@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 1997/10/14 09:20:29 mark Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 1998/02/21 23:11:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -35,7 +35,7 @@
 #ifndef _ARM32_PTE_H_
 #define _ARM32_PTE_H_
 
-#define PDSHIFT	20			/* LOG2(NBPDR) */
+#define PDSHIFT		20		/* LOG2(NBPDR) */
 #define NBPD		(1 << PDSHIFT)	/* bytes/page dir */
 /*# define PDOFSET	(NBPD-1)*/	/* byte offset into page dir */
 #define NPTEPD		(NBPD / NBPG)
@@ -90,13 +90,14 @@ typedef	int	pt_entry_t;		/* page table entry */
 #define L2_MASK		0x03
 #define L2_INVAL	0x00
 
-#define L2_PTE(p, a) ((p) | PT_AP(a) | L2_SPAGE | PT_C | PT_B)
+#define L2_PTE(p, a)	((p) | PT_AP(a) | L2_SPAGE | PT_C | PT_B)
 #define L2_PTE_NC(p, a) ((p) | PT_AP(a) | L2_SPAGE | PT_B)
 #define L2_PTE_NC_NB(p, a) ((p) | PT_AP(a) | L2_SPAGE)
 
-#define L1_PTE(p) ((p) | 0x00 | PT_U | L1_PAGE)
-
-#define L1_SEC(p) ((p) | (AP_KRW << AP_SECTION_SHIFT) | PT_U | L1_SECTION)
+#define L1_PTE(p)	((p) | 0x00 | PT_U | L1_PAGE)
+#define L1_SEC(p, c)	((p) | (AP_KRW << AP_SECTION_SHIFT) | PT_U | (c) \
+			| L1_SECTION)
+#define L1_SEC_SIZE	(1 << PDSHIFT)
 
 #define DOMAIN_FAULT		0x00
 #define DOMAIN_CLIENT		0x01
