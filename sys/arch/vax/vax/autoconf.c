@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1997/01/11 11:31:29 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1997/01/11 13:50:20 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -171,7 +171,9 @@ configure()
 	 * parameter based on device(s) used.
 	 */
 	gencnslask(); /* XXX inte g|ras h{r */
+#if VAX410 || VAX43
 	dzcnslask(); /* XXX inte g|ras h{r */
+#endif
 	swapconf();
 	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
@@ -437,9 +439,9 @@ mem_attach(parent, self, aux)
 	sc->sc_memaddr = sa->nexaddr;
 	sc->sc_memtype = sa->nexinfo;
 	sc->sc_memnr = sa->type;
-
+#ifdef VAX780
 	ka780_memenable(sa, sc);
-
+#endif
 }
 
 struct	cfdriver backplane_cd = {
