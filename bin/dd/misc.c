@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/07/20 21:58:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $";
+__RCSID("$NetBSD: misc.c,v 1.5 1997/07/20 21:58:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,22 +69,22 @@ summary()
 		secs = 1;
 	/* Use snprintf(3) so that we don't reenter stdio(3). */
 	(void)snprintf(buf, sizeof(buf),
-	    "%u+%u records in\n%u+%u records out\n",
+	    "%lu+%lu records in\n%lu+%lu records out\n",
 	    st.in_full, st.in_part, st.out_full, st.out_part);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 	if (st.swab) {
-		(void)snprintf(buf, sizeof(buf), "%u odd length swab %s\n",
+		(void)snprintf(buf, sizeof(buf), "%lu odd length swab %s\n",
 		     st.swab, (st.swab == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	if (st.trunc) {
-		(void)snprintf(buf, sizeof(buf), "%u truncated %s\n",
+		(void)snprintf(buf, sizeof(buf), "%lu truncated %s\n",
 		     st.trunc, (st.trunc == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
-	    "%u bytes transferred in %u secs (%u bytes/sec)\n",
-	    st.bytes, secs, st.bytes / secs);
+	    "%lu bytes transferred in %lu secs (%lu bytes/sec)\n",
+	    st.bytes, (long) secs, st.bytes / secs);
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 }
 
