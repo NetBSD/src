@@ -4,7 +4,7 @@
  * Written by Roland McGrath <roland@frob.com> 10/14/93.
  * Public domain.
  *
- * $Id: ethers.c,v 1.3 1993/12/28 19:51:37 jtc Exp $
+ * $Id: ethers.c,v 1.4 1993/12/30 04:21:05 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -22,16 +22,6 @@
 #ifndef _PATH_ETHERS
 #define _PATH_ETHERS "/etc/ethers"
 #endif
-
-/*
- * Sun uses this structure in netinet/if_ether.h.
- * It looked like it would be harmless to change that file,
- * but I didn't want to bother and struct ether_addr and u_char[6]
- * are layed out identically in memory anyway.
- */
-struct ether_addr {
-	u_char ether_addr_octet[6];
-};
 
 char *
 ether_ntoa(e)
