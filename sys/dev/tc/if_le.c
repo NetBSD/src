@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1996/04/18 00:50:11 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1996/04/22 02:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -96,6 +96,12 @@ dec_le_common_attach(sc, eap)
 
 	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
+}
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
 }
 
 integrate void
