@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.658 2004/01/30 15:30:44 christos Exp $
+# $NetBSD: mi,v 1.659 2004/02/07 04:49:26 itohy Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1381,6 +1381,7 @@
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/link.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lkm.conf.0			man-sys-catman		.cat
+./usr/share/man/cat5/locate.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/login.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/magic.0			man-util-catman		.cat
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
@@ -3434,6 +3435,7 @@
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
 ./usr/share/man/man5/link.5			man-sys-man		.man
 ./usr/share/man/man5/lkm.conf.5			man-sys-man		.man
+./usr/share/man/man5/locate.conf.5		man-sys-man		.man
 ./usr/share/man/man5/login.conf.5		man-sys-man		.man
 ./usr/share/man/man5/magic.5			man-util-man		.man
 ./usr/share/man/man5/mailer.conf.5		man-mailwrapper-man	.man
