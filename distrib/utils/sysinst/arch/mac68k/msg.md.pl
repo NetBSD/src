@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2002/09/03 00:35:53 rnestor Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2002/10/20 22:06:18 rnestor Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -66,7 +66,7 @@ jesli bedzie to potrzebne.
 Spowoduje to, ze dysk nie bedzie bootowalny ani uzyteczny pod MacOS.
 }
 
-+message okwritediskmap
+message okwritediskmap
 {Sysinst sprobuje zainicjalizowac twoj dysk z nowa Mapa Partycji Dysku
 uzywajac wartosci pobranych ze sterownika dysku. Ta domyslna Mapa
 bedzie zawierala minimalna definicje Bloku0, Mape Partycji pozwalajaca
