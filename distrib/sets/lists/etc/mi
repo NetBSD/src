@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.84 2001/05/22 14:52:25 fredette Exp $
+# $NetBSD: mi,v 1.85 2001/05/26 23:27:14 itojun Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -58,6 +58,7 @@
 ./etc/postfix/main.cf			etc-postfix-etc
 ./etc/postfix/master.cf			etc-postfix-etc
 ./etc/postfix/postfix-script		etc-postfix-etc
+./etc/primes				etc-secsh-etc
 ./etc/printcap				etc-lpr-etc
 ./etc/profile				etc-util-etc
 ./etc/protocols				etc-net-etc
