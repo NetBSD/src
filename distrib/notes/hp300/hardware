@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.10 2002/04/22 02:51:19 mbw Exp $
+.\"	$NetBSD: hardware,v 1.11 2002/04/23 05:56:44 gmcgarry Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -18,11 +18,9 @@ Anything else is up to you!
 .item)
 .Pp
 .(Note
-The \*M installation procedure uses a
-.Em miniroot
-file system
-which is placed into the swap area of the disk.  The swap partition
-must be large enough to hold this miniroot image.
+If you're planning to do the installation using the miniroot file system
+which is placed into the swap area of the disk, the swap partition must
+be large enough to hold this miniroot image.
 .Note)
 .
 .Ss2 Supported hardware
