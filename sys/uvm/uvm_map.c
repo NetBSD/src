@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.39 1999/05/12 19:11:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.40 1999/05/20 23:03:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,6 +112,17 @@ struct pool uvm_vmspace_pool;
  */
 
 struct pool uvm_map_entry_pool;
+
+#ifdef PMAP_GROWKERNEL
+/*
+ * This global represents the end of the kernel virtual address
+ * space.  If we want to exceed this, we must grow the kernel
+ * virtual address space dynamically.
+ *
+ * Note, this variable is locked by kernel_map's lock.
+ */
+vaddr_t uvm_maxkaddr;
+#endif
 
 /*
  * macros
@@ -503,18 +514,14 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 		return (KERN_NO_SPACE);
 	}
 
-#if defined(PMAP_GROWKERNEL)	/* hack */
+#ifdef PMAP_GROWKERNEL
 	{
-		/* locked by kernel_map lock */
-		static vaddr_t maxkaddr = 0;
-		
 		/*
-		 * hack: grow kernel PTPs in advance.
+		 * If the kernel pmap can't map the requested space,
+		 * then allocate more resources for it.
 		 */
-		if (map == kernel_map && maxkaddr < (*startp + size)) {
-			pmap_growkernel(*startp + size);
-			maxkaddr = *startp + size;
-		}
+		if (map == kernel_map && uvm_maxkaddr < (*startp + size))
+			uvm_maxkaddr = pmap_growkernel(*startp + size);
 	}
 #endif
 

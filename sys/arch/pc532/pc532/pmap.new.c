@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.12 1999/04/17 20:03:39 chs Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.13 1999/05/20 23:03:23 thorpej Exp $	*/
 
 /*
  *
@@ -3368,7 +3368,7 @@ enter_now:
  *	the pmaps on the system.
  */
 
-void pmap_growkernel(maxkvaddr)
+vaddr_t pmap_growkernel(maxkvaddr)
 
 vaddr_t maxkvaddr;
 
@@ -3379,7 +3379,7 @@ vaddr_t maxkvaddr;
 
   needed_kpde = (int)(maxkvaddr - VM_MIN_KERNEL_ADDRESS + (NBPD-1)) / NBPD;
   if (needed_kpde <= nkpde)
-    return;		/* we are OK */
+    goto out;		/* we are OK */
 
   /*
    * whoops!   we need to add kernel PTPs
@@ -3389,6 +3389,21 @@ vaddr_t maxkvaddr;
   simple_lock(&kpm->pm_obj.vmobjlock);
 
   for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
+
+    if (pmap_initialized == FALSE) {
+      /*
+       * we're growing the kernel pmap early (from uvm_pageboot_alloc()).
+       * this case must be handled a little differently.
+       */
+      paddr_t ptaddr;
+
+      if (uvm_page_physget(&ptaddr) == FALSE)
+	panic("pmap_growkernel: out of memory");
+
+      kpm->pm_pdir[PDSLOT_KERN + nkpde] = ptaddr | PG_RW | PG_V;
+      kpm->pm_stats.resident_count++;	/* count PTP as resident */
+      continue;
+    }
 
     pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE);
     kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_u; /* PG_u not for kernel */
@@ -3403,6 +3418,9 @@ vaddr_t maxkvaddr;
 
   simple_unlock(&kpm->pm_obj.vmobjlock);
   splx(s);
+
+ out:
+  return (VM_MIN_KERNEL_ADDRESS + (nkpde * NBPD));
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.19 1999/05/20 20:07:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.20 1999/05/20 23:03:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -409,11 +409,23 @@ uvm_pageboot_alloc(size)
 	 * allocate virtual memory for this request
 	 */
 	if (virtual_space_start == virtual_space_end ||
-	    (virtual_space_end - virtual_space_start) < size) {
+	    (virtual_space_end - virtual_space_start) < size)
 		panic("uvm_pageboot_alloc: out of virtual space");
-	}
 
 	addr = virtual_space_start;
+
+#ifdef PMAP_GROWKERNEL
+	/*
+	 * If the kernel pmap can't map the requested space,
+	 * then allocate more resources for it.
+	 */
+	if (uvm_maxkaddr < (addr + size)) {
+		uvm_maxkaddr = pmap_growkernel(addr + size);
+		if (uvm_maxkaddr < (addr + size))
+			panic("uvm_pageboot_alloc: pmap_growkernel() failed");
+	}
+#endif
+
 	virtual_space_start += size;
 
 	/*
