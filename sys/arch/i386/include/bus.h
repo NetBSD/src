@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7.8.3 1997/05/25 02:10:45 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.8.4 1997/06/06 00:43:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -825,7 +825,7 @@ struct i386_bus_dmamap {
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
 	int		dm_nsegs;	/* # valid segments in mapping */
-	bus_dma_segment_t dm_segs[0];	/* segments; variable length */
+	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
 #ifdef _I386_BUS_DMA_PRIVATE
