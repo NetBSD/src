@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.3 2000/04/11 14:27:51 simonb Exp $	*/
+/*	$NetBSD: acs.c,v 1.4 2000/04/11 20:41:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __init_acs()
 		if ((term = *aofac) == '\0')
 			return;
 		if (acs > 0) 	/* Only add characters 1 to 127 */
-			_acs_char[(int)acs] = term | __ALTCHARSET;
+			_acs_char[(unsigned char)acs] = term | __ALTCHARSET;
 		aofac++;
 #ifdef DEBUG
 		__CTRACE("__init_acs: %c = %c\n", acs, term);
