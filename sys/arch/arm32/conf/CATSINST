@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.22 2000/09/24 15:59:29 jdolecek Exp $
+#	$NetBSD: CATSINST,v 1.23 2000/11/13 18:40:34 abs Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -32,6 +32,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # For StrongARM systems
 options 	CPU_SA110	# Support the SA110 core
+makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 #options 	IOMD		# We have an IOMD
