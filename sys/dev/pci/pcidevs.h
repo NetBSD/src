@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.76 1998/07/22 17:43:11 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.77 1998/07/25 11:57:51 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -489,7 +489,7 @@
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
 #define	PCI_VENDOR_2MICRO	0x1217		/* 2 Micro Inc */
-#define	PCI_VENDOR_3DFX	0x121A		/* 3Dfx Interactive */
+#define	PCI_VENDOR_3DFX	0x121a		/* 3Dfx Interactive */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
@@ -501,6 +501,7 @@
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
+#define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* STB Systems (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
@@ -909,6 +910,9 @@
 
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* Ethernet */
+
+/* RISCom (SDL Communications, Inc?) products */
+#define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
