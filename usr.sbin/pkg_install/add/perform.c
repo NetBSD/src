@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.65 2002/06/09 13:23:44 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.66 2002/06/10 09:14:26 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.65 2002/06/09 13:23:44 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.66 2002/06/10 09:14:26 yamt Exp $");
 #endif
 #endif
 
@@ -676,7 +676,6 @@ pkg_do(char *pkg)
 	/* Time to record the deed? */
 	if (!NoRecord && !Fake) {
 		char    contents[FILENAME_MAX];
-		FILE   *cfile;
 
 		umask(022);
 		if (getuid() != 0)
