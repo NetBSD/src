@@ -1,4 +1,4 @@
-.\" $NetBSD: macros,v 1.5 2000/10/05 08:54:04 lukem Exp $
+.\"	$NetBSD: macros,v 1.6 2000/10/10 12:02:46 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 ..
 .
 .
-.\" standard display, with nice showmatch parens in the name
+.\" Standard indented literal display, with nice showmatch parens in the name
 .
 .
 .de (disp
@@ -83,34 +83,82 @@
 .
 .
 .
-.\" Degenerate case of tagged list: a single tagged paragraph, possibly
-.\" followed by more (.Pp) paragraphs at the same indent level. Uses the
-.\" last parameter specified for the width, so things like .(tag Em tagfun
-.\" will DTRT. End the sequence with ``.tag)''.
+.\" Tagged lists:
+.\"	(tag wid rest	Creates a tag with width wid and other args rest
+.\"	tag)		End sequence
 .\"
 .
-.
 .de (tag
-.	Bl -tag -width x\\$\\n[.$]
-.	It \\$@
-.
+.	Bl -tag -width \\$*
 ..
+.
 .de tag)
 .	El
 ..
 .
 .de (Note
-.	(tag Em Note
+.	(tag Note:
+.	It Em Note:
 ..
 .
 .de Note)
 .	tag)
 ..
 .
+.\" Bullet list, which swaps between bullet and hyphen at each alternate
+.\" indent level.
+.
+.nr b_or_h 1
+.
+.de (bullet
+.	ie \\n[b_or_h] .Bl -bullet \\$*
+.	el .Bl -hyphen \\$*
+.	nr b_or_h 1-\\n[b_or_h]
+.	It
+..
+.
+.de bullet)
+.	El
+.	nr b_or_h 1-\\n[b_or_h]
+..
+.
+.\" Enumerated list
+.\"
+.
+.de (enum
+.	Bl -enum \\$*
+.	It
+..
+.
+.de enum)
+.	El
+..
+.
+.\" Item list
+.\"
+.
+.de (item
+.	Bl -item \\$*
+.	It
+..
+.
+.de item)
+.	El
+..
+.
 .de D2
 .	Pp
 .	Dl Ic $@
 ..
+.
+.\" Generate NetBSD/${MACHINE}, with NetBSD being done with .Nx.
+.\" If there's trailing args to the macro, concatinate with no space.
+.
+.de Nx*M
+.ie \\n[.$]>0 .Nx Ns / Ns \*M Ns \\$*
+.el .Nx Ns / Ns \*M
+..
+.
 .
 .\"	--------------------  MISC  --------------------
 .
@@ -130,11 +178,10 @@
 .\" Define _ versions, sometimes these look better as with .if r_xxx
 .
 .nr _FOR_RELEASE \n[FOR_RELEASE]
-.nr _\*[MACHINE] 1
+.nr _\*M 1
 .
-.de (note
-.	(Note
-..
-.de note)
-.	Note)
-..
+.\" Other strings available:
+.\"
+.\"	\*M		${MACHINE} (e.g, `i386')
+.\"	\*V		Version (e.g, `1.5')
+.\"	\*[.CURDIR]	${.CURDIR}
