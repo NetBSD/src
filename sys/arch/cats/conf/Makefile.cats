@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats,v 1.1 2001/05/22 20:59:27 chris Exp $
+#	$NetBSD: Makefile.cats,v 1.2 2001/05/29 02:20:22 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ THISARM=	$S/arch/cats
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dcats
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dcats
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 

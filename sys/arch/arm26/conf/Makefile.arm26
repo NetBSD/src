@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.6 2001/02/17 19:38:36 bjh21 Exp $
+#	$NetBSD: Makefile.arm26,v 1.7 2001/05/29 02:20:21 mrg Exp $
 
 # Makefile for NetBSD/arm26
 #
@@ -41,7 +41,7 @@ ARM26=	$S/arch/arm26
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darm26
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Darm26
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 

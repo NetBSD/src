@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prep,v 1.4 2000/12/17 15:52:43 jdolecek Exp $
+#	$NetBSD: Makefile.prep,v 1.5 2001/05/29 02:20:25 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -42,7 +42,7 @@ POWERPC= $S/arch/powerpc
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dprep
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dprep
 CWARNFLAGS?=	-Werror -Wreturn-type -Wpointer-arith
 #CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 #		-Wpointer-arith -Wuninitialized

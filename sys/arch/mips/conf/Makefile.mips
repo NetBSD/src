@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.13 2001/05/23 02:35:40 hubertf Exp $
+#	$NetBSD: Makefile.mips,v 1.14 2001/05/29 02:20:24 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,7 @@ MIPS=		$S/arch/mips
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${TARGET_MACHINE}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -D${TARGET_MACHINE}
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't

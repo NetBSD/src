@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.8 2000/12/17 15:52:42 jdolecek Exp $
+#	$NetBSD: Makefile.news68k,v 1.9 2001/05/29 02:20:24 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -39,7 +39,7 @@ NEWS68K=$S/arch/news68k
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dnews68k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dnews68k
 CWARNFLAGS?=	-Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes \
 		-Wall -Werror
 # XXX Delete -Wuninitialized for now, since the compiler doesn't

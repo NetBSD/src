@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.8 2000/12/17 15:52:41 jdolecek Exp $
+#	$NetBSD: Makefile.luna68k,v 1.9 2001/05/29 02:20:23 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -41,7 +41,7 @@ LUNA68K=$S/arch/luna68k
 # Keep -nostdinc before all -I flags, similar for -undef ...
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dluna68k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dluna68k
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't

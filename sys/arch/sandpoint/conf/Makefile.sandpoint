@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sandpoint,v 1.1 2001/02/04 18:32:11 briggs Exp $
+#	$NetBSD: Makefile.sandpoint,v 1.2 2001/05/29 02:20:25 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -48,7 +48,7 @@ POWERPC= $S/arch/powerpc
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dsandpoint
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dsandpoint
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wreturn-type -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3.be,v 1.6 2000/12/17 15:52:43 jdolecek Exp $
+#	$NetBSD: Makefile.sh3.be,v 1.7 2001/05/29 02:20:25 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ S!=	cd ../../../..; pwd
 SH3=	$S/arch/sh3
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
 		-Dsh3
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.50 2000/12/17 15:52:42 jdolecek Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.51 2001/05/29 02:20:24 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ MVME68K=$S/arch/mvme68k
 # Keep -nostdinc before all -I flags, similar for -undef ...
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme68k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dmvme68k
 .if empty(IDENT:M-DMVME172) && empty(IDENT:M-DMVME177)
 .if empty(IDENT:M-DMVME147)
 CMACHFLAGS=	-m68040

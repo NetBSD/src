@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.49 2000/12/29 15:18:37 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.50 2001/05/29 02:20:27 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,7 @@ X68K=	$S/arch/x68k
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dx68k
 CMACHFLAGS?=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.16 2001/05/17 23:48:31 matt Exp $
+#	$NetBSD: Makefile.macppc,v 1.17 2001/05/29 02:20:23 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -41,7 +41,7 @@ PPC=	$S/arch/macppc
 TEXTADDR?=	100000
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmacppc
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -Dmacppc
 CWARNFLAGS?=	-Werror -Wreturn-type -Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 

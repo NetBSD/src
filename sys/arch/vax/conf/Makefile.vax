@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.57 2001/02/08 15:19:14 chs Exp $
+#	$NetBSD: Makefile.vax,v 1.58 2001/05/29 02:20:26 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -38,7 +38,7 @@ VAX=	$S/arch/vax
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
 		-D_VAX_INLINE_
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wpointer-arith
