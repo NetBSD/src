@@ -64,6 +64,7 @@
 #	speaker	pc speaker
 #	dcf*	dcf clock
 #	lkm	loadable kernel modules interface
+#	audio	audio device
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -75,6 +76,7 @@ case $i in
 all)
 	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 tty0 tty1 pty0 st0
 	sh MAKEDEV ch0 cd0 lpt0 lpt1 lpt2 lpa0 lpa1 lpa2 speaker lkm mcd0
+	sh MAKEDEV audio
 	;;
 
 std)
@@ -350,6 +352,13 @@ mouse*)
 	ln -s $name mouse
 	;;
 
+audio*)
+	rm -f audio sound
+	mknod sound c 42 0
+	mknod audio c 42 128
+	chown root.wheel audio sound
+	chmod 666 audio sound
+	
 local)
 	umask 0
 	sh MAKEDEV.local
