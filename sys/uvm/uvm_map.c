@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.50 1999/05/31 23:36:23 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.51 1999/06/02 21:23:08 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -223,6 +223,23 @@ vm_map_clear_recursive(map)
 		map->lock.lk_flags &= ~LK_CANRECURSE;
 	simple_unlock(&map->lock.lk_interlock);
 }
+
+/* XXX Should not exist! */
+#define	vm_map_downgrade(map)						\
+	(void) lockmgr(&(map)->lock, LK_DOWNGRADE, NULL)
+
+/* XXX Should not exist! */
+#ifdef DIAGNOSTIC
+#define	vm_map_upgrade(map)						\
+do {									\
+	if (lockmgr(&(map)->lock, LK_UPGRADE, NULL) != 0)		\
+		panic("vm_map_upgrade: failed to upgrade lock");	\
+} while (0)
+#else
+#define	vm_map_upgrade(map)						\
+	(void) lockmgr(&(map)->lock, LK_UPGRADE, NULL)
+#endif /* DIAGNOSTIC */
+
 
 /*
  * uvm_mapent_alloc: allocate a map entry
@@ -2167,62 +2184,64 @@ uvm_map_pageable(map, start, end, new_pageable)
 	/*
 	 * Pass 2.
 	 */
+
 	/*
-	 * HACK HACK HACK HACK
+	 * XXX Note, even if we're a kernel map, just set recursion on
+	 * XXX the lock.  If the pmap (via uvm_fault()) needs to lock
+	 * XXX this map again in this thread, it will be able to due
+	 * XXX to the recursion setting.  Note that we have already
+	 * XXX done what we need to do to the map entries, so we
+	 * XXX should be okay.
 	 *
-	 * if we are wiring in the kernel map or a submap of it, unlock the
-	 * map to avoid deadlocks.  we trust that the kernel threads are
-	 * well-behaved, and therefore will not do anything destructive to
-	 * this region of the map while we have it unlocked.  we cannot
-	 * trust user threads to do the same.
-	 *
-	 * HACK HACK HACK HACK 
+	 * JEEZ, THIS IS A MESS!
 	 */
-	if (vm_map_pmap(map) == pmap_kernel()) {
-		vm_map_unlock(map);         /* trust me ... */
-	} else {
-		vm_map_set_recursive(map);
-		lockmgr(&map->lock, LK_DOWNGRADE, (void *)0);
-	}
+
+	vm_map_set_recursive(map);
+	vm_map_downgrade(map);
 
 	rv = 0;
 	entry = start_entry;
 	while (entry != &map->header && entry->start < end) {
-		/*
-		 * if uvm_fault_wire fails for any page we need to undo what has
-		 * been done.  we decrement the wiring count for those pages
-		 * which have not yet been wired (now) and unwire those that
-		 * have * (later).
-		 *
-		 * XXX this violates the locking protocol on the map, needs to
-		 * be fixed.  [because we only have a read lock on map we 
-		 * shouldn't be changing wired_count?]
-		 */
-		if (rv) {
-			entry->wired_count--;
-		} else if (entry->wired_count == 1) {
+		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
 			    entry->protection);
 			if (rv) {
-				failed = entry->start;
-				entry->wired_count--;
+				/*
+				 * wiring failed.  break out of the loop.
+				 * we'll clean up the map below, once we
+				 * have a write lock again.
+				 */
+				break;
 			}
 		}
 		entry = entry->next;
 	}
 
-	if (vm_map_pmap(map) == pmap_kernel()) {
-		vm_map_lock(map);     /* relock */
-	} else {
-		vm_map_clear_recursive(map);
-	} 
+	/*
+	 * Get back to an exclusive, non-recursive lock.  (XXX: see above)
+	 */
+	vm_map_upgrade(map);
+	vm_map_clear_recursive(map);
 
 	if (rv) {        /* failed? */
+		/*
+		 * first drop the wiring count on all the entries
+		 * which haven't actually been wired yet.
+		 */
+		failed = entry->start;
+		while (entry != &map->header && entry->start < end)
+			entry->wired_count--;
+
+		/*
+		 * now, unlock the map, and unwire all the pages that
+		 * were successfully wired above.
+		 */
 		vm_map_unlock(map);
 		(void) uvm_map_pageable(map, start, failed, TRUE);
 		UVMHIST_LOG(maphist, "<- done (RV=%d)", rv,0,0,0);
 		return(rv);
 	}
+
 	vm_map_unlock(map);
 	
 	UVMHIST_LOG(maphist,"<- done (OK WIRE)",0,0,0,0);
