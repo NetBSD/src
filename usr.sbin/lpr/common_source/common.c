@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ifaddrs.h>
 #include "lp.h"
 #include "pathnames.h"
 
@@ -303,68 +304,91 @@ compar(p1, p2)
 /*
  * Figure out whether the local machine is the same
  * as the remote machine (RM) entry (if it exists).
- *
- * XXX not really the right way to determine.
  */
 char *
 checkremote()
 {
-	char hname[NI_MAXHOST];
-	struct addrinfo hints, *res;
+	char lname[NI_MAXHOST], rname[NI_MAXHOST];
+	struct addrinfo hints, *res, *res0;
 	static char errbuf[128];
 	int error;
+	struct ifaddrs *ifap, *ifa;
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST;
+#endif
+#ifdef __KAME__
+	struct sockaddr_in6 sin6;
+	struct sockaddr_in6 *sin6p;
+#endif
 
-	remote = 0;	/* assume printer is local */
-	if (RM != NULL) {
-		/* get the official name of the local host */
-		gethostname(hname, sizeof(hname));
-		hname[sizeof(hname)-1] = '\0';
+	remote = 0;	/* assume printer is local on failure */
 
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_flags = AI_CANONNAME;
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		res = NULL;
-		error = getaddrinfo(hname, NULL, &hints, &res);
-		if (error || !res->ai_canonname) {
-			(void)snprintf(errbuf, sizeof(errbuf),
-			    "unable to get official name for local machine %s: "
-			    "%s", hname, gai_strerror(error));
-			if (res)
-				freeaddrinfo(res);
-			return errbuf;
-		} else {
-			(void)strncpy(hname, res->ai_canonname,
-			    sizeof(hname) - 1);
-			hname[sizeof(hname) - 1] = '\0';
-		}
-		freeaddrinfo(res);
+	if (RM == NULL)
+		return NULL;
 
-		/* get the official name of RM */
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_flags = AI_CANONNAME;
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		res = NULL;
-		error = getaddrinfo(RM, NULL, &hints, &res);
-		if (error || !res->ai_canonname) {
-			(void)snprintf(errbuf, sizeof(errbuf),
-			    "unable to get official name for local machine %s: "
-			    "%s", RM, gai_strerror(error));
-			if (res)
-				freeaddrinfo(res);
-			return errbuf;
-		}
-
-		/*
-		 * if the two hosts are not the same,
-		 * then the printer must be remote.
-		 */
-		if (strcasecmp(hname, res->ai_canonname) != 0)
-			remote = 1;
-
-		freeaddrinfo(res);
+	/* get the local interface addresses */
+	if (getifaddrs(&ifap) < 0) {
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "unable to get local interface address: %s",
+		    strerror(errno));
+		return errbuf;
 	}
+
+	/* get the remote host addresses (RM) */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_CANONNAME;
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	res = NULL;
+	error = getaddrinfo(RM, NULL, &hints, &res0);
+	if (error) {
+		(void)snprintf(errbuf, sizeof(errbuf),
+		    "unable to resolve remote machine %s: %s",
+		    RM, gai_strerror(error));
+		freeifaddrs(ifap);
+		return errbuf;
+	}
+
+	remote = 1;	/* assume printer is remote */
+
+	for (res = res0; res; res = res->ai_next) {
+		if (getnameinfo(res->ai_addr, res->ai_addrlen,
+		    rname, sizeof(rname), NULL, 0, niflags) != 0)
+			continue;
+		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+#ifdef __KAME__
+			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (ifa->ifa_addr->sa_family == AF_INET6 &&
+			    ifa->ifa_addr->sa_len == sizeof(sin6) &&
+			    IN6_IS_ADDR_LINKLOCAL(&sin6p->sin6_addr) &&
+			    *(u_int16_t *)&sin6p->sin6_addr.s6_addr[2]) {
+				/* kame scopeid hack */
+				memcpy(&sin6, ifa->ifa_addr, sizeof(sin6));
+				sin6.sin6_scope_id =
+				    ntohs(*(u_int16_t *)&sin6p->sin6_addr.s6_addr[2]);
+				sin6.sin6_addr.s6_addr[2] = 0;
+				sin6.sin6_addr.s6_addr[3] = 0;
+				if (getnameinfo((struct sockaddr *)&sin6,
+				    sin6.sin6_len, lname, sizeof(lname),
+				    NULL, 0, niflags) != 0)
+					continue;
+			} else
+#endif
+			if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
+			    lname, sizeof(lname), NULL, 0, niflags) != 0)
+				continue;
+
+			if (strcmp(rname, lname) == 0) {
+				remote = 0;
+				goto done;
+			}
+		}
+	}
+done:
+	freeaddrinfo(res0);
+	freeifaddrs(ifap);
 	return NULL;
 }
 
