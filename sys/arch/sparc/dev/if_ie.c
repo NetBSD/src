@@ -1,12 +1,13 @@
-/*	$NetBSD: if_ie.c,v 1.10 1994/12/16 22:01:09 deraadt Exp $ */
+/*	$NetBSD: if_ie.c,v 1.11 1995/01/27 09:49:57 pk Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
  *  Agricultural College.
  * Copyright (c) 1992, 1993, Garrett A. Wollman.
  *
  * Portions:
+ * Copyright (c) 1994, 1995, Rafal K. Boni
  * Copyright (c) 1990, 1991, William F. Jolitz
  * Copyright (c) 1990, The Regents of the University of California
  *
@@ -56,7 +57,9 @@
  *
  * Majorly cleaned up and 3C507 code merged by Charles Hannum.
  *
- * Converted to SUN ie driver by Charles D. Cranor, October 1994.
+ * Converted to SUN ie driver by Charles D. Cranor, 
+ *		October 1994, January 1995.
+ * This sun version based on i386 version 1.30.
  */
 
 /*
@@ -69,7 +72,7 @@
  */
 
 /*
-   Mode of operation:
+Mode of operation:
 
    We run the 82586 in a standard Ethernet mode.  We keep NFRAMES
    received frame descriptors around for the receiver to use, and
@@ -78,19 +81,20 @@
    necessary.  (The 586 treats both lists as a simple queue.)  We also
    keep a transmit command around so that packets can be sent off
    quickly.
-				
+
    We configure the adapter in AL-LOC = 1 mode, which means that the
    Ethernet/802.3 MAC header is placed at the beginning of the receive
    buffer rather than being split off into various fields in the RFD.
    This also means that we must include this header in the transmit
    buffer as well.
-				
+
    By convention, all transmit commands, and only transmit commands,
    shall have the I (IE_CMD_INTR) bit set in the command.  This way,
    when an interrupt arrives at ieintr(), it is immediately possible
    to tell what precisely caused it.  ANY OTHER command-sending
    routines should run at splimp(), and should post an acknowledgement
    to every interrupt they generate.
+
 */
 
 #include "bpfilter.h"
@@ -105,7 +109,6 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -137,8 +140,8 @@
  * ugly byte-order hack for SUNs
  */
 
-#define SWAP(x)		((u_short)(XSWAP((u_short)(x))))
-#define XSWAP(y)	( ((y) >> 8) | ((y) << 8) )
+#define SWAP(x)         ((u_short)(XSWAP((u_short)(x))))
+#define XSWAP(y)        ( ((y) >> 8) | ((y) << 8) )
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -149,10 +152,6 @@
 
 static struct mbuf *last_not_for_us;
 vm_map_t ie_map; /* for obio */
-
-/*
- * IED: ie debug flags
- */
 
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
@@ -165,27 +164,27 @@ vm_map_t ie_map; /* for obio */
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-
-#define B_PER_F         3	/* number of buffers to allocate per frame */
-#define	MXFRAMES	300	/* max number of frames to allow for receive */
-#define	MXRXBUF (MXFRAMES*B_PER_F)	/* max number of buffers to allocate */
-#define	IE_RBUF_SIZE	256	/* size of each buffer, MUST BE POWER OF TWO */
-#define	NTXBUF		2	/* number of transmit buffer/command pairs */
-#define	IE_TBUF_SIZE	1512	/* length of transmit buffer */
+#define B_PER_F         3               /* recv buffers per frame */
+#define MXFRAMES        300             /* max number of recv frames */
+#define	MXRXBUF		(MXFRAMES*B_PER_F) /* number of buffers to allocate */
+#define	IE_RBUF_SIZE	256		/* size of each receive buffer;
+						MUST BE POWER OF TWO */
+#define	NTXBUF		2		/* number of transmit commands */
+#define	IE_TBUF_SIZE	ETHER_MAX_LEN	/* length of transmit buffer */
 
 
 enum ie_hardware {
-	IE_VME,			/* multibus to VME ie card */
-	IE_OBIO,		/* on board */
-	IE_VME3E,		/* sun 3e VME card */
-	IE_UNKNOWN
+  IE_VME,             /* multibus to VME card */
+  IE_OBIO,            /* on board */
+  IE_VME3E,           /* sun 3e VME card */
+  IE_UNKNOWN
 };
 
 const char *ie_hardware_names[] = {
 	"multibus/vme",
 	"onboard",
 	"3e/vme",
-	"unknown"
+	"Unknown"
 };
 
 /*
@@ -217,68 +216,78 @@ const char *ie_hardware_names[] = {
  *   it into bits 17-20 (e.g. 0x40000).    Then or it to get the
  *   address of RAM (in our example: 0xffe40000).   see the attach routine!
  *
- * XXX CONFIRM THE BELOW COMMENT
  * on the onboard ie interface the 24 bit address space is hardwired
  * to be 0xff000000 -> 0xffffffff of KVA.   this means that sc_iobase
  * will be 0xff000000.   sc_maddr will be where ever we allocate RAM
  * in KVA.    note that since the SCP is at a fixed address it means
  * that we have to allocate a fixed KVA for the SCP.
  */
-struct ie_softc {
-	struct device sc_dev;	/* device structure */
-	struct intrhand sc_ih;	/* interrupt info */
 
-	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
-	caddr_t sc_maddr;	/* KVA of base of chip's RAM (16bit addr sp.)*/
-	u_int   sc_msize;	/* how much RAM we have/use */
-	caddr_t sc_reg;		/* KVA of card's register */
+struct ie_softc {
+	struct device sc_dev;   /* device structure */
+	struct intrhand sc_ih;  /* interrupt info */
+
+	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
+	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
+	u_int sc_msize;         /* how much RAM we have/use */
+	caddr_t sc_reg;         /* KVA of car's register */
 
 	struct arpcom sc_arpcom;/* system arpcom structure */
 
-	void    (*reset_586)();	/* card dependent reset function */
-	void    (*chan_attn)();	/* card dependent attn function */
-	void    (*run_586)();	/* card dependent "go on-line" function */
-
-	enum ie_hardware hard_type;	/* card type */
+	void (*reset_586)();    /* card dependent reset function */
+	void (*chan_attn)();    /* card dependent attn function */
+	void (*run_586)();      /* card depenent "go on-line" function */
 	void (*memcopy) __P((const void *, void *, u_int));
-	void (*memzero) __P((void *, u_int));
+	                        /* card dependent memory copy function */
+        void (*memzero) __P((void *, u_int));
+	                        /* card dependent memory zero function */
 
-	int     want_mcsetup;	/* flag for multicast setup */
-	int     promisc;	/* are we in promisc mode? */
+	
+	enum ie_hardware hard_type;     /* card type */
+
+	int want_mcsetup;       /* mcsetup flag */
+	int promisc;            /* are we in promisc mode? */
 
 	/*
 	 * pointers to the 3 major control structures
 	 */
+
 	volatile struct ie_sys_conf_ptr *scp;
 	volatile struct ie_int_sys_conf_ptr *iscp;
 	volatile struct ie_sys_ctl_block *scb;
 
 	/*
-	 * pointer and size of a block of KVA where the buffers
+	 * pointer and size of a block of KVA where the buffers 
 	 * are to be allocated from
 	 */
+        
 	caddr_t buf_area;
-	int     buf_area_sz;
+	int buf_area_sz;
 
 	/*
-         * the actual buffers (recv and xmit)
-         */
+	 * the actual buffers (recv and xmit)
+	 */
+
 	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
 	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
 	volatile char *cbuffs[MXRXBUF];
-	int     rfhead, rftail, rbhead, rbtail;
+        int rfhead, rftail, rbhead, rbtail;
 
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
-	int     xmit_count;
 	u_char *xmit_cbuffs[NTXBUF];
+	int xmit_busy;
+	int xmit_free;
+	int xchead, xctail;
 
 	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
-	int     mcast_count;
+	int mcast_count;
 
-	int     nframes, nrxbuf;
+	int nframes;      /* number of frames in use */
+	int nrxbuf;       /* number of recv buffs in use */
+
 #ifdef IEDEBUG
-	int     sc_debug;
+	int sc_debug;
 #endif
 };
 
@@ -289,34 +298,33 @@ static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));
 static void ie_vmerun __P((struct ie_softc *));
 
-int iewatchdog __P(( /* short */ ));
+int iewatchdog __P((/* short */));
 int ieintr __P((void *));
-int ieinit __P((struct ie_softc * sc));
-int ieioctl __P((struct ifnet * ifp, u_long command, caddr_t data));
-int iestart __P((struct ifnet * ifp));
+int ieinit __P((struct ie_softc *));
+int ieioctl __P((struct ifnet *, u_long, caddr_t));
+int iestart __P((struct ifnet *));
 void iereset __P((struct ie_softc *));
-static void ie_readframe __P((struct ie_softc * sc, int bufno));
-static void ie_drop_packet_buffer __P((struct ie_softc * sc));
-static int command_and_wait __P((struct ie_softc * sc, int command,
-    void volatile * pcmd, int));
-static void ierint __P((struct ie_softc * sc));
-static void ietint __P((struct ie_softc * sc));
-static void iernr __P((struct ie_softc * sc));
-static void start_receiver __P((struct ie_softc * sc));
+static void ie_readframe __P((struct ie_softc *, int));
+static void ie_drop_packet_buffer __P((struct ie_softc *));
+static int command_and_wait __P((struct ie_softc *, int,
+    void volatile *, int));
+/*static*/ void ierint __P((struct ie_softc *));
+/*static*/ void ietint __P((struct ie_softc *));
 static int ieget __P((struct ie_softc *, struct mbuf **,
-    struct ether_header *, int *));
-static void setup_bufs __P((struct ie_softc * sc));
-static int mc_setup __P((struct ie_softc *, caddr_t));
-static void mc_reset __P((struct ie_softc * sc));
+		      struct ether_header *, int *));
+static void setup_bufs __P((struct ie_softc *));
+static int mc_setup __P((struct ie_softc *, void *));
+static void mc_reset __P((struct ie_softc *));
 
 #ifdef IEDEBUG
-void print_rbd __P((volatile struct ie_recv_buf_desc * rbd));
-int     in_ierint = 0;
-int     in_ietint = 0;
+void print_rbd __P((volatile struct ie_recv_buf_desc *));
+
+int in_ierint = 0;
+int in_ietint = 0;
 #endif
 
-int     iematch();
-void    ieattach();
+int iematch();
+void ieattach();
 
 struct cfdriver iecd = {
 	NULL, "ie", iematch, ieattach, DV_IFNET, sizeof(struct ie_softc)
@@ -331,30 +339,21 @@ struct cfdriver iecd = {
 #define MK_24(base, ptr) ((caddr_t)((u_long)ptr - (u_long)base))
 #define MK_16(base, ptr) SWAP((u_short)( ((u_long)(ptr)) - ((u_long)(base)) ))
 #define ST_24(to, from) { \
-			    u_long fval = (u_long)(from); \
-			    u_char *t = (u_char *)&(to), *f = (u_char *)&fval; \
-			    t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*t[3] = f[0];*/ \
-			}
-
+                            u_long fval = (u_long)(from); \
+                            u_char *t = (u_char *)&(to), *f = (u_char *)&fval; \
+                            t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*t[3] = f[0]
+;*/ \
+                        }
 /*
- * zero/copy functions: OBIO can use the normal functions, but VME
- *    must do only byte or half-word (16 bit) accesses...
- */
-
-/*
- * Here are a few useful functions.  We could have done these as macros,
- * but since we have the inline facility, it makes sense to use that
- * instead.
+ * Here are a few useful functions.  We could have done these as macros, but
+ * since we have the inline facility, it makes sense to use that instead.
  */
 static inline void
-ie_setup_config(cmd, promiscuous)
+ie_setup_config(cmd, promiscuous, manchester)
 	volatile struct ie_config_cmd *cmd;
-	int     promiscuous;
+	int promiscuous, manchester;
 {
 
-	/*
-	 * these are all char's so don't swap them!
-	 */
 	cmd->ie_config_count = 0x0c;
 	cmd->ie_fifo = 8;
 	cmd->ie_save_bad = 0x40;
@@ -363,26 +362,16 @@ ie_setup_config(cmd, promiscuous)
 	cmd->ie_ifs = 0x60;
 	cmd->ie_slot_low = 0;
 	cmd->ie_slot_high = 0xf2;
-	cmd->ie_promisc = !!promiscuous;
+	cmd->ie_promisc = !!promiscuous | manchester << 2;
 	cmd->ie_crs_cdt = 0;
 	cmd->ie_min_len = 64;
 	cmd->ie_junk = 0xff;
 }
 
-static inline caddr_t
-Align(ptr)
-	caddr_t ptr;
-{
-	u_long  l = (u_long)ptr;
-
-	l = (l + 3) & ~3L;
-	return (caddr_t)l;
-}
-
 static inline void
 ie_ack(sc, mask)
 	struct ie_softc *sc;
-	u_int   mask;
+	u_int mask;
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 
@@ -678,13 +667,15 @@ ieattach(parent, self, aux)
 	}
 }
 
+
+
 /*
- * Device timeout/watchdog routine.  Entered if the device neglects to
- * generate an interrupt after a transmit has been started on it.
+ * Device timeout/watchdog routine.  Entered if the device neglects to generate
+ * an interrupt after a transmit has been started on it.
  */
 int
 iewatchdog(unit)
-	short   unit;
+	short unit;
 {
 	struct ie_softc *sc = iecd.cd_devs[unit];
 
@@ -699,26 +690,32 @@ iewatchdog(unit)
  */
 int
 ieintr(v)
-	void   *v;
+void *v;
 {
 	struct ie_softc *sc = v;
 	register u_short status;
 
 	status = sc->scb->ie_status;
 
-	/*
-	 * check for parity error
-	 */
-	if (sc->hard_type == IE_VME) {
-		volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
-		if (iev->status & IEVME_PERR) {
-			printf("%s: parity error (ctrl %x @ %02x%04x)\n",
-			    iev->pectrl, iev->pectrl & IEVME_HADDR,
-			    iev->peaddr);
-			iev->pectrl = iev->pectrl | IEVME_PARACK;
-		}
-	}
+        /*
+         * check for parity error
+         */
+        if (sc->hard_type == IE_VME) {
+                volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg
+;
+                if (iev->status & IEVME_PERR) {
+                        printf("%s: parity error (ctrl %x @ %02x%04x)\n",
+                            iev->pectrl, iev->pectrl & IEVME_HADDR,
+                            iev->peaddr);
+                        iev->pectrl = iev->pectrl | IEVME_PARACK;
+                }
+        }
+
+
 loop:
+	/* Ack interrupts FIRST in case we receive more during the ISR. */
+	ie_ack(sc, IE_ST_WHENCE & status);
+
 	if (status & (IE_ST_RECV | IE_ST_RNR)) {
 #ifdef IEDEBUG
 		in_ierint++;
@@ -730,6 +727,7 @@ loop:
 		in_ierint--;
 #endif
 	}
+
 	if (status & IE_ST_DONE) {
 #ifdef IEDEBUG
 		in_ietint++;
@@ -741,23 +739,21 @@ loop:
 		in_ietint--;
 #endif
 	}
+
 	if (status & IE_ST_RNR) {
-#ifdef IEDEBUG
-		if (sc->sc_debug & IED_RNR)
-			printf("%s: rnr\n", sc->sc_dev.dv_xname);
-#endif
-		iernr(sc);
+		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_if.if_ierrors++;
+		iereset(sc);
 	}
+
 #ifdef IEDEBUG
 	if ((status & IE_ST_ALLDONE) && (sc->sc_debug & IED_CNA))
 		printf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
-	/* Don't ack interrupts which we didn't receive */
-	ie_ack(sc, IE_ST_WHENCE & status);
-
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
 		goto loop;
+
 	return 1;
 }
 
@@ -769,7 +765,7 @@ ierint(sc)
 	struct ie_softc *sc;
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
-	int     i, status;
+	int i, status;
 	static int timesthru = 1024;
 
 	i = sc->rfhead;
@@ -780,23 +776,23 @@ ierint(sc)
 			sc->sc_arpcom.ac_if.if_ipackets++;
 			if (!--timesthru) {
 				sc->sc_arpcom.ac_if.if_ierrors +=
-				    SWAP(scb->ie_err_crc) +
+				    SWAP(scb->ie_err_crc) + 
 				    SWAP(scb->ie_err_align) +
-				    SWAP(scb->ie_err_resource) +
+				    SWAP(scb->ie_err_resource) + 
 				    SWAP(scb->ie_err_overrun);
-				scb->ie_err_crc = scb->ie_err_align = 0;
-				scb->ie_err_resource = 0;
-				scb->ie_err_overrun = 0;
+				scb->ie_err_crc = scb->ie_err_align =
+				    scb->ie_err_resource = scb->ie_err_overrun =
+				    0;
 				timesthru = 1024;
 			}
 			ie_readframe(sc, i);
 		} else {
 			if ((status & IE_FD_RNR) != 0 &&
 			    (scb->ie_status & IE_RU_READY) == 0) {
-					sc->rframes[0]->ie_fd_next = MK_16(sc->sc_maddr,
-				    sc->rbuffs[0]);
-				scb->ie_recv_list = MK_16(sc->sc_maddr, 
-					sc->rframes[0]);
+				sc->rframes[0]->ie_fd_buf_desc =
+					MK_16(sc->sc_maddr, sc->rbuffs[0]);
+				scb->ie_recv_list = 
+				  MK_16(sc->sc_maddr, sc->rframes[0]);
 				command_and_wait(sc, IE_RU_START, 0, 0);
 			}
 			break;
@@ -806,88 +802,67 @@ ierint(sc)
 }
 
 /*
- * Process a command-complete interrupt.  These are only generated by
- * the transmission of frames.  This routine is deceptively simple, since
- * most of the real work is done by iestart().
+ * Process a command-complete interrupt.  These are only generated by the
+ * transmission of frames.  This routine is deceptively simple, since most of
+ * the real work is done by iestart().
  */
 void
 ietint(sc)
 	struct ie_softc *sc;
 {
-	int     status;
-	int     i;
+	int status;
 
 	sc->sc_arpcom.ac_if.if_timer = 0;
 	sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 
-	for (i = 0; i < sc->xmit_count; i++) {
-		status = sc->xmit_cmds[i]->ie_xmit_status;
+	status = sc->xmit_cmds[sc->xctail]->ie_xmit_status;
 
-		if (status & IE_XS_LATECOLL) {
-			printf("%s: late collision\n", sc->sc_dev.dv_xname);
-			sc->sc_arpcom.ac_if.if_collisions++;
-			sc->sc_arpcom.ac_if.if_oerrors++;
-		} else if (status & IE_XS_NOCARRIER) {
-			printf("%s: no carrier\n", sc->sc_dev.dv_xname);
-			    sc->sc_arpcom.ac_if.if_oerrors++;
-		} else if (status & IE_XS_LOSTCTS) {
-			printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
-			    sc->sc_arpcom.ac_if.if_oerrors++;
-		} else if (status & IE_XS_UNDERRUN) {
-			printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
-			    sc->sc_arpcom.ac_if.if_oerrors++;
-		} else if (status & IE_XS_EXCMAX) {
-			printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
-			    sc->sc_arpcom.ac_if.if_collisions += 16;
-			sc->sc_arpcom.ac_if.if_oerrors++;
-		} else {
-			sc->sc_arpcom.ac_if.if_opackets++;
-			sc->sc_arpcom.ac_if.if_collisions +=
-			    SWAP(status & IE_XS_MAXCOLL);
-		}
+	if (!(status & IE_STAT_COMPL) || (status & IE_STAT_BUSY))
+		printf("ietint: command still busy!\n");
+
+	if (status & IE_STAT_OK) {
+		sc->sc_arpcom.ac_if.if_opackets++;
+		sc->sc_arpcom.ac_if.if_collisions += 
+		  SWAP(status & IE_XS_MAXCOLL);
+	} else if (status & IE_STAT_ABORT) {
+		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_if.if_oerrors++;
+	} else if (status & IE_XS_NOCARRIER) {
+		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_if.if_oerrors++;
+	} else if (status & IE_XS_LOSTCTS) {
+		printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_if.if_oerrors++;
+	} else if (status & IE_XS_UNDERRUN) {
+		printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_if.if_oerrors++;
+	} else if (status & IE_XS_EXCMAX) {
+		printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
+		sc->sc_arpcom.ac_if.if_collisions += 16;
+		sc->sc_arpcom.ac_if.if_oerrors++;
 	}
-	sc->xmit_count = 0;
 
 	/*
-	 * If multicast addresses were added or deleted while we
-	 * were transmitting, mc_reset() set the want_mcsetup flag
-	 * indicating that we should do it.
+	 * If multicast addresses were added or deleted while transmitting,
+	 * mc_reset() set the want_mcsetup flag indicating that we should do
+	 * it.
 	 */
 	if (sc->want_mcsetup) {
-		mc_setup(sc, (caddr_t)sc->xmit_cbuffs[0]);
+		mc_setup(sc, (caddr_t)sc->xmit_cbuffs[sc->xctail]);
 		sc->want_mcsetup = 0;
 	}
-	/* Wish I knew why this seems to be necessary... */
-	sc->xmit_cmds[0]->ie_xmit_status |= IE_STAT_COMPL;
+
+	/* Done with the buffer. */
+	sc->xmit_free++;
+	sc->xmit_busy = 0;
+	sc->xctail = (sc->xctail + 1) % NTXBUF;
 
 	iestart(&sc->sc_arpcom.ac_if);
 }
 
 /*
- * Process a receiver-not-ready interrupt.  I believe that we get these
- * when there aren't enough buffers to go around.  For now (FIXME), we
- * just restart the receiver, and hope everything's ok.
- */
-void
-iernr(sc)
-	struct ie_softc *sc;
-{
-
-	command_and_wait(sc, IE_RU_DISABLE, 0, 0);	/* just in case */
-	setup_bufs(sc);
-
-	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
-	command_and_wait(sc, IE_RU_START, 0, 0);	/* was ENABLE */
-
-	ie_ack(sc, IE_ST_WHENCE);
-
-	sc->sc_arpcom.ac_if.if_ierrors++;
-}
-
-/*
- * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  I'd love to have an inline assembler
- * version of this...
+ * Compare two Ether/802 addresses for equality, inlined and unrolled for
+ * speed.  I'd love to have an inline assembler version of this...
  */
 static inline int
 ether_equal(one, two)
@@ -916,23 +891,22 @@ static inline int
 check_eh(sc, eh, to_bpf)
 	struct ie_softc *sc;
 	struct ether_header *eh;
-	int    *to_bpf;
+	int *to_bpf;
 {
-	int     i;
+	int i;
 
-	switch (sc->promisc) {
+	switch(sc->promisc) {
 	case IFF_ALLMULTI:
 		/*
 		 * Receiving all multicasts, but no unicasts except those
 		 * destined for us.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
+		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0); /* BPF gets this packet if anybody cares */
 #endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
-			return 1;
+		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) return 1;
 		return 0;
 
 	case IFF_PROMISC:
@@ -943,12 +917,11 @@ check_eh(sc, eh, to_bpf)
 		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
 #endif
 		/* If for us, accept and hand up to BPF */
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
-			return 1;
+		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) return 1;
 
 #if NBPFILTER > 0
 		if (*to_bpf)
-			*to_bpf = 2;	/* we don't need to see it */
+			*to_bpf = 2; /* we don't need to see it */
 #endif
 
 		/*
@@ -962,8 +935,7 @@ check_eh(sc, eh, to_bpf)
 		 * up.
 		 */
 		for (i = 0; i < sc->mcast_count; i++) {
-			if (ether_equal(eh->ether_dhost,
-			    (u_char *)&sc->mcast_addrs[i])) {
+			if (ether_equal(eh->ether_dhost, (u_char *)&sc->mcast_addrs[i])) {
 #if NBPFILTER > 0
 				if (*to_bpf)
 					*to_bpf = 1;
@@ -1001,9 +973,9 @@ check_eh(sc, eh, to_bpf)
 		 * Only accept unicast packets destined for us, or multicasts
 		 * for groups that we belong to.  For now, we assume that the
 		 * '586 will only return packets that we asked it for.  This
-		 * isn't strictly true (it uses hashing for the multicast filter),
-		 * but it will do in this case, and we want to get out of here
-		 * as quickly as possible.
+		 * isn't strictly true (it uses hashing for the multicast
+		 * filter), but it will do in this case, and we want to get out
+		 * of here as quickly as possible.
 		 */
 #if NBPFILTER > 0
 		*to_bpf = (sc->sc_arpcom.ac_if.if_bpf != 0);
@@ -1021,7 +993,7 @@ check_eh(sc, eh, to_bpf)
 static inline int
 ie_buflen(sc, head)
 	struct ie_softc *sc;
-	int     head;
+	int head;
 {
 
 	return (SWAP(sc->rbuffs[head]->ie_rbd_actual)
@@ -1032,9 +1004,9 @@ static inline int
 ie_packet_len(sc)
 	struct ie_softc *sc;
 {
-	int     i;
-	int     head = sc->rbhead;
-	int     acc = 0;
+	int i;
+	int head = sc->rbhead;
+	int acc = 0;
 
 	do {
 		if (!(sc->rbuffs[sc->rbhead]->ie_rbd_actual & IE_RBD_USED)) {
@@ -1046,6 +1018,7 @@ ie_packet_len(sc)
 			iereset(sc);
 			return -1;
 		}
+
 		i = sc->rbuffs[head]->ie_rbd_actual & IE_RBD_LAST;
 
 		acc += ie_buflen(sc, head);
@@ -1056,6 +1029,48 @@ ie_packet_len(sc)
 }
 
 /*
+ * Setup all necessary artifacts for an XMIT command, and then pass the XMIT
+ * command to the chip to be executed.  On the way, if we have a BPF listener
+ * also give him a copy.
+ */
+inline static void
+iexmit(sc)
+	struct ie_softc *sc;
+{
+
+#if NBPFILTER > 0
+	/*
+	 * If BPF is listening on this interface, let it see the packet before
+	 * we push it on the wire.
+	 */
+	if (sc->sc_arpcom.ac_if.if_bpf)
+		bpf_tap(sc->sc_arpcom.ac_if.if_bpf,
+		    sc->xmit_cbuffs[sc->xctail],
+		    SWAP(sc->xmit_buffs[sc->xctail]->ie_xmit_flags));
+#endif
+
+	sc->xmit_buffs[sc->xctail]->ie_xmit_flags |= IE_XMIT_LAST;
+	sc->xmit_buffs[sc->xctail]->ie_xmit_next = SWAP(0xffff);
+	ST_24(sc->xmit_buffs[sc->xctail]->ie_xmit_buf,
+	    MK_24(sc->sc_iobase, sc->xmit_cbuffs[sc->xctail]));
+
+	sc->xmit_cmds[sc->xctail]->com.ie_cmd_link = SWAP(0xffff);
+	sc->xmit_cmds[sc->xctail]->com.ie_cmd_cmd =
+	  IE_CMD_XMIT | IE_CMD_INTR | IE_CMD_LAST;
+
+	sc->xmit_cmds[sc->xctail]->ie_xmit_status = SWAP(0);
+	sc->xmit_cmds[sc->xctail]->ie_xmit_desc =
+	    MK_16(sc->sc_maddr, sc->xmit_buffs[sc->xctail]);
+
+	sc->scb->ie_command_list = 
+	  MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xctail]);
+	command_and_wait(sc, IE_CU_START, 0, 0);
+
+	sc->xmit_busy = 1;
+	sc->sc_arpcom.ac_if.if_timer = 5;
+}
+
+/*
  * Read data off the interface, and turn it into an mbuf chain.
  *
  * This code is DRAMATICALLY different from the previous version; this
@@ -1063,21 +1078,21 @@ ie_packet_len(sc)
  * length of the data available.  This enables us to allocate mbuf
  * clusters in many situations where before we would have had a long
  * chain of partially-full mbufs.  This should help to speed up the
- * operation considerably.  (Provided that it works, of course.)
+ * operation considerably.  (Provided that it works, of course.)  
  */
 static inline int
 ieget(sc, mp, ehp, to_bpf)
 	struct ie_softc *sc;
 	struct mbuf **mp;
 	struct ether_header *ehp;
-	int    *to_bpf;
+	int *to_bpf;
 {
 	struct mbuf *m, *top, **mymp;
-	int     i;
-	int     offset;
-	int     totlen, resid;
-	int     thismboff;
-	int     head;
+	int i;
+	int offset;
+	int totlen, resid;
+	int thismboff;
+	int head;
 
 	totlen = ie_packet_len(sc);
 	if (totlen <= 0)
@@ -1099,8 +1114,7 @@ ieget(sc, mp, ehp, to_bpf)
 	 */
 	if (!check_eh(sc, ehp, to_bpf)) {
 		ie_drop_packet_buffer(sc);
-		sc->sc_arpcom.ac_if.if_ierrors--;	/* just this case, it's
-							 * not an error */
+		sc->sc_arpcom.ac_if.if_ierrors--; /* just this case, it's not an error */
 		return -1;
 	}
 	totlen -= (offset = sizeof *ehp);
@@ -1110,6 +1124,7 @@ ieget(sc, mp, ehp, to_bpf)
 		ie_drop_packet_buffer(sc);
 		return -1;
 	}
+
 	m = *mp;
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
 	m->m_len = MHLEN;
@@ -1121,14 +1136,15 @@ ieget(sc, mp, ehp, to_bpf)
 	 * This loop goes through and allocates mbufs for all the data we will
 	 * be copying in.  It does not actually do the copying yet.
 	 */
-	do {			/* while (resid > 0) */
+	do {				/* while (resid > 0) */
 		/*
 		 * Try to allocate an mbuf to hold the data that we have.  If
 		 * we already allocated one, just get another one and stick it
 		 * on the end (eventually).  If we don't already have one, try
 		 * to allocate an mbuf cluster big enough to hold the whole
 		 * packet, if we think it's reasonable, or a single mbuf which
-		 * may or may not be big enough. Got that?
+		 * may or may not be big enough.
+		 * Got that?
 		 */
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
@@ -1139,6 +1155,7 @@ ieget(sc, mp, ehp, to_bpf)
 			}
 			m->m_len = MLEN;
 		}
+
 		if (resid >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if (m->m_flags & M_EXT)
@@ -1162,57 +1179,58 @@ ieget(sc, mp, ehp, to_bpf)
 
 	/*
 	 * Now we take the mbuf chain (hopefully only one mbuf most of the
-	 * time) and stuff the data into it.  There are no possible failures
-	 * at or after this point.
+	 * time) and stuff the data into it.  There are no possible failures at
+	 * or after this point.
 	 */
-	while (resid > 0) {	/* while there's stuff left */
-		int     thislen = ie_buflen(sc, head) - offset;
+	while (resid > 0) {		/* while there's stuff left */
+		int thislen = ie_buflen(sc, head) - offset;
 
 		/*
-		 * If too much data for the current mbuf, then fill the current one
-		 * up, go to the next one, and try again.
+		 * If too much data for the current mbuf, then fill the current
+		 * one up, go to the next one, and try again.
 		 */
 		if (thislen > m->m_len - thismboff) {
-			int     newlen = m->m_len - thismboff;
+			int newlen = m->m_len - thismboff;
 			(sc->memcopy)((caddr_t)(sc->cbuffs[head] + offset),
 			    mtod(m, caddr_t) + thismboff, (u_int)newlen);
 			m = m->m_next;
-			thismboff = 0;	/* new mbuf, so no offset */
-			offset += newlen;	/* we are now this far into
-						 * the packet */
-			resid -= newlen;	/* so there is this much left
-						 * to get */
+			thismboff = 0;		/* new mbuf, so no offset */
+			offset += newlen;	/* we are now this far
+							into the packet */
+			resid -= newlen;	/* so there is this much
+							left to get */
 			continue;
 		}
+
 		/*
 		 * If there is more than enough space in the mbuf to hold the
-		 * contents of this buffer, copy everything in, advance pointers,
-		 * and so on.
+		 * contents of this buffer, copy everything in, advance
+		 * pointers and so on.
 		 */
 		if (thislen < m->m_len - thismboff) {
 			(sc->memcopy)((caddr_t)(sc->cbuffs[head] + offset),
 			    mtod(m, caddr_t) + thismboff, (u_int)thislen);
-			thismboff += thislen;	/* we are this far into the
-						 * mbuf */
+			thismboff += thislen;	/* we are this far into the mbuf */
 			resid -= thislen;	/* and this much is left */
 			goto nextbuf;
 		}
+
 		/*
-		 * Otherwise, there is exactly enough space to put this buffer's
-		 * contents into the current mbuf.  Do the combination of the above
-		 * actions.
+		 * Otherwise, there is exactly enough space to put this
+		 * buffer's contents into the current mbuf.  Do the combination
+		 * of the above actions.
 		 */
 		(sc->memcopy)((caddr_t)(sc->cbuffs[head] + offset),
 		    mtod(m, caddr_t) + thismboff, (u_int)thislen);
 		m = m->m_next;
-		thismboff = 0;	/* new mbuf, start at the beginning */
+		thismboff = 0;		/* new mbuf, start at the beginning */
 		resid -= thislen;	/* and we are this far through */
 
 		/*
-		 * Advance all the pointers.  We can get here from either of the
-		 * last two cases, but never the first.
+		 * Advance all the pointers.  We can get here from either of
+		 * the last two cases, but never the first.
 		 */
-nextbuf:
+	nextbuf:
 		offset = 0;
 		sc->rbuffs[head]->ie_rbd_actual = SWAP(0);
 		sc->rbuffs[head]->ie_rbd_length |= IE_RBD_LAST;
@@ -1222,8 +1240,8 @@ nextbuf:
 	}
 
 	/*
-	 * Unless something changed strangely while we were doing the copy,
-	 * we have now copied everything in from the shared memory.
+	 * Unless something changed strangely while we were doing the copy, we
+	 * have now copied everything in from the shared memory.
 	 * This means that we are done.
 	 */
 	return 0;
@@ -1232,26 +1250,25 @@ nextbuf:
 /*
  * Read frame NUM from unit UNIT (pre-cached as IE).
  *
- * This routine reads the RFD at NUM, and copies in the buffers from
- * the list of RBD, then rotates the RBD and RFD lists so that the receiver
- * doesn't start complaining.  Trailers are DROPPED---there's no point
- * in wasting time on confusing code to deal with them.  Hopefully,
- * this machine will never ARP for trailers anyway.
+ * This routine reads the RFD at NUM, and copies in the buffers from the list
+ * of RBD, then rotates the RBD and RFD lists so that the receiver doesn't
+ * start complaining.  Trailers are DROPPED---there's no point in wasting time
+ * on confusing code to deal with them.  Hopefully, this machine will never ARP
+ * for trailers anyway.
  */
 static void
 ie_readframe(sc, num)
 	struct ie_softc *sc;
-	int     num;		/* frame number to read */
+	int num;			/* frame number to read */
 {
-	struct ie_recv_frame_desc rfd;
+	int status;
 	struct mbuf *m = 0;
 	struct ether_header eh;
 #if NBPFILTER > 0
-	int     bpf_gets_it = 0;
+	int bpf_gets_it = 0;
 #endif
 
-	(sc->memcopy)((caddr_t)(sc->rframes[num]), &rfd,
-	    sizeof(struct ie_recv_frame_desc));
+	status = sc->rframes[num]->ie_fd_status;
 
 	/* Immediately advance the RFD list, since we have copied ours now. */
 	sc->rframes[num]->ie_fd_status = SWAP(0);
@@ -1260,7 +1277,7 @@ ie_readframe(sc, num)
 	sc->rftail = (sc->rftail + 1) % sc->nframes;
 	sc->rfhead = (sc->rfhead + 1) % sc->nframes;
 
-	if (rfd.ie_fd_status & IE_FD_OK) {
+	if (status & IE_FD_OK) {
 #if NBPFILTER > 0
 		if (ieget(sc, &m, &eh, &bpf_gets_it)) {
 #else
@@ -1270,6 +1287,7 @@ ie_readframe(sc, num)
 			return;
 		}
 	}
+
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
 		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
@@ -1283,11 +1301,12 @@ ie_readframe(sc, num)
 		m_freem(last_not_for_us);
 		last_not_for_us = 0;
 	}
+
 #if NBPFILTER > 0
 	/*
 	 * Check for a BPF filter; if so, hand it up.
-	 * Note that we have to stick an extra mbuf up front, because
-	 * bpf_mtap expects to have the ether header at the front.
+	 * Note that we have to stick an extra mbuf up front, because bpf_mtap
+	 * expects to have the ether header at the front.
 	 * It doesn't matter that this results in an ill-formatted mbuf chain,
 	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
 	 * tho' it will make a copy for tcpdump.)
@@ -1298,7 +1317,7 @@ ie_readframe(sc, num)
 		m0.m_data = (caddr_t)&eh;
 		m0.m_next = m;
 
-		/* Pass it up */
+		/* Pass it up. */
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, &m0);
 	}
 	/*
@@ -1310,7 +1329,7 @@ ie_readframe(sc, num)
 		last_not_for_us = m;
 		return;
 	}
-#endif				/* NBPFILTER > 0 */
+#endif /* NBPFILTER > 0 */
 
 	/*
 	 * In here there used to be code to check destination addresses upon
@@ -1330,7 +1349,7 @@ static void
 ie_drop_packet_buffer(sc)
 	struct ie_softc *sc;
 {
-	int     i;
+	int i;
 
 	do {
 		/*
@@ -1346,6 +1365,7 @@ ie_drop_packet_buffer(sc)
 			iereset(sc);
 			return;
 		}
+
 		i = sc->rbuffs[sc->rbhead]->ie_rbd_actual & IE_RBD_LAST;
 
 		sc->rbuffs[sc->rbhead]->ie_rbd_length |= IE_RBD_LAST;
@@ -1355,6 +1375,7 @@ ie_drop_packet_buffer(sc)
 		sc->rbtail = (sc->rbtail + 1) % sc->nrxbuf;
 	} while (!i);
 }
+
 
 /*
  * Start transmission on an interface.
@@ -1367,71 +1388,47 @@ iestart(ifp)
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
-	/* This is not really volatile, in this routine, but it makes gcc
-	 * happy. */
-	volatile u_short *bptr = &sc->scb->ie_command_list;
 
-	if ((ifp->if_flags ^ IFF_RUNNING) & (IFF_RUNNING | IFF_OACTIVE))
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
+
+	if (sc->xmit_free == 0) {
+		ifp->if_flags |= IFF_OACTIVE;
+		if (!sc->xmit_busy)
+			iexmit(sc);
+		return 0;
+	}
 
 	do {
 		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
 		if (!m)
 			break;
 
-		buffer = sc->xmit_cbuffs[sc->xmit_count];
 		len = 0;
+		buffer = sc->xmit_cbuffs[sc->xchead];
 
-		for (m0 = m; m && len < IE_TBUF_SIZE; m = m->m_next) {
-			(sc->memcopy)(mtod(m, caddr_t), buffer, m->m_len);
+		for (m0 = m; m && (len +m->m_len) < IE_TBUF_SIZE; 
+		                                           m = m->m_next) {
+			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
 		}
+		if (m)
+		  printf("%s: tbuf overflow\n", sc->sc_dev.dv_xname);
 
 		m_freem(m0);
 		len = max(len, ETHER_MIN_LEN);
+		sc->xmit_buffs[sc->xchead]->ie_xmit_flags = SWAP(len);
 
-#if NBPFILTER > 0
-		/*
-		 * See if bpf is listening on this interface, let it see the packet
-		 * before we commit it to the wire.
-		 */
-		if (sc->sc_arpcom.ac_if.if_bpf)
-			bpf_tap(sc->sc_arpcom.ac_if.if_bpf,
-			    sc->xmit_cbuffs[sc->xmit_count],
-			    len);
-#endif
+		sc->xmit_free--;
+		sc->xchead = (sc->xchead + 1) % NTXBUF;
+	} while (sc->xmit_free > 0);
 
-		sc->xmit_buffs[sc->xmit_count]->ie_xmit_flags =
-		    IE_XMIT_LAST | SWAP(len);
-		sc->xmit_buffs[sc->xmit_count]->ie_xmit_next = SWAP(0xffff);
-		ST_24(sc->xmit_buffs[sc->xmit_count]->ie_xmit_buf,
-		    MK_24(sc->sc_iobase, sc->xmit_cbuffs[sc->xmit_count]));
+	/* If we stuffed any packets into the card's memory, send now. */
+	if ((sc->xmit_free < NTXBUF) && (!sc->xmit_busy))
+		iexmit(sc);
 
-		sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_cmd = IE_CMD_XMIT;
-		sc->xmit_cmds[sc->xmit_count]->ie_xmit_status = SWAP(0);
-		sc->xmit_cmds[sc->xmit_count]->ie_xmit_desc =
-		    MK_16(sc->sc_maddr, sc->xmit_buffs[sc->xmit_count]);
-
-		*bptr = MK_16(sc->sc_maddr, sc->xmit_cmds[sc->xmit_count]);
-		bptr = &sc->xmit_cmds[sc->xmit_count]->com.ie_cmd_link;
-	} while (++sc->xmit_count < NTXBUF);
-
-	/*
-	 * If we queued up anything for transmission, send it.
-	 */
-	if (sc->xmit_count) {
-		sc->xmit_cmds[sc->xmit_count - 1]->com.ie_cmd_cmd |=
-		    IE_CMD_LAST | IE_CMD_INTR;
-
-		/*
-		 * By passing the command pointer as a null, we tell
-		 * command_and_wait() to pretend that this isn't an action
-		 * command.  I wish I understood what was happening here.
-		 */
-		command_and_wait(sc, IE_CU_START, 0, 0);
-		ifp->if_flags |= IFF_OACTIVE;
-	}
+	return 1;
 }
 
 /*
@@ -1486,10 +1483,12 @@ void
 iereset(sc)
 	struct ie_softc *sc;
 {
-	int     s = splimp();
+	int s = splimp();
 
 	printf("%s: reset\n", sc->sc_dev.dv_xname);
-	sc->sc_arpcom.ac_if.if_flags &= ~IFF_UP;
+
+	/* Clear OACTIVE in case we're called from watchdog (frozen xmit). */
+	sc->sc_arpcom.ac_if.if_flags &= ~(IFF_UP | IFF_OACTIVE);
 	ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, 0);
 
 	/*
@@ -1500,6 +1499,11 @@ iereset(sc)
 
 	if (command_and_wait(sc, IE_RU_DISABLE | IE_CU_STOP, 0, 0))
 		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
+
+#ifdef notdef
+	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
+		panic("ie disappeared!\n");
+#endif
 
 	sc->sc_arpcom.ac_if.if_flags |= IFF_UP;
 	ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, 0);
@@ -1514,24 +1518,25 @@ static void
 chan_attn_timeout(rock)
 	caddr_t rock;
 {
-	*(int *) rock = 1;
+
+	*(int *)rock = 1;
 }
 
 /*
- * Send a command to the controller and wait for it to either
- * complete or be accepted, depending on the command.  If the
- * command pointer is null, then pretend that the command is
- * not an action command.  If the command pointer is not null,
- * and the command is an action command, wait for
- * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK
- * to become true.
+ * Send a command to the controller and wait for it to either complete
+ * or be accepted, depending on the command.  If the command pointer
+ * is null, then pretend that the command is not an action command.
+ * If the command pointer is not null, and the command is an action
+ * command, wait for 
+ * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK 
+ * to become true.  
  */
 static int
 command_and_wait(sc, cmd, pcmd, mask)
 	struct ie_softc *sc;
-	int     cmd;
+	int cmd;
 	volatile void *pcmd;
-	int     mask;
+	int mask;
 {
 	volatile struct ie_cmd_common *cc = pcmd;
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
@@ -1541,20 +1546,19 @@ command_and_wait(sc, cmd, pcmd, mask)
 	scb->ie_command = (u_short)cmd;
 
 	if (IE_ACTION_COMMAND(cmd) && pcmd) {
-		(sc->chan_attn) (sc);
+		(sc->chan_attn)(sc);
+
+                /*
+                 * XXX
+                 * I don't think this timeout works on suns.
+                 * we are at splimp() in the loop, and the timeout
+                 * stuff runs at software spl (so it is masked off?).
+                 */
 
 		/*
-		 * XXX
-		 * I don't think this timeout works on suns.
-		 * we are at splimp() in the loop, and the timeout
-		 * stuff runs at software spl (so it is masked off?).
+		 * According to the packet driver, the minimum timeout should
+		 * be .369 seconds, which we round up to .4.
 		 */
-
-		/*
-		 * According to the packet driver, the minimum timeout should be
-		 * .369 seconds, which we round up to .4.
-		 */
-
 		timeout(chan_attn_timeout, (caddr_t)&timedout, 2 * hz / 5);
 
 		/*
@@ -1572,27 +1576,27 @@ command_and_wait(sc, cmd, pcmd, mask)
 
 		return timedout;
 	} else {
-
 		/*
 		 * Otherwise, just wait for the command to be accepted.
 		 */
-		(sc->chan_attn) (sc);
+		(sc->chan_attn)(sc);
 
-		while (scb->ie_command);	/* spin lock */
+		while (scb->ie_command)
+			;				/* XXX spin lock */
 
 		return 0;
 	}
 }
 
 /*
- * Run the time-domain reflectometer...
+ * Run the time-domain reflectometer.
  */
-static void 
+static void
 run_tdr(sc, cmd)
 	struct ie_softc *sc;
 	struct ie_tdr_cmd *cmd;
 {
-	int     result;
+	int result;
 
 	cmd->com.ie_cmd_status = SWAP(0);
 	cmd->com.ie_cmd_cmd = IE_CMD_TDR | IE_CMD_LAST;
@@ -1603,7 +1607,7 @@ run_tdr(sc, cmd)
 
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 	    !(cmd->com.ie_cmd_status & IE_STAT_OK))
-		result = 0x10000;	/* XXX */
+		result = 0x10000; /* XXX */
 	else
 		result = cmd->ie_tdr_time;
 
@@ -1612,34 +1616,35 @@ run_tdr(sc, cmd)
 	if (result & IE_TDR_SUCCESS)
 		return;
 
-	if (result & 0x10000) {
+	if (result & 0x10000)
 		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
-	} else if (result & IE_TDR_XCVR) {
+	else if (result & IE_TDR_XCVR)
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
-	} else if (result & IE_TDR_OPEN) {
+	else if (result & IE_TDR_OPEN)
 		printf("%s: TDR detected an open %d clocks away\n",
-		    sc->sc_dev.dv_xname, SWAP(result & IE_TDR_TIME));
-	} else if (result & IE_TDR_SHORT) {
+		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
+	else if (result & IE_TDR_SHORT)
 		printf("%s: TDR detected a short %d clocks away\n",
-		    sc->sc_dev.dv_xname, SWAP(result & IE_TDR_TIME));
-	} else {
+		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
+	else
 		printf("%s: TDR returned unknown status %x\n",
 		    sc->sc_dev.dv_xname, result);
-	}
 }
 
-static void
-start_receiver(sc)
-	struct ie_softc *sc;
+#ifdef notdef
+/* ALIGN works on 8 byte boundaries.... but 4 byte boundaries are ok for sun */
+#define	_ALLOC(p, n)	(bzero(p, n), p += n, p - n)
+#define	ALLOC(p, n)	_ALLOC(p, ALIGN(n)) /* XXX convert to this? */
+#endif
+
+static inline caddr_t
+Align(ptr)
+        caddr_t ptr;
 {
-	int     s = splimp();
+        u_long  l = (u_long)ptr;
 
-	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
-	command_and_wait(sc, IE_RU_START, 0, 0);
-
-	ie_ack(sc, IE_ST_WHENCE);
-
-	splx(s);
+        l = (l + 3) & ~3L;
+        return (caddr_t)l;
 }
 
 /*
@@ -1747,6 +1752,13 @@ setup_bufs(sc)
 		ptr = Align(ptr + IE_TBUF_SIZE);
 	}
 
+	/* Pointers to last packet sent and next available transmit buffer. */
+	sc->xchead = sc->xctail = 0;
+
+	/* Clear transmit-busy flag and set number of free transmit buffers. */
+	sc->xmit_busy = 0;
+	sc->xmit_free = NTXBUF;
+
 	for (n = 0; n < sc->nrxbuf; n++) {
 		sc->cbuffs[n] = (char *) ptr;	/* XXX why char vs uchar? */
 		sc->rbuffs[n]->ie_rbd_length = SWAP(IE_RBUF_SIZE);
@@ -1780,9 +1792,9 @@ setup_bufs(sc)
 static int
 mc_setup(sc, ptr)
 	struct ie_softc *sc;
-	caddr_t ptr;
+	void *ptr;
 {
-	volatile struct ie_mcast_cmd *cmd = (void *) ptr;
+	volatile struct ie_mcast_cmd *cmd = ptr;
 
 	cmd->com.ie_cmd_status = SWAP(0);
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
@@ -1791,8 +1803,8 @@ mc_setup(sc, ptr)
 	(sc->memcopy)((caddr_t)sc->mcast_addrs, (caddr_t)cmd->ie_mcast_addrs,
 	    sc->mcast_count * sizeof *sc->mcast_addrs);
 
-	cmd->ie_mcast_bytes =
-	    SWAP(sc->mcast_count * ETHER_ADDR_LEN);	/* grrr... */
+	cmd->ie_mcast_bytes = 
+	  SWAP(sc->mcast_count * ETHER_ADDR_LEN); /* grrr... */
 
 	sc->scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 	if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -1805,19 +1817,20 @@ mc_setup(sc, ptr)
 }
 
 /*
- * This routine inits the ie.
- * This includes executing the CONFIGURE, IA-SETUP, and MC-SETUP commands,
- * starting the receiver unit, and clearing interrupts.
+ * This routine takes the environment generated by check_ie_present() and adds
+ * to it all the other structures we need to operate the adapter.  This
+ * includes executing the CONFIGURE, IA-SETUP, and MC-SETUP commands, starting
+ * the receiver unit, and clearing interrupts.
  *
  * THIS ROUTINE MUST BE CALLED AT splimp() OR HIGHER.
  */
-int 
+int
 ieinit(sc)
 	struct ie_softc *sc;
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
-	caddr_t ptr;
-	int     n;
+	void *ptr;
+	int n;
 
 	ptr = sc->buf_area;
 
@@ -1825,14 +1838,14 @@ ieinit(sc)
 	 * Send the configure command first.
 	 */
 	{
-		volatile struct ie_config_cmd *cmd = (void *) ptr;
+		volatile struct ie_config_cmd *cmd = ptr;
 
-		ie_setup_config(cmd, sc->promisc);
+		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 		cmd->com.ie_cmd_status = SWAP(0);
 		cmd->com.ie_cmd_cmd = IE_CMD_CONFIG | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
+		ie_setup_config(cmd, sc->promisc, 0);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
@@ -1841,20 +1854,21 @@ ieinit(sc)
 			return 0;
 		}
 	}
+
 	/*
 	 * Now send the Individual Address Setup command.
 	 */
 	{
-		volatile struct ie_iasetup_cmd *cmd = (void *) ptr;
+		volatile struct ie_iasetup_cmd *cmd = ptr;
 
+		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 		cmd->com.ie_cmd_status = SWAP(0);
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
-		(sc->memcopy)(sc->sc_arpcom.ac_enaddr,
-		    (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
+		(sc->memcopy)(sc->sc_arpcom.ac_enaddr, 
+		      (caddr_t)&cmd->ie_address, sizeof cmd->ie_address);
 
-		scb->ie_command_list = MK_16(sc->sc_maddr, cmd);
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
 			printf("%s: individual address setup command failed\n",
@@ -1866,7 +1880,7 @@ ieinit(sc)
 	/*
 	 * Now run the time-domain reflectometer.
 	 */
-	run_tdr(sc, (void *) ptr);
+	run_tdr(sc, ptr);
 
 	/*
 	 * Acknowledge any interrupts we have generated thus far.
@@ -1878,17 +1892,15 @@ ieinit(sc)
 	 */
 	setup_bufs(sc);
 
-	/*
-	 * This must be coordinated with iestart() and ietint().
-	 */
-	sc->xmit_cmds[0]->ie_xmit_status = IE_STAT_COMPL;
+	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING; /* tell higher levels that we are here */
 
-	sc->sc_arpcom.ac_if.if_flags |= IFF_RUNNING;
-	/* tell higher levels that we are here */
+	sc->scb->ie_recv_list = MK_16(sc->sc_maddr, sc->rframes[0]);
+	command_and_wait(sc, IE_RU_START, 0, 0);
 
-	start_receiver(sc);
+	ie_ack(sc, IE_ST_WHENCE);
+
 	if (sc->run_586)
-		(sc->run_586) (sc);
+	  (sc->run_586)(sc);
 
 	return 0;
 }
@@ -1904,30 +1916,29 @@ iestop(sc)
 int
 ieioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	u_long	cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
-	struct ifaddr *ifa = (struct ifaddr *) data;
-	struct ifreq *ifr = (struct ifreq *) data;
-	int     s, error = 0;
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	int s, error = 0;
 
 	s = splimp();
 
-	switch (cmd) {
+	switch(cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 
-		switch (ifa->ifa_addr->sa_family) {
+		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			ieinit(sc);
 			/*
 			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
+			 * i.e.: There is an address conflict! If a conflict
+			 * exists, a message is sent to the console.
 			 */
 			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
@@ -1941,7 +1952,7 @@ ieioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *) (sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
 			else
 				bcopy(ina->x_host.c_host,
 				    sc->sc_arpcom.ac_enaddr,
@@ -1959,7 +1970,6 @@ ieioctl(ifp, cmd, data)
 
 	case SIOCSIFFLAGS:
 		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
-
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -1969,7 +1979,7 @@ ieioctl(ifp, cmd, data)
 			iestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1994,7 +2004,7 @@ ieioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_addmulti(ifr, &sc->sc_arpcom):
 		    ether_delmulti(ifr, &sc->sc_arpcom);
 
 		if (error == ENETRESET) {
@@ -2033,6 +2043,7 @@ mc_reset(sc)
 			ieioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, (void *)0);
 			goto setflag;
 		}
+
 		bcopy(enm->enm_addrlo, &sc->mcast_addrs[sc->mcast_count], 6);
 		sc->mcast_count++;
 		ETHER_NEXT_MULTI(step, enm);

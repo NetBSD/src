@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.2 1994/11/20 20:52:17 deraadt Exp $ */
+/*	$NetBSD: i82586.h,v 1.3 1995/01/27 09:49:55 pk Exp $ */
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -178,6 +178,8 @@ struct ie_cmd_common {
 #define IE_STAT_COMPL	SWAP(0x8000)	/* command is completed */
 #define IE_STAT_BUSY	SWAP(0x4000)	/* command is running now */
 #define IE_STAT_OK	SWAP(0x2000)	/* command completed successfully */
+#define IE_STAT_ABORT	SWAP(0x1000)	/* command was aborted */
+
 
 #define IE_CMD_NOP	SWAP(0x0000)	/* NOP */
 #define IE_CMD_IASETUP	SWAP(0x0001)	/* initial address setup */
@@ -212,7 +214,6 @@ struct ie_xmit_cmd {
 #define IE_XS_UNDERRUN	SWAP(0x0100)	/* DMA underrun */
 #define IE_XS_LOSTCTS	SWAP(0x0200)	/* Lost CTS */
 #define IE_XS_NOCARRIER	SWAP(0x0400)	/* No Carrier */
-#define IE_XS_LATECOLL	SWAP(0x0800)	/* Late collision */
 
 /*
  * This is a buffer descriptor for a frame to be transmitted.
@@ -231,7 +232,7 @@ struct ie_xmit_buf {
  * Multicast setup command.
  */
 
-#define MAXMCAST 50		/* must fit in transmit buffer */
+#define MAXMCAST 250		/* must fit in transmit buffer */
 
 struct ie_mcast_cmd {
 	struct ie_cmd_common com;	/* common part */
