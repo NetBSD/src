@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.27 2004/04/01 23:29:07 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.28 2004/04/01 23:36:30 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -265,3 +265,23 @@ sys/kern/kern_sig.c				1.190
 	is set to SIG_IGN) reset the signal back to its default settings
 	so that a coredump can be generated.
 	[matt, ticket #43]
+
+sys/arch/macppc/macppc/machdep.c		1.131
+sys/arch/powerpc/oea/oea_machdep.c		1.16
+
+	Move to softintr__init to cpu_startup and remove softintr__init call 
+	for oea.
+	[matt, ticket #44]
+
+sys/dev/ic/i82557.c				1.82
+
+	Be more careful about issuing CU_RESUME in fxp_start()--only doing
+	it if we think it's probably necessary.  Then do it again in the
+	tx interrupt handler, if we again think it's necessary.  This
+	reduces the number of commands we issue the chip.  Prior to this
+	change, the i82550 (running without extended feature set, so like
+	a '559)  would sometimes fail in fxp_scb_wait() prior to issuing
+	another CU_RESUME, resulting in
+	        fxp0: WARNING: SCB timed out!
+	messages on the console, often followed by device timeouts.
+	[briggs, ticket #45]
