@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.5 1997/10/15 05:01:37 lukem Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.6 1997/11/08 15:36:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,13 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.5 1997/10/15 05:01:37 lukem Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.6 1997/11/08 15:36:09 lukem Exp $");
 #endif
 
 /*
- * major revision/cleanup of Mats' version
- * done by Chuck Cranor <chuck@ccrc.wustl.edu>
- * Jan 1996.
+ * major revision/cleanup of Mats' version done by
+ * Chuck Cranor <chuck@ccrc.wustl.edu> Jan 1996.
  */
 
 #include <sys/types.h>
@@ -83,6 +82,9 @@ struct opt_map {
 	struct opt_domain *dom;		/* back ptr to our domain */
 	int	host_lookup;		/* host lookup */
 	int	secure;			/* is this map secure? */
+	dev_t	dbdev;			/* device db is on */
+	ino_t	dbino;			/* inode of db */
+	time_t	dbmtime;		/* time of last db modification */
 	CIRCLEQ_ENTRY(opt_map) mapsq;	/* map queue pointers */
 	LIST_ENTRY(opt_map) mapsl;	/* map list pointers */
 };
@@ -99,9 +101,10 @@ struct mapq     maps;			/* global queue of maps (LRU) */
 extern int      usedns;
 
 int	yp_private __P((datum, int));
-void	ypdb_close_last __P((void));
 void	ypdb_close_db __P((DBM *));
-DBM	*ypdb_open_db __P((const char *, const char *, int *,
+void	ypdb_close_last __P((void));
+void	ypdb_close_map __P((struct opt_map *));
+DBM    *ypdb_open_db __P((const char *, const char *, int *,
 	    struct opt_map **));
 int	lookup_host __P((int, int, DBM *, char *, struct ypresp_val *));
 
@@ -165,8 +168,28 @@ yp_private(key, ypprivate)
 }
 
 /*
- * Close least recent used map. This routine is called when we have
- * no more file descripotors free, or we want to close all maps.
+ * Close specified map.
+ */
+void
+ypdb_close_map(map)
+	struct opt_map *map;
+{
+	CIRCLEQ_REMOVE(&maps, map, mapsq);	/* remove from LRU circleq */
+	LIST_REMOVE(map, mapsl);		/* remove from domain list */
+
+#ifdef DEBUG
+	yplog("  ypdb_close_map: closing map %s in domain %s [db=%#x]",
+	      map->map, map->dom->domain, map->db);
+#endif
+
+	ypdb_close(map->db);			/* close DB */
+	free(map->map);				/* free map name */
+	free(map);				/* free map */
+}
+
+/*
+ * Close least recently used map. This routine is called when we have
+ * no more file descriptors free, or we want to close all maps.
  */
 void
 ypdb_close_last()
@@ -177,18 +200,7 @@ ypdb_close_last()
 		yplog("  ypdb_close_last: LRU list is empty!");
 		return;
 	}
-
-	CIRCLEQ_REMOVE(&maps, last, mapsq);	/* remove from LRU circleq */
-	LIST_REMOVE(last, mapsl);		/* remove from domain list */
-
-#ifdef DEBUG
-	yplog("  ypdb_close_last: closing map %s in domain %s [db=%#x]",
-	      last->map, last->dom->domain, last->db);
-#endif
-
-	ypdb_close(last->db);			/* close DB */
-	free(last->map);			/* free map name */
-	free(last);				/* free map */
+	ypdb_close_map(last);
 }
 
 /*
@@ -246,40 +258,11 @@ ypdb_open_db(domain, map, status, map_info)
 	DBM *db;
 	datum k, v;
 
-	/*
-	 * check for preloaded domain, map
-	 */
-
-	for (d = doms.lh_first; d != NULL; d = d->domsl.le_next)
-		if (strcmp(domain, d->domain) == 0)
-			break;
-
-	if (d)
-		for (m = d->dmaps.lh_first; m != NULL; m = m->mapsl.le_next)
-			if (strcmp(map, m->map) == 0)
-				break;
-
-	/*
-	 * map found open?
-	 */
-
-	if (m) {
-#ifdef DEBUG
-		yplog("  ypdb_open_db: cached open: domain=%s, map=%s, db=%#x",
-		      domain, map, m->db);
-#endif
-		CIRCLEQ_REMOVE(&maps, m, mapsq);	/* adjust LRU queue */
-		CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
-		*status = YP_TRUE;
-		if (map_info)
-			*map_info = m;
-		return (m->db);
-	}
+	*status = YP_TRUE;	/* defaults to true */
 
 	/*
 	 * check for illegal domain and map names
 	 */
-
 	if (_yp_invalid_domain(domain)) {
 		*status = YP_NODOM;
 		return (NULL);
@@ -292,35 +275,94 @@ ypdb_open_db(domain, map, status, map_info)
 	/*
 	 * check for domain, file.
 	 */
-
 	snprintf(map_path, sizeof(map_path), "%s/%s", YP_DB_PATH, domain);
 	if (stat(map_path, &finfo) < 0 || S_ISDIR(finfo.st_mode) == 0) {
 #ifdef DEBUG
 		yplog("  ypdb_open_db: no domain %s (map=%s)", domain, map);
 #endif
 		*status = YP_NODOM;
-		return (NULL);
+	} else {
+		snprintf(map_path, sizeof(map_path), "%s/%s/%s%s",
+		    YP_DB_PATH, domain, map, YPDB_SUFFIX);
+		if (stat(map_path, &finfo) < 0) {
+#ifdef DEBUG
+			yplog("  ypdb_open_db: no map %s (domain=%s)", map,
+			    domain);
+#endif
+			*status = YP_NOMAP;
+		}
 	}
 
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s%s",
-	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
-	if (stat(map_path, &finfo) < 0) {
+	/*
+	 * check for preloaded domain, map
+	 */
+	for (d = doms.lh_first; d != NULL; d = d->domsl.le_next)
+		if (strcmp(domain, d->domain) == 0)
+			break;
+
+	if (d)
+		for (m = d->dmaps.lh_first; m != NULL; m = m->mapsl.le_next)
+			if (strcmp(map, m->map) == 0)
+				break;
+
+	/*
+	 * map found open?
+	 */
+	if (m) {
 #ifdef DEBUG
-		yplog("  ypdb_open_db: no map %s (domain=%s)", map, domain);
+		yplog("  ypdb_open_db: cached open: domain=%s, map=%s, db=%#x,",
+		    domain, map, m->db);
+		yplog("\t\tdbdev %d new %d; dbino %d new %d; dbmtime %d new %d",
+		    m->dbdev, finfo.st_dev, m->dbino, finfo.st_ino,
+		    m->dbmtime, finfo.st_mtime);
 #endif
-		*status = YP_NOMAP;
-		return (NULL);
+		/*
+		 * if status != YP_TRUE, then this cached database is now
+		 * non-existant
+		 */
+		if (*status != YP_TRUE) {
+#ifdef DEBUG
+			yplog(
+	"  ypdb_open_db: cached db is now unavailable - closing: status %s", 
+			    yperr_string(ypprot_err(*status)));
+#endif
+			ypdb_close_map(m);
+			return (NULL);
+		}
+
+		/*
+		 * is this the same db?
+		 */
+		if (finfo.st_dev == m->dbdev && finfo.st_ino == m->dbino &&
+		    finfo.st_mtime == m->dbmtime) {
+			CIRCLEQ_REMOVE(&maps, m, mapsq); /* adjust LRU queue */
+			CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
+			if (map_info)
+				*map_info = m;
+			return (m->db);
+		} else {
+#ifdef DEBUG
+			yplog("  ypdb_open_db: db changed; closing");
+#endif
+			ypdb_close_map(m);
+			m = NULL;
+		}
 	}
+
+	/*
+	 * not cached and non-existant, return
+	 */
+	if (*status != YP_TRUE)	
+		return (NULL);
 
 	/*
 	 * open map
 	 */
-
+	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
+	    YP_DB_PATH, domain, map);
 #ifdef OPTIMIZE_DB
 retryopen:
 #endif /* OPTIMIZE_DB */
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
-	    YP_DB_PATH, domain, map);
 	db = ypdb_open(map_path, O_RDONLY, 0444);
 #ifdef OPTIMIZE_DB
 	if (db == NULL) {
@@ -347,7 +389,6 @@ retryopen:
 	/*
 	 * note: status now YP_NOMAP
 	 */
-
 	if (d == NULL) {	/* allocate new domain? */
 		d = (struct opt_domain *) malloc(sizeof(*d));
 		if (d)
@@ -369,7 +410,6 @@ retryopen:
 	/*
 	 * m must be NULL since we couldn't find a map.  allocate new one
 	 */
-
 	m = (struct opt_map *) malloc(sizeof(*m));
 	if (m)
 		m->map = strdup(map);
@@ -384,6 +424,9 @@ retryopen:
 	m->db = db;
 	m->dom = d;
 	m->host_lookup = FALSE;
+	m->dbdev = finfo.st_dev;
+	m->dbino = finfo.st_ino;
+	m->dbmtime = finfo.st_mtime;
 	CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
 	LIST_INSERT_HEAD(&d->dmaps, m, mapsl);
 	if (strcmp(map, YP_HOSTNAME) == 0 || strcmp(map, YP_HOSTADDR) == 0) {
@@ -478,7 +521,8 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 
 	l = 0;
 	for (; host->h_addr_list[0] != NULL; host->h_addr_list++)
-		if (!memcmp(host->h_addr_list[0], &addr_addr, sizeof(addr_addr)))
+		if (!memcmp(host->h_addr_list[0], &addr_addr,
+		    sizeof(addr_addr)))
 			l++;
 
 	if (l == 0) {
@@ -744,7 +788,6 @@ ypdb_xdr_get_all(xdrs, req)
 	/*
 	 * open db, and advance past any private keys we may see
 	 */
-
 	db = ypdb_open_db(req->domain, req->map,
 	    &resp.ypresp_all_u.val.status, NULL);
 
