@@ -701,6 +701,9 @@ case "${target}" in
   hppa*64*-*-*)
     # Do configure ld/binutils/gas for this case.
     ;;
+  hppa*-*-netbsd*)
+    noconfigdirs="$noconfigdirs gcc gdb ${libstdcxx_version} target-libffi"
+    ;;
   hppa*-*-*)
     # HP's C compiler doesn't handle Emacs correctly (but on BSD and Mach
     # cc is gcc, and on any system a user should be able to link cc to

@@ -490,7 +490,7 @@ struct selector_entry
 static void pa_check_current_space_and_subspace PARAMS ((void));
 #endif
 
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
 static void pa_text PARAMS ((int));
 static void pa_data PARAMS ((int));
 static void pa_comm PARAMS ((int));
@@ -642,7 +642,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"byte", pa_cons, 1},
   {"call", pa_call, 0},
   {"callinfo", pa_callinfo, 0},
-#if defined (OBJ_ELF) && defined (TE_LINUX)
+#if defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD))
   {"code", obj_elf_text, 0},
 #else
   {"code", pa_text, 0},
@@ -652,14 +652,14 @@ const pseudo_typeS md_pseudo_table[] =
   {"compiler", pa_compiler, 0},
 #endif
   {"copyright", pa_copyright, 0},
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
   {"data", pa_data, 0},
 #endif
   {"double", pa_float_cons, 'd'},
   {"dword", pa_cons, 8},
   {"end", pa_end, 0},
   {"end_brtab", pa_brtab, 0},
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
   {"end_try", pa_try, 0},
 #endif
   {"enter", pa_enter, 0},
@@ -668,7 +668,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"exit", pa_exit, 0},
   {"export", pa_export, 0},
 #ifdef OBJ_ELF
-  {"file", dwarf2_directive_file, 0 },
+  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
 #endif
   {"fill", pa_fill, 0},
   {"float", pa_float_cons, 'f'},
@@ -706,7 +706,7 @@ const pseudo_typeS md_pseudo_table[] =
 #ifdef OBJ_SOM
   {"subspa", pa_subspace, 0},
 #endif
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
   {"text", pa_text, 0},
 #endif
   {"version", pa_version, 0},
@@ -853,6 +853,10 @@ static const struct pd_reg pre_defined_registers[] =
   {"%dp",    27},
   {"%eiem",  15},
   {"%eirr",  23},
+  {"%farg0",  5},
+  {"%farg1",  6},
+  {"%farg2",  7},
+  {"%farg3",  8},
   {"%fr0",    0 + FP_REG_BASE},
   {"%fr0l",   0 + FP_REG_BASE},
   {"%fr0r",   0 + FP_REG_BASE + FP_REG_RSEL},
@@ -949,6 +953,7 @@ static const struct pd_reg pre_defined_registers[] =
   {"%fr9",    9 + FP_REG_BASE},
   {"%fr9l",   9 + FP_REG_BASE},
   {"%fr9r",   9 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fret",   4},
   {"%hta",   25},
   {"%iir",   19},
   {"%ior",   21},
@@ -1014,6 +1019,14 @@ static const struct pd_reg pre_defined_registers[] =
   {"%sr5",    5},
   {"%sr6",    6},
   {"%sr7",    7},
+  {"%t1",    22},
+  {"%t2",    21},
+  {"%t3",    20},
+  {"%t4",    19},
+  {"%tf1",   11},
+  {"%tf2",   10},
+  {"%tf3",    9},
+  {"%tf4",    8},
   {"%tr0",   24},
   {"%tr1",   25},
   {"%tr2",   26},
@@ -6314,7 +6327,7 @@ pa_callinfo (unused)
   demand_empty_rest_of_line ();
 }
 
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
 /* Switch to the text space.  Like s_text, but delete our
    label when finished.  */
 static void
@@ -6394,7 +6407,7 @@ pa_comm (unused)
     }
   demand_empty_rest_of_line ();
 }
-#endif /* !(defined (OBJ_ELF) && defined (TE_LINUX)) */
+#endif /* !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD))) */
 
 /* Process a .END pseudo-op.  */
 

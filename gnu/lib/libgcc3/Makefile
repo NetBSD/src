@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/10/01 09:39:50 tron Exp $
+#	$NetBSD: Makefile,v 1.12 2003/10/06 05:10:13 matt Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -25,8 +25,10 @@ CPPFLAGS+=	-I${DIST}/gcc/cp -I${GCCARCHXX} -I.
 LIB2FUNCS=	${G_LIB2FUNCS_1:=.c} ${G_LIB2FUNCS_2:=.c} ${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${G_LIB2_DIVMOD_FUNCS:=.c}
 LIB2_EH=	${G_LIB2ADDEH:M*.c:T}
+LIB1ASMFUNCS=	${G_LIB1ASMFUNCS:=.S}
 
-SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${G_LIB2ADD:T:S/.asm/.S/}
+SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
+		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
 
 DPSRCS+=	${.CURDIR}/${MACHINE_ARCH}.mk tconfig.h
 CLEANFILES+=	${LIB2FUNCS} ${LIB2DIVMOD} tconfig.h
@@ -36,6 +38,11 @@ ${LIB2FUNCS}: ${.CURDIR}/Makefile
 
 ${LIB2DIVMOD}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
+
+.if !empty(LIB1ASMFUNCS)
+${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
+	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
+.endif
 
 ${G_LIB2ADD:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
 	@echo copying ${G_LIB2ADD}

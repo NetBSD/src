@@ -322,11 +322,11 @@ case "${targ}" in
     ;;
 #endif
 
-  hppa*-*-linux-gnu*)
+  hppa*-*-linux-gnu* | hppa*-*-netbsd* )
     targ_defvec=bfd_elf32_hppa_linux_vec
     targ_selvecs=bfd_elf32_hppa_vec
     ;;
-  hppa*-*-*elf* | hppa*-*-lites* | hppa*-*-netbsd* | hppa*-*-sysv4* | hppa*-*-rtems* | hppa*-*-openbsd*)
+  hppa*-*-*elf* | hppa*-*-lites* | hppa*-*-sysv4* | hppa*-*-rtems* | hppa*-*-openbsd*)
     targ_defvec=bfd_elf32_hppa_vec
     targ_selvecs=bfd_elf32_hppa_linux_vec
     ;;
