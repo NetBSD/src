@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.6 1997/11/08 15:36:09 lukem Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.7 1999/01/17 06:54:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.6 1997/11/08 15:36:09 lukem Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.7 1999/01/17 06:54:14 lukem Exp $");
 #endif
 
 /*
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: ypserv_db.c,v 1.6 1997/11/08 15:36:09 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
+#include <nsswitch.h>
 #include <resolv.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -479,16 +480,35 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	char *v, *ptr;
 	int l;
 
+		/*
+		 * as per gethostby{addr,name}() in libc/gen/gethnamadr.c,
+		 * except only supporting `files' and `dns'.
+		 * (circular dependancy results in support `nis'...
+		 */
+	extern int _gethtbyaddr __P((void *, void *, va_list));
+	extern int _gethtbyname __P((void *, void *, va_list));
+	extern int _dns_gethtbyaddr __P((void *, void *, va_list));
+	extern int _dns_gethtbyname __P((void *, void *, va_list));
+	static ns_dtab	byaddr_dtab[] = {
+		NS_FILES_CB(_gethtbyaddr, NULL),
+		{ NSSRC_DNS, _dns_gethtbyaddr, NULL },	/* force -DHESIOD */
+		{ NULL, NULL, NULL }
+	};
+	static ns_dtab	byname_dtab[] = {
+		NS_FILES_CB(_gethtbyname, NULL),
+		{ NSSRC_DNS, _dns_gethtbyname, NULL },	/* force -DHESIOD */
+		{ NULL, NULL, NULL }
+	};
+
 	if (!host_lookup)
 		return (YP_NOKEY);
 
 	if ((_res.options & RES_INIT) == 0)
 		res_init();
-	memcpy(_res.lookups, "b", sizeof("b"));
 
 	if (nametable) {
-		host = gethostbyname(keystr);
-		if (host == NULL || host->h_addrtype != AF_INET)
+		if (nsdispatch(&host, byname_dtab, NSDB_HOSTS,
+		    keystr, strlen(keystr), AF_INET) != NS_SUCCESS)
 			return (YP_NOKEY);
 
 		addr_name = (struct in_addr *)host->h_addr_list[0];
@@ -509,8 +529,8 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 		return (YP_TRUE);
 	}
 	inet_aton(keystr, &addr_addr);
-	host = gethostbyaddr((char *)&addr_addr, sizeof(addr_addr), AF_INET);
-	if (host == NULL)
+	if (nsdispatch(&host, byaddr_dtab, NSDB_HOSTS, (u_char *)&addr_addr,
+	    sizeof(addr_addr), AF_INET) != NS_SUCCESS)
 		return (YP_NOKEY);
 
 	strncpy((char *) hostname, host->h_name, sizeof(hostname) - 1);
