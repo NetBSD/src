@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.53 2000/06/27 17:41:45 mrg Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.54 2000/08/02 20:56:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -439,8 +439,8 @@ sys_sendmsg(p, v, retval)
 	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
 		if ((unsigned int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
-		    sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
+		iov = malloc(sizeof(struct iovec) * msg.msg_iovlen,
+		    M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
 	if ((unsigned int)msg.msg_iovlen > 0) {
@@ -456,7 +456,7 @@ sys_sendmsg(p, v, retval)
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
-		FREE(iov, M_IOV);
+		free(iov, M_IOV);
 	return (error);
 }
 
@@ -551,7 +551,7 @@ sendit(p, s, mp, flags, retsize)
 	if (KTRPOINT(p, KTR_GENIO)) {
 		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -571,7 +571,7 @@ sendit(p, s, mp, flags, retsize)
 	if (ktriov != NULL) {
 		if (error == 0)
 			ktrgenio(p, s, UIO_WRITE, ktriov, *retsize, error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 #endif
  bad:
@@ -641,8 +641,8 @@ sys_recvmsg(p, v, retval)
 	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
 		if ((unsigned int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
-		    sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
+		iov = malloc(sizeof(struct iovec) * msg.msg_iovlen,
+		    M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
 	if ((unsigned int)msg.msg_iovlen > 0) {
@@ -665,7 +665,7 @@ sys_recvmsg(p, v, retval)
 	}
 done:
 	if (iov != aiov)
-		FREE(iov, M_IOV);
+		free(iov, M_IOV);
 	return (error);
 }
 
@@ -722,7 +722,7 @@ recvit(p, s, mp, namelenp, retsize)
 	if (KTRPOINT(p, KTR_GENIO)) {
 		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -740,7 +740,7 @@ recvit(p, s, mp, namelenp, retsize)
 		if (error == 0)
 			ktrgenio(p, s, UIO_READ, ktriov,
 			    len - auio.uio_resid, error);
-		FREE(ktriov, M_TEMP);
+		free(ktriov, M_TEMP);
 	}
 #endif
 	if (error)
