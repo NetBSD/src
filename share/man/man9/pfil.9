@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.2 1996/11/18 10:26:18 mrg Exp $
+.\"	$NetBSD: pfil.9,v 1.3 1996/12/02 01:00:50 tls Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ is the direction; 0 for incoming packets and 1 for outgoing packets.
 The
 .Fn pfil
 interface is enabled in the kernel via the
-.Sy PACKET_FILTER
+.Sy PFIL_HOOKS
 option.
 .Sh RETURN VALUES
 If successful
