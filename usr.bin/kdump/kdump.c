@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.64 2003/11/16 10:13:48 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.65 2003/11/16 14:51:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.64 2003/11/16 10:13:48 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.65 2003/11/16 14:51:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: kdump.c,v 1.64 2003/11/16 10:13:48 manu Exp $");
 #include <sys/syscall.h>
 
 int timestamp, decimal, plain, tail, maxdata = -1, numeric;
-int hexdump;
+int word_size;
 pid_t do_pid = -1;
 const char *tracefile = NULL;
 struct ktr_header ktr_header;
@@ -126,6 +126,7 @@ main(argc, argv)
 	int trset = 0;
 	const char *emul_name = "netbsd";
 	int col;
+	char *cp;
 
 	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:x:")) != -1)
 		switch (ch) {
@@ -166,18 +167,10 @@ main(argc, argv)
 				errx(1, "unknown trace point in %s", optarg);
 			break;
 		case 'x':
-			hexdump = atoi(optarg);
-			switch (hexdump) {
-			case 1:
-			case 4:
-				break;
-			case 0:
-				hexdump = 1;
-				break;
-			default:
-				errx(1, "Only -x1 and -x4 are supported");
-				break;
-			}
+			word_size = strtoul(optarg, &cp, 0);
+			if (*cp != 0 || word_size & (word_size - 1) ||
+			    word_size > 16 || word_size == 0)
+				errx(1, "argument to -x must be 1, 2, 4, 8 or 16");
 			break;
 		default:
 			usage();
@@ -266,7 +259,7 @@ main(argc, argv)
 			break;
 		default:
 			printf("\n");
-			hexdump_buf(m, ktrlen, hexdump);
+			hexdump_buf(m, ktrlen, word_size);
 		}
 		if (tail)
 			(void)fflush(stdout);
@@ -583,56 +576,61 @@ ktremul(name, len, bufsize)
 }
 
 static void
-hexdump_buf(vdp, datalen, dumpsize) 
+hexdump_buf(vdp, datalen, word_sz) 
 	const void *vdp;
 	int datalen;
-	int dumpsize;
+	int word_sz;
 {
+	const char hex[] = "0123456789abcdef";
 	char chars[16];
+	char bytes[16 * 3 + 4];
 	const unsigned char *dp = vdp;
-	int line_end, off, l, c;
-	char *cp;
-	int divmask, cdisp, pad, padbase;
-	const char *bdelim;
-	const char *gdelim;
+	const unsigned char *datalim = dp + datalen;
+	const unsigned char *line_end;
+	int off, l, c;
+	char *cp, *bp;
+	int divmask = word_sz - 1;	/* block size in bytes */
+	int gdelim = 3;			/* gap between blocks */
+	int bsize = 2;			/* increment for each byte */
+	int width;
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	int bswap = word_sz - 1;
+#else
+#define	bswap 0
+#endif
 
-	switch (dumpsize) {
-	case 4:
-		divmask = 3;
-		cdisp = 39;
-		bdelim = "";
-		gdelim = "  ";
-		padbase = -2;
+	switch (word_sz) {
+	case 2:
+		gdelim = 2;
 		break;
 	case 1:
-	default:
 		divmask = 7;
-		cdisp = 50;
-		bdelim = " ";
-		gdelim = " ";
-		padbase = 0;
+		bsize = 3;
+		gdelim = 1;
+		break;
+	default:
 		break;
 	}
+	width = 16 * bsize + (16 / (divmask + 1)) * gdelim;
+	if (word_size != 1)
+		width += 2;
 
-	for (off = 0; off < datalen;) {
-		line_end = off + 16;
-		pad = 0;
-		if (line_end > datalen) {
-			line_end = datalen;
-			pad = padbase;
-		}
+	for (off = 0; dp < datalim; off += l) {
+		memset(bytes, ' ', sizeof bytes);
+		line_end = dp + 16;
+		if (line_end > datalim)
+			line_end = datalim;
 
-		printf("\t%3.3x ", off);
-		for (l = 0, cp = chars; off < line_end; off++) {
+		for (l = 0, bp = bytes, cp = chars; dp < line_end; l++) {
 			c = *dp++;
-			if ((off & divmask) == 0)
-				l += printf(gdelim);
-			l += printf("%s%2.2x", bdelim, c);
+			if ((l & divmask) == 0)
+				bp += gdelim;
+			bp[(l ^ bswap) * bsize] = hex[c >> 4];
+			bp[(l ^ bswap) * bsize + 1] = hex[c & 0xf];
 			*cp++ = isgraph(c) ? c : '.';
 		};
 
-		l += pad;
-		printf("%*s %.*s\n", cdisp - l , "", (int)(cp - chars), chars);
+		printf("\t%3.3x  %.*s%.*s\n", off, width, bytes, l, chars);
 	}
 }
 
@@ -708,8 +706,8 @@ ktrgenio(ktr, len)
 		return;
 	if (maxdata > 0 && datalen > maxdata)
 		datalen = maxdata;
-	if (hexdump) {
-		hexdump_buf(dp, datalen, hexdump);
+	if (word_size) {
+		hexdump_buf(dp, datalen, word_size);
 		return;
 	}
 	(void)printf("       ");
@@ -866,7 +864,7 @@ ktrmmsg(mmsg, len)
 	else 
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
-	hexdump_buf(mmsg, len, hexdump);
+	hexdump_buf(mmsg, len, word_size ? word_size : 4);
 }
 
 static const char *
