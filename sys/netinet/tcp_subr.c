@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.160.2.1 2004/04/06 03:59:43 jmc Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.160.2.2 2004/04/20 20:27:47 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160.2.1 2004/04/06 03:59:43 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.160.2.2 2004/04/20 20:27:47 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -196,6 +196,7 @@ int	tcp_compat_42 = 1;
 int	tcp_compat_42 = 0;
 #endif
 int	tcp_rst_ppslim = 100;	/* 100pps */
+int	tcp_ackdrop_ppslim = 100;	/* 100pps */
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
