@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.15 2001/12/15 13:23:23 soren Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.15.10.1 2003/10/21 03:45:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -155,6 +155,8 @@ struct pcmcia_function {
 /* pf_flags */
 #define	PFF_ENABLED	0x0001		/* function is enabled */
 
+SIMPLEQ_HEAD(pcmcia_function_head, pcmcia_function);
+
 struct pcmcia_card {
 	int		cis1_major;
 	int		cis1_minor;
@@ -172,7 +174,7 @@ struct pcmcia_card {
 #define	PCMCIA_PRODUCT_INVALID		-1
 	u_int16_t	error;
 #define	PCMCIA_CIS_INVALID		{ NULL, NULL, NULL, NULL }
-	SIMPLEQ_HEAD(, pcmcia_function) pf_head;
+	struct pcmcia_function_head	pf_head;
 };
 
 struct pcmcia_softc {
@@ -278,8 +280,8 @@ int	pcmcia_scan_cis __P((struct device * dev,
 int	pcmcia_ccr_read __P((struct pcmcia_function *, int));
 void	pcmcia_ccr_write __P((struct pcmcia_function *, int, int));
 
-#define	pcmcia_mfc(sc)	((sc)->card.pf_head.sqh_first &&		\
-			 (sc)->card.pf_head.sqh_first->pf_list.sqe_next)
+#define	pcmcia_mfc(sc)	(! SIMPLEQ_EMPTY(&(sc)->card.pf_head) &&	\
+		 SIMPLEQ_NEXT(SIMPLEQ_FIRST(&(sc)->card.pf_head), pf_list))
 
 void	pcmcia_function_init __P((struct pcmcia_function *,
 	    struct pcmcia_config_entry *));
@@ -296,6 +298,8 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
 	    bus_size_t, struct pcmcia_io_handle *, int *));
 void	pcmcia_io_unmap __P((struct pcmcia_function *, int));
+
+void	pcmcia_free_pf __P((struct pcmcia_function_head *));
 
 #define pcmcia_mem_alloc(pf, size, pcmhp)				\
 	(pcmcia_chip_mem_alloc((pf)->sc->pct, (pf)->sc->pch, (size), (pcmhp)))
