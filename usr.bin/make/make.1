@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.44 2000/12/30 02:05:21 sommerfeld Exp $
+.\"	$NetBSD: make.1,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl Beiknqrst
+.Op Fl BeikNnqrst
 .Bk -words
 .Op Fl D Ar variable
 .Ek
@@ -188,8 +188,13 @@ for "..."-style inclusions (see the
 .Fl I
 option).
 .It Fl n
-Display the commands that would have been executed, but do not actually
-execute them.
+Display the commands that would have been executed, but do not
+actually execute them unless the target depends on the .MAKE special
+source (see below)
+.It Fl N
+Display the commands which would have been executed, but do not
+actually execute any of them; useful for debugging top-level makefiles
+without descending into subdirectories.
 .It Fl q
 Do not execute any commands, but exit 0 if the specified targets are
 up-to-date and 1, otherwise.

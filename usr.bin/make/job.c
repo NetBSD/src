@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.44 2000/12/30 16:38:22 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.44 2000/12/30 16:38:22 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.44 2000/12/30 16:38:22 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -572,7 +572,7 @@ JobPrintCommand(cmdp, jobp)
     Job           *job = (Job *) jobp;
     char	*cp;
     
-    noSpecials = noExecute && !(job->node->type & OP_MAKE);
+    noSpecials = NoExecute(job->node);
 
     if (strcmp(cmd, "...") == 0) {
 	job->node->type |= OP_SAVE_CMDS;
@@ -1095,12 +1095,12 @@ Job_Touch(gn, silent)
 	return;
     }
 
-    if (!silent || (noExecute && !(gn->type & OP_MAKE))) {
+    if (!silent || NoExecute(gn)) {
 	(void) fprintf(stdout, "touch %s\n", gn->name);
 	(void) fflush(stdout);
     }
 
-    if (noExecute && !(gn->type & OP_MAKE)) {
+    if (NoExecute(gn)) {
 	return;
     }
 
@@ -1770,7 +1770,8 @@ JobStart(gn, flags, previous)
      * need to reopen it to feed it to the shell. If the -n flag *was* given,
      * we just set the file to be stdout. Cute, huh?
      */
-    if ((gn->type & OP_MAKE) || (!noExecute && !touchFlag)) {
+    if (((gn->type & OP_MAKE) && !(noRecursiveExecute)) ||
+	(!noExecute && !touchFlag)) {
 	/*
 	 * tfile is the name of a file into which all shell commands are
 	 * put. It is used over by removing it before the child shell is
@@ -1857,7 +1858,7 @@ JobStart(gn, flags, previous)
 		noExec = TRUE;
 	    }
 	}
-    } else if (noExecute) {
+    } else if (NoExecute(gn)) {
 	/*
 	 * Not executing anything -- just print all the commands to stdout
 	 * in one fell swoop. This will still set up job->tailCmds correctly.

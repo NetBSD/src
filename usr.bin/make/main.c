@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2000/12/30 14:21:23 sommerfeld Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2001/01/01 15:47:37 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.60 2000/12/30 14:21:23 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.61 2001/01/01 15:47:37 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.60 2000/12/30 14:21:23 sommerfeld Exp $");
+__RCSID("$NetBSD: main.c,v 1.61 2001/01/01 15:47:37 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -128,6 +128,7 @@ static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
 Boolean			debug;		/* -d flag */
 Boolean			noExecute;	/* -n flag */
+Boolean			noRecursiveExecute;	/* -N flag */
 Boolean			keepgoing;	/* -k flag */
 Boolean			queryFlag;	/* -q flag */
 Boolean			touchFlag;	/* -t flag */
@@ -150,7 +151,6 @@ static char *objdir;			/* where we chdir'ed to */
 static char *progname;			/* the program name */
 
 Boolean forceJobs = FALSE;
-Boolean forceSerial = FALSE;
 
 /*-
  * MainParseArgs --
@@ -176,9 +176,9 @@ MainParseArgs(argc, argv)
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
-# define OPTFLAGS "BD:I:J:L:PST:V:d:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:L:NPST:V:d:ef:ij:km:nqrst"
 #else
-# define OPTFLAGS "BD:I:J:PST:V:d:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:NPST:V:d:ef:ij:km:nqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
@@ -200,11 +200,13 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			}
 			if ((fcntl(job_pipe[0], F_GETFD, 0) < 0) ||
 			    (fcntl(job_pipe[1], F_GETFD, 0) < 0)) {
+#if 0
 			    (void)fprintf(stderr,
 			      "make: warning -- J descriptors were closed!\n");
+#endif
 			    job_pipe[0] = -1;
 			    job_pipe[1] = -1;
-			    forceSerial = TRUE;
+			    compatMake = TRUE;
 			} else {
 			    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
 			    Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
@@ -231,6 +233,11 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 #endif
+		case 'N':
+			noExecute = TRUE;
+			noRecursiveExecute = TRUE;
+			Var_Append(MAKEFLAGS, "-N", VAR_GLOBAL);
+			break;
 		case 'P':
 			usePipes = FALSE;
 			Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
@@ -636,6 +643,7 @@ main(argc, argv)
 	beSilent = FALSE;		/* Print commands as executed */
 	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
 	noExecute = FALSE;		/* Execute all commands */
+	noRecursiveExecute = FALSE;	/* Execute all .MAKE targets */
 	keepgoing = FALSE;		/* Stop on error */
 	allPrecious = FALSE;		/* Remove targets when interrupted */
 	queryFlag = FALSE;		/* This is not just a check-run */
@@ -698,10 +706,6 @@ main(argc, argv)
 	 * Be compatible if user did not specify -j and did not explicitly
 	 * turned compatibility on
 	 */
-	if (forceSerial) {
-		forceJobs = FALSE;
-	}
-
 	if (!compatMake && !forceJobs) {
 		compatMake = TRUE;
 	}
