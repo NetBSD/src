@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_broadcast.3,v 1.2 2003/06/08 06:44:29 thorpej Exp $
+.\" $NetBSD: pthread_cond_broadcast.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,7 @@ function unblocks all threads waiting for the condition variable
 .Fa cond .
 If no threads are waiting on
 .Fa cond ,
-the 
+the
 .Fn pthead_cond_broadcast
 function has no effect.
 .Pp
@@ -86,19 +86,19 @@ function unblocks one thread waiting for the condition variable
 .Fa cond .
 If no threads are waiting on
 .Fa cond ,
-the 
+the
 .Fn pthead_cond_signal
 function has no effect.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_cond_broadcast
-and 
+and
 .Fn pthread_cond_signal
 functions will return zero, otherwise an error number will be returned
 to indicate the error.
 .Sh ERRORS
 .Fn pthread_cond_broadcast
-and 
+and
 .Fn pthread_cond_signal
 may fail if:
 .Bl -tag -width Er
