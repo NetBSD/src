@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.26.4.4 2002/06/26 16:50:29 he Exp $	*/
+/*	$NetBSD: plist.c,v 1.26.4.5 2003/03/15 20:13:00 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.26.4.4 2002/06/26 16:50:29 he Exp $");
+__RCSID("$NetBSD: plist.c,v 1.26.4.5 2003/03/15 20:13:00 he Exp $");
 #endif
 #endif
 
@@ -70,7 +70,7 @@ static const cmd_t cmdv[] = {
  * Add an item to the end of a packing list
  */
 void
-add_plist(package_t *p, pl_ent_t type, char *arg)
+add_plist(package_t *p, pl_ent_t type, const char *arg)
 {
 	plist_t *tmp;
 
@@ -90,7 +90,7 @@ add_plist(package_t *p, pl_ent_t type, char *arg)
  * Add an item to the start of a packing list
  */
 void
-add_plist_top(package_t *p, pl_ent_t type, char *arg)
+add_plist_top(package_t *p, pl_ent_t type, const char *arg)
 {
 	plist_t *tmp;
 
@@ -331,8 +331,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	Boolean preserve;
 	char    tmp[FILENAME_MAX], *name = NULL;
 
-	if (pkgdb_open(0) == -1) {
-		err(1, "cannot open pkgdb");
+	if (!pkgdb_open(ReadWrite)) {
+		err(EXIT_FAILURE, "cannot open pkgdb");
 	}
 
 	preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
