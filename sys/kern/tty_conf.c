@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_conf.c	8.4 (Berkeley) 1/21/94
- *	$Id: tty_conf.c,v 1.10 1994/05/05 05:38:38 cgd Exp $
+ *	$Id: tty_conf.c,v 1.11 1994/05/12 03:43:00 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -131,7 +131,6 @@ int	nlinesw = sizeof (linesw) / sizeof (linesw[0]);
  * discipline specific ioctl command.
  */
 /*ARGSUSED*/
-int
 nullioctl(tp, cmd, data, flags, p)
 	struct tty *tp;
 	int cmd;
