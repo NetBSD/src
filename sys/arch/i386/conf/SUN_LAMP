@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.83 1997/01/31 01:50:51 thorpej Exp $
+#	$NetBSD: SUN_LAMP,v 1.84 1997/01/31 05:57:05 thorpej Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -51,7 +51,7 @@ options		INSECURE
 file-system 	FFS		# UFS
 #file-system	LFS		# log-structured file system
 file-system 	MFS		# memory file system
-file-system 	NFSCLIENT	# Network File System client
+file-system 	NFS		# Network File System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
