@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: file.c,v 1.3 1994/02/07 22:04:18 proven Exp $ $provenid: file.c,v 1.16 1994/02/07 02:18:55 proven Exp $";
+static const char rcsid[] = "$Id: file.c,v 1.4 1997/10/08 04:10:50 christos Exp $ $provenid: file.c,v 1.16 1994/02/07 02:18:55 proven Exp $";
 #endif
 
 #include <pthread.h>
@@ -45,7 +45,7 @@ static const char rcsid[] = "$Id: file.c,v 1.3 1994/02/07 22:04:18 proven Exp $ 
 /* ==========================================================================
  * flockfile()
  */
-void flockfile(FILE *fp)
+void flockfile(const FILE *fp)
 {
 	semaphore *lock;
 	int fd;
@@ -67,7 +67,7 @@ void flockfile(FILE *fp)
 /* ==========================================================================
  * ftrylockfile()
  */
-int ftrylockfile(FILE *fp)
+int ftrylockfile(const FILE *fp)
 {
 	semaphore *lock;
 	int fd;
@@ -96,7 +96,7 @@ int ftrylockfile(FILE *fp)
 /* ==========================================================================
  * funlockfile()
  */
-void funlockfile(FILE *fp)
+void funlockfile(const FILE *fp)
 {
 	semaphore *lock;
 	int fd;
