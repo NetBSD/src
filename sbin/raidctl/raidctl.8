@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.10 1999/11/19 22:48:02 kristerw Exp $
+.\"     $NetBSD: raidctl.8,v 1.11 2000/01/05 03:02:41 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,36 +68,52 @@
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
 .Nm ""
+.Op Fl v 
 .Fl a Ar component Ar dev
 .Nm ""
+.Op Fl v 
 .Fl B Ar dev 
 .Nm ""
+.Op Fl v 
 .Fl c Ar config_file Ar dev
 .Nm ""
+.Op Fl v 
 .Fl C Ar config_file Ar dev
 .Nm ""
+.Op Fl v 
 .Fl f Ar component Ar dev
 .Nm ""
+.Op Fl v 
 .Fl F Ar component Ar dev
 .Nm ""
+.Op Fl v 
 .Fl g Ar component Ar dev
 .Nm ""
+.Op Fl v 
 .Fl i Ar dev
 .Nm ""
+.Op Fl v 
 .Fl I Ar serial_number Ar dev
 .Nm ""
+.Op Fl v 
 .Fl p Ar dev
 .Nm "" 
+.Op Fl v 
 .Fl P Ar dev
 .Nm ""
+.Op Fl v 
 .Fl r Ar component Ar dev
 .Nm ""
+.Op Fl v 
 .Fl R Ar component Ar dev
 .Nm ""
+.Op Fl v 
 .Fl s Ar dev 
 .Nm ""
+.Op Fl v 
 .Fl S Ar dev
 .Nm ""
+.Op Fl v 
 .Fl u Ar dev
 .Sh DESCRIPTION
 .Nm ""
@@ -191,6 +207,9 @@ Check the status of component reconstruction.  The output indicates
 the amount of progress achieved in reconstructing a failed component.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
+.It Fl v 
+Be more verbose.  For operations such as reconstructions, parity
+re-writing, and copybacks, provide a progress indicator.
 .El
 .Pp
 The device used by 
