@@ -268,9 +268,19 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	}
 #else
 	char hbufl[NI_MAXHOST];
-	struct addrinfo hints, *res;
+	struct addrinfo hints, *res = NULL, *loopback = NULL;
 	SOCKADDR_SIZE salen;
 
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = sa->sa_family;
+	hints.ai_socktype = SOCK_STREAM;
+	if (getaddrinfo(NULL, "0", &hints, &loopback) != 0)
+	    loopback = NULL;
+
+	/*
+	 * getnameinfo -> getaddrinfo loop is here so that we can
+	 * get rid of port.
+	 */
 #ifdef HAS_SA_LEN
 	salen = ((struct sockaddr *)(addr_list->addrs))->sa_len;
 #else
@@ -283,13 +293,18 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	hints.ai_family = sa->sa_family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE|AI_NUMERICHOST;
-	if (getaddrinfo(hbufl, NULL, &hints, &res) == 0) {
+	if (getaddrinfo(hbufl, NULL, &hints, &res) == 0 &&
+	    !(res->ai_addrlen == loopback->ai_addrlen &&
+	      memcmp(res->ai_addr, loopback->ai_addr, res->ai_addrlen) == 0)) {
 	    if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
 		msg_warn("%s: bind %s: %m", myname, hbufl);
-	    freeaddrinfo(res);
 	    if (msg_verbose)
 		msg_info("%s: bind %s", myname, hbufl);
 	}
+	if (res)
+	    freeaddrinfo(res);
+	if (loopback)
+	    freeaddrinfo(loopback);
 #endif
     }
 
@@ -386,7 +401,7 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	vstream_fclose(stream);
 	return (0);
     }
-    return (smtp_session_alloc(stream, addr->name, mystrdup(hbuf)));
+    return (smtp_session_alloc(stream, addr->name, hbuf));
 }
 
 /* smtp_connect_host - direct connection to host */
