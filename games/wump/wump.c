@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.4 1995/04/24 12:26:22 cgd Exp $	*/
+/*	$NetBSD: wump.c,v 1.5 1997/10/12 03:36:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: wump.c,v 1.4 1995/04/24 12:26:22 cgd Exp $";
+__RCSID("$NetBSD: wump.c,v 1.5 1997/10/12 03:36:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,9 @@ static char rcsid[] = "$NetBSD: wump.c,v 1.4 1995/04/24 12:26:22 cgd Exp $";
 #include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 /* some defines to spec out what our wumpus cave should look like */
@@ -111,17 +113,41 @@ int arrow_num = NUMBER_OF_ARROWS;	/* arrow inventory */
 
 char answer[20];			/* user input */
 
+int	bats_nearby __P((void));
+void	cave_init __P((void));
+void	clear_things_in_cave __P((void));
+void	display_room_stats __P((void));
+int	getans __P((const char *));
+void	initialize_things_in_cave __P((void));
+void	instructions __P((void));
+int	int_compare __P((const void *, const void *));
+void	jump __P((int));
+void	kill_wump __P((void));
+int	main __P((int, char **));
+int	move_to __P((const char *));
+void	move_wump __P((void));
+void	no_arrows __P((void));
+void	pit_kill __P((void));
+int	pit_nearby __P((void));
+void	pit_survive __P((void));
+int	shoot __P((char *));
+void	shoot_self __P((void));
+int	take_action __P((void));
+void	usage __P((void));
+void	wump_kill __P((void));
+int	wump_nearby __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
 	int c;
 
 #ifdef DEBUG
-	while ((c = getopt(argc, argv, "a:b:hp:r:t:d")) != EOF)
+	while ((c = getopt(argc, argv, "a:b:hp:r:t:d")) != -1)
 #else
-	while ((c = getopt(argc, argv, "a:b:hp:r:t:")) != EOF)
+	while ((c = getopt(argc, argv, "a:b:hp:r:t:")) != -1)
 #endif
 		switch (c) {
 		case 'a':
@@ -221,11 +247,13 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 			cave_init();
 	}
 	/* NOTREACHED */
+	return (0);
 }
 
+void
 display_room_stats()
 {
-	register int i;
+	int i;
 
 	/*
 	 * Routine will explain what's going on with the current room, as well
@@ -252,6 +280,7 @@ display_room_stats()
 	(void)printf("and %d.\n", cave[player_loc].tunnel[link_num - 1]);
 }
 
+int
 take_action()
 {
 	/*
@@ -280,8 +309,9 @@ take_action()
 	return(0);
 }
 
+int
 move_to(room_number)
-	char *room_number;
+	const char *room_number;
 {
 	int i, just_moved_by_bats, next_room, tunnel_available;
 
@@ -370,12 +400,13 @@ move_to(room_number)
 	return(0);
 }
 
+int
 shoot(room_list)
 	char *room_list;
 {
 	int chance, next, roomcnt;
 	int j, arrow_location, link, ok;
-	char *p, *strtok();
+	char *p;
 
 	/*
 	 * Implement shooting arrows.  Arrows are shot by the player indicating
@@ -481,11 +512,11 @@ The arrow is weakly shot and can go no further!\n");
 	return(0);
 }
 
+void
 cave_init()
 {
-	register int i, j, k, link;
-	int delta, int_compare();
-	time_t time();
+	int i, j, k, link;
+	int delta;
 
 	/*
 	 * This does most of the interesting work in this program actually!
@@ -555,9 +586,10 @@ try_again:		link = (random() % room_num) + 1;
 #endif
 }
 
+void
 clear_things_in_cave()
 {
-	register int i;
+	int i;
 
 	/*
 	 * remove bats and pits from the current cave in preparation for us
@@ -567,9 +599,10 @@ clear_things_in_cave()
 		cave[i].has_a_bat = cave[i].has_a_pit = 0;
 }
 
+void
 initialize_things_in_cave()
 {
-	register int i, loc;
+	int i, loc;
 
 	/* place some bats, pits, the wumpus, and the player. */
 	for (i = 0; i < bat_num; ++i) {
@@ -606,8 +639,9 @@ initialize_things_in_cave()
 	    (link_num / room_num < 0.4 ? wump_nearby() : 0) : 0));
 }
 
+int
 getans(prompt)
-	char *prompt;
+	const char *prompt;
 {
 	char buf[20];
 
@@ -631,9 +665,10 @@ getans(prompt)
 	/* NOTREACHED */
 }
 
+int
 bats_nearby()
 { 
-	register int i;
+	int i;
 
 	/* check for bats in the immediate vicinity */
 	for (i = 0; i < link_num; ++i)
@@ -642,9 +677,10 @@ bats_nearby()
 	return(0);
 }
 
+int
 pit_nearby()
 { 
-	register int i;
+	int i;
 
 	/* check for pits in the immediate vicinity */
 	for (i = 0; i < link_num; ++i)
@@ -653,9 +689,10 @@ pit_nearby()
 	return(0);
 }
 
+int
 wump_nearby()
 {
-	register int i, j;
+	int i, j;
 
 	/* check for a wumpus within TWO caves of where we are */
 	for (i = 0; i < link_num; ++i) {
@@ -669,20 +706,23 @@ wump_nearby()
 	return(0);
 }
 
+void
 move_wump()
 {
 	wumpus_loc = cave[wumpus_loc].tunnel[random() % link_num];
 }
 
+int
 int_compare(a, b)
-	int *a, *b;
+	const void *a, *b;
 {
-	return(*a < *b ? -1 : 1);
+	return(*(int *)a < *(int *)b ? -1 : 1);
 }
 
+void
 instructions()
 {
-	char buf[120], *p, *getenv();
+	char buf[120], *p;
 
 	/*
 	 * read the instructions file, if needed, and show the user how to
@@ -706,6 +746,7 @@ puff of greasy black smoke! (poof)\n");
 	(void)system(buf);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr,
@@ -715,6 +756,7 @@ usage()
 
 /* messages */
 
+void
 wump_kill()
 {
 	(void)printf(
@@ -726,6 +768,7 @@ so long since the evil Wumpus cleaned his teeth that you immediately\n\
 passed out from the stench!\n");
 }
 
+void
 kill_wump()
 {
 	(void)printf(
@@ -737,6 +780,7 @@ dead Wumpus is also quite well known, a stench plenty enough to slay the\n\
 mightiest adventurer at a single whiff!!\n");
 }
 
+void
 no_arrows()
 {
 	(void)printf(
@@ -746,6 +790,7 @@ with its psychic powers, the evil Wumpus rampagees through the cave, finds\n\
 you, and with a mighty *ROAR* eats you alive!\n");
 }
 
+void
 shoot_self()
 {
 	(void)printf(
@@ -756,6 +801,7 @@ and immediately rushes to your side, not to help, alas, but to EAT YOU!\n\
 (*CHOMP*)\n");
 }
 
+void
 jump(where)
 	int where;
 {
@@ -765,6 +811,7 @@ notice that the walls are shimmering and glowing.  Suddenly you feel\n\
 a very curious, warm sensation and find yourself in room %d!!\n", where);
 }
 
+void
 pit_kill()
 {
 	(void)printf(
@@ -776,6 +823,7 @@ you fall many miles to the core of the earth.  Look on the bright side;\n\
 you can at least find out if Jules Verne was right...\n");
 }
 
+void
 pit_survive()
 {
 	(void)printf(
