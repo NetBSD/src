@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
+/* $NetBSD: vgavar.h,v 1.5 2000/08/08 02:11:05 jeffs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -141,7 +141,7 @@ void	vga_common_attach __P((struct device *, bus_space_tag_t,
 #ifdef arc
 void	vga_extended_attach __P((struct device *, bus_space_tag_t,
 				 bus_space_tag_t, int,
-				 int (*) __P((void *, off_t, int))));
+				 paddr_t (*) __P((void *, off_t, int))));
 #endif
 int	vga_is_console __P((bus_space_tag_t, int));
 
