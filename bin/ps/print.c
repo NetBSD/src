@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
+/*	$NetBSD: print.c,v 1.28 1996/07/13 06:58:33 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.28 1996/07/13 06:58:33 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $";
 #include <kvm.h>
 #include <math.h>
 #include <nlist.h>
+#include <pwd.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -628,7 +629,7 @@ pagein(k, ve)
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*d", v->width, 
+	(void)printf("%*ld", v->width, 
 	    k->ki_u.u_valid ? k->ki_u.u_ru.ru_majflt : 0);
 }
 
