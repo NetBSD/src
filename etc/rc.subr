@@ -1,4 +1,4 @@
-#	$NetBSD: rc.subr,v 1.9 1999/04/28 23:32:29 nathanw Exp $
+#	$NetBSD: rc.subr,v 1.10 1999/07/07 21:24:56 drochner Exp $
 # functions used by various rc scripts
 
 #
@@ -34,10 +34,12 @@ checkyesno() {
 #
 fstab=/etc/fstab
 mount_critical_filesystems() {
-	for fs in $critical_filesystems; do
-		if [ $1 = local ] && ! islocalfs $fs; then
-			continue
-		fi
+	if [ $1 = local ]; then
+		_fslist=$critical_filesystems_beforenet
+	else
+		_fslist=$critical_filesystems
+	fi
+	for fs in $_fslist; do
 		mount | (
 			ismounted=no
 			while read what _on on _type type; do
