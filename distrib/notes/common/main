@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.10 2000/11/14 16:45:22 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.11 2000/11/15 19:09:29 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -241,7 +241,7 @@ thus resolving a source of several panics in the past.
 .It
 Support for NFS and RPC over IPv6.
 .It
-NFS locking (implemented with
+Server part of NFS locking (implemented by
 .Xr rpc.lockd 8 )
 now works.
 .bullet)
