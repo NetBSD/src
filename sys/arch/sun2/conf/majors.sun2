@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.9 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.sun2,v 1.10 2003/10/15 18:20:19 jdolecek Exp $
 #
 # Device majors for sun2
 #
@@ -33,6 +33,7 @@ device-major	xt		char 30  block 8	xt
 device-major	ccd		char 33  block 9	ccd
 
 device-major	bpf		char 36			bpfilter
+device-major	ipl		char 37			ipfilter
 
 device-major	xd		char 42  block 10	xd
 
