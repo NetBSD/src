@@ -1,7 +1,7 @@
 #
 # SCSITEST -- Generic ISA machine -- scsi test kernel -ultrastore 14f adapter
 #
-#	$Id: UHATEST,v 1.11 1993/05/20 14:32:42 cgd Exp $
+#	$Id: UHATEST,v 1.12 1993/06/03 01:30:41 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -15,6 +15,7 @@ options		"TCP_COMPAT_42"
 options		SCSI
 options		DDB
 options		"MATH_EMULATE"
+options		"COMPAT_NOMID"
 
 config		netbsd	root on wd0 swap on wd0 and sd0
 

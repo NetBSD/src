@@ -1,7 +1,7 @@
 #
 # SUN_LAMP_DDB -- kernel for one of cgd's 486/50 EISA boxes, with debugging
 #
-#	$Id: SUN_LAMP_DDB,v 1.1 1993/05/26 11:22:45 cgd Exp $
+#	$Id: SUN_LAMP_DDB,v 1.2 1993/06/03 01:30:38 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -17,6 +17,7 @@ options		FDESC,KERNFS
 options		KTRACE
 options		SCSI
 options		DDB
+options		"COMPAT_NOMID"
 
 config		netbsd	root on sd0 swap on sd0
 
