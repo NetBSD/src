@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2001/09/01 17:08:19 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132.2.1 2001/10/01 12:40:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2001/09/01 17:08:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132.2.1 2001/10/01 12:40:48 fvdl Exp $");
 
 /*
  *	Manages physical address maps.
@@ -204,7 +204,7 @@ boolean_t	pmap_initialized = FALSE;
 	    (pmap_initialized == TRUE && vm_physseg_find(atop(pa), NULL) != -1)
 
 #define PMAP_IS_ACTIVE(pm)	\
-	    (curproc != NULL && (pm) == curproc->p_vmspace->vm_map.pmap)
+	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
 
 #define	pa_to_pvh(pa)							\
 ({									\
@@ -823,7 +823,7 @@ pmap_page_protect(pg, prot)
 				va = pv->pv_va;
 				pmap_protect(pv->pv_pmap, va, va + PAGE_SIZE,
 					prot);
-				pmap_update();
+				pmap_update(pv->pv_pmap);
 			}
 		}
 		break;
@@ -835,7 +835,7 @@ pmap_page_protect(pg, prot)
 			pmap_remove(pv->pv_pmap, pv->pv_va,
 				    pv->pv_va + PAGE_SIZE);
 		}
-		pmap_update();
+		pmap_update(pv->pv_pmap);
 	}
 }
 
@@ -1363,7 +1363,6 @@ pmap_kremove(va, len)
 {
 	pt_entry_t *pte;
 	vaddr_t eva;
-	paddr_t pa;
 	u_int entry;
 
 #ifdef DEBUG
@@ -1379,11 +1378,7 @@ pmap_kremove(va, len)
 			continue;
 		}
 		if (CPUISMIPS3) {
-			MachFlushDCache(va, PAGE_SIZE);
-			if (mips_L2CachePresent) {
-				pa = mips_tlbpfn_to_paddr(entry);
-				MachFlushDCache(pa, PAGE_SIZE);
-			}
+			MachHitFlushDCache(va, PAGE_SIZE);
 			pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
 		} else {
 			pte->pt_entry = MIPS1_PG_NV;
@@ -1640,14 +1635,16 @@ pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	int *attrp;
 	boolean_t rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
-	rv = *pa_to_attribute(pa) & PV_REFERENCED;
-	*pa_to_attribute(pa) &= ~PV_REFERENCED;
+	attrp = pa_to_attribute(pa);
+	rv = *attrp & PV_REFERENCED;
+	*attrp &= ~PV_REFERENCED;
 	return rv;
 }
 
@@ -1674,15 +1671,63 @@ pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	struct pmap *pmap;
+	struct pv_entry *pv;
+	pt_entry_t *pte;
+	int *attrp;
+	vaddr_t va;
+	unsigned asid;
 	boolean_t rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
-	rv = *pa_to_attribute(pa) & PV_MODIFIED;
-	*pa_to_attribute(pa) &= ~PV_MODIFIED;
-	return rv;
+	attrp = pa_to_attribute(pa);
+	rv = *attrp & PV_MODIFIED;
+	*attrp &= ~PV_MODIFIED;
+	if (!rv) {
+		return rv;
+	}
+	pv = pa_to_pvh(pa);
+	if (pv->pv_pmap == NULL) {
+		return TRUE;
+	}
+
+	/*
+	 * remove write access from any pages that are dirty
+	 * so we can tell if they are written to again later.
+	 * flush the VAC first if there is one.
+	 */
+
+	for (; pv; pv = pv->pv_next) {
+		pmap = pv->pv_pmap;
+		va = pv->pv_va;
+		if (pmap == pmap_kernel()) {
+			pte = kvtopte(va);
+			asid = 0;
+		} else {
+			pte = pmap_segmap(pmap, va);
+			KASSERT(pte);
+			pte += ((va >> PGSHIFT) & (NPTEPG - 1));
+			asid = pmap->pm_asid << MIPS_TLB_PID_SHIFT;
+		}
+		if ((pte->pt_entry & mips_pg_m_bit()) == 0) {
+			continue;
+		}
+		if (CPUISMIPS3) {
+			if (PMAP_IS_ACTIVE(pmap)) {
+				MachHitFlushDCache(va, PAGE_SIZE);
+			} else {
+				MachFlushDCache(va, PAGE_SIZE);
+			}
+		}
+		pte->pt_entry &= ~mips_pg_m_bit();
+		if (pmap->pm_asidgen == pmap_asid_generation) {
+			MIPS_TBIS(va | asid);
+		}
+	}
+	return TRUE;
 }
 
 /*
@@ -1825,7 +1870,7 @@ again:
 				    mips_indexof(va)) {
 					pmap_remove(npv->pv_pmap, npv->pv_va,
 						    npv->pv_va + PAGE_SIZE);
-					pmap_update();
+					pmap_update(npv->pv_pmap);
 					goto again;
 				}
 			}

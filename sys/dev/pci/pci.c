@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.54 2001/07/11 08:36:46 mrg Exp $	*/
+/*	$NetBSD: pci.c,v 1.54.2.1 2001/10/01 12:45:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -54,22 +54,12 @@ int pci_config_dump = 0;
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
-struct pci_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot, sc_memt;
-	bus_dma_tag_t sc_dmat;
-	pci_chipset_tag_t sc_pc;
-	int sc_bus, sc_maxndevs;
-	u_int sc_intrswiz;
-	pcitag_t sc_intrtag;
-	int sc_flags;
-};
-
 struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach
 };
 
-void	pci_probe_bus __P((struct device *));
+int	pci_probe_bus(struct device *, int (*match)(struct pci_attach_args *),
+		      struct pci_attach_args *);
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
 
@@ -130,15 +120,15 @@ pcimatch(parent, cf, aux)
  * The __PCI_BUS_DEVORDER/__PCI_DEV_FUNCORDER macros should go away
  * and be implemented with device properties when they arrive.
  */
-void
-pci_probe_bus(self)
-	struct device *self;
+int
+pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
+	      struct pci_attach_args *pap)
 {
 	struct pci_softc *sc = (struct pci_softc *)self;
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	const struct pci_quirkdata *qd;
-	int bus, device, function, nfunctions;
+	int bus, device, function, nfunctions, ret;
 #ifdef __PCI_BUS_DEVORDER
 	char devs[32];
 	int i;
@@ -257,9 +247,20 @@ pci_probe_bus(self)
 			}
 			pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
 
-			config_found_sm(self, &pa, pciprint, pcisubmatch);
+			if (match != NULL) {
+				ret = match(&pa);
+				if (ret != 0) {
+					if (pap != NULL)
+						*pap = pa;
+					return ret;
+				}
+			} else {
+				config_found_sm(self, &pa, pciprint,
+				    pcisubmatch);
+			}
 		}
 	}
+	return 0;
 }
 
 void
@@ -319,7 +320,7 @@ pciattach(parent, self, aux)
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
-	pci_probe_bus(self);
+	pci_probe_bus(self, NULL, NULL);
 }
 
 int
@@ -431,4 +432,20 @@ pci_get_capability(pc, tag, capid, offset, value)
 	}
 
 	return (0);
+}
+
+int
+pci_find_device(struct pci_attach_args *pa,
+		int (*match)(struct pci_attach_args *))
+{
+	int i;
+	struct device *pcidev;
+	extern struct cfdriver pci_cd;
+
+	for (i = 0; i < pci_cd.cd_ndevs; i++) {
+		pcidev = pci_cd.cd_devs[i];
+		if (pcidev != NULL && pci_probe_bus(pcidev, match, pa) != 0)
+			return 1;
+	}
+	return 0;
 }

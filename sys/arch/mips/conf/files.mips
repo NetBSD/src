@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.30 2001/01/16 06:01:26 thorpej Exp $
+#	$NetBSD: files.mips,v 1.30.2.1 2001/10/01 12:40:44 fvdl Exp $
 #
 
 defopt 	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
@@ -38,3 +38,11 @@ file	arch/mips/mips/compat_13_machdep.c	compat_13 | compat_ultrix
 
 # Ultrix Binary Compatibility (COMPAT_ULTRIX)
 include "compat/ultrix/files.ultrix"
+
+# Linux compatibility (COMPAT_LINUX)       XXX Highly experimental
+include "compat/ossaudio/files.ossaudio"
+include "compat/linux/files.linux"
+include "compat/linux/arch/mips/files.linux_mips"
+file arch/mips/mips/linux_trap.c			compat_linux
+file arch/mips/mips/linux_syscall.c			compat_linux
+

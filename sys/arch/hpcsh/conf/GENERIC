@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 2001/09/01 23:08:42 atatat Exp $
+#	$NetBSD: GENERIC,v 1.8.2.1 2001/10/01 12:39:29 fvdl Exp $
 #
 #	GENERIC kernel for SH3+HD64461 based machines.
 #
@@ -41,6 +41,10 @@ file-system 	PROCFS		# /proc
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+
 options 	NFS_BOOT_DHCP
 
 # Kernel root file system and dump configuration.
@@ -62,8 +66,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #
 mainbus0 at root
 
-shb0 at mainbus? id HP
-shb1 at mainbus? id HITACHI
+shb0 at mainbus?
 
 #
 # Workstation Console attachments
@@ -71,6 +74,7 @@ shb1 at mainbus? id HITACHI
 hpcfb*		at hd64461video?
 wsdisplay*	at hpcfb?
 pfckbd*		at mainbus? id HP
+pfckbd*		at mainbus? id HITACHI
 hpckbd*		at pfckbd?
 wskbd*		at hpckbd? mux 1
 
@@ -85,12 +89,6 @@ scif0 at shb0 port 0xa4000008 irq 12
 hd64461if0 at shb0 irq 4
 hd64461pcmcia*	at hd64461if0
 hd64461video*	at hd64461if0
-
-#
-# HITACHI PERSONA
-#
-hd64461if1 at shb1 irq 4
-com*		at hd64461if1
 
 #
 # machine independent part
@@ -147,3 +145,6 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
+
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	vlan			# IEEE 802.1q encapsulation

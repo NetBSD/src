@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.1.2.1 2001/10/01 12:37:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -120,7 +120,7 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	/* Check the page protection for copy-on-write */
-	stmfd	sp!, {r4-r7}
+	stmfd	sp!, {r4-r7}			/* stack is 8 byte aligned */
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
 
@@ -146,28 +146,28 @@ do_ptecheck_next:
 	subs	r7, r7, #1
 	bpl	do_ptecheck
 	str	r5, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4-r7}
+	ldmfd	sp!, {r4-r7}			/* stack is 8 byte aligned */
 
 	/* Do the actual copy */
 	b	do_copyinout
 
 do_cowfault:
-	stmfd	sp!, {r0-r2, lr}
+	stmfd	sp!, {r0-r2, lr}		/* stack is 8 byte aligned */
 	ldr	r3, Lpgbase
 	sub	r0, r6, r3
 	mov	r0, r0, lsl #(PGSHIFT-2)	/* calculate VA of page */
 	bl	_C_LABEL(cowfault)
 	mov	r3, r0
-	ldmfd	sp!, {r0-r2, lr}
+	ldmfd	sp!, {r0-r2, lr}		/* stack is 8 byte aligned */
 	teq	r3, #0				/* check for error return */
 	beq	do_ptecheck_next
 	mov	r0, r3
 	str	r5, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4-r7}
+	ldmfd	sp!, {r4-r7}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
 do_copyinout:
-	stmfd	sp!, {r4, r5}
+	stmfd	sp!, {r4, r5}			/* stack is 8 byte aligned */
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
 
@@ -212,13 +212,13 @@ Lslow_copyinout_loop:
 Lcopyinout_exit:
 	mov	r0, #0x00000000
 	str	r5, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4, r5}
+	ldmfd	sp!, {r4, r5}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
 /* A fault occurred during the copy */
 Lcopyinoutfault:
 	str	r5, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4, r5}
+	ldmfd	sp!, {r4, r5}			/* stack is 8 byte aligned */
 
 	/* FALLTHROUGH */
 

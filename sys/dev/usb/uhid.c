@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.43.2.2 2001/09/26 15:28:19 fvdl Exp $	*/
+/*	$NetBSD: uhid.c,v 1.43.2.3 2001/10/01 12:46:32 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ uhid_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		
 	if (sc->sc_state & UHID_ASLP) {
 		sc->sc_state &= ~UHID_ASLP;
-		DPRINTFN(5, ("uhid_intr: waking %p\n", sc));
+		DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
 		wakeup(&sc->sc_q);
 	}
 	selwakeup(&sc->sc_rsel);
@@ -480,7 +480,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 			return (EWOULDBLOCK);
 		}
 		sc->sc_state |= UHID_ASLP;
-		DPRINTFN(5, ("uhidread: sleep on %p\n", sc));
+		DPRINTFN(5, ("uhidread: sleep on %p\n", &sc->sc_q));
 		error = tsleep(&sc->sc_q, PZERO | PCATCH, "uhidrea", 0);
 		DPRINTFN(5, ("uhidread: woke, error=%d\n", error));
 		if (sc->sc_dying)

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.8 2000/06/13 13:36:56 ad Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.8.8.1 2001/10/01 12:46:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.8 2000/06/13 13:36:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.8.8.1 2001/10/01 12:46:14 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
 #define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
 
 /*
- * Initalize rasops_info struct for this colordepth.
+ * Initialize rasops_info struct for this colordepth.
  */
 void
 rasops15_init(ri)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2001/06/27 03:41:27 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.4.1 2001/10/01 12:42:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -100,10 +100,6 @@
 #include <sys/kcore.h>
 
 #include <uvm/uvm.h>
-
-/* XXX - Pager hacks... (explain?) */
-#define PAGER_SVA (uvm.pager_sva)
-#define PAGER_EVA (uvm.pager_eva)
 
 #include <machine/cpu.h>
 #include <machine/dvma.h>
@@ -1185,18 +1181,6 @@ pv_changepte(pa, set_bits, clear_bits)
 			panic("pv_changepte: null segmap");
 #endif
 
-		/* XXX don't write protect pager mappings */
-		if (clear_bits & PG_WRITE) {
-			if (va >= PAGER_SVA && va < PAGER_EVA) {
-#ifdef	PMAP_DEBUG
-				/* XXX - Does this actually happen? */
-				printf("pv_changepte: in pager!\n");
-				Debugger();
-#endif
-				continue;
-			}
-		}
-
 		/* Is the PTE currently accessible in some context? */
 		in_ctx = FALSE;
 		sme = SEGINV;	/* kill warning */
@@ -1912,7 +1896,7 @@ pmap_map(va, pa, endpa, prot)
 		pa += NBPG;
 		sz -= NBPG;
 	} while (sz > 0);
-	pmap_update();
+	pmap_update(kernel_pmap);
 	return(va);
 }
 

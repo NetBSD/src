@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: mkimg.sh,v 1.1 2001/06/13 06:01:51 simonb Exp $
+# $NetBSD: mkimg.sh,v 1.1.4.1 2001/10/01 12:43:04 fvdl Exp $
 
-# Covert a kernel to an tftp image loadable by the walnut IBM openbios.
+# Convert a kernel to an tftp image loadable by the walnut IBM openbios.
 
 if [ $# -ne 2 ] ; then
 	echo usage: $0 kernel image 1>&2

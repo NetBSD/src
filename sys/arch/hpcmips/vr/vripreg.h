@@ -1,4 +1,4 @@
-/*	$NetBSD: vripreg.h,v 1.4 2001/08/04 14:08:46 sato Exp $	*/
+/*	$NetBSD: vripreg.h,v 1.4.2.1 2001/10/01 12:39:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -53,7 +53,7 @@
 #define VR4181_KIU_ADDR		0x0a000180
 #define VR4181_DSIU_ADDR	0x0a0001a0
 #define VR4181_LED_ADDR		0x0a000240
-#define VR4181_SIU_ADDR		0x0c000000
+#define VR4181_SIU_ADDR		0x0c000010
 #define VR4181_HSP_ADDR		0x0a000020
 #define VR4181_FIR_ADDR		0x0a000000	/* XXX */
 #define VR4181_MEMCON_ADDR	0x0a000300
@@ -63,7 +63,7 @@
 #define VR4181_CSI81_ADDR	0x0b000900
 #define VR4181_GIU81_ADDR	0x0b000300
 #define VR4181_LCD_ADDR		0x0a000400
-#define VR4181_SIU1_ADDR	0x0c000010
+#define VR4181_SIU1_ADDR	0x0c000000
 #define	VR4181_SCU_ARR		VRIP_NO_ADDR	/* XXX: no register */
 #define VR4181_SDRAMU_ADDR	VRIP_NO_ADDR	/* XXX: no register */
 #define VR4181_PCI_ADDR		VRIP_NO_ADDR	/* XXX: no register */
@@ -186,7 +186,7 @@
 
 #endif /* VRGROUP_4181 */
 
-#if defined VRGROUP_4122
+#if defined VRGROUP_4122_4131
 #define VRIP_BASE_ADDR		0x0f000000
 
 #define VRIP_BCU_ADDR		VR4122_BCU_ADDR	
@@ -219,7 +219,7 @@
 #define VRIP_PCICONF_ADDR	VR4122_PCICONF_ADDR	/* XXX: no register */
 #define VRIP_CSI_ADDR		VR4122_CSI_ADDR		/* XXX: no register */
 
-#endif /* VRGROUP_4122 */
+#endif /* VRGROUP_4122_4131 */
 
 #if defined VRGROUP_4102_4121
 #define VRIP_BASE_ADDR		0x0b000000
@@ -246,7 +246,7 @@
 #define VRIP_ECU_ADDR		VR4102_ECU_ADDR		/* XXX: no register */
 #define VRIP_DCU81_ADDR		VR4102_DCU81_ADDR	/* XXX: no register */
 #define VRIP_CSI81_ADDR		VR4102_CSI81_ADDR	/* XXX: no register */
-#define VRIP_GIU81_ADDR		VR4102_CSI81_ADDR	/* XXX: no register */
+#define VRIP_GIU81_ADDR		VR4102_GIU81_ADDR	/* XXX: no register */
 #define VRIP_SIU1_ADDR		VR4102_SIU1_ADDR	/* XXX: no register */	
 #define	VRIP_SCU_ARR		VR4102_SCU_ARR		/* XXX: no register */
 #define VRIP_SDRAMU_ADDR	VR4102_SDRAMU_ADDR	/* XXX: no register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 2001/06/02 18:09:12 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.4.1 2001/10/01 12:38:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -218,7 +218,7 @@ hp300_init()
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -229,13 +229,13 @@ hp300_init()
 	pmap_enter(pmap_kernel(), bootinfo_va, bootinfo_pa,
 	    VM_PROT_READ|VM_PROT_WRITE,
 	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	bt_mag = lookup_bootinfo(BTINFO_MAGIC);
 	if (bt_mag == NULL ||
 	    bt_mag->magic1 != BOOTINFO_MAGIC1 ||
 	    bt_mag->magic2 != BOOTINFO_MAGIC2) {
 		pmap_remove(pmap_kernel(), bootinfo_va, bootinfo_va + NBPG);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		bootinfo_va = 0;
 	}
 }
@@ -375,7 +375,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -969,7 +969,7 @@ dumpsys()
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 
-		pmap_update();
+		pmap_update(pmap_kernel());
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:
 		switch (error) {
@@ -1268,7 +1268,7 @@ parityerrorfind()
 #endif
 	/*
 	 * If looking is true we are searching for a known parity error
-	 * and it has just occured.  All we do is return to the higher
+	 * and it has just occurred.  All we do is return to the higher
 	 * level invocation.
 	 */
 	if (looking)
@@ -1276,7 +1276,7 @@ parityerrorfind()
 	s = splhigh();
 	/*
 	 * If setjmp returns true, the parity error we were searching
-	 * for has just occured (longjmp above) at the current pg+o
+	 * for has just occurred (longjmp above) at the current pg+o
 	 */
 	if (setjmp(&parcatch)) {
 		printf("Parity error at 0x%x\n", ctob(pg)|o);
@@ -1284,7 +1284,7 @@ parityerrorfind()
 		goto done;
 	}
 	/*
-	 * If we get here, a parity error has occured for the first time
+	 * If we get here, a parity error has occurred for the first time
 	 * and we need to find it.  We turn off any external caches and
 	 * loop thru memory, testing every longword til a fault occurs and
 	 * we regain control at setjmp above.  Note that because of the
@@ -1295,7 +1295,7 @@ parityerrorfind()
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
 		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, ctob(pg),
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap_kernel());
 		ip = (int *)vmmap;
 		for (o = 0; o < NBPG; o += sizeof(int))
 			i = *ip++;
@@ -1308,7 +1308,7 @@ parityerrorfind()
 done:
 	looking = 0;
 	pmap_remove(pmap_kernel(), (vaddr_t)vmmap, (vaddr_t)&vmmap[NBPG]);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	ecacheon();
 	splx(s);
 	return(found);

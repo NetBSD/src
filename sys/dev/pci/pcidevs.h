@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.360 2001/09/05 13:47:59 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.360.2.1 2001/10/01 12:45:59 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp 
+ *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
  */
 
 /*
@@ -616,6 +616,7 @@
 #define	PCI_PRODUCT_3DFX_VOODOO2	0x0002		/* Voodoo2 */
 #define	PCI_PRODUCT_3DFX_BANSHEE	0x0003		/* Banshee */
 #define	PCI_PRODUCT_3DFX_VOODOO3	0x0005		/* Voodoo3 */
+#define	PCI_PRODUCT_3DFX_VOODOO5	0x0009		/* Voodoo 4/5 */
 
 /* 3D Labs products */
 #define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* GLINT 300SX */
@@ -1201,9 +1202,10 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
-#define	PCI_PRODUCT_INTEL_82452	0x1000		/* PRO/1000 Gigabit Ethernet (i82452) */
-#define	PCI_PRODUCT_INTEL_82453	0x1001		/* PRO/1000 Gigabit Ethernet (i82453) */
-#define	PCI_PRODUCT_INTEL_82453_SC	0x1003		/* PRO/1000 Gigabit Ethernet (i82453-SC) */
+#define	PCI_PRODUCT_INTEL_82452	0x1000		/* i82452 Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82453_FIBER	0x1001		/* i82453 Gigabit Ethernet (1000BASE-X) */
+#define	PCI_PRODUCT_INTEL_82453_SC	0x1003		/* i82453-SC Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82543_COPPER	0x1004		/* i82543 Gigabit Ethernet (1000BASE-T) */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_0	0x1031		/* PRO/100 VE Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_100_VE_1	0x1032		/* PRO/100 VE Network Controller */
@@ -1671,6 +1673,7 @@
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* SiS 7016 10/100 Ethernet */
+#define	PCI_PRODUCT_SIS_7018	0x7018		/* SiS 7018 Sound */
 
 /* Silicon Motion products */
 #define	PCI_PRODUCT_SILMOTION_LYNX_EMP	0x0712		/* Lynx EM+ */
@@ -1699,6 +1702,7 @@
 #define	PCI_PRODUCT_SUN_ERINETWORK	0x1101		/* ERI Ethernet */
 #define	PCI_PRODUCT_SUN_FIREWIRE	0x1102		/* FireWire controller */
 #define	PCI_PRODUCT_SUN_USB	0x1103		/* USB controller */
+#define	PCI_PRODUCT_SUN_GEMNETWORK	0x2bad		/* GEM Gigabit Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
@@ -1791,6 +1795,8 @@
 #define	PCI_PRODUCT_TRANSMETA_BIOS_SCRATCH	0x0397		/* BIOS Scratchpad */
 
 /* Trident products */
+#define	PCI_PRODUCT_TRIDENT_4DWAVE_DX	0x2000		/* 4DWAVE DX */
+#define	PCI_PRODUCT_TRIDENT_4DWAVE_NX	0x2001		/* 4DWAVE NX */
 #define	PCI_PRODUCT_TRIDENT_CYBERBLADE_I7	0x8420		/* CyberBlade i7 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9350	0x9350		/* TGUI 9350 */

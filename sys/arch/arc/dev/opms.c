@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1 2001/06/13 15:05:43 soda Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.6.1 2001/10/01 12:37:25 fvdl Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -50,6 +50,7 @@
 #include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 #include <machine/kbdreg.h>
@@ -231,7 +232,7 @@ opmsread(dev, uio, flag)
 	size_t length;
 	u_char buffer[PMS_CHUNK];
 
-	/* Block until mouse activity occured. */
+	/* Block until mouse activity occurred. */
 
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2001/07/08 20:30:13 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.8.4.1 2001/10/01 12:41:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,7 +118,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  * confuse, e.g. the hashing routines.  User access (e.g., for libkvm
  * and ps) is provided through the /dev/drum character (raw) device.
  */
-dev_t	swapdev = makedev(0, 0);
+dev_t	swapdev = makedev(1, 0);
 
 struct cdevsw cdevsw[] =
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.3 2001/06/05 14:43:04 mrg Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.3.4.1 2001/10/01 12:42:40 fvdl Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -34,6 +34,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/exec.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
@@ -45,6 +46,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/select.h>
 
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
@@ -52,9 +54,14 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscallargs.h>
+#include <compat/sunos32/sunos32_exec.h>
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
+#include <machine/vuid_event.h>
+#include <machine/reg.h>
+
+#include <dev/sun/event_var.h>
 
 #ifdef DEBUG
 #include <sparc64/sparc64/sigdebug.h>
@@ -79,6 +86,69 @@ struct sunos32_sigframe {
 	u_int32_t	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	sunos32_sigcontext sf_sc;	/* actual sigcontext */
 };
+
+static int ev_out32 __P((struct firm_event *, int, struct uio *));
+
+/*
+ * Set up registers on exec.
+ *
+ * XXX this entire mess must be fixed
+ */
+/* ARGSUSED */
+void
+sunos32_setregs(p, pack, stack)
+	struct proc *p;
+	struct exec_package *pack;
+	u_long stack; /* XXX */
+{
+	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct fpstate64 *fs;
+	register int64_t tstate;
+
+	/* Don't allow misaligned code by default */
+	p->p_md.md_flags &= ~MDP_FIXALIGN;
+
+	/* Mark this as a 32-bit emulation */
+	p->p_flag |= P_32;
+
+	/* Setup the coredump32 and ev_out32 hook's */
+	if (coredump32_hook == NULL)
+		coredump32_hook = coredump32;
+	if (ev_out32_hook == NULL)
+		ev_out32_hook = ev_out32;
+
+	/*
+	 * Set the registers to 0 except for:
+	 *	%o6: stack pointer, built in exec())
+	 *	%tstate: (retain icc and xcc and cwp bits)
+	 *	%g1: address of PS_STRINGS (used by crt0)
+	 *	%tpc,%tnpc: entry point of program
+	 */
+	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
+		| (tf->tf_tstate & TSTATE_CWP);
+	if ((fs = p->p_md.md_fpstate) != NULL) {
+		/*
+		 * We hold an FPU state.  If we own *the* FPU chip state
+		 * we must get rid of it, and the only way to do that is
+		 * to save it.  In any case, get rid of our FPU state.
+		 */
+		if (p == fpproc) {
+			savefpstate(fs);
+			fpproc = NULL;
+		}
+		free((void *)fs, M_SUBPROC);
+		p->p_md.md_fpstate = NULL;
+	}
+	bzero((caddr_t)tf, sizeof *tf);
+	tf->tf_tstate = tstate;
+	tf->tf_global[1] = (u_int)(u_long)p->p_psstr;
+	tf->tf_pc = pack->ep_entry & ~3;
+	tf->tf_npc = tf->tf_pc + 4;
+
+	stack -= sizeof(struct rwindow32);
+	tf->tf_out[6] = stack;
+	tf->tf_out[7] = NULL;
+}
 
 void
 sunos32_sendsig(catcher, sig, mask, code)
@@ -286,4 +356,27 @@ sunos32_sys_sigreturn(p, v, retval)
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
+}
+
+/*
+ * Write out a series of 32-bit firm_events.
+ */
+static int
+ev_out32(e, n, uio)
+	struct firm_event *e;  
+	int n;
+	struct uio *uio;
+{
+	struct firm_event32 e32;
+	int error = 0;
+
+	while (n-- && error == 0) {
+		e32.id = e->id;
+		e32.value = e->value;
+		e32.time.tv_sec = e->time.tv_sec;
+		e32.time.tv_usec = e->time.tv_usec;
+		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		e++;
+	}
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.5 2001/01/24 09:29:25 sato Exp $ */
+/*	$NetBSD: apmdev.c,v 1.5.2.1 2001/10/01 12:39:03 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -127,24 +127,24 @@ struct apm_softc {
 #define	APM_UNLOCK(apmsc)						\
 	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
 
-static void	apmattach __P((struct device *, struct device *, void *));
-static int	apmmatch __P((struct device *, struct cfdata *, void *));
+static void	apmattach(struct device *, struct device *, void *);
+static int	apmmatch(struct device *, struct cfdata *, void *);
 
-static void	apm_event_handle __P((struct apm_softc *, u_int, u_int));
-static void	apm_periodic_check __P((struct apm_softc *));
-static void	apm_create_thread __P((void *));
-static void	apm_thread __P((void *));
-static void	apm_perror __P((const char *, int, ...))
+static void	apm_event_handle(struct apm_softc *, u_int, u_int);
+static void	apm_periodic_check(struct apm_softc *);
+static void	apm_create_thread(void *);
+static void	apm_thread(void *);
+static void	apm_perror(const char *, int, ...)
 		    __attribute__((__format__(__printf__,1,3)));
 #ifdef APM_POWER_PRINT
-static void	apm_power_print __P((struct apm_softc *, struct apm_power_info *));
+static void	apm_power_print(struct apm_softc *, struct apm_power_info *);
 #endif
-static int	apm_record_event __P((struct apm_softc *, u_int));
-static void	apm_set_ver __P((struct apm_softc *, u_long));
-static void	apm_standby __P((struct apm_softc *));
-static const char *apm_strerror __P((int));
-static void	apm_suspend __P((struct apm_softc *));
-static void	apm_resume __P((struct apm_softc *, u_int, u_int));
+static int	apm_record_event(struct apm_softc *, u_int);
+static void	apm_set_ver(struct apm_softc *, u_long);
+static void	apm_standby(struct apm_softc *);
+static const char *apm_strerror(int);
+static void	apm_suspend(struct apm_softc *);
+static void	apm_resume(struct apm_softc *, u_int, u_int);
 
 cdev_decl(apmdev);
 
@@ -192,8 +192,7 @@ int	apm_evindex;
 static int apm_spl;		/* saved spl while suspended */
 
 static const char *
-apm_strerror(code)
-	int code;
+apm_strerror(int code)
 {
 	switch (code) {
 	case APM_ERR_PM_DISABLED:
@@ -243,9 +242,7 @@ apm_perror(const char *str, int errinfo, ...) /* XXX cgd */
 
 #ifdef APM_POWER_PRINT
 static void
-apm_power_print(sc, pi)
-	struct apm_softc *sc;
-	struct apm_power_info *pi;
+apm_power_print(struct apm_softc *sc, struct apm_power_info *pi)
 {
 
 	if (pi->battery_life != APM_BATT_LIFE_UNKNOWN) {
@@ -312,8 +309,7 @@ apm_power_print(sc, pi)
 #endif
 
 static void
-apm_suspend(sc)
-	struct apm_softc *sc;
+apm_suspend(struct apm_softc *sc)
 {
 
 	if (sc->sc_power_state == PWR_SUSPEND) {
@@ -337,8 +333,7 @@ apm_suspend(sc)
 }
 
 static void
-apm_standby(sc)
-	struct apm_softc *sc;
+apm_standby(struct apm_softc *sc)
 {
 
 	if (sc->sc_power_state == PWR_STANDBY) {
@@ -361,9 +356,7 @@ apm_standby(sc)
 }
 
 static void
-apm_resume(sc, event_type, event_info)
-	struct apm_softc *sc;
-	u_int event_type, event_info;
+apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 {
 
 	if (sc->sc_power_state == PWR_RESUME) {
@@ -397,9 +390,7 @@ apm_resume(sc, event_type, event_info)
  * return 1 if the kernel driver should do so.
  */
 static int
-apm_record_event(sc, event_type)
-	struct apm_softc *sc;
-	u_int event_type;
+apm_record_event(struct apm_softc *sc, u_int event_type)
 {
 	struct apm_event_info *evp;
 
@@ -418,9 +409,7 @@ apm_record_event(sc, event_type)
 }
 
 static void
-apm_event_handle(sc, event_code, event_info)
-	struct apm_softc *sc;
-	u_int event_code, event_info;
+apm_event_handle(struct apm_softc *sc, u_int event_code, u_int event_info)
 {
 	int error;
 	char *code;
@@ -571,8 +560,7 @@ apm_event_handle(sc, event_code, event_info)
 }
 
 static void
-apm_periodic_check(sc)
-	struct apm_softc *sc;
+apm_periodic_check(struct apm_softc *sc)
 {
 	int error;
 	u_int event_code, event_info;
@@ -605,9 +593,7 @@ apm_periodic_check(sc)
 }
 
 static void
-apm_set_ver(self, detail)
-	struct apm_softc *self;
-	u_long detail;
+apm_set_ver(struct apm_softc *self, u_long detail)
 {
 
 	if (apm_v12_enabled &&
@@ -647,10 +633,7 @@ ok:
 }
 
 static int
-apmmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+apmmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	/* There can be only one! */
@@ -661,9 +644,7 @@ apmmatch(parent, match, aux)
 }
 
 static void
-apmattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apm_softc *sc = (void *)self;
 	struct apmdev_attach_args *aaa = aux;
@@ -730,9 +711,7 @@ apmattach(parent, self, aux)
  * Print function (for parent devices).
  */
 int
-apmprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+apmprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		printf("apm at %s", pnp);
@@ -741,8 +720,7 @@ apmprint(aux, pnp)
 }
 
 void
-apm_create_thread(arg)
-	void *arg;
+apm_create_thread(void *arg)
 {
 	struct apm_softc *sc = arg;
 
@@ -759,8 +737,7 @@ apm_create_thread(arg)
 }
 
 void
-apm_thread(arg)
-	void *arg;
+apm_thread(void *arg)
 {
 	struct apm_softc *apmsc = arg;
 
@@ -776,10 +753,7 @@ apm_thread(arg)
 }
 
 int
-apmdevopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+apmdevopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = APMUNIT(dev);
 	int ctl = APMDEV(dev);
@@ -828,10 +802,7 @@ apmdevopen(dev, flag, mode, p)
 }
 
 int
-apmdevclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+apmdevclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APMDEV(dev);
@@ -857,12 +828,7 @@ apmdevclose(dev, flag, mode, p)
 }
 
 int
-apmdevioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -924,10 +890,7 @@ apmdevioctl(dev, cmd, data, flag, p)
 }
 
 int
-apmdevpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+apmdevpoll(dev_t dev, int events, struct proc *p)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	int revents = 0;

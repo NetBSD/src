@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.30 2000/07/13 22:18:08 jdolecek Exp $
+# $NetBSD: Makefile.booters,v 1.30.2.1 2001/10/01 12:41:39 fvdl Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -111,11 +111,11 @@ ${PROG}: machine mips pmax ${OBJS} ${LIBS}
 	    (rm -f ${PROG} ; false)
 .endif
 
+.include <bsd.prog.mk>
+
 CLEANFILES+=	${PROG}.map
 
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
 	rm -rf lib
-
-.include <bsd.prog.mk>

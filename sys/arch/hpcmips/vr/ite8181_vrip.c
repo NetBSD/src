@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.3 2001/04/18 11:07:27 sato Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.3.4.1 2001/10/01 12:39:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -52,20 +52,15 @@ struct ite8181_vrip_softc {
 	struct ite8181_softc	sc_ite8181;
 };
 
-static int	ite8181_vrip_probe __P((struct device *, struct cfdata *,
-				      void *));
-static void	ite8181_vrip_attach __P((struct device *, struct device *,
-				       void *));
+static int	ite8181_vrip_probe(struct device *, struct cfdata *, void *);
+static void	ite8181_vrip_attach(struct device *, struct device *, void *);
 
 struct cfattach ite8181video_vrip_ca = {
 	sizeof(struct ite8181_vrip_softc), ite8181_vrip_probe, ite8181_vrip_attach
 };
 
 static int
-ite8181_vrip_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ite8181_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	bus_space_handle_t ioh;
@@ -91,9 +86,7 @@ ite8181_vrip_probe(parent, cf, aux)
 
 
 static void
-ite8181_vrip_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ite8181_vrip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ite8181_vrip_softc *vsc = (void *)self;
 	struct ite8181_softc *sc = &vsc->sc_ite8181;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $	*/
+/* 	$NetBSD: px.c,v 1.35.4.1 2001/10/01 12:41:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35.4.1 2001/10/01 12:41:30 fvdl Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>
 
@@ -441,7 +441,7 @@ px_init(fi, slotbase, unit, console)
 }
 
 /*
- * Initalize our DISGUSTING little hack so we can use the qvss event-buffer
+ * Initialize our DISGUSTING little hack so we can use the qvss event-buffer
  * stuff for the X server.
  */
 static void
@@ -461,7 +461,7 @@ px_qvss_init(pxi)
 	fi->fi_fbu = &pxi->pxi_fbuaccess;
 	fi->fi_type.fb_width = 1280;
 	fi->fi_type.fb_height = 1024;
-	fi->fi_type.fb_boardtype = PMAX_FBTYPE_PX;
+	fi->fi_type.fb_type = PMAX_FBTYPE_PX;
 	fi->fi_type.fb_cmsize = 256;
 	fi->fi_type.fb_depth = 8;
 	fi->fi_fbu->scrInfo.max_row = 1024 / 8;
@@ -494,7 +494,7 @@ px_bt459_init(pxi)
 
 	tc_wmb();
 
-	/* Finish the initalization */
+	/* Finish the initialization */
 	BT459_SELECT(vdac, BT459_IREG_COMMAND_1);
 	BT459_WRITE_REG(vdac, 0x000000);
 	BT459_WRITE_REG(vdac, 0xc2c2c2);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/05/28 21:06:19 chs Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2001/10/01 12:42:46 fvdl Exp $
 
 KDIR=	/sys/arch/sun3/include
 INCSDIR= /usr/include/sun3
@@ -8,7 +8,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	cdefs.h cg2reg.h cpu.h \
 	db_machdep.h disklabel.h dvma.h dvma3.h dvma3x.h \
 	eeprom.h elf_machdep.h endian.h endian_machdep.h \
-	fbio.h float.h frame.h \
+	float.h frame.h \
 	idprom.h ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \

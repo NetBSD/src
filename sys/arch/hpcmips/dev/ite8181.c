@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.14 2001/07/22 09:56:41 takemura Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.14.2.1 2001/10/01 12:38:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -98,35 +98,36 @@ int ite8181_lcd_on_delay = ITE8181_LCD_ON_DELAY; /* msec */
 /*
  * function prototypes
  */
-static void	ite8181_config_write_4 __P((bus_space_tag_t, bus_space_handle_t, int, int));
-static int	ite8181_config_read_4 __P((bus_space_tag_t, bus_space_handle_t, int));
+static void	ite8181_config_write_4(bus_space_tag_t, bus_space_handle_t,
+		    int, int);
+static int	ite8181_config_read_4(bus_space_tag_t, bus_space_handle_t,
+		    int);
+static void	ite8181_gui_write_4(struct ite8181_softc *, int, int);
+static int	ite8181_gui_read_4(struct ite8181_softc *, int);
 
-static void	ite8181_gui_write_4 __P((struct ite8181_softc *, int, int));
-static int	ite8181_gui_read_4 __P((struct ite8181_softc *, int));
+static void	ite8181_gui_write_1(struct ite8181_softc *, int, int);
+static int	ite8181_gui_read_1(struct ite8181_softc *, int);
 
-static void	ite8181_gui_write_1 __P((struct ite8181_softc *, int, int));
-static int	ite8181_gui_read_1 __P((struct ite8181_softc *, int));
+static void	ite8181_graphics_write_1(struct ite8181_softc *, int, int);
+static int	ite8181_graphics_read_1(struct ite8181_softc *, int);
 
-static void	ite8181_graphics_write_1 __P((struct ite8181_softc *, int, int));
-static int	ite8181_graphics_read_1 __P((struct ite8181_softc *, int));
+static void	ite8181_ema_write_1(struct ite8181_softc *, int, int);
+static int	ite8181_ema_read_1(struct ite8181_softc *, int);
 
-static void	ite8181_ema_write_1 __P((struct ite8181_softc *, int, int));
-static int	ite8181_ema_read_1 __P((struct ite8181_softc *, int));
+static void	ite8181_power(int, void *);
+static int	ite8181_hardpower(void *, int, long, void *);
+static int	ite8181_fbinit(struct hpcfb_fbconf *);
+static int	ite8181_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	ite8181_mmap(void *, off_t offset, int);
+static void	ite8181_erase_cursor(struct ite8181_softc *);
+static int	ite8181_lcd_power(struct ite8181_softc *, int);
 
-static void	ite8181_power __P((int, void *));
-static int	ite8181_hardpower __P((void *, int, long, void *));
-static int	ite8181_fbinit __P((struct hpcfb_fbconf *));
-static int	ite8181_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	ite8181_mmap __P((void *, off_t offset, int));
-static void	ite8181_erase_cursor __P((struct ite8181_softc *));
-static int	ite8181_lcd_power __P((struct ite8181_softc *, int));
-
-static void	ite8181_update_powerstate __P((struct ite8181_softc *, int));
-void	ite8181_init_backlight __P((struct ite8181_softc *, int));
-void	ite8181_init_brightness __P((struct ite8181_softc *, int));
-void	ite8181_init_contrast __P((struct ite8181_softc *, int));
-void	ite8181_set_brightness __P((struct ite8181_softc *, int));
-void	ite8181_set_contrast __P((struct ite8181_softc *, int));
+static void	ite8181_update_powerstate(struct ite8181_softc *, int);
+void	ite8181_init_backlight(struct ite8181_softc *, int);
+void	ite8181_init_brightness(struct ite8181_softc *, int);
+void	ite8181_init_contrast(struct ite8181_softc *, int);
+void	ite8181_set_brightness(struct ite8181_softc *, int);
+void	ite8181_set_contrast(struct ite8181_softc *, int);
 
 /*
  * static variables
@@ -136,112 +137,98 @@ struct hpcfb_accessops ite8181_ha = {
 };
 
 inline int
-ite8181_config_read_4(iot, ioh, byteoffset)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int byteoffset;
+ite8181_config_read_4(bus_space_tag_t iot, bus_space_handle_t ioh,
+    int byteoffset)
 {
-	return bus_space_read_4(iot, ioh, ITE8181_CONF_OFFSET + byteoffset);
+
+	return (bus_space_read_4(iot, ioh, ITE8181_CONF_OFFSET + byteoffset));
 }
 
 inline void
-ite8181_config_write_4(iot, ioh, byteoffset, data)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int byteoffset;
-	int data;
+ite8181_config_write_4(bus_space_tag_t iot, bus_space_handle_t ioh,
+    int byteoffset, int data)
 {
+
 	bus_space_write_4(iot, ioh, ITE8181_CONF_OFFSET + byteoffset, data);
 }
 
 inline int
-ite8181_gui_read_4(sc, byteoffset)
-	struct ite8181_softc *sc;
-	int byteoffset;
+ite8181_gui_read_4(struct ite8181_softc *sc, int byteoffset)
 {
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, 
-			sc->sc_gba + byteoffset);
+
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    sc->sc_gba + byteoffset));
 }
 
 inline void
-ite8181_gui_write_4(sc, byteoffset, data)
-	struct ite8181_softc *sc;
-	int byteoffset;
-	int data;
+ite8181_gui_write_4(struct ite8181_softc *sc, int byteoffset, int data)
 {
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_gba + byteoffset, data);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_gba + byteoffset,
+	    data);
 }
 
 inline int
-ite8181_gui_read_1(sc, byteoffset)
-	struct ite8181_softc *sc;
-	int byteoffset;
+ite8181_gui_read_1(struct ite8181_softc *sc, int byteoffset)
 {
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
-			sc->sc_gba + byteoffset);
+
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+	    sc->sc_gba + byteoffset));
 }
 
 inline void
-ite8181_gui_write_1(sc, byteoffset, data)
-	struct ite8181_softc *sc;
-	int byteoffset;
-	int data;
+ite8181_gui_write_1(struct ite8181_softc *sc, int byteoffset, int data)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_gba + byteoffset, data);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_gba + byteoffset,
+	    data);
 }
 
 inline int
-ite8181_graphics_read_1(sc, byteoffset)
-	struct ite8181_softc *sc;
-	int byteoffset;
+ite8181_graphics_read_1(struct ite8181_softc *sc, int byteoffset)
 {
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
-			sc->sc_sba + byteoffset);
+
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+	    sc->sc_sba + byteoffset));
 }
 
 inline void
-ite8181_graphics_write_1(sc, byteoffset, data)
-	struct ite8181_softc *sc;
-	int byteoffset;
-	int data;
+ite8181_graphics_write_1(struct ite8181_softc *sc, int byteoffset, int data)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_sba + byteoffset, data);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_sba + byteoffset,
+	    data);
 }
 
 inline int
-ite8181_ema_read_1(sc, byteoffset)
-	struct ite8181_softc *sc;
-	int byteoffset;
+ite8181_ema_read_1(struct ite8181_softc *sc, int byteoffset)
 {
+
 	ite8181_graphics_write_1(sc, ITE8181_EMA_EXAX, byteoffset);
-	return ite8181_graphics_read_1(sc, ITE8181_EMA_EXADATA);
+	return (ite8181_graphics_read_1(sc, ITE8181_EMA_EXADATA));
 }
 
 inline void
-ite8181_ema_write_1(sc, byteoffset, data)
-	struct ite8181_softc *sc;
-	int byteoffset;
-	int data;
+ite8181_ema_write_1(struct ite8181_softc *sc, int byteoffset, int data)
 {
+
 	ite8181_graphics_write_1(sc, ITE8181_EMA_EXAX, byteoffset);
 	ite8181_graphics_write_1(sc, ITE8181_EMA_EXADATA, data);
 }
 	
 int
-ite8181_probe(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+ite8181_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	unsigned long regval;
 
 #if NBIVIDEO > 0
-	if (bivideo_dont_attach)	/* some video driver already attached */
+	if (bivideo_dont_attach)  /* some video driver already attached */
 		return (0);
 #endif /* NBIVIDEO > 0 */
 
 	regval = ite8181_config_read_4(iot, ioh, ITE8181_ID);
 	VPRINTF(("ite8181_probe: vendor id=%04lx product id=%04lx\n",
-		 regval & 0xffff, (regval >> 16) & 0xffff));
+	    regval & 0xffff, (regval >> 16) & 0xffff));
 	if (regval != ((ITE8181_PRODUCT_ID << 16) | ITE8181_VENDER_ID))
 		return (0);
 
@@ -249,8 +236,7 @@ ite8181_probe(iot, ioh)
 }
 
 void
-ite8181_attach(sc)
-	struct ite8181_softc *sc;
+ite8181_attach(struct ite8181_softc *sc)
 {
 	unsigned long regval;
 	struct hpcfb_attach_args ha;
@@ -269,10 +255,10 @@ ite8181_attach(sc)
 	}
 	printf("\n");
 	printf("%s: framebuffer address: 0x%08lx\n", 
-		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 	if (ite8181_lcd_control_disable)
 		printf("%s: ite8181 lcd coontrol is DISABLED.\n", 
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
 	/* set base offsets */
 	sc->sc_mba = ite8181_config_read_4(sc->sc_iot, sc->sc_ioh, ITE8181_MBA);
@@ -291,16 +277,16 @@ ite8181_attach(sc)
 	sc->sc_powerhook = powerhook_establish(ite8181_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
 	/* Add a hard power hook to power saving */
 	sc->sc_hardpowerhook = config_hook(CONFIG_HOOK_PMEVENT,
-					   CONFIG_HOOK_PMEVENT_HARDPOWER,
-					   CONFIG_HOOK_SHARE,
-					   ite8181_hardpower, sc);
+	    CONFIG_HOOK_PMEVENT_HARDPOWER,
+	    CONFIG_HOOK_SHARE,
+	    ite8181_hardpower, sc);
 	if (sc->sc_hardpowerhook == NULL)
 		printf("%s: WARNING: unable to establish hard power hook\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
 	/* initialize backlight brightness and lcd contrast */
 	sc->sc_lcd_inited = 0;
@@ -332,9 +318,8 @@ ite8181_attach(sc)
 #endif /* NBIVIDEO > 0 */
 }
 
-int ite8181_lcd_power(sc, on)
-	struct ite8181_softc *sc;
-	int on;
+int
+ite8181_lcd_power(struct ite8181_softc *sc, int on)
 {
 	int lcd_p;
 	int lcd_s;
@@ -348,17 +333,18 @@ int ite8181_lcd_power(sc, on)
 
 	if (sc->sc_lcd != on) {
 		ite8181_ema_write_1(sc, ITE8181_EMA_ENABLEEMA, 
-			ITE8181_EMA_ENABLEPASS);
+		    ITE8181_EMA_ENABLEPASS);
 		lcd_p = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER);
 		lcd_s = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT);
 		lcd_seq = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSEQ);
 		DPRINTFN(1,("ite8181_lcd_power(%d)< p=%x, s=%x, seq=%x\n",
-			on,
-			lcd_p, lcd_s, lcd_seq));
+		    on,
+		    lcd_p, lcd_s, lcd_seq));
 		if (on) {
 			sc->sc_lcd = 1;
 			lcd_seq |= (ITE8181_PUP0|ITE8181_PUP1|ITE8181_PUP2);
-			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWERSEQ, lcd_seq);
+			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWERSEQ,
+			    lcd_seq);
 			lcd_p &= ~ITE8181_LCDSTANDBY;
 			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWER, lcd_p);
 			/*
@@ -370,84 +356,93 @@ int ite8181_lcd_power(sc, on)
 			 */
 			delay(ite8181_lcd_on_self_delay*MSEC);
 			while (loop--) {
-				lcd_p = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER);
-				lcd_s = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT);
-				lcd_seq = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSEQ);
-				DPRINTFN(1,("ite8181_lcd_power(%d)%d| p=%x, s=%x, seq=%x\n",
-					on, loop,
-					lcd_p, lcd_s, lcd_seq));
-				/* XXX the states which are not described in manual.*/
+				lcd_p = ite8181_ema_read_1(sc,
+				    ITE8181_EMA_LCDPOWER);
+				lcd_s = ite8181_ema_read_1(sc,
+				    ITE8181_EMA_LCDPOWERSTAT);
+				lcd_seq = ite8181_ema_read_1(sc,
+				    ITE8181_EMA_LCDPOWERSEQ);
+				DPRINTFN(1,("ite8181_lcd_power(%d)%d| p=%x,"
+				    " s=%x, seq=%x\n", on, loop, lcd_p, lcd_s,
+				    lcd_seq));
+				/* 
+				 *  XXX the states which are not described 
+				 *  XXX in manual.
+				 */
 				if (!(lcd_s&ITE8181_LCDPSTANDBY) &&
-					!(lcd_s&ITE8181_LCDPUP) &&
-					(lcd_s&ITE8181_LCDPON))
+				    !(lcd_s&ITE8181_LCDPUP) &&
+				    (lcd_s&ITE8181_LCDPON))
 					break;
 				delay(100);
 			}
 			lcd_s |= ITE8181_PPTOBEON;
-			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWERSTAT, lcd_s);
+			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWERSTAT,
+			    lcd_s);
 		} else {
 			sc->sc_lcd = 0;
 			lcd_p |= ITE8181_LCDSTANDBY;
 			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWER, lcd_p);
 			while (loop--) {
-				lcd_p = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER);
-				lcd_s = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT);
-				lcd_seq = ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSEQ);
-				DPRINTFN(1,("ite8181_lcd_power(%d)%d| p=%x, s=%x, seq=%x\n",
-					on, loop,
-					lcd_p, lcd_s, lcd_seq));
-				/* XXX the states which are not described in manual.*/
+				lcd_p = ite8181_ema_read_1(sc,
+				    ITE8181_EMA_LCDPOWER);
+				lcd_s = ite8181_ema_read_1(sc,
+				    ITE8181_EMA_LCDPOWERSTAT);
+				lcd_seq = ite8181_ema_read_1(sc,
+				    ITE8181_EMA_LCDPOWERSEQ);
+				DPRINTFN(1,("ite8181_lcd_power(%d)%d| p=%x,"
+				    " s=%x, seq=%x\n", on, loop, lcd_p, lcd_s,
+				    lcd_seq));
+				/* 
+				 * XXX the states which are not described
+				 * XXX in manual.
+				 */
 				if ((lcd_s&ITE8181_LCDPSTANDBY) &&
-					!(lcd_s&ITE8181_LCDPDOWN) &&
-					!(lcd_s&ITE8181_LCDPON))
+				    !(lcd_s&ITE8181_LCDPDOWN) &&
+				    !(lcd_s&ITE8181_LCDPON))
 					break;
 				delay(100);
 			}
 			lcd_s &= ~ITE8181_PPTOBEON;
-			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWERSTAT, lcd_s);
+			ite8181_ema_write_1(sc, ITE8181_EMA_LCDPOWERSTAT,
+			    lcd_s);
 		}
 		DPRINTFN(1,("ite8181_lcd_power(%d)> p=%x, s=%x, seq=%x\n",
-			on,
-			ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER),
-			ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT),
-			ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSEQ)));
+		    on,
+		    ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWER),
+		    ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSTAT),
+		    ite8181_ema_read_1(sc, ITE8181_EMA_LCDPOWERSEQ)));
 		ite8181_ema_write_1(sc, ITE8181_EMA_ENABLEEMA,
-					ITE8181_EMA_DISABLEPASS);
+		    ITE8181_EMA_DISABLEPASS);
 	}	
 	return 0;
 }
 
 static void
-ite8181_erase_cursor(sc)
-	struct ite8181_softc *sc;
+ite8181_erase_cursor(struct ite8181_softc *sc)
 {
 	ite8181_gui_write_1(sc, ITE8181_GUI_C1C, 0); /* Cursor 1 Control Reg. */
 	/* other ? */
 }
 
 static void
-ite8181_update_powerstate(sc, updates)
-	struct ite8181_softc *sc;
-	int updates;
+ite8181_update_powerstate(struct ite8181_softc *sc, int updates)
 {
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
 		    (void*)!(sc->sc_powerstate & 
-				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
+			(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
 		    (void*)(!(sc->sc_powerstate & 
-				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
-			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
+			(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
+			(sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
 static void 
-ite8181_power(why, arg)
-	int why;
-	void *arg;
+ite8181_power(int why, void *arg)
 {
         struct ite8181_softc *sc = arg;
 
@@ -468,11 +463,7 @@ ite8181_power(why, arg)
 }
 
 static int
-ite8181_hardpower(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+ite8181_hardpower(void *ctx, int type, long id, void *msg)
 {
 	struct ite8181_softc *sc = ctx;
 	int why = (int)msg;
@@ -508,8 +499,7 @@ ite8181_hardpower(ctx, type, id, msg)
 }
 
 static int
-ite8181_fbinit(fb)
-	struct hpcfb_fbconf *fb;
+ite8181_fbinit(struct hpcfb_fbconf *fb)
 {
 
 	/*
@@ -537,12 +527,12 @@ ite8181_fbinit(fb)
 	fb->hf_width		= bootinfo->fb_width;
 	fb->hf_baseaddr		= (u_long)bootinfo->fb_addr;
 	fb->hf_offset		= (u_long)bootinfo->fb_addr -
-				     mips_ptob(mips_btop(bootinfo->fb_addr));
+	    mips_ptob(mips_btop(bootinfo->fb_addr));
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= bootinfo->fb_line_bytes;
 	fb->hf_nplanes		= 1;
 	fb->hf_bytes_per_plane	= bootinfo->fb_height *
-					bootinfo->fb_line_bytes;
+	    bootinfo->fb_line_bytes;
 
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
@@ -688,7 +678,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GVIDEO:
 		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
-				WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
+		    WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
 		return 0;
 
 
@@ -700,17 +690,19 @@ ite8181_ioctl(v, cmd, data, flag, p)
 			ite8181_init_brightness(sc, 0);
 			ite8181_init_backlight(sc, 0);
 			VPRINTF(("ite8181_ioctl: GET:(real)BACKLIGHT %d\n",
-				 (sc->sc_powerstate&PWRSTAT_BACKLIGHT)? 1: 0));
+			    (sc->sc_powerstate&PWRSTAT_BACKLIGHT)? 1: 0));
 			dispparam->min = 0;
 			dispparam->max = 1;
 			if (sc->sc_max_brightness > 0)
-				dispparam->curval = sc->sc_brightness > 0? 1: 0;
+				dispparam->curval = 
+				    sc->sc_brightness > 0 ? 1: 0;
 			else
 				dispparam->curval =
-				    (sc->sc_powerstate&PWRSTAT_BACKLIGHT) ? 1: 0;
+				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT)
+				    ? 1: 0;
 			VPRINTF(("ite8181_ioctl: GET:BACKLIGHT:%d(%s)\n",
-				dispparam->curval,
-				sc->sc_max_brightness > 0? "brightness": "light"));
+			    dispparam->curval,
+			    sc->sc_max_brightness > 0? "brightness": "light"));
 			return 0;
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
@@ -720,10 +712,13 @@ ite8181_ioctl(v, cmd, data, flag, p)
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_contrast;
 				dispparam->curval = sc->sc_contrast;
-				VPRINTF(("ite8181_ioctl: GET:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast));
+				VPRINTF(("ite8181_ioctl: GET:CONTRAST max=%d,"
+				    " current=%d\n", sc->sc_max_contrast,
+				    sc->sc_contrast));
 				return 0;
 			} else {
-				VPRINTF(("ite8181_ioctl: GET:CONTRAST EINVAL\n"));
+				VPRINTF(("ite8181_ioctl: "
+				    "GET:CONTRAST EINVAL\n"));
 				return (EINVAL);
 			}
 			break;	
@@ -734,10 +729,13 @@ ite8181_ioctl(v, cmd, data, flag, p)
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_brightness;
 				dispparam->curval = sc->sc_brightness;
-				VPRINTF(("ite8181_ioctl: GET:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness));
+				VPRINTF(("ite8181_ioctl: GET:BRIGHTNESS"
+				    " max=%d, current=%d\n",
+				    sc->sc_max_brightness, sc->sc_brightness));
 				return 0;
 			} else {
-				VPRINTF(("ite8181_ioctl: GET:BRIGHTNESS EINVAL\n"));
+				VPRINTF(("ite8181_ioctl: GET:BRIGHTNESS"
+				    " EINVAL\n"));
 				return (EINVAL);
 			}
 			return (EINVAL);
@@ -755,27 +753,36 @@ ite8181_ioctl(v, cmd, data, flag, p)
 			    1 < dispparam->curval)
 				return (EINVAL);
 			ite8181_init_brightness(sc, 0);
-			VPRINTF(("ite8181_ioctl: SET:max brightness=%d\n", sc->sc_max_brightness));
+			VPRINTF(("ite8181_ioctl: SET:max brightness=%d\n",
+			    sc->sc_max_brightness));
 			if (sc->sc_max_brightness > 0) { /* dimmer */
 				if (dispparam->curval == 0){
-					sc->sc_brightness_save = sc->sc_brightness;
-					ite8181_set_brightness(sc, 0);	/* min */
+					sc->sc_brightness_save =
+					    sc->sc_brightness;
+					ite8181_set_brightness(sc, 0);/* min */
 				} else {
 					if (sc->sc_brightness_save == 0)
-						sc->sc_brightness_save = sc->sc_max_brightness;
-					ite8181_set_brightness(sc, sc->sc_brightness_save);
+						sc->sc_brightness_save =
+						    sc->sc_max_brightness;
+					ite8181_set_brightness(sc,
+					    sc->sc_brightness_save);
 				}
-				VPRINTF(("ite8181_ioctl: SET:BACKLIGHT:brightness=%d\n", sc->sc_brightness));
+				VPRINTF(("ite8181_ioctl: SET:BACKLIGHT:"
+				    "brightness=%d\n", sc->sc_brightness));
 			} else { /* off */
 				if (dispparam->curval == 0)
 					sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
 				else
 					sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-				VPRINTF(("ite8181_ioctl: SET:BACKLIGHT:powerstate %d\n",
-						(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
-				ite8181_update_powerstate(sc, PWRSTAT_BACKLIGHT);
+				VPRINTF(("ite8181_ioctl: SET:BACKLIGHT:"
+				    "powerstate %d\n",
+				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT)
+				    ? 1 : 0));
+				ite8181_update_powerstate(sc,
+				    PWRSTAT_BACKLIGHT);
 				VPRINTF(("ite8181_ioctl: SET:BACKLIGHT:%d\n",
-					(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT)
+				    ? 1 : 0));
 			}
 			return 0;
 			break;
@@ -787,11 +794,14 @@ ite8181_ioctl(v, cmd, data, flag, p)
 				return (EINVAL);
 			if (sc->sc_max_contrast > 0) {
 				int org = sc->sc_contrast;
-				ite8181_set_contrast(sc, dispparam->curval);	
-				VPRINTF(("ite8181_ioctl: SET:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
+				ite8181_set_contrast(sc, dispparam->curval);
+				VPRINTF(("ite8181_ioctl: SET:CONTRAST"
+				    " org=%d, current=%d\n", org,
+				    sc->sc_contrast));
 				return 0;
 			} else {
-				VPRINTF(("ite8181_ioctl: SET:CONTRAST EINVAL\n"));
+				VPRINTF(("ite8181_ioctl: SET:CONTRAST"
+				    " EINVAL\n"));
 				return (EINVAL);
 			}
 			break;
@@ -803,11 +813,14 @@ ite8181_ioctl(v, cmd, data, flag, p)
 				return (EINVAL);
 			if (sc->sc_max_brightness > 0) {
 				int org = sc->sc_brightness;
-				ite8181_set_brightness(sc, dispparam->curval);	
-				VPRINTF(("ite8181_ioctl: SET:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
+				ite8181_set_brightness(sc, dispparam->curval);
+				VPRINTF(("ite8181_ioctl: SET:BRIGHTNESS"
+				    " org=%d, current=%d\n", org,
+				    sc->sc_brightness));
 				return 0;
 			} else {
-				VPRINTF(("ite8181_ioctl: SET:BRIGHTNESS EINVAL\n"));
+				VPRINTF(("ite8181_ioctl: SET:BRIGHTNESS"
+				    " EINVAL\n"));
 				return (EINVAL);
 			}
 			break;
@@ -837,9 +850,9 @@ ite8181_ioctl(v, cmd, data, flag, p)
 	case HPCFBIO_GDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
-		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
-		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
 			return (EINVAL);
 		}
 		*dspconf = sc->sc_dspconf;	/* structure assignment */
@@ -847,9 +860,9 @@ ite8181_ioctl(v, cmd, data, flag, p)
 	case HPCFBIO_SDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
-		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
-		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
 			return (EINVAL);
 		}
 		/*
@@ -869,10 +882,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-ite8181_mmap(ctx, offset, prot)
-	void *ctx;
-	off_t offset;
-	int prot;
+ite8181_mmap(void *ctx, off_t offset, int prot)
 {
 	struct ite8181_softc *sc = (struct ite8181_softc *)ctx;
 
@@ -886,9 +896,7 @@ ite8181_mmap(ctx, offset, prot)
 
 
 void
-ite8181_init_backlight(sc, inattach)
-	struct ite8181_softc *sc;
-	int inattach;
+ite8181_init_backlight(struct ite8181_softc *sc, int inattach)
 {
 	int val = -1;
 
@@ -896,7 +904,7 @@ ite8181_init_backlight(sc, inattach)
 		return;
 
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+	    CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
 		/* we can get real light state */
 		VPRINTF(("ite8181_init_backlight: real backlight=%d\n", val));
 		if (val == 0)
@@ -910,7 +918,7 @@ ite8181_init_backlight(sc, inattach)
 		   because light device not yet attached.
 		   we will retry in !inattach.
 		   temporary assume light is on.
-		 */
+		*/
 		sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 	} else {
 		/* we cannot get real light state, so work by myself state */
@@ -919,9 +927,7 @@ ite8181_init_backlight(sc, inattach)
 }
 
 void
-ite8181_init_brightness(sc, inattach)
-	struct ite8181_softc *sc;
-	int inattach;
+ite8181_init_brightness(struct ite8181_softc *sc, int inattach)
 {
 	int val = -1;
 
@@ -930,19 +936,21 @@ ite8181_init_brightness(sc, inattach)
 
 	VPRINTF(("ite8181_init_brightness\n"));
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+	    CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
 		/* we can get real brightness max */
-		VPRINTF(("ite8181_init_brightness: real brightness max=%d\n", val));
+		VPRINTF(("ite8181_init_brightness: real brightness max=%d\n",
+		    val));
 		sc->sc_max_brightness = val;
 		val = -1;
 		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+		    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 			/* we can get real brightness */
-			VPRINTF(("ite8181_init_brightness: real brightness=%d\n", val));
+			VPRINTF(("ite8181_init_brightness:"
+			    " real brightness=%d\n", val));
 			sc->sc_brightness_save = sc->sc_brightness = val;
 		} else {
 			sc->sc_brightness_save =
-			sc->sc_brightness = sc->sc_max_brightness;
+			    sc->sc_brightness = sc->sc_max_brightness;
 		}
 		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	} else if (inattach) {
@@ -950,7 +958,7 @@ ite8181_init_brightness(sc, inattach)
 		   we cannot get real brightness in attach time
 		   because brightness device not yet attached.
 		   we will retry in !inattach.
-		 */
+		*/
 		sc->sc_max_brightness = -1;
 		sc->sc_brightness = -1;
 		sc->sc_brightness_save = -1;
@@ -963,9 +971,7 @@ ite8181_init_brightness(sc, inattach)
 }
 
 void
-ite8181_init_contrast(sc, inattach)
-	struct ite8181_softc *sc;
-	int inattach;
+ite8181_init_contrast(struct ite8181_softc *sc, int inattach)
 {
 	int val = -1;
 
@@ -974,15 +980,16 @@ ite8181_init_contrast(sc, inattach)
 
 	VPRINTF(("ite8181_init_contrast\n"));
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
+	    CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
 		/* we can get real contrast max */
 		VPRINTF(("ite8181_init_contrast: real contrast max=%d\n", val));
 		sc->sc_max_contrast = val;
 		val = -1;
 		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_CONTRAST, &val) != -1) {
+		    CONFIG_HOOK_CONTRAST, &val) != -1) {
 			/* we can get real contrast */
-			VPRINTF(("ite8181_init_contrast: real contrast=%d\n", val));
+			VPRINTF(("ite8181_init_contrast: real contrast=%d\n",
+			    val));
 			sc->sc_contrast = val;
 		} else {
 			sc->sc_contrast = sc->sc_max_contrast;
@@ -993,7 +1000,7 @@ ite8181_init_contrast(sc, inattach)
 		   we cannot get real contrast in attach time
 		   because contrast device not yet attached.
 		   we will retry in !inattach.
-		 */
+		*/
 		sc->sc_max_contrast = -1;
 		sc->sc_contrast = -1;
 	} else {
@@ -1006,29 +1013,27 @@ ite8181_init_contrast(sc, inattach)
 
 
 void
-ite8181_set_brightness(sc, val)
-	struct ite8181_softc *sc;
-	int val;
+ite8181_set_brightness(struct ite8181_softc *sc, int val)
 {
+
 	sc->sc_brightness = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS, &val);
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+	    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 		sc->sc_brightness = val;
 	}
 }
 
 void
-ite8181_set_contrast(sc, val)
-	struct ite8181_softc *sc;
-	int val;
+ite8181_set_contrast(struct ite8181_softc *sc, int val)
 {
+
 	sc->sc_contrast = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST, &val);
 	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_CONTRAST, &val) != -1) {
+	    CONFIG_HOOK_CONTRAST, &val) != -1) {
 		sc->sc_contrast = val;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.8 2000/06/28 16:27:52 mrg Exp $	*/
+/*	$NetBSD: aria.c,v 1.8.6.1 2001/10/01 12:45:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -48,9 +48,6 @@
  *           we are passed.
  *       o   Deal better with cards that have no mixer.
  */
-
-#include "aria.h"
-#if NARIA > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1659,5 +1656,3 @@ mute:
 	}
 	return 0;
 }
-
-#endif /* NARIA */

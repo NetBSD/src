@@ -1,4 +1,4 @@
-/*      $NetBSD: pms.c,v 1.6 2000/03/25 21:26:47 scw Exp $        */
+/*      $NetBSD: pms.c,v 1.6.6.1 2001/10/01 12:37:59 fvdl Exp $        */
 
 /*
  * Copyright 1997
@@ -813,8 +813,8 @@ pmsintr(arg)
                 /* First byte of protocol consists of the following mouse bits
                 ** Bit 7  6  5  4   3  2  1  0
                 **     YO XO YS XS  1  0  R  L
-                ** YO = Overflow occured in the Y direction.
-                ** XO = Overflow occured in the X direction.
+                ** YO = Overflow occurred in the Y direction.
+                ** XO = Overflow occurred in the X direction.
                 ** YS = Sign of movement data on Y axis (1 = negative)
                 ** XS = Sign of movement data on X axis (1 = negative)
                 ** R  = Right button state (1 = pressed down)

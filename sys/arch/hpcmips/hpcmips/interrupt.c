@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2001/06/13 06:03:11 enami Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.6.1 2001/10/01 12:39:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,53 +44,10 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-#include <machine/autoconf.h>
-#include <machine/intr.h>
-#include <machine/locore.h>
 #include <machine/sysconf.h>
 
-struct hpcmips_soft_intrhand *softnet_intrhand;
-
-#if 0
-/*
- * NetBSD/hpcmips currently using splvec structure for this.  XXX.
- */
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given interrupt priority level.
- */
-const u_int32_t ipl_sr_bits[_IPL_N] = {
-	0,					/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/* IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1,		/* IPL_{CLOCK,HIGH} */
-};
-#endif
+extern const u_int32_t __ipl_sr_bits_vr[];
+extern const u_int32_t __ipl_sr_bits_tx[];
 
 const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -99,51 +56,53 @@ const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
+const u_int32_t *ipl_sr_bits;
+struct hpcmips_soft_intrhand *softnet_intrhand;
 struct hpcmips_soft_intr hpcmips_soft_intrs[_IPL_NSOFT];
 
 void
+intr_init()
+{
+#if defined(VR41XX) && defined(TX39XX)
+	__cpu_intr = CPUISMIPS3 ? vr_intr : tx_intr;
+	ipl_sr_bits = CPUISMIPS3 ? __ipl_sr_bits_vr : __ipl_sr_bits_tx;
+#elif defined(VR41XX)
+	ipl_sr_bits = __ipl_sr_bits_vr;
+#elif defined(TX39XX)
+	ipl_sr_bits = __ipl_sr_bits_tx;
+#endif
+}
+
+#if defined(VR41XX) && defined(TX39XX)
+/*
+ * cpu_intr:
+ *
+ *	handle MIPS CPU interrupt.
+ *	if VR41XX only or TX39XX only kernel, directly jump to each handler
+ *	(tx/tx39icu.c, vr/vr.c), don't use this dispather.
+ * 
+ */
+void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+
+	(*platform.cpu_intr)(status, cause, pc, ipending);
+}
+#endif /* VR41XX && TX39XX */
+
+/*
+ * softintr:
+ *
+ *	dispatch pending software interrupt handler.
+ */
+void
+softintr(u_int32_t ipending)
 {
 	struct hpcmips_soft_intr *asi;
 	struct hpcmips_soft_intrhand *sih;
 	int i, s;
 
-	uvmexp.intrs++;
-
-#ifdef VR41XX
-#ifdef TX39XX
-	if (CPUISMIPS3)
-#endif /* TX39XX */
-		if (ipending & MIPS_INT_MASK_5) {
-			/*
-			 *  Writing a value to the Compare register,
-			 *  as a side effect, clears the timer
-			 *  interrupt request.
-			 */
-			mips3_cp0_compare_write(mips3_cp0_count_read());
-		}
-#endif
-
-	/* Process clock and I/O interrupts. */
-#if defined(VR41XX)
-#if defined(TX39XX)
-	if (CPUISMIPS3)
-#endif /* TX39XX */
-		if (ipending & MIPS3_HARD_INT_MASK)
-			_splset((*platform.iointr)(status, cause, pc,
-			    ipending));
-#endif /* VR41XX */
-
-#if defined(TX39XX)
-#if defined(VR41XX)
-	if (!CPUISMIPS3)
-#endif /* VR41XX */
-		if (ipending & MIPS_HARD_INT_MASK)
-			_splset((*platform.iointr)(status, cause, pc,
-			    ipending));
-#endif /* TX39XX */
-
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	ipending &= (MIPS_SOFT_INT_MASK_1 | MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
 

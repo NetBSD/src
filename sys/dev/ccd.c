@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.73.2.2 2001/09/26 15:28:09 fvdl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.73.2.3 2001/10/01 12:44:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -609,9 +609,10 @@ ccdstrategy(bp)
 	int s;
 	int wlabel;
 	struct disklabel *lp;
+	dev_t rdev;
 
 	cs = vdev_privdata(bp->b_devvp);
-	rdev = vdev_rdev(devvp);
+	rdev = vdev_rdev(bp->b_devvp);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)

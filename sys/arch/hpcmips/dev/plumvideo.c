@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.20 2001/08/05 18:07:52 jdolecek Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.20.2.1 2001/10/01 12:39:00 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ void	plumvideo_clut_default(struct plumvideo_softc *);
 void	plumvideo_clut_set(struct plumvideo_softc *, u_int32_t *, int, int);
 void	plumvideo_clut_get(struct plumvideo_softc *, u_int32_t *, int, int);
 void	__plumvideo_clut_access(struct plumvideo_softc *,
-				void (*)(bus_space_tag_t, bus_space_handle_t));
+	    void (*)(bus_space_tag_t, bus_space_handle_t));
 static void _flush_cache(void) __attribute__((__unused__)); /* !!! */
 
 #ifdef PLUMVIDEODEBUG
@@ -164,19 +164,19 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map register area */
 	if (bus_space_map(sc->sc_regt, PLUM_VIDEO_REGBASE, 
-			  PLUM_VIDEO_REGSIZE, 0, &sc->sc_regh)) {
+	    PLUM_VIDEO_REGSIZE, 0, &sc->sc_regh)) {
 		printf("register map failed\n");
 		return;
 	}
 
 	/* power control */
 	plumvideo_power(sc, 0, 0,
-			(void *)(console ? PWR_RESUME : PWR_SUSPEND));
+	    (void *)(console ? PWR_RESUME : PWR_SUSPEND));
 	/* Add a hard power hook to power saving */
 	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
-				       CONFIG_HOOK_PMEVENT_HARDPOWER,
-				       CONFIG_HOOK_SHARE,
-				       plumvideo_power, sc);
+	    CONFIG_HOOK_PMEVENT_HARDPOWER,
+	    CONFIG_HOOK_SHARE,
+	    plumvideo_power, sc);
 	if (sc->sc_powerhook == 0)
 		printf("WARNING unable to establish hard power hook");
 	
@@ -306,9 +306,9 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 #if notyet
 	/* map BitBlt area */
 	if (bus_space_map(sc->sc_bitbltt,
-			  PLUM_VIDEO_BITBLT_IOBASE,
-			  PLUM_VIDEO_BITBLT_IOSIZE, 0, 
-			  &sc->sc_bitblth)) {
+	    PLUM_VIDEO_BITBLT_IOBASE,
+	    PLUM_VIDEO_BITBLT_IOSIZE, 0, 
+	    &sc->sc_bitblth)) {
 		printf(": BitBlt map failed\n");
 		return (1);
 	}
@@ -344,10 +344,10 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 	 * Get display size from WindowsCE setted.
 	 */
 	chip->vc_fbwidth = width = bootinfo->fb_width = 
-		plum_conf_read(regt, regh, PLUM_VIDEO_PLHPX_REG) + 1;
+	    plum_conf_read(regt, regh, PLUM_VIDEO_PLHPX_REG) + 1;
 	chip->vc_fbheight = height = bootinfo->fb_height = 
-		plum_conf_read(regt, regh, PLUM_VIDEO_PLVT_REG) -
-		plum_conf_read(regt, regh, PLUM_VIDEO_PLVDS_REG);
+	    plum_conf_read(regt, regh, PLUM_VIDEO_PLVT_REG) -
+	    plum_conf_read(regt, regh, PLUM_VIDEO_PLVDS_REG);
 
 	/*
 	 * set line byte length to bootinfo and LCD controller.
@@ -355,7 +355,7 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 	vram_pitch = bootinfo->fb_line_bytes = (width * bpp) / NBBY;
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT1_REG, vram_pitch);
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT2_REG,
-			vram_pitch & PLUM_VIDEO_PLPIT2_MASK);
+	    vram_pitch & PLUM_VIDEO_PLPIT2_MASK);
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLOFS_REG, vram_pitch);
 	
 	/*
@@ -370,9 +370,9 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 		printf("8bpp ");
 		/* map CLUT area */
 		if (bus_space_map(sc->sc_clutiot,
-				  PLUM_VIDEO_CLUT_LCD_IOBASE,
-				  PLUM_VIDEO_CLUT_LCD_IOSIZE, 0, 
-				  &sc->sc_clutioh)) {
+		    PLUM_VIDEO_CLUT_LCD_IOBASE,
+		    PLUM_VIDEO_CLUT_LCD_IOSIZE, 0, 
+		    &sc->sc_clutioh)) {
 			printf(": CLUT map failed\n");
 			return (1);
 		}
@@ -396,7 +396,7 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 	 * map V-RAM area.
 	 */
 	if (bus_space_map(sc->sc_fbiot, PLUM_VIDEO_VRAM_IOBASE,
-			  vram_size, 0, &sc->sc_fbioh)) {
+	    vram_size, 0, &sc->sc_fbioh)) {
 		printf(": V-RAM map failed\n");
 		return (1);
 	}
@@ -511,9 +511,9 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case HPCFBIO_GDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
-		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
-		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
 			return (EINVAL);
 		}
 		*dspconf = sc->sc_dspconf;	/* structure assignment */
@@ -522,9 +522,9 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case HPCFBIO_SDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
-		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
-		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
 			return (EINVAL);
 		}
 		/*
@@ -548,7 +548,7 @@ plumvideo_mmap(void *ctx, off_t offset, int prot)
 	struct plumvideo_softc *sc = (struct plumvideo_softc *)ctx;
 
 	if (offset < 0 || (sc->sc_fbconf.hf_bytes_per_plane +
-			   sc->sc_fbconf.hf_offset) <  offset) {
+	    sc->sc_fbconf.hf_offset) <  offset) {
 		return (-1);
 	}
 	
@@ -557,19 +557,19 @@ plumvideo_mmap(void *ctx, off_t offset, int prot)
 
 void
 plumvideo_clut_get(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
-		   int cnt)
+    int cnt)
 {
 	static void __plumvideo_clut_get(bus_space_tag_t,
-					      bus_space_handle_t);
+	    bus_space_handle_t);
 	static void __plumvideo_clut_get(iot, ioh)
-		bus_space_tag_t iot;
-		bus_space_handle_t ioh;
+	    bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	{
 		int i;
 		
 		for (i = 0, beg *= 4; i < cnt; i++, beg += 4) {
 			*rgb++ = bus_space_read_4(iot, ioh, beg) &
-				0x00ffffff;
+			    0x00ffffff;
 		}
 	}
 
@@ -581,19 +581,19 @@ plumvideo_clut_get(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
 
 void
 plumvideo_clut_set(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
-		   int cnt)
+    int cnt)
 {
 	static void __plumvideo_clut_set(bus_space_tag_t,
-					      bus_space_handle_t);
+	    bus_space_handle_t);
 	static void __plumvideo_clut_set(iot, ioh)
-		bus_space_tag_t iot;
-		bus_space_handle_t ioh;
+	    bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	{
 		int i;
 		
 		for (i = 0, beg *= 4; i < cnt; i++, beg +=4) {
 			bus_space_write_4(iot, ioh, beg,
-					  *rgb++ & 0x00ffffff);
+			    *rgb++ & 0x00ffffff);
 		}
 	}
 
@@ -607,10 +607,10 @@ void
 plumvideo_clut_default(struct plumvideo_softc *sc)
 {
 	static void __plumvideo_clut_default(bus_space_tag_t,
-						  bus_space_handle_t);
+	    bus_space_handle_t);
 	static void __plumvideo_clut_default(iot, ioh)
-		bus_space_tag_t iot;
-		bus_space_handle_t ioh;
+	    bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	{
 		const u_int8_t compo6[6] = { 0,  51, 102, 153, 204, 255 };
 		const u_int32_t ansi_color[16] = {
@@ -635,9 +635,9 @@ plumvideo_clut_default(struct plumvideo_softc *sc)
 			for (g = 0; g < 6; g++) {
 				for (b = 0; b < 6; b++) {
 					bus_space_write_4(iot, ioh, i << 2,
-							  RGB24(compo6[r],
-								compo6[g],
-								compo6[b]));
+					    RGB24(compo6[r],
+						compo6[g],
+						compo6[b]));
 					i++;
 				}
 			}
@@ -653,7 +653,7 @@ plumvideo_clut_default(struct plumvideo_softc *sc)
 
 void
 __plumvideo_clut_access(struct plumvideo_softc *sc, void (*palette_func)
-			(bus_space_tag_t, bus_space_handle_t))
+    (bus_space_tag_t, bus_space_handle_t))
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -708,7 +708,7 @@ plumvideo_power(void *ctx, int type, long id, void *msg)
 	switch (why) {
 	case PWR_RESUME:
 		if (!sc->sc_console)
-			return 0; /* serial console */
+			return (0); /* serial console */
 
 		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
 		/* power on */
@@ -717,7 +717,7 @@ plumvideo_power(void *ctx, int type, long id, void *msg)
 		/* back-light on */
 		plum_power_establish(pc, PLUM_PWR_BKL);
 		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
-				PLUM_VIDEO_PLLUM_MAX);
+		    PLUM_VIDEO_PLLUM_MAX);
 		break;
 	case PWR_SUSPEND:
 		/* FALLTHROUGH */
@@ -725,14 +725,14 @@ plumvideo_power(void *ctx, int type, long id, void *msg)
 		DPRINTF(("%s: OFF\n", sc->sc_dev.dv_xname));
 		/* back-light off */
 		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
-				PLUM_VIDEO_PLLUM_MIN);
+		    PLUM_VIDEO_PLLUM_MIN);
 		plum_power_disestablish(pc, PLUM_PWR_BKL);
 		/* power down */
 		plum_power_disestablish(pc, PLUM_PWR_LCD);
 		break;
 	}
 
-	return 0;
+	return (0);
 }
 
 #ifdef PLUMVIDEODEBUG

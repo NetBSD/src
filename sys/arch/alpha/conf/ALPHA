@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.152 2001/08/22 15:39:04 hubertf Exp $
+# $NetBSD: ALPHA,v 1.152.4.1 2001/10/01 12:36:58 fvdl Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.152 $"
+ident		"ALPHA-$Revision: 1.152.4.1 $"
 
 maxusers 32
 
@@ -58,6 +58,7 @@ file-system	PORTAL		# Portal file system
 file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
+file-system	CODA		# CODA distributed file system
 
 # File system options
 options 	QUOTA		# User and group quotas for the FFS
@@ -68,8 +69,8 @@ options 	SOFTDEP		# FFS soft updates support.
 # Networking options
 options 	INET		# Internet protocol suite
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	NS		# Xerox NS protocol suite
 options 	ISO,TPIP,EON	# ISO protocol suite
@@ -225,6 +226,9 @@ pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
 pci*	at	ttwopci?
+
+# AGP support
+agp*	at	irongate?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -513,3 +517,5 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+# a pseudo device needed for Coda	# also needs CODA (above)
+pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.4 2001/05/06 14:25:16 takemura Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.4.4.1 2001/10/01 12:39:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -87,22 +87,23 @@ struct vrip_attach_args {
 /*
  * Interrupt establishment/disestablishment functions
  */
-void *vrip_intr_establish __P((vrip_chipset_tag_t, int, int, int(*)(void*), void*));
-void vrip_intr_disestablish __P((vrip_chipset_tag_t, void*));
-void vrip_intr_setmask1 __P((vrip_chipset_tag_t, void*, int));
-void vrip_intr_setmask2 __P((vrip_chipset_tag_t, void*, u_int32_t, int));
-void vrip_intr_get_status2 __P((vrip_chipset_tag_t, void*, u_int32_t*));
+void *vrip_intr_establish(vrip_chipset_tag_t, int, int, int(*)(void*), void*);
+void vrip_intr_disestablish(vrip_chipset_tag_t, void*);
+void vrip_intr_setmask1(vrip_chipset_tag_t, void*, int);
+void vrip_intr_setmask2(vrip_chipset_tag_t, void*, u_int32_t, int);
+void vrip_intr_get_status2(vrip_chipset_tag_t, void*, u_int32_t*);
 void vrip_intr_suspend(void);
 void vrip_intr_resume(void);
 /*
  * CMU/GPIO interface.
  */
-void vrip_cmu_function_register __P((vrip_chipset_tag_t, vrcmu_function_tag_t, vrcmu_chipset_tag_t));
-void vrip_gpio_register __P((vrip_chipset_tag_t, hpcio_chip_t));
+void vrip_cmu_function_register(vrip_chipset_tag_t, vrcmu_function_tag_t,
+    vrcmu_chipset_tag_t);
+void vrip_gpio_register(vrip_chipset_tag_t, hpcio_chip_t);
     
 /*
  * Debuggin utility
  */    
-void bitdisp16 __P((u_int16_t));
-void bitdisp32 __P((u_int32_t));
-void bitdisp64 __P((u_int32_t[2]));
+void bitdisp16(u_int16_t);
+void bitdisp32(u_int32_t);
+void bitdisp64(u_int32_t[2]);

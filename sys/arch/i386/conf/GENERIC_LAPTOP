@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.20 2001/09/01 21:52:27 atatat Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.20.2.1 2001/10/01 12:39:35 fvdl Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.20.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -22,6 +22,8 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+options 	MTRR		# memory-type range register syscall support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -250,9 +252,11 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
+#agp* 	at pchb?
+
 # ISA bus support
-isa*	at mainbus?
-isa*	at pcib?
+isa0	at mainbus?
+isa0	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
@@ -614,10 +618,14 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# PCMCIA audio devices
+esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
+
 #cms0	at isa? port 0x220			# Creative Music System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at esl?
 opl*	at eso?
 opl*	at ess?
 opl*	at fms?
@@ -635,6 +643,7 @@ audio*	at clcs?
 audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at esl?
 audio*	at esm?
 audio*	at eso?
 audio*	at ess?

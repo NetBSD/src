@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.10 2001/08/20 12:20:05 wiz Exp $
+REM $NetBSD: BtNetBSD,v 1.10.2.1 2001/10/01 12:38:00 fvdl Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -219,7 +219,7 @@ DEF PROCload_kernel_elf(file%)
   freepagesbase% = first_mapped_DRAM_index% : REM == first virt address in DRAM0a
   start_kernelpage% = freepagesbase%
   pv_offset% = KERNEL_BASE - DRAM_addr%(0) : REM XXX hardcoded
- 
+
   REM load the code blocks ?
   first% = TRUE
   FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
@@ -228,6 +228,7 @@ DEF PROCload_kernel_elf(file%)
     first%  = FALSE
     offset% = ph%!4
     vaddr%  = ph%!8
+    REM physaddr% = ph%!12
     filesz% = ph%!16
     memsz%  = ph%!20
     flags%  = ph%!24
@@ -289,6 +290,7 @@ DEF PROCload_kernel_elf(file%)
   REM XXX
 
   kernelpages% = freepagesbase% - start_kernelpage%
+  IF extradebug% THEN PRINT ''"Number of kernel pages ";kernelpages%;" (";kernelpages%*nbpp%;")"
  
   PROCfinish_relocationtable
 ENDPROC
@@ -301,11 +303,12 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
   REM filesz%  number of bytes to read of `file' for this chunk
   REM memsz%   number of bytes to clear for this chunk
   PRINT ;filesz%;
-  IF extradebug% PRINT ;" (";~vaddr%;"-";~(vaddr%+filesz%+memsz%);" [till base+";INT((vaddr%+filesz%+memsz%-&F0000000)/1024);"k]) ";
+  IF extradebug% PRINT ;" (";~vaddr%;"-";~(vaddr%+memsz%);" [till base+";INT((vaddr%+memsz%-&F0000000)/1024);"k]) ";
   WHILE filesz% > 0
     REM freepagesbase% is first page index in freepages list
-    fragsz% = nbpp% - (vaddr% MOD nbpp%)
+    fragsz% = nbpp%
     IF fragsz% > filesz% THEN fragsz% = filesz%
+
     fragaddr% = FNblock_vaddr(freepagesbase%)
     SYS "OS_GBPB", 3, file%, fragaddr%, fragsz%, offset%
  
@@ -322,11 +325,13 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
     memsz% -= fragsz%
     PROCtwirl
   ENDWHILE
+ 
   IF memsz% > 0 PRINT "+";memsz%;
   WHILE memsz% > 0
     REM freepagesbase% is first page index in freepages list
-    fragsz = nbpp% - (vaddr% MOD nbpp%)
+    fragsz% = nbpp%
     IF fragsz% > memsz% THEN fragsz% = memsz%
+
     PROCbzero(FNblock_vaddr(freepagesbase%), fragsz%)
 
     REM create a relocation block
@@ -907,7 +912,7 @@ DEF PROCget_memory_map
   ENDWHILE
   PRINT'
   IF extradebug% THEN PRINT '"First DRAM index found at index ";first_mapped_DRAM_index%;" DRAM_addr%(0)=0x";~DRAM_addr%(0)
-  IF first_mapped_DRAM_index%<0 THEN ERROR EXT 1, "No (S)DRAM mapped in this program (weird) ... increase Wimpslot!"
+  IF first_mapped_DRAM_index%<0 THEN ERROR EXT 1, "No (S)DRAM mapped in this program (wierd) ... increase Wimpslot!"
 ENDPROC
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.30 2001/07/07 14:21:01 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30.4.1 2001/10/01 12:41:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -680,7 +681,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			/* XXX Do something about COHERENT here. */
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

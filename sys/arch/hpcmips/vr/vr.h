@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.h,v 1.3 2000/01/28 15:08:38 takemura Exp $	*/
+/*	$NetBSD: vr.h,v 1.3.6.1 2001/10/01 12:39:23 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,8 +34,8 @@
  *
  */
 
-void* vr_intr_establish __P((int, int (*) __P((void*, u_int32_t, u_int32_t)), void*));
-void vr_intr_disestablish __P((void *));
+void *vr_intr_establish(int, int (*)(void *, u_int32_t, u_int32_t), void *);
+void vr_intr_disestablish(void *);
 
 #define VR_INTR0	0
 #define VR_INTR1	1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/04/15 17:13:17 kleink Exp $
+#	$NetBSD: Makefile,v 1.19.4.1 2001/10/01 12:42:02 fvdl Exp $
 
 KDIR=	/sys/arch/sparc/include
 INCSDIR= /usr/include/sparc
@@ -20,7 +20,5 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	setjmp.h signal.h stdarg.h \
 	tctrl.h trap.h types.h \
 	varargs.h vmparam.h vuid_event.h
-
-SYMLINKS= ../dev/sun/fbio.h ${INCSDIR}/fbio.h
 
 .include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.138 2001/09/04 13:37:29 itohy Exp $
+#	$NetBSD: files.pci,v 1.138.2.1 2001/10/01 12:45:53 fvdl Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -21,6 +21,7 @@ file	dev/pci/pci.c			pci			needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+file	dev/pci/pci_usrreq.c		pci
 file	dev/pci/pciconf.c		pci_netbsd_configure
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
@@ -170,6 +171,10 @@ file	dev/pci/if_fxp_pci.c		fxp_pci
 # Sun HME-network
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci
+
+# Sun GEM-network
+attach	gem at pci with gem_pci
+file	dev/pci/if_gem_pci.c		gem_pci
 
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT	: IPKDB_NE_PCI

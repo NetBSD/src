@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.5 2001/05/30 15:24:40 lukem Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.5.4.1 2001/10/01 12:43:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,7 +52,7 @@
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.5 2001/05/30 15:24:40 lukem Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.5.4.1 2001/10/01 12:43:12 fvdl Exp $";
 #endif
 
 #include <sys/param.h>
@@ -398,7 +398,7 @@ kgdb_trap(type, frame)
 	}
 	/*
 	 * Stick frame regs into our reg cache then tell remote host
-	 * that an exception has occured.
+	 * that an exception has occurred.
 	 */
 	regs_to_gdb(frame, gdb_regs);
 	if (type != T_TRAP15) {

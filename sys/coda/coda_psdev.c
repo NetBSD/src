@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.17.2.2 2001/09/26 15:28:07 fvdl Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.17.2.3 2001/10/01 12:43:20 fvdl Exp $	*/
 
 /*
  * 
@@ -129,7 +129,6 @@ vc_nb_open(devvp, flag, mode, p)
     struct proc *p;             /* NetBSD only */
 {
     struct vcomm *vcp;
-    dev_t rdev;
     int unit;
     
     ENTRY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.7 2000/04/11 17:57:43 uch Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.7.6.1 2001/10/01 12:39:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,9 +36,6 @@
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
- * Additional reworking for pmaxes.
- * Since pmax mboard support different CPU daughterboards,
- * and others are mmultiprocessors, rename from cpu_* to sys_*.
  */
 
 /*
@@ -48,52 +45,42 @@
 #ifndef	_HPCMIPS_SYSCONF_H_
 #define	_HPCMIPS_SYSCONF_H_
 
-
 #ifdef _KERNEL
 /*
- * Platform Specific Information and Function Hooks.
- *
- * The tags family and model information are strings describing the platform.
- * 
- * The tag iobus describes the primary iobus for the platform- primarily
- * to give a hint as to where to start configuring. The likely choices
- * are one of tcasic, lca, apecs, cia, or tlsb.
- *
+ * Platform(VR/TX) Specific Information and Function Hooks.
  */
+struct platform_clock;
+struct clock_ymdhms;
+
 extern struct platform {
 	/*
-	 * Platform Information.
-	 */
-	const char	*iobus;		/* Primary iobus name */
-
-	/*
-	 * Platform Specific Function Hooks
+	 *	cpu_intr	-	interrupt handler
+	 *	cpu_idle	-	CPU dependend idle routine.
 	 *	cons_init 	-	console initialization
-	 *	device_register	-	boot configuration aid
-	 *	iointr		-	I/O interrupt handler
-	 *	clockintr	-	Clock Interrupt Handler
 	 *	fb_init         -       frame buffer initialization
 	 *      mem_init        -       Count available memory
-#ifdef notyet
-	 *	mcheck_handler	-	Platform Specific Machine Check Handler
-#endif
 	 *	reboot		-	reboot or powerdown
+	 *	clock		-
 	 */
-	void	(*os_init) __P((void));
-	void	(*bus_reset) __P((void));
-	void	(*cons_init) __P((void));
-	void	(*device_register) __P((struct device *, void *));
-	int	(*iointr) __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-	void	(*clockintr) __P((void *));
-	void	(*fb_init) __P((caddr_t*));
-	void	(*mem_init) __P((paddr_t));
-#ifdef notyet
-	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
-		unsigned long, unsigned long));
-#endif
-	void	(*reboot) __P((int howto, char *bootstr));
+	void	(*cpu_intr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+	void	(*cpu_idle)(void);
+	void	(*cons_init)(void);
+	void	(*fb_init)(caddr_t*);
+	void	(*mem_init)(paddr_t);
+	void	(*reboot)(int, char *);
+	struct platform_clock *clock;
 } platform;
 
-extern struct platform unimpl_platform;
+struct platform_clock {
+	int	hz;
+	void	(*init)(struct device *);
+	void	(*rtc_get)(struct device *, time_t, struct clock_ymdhms *);
+	void	(*rtc_set)(struct device *, struct clock_ymdhms *);
+	void	*self;
+	int	start;
+};
+
+void platform_clock_attach(void *, struct platform_clock *);
+
 #endif /* _KERNEL */
 #endif /* !_HPCMIPS_SYSCONF_H_ */

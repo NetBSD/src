@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.8 2000/06/29 07:14:23 mrg Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.8.2.1 2001/10/01 12:42:59 fvdl Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -120,12 +120,22 @@ vax_mem_bus_space_free(
 {    
 	panic("vax_mem_bus_free not implemented");
 }
-	
+
+static paddr_t
+vax_mem_bus_space_mmap(void *v, bus_addr_t addr, off_t off, int prot, int flags)
+{
+	bus_addr_t rv;
+
+	rv = addr + off;
+	return btop(rv);
+}
+
 struct vax_bus_space vax_mem_bus_space = {
 	NULL,
 	vax_mem_bus_space_map,
 	vax_mem_bus_space_unmap,
 	vax_mem_bus_space_subregion,
 	vax_mem_bus_space_alloc,
-	vax_mem_bus_space_free
+	vax_mem_bus_space_free,
+	vax_mem_bus_space_mmap,
 };

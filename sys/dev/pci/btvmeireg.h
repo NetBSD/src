@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeireg.h,v 1.2 2001/06/12 15:17:25 wiz Exp $ */
+/* $NetBSD: btvmeireg.h,v 1.2.4.1 2001/10/01 12:45:52 fvdl Exp $ */
 
 #ifndef _bit3reg_h_
 #define _bit3reg_h_
@@ -361,7 +361,7 @@
 
 #define RSS_PARITY_ERR       (1<<7)     /* Interface Parity Error Remote->PCI */
 #define RSS_REMBUS_ERR       (1<<6)     /* Invalid mapping RAM access or a    */
-                                        /*     data parity error occured      */
+                                        /*     data parity error occurred      */
 #define RSS_PR_STATUS        (1<<5)     /* PR interrupt set on the VME card   */
 #define RSS_TIMEOUT_ERR      (1<<2)     /* Interface Timeout error on DMA xfer */
 #define RSS_PT_STATUS        (1<<1)     /* PT interrupt set on the VME card   */

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.39 2001/09/04 17:06:54 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.39.2.1 2001/10/01 12:45:43 fvdl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -89,31 +89,6 @@ struct vgascreen {
 	/* palette */
 
 	int mindispoffset, maxdispoffset;
-};
-
-struct vga_config {
-	struct vga_handle hdl;
-
-	int nscreens;
-	LIST_HEAD(, vgascreen) screens;
-	struct vgascreen *active; /* current display */
-	const struct wsscreen_descr *currenttype;
-	int currentfontset1, currentfontset2;
-
-	int vc_biosmapped;
-	bus_space_tag_t vc_biostag;
-	bus_space_handle_t vc_bioshdl;
-
-	struct egavga_font *vc_fonts[8]; /* currently loaded */
-	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
-
-	struct vgascreen *wantedscreen;
-	void (*switchcb) __P((void *, int, int));
-	void *switchcbarg;
-
-	paddr_t (*vc_mmap) __P((void *, off_t, int));
-
-	struct callout vc_switch_callout;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -439,6 +414,10 @@ egavga_unreffont(vc, f)
 #endif
 	if (f->usecount == 0 && f != &vga_builtinfont) {
 		TAILQ_REMOVE(&vc->vc_fontlist, f, next);
+		if (f->slot != -1) {
+			KASSERT(vc->vc_fonts[f->slot] == f);
+			vc->vc_fonts[f->slot] = 0;
+		}
 		wsfont_unlock(f->cookie);
 #ifdef VGA_CONSOLE_SCREENTYPE
 		if (f != &vga_consolefont)
@@ -508,7 +487,6 @@ vga_init_screen(vc, scr, type, existing, attrp)
 
 	if (existing) {
 		vc->active = scr;
-		vc->currenttype = type;
 
 		cpos = vga_6845_read(&vc->hdl, cursorh) << 8;
 		cpos |= vga_6845_read(&vc->hdl, cursorl);
@@ -524,6 +502,11 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
+
+		if (type != vc->currenttype) {
+			vga_setscreentype(&vc->hdl, type);
+			vc->currenttype = type;
+		}
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
@@ -558,6 +541,8 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		else
 			printf("vga_init_screen: no font\n");
 	}
+	if (existing)
+		vga_setfont(vc, scr);
 
 	vc->nscreens++;
 	LIST_INSERT_HEAD(&vc->screens, scr, next);
@@ -618,11 +603,11 @@ vga_init(vc, iot, memt)
 }
 
 void
-vga_common_attach(self, iot, memt, type, map)
-	struct device *self;
+vga_common_attach(sc, iot, memt, type, vf)
+	struct vga_softc *sc;
 	bus_space_tag_t iot, memt;
 	int type;
-	paddr_t (*map) __P((void *, off_t, int));
+	const struct vga_funcs *vf;
 {
 	int console;
 	struct vga_config *vc;
@@ -638,14 +623,18 @@ vga_common_attach(self, iot, memt, type, map)
 		vga_init(vc, iot, memt);
 	}
 
-	vc->vc_mmap = map;
+	vc->vc_type = type;
+	vc->vc_funcs = vf;
+
+	sc->sc_vc = vc;
+	vc->softc = sc;
 
 	aa.console = console;
 	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
 
-        config_found(self, &aa, wsemuldisplaydevprint);
+        config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -666,17 +655,10 @@ vga_cnattach(iot, memt, type, check)
 	       &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
 	if (!scr)
 		panic("vga_cnattach: invalid screen type");
-	if (scr != vga_console_vc.currenttype) {
-		vga_setscreentype(&vga_console_vc.hdl, scr);
-		vga_console_vc.currenttype = scr;
-	}
 #else
 	scr = vga_console_vc.currenttype;
 #endif
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
-#ifdef VGA_CONSOLE_SCREENTYPE
-	vga_setfont(&vga_console_vc, &vga_console_screen);
-#endif
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
 			   vga_console_screen.pcs.vc_ccol,
@@ -709,23 +691,18 @@ vga_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if 0
 	struct vga_config *vc = v;
-#endif
+	const struct vga_funcs *vf = vc->vc_funcs;
 
 	switch (cmd) {
-#if 0
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = vc->vc_type;
-		/* XXX should get detailed hardware information here */
 		return 0;
-#else
-	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;
-		return 0;
-#endif
 
 	case WSDISPLAYIO_GINFO:
+		/* XXX should get detailed hardware information here */
+		return ENOTTY;
+
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
 	case WSDISPLAYIO_GVIDEO:
@@ -739,7 +716,13 @@ vga_ioctl(v, cmd, data, flag, p)
 		return ENOTTY;
 	}
 
-	return -1;
+	if (vc->vc_funcs == NULL)
+		return (-1);
+
+	if (vf->vf_ioctl == NULL)
+		return (-1);
+
+	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
 }
 
 static paddr_t
@@ -748,13 +731,16 @@ vga_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-
 	struct vga_config *vc = v;
+	const struct vga_funcs *vf = vc->vc_funcs;
 
-	if (vc->vc_mmap != NULL)
-		return (*vc->vc_mmap)(v, offset, prot);
+	if (vc->vc_funcs == NULL)
+		return (-1);
 
-	return -1;
+	if (vf->vf_mmap == NULL)
+		return (-1);
+
+	return ((*vf->vf_mmap)(v, offset, prot));
 }
 
 int
@@ -819,9 +805,9 @@ vga_free_screen(v, cookie)
 		vc->active = 0;
 }
 
-void vga_usefont(struct vga_config *, struct egavga_font *);
+static void vga_usefont(struct vga_config *, struct egavga_font *);
 
-void
+static void
 vga_usefont(vc, f)
 	struct vga_config *vc;
 	struct egavga_font *f;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.35 2000/02/03 04:20:00 nisimura Exp $	*/
+/*	$NetBSD: fb.c,v 1.35.6.1 2001/10/01 12:41:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@
 #include <sys/conf.h>
 
 #include <machine/conf.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>
 

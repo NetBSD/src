@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/04/15 17:13:13 kleink Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2001/10/01 12:40:57 fvdl Exp $
 
 KDIR=	/sys/arch/mmeye/include
 INCSDIR= /usr/include/mmeye
@@ -12,7 +12,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
-	limits.h lock.h loadfile_machdep.h \
+	limits.h lock.h \
 	math.h mmeye.h \
 	param.h pcb.h pio.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \

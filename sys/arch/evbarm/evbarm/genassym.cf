@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2001/09/05 04:53:40 matt Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.1 2001/10/01 12:38:32 fvdl Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,15 +75,15 @@ define	SONPROC			SONPROC
 
 define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)
 define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
-define	PCB_R8			offsetof(struct pcb, pcb_r8)
-define	PCB_R9			offsetof(struct pcb, pcb_r9)
-define	PCB_R10			offsetof(struct pcb, pcb_r10)
-define	PCB_R11			offsetof(struct pcb, pcb_r11)
-define	PCB_R12			offsetof(struct pcb, pcb_r12)
-define	PCB_SP			offsetof(struct pcb, pcb_sp)
-define	PCB_LR			offsetof(struct pcb, pcb_lr)
-define	PCB_PC			offsetof(struct pcb, pcb_pc)
-define	PCB_UND_SP		offsetof(struct pcb, pcb_und_sp)
+define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
+define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
+define	PCB_R10			offsetof(struct pcb, pcb_un.un_32.pcb32_r10)
+define	PCB_R11			offsetof(struct pcb, pcb_un.un_32.pcb32_r11)
+define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
+define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
+define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
+define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
+define	PCB_UND_SP		offsetof(struct pcb, pcb_un.un_32.pcb32_und_sp)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 
 define	USER_SIZE		sizeof(struct user)

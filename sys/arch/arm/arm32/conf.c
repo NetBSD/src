@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2001/09/04 21:45:19 wiz Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.2.1 2001/10/01 12:37:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -122,6 +122,10 @@
 #ifndef NRTC
 #define	NRTC	0
 #endif
+/*#include "sacom.h"*/
+#ifndef NSACOM
+#define	NSACOM	0
+#endif
 /*#include "scr.h"*/
 #ifndef NSCR
 #define	NSCR	0
@@ -147,11 +151,12 @@
 /*
  * Standard pseudo-devices
  */
-#include "pty.h"
+#include <altq/altqconf.h>	/* ick! */
 #include "bpfilter.h"
 #include "ipfilter.h"
-#include "tun.h"
+#include "pty.h"
 #include "rnd.h"
+#include "tun.h"
 
 /*
  * Disk/Filesystem pseudo-devices
@@ -184,6 +189,20 @@
 #define	NI4BTEL	0
 #endif
 
+#ifdef CONF_HAVE_PCI
+#include "iop.h"
+#include "ld.h"
+#include "mlx.h"
+#include "mly.h"
+#include "pci.h"
+#else
+#define NIOP	0
+#define NLD	0
+#define NMLX	0
+#define NMLY	0
+#define NPCI	0
+#endif
+#define	NAGP	0
 /*
  * SCSI/ATAPI devices
  */
@@ -238,11 +257,13 @@
  */
 #ifdef	CONF_HAVE_WSCONS
 #include "wsdisplay.h"
+#include "wsfont.h"
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
 #else
 #define	NWSDISPLAY	0
+#define	NWSFONT	0
 #define	NWSKBD	0
 #define	NWSMOUSE	0
 #define	NWSMUX	0
@@ -326,6 +347,26 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 70: */
 	bdev_disk_init(NRAID,raid),	/* 71: RAIDframe disk driver */
 	bdev_lkm_dummy(),		/* 72: */
+	bdev_lkm_dummy(),		/* 73: */
+	bdev_lkm_dummy(),		/* 74: */
+	bdev_lkm_dummy(),		/* 75: */
+	bdev_lkm_dummy(),		/* 76: */
+	bdev_lkm_dummy(),		/* 77: */
+	bdev_lkm_dummy(),		/* 78: */
+	bdev_lkm_dummy(),		/* 79: */
+	bdev_lkm_dummy(),		/* 80: */
+	bdev_lkm_dummy(),		/* 81: */
+	bdev_lkm_dummy(),		/* 82: */
+	bdev_lkm_dummy(),		/* 83: */
+	bdev_lkm_dummy(),		/* 84: */
+	bdev_lkm_dummy(),		/* 85: */
+	bdev_lkm_dummy(),		/* 86: */
+	bdev_lkm_dummy(),		/* 87: */
+	bdev_lkm_dummy(),		/* 88: */
+	bdev_lkm_dummy(),		/* 89: */
+	bdev_lkm_dummy(),		/* 90: */
+	bdev_lkm_dummy(),		/* 91: */
+	bdev_lkm_dummy(),		/* 92: Logical disk driver */
 };
 
 /* Character devices */
@@ -424,6 +465,15 @@ struct cdevsw cdevsw[] = {
 	cdev_i4brbch_init(NI4BRBCH,i4brbch),	/* 81: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC,i4btrc),	/* 82: i4b trace device */
 	cdev_i4btel_init(NI4BTEL,i4btel),	/* 83: i4b phone device */
+	cdev_tty_init(NSACOM,sacom),		/* 84: SA11x0 serial port */
+	cdev__oci_init(NMLY,mly),		/* 85: Newer Mylex ctrl iface */
+	cdev__oci_init(NWSFONT,wsfont),		/* 86: wsfont pseudo-device */
+	cdev__ocim_init(NAGP,agp),		/* 87: AGP graphics aperture */
+	cdev_pci_init(NPCI,pci),		/* 88: PCI bus access device */
+	cdev__oci_init(NIOP,iop),		/* 89: I2O IOP control iface */
+	cdev_altq_init(NALTQ,altq),		/* 90: ALTQ control interface */
+	cdev__oci_init(NMLX,mlx),		/* 91: Mylex DAC960 ctl iface */
+	cdev_disk_init(NLD,ld),			/* 92: Logical disk */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -549,6 +599,16 @@ static int chrtoblktbl[] = {
     /* 80 */	    NODEV,
     /* 81 */	    NODEV,
     /* 82 */	    NODEV,
+    /* 83 */	    NODEV,
+    /* 84 */	    NODEV,
+    /* 85 */	    NODEV,
+    /* 86 */	    NODEV,
+    /* 87 */	    NODEV,
+    /* 88 */	    NODEV,
+    /* 89 */	    NODEV,
+    /* 90 */	    NODEV,
+    /* 91 */	    NODEV,
+    /* 92 */	    92,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.51.2.1 2001/10/01 12:42:30 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -721,7 +721,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			portid = -1;
 		ma.ma_upaid = portid;
 
-		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
+		if (PROM_getprop(node, "reg", sizeof(*ma.ma_reg), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
@@ -734,7 +734,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no reg\n");
 		}
 #endif
-		rv = getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
+		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
 			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -749,7 +749,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no interrupts\n");
 		}
 #endif
-		rv = getprop(node, "address", sizeof(*ma.ma_address), 
+		rv = PROM_getprop(node, "address", sizeof(*ma.ma_address), 
 			&ma.ma_naddress, (void**)&ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -784,7 +784,7 @@ struct cfattach mainbus_ca = {
 };
 
 int
-getprop(node, name, size, nitem, bufp)
+PROM_getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
 	size_t	size;
@@ -795,7 +795,7 @@ getprop(node, name, size, nitem, bufp)
 	long	len;
 
 	*nitem = 0;
-	len = getproplen(node, name);
+	len = PROM_getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -821,7 +821,7 @@ getprop(node, name, size, nitem, bufp)
  * Internal form of proplen().  Returns the property length.
  */
 long
-getproplen(node, name)
+PROM_getproplen(node, name)
 	int node;
 	char *name;
 {
@@ -834,25 +834,25 @@ getproplen(node, name)
  * subsequent calls.
  */
 char *
-getpropstring(node, name)
+PROM_getpropstring(node, name)
 	int node;
 	char *name;
 {
 	static char stringbuf[32];
 
-	return (getpropstringA(node, name, stringbuf));
+	return (PROM_getpropstringA(node, name, stringbuf));
 }
 
-/* Alternative getpropstring(), where caller provides the buffer */
+/* Alternative PROM_getpropstring(), where caller provides the buffer */
 char *
-getpropstringA(node, name, buffer)
+PROM_getpropstringA(node, name, buffer)
 	int node;
 	char *name;
 	char *buffer;
 {
 	int blen;
 
-	if (getprop(node, name, 1, &blen, (void **)&buffer) != 0)
+	if (PROM_getprop(node, name, 1, &blen, (void **)&buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
@@ -864,7 +864,7 @@ getpropstringA(node, name, buffer)
  * The return value is the property, or the default if there was none.
  */
 int
-getpropint(node, name, deflt)
+PROM_getpropint(node, name, deflt)
 	int node;
 	char *name;
 	int deflt;

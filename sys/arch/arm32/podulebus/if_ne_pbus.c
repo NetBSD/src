@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.9 2001/06/08 22:38:07 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.9.4.1 2001/10/01 12:37:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -391,6 +391,27 @@ ne_pbus_attach(parent, self, aux)
 	 * from the EEPROM.
 	 */
 	ne2000_attach(nsc, myea);
+	printf("%s: ", dsc->sc_dev.dv_xname);
+	switch (nsc->sc_type) {
+	case NE2000_TYPE_NE1000:
+		printf("NE1000");
+		break;
+	case NE2000_TYPE_NE2000:
+		printf("NE2000");
+		break;
+	case NE2000_TYPE_AX88190:
+		printf("AX88190");
+		break;
+	case NE2000_TYPE_DL10019:
+		printf("DL10019");
+		break;
+        case NE2000_TYPE_DL10022:
+		printf("DL10022");
+		break;
+	default:
+		printf("??");
+	};
+	printf(" chipset, %d Kb memory\n", dsc->mem_start/1024);
 
 	/* Does the interface need a postattach call ? */
 	if (ne->postattach)

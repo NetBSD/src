@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.2 2001/02/09 20:42:27 uch Exp $	*/
+/*	$NetBSD: bicons.c,v 1.2.8.1 2001/10/01 12:45:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -50,7 +50,6 @@
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
 extern u_int8_t font_clR8x8_data[];
-extern u_int8_t font_clB8x8_data[];
 #define FONT_HEIGHT	8
 #define FONT_WIDTH	1
 

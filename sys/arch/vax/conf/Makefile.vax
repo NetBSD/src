@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.59 2001/06/25 05:12:01 matt Exp $
+#	$NetBSD: Makefile.vax,v 1.59.4.1 2001/10/01 12:42:56 fvdl Exp $
 
 # Makefile for NetBSD
 #
@@ -41,13 +41,10 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
 		-D_VAX_INLINE_
 CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
-		-Wpointer-arith
+		-Wpointer-arith -Wno-main
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
 # XXX always get it right.  --thorpej 
 CWARNFLAGS+=	-Wno-uninitialized
-.if (${HAVE_EGCS} != "")
-CWARNFLAGS+=	-Wno-main
-.endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 .if (${HAVE_EGCS} != "")
 CFLAGS+=	-mno-pic

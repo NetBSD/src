@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.32 2001/08/27 02:00:18 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.32.2.1 2001/10/01 12:41:37 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.32 2001/08/27 02:00:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.32.2.1 2001/10/01 12:41:37 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ dec_5100_init()
 }
 
 /*
- * Initalize the memory system and I/O buses.
+ * Initialize the memory system and I/O buses.
  */
 static void
 dec_5100_bus_reset()

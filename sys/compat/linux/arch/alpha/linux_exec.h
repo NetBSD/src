@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.4 2001/07/29 21:28:45 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.4.2.1 2001/10/01 12:43:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,13 @@
 
 #define LINUX_M_ALPHA		MID_ALPHA
 #define LINUX_MID_MACHINE	LINUX_M_ALPHA
+
+/*
+ * LINUX_ATEXIT_SIGNATURE enable the atexit_signature test. See
+ * sys/compat/linux/common/linux_exec_elf32.c:linux_atexit_signature()
+ */
+#define	LINUX_ATEXIT_SIGNATURE	1
+
 
 #define LINUX_COPYARGS_FUNCTION	ELFNAME2(linux,copyargs)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.10 2001/09/04 02:37:08 thorpej Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.10.2.1 2001/10/01 12:39:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/extent.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -314,7 +315,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 				pmap_update_pg(va);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
  
 	return 0;
 }
@@ -818,7 +819,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

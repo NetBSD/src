@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.47 2001/06/18 02:00:52 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.47.4.1 2001/10/01 12:43:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -81,6 +81,7 @@ const struct emul emul_ibcs2 = {
 	trapsignal,
 	ibcs2_sigcode,
 	ibcs2_esigcode,
+	ibcs2_setregs,
 	ibcs2_e_proc_exec,
 	NULL,
 	NULL,

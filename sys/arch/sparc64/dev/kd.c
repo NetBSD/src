@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16 2001/05/02 10:32:20 scw Exp $	*/
+/*	$NetBSD: kd.c,v 1.16.4.1 2001/10/01 12:42:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <machine/conf.h>
 
 #ifdef RASTERCONSOLE
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #endif
 
@@ -138,14 +138,14 @@ kd_init(kd)
 	}
 
 	if (kd->rows == 0 &&
-	    (prop = getpropstring(optionsnode, "screen-#rows"))) {
+	    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
 		i = 0;
 		while (*prop != '\0')
 			i = i * 10 + *prop++ - '0';
 		kd->rows = (unsigned short)i;
 	}
 	if (kd->cols == 0 &&
-	    (prop = getpropstring(optionsnode, "screen-#columns"))) {
+	    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
 		i = 0;
 		while (*prop != '\0')
 			i = i * 10 + *prop++ - '0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.7 2001/08/24 05:04:40 thorpej Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.7.2.1 2001/10/01 12:45:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@
 #define	LE_C0_MERR	0x0800		/* memory error */
 #define	LE_C0_RINT	0x0400		/* receiver interrupt */
 #define	LE_C0_TINT	0x0200		/* transmitter interrupt */
-#define	LE_C0_IDON	0x0100		/* initalization done */
+#define	LE_C0_IDON	0x0100		/* initialization done */
 #define	LE_C0_INTR	0x0080		/* interrupt condition */
 #define	LE_C0_INEA	0x0040		/* interrupt enable */
 #define	LE_C0_RXON	0x0020		/* receiver on */
@@ -283,7 +283,7 @@
 #define	LE_C0_TDMD	0x0008		/* transmit demand */
 #define	LE_C0_STOP	0x0004		/* disable all external activity */
 #define	LE_C0_STRT	0x0002		/* enable external activity */
-#define	LE_C0_INIT	0x0001		/* begin initalization */
+#define	LE_C0_INIT	0x0001		/* begin initialization */
 
 #define	LE_C0_BITS \
     "\20\20ERR\17BABL\16CERR\15MISS\14MERR\13RINT\

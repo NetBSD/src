@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2001/07/09 02:00:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.4.1 2001/10/01 12:41:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -240,11 +240,9 @@ mach_init(argc, argv, envp)
 	boothowto = RB_SINGLE;
 
 	for (i = 0; i < argc; i++) {
-#if 0
 		if (strcmp(argv[i], "OSLoadOptions=auto") == 0) {
 			boothowto &= ~RB_SINGLE;
 		}
-#endif
 #if 0
 		printf("argv[%d]: %s\n", i, argv[i]);
 		/* delay(20000); */ /* give the user a little time.. */
@@ -490,7 +488,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -579,7 +577,7 @@ cpu_reboot(howto, bootstr)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) && (waittime < 0)) {
+	if ((howto & RB_NOSYNC) == 0 && (waittime < 0)) {
 		waittime = 0;
 		vfs_shutdown();
 
@@ -599,13 +597,25 @@ haltsys:
 
 	doshutdownhooks();
 
-#if 0
-	if (howto & RB_POWERDOWN) {
+	/*
+	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"
+	 * which lands me back in DDB, at least on my Indy.  So, enable 
+	 * the FPU before asking the PROM to power down to avoid this.. 
+	 * It seems to want the FPU to play the `poweroff tune' 8-/
+	 */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* Set CP1 usable bit in SR */
+	 	mips_cp0_status_write(mips_cp0_status_read() | 
+					MIPS_SR_COP_1_BIT);	
+
 		printf("powering off...\n\n");
+		delay(500000);
 		ARCBIOS->PowerDown();
 		printf("WARNING: powerdown failed\n");
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
 	}
-#endif
 
 	if (howto & RB_HALT) {
 		printf("halting...\n\n");

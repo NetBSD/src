@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.8 2000/11/01 06:17:32 eeh Exp $ */
+/*	$NetBSD: bpp.c,v 1.8.6.1 2001/10/01 12:46:16 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ bppattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = getpropint(node, "burst-sizes", -1);
+	burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;

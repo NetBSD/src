@@ -753,7 +753,7 @@ pmap_map(virt, start, end, prot)
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(virt);
 }
 
@@ -1447,7 +1447,7 @@ pmap_kremove(va, len)
 				 */
 
 				*pte = PG_NV;
-				TBIS(va);
+				TBIS(sva);
 			}
 			pte++;
 			sva += NBPG;
@@ -2526,7 +2526,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((char *)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap);
 #if defined(M68060)
 		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);

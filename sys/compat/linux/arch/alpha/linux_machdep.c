@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17 2001/05/30 11:37:25 mrg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.17.4.1 2001/10/01 12:43:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,8 +101,18 @@ linux_setregs(p, epp, stack)
 	struct exec_package *epp;
 	u_long stack;
 {
-/* XXX XAX I think this is ok. not sure though. */
+#ifdef DEBUG
+	struct trapframe *tfp = p->p_md.md_tf;
+#endif
+
 	setregs(p, epp, stack);
+#ifdef DEBUG
+	/*
+	 * Linux has registers set to zero on entry; for DEBUG kernels
+	 * the alpha setregs() fills registers with 0xbabefacedeadbeef.
+	 */
+	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
+#endif
 }
 
 void setup_linux_rt_sigframe(tf, sig, mask)

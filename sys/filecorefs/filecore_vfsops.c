@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14.4.2 2001/09/26 15:28:21 fvdl Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.14.4.3 2001/10/01 12:46:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -79,6 +79,7 @@ struct vfsops filecore_vfsops = {
 	filecore_fhtovp,
 	filecore_vptofh,
 	filecore_init,
+	filecore_reinit,
 	filecore_done,
 	filecore_sysctl,
 	NULL,				/* filecore_mountroot */
@@ -585,7 +586,7 @@ filecore_vget(mp, ino, vpp)
 		return (error);
 	}
 	ip = pool_get(&filecore_node_pool, PR_WAITOK);
-	memset((caddr_t)ip, 0, sizeof(struct filecore_node));
+	memset(ip, 0, sizeof(struct filecore_node));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
@@ -672,6 +673,7 @@ filecore_vget(mp, ino, vpp)
 	 * XXX need generation number?
 	 */
 
+	vp->v_size = ip->i_size;
 	*vpp = vp;
 	return (0);
 }

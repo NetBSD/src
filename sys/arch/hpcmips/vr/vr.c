@@ -1,7 +1,7 @@
-/*	$NetBSD: vr.c,v 1.26 2001/06/11 06:11:01 enami Exp $	*/
+/*	$NetBSD: vr.c,v 1.26.4.1 2001/10/01 12:39:22 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 1999
+ * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,37 +33,30 @@
  * SUCH DAMAGE.
  *
  */
+
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/reboot.h>
-#include <sys/kcore.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/locore.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/sysconf.h>
 #include <machine/bus.h>
-#include <machine/autoconf.h>
-
-#include <mips/mips_param.h>		/* hokey spl()s */
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
+#include <machine/bootinfo.h>
 
 #include <dev/hpc/hpckbdvar.h>
 
-#include "opt_vr41xx.h"
+#include <hpcmips/hpcmips/machdep.h>	/* cpu_name, mem_cluster */
+
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
-#include <hpcmips/hpcmips/machdep.h>	/* cpu_name */
-#include <machine/bootinfo.h>
 
 #include "vrip.h"
 #if NVRIP > 0
@@ -109,54 +102,87 @@
 #include <arch/hpcmips/vr/vrkiuvar.h>
 #endif
 
-void	vr_init __P((void));
-void	vr_os_init __P((void));
-void	vr_bus_reset __P((void));
-int	vr_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-void	vr_cons_init __P((void));
-void	vr_device_register __P((struct device *, void *));
-void    vr_fb_init __P((caddr_t*));
-void    vr_mem_init __P((paddr_t));
-void	vr_find_dram __P((paddr_t, paddr_t));
-void	vr_reboot __P((int howto, char *bootstr));
+#ifdef DEBUG
+#define STATIC
+#else
+#define STATIC	static
+#endif
 
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+const u_int32_t __ipl_sr_bits_vr[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1,		/* IPL_{CLOCK,HIGH} */
+};
+
+#if defined(VR41XX) && defined(TX39XX)
+#define	VR_INTR	vr_intr
+#else
+#define	VR_INTR	cpu_intr	/* locore_mips3 directly call this */
+#endif
+
+void vr_init(void);
+void VR_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+extern void vr_idle(void);
+STATIC void vr_cons_init(void);
+STATIC void vr_fb_init(caddr_t *);
+STATIC void vr_mem_init(paddr_t);
+STATIC void vr_find_dram(paddr_t, paddr_t);
+STATIC void vr_reboot(int, char *);
 
 /*
  * CPU interrupt dispatch table (HwInt[0:3])
  */
-int null_handler __P((void*, u_int32_t, u_int32_t));
-static int (*intr_handler[4]) __P((void*, u_int32_t, u_int32_t)) = 
+STATIC int vr_null_handler(void *, u_int32_t, u_int32_t);
+STATIC int (*vr_intr_handler[4])(void *, u_int32_t, u_int32_t) = 
 {
-	null_handler,
-	null_handler,
-	null_handler,
-	null_handler
+	vr_null_handler,
+	vr_null_handler,
+	vr_null_handler,
+	vr_null_handler
 };
-static void *intr_arg[4];
-
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
+STATIC void *vr_intr_arg[4];
 
 void
 vr_init()
 {
 	/*
-	 * Platform Information.
-	 */
-
-	/*
 	 * Platform Specific Function Hooks
 	 */
-	platform.os_init = vr_os_init;
-	platform.iointr = vr_intr;
-	platform.bus_reset = vr_bus_reset;
-	platform.cons_init = vr_cons_init;
-	platform.device_register = vr_device_register;
-	platform.fb_init = vr_fb_init;
-	platform.mem_init = vr_mem_init;
-	platform.reboot = vr_reboot;
+	platform.cpu_idle	= vr_idle;
+	platform.cpu_intr	= VR_INTR;
+	platform.cons_init	= vr_cons_init;
+	platform.fb_init	= vr_fb_init;
+	platform.mem_init	= vr_mem_init;
+	platform.reboot		= vr_reboot;
 
 #if NVRBCU > 0
 	sprintf(cpu_name, "NEC %s rev%d.%d %d.%03dMHz", 
@@ -171,8 +197,7 @@ vr_init()
 }
 
 void
-vr_mem_init(kernend)
-	paddr_t kernend;
+vr_mem_init(paddr_t kernend)
 {
 
 	mem_clusters[0].start = 0;
@@ -189,8 +214,7 @@ vr_mem_init(kernend)
 }
 
 void
-vr_find_dram(addr, end)
-	paddr_t addr, end;
+vr_find_dram(paddr_t addr, paddr_t end)
 {
 	int n;
 	caddr_t page;
@@ -201,7 +225,7 @@ vr_find_dram(addr, end)
 #ifdef VR_FIND_DRAMLIM
 	if (VR_FIND_DRAMLIM < end)
 		end = VR_FIND_DRAMLIM;
-#endif
+#endif /* VR_FIND_DRAMLIM */
 	n = mem_cluster_cnt;
 	for (; addr < end; addr += NBPG) {
 
@@ -241,7 +265,7 @@ vr_find_dram(addr, end)
 		for (i = 0; i < NBPG; i += 4)
 			if (*(volatile int *)(page+i) != (x ^ i))
 				goto bad;
-#endif
+#endif /* NARLY_MEMORY_PROBE */
 
 		if (!mem_clusters[n].size)
 			mem_clusters[n].start = addr;
@@ -259,90 +283,39 @@ vr_find_dram(addr, end)
 }
 
 void
-vr_fb_init(kernend)
-	caddr_t *kernend;
+vr_fb_init(caddr_t *kernend)
 {
 	/* Nothing to do */
-}
-
-void
-vr_os_init()
-{
-	/*
-	 * Set up interrupt handling and I/O addresses.
-	 */
-
-	splvec.splbio = MIPS_SPL0;
-	splvec.splnet = MIPS_SPL0;
-	splvec.spltty = MIPS_SPL0;
-	splvec.splvm = MIPS_SPL0;
-	splvec.splclock = MIPS_SPL_0_1;
-	splvec.splstatclock = MIPS_SPL_0_1;
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
-
-#ifdef NOT_YET
-	mcclock_addr = (volatile struct chiptime *)
-		MIPS_PHYS_TO_KSEG1(Vr_SYS_CLOCK);
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
-#else
-	printf("%s(%d): cpuspeed estimation is notimplemented\n",
-	       __FILE__, __LINE__);
-#endif
-#ifdef HPCMIPS_L1CACHE_DISABLE
-	cpuspeed = 1;	/* XXX, CPU is very very slow because L1 cache is */
-	/* disabled. */
-#endif /*  HPCMIPS_L1CAHCE_DISABLE */
-}
-
-
-/*
- * Initalize the memory system and I/O buses.
- */
-void
-vr_bus_reset()
-{
-	printf("%s(%d): vr_bus_reset() not implemented.\n",
-	       __FILE__, __LINE__);
 }
 
 void
 vr_cons_init()
 {
 #if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
-	extern bus_space_tag_t system_bus_iot;
-	extern bus_space_tag_t mb_bus_space_init __P((void));
-
-	/*
-	 * At this time, system_bus_iot is not initialized yet.
-	 * Just initialize it here.
-	 */
-	mb_bus_space_init();
+	bus_space_tag_t iot = hpcmips_system_bus_space();
 #endif
 
 #if NCOM > 0
 #ifdef KGDB
 	/* if KGDB is defined, always use the serial port for KGDB */
-	if (com_vrip_cndb_attach(system_bus_iot, VRIP_SIU_ADDR, 9600,
-	    VRCOM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
+	if (com_vrip_cndb_attach(iot, VRIP_SIU_ADDR, 9600, VRCOM_FREQ,
+	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
 		printf("%s(%d): can't init kgdb's serial port",
 		    __FILE__, __LINE__);
 	}
-#else
+#else /* KGDB */
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
 		/* Serial console */
-		if (com_vrip_cndb_attach(system_bus_iot,
-		    VRIP_SIU_ADDR, CONSPEED, VRCOM_FREQ,
-		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
+		if (com_vrip_cndb_attach(iot, VRIP_SIU_ADDR, CONSPEED,
+		    VRCOM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
 			printf("%s(%d): can't init serial console",
 			    __FILE__, __LINE__);
 		} else {
 			return;
 		}
 	}
-#endif
-#endif
+#endif /* KGDB */
+#endif /* NCOM > 0 */
 
 #if NHPCFB > 0
 	if (hpcfb_cnattach(NULL)) {
@@ -351,32 +324,20 @@ vr_cons_init()
 		goto find_keyboard;
 	}
  find_keyboard:
-#endif
+#endif /* NHPCFB > 0 */
 
 #if NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR
-	if (vrkiu_cnattach(system_bus_iot, VRIP_KIU_ADDR)) {
+	if (vrkiu_cnattach(iot, VRIP_KIU_ADDR)) {
 		printf("%s(%d): can't init vrkiu as console",
 		       __FILE__, __LINE__);
 	} else {
 		return;
 	}
-#endif
+#endif /* NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR */
 }
 
 void
-vr_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	printf("%s(%d): vr_device_register() not implemented.\n",
-	       __FILE__, __LINE__);
-	panic("abort");
-}
-
-void
-vr_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+vr_reboot(int howto, char *bootstr)
 {
 	/*
 	 * power down
@@ -425,56 +386,73 @@ vr_reboot(howto, bootstr)
 #endif
 }
 
-void *
-vr_intr_establish(line, ih_fun, ih_arg)
-	int line;
-	int (*ih_fun) __P((void*, u_int32_t, u_int32_t));
-	void *ih_arg;
-{
-	if (intr_handler[line] != null_handler) {
-		panic("vr_intr_establish: can't establish duplicated intr handler.");
-	}
-	intr_handler[line] = ih_fun;
-	intr_arg[line] = ih_arg;
-
-	return (void*)line;
-}
-
-
-void
-vr_intr_disestablish(ih)
-	void *ih;
-{
-	int line = (int)ih;
-	intr_handler[line] = null_handler;
-	intr_arg[line] = NULL;
-}
-
-int
-null_handler(arg, pc, statusReg)
-	void *arg;
-	u_int32_t pc;
-	u_int32_t statusReg;
-{
-	printf("null_handler\n");
-	return 0;
-}
-
 /*
  * Handle interrupts.
  */
-int
-vr_intr(status, cause, pc, ipending)
-	u_int32_t status, cause, pc, ipending;
+void
+VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
-	int hwintr;
+	uvmexp.intrs++;
 
-	hwintr = (ffs(ipending >> 10) -1) & 0x3;
-	(*intr_handler[hwintr])(intr_arg[hwintr], pc, status);
-	
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+	if (ipending & MIPS_INT_MASK_5) {
+		/*
+		 * spl* uses MIPS_INT_MASK not MIPS3_INT_MASK. it causes
+		 * INT5 interrupt.
+		 */
+		mips3_cp0_compare_write(mips3_cp0_count_read());
+	}
+
+	/* for spllowersoftclock */
+	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	if (ipending & MIPS_INT_MASK_1) {
+		(*vr_intr_handler[1])(vr_intr_arg[1], pc, status);
+
+		cause &= ~MIPS_INT_MASK_1;
+		_splset(((status & ~cause) & MIPS_HARD_INT_MASK)
+		    | MIPS_SR_INT_IE);
+	}
+
+	if (ipending & MIPS_INT_MASK_0) {
+		(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
+
+		cause &= ~MIPS_INT_MASK_0;
+	}
+	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	softintr(ipending);
 }
 
+void *
+vr_intr_establish(int line, int (*ih_fun)(void *, u_int32_t, u_int32_t),
+    void *ih_arg)
+{
+
+	KDASSERT(vr_intr_handler[line] == vr_null_handler);
+
+	vr_intr_handler[line] = ih_fun;
+	vr_intr_arg[line] = ih_arg;
+
+	return ((void *)line);
+}
+
+void
+vr_intr_disestablish(void *ih)
+{
+	int line = (int)ih;
+
+	vr_intr_handler[line] = vr_null_handler;
+	vr_intr_arg[line] = NULL;
+}
+
+int
+vr_null_handler(void *arg, u_int32_t pc, u_int32_t status)
+{
+
+	printf("vr_null_handler\n");
+
+	return (0);
+}
 
 /*
 int x4181 = VR4181;

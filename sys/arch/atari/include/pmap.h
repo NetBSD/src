@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 2001/05/26 21:27:05 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26.4.1 2001/10/01 12:38:12 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -153,7 +153,7 @@ struct pmap	kernel_pmap_store;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define	pmap_update()			/* nothing (yet) */
+#define	pmap_update(pmap)		/* nothing (yet) */
 
 #define	active_user_pmap(pm) \
 	(curproc && \

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.43.2.1 2001/10/01 12:42:24 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 
+#include <uvm/uvm_prot.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/sparc64.h>
@@ -142,7 +144,7 @@ static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *, int));
-static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
 static int sbus_overtemp __P((void *));
 static int _sbus_bus_map __P((
@@ -294,7 +296,7 @@ sbus_attach(parent, self, aux)
 	 * Record clock frequency for synchronous SCSI.
 	 * IS THIS THE CORRECT DEFAULT??
 	 */
-	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	sc->sc_clockfreq = PROM_getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
 	sbt = sbus_alloc_bustag(sc);
@@ -303,12 +305,12 @@ sbus_attach(parent, self, aux)
 	/*
 	 * Get the SBus burst transfer size if burst transfers are supported
 	 */
-	sc->sc_burst = getpropint(node, "burst-sizes", 0);
+	sc->sc_burst = PROM_getpropint(node, "burst-sizes", 0);
 
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getprop(node, "ranges", sizeof(struct sbus_range),
+	error = PROM_getprop(node, "ranges", sizeof(struct sbus_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
@@ -362,7 +364,7 @@ sbus_attach(parent, self, aux)
 	 */
 	node0 = firstchild(node);
 	for (node = node0; node; node = nextsibling(node)) {
-		char *name = getpropstring(node, "name");
+		char *name = PROM_getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
 					   node, &sa) != 0) {
@@ -388,7 +390,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = getprop(node, "name", 1, &n, (void **)&sa->sa_name);
+	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -398,13 +400,13 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_node = node;
 	sa->sa_frequency = sc->sc_clockfreq;
 
-	error = getprop(node, "reg", sizeof(struct sbus_reg),
+	error = PROM_getprop(node, "reg", sizeof(struct sbus_reg),
 			 &sa->sa_nreg, (void **)&sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
 		    !node_has_property(node, "device_type") ||
-		    strcmp(getpropstringA(node, "device_type", buf),
+		    strcmp(PROM_getpropstringA(node, "device_type", buf),
 			   "hierarchical") != 0)
 			return (error);
 	}
@@ -421,7 +423,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	    sa->sa_slot)) != 0)
 		return (error);
 
-	error = getprop(node, "address", sizeof(u_int32_t),
+	error = PROM_getprop(node, "address", sizeof(u_int32_t),
 			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -504,11 +506,33 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 
 		paddr = sc->sc_range[i].poffset + offset;
 		paddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
-		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
-				       flags, hp));
+		*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
+			VM_PROT_READ|VM_PROT_WRITE, flags);
 	}
 
-	return (-1);
+	return (*hp == -1 ? -1 : 0);
+}
+
+bus_addr_t
+sbus_bus_addr(t, btype, offset)
+	bus_space_tag_t t;
+	u_int btype;
+	u_int offset;
+{
+	bus_addr_t baddr;
+	int slot = btype;
+	struct sbus_softc *sc = t->cookie;
+	int i;
+
+	for (i = 0; i < sc->sc_nrange; i++) {
+		if (sc->sc_range[i].cspace != slot)
+			continue;
+
+		baddr = sc->sc_range[i].poffset + offset;
+		baddr |= ((bus_addr_t)sc->sc_range[i].pspace<<32);
+	}
+
+	return (baddr);
 }
 
 
@@ -607,7 +631,7 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
 		struct sbus_intr *ip;
 		int pri;
 
@@ -625,9 +649,9 @@ sbus_get_intr(sc, node, ipp, np, slot)
 		 * somehow. Luckily, the interrupt vector has lots of free
 		 * space and we can easily stuff the IPL in there for a while.
 		 */
-		getpropstringA(node, "device_type", buf);
+		PROM_getpropstringA(node, "device_type", buf);
 		if (!buf[0])
-			getpropstringA(node, "name", buf);
+			PROM_getpropstringA(node, "name", buf);
 
 		for (i = 0; intrmap[i].in_class; i++) 
 			if (strcmp(intrmap[i].in_class, buf) == 0) {
@@ -775,7 +799,7 @@ sbus_alloc_bustag(sc)
 	sbt->parent = sc->sc_bustag;
 	sbt->type = SBUS_BUS_SPACE;
 	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sbus_bus_mmap;
+	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }

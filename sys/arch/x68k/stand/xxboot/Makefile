@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/06/12 16:57:28 minoura Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2001/10/01 12:43:11 fvdl Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -18,7 +18,6 @@ SCRIPTS=	installboot.sh
 MKMAN=		no
 
 STRIP?=		strip
-OBJCOPY?=	objcopy
 
 SRCS=	xxboot.S bootufs.c unzip.c
 .PATH:	${.CURDIR}/gunzip
@@ -31,6 +30,9 @@ CFLAGS+= -DTITLE_IMAGE -DIMAGE_EXTRA=100
 #CFLAGS+= -DBOOT_DEBUG
 AFLAGS=	${CFLAGS:M-[ID]*}
 LDFLAGS=-N -Bstatic -Ttext $(TEXT) -e top
+.if ${OBJECT_FMT} == "ELF"
+LDFLAGS+=  -noinhibit-exec	# XXX
+.endif
 #LDADD=	-lc
 
 CLEANFILES=	$(BOOT).x s.x x.s x.o

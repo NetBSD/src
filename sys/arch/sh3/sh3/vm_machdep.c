@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 2001/08/19 20:44:41 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19.2.1 2001/10/01 12:41:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -119,7 +119,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->kr15 = (int)p2->p_addr + USPACE - sizeof(struct trapframe);
 
 	/* convert r15, kr15 to physical address , because tlb miss must not
-	   be occured when accessing kernel stack */
+	   occur when accessing kernel stack */
         pcb->kr15 = SH3_PHYS_TO_P1SEG(SH3_P2SEG_TO_PHYS(vtophys(pcb->kr15)));
 
 	/*
@@ -315,7 +315,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 }
 
 /*
@@ -335,7 +335,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
-	pmap_update();
+	pmap_update(vm_map_pmap(phys_map));
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

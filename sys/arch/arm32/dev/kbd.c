@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26 2001/03/18 17:00:56 rearnsha Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.4.1 2001/10/01 12:37:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -287,7 +287,7 @@ kbdread(dev, uio, flag)
 	if (KBDFLAG(dev) == KBDFLAG_CONUNIT)
 		return(ENXIO);
 
-	/* Block until keyboard activity occured. */
+	/* Block until keyboard activity occurred. */
 
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {

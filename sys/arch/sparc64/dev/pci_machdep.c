@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.23 2001/08/23 16:14:12 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23.2.1 2001/10/01 12:42:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -359,8 +359,8 @@ pci_conf_read(pc, tag, reg)
 			PCITAG_OFFSET(tag) + reg);
 	}
 #ifdef DEBUG
-	else printf("pci_conf_read: bogus pcitag %x\n",
-		(int)PCITAG_OFFSET(tag));
+	else DPRINTF(SPDB_CONF, ("pci_conf_read: bogus pcitag %x\n",
+		(int)PCITAG_OFFSET(tag)));
 #endif
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
@@ -384,8 +384,11 @@ pci_conf_write(pc, tag, reg, data)
 		(long long)(sc->sc_configaddr + PCITAG_OFFSET(tag) + reg), 
 		(int)PCITAG_OFFSET(tag) + reg));
 
-	if (PCITAG_NODE(tag) == -1)
-		panic("pci_conf_write: bad addr");
+	/* If we don't know it, just punt it.  */
+	if (PCITAG_NODE(tag) == -1) {
+		DPRINTF(SPDB_CONF, ("pci_conf_write: bad addr"));
+		return;
+	}
 		
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, 
 		PCITAG_OFFSET(tag) + reg, data);

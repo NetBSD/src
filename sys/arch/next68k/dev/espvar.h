@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.11 1999/03/14 10:31:05 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.11.20.1 2001/10/01 12:41:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,31 +41,31 @@ struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	struct nextdma_config sc_scsi_dma;
 	bus_space_tag_t	sc_bst;				
-	bus_space_handle_t sc_bsh;		/* the device registers */
+	bus_space_handle_t sc_bsh;	/* the device registers */
 
-	caddr_t *sc_dmaaddr;					/* saved argument to esp_dma_setup */
-	size_t  *sc_dmalen;						/* saved argument to esp_dma_setup */
-	size_t  sc_dmasize;						/* saved argument to esp_dma_setup */
-	int sc_datain;								/* saved argument to esp_dma_setup */
+	caddr_t *sc_dmaaddr;		/* saved argument to esp_dma_setup */
+	size_t  *sc_dmalen;		/* saved argument to esp_dma_setup */
+	size_t  sc_dmasize;		/* saved argument to esp_dma_setup */
+	int sc_datain;			/* saved argument to esp_dma_setup */
 
 #define ESP_LOADED_MAIN   (0x01)
 #define ESP_LOADED_TAIL   (0x02)
 #define ESP_UNLOADED_MAIN (0x10)
 #define ESP_UNLOADED_TAIL (0x20)
 
-	int sc_loaded;								/* used by continue callback to remember
-																 * which dmamaps are already loaded.
-																 */
+	int sc_loaded;			/* used by continue callback to remember
+					 * which dmamaps are already loaded.
+					 */
 
 	/* To deal with begin alignment problems, we stuff the fifo
 	 * with a begin buffer
 	 */
-	caddr_t       sc_begin;				/* pointer to start io buf, NULL if invalid */
+	caddr_t       sc_begin;		/* pointer to start io buf, NULL if invalid */
 	size_t        sc_begin_size;	/*  */
 
 	bus_dmamap_t  sc_main_dmamap;	/* i/o dma map */
-	caddr_t       sc_main;				/* pointer to main io buf, NULL if invalid */
-	size_t        sc_main_size;		/* aligned length of main io buf we are using */
+	caddr_t       sc_main;		/* pointer to main io buf, NULL if invalid */
+	size_t        sc_main_size;	/* aligned length of main io buf we are using */
 
 	/* To deal with end alignment problems, we copy the end of the dma
 	 * buffer into a "tail" buffer that we can control more carefully.
@@ -75,7 +75,7 @@ struct esp_softc {
 #define ESP_DMA_MAXTAIL 128
 #define ESP_DMA_TAILBUFSIZE (ESP_DMA_MAXTAIL+2*DMA_ENDALIGNMENT+ESP_DMA_OVERRUN)
 	bus_dmamap_t  sc_tail_dmamap;
-	caddr_t sc_tail;							/* pointer into sc_tailbuf, NULL if invalid */
-	size_t  sc_tail_size;					/* aligned length of tailbuf we are using */
+	caddr_t sc_tail;	/* pointer into sc_tailbuf, NULL if invalid */
+	size_t  sc_tail_size;	/* aligned length of tailbuf we are using */
 	u_char sc_tailbuf[ESP_DMA_TAILBUFSIZE];
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.40 2001/05/14 20:35:27 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.40.4.1 2001/10/01 12:46:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -318,7 +318,7 @@ atapi_probe_device(sc, target, periph, sa)
 		return config_attach(&sc->sc_dev, cf, sa,
 		    atapibusprint);
 	} else {
-		atapibusprint(&sa, sc->sc_dev.dv_xname);
+		atapibusprint(sa, sc->sc_dev.dv_xname);
 		printf(" not configured\n");
 		free(periph, M_DEVBUF);
 		return NULL;

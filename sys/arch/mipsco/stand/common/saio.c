@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.c,v 1.2 2000/09/26 09:48:35 wdk Exp $	*/
+/*	$NetBSD: saio.c,v 1.2.4.1 2001/10/01 12:40:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,6 +166,8 @@ saioopen(struct open_file *f, ...)
 	ctlr = va_arg(ap, int);
 	unit = va_arg(ap, int);
 	part = va_arg(ap, int);
+
+	va_end(ap);
 
 	device[5] = '0' + ctlr;
 	device[7] = '0' + unit;

@@ -1,0 +1,4 @@
+#	$NetBSD: files.irix,v 1.1.2.2 2001/10/01 12:43:26 fvdl Exp $
+#
+
+file	compat/irix/irix_exec.c			compat_irix

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.3 2000/12/04 20:17:10 fvdl Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.3.6.1 2001/10/01 12:46:17 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,8 +115,8 @@ cgsixattach(parent, self, aux)
 
 	/* Remember cookies for cgsix_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
-	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
+	sc->sc_btype = (bus_type_t)sa->sa_slot; /* Should be deprecated */
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	node = sa->sa_node;
 
@@ -183,7 +183,7 @@ cgsixattach(parent, self, aux)
 	sc->sc_fbc = (struct cg6_fbc *)(u_long)bh;
 
 	sbus_establish(sd, &sc->sc_dev);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	isconsole = fb_is_console(node);
 	if (isconsole && cgsix_use_rasterconsole) {

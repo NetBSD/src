@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.12 2000/09/24 20:56:04 jdolecek Exp $
+ * $NetBSD: main.c,v 1.12.2.1 2001/10/01 12:37:18 fvdl Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -83,9 +83,9 @@ void startit_end __P((void));
 
 static long get_number(char **);
 
-#define VERSION "2.2"
+#define VERSION "2.4"
 
-char default_command[] = "netbsd -ASn2";
+extern char default_command[];
 
 int
 pain(aio)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 2001/08/30 22:06:44 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23.2.1 2001/10/01 12:41:43 fvdl Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -912,7 +912,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
  * incorrect entries NOW.
  */
 void
-pmap_update(void)
+pmap_update(struct pmap *pmap)
 {
 #ifdef MULTIPROCESSOR
 	TLBSYNC();
@@ -1419,6 +1419,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 				if ((flags & PMAP_CANFAIL) == 0)
 					panic("pmap_pvo_enter: failed");
 				pmap_pvo_enter_depth--;
+				pmap_interrupts_restore(msr);
 				return ENOMEM;
 #if 0
 			}
@@ -1622,6 +1623,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
 	u_int32_t pte_lo;
+	u_int32_t msr;
 	int error;
 	int s;
 
@@ -1646,8 +1648,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		pte_lo |= PTE_BR;
 
 	s = splvm();
+	msr = pmap_interrupts_off();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool, &pmap_pvo_kunmanaged,
 	    va, pa, pte_lo, prot|PMAP_WIRED);
+	pmap_interrupts_restore(msr);
 	splx(s);
 
 	if (error != 0 && error != ENOENT)
@@ -1711,17 +1715,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	if (pvo != NULL) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
-#ifdef DEBUG
-	} else {
-		if (pm == pmap_kernel()) {
-			if (va >= VM_MIN_KERNEL_ADDRESS) {
-				printf("pmap_extract: va=%#lx: no pa\n", va);
-#ifdef DDB
-				Debugger();
-#endif
-			}
-		}
-#endif
 	}
 	pmap_interrupts_restore(msr);
 	splx(s);
@@ -2411,7 +2404,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	 */
 	if (ps->avail_start == ps->end) {
 		/*
-		 * If this was the last one, then a very bad thing has occured
+		 * If this was the last one, then a very bad thing has occurred
 		 */
 		if (--vm_nphysseg == 0)
 			panic("pmap_steal_memory: out of memory!");
