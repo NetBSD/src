@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.2 2004/12/29 04:46:13 joff Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.3 2005/01/05 04:53:50 joff Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.2 2004/12/29 04:46:13 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.3 2005/01/05 04:53:50 joff Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -476,7 +476,6 @@ ep93xx_intr_dispatch(struct clockframe *frame)
 	u_int32_t		vic1_hwpend;
 	u_int32_t		vic2_hwpend;
 	int			irq;
-	u_int32_t		ibit;
 
 	pcpl = current_spl_level;
 
@@ -490,40 +489,31 @@ ep93xx_intr_dispatch(struct clockframe *frame)
 	vic1_hwpend &= ~vic1_imask[pcpl];
 	vic2_hwpend &= ~vic2_imask[pcpl];
 
-	while (vic1_hwpend) {
+	if (vic1_hwpend) {
 		irq = ffs(vic1_hwpend) - 1;
-		ibit = (1U << irq);
 
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			int	ipl;
-
-			current_spl_level = ipl = ih->ih_ipl;
+			current_spl_level = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
-			vic1_hwpend &= ~ibit;
 		}
-	}
-	while (vic2_hwpend) {
+	} else if (vic2_hwpend) {
 		irq = ffs(vic2_hwpend) - 1;
-		ibit = (1U << irq);
 
 		iq = &intrq[irq + VIC_NIRQ];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			int	ipl;
-
-			current_spl_level = ipl = ih->ih_ipl;
+			current_spl_level = ih->ih_ipl;
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
-			vic2_hwpend &= ~ibit;
 		}
 	}
 
