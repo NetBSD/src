@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.17.2.1 1999/04/18 00:18:49 fvdl Exp $
+.\"	$NetBSD: fdisk.8,v 1.17.2.2 1999/05/02 21:28:12 perry Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -242,12 +242,6 @@ These figures are by default taken from the incore disklabel, but
 gives you an opportunity to change them.
 This allows the user to create a bootblock that can work with drives
 that use geometry translation under the BIOS.
-.Pp
-If you hand craft your disk layout,
-please make sure that the
-.Nx
-partition starts on a cylinder boundary.
-(This restriction may be changed in the future.)
 .Pp
 Editing an existing partition is risky, and may cause you to
 lose all the data in that partition.
