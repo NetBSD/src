@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.3 1995/11/23 02:33:52 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.4 1996/04/12 02:09:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,6 +34,8 @@
 #include <machine/rpb.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -45,33 +47,32 @@
 char *
 dec_2100_a50_modelname()
 {
+	static char s[80];
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
 	case SV_ST_AVANTI:
 	case SV_ST_AVANTI_XXX:		/* XXX apparently the same? */
 		return "AlphaStation 400 4/233 (\"Avanti\")";
-		break;
 
 	case SV_ST_MUSTANG2_4_166:
 		return "AlphaStation 200 4/166 (\"Mustang II\")";
-		break;
 
 	case SV_ST_MUSTANG2_4_233:
 		return "AlphaStation 200 4/233 (\"Mustang II\")";
-		break;
 
 	case 0x2000:
 		return "AlphaStation 250 4/266";
-		break;
 
 	case SV_ST_MUSTANG2_4_100:
 		return "AlphaStation 200 4/100 (\"Mustang II\")";
-		break;
+
+	case 0xa800:
+		return "AlphaStation 255/233";
 
 	default:
-		printf("unknown system variation %lx\n",
+		sprintf(s, "DEC 2100/A50 (\"Avanti\") family, variation %lx",
 		    hwrpb->rpb_variation & SV_ST_MASK);
-		return NULL;
+		return s;
 	}
 }
 
@@ -97,23 +98,23 @@ dec_2100_a50_consinit(constype)
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comdefaultrate, comconsole;
-			extern int comconsaddr, comconsinit;
+			extern bus_chipset_tag_t comconsbc;	/* set */
+			extern bus_io_handle_t comcomsioh;	/* set */
+			extern int comconsaddr, comconsinit;	/* set */
+			extern int comdefaultrate;
 			extern int comcngetc __P((dev_t));
 			extern void comcnputc __P((dev_t, int));
 			extern void comcnpollc __P((dev_t, int));
-			extern __const struct isa_pio_fns *comconsipf;
-			extern __const void *comconsipfa;
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
-			cominit(acp->ac_piofns, acp->ac_pioarg, 0,
-			    comdefaultrate);
-			comconsole = 0;				/* XXX */
-			comconsaddr = 0x3f8;			/* XXX */
+			comconsaddr = 0x3f8;
 			comconsinit = 0;
-			comconsipf = acp->ac_piofns;
-			comconsipfa = acp->ac_pioarg;
+			comconsbc = &acp->ac_bc;
+			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
+			    &comconsioh))
+				panic("can't map serial console I/O ports");
+			cominit(comconsbc, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -123,9 +124,9 @@ dec_2100_a50_consinit(constype)
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(acp->ac_conffns, acp->ac_confarg,
-		    acp->ac_memfns, acp->ac_memarg, acp->ac_piofns,
-		    acp->ac_pioarg, 0, ctb->ctb_turboslot & 0xffff, 0);
+		pci_display_console(&acp->ac_bc, &acp->ac_pc,
+		    (ctb->ctb_turboslot >> 8) & 0xff,
+		    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
