@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.1.1.1 1996/11/29 23:36:29 is Exp $	*/
+/*	$NetBSD: startit.s,v 1.2 1997/02/01 01:46:27 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
+ * From: $NetBSD: startit.s,v 1.2 1997/02/01 01:46:27 mhitch Exp $
  */
 
 	.set	ABSEXECBASE,4
@@ -63,6 +63,7 @@ start_super:
 	| d3:  Amiga specific flags
 	| d4:  E clock frequency
 	| d5:  AttnFlags (cpuid)
+	| d6:  boot partition offset
 	| d7:  boothowto
 	| a4:  esym location
 	| a2:  Inhibit sync flags
@@ -83,11 +84,11 @@ start_super:
 	movel	a3@(40),d4		| E clock frequency
 	movel	a3@(44),d3		| Amiga flags
 	movel	a3@(48),a2		| Inhibit sync flags
-	movel	a3@(52),d6		| Load to fastmem flag
-	subl	a5,a5			| target, load to 0
+	movel	a3@(52),d6		| boot partition offset
 
 	cmpb	#0x7D,a3@(36)		| is it DraCo?
-	beq	nott			| yes, switch off MMU later
+	movel	a3@(56),a3		| Load to fastmem flag
+	jeq	nott			| yes, switch off MMU later
 
 					| no, it is an Amiga:
 
@@ -104,34 +105,34 @@ start_super:
 | ------ mmu off start -----
 
 	btst	#3,d5			| AFB_68040,SysBase->AttnFlags
-	beq	not040
+	jeq	not040
 
 | Turn off 68040/060 MMU
 
-	subl	a3,a3
-	.word 0x4e7b,0xb003		| movec a3,tc
-	.word 0x4e7b,0xb806		| movec a3,urp
-	.word 0x4e7b,0xb807		| movec a3,srp
-	.word 0x4e7b,0xb004		| movec a3,itt0
-	.word 0x4e7b,0xb005		| movec a3,itt1
-	.word 0x4e7b,0xb006		| movec a3,dtt0
-	.word 0x4e7b,0xb007		| movec a3,dtt1
-	bra	nott
+	subl	a5,a5
+	.word 0x4e7b,0xd003		| movec a5,tc
+	.word 0x4e7b,0xd806		| movec a5,urp
+	.word 0x4e7b,0xd807		| movec a5,srp
+	.word 0x4e7b,0xd004		| movec a5,itt0
+	.word 0x4e7b,0xd005		| movec a5,itt1
+	.word 0x4e7b,0xd006		| movec a5,dtt0
+	.word 0x4e7b,0xd007		| movec a5,dtt1
+	jra	nott
 
 not040:
-	lea	pc@(zero:w),a3
-	pmove	a3@,tc			| Turn off MMU
-	lea	pc@(nullrp:w),a3
-	pmove	a3@,crp			| Turn off MMU some more
-	pmove	a3@,srp			| Really, really, turn off MMU
+	lea	pc@(zero:w),a5
+	pmove	a5@,tc			| Turn off MMU
+	lea	pc@(nullrp:w),a5
+	pmove	a5@,crp			| Turn off MMU some more
+	pmove	a5@,srp			| Really, really, turn off MMU
 
 | Turn off 68030 TT registers
 
 	btst	#2,d5			| AFB_68030,SysBase->AttnFlags
-	beq	nott			| Skip TT registers if not 68030
-	lea	pc@(zero:w),a3
-	.word 0xf013,0x0800		| pmove a3@,tt0 (gas only knows about 68851 ops..)
-	.word 0xf013,0x0c00		| pmove a3@,tt1 (gas only knows about 68851 ops..)
+	jeq	nott			| Skip TT registers if not 68030
+	lea	pc@(zero:w),a5
+	.word 0xf015,0x0800		| pmove a5@,tt0 (gas only knows about 68851 ops..)
+	.word 0xf015,0x0c00		| pmove a5@,tt1 (gas only knows about 68851 ops..)
 
 nott:
 | ---- mmu off end ----
@@ -145,20 +146,20 @@ nott:
 
 | ---- copy kernel start ----
 
-	tstl	d6			| Can we load to fastmem?
-	beq	L0			| No, leave destination at 0
-	movl	a0,a5			| Move to start of fastmem chunk
+	tstl	a3			| Can we load to fastmem?
+	jeq	L0			| No, leave destination at 0
+	movl	a0,a3			| Move to start of fastmem chunk
 	addl	a0,a6			| relocate kernel entry point
 L0:
-	movl	a1@+,a5@+
+	movl	a1@+,a3@+
 	subl	#4,d2
 	bcc	L0
 
 	lea	pc@(ckend:w),a1
-	movl	a5,sp@-
+	movl	a3,sp@-
 	pea	pc@(_startit_end:w)
 L1:
-	movl	a1@+,a5@+
+	movl	a1@+,a3@+
 	cmpl	sp@,a1
 	bcs	L1
 	addql	#4,sp
@@ -197,23 +198,22 @@ ckend:
 
 | DraCo: switch off MMU now:
 
-	subl	a3,a3
-	.word 0x4e7b,0xb003		| movec a3,tc
-	.word 0x4e7b,0xb806		| movec a3,urp
-	.word 0x4e7b,0xb807		| movec a3,srp
-	.word 0x4e7b,0xb004		| movec a3,itt0
-	.word 0x4e7b,0xb005		| movec a3,itt1
-	.word 0x4e7b,0xb006		| movec a3,dtt0
-	.word 0x4e7b,0xb007		| movec a3,dtt1
+	subl	a5,a5
+	.word 0x4e7b,0xd003		| movec a5,tc
+	.word 0x4e7b,0xd806		| movec a5,urp
+	.word 0x4e7b,0xd807		| movec a5,srp
+	.word 0x4e7b,0xd004		| movec a5,itt0
+	.word 0x4e7b,0xd005		| movec a5,itt1
+	.word 0x4e7b,0xd006		| movec a5,dtt0
+	.word 0x4e7b,0xd007		| movec a5,dtt1
 	
 noDraCo:
 	moveq	#0,d2			| zero out unused registers
-	moveq	#0,d6			| (might make future compatibility
-	movel	d6,a1			|  would have known contents)
-	movel	d6,a3
-	movel	d6,a5
+	movel	d2,a1			| (might make future compatibility
+	movel	d2,a3			|  would have known contents)
+	movel	d2,a5
 	movel	a6,sp			| entry point into stack pointer
-	movel	d6,a6
+	movel	d2,a6
 
 #if TESTONAMIGA
 	movew	#0x0F0,0xdff180		| green

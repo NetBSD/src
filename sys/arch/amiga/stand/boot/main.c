@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.2 1997/01/21 18:26:14 is Exp $
+ * $NetBSD: main.c,v 1.3 1997/02/01 01:46:26 mhitch Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -60,7 +60,7 @@
 #define EXECMIN 36
 
 void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
-	int, int, u_long, u_long, int));
+	int, int, u_long, u_long, u_long, int));
 void startit_end __P((void));
 int get_cpuid __P((u_int32_t *));
 
@@ -78,7 +78,7 @@ int get_cpuid __P((u_int32_t *));
 static long get_number(char **);
 
 const char version[] = "2.0";
-char default_command[] = "netbsd -Sn2";
+char default_command[] = "netbsd -AS";
 
 int
 pain()
@@ -106,7 +106,7 @@ pain()
 	/* int	skip_chipmem = 0; */
 
 	void (*start_it)(void *, u_long, u_long, void *, u_long, u_long, int,
-	    void *, int, int, u_long, u_long, int) = startit;
+	    void *, int, int, u_long, u_long, u_long, int) = startit;
 
 	caddr_t kp;
 	u_int16_t *kvers;
@@ -125,6 +125,8 @@ pain()
 	char c;
 
 	extern u_int16_t timelimit;
+
+	extern u_int32_t aio_base;
 
 	/*
 	 * we need V36 for: EClock, RDB Bootblocks, CacheClearU
@@ -453,7 +455,8 @@ pain()
 	(void)getchar();
 
 	start_it(kp, ksize, eh->a_entry, (void *)fmem, fmemsz, cmemsz,
-	    boothowto, esym, cpuid, eclock, amiga_flags, I_flag, Z_flag == 0);
+	    boothowto, esym, cpuid, eclock, amiga_flags, I_flag,
+	    aio_base >> 9, Z_flag == 0);
 	/*NOTREACHED*/
 
 freeall:

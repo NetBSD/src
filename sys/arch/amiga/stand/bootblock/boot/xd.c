@@ -1,5 +1,5 @@
 /*
- * $NetBSD: xd.c,v 1.2 1997/01/21 18:26:16 is Exp $
+ * $NetBSD: xd.c,v 1.3 1997/02/01 01:46:28 mhitch Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis.
  * Copyright (c) 1995 Waldi Ravens.
@@ -45,7 +45,7 @@ static int xdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 static int xdopenclose __P((struct open_file *));
 static int xdioctl __P((struct open_file *, u_long, void *));
 
-static u_int32_t aio_base;
+u_int32_t aio_base;
 static struct AmigaIO *aio_save;
 
 static struct devsw devsw[] = {
