@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.11 2000/05/13 15:22:17 mycroft Exp $
+.\" $NetBSD: gre.4,v 1.12 2000/07/05 18:14:40 thorpej Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm gre
 .Nd encapsulating network device
 .Sh SYNOPSIS
-.Cd pseudo-device gre Op Ar count
+.Cd pseudo-device gre
 .Sh DESCRIPTION
 The
 .Nm gre
@@ -49,6 +49,14 @@ network interface is a pseudo device that allows to encapsulate datagrams
 into IP. These encapsulated datagrams are routed to a destination host,
 where they are decapsulated and further routed to their final destination.
 The so called ``tunnel'' appears to the inner datagrams like one hop.
+.Pp
+.Nm
+interfaces are dynamically created and destroyed with the
+.Xr ifconfig 8
+.Cm create
+and
+.Cm destroy
+subcommands.
 .Pp
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
