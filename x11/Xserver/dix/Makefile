@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:10 lukem Exp $
+
+.include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -26,6 +28,6 @@ CPPFLAGS.main.c=	-DVENDOR_STRING="\"The XFree86 Project, Inc\"" \
 			-DVENDOR_RELEASE="(((4) * 10000000) + ((    3) * 100000) + ((       0) * 1000) +    0)"
 
 
+.include <bsd.x11.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>
