@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.4 2001/03/04 13:32:25 ad Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.5 2001/07/04 14:17:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -106,11 +106,11 @@ struct cfattach pxg_ca = {
 };
 
 static const char *pxg_types[] = {
-	"PMAG-DA ", "LM-3DA",
-	"PMAG-FA ", "HE-3DA",
-	"PMAG-FB ", "HE+3DA",
-	"PMAGB-FA", "HE+3DA",
-	"PMAGB-FB", "HE+3DA",
+	"PMAG-DA ",
+	"PMAG-FA ",
+	"PMAG-FB ",
+	"PMAGB-FA",
+	"PMAGB-FB",
 };
 
 static int
@@ -121,7 +121,7 @@ pxg_match(struct device *parent, struct cfdata *match, void *aux)
 
 	ta = aux;
 
-	for (i = 0; i < sizeof(pxg_types) / sizeof(pxg_types[0]); i += 2)
+	for (i = 0; i < sizeof(pxg_types) / sizeof(pxg_types[0]); i++)
 		if (strncmp(pxg_types[i], ta->ta_modname, TC_ROM_LLEN) == 0)
 			return (1);
 
@@ -134,7 +134,7 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 	struct stic_info *si;
 	struct tc_attach_args *ta;
 	struct pxg_softc *pxg;
-	int console, i;
+	int console;
 
 	pxg = (struct pxg_softc *)self;
 	ta = (struct tc_attach_args *)aux;
@@ -157,13 +157,8 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 	pxg->pxg_si = si;
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, pxg_intr, si);
 
-	for (i = 0; i < sizeof(pxg_types) / sizeof(pxg_types[0]); i += 2)
-		if (strncmp(pxg_types[i], ta->ta_modname, TC_ROM_LLEN) == 0)
-			break;
-
-	printf(": %s, %d plane, %dx%d stamp, %dkB SRAM\n", pxg_types[i + 1],
-	    si->si_depth, si->si_stampw, si->si_stamph,
-	    (int)si->si_buf_size >> 10);
+	printf(": %d plane, %dx%d stamp, %dkB SRAM\n", si->si_depth,
+	    si->si_stampw, si->si_stamph, (int)si->si_buf_size >> 10);
 
 	stic_attach(self, si, console);
 }
