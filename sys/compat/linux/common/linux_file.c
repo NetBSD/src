@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.51 2002/04/10 18:19:34 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.52 2002/05/13 05:31:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.51 2002/04/10 18:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.52 2002/05/13 05:31:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,6 @@ linux_sys_fcntl(p, v, retval)
 			return error;
 		bsd_to_linux_flock(&bfl, &lfl);
 		return copyout(&lfl, arg, sizeof lfl);
-		break;
 
 	case LINUX_F_SETLK:
 	case LINUX_F_SETLKW:
