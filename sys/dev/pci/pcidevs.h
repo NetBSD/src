@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.645 2004/08/04 19:29:05 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.646 2004/08/05 16:26:41 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.643 2004/08/04 19:28:52 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.645 2004/08/05 16:26:05 cube Exp 
  */
 
 /*
@@ -2180,6 +2180,7 @@
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_500	0x032B		/* Quadro FX 500 */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5900U	0x0330		/* GeForce FX 5900 Ultra */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5900	0x0331		/* GeForce FX 5900 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5900XT	0x0332		/* GeForce FX 5900XT */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5950U	0x0333		/* GeForce FX 5950 Ultra */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_3000	0x0338		/* Quadro FX 3000 */
 
