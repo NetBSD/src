@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 1997/05/16 21:35:39 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 1997/07/09 19:27:54 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -201,7 +201,5 @@ pmap_phys_address(int ppn)
 }
 
 #endif	/* _KERNEL */
-
-#define	__VM_PMAP_HACK
 
 #endif /* _NS532_PMAP_H_ */
