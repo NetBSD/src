@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.1 1995/07/08 21:30:41 pk Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.2 1995/09/03 22:26:02 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -181,9 +181,9 @@ ncr5380_send_cmd(xs)
 		ncr5380_show_scsi_cmd(xs);
 #endif
 
-	sense = ncr5380_generic( xs->sc_link->scsibus, xs->sc_link->target,
-			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
-			  xs->data, xs->datalen );
+	sense = ncr5380_generic( xs->sc_link->adapter_softc,
+	    xs->sc_link->target, xs->sc_link->lun, xs->cmd,
+	    xs->cmdlen, xs->data, xs->datalen );
 
 	switch (sense) {
 	case 0:	/* success */
@@ -198,7 +198,7 @@ ncr5380_send_cmd(xs)
 				   xs->sc_link->target);
 #endif
 		delay(10);	/* Phil's fix for slow devices. */
-		ncr5380_group0(xs->sc_link->scsibus,
+		ncr5380_group0(xs->sc_link->adapter_softc,
 				  xs->sc_link->target,
 				  xs->sc_link->lun,
 				  0x3, 0x0,
@@ -228,7 +228,6 @@ ncr5380_select_target(regs, myid, tid, with_atn)
 	int		ret = SCSI_RET_RETRY;
 	int 	arb_retries, arb_wait;
 	int i;
-	volatile u_char vuc;
 
 	/* for our purposes.. */
 	myid = 1 << myid;
@@ -241,6 +240,7 @@ ncr5380_select_target(regs, myid, tid, with_atn)
 
 retry_arbitration:
 	regs->sci_mode = 0;	/* get into a harmless state */
+wait_for_bus_free:
 	if (--arb_retries <= 0) {
 #ifdef	DEBUG
 		if (ncr5380_debug) {
@@ -253,21 +253,17 @@ retry_arbitration:
 
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 
-	/* Picked this constant for convenience. --thorpej */
-	for (i = 0; i < ARBITRATION_RETRIES; ++i) {
-		vuc = (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL));
-		if (vuc == 0)
-			break;
-		delay(10);
-	}
-	if (vuc != 0) {
-		/* No sir, I don't like it.  Call for a reset. */
+	if (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) {
+		/* Something is sitting on the SCSI bus... */
 #ifdef DEBUG
-		if (ncr5380_debug)
-			printf("ncr5380_select_target: still BSY+SEL; resetting\n");
+		/* Only complain once (the last time through). */
+		if (ncr5380_debug && (arb_retries <= 1)) {
+			printf("si_select_target: still BSY+SEL\n");
+		}
 #endif
-		ret = SCSI_RET_NEED_RESET;
-		goto nosel;
+		/* Give it a little time, then try again. */
+		delay(10);
+		goto wait_for_bus_free;
 	}
 
 	regs->sci_odata = myid;
@@ -416,10 +412,11 @@ sci_data_out(regs, phase, count, data)
 
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 loop:
+	/* SCSI bus phase not valid until REQ is true. */
+	WAIT_FOR_REQ(regs);
 	if (SCI_CUR_PHASE(regs->sci_bus_csr) != phase)
 		return cnt;
 
-	WAIT_FOR_REQ(regs);
 	icmd |= SCI_ICMD_DATA;
 	regs->sci_icmd = icmd;
 	regs->sci_odata = *data++;
@@ -449,10 +446,11 @@ sci_data_in(regs, phase, count, data)
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 
 loop:
+	/* SCSI bus phase not valid until REQ is true. */
+	WAIT_FOR_REQ(regs);
 	if (SCI_CUR_PHASE(regs->sci_bus_csr) != phase)
 		return cnt;
 
-	WAIT_FOR_REQ(regs);
 	*data++ = regs->sci_data;
 	icmd |= SCI_ICMD_ACK;
 	regs->sci_icmd = icmd;
@@ -693,13 +691,14 @@ ncr5380_dorequest(sc, target, lun, cmd, cmdlen, databuf, datalen, sent)
 
 static int
 ncr5380_generic(adapter, id, lun, cmd, cmdlen, databuf, datalen)
-	int adapter, id, lun;
+	void *adapter;
+	int id, lun;
 	struct scsi_generic *cmd;
 	int cmdlen;
 	void *databuf;
 	int datalen;
 {
-	register struct ncr5380_softc *sc = sicd.cd_devs[adapter];
+	register struct ncr5380_softc *sc = adapter;
 	int i, j, sent;
 
 	if (cmd->opcode == TEST_UNIT_READY)	/* XXX */
@@ -713,11 +712,12 @@ ncr5380_generic(adapter, id, lun, cmd, cmdlen, databuf, datalen)
 
 static int
 ncr5380_group0(adapter, id, lun, opcode, addr, len, flags, databuf, datalen)
-	int adapter, id, lun, opcode, addr, len, flags;
+	void *adapter;
+	int id, lun, opcode, addr, len, flags;
 	caddr_t databuf;
 	int datalen;
 {
-	register struct ncr5380_softc *sc = sicd.cd_devs[adapter];
+	register struct ncr5380_softc *sc = adapter;
 	unsigned char cmd[6];
 	int i, j, sent;
 
