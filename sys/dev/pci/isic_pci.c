@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.9 2002/03/27 07:39:37 martin Exp $ 
+ *	$Id: isic_pci.c,v 1.10 2002/03/30 19:13:45 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.9 2002/03/27 07:39:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.10 2002/03/30 19:13:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -334,7 +334,7 @@ isic_pci_isdn_attach(psc, pa, cardname)
 #endif
 	
 	/* init higher protocol layers */
-
+	isic_enable_intr(sc, 0);
 	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
 
