@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.27 2004/04/26 21:00:38 dsl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.28 2004/07/28 09:17:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -596,6 +596,82 @@ struct hp300_load {
 #define	HP300_DIR_TYPE		-5822
 #define	HP300_DIR_FLAG		0x8001	/* dont ask me! */
 #define	HP300_SECTSIZE		256
+
+
+/* ------------------------------------------
+ * hp700
+ *
+ */
+
+/*
+ * volume header for "LIF" format volumes
+ */
+struct	hp700_lifvol {
+	uint16_t	vol_id;
+	uint8_t		vol_label[6];
+	uint32_t	vol_addr;
+	uint16_t	vol_oct;
+	uint16_t	vol_dummy;
+
+	uint32_t	vol_dirsize;
+	uint16_t	vol_version;
+	uint16_t	vol_zero;
+	uint32_t	vol_number;
+	uint32_t	vol_lastvol;
+
+	uint32_t	vol_length;
+	uint8_t		vol_toc[6];
+	uint8_t		vol_dummy1[198];
+
+	uint32_t	ipl_addr;
+	uint32_t	ipl_size;
+	uint32_t	ipl_entry;
+
+	uint32_t	vol_dummy2;
+};
+
+struct	hp700_lifdir {
+	uint8_t		dir_name[10];
+	uint16_t	dir_type;
+	uint32_t	dir_addr;
+	uint32_t	dir_length;
+	uint8_t		dir_toc[6];
+	uint16_t	dir_flag;
+	uint32_t	dir_implement;
+};
+
+struct hp700_lifload {
+	int address;
+	int count;
+};
+
+#define	HP700_LIF_VOL_ID	0x8000
+#define	HP700_LIF_VOL_OCT	0x1000
+#define	HP700_LIF_DIR_SWAP	0x5243
+#define	HP700_LIF_DIR_FS	0xcd38
+#define	HP700_LIF_DIR_IOMAP	0xcd60
+#define	HP700_LIF_DIR_HPUX	0xcd80
+#define	HP700_LIF_DIR_ISL	0xce00
+#define	HP700_LIF_DIR_PAD	0xcffe
+#define	HP700_LIF_DIR_AUTO	0xcfff
+#define	HP700_LIF_DIR_EST	0xd001
+#define	HP700_LIF_DIR_TYPE	0xe942
+
+#define	HP700_LIF_DIR_FLAG	0x8001	/* dont ask me! */
+#define	HP700_LIF_SECTSIZE	256
+
+#define	HP700_LIF_NUMDIR	8
+
+#define	HP700_LIF_VOLSTART	0
+#define	HP700_LIF_VOLSIZE	sizeof(struct hp700_lifvol)
+#define	HP700_LIF_DIRSTART	2048
+#define	HP700_LIF_DIRSIZE	(HP700_LIF_NUMDIR * sizeof(struct hp700_lifdir))
+#define	HP700_LIF_FILESTART	4096
+
+#define	hp700_btolifs(b)	(((b) + (HP700_LIF_SECTSIZE - 1)) / HP700_LIF_SECTSIZE)
+#define	hp700_lifstob(s)	((s) * HP700_LIF_SECTSIZE) 
+#define	hp700_lifstodb(s)	((s) * HP700_LIF_SECTSIZE / DEV_BSIZE)
+
 
 /* ------------------------------------------
  * x86
