@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.46 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: mfb.c,v 1.47 2001/09/19 19:04:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.46 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.47 2001/09/19 19:04:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.46 2001/07/07 14:21:00 simonb Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/pmioctl.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/mfbreg.h>
@@ -281,7 +281,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 	fi->fi_blanked = 0;
 
 	/* Fill in Frame Buffer Type struct. */
-	fi->fi_type.fb_boardtype = PMAX_FBTYPE_MFB;
+	fi->fi_type.fb_type = PMAX_FBTYPE_MFB;
 	fi->fi_type.fb_width = 1280;	/* visible screen pixels */
 	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_depth = 8;
