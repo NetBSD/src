@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.9 2003/10/25 19:44:42 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.10 2003/10/25 21:51:31 scw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -300,7 +300,11 @@ ASENTRY_NP(data_abort_entry)
 					/* to SVC32 mode */
 
 #if defined(COMPAT_15) && defined(EXEC_AOUT)
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode (r0 = spsr_all)*/
+	teq	r0, #(PSR_USR32_MODE)
+	bne	99f			/* Not USR mode so skip AFLT check */
 	ENABLE_ALIGNMENT_FAULTS
+99:
 #endif
 
 	mov	r0, sp			/* pass the stack pointer as r0 */
@@ -523,7 +527,11 @@ Lundefined_handler_indirection:
 ENTRY_NP(undefinedinstruction_bounce)
 	PUSHFRAMEINSVC
 #if defined(COMPAT_15) && defined(EXEC_AOUT)
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode (r0 = spsr_all)*/
+	teq	r0, #(PSR_USR32_MODE)
+	bne	99f			/* Not USR mode so skip AFLT check */
 	ENABLE_ALIGNMENT_FAULTS
+99:
 #endif
 	mov	r0, sp
 	bl	_C_LABEL(undefinedinstruction)
