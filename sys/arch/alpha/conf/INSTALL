@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.14 1998/05/24 23:45:30 thorpej Exp $
+# $NetBSD: INSTALL,v 1.15 1998/06/02 01:43:33 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -108,6 +108,7 @@ pci*	at	dwlpx?
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
+epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
