@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/06/06 17:36:01 matt Exp $
+#	$NetBSD: Makefile,v 1.21 2001/06/10 11:01:27 tsubai Exp $
 
 KDIR=	/sys/arch/powerpc/include
 INCSDIR= /usr/include/powerpc
@@ -15,7 +15,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pio.h proc.h profile.h psl.h ptrace.h \
+	param.h pcb.h pio.h pmap.h proc.h profile.h psl.h ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
