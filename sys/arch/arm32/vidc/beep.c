@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.13 1998/06/02 20:41:55 mark Exp $	*/
+/*	$NetBSD: beep.c,v 1.14 1998/07/07 03:05:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,9 @@
  *
  */
 
+#include "opt_cputypes.h"
 #include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.23 1998/06/02 20:41:55 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.24 1998/07/07 03:05:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -43,6 +43,7 @@
  *
  */
 
+#include "opt_cputypes.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>	/* proc.h */
