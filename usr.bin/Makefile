@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.52 1995/07/24 04:31:55 cgd Exp $
+#	$Id: Makefile,v 1.53 1995/09/05 02:41:54 tls Exp $
 
 SUBDIR=	apply apropos asa at basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
@@ -25,4 +25,8 @@ SUBDIR=	apply apropos asa at basename bdes biff cal calendar cap_mkdb \
 SUBDIR+= ar gprof nm ranlib size strip
 .endif
 
+# gcore works only on some ports.
+.if (${MACHINE} == "hp300" || ${MACHINE} == "i386" || ${MACHINE} == "sparc")
+SUBDIR+= gcore
+.endif
 .include <bsd.subdir.mk>
