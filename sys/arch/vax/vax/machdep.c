@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.34 1996/10/13 03:35:54 christos Exp $  */
+/* $NetBSD: machdep.c,v 1.35 1997/01/11 11:31:26 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -691,7 +691,7 @@ dumpsys()
 
 int
 fuswintr(addr)
-	caddr_t addr;
+	const void *addr;
 {
 	panic("fuswintr: need to be implemented");
 	return 0;
@@ -700,8 +700,8 @@ fuswintr(addr)
 
 int
 suibyte(base, byte)
-	int byte;
 	void *base;
+	short byte;
 {
 	panic("suibyte: need to be implemented");
 	return 0;
@@ -709,8 +709,8 @@ suibyte(base, byte)
 
 int
 suswintr(addr, cnt)
-	caddr_t addr;
-	u_int	cnt;
+	void *addr;
+	short	cnt;
 {
 	panic("suswintr: need to be implemented");
 	return 0;
