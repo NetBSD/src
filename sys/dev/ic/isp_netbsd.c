@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.10 1999/02/09 00:42:22 mjacob Exp $ */
-/* release_02_05_99 */
+/* $NetBSD: isp_netbsd.c,v 1.11 1999/03/17 06:15:48 mjacob Exp $ */
+/* release_03_16_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -79,8 +79,15 @@ isp_attach(isp)
 	TAILQ_INIT(&isp->isp_osinfo.waitq);
 
 	if (isp->isp_type & ISP_HA_FC) {
+		/*
+		 * Give it another chance here to come alive...
+		 */
+		fcparam *fcp = isp->isp_param;
+		if (fcp->isp_fwstate != FW_READY) {
+			(void) isp_control(isp, ISPCTL_FCLINK_TEST, NULL);
+		}
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
-#ifdef	SCCLUN
+#ifdef	ISP2100_SCCLUN
 		/*
 		 * 16 bits worth, but let's be reasonable..
 		 */
@@ -124,8 +131,12 @@ isp_attach(isp)
 	 * XXX: that async events happen.
 	 */
 	
-	if (isp->isp_type & ISP_HA_SCSI)
+	if (isp->isp_type & ISP_HA_SCSI) {
 		(void) isp_control(isp, ISPCTL_RESET_BUS, NULL);
+		SYS_DELAY(2*1000000);
+	} else {
+		;
+	}
 
 	/*
 	 * Start the watchdog.
@@ -193,6 +204,20 @@ ispcmd(xs)
 			isp->isp_update = 1;
 		}
 	}
+
+	if (isp->isp_state < ISP_RUNSTATE) {
+		DISABLE_INTS(isp);
+		isp_init(isp);
+                if (isp->isp_state != ISP_INITSTATE) {
+			ENABLE_INTS(isp);
+                        (void) splx(s);
+                        XS_SETERR(xs, HBA_BOTCH);
+                        return (CMD_COMPLETE);
+                }
+                isp->isp_state = ISP_RUNSTATE;
+		ENABLE_INTS(isp);
+        }
+
 	/*
 	 * Check for queue blockage...
 	 */
@@ -208,7 +233,9 @@ ispcmd(xs)
 		return (CMD_QUEUED);
 	}
 	
+	DISABLE_INTS(isp);
 	result = ispscsicmd(xs);
+	ENABLE_INTS(isp);
 	if (result != CMD_QUEUED || (xs->flags & SCSI_POLL) == 0) {
 		(void) splx(s);
 		return (result);
@@ -339,13 +366,17 @@ isp_internal_restart(arg)
 	void *arg;
 {
 	struct ispsoftc *isp = arg;
-	int result, nrestarted = 0, s = splbio();
+	int result, nrestarted = 0, s;
 
+	s = splbio();
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
 			TAILQ_REMOVE(&isp->isp_osinfo.waitq, xs, adapter_q);
-			if ((result = ispscsicmd(xs)) != CMD_QUEUED) {
+			DISABLE_INTS(isp);
+			result = ispscsicmd(xs);
+			ENABLE_INTS(isp);
+			if (result != CMD_QUEUED) {
 				printf("%s: botched command restart (0x%x)\n",
 				    isp->isp_name, result);
 				xs->flags |= ITSDONE;
@@ -368,17 +399,6 @@ isp_async(isp, cmd, arg)
 {
 	int s = splbio();
 	switch (cmd) {
-	case ISPASYNC_LOOP_DOWN:
-		/*
-		 * Hopefully we get here in time to minimize the number
-		 * of commands we are firing off that are sure to die.
-		 */
-		isp->isp_osinfo.blocked = 1;
-		break;
-        case ISPASYNC_LOOP_UP:
-		isp->isp_osinfo.blocked = 0;
-		timeout(isp_internal_restart, isp, 1);
-		break;
 	case ISPASYNC_NEW_TGT_PARAMS:
 		if (isp->isp_type & ISP_HA_SCSI) {
 			sdparam *sdp = isp->isp_param;
@@ -416,6 +436,73 @@ isp_async(isp, cmd, arg)
 				    isp->isp_name, tgt, wt);
 			}
 		}
+		break;
+	case ISPASYNC_BUS_RESET:
+		printf("%s: SCSI bus reset detected\n", isp->isp_name);
+		break;
+	case ISPASYNC_LOOP_DOWN:
+		/*
+		 * Hopefully we get here in time to minimize the number
+		 * of commands we are firing off that are sure to die.
+		 */
+		isp->isp_osinfo.blocked = 1;
+		printf("%s: Loop DOWN\n", isp->isp_name);
+		break;
+        case ISPASYNC_LOOP_UP:
+		isp->isp_osinfo.blocked = 0;
+		timeout(isp_internal_restart, isp, 1);
+		printf("%s: Loop UP\n", isp->isp_name);
+		break;
+	case ISPASYNC_PDB_CHANGE_COMPLETE:
+	if (isp->isp_type & ISP_HA_FC) {
+		static char *roles[4] = {
+		    "No", "Target", "Initiator", "Target/Initiator"
+		};
+		long tgt = (long) arg;
+		isp_pdb_t *pdbp = &((fcparam *)isp->isp_param)->isp_pdb[tgt];
+		printf("%s: Loop ID %d, %s role\n",
+		    isp->isp_name, pdbp->pdb_loopid,
+		    roles[(pdbp->pdb_prli_svc3 >> 4) & 0x3]);
+		printf("     Node Address 0x%x WWN 0x"
+		    "%02x%02x%02x%02x%02x%02x%02x%02x\n",
+		    BITS2WORD(pdbp->pdb_portid_bits),
+		    pdbp->pdb_portname[0], pdbp->pdb_portname[1],
+		    pdbp->pdb_portname[2], pdbp->pdb_portname[3],
+		    pdbp->pdb_portname[4], pdbp->pdb_portname[5],
+		    pdbp->pdb_portname[6], pdbp->pdb_portname[7]);
+		if (pdbp->pdb_options & PDB_OPTIONS_ADISC)
+			printf("     Hard Address 0x%x WWN 0x"
+			    "%02x%02x%02x%02x%02x%02x%02x%02x\n",
+			    BITS2WORD(pdbp->pdb_hardaddr_bits),
+			    pdbp->pdb_nodename[0],
+			    pdbp->pdb_nodename[1],
+			    pdbp->pdb_nodename[2],
+			    pdbp->pdb_nodename[3],
+			    pdbp->pdb_nodename[4],
+			    pdbp->pdb_nodename[5],
+			    pdbp->pdb_nodename[6],
+			    pdbp->pdb_nodename[7]);
+		switch (pdbp->pdb_prli_svc3 & SVC3_ROLE_MASK) {
+		case SVC3_TGT_ROLE|SVC3_INI_ROLE:
+			printf("     Master State=%s, Slave State=%s\n",
+			    isp2100_pdb_statename(pdbp->pdb_mstate),
+			    isp2100_pdb_statename(pdbp->pdb_sstate));
+			break;
+		case SVC3_TGT_ROLE:
+			printf("     Master State=%s\n",
+			    isp2100_pdb_statename(pdbp->pdb_mstate));
+			break;
+		case SVC3_INI_ROLE:
+			printf("     Slave State=%s\n",
+			    isp2100_pdb_statename(pdbp->pdb_sstate));
+			break;
+		default:
+			break;
+		}
+		break;
+	}
+	case ISPASYNC_CHANGE_NOTIFY:
+		printf("%s: Name Server Database Changed\n", isp->isp_name);
 		break;
 	default:
 		break;
