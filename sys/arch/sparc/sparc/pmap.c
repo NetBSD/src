@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1995/01/09 11:22:09 mycroft Exp $ */
+/*	$NetBSD: pmap.c,v 1.28 1995/01/10 16:50:50 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1387,7 +1387,7 @@ pmap_bootstrap(nmmu, nctx)
 		 * Unmap the pages, if any, that are not part of
 		 * the final segment.
 		 */
-		for (p += n << PGSHIFT; j < NPTESG; j++, p += NBPG)
+		for (p += n << PGSHIFT; n < NPTESG; n++, p += NBPG)
 			setpte(p, 0);
 		break;
 	}
