@@ -2,7 +2,9 @@
 
 LIB=	ln
 SRCS=	libmain.c
-LINKS=	${LIBDIR}/libln.a ${LIBDIR}/libl.a \
-	${LIBDIR}/libln_p.a ${LIBDIR}/libl_p.a
+LINKS=	${LIBDIR}/libln.a ${LIBDIR}/libl.a
+.if !defined(NOPROFILE)
+LINKS+=	${LIBDIR}/libln_p.a ${LIBDIR}/libl_p.a
+.endif
 
 .include <bsd.lib.mk>
