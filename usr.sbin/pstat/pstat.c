@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.64 2002/02/22 04:27:30 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.65 2002/02/22 04:30:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.64 2002/02/22 04:27:30 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.65 2002/02/22 04:30:39 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -482,7 +482,7 @@ ufs_print(vp)
 	type = ip->i_ffs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode))
 		if (usenumflag ||
-		    ((name = devname(ip->i_ffs_rdev, type)) == NULL))
+		    (name = devname(ip->i_ffs_rdev, type)) == NULL)
 			(void)printf("   %2d,%-2d",
 			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
 		else
@@ -507,7 +507,7 @@ ext2fs_print(vp)
 	type = ip->i_e2fs_mode & S_IFMT;
 	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode))
 		if (usenumflag ||
-		    ((name = devname(ip->i_e2fs_rdev, type)) == NULL))
+		    (name = devname(ip->i_e2fs_rdev, type)) == NULL)
 			(void)printf("   %2d,%-2d",
 			    major(ip->i_e2fs_rdev), minor(ip->i_e2fs_rdev));
 		else
@@ -571,7 +571,7 @@ nfs_print(vp)
 	case VBLK:
 		type = S_IFBLK;
 	device:
-		if (usenumflag || ((name = devname(va.va_rdev, type)) == NULL))
+		if (usenumflag || (name = devname(va.va_rdev, type)) == NULL)
 			(void)printf("   %2d,%-2d",
 			    major(va.va_rdev), minor(va.va_rdev));
 		else
