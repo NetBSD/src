@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.30 1998/08/04 04:03:17 perry Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.31 1998/08/13 19:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -110,9 +110,9 @@ mclpool_release(v, sz, mtype)
 {
 
 #if defined(UVM)
-	uvm_km_free_poolpage1(mb_map, (vm_offset_t)v);
+	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
 #else
-	kmem_free_poolpage1(mb_map, (vm_offset_t)v);
+	kmem_free_poolpage1(mb_map, (vaddr_t)v);
 #endif
 }
 
