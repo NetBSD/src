@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:11 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:50 lukem Exp $
 
 .PATH: ${.CURDIR}/CP
 
@@ -8,24 +8,32 @@ CLEANFILES+=		mapper.dir.CP charset.pivot.CP
 PART_CP!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/CP/CP.part
 
 mapper.dir.CP: ${.CURDIR}/CP/CP.part ${.CURDIR}/CP/mapper.dir.CP.src
-	echo "# CP" > $@
-.for i in ${PART_CP}
-	printf '%-32s%-16s%s\n' 'CP$i/UCS' 'mapper_std' \
-		'CP/CP${i:S/:/@/}%UCS.mps' >> $@
-	printf '%-32s%-16s%s\n' 'UCS/CP$i' 'mapper_std' \
-		'CP/UCS%CP${i:S/:/@/}.mps' >> $@
-.endfor
-	cat ${.CURDIR}/CP/mapper.dir.CP.src >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(\
+	    echo "# CP";\
+	    for i in ${PART_CP}; do \
+		printf '%-32s%-16s%s\n' CP$$i'/UCS' \
+		    mapper_std CP/CP$$i'%UCS.mps';\
+		printf '%-32s%-16s%s\n' UCS/CP$$i \
+		    mapper_std CP/UCS%CP$$i'.mps';\
+	    done;\
+	    cat ${.CURDIR}/CP/mapper.dir.CP.src;\
+	    echo;\
+	) > ${.TARGET}
 
 charset.pivot.CP: ${.CURDIR}/CP/CP.part ${.CURDIR}/CP/charset.pivot.CP.src
-	echo "# CP" > $@
-.for i in ${PART_CP}
-	printf "%-32s%-32s%d\n" 'CP$i' 'UCS' '1' >> $@
-	printf "%-32s%-32s%d\n" 'UCS' 'CP$i' '1' >> $@
-.endfor
-	cat ${.CURDIR}/CP/charset.pivot.CP.src >> $@
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(\
+	    echo "# CP";\
+	    for i in ${PART_CP}; do \
+		printf "%-32s%-32s%d\n" CP$$i UCS 1;\
+		printf "%-32s%-32s%d\n" UCS CP$$i 1;\
+	    done;\
+	    cat ${.CURDIR}/CP/charset.pivot.CP.src;\
+	    echo;\
+	) > ${.TARGET}
 
 .for i in ${PART_CP}
 FILES+=		CP${i:S/:/@/}%UCS.mps UCS%CP${i:S/:/@/}.mps

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:28 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2003/10/19 14:08:50 lukem Exp $
 
 .PATH: ${.CURDIR}/EBCDIC
 
@@ -8,22 +8,30 @@ CLEANFILES+=		mapper.dir.EBCDIC charset.pivot.EBCDIC
 PART_EBCDIC!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/EBCDIC/EBCDIC.part
 
 mapper.dir.EBCDIC: ${.CURDIR}/EBCDIC/EBCDIC.part
-	echo "# EBCDIC" > $@
-.for i in ${PART_EBCDIC}
-	printf '%-32s%-16s%s\n' 'EBCDIC-$i/UCS' 'mapper_std' \
-		'EBCDIC/EBCDIC-${i:S/:/@/}%UCS.mps' >> $@
-	printf '%-32s%-16s%s\n' 'UCS/EBCDIC-$i' 'mapper_std' \
-		'EBCDIC/EBCDIC-${i:S/:/@/}%UCS.mps' >> $@
-.endfor
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(\
+	    echo "# EBCDIC";\
+	    for i in ${PART_EBCDIC}; do \
+		printf '%-32s%-16s%s\n' EBCDIC-$$i'/UCS' \
+		    mapper_std EBCDIC/EBCDIC-$$i'%UCS.mps';\
+		printf '%-32s%-16s%s\n' UCS/EBCDIC-$$i \
+		    mapper_std EBCDIC/EBCDIC-$$i'%UCS.mps';\
+	    done;\
+	    echo;\
+	) > ${.TARGET}
 
 charset.pivot.EBCDIC: ${.CURDIR}/EBCDIC/EBCDIC.part
-	echo "# EBCDIC" > $@
-.for i in ${PART_EBCDIC}
-	printf "%-32s%-32s%d\n" 'EBCDIC-$i' 'UCS' '1' >> $@
-	printf "%-32s%-32s%d\n" 'UCS' 'EBCDIC-$i' '1' >> $@
-.endfor
-	echo >> $@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	(\
+	    echo "# EBCDIC";\
+	    for i in ${PART_EBCDIC}; do \
+		printf "%-32s%-32s%d\n" EBCDIC-$$i UCS 1;\
+		printf "%-32s%-32s%d\n" UCS EBCDIC-$$i 1;\
+	    done;\
+	    echo;\
+	) > ${.TARGET}
 
 .for i in ${PART_EBCDIC}
 FILES+=					EBCDIC-${i:S/:/@/}%UCS.mps
