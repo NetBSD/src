@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2000/08/02 16:46:16 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2001/11/25 06:53:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,24 +41,24 @@
 
 #include <sys/cdefs.h>
 
-void block __P((void));
-void block_close __P((void));
-void dd_out __P((int));
-void def __P((void));
-void def_close __P((void));
-void jcl __P((char **));
-void pos_in __P((void));
-void pos_out __P((void));
-void summary __P((void));
-void summaryx __P((int));
-void terminate __P((int));
-void unblock __P((void));
-void unblock_close __P((void));
-ssize_t bwrite __P((int, const void *, size_t));
+void block(void);
+void block_close(void);
+void dd_out(int);
+void def(void);
+void def_close(void);
+void jcl(char **);
+void pos_in(void);
+void pos_out(void);
+void summary(void);
+void summaryx(int);
+void terminate(int);
+void unblock(void);
+void unblock_close(void);
+ssize_t bwrite(int, const void *, size_t);
 
 extern IO in, out;
 extern STAT st;
-extern void (*cfunc) __P((void));
+extern void (*cfunc)(void);
 extern u_long cpy_cnt;
 extern u_int cbsz;
 extern u_int ddflags;
