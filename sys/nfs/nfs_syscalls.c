@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.58 2003/04/09 14:22:33 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.59 2003/05/07 16:18:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.58 2003/04/09 14:22:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.59 2003/05/07 16:18:17 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -972,37 +972,39 @@ nfssvc_iod(l)
 	 * Just loop around doing our stuff until SIGKILL
 	 */
 	for (;;) {
-	    while (((nmp = myiod->nid_mount) == NULL
+		while (((nmp = myiod->nid_mount) == NULL
 		    || TAILQ_EMPTY(&nmp->nm_bufq)) && error == 0) {
-		if (nmp)
-		    nmp->nm_bufqiods--;
-		myiod->nid_want = p;
-		myiod->nid_mount = NULL;
-		error = tsleep((caddr_t)&myiod->nid_want,
-			PWAIT | PCATCH, "nfsidl", 0);
-	    }
-	    while (nmp != NULL && (bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
-		/* Take one off the front of the list */
-		TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
-		nmp->nm_bufqlen--;
-		if (nmp->nm_bufqwant && nmp->nm_bufqlen < 2 * nfs_numasync) {
-		    nmp->nm_bufqwant = FALSE;
-		    wakeup(&nmp->nm_bufq);
+			if (nmp)
+				nmp->nm_bufqiods--;
+			myiod->nid_want = p;
+			myiod->nid_mount = NULL;
+			error = tsleep((caddr_t)&myiod->nid_want,
+			    PWAIT | PCATCH, "nfsidl", 0);
 		}
-		(void) nfs_doio(bp, NULL);
-		/*
-		 * If there are more than one iod on this mount, then defect
-		 * so that the iods can be shared out fairly between the mounts
-		 */
-		if (nfs_defect && nmp->nm_bufqiods > 1) {
-		    myiod->nid_mount = NULL;
-		    nmp->nm_bufqiods--;
-		    break;
+		while (nmp != NULL &&
+		    (bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
+			/* Take one off the front of the list */
+			TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
+			nmp->nm_bufqlen--;
+			if (nmp->nm_bufqwant &&
+			    nmp->nm_bufqlen < 2 * nfs_numasync) {
+				nmp->nm_bufqwant = FALSE;
+				wakeup(&nmp->nm_bufq);
+			}
+			(void) nfs_doio(bp, NULL);
+			/*
+			 * If there are more than one iod on this mount, then defect
+			 * so that the iods can be shared out fairly between the mounts
+			 */
+			if (nfs_defect && nmp->nm_bufqiods > 1) {
+				myiod->nid_mount = NULL;
+				nmp->nm_bufqiods--;
+				break;
+			}
 		}
-	    }
-	    if (error) {
-		    break;
-	    }
+		if (error) {
+			break;
+		}
 	}
 	PRELE(l);
 	if (nmp)
