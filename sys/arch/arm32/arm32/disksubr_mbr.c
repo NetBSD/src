@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.2 1998/06/22 21:12:51 sommerfe Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.3 1999/01/29 21:20:22 matthias Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -84,9 +84,9 @@
 static char mbrsig[2] = {0x55, 0xaa};
 
 int fat_types[] = {
-	MBR_PTYP_FAT12, MBR_PTYP_FAT16S,
-	MBR_PTYP_FAT16B, MBR_PTYP_FAT32,
-	MBR_PTYP_FAT32L, MBR_PTYP_FAT16L,
+	MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
+	MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
+	MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
 	-1
 };
 
@@ -142,13 +142,13 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		/* look for NetBSD partition */
 		ourmbrp = NULL;
 		for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-			if (mbrp[i].mbrp_typ == MBR_PTYP_NETBSD)
+			if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
 				ourmbrp = &mbrp[i];
 		}
 #ifdef COMPAT_386BSD_MBRPART
 		/* didn't find it -- look for 386BSD partition */
 		for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-			if (mbrp[i].mbrp_typ == MBR_PTYP_386BSD) {
+			if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
 				printf("WARNING: old BSD partition ID!\n");
 				ourmbrp = &mbrp[i];
 				break;
@@ -168,7 +168,7 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 				if (mbrp->mbrp_typ == *ip)
 					pp->p_fstype = FS_MSDOS;
 			}
-			if (mbrp->mbrp_typ == MBR_PTYP_LNXEXT2)
+			if (mbrp->mbrp_typ == MBR_PTYPE_LNXEXT2)
 				pp->p_fstype = FS_EX2FS;
 
 			/* is this ours? */
@@ -250,13 +250,13 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	/* look for NetBSD partition */
 	ourmbrp = NULL;
 	for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYP_NETBSD)
+		if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
 			ourmbrp = &mbrp[i];
 	}
 #ifdef COMPAT_386BSD_MBRPART
 	/* didn't find it -- look for 386BSD partition */
 	for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYP_386BSD) {
+		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
 			printf("WARNING: old BSD partition ID!\n");
 			ourmbrp = &mbrp[i];
 		}
