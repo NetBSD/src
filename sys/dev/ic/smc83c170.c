@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.8 1998/08/11 00:13:48 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.9 1998/10/05 19:10:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1068,6 +1068,11 @@ epic_init(sc)
 	 * Start the one second clock.
 	 */
 	timeout(epic_tick, sc, hz);
+
+	/*
+	 * Attempt to start output on the interface.
+	 */
+	epic_start(ifp);
 }
 
 /*
