@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/10 17:04:21 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/21 20:04:37 tv Exp $
 
 TIMESTAMP=	${TOOLDIR}/bin/nbhost-mkdep
 
@@ -9,7 +9,8 @@ CLEANFILES+=	config.cache config.log config.status host-mkdep
 realall: host-mkdep
 host-mkdep: configure host-mkdep.in
 	-rm -f $@
-	CC="${HOST_CC}" ${.CURDIR}/configure --cache-file=config.cache
+	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
+		${.CURDIR}/configure --cache-file=config.cache
 
 # This is the only program that comes before binstall.
 install: ${TIMESTAMP}
