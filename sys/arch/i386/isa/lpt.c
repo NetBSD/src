@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.15 1993/10/29 21:04:20 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.16 1993/10/29 21:33:32 mycroft Exp $
  */
 
 /*
@@ -481,6 +481,7 @@ pushbytes(sc)
 				return error;
 		}
 	}
+	return 0;
 }
 
 /* 
