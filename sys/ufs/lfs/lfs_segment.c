@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.32 1999/11/06 20:33:05 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.33 1999/11/09 02:21:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -772,8 +772,7 @@ lfs_writeinode(fs, sp, ip)
 	 * No need to update segment usage if there was no former inode address 
 	 * or if the last inode address is in the current partial segment.
 	 */
-	if (daddr != LFS_UNUSED_DADDR &&
-	    !(daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)) {
+	if (daddr>0 && !(daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {

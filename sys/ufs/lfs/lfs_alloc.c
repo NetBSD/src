@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.26 1999/11/06 20:33:05 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.27 1999/11/09 02:21:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,10 +152,18 @@ lfs_valloc(v)
 	fs->lfs_free = ifp->if_nextfree;
 #ifdef LFS_DEBUG_NEXTFREE
 	ifp->if_nextfree = 0;
-	VOP_BWRITE(bp);
-#else
-	brelse(bp);
 #endif
+	/*
+	 * If a vflush is called before the dirop that created us is written,
+	 * and then the system crashes, we could be in limbo (allocated but
+	 * not connected), and stay that way forever.  To detect this
+	 * condition easily, we set if_daddr=UNASSIGNED, and walk the free
+	 * list at fs mount time (or roll-forward time).  Any inodes with
+	 * if_daddr==UNASSIGNED have never been written to disk, and will
+	 * be silently restored to the free list.
+	 */
+	ifp->if_daddr = UNASSIGNED;
+	VOP_BWRITE(bp);
 	
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
