@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.27 2001/12/01 09:39:32 enami Exp $	*/
+/*	$NetBSD: ehci.c,v 1.28 2001/12/28 00:21:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.27 2001/12/01 09:39:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.28 2001/12/28 00:21:26 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -959,10 +959,17 @@ ehci_allocx(struct usbd_bus *bus)
 	usbd_xfer_handle xfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
-	if (xfer != NULL)
+	if (xfer != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
-	else
+#ifdef DIAGNOSTIC
+		if (xfer->busy_free != XFER_FREE) {
+			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,
+			       xfer->busy_free);
+		}
+#endif
+	} else {
 		xfer = malloc(sizeof(struct ehci_xfer), M_USB, M_NOWAIT);
+	}
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof (struct ehci_xfer));
 #ifdef DIAGNOSTIC
