@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.481 2002/11/04 12:36:25 wiz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.482 2002/11/07 20:41:28 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.480 2002/11/04 12:35:27 wiz Exp 
+ *	NetBSD: pcidevs,v 1.481 2002/11/07 20:40:28 martin Exp 
  */
 
 /*
@@ -4946,6 +4946,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Mutech",
 	    "MV1000",
+	},
+	{
+	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803,
+	    0,
+	    "Myson-Century Technology",
+	    "MTD803 3-in-1 Fast Ethernet Controller",
 	},
 	{
 	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
@@ -11095,6 +11101,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TEKRAM2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Tekram Technology (2nd PCI Vendor ID)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_MYSON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Myson-Century Technology",
 	    NULL,
 	},
 	{

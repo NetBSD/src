@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.483 2002/11/04 12:36:25 wiz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.484 2002/11/07 20:41:27 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.480 2002/11/04 12:35:27 wiz Exp 
+ *	NetBSD: pcidevs,v 1.481 2002/11/07 20:40:28 martin Exp 
  */
 
 /*
@@ -564,6 +564,7 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp. */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics, Inc. */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
@@ -1661,6 +1662,9 @@
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
+
+/* Myson-Century Technology products */
+#define	PCI_PRODUCT_MYSON_MTD803	0x0803		/* MTD803 3-in-1 Fast Ethernet Controller */
 
 /* National Datacomm Corp. products */
 #define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 Wireless NIC */
