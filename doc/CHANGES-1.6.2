@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.12 2003/06/16 12:45:13 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.13 2003/06/16 12:49:41 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -271,3 +271,9 @@ sys/dev/scsipi/ses.c				1.19-1.20
 	kern/20231- pass the correct argument (arg_addr) on thru to
 	scsipi_do_ioctl, not the locally dereferenced fetch.
 	[mjacob, ticket #1162]
+
+sys/dev/pci/agp.c				1.26
+
+	Don't match a PCI graphics card in a system which supports an AGP.
+	Patch supplied by Quentin Garnier in PR kern/19256.
+	[tron, ticket #1181]
