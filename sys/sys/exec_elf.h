@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.9 1996/10/03 22:55:25 cgd Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.10 1997/03/21 05:34:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -385,6 +385,31 @@ enum AuxID {
 	AUX_sun_rgid = 2003	/* rgid */
 };
 
+/*
+ * Note Definitions
+ */
+typedef struct {
+	Elf32_Word namesz;
+	Elf32_Word descsz;
+	Elf32_Word type;
+} Elf32_Note;
+
+typedef struct {
+	Elf64_Half namesz;
+	Elf64_Half descsz;
+	Elf64_Half type;
+} Elf64_Note;
+
+/* "name" for NetBSD-specific notes. */
+#define	ELF_NOTE_NETBSD_NAME		"NetBSD"
+
+/* NetBSD-specific note type: OS Version.  desc is 4-byte NetBSD integer. */
+#define	ELF_NOTE_NETBSD_TYPE_OSVERSION	1
+
+/* NetBSD-specific note type: Emulation name.  desc is emul name string. */
+#define	ELF_NOTE_NETBSD_TYPE_EMULNAME	2
+
+
 #include <machine/elf_machdep.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
@@ -398,6 +423,7 @@ enum AuxID {
 #define	Elf_Word	Elf32_Word
 #define	Elf_Addr	Elf32_Addr
 #define	Elf_Off		Elf32_Off
+#define	Elf_Note	Elf32_Note
 
 #define	ELF_R_SYM	ELF32_R_SYM
 #define	ELF_R_TYPE	ELF32_R_TYPE
@@ -416,6 +442,7 @@ enum AuxID {
 #define	Elf_Word	Elf64_Word
 #define	Elf_Addr	Elf64_Addr
 #define	Elf_Off		Elf64_Off
+#define	Elf_Note	Elf64_Note
 
 #define	ELF_R_SYM	ELF64_R_SYM
 #define	ELF_R_TYPE	ELF64_R_TYPE
