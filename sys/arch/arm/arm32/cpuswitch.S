@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.18 2002/08/12 20:52:14 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.19 2002/08/12 21:00:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -282,16 +282,15 @@ ENTRY(cpu_switch)
 
 	/*
 	 * Get the current lwp and indicate that there is no longer
-	 * a valid process (curlwp = 0)
+	 * a valid process (curlwp = 0).  Zero the current PCB pointer
+	 * while we're at it.
 	 */
 	ldr	r7, Lcurlwp
-	ldr	r1, [r7]
+	ldr	r6, Lcurpcb
 	mov	r0, #0x00000000
-	str	r0, [r7]
-
-	/* Zero the pcb */
-	ldr	r7, Lcurpcb
-	str	r0, [r7]
+	ldr	r1, [r7]		/* r1 = curproc */
+	str	r0, [r7]		/* curproc = NULL */
+	str	r0, [r6]		/* curpcb = NULL */
 
 	/* stash the old proc while we call functions */
 	mov	r5, r1
