@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.9.2.2 1999/11/05 07:34:20 cgd Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.9.2.3 1999/11/20 17:10:30 he Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.9.2.2 1999/11/05 07:34:20 cgd Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.9.2.3 1999/11/20 17:10:30 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -140,6 +140,7 @@ inet_pton4(src, dst)
 			 *	a.b.c.d
 			 *	a.b.c	(with c treated as 16 bits)
 			 *	a.b	(with b treated as 24 bits)
+			 *	a	(with a treated as 32 bits)
 			 */
 			if (pp >= parts + 3)
 				return (0);
@@ -167,19 +168,19 @@ inet_pton4(src, dst)
 		break;
 
 	case 2:				/* a.b -- 8.24 bits */
-		if (val > 0xffffff)
+		if (parts[0] > 0xff || val > 0xffffff)
 			return (0);
 		val |= parts[0] << 24;
 		break;
 
 	case 3:				/* a.b.c -- 8.8.16 bits */
-		if (val > 0xffff)
+		if ((parts[0] | parts[1]) > 0xff || val > 0xffff)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16);
 		break;
 
 	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
-		if (val > 0xff)
+		if ((parts[0] | parts[1] | parts[2] | val) > 0xff)
 			return (0);
 		val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
 		break;
