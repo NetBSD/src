@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pppoe.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.6 2004/09/28 12:27:02 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.24.2.4 2004/03/24 03:04:22 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.6 2004/09/28 12:27:02 he Exp $");
 #endif
 #endif
 
@@ -144,7 +144,7 @@ pppoe_print(register const u_char *bp, u_int length)
 		/* (small packets are probably just padded up to the ethernet
 		   minimum of 64 bytes) */
 		printf(" [length %d (%d extra bytes)]",
-		    pppoe_length, snapend - pppoe_payload - pppoe_length);
+		    pppoe_length, (int)(snapend - pppoe_payload - pppoe_length));
 #if RESPECT_PAYLOAD_LENGTH
 		snapend = pppoe_payload+pppoe_length;
 #else
