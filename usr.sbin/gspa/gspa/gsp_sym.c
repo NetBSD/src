@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_sym.c,v 1.3 1997/10/17 06:59:10 lukem Exp $	*/
 /*
  * GSP assembler - symbol table
  *
@@ -30,6 +31,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_sym.c,v 1.3 1997/10/17 06:59:10 lukem Exp $");
+#endif
+
+#include <stdio.h>
 #include <string.h>
 #include "gsp_ass.h"
 
@@ -37,12 +44,14 @@
 
 symbol symbol_hash[NHASH];
 
+void define_sym(char *, unsigned, unsigned, int);
+
 symbol
 lookup(char *id, bool makeit)
 {
-	register symbol ptr, p, *pp;
-	register int h;
-	register char *ip;
+	symbol ptr, p, *pp;
+	int h;
+	char *ip;
 
 	h = 0;
 	for( ip = id; *ip != 0; )
@@ -70,7 +79,7 @@ lookup(char *id, bool makeit)
 void
 define_sym(char *id, unsigned val, unsigned lineno, int flags)
 {
-	register symbol ptr;
+	symbol ptr;
 
 	ptr = lookup(id, TRUE);
 	if( (ptr->flags & SET_LABEL) == 0 ){
@@ -116,8 +125,8 @@ do_asg(char *name, expr value, int flags)
 void
 set_numeric_label(int lnum)
 {
-	register symbol bp, fp;
-	register struct numlab *nl;
+	symbol bp, fp;
+	struct numlab *nl;
 	char id[32];
 
 	/* define the backward reference symbol */
@@ -174,9 +183,9 @@ set_numeric_label(int lnum)
 void
 reset_numeric_labels()
 {
-	register symbol p;
-	register struct numlab *nl;
-	register int h;
+	symbol p;
+	struct numlab *nl;
+	int h;
 
 	for( h = 0; h < NHASH; ++h )
 		for( p = symbol_hash[h]; p != NULL; p = p->next )
