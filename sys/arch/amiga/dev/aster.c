@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.8 2001/01/25 22:22:15 is Exp $ */
+/*	$NetBSD: aster.c,v 1.9 2001/01/26 21:49:04 is Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -95,6 +95,9 @@ astermatch(parent, cfp, auxp)
 	if (zap->manid == 4626 && zap->prodid == 5 && zap->serno == 0)
 		return (1);			/* Schoenfeld ISDN Surfer */
 
+	if (zap->manid == 2189 && zap->prodid == 3)
+		return (1);			/* Zeus Dev. ? ISDN board */
+
 	return (0);
 }
 
@@ -124,6 +127,9 @@ asterattach(parent, self, auxp)
 	} else if (zap->manid == 5000 && zap->prodid == 1) {
 		cardname = "Master II";
 		supa.supio_name = "isic13";
+	} else if (zap->manid == 2189 && zap->prodid == 3) {
+		cardname = "board";
+		supa.supio_name = "isic@B";
 	} else /* if (zap->manid == 4626 && zap->prodid == 5 &&
 		    zap->serno == 0) */{
 		cardname = "Surfer";
