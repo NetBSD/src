@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.50 2002/09/23 23:16:07 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.51 2002/09/26 04:07:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -162,6 +162,19 @@ TAILQ_HEAD(evcntlist, evcnt);
     }
 
 /*
+ * Description of a configuration parent.  Each device attachment attaches
+ * to an "interface attribute", which is given in this structure.  The parent
+ * *must* carry this attribute.  Optionally, an individual device instance
+ * may also specify a specific parent device instance.
+ */
+struct cfparent {
+	const char *cfp_iattr;		/* interface attribute */
+	const char *cfp_parent;		/* optional specific parent */
+	int cfp_unit;			/* optional specific unit
+					   (-1 to wildcard) */
+};
+
+/*
  * Configuration data (i.e., data placed in ioconf.c).
  */
 struct cfdata {
@@ -171,8 +184,8 @@ struct cfdata {
 	short	cf_fstate;		/* finding state (below) */
 	int	*cf_loc;		/* locators (machine dependent) */
 	int	cf_flags;		/* flags from config */
-	short	*cf_parents;		/* potential parents */
-	const char **cf_locnames;	/* locator names (machine dependent) */
+	const struct cfparent *cf_pspec;/* parent specification */
+	const char * const *cf_locnames;/* locator names (machine dependent) */
 };
 #define FSTATE_NOTFOUND		0	/* has not been found */
 #define	FSTATE_FOUND		1	/* has been found */
@@ -224,6 +237,7 @@ struct cfdriver {
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
+	const char * const *cd_attrs;	/* attributes for this device */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.21 2002/03/08 20:48:42 thorpej Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.22 2002/09/26 04:07:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.21 2002/03/08 20:48:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.22 2002/09/26 04:07:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -323,7 +323,7 @@ struct vattr va_null;
 void
 vfsinit()
 {
-	extern struct vfsops *vfs_list_initial[];
+	extern struct vfsops * const vfs_list_initial[];
 	int i;
 
 	/*
