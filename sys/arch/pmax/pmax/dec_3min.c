@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.41 2000/05/28 05:56:36 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.41 2000/05/28 05:56:36 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,6 @@ static unsigned latched_cycle_cnt;
 void
 dec_3min_init()
 {
-	int physmem_boardmax;
-
 	platform.iobus = "tcbus";
 	platform.bus_reset = dec_3min_bus_reset;
 	platform.cons_init = dec_3min_cons_init;
