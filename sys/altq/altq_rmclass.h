@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_rmclass.h,v 1.2 2000/12/14 08:49:51 thorpej Exp $	*/
-/*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.3 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$KAME: altq_rmclass.h,v 1.7 2002/01/11 07:32:54 kjc Exp $	*/
 
 /*
  * Copyright (c) 1991-1997 Regents of the University of California.
@@ -81,8 +81,8 @@ struct red;
 	if ((xxs = (a)->tv_sec - (b)->tv_sec)) { \
 		switch (xxs) { \
 		default: \
-			if (xxs < 0) \
-				printf("rm_class: bogus time values\n"); \
+			/* if (xxs < 0) \
+				printf("rm_class: bogus time values\n"); */ \
 			delta = 0; \
 			/* fall through */ \
 		case 2: \

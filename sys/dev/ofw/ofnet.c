@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.23 2001/11/13 07:26:28 lukem Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.24 2002/03/05 04:12:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.23 2001/11/13 07:26:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.24 2002/03/05 04:12:58 itojun Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -162,6 +162,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ofnet_ioctl;
 	ifp->if_watchdog = ofnet_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
@@ -327,7 +328,7 @@ ofnet_start(struct ifnet *ifp)
 		ofnet_read(of);
 		
 		/* Now get the first packet on the queue */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (!m0)
 			return;
 		

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.38 2002/01/14 18:19:15 kleink Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.39 2002/03/05 04:13:01 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.38 2002/01/14 18:19:15 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.39 2002/03/05 04:13:01 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -164,9 +164,7 @@ gifattach0(sc)
 	sc->gif_if.if_output = gif_output;
 	sc->gif_if.if_type   = IFT_GIF;
 	sc->gif_if.if_dlt    = DLT_NULL;
-#ifdef ALTQ
 	IFQ_SET_READY(&sc->gif_if.if_snd);
-#endif
 	if_attach(&sc->gif_if);
 	if_alloc_sadl(&sc->gif_if);
 #if NBPFILTER > 0
@@ -268,14 +266,10 @@ gif_output(ifp, m, dst, rt)
 	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
 	static int called = 0;	/* XXX: MUTEX */
-#ifdef ALTQ
-	struct altq_pktattr pktattr;
-#endif
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int s;
 
-#ifdef ALTQ
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
-#endif
 
 	/*
 	 * gif may cause infinite recursion calls when misconfigured.
@@ -327,21 +321,11 @@ gif_output(ifp, m, dst, rt)
 	*mtod(m, int *) = dst->sa_family;
 
 	s = splnet();
-#ifdef ALTQ
 	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 	if (error) {
 		splx(s);
 		goto end;
 	}
-#else
-	if (IF_QFULL(&ifp->if_snd)) {
-		m_freem(m);
-		error = ENOBUFS;
-		splx(s);
-		goto end;
-	}
-	IF_ENQUEUE(&ifp->if_snd, m);
-#endif /* ALTQ */
 	splx(s);
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -390,11 +374,7 @@ gifintr(arg)
 	/* output processing */
 	while (1) {
 		s = splnet();
-#ifdef ALTQ
 		IFQ_DEQUEUE(&sc->gif_if.if_snd, m);
-#else
-		IF_DEQUEUE(&sc->gif_if.if_snd, m);
-#endif
 		splx(s);
 		if (m == NULL)
 			break;

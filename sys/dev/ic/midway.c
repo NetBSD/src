@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.57 2002/02/11 11:19:29 wiz Exp $	*/
+/*	$NetBSD: midway.c,v 1.58 2002/03/05 04:12:57 itojun Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.57 2002/02/11 11:19:29 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.58 2002/03/05 04:12:57 itojun Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -812,6 +812,7 @@ done_probe:
   ifp->if_ioctl = en_ioctl;
   ifp->if_output = atm_output;
   ifp->if_start = en_start;
+  IFQ_SET_READY(&ifp->if_snd);
 
   /*
    * init softc
