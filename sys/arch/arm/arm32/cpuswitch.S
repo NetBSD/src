@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.14 2002/08/15 01:37:01 briggs Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.15 2002/08/16 15:25:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -228,38 +228,47 @@ _C_LABEL(curpcb):
 Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
+.Lcpu_do_powersave:
+	.word	_C_LABEL(cpu_do_powersave)
+
 /*
  * Idle loop, exercised while waiting for a process to wake up.
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
-
 #if defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Enable interrupts */
 	IRQenable
 
-	ldr	r3, Lcpufuncs
-	mov	r0, #0
-	add	lr, pc, #.Lidle_slept - . - 8
-	ldr	pc, [r3, #CF_SLEEP]
+	/* If we don't want to sleep, use a simpler loop. */
+	ldr	r3, .Lcpu_do_powersave
+	ldr	r7, Lwhichqs			/* r7 = &whichqs */
+	ldr	r3, [r3]
+	teq	r3, #0
+	beq	.Lidle_nosleep
 
-	/* should also call the uvm pageidlezero stuff */
-
-.Lidle_slept:
-
-	/* Disable interrupts while we check for an active queue */
-	IRQdisable
-#if defined(LOCKDEBUG)
-	bl	_C_LABEL(sched_lock_idle)
-#endif
-	ldr	r7, Lwhichqs
+	/* Powersave idle. */
+	ldr	r4, Lcpufuncs
+.Lidle_sleep:
 	ldr	r3, [r7]
 	teq	r3, #0x00000000
+	bne	.Lswitch_search
 
-	beq	_ASM_LABEL(idle)
-	b	.Lidle_ret
+	/* if saving power, don't want to pageidlezero */
+	mov	r0, #0
+	add	lr, pc, #.Lidle_sleep - . - 8
+	ldr	pc, [r4, #(CF_SLEEP)]
+	/* loops back around */
+
+	/* Non-powersave idle. */
+.Lidle_nosleep:
+	/* should maybe do uvm pageidlezero stuff here */
+	ldr	r3, [r7]
+	teq	r3, #0x00000000
+	bne	.Lswitch_search
+	b	.Lidle_nosleep
 
 /*
  * Find a new process to run, save the current context and
@@ -332,7 +341,6 @@ ENTRY(cpu_switch)
 	/* If not we must idle until we do. */
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
-.Lidle_ret:
 
 	/* put old proc back in r1 */
 	mov	r1, r5
