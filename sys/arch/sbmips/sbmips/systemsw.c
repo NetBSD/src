@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.5 2002/06/01 14:38:28 simonb Exp $ */
+/* $NetBSD: systemsw.c,v 1.6 2002/06/04 05:42:41 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -133,10 +133,7 @@ clkread_triv(void)
 	uint32_t res, count;
 
 	count = mips3_cp0_count_read();
-
-	asm volatile("multu %1,%2 ; mfhi %0"
-	    : "=r"(res) : "r"(count), "r"(curcpu()->ci_divisor_recip));
-
+	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
 	return (res);
 }
 
