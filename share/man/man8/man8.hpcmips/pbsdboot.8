@@ -1,4 +1,4 @@
-.\"	$NetBSD: pbsdboot.8,v 1.4 2001/06/26 01:46:26 hubertf Exp $
+.\"	$NetBSD: pbsdboot.8,v 1.5 2001/12/26 01:30:52 wiz Exp $
 .Dd August 25, 2000
 .Dt PBSDBOOT 8 hpcmips
 .Os
@@ -49,13 +49,13 @@ change boot device to DEV(wd0,sd0,nfs,etc)
 You will find this program Windows CE readable disk partition.
 .El
 .Sh SEE ALSO
-.Xr reboot 2 ,
-.Sh BUGS
-.Nm
-reads the entire kernel image at once,
-and requires enough free area on the main memory.
+.Xr reboot 2
 .Sh HISTORY
 The
 .Nm
 utility first appeared in
 .Nx 1.5 .
+.Sh BUGS
+.Nm
+reads the entire kernel image at once,
+and requires enough free area on the main memory.
