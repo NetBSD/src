@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.73 2003/12/29 22:08:02 martin Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.74 2004/03/23 13:22:05 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.73 2003/12/29 22:08:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.74 2004/03/23 13:22:05 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.73 2003/12/29 22:08:02 martin Exp 
 struct	sockaddr_un sun_noname = { sizeof(sun_noname), AF_LOCAL };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
 
-struct mbuf *unp_addsockcred __P((struct proc *, struct mbuf *));
+struct mbuf *unp_addsockcred(struct proc *, struct mbuf *);
 
 int
 unp_output(m, control, unp, p)
@@ -1297,7 +1297,7 @@ unp_dispose(m)
 void
 unp_scan(m0, op, discard)
 	struct mbuf *m0;
-	void (*op) __P((struct file *));
+	void (*op)(struct file *);
 	int discard;
 {
 	struct mbuf *m;

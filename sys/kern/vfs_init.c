@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.24 2003/08/07 16:32:02 agc Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.25 2004/03/23 13:22:05 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.24 2003/08/07 16:32:02 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.25 2004/03/23 13:22:05 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -126,12 +126,12 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
  * extra level of indirection for arrays.  It's an interesting
  * "feature" of C.
  */
-typedef int (*PFI) __P((void *));
+typedef int (*PFI)(void *);
 
-static void vfs_opv_init_explicit __P((const struct vnodeopv_desc *));
-static void vfs_opv_init_default __P((const struct vnodeopv_desc *));
+static void vfs_opv_init_explicit(const struct vnodeopv_desc *);
+static void vfs_opv_init_default(const struct vnodeopv_desc *);
 #ifdef DEBUG
-static void vfs_op_check __P((void));
+static void vfs_op_check(void);
 #endif
 
 /*
@@ -172,7 +172,7 @@ static void
 vfs_opv_init_explicit(vfs_opv_desc)
 	const struct vnodeopv_desc *vfs_opv_desc;
 {
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 	const struct vnodeopv_entry_desc *opve_descp;
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
@@ -217,7 +217,7 @@ vfs_opv_init_default(vfs_opv_desc)
 	const struct vnodeopv_desc *vfs_opv_desc;
 {
 	int j;
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
 
@@ -237,7 +237,7 @@ void
 vfs_opv_init(vopvdpp)
 	const struct vnodeopv_desc * const *vopvdpp;
 {
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 	int i;
 
 	/*

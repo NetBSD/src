@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.80 2003/10/10 15:24:28 chs Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.81 2004/03/23 13:22:04 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.80 2003/10/10 15:24:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.81 2004/03/23 13:22:04 junyoung Exp $");
 
 #include "opt_ktrace.h"
 
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.80 2003/10/10 15:24:28 chs Exp $")
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));
-int pollscan __P((struct proc *, struct pollfd *, int, register_t *));
+int selscan(struct proc *, fd_mask *, fd_mask *, int, register_t *);
+int pollscan(struct proc *, struct pollfd *, int, register_t *);
 
 /*
  * Read system call.

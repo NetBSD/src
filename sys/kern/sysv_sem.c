@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.52 2004/03/18 22:57:38 enami Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.53 2004/03/23 13:22:04 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.52 2004/03/18 22:57:38 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.53 2004/03/23 13:22:04 junyoung Exp $");
 
 #define SYSVSEM
 
@@ -70,9 +70,9 @@ static int	*semu;			/* undo structure pool */
 #define SEM_PRINTF(a)
 #endif
 
-struct sem_undo *semu_alloc __P((struct proc *));
-int semundo_adjust __P((struct proc *, struct sem_undo **, int, int, int));
-void semundo_clear __P((int, int));
+struct sem_undo *semu_alloc(struct proc *);
+int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
+void semundo_clear(int, int);
 
 /*
  * XXXSMP Once we go MP, there needs to be a lock for the semaphore system.
