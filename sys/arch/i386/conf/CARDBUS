@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.68 2002/10/01 12:56:38 fvdl Exp $
+#	$NetBSD: CARDBUS,v 1.69 2002/10/05 16:02:38 elric Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.68 $"
+#ident		"CARDBUS-$Revision: 1.69 $"
 
 maxusers	32		# estimated number of users
 
@@ -880,6 +880,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)
