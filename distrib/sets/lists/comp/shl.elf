@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.39 2003/06/14 08:04:43 nonaka Exp $
+# $NetBSD: shl.elf,v 1.40 2003/06/25 10:38:03 tshiozak Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -20,7 +20,16 @@
 ./usr/lib/i18n/libEUCTW.so	comp-i18n-lib
 ./usr/lib/i18n/libISO2022.so	comp-i18n-lib
 ./usr/lib/i18n/libMSKanji.so	comp-i18n-lib
+./usr/lib/i18n/libUTF1632.so	comp-i18n-lib
 ./usr/lib/i18n/libUTF8.so	comp-i18n-lib
+./usr/lib/i18n/iconv_none.so	comp-i18n-lib
+./usr/lib/i18n/iconv_std.so	comp-i18n-lib
+./usr/lib/i18n/mapper_646.so	comp-i18n-lib
+./usr/lib/i18n/mapper_none.so	comp-i18n-lib
+./usr/lib/i18n/mapper_parallel.so	comp-i18n-lib
+./usr/lib/i18n/mapper_serial.so	comp-i18n-lib
+./usr/lib/i18n/mapper_std.so	comp-i18n-lib
+./usr/lib/i18n/mapper_zone.so	comp-i18n-lib
 ./usr/lib/libasn1.so		comp-c-lib
 ./usr/lib/libbsdmalloc.so	comp-c-lib
 ./usr/lib/libbz2.so		comp-c-lib
