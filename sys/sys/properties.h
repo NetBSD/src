@@ -1,4 +1,4 @@
-/*	$NetBSD: properties.h,v 1.1 2001/10/04 18:56:06 eeh Exp $	*/
+/*	$NetBSD: properties.h,v 1.2 2001/10/05 19:05:06 eeh Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -63,56 +63,4 @@ int prop_delete(propdb_t db, opaque_t object, const char *name);
 int prop_copy(propdb_t db, opaque_t source, opaque_t dest,
 	int wait);
 
-int sysctl_propdb(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	void *newp, size_t newlen);
-
-
-/*
- * KERN_DB subtypes
- */
-
-#define	KERN_DB_ALL		 0	/* all databases */
-#define	KERN_DB_OBJ_ALL		 1	/* all objects in a database */
-#define	KERN_DB_PROP_ALL	 2	/* all properties in an object */
-#define	KERN_DB_PROP_GET	 3	/* get a single property */
-#define	KERN_DB_PROP_SET	 4	/* set a single property */
-#define	KERN_DB_PROP_DELETE	 5	/* delete a single property */
-
-#define	CTL_DB_NAMES { \
-	{ 0, 0 }, \
-	{ "all", CTLTYPE_STRUCT }, \
-	{ "allobj", CTLTYPE_QUAD }, \
-	{ "allprops", CTLTYPE_INT }, \
-	{ "propget", CTLTYPE_STRUCT }, \
-	{ "propset", CTLTYPE_STRUCT }, \
-	{ "propdelete", CTLTYPE_STRUCT }, \
-}
-
-/* Info available for each database. */
-struct kinfo_kdb {
-	char		ki_name[MAX_KDBNAME];
-	uint64_t	ki_id;
-};
-
-/* A single property */
-struct kinfo_prop {
-	uint32_t	kip_len;	/* total len of this prop */
-	uint32_t	kip_type;	/* type of this prop */
-	uint32_t	kip_valoff;	/* offset of start of value */
-	uint32_t	kip_vallen;	/* length of value */
-	char		kip_name[1];	/* name of this property */
-};
-
-/* Use these macros to encode database and object information in the MIB. */
-#define	KERN_DB_ENCODE_DB(p, m)		do {			\
-		(m)[2] = (int)(((uint64_t)(long)(p))>>32);	\
-		(m)[3] = (int)(p);				\
-	} while (0)
-
-#define	KERN_DB_ENCODE_OBJ(p, o, m)	do {			\
-		(m)[2] = (int)(((uint64_t)(long)(p))>>32);	\
-		(m)[3] = (int)(p);				\
-		(m)[4] = (int)(((uint64_t)(long)(o))>>32);	\
-		(m)[5] = (int)(o);				\
-	} while (0)
 #endif
