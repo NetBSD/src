@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2003/03/05 23:56:03 fvdl Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2003/03/20 22:30:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,8 +111,7 @@
  * XXXfvdl we have plenty of KVM now, remove this.
  */
 #ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF \
-	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 1024 * 7 / 10 * 1024)
+#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
