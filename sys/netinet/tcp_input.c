@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.8 1997/06/26 22:20:35 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.9 1997/06/26 22:24:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -66,28 +66,24 @@
  *		    only, setting the initial window to 0, and letting the
  *		    zero window probe machinery take care of it.
  *
- *	(b) tcp_mss() _must_ take a u_int arguemnt; the change to u_int16_t
- *	    is wrong, and will cause lossage.  In addition, a few
- *	    u_short -> u_int16_t changes were reversed along the way.
- *
- *	(c) There's clearly a change to the tcp_respond() interface, but
+ *	(b) There's clearly a change to the tcp_respond() interface, but
  *	    it's not clear to me exactly what the new semantics are, or
  *	    that all of the callers get it correct.  Unfortunately, the
  *	    change isn't DOCUMENTED, and I don't have time to figure it
  *	    out.
  *
- *	(d) This is wrong:
+ *	(c) This is wrong:
  *
  *		IN_MULTICAST(ntohl(ti->ti_src.s_addr)) ||
  *		IN_MULTICAST(ntohl(ti->ti_dst.s_addr)))
  *
  *	    Nuke the ntohl()s.
  *
- *	(e) Needs KNF.
+ *	(d) Needs KNF.
  *
- *	(f) SS_FORCE/SS_PRIV use needs to die.  (See (a) above.)
+ *	(e) SS_FORCE/SS_PRIV use needs to die.  (See (a) above.)
  *
- *	(g) The definition of "struct syn_cache" says:
+ *	(f) The definition of "struct syn_cache" says:
  *
  *		This structure should not exceeed 32 bytes.
  *
@@ -112,7 +108,7 @@
  *	    integreated these changes with one fo the IPv6 status that are
  *	    available?)
  *
- *	(h) Find room for a "state" field, which is needed to keep a
+ *	(g) Find room for a "state" field, which is needed to keep a
  *	    compressed state for TIME_WAIT TCBs.  It's been noted already
  *	    that this is fairly important for very high-volume web and
  *	    mail servers, which use a large number of short-lived
