@@ -1,7 +1,7 @@
-/*	$NetBSD: ahareg.h,v 1.8 1998/08/17 00:26:33 mycroft Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.9 1999/04/15 23:51:45 mjl Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-99 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -116,6 +116,19 @@ typedef u_int8_t physlen[3];
 #define AHA_INTR_HACC		0x04	/* Command complete */
 #define AHA_INTR_MBOA		0x02	/* MBX out empty */
 #define AHA_INTR_MBIF		0x01	/* MBX in full */
+
+/*
+ * AHA Board IDs
+ */
+#define BOARD_1540_16HEAD_BIOS  0x00
+#define BOARD_1540_64HEAD_BIOS  0x30
+#define BOARD_1540              0x31
+#define BOARD_1542              0x41    /* aha-1540/1542 w/64-h bios */
+#define BOARD_1640              0x42    /* aha-1640 */
+#define BOARD_1740              0x43    /* aha-1740A/1742A/1744 */
+#define BOARD_1542C             0x44    /* aha-1542C */
+#define BOARD_1542CF            0x45    /* aha-1542CF */
+#define BOARD_1542CP            0x46    /* aha-1542CP, plug and play */
 
 struct aha_mbx_out {
 	u_char cmd;
