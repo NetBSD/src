@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.21 1997/07/21 14:07:05 jtc Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.22 1998/02/26 03:01:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.21 1997/07/21 14:07:05 jtc Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.22 1998/02/26 03:01:12 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -229,14 +229,14 @@ grscan(search, gid, name)
 						free(data);
 					continue;
 				}
-				bcopy(data, line, datalen);
+				bcopy(data, line, (size_t)datalen);
 				free(data);
 				break;
 			case YPMODE_NAME:
 				if (grname != (char *)NULL) {
 					data = NULL;
 					r = yp_match(__ypdomain, "group.byname",
-						grname, strlen(grname),
+						grname, (int)strlen(grname),
 						&data, &datalen);
 					__ypmode = YPMODE_NONE;
 					free(grname);
@@ -246,7 +246,7 @@ grscan(search, gid, name)
 							free(data);
 						continue;
 					}
-					bcopy(data, line, datalen);
+					bcopy(data, line, (size_t)datalen);
 					free(data);
 				} else {
 						/* YP not available? */
@@ -292,7 +292,8 @@ grscan(search, gid, name)
 					if (name) {
 						r = yp_match(__ypdomain,
 							     "group.byname",
-							     name, strlen(name),
+							     name,
+							     (int)strlen(name),
 							     &data, &datalen);
 					} else {
 						char buf[20];
@@ -300,7 +301,8 @@ grscan(search, gid, name)
 						    "%u", gid);
 						r = yp_match(__ypdomain,
 							     "group.bygid",
-							     buf, strlen(buf),
+							     buf,
+							     (int)strlen(buf),
 							     &data, &datalen);
 					}
 					if (r != 0) {
@@ -308,7 +310,7 @@ grscan(search, gid, name)
 							free(data);
 						continue;
 					}
-					bcopy(data, line, datalen);
+					bcopy(data, line, (size_t)datalen);
 					free(data);
 					line[datalen] = '\0';
 					bp = line;

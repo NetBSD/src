@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.7 1997/07/21 14:07:09 jtc Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.8 1998/02/26 03:08:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.7 1997/07/21 14:07:09 jtc Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.8 1998/02/26 03:08:13 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,11 +62,13 @@ getmntinfo(mntbufp, flags)
 {
 	static struct statfs *mntbuf;
 	static int mntsize;
-	static long bufsize;
+	static size_t bufsize;
 
-	if (mntsize <= 0 && (mntsize = getfsstat(0, 0, MNT_NOWAIT)) < 0)
+	if (mntsize <= 0 &&
+	    (mntsize = getfsstat(NULL, 0L, MNT_NOWAIT)) < 0)
 		return (0);
-	if (bufsize > 0 && (mntsize = getfsstat(mntbuf, bufsize, flags)) < 0)
+	if (bufsize > 0 &&
+	    (mntsize = getfsstat(mntbuf, (long)bufsize, flags)) < 0)
 		return (0);
 	while (bufsize <= mntsize * sizeof(struct statfs)) {
 		if (mntbuf)
@@ -74,7 +76,7 @@ getmntinfo(mntbufp, flags)
 		bufsize = (mntsize + 1) * sizeof(struct statfs);
 		if ((mntbuf = (struct statfs *)malloc(bufsize)) == 0)
 			return (0);
-		if ((mntsize = getfsstat(mntbuf, bufsize, flags)) < 0)
+		if ((mntsize = getfsstat(mntbuf, (long)bufsize, flags)) < 0)
 			return (0);
 	}
 	*mntbufp = mntbuf;
