@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.41 2003/08/22 21:53:11 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.42 2003/09/30 00:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.41 2003/08/22 21:53:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.42 2003/09/30 00:01:18 christos Exp $");
 
 #include "opt_eon.h"
 
@@ -608,7 +608,7 @@ eonctlinput(cmd, sa, dummy)
 	}
 #endif
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 
 	IncStat(es_icmp[cmd]);

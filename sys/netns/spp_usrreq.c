@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.34 2003/08/07 16:33:48 agc Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.35 2003/09/30 00:01:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.34 2003/08/07 16:33:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.35 2003/09/30 00:01:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,7 +622,7 @@ spp_ctlinput(cmd, sa, arg)
 	struct sockaddr_ns *sns;
 	int type;
 
-	if (cmd < 0 || cmd > PRC_NCMDS)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	type = NS_ERR_UNREACH_HOST;
 
