@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.176 2005/01/01 21:11:51 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.177 2005/01/01 21:12:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.176 2005/01/01 21:11:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.177 2005/01/01 21:12:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1946,6 +1946,24 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 			pmap_remove(map->pmap, entry->start, entry->end);
 		}
+
+#if defined(DEBUG)
+		if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
+
+			/*
+			 * check if there's remaining mapping,
+			 * which is a bug in caller.
+			 */
+
+			vaddr_t va;
+			for (va = entry->start; va < entry->end;
+			    va += PAGE_SIZE) {
+				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
+					panic("uvm_unmap_remove: has mapping");
+				}
+			}
+		}
+#endif /* defined(DEBUG) */
 
 		/*
 		 * remove entry from map and put it on our list of entries
