@@ -1,4 +1,4 @@
-.\"	$NetBSD: ebus.4,v 1.1 2002/03/13 18:59:14 uwe Exp $
+.\"	$NetBSD: ebus.4,v 1.2 2002/03/13 19:44:42 uwe Exp $
 .\"
 .\" Copyright (c) 1999 Matthew R. Green
 .\" All rights reserved.
@@ -25,6 +25,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
+.\"
 .Dd March 13, 2002
 .Dt EBUS 4
 .Os
@@ -36,8 +37,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-bus is designed to plug traditional PC-ISA devices into a SPARC system
-with as few costs as possible, without sacrificing to performance.
+bus is designed to provide the ability to put ISA and traditional
+Intel-style peripherals in a SPARC based system with a minimal amount
+of glue logic.  
 Typically, it is implemented in the PCIO IC from SME, which also
 implements a
 .Xr hme 4
@@ -45,12 +47,15 @@ compatible PCI network device
 .Pf ( Ql network ) .
 The
 .Nm
-has 4 DMA channels, similar to the DMA seen in the
+has four DMA channels, similar to the DMA seen in the
 .Xr esp 4
+.hw SCSI \" XXX: prevent SC-SI
 SCSI DMA.
 .Sh SEE ALSO
 .Rs
 .%A Sun Microelectronics
 .%B Peripheral Component Interconnect Input Output Controller
-.%O Part\ No.:\ 802-7837-01
+.%V Part\ No.:\ 802-7837-01
+.%D March 1997
+.%O "http://www.sun.com/microelectronics/manuals/802-7837.pdf"
 .Re
