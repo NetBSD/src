@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.hp300,v 1.7 1993/08/14 14:20:08 mycroft Exp $
+#	$Id: Makefile.hp300,v 1.8 1993/08/16 16:23:38 mycroft Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -85,8 +85,8 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} -c vers.c
 
 clean:
-	rm -f eddep *vmunix tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks
+	rm -f eddep *netbsd tags *.o locore.i [a-z]*.s \
+		[Ee]rrs linterrs makelinks
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
