@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.15 1994/04/29 04:41:02 cgd Exp $
+ *	$Id: pmap.c,v 1.16 1994/05/23 02:26:37 cgd Exp $
  */
 
 /*
@@ -431,7 +431,7 @@ pmap_pinit(pmap)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		pg("pmap_pinit(%x)\n", pmap);
+		printf("pmap_pinit(%x)\n", pmap);
 #endif
 
 	/*
@@ -491,7 +491,7 @@ pmap_release(pmap)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		pg("pmap_release(%x)\n", pmap);
+		printf("pmap_release(%x)\n", pmap);
 #endif
 
 #ifdef DIAGNOSTICx
@@ -881,7 +881,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if (wired && !pmap_pte_w(pte) || !wired && pmap_pte_w(pte)) {
 #ifdef DEBUG
 				if (pmapdebug & PDB_ENTER)
-					pg("enter: wiring change -> %x ", wired);
+					printf("enter: wiring change -> %x ", wired);
 #endif
 				if (wired)
 					pmap->pm_stats.wired_count++;
@@ -1071,7 +1071,7 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (!pmap_pte_v(pte)) {
 		if (pmapdebug & PDB_PARANOIA)
-			pg("pmap_change_wiring: invalid PTE for %x ", va);
+			printf("pmap_change_wiring: invalid PTE for %x ", va);
 	}
 #endif
 
@@ -1143,7 +1143,7 @@ pmap_extract(pmap, va)
 
 #ifdef DEBUGx
 	if (pmapdebug & PDB_FOLLOW)
-		pg("pmap_extract(%x, %x) -> ", pmap, va);
+		printf("pmap_extract(%x, %x) -> ", pmap, va);
 #endif
 
 	pte = pmap_pte(pmap, va);
@@ -1239,7 +1239,7 @@ pmap_activate(pmap, pcbp)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PDRTAB))
-		pg("pmap_activate(%x, %x) ", pmap, pcbp);
+		printf("pmap_activate(%x, %x) ", pmap, pcbp);
 #endif
 
 	PMAP_ACTIVATE(pmap, pcbp);
@@ -1358,7 +1358,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 #ifdef DEBUG
 		pv = pa_to_pvh(pa);
 		if (pv->pv_va != sva || pv->pv_next) {
-			pg("pmap_pageable: bad PT page va %x next %x\n",
+			printf("pmap_pageable: bad PT page va %x next %x\n",
 			       pv->pv_va, pv->pv_next);
 			return;
 		}
@@ -1371,7 +1371,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 
 #ifdef needsomethinglikethis
 		if (pmapdebug & PDB_PTPAGE)
-			pg("pmap_pageable: PT page %x(%x) unmodified\n",
+			printf("pmap_pageable: PT page %x(%x) unmodified\n",
 			       sva, *(int *)pmap_pte(pmap, sva));
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("pageable", sva);
@@ -1617,7 +1617,7 @@ pmap_check_wiring(str, va)
 		return;
 
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
-		pg("wired_check: entry for %x not found\n", va);
+		printf("wired_check: entry for %x not found\n", va);
 		return;
 	}
 	count = 0;
@@ -1625,7 +1625,7 @@ pmap_check_wiring(str, va)
 		if (*pte)
 			count++;
 	if (entry->wired_count != count)
-		pg("*%s*: %x: w%d/a%d\n",
+		printf("*%s*: %x: w%d/a%d\n",
 		       str, va, entry->wired_count, count);
 }
 #endif
