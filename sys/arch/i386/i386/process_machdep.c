@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 1995/08/06 18:02:22 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16 1995/08/06 19:01:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -197,8 +197,6 @@ process_write_fpregs(p, regs)
 	struct save87 *frame;
 
 #if NNPX > 0
-	if (npxproc != p)
-		npxdna(p);
 	if (npxproc == p)
 		npxdrop();
 #endif
@@ -207,6 +205,7 @@ process_write_fpregs(p, regs)
 	if (frame == NULL)
 		return (EIO);
 
+	p->p_md.md_flags |= MDP_USEDFPU;
 	bcopy(regs, frame, sizeof(frame));
 
 	return (0);
