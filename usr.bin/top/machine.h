@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.h,v 1.7 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: machine.h,v 1.8 2003/10/03 15:32:06 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -46,6 +46,7 @@ struct statics
 #ifdef ORDER
     char **order_names;
 #endif
+    int ncpu;
 };
 
 /*
