@@ -1,11 +1,8 @@
-/* $NetBSD: fattr.c,v 1.1 2000/10/30 20:56:57 jdolecek Exp $ */
+/* $NetBSD: fattr.c,v 1.2 2000/10/30 20:58:20 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Scott Telford <s.telford@ed.ac.uk>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.1 2000/10/30 20:56:57 jdolecek Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.2 2000/10/30 20:58:20 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
