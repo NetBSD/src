@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.13 1997/07/10 05:08:06 mikel Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.14 1997/09/15 11:17:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: shutdown.c,v 1.13 1997/07/10 05:08:06 mikel Exp $";
+__RCSID("$NetBSD: shutdown.c,v 1.14 1997/09/15 11:17:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ void doitfast __P((void));
 void finish __P((int));
 void getoffset __P((char *));
 void loop __P((void));
+int main __P((int, char *[]));
 void nolog __P((void));
 void timeout __P((int));
 void timewarn __P((int));
@@ -109,7 +110,7 @@ main(argc, argv)
 	char *argv[];
 {
 	extern int optind;
-	register char *p, *endp;
+	char *p, *endp;
 	struct passwd *pw;
 	int arglen, ch, len, readstdin;
 
@@ -120,7 +121,7 @@ main(argc, argv)
 	}
 #endif
 	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknrd")) != EOF)
+	while ((ch = getopt(argc, argv, "-fhknrd")) != -1)
 		switch (ch) {
 		case '-':
 			readstdin = 1;
@@ -383,10 +384,10 @@ die_you_gravy_sucking_pig_dog()
 
 void
 getoffset(timearg)
-	register char *timearg;
+	char *timearg;
 {
-	register struct tm *lt;
-	register char *p;
+	struct tm *lt;
+	char *p;
 	time_t now;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
