@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.27 1994/06/10 15:16:07 pk Exp $
+ *	$Id: ld.c,v 1.28 1994/06/16 13:41:52 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -88,6 +88,9 @@ int	page_align_segments;
 
 /* 1 => data segment must be page aligned, even if `-n' or `-N' */
 int	page_align_data;
+
+/* 1 => do not use standard library search path */
+int	nostdlib;
 
 /* Version number to put in __DYNAMIC (set by -V) */
 int	soversion;
@@ -554,7 +557,7 @@ decode_command(argc, argv)
 
 	/* Append the standard search directories to the user-specified ones. */
 	add_search_path(getenv("LD_LIBRARY_PATH"));
-	if (getenv("LD_NOSTD_PATH") == NULL)
+	if (!nostdlib && getenv("LD_NOSTD_PATH") == NULL)
 		std_search_path();
 }
 
@@ -637,6 +640,10 @@ decode_option(swt, arg)
 	}
 	if (!strcmp(swt + 1, "noinhibit-exec")) {
 		force_executable = 1;
+		return;
+	}
+	if (!strcmp(swt + 1, "nostdlib")) {
+		nostdlib = 1;
 		return;
 	}
 	if (swt[2] != 0)
@@ -955,7 +962,10 @@ file_open(entry)
 		return fd;
 	}
 
-	err(1, "%s", get_file_name(entry));
+	if (entry->flags & E_SEARCH_DIRS)
+		errx(1, "%s: no match", entry->local_sym_name);
+	else
+		err(1, "%s", entry->filename);
 	return fd;
 }
 
@@ -1200,7 +1210,7 @@ read_file_symbols(entry)
 				entry->flags |= E_SCRAPPED;
 		} else {
 			read_entry_symbols(fd, entry);
-			entry->strings = (char *)alloca (entry->string_size);
+			entry->strings = (char *)alloca(entry->string_size);
 			read_entry_strings(fd, entry);
 			read_entry_relocation(fd, entry);
 			enter_file_symbols(entry);
@@ -1708,7 +1718,7 @@ digest_pass1()
 			continue;
 		}
 		if (sp->so_defined)
-			/* Already examined; must have bee an alias */
+			/* Already examined; must have been an alias */
 			continue;
 
 		if (sp == got_symbol || sp == dynamic_symbol)

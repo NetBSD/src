@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.10 1994/06/10 15:16:17 pk Exp $
+ * $Id: warnings.c,v 1.11 1994/06/16 13:42:05 pk Exp $
  */
 
 #include <sys/param.h>
@@ -74,15 +74,15 @@ get_file_name (entry)
 	}
 
 	if (entry->superfile) {
-		supfile = get_file_name (entry->superfile);
-		result = (char *) xmalloc (strlen(supfile)
-					+ strlen(entry->filename) + 3);
-		sprintf (result, "%s(%s)", supfile, entry->filename);
-		free (supfile);
+		supfile = get_file_name(entry->superfile);
+		result = (char *)
+			xmalloc(strlen(supfile) + strlen(entry->filename) + 3);
+		(void)sprintf(result, "%s(%s)", supfile, entry->filename);
+		free(supfile);
 
 	} else {
-		result = (char *) xmalloc (strlen (entry->filename) + 1);
-		strcpy (result, entry->filename);
+		result = (char *)xmalloc(strlen(entry->filename) + 1);
+		strcpy(result, entry->filename);
 	}
 	return result;
 }
@@ -141,8 +141,8 @@ list_file_locals (entry, outfile)
 {
 	struct localsymbol	*lsp, *lspend;
 
-	entry->strings = (char *) alloca (entry->string_size);
-	read_entry_strings (file_open (entry), entry);
+	entry->strings = (char *)alloca(entry->string_size);
+	read_entry_strings (file_open(entry), entry);
 
 	fprintf (outfile, "\nLocal symbols of ");
 	print_file_name (entry, outfile);
@@ -170,7 +170,7 @@ static int list_warning_symbols;	/* List warning syms */
 static int list_multiple_defs;		/* List multiple definitions */
 
 static struct line_debug_entry *init_debug_scan __P((int, struct file_entry *));
-static int		next_debug_entry __P((int, struct line_debug_entry *));
+static int	next_debug_entry __P((int, struct line_debug_entry *));
 
 /*
  * Structure for communication between do_file_warnings and it's
@@ -188,28 +188,32 @@ struct line_debug_entry
  * Helper routines for do_file_warnings.
  */
 
-/* Return an integer less than, equal to, or greater than 0 as per the
-   relation between the two relocation entries.  Used by qsort.  */
+/*
+ * Return an integer less than, equal to, or greater than 0 as per the
+ * relation between the two relocation entries.  Used by qsort.
+ */
 
 static int
-relocation_entries_relation (rel1, rel2)
-     struct relocation_info *rel1, *rel2;
+reloc_cmp(rel1, rel2)
+	struct relocation_info *rel1, *rel2;
 {
 	return RELOC_ADDRESS(rel1) - RELOC_ADDRESS(rel2);
 }
 
-/* Moves to the next debugging symbol in the file.  USE_DATA_SYMBOLS
-   determines the type of the debugging symbol to look for (DSLINE or
-   SLINE).  STATE_POINTER keeps track of the old and new locatiosn in
-   the file.  It assumes that state_pointer[1] is valid; ie
-   that it.sym points into some entry in the symbol table.  If
-   state_pointer[1].sym == 0, this routine should not be called.  */
+/*
+ * Moves to the next debugging symbol in the file.  USE_DATA_SYMBOLS
+ * determines the type of the debugging symbol to look for (DSLINE or
+ * SLINE).  STATE_POINTER keeps track of the old and new locatiosn in
+ * the file.  It assumes that state_pointer[1] is valid; ie
+ * that it.sym points into some entry in the symbol table.  If
+ * state_pointer[1].sym == 0, this routine should not be called.
+ */
 
 static int
-next_debug_entry (use_data_symbols, state_pointer)
-     register int use_data_symbols;
-     /* Next must be passed by reference! */
-     struct line_debug_entry state_pointer[3];
+next_debug_entry(use_data_symbols, state_pointer)
+	register int use_data_symbols;
+	/* Next must be passed by reference! */
+	struct line_debug_entry state_pointer[3];
 {
 	register struct line_debug_entry
 				*current = state_pointer,
@@ -217,15 +221,15 @@ next_debug_entry (use_data_symbols, state_pointer)
 				/* Used to store source file */
 				*source = state_pointer + 2;
 
-	struct file_entry	*entry = (struct file_entry *) source->sym;
-	struct localsymbol	*endp = entry->symbols + entry->nsymbols;
+	struct file_entry	*entry = (struct file_entry *)source->sym;
+	struct localsymbol	*lspend = entry->symbols + entry->nsymbols;
 
 
 	current->sym = next->sym;
 	current->line = next->line;
 	current->filename = next->filename;
 
-	while (++(next->sym) < endp) {
+	while (++(next->sym) < lspend) {
 
 		struct nlist	*np = &next->sym->nzlist.nlist;
 
@@ -235,11 +239,13 @@ next_debug_entry (use_data_symbols, state_pointer)
 		 */
 		switch (np->n_type & 0xff) {
 		case N_SLINE:
-			if (use_data_symbols) continue;
+			if (use_data_symbols)
+				continue;
 			next->line = np->n_desc;
 			return 1;
 		case N_DSLINE:
-			if (!use_data_symbols) continue;
+			if (!use_data_symbols)
+				continue;
 			next->line = np->n_desc;
 			return 1;
 #ifdef HAVE_SUN_STABS
@@ -266,39 +272,41 @@ next_debug_entry (use_data_symbols, state_pointer)
 /*
  * Create a structure to save the state of a scan through the debug symbols.
  * USE_DATA_SYMBOLS is set if we should be scanning for DSLINE's instead of
- * SLINE's.  entry is the file entry which points at the symbols to use.
+ * SLINE's. ENTRY is the file entry which points at the symbols to use.
  */
 
 static struct line_debug_entry *
 init_debug_scan(use_data_symbols, entry)
-	int             use_data_symbols;
-	struct file_entry *entry;
+	int			use_data_symbols;
+	struct file_entry	*entry;
 {
-	struct localsymbol	*lsp;
-	struct line_debug_entry *state_pointer = (struct line_debug_entry *)
-				xmalloc(3 * sizeof(struct line_debug_entry));
+	register struct localsymbol	*lsp, *lspend;
+	struct line_debug_entry *state_pointer, *current, *next, *source;
 
-	register struct line_debug_entry
-		*current = state_pointer,
-		*next = state_pointer + 1,
-		*source = state_pointer + 2;	/* Used to store source file */
+	state_pointer = (struct line_debug_entry *)
+		xmalloc(3 * sizeof(*state_pointer));
 
+	current = state_pointer,
+	next = state_pointer + 1,
+	source = state_pointer + 2;	/* Used to store source file */
 
-	for (lsp = entry->symbols; lsp < entry->symbols+entry->nsymbols; lsp++)
+	lspend = entry->symbols+entry->nsymbols;
+
+	for (lsp = entry->symbols; lsp < lspend; lsp++)
 		if (lsp->nzlist.nlist.n_type == N_SO)
 			break;
 
-	if (lsp >= entry->symbols + entry->nsymbols) {
+	if (lsp >= lspend) {
 		/* I believe this translates to "We lose" */
 		current->filename = next->filename = entry->filename;
 		current->line = next->line = -1;
-		current->sym = next->sym = (struct localsymbol *) 0;
+		current->sym = next->sym = (struct localsymbol *)0;
 		return state_pointer;
 	}
 	next->line = source->line = 0;
 	next->filename = source->filename
 			= (lsp->nzlist.nlist.n_un.n_strx + entry->strings);
-	source->sym = (struct localsymbol *) entry;
+	source->sym = (struct localsymbol *)entry;
 	next->sym = lsp;
 
 	/* To setup next */
@@ -391,22 +399,12 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 	FILE           *outfile;
 	unsigned char  *nlist_bitvector;
 {
-	struct relocation_info *reloc, *reloc_start =
-			data_segment ? entry->datarel : entry->textrel;
-
-	int	reloc_size = (data_segment ? entry->ndatarel : entry->ntextrel);
-	int	start_of_segment = (data_segment ?
-					entry->data_start_address :
-					entry->text_start_address);
-	struct localsymbol	*start_of_syms = entry->symbols;
-	struct line_debug_entry	*state_pointer =
-				init_debug_scan(data_segment != 0, entry);
-
-	register struct line_debug_entry	*current = state_pointer;
-
+	struct relocation_info	*rp, *erp;
+	int			start_of_segment;
+	struct localsymbol	*start_of_syms;
+	struct line_debug_entry	*state_pointer, *current;
 	/* Assigned to generally static values; should not be written into.  */
 	char *errfmt;
-
 	/*
 	 * Assigned to alloca'd values cand copied into; should be freed when
 	 * done.
@@ -414,28 +412,32 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 	char *errmsg;
 	int  invalidate_line_number;
 
+	rp = data_segment ? entry->datarel : entry->textrel;
+	erp = data_segment ? (rp + entry->ndatarel) : (rp + entry->ntextrel);
+	start_of_syms = entry->symbols;
+	start_of_segment = (data_segment ?
+		entry->data_start_address :
+		entry->text_start_address);
+	state_pointer = init_debug_scan(data_segment != 0, entry);
+	current = state_pointer;
+
 	/*
 	 * We need to sort the relocation info here.  Sheesh, so much effort
 	 * for one lousy error optimization.
 	 */
+	qsort(rp, erp - rp, sizeof(rp[0]), reloc_cmp);
 
-	qsort(reloc_start, reloc_size, sizeof(struct relocation_info),
-	      relocation_entries_relation);
-
-	for (reloc = reloc_start;
-	     reloc < (reloc_start + reloc_size);
-	     reloc++) {
-		register struct localsymbol *s;
+	for (; rp < erp; rp++) {
+		register struct localsymbol *lsp;
 		register symbol *g;
 
 		/*
-		 * If the relocation isn't resolved through a symbol,
-		 * continue
+		 * If the relocation isn't resolved through a symbol, continue.
 		 */
-		if (!RELOC_EXTERN_P(reloc))
+		if (!RELOC_EXTERN_P(rp))
 			continue;
 
-		s = &entry->symbols[RELOC_SYMBOL(reloc)];
+		lsp = &entry->symbols[RELOC_SYMBOL(rp)];
 
 		/*
 		 * Local symbols shouldn't ever be used by relocation info,
@@ -446,17 +448,24 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 		 * assembler would have caught it otherwise), so we can
 		 * ignore these cases.
 		 */
-		if (!(s->nzlist.nz_type & N_EXT))
+
+		if ((g = lsp->symbol) == NULL)
 			continue;
 
-		g = s->symbol;
+		if (!(lsp->nzlist.nz_type & N_EXT) &&
+		    !SET_ELEMENT_P(lsp->nzlist.nz_type)) {
+			warnx("internal error: `%s' N_EXT not set", g->name);
+			continue;
+		}
+
 		errmsg = 0;
 
-		if (!g->defined && !g->so_defined && list_unresolved_refs) {	/* Reference */
-			/* Mark as being noted by relocation warning pass.  */
-			SET_BIT(nlist_bitvector, s - start_of_syms);
+		if (!g->defined && !g->so_defined && list_unresolved_refs) {
+			/* Mark as being noted by relocation warning pass. */
+			SET_BIT(nlist_bitvector, lsp - start_of_syms);
 
-			if (g->undef_refs >= MAX_UREFS_PRINTED)	/* Listed too many */
+			if (g->undef_refs >= MAX_UREFS_PRINTED)
+				/* Listed too many */
 				continue;
 
 			/* Undefined symbol which we should mention */
@@ -465,7 +474,8 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 				errfmt = "More undefined symbol %s refs follow";
 				invalidate_line_number = 1;
 			} else {
-				errfmt = "Undefined symbol %s referenced from %s segment";
+				errfmt =
+			"Undefined symbol `%s' referenced from %s segment";
 				invalidate_line_number = 0;
 			}
 		} else {	/* Defined */
@@ -474,7 +484,7 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 				continue;
 
 			/* Mark as being noted by relocation warning pass.  */
-			SET_BIT(nlist_bitvector, s - start_of_syms);
+			SET_BIT(nlist_bitvector, lsp - start_of_syms);
 
 			errfmt = 0;
 			errmsg = g->warning;
@@ -493,12 +503,14 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 			if (nm != g->name)
 				free(nm);
 		}
-		address_to_line(RELOC_ADDRESS(reloc) + start_of_segment,
+		address_to_line(RELOC_ADDRESS(rp) + start_of_segment,
 				state_pointer);
 
 		if (current->line >= 0)
-			fprintf(outfile, "%s:%d: %s\n", current->filename,
-			invalidate_line_number ? 0 : current->line, errmsg);
+			fprintf(outfile, "%s:%d: %s\n",
+				current->filename,
+				invalidate_line_number ? 0 : current->line,
+				errmsg);
 		else
 			fprintf(outfile, "%s: %s\n", current->filename, errmsg);
 
@@ -520,25 +532,21 @@ do_file_warnings (entry, outfile)
 	struct file_entry	*entry;
 	FILE			*outfile;
 {
-	int number_of_syms = entry->nsymbols;
-	unsigned char *nlist_bitvector = (unsigned char *)
-					alloca ((number_of_syms >> 3) + 1);
-	struct line_debug_entry *text_scan, *data_scan;
+	int	nsym;
 	int	i;
 	char	*errfmt, *file_name;
 	int	line_number;
 	int	dont_allow_symbol_name;
+	u_char	*nlist_bitvector;
+	struct line_debug_entry	*text_scan, *data_scan;
 
-	bzero (nlist_bitvector, (number_of_syms >> 3) + 1);
+	nsym = entry->nsymbols;
+	nlist_bitvector = (u_char *)alloca((nsym >> 3) + 1);
+	bzero(nlist_bitvector, (nsym >> 3) + 1);
 
-	/* Read in the files strings if they aren't available */
-	if (!entry->strings) {
-		int desc;
-
-		entry->strings = (char *)alloca(entry->string_size);
-		desc = file_open(entry);
-		read_entry_strings(desc, entry);
-	}
+	/* Read in the strings */
+	entry->strings = (char *)alloca(entry->string_size);
+	read_entry_strings(file_open(entry), entry);
 
 	if (!(entry->flags & E_DYNAMIC)) {
 		/* Do text warnings based on a scan through the reloc info. */
@@ -548,21 +556,27 @@ do_file_warnings (entry, outfile)
 		do_relocation_warnings(entry, 1, outfile, nlist_bitvector);
 	}
 
-	/* Scan through all of the nlist entries in this file and pick up
-	anything that the scan through the relocation stuff didn't. */
-
+	/*
+	 * Scan through all of the nlist entries in this file and pick up
+	 * anything that the scan through the relocation stuff didn't.
+	 */
 	text_scan = init_debug_scan(0, entry);
 	data_scan = init_debug_scan(1, entry);
 
-	for (i = 0; i < number_of_syms; i++) {
-		struct nlist *s;
+	for (i = 0; i < nsym; i++) {
+		struct nlist *np;
 		symbol *g;
 
 	        g = entry->symbols[i].symbol;
-		s = &entry->symbols[i].nzlist.nlist;
+		np = &entry->symbols[i].nzlist.nlist;
 
-		if (!(s->n_type & N_EXT))
+		if (g == NULL)
 			continue;
+
+		if (!(np->n_type & N_EXT) && !SET_ELEMENT_P(np->n_type)) {
+			warnx("internal error: `%s' N_EXT not set", g->name);
+			continue;
+		}
 
 		if (!(g->flags & GS_REFERENCED)) {
 #if 0
@@ -590,18 +604,18 @@ do_file_warnings (entry, outfile)
 		dont_allow_symbol_name = 0;
 
 		if (list_multiple_defs && g->mult_defs) {
-			errfmt = "Definition of symbol %s (multiply defined)";
-			switch (s->n_type) {
 
+			errfmt = "Definition of symbol `%s' (multiply defined)";
+			switch (np->n_type) {
 			case N_TEXT | N_EXT:
 				line_number =
-					address_to_line(s->n_value, text_scan);
+					address_to_line(np->n_value, text_scan);
 				file_name = text_scan[0].filename;
 				break;
 
 			case N_DATA | N_EXT:
 				line_number =
-					address_to_line(s->n_value, data_scan);
+					address_to_line(np->n_value, data_scan);
 				file_name = data_scan[0].filename;
 				break;
 
@@ -612,12 +626,12 @@ do_file_warnings (entry, outfile)
 				if (g->mult_defs == 2)
 					continue;
 				errfmt =
-		"First set element definition of symbol %s (multiply defined)";
+	"First set element definition of symbol `%s' (multiply defined)";
 				line_number = -1;
 				break;
 
 			default:
-printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
+warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np->n_type);
 				/* Don't print out multiple defs at references.*/
 				continue;
 			}
@@ -631,19 +645,19 @@ printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
 				continue;
 
 			if (++(g->undef_refs) == MAX_UREFS_PRINTED)
-				errfmt = "More undefined \"%s\" refs follow";
+				errfmt = "More undefined `%s' refs follow";
 			else
-				errfmt = "Undefined symbol \"%s\" referenced";
+				errfmt = "Undefined symbol `%s' referenced";
 			line_number = -1;
 		} else if (g->warning) {
 			/*
 			 * There are two cases in which we don't want to do
 			 * this. The first is if this is a definition instead
-			 * do a reference. The second is if it's the reference
+			 * of a reference. The second is if it's the reference
 			 * used by the warning stabs itself.
 			 */
-			if (s->n_type != (N_EXT | N_UNDF) ||
-			    (i && (s-1)->n_type == N_WARNING))
+			if (np->n_type != (N_EXT | N_UNDF) ||
+			    (i && (np-1)->n_type == N_WARNING))
 				continue;
 
 			errfmt = g->warning;
@@ -666,7 +680,7 @@ printf("multiply defined: %s, type %#x\n", g->name, s->n_type);
 	}
 	free(text_scan);
 	free(data_scan);
-	entry->strings = 0;	/* Since it will dissapear anyway. */
+	entry->strings = 0;	/* Since it will disappear anyway. */
 }
 
 int
@@ -679,13 +693,15 @@ do_warnings(outfile)
 	list_multiple_defs = multiple_def_count != 0;
 
 	if (!(list_unresolved_refs ||
-	    list_warning_symbols || list_multiple_defs))
+	      list_warning_symbols ||
+	      list_multiple_defs))
 		/* No need to run this routine */
 		return 1;
 
 	if (entry_symbol && !entry_symbol->defined)
-		fprintf(outfile, "Undefined entry symbol %s\n",
+		fprintf(outfile, "Undefined entry symbol `%s'\n",
 			entry_symbol->name);
+
 	each_file(do_file_warnings, (void *)outfile);
 
 	if (list_unresolved_refs || list_multiple_defs)
