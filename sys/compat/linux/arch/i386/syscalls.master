@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 1995/02/28 23:26:26 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.2 1995/03/05 23:23:51 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -49,13 +49,13 @@
 7	STD		{ int linux_waitpid(int pid, int *status, int options);}
 8	STD		{ int linux_creat(char *path, int mode); }
 9	NOARGS		{ int link(char *path, char *link); }
-10	NOARGS		{ int unlink(char *path); }
+10	STD		{ int linux_unlink(char *path); }
 11	STD		{ int linux_execve(char *path, char **argp, char **envp); }
-12	NOARGS		{ int chdir(char *path); }
+12	STD		{ int linux_chdir(char *path); }
 13	STD		{ int linux_time(linux_time_t *t); }
-14	NOARGS		{ int mknod(char *path, int mode, int dev); }
-15	NOARGS		{ int chmod(char *path, int mode); }
-16	NOARGS		{ int chown(char *path, int uid, int gid); }
+14	STD		{ int linux_mknod(char *path, int mode, int dev); }
+15	STD		{ int linux_chmod(char *path, int mode); }
+16	STD		{ int linux_chown(char *path, int uid, int gid); }
 17	STD		{ int linux_break(char *nsize); }
 18	OBSOL		linux_ostat
 19	NOARGS		{ long compat_43_lseek(int fd, long offset, int whence); }
@@ -77,9 +77,9 @@
 35	UNIMPL		linux_ftime
 36	NOARGS		{ int sync(void); }
 37	STD		{ int linux_kill(int pid, int signum); }
-38	NOARGS		{ int rename(char *from, char *to); }
-39	NOARGS		{ int mkdir(char *path); }
-40	NOARGS		{ int rmdir(char *path); }
+38	STD		{ int linux_rename(char *from, char *to); }
+39	STD		{ int linux_mkdir(char *path); }
+40	STD		{ int linux_rmdir(char *path); }
 41	NOARGS		{ int dup(u_int fd); }
 42	STD		{ int linux_pipe(int *pfds); }
 43	STD		{ int linux_times(struct times *tms); }
@@ -128,9 +128,9 @@
 80	NOARGS		{ int getgroups(u_int gidsetsize, gid_t *gidset); }
 81	NOARGS		{ int setgroups(u_int gidsetsize, gid_t *gidset); }
 82	STD		{ int linux_select(struct linux_select *lsp); }
-83	NOARGS		{ int symlink(char *path, char *to); }
+83	STD		{ int linux_symlink(char *path, char *to); }
 84	NOARGS		{ int compat_43_lstat(char *path, struct ostat *up); }
-85	NOARGS		{ int readlink(char *name, char *buf, int count); }
+85	STD		{ int linux_readlink(char *name, char *buf, int count); }
 86	STD		{ int linux_uselib(char *path); }
 87	NOARGS		{ int swapon(char *name); }
 88	NOARGS		{ int reboot(int opt); }
@@ -138,7 +138,7 @@
 			    unsigned int count); }
 90	STD		{ int linux_mmap(struct linux_mmap *lmp); }
 91	NOARGS		{ int munmap(caddr_t addr, int len); }
-92	NOARGS		{ int compat_43_truncate(char *path, long length); }
+92	STD		{ int linux_truncate(char *path, long length); }
 93	NOARGS		{ int compat_43_ftruncate(int fd, long length); }
 94	NOARGS		{ int fchmod(int fd, int mode); }
 95	NOARGS		{ int fchown(int fd, int uid, int gid); }
@@ -147,7 +147,7 @@
 98	NOARGS		{ int profil(caddr_t samples, u_int size, \
 				u_int offset, u_int scale); }
 99	STD		{ int linux_statfs(char *path, struct linux_statfs *sp); }
-100	STD		{ int linux_fstatfs(char *path, struct linux_statfs *sp); }
+100	STD		{ int linux_fstatfs(int fd, struct linux_statfs *sp); }
 101	UNIMPL		linux_ioperm
 102	STD		{ int linux_socketcall(int what, void *args); }
 103	UNIMPL		linux_klog
@@ -189,3 +189,7 @@
 135	UNIMPL		linux_sysfs
 136	UNIMPL		linux_personality
 137	UNIMPL		linux_afs_syscall
+138	UNIMPL		linux_setfsuid
+139	UNIMPL		linux_getfsuid
+140	STD		{ int linux_llseek(int fd, u_int32_t ohigh, \
+				u_int32_t olow, caddr_t res, int whence); }

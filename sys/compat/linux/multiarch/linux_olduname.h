@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.h,v 1.1 1995/02/28 23:26:14 fvdl Exp $	*/
+/*	$NetBSD: linux_olduname.h,v 1.2 1995/03/05 23:23:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,6 +34,9 @@
 #ifndef _LINUX_TYPES_H
 #define _LINUX_TYPES_H
 
+typedef struct {
+	long	val[2];
+} linux_fsid_t;
 
 typedef unsigned short linux_uid_t;
 typedef unsigned short linux_gid_t;
@@ -49,7 +52,16 @@ typedef unsigned long linux_sigset_t;
 typedef void (*linux_handler_t)(int);
 
 struct linux_statfs {
-	int dummy;	/* Not filled in yet */
+	long		l_ftype;
+	long		l_fbsize;
+	long		l_fblocks;
+	long		l_fbfree;
+	long		l_fbavail;
+	long		l_ffiles;
+	long		l_fffree;
+	linux_fsid_t	l_ffsid;
+	long		l_fnamelen;
+	long		l_fspare[6];
 };
 
 /*

@@ -24,14 +24,39 @@ struct linux_creat_args {
 	syscallarg(int) mode;
 };
 
+struct linux_unlink_args {
+	syscallarg(char *) path;
+};
+
 struct linux_execve_args {
 	syscallarg(char *) path;
 	syscallarg(char **) argp;
 	syscallarg(char **) envp;
 };
 
+struct linux_chdir_args {
+	syscallarg(char *) path;
+};
+
 struct linux_time_args {
 	syscallarg(linux_time_t *) t;
+};
+
+struct linux_mknod_args {
+	syscallarg(char *) path;
+	syscallarg(int) mode;
+	syscallarg(int) dev;
+};
+
+struct linux_chmod_args {
+	syscallarg(char *) path;
+	syscallarg(int) mode;
+};
+
+struct linux_chown_args {
+	syscallarg(char *) path;
+	syscallarg(int) uid;
+	syscallarg(int) gid;
 };
 
 struct linux_break_args {
@@ -55,6 +80,19 @@ struct linux_access_args {
 struct linux_kill_args {
 	syscallarg(int) pid;
 	syscallarg(int) signum;
+};
+
+struct linux_rename_args {
+	syscallarg(char *) from;
+	syscallarg(char *) to;
+};
+
+struct linux_mkdir_args {
+	syscallarg(char *) path;
+};
+
+struct linux_rmdir_args {
+	syscallarg(char *) path;
 };
 
 struct linux_pipe_args {
@@ -108,6 +146,17 @@ struct linux_select_args {
 	syscallarg(struct linux_select *) lsp;
 };
 
+struct linux_symlink_args {
+	syscallarg(char *) path;
+	syscallarg(char *) to;
+};
+
+struct linux_readlink_args {
+	syscallarg(char *) name;
+	syscallarg(char *) buf;
+	syscallarg(int) count;
+};
+
 struct linux_uselib_args {
 	syscallarg(char *) path;
 };
@@ -122,13 +171,18 @@ struct linux_mmap_args {
 	syscallarg(struct linux_mmap *) lmp;
 };
 
+struct linux_truncate_args {
+	syscallarg(char *) path;
+	syscallarg(long) length;
+};
+
 struct linux_statfs_args {
 	syscallarg(char *) path;
 	syscallarg(struct linux_statfs *) sp;
 };
 
 struct linux_fstatfs_args {
-	syscallarg(char *) path;
+	syscallarg(int) fd;
 	syscallarg(struct linux_statfs *) sp;
 };
 
@@ -179,6 +233,14 @@ struct linux_sigprocmask_args {
 
 struct linux_getpgid_args {
 	syscallarg(int) pid;
+};
+
+struct linux_llseek_args {
+	syscallarg(int) fd;
+	syscallarg(u_int32_t) ohigh;
+	syscallarg(u_int32_t) olow;
+	syscallarg(caddr_t) res;
+	syscallarg(int) whence;
 };
 
 #undef	syscallarg

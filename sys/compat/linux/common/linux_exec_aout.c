@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.1 1995/02/28 23:24:46 fvdl Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.2 1995/03/05 23:23:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -297,7 +297,7 @@ linux_uselib(p, uap, retval)
 	int rem, i, magic, error;
 
 	sg = stackgap_init();
-	CHECK_ALT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
@@ -377,7 +377,7 @@ linux_execve(p, uap, retval)
 	caddr_t sg;
 
 	sg = stackgap_init();
-	CHECK_ALT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return execve(p, uap, retval);
 }

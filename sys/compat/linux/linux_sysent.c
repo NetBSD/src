@@ -22,13 +22,13 @@ int	close();
 int	linux_waitpid();
 int	linux_creat();
 int	link();
-int	unlink();
+int	linux_unlink();
 int	linux_execve();
-int	chdir();
+int	linux_chdir();
 int	linux_time();
-int	mknod();
-int	chmod();
-int	chown();
+int	linux_mknod();
+int	linux_chmod();
+int	linux_chown();
 int	linux_break();
 int	compat_43_lseek();
 int	getpid();
@@ -39,9 +39,9 @@ int	linux_utime();
 int	linux_access();
 int	sync();
 int	linux_kill();
-int	rename();
-int	mkdir();
-int	rmdir();
+int	linux_rename();
+int	linux_mkdir();
+int	linux_rmdir();
 int	dup();
 int	linux_pipe();
 int	linux_times();
@@ -77,16 +77,16 @@ int	settimeofday();
 int	getgroups();
 int	setgroups();
 int	linux_select();
-int	symlink();
+int	linux_symlink();
 int	compat_43_lstat();
-int	readlink();
+int	linux_readlink();
 int	linux_uselib();
 int	swapon();
 int	reboot();
 int	linux_readdir();
 int	linux_mmap();
 int	munmap();
-int	compat_43_truncate();
+int	linux_truncate();
 int	compat_43_ftruncate();
 int	fchmod();
 int	fchown();
@@ -110,6 +110,7 @@ int	mprotect();
 int	linux_sigprocmask();
 int	linux_getpgid();
 int	fchdir();
+int	linux_llseek();
 #define	s(type)	sizeof(type)
 
 struct sysent linux_sysent[] = {
@@ -133,20 +134,20 @@ struct sysent linux_sysent[] = {
 	    linux_creat },			/* 8 = linux_creat */
 	{ 2, s(struct link_args),
 	    link },				/* 9 = link */
-	{ 1, s(struct unlink_args),
-	    unlink },				/* 10 = unlink */
+	{ 1, s(struct linux_unlink_args),
+	    linux_unlink },			/* 10 = linux_unlink */
 	{ 3, s(struct linux_execve_args),
 	    linux_execve },			/* 11 = linux_execve */
-	{ 1, s(struct chdir_args),
-	    chdir },				/* 12 = chdir */
+	{ 1, s(struct linux_chdir_args),
+	    linux_chdir },			/* 12 = linux_chdir */
 	{ 1, s(struct linux_time_args),
 	    linux_time },			/* 13 = linux_time */
-	{ 3, s(struct mknod_args),
-	    mknod },				/* 14 = mknod */
-	{ 2, s(struct chmod_args),
-	    chmod },				/* 15 = chmod */
-	{ 3, s(struct chown_args),
-	    chown },				/* 16 = chown */
+	{ 3, s(struct linux_mknod_args),
+	    linux_mknod },			/* 14 = linux_mknod */
+	{ 2, s(struct linux_chmod_args),
+	    linux_chmod },			/* 15 = linux_chmod */
+	{ 3, s(struct linux_chown_args),
+	    linux_chown },			/* 16 = linux_chown */
 	{ 1, s(struct linux_break_args),
 	    linux_break },			/* 17 = linux_break */
 	{ 0, 0,
@@ -189,12 +190,12 @@ struct sysent linux_sysent[] = {
 	    sync },				/* 36 = sync */
 	{ 2, s(struct linux_kill_args),
 	    linux_kill },			/* 37 = linux_kill */
-	{ 2, s(struct rename_args),
-	    rename },				/* 38 = rename */
-	{ 1, s(struct mkdir_args),
-	    mkdir },				/* 39 = mkdir */
-	{ 1, s(struct rmdir_args),
-	    rmdir },				/* 40 = rmdir */
+	{ 2, s(struct linux_rename_args),
+	    linux_rename },			/* 38 = linux_rename */
+	{ 1, s(struct linux_mkdir_args),
+	    linux_mkdir },			/* 39 = linux_mkdir */
+	{ 1, s(struct linux_rmdir_args),
+	    linux_rmdir },			/* 40 = linux_rmdir */
 	{ 1, s(struct dup_args),
 	    dup },				/* 41 = dup */
 	{ 1, s(struct linux_pipe_args),
@@ -279,12 +280,12 @@ struct sysent linux_sysent[] = {
 	    setgroups },			/* 81 = setgroups */
 	{ 1, s(struct linux_select_args),
 	    linux_select },			/* 82 = linux_select */
-	{ 2, s(struct symlink_args),
-	    symlink },				/* 83 = symlink */
+	{ 2, s(struct linux_symlink_args),
+	    linux_symlink },			/* 83 = linux_symlink */
 	{ 2, s(struct compat_43_lstat_args),
 	    compat_43_lstat },			/* 84 = compat_43_lstat */
-	{ 3, s(struct readlink_args),
-	    readlink },				/* 85 = readlink */
+	{ 3, s(struct linux_readlink_args),
+	    linux_readlink },			/* 85 = linux_readlink */
 	{ 1, s(struct linux_uselib_args),
 	    linux_uselib },			/* 86 = linux_uselib */
 	{ 1, s(struct swapon_args),
@@ -297,8 +298,8 @@ struct sysent linux_sysent[] = {
 	    linux_mmap },			/* 90 = linux_mmap */
 	{ 2, s(struct munmap_args),
 	    munmap },				/* 91 = munmap */
-	{ 2, s(struct compat_43_truncate_args),
-	    compat_43_truncate },		/* 92 = compat_43_truncate */
+	{ 2, s(struct linux_truncate_args),
+	    linux_truncate },			/* 92 = linux_truncate */
 	{ 2, s(struct compat_43_ftruncate_args),
 	    compat_43_ftruncate },		/* 93 = compat_43_ftruncate */
 	{ 2, s(struct fchmod_args),
@@ -389,6 +390,12 @@ struct sysent linux_sysent[] = {
 	    nosys },				/* 136 = unimplemented linux_personality */
 	{ 0, 0,
 	    nosys },				/* 137 = unimplemented linux_afs_syscall */
+	{ 0, 0,
+	    nosys },				/* 138 = unimplemented linux_setfsuid */
+	{ 0, 0,
+	    nosys },				/* 139 = unimplemented linux_getfsuid */
+	{ 5, s(struct linux_llseek_args),
+	    linux_llseek },			/* 140 = linux_llseek */
 };
 
 int	nlinux_sysent= sizeof(linux_sysent) / sizeof(linux_sysent[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_util.h,v 1.1 1995/02/28 23:26:17 fvdl Exp $	*/
+/*	$NetBSD: linux_util.h,v 1.2 1995/03/05 23:23:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -67,9 +67,12 @@ stackgap_alloc(sgp, sz)
 extern const char linux_emul_path[];
 
 int linux_emul_find __P((struct proc *, caddr_t *, const char *, char *,
-			char **));
+			char **, int));
 
-#define CHECK_ALT(p, sgp, path) \
-    linux_emul_find(p, sgp, linux_emul_path, path, &(path))
+#define CHECK_ALT_EXIST(p, sgp, path) \
+    linux_emul_find(p, sgp, linux_emul_path, path, &(path), 0)
+
+#define CHECK_ALT_CREAT(p, sgp, path) \
+    linux_emul_find(p, sgp, linux_emul_path, path, &(path), 1)
 
 #endif /* !_LINUX_UTIL_H_ */
