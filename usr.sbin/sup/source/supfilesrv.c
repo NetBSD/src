@@ -42,6 +42,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.6  1995/06/03 21:22:00  christos
+ * Changes to write ascii timestamps in the when files.
+ * Looked into making it 64 bit clean, but it is hopeless.
+ * Added little program to convert from the old timestamp files
+ * into the new ones.
+ *
  * Revision 1.5  1993/08/04 17:46:21  brezak
  * Changes from nate for gzip'ed sup
  *
@@ -332,6 +338,9 @@ HASH *gidH[HASHSIZE];
 HASH *inodeH[HASHSIZE];			/* for inode lookup for linked file check */
 
 char *fmttime ();			/* time format routine */
+#if __STDC__
+int goaway(char *fmt,...);
+#endif
 
 /*************************************
  ***    M A I N   R O U T I N E    ***
@@ -343,7 +352,7 @@ char **argv;
 {
 	register int x,pid,signalmask;
 	struct sigvec chldvec,ignvec,oldvec;
-	int chldsig ();
+	void chldsig();
 	long tloc;
 
 	/* initialize global variables */
@@ -406,11 +415,13 @@ char **argv;
  * Child status signal handler
  */
 
-chldsig()
+void
+chldsig(snum)
+	int snum;
 {
 	union wait w;
 
-	while (wait3(&w, WNOHANG, (struct rusage *)0) > 0) {
+	while (wait3((int *) &w, WNOHANG, (struct rusage *)0) > 0) {
 		if (nchildren) nchildren--;
 	}
 }

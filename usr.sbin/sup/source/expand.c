@@ -83,6 +83,15 @@ static	char	**BUFFER;		/* pointer to the buffer */
 static	int	BUFSIZE;		/* maximum number in buffer */
 static	int	bufcnt;			/* current number in buffer */
 
+static void glob();
+static void matchdir();
+static int execbrc();
+static int match();
+static int amatch();
+static void addone();
+static int addpath();
+static int gethdir();
+
 int expand(spec, buffer, bufsize)
 	register char *spec;
 	char **buffer;
@@ -99,7 +108,7 @@ int expand(spec, buffer, bufsize)
 	return(bufcnt);
 }
 
-static glob(as)
+static void glob(as)
 	char *as;
 {
 	register char *cs;
@@ -149,7 +158,7 @@ endit:
 	return;
 }
 
-static matchdir(pattern)
+static void matchdir(pattern)
 	char *pattern;
 {
 #ifdef HAS_POSIX_DIR
@@ -175,7 +184,7 @@ static matchdir(pattern)
 	return;
 }
 
-static execbrc(p, s)
+static int execbrc(p, s)
 	char *p, *s;
 {
 	char restbuf[MAXPATHLEN + 1];
@@ -240,7 +249,7 @@ doit:
 	return (0);
 }
 
-static match(s, p)
+static int match(s, p)
 	char *s, *p;
 {
 	register int c;
@@ -254,7 +263,7 @@ static match(s, p)
 	return (c);
 }
 
-static amatch(s, p)
+static int amatch(s, p)
 	register char *s, *p;
 {
 	register int scc;
@@ -325,7 +334,7 @@ pathovfl:
 	}
 }
 
-static addone(s1, s2)
+static void addone(s1, s2)
 	register char *s1, *s2;
 {
 	register char *ep;
@@ -344,7 +353,7 @@ static addone(s1, s2)
 	while (*ep++ = *s2++);
 }
 
-static addpath(c)
+static int addpath(c)
 	char c;
 {
 	if (pathp >= lastpathp)
@@ -354,7 +363,7 @@ static addpath(c)
 	return(0);
 }
 
-static gethdir(home)
+static int gethdir(home)
 	char *home;
 {
 	struct passwd *getpwnam();
