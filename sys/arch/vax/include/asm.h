@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2000/07/03 04:24:56 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.14 2000/07/03 23:05:32 matt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -98,12 +98,14 @@
 #define NENTRY(x, regs)		_ENTRY(_C_LABEL(x), regs)
 #define ASENTRY(x, regs)	_ENTRY(_ASM_LABEL(x), regs); _PROF_PROLOGUE
 
-#define ALTENTRY(x)		.text; _ALIGN_TEXT; .globl _C_LABEL(x); _C_LABEL(x):
+#define ALTENTRY(x)		.globl _C_LABEL(x); _C_LABEL(x):
 #define RCSID(x)		.text; .asciz x
 
+#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
+#endif
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
