@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.269 2002/08/13 11:37:09 augustss Exp $
+$NetBSD: usbdevs,v 1.270 2002/08/22 02:11:53 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -489,6 +489,9 @@ product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
 product BILLIONTON USBLP100	0x0987	USB100LP
 product BILLIONTON USBEL100	0x0988	USB100EL
 product BILLIONTON USBE100	0x8511	USBE100
+
+/* Broadcom products */
+product BROADCOM BCM2033	0x2033	BCM2033 Bluetooth adapter
 
 /* Brother Industries products */
 product BROTHER HL1050		0x0002	HL-1050 laser printer
