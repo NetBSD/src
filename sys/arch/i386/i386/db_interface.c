@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.15 1995/01/15 00:46:38 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.16 1995/01/15 02:19:12 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -80,7 +80,7 @@ kdb_trap(type, code, regs)
 		 * Kernel mode - esp and ss not saved
 		 */
 		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
-		asm("movw %%ss,%W0" : "=r" (ddb_regs.tf_ss));
+		asm("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
 	}
 
 	s = splhigh();
