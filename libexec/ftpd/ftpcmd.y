@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.41 1999/12/12 14:05:54 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.42 1999/12/18 05:51:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.41 1999/12/12 14:05:54 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.42 1999/12/18 05:51:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,6 +201,7 @@ cmd
 	| PASS SP password CRLF
 		{
 			pass($3);
+			memset($3, 0, strlen($3));
 			free($3);
 		}
 
@@ -281,6 +282,8 @@ cmd
 
 	| LPRT check_login SP host_long_port4 CRLF
 		{
+			if ($2) {
+
 			/* reject invalid host_long_port4 */
 			if (data_dest.su_family != AF_INET) {
 				reply(500, "Illegal LPRT command rejected");
@@ -305,10 +308,14 @@ cmd
 				}
 				reply(200, "LPRT command successful.");
 			}
+
+			}
 		}
 
 	| LPRT check_login SP host_long_port6 CRLF
 		{
+			if ($2) {
+
 			/* reject invalid host_long_port6 */
 			if (data_dest.su_family != AF_INET6) {
 				reply(500, "Illegal LPRT command rejected");
@@ -333,6 +340,8 @@ cmd
 				}
 				reply(200, "LPRT command successful.");
 			}
+
+			}
 		}
 
 	| EPRT check_login SP STRING CRLF
@@ -345,6 +354,8 @@ cmd
 			struct addrinfo *res;
 			int i;
 
+			if ($2) {
+
 			if (epsvall) {
 				reply(501, "EPRT disallowed after EPSV ALL");
 				goto eprt_done;
@@ -355,8 +366,6 @@ cmd
 				pdata = -1;
 			}
 
-			/*XXX checks for login */
-
 			tmp = xstrdup($4);
 			p = tmp;
 			delim = p[0];
@@ -366,9 +375,8 @@ cmd
 				q = strchr(p, delim);
 				if (!q || *q != delim) {
 		parsefail:
-					reply(500, "Invalid argument, rejected.");
-					if (tmp)
-						free(tmp);
+					reply(500,
+					    "Invalid argument, rejected.");
 					usedefault = 1;
 					goto eprt_done;
 				}
@@ -420,12 +428,14 @@ cmd
 					fail++;
 				switch (data_dest.su_family) {
 				case AF_INET:
-					fail += memcmp(&data_dest.su_sin.sin_addr,
+					fail += memcmp(
+					    &data_dest.su_sin.sin_addr,
 					    &his_addr.su_sin.sin_addr,
 					    sizeof(data_dest.su_sin.sin_addr));
 					break;
 				case AF_INET6:
-					fail += memcmp(&data_dest.su_sin6.sin6_addr,
+					fail += memcmp(
+					    &data_dest.su_sin6.sin6_addr,
 					    &his_addr.su_sin6.sin6_addr,
 					    sizeof(data_dest.su_sin6.sin6_addr));
 					break;
@@ -438,68 +448,78 @@ cmd
 					return (NULL);
 				}
 			}
-			free(tmp);
-			tmp = NULL;
 			if (pdata >= 0) {
 				(void) close(pdata);
 				pdata = -1;
 			}
 			reply(200, "EPRT command successful.");
 		eprt_done:;
+			if (tmp != NULL)
+				free(tmp);
+
+			}
+			free($4);
 		}
 
 	| PASV check_login CRLF
 		{
-			if (curclass.passive) {
-				passive();
-			} else {
-				reply(500, "PASV mode not available.");
+			if ($2) {
+				if (curclass.passive)
+					passive();
+				else
+					reply(500, "PASV mode not available.");
 			}
 		}
 
-	| LPSV CRLF
+	| LPSV check_login CRLF
 		{
-			if (epsvall)
-				reply(501, "LPSV disallowed after EPSV ALL");
-			else
-				long_passive("LPSV", PF_UNSPEC);
-		}
-
-	| EPSV SP NUMBER CRLF
-		{
-			int pf;
-			switch ($3) {
-			case 1:
-				pf = PF_INET;
-				break;
-			case 2:
-				pf = PF_INET6;
-				break;
-			default:
-				pf = -1;	/*junk*/
-				break;
+			if ($2) {
+				if (epsvall)
+					reply(501,
+					    "LPSV disallowed after EPSV ALL");
+				else
+					long_passive("LPSV", PF_UNSPEC);
 			}
-			long_passive("EPSV", pf);
 		}
 
-	| EPSV SP ALL CRLF
+	| EPSV check_login SP NUMBER CRLF
 		{
-			if (!logged_in) {
-				syslog(LOG_NOTICE, "long passive but not logged in");
-				reply(503, "Login with USER first.");
-			} else {
+			if ($2) {
+				int pf;
+
+				switch ($4) {
+				case 1:
+					pf = PF_INET;
+					break;
+				case 2:
+					pf = PF_INET6;
+					break;
+				default:
+					pf = -1;	/*junk*/
+					break;
+				}
+				long_passive("EPSV", pf);
+			}
+		}
+
+	| EPSV check_login SP ALL CRLF
+		{
+			if ($2) {
 				reply(200, "EPSV ALL command successful.");
 				epsvall++;
 			}
 		}
 
-	| EPSV CRLF
+	| EPSV check_login CRLF
 		{
-			long_passive("EPSV", PF_UNSPEC);
+			if ($2)
+				long_passive("EPSV", PF_UNSPEC);
 		}
 
-	| TYPE SP type_code CRLF
+	| TYPE check_login SP type_code CRLF
 		{
+			if ($2) {
+
 			switch (cmd_type) {
 
 			case TYPE_A:
@@ -532,31 +552,37 @@ cmd
 				UNIMPLEMENTED for NBBY != 8
 #endif /* NBBY == 8 */
 			}
-		}
-
-	| STRU SP struct_code CRLF
-		{
-			switch ($3) {
-
-			case STRU_F:
-				reply(200, "STRU F ok.");
-				break;
-
-			default:
-				reply(504, "Unimplemented STRU type.");
+			
 			}
 		}
 
-	| MODE SP mode_code CRLF
+	| STRU check_login SP struct_code CRLF
 		{
-			switch ($3) {
+			if ($2) {
+				switch ($4) {
 
-			case MODE_S:
-				reply(200, "MODE S ok.");
-				break;
+				case STRU_F:
+					reply(200, "STRU F ok.");
+					break;
 
-			default:
-				reply(502, "Unimplemented MODE type.");
+				default:
+					reply(504, "Unimplemented STRU type.");
+				}
+			}
+		}
+
+	| MODE check_login SP mode_code CRLF
+		{
+			if ($2) {
+				switch ($4) {
+
+				case MODE_S:
+					reply(200, "MODE S ok.");
+					break;
+
+				default:
+					reply(502, "Unimplemented MODE type.");
+				}
 			}
 		}
 
@@ -592,31 +618,36 @@ cmd
 				free($4);
 		}
 
-	| ALLO SP NUMBER CRLF
+	| ALLO check_login SP NUMBER CRLF
 		{
-			reply(202, "ALLO command ignored.");
+			if ($2)
+				reply(202, "ALLO command ignored.");
 		}
 
-	| ALLO SP NUMBER SP R SP NUMBER CRLF
+	| ALLO check_login SP NUMBER SP R SP NUMBER CRLF
 		{
-			reply(202, "ALLO command ignored.");
+			if ($2)
+				reply(202, "ALLO command ignored.");
 		}
 
-	| RNTO SP pathname CRLF
+	| RNTO check_login SP pathname CRLF
 		{
-			if (fromname) {
-				renamecmd(fromname, $3);
-				free(fromname);
-				fromname = NULL;
-			} else {
-				reply(503, "Bad sequence of commands.");
+			if ($2) {
+				if (fromname) {
+					renamecmd(fromname, $4);
+					free(fromname);
+					fromname = NULL;
+				} else {
+					reply(503, "Bad sequence of commands.");
+				}
 			}
-			free($3);
+			free($4);
 		}
 
-	| ABOR CRLF
+	| ABOR check_login CRLF
 		{
-			reply(225, "ABOR command successful.");
+			if ($2)
+				reply(225, "ABOR command successful.");
 		}
 
 	| DELE check_modify SP pathname CRLF
@@ -677,10 +708,9 @@ cmd
 
 	| NLST check_login SP STRING CRLF
 		{
-			if ($2 && $4 != NULL)
+			if ($2)
 				send_file_list($4);
-			if ($4 != NULL)
-				free($4);
+			free($4);
 		}
 
 	| SITE SP HELP CRLF
@@ -706,80 +736,97 @@ cmd
 	| SITE SP HELP SP STRING CRLF
 		{
 			help(sitetab, $5);
+			free($5);
 		}
 
-	| SITE SP IDLE CRLF
+	| SITE SP IDLE check_login CRLF
 		{
-			reply(200,
-			    "Current IDLE time limit is %d seconds; max %d",
-				curclass.timeout, curclass.maxtimeout);
-		}
-
-	| SITE SP IDLE SP NUMBER CRLF
-		{
-			if ($5 < 30 || $5 > curclass.maxtimeout) {
-				reply(501,
-			"IDLE time limit must be between 30 and %d seconds",
-				    curclass.maxtimeout);
-			} else {
-				curclass.timeout = $5;
-				(void) alarm(curclass.timeout);
+			if ($4) {
 				reply(200,
-				    "IDLE time limit set to %d seconds",
-				    curclass.timeout);
+			    "Current IDLE time limit is %d seconds; max %d",
+				    curclass.timeout, curclass.maxtimeout);
 			}
 		}
 
-	| SITE SP RATEGET CRLF
+	| SITE SP IDLE check_login SP NUMBER CRLF
 		{
-			reply(200, "Current RATEGET is %d bytes/sec",
-			    curclass.rateget);
+			if ($4) {
+				if ($6 < 30 || $6 > curclass.maxtimeout) {
+					reply(501,
+			    "IDLE time limit must be between 30 and %d seconds",
+					    curclass.maxtimeout);
+				} else {
+					curclass.timeout = $6;
+					(void) alarm(curclass.timeout);
+					reply(200,
+					    "IDLE time limit set to %d seconds",
+					    curclass.timeout);
+				}
+			}
 		}
 
-	| SITE SP RATEGET SP STRING CRLF
+	| SITE SP RATEGET check_login CRLF
 		{
-			char *p = $5;
-			int rate;
-
-			rate = strsuftoi(p);
-			if (rate == -1)
-				reply(501, "Invalid RATEGET %s", p);
-			else if (curclass.maxrateget &&
-			    rate > curclass.maxrateget)
-				reply(501,
-			    "RATEGET %d is larger than maximum RATEGET %d",
-				    rate, curclass.maxrateget);
-			else {
-				curclass.rateget = rate;
-				reply(200, "RATEGET set to %d bytes/sec",
+			if ($4) {
+				reply(200, "Current RATEGET is %d bytes/sec",
 				    curclass.rateget);
 			}
 		}
 
-	| SITE SP RATEPUT CRLF
+	| SITE SP RATEGET check_login SP STRING CRLF
 		{
-			reply(200, "Current RATEPUT is %d bytes/sec",
-			    curclass.rateput);
-		}
-
-	| SITE SP RATEPUT SP STRING CRLF
-		{
-			char *p = $5;
+			char *p = $6;
 			int rate;
 
-			rate = strsuftoi(p);
-			if (rate == -1)
-				reply(501, "Invalid RATEPUT %s", p);
-			else if (curclass.maxrateput &&
-			    rate > curclass.maxrateput)
-				reply(501,
-			    "RATEPUT %d is larger than maximum RATEPUT %d",
-				    rate, curclass.maxrateput);
-			else {
-				curclass.rateput = rate;
-				reply(200, "RATEPUT set to %d bytes/sec",
+			if ($4) {
+				rate = strsuftoi(p);
+				if (rate == -1)
+					reply(501, "Invalid RATEGET %s", p);
+				else if (curclass.maxrateget &&
+				    rate > curclass.maxrateget)
+					reply(501,
+				"RATEGET %d is larger than maximum RATEGET %d",
+					    rate, curclass.maxrateget);
+				else {
+					curclass.rateget = rate;
+					reply(200,
+					    "RATEGET set to %d bytes/sec",
+					    curclass.rateget);
+				}
+			}
+			free($6);
+		}
+
+	| SITE SP RATEPUT check_login CRLF
+		{
+			if ($4) {
+				reply(200, "Current RATEPUT is %d bytes/sec",
 				    curclass.rateput);
 			}
+		}
+
+	| SITE SP RATEPUT check_login SP STRING CRLF
+		{
+			char *p = $6;
+			int rate;
+
+			if ($4) {
+				rate = strsuftoi(p);
+				if (rate == -1)
+					reply(501, "Invalid RATEPUT %s", p);
+				else if (curclass.maxrateput &&
+				    rate > curclass.maxrateput)
+					reply(501,
+				"RATEPUT %d is larger than maximum RATEPUT %d",
+					    rate, curclass.maxrateput);
+				else {
+					curclass.rateput = rate;
+					reply(200,
+					    "RATEPUT set to %d bytes/sec",
+					    curclass.rateput);
+				}
+			}
+			free($6);
 		}
 
 	| SITE SP UMASK check_login CRLF
@@ -846,6 +893,7 @@ cmd
 					help(sitetab, NULL);
 			} else
 				help(cmdtab, $3);
+			free($3);
 		}
 
 	| NOOP CRLF
@@ -857,18 +905,21 @@ cmd
 	| AUTH SP mechanism_name CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 	| ADAT SP base64data CRLF
 		{
 			reply(503,
 			    "Please set authentication state with AUTH.");
+			free($3);
 		}
 
 	| PROT SP prot_code CRLF
 		{
 			reply(503,
 			    "Please set protection buffer size with PBSZ.");
+			free($3);
 		}
 
 	| PBSZ SP decimal_integer CRLF
@@ -885,16 +936,19 @@ cmd
 	| MIC SP base64data CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 	| CONF SP base64data CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 	| ENC SP base64data CRLF
 		{
 			reply(502, "RFC 2228 authentication not implemented.");
+			free($3);
 		}
 
 						/* RFC 2389 */
@@ -911,6 +965,7 @@ cmd
 		{
 			
 			opts($3);
+			free($3);
 		}
 
 
@@ -969,23 +1024,25 @@ cmd
 	;
 
 rcmd
-	: REST SP byte_size CRLF
+	: REST check_login SP byte_size CRLF
 		{
-			fromname = NULL;
-			restart_point = $3;	/* XXX $3 is only "int" */
-			reply(350, "Restarting at %qd. %s",
-			    (qdfmt_t)restart_point,
+			if ($2) {
+				fromname = NULL;
+				restart_point = $4; /* XXX $3 is only "int" */
+				reply(350, "Restarting at %qd. %s",
+				    (qdfmt_t)restart_point,
 			    "Send STORE or RETRIEVE to initiate transfer.");
+			}
 		}
+
 	| RNFR check_modify SP pathname CRLF
 		{
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
 				fromname = renamefrom($4);
-				if (fromname == NULL && $4) {
-					free($4);
-				}
 			}
+			if ($4)
+				free($4);
 		}
 	;
 
@@ -1563,11 +1620,12 @@ yylex()
 			dologout(0);
 		}
 		(void) alarm(0);
-#ifdef HASSETPROCTITLE
-		if (strncasecmp(cbuf, "PASS", 4) != 0)
-			setproctitle("%s: %s", proctitle, cbuf);
-#endif /* HASSETPROCTITLE */
 		if ((cp = strchr(cbuf, '\r'))) {
+			*cp = '\0';
+#ifdef HASSETPROCTITLE
+			if (strncasecmp(cbuf, "PASS", 4) != 0)
+				setproctitle("%s: %s", proctitle, cbuf);
+#endif /* HASSETPROCTITLE */
 			*cp++ = '\n';
 			*cp = '\0';
 		}
