@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/09/02 23:00:30 wiz Exp $
+#	$NetBSD: Makefile,v 1.11 2002/04/24 08:18:47 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,6 @@ INFOFLAGS=	-I${DIST}/texinfo/doc
 
 .PATH: ${DIST}/texinfo ${DIST}/texinfo/doc ${DIST}/texinfo/po
 
-.include <bsd.man.mk>
 .include <bsd.info.mk>
-.include <bsd.files.mk>
+.include <bsd.prog.mk>
 .include <bsd.subdir.mk>

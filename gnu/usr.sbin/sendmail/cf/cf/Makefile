@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2002/02/09 09:21:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2002/04/24 08:18:48 lukem Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -122,4 +122,3 @@ M4FILES=	${CFDIR}/domain/Berkeley.EDU.m4 \
 ${ALL}: ${M4FILES}
 
 .include <bsd.prog.mk>
-.include <bsd.files.mk>
