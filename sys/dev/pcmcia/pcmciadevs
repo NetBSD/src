@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.155 2001/12/29 08:31:01 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -310,6 +310,7 @@ product SMC EZCARD		0x8022 SMC EZCard 10 PCMCIA
 
 /* Socket Communications Products */
 product SOCKET EA_ETHER		0x0000 Socket Communications EA
+product SOCKET LP_WLAN_CF	0x0001 Socket Communications Low Power WLAN Card
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product SOCKET LP_ETHER		0x000d Socket Communications LP-E
