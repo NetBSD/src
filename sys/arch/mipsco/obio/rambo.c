@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.c,v 1.2 2000/08/15 04:56:47 wdk Exp $	*/
+/*	$NetBSD: rambo.c,v 1.3 2000/09/06 07:52:47 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ rambo_attach(parent, self, aux)
 	/* Setup RAMBO Timer to generate timer interrupts */
 	sc->sc_hzticks = HZ_TO_TICKS(hz);
 
-	sc->sc_tclast = sc->sc_hzticks;
+	sc->sc_tclast = 0;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, RB_TCOUNT, 0);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, RB_TBREAK, sc->sc_hzticks);
 
@@ -120,36 +120,49 @@ void
 rambo_clkintr(cf)
 	struct clockframe *cf;
 {
-	register u_int32_t tbreak, tclast;
-	register int cycles = 0;
-	
+	register u_int32_t tbreak, tcount;
+	register int delta;
+
 	rambo->sc_intrcnt.ev_count++;
 	tbreak = bus_space_read_4(rambo->sc_bst, rambo->sc_bsh, RB_TBREAK);
-	/* This will also clear the interrupt */
-	while ((tclast=bus_space_read_4(rambo->sc_bst, rambo->sc_bsh,
-					RB_TCOUNT)) >= tbreak) { 
+	tcount = bus_space_read_4(rambo->sc_bst, rambo->sc_bsh,	RB_TCOUNT);
+	delta  = tcount - tbreak;
+
+	if (delta > (rambo->sc_hzticks>>1)) {
+		/*
+		 * Either tcount may overtake the updated tbreak value
+		 * or we have missed several interrupt's
+		 */
+		int cycles = 10 * hz;
+		while (cycles && tbreak < tcount) {
+			hardclock(cf);
+			rambo->sc_tclast = tbreak;
+			tbreak += rambo->sc_hzticks;
+			cycles--;
+		}
+		if (cycles == 0) { /* catchup failed - assume we are in sync */
+			tcount = bus_space_read_4(rambo->sc_bst,
+						  rambo->sc_bsh, RB_TCOUNT);
+			rambo->sc_tclast = tbreak = tcount;
+		}
+	} else {
 		hardclock(cf);
-		tbreak += rambo->sc_hzticks;
-		cycles++;
+		rambo->sc_tclast = tbreak;
 	}
 
+	tbreak += rambo->sc_hzticks;
+
 	bus_space_write_4(rambo->sc_bst, rambo->sc_bsh, RB_TBREAK, tbreak);
-	rambo->sc_tclast = tclast;
 }    
 
 /*
  * Calculate the number of microseconds since the last clock tick
  */
-unsigned
+static unsigned
 rambo_clkread()
 {
         register u_int32_t tcount;
-	register u_int32_t tusec;
 	
-	int s = splclock();
 	tcount = bus_space_read_4(rambo->sc_bst, rambo->sc_bsh, RB_TCOUNT);
-	tusec  = TICKS_TO_USECS(tcount-rambo->sc_tclast, hz);
-	splx(s);
-
-	return tusec;
+	return TICKS_TO_USECS(tcount - rambo->sc_tclast);
 }

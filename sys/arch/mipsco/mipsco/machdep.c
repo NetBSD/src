@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2000/08/29 12:12:59 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2000/09/06 07:52:47 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2000/08/29 12:12:59 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2000/09/06 07:52:47 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -570,13 +570,12 @@ microtime(tvp)
 {
 	static struct timeval lasttime;
 	int s = splclock();
-	long rambo_getutime();
 
 	*tvp = time;
 
 	tvp->tv_usec += (*platform.clkread)();
 
-	if (tvp->tv_usec >= 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}
