@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 1999/03/28 06:00:18 simonb Exp $
+#	$NetBSD: genassym.cf,v 1.15 1999/04/19 21:22:58 kleink Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -35,6 +35,8 @@
 #	@(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
 
+include "opt_compat_svr4.h"
+
 include <sys/param.h>
 include <sys/buf.h>
 include <sys/map.h>
@@ -46,6 +48,11 @@ include <sys/user.h>
 
 include <vm/vm.h>
 include <uvm/uvm_extern.h>
+
+ifdef COMPAT_SVR4
+include <compat/svr4/svr4_syscall.h>
+include <compat/svr4/svr4_ucontext.h>
+endif
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
@@ -229,3 +236,12 @@ define	ENAMETOOLONG		ENAMETOOLONG
 define	CLKSR			CLKSR
 define	CLKMSB1			CLKMSB1
 define	CLKMSB3			CLKMSB3
+
+# SVR4 binary compatibility
+ifdef COMPAT_SVR4
+define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
+define	SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
+define	SVR4_SYS_context	SVR4_SYS_context
+define	SVR4_SYS_exit		SVR4_SYS_exit
+define	SVR4_SETCONTEXT		SVR4_SETCONTEXT
+endif

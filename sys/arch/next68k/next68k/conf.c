@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1999/03/26 04:43:00 dbj Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1999/04/19 21:23:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
  * Derived a long time ago from
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 41: frame buffers, etc. */
 	cdev_mouse_init(NWSKBD, wskbd), /* 42: keyboards */
 	cdev_mouse_init(NWSMOUSE, wsmouse),       /* 43: mice */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1998/11/21 23:41:13 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 1999/04/19 21:22:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,6 +315,7 @@ struct cdevsw	cdevsw[] =
 #endif /* __I4B_IS_INTEGRATED */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 49: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 50: RAIDframe disk driver */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 51: svr4 net pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

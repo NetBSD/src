@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.18 1998/10/01 00:29:53 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.19 1999/04/19 21:23:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -60,14 +60,20 @@
  * the gcc asm() statement (inline assembly).
  */
 
+#include "opt_compat_svr4.h"
+
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/syscall.h>
 
 #include <vm/vm.h>
+
+#ifdef COMPAT_SVR4
+#include <compat/svr4/svr4_syscalls.h>
+#include <compat/svr4/svr4_ucontext.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/pcb.h>
@@ -193,6 +199,15 @@ struct nv assyms[] = {
 	/* FP frame offsets */
 	def("FPF_REGS", offsetof(struct fpframe, fpf_regs[0])),
 	def("FPF_FPCR", offsetof(struct fpframe, fpf_fpcr)),
+
+	/* SVR4 binary compatibility */
+#ifdef COMPAT_SVR4
+	def("SVR4_SIGF_HANDLER", offsetof(struct svr4_sigframe, sf_handler)),
+	def("SVR4_SIGF_UC", offsetof(struct svr4_sigframe, sf_uc)),
+	def1(SVR4_SYS_context),
+	def1(SVR4_SYS_exit),
+	def1(SVR4_SETCONTEXT),
+#endif
 };
 int nassyms = sizeof(assyms)/sizeof(assyms[0]);
 

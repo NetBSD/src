@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107 1999/03/26 21:18:50 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.108 1999/04/19 21:22:56 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 
 #include "opt_bb060stupidrom.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_svr4.h"
 
 #include "assym.h"
 #include <machine/asm.h>
