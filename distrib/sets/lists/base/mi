@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.400 2003/04/14 05:21:49 salo Exp $
+# $NetBSD: mi,v 1.401 2003/04/15 19:46:39 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -328,6 +328,7 @@
 ./usr/bin/passwd	base-util-bin
 ./usr/bin/paste		base-util-bin
 ./usr/bin/patch		base-util-bin
+./usr/bin/pathchk	base-util-bin
 ./usr/bin/pawd		base-amd-bin
 ./usr/bin/pmap		base-util-bin
 ./usr/bin/pgrep		base-util-bin
