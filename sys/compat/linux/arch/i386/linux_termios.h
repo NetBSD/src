@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.5 2001/08/26 17:26:31 manu Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.6 2004/11/13 07:20:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #define LINUX_TIOCGETD		_LINUX_IO('T', 36)
 #define LINUX_TCSBRKP		_LINUX_IO('T', 37)
 #define LINUX_TIOCTTYGSTRUCT	_LINUX_IO('T', 38)
+#define LINUX_TIOCGPTN		_LINUX_IO('T', 48)
 
 #define LINUX_FIONCLEX		_LINUX_IO('T', 80)
 #define LINUX_FIOCLEX		_LINUX_IO('T', 81)
