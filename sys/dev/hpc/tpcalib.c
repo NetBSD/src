@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -43,32 +43,27 @@ int	tpcalib_debug = 0;
 #endif
 
 /* mra is defined in mra.c */
-int mra_Y_AX1_BX2_C __P((int *y, int ys, int *x1, int x1s, int *x2, int x2s,
-			 int n, int scale, int *a, int *b, int *c));
+extern int mra_Y_AX1_BX2_C(int *, int, int *, int, int *, int, int, int, int *,
+    int *, int *);
 
 #define SCALE	(1024*1024)
 
 int
-tpcalib_init(sc)
-	struct tpcalib_softc *sc;
+tpcalib_init(struct tpcalib_softc *sc)
 {
 	tpcalib_reset(sc);
 	return (0);
 }
 
 void
-tpcalib_reset(sc)
-	struct tpcalib_softc *sc;
+tpcalib_reset(struct tpcalib_softc *sc)
 {
 	/* This indicate 'raw mode'. No translation will be done. */
 	sc->sc_saved.samplelen = WSMOUSE_CALIBCOORDS_RESET;
 }
 
 void
-tpcalib_trans(sc, rawx, rawy, x, y)
-	struct tpcalib_softc *sc;
-	int rawx, rawy;
-	int *x, *y;
+tpcalib_trans(struct tpcalib_softc *sc, int rawx, int rawy, int *x, int *y)
 {
 	if (sc->sc_saved.samplelen == WSMOUSE_CALIBCOORDS_RESET) {
 		/* This indicate 'raw mode'. No translation will be done. */
@@ -87,12 +82,8 @@ tpcalib_trans(sc, rawx, rawy, x, y)
 }
 
 int
-tpcalib_ioctl(sc, cmd, data, flag, p)
-	struct tpcalib_softc *sc;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct wsmouse_calibcoords *d;
 	int s = sizeof(struct wsmouse_calibcoord);
@@ -104,31 +95,31 @@ tpcalib_ioctl(sc, cmd, data, flag, p)
 		if (d->samplelen == WSMOUSE_CALIBCOORDS_RESET) {
 			tpcalib_reset(sc);
 		} else
-		if (mra_Y_AX1_BX2_C(&d->samples[0].x, s,
-				    &d->samples[0].rawx, s,
-				    &d->samples[0].rawy, s,
-				    d->samplelen, SCALE,
-				    &sc->sc_ax, &sc->sc_bx, &sc->sc_cx) ||
-		    mra_Y_AX1_BX2_C(&d->samples[0].y, s,
-				    &d->samples[0].rawx, s,
-				    &d->samples[0].rawy, s,
-				    d->samplelen, SCALE,
-				    &sc->sc_ay, &sc->sc_by, &sc->sc_cy)) {
-			printf("tpcalib: MRA error");
-			tpcalib_reset(sc);
+			if (mra_Y_AX1_BX2_C(&d->samples[0].x, s,
+			    &d->samples[0].rawx, s,
+			    &d->samples[0].rawy, s,
+			    d->samplelen, SCALE,
+			    &sc->sc_ax, &sc->sc_bx, &sc->sc_cx) ||
+			    mra_Y_AX1_BX2_C(&d->samples[0].y, s,
+				&d->samples[0].rawx, s,
+				&d->samples[0].rawy, s,
+				d->samplelen, SCALE,
+				&sc->sc_ay, &sc->sc_by, &sc->sc_cy)) {
+				printf("tpcalib: MRA error");
+				tpcalib_reset(sc);
 			
-			return (-1);
-		} else {
-			sc->sc_minx = d->minx;
-			sc->sc_maxx = d->maxx;
-			sc->sc_miny = d->miny;
-			sc->sc_maxy = d->maxy;
-			sc->sc_saved = *d;
-			DPRINTF(("tpcalib: Ax=%d Bx=%d Cx=%d\n",
-				 sc->sc_ax, sc->sc_bx, sc->sc_cx));
-			DPRINTF(("tpcalib: Ay=%d By=%d Cy=%d\n",
-				 sc->sc_ay, sc->sc_by, sc->sc_cy));
-		}
+				return (-1);
+			} else {
+				sc->sc_minx = d->minx;
+				sc->sc_maxx = d->maxx;
+				sc->sc_miny = d->miny;
+				sc->sc_maxy = d->maxy;
+				sc->sc_saved = *d;
+				DPRINTF(("tpcalib: Ax=%d Bx=%d Cx=%d\n",
+				    sc->sc_ax, sc->sc_bx, sc->sc_cx));
+				DPRINTF(("tpcalib: Ay=%d By=%d Cy=%d\n",
+				    sc->sc_ay, sc->sc_by, sc->sc_cy));
+			}
 		break;
 
 	case WSMOUSEIO_GCALIBCOORDS:
