@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.75 1995/08/12 20:31:46 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.76 1995/08/12 21:36:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -548,6 +548,7 @@ sdread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
+	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
 
 	return (physio(sdstrategy, NULL, dev, B_READ,
 		       sd->sc_link->adapter->scsi_minphys, uio));
@@ -558,6 +559,7 @@ sdwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
+	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
 
 	return (physio(sdstrategy, NULL, dev, B_WRITE,
 		       sd->sc_link->adapter->scsi_minphys, uio));
