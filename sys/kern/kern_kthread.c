@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.11.2.5 2002/07/12 01:40:16 nathanw Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11.2.6 2002/07/17 18:03:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.2.5 2002/07/12 01:40:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.11.2.6 2002/07/17 18:03:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ kthread_create1(void (*func)(void *), void *arg,
 	 * to init(8) when they exit.  init(8) can easily wait them
 	 * out for us.
 	 */
-	p2->p_flag |=  P_SYSTEM | P_NOCLDWAIT;	/* XXX */
+	p2->p_flag |= P_SYSTEM | P_NOCLDWAIT;	/* XXX */
 	LIST_FIRST(&p2->p_lwps)->l_flag |= L_INMEM;
 
 	/* Name it as specified. */
