@@ -1,5 +1,7 @@
-# $NetBSD: domains.sed,v 1.1 2003/03/02 20:10:39 jhawk Exp $
+# $NetBSD: domains.sed,v 1.2 2003/03/02 21:32:33 jhawk Exp $
 :top
+#				Strip ^Ms
+s///g			
 # 				Join all lines with unterminated HTML tags
 /<[^>]*$/{
 	N
