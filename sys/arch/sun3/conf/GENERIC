@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.18 1995/03/26 19:17:23 gwr Exp $
+#	$NetBSD: GENERIC,v 1.19 1995/04/03 22:03:38 gwr Exp $
 
 #
 # GENERIC kernel - supports root on: ie0, le0, sd*, ...
@@ -26,14 +26,18 @@ options		KTRACE				# system call tracing support
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
 # I use DDB by copying in the symbols with dbsym.
 options		DDB
-options		SYMTAB_SPACE=92000
+options		SYMTAB_SPACE=97000
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
 options 	NFSCLIENT			# nfs client support
 options 	FFS				# ufs file system
+options 	FDESC		# /dev/fd/*
+options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
+options		NULLFS		# loopback file system
 options		PROCFS		# /proc
+options		UNION		# union file system
 
 # Networking options
 options		INET				# IP prototol stack support
