@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.128 2001/06/18 20:36:15 nra Exp $
+.\"	$NetBSD: main,v 1.129 2001/06/18 20:52:34 nra Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1264,8 +1264,8 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
 .It Ta Ta
-.It Ta Steve Allen Ta Mt wormey@netbsd.org
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
+.It Ta Steve Allen Ta Mt wormey@netbsd.org
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
 .It Ta Christoph Badura Ta Mt bad@netbsd.org
@@ -1342,6 +1342,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Antti Kantee Ta Mt pooka@netbsd.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
+.It Ta Mario Kemper Ta Mt magick@netbsd.org
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Thomas Klausner Ta Mt wiz@netbsd.org
 .It Ta Klaus Klein Ta Mt kleink@netbsd.org
@@ -1426,7 +1427,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Colin Wood Ta Mt ender@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
-.It Ta Mario Kemper Ta Mt magick@netbsd.org
 .
 .El
 .
