@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.54 2000/11/30 00:19:25 eeh Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.55 2000/11/30 09:58:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -456,7 +456,8 @@ ncr53c9x_init(sc, doreset)
 			((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
 			T_NEED_TO_RESET;
 #ifdef DEBUG
-		if (ncr53c9x_notag) ti->flags |= T_TAGOFF;
+		if (ncr53c9x_notag)
+			ti->flags |= T_TAGOFF;
 #endif
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
@@ -1609,16 +1610,16 @@ gotit:
 				printf("%s: TAG reselect without IDENTIFY;"
 				       " MSG %x;"
 				       " sending DEVICE RESET\n",
-				       sc->sc_imess[0],
-				       sc->sc_dev.dv_xname);
+				       sc->sc_dev.dv_xname,
+				       sc->sc_imess[0]);
 				goto reset;
 			}
 		} else {
 			printf("%s: reselect without IDENTIFY;"
 			       " MSG %x;"
 			       " sending DEVICE RESET\n",
-			       sc->sc_imess[0],
-			       sc->sc_dev.dv_xname);
+			       sc->sc_dev.dv_xname,
+			       sc->sc_imess[0]);
 			goto reset;
 		}
 
@@ -1981,7 +1982,6 @@ again:
 					sc->sc_espstep,
 					sc->sc_prevphase,
 					ecb?ecb->dleft:-1);
-Debugger();
 			}
 		}
 	}
