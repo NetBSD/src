@@ -33,9 +33,9 @@ S=	../../../..
 PC532=	../..
 I=	../../../..
 
-.s.o:; (${CPP} ${COPTS} ${PC532}/pc532/$*.s >f$$$$; ${AS} ${ASFLAGS} -o $*.o f$$$$; rm f$$$$)
+.s.o:; (${CPP} ${COPTS} ${PC532}/pc532/$*.s | ${AS} ${ASFLAGS} -o $*.o)
 
-INCLUDES= -I. -I$I/sys -I$I -I$I/../include -nostdinc
+INCLUDES= -I. -I${PC532} -I$I -I$I/sys 
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL
 ASFLAGS=
 CFLAGS=	-O ${COPTS}
@@ -48,7 +48,7 @@ LIBKERN=	${KERNLIB}
 LIBKERN=	${KERNLIB_PROF}
 .endif
 
-NORMAL_S= (${CPP} ${COPTS} ${PROF} $< > f$$$$; ${AS} ${ASFLAGS} -o $*.o f$$$$; rm -f f$$$$)
+NORMAL_S= (${CPP} ${COPTS} ${PROF} $< | ${AS} ${ASFLAGS} -o $*.o)
 NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
@@ -143,6 +143,4 @@ param.o: param.c Makefile
 vers.o: newvers
 
 %RULES
-
-# DO NOT DELETE THIS LINE -- make depend uses it
 
