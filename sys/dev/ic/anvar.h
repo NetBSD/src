@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.5 2000/12/20 23:30:36 onoe Exp $	*/
+/*	$NetBSD: anvar.h,v 1.6 2001/06/21 12:49:06 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -138,6 +138,11 @@ struct an_tx_ring_data {
 	int			an_tx_cons;
 };
 
+struct an_wepkey {
+	int			an_wep_key[16];
+	int			an_wep_keylen;
+};
+
 struct an_softc	{
 	struct device		an_dev;
 	struct ethercom		arpcom;
@@ -153,20 +158,20 @@ struct an_softc	{
 	struct an_ltv_caps	an_caps;
 	struct an_ltv_ssidlist	an_ssidlist;
 	struct an_ltv_aplist	an_aplist;
-        struct an_ltv_wepkey	an_temp_keys;
-        struct an_ltv_wepkey	an_perm_keys;
+	struct an_wepkey 	an_wepkeys[IEEE80211_WEP_NKID];
+	int			an_tx_key;
+	int			an_perskeylen[IEEE80211_WEP_NKID];
+	int			an_tx_perskey;
 	int			an_tx_rate;
-	int			an_rxmode;
 	int			an_if_flags;
-	u_int8_t		an_txbuf[1536];
 	struct an_tx_ring_data	an_rdata;
-	struct an_ltv_stats	an_stats;
 	struct an_ltv_status	an_status;
 	u_int8_t		an_associated;
 	int			an_sigitems;
 	struct an_sigcache	an_sigcache[MAXANCACHE];
 	int			an_nextitem;
 	struct callout		an_stat_ch;
+	struct an_req		an_reqbuf;
 };
 
 int	an_attach		__P((struct an_softc *));
