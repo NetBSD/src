@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.70 2001/05/15 14:08:31 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.71 2001/05/15 22:58:03 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -4803,8 +4803,97 @@ distrib/notes/common/main			patch
 
 sys/conf/osrelease.sh				patch
 
-  We are not at NetBSD 1.5.1_BETA2.
+  We are now at NetBSD 1.5.1_BETA2.
 
 sys/dev/ic/ca.c					patch
 
   Allow this to build on systems which do not define __HAVE_OLD_DISKLABEL.
+
+distrib/sets/lists/comp/mi			patch
+
+  Move log.9 to the right spot.
+
+sys/compat/linux/arch/i386/linux_machdep.c	1.62
+
+  Fix a build problem where COMPAT_LINUX is defined, but wscons is
+  not present.  Fixes PR#12886.
+
+sys/arch/mips/mips/vm_machdep.c			1.75-1.76 via patch
+
+  Make sure new processes (and kernel threads) gets created in spl0
+  level.
+
+sys/dev/pci/pcidevs				1.320 via patch
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pciide.c				1.113-1.116 via patch
+sys/dev/pci/pciide_apollo_reg.h			1.9 via patch
+sys/dev/pci/pciide_amd_reg.h			1.3
+distrib/notes/i386/hardware			1.88-1.89
+share/man/man4/pciide.4				1.28-1.29
+
+  Add support for newer VIA pciide controllers.
+  Add support for the AMD 766 pciide controller.
+  Properly distinguish between HPT366 and HPT370 controllers.
+
+sys/dev/pci/pcivar.h				1.46
+sys/dev/pci/pci.c				1.52
+
+  Add a pa_bus member to pci_attach_args, so that the PCI bus number
+  can be used in pci device drivers.
+
+usr.bin/audio/Makefile.inc			1.3
+
+  Remove COPTS+=-g, we are no longer debugging.
+
+sys/dev/vme/xy.c				1.33
+
+  Fix build problem related to __HAVE_OLD_DISKLABEL.  Fixes PR#12817.
+
+lib/libutil/pty.c				1.17
+
+  Since pccons is still used on a few ports, ttyv* should be skipped
+  in pty allocation.
+
+sys/dev/ic/elinkxl.c				1.49
+
+  Wait longer after a card reset, avoids reading bad values from
+  the eeprom.
+
+sbin/dump/dump.h				1.25
+sbin/dump/main.c				1.29
+sbin/dump/tape.c				1.25
+
+  Fix bug in new ``e'' option: only eject tape if it is full, not
+  if the dump was finished.
+
+sys/arch/sparc64/sparc64/machdep.c		1.97
+
+  Implement bus_space_subregion(), makes pciide work.
+
+sys/arch/sparc64/dev/ebus.c			1.17
+
+  Fix a bug: ``sc'' is a pointer, so use it correctly.
+
+gnu/usr.bin/egcs/Makefile			1.13 via patch
+
+  Turn off all subdirectories on sparc64.
+
+distrib/notes/macppc/hardware			1.9-1.11
+distrib/notes/macppc/prep			1.12-1.14
+distrib/notes/macppc/install			1.10-1.11
+distrib/notes/common/postinstall		1.24-1.25
+distrib/notes/common/xfer			1.18
+distrib/notes/common/sysinst			1.22
+
+  Updates of installation notes for macppc.
+
+sys/arch/pmax/dev/rcons.c			1.48
+
+  In rcons_connect(), PMAX_FBTYPE_PM_COLOR should use the defaults.
+  Fixes reversed characters on the DECstation 3100.
+
+sys/arch/alpha/alpha/interrupt.c		1.60 via patch
+sys/arch/alpha/include/alpha.h			1.16 via patch
+
+  Deal with stray machine checks.
