@@ -1,5 +1,5 @@
-/*	$NetBSD: intr.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
-/*	NetBSD: intr.c,v 1.14 2004/02/20 18:04:06 yamt Exp 	*/
+/*	$NetBSD: intr.c,v 1.2 2004/04/11 00:18:29 cl Exp $	*/
+/*	NetBSD: intr.c,v 1.15 2004/04/10 14:49:55 kochi Exp 	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2004/04/11 00:18:29 cl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -74,14 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #endif
 
 struct pic softintr_pic = {
-        {0, {0}, NULL, NULL, NULL, 0, "softintr_fakepic", NULL, 0},
-        PIC_SOFT,
-        __SIMPLELOCK_UNLOCKED,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.pic_dev = {
+		.dv_xname = "softintr_fakepic",
+	},
+	.pic_type = PIC_SOFT,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
 };
 
 #if NIOAPIC > 0

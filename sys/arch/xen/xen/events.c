@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: events.c,v 1.2 2004/04/11 00:18:29 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.2 2004/04/11 00:18:29 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,15 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: events.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
 #include <machine/events.h>
 
 struct pic xenev_pic = {
-        {0, {0}, NULL, NULL, NULL, 0, "xen_fakepic", NULL, 0}, /* dev */
-        PIC_XEN,		/* type */
-        __SIMPLELOCK_UNLOCKED,	/* pic_lock */
-	NULL,			/* hwmask */
-	NULL,			/* hwunmask */
-	NULL,			/* addroute */
-	NULL,			/* delroute */
-	NULL/* xenev_stubs */,		/* level stubs */
-	NULL/* xenev_stubs */,		/* edge stubs */
+	.pic_dev = {
+		.dv_xname = "xen_fakepic",
+	},
+	.pic_type = PIC_XEN,
+	.pic_lock = __SIMPLELOCK_UNLOCKED,
 };
 
 typedef struct ev_vector {
