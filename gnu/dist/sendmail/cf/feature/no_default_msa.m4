@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: no_default_msa.m4,v 1.1.1.1 2000/05/03 09:27:32 itojun Exp $')
+VERSIONID(`Id: no_default_msa.m4,v 8.1 2000/02/01 15:56:30 ca Exp')
 divert(-1)
 
 define(`_NO_MSA_', `1')

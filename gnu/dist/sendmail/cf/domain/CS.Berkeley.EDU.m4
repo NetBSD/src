@@ -12,7 +12,7 @@ divert(-1)
 #
 #
 divert(0)
-VERSIONID(`$Id: CS.Berkeley.EDU.m4,v 1.1.1.2 2000/05/03 09:27:29 itojun Exp $')
+VERSIONID(`Id: CS.Berkeley.EDU.m4,v 8.10 1999/02/07 07:26:06 gshapiro Exp')
 DOMAIN(Berkeley.EDU)dnl
 HACK(cssubdomain)dnl
 define(`confUSERDB_SPEC',

@@ -1,4 +1,4 @@
-#	$Id: GNU,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: GNU,v 8.2 2000/01/28 18:50:33 gshapiro Exp
 define(`confCC', `gcc')
 define(`confOPTIMIZE', `-g -O2')
 define(`confDEPEND_TYPE', `CC-M')

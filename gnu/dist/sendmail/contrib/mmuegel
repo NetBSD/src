@@ -164,7 +164,7 @@ sed 's/^X//' << 'SHAR_EOF' > 'libs/date.pl' &&
 ;# Synopsis
 ;#	require "date.pl";
 ;#	$Date = &date(time);
-;#	$Date = &date(time, $format);
+;#	Date = &date(time,format);
 ;#
 ;# Description
 ;#	This package implements the output formatting functions of date(1) in
