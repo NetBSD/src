@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.77 1995/11/11 20:07:57 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.78 1995/12/07 19:11:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -450,8 +450,10 @@ cdstart(cd)
 	register struct scsi_link *sc_link = cd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
-	struct scsi_rw_big cmd;
-	int blkno, nblks;
+	struct scsi_rw_big cmd_big;
+	struct scsi_rw cmd_small;
+	struct scsi_generic *cmdp;
+	int blkno, nblks, cmdlen;
 	struct partition *p;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart "));
@@ -505,23 +507,46 @@ cdstart(cd)
 		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label.d_secsize);
 
 		/*
-		 *  Fill out the scsi command
+		 *  Fill out the scsi command.  If the transfer will
+		 *  fit in a "small" cdb, use it.
 		 */
-		bzero(&cmd, sizeof(cmd));
-		cmd.opcode = (bp->b_flags & B_READ) ? READ_BIG : WRITE_BIG;
-		cmd.addr_3 = (blkno >> 24) & 0xff;
-		cmd.addr_2 = (blkno >> 16) & 0xff;
-		cmd.addr_1 = (blkno >> 8) & 0xff;
-		cmd.addr_0 = blkno & 0xff;
-		cmd.length2 = (nblks >> 8) & 0xff;
-		cmd.length1 = nblks & 0xff;
+		if (((blkno & 0x1fffff) == blkno) &&
+		    ((nblks & 0xff) == nblks)) {
+			/*
+			 * We can fit in a small cdb.
+			 */
+			bzero(&cmd_small, sizeof(cmd_small));
+			cmd_small.opcode = (bp->b_flags & B_READ) ?
+			    READ_COMMAND : WRITE_COMMAND;
+			cmd_small.addr_2 = (blkno >> 16) & 0x1f;
+			cmd_small.addr_1 = (blkno >> 8) & 0xff;
+			cmd_small.addr_0 = blkno & 0xff;
+			cmd_small.length = nblks & 0xff;
+			cmdlen = sizeof(cmd_small);
+			cmdp = (struct scsi_generic *)&cmd_small;
+		} else {
+			/*
+			 * Need a large cdb.
+			 */
+			bzero(&cmd_big, sizeof(cmd_big));
+			cmd_big.opcode = (bp->b_flags & B_READ) ?
+			    READ_BIG : WRITE_BIG;
+			cmd_big.addr_3 = (blkno >> 24) & 0xff;
+			cmd_big.addr_2 = (blkno >> 16) & 0xff;
+			cmd_big.addr_1 = (blkno >> 8) & 0xff;
+			cmd_big.addr_0 = blkno & 0xff;
+			cmd_big.length2 = (nblks >> 8) & 0xff;
+			cmd_big.length1 = nblks & 0xff;
+			cmdlen = sizeof(cmd_big);
+			cmdp = (struct scsi_generic *)&cmd_big;
+		}
 
 		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *)&cmd,
-		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount,
+		if (scsi_scsi_cmd(sc_link, cmdp, cmdlen,
+		    (u_char *) bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT)))
 			printf("%s: not queued", cd->sc_dev.dv_xname);
