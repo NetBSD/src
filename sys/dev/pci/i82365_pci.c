@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.5 1998/11/30 19:47:17 jtk Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.6 1998/12/17 17:45:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -129,7 +129,7 @@ pcic_pci_attach(parent, self, aux)
 
 	/* Map mem space. */
 	if (bus_space_map(memt, 0xd0000, 0x4000, 0, &memh))
-		panic("pcic_isa_attach: can't map i/o space");
+		panic("pcic_pci_attach: can't map mem space");
 
 	sc->membase = 0xd0000;
 	sc->subregionmask = (1 << (0x4000 / PCIC_MEM_PAGESIZE)) - 1;
