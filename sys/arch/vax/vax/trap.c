@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.32 1997/11/04 20:52:28 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.33 1998/01/03 00:35:28 thorpej Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -179,14 +179,14 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 		if (frame->trap & T_PTEFETCH) {
 			pm = p->p_vmspace->vm_map.pmap;
 			if (frame->code < 0x40000000) {
-				addr = trunc_page((unsigned)&pm->pm_pcb->P0BR[
+				addr = trunc_page((unsigned)&pm->pm_p0br[
 				    frame->code >> PGSHIFT]);
 #ifdef DEBUG
 			} else if (frame->code < 0) {
 				panic("ptefetch in kernel");
 #endif
 			} else {
-				addr = trunc_page((unsigned)&pm->pm_pcb->P1BR[
+				addr = trunc_page((unsigned)&pm->pm_p1br[
 				    (frame->code & 0x3fffffff) >> PGSHIFT]);
 			}
 			rv = vm_fault(pte_map, addr,
