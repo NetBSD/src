@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)read.c	5.1 (Berkeley) 7/21/91";*/
-static char rcsid[] = "$Id: read.c,v 1.2 1993/08/01 18:08:03 mycroft Exp $";
+static char rcsid[] = "$Id: read.c,v 1.3 1994/03/28 02:22:33 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ static char rcsid[] = "$Id: read.c,v 1.2 1993/08/01 18:08:03 mycroft Exp $";
 void
 bytes(fp, off)
 	register FILE *fp;
-	long off;
+	off_t off;
 {
 	register int ch, len, tlen;
 	register char *ep, *p, *t;
@@ -127,7 +127,7 @@ bytes(fp, off)
 void
 lines(fp, off)
 	register FILE *fp;
-	long off;
+	off_t off;
 {
 	struct {
 		u_int blen;

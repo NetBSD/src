@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)forward.c	5.4 (Berkeley) 2/12/92";*/
-static char rcsid[] = "$Id: forward.c,v 1.2 1993/08/01 18:08:04 mycroft Exp $";
+static char rcsid[] = "$Id: forward.c,v 1.3 1994/03/28 02:22:29 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -185,7 +185,7 @@ rlines(fp, off, sbp)
 		return;
 
 	if ((p = mmap(NULL,
-	    size, PROT_READ, MAP_FILE, fileno(fp), (off_t)0)) == (caddr_t)-1)
+	    size, PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1)
 		err("%s", strerror(errno));
 
 	/* Last char is special, ignore whether newline or not. */
