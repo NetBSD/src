@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.16 1996/12/30 23:38:19 mouse Exp $	*/
+/*	$NetBSD: inetd.c,v 1.17 1997/01/02 14:25:18 mouse Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.16 1996/12/30 23:38:19 mouse Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.17 1997/01/02 14:25:18 mouse Exp $";
 #endif /* not lint */
 
 /*
@@ -171,13 +171,13 @@ static char rcsid[] = "$Id: inetd.c,v 1.16 1996/12/30 23:38:19 mouse Exp $";
 #ifdef LIBWRAP
 # include <tcpd.h>
 #ifndef LIBWRAP_ALLOW_FACILITY
-# define LIBWRAP_ALLOW_FACILITY 0 /* Don't modify our default */
+# define LIBWRAP_ALLOW_FACILITY LOG_AUTH
 #endif
 #ifndef LIBWRAP_ALLOW_SEVERITY
 # define LIBWRAP_ALLOW_SEVERITY LOG_INFO
 #endif
 #ifndef LIBWRAP_DENY_FACILITY
-# define LIBWRAP_DENY_FACILITY 0 /* Don't modify our default */
+# define LIBWRAP_DENY_FACILITY LOG_AUTH
 #endif
 #ifndef LIBWRAP_DENY_SEVERITY
 # define LIBWRAP_DENY_SEVERITY LOG_WARNING
