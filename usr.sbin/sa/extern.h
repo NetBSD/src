@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.5 2000/06/14 17:26:22 cgd Exp $ */
+/* $NetBSD: extern.h,v 1.6 2000/07/29 19:12:48 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -68,6 +68,7 @@ typedef	int (*cmpf_t) __P((const DBT *, const DBT *));
 
 /* external functions in sa.c */
 int	main		__P((int, char **));
+const char *fmt		__P((const DBT *));
 
 /* external functions in pdb.c */
 int	pacct_init	__P((void));
