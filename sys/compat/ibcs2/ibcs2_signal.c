@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.16 2002/07/04 23:32:09 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.17 2002/11/26 18:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.16 2002/07/04 23:32:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.17 2002/11/26 18:43:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,24 +102,24 @@ ibcs2_to_native_sigaction(isa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = isa->sa_handler;
-	ibcs2_to_native_sigset(&isa->sa_mask, &bsa->sa_mask);
+	bsa->sa_handler = isa->ibcs2_sa_handler;
+	ibcs2_to_native_sigset(&isa->ibcs2_sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
-	if ((isa->sa_flags & IBCS2_SA_NOCLDSTOP) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
-	if ((isa->sa_flags & IBCS2_SA_RESETHAND) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_RESETHAND) != 0)
 		bsa->sa_flags |= SA_RESETHAND;
-	if ((isa->sa_flags & IBCS2_SA_RESTART) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_RESTART) != 0)
 		bsa->sa_flags |= SA_RESTART;
-	if ((isa->sa_flags & IBCS2_SA_SIGINFO) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_SIGINFO) != 0)
 /*XXX*/		printf("ibcs2_to_native_sigaction: SA_SIGINFO ignored\n");
-	if ((isa->sa_flags & IBCS2_SA_NODEFER) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
-	if ((isa->sa_flags & IBCS2_SA_ONSTACK) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_ONSTACK) != 0)
 		bsa->sa_flags |= SA_ONSTACK;
-	if ((isa->sa_flags & IBCS2_SA_NOCLDWAIT) != 0)
+	if ((isa->ibcs2_sa_flags & IBCS2_SA_NOCLDWAIT) != 0)
 /*XXX*/		printf("ibcs2_to_native_sigaction: SA_NOCLDWAIT ignored\n");
-	if ((isa->sa_flags & ~IBCS2_SA_ALLBITS) != 0)
+	if ((isa->ibcs2_sa_flags & ~IBCS2_SA_ALLBITS) != 0)
 /*XXX*/		printf("ibcs2_to_native_sigaction: extra bits ignored\n");
 }
 
@@ -129,19 +129,19 @@ native_to_ibcs2_sigaction(bsa, isa)
 	struct ibcs2_sigaction *isa;
 {
 
-	isa->sa_handler = bsa->sa_handler;
-	native_to_ibcs2_sigset(&bsa->sa_mask, &isa->sa_mask);
-	isa->sa_flags = 0;
+	isa->ibcs2_sa_handler = bsa->sa_handler;
+	native_to_ibcs2_sigset(&bsa->sa_mask, &isa->ibcs2_sa_mask);
+	isa->ibcs2_sa_flags = 0;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
-		isa->sa_flags |= IBCS2_SA_NOCLDSTOP;
+		isa->ibcs2_sa_flags |= IBCS2_SA_NOCLDSTOP;
 	if ((bsa->sa_flags & SA_RESETHAND) != 0)
-		isa->sa_flags |= IBCS2_SA_RESETHAND;
+		isa->ibcs2_sa_flags |= IBCS2_SA_RESETHAND;
 	if ((bsa->sa_flags & SA_RESTART) != 0)
-		isa->sa_flags |= IBCS2_SA_RESTART;
+		isa->ibcs2_sa_flags |= IBCS2_SA_RESTART;
 	if ((bsa->sa_flags & SA_NODEFER) != 0)
-		isa->sa_flags |= IBCS2_SA_NODEFER;
+		isa->ibcs2_sa_flags |= IBCS2_SA_NODEFER;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
-		isa->sa_flags |= IBCS2_SA_ONSTACK;
+		isa->ibcs2_sa_flags |= IBCS2_SA_ONSTACK;
 }
 
 void

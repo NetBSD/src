@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.22 2002/07/04 23:32:13 thorpej Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.23 2002/11/26 18:43:22 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -106,10 +106,10 @@ typedef struct {
 } svr4_sigset_t;
 
 struct svr4_sigaction {
-	int		sa_flags;
-	svr4_sig_t	sa_handler;
-	svr4_sigset_t	sa_mask;
-	int 		sa_reserved[2];
+	int		svr4_sa_flags;
+	svr4_sig_t	svr4_sa_handler;
+	svr4_sigset_t	svr4_sa_mask;
+	int 		svr4_sa_reserved[2];
 };
 
 /* sa_flags */
