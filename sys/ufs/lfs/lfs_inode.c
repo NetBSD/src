@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.65 2003/02/20 04:27:24 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.66 2003/02/28 04:37:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.65 2003/02/20 04:27:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.66 2003/02/28 04:37:07 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -527,11 +527,14 @@ done:
 	lfs_update_seguse(fs, lastseg, bc);
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] != oip->i_ffs_ib[level])
+		if ((newblks[NDADDR + level] == 0) !=
+		    (oip->i_ffs_ib[level]) == 0) {
 			panic("lfs itrunc1");
+		}
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != oip->i_ffs_db[i])
+		if ((newblks[i] == 0) != (oip->i_ffs_db[i] == 0)) {
 			panic("lfs itrunc2");
+		}
 	if (length == 0 &&
 	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
 		panic("lfs itrunc3");
