@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.35 1997/06/07 19:16:23 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.36 1997/06/10 20:57:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -602,13 +602,11 @@ vmeintr_establish(vec, level, ih)
 {
 	struct intrhand *ihs;
 
-	if (!CPU_ISSUN4) {
-		panic("vmeintr_establish: not supported on cpu-type %d",
-		      cputyp);
-	}
+	if (vmeints == NULL)
+		panic("vmeintr_establish: interrupt vector not allocated");
 
 	if (vec == -1)
-		panic("vmeintr_establish: uninitialized vec\n");
+		panic("vmeintr_establish: uninitialized vec");
 
 	if (vmeints[vec] == NULL)
 		vmeints[vec] = ih;
