@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.315 2001/03/21 01:10:07 hubertf Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.316 2001/03/21 18:10:35 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.311 2001/03/21 01:09:36 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.312 2001/03/21 18:10:13 soren Exp 
  */
 
 /*
@@ -3190,31 +3190,31 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044A,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044a,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044B,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044b,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044C,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044c,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044D,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044d,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044E,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044e,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
@@ -3280,7 +3280,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "LTMODEM",
 	},
 	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045A,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045a,
 	    0,
 	    "Lucent Technologies",
 	    "LTMODEM",
