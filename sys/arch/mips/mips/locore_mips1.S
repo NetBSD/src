@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.5 1999/02/16 08:35:35 jonathan Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.6 1999/02/22 00:21:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -759,7 +759,7 @@ _C_LABEL(mips1_exceptionentry_end):
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips1_TLBModException)
+LEAF_NOPROFILE(mips1_TLBModException)
 	.set	noat
 	tlbp					# find the TLB entry
 	mfc0	k0, MIPS_COP_0_TLB_LOW		# get the physical address
@@ -802,7 +802,7 @@ END(mips1_TLBModException)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips1_TLBMissException)
+LEAF_NOPROFILE(mips1_TLBMissException)
 	.set	noat
 	mfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index

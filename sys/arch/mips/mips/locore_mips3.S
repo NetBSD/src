@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.6 1999/02/16 05:06:27 jonathan Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.7 1999/02/22 00:21:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1025,7 +1025,7 @@ END(mips3_UserIntr)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips3_TLBInvalidException)
+LEAF_NOPROFILE(mips3_TLBInvalidException)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -1119,7 +1119,7 @@ END(mips3_TLBInvalidException)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips3_TLBMissException)
+LEAF_NOPROFILE(mips3_TLBMissException)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -1935,7 +1935,7 @@ END(mips3_InvalidateDCache)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(mips3_VCED)
+LEAF_NOPROFILE(mips3_VCED)
 ALIAS(mips3_VCEI)	/* XXXX */
 	.set	noat
 	move	k0, AT
