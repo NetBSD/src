@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.247 2000/07/08 04:39:50 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.248 2000/07/09 00:45:56 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.241 2000/07/08 04:38:55 mrg Exp 
+ *	NetBSD: pcidevs,v 1.242 2000/07/09 00:45:14 mycroft Exp 
  */
 
 /*
@@ -1024,6 +1024,7 @@
 #define	PCI_PRODUCT_INTEL_82426EX	0x0486		/* 82426EX PCI-to-ISA Bridge (PCIB) */
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_IN_BUSINESS	0x1030		/* InBusiness Fast Ethernet LAN Controller */
+#define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
 #define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 LAN Controller */
