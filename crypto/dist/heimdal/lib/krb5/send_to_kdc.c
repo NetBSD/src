@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,8 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: send_to_kdc.c,v 1.5 2001/09/17 12:32:39 assar Exp $");
+__RCSID("$Heimdal: send_to_kdc.c,v 1.48 2002/03/27 09:32:50 joda Exp $"
+        "$NetBSD: send_to_kdc.c,v 1.6 2002/09/12 13:19:18 joda Exp $");
 
 /*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
@@ -238,7 +239,7 @@ init_port(const char *s, int fallback)
 static int
 send_via_proxy (krb5_context context,
 		const krb5_krbhst_info *hi,
-		const krb5_data *send,
+		const krb5_data *send_data,
 		krb5_data *receive)
 {
     char *proxy2 = strdup(context->http_proxy);
@@ -291,7 +292,7 @@ send_via_proxy (krb5_context context,
 	return 1;
     }
     ret = send_and_recv_http(s, context->kdc_timeout,
-			     prefix, send, receive);
+			     prefix, send_data, receive);
     close (s);
     free(prefix);
     if(ret == 0 && receive->length != 0)
@@ -306,7 +307,7 @@ send_via_proxy (krb5_context context,
 
 krb5_error_code
 krb5_sendto (krb5_context context,
-	     const krb5_data *send,
+	     const krb5_data *send_data,
 	     krb5_krbhst_handle handle,	     
 	     krb5_data *receive)
 {
@@ -322,7 +323,7 @@ krb5_sendto (krb5_context context,
 	     struct addrinfo *ai, *a;
 
 	     if(hi->proto == KRB5_KRBHST_HTTP && context->http_proxy) {
-		 if (send_via_proxy (context, hi, send, receive))
+		 if (send_via_proxy (context, hi, send_data, receive))
 		     continue;
 		 else
 		     goto out;
@@ -343,15 +344,15 @@ krb5_sendto (krb5_context context,
 		 switch (hi->proto) {
 		 case KRB5_KRBHST_HTTP :
 		     ret = send_and_recv_http(fd, context->kdc_timeout,
-					      "", send, receive);
+					      "", send_data, receive);
 		     break;
 		 case KRB5_KRBHST_TCP :
 		     ret = send_and_recv_tcp (fd, context->kdc_timeout,
-					      send, receive);
+					      send_data, receive);
 		     break;
 		 case KRB5_KRBHST_UDP :
 		     ret = send_and_recv_udp (fd, context->kdc_timeout,
-					      send, receive);
+					      send_data, receive);
 		     break;
 		 }
 		 close (fd);
@@ -369,7 +370,7 @@ out:
 
 krb5_error_code
 krb5_sendto_kdc2(krb5_context context,
-		 const krb5_data *send,
+		 const krb5_data *send_data,
 		 const krb5_realm *realm,
 		 krb5_data *receive,
 		 krb5_boolean master)
@@ -387,7 +388,7 @@ krb5_sendto_kdc2(krb5_context context,
     if (ret)
 	return ret;
 
-    ret = krb5_sendto(context, send, handle, receive);
+    ret = krb5_sendto(context, send_data, handle, receive);
     krb5_krbhst_free(context, handle);
     if (ret == KRB5_KDC_UNREACH)
 	krb5_set_error_string(context,
@@ -397,9 +398,9 @@ krb5_sendto_kdc2(krb5_context context,
 
 krb5_error_code
 krb5_sendto_kdc(krb5_context context,
-		const krb5_data *send,
+		const krb5_data *send_data,
 		const krb5_realm *realm,
 		krb5_data *receive)
 {
-    return krb5_sendto_kdc2(context, send, realm, receive, FALSE);
+    return krb5_sendto_kdc2(context, send_data, realm, receive, FALSE);
 }

@@ -33,7 +33,8 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: db3.c,v 1.3 2001/09/17 12:32:37 assar Exp $");
+__RCSID("$Heimdal: db3.c,v 1.8 2001/08/09 08:41:48 assar Exp $"
+        "$NetBSD: db3.c,v 1.4 2002/09/12 13:19:09 joda Exp $");
 
 #if HAVE_DB3
 

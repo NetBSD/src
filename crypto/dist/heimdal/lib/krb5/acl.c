@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,8 @@
 #include "krb5_locl.h"
 #include <fnmatch.h>
 
-RCSID("$Id: acl.c,v 1.2 2001/06/19 22:39:58 assar Exp $");
+__RCSID("$Heimdal: acl.c,v 1.3 2002/04/18 16:16:24 joda Exp $"
+        "$NetBSD: acl.c,v 1.3 2002/09/12 13:19:12 joda Exp $");
 
 struct acl_field {
     enum { acl_string, acl_fnmatch, acl_retval } type;
@@ -129,7 +130,7 @@ acl_match_acl(krb5_context context,
 
 krb5_error_code
 krb5_acl_match_string(krb5_context context,
-		      const char *acl_string,
+		      const char *string,
 		      const char *format,
 		      ...)
 {
@@ -144,7 +145,7 @@ krb5_acl_match_string(krb5_context context,
     if(ret)
 	return ret;
 
-    found = acl_match_acl(context, acl, acl_string);
+    found = acl_match_acl(context, acl, string);
     acl_free_list(acl);
     if (found) {
 	return 0;

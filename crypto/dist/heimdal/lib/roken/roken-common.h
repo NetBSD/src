@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken-common.h,v 1.4 2001/09/17 12:32:39 assar Exp $ */
+/* $Heimdal: roken-common.h,v 1.51 2002/09/09 13:41:12 joda Exp $
+   $NetBSD: roken-common.h,v 1.5 2002/09/12 13:19:21 joda Exp $ */
 
 #ifndef __ROKEN_COMMON_H__
 #define __ROKEN_COMMON_H__
@@ -191,12 +192,13 @@
 /* flags for getaddrinfo() */
 
 #ifndef AI_PASSIVE
-
 #define AI_PASSIVE	0x01
 #define AI_CANONNAME	0x02
-#define AI_NUMERICHOST	0x04
-
 #endif /* AI_PASSIVE */
+
+#ifndef AI_NUMERICHOST
+#define AI_NUMERICHOST	0x04
+#endif
 
 /* flags for getnameinfo() */
 
@@ -251,7 +253,7 @@
 
 ROKEN_CPP_START
 
-#if IRIX != 4 /* fix for compiler bug */
+#ifndef IRIX4 /* fix for compiler bug */
 #ifdef RETSIGTYPE
 typedef RETSIGTYPE (*SigAction)(int);
 #ifndef BSD4_4

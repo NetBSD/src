@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID ("$Id: rtbl.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $");
+RCSID ("$Id: rtbl.c,v 1.2 2002/09/12 13:19:21 joda Exp $");
 #endif
 #include "roken.h"
 #include "rtbl.h"
