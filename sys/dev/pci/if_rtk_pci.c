@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.7 2000/05/01 15:08:55 tsutsui Exp $ */
+/* $NetBSD: if_rtk_pci.c,v 1.1 2000/05/10 00:19:55 haya Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
