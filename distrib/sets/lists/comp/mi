@@ -102,6 +102,8 @@
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/smc90cx6reg.h
+./usr/include/dev/ic/smc91cxxreg.h
+./usr/include/dev/ic/smc91cxxvar.h
 ./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/uhareg.h
 ./usr/include/dev/ic/uhavar.h
