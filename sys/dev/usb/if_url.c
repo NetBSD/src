@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.8 2003/09/04 15:17:39 tsutsui Exp $	*/
+/*	$NetBSD: if_url.c,v 1.9 2004/04/23 17:25:25 itojun Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.8 2003/09/04 15:17:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.9 2004/04/23 17:25:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -191,7 +191,7 @@ USB_ATTACH(url)
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, s;
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", devname, devinfo);
 

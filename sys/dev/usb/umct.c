@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.12 2003/11/10 08:58:39 wiz Exp $	*/
+/*	$NetBSD: umct.c,v 1.13 2004/04/23 17:25:25 itojun Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.12 2003/11/10 08:58:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.13 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ USB_ATTACH(umct)
 	int i, found;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo);
+        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
         USB_ATTACH_SETUP;
         printf("%s: %s\n", devname, devinfo);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.11 2004/01/05 13:28:18 augustss Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.12 2004/04/23 17:25:27 itojun Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.11 2004/01/05 13:28:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.12 2004/04/23 17:25:27 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ USB_ATTACH(uvscom)
 	int i;
 	struct ucom_attach_args uca;
 
-        usbd_devinfo(dev, 0, devinfo);
+        usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
         USB_ATTACH_SETUP;
         printf("%s: %s\n", devname, devinfo);
 

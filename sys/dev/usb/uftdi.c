@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.20 2004/01/28 21:50:28 augustss Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.21 2004/04/23 17:25:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.20 2004/01/28 21:50:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.21 2004/04/23 17:25:25 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ USB_ATTACH(uftdi)
 		goto bad;
 	}
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", devname, devinfo);
 
