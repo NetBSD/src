@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.108 2001/03/12 05:56:15 zuntum Exp $
+.\"	$NetBSD: main,v 1.109 2001/03/12 21:06:01 zuntum Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1164,6 +1164,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Joel Lindholm Ta Mt joel@netbsd.org
 .It Ta Mike Long Ta Mt mikel@netbsd.org
 .It Ta Warner Losh Ta Mt imp@netbsd.org
+.It Ta Tomasz Luchowski Ta Mt zuntum@netbsd.org
 .It Ta Federico Lupi Ta Mt federico@netbsd.org
 .It Ta Brett Lymn Ta Mt blymn@netbsd.org
 .It Ta Paul Mackerras Ta Mt paulus@netbsd.org
@@ -1232,7 +1233,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org
-.It Ta Tomasz Luchowski Ta Mt zuntum@netbsd.org
 .
 .El
 .
