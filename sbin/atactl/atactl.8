@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.8 2001/06/05 11:22:41 wiz Exp $
+.\"	$NetBSD: atactl.8,v 1.9 2001/11/16 11:21:37 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,21 +103,21 @@ seconds.  A value of 0 will disable the Standby timer.
 .Pp
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
-.Sh BUGS
-The output from the
-.Cm identify
-command is rather ugly.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4
-.Sh AUTHOR
-The
-.Nm
-command was written by Ken Hornstein.  It was based heavily on the
-.Xr scsictl 8
-command written by Jason R. Thorpe.
 .Sh HISTORY
 The
 .Nm
 command first appeared in
 .Nx 1.4 .
+.Sh AUTHORS
+The
+.Nm
+command was written by Ken Hornstein.  It was based heavily on the
+.Xr scsictl 8
+command written by Jason R. Thorpe.
+.Sh BUGS
+The output from the
+.Cm identify
+command is rather ugly.

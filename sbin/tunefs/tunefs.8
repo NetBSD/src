@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.28 2001/11/16 10:25:51 wiz Exp $
+.\"	$NetBSD: tunefs.8,v 1.29 2001/11/16 11:21:39 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -186,6 +186,11 @@ or
 .%D August 1984
 .%O "(reprinted in the BSD System Manager's Manual, SMM:5)"
 .Re
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 This program should work on mounted and active file systems.
 Because the super-block is not kept in the buffer cache,
@@ -195,8 +200,3 @@ To change the root file system, the system must be rebooted
 after the file system is tuned.
 .Pp
 You can tune a file system, but you can't tune a fish.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.2 .

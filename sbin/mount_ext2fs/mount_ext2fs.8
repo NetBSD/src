@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_ext2fs.8,v 1.9 2001/11/16 10:25:46 wiz Exp $
+.\"	$NetBSD: mount_ext2fs.8,v 1.10 2001/11/16 11:21:38 wiz Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,11 +65,6 @@ See the
 .Xr mount 8
 man page for possible options and their meanings.
 .El
-.Sh BUGS
-Some EXT2FS-specific options, features or file flags are not supported.
-.Pp
-Because of EXT2FS limitations, an EXT2FS file system can't be used with
-any UID or GID greater than 65535.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
@@ -81,3 +76,8 @@ The
 .Nm
 utility first appeared in
 .Fx 2.2 .
+.Sh BUGS
+Some EXT2FS-specific options, features or file flags are not supported.
+.Pp
+Because of EXT2FS limitations, an EXT2FS file system can't be used with
+any UID or GID greater than 65535.
