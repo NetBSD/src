@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.143 2002/10/23 09:14:25 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.144 2002/11/26 18:44:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.143 2002/10/23 09:14:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.144 2002/11/26 18:44:35 christos Exp $");
 
 #include "opt_uconsole.h"
 
@@ -1077,7 +1077,7 @@ filt_ttyrdetach(struct knote *kn)
 
 	tp = kn->kn_hook;
 	s = spltty();
-	SLIST_REMOVE(&tp->t_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&tp->t_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1099,7 +1099,7 @@ filt_ttywdetach(struct knote *kn)
 
 	tp = kn->kn_hook;
 	s = spltty();
-	SLIST_REMOVE(&tp->t_wsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&tp->t_wsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1132,11 +1132,11 @@ ttykqfilter(dev_t dev, struct knote *kn)
 	tp = (*cdev->d_tty)(dev);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &tp->t_rsel.si_klist;
+		klist = &tp->t_rsel.sel_klist;
 		kn->kn_fop = &ttyread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &tp->t_wsel.si_klist;
+		klist = &tp->t_wsel.sel_klist;
 		kn->kn_fop = &ttywrite_filtops;
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.65 2002/11/24 11:37:57 scw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.66 2002/11/26 18:44:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.65 2002/11/24 11:37:57 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.66 2002/11/26 18:44:34 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -934,14 +934,14 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	pid_t		mypid;
 
 	mypid = selector->p_pid;
-	if (sip->si_pid == mypid)
+	if (sip->sel_pid == mypid)
 		return;
-	if (sip->si_pid && (p = pfind(sip->si_pid)) &&
+	if (sip->sel_pid && (p = pfind(sip->sel_pid)) &&
 	    p->p_wchan == (caddr_t)&selwait)
-		sip->si_flags |= SI_COLL;
+		sip->sel_flags |= SI_COLL;
 	else {
-		sip->si_flags &= ~SI_COLL;
-		sip->si_pid = mypid;
+		sip->sel_flags &= ~SI_COLL;
+		sip->sel_pid = mypid;
 	}
 }
 
@@ -955,15 +955,15 @@ selwakeup(sip)
 	struct proc *p;
 	int s;
 
-	if (sip->si_pid == 0)
+	if (sip->sel_pid == 0)
 		return;
-	if (sip->si_flags & SI_COLL) {
+	if (sip->sel_flags & SI_COLL) {
 		nselcoll++;
-		sip->si_flags &= ~SI_COLL;
+		sip->sel_flags &= ~SI_COLL;
 		wakeup((caddr_t)&selwait);
 	}
-	p = pfind(sip->si_pid);
-	sip->si_pid = 0;
+	p = pfind(sip->sel_pid);
+	sip->sel_pid = 0;
 	if (p != NULL) {
 		SCHED_LOCK(s);
 		if (p->p_wchan == (caddr_t)&selwait) {
