@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.25.4.1 2001/11/12 23:37:20 he Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.25.4.2 2002/02/09 20:44:13 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,7 +122,7 @@ cache_lookup(dvp, vpp, cnp)
 		return (-1);
 	}
 	ncpp = &nchashtbl[(cnp->cn_hash ^ dvp->v_id) & nchash];
-	for (ncp = ncpp->lh_first; ncp != 0; ncp = ncp->nc_hash.le_next) {
+	LIST_FOREACH(ncp, ncpp, nc_hash) {
 		if (ncp->nc_dvp == dvp &&
 		    ncp->nc_dvpid == dvp->v_id &&
 		    ncp->nc_nlen == cnp->cn_namelen &&
@@ -272,7 +272,7 @@ cache_revlookup (vp, dvpp, bpp, bufp)
 
 	nvcpp = &ncvhashtbl[(vp->v_id & ncvhash)];
 
-	for (ncp = nvcpp->lh_first; ncp != 0; ncp = ncp->nc_vhash.le_next) {
+	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
 		if ((ncp->nc_vp == vp) &&
 		    (ncp->nc_vpid == vp->v_id) &&
 		    ((dvp = ncp->nc_dvp) != 0) &&
@@ -339,9 +339,9 @@ cache_enter(dvp, vp, cnp)
 	 */
 	if (numcache < numvnodes) {
 		ncp = pool_get(&namecache_pool, PR_WAITOK);
-		memset((char *)ncp, 0, sizeof(*ncp));
+		memset(ncp, 0, sizeof(*ncp));
 		numcache++;
-	} else if ((ncp = nclruhead.tqh_first) != NULL) {
+	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 		if (ncp->nc_hash.le_prev != 0) {
 			LIST_REMOVE(ncp, nc_hash);
@@ -423,7 +423,7 @@ cache_purge(vp)
 	if (nextvnodeid != 0)
 		return;
 	for (ncpp = &nchashtbl[nchash]; ncpp >= nchashtbl; ncpp--) {
-		for (ncp = ncpp->lh_first; ncp != 0; ncp = ncp->nc_hash.le_next) {
+		LIST_FOREACH(ncp, ncpp, nc_hash) {
 			ncp->nc_vpid = 0;
 			ncp->nc_dvpid = 0;
 		}
@@ -433,11 +433,7 @@ cache_purge(vp)
 
 /*
  * Cache flush, a whole filesystem; called when filesys is umounted to
- * remove entries that would now be invalid
- *
- * The line "nxtcp = nclruhead.tqh_first" near the end is to avoid potential
- * problems if the cache lru chain is modified while we are dumping the inode.
- * This makes the algorithm O(n^2), but do you think I care?
+ * remove entries that would now be invalid.
  */
 void
 cache_purgevfs(mp)
@@ -445,9 +441,9 @@ cache_purgevfs(mp)
 {
 	struct namecache *ncp, *nxtcp;
 
-	for (ncp = nclruhead.tqh_first; ncp != 0; ncp = nxtcp) {
+	for (ncp = TAILQ_FIRST(&nclruhead); ncp != NULL; ncp = nxtcp) {
+		nxtcp = TAILQ_NEXT(ncp, nc_lru);
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
-			nxtcp = ncp->nc_lru.tqe_next;
 			continue;
 		}
 		/* free the resources we had */
@@ -462,8 +458,6 @@ cache_purgevfs(mp)
 			LIST_REMOVE(ncp, nc_vhash);
 			ncp->nc_vhash.le_prev = 0;
 		}
-		/* cause rescan of list, it may have altered */
-		nxtcp = nclruhead.tqh_first;
 		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
 	}
 }
