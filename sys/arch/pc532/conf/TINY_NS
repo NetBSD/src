@@ -9,6 +9,7 @@ ident		TINY_NS
 timezone	8 dst
 maxusers	8
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		"COMPAT_43"
 options		"RAMD_SIZE=1536000"
 #options		"RAMD_ADR=0x400000"

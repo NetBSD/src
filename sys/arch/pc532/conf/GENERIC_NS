@@ -1,7 +1,7 @@
 #
 # GENERIC_NS -- Generic 532 machine -- distribution
 #
-#	$Id: GENERIC_NS,v 1.3 1993/12/03 00:18:30 phil Exp $
+#	$Id: GENERIC_NS,v 1.4 1994/03/09 21:23:00 ws Exp $
 #
 machine		"pc532"
 cpu		"ns532"
@@ -9,6 +9,7 @@ ident		GENERIC_NS
 timezone	8 dst
 maxusers	20
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		INET,NFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

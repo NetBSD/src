@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.10 1994/02/06 11:28:37 mycroft Exp $
+ *	$Id: nfs_subs.c,v 1.11 1994/03/09 21:24:36 ws Exp $
  */
 
 /*
@@ -55,9 +55,6 @@
 #ifdef NFSCLIENT
 #include <sys/buf.h>
 #endif
-
-#include <ufs/quota.h>
-#include <ufs/inode.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>

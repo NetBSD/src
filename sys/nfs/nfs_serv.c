@@ -63,10 +63,10 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
+#include <sys/dir.h>
 
 #include <ufs/quota.h>
-#include <ufs/inode.h>
-#include <ufs/dir.h>
+#include <ufs/inode.h>		/* for IFTOVT */
 
 #include <nfs/nfsv2.h>
 #include <nfs/nfs.h>
@@ -1211,7 +1211,7 @@ out:
  *	reads nothing
  * - as such one readdir rpc will return eof false although you are there
  *	and then the next will return eof
- * - it trims out records with d_ino == 0
+ * - it trims out records with d_fileno == 0
  *	this doesn't matter for Unix clients, but they might confuse clients
  *	for other os'.
  * NB: It is tempting to set eof to true if the VOP_READDIR() reads less
@@ -1237,7 +1237,7 @@ nfsrv_readdir(mrep, md, dpos, cred, xid, mrq, repstat, p)
 {
 	register char *bp, *be;
 	register struct mbuf *mp;
-	register struct direct *dp;
+	register struct dirent *dp;
 	register caddr_t cp;
 	register u_long *tl;
 	register long t1;
@@ -1324,8 +1324,8 @@ again:
 	cpos = rbuf;
 	cend = rbuf + siz;
 	while (cpos < cend) {
-		dp = (struct direct *)cpos;
-		if (cpos < rbuf || dp->d_ino == 0) {
+		dp = (struct dirent *)cpos;
+		if (cpos < rbuf || dp->d_fileno == 0) {
 			cpos += dp->d_reclen;
 			cookie++;
 		} else
@@ -1344,7 +1344,7 @@ again:
 
 	/* Loop through the records and build reply */
 	while (cpos < cend) {
-		if (dp->d_ino != 0) {
+		if (dp->d_fileno != 0) {
 			nlen = dp->d_namlen;
 			rem = nfsm_rndup(nlen)-nlen;
 	
@@ -1359,12 +1359,12 @@ again:
 				break;
 			}
 	
-			/* Build the directory record xdr from the direct entry */
+			/* Build the directory record xdr from the dirent entry */
 			nfsm_clget;
 			*tl = nfs_true;
 			bp += NFSX_UNSIGNED;
 			nfsm_clget;
-			*tl = txdr_unsigned(dp->d_ino);
+			*tl = txdr_unsigned(dp->d_fileno);
 			bp += NFSX_UNSIGNED;
 			nfsm_clget;
 			*tl = txdr_unsigned(nlen);
@@ -1395,7 +1395,7 @@ again:
 			bp += NFSX_UNSIGNED;
 		}
 		cpos += dp->d_reclen;
-		dp = (struct direct *)cpos;
+		dp = (struct dirent *)cpos;
 		cookie++;
 	}
 	nfsm_clget;

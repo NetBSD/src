@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.39 1994/02/15 06:14:45 cgd Exp $
+#	$Id: files.oldconf,v 1.40 1994/03/09 21:23:26 ws Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -80,6 +80,7 @@ kern/vfs_bio.c		standard
 kern/vfs_cache.c	standard
 kern/vfs_conf.c		standard
 kern/vfs_lookup.c	standard
+kern/vfs_lockf.c	standard
 kern/vfs_subr.c		standard
 kern/vfs_syscalls.c	standard
 kern/vfs_vnops.c	standard
@@ -208,19 +209,18 @@ nfs/nfs_subs.c		optional nfsserver or nfsclient requires inet
 nfs/nfs_syscalls.c	optional nfsserver or nfsclient requires inet
 nfs/nfs_vfsops.c	optional nfsclient requires inet
 nfs/nfs_vnops.c		optional nfsclient requires inet
-ufs/mfs_vfsops.c	optional mfs
-ufs/mfs_vnops.c		optional mfs
-ufs/ufs_alloc.c		standard
-ufs/ufs_bmap.c		standard
-ufs/ufs_disksubr.c	standard
-ufs/ufs_inode.c		standard
-ufs/ufs_lockf.c		standard
-ufs/ufs_lookup.c	standard
-ufs/ufs_quota.c		optional quota
-ufs/ufs_subr.c		standard
-ufs/ufs_tables.c	standard
-ufs/ufs_vfsops.c	standard
-ufs/ufs_vnops.c		standard
+ufs/mfs_vfsops.c	optional mfs requires ffs
+ufs/mfs_vnops.c		optional mfs requires ffs
+ufs/ufs_alloc.c		optional ffs
+ufs/ufs_bmap.c		optional ffs
+ufs/ufs_inode.c		optional ffs
+ufs/ufs_lookup.c	optional ffs
+ufs/ufs_quota.c		optional quota requires ffs
+ufs/ufs_subr.c		optional ffs
+ufs/ufs_tables.c	optional ffs
+ufs/ufs_vfsops.c	optional ffs
+ufs/ufs_vnops.c		optional ffs
+ufs/ufs_vtab.c		optional ffs or nfsserver
 vm/device_pager.c	optional devpager
 vm/kern_lock.c		standard
 vm/swap_pager.c		optional swappager

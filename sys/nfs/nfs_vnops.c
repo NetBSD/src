@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.24 1994/02/15 21:43:09 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.25 1994/03/09 21:24:40 ws Exp $
  */
 
 /*
@@ -52,12 +52,9 @@
 #include <sys/conf.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/dir.h>
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <miscfs/fifofs/fifo.h> /* XXX */
-
-#include <ufs/quota.h>
-#include <ufs/inode.h>
-#include <ufs/dir.h>
 
 #include <nfs/nfsv2.h>
 #include <nfs/nfs.h>
@@ -1305,7 +1302,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	struct ucred *cred;
 {
 	register long len;
-	register struct direct *dp;
+	register struct dirent *dp;
 	register u_long *tl;
 	register caddr_t cp;
 	register long t1;
@@ -1319,7 +1316,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	int siz;
 	int more_dirs = 1;
 	off_t off, savoff;
-	struct direct *savdp;
+	struct dirent *savdp;
 	struct nfsmount *nmp;
 	struct nfsnode *np = VTONFS(vp);
 	long tresid;
@@ -1351,14 +1348,14 @@ nfs_readdirrpc(vp, uiop, cred)
 		/* loop thru the dir entries, doctoring them to 4bsd form */
 		off = uiop->uio_offset;
 #ifdef lint
-		dp = (struct direct *)0;
+		dp = (struct dirent *)0;
 #endif /* lint */
 		while (more_dirs && siz < uiop->uio_resid) {
 			savoff = off;		/* Hold onto offset and dp */
 			savdp = dp;
 			nfsm_disecton(tl, u_long *, 2*NFSX_UNSIGNED);
-			dp = (struct direct *)tl;
-			dp->d_ino = fxdr_unsigned(u_long, *tl++);
+			dp = (struct dirent *)tl;
+			dp->d_fileno = fxdr_unsigned(u_long, *tl++);
 			len = fxdr_unsigned(int, *tl);
 			if (len <= 0 || len > NFS_MAXNAMLEN) {
 				error = EBADRPC;
@@ -1425,7 +1422,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	if (uiop->uio_resid < tresid) {
 		len = uiop->uio_resid & (NFS_DIRBLKSIZ - 1);
 		if (len > 0) {
-			dp = (struct direct *)
+			dp = (struct dirent *)
 				(uiop->uio_iov->iov_base - lastlen);
 			dp->d_reclen += len;
 			uiop->uio_iov->iov_base += len;
@@ -1839,7 +1836,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	type = nfstov_type(fp->fa_type);
 	mode = fxdr_unsigned(u_short, fp->fa_mode);
 	if (type == VNON)
-		type = IFTOVT(mode);
+		type = ntov_type[mode&0x7];
 	rdev = fxdr_unsigned(long, fp->fa_rdev);
 	fxdr_time(&fp->fa_mtime, &mtime);
 	/*

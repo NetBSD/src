@@ -118,6 +118,7 @@ file kern/vfs_bio.c
 file kern/vfs_cache.c	
 file kern/vfs_conf.c		
 file kern/vfs_lookup.c	
+file kern/vfs_lockf.c
 file kern/vfs_subr.c		
 file kern/vfs_syscalls.c	
 file kern/vfs_vnops.c	
@@ -248,17 +249,16 @@ file nfs/nfs_vfsops.c	 	nfsclient
 file nfs/nfs_vnops.c		nfsclient
 file ufs/mfs_vfsops.c	 	mfs
 file ufs/mfs_vnops.c		mfs
-file ufs/ufs_alloc.c		
-file ufs/ufs_bmap.c		
-file ufs/ufs_disksubr.c	
-file ufs/ufs_inode.c		
-file ufs/ufs_lockf.c		
-file ufs/ufs_lookup.c	
+file ufs/ufs_alloc.c		ffs
+file ufs/ufs_bmap.c		ffs
+file ufs/ufs_inode.c		ffs
+file ufs/ufs_lookup.c		ffs
 file ufs/ufs_quota.c		quota
-file ufs/ufs_subr.c		
-file ufs/ufs_tables.c	
-file ufs/ufs_vfsops.c	
-file ufs/ufs_vnops.c		
+file ufs/ufs_subr.c		ffs
+file ufs/ufs_tables.c		ffs
+file ufs/ufs_vfsops.c		ffs
+file ufs/ufs_vnops.c		ffs
+file ufs/ufs_vtab.c		ffs nfsserver
 file vm/device_pager.c	 	devpager
 file vm/kern_lock.c		
 file vm/swap_pager.c		swappager

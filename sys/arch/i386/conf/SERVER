@@ -1,7 +1,7 @@
 #
 #	SERVER -- an NFS server
 #
-#	$Id: SERVER,v 1.13 1994/01/06 12:07:53 cgd Exp $
+#	$Id: SERVER,v 1.14 1994/03/09 21:22:42 ws Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -11,6 +11,7 @@ timezone	8 dst
 maxusers	10
 maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		INET,MFS,NFSSERVER
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

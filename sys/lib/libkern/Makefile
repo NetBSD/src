@@ -1,13 +1,15 @@
-#	$Id: Makefile,v 1.5 1993/12/04 05:21:03 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/03/09 21:24:03 ws Exp $
 
 LIB=	kern
 NOPIC=
 OBJMACHINE=
+CFLAGS+=	-DKERNEL
 
 .if exists (${.CURDIR}/${MACHINE_ARCH}/Makefile.inc)
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
 .include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
 .endif
+.PATH:	${.CURDIR}/kernel
 
 LIBC=	${.CURDIR}/../../../lib/libc
 .PATH: ${LIBC}/string ${LIBC}/arch/${MACHINE_ARCH}/string
@@ -21,6 +23,9 @@ AINC+=	-I${LIBC}/arch/${MACHINE_ARCH}
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
 	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
+
+# Disk subroutines
+SRCS+=	disklib.c
 
 .PATH: ${LIBC}/arch/${MACHINE_ARCH}/quad ${LIBC}/quad
 

@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.41 1994/03/09 02:57:21 cgd Exp $
+#	$Id: ALL,v 1.42 1994/03/09 21:22:31 ws Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -53,6 +53,9 @@ options		SYSVSHM
 
 # generic SCSI system
 options		SCSI
+
+# UFS
+options		FFS
 
 # quotas in UFS
 options		QUOTA

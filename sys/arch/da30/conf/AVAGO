@@ -4,6 +4,7 @@ options		AVAGO
 #options		GENERIC
 options		DIAGNOSTIC, DEBUG
 options		INET
+options		FFS
 options		NFSCLIENT, NFSSERVER
 options 	SYSVSHM
 options 	KTRACE

@@ -1,7 +1,7 @@
 #
 # GENERICAHBBT -- Generic machine w/ahb and bt drivers -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.30 1994/03/01 03:03:56 hpeyerl Exp $
+#	$Id: GENERICAHBBT,v 1.31 1994/03/09 21:22:37 ws Exp $
 #
 
 machine		"i386"
@@ -12,6 +12,7 @@ timezone	8 dst
 maxusers	10
 maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		INET,ISOFS,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"

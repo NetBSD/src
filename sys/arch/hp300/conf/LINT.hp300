@@ -15,6 +15,7 @@ timezone	7 dst
 maxusers	8
 
 # Standard 4.4bsd options
+options		FFS
 options		QUOTA
 options		INET
 options		MFS,NFS

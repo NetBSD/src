@@ -15,6 +15,7 @@ maxusers	16
 
 # Standard options
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		QUOTA
 options		INET
 options		MFS,NFS,FIFO

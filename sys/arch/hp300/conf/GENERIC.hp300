@@ -20,6 +20,7 @@ options		NS
 # umm, no can do, on this one...
 #options		KADB
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
 options		QUOTA
 options		FIFO
 options		NFS
