@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.35 2001/11/08 02:39:16 lukem Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.36 2001/11/19 07:00:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.35 2001/11/08 02:39:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.36 2001/11/19 07:00:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -940,6 +940,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	struct direct *ep;
 	struct buf *bp;
 	int error;
+	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
 
 	dp = VTOI(dvp);
 
@@ -951,7 +952,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 				     &bp);
 		if (error)
 			return (error);
-		ep->d_ino = ufs_rw32(WINO, UFS_MPNEEDSWAP(dvp->v_mount));
+		ep->d_ino = ufs_rw32(WINO, needswap);
 		ep->d_type = DT_WHT;
 		goto out;
 	}
@@ -970,9 +971,8 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		 * Collapse new free space into previous entry.
 		 */
 		ep->d_reclen =
-		    ufs_rw16(ufs_rw16(ep->d_reclen,
-				      UFS_MPNEEDSWAP(dvp->v_mount))
-			     + dp->i_reclen, UFS_MPNEEDSWAP(dvp->v_mount));
+		    ufs_rw16(ufs_rw16(ep->d_reclen, needswap) + dp->i_reclen,
+			needswap);
 	}
 out:
 	if (DOINGSOFTDEP(dvp)) {
@@ -1051,10 +1051,11 @@ ufs_dirempty(ip, parentino, cred)
 	struct direct *dp = (struct direct *)&dbuf;
 	int error, namlen;
 	size_t count;
+	const int needswap = UFS_IPNEEDSWAP(ip);
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
 	for (off = 0; off < ip->i_ffs_size;
-	    off += ufs_rw16(dp->d_reclen, UFS_IPNEEDSWAP(ip))) {
+	    off += ufs_rw16(dp->d_reclen, needswap)) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*
@@ -1067,19 +1068,16 @@ ufs_dirempty(ip, parentino, cred)
 		if (dp->d_reclen == 0)
 			return (0);
 		/* skip empty entries */
-		if (dp->d_ino == 0 ||
-		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == WINO)
+		if (dp->d_ino == 0 || ufs_rw32(dp->d_ino, needswap) == WINO)
 			continue;
 		/* accept only "." and ".." */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0 || 
-		   UFS_IPNEEDSWAP(ip) != 0)
+		if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0 || needswap != 0)
 			namlen = dp->d_namlen;
 		else
 			namlen = dp->d_type;
 #else
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen <= 0 &&
-		    UFS_IPNEEDSWAP(ip) != 0)
+		if (ITOV(ip)->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0)
 			namlen = dp->d_type;
 		else
 			namlen = dp->d_namlen;
@@ -1094,10 +1092,10 @@ ufs_dirempty(ip, parentino, cred)
 		 * char is also "."
 		 */
 		if (namlen == 1 &&
-		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == ip->i_number)
+		    ufs_rw32(dp->d_ino, needswap) == ip->i_number)
 			continue;
 		if (dp->d_name[1] == '.' &&
-		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == parentino)
+		    ufs_rw32(dp->d_ino, needswap) == parentino)
 			continue;
 		return (0);
 	}
