@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.40 2000/05/31 05:14:32 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.41 2000/06/03 20:47:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,7 +142,8 @@ struct cpu_info {
 extern	u_long cpus_running;
 extern	struct cpu_info cpu_info[];
 
-#define	curcpu()	((struct cpu_info *)alpha_pal_rdval())
+#define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 void	cpu_boot_secondary_processors __P((void));
 #else /* ! MULTIPROCESSOR */

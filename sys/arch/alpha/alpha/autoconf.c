@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.36 1999/09/17 19:59:35 thorpej Exp $ */
+/* $NetBSD: autoconf.c,v 1.37 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 1999/09/17 19:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.37 2000/06/03 20:47:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 1999/09/17 19:59:35 thorpej Exp $"
 #include <machine/cpu.h>
 #include <machine/prom.h>
 #include <machine/conf.h>
+#include <machine/intr.h>
 
 struct device		*booted_device;
 int			booted_partition;
@@ -78,6 +79,7 @@ cpu_configure()
 {
 
 	parse_prom_bootdev();
+	softintr_init();
 
 	/*
 	 * Disable interrupts during autoconfiguration.  splhigh() won't
