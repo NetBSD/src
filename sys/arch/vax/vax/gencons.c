@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.39 2002/10/23 09:12:38 jdolecek Exp $	*/
+/*	$NetBSD: gencons.c,v 1.40 2003/07/15 02:15:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -34,6 +34,9 @@
  */
 
  /* All bugs are subject to removal without further notice */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40 2003/07/15 02:15:03 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

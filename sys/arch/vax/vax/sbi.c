@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.28 2003/01/19 22:29:24 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.29 2003/07/15 02:15:05 lukem Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,6 +32,9 @@
 /*
  * Still to do: Write all SBI error handling.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.29 2003/07/15 02:15:05 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

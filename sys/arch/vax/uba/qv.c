@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.11 2002/10/23 09:12:34 jdolecek Exp $	*/
+/*	$NetBSD: qv.c,v 1.12 2003/07/15 02:15:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -126,6 +126,8 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.12 2003/07/15 02:15:01 lukem Exp $");
 
 #include "qv.h"
 #if NQV > 0

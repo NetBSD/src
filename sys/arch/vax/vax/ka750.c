@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.34 2002/10/02 16:02:35 thorpej Exp $ */
+/*	$NetBSD: ka750.c,v 1.35 2003/07/15 02:15:04 lukem Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,9 @@
  *	@(#)ka750.c	7.4 (Berkeley) 5/9/91
  *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.35 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.18 2002/10/23 09:12:37 jdolecek Exp $ */
+/*	$NetBSD: ctu.c,v 1.19 2003/07/15 02:15:03 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,9 @@
  * multiuser, because the serial device don't have any buffers 
  * so we will loose interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.19 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
