@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.19 1997/09/26 20:22:26 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.20 1997/09/29 03:53:39 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.32 1997/07/14 03:52:33 paulus Exp ";
 #else
-__RCSID("$NetBSD: auth.c,v 1.19 1997/09/26 20:22:26 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.20 1997/09/29 03:53:39 christos Exp $");
 #endif
 #endif
 
@@ -150,9 +150,6 @@ static int  scan_authfile __P((FILE *, char *, char *, u_int32_t, char *,
 static void free_wordlist __P((struct wordlist *));
 static void auth_script __P((char *));
 static void set_allowed_addrs __P((int, struct wordlist *));
-#ifdef CBCP_SUPPORT
-static void callback_phase __P((int));
-#endif
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
