@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.13 1997/07/06 22:19:43 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.14 1997/07/19 15:35:27 kleink Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -70,7 +70,7 @@
 
 extern	int	lkmenodev __P((void));
 
-int	xxxinit __P((struct lkm_table *, int, int));
+	int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
 static	int	ipl_unload __P((void));
 static	int	ipl_load __P((void));
 static	int	ipl_remove __P((void));
