@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.29 2000/05/08 00:37:54 itojun Exp $
+#	$NetBSD: special,v 1.30 2000/05/13 08:07:02 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -67,7 +67,6 @@ named.boot	type=file mode=0644 uname=root gname=wheel optional
 named.conf	type=file mode=0644 uname=root gname=wheel optional
 namedb		type=dir mode=0755 uname=root gname=wheel
 ..	#etc/namedb
-netstart	type=file mode=0644 uname=root gname=wheel
 networks	type=file mode=0644 uname=root gname=wheel
 newsyslog.conf	type=file mode=0644 uname=root gname=wheel
 nsswitch.conf	type=file mode=0644 uname=root gname=wheel
