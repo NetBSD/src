@@ -1,4 +1,4 @@
-.\"	$NetBSD: dvbox.4,v 1.1 2001/09/11 06:30:03 gmcgarry Exp $
+.\"	$NetBSD: dvbox.4,v 1.2 2002/01/15 01:31:48 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,22 @@ mapped, the frame buffer structure is accessible.  The structure describing
 the 98730 is defined in
 .Aq Pa hpdev/grf_dvreg.h .
 .El
-.Sh EXAMPLE
+.Sh FILES
+.Bl -tag -width /dev/MAKEDEV.hpux -compact
+.It Pa /dev/grf?
+.Bx
+special file
+.It Pa /dev/crt98730
+.It Pa /dev/ocrt98730
+.Tn HP-UX
+.Em starbase
+special files
+.It Pa /dev/MAKEDEV.hpux
+script for creating
+.Tn HP-UX
+special files
+.El
+.Sh EXAMPLES
 This is a short segment of code showing how the device is opened and mapped
 into user process address space assuming that it is
 .Ql grf0 :
@@ -131,21 +146,6 @@ return -1;
 dvbox = (dvboxfb *) Addr;                  /* Control Registers   */
 frame_buffer=(u_char *)Addr+gi.gd_regsize; /* Frame buffer memory */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/MAKEDEV.hpux -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt98730
-.It Pa /dev/ocrt98730
-.Tn HP-UX
-.Em starbase
-special files
-.It Pa /dev/MAKEDEV.hpux
-script for creating
-.Tn HP-UX
-special files
-.El
 .Sh DIAGNOSTICS
 None under
 .Bx .
