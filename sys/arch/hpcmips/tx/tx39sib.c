@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.3 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.4 2000/03/03 19:54:36 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -47,8 +47,8 @@
 #include "locators.h"
 
 #ifdef TX39SIBDEBUG
-int	tx39sib_debug = 0;
-#define	DPRINTF(arg) if (tx39sib_debug) printf arg;
+int	tx39sibdebug = 0;
+#define	DPRINTF(arg) if (tx39sibdebug) printf arg;
 #else
 #define	DPRINTF(arg)
 #endif
@@ -83,7 +83,7 @@ struct tx39sib_param {
 	int sp_snd_rate; /* SNDFSDIV + 1 */
 	int sp_tel_rate; /* TELFSDIV + 1 */
 /*
- *	Fs = (SIBSCLK * 2) / ((FSDIV + 1) * 64
+ *	Fs = (SIBSCLK * 2) / ((FSDIV + 1) * 64)
  *	FSDIV + 1	sampling rate
  *	15		19.2k		(1.6% error vs. CD-XA)
  *	13		22.154k		(0.47% error vs. CD-Audio)
@@ -94,9 +94,22 @@ struct tx39sib_param {
 	int sp_sf0telmode;
 };
 
-struct tx39sib_param tx39sib_param_default = {
+struct tx39sib_param tx39sib_param_default_3912 = {
 	0,			/* SIBSCLK = 9.216MHz */
-	13,			/* audio: CD-Audio */
+#if 0 /* setting sample */
+	40,			/* audio: 7.2kHz */
+	26,			/* audio: CD-Audio(/4) 11.077kHz*/
+	6,			/* audio: 48kHz */
+#endif
+	13,			/* audio: CD-Audio(/2 = 22.050) 22.154kHz*/
+	40,			/* telecom: 7.2kHz */
+	TX39_SIBCTRL_SND16,	/* Audio 16bit mono */
+	TX39_SIBCTRL_TEL16	/* Telecom 16bit mono */
+};
+
+struct tx39sib_param tx39sib_param_default_3922 = {
+	0,			/* SIBSCLK = 9.216MHz */
+	13,			/* audio: CD-Audio(/4) 11.077kHz */
 	40,			/* telecom: 7.2kHz */
 	TX39_SIBCTRL_SND16,	/* Audio 16bit mono */
 	TX39_SIBCTRL_TEL16	/* Telecom 16bit mono */
@@ -111,7 +124,9 @@ struct tx39sib_softc {
 };
 
 __inline int	__txsibsf0_ready __P((tx_chipset_tag_t));
+#ifdef TX39SIBDEBUG
 void	tx39sib_dump __P((struct tx39sib_softc*));
+#endif
 
 struct cfattach tx39sib_ca = {
 	sizeof(struct tx39sib_softc), tx39sib_match, tx39sib_attach
@@ -139,13 +154,20 @@ tx39sib_attach(parent, self, aux)
 	sc->sc_tc = tc = ta->ta_tc;
 
 	/* set default param */
-	sc->sc_param = tx39sib_param_default;
+#ifdef TX391X
+	sc->sc_param = tx39sib_param_default_3912;
+#endif /* TX391X */
+#ifdef TX392X
+	sc->sc_param = tx39sib_param_default_3922;
+#endif /* TX392X */
+
 #define MHZ(a) ((a) / 1000000), (((a) % 1000000) / 1000)
 	printf(": %d.%03d MHz", MHZ(tx39sib_clock(self)));
 	
 	printf("\n");
 #ifdef TX39SIBDEBUG
-	tx39sib_dump(sc);
+	if (tx39sibdebug)
+		tx39sib_dump(sc);
 #endif	
 	/* enable subframe0 */
 	tx39sib_enable1(self);
@@ -153,7 +175,8 @@ tx39sib_attach(parent, self, aux)
 	tx39sib_enable2(self);
 
 #ifdef TX39SIBDEBUG
-	tx39sib_dump(sc);
+	if (tx39sibdebug)
+		tx39sib_dump(sc);
 #endif	
 
 	config_search(tx39sib_search, self, tx39sib_print);
@@ -304,12 +327,12 @@ __txsibsf0_ready(tc)
 	
 	tx_conf_write(tc, TX39_INTRSTATUS1_REG, TX39_INTRSTATUS1_SIBSF0INT);
 	for (i = 0; (!(tx_conf_read(tc, TX39_INTRSTATUS1_REG) & 
-		       TX39_INTRSTATUS1_SIBSF0INT)) && i < 100; i++)
+		       TX39_INTRSTATUS1_SIBSF0INT)) && i < 200; i++)
 		;
-	if (i == 100) {
+	if (i >= 200) {
 		printf("sf0 busy\n");
 		return 0;
-	} else 	if (i > 50) {
+	} else 	if (i > 100) {
 		printf("sf0 busy loop:%d\n", i);
 		return 0;
 	}
@@ -366,10 +389,7 @@ txsibsf0_read(tc, addr)
 	return reg;
 }
 
-/*
- * debug functions.
- */
-
+#ifdef TX39SIBDEBUG
 #define ISSETPRINT_CTRL(r, m) \
 	__is_set_print(r, TX39_SIBCTRL_##m, #m)
 #define ISSETPRINT_DMACTRL(r, m) \
@@ -417,3 +437,4 @@ tx39sib_dump(sc)
 	printf("TELDMAPTR %d\n", TX39_SIBDMACTRL_SNDDMAPTR(reg));
 
 }
+#endif /* TX39SIBDEBUG */

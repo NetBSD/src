@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sibreg.h,v 1.1 2000/01/08 21:07:03 uch Exp $ */
+/*	$NetBSD: tx39sibreg.h,v 1.2 2000/03/03 19:54:37 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -44,18 +44,23 @@
 #define	TX39_SIBDMACTRL_REG	0x090 /* R/W */
 
 /*
+ *	SIB DMA
+ */
+#define TX39_SIBDMA_SIZE	16384
+
+/*
  *	SIB Size Register
  */
 #define TX39_SIBSIZE_SND_SHIFT	18
 #define TX39_SIBSIZE_TEL_SHIFT	2
 #define TX39_SIBSIZE_MASK	0xfff
 
-#define TX39_SIBSIZE_SNDSIZE_SET(val) \
-	(((((val) >> 2) - 1) << TX39_SIBSIZE_SND_SHIFT) & \
-	(TX39_SIBSIZE_MASK << TX39_SIBSIZE_SND_SHIFT))
-#define TX39_SIBSIZE_TELSIZE_SET(val) \
-	(((((val) >> 2) - 1) << TX39_SIBSIZE_TEL_SHIFT) & \
-	(TX39_SIBSIZE_MASK << TX39_SIBSIZE_TEL_SHIFT))
+#define TX39_SIBSIZE_SNDSIZE_SET(cr, val)				\
+	((cr) | (((((val) >> 2) - 1) << TX39_SIBSIZE_SND_SHIFT) &	\
+	(TX39_SIBSIZE_MASK << TX39_SIBSIZE_SND_SHIFT)))
+#define TX39_SIBSIZE_TELSIZE_SET(cr, val)				\
+	((cr) | (((((val) >> 2) - 1) << TX39_SIBSIZE_TEL_SHIFT) &	\
+	(TX39_SIBSIZE_MASK << TX39_SIBSIZE_TEL_SHIFT)))
 
 /*
  *	SIB Sound RX Start Register
