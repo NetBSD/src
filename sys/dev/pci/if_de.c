@@ -108,6 +108,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
 #if defined(__i386__)
+#include <machine/pio.h>
 #include <i386/isa/isa_machdep.h>
 #endif
 #endif /* __NetBSD__ */
@@ -136,7 +137,11 @@ typedef struct {
 } tulip_ringinfo_t;
 
 #ifdef TULIP_IOMAPPED
+#ifndef __NetBSD__
 typedef tulip_uint16_t tulip_csrptr_t;
+#else
+typedef int tulip_csrptr_t;
+#endif
 
 #define	TULIP_EISA_CSRSIZE	16
 #define	TULIP_EISA_CSROFFSET	0
@@ -288,12 +293,12 @@ struct _tulip_softc_t {
 #if defined(__bsdi__)
     struct device tulip_dev;		/* base device */
     struct isadev tulip_id;		/* ISA device */
-    struct intrhand tulip_ih;		/* intrrupt vectoring */
+    struct intrhand tulip_ih;		/* interrupt vectoring */
     struct atshutdown tulip_ats;	/* shutdown hook */
 #endif
 #if defined(__NetBSD__)
     struct device tulip_dev;		/* base device */
-    void *tulip_ih;			/* intrrupt vectoring */
+    void *tulip_ih;			/* interrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
 #endif
     struct arpcom tulip_ac;
@@ -1767,13 +1772,13 @@ tulip_ioctl(
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET: {
-		    ((struct arpcom *)ifp)->ac_ipaddr = IA_SIN(ifa)->sin_addr;
+		    sc->tulip_ac.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 		    tulip_addr_filter(sc);	/* reset multicast filtering */
 		    tulip_init(sc);
 #if defined(__FreeBSD__) || defined(__NetBSD__)
-		    arp_ifinit((struct arpcom *)ifp, ifa);
+		    arp_ifinit(&sc->tulip_ac, ifa);
 #elif defined(__bsdi__)
-		    arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+		    arpwhohas(&sc->tulip_ac, &IA_SIN(ifa)->sin_addr);
 #endif
 		    break;
 		}
