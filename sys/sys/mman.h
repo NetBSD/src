@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.21 1999/04/27 20:13:06 cgd Exp $	*/
+/*	$NetBSD: mman.h,v 1.22 1999/06/15 23:27:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -91,6 +91,12 @@ typedef	_BSD_SIZE_T_	size_t;
 #define	MS_INVALIDATE	0x02	/* invalidate cached data */
 #define	MS_SYNC		0x04	/* perform synchronous writes */
 
+/*
+ * Flags to mlockall
+ */
+#define	MCL_CURRENT	0x01	/* lock all pages currently mapped */
+#define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
+
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /*
  * Advice to madvise
@@ -119,8 +125,11 @@ int	msync __P((void *, size_t, int))	__RENAME(__msync13);
 #endif
 int	mlock __P((const void *, size_t));
 int	munlock __P((const void *, size_t));
+int	mlockall __P((int));
+int	munlockall __P((void));
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	madvise __P((void *, size_t, int));
+int	mincore __P((void *, size_t, char *));
 int	minherit __P((void *, size_t, int));
 #endif
 __END_DECLS
