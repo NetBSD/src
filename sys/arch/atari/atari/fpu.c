@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 1997/04/24 22:37:11 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.7 2001/02/09 21:47:46 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ fpu_probe()
 	 * have if this will.  We save the state in order to get the
 	 * size of the frame.
 	 */
-	asm("movl %0, a0; fsave a0@" : : "a" (&fpframe) : "a0" );
+	asm("movl %0, %%a0; fsave %%a0@" : : "a" (&fpframe) : "a0" );
 
 	b = fpframe.fpf_fsize;
 
