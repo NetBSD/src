@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.10 2002/04/01 07:47:50 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.11 2002/04/23 03:25:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.10 2002/04/01 07:47:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.11 2002/04/23 03:25:44 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -270,7 +270,7 @@ main(void)
 
 	l->l_flag = L_INMEM;
 	l->l_stat = LSONPROC;
-
+	p->p_nrlwps = 1;
 
 	callout_init(&l->l_tsleep_ch);
 
