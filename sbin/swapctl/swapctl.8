@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.16 2000/01/13 12:11:31 ad Exp $
+.\"	$NetBSD: swapctl.8,v 1.17 2000/03/05 11:35:22 lukem Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 12, 1997
+.Dd March 5, 2000
 .Dt SWAPCTL 8
 .Os NetBSD
 .Sh NAME
@@ -36,8 +36,12 @@
 .Sh SYNOPSIS
 .Nm
 .Fl A
-.Op Fl D Ar dumpdev
 .Op Fl p Ar priority
+.Op Fl t Ar blk|noblk
+.Nm ""
+.Fl D Ar dumpdev
+.Nm ""
+.Fl U
 .Op Fl t Ar blk|noblk
 .Nm ""
 .Fl a
@@ -110,6 +114,18 @@ system call.  The dump device is used when the system crashes
 to write a current snapshot of real memory, to be saved later with
 .Xr savecore 8
 at system reboot, and analyzed to determine the problem.
+.It Fl U
+This option causes
+.Nm
+to read the
+.Pa /etc/fstab
+file for devices and files with a 
+.Dq sw
+type, and remove all these entries
+as swap devices.
+If no swap devices are unconfigured,
+.Nm
+will exit with an error code.
 .It Fl a
 The
 .Fl a
@@ -163,7 +179,9 @@ option uses 1024 byte blocks instead of the default 512 byte.
 .It Fl t
 This flag modifies the function of the
 .Fl A
-option.
+and
+.Fl U
+options.
 The
 .Fl t
 option allows the type of device to add to be specified.  An argument of
