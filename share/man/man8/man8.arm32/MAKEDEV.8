@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.17 2001/09/10 22:17:34 augustss Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.18 2001/12/11 00:54:31 chris Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -266,6 +266,14 @@ Coda file system device
 . It Ar wsmux#
 Wscons event multiplexor, see
 .Xr \&wsmux 4
+. It Ar wsfont#
+Console font control
+. It Ar pci#
+PCI bus access devices, see
+.Xr \&pci 4
+. It Ar clockctl
+Clockctl device, see
+.Xr \&clockctl 4
 . El
 .El
 .Sh FILES
