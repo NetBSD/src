@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2004/03/04 19:10:10 dbj Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2004/06/28 09:13:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -156,16 +156,21 @@ static __inline void
 spllower(int nlevel)
 {
 	struct cpu_info *ci = curcpu();
+	u_int32_t imask;
+	u_long psl;
 
 	__splbarrier();
-	/*
-	 * Since this should only lower the interrupt level,
-	 * the XOR below should only show interrupts that
-	 * are being unmasked.
-	 */
-	ci->ci_ilevel = nlevel;
-	if (ci->ci_ipending & IUNMASK(ci,nlevel))
+
+	imask = IUNMASK(ci, nlevel);
+	psl = read_psl();
+	disable_intr();
+	if (ci->ci_ipending & imask) {
 		Xspllower(nlevel);
+		/* Xspllower does enable_intr() */
+	} else {
+		ci->ci_ilevel = nlevel;
+		write_psl(psl);
+	}
 }
 
 /*
