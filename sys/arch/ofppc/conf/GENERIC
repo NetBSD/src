@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 1998/06/05 11:27:10 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.15 1998/06/26 01:54:04 lukem Exp $
 #
 # First try for PPC config file
 #
@@ -48,7 +48,6 @@ file-system 	PROCFS
 file-system 	UMAPFS
 file-system 	UNION
 
-options 	FIFO
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
 

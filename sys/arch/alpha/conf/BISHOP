@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.7 1998/05/24 23:45:30 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.8 1998/06/26 01:53:44 lukem Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -34,7 +34,6 @@ file-system	KERNFS		# /kern file system
 file-system	FDESC		# /dev/fd file system
 
 # File system options
-options 	FIFO		# POSIX fifo support (in all file systems)
 options 	NFSSERVER	# Sun NFS-compatible file system server
 options 	NFS_BOOT_DHCP	# use DHCP for NFS root
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.23 1997/12/01 15:25:34 kleink Exp $
+#	$NetBSD: DISKLESS,v 1.24 1998/06/26 01:53:54 lukem Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -44,9 +44,6 @@ file-system	KERNFS		# kernel data-structure filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem
-
-# Filesystem options
-options 	FIFO		# POSIX fifo support (in all filesystems)
 
 # Networking options
 options 	INET		# Internet protocols

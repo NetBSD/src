@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.48 1998/05/13 14:20:47 lukem Exp $
+.\"	$NetBSD: options.4,v 1.49 1998/06/26 02:12:56 lukem Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 20, 1996
+.Dd June 26, 1998
 .Os NetBSD 1.3
 .Dt OPTIONS 4
 .Sh NAME
@@ -515,13 +515,6 @@ See also
 .Xr fsck_ffs 8 ,
 .Xr dumpfs 8
 for filesystem byte order status and manipulation.
-.It Cd options FIFO
-Augments the system to permit the use of
-.At V
-style FIFOs (i.e.
-.Dq named pipes
-).
-This option is recommended.
 .It Cd options NVNODE=integer
 This option sets the size of the cache used by the name-to-inode translation
 routines, (a.k.a. the

@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: GENERIC,v 1.5 1998/06/05 14:19:22 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.6 1998/06/26 01:54:03 lukem Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -56,7 +56,6 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	FIFO		# POSIX fifo support (in all filesystems)
 
 # Networking options
 options 	INET		# Internet protocols

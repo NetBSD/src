@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.18 1998/02/08 05:10:51 gwr Exp $
+#	$NetBSD: KGDB,v 1.19 1998/06/26 01:54:12 lukem Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -60,7 +60,6 @@ file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1998/06/24 15:13:42 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.5 1998/06/26 01:54:02 lukem Exp $
 #
 # POWERMAC config file
 #
@@ -63,7 +63,6 @@ file-system 	UNION		# union file system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER	# Network File System server
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

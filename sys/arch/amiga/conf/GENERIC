@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.105 1998/04/11 19:30:56 is Exp $
+#	$NetBSD: GENERIC,v 1.106 1998/06/26 01:53:48 lukem Exp $
 
 #
 # GENERIC AMIGA
@@ -70,7 +70,6 @@ file-system 	UNION		# union filesystem
 
 # Filesystem options
 options 	NFSSERVER	# Network File System server side code
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
 

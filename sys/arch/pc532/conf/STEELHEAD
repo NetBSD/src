@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.23 1998/03/20 19:15:18 phil Exp $
+#	$NetBSD: STEELHEAD,v 1.24 1998/06/26 01:54:06 lukem Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -34,7 +34,6 @@ file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
 file-system	FDESC			# /dev/fd
 file-system	KERNFS			# kernel file system; recommended
 
-options 	FIFO			# fifos; recommended
 #options 	QUOTA			# file system quotas
 options 	NFSSERVER		# Network File System server
 #options 	FASTLINKS		# fast symbolic links in FFS
