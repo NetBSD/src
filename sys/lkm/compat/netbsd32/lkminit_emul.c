@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/17 16:00:38 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.4 2001/06/06 21:34:23 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+#include <compat/netbsd32/netbsd32.h>
 
 extern const struct emul emul_netbsd32;
 
