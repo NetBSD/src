@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.41 2000/06/29 16:47:09 wiz Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.42 2000/07/06 20:25:26 jhawk Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -222,7 +222,8 @@ menu distset, title "Select your distribution";
 
 menu ftpsource, title "Change";
 	display action
-		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
+		{ msg_clear();
+		  msg_table_add (MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
 		     strcmp(ftp_user, "ftp") == 0 ? ftp_pass :
 		       strlen(ftp_pass) != 0 ? "** hidden **" : "");
 		};
