@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.22 2003/11/28 08:56:48 keihan Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.23 2003/12/26 23:39:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,6 +91,14 @@ struct spppstatus {
 
 #define	SPPPGETSTATUS	_IOWR('i', 124, struct spppstatus)
 
+struct spppstatusncp {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	int	phase;			/* one of SPPP_PHASE_* above */
+	int	ncpup;			/* != 0 if at least on NCP is up */
+};
+
+#define	SPPPGETSTATUSNCP	_IOWR('i', 134, struct spppstatusncp)
+
 struct spppidletimeout {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
 	time_t	idle_seconds;		/* number of seconds idle before
@@ -140,3 +148,4 @@ struct spppkeepalivesettings {
 #define	SPPPSETKEEPALIVE	_IOW('i', 132, struct spppkeepalivesettings)
 #define	SPPPGETKEEPALIVE	_IOWR('i', 133, struct spppkeepalivesettings)
 
+/* 134 already used! */
