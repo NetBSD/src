@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.6 2000/05/08 17:11:54 dante Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/adwlib.h>
+#include <dev/ic/adwmcode.h>
 #include <dev/ic/adw.h>
 
 /******************************************************************************/
@@ -127,17 +128,17 @@ adw_pci_attach(parent, self, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ADVSYS_WIDE:
-			sc->chip_type = ADV_CHIP_ASC3550;
+			sc->chip_type = ADW_CHIP_ASC3550;
 			printf(": AdvanSys ASB-3940UW-00 SCSI adapter\n");
 			break;
 
 		case PCI_PRODUCT_ADVSYS_U2W:
-			sc->chip_type = ADV_CHIP_ASC38C0800;
+			sc->chip_type = ADW_CHIP_ASC38C0800;
 			printf(": AdvanSys ASB-3940U2W-00 SCSI adapter\n");
 			break;
 
 		case PCI_PRODUCT_ADVSYS_U3W:
-			sc->chip_type = ADV_CHIP_ASC38C1600;
+			sc->chip_type = ADW_CHIP_ASC38C1600;
 			printf(": AdvanSys ASB-3940U3W-00 SCSI adapter\n");
 			break;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.8 2000/05/10 21:22:34 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.9 2000/05/26 15:13:43 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -48,41 +48,6 @@ typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
 
 
 /*
- * ADW_CARRIER must be exactly 16 BYTES
- * Every adw_carrier structure _MUST_ always be aligned on a 16 bytes boundary
- */
-struct adw_carrier {
-/* ---------- the microcode wants the field below ---------- */
-	u_int32_t	carr_id;  /* Carrier ID */
-	u_int32_t	carr_ba;  /* Carrier Bus Address */
-	u_int32_t	areq_ba;  /* ADW_SCSI_REQ_Q Bus Address */
-	/*
-	 * next_vpa [31:4]	Carrier Physical Next Pointer
-	 *
-	 * next_vpa [3:1]	Reserved Bits
-	 * next_vpa [0]		Done Flag set in Response Queue.
-	 */
-	u_int32_t	next_ba;  /* see next_ba flags below */
-/* ----------                                     ---------- */
-};
-
-typedef struct adw_carrier ADW_CARRIER;
-
-/*
- * next_ba flags
- */
-#define ASC_RQ_DONE		0x00000001
-#define ASC_RQ_GOOD		0x00000002
-#define ASC_CQ_STOPPER		0x00000000
-
-/*
- * Mask used to eliminate low 4 bits of carrier 'next_vpa' field.
- */
-#define ASC_NEXT_BA_MASK	0xFFFFFFF0
-#define ASC_GET_CARRP(carrp)	((carrp) & ASC_NEXT_BA_MASK)
-
-
-/*
  * per request scatter-gather element limit
  * We could have up to 256 SG lists.
  */
@@ -127,7 +92,6 @@ typedef struct adw_ccb ADW_CCB;
 #define CCB_ABORTED	0x04
 
 
-#define ADW_MAX_CARRIER	253	/* Max. number of host commands (253) */
 #define ADW_MAX_CCB	63	/* Max. number commands per device (63) */
 
 struct adw_control {
@@ -135,20 +99,6 @@ struct adw_control {
 	ADW_CARRIER	*carriers;		/* all our carriers */
 };
 
-/*
- * Bus Address of a Carrier.
- * ba = base_ba + v_address - base_va
- */
-#define	ADW_CARRIER_BADDR(sc,x)	((sc)->sc_dmamap_carrier->dm_segs[0].ds_addr + \
-			(((u_long)x) - ((u_long)(sc)->sc_control->carriers)))
-/*
- * Virtual Address of a Carrier.
- * va = base_va + bus_address - base_ba
- */
-#define	ADW_CARRIER_VADDR(sc,x)	((ADW_CARRIER *) \
-			(((u_int8_t *)(sc)->sc_control->carriers) + \
-			((u_long)x) - \
-			(sc)->sc_dmamap_carrier->dm_segs[0].ds_addr))
 /*
  * Offset of a CCB from the beginning of the control DMA mapping.
  */
@@ -161,7 +111,6 @@ int adw_init __P((ADW_SOFTC *sc));
 void adw_attach __P((ADW_SOFTC *sc));
 int adw_intr __P((void *arg));
 ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_int32_t));
-ADW_CARRIER *adw_carrier_phys_kv __P((ADW_SOFTC *, u_int32_t));
 
 /******************************************************************************/
 
