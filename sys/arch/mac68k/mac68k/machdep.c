@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 1996/09/16 18:00:30 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 1996/09/18 03:33:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2394,6 +2394,9 @@ get_physical(u_int addr, u_long * phys)
 	u_short psr;
 	int     i, numbits;
 	extern u_int macos_tc;
+
+	if (mmutype == MMU_68040)
+		return 0;
 
 	i = get_pte(addr, pte, &psr);
 
