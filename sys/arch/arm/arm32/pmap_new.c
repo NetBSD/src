@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.6 2003/04/28 15:57:23 scw Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.7 2003/05/02 19:01:00 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.6 2003/04/28 15:57:23 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.7 2003/05/02 19:01:00 scw Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -276,6 +276,11 @@ static LIST_HEAD(, pmap) pmap_pmaps;
  * Pool of PV structures
  */
 static struct pool pmap_pv_pool;
+static void *pmap_bootstrap_pv_page_alloc(struct pool *, int);
+static void pmap_bootstrap_pv_page_free(struct pool *, void *);
+static struct pool_allocator pmap_bootstrap_pv_allocator = {
+	pmap_bootstrap_pv_page_alloc, pmap_bootstrap_pv_page_free
+};
 
 /*
  * Pool and cache of l2_dtable structures.
@@ -284,11 +289,7 @@ static struct pool pmap_pv_pool;
  */
 static struct pool pmap_l2dtable_pool;
 static struct pool_cache pmap_l2dtable_cache;
-static void *pmap_bootstrap_page_alloc(struct pool *, int);
-static void pmap_bootstrap_page_free(struct pool *, void *);
-static struct pool_allocator pmap_bootstrap_allocator = {
-	pmap_bootstrap_page_alloc, pmap_bootstrap_page_free
-};
+static vaddr_t pmap_kernel_l2dtable_kva;
 
 /*
  * Pool and cache of L2 page descriptors.
@@ -297,6 +298,8 @@ static struct pool_allocator pmap_bootstrap_allocator = {
  */
 static struct pool pmap_l2ptp_pool;
 static struct pool_cache pmap_l2ptp_cache;
+static vaddr_t pmap_kernel_l2ptp_kva;
+static paddr_t pmap_kernel_l2ptp_phys;
 
 /*
  * pmap copy/zero page, and mem(5) hook point
@@ -310,7 +313,6 @@ extern caddr_t msgbufaddr;
  * Flag to indicate if pmap_init() has done its thing
  */
 boolean_t pmap_initialized;
-boolean_t pmap_postinit_done;
 
 /*
  * Misc. locking data structures
@@ -440,13 +442,9 @@ struct l2_dtable {
 	    pool_cache_get(&pmap_l2dtable_cache, PR_NOWAIT)
 #define	pmap_free_l2_dtable(l2)		\
 	    pool_cache_put(&pmap_l2dtable_cache, (l2))
-
-static pt_entry_t *pmap_alloc_l2_ptp(paddr_t *);
-#ifndef PMAP_INCLUDE_PTE_SYNC
-static void pmap_free_l2_ptp(pt_entry_t *, paddr_t);
-#else
-static void pmap_free_l2_ptp(boolean_t, pt_entry_t *, paddr_t);
-#endif
+#define pmap_alloc_l2_ptp(pap)		\
+	    ((pt_entry_t *)pool_cache_get_paddr(&pmap_l2ptp_cache,\
+	    PR_NOWAIT, (pap)))
 
 /*
  * We try to map the page tables write-through, if possible.  However, not
@@ -484,10 +482,8 @@ struct pv_entry {
  * Local prototypes
  */
 static int		pmap_set_pt_cache_mode(pd_entry_t *, vaddr_t);
-#ifdef ARM32_NEW_VM_LAYOUT
 static void		pmap_alloc_specials(vaddr_t *, int, vaddr_t *,
 			    pt_entry_t **);
-#endif
 static boolean_t	pmap_is_current(pmap_t);
 static boolean_t	pmap_is_cached(pmap_t);
 static void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
@@ -635,111 +631,6 @@ pmap_dcache_wbinv_all(pmap_t pm)
 		cpu_dcache_wbinv_all();
 		pm->pm_cstate.cs_cache_d = 0;
 	}
-}
-
-/*
- * During bootstrap, we steal pages to use as L2 descriptor tables
- * to avoid calling into the pool(9) module. This variable is a
- * free-list of those stolen pages (we get four L2s per 4KB page,
- * so we need somewhere to track the excess).
- *
- * Since these are allocated for the kernel pmap, they are never freed
- * so we don't risk polluting the pool with 'unmanaged' memory.
- */
-static volatile void *pmap_static_l2_ptps;
-
-/*
- * void *pmap_alloc_l2_ptp(paddr_t *)
- *
- * Allocate an L2 descriptor table.
- *
- * We return both the kernel virtual address *and* physical address of
- * the table.
- */
-static pt_entry_t *
-pmap_alloc_l2_ptp(paddr_t *pap)
-{
-	pt_entry_t *ptep;
-	vaddr_t va;
-	int i;
-
-	/*
-	 * In the normal case, use the pool cache to allocate L2s
-	 */
-	if (__predict_true(pmap_postinit_done)) {
-		return ((pt_entry_t *)pool_cache_get_paddr(&pmap_l2ptp_cache,
-		    PR_NOWAIT, pap));
-	}
-
-	/*
-	 * Otherwise, check the bootstrap free list
-	 */
-	if (pmap_static_l2_ptps) {
-		ptep = (pt_entry_t *)pmap_static_l2_ptps;
-		pmap_static_l2_ptps = (volatile void *)ptep[0];
-		*pap = ptep[1];
-		ptep[0] = ptep[1] = 0;
-		PTE_SYNC_RANGE(ptep, 2);
-		return (ptep);
-	}
-
-	/*
-	 * Steal a page from UVM
-	 */
-	va = uvm_km_kmemalloc(kernel_map, NULL, PAGE_SIZE, UVM_KMF_NOWAIT);
-	pmap_extract(pmap_kernel(), va, pap);
-	ptep = (pt_entry_t *)va;
-	memset(ptep, 0, PAGE_SIZE);
-
-	/*
-	 * What follows is gross. Look away now.
-	 */
-	va += L2_TABLE_SIZE_REAL;
-	for (i = 1; i < (PAGE_SIZE / L2_TABLE_SIZE_REAL); i++) {
-		*((volatile void **)va) = pmap_static_l2_ptps;
-		((paddr_t *)va)[1] = *pap + (i * L2_TABLE_SIZE_REAL);
-		pmap_static_l2_ptps = (void *)va;
-		va += L2_TABLE_SIZE_REAL;
-	}
-
-	PTE_SYNC_RANGE(ptep, PAGE_SIZE/sizeof(pt_entry_t));
-	return (ptep);
-}
-
-/*
- * void pmap_free_l2_ptp(pt_entry_t *, paddr_t *)
- *
- * Free an L2 descriptor table.
- */
-static __inline void
-#ifndef PMAP_INCLUDE_PTE_SYNC
-pmap_free_l2_ptp(pt_entry_t *l2, paddr_t pa)
-#else
-pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
-#endif
-{
-
-	if (__predict_true(uvm.page_init_done)) {
-#ifdef PMAP_INCLUDE_PTE_SYNC
-		/*
-		 * Note: With a write-back cache, we may need to sync this
-		 * L2 table before re-using it.
-		 * This is because it may have belonged to a non-current
-		 * pmap, in which case the cache syncs would have been
-		 * skipped when the pages were being unmapped. If the
-		 * L2 table were then to be immediately re-allocated to
-		 * the *current* pmap, it may well contain stale mappings
-		 * which have not yet been cleared by a cache write-back
-		 * and so would still be visible to the mmu.
-		 */
-		if (need_sync) {
-			PTE_SYNC_RANGE(l2,
-			    L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
-		}
-#endif
-		pool_cache_put_paddr(&pmap_l2ptp_cache, (void *)l2, pa);
-	} else
-		panic("pmap_free_l2_ptp: called during initialisation!");
 }
 
 static __inline boolean_t
@@ -1095,6 +986,36 @@ pmap_use_l1(pmap_t pm)
 	TAILQ_INSERT_TAIL(&l1_lru_list, l1, l1_lru);
 
 	simple_unlock(&l1_lru_lock);
+}
+
+/*
+ * void pmap_free_l2_ptp(pt_entry_t *, paddr_t *)
+ *
+ * Free an L2 descriptor table.
+ */
+static __inline void
+#ifndef PMAP_INCLUDE_PTE_SYNC
+pmap_free_l2_ptp(pt_entry_t *l2, paddr_t pa)
+#else
+pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
+#endif
+{
+#ifdef PMAP_INCLUDE_PTE_SYNC
+	/*
+	 * Note: With a write-back cache, we may need to sync this
+	 * L2 table before re-using it.
+	 * This is because it may have belonged to a non-current
+	 * pmap, in which case the cache syncs would have been
+	 * skipped when the pages were being unmapped. If the
+	 * L2 table were then to be immediately re-allocated to
+	 * the *current* pmap, it may well contain stale mappings
+	 * which have not yet been cleared by a cache write-back
+	 * and so would still be visible to the mmu.
+	 */
+	if (need_sync)
+		PTE_SYNC_RANGE(l2, L2_TABLE_SIZE_REAL / sizeof(pt_entry_t));
+#endif
+	pool_cache_put_paddr(&pmap_l2ptp_cache, (void *)l2, pa);
 }
 
 /*
@@ -3537,6 +3458,126 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 	*end = virtual_end;
 }
 
+/*
+ * Helper function for pmap_grow_l2_bucket()
+ */
+static __inline int
+pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
+{
+	struct l2_bucket *l2b;
+	pt_entry_t *ptep;
+	paddr_t pa;
+
+	if (uvm.page_init_done == FALSE) {
+		if (uvm_page_physget(&pa) == FALSE)
+			return (1);
+	} else {
+		struct vm_page *pg;
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+		if (pg == NULL)
+			return (1);
+		pa = VM_PAGE_TO_PHYS(pg);
+	}
+
+	if (pap)
+		*pap = pa;
+
+	l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+	KDASSERT(l2b != NULL);
+
+	ptep = &l2b->l2b_kva[l2pte_index(va)];
+	*ptep = L2_S_PROTO | pa | cache_mode |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ | VM_PROT_WRITE);
+	PTE_SYNC(ptep);
+	memset((void *)va, 0, PAGE_SIZE);
+	return (0);
+}
+
+/*
+ * This is the same as pmap_alloc_l2_bucket(), except that it is only
+ * used by pmap_growkernel().
+ */
+static __inline struct l2_bucket *
+pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
+{
+	struct l2_dtable *l2;
+	struct l2_bucket *l2b;
+	u_short l1idx;
+	vaddr_t nva;
+
+	l1idx = L1_IDX(va);
+
+	if ((l2 = pm->pm_l2[L2_IDX(l1idx)]) == NULL) {
+		/*
+		 * No mapping at this address, as there is
+		 * no entry in the L1 table.
+		 * Need to allocate a new l2_dtable.
+		 */
+		nva = pmap_kernel_l2dtable_kva;
+		if ((nva & PGOFSET) == 0) {
+			/*
+			 * Need to allocate a backing page
+			 */
+			if (pmap_grow_map(nva, pte_l2_s_cache_mode, NULL))
+				return (NULL);
+		}
+
+		l2 = (struct l2_dtable *)nva;
+		nva += sizeof(struct l2_dtable);
+
+		if ((nva & PGOFSET) < (pmap_kernel_l2dtable_kva & PGOFSET)) {
+			/*
+			 * The new l2_dtable straddles a page boundary.
+			 * Map in another page to cover it.
+			 */
+			if (pmap_grow_map(nva, pte_l2_s_cache_mode, NULL))
+				return (NULL);
+		}
+
+		pmap_kernel_l2dtable_kva = nva;
+
+		/*
+		 * Link it into the parent pmap
+		 */
+		pm->pm_l2[L2_IDX(l1idx)] = l2;
+	}
+
+	l2b = &l2->l2_bucket[L2_BUCKET(l1idx)];
+
+	/*
+	 * Fetch pointer to the L2 page table associated with the address.
+	 */
+	if (l2b->l2b_kva == NULL) {
+		pt_entry_t *ptep;
+
+		/*
+		 * No L2 page table has been allocated. Chances are, this
+		 * is because we just allocated the l2_dtable, above.
+		 */
+		nva = pmap_kernel_l2ptp_kva;
+		ptep = (pt_entry_t *)nva;
+		if ((nva & PGOFSET) == 0) {
+			/*
+			 * Need to allocate a backing page
+			 */
+			if (pmap_grow_map(nva, pte_l2_s_cache_mode_pt,
+			    &pmap_kernel_l2ptp_phys))
+				return (NULL);
+			PTE_SYNC_RANGE(ptep, PAGE_SIZE / sizeof(pt_entry_t));
+		}
+
+		l2->l2_occupancy++;
+		l2b->l2b_kva = ptep;
+		l2b->l2b_l1idx = l1idx;
+		l2b->l2b_phys = pmap_kernel_l2ptp_phys;
+
+		pmap_kernel_l2ptp_kva += L2_TABLE_SIZE_REAL;
+		pmap_kernel_l2ptp_phys += L2_TABLE_SIZE_REAL;
+	}
+
+	return (l2b);
+}
+
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
@@ -3553,6 +3594,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	    printf("pmap_growkernel: growing kernel from 0x%lx to 0x%lx\n",
 	    pmap_curmaxkvaddr, maxkvaddr));
 
+	KDASSERT(maxkvaddr <= virtual_end);
+
 	/*
 	 * whoops!   we need to add kernel PTPs
 	 */
@@ -3563,7 +3606,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	/* Map 1MB at a time */
 	for (; pmap_curmaxkvaddr < maxkvaddr; pmap_curmaxkvaddr += L1_S_SIZE) {
 
-		l2b = pmap_alloc_l2_bucket(kpm, pmap_curmaxkvaddr);
+		l2b = pmap_grow_l2_bucket(kpm, pmap_curmaxkvaddr);
 		KDASSERT(l2b != NULL);
 
 		/* Distribute new L1 entry to all other L1s */
@@ -3765,6 +3808,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t avail)
 	pt_entry_t *ptep;
 	paddr_t pa;
 	vaddr_t va;
+	vsize_t size;
 	int l1idx, l2idx, l2next = 0;
 
 	/*
@@ -3874,42 +3918,36 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t avail)
 #ifndef ARM32_NEW_VM_LAYOUT
 	virtual_avail = KERNEL_VM_BASE;
 	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;
-
-	/*
-	 * We find the PTE that maps the allocated VA via the linear PTE
-	 * mapping.
-	 */
-	ptep = ((pt_entry_t *) PTE_BASE) + atop(virtual_avail);
-
-	(void) pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)ptep);
-	csrcp = virtual_avail; csrc_pte = ptep;
-	virtual_avail += PAGE_SIZE; ptep++;
-
-	(void) pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)ptep);
-	cdstp = virtual_avail; cdst_pte = ptep;
-	virtual_avail += PAGE_SIZE; ptep++;
-
-	memhook = (char *) virtual_avail;	/* don't need ptep */
-	*ptep = 0;
-	PTE_SYNC(ptep);
-	virtual_avail += PAGE_SIZE; ptep++;
-
-	msgbufaddr = (caddr_t) virtual_avail;	/* don't need ptep */
-	virtual_avail += round_page(MSGBUFSIZE);
-	ptep += atop(round_page(MSGBUFSIZE));
 #else
 	/*
 	 * Managed KVM space start from wherever initarm() tells us.
 	 */
 	virtual_avail = avail;
 	virtual_end = avail + KERNEL_VM_SIZE;
+#endif
 
 	pmap_alloc_specials(&virtual_avail, 1, &csrcp, &csrc_pte);
+	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
+	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
 	pmap_alloc_specials(&virtual_avail, 1, (vaddr_t *)&memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
 	    (vaddr_t *)&msgbufaddr, NULL);
-#endif
+
+	/*
+	 * Allocate a range of kernel virtual address space to be used
+	 * for L2 descriptor tables and metadata allocation in
+	 * pmap_growkernel().
+	 */
+	size = ((virtual_end - pmap_curmaxkvaddr) + L1_S_OFFSET) / L1_S_SIZE;
+	pmap_alloc_specials(&virtual_avail,
+	    round_page(size * L2_TABLE_SIZE_REAL) / PAGE_SIZE,
+	    &pmap_kernel_l2ptp_kva, NULL);
+
+	size = (size + (L2_BUCKET_SIZE - 1)) / L2_BUCKET_SIZE;
+	pmap_alloc_specials(&virtual_avail,
+	    round_page(size * sizeof(struct l2_dtable)) / PAGE_SIZE,
+	    &pmap_kernel_l2dtable_kva, NULL);
 
 	/*
 	 * init the static-global locks and global pmap list.
@@ -3940,13 +3978,13 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t avail)
 	 * Initialize the pv pool.
 	 */
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvepl",
-	    &pmap_bootstrap_allocator);
+	    &pmap_bootstrap_pv_allocator);
 
 	/*
 	 * Initialize the L2 dtable pool and cache.
 	 */
 	pool_init(&pmap_l2dtable_pool, sizeof(struct l2_dtable), 0, 0, 0,
-	    "l2dtblpl", &pmap_bootstrap_allocator);
+	    "l2dtblpl", NULL);
 	pool_cache_init(&pmap_l2dtable_cache, &pmap_l2dtable_pool,
 	    pmap_l2dtable_ctor, NULL, NULL);
 
@@ -4003,26 +4041,30 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va)
 	return (rv);
 }
 
-#ifdef ARM32_NEW_VM_LAYOUT
 static void
 pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 {
-	struct l2_bucket *l2b;
-	vaddr_t va;
+	vaddr_t va = *availp;
 
-	va = *availp;
-
-	l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-	if (l2b == NULL)
-		panic("pmap_alloc_specials: no l2b for 0x%lx", va);
-
+#ifndef ARM32_NEW_VM_LAYOUT
 	if (ptep)
-		*ptep = &l2b->l2b_kva[l2pte_index(va)];
+		*ptep = ((pt_entry_t *) PTE_BASE) + atop(va);
+#else
+	struct l2_bucket *l2b;
+
+	if (ptep) {
+		l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+		if (l2b == NULL)
+			panic("pmap_alloc_specials: no l2b for 0x%lx", va);
+
+		if (ptep)
+			*ptep = &l2b->l2b_kva[l2pte_index(va)];
+	}
+#endif
 
 	*vap = va;
 	*availp = va + (PAGE_SIZE * pages);
 }
-#endif
 
 void
 pmap_init(void)
@@ -4046,9 +4088,6 @@ pmap_init(void)
 	 * of kernel_map and use it to provide an initial pool of pv_entry
 	 * structures.   we never free this page.
 	 */
-	pool_setlowat(&pmap_l2dtable_pool,
-	    (PAGE_SIZE / sizeof(struct l2_dtable)) * 2);
-
 	pool_setlowat(&pmap_pv_pool,
 	    (PAGE_SIZE / sizeof(struct pv_entry)) * 2);
 
@@ -4059,7 +4098,7 @@ static vaddr_t last_bootstrap_page = 0;
 static void *free_bootstrap_pages = NULL;
 
 static void *
-pmap_bootstrap_page_alloc(struct pool *pp, int flags)
+pmap_bootstrap_pv_page_alloc(struct pool *pp, int flags)
 {
 	extern void *pool_page_alloc(struct pool *, int);
 	vaddr_t new_page;
@@ -4083,7 +4122,7 @@ pmap_bootstrap_page_alloc(struct pool *pp, int flags)
 }
 
 static void
-pmap_bootstrap_page_free(struct pool *pp, void *v)
+pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
 {
 	extern void pool_page_free(struct pool *, void *);
 
@@ -4120,9 +4159,10 @@ pmap_postinit(void)
 	u_int loop, needed;
 	int error;
 
-	pmap_postinit_done = TRUE;
 	pool_setlowat(&pmap_l2ptp_pool,
 	    (PAGE_SIZE / L2_TABLE_SIZE_REAL) * 4);
+	pool_setlowat(&pmap_l2dtable_pool,
+	    (PAGE_SIZE / sizeof(struct l2_dtable)) * 2);
 
 	needed = (maxproc / PMAP_DOMAINS) + ((maxproc % PMAP_DOMAINS) ? 1 : 0);
 	needed -= 1;
