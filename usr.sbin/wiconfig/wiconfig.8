@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.18 2002/01/16 12:01:12 wiz Exp $
+.\"	$NetBSD: wiconfig.8,v 1.19 2002/01/21 11:35:06 ichiro Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -42,6 +42,7 @@
 .Nm wiconfig
 .Ar interface
 .Op Fl o
+.Op Fl D
 .Bk -words
 .Op Fl e Ar 0|1
 .Ek
@@ -136,6 +137,11 @@ The options are as follows:
 .It Fl o
 Print out the statistics counters instead of the card settings.
 Note that, however, the statictics will only be updated every 1 minutes or so.
+.It Fl D
+This forces the driver to initiate one round of access point scanning.
+All of Access points found are displayed.
+This mode does not work unless the driver has been initialized; i.e., an IP
+address must be assigned first.
 .It Fl e Ar 0|1
 Enable or disable WEP encryption.  Permitted values are
 .Ar 0
