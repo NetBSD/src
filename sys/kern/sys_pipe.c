@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.40 2003/06/29 22:31:26 fvdl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.41 2003/08/11 10:24:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40 2003/06/29 22:31:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.41 2003/08/11 10:24:41 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,6 +358,24 @@ pipelock(pipe, catch)
 		simple_lock(&pipe->pipe_slock);
 		if (catch || (error != EINTR && error != ERESTART))
 			break;
+		/*
+		 * XXX XXX XXX
+		 * The pipe lock is initialised with PCATCH on and we cannot
+		 * override this in a lockmgr() call. Thus a pending signal
+		 * will cause lockmgr() to return with EINTR or ERESTART.
+		 * We cannot simply re-enter lockmgr() at this point since
+		 * the pending signals have not yet been posted and would
+		 * cause an immediate EINTR/ERESTART return again.
+		 * As a workaround we pause for a while here, giving the lock
+		 * a chance to drain, before trying again.
+		 * XXX XXX XXX
+		 *
+		 * NOTE: Consider dropping PCATCH from this lock; in practice
+		 * it is never held for long enough periods for having it
+		 * interruptable at the start of pipe_read/pipe_write to be
+		 * beneficial.
+		 */
+		(void) tsleep(&lbolt, PRIBIO, "rstrtpipelock", hz);
 	}
 	return (error);
 }
