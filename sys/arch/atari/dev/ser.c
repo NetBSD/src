@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.16 2002/05/30 19:59:36 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.17 2002/08/29 08:28:59 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
+#include "opt_serconsole.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,13 +321,13 @@ void	*auxp;
 
 	callout_init(&sc->sc_diag_ch);
 
-#ifdef SERCONSOLE
+#if SERCONSOLE > 0
 	/*
 	 * Activate serial console when DCD present...
 	 */
 	if (!(MFP->mf_gpip & MCR_DCD))
 		SET(sc->sc_hwflags, SER_HW_CONSOLE);
-#endif /* SERCONSOLE */
+#endif /* SERCONSOLE > 0 */
 
 	printf("\n");
 	if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
@@ -1428,11 +1429,11 @@ sercnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(sermajor, 0); /* XXX: LWP What unit? */
-#ifdef SERCONSOLE
+#if SERCONSOLE > 0
 	cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
 #else
 	cp->cn_pri = CN_NORMAL;
-#endif
+#endif /* SERCONSOLE > 0 */
 }
 
 void
