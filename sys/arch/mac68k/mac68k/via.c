@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.41 1996/05/20 04:32:33 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.42 1996/05/21 00:04:18 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -242,7 +242,10 @@ rbv_intr(fp)
 	do {
 		if (intbits & mask) {
 			via2itab[bitnum](via2iarg[bitnum]);
-			via2_reg(rIFR) = mask;
+			/*
+			 * High bit must be set to actually clear interrupt.
+			 */
+			via2_reg(rIFR) = 0x80 | mask;
 		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum < 7);
