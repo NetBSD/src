@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.78 2000/05/08 19:58:17 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.79 2000/05/27 00:11:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -486,7 +486,7 @@ loop:
 				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}
-			scheduler_wait_hook(curproc, p);
+			scheduler_wait_hook(q, p);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			pool_put(&rusage_pool, p->p_ru);
