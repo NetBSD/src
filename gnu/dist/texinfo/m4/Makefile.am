@@ -14,6 +14,7 @@ EXTRA_DIST = \
   lib-link.m4 \
   lib-prefix.m4 \
   mkstemp.m4 \
+  onceonly_2_57.m4 \
   prereq.m4 \
   progtest.m4 \
   stdint_h.m4 \
