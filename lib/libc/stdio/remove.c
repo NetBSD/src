@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.5 1996/03/29 23:29:19 jtc Exp $	*/
+/*	$NetBSD: remove.c,v 1.6 1997/06/03 22:26:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,9 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: remove.c,v 1.5 1996/03/29 23:29:19 jtc Exp $";
+static char rcsid[] = "$NetBSD: remove.c,v 1.6 1997/06/03 22:26:38 kleink Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 
@@ -50,5 +52,17 @@ int
 remove(file)
 	const char *file;
 {
-	return (unlink(file));
+	struct stat sb;
+
+	if (stat(file, &sb) < 0)
+		return (-1);
+
+	/*
+	 * The file system may prohibit using unlink(2) on directories,
+	 * so always use rmdir(2) in that case.
+	 */
+	if (S_ISDIR(sb.st_mode))
+		return (rmdir(file));
+	else
+		return (unlink(file));
 }
