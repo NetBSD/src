@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.28 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.29 1999/09/09 12:26:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* From usb_mem.h */
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+struct usb_dma_block;
+typedef struct {
+	struct usb_dma_block *block;
+	u_int offs;
+} usb_dma_t;
+#elif defined(__FreeBSD__)
+typedef void * usb_dma_t;
+#endif
+
 struct usbd_request;
 struct usbd_pipe;
 
@@ -45,15 +56,21 @@ struct usbd_endpoint {
 	int			refcnt;
 };
 
-struct usbd_methods {
+struct usbd_bus_methods {
+	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
+	void		      (*do_poll)__P((struct usbd_bus *));
+	usbd_status	      (*allocm)__P((struct usbd_bus *, usb_dma_t *,
+					    u_int32_t bufsize));
+	void		      (*freem)__P((struct usbd_bus *, usb_dma_t *));
+};
+
+struct usbd_pipe_methods {
 	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
 	usbd_status	      (*start)__P((usbd_request_handle reqh));
 	void		      (*abort)__P((usbd_request_handle reqh));
 	void		      (*close)__P((usbd_pipe_handle pipe));
 	void		      (*cleartoggle)__P((usbd_pipe_handle pipe));
 	void		      (*done)__P((usbd_request_handle reqh));
-	usbd_status	      (*isobuf)__P((usbd_pipe_handle pipe,
-					    u_int32_t bufsize,u_int32_t nbuf));
 };
 
 struct usbd_port {
@@ -80,9 +97,8 @@ struct usb_softc;
 struct usbd_bus {
 	/* Filled by HC driver */
 	USBBASEDEVICE		bdev; /* base device, host adapter */
-	usbd_status	      (*open_pipe)__P((struct usbd_pipe *pipe));
+	struct usbd_bus_methods	*methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
-	void		      (*do_poll)__P((struct usbd_bus *));
 	/* Filled by usb driver */
 	struct usbd_device     *root_hub;
 	usbd_device_handle	devices[USB_MAX_DEVICES];
@@ -137,7 +153,7 @@ struct usbd_pipe {
 	char			repeat;
 
 	/* Filled by HC driver. */
-	struct usbd_methods    *methods;
+	struct usbd_pipe_methods *methods;
 };
 
 struct usbd_request {
@@ -152,12 +168,26 @@ struct usbd_request {
 	usbd_callback		callback;
 	__volatile char		done;
 
+	/* For control pipe */
 	usb_device_request_t	request;
-	char			isreq;
+
+	/* For isoc */
+	u_int16_t		*frlengths;
+	int			nframes;
+
+	/* For memory allocation */
+	struct usbd_device     *dev;
+	usb_dma_t		dmabuf;
+
+	int			rqflags;
+#define URQ_REQUEST	0x01
+#define URQ_SYSDMABUF	0x10
+#define URQ_USRDMABUF	0x20
 
 	SIMPLEQ_ENTRY(usbd_request) next;
 
-	void		       *hcpriv; /* XXX private use by the HC driver */
+	void		       *hcpriv; /* private use by the HC driver */
+	int			hcprivint; /* ditto */
 
 #if defined(__FreeBSD__)
 	struct callout_handle  timo_handle;
@@ -193,9 +223,6 @@ void		usb_transfer_complete __P((usbd_request_handle reqh));
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
 void		usb_needs_explore __P((usbd_bus_handle));
-#if 0
-usbd_status	usb_get_bus_handle __P((int, usbd_bus_handle *));
-#endif
 
 /* Locator stuff. */
 

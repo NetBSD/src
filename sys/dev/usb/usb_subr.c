@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.44 1999/09/05 21:22:39 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.45 1999/09/09 12:26:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -678,7 +678,7 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	p->running = 0;
 	p->repeat = 0;
 	SIMPLEQ_INIT(&p->queue);
-	r = dev->bus->open_pipe(p);
+	r = dev->bus->methods->open_pipe(p);
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
 			 "%s\n",

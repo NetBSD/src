@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.26 1999/09/05 19:32:19 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.27 1999/09/09 12:26:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,18 +93,22 @@ usbd_status usbd_open_pipe
 	     u_int8_t flags, usbd_pipe_handle *pipe));
 usbd_status usbd_close_pipe	__P((usbd_pipe_handle pipe));
 usbd_status usbd_transfer	__P((usbd_request_handle req));
-usbd_request_handle usbd_alloc_request	__P((void));
+usbd_request_handle usbd_alloc_request	__P((usbd_device_handle));
 usbd_status usbd_free_request	__P((usbd_request_handle reqh));
-usbd_status usbd_setup_request	
+void usbd_setup_request	
 	__P((usbd_request_handle reqh, usbd_pipe_handle pipe,
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, u_int16_t flags, u_int32_t timeout,
 	     usbd_callback));
-usbd_status usbd_setup_default_request
+void usbd_setup_default_request
 	__P((usbd_request_handle reqh, usbd_device_handle dev,
 	     usbd_private_handle priv, u_int32_t timeout,
 	     usb_device_request_t *req,  void *buffer,
 	     u_int32_t length, u_int16_t flags, usbd_callback));
+void usbd_setup_isoc_request	
+	__P((usbd_request_handle reqh, usbd_pipe_handle pipe,
+	     usbd_private_handle priv, u_int16_t *frlengths,
+	     u_int32_t nframes, usbd_callback));
 void usbd_get_request_status
 	__P((usbd_request_handle reqh, usbd_private_handle *priv,
 	     void **buffer, u_int32_t *count, usbd_status *status));
@@ -122,17 +126,15 @@ usbd_status usbd_interface2device_handle
 usbd_status usbd_device2interface_handle
 	__P((usbd_device_handle dev, u_int8_t ifaceno, usbd_interface_handle *iface));
 
-/* Non-standard */
+usbd_device_handle usbd_pipe2device_handle __P((usbd_pipe_handle));
+void *usbd_alloc_buffer __P((usbd_request_handle req, u_int32_t size));
+void usbd_free_buffer __P((usbd_request_handle req));
 usbd_status usbd_sync_transfer	__P((usbd_request_handle req));
 usbd_status usbd_open_pipe_intr
 	__P((usbd_interface_handle iface, u_int8_t address,
 	     u_int8_t flags, usbd_pipe_handle *pipe,
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, usbd_callback));
-usbd_status usbd_open_pipe_iso
-	__P((usbd_interface_handle iface, u_int8_t address,
-	     u_int8_t flags, usbd_pipe_handle *pipe,
-	     usbd_private_handle priv, u_int32_t bufsize, u_int32_t nbuf));
 usbd_status usbd_do_request 
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_async
