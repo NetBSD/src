@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.19 1999/12/06 21:07:00 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.20 2000/01/16 10:27:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -163,6 +163,7 @@ typedef struct uhci_softc {
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	void *sc_powerhook;		/* cookie from power hook */
+	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	device_ptr_t sc_child;		/* /dev/usb device */
 } uhci_softc_t;
