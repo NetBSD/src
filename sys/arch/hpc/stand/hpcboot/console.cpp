@@ -1,4 +1,4 @@
-/*	$NetBSD: console.cpp,v 1.1 2001/02/09 18:34:35 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.2 2001/03/22 18:19:09 uch Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,4 +120,18 @@ SerialConsole::openCOM1(void)
 	CloseHandle(_handle);
 	_handle = INVALID_HANDLE_VALUE;
 	return FALSE;
+}
+
+void
+SerialConsole::genericPrint(const char *buf)
+{
+	unsigned long wrote;
+	int i;
+	
+	for (i = 0; *buf != '\0'; buf++) {
+		char c = *buf;
+		if (c == '\n')
+			WriteFile(_handle, "\r", 1, &wrote, 0);
+		WriteFile(_handle, &c, 1, &wrote, 0);
+	}
 }
