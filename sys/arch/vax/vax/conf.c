@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1995/04/10 03:36:17 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1995/04/12 15:34:52 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -50,111 +50,97 @@ int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
+#define CHARDEV(open,close,read,write,ioctl,stop,reset,ttys,select,mmap,strat)\
+        {(int(*)(dev_t, int, int, struct proc *))open, \
+         (int(*)(dev_t, int, int, struct proc *))close, \
+         (int(*)(dev_t, struct uio *, int))read, \
+         (int(*)(dev_t, struct uio *, int))write, \
+         (int(*)(dev_t, u_long, caddr_t, int, struct proc *))ioctl, \
+         (int(*)(struct tty *, int))stop, \
+         (int(*)(int))reset, \
+         (struct  tty **)ttys, \
+         (int(*)(dev_t, int, struct proc *))select, \
+         (int(*)())mmap, \
+         (void(*)(struct buf *))strat }
+
+
 #ifndef LKM
 #define lkmenodev       enodev
 #else
 int     lkmenodev();
 #endif
 
-#include "hp.h"
+#include "hp.h" /* 0 */
 bdev_decl(hp);
+
+#include "tu.h"
+bdev_decl(ht);
+
 #include "rk.h"
 bdev_decl(rk);
+
 #include "te.h"
 bdev_decl(tm);
+
 #include "tmscp.h"
 bdev_decl(tmscp);
+
 #include "ts.h"
 bdev_decl(ts);
+
 #include "mu.h"
 bdev_decl(mt);
+
+#if 0 /* defined(VAX750) || defined(VAX730) */
+#define	NCTU	1
+#else
+#define	NCTU	0
+#endif
+bdev_decl(tu);
+
 #include "uda.h"
 bdev_decl(uda);
 
-/*#include "kra.h" */
-#if 0
-int	kdbopen(),kdbstrategy(),kdbdump(),kdbsize();
-#else
-#define	kdbopen		enxio
-#define	kdbstrategy	enxio
-#define	kdbdump		enxio
-#define	kdbsize		0
-#endif
+#include "kdb.h"
+bdev_decl(kdb);
 
 #include "up.h"
 bdev_decl(up);
+
 #include "tj.h"
 bdev_decl(ut);
+
 #include "rb.h"
 bdev_decl(idc);
 
 #include "rx.h"
-#if NFX > 0
-int	rxopen(),rxstrategy(),rxclose(),rxread(),rxwrite(),rxreset(),rxioctl();
-#else
-#define	rxopen		enxio
-#define rxstrategy	enxio
-#define	rxclose		enxio
-#define	rxread		enxio
-#define	rxwrite		enxio
-#define	rxreset		nullop
-#define	rxioctl		enxio
-#endif
+bdev_decl(rx);
 
 #include "uu.h"
-#if NUU > 0
-int	uuopen(),uustrategy(),uuclose(),uureset(),uuioctl();
-#else
-#define	uuopen		enxio
-#define uustrategy	enxio
-#define	uuclose		enxio
-#define	uureset		nullop
-#define	uuioctl		enxio
-#endif
+bdev_decl(uu);
 
 #include "rl.h"
-#if NRL > 0
-int	rlopen(),rlstrategy(),rlreset(),rldump(),rlsize();
-#else
-#define	rlopen		enxio
-#define	rlstrategy	enxio
-#define	rlreset		nullop
-#define	rldump		enxio
-#define	rlsize		0
-#endif
-
-#include "np.h"
-#if NNP > 0
-int	npopen(),npclose(),npread(),npwrite();
-int	npreset(),npioctl();
-#else
-#define	npopen		enxio
-#define	npclose		enxio
-#define	npread		enxio
-#define	npwrite		enxio
-#define	npreset		nullop
-#define	npioctl		enxio
-#endif
+bdev_decl(rl);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NHP,hp),		/* 0: ??? */
-	bdev_notdef(),			/* 1 */
+	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
+	bdev_tape_init(NTU,ht),		/* 1: TU77 w/ TM03 */
 	bdev_disk_init(NUP,up),		/* 2: SC-21/SC-31 */
 	bdev_disk_init(NRK,rk),		/* 3: RK06/07 */
 	bdev_swap_init(),		/* 4: swap pseudo-device */
 	bdev_tape_init(NTE,tm),		/* 5: TM11/TE10 */
 	bdev_tape_init(NTS,ts),		/* 6: TS11 */
 	bdev_tape_init(NMU,mt),		/* 7: TU78 */
-	bdev_tape_init(NTU,tu),		/* 8: TU58 */
-	bdev_disk_init(NUDA,uda),	/* 9: ??? */
+	bdev_tape_init(NCTU,tu),		/* 8: TU58 */
+	bdev_disk_init(NUDA,uda),	/* 9: UDA50/RA?? */
 	bdev_tape_init(NTJ,ut),		/* 10: TU45 */
-	bdec_disk_init(NRB,idc),	/* 11: IDC (RB730) */
-	BLOCKDEV(rxopen,rxclose,rxstrategy,enodev,enodev,0,0),		/* 12 */
-	BLOCKDEV(uuopen,uuclose,uustrategy,enodev,enodev,0,0),		/* 13 */
-	BLOCKDEV(rlopen,nullop,rlstrategy,enodev,rldump,rlsize,0),	/* 14 */
-	bdev_tape_init(NTMSCP,tmscp),
-	BLOCKDEV(kdbopen,nullop,kdbstrategy,enodev,kdbdump,kdbsize,0),	/* 16 */
+	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
+	bdev_disk_init(NRX,rx),		/* 12: RX01/02 on unibus */
+	bdev_disk_init(NUU,uu),		/* 13: ?? */
+	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
+	bdev_tape_init(NTMSCP,tmscp),	/* 15: TMSCP tape */
+	bdev_disk_init(NKDB,kdb),	/* 16: KDB50/RA?? */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -164,8 +150,9 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
-int	gencnprobe(), gencninit(), gencngetc(), gencnputc();
+void	gencnprobe(), gencninit(), gencnputc();
 int	gencnopen(), gencnclose(), gencnwrite(), gencnread(), gencnioctl();
+int	gencngetc(); 
 
 extern 	struct tty *gencntty[];
 
@@ -212,6 +199,7 @@ cdev_decl(uda);
 cdev_decl(up);
 cdev_decl(ut);
 cdev_decl(idc);
+cdev_decl(fd);
 
 #include "acc.h"
 #if NACC > 0
@@ -233,6 +221,19 @@ int	ctopen(),ctclose(),ctwrite();
 cdev_decl(dh);
 #include "dmf.h"
 cdev_decl(dmf);
+
+#include "np.h"
+#if NNP > 0
+int     npopen(),npclose(),npread(),npwrite();
+int     npreset(),npioctl();
+#else
+#define npopen          enxio
+#define npclose         enxio
+#define npread          enxio
+#define npwrite         enxio
+#define npreset         nullop
+#define npioctl         enxio
+#endif
 
 #if VAX8600
 int	crlopen(),crlclose(),crlrw();
@@ -493,12 +494,10 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	CHARDEV(adopen,	adclose,enodev,	enodev,	/*29*/ adioctl,	enodev,
 		adreset,NULL, seltrue,	enodev,	NULL),
-	CHARDEV(rxopen,	rxclose,rxread,	rxwrite,/*30*/ rxioctl,	enodev,
-		rxreset,NULL, seltrue,	enodev,	NULL),
+	cdev_disk_init(NRX,rx),		/* 30: RX01/02 on unibus */
 	CHARDEV(ikopen,	ikclose,ikread,	ikwrite,/*31*/ ikioctl,	enodev,
 		ikreset,NULL, seltrue,	enodev,	NULL),
-	CHARDEV(rlopen,	enodev,	rawread,rawwrite,/*32*/ enodev,	enodev,
-		rlreset,NULL, seltrue,	enodev,	rlstrategy),
+	cdev_disk_init(NRL,rl),		/* 32: RL01/02 on unibus */
 	cdev_log_init(1,log),		/* 33: /dev/klog */
 	cdev_tty_init(NDHU,dhu),	/* 34: DHU-11 */
  	CHARDEV(crlopen,crlclose,	crlrw,		crlrw,		/*35*/
@@ -508,10 +507,12 @@ struct cdevsw	cdevsw[] =
 	vsioctl,	enodev,		vsreset,	NULL,
 	vsselect,	enodev,		NULL),
 	cdev_tty_init(NDMZ,dmz),	/* 37: DMZ32 */
-	cdev_tape_init(NTMSCP,tmscp),
-	CHARDEV(npopen,	npclose,	npread,		npwrite,	/*39*/
-	npioctl,	enodev,		npreset,	NULL,
-	seltrue,	enodev,		NULL),
+	cdev_tape_init(NTMSCP,tmscp),	/* 38: TMSCP tape */
+
+        CHARDEV(npopen, npclose,        npread,         npwrite,        /*39*/
+        npioctl,        enodev,         npreset,        NULL,
+        seltrue,        enodev,         NULL),
+
 	CHARDEV(qvopen,	qvclose,	qvread,		qvwrite,	/*40*/
 	qvioctl,	qvstop,		qvreset,	NULL,
 	qvselect,	enodev,		NULL),
@@ -538,10 +539,7 @@ struct cdevsw	cdevsw[] =
 	CHARDEV(rx50open,rx50close,	rx50rw,		rx50rw,		/*51*/
 	enodev,		enodev,		nullop,	0,
 	seltrue,	enodev,		NULL),
-/* kdb50 ra */
-	CHARDEV(kdbopen,nullop/*XXX*/,	rawread,	rawwrite,	/*52*/
-	enodev,		enodev,		nullop,	0,
-	seltrue,	enodev,		kdbstrategy),
+	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
 	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

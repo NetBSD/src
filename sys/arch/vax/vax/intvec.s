@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.7 1995/02/23 17:53:52 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.8 1995/04/12 15:34:56 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,7 +61,7 @@
 _kernbase:
 	INTVEC(stray00, ISTACK)	# Unused., 0
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
-	INTVEC(stray08, ISTACK)	# Kernel Stack Invalid., 8
+	INTVEC(invkstk, ISTACK)	# Kernel Stack Invalid., 8
 	INTVEC(stray0C, ISTACK)	# Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
 	INTVEC(stray14, ISTACK)	# Customer Reserved Instruction, 14
@@ -162,7 +162,9 @@ mcheck:	.globl	mcheck
 	movl	_memtest,(sp)	# REI to new adress
 	rei
 
-	STRAY(0, 08)
+	.align 2
+invkstk: chmk $8	# skould always halt.
+/*	STRAY(0, 08) */
 	STRAY(0, 0C)
 
 	TRAPCALL(privinflt, T_PRIVINFLT)

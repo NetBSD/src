@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.10 1995/03/30 21:25:51 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.11 1995/04/12 15:35:14 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -52,24 +52,24 @@
 
 volatile int whichqs;
 extern u_int proc0paddr;
-
+/*
+ * pagemove - moves pages at virtual address from to virtual address to,
+ * block moved of size size. Using fast insn bcopy for pte move.
+ */
+void
 pagemove(from, to, size)
 	caddr_t from, to;
 	int size;
 {
-	u_int *fpte, *tpte;
+	u_int *fpte, *tpte,stor;
 
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	while (size > 0) {
-		*tpte++ = *fpte;
-		*(int *)fpte++ = PG_NV;
-		mtpr(from,PR_TBIS);
-		mtpr(to,PR_TBIS);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
-	}
+
+	stor = (size/NBPG) * sizeof(struct pte);
+	bcopy(fpte,tpte,stor);
+	bzero(fpte,stor);
+	mtpr(0,PR_TBIA);
 }
 
 #define VIRT2PHYS(x) \

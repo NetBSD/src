@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1995/03/30 21:25:14 ragge Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1995/04/12 15:34:44 ragge Exp $	*/
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,14 +33,9 @@
 		
 
 
-/******************************************************************************
-
-  clock.c
-
-******************************************************************************/
-
 #include <sys/param.h>
 #include <sys/kernel.h>
+
 #include "machine/mtpr.h"
 #include "machine/sid.h"
 
@@ -60,10 +55,12 @@ void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splhigh(),i;
-	u_int int_time=mfpr(PR_TODR),tmp_year;
+	int s,i;
+	u_int int_time,tmp_year;
 	static struct timeval lasttime;
 
+	s = splhigh();
+	int_time=mfpr(PR_TODR);
 	bcopy(&time,tvp,sizeof(struct timeval));
 	i=mfpr(PR_ICR)+tick; /* Get current interval count */
 	tvp->tv_usec += i;
@@ -96,81 +93,91 @@ microtime(tvp)
  * alert is printed and the time is temporary set to the time in fs_time.
  */
 
-void inittodr(time_t fs_time) {
+void
+inittodr(fs_time) 
+	time_t fs_time;
+{
 
-  unsigned long tmp_year,sluttid=fs_time,year_ticks;
-  int clock_stopped;
+	unsigned long tmp_year,sluttid,year_ticks;
+	int clock_stopped;
 
-  year=(fs_time/SEC_PER_DAY/365)*365*SEC_PER_DAY;
-  tmp_year=year/SEC_PER_DAY/365+2;
-  year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
+	sluttid=fs_time;
+	year=(fs_time/SEC_PER_DAY/365)*365*SEC_PER_DAY;
+	tmp_year=year/SEC_PER_DAY/365+2;
+	year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
 
-  switch (cpunumber) {
+	switch (cpunumber) {
 #if VAX750
-  case VAX_750:
-    year_ticks = mfpr(PR_TODR);
-    clock_stopped = todrstopped;
-    break;
+	case VAX_750:
+		year_ticks = mfpr(PR_TODR);
+		clock_stopped = todrstopped;
+		break;
 #endif
 #if VAX630 || VAX410
-  case VAX_78032:
-    year_ticks = uvaxII_gettodr(&clock_stopped);
-    break;
+	case VAX_78032:
+		year_ticks = uvaxII_gettodr(&clock_stopped);
+		break;
 #endif
-  default:
-    year_ticks = 0;
-    clock_stopped = 1;
-  };
+	default:
+		year_ticks = 0;
+		clock_stopped = 1;
+	};
 
-  if(clock_stopped){
-    printf("Internal clock not started. Using time from file system.\n");
-    switch (cpunumber) {
+	if(clock_stopped){
+		printf(
+	"Internal clock not started. Using time from file system.\n");
+		switch (cpunumber) {
 #if VAX750
-    case VAX_750:
-      mtpr((fs_time-year)*100+1, PR_TODR); /*+1 so the clock won't be stopped */
-      break;
+		case VAX_750:
+			/*+1 so the clock won't be stopped */
+			mtpr((fs_time-year)*100+1, PR_TODR);
+			break;
 #endif
 #if VAX630 || VAX410
-    case VAX_78032:
-      uvaxII_settodr((fs_time-year)*100+1);
-      break;
+		case VAX_78032:
+			uvaxII_settodr((fs_time-year)*100+1);
+			break;
 #endif
-    };
-    todrstopped=0;
-  } else if(year_ticks/100>fs_time-year+SEC_PER_DAY*3) {
-    printf("WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
-	 (year_ticks/100-(fs_time-year))/SEC_PER_DAY);
-    sluttid=year+(year_ticks/100);
-  } else if(year_ticks/100<fs_time-year) {
-    printf("WARNING: Clock has lost time - CHECK AND RESET THE DATE.\n");
-  } else sluttid=year+(year_ticks/100);
-  time.tv_sec=sluttid;
+		};
+		todrstopped=0;
+	} else if(year_ticks/100>fs_time-year+SEC_PER_DAY*3) {
+		printf(
+	"WARNING: Clock has gained %d days - CHECK AND RESET THE DATE.\n",
+		    (year_ticks/100-(fs_time-year))/SEC_PER_DAY);
+		sluttid=year+(year_ticks/100);
+	} else if(year_ticks/100<fs_time-year) {
+		printf(
+		"WARNING: Clock has lost time - CHECK AND RESET THE DATE.\n");
+	} else sluttid=year+(year_ticks/100);
+	time.tv_sec=sluttid;
 }
 
 /*   
  * Resettodr restores the time of day hardware after a time change.
  */
 
-void resettodr(void) {
+void
+resettodr()
+{
 
-  unsigned long tmp_year;
+	unsigned long tmp_year;
 
-  year=(time.tv_sec/SEC_PER_DAY/365)*365*SEC_PER_DAY;
-  tmp_year=year/SEC_PER_DAY/365+2;
-  year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
-  switch (cpunumber) {
+	year=(time.tv_sec/SEC_PER_DAY/365)*365*SEC_PER_DAY;
+	tmp_year=year/SEC_PER_DAY/365+2;
+	year_len=100*SEC_PER_DAY*((tmp_year%4&&tmp_year!=32)?365:366);
+	switch (cpunumber) {
 #if VAX750
-  case VAX_750:
-    mtpr((time.tv_sec-year)*100+1, PR_TODR);
-    break;
+	case VAX_750:
+		mtpr((time.tv_sec-year)*100+1, PR_TODR);
+		break;
 #endif
 #if VAX630 || VAX410
-  case VAX_78032:
-    uvaxII_settodr((time.tv_sec-year)*100+1);
-    break;
+	case VAX_78032:
+		uvaxII_settodr((time.tv_sec-year)*100+1);
+		break;
 #endif
-  };
-  todrstopped=0;
+	};
+	todrstopped=0;
 }
 
 /*
@@ -181,7 +188,7 @@ void resettodr(void) {
  */
 int
 todr()
-  {
+{
       int delaycnt, x = 4, y = 4;
       static int todr_val;
 
