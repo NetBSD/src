@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.5 2000/01/19 13:12:55 leo Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.6 2002/05/30 22:25:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -237,9 +237,9 @@ static __inline__ u_int16_t swap16(u_int16_t v)
 
 static __inline__ u_int32_t swap32(u_int32_t v)
 {
-	__asm volatile ("	rolw	#8, %0
-				swap	%0
-				rolw	#8, %0" : "=d"(v) : "0"(v));
+	__asm volatile ("	rolw	#8, %0	\n"
+			"	swap	%0	\n"
+			"	rolw	#8, %0" : "=d"(v) : "0"(v));
 	return(v);
 }
 
