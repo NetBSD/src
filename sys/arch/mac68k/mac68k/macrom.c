@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.19 1996/02/28 04:14:15 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.20 1996/03/29 02:00:59 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -47,7 +47,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include "via.h"
+#include <machine/viareg.h>
 #include "macrom.h"
 #include <sys/malloc.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.37 1996/02/11 01:20:46 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.38 1996/03/29 02:01:06 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -43,7 +43,7 @@
 #include <sys/syslog.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include "via.h"
+#include <machine/viareg.h>
 
 #include "ncrscsi.h"
 #include "ncr96scsi.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 1996/03/12 21:34:57 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.28 1996/03/29 02:00:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,7 @@
 #endif				/* STANDALONE */
 
 #include "clockreg.h"
-#include "via.h"
+#include <machine/viareg.h>
 
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1996/03/17 01:33:44 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1996/03/29 02:00:38 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,6 +108,7 @@
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+#include <machine/viareg.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -123,13 +124,20 @@ int	cold;		    /* if 1 (locore.s), still working on cold-start */
 int	acdebug = 0;
 #endif
 
+static int	mbprint __P((void *aux, char *name));
+static int	root_matchbyname __P((struct device *parent,
+					void *cf, void *aux));
+static void	mainbus_attach __P((struct device *parent,
+					struct device *self, void *aux));
+static void	setroot __P((void));
+static void	swapconf __P((void));
+
 /*
  * Determine mass storage and memory configuration for a machine.
  */
-configure()
+void
+configure(void)
 {
-	int found;
-
 	VIA_initialize();
 
 	mrg_init();		/* Init Mac ROM Glue */
@@ -163,10 +171,11 @@ configure()
 /*
  * Configure swap space and related parameters.
  */
-swapconf()
+static void
+swapconf(void)
 {
 	register struct swdevt *swp;
-	register int nblks, tblks;
+	register int nblks;
 
 	for (swp = swdevt; swp->sw_dev != NODEV ; swp++) {
 		int maj = major(swp->sw_dev);
@@ -197,14 +206,13 @@ struct	device *bootdv = NULL;
 static int
 target_to_unit(u_long bus, u_long target, u_long lun)
 {
-	int			targ;
 	struct scsibus_softc	*scsi;
 	struct scsi_link	*sc_link;
 	struct device		*sc_dev;
 extern	struct cfdriver		scsibus_cd;
 
 	if (target < 0 || target > 7 || lun < 0 || lun > 7) {
-		printf("scsi target to unit, target (%d) or lun (%d)"
+		printf("scsi target to unit, target (%ld) or lun (%ld)"
 			" out of range.\n", target, lun);
 		return -1;
 	}
@@ -225,7 +233,7 @@ extern	struct cfdriver		scsibus_cd;
 		return -1;
 	}
 	if (bus < 0 || bus >= scsibus_cd.cd_ndevs) {
-		printf("scsi target to unit, bus (%d) out of range.\n", bus);
+		printf("scsi target to unit, bus (%ld) out of range.\n", bus);
 		return -1;
 	}
 	if (scsibus_cd.cd_devs[bus]) {
@@ -257,7 +265,7 @@ findblkmajor(register struct disk *dv)
  * Yanked from i386/i386/autoconf.c
  */
 void
-findbootdev()
+findbootdev(void)
 {
 	register struct device *dv;
 	register struct disk *diskp;
@@ -299,11 +307,12 @@ findbootdev()
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
-setroot()
+static void
+setroot(void)
 {
 	register struct swdevt	*swp;
 	register int		majdev, mindev, part;
-	dev_t			nrootdev, nswapdev, temp;
+	dev_t			nrootdev, temp;
 
 	if (boothowto & RB_DFLTROOT)
 		return;
@@ -313,10 +322,11 @@ setroot()
 		delay(10000000);
 /*		panic("ARGH!!  No boot device????"); */
 	}
+	nrootdev = 0;
 	switch (bootdv->dv_class) {
 		case DV_DISK:
 			nrootdev = makedev(B_TYPE(bootdev),
-					   B_UNIT(bootdev) << UNITSHIFT
+					   (B_UNIT(bootdev) << UNITSHIFT)
 					   + B_PARTITION(bootdev));
 			break;
 		default:
@@ -370,11 +380,13 @@ mbprint(aux, name)
 }
 
 static int
-root_matchbyname(parent, cf, aux)
+root_matchbyname(parent, cfv, aux)
 	struct device	*parent;
-	struct cfdata	*cf;
+	void		*cfv;
 	void		*aux;
 {
+	struct cfdata	*cf = (struct cfdata *) cfv;
+
 	return (strcmp(cf->cf_driver->cd_name, (char *)aux) == 0);
 }
 

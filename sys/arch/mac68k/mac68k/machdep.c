@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1996/03/12 04:24:47 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 1996/03/29 02:00:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,7 +123,7 @@
 
 #include <dev/cons.h>
 
-#include "via.h"
+#include <machine/viareg.h>
 #include "macrom.h"
 #include "ether.h"
 
