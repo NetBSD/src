@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.8 2000/06/23 15:40:39 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.9 2000/06/26 06:25:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.8 2000/06/23 15:40:39 kleink Exp $")
+	RCSID("$NetBSD: brk.S,v 1.9 2000/06/26 06:25:45 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -63,11 +63,7 @@ _C_LABEL(__minbrk):
 	.long	_end			! lower brk limit; also for gmon code
 	.text
 
-#ifdef WEAK_ALIAS
 ENTRY(_brk)
-#else
-ENTRY(brk)
-#endif
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
 	ld	[%o5 + _C_LABEL(__minbrk)], %o4
