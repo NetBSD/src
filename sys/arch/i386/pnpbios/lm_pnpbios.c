@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.4 2001/11/15 07:03:35 lukem Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.5 2002/09/27 20:33:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.4 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.5 2002/09/27 20:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ void lm_pnpbios_attach __P((struct device *, struct device *, void *));
 int lm_pnpbios_hints_index __P((const char *));
 
 
-struct cfattach lm_pnpbios_ca = {
+const struct cfattach lm_pnpbios_ca = {
 	sizeof(struct lm_softc), lm_pnpbios_match, lm_pnpbios_attach
 };
 

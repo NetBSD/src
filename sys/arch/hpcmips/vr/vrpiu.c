@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.23 2002/03/17 19:40:41 atatat Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.24 2002/09/27 20:32:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -128,7 +128,7 @@ int mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s,
 /*
  * static or global variables
  */
-struct cfattach vrpiu_ca = {
+const struct cfattach vrpiu_ca = {
 	sizeof(struct vrpiu_softc), vrpiumatch, vrpiuattach
 };
 

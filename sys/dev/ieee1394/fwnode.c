@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.14 2002/09/27 15:37:21 provos Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.15 2002/09/27 20:38:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.14 2002/09/27 15:37:21 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.15 2002/09/27 20:38:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,7 +76,7 @@ int     fwnodedebug = 1;
 #define DPRINTFN(n,x)
 #endif
 
-struct cfattach fwnode_ca = {
+const struct cfattach fwnode_ca = {
 	sizeof(struct fwnode_softc), fwnode_match, fwnode_attach,
 	fwnode_detach
 };

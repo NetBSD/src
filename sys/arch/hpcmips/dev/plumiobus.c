@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.6 2002/09/27 03:17:54 thorpej Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.7 2002/09/27 20:32:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct plumiobus_softc {
 	struct plumisa_resource	sc_isa[PLUM_IOBUS_IO5CSMAX];
 };
 
-struct cfattach plumiobus_ca = {
+const struct cfattach plumiobus_ca = {
 	sizeof(struct plumiobus_softc), plumiobus_match, plumiobus_attach
 };
 

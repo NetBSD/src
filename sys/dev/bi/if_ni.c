@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
+/*	$NetBSD: if_ni.c,v 1.16 2002/09/27 20:37:37 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.16 2002/09/27 20:37:37 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -153,7 +153,7 @@ static	int failtest(struct ni_softc *, int, int, int, char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
 
-struct	cfattach ni_ca = {
+const struct cfattach ni_ca = {
 	sizeof(struct ni_softc), nimatch, niattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.10 2002/09/27 02:24:21 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.11 2002/09/27 20:35:01 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -271,7 +271,7 @@ static void	emac_mii_writereg(struct device *, int, int, int);
 
 int		emac_copy_small = 0;
 
-struct cfattach emac_ca = {
+const struct cfattach emac_ca = {
 	sizeof(struct emac_softc), emac_match, emac_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.17 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.18 2002/09/27 20:33:34 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -124,7 +124,7 @@ void bmac_mii_tick __P((void *));
 u_int32_t bmac_mbo_read __P((struct device *));
 void bmac_mbo_write __P((struct device *, u_int32_t));
 
-struct cfattach bm_ca = {
+const struct cfattach bm_ca = {
 	sizeof(struct bmac_softc), bmac_match, bmac_attach
 };
 

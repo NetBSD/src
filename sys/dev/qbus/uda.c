@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.44 2002/09/27 02:24:31 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.45 2002/09/27 20:41:21 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.44 2002/09/27 02:24:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.45 2002/09/27 20:41:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,11 +89,11 @@ static	int udaprint(void *, const char *);
 static	void udasaerror(struct device *, int);
 static	void udago(struct device *, struct mscp_xi *);
 
-struct	cfattach mtc_ca = {
+const struct cfattach mtc_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach
 };
 
-struct	cfattach uda_ca = {
+const struct cfattach uda_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisapc.c,v 1.1 2002/02/10 01:57:58 thorpej Exp $	*/
+/*	$NetBSD: ofisapc.c,v 1.2 2002/09/27 20:35:32 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,7 +53,7 @@ int ofisapcprobe __P((struct device *, struct cfdata *, void *));
 void ofisapcattach __P((struct device *, struct device *, void *));
 
 
-struct cfattach ofisapc_ca = {
+const struct cfattach ofisapc_ca = {
 	sizeof(struct device), ofisapcprobe, ofisapcattach
 };
 

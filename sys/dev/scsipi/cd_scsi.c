@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.23 2001/11/15 09:48:16 lukem Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.24 2002/09/27 20:41:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.23 2001/11/15 09:48:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.24 2002/09/27 20:41:41 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.23 2001/11/15 09:48:16 lukem Exp $");
 int	cd_scsibus_match __P((struct device *, struct cfdata *, void *));
 void	cd_scsibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach cd_scsibus_ca = {
+const struct cfattach cd_scsibus_ca = {
 	sizeof(struct cd_softc), cd_scsibus_match, cd_scsibus_attach,
 	cddetach, cdactivate
 };

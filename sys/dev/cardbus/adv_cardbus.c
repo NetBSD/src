@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.5 2001/11/13 12:51:12 lukem Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.6 2002/09/27 20:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.5 2001/11/13 12:51:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.6 2002/09/27 20:37:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ int	adv_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	adv_cardbus_attach __P((struct device *, struct device *, void *));
 int	adv_cardbus_detach __P((struct device *, int));
 
-struct cfattach adv_cardbus_ca = {
+const struct cfattach adv_cardbus_ca = {
 	sizeof(struct adv_cardbus_softc), adv_cardbus_match, adv_cardbus_attach,
 	adv_cardbus_detach
 };

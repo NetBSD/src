@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.12 2002/02/02 10:50:09 takemura Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.13 2002/09/27 20:32:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -88,7 +88,7 @@ void vrcmu_init(void);
 void vrcmu_supply(int);
 void vrcmu_mask(int);
 
-struct cfattach com_vrip_ca = {
+const struct cfattach com_vrip_ca = {
 	sizeof(struct com_vrip_softc), com_vrip_probe, com_vrip_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.2 2002/03/17 19:40:45 atatat Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.3 2002/09/27 20:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -80,7 +80,7 @@ int kb_ap_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 extern struct wscons_keydesc newskb_keydesctab[];
 
-struct cfattach kb_ap_ca = {
+const struct cfattach kb_ap_ca = {
 	sizeof(struct kb_ap_softc), kb_ap_match, kb_ap_attach
 };
 

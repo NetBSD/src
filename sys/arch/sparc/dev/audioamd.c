@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.9 2002/06/13 21:02:45 gmcgarry Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.10 2002/09/27 20:35:38 thorpej Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -111,13 +111,13 @@ void	audioamd_sbus_attach __P((struct device *, struct device *, void *));
 int	audioamd_sbus_match __P((struct device *, struct cfdata *, void *));
 void	audioamd_attach(struct audioamd_softc *sc, int);
 
-struct cfattach audioamd_mainbus_ca = {
+const struct cfattach audioamd_mainbus_ca = {
 	sizeof(struct audioamd_softc),
 	audioamd_mainbus_match,
 	audioamd_mainbus_attach
 };
 
-struct cfattach audioamd_sbus_ca = {
+const struct cfattach audioamd_sbus_ca = {
 	sizeof(struct audioamd_softc),
 	audioamd_sbus_match,
 	audioamd_sbus_attach

@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.10 2002/07/09 00:24:52 uwe Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.11 2002/09/27 20:41:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.10 2002/07/09 00:24:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.11 2002/09/27 20:41:06 thorpej Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -141,7 +141,7 @@ void	mhzc_attach __P((struct device *, struct device *, void *));
 int	mhzc_detach __P((struct device *, int));
 int	mhzc_activate __P((struct device *, enum devact));
 
-struct cfattach mhzc_ca = {
+const struct cfattach mhzc_ca = {
 	sizeof(struct mhzc_softc), mhzc_match, mhzc_attach,
 	    mhzc_detach, mhzc_activate
 };
@@ -665,7 +665,7 @@ void	com_mhzc_attach __P((struct device *, struct device *, void *));
 int	com_mhzc_detach __P((struct device *, int));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
-struct cfattach com_mhzc_ca = {
+const struct cfattach com_mhzc_ca = {
 	sizeof(struct com_softc), com_mhzc_match, com_mhzc_attach,
 	    com_detach, com_activate
 };
@@ -753,7 +753,7 @@ int	sm_mhzc_match __P((struct device *, struct cfdata *, void *));
 void	sm_mhzc_attach __P((struct device *, struct device *, void *));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
-struct cfattach sm_mhzc_ca = {
+const struct cfattach sm_mhzc_ca = {
 	sizeof(struct smc91cxx_softc), sm_mhzc_match, sm_mhzc_attach,
 	    smc91cxx_detach, smc91cxx_activate
 };

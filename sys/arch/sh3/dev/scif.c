@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.29 2002/09/27 02:24:23 thorpej Exp $ */
+/*	$NetBSD: scif.c,v 1.30 2002/09/27 20:35:23 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -264,7 +264,7 @@ struct callout scif_soft_ch = CALLOUT_INITIALIZER;
 
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
-struct cfattach scif_ca = {
+const struct cfattach scif_ca = {
 	sizeof(struct scif_softc), scif_match, scif_attach
 };
 

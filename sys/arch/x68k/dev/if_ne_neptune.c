@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.4 2001/02/21 05:44:32 minoura Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.5 2002/09/27 20:37:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ static int ne_neptune_intr __P((void *));
 
 #define ne_neptune_softc ne2000_softc
 
-struct cfattach ne_neptune_ca = {
+const struct cfattach ne_neptune_ca = {
 	sizeof(struct ne_neptune_softc), ne_neptune_match, ne_neptune_attach
 };
 

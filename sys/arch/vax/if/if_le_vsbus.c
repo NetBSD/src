@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.12 2001/11/28 05:22:48 lukem Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.13 2002/09/27 20:36:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ static	void	le_vsbus_attach __P((struct device *, struct device *, void *));
 static	void	lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static	u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
 
-struct cfattach le_vsbus_ca = {
+const struct cfattach le_vsbus_ca = {
 	sizeof(struct le_softc), le_vsbus_match, le_vsbus_attach
 };
 

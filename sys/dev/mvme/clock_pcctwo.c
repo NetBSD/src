@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.1 2002/02/12 20:38:40 scw Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.2 2002/09/27 20:39:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct clock_pcctwo_softc {
 	u_char sc_clock_lvl;
 };
 
-struct cfattach clock_pcctwo_ca = {
+const struct cfattach clock_pcctwo_ca = {
 	sizeof(struct device), clock_pcctwo_match, clock_pcctwo_attach
 };
 

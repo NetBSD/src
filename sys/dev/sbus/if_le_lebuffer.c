@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.12 2002/09/27 02:24:32 thorpej Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.13 2002/09/27 20:41:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.12 2002/09/27 02:24:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.13 2002/09/27 20:41:29 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -98,7 +98,7 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
-struct cfattach le_lebuffer_ca = {
+const struct cfattach le_lebuffer_ca = {
 	sizeof(struct le_softc), lematch_lebuffer, leattach_lebuffer
 };
 

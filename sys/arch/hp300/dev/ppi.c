@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.21 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ppi.c,v 1.22 2002/09/27 20:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.21 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.22 2002/09/27 20:31:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ struct	ppi_softc {
 int	ppimatch __P((struct device *, struct cfdata *, void *));
 void	ppiattach __P((struct device *, struct device *, void *));
 
-struct cfattach ppi_ca = {
+const struct cfattach ppi_ca = {
 	sizeof(struct ppi_softc), ppimatch, ppiattach
 };
 

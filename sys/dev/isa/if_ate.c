@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.30 2002/01/07 21:47:06 thorpej Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.31 2002/09/27 20:38:25 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.30 2002/01/07 21:47:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.31 2002/09/27 20:38:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct ate_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ate_isa_ca = {
+const struct cfattach ate_isa_ca = {
 	sizeof(struct ate_softc), ate_match, ate_attach
 };
 

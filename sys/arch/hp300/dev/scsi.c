@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.31 2002/09/27 03:17:50 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.32 2002/09/27 20:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.31 2002/09/27 03:17:50 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.32 2002/09/27 20:31:54 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ void	scsiattach __P((struct device *, struct device *, void *));
 void	scsi_attach_children __P((struct scsi_softc *));
 int	scsisubmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach oscsi_ca = {
+const struct cfattach oscsi_ca = {
 	sizeof(struct scsi_softc), scsimatch, scsiattach
 };
 

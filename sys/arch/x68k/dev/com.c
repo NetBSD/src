@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.26 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: com.c,v 1.27 2002/09/27 20:37:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ static int comspeed __P((long));
 
 static u_char tiocm_xxx2mcr __P((int));
 
-struct cfattach xcom_ca = {
+const struct cfattach xcom_ca = {
 	sizeof(struct com_softc), comprobe, comattach,
 };
 

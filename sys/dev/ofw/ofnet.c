@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.25 2002/09/18 01:47:08 chs Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.26 2002/09/27 20:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.25 2002/09/18 01:47:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.26 2002/09/27 20:39:38 thorpej Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.25 2002/09/18 01:47:08 chs Exp $");
 #include <ipkdb/ipkdb.h>
 #include <machine/ipkdb.h>
 
-struct cfattach ipkdb_ofn_ca = {
+const struct cfattach ipkdb_ofn_ca = {
 	0, ipkdb_probe, ipkdb_attach
 };
 
@@ -88,7 +88,7 @@ struct ofnet_softc {
 static int ofnet_match (struct device *, struct cfdata *, void *);
 static void ofnet_attach (struct device *, struct device *, void *);
 
-struct cfattach ofnet_ca = {
+const struct cfattach ofnet_ca = {
 	sizeof(struct ofnet_softc), ofnet_match, ofnet_attach
 };
 

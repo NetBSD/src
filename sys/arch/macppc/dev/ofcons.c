@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.10 2002/09/27 20:33:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,7 +64,7 @@ static int stdin, stdout;
 static int ofcmatch __P((struct device *, struct cfdata *, void *));
 static void ofcattach __P((struct device *, struct device *, void *));
 
-struct cfattach macofcons_ca = {
+const struct cfattach macofcons_ca = {
 	sizeof(struct ofcons_softc), ofcmatch, ofcattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: i82072.c,v 1.5 2002/09/27 20:33:49 thorpej Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,7 +76,7 @@ static int	fd_match (struct device *, struct cfdata *, void *);
 static void	fd_attach (struct device *, struct device *, void *);
 static void     fd_reset (struct fd_softc *);
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fd_match, fd_attach
 };
 

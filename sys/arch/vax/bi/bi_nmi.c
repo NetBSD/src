@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_nmi.c,v 1.1 2000/07/26 11:47:15 ragge Exp $	   */
+/*	$NetBSD: bi_nmi.c,v 1.2 2002/09/27 20:36:44 thorpej Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -102,6 +102,6 @@ bi_nmi_attach(struct device *parent, struct device *self, void *aux)
 	bi_attach(sc);
 }
 
-struct	cfattach bi_nmi_ca = {
+const struct cfattach bi_nmi_ca = {
 	sizeof(struct bi_softc), bi_nmi_match, bi_nmi_attach
 };

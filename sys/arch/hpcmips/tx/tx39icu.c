@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.18 2002/05/15 15:19:55 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.19 2002/09/27 20:32:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ void	tx39_irqhigh_establish(tx_chipset_tag_t, int, int, int,
 void	tx39_irqhigh_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 int	tx39_irqhigh(int, int);
 
-struct cfattach tx39icu_ca = {
+const struct cfattach tx39icu_ca = {
 	sizeof(struct tx39icu_softc), tx39icu_match, tx39icu_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: pccons.c,v 1.7 2002/09/27 20:37:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
 
-struct cfattach pc_ca = {
+const struct cfattach pc_ca = {
 	sizeof(struct pc_softc), pcprobe, pcattach
 };
 
@@ -220,7 +220,7 @@ int pcconskbdprobe __P((struct device *, struct cfdata *, void *));
 void pcconskbdattach __P((struct device *, struct device *, void *));
 void pcinput __P((void *, int));
 
-struct cfattach pcconskbd_ca = {
+const struct cfattach pcconskbd_ca = {
 	sizeof(struct pcconskbd_softc), pcconskbdprobe, pcconskbdattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.51 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: rd.c,v 1.52 2002/09/27 20:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.51 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.52 2002/09/27 20:31:52 thorpej Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -280,7 +280,7 @@ void	rdprinterr __P((char *, short, char **));
 int	rdmatch __P((struct device *, struct cfdata *, void *));
 void	rdattach __P((struct device *, struct device *, void *));
 
-struct cfattach rd_ca = {
+const struct cfattach rd_ca = {
 	sizeof(struct rd_softc), rdmatch, rdattach
 };
 

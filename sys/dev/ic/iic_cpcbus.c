@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_cpcbus.c,v 1.2 2002/06/13 15:27:23 augustss Exp $	*/
+/*	$NetBSD: iic_cpcbus.c,v 1.3 2002/09/27 20:38:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct iic_cpcbus_softc {
 static int	iic_cpcbus_match(struct device *, struct cfdata *, void *);
 static void	iic_cpcbus_attach(struct device *, struct device *, void *);
 
-struct cfattach iic_cpcbus_ca = {
+const struct cfattach iic_cpcbus_ca = {
 	sizeof(struct iic_cpcbus_softc), iic_cpcbus_match, iic_cpcbus_attach
 };
 

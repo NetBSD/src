@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.25 2002/01/14 13:39:14 tsutsui Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.26 2002/09/27 20:37:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.25 2002/01/14 13:39:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.26 2002/09/27 20:37:53 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -528,7 +528,7 @@ pdq_eisa_attach(
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
 
-struct cfattach fea_ca = {
+const struct cfattach fea_ca = {
     sizeof(pdq_softc_t), pdq_eisa_match, pdq_eisa_attach
 };
 #endif

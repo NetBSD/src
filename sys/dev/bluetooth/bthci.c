@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.4 2002/09/27 15:37:11 provos Exp $	*/
+/*	$NetBSD: bthci.c,v 1.5 2002/09/27 20:37:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,12 +73,12 @@ struct cfdriver bthci_cd = {
 };
 #endif
 
-struct cfattach bthci_ca = {
+const struct cfattach bthci_ca = {
 	sizeof(struct bthci_softc), bthci_match, bthci_attach,
 	bthci_detach, bthci_activate
 };
 
-extern struct cfattach bthci_ca;
+extern const struct cfattach bthci_ca;
 extern struct cfdriver bthci_cd;
 
 dev_type_open(bthciopen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.71 2002/08/13 00:50:34 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.72 2002/09/27 20:32:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.71 2002/08/13 00:50:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.72 2002/09/27 20:32:57 thorpej Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -132,7 +132,7 @@ int clock_debug = 0;
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
-struct cfattach sysbeep_ca = {
+const struct cfattach sysbeep_ca = {
 	sizeof(struct device), sysbeepmatch, sysbeepattach
 };
 

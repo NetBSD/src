@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.5 2002/09/27 15:37:12 provos Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.6 2002/09/27 20:37:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.5 2002/09/27 15:37:12 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.6 2002/09/27 20:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ struct ppb_cardbus_softc {
   int foo;
 };
 
-struct cfattach rbus_ppb_ca = {
+const struct cfattach rbus_ppb_ca = {
 	sizeof(struct ppb_cardbus_softc),
 	ppb_cardbus_match,
 	ppb_cardbus_attach,

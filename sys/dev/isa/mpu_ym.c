@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_ym.c,v 1.3 2002/03/10 13:57:11 itohy Exp $	*/
+/*	$NetBSD: mpu_ym.c,v 1.4 2002/09/27 20:38:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.3 2002/03/10 13:57:11 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.4 2002/09/27 20:38:43 thorpej Exp $");
 
 #define NMPU_YM 1
 
@@ -68,7 +68,7 @@ void	mpu_ym_attach __P((struct device *, struct device *, void *));
 int	mpu_ym_power_ctl __P((void *, int));
 #endif
 
-struct cfattach mpu_ym_ca = {
+const struct cfattach mpu_ym_ca = {
 	sizeof (struct mpu_softc), mpu_ym_match, mpu_ym_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.5 2002/03/04 02:19:10 simonb Exp $ */
+/* $NetBSD: btvmeii.c,v 1.6 2002/09/27 20:39:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.5 2002/03/04 02:19:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.6 2002/09/27 20:39:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct b3_2706_softc {
 	int strayintrs;
 };
 
-struct cfattach btvmeii_ca = {
+const struct cfattach btvmeii_ca = {
 	sizeof(struct b3_2706_softc), b3_2706_match, b3_2706_attach,
 #if 0
 	b3_2706_detach

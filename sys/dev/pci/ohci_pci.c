@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.20 2001/11/13 07:48:46 lukem Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.21 2002/09/27 20:40:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.20 2001/11/13 07:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.21 2002/09/27 20:40:32 thorpej Exp $");
 
 #include "ehci.h"
 
@@ -75,7 +75,7 @@ struct ohci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach ohci_pci_ca = {
+const struct cfattach ohci_pci_ca = {
 	sizeof(struct ohci_pci_softc), ohci_pci_match, ohci_pci_attach,
 	ohci_pci_detach, ohci_activate
 };

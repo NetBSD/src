@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: power.c,v 1.2 2002/09/27 20:36:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,7 +51,7 @@
 static int powermatch __P((struct device *, struct cfdata *, void *));
 static void powerattach __P((struct device *, struct device *, void *));
 
-struct cfattach power_ca = {
+const struct cfattach power_ca = {
 	sizeof(struct device), powermatch, powerattach
 };
 

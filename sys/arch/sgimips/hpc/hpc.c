@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.9 2002/09/27 15:36:40 provos Exp $	*/
+/*	$NetBSD: hpc.c,v 1.10 2002/09/27 20:35:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -117,7 +117,7 @@ int	hpc_submatch(struct device *, struct cfdata *, void *);
 
 int	hpc_power_intr(void *);
 
-struct cfattach hpc_ca = {
+const struct cfattach hpc_ca = {
 	sizeof(struct hpc_softc), hpc_match, hpc_attach
 };
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.52 2002/09/27 15:37:29 provos Exp $ */
+/*      $NetBSD: if_qe.c,v 1.53 2002/09/27 20:41:18 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.52 2002/09/27 15:37:29 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.53 2002/09/27 20:41:18 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -114,7 +114,7 @@ static	int	qe_add_rxbuf(struct qe_softc *, int);
 static	void	qe_setup(struct qe_softc *);
 static	void	qetimeout(struct ifnet *);
 
-struct	cfattach qe_ca = {
+const struct cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
 };
 

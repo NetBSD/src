@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.6 2001/11/15 07:03:33 lukem Exp $	*/
+/*	$NetBSD: pceb.c,v 1.7 2002/09/27 20:33:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.6 2001/11/15 07:03:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.7 2002/09/27 20:33:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.6 2001/11/15 07:03:33 lukem Exp $");
 int	pcebmatch __P((struct device *, struct cfdata *, void *));
 void	pcebattach __P((struct device *, struct device *, void *));
 
-struct cfattach pceb_ca = {
+const struct cfattach pceb_ca = {
 	sizeof(struct device), pcebmatch, pcebattach
 };
 

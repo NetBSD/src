@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.36 2001/11/13 07:48:43 lukem Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.37 2002/09/27 20:40:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.36 2001/11/13 07:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.37 2002/09/27 20:40:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_pci.c,v 1.36 2001/11/13 07:48:43 lukem Exp $")
 int ep_pci_match __P((struct device *, struct cfdata *, void *));
 void ep_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ep_pci_ca = {
+const struct cfattach ep_pci_ca = {
 	sizeof(struct ep_softc), ep_pci_match, ep_pci_attach
 };
 

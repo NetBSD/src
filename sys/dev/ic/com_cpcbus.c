@@ -1,4 +1,4 @@
-/*	$NetBSD: com_cpcbus.c,v 1.1 2002/05/21 02:58:25 augustss Exp $	*/
+/*	$NetBSD: com_cpcbus.c,v 1.2 2002/09/27 20:38:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct com_cpc_softc {
 static int	com_cpc_match(struct device *, struct cfdata *, void *);
 static void	com_cpc_attach(struct device *, struct device *, void *);
 
-struct cfattach com_cpcbus_ca = {
+const struct cfattach com_cpcbus_ca = {
 	sizeof(struct com_cpc_softc), com_cpc_match, com_cpc_attach
 };
 

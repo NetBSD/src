@@ -1,4 +1,4 @@
-/*	$NetBSD: mbio.c,v 1.8 2002/09/27 02:24:26 thorpej Exp $	*/
+/*	$NetBSD: mbio.c,v 1.9 2002/09/27 20:36:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct mbio_softc {
 	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
 };
 
-struct cfattach mbio_ca = {
+const struct cfattach mbio_ca = {
 	sizeof(struct mbio_softc), mbio_match, mbio_attach
 };
 

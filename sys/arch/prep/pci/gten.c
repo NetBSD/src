@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.5 2002/07/04 14:43:52 junyoung Exp $	*/
+/*	$NetBSD: gten.c,v 1.6 2002/09/27 20:35:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ static	int	gten_match (struct device *, struct cfdata *, void *);
 static	void	gten_attach (struct device *, struct device *, void *);
 static	int	gten_print (void *, const char *);
 
-struct cfattach gten_ca = {
+const struct cfattach gten_ca = {
 	sizeof(struct gten_softc), gten_match, gten_attach,
 };
 

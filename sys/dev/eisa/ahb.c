@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.35 2002/04/05 18:27:48 bouyer Exp $	*/
+/*	$NetBSD: ahb.c,v 1.36 2002/09/27 20:37:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.35 2002/04/05 18:27:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.36 2002/09/27 20:37:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,7 +152,7 @@ integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 int	ahbmatch __P((struct device *, struct cfdata *, void *));
 void	ahbattach __P((struct device *, struct device *, void *));
 
-struct cfattach ahb_ca = {
+const struct cfattach ahb_ca = {
 	sizeof(struct ahb_softc), ahbmatch, ahbattach
 };
 

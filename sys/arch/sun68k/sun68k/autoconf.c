@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2002/09/27 15:36:58 provos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2002/09/27 20:36:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ cpu_configure()
 static int 	mainbus_match __P((struct device *, struct cfdata *, void *));
 static void	mainbus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.34 2002/06/21 16:03:33 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.35 2002/09/27 20:33:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.34 2002/06/21 16:03:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.35 2002/09/27 20:33:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,7 @@ void	pchbattach __P((struct device *, struct device *, void *));
 int	pchb_print __P((void *, const char *));
 int	agp_print __P((void *, const char *));
 
-struct cfattach pchb_ca = {
+const struct cfattach pchb_ca = {
 	sizeof(struct pchb_softc), pchbmatch, pchbattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.11 2002/05/14 02:03:03 matt Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.12 2002/09/27 20:37:19 thorpej Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -60,7 +60,7 @@ static void rtc_attach __P((struct device *, struct device *, void *));
 
 int rtclockinit __P((void));
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtc_match, rtc_attach
 };
 

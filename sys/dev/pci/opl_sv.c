@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sv.c,v 1.2 2001/11/13 07:48:46 lukem Exp $	*/
+/*	$NetBSD: opl_sv.c,v 1.3 2002/09/27 20:40:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.2 2001/11/13 07:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.3 2002/09/27 20:40:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_sv.c,v 1.2 2001/11/13 07:48:46 lukem Exp $");
 int	opl_sv_match __P((struct device *, struct cfdata *, void *));
 void	opl_sv_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opl_sv_ca = {
+const struct cfattach opl_sv_ca = {
 	sizeof (struct opl_softc), opl_sv_match, opl_sv_attach
 };
 

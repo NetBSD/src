@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.15 2002/04/07 14:52:27 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.16 2002/09/27 20:37:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -105,7 +105,7 @@ static inline void vs_set_po(struct vs_softc *sc, u_long);
 
 extern struct cfdata vs_cd;
 
-struct cfattach vs_ca = {
+const struct cfattach vs_ca = {
 	sizeof(struct vs_softc), vs_match, vs_attach
 };
 

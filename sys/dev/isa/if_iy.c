@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.58 2002/03/05 04:12:58 itojun Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.59 2002/09/27 20:38:33 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.58 2002/03/05 04:12:58 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.59 2002/09/27 20:38:33 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -191,7 +191,7 @@ static u_int16_t eepromread __P((bus_space_tag_t, bus_space_handle_t, int));
 static int eepromreadall __P((bus_space_tag_t, bus_space_handle_t, u_int16_t *,
     int));
 
-struct cfattach iy_ca = {
+const struct cfattach iy_ca = {
 	sizeof(struct iy_softc), iyprobe, iyattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.4 2002/09/18 01:44:12 chs Exp $	*/
+/*	$NetBSD: firepower.c,v 1.5 2002/09/27 20:34:33 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -230,7 +230,7 @@ firepower_device_register(struct device *dev, void *aux)
 int	firepower_match(struct device *, struct cfdata *, void *);
 void	firepower_attach(struct device *, struct device *, void *);
 
-struct cfattach firepower_ca = {
+const struct cfattach firepower_ca = {
 	sizeof(struct firepower_softc), firepower_match, firepower_attach,
 };
 

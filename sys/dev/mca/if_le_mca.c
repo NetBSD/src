@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.3 2001/11/13 07:46:26 lukem Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.4 2002/09/27 20:39:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.3 2001/11/13 07:46:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.4 2002/09/27 20:39:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static __inline void le_mca_wrreg __P((struct le_mca_softc *, int, int));
 #define le_mca_set_RAP(sc, reg_number) \
 		le_mca_wrreg(sc, reg_number, RAP | REGWRITE)
 
-struct cfattach le_mca_ca = {
+const struct cfattach le_mca_ca = {
 	sizeof(struct le_mca_softc), le_mca_match, le_mca_attach
 };
 

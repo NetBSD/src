@@ -1,4 +1,4 @@
-/* $NetBSD: pbus.c,v 1.5 2002/09/27 03:18:08 thorpej Exp $ */
+/* $NetBSD: pbus.c,v 1.6 2002/09/27 20:37:07 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -98,7 +98,7 @@ static void	pbus_attach(struct device *, struct device *, void *);
 static int	pbus_submatch(struct device *, struct cfdata *, void *);
 static int	pbus_print(void *, const char *);
 
-struct cfattach pbus_ca = {
+const struct cfattach pbus_ca = {
 	sizeof(struct device), pbus_match, pbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ipaq_pcic.c,v 1.9 2002/09/27 15:36:03 provos Exp $        */
+/*      $NetBSD: ipaq_pcic.c,v 1.10 2002/09/27 20:32:07 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ static struct sapcic_tag ipaqpcic_functions = {
 	ipaqpcic_intr_disestablish
 };
 
-struct cfattach ipaqpcic_ca = {
+const struct cfattach ipaqpcic_ca = {
 	sizeof(struct ipaqpcic_softc), ipaqpcic_match, ipaqpcic_attach
 };
 

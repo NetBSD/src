@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.2 2001/11/13 07:48:46 lukem Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.3 2002/09/27 20:40:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.2 2001/11/13 07:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.3 2002/09/27 20:40:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.2 2001/11/13 07:48:46 lukem Exp $");
 int	opl_cmpci_match __P((struct device *, struct cfdata *, void *));
 void	opl_cmpci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opl_cmpci_ca = {
+const struct cfattach opl_cmpci_ca = {
 	sizeof (struct opl_softc), opl_cmpci_match, opl_cmpci_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.27 2002/09/27 03:17:57 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.28 2002/09/27 20:33:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.27 2002/09/27 03:17:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.28 2002/09/27 20:33:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ static struct{
 };
 
 
-struct cfattach pnpbios_ca = {
+const struct cfattach pnpbios_ca = {
 	sizeof(struct pnpbios_softc), pnpbios_match, pnpbios_attach
 };
 
