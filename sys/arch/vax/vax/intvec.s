@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.17 1996/03/02 13:45:39 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.18 1996/03/07 23:22:45 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -183,7 +183,13 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 	mtpr	$0, $PR_SBIFS	# Clear SBI fault register
 	brb	2f
 
-1:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
+1:	cmpl	_cpunumber, $4	# Is it a 8600?
+	bneq	3f
+
+	mtpr	$0, $PR_EHSR	# Clear Error status register
+	brb	2f
+
+3:	mtpr	$0xF,$PR_MCESR	# clear the bus error bit
 2:	movl	_memtest,(sp)	# REI to new adress
 	rei
 

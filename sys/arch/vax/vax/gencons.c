@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.8 1996/02/02 18:08:52 mycroft Exp $	*/
+/*	$NetBSD: gencons.c,v 1.9 1996/03/07 23:22:41 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -191,7 +191,7 @@ gencnrint()
 	int i, j;
 
 	tp = gencn_tty[0];
-	i = mfpr(PR_RXDB);
+	i = mfpr(PR_RXDB) & 0377; /* Mask status flags etc... */
 
 #ifdef DDB
 	j = kdbrint(i);

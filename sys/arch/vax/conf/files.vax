@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.16 1996/03/03 11:56:33 ragge Exp $
+#       $NetBSD: files.vax,v 1.17 1996/03/07 23:27:59 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -198,6 +198,7 @@ file	arch/vax/vax/ctu.c		vax750
 file	arch/vax/vax/uvaxII.c		vax630
 file	arch/vax/vax/emulate.s		vax630 ka650
 file	arch/vax/vax/ka650.c		vax650
+file	arch/vax/vax/ka860.c		vax8600
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
 file	arch/vax/vax/udiv.s
@@ -224,7 +225,6 @@ file	compat/ultrix/ultrix_sysent.c	compat_ultrix
 #arch/vax/vax/flp.c           standard
 #arch/vax/vax/ka730.c         standard
 #arch/vax/vax/ka820.c         standard
-#arch/vax/vax/ka860.c         standard
 #arch/vax/vax/rx50.c          standard
 #arch/vax/vax/iidr.o          optional ii
 #arch/vax/vax/iidrsys.o       optional ii

@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.8 1996/03/02 13:45:34 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.9 1996/03/07 23:22:34 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -45,7 +45,9 @@
 #include <machine/vmparam.h>
 #include <machine/nexus.h>
 #include <machine/ka750.h>
-#include <machine/../vax/gencons.h>
+#include <machine/ioa.h>
+
+#include <vax/vax/gencons.h>
 
 #include <vm/vm.h>
 
@@ -62,6 +64,10 @@ struct bp_conf {
 extern int cold;
 
 int	cpu_notsupp(),cpu_notgen();
+#ifdef VAX8600
+int	ka86_mchk(), ka86_memerr(), ka86_clock(), ka86_conf();
+int	ka86_steal_pages();
+#endif
 #ifdef VAX780
 int	ka780_mchk(), ka780_memerr(), ka780_clock(), ka780_conf();
 int	ka780_steal_pages();
@@ -109,7 +115,7 @@ struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
 #ifdef	VAX8600	/* Type 4, 8600/8650 (11/{790,795}) */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+	ka86_steal_pages, ka86_clock, ka86_mchk, ka86_memerr, ka86_conf,
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
@@ -215,13 +221,18 @@ backplane_attach(parent, self, hej)
 
 	printf("\n");
 
-	switch(cpunumber){
+	switch (cpunumber) {
 	case VAX_750:
 	case VAX_650:
 	case VAX_78032:
 	case VAX_780:
 		cmem = cbi = 0;
 		ccpu = csbi = 1;
+		break;
+
+	case VAX_8600:
+		cmem = ccpu = 1;
+		cbi = csbi = 0;
 		break;
 	}
 
@@ -246,7 +257,48 @@ backplane_attach(parent, self, hej)
 		bp.num = i;
 		config_found(self, &bp, printut);
 	}
+#if VAX8600
+	if (cpunumber == VAX_8600)
+		find_sbi(self, &bp, printut);
+#endif
 }
+
+#if VAX8600
+find_sbi(self, bp, print)
+	struct	device *self;
+	struct	bp_conf *bp;
+	int	(*print)();
+{
+	volatile int tmp;
+	volatile struct	sbia_regs *sbiar;
+	extern	struct ioa *ioa;
+	int	type, i;
+
+	for (i = 0; i < MAXNIOA; i++) {
+		if (badaddr((caddr_t)&ioa[i], 4))
+			continue;
+		tmp = ioa[i].ioacsr.ioa_csr;
+		type = tmp & IOA_TYPMSK;
+
+		switch (type) {
+
+		case IOA_SBIA:
+			bp->type = "sbi";
+			bp->num = i;
+			config_found(self, bp, printut);
+			sbiar = (void *)&ioa[i];
+			sbiar->sbi_errsum = -1;
+			sbiar->sbi_error = 0x1000;
+			sbiar->sbi_fltsts = 0xc0000;
+			break;
+
+		default:
+			printf("IOAdapter %x unsupported\n", type);
+			break;
+		}
+	}
+}
+#endif
 
 int
 cpu_match(parent, cf, aux)
@@ -256,7 +308,7 @@ cpu_match(parent, cf, aux)
 {
 	struct bp_conf *bp = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, "cpu"))
+	if (strcmp(bp->type, "cpu"))
 		return 0;
 
 	switch (cpunumber) {
@@ -283,16 +335,22 @@ cpu_attach(parent, self, aux)
 	(*cpu_calls[cpunumber].cpu_conf)(parent, self, aux);
 }
 
-int nmcr = 0;
-
 int
 mem_match(parent, cf, aux)
 	struct  device  *parent;
 	struct  cfdata  *cf;
 	void    *aux;
 {
-	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct	bp_conf	*bp = aux;
 
+#if VAX8600
+	if (cpunumber == VAX_8600 && !strcmp(parent->dv_xname, "backplane0")) {
+		if (strcmp(bp->type, "mem"))
+			return 0;
+		return 1;
+	}
+#endif
 	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1))
 		return 0;
 
@@ -334,6 +392,13 @@ mem_attach(parent, self, aux)
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	struct	mem_softc *sc = (void *)self;
 
+#if VAX8600
+	if (cpunumber == VAX_8600) {
+		ka86_memenable();
+		printf("\n");
+		return;
+	}
+#endif
 	sc->sc_memaddr = sa->nexaddr;
 	sc->sc_memtype = sa->nexinfo;
 	sc->sc_memnr = sa->type;
@@ -349,7 +414,6 @@ mem_attach(parent, self, aux)
 		ka780_memenable(sa, sc);
 		break;
 #endif
-
 	default:
 		break;
 	}
