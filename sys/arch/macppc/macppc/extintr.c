@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.15 2000/08/20 06:56:42 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.16 2000/11/29 17:55:52 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -73,6 +73,8 @@ void openpic_disable_irq __P((int));
 void openpic_set_priority __P((int, int));
 static __inline int openpic_read_irq __P((int));
 static __inline void openpic_eoi __P((int));
+
+static void do_pending_int __P((void));
 
 unsigned int imen = 0xffffffff;
 volatile int cpl, ipending, astpending, tickspending;
@@ -610,7 +612,7 @@ out:
 	splx(pcpl);	/* Process pendings. */
 }
 
-void
+static void
 do_pending_int()
 {
 	struct intrhand *ih;
@@ -670,6 +672,60 @@ do_pending_int()
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
+}
+
+int
+splraise(ncpl)
+	int ncpl;
+{
+	int ocpl;
+
+	asm volatile("sync; eieio\n");	/* don't reorder.... */
+	ocpl = cpl;
+	cpl = ocpl | ncpl;
+	asm volatile("sync; eieio\n");	/* reorder protect */
+	return ocpl;
+}
+
+void
+splx(ncpl)
+	int ncpl;
+{
+
+	asm volatile("sync; eieio\n");	/* reorder protect */
+	cpl = ncpl;
+	if (ipending & ~ncpl)
+		do_pending_int();
+	asm volatile("sync; eieio\n");	/* reorder protect */
+}
+
+int
+spllower(ncpl)
+	int ncpl;
+{
+	int ocpl;
+
+	asm volatile("sync; eieio\n");	/* reorder protect */
+	ocpl = cpl;
+	cpl = ncpl;
+	if (ipending & ~ncpl)
+		do_pending_int();
+	asm volatile("sync; eieio\n");	/* reorder protect */
+	return ocpl;
+}
+
+/* Following code should be implemented with lwarx/stwcx to avoid
+ * the disable/enable. i need to read the manual once more.... */
+void
+softintr(ipl)
+	int ipl;
+{
+	int msrsave;
+
+	asm volatile("mfmsr %0" : "=r"(msrsave));
+	asm volatile("mtmsr %0" :: "r"(msrsave & ~PSL_EE));
+	ipending |= 1 << ipl;
+	asm volatile("mtmsr %0" :: "r"(msrsave));
 }
 
 void
