@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 1998/07/04 22:18:30 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 1998/07/21 17:53:50 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -77,12 +77,12 @@ GLOBAL(eintrcnt)
 /*
  * File-scope for locore.S
  */
-	.data
 idle_u:
 	.long	0			/* fake uarea during idle after exit */
-	.globl	openfirmware_entry
 openfirmware_entry:
 	.long	0			/* openfirmware entry point */
+ofw_msr:
+	.long	0			/* msr used in OpenFirmware */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -107,6 +107,10 @@ __start:
 	bl	_C_LABEL(ofwr_init)
 1:
 #endif
+	mfmsr	0
+	lis	9,ofw_msr@ha
+	stw	0,ofw_msr@l(9)
+
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 	isync
@@ -159,8 +163,9 @@ ENTRY(openfirmware)
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
 
-	li	0,PSL_IR|PSL_DR		/* turn on MMU */
-	mtmsr	0
+	lis	4,ofw_msr@ha		/* OpenFirmware msr */
+	lwz	4,ofw_msr@l(4)
+	mtmsr	4
 	isync
 
 	blrl				/* call OpenFirmware */
