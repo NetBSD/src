@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -44,7 +44,8 @@
 #include <arm/trap.h>
 #include "assym.h"
 
-#include "opt_cputypes.h"
+#include <arm/cpuconf.h>
+
 #include "opt_ddb.h"
 
 #include "fiq.h"
@@ -456,4 +457,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.3 2002/04/12 18:50:30 thorpej Exp $")
