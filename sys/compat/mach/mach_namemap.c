@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.16 2003/02/07 16:56:19 manu Exp $ */
+/*	$NetBSD: mach_namemap.c,v 1.17 2003/02/07 20:40:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.16 2003/02/07 16:56:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.17 2003/02/07 20:40:37 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,22 +62,31 @@ struct mach_subsystem_namemap mach_namemap[] = {
 /*	{ 403, mach_boostrap_register, "boostrap_register" }, */
  	{ 404, mach_bootstrap_look_up, "bootstrap_look_up" }, 
 	{ 1000, mach_clock_get_time, "clock_get_time" },
+	{ 2800, mach_io_object_get_class, "io_object_get_class" },
 	{ 2801, mach_io_object_conforms_to, "io_object_conforms_to" },
 	{ 2802, mach_io_iterator_next, "io_iterator_next" },
 	{ 2804, mach_io_service_get_matching_services, 
 	    "io_service_get_matching_services" },
 	{ 2805, mach_io_registry_entry_get_property,
 	    "io_registry_entry_get_property" },
+	{ 2813, mach_io_registry_entry_get_child_iterator,
+	    "io_registry_entry_get_child_iterator" },
 	{ 2815, mach_io_service_open, "io_service_open" },
 	{ 2817, mach_io_connect_get_service, "io_connect_get_service" },
 	{ 2818, mach_io_connect_set_notification_port,
 	    "io_connect_set_notification_port" },
 	{ 2822, mach_io_connect_method_scalari_scalaro,
 	    "io_connect_method_scalari_scalaro" },
+	{ 2827, mach_io_registry_get_root_entry, 
+	    "io_registry_get_root_entry" },
 	{ 2833, mach_io_registry_entry_create_iterator,
 	    "io_registry_entry_create_iterator" },
+	{ 2843, mach_io_registry_entry_get_name_in_plane,
+	    "io_registry_entry_get_name_in_plane" },
 	{ 2850, mach_io_service_add_interest_notification,
 	    "io_service_add_interest_notification" },
+	{ 2854, mach_io_registry_entry_get_location_in_plane,
+	    "io_registry_entry_get_location_in_plane" },
 	{ 3201, mach_port_type, "port_type" },
 	{ 3204, mach_port_allocate, "port_allocate" },
 	{ 3205, mach_port_destroy, "port_destroy" },
