@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.1 2001/01/17 05:27:15 itojun Exp $
+#	$NetBSD: ttys,v 1.2 2001/01/21 18:36:32 uch Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
@@ -8,10 +8,7 @@
 #
 # /dev/console is always valid, regardless of the board type.
 #
-console "/usr/libexec/getty std.115200"	unknown	on secure
-
-#tty00	"/usr/libexec/getty std.9600"	unknown	off secure
-#tty01	"/usr/libexec/getty std.9600"	unknown	off secure
+console "/usr/libexec/getty std.9600"	vt100	on secure
 
 # Pseudo Terminals
 ttyp0	none			network
