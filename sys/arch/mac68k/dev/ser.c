@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.9 1994/07/21 00:52:47 briggs Exp $
+ * $Id: ser.c,v 1.10 1994/07/21 03:32:07 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -686,7 +686,9 @@ serioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		printf("ser%d: ioctl(,%d,,)\n", UNIT(dev), cmd);
+#if defined(DEBUG)
+		printf("ser%d: unknown ioctl(,%d,)\n", UNIT(dev), cmd);
+#endif
 		return (ENOTTY);
 	}
 #if defined(DEBUG)
