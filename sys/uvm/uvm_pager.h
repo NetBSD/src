@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_pager.h,v 1.8 1999/03/24 03:45:28 cgd Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.9 1999/03/25 18:48:55 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
