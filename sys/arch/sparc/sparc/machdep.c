@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1995/04/13 14:45:43 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.41 1995/04/22 10:00:50 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -587,8 +587,6 @@ boot(howto)
 	fb_unblank();
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
 #if 1
 		extern struct proc proc0;
 
@@ -597,29 +595,8 @@ boot(howto)
 			curproc = &proc0;
 #endif
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount((struct mount *)NULL);
-		sync(&proc0, (void *)NULL, (int *)NULL);
+		vfs_shutdown();
 
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			DELAY(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
