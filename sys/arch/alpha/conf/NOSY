@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.6 1996/06/11 23:24:02 thorpej Exp $
+#	$NetBSD: NOSY,v 1.7 1996/06/13 19:18:37 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
@@ -33,13 +33,21 @@ options		INET		# Internet protocol suite
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options		COMPAT_43
 
+# Binary compatibility with previous versions of NetBSD.
+#options	COMPAT_09
+options		COMPAT_10
+options		COMPAT_11
+
+# OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
+#options	COMPAT_OSF1
+
 # Loadable Kernel Modules
 options		LKM
 
 # Disable kernel security.
 options		INSECURE
 
-config		netbsd	root on sd0 swap on sd0
+config		netbsd	swap generic
 
 mainbus0 at	root
 cpu*	at	mainbus0
@@ -53,14 +61,14 @@ tc*	at	tcasic?
 # TurboChannel devices
 ioasic0	at	tc? slot ? offset ?
 mcclock0 at	ioasic? offset ?
-le0	at	ioasic? offset ?
+le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
 esp1	at	tcds? slot ?
 sfb*	at	tc? slot ? offset ?
-fta*	at	tc? slot ? offset ?
+fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # SCSI bus support
 scsibus* at	esp?
