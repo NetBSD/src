@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.16 2000/02/09 15:40:24 enami Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.17 2000/03/22 18:02:59 ws Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -139,6 +139,8 @@ struct dp8390_softc {
 				    ((sc)->sc_reg_map[reg]))
 #define NIC_PUT(t, h, reg, val)	bus_space_write_1(t, h,			\
 				    ((sc)->sc_reg_map[reg]), (val))
+#define	NIC_BARRIER(t, h)	bus_space_barrier(t, h, 0, 0x10,	\
+			    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
 int	dp8390_config __P((struct dp8390_softc *, int *, int, int));
 int	dp8390_intr __P((void *));
