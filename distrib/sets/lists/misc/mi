@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37.2.8 2001/02/27 16:16:28 he Exp $
+# $NetBSD: mi,v 1.37.2.9 2001/03/22 03:55:49 he Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -485,6 +485,7 @@
 ./usr/share/sendmail/ostype/aix2.m4
 ./usr/share/sendmail/ostype/aix3.m4
 ./usr/share/sendmail/ostype/aix4.m4
+./usr/share/sendmail/ostype/aix5.m4
 ./usr/share/sendmail/ostype/altos.m4
 ./usr/share/sendmail/ostype/amdahl-uts.m4
 ./usr/share/sendmail/ostype/aux.m4
@@ -521,6 +522,7 @@
 ./usr/share/sendmail/ostype/solaris2.m4
 ./usr/share/sendmail/ostype/solaris2.ml.m4
 ./usr/share/sendmail/ostype/solaris2.pre5.m4
+./usr/share/sendmail/ostype/solaris8.m4
 ./usr/share/sendmail/ostype/sunos3.5.m4
 ./usr/share/sendmail/ostype/sunos4.1.m4
 ./usr/share/sendmail/ostype/svr4.m4
