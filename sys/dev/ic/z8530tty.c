@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.30 1997/11/02 08:29:51 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.31 1997/11/02 08:50:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -448,8 +448,6 @@ zsopen(dev, flags, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splzs();
-
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -458,6 +456,8 @@ zsopen(dev, flags, mode, p)
 		 * unless explicitly requested to deassert it.
 		 */
 		zs_modem(zst, 1);
+
+		s2 = splzs();
 
 		/* Clear the input ring, and unblock. */
 		zst->zst_rbget = zst->zst_rbput;
@@ -528,10 +528,11 @@ zsclose(dev, flags, mode, p)
 	/* If we were asserting flow control, then deassert it. */
 	zst->zst_rx_blocked = 1;
 	zs_hwiflow(zst);
-	/* Clear any break condition set with TIOCSBRK. */
-	zs_break(cs, 0);
 
 	splx(s);
+
+	/* Clear any break condition set with TIOCSBRK. */
+	zs_break(cs, 0);
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
