@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.15 2002/10/01 03:03:37 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.16 2002/10/02 15:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -93,7 +93,7 @@ static struct mkbd_softc *mkbd_console_softc = NULL;
 static int mkbd_console_initted = 0;
 
 CFATTACH_DECL(mkbd, sizeof(struct mkbd_softc),
-    mkbdmatch, mkbdattach, NULL, NULL)
+    mkbdmatch, mkbdattach, NULL, NULL);
 
 static int
 mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)
