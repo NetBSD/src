@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.35 2000/03/29 18:24:52 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.36 2000/03/30 00:18:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -890,6 +890,9 @@ USB_ATTACH(aue)
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
+#if defined(__OpenBSD__)
+	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+#endif
 	strncpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
 
 	/* Initialize MII/media info. */
@@ -1270,9 +1273,9 @@ aue_rxeof(xfer, priv, status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf) {
+#if defined(__NetBSD__)
 		struct ether_header *eh = mtod(m, struct ether_header *);
 		BPF_MTAP(ifp, m);
-#if defined(__NetBSD__)
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			   ETHER_ADDR_LEN) &&
@@ -1280,6 +1283,8 @@ aue_rxeof(xfer, priv, status)
 			m_freem(m);
 			goto done1;
 		}
+#else
+		BPF_MTAP(ifp, m);
 #endif
 	}
 #endif
