@@ -185,6 +185,22 @@ struct aout_backend_data
   boolean (*translate_to_native_sym_flags) PARAMS ((bfd *, 
                                                     asymbol *,
                                                     struct external_nlist *));
+
+  /* Return the list of objects needed by BFD.  */
+  struct bfd_link_needed_list * (*get_needed_list)
+    PARAMS ((bfd *, struct bfd_link_info *));
+
+  /* Record an assignment made to a symbol by a linker script.  */
+  boolean (*record_link_assignment) PARAMS ((bfd *,
+					     struct bfd_link_info *,
+					     const char *));
+
+  /* Set up the sizes and contents of the dynamic sections.  */
+  boolean (*size_dynamic_sections) PARAMS ((bfd *,
+					    struct bfd_link_info *,
+					    struct sec **,
+					    struct sec **,
+					    struct sec **));
 };
 #define aout_backend_info(abfd) \
 	((CONST struct aout_backend_data *)((abfd)->xvec->backend_data))

@@ -341,6 +341,15 @@ MY(set_sizes) (abfd)
 #ifndef MY_translate_to_native_sym_flags
 #define MY_translate_to_native_sym_flags 0
 #endif
+#ifndef MY_get_needed_list
+#define MY_get_needed_list 0
+#endif
+#ifndef MY_record_link_assignment
+#define MY_record_link_assignment 0
+#endif
+#ifndef MY_size_dynamic_sections
+#define MY_size_dynamic_sections 0
+#endif
 
 static CONST struct aout_backend_data MY(backend_data) = {
   MY_zmagic_contiguous,
@@ -357,7 +366,10 @@ static CONST struct aout_backend_data MY(backend_data) = {
   MY_check_dynamic_reloc,
   MY_finish_dynamic_link,
   MY_translate_from_native_sym_flags,
-  MY_translate_to_native_sym_flags
+  MY_translate_to_native_sym_flags,
+  MY_get_needed_list,
+  MY_record_link_assignment,
+  MY_size_dynamic_sections
 };
 #define MY_backend_data &MY(backend_data)
 #endif
