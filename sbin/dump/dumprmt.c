@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.15 1997/05/27 08:35:27 mrg Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.16 1997/06/05 11:13:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.15 1997/05/27 08:35:27 mrg Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.16 1997/06/05 11:13:23 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,6 @@ static	void rmtgets __P((char *, int));
 static	int rmtreply __P((char *));
 
 extern	int ntrec;		/* blocking factor on tape */
-extern	uid_t uid;		/* real uid */
-extern	uid_t euid;		/* effective uid */
 
 int
 rmthost(host)

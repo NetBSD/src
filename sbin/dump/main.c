@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1997/05/27 08:35:28 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,12 +43,15 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.13 1997/05/27 08:35:28 mrg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/mount.h>
+
 #ifdef sunos
 #include <sys/vnode.h>
 
@@ -108,6 +111,8 @@ main(argc, argv)
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow;
+	int dirlist;
+	char *toplevel;
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -198,14 +203,66 @@ main(argc, argv)
 		(void)fprintf(stderr, "Must specify disk or filesystem\n");
 		exit(X_ABORT);
 	}
-	disk = *argv++;
-	argc--;
-	if (argc >= 1) {
-		(void)fprintf(stderr, "Unknown arguments to dump:");
-		while (argc--)
-			(void)fprintf(stderr, " %s", *argv++);
-		(void)fprintf(stderr, "\n");
-		exit(X_ABORT);
+
+	/*
+	 *	determine if disk is a subdirectory, and setup appropriately
+	 */
+	dirlist = 0;
+	toplevel = NULL;
+	for (i = 0; i < argc; i++) {
+		struct stat sb;
+		struct statfs fsbuf;
+
+		if (lstat(argv[i], &sb) == -1) {
+			msg("Cannot lstat %s: %s\n", argv[i], strerror(errno));
+			exit(X_ABORT);
+		}
+		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
+			break;
+		if (statfs(argv[i], &fsbuf) == -1) {
+			msg("Cannot statfs %s: %s\n", argv[i], strerror(errno));
+			exit(X_ABORT);
+		}
+		if (strcmp(argv[i], fsbuf.f_mntonname) == 0) {
+			if (dirlist != 0) {
+				msg("Can't dump a mountpoint and a filelist\n");
+				exit(X_ABORT);
+			}
+			break;		/* exit if sole mountpoint */
+		}
+		if (!disk) {
+			if ((toplevel = strdup(fsbuf.f_mntonname)) == NULL) {
+				msg("Cannot malloc diskname\n");
+				exit(X_ABORT);
+			}
+			disk = toplevel;
+			if (uflag) {
+				msg("Ignoring u flag for subdir dump\n");
+				uflag = 0;
+			}
+			if (level > '0') {
+				msg("Subdir dump is done at level 0\n");
+				level = '0';
+			}
+			msg("Dumping sub files/directories from %s\n", disk);
+		} else {
+			if (strcmp(disk, fsbuf.f_mntonname) != 0) {
+				msg("%s is not on %s\n", argv[i], disk);
+				exit(X_ABORT);
+			}
+		}
+		msg("Dumping file/directory %s\n", argv[i]);
+		dirlist++;
+	}
+	if (dirlist == 0) {
+		disk = *argv++;
+		if (argc != 1) {
+			(void)fprintf(stderr, "Excess arguments to dump:");
+			while (--argc)
+				(void)fprintf(stderr, " %s", *argv++);
+			(void)fprintf(stderr, "\n");
+			exit(X_ABORT);
+		}
 	}
 	if (Tflag && uflag) {
 	        (void)fprintf(stderr,
@@ -265,6 +322,7 @@ main(argc, argv)
 
 	set_operators();	/* /etc/group snarfed */
 	getfstab();		/* /etc/fstab snarfed */
+
 	/*
 	 *	disk can be either the full special file name,
 	 *	the suffix of the special file name,
@@ -275,7 +333,11 @@ main(argc, argv)
 	if (dt != NULL) {
 		disk = rawname(dt->fs_spec);
 		(void)strncpy(spcl.c_dev, dt->fs_spec, NAMELEN);
-		(void)strncpy(spcl.c_filesys, dt->fs_file, NAMELEN);
+		if (dirlist != 0)
+			(void)snprintf(spcl.c_filesys, NAMELEN,
+			    "a subset of %s", dt->fs_file);
+		else
+			(void)strncpy(spcl.c_filesys, dt->fs_file, NAMELEN);
 	} else {
 		(void)strncpy(spcl.c_dev, disk, NAMELEN);
 		(void)strncpy(spcl.c_filesys, "an unlisted file system",
@@ -329,8 +391,11 @@ main(argc, argv)
 
 	nonodump = spcl.c_level < honorlevel;
 
+	(void)signal(SIGINFO, statussig);
+
 	msg("mapping (Pass I) [regular files]\n");
-	anydirskipped = mapfiles(maxino, &tapesize);
+	anydirskipped = mapfiles(maxino, &tapesize, toplevel,
+	    (dirlist ? argv : NULL));
 
 	msg("mapping (Pass II) [directories]\n");
 	while (anydirskipped) {
@@ -445,7 +510,7 @@ main(argc, argv)
 	msg("Date of this level %c dump: %s", level,
 		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
 	msg("Date this dump completed:  %s", ctime(&tnow));
-	msg("Average transfer rate: %ldK/s\n", xferrate / tapeno);
+	msg("Average transfer rate: %ld KB/s\n", xferrate / tapeno);
 	putdumptime();
 	trewind();
 	broadcast("DUMP IS DONE!\7\7\n");
@@ -550,7 +615,7 @@ obsolete(argcp, argvp)
 	/* Allocate space for new arguments. */
 	if ((*argvp = nargv = malloc((argc + 1) * sizeof(char *))) == NULL ||
 	    (p = flagsp = malloc(strlen(ap) + 2)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 
 	*nargv++ = *argv;
 	argv += 2;
@@ -569,7 +634,7 @@ obsolete(argcp, argvp)
 				usage();
 			}
 			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
-				err(1, NULL);
+				err(1, "malloc");
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
 			(void)strcpy(&nargv[0][2], *argv); /* XXX strcpy is safe */
@@ -593,7 +658,8 @@ obsolete(argcp, argvp)
 	}
 
 	/* Copy remaining arguments. */
-	while (*nargv++ = *argv++);
+	while ((*nargv++ = *argv++) != NULL)
+		;
 
 	/* Update argument count. */
 	*argcp = nargv - *argvp - 1;
