@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.128 2004/06/20 18:55:58 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.129 2004/09/08 10:20:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.128 2004/06/20 18:55:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.129 2004/09/08 10:20:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1252,21 +1252,13 @@ buf_trim(void)
 {
 	struct buf *bp;
 	long size = 0;
-	int wanted;
 
 	/* Instruct getnewbuf() to get buffers off the queues */
 	if ((bp = getnewbuf(PCATCH, 1, 1)) == NULL)
 		return 0;
 
-	wanted = ISSET(bp->b_flags, B_WANTED);
+	KASSERT(!ISSET(bp->b_flags, B_WANTED));
 	simple_unlock(&bp->b_interlock);
-	if (wanted) {
-		printf("buftrim: got WANTED buffer\n");
-		SET(bp->b_flags, B_INVAL);
-		binshash(bp, &invalhash);
-		simple_unlock(&bqueue_slock);
-		goto out;
-	}
 	size = bp->b_bufsize;
 	bufmem -= size;
 	simple_unlock(&bqueue_slock);
@@ -1274,8 +1266,6 @@ buf_trim(void)
 		buf_mrelease(bp->b_data, size);
 		bp->b_bcount = bp->b_bufsize = 0;
 	}
-
-out:
 	/* brelse() will return the buffer to the global buffer pool */
 	brelse(bp);
 	simple_lock(&bqueue_slock);
