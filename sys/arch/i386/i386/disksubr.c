@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.45 2002/02/19 17:09:44 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.46 2002/09/28 01:17:09 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45 2002/02/19 17:09:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.46 2002/09/28 01:17:09 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,9 @@ readdisklabel(dev, strat, lp, osdep)
 
 			if (dp->mbrp_typ == MBR_PTYPE_NTFS)
 				pp->p_fstype = FS_NTFS;
+
+			if (dp->mbrp_typ == MBR_PTYPE_APPLEUFS)
+				pp->p_fstype = FS_APPLEUFS;
 
 			/* is this ours? */
 			if (dp == ourdp) {
