@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.23 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.24 2004/09/18 00:08:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.23 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.24 2004/09/18 00:08:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -321,9 +321,8 @@ mustek_trigger_scanner(struct ss_softc *ss)
 
 	/* send the set window command to the scanner */
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_set_parms: set_window\n"));
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *) &window_cmd,
-	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
+	error = scsipi_command(periph, (void *)&window_cmd, sizeof(window_cmd),
+	    (void *)&window_data, sizeof(window_data),
 	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -361,9 +360,8 @@ mustek_trigger_scanner(struct ss_softc *ss)
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
-	error = scsipi_command(periph,
-	    (struct scsipi_generic *) &mode_cmd,
-	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
+	error = scsipi_command(periph, (void *)&mode_cmd, sizeof(mode_cmd),
+	    (void *)&mode_data, sizeof(mode_data),
 	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -400,8 +398,8 @@ mustek_trigger_scanner(struct ss_softc *ss)
 	/* send the command to the scanner */
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_trigger_scanner: start_scan\n"));
 	error = scsipi_command(periph,
-	    (struct scsipi_generic *) &start_scan_cmd,
-	    sizeof(start_scan_cmd), NULL, 0,
+	    (void *)&start_scan_cmd, sizeof(start_scan_cmd),
+	    NULL, 0,
 	    MUSTEK_RETRIES, 5000, NULL, 0);
 	if (error)
 		return (error);
@@ -443,8 +441,9 @@ mustek_rewind_scanner(struct ss_softc *ss)
 		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("mustek_rewind_scanner: stop_scan\n"));
 		error = scsipi_command(periph,
-		    (struct scsipi_generic *) &cmd,
-		    sizeof(cmd), NULL, 0, MUSTEK_RETRIES, 5000, NULL, 0);
+		    (void *)&cmd, sizeof(cmd),
+		    NULL, 0,
+		    MUSTEK_RETRIES, 5000, NULL, 0);
 		if (error)
 			return (error);
 	}
@@ -534,10 +533,9 @@ mustek_get_status(struct ss_softc *ss, int timeout, int update)
 
 	while (1) {
 		SC_DEBUG(periph, SCSIPI_DB1, ("mustek_get_status: stat_cmd\n"));
-		error = scsipi_command(periph,
-		    (struct scsipi_generic *) &cmd, sizeof(cmd),
-		    (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
-		    5000, NULL, XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+		error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+		    (void *)&data, sizeof(data),
+		    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
 		if ((data.ready_busy == MUSTEK_READY) ||
