@@ -41,7 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define FRAME_SAVED_PC(FRAME) \
   (((FRAME)->signal_handler_caller \
     ? sigtramp_saved_pc (FRAME) \
-    : read_memory_integer ((FRAME)->frame + 4, 4)) \
+    : read_memory_unsigned_integer ((FRAME)->frame + 4, 4)) \
    )
 
 #undef FRAME_NUM_ARGS
@@ -49,8 +49,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #undef FRAME_CHAIN
 #define FRAME_CHAIN(thisframe)  \
-  (read_memory_integer ((thisframe)->frame, 4) > (thisframe)->frame ? \
-   read_memory_integer ((thisframe)->frame, 4) : 0)
+  (read_memory_unsigned_integer ((thisframe)->frame, 4) > (thisframe)->frame ? \
+   read_memory_unsigned_integer ((thisframe)->frame, 4) : 0)
 
 #define FRAME_CHAIN_VALID(chain, thisframe)\
      ((chain) != 0\
@@ -98,8 +98,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #undef FRAME_CHAIN
 #define FRAME_CHAIN(thisframe)  \
-  (read_memory_integer ((thisframe)->frame, 4) > (thisframe)->frame ? \
-   read_memory_integer ((thisframe)->frame, 4) : 0)
+  (read_memory_unsigned_integer ((thisframe)->frame, 4) > (thisframe)->frame ? \
+   read_memory_unsigned_integer ((thisframe)->frame, 4) : 0)
 
 #undef FRAME_CHAIN_VALID
 #define FRAME_CHAIN_VALID(chain, thisframe)	\
