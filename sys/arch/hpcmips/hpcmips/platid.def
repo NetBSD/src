@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.16 2000/02/06 14:02:42 takemura Exp $	*/
+/*	$NetBSD: platid.def,v 1.17 2000/02/14 06:55:36 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -122,6 +122,7 @@ Sharp {
   Mobilon {
     HC {	
       CPU=MIPS_TX_3912 HC4100
+      CPU=MIPS_TX_3912 HC1200
     }
   }
 }
