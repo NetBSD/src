@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.23 1997/09/28 03:31:14 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.24 1998/03/26 19:20:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.23 1997/09/28 03:31:14 lukem Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.24 1998/03/26 19:20:37 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.23 1997/09/28 03:31:14 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.24 1998/03/26 19:20:37 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1255,15 +1255,19 @@ VarModify (str, modProc, datum)
 				     * buffer before adding the trimmed
 				     * word */
     char **av;			    /* word list [first word does not count] */
+    char *as;			    /* word list memory */
     int ac, i;
 
     buf = Buf_Init (0);
     addSpace = FALSE;
 
-    av = brk_string(str, &ac, FALSE);
+    av = brk_string(str, &ac, FALSE, &as);
 
-    for (i = 1; i < ac; i++)
+    for (i = 0; i < ac; i++)
 	addSpace = (*modProc)(av[i], addSpace, buf, datum);
+
+    free(as);
+    free(av);
 
     Buf_AddByte (buf, '\0');
     str = (char *)Buf_GetAll (buf, (int *)NULL);
