@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.1 2004/01/17 11:47:31 dsl Exp $
+#	$NetBSD: mkinit.sh,v 1.2 2004/06/15 23:09:54 dsl Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,8 @@ srcs="$*"
 
 nl='
 '
+openparen='('
+backslash='\'
 
 includes=' "shell.h" "mystring.h" "init.h" '
 defines=
@@ -88,9 +90,9 @@ for src in $srcs; do
 			IFS=' 	'
 			set -- $line
 			# Ignore those with arguments
-			[ "$2" = "${2##*(}" ] || continue
+			[ "$2" = "${2##*$openparen}" ] || continue
 			# and multiline definitions
-			[ "$line" = "${line%\\}" ] || continue
+			[ "$line" = "${line%$backslash}" ] || continue
 			defines="${defines}#undef  $2${nl}${line}${nl}"
 			continue
 			;;
