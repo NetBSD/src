@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.33 2002/03/19 22:03:37 thorpej Exp $
+#	$NetBSD: Makefile.booters,v 1.34 2002/05/31 18:26:26 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ BINMODE=444
 # Make sure we override any optimization options specified by the
 # user.
 COPTS+=	-Os -mcpu=i386
+COPTS+= -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
