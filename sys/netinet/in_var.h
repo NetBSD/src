@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.48 2003/08/07 16:33:11 agc Exp $	*/
+/*	$NetBSD: in_var.h,v 1.49 2003/08/18 22:28:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,17 +154,13 @@ extern	const	int	inetctlerrmap[];
 /*
  * Macro for finding whether an internet address (in_addr) belongs to one
  * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
- *
- * Note that even if we find an interface with the address we're looking
- * for, we should skip that interface if it is not up.
  */
 #define INADDR_TO_IA(addr, ia) \
 	/* struct in_addr addr; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
 	LIST_FOREACH(ia, &IN_IFADDR_HASH((addr).s_addr), ia_hash) { \
-		if (in_hosteq(ia->ia_addr.sin_addr, (addr)) && \
-		    (ia->ia_ifp->if_flags & IFF_UP) != 0) \
+		if (in_hosteq(ia->ia_addr.sin_addr, (addr))) \
 			break; \
 	} \
 }
