@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.37 2002/12/30 22:24:34 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.38 2003/01/02 02:21:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 
-static pthread_attr_t pthread_default_attr;
+int pthread__started;
 
 pthread_spin_t allqueue_lock;
 struct pthread_queue_t allqueue;
@@ -72,14 +72,13 @@ struct pthread_queue_t deadqueue;
 struct pthread_queue_t reidlequeue;
 
 
+static int nextthread;
+static pthread_spin_t nextthread_lock;
+static pthread_attr_t pthread_default_attr;
+
 extern struct pthread_queue_t runqueue;
 extern struct pthread_queue_t idlequeue;
 extern pthread_spin_t runqueue_lock;
-
-int pthread__started;
-
-static int nextthread;
-pthread_spin_t nextthread_lock;
 
 pthread_ops_t pthread_ops = {
 	pthread_mutex_init,
@@ -112,6 +111,7 @@ pthread_ops_t pthread_ops = {
 
 	pthread__errno
 };
+
 
 /*
  * This needs to be started by the library loading code, before main()
@@ -157,6 +157,7 @@ void pthread_init(void)
 
 }
 
+
 static void
 pthread__start(void)
 {
@@ -183,6 +184,7 @@ pthread__start(void)
 	pthread__sa_start();
 	SDPRINTF(("(pthread__start %p) Started.\n", self));
 }
+
 
 /* General-purpose thread data structure sanitization. */
 void
@@ -223,6 +225,7 @@ pthread__initthread(pthread_t self, pthread_t t)
 	t->rescheds = 0;
 #endif
 }
+
 
 int
 pthread_create(pthread_t *thread, const pthread_attr_t *attr,
@@ -298,6 +301,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	return 0;
 }
+
 
 static void
 pthread__create_tramp(void *(*start)(void *), void *arg)
@@ -406,7 +410,6 @@ pthread_exit(void *retval)
 		pthread__block(self, &self->pt_join_lock);
 	}
 
-
 	/* NOTREACHED */
 	assert(0);
 	exit(1);
@@ -488,6 +491,7 @@ pthread_join(pthread_t thread, void **valptr)
 	return 0;
 }
 
+
 int
 pthread_equal(pthread_t t1, pthread_t t2)
 {
@@ -495,6 +499,7 @@ pthread_equal(pthread_t t1, pthread_t t2)
 	/* Nothing special here. */
 	return (t1 == t2);
 }
+
 
 int
 pthread_detach(pthread_t thread)
@@ -526,6 +531,7 @@ pthread_detach(pthread_t thread)
 
 	return 0;
 }
+
 
 int
 pthread_attr_init(pthread_attr_t *attr)
@@ -613,14 +619,15 @@ pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
 	return 0;
 }
 
+
 /*
  * XXX There should be a way for applications to use the efficent
  *  inline version, but there are opacity/namespace issues.
  */
-
 pthread_t
 pthread_self(void)
 {
+
 	return pthread__self();
 }
 
@@ -678,7 +685,6 @@ pthread_cancel(pthread_t thread)
 
 	return 0;
 }
-
 
 
 int
@@ -762,6 +768,7 @@ pthread_testcancel()
 		pthread_exit(PTHREAD_CANCELED);
 }
 
+
 /*
  * POSIX requires that certain functions return an error rather than
  * invoking undefined behavior even when handed completely bogus
@@ -795,6 +802,7 @@ pthread__testcancel(pthread_t self)
 		pthread_exit(PTHREAD_CANCELED);
 }
 
+
 void
 pthread__cleanup_push(void (*cleanup)(void *), void *arg, void *store)
 {
@@ -806,8 +814,8 @@ pthread__cleanup_push(void (*cleanup)(void *), void *arg, void *store)
 	entry->ptc_cleanup = cleanup;
 	entry->ptc_arg = arg;
 	PTQ_INSERT_HEAD(&self->pt_cleanup_stack, entry, ptc_next);
-
 }
+
 
 void
 pthread__cleanup_pop(int ex, void *store)
@@ -821,7 +829,6 @@ pthread__cleanup_pop(int ex, void *store)
 	PTQ_REMOVE(&self->pt_cleanup_stack, entry, ptc_next);
 	if (ex)
 		(*entry->ptc_cleanup)(entry->ptc_arg);
-
 }
 
 
