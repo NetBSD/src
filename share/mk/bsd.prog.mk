@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.33 1993/11/10 03:32:48 cgd Exp $
+#	$Id: bsd.prog.mk,v 1.34 1994/01/28 00:16:38 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -19,6 +19,7 @@ LIBDES?=	/usr/lib/libdes.a
 LIBL?=		/usr/lib/libl.a
 LIBKDB?=	/usr/lib/libkdb.a
 LIBKRB?=	/usr/lib/libkrb.a
+LIBKVM?=	/usr/lib/libkvm.a
 LIBM?=		/usr/lib/libm.a
 LIBMP?=		/usr/lib/libmp.a
 LIBPC?=		/usr/lib/libpc.a
