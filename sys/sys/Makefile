@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2002/01/01 21:51:39 augustss Exp $
+#	$NetBSD: Makefile,v 1.39 2002/03/31 14:12:38 bjh21 Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -27,7 +27,6 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h buf.h bswap.h \
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/poll.h /usr/include/poll.h \
-	sys/sha1.h /usr/include/sha1.h \
 	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h
