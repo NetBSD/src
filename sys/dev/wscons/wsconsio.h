@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.8 1998/09/17 18:05:43 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.9 1998/12/30 13:14:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -147,10 +147,11 @@ struct wskbd_map_data {
  * Mouse ioctls (32 - 63)
  */
 
-/* Get keyboard type */
+/* Get mouse type */
 #define	WSMOUSEIO_GTYPE		_IOR('W', 32, u_int)
 #define		WSMOUSE_TYPE_VSXXX	1	/* DEC TC(?) serial */
 #define		WSMOUSE_TYPE_PS2	2	/* PS/2-compatible */
+#define		WSMOUSE_TYPE_USB	3	/* USB mouse */
 
 /*
  * Display ioctls (64 - 95)
