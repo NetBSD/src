@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.2 1995/05/08 22:21:29 brezak Exp $	*/
+/*	$NetBSD: audioio.h,v 1.3 1995/07/07 01:43:35 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -59,6 +59,7 @@ struct audio_prinfo {
 	u_char	open;		/* non-zero if currently open */
 	u_char	active;		/* non-zero if I/O is currently active */
 };
+typedef struct audio_prinfo audio_prinfo_t;
 
 struct audio_info {
 	struct	audio_prinfo play;	/* Info for play (output) side */
@@ -69,10 +70,9 @@ struct audio_info {
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
 	u_int	backlog;	/* samples of output backlog to gen. */
-	u_int	mode;			/* bitmask of AUMODE_* values */
-				/* (Some devices can do both simultaneously) */
-#define AUMODE_PLAY	0
-#define AUMODE_RECORD	1
+	u_int	mode;		/* current device mode */
+#define AUMODE_PLAY	0x01
+#define AUMODE_RECORD	0x02
 };
 typedef struct audio_info audio_info_t;
 
@@ -224,6 +224,17 @@ typedef struct mixer_ctrl {
 #define AudioNoff	"off"
 #define AudioNmode	"mode"
 #define AudioNsource	"source"
+#define AudioNfmsynth	"fmsynth"
+#define AudioNwave	"wave"
+#define AudioNmidi	"midi"
+#define AudioNmixerout	"mixerout"
+
+#define AudioElinear "linear"
+#define AudioEmulaw "mulaw"
+#define AudioEalaw "alaw"
+#define AudioEpcm16 "PCM-16"
+#define AudioEpcm8 "PCM-8"
+#define AudioEadpcm "ADPCM"
 
 #define AudioCInputs	"Inputs"
 #define AudioCOutputs	"Outputs"
