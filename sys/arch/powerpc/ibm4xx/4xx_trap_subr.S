@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.2 2002/07/11 01:38:48 simonb Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.3 2003/03/11 10:40:16 hannken Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -92,7 +92,7 @@ _C_LABEL(tlbimiss4xx):
 	mfesr	r31
 	stmw	r30,16+tlbsave(0)
 	bla	s4xx_miss
-_C_LABEL(tlbim4size) = .-_C_LABEL(tlbdmiss4xx)
+_C_LABEL(tlbim4size) = .-_C_LABEL(tlbimiss4xx)
 
 s4xx_miss:
 	.globl	_C_LABEL(pmap_tlbmiss)
