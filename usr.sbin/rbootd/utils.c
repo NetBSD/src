@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.6 1995/11/14 08:41:47 thorpej Exp $	*/
+/*	$NetBSD: utils.c,v 1.7 1997/07/28 05:39:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -46,9 +46,13 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: utils.c,v 1.6 1995/11/14 08:41:47 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: utils.c,v 1.7 1997/07/28 05:39:22 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.5 1997/07/28 05:39:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -46,9 +46,13 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: parseconf.c,v 1.5 1997/07/28 05:39:19 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
