@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.513 2003/01/14 11:29:35 wiz Exp $
+#	$NetBSD: mi,v 1.514 2003/01/16 00:02:46 kleink Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2794,6 +2794,8 @@
 ./usr/share/man/cat3/sigdelset.0	comp-c-catman
 ./usr/share/man/cat3/sigemptyset.0	comp-c-catman
 ./usr/share/man/cat3/sigfillset.0	comp-c-catman
+./usr/share/man/cat3/sighold.0	comp-c-catman
+./usr/share/man/cat3/sigignore.0	comp-c-catman
 ./usr/share/man/cat3/siginterrupt.0	comp-c-catman
 ./usr/share/man/cat3/sigismember.0	comp-c-catman
 ./usr/share/man/cat3/siglongjmp.0	comp-c-catman
@@ -2801,6 +2803,8 @@
 ./usr/share/man/cat3/significand.0	comp-c-catman
 ./usr/share/man/cat3/significandf.0	comp-c-catman
 ./usr/share/man/cat3/sigpause.0	comp-c-catman
+./usr/share/man/cat3/sigrelse.0	comp-c-catman
+./usr/share/man/cat3/sigset.0	comp-c-catman
 ./usr/share/man/cat3/sigsetjmp.0	comp-c-catman
 ./usr/share/man/cat3/sigsetmask.0	comp-c-catman
 ./usr/share/man/cat3/sigsetops.0	comp-c-catman
@@ -5792,6 +5796,8 @@
 ./usr/share/man/man3/sigdelset.3		comp-c-man
 ./usr/share/man/man3/sigemptyset.3		comp-c-man
 ./usr/share/man/man3/sigfillset.3		comp-c-man
+./usr/share/man/man3/sighold.3		comp-c-man
+./usr/share/man/man3/sigignore.3		comp-c-man
 ./usr/share/man/man3/siginterrupt.3		comp-c-man
 ./usr/share/man/man3/sigismember.3		comp-c-man
 ./usr/share/man/man3/siglongjmp.3		comp-c-man
@@ -5799,6 +5805,8 @@
 ./usr/share/man/man3/significand.3		comp-c-man
 ./usr/share/man/man3/significandf.3		comp-c-man
 ./usr/share/man/man3/sigpause.3		comp-c-man
+./usr/share/man/man3/sigrelse.3		comp-c-man
+./usr/share/man/man3/sigset.3		comp-c-man
 ./usr/share/man/man3/sigsetjmp.3		comp-c-man
 ./usr/share/man/man3/sigsetmask.3		comp-c-man
 ./usr/share/man/man3/sigsetops.3		comp-c-man
