@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 1997/10/31 23:00:50 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.10 1997/11/02 08:20:45 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* util.c -- routines that don't really fit anywhere else... */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +50,7 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
 
 
 void get_ramsize(void)
@@ -122,17 +124,8 @@ extract_dist (void)
 	}
 	files[numchar] = '\0';
 
-#ifndef DEBUG
-	if (chdir("/mnt")) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), "/mnt");
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", "/mnt");
-#endif
+	target_chdir_or_die("/");
 
-	endwin();
 	p = strtok (files, " \n");
 	while (p != NULL) {
 		(void)printf (msg_string(MSG_extracting), p);
@@ -151,15 +144,7 @@ void run_makedev (void)
 {
 	msg_display (MSG_makedev);
 	sleep (1);
-#ifndef DEBUG
-	if (chdir("/mnt/dev")) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), "/mnt");
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", "/mnt/dev");
-#endif
+	target_chdir_or_die("/dev");
 	run_prog ("/bin/sh MAKEDEV all");
 }
 
@@ -222,7 +207,7 @@ int get_via_floppy (void)
 		list++;
 	}
 #ifndef DEBUG
-	chdir("/");
+	chdir("/");	/* back to current real root */
 #endif
 	return 1;
 }
@@ -252,26 +237,16 @@ get_via_cdrom(void)
 
 void cd_dist_dir (char *forwhat)
 {
-	char realdir[STRSIZE];
-
+	/* ask user for the mountpoint. */
 	msg_prompt (MSG_distdir, dist_dir, dist_dir, STRSIZE, forwhat);
-	if (*dist_dir == '/')
-		snprintf (realdir, STRSIZE, "/mnt%s", dist_dir);
-	else
-		snprintf (realdir, STRSIZE, "/mnt/%s", dist_dir);
-	strcpy (dist_dir, realdir);
-	run_prog ("/bin/mkdir %s", realdir);
+
+	/* make sure the directory exists. */
+	make_target_dir(dist_dir);
+
 	clean_dist_dir = 1;
-#ifndef DEBUG
-	if (chdir(realdir)) {
-		endwin();
-		(void)fprintf(stderr, msg_string(MSG_realdir), realdir);
-		exit(1);
-	}
-#else
-	printf ("chdir (%s)\n", realdir);
-#endif
+	target_chdir_or_die(dist_dir);
 }
+
 
 /* Support for custom distribution fetches / unpacks. */
 
@@ -292,3 +267,4 @@ void show_cur_distsets (void)
 		list++;
 	}
 }
+
