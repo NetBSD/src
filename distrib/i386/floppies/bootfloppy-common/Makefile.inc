@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2000/02/01 05:02:33 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2000/02/18 02:50:17 enami Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -46,9 +46,6 @@ realall:	netbsd.ram.gz
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
-	@echo ""
-	@echo "installing new bootblocks"
-	-rm -f ${MOUNT_POINT}/boot
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
