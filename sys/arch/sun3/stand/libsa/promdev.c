@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.5 1995/09/26 21:30:19 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.6 1995/10/13 21:45:21 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -41,26 +41,31 @@
 
 extern void set_pte __P((int, int));
 
-struct saioreq prom_si;
 static int promdev_inuse;
 
 static char *
 prom_mapin(u_long physaddr, int length, int maptype);
 
+/*
+ * Note: caller sets the fields:
+ *	si->si_boottab
+ *	si->si_ctlr
+ *	si->si_unit
+ *	si->si_boff
+ */
+
 int
-prom_iopen(void **devdatap)
+prom_iopen(si)
+	struct saioreq *si;
 {
-	struct bootparam *bp;
 	struct boottab *ops;
 	struct devinfo *dip;
-	struct saioreq *si;
 	int	error;
 
 	if (promdev_inuse)
 		return(EMFILE);
 
-	bp = *romp->bootParam;
-	ops = bp->bootDevice;
+	ops = si->si_boottab;
 	dip = ops->b_devinfo;
 
 #ifdef DEBUG_PROM
@@ -69,24 +74,18 @@ prom_iopen(void **devdatap)
 	printf("d_dmabytes=%d\n", dip->d_dmabytes);
 	printf("d_localbytes=%d\n", dip->d_localbytes);
 	printf("d_stdcount=%d\n", dip->d_stdcount);
-	printf("d_stdaddrs[%d]=%x\n", bp->ctlrNum, dip->d_stdaddrs[bp->ctlrNum]);
+	printf("d_stdaddrs[%d]=%x\n", si->si_ctlr,
+	              dip->d_stdaddrs[si->si_ctlr]);
 	printf("d_devtype=%d\n", dip->d_devtype);
 	printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
 #endif
-
-	dvma_init();
-
-	si = &prom_si;
-	bzero((caddr_t)si, sizeof(*si));
-	si->si_boottab = ops;
-	si->si_ctlr = bp->ctlrNum;
-	si->si_unit = bp->unitNum;
-	si->si_boff = bp->partNum;
 
 	if (si->si_ctlr > dip->d_stdcount) {
 		printf("Invalid controller number\n");
 		return(ENXIO);
 	}
+
+	dvma_init();
 
 	if (dip->d_devbytes) {
 		si->si_devaddr = prom_mapin(dip->d_stdaddrs[si->si_ctlr],
@@ -122,22 +121,20 @@ prom_iopen(void **devdatap)
 	printf("prom_iopen: succeeded, error=%d\n", error);
 #endif
 
-	*devdatap = si;
 	promdev_inuse++;
 	return (0);
 }
 
 void
-prom_iclose(void *devdata)
+prom_iclose(si)
+	struct saioreq *si;
 {
 	struct boottab *ops;
 	struct devinfo *dip;
-	struct saioreq *si;
 
 	if (promdev_inuse == 0)
 		return;
 
-	si = devdata;
 	ops = si->si_boottab;
 	dip = ops->b_devinfo;
 
