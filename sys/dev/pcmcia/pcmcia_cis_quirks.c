@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.2 1998/12/25 00:54:46 marc Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -90,11 +90,35 @@ static struct pcmcia_config_entry pcmcia_3cxem556_func1_cfe0 = {
 	0,			/* maxtwins */
 };
 
+static struct pcmcia_function pcmcia_sveclancard_func0 = {
+	0,			/* function number */
+	PCMCIA_FUNCTION_NETWORK,
+	0x1,			/* last cfe number */
+	0x100,			/* ccr_base */
+	0x1,			/* ccr_mask */
+};
+
+static struct pcmcia_config_entry pcmcia_sveclancard_func0_cfe0 = {
+	0x1,			/* cfe number */
+	PCMCIA_CFE_MWAIT_REQUIRED | PCMCIA_CFE_RDYBSY_ACTIVE |
+	PCMCIA_CFE_WP_ACTIVE | PCMCIA_CFE_BVD_ACTIVE | PCMCIA_CFE_IO16,
+	PCMCIA_IFTYPE_IO,
+	1,			/* num_iospace */
+	5,			/* iomask */
+	{ { 0x20, 0x300 } },	/* iospace */
+	0xdeb8,			/* irqmask */
+	0,			/* num_memspace */
+	{ },			/* memspace */
+	0,			/* maxtwins */
+};
+
 static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID, 
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_SVEC_LANCARD,
+	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },
 };
 	
 static int n_pcmcia_cis_quirks =
@@ -112,10 +136,18 @@ void pcmcia_check_cis_quirks(sc)
 	pf_last = NULL;
 
 	for (i=0; i<n_pcmcia_cis_quirks; i++) {
-		if ((sc->card.manufacturer ==
-		     pcmcia_cis_quirks[i].manufacturer) &&
-		    (sc->card.product ==
-		     pcmcia_cis_quirks[i].product)) {
+		if ((sc->card.manufacturer == pcmcia_cis_quirks[i].manufacturer) &&
+			(sc->card.product == pcmcia_cis_quirks[i].product) &&
+			(((sc->card.manufacturer != PCMCIA_VENDOR_INVALID) &&
+			  (sc->card.product != PCMCIA_PRODUCT_INVALID)) ||
+			 ((sc->card.manufacturer == PCMCIA_VENDOR_INVALID) &&
+			  (sc->card.product == PCMCIA_PRODUCT_INVALID) &&
+			  sc->card.cis1_info[0] &&
+			  (strcmp(sc->card.cis1_info[0],
+					  pcmcia_cis_quirks[i].cis1_info[0]) == 0) &&
+			  sc->card.cis1_info[1] &&
+			  (strcmp(sc->card.cis1_info[1],
+					  pcmcia_cis_quirks[i].cis1_info[1]) == 0)))) {
 			if (!wiped) {
 				if (pcmcia_verbose) {
 					printf("%s: using CIS quirks for ", sc->dev.dv_xname);
