@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.110 2003/09/26 11:51:53 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.111 2003/11/17 00:28:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.110 2003/09/26 11:51:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.111 2003/11/17 00:28:32 jonathan Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -836,10 +836,16 @@ again:
 
 	/*
 	 * If we have an iod which can process the request, then queue
-	 * the buffer.
+	 * the buffer.  However, even if we have an iod, do not initiate 
+	 * queue cleaning if curproc is the pageout daemon. if the NFS mount
+	 * is via local loopback, we may put curproc (pagedaemon) to sleep
+	 * waiting for the writes to complete. But the server (ourself)
+	 * may block the write, waiting for its (ie., our) pagedaemon
+	 * to produce clean pages to handle the write: deadlock.
+	 * XXX: start non-loopback mounts straight away?  If "lots free",
+	 * let pagedaemon start loopback writes anyway?
 	 */
-
-	if (gotiod) {
+	if (gotiod && (curproc != uvm.pagedaemon_proc)) {
 
 		/*
 		 * Ensure that the queue never grows too large.
