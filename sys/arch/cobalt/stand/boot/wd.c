@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: wd.c,v 1.3 2003/12/13 22:34:30 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ wd_get_params(wd)
 	wd->sc_params = *(struct ataparams *)buf;
 
 	/* 48-bit LBA addressing */
-	if ((wd->sc_params.atap_cmd2_en & WDC_CAP_LBA48) != 0) {
+	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0) {
 		DPRINTF(("Drive supports LBA48.\n"));
 #if defined(_ENABLE_LBA48)
 		wd->sc_flags |= WDF_LBA48;
@@ -203,8 +203,8 @@ wdopen(struct open_file *f, ...)
 	struct wd_softc *wd;
 
 	va_start(ap, f);
-	unit = va_arg(ap, u_int8_t);
-	part = va_arg(ap, u_int8_t);
+	unit = va_arg(ap, u_int);
+	part = va_arg(ap, u_int);
 	va_end(ap);
 
 	DPRINTF(("wdopen: %d:%d\n", unit, part));
