@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2000/08/23 21:35:56 eeh Exp $ */
+/*	$NetBSD: intr.h,v 1.7 2000/12/03 14:49:50 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #define	__GENERIC_SOFT_INTERRUPTS
 
 void *
-softintr_establish __P((int level, int (*fun)(void *), void *arg));
+softintr_establish __P((int level, void (*fun)(void *), void *arg));
 
 void
 softintr_disestablish __P((void *cookie));

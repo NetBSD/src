@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.27 2000/11/10 11:57:26 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.28 2000/12/03 14:49:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ extern int fbnode;
 /* Interrupt handlers. */
 int zscheckintr __P((void *));
 static int zshard __P((void *));
-static int zssoft __P((void *));
+static void zssoft __P((void *));
 
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -489,7 +489,7 @@ zscheckintr(arg)
 /*
  * We need this only for TTY_DEBUG purposes.
  */
-static int
+static void
 zssoft(arg)
 	void *arg;
 {
@@ -513,7 +513,6 @@ zssoft(arg)
 	}
 #endif
 	splx(s);
-	return (1);
 }
 
 
