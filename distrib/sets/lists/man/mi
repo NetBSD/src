@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.679 2004/04/03 03:13:21 uwe Exp $
+# $NetBSD: mi,v 1.680 2004/04/03 04:20:38 uwe Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1675,6 +1675,7 @@
 ./usr/share/man/cat8/hpcmips/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hpcmips/pbsdboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hpcsh/MAKEDEV.0		man-obsolete		obsolete
+./usr/share/man/cat8/hpcsh/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hpcsh/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hprop.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman		kerberos,.cat
@@ -3754,6 +3755,7 @@
 ./usr/share/man/man8/hpcmips/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hpcmips/pbsdboot.8		man-sys-man		.man
 ./usr/share/man/man8/hpcsh/MAKEDEV.8		man-obsolete		obsolete
+./usr/share/man/man8/hpcsh/boot.8		man-sys-man		.man
 ./usr/share/man/man8/hpcsh/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hprop.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/hpropd.8			man-krb5-man		kerberos,.man
