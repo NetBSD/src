@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.38 1998/09/11 12:50:06 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.39 1998/09/11 13:22:45 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ svr4_getcontext(p, uc, mask)
 	/*
 	 * Set the flags
 	 */
-	uc->uc_flags = SVR4_UC_ALL;
+	uc->uc_flags = SVR4_UC_CPU|SVR4_UC_SIGMASK|SVR4_UC_STACK;
 }
 
 
@@ -168,51 +168,57 @@ svr4_setcontext(p, uc)
 	 * What to do with floating point stuff?
 	 */
 
-	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	if (uc->uc_flags & SVR4_UC_CPU) {
+		/* Restore register context. */
+		tf = p->p_md.md_regs;
 #ifdef VM86
-	if (r[SVR4_X86_EFL] & PSL_VM) {
-		tf->tf_vm86_gs = r[SVR4_X86_GS];
-		tf->tf_vm86_fs = r[SVR4_X86_FS];
-		tf->tf_vm86_es = r[SVR4_X86_ES];
-		tf->tf_vm86_ds = r[SVR4_X86_DS];
-		set_vflags(p, r[SVR4_X86_EFL]);
-	} else
+		if (r[SVR4_X86_EFL] & PSL_VM) {
+			tf->tf_vm86_gs = r[SVR4_X86_GS];
+			tf->tf_vm86_fs = r[SVR4_X86_FS];
+			tf->tf_vm86_es = r[SVR4_X86_ES];
+			tf->tf_vm86_ds = r[SVR4_X86_DS];
+			set_vflags(p, r[SVR4_X86_EFL]);
+		} else
 #endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
-			return (EINVAL);
+		{
+			/*
+			 * Check for security violations.  If we're returning to
+			 * protected mode, the CPU will validate the segment registers
+			 * automatically and generate a trap on violations.  We handle
+			 * the trap, rather than doing all of the checking here.
+			 */
+			if (((r[SVR4_X86_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
+			    !USERMODE(r[SVR4_X86_CS], r[SVR4_X86_EFL]))
+				return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
-		tf->tf_es = r[SVR4_X86_ES];
-		tf->tf_ds = r[SVR4_X86_DS];
-		tf->tf_eflags = r[SVR4_X86_EFL];
+			/* %fs and %gs were restored by the trampoline. */
+			tf->tf_es = r[SVR4_X86_ES];
+			tf->tf_ds = r[SVR4_X86_DS];
+			tf->tf_eflags = r[SVR4_X86_EFL];
+		}
+		tf->tf_edi = r[SVR4_X86_EDI];
+		tf->tf_esi = r[SVR4_X86_ESI];
+		tf->tf_ebp = r[SVR4_X86_EBP];
+		tf->tf_ebx = r[SVR4_X86_EBX];
+		tf->tf_edx = r[SVR4_X86_EDX];
+		tf->tf_ecx = r[SVR4_X86_ECX];
+		tf->tf_eax = r[SVR4_X86_EAX];
+		tf->tf_eip = r[SVR4_X86_EIP];
+		tf->tf_cs = r[SVR4_X86_CS];
+		tf->tf_ss = r[SVR4_X86_SS];
+		tf->tf_esp = r[SVR4_X86_ESP];
 	}
-	tf->tf_edi = r[SVR4_X86_EDI];
-	tf->tf_esi = r[SVR4_X86_ESI];
-	tf->tf_ebp = r[SVR4_X86_EBP];
-	tf->tf_ebx = r[SVR4_X86_EBX];
-	tf->tf_edx = r[SVR4_X86_EDX];
-	tf->tf_ecx = r[SVR4_X86_ECX];
-	tf->tf_eax = r[SVR4_X86_EAX];
-	tf->tf_eip = r[SVR4_X86_EIP];
-	tf->tf_cs = r[SVR4_X86_CS];
-	tf->tf_ss = r[SVR4_X86_SS];
-	tf->tf_esp = r[SVR4_X86_ESP];
 
-	/* Restore signal stack. */
-	svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
+	if (uc->uc_flags & SVR4_UC_STACK) {
+		/* Restore signal stack. */
+		svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
+	}
 
-	/* Restore signal mask. */
-	svr4_to_native_sigset(&uc->uc_sigmask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	if (uc->uc_flags & SVR4_UC_SIGMASK) {
+		/* Restore signal mask. */
+		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
+		(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	}
 
 	return (EJUSTRETURN);
 }
@@ -344,7 +350,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size);
+						       psp->ps_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)tf->tf_esp;
 	fp--;
@@ -366,6 +372,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
+
 #ifdef DEBUG_SVR4
 	printf("sig = %d, sip %p, ucp = %p, handler = %p\n", 
 	       frame.sf_signum, frame.sf_sip, frame.sf_ucp, frame.sf_handler);
