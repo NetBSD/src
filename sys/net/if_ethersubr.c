@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.95.2.1 2002/11/19 21:08:12 tron Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.95.2.2 2003/01/26 10:32:57 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.1 2002/11/19 21:08:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.2 2003/01/26 10:32:57 jmc Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -104,9 +104,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.1 2002/11/19 21:08:12 tron E
 
 #if NARP == 0
 /*
- * XXX there should realy be a way to issue this warning from within config(8)
+ * XXX there should really be a way to issue this warning from within config(8)
  */
-#error You have included a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you realy need pseudo-device bridge, ppppoe or vlan.
+#error You have included a pseudo-device in your configuration that depends on the presence of ethernet interfaces, but have no such interfaces configured. Check if you really need pseudo-device bridge, ppppoe or vlan.
 #endif
 
 #if NBPFILTER > 0 
