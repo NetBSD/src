@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $
+#	$NetBSD: Makefile,v 1.2 1998/07/07 00:16:34 dbj Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -42,7 +42,7 @@ LIBS=	${SALIB} ${KERNLIB}
 
 ${PROG}: links srt0.o ${OBJS} vers.o ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} vers.o -o $@
-	@size $@
+	@${SIZE} $@
 
 # this looks useful to me ... let's see when it will be an official part
 # of libsa
