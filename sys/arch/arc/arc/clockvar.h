@@ -1,4 +1,5 @@
-/*	$NetBSD: clockvar.h,v 1.1.1.2 2000/01/23 20:09:04 soda Exp $	*/
+/*	$OpenBSD: clockvar.h,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.1.1.3 2000/01/23 20:24:24 soda Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +30,7 @@
  */
 
 /*
- * Definitions for "cpu-independent" clock handling for the r4400.
+ * Definitions for "cpu-independent" clock handling for the mips arc arch.
  */
 
 /*
