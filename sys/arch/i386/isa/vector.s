@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.11 1993/10/29 04:36:51 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.12 1993/10/31 18:39:01 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -38,7 +38,7 @@
 #ifndef AUTO_EOI_1
 #define	ENABLE_ICU1 \
 	movb	$ICU_EOI,%al ;	/* non-specific EOI */ \
-	outb	%al,$IO_ICU1
+	outb	%al,$IO_ICU1 ;
 #else /* AUTO_EOI_1 */
 #define	ENABLE_ICU1		/* we now use auto-EOI to reduce i/o */
 #endif
@@ -47,12 +47,25 @@
 #define	ENABLE_ICU1_AND_2 \
 	movb	$ICU_EOI,%al ;	/* non-specific EOI */ \
 	outb	%al,$IO_ICU2 ;	/* do second icu first */ \
-	FASTER_NOP ; \
-	outb	%al,$IO_ICU1	/* then first */
+	outb	%al,$IO_ICU1 ;	/* then first */
 #else /* AUTO_EOI_2 */
 #define	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave */
 				/* on older chips, but it sometimes works */
 #endif
+
+#define	MASK(irq_num, icu) \
+	movb	_imen + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
+	orb	$IRQ_BIT(irq_num),%al ; \
+	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
+	outb	%al,$(icu+1) ;
+
+#define	UNMASK(irq_num, icu) \
+	cli ; \
+	movb	_imen + IRQ_BYTE(irq_num),%al ; \
+	andb	$~IRQ_BIT(irq_num),%al ; \
+	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
+	outb	%al,$(icu+1) ; \
+	sti ;
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -172,14 +185,11 @@ IDTVEC(intr/**/irq_num) ; \
 	pushl	%ds ; 		/* save our data and extra segments ... */ \
 	pushl	%es ; \
 	pushal ; \
+	enable_icus ;		/* reenable hw interrupts */ \
 	movl	$KDSEL,%eax ;	/* ... and reload with kernel's own ... */ \
 	movl	%ax,%ds ; \
 	movl	%ax,%es ; \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
-	orb	$IRQ_BIT(irq_num),%al ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	outb	%al,$icu+1 ; \
-	enable_icus ; 		/* reenable hw interrupts */ \
+	MASK(irq_num,icu) ; \
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
 	jnz	2f ; \
 _Xresume/**/irq_num: ; \
@@ -211,12 +221,7 @@ _Xresume/**/irq_num: ; \
 	testl	%esi,%esi ; 	/* check for stray interrupt */ \
 	jz	6f ; \
 5: ; \
-	cli ; 			/* unmask interrupt in hw */ \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; \
-	andb	$~IRQ_BIT(irq_num),%al ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	outb	%al,$icu+1 ; \
-	sti ; \
+	UNMASK(irq_num,icu) ; \
 	jmp	doreti ; 	/* finish up */ \
 	ALIGN_TEXT ; \
 6: ; \
