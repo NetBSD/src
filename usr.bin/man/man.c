@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.28 2002/06/11 04:39:52 lukem Exp $	*/
+/*	$NetBSD: man.c,v 1.29 2002/09/13 15:56:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.28 2002/06/11 04:39:52 lukem Exp $");
+__RCSID("$NetBSD: man.c,v 1.29 2002/09/13 15:56:38 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: man.c,v 1.28 2002/06/11 04:39:52 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "manconf.h"
 #include "pathnames.h"
 
 int f_all, f_where;
