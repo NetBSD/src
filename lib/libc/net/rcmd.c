@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.23 1998/01/18 06:22:19 lukem Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.24 1998/07/18 05:04:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.23 1998/01/18 06:22:19 lukem Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.24 1998/07/18 05:04:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -300,13 +300,13 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	}
 
 	/* get a socketpair we'll use for stdin and stdout. */
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) < 0) {
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sp) < 0) {
 		warn("rshrcmd: socketpair");
 		return (-1);
 	}
 	/* we will use this for the fd2 pointer */
 	if (fd2p) {
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, ep) < 0) {
+		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, ep) < 0) {
 			warn("rshrcmd: socketpair");
 			return (-1);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.16 1998/03/18 16:54:56 bouyer Exp $	*/
+/*	$NetBSD: tape.c,v 1.17 1998/07/18 05:04:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.16 1998/03/18 16:54:56 bouyer Exp $");
+__RCSID("$NetBSD: tape.c,v 1.17 1998/07/18 05:04:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -760,7 +760,7 @@ enslave()
 			caught = 0;
 		}
 
-		if (socketpair(AF_UNIX, SOCK_STREAM, 0, cmd) < 0 ||
+		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, cmd) < 0 ||
 		    (slaves[i].pid = fork()) < 0)
 			quit("too many slaves, %d (recompile smaller): %s\n",
 			    i, strerror(errno));

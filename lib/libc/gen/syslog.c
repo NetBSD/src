@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.14 1998/02/03 18:23:53 perry Exp $	*/
+/*	$NetBSD: syslog.c,v 1.15 1998/07/18 05:04:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.14 1998/02/03 18:23:53 perry Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.15 1998/07/18 05:04:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -252,7 +252,7 @@ vsyslog(pri, fmt, ap)
 	}
 }
 
-static struct sockaddr SyslogAddr;	/* AF_UNIX address of local logger */
+static struct sockaddr SyslogAddr;	/* AF_LOCAL address of local logger */
 
 void
 openlog(ident, logstat, logfac)
@@ -266,11 +266,11 @@ openlog(ident, logstat, logfac)
 		LogFacility = logfac;
 
 	if (LogFile == -1) {
-		SyslogAddr.sa_family = AF_UNIX;
+		SyslogAddr.sa_family = AF_LOCAL;
 		(void)strncpy(SyslogAddr.sa_data, _PATH_LOG,
 		    sizeof(SyslogAddr.sa_data));
 		if (LogStat & LOG_NDELAY) {
-			if ((LogFile = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1)
+			if ((LogFile = socket(AF_LOCAL, SOCK_DGRAM, 0)) == -1)
 				return;
 			(void)fcntl(LogFile, F_SETFD, 1);
 		}

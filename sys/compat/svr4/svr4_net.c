@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.13 1997/11/16 22:50:57 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.14 1998/07/18 05:04:37 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -152,7 +152,7 @@ svr4_netopen(dev, flag, mode, p)
 		break;
 
 	case dev_unix_dgram:
-		family = AF_UNIX;
+		family = AF_LOCAL;
 		type = SOCK_DGRAM;
 		protocol = 0;
 		DPRINTF(("unix-dgram, "));
@@ -160,7 +160,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	case dev_unix_stream:
 	case dev_unix_ord_stream:
-		family = AF_UNIX;
+		family = AF_LOCAL;
 		type = SOCK_STREAM;
 		protocol = 0;
 		DPRINTF(("unix-stream, "));

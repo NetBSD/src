@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.18 1998/07/05 08:49:46 jonathan Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.19 1998/07/18 05:04:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -120,7 +120,7 @@ portal_mount(mp, path, data, ndp, p)
 	if ((error = getsock(p->p_fd, args.pa_socket, &fp)) != 0)
 		return (error);
 	so = (struct socket *) fp->f_data;
-	if (so->so_proto->pr_domain->dom_family != AF_UNIX)
+	if (so->so_proto->pr_domain->dom_family != AF_LOCAL)
 		return (ESOCKTNOSUPPORT);
 
 	error = getnewvnode(VT_PORTAL, mp, portal_vnodeop_p, &rvp); /* XXX */
