@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.21 1995/06/24 20:29:23 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.22 1995/06/27 22:12:47 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -298,7 +298,7 @@ svr4_mmap(p, uap, retval)
 	struct vnode		*vp;
 	struct mmap_args	 mm;
 	caddr_t 		 rp;
-
+#define _MAP_NEW	0x80000000
 	/*
          * Verify the arguments.
          */
@@ -307,7 +307,7 @@ svr4_mmap(p, uap, retval)
 
 	SCARG(&mm, prot) = SCARG(uap, prot);
 	SCARG(&mm, len) = SCARG(uap, len);
-	SCARG(&mm, flags) = SCARG(uap, flags);
+	SCARG(&mm, flags) = SCARG(uap, flags) & ~_MAP_NEW;
 	SCARG(&mm, fd) = SCARG(uap, fd);
 	SCARG(&mm, addr) = SCARG(uap, addr);
 	SCARG(&mm, pos) = SCARG(uap, pos);
