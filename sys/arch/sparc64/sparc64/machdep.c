@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2000/06/30 22:58:02 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.75 2000/07/07 02:50:20 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1044,7 +1044,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_NOWRITE|BUS_DMA_NOCACHE);
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT|BUS_DMA_COHERENT|
+				   BUS_DMA_NOWRITE|BUS_DMA_NOCACHE);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -1262,6 +1263,16 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		return (ENOMEM);
 
 	/*
+	 * If the bus uses DVMA then ignore boundary and alignment.
+	 */
+	segs[0]._ds_boundary = boundary;
+	segs[0]._ds_align = alignment;
+	if (flags & BUS_DMA_DVMA) {
+		boundary = 0;
+		alignment = 0;
+	}
+
+	/*
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
@@ -1276,7 +1287,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 */
 	segs[0].ds_addr = NULL; /* UPA does not map things */
 	segs[0].ds_len = size;
-	segs[0]._ds_boundary = boundary;
 	*rsegs = 1;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.20 2000/07/02 14:00:38 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.21 2000/07/07 02:50:21 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -240,7 +240,7 @@ iommu_init(name, is, tsbsize)
 		(unsigned int)is->is_dvmabase,
 		(unsigned int)IOTSB_VEND);
 	is->is_dvmamap = extent_create(name,
-				       is->is_dvmabase, IOTSB_VEND,
+				       is->is_dvmabase, (u_long)IOTSB_VEND,
 				       M_DEVBUF, 0, 0, EX_NOWAIT);
 }
 
@@ -255,21 +255,27 @@ iommu_reset(is)
 {
 
 	/* Need to do 64-bit stores */
-	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_tsb, 0, is->is_ptsb);
+	bus_space_write_8(is->is_bustag, 
+			  (bus_space_handle_t)(u_long)&is->is_iommu->iommu_tsb, 
+			  0, is->is_ptsb);
 	/* Enable IOMMU in diagnostic mode */
-	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_cr, 0, 
-		is->is_cr|IOMMUCR_DE);
+	bus_space_write_8(is->is_bustag, 
+			  (bus_space_handle_t)(u_long)&is->is_iommu->iommu_cr, 0, 
+			  is->is_cr|IOMMUCR_DE);
 
 
 	if (!is->is_sb)
 		return;
 
 	/* Enable diagnostics mode? */
-	bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_ctl, 0, STRBUF_EN);
+	bus_space_write_8(is->is_bustag, 
+			  (bus_space_handle_t)(u_long)&is->is_sb->strbuf_ctl,
+			  0, STRBUF_EN);
 
 	/* No streaming buffers? Disable them */
 	if (bus_space_read_8(is->is_bustag,
-	    (bus_space_handle_t)(u_long)&is->is_sb->strbuf_ctl, 0) == 0)
+			     (bus_space_handle_t)(u_long)&is->is_sb->strbuf_ctl, 
+			     0) == 0)
 		is->is_sb = 0;
 }
 
@@ -295,15 +301,15 @@ iommu_enter(is, va, pa, flags)
 	
 	/* Is the streamcache flush really needed? */
 	if (is->is_sb) {
-		bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_pgflush, 0,
-		    va);
+		bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+				  &is->is_sb->strbuf_pgflush, 0, va);
 		iommu_strbuf_flush(is);
 	}
 	DPRINTF(IDB_DVMA, ("Clearing TSB slot %d for va %p\n", 
 		       (int)IOTSBSLOT(va,is->is_tsbsize), va));
 	is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = tte;
-	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_flush, 
-			  0, va);
+	bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+			  &is->is_iommu->iommu_flush, 0, va);
 	DPRINTF(IDB_DVMA, ("iommu_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
 		       va, (long)pa, IOTSBSLOT(va,is->is_tsbsize), 
 		       &is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
@@ -347,8 +353,8 @@ iommu_remove(is, va, len)
 			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
-			bus_space_write_8(is->is_bustag,
-			    &is->is_sb->strbuf_pgflush, 0, va);
+			bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+					  &is->is_sb->strbuf_pgflush, 0, va);
 			if (len <= NBPG)
 				iommu_strbuf_flush(is);
 			DPRINTF(IDB_DVMA, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
@@ -365,7 +371,8 @@ iommu_remove(is, va, len)
 			len -= NBPG;
 
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = 0;
-		bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_flush, 0, va);
+		bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+				  &is->is_iommu->iommu_flush, 0, va);
 		va += NBPG;
 	}
 }
@@ -405,7 +412,8 @@ iommu_strbuf_flush(is)
 
 	is->is_flush = 0;
 	membar_sync();
-	bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
+	bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+			  &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
 	membar_sync();
 
 	microtime(&flushtimeout); 
@@ -452,7 +460,8 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	int err;
 	bus_size_t sgsize;
 	paddr_t curaddr;
-	u_long dvmaddr, align;
+	u_long dvmaddr;
+	bus_size_t align, boundary;
 	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 
@@ -478,12 +487,15 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
 	/*
-	 * XXX Need to implement "don't dma across this boundry".
+	 * A boundary presented to bus_dmamem_alloc() takes precedence
+	 * over boundary in the map.
 	 */
-	align = max(map->_dm_boundary, NBPG);
+	if ((boundary = (map->dm_segs[0]._ds_boundary)) == 0)
+		boundary = map->_dm_boundary;
+	align = max(map->dm_segs[0]._ds_align, NBPG);
 	s = splhigh();
 	err = extent_alloc(is->is_dvmamap, sgsize, align,
-	    map->_dm_boundary, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
+	    boundary, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dvmaddr);
 	splx(s);
 
 #ifdef DEBUG
@@ -598,7 +610,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
 	int err;
 	bus_size_t sgsize;
 	paddr_t pa;
-	u_long boundary, align;
+	bus_size_t boundary, align;
 	u_long dvmaddr;
 	struct pglist *mlist;
 	int pagesz = PAGE_SIZE;
@@ -633,7 +645,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, size, flags)
 	if ((boundary = segs[0]._ds_boundary) == 0)
 		boundary = map->_dm_boundary;
 	
-	align = max(map->_dm_boundary, NBPG);
+	align = max(segs[0]._ds_align, NBPG);
 	s = splhigh();
 	err = extent_alloc(is->is_dvmamap, sgsize, align, boundary, 
 	   ((flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT)|EX_BOUNDZERO, 
@@ -712,8 +724,9 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 				DPRINTF(IDB_DVMA,
 				    ("iommu_dvmamap_sync: flushing va %p, %lu "
 				     "bytes left\n", (long)va, (u_long)len));
-				bus_space_write_8(is->is_bustag,
-				    &is->is_sb->strbuf_pgflush, 0, va);
+				bus_space_write_8(is->is_bustag, 
+						  (bus_space_handle_t)(u_long)
+						  &is->is_sb->strbuf_pgflush, 0, va);
 				if (len <= NBPG) {
 					iommu_strbuf_flush(is);
 					len = 0;
@@ -750,7 +763,7 @@ iommu_dvmamem_alloc(t, is, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	DPRINTF(IDB_DVMA, ("iommu_dvmamem_alloc: sz %qx align %qx bound %qx "
 	   "segp %p flags %d\n", size, alignment, boundary, segs, flags));
 	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags));
+	    segs, nsegs, rsegs, flags|BUS_DMA_DVMA));
 }
 
 void
