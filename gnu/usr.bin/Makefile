@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 1998/12/13 12:54:33 drochner Exp $
+#	$NetBSD: Makefile,v 1.62 1998/12/17 22:36:42 thorpej Exp $
 
 # XXX for OBJECT_FMT
 .include <bsd.own.mk>
@@ -16,7 +16,7 @@ SUBDIR+=	gas
 
 # XXX mips vs mips{el,eb}.  Should be all ELF hosts anyway.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips")
-SUBDIR+=	ld.new ld/rtld ld/ldd ld/ldconfig
+SUBDIR+=	ld.new
 .else
 SUBDIR+=	ld
 .endif
