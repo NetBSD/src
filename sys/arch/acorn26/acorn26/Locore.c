@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.4 2002/09/22 05:43:25 gmcgarry Exp $	*/
+/*	$NetBSD: Locore.c,v 1.5 2002/10/07 02:48:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,15 +41,17 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.4 2002/09/22 05:43:25 gmcgarry Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.5 2002/10/07 02:48:38 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/frame.h>
 #include <machine/machdep.h>
 
 void idle(void);
@@ -163,6 +165,17 @@ cpu_switch(struct proc *p1, struct proc *newp)
 		return;
 	pmap_deactivate(p1);
 	pmap_activate(p2);
+
+	/* Check for Restartable Atomic Sequences. */
+	if (p2->p_nras != 0) {
+		struct trapframe *tf = p2->p_addr->u_pcb.pcb_tf;
+		caddr_t pc;
+
+		pc = ras_lookup(p2, (caddr_t) tf->tf_pc);
+		if (pc != (caddr_t) -1)
+			tf->tf_pc = (register_t) pc;
+	}
+
 	cpu_loswitch(&p1->p_addr->u_pcb.pcb_sf, p2->p_addr->u_pcb.pcb_sf);
 	/* We only get back here after the other process has run. */
 }
