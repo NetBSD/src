@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.6 1998/04/19 01:48:35 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.7 1998/06/22 09:37:42 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.6 1998/04/19 01:48:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7 1998/06/22 09:37:42 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -93,10 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.6 1998/04/19 01:48:35 jonathan Exp $"
 /* all these to get ioasic_base */
 #include <sys/device.h>			/* struct cfdata for.. */
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
+#include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h> 
 #include <pmax/pmax/pmaxtype.h> 
 
@@ -258,8 +258,8 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 		mask = MIPS_INT_MASK_2; break;
 
 	case KMIN_SCSI_SLOT:
-		mask = (KMIN_INTR_SCSI | KMIN_INTR_SCSI_PTR_LOAD |
-			KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
+		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
+			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
 
 	case KMIN_LANCE_SLOT:
@@ -363,18 +363,18 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 		/* masked interrupts are still observable */
 		intr &= old_mask;
 	
-		if (intr & KMIN_INTR_SCSI_PTR_LOAD) {
-			*intrp &= ~KMIN_INTR_SCSI_PTR_LOAD;
+		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
+			*intrp &= ~IOASIC_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
 			asc_dma_intr();
 #endif
 		}
 	
-		if (intr & (KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E))
-			*intrp &= ~(KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
+		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
+			*intrp &= ~(IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 
-		if (intr & KMIN_INTR_LANCE_READ_E)
-			*intrp &= ~KMIN_INTR_LANCE_READ_E;
+		if (intr & IOASIC_INTR_LANCE_READ_E)
+			*intrp &= ~IOASIC_INTR_LANCE_READ_E;
 
 		if (intr & KMIN_INTR_TIMEOUT)
 			kn02ba_errintr();
@@ -408,14 +408,14 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			intrcnt[SERIAL1_INTR]++;
 		}
 	
-		if ((intr & KMIN_INTR_SCSI) &&
+		if ((intr & IOASIC_INTR_SCSI) &&
 		    tc_slot_info[KMIN_SCSI_SLOT].intr) {
 			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
 			  (tc_slot_info[KMIN_SCSI_SLOT].sc);
 			intrcnt[SCSI_INTR]++;
 		}
 
-		if ((intr & KMIN_INTR_LANCE) &&
+		if ((intr & IOASIC_INTR_LANCE) &&
 		    tc_slot_info[KMIN_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
 			  (tc_slot_info[KMIN_LANCE_SLOT].sc);
