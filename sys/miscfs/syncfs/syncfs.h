@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.3 2000/03/30 02:21:49 simonb Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.4 2000/07/09 00:59:06 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -46,6 +46,7 @@ int	sync_print	__P((void *));
 void sched_sync __P((void *));
 void vn_initialize_syncerd __P((void));
 int vfs_allocate_syncvnode __P((struct mount *));
+void vfs_deallocate_syncvnode __P((struct mount *));
 
 extern int (**sync_vnodeop_p) __P((void *));
 
