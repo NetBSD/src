@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.39 2003/11/03 22:34:51 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.40 2003/11/07 11:59:48 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.39 2003/11/03 22:34:51 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.40 2003/11/07 11:59:48 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,7 +693,7 @@ sa_switch(struct lwp *l, int type)
 	struct sadata_upcall *sau;
 	struct lwp *l2;
 	stack_t st;
-	int error;
+	int error, s;
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
 	    type, sa->sa_vp ? sa->sa_vp->l_lid : 0));
@@ -711,6 +711,13 @@ sa_switch(struct lwp *l, int type)
 		if (sa->sa_wokenq_head == NULL) {
 			l->l_flag |= L_SA_IDLE;
 			mi_switch(l, NULL);
+		} else {
+			/* make us running again. */
+			unsleep(l);
+			l->l_stat = LSONPROC;
+			l->l_proc->p_nrlwps++;
+			s = splsched();
+			SCHED_UNLOCK(s);
 		}
 		return;
 	} else if (sa->sa_vp == l) {
