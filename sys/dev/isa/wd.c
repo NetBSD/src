@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.86 1994/07/26 19:36:13 mycroft Exp $
+ *	$Id: wd.c,v 1.87 1994/08/15 08:22:20 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -75,7 +75,7 @@
 #define WDCDELAY	100
 #define	RECOVERYTIME	hz/2	/* time to recover from an error */
 
-#if 0
+#if 1
 /* If you enable this, it will report any delays more than 100us * N long. */
 #define WDCNDELAY_DEBUG	10
 #endif
@@ -175,7 +175,9 @@ static void wdctimeout __P((void *arg));
 void wddisksort __P((struct buf *, struct buf *));
 static void wderror __P((void *, struct buf *, char *));
 int wdcwait __P((struct wdc_softc *, int));
-#define	wait_for_drq(d)		wdcwait(d, WDCS_DRQ)
+/* ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
+   command is aborted. */
+#define	wait_for_drq(d)		wdcwait(d, WDCS_READY | WDCS_SEEKCMPLT | WDCS_DRQ)
 #define	wait_for_ready(d)	wdcwait(d, WDCS_READY | WDCS_SEEKCMPLT)
 #define	wait_for_unbusy(d)	wdcwait(d, 0)
 
@@ -706,11 +708,11 @@ wdcintr(wdc)
 	struct wd_softc *wd;
 	struct buf *bp;
 
-	/* Clear the pending interrupt. */
-	(void) inb(wdc->sc_iobase+wd_status);
-
-	if ((wdc->sc_flags & WDCF_ACTIVE) == 0)
+	if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
+		/* Clear the pending interrupt. */
+		(void) inb(wdc->sc_iobase+wd_status);
 		return 0;
+	}
 
 	wd = wdc->sc_drives.tqh_first;
 	bp = wd->sc_q.b_actf;
@@ -768,8 +770,9 @@ wdcintr(wdc)
 	/* If this was a read, fetch the data. */
 	if (bp->b_flags & B_READ) {
 		/* Ready to receive data? */
-		if (wait_for_drq(wdc) != 0) {
-			wderror(wd, NULL, "wdcintr: read error detected late");
+		if ((wdc->sc_status & (WDCS_READY | WDCS_SEEKCMPLT | WDCS_DRQ))
+		    != (WDCS_READY | WDCS_SEEKCMPLT | WDCS_DRQ)) {
+			wderror(wd, NULL, "wdcintr: read intr before drq");
 			wdcunwedge(wdc);
 			return 1;
 		}
@@ -1542,23 +1545,27 @@ wdcwait(wdc, mask)
 	u_short iobase = wdc->sc_iobase;
 	int timeout = 0;
 	u_char status;
+	extern int cold;
 
 	for (;;) {
-		wdc->sc_status = status = inb(iobase+wd_altsts);
+		wdc->sc_status = status = inb(iobase+wd_status);
 		if ((status & WDCS_BUSY) == 0 && (status & mask) == mask)
 			break;
 		if (++timeout > WDCNDELAY)
 			return -1;
 		delay(WDCDELAY);
 	}
-	if (status & WDCS_ERR)
+	if (status & WDCS_ERR) {
 		wdc->sc_error = inb(iobase+wd_error);
+		return WDCS_ERR;
+	}
 #ifdef WDCNDELAY_DEBUG
-	if (timeout > WDCNDELAY_DEBUG)
-		printf("%s: ignore this: busy-wait took %dus\n",
+	/* After autoconfig, there should be no long delays. */
+	if (!cold && timeout > WDCNDELAY_DEBUG)
+		printf("%s: warning: busy-wait took %dus\n",
 		    wdc->sc_dev.dv_xname, WDCDELAY * timeout);
 #endif
-	return status & WDCS_ERR;
+	return 0;
 }
 
 static void
