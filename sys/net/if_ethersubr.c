@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.13 1995/06/12 00:46:52 mycroft Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.14 1995/08/19 16:33:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -106,7 +106,6 @@ ether_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct ether_header *eh;
-	int off, len = m->m_pkthdr.len;
 	struct arpcom *ac = (struct arpcom *)ifp;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -143,7 +142,6 @@ ether_output(ifp, m0, dst, rt0)
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		off = m->m_pkthdr.len - m->m_len;
 		etype = ETHERTYPE_IP;
 		break;
 #endif
@@ -193,7 +191,6 @@ ether_output(ifp, m0, dst, rt0)
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
-		len += 3;
 		IFDEBUG(D_ETHER)
 			int i;
 			printf("unoutput: sending pkt to: ");
@@ -283,11 +280,11 @@ ether_output(ifp, m0, dst, rt0)
 		splx(s);
 		senderr(ENOBUFS);
 	}
+	ifp->if_obytes += m->m_pkthdr.len;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
-	ifp->if_obytes += len + sizeof (struct ether_header);
 	if (m->m_flags & M_MCAST)
 		ifp->if_omcasts++;
 	return (error);
