@@ -1919,10 +1919,57 @@ echo "$as_me: error: POSIX regex.h is required" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
+# If we don't have <poll.h>, we need to use select(2).
+echo "$as_me:1923: checking for poll.h" >&5
+echo $ECHO_N "checking for poll.h... $ECHO_C" >&6
+if test "${ac_cv_header_poll_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line 1929 "configure"
+#include "confdefs.h"
+#include <poll.h>
+_ACEOF
+if { (eval echo "$as_me:1933: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  egrep -v '^ *\+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:1939: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_cv_header_poll_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  ac_cv_header_poll_h=no
+fi
+rm -f conftest.err conftest.$ac_ext
+fi
+echo "$as_me:1958: result: $ac_cv_header_poll_h" >&5
+echo "${ECHO_T}$ac_cv_header_poll_h" >&6
+if test $ac_cv_header_poll_h = yes; then
+  :
+else
+  cat >>confdefs.h <<\EOF
+#define USE_SELECT 1
+EOF
+
+fi
+
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().
 
-echo "$as_me:1925: checking for regfree in -lregex" >&5
+echo "$as_me:1972: checking for regfree in -lregex" >&5
 echo $ECHO_N "checking for regfree in -lregex... $ECHO_C" >&6
 if test "${ac_cv_lib_regex_regfree+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -1930,7 +1977,7 @@ else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lregex  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
-#line 1933 "configure"
+#line 1980 "configure"
 #include "confdefs.h"
 
 /* Override any gcc2 internal prototype to avoid an error.  */
@@ -1949,16 +1996,16 @@ regfree ();
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:1952: \"$ac_link\"") >&5
+if { (eval echo "$as_me:1999: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:1955: \$? = $ac_status" >&5
+  echo "$as_me:2002: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:1958: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2005: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:1961: \$? = $ac_status" >&5
+  echo "$as_me:2008: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_lib_regex_regfree=yes
 else
@@ -1969,7 +2016,7 @@ fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:1972: result: $ac_cv_lib_regex_regfree" >&5
+echo "$as_me:2019: result: $ac_cv_lib_regex_regfree" >&5
 echo "${ECHO_T}$ac_cv_lib_regex_regfree" >&6
 if test $ac_cv_lib_regex_regfree = yes; then
   cat >>confdefs.h <<EOF
@@ -1980,7 +2027,7 @@ EOF
 
 fi
 
-echo "$as_me:1983: checking for library containing regfree" >&5
+echo "$as_me:2030: checking for library containing regfree" >&5
 echo $ECHO_N "checking for library containing regfree... $ECHO_C" >&6
 if test "${ac_cv_search_regfree+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -1988,7 +2035,7 @@ else
   ac_func_search_save_LIBS=$LIBS
 ac_cv_search_regfree=no
 cat >conftest.$ac_ext <<_ACEOF
-#line 1991 "configure"
+#line 2038 "configure"
 #include "confdefs.h"
 
 /* Override any gcc2 internal prototype to avoid an error.  */
@@ -2007,16 +2054,16 @@ regfree ();
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:2010: \"$ac_link\"") >&5
+if { (eval echo "$as_me:2057: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:2013: \$? = $ac_status" >&5
+  echo "$as_me:2060: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:2016: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2063: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2019: \$? = $ac_status" >&5
+  echo "$as_me:2066: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_search_regfree="none required"
 else
@@ -2028,7 +2075,7 @@ if test "$ac_cv_search_regfree" = no; then
   for ac_lib in rx posix; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
-#line 2031 "configure"
+#line 2078 "configure"
 #include "confdefs.h"
 
 /* Override any gcc2 internal prototype to avoid an error.  */
@@ -2047,16 +2094,16 @@ regfree ();
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:2050: \"$ac_link\"") >&5
+if { (eval echo "$as_me:2097: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:2053: \$? = $ac_status" >&5
+  echo "$as_me:2100: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:2056: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2103: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2059: \$? = $ac_status" >&5
+  echo "$as_me:2106: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_search_regfree="-l$ac_lib"
 break
@@ -2069,7 +2116,7 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
 LIBS=$ac_func_search_save_LIBS
 fi
-echo "$as_me:2072: result: $ac_cv_search_regfree" >&5
+echo "$as_me:2119: result: $ac_cv_search_regfree" >&5
 echo "${ECHO_T}$ac_cv_search_regfree" >&6
 if test "$ac_cv_search_regfree" != no; then
   test "$ac_cv_search_regfree" = "none required" || LIBS="$ac_cv_search_regfree $LIBS"
@@ -2079,13 +2126,13 @@ fi
 for ac_func in setenv strdup strerror strftime vsnprintf
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:2082: checking for $ac_func" >&5
+echo "$as_me:2129: checking for $ac_func" >&5
 echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
 if eval "test \"\${$as_ac_var+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 2088 "configure"
+#line 2135 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char $ac_func (); below.  */
@@ -2116,16 +2163,16 @@ f = $ac_func;
 }
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:2119: \"$ac_link\"") >&5
+if { (eval echo "$as_me:2166: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:2122: \$? = $ac_status" >&5
+  echo "$as_me:2169: \$? = $ac_status" >&5
   (exit $ac_status); } &&
          { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:2125: \"$ac_try\"") >&5
+  { (eval echo "$as_me:2172: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:2128: \$? = $ac_status" >&5
+  echo "$as_me:2175: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   eval "$as_ac_var=yes"
 else
@@ -2135,7 +2182,7 @@ eval "$as_ac_var=no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 fi
-echo "$as_me:2138: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "$as_me:2185: result: `eval echo '${'$as_ac_var'}'`" >&5
 echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
 if test `eval echo '${'$as_ac_var'}'` = yes; then
   cat >>confdefs.h <<EOF
@@ -2254,7 +2301,7 @@ rm -f confdef2opt.sed
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
 ac_clean_files="$ac_clean_files $CONFIG_STATUS"
-{ echo "$as_me:2257: creating $CONFIG_STATUS" >&5
+{ echo "$as_me:2304: creating $CONFIG_STATUS" >&5
 echo "$as_me: creating $CONFIG_STATUS" >&6;}
 cat >$CONFIG_STATUS <<_ACEOF
 #! $SHELL
@@ -2421,7 +2468,7 @@ cat >>$CONFIG_STATUS <<\EOF
     echo "$ac_cs_version"; exit 0 ;;
   --he | --h)
     # Conflict between --help and --header
-    { { echo "$as_me:2424: error: ambiguous option: $1
+    { { echo "$as_me:2471: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -2440,7 +2487,7 @@ Try \`$0 --help' for more information." >&2;}
     ac_need_defaults=false;;
 
   # This is an error.
-  -*) { { echo "$as_me:2443: error: unrecognized option: $1
+  -*) { { echo "$as_me:2490: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -2476,7 +2523,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "buildmake.sh" ) CONFIG_FILES="$CONFIG_FILES buildmake.sh" ;;
-  *) { { echo "$as_me:2479: error: invalid argument: $ac_config_target" >&5
+  *) { { echo "$as_me:2526: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
   esac
@@ -2674,7 +2721,7 @@ done; }
   esac
 
   if test x"$ac_file" != x-; then
-    { echo "$as_me:2677: creating $ac_file" >&5
+    { echo "$as_me:2724: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
     rm -f "$ac_file"
   fi
@@ -2692,7 +2739,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:2695: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:2742: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -2705,7 +2752,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:2708: error: cannot find input file: $f" >&5
+           { { echo "$as_me:2755: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
