@@ -40,12 +40,12 @@ Supported devices include:
 		3COM 3c505 [*]
 		3COM 3c507
 		3COM 3c509 and 3c579
-		Digital DEPCA
-		BICC Isolan [not recently tested]
+		Digital DEPCA [*]
+		BICC Isolan [* and not recently tested]
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
 		Novell NE1000, NE2000
-		Novell NE2100 [not recently tested]
+		Novell NE2100 [* and not recently tested]
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
@@ -141,6 +141,3 @@ Novell NE1000, or NE2000 Ethernet boards
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
 		ie0	0x360	7		iomem 0xd0000
-
-BICC Isolan, Novell NE2100, or Digitial DEPCA Ethernet boards
-		le0	0x320	10	7
