@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.1 2000/01/20 17:07:41 mjacob Exp $ */
+/*	$NetBSD: ses.c,v 1.2 2000/01/21 21:10:41 mjacob Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -92,6 +92,10 @@ typedef struct {
 #define	SEN_ID		"UNISYS           SUN_SEN"
 #define	SEN_ID_LEN	24
 
+#define	SAFTE_START	44
+#define	SAFTE_END	50
+#define	SAFTE_LEN	SAFTE_END-SAFTE_START
+
 
 static enctyp ses_type __P((void *, int));
 
@@ -184,13 +188,17 @@ ses_match(parent, match, aux)
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;
+
 	switch (ses_device_type(sa)) {
 	case SES_SES:
 	case SES_SES_SCSI2:
-	case SES_SES_PASSTHROUGH:
 	case SES_SEN:
 	case SES_SAFT:
-		return (1);
+	case SES_SES_PASSTHROUGH:
+		/*
+		 * For these devices, it's a perfect match.
+		 */
+		return (24);
 	default:
 		return (0);
 	}
@@ -272,6 +280,8 @@ ses_attach(parent, self, aux)
 	printf("\n%s: %s\n", softc->sc_device.dv_xname, tname);
 }
 
+
+
 static enctyp
 ses_device_type(sa)
 	struct scsipibus_attach_args *sa;
@@ -290,18 +300,19 @@ ses_device_type(sa)
 	 * we don't have to run this as a polled command.
 	 */
 
-#define	MORESZ	64
-	if (inqp->additional_length > MORESZ-4) {
+	if (inqp->additional_length >= SAFTE_END-4) {
+		size_t amt = inqp->additional_length + 4;
 		struct scsipi_generic cmd;
-		static u_char more[MORESZ];
+		static u_char more[64];
+
 		bzero(&cmd, sizeof(cmd));
 		cmd.opcode = INQUIRY;
-		cmd.bytes[3] = MORESZ;
-		if (scsipi_command(sa->sa_sc_link, &cmd, 6, more, MORESZ,
+		cmd.bytes[3] = amt;
+		if (scsipi_command(sa->sa_sc_link, &cmd, 6, more, amt,
 		    SCSIPIRETRIES, 10000, NULL,
 		    XS_CTL_DATA_IN | XS_CTL_DISCOVERY) == 0) {
+			length = amt;
 			inqp = (struct scsipi_inquiry_data *) more;
-			length = MORESZ;
 		}
 	} else {
 		length = sizeof (struct scsipi_inquiry_data);
@@ -589,7 +600,7 @@ ses_type(void *buf, int buflen)
 {
 	unsigned char *iqd = buf;
 
-	if (buflen < 32)
+	if (buflen < 8+SEN_ID_LEN)
 		return (SES_NONE);
 
 	if ((iqd[0] & 0x1f) == T_ENCLOSURE) {
@@ -612,14 +623,16 @@ ses_type(void *buf, int buflen)
 	}
 #endif
 
-	if (buflen < 47) {
+	/*
+	 * The comparison is short for a reason-
+	 * some vendors were chopping it short.
+	 */
+
+	if (buflen < SAFTE_END - 2) {
 		return (SES_NONE);
 	}
-	/*
-	 * The comparison is short for a reason- some vendors were chopping
-	 * it short.
-	 */
-	if (STRNCMP((char *)&iqd[44], "SAF-TE", 4) == 0) {
+
+	if (STRNCMP((char *)&iqd[SAFTE_START], "SAF-TE", SAFTE_LEN - 2) == 0) {
 		return (SES_SAFT);
 	}
 	return (SES_NONE);
