@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 2001/05/23 02:59:35 fredette Exp $	*/
+/*	$NetBSD: config.h,v 1.4 2001/06/13 21:38:30 fredette Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -70,5 +70,5 @@
 #define PACKAGE "ndbootd"
 
 /* Version number of package */
-#define VERSION "0.4"
+#define VERSION "0.5"
 
