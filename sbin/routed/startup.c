@@ -1,4 +1,4 @@
-/*	$NetBSD: startup.c,v 1.11 1995/03/18 15:00:40 cgd Exp $	*/
+/*	$NetBSD: startup.c,v 1.12 1995/04/24 13:24:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: startup.c,v 1.11 1995/03/18 15:00:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: startup.c,v 1.12 1995/04/24 13:24:32 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -441,7 +441,9 @@ gwkludge()
 			 * to prevent overriding them
 			 * with something else.
 			 */
-			rtadd(&dst, &gate, metric, RTS_EXTERNAL|RTS_PASSIVE);
+			rtadd((struct sockaddr *)&dst,
+			    (struct sockaddr *)&gate, metric,
+			    RTS_EXTERNAL|RTS_PASSIVE);
 			continue;
 		}
 		/* assume no duplicate entries */
