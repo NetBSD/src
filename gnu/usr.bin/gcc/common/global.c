@@ -656,6 +656,8 @@ global_conflicts ()
 	  else
 	    for (bit = 1; bit; bit <<= 1, i++)
 	      {
+		if (i < FIRST_PSEUDO_REGISTER)
+		  continue;
 		if (i >= max_regno)
 		  break;
 		if (old[offset] & bit)
