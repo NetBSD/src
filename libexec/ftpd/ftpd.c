@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.73 1999/12/12 14:05:54 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.74 1999/12/13 04:36:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.73 1999/12/12 14:05:54 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.74 1999/12/13 04:36:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,13 +347,14 @@ main(argc, argv)
 		 * I hate to do this, but this is the easiest solution.
 		 */
 		union sockunion tmp_addr;
+		const int off = sizeof(struct in6_addr) - sizeof(struct in_addr);
 
 		tmp_addr = his_addr;
 		memset(&his_addr, 0, sizeof(his_addr));
 		his_addr.su_sin.sin_family = AF_INET;
 		his_addr.su_sin.sin_len = sizeof(his_addr.su_sin);
 		memcpy(&his_addr.su_sin.sin_addr,
-			&tmp_addr.su_sin6.sin6_addr.s6_addr32[3],
+			&tmp_addr.su_sin6.sin6_addr.s6_addr[off],
 			sizeof(his_addr.su_sin.sin_addr));
 		his_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
 
@@ -362,7 +363,7 @@ main(argc, argv)
 		ctrl_addr.su_sin.sin_family = AF_INET;
 		ctrl_addr.su_sin.sin_len = sizeof(ctrl_addr.su_sin);
 		memcpy(&ctrl_addr.su_sin.sin_addr,
-			&tmp_addr.su_sin6.sin6_addr.s6_addr32[3],
+			&tmp_addr.su_sin6.sin6_addr.s6_addr[off],
 			sizeof(ctrl_addr.su_sin.sin_addr));
 		ctrl_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
 #else
