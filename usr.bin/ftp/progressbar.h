@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.61 2003/01/21 16:08:07 jhawk Exp $	*/
+/*	$NetBSD: progressbar.h,v 1.1 2003/01/21 16:08:08 jhawk Exp $	*/
 
 /*-
- * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c) 1994 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1985, 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,7 +68,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.3 (Berkeley) 10/9/94
+ *	from: ftp_var.h	8.4 (Berkeley) 10/9/94
+ *      from: extern.h	8.3 (Berkeley) 10/9/94
  */
 
 /*
@@ -100,162 +101,64 @@
  * SUCH DAMAGE.
  */
 
-struct sockaddr;
-struct tm;
-struct addrinfo;
+#ifndef STANDALONE_PROGRESS
+#include <setjmp.h>
+#endif	/* !STANDALONE_PROGRESS */
 
-void	abort_remote(FILE *);
-void	abort_squared(int);
-void	abortpt(int);
-void	abortxfer(int);
-void	account(int, char **);
-void	ai_unmapped(struct addrinfo *);
-int	another(int *, char ***, const char *);
-int	auto_fetch(int, char **);
-int	auto_put(int, char **, const char *);
-void	blkfree(char **);
-void	cd(int, char **);
-void	cdup(int, char **);
-void	changetype(int, int);
-void	cleanuppeer(void);
-void	cmdabort(int);
-void	cmdtimeout(int);
-void	cmdscanner(void);
-int	command(const char *, ...)
-     __attribute__((__format__(__printf__, 1, 2)));
-#ifndef NO_EDITCOMPLETE
-unsigned char complete(EditLine *, int);
-void	controlediting(void);
-#endif /* !NO_EDITCOMPLETE */
-void	crankrate(int);
-FILE   *dataconn(const char *);
-void	delete(int, char **);
-void	disconnect(int, char **);
-void	do_chmod(int, char **);
-void	do_umask(int, char **);
-char   *docase(char *);
-void	domacro(int, char **);
-char   *domap(char *);
-void	doproxy(int, char **);
-char   *dotrans(char *);
-void	feat(int, char **);
-void	fget(int, char **);
+#ifndef	GLOBAL
+#define	GLOBAL	extern
+#endif
+
+
+#define	STALLTIME	5	/* # of seconds of no xfer before "stalling" */
+
+typedef void (*sigfunc)(int);
+
+
+GLOBAL	FILE   *ttyout;		/* stdout, or stderr if retrieving to stdout */
+
+GLOBAL	int	progress;	/* display transfer progress bar */
+GLOBAL	int	ttywidth;	/* width of tty */
+
+GLOBAL	off_t	bytes;		/* current # of bytes read */
+GLOBAL	off_t	filesize;	/* size of file being transferred */
+GLOBAL	off_t	restart_point;	/* offset to restart transfer */
+
+
+#ifndef	STANDALONE_PROGRESS
+GLOBAL	int	fromatty;	/* input is from a terminal */
+GLOBAL	int	verbose;	/* print messages coming back from server */
+GLOBAL	int	quit_time;	/* maximum time to wait if stalled */
+
+GLOBAL	char   *direction;	/* direction transfer is occurring */
+
+GLOBAL	sigjmp_buf toplevel;	/* non-local goto stuff for cmd scanner */
+#endif	/* !STANDALONE_PROGRESS */
+
+void	alarmtimer(int);
+void	progressmeter(int);
+sigfunc	xsignal(int, sigfunc);
+sigfunc	xsignal_restart(int, sigfunc, int);
+
+#ifndef STANDALONE_PROGRESS
 int	foregroundproc(void);
-void	formatbuf(char *, size_t, const char *);
-void	ftpvis(char *, size_t, const char *, size_t);
-int	ftp_login(const char *, const char *, const char *);
-void	get(int, char **);
-struct cmd *getcmd(const char *);
-int	getit(int, char **, int, const char *);
-struct option *getoption(const char *);
-char   *getoptionvalue(const char *);
-void	getremoteinfo(void);
-int	getreply(int);
-char   *globulize(const char *);
-char   *gunique(const char *);
-void	help(int, char **);
-char   *hookup(char *, char *);
-void	idlecmd(int, char **);
-int	initconn(void);
-void	intr(int);
-int	isipv6addr(const char *);
-void	list_vertical(StringList *);
-void	lcd(int, char **);
-void	lostpeer(int);
-void	lpage(int, char **);
-void	lpwd(int, char **);
-void	ls(int, char **);
-void	mabort(void);
-void	macdef(int, char **);
-void	makeargv(void);
-void	makedir(int, char **);
-void	mdelete(int, char **);
-void	mget(int, char **);
-void	mintr(int);
-void	mls(int, char **);
-void	mlst(int, char **);
-void	modtime(int, char **);
-void	mput(int, char **);
-char   *onoff(int);
-void	opts(int, char **);
-void	newer(int, char **);
-void	page(int, char **);
-int	parseport(const char *, int);
-int	parserate(int, char **, int);
-char   *prompt(void);
-void	proxabort(int);
-void	proxtrans(const char *, const char *, const char *);
-void	psabort(int);
-void	pswitch(int);
-void	put(int, char **);
-void	pwd(int, char **);
-void	quit(int, char **);
-void	quote(int, char **);
-void	quote1(const char *, int, char **);
-void	recvrequest(const char *, const char *, const char *,
-	    const char *, int, int);
-void	reget(int, char **);
-char   *remglob(char **, int, char **);
-time_t	remotemodtime(const char *, int);
-off_t	remotesize(const char *, int);
-void	removedir(int, char **);
-void	renamefile(int, char **);
-void	reset(int, char **);
-void	restart(int, char **);
-void	rmthelp(int, char **);
-void	rmtstatus(int, char **);
-char   *rprompt(void);
-int	ruserpass(const char *, const char **, const char **,
-	    const char **);
-void	sendrequest(const char *, const char *, const char *, int);
-void	setascii(int, char **);
-void	setbell(int, char **);
-void	setbinary(int, char **);
-void	setcase(int, char **);
-void	setcr(int, char **);
-void	setdebug(int, char **);
-void	setedit(int, char **);
-void	setepsv4(int, char **);
-void	setform(int, char **);
-void	setftmode(int, char **);
-void	setgate(int, char **);
-void	setglob(int, char **);
-void	sethash(int, char **);
-void	setnmap(int, char **);
-void	setntrans(int, char **);
-void	setoption(int, char **);
-void	setpassive(int, char **);
-void	setpeer(int, char **);
-void	setport(int, char **);
-void	setpreserve(int, char **);
-void	setprogress(int, char **);
-void	setprompt(int, char **);
-void	setrate(int, char **);
-void	setrunique(int, char **);
-void	setstruct(int, char **);
-void	setsunique(int, char **);
-void	settenex(int, char **);
-void	settrace(int, char **);
-void	setttywidth(int);
-void	settype(int, char **);
-void	setupsockbufsize(int);
-void	setverbose(int, char **);
-void	setxferbuf(int, char **);
-void	shell(int, char **);
-void	site(int, char **);
-void	sizecmd(int, char **);
-char   *slurpstring(void);
-void	status(int, char **);
-int	strsuftoi(const char *);
-void	syst(int, char **);
-int	togglevar(int, char **, int *, const char *);
-void	unsetoption(int, char **);
-void	updateremotepwd(void);
-void	usage(void);
-void	user(int, char **);
-int	xconnect(int, const struct sockaddr *, int);
-int	xlisten(int, int);
-void   *xmalloc(size_t);
-StringList *xsl_init(void);
-void	xsl_add(StringList *, char *);
-char   *xstrdup(const char *);
+void	psummary(int);
+void	ptransfer(int);
+#endif	/* !STANDALONE_PROGRESS */
+
+
+#ifdef NO_LONG_LONG
+# define LLF		"%ld"
+# define LLFP(x)	"%" x "ld"
+# define LLT		long
+# define ULLF		"%lu"
+# define ULLFP(x)	"%" x "lu"
+# define ULLT		unsigned long
+#else
+# define LLF		"%lld"
+# define LLFP(x)	"%" x "lld"
+# define LLT		long long
+# define ULLF		"%llu"
+# define ULLFP(x)	"%" x "llu"
+# define ULLT		unsigned long long
+#endif
