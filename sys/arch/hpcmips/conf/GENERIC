@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2003/12/27 07:34:21 shin Exp $
+# $NetBSD: GENERIC,v 1.145 2003/12/27 07:36:06 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.145 $"
 
 maxusers	16
 
@@ -435,7 +435,7 @@ plumpower*	at plum?
 plumvideo*	at plum?
 hpcfb*		at plumvideo?
 plumpcmcia*	at plum?
-ohci*	at plum?
+ohci*		at plum?
 
 # Workstation Console attachments
 bivideo0	at	mainbus0
