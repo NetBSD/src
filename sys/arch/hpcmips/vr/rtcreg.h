@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.6 2001/12/24 01:22:50 shin Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.7 2002/02/09 14:47:57 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -67,7 +67,7 @@
  *		start 0x0F000100 (Vr4122-4131)
  *		start 0x0B0000C0 (Vr4181)
  */
-#define RTC_NOREG_W		-1
+#define RTC_NO_REG_W		0xffffffff
 
 #define ETIME_L_REG_W		0x000	/* Elapsed Time L */
 #define ETIME_M_REG_W		0x002	/* Elapsed Time M */

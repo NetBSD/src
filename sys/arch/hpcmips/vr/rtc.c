@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.12 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: rtc.c,v 1.13 2002/02/09 14:47:57 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -161,7 +161,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL2_H_REG_W, 0);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL2_L_REG_W, 0);
 	/* Disable RTC TCLK intr */
-	if (TCLK_H_REG_W != RTC_NOREG_W) {
+	if (TCLK_H_REG_W != RTC_NO_REG_W) {
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, TCLK_H_REG_W, 0);
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, TCLK_L_REG_W, 0);
 	}
@@ -393,7 +393,7 @@ vrrtc_dump_regs(struct vrrtc_softc *sc)
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, RTCL2_CNT_L_REG_W);
 	printf("clock_init()  LONG2 CNTL %04x%04x\n", timeh, timel);
 
-	if (TCLK_H_REG_W != RTC_NOREG_W) {
+	if (TCLK_H_REG_W != RTC_NO_REG_W) {
 		timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_H_REG_W);
 		timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_L_REG_W);
 		printf("clock_init()  TCLK %04x%04x\n", timeh, timel);
