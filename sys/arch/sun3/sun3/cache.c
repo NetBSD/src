@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.14 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: cache.c,v 1.15 2003/04/01 15:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ cache_flush_page(pgva)
 
 	/* Write to control space for each cache line. */
 	va = (char *) pgva;
-	endva = (char *) (pgva + NBPG);
+	endva = (char *) (pgva + PAGE_SIZE);
 	data = VAC_FLUSH_PAGE;
 
 	do {
