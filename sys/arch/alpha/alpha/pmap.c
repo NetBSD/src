@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.116 1999/11/26 23:04:33 mycroft Exp $ */
+/* $NetBSD: pmap.c,v 1.117 1999/11/27 00:25:15 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 1999/11/26 23:04:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 1999/11/27 00:25:15 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2809,11 +2809,12 @@ pmap_emulate_reference(p, v, user, write)
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pvh->pvh_slock);
 
-	pvh->pvh_attrs = PGA_REFERENCED;
-	faultoff = PG_FOR | PG_FOE;
 	if (write) {
-		pvh->pvh_attrs |= PGA_MODIFIED;
-		faultoff |= PG_FOW;
+		pvh->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+		faultoff = PG_FOR | PG_FOW | PG_FOE;
+	} else {
+		pvh->pvh_attrs |= PGA_REFERENCED;
+		faultoff = PG_FOR | PG_FOE;
 	}
 	pmap_changebit(pa, 0, ~faultoff, cpu_id);
 
