@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.2,v 1.7 1997/03/05 06:53:40 mikel Exp $
+.\"	$NetBSD: chflags.2,v 1.8 1997/04/22 06:10:26 mikel Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,35 +58,44 @@ has its flags changed to
 .Pp
 The flags specified are formed by
 .Em or Ns 'ing
-the following values
+the following values:
 .Pp
 .Bl -tag -width "SF_IMMUTABLE" -compact -offset indent
-.It UF_NODUMP
+.It Dv UF_NODUMP
 Do not dump the file.
-.It UF_IMMUTABLE
+.It Dv UF_IMMUTABLE
 The file may not be changed.
-.It UF_APPEND
+.It Dv UF_APPEND
 The file may only be appended to.
-.\".It ARCHIVED
-.\"File is archived.
-.It SF_IMMUTABLE
+.It Dv UF_OPAQUE
+The file (if a directory) is opaque for union mounts.
+.It Dv SF_ARCHIVED
+The file is archived.
+.It Dv SF_IMMUTABLE
 The file may not be changed.
-.It SF_APPEND
+.It Dv SF_APPEND
 The file may only be appended to.
 .El
 .Pp
 The
-.Dq UF_IMMUTABLE
+.Dv UF_NODUMP ,
+.Dv UF_IMMUTABLE ,
+.Dv UF_APPEND ,
 and
-.Dq UF_APPEND
+.Dv UF_OPAQUE
 flags may be set or unset by either the owner of a file or the super-user.
 .Pp
 The
-.Dq SF_IMMUTABLE
+.Dv SF_ARCHIVED ,
+.Dv SF_IMMUTABLE ,
 and
-.Dq SF_APPEND
+.Dv SF_APPEND
 flags may only be set or unset by the super-user.
-They may be set at any time, but normally may only be unset when
+The
+.Dv SF_IMMUTABLE
+and
+.Dv SF_APPEND
+flags may be set at any time, but normally may only be unset when
 the system is in single-user mode.
 (See
 .Xr init 8
@@ -158,5 +167,5 @@ error occurred while reading from or writing to the file system.
 The
 .Fn chflags
 and
-.Nm fchflags
+.Fn fchflags
 functions first appeared in 4.4BSD.
