@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.23 2001/11/05 17:51:56 jdolecek Exp $
+.\"	$NetBSD: df.1,v 1.24 2001/12/20 20:04:46 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,7 +140,7 @@ be taken.  If a file system is given on the command line that is not of
 the specified type, a warning is issued and no information is given on
 that file system.
 .El
-.Sh ENVIRONMENT VARIABLES
+.Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
 If the environment variable
@@ -154,15 +154,15 @@ size block.
 .El
 .Sh SEE ALSO
 .Xr quota 1 ,
-.Xr statfs 2 ,
 .Xr fstatfs 2 ,
 .Xr getfsstat 2 ,
+.Xr statfs 2 ,
 .Xr getbsize 3 ,
 .Xr getmntinfo 3 ,
+.Xr fs 5 ,
 .Xr fstab 5 ,
 .Xr mount 8 ,
 .Xr quot 8 ,
-.Xr fs 5 ,
 .Xr tunefs 8
 .Sh HISTORY
 A
