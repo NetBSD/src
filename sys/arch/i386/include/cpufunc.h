@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.18 2000/03/28 01:38:22 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.19 2000/03/28 19:17:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,14 +169,14 @@ rdmsr(u_int msr)
 {
 	u_int64_t rv;
 
-	__asm __volatile(".byte 0x0f, 0x32" : "=A" (rv) : "c" (msr));
+	__asm __volatile("rdmsr" : "=A" (rv) : "c" (msr));
 	return (rv);
 }
 
 static __inline void
 wrmsr(u_int msr, u_int64_t newval)
 {
-	__asm __volatile(".byte 0x0f, 0x30" : : "A" (newval), "c" (msr));
+	__asm __volatile("wrmsr" : : "A" (newval), "c" (msr));
 }
 
 static __inline void
@@ -190,7 +190,7 @@ rdtsc(void)
 {
 	u_int64_t rv;
 
-	__asm __volatile(".byte 0x0f, 0x31" : "=A" (rv));
+	__asm __volatile("rdtsc" : "=A" (rv));
 	return (rv);
 }
 
@@ -199,7 +199,7 @@ rdpmc(u_int pmc)
 {
 	u_int64_t rv;
 
-	__asm __volatile(".byte 0x0f, 0x33" : "=A" (rv) : "c" (pmc));
+	__asm __volatile("rdpmc" : "=A" (rv) : "c" (pmc));
 	return (rv);
 }
 
