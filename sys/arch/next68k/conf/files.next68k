@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.32 2002/11/05 07:41:37 chs Exp $
+# $NetBSD: files.next68k,v 1.33 2003/06/25 21:02:19 he Exp $
 
 # next68k-specific configuration info
 
@@ -9,6 +9,8 @@ maxusers 2 8 64
 
 # serial console options
 defflag	opt_serial.h		ZS_CONSOLE_ABORT SERCONSOLE
+# Status LEDs
+defflag 			USELEDS
 
 device mainbus { }
 attach mainbus at root
