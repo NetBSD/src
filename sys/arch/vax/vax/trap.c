@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 2002/04/29 01:54:11 thorpej Exp $     */
+/*	$NetBSD: trap.c,v 1.71 2002/06/17 16:33:20 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,6 +34,7 @@
 		
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
@@ -60,6 +61,9 @@
 #include <kern/syscalls.c>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #ifdef TRAPDEBUG
@@ -371,19 +375,13 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	KERNEL_PROC_LOCK(p);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err) {
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p, frame->code,
-				    callp->sy_argsize, args);
-#endif
+		if (err)
 			goto bad;
-		}
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, frame->code, callp->sy_argsize, args);
-#endif
+
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
+
 	err = (*callp->sy_call)(curproc, args, rval);
 	KERNEL_PROC_UNLOCK(p);
 	exptr = curproc->p_addr->u_pcb.framep;
@@ -411,20 +409,15 @@ bad:
 		break;
 
 	default:
+	bad:
 		exptr->r0 = err;
 		exptr->psl |= PSL_C;
 		break;
 	}
 
-	userret(p, frame, oticks);
+	trace_exit(p, code, args, rval, error);
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, frame->code, err, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
+	userret(p, frame, oticks);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1 2000/12/19 21:09:59 scw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.2 2002/06/17 16:33:08 christos Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_aout_m68k.h"
 #include "opt_compat_sunos.h"
@@ -94,6 +95,9 @@
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <machine/psl.h>
@@ -255,19 +259,15 @@ syscall(code, frame)
 		}
 	} else
 #endif
-	if (argsize)
+	if (argsize) {
 		error = copyin(params, (caddr_t)args, argsize);
-	else
-		error = 0;
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif
-	if (error)
+		if (error)
+			goto bad;
+	}
+
+	if ((error = trace_enter(p, code, args, rval)) != 0)
 		goto bad;
+
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
 	error = (*callp->sy_call)(p, args, rval);
@@ -309,9 +309,8 @@ syscall(code, frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+	trace_exit(p, code, args, rval, error);
+
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
 	if (p->p_md.md_flags & MDP_STACKADJ) {
@@ -321,10 +320,6 @@ syscall(code, frame)
 	}
 #endif
 	machine_userret(p, &frame, sticks);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
 }
 
 void
