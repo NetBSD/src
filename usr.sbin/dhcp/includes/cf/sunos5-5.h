@@ -141,3 +141,5 @@ extern int h_errno;
 @@@ ERROR @@@   Unable to determine byte order!
 # endif
 #endif
+
+#define ALIAS_NAMES_PERMUTED

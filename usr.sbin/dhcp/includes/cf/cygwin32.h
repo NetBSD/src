@@ -1,9 +1,9 @@
-/* freebsd.h
+/* cygwin32.h
 
-   System dependencies for FreeBSD... */
+   System dependencies for Win32, compiled with Cygwin32... */
 
 /*
- * Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+ * Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,55 +35,86 @@
  * under a contract with Vixie Laboratories.
  */
 
-#define _ANSI_SOURCE
+#include <sys/time.h>
+
+#define IN
+#define OUT
+#undef fd_set
+#undef FD_SET
+#undef FD_CLR
+#undef FD_ZERO
+#undef FD_ISSET
+#undef FD_ISCLR
+#undef FD_SETSIZE
+#define IFNAMSIZ 16
+#include <winsock.h>
 
 #include <syslog.h>
-#include <sys/types.h>
 #include <string.h>
 #include <paths.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <setjmp.h>
 #include <limits.h>
 
 #include <sys/wait.h>
 #include <signal.h>
 
-extern int h_errno;
+#define NO_H_ERRNO
 
-#include <net/if.h>
-#include <net/if_dl.h>
-#define INADDR_LOOPBACK	((u_int32_t)0x7f000001)
+#include <sys/param.h>
 
 /* Varargs stuff... */
 #include <stdarg.h>
 #define VA_DOTDOTDOT ...
 #define va_dcl
 #define VA_start(list, last) va_start (list, last)
+#define vsnprintf(buf, size, fmt, list) vsprintf (buf, fmt, list)
+#define NO_SNPRINTF
 
 #ifndef _PATH_DHCPD_PID
-#define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
+#define _PATH_DHCPD_PID	"//e/etc/dhcpd.pid"
 #endif
 #ifndef _PATH_DHCPD_DB
-#define _PATH_DHCPD_DB	"/var/db/dhcpd.leases"
+#define _PATH_DHCPD_DB "//e/etc/dhcpd.leases"
+#endif
+#ifndef _PATH_DHCPD_CONF
+#define _PATH_DHCPD_CONF "//e/etc/dhcpd.conf"
 #endif
 #ifndef _PATH_DHCLIENT_PID
-#define _PATH_DHCLIENT_PID "/var/run/dhclient.pid"
+#define _PATH_DHCLIENT_PID "//e/etc/dhclient.pid"
 #endif
 #ifndef _PATH_DHCLIENT_DB
-#define _PATH_DHCLIENT_DB "/var/db/dhclient.leases"
+#define _PATH_DHCLIENT_DB "//e/etc/dhclient.leases"
 #endif
+#ifndef _PATH_DHCLIENT_CONF
+#define _PATH_DHCLIENT_CONF "//e/etc/dhclient.conf"
+#endif
+
+#ifndef _PATH_RESOLV_CONF
+#define _PATH_RESOLV_CONF "//e/etc/resolv.conf"
+#endif
+
+#define int8_t		char
+#define int16_t		short 
+#define int32_t		long 
+
+#define u_int8_t	unsigned char		/* Not quite POSIX... */
+#define u_int16_t	unsigned short 
+#define u_int32_t	unsigned long 
 
 #define EOL	'\n'
 #define VOIDPTR void *
 
 /* Time stuff... */
-#include <sys/time.h>
 #define TIME time_t
 #define GET_TIME(x)	time ((x))
 
-#define HAVE_SA_LEN
-
 #if defined (USE_DEFAULT_NETWORK)
-#  define USE_BPF
+#  define USE_SOCKETS
+#endif
+
+#ifdef __alpha__
+#define PTRSIZE_64BIT
 #endif

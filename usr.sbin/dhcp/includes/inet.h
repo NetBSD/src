@@ -45,3 +45,8 @@ struct iaddr {
 	int len;
 	unsigned char iabuf [16];
 };
+
+struct iaddrlist {
+	struct iaddrlist *next;
+	struct iaddr addr;
+};

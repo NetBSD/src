@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.2 1997/06/03 02:49:32 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -131,7 +131,7 @@ void dump_packet (tp)
 					dhcp_options [i].name,
 					pretty_print_option
 					(i, tp -> options [i].data,
-					 tp -> options [i].len, 1));
+					 tp -> options [i].len, 1, 1));
 		}
 	}
 	debug ("");

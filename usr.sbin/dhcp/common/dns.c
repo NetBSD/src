@@ -48,7 +48,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.1 1997/03/29 21:52:16 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.2 1997/06/03 02:49:25 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -60,13 +60,15 @@ int dns_protocol_fd;
 static int addlabel PROTO ((u_int8_t *, char *));
 static int skipname PROTO ((u_int8_t *));
 static int copy_out_name PROTO ((u_int8_t *, u_int8_t *, char *));
+static int nslookup PROTO ((u_int8_t, char *, int, u_int16_t, u_int16_t));
+static int zonelookup PROTO ((u_int8_t, char *, int, u_int16_t));
+u_int16_t dns_port;
 
 /* Initialize the DNS protocol. */
 
 void dns_startup ()
 {
 	struct servent *srv;
-	u_int16_t dns_port = htons (53);
 	struct sockaddr_in from;
 
 	/* Only initialize icmp once. */
@@ -75,14 +77,18 @@ void dns_startup ()
 	dns_protocol_initialized = 1;
 
 	/* Get the protocol number (should be 1). */
-	srv = getsrvbyname ("domain", "tcp");
+	srv = getservbyname ("domain", "tcp");
 	if (srv)
-		port = srv -> s_port;
+		dns_port = srv -> s_port;
+	else
+		dns_port = htons (53);
 
-	/* Get a raw socket for the ICMP protocol. */
+	/* Get a socket for the DNS protocol. */
 	dns_protocol_fd = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (!dns_protocol_fd)
 		error ("unable to create dns socket: %m");
+
+	pick_name_server ();
 
 	add_protocol ("dns", dns_protocol_fd, dns_packet, 0);
 }
@@ -145,8 +151,7 @@ static int copy_out_name (base, name, buf)
    called with a null pointer.   Otherwise, the callback is called with the
    address of the string returned by the name server. */
 
-int ns_inaddr_lookup (server, id, inaddr)
-	struct sockaddr_in *server;
+int ns_inaddr_lookup (id, inaddr)
 	u_int16_t id;
 	struct iaddr inaddr;
 {
@@ -159,7 +164,7 @@ int ns_inaddr_lookup (server, id, inaddr)
 	for (i = 3; i >= 0; --i) {
 		label = s++;
 		*label = 1;
-		c = inaddr -> addr [i];
+		c = inaddr.iabuf [i];
 		if (c > 100) {
 			++*label;
 			*s++ = '0' + c / 100;
@@ -173,13 +178,13 @@ int ns_inaddr_lookup (server, id, inaddr)
 	s += addlabel (s, "in-addr");
 	s += addlabel (s, "arpa");
 	*s++ = 0;
-	return nslookup (server, id, namebuf, s - namebuf, T_PTR, C_IN);
+/*	return nslookup (id, namebuf, s - namebuf, T_PTR, C_IN); */
+	return zonelookup (id, namebuf, s - namebuf, C_IN);
 }
 
 /* Construct and transmit a name server query. */
 
-int nslookup (server, id, qname, namelen, qtype, qclass)
-	struct sockaddr_in *server;
+static int nslookup (id, qname, namelen, qtype, qclass)
 	u_int8_t id;
 	char *qname;
 	int namelen;
@@ -188,20 +193,21 @@ int nslookup (server, id, qname, namelen, qtype, qclass)
 {
 	HEADER *hdr;
 	unsigned char query [512];
-	unsigned char *s;
+	u_int8_t *s;
 	int len;
-	int i;
+	int i, status;
+	struct sockaddr_in *server = pick_name_server ();
 	
 	/* Construct a header... */
 	hdr = (HEADER *)query;
-	memset (&hdr, 0, sizeof hdr);
+	memset (hdr, 0, sizeof *hdr);
 	hdr -> id = htons (id);
 	hdr -> rd = 1;
 	hdr -> opcode = QUERY;
 	hdr -> qdcount = htons (1);
 
 	/* Copy in the name we're looking up. */
-	s = (u_int8_t)(hdr + 1);
+	s = (u_int8_t *)(hdr + 1);
 	memcpy (s, qname, namelen);
 	s += namelen;
 	
@@ -223,9 +229,88 @@ int nslookup (server, id, qname, namelen, qtype, qclass)
 	return 1;
 }
 
+/* Construct a query for the SOA for a specified name.
+   Try every possible SOA name starting from the name specified and going
+   to the root name - e.g., for
+
+   	215.5.5.192.in-addr.arpa, look for SOAs matching:
+
+	215.5.5.5.192.in-addr.arpa
+	5.5.192.in-addr.arpa
+	5.192.in-addr.arpa
+	192.in-addr.arpa
+	in-addr.arpa
+	arpa */
+
+static int zonelookup (id, qname, namelen, qclass)
+	u_int8_t id;
+	char *qname;
+	int namelen;
+	u_int16_t qclass;
+{
+	HEADER *hdr;
+	unsigned char query [512];
+	u_int8_t *s, *nptr;
+	int len;
+	int i, status, count;
+	struct sockaddr_in *server = pick_name_server ();
+	
+	/* Construct a header... */
+	hdr = (HEADER *)query;
+	memset (hdr, 0, sizeof *hdr);
+	hdr -> id = htons (id);
+	hdr -> rd = 1;
+	hdr -> opcode = QUERY;
+
+	/* Copy in the name we're looking up. */
+	s = (u_int8_t *)(hdr + 1);
+	memcpy (s, qname, namelen);
+	s += namelen;
+	
+	/* Set the query type. */
+	putUShort (s, T_SOA);
+	s += sizeof (u_int16_t);
+
+	/* Set the query class. */
+	putUShort (s, qclass);
+	s += sizeof (u_int16_t);
+	count = 1;
+
+	/* Now query up the hierarchy. */
+	nptr = (u_int8_t *)(hdr + 1);
+	while (*(nptr += *nptr + 1)) {
+		/* Store a compressed reference from the full name. */
+		putUShort (s, ntohs (htons (0xC000) |
+				     htons (nptr - &query [0])));
+		s += sizeof (u_int16_t);
+
+		/* Store the query type. */
+		putUShort (s, T_SOA);
+		s += sizeof (u_int16_t);
+
+		putUShort (s, qclass);
+		s += sizeof (u_int16_t);
+
+		/* Increment the query count... */
+		++count;
+break;
+	}
+	hdr -> qdcount = htons (count);
+
+dump_raw (query, s - query);
+	/* Send the query. */
+	status = sendto (dns_protocol_fd, query, s - query, 0,
+			 (struct sockaddr *)server, sizeof *server);
+
+	/* If the send failed, report the failure. */
+	if (status < 0)
+		return 0;
+	return 1;
+}
+
 /* Process a reply from a name server. */
 
-dns_packet (protocol)
+void dns_packet (protocol)
 	struct protocol *protocol;
 {
 	HEADER *ns_header;
@@ -235,14 +320,15 @@ dns_packet (protocol)
 	unsigned char nbuf [512];
 	unsigned char *base;
 	unsigned char *dptr;
-	int type;
-	int class;
-	int ttl;
-	int rdlength;
-	char nbuf [MAXDNAME];
+	u_int16_t type;
+	u_int16_t class;
+	TIME ttl;
+	u_int16_t rdlength;
+	int len, status;
+	int i;
 
 	len = sizeof from;
-	status = recvfrom (protocol -> fd, icbuf, sizeof icbuf, 0,
+	status = recvfrom (protocol -> fd, buf, sizeof buf, 0,
 			  (struct sockaddr *)&from, &len);
 	if (status < 0) {
 		warn ("icmp_echoreply: %m");
@@ -252,46 +338,60 @@ dns_packet (protocol)
 	ns_header = (HEADER *)buf;
 	base = (unsigned char *)(ns_header + 1);
 
+#if 0
 	/* Ignore invalid packets... */
 	if (ntohs (ns_header -> id) > ns_query_max) {
 		printf ("Out-of-range NS message; id = %d\n",
 			ntohs (ns_header -> id));
 		return;
 	}
+#endif
 
 	/* Parse the response... */
 	dptr = base;
 
-	/* Skip over the query name... */
-	dptr += skipname (dptr);
-	/* Skip over the query type and the query class. */
-	dptr += 2 * sizeof (short);
+	/* Skip over the queries... */
+	for (i = 0; i < ntohs (ns_header -> qdcount); i++) {
+		dptr += skipname (dptr);
+		/* Skip over the query type and query class. */
+		dptr += 2 * sizeof (u_int16_t);
+	}
 
-	/* Skip over the reply name... */
-	dptr += skipname (dptr);
-	/* Extract the numeric fields: */
-	getUShort (dptr, (u_int8_t *)&type);
-	dptr += sizeof type;
-	getULong (dptr, (u_int8_t *)&class);
-	dptr += sizeof class;
-	getULong (dptr, (u_int8_t *)&ttl);
-	dptr += sizeof ttl;
-	getUShort (dptr, (u_int8_t *)&rdlength);
-	dptr += sizeof rdlength;
+	/* Process the answers... */
+	for (i = 0; i < ntohs (ns_header -> ancount); i++) {
+		/* Skip over the name we looked up. */
+		dptr += skipname (dptr);
 
-	switch (type) {
-	      case T_A:
-		printf ("A record; value is %d.%d.%d.%d",
-			dptr [0], dptr [1], dptr [2], dptr [3]);
-		break;
+		/* Get the type. */
+		type = getUShort (dptr);
+		dptr += sizeof type;
 
-	      case T_CNAME:
-	      case T_PTR:
-		copy_out_name (base, dptr, nbuf);
-		printf ("Domain name; value is %s\n", nbuf);
-		return;
+		/* Get the class. */
+		class = getUShort (dptr);
+		dptr += sizeof class;
 
-	      default:
-		printf ("unhandled type: %x\n", type);
+		/* Get the time-to-live. */
+		ttl = getULong (dptr);
+		dptr += sizeof ttl;
+
+		/* Get the length of the reply. */
+		rdlength = getUShort (dptr);
+		dptr += sizeof rdlength;
+
+		switch (type) {
+		      case T_A:
+			note ("A record; value is %d.%d.%d.%d",
+			      dptr [0], dptr [1], dptr [2], dptr [3]);
+			break;
+
+		      case T_CNAME:
+		      case T_PTR:
+			copy_out_name (base, dptr, nbuf);
+			note ("Domain name; value is %s\n", nbuf);
+			return;
+
+		      default:
+			note ("unhandled type: %x", type);
+		}
 	}
 }

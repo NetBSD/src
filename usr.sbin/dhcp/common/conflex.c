@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: conflex.c,v 1.1.1.1 1997/03/29 21:52:16 mellon Exp $ Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: conflex.c,v 1.1.1.2 1997/06/03 02:49:19 mellon Exp $ Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -55,6 +55,7 @@ char *token_line;
 char *prev_line;
 char *cur_line;
 char *tlname;
+int eol_token;
 
 static char line1 [81];
 static char line2 [81];
@@ -141,7 +142,7 @@ static int get_token (cfile)
 			comments [comment_index++] = '\n';
 #endif
 
-		if (isascii (c) && isspace (c))
+		if (!(c == '\n' && eol_token) && isascii (c) && isspace (c))
 			continue;
 		if (c == '#') {
 #ifdef OLD_LEXER
@@ -353,6 +354,8 @@ static int intern (atom, dfv)
 
 	switch (tolower (atom [0])) {
 	      case 'a':
+		if (!strcasecmp (atom + 1, "ppend"))
+			return APPEND;
 		if (!strcasecmp (atom + 1, "llow"))
 			return ALLOW;
 		if (!strcasecmp (atom + 1, "lias"))
@@ -378,6 +381,8 @@ static int intern (atom, dfv)
 			return CLIENT_IDENTIFIER;
 		break;
 	      case 'd':
+		if (!strcasecmp (atom + 1, "omain"))
+			return DOMAIN;
 		if (!strcasecmp (atom + 1, "eny"))
 			return DENY;
 		if (!strncasecmp (atom + 1, "efault", 6)) {
@@ -447,6 +452,8 @@ static int intern (atom, dfv)
 		}
 		break;
 	      case 'n':
+		if (!strcasecmp (atom + 1, "ameserver"))
+			return NAMESERVER;
 		if (!strcasecmp (atom + 1, "etmask"))
 			return NETMASK;
 		if (!strcasecmp (atom + 1, "ext-server"))
@@ -459,6 +466,8 @@ static int intern (atom, dfv)
 			return ONE_LEASE_PER_CLIENT;
 		break;
 	      case 'p':
+		if (!strcasecmp (atom + 1, "repend"))
+			return PREPEND;
 		if (!strcasecmp (atom + 1, "acket"))
 			return PACKET;
 		break;
@@ -477,8 +486,12 @@ static int intern (atom, dfv)
 			return REBIND;
 		if (!strcasecmp (atom + 1, "eboot"))
 			return REBOOT;
+		if (!strcasecmp (atom + 1, "eject"))
+			return REJECT;
 		break;
 	      case 's':
+		if (!strcasecmp (atom + 1, "earch"))
+			return SEARCH;
 		if (!strcasecmp (atom + 1, "tarts"))
 			return STARTS;
 		if (!strcasecmp (atom + 1, "iaddr"))
@@ -497,6 +510,8 @@ static int intern (atom, dfv)
 			return SEND;
 		if (!strcasecmp (atom + 1, "cript"))
 			return SCRIPT;
+		if (!strcasecmp (atom + 1, "upersede"))
+			return SUPERSEDE;
 		break;
 	      case 't':
 		if (!strcasecmp (atom + 1, "imestamp"))

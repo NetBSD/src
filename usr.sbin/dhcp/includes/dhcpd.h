@@ -40,11 +40,16 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
+#ifndef __CYGWIN32__
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#else
+#define fd_set cygwin_fd_set
+#include <sys/types.h>
+#endif
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -69,6 +74,20 @@ struct option_data {
 struct string_list {
 	struct string_list *next;
 	char string [1];
+};
+
+/* A name server, from /etc/resolv.conf. */
+struct name_server {
+	struct name_server *next;
+	struct sockaddr_in addr;
+	TIME rcdate;
+};
+
+/* A domain search list element. */
+struct domain_search_list {
+	struct domain_search_list *next;
+	char *domain;
+	TIME rcdate;
 };
 
 /* A dhcp packet and the pointers to its option values. */
@@ -107,6 +126,7 @@ struct lease {
 	int uid_max;
 	unsigned char uid_buf [32];
 	char *hostname;
+	char *client_hostname;
 	struct host_decl *host;
 	struct subnet *subnet;
 	struct shared_network *shared_network;
@@ -233,7 +253,8 @@ struct client_lease {
 	char *filename;		     /* Name of file we're supposed to boot. */
 	struct string_list *medium;			  /* Network medium. */
 
-	int is_static;		 /* If nonzero, lease came from config file. */
+	unsigned int is_static : 1;    /* If set, lease is from config file. */
+	unsigned int is_bootp: 1;   /* If set, lease was aquired with BOOTP. */
 
 	struct option_data options [256];    /* Options supplied with lease. */
 };
@@ -252,6 +273,14 @@ enum dhcp_state {
 /* Configuration information from the config file... */
 struct client_config {
 	struct option_data defaults [256]; /* Default values for options. */
+	enum {
+		ACTION_DEFAULT,		/* Use server value if present,
+					   otherwise default. */
+		ACTION_SUPERSEDE,	/* Always use default. */
+		ACTION_PREPEND,		/* Prepend default to server. */
+		ACTION_APPEND,		/* Append default to server. */
+	} default_actions [256];
+
 	struct option_data send_options [256]; /* Send these to server. */
 	u_int8_t required_options [256]; /* Options server must supply. */
 	u_int8_t requested_options [256]; /* Options to request from server. */
@@ -280,6 +309,8 @@ struct client_config {
 					/* Ignore, accept or prefer BOOTP
 					   responses. */
 	struct string_list *medium;	/* Current network medium. */
+
+	struct iaddrlist *reject_list;	/* Servers to reject. */
 };
 
 /* Per-interface state used in the dhcp client... */
@@ -396,6 +427,9 @@ typedef unsigned char option_mask [16];
 #define _PATH_DHCLIENT_DB	"/etc/dhclient.leases"
 #endif
 
+#ifndef _PATH_RESOLV_CONF
+#define _PATH_RESOLV_CONF	"/etc/resolv.conf"
+#endif
 
 #ifndef DHCPD_LOG_FACILITY
 #define DHCPD_LOG_FACILITY	LOG_DAEMON
@@ -414,7 +448,8 @@ int cons_options PROTO ((struct packet *, struct dhcp_packet *,
 			  struct tree_cache **, int, int));
 int store_options PROTO ((unsigned char *, int, struct tree_cache **,
 			   unsigned char *, int, int, int, int));
-char *pretty_print_option PROTO ((unsigned char, unsigned char *, int, int));
+char *pretty_print_option PROTO ((unsigned int,
+				  unsigned char *, int, int, int));
 void do_packet PROTO ((struct interface_info *,
 		       unsigned char *, int,
 		       unsigned short, struct iaddr, struct hardware *));
@@ -454,6 +489,7 @@ extern int lexline, lexchar;
 extern char *token_line, *tlname;
 extern char comments [4096];
 extern int comment_index;
+extern int eol_token;
 void new_parse PROTO ((char *));
 int next_token PROTO ((char **, FILE *));
 int peek_token PROTO ((char **, FILE *));
@@ -567,6 +603,10 @@ struct shared_network *new_shared_network PROTO ((char *));
 struct group *new_group PROTO ((char *));
 struct protocol *new_protocol PROTO ((char *));
 struct lease_state *new_lease_state PROTO ((char *));
+struct domain_search_list *new_domain_search_list PROTO ((char *));
+struct name_server *new_name_server PROTO ((char *));
+void free_name_server PROTO ((struct name_server *, char *));
+void free_domain_search_list PROTO ((struct domain_search_list *, char *));
 void free_lease_state PROTO ((struct lease_state *, char *));
 void free_protocol PROTO ((struct protocol *, char *));
 void free_group PROTO ((struct group *, char *));
@@ -754,6 +794,8 @@ void state_requesting PROTO ((void *));
 void state_bound PROTO ((void *));
 void state_panic PROTO ((void *));
 
+void bind_lease PROTO ((struct interface_info *));
+
 void make_discover PROTO ((struct interface_info *, struct client_lease *));
 void make_request PROTO ((struct interface_info *, struct client_lease *));
 void make_decline PROTO ((struct interface_info *, struct client_lease *));
@@ -847,9 +889,10 @@ void make_client_config PROTO ((struct interface_info *,
 void parse_client_lease_statement PROTO ((FILE *, int));
 void parse_client_lease_declaration PROTO ((FILE *, struct client_lease *,
 					    struct interface_info **));
-void parse_ip_addr PROTO ((FILE *, struct iaddr *));
-void parse_option_decl PROTO ((FILE *, struct option_data *));
+struct option *parse_option_decl PROTO ((FILE *, struct option_data *));
 void parse_string_list PROTO ((FILE *, struct string_list **, int));
+int parse_ip_addr PROTO ((FILE *, struct iaddr *));
+void parse_reject_statement PROTO ((FILE *, struct client_config *));
 
 /* dhcrelay.c */
 void relay PROTO ((struct interface_info *, u_int8_t *, int,
@@ -863,7 +906,16 @@ void icmp_echoreply PROTO ((struct protocol *));
 
 /* dns.c */
 void dns_startup PROTO ((void));
-int ns_inaddr_lookup PROTO ((struct sockaddr_in *, u_int16_t, struct iaddr));
+int ns_inaddr_lookup PROTO ((u_int16_t, struct iaddr));
+void dns_packet PROTO ((struct protocol *));
+
+/* resolv.c */
+extern char path_resolv_conf [];
+struct name_server *name_servers;
+struct domain_search_list *domains;
+
+void read_resolv_conf PROTO ((TIME));
+struct sockaddr_in *pick_name_server PROTO ((void));
 
 /* inet_addr.c */
 #ifdef NEED_INET_ATON

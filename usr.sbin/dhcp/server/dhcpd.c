@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.1 1997/03/29 21:52:18 mellon Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.2 1997/06/03 02:49:57 mellon Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
@@ -85,6 +85,7 @@ int main (argc, argv, envp)
 	int i, status;
 	struct servent *ent;
 	char *s;
+	int cftest = 0;
 #ifndef DEBUG
 	int pidfilewritten = 0;
 	int pid;
@@ -102,7 +103,9 @@ int main (argc, argv, envp)
 
 #ifndef DEBUG
 #ifndef SYSLOG_4_2
+#ifndef __CYGWIN32__ /* XXX */
 	setlogmask (LOG_UPTO (LOG_INFO));
+#endif
 #endif
 #endif	
 	note (message);
@@ -141,6 +144,13 @@ int main (argc, argv, envp)
 			if (++i == argc)
 				usage ();
 			path_dhcpd_db = argv [i];
+                } else if (!strcmp (argv [i], "-t")) {
+			/* test configurations only */
+#ifndef DEBUG
+			daemon = 0;
+#endif
+			cftest = 1;
+			log_perror = -1;
 		} else if (argv [i][0] == '-') {
 			usage ();
 		} else {
@@ -197,7 +207,9 @@ int main (argc, argv, envp)
 			local_port = htons (67);
 		else
 			local_port = ent -> s_port;
+#ifndef __CYGWIN32__ /* XXX */
 		endservent ();
+#endif
 	}
   
 	remote_port = htons (ntohs (local_port) + 1);
@@ -205,9 +217,16 @@ int main (argc, argv, envp)
 	/* Get the current time... */
 	GET_TIME (&cur_time);
 
+	/* Initialize DNS support... */
+	dns_startup ();
+
 	/* Read the dhcpd.conf file... */
 	if (!readconf ())
 		error ("Configuration file errors encountered -- exiting");
+
+        /* test option should cause an early exit */
+ 	if (cftest) 
+ 		exit(0);
 
 	/* Start up the database... */
 	db_startup ();

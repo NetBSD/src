@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.2 1997/06/03 02:49:31 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -81,6 +81,12 @@ void skip_to_semi (cfile)
 		} else if (token == LBRACE) {
 			brace_count++;
 		} else if (token == SEMI && !brace_count) {
+			token = next_token (&val, cfile);
+			return;
+		} else if (token == EOL) {
+			/* EOL only happens when parsing /etc/resolv.conf,
+			   and we treat it like a semicolon because the
+			   resolv.conf file is line-oriented. */
 			token = next_token (&val, cfile);
 			return;
 		}
@@ -127,6 +133,74 @@ char *parse_string (cfile)
 		return (char *)0;
 	return s;
 }
+
+/* hostname :== identifier | hostname DOT identifier */
+
+char *parse_host_name (cfile)
+	FILE *cfile;
+{
+	char *val;
+	int token;
+	int len = 0;
+	char *s;
+	char *t;
+	pair c = (pair)0;
+	
+	/* Read a dotted hostname... */
+	do {
+		/* Read a token, which should be an identifier. */
+		token = next_token (&val, cfile);
+		if (!is_identifier (token) && token != NUMBER) {
+			parse_warn ("expecting an identifier in hostname");
+			skip_to_semi (cfile);
+			return (char *)0;
+		}
+		/* Store this identifier... */
+		if (!(s = (char *)malloc (strlen (val) + 1)))
+			error ("can't allocate temp space for hostname.");
+		strcpy (s, val);
+		c = cons ((caddr_t)s, c);
+		len += strlen (s) + 1;
+		/* Look for a dot; if it's there, keep going, otherwise
+		   we're done. */
+		token = peek_token (&val, cfile);
+		if (token == DOT)
+			token = next_token (&val, cfile);
+	} while (token == DOT);
+
+	/* Assemble the hostname together into a string. */
+	if (!(s = (char *)malloc (len)))
+		error ("can't allocate space for hostname.");
+	t = s + len;
+	*--t = 0;
+	while (c) {
+		pair cdr = c -> cdr;
+		int l = strlen ((char *)(c -> car));
+		t -= l;
+		memcpy (t, (char *)(c -> car), l);
+		/* Free up temp space. */
+		free (c -> car);
+		free (c);
+		c = cdr;
+		if (t != s)
+			*--t = '.';
+	}
+	return s;
+}
+
+int parse_ip_addr (cfile, addr)
+	FILE *cfile;
+	struct iaddr *addr;
+{
+	char *val;
+	int token;
+
+	addr -> len = 4;
+	if (parse_numeric_aggregate (cfile, addr -> iabuf,
+				     &addr -> len, DOT, 10, 8))
+		return 1;
+	return 0;
+}	
 
 /* hardware-parameter :== HARDWARE ETHERNET csns SEMI
    csns :== NUMBER | csns COLON NUMBER */
@@ -545,13 +619,13 @@ TIME parse_date (cfile)
 
 	/* Guess the time value... */
 	guess = ((((((365 * (tm.tm_year - 70) +	/* Days in years since '70 */
-		      (tm.tm_year - 72) / 4 +	/* Leap days since '70 */
+		      (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
 		      (tm.tm_mon		/* Days in months this year */
 		       ? months [tm.tm_mon - 1]
 		       : 0) +
 		      (tm.tm_mon > 1 &&		/* Leap day this year */
-		       ((tm.tm_year - 72) & 3)) +
-		      tm.tm_mday) * 24) +	/* Day of month */
+		       !((tm.tm_year - 72) & 3)) +
+		      tm.tm_mday - 1) * 24) +	/* Day of month */
 		    tm.tm_hour) * 60) +
 		  tm.tm_min) * 60) + tm.tm_sec;
 

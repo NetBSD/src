@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.1.1.1 1997/03/29 21:52:16 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.2 1997/06/03 02:49:13 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -99,6 +99,7 @@ int main (argc, argv, envp)
 	int i;
 	struct servent *ent;
 	struct interface_info *ip;
+	int seed;
 
 #ifdef SYSLOG_4_2
 	openlog ("dhclient", LOG_NDELAY);
@@ -107,7 +108,7 @@ int main (argc, argv, envp)
 	openlog ("dhclient", LOG_NDELAY, LOG_DAEMON);
 #endif
 
-#if !(defined (DEBUG) || defined (SYSLOG_4_2))
+#if !(defined (DEBUG) || defined (SYSLOG_4_2) || defined (__CYGWIN32__))
 	setlogmask (LOG_UPTO (LOG_INFO));
 #endif	
 
@@ -143,7 +144,9 @@ int main (argc, argv, envp)
 			local_port = htons (68);
 		else
 			local_port = ent -> s_port;
+#ifndef __CYGWIN32__
 		endservent ();
+#endif
 	}
 	remote_port = htons (ntohs (local_port) - 1);	/* XXX */
   
@@ -196,9 +199,23 @@ int main (argc, argv, envp)
 	   up the interfaces. */
 	discover_interfaces (DISCOVER_RUNNING);
 
+	/* Make up a seed for the random number generator from current
+	   time plus the sum of the last four bytes of each
+	   interface's hardware address interpreted as an integer.
+	   Not much entropy, but we're booting, so we're not likely to
+	   find anything better. */
+	seed = 0; /* Unfortunately, what's on the stack isn't random. :') */
+	for (ip = interfaces; ip; ip = ip -> next) {
+		int junk;
+		memcpy (&junk,
+			&ip -> hw_address.haddr [ip -> hw_address.hlen -
+						 sizeof seed], sizeof seed);
+		seed += junk;
+	}
+	srandom (seed + cur_time);
+
 	/* Start a configuration state machine for each interface. */
 	for (ip = interfaces; ip; ip = ip -> next) {
-		srandom (cur_time + *(int *)(&ip -> hw_address.haddr [0]));
 		ip -> client -> state = S_INIT;
 		state_reboot (ip);
 	}
@@ -258,7 +275,7 @@ void state_reboot (ipp)
 
 	/* If we don't remember an active lease, go straight to INIT. */
 	if (!ip -> client -> active ||
-	    ip -> client -> active -> rebind < cur_time) {
+	    ip -> client -> active -> is_bootp) {
 		state_init (ip);
 		return;
 	}
@@ -359,6 +376,23 @@ void state_selecting (ipp)
 		return;
 	}
 
+	/* If it was a BOOTREPLY, we can just take the address right now. */
+	if (!picked -> options [DHO_DHCP_MESSAGE_TYPE].len) {
+		ip -> client -> new = picked;
+
+		/* Make up some lease expiry times
+		   XXX these should be configurable. */
+		ip -> client -> new -> expiry = cur_time + 12000;
+		ip -> client -> new -> renewal += cur_time + 8000;
+		ip -> client -> new -> rebind += cur_time + 10000;
+
+		ip -> client -> state = S_REQUESTING;
+
+		/* Bind to the address we received. */
+		bind_lease (ip);
+		return;
+	}
+
 	/* Go to the REQUESTING state. */
 	ip -> client -> destination = iaddr_broadcast;
 	ip -> client -> state = S_REQUESTING;
@@ -401,10 +435,7 @@ void dhcpack (packet)
 		return;
 	}
 
-	note ("DHCPACK from %s",
-	      print_hw_addr (packet -> raw -> htype,
-			     packet -> raw -> hlen,
-			     packet -> raw -> chaddr));
+	note ("DHCPACK from %s", piaddr (packet -> client_addr));
 
 	lease = packet_to_lease (packet);
 	if (!lease) {
@@ -447,6 +478,12 @@ void dhcpack (packet)
 	ip -> client -> new -> renewal += cur_time;
 	ip -> client -> new -> rebind += cur_time;
 
+	bind_lease (ip);
+}
+
+void bind_lease (ip)
+	struct interface_info *ip;
+{
 	/* Write out the new lease. */
 	write_client_lease (ip, ip -> client -> new);
 
@@ -478,7 +515,8 @@ void dhcpack (packet)
 	add_timeout (ip -> client -> active -> renewal,
 		     state_bound, ip);
 
-	note ("bound: renewal in %d seconds.",
+	note ("bound to %s -- renewal in %d seconds.",
+	      piaddr (ip -> client -> active -> address),
 	      ip -> client -> active -> renewal - cur_time);
 	ip -> client -> state = S_BOUND;
 	reinitialize_interfaces ();
@@ -536,31 +574,64 @@ void db_startup ()
 void bootp (packet)
 	struct packet *packet;
 {
-	note ("BOOTREPLY from %s",
-	      print_hw_addr (packet -> raw -> htype,
-			     packet -> raw -> hlen,
-			     packet -> raw -> chaddr));
+	struct iaddrlist *ap;
+
+	if (packet -> raw -> op != BOOTREPLY)
+		return;
+
+	/* If there's a reject list, make sure this packet's sender isn't
+	   on it. */
+	for (ap = packet -> interface -> client -> config -> reject_list;
+	     ap; ap = ap -> next) {
+		if (addr_eq (packet -> client_addr, ap -> addr)) {
+			note ("BOOTREPLY from %s rejected.",
+			      piaddr (ap -> addr));
+			return;
+		}
+	}
+	
+	dhcpoffer (packet);
+
 }
 
 void dhcp (packet)
 	struct packet *packet;
 {
+	struct iaddrlist *ap;
+	void (*handler) PROTO ((struct packet *));
+	char *type;
+
 	switch (packet -> packet_type) {
 	      case DHCPOFFER:
-		dhcpoffer (packet);
+		handler = dhcpoffer;
+		type = "DHCPOFFER";
 		break;
 
 	      case DHCPNAK:
-		dhcpnak (packet);
+		handler = dhcpnak;
+		type = "DHCPNACK";
 		break;
 
 	      case DHCPACK:
-		dhcpack (packet);
+		handler = dhcpack;
+		type = "DHCPACK";
 		break;
 
 	      default:
-		break;
+		return;
 	}
+
+	/* If there's a reject list, make sure this packet's sender isn't
+	   on it. */
+	for (ap = packet -> interface -> client -> config -> reject_list;
+	     ap; ap = ap -> next) {
+		if (addr_eq (packet -> client_addr, ap -> addr)) {
+			note ("%s from %s rejected.",
+			      type, piaddr (ap -> addr));
+			return;
+		}
+	}
+	(*handler) (packet);
 }
 
 void dhcpoffer (packet)
@@ -570,6 +641,9 @@ void dhcpoffer (packet)
 	struct client_lease *lease, *lp;
 	int i;
 	int arp_timeout_needed, stop_selecting;
+	char *name = (packet -> options [DHO_DHCP_MESSAGE_TYPE].len
+		      ? "DHCPOFFER" : "BOOTREPLY");
+	struct iaddrlist *ap;
 	
 #ifdef DEBUG_PACKET
 	dump_packet (packet);
@@ -579,21 +653,18 @@ void dhcpoffer (packet)
 	   has an unrecognizable transaction id, then just drop it. */
 	if (ip -> client -> state != S_SELECTING ||
 	    packet -> interface -> client -> xid != packet -> raw -> xid) {
-		debug ("DHCPOFFER in wrong transaction.");
+		debug ("%s in wrong transaction.", name);
 		return;
 	}
 
-	note ("DHCPOFFER from %s",
-	      print_hw_addr (packet -> raw -> htype,
-			     packet -> raw -> hlen,
-			     packet -> raw -> chaddr));
+	note ("%s from %s", name, piaddr (packet -> client_addr));
 
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
 	for (i = 0; ip -> client -> config -> required_options [i]; i++) {
 		if (!packet -> options [ip -> client -> config ->
 					required_options [i]].len) {
-			note ("DHCPOFFER isn't satisfactory.");
+			note ("%s isn't satisfactory.", name);
 			return;
 		}
 	}
@@ -604,7 +675,7 @@ void dhcpoffer (packet)
 		if (lease -> address.len == sizeof packet -> raw -> yiaddr &&
 		    !memcmp (lease -> address.iabuf,
 			     &packet -> raw -> yiaddr, lease -> address.len)) {
-			debug ("DHCPOFFER already seen.");
+			debug ("%s already seen.", name);
 			return;
 		}
 	}
@@ -614,6 +685,11 @@ void dhcpoffer (packet)
 		note ("packet_to_lease failed.");
 		return;
 	}
+
+	/* If this lease was acquired through a BOOTREPLY, record that
+	   fact. */
+	if (!packet -> options [DHO_DHCP_MESSAGE_TYPE].len)
+		lease -> is_bootp = 1;
 
 	/* Record the medium under which this lease was offered. */
 	lease -> medium = ip -> client -> medium;
@@ -785,10 +861,7 @@ void dhcpnak (packet)
 		return;
 	}
 
-	note ("DHCPNAK from %s",
-	      print_hw_addr (packet -> raw -> htype,
-			     packet -> raw -> hlen,
-			     packet -> raw -> chaddr));
+	note ("DHCPNAK from %s", piaddr (packet -> client_addr));
 
 	if (!ip -> client -> active) {
 		note ("DHCPNAK with no active lease.\n");
@@ -806,10 +879,8 @@ void dhcpnak (packet)
 }
 
 /* Send out a DHCPDISCOVER packet, and set a timeout to send out another
-   one after the right interval has expired.   If we are past the renewal
-   (T1) interval but not yet past the rebind (T2) interval, unicast
-   the message; otherwise broadcast it.   If the lease expires, go back to
-   the INIT state. */
+   one after the right interval has expired.  If we don't get an offer by
+   the time we reach the panic interval, call the panic function. */
 
 void send_discover (ipp)
 	void *ipp;
@@ -893,16 +964,16 @@ void send_discover (ipp)
 			(ip -> client -> first_sending +
 			 ip -> client -> config -> timeout) - cur_time + 1;
 
-	note ("DHCPDISCOVER on %s to %s port %d interval %ld",
-	      ip -> name,
-	      inet_ntoa (sockaddr_broadcast.sin_addr),
-	      ntohs (sockaddr_broadcast.sin_port), ip -> client -> interval);
-
 	/* Record the number of seconds since we started sending. */
 	if (interval < 255)
 		ip -> client -> packet.secs = interval;
 	else
 		ip -> client -> packet.secs = 255;
+
+	note ("DHCPDISCOVER on %s to %s port %d interval %ld",
+	      ip -> name,
+	      inet_ntoa (sockaddr_broadcast.sin_addr),
+	      ntohs (sockaddr_broadcast.sin_port), ip -> client -> interval);
 
 	/* Send out a packet. */
 	result = send_packet (ip, (struct packet *)0,
@@ -933,10 +1004,8 @@ void state_panic (ipp)
 
 	/* We may not have an active lease, but we may have some
 	   predefined leases that we can try. */
-	if (!ip -> client -> active && ip -> client -> leases) {
-		loop = ip -> client -> leases;
+	if (!ip -> client -> active && ip -> client -> leases)
 		goto activate_next;
-	}
 
 	/* Run through the list of leases and see if one can be used. */
 	while (ip -> client -> active) {
@@ -1001,6 +1070,8 @@ void state_panic (ipp)
 		   now. */
 		if (ip -> client -> active == loop)
 			break;
+		else if (!loop)
+			loop = ip -> client -> active;
 	}
 
 	/* No leases were available, or what was available didn't work, so
@@ -1014,6 +1085,7 @@ void state_panic (ipp)
 	ip -> client -> state = S_INIT;
 	add_timeout (cur_time + ip -> client -> config -> retry_interval,
 		     state_init, ip);
+	go_daemon ();
 }
 
 void send_request (ipp)
@@ -1626,6 +1698,8 @@ void write_client_lease (ip, lease)
 	}
 
 	fprintf (leaseFile, "lease {\n");
+	if (lease -> is_bootp)
+		fprintf (leaseFile, "  bootp;\n");
 	fprintf (leaseFile, "  interface \"%s\";\n", ip -> name);
 	fprintf (leaseFile, "  fixed-address %s;\n",
 		 piaddr (lease -> address));
@@ -1645,7 +1719,7 @@ void write_client_lease (ip, lease)
 				 dhcp_options [i].name,
 				 pretty_print_option
 				 (i, lease -> options [i].data,
-				  lease -> options [i].len, 1));
+				  lease -> options [i].len, 1, 1));
 		}
 	}
 	t = gmtime (&lease -> renewal);
@@ -1706,6 +1780,8 @@ void script_write_params (ip, prefix, lease)
 	struct client_lease *lease;
 {
 	int i;
+	u_int8_t dbuf [1500];
+	int len;
 
 	fprintf (scriptFile, "%sip_address=\"%s\"\n",
 		 prefix, piaddr (lease -> address));
@@ -1721,13 +1797,82 @@ void script_write_params (ip, prefix, lease)
 		fprintf (scriptFile, "export %sserver_name\n", prefix);
 	}
 	for (i = 0; i < 256; i++) {
-		if (lease -> options [i].len) {
+		u_int8_t *dp;
+
+		if (ip -> client -> config -> defaults [i].len) {
+			if (lease -> options [i].len) {
+				switch (ip -> client ->
+					config -> default_actions [i]) {
+				      case ACTION_DEFAULT:
+					dp = lease -> options [i].data;
+					len = lease -> options [i].len;
+					break;
+				      case ACTION_SUPERSEDE:
+				      supersede:
+					dp = ip -> client ->
+						config -> defaults [i].data;
+					len = ip -> client ->
+						config -> defaults [i].len;
+					break;
+				      case ACTION_PREPEND:
+					len = (ip -> client ->
+					       config -> defaults [i].len +
+					       lease -> options [i].len);
+					if (len > sizeof dbuf) {
+						warn ("no space to %s %s",
+						      "prepend option",
+						      dhcp_options [i].name);
+						goto supersede;
+					}
+					dp = dbuf;
+					memcpy (dp,
+						ip -> client -> 
+						config -> defaults [i].data,
+						ip -> client -> 
+						config -> defaults [i].len);
+					memcpy (dp + ip -> client -> 
+						config -> defaults [i].len,
+						lease -> options [i].data,
+						lease -> options [i].len);
+					break;
+				      case ACTION_APPEND:
+					len = (ip -> client ->
+					       config -> defaults [i].len +
+					       lease -> options [i].len);
+					if (len > sizeof dbuf) {
+						warn ("no space to %s %s",
+						      "prepend option",
+						      dhcp_options [i].name);
+						goto supersede;
+					}
+					dp = dbuf;
+					memcpy (dp,
+						ip -> client -> 
+						config -> defaults [i].data,
+						ip -> client -> 
+						config -> defaults [i].len);
+					memcpy (dp + ip -> client -> 
+						config -> defaults [i].len,
+						lease -> options [i].data,
+						lease -> options [i].len);
+				}
+			} else {
+				dp = ip -> client ->
+					config -> defaults [i].data;
+				len = ip -> client ->
+					config -> defaults [i].len;
+			}
+		} else if (lease -> options [i].len) {
+			len = lease -> options [i].len;
+			dp = lease -> options [i].data;
+		} else {
+			len = 0;
+		}
+		if (len) {
 			char *s = dhcp_option_ev_name (&dhcp_options [i]);
-			fprintf (scriptFile,
-				 "%s%s=\"%s\"\n", prefix, s,
-				 pretty_print_option
-				 (i, lease -> options [i].data,
-				  lease -> options [i].len, 0));
+				
+			fprintf (scriptFile, "%s%s=\"%s\"\n", prefix, s,
+				 pretty_print_option (i, dp, len, 0, 0));
 			fprintf (scriptFile, "export %s%s\n", prefix, s);
 		}
 	}

@@ -115,6 +115,15 @@
 #define ABANDONED	319
 #define	BACKOFF_CUTOFF	320
 #define	INITIAL_INTERVAL 321
+#define NAMESERVER	322
+#define	DOMAIN		323
+#define SEARCH		324
+#define SUPERSEDE	325
+#define APPEND		326
+#define PREPEND		327
+#define HOSTNAME	328
+#define CLIENT_HOSTNAME	329
+#define REJECT		330
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\
 				 (x) != STRING &&	\
