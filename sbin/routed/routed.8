@@ -1,4 +1,4 @@
-.\"	$NetBSD: routed.8,v 1.32 2001/06/05 11:22:53 wiz Exp $
+.\"	$NetBSD: routed.8,v 1.33 2001/10/01 10:31:45 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -246,8 +246,8 @@ force
 .Nm
 to supply routing information.
 This is the default if multiple network interfaces are present on which
-RIP or Router Discovery have not been disabled, and if the kernel switch
-ipforwarding=1.
+RIP or Router Discovery have not been disabled, and if the sysctl
+net.inet.ip.forwarding=1.
 .It Fl q
 is the opposite of the
 .Fl s
