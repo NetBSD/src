@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.25 2002/11/08 09:28:19 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.26 2002/11/08 09:33:44 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -907,4 +907,13 @@ sys/arch/sparc64/sparc64/machdep.c		1.132
 
 	Make 32bit sparc64 kernels with DEBUG and DIAGNOSTIC compile.
 	[martin, ticket #916]
+
+sys/kern/uipc_socket.c				1.68
+
+	Fix 2 bugs with MSG_WAITALL. The first is to not block forever if one
+	is trying to MSG_PEEK for more than the socket can hold. The second is
+	that before sleeping waiting for more data, upcall the protocol
+	telling it you have just received data so it can kick itself to
+	re-fill the just drained socket buffer.
+	[thorpej, ticket #429]
 
