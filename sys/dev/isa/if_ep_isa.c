@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.14 1997/04/28 15:52:44 mjacob Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.15 1997/06/23 05:25:40 cjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -152,7 +152,7 @@ ep_isa_probe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, ioh2;
 	int slot, iobase, irq, i;
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
@@ -236,12 +236,18 @@ ep_isa_probe(parent, match, aux)
 		 * Don't attach a 3c509 in PnP mode.
 		 */
 		if ((model & 0xfff0) == PROD_ID_3C509) {
-			if (bus_space_read_2(iot, iobase, EP_W0_EEPROM_COMMAND)
+			if (bus_space_map(iot, iobase, 1, 0, &ioh2)) {
+				printf(
+				"ep_isa_probe: can't map Etherlink iobase\n");
+				return 0;
+			}
+			if (bus_space_read_2(iot, ioh2, EP_W0_EEPROM_COMMAND)
 			    & EEPROM_TST_MODE) {
 				printf(
 				 "3COM 3C509 Ethernet card in PnP mode\n");
 				continue;
 			}
+			bus_space_unmap(iot, ioh2, 1);
 		}
 		epaddcard(bus, iobase, irq, model);
 	}
