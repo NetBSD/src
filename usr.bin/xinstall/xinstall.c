@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.74 2002/12/19 08:30:39 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.75 2002/12/22 10:15:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.74 2002/12/19 08:30:39 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.75 2002/12/22 10:15:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ u_long	fileflags;
 char	*stripArgs;
 char	*afterinstallcmd;
 char	*suffix = BACKUP_SUFFIX;
+char	*destdir;
 
 #define LN_ABSOLUTE	0x01
 #define LN_RELATIVE	0x02
@@ -133,7 +134,8 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "a:cbB:df:g:l:m:M:N:o:prsS:T:U")) != -1)
+	while ((ch = getopt(argc, argv, "a:cbB:dD:f:g:l:m:M:N:o:prsS:T:U"))
+	    != -1)
 		switch((char)ch) {
 		case 'a':
 			afterinstallcmd = strdup(optarg);
@@ -166,6 +168,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dodir = 1;
+			break;
+		case 'D':
+			destdir = optarg;
 			break;
 #if !HAVE_CONFIG_H
 		case 'f':
@@ -920,7 +925,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	const char *link)
 {
 	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
-	char		*buf;
+	char		*buf, *p;
+	size_t		destlen;
 	struct flock	metalog_lock;
 
 	if (!metafp)	
@@ -941,8 +947,16 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	}
 
 	strsvis(buf, path, VIS_CSTYLE, extra);		/* encode name */
-	fprintf(metafp, ".%s%s type=%s mode=%#o",	/* print details */
-	    buf[0] == '/' ? "" : "/", buf, type, mode);
+	p = buf;					/* remove destdir */
+	if (destdir) {
+		destlen = strlen(destdir);
+		if (strncmp(p, destdir, destlen) == 0 && p[destlen] == '/')
+			p += destlen;
+	}
+	while (*p && *p == '/')				/* remove leading /s */
+		p++;
+							/* print details */
+	fprintf(metafp, "./%s type=%s mode=%#o", p, type, mode);
 	if (link)
 		fprintf(metafp, " link=%s", link);
 	if (owner)
@@ -1005,13 +1019,13 @@ usage(void)
 	prog = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-Ubcprs] [-M log] [-T tags] [-B suffix] [-a afterinstallcmd]\n"
-"           [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group] [-l linkflags]\n"
-"           [-S stripflags] file1 file2\n"
-"       %s [-Ubcprs] [-M log] [-T tags] [-B suffix] [-a afterinstallcmd]\n"
-"           [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group] [-l linkflags]\n"
-"           [-S stripflags] file1 ... fileN directory\n"
-"       %s -d [-Up] [-M log] [-T tags] [-a afterinstallcmd] [-m mode]\n"
+"usage: %s [-Ubcprs] [-M log] [-D dest] [-T tags] [-B suffix]\n"
+"           [-a aftercmd] [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group] \n"
+"           [-l linkflags] [-S stripflags] file1 file2\n"
+"       %s [-Ubcprs] [-M log] [-D dest] [-T tags] [-B suffix]\n"
+"           [-a aftercmd] [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group]\n"
+"           [-l linkflags] [-S stripflags] file1 ... fileN directory\n"
+"       %s -d [-Up] [-M log] [-D dest] [-T tags] [-a aftercmd] [-m mode]\n"
 "           [-N dbdir] [-o owner] [-g group] directory ...\n",
 	    prog, prog, prog);
 	exit(1);
