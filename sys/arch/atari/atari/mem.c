@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1997/04/25 19:07:45 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1998/05/11 07:46:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,8 @@
  * Memory special file
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
@@ -53,6 +55,9 @@
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif  
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
@@ -153,9 +158,15 @@ mmrw(dev, uio, flags)
 		case 1: /* minor device 1 is kernel memory */
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+#if defined(UVM)
+			if (!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+#else
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
+#endif
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 1997/07/08 16:56:34 kleink Exp $	*/
+/*	$NetBSD: trap.c,v 1.29 1998/05/11 07:46:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -58,6 +60,9 @@
 #include <vm/vm.h>
 #include <sys/user.h>
 #include <vm/pmap.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
@@ -337,7 +342,12 @@ trap(type, code, v, frame)
 
 	p = curproc;
 	sticks = ucode = 0;
+
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 
 	/* I have verified that this DOES happen! -gwr */
 	if (p == NULL)
@@ -361,6 +371,9 @@ trap(type, code, v, frame)
 #endif
 
 	switch (type) {
+#ifdef DEBUG
+	dopanic:
+#endif /* DEBUG */
 	default:
 		panictrap(type, code, v, &frame);
 	/*
@@ -544,7 +557,11 @@ trap(type, code, v, frame)
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
+#if defined(UVM)
+			uvmexp.traps--;
+#else
 			cnt.v_trap--;
+#endif
 			return;
 		}
 		spl0();
@@ -605,7 +622,11 @@ trap(type, code, v, frame)
 			panictrap(type, code, v, &frame);
 		}
 #endif
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#else
 		rv = vm_fault(map, va, ftype, FALSE);
+#endif
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
@@ -908,6 +929,7 @@ writeback(fp, docachepush)
 		}
 	}
 	p->p_addr->u_pcb.pcb_onfault = oonfault;
+
 	/*
 	 * Determine the cause of the failure if any translating to
 	 * a signal.  If the corresponding VA is valid and RO it is
@@ -915,6 +937,17 @@ writeback(fp, docachepush)
 	 * illegal reference (SIGSEGV).
 	 */
 	if (err) {
+#if defined(UVM)
+		if (uvm_map_checkprot(&p->p_vmspace->vm_map,	
+					    trunc_page(fa), round_page(fa),
+					    VM_PROT_READ) &&
+		    !uvm_map_checkprot(&p->p_vmspace->vm_map,
+					     trunc_page(fa), round_page(fa),
+					     VM_PROT_WRITE))
+			err = SIGBUS;
+		else
+			err = SIGSEGV;
+#else /* ! UVM */
 		if (vm_map_check_protection(&p->p_vmspace->vm_map,	
 					    trunc_page(fa), round_page(fa),
 					    VM_PROT_READ) &&
@@ -924,6 +957,7 @@ writeback(fp, docachepush)
 			err = SIGBUS;
 		else
 			err = SIGSEGV;
+#endif /* UVM */
 	}
 	return(err);
 }
@@ -995,7 +1029,11 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;

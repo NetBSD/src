@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.41 1998/04/23 09:26:25 leo Exp $
+#	$NetBSD: GENERIC,v 1.42 1998/05/11 07:46:28 leo Exp $
 #
 # Generic atari
 #
@@ -105,6 +105,7 @@ options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 options 	SERCONSOLE		# modem1 console support
+options 	UVM			# New UVM VM system
 
 # Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f

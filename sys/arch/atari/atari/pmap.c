@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1998/05/07 07:25:52 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1998/05/11 07:46:18 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -74,6 +74,7 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,11 +84,17 @@
 #include <sys/user.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
+
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/vmparam.h>
+
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
  * and not yet converted.  XXX.
@@ -235,6 +242,9 @@ vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES + 4 / NPTEPG;
 
 struct pmap	kernel_pmap_store;
 vm_map_t	pt_map;
+#if defined(UVM)
+struct vm_map	pt_map_store;
+#endif
 
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -340,10 +350,17 @@ u_int		hw_addr, hw_pages;
 	 * Announce available memory to the VM-system
 	 */
 	for (i = 0; usable_segs[i].start; i++)
+#if defined(UVM)
+		uvm_page_physload(atop(usable_segs[i].start),
+				 atop(usable_segs[i].end),
+				 atop(usable_segs[i].start),
+				 atop(usable_segs[i].end));
+#else
 		vm_page_physload(atop(usable_segs[i].start),
 				 atop(usable_segs[i].end),
 				 atop(usable_segs[i].start),
 				 atop(usable_segs[i].end));
+#endif
 
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + kernel_size;
@@ -408,6 +425,30 @@ pmap_init()
 	 * Now that kernel map has been allocated, we can mark as
 	 * unavailable regions which we have mapped in atari_init.c.
 	 */
+#if defined(UVM)
+	addr = atarihwaddr;
+	if (uvm_map(kernel_map, &addr,
+		    ptoa(atarihwpg),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+		goto bogons;
+	addr = (vm_offset_t) Sysmap;
+	if (uvm_map(kernel_map, &addr, ATARI_KPTSIZE,
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
+		/*
+		 * If this fails, it is probably because the static
+		 * portion of the kernel page table isn't big enough
+		 * and we overran the page table map.
+		 */
+ bogons:
+		panic("pmap_init: bogons in the VM system!\n");
+	}
+#else
 	addr = atarihwaddr;
 	(void)vm_map_find(kernel_map, NULL, 0, &addr, ptoa(atarihwpg), FALSE);
 	if (addr != atarihwaddr)
@@ -424,6 +465,8 @@ pmap_init()
 	 */
 	if (addr != (vm_offset_t)Sysmap)
 		panic("pmap_init: bogons in the VM system!\n");
+#endif /* UVM */
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
@@ -449,7 +492,13 @@ pmap_init()
 	s += page_cnt * sizeof(char);			/* attribute table */
 	s = round_page(s);
 
+#if defined(UVM)
+	addr = (vm_offset_t) uvm_km_zalloc(kernel_map, s);
+	if (addr == 0)
+		panic("pmap_init: can't allocate data structures");
+#else
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
+#endif
 	Segtabzero   = (u_int *) addr;
 	Segtabzeropa = (u_int *) pmap_extract(pmap_kernel(), addr);
 
@@ -501,17 +550,35 @@ pmap_init()
 	 * Verify that space will be allocated in region for which
 	 * we already have kernel PT pages.
 	 */
+#if defined(UVM)
+	addr = 0;
+	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET,
+		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
+	if (rv != KERN_SUCCESS || (addr + s) >= (vm_offset_t)Sysmap)
+		panic("pmap_init: kernel PT too small");
+	rv = uvm_unmap(kernel_map, addr, addr + s, FALSE);
+	if (rv != KERN_SUCCESS)
+		panic("pmap_init: uvm_unmap failed");
+#else
 	addr = 0;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS || addr + s >= (vm_offset_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
 	vm_map_remove(kernel_map, addr, addr + s);
+#endif
 
 	/*
 	 * Now allocate the space and link the pages together to
 	 * form the KPT free list.
 	 */
+#if defined(UVM)
+	addr = (vm_offset_t) uvm_km_zalloc(kernel_map, s);
+	if (addr == 0)
+		panic("pmap_init: cannot allocate KPT free list");
+#else
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
+#endif
 	s = ptoa(npg);
 	addr2 = addr + s;
 	kpt_pages = &((struct kpt_page *)addr2)[npg];
@@ -548,6 +615,11 @@ pmap_init()
 		maxproc = ATARI_UPTMAXSIZE / ATARI_UPTSIZE;
 	}
 	else s = maxproc * ATARI_UPTSIZE;
+
+#if defined(UVM)
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	    TRUE, &pt_map_store);
+#else
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS)
@@ -559,6 +631,8 @@ pmap_init()
 	rv = vm_map_submap(kernel_map, addr, addr2, pt_map);
 	if (rv != KERN_SUCCESS)
 		panic("pmap_init: cannot map range to pt_map");
+#endif /* UVM */
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_init: pt_map [%lx - %lx)\n", addr, addr2);
@@ -609,9 +683,15 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
+#if defined(UVM)
+		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG);
+		if (pvp == 0)
+			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
+#else
 		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
+#endif
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; i; i--, pv++)
 			pv->pv_next = pv + 1;
@@ -653,7 +733,11 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+#if defined(UVM)
+		uvm_km_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 		break;
 	}
 }
@@ -800,11 +884,21 @@ pmap_release(pmap)
 		panic("pmap_release count");
 #endif
 	if (pmap->pm_ptab)
+#if defined(UVM)
+		uvm_km_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
+				   ATARI_UPTSIZE);
+#else
 		kmem_free_wakeup(pt_map, (vm_offset_t)pmap->pm_ptab,
 				 ATARI_UPTSIZE);
+#endif
 	if (pmap->pm_stab != Segtabzero)
+#if defined(UVM)
+		uvm_km_free_wakeup(kernel_map, (vm_offset_t)pmap->pm_stab,
+				 ATARI_STSIZE);
+#else
 		kmem_free_wakeup(kernel_map, (vm_offset_t)pmap->pm_stab,
 				 ATARI_STSIZE);
+#endif
 }
 
 /*
@@ -908,8 +1002,13 @@ pmap_remove(pmap, sva, eva)
 	     */
 	    if (pmap != pmap_kernel()) {
 		pte = pmap_pte(pmap, va);
-		vm_map_pageable(pt_map, trunc_page(pte),
+#if defined(UVM)
+		(void) uvm_map_pageable(pt_map, trunc_page(pte),
 					round_page(pte+1), TRUE);
+#else
+		(void) vm_map_pageable(pt_map, trunc_page(pte),
+				       round_page(pte+1), TRUE);
+#endif
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("remove", trunc_page(pte));
@@ -1019,9 +1118,15 @@ pmap_remove(pmap, sva, eva)
 				printf("remove: free stab %p\n",
 					       ptpmap->pm_stab);
 #endif
+#if defined(UVM)
+				uvm_km_free_wakeup(kernel_map,
+						  (vm_offset_t)ptpmap->pm_stab,
+				   		  ATARI_STSIZE);
+#else
 				kmem_free_wakeup(kernel_map,
 						  (vm_offset_t)ptpmap->pm_stab,
 						  ATARI_STSIZE);
+#endif
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
 #if defined(M68040) || defined(M68060)
@@ -1235,8 +1340,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
 	if (pmap->pm_ptab == NULL)
+#if defined(UVM)
+		pmap->pm_ptab = (u_int *)
+			uvm_km_valloc_wait(pt_map, ATARI_UPTSIZE);
+#else
 		pmap->pm_ptab = (u_int *)
 			kmem_alloc_wait(pt_map, ATARI_UPTSIZE);
+#endif
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
@@ -1307,8 +1417,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		vm_map_pageable(pt_map, trunc_page(pte),
-				round_page(pte+1), FALSE);
+#if defined(UVM)
+		(void) uvm_map_pageable(pt_map, trunc_page(pte),
+					round_page(pte+1), FALSE);
+#else
+		(void) vm_map_pageable(pt_map, trunc_page(pte),
+				       round_page(pte+1), FALSE);
+#endif
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -2059,10 +2174,15 @@ pmap_changebit(pa, bit, setem)
 		 * XXX don't write protect pager mappings
 		 */
 		if (bit == PG_RO) {
+#if defined(UVM)
+			if (va >= uvm.pager_sva && va < uvm.pager_eva)
+				continue;
+#else
 			extern vm_offset_t pager_sva, pager_eva;
 
 			if (va >= pager_sva && va < pager_eva)
 				continue;
+#endif
 		}
 
 		pte = (int *) pmap_pte(pv->pv_pmap, va);
@@ -2118,8 +2238,13 @@ pmap_enter_ptpage(pmap, va)
 	 * reference count drops to zero.
 	 */
 	if (pmap->pm_stab == Segtabzero) {
+#if defined(UVM)
+		pmap->pm_stab = (u_int *)
+			uvm_km_zalloc(kernel_map, ATARI_STSIZE);
+#else
 		pmap->pm_stab = (u_int *)
 			kmem_alloc(kernel_map, ATARI_STSIZE);
+#endif
 		pmap->pm_stpa = (u_int *) pmap_extract(
 		    pmap_kernel(), (vm_offset_t)pmap->pm_stab);
 #if defined(M68040) || defined(M68060)
@@ -2258,9 +2383,18 @@ pmap_enter_ptpage(pmap, va)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to fault UPT pg at %lx\n", va);
 #endif
+#if defined(UVM)
+		if ((s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE))
+		    != KERN_SUCCESS) {
+			printf("uvm_fault(pt_map, 0x%lx, 0, RW) -> %d\n",
+			    va, s);
+			panic("pmap_enter: uvm_fault failed");
+		}
+#else
 		if (vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE)
 		    != KERN_SUCCESS)
 			panic("pmap_enter: vm_fault failed");
+#endif
 		ptpa = pmap_extract(pmap_kernel(), va);
 #ifdef DEBUG
 		PHYS_TO_VM_PAGE(ptpa)->flags |=  PG_PTPAGE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1998/01/05 23:16:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 1998/05/11 07:46:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,8 @@
  * Amiga author: Markus Wild
  * Atari Modifications: Leo Weppelman
  */
+
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -551,7 +553,11 @@ Lbrkpt3:
 
 _spurintr:
 	addql	#1,_intrcnt+0
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 	/* MFP timer A handler --- System clock --- */
@@ -562,7 +568,11 @@ mfp_tima:
 	addql	#4,sp			|  pop params
 	addql	#1,_intrcnt_user+52	|  add another system clock interrupt
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei			|  all done
 
 #ifdef STATCLOCK
@@ -572,7 +582,11 @@ mfp_timc:
 	jbsr	_statintr		|  call statistics clock handler
 	addql	#1,_intrcnt+36		|  add another stat clock interrupt
 	moveml	sp@+,d0-d1/a0-a1	|  restore scratch regs	
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei			|  all done
 #endif /* STATCLOCK */
 
@@ -586,7 +600,11 @@ mfp_kbd:
 	jbsr	_kbdintr		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 	/* MFP2 SCSI DMA handler --- NCR5380 --- */
@@ -599,7 +617,11 @@ mfp2_5380dm:
 	jbsr	_scsi_dma		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 	/* MFP2 SCSI handler --- NCR5380 --- */
@@ -612,7 +634,11 @@ mfp2_5380:
 	jbsr	_scsi_ctrl		|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 	/* SCC Interrupt --- modem2/serial2 --- */
@@ -625,7 +651,11 @@ sccint:
 	jbsr	_zshard			|  handle interrupt
 	addql	#4,sp			|  pop SR
 	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 	/* Level 1 (Software) interrupt handler */
@@ -636,7 +666,11 @@ _lev1intr:
 	addql	#1,_intrcnt+16		|  add another software interrupt
 	jbsr	_softint		|  handle software interrupts
 	moveml	sp@+,d0-d1/a0-a1
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 	/*
@@ -1038,7 +1072,10 @@ ENTRY(qsetjmp)
 	moveq	#0,d0			|  return 0
 	rts
 
-	.globl	_whichqs,_qs,_cnt,_panic
+#if !defined(UVM)
+	.globl	_cnt
+#endif
+	.globl	_whichqs,_qs,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
 
@@ -1076,7 +1113,11 @@ ENTRY(switch_exit)
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address of process's u-area
 	movl	_kernel_map,sp@-	| map it was allocated in
-	jbsr	_kmem_free		| deallocate it
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_km_free)	| deallocate it
+#else
+	jbsr	_C_LABEL(kmem_free)	| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
 	jra	_cpu_switch

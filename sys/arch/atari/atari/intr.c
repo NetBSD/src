@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 1997/10/04 09:46:07 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 1998/05/11 07:46:16 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,12 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+
+#if defined(UVM)
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <machine/cpu.h>
 
 #include <atari/atari/intr.h>
@@ -287,8 +294,11 @@ struct clockframe	frame;
 	ih_list_t	*vec_list;
 	struct intrhand	*ih;
 
+#if defined(UVM)
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
-
+#endif
 	vector = (frame.cf_vo & 0xfff) >> 2;
 	if (vector < (AVEC_LOC+AVEC_MAX) && vector >= AVEC_LOC)
 		vec_list = &autovec_list[vector - AVEC_LOC];
