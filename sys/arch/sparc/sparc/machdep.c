@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 1997/10/16 10:35:49 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.90 1997/11/02 21:31:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,8 @@
 #include <sys/sysctl.h>
 
 #include <machine/autoconf.h>
+#define _SPARC_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
@@ -1097,4 +1099,455 @@ wcopy(vb1, vb2, l)
 	/* and back. */
 	if (l & 1)
 		*b2 = *b1e;
+}
+
+
+
+
+/*
+ * Common function for DMA map creation.  May be called by bus-specific
+ * DMA map creation functions.
+ */
+int
+_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
+	bus_dma_tag_t t;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	bus_size_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	struct sparc_bus_dmamap *map;
+	void *mapstore;
+	size_t mapsize;
+
+	/*
+	 * Allocate and initialize the DMA map.  The end of the map
+	 * is a variable-sized array of segments, so we allocate enough
+	 * room for them in one shot.
+	 *
+	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
+	 * of ALLOCNOW notifies others that we've reserved these resources,
+	 * and they are not to be freed.
+	 *
+	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
+	 * the (nsegments - 1).
+	 */
+	mapsize = sizeof(struct sparc_bus_dmamap) +
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	if ((mapstore = malloc(mapsize, M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+		return (ENOMEM);
+
+	bzero(mapstore, mapsize);
+	map = (struct sparc_bus_dmamap *)mapstore;
+	map->_dm_size = size;
+	map->_dm_segcnt = nsegments;
+	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_boundary = boundary;
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_nsegs = 0;		/* no valid mappings */
+
+	*dmamp = map;
+	return (0);
+}
+
+/*
+ * Common function for DMA map destruction.  May be called by bus-specific
+ * DMA map destruction functions.
+ */
+void
+_bus_dmamap_destroy(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+
+	free(map, M_DEVBUF);
+}
+
+/*
+ * Common function for loading a DMA map with a linear buffer.  May
+ * be called by bus-specific DMA map load functions.
+ */
+int
+_bus_dmamap_load(t, map, buf, buflen, p, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	void *buf;
+	bus_size_t buflen;
+	struct proc *p;
+	int flags;
+{
+	bus_size_t sgsize;
+	bus_addr_t curaddr, lastaddr;
+	caddr_t vaddr = buf;
+	int first, seg, s;
+	pmap_t pmap;
+	vm_offset_t dvmaddr;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+		return (EINVAL);
+
+	map->_dm_npf = btoc(round_page(buflen + ((int)vaddr & PGOFSET)));
+
+	/*
+	 * XXX Need to implement "don't dma across this boundry".
+	 */
+	s = splimp();
+	for (;;) {
+		map->_dm_pn = rmalloc(dvmamap, map->_dm_npf);
+		if (map->_dm_pn != 0)
+			break;
+
+		if (flags & BUS_DMA_WAITOK) {
+			(void)tsleep(dvmamap, PRIBIO+1, "dvma", 0);
+			continue;
+		}
+		splx(s); 
+		return (ENOMEM); 
+	}
+	splx(s);        
+ 
+	dvmaddr = rctov(map->_dm_pn);
+
+	if (p != NULL)
+		pmap = p->p_vmspace->vm_map.pmap;
+	else
+		pmap = pmap_kernel();
+
+	lastaddr = ~0;		/* XXX gcc */
+	for (first = 1, seg = 0; buflen > 0 && seg < map->_dm_segcnt; ) {
+		/*
+		 * Get the physical address for this segment.
+		 */
+		curaddr = (bus_addr_t)pmap_extract(pmap, (vm_offset_t)vaddr);
+
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = NBPG - ((u_long)vaddr & PGOFSET);
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		/*
+		 * Insert chunk into a segment, coalescing with
+		 * previous segment if possible.
+		 */
+		if (first) {
+			map->dm_segs[seg].ds_addr = curaddr;
+			map->dm_segs[seg].ds_len = sgsize;
+			first = 0;
+		} else {
+			if (curaddr == lastaddr &&
+			    (map->dm_segs[seg].ds_len + sgsize) <=
+			     map->_dm_maxsegsz)
+				map->dm_segs[seg].ds_len += sgsize;
+			else {
+				seg++;
+				map->dm_segs[seg].ds_addr = curaddr;
+				map->dm_segs[seg].ds_len = sgsize;
+			}
+		}
+
+#if defined(SUN4M) 
+		if (CPU_ISSUN4M) {
+			iommu_enter(dvmaddr, curaddr & ~(NBPG-1));
+		} else
+#endif
+		{
+#ifdef notyet
+#if defined(SUN4)
+			if (have_iocache)
+				curaddr |= PG_IOC;
+#endif
+#endif
+			pmap_enter(pmap_kernel(), dvmaddr,
+				   (curaddr & ~(NBPG-1))| PMAP_NC,
+				   VM_PROT_READ|VM_PROT_WRITE, 1);
+		}
+
+		dvmaddr += NBPG;
+		lastaddr = curaddr + sgsize;
+		vaddr += sgsize;
+		buflen -= sgsize;
+	}
+
+	/*
+	 * Did we fit?
+	 */
+	if (buflen != 0)
+		return (EFBIG);		/* XXX better return value here? */
+
+	map->dm_nsegs = seg + 1;
+	return (0);
+}
+
+/*
+ * Like _bus_dmamap_load(), but for mbufs.
+ */
+int
+_bus_dmamap_load_mbuf(t, map, m, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	struct mbuf *m;
+	int flags;
+{
+
+	panic("_bus_dmamap_load: not implemented");
+}
+
+/*
+ * Like _bus_dmamap_load(), but for uios.
+ */
+int
+_bus_dmamap_load_uio(t, map, uio, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	struct uio *uio;
+	int flags;
+{
+
+	panic("_bus_dmamap_load_uio: not implemented");
+}
+
+/*
+ * Like _bus_dmamap_load(), but for raw memory allocated with
+ * bus_dmamem_alloc().
+ */
+int
+_bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+
+	panic("_bus_dmamap_load_raw: not implemented");
+}
+
+/*
+ * Common function for unloading a DMA map.  May be called by
+ * bus-specific DMA map unload functions.
+ */
+void
+_bus_dmamap_unload(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+	int len, s;
+	vm_offset_t kva;
+
+	kva = rctov(map->_dm_pn);
+	len = ctob(map->_dm_npf);
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M)
+		iommu_remove(kva, len);
+	else
+#endif          
+		pmap_remove(pmap_kernel(), kva, kva + len);
+
+	s = splimp();
+	rmfree(dvmamap, map->_dm_npf, map->_dm_pn);
+	wakeup(dvmamap); 
+	splx(s);
+
+	/* Mark the mappings as invalid. */
+	map->dm_nsegs = 0;
+}
+
+/*
+ * Common function for DMA map synchronization.  May be called
+ * by bus-specific DMA map synchronization functions.
+ */
+void
+_bus_dmamap_sync(t, map, op)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+	bus_dmasync_op_t op;
+{
+
+	/* Nothing to do here. */
+}
+
+/*
+ * Common function for DMA-safe memory allocation.  May be called
+ * by bus-specific DMA memory allocation functions.
+ */
+int
+_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
+	bus_dma_tag_t t;
+	bus_size_t size, alignment, boundary;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int *rsegs;
+	int flags;
+{
+	vm_offset_t curaddr, lastaddr;
+	vm_offset_t low, high;
+	vm_page_t m;
+	struct pglist mlist;
+	int curseg, error;
+
+	/* Always round the size. */
+	size = round_page(size);
+	low = vm_first_phys;
+	high = vm_first_phys + vm_num_phys - PAGE_SIZE;
+
+	/*
+	 * Allocate pages from the VM system.
+	 */
+	TAILQ_INIT(&mlist);
+	error = vm_page_alloc_memory(size, low, high,
+	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	if (error)
+		return (error);
+
+	/*
+	 * Compute the location, size, and number of segments actually
+	 * returned by the VM code.
+	 */
+	m = mlist.tqh_first;
+	curseg = 0;
+	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	segs[curseg].ds_len = PAGE_SIZE;
+	m = m->pageq.tqe_next;
+
+	for (; m != NULL; m = m->pageq.tqe_next) {
+		curaddr = VM_PAGE_TO_PHYS(m);
+#ifdef DIAGNOSTIC
+		if (curaddr < low || curaddr >= high) {
+			printf("vm_page_alloc_memory returned non-sensical"
+			    " address 0x%lx\n", curaddr);
+			panic("_bus_dmamem_alloc_range");
+		}
+#endif
+		if (curaddr == (lastaddr + PAGE_SIZE))
+			segs[curseg].ds_len += PAGE_SIZE;
+		else {
+			curseg++;
+			segs[curseg].ds_addr = curaddr;
+			segs[curseg].ds_len = PAGE_SIZE;
+		}
+		lastaddr = curaddr;
+	}
+
+	*rsegs = curseg + 1;
+
+	return (0);
+}
+
+/*
+ * Common function for freeing DMA-safe memory.  May be called by
+ * bus-specific DMA memory free functions.
+ */
+void
+_bus_dmamem_free(t, segs, nsegs)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+{
+	vm_page_t m;
+	bus_addr_t addr;
+	struct pglist mlist;
+	int curseg;
+
+	/*
+	 * Build a list of pages to free back to the VM system.
+	 */
+	TAILQ_INIT(&mlist);
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		for (addr = segs[curseg].ds_addr;
+		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		    addr += PAGE_SIZE) {
+			m = PHYS_TO_VM_PAGE(addr);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+		}
+	}
+
+	vm_page_free_memory(&mlist);
+}
+
+/*
+ * Common function for mapping DMA-safe memory.  May be called by
+ * bus-specific DMA memory map functions.
+ */
+int
+_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	vm_offset_t va;
+	bus_addr_t addr;
+	int curseg;
+
+	size = round_page(size);
+	va = kmem_alloc_pageable(kmem_map, size);
+	if (va == 0)
+		return (ENOMEM);
+
+	*kvap = (caddr_t)va;
+
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		for (addr = segs[curseg].ds_addr;
+		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
+		    addr += NBPG, va += NBPG, size -= NBPG) {
+			if (size == 0)
+				panic("_bus_dmamem_map: size botch");
+			pmap_enter(pmap_kernel(), va, addr,
+			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+#if 0
+			if (flags & BUS_DMAMEM_NOSYNC)
+				/* XXX */;
+#endif
+		}
+	}
+
+	return (0);
+}
+
+/*
+ * Common function for unmapping DMA-safe memory.  May be called by
+ * bus-specific DMA memory unmapping functions.
+ */
+void
+_bus_dmamem_unmap(t, kva, size)
+	bus_dma_tag_t t;
+	caddr_t kva;
+	size_t size;
+{
+
+#ifdef DIAGNOSTIC
+	if ((u_long)kva & PGOFSET)
+		panic("_bus_dmamem_unmap");
+#endif
+
+	size = round_page(size);
+	kmem_free(kmem_map, (vm_offset_t)kva, size);
+}
+
+/*
+ * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * bus-specific DMA mmap(2)'ing functions.
+ */
+int
+_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs, off, prot, flags;
+{
+
+	panic("_bus_dmamem_mmap: not implemented");
 }
