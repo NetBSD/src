@@ -1,0 +1,14 @@
+#	$NetBSD: files.ipfilter,v 1.1 2002/10/10 22:45:46 thorpej Exp $
+
+defflag		IPFILTER_LOG		# logging of ip packets
+
+defpseudo ipfilter: ifnet		# XXX not really an ifnet
+
+file	netinet/fil.c		ipfilter
+file	netinet/ip_auth.c	ipfilter
+file	netinet/ip_fil.c	ipfilter
+file	netinet/ip_frag.c	ipfilter
+file	netinet/ip_log.c	ipfilter & ipfilter_log
+file	netinet/ip_nat.c	ipfilter
+file	netinet/ip_proxy.c	ipfilter
+file	netinet/ip_state.c	ipfilter

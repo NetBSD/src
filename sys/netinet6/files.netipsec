@@ -1,0 +1,23 @@
+#	$NetBSD: files.netipsec,v 1.1 2002/10/10 22:45:46 thorpej Exp $
+
+defflag opt_ipsec.h		IPSEC IPSEC_ESP
+
+file	netinet6/ah_core.c		ipsec
+file	netinet6/ah_input.c		ipsec
+file	netinet6/ah_output.c		ipsec
+
+file	netinet6/esp_core.c		ipsec & ipsec_esp
+file	netinet6/esp_output.c		ipsec & ipsec_esp
+file	netinet6/esp_input.c		ipsec & ipsec_esp
+file	netinet6/esp_rijndael.c		ipsec & ipsec_esp
+
+file	netinet6/ipcomp_core.c		ipsec
+file	netinet6/ipcomp_input.c		ipsec
+file	netinet6/ipcomp_output.c	ipsec
+
+file	netinet6/ipsec.c		ipsec
+
+file	netkey/key.c			ipsec
+file	netkey/key_debug.c		ipsec
+file	netkey/keydb.c			ipsec
+file	netkey/keysock.c		ipsec
