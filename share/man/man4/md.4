@@ -1,8 +1,8 @@
-.\"   $NetBSD: md.4,v 1.3 2004/01/12 20:03:39 is Exp $
+.\"   $NetBSD: md.4,v 1.4 2004/01/12 21:17:30 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .\"
-.Dd April 11, 1997
+.Dd January 12, 2004
 .Dt MD 4
 .Os
 .Sh NAME
@@ -20,10 +20,10 @@ before the
 .Nm
 device may be used as a disk.
 Its behaviour is configured by the kernel options
-.Sy MEMORY_DISK_HOOKS,
-.Sy MEMORY_DISK_IS_ROOT,
-.Sy MEMORY_DISK_ROOT_SIZE, 
-.Sy MEMORY_DISK_DYNAMIC
+.Sy MEMORY_DISK_HOOKS ,
+.Sy MEMORY_DISK_IS_ROOT ,
+.Sy MEMORY_DISK_ROOT_SIZE ,
+.Sy MEMORY_DISK_DYNAMIC ,
 and
 .Sy MEMORY_DISK_SERVER .
 .Sh FILES
@@ -34,6 +34,6 @@ block mode memory disk devices.
 raw mode memory disk devices.
 .El
 .Sh SEE ALSO
+.Xr options 4 ,
 .Xr mdconfig 8 ,
-.Xr mdsetimage 8 ,
-.Xr options 4
+.Xr mdsetimage 8
