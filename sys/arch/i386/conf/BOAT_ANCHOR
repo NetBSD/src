@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.23.2.6 1993/12/04 07:37:09 cgd Exp $
+#	$Id: BOAT_ANCHOR,v 1.23.2.7 1993/12/13 12:35:25 cgd Exp $
 #
 
 # standard options
@@ -51,14 +51,14 @@ options		INET			# IP
 #options	TPIP			# ?
 #options	EON			# ?
 
-config		netbsd root on wd0 swap on wd0
+config		netbsd swap generic
 
 include		"std.i386"
 
 #timer1 at isa? port 0x48			# only in EISA boxes
 
 #console
-pc0 at isa? port 0x60
+pc0 at isa?
 
 #math co-processor
 npx0 at isa? port 0xf0
