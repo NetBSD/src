@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.51 2005/01/10 13:16:39 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.52 2005/01/10 14:10:32 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -6,6 +6,7 @@ ADC	analog [to] digital converter
 ADPCM	adaptive differential pulse code modulation
 AGP	accelerated graphics port
 AM	amplitude modulation
+AMI	alternate mark inversion
 ANSI	american national standards institute
 API	application programming interface
 APIC	advanced programmable interrupt controller
