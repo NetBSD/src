@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.243 2003/10/03 02:15:17 grog Exp $
+.\"	$NetBSD: main,v 1.244 2003/10/10 23:49:23 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,11 +46,11 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amiga amigappc arc atari bebox
 .as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbppc evbsh3
-.as MACHINE_LIST " hp300 hpcarm hpcmips hpcsh i386 luna68k mac68k macppc mipsco
-.as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
-.as MACHINE_LIST " ofppc pc532 playstation2 pmax pmppc prep sandpoint sbmips
-.as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k x86_64
-.
+.as MACHINE_LIST " hp300 hp700 hpcarm hpcmips hpcsh i386 luna68k mac68k macppc
+.as MACHINE_LIST " mipsco mmeye mvme68k mvmeppc netwinder news68k newsmips
+.as MACHINE_LIST " next68k ofppc pc532 playstation2 pmax pmppc prep sandpoint
+.as MACHINE_LIST " sbmips sgimips shark sparc sparc64 sun2 sun3 vax 
+.as MACHINE_LIST " x68k x86_64 .
 .so \*[.CURDIR]/../common/macros
 .
 .Dd September 7, 2002
@@ -453,6 +453,7 @@ algor,
 dreamcast,
 evbarm,
 evbppc,
+hp700,
 hpcarm,
 hpcsh,
 newsmips,
@@ -1634,6 +1635,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Simon Burge Ta Mt simonb@NetBSD.org Ta Sy pmax
 .It Ta Simon Burge Ta Mt simonb@NetBSD.org Ta Sy sbmips
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org Ta Sy sun3x
+.It Ta Matt Fredette Ta Mt fredette@NetBSD.org Ta Sy hp700
 .It Ta Matt Fredette Ta Mt fredette@NetBSD.org Ta Sy sun2
 .It Ta Chris Gilbert Ta Mt chris@NetBSD.org Ta Sy cats
 .It Ta Ross Harvey Ta Mt ross@NetBSD.org Ta Sy alpha
