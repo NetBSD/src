@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.36 1998/10/05 05:26:00 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.36.2.1 1998/10/15 03:16:48 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.36 1998/10/05 05:26:00 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.36.2.1 1998/10/15 03:16:48 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -453,13 +453,6 @@ mips_set_wbflush(flush_fn)
 	mips_locore_jumpvec.wbflush = flush_fn;
 	(*flush_fn)();
 }
-
-/* XXX patch work XXX */
-#define	MIPS_R4100	0x0c
-#define	MIPS_TX3900	0x22
-#define	MIPS_RC32364	0x26
-#define	MIPS_RC64470	0x30
-/* XXX patch work XXX */
 
 struct pridtab {
 	int	cpu_imp;

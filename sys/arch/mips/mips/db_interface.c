@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 1998/07/04 22:18:30 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5.4.1 1998/10/15 03:16:46 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,8 +36,9 @@
 #include <sys/user.h>
 #include <sys/reboot.h>
 
+#include <vm/vm.h>
+#include <mips/pte.h>
 #include <mips/cpu.h>
-#include <mips/cpuregs.h>
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
@@ -57,6 +58,8 @@
 int	db_active = 0;
 
 
+int  ddb_trap __P((int, int *));
+
 void db_halt_cmd __P((db_expr_t addr, int have_addr, db_expr_t count,
          char *modif));
 
@@ -70,9 +73,6 @@ extern int	kdbpeek __P((vm_offset_t addr));
 extern void	kdbpoke __P((vm_offset_t addr, int newval));
 extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
      unsigned instPC, unsigned fpcCSR, int allowNonBranch));
-extern void mips1_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
-extern void mips3_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
-
 
 /*
  * kdbpoke -- write a value to a kernel virtual address.
@@ -85,18 +85,19 @@ kdbpoke(vm_offset_t addr, int newval)
 {
 	*(int*) addr = newval;
 	wbflush();
-	if (CPUISMIPS3) {
-#ifdef MIPS3
-		mips3_HitFlushDCache((vm_offset_t) addr, sizeof(int));
-		mips3_FlushICache((vm_offset_t) addr, sizeof(int));
-#endif
-	} else {
 #ifdef MIPS1
+	if (cpu_arch == 1)
 		mips1_FlushICache((vm_offset_t) addr, sizeof(int));
 #endif
+#ifdef MIPS3
+	if (cpu_arch == 3) {
+		mips3_HitFlushDCache((vm_offset_t) addr, sizeof(int));
+		mips3_FlushICache((vm_offset_t) addr, sizeof(int));
 	}
+#endif
 }
 
+#if 0 /* UNUSED */
 /*
  * Received keyboard interrupt sequence.
  */
@@ -106,20 +107,20 @@ kdb_kbd_trap(tf)
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, tf);
+		ddb_trap(-1, tf);
 	}
 }
+#endif
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  ddb_trap - field a BREAK trap
  */
 int
-kdb_trap(type, tf)
-	int	type;
-	register db_regs_t *tf;
+ddb_trap(type, tf)
+	int type;
+	int *tf;
 {
-
-	/* fb_unblank(); */
+	int *regs;
 
 	switch (type) {
 	case T_BREAK:		/* breakpoint */
@@ -138,8 +139,30 @@ kdb_trap(type, tf)
 
 	/* Should switch to kdb`s own stack here. */
 
-	/*  XXX copy trapframe to  ddb_regs */
-	ddb_regs = *tf;
+	memset(&ddb_regs, 0, sizeof ddb_regs);
+	regs = (int *)&ddb_regs;
+	regs[AST] = tf[0];
+	regs[V0] = tf[1];
+	regs[V1] = tf[2];
+	regs[A0] = tf[3];
+	regs[A1] = tf[4];
+	regs[A2] = tf[5];
+	regs[A3] = tf[6];
+	regs[T0] = tf[7];
+	regs[T1] = tf[8];
+	regs[T2] = tf[9];
+	regs[T3] = tf[10];
+	regs[T4] = tf[11];
+	regs[T5] = tf[12];
+	regs[T6] = tf[13];
+	regs[T7] = tf[14];
+	regs[T8] = tf[15];
+	regs[T9] = tf[16];
+	regs[RA] = tf[17];
+	regs[SR] = tf[18];
+	regs[MULLO] = tf[19];
+	regs[MULHI] = tf[20];
+	regs[PC] = tf[21];
 
 	db_active++;
 	cnpollc(1);
@@ -148,7 +171,28 @@ kdb_trap(type, tf)
 	db_active--;
 
 	/*  write ddb_regs back to trapframe */
-	*tf = ddb_regs;
+	tf[0] = regs[AST];
+	tf[1] = regs[V0];
+	tf[2] = regs[V1];
+	tf[3] = regs[A0];
+	tf[4] = regs[A1];
+	tf[5] = regs[A2];
+	tf[6] = regs[A3];
+	tf[7] = regs[T0];
+	tf[8] = regs[T1];
+	tf[9] = regs[T2];
+	tf[10] = regs[T3];
+	tf[11] = regs[T4];
+	tf[12] = regs[T5];
+	tf[13] = regs[T6];
+	tf[14] = regs[T7];
+	tf[15] = regs[T8];
+	tf[16] = regs[T9];
+	tf[17] = regs[RA];
+	tf[18] = regs[SR];
+	tf[19] = regs[MULLO];
+	tf[20] = regs[MULHI];
+	tf[21] = regs[PC];
 
 	return (1);
 }
@@ -156,7 +200,7 @@ kdb_trap(type, tf)
 void
 Debugger()
 {
-	asm("break ");
+	asm("break");
 }
 
 
@@ -244,15 +288,52 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	if (CPUISMIPS3) {
-#ifdef MIPS3
-		mips3_dump_tlb(0, MIPS3_TLB_NUM_TLB_ENTRIES - 1, db_printf);
-#endif
-	} else {
 #ifdef MIPS1
-		mips1_dump_tlb(0, MIPS1_TLB_NUM_TLB_ENTRIES - 1, db_printf);
-#endif
+	if (cpu_arch == 1) {
+		struct mips1_tlb {
+			u_int32_t tlb_hi;
+			u_int32_t tlb_lo;
+		} tlb;
+		int i;
+		extern mips1_TLBRead __P((int, struct mips1_tlb *));
+
+		for (i = 0; i < MIPS1_TLB_NUM_TLB_ENTRIES; i++) {
+			mips1_TLBRead(i, &tlb);
+			db_printf("TLB%c%2d vad 0x%08d %0x08x",
+				(tlb.tlb_lo & MIPS1_PG_V) ? '*' : ' ',
+				i, tlb.tlb_hi,
+				tlb.tlb_lo & MIPS1_PG_FRAME);
+			db_printf("%c%c%c\n",
+				(tlb.tlb_lo & MIPS1_PG_M) ? 'M' : ' ',
+				(tlb.tlb_lo & MIPS1_PG_G) ? 'G' : ' ',
+				(tlb.tlb_lo & MIPS1_PG_N) ? 'N' : ' ');
+		}
 	}
+#endif
+#ifdef MIPS3
+	if (cpu_arch == 3) {
+		struct tlb tlb;
+		int i;
+
+		for (i = 0; i < MIPS3_TLB_NUM_TLB_ENTRIES; i++) {
+			mips3_TLBRead(i, &tlb);
+			db_printf("TLB%c%2d vad 0%x08x ",
+			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? '*' : ' ',
+				i, tlb.tlb_hi);
+			db_printf("0=0x%08x %c%c attr %x",
+				(unsigned)pfn_to_vad(tlb.tlb_lo0),
+				(tlb.tlb_lo0 & MIPS3_PG_M) ? 'M' : ' ',
+				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
+				(tlb.tlb_lo0 >> 3) & 7);
+			db_printf("1=0x%08x %c%c atr %x sz=%x\n", 
+				(unsigned)pfn_to_vad(tlb.tlb_lo1),
+				(tlb.tlb_lo1 & MIPS3_PG_M) ? 'M' : ' ',
+				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
+				(tlb.tlb_lo1 >> 3) & 7,
+				tlb.tlb_mask);
+		}
+	}
+#endif
 }
 
 void

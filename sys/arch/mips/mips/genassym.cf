@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 1998/03/12 05:45:04 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.6.4.1 1998/10/15 03:16:46 nisimura Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -47,7 +47,6 @@ include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
-include <sys/vmmeter.h>
 
 include <vm/vm.h>
 
@@ -55,9 +54,9 @@ ifdef UVM
 include <uvm/uvm_extern.h>
 endif
 
-include <machine/reg.h>
-include <machine/vmparam.h>
-
+include <mips/regnum.h>
+include <mips/vmparam.h>
+include <mips/pte.h>
 include <mips/locore.h>
 
 define  P_FORW			offsetof(struct proc, p_forw)
@@ -83,9 +82,133 @@ else
 define  V_SWTCH			offsetof(struct vmmeter, v_swtch)
 endif
 
-define	SIGILL			SIGILL
 define	SIGFPE		 	SIGFPE
 
 define	MIPSX_FLUSHICACHE	offsetof(mips_locore_jumpvec_t, flushICache)
 define	MIPSX_SWITCH_EXIT	offsetof(mips_locore_jumpvec_t, mips_switch_exit)
 define	MIPSX_CPU_SWITCH_RESUME	offsetof(mips_locore_jumpvec_t, cpu_switch_resume)
+
+define	MIPS1_PG_G		MIPS1_PG_G
+define	MIPS1_PG_V		MIPS1_PG_V
+define	MIPS3_PG_G		MIPS3_PG_G
+define	MIPS3_PG_V		MIPS3_PG_V
+define	MIPS3_PG_HVPN		MIPS3_PG_HVPN
+define	MIPS3_PG_ASID		MIPS3_PG_ASID
+define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
+
+define	FRAME_ZERO		sizeof(int) * ZERO
+define	FRAME_AST		sizeof(int) * AST
+define	FRAME_V0		sizeof(int) * V0
+define	FRAME_V1		sizeof(int) * V1
+define	FRAME_A0		sizeof(int) * A0
+define	FRAME_A1		sizeof(int) * A1
+define	FRAME_A2		sizeof(int) * A2
+define	FRAME_A3		sizeof(int) * A3
+define	FRAME_T0		sizeof(int) * T0
+define	FRAME_T1		sizeof(int) * T1
+define	FRAME_T2		sizeof(int) * T2
+define	FRAME_T3		sizeof(int) * T3
+define	FRAME_T4		sizeof(int) * T4
+define	FRAME_T5		sizeof(int) * T5
+define	FRAME_T6		sizeof(int) * T6
+define	FRAME_T7		sizeof(int) * T7
+define	FRAME_S0		sizeof(int) * S0
+define	FRAME_S1		sizeof(int) * S1
+define	FRAME_S2		sizeof(int) * S2
+define	FRAME_S3		sizeof(int) * S3
+define	FRAME_S4		sizeof(int) * S4
+define	FRAME_S5		sizeof(int) * S5
+define	FRAME_S6		sizeof(int) * S6
+define	FRAME_S7		sizeof(int) * S7
+define	FRAME_T8		sizeof(int) * T8
+define	FRAME_T9		sizeof(int) * T9
+define	FRAME_K0		sizeof(int) * K0
+define	FRAME_K1		sizeof(int) * K1
+define	FRAME_GP		sizeof(int) * GP
+define	FRAME_SP		sizeof(int) * SP
+define	FRAME_S8		sizeof(int) * S8
+define	FRAME_RA		sizeof(int) * RA
+define	FRAME_SR		sizeof(int) * SR
+define	FRAME_MULLO		sizeof(int) * MULLO
+define	FRAME_MULHI		sizeof(int) * MULHI
+define	FRAME_BADVADDR		sizeof(int) * BADVADDR
+define	FRAME_CAUSE		sizeof(int) * CAUSE
+define	FRAME_EPC		sizeof(int) * PC
+define	FRAME_FSR		sizeof(int) * 32
+define	FRAME_FP0		sizeof(int) * 0
+define	FRAME_FP1		sizeof(int) * 1
+define	FRAME_FP2		sizeof(int) * 2
+define	FRAME_FP3		sizeof(int) * 3
+define	FRAME_FP4		sizeof(int) * 4
+define	FRAME_FP5		sizeof(int) * 5
+define	FRAME_FP6		sizeof(int) * 6
+define	FRAME_FP7		sizeof(int) * 7
+define	FRAME_FP8		sizeof(int) * 8
+define	FRAME_FP9		sizeof(int) * 9
+define	FRAME_FP10		sizeof(int) * 10
+define	FRAME_FP11		sizeof(int) * 11
+define	FRAME_FP12		sizeof(int) * 12
+define	FRAME_FP13		sizeof(int) * 13
+define	FRAME_FP14		sizeof(int) * 14
+define	FRAME_FP15		sizeof(int) * 15
+define	FRAME_FP16		sizeof(int) * 16
+define	FRAME_FP17		sizeof(int) * 17
+define	FRAME_FP18		sizeof(int) * 18
+define	FRAME_FP19		sizeof(int) * 19
+define	FRAME_FP20		sizeof(int) * 20
+define	FRAME_FP21		sizeof(int) * 21
+define	FRAME_FP22		sizeof(int) * 22
+define	FRAME_FP23		sizeof(int) * 23
+define	FRAME_FP24		sizeof(int) * 24
+define	FRAME_FP25		sizeof(int) * 25
+define	FRAME_FP26		sizeof(int) * 26
+define	FRAME_FP27		sizeof(int) * 27
+define	FRAME_FP28		sizeof(int) * 28
+define	FRAME_FP29		sizeof(int) * 29
+define	FRAME_FP30		sizeof(int) * 30
+define	FRAME_FP31		sizeof(int) * 31
+
+# standard callframe {
+# 	int cf_args[4];
+# 	int cf_sp;
+# 	int cf_ra;
+# };
+# 
+# trapframe placed on stack as 5th arg {
+# 	int cf_args[4];
+# 	int kf_regs[17];
+#	int kf_ra;
+#	int kf_sr;
+#	int kf_mullo;
+#	int kf_mulhi;
+#	int kf_epc;
+# 	int cf_sp;
+# 	int cf_ra;
+# };
+
+define	CALLFRAME_SIZ	sizeof(int) * (4 + 2)
+define	KERNFRAME_SIZ	sizeof(int) * (4 + 17 + 4 + 2)
+
+define	KF_BASE		sizeof(int) * 4
+define	KF_REGS_AST	sizeof(int) * 0
+define	KF_REGS_V0	sizeof(int) * 1
+define	KF_REGS_V1	sizeof(int) * 2
+define	KF_REGS_A0	sizeof(int) * 3
+define	KF_REGS_A1	sizeof(int) * 4
+define	KF_REGS_A2	sizeof(int) * 5
+define	KF_REGS_A3	sizeof(int) * 6
+define	KF_REGS_T0	sizeof(int) * 7
+define	KF_REGS_T1	sizeof(int) * 8
+define	KF_REGS_T2	sizeof(int) * 9
+define	KF_REGS_T3	sizeof(int) * 10
+define	KF_REGS_T4	sizeof(int) * 11
+define	KF_REGS_T5	sizeof(int) * 12
+define	KF_REGS_T6	sizeof(int) * 13
+define	KF_REGS_T7	sizeof(int) * 14
+define	KF_REGS_T8	sizeof(int) * 15
+define	KF_REGS_T9	sizeof(int) * 16
+define	KF_REGS_RA	sizeof(int) * 17
+define	KF_REGS_SR	sizeof(int) * 18
+define	KF_REGS_MULLO	sizeof(int) * 19
+define	KF_REGS_MULHI	sizeof(int) * 20
+define	KF_REGS_EPC	sizeof(int) * 21
