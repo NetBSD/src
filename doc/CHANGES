@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.35 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.36 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,6 +101,8 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	ipf(8): updated to version 3.4.29. [martti 20020919]
 	mount(2): Add MNT_GETARGS support to retrieve mounted filesystem
 		specific arguments. [christos 20020921]
+	compat/irix: sproc emulation supports share groups with private
+		memory mappings. [manu 20020922]
 	mk.conf(5): MKDYNAMICROOT=yes made as the default, resulting in
 		a fully dynamically linked system.  [lukem 20020923]
 	iwic(4): Add driver for Winbond W6692 ISDN [pooka 20020924]
@@ -162,3 +164,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	systat(1): report read/write stats in iostat "rw" mode.  [mrg 20021101]
 	sparc64: Find the correct boot path for all IDE disks.  [mrg 20021102]
 	eap(4): Add support for second DAC [pooka 20021104]
+	Added two sysctl(8) flags to stop process just after creation by
+		fork(2) or exec(2).  [manu 20021106]
