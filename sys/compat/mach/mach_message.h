@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.8 2002/12/15 00:40:25 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.9 2002/12/17 18:42:57 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,21 +151,18 @@ typedef struct {
 	mach_msg_size_t	msgh_descriptor_count;
 } mach_msg_body_t;
 
+struct mach_trap_args {
+	struct proc *p;
+	void *smsg;
+	void *rmsg;
+	size_t *rsize;
+};
 struct mach_subsystem_namemap {
 	int	map_id;
-	int	(*map_handler)(struct proc *, mach_msg_header_t *, 
-		    size_t, mach_msg_header_t *);
+	int	(*map_handler)(struct mach_trap_args *);
 	const char	*map_name;
 };
 extern struct mach_subsystem_namemap mach_namemap[];
-
-#define MACH_MSG_RETURN(p,rep,msgh,msglen,maxlen,dst) \
-    mach_msg_return((p), (mach_msg_header_t *)(rep), (msgh), \
-    (msglen), (maxlen), (dst))
-
-int mach_msg_return(struct proc *, mach_msg_header_t *, mach_msg_header_t *, 
-    size_t, size_t, mach_msg_header_t *);
-
 
 
 /* In-kernel Mach messages description */
@@ -174,10 +171,14 @@ struct mach_message {
 	size_t mm_size;			/* Message size */
 	TAILQ_ENTRY(mach_message) mm_list;
 					/* List of pending messages */
+	struct mach_port *mm_port;	/* The port on which msg is queued */
 };
 
 void mach_message_init(void);
-struct mach_message *mach_message_get(void);
+struct mach_message *mach_message_get(mach_msg_header_t *, 
+    size_t, struct mach_port *);
 void mach_message_put(struct mach_message *);
+void mach_message_put_shlocked(struct mach_message *);
+void mach_message_put_exclocked(struct mach_message *);
 
 #endif /* !_MACH_MESSAGE_H_ */
