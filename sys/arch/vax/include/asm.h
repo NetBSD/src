@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2000/06/27 06:17:28 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.12 2000/07/01 06:42:06 matt Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,11 +101,9 @@
 #define ALTENTRY(x)		.globl _C_LABEL(x); _C_LABEL(x):
 #define RCSID(x)		.text; .asciz x
 
-#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
