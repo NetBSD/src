@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 1995/04/22 19:48:52 christos Exp $
+	$NetBSD: syscalls.master,v 1.26 1995/04/22 23:45:33 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -98,7 +98,7 @@
 53	STD		{ int sunos_mctl(caddr_t addr, int len, int func, \
 			    void *arg); }
 54	STD		{ int sunos_ioctl(int fd, u_long com, caddr_t data); }
-55	NOARGS		{ int reboot(int opt); }
+55	STD		{ int sunos_reboot(int howto, char *bootstr); }
 56	OBSOL		sunos_owait3
 57	NOARGS		{ int symlink(char *path, char *link); }
 58	NOARGS		{ int readlink(char *path, char *buf, int count); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.43 1995/03/21 13:34:15 mycroft Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.44 1995/04/22 23:45:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/reboot.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -1016,4 +1017,66 @@ bad:
 	free((char *) pl, M_TEMP);
 
 	return (error);
+}
+
+/*
+ * SunOS reboot system call (for compatibility).
+ * Sun lets you pass in a boot string which the PROM
+ * saves and provides to the next boot program.
+ */
+static struct sunos_howto_conv {
+	int sunos_howto;
+	int bsd_howto;
+} sunos_howto_conv[] = {
+	{ 0x001,	RB_ASKNAME },
+	{ 0x002,	RB_SINGLE },
+	{ 0x004,	RB_NOSYNC },
+	{ 0x008,	RB_HALT },
+	{ 0x080,	RB_DUMP },
+	{ 0x000,	0 },
+};
+
+int sunos_reboot(p, uap, retval)
+	struct proc *p;
+	struct sunos_reboot_args *uap;
+	int *retval;
+{
+	struct reboot_args rb;
+	struct sunos_howto_conv *convp;
+	int error, bsd_howto, sunos_howto;
+	char bs[128];
+	char *bsd_bootstr = NULL;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+
+	/*
+	 * Convert howto bits to BSD format.
+	 */
+	sunos_howto = uap->howto;
+	bsd_howto = 0;
+	convp = sunos_howto_conv;
+	while (convp->sunos_howto) {
+		if (sunos_howto &  convp->sunos_howto)
+			bsd_howto |= convp->bsd_howto;
+		convp++;
+	}
+
+#ifdef notyet
+	/* Only works on sun3's */
+	/*
+	 * Sun RB_STRING (Get user supplied bootstring.)
+	 */
+	bsd_bootstr = NULL;
+	if (sunos_howto & 0x200) {
+		error = copyinstr(uap->bootstr, bs, sizeof(bs), 0);
+		if (error) return error;
+		bsd_bootstr = bs;
+	}
+
+	return (reboot2(bsd_howto, bsd_bootstr));
+#else
+	rb.opt = bsd_howto;
+	return reboot(p, &rb, retval);
+#endif
 }
