@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.21 2002/10/23 09:14:45 jdolecek Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.22 2002/11/26 19:49:00 christos Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.21 2002/10/23 09:14:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.22 2002/11/26 19:49:00 christos Exp $");
 
 #include "isdn.h"
 
@@ -949,7 +949,7 @@ filt_i4brdetach(struct knote *kn)
 	int s;
 
 	s = splnet();
-	SLIST_REMOVE(&select_rd_info.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&select_rd_info.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -981,12 +981,12 @@ isdnkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &select_rd_info.si_klist;
+		klist = &select_rd_info.sel_klist;
 		kn->kn_fop = &i4bread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &select_rd_info.si_klist;
+		klist = &select_rd_info.sel_klist;
 		kn->kn_fop = &i4b_seltrue_filtops;
 		break;
 

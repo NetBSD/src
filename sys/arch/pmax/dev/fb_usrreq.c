@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.24 2002/10/23 09:11:49 jdolecek Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.25 2002/11/26 19:50:27 christos Exp $	*/
 
 #include <sys/conf.h>
 
@@ -275,7 +275,7 @@ filt_fbrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&fi->fi_selp.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&fi->fi_selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -303,7 +303,7 @@ fbkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &fi->fi_selp.si_klist;
+		klist = &fi->fi_selp.sel_klist;
 		kn->kn_fop = &fbread_filtops;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.9 2002/10/23 09:10:56 jdolecek Exp $	*/
+/*	$NetBSD: lms.c,v 1.10 2002/11/26 19:50:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -398,7 +398,7 @@ filt_lmsrdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -423,7 +423,7 @@ lmskqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &lmsread_filtops;
 		break;
 

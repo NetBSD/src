@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.13 2002/10/23 09:11:17 jdolecek Exp $ */
+/*	$NetBSD: apmdev.c,v 1.14 2002/11/26 19:50:24 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -941,7 +941,7 @@ filt_apmrdetach(struct knote *kn)
 	struct apm_softc *sc = kn->kn_hook;
 
 	APM_LOCK(sc); 
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	APM_UNLOCK(sc);
 }
 
@@ -965,7 +965,7 @@ apmdevkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &apmread_filtops;
 		break;
 

@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.11 2002/10/23 09:14:45 jdolecek Exp $
+ *	$Id: i4b_rbch.c,v 1.12 2002/11/26 19:49:00 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.11 2002/10/23 09:14:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.12 2002/11/26 19:49:00 christos Exp $");
 
 #include "isdnbchan.h"
 
@@ -804,7 +804,7 @@ filt_i4brbchdetach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	SLIST_REMOVE(&sc->selp.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -859,12 +859,12 @@ isdnbchankqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->selp.si_klist;
+		klist = &sc->selp.sel_klist;
 		kn->kn_fop = &i4brbchread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->selp.si_klist;
+		klist = &sc->selp.sel_klist;
 		kn->kn_fop = &i4brbchwrite_filtops;
 		break;
 

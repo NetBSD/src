@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.11 2002/10/23 09:14:46 jdolecek Exp $
+ *	$Id: i4b_tel.c,v 1.12 2002/11/26 19:49:01 christos Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.11 2002/10/23 09:14:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.12 2002/11/26 19:49:01 christos Exp $");
 
 #include "isdntel.h"
 
@@ -947,7 +947,7 @@ filt_i4btel_detach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	SLIST_REMOVE(&sc->selp.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1019,7 +1019,7 @@ isdntelkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->selp.si_klist;
+		klist = &sc->selp.sel_klist;
 		if (func == FUNCTEL)
 			kn->kn_fop = &i4btel_telread_filtops;
 		else if (func == FUNCDIAL)
@@ -1029,7 +1029,7 @@ isdntelkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->selp.si_klist;
+		klist = &sc->selp.sel_klist;
 		if (func == FUNCTEL)
 			kn->kn_fop = &i4btel_telwrite_filtops;
 		else if (func == FUNCDIAL)
