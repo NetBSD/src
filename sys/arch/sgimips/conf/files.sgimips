@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.28 2003/12/14 05:23:12 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.29 2003/12/15 10:26:38 sekiya Exp $
 
 maxpartitions 16
 
@@ -13,6 +13,8 @@ file arch/sgimips/sgimips/mainbus.c	mainbus
 device cpu
 attach cpu at mainbus
 file arch/sgimips/sgimips/cpu.c		cpu
+
+include "arch/sgimips/ioc/files.ioc"
 
 define giobus {}
 
