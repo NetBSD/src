@@ -1,5 +1,5 @@
 # This is the Makefile for the Taylor UUCP uuconf library
-# $Id: Makefile,v 1.2 1993/08/05 16:14:55 jtc Exp $
+# $Id: Makefile,v 1.3 1993/10/28 05:00:19 cgd Exp $
 
 LIB=		uuconf
 SRCS=		addblk.c addstr.c allblk.c alloc.c base.c bool.c callin.c \
@@ -20,6 +20,7 @@ CFLAGS+=	-I$(.CURDIR)/../common_sources \
 
 NOMAN=		noman
 NOPROFILE=	noprofile
+NOPIC=		nopic
 
 install:
 

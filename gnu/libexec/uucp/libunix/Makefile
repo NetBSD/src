@@ -1,5 +1,5 @@
 # This subdirectory contains Unix specific support functions.
-# $Id: Makefile,v 1.2 1993/08/05 16:14:51 jtc Exp $
+# $Id: Makefile,v 1.3 1993/10/28 05:00:07 cgd Exp $
 
 LIB=		unix
 SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
@@ -16,6 +16,7 @@ CFLAGS+=	-I$(.CURDIR)/../common_sources \
 
 NOMAN=		noman
 NOPROFILE=	noprofile
+NOPIC=		nopic
 
 install:
 
