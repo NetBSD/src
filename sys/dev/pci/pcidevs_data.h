@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.280 2000/12/14 04:06:06 onoe Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.281 2000/12/23 10:13:20 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.276 2000/12/14 04:05:38 onoe Exp 
+ *	NetBSD: pcidevs,v 1.277 2000/12/23 10:11:55 tsutsui Exp 
  */
 
 /*
@@ -290,6 +290,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ACC Microelectronics",
 	    "2051 PCI Single Chip Solution (ISA bridge)",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6210U,
+	    0,
+	    "Acard",
+	    "AEC6210U/UF UDMA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6260,
+	    0,
+	    "Acard",
+	    "AEC6260 UDMA IDE Controller",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
