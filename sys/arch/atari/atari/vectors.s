@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.1.1.1 1995/03/26 07:12:19 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.2 1995/05/05 16:30:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -141,7 +141,7 @@ Lvectab:
 	.long	_badmfpint	|  74: modem port 1 - XMIT buffer empty
 	.long	_badmfpint	|  75: modem port 1 - RCV error	
 	.long	_badmfpint	|  76: modem port 1 - RCV buffer full
-	.long	_badmfpint	|  77: Timer A
+	.long	mfp_tima	|  77: Timer A (System clock)
 	.long	_badmfpint	|  78: modem port 1 - RI
 	.long	_badmfpint	|  79: Monochrome detect
 
@@ -161,7 +161,7 @@ Lvectab:
 	.long	_badmfpint	|  90: serial port 1 - XMIT buffer empty
 	.long	_badmfpint	|  91: serial port 1 - RCV error
 	.long	_badmfpint	|  92: serial port 1 - RCV buffer full
-	.long	mfp2_tima	|  93: Timer A (System clock)
+	.long	_badmfpint	|  93: Timer A
 	.long	_badmfpint	|  94: RTC
 	.long	mfp2_5380	|  95: SCSI 5380
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1.1.1 1995/03/26 07:12:19 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 1995/05/05 16:30:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,16 +216,16 @@ _fpfline:
 
 _fpunsupp:
 #if defined(M68040)
-	cmpl	#-2,_mmutype	|  68040?
-	jne	_illinst	|  no, treat as illinst
+	cmpl	#MMU_68040,_mmutype	|  68040?
+	jne	_illinst		|  no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
-	jmp	fpsp_unsupp	|  yes, go handle it
+	jmp	fpsp_unsupp		|  yes, go handle it
 #else
-	clrl	sp@-		|  stack adjust count
-	moveml	#0xFFFF,sp@-	|  save registers
-	moveq	#T_FPEMULD,d0	|  denote as FP emulation trap
-	jra	fault		|  do it
+	clrl	sp@-			|  stack adjust count
+	moveml	#0xFFFF,sp@-		|  save registers
+	moveq	#T_FPEMULD,d0		|  denote as FP emulation trap
+	jra	fault			|  do it
 #endif
 #else
 	jra	_illinst
@@ -336,7 +336,10 @@ fault:
 	jra	rei			|  all done
 
 	.globl	_straytrap
-_lev2intr:
+
+_lev2intr:				| HBL, cannot be turned off on
+	rte				|  a Falcon, so just ignore it.
+
 _lev3intr:
 _lev4intr:
 _lev5intr:
@@ -503,9 +506,9 @@ _spurintr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-	/* MFP2 timer A handler --- System clock --- */
+	/* MFP timer A handler --- System clock --- */
 	/* Note: Reduce by factor 4 before handling  */
-mfp2_tima:
+mfp_tima:
 	subqw	#1,_clk_div		|  time for another clock tick?
 	jgt	clk_ret			|  no, return
 	movw	#4,_clk_div		|  reset divide counter
@@ -592,7 +595,7 @@ _lev1intr:
 	moveb	#0, SOFTINT_ADDR	|  Turn off software interrupt
 	moveml	d0-d1/a0-a1,sp@-
 	addql	#1,_intrcnt+16		|  add another software interrupt
-	jbsr	_call_sicallbacks	|  handle call-backs
+	jbsr	_softint		|  handle software interrupts
 	moveml	sp@+,d0-d1/a0-a1
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei
