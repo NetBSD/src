@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.8 1999/11/29 19:59:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.8 1999/11/29 19:59:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -262,4 +262,23 @@ alpha_shared_intr_stray(intr, num, basename)
 		log(LOG_ERR, "stray %s %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
 		      "; stopped logging" : "");
+}
+
+void
+alpha_shared_intr_set_private(intr, num, v)
+	struct alpha_shared_intr *intr;
+	unsigned int num;
+	void *v;
+{
+
+	intr[num].intr_private = v;
+}
+
+void *
+alpha_shared_intr_get_private(intr, num)
+	struct alpha_shared_intr *intr;
+	unsigned int num;
+{
+
+	return (intr[num].intr_private);
 }
