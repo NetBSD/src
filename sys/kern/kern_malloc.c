@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.31 1998/02/10 14:09:34 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.32 1998/03/01 02:22:29 fvdl Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_malloc.c	8.3 (Berkeley) 1/4/94
+ *	@(#)kern_malloc.c	8.4 (Berkeley) 5/20/95
  */
 
 #include "opt_uvm.h"
@@ -198,6 +198,9 @@ malloc(size, type, flags)
 	int copysize;
 	const char *savedtype;
 #endif
+#ifdef LOCKDEBUG
+	extern int simplelockrecurse;
+#endif
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];
 
@@ -221,6 +224,10 @@ malloc(size, type, flags)
 #endif
 #ifdef DIAGNOSTIC
 	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
+#endif
+#ifdef LOCKDEBUG
+	if (flags & M_NOWAIT)
+		simplelockrecurse++;
 #endif
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
@@ -248,6 +255,9 @@ malloc(size, type, flags)
 			 */
 			if ((flags & M_NOWAIT) == 0)
 				panic("malloc: out of space in kmem_map");
+#ifdef LOCKDEBUG
+			simplelockrecurse--;
+#endif
 			splx(s);
 			return ((void *) NULL);
 		}
@@ -385,6 +395,10 @@ out:
 	domlog(va, size, type, 1, file, line);
 #endif
 	splx(s);
+#ifdef LOCKDEBUG
+	if (flags & M_NOWAIT)
+		simplelockrecurse--;
+#endif
 	return ((void *) va);
 }
 

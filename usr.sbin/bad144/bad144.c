@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.13 1997/10/17 05:31:07 lukem Exp $	*/
+/*	$NetBSD: bad144.c,v 1.14 1998/03/01 02:25:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.13 1997/10/17 05:31:07 lukem Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.14 1998/03/01 02:25:44 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ __RCSID("$NetBSD: bad144.c,v 1.13 1997/10/17 05:31:07 lukem Exp $");
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
 #include <err.h>

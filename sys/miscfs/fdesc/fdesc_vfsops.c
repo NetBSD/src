@@ -1,7 +1,7 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.23 1998/02/18 07:26:57 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.24 1998/03/01 02:21:08 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fdesc_vfsops.c	8.4 (Berkeley) 1/21/94
+ *	@(#)fdesc_vfsops.c	8.10 (Berkeley) 5/14/95
  *
  * #Id: fdesc_vfsops.c,v 1.9 1993/04/06 15:28:33 jsp Exp #
  */
@@ -70,6 +70,8 @@ int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
 int	fdesc_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			  struct vnode **, int *, struct ucred **));
 int	fdesc_vptofh __P((struct vnode *, struct fid *));
+int	fdesc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			  struct proc *));
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -104,7 +106,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	fmp->f_root = rvp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;
-	getnewfsid(mp, makefstype(MOUNT_FDESC));
+	vfs_getnewfsid(mp, MOUNT_FDESC);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -130,15 +132,10 @@ fdesc_unmount(mp, mntflags, p)
 {
 	int error;
 	int flags = 0;
-	extern int doforce;
 	struct vnode *rootvp = VFSTOFDESC(mp)->f_root;
 
-	if (mntflags & MNT_FORCE) {
-		/* fdesc can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	/*
 	 * Clear out buffer cache.  I don't think we
@@ -179,7 +176,7 @@ fdesc_root(mp, vpp)
 	 */
 	vp = VFSTOFDESC(mp)->f_root;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return (0);
 }
@@ -229,11 +226,6 @@ fdesc_statfs(mp, sbp, p)
 	if (fdp->fd_nfiles < lim)
 		freefd += (lim - fdp->fd_nfiles);
 
-#ifdef COMPAT_09
-	sbp->f_type = 6;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
@@ -241,6 +233,11 @@ fdesc_statfs(mp, sbp, p)
 	sbp->f_bavail = 0;
 	sbp->f_files = lim + 1;		/* Allow for "." */
 	sbp->f_ffree = freefd;		/* See comments above */
+#ifdef COMPAT_09
+	sbp->f_type = 6;
+#else
+	sbp->f_type = 0;
+#endif
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -300,6 +297,19 @@ fdesc_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+int
+fdesc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
 extern struct vnodeopv_desc fdesc_vnodeop_opv_desc;
 
 struct vnodeopv_desc *fdesc_vnodeopv_descs[] = {
@@ -320,6 +330,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_fhtovp,
 	fdesc_vptofh,
 	fdesc_init,
+	fdesc_sysctl,
 	NULL,				/* vfs_mountroot */
 	fdesc_vnodeopv_descs,
 };

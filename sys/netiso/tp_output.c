@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.15 1996/10/13 02:04:39 christos Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.16 1998/03/01 02:24:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tp_output.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tp_output.c	8.2 (Berkeley) 2/9/95
  */
 
 /***********************************************************

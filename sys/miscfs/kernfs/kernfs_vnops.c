@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.56 1998/02/12 20:38:45 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.57 1998/03/01 02:21:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kernfs_vnops.c	8.9 (Berkeley) 6/15/94
+ *	@(#)kernfs_vnops.c	8.15 (Berkeley) 5/21/95
  */
 
 /*
@@ -119,6 +119,7 @@ int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
 #define	kernfs_ioctl	genfs_eopnotsupp
 #define	kernfs_poll	genfs_poll
+#define kernfs_revoke	genfs_revoke
 #define	kernfs_mmap	genfs_eopnotsupp
 #define	kernfs_fsync	genfs_nullop
 #define	kernfs_seek	genfs_nullop
@@ -133,12 +134,12 @@ int	kernfs_readdir	__P((void *));
 #define	kernfs_abortop	genfs_abortop
 int	kernfs_inactive	__P((void *));
 int	kernfs_reclaim	__P((void *));
-#define	kernfs_lock	genfs_nullop
-#define	kernfs_unlock	genfs_nullop
+#define	kernfs_lock	genfs_nolock
+#define	kernfs_unlock	genfs_nounlock
 #define	kernfs_bmap	genfs_badop
 #define	kernfs_strategy	genfs_badop
 int	kernfs_print	__P((void *));
-#define	kernfs_islocked	genfs_nullop
+#define	kernfs_islocked	genfs_noislocked
 int	kernfs_pathconf	__P((void *));
 #define	kernfs_advlock	genfs_eopnotsupp
 #define	kernfs_blkatoff	genfs_eopnotsupp
@@ -166,6 +167,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_write_desc, kernfs_write },		/* write */
 	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, kernfs_poll },		/* poll */
+	{ &vop_revoke_desc, kernfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, kernfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
 	{ &vop_seek_desc, kernfs_seek },		/* seek */
@@ -346,10 +348,11 @@ kernfs_lookup(v)
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
 
+	VOP_UNLOCK(dvp, 0);
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		/*VOP_LOCK(dvp);*/
+		vn_lock(dvp, LK_SHARED | LK_RETRY);
 		return (0);
 	}
 
@@ -357,7 +360,7 @@ kernfs_lookup(v)
 	if (cnp->cn_namelen == 4 && bcmp(pname, "root", 4) == 0) {
 		*vpp = rootdir;
 		VREF(rootdir);
-		VOP_LOCK(rootdir);
+		vn_lock(rootdir, LK_SHARED | LK_RETRY);
 		return (0);
 	}
 #endif
@@ -372,16 +375,19 @@ kernfs_lookup(v)
 	printf("kernfs_lookup: i = %d, failed", i);
 #endif
 
+	vn_lock(dvp, LK_SHARED | LK_RETRY);
 	return (cnp->cn_nameiop == LOOKUP ? ENOENT : EROFS);
 
 found:
 	if (kt->kt_tag == KTT_DEVICE) {
 		dev_t *dp = kt->kt_data;
 	loop:
-		if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp))
+		if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp)) {
+			vn_lock(dvp, LK_SHARED | LK_RETRY);
 			return (ENOENT);
+		}
 		*vpp = fvp;
-		if (vget(fvp, 1))
+		if (vget(fvp, LK_EXCLUSIVE))
 			goto loop;
 		return (0);
 	}
@@ -390,13 +396,16 @@ found:
 	printf("kernfs_lookup: allocate new vnode\n");
 #endif
 	error = getnewvnode(VT_KERNFS, dvp->v_mount, kernfs_vnodeop_p, &fvp);
-	if (error)
+	if (error) {
+		vn_lock(dvp, LK_SHARED | LK_RETRY);
 		return (error);
+	}
 
 	MALLOC(fvp->v_data, void *, sizeof(struct kernfs_node), M_TEMP,
 	    M_WAITOK);
 	VTOKERN(fvp)->kf_kt = kt;
 	fvp->v_type = kt->kt_vtype;
+	vn_lock(fvp, LK_SHARED | LK_RETRY);
 	*vpp = fvp;
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -479,7 +488,7 @@ kernfs_getattr(v)
 		vap->va_type = kt->kt_vtype;
 		vap->va_mode = kt->kt_mode;
 		vap->va_nlink = 1;
-		vap->va_fileid = 3 + (kt - kern_targets);
+		vap->va_fileid = 1 + (kt - kern_targets);
 		total = 0;
 		while (buf = strbuf,
 		       nbytes = kernfs_xread(kt, total, &buf, sizeof(strbuf)))
@@ -592,16 +601,16 @@ kernfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		off_t *a_cookies;
-		int a_ncookies;
+		off_t **a_cookies;
+		int a_*ncookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct kern_target *kt;
 	int i;
 	int error;
-	off_t *cookies = ap->a_cookies;
-	int ncookies = ap->a_ncookies;
+	off_t *cookies = NULL;
+	int ncookies = 0, nc = 0;
 
 	if (ap->a_vp->v_type != VDIR)
 		return (ENOTDIR);
@@ -615,6 +624,14 @@ kernfs_readdir(v)
 	i = uio->uio_offset;
 	bzero((caddr_t)&d, UIO_MX);
 	d.d_reclen = UIO_MX;
+
+	if (ap->a_ncookies) {
+		nc = uio->uio_resid / UIO_MX;
+		nc = min(nc, (nkern_targets - i));
+		MALLOC(cookies, off_t *, nc * sizeof(off_t), M_TEMP,
+		    M_WAITOK);
+		*ap->a_cookies = cookies;
+	}
 
 	for (kt = &kern_targets[i];
 	     uio->uio_resid >= UIO_MX && i < nkern_targets; kt++, i++) {
@@ -637,8 +654,19 @@ kernfs_readdir(v)
 
 		if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 			break;
-		if (ncookies-- > 0)
+		if (cookies) {
 			*cookies++ = i + 1;
+			ncookies++;
+		}
+	}
+
+	if (ap->a_ncookies) {
+		if (error) {
+			FREE(*ap->a_cookies, M_TEMP);
+			*ap->a_ncookies = 0;
+			*ap->a_cookies = NULL;
+		} else
+			*ap->a_ncookies = ncookies;
 	}
 
 	uio->uio_offset = i;
@@ -651,6 +679,7 @@ kernfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -661,6 +690,7 @@ kernfs_inactive(v)
 	 * Clear out the v_type field to avoid
 	 * nasty things happening in vgone().
 	 */
+	VOP_UNLOCK(vp, 0);
 	vp->v_type = VNON;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.33 1998/01/08 11:36:23 mrg Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.34 1998/03/01 02:24:00 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_map.c	8.3 (Berkeley) 1/12/94
+ *	@(#)vm_map.c	8.9 (Berkeley) 5/17/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -485,16 +485,12 @@ void
 vm_map_deallocate(map)
 	register vm_map_t	map;
 {
-	register int		c;
-
 	if (map == NULL)
 		return;
 
 	simple_lock(&map->ref_lock);
-	c = --map->ref_count;
-	simple_unlock(&map->ref_lock);
-
-	if (c > 0) {
+	if (--map->ref_count > 0) {
+		simple_unlock(&map->ref_lock);
 		return;
 	}
 
@@ -503,11 +499,13 @@ vm_map_deallocate(map)
 	 *	to it.
 	 */
 
-	vm_map_lock(map);
+	vm_map_lock_drain_interlock(map);
 
 	(void) vm_map_delete(map, map->min_offset, map->max_offset);
 
 	pmap_destroy(map->pmap);
+
+	vm_map_unlock(map);
 
 	FREE(map, M_VMMAP);
 }
@@ -1419,7 +1417,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		}
 		else {
 		    vm_map_set_recursive(&map->lock);
-		    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0, curproc);
+		    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0);
 		}
 
 		rv = 0;
@@ -2558,7 +2556,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 			 */
 
 			if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
-				    (void *)0, curproc)) {
+			    (void *)0)) {
 				if (share_map != map)
 					vm_map_unlock_read(map);
 				goto RetryLookup;
@@ -2570,8 +2568,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 				(vm_size_t) (entry->end - entry->start));
 				
 			entry->needs_copy = FALSE;
-			lockmgr(&share_map->lock, LK_DOWNGRADE,
-				(void *)0, curproc);
+			lockmgr(&share_map->lock, LK_DOWNGRADE, (void *)0);
 		}
 		else {
 			/*
@@ -2588,8 +2585,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 	 */
 	if (entry->object.vm_object == NULL) {
 
-		if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
-			    (void *)0, curproc)) {
+		if (lockmgr(&share_map->lock, LK_EXCLUPGRADE, (void *)0)) {
 			if (share_map != map)
 				vm_map_unlock_read(map);
 			goto RetryLookup;
@@ -2598,8 +2594,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 		entry->object.vm_object = vm_object_allocate(
 					(vm_size_t)(entry->end - entry->start));
 		entry->offset = 0;
-		lockmgr(&share_map->lock, LK_DOWNGRADE,
-			(void *)0, curproc);
+		lockmgr(&share_map->lock, LK_DOWNGRADE, (void *)0);
 	}
 
 	/*

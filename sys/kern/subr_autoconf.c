@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.27 1997/09/20 14:16:43 drochner Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.28 1998/03/01 02:22:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  *
  * from: Header: subr_autoconf.c,v 1.12 93/02/01 19:31:48 torek Exp  (LBL)
  *
- *	@(#)subr_autoconf.c	8.1 (Berkeley) 6/10/93
+ *	@(#)subr_autoconf.c	8.3 (Berkeley) 5/17/94
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.27 1998/02/18 07:05:48 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.28 1998/03/01 02:22:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_vfsops.c	8.9 (Berkeley) 12/5/94
+ *	@(#)cd9660_vfsops.c	8.18 (Berkeley) 5/22/95
  */
 
 #include <sys/param.h>
@@ -61,6 +61,7 @@
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/iso_rrip.h>
 #include <isofs/cd9660/cd9660_node.h>
+#include <isofs/cd9660/cd9660_mount.h>
 
 extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
 extern struct vnodeopv_desc cd9660_specop_opv_desc;
@@ -90,6 +91,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_fhtovp,
 	cd9660_vptofh,
 	cd9660_init,
+	cd9660_sysctl,
 	cd9660_mountroot,
 	cd9660_vnodeopv_descs,
 };
@@ -107,11 +109,9 @@ static int iso_mountfs __P((struct vnode *devvp, struct mount *mp,
 int
 cd9660_mountroot()
 {
-	register struct mount *mp;
+	struct mount *mp;
 	extern struct vnode *rootvp;
 	struct proc *p = curproc;	/* XXX */
-	struct iso_mnt *imp;
-	size_t size;
 	int error;
 	struct iso_args args;
 
@@ -124,32 +124,21 @@ cd9660_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("cd9660_mountroot: can't setup rootvp");
 
-	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
-	mp->mnt_op = &cd9660_vfsops;
-	mp->mnt_flag = MNT_RDONLY;
-	LIST_INIT(&mp->mnt_vnodelist);
+	if ((error = vfs_rootmountalloc(MOUNT_CD9660, "root_device", &mp)) != 0)
+		return (error);
+
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
+		mp->mnt_op->vfs_refcount--;
+		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	if ((error = vfs_lock(mp)) != 0) {
-		(void)cd9660_unmount(mp, 0, p);
-		free(mp, M_MOUNT);
-		return (error);
-	}
+	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_vnodecovered = NULLVP;
-	imp = VFSTOISOFS(mp);
-	(void) copystr("/", mp->mnt_stat.f_mntonname, MNAMELEN - 1,
-	    &size);
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	simple_unlock(&mountlist_slock);
 	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
-	vfs_unlock(mp);
+	vfs_unbusy(mp);
 	return (0);
 }
 
@@ -160,7 +149,7 @@ cd9660_mountroot()
  */
 int
 cd9660_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
+	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
@@ -641,6 +630,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	MALLOC(ip, struct iso_node *, sizeof(struct iso_node), M_ISOFSNODE,
 	    M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct iso_node));
+	lockinit(&ip->i_lock, PINOD, "isonode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
@@ -785,9 +775,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its iso_node.
+			 * Note that the lock is carried over in the iso_node
+			 * to the replacement vnode.
 			 */
-			cd9660_ihashrem(ip);
-			VOP_UNLOCK(vp);
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = spec_vnodeop_p;
@@ -798,7 +788,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			 */
 			vp = nvp;
 			ip->i_vnode = vp;
-			cd9660_ihashins(ip);
 		}
 		break;
 	case VLNK:
@@ -844,4 +833,17 @@ cd9660_vptofh(vp, fhp)
 	    ifhp->ifid_ino,ifhp->ifid_start);
 #endif
 	return 0;
+}
+
+int
+cd9660_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }

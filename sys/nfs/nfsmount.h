@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.15 1997/10/10 01:53:32 fvdl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.16 1998/03/01 02:24:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,74 @@
 #ifndef _NFS_NFSMOUNT_H_
 #define _NFS_NFSMOUNT_H_
 
+/*
+ * Arguments to mount NFS
+ */
+#define NFS_ARGSVERSION	3		/* change when nfs_args changes */
+struct nfs_args {
+	int		version;	/* args structure version number */
+	struct sockaddr	*addr;		/* file server address */
+	int		addrlen;	/* length of address */
+	int		sotype;		/* Socket type */
+	int		proto;		/* and Protocol */
+	u_char		*fh;		/* File handle to be mounted */
+	int		fhsize;		/* Size, in bytes, of fh */
+	int		flags;		/* flags */
+	int		wsize;		/* write size in bytes */
+	int		rsize;		/* read size in bytes */
+	int		readdirsize;	/* readdir size in bytes */
+	int		timeo;		/* initial timeout in .1 secs */
+	int		retrans;	/* times to retry send */
+	int		maxgrouplist;	/* Max. size of group list */
+	int		readahead;	/* # of blocks to readahead */
+	int		leaseterm;	/* Term (sec) of lease */
+	int		deadthresh;	/* Retrans threshold */
+	char		*hostname;	/* server's name */
+};
+
+/*
+ * NFS mount option flags (nm_flag)
+ */
+#define	NFSMNT_SOFT		0x00000001  /* soft mount (hard is default) */
+#define	NFSMNT_WSIZE		0x00000002  /* set write size */
+#define	NFSMNT_RSIZE		0x00000004  /* set read size */
+#define	NFSMNT_TIMEO		0x00000008  /* set initial timeout */
+#define	NFSMNT_RETRANS		0x00000010  /* set number of request retries */
+#define	NFSMNT_MAXGRPS		0x00000020  /* set maximum grouplist size */
+#define	NFSMNT_INT		0x00000040  /* allow interrupts on hard mount */
+#define	NFSMNT_NOCONN		0x00000080  /* Don't Connect the socket */
+#define	NFSMNT_NQNFS		0x00000100  /* Use Nqnfs protocol */
+#define	NFSMNT_NFSV3		0x00000200  /* Use NFS Version 3 protocol */
+#define	NFSMNT_KERB		0x00000400  /* Use Kerberos authentication */
+#define	NFSMNT_DUMBTIMR		0x00000800  /* Don't estimate rtt dynamically */
+#define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
+#define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
+#define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
+#define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
+#define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
+#define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
+#define NFSMNT_XLATECOOKIE	0x00040000  /* 32<->64 dir cookie xlation */
+
+/*
+ * NFS internal flags (nm_iflag) */
+
+#define NFSMNT_HASWRITEVERF	0x00000001  /* Has write verifier for V3 */
+#define NFSMNT_GOTPATHCONF	0x00000002  /* Got the V3 pathconf info */
+#define NFSMNT_GOTFSINFO	0x00000004  /* Got the V3 fsinfo */
+#define	NFSMNT_MNTD		0x00000008  /* Mnt server for mnt point */
+#define	NFSMNT_DISMINPROG	0x00000010  /* Dismount in progress */
+#define	NFSMNT_DISMNT		0x00000020  /* Dismounted */
+#define	NFSMNT_SNDLOCK		0x00000040  /* Send socket lock */
+#define	NFSMNT_WANTSND		0x00000080  /* Want above */
+#define	NFSMNT_RCVLOCK		0x00000100  /* Rcv socket lock */
+#define	NFSMNT_WANTRCV		0x00000200  /* Want above */
+#define	NFSMNT_WAITAUTH		0x00000400  /* Wait for authentication */
+#define	NFSMNT_HASAUTH		0x00000800  /* Has authenticator */
+#define	NFSMNT_WANTAUTH		0x00001000  /* Wants an authenticator */
+#define	NFSMNT_AUTHERR		0x00002000  /* Authentication error */
+#define NFSMNT_SWAPCOOKIE	0x00004000  /* XDR encode dir cookies */
+
+#ifdef _KERNEL
 /*
  * Mount structure.
  * One allocated on every NFS mount.
@@ -92,12 +160,10 @@ struct	nfsmount {
 	int	nm_iflag;		/* internal flags */
 };
 
-#ifdef _KERNEL
 /*
  * Convert mount ptr to nfsmount ptr.
  */
 #define VFSTONFS(mp)	((struct nfsmount *)((mp)->mnt_data))
-#endif /* _KERNEL */
 
 /*
  * Prototypes for NFS mount operations
@@ -129,5 +195,7 @@ void	nfs_vfs_init __P((void));
  * Prototypes for miscellaneous exported NFS functions.
  */
 void	nfs_init __P((void));
+
+#endif /* _KERNEL */
 
 #endif

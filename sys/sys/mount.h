@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.63 1998/02/18 07:09:15 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.64 1998/03/01 02:24:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mount.h	8.15 (Berkeley) 7/14/94
+ *	@(#)mount.h	8.21 (Berkeley) 5/20/95
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -42,6 +42,7 @@
 #include <sys/ucred.h>
 #endif
 #include <sys/queue.h>
+#include <sys/lock.h>
 
 typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 
@@ -65,7 +66,7 @@ struct fid {
 #define	MNAMELEN	90	/* length of buffer for returned name */
 
 struct statfs {
-	short	f_type;			/* type of file system (unused; zero) */
+	short	f_type;			/* type of file system */
 	u_short	f_flags;		/* copy of mount flags */
 	long	f_bsize;		/* fundamental file system block size */
 	long	f_iosize;		/* optimal transfer block size */
@@ -115,6 +116,7 @@ struct mount {
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
+	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
@@ -163,7 +165,7 @@ struct mount {
 #define	MNT_VISFLAGMASK	0x2400ffff
 
 /*
- * filesystem control flags.
+ * External filesystem control flags.
  *
  * MNT_MLOCK lock the mount entry so that name lookup cannot proceed
  * past the mount point.  This keeps the subtree stable during mounts
@@ -173,17 +175,52 @@ struct mount {
 #define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
-#define	MNT_MLOCK	0x00100000	/* lock so that subtree is stable */
-#define	MNT_MWAIT	0x00200000	/* someone is waiting for lock */
-#define MNT_MPBUSY	0x00400000	/* scan of mount point in progress */
-#define MNT_MPWANT	0x00800000	/* waiting for mount point */
+
+/*
+ * Internal filesystem control flags.
+ *
+ * MNT_UNMOUNT locks the mount entry so that name lookup cannot proceed
+ * past the mount point.  This keeps the subtree stable during mounts
+ * and unmounts.
+ */
+#define	MNT_MWAIT	0x00200000	/* waiting for unmount to finish */
 #define MNT_UNMOUNT	0x01000000	/* unmount in progress */
-#define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
+#define MNT_WANTRDWR	0x02000000	/* upgrade to read/write requested */
+
+/*
+ * Sysctl CTL_VFS definitions.
+ *
+ * Second level identifier specifies which filesystem. Second level
+ * identifier VFS_GENERIC returns information about all filesystems.
+ */
+#define VFS_GENERIC	0		/* generic filesystem information */
+#define VFS_MAXTYPENUM	1		/* int: highest defined fs type */
+#define VFS_CONF	2		/* struct: vfsconf for filesystem given
+					   as next argument */
 
 /*
  * Operations supported on mounted file system.
  */
 #ifdef _KERNEL
+
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
+
+/*
+ * Filesystem configuration information. Not used by NetBSD, but
+ * defined here to provide a compatible sysctl interface to Lite2.
+ */
+struct vfsconf {
+	struct	vfsops *vfc_vfsops;	/* filesystem operations vector */
+	char	vfc_name[MFSNAMELEN]; 	/* filesystem type name */
+	int	vfc_typenum;		/* historic filesystem type number */
+	int  	vfc_refcount;		/* number mounted of this type */
+	int	vfc_flags;		/* permanent flags */
+	int	(*vfc_mountroot)(void);	/* if != NULL, routine to mount root */
+	struct	vfsconf *vfc_next; 	/* next in list */
+};
+
+#endif
+
 #ifdef __STDC__
 struct nameidata;
 struct mbuf;
@@ -213,6 +250,8 @@ struct vfsops {
 				    int *exflagsp, struct ucred **credanonp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	void	(*vfs_init)	__P((void));
+	int	(*vfs_sysctl)	__P((int *, u_int, void *, size_t *, void *,
+				    size_t, struct proc *));
 	int	(*vfs_mountroot) __P((void));
 	struct vnodeopv_desc **vfs_opv_descs;
 	int	vfs_refcount;
@@ -287,103 +326,6 @@ struct export_args {
 };
 
 /*
- * Arguments to mount UFS-based filesystems
- */
-struct ufs_args {
-	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
-};
-
-/*
- * Arguments to mount MFS
- */
-struct mfs_args {
-	char	*fspec;			/* name to export for statfs */
-	struct	export_args export;	/* if exported MFSes are supported */
-	caddr_t	base;			/* base of file system in memory */
-	u_long	size;			/* size of file system */
-};
-
-/*
- * Arguments to mount ISO 9660 filesystems.
- */
-struct iso_args {
-	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export info */
-	int	flags;			/* mounting flags, see below */
-};
-#define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
-#define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
-#define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
-
-/*
- * Arguments to mount NFS
- */
-#define NFS_ARGSVERSION	3		/* change when nfs_args changes */
-struct nfs_args {
-	int		version;	/* args structure version number */
-	struct sockaddr	*addr;		/* file server address */
-	int		addrlen;	/* length of address */
-	int		sotype;		/* Socket type */
-	int		proto;		/* and Protocol */
-	u_char		*fh;		/* File handle to be mounted */
-	int		fhsize;		/* Size, in bytes, of fh */
-	int		flags;		/* flags */
-	int		wsize;		/* write size in bytes */
-	int		rsize;		/* read size in bytes */
-	int		readdirsize;	/* readdir size in bytes */
-	int		timeo;		/* initial timeout in .1 secs */
-	int		retrans;	/* times to retry send */
-	int		maxgrouplist;	/* Max. size of group list */
-	int		readahead;	/* # of blocks to readahead */
-	int		leaseterm;	/* Term (sec) of lease */
-	int		deadthresh;	/* Retrans threshold */
-	char		*hostname;	/* server's name */
-};
-
-/*
- * NFS mount option flags (nm_flag)
- */
-#define	NFSMNT_SOFT		0x00000001  /* soft mount (hard is default) */
-#define	NFSMNT_WSIZE		0x00000002  /* set write size */
-#define	NFSMNT_RSIZE		0x00000004  /* set read size */
-#define	NFSMNT_TIMEO		0x00000008  /* set initial timeout */
-#define	NFSMNT_RETRANS		0x00000010  /* set number of request retries */
-#define	NFSMNT_MAXGRPS		0x00000020  /* set maximum grouplist size */
-#define	NFSMNT_INT		0x00000040  /* allow interrupts on hard mount */
-#define	NFSMNT_NOCONN		0x00000080  /* Don't Connect the socket */
-#define	NFSMNT_NQNFS		0x00000100  /* Use Nqnfs protocol */
-#define	NFSMNT_NFSV3		0x00000200  /* Use NFS Version 3 protocol */
-#define	NFSMNT_KERB		0x00000400  /* Use Kerberos authentication */
-#define	NFSMNT_DUMBTIMR		0x00000800  /* Don't estimate rtt dynamically */
-#define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
-#define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
-#define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
-#define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
-#define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
-#define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
-#define NFSMNT_XLATECOOKIE	0x00040000  /* 32<->64 dir cookie xlation */
-
-/*
- * NFS internal flags (nm_iflag) */
-
-#define NFSMNT_HASWRITEVERF	0x00000001  /* Has write verifier for V3 */
-#define NFSMNT_GOTPATHCONF	0x00000002  /* Got the V3 pathconf info */
-#define NFSMNT_GOTFSINFO	0x00000004  /* Got the V3 fsinfo */
-#define	NFSMNT_MNTD		0x00000008  /* Mnt server for mnt point */
-#define	NFSMNT_DISMINPROG	0x00000010  /* Dismount in progress */
-#define	NFSMNT_DISMNT		0x00000020  /* Dismounted */
-#define	NFSMNT_SNDLOCK		0x00000040  /* Send socket lock */
-#define	NFSMNT_WANTSND		0x00000080  /* Want above */
-#define	NFSMNT_RCVLOCK		0x00000100  /* Rcv socket lock */
-#define	NFSMNT_WANTRCV		0x00000200  /* Want above */
-#define	NFSMNT_WAITAUTH		0x00000400  /* Wait for authentication */
-#define	NFSMNT_HASAUTH		0x00000800  /* Has authenticator */
-#define	NFSMNT_WANTAUTH		0x00001000  /* Wants an authenticator */
-#define	NFSMNT_AUTHERR		0x00002000  /* Authentication error */
-#define NFSMNT_SWAPCOOKIE	0x00004000  /* XDR encode dir cookies */
-
-/*
  * Structure holding information for a publicly exported filesystem
  * (WebNFS). Currently the specs allow just for one such filesystem.
  */
@@ -394,42 +336,11 @@ struct nfs_public {
 	char		*np_index;	/* Index file */
 };
 
-/*
- *  Arguments to mount MSDOS filesystems.
- */
-struct msdosfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
-	uid_t	uid;		/* uid that owns msdosfs files */
-	gid_t	gid;		/* gid that owns msdosfs files */
-	mode_t  mask;		/* mask to be applied for msdosfs perms */
-	int	flags;		/* see below */
-};
-
-/*
- * Msdosfs mount options:
- */
-#define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
-#define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
-#define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
-#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
-
-/*
- * Arguments to mount amigados filesystems.
- */
-struct adosfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
-	uid_t	uid;		/* uid that owns msdosfs files */
-	gid_t	gid;		/* gid that owns msdosfs files */
-	mode_t	mask;		/* mask to be applied for msdosfs perms */
-};
-
 #ifdef _KERNEL
 /*
  * exported vnode operations
  */
-struct	mount *getvfs __P((fsid_t *));	    /* return vfs given fsid */
+struct	mount *vfs_getvfs __P((fsid_t *));    /* return vfs given fsid */
 int	vfs_export			    /* process mount export info */
 	  __P((struct mount *, struct netexport *, struct export_args *));
 struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
@@ -442,18 +353,25 @@ int	vfs_mountroot __P((void));
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
 void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
 void	vfs_unmountall __P((void));	    /* unmount file systems */
-int 	vfs_busy __P((struct mount *));
+int 	vfs_busy __P((struct mount *, int, struct simplelock *));
+int	vfs_rootmountalloc __P((char *, char *, struct mount **));
 void	vfs_unbusy __P((struct mount *));
 int	vfs_attach __P((struct vfsops *));
 int	vfs_detach __P((struct vfsops *));
 struct vfsops *vfs_getopsbyname __P((const char *));
+int	vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			struct proc *));
 
+extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
+extern	struct vfsops *vfssw[];			/* filesystem type table */
+extern	int nvfssw;
+extern	struct nfs_public nfs_pub;
+extern	struct simplelock mountlist_slock;
 long	makefstype __P((char *));
 int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
 void	vfs_opv_init __P((struct vnodeopv_desc **));
 void	vfs_opv_free __P((struct vnodeopv_desc **));
-
 #ifdef DEBUG
 void	vfs_bufstats __P((void));
 #endif
@@ -461,8 +379,6 @@ void	vfs_bufstats __P((void));
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
 
-extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
-extern	struct nfs_public nfs_pub;
 #else /* _KERNEL */
 
 #include <sys/cdefs.h>

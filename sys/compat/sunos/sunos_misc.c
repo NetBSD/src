@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.87 1998/02/19 00:43:56 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.88 1998/03/01 02:22:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,14 +451,9 @@ sunos_sys_getdents(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 
-	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
-		return (EINVAL);
-
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	ncookies = buflen / 16;
-	cookiebuf = malloc(ncookies * sizeof(*cookiebuf), M_TEMP, M_WAITOK);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
 again:
 	aiov.iov_base = buf;
@@ -474,8 +469,8 @@ again:
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookiebuf,
-	    ncookies);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
+	    &ncookies);
 	if (error)
 		goto out;
 
@@ -534,7 +529,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
@@ -690,12 +685,12 @@ sunos_sys_fchroot(p, v, retval)
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
 	VREF(vp);

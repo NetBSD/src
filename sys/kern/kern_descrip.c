@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.50 1998/02/10 14:09:25 mrg Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.51 1998/03/01 02:22:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_descrip.c	8.6 (Berkeley) 4/19/94
+ *	@(#)kern_descrip.c	8.8 (Berkeley) 2/14/95
  */
 
 #include "opt_uvm.h"

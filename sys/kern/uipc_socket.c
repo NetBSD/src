@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.31 1998/01/07 23:47:08 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.32 1998/03/01 02:22:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_socket.c	8.3 (Berkeley) 4/15/94
+ *	@(#)uipc_socket.c	8.6 (Berkeley) 5/2/95
  */
 
 #include <sys/param.h>

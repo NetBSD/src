@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.20 1997/08/27 08:52:51 thorpej Exp $	*/
+/*	$NetBSD: procfs.h,v 1.21 1998/03/01 02:21:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)procfs.h	8.7 (Berkeley) 6/15/94
+ *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
 
 /*
@@ -128,7 +128,6 @@ int procfs_rw __P((void *));
 extern int (**procfs_vnodeop_p) __P((void *));
 extern struct vfsops procfs_vfsops;
 
-void	procfs_init __P((void));
 int	procfs_root __P((struct mount *, struct vnode **));
 
 #endif /* _KERNEL */

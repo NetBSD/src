@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.16 1997/11/04 23:25:02 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.17 1998/03/01 02:24:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mman.h	8.1 (Berkeley) 6/2/93
+ *	@(#)mman.h	8.2 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_MMAN_H_

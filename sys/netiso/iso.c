@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.18 1996/10/13 02:04:25 christos Exp $	*/
+/*	$NetBSD: iso.c,v 1.19 1998/03/01 02:24:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso.c	8.2 (Berkeley) 11/15/93
+ *	@(#)iso.c	8.3 (Berkeley) 1/9/95
  */
 
 /***********************************************************

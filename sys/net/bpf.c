@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.38 1997/10/12 16:35:10 mycroft Exp $	*/
+/*	$NetBSD: bpf.c,v 1.39 1998/03/01 02:25:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpf.c	8.2 (Berkeley) 3/28/94
+ *	@(#)bpf.c	8.4 (Berkeley) 1/9/95
  * static char rcsid[] =
  * "Header: bpf.c,v 1.67 96/09/26 22:00:52 leres Exp ";
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.29 1998/02/10 14:08:44 mrg Exp $	*/
+/*	$NetBSD: buf.h,v 1.30 1998/03/01 02:24:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)buf.h	8.7 (Berkeley) 1/21/94
+ *	@(#)buf.h	8.9 (Berkeley) 3/30/95
  */
 
 #ifndef _SYS_BUF_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.11 1997/05/10 22:04:13 pk Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.12 1998/03/01 02:21:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kernfs.h	8.5 (Berkeley) 6/15/94
+ *	@(#)kernfs.h	8.6 (Berkeley) 3/29/95
  */
 
 #define	_PATH_KERNFS	"/kern"		/* Default mountpoint */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.44 1998/02/10 14:09:37 mrg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.45 1998/03/01 02:22:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_resource.c	8.5 (Berkeley) 1/21/94
+ *	@(#)kern_resource.c	8.8 (Berkeley) 2/14/95
  */
 
 #include "opt_uvm.h"
@@ -96,7 +96,8 @@ sys_getpriority(curp, v, retval)
 			pg = curp->p_pgrp;
 		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
-		for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
+		for (p = pg->pg_members.lh_first; p != 0;
+		     p = p->p_pglist.le_next) {
 			if (p->p_nice < low)
 				low = p->p_nice;
 		}

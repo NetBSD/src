@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.8 1998/02/24 15:58:09 chuck Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.9 1998/03/01 02:25:28 fvdl Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2078,7 +2078,7 @@ boolean_t new_pageable;
     vm_map_unlock(map);         /* trust me ... */
   } else {
     vm_map_set_recursive(&map->lock);
-    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0, curproc);
+    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0);
   }
 
   rv = 0;

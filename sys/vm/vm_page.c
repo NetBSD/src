@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.41 1998/02/08 18:24:52 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.42 1998/03/01 02:24:01 fvdl Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -74,7 +74,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_page.c	8.3 (Berkeley) 3/21/94
+ *	@(#)vm_page.c	8.4 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

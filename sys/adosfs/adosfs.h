@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.12 1996/10/08 22:18:02 thorpej Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.13 1998/03/01 02:25:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,6 +32,18 @@
  */
 
 /*
+ * Arguments to mount amigados filesystems.
+ */
+struct adosfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
+	struct	export_args export;	/* network export information */
+	uid_t	uid;		/* uid that owns msdosfs files */
+	gid_t	gid;		/* gid that owns msdosfs files */
+	mode_t	mask;		/* mask to be applied for msdosfs perms */
+};
+
+#ifdef _KERNEL
+/*
  * Amigados datestamp. (from 1/1/1978 00:00:00 local)
  */
 struct datestamp {
@@ -42,7 +54,6 @@ struct datestamp {
 };
 
 enum anode_type { AROOT, ADIR, AFILE, ALDIR, ALFILE, ASLINK };
-enum anode_flags { AWANT = 0x1, ALOCKED = 0x2 };
 
 /* 
  * similar to inode's, we use to represent:
@@ -69,6 +80,7 @@ struct anode {
 	u_long lastlindblk;	/* (f/hf) last logical indirect block */
 	u_long lastindblk;	/* (f/hf) last indirect block read */
 	u_long *tab;		/* (r/d) hash table */
+	struct lock lock;	/* node lock */
 	int *tabi;		/* (r/d) table info */
 	int ntabent;		/* (r/d) number of entries in table */
 	int nwords;		/* size of blocks in long words */
@@ -108,6 +120,7 @@ struct adosfsmount {
 	u_long numblks;		/* number of usable blocks */
 	u_long freeblks;	/* number of free blocks */
 };
+
 #define VFSTOADOSFS(mp) ((struct adosfsmount *)(mp)->mnt_data)
 
 #define IS_FFS(amp)	((amp)->dostype & 1)
@@ -153,3 +166,4 @@ void adosfs_aremhash __P((struct anode *));
 int adosfs_lookup __P((void *));
 
 int (**adosfs_vnodeop_p) __P((void *));
+#endif /* _KERNEL */

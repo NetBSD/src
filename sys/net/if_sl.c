@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.46 1997/05/17 21:12:05 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.47 1998/03/01 02:25:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_sl.c	8.6 (Berkeley) 2/1/94
+ *	@(#)if_sl.c	8.9 (Berkeley) 1/9/95
  */
 
 /*
@@ -275,6 +275,9 @@ slopen(dev, tp)
 			tp->t_sc = (caddr_t)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
+			s = spltty();
+			tp->t_state |= TS_ISOPEN | TS_XCLUDE;
+			splx(s);
 			ttyflush(tp, FREAD | FWRITE);
 #ifdef NetBSD
 			/*
@@ -319,6 +322,7 @@ slclose(tp)
 	ttywflush(tp);
 	s = splimp();		/* actually, max(spltty, splsoftnet) */
 	tp->t_line = 0;
+	tp->t_state = 0;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc != NULL) {
 		if_down(&sc->sc_if);
@@ -713,7 +717,7 @@ slinput(c, tp)
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc == NULL)
 		return;
-	if (c & TTY_ERRORMASK || ((tp->t_state & TS_CARR_ON) == 0 &&
+	if ((c & TTY_ERRORMASK) || ((tp->t_state & TS_CARR_ON) == 0 &&
 	    (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
 		return;

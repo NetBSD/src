@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.117 1998/02/19 00:49:27 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.118 1998/03/01 02:22:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)init_main.c	8.9 (Berkeley) 1/21/94
+ *	@(#)init_main.c	8.16 (Berkeley) 5/14/95
  */
 
 #include "fs_nfs.h"
@@ -374,7 +374,7 @@ main(framep)
 		panic("cannot find root vnode");
 	filedesc0.fd_fd.fd_cdir = rootvnode;
 	VREF(filedesc0.fd_fd.fd_cdir);
-	VOP_UNLOCK(rootvnode);
+	VOP_UNLOCK(rootvnode, 0);
 	filedesc0.fd_fd.fd_rdir = NULL;
 #if defined(UVM)
 	uvm_swap_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.27 1998/02/09 01:29:10 scottb Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.28 1998/03/01 02:22:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -387,7 +387,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 #ifdef notyet /* XXX cgd 960926 */
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
 #endif
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 
 	if ((error = ELFNAME(read_from)(p, vp, 0, (caddr_t) &eh,
 	    sizeof(eh))) != 0)
@@ -443,7 +443,7 @@ ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
 	return 0;
 
 badunlock:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 
 bad:
 	if (ph != NULL)

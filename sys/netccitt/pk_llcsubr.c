@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.5 1996/03/14 18:47:53 christos Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.6 1998/03/01 02:24:57 fvdl Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_llcsubr.c	8.1 (Berkeley) 6/10/93
+ *	@(#)pk_llcsubr.c	8.2 (Berkeley) 2/9/95
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.16 1997/06/26 21:36:58 kleink Exp $	*/
+/*	$NetBSD: adutil.c,v 1.17 1998/03/01 02:25:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -47,6 +47,8 @@
 #define AHASH(an) ((an) & (ANODEHASHSZ - 1))
 static int CapitalChar __P((int, int));
 
+extern struct simplelock adosfs_hashlock;
+
 struct vnode * 
 adosfs_ahashget(mp, an)
 	struct mount *mp;
@@ -54,22 +56,23 @@ adosfs_ahashget(mp, an)
 {
 	struct anodechain *hp;
 	struct anode *ap;
+	struct vnode *vp;
 
 	hp = &VFSTOADOSFS(mp)->anodetab[AHASH(an)];
 
 start_over:
+	simple_lock(&adosfs_hashlock);
 	for (ap = hp->lh_first; ap != NULL; ap = ap->link.le_next) {
-		if (ap->block != an)
-			continue;
-		if (ap->flags & ALOCKED) {
-			ap->flags |= AWANT;
-			tsleep(ap, PINOD, "ahashget", 0);
-			goto start_over;
+		if (ap->block == an) {
+			vp = ATOV(ap);
+			simple_lock(&vp->v_interlock);
+			simple_unlock(&adosfs_hashlock);
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+				goto start_over;
+			return (ATOV(ap));
 		}
-		if (vget(ATOV(ap), 1))
-			goto start_over;
-		return (ATOV(ap));
 	}
+	simple_unlock(&adosfs_hashlock);
 	return (NULL);
 }
 
@@ -81,15 +84,20 @@ adosfs_ainshash(amp, ap)
 	struct adosfsmount *amp;
 	struct anode *ap;
 {
+	lockmgr(&ap->lock, LK_EXCLUSIVE, (struct simplelock *)0);
+
+	simple_lock(&adosfs_hashlock);
 	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);
-	ap->flags |= ALOCKED;
+	simple_unlock(&adosfs_hashlock);
 }
 
 void
 adosfs_aremhash(ap)
 	struct anode *ap;
 {
+	simple_lock(&adosfs_hashlock);
 	LIST_REMOVE(ap, link);
+	simple_unlock(&adosfs_hashlock);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.5 1996/09/07 12:41:42 mycroft Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.6 1998/03/01 02:23:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfsnode.h	8.2 (Berkeley) 8/11/93
+ *	@(#)mfsnode.h	8.3 (Berkeley) 5/19/95
  */
 
 /*
@@ -75,9 +75,9 @@ struct mfsnode {
 #define	mfs_readdir	genfs_badop
 #define	mfs_readlink	genfs_badop
 #define	mfs_abortop	genfs_badop
-#define	mfs_lock	genfs_nullop
-#define	mfs_unlock	genfs_nullop
-#define	mfs_islocked	genfs_nullop
+#define	mfs_lock	genfs_nolock
+#define	mfs_unlock	genfs_nounlock
+#define	mfs_islocked	genfs_noislocked
 #define	mfs_pathconf	genfs_badop
 #define	mfs_advlock	genfs_badop
 #define	mfs_blkatoff	genfs_badop
@@ -86,3 +86,4 @@ struct mfsnode {
 #define	mfs_truncate	genfs_badop
 #define	mfs_update	genfs_badop
 #define	mfs_bwrite	vn_bwrite
+#define	mfs_revoke	genfs_revoke

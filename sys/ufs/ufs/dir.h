@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
+/*	$NetBSD: dir.h,v 1.9 1998/03/01 02:23:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dir.h	8.4 (Berkeley) 8/10/94
+ *	@(#)dir.h	8.5 (Berkeley) 4/27/95
  */
 
 #ifndef _DIR_H_
@@ -47,7 +47,7 @@
  * Theoretically, directories can be more than 2Gb in length, however, in
  * practice this seems unlikely. So, we define the type doff_t as a 32-bit
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
-*/
+ */
 #define	doff_t		int32_t
 #define	MAXDIRSIZE	(0x7fffffff)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.2 1998/03/01 02:23:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,14 +39,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <ufs/ext2fs/ext2fs.h>
-#include <ufs/ext2fs/ext2fs_extern.h>
-
-#ifdef _KERNEL
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ext2fs/ext2fs.h>
+#include <ufs/ext2fs/ext2fs_extern.h>
 
 /*
  * Return buffer with the contents of block "offset" from the beginning of
@@ -66,7 +64,7 @@ ext2fs_blkatoff(v)
 	struct inode *ip;
 	register struct m_ext2fs *fs;
 	struct buf *bp;
-	daddr_t lbn;
+	ufs_daddr_t lbn;
 	int error;
 
 	ip = VTOI(ap->a_vp);
@@ -83,16 +81,14 @@ ext2fs_blkatoff(v)
 	*ap->a_bpp = bp;
 	return (0);
 }
-#endif
 
-#if defined(_KERNEL) && defined(DIAGNOSTIC)
 void
 ext2fs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
 	register struct buf *ebp, *ep;
-	register daddr_t start, last;
+	register ufs_daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];
@@ -102,7 +98,7 @@ ext2fs_checkoverlap(bp, ip)
 		if (ep == bp || (ep->b_flags & B_INVAL) ||
 			ep->b_vp == NULLVP)
 			continue;
-		if (VOP_BMAP(ep->b_vp, (daddr_t)0, &vp, (daddr_t)0, NULL))
+		if (VOP_BMAP(ep->b_vp, (ufs_daddr_t)0, &vp, (ufs_daddr_t)0, NULL))
 			continue;
 		if (vp != ip->i_devvp)
 			continue;
@@ -117,4 +113,3 @@ ext2fs_checkoverlap(bp, ip)
 		panic("Disk buffer overlap");
 	}
 }
-#endif /* DIAGNOSTIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.13 1998/02/10 00:25:30 perry Exp $	*/
+/*	$NetBSD: file.h,v 1.14 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)file.h	8.2 (Berkeley) 8/20/94
+ *	@(#)file.h	8.3 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_FILE_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.21 1996/10/13 02:21:25 christos Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.22 1998/03/01 02:21:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,6 +89,7 @@ int	dead_print	__P((void *));
 #define dead_truncate	genfs_nullop
 #define dead_update	genfs_nullop
 #define dead_bwrite	genfs_nullop
+#define dead_revoke	genfs_nullop
 
 int	chkvnlock __P((struct vnode *));
 
@@ -108,6 +109,7 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_write_desc, dead_write },		/* write */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
 	{ &vop_poll_desc, dead_poll },			/* poll */
+	{ &vop_revoke_desc, dead_revoke },		/* revoke */
 	{ &vop_mmap_desc, dead_mmap },			/* mmap */
 	{ &vop_fsync_desc, dead_fsync },		/* fsync */
 	{ &vop_seek_desc, dead_seek },			/* seek */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.22 1998/02/14 19:34:12 kleink Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.23 1998/03/01 02:22:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_proc.c	8.4 (Berkeley) 1/4/94
+ *	@(#)kern_proc.c	8.7 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.42 1998/02/21 23:32:19 fvdl Exp $	*/
+/*	$NetBSD: mountd.c,v 1.43 1998/03/01 02:25:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.42 1998/02/21 23:32:19 fvdl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.43 1998/03/01 02:25:50 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,13 @@ __RCSID("$NetBSD: mountd.c,v 1.42 1998/02/21 23:32:19 fvdl Exp $");
 #endif
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+
+#include <ufs/ufs/ufsmount.h>
+#include <isofs/cd9660/cd9660_mount.h>
+#include <msdosfs/msdosfsmount.h>
+#include <adosfs/adosfs.h>
 
 #include <arpa/inet.h>
 

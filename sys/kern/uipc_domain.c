@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.17 1997/04/04 14:22:21 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.18 1998/03/01 02:22:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_domain.c	8.2 (Berkeley) 10/18/93
+ *	@(#)uipc_domain.c	8.3 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

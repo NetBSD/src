@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.25 1998/02/07 02:44:58 chs Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.26 1998/03/01 02:24:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -108,7 +108,6 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	int fhsize;
 	struct nfsnode **npp;
 {
-	struct proc *p = curproc;	/* XXX */
 	register struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
@@ -123,21 +122,17 @@ loop:
 		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
-#ifdef Lite2_integrated
-		if (vget(vp, LK_EXCLUSIVE, p))
-#else
-		if (vget(vp, 1))
-#endif
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		*npp = np;
 		return(0);
 	}
-	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0, p))
+	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
 		goto loop;
 	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
 	if (error) {
 		*npp = 0;
-		lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
+		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
 	vp = nvp;
@@ -158,7 +153,7 @@ loop:
 	MALLOC(np->n_vattr, struct vattr *, sizeof (struct vattr),
 	    M_NFSNODE, M_WAITOK);
 	bzero(np->n_vattr, sizeof (struct vattr));
-	lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
+	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
 	return (0);
 }
@@ -169,13 +164,11 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-#ifdef Lite2_integrated
 		struct proc *a_p;
-#endif
 	} */ *ap = v;
 	register struct nfsnode *np;
 	register struct sillyrename *sp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = ap->a_p;
 	extern int prtactive;
 
 	np = VTONFS(ap->a_vp);
@@ -186,11 +179,6 @@ nfs_inactive(v)
 		np->n_sillyrename = (struct sillyrename *)0;
 	} else
 		sp = (struct sillyrename *)0;
-#ifdef Lite2_integrated
-	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
-#else
-	VOP_UNLOCK(ap->a_vp);
-#endif
 	if (sp) {
 		/*
 		 * If the usecount is greater than zero, then we are
@@ -202,11 +190,7 @@ nfs_inactive(v)
 		 */
 		if (ap->a_vp->v_usecount > 0)
 			(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
-#ifdef Lite2_integrated
-		else if (vget(ap->a_vp, 0, p))
-#else
 		else if (vget(ap->a_vp, 0))
-#endif
                         panic("nfs_inactive: lost vnode");
 		else {
 			(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
@@ -224,6 +208,7 @@ nfs_inactive(v)
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
+	VOP_UNLOCK(ap->a_vp, 0);
 	return (0);
 }
 
@@ -273,61 +258,3 @@ nfs_reclaim(v)
 	vp->v_data = (void *)0;
 	return (0);
 }
-
-#ifndef Lite2_integrated
-/*
- * Lock an nfsnode
- */
-int
-nfs_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-
-	/*
-	 * Ugh, another place where interruptible mounts will get hung.
-	 * If you make this sleep interruptible, then you have to fix all
-	 * the VOP_LOCK() calls to expect interruptibility.
-	 */
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		(void) tsleep((caddr_t)vp, PINOD, "nfslck", 0);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	return (0);
-}
-
-/*
- * Unlock an nfsnode
- */
-int
-nfs_unlock(v)
-	void *v;
-{
-#if 0
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-#endif
-	return (0);
-}
-
-/*
- * Check for a locked nfsnode
- */
-int
-nfs_islocked(v)
-	void *v;
-{
-#if 0
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-#endif
-	return (0);
-}
-#endif /* Lite2_integrated */
