@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.h,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: bbinfo.h,v 1.2 1997/06/19 11:46:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -56,4 +56,6 @@ struct fraglist {
 #ifndef MAXFLENTRIES
 #define MAXFLENTRIES 5
 #endif
+#ifndef PRIM_LOADSZ
 #define PRIM_LOADSZ 15
+#endif
