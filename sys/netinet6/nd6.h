@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.4 1999/07/06 12:23:22 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.5 1999/07/31 18:41:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -273,7 +273,7 @@ void nd6_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 void nd6_p2p_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
-	char *, int, int));
+	char *, int, int, int));
 /* for test */
 int nd6_output __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *,
 		    struct rtentry *));
