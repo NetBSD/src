@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.45 2000/01/25 12:09:19 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.46 2000/03/19 17:24:27 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.45 2000/01/25 12:09:19 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.46 2000/03/19 17:24:27 hubertf Exp $");
 #endif
 #endif
 
@@ -310,17 +310,14 @@ pkg_do(char *pkg)
 
 	/* See if some other version of us is already installed */
 	{
-		char    buf[FILENAME_MAX];
-		char    installed[FILENAME_MAX];
 		char   *s;
 
 		if ((s = strrchr(PkgName, '-')) != NULL) {
-			int     l;
+			char    buf[FILENAME_MAX];
+			char    installed[FILENAME_MAX];
 
-			l = s - PkgName + 1;
-			(void) memcpy(buf, PkgName, l);
-			(void) strcpy(&buf[l], "[0-9]*");
-
+			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
+				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
 				warnx("other version '%s' already installed", installed);
 				code = 1;
@@ -341,10 +338,47 @@ pkg_do(char *pkg)
 		/* was: */
 		/* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
-			warnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n", installed);
+			warnx("Conflicting package `%s'installed, please use\n"
+			      "\t\"pkg_delete %s\" first to remove it!\n", installed, installed);
 			++code;
 		}
 	}
+
+	/* Quick pre-check if any conflicting dependencies are installed
+	 * (e.g. version X is installed, but version Y is required)
+	 */
+	for (p = Plist.head; p; p = p->next) {
+		char installed[FILENAME_MAX];
+		
+		if (p->type != PLIST_PKGDEP)
+			continue;
+		if (Verbose)
+			printf("Depends pre-scan: `%s' required.\n", p->name);
+		/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
+		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) <= 0) {
+			/* 
+			 * required pkg not found. look if it's available with a more liberal
+			 * pattern. If so, this will lead to problems later (check on "some
+			 * other version of us is already installed" will fail, see above),
+			 * and we better stop right now.
+			 */
+			char *s;
+			
+			if ((s = strrchr(p->name, '-')) != NULL) {
+				char    buf[FILENAME_MAX];
+		
+				(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
+					(int)(s - p->name) + 1, p->name);
+				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
+					warnx("pkg `%s' required, but `%s' found installed.\n"
+					      "Please resolve this conflict!", p->name, installed);
+					code = 1;
+					goto success; /* close enough */
+				}
+			}
+		}
+	}
+	
 
 	/* Now check the packing list for dependencies */
 	for (p = Plist.head; p; p = p->next) {
@@ -546,7 +580,7 @@ pkg_do(char *pkg)
 		if (make_hierarchy(LogDir)) {
 			warnx("can't record package into '%s', you're on your own!",
 			    LogDir);
-			memset(LogDir, 0, FILENAME_MAX);
+			memset(LogDir, 0, sizeof(LogDir));
 			code = 1;
 			goto success;	/* close enough for government work */
 		}
