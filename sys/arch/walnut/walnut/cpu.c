@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/06/24 01:16:18 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,15 +42,15 @@
 #include <machine/autoconf.h>
 #include <machine/walnut.h>
 
-#define IBM405GP	0x4011
+#include <powerpc/ibm4xx/ibm405gp.h>
 
 struct cputab {
 	int version;
 	char *name;
 };
 static struct cputab models[] = {
-	{ IBM405GP, "405GP" },
-	{ 0,	    NULL }
+	{ PVR_405GP >> 16, "405GP" },
+	{ 0,		    NULL }
 };
 
 static int	cpumatch(struct device *, struct cfdata *, void *);
