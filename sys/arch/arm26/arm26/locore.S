@@ -1,6 +1,6 @@
-/* $NetBSD: locore.S,v 1.4 2000/08/20 13:41:44 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.5 2000/12/07 21:48:58 bjh21 Exp $ */
 /*
- * Copyright (c) 1998, 2000 Ben Harris
+ * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
  * Copyright (C) 1994 Brini
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.4 2000/08/20 13:41:44 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.5 2000/12/07 21:48:58 bjh21 Exp $")
 
 #include <sys/syscall.h>
 #include <machine/armreg.h>
@@ -80,7 +80,69 @@ pc	.req	r15
 
 	.global _C_LABEL(kernel_text)
 _C_LABEL(kernel_text):
-	b	_C_LABEL(start)		/* Just in case the linker loses it */
+
+/*
+ * Data to be mapped into zero page.
+ *
+ * Now, here we could do with the ability to change the assembler's
+ * idea of where we're assembling to without changing where it puts
+ * the output.  Unfortunately, this kind of thing needs the connivance
+ * of the linker, which is asking a bit much.  Thus...
+ *
+ * B and BL can be used normally within zero-page, but not between
+ * zero-page and the outside world.
+ *
+ * LDR can safely be used with a label within zero-page, but not to
+ * outside.
+ *
+ * Absolute references only work to outside.  Relative references only
+ * work to inside.
+ *
+ *
+ * Instructions to copy to the bottom of zero page
+ * These are the entry point to the system exception routines
+ *
+ * They go:
+ * Reset
+ * Undefined instruction
+ * SWI
+ * Prefetch abort
+ * Data abort
+ * Address exception
+ * IRQ
+ * FIQ
+ */
+
+	.global	_C_LABEL(page0), _C_LABEL(page0_end)
+_C_LABEL(page0):
+	ldr	pc, Lreset_target
+	ldr	pc, Lundefined_target
+	ldr	pc, Lswi_target
+	ldr	pc, Lprefetch_abort_target
+	ldr	pc, Ldata_abort_target
+	ldr	pc, Laddress_exception_target
+	ldr	pc, Lirq_target
+Lfiqhandler:
+	.global _C_LABEL(fiqhandler)
+	.set	_C_LABEL(fiqhandler), . - _C_LABEL(page0)
+	subs	pc, lr, #4
+	.org	Lfiqhandler + 0x100
+
+Lreset_target:
+	.word	reset_entry
+Lundefined_target:
+	.word	undefined_entry
+Lswi_target:
+	.word	swi_entry
+Lprefetch_abort_target:
+	.word	prefetch_abort_entry
+Ldata_abort_target:
+	.word	data_abort_entry
+Laddress_exception_target:
+	.word	address_exception_entry
+Lirq_target:
+	.word	irq_entry
+_C_LABEL(page0_end):
 
 /*
  * Trap handlers
