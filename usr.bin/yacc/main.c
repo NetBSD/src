@@ -41,7 +41,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.4 (Berkeley) 2/26/91";
+static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #endif /* not lint */
 
 #include <signal.h>
@@ -53,6 +53,7 @@ char rflag;
 char tflag;
 char vflag;
 
+char *symbol_prefix;
 char *file_prefix = "y";
 char *myname = "yacc";
 char *temp_form = "yacc.XXXXXXX";
@@ -117,7 +118,8 @@ int k;
 
 
 void
-onintr()
+onintr(signo)
+	int signo;
 {
     done(1);
 }
@@ -142,7 +144,7 @@ set_signals()
 
 usage()
 {
-    fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] filename\n", myname);
+    fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-p symbol_prefix] filename\n", myname);
     exit(1);
 }
 
@@ -186,6 +188,15 @@ char *argv[];
 	case 'l':
 	    lflag = 1;
 	    break;
+
+	case 'p':
+	    if (*++s)
+		symbol_prefix = s;
+	    else if (++i < argc)
+		symbol_prefix = argv[i];
+	    else
+		usage();
+	    continue;
 
 	case 'r':
 	    rflag = 1;
