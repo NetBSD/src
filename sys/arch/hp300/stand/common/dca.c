@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.2 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: dca.c,v 1.3 2003/11/08 12:02:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -76,8 +76,7 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
-#include <hp300/dev/dcareg.h>
-
+#include <hp300/stand/common/dcareg.h>
 #include <hp300/stand/common/consdefs.h>
 #include <hp300/stand/common/samachdep.h>
 
