@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.5 2003/04/25 21:11:04 ragge Exp $
+#	$NetBSD: majors.x68k,v 1.6 2003/07/27 14:18:28 itojun Exp $
 #
 # Device majors for x68k
 #
@@ -53,3 +53,4 @@ device-major	ugen		char 51			ugen
 device-major	cgd		char 52  block 17	cgd
 device-major	bmd		char 53  block 18	bmd
 device-major	ksyms		char 54			ksyms
+device-major	pf		char 55			pf

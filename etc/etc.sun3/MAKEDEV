@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.53 2003/04/27 13:15:47 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.54 2003/07/27 14:18:13 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,6 +65,7 @@
 #	cgfour*	8-bit color frame buffer
 #	bpf*	packet filter
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	random	Random number generator
@@ -126,7 +127,7 @@ init|all)
 	makedev vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	makedev tun0 tun1 ipl
+	makedev tun0 tun1 ipl pf
 	makedev lkm random
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev local
@@ -325,6 +326,12 @@ systrace)
 	rm -f systrace
 	mknod systrace c 85 0
 	chmod 644 systrace
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 88 0
+	chmod 600 pf
 	;;
 
 local)

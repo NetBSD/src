@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.87 2003/04/27 13:15:30 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.88 2003/07/27 14:17:59 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -110,6 +110,7 @@
 #	view*	generic interface to graphic displays
 #	lkm	loadable kernel modules interface
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	random	Random number generator
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
@@ -161,7 +162,7 @@ init|all)
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	makedev tun0 tun1 lkm ipl random local
+	makedev tun0 tun1 lkm ipl pf random local
 	makedev audio0 audio1 audio2 audio3
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev isdns
@@ -589,6 +590,12 @@ ipl)
 	mknod ipstate c 40 2
 	mknod ipauth c 40 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 59 0
+	chmod 600 pf
 	;;
 
 audio*)
