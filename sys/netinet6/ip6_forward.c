@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.12.2.7 2002/02/09 17:02:15 he Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.12.2.8 2002/02/26 20:14:36 he Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6protosw.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -503,7 +504,8 @@ ip6_forward(m, srcrt)
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+	pfh = pfil_hook_get(PFIL_OUT,
+		&inet6sw[ip6_protox[IPPROTO_IPV6]].pr_pfh);
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 			rv = pfh->pfil_func(ip6, sizeof(*ip6),
