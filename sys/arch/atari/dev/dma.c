@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.5 1995/11/06 21:13:38 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.6 1996/02/22 10:11:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -62,10 +62,10 @@
 #define	NDMA_DEV	10	/* Max 2 floppy's, 8 hard-disks		*/
 typedef struct dma_entry {
 	TAILQ_ENTRY(dma_entry)	entries;	/* List pointers	   */
-	void			(*call_func)();	/* Call when lock granted  */
-	void			(*int_func)();	/* Call on DMA interrupt   */
-	void			*softc;		/* Arg. to int_func	   */
-	int			*lock_stat;	/* status of DMA lock	   */
+	void		(*call_func)(void *);	/* Call when lock granted  */
+	void		(*int_func)(void *);	/* Call on DMA interrupt   */
+	void		*softc;			/* Arg. to int_func	   */
+	int		*lock_stat;		/* status of DMA lock	   */
 } DMA_ENTRY;
 
 /*
@@ -82,10 +82,14 @@ static  TAILQ_HEAD(acthead, dma_entry)	dma_active;
 
 static	int	must_init = 1;		/* Must initialize		*/
 
+void	cdmaint __P((int));
+
+long	sr;	/* sr at time of interrupt */
 static	void	cdmasoft __P((void));
 static	void	init_queues __P((void));
 
-static void init_queues()
+static void
+init_queues()
 {
 	int	i;
 
@@ -96,12 +100,13 @@ static void init_queues()
 		TAILQ_INSERT_HEAD(&dma_free, &dmatable[i], entries);
 }
 
-int st_dmagrab(int_func, call_func, softc, lock_stat, rcaller)
-void 	(*int_func)();
-void 	(*call_func)();
-void	*softc;
-int	*lock_stat;
-int	rcaller;
+int
+st_dmagrab(int_func, call_func, softc, lock_stat, rcaller)
+dma_farg	int_func;
+dma_farg 	call_func;
+void		*softc;
+int		*lock_stat;
+int		rcaller;
 {
 	int		sps;
 	DMA_ENTRY	*req;
@@ -193,8 +198,9 @@ st_dmawanted()
 	return(dma_active.tqh_first->entries.tqe_next != NULL);
 }
 
+void
 cdmaint(sr)
-long	sr;	/* sr at time of interrupt */
+int	sr;	/* sr at time of interrupt */
 {
 	if(dma_active.tqh_first != NULL) {
 		if(!BASEPRI(sr)) {
@@ -209,11 +215,12 @@ long	sr;	/* sr at time of interrupt */
 	else printf("DMA interrupt discarded\n");
 }
 
-static void cdmasoft()
+static void
+cdmasoft()
 {
-	int	s;
-	void 	(*int_func)();
-	void	*softc;
+	int		s;
+	dma_farg	int_func;
+	void		*softc;
 
 	/*
 	 * Prevent a race condition here. DMA might be freed while
@@ -225,7 +232,7 @@ static void cdmasoft()
 		int_func = dma_active.tqh_first->int_func;
 		softc    = dma_active.tqh_first->softc;
 	}
-	else int_func = NULL;
+	else int_func = softc = NULL;
 	splx(s);
 
 	if(int_func != NULL)

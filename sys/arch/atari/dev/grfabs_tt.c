@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.1 1995/08/20 18:17:34 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.2 1996/02/22 10:11:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -38,6 +38,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <machine/iomap.h>
 #include <machine/video.h>
@@ -157,8 +158,6 @@ tt_free_view(v)
 view_t *v;
 {
 	if(v) {
-		dmode_t *md = v->mode;
-
 		tt_remove_view(v);
 		if (v->colormap != &gra_con_cmap)
 			free(v->colormap, M_DEVBUF);
@@ -304,7 +303,6 @@ alloc_bitmap(width, height, depth)
 u_long	width, height;
 u_char	depth;
 {
-	int     i;
 	u_long  total_size, bm_size;
 	void	*hw_address;
 	bmap_t	*bm;

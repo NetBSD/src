@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1996/01/06 20:10:41 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 1996/02/22 10:10:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -121,7 +121,7 @@ atari_config_found(pcfp, pdp, auxp, pfn)
  * basically this means start attaching the grfxx's that support 
  * the console. Kinda hacky but it works.
  */
-int
+void
 config_console()
 {	
 	struct cfdata *cf;

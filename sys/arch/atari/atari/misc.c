@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 1995/05/21 10:48:53 leo Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 1996/02/22 10:10:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/queue.h>
 
 #include <atari/atari/misc.h>
@@ -78,7 +79,6 @@ u_long	size;
 void	**phys_addr;
 {
 	struct mem_node *mn, *new, *bfit;
-	void		*mem;
 	int		s;
 
 	if (size == 0)
