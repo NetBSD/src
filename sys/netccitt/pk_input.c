@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.15 2000/02/26 16:03:23 itojun Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.16 2000/03/13 23:52:39 soren Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -9,7 +9,7 @@
  *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
- * of the the University of British Columbia and the Computer Science
+ * of the University of British Columbia and the Computer Science
  * Department (IV) of the University of Erlangen-Nuremberg, Germany.
  *
  * Redistribution and use in source and binary forms, with or without

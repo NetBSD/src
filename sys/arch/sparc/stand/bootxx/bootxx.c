@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 1999/11/08 23:29:57 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.8 2000/03/13 23:52:33 soren Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,9 +56,9 @@ struct open_file	io;
 
 /*
  * The contents of the block_* variables below is set by installboot(8)
- * to hold the the filesystem data of the second-stage boot program
- * (typically `/boot'): filesystem block size, # of filesystem blocks and
- * the block numbers themselves.
+ * to hold the filesystem data of the second-stage boot program
+ * (typically `/boot'): filesystem block size, # of filesystem
+ * blocks and the block numbers themselves.
  */
 #define MAXBLOCKNUM	256	/* enough for a 2MB boot program (bs 8K) */
 int32_t			block_size = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.10 1998/05/26 23:43:05 thorpej Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.11 2000/03/13 23:52:26 soren Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -96,7 +96,7 @@ int	tcds_scsi_isintr __P((struct tcds_slotconfig *, int));
 void	tcds_scsi_reset __P((struct tcds_slotconfig *));
 
 /*
- * TCDS DMA functions (used the the 53c94 driver)
+ * TCDS DMA functions (used by the 53c94 driver)
  */
 int	tcds_dma_isintr	__P((struct tcds_slotconfig *));
 void	tcds_dma_reset __P((struct tcds_slotconfig *));

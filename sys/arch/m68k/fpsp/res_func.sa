@@ -1,4 +1,4 @@
-*	$NetBSD: res_func.sa,v 1.3 1994/10/26 07:49:22 cgd Exp $
+*	$NetBSD: res_func.sa,v 1.4 2000/03/13 23:52:32 soren Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -1914,7 +1914,7 @@ dp_over:
 *
 * Input: a0  points to a normalized number in internal extended format
 *	 d0  is the round precision (=1 for sgl; =2 for dbl)
-*	 d1  is the the single precision or double precision
+*	 d1  is the single precision or double precision
 *	     denorm threshold
 *
 * Output: (In the format for dest_sgl or dest_dbl)

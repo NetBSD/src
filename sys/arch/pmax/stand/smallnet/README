@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 1999/05/13 08:40:08 simonb Exp $
+$NetBSD: README,v 1.3 2000/03/13 23:52:33 soren Exp $
 
 The smallnet network loader is meant to be a short term solution for
 machines that can't netboot full size kernels until a proper two stage
@@ -6,8 +6,7 @@ netboot is available.  It isn't the prettiest code around, but it gets
 us out of a bind.
 
 
-To use, "make" in this directory and then in the the setnetimage
-directory:
+To use, "make" in this directory and then in the setnetimage directory:
 
 	make KERNEL=/path/to/nfs/install/kernel kernel
 

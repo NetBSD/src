@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.26 1999/11/13 18:03:34 matthias Exp $	*/
+/*	$NetBSD: if_se.c,v 1.27 2000/03/13 23:52:37 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -36,7 +36,7 @@
  * Written by Ian Dall <ian.dall@dsto.defence.gov.au> Feb 3, 1997
  *
  * Acknowledgement: Thanks are due to Philip L. Budne <budd@cs.bu.edu>
- * who reverse engineered the the EA41x. In developing this code,
+ * who reverse engineered the EA41x. In developing this code,
  * Phil's userland daemon "etherd", was refered to extensively in lieu
  * of accurate documentation for the device.
  *
