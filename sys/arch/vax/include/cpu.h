@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.36 1999/05/01 16:13:43 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.37 1999/05/23 22:56:54 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -126,6 +126,7 @@ vaddr_t	vax_map_physmem __P((paddr_t, int));
 void	vax_unmap_physmem __P((vaddr_t, int));
 void	ioaccess __P((vaddr_t, paddr_t, int));
 void	iounaccess __P((vaddr_t, int));
+void	findcpu(void);
 #ifdef DDB
 int	kdbrint __P((int));
 #endif

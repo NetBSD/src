@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.1 1999/05/23 22:00:43 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.2 1999/05/23 22:56:54 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,10 +31,12 @@
 
 
 #include <sys/param.h>
+#include <sys/device.h>
 
 #include <machine/sid.h>
 #include <machine/nexus.h>
 #include <machine/mtpr.h>
+#include <machine/cpu.h>
 
 /* 
  * We set up some information about the machine we're
