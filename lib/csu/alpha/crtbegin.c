@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.2 1997/03/21 05:47:28 cgd Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.2.2.1 1998/05/08 05:42:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -29,8 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef ECOFF_COMPAT
 
 /*
  * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
@@ -87,33 +85,33 @@ __ctors()
 		(**p++)();
 }
 
-extern void __init(void) __attribute__((section(".init")));
+extern void _init(void) __attribute__((section(".init")));
 
 void
-__init()
+_init()
 {
 	static int initialized = 0;
-
+	static void (*volatile call__ctors)(void) = __ctors;
 	/*
 	 * Call global constructors.
 	 * Arrange to call global destructors at exit.
 	 */
+	/* prevent function pointer constant propagation */
 	if (!initialized) {
 		initialized = 1;
-		__ctors();
+		(*call__ctors)();
 	}
-
 }
 
-extern void __fini(void) __attribute__((section(".fini")));
+extern void _fini(void) __attribute__((section(".fini")));
 
 void
-__fini()
+_fini()
 {
+	static void (* volatile call__dtors)(void) = __dtors;
 	/*
 	 * Call global destructors.
 	 */
-	__dtors();
+	/* prevent function pointer constant propagation */
+	(*call__dtors)();
 }
-
-#endif /* !ECOFF_COMPAT */
