@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.20 2002/03/28 21:54:27 christos Exp $ */
+/* $NetBSD: pms.c,v 1.1 2002/04/22 10:44:47 wiz Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.20 2002/03/28 21:54:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.1 2002/04/22 10:44:47 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.20 2002/03/28 21:54:27 christos Exp $");
 
 #include <dev/ic/pckbcvar.h>
 
-#include <dev/pckbc/psmreg.h>
+#include <dev/pckbc/pmsreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -469,7 +469,7 @@ pmsinput(vsc, data)
 		 * too frequently -christos
 		 */
 		if (diff.tv_sec > 0 || diff.tv_usec > 25000) {
-			DPRINTF(("psm_input: unusual delay, "
+			DPRINTF(("pms_input: unusual delay, "
 			    "spawning reset thread\n"));
 			sc->inputstate = 0;
 			sc->sc_enabled = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: psmreg.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
+/* $NetBSD: pmsreg.h,v 1.1 2002/04/22 10:44:47 wiz Exp $ */
 
 /* mouse commands */
 #define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
