@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.h,v 1.3 1998/01/17 21:53:53 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.h,v 1.4 1998/06/04 01:22:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
 
+extern	SGMAP_PTE_TYPE	__C(SGMAP_TYPE,_prefetch_spill_page_pte);
+
+void	__C(SGMAP_TYPE,_init_spill_page_pte) __P((void));
 int	__C(SGMAP_TYPE,_load) __P((bus_dma_tag_t, bus_dmamap_t,
 	    void *, bus_size_t, struct proc *, int, struct alpha_sgmap *));
 int	__C(SGMAP_TYPE,_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
