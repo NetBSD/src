@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.8 1999/09/19 23:00:04 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.9 1999/09/29 17:26:06 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -73,10 +73,10 @@ pcdisplay_cursor(id, on, row, col)
 		scr->cursortmp = bus_space_read_2(memt, memh, 
 		    scr->dispoffset + off);
 		bus_space_write_2(memt, memh, scr->dispoffset + off,
-		    scr->cursortmp ^ 0x7000);
+		    scr->cursortmp ^ 0x7700);
 	} else {
 		scr->cursortmp = scr->mem[off];
-		scr->mem[off] = scr->cursortmp ^ 0x7000;
+		scr->mem[off] = scr->cursortmp ^ 0x7700;
 	}
 #else 	/* PCDISPLAY_SOFTCURSOR */
 	struct pcdisplayscreen *scr = id;
@@ -123,7 +123,6 @@ pcdisplay_putchar(id, row, col, c, attr)
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
-
 
 	off = row * scr->type->ncols + col;
 
