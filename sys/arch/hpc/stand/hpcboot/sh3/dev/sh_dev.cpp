@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_dev.cpp,v 1.1 2002/02/11 17:08:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_dev.cpp,v 1.2 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 SHdev::SHdev()
 {
 
-	_menu = &HpcMenuInterface::Instance();	
+	_menu = &HpcMenuInterface::Instance();
 	_cons = Console::Instance();
 }
 
@@ -121,7 +121,7 @@ SHdev::scif_dump(int bps)
 	    32 * bps *(r + 1) * n));
 
 	/* control */
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCSCR2_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCSCR2_##m, #m)
 	DPRINTF((TEXT("SCSCR2: ")));
 	r = _scif_reg_read(SH3_SCSCR2);
 	DBG_BIT_PRINT(r, TIE);
@@ -132,7 +132,7 @@ SHdev::scif_dump(int bps)
 #undef	DBG_BIT_PRINT
 
 	/* status */
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCSSR2_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCSSR2_##m, #m)
 	r16 = _reg_read_2(SH3_SCSSR2);
 	DPRINTF((TEXT("SCSSR2: ")));
 	DBG_BIT_PRINT(r16, ER);
@@ -146,7 +146,7 @@ SHdev::scif_dump(int bps)
 #undef	DBG_BIT_PRINT
 
 	/* FIFO control */
-#define DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCFCR2_##m, #m)
+#define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SCFCR2_##m, #m)
 	r = _scif_reg_read(SH3_SCFCR2);
 	DPRINTF((TEXT("SCFCR2: ")));
 	DBG_BIT_PRINT(r, RTRG1);
@@ -165,7 +165,7 @@ SHdev::scif_dump(int bps)
 void
 SHdev::icu_dump_priority(struct intr_priority *tab)
 {
-	
+
 	DPRINTF((TEXT("<<<INTC>>>\n")));
 
 	DPRINTF((TEXT("----interrupt priority----\n")));
