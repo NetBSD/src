@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1995/10/16 04:55:44 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 1995/10/18 03:52:15 cgd Exp $
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -20,8 +20,7 @@ mount-fs:
 	disklabel -W ${DESTDISK}
 	-dd if=/dev/zero of=/dev/r${DESTDISK}c bs=`expr ${SECPERCYL} \* 512` \
 	    count=${CYLS}
-	disklabel -w -r -B -b /usr/mdec/sdboot -s /usr/mdec/bootsd \
-	    ${DESTDISK} rz25
+	disklabel -w -r ${DESTDISK} rz25
 	disklabel -W ${DESTDISK}
 	newfs -O /dev/r${DESTDISK}a
 	newfs -O /dev/r${DESTDISK}d
@@ -49,6 +48,9 @@ build-fs:
 	ln -s ../local/bin/size ${DESTDIR}/usr/bin
 	ln -s ../local/bin/strip ${DESTDIR}/usr/bin
 	cp -p ${DESTDIR}/usr/mdec/boot ${DESTDIR}/
+	sync; sleep 1; sync; sleep 1
+	${DESTDIR}/usr/mdec/installboot -v ${DESTDIR}/boot \
+	    ${DESTDIR}/usr/mdec/bootxx /dev/r${DESTDISK}c
 
 unmount-fs:
 	umount ${DESTDIR}/usr ${DESTDIR}
@@ -63,7 +65,7 @@ bin.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
 	(cd ${DESTDIR} ; find . | grep -v '^./etc' | \
 	    grep -v '^./usr/X11R6' | grep -v '^./netbsd' | \
-	    pax -w -d | gzip -9) > $@
+	    grep -v '^./boot' | pax -w -d | gzip -9) > $@
 
 etc.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
