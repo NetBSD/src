@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.5 2002/11/02 07:35:07 perry Exp $	*/
+/*	$NetBSD: tree.h,v 1.6 2003/11/03 04:20:28 yamt Exp $	*/
 /*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -209,7 +209,7 @@ name##_SPLAY(struct name *head, struct type *elm)			\
 	SPLAY_LEFT(&__node, field) = SPLAY_RIGHT(&__node, field) = NULL;\
 	__left = __right = &__node;					\
 \
-	while ((__comp = (cmp)(elm, (head)->sph_root))) {		\
+	while ((__comp = (cmp)(elm, (head)->sph_root)) != 0) {		\
 		if (__comp < 0) {					\
 			__tmp = SPLAY_LEFT((head)->sph_root, field);	\
 			if (__tmp == NULL)				\
@@ -335,11 +335,11 @@ struct {								\
 
 #define RB_ROTATE_LEFT(head, elm, tmp, field) do {			\
 	(tmp) = RB_RIGHT(elm, field);					\
-	if ((RB_RIGHT(elm, field) = RB_LEFT(tmp, field))) {		\
+	if ((RB_RIGHT(elm, field) = RB_LEFT(tmp, field)) != NULL) {	\
 		RB_PARENT(RB_LEFT(tmp, field), field) = (elm);		\
 	}								\
 	RB_AUGMENT(elm);						\
-	if ((RB_PARENT(tmp, field) = RB_PARENT(elm, field))) {		\
+	if ((RB_PARENT(tmp, field) = RB_PARENT(elm, field)) != NULL) {	\
 		if ((elm) == RB_LEFT(RB_PARENT(elm, field), field))	\
 			RB_LEFT(RB_PARENT(elm, field), field) = (tmp);	\
 		else							\
@@ -355,11 +355,11 @@ struct {								\
 
 #define RB_ROTATE_RIGHT(head, elm, tmp, field) do {			\
 	(tmp) = RB_LEFT(elm, field);					\
-	if ((RB_LEFT(elm, field) = RB_RIGHT(tmp, field))) {		\
+	if ((RB_LEFT(elm, field) = RB_RIGHT(tmp, field)) != NULL) {	\
 		RB_PARENT(RB_RIGHT(tmp, field), field) = (elm);		\
 	}								\
 	RB_AUGMENT(elm);						\
-	if ((RB_PARENT(tmp, field) = RB_PARENT(elm, field))) {		\
+	if ((RB_PARENT(tmp, field) = RB_PARENT(elm, field)) != NULL) {	\
 		if ((elm) == RB_LEFT(RB_PARENT(elm, field), field))	\
 			RB_LEFT(RB_PARENT(elm, field), field) = (tmp);	\
 		else							\
@@ -392,7 +392,7 @@ void									\
 name##_RB_INSERT_COLOR(struct name *head, struct type *elm)		\
 {									\
 	struct type *parent, *gparent, *tmp;				\
-	while ((parent = RB_PARENT(elm, field)) &&			\
+	while ((parent = RB_PARENT(elm, field)) != NULL &&		\
 	    RB_COLOR(parent, field) == RB_RED) {			\
 		gparent = RB_PARENT(parent, field);			\
 		if (parent == RB_LEFT(gparent, field)) {		\
@@ -456,7 +456,8 @@ name##_RB_REMOVE_COLOR(struct name *head, struct type *parent, struct type *elm)
 				if (RB_RIGHT(tmp, field) == NULL ||	\
 				    RB_COLOR(RB_RIGHT(tmp, field), field) == RB_BLACK) {\
 					struct type *oleft;		\
-					if ((oleft = RB_LEFT(tmp, field)))\
+					if ((oleft = RB_LEFT(tmp, field)) \
+					    != NULL)			\
 						RB_COLOR(oleft, field) = RB_BLACK;\
 					RB_COLOR(tmp, field) = RB_RED;	\
 					RB_ROTATE_RIGHT(head, tmp, oleft, field);\
@@ -488,7 +489,8 @@ name##_RB_REMOVE_COLOR(struct name *head, struct type *parent, struct type *elm)
 				if (RB_LEFT(tmp, field) == NULL ||	\
 				    RB_COLOR(RB_LEFT(tmp, field), field) == RB_BLACK) {\
 					struct type *oright;		\
-					if ((oright = RB_RIGHT(tmp, field)))\
+					if ((oright = RB_RIGHT(tmp, field)) \
+					    != NULL)			\
 						RB_COLOR(oright, field) = RB_BLACK;\
 					RB_COLOR(tmp, field) = RB_RED;	\
 					RB_ROTATE_LEFT(head, tmp, oright, field);\
@@ -520,7 +522,7 @@ name##_RB_REMOVE(struct name *head, struct type *elm)			\
 	else {								\
 		struct type *left;					\
 		elm = RB_RIGHT(elm, field);				\
-		while ((left = RB_LEFT(elm, field)))			\
+		while ((left = RB_LEFT(elm, field)) != NULL)		\
 			elm = left;					\
 		child = RB_RIGHT(elm, field);				\
 		parent = RB_PARENT(elm, field);				\
@@ -553,7 +555,7 @@ name##_RB_REMOVE(struct name *head, struct type *elm)			\
 			left = parent;					\
 			do {						\
 				RB_AUGMENT(left);			\
-			} while ((left = RB_PARENT(left, field)));	\
+			} while ((left = RB_PARENT(left, field)) != NULL); \
 		}							\
 		goto color;						\
 	}								\
@@ -624,6 +626,7 @@ name##_RB_FIND(struct name *head, struct type *elm)			\
 	return (NULL);							\
 }									\
 									\
+/* ARGSUSED */								\
 struct type *								\
 name##_RB_NEXT(struct name *head, struct type *elm)			\
 {									\
