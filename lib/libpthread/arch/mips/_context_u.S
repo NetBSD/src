@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/29 11:03:25 wdk Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2002/12/01 10:07:15 wdk Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@
 	sll	t1, t1, _UC_USER_BIT			; \
 	and	t0, t1, t0				; \
 	beq	t0, zero, 1f				; \
-	 nop						; \
 	REG_PROLOGUE					; \
 	REG_L	s0, (UC_REGS + _REG_S0 * SZREG)(reg)	; \
 	REG_L	s1, (UC_REGS + _REG_S1 * SZREG)(reg)	; \
@@ -102,22 +101,27 @@
 	j	t9					; \
 	nop						; \
 	/* NOTREACHED */				; \
-1:	move	a0, reg					; \
-	PIC_CALL(setcontext, t9)
+							; \
+1:							; \
+	move	a0, reg					; \
+	la	t9, _C_LABEL(setcontext)		; \
+	jr	t9					; \
+	nop						; \
 	/* NOTREACHED */
 
 LEAF(_getcontext_u)
+	PIC_PROLOGUE(_getcontext_u, t9)
 	GETC(a0)
+	xor	v0, v0, v0
 	j	ra
-	 xor	v0, v0, v0
 END(_getcontext_u)
 
-NESTED(_setcontext_u, CALLFRAME_SIZ, ra)
+LEAF(_setcontext_u)
 	PIC_PROLOGUE(_setcontext_u, t9)
 	SETC(a0)
 END(_setcontext_u)
 
-NESTED(_swapcontext_u, CALLFRAME_SIZ, ra)
+LEAF(_swapcontext_u)
 	PIC_PROLOGUE(_swapcontext_u, t9)
 	GETC(a0)
 	SETC(a1)
