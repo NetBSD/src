@@ -1,4 +1,4 @@
-/* $NetBSD: systmodes.h,v 1.3 2001/03/22 12:08:59 ross Exp $ */
+/*	$NetBSD: systmodes.h,v 1.4 2002/02/21 07:38:17 itojun Exp $	*/
 
 /* This is a derivative work. */
 

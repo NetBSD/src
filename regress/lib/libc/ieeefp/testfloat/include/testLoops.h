@@ -1,4 +1,4 @@
-/* $NetBSD: testLoops.h,v 1.2 2001/03/13 07:49:34 ross Exp $ */
+/*	$NetBSD: testLoops.h,v 1.3 2002/02/21 07:38:17 itojun Exp $	*/
 
 /* This is a derivative work. */
 

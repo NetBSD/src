@@ -1,3 +1,5 @@
+/*	$NetBSD: divremtest.c,v 1.4 2002/02/21 07:38:15 itojun Exp $	*/
+
 /*-
  * Copyright (c) 2002 Ross Harvey
  * All rights reserved.

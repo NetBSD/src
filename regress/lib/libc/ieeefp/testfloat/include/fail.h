@@ -1,4 +1,4 @@
-/* $NetBSD: fail.h,v 1.2 2001/03/13 07:49:33 ross Exp $ */
+/*	$NetBSD: fail.h,v 1.3 2002/02/21 07:38:16 itojun Exp $	*/
 
 /* This is a derivative work. */
 

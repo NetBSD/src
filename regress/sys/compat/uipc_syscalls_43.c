@@ -1,4 +1,4 @@
-/* $NetBSD: uipc_syscalls_43.c,v 1.1 2001/07/17 11:32:28 jdolecek Exp $ */
+/*	$NetBSD: uipc_syscalls_43.c,v 1.2 2002/02/21 07:38:20 itojun Exp $	*/
 
 /*
  * This is regression test for COMPAT_43 code. Tested 4.3 syscalls are:

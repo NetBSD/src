@@ -1,4 +1,4 @@
-/* $NetBSD: systfloat.c,v 1.5 2001/03/22 12:22:18 ross Exp $ */
+/*	$NetBSD: systfloat.c,v 1.6 2002/02/21 07:38:16 itojun Exp $	*/
 
 /* This is a derivative work. */
 
@@ -64,7 +64,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: systfloat.c,v 1.5 2001/03/22 12:22:18 ross Exp $");
+__RCSID("$NetBSD: systfloat.c,v 1.6 2002/02/21 07:38:16 itojun Exp $");
 #endif
 
 #include <math.h>

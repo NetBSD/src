@@ -1,4 +1,4 @@
-/* $NetBSD: testCases.c,v 1.3 2001/03/13 07:39:58 ross Exp $ */
+/*	$NetBSD: testCases.c,v 1.4 2002/02/21 07:38:16 itojun Exp $	*/
 
 /* This is a derivative work. */
 

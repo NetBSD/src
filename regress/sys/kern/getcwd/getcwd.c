@@ -1,4 +1,4 @@
-/* $NetBSD: getcwd.c,v 1.5 1999/07/11 09:54:41 sommerfeld Exp $ */
+/*	$NetBSD: getcwd.c,v 1.6 2002/02/21 07:38:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

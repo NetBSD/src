@@ -1,4 +1,4 @@
-/* $NetBSD: hsearchtest.c,v 1.3 2001/02/14 06:03:37 cgd Exp $ */
+/*	$NetBSD: hsearchtest.c,v 1.4 2002/02/21 07:38:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: hsearchtest.c,v 1.3 2001/02/14 06:03:37 cgd Exp $");
+__RCSID("$NetBSD: hsearchtest.c,v 1.4 2002/02/21 07:38:15 itojun Exp $");
 __COPYRIGHT(
 "@(#) Copyright (c) 2001 Christopher G. Demetriou.  All rights reserved.\n");
 #endif /* not lint */

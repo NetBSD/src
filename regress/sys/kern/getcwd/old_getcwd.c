@@ -1,5 +1,4 @@
-
-/*	$NetBSD: old_getcwd.c,v 1.1 1999/03/22 18:14:39 sommerfe Exp $	*/
+/*	$NetBSD: old_getcwd.c,v 1.2 2002/02/21 07:38:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -48,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: old_getcwd.c,v 1.1 1999/03/22 18:14:39 sommerfe Exp $");
+__RCSID("$NetBSD: old_getcwd.c,v 1.2 2002/02/21 07:38:20 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

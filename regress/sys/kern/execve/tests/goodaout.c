@@ -1,4 +1,4 @@
-/* $NetBSD: goodaout.c,v 1.6 2000/07/03 04:02:35 matt Exp $ */
+/*	$NetBSD: goodaout.c,v 1.7 2002/02/21 07:38:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
