@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.5 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.6 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -106,3 +106,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	iwic(4): Add driver for Winbond W6692 ISDN [pooka 20020924]
 	Removed the old rmap code, <sys/map.h> and kern/subr_rmap.c.
 		[thorpej 20020925]
+	Overhaul device parent matching; now record attributes in
+		a "parent spec" in the kernel. [thorpej 20020925]
