@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.45.2.1 1997/05/13 03:35:57 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.45.2.2 1997/05/19 00:14:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -84,7 +84,7 @@ struct {
 	int wmidi;
 } sberr;
 
-int sbdsp_srtotc __P((struct sbdsp_softc *sc, int sr, int isdac,
+void sbdsp_srtotc __P((struct sbdsp_softc *sc, int sr, int isdac,
 		      int *tcp, int *modep));
 u_int sbdsp_jazz16_probe __P((struct sbdsp_softc *));
 
@@ -128,9 +128,6 @@ void	sbdsp_pause __P((struct sbdsp_softc *));
 int	sbdsp16_setrate __P((struct sbdsp_softc *, int, int, int *));
 int	sbdsp_tctosr __P((struct sbdsp_softc *, int));
 int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
-int	sbdsp_set_io_params __P((struct sbdsp_softc *, struct audio_params *));
-void	sbdsp_mulaw_expand __P((void *, u_char *, int));
-void	sbdsp_mulaw_compress __P((void *, u_char *, int));
 
 #ifdef AUDIO_DEBUG
 void sb_printsc __P((struct sbdsp_softc *));
@@ -181,7 +178,9 @@ sbdsp_probe(sc)
 		sc->sc_model = sbversion(sc);
 	}
 
+#if 0
 	sc->sc_model = 0x100;	/* XXX pretend to be just a tired old SB XXX */
+#endif
 
 	return 1;
 }
@@ -331,11 +330,14 @@ sbdsp_mix_write(sc, mixerport, val)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int s;
 
+	s = splaudio();
 	bus_space_write_1(iot, ioh, SBP_MIXER_ADDR, mixerport);
-	delay(10);
+	delay(20);
 	bus_space_write_1(iot, ioh, SBP_MIXER_DATA, val);
 	delay(30);
+	splx(s);
 }
 
 int
@@ -345,10 +347,16 @@ sbdsp_mix_read(sc, mixerport)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	int val;
+	int s;
 
+	s = splaudio();
 	bus_space_write_1(iot, ioh, SBP_MIXER_ADDR, mixerport);
-	delay(10);
-	return bus_space_read_1(iot, ioh, SBP_MIXER_DATA);
+	delay(20);
+	val = bus_space_read_1(iot, ioh, SBP_MIXER_DATA);
+	delay(30);
+	splx(s);
+	return val;
 }
 
 int
@@ -356,82 +364,60 @@ sbdsp_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
 {
+	struct sbdsp_softc *sc = addr;
+
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 1:
-		strcpy(fp->name, AudioElinear_le);
-		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
-		fp->precision = 16;
-		fp->flags = 0;
-		break;
-	case 2:
 		strcpy(fp->name, AudioEulinear);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	default:
-		return (EINVAL);
-	}
-	return (0);
-}
-
-int
-sbdsp_set_io_params(sc, p)
-	struct sbdsp_softc *sc;
-	struct audio_params *p;
-{
-
-	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-	case AUDIO_ENCODING_LINEAR_LE:
+	case 1:
+		strcpy(fp->name, AudioEmulaw);
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 2:
+		strcpy(fp->name, AudioElinear);
+		fp->encoding = AUDIO_ENCODING_LINEAR;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
-		return (EINVAL);
+		if (!(ISSB16CLASS(sc) || ISJAZZ16(sc)))
+			return (EINVAL);
+		switch(fp->index) {
+		case 3:
+			strcpy(fp->name, AudioElinear_le);
+			fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+			fp->precision = 16;
+			fp->flags = 0;
+			break;
+		case 4:
+			strcpy(fp->name, AudioEulinear_le);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+			fp->precision = 16;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			break;
+		case 5:
+			strcpy(fp->name, AudioElinear_be);
+			fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+			fp->precision = 16;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			break;
+		case 6:
+			strcpy(fp->name, AudioEulinear_be);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+			fp->precision = 16;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			break;
+		default:
+			return (EINVAL);
+		}
 	}
-
-	if (ISSB16CLASS(sc) || ISJAZZ16(sc)) {
-		if (p->precision != 16 && p->precision != 8)
-			return (EINVAL);
-	} else {
-		if (p->precision != 8)
-			return (EINVAL);
-	}
-
-	if (ISSBPROCLASS(sc)) {
-		if (p->channels != 1 && p->channels != 2)
-			return (EINVAL);
-		if (p->channels == 2 && p->sample_rate > 22000)
-			return (EINVAL);
-	} else {
-		if (p->channels != 1)
-			return (EINVAL);
-	}
-
 	return (0);
-}
-
-void
-sbdsp_mulaw_expand(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
-{
-	mulaw_to_ulinear8(p, cc);
-}
-
-void
-sbdsp_mulaw_compress(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
-{
-	ulinear8_to_mulaw(p, cc);
 }
 
 int
@@ -440,51 +426,107 @@ sbdsp_set_params(addr, mode, p, q)
 	int mode;
 	struct audio_params *p, *q;
 {
-	register struct sbdsp_softc *sc = addr;
-	int error, rate;
+	struct sbdsp_softc *sc = addr;
+	int maxspeed;
+	void (*swcode) __P((void *, u_char *buf, int cnt));
+	int can16 = ISSB16CLASS(sc) || ISJAZZ16(sc);
 
-	error = sbdsp_set_io_params(sc, p);
-	if (error)
-		return error;
-
-	if (mode == AUMODE_RECORD) {
-		if (ISSB16CLASS(sc)) {
-			error = sbdsp16_setrate(sc, p->sample_rate, SB_INPUT_RATE, 
-						&sc->sc_irate);
-			rate = sc->sc_irate;
-		} else {
-			error = sbdsp_srtotc(sc, p->sample_rate, SB_INPUT_RATE, 
-					     &sc->sc_itc, &sc->sc_imode);
-			rate = sbdsp_tctosr(sc, sc->sc_itc);
-		}
-	} else {
-		if (ISSB16CLASS(sc)) {
-			error = sbdsp16_setrate(sc, p->sample_rate, SB_OUTPUT_RATE, 
-						&sc->sc_orate);
-			rate = sc->sc_orate;
-		} else {
-			error = sbdsp_srtotc(sc, p->sample_rate, SB_OUTPUT_RATE, 
-					     &sc->sc_otc, &sc->sc_omode);
-			rate = sbdsp_tctosr(sc, sc->sc_otc);
-		}
+	switch (p->encoding) {
+	case AUDIO_ENCODING_LINEAR_LE:
+		if (p->precision == 8)
+			swcode = change_sign8;
+		else if (can16)
+			swcode = 0;
+		else
+			return EINVAL;
+		break;
+	case AUDIO_ENCODING_ULINEAR_LE:
+		if (p->precision == 8)
+			swcode = 0;
+		else if (can16)
+			swcode = change_sign16;
+		else
+			return EINVAL;
+		break;
+	case AUDIO_ENCODING_LINEAR_BE:
+		if (p->precision == 8)
+			swcode = change_sign8;
+		else if (can16)
+			swcode = swap_bytes;
+		else
+			return EINVAL;
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		if (p->precision == 8)
+			swcode = 0;
+		else if (can16)
+			swcode = swap_bytes_change_sign16;
+		else
+			return EINVAL;
+		break;
+	case AUDIO_ENCODING_ULAW:
+		swcode = mode == AUMODE_PLAY ? 
+			  mulaw_to_ulinear8 : ulinear8_to_mulaw;
+		break;
+	default:
+		return EINVAL;
 	}
-	if (error)
-		return error;
+
+
+	if (!ISSBPROCLASS(sc)) {
+		/* v 1.x or v 2.x */
+		if (mode == AUMODE_PLAY) {
+			if (ISSB2CLASS(sc) && SBVER_MINOR(sc->sc_model) > 0)
+				maxspeed = 44100;
+			else
+				maxspeed = 22727;
+		} else
+			maxspeed = 12987;
+		if (p->sample_rate < 4000 || p->sample_rate > maxspeed) 
+			return EINVAL;
+		if (p->channels != 1)
+			return EINVAL;
+	} else if (!can16) {
+		/* v 3.x (SBPRO) */
+		if (p->channels == 1)
+			maxspeed = 45454;
+		else
+			maxspeed = 22727;
+		if (p->sample_rate < 4000 || p->sample_rate > maxspeed) 
+			return EINVAL;
+	} else {
+		/* >= v 4.x */
+		if (p->sample_rate < 4000 || p->sample_rate > 44100) 
+			return EINVAL;
+	}
+
+	if (ISSB16CLASS(sc)) {
+		if (mode == AUMODE_RECORD)
+			sc->sc_irate = p->sample_rate;
+		else
+			sc->sc_orate = p->sample_rate;
+	} else {
+		sbdsp_srtotc(sc, p->sample_rate, SB_OUTPUT_RATE, 
+			     &sc->sc_otc, &sc->sc_omode);
+		p->sample_rate = sbdsp_tctosr(sc, sc->sc_otc);
+	}
 
 	sc->sc_precision = p->precision;
 	sc->sc_channels = p->channels;
 
-	p->sample_rate = rate;
-	if (p->encoding == AUDIO_ENCODING_ULAW) {
-		p->sw_code = mode == AUMODE_PLAY ? 
-			sbdsp_mulaw_expand : sbdsp_mulaw_compress;
-	} else
-		p->sw_code = 0;
+	p->sw_code = swcode;
 
 	/* Update setting for the other mode. */
 	q->encoding = p->encoding;
 	q->channels = p->channels;
 	q->precision = p->precision;
+
+	/*
+	 * XXX
+	 * Should wait for chip to be idle.
+	 */
+	sc->sc_dmadir = SB_DMA_NONE;
+
 	return 0;
 }
 
@@ -662,6 +704,9 @@ sbdsp_round_blocksize(addr, blk)
 	/* Round to a multiple of the sample size. */
 	blk &= -(sc->sc_channels * sc->sc_precision / 8);
 
+	if (blk > 1364)
+		blk = 1364;	/* XXX */
+
 	return (blk);
 }
 
@@ -669,49 +714,6 @@ int
 sbdsp_commit_settings(addr)
 	void *addr;
 {
-	register struct sbdsp_softc *sc = addr;
-
-	/* XXX these can me moved to sddsp_io_params() now */
-
-	/* due to potentially unfortunate ordering in the above layers,
-	   re-do a few sets which may be important--input gains
-	   (adjust the proper channels), number of input channels (hit the
-	   record rate and set mode) */
-
-	if (ISSBPRO(sc)) {
-		/*
-		 * With 2 channels, SBPro can't do more than 22kHz.
-		 * Whack the rates down to speed if necessary.
-		 * Reset the time constant anyway
-		 * because it may have been adjusted with a different number
-		 * of channels, which means it might have computed the wrong
-		 * mode (low/high speed).
-		 */
-		if (sc->sc_channels == 2 &&
-		    sbdsp_tctosr(sc, sc->sc_itc) > 22727) {
-			sbdsp_srtotc(sc, 22727, SB_INPUT_RATE,
-				     &sc->sc_itc, &sc->sc_imode);
-		} else
-			sbdsp_srtotc(sc, sbdsp_tctosr(sc, sc->sc_itc),
-				     SB_INPUT_RATE, &sc->sc_itc,
-				     &sc->sc_imode);
-
-		if (sc->sc_channels == 2 &&
-		    sbdsp_tctosr(sc, sc->sc_otc) > 22727) {
-			sbdsp_srtotc(sc, 22727, SB_OUTPUT_RATE,
-				     &sc->sc_otc, &sc->sc_omode);
-		} else
-			sbdsp_srtotc(sc, sbdsp_tctosr(sc, sc->sc_otc),
-				     SB_OUTPUT_RATE, &sc->sc_otc,
-				     &sc->sc_omode);
-	}
-
-	/*
-	 * XXX
-	 * Should wait for chip to be idle.
-	 */
-	sc->sc_dmadir = SB_DMA_NONE;
-
 	return 0;
 }
 
@@ -969,24 +971,6 @@ sbdsp_contdma(addr)
 	return(0);
 }
 
-int
-sbdsp16_setrate(sc, sr, isdac, ratep)
-	register struct sbdsp_softc *sc;
-	int sr;
-	int isdac;
-	int *ratep;
-{
-
-	/*
-	 * XXXX
-	 * More checks here?
-	 */
-	if (sr < 5000 || sr > 45454)
-		return (EINVAL);
-	*ratep = sr;
-	return (0);
-}
-
 /*
  * Convert a linear sampling rate into the DAC time constant.
  * Set *mode to indicate the high/low-speed DMA operation.
@@ -995,7 +979,7 @@ sbdsp16_setrate(sc, sr, isdac, ratep)
  * The sampling rate limits are different for the DAC and ADC,
  * so isdac indicates output, and !isdac indicates input.
  */
-int
+void
 sbdsp_srtotc(sc, sr, isdac, tcp, modep)
 	register struct sbdsp_softc *sc;
 	int sr;
@@ -1061,7 +1045,6 @@ sbdsp_srtotc(sc, sr, isdac, tcp, modep)
 out:
 	*tcp = tc;
 	*modep = mode;
-	return (0);
 }
 
 /*
@@ -1381,7 +1364,7 @@ sbdsp_intr(arg)
 #endif
 	if (sc->sc_intr != 0) {
 		/* clear interrupt */
-		x = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    sc->sc_precision == 16 ? SBP_DSP_IRQACK16 :
 					     SBP_DSP_IRQACK8);
 		if (!ISSB2CLASS(sc))
@@ -1565,7 +1548,7 @@ sbdsp_mixer_get_port(addr, cp)
 	register struct sbdsp_softc *sc = addr;
 	int gain;
     
-	DPRINTF(("sbdsp_mixer_get_port: port=%d", cp->dev));
+	DPRINTF(("sbdsp_mixer_get_port: port=%d\n", cp->dev));
 
 	if (!ISSBPROCLASS(sc))
 		return EINVAL;

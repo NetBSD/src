@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.27.2.1 1997/05/13 03:06:06 thorpej Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.27.2.2 1997/05/19 00:14:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -157,10 +157,6 @@ static int ad_read __P((struct ad1848_softc *, int));
 static __inline void ad_write __P((struct ad1848_softc *, int, int));
 static void ad_set_MCE __P((struct ad1848_softc *, int));
 static void wait_for_calibration __P((struct ad1848_softc *));
-
-void ad1848_sign8(void *, u_char *, int);
-void ad1848_sign16(void *, u_char *, int);
-void ad1848_swap(void *, u_char *, int);
 
 static int
 ad_read(sc, reg)
@@ -1009,33 +1005,6 @@ ad1848_query_encoding(addr, fp)
     return (0);
 }
 
-void
-ad1848_sign8(addr, p, cc)
-    void *addr;
-    u_char *p;
-    int cc;
-{
-    change_sign8(p, cc);
-}
-
-void
-ad1848_sign16(addr, p, cc)
-    void *addr;
-    u_char *p;
-    int cc;
-{
-    change_sign16(p, cc);
-}
-
-void
-ad1848_swap(addr, p, cc)
-    void *addr;
-    u_char *p;
-    int cc;
-{
-    swap_bytes(p, cc);
-}
-
 int
 ad1848_set_params(addr, mode, p, q)
     void *addr;
@@ -1044,30 +1013,30 @@ ad1848_set_params(addr, mode, p, q)
 {
     struct ad1848_softc *sc = addr;
     int error, bits, enc;
+    void (*swcode) __P((void *, u_char *buf, int cnt));
 
     DPRINTF(("ad1848_set_params: %d %d %d %d\n", 
 	     p->encoding, p->precision, p->channels, p->sample_rate));
 
-    p->sw_code = 0;
-
     enc = p->encoding;
+    swcode = 0;
     switch (enc) {
     case AUDIO_ENCODING_LINEAR_LE:
 	if (p->precision == 8) {
 	    enc = AUDIO_ENCODING_ULINEAR_LE;
-	    p->sw_code = ad1848_sign8;
+	    swcode = change_sign8;
 	}
 	break;
     case AUDIO_ENCODING_LINEAR_BE:
 	if (p->precision == 16 && sc->mode == 1) {
 	    enc = AUDIO_ENCODING_LINEAR_LE;
-	    p->sw_code = ad1848_swap;
+	    swcode = swap_bytes;
 	}
 	break;
     case AUDIO_ENCODING_ULINEAR_LE:
 	if (p->precision == 16) {
 	    enc = AUDIO_ENCODING_LINEAR_LE;
-	    p->sw_code = ad1848_sign16;
+	    swcode = change_sign16;
 	}
 	break;
     }
@@ -1109,6 +1078,8 @@ ad1848_set_params(addr, mode, p, q)
     error = ad1848_set_speed(sc, &p->sample_rate);
     if (error)
 	return error;
+
+    p->sw_code = swcode;
 
     sc->format_bits = bits;
     sc->channels = p->channels;
