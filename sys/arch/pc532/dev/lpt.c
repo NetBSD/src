@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.19 1997/03/15 18:10:16 is Exp $	*/
+/*	$NetBSD: lpt.c,v 1.20 1997/03/22 08:29:52 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -67,12 +67,11 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/conf.h>
 
 #if defined(INET) && defined(PLIP)
 #include "bpfilter.h"
@@ -171,9 +170,7 @@ struct lpt_softc {
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)
-
-/* XXX does not belong here */
-cdev_decl(lpt);
+#define LPTSOFTC(n)	((struct lpt_softc *) lpt_cd.cd_devs[n])
 
 static int lptmatch __P((struct device *, struct cfdata *, void *aux));
 static void lptattach __P((struct device *, struct device *, void *));
@@ -278,18 +275,23 @@ lptopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[LPTUNIT(dev)];
-	volatile struct i8255 *i8255 = sc->sc_i8255;
+	struct lpt_softc *sc;
+	volatile struct i8255 *i8255;
 	u_char flags = LPTFLAGS(dev);
 	int error;
 	int spin;
 
-	if (LPTUNIT(dev) >= NLPT || !sc)
+	if (LPTUNIT(dev) >= lpt_cd.cd_ndevs)
+		return ENXIO;
+
+	sc = LPTSOFTC(LPTUNIT(dev));
+	if (!sc)
 		return ENXIO;
 
 	if (sc->sc_state)
 		return EBUSY;
 
+	i8255 = sc->sc_i8255;
 #if defined(INET) && defined(PLIP)
 	if (sc->sc_ethercom.ec_if.if_flags & IFF_UP)
 		return EBUSY;
@@ -318,8 +320,8 @@ lptopen(dev, flag, mode, p)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
-		    STEP) != EWOULDBLOCK) {
+		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
 		}
@@ -375,7 +377,7 @@ lptclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -396,8 +398,8 @@ pushbytes(sc)
 
 	while (sc->sc_count > 0) {
 		i8255->port_control = LPT_IRQENABLE;
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-		    "lptwrite", 0))
+		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptwrite", 0);
+		if (error != 0) 
 			return error;
 	}
 	return 0;
@@ -413,12 +415,12 @@ lptwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = LPTSOFTC(LPTUNIT(dev));
 	size_t n;
 	int error = 0;
 
 	if (sc->sc_count) return EBUSY;
-	while (n = min(LPT_BSIZE, uio->uio_resid)) {
+	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);
@@ -507,9 +509,11 @@ plipattach(sc, unit)
 	int unit;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	sc->sc_ifbuf = NULL;
 	sprintf(ifp->if_xname, "plip%d", unit);
+	bzero(myaddr, sizeof(myaddr));
 	ifp->if_softc = sc;
 	ifp->if_start = plipstart;
 	ifp->if_ioctl = plipioctl;
@@ -517,7 +521,7 @@ plipattach(sc, unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, myaddr);
 	ifp->if_mtu = PLIPMTU;
 
 #if NBPFILTER > 0
@@ -542,7 +546,6 @@ plipioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data; 
 	struct sockaddr_dl *sdl;
-	int s;
 	int error = 0;
 
 	switch (cmd) {
@@ -742,7 +745,7 @@ plipinput(sc)
 	struct mbuf *m;
 	struct ether_header *eh;
 	u_char *p = sc->sc_ifbuf, minibuf[4];
-	int c, i = 0, s, len, cksum;
+	int s, len, cksum;
 
 	if (!(i8255->port_c & LPC_NACK)) {
 		i8255->port_a |= LPA_ACKENABLE;
@@ -754,6 +757,7 @@ plipinput(sc)
 
 #if defined(COMPAT_PLIP10)
 	if (ifp->if_flags & IFF_LINK0) {
+		int c;
 		if (plipreceive(i8255, minibuf, 3) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[2];
 		if (len > (ifp->if_mtu + ifp->if_hdrlen)) goto err;
@@ -799,7 +803,7 @@ plipinput(sc)
 	i8255->port_b = 0x00;
 
 	s = splimp();
-	if (m = m_devget(sc->sc_ifbuf, len, 0, ifp, NULL)) {
+	if ((m = m_devget(sc->sc_ifbuf, len, 0, ifp, NULL)) != NULL) {
 		/* We assume that the header fit entirely in one mbuf. */
 		eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
