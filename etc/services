@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.30 1999/01/13 13:32:22 hwr Exp $
+#	$NetBSD: services,v 1.31 1999/02/14 00:43:38 lukem Exp $
 #
 # Network services, Internet style
 #
@@ -37,8 +37,8 @@ time		37/udp		timserver
 rlp		39/udp		resource	# resource location
 nameserver	42/tcp		name		# IEN 116
 whois		43/tcp		nicname
-domain		53/tcp		nameserver	# name-domain server
-domain		53/udp		nameserver
+domain		53/tcp		# name-domain server
+domain		53/udp
 mtp		57/tcp				# deprecated
 bootps		67/tcp		# BOOTP server
 bootps		67/udp
@@ -139,7 +139,7 @@ timed		525/udp		timeserver
 tempo		526/tcp		newdate
 courier		530/tcp		rpc
 conference	531/tcp		chat
-netnews		532/tcp		readnews
+netnews		532/tcp
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 rdist		541/tcp		rdistd		# rdist daemon
