@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.24 2002/09/04 03:43:55 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.25 2002/09/04 04:09:05 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1378,3 +1378,17 @@ sys/uvm/uvm_amap_i.h				1.18
 
 sys/kern/exec_aout.c				1.23
   only create a vmcmd for the BSS if there is any BSS.  fixes PR 17834.
+
+sys/arch/amiga/dev/grf_cv3d.c			1.11
+sys/arch/hpcmips/dev/mq200.c			1.21
+sys/arch/i386/i386/sys_machdep.c		1.64
+sys/arch/luna68k/dev/lunafb.c			1.9
+sys/arch/sparc/dev/bt_subr.c			via patch
+sys/arch/sparc64/dev/bt_subr.c			via patch
+sys/arch/sun3/dev/bt_subr.c			via patch
+sys/compat/ibcs2/ibcs2_stat.c			1.21-1.23
+sys/dev/sun/bt_subr.c				1.3
+sys/dev/tc/cfb.c				1.34
+sys/dev/tc/sfb.c				1.53
+sys/dev/tc/xcfb.c				1.29
+  integer overflow.  reported by silvio@qualys.com

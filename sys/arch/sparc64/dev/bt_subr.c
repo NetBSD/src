@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.4 1999/03/24 05:51:12 mrg Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.4.18.1 2002/09/04 04:09:07 itojun Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -77,7 +77,7 @@ bt_getcmap(p, cm, cmsize)
 	if (copyin(&p->index, &start, sizeof(start)) ||
 	    copyin(&p->count, &count, sizeof(count)))
 		return (EFAULT);
-	if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 		return (EINVAL);
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 3, i++) {
 		if (subyte(&p->red[i], cp[0]) ||
@@ -103,7 +103,7 @@ bt_putcmap(p, cm, cmsize)
 	/* Apparently the ioctl interface does a copyin of this structure for us. */
 	start = p->index;
 	count = p->count;
-	if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 		return (EINVAL);
 	if (!uvm_useracc(p->red, count, B_READ) ||
 	    !uvm_useracc(p->green, count, B_READ) ||
