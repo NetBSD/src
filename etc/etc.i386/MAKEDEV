@@ -166,7 +166,7 @@ pty*)
 			for (i = 0; i < 16; i++)
 				printf("rm -f tty%s%x; mknod tty%s%x c 5 %d; \
 					rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
-					n, i, n, i, b+i, n, i, b+i); }'`
+					n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		if [ $class = 1 ]; then
 			mv ttyqf ttyv0; mv ptyqf ptyv0
