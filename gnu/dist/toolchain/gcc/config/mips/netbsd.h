@@ -18,210 +18,108 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#define DECSTATION
+/* Define default target values. */
 
-/* Look for the include files in the system-defined places.  */
-
-#ifndef CROSS_COMPILE
-#undef GPLUSPLUS_INCLUDE_DIR
-#define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
-
-#undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include"
-
-#undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS			\
-  {						\
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
-    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
-    { 0, 0, 0, 0 }				\
-  }
-
-/* Under NetBSD, the normal location of the various *crt*.o files is the
-   /usr/lib directory.  */
-
-#undef STANDARD_STARTFILE_PREFIX
-#define STANDARD_STARTFILE_PREFIX "/usr/lib/"
+#ifdef TARGET_BIG_ENDIAN_DEFAULT
+#define TARGET_ENDIAN_DEFAULT MASK_BIG_ENDIAN
+#else
+#define TARGET_ENDIAN_DEFAULT 0
 #endif
-
-/* Provide a LINK_SPEC appropriate for NetBSD.  Here we provide support
-   for the special GCC options -static, -assert, and -nostdlib.  */
-
-#undef LINK_SPEC
-#define LINK_SPEC \
-  "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
-   %{!nostartfiles:%{!r*:%{!e*:-e __start}}} -dc -dp %{static:-Bstatic} %{assert*}"
-
-/* We have atexit(3).  */
-
-#define HAVE_ATEXIT
-
-/* Implicit library calls should use memcpy, not bcopy, etc.  */
-
-#define TARGET_MEM_FUNCTIONS
-
-/* Define mips-specific netbsd predefines... */
-#ifndef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__ANSI_COMPAT \
--DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD -D__NetBSD__ -Dmips \
--D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
--Dunix -D_R3000 \
--Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
-#endif
-
-#ifndef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
-#endif
-
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
-#define STARTFILE_SPEC ""
 
 #ifndef MACHINE_TYPE
 #define MACHINE_TYPE "NetBSD/pmax"
 #endif
 
-#define TARGET_DEFAULT MASK_GAS
+#define TARGET_MEM_FUNCTIONS
+
+#define TARGET_DEFAULT (MASK_GAS|MASK_ABICALLS)
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
-#include "mips/mips.h"
+#include <mips/elf.h>
+#undef OBJECT_FORMAT_COFF
 
-/*
- * Some imports from svr4.h in support of shared libraries.
- * Currently, we need the DECLARE_OBJECT_SIZE stuff.
- */
+/* Get generic NetBSD definitions. */
 
-/* Define the strings used for the special svr4 .type and .size directives.
-   These strings generally do not vary from one system running svr4 to
-   another, but if a given system (e.g. m88k running svr) needs to use
-   different pseudo-op names for these, they may be overridden in the
-   file which includes this one.  */
+#define NETBSD_ELF
+#include <netbsd.h>
 
-#undef TYPE_ASM_OP
-#undef SIZE_ASM_OP
-#undef WEAK_ASM_OP
-#define TYPE_ASM_OP	".type"
-#define SIZE_ASM_OP	".size"
-#define WEAK_ASM_OP	".weak"
+/* Implicit library calls should use memcpy, not bcopy, etc.  */
 
-/* The following macro defines the format used to output the second
-   operand of the .type assembler directive.  Different svr4 assemblers
-   expect various different forms for this operand.  The one given here
-   is just a default.  You may need to override it in your machine-
-   specific tm.h file (depending upon the particulars of your assembler).  */
+/* Define mips-specific netbsd predefines... */
 
-#undef TYPE_OPERAND_FMT
-#define TYPE_OPERAND_FMT	"@%s"
-
-/* Write the extra assembler code needed to declare a function's result.
-   Most svr4 assemblers don't require any special declaration of the
-   result value, but there are exceptions.  */
-
-#ifndef ASM_DECLARE_RESULT
-#define ASM_DECLARE_RESULT(FILE, RESULT)
+#undef CPP_PREDEFINES
+#ifdef TARGET_BIG_ENDIAN_DEFAULT
+#define CPP_PREDEFINES \
+ "-D__ANSI_COMPAT -DMIPSEB -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
+  -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
+  -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
+#else
+#define CPP_PREDEFINES \
+ "-D__ANSI_COMPAT -DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
+  -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
+  -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
 #endif
 
-/* These macros generate the special .type and .size directives which
-   are used to set the corresponding fields of the linker symbol table
-   entries in an ELF object file under SVR4.  These macros also output
-   the starting labels for the relevant functions/objects.  */
+#undef ASM_SPEC
+#define ASM_SPEC \
+ "%{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} %{v} \
+  %{noasmopt:-O0} \
+  %{!noasmopt:%{O:-O2} %{O1:-O2} %{O2:-O2} %{O3:-O3}} \
+  %{g} %{g0} %{g1} %{g2} %{g3} \
+  %{ggdb:-g} %{ggdb0:-g0} %{ggdb1:-g1} %{ggdb2:-g2} %{ggdb3:-g3} \
+  %{gstabs:-g} %{gstabs0:-g0} %{gstabs1:-g1} %{gstabs2:-g2} %{gstabs3:-g3} \
+  %{gstabs+:-g} %{gstabs+0:-g0} %{gstabs+1:-g1} %{gstabs+2:-g2} %{gstabs+3:-g3} \
+  %{gcoff:-g} %{gcoff0:-g0} %{gcoff1:-g1} %{gcoff2:-g2} %{gcoff3:-g3} \
+  %{membedded-pic} %{fpic:-k} %{fPIC:-k -K}"
 
-/* Write the extra assembler code needed to declare a function properly.
-   Some svr4 assemblers need to also have something extra said about the
-   function's return value.  We allow for that here.  */
+/* Provide a LINK_SPEC appropriate for a NetBSD ELF target.  */
 
-#undef ASM_DECLARE_FUNCTION_NAME
-#define ASM_DECLARE_FUNCTION_NAME(FILE, NAME, DECL)			\
-  do {									\
-    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
-    assemble_name (FILE, NAME);						\
-    putc (',', FILE);							\
-    fprintf (FILE, TYPE_OPERAND_FMT, "function");			\
-    putc ('\n', FILE);							\
-    ASM_DECLARE_RESULT (FILE, DECL_RESULT (DECL));			\
-  } while (0)
+#undef LINK_SPEC
+#define	LINK_SPEC \
+ "%{assert*} \
+  %{R*} %{static:-Bstatic} %{!static:-Bdynamic} \
+  %{G*} %{EB} %{EL} %{mips1} %{mips2} %{mips3} \
+  %{shared:-shared} \
+  %{bestGnum} %{call_shared} %{no_archive} %{exact_version} \
+  %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
+  %{!shared: \
+    -dc -dp \
+    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
 
-/* Write the extra assembler code needed to declare an object properly.  */
+/* Provide CC1_SPEC appropriate for NetBSD/mips ELF platforms */
 
-#undef ASM_DECLARE_OBJECT_NAME
-#define ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL)			\
-  do {									\
-    fprintf (FILE, "\t%s\t ", TYPE_ASM_OP);				\
-    assemble_name (FILE, NAME);						\
-    putc (',', FILE);							\
-    fprintf (FILE, TYPE_OPERAND_FMT, "object");				\
-    putc ('\n', FILE);							\
-    size_directive_output = 0;						\
-    if (!flag_inhibit_size_directive && DECL_SIZE (DECL))		\
-      {									\
-	size_directive_output = 1;					\
-	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
-	assemble_name (FILE, NAME);					\
-	fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL)));	\
-      }									\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
-  } while (0)
+#undef CC1_SPEC
+#define CC1_SPEC \
+ "%{gline:%{!g:%{!g0:%{!g1:%{!g2: -g1}}}}} \
+  %{mips1:-mfp32 -mgp32}%{mips2:-mfp32 -mgp32}\
+  %{mips3:%{!msingle-float:%{!m4650:-mfp64}} -mgp64} \
+  %{mips4:%{!msingle-float:%{!m4650:-mfp64}} -mgp64} \
+  %{mfp64:%{msingle-float:%emay not use both -mfp64 and -msingle-float}} \
+  %{mfp64:%{m4650:%emay not use both -mfp64 and -m4650}} \
+  %{m4650:-mcpu=r4650} \
+  %{G*} %{EB:-meb} %{EL:-mel} %{EB:%{EL:%emay not use both -EB and -EL}} \
+  %{pic-none:   -mno-half-pic} \
+  %{pic-lib:    -mhalf-pic} \
+  %{pic-extern: -mhalf-pic} \
+  %{pic-calls:  -mhalf-pic} \
+  %{save-temps: }"
 
-/* Output the size directive for a decl in rest_of_decl_compilation
-   in the case where we did not do so before the initializer.
-   Once we find the error_mark_node, we know that the value of
-   size_directive_output was set
-   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
+#undef CPP_SPEC
+#define CPP_SPEC \
+ "%{posix:-D_POSIX_SOURCE} \
+  %{mlong64:-D__SIZE_TYPE__=long\\ unsigned\\ int -D__PTRDIFF_TYPE__=long\\ int} \
+  %{!mlong64:-D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int} \
+  %{mips3:-U__mips -D__mips=3 -D__mips64} \
+  %{mgp32:-U__mips64} %{mgp64:-D__mips64}"
 
-#undef ASM_FINISH_DECLARE_OBJECT
-#define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	 \
-do {									 \
-     char *name = XSTR (XEXP (DECL_RTL (DECL), 0), 0);			 \
-     if (!flag_inhibit_size_directive && DECL_SIZE (DECL)		 \
-         && ! AT_END && TOP_LEVEL					 \
-	 && DECL_INITIAL (DECL) == error_mark_node			 \
-	 && !size_directive_output)					 \
-       {								 \
-	 size_directive_output = 1;					 \
-	 fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);			 \
-	 assemble_name (FILE, name);					 \
-	 fprintf (FILE, ",%d\n",  int_size_in_bytes (TREE_TYPE (DECL))); \
-       }								 \
-   } while (0)
+/* Trampoline code for closures should call _cacheflush()
+    to ensure I-cache consistency after writing trampoline code.  */
 
-/* This is how to declare the size of a function.  */
+#define MIPS_CACHEFLUSH_FUNC "_cacheflush"
 
-#undef ASM_DECLARE_FUNCTION_SIZE
-#define ASM_DECLARE_FUNCTION_SIZE(FILE, FNAME, DECL)			\
-  do {									\
-    if (!flag_inhibit_size_directive)					\
-      {									\
-        char label[256];						\
-	static int labelno;						\
-	labelno++;							\
-	ASM_GENERATE_INTERNAL_LABEL (label, "Lfe", labelno);		\
-	ASM_OUTPUT_INTERNAL_LABEL (FILE, "Lfe", labelno);		\
-	fprintf (FILE, "\t%s\t ", SIZE_ASM_OP);				\
-	assemble_name (FILE, (FNAME));					\
-        fprintf (FILE, ",");						\
-	assemble_name (FILE, label);					\
-        fprintf (FILE, "-");						\
-	assemble_name (FILE, (FNAME));					\
-	putc ('\n', FILE);						\
-      }									\
-  } while (0)
-
-/*
- A C statement to output something to the assembler file to switch to section
- NAME for object DECL which is either a FUNCTION_DECL, a VAR_DECL or
- NULL_TREE.  Some target formats do not support arbitrary sections.  Do not
- define this macro in such cases.
-*/
-#define ASM_OUTPUT_SECTION_NAME(F, DECL, NAME, RELOC)                        \
-do {                                                                         \
-  extern FILE *asm_out_text_file;                                            \
-  if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL)                           \
-    fprintf (asm_out_text_file, "\t.section %s,\"ax\",@progbits\n", (NAME)); \
-  else if ((DECL) && DECL_READONLY_SECTION (DECL, RELOC))                    \
-    fprintf (F, "\t.section %s,\"a\",@progbits\n", (NAME));                  \
-  else                                                                       \
-    fprintf (F, "\t.section %s,\"aw\",@progbits\n", (NAME));                 \
-} while (0)
-
-/* Since gas and gld are standard on NetBSD, we don't need these */
-#undef ASM_FINAL_SPEC
-#undef STARTFILE_SPEC
+/* Use sjlj exceptions. */
+#define DWARF2_UNWIND_INFO 0
