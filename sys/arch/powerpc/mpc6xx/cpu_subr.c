@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.18 2002/06/17 21:28:48 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.19 2002/06/19 17:01:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -87,6 +87,11 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 8;
 		break;
+	case MPC603:
+		curcpu()->ci_ci.dcache_size = 8 K;
+		curcpu()->ci_ci.icache_size = 8 K;
+		assoc = 2;
+		break;
 	case MPC603e:
 	case MPC603ev:
 	case MPC604:
@@ -100,8 +105,8 @@ cpu_probe_cache(void)
 		assoc = 4;
 		break;
 	default:
-		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
-		curcpu()->ci_ci.icache_size = PAGE_SIZE;
+		curcpu()->ci_ci.dcache_size = NBPG;
+		curcpu()->ci_ci.icache_size = NBPG;
 		assoc = 1;
 #undef	K
 	}
