@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2003/04/30 12:32:29 martin Exp $
+.\"	$NetBSD: boot.8,v 1.2 2003/04/30 20:40:06 martin Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,8 @@ Any extra flags or arguments, or the
 after the -- separator are passed to the boot PROM.
 Other flags are currently ignored.
 .Pp
-At any time you can break back to the ROM by pressing the `L1' and `a'
+At any time you can break back to the ROM by pressing the `STOP'
+(labeled `L1' on older keyboard types) and `a'
 keys at the same time (if the console is a serial port the same is
 achieved by sending a `break').
 If you do this accidentally you can continue whatever was in progress
@@ -168,4 +169,6 @@ system bootstrap
 .Xr installboot 8 ,
 .Xr rc 8 ,
 .Xr shutdown 8 ,
-.Xr syslogd 8
+.Xr syslogd 8 ,
+.St - IEEE 1275 Open Firmware ,
+.Pa http://playground.sun.com/1275
