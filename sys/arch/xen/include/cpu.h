@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2004/04/26 23:54:42 cl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2004/05/07 13:48:32 cl Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -91,6 +91,7 @@ struct cpu_info {
 	 */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
+	int	ci_fpused;		/* FPU was used by curlwp */
 
 	volatile u_int32_t	ci_tlb_ipi_mask;
 
