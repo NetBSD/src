@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "timedc.h"
@@ -77,7 +77,7 @@ void bytenetorder(struct tsp *);
 void bytehostorder(struct tsp *);
 
 
-#define BU ((unsigned long)2208988800)	/* seconds before UNIX epoch */
+#define BU ((unsigned long)2208988800U)	/* seconds before UNIX epoch */
 
 
 /* compute the difference between our date and another machine
