@@ -1,4 +1,4 @@
-/* $NetBSD: bf_cbc.S,v 1.1 2001/09/09 11:01:01 tls Exp $ */
+/* $NetBSD: bf_cbc.S,v 1.2 2002/11/12 03:03:10 itohy Exp $ */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -162,7 +162,11 @@ ENTRY(BF_cbc_encrypt)
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
 	jmp	.L003finish
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L000decrypt:
 	andl	$4294967288,	%ebp
 	movl	16(%esp),	%eax
@@ -244,7 +248,11 @@ ENTRY(BF_cbc_encrypt)
 	movb	%cl,		(%esi)
 .L019djend:
 	jmp	.L003finish
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L003finish:
 	movl	60(%esp),	%ecx
 	addl	$24,		%esp
@@ -255,7 +263,11 @@ ENTRY(BF_cbc_encrypt)
 	popl	%ebx
 	popl	%ebp
 	ret
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L004cbc_enc_jmp_table:
 	.long 0
 	.long .L012ej1
@@ -265,7 +277,11 @@ ENTRY(BF_cbc_encrypt)
 	.long .L007ej5
 	.long .L006ej6
 	.long .L005ej7
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L023cbc_dec_jmp_table:
 	.long 0
 	.long .L022dj1

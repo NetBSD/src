@@ -1,4 +1,4 @@
-/* $NetBSD: des_cbc.S,v 1.1 2001/09/09 11:01:02 tls Exp $ */
+/* $NetBSD: des_cbc.S,v 1.2 2002/11/12 03:03:11 itohy Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -148,7 +148,11 @@ ENTRY(des_ncbc_encrypt)
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
 	jmp	.L007finish
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L004decrypt:
 	andl	$4294967288,	%ebp
 	movl	20(%esp),	%eax
@@ -214,7 +218,11 @@ ENTRY(des_ncbc_encrypt)
 	movb	%cl,		(%esi)
 .L023djend:
 	jmp	.L007finish
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L007finish:
 	movl	64(%esp),	%ecx
 	addl	$28,		%esp
@@ -225,7 +233,11 @@ ENTRY(des_ncbc_encrypt)
 	popl	%ebx
 	popl	%ebp
 	ret
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L008cbc_enc_jmp_table:
 	.long 0
 	.long .L016ej1
@@ -235,7 +247,11 @@ ENTRY(des_ncbc_encrypt)
 	.long .L011ej5
 	.long .L010ej6
 	.long .L009ej7
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L027cbc_dec_jmp_table:
 	.long 0
 	.long .L026dj1
@@ -336,7 +352,11 @@ ENTRY(des_ede3_cbc_encrypt)
 	movl	%eax,		(%edi)
 	movl	%ebx,		4(%edi)
 	jmp	.L031finish
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L028decrypt:
 	andl	$4294967288,	%ebp
 	movl	24(%esp),	%eax
@@ -402,7 +422,11 @@ ENTRY(des_ede3_cbc_encrypt)
 	movb	%cl,		(%esi)
 .L047djend:
 	jmp	.L031finish
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L031finish:
 	movl	76(%esp),	%ecx
 	addl	$32,		%esp
@@ -413,7 +437,11 @@ ENTRY(des_ede3_cbc_encrypt)
 	popl	%ebx
 	popl	%ebp
 	ret
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L032cbc_enc_jmp_table:
 	.long 0
 	.long .L040ej1
@@ -423,7 +451,11 @@ ENTRY(des_ede3_cbc_encrypt)
 	.long .L035ej5
 	.long .L034ej6
 	.long .L033ej7
+#ifdef __ELF__
 .align 16
+#else
+.align 4
+#endif
 .L051cbc_dec_jmp_table:
 	.long 0
 	.long .L050dj1
