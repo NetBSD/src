@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.15 2004/01/29 13:08:19 mrg Exp $ */
+/* $NetBSD: zlib.h,v 1.16 2005/02/05 16:37:03 yamt Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -655,8 +655,6 @@ ZEXTERN int ZEXPORT uncompress __P((Bytef *, uLongf *, const Bytef *, uLong));
 typedef voidp gzFile;
 
 ZEXTERN gzFile ZEXPORT gzopen  __P((const char *, const char *));
-ZEXTERN gzFile ZEXPORT gzopenfull  __P((const char *, const char *,
-					const char *, u_int32_t));
 /*
      Opens a gzip (.gz) file for reading or writing. The mode parameter
    is as in fopen ("rb" or "wb") but can also include a compression level
@@ -670,13 +668,9 @@ ZEXTERN gzFile ZEXPORT gzopenfull  __P((const char *, const char *,
      gzopen returns NULL if the file could not be opened or if there was
    insufficient memory to allocate the (de)compression state; errno
    can be checked to distinguish the two cases (if errno is zero, the
-   zlib error is Z_MEM_ERROR).
-
-     The full version sets name and timestamp information as well.  */
+   zlib error is Z_MEM_ERROR).  */
 
 ZEXTERN gzFile ZEXPORT gzdopen  __P((int, const char *));
-ZEXTERN gzFile ZEXPORT gzdopenfull  __P((int, const char *, const char *,
-					 u_int32_t));
 /*
      gzdopen() associates a gzFile with the file descriptor fd.  File
    descriptors are obtained from calls like open, dup, creat, pipe or
@@ -687,7 +681,6 @@ ZEXTERN gzFile ZEXPORT gzdopenfull  __P((int, const char *, const char *,
    descriptor fd. If you want to keep fd open, use gzdopen(dup(fd), mode).
      gzdopen returns NULL if there was insufficient memory to allocate
    the (de)compression state.
-     The full version sets name and timestamp information as well.
 */
 
 ZEXTERN int ZEXPORT gzsetparams __P((gzFile, int, int));
