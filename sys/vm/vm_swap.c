@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.5 1993/05/20 03:59:48 cgd Exp $
+ *	$Id: vm_swap.c,v 1.6 1993/06/17 16:34:25 brezak Exp $
  */
 
 #include "param.h"
@@ -210,9 +210,8 @@ swapon(p, uap, retval)
 				return (EBUSY);
 			}
 			sp->sw_vp = vp;
-			printf("adding swap: ");
 			if (error = swfree(p, sp - swdevt)) {
-				printf("failed! (unchanged)\n");
+				printf("swapon: failed! (unchanged)\n");
 				vrele(vp);
 				return (error);
 			}
