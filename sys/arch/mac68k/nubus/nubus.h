@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.40 1998/08/09 18:19:10 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.41 1998/08/12 07:19:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -84,6 +84,7 @@
 #define NUBUS_CATEGORY_NETWORK	0x0004
 #define  NUBUS_TYPE_ETHERNET	0x0001
 #define   NUBUS_DRSW_3COM	0x0000
+#define   NUBUS_DRSW_CABLETRON	0x0001
 #define   NUBUS_DRSW_GATOR	0x0103
 #define   NUBUS_DRSW_ASANTE	0x0104
 #define   NUBUS_DRSW_TECHWORKS	0x0109

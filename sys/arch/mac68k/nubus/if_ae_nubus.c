@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.26 1998/05/02 16:45:30 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.27 1998/08/12 07:19:10 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -101,6 +101,7 @@ ae_nubus_match(parent, cf, aux)
 		case DP8390_VENDOR_FARALLON:
 		case DP8390_VENDOR_INTERLAN:
 		case DP8390_VENDOR_KINETICS:
+		case DP8390_VENDOR_CABLETRON:
 			rv = 1;
 			break;
 		case DP8390_VENDOR_DAYNA:
@@ -328,6 +329,32 @@ ae_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
+	case DP8390_VENDOR_CABLETRON:
+		/* Map register offsets */
+		for (i = 0; i < 16; i++)
+  			sc->sc_reg_map[i] =  i << 1 ;  /* normal order, word aligned */
+  		sc->dcr_reg = (ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
+		if (bus_space_subregion(bst, bsh,
+		    CT_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
+			printf(": failed to map register space\n");
+			break;
+		}
+		if ((sc->mem_size = ae_size_card_memory(bst, bsh,
+		    CT_DATA_OFFSET)) == 0) {
+			printf(": failed to determine size of RAM.\n");
+			break;
+		}
+		if (bus_space_subregion(bst, bsh,
+		    CT_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
+			printf(": failed to map register space\n");
+			break;
+		}
+		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_enaddr)) {
+			printf(": can't find MAC address\n");
+			break;
+		}
+		success = 1;
+		break;
 	default:
 		break;
 	}
@@ -393,7 +420,11 @@ ae_nb_card_vendor(bst, bsh, na)
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_DAYNA2:
 	case NUBUS_DRSW_TECHWORKS:
-		vendor = DP8390_VENDOR_APPLE;
+		if (na->drhw == NUBUS_DRHW_CABLETRON) {
+			vendor = DP8390_VENDOR_CABLETRON;
+		} else {
+			vendor = DP8390_VENDOR_APPLE;
+		}
 		break;
 	case NUBUS_DRSW_ASANTE:
 		vendor = DP8390_VENDOR_ASANTE;

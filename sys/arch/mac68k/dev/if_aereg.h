@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.16 1997/04/29 04:40:25 scottr Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.17 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -31,5 +31,9 @@
 #define KE_ROM_OFFSET		0x000f0007
 #define KE_DATA_OFFSET		0x00000000	/* Offset to NIC memory */
 #define KE_REG_OFFSET		0x00080003	/* Offset to NIC registers */
+
+#define CT_ROM_OFFSET		0x00030000	/* ROM offset */
+#define CT_DATA_OFFSET		0x00000000	/* RAM offset */
+#define CT_REG_OFFSET		0x00010000	/* REG offset */
 
 #define	AE_REG_SIZE		0x40		/* Size of register space */
