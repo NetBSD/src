@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 1997/11/16 22:50:59 christos Exp $
+	$NetBSD: syscalls.master,v 1.29 1998/02/01 13:12:42 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -303,7 +303,8 @@
 196	UNIMPL		timer_settime
 197	UNIMPL		timer_gettime
 198	UNIMPL		timer_getoverrun
-199	UNIMPL		nanosleep
+199	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
+			    struct timespec *rmtp); }
 200	STD		{ int svr4_sys_facl(int fd, int cmd, int num, \
 			    struct svr4_aclent *buf); }
 201	UNIMPL		door
