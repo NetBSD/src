@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.7 1997/10/30 16:09:08 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.8 1997/11/14 12:47:19 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11 1997/10/23 11:40:35 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.2 1997/11/12 10:54:11 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -28,13 +28,21 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11 1997/10/23 11:40:35 d
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
-#include <sys/protosw.h>
+#ifndef	linux
+# include <sys/protosw.h>
+#endif
 #include <sys/socket.h>
-#ifdef _KERNEL
-# include <sys/systm.h>
+#if defined(_KERNEL)
+# if !defined(linux)
+#  include <sys/systm.h>
+# else
+#  include <linux/string.h>
+# endif
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/byteorder.h>
 # include <sys/dditypes.h>
@@ -52,12 +60,14 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11 1997/10/23 11:40:35 d
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
+#ifndef linux
+# include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
@@ -73,7 +83,7 @@ static ap_session_t *ap_new_session __P((aproxy_t *, ip_t *, tcphdr_t *,
 
 #define	AP_SESS_SIZE	53
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) && !defined(linux)
 #include "netinet/ip_ftp_pxy.c"
 #endif
 
@@ -218,8 +228,10 @@ nat_t *nat;
 			 * don't do anything with this packet.
 			 */
 			if (tcp->th_sum != fr_tcpsum(*(mb_t **)fin->fin_mp,
-						     ip, tcp))
+						     ip, tcp)) {
+				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
+			}
 			fr_tcp_age(&aps->aps_tout, aps->aps_state, ip, fin,
 				   tcp->th_sport == aps->aps_sport);
 		}
@@ -245,13 +257,9 @@ nat_t *nat;
 }
 
 
-#ifdef __STDC__
-aproxy_t *ap_match(u_char pr, char *name)
-#else
 aproxy_t *ap_match(pr, name)
 u_char pr;
 char *name;
-#endif
 {
 	aproxy_t *ap;
 

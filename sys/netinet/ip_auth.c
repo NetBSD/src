@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.5 1997/10/30 16:08:56 mrg Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.6 1997/11/14 12:46:45 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21 1997/10/29 12:14:04 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21.2.2 1997/11/12 10:45:51 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -27,13 +27,17 @@ static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21 1997/10/29 12:14:04 da
 # include <sys/ioctl.h>
 #endif
 #include <sys/uio.h>
-#include <sys/protosw.h>
+#ifndef linux
+# include <sys/protosw.h>
+#endif
 #include <sys/socket.h>
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(linux)
 # include <sys/systm.h>
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/filio.h>
 # include <sys/byteorder.h>
@@ -41,7 +45,7 @@ static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21 1997/10/29 12:14:04 da
 # include <sys/stream.h>
 # include <sys/kmem.h>
 #endif
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(bsdi)
 # include <machine/cpu.h>
 #endif
 #include <net/if.h>
@@ -56,7 +60,9 @@ static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21 1997/10/29 12:14:04 da
 #define	KERNEL
 #define	NOT_KERNEL
 #endif
-#include <netinet/ip_var.h>
+#ifndef linux
+# include <netinet/ip_var.h>
+#endif
 #ifdef	NOT_KERNEL
 #undef	KERNEL
 #endif
@@ -65,20 +71,22 @@ static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.0.2.21 1997/10/29 12:14:04 da
 #include <sys/hashing.h>
 # endif
 #endif
+#include <netinet/tcp.h>
 #if defined(__sgi) && !defined(IFF_DRVRLOCK) /* IRIX < 6 */
 extern struct ifqueue   ipintrq;                /* ip packet input queue */
 #else
-#include <netinet/in_var.h>
+# ifndef linux
+#  include <netinet/in_var.h>
+#  include <netinet/tcp_fsm.h>
+# endif
 #endif
-#include <netinet/tcp.h>
-#include <netinet/tcp_fsm.h>
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_auth.h"
-#if !SOLARIS
+#if !SOLARIS && !defined(linux)
 # include <net/netisr.h>
 #endif
 
@@ -88,6 +96,9 @@ extern kmutex_t ipf_auth;
 # if SOLARIS
 extern kcondvar_t ipfauthwait;
 # endif
+#endif
+#ifdef linux
+static struct wait_queue *ipfauthwait = NULL;
 #endif
 
 int	fr_authsize = FR_NUMAUTH;
@@ -227,7 +238,11 @@ ip_t *ip;
 	cv_signal(&ipfauthwait);
 #else
 	fr_authpkts[i] = m;
+# if defined(linux) && defined(_KERNEL)
+	wake_up_interruptible(&ipfauthwait);
+# else
 	WAKEUP(&fr_authnext);
+# endif
 #endif
 	return 1;
 }
@@ -313,7 +328,13 @@ fr_authioctlloop:
 			return EINTR;
 		}
 # else
+#  ifdef linux
+		interruptible_sleep_on(&ipfauthwait);
+		if (current->signal & ~current->blocked)
+			error = -EINTR;
+#  else
 		error = SLEEP(&fr_authnext, "fr_authnext");
+# endif
 # endif
 #endif
 		MUTEX_EXIT(&ipf_auth);
@@ -336,12 +357,13 @@ fr_authioctlloop:
 #ifdef	_KERNEL
 		MUTEX_EXIT(&ipf_auth);
 		SPL_NET(s);
+# ifndef linux
 		if (m && au->fra_info.fin_out) {
-# if SOLARIS
+#  if SOLARIS
 			error = fr_qout(fr_auth[i].fra_q, m);
-# else /* SOLARIS */
+#  else /* SOLARIS */
 			error = ip_output(m, NULL, NULL, IP_FORWARDING, NULL);
-# endif /* SOLARIS */
+#  endif /* SOLARIS */
 			if (error)
 				fr_authstats.fas_sendfail++;
 			else
@@ -366,6 +388,7 @@ fr_authioctlloop:
 				fr_authstats.fas_queok++;
 		} else
 			error = EINVAL;
+# endif
 # if SOLARIS
 		if (error)
 			error = EINVAL;

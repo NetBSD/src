@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.16 1997/10/30 16:08:54 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.17 1997/11/14 12:46:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41 1997/10/23 14:51:25 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41.2.3 1997/11/12 10:44:22 darrenr Exp ";
 #endif
 
 #include <sys/errno.h>
@@ -18,22 +18,29 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41 1997/10/23 14:51:25 darren
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#if defined(_KERNEL) || defined(KERNEL)
+#if (defined(_KERNEL) || defined(KERNEL)) && !defined(linux)
 # include <sys/systm.h>
 #else
 # include <stdio.h>
 # include <string.h>
+# ifdef __NetBSD__
+#  include <stdlib.h>
+# endif
 #endif
 #include <sys/uio.h>
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/byteorder.h>
 # include <sys/dditypes.h>
 # include <sys/stream.h>
 #endif
-#include <sys/protosw.h>
-#include <sys/socket.h>
+#ifndef linux
+# include <sys/protosw.h>
+# include <sys/socket.h>
+#endif
 #include <net/if.h>
 #ifdef sun
 # include <net/af.h>
@@ -42,12 +49,14 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.0.2.41 1997/10/23 14:51:25 darren
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
+#ifndef linux
+# include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
@@ -77,7 +86,6 @@ extern	int	opts;
 # else
 #  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(b, ip, if)
 # endif
-
 #else /* #ifndef _KERNEL */
 # define	FR_IFVERBOSE(ex,second,verb_pr)	;
 # define	FR_IFDEBUG(ex,second,verb_pr)	;
@@ -93,7 +101,7 @@ extern	kmutex_t	ipf_mutex, ipf_auth;
 #  define	SEND_RESET(ip, qif, if)		send_reset(ip, qif)
 #  define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(ip, t, c, if, src)
-# else
+# else /* SOLARIS */
 #  define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
 #  define	SEND_RESET(ip, qif, if)	send_reset((struct tcpiphdr *)ip)
 #  ifdef __sgi
@@ -101,15 +109,19 @@ extern	kmutex_t	ipf_mutex, ipf_auth;
 			icmp_error(b, t, c, if, src, if)
 #  else
 #   if BSD < 199103
-#    define	ICMP_ERROR(b, ip, t, c, if, src) \
+#    ifdef linux
+#     define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_send(b,t,c,0,if)
+#    else
+#     define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(mtod(b, ip_t *), t, c, if, src)
+#    endif /* linux */
 #   else
 #    define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(b, t, c, (src).s_addr, if)
-#   endif
+#   endif /* BSD < 199103 */
 #  endif /* __sgi */
-# endif
-#endif
+# endif /* SOLARIS || __sgi */
+#endif /* _KERNEL */
 
 
 struct	filterstats frstats[2] = {{0,0,0,0,0},{0,0,0,0,0}};
@@ -127,6 +139,7 @@ fr_info_t	frcache[2];
 
 static	void	fr_makefrip __P((int, ip_t *, fr_info_t *));
 static	int	fr_tcpudpchk __P((frentry_t *, fr_info_t *));
+static	int	frflushlist __P((int, int, int *, frentry_t *, frentry_t **));
 
 
 /*
@@ -191,6 +204,7 @@ fr_info_t *fin;
 	fin->fin_data[0] = 0;
 	fin->fin_data[1] = 0;
 	fin->fin_rule = -1;
+	fin->fin_group = -1;
 	fin->fin_id = ip->ip_id;
 #ifdef	_KERNEL
 	fin->fin_icode = ipl_unreach;
@@ -205,7 +219,7 @@ fr_info_t *fin;
 	(*(((u_32_t *)fi) + 1)) = (*(((u_32_t *)ip) + 3));
 	(*(((u_32_t *)fi) + 2)) = (*(((u_32_t *)ip) + 4));
 
-	fi->fi_fl = (hlen > sizeof(struct ip)) ? FI_OPTIONS : 0;
+	fi->fi_fl = (hlen > sizeof(ip_t)) ? FI_OPTIONS : 0;
 	off = (ip->ip_off & 0x1fff) << 3;
 	if (ip->ip_off & 0x3fff)
 		fi->fi_fl |= FI_FRAG;
@@ -400,6 +414,7 @@ void *m;
 	fr = fin->fin_fr;
 	fin->fin_fr = NULL;
 	fin->fin_rule = 0;
+	fin->fin_group = 0;
 	off = ip->ip_off & 0x1fff;
 	pass |= (fi->fi_fl << 24);
 
@@ -501,10 +516,16 @@ void *m;
 		else
 			fin->fin_icode = fr->fr_icode;
 		fin->fin_rule = rulen;
+		fin->fin_group = fr->fr_group;
 		fin->fin_fr = fr;
 		if (fr->fr_grp) {
 			fin->fin_fr = fr->fr_grp;
 			pass = fr_scanlist(pass, ip, fin, m);
+			if (fin->fin_fr == NULL) {
+				fin->fin_rule = rulen;
+				fin->fin_group = fr->fr_group;
+				fin->fin_fr = fr;
+			}
 		}
 		if (pass & FR_QUICK)
 			break;
@@ -543,10 +564,10 @@ int out;
 #endif
 
 #ifdef	_KERNEL
+	mb_t *mc = NULL;
 # if !defined(__SVR4) && !defined(__svr4__)
-	struct mbuf *mc = NULL;
 #  ifdef __sgi
-	char hbuf[(0xf << 2) + sizeof(struct icmp) + sizeof(struct ip) + 8];
+	char hbuf[(0xf << 2) + sizeof(struct icmp) + sizeof(ip_t) + 8];
 #  endif
 	int up;
 
@@ -564,7 +585,7 @@ int out;
 			break;
 		case IPPROTO_ICMP:
 			/* 96 - enough for complete ICMP error IP header */
-			plen = sizeof(struct icmp) + sizeof(struct ip) + 8;
+			plen = sizeof(struct icmp) + sizeof(ip_t) + 8;
 			break;
 		}
 		up = MIN(hlen + plen, ip->ip_len);
@@ -577,16 +598,18 @@ int out;
 			}
 			m_copydata(m, 0, up, hbuf);
 			frstats[out].fr_pull[0]++;
-			ip = (struct ip *)hbuf;
+			ip = (ip_t *)hbuf;
 #else
+# ifndef linux
 			if ((*mp = m_pullup(m, up)) == 0) {
 				frstats[out].fr_pull[1]++;
 				return -1;
 			} else {
 				frstats[out].fr_pull[0]++;
 				m = *mp;
-				ip = mtod(m, struct ip *);
+				ip = mtod(m, ip_t *);
 			}
+# endif
 #endif
 		} else
 			up = 0;
@@ -594,7 +617,7 @@ int out;
 		up = 0;
 # endif
 # if SOLARIS
-	mblk_t *mc = NULL, *m = qif->qf_m;
+	mb_t *m = qif->qf_m;
 # endif
 #endif
 	fr_makefrip(hlen, ip, fin);
@@ -747,7 +770,9 @@ logit:
 # if	SOLARIS
 		mc = dupmsg(m);
 # else
+#  ifndef linux
 		mc = m_copy(m, 0, M_COPYALL);
+#  endif
 # endif
 #endif
 
@@ -801,8 +826,9 @@ logit:
 	 * Once we're finished return to our caller, freeing the packet if
 	 * we are dropping it (* BSD ONLY *).
 	 */
-#ifdef	_KERNEL
-# if	!SOLARIS
+#if defined(_KERNEL)
+# if !SOLARIS
+#  if !defined(linux)
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
@@ -816,12 +842,13 @@ logit:
 	}
 	if (!(pass & FR_PASS) && m)
 		m_freem(m);
-#  ifdef __sgi
+#   ifdef __sgi
 	else if (changed && up && m)
 		m_copyback(m, 0, up, hbuf);
-#  endif
+#   endif
+#  endif /* !linux */
 	return (pass & FR_PASS) ? 0 : -1;
-# else
+#  else /* !SOLARIS */
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
@@ -834,8 +861,8 @@ logit:
 			ipfr_fastroute(qif, ip, mc, mp, fin, &fr->fr_dif);
 	}
 	return (pass & FR_PASS) ? changed : -1;
-# endif
-#else
+# endif /* !SOLARIS */
+#else /* _KERNEL */
 	if (pass & FR_NOMATCH)
 		return 1;
 	if (pass & FR_PASS)
@@ -843,7 +870,7 @@ logit:
 	if (pass & FR_AUTH)
 		return -2;
 	return -1;
-#endif
+#endif /* _KERNEL */
 }
 
 
@@ -1037,25 +1064,18 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.0.2.41 1997/10/23 14:51:25 darrenr Exp 
+ * Id: fil.c,v 2.0.2.41.2.3 1997/11/12 10:44:22 darrenr Exp 
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
  * continuing for "len" bytes, into the indicated buffer.
  */
-#include <sys/mbuf.h>
-
-#ifdef __STDC__
-void
-m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
-#else
 void
 m_copydata(m, off, len, cp)
-	register struct mbuf *m;
+	register mb_t *m;
 	register int off;
 	register int len;
 	caddr_t cp;
-#endif
 {
 	register unsigned count;
 
@@ -1082,6 +1102,7 @@ m_copydata(m, off, len, cp)
 }
 
 
+# ifndef linux
 /*
  * Copy data from a buffer back into the indicated mbuf chain,
  * starting "off" bytes from the beginning, extending the mbuf
@@ -1138,4 +1159,137 @@ out:
 #endif
 	return;
 }
-#endif
+# endif /* linux */
+#endif /* (_KERNEL) && ( ((BSD < 199306) && !SOLARIS) || __sgi) */
+
+
+frgroup_t *fr_findgroup(num, flags, which, set, fgpp)
+u_short num;
+u_32_t flags;
+int which, set;
+frgroup_t ***fgpp;
+{
+	frgroup_t *fg, **fgp;
+
+	if (which == IPL_LOGAUTH)
+		fgp = &ipfgroups[2][set];
+	else if (flags & FR_ACCOUNT)
+		fgp = &ipfgroups[1][set];
+	else if (flags & (FR_OUTQUE|FR_INQUE))
+		fgp = &ipfgroups[0][set];
+	else
+		return NULL;
+
+	while ((fg = *fgp))
+		if (fg->fg_num == num)
+			break;
+		else
+			fgp = &fg->fg_next;
+	if (fgpp)
+		*fgpp = fgp;
+	return fg;
+}
+
+
+frgroup_t *fr_addgroup(num, fp, which, set)
+u_short num;
+frentry_t *fp;
+int which, set;
+{
+	frgroup_t *fg, **fgp;
+
+	if ((fg = fr_findgroup(num, fp->fr_flags, which, set, &fgp)))
+		return fg;
+
+	KMALLOC(fg, frgroup_t *, sizeof(*fg));
+	if (fg) {
+		fg->fg_num = num;
+		fg->fg_next = *fgp;
+		fg->fg_head = fp;
+		fg->fg_start = &fp->fr_grp;
+		*fgp = fg;
+	}
+	return fg;
+}
+
+
+void fr_delgroup(num, flags, which, set)
+u_short num;
+u_32_t flags;
+int which, set;
+{
+	frgroup_t *fg, **fgp;
+ 
+	if (!(fg = fr_findgroup(num, flags, which, set, &fgp)))
+		return;
+ 
+	*fgp = fg->fg_next;
+	KFREE(fg);
+}
+
+
+
+/*
+ * recursively flush rules from the list, descending groups as they are
+ * encountered.  if a rule is the head of a group and it has lost all its
+ * group members, then also delete the group reference.
+ */
+static int frflushlist(set, unit, nfreedp, list, listp)
+int set, unit, *nfreedp;
+frentry_t *list, **listp;
+{
+	register frentry_t *fp = list, *fpn;
+	register int freed = 0;
+
+	while (fp) {
+		fpn = fp->fr_next;
+		if (fp->fr_grp) {
+			fp->fr_ref -= frflushlist(set, unit, nfreedp,
+						  fp->fr_grp, &fp->fr_grp);
+		}
+
+		if (fp->fr_ref == 1) {
+			if (fp->fr_grhead)
+				fr_delgroup(fp->fr_grhead, fp->fr_flags, unit,
+					    set);
+			KFREE(fp);
+			*listp = fpn;
+			freed++;
+		}
+		fp = fpn;
+	}
+	*nfreedp += freed;
+	return freed;
+}
+
+
+void frflush(unit, data)
+int unit;
+caddr_t data;
+{
+	int flags = *(int *)data, flushed = 0, set = fr_active;
+
+	bzero((char *)frcache, sizeof(frcache[0]) * 2);
+
+	if (flags & FR_INACTIVE)
+		set = 1 - set;
+
+	if (unit == IPL_LOGIPF) {
+		if (flags & FR_OUTQUE) {
+			(void) frflushlist(set, unit, &flushed,
+					   ipfilter[1][set],
+					   &ipfilter[1][set]);
+			(void) frflushlist(set, unit, &flushed,
+					   ipacct[1][set], &ipacct[1][set]);
+		}
+		if (flags & FR_INQUE) {
+			(void) frflushlist(set, unit, &flushed,
+					   ipfilter[0][set],
+					   &ipfilter[0][set]);
+			(void) frflushlist(set, unit, &flushed,
+					   ipacct[0][set], &ipacct[0][set]);
+		}
+	}
+
+	*(int *)data = flushed;
+}

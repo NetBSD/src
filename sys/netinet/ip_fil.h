@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.21 1997/10/30 16:08:59 mrg Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.22 1997/11/14 12:46:56 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.0.2.39 1997/10/29 12:14:10 darrenr Exp 
+ * Id: ip_fil.h,v 2.0.2.39.2.4 1997/11/12 10:50:02 darrenr Exp 
  */
 
 #ifndef	__IP_FIL_H__
@@ -109,6 +109,7 @@ typedef	struct	fr_info	{
 	u_char	fin_tcpf;
 	u_char	fin_icode;		/* From here on is packet specific */
 	u_short	fin_rule;
+	u_short	fin_group;
 	u_short	fin_dlen;
 	u_short	fin_id;
 	void	*fin_ifp;
@@ -166,7 +167,7 @@ typedef	struct	frentry {
 	u_short	fr_dtop;	/* top port for <> and >< */
 	u_32_t	fr_flags;	/* per-rule flags && options (see below) */
 	int	fr_skip;	/* # of rules to skip */
-	int	(*fr_func) __P((int, struct ip *, fr_info_t *));	/* call this function */
+	int	(*fr_func) __P((int, ip_t *, fr_info_t *));	/* call this function */
 	char	fr_icode;	/* return ICMP code */
 	char	fr_ifname[IFNAMSIZ];
 	struct	frdest	fr_tif;	/* "to" interface */
@@ -260,6 +261,7 @@ typedef	struct	filterstats {
 	u_long	fr_bads;	/* bad attempts to allocate packet state */
 	u_long	fr_ads;		/* new packet state kept */
 	u_long	fr_chit;	/* cached hit */
+	u_long	fr_tcpbad;	/* TCP checksum check failures */
 	u_long	fr_pull[2];	/* good and bad pullup attempts */
 #if SOLARIS
 	u_long	fr_bad;		/* bad IP packets to the filter */
@@ -304,7 +306,7 @@ typedef	struct frgroup {
  * Following this in the log records read from the device will be an ipflog
  * structure which is then followed by any packet data.
  */
-typedef	struct iplog	{
+typedef	struct	iplog	{
 	u_long	ipl_magic;
 	u_long	ipl_sec;
 	u_long	ipl_usec;
@@ -327,6 +329,7 @@ typedef	struct	ipflog	{
 	u_char	fl_plen;	/* extra data after hlen */
 	u_char	fl_hlen;	/* length of IP headers saved */
 	u_short	fl_rule;	/* assume never more than 64k rules, total */
+	u_short	fl_group;
 	u_32_t	fl_flags;
 } ipflog_t;
 
@@ -372,12 +375,12 @@ typedef	struct	ipflog	{
 #endif
 
 #ifndef	_KERNEL
-extern	int	fr_check __P((struct ip *, int, void *, int, mb_t **));
-extern	int	(*fr_checkp) __P((struct ip *, int, void *, int, mb_t **));
-extern	int	send_reset __P((struct ip *, struct ifnet *));
-extern	int	icmp_error __P((struct ip *, struct ifnet *));
+extern	int	fr_check __P((ip_t *, int, void *, int, mb_t **));
+extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
+extern	int	send_reset __P((ip_t *, struct ifnet *));
+extern	int	icmp_error __P((ip_t *, struct ifnet *));
 extern	int	ipf_log __P((void));
-extern	void	ipfr_fastroute __P((struct ip *, fr_info_t *, frdest_t *));
+extern	void	ipfr_fastroute __P((ip_t *, fr_info_t *, frdest_t *));
 extern	struct	ifnet *get_unit __P((char *));
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
 # if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -399,11 +402,11 @@ extern	int	ipl_disable __P((void));
 extern	void	ipflog_init __P((void));
 extern	int	ipflog_clear __P((int));
 extern	int	ipflog_read __P((int, struct uio *));
-extern	int	ipflog __P((u_int, struct ip *, fr_info_t *, mb_t *));
+extern	int	ipflog __P((u_int, ip_t *, fr_info_t *, mb_t *));
 extern	int	ipllog __P((int, u_long, void **, size_t *, int *, int));
 # if	SOLARIS
-extern	int	fr_check __P((struct ip *, int, void *, int, qif_t *, mb_t **));
-extern	int	(*fr_checkp) __P((struct ip *, int, void *,
+extern	int	fr_check __P((ip_t *, int, void *, int, qif_t *, mb_t **));
+extern	int	(*fr_checkp) __P((ip_t *, int, void *,
 				  int, qif_t *, mb_t **));
 extern	int	icmp_error __P((ip_t *, int, int, qif_t *,
 				struct in_addr));
@@ -422,11 +425,11 @@ extern	int	fr_qout __P((queue_t *, mblk_t *));
 extern	int	iplread __P((dev_t, struct uio *, cred_t *));
 #  endif
 # else /* SOLARIS */
-extern	int	fr_check __P((struct ip *, int, void *, int, mb_t **));
-extern	int	(*fr_checkp) __P((struct ip *, int, void *, int, mb_t **));
+extern	int	fr_check __P((ip_t *, int, void *, int, mb_t **));
+extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
 extern	int	send_reset __P((struct tcpiphdr *));
-extern	void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
-extern	size_t	mbufchainlen __P((struct mbuf *));
+extern	void	ipfr_fastroute __P((mb_t *, fr_info_t *, frdest_t *));
+extern	size_t	mbufchainlen __P((mb_t *));
 #  ifdef	__sgi
 #   include <sys/cred.h>
 extern	int	iplioctl __P((dev_t, int, caddr_t, int, cred_t *, int *));
@@ -454,15 +457,28 @@ extern	int	iplclose __P((dev_t, int, int, struct proc *));
 #    if defined(__OpenBSD__)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
 #    else /* __OpenBSD__ */
+#     ifndef	linux
 extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+#     else
+extern	int	iplioctl(struct inode *, struct file *, u_int, u_long);
+#     endif
 #    endif /* __OpenBSD__ */
+#    ifndef linux
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
+#    else
+extern	int	iplopen __P((struct inode *, struct file *));
+extern	void	iplclose __P((struct inode *, struct file *));
+#    endif /* !linux */
 #   endif /* (_BSDI_VERSION >= 199510) */
 #   if	BSD >= 199306
 extern	int	iplread __P((dev_t, struct uio *, int));
 #   else
+#    ifndef linux
 extern	int	iplread __P((dev_t, struct uio *));
+#    else
+extern	int	iplread(struct inode *, struct file *, char *, int);
+#    endif /* !linux */
 #   endif /* BSD >= 199306 */
 #  endif /* __ sgi */
 # endif /* SOLARIS */
@@ -486,8 +502,13 @@ extern	u_short	fr_tcpsum __P((mb_t *, ip_t *, tcphdr_t *));
 extern	int	fr_scanlist __P((int, ip_t *, fr_info_t *, void *));
 extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	fr_copytolog __P((int, char *, int));
+extern	void	frflush __P((int, caddr_t));
+extern	frgroup_t *fr_addgroup __P((u_short, frentry_t *, int, int));
+extern	frgroup_t *fr_findgroup __P((u_short, u_32_t, int, int, frgroup_t ***));
+extern	void	fr_delgroup __P((u_short, u_32_t, int, int));
 extern	int	ipl_unreach;
 extern	int	ipl_inited;
+extern	u_long	ipl_frouteok[2];
 extern	int	fr_pass;
 extern	int	fr_flags;
 extern	int	fr_active;
