@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1996/10/09 07:45:13 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1996/11/06 20:19:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -652,8 +652,8 @@ ENTRY(longjmp)
 
 /*
  * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrq puts processes into queues, Remrq
+ * _whichqs tells which of the 32 queues _qs have processes
+ * in them.  Setrunqueue puts processes into queues, remrunqueue
  * removes them from queues.  The running process is on no queue,
  * other processes are on a queue related to p->p_pri, divided by 4
  * actually to shrink the 0-127 range of priorities into the 32 available
@@ -692,10 +692,10 @@ ENTRY(setrunqueue)
 #endif
 
 /*
- * remrq(struct proc *p);
+ * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movd	S_ARG0,r1
 	movzbd	P_PRIORITY(r1),r0
 #ifdef DIAGNOSTIC
@@ -718,7 +718,7 @@ ENTRY(remrq)
 #ifdef DIAGNOSTIC
 1:	addr	3f(pc),tos		/* No queue entry! */
 	bsr	_panic
-3:	.asciz "remrq"
+3:	.asciz "remrunqueue"
 #endif
 
 /*
