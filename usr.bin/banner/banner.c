@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.5 2000/07/03 02:51:12 matt Exp $	*/
+/*	$NetBSD: banner.c,v 1.6 2000/10/04 19:50:52 mjl Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.5 2000/07/03 02:51:12 matt Exp $");
+__RCSID("$NetBSD: banner.c,v 1.6 2000/10/04 19:50:52 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,8 @@ __RCSID("$NetBSD: banner.c,v 1.5 2000/07/03 02:51:12 matt Exp $");
 #include <unistd.h>
 
 #include "banner.h"
+
+extern char * __progname;
 
 static long PW = LINELEN;
 /*
@@ -83,18 +85,15 @@ static int ForeGnd = '#';
 static int BackGnd = ' ';
 static int Drop = 0;				/* 3 for the LPD font */
 
-static	int	dropit __P((int));
-	int	main __P((int, char **));
-static	void	scan_out __P((int, char *, int));
-static	char   *scnline __P((int, char *, int));
+static	int	dropit (int);
+static	void	scan_out (int, char *, int);
+static	char   *scnline (int, char *, int);
+static	void	usage(void);
 
 /* the char gen code below is lifted from lpd */
 
 static char *
-scnline(key, p, c)
-	int key;
-	char *p;
-	int c;
+scnline(int key, char *p, int c)
 {
 	int scnwidth;
 
@@ -112,8 +111,7 @@ scnline(key, p, c)
 
 
 static int
-dropit(c)
-	int c;
+dropit(int c)
 {
 	switch(c) {
 
@@ -133,10 +131,7 @@ dropit(c)
 }
 
 static void
-scan_out(scfd, scsp, dlm)
-	int scfd;
-	char *scsp;
-	int dlm;
+scan_out(int scfd, char *scsp, int dlm)
 {
 	char *strp;
 	int nchrs, j;
@@ -179,14 +174,12 @@ scan_out(scfd, scsp, dlm)
  * for each word, print up to 10 chars in big letters.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	char word[10+1];		/* strings limited to 10 chars */
 	int c;
 
-	while ((c = getopt(argc, argv, "b:f:l")) != EOF) {
+	while ((c = getopt(argc, argv, "b:f:l")) != -1) {
 	    switch (c) {
 	    case 'f':
 		if (*optarg == '-')
@@ -200,6 +193,8 @@ main(argc, argv)
 	    case 'l':
 		Drop = 3;			/* for LPD font */
 		break;
+	    default:
+		usage();
 	    }
 	}
 
@@ -209,4 +204,12 @@ main(argc, argv)
 		scan_out(1, word, '\0');
 	}
 	exit(0);
+}
+
+void
+usage(void)
+{
+    fprintf(stderr, "usage: %s [-f fgchar] [-b bgchar] [-l] message...\n",
+	__progname);
+    exit(1);
 }
