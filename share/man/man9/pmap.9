@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.17 2002/09/22 07:22:28 chs Exp $
+.\"	$NetBSD: pmap.9,v 1.18 2002/09/27 07:46:37 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 14, 2002
+.Dd September 27, 2002
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -125,7 +125,8 @@ The purpose of the
 module is to manage physical address maps, to program the
 memory management hardware on the system, and perform any
 cache operations necessary to ensure correct operation of
-the virtual memory system.  The
+the virtual memory system.
+The
 .Nm
 module is also responsible for maintaining certain information
 required by
@@ -137,8 +138,8 @@ TLB invalidations, TLB shootdown operations for multiple
 processors), the
 .Nm
 module is allowed to delay mapping invalidation or protection
-operations until such time as they are actually necessary.  The
-functions that are allowed to delay such actions are
+operations until such time as they are actually necessary.
+The functions that are allowed to delay such actions are
 .Fn pmap_enter ,
 .Fn pmap_remove ,
 .Fn pmap_protect ,
@@ -149,7 +150,8 @@ Callers of these functions must use the
 .Fn pmap_update
 function to notify the
 .Nm
-module that the mappings need to be made correct.  Since the
+module that the mappings need to be made correct.
+Since the
 .Nm
 module is provided with information as to which processors are
 using a given physical map, the
@@ -158,7 +160,7 @@ module may use whatever optimizations it has available to reduce
 the expense of virtual-to-physical mapping synchronization.
 .Ss HEADER FILES AND DATA STRUCTURES
 Machine-dependent code must provide the header file
-.Pa \*[Lt]machine/pmap.h\*[Gt] .
+.Aq Pa machine/pmap.h .
 This file contains the definition of the
 .Dv pmap
 structure:
@@ -176,7 +178,7 @@ implementation uses.
 Note that all prototypes for
 .Nm
 interface functions are provided by the header file
-.Pa \*[Lt]uvm/uvm_pmap.h\*[Gt] .
+.Aq Pa uvm/uvm_pmap.h .
 It is possible to override this behavior by defining the
 C pre-processor macro
 .Dq PMAP_EXCLUDE_DECLS .
@@ -184,10 +186,11 @@ This may be used to add a layer of indirection to
 .Nm
 API calls, for handling different MMU types in a single
 .Nm
-module, for example.  If the
+module, for example.
+If the
 .Dq PMAP_EXCLUDE_DECLS
 macro is defined,
-.Pa \*[Lt]machine/pmap.h\*[Gt]
+.Aq Pa machine/pmap.h
 .Em must
 provide function prototypes in a block like so:
 .Bd -literal -offset indent
@@ -199,10 +202,11 @@ __END_DECLS
 .Ed
 .Pp
 The header file
-.Pa \*[Lt]uvm/uvm_pmap.h\*[Gt]
+.Aq Pa uvm/uvm_pmap.h
 defines a structure for tracking
 .Nm
-statistics (see below).  This structure is defined as:
+statistics (see below).
+This structure is defined as:
 .Bd -literal -offset indent
 struct pmap_statistics {
         long        resident_count; /* number of mapped pages */
@@ -213,49 +217,50 @@ struct pmap_statistics {
 The
 .Nm
 module is based on the premise that all information contained
-in the physical maps it manages is redundant.  That is, physical
-map information may be
+in the physical maps it manages is redundant.
+That is, physical map information may be
 .Dq forgotten
 by the
 .Nm
 module in the event that it is necessary to do so; it can be rebuilt
 by
 .Xr uvm 9
-by taking a page fault.  There is one exception to this rule: so-called
+by taking a page fault.
+There is one exception to this rule: so-called
 .Dq wired
-mappings may not be forgotten.  Wired mappings are those for which either
-no high-level information exists with which to rebuild the mapping, or
-mappings which are needed by critical sections of code where taking a
-page fault is unacceptable.  Information about which mappings are wired
-is provided to the
+mappings may not be forgotten.
+Wired mappings are those for which either no high-level information
+exists with which to rebuild the mapping, or mappings which are needed
+by critical sections of code where taking a page fault is unacceptable.
+Information about which mappings are wired is provided to the
 .Nm
 module when a mapping is established.
 .Ss MODIFIED/REFERENCED INFORMATION
 The
 .Nm
 module is required to keep track of whether or not a page managed
-by the virtual memory system has been referenced or modified.  This
-information is used by
+by the virtual memory system has been referenced or modified.
+This information is used by
 .Xr uvm 9
 to determine what happens to the page when scanned by the
 pagedaemon.
 .Pp
 Many CPUs provide hardware support for tracking
-modified/referenced information.  However, many CPUs, particularly
-modern RISC CPUs, do not.  On CPUs which lack hardware support
-for modified/referenced tracking, the
+modified/referenced information.
+However, many CPUs, particularly modern RISC CPUs, do not.
+On CPUs which lack hardware support for modified/referenced tracking, the
 .Nm
-module must emulate it in software.  There are several strategies
-for doing this, and the best strategy depends on the CPU.
+module must emulate it in software.
+There are several strategies for doing this, and the best strategy
+depends on the CPU.
 .Pp
 The
 .Dq referenced
 attribute is used by the pagedaemon to determine if a page is
 .Dq active .
-Active pages are not candidates for re-use in the page replacement
-algorithm.  Accurate referenced information is not required for
-correct operation; if supplying referenced information for a page
-is not feasible, then the
+Active pages are not candidates for re-use in the page replacement algorithm.
+Accurate referenced information is not required for correct operation; if
+supplying referenced information for a page is not feasible, then the
 .Nm
 implementation should always consider the
 .Dq referenced
@@ -272,19 +277,22 @@ be provided by the
 module for correct operation of the virtual memory system.
 .Pp
 Note that modified/referenced information is only tracked for
-pages managed by the virtual memory system (i.e. pages for
-which a vm_page structure exists).  In addition, only
+pages managed by the virtual memory system (i.e., pages for
+which a vm_page structure exists).
+In addition, only
 .Dq managed
-mappings of those pages have modified/referenced tracking.  Mappings
-entered with the
+mappings of those pages have modified/referenced tracking.
+Mappings entered with the
 .Fn pmap_enter
 function are
 .Dq managed
-mappings.  It is possible for
+mappings.
+It is possible for
 .Dq unmanaged
 mappings of a page to be created, using the
 .Fn pmap_kenter_pa
-function.  The use of
+function.
+The use of
 .Dq unmanaged
 mappings should be limited to code which may execute in interrupt context
 (for example, the kernel memory allocator), or to enter mappings for
@@ -302,17 +310,21 @@ structures or holding locks.
 .Pp
 Also note that the modified/referenced information must be tracked
 on a per-page basis; they are not attributes of a mapping, but attributes
-of a page.  Therefore, even after all mappings for a given page have
+of a page.
+Therefore, even after all mappings for a given page have
 been removed, the modified/referenced information for that page
 .Em must
-be preserved.  The only time the modified/referenced attributes may
+be preserved.
+The only time the modified/referenced attributes may
 be cleared is when the virtual memory system explicitly calls the
 .Fn pmap_clear_modify
 and
 .Fn pmap_clear_reference
-functions.  These functions must also change any internal state
-necessary to detect the page being modified or referenced again
-after the modified or referenced state is cleared.  (Prior to
+functions.
+These functions must also change any internal state necessary to detect
+the page being modified or referenced again after the modified or
+referenced state is cleared.
+(Prior to
 .Nx 1.6 ,
 .Nm
 implementations could get away without this because UVM (and Mach VM
@@ -333,16 +345,17 @@ pages.
 .Pp
 A
 .Dq resident
-page is one for which a mapping exists.  This statistic is used to
-compute the resident size of a process and enforce resource limits.
+page is one for which a mapping exists.
+This statistic is used to compute the resident size of a process and
+enforce resource limits.
 Only pages (whether managed by the virtual memory system or not)
 which are mapped into a physical map should be counted in the resident
 count.
 .Pp
 A
 .Dq wired
-page is one for which a wired mapping exists.  This statistic is used to
-enforce resource limits.
+page is one for which a wired mapping exists.
+This statistic is used to enforce resource limits.
 .Pp
 Note that it is recommended (though not required) that the
 .Nm
@@ -353,8 +366,9 @@ structure in the tracking of
 statistics by placing it inside the
 .Dv pmap
 structure and adjusting the counts when mappings are established, changed,
-or removed.  This avoids potentially expensive data structure traversals
-when the statistics are queried.
+or removed.
+This avoids potentially expensive data structure traversals when the
+statistics are queried.
 .Ss REQUIRED FUNCTIONS
 This section describes functions that a
 .Nm
@@ -363,7 +377,8 @@ module must provide to the virtual memory system.
 .It void Fn "pmap_init" "void"
 This function initializes the
 .Nm
-module.  It is called by
+module.
+It is called by
 .Fn uvm_init
 to initialize any data structures that the module needs to
 manage physical maps.
@@ -377,8 +392,9 @@ Note that this function may be provided as a C pre-processor macro.
 The
 .Fn pmap_virtual_space
 function is called to determine the initial kernel virtual address
-space beginning and end.  These values are used to create the kernel's
-virtual memory map.  The function must set
+space beginning and end.
+These values are used to create the kernel's virtual memory map.
+The function must set
 .Fa *vstartp
 to the first kernel virtual address that will be managed by
 .Xr uvm 9 ,
@@ -394,7 +410,8 @@ feature is used by a
 implementation, then
 .Fa *vendp
 should be set to the maximum kernel virtual address allowed by the
-implementation.  If
+implementation.
+If
 .Fn pmap_growkernel
 is not used, then
 .Fa *vendp
@@ -403,13 +420,14 @@ be set to the maximum kernel virtual address that can be mapped with
 the resources currently allocated to map the kernel virtual address
 space.
 .It pmap_t Fn "pmap_create" "void"
-Create a physical map and return it to the caller.  The reference
-count on the new map is 1.
+Create a physical map and return it to the caller.
+The reference count on the new map is 1.
 .It void Fn "pmap_destroy" "pmap_t pmap"
-Drop the reference count on the specified physical map.  If the
-reference count drops to 0, all resources associated with the
-physical map are released and the physical map destroyed.  In the
-case of a drop-to-0, no mappings will exist in the map.  The
+Drop the reference count on the specified physical map.
+If the reference count drops to 0, all resources associated with the
+physical map are released and the physical map destroyed.
+In the case of a drop-to-0, no mappings will exist in the map.
+The
 .Nm
 implementation may assert this.
 .It void Fn "pmap_reference" "pmap_t pmap"
@@ -453,7 +471,8 @@ The
 argument contains protection bits (the same bits as used in the
 .Fa prot
 argument) indicating the type of access that caused the mapping to
-be created.  This information may be used to seed modified/referenced
+be created.
+This information may be used to seed modified/referenced
 information for the page being mapped, possibly avoiding redundant faults
 on platforms that track modified/referenced information in software.
 Other information provided by
@@ -464,7 +483,8 @@ The mapping being created is a wired mapping.
 .It PMAP_CANFAIL
 The call to
 .Fn pmap_enter
-is allowed to fail.  If this flag is
+is allowed to fail.
+If this flag is
 .Em not
 set, and the
 .Fn pmap_enter
@@ -487,17 +507,17 @@ information for the page
 .Em must
 be seeded with the access type provided in
 .Fa flags
-if the PMAP_WIRED flag is set.  This is to prevent a fault
-for the purpose of tracking modified/referenced information
-from occurring while the system is in a critical section where
-a fault would be unacceptable.
+if the PMAP_WIRED flag is set.
+This is to prevent a fault for the purpose of tracking
+modified/referenced information from occurring while the system is in
+a critical section where a fault would be unacceptable.
 .Pp
 Note that
 .Fn pmap_enter
 is sometimes called to enter a mapping at a virtual address
-for which a mapping already exists.  In this situation, the
-implementation must take whatever action is necessary to
-invalidate the previous mapping before entering the new one.
+for which a mapping already exists.
+In this situation, the implementation must take whatever action is
+necessary to invalidate the previous mapping before entering the new one.
 .Pp
 Also note that
 .Fn pmap_enter
@@ -532,8 +552,8 @@ No other
 .Nm pmap
 interfaces which take
 .Fa pmap
-as an argument will called during this process.  Other interfaces which
-might need to access
+as an argument will be called during this process.
+Other interfaces which might need to access
 .Fa pmap
 (such as
 .Fn pmap_page_protect )
@@ -542,7 +562,7 @@ are permitted during this process.
 The
 .Nm pmap
 implementation is free to either remove all the
-.Nm pmap 's
+.Nm pmap Ns 's
 mappings immediately in
 .Fn pmap_remove_all ,
 or to use the knowledge of the upcoming
@@ -562,8 +582,8 @@ Clear the
 attribute on the mapping for virtual address
 .Fa va .
 .It boolean_t Fn "pmap_extract" "pmap_t pmap" "vaddr_t va" "paddr_t *pap"
-This function extracts a mapping from the specified physical map.  It
-serves two purposes: to determine if a mapping exists for the specified
+This function extracts a mapping from the specified physical map.
+It serves two purposes: to determine if a mapping exists for the specified
 virtual address, and to determine what physical address is mapped at the
 specified virtual address.
 .Pp
@@ -571,8 +591,8 @@ The
 .Fn pmap_extract
 function returns FALSE if a mapping for
 .Fa va
-does not exist.  Otherwise, it returns TRUE and places the
-physical address mapped at
+does not exist.
+Otherwise, it returns TRUE and places the physical address mapped at
 .Fa va
 into
 .Fa *pap
@@ -588,13 +608,15 @@ at virtual address
 .Fa va
 with protection
 .Fa prot
-into the kernel physical map.  Mappings of this type are always
+into the kernel physical map.
+Mappings of this type are always
 .Dq wired ,
 and are unaffected by routines that alter the protection of pages
 (such as
 .Fn pmap_page_protect ) .
 Such mappings are also not included in the gathering of modified/referenced
-information about a page.  Mappings entered with
+information about a page.
+Mappings entered with
 .Fn pmap_kenter_pa
 by machine-independent code
 .Em must not
@@ -622,8 +644,8 @@ Remove all mappings starting at virtual address
 .Fa va
 for
 .Fa size
-bytes from the kernel physical map.  All mappings that are
-removed must be the
+bytes from the kernel physical map.
+All mappings that are removed must be the
 .Dq unmanaged
 type created with
 .Fn pmap_kenter_pa .
@@ -656,8 +678,8 @@ allow the
 .Nm
 module to release resources used to map the process's address space.
 The implementation may choose to remove physical mappings in order
-to free e.g. page tables back to the system.  Note, however, that
-wired mappings must
+to free e.g. page tables back to the system.
+Note, however, that wired mappings must
 .Em not
 be removed when
 .Fn pmap_collect
@@ -667,7 +689,8 @@ Note that while this function is required to be provided by a
 .Nm
 implementation, it is not actually required to do anything.
 .Fn pmap_collect
-is merely advisory.  It is recommended, however, that
+is merely advisory.
+It is recommended, however, that
 .Fn pmap_collect
 be fully implemented by a
 .Nm
@@ -676,9 +699,10 @@ implementation.
 This function is used to inform the
 .Nm
 module that all physical mappings, for the specified pmap, must now be
-correct.  That is, all delayed virtual-to-physical mappings updates
-(such as TLB invalidation or address space identifier updates) must
-be completed.  This routine must be used after calls to
+correct.
+That is, all delayed virtual-to-physical mappings updates (such as TLB
+invalidation or address space identifier updates) must be completed.
+This routine must be used after calls to
 .Fn pmap_enter ,
 .Fn pmap_remove ,
 .Fn pmap_protect ,
@@ -691,9 +715,9 @@ If a
 .Nm
 implementation does not delay virtual-to-physical mapping updates,
 .Fn pmap_update
-has no operation.  In this case, the call may be deleted using
-a C pre-processor macro in
-.Pa \*[Lt]machine/pmap.h\*[Gt] .
+has no operation.
+In this case, the call may be deleted using a C pre-processor macro in
+.Aq Pa machine/pmap.h .
 .It void Fn "pmap_activate" "struct proc *p"
 Activate the physical map used by process
 .Fa p .
@@ -701,7 +725,8 @@ This is called by the virtual memory system when the the
 virtual memory context for a process is changed, and is also
 often used by machine-dependent context switch code to program
 the memory management hardware with the process's page table
-base, etc.  Note that
+base, etc.
+Note that
 .Fn pmap_activate
 may not always be called when
 .Fa p
@@ -725,10 +750,10 @@ Zero the PAGE_SIZE sized region starting at physical address
 The
 .Nm
 implementation must take whatever steps are necessary to map the
-page to a kernel-accessible address and zero the page.  It is
-suggested that implementations use an optimized zeroing algorithm,
-as the performance of this function directly impacts page fault
-performance.  The implementation may assume that the region is
+page to a kernel-accessible address and zero the page.
+It is suggested that implementations use an optimized zeroing algorithm,
+as the performance of this function directly impacts page fault performance.
+The implementation may assume that the region is
 PAGE_SIZE aligned and exactly PAGE_SIZE bytes in length.
 .Pp
 Note that the cache configuration of the platform should also be
@@ -736,12 +761,14 @@ considered in the implementation of
 .Fn pmap_zero_page .
 For example, on systems with a physically-addressed cache, the cache
 load caused by zeroing the page will not be wasted, as the zeroing is
-usually done on-demand.  However, on systems with a virtually-addressed
-cached, the cache load caused by zeroing the page
+usually done on-demand.
+However, on systems with a virtually-addressed cached, the cache load
+caused by zeroing the page
 .Em will
 be wasted, as the page will be mapped at a virtual address which is
-different from that used to zero the page.  In the virtually-addressed
-cache case, care should also be taken to avoid cache alias problems.
+different from that used to zero the page.
+In the virtually-addressed cache case, care should also be taken to
+avoid cache alias problems.
 .It void Fn "pmap_copy_page" "paddr_t src" "paddr_t dst"
 Copy the PAGE_SIZE sized region starting at physical address
 .Fa src
@@ -751,11 +778,11 @@ The
 .Nm
 implementation must take whatever steps are necessary to map the
 source and destination pages to a kernel-accessible address and
-perform the copy.  It is suggested that implementations use an
-optimized copy algorithm, as the performance of this function
-directly impacts page fault performance.  The implementation may
-assume that both regions are PAGE_SIZE aligned and exactly PAGE_SIZE
-bytes in length.
+perform the copy.
+It is suggested that implementations use an optimized copy algorithm,
+as the performance of this function directly impacts page fault performance.
+The implementation may assume that both regions are PAGE_SIZE aligned
+and exactly PAGE_SIZE bytes in length.
 .Pp
 The same cache considerations that apply to
 .Fn pmap_zero_page
@@ -817,11 +844,12 @@ Note that this function may be provided as a C pre-processor macro.
 .It paddr_t Fn "pmap_phys_address" "int cookie"
 Convert a cookie returned by a device
 .Fn mmap
-function into a physical address.  This function is provided to
-accommodate systems which have physical address spaces larger than
-can be directly addressed by the platform's
+function into a physical address.
+This function is provided to accommodate systems which have physical
+address spaces larger than can be directly addressed by the platform's
 .Fa paddr_t
-type.  The existence of this function is highly dubious, and it is
+type.
+The existence of this function is highly dubious, and it is
 expected that this function will be removed from the
 .Nm pmap
 API in a future release of
@@ -839,14 +867,16 @@ API.
 This function is a bootstrap memory allocator, which may be provided
 as an alternative to the bootstrap memory allocator used within
 .Xr uvm 9
-itself.  It is particularly useful on systems which provide e.g.
-a direct-mapped memory segment.  This function works by stealing
-pages from the (to be) managed memory pool, which has already been
-provided to
+itself.
+It is particularly useful on systems which provide e.g. a direct-mapped
+memory segment.
+This function works by stealing pages from the (to be) managed memory
+pool, which has already been provided to
 .Xr uvm 9
-in the vm_physmem[] array.  The pages are then mapped, or otherwise
-made accessible to the kernel, in a machine-dependent way.  The
-memory must be zeroed by
+in the vm_physmem[] array.
+The pages are then mapped, or otherwise made accessible to the kernel,
+in a machine-dependent way.
+The memory must be zeroed by
 .Fn pmap_steal_memory .
 Note that memory allocated with
 .Fn pmap_steal_memory
@@ -858,10 +888,12 @@ must never be
 Note that
 .Fn pmap_steal_memory
 should not be used as a general-purpose early-startup memory
-allocation routine.  It is intended to be used only by the
+allocation routine.
+It is intended to be used only by the
 .Fn uvm_pageboot_alloc
-routine and its supporting routines.  If you need to allocate
-memory before the virtual memory system is initialized, use
+routine and its supporting routines.
+If you need to allocate memory before the virtual memory system is
+initialized, use
 .Fn uvm_pageboot_alloc .
 See
 .Xr uvm 9
@@ -892,32 +924,34 @@ The
 function is enabled by defining the C pre-processor macro
 .Dq PMAP_STEAL_MEMORY
 in
-.Pa \*[Lt]machine/pmap.h\*[Gt] .
+.Aq Pa machine/pmap.h .
 .It vaddr_t Fn "pmap_growkernel" "vaddr_t maxkvaddr"
 Management of the kernel virtual address space is complicated by the
 fact that it is not always safe to wait for resources with which to
-map a kernel virtual address.  However, it is not always desirable to
-pre-allocate all resources necessary to map the entire kernel virtual
-address space.
+map a kernel virtual address.
+However, it is not always desirable to pre-allocate all resources
+necessary to map the entire kernel virtual address space.
 .Pp
 The
 .Fn pmap_growkernel
-interface is designed to help alleviate this problem.  The virtual
-memory startup code may choose to allocate an initial set of mapping
-resources (e.g. page tables) and set an internal variable indicating
-how much kernel virtual address space can be mapped using those initial
-resources.  Then, when the virtual memory system wishes to map something
+interface is designed to help alleviate this problem.
+The virtual memory startup code may choose to allocate an initial set
+of mapping resources (e.g., page tables) and set an internal variable
+indicating how much kernel virtual address space can be mapped using
+those initial resources.
+Then, when the virtual memory system wishes to map something
 at an address beyond that initial limit, it calls
 .Fn pmap_growkernel
-to pre-allocate more sources with which to create the mapping.  Note that
-once additional kernel virtual address space mapping resources have been
-allocated, they should not be freed; it is likely they will be needed
-again.
+to pre-allocate more sources with which to create the mapping.
+Note that once additional kernel virtual address space mapping resources
+have been allocated, they should not be freed; it is likely they will
+be needed again.
 .Pp
 The
 .Fn pmap_growkernel
 function returns the new maximum kernel virtual address that can be mapped
-with the resources it has available.  If new resources cannot be allocated,
+with the resources it has available.
+If new resources cannot be allocated,
 .Fn pmap_growkernel
 must panic.
 .Pp
@@ -926,16 +960,16 @@ The
 function is enabled by defining the C pre-processor macro
 .Dq PMAP_GROWKERNEL
 in
-.Pa \*[Lt]machine/pmap.h\*[Gt] .
+.Aq Pa machine/pmap.h .
 .It void Fn "pmap_fork" "pmap_t src_map" "pmap_t dst_map"
 Some
 .Nm
 implementations may need to keep track of other information not
-directly related to the virtual address space.  For example, on
-the i386 port, the Local Descriptor Table state of a process is
-associated with the pmap (this is due to the fact that applications
-manipulate the Local Descriptor Table directly expect it to be
-logically associated with the virtual memory state of the process).
+directly related to the virtual address space.
+For example, on the i386 port, the Local Descriptor Table state of a
+process is associated with the pmap (this is due to the fact that
+applications manipulate the Local Descriptor Table directly expect it
+to be logically associated with the virtual memory state of the process).
 .Pp
 The
 .Fn pmap_fork
@@ -955,25 +989,26 @@ The
 function is enabled by defining the C pre-processor macro
 .Dq PMAP_FORK
 in
-.Pa \*[Lt]machine/pmap.h\*[Gt] .
+.Aq Pa machine/pmap.h .
 .It vaddr_t Fn "PMAP_MAP_POOLPAGE" "paddr_t pa"
 This function is used by the
 .Xr pool 9
-memory pool manager.  Pools allocate backing pages one at a time.  This
-is provided as a means to use hardware features such as a direct-mapped
-memory segment to map the pages used by the
+memory pool manager.
+Pools allocate backing pages one at a time.
+This is provided as a means to use hardware features such as a
+direct-mapped memory segment to map the pages used by the
 .Xr pool 9
-allocator.  This can lead to better performance by e.g. reducing
-TLB contention.
+allocator.
+This can lead to better performance by e.g. reducing TLB contention.
 .Pp
 .Fn PMAP_MAP_POOLPAGE
-returns the kernel-accessible address of the page being mapped.  It must
-always succeed.
+returns the kernel-accessible address of the page being mapped.
+It must always succeed.
 .Pp
 The use of
 .Fn PMAP_MAP_POOLPAGE
 is enabled by defining it as a C pre-processor macro in
-.Fa \*[Lt]machine/pmap.h\*[Gt] .
+.Aq Pa machine/pmap.h .
 If
 .Fn PMAP_MAP_POOLPAGE
 is defined,
@@ -999,7 +1034,7 @@ provided kernel-accessible address.
 The use of
 .Fn PMAP_UNMAP_POOLPAGE
 is enabled by defining it as a C pre-processor macro in
-.Fa \*[Lt]machine/pmap.h\*[Gt] .
+.Aq Pa machine/pmap.h .
 If
 .Fn PMAP_UNMAP_POOLPAGE
 is defined,
@@ -1021,9 +1056,10 @@ and returns the physical address of that page on a MIPS processor.
 The
 .Nm
 module was originally part of the design of the virtual memory system
-in the Mach Operating System.  The goal was to provide a clean separation
-between the machine-independent and the machine-dependent portions of
-the virtual memory system, in stark contrast to the original
+in the Mach Operating System.
+The goal was to provide a clean separation between the machine-independent
+and the machine-dependent portions of the virtual memory system, in
+stark contrast to the original
 .Bx 3
 virtual memory system, which was specific to the VAX.
 .Pp
@@ -1050,7 +1086,8 @@ release with the new
 .Xr uvm 9
 virtual memory system, which included several changes to the
 .Nm
-API.  Since the introduction of
+API.
+Since the introduction of
 .Xr uvm 9 ,
 the
 .Nm
@@ -1097,12 +1134,12 @@ needs to be reexamined.
 .Pp
 The use of
 .Fn pmap_copy
-needs to be reexamined.  Empirical evidence suggests that performance
-of the system suffers when
+needs to be reexamined.
+Empirical evidence suggests that performance of the system suffers when
 .Fn pmap_copy
-actually performs its defined function.  This is largely due to the
-fact that the copy of the virtual-to-physical mappings is wasted if
-the process calls
+actually performs its defined function.
+This is largely due to the fact that the copy of the virtual-to-physical
+mappings is wasted if the process calls
 .Xr execve 2
 after
 .Xr fork 2 .
