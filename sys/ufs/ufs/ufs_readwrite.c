@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.38 2001/11/08 05:24:52 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.39 2001/11/17 07:22:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.38 2001/11/08 05:24:52 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.39 2001/11/17 07:22:34 simonb Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -264,6 +264,7 @@ WRITE(void *v)
 		return (EFBIG);
 	}
 
+	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	resid = uio->uio_resid;
 	osize = ip->i_ffs_size;
@@ -380,7 +381,6 @@ WRITE(void *v)
 	goto out;
 
  bcache:
-	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	while (uio->uio_resid > 0) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
