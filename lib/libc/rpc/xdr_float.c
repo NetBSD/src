@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.26 2001/02/18 22:13:41 bjh21 Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.27 2001/02/21 18:09:25 bjh21 Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.26 2001/02/18 22:13:41 bjh21 Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.27 2001/02/21 18:09:25 bjh21 Exp $");
 #endif
 #endif
 
@@ -230,7 +230,8 @@ xdr_double(xdrs, dp)
 	case XDR_ENCODE:
 #ifdef IEEEFP
 		i32p = (int32_t *)(void *)dp;
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm__)
+#if (BYTE_ORDER == BIG_ENDIAN) || \
+    (defined(__arm__) && !defined(__VFP_FP__))
 		rv = XDR_PUTINT32(xdrs, i32p);
 		if (!rv)
 			return (rv);
@@ -270,7 +271,8 @@ xdr_double(xdrs, dp)
 	case XDR_DECODE:
 #ifdef IEEEFP
 		i32p = (int32_t *)(void *)dp;
-#if BYTE_ORDER == BIG_ENDIAN || defined(__arm__)
+#if BYTE_ORDER == BIG_ENDIAN || \
+    (defined(__arm__) && !defined(__VFP_FP__))
 		rv = XDR_GETINT32(xdrs, i32p);
 		if (!rv)
 			return (rv);

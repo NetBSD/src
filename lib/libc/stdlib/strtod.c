@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.35 2001/02/09 18:38:33 bjh21 Exp $	*/
+/*	$NetBSD: strtod.c,v 1.36 2001/02/21 18:09:26 bjh21 Exp $	*/
 
 /****************************************************************
  *
@@ -93,13 +93,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.35 2001/02/09 18:38:33 bjh21 Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.36 2001/02/21 18:09:26 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define Unsigned_Shifts
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
-    defined(__powerpc__) || defined(__sh3__)
+    defined(__powerpc__) || defined(__sh3__) || \
+    (defined(__arm__) && defined(__VFP_FP__))
 #include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define IEEE_BIG_ENDIAN
@@ -108,7 +109,7 @@ __RCSID("$NetBSD: strtod.c,v 1.35 2001/02/09 18:38:33 bjh21 Exp $");
 #endif
 #endif
 
-#if defined(__arm__)
+#if defined(__arm__) && !defined(__VFP_FP__)
 /*
  * Although the CPU is little endian the FP has different
  * byte and word endianness. The byte order is still little endian
