@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.458 2001/09/13 05:19:53 enami Exp $
+#	$NetBSD: files,v 1.459 2001/09/13 05:22:16 enami Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -14,6 +14,8 @@ defopt	UCONSOLE
 defopt	NEW_PIPE
 
 defopt	MULTIPROCESSOR
+
+defopt	opt_callout.h	CALLWHEEL_STATS
 
 defopt	opt_sysv.h	SYSVMSG SYSVSEM	SYSVSHM
 defopt	opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
