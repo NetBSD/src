@@ -35,5 +35,9 @@ SRCS   = dhclient.c clparse.c
 PROG   = dhclient
 MAN    = dhclient.8 dhclient.conf.5
 
+# XXX
+BINDIR?=	/sbin
+LDSTATIC=	-static
+
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
