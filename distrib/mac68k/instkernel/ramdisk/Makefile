@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/08/30 23:51:50 jhawk Exp $
+#	$NetBSD: Makefile,v 1.8 2000/11/01 07:57:58 garbled Exp $
 
 .ifndef NOTESOBJDIR
 NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} ${MAKEFLAGS} -V .OBJDIR
@@ -23,6 +23,8 @@ IMAGE?=		xxx.fs
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
+
+CRUNCHGEN?=	crunchgen
 
 all: notes ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=5120
@@ -50,7 +52,7 @@ notes:
 	    cp ${NOTESOBJDIR}/INSTALL.more ${.OBJDIR}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
