@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.1 1996/01/31 23:16:38 mark Exp $ */
+/* $NetBSD: pmap.c,v 1.2 1996/02/05 21:25:42 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 20/09/94
  * Last updated : 02/06/95
  *
- *    $Id: pmap.c,v 1.1 1996/01/31 23:16:38 mark Exp $
+ *    $Id: pmap.c,v 1.2 1996/02/05 21:25:42 mark Exp $
  */
 
 /*
@@ -84,7 +84,7 @@
 #include <machine/katelib.h>
 #include <machine/vidc.h>
 
-#include "hydra.h"
+#include "hydrabus.h"
 
 /*#define bcopy_page(s, d) bcopy(s, d, NBPG)*/
 /*#define bzero_page(s)    bzero(s, NBPG)*/
@@ -146,7 +146,7 @@ typedef struct {
 } pv_addr_t;
 
 extern pv_addr_t kernelstack;
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 extern pv_addr_t hydrascratch;
 #endif
 
@@ -590,7 +590,7 @@ pmap_bootstrap(kernel_l1pt)
 	    page_hook_addr0, page_hook_pte0); 
 #endif
 
-#if NHYDRA > 0
+#if NHYDRABUS > 0
 	hydrascratch.virtual = virtual_start;
 	virtual_start += NBPG;
 
