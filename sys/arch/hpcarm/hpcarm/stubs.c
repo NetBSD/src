@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.6 2001/06/29 02:40:28 toshii Exp $	*/
+/*	$NetBSD: stubs.c,v 1.7 2001/08/12 08:35:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -54,49 +54,6 @@
 
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
-
-/* These queue functions are candiates for arm32/machdep.c */
-struct queue {
-	struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
-{
-	struct queue *elem = v1, *head = v2;
-	struct queue *next;
-
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-
-void
-_remque(v)
-	void *v;
-{
-	struct queue *elem = v;
-	struct queue *next, *prev;
-
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
-}
-
 
 /*
  * These variables are needed by /sbin/savecore
