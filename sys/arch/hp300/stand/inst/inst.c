@@ -1,7 +1,7 @@
-/*	$NetBSD: inst.c,v 1.1 1997/02/04 03:52:57 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.2 1997/02/04 19:34:09 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.
+ * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -451,7 +451,7 @@ miniroot()
 	char diskname[64], minirootname[128];
 	char block[DEV_BSIZE];
 	char tapename[64];
-	int fileno;
+	int fileno, ignoreshread, eof, len;
 	struct stat st;
 	size_t xfersize;
 	struct open_file *disk_ofp;
@@ -489,21 +489,17 @@ miniroot()
 		}
 
 		/*
-		 * Find out how big the miniroot is.  Make sure it's
-		 * an even number of blocks...
+		 * Find out how big the miniroot is... we can't
+		 * check for size because it may be compressed.
 		 */
+		ignoreshread = 1;
 		if (fstat(sfd, &st) < 0) {
 			printf("can't stat %s\n", line);
 			goto done;
 		}
-		if (st.st_size % DEV_BSIZE) {
-			printf("Miniroot size must be an even multiple of %d\n",
-			    DEV_BSIZE);
-			return;
-		}
 		nblks = (int)(st.st_size / sizeof(block));
 
-		printf("Copying %d blocks from %s to %s...", nblks, line,
+		printf("Copying miniroot from %s to %s...", line,
 		    diskname);
 		break;
 
@@ -541,6 +537,7 @@ miniroot()
 		minirootname[i++] = ':';
 		strcat(minirootname, "XXX");	/* lameness in open() */
 
+		ignoreshread = 0;
 		printf("Copy how many %d byte blocks? ", DEV_BSIZE);
 		bzero(line, sizeof(line));
 		gets(line);
@@ -558,7 +555,7 @@ miniroot()
 			return;
 		}
 
-		printf("Copying %s file %c to %s...", tapename, fileno,
+		printf("Copying %s file %d to %s...", tapename, fileno,
 		    diskname);
 		break;
 
@@ -576,24 +573,36 @@ miniroot()
 	 * This is fairly slow... if someone wants to speed it
 	 * up, they'll get no complaints from me.
 	 */
-	for (i = 0; i < nblks; ++i) {
-		if (read(sfd, block, sizeof(block)) != sizeof(block)) {
-			printf("Short read, errno = %d\n", errno);
-			goto done;
+	for (i = 0, eof = 0; i < nblks || ignoreshread == 0; i++) {
+		if ((len = read(sfd, block, sizeof(block))) < 0) {
+			printf("Read error, errno = %d\n", errno);
+			goto out;
 		}
+
+		/*
+		 * Check for end-of-file.
+		 */
+		if (len == 0)
+			goto done;
+		else if (len < sizeof(block))
+			eof = 1;
+
 		if ((*disk_ofp->f_dev->dv_strategy)(disk_ofp->f_devdata,
-		    F_WRITE, i, sizeof(block), block, &xfersize) ||
-		    xfersize != sizeof(block)) {
+		    F_WRITE, i, len, block, &xfersize) || xfersize != len) {
 			printf("Bad write at block %d, errno = %d\n",
 			    i, errno);
-			goto done;
+			goto out;
 		}
+
+		if (eof)
+			goto done;
 	}
+ done:
 	printf("done\n");
 
 	printf("Successfully copied miniroot image.\n");
 
- done:
+ out:
 	close(sfd);
 	close(dfd);
 }
