@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.28 1995/08/11 03:02:04 briggs Exp $	*/
+/*	$NetBSD: ser.c,v 1.29 1995/08/11 03:29:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -220,7 +220,6 @@ serinit(int running_interrupts)
 	}
 	if (running_interrupts) {
 		if (mac68k_machine.serial_console & 0x01) {
-#if 0
 			if (mac68k_machine.serial_console & 0x02) {
 				SER_DOCNTL(0, 1, 0x0a);
 				SER_DOCNTL(0, 9, 0x0e);
@@ -228,7 +227,6 @@ serinit(int running_interrupts)
 				SER_DOCNTL(1, 1, 0x0a);
 				SER_DOCNTL(1, 9, 0x0e);
 			}
-#endif
 		} else {
 			SER_DOCNTL(0, 1, 0x0a);
 			SER_DOCNTL(0, 9, 0x0e);
@@ -424,10 +422,12 @@ ser_intr(void)
 	int     s;
 	register int unit;
 
-	if (!initted || (mac68k_machine.serial_console & 0x01)) return;
+	if (!sccA) return;
 
 	/* read status to reset SCC state machine */
 	reg0 = SCCCNTL(0);
+
+	if (!initted) return;
 
 	/* reset port B vector to see who interrupted us */
 	bits = SER_STATUS(1, 2) & 0x0e;
