@@ -1,0 +1,33 @@
+#	$NetBSD: files.ixdp425,v 1.1 2003/05/23 00:57:26 ichiro Exp $
+#
+# Intel IXP425 networkproccesor board configuration info
+#
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+
+# IXP425 Network Processor CPU support
+include "arch/arm/xscale/files.ixp425"
+
+# Use the shared initarm_common() code.
+# XXX: Not yet ready for prime-time
+#file	arch/evbarm/evbarm/initarm_common.c
+file	arch/evbarm/ixdp425/ixdp425_machdep.c
+
+# IXP425 PCI bus support
+attach	ixpio at mainbus with ixpio_mainbus
+file	arch/evbarm/ixdp425/ixdp425_mainbus.c		ixpio_mainbus
+
+
+# IXP425 slow peripheral bus support
+attach	ixpsip at mainbus
+
+# LED
+#device	ixdpled
+#attach	ixdpled at ixpsip
+#file    arch/evbarm/ixdp425/ixdp425_led.c		ixdpled needs-flag
+
+# IXDP425 serial port
+# "device" declaration in files.evbarm (because of needs-flag)
+attach	ixpcom at ixpsip with ixpcom_ixdp
+file	arch/evbarm/ixdp425/ixpcom_ixdp425.c		ixpcom_ixdp

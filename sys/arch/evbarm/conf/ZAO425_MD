@@ -1,0 +1,14 @@
+#       $NetBSD: ZAO425_MD,v 1.1 2003/05/23 00:57:26 ichiro Exp $
+#
+#	ZAO425_MD config file
+#
+
+include "arch/evbarm/conf/ZAO425"
+
+# Enable the hooks used for initializing the ram-disk.
+options		MEMORY_DISK_HOOKS
+options		MEMORY_DISK_IS_ROOT		# Force root on ram-disk
+options		MEMORY_DISK_ROOT_SIZE=8192	# 2 Megabytes
+
+# disk/mass storage pseudo-devices
+pseudo-device	md	1	# memory disk device

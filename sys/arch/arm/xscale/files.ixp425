@@ -1,0 +1,31 @@
+#       $NetBSD: files.ixp425,v 1.1 2003/05/23 00:57:24 ichiro Exp $
+#
+# Configuration info for Intel IXP12x0 CPU support
+#
+
+file    arch/arm/xscale/ixp425_intr.c
+file    arch/arm/arm32/irq_dispatch.S
+
+file    arch/arm/xscale/xscale_pmc.c            perfctrs
+
+# IXP425 Slow peripheral devices
+device  ixpsip { [addr=-1], [size=0], [intr=-1] }: bus_space_generic
+file    arch/arm/xscale/ixp425_sip.c		ixpsip
+file	arch/arm/xscale/ixp425_sip_io.c	ixpsip
+
+# IXP425 Processor CPU support
+# IXP425 PCI bus
+device	ixpio: pcibus, bus_space_generic
+file    arch/arm/xscale/ixp425.c		ixpio
+file    arch/arm/xscale/ixp425_io.c		ixpio
+#file    arch/arm/xscale/ixp425_pci.c		ixpio
+#file    arch/arm/xscale/ixp425_pci_dma.c	ixpio
+
+# clock device
+device	ixpclk
+attach	ixpclk at ixpsip
+file	arch/arm/xscale/ixp425_timer.c		ixpclk needs-flag
+
+# IXDP425 serial device
+device	ixpcom: tty
+file	arch/arm/xscale/ixp425_com.c		ixpcom needs-flag
