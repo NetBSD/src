@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.20 2002/08/02 01:59:44 christos Exp $	*/
+/*	$NetBSD: write.c,v 1.21 2002/08/16 20:21:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: write.c,v 1.20 2002/08/02 01:59:44 christos Exp $");
+__RCSID("$NetBSD: write.c,v 1.21 2002/08/16 20:21:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,25 +64,34 @@ __RCSID("$NetBSD: write.c,v 1.20 2002/08/02 01:59:44 christos Exp $");
 #include <pwd.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
 
 #include "utmpentry.h"
 
 void done(int);
-void do_write(const char *, const char *, const uid_t);
+void do_write(int, const char *, const uid_t);
 void wr_fputs(char *);
-void search_utmp(char *, char *, char *, uid_t, int);
-int term_chk(const char *, int *, time_t *, int);
+int search_utmp(char *, char *, uid_t);
+int term_chk(uid_t, const char *, int *, time_t *, int);
 int utmp_chk(const char *, const char *);
 int main(int, char **);
+
+static	gid_t	saved_egid;
 
 int
 main(int argc, char **argv)
 {
 	char *cp;
 	time_t atime;
-	uid_t myuid;
-	int msgsok, myttyfd;
-	char tty[MAXPATHLEN], *mytty;
+	uid_t myuid, uid;
+	int msgsok, myttyfd, ttyfd;
+	char *mytty;
+
+	saved_egid = getegid();
+	if (setegid(getgid()) == -1)
+		err(1, "setegid");
+	myuid = getuid();
+	ttyfd = -1;
 
 	/* check that sender has write enabled */
 	if (isatty(fileno(stdin)))
@@ -97,39 +106,41 @@ main(int argc, char **argv)
 		errx(1, "can't find your tty's name");
 	if ((cp = strrchr(mytty, '/')) != NULL)
 		mytty = cp + 1;
-	if (term_chk(mytty, &msgsok, &atime, 1))
-		exit(1);
+	if (term_chk(myuid, mytty, &msgsok, &atime, 1) == -1)
+		err(1, "%s%s", _PATH_DEV, mytty);
 	if (!msgsok) {
 		(void)fprintf(stderr,
 		    "warning: you have write permission turned off; "
 		    "no reply possible\n");
 	}
 
-	myuid = getuid();
-
 	/* check args */
 	switch (argc) {
 	case 2:
-		search_utmp(argv[1], tty, mytty, myuid, sizeof tty);
-		do_write(tty, mytty, myuid);
+		ttyfd = search_utmp(argv[1], mytty, myuid);
 		break;
 	case 3:
 		if (!strncmp(argv[2], _PATH_DEV, strlen(_PATH_DEV)))
 			argv[2] += strlen(_PATH_DEV);
+		if (uid_from_user(argv[1], &uid) == -1)
+			errx(1, "%s: unknown user", argv[1]);
 		if (utmp_chk(argv[1], argv[2]))
 			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);
-		if (term_chk(argv[2], &msgsok, &atime, 1))
-			exit(1);
+		ttyfd = term_chk(uid, argv[2], &msgsok, &atime, 0);
+		if (ttyfd == -1)
+			err(1, "%s%s", _PATH_DEV, argv[2]);
 		if (myuid && !msgsok)
 			errx(1, "%s has messages disabled on %s",
 			    argv[1], argv[2]);
-		do_write(argv[2], mytty, myuid);
 		break;
 	default:
 		(void)fprintf(stderr, "usage: write user [tty]\n");
 		exit(1);
 	}
+	if (setgid(getgid()) == -1)
+		err(1, "setgid");
+	do_write(ttyfd, mytty, myuid);
 	done(0);
 	/* NOTREACHED */
 #ifdef __GNUC__
@@ -165,49 +176,63 @@ utmp_chk(const char *user, const char *tty)
  * Special case for writing to yourself - ignore the terminal you're
  * writing from, unless that's the only terminal with messages enabled.
  */
-void
-search_utmp(char *user, char *tty, char *mytty, uid_t myuid, int ttylen)
+int
+search_utmp(char *user, char *mytty, uid_t myuid)
 {
+	char tty[MAXPATHLEN];
 	time_t bestatime, atime;
 	int nloggedttys, nttys, msgsok, user_is_me;
 	struct utmpentry *ep;
+	int fd, nfd;
+	uid_t uid;
+
+	if (uid_from_user(user, &uid) == -1)
+		errx(1, "%s: unknown user", user);
 
 	(void)getutentries(NULL, &ep);
 
 	nloggedttys = nttys = 0;
 	bestatime = 0;
 	user_is_me = 0;
+	fd = -1;
 	for (; ep; ep = ep->next)
 		if (strcmp(user, ep->name) == 0) {
 			++nloggedttys;
-			if (term_chk(ep->line, &msgsok, &atime, 0))
+			nfd = term_chk(uid, ep->line, &msgsok, &atime, 0);
+			if (nfd == -1)
 				continue;	/* bad term? skip */
-			if (myuid && !msgsok)
+			if (myuid && !msgsok) {
+				close(nfd);
 				continue;	/* skip ttys with msgs off */
+			}
 			if (strcmp(ep->line, mytty) == 0) {
 				user_is_me = 1;
+				if (fd == -1)
+					fd = nfd;
+				else
+					close(nfd);
 				continue;	/* don't write to yourself */
 			}
 			++nttys;
 			if (atime > bestatime) {
 				bestatime = atime;
-				(void)strncpy(tty, ep->line, ttylen - 1);
-				tty[ttylen - 1] = '\0';
-			}
+				(void)strlcpy(tty, ep->line, sizeof(tty));
+				close(fd);
+				fd = nfd;
+			} else
+				close(nfd);
 		}
 
 	if (nloggedttys == 0)
 		errx(1, "%s is not logged in", user);
 	if (nttys == 0) {
-		if (user_is_me) {		/* ok, so write to yourself! */
-			(void)strncpy(tty, mytty, ttylen - 1);
-			tty[ttylen - 1] = '\0';
-			return;
-		}
+		if (user_is_me)			/* ok, so write to yourself! */
+			return fd;
 		errx(1, "%s has messages disabled", user);
 	} else if (nttys > 1)
 		warnx("%s is logged in more than once; writing to %s",
 		    user, tty);
+	return fd;
 }
 
 /*
@@ -215,46 +240,71 @@ search_utmp(char *user, char *tty, char *mytty, uid_t myuid, int ttylen)
  *     and the access time
  */
 int
-term_chk(const char *tty, int *msgsokP, time_t *atimeP, int showerror)
+term_chk(uid_t uid, const char *tty, int *msgsokP, time_t *atimeP, int ismytty)
 {
-	struct stat s;
 	char path[MAXPATHLEN];
+	struct stat s;
+	int i, fd, serrno;
 
-	(void)snprintf(path, sizeof path, _PATH_DEV "%s", tty);
-	if (stat(path, &s) < 0) {
-		if (showerror)
-			warn("%s", path);
-		return(1);
+	if (strcspn(tty, "./") != strlen(tty)) {
+		errno = EINVAL; return(-1);
 	}
+	i = snprintf(path, sizeof path, _PATH_DEV "%s", tty);
+	if (i < 0 || i >= sizeof(path)) {
+		errno = ENOMEM; return(-1);
+	}
+
+	(void)setegid(saved_egid);
+	fd = open(path, O_WRONLY, 0);
+	serrno = errno;
+	(void)setegid(getgid());
+	errno = serrno;
+
+	if (fd == -1)
+		return(-1);
+	if (fstat(fd, &s) == -1)
+		goto error;
+	if (!isatty(fd) || s.st_uid != uid)
+		goto error;
 	*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
 	*atimeP = s.st_atime;
-	return(0);
+	if (ismytty)
+		(void) close(fd);
+	return(ismytty? 0: fd);
+error:
+	if (fd != -1) {
+		serrno = errno;
+		close(fd);
+		errno = serrno;
+	}
+	return(-1);
 }
 
 /*
  * do_write - actually make the connection
  */
 void
-do_write(const char *tty, const char *mytty, const uid_t myuid)
+do_write(int ttyfd, const char *mytty, const uid_t myuid)
 {
 	const char *login;
 	char *nows;
 	struct passwd *pwd;
 	time_t now;
-	char path[MAXPATHLEN], host[MAXHOSTNAMELEN + 1], line[512];
+	char host[MAXHOSTNAMELEN + 1], line[512];
 
-	/* Determine our login name before the we reopen() stdout */
+	/* Determine our login name before we re-open stdout */
 	if ((login = getlogin()) == NULL) {
 		if ((pwd = getpwuid(myuid)) != NULL)
 			login = pwd->pw_name;
 		else	login = "???";
 	}
-	(void)snprintf(path, sizeof path, _PATH_DEV "%s", tty);
-	if ((freopen(path, "w", stdout)) == NULL)
-		err(1, "%s", path);
+
+	if (dup2(ttyfd, STDOUT_FILENO) == -1)
+		err(1, "dup2");
 
 	(void)signal(SIGINT, done);
 	(void)signal(SIGHUP, done);
+	(void)close(ttyfd);
 
 	/* print greeting */
 	if (gethostname(host, sizeof(host)) < 0)
@@ -264,7 +314,7 @@ do_write(const char *tty, const char *mytty, const uid_t myuid)
 	now = time((time_t *)NULL);
 	nows = ctime(&now);
 	nows[16] = '\0';
-	(void)printf("\r\n\007\007\007Message from %s@%s on %s at %s ...\r\n",
+	(void)printf("\r\n\a\a\aMessage from %s@%s on %s at %s ...\r\n",
 	    login, host, mytty, nows + 11);
 
 	while (fgets(line, sizeof(line), stdin) != NULL)
@@ -275,11 +325,14 @@ do_write(const char *tty, const char *mytty, const uid_t myuid)
  * done - cleanup and exit
  */
 void
-done(int dummy)
+done(int signo)
 {
 
-	(void)printf("EOF\r\n");
-	exit(0);
+	(void)write(STDOUT_FILENO, "EOF\r\n", sizeof("EOF\r\n") - 1);
+	if (signo == 0)
+		exit(0);
+	else
+		_exit(0);
 }
 
 /*
@@ -289,7 +342,7 @@ done(int dummy)
 void
 wr_fputs(char *s)
 {
-	char c;
+	unsigned char c;
 
 #define	PUTC(c)	if (putchar(c) == EOF) goto err;
 
@@ -297,13 +350,11 @@ wr_fputs(char *s)
 		c = toascii(*s);
 		if (c == '\n') {
 			PUTC('\r');
-			PUTC('\n');
-		} else if (!isprint((unsigned char)c) &&
-		    !isspace((unsigned char)c) && c != '\007') {
+		} else if (!isprint(c) && !isspace(c) && c != '\a') {
 			PUTC('^');
-			PUTC(c^0x40);	/* DEL to ?, others to alpha */
-		} else
-			PUTC(c);
+			c ^= 0x40;	/* DEL to ?, others to alpha */
+		}
+		PUTC(c);
 	}
 	return;
 
