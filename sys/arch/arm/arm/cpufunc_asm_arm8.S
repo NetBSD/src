@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm8.S,v 1.1 2001/11/10 23:14:09 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm8.S,v 1.2 2001/11/11 00:47:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 ARM Limited
@@ -115,8 +115,7 @@ ENTRY(arm8_cache_flushID_E)
 ENTRY(arm8_cache_cleanID)
 	mov	r0, #0x00000000
 
-Larm8_cache_cleanID_loop:
-	mov	r2, r0
+1:	mov	r2, r0
 	mcr	p15, 0, r2, c7, c11, 1
 	add	r2, r2, #0x10
 	mcr	p15, 0, r2, c7, c11, 1
@@ -150,7 +149,7 @@ Larm8_cache_cleanID_loop:
 	mcr	p15, 0, r2, c7, c11, 1
 
 	adds	r0, r0, #0x04000000
-	bne	Larm8_cache_cleanID_loop
+	bne	1b
 
 	mov	pc, lr
 
@@ -178,8 +177,7 @@ ENTRY(arm8_cache_purgeID)
 	orr	r2, r3, #(I32_bit | F32_bit)
 	msr	cpsr_all, r2
 
-Larm8_cache_purgeID_loop:
-	mov	r2, r0
+1:	mov	r2, r0
 	mcr	p15, 0, r2, c7, c11, 1
 	mcr	p15, 0, r2, c7, c7, 1
 	add	r2, r2, #0x10
@@ -229,7 +227,7 @@ Larm8_cache_purgeID_loop:
 	mcr	p15, 0, r2, c7, c7, 1
 
 	adds	r0, r0, #0x04000000
-	bne	Larm8_cache_purgeID_loop
+	bne	1b
 
 	msr	cpsr_all, r3
 	mov	pc, lr
