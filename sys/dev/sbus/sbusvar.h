@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.14 2002/03/11 16:00:57 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.15 2002/03/15 07:00:34 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -120,14 +120,8 @@ int	sbus_setup_attach_args __P((
 
 void	sbus_destroy_attach_args __P((struct sbus_attach_args *));
 
-#if defined(SUN4U)
-/* XXX - until sun4u catches up */
-#define sbus_bus_map(t, bt, a, s, f, hp) \
-	bus_space_map2(t, bt, a, s, f, 0, hp)
-#else
 #define sbus_bus_map(tag, slot, offset, sz, flags, hp) \
 	bus_space_map(tag, BUS_ADDR(slot,offset), sz, flags, hp)
-#endif
 bus_addr_t	sbus_bus_addr __P((bus_space_tag_t, u_int, u_int));
 
 #if notyet
