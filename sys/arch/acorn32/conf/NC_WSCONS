@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.5 2001/12/22 23:17:35 cjep Exp $
+#	$NetBSD: NC_WSCONS,v 1.6 2002/01/25 15:20:55 reinoud Exp $
 #
 #	NC - with wscons
 #
@@ -285,7 +285,6 @@ podulebus0	at root
 #eb0	at podulebus?			# EtherB network slot cards
 ne*	at podulebus?			# NE2000 clone cards
 
-pseudo-device	wsmux
 pseudo-device	loop	1		# network loopback
 #pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	sl	2		# CSLIP

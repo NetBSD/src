@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.5 2001/12/22 23:17:35 cjep Exp $
+#	$NetBSD: RPC_WSCONS,v 1.6 2002/01/25 15:20:56 reinoud Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -27,7 +27,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 # Architecture options
 # Architecture options
 options 	RISCPC		# We are a RiscPC
-#options 	RC7500		# We are a RC7500
 
 # FPA options
 
@@ -70,7 +69,7 @@ options 	INET6		# IPV6
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
-options 	NETATALK	# AppleTalk networking
+#options 	NETATALK	# AppleTalk networking
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
@@ -192,12 +191,12 @@ pseudo-device	wsmux
 #opms*		at iomd?		# A7000/NC? mouse for vidcconsole
 
 # generic VT console device
-#vt0	at vidc?
-#vt1	at vidc?
-#vt2	at vidc?
-#vt3	at vidc?
-#vt4	at vidc?
-#vt5	at vidc?
+#vt0		at vidc?
+#vt1		at vidc?
+#vt2		at vidc?
+#vt3		at vidc?
+#vt4		at vidc?
+#vt5		at vidc?
 
 
 # Peripheral IO Controller

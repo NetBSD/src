@@ -1,12 +1,28 @@
-#	$NetBSD: RPCINST,v 1.3 2001/12/22 23:17:35 cjep Exp $
+#	$NetBSD: INSTALL,v 1.1 2002/01/25 15:20:55 reinoud Exp $
 #
-#	RPCINST -- RiscPC install configuration
+#	INSTALL -- NetBSD/acorn32 install configuration
 #
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-include	"arch/acorn32/conf/std.acorn32"
+include		"arch/acorn32/conf/std.acorn32"
+
+#ident		"INSTALL-$Revision: 1.1 $"
 
 # estimated number of users
-
 maxusers	32
 
 # Standard system options
@@ -23,10 +39,8 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # Architecture options
 options 	RISCPC		# We are a RiscPC
-#options 	RC7500		# We are a RC7500
 
 # FPA options
-
 #options 	ARMFPE		# ARM Ltd FPE
 
 # File systems
@@ -43,6 +57,7 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay filesystem
 #file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
@@ -50,12 +65,18 @@ file-system	KERNFS		# /kern
 
 # File system options
 #options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER
 
 # Networking options
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -72,6 +93,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options		COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.
 options 	COMPAT_12	# NetBSD 1.2 compatibility.
@@ -81,12 +103,16 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Bootloader options
-options 	COMPAT_OLD_BOOTLOADER
+#options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -94,20 +120,21 @@ options 	COMPAT_OLD_BOOTLOADER
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 #options 	MEMORY_DISK_SIZE=0	# Size in blocks
-options 	MINIROOTSIZE=3800	# Size in blocks
+options 	MINIROOTSIZE=4100	# Size in blocks
 options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
-options 	KMEMSTATS	# kernel memory statistics
+#options 	KMEMSTATS	# kernel memory statistics
+#options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Development and Debugging options
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-options 	DIAGNOSTIC	# internally consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
@@ -222,7 +249,7 @@ scsibus* at oak?
 csa*	at podulebus?			# Cumana SCSI I adpater
 scsibus* at csa?
 
-hcsc*	at podulebus0 slot ?	# HCCS 8-bit SCSI interface
+hcsc*	at podulebus0 slot ?		# HCCS 8-bit SCSI interface
 scsibus* at hcsc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -231,6 +258,14 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI auto-changers
 #uk*	at scsibus? target ? lun ?	# SCSI unknown device
 #ss*	at scsibus? target ? lun ?	# SCSI scanner
+
+dtide*	at podulebus?			# D.T. Software IDE card
+wd*	at dtide? channel ? drive ?
+atapibus* at dtide? channel ?
+
+hcide*	at podulebus?			# HCCS IDE card
+wd*	at hcide? channel ? drive ?
+atapibus* at hcide? channel ?
 
 icside*	at podulebus?			# ICS IDE card
 wd*	at icside? channel ? drive ?
@@ -244,6 +279,9 @@ simide*	at podulebus?			# Simtec IDE card
 wd*	at simide? channel ? drive ?
 atapibus* at simide? channel ?
 
+amps*	at podulebus?			# Atomwide Multi-Port Serial card
+com*	at amps?
+
 ie*	at podulebus?			# Ether1 podules
 ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
@@ -253,15 +291,32 @@ pseudo-device	loop	1		# network loopback
 #pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	gre	2		# generic L3 over IP tunnel
 #pseudo-device	ipfilter 1		# ip filter
-#pseudo-device	strip	4		# STRIP
+#pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
+#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	raid	8		# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md	1		# Ramdisk driver
-#pseudo-device	rnd			# /dev/random and /dev/urandom
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"
