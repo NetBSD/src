@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.22 2000/07/12 21:49:44 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.23 2000/07/14 15:13:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -437,9 +437,7 @@ psycho_init(sc, ma, pba)
 	bus_space_handle_t bh;
 	u_int64_t csr;
 	int psycho_br[2], n;
-	char who;
-
-	printf("psycho: ");
+	struct pci_ctl *pci_ctl;
 
 	/*
 	 * The psycho gets three register banks:
@@ -452,6 +450,11 @@ psycho_init(sc, ma, pba)
 	 */
 	sc->sc_regs = (struct psychoreg *)(u_long)ma->ma_address[2];
 	sc->sc_basepaddr = (paddr_t)ma->ma_reg[2].ur_paddr;
+	pci_ctl = (struct pci_ctl *)(u_long)ma->ma_address[0];
+
+	csr = sc->sc_regs->psy_csr;
+	printf("psycho: impl %d, version %d: ",
+		PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr) );
 
 	/*
 	 * OK, so the deal here is:
@@ -468,6 +471,8 @@ psycho_init(sc, ma, pba)
 		/*
 		 * I am not myself.
 		 */
+
+		/* XXX - we get sc_regs from the PROM, so this does not work */
 		if (osc == sc || osc->sc_regs != sc->sc_regs)
 			continue;
 
@@ -478,20 +483,18 @@ psycho_init(sc, ma, pba)
 
 		/* who? said a voice, incredulous */
 		sc->sc_mode = PSYCHO_MODE_PSYCHO_B;	/* XXX */
-		who = 'b';
 		break;
 	}
 
 	if (sc->sc_mode != PSYCHO_MODE_PSYCHO_B) {
 		sc->sc_mode = PSYCHO_MODE_PSYCHO_A;	/* XXX */
-		who = 'a';
 	}
 
 	/* Oh, dear.  OK, lets get started */
 
 	/* XXX: check this is OK for real psycho */
 	/* setup the PCI control register */
-	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&sc->sc_regs->psy_pcictl[0].pci_csr, 0);
+	csr = bus_space_read_8(sc->sc_bustag, (bus_space_handle_t)(u_long)&pci_ctl->pci_csr, 0);
 	csr |= PCICTL_MRLM |
 	       PCICTL_ARB_PARK |
 	       PCICTL_ERRINTEN |
@@ -500,7 +503,7 @@ psycho_init(sc, ma, pba)
 		 PCICTL_CPU_PRIO |
 		 PCICTL_ARB_PRIO |
 		 PCICTL_RTRYWAIT);
-	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
+	bus_space_write_8(sc->sc_bustag, &pci_ctl->pci_csr, 0, csr);
 
 	/* allocate our psycho_pbm */
 	pp = sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
@@ -524,7 +527,7 @@ psycho_init(sc, ma, pba)
 	pba->pba_bus = psycho_br[0];
 
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
-	printf("; simba %c, PCI bus %d", who, psycho_br[0]);
+	printf("; PCI bus %d", psycho_br[0]);
 
 	pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 
@@ -571,7 +574,7 @@ psycho_init(sc, ma, pba)
 				  0,
 				  0,
 				  &bh))
-			panic("could not map sabre PCI configuration space");
+			panic("could not map psycho PCI configuration space");
 		sc->sc_configaddr = (off_t)bh;
 	} else {
 		/* for psycho B, we just copy the config tag and address */
