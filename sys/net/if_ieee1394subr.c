@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.16 2002/06/24 08:06:22 itojun Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.17 2002/06/24 12:00:49 enami Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.16 2002/06/24 08:06:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.17 2002/06/24 12:00:49 enami Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -386,7 +386,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 	case ETHERTYPE_ARP:
 		schednetisr(NETISR_ARP);
 		inq = &arpintrq;
-		return;
+		break;
 #endif /* INET */
 
 #ifdef INET6
