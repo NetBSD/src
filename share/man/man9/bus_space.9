@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.21 2001/12/26 01:02:01 wiz Exp $
+.\" $NetBSD: bus_space.9,v 1.22 2002/02/11 22:05:13 eeh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -427,15 +427,41 @@ Because some architectures' memory systems use buffering to improve
 memory and device access performance, there is a mechanism which can be
 used to create
 .Dq barriers
-in the bus space read and write stream.  There
-are three types of barriers: read, write, and read/write.  All reads
-started to the region before a read barrier must complete before any reads
-after the read barrier are started.  (The analogous requirement is true for
-write barriers.)  Read/write barriers force all reads and writes started
-before the barrier to complete before any reads or writes after the
-barrier are started.  Correctly-written drivers will include all
-appropriate barriers, and assume only the read/write ordering imposed by
-the barrier operations.
+in the bus space read and write stream.  
+
+There are two types of barriers: ordering barriers and completion 
+barriers.  
+.Pp
+Ordering barriers prevent some operations from bypassing other 
+operations.  They are relatively light weight and described in terms 
+of the operations they are intended to order.  The important thing 
+to note is that they create specific ordering constraint surrounding 
+bus accesses but do not necessarily force any synchronization themselves.
+So, if there is enough distance between the memory operations being 
+ordered, the preceeding ones could complete by themselves resulting 
+in no performance penalty.
+.Pp
+For instance, a write before read barrier will force any writes 
+issued before the barrier instruction to complete before any reads 
+after the barrier are issued.  This forces processors
+with write buffers to read data from memory rather than from the
+pending write in the write buffer.  
+.Pp
+Ordering barriers are usually sufficient for most circumstances, 
+and can be combined together.  For instance a read before write 
+barrier can be combined with a write before write barrier to force 
+all memory operations to complete before the next write is started. 
+.Pp
+Completion barriers force all memory operations and any pending 
+exceptions to be completed before any instructions after the
+barrier may be issued.  Completion barriers are extremely expensive
+and almost never required in device driver code.  A single completion
+barrier can force the processor to stall on memory for hundreds
+of cycles on some machines.
+.Pp
+Correctly-written drivers will include all appropriate barriers, 
+and assume only the read/write ordering imposed by the barrier 
+operations.
 .Pp
 People trying to write portable drivers with the
 .Nm
@@ -1040,15 +1066,26 @@ The
 .Fa flags
 argument controls what types of operations are to be ordered.
 Supported flags are:
-.Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
-.It Dv BUS_SPACE_BARRIER_READ
-Synchronize read operations.
-.It Dv BUS_SPACE_BARRIER_WRITE
-Synchronize write operations.
+.Bl -tag -width BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE -offset indent
+.It Dv BUS_SPACE_BARRIER_READ_BEFORE_READ
+Force all reads before the barrier to complete before any reads 
+after the barrier may be issued.
+.It Dv BUS_SPACE_BARRIER_READ_BEFORE_WRITE
+Force all reads before the barrier to complete before any writes
+after the barrier may be issued.
+.It Dv BUS_SPACE_BARRIER_WRITE_BEFORE_READ
+Force all writes before the barrier to complete before any reads
+after the barrier may be issued.
+.It Dv BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE
+Force all writes before the barrier to complete before any writes
+after the barrier may be issued.
+.It Dv BUS_SPACE_BARRIER_SYNC
+Force all memory operations and any pending exceptions to be 
+completed before any instructions after the barrier may be issued.
 .El
 .Pp
-Those flags can be combined (or-ed together) to enforce ordering on both
-read and write operations.
+Those flags can be combined (or-ed together) to enforce ordering on 
+different combinations of read and write operations.
 .Pp
 All of the specified type(s) of operation which are done to the region
 before the barrier operation are guaranteed to complete before any of the
@@ -1068,12 +1105,11 @@ would be:
  * space.
  */
 bus_space_write_1(t, h, 0, data0);
-bus_space_barrier(t, h, 0, 1, BUS_SPACE_BARRIER_WRITE);  /* 1 */
+bus_space_barrier(t, h, 0, 1, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE); /* 1 */
 bus_space_write_1(t, h, 0, data1);
-bus_space_barrier(t, h, 0, 2,
-    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);     /* 2 */
+bus_space_barrier(t, h, 0, 2, BUS_SPACE_BARRIER_WRITE_BEFORE_READ);  /* 2 */
 ndata1 = bus_space_read_1(t, h, 1);
-bus_space_barrier(t, h, 1, 1, BUS_SPACE_BARRIER_READ);   /* 3 */
+bus_space_barrier(t, h, 1, 1, BUS_SPACE_BARRIER_READ_BEFORE_READ);   /* 3 */
 ndata0 = bus_space_read_1(t, h, 1);
 /* data0 == ndata0, data1 == ndata1 */
 .Ed
@@ -1083,8 +1119,8 @@ second write is issued, so that two writes to the input port are done
 in order and are not collapsed into a single write.  This ensures that
 the data bytes are written to the device correctly and in order.
 .Pp
-The second barrier makes sure that the writes to the output port finish
-before any of the reads to the input port are issued, thereby making sure
+The second barrier forces the writes to the output port finish before 
+any of the reads to the input port are issued, thereby making sure
 that all of the writes are finished before data is read.  This ensures
 that the first byte read from the device really is the last one that was
 written.
@@ -1097,6 +1133,15 @@ minimum number of bus space locations.  It is correct (and often
 easier) to make barrier operations cover the device's whole range of bus
 space, that is, to specify an offset of zero and the size of the
 whole region.
+.Pp
+The following barrier operations are obsolete and should be removed 
+from existing code:
+.Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
+.It Dv BUS_SPACE_BARRIER_READ
+Synchronize read operations.
+.It Dv BUS_SPACE_BARRIER_WRITE
+Synchronize write operations.
+.El
 .El
 .Sh REGION OPERATIONS
 Some devices use buffers which are mapped as regions in bus space.
