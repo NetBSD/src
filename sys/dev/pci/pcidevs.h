@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.108 1999/01/28 04:34:31 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.109 1999/02/05 22:55:40 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.102 1999/01/28 04:31:33 augustss Exp 
+ *	NetBSD: pcidevs,v 1.103 1999/02/05 22:55:19 thorpej Exp 
  */
 
 /*
@@ -907,6 +907,11 @@
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
+
+/* Olicom products */
+#define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* Olicom OC-2183/2185 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* Olicom OC-2325 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* Olicom OC-2326 10/100-TX Ethernet */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
