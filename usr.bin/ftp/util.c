@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1997/03/13 06:23:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.4 1997/02/01 11:26:34 lukem Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.5 1997/03/13 06:23:21 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -70,12 +70,12 @@ setpeer(argc, argv)
 
 	if (connected) {
 		printf("Already connected to %s, use close first.\n",
-			hostname);
+		    hostname);
 		code = -1;
 		return;
 	}
 	if (argc < 2)
-		(void) another(&argc, &argv, "to");
+		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
 		printf("usage: %s host-name [port]\n", argv[0]);
 		code = -1;
@@ -85,8 +85,8 @@ setpeer(argc, argv)
 	if (argc > 2) {
 		port = atoi(argv[2]);
 		if (port <= 0) {
-			printf("%s: bad port number-- %s\n", argv[1], argv[2]);
-			printf ("usage: %s host-name [port]\n", argv[0]);
+			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
+			printf("usage: %s host-name [port]\n", argv[0]);
 			code = -1;
 			return;
 		}
@@ -100,14 +100,14 @@ setpeer(argc, argv)
 		/*
 		 * Set up defaults for FTP.
 		 */
-		(void) strcpy(typename, "ascii"), type = TYPE_A;
+		(void)strcpy(typename, "ascii"), type = TYPE_A;
 		curtype = TYPE_A;
-		(void) strcpy(formname, "non-print"), form = FORM_N;
-		(void) strcpy(modename, "stream"), mode = MODE_S;
-		(void) strcpy(structname, "file"), stru = STRU_F;
-		(void) strcpy(bytename, "8"), bytesize = 8;
+		(void)strcpy(formname, "non-print"), form = FORM_N;
+		(void)strcpy(modename, "stream"), mode = MODE_S;
+		(void)strcpy(structname, "file"), stru = STRU_F;
+		(void)strcpy(bytename, "8"), bytesize = 8;
 		if (autologin)
-			(void) login(argv[1]);
+			(void)login(argv[1]);
 
 		overbose = verbose;
 		if (debug == 0)
@@ -125,8 +125,7 @@ setpeer(argc, argv)
 				*cp = '\0';
 			}
 
-			printf("Remote system type is %s.\n",
-				reply_string+4);
+			printf("Remote system type is %s.\n", reply_string + 4);
 			if (cp)
 				*cp = c;
 		}
@@ -142,7 +141,7 @@ setpeer(argc, argv)
 			 * for text files unless changed by the user.
 			 */
 			type = 0;
-			(void) strcpy(typename, "binary");
+			(void)strcpy(typename, "binary");
 			if (overbose)
 			    printf("Using %s mode to transfer files.\n",
 				typename);
@@ -153,16 +152,15 @@ setpeer(argc, argv)
 				unix_server = 0;
 			if (overbose &&
 			    !strncmp(reply_string, "215 TOPS20", 10))
-				printf("Remember to set tenex mode when "
-				    "transferring binary files from this "
-				    "machine.\n");
+				puts(
+"Remember to set tenex mode when transferring binary files from this machine.");
 		}
 		verbose = overbose;
 	}
 }
 
 /*
- * `Another' gets another argument, and stores the new argc and argv.
+ * `another' gets another argument, and stores the new argc and argv.
  * It reverts to the top level (via main.c's intr()) on EOF/error.
  *
  * Returns false if no new arguments have been added.
@@ -176,7 +174,7 @@ another(pargc, pargv, prompt)
 	int len = strlen(line), ret;
 
 	if (len >= sizeof(line) - 3) {
-		printf("sorry, arguments too long\n");
+		puts("sorry, arguments too long.");
 		intr();
 	}
 	printf("(%s) ", prompt);
@@ -193,10 +191,16 @@ another(pargc, pargv, prompt)
 	return (ret);
 }
 
+/*
+ * glob files given in argv[] from the remote server.
+ * if errbuf isn't NULL, store error messages there instead
+ * of writing to the screen.
+ */
 char *
-remglob(argv, doswitch)
+remglob(argv, doswitch, errbuf)
         char *argv[];
         int doswitch;
+	char **errbuf;
 {
         char temp[MAXPATHLEN];
         static char buf[MAXPATHLEN];
@@ -206,12 +210,11 @@ remglob(argv, doswitch)
         char *cp, *mode;
 
         if (!mflag) {
-                if (!doglob) {
+                if (!doglob)
                         args = NULL;
-                }
                 else {
                         if (ftemp) {
-                                (void) fclose(ftemp);
+                                (void)fclose(ftemp);
                                 ftemp = NULL;
                         }
                 }
@@ -225,34 +228,42 @@ remglob(argv, doswitch)
                 return (cp);
         }
         if (ftemp == NULL) {
-                (void) snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE)
-;
-                fd = mkstemp(temp);
-                if (fd < 0) {
+                (void)snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE);
+                if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);
                 }
                 close(fd);
-                oldverbose = verbose, verbose = 0;
-                oldhash = hash, hash = 0;
-                if (doswitch) {
+                oldverbose = verbose;
+		verbose = (errbuf != NULL) ? -1 : 0;
+                oldhash = hash;
+                hash = 0;
+                if (doswitch)
                         pswitch(!proxy);
-                }
                 for (mode = "w"; *++argv != NULL; mode = "a")
-                        recvrequest ("NLST", temp, *argv, mode, 0);
-                if (doswitch) {
+                        recvrequest("NLST", temp, *argv, mode, 0);
+		if ((code / 100) != COMPLETE) {
+			if (errbuf != NULL)
+				*errbuf = reply_string;
+		}
+                if (doswitch)
                         pswitch(!proxy);
-                }
-                verbose = oldverbose; hash = oldhash;
+                verbose = oldverbose;
+		hash = oldhash;
                 ftemp = fopen(temp, "r");
-                (void) unlink(temp);
+                (void)unlink(temp);
                 if (ftemp == NULL) {
-                        printf("can't find list of remote files, oops\n");
+			if (errbuf == NULL)
+				puts("can't find list of remote files, oops.");
+			else
+				*errbuf =
+				    "can't find list of remote files, oops.";
                         return (NULL);
                 }
         }
-        if (fgets(buf, sizeof (buf), ftemp) == NULL) {
-                (void) fclose(ftemp), ftemp = NULL;
+        if (fgets(buf, sizeof(buf), ftemp) == NULL) {
+                (void)fclose(ftemp);
+		ftemp = NULL;
                 return (NULL);
         }
         if ((cp = strchr(buf, '\n')) != NULL)
@@ -269,7 +280,7 @@ confirm(cmd, file)
 	if (!interactive || confirmrest)
 		return (1);
 	printf("%s %s? ", cmd, file);
-	(void) fflush(stdout);
+	(void)fflush(stdout);
 	if (fgets(line, sizeof(line), stdin) == NULL)
 		return (0);
 	switch (tolower(*line)) {
@@ -277,11 +288,11 @@ confirm(cmd, file)
 			return (0);
 		case 'p':
 			interactive = 0;
-			printf("Interactive mode: off\n");
+			puts("Interactive mode: off.");
 			break;
 		case 'a':
 			confirmrest = 1;
-			printf("Prompting off for duration of %s\n", cmd);
+			printf("Prompting off for duration of %s.\n", cmd);
 			break;
 	}
 	return (1);
@@ -334,7 +345,7 @@ remotesize(file, noisy)
 	if (command("SIZE %s", file) == COMPLETE)
 		sscanf(reply_string, "%*s %qd", &size);
 	else if (noisy && debug == 0)
-		printf("%s\n", reply_string);
+		puts(reply_string);
 	verbose = overbose;
 	return (size);
 }
@@ -369,11 +380,11 @@ remotemodtime(file, noisy)
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
 		if (rtime == -1 && (noisy || debug != 0))
-			printf("Can't convert %s to a time\n", reply_string);
+			printf("Can't convert %s to a time.\n", reply_string);
 		else
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
 	} else if (noisy && debug == 0)
-		printf("%s\n", reply_string);
+		puts(reply_string);
 	verbose = overbose;
 	return (rtime);
 }
@@ -416,11 +427,11 @@ progressmeter(flag)
 	char buf[256];
 
 	if (flag == -1) {
-		(void) gettimeofday(&start, (struct timezone *)0);
+		(void)gettimeofday(&start, (struct timezone *)0);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void) gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, (struct timezone *)0);
 	if (!progress || filesize <= 0)
 		return;
 	cursize = bytes + restart_point;
@@ -487,11 +498,11 @@ progressmeter(flag)
 	(void)write(STDOUT_FILENO, buf, strlen(buf));
 
 	if (flag == -1) {
-		(void) signal(SIGALRM, updateprogressmeter);
+		(void)signal(SIGALRM, updateprogressmeter);
 		alarmtimer(1);		/* set alarm timer for 1 Hz */
 	} else if (flag == 1) {
 		alarmtimer(0);
-		(void) putchar('\n');
+		(void)putchar('\n');
 	}
 	fflush(stdout);
 }
@@ -517,7 +528,7 @@ ptransfer(siginfo)
 	if (!verbose && !siginfo)
 		return;
 
-	(void) gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, (struct timezone *)0);
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
@@ -568,15 +579,15 @@ list_vertical(sl)
 		for (j = 0; j < columns; j++) {
 			p = sl->sl_str[j * lines + i];
 			if (p)
-				printf("%s", p);
+				fputs(p, stdout);
 			if (j * lines + i + lines >= sl->sl_cur) {
-				printf("\n");
+				putchar('\n');
 				break;
 			}
 			w = strlen(p);
 			while (w < width) {
 				w = (w + 8) &~ 7;
-				(void) putchar('\t');
+				(void)putchar('\t');
 			}
 		}
 	}
