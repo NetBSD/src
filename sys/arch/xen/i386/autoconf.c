@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2004/10/20 04:20:05 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2004/10/23 17:12:23 thorpej Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2004/10/20 04:20:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2004/10/23 17:12:23 thorpej Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -122,9 +122,6 @@ int x86_ndisks;
 #endif
 
 #include "opt_xen.h"
-
-struct device *booted_device;
-int booted_partition;
 
 /*
  * Determine i/o configuration for a machine.

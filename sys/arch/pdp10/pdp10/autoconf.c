@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2003/08/19 10:54:59 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,9 +30,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-
-static struct device *booted_device;
-static int booted_partition;
 
 void
 cpu_rootconf(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2004/10/23 17:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2004/10/23 17:07:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,8 +114,6 @@ extern int initcpu __P((void));		/*XXX*/
 void	findroot __P((struct device **, int *));
 
 struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
-struct device  *booted_device;
-static int	booted_partition;
 
 /*
  * Determine mass storage and memory configuration for a machine.

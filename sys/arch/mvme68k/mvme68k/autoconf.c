@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2003/08/07 16:28:42 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.39 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2003/08/07 16:28:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.39 2004/10/23 17:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.38 2003/08/07 16:28:42 agc Exp $");
 #include <dev/mvme/pcctworeg.h>
 #endif
 
-
-struct device *booted_device;	/* boot device */
 
 /*
  * Determine mass storage and memory configuration for a machine.

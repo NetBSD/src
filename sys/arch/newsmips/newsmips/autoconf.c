@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2004/02/13 11:36:16 wiz Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2004/02/13 11:36:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2004/10/23 17:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2004/02/13 11:36:16 wiz Exp $");
  * the machine.
  */
 int	cpuspeed = 10;	/* approx # instr per usec. */
-
-struct device *booted_device;
-int booted_partition;
 
 static void findroot __P((void));
 

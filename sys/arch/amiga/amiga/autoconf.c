@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.92 2003/10/27 09:56:56 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.93 2004/10/23 17:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2003/10/27 09:56:56 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.93 2004/10/23 17:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,6 @@ int mbmatch(struct device *, struct cfdata *, void *);
 #include <sys/kernel.h>
 
 u_long boot_partition;
-struct device *booted_device;
-int booted_partition;
 
 int amiga_realconfig;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2003/07/15 02:59:24 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2003/07/15 02:59:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2004/10/23 17:12:22 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -59,9 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2003/07/15 02:59:24 lukem Exp $");
 #include <machine/intr.h>
 
 #include "isa.h"
-
-struct device *booted_device;
-int booted_partition;
 
 extern int footbridge_imask[NIPL];
 

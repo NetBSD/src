@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 2003/08/07 16:29:12 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.66 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2003/08/07 16:29:12 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.66 2004/10/23 17:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2003/08/07 16:29:12 agc Exp $");
 #include "opt_dec_5100.h"
 
 struct intrhand		 intrtab[MAX_DEV_NCOOKIES];
-struct device		*booted_device;
 static struct device	*booted_controller;
-static int		 booted_slot, booted_unit, booted_partition;
+static int		 booted_slot, booted_unit;
 static char		*booted_protocol;
 
 /*

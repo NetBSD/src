@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2004/10/23 17:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2004/09/04 13:43:11 tsutsui Exp $"
  * the configuration process, and are used in initializing
  * the machine.
  */
-
-struct device *booted_device;
-int booted_partition;
 
 static void findroot(void);
 
