@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.6 1998/07/21 00:22:30 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.7 1998/07/21 00:24:45 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -93,15 +93,6 @@ struct cs_softc {
 
 	u_int8_t sc_enaddr[6];		/* MAC address */
 };
-
-/* Debug Status */
-/*#define CS_DEBUG 0*/
-
-#ifdef CS_DEBUG
-#define dbg_print(x) printf x
-#else
-#define dbg_print(x) 
-#endif
 
 /* Return Status */
 #define	CS_ERROR   -1
