@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.29 1998/04/07 20:18:19 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.30 1999/06/30 15:18:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,22 +124,21 @@ cgtwomatch(parent, cf, aux)
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
-	vme_mod_t		mod;
+	vme_chipset_tag_t	ct = va->va_vct;
+	vme_am_t		mod;
 
 	/*
 	 * Mask out invalid flags from the user.
 	 */
 	cf->cf_flags &= FB_USERMASK;
 
-	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	if (vme_bus_probe(ct, bt, va->vma_reg[0], CG2_CTLREG_OFF, 2, mod,
+	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	if (vme_probe(ct, va->r[0].offset + CG2_CTLREG_OFF, 2, mod, VME_D16,
 			  0, 0)) {
-		return (1);
+		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 /*
@@ -151,10 +150,11 @@ cgtwoattach(parent, self, aux)
 	void *aux;
 {
 	struct vme_attach_args	*va = aux;
-	vme_chipset_tag_t	ct = va->vma_chipset_tag;
-	bus_space_tag_t		bt = va->vma_bustag;
+	vme_chipset_tag_t	ct = va->va_vct;
+	bus_space_tag_t		bt;
 	bus_space_handle_t	bh;
-	vme_mod_t		mod;
+	vme_am_t		mod;
+	vme_mapresc_t resc;
 	struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
 	struct fbdevice *fb = &sc->sc_fb;
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
@@ -162,7 +162,6 @@ cgtwoattach(parent, self, aux)
 	char *nam = NULL;
 
 	sc->sc_ct = ct;
-	sc->sc_bt = bt;
 	fb->fb_driver = &cgtwofbdriver;
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUN2COLOR;
@@ -182,20 +181,23 @@ cgtwoattach(parent, self, aux)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	sc->sc_paddr = va->vma_reg[0];
-	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
+	sc->sc_paddr = va->r[0].offset;
+	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
 
-	if (vme_bus_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
+	if (vme_space_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
 				offsetof(struct cg2fb, status.reg),
-			sizeof(struct cg2statusreg), mod, bt, &bh) != 0)
+			sizeof(struct cg2statusreg), mod, VME_D16, 0,
+			&bt, &bh, &resc) != 0)
 		panic("cgtwo: vme_map status");
-	sc->sc_reg = (volatile struct cg2statusreg *)bh;
+	sc->sc_bt = bt;
+	sc->sc_reg = (volatile struct cg2statusreg *)bh; /* XXX */
 
-	if (vme_bus_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
+	if (vme_space_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
 				offsetof(struct cg2fb, redmap[0]),
-			3 * CG2_CMSIZE, mod, bt, &bh) != 0)
+			3 * CG2_CMSIZE, mod, VME_D16, 0,
+			&bt, &bh, &resc) != 0)
 		panic("cgtwo: vme_map cmap");
-	sc->sc_cmap = (volatile u_short *)bh;
+	sc->sc_cmap = (volatile u_short *)bh; /* XXX */
 
 	/*
 	 * Assume this is the console if there's no eeprom info
@@ -207,11 +209,12 @@ cgtwoattach(parent, self, aux)
 		isconsole = 0;
 
 	if (isconsole) {
-		if (vme_bus_map(ct, sc->sc_paddr + CG2_PIXMAP_OFF,
-				CG2_PIXMAP_SIZE, mod, bt, &bh) != 0)
+		if (vme_space_map(ct, sc->sc_paddr + CG2_PIXMAP_OFF,
+				CG2_PIXMAP_SIZE, mod, VME_D16, 0,
+				  &bt, &bh, &resc) != 0)
 			panic("cgtwo: vme_map pixels");
 
-		fb->fb_pixels = (caddr_t)bh;
+		fb->fb_pixels = (caddr_t)bh; /* XXX */
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
 		fbrcons_init(fb);
@@ -409,8 +412,10 @@ cgtwommap(dev, off, prot)
 	int off, prot;
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
-	vme_mod_t mod;
+	vme_am_t mod;
 	bus_space_handle_t bh;
+	extern int sparc_vme_mmap_cookie __P((vme_addr_t, vme_am_t,
+					      bus_space_handle_t *));
 
 	if (off & PGOFSET)
 		panic("cgtwommap");
@@ -419,10 +424,9 @@ cgtwommap(dev, off, prot)
 		return (-1);
 
 	/* Apparently, the pixels are in 32-bit data space */
-	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
+	mod = 0x3d; /* VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
 
-	if (vme_bus_mmap_cookie(sc->sc_ct, sc->sc_paddr + off,
-				mod, sc->sc_bt, &bh) != 0)
+	if (sparc_vme_mmap_cookie(sc->sc_paddr + off, mod, &bh) != 0)
 		panic("cgtwommap");
 
 	return ((int)bh);
