@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.85 2001/04/11 08:23:26 sato Exp $
+# 	$NetBSD: GENERIC,v 1.86 2001/04/20 12:07:49 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 maxusers	8
 
@@ -15,9 +15,9 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 # Support for specific models of H/PC MIPS
 options 	MIPS3_4100		# VR4100 core
 options 	VR41XX			# NEC VR41xx series
-options		VR4102			# NEC VR4102
-options		VR4111			# NEC VR4111
-options		VR4121			# NEC VR4121
+options 	VR4102			# NEC VR4102
+options 	VR4111			# NEC VR4111
+options 	VR4121			# NEC VR4121
 options 	NOFPU			# No FPU
 options 	SOFTFLOAT		# emulate FPU insn
 options 	MIPS3_L2CACHE_ABSENT
@@ -25,7 +25,7 @@ options 	MIPS3_L2CACHE_ABSENT
 # Standard system options
 options 	DDB			# in-kernel debugger
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
-#options	KGDB			# remote debugger
+#options 	KGDB			# remote debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
