@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.172 1998/08/11 00:32:04 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.173 1998/08/12 18:17:55 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -437,11 +437,11 @@ ulpt*	at uhub? port ?
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # ISA Plug-and-Play audio devices
+ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
 sb*	at isapnp?			# SoundBlaster-compatible audio
 wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
-ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 
 # ISA audio devices
 aria0	at isa? port 0x290 irq 10 		# Aria
@@ -468,7 +468,8 @@ audio*	at wss?
 audio*	at ym?
 
 # MIDI support
-midi*	at sb?
+midi*	at pcppi?		# MIDI interface to the PC speaker
+midi*	at sb?			# SB MPU401 port
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
