@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.2 2001/01/19 12:44:45 martin Exp $
+ *	$Id: i4b_tel.c,v 1.3 2001/03/24 12:40:33 martin Exp $
  *
  * $FreeBSD$
  *
@@ -755,7 +755,7 @@ i4btelwrite(dev_t dev, struct uio * uio, int ioflag)
 				IF_ENQUEUE(sc->isdn_linktab->tx_queue, m);
 			}
 	
-			(*sc->isdn_linktab->bch_tx_start)(sc->isdn_linktab->unit, sc->isdn_linktab->channel);
+			(*sc->isdn_linktab->bch_tx_start)(sc->isdn_linktab->l1token, sc->isdn_linktab->channel);
 		}
 	
 		splx(s);
@@ -832,7 +832,7 @@ tel_tone(tel_sc_t *sc)
 		m->m_len++;
 	}
 	IF_ENQUEUE(sc->isdn_linktab->tx_queue, m);
-	(*sc->isdn_linktab->bch_tx_start)(sc->isdn_linktab->unit, sc->isdn_linktab->channel);
+	(*sc->isdn_linktab->bch_tx_start)(sc->isdn_linktab->l1token, sc->isdn_linktab->channel);
 }
 
 

@@ -27,7 +27,7 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.1 2001/02/20 22:24:36 martin Exp $ 
+ *	$Id: isac.c,v 1.2 2001/03/24 12:40:29 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
@@ -173,13 +173,12 @@ isic_isac_irq(struct l1_softc *sc, int ista)
 
 			if(sc->sc_trace & TRACE_D_RX)
 			{
-				i4b_trace_hdr_t hdr;
-				hdr.unit = sc->sc_unit;
+				i4b_trace_hdr hdr;
+				memset(&hdr, 0, sizeof hdr);
 				hdr.type = TRC_CH_D;
 				hdr.dir = FROM_NT;
 				hdr.count = ++sc->sc_trace_dcount;
-				MICROTIME(hdr.time);
-				MPH_Trace_Ind(&hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
+				isdn_layer2_trace_ind(sc->sc_l2, &hdr, sc->sc_ibuf->m_len, sc->sc_ibuf->m_data);
 			}
 
 			c |= ISAC_CMDR_RMC;
@@ -187,7 +186,7 @@ isic_isac_irq(struct l1_softc *sc, int ista)
 			if(sc->sc_enabled &&
 			   (ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S))
 			{
-				PH_Data_Ind(sc->sc_unit, sc->sc_ibuf);
+				isdn_layer2_data_ind(sc->sc_l2, sc->sc_ibuf);
 			}
 			else
 			{
@@ -395,7 +394,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR8);
 			event = EV_INFO48;
-			MPH_Status_Ind(sc->sc_unit, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
 			break;
 			
 		case ISAC_CIRR_IAI10:
@@ -403,7 +402,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
 			if(sc->sc_bustyp == BUS_TYPE_IOM2)
 				isic_isac_l1_cmd(sc, CMD_AR10);
 			event = EV_INFO410;
-			MPH_Status_Ind(sc->sc_unit, STI_L1STAT, LAYER_ACTIVE);
+			isdn_layer2_status_ind(sc->sc_l2, STI_L1STAT, LAYER_ACTIVE);
 			break;
 
 		case ISAC_CIRR_IRSY:
@@ -425,7 +424,7 @@ isic_isac_ind_hdlr(register struct l1_softc *sc, int ind)
 		case ISAC_CIRR_IDID:
 			NDBGL1(L1_I_CICO, "rx DID in state %s", isic_printstate(sc));
 			event = EV_INFO0;
-			MPH_Status_Ind(sc->sc_unit, STI_L1STAT, LAYER_IDLE);
+			isdn_layer2_status_ind(sc->sc_l2, STI_L1STAT, LAYER_IDLE);
 			break;
 
 		case ISAC_CIRR_IDIS:

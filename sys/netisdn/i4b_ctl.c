@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.1.1.1 2001/01/05 12:50:00 martin Exp $
+ *	$Id: i4b_ctl.c,v 1.2 2001/03/24 12:40:31 martin Exp $
  *
  * $FreeBSD$
  *
@@ -90,6 +90,7 @@
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_l3l4.h>
 
+#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l2.h>
 
 static int openflag = 0;
@@ -303,16 +304,20 @@ i4bctlioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
                 case I4B_CTL_GET_CHIPSTAT:
                 {
                         struct chipstat *cst;
+			l2_softc_t * scl2;
 			cst = (struct chipstat *)data;
-			(*ctrl_desc[cst->driver_unit].N_MGMT_COMMAND)(cst->driver_unit, CMR_GCST, cst);
+			scl2 = (l2_softc_t*)isdn_find_l2_by_bri(cst->driver_unit);
+			scl2->driver->n_mgmt_command(scl2->l1_token, CMR_GCST, cst);
                         break;
                 }
 
                 case I4B_CTL_CLR_CHIPSTAT:
                 {
                         struct chipstat *cst;
+			l2_softc_t * scl2;
 			cst = (struct chipstat *)data;
-			(*ctrl_desc[cst->driver_unit].N_MGMT_COMMAND)(cst->driver_unit, CMR_CCST, cst);
+			scl2 = (l2_softc_t*)isdn_find_l2_by_bri(cst->driver_unit);
+			scl2->driver->n_mgmt_command(scl2->l1_token, CMR_CCST, cst);
                         break;
                 }
 
@@ -322,14 +327,12 @@ i4bctlioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
                         l2_softc_t *sc;
                         l2s = (l2stat_t *)data;
 
-                        if( l2s->unit < 0 || l2s->unit > MAXL1UNITS)
-                        {
+                        sc = (l2_softc_t*)isdn_find_l2_by_bri(l2s->unit);
+                        if (sc == NULL) {
                         	error = EINVAL;
 				break;
 			}
 			  
-			sc = &l2_softc[l2s->unit];
-
 			bcopy(&sc->stat, &l2s->lapdstat, sizeof(lapdstat_t));
                         break;
                 }
@@ -340,14 +343,12 @@ i4bctlioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
                         l2_softc_t *sc;
                         up = (int *)data;
 
-                        if( *up < 0 || *up > MAXL1UNITS)
-                        {
+                        sc = (l2_softc_t*)isdn_find_l2_by_bri(*up);
+                        if (sc == NULL) {
                         	error = EINVAL;
 				break;
 			}
 			  
-			sc = &l2_softc[*up];
-
 			bzero(&sc->stat, sizeof(lapdstat_t));
                         break;
                 }

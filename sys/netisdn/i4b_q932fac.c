@@ -27,7 +27,7 @@
  *	i4b_q932fac.c - Q932 facility handling
  *	--------------------------------------
  *
- *	$Id: i4b_q932fac.c,v 1.1.1.1 2001/01/05 12:50:03 martin Exp $ 
+ *	$Id: i4b_q932fac.c,v 1.2 2001/03/24 12:40:32 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -62,7 +62,6 @@
 #endif
 
 #include <netisdn/i4b_isdnq931.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 

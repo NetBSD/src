@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.2 2001/02/20 22:24:39 martin Exp $ 
+ *	$Id: isic_isapnp.c,v 1.3 2001/03/24 12:40:30 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -81,6 +81,8 @@
 #include <netisdn/i4b_global.h>
 
 #include "opt_isicpnp.h"
+
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 static int isic_isapnp_probe __P((struct device *, void *, void *));
@@ -253,7 +255,6 @@ isic_isapnp_attach(parent, self, aux)
 			sc->sc_dev.dv_xname);
 
 	/* init card */
-	l1_sc[sc->sc_unit] = sc;		
 	desc->attach(sc);
 
 	/* announce chip versions */
@@ -298,9 +299,9 @@ isic_isapnp_attach(parent, self, aux)
 
 	/* HSCX setup */
 
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
 	
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
 
@@ -329,9 +330,9 @@ isic_isapnp_attach(parent, self, aux)
 	callout_init(&sc->sc_T4_callout);
 #endif
 
-	/* init higher protocol layers */
-	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);	
+	/* init higher protocol layers and save l2 handle */
+
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 
 	/* announce chip versions */
 	

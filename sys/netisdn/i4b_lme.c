@@ -27,7 +27,7 @@
  *	i4b_lme.c - layer management entity
  *	-------------------------------------
  *
- *	$Id: i4b_lme.c,v 1.1.1.1 2001/01/05 12:50:06 martin Exp $ 
+ *	$Id: i4b_lme.c,v 1.2 2001/03/24 12:40:32 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -62,7 +62,6 @@
 #endif
 
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -75,7 +74,7 @@
 void
 i4b_mdl_assign_ind(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_PRIM, "unit %d", l2sc->unit);
+	NDBGL2(L2_PRIM, "bri %d", l2sc->bri);
 	
 	i4b_l1_activate(l2sc);
 	
@@ -123,7 +122,7 @@ i4b_mdl_error_ind(l2_softc_t *l2sc, char *where, int errorcode)
 	if(errorcode > MDL_ERR_MAX)
 		errorcode = MDL_ERR_MAX;
 		
-	NDBGL2(L2_ERROR, "unit = %d, location = %s", l2sc->unit, where);
+	NDBGL2(L2_ERROR, "bri = %d, location = %s", l2sc->bri, where);
 	NDBGL2(L2_ERROR, "error = %s", error_text[errorcode]);
 
 	switch(errorcode)

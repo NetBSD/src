@@ -27,7 +27,7 @@
  *	i4b_l1fsm.c - isdn4bsd layer 1 I.430 state machine
  *	--------------------------------------------------
  *
- *	$Id: isic_l1fsm.c,v 1.1 2001/02/20 22:24:37 martin Exp $ 
+ *	$Id: isic_l1fsm.c,v 1.2 2001/03/24 12:40:30 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
@@ -75,6 +75,7 @@
 #include <dev/ic/hscx.h>
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -161,7 +162,7 @@ timer3_expired(struct l1_softc *sc)
 
 			splx(s);
 
-			MPH_Status_Ind(sc->sc_unit, STI_NOL1ACC, 0);
+			isdn_layer2_status_ind(sc->sc_l2, STI_NOL1ACC, 0);
 		}
 		
 		isic_next_state(sc, EV_T3);		
@@ -209,7 +210,7 @@ F_T3ex(struct l1_softc *sc)
 {
 	NDBGL1(L1_F_MSG, "FSM function F_T3ex executing");
 	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		PH_Deact_Ind(sc->sc_unit);
+		isdn_layer2_activate_ind(sc->sc_l2, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -222,7 +223,7 @@ timer4_expired(struct l1_softc *sc)
 	{
 		NDBGL1(L1_T_MSG, "state = %s", isic_printstate(sc));
 		sc->sc_I430T4 = 0;
-		MPH_Status_Ind(sc->sc_unit, STI_PDEACT, 0);
+		isdn_layer2_status_ind(sc->sc_l2, STI_PDEACT, 0);
 	}
 	else
 	{
@@ -268,21 +269,19 @@ F_AI8(struct l1_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_AI8 executing");
 
 	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		PH_Act_Ind(sc->sc_unit);
+		isdn_layer2_activate_ind(sc->sc_l2, 1);
 
 	T3_stop(sc);
 
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO4_8;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -297,21 +296,19 @@ F_AI10(struct l1_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_AI10 executing");
 
 	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		PH_Act_Ind(sc->sc_unit);
+		isdn_layer2_activate_ind(sc->sc_l2, 1);
 
 	T3_stop(sc);
 
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO4_10;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -325,15 +322,13 @@ F_I01(struct l1_softc *sc)
 
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO0;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -346,19 +341,17 @@ F_I02(struct l1_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_I02 executing");
 
 	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		PH_Deact_Ind(sc->sc_unit);
+		isdn_layer2_activate_ind(sc->sc_l2, 0);
 
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO0;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -371,21 +364,19 @@ F_I03(struct l1_softc *sc)
 	NDBGL1(L1_F_MSG, "FSM function F_I03 executing");
 
 	if(ctrl_desc[sc->sc_unit].protocol != PROTOCOL_D64S)
-		PH_Deact_Ind(sc->sc_unit);
+		isdn_layer2_activate_ind(sc->sc_l2, 0);
 
 	T4_start(sc);
 	
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO0;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}
 }
 
@@ -399,15 +390,13 @@ F_AR(struct l1_softc *sc)
 
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO1_8;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_TE;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}
 
 	isic_isac_l1_cmd(sc, CMD_AR8);
@@ -425,15 +414,13 @@ F_I2(struct l1_softc *sc)
 
 	if(sc->sc_trace & TRACE_I)
 	{
-		i4b_trace_hdr_t hdr;
+		i4b_trace_hdr hdr;
 		char info = INFO2;
 		
-		hdr.unit = sc->sc_unit;
 		hdr.type = TRC_CH_I;
 		hdr.dir = FROM_NT;
 		hdr.count = 0;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, 1, &info);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, 1, &info);
 	}		
 
 }
