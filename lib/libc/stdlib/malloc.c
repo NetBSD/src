@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.41 2003/01/18 11:32:03 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.42 2003/07/23 08:15:02 itojun Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1075,11 +1075,6 @@ ifree(void *ptr)
     if (!ptr)
 	return;
 
-    if (!malloc_started) {
-	wrtwarning("malloc() has never been called.\n");
-	return;
-    }
-
     /* If we're already sinking, don't make matters any worse. */
     if (suicide)
 	return;
@@ -1150,10 +1145,11 @@ free(void *ptr)
 	malloc_active--;
 	THREAD_UNLOCK();
 	return;
-    } else {
-	ifree(ptr);
-	UTRACE(ptr, 0, 0);
     }
+    if (!malloc_started)
+	malloc_init();
+    ifree(ptr);
+    UTRACE(ptr, 0, 0);
     malloc_active--;
     THREAD_UNLOCK();
     return;
@@ -1172,10 +1168,6 @@ realloc(void *ptr, size_t size)
 	THREAD_UNLOCK();
 	return (0);
     }
-    if (ptr && !malloc_started) {
-	wrtwarning("malloc() has never been called.\n");
-	ptr = 0;
-    }		
     if (!malloc_started)
 	malloc_init();
     if (malloc_sysv && !size) {
