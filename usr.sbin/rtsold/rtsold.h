@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsold.h,v 1.7 2001/07/09 06:04:29 itojun Exp $	*/
-/*	$KAME: rtsold.h,v 1.11 2000/10/10 06:18:04 itojun Exp $	*/
+/*	$NetBSD: rtsold.h,v 1.8 2002/05/31 10:22:17 itojun Exp $	*/
+/*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,6 +35,7 @@ struct ifinfo {
 
 	struct sockaddr_dl *sdl; /* link-layer address */
 	char ifname[IF_NAMESIZE]; /* interface name */
+	u_int32_t linkid;	/* link ID of this interface */
 	int active;		/* interface status */
 	int probeinterval;	/* interval of probe timer(if necessary) */
 	int probetimer;		/* rest of probe timer */
@@ -62,29 +63,32 @@ struct ifinfo {
 /* rtsold.c */
 extern struct timeval tm_max;
 extern int dflag;
-struct ifinfo *find_ifinfo __P((int ifindex));
-void rtsol_timer_update __P((struct ifinfo *ifinfo));
+extern int aflag;
+extern int ifconfig __P((char *));
+extern void iflist_init __P((void));
+struct ifinfo *find_ifinfo __P((int));
+void rtsol_timer_update __P((struct ifinfo *));
 extern void warnmsg __P((int, const char *, const char *, ...))
      __attribute__((__format__(__printf__, 3, 4)));
+extern char **autoifprobe __P((void));
 
 /* if.c */
 extern int ifinit __P((void));
-extern int interface_up __P((char *name));
-extern int interface_status __P((struct ifinfo*));
-extern int lladdropt_length __P((struct sockaddr_dl *sdl));
-extern void lladdropt_fill __P((struct sockaddr_dl *sdl,
-				struct nd_opt_hdr *ndopt));
-extern struct sockaddr_dl *if_nametosdl __P((char *name));
-extern int getinet6sysctl __P((int code));
+extern int interface_up __P((char *));
+extern int interface_status __P((struct ifinfo *));
+extern int lladdropt_length __P((struct sockaddr_dl *));
+extern void lladdropt_fill __P((struct sockaddr_dl *, struct nd_opt_hdr *));
+extern struct sockaddr_dl *if_nametosdl __P((char *));
+extern int getinet6sysctl __P((int));
 
 /* rtsol.c */
 extern int sockopen __P((void));
-extern void sendpacket __P((struct ifinfo *ifinfo));
-extern void rtsol_input __P((int s));
+extern void sendpacket __P((struct ifinfo *));
+extern void rtsol_input __P((int));
 
 /* probe.c */
 extern int probe_init __P((void));
-extern void defrouter_probe __P((int ifindex));
+extern void defrouter_probe __P((struct ifinfo *));
 
 /* dump.c */
 extern void rtsold_dump_file __P((char *));
