@@ -50,8 +50,9 @@ static StringList *hosts = NULL;
 
 static void usage(void)  __attribute__((__noreturn__));
 static void load(const char *);
-static void resolvone(void);
+static void resolvone(int);
 static void *resolvloop(void *);
+static void run(int *);
 
 static void
 usage(void)
@@ -84,7 +85,7 @@ load(const char *fname)
 }
 
 static void
-resolvone()
+resolvone(int n)
 {
 	char buf[1024];
 	pthread_t self = pthread_self();
@@ -92,7 +93,7 @@ resolvone()
 	char *host = hosts->sl_str[i];
 	struct addrinfo *res;
 	int error, len;
-	len = snprintf(buf, sizeof(buf), "%p: resolving %s %d\n", self,
+	len = snprintf(buf, sizeof(buf), "%p: %d resolving %s %d\n", self, n,
 	    host, (int)i);
 	(void)write(STDOUT_FILENO, buf, len);
 	error = getaddrinfo(host, NULL, NULL, &res);
@@ -107,16 +108,17 @@ static void *
 resolvloop(void *p)
 {
 	int nhosts = *(int *)p;
+	printf("nhosts = %d\n", nhosts);
 	while (nhosts--)
-		resolvone();
+		resolvone(nhosts);
 	return NULL;
 }
 
 static void
-run(int nhosts)
+run(int *nhosts)
 {
 	pthread_t self = pthread_self();
-	if (pthread_create(&self, NULL, resolvloop, &nhosts) != 0)
+	if (pthread_create(&self, NULL, resolvloop, nhosts) != 0)
 		err(1, "pthread_create");
 }
 
@@ -147,7 +149,7 @@ main(int argc, char *argv[])
 	if (hosts->sl_cur == 0)
 		usage();
 	for (i = 0; i < nthreads; i++)
-		run(nhosts);
+		run(&nhosts);
 	sleep(100000);
 	return 0;
 }
