@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.15 1994/12/22 09:20:42 cgd Exp $
+#	$NetBSD: bsd.man.mk,v 1.16 1994/12/23 11:19:21 cgd Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 .if !target(.MAIN)
@@ -16,12 +16,14 @@
 	@echo "nroff -mandoc ${.IMPSRC} > ${.TARGET}"
 	@nroff -mandoc ${.IMPSRC} > ${.TARGET} || ( rm -f ${.TARGET} ; false )
 
+.if defined(MAN) && !empty(MAN)
 MANALL=	${MAN:S/.1$/.cat1/g:S/.2$/.cat2/g:S/.3$/.cat3/g:S/.4$/.cat4/g:S/.5$/.cat5/g:S/.6$/.cat6/g:S/.7$/.cat7/g:S/.8$/.cat8/g}
+.endif
 
 MINSTALL=	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE}
 
 maninstall:
-.if defined(MAN) && !empty(MAN)
+.if defined(MANALL)
 	@for page in ${MANALL}; do \
 		dir=${DESTDIR}${MANDIR}`expr $$page : '.*\.cat\([1-8]\)'`; \
 		instpage=`expr $$page : '\(.*\)\.cat[1-8]'`.0; \
