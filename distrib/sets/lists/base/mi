@@ -181,7 +181,6 @@
 ./usr/bin/gzip
 ./usr/bin/head
 ./usr/bin/hexdump
-./usr/bin/host
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent

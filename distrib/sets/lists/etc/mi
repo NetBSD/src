@@ -26,6 +26,7 @@
 ./etc/master.passwd
 ./etc/monthly
 ./etc/motd
+./etc/mrouted.conf
 ./etc/mtree/4.4BSD.dist
 ./etc/mtree/special
 ./etc/myname
@@ -33,12 +34,14 @@
 ./etc/namedb/named.boot
 ./etc/namedb/root.cache
 ./etc/netstart
+./etc/networks
 ./etc/newsyslog.conf
 ./etc/passwd
 ./etc/phones
 ./etc/printcap
 ./etc/protocols
 ./etc/pwd.db
+./etc/rbootd.conf
 ./etc/rc
 ./etc/rc.local
 ./etc/remote
