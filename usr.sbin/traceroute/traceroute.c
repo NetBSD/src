@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.53 2002/08/12 02:51:07 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.54 2002/09/18 23:33:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.53 2002/08/12 02:51:07 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.54 2002/09/18 23:33:37 mycroft Exp $");
 #endif
 #endif
 
@@ -207,9 +207,7 @@ __RCSID("$NetBSD: traceroute.c,v 1.53 2002/08/12 02:51:07 itojun Exp $");
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
@@ -1021,20 +1019,14 @@ again:
 int
 wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 {
-	fd_set *fdsp;
-	size_t nfds;
+	struct pollfd set[1];
 	struct timeval now, wait;
 	int cc = 0;
 	int fromlen = sizeof(*fromp);
 	int retval;
 
-	nfds = howmany(sock + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = malloc(nfds)) == NULL) {
-		Fprintf(stderr, "%s: malloc: %s\n", prog, strerror(errno));
-		exit(1);
-	}
-	memset(fdsp, 0, nfds);
-	FD_SET(sock, fdsp);
+	set[0].fd = sock;
+	set[0].events = POLLIN;
 
 	wait.tv_sec = tp->tv_sec + waittime;
 	wait.tv_usec = tp->tv_usec;
@@ -1046,8 +1038,7 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 		wait.tv_usec = 0;
 	}
 
-	retval = select(sock + 1, fdsp, NULL, NULL, &wait);
-	free(fdsp);
+	retval = poll(set, 1, wait.tv_sec * 1000 + wait.tv_usec / 1000);
 	if (retval < 0)  {
 		/* If we continue, we probably just flood the remote host. */
 		Fprintf(stderr, "%s: select: %s\n", prog, strerror(errno));
