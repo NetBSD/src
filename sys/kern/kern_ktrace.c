@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74 2003/06/29 22:31:21 fvdl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.75 2003/07/16 22:42:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74 2003/06/29 22:31:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.75 2003/07/16 22:42:47 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -218,6 +218,20 @@ ktremul(p)
 	kth.ktr_buf = (caddr_t)emul;
 
 	(void) ktrwrite(p, &kth);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
+void
+ktrkmem(struct proc *p, int ktr, const void *buf, size_t len)
+{
+	struct ktr_header kth;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, p, ktr);
+	kth.ktr_len = len;
+	kth.ktr_buf = buf;
+
+	(void)ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
 
@@ -696,7 +710,7 @@ ktrwrite(p, kth)
 	auio.uio_procp = (struct proc *)0;
 	if (kth->ktr_len > 0) {
 		auio.uio_iovcnt++;
-		aiov[1].iov_base = kth->ktr_buf;
+		aiov[1].iov_base = (void *)kth->ktr_buf;
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
