@@ -1,4 +1,4 @@
-/*	$NetBSD: done.c,v 1.5 1997/10/11 01:53:23 lukem Exp $	*/
+/*	$NetBSD: done.c,v 1.6 1998/09/13 15:21:36 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)done.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: done.c,v 1.5 1997/10/11 01:53:23 lukem Exp $");
+__RCSID("$NetBSD: done.c,v 1.6 1998/09/13 15:21:36 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ done(entry)		/* entry=1 means goto 13000 */	/* game is over */
 }
 
 
-int
+void
 die(entry)			/* label 90 */
 	int     entry;
 {
@@ -171,5 +171,4 @@ die(entry)			/* label 90 */
 	}
 	loc = 3;
 	oldloc = loc;
-	return (2000);
 }

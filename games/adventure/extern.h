@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/09/13 00:07:24 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1998/09/13 15:21:37 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -37,8 +37,8 @@ unsigned long crc __P((const char *, int));
 
 /* done.c */
 int score __P((void));
-void done __P((int));
-int die __P((int));
+void done __P((int)) __attribute__((__noreturn__));
+void die __P((int));
 
 /* init.c */
 void init __P((void));
@@ -90,9 +90,9 @@ int march __P((void));
 int mback __P((void));
 int specials __P((void));
 int trbridge __P((void));
-int badmove __P((void));
-int bug __P((int)) __attribute__((__noreturn__));
-int checkhints __P((void));
+void badmove __P((void));
+void bug __P((int)) __attribute__((__noreturn__));
+void checkhints __P((void));
 int trsay __P((void));
 int trtake __P((void));
 int dropper __P((void));
@@ -102,8 +102,8 @@ int trkill __P((void));
 int trtoss __P((void));
 int trfeed __P((void));
 int trfill __P((void));
-int closing __P((void));
-int caveclose __P((void));
+void closing __P((void));
+void caveclose __P((void));
 
 /* vocab.c */
 void dstroy __P((int));
