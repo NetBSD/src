@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.25 2002/02/13 08:18:22 ross Exp $
+.\"	$NetBSD: compat_linux.8,v 1.26 2002/03/29 16:07:39 bjh21 Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 5, 2001
+.Dd March 29, 2002
 .Dt COMPAT_LINUX 8
 .Os
 .Sh NAME
@@ -37,8 +37,8 @@
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
 .Nx
-supports running Linux binaries.  This applies to i386, PowerPC, alpha
-and m68k systems for now.  Both the a.out and ELF binary formats are supported.
+supports running Linux binaries.  This applies to arm, alpha, i386, m68k and
+powerpc systems for now.  Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib (only
 on i386).  Programs that will not work include some that use the Linux
 .Pa /proc
