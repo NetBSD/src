@@ -101,8 +101,8 @@ char	**argv;
 	struct	in_addr	gwip;
 	ip_t	*ip;
 	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
-	char	*src = NULL, *dst, c;
-	int	mtu = 1500, tests = 0, pointtest = 0;
+	char	*src = NULL, *dst;
+	int	c, mtu = 1500, tests = 0, pointtest = 0;
 
 	/*
 	 * 65535 is maximum packet size...you never know...
