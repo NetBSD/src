@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/12 06:39:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/11 05:30:12 lukem Exp $
 
-.include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
+
 .include <bsd.kernobj.mk>
 
-CLEANFILES=	netbsd.tmp
+CLEANFILES=	netbsd.tmp netbsd.tmp.gz
 
 RAMDISKS=	RAMDISK	ramdisk
 
@@ -36,7 +37,7 @@ netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
 
 #	do the work
 #
-all: ${KERNELS}
+realall: ${KERNELS}
 
 release:
 	-mkdir -p ${RELEASEDIR}/binary/kernel
