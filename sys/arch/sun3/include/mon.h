@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/mon.h,v 1.10 1993/08/28 15:36:16 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/mon.h,v 1.11 1994/02/04 08:20:00 glass Exp $
  */
 /*
  * This file derived from kernel/mach/sun3.md/machMon.h from the
