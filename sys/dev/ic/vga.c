@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.6 1998/06/20 21:55:06 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.7 1998/06/26 21:05:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -87,6 +87,7 @@ static int	vga_alloc_attr __P((void *, int, int, int, long *));
 
 const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
+	pcdisplay_mapchar,
 	pcdisplay_putchar,
 	pcdisplay_copycols,
 	pcdisplay_erasecols,
