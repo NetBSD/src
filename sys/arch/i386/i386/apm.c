@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.33 1998/08/18 18:27:44 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.34 1998/08/31 23:54:32 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -177,6 +177,9 @@ int	apm_v11_enabled = 0;
 #else
 int	apm_v11_enabled = 1;
 #endif
+#ifdef APMDEBUG
+int	apm_v12_enabled = 0;
+#endif
 
 /* variables used during operation (XXX cgd) */
 struct apm_connect_info apminfo;
@@ -251,7 +254,7 @@ apm_perror(const char *str, struct bioscallregs *regs, ...) /* XXX cgd */
 
 	va_start(ap, regs);
 	printf("APM %:: %s (0x%x)\n", str, ap, /* XXX cgd */
-	    apm_strerror(APM_ERR_CODE(regs)), regs->ax);
+	    apm_strerror(APM_ERR_CODE(regs)), regs->AX);
 	va_end(ap);
 }
 
@@ -304,7 +307,7 @@ apm_power_print(sc, regs)
 			break;
 		}
 	else if (apm_minver >= 1) {
-		if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
+		if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_NO_SYSTEM_BATTERY)
 			printf(" no battery");
 		else {
 			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
@@ -334,10 +337,10 @@ apm_get_powstate(dev)
 	struct bioscallregs regs;
 	int rval;
 
-	regs.bx = dev;
+	regs.BX = dev;
 	rval = apmcall(APM_GET_POWER_STATE, &regs);
 	if (rval == 0) { /* XXX cgd */
-		printf("apm dev %04x state %04x\n", dev, regs.cx);
+		printf("apm dev %04x state %04x\n", dev, regs.CX);
 	}
 }
 
@@ -390,11 +393,11 @@ apm_event_handle(sc, regs)
 	int error;
 	struct bioscallregs nregs;
 
-	switch(regs->bx) {
+	switch (regs->BX) {
 	case APM_USER_STANDBY_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: user standby request\n"));
 		if (apm_do_standby) {
-			if (apm_record_event(sc, regs->bx))
+			if (apm_record_event(sc, regs->BX))
 				apm_userstandbys++;
 			apm_op_inprog++;
 			(void)apm_set_powstate(APM_DEV_ALLDEVS,
@@ -416,7 +419,7 @@ apm_event_handle(sc, regs)
 			apm_damn_fool_bios = 1;
 		}
 		if (apm_do_standby) {
-			if (apm_record_event(sc, regs->bx))
+			if (apm_record_event(sc, regs->BX))
 				apm_standbys++;
 			apm_op_inprog++;
 			(void)apm_set_powstate(APM_DEV_ALLDEVS,
@@ -431,7 +434,7 @@ apm_event_handle(sc, regs)
 
 	case APM_USER_SUSPEND_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: user suspend request\n"));
-		if (apm_record_event(sc, regs->bx))
+		if (apm_record_event(sc, regs->BX))
 			apm_suspends++;
 		apm_op_inprog++;
 		(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
@@ -445,7 +448,7 @@ apm_event_handle(sc, regs)
 			/* just give up the fight */
 			apm_damn_fool_bios = 1;
 		}
-		if (apm_record_event(sc, regs->bx))
+		if (apm_record_event(sc, regs->BX))
 			apm_suspends++;
 		apm_op_inprog++;
 		(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
@@ -458,47 +461,47 @@ apm_event_handle(sc, regs)
 		if (error == 0 &&
 		    (sc->sc_flags & (SCFLAG_OREAD|SCFLAG_OWRITE)) == 0)
 			apm_power_print(sc, &nregs);
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		break;
 
 	case APM_NORMAL_RESUME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: resume system\n"));
 		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		break;
 
 	case APM_CRIT_RESUME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: critical resume system"));
 		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		break;
 
 	case APM_SYS_STANDBY_RESUME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: system standby resume\n"));
 		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		break;
 
 	case APM_UPDATE_TIME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: update time\n"));
 		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		break;
 
 	case APM_CRIT_SUSPEND_REQ:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: critical system suspend\n"));
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		apm_suspend();
 		break;
 
 	case APM_BATTERY_LOW:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: battery low\n"));
 		apm_battlow++;
-		apm_record_event(sc, regs->bx);
+		apm_record_event(sc, regs->BX);
 		break;
 
 	default:
-		printf("APM nonstandard event code %x\n", regs->bx);
+		printf("APM nonstandard event code %x\n", regs->BX);
 	}
 }
 
@@ -547,8 +550,8 @@ apm_powmgt_enable(onoff)
 {
 	struct bioscallregs regs;
 
-	regs.bx = apm_minver == 0 ? APM_MGT_ALL : APM_DEV_ALLDEVS;
-	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
+	regs.BX = apm_minver == 0 ? APM_MGT_ALL : APM_DEV_ALLDEVS;
+	regs.CX = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (apmcall(APM_PWR_MGT_ENABLE, &regs) != 0)
 		apm_perror("power management enable all <%s>", &regs,
 		    onoff ? "enable" : "disable");
@@ -563,8 +566,8 @@ apm_powmgt_engage(onoff, dev)
 
 	if (apm_minver == 0)
 		return;
-	regs.bx = dev;
-	regs.cx = onoff ? APM_MGT_ENGAGE : APM_MGT_DISENGAGE;
+	regs.BX = dev;
+	regs.CX = onoff ? APM_MGT_ENGAGE : APM_MGT_DISENGAGE;
 	if (apmcall(APM_PWR_MGT_ENGAGE, &regs) != 0)
 		apm_perror("power mgmt engage (device %x)\n", &regs, dev);
 }
@@ -579,13 +582,13 @@ apm_devpowmgt_enable(onoff, dev)
 
 	if (apm_minver == 0)
 	    return;
-	regs.bx = dev;
+	regs.BX = dev;
 
 	/*
 	 * enable is auto BIOS managment.
 	 * disable is program control.
 	 */
-	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
+	regs.CX = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (apmcall(APM_DEVICE_MGMT_ENABLE, &regs) != 0)
 		printf("APM device engage (device %x): %s (%d)\n",
 		    dev, apm_strerror(APM_ERR_CODE(&regs)),
@@ -600,8 +603,8 @@ apm_set_powstate(dev, state)
 	struct bioscallregs regs;
 	if (!apm_inited || (apm_minver == 0 && state > APM_SYS_OFF))
 		return EINVAL;
-	regs.bx = dev;
-	regs.cx = state;
+	regs.BX = dev;
+	regs.CX = state;
 	if (apmcall(APM_SET_PWR_STATE, &regs) != 0) {
 		apm_perror("set power state <%x,%x>", &regs, dev, state);
 		return EIO;
@@ -639,8 +642,36 @@ apm_set_ver(self)
 	struct bioscallregs regs;
 	int error;
 
-	regs.cx = 0x0101;	/* APM Version 1.1 */
-	regs.bx = APM_DEV_APM_BIOS;
+#ifdef APMDEBUG
+	if (apm_v12_enabled && (apmdebug & APMDEBUG_ATTACH)) {
+	  /* call APM_GET_CAPABILITIES */
+	  regs.BX = APM_DEV_APM_BIOS;
+	  if (apmcall(APM_GET_CAPABILITIES, &regs) == 0) {
+	    /* print out stats */
+	    printf("%d batteries", APM_NBATTERIES(&regs));
+	    if (regs.CX & APM_GLOBAL_STANDBY)
+	      printf(", global standby");
+	    if (regs.CX & APM_GLOBAL_SUSPEND)
+	      printf(", global suspend");
+	    if (regs.CX & APM_RTIMER_STANDBY)
+	      printf(", rtimer standby");
+	    if (regs.CX & APM_RTIMER_SUSPEND)
+	      printf(", rtimer suspend");
+	    if (regs.CX & APM_IRRING_STANDBY)
+	      printf(", internal standby");
+	    if (regs.CX & APM_IRRING_SUSPEND)
+	      printf(", internal suspend");
+	    if (regs.CX & APM_PCRING_STANDBY)
+	      printf(", pccard standby");
+	    if (regs.CX & APM_PCRING_SUSPEND)
+	      printf(", pccard suspend");
+	    printf("\n");
+	  }
+	}
+#endif /* APMDEBUG */
+
+	regs.CX = 0x0101;	/* APM Version 1.1 */
+	regs.BX = APM_DEV_APM_BIOS;
 	
 	if (apm_v11_enabled &&
 	    (error = apmcall(APM_DRIVER_VERSION, &regs)) == 0) {
@@ -673,7 +704,7 @@ apm_get_powstat(regs)
 	struct bioscallregs *regs;
 {
 
-	regs->bx = APM_DEV_ALLDEVS;
+	regs->BX = APM_DEV_ALLDEVS;
 	return apmcall(APM_POWER_STATUS, regs);
 }
 
@@ -684,12 +715,12 @@ apm_disconnect(xxx)
 {
 	struct bioscallregs regs;
 
-	regs.bx = apm_minver == 1 ? APM_DEV_ALLDEVS : APM_DEFAULTS_ALL;
+	regs.BX = apm_minver == 1 ? APM_DEV_ALLDEVS : APM_DEFAULTS_ALL;
 	if (apmcall(APM_SYSTEM_DEFAULTS, &regs))
 		apm_perror("system defaults (%s) failed", &regs,
 		    apm_minver == 1 ? "alldevs" : "all");
 
-	regs.bx = APM_DEV_APM_BIOS;
+	regs.BX = APM_DEV_APM_BIOS;
 	if (apmcall(APM_DISCONNECT, &regs))
 		apm_perror("disconnect failed", &regs);
 	else
@@ -708,24 +739,25 @@ apm_busprobe()
 	char bits[128];
 #endif
 
-	regs.ax = APM_BIOS_FN(APM_INSTALLATION_CHECK);
-	regs.bx = APM_DEV_APM_BIOS;
-	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	regs.AX = APM_BIOS_FN(APM_INSTALLATION_CHECK);
+	regs.BX = APM_DEV_APM_BIOS;
+	regs.CX = regs.DX = 0;
+	regs.ESI = regs.EDI = regs.EFLAGS = 0;
 	bioscall(APM_SYSTEM_BIOS, &regs);
 	DPRINTF(APMDEBUG_PROBE, ("apm: bioscall return: %x %x %x %x %s %x %x\n",
-	    regs.ax, regs.bx, regs.cx, regs.dx,
-	    bitmask_snprintf(regs.flags, I386_FLAGBITS, bits, sizeof(bits)),
-	    regs.si, regs.di));
+	    regs.AX, regs.BX, regs.CX, regs.DX,
+	    bitmask_snprintf(regs.EFLAGS, I386_FLAGBITS, bits, sizeof(bits)),
+	    regs.ESI, regs.EDI));
 
-	if (regs.flags & PSL_C) {
+	if (regs.FLAGS & PSL_C) {
 		DPRINTF(APMDEBUG_PROBE, ("apm: carry set means no APM bios\n"));
 		return 0;	/* no carry -> not installed */
 	}
-	if (regs.bx != APM_INSTALL_SIGNATURE) {
+	if (regs.BX != APM_INSTALL_SIGNATURE) {
 		DPRINTF(APMDEBUG_PROBE, ("apm: PM signature not found\n"));
 		return 0;
 	}
-	if ((regs.cx & APM_32BIT_SUPPORT) == 0) {
+	if ((regs.CX & APM_32BIT_SUPPORT) == 0) {
 		DPRINTF(APMDEBUG_PROBE, ("apm: no 32bit support (busprobe)\n"));
 		return 0;
 	}
@@ -763,9 +795,9 @@ apmmatch(parent, match, aux)
 #define	DPRINTF_BIOSRETURN(regs, bits)					\
 	DPRINTF(APMDEBUG_ATTACH,					\
 	    ("bioscall return: %x %x %x %x %s %x %x",			\
-	    (regs).ax, (regs).bx, (regs).cx, (regs).dx,			\
-	    bitmask_snprintf((regs).flags, I386_FLAGBITS,		\
-	    (bits), sizeof(bits)), (regs).si, (regs).di))
+	    (regs).EAX, (regs).EBX, (regs).ECX, (regs).EDX,		\
+	    bitmask_snprintf((regs).EFLAGS, I386_FLAGBITS,		\
+	    (bits), sizeof(bits)), (regs).ESI, (regs).EDI))
 
 static void
 apmattach(parent, self, aux)
@@ -785,22 +817,22 @@ apmattach(parent, self, aux)
 
 	printf(": ");
 
-	regs.ax = APM_BIOS_FN(APM_INSTALLATION_CHECK);
-	regs.bx = APM_DEV_APM_BIOS;
-	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	regs.AX = APM_BIOS_FN(APM_INSTALLATION_CHECK);
+	regs.BX = APM_DEV_APM_BIOS;
+	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
 	bioscall(APM_SYSTEM_BIOS, &regs);
 	DPRINTF_BIOSRETURN(regs, bits);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
-	apminfo.apm_detail = (u_int)regs.ax | ((u_int)regs.cx << 16);
+	apminfo.apm_detail = (u_int)regs.AX | ((u_int)regs.CX << 16);
 
 	/*
 	 * call a disconnect in case it was already connected
 	 * by some previous code.
 	 */
-	regs.ax = APM_BIOS_FN(APM_DISCONNECT);
-	regs.bx = APM_DEV_APM_BIOS;
-	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	regs.AX = APM_BIOS_FN(APM_DISCONNECT);
+	regs.BX = APM_DEV_APM_BIOS;
+	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
 	bioscall(APM_SYSTEM_BIOS, &regs);
 	DPRINTF_BIOSRETURN(regs, bits);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
@@ -813,19 +845,21 @@ apmattach(parent, self, aux)
 	/*
 	 * And connect to it.
 	 */
-	regs.ax = APM_BIOS_FN(APM_32BIT_CONNECT);
-	regs.bx = APM_DEV_APM_BIOS;
-	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	regs.AX = APM_BIOS_FN(APM_32BIT_CONNECT);
+	regs.BX = APM_DEV_APM_BIOS;
+	regs.CX = regs.DX = regs.DI = regs.FLAGS = 0;
+	regs.ESI = 0;
 	bioscall(APM_SYSTEM_BIOS, &regs);
 	DPRINTF_BIOSRETURN(regs, bits);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 
-	apminfo.apm_code32_seg_base = regs.ax << 4;
-	apminfo.apm_entrypt = regs.bx;
-	apminfo.apm_code16_seg_base = regs.cx << 4;
-	apminfo.apm_data_seg_base = regs.dx << 4;
-	apminfo.apm_code32_seg_len = regs.si;
-	apminfo.apm_data_seg_len = regs.di;
+	apminfo.apm_code32_seg_base = regs.AX << 4;
+	apminfo.apm_entrypt = regs.BX;
+	apminfo.apm_code16_seg_base = regs.CX << 4;
+	apminfo.apm_data_seg_base = regs.DX << 4;
+	apminfo.apm_code32_seg_len = regs.SI;
+	apminfo.apm_code16_seg_len = regs.SI_HI;
+	apminfo.apm_data_seg_len = regs.DI;
 
 
 	if (apm_force_64k_segments) {
@@ -837,8 +871,12 @@ apmattach(parent, self, aux)
 		case 0x0100:
 			apminfo.apm_code32_seg_len = 65536;
 			apminfo.apm_data_seg_len = 65536;
+			apm_v11_enabled = 0;
 			break;
 		case 0x0101:
+			apminfo.apm_code16_seg_len = apminfo.apm_code32_seg_len;
+			/* fall through */
+		case 0x0102:
 		default:
 			if (apminfo.apm_code32_seg_len == 0) {
 				/*
@@ -1061,6 +1099,13 @@ apmattach(parent, self, aux)
 	    &apminfo.apm_segsel,
 	    apmsc->sc_dev.dv_xname));
 
+#ifdef APMDEBUG
+	/* support isn't complete yet */
+	if (APM_MAJOR_VERS(apminfo.apm_detail) == 0x01 &&
+	    APM_MINOR_VERS(apminfo.apm_detail) == 0x02)
+	  apm_v12_enabled = 1;
+#endif
+
 	apm_set_ver(apmsc);		/* prints version info */
 	printf("\n");
 
@@ -1104,9 +1149,9 @@ bail:
 	/*
 	 * call a disconnect; we're punting.
 	 */
-	regs.ax = APM_BIOS_FN(APM_DISCONNECT);
-	regs.bx = APM_DEV_APM_BIOS;
-	regs.cx = regs.dx = regs.si = regs.di = regs.flags = 0;
+	regs.AX = APM_BIOS_FN(APM_DISCONNECT);
+	regs.BX = APM_DEV_APM_BIOS;
+	regs.CX = regs.DX = regs.SI = regs.DI = regs.FLAGS = 0;
 	bioscall(APM_SYSTEM_BIOS, &regs);
 	DPRINTF(APMDEBUG_ATTACH, ("\n%s: ", apmsc->sc_dev.dv_xname));
 	DPRINTF_BIOSRETURN(regs, bits);
@@ -1261,7 +1306,7 @@ apmioctl(dev, cmd, data, flag, p)
 				powerp->battery_state = APM_BATT_CRITICAL;
 			else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_CHARGING)
 				powerp->battery_state = APM_BATT_CHARGING;
-			else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_NOBATTERY)
+			else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_NO_SYSTEM_BATTERY)
 				powerp->battery_state = APM_BATT_ABSENT;
 			if (APM_BATT_REM_VALID(&regs))
 				powerp->minutes_left =
