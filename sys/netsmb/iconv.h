@@ -1,4 +1,6 @@
-/*	$NetBSD: iconv.h,v 1.2 2002/01/04 02:39:38 deberg Exp $	*/
+/*	$NetBSD: iconv.h,v 1.3 2002/01/05 20:29:38 deberg Exp $	*/
+
+/* Public domain */
 
 #ifndef _SYS_ICONV_H_
 #define _SYS_ICONV_H_
