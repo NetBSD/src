@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.7.4.3 1999/07/02 00:15:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.7.4.4 1999/07/02 00:24:41 thorpej Exp $	*/
 
 /*
  *
@@ -93,12 +93,12 @@ struct uvm_vnode {
 					   i/o sync to clear so it can do
 					   i/o */
 #define UVM_VNODE_WRITEABLE	0x200	/* uvn has pages that are writeable */
-#endif /* UBC */
 
 /*
  * UVM_VNODE_BLOCKED: any condition that should new processes from
  * touching the vnode [set WANTED and sleep to wait for it to clear]
  */
 #define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
+#endif /* UBC */
 
 #endif /* _UVM_UVM_VNODE_H_ */
