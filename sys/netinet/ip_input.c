@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.99 2000/02/12 18:00:00 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.100 2000/02/16 12:40:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -348,6 +348,7 @@ ip_input(struct mbuf *m)
 	register struct ifaddr *ifa;
 	struct ipqent *ipqe;
 	int hlen = 0, mff, len;
+	int downmatch;
 #ifdef PFIL_HOOKS
 	struct packet_filter_hook *pfh;
 	struct mbuf *m0;
@@ -489,18 +490,20 @@ ip_input(struct mbuf *m)
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
+	 *
+	 * Traditional 4.4BSD did not consult IFF_UP at all.
+	 * The behavior here is to treat addresses on !IFF_UP interface
+	 * as not mine.
 	 */
+	downmatch = 0;
 	for (ia = IN_IFADDR_HASH(ip->ip_dst.s_addr).lh_first;
 	     ia != NULL;
 	     ia = ia->ia_hash.le_next) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
-			else {
-				icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST,
-				    0, m->m_pkthdr.rcvif);
-				return;
-			}
+			else
+				downmatch++;
 		}
 	}
 	if (ia != NULL)
@@ -591,8 +594,20 @@ ip_input(struct mbuf *m)
 	if (ipforwarding == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
-	} else
+	} else {
+		/*
+		 * If ip_dst matched any of my address on !IFF_UP interface,
+		 * and there's no IFF_UP interface that matches ip_dst,
+		 * send icmp unreach.  Forwarding it will result in in-kernel
+		 * forwarding loop till TTL goes to 0.
+		 */
+		if (downmatch) {
+			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
+			ipstat.ips_cantforward++;
+			return;
+		}
 		ip_forward(m, 0);
+	}
 	return;
 
 ours:
