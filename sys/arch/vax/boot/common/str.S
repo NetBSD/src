@@ -1,4 +1,4 @@
-/*	$NetBSD: str.S,v 1.3 2003/10/07 12:01:27 ragge Exp $ */
+/*	$NetBSD: str.S,v 1.4 2003/11/01 13:02:04 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -56,9 +56,9 @@ ENTRY(atoi, 0)
 1:	ret
 
 /*
- * index() small and easy.
+ * strchr() small and easy.
  */
-ENTRY(index, 0)
+ENTRY(strchr, 0)
 	movq	4(%ap),%r0
 1:	cmpb	(%r0), 8(%ap)
 	beql	2f
