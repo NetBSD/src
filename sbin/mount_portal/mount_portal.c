@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.20 2002/07/20 08:36:27 grant Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.21 2002/09/21 18:32:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.20 2002/07/20 08:36:27 grant Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.21 2002/09/21 18:32:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: mount_portal.c,v 1.20 2002/07/20 08:36:27 grant Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -238,7 +239,7 @@ main(argc, argv)
 		int len2 = sizeof(un2);
 		int so2;
 		pid_t pid;
-		fd_set fdset;
+		struct pollfd fdset[1];
 
 		/*
 		 * Check whether we need to re-read the configuration file
@@ -254,14 +255,13 @@ main(argc, argv)
 		 * Will get EINTR if a signal has arrived, so just
 		 * ignore that error code
 		 */
-		FD_ZERO(&fdset);
-		FD_SET(so, &fdset);
-		rc = select(so+1, &fdset, (fd_set *)0, (fd_set *)0,
-		    (struct timeval *)0);
+		fdset[0].fd = so;
+		fdset[0].events = POLLIN;
+		rc = poll(fdset, 1, INFTIM);
 		if (rc < 0) {
 			if (errno == EINTR)
 				continue;
-			syslog(LOG_ERR, "select: %m");
+			syslog(LOG_ERR, "poll: %m");
 			exit(1);
 		}
 		if (rc == 0)
