@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.60 2003/03/17 09:05:30 jdolecek Exp $	*/
+/*	$NetBSD: buf.h,v 1.61 2003/04/09 12:55:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -201,7 +201,6 @@ do {									\
  * These flags are kept in b_flags.
  */
 #define	B_AGE		0x00000001	/* Move to age queue when I/O done. */
-#define	B_NEEDCOMMIT	0x00000002	/* Needs committing to stable storage */
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */

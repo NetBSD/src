@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.91 2003/02/25 20:35:38 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.92 2003/04/09 12:55:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.91 2003/02/25 20:35:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.92 2003/04/09 12:55:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ bdwrite(bp)
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
-	CLR(bp->b_flags, B_NEEDCOMMIT|B_DONE);
+	CLR(bp->b_flags, B_DONE);
 	simple_unlock(&bp->b_interlock);
 	splx(s);
 
