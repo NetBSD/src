@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2002/09/18 01:45:49 chs Exp $
+#	$NetBSD: Makefile,v 1.14 2002/09/21 01:18:40 chs Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
-FILES=		${PROG}.elf
 SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-msoft-float -Wno-main
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
@@ -27,7 +26,7 @@ RELOC=		20000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c ${PROG}.elf
+CLEANFILES+=	vers.c
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
