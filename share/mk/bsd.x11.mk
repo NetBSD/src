@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.3 2003/09/13 20:10:44 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.4 2003/09/13 20:39:45 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -88,10 +88,10 @@ realinstall: appdefsinstall
 #
 # .man page handling
 #
-.if (${MAN:U} != "" && ${MKMAN} != "no")			# {
+.if (${MKMAN} != "no" && (${MAN:U} != "" || ${PROG:U} != ""))	# {
 cleandir: cleanx11man
 cleanx11man:
-	rm -f ${MAN}
+	rm -f ${MAN:U${PROG:D${PROG.1}}}
 .endif								# }
 
 .SUFFIXES:	.man .1 .3 .7
