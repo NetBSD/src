@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.3 1993/07/19 09:57:22 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.4 1993/07/28 02:22:08 cgd Exp $
  */
 
 #include "param.h"
@@ -307,11 +307,10 @@ int		flag;
 
 		if( ( i = unloadp->id) == -1) {		/* unload by name*/
 			/*
-			 * Copy name in and lookup id from all loaded
-			 * modules.  May fail.
+			 * Copy name and lookup id from all loaded
+			 * modules.
 			 */
-		 	if( err = copyinstr( unloadp->name, istr, MAXLKMNAME-1, NULL))
-		 		break;
+		 	copystr( unloadp->name, istr, MAXLKMNAME-1, NULL);
 			/*
 			 * look up id...
 			 */
@@ -352,11 +351,10 @@ int		flag;
 
 		if( ( i = statp->id) == -1) {		/* stat by name*/
 			/*
-			 * Copy name in and lookup id from all loaded
-			 * modules.  May fail.
+			 * Copy name and lookup id from all loaded
+			 * modules.
 			 */
-		 	if( err = copyinstr( statp->name, istr, MAXLKMNAME-1, NULL))
-		 		break;
+		 	copystr( statp->name, istr, MAXLKMNAME-1, NULL);
 			/*
 			 * look up id...
 			 */
@@ -399,10 +397,10 @@ int		flag;
 		statp->size	= curp->size / PAGESIZE;
 		statp->private	= (unsigned long)curp->private.lkm_any;
 		statp->ver	= curp->private.lkm_any->lkm_ver;
-		err = copyoutstr( curp->private.lkm_any->lkm_name, 
-				  statp->name,
-				  MAXLKMNAME - 2,
-				  NULL);
+		copystr( curp->private.lkm_any->lkm_name, 
+			  statp->name,
+			  MAXLKMNAME - 2,
+			  NULL);
 
 		break;
 

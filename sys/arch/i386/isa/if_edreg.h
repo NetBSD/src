@@ -1,16 +1,7 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- * $Log: if_edreg.h,v $
- * Revision 1.1  1993/07/03 12:21:07  cgd
- * add support for David Greenman "ed" driver
- *
- * Revision 1.2  93/06/23  03:03:05  davidg
- * added some additional definitions for the 83C584 bus interface
- * chip (SMC/WD boards)
- * 
- * Revision 1.1  93/06/23  03:01:07  davidg
- * Initial revision
+ *	$Id: if_edreg.h,v 1.2 1993/07/28 02:21:23 cgd Exp $
  * 
  */
 
@@ -564,7 +555,19 @@ struct ed_ring	{
 /*
  * this sets the default for enabling/disablng the tranceiver
  */
-#define ED_FLAGS_DISABLE_TRANCEIVER 0x01
+#define ED_FLAGS_DISABLE_TRANCEIVER	0x01
+
+/*
+ * This forces the board to be used in 8/16bit mode even if it
+ *	autoconfigs differently
+ */
+#define ED_FLAGS_FORCE_8BIT_MODE	0x02
+#define ED_FLAGS_FORCE_16BIT_MODE	0x04
+
+/*
+ * This disables the use of double transmit buffers.
+ */
+#define ED_FLAGS_NO_DOUBLE_BUFFERING	0x08
 
 /*
  *		Definitions for Western digital/SMC WD80x3 series ASIC

@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.13 1993/07/17 16:20:24 mycroft Exp $
+ *	$Id: aha1742.c,v 1.14 1993/07/28 02:21:11 cgd Exp $
  */
 
 #include "ahb.h"
@@ -1016,12 +1016,10 @@ cheat = ecb;
 				ahb_free_ecb(unit,ecb,flags);
 			}
 			xs->error = XS_DRIVER_STUFFUP;
-			splx(s);
 			return(HAD_ERROR);
 		}
 	} while (!(xs->flags & ITSDONE));
 
-	splx(s);
 	scsi_debug = 0;
 	ahb_debug = 0;
 	if(xs->error)
