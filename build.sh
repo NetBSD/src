@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.125 2003/11/14 12:38:12 lukem Exp $
+#	$NetBSD: build.sh,v 1.126 2004/02/04 11:23:40 lukem Exp $
 #
-# Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -375,7 +375,7 @@ Usage: ${progname} [-EnorUu] [-a arch] [-B buildid] [-D dest] [-j njob]
     -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                 Unsets MAKEOBJDIR.
     -m mach     Set MACHINE to mach; not required if NetBSD native.
-    -N noisy	Set the noisyness level of the build:
+    -N noisy	Set the noisyness (MAKEVERBOSE) level of the build:
 		    0	Quiet
 		    1	Operations are described, commands are suppressed
 		    2	Full output
@@ -830,7 +830,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.125 2003/11/14 12:38:12 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.126 2004/02/04 11:23:40 lukem Exp $
 #
 
 EOF
