@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 2003/01/04 23:46:11 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.26 2003/01/22 21:44:56 kleink Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
@@ -118,6 +118,7 @@ kdb_trap(type, v)
 	DDB_REGS->ctr = frame->ctr;
 	DDB_REGS->cr = frame->cr;
 	DDB_REGS->xer = frame->xer;
+	DDB_REGS->mq = frame->mq;
 #ifdef PPC_IBM4XX
 	DDB_REGS->dear = frame->dear;
 	DDB_REGS->esr = frame->esr;
@@ -154,6 +155,7 @@ kdb_trap(type, v)
 	frame->ctr = DDB_REGS->ctr;
 	frame->cr = DDB_REGS->cr;
 	frame->xer = DDB_REGS->xer;
+	frame->mq = DDB_REGS->mq;
 #ifdef PPC_IBM4XX
 	frame->dear = DDB_REGS->dear;
 	frame->esr = DDB_REGS->esr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2003/01/18 06:23:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2003/01/22 21:44:55 kleink Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,6 +88,7 @@
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
+#include <powerpc/mpc6xx/sr_601.h>
 #if __NetBSD_Version__ > 105010000
 #include <powerpc/mpc6xx/bat.h>
 #else
@@ -129,6 +130,8 @@ extern paddr_t msgbuf_paddr;
 
 static struct mem_region *mem, *avail;
 static u_int mem_cnt, avail_cnt;
+
+extern sr_t iosrtable[16];
 
 #ifdef __HAVE_PMAP_PHYSSEG
 /*
@@ -399,7 +402,7 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
 #define	MFSRIN(va)	mfsrin(va)
-#define	MFTB()		mftbl()
+#define	MFTB()		mfrtcltbl()
 
 static __inline sr_t
 mfsrin(vaddr_t va)
@@ -425,6 +428,16 @@ pmap_interrupts_restore(u_int32_t msr)
 		MTMSR(msr);
 }
 
+static __inline u_int32_t
+mfrtcltbl(void)
+{
+
+	if ((MFPVR() >> 16) == MPC601)
+		return (mfrtcl() >> 7);
+	else
+		return (mftbl());
+}
+
 /*
  * These small routines may have to be replaced,
  * if/when we support processors other that the 604.
@@ -445,6 +458,7 @@ tlbia(void)
 	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000) {
 		TLBIE(i);
 		EIEIO();
+		SYNC();
 	}
 	TLBSYNC();
 	SYNC();
@@ -628,6 +642,7 @@ pmap_pte_clear(volatile pte_t *pt, vaddr_t va, int ptebit)
 	 */
 	pt->pte_lo &= ~ptebit;
 	TLBIE(va);
+	SYNC();
 	EIEIO();
 	TLBSYNC();
 	SYNC();
@@ -674,6 +689,7 @@ pmap_pte_unset(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
 	pt->pte_hi &= ~PTE_VALID;
 	SYNC();
 	TLBIE(va);
+	SYNC();
 	EIEIO();
 	TLBSYNC();
 	SYNC();
@@ -2709,8 +2725,7 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
  * is really initialized.
  */
 void
-pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
-    const struct segtab *kernsegs)
+pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 {
 	struct mem_region *mp, tmp;
 	paddr_t s, e;
@@ -2978,16 +2993,14 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
-	if (kernsegs != NULL) {
-		for (i = 0; i < 16; i++) {
-			if (kernsegs->st_mask & (1 << i)) {
-				pmap_kernel()->pm_sr[i] = kernsegs->st_sr[i];
-				__asm __volatile ("mtsrin %0,%1"
-				    :: "r"(pmap_kernel()->pm_sr[i]),
-				       "r"(i << ADDR_SR_SHFT));
-			}
+	for (i = 0; i < 16; i++) {
+		if (iosrtable[i] & SR601_T) {
+			pmap_kernel()->pm_sr[i] = iosrtable[i];
+			__asm __volatile ("mtsrin %0,%1"
+			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
+		
 	__asm __volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();
