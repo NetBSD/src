@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.25 1999/08/22 20:12:40 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.26 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	/* full config descr */
 	struct usbd_quirks     *quirks;
 	struct usbd_hub	       *hub; /* only if this is a hub */
-	struct device	      **subdevs;	/* sub-devices, 0 terminated */
+	bdevice		      **subdevs;	/* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
