@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.6 1996/11/12 00:50:06 jtc Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.6.14.1 2002/08/01 03:27:56 nathanw Exp $")
 #endif
 
 	/*
@@ -58,48 +58,97 @@ ENTRY(bcopy)
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	12(%esp),%edi
 	movl	16(%esp),%esi
+	movl	%edi,%eax	/* return value */
 #else
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 #endif
 	movl	20(%esp),%ecx
-	movl	%edi,%eax
-	subl	%esi,%eax
-	cmpl	%ecx,%eax	/* overlapping? */
+	movl	%edi,%edx
+	subl	%esi,%edx
+	cmpl	%ecx,%edx	/* overlapping? */
+	movl	%ecx,%edx
 	jb	1f
 	cld			/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
 	movsl
-	movl	20(%esp),%ecx
+	movl	%edx,%ecx
 	andl	$3,%ecx		/* any bytes left? */
 	rep
 	movsb
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	12(%esp),%eax
-#endif
 	popl	%edi
 	popl	%esi
 	ret
 1:
 	addl	%ecx,%edi	/* copy backwards. */
 	addl	%ecx,%esi
+
+#ifdef _DIAGNOSTIC
+				/* check pointer wraparound */
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	cmpl	12(%esp),%edi
+#else
+	cmpl	16(%esp),%edi
+#endif
+	jae	2f
+	pushl	$diagmes1
+	pushl	$func
+	pushl	$__LINE__-4
+	jmp	4f
+2:	
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	cmpl	16(%esp),%esi
+#else
+	cmpl	12(%esp),%esi
+#endif
+	jae	3f
+	pushl	$diagmes2
+	pushl	$func
+	pushl	$__LINE__-4
+4:	
+	pushl	$file
+	call	_C_LABEL(__diagassert13)
+	addl	$16,%esp
+#if defined(MEMCOPY) || defined(MEMMOVE)
+	movl	12(%esp),%eax
+#endif
+	popl	%edi
+	popl	%esi
+	ret
+3:
+#endif	/* _DIAGNOSTIC */
+
 	std
 	andl	$3,%ecx		/* any fractional bytes? */
 	decl	%edi
 	decl	%esi
 	rep
 	movsb
-	movl	20(%esp),%ecx	/* copy remainder by words */
+	movl	%edx,%ecx	/* copy remainder by words */
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
 	rep
 	movsl
-#if defined(MEMCOPY) || defined(MEMMOVE)
-	movl	12(%esp),%eax
-#endif
 	popl	%edi
 	popl	%esi
 	cld
 	ret
+
+#ifdef _DIAGNOSTIC
+file:
+	.asciz	__FILE__
+func:
+#if defined(MEMCOPY)
+	.asciz	"memcpy"
+#elseif defined(MEMMOVE)
+	.asciz	"memmove"
+#else
+	.asciz	"bcopy"
+#endif
+diagmes1:
+	.asciz	"src + length > src"
+diagmes2:
+	.asciz	"dst + length > dst"
+#endif	/* _DIAGNOSTIC */

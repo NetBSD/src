@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 1999/01/15 13:31:19 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.13.12.1 2002/08/01 03:27:58 nathanw Exp $
 
 KMINCLUDES= arch/ns32k/SYS.h
 KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S \
@@ -8,3 +8,5 @@ KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S \
 SRCS+=	${ASSRCS}
 LSRCS+= ${ASSRCS:S/S$/c/g:C/^./Lint_&/g}
 DPSRCS+=${ASSRCS:S/S$/c/g:C/^./Lint_&/g}
+
+SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S
