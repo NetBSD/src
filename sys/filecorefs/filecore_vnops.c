@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.3 1998/09/07 15:58:37 kleink Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4 1998/09/18 04:17:44 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	filecore_vnops.c	1.1	1998/6/26
+ *	filecore_vnops.c	1.2	1998/8/18
  */
 
 #include <sys/param.h>
@@ -255,20 +255,20 @@ filecore_readdir(v)
 	int error = 0;
 	off_t *cookies = NULL;
 	int ncookies = 0;
-	int nent, i;
+	int i;
+	off_t uiooff;
 
 	dp = VTOI(vdp);
 
 	if ((dp->i_dirent.attr & FILECORE_ATTR_DIR) == 0)
 		return (ENOTDIR);
 
-	if (uio->uio_offset % FILECORE_DIRENT_SIZE != 0 ||
-	    uio->uio_resid < FILECORE_DIRENT_SIZE)
+	if (uio->uio_offset % FILECORE_DIRENT_SIZE != 0)
 		return (EINVAL);
-	nent = uio->uio_resid / FILECORE_DIRENT_SIZE;
 	i = uio->uio_offset / FILECORE_DIRENT_SIZE;
-	uio->uio_resid=nent * FILECORE_DIRENT_SIZE;
+	uiooff = uio->uio_offset;
 
+	*ap->a_eofflag = 0;
 	fcmp = dp->i_mnt;
 
 	error = filecore_dbread(dp, &bp);
@@ -279,13 +279,13 @@ filecore_readdir(v)
 	if (ap->a_ncookies == NULL)
 		cookies = NULL;
 	else {
-		ncookies = nent;
+		*ap->a_ncookies = 0;
+		ncookies = uio->uio_resid/16;
 		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
 		    M_WAITOK);
 	}
 
-	nent += i;
-	for (; i < nent; i++) {
+	for (; ; i++) {
 		switch (i) {
 		case 0:
 			/* Fake the '.' entry */
@@ -310,8 +310,10 @@ filecore_readdir(v)
 			else
 				de.d_type = DT_REG;
 			if (filecore_fn2unix(dep->name, de.d_name,
-			    &de.d_namlen))
+			    &de.d_namlen)) {
+				*ap->a_eofflag = 1;
 				goto out;
+			}
 			break;
 		}
 		de.d_reclen = DIRENT_SIZE(&de);
@@ -320,24 +322,24 @@ filecore_readdir(v)
 		error = uiomove((caddr_t) &de, de.d_reclen, uio);
 		if (error)
 			goto out;
+		uiooff += FILECORE_DIRENT_SIZE;
 
 		if (cookies) {
 			*cookies++ = i*FILECORE_DIRENT_SIZE;
 			(*ap->a_ncookies)++;
-		}		
+			if (--ncookies == 0) goto out;
+		}
 	}
 out:
-	if (ap->a_ncookies) {
+	if (cookies) {
+		*ap->a_cookies = cookies;
 		if (error) {
 			FREE(cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		}
 	}
-	if (dep != NULL && dep->name[0] == 0)
-		*ap->a_eofflag = 1;
-	else
-		*ap->a_eofflag = 0;
+	uio->uio_offset = uiooff;
 
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vn3\n", bp);
@@ -364,7 +366,7 @@ filecore_readlink(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 #endif
-	
+
 	return (EINVAL);
 }
 
