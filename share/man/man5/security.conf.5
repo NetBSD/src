@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.7 2000/04/24 23:46:38 fair Exp $
+.\"	$NetBSD: security.conf.5,v 1.8 2000/05/05 18:28:54 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -66,8 +66,11 @@ This checks that the correct users are in the
 file.
 .It Sy check_aliases
 This checks for security problems in the
-.Pa /etc/aliases
+.Pa /etc/mail/aliases
 file.
+For backward compatibility,
+.Pa /etc/aliases
+will be checked as well if exists.
 .It Sy check_rhosts
 This checks for system and user rhosts files with "+" in them.
 .It Sy check_homes
