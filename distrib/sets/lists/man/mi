@@ -484,8 +484,8 @@
 ./usr/share/man/cat8/rpc.rusersd.0
 ./usr/share/man/cat8/rpc.rwalld.0
 ./usr/share/man/cat8/rpc.sprayd.0
-./usr/share/man/cat8/rquotad.0
 ./usr/share/man/cat8/rpcinfo.0
+./usr/share/man/cat8/rquotad.0
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
 ./usr/share/man/cat8/rstatd.0
