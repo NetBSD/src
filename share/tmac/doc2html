@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.35 2002/02/07 00:59:18 ross Exp $
+.\" $NetBSD: doc2html,v 1.36 2002/02/07 01:59:14 ross Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,7 @@ TODO:
 ..
 .
 .doc-rlookup DOC_DEBUG_MODE 0
-.doc-rlookup DOC_XR 1
+.doc-rlookup DOC_XR 0
 .doc-slookup DOC_MANROOT ..
 .
 .nr in-pre 0
@@ -982,7 +982,9 @@ AT&T UNIX\\$*
 .		mode-code-off
 .	\}
 .	el \{\
-.		as doc-pcresult <a href="\\*[DOC_MANROOT]/html\\$2/m_\\$1.html">
+.		ds Xr-tmp \\$1
+.		if \\*[Xr-tmp]index .ds Xr-tmp xindex
+.		as doc-pcresult <a href="\\*[DOC_MANROOT]/html\\$2/\\$1.html">
 .		ie \\w\\$2=0 .as doc-pcresult \\$1
 .		el .as doc-pcresult \\$1(\\$2)
 .		as doc-pcresult </a>
