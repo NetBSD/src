@@ -1,15 +1,19 @@
-# $NetBSD: ENIWETOK,v 1.28 2000/09/24 15:59:26 jdolecek Exp $
-# From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
+# $NetBSD: ENIWETOK,v 1.29 2000/11/12 06:52:37 mycroft Exp $
+# From: GENERIC,v 1.168 2000/10/19 14:35:44 ad Exp
 #
 # Mycroft's AS200.
 
 include	"arch/alpha/conf/std.alpha"
+
+#ident 		"ENIWETOK-$Revision: 1.29 $"
 
 maxusers 32
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+#options 	DEC_2100_A500	# Sable:	AlphaServer 2100
+#options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
 #options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 #options 	DEC_3000_300	# Pelican etc:	3000/300*
 #options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
@@ -24,6 +28,7 @@ options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 #options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 #options 	DEC_EB66	# EB66:		21066 Evaluation Board
 #options 	DEC_6600	# EV6:		264DP OEM Board
+#options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Standard system options
 options 	KTRACE			# System call tracing support
@@ -38,8 +43,8 @@ file-system	FFS		# Fast file system
 #file-system	MFS		# Memory-based file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
-file-system	NFS		# Sun NFS-compatible file system client
 #file-system	NTFS		# Windows/NT file system (experimental)
+file-system	NFS		# Sun NFS-compatible file system client
 #file-system	KERNFS
 #file-system	PROCFS
 
@@ -90,6 +95,7 @@ options 	INSECURE
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices
 #options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	TCVERBOSE		# recognize "unknown" TC devices
@@ -133,6 +139,14 @@ cpu*	at	mainbus0
 
 #tsc*	at	mainbus0
 
+# DECpc AXP150 (Jensen) internal bus support
+#jensenio* at	mainbus0
+
+#com*	at	jensenio? port ?
+#lpt*	at	jensenio? port ?
+#mcclock* at	jensenio? port ?
+#pckbc*	at	jensenio? port ?
+
 # TurboChannel host bus adapter support
 #tcasic*	at	mainbus0
 
@@ -155,19 +169,31 @@ cpu*	at	mainbus0
 # PCI host bus adapter support
 apecs*	at	mainbus?
 #cia*	at	mainbus?
+#irongate* at	mainbus?
 #lca*	at	mainbus?
 #dwlpx*	at	kft?
 #mcpcia*	at	mcbus? mid ?
 #tsp*	at	tsc?
+#ttwoga*	at	mainbus?
+
+# Sable PCI and STDIO bus and devices
+#ttwopci* at	ttwoga? hose ?  
+#sableio* at	ttwopci? bus ?  
+#com*	at	sableio? port ? 
+#lpt*	at	sableio? port ? 
+#pckbc*	at	sableio? port ? 
+#fdc*	at	sableio? port ?
 
 # PCI bus support
 pci*	at	apecs?
 #pci*	at	cia?
+#pci*	at	irongate?
 #pci*	at	lca?
 #pci*	at	ppb?
 #pci*	at	dwlpx?
 #pci*	at	mcpcia?
 #pci*	at	tsp?
+#pci*	at	ttwopci?
 
 # PCI devices
 #adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -177,7 +203,9 @@ pci*	at	apecs?
 #options 	ADW_TAGQ_DISABLE		# 	disable Tag Queuing
 #ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+#cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
+#cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 #dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
@@ -192,6 +220,7 @@ eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
@@ -235,6 +264,8 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
+#isa*	at	jensenio?
+#eisa*	at	jensenio?
 #isa*	at	pceb?
 #eisa*	at	pceb?
 isa*	at	sio?
@@ -242,7 +273,7 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pckbc0	at	isa?				# PC keyboard controller
+pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
@@ -252,6 +283,7 @@ midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
+#ec0	at	isa? port 0x250 iomem 0xd8000 irq 9  # 3Com 3c503 Ethernet
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 #ep*	at	isapnp?
 #ix0	at	isa? port 0x300 irq 10		# EtherExpress/16
@@ -262,13 +294,13 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
 #depca1	at	isa? port 0x200 iomem 0xd8000 iosiz 0x8000 irq 10 	# DEPCA
 #le*	at	depca?
-#we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-#we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 #vga*	at	isa?				# ISA (EISA: XXX) VGA
 #wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 #wdc1	at	isa? port 0x170 irq 15
 #wdc*	at	isapnp?
+#we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
+#we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 audio*	at	wss?
@@ -283,8 +315,9 @@ audio*	at	wss?
 #bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 #uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 #uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
-pcic*	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000 flags 1
-#pcic*	at	isapnp?
+pcic0	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000 flags 1
+#pcic1	at	isa? port 0x3e2 iomem 0xcc000 iosiz 0x10000
+pcmcia*	at	pcic? controller ? socket ?
 
 # EISA devices
 #ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
@@ -293,10 +326,9 @@ pcic*	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000 flags 1
 #ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 #fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 #tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
+#depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
+#le*	at	depca?
 #uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
-
-# PCMCIA bus support
-pcmcia*	at	pcic? controller ? socket ?
 
 # PCMCIA devices
 #aic*	at	pcmcia? function ?		# Adaptec APA-1460 SCSI
@@ -306,11 +338,12 @@ ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
 #mbe*	at	pcmcia? function ?		# MB8696x based Ethernet
 ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
 #sm*	at	pcmcia? function ?		# Megahertz Ethernet
-#sb*	at	pcmcia? function ?		# SoundBlaster clones
 ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
+#wi*	at	pcmcia? function ?		# Lucent WaveLAN/IEEE
 
 # SCSI bus support
 #scsibus* at	adv?
+#scsibus* at	aic?
 #scsibus* at	adw?
 #scsibus* at	aha?
 #scsibus* at	ahb?
@@ -321,6 +354,7 @@ ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
 #scsibus* at	dpt?
 #scsibus* at	isp?
 scsibus* at	ncr?
+#scsibus* at	siop?
 #scsibus* at	pcscp?
 #scsibus* at	uha?
 
@@ -343,6 +377,9 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Floppy drives
 fd*	at	fdc? drive ?
+
+# Hardware RAID devices
+#lsu*	at	cac? unit ?
 
 # USB bus support
 #usb*	at uhci?
@@ -394,16 +431,18 @@ wsmouse*	at	pms?
 pseudo-device	bpfilter	16
 #pseudo-device	ccd		4
 #pseudo-device	raid		4		# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1
 #pseudo-device	ppp		4
-pseudo-device	pty
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sl		4
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
