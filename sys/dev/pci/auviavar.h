@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.4 2002/10/08 13:10:24 kent Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.5 2002/10/16 15:27:28 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct auvia_softc_chan {
 	struct auvia_dma_op *sc_dma_ops;
 	struct auvia_dma *sc_dma_ops_dma;
 	u_int16_t sc_dma_op_count;
+	int sc_base;
 	u_int16_t sc_reg;
 };
 
