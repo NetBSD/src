@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.5 1999/02/08 10:45:11 he Exp $	*/
+/*	$NetBSD: srt0.S,v 1.6 1999/07/31 00:45:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,10 +171,14 @@ not68030:
 	jeq	isa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
 	jeq	isa425
+	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
+	jeq	isa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	isa433
-	cmpb	#MMUID_433_S,d0		| last chance...
+	cmpb	#MMUID_433_S,d0		| or a 433s?
 	jeq	isa433
+	cmpb	#MMUID_385,d0		| or a 385?
+	jeq	isa385
 	movl	#HP_380,a0@		| guess we are a 380
 	jra	ihpibcheck
 isa425:
@@ -182,6 +186,9 @@ isa425:
 	jra	ihpibcheck
 isa433:
 	movl	#HP_433,a0@
+	jra	ihpibcheck
+isa385:
+	movl	#HP_385,a0@
 	jra	ihpibcheck
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1997/02/04 03:52:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1999/07/31 00:45:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,6 +106,7 @@ configure()
 	case HP_380:
 		cpuspeed = MHZ_25 * 2;	/* XXX */
 		break;
+	case HP_385:
 	case HP_433:
 		cpuspeed = MHZ_33 * 2;	/* XXX */
 		break;
