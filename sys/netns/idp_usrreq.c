@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)idp_usrreq.c	7.11 (Berkeley) 6/27/91
- *	$Id: idp_usrreq.c,v 1.3 1993/12/18 00:44:15 mycroft Exp $
+ *	from: @(#)idp_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	$Id: idp_usrreq.c,v 1.4 1994/05/13 06:11:05 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ idp_output(nsp, m0)
 		}
 	}
 	nsp->nsp_lastdst = idp->idp_dna;
-#endif ancient_history
+#endif /* ancient_history */
 	if (noIdpRoute) ro = 0;
 	return (ns_output(m, ro, so->so_options & SO_BROADCAST));
 }
@@ -358,7 +358,7 @@ idp_ctloutput(req, so, level, name, value)
 		case SO_NSIP_ROUTE:
 			error = nsip_route(*value);
 			break;
-#endif NSIP
+#endif /* NSIP */
 		default:
 			error = EINVAL;
 		}
