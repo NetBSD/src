@@ -1,9 +1,7 @@
-/*
- *                     RCS keyword table and match operation
- */
+/* RCS keyword table and match operation */
 
-/* Copyright (C) 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991 by Paul Eggert
+/* Copyright 1982, 1988, 1989 Walter Tichy
+   Copyright 1990, 1991, 1992, 1993 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -28,20 +26,53 @@ Report problems and direct all questions to:
 
 */
 
+/* $Log: rcskeys.c,v $
+/* Revision 1.6  1995/02/24 02:25:08  mycroft
+/* RCS 5.6.7.4
+/*
+ * Revision 5.3  1993/11/03 17:42:27  eggert
+ * Add Name keyword.
+ *
+ * Revision 5.2  1991/08/19  03:13:55  eggert
+ * Say `T const' instead of `const T'; it's less confusing for pointer types.
+ * (This change was made in other source files too.)
+ *
+ * Revision 5.1  1991/04/21  11:58:25  eggert
+ * Don't put , just before } in initializer.
+ *
+ * Revision 5.0  1990/08/22  08:12:54  eggert
+ * Add -k.  Ansify and Posixate.
+ *
+ * Revision 4.3  89/05/01  15:13:02  narten
+ * changed copyright header to reflect current distribution rules
+ * 
+ * Revision 4.2  87/10/18  10:36:33  narten
+ * Updating version numbers. Changes relative to 1.1 actuallyt
+ * relative to 4.1
+ * 
+ * Revision 1.2  87/09/24  14:00:10  narten
+ * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
+ * warnings)
+ * 
+ * Revision 4.1  83/05/04  10:06:53  wft
+ * Initial revision.
+ * 
+ */
+
+
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.5 1994/10/07 14:41:18 mycroft Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.6 1995/02/24 02:25:08 mycroft Exp $")
 
 
 char const *const Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
-	nil,
+	0,
 	AUTHOR, DATE, HEADER, IDH,
 #ifdef LOCALID
 	LOCALID,
 #endif
-	LOCKER, LOG,
-	RCSFILE, REVISION, SOURCE, STATE
+	LOCKER, LOG, NAME, RCSFILE, REVISION, SOURCE, STATE
 };
 
 

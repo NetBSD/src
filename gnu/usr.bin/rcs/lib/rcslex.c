@@ -1,17 +1,16 @@
-/*
- *                     RCS file input
- */
-/*********************************************************************************
+/* lexical analysis of RCS files */
+
+/******************************************************************************
  *                     Lexical Analysis.
  *                     hashtable, Lexinit, nextlex, getlex, getkey,
  *                     getid, getnum, readstring, printstring, savestring,
  *                     checkid, fatserror, error, faterror, warn, diagnose
  *                     Testprogram: define LEXDB
- *********************************************************************************
+ ******************************************************************************
  */
 
-/* Copyright (C) 1982, 1988, 1989 Walter Tichy
-   Copyright 1990, 1991 by Paul Eggert
+/* Copyright 1982, 1988, 1989 Walter Tichy
+   Copyright 1990, 1991, 1992, 1993, 1994 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -36,6 +35,113 @@ Report problems and direct all questions to:
 
 */
 
+
+
+/*
+ * $Log: rcslex.c,v $
+ * Revision 1.4  1995/02/24 02:25:10  mycroft
+ * RCS 5.6.7.4
+ *
+ * Revision 5.17  1994/03/20 04:52:58  eggert
+ * Don't worry if madvise fails.  Add Orewind.  Remove lint.
+ *
+ * Revision 5.16  1993/11/09 17:55:29  eggert
+ * Fix `label: }' typo.
+ *
+ * Revision 5.15  1993/11/03 17:42:27  eggert
+ * Improve quality of diagnostics by putting file names in them more often.
+ * Don't discard ignored phrases.
+ *
+ * Revision 5.14  1992/07/28  16:12:44  eggert
+ * Identifiers may now start with a digit and (unless they are symbolic names)
+ * may contain `.'.  Avoid `unsigned'.  Statement macro names now end in _.
+ *
+ * Revision 5.13  1992/02/17  23:02:27  eggert
+ * Work around NFS mmap SIGBUS problem.
+ *
+ * Revision 5.12  1992/01/06  02:42:34  eggert
+ * Use OPEN_O_BINARY if mode contains 'b'.
+ *
+ * Revision 5.11  1991/11/03  03:30:44  eggert
+ * Fix porting bug to ancient hosts lacking vfprintf.
+ *
+ * Revision 5.10  1991/10/07  17:32:46  eggert
+ * Support piece tables even if !has_mmap.
+ *
+ * Revision 5.9  1991/09/24  00:28:42  eggert
+ * Don't export errsay().
+ *
+ * Revision 5.8  1991/08/19  03:13:55  eggert
+ * Add eoflex(), mmap support.  Tune.
+ *
+ * Revision 5.7  1991/04/21  11:58:26  eggert
+ * Add MS-DOS support.
+ *
+ * Revision 5.6  1991/02/25  07:12:42  eggert
+ * Work around fputs bug.  strsave -> str_save (DG/UX name clash)
+ *
+ * Revision 5.5  1990/12/04  05:18:47  eggert
+ * Use -I for prompts and -q for diagnostics.
+ *
+ * Revision 5.4  1990/11/19  20:05:28  hammer
+ * no longer gives warning about unknown keywords if -q is specified
+ *
+ * Revision 5.3  1990/11/01  05:03:48  eggert
+ * When ignoring unknown phrases, copy them to the output RCS file.
+ *
+ * Revision 5.2  1990/09/04  08:02:27  eggert
+ * Count RCS lines better.
+ *
+ * Revision 5.1  1990/08/29  07:14:03  eggert
+ * Work around buggy compilers with defective argument promotion.
+ *
+ * Revision 5.0  1990/08/22  08:12:55  eggert
+ * Remove compile-time limits; use malloc instead.
+ * Report errno-related errors with perror().
+ * Ansify and Posixate.  Add support for ISO 8859.
+ * Use better hash function.
+ *
+ * Revision 4.6  89/05/01  15:13:07  narten
+ * changed copyright header to reflect current distribution rules
+ * 
+ * Revision 4.5  88/08/28  15:01:12  eggert
+ * Don't loop when writing error messages to a full filesystem.
+ * Flush stderr/stdout when mixing output.
+ * Yield exit status compatible with diff(1).
+ * Shrink stdio code size; allow cc -R; remove lint.
+ * 
+ * Revision 4.4  87/12/18  11:44:47  narten
+ * fixed to use "varargs" in "fprintf"; this is required if it is to
+ * work on a SPARC machine such as a Sun-4
+ * 
+ * Revision 4.3  87/10/18  10:37:18  narten
+ * Updating version numbers. Changes relative to 1.1 actually relative
+ * to version 4.1
+ * 
+ * Revision 1.3  87/09/24  14:00:17  narten
+ * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
+ * warnings)
+ * 
+ * Revision 1.2  87/03/27  14:22:33  jenkins
+ * Port to suns
+ * 
+ * Revision 4.1  83/03/25  18:12:51  wft
+ * Only changed $Header to $Id.
+ * 
+ * Revision 3.3  82/12/10  16:22:37  wft
+ * Improved error messages, changed exit status on error to 1.
+ *
+ * Revision 3.2  82/11/28  21:27:10  wft
+ * Renamed ctab to map and included EOFILE; ctab is now a macro in rcsbase.h.
+ * Added fflsbuf(), fputs(), and fprintf(), which abort the RCS operations
+ * properly in case there is an IO-error (e.g., file system full).
+ *
+ * Revision 3.1  82/10/11  19:43:56  wft
+ * removed unused label out:;
+ * made sure all calls to getc() return into an integer, not a char.
+ */
+
+
 /*
 #define LEXDB
 */
@@ -49,7 +155,14 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(lexId, "$Id: rcslex.c,v 1.3 1993/12/01 01:41:51 cgd Exp $")
+libId(lexId, "$Id: rcslex.c,v 1.4 1995/02/24 02:25:10 mycroft Exp $")
+
+static char *checkidentifier P((char*,int,int));
+static void errsay P((char const*));
+static void fatsay P((char const*));
+static void lookup P((char const*));
+static void startsay P((const char*,const char*));
+static void warnsay P((char const*));
 
 static struct hshentry *nexthsh;  /*pointer to next hash entry, set by lookup*/
 
@@ -59,7 +172,7 @@ int             hshenter;   /*if true, next suitable lexeme will be entered */
                             /*into the symbol table. Handle with care.      */
 int             nextc;      /*next input character, initialized by Lexinit  */
 
-unsigned long	rcsline;    /*current line-number of input		    */
+long		rcsline;    /*current line-number of input		    */
 int             nerror;     /*counter for errors                            */
 int             quietflag;  /*indicates quiet mode                          */
 RILE *		finptr;	    /*input file descriptor			    */
@@ -89,9 +202,9 @@ static int ignored_phrases; /* have we ignored phrases in this RCS file? */
     void
 warnignore()
 {
-    if (! (ignored_phrases|quietflag)) {
+    if (!ignored_phrases) {
 	ignored_phrases = true;
-	warn("Unknown phrases like `%s ...;' are in the RCS file.", NextString);
+	rcswarn("Unknown phrases like `%s ...;' are present.", NextString);
     }
 }
 
@@ -122,7 +235,7 @@ lookup(str)
 			/* empty slot found */
 			*p = n = ftalloc(struct hshentry);
 			n->num = fstr_save(str);
-			n->nexthsh = nil;
+			n->nexthsh = 0;
 #			ifdef LEXDB
 				VOID printf("\nEntered: %s at %u ", str, ihash);
 #			endif
@@ -148,7 +261,7 @@ Lexinit()
 {       register int            c;
 
 	for (c = hshsize;  0 <= --c;  ) {
-		hshtab[c] = nil;
+		hshtab[c] = 0;
         }
 
 	nerror = 0;
@@ -158,7 +271,7 @@ Lexinit()
 		ignored_phrases = false;
 		rcsline = 1;
 		bufrealloc(&tokbuf, 2);
-		Iget(finptr, nextc);
+		Iget_(finptr, nextc)
                 nextlex();            /*initial token*/
         }
 }
@@ -205,46 +318,48 @@ nextlex()
                 /* Note: falls into next case */
 
         case SPACE:
-		GETC(frew, c);
+		GETC_(frew, c)
 		continue;
 
-        case DIGIT:
-		sp = tokbuf.string;
-		limit = sp + tokbuf.size;
-		*sp++ = c;
-		for (;;) {
-			GETC(frew, c);
-			if ((d=ctab[c])!=DIGIT && d!=PERIOD)
-				break;
-                        *sp++ = c;         /* 1.2. and 1.2 are different */
-			if (limit <= sp)
-				sp = bufenlarge(&tokbuf, &limit);
-                }
-		*sp = 0;
-		if (hshenter)
-			lookup(tokbuf.string);
-		else
-			NextString = fstr_save(tokbuf.string);
-		d = NUM;
-		break;
-
-
-        case LETTER:
+	case IDCHAR:
+	case LETTER:
 	case Letter:
+		d = ID;
+		/* fall into */
+	case DIGIT:
+	case PERIOD:
 		sp = tokbuf.string;
 		limit = sp + tokbuf.size;
 		*sp++ = c;
 		for (;;) {
-			GETC(frew, c);
-			if ((d=ctab[c])!=LETTER && d!=Letter && d!=DIGIT && d!=IDCHAR)
+			GETC_(frew, c)
+			switch (ctab[c]) {
+			    case IDCHAR:
+			    case LETTER:
+			    case Letter:
+				d = ID;
+				/* fall into */
+			    case DIGIT:
+			    case PERIOD:
+				*sp++ = c;
+				if (limit <= sp)
+					sp = bufenlarge(&tokbuf, &limit);
+				continue;
+			    
+			    default:
 				break;
-                        *sp++ = c;
-			if (limit <= sp)
-				sp = bufenlarge(&tokbuf, &limit);
+			}
+			break;
                 }
 		*sp = 0;
+		if (d == DIGIT  ||  d == PERIOD) {
+			d = NUM;
+			if (hshenter) {
+				lookup(tokbuf.string);
+				break;
+			}
+		}
 		NextString = fstr_save(tokbuf.string);
-		d = ID;  /* may be ID or keyword */
 		break;
 
         case SBEGIN: /* long string */
@@ -255,7 +370,7 @@ nextlex()
 
 	case COLON:
 	case SEMI:
-		GETC(frew, c);
+		GETC_(frew, c)
 		break;
 	} break; }
 	nextc = c;
@@ -291,11 +406,11 @@ eoflex()
 				++rcsline;
 				/* fall into */
 			case SPACE:
-				cachegeteof(c, {uncache(fin);return true;});
+				cachegeteof_(c, {uncache(fin);return true;})
 				break;
 		}
 		if (fout)
-			aputc(c, fout);
+			aputc_(c, fout)
 	}
 }
 
@@ -359,7 +474,7 @@ getkeystring(key)
 getid()
 /* Function: Checks if nexttok is an identifier. If so,
  * advances the input by calling nextlex and returns a pointer
- * to the identifier; otherwise returns nil.
+ * to the identifier; otherwise returns 0.
  * Treats keywords as identifiers.
  */
 {
@@ -368,14 +483,15 @@ getid()
                 name = NextString;
                 nextlex();
                 return name;
-        } else  return nil;
+	} else
+		return 0;
 }
 
 
 struct hshentry * getnum()
 /* Function: Checks if nexttok is a number. If so,
  * advances the input by calling nextlex and returns a pointer
- * to the hashtable entry. Otherwise returns nil.
+ * to the hashtable entry.  Otherwise returns 0.
  * Doesn't work if hshenter is false.
  */
 {
@@ -384,46 +500,55 @@ struct hshentry * getnum()
                 num=nexthsh;
                 nextlex();
                 return num;
-        } else  return nil;
+	} else
+		return 0;
 }
 
 	struct cbuf
 getphrases(key)
 	char const *key;
-/* Get a series of phrases that do not start with KEY, yield resulting buffer.
- * Stop when the next phrase starts with a token that is not an identifier,
- * or is KEY.
- * Assume !foutptr.
- */
+/*
+* Get a series of phrases that do not start with KEY.  Yield resulting buffer.
+* Stop when the next phrase starts with a token that is not an identifier,
+* or is KEY.  Copy input to foutptr if it is set.  Unlike ignorephrases(),
+* this routine assumes nextlex() has already been invoked before we start.
+*/
 {
     declarecache;
     register int c;
-    register char *p;
-    char const *limit;
-    register char const *ki, *kn;
+    register char const *kn;
     struct cbuf r;
-    struct buf b;
     register RILE *fin;
+    register FILE *frew;
+#   if large_memory
+#	define savech_(c) ;
+#   else
+	register char *p;
+	char const *limit;
+	struct buf b;
+#	define savech_(c) {if (limit<=p)p=bufenlarge(&b,&limit); *p++ =(c);}
+#   endif
 
-    if (nexttok!=ID  ||  strcmp(NextString,key) == 0) {
-	r.string = 0;
-	r.size = 0;
-	return r;
-    } else {
+    if (nexttok!=ID  ||  strcmp(NextString,key) == 0)
+	clear_buf(&r);
+    else {
 	warnignore();
 	fin = finptr;
+	frew = foutptr;
 	setupcache(fin); cache(fin);
-	bufautobegin(&b);
-	bufscpy(&b, NextString);
+#	if large_memory
+	    r.string = (char const*)cachetell() - strlen(NextString) - 1;
+#	else
+	    bufautobegin(&b);
+	    bufscpy(&b, NextString);
+	    p = b.string + strlen(b.string);
+	    limit = b.string + b.size;
+#	endif
 	ffree1(NextString);
-	p = b.string + strlen(b.string);
-	limit = b.string + b.size;
 	c = nextc;
 	for (;;) {
 	    for (;;) {
-		if (limit <= p)
-		    p = bufenlarge(&b, &limit);
-		*p++ = c;
+		savech_(c)
 		switch (ctab[c]) {
 		    default:
 			fatserror("unknown character `%c'", c);
@@ -433,15 +558,13 @@ getphrases(key)
 			/* fall into */
 		    case COLON: case DIGIT: case LETTER: case Letter:
 		    case PERIOD: case SPACE:
-			cacheget(c);
+			GETC_(frew, c)
 			continue;
 		    case SBEGIN: /* long string */
 			for (;;) {
 			    for (;;) {
-				if (limit <= p)
-				    p = bufenlarge(&b, &limit);
-				cacheget(c);
-				*p++ = c;
+				GETC_(frew, c)
+				savech_(c)
 				switch (c) {
 				    case '\n':
 					++rcsline;
@@ -454,48 +577,50 @@ getphrases(key)
 				}
 				break;
 			    }
-			    cacheget(c);
+			    GETC_(frew, c)
 			    if (c != SDELIM)
 				break;
-			    if (limit <= p)
-				p = bufenlarge(&b, &limit);
-			    *p++ = c;
+			    savech_(c)
 			}
 			continue;
 		    case SEMI:
-			cacheget(c);
+			cacheget_(c)
 			if (ctab[c] == NEWLN) {
+			    if (frew)
+				aputc_(c, frew)
 			    ++rcsline;
-			    if (limit <= p)
-				p = bufenlarge(&b, &limit);
-			    *p++ = c;
-			    cacheget(c);
+			    savech_(c)
+			    cacheget_(c)
 			}
+#			if large_memory
+			    r.size = (char const*)cachetell() - 1 - r.string;
+#			endif
 			for (;;) {
 			    switch (ctab[c]) {
 				case NEWLN:
 					++rcsline;
 					/* fall into */
 				case SPACE:
-					cacheget(c);
+					cacheget_(c)
 					continue;
 
 				default: break;
 			    }
 			    break;
 			}
+			if (frew)
+			    aputc_(c, frew)
 			break;
 		}
 		break;
 	    }
-	    switch (ctab[c]) {
-		case LETTER:
-		case Letter:
+	    if (ctab[c] == Letter) {
 		    for (kn = key;  c && *kn==c;  kn++)
-			cacheget(c);
+			GETC_(frew, c)
 		    if (!*kn)
 			switch (ctab[c]) {
 			    case DIGIT: case LETTER: case Letter:
+			    case IDCHAR: case PERIOD:
 				break;
 			    default:
 				nextc = c;
@@ -504,23 +629,26 @@ getphrases(key)
 				uncache(fin);
 				goto returnit;
 			}
-		    for (ki=key; ki<kn; ) {
-			if (limit <= p)
-			    p = bufenlarge(&b, &limit);
-			*p++ = *ki++;
-		    }
-		    break;
-
-		default:
+#		    if !large_memory
+			{
+			    register char const *ki;
+			    for (ki=key; ki<kn; )
+				savech_(*ki++)
+			}
+#		    endif
+	    } else {
 		    nextc = c;
 		    uncache(fin);
 		    nextlex();
-		    goto returnit;
+		    break;
 	    }
 	}
-    returnit:
-	return bufremember(&b, (size_t)(p - b.string));
+    returnit:;
+#	if !large_memory
+	    return bufremember(&b, (size_t)(p - b.string));
+#	endif
     }
+    return r;
 }
 
 
@@ -536,14 +664,14 @@ readstring()
 	fin=finptr; frew=foutptr;
 	setupcache(fin); cache(fin);
 	for (;;) {
-		GETC(frew, c);
+		GETC_(frew, c)
 		switch (c) {
 		    case '\n':
 			++rcsline;
 			break;
 
 		    case SDELIM:
-			GETC(frew, c);
+			GETC_(frew, c)
 			if (c != SDELIM) {
 				/* end of string */
 				nextc = c;
@@ -570,13 +698,13 @@ printstring()
 	fout = stdout;
 	setupcache(fin); cache(fin);
 	for (;;) {
-		cacheget(c);
+		cacheget_(c)
 		switch (c) {
 		    case '\n':
 			++rcsline;
 			break;
 		    case SDELIM:
-			cacheget(c);
+			cacheget_(c)
 			if (c != SDELIM) {
                                 nextc=c;
 				uncache(fin);
@@ -584,7 +712,7 @@ printstring()
                         }
 			break;
                 }
-		aputc(c,fout);
+		aputc_(c,fout)
         }
 }
 
@@ -612,13 +740,13 @@ savestring(target)
 	setupcache(fin); cache(fin);
 	tp = target->string;  limit = tp + target->size;
 	for (;;) {
-		GETC(frew, c);
+		GETC_(frew, c)
 		switch (c) {
 		    case '\n':
 			++rcsline;
 			break;
 		    case SDELIM:
-			GETC(frew, c);
+			GETC_(frew, c)
 			if (c != SDELIM) {
                                 /* end of string */
                                 nextc=c;
@@ -636,42 +764,74 @@ savestring(target)
 }
 
 
-	char *
-checkid(id, delimiter)
+	static char *
+checkidentifier(id, delimiter, dotok)
 	register char *id;
 	int delimiter;
+	register int dotok;
 /*   Function:  check whether the string starting at id is an   */
 /*		identifier and return a pointer to the delimiter*/
 /*		after the identifier.  White space, delim and 0 */
 /*              are legal delimiters.  Aborts the program if not*/
 /*              a legal identifier. Useful for checking commands*/
 /*		If !delim, the only delimiter is 0.		*/
+/*		Allow '.' in identifier only if DOTOK is set.   */
 {
-        register enum  tokens  d;
         register char    *temp;
-        register char    c,tc;
+	register char c;
 	register char delim = delimiter;
+	int isid = false;
 
 	temp = id;
-	if ((d = ctab[(unsigned char)(c = *id)])==LETTER || d==Letter) {
-	    while ((d = ctab[(unsigned char)(c = *++id)])==LETTER
-		|| d==Letter || d==DIGIT || d==IDCHAR
-	    )
-		;
-	    if (c  &&  (!delim || c!=delim && c!=' ' && c!='\t' && c!='\n')) {
+	for (;;  id++) {
+		switch (ctab[(unsigned char)(c = *id)]) {
+			case IDCHAR:
+			case LETTER:
+			case Letter:
+				isid = true;
+				continue;
+
+			case DIGIT:
+				continue;
+
+			case PERIOD:
+				if (dotok)
+					continue;
+				break;
+			
+			default:
+				break;
+		}
+		break;
+	}
+	if (	 ! isid
+	    ||	 (c  &&  (!delim || (c!=delim && c!=' ' && c!='\t' && c!='\n')))
+	) {
                 /* append \0 to end of id before error message */
-                tc = c;
-                while( (c=(*++id))!=' ' && c!='\t' && c!='\n' && c!='\0' && c!=delim) ;
+		while ((c = *id) && c!=' ' && c!='\t' && c!='\n' && c!=delim)
+		    id++;
                 *id = '\0';
-		faterror("invalid character %c in identifier `%s'",tc,temp);
-	    }
-        } else {
-            /* append \0 to end of id before error message */
-            while( (c=(*++id))!=' ' && c!='\t' && c!='\n' && c!='\0' && c!=delim) ;
-            *id = '\0';
-	    faterror("identifier `%s' doesn't start with letter", temp);
-        }
+		faterror("invalid %s `%s'",
+			dotok ? "identifier" : "symbol", temp
+		);
+	}
 	return id;
+}
+
+	char *
+checkid(id, delimiter)
+	char *id;
+	int delimiter;
+{
+	return checkidentifier(id, delimiter, true);
+}
+
+	char *
+checksym(sym, delimiter)
+	char *sym;
+	int delimiter;
+{
+	return checkidentifier(sym, delimiter, false);
 }
 
 	void
@@ -682,16 +842,26 @@ checksid(id)
 	VOID checkid(id, 0);
 }
 
+	void
+checkssym(sym)
+	char *sym;
+{
+	VOID checksym(sym, 0);
+}
 
-	static RILE *
+
 #if has_mmap && large_memory
-fd2_RILE(fd, filename, status)
+	static RILE *fd2_RILE P((int,char const*,struct stat*));
+	static RILE *
+fd2_RILE(fd, name, status)
 #else
-fd2RILE(fd, filename, mode, status)
+	static RILE *fd2RILE P((int,char const*,char const*,struct stat*));
+	static RILE *
+fd2RILE(fd, name, mode, status)
 	char const *mode;
 #endif
 	int fd;
-	char const *filename;
+	char const *name;
 	register struct stat *status;
 {
 	struct stat st;
@@ -699,9 +869,9 @@ fd2RILE(fd, filename, mode, status)
 	if (!status)
 		status = &st;
 	if (fstat(fd, status) != 0)
-		efaterror(filename);
+		efaterror(name);
 	if (!S_ISREG(status->st_mode)) {
-		error("`%s' is not a regular file", filename);
+		error("`%s' is not a regular file", name);
 		VOID close(fd);
 		errno = EINVAL;
 		return 0;
@@ -710,7 +880,7 @@ fd2RILE(fd, filename, mode, status)
 #	    if ! (has_mmap && large_memory)
 		FILE *stream;
 		if (!(stream = fdopen(fd, mode)))
-			efaterror(filename);
+			efaterror(name);
 #	    endif
 
 #	    if !large_memory
@@ -724,7 +894,7 @@ fd2RILE(fd, filename, mode, status)
 			size_t s = status->st_size;
 
 			if (s != status->st_size)
-				faterror("`%s' is enormous", filename);
+				faterror("%s: too large", name);
 			for (f = rilebuf;  f->base;  f++)
 				if (f == rilebuf+RILES)
 					faterror("too many RILEs");
@@ -733,13 +903,14 @@ fd2RILE(fd, filename, mode, status)
 				f->base = &dummy;
 			} else {
 #			    if has_mmap
+				catchmmapints();
 				if (
 				    (f->base = (unsigned char *)mmap(
 					(caddr_t)0, s, PROT_READ, MAP_SHARED,
 					fd, (off_t)0
 				    )) == (unsigned char *)-1
 				)
-					efaterror("mmap");
+					efaterror(name);
 #			    else
 			    	f->base = tnalloc(unsigned char, s);
 #			    endif
@@ -785,30 +956,34 @@ advise_access(f, advice)
 	register RILE *f;
 	int advice;
 {
-	if (madvise((caddr_t)f->base, (size_t)(f->lim - f->base), advice) != 0)
-		efaterror("madvise");
+	VOID madvise((caddr_t)f->base, (size_t)(f->lim - f->base), advice);
+	/* Don't worry if madvise fails; it's only advisory.  */
 }
 #endif
 
 	RILE *
 #if has_mmap && large_memory
-I_open(filename, status)
+I_open(name, status)
 #else
-Iopen(filename, mode, status)
+Iopen(name, mode, status)
 	char const *mode;
 #endif
-	char const *filename;
+	char const *name;
 	struct stat *status;
-/* Open FILENAME for reading, yield its descriptor, and set *STATUS.  */
+/* Open NAME for reading, yield its descriptor, and set *STATUS.  */
 {
-	int fd;
+	int fd = open(name, O_RDONLY
+#		if OPEN_O_BINARY  &&  !(has_mmap && large_memory)
+			|  (strchr(mode,'b') ? OPEN_O_BINARY : 0)
+#		endif
+	);
 
-	if ((fd = open(filename,O_RDONLY|O_BINARY)) < 0)
+	if (fd < 0)
 		return 0;
 #	if has_mmap && large_memory
-		return fd2_RILE(fd, filename, status);
+		return fd2_RILE(fd, name, status);
 #	else
-		return fd2RILE(fd, filename, mode, status);
+		return fd2RILE(fd, name, mode, status);
 #	endif
 }
 
@@ -816,6 +991,7 @@ Iopen(filename, mode, status)
 #if !large_memory
 #	define Iclose(f) fclose(f)
 #else
+	static int Iclose P((RILE*));
 		static int
 	Iclose(f)
 		register RILE *f;
@@ -837,7 +1013,7 @@ Iopen(filename, mode, status)
 
 static int Oerrloop;
 
-	exiting void
+	void
 Oerror()
 {
 	if (Oerrloop)
@@ -846,8 +1022,8 @@ Oerror()
 	efaterror("output error");
 }
 
-exiting void Ieof() { fatserror("unexpected end of file"); }
-exiting void Ierror() { efaterror("input error"); }
+void Ieof() { fatserror("unexpected end of file"); }
+void Ierror() { efaterror("input error"); }
 void testIerror(f) FILE *f; { if (ferror(f)) Ierror(); }
 void testOerror(o) FILE *o; { if (ferror(o)) Oerror(); }
 
@@ -857,7 +1033,7 @@ void Ofclose(f) FILE *f; { if (f && fclose(f)!=0) Oerror(); }
 #else
 void Ofclose(f) FILE *f; { if (f && (fflush(f)!=0 ||
 				     ((fsync(fileno(f)) == -1) &&
-				         (errno != EINVAL)) ||
+				      (errno != EINVAL)) ||
 				     fclose(f)!=0)) Oerror(); }
 #endif
 void Izclose(p) RILE **p; { Ifclose(*p); *p = 0; }
@@ -875,6 +1051,8 @@ testIeof(f)
 void Irewind(f) FILE *f; { if (fseek(f,0L,SEEK_SET) != 0) Ierror(); }
 #endif
 
+void Orewind(f) FILE *f; { if (fseek(f,0L,SEEK_SET) != 0) Oerror(); }
+
 void eflush()
 {
 	if (fflush(stderr) != 0  &&  !Oerrloop)
@@ -887,7 +1065,7 @@ void oflush()
 		Oerror();
 }
 
-	static exiting void
+	void
 fatcleanup(already_newline)
 	int already_newline;
 {
@@ -895,8 +1073,38 @@ fatcleanup(already_newline)
 	exiterr();
 }
 
-static void errsay() { oflush(); aprintf(stderr,"%s error: ",cmdid); nerror++; }
-static void fatsay() { oflush(); VOID fprintf(stderr,"%s error: ",cmdid); }
+	static void
+startsay(s, t)
+	const char *s, *t;
+{
+	oflush();
+	if (s)
+	    aprintf(stderr, "%s: %s: %s", cmdid, s, t);
+	else
+	    aprintf(stderr, "%s: %s", cmdid, t);
+}
+
+	static void
+fatsay(s)
+	char const *s;
+{
+	startsay(s, "");
+}
+
+	static void
+errsay(s)
+	char const *s;
+{
+	fatsay(s);
+	nerror++;
+}
+
+	static void
+warnsay(s)
+	char const *s;
+{
+	startsay(s, "warning: ");
+}
 
 void eerror(s) char const *s; { enerror(errno,s); }
 
@@ -905,20 +1113,20 @@ enerror(e,s)
 	int e;
 	char const *s;
 {
-	errsay();
+	errsay((char const*)0);
 	errno = e;
 	perror(s);
 	eflush();
 }
 
-exiting void efaterror(s) char const *s; { enfaterror(errno,s); }
+void efaterror(s) char const *s; { enfaterror(errno,s); }
 
-	exiting void
+	void
 enfaterror(e,s)
 	int e;
 	char const *s;
 {
-	fatsay();
+	fatsay((char const*)0);
 	errno = e;
 	perror(s);
 	fatcleanup(true);
@@ -933,7 +1141,7 @@ error(char const *format,...)
 /* non-fatal error */
 {
 	va_list args;
-	errsay();
+	errsay((char const*)0);
 	vararg_start(args, format);
 	fvfprintf(stderr, format, args);
 	va_end(args);
@@ -942,17 +1150,51 @@ error(char const *format,...)
 }
 
 #if has_prototypes
-	exiting void
+	void
+rcserror(char const *format,...)
+#else
+	/*VARARGS1*/ void rcserror(format, va_alist) char const *format; va_dcl
+#endif
+/* non-fatal RCS file error */
+{
+	va_list args;
+	errsay(RCSname);
+	vararg_start(args, format);
+	fvfprintf(stderr, format, args);
+	va_end(args);
+	afputc('\n',stderr);
+	eflush();
+}
+
+#if has_prototypes
+	void
+workerror(char const *format,...)
+#else
+	/*VARARGS1*/ void workerror(format, va_alist) char const *format; va_dcl
+#endif
+/* non-fatal working file error */
+{
+	va_list args;
+	errsay(workname);
+	vararg_start(args, format);
+	fvfprintf(stderr, format, args);
+	va_end(args);
+	afputc('\n',stderr);
+	eflush();
+}
+
+#if has_prototypes
+	void
 fatserror(char const *format,...)
 #else
-	/*VARARGS1*/ exiting void
+	/*VARARGS1*/ void
 	fatserror(format, va_alist) char const *format; va_dcl
 #endif
-/* fatal syntax error */
+/* fatal RCS file syntax error */
 {
 	va_list args;
 	oflush();
-	VOID fprintf(stderr, "%s: %s:%lu: ", cmdid, RCSfilename, rcsline);
+	VOID fprintf(stderr, "%s: %s:%ld: ", cmdid, RCSname, rcsline);
 	vararg_start(args, format);
 	fvfprintf(stderr, format, args);
 	va_end(args);
@@ -960,16 +1202,33 @@ fatserror(char const *format,...)
 }
 
 #if has_prototypes
-	exiting void
+	void
 faterror(char const *format,...)
 #else
-	/*VARARGS1*/ exiting void faterror(format, va_alist)
+	/*VARARGS1*/ void faterror(format, va_alist)
 	char const *format; va_dcl
 #endif
 /* fatal error, terminates program after cleanup */
 {
 	va_list args;
-	fatsay();
+	fatsay((char const*)0);
+	vararg_start(args, format);
+	fvfprintf(stderr, format, args);
+	va_end(args);
+	fatcleanup(false);
+}
+
+#if has_prototypes
+	void
+rcsfaterror(char const *format,...)
+#else
+	/*VARARGS1*/ void rcsfaterror(format, va_alist)
+	char const *format; va_dcl
+#endif
+/* fatal RCS file error, terminates program after cleanup */
+{
+	va_list args;
+	fatsay(RCSname);
 	vararg_start(args, format);
 	fvfprintf(stderr, format, args);
 	va_end(args);
@@ -982,16 +1241,55 @@ warn(char const *format,...)
 #else
 	/*VARARGS1*/ void warn(format, va_alist) char const *format; va_dcl
 #endif
-/* prints a warning message */
+/* warning */
 {
 	va_list args;
-	oflush();
-	aprintf(stderr,"%s warning: ",cmdid);
-	vararg_start(args, format);
-	fvfprintf(stderr, format, args);
-	va_end(args);
-	afputc('\n',stderr);
-	eflush();
+	if (!quietflag) {
+		warnsay((char *)0);
+		vararg_start(args, format);
+		fvfprintf(stderr, format, args);
+		va_end(args);
+		afputc('\n', stderr);
+		eflush();
+	}
+}
+
+#if has_prototypes
+	void
+rcswarn(char const *format,...)
+#else
+	/*VARARGS1*/ void rcswarn(format, va_alist) char const *format; va_dcl
+#endif
+/* RCS file warning */
+{
+	va_list args;
+	if (!quietflag) {
+		warnsay(RCSname);
+		vararg_start(args, format);
+		fvfprintf(stderr, format, args);
+		va_end(args);
+		afputc('\n', stderr);
+		eflush();
+	}
+}
+
+#if has_prototypes
+	void
+workwarn(char const *format,...)
+#else
+	/*VARARGS1*/ void workwarn(format, va_alist) char const *format; va_dcl
+#endif
+/* working file warning */
+{
+	va_list args;
+	if (!quietflag) {
+		warnsay(workname);
+		vararg_start(args, format);
+		fvfprintf(stderr, format, args);
+		va_end(args);
+		afputc('\n', stderr);
+		eflush();
+	}
 }
 
 	void
@@ -1026,12 +1324,11 @@ diagnose(char const *format,...)
 
 	void
 afputc(c, f)
-/* Function: afputc(c,f) acts like aputc(c,f), but is smaller and slower.
- */
+/* afputc(c,f); acts like aputc_(c,f) but is smaller and slower.  */
 	int c;
 	register FILE *f;
 {
-	aputc(c,f);
+	aputc_(c,f)
 }
 
 
@@ -1159,7 +1456,7 @@ int argc; char * argv[];
 	exitmain(EXIT_SUCCESS);
 }
 
-exiting void exiterr() { _exit(EXIT_FAILURE); }
+void exiterr() { _exit(EXIT_FAILURE); }
 
 
 #endif
