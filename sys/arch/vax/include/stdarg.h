@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.15 2003/08/07 16:30:12 agc Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.16 2004/03/19 08:38:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -60,7 +60,7 @@ typedef _BSD_VA_LIST_	va_list;
 
 #define va_end(ap)	
 
-#define __va_copy(dest, src)	((dest) == (src))
+#define __va_copy(dest, src)	((dest) = (src))
 #endif
 
 #if !defined(_ANSI_SOURCE) &&						\
