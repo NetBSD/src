@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.18 2000/11/15 01:02:12 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.19 2001/02/24 20:11:08 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -78,7 +78,7 @@
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <arm32/rc7500/if_esreg.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 
 #include "locators.h"
 
