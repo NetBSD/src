@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2001/11/21 22:13:55 soren Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2001/11/21 23:33:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,9 +85,7 @@
 #include <dev/arcbios/arcbios.h>
 
 #include "common.h"
-#if 0
 #include "bootinfo.h"
-#endif
 
 /*
  * We won't go overboard with gzip'd kernel names.  After all we can
@@ -109,14 +107,15 @@ char *kernelnames[] = {
 
 extern const struct arcbios_fv *ARCBIOS;
 
-#if 0
-static char *devname __P((char *));
-#endif
-int main __P((int, char **, char **));
+int main __P((int, char *[]));
 
 #ifdef HEAP_VARIABLE
 void setheap(void *, void*);
 #endif
+
+/* Storage must be static. */
+struct btinfo_symtab bi_syms;
+struct btinfo_bootpath bi_bpath;
 
 /*
  * This gets arguments from the first stage boot lader, calls PROM routines
@@ -128,24 +127,20 @@ void setheap(void *, void*);
  * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
-main(argc, argv, envp)
+main(argc, argv)
 	int argc;
 	char **argv;
-	char **envp;
 {
 	char *name/*, **namep, *dev, *kernel*/;
 	char /*bootname[PATH_MAX],*/ bootpath[PATH_MAX];
-	int entry, win;
+	void (*entry)(int, char *[], int, void *);
 	u_long marks[MARK_MAX];
 	struct arcbios_mem *mem;
-#if 0
-	struct btinfo_symtab bi_syms;
-	struct btinfo_bootpath bi_bpath;
-#endif
+	int win;
 
 	/* print a banner */
 	printf("\n");
-	printf("NetBSD/sgimips " NETBSD_VERS " "/* BOOT_TYPE_NAME */" Bootstrap, Revision %s\n",
+	printf("NetBSD/sgimips " NETBSD_VERS " Bootstrap, Revision %s\n",
 	    bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
@@ -166,9 +161,7 @@ main(argc, argv, envp)
 		printf("argv[%d]: %s\n", win, argv[win]);
 
 	/* initialise bootinfo structure early */
-#if 0
-	bi_init(BOOTINFO_ADDR);
-#endif
+	bi_init();
 
 	/*
 	 * How to find partition and file to load?
@@ -190,20 +183,12 @@ main(argc, argv, envp)
 	if (strchr(argv[1], '=') == NULL) {
 		strcpy(bootpath, argv[1]);
 		if (strchr(argv[1], '(') == NULL) {
-			strcpy(bootpath, ARCBIOS->GetEnvironmentVariable("OSLoadPartition"));
+			strcpy(bootpath,
+			    ARCBIOS->GetEnvironmentVariable("OSLoadPartition"));
 			strcat(bootpath, argv[1]);
 		}
 	}
 	printf("Boot: %s\n", bootpath);
-
-#if 0
-	/* NOTE: devname() can modify bootname[]. */
-	strcpy(bootname, argv[1]);
-	if ((kernel = devname(bootname)) == NULL) {
-		dev = bootname;
-		name = NULL;
-	}
-#endif
 
 	memset(marks, 0, sizeof marks);
 #if 0
@@ -234,67 +219,22 @@ main(argc, argv, envp)
 	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 #endif
 
-	entry = marks[MARK_ENTRY];
-#if 0
+	entry = (void *) marks[MARK_ENTRY];
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
 	bi_syms.esym = marks[MARK_END];
-	bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
-#endif
+	bi_add(&bi_syms, BTINFO_SYMTAB);
 
-	printf("Starting at 0x%x\n\n", entry);
-	printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM], marks[MARK_SYM],
-	    marks[MARK_END]);
+	printf("Starting at %p\n\n", entry);
+	printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
+	    marks[MARK_SYM], marks[MARK_END]);
 	ARCBIOS->FlushAllCaches();
-	startprog(entry, entry, argc, argv, envp, (void *)marks[MARK_END],
-#if 0
-		    BOOTINFO_MAGIC, BOOTINFO_ADDR);
-#else
-		    0, 0);
-#endif
-	(void)printf("KERNEL RETURNED!\n");
+	(*entry)(argc, argv, BOOTINFO_MAGIC, bootinfo);
 
-fail:
+	printf("Kernel returned!  Halting...\n");
+	return (0);
+
+ fail:
 	(void)printf("Boot failed!  Halting...\n");
 	return (0);
 }
-
-
-/*
- * Check whether or not fname is a device name only or a full
- * bootpath including the kernel name.  This code to do this
- * is copied from loadfile() in the first stage bootblocks.
- * Returns the kernel name, or NULL if no kernel name specified.
- *
- * NOTE:  fname will be modified if it's of the form N/rzY
- *        without a trailing slash.
- */
-#if 0
-static char *
-devname(fname)
-	char *fname;
-{
-	char c;
-
-	while ((c = *fname++) != '\0') {
-		if (c == ')')
-			break;
-		if (c != '/')
-			continue;
-		while ((c = *fname++) != '\0')
-			if (c == '/')
-				break;
-		/*
-		 * Make "N/rzY" with no trailing '/' valid by adding
-		 * the extra '/' before appending 'boot.sgimips' to the path.
-		 */
-		if (c != '/') {
-			fname--;
-			*fname++ = '/';
-			*fname = '\0';
-		}
-		break;
-	}
-	return (*fname == '\0' ? NULL : fname);
-}
-#endif
