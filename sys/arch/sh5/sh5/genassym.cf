@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2002/07/05 13:32:04 scw Exp $
+#	$NetBSD: genassym.cf,v 1.2 2002/07/10 15:49:33 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -239,7 +239,11 @@ define	P_WCHAN			offsetof(struct proc, p_wchan)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
+define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	PH_LINK			offsetof(struct prochd, ph_link)
+
+define	MDP_FPUSED		MDP_FPUSED
+define	MDP_FPSAVED		MDP_FPSAVED
 
 define	T_TRAP			T_TRAP
 define	T_AST			T_AST
