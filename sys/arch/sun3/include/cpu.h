@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2003/08/07 16:29:56 agc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2003/09/22 17:11:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -187,9 +187,7 @@ union sun3sir {
 	char	sir_which[4];
 };
 
-#ifdef _KERNEL
 extern union sun3sir sun3sir;
-#endif
 
 #define SIR_NET  	0
 #define SIR_CLOCK	1
