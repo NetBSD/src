@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.43 1998/09/06 17:52:28 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.44 1998/09/28 12:32:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -258,11 +258,15 @@ in_control(so, cmd, data, ifp, p)
 	case SIOCSIFADDR:
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
+		if (ifp == 0)
+			panic("in_control");
+
+		if (cmd == SIOCGIFALIAS)
+			break;
+
 		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 
-		if (ifp == 0)
-			panic("in_control");
 		if (ia == 0) {
 			MALLOC(ia, struct in_ifaddr *, sizeof(*ia),
 			       M_IFADDR, M_WAITOK);
