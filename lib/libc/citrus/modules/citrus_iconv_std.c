@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.8 2004/12/21 09:29:04 yamt Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.9 2004/12/21 11:25:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.8 2004/12/21 09:29:04 yamt Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.9 2004/12/21 11:25:43 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -288,7 +288,7 @@ err:
 #define E_NO_CORRESPONDING_CHAR ENOENT /* XXX */
 static int
 /*ARGSUSED*/
-do_conv(struct _citrus_iconv_std_shared *is,
+do_conv(const struct _citrus_iconv_std_shared *is,
 	struct _citrus_iconv_std_context *sc, _csid_t *csid, _index_t *idx)
 {
 	_index_t tmpidx;
@@ -402,7 +402,7 @@ _citrus_iconv_std_iconv_uninit_shared(struct _citrus_iconv_shared *ci)
 static int
 _citrus_iconv_std_iconv_init_context(struct _citrus_iconv *cv)
 {
-	struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
+	const struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
 	struct _citrus_iconv_std_context *sc;
 	int ret;
 	size_t szpssrc, szpsdst, sz;
@@ -450,7 +450,7 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 				size_t * __restrict outbytes, u_int32_t flags,
 				size_t * __restrict invalids)
 {
-	struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
+	const struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
 	struct _citrus_iconv_std_context *sc = cv->cv_closure;
 	_index_t idx;
 	_csid_t csid;
