@@ -13,7 +13,7 @@ really isn't usable on a 4M system.)
 Here is a table of recommended HD partition sizes for a full install:
 	partition:	advise,	with X,	needed,	with X
 	root (/)	20M	20M	15M	15M
-	user (/usr)	80M	110M	60M 	90M
+	user (/usr)	95M	125M	75M 	105M
 	swap		----- 2M for every M ram -----
 	local (/usr/local)	up to you
 
@@ -99,10 +99,8 @@ Known problems with some hardware:
 	*) the Emplant SCSI adapter has been reported by a party to
 	hang after doing part of the installation without problems.
 
-	**) There is currently no support for the CyberVision 64/3D
-	in ZorroII mode only in ZorroIII mode. There is also a problem
-	that textmode of the Console produce a black screen so the
-	console driver is not enabled.
+	**) the CyberVision 64/3D works at the moment only in
+	ZorroIII mode.
 
 	***) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
