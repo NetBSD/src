@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.24 1997/09/18 01:08:56 mjacob Exp $ */
+/* $NetBSD: pmap.old.c,v 1.24.2.1 1997/11/04 23:31:25 mellon Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.24 1997/09/18 01:08:56 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.24.2.1 1997/11/04 23:31:25 mellon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1997,7 +1997,7 @@ pmap_changebit(pa, bit, setem)
 				npte = *pte & ~bit;
 			if (*pte != npte) {
 				*pte = npte;
-				if (active_pmap(pv->pv_pmap))
+				if (curproc == NULL || active_pmap(pv->pv_pmap))
 					ALPHA_TBIS(va);
 #ifdef PMAPSTATS
 				if (setem)
