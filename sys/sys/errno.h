@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.19 1998/10/01 19:53:54 kleink Exp $	*/
+/*	$NetBSD: errno.h,v 1.20 1998/11/30 20:37:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -56,8 +56,8 @@ extern int errno;
 #endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-extern __const int sys_nerr;
-extern __const char *__const sys_errlist[];
+extern __const int sys_nerr __RENAME(__sys_nerr14);
+extern __const char *__const *sys_errlist __RENAME(__sys_errlist14);
 #endif
 __END_DECLS
 #endif /* !_KERNEL */
