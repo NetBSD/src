@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.38 2002/06/27 10:22:11 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.39 2002/08/02 07:50:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.38 2002/06/27 10:22:11 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.39 2002/08/02 07:50:35 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -202,8 +202,7 @@ res_init()
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
-		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		(void)strlcpy(_res.defdname, cp, sizeof(_res.defdname));
 		if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			*cp = '\0';
 		haveenv++;
@@ -257,8 +256,7 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		    (void)strlcpy(_res.defdname, cp, sizeof(_res.defdname));
 		    if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
@@ -276,8 +274,7 @@ res_init()
 			    cp++;
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
-		    (void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
-		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		    (void)strlcpy(_res.defdname, cp, sizeof(_res.defdname));
 		    if ((cp = strchr(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    /*
@@ -471,7 +468,8 @@ res_init()
 		rv = gethostname(buf, sizeof(_res.defdname));
 		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		if (rv == 0 && (cp = strchr(buf, '.')))
-			(void)strncpy(_res.defdname, cp + 1, sizeof(_res.defdname) - 1);
+			(void)strlcpy(_res.defdname, cp + 1,
+			    sizeof(_res.defdname));
 	}
 
 	/* find components of local domain that might be searched */
