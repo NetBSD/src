@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.4 2002/07/14 13:56:20 drochner Exp $ */
+/* $NetBSD: vesabios.c,v 1.5 2002/07/14 14:39:44 drochner Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ vbegetinfo(vip)
 
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f00; /* function code */
-	tf.tf_es = 0;
+	tf.tf_vm86_es = 0;
 	tf.tf_edi = 0x2000; /* buf ptr */
 
 	res = kvm86_bioscall(0x10, &tf);
@@ -205,7 +205,7 @@ vesabios_attach(parent, dev, aux)
 		memset(&tf, 0, sizeof(struct trapframe));
 		tf.tf_eax = 0x4f01; /* function code */
 		tf.tf_ecx = modes[i];
-		tf.tf_es = 0;
+		tf.tf_vm86_es = 0;
 		tf.tf_edi = 0x2000; /* buf ptr */
 
 		res = kvm86_bioscall(0x10, &tf);
