@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2000/01/18 19:48:23 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2000/02/22 02:14:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -52,8 +52,9 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 #define NO_MBR_SIGNATURE ((struct mbr_partition *) -1)
 
 void ChangeEndianDiskLabel __P((struct disklabel *));
+u_int sh3_dkcksum __P((struct disklabel *));
 static struct mbr_partition *
-mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
+mbr_findslice __P((struct mbr_partition *, struct buf *));
 
 void
 ChangeEndianDiskLabel(lp)
@@ -342,7 +343,7 @@ readdisklabel(dev, strat, lp, osdep)
 			if (msg == NULL)
 				msg = "no disk label";
 		} else if (dls.d_npartitions > MAXPARTITIONS ||
-			   dkcksum(&dls) != 0)
+			   sh3_dkcksum(&dls) != 0)
 			msg = "disk label corrupted";
 		else {
 			*lp = dls;
@@ -396,6 +397,33 @@ done:
 	return (msg);
 }
 
+u_int
+sh3_dkcksum(lp)
+	struct disklabel *lp;
+{
+    struct disklabel tdl;
+    u_short *start, *end;
+    int offset;
+    u_short sum = 0;
+    u_short w;
+
+    tdl = *lp;
+
+    ChangeEndianDiskLabel(&tdl);
+    start = (u_short *)lp;
+    end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+    offset = end - start;
+
+    start = (u_short *)&tdl;
+    end = start + offset;
+    while (start < end) {
+        w = *start++;
+        sum ^= bswap16(w);
+    }
+
+    return (sum);
+}
+
 /*
  * Check new disk label for sensibility
  * before setting it.
@@ -421,7 +449,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	}
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
+	    sh3_dkcksum(nlp) != 0)
 		return (EINVAL);
 
 	/* XXX missing check if other dos partitions will be overwritten */
@@ -446,8 +474,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 			npp->p_cpg = opp->p_cpg;
 		}
 	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = sh3_dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }
@@ -529,7 +557,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 		ChangeEndianDiskLabel(&dls);
 		if (dls.d_magic == DISKMAGIC && dls.d_magic2 == DISKMAGIC &&
-		    dkcksum(&dls) == 0) {
+		    sh3_dkcksum(&dls) == 0) {
 			dls = *lp;
 			ChangeEndianDiskLabel(&dls);
 			*dlp = dls;
