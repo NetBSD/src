@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.51.2.2 1997/10/30 23:20:37 mellon Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.51.2.3 1997/11/17 02:28:17 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -79,6 +79,7 @@
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_sysconfig.h>
 #include <compat/svr4/svr4_acl.h>
+#include <compat/svr4/svr4_mman.h>
 
 #include <vm/vm.h>
 
@@ -578,7 +579,8 @@ svr4_sys_mknod(p, v, retval)
 {
 	struct svr4_sys_mknod_args *uap = v;
 	return svr4_mknod(p, retval,
-			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
+			  SCARG(uap, path), SCARG(uap, mode),
+			  svr4_to_bsd_odev_t(SCARG(uap, dev)));
 }
 
 
@@ -590,7 +592,8 @@ svr4_sys_xmknod(p, v, retval)
 {
 	struct svr4_sys_xmknod_args *uap = v;
 	return svr4_mknod(p, retval,
-			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
+			  SCARG(uap, path), SCARG(uap, mode),
+			  svr4_to_bsd_dev_t(SCARG(uap, dev)));
 }
 
 
@@ -900,6 +903,8 @@ svr4_sys_ulimit(p, v, retval)
 	switch (SCARG(uap, cmd)) {
 	case SVR4_GFILLIM:
 		*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur / 512;
+		if (*retval == -1)
+			*retval = 0x7fffffff;
 		return 0;
 
 	case SVR4_SFILLIM:
@@ -926,23 +931,33 @@ svr4_sys_ulimit(p, v, retval)
 				return error;
 
 			*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
+			if (*retval == -1)
+				*retval = 0x7fffffff;
 			return 0;
 		}
 
 	case SVR4_GMEMLIM:
 		{
 			struct vmspace *vm = p->p_vmspace;
-			*retval = (long) vm->vm_daddr +
-				  p->p_rlimit[RLIMIT_DATA].rlim_cur;
+			register_t r = p->p_rlimit[RLIMIT_DATA].rlim_cur;
+
+			if (r == -1)
+				r = 0x7fffffff;
+			r += (long) vm->vm_daddr;
+			if (r < 0)
+				r = 0x7fffffff;
+			*retval = r;
 			return 0;
 		}
 
 	case SVR4_GDESLIM:
 		*retval = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
+		if (*retval == -1)
+			*retval = 0x7fffffff;
 		return 0;
 
 	default:
-		return ENOSYS;
+		return EINVAL;
 	}
 }
 
@@ -973,24 +988,22 @@ svr4_sys_pgrpsys(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_pgrpsys_args *uap = v;
-	int error;
 
 	switch (SCARG(uap, cmd)) {
+	case 1:			/* setpgrp() */
+		/*
+		 * SVR4 setpgrp() (which takes no arguments) has the
+		 * semantics that the session ID is also created anew, so
+		 * in almost every sense, setpgrp() is identical to
+		 * setsid() for SVR4.  (Under BSD, the difference is that
+		 * a setpgid(0,0) will not create a new session.)
+		 */
+		sys_setsid(p, NULL, retval);
+		/*FALLTHROUGH*/
+
 	case 0:			/* getpgrp() */
 		*retval = p->p_pgrp->pg_id;
 		return 0;
-
-	case 1:			/* setpgrp() */
-		{
-			struct sys_setpgid_args sa;
-
-			SCARG(&sa, pid) = 0;
-			SCARG(&sa, pgid) = 0;
-			if ((error = sys_setpgid(p, &sa, retval)) != 0)
-				return error;
-			*retval = p->p_pgrp->pg_id;
-			return 0;
-		}
 
 	case 2:			/* getsid(pid) */
 		if (SCARG(uap, pid) != 0 &&
@@ -1594,14 +1607,35 @@ svr4_sys_memcntl(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_memcntl_args *uap = v;
-	struct sys_mprotect_args ap;
+	switch (SCARG(uap, cmd)) {
+	case SVR4_MC_SYNC:
+		{
+			struct sys___msync13_args msa;
 
-	SCARG(&ap, addr) = SCARG(uap, addr);
-	SCARG(&ap, len) = SCARG(uap, len);
-	SCARG(&ap, prot) = SCARG(uap, attr);
+			SCARG(&msa, addr) = SCARG(uap, addr);
+			SCARG(&msa, len) = SCARG(uap, len);
+			SCARG(&msa, flags) = (int)SCARG(uap, arg);
 
-	/* XXX: no locking, invalidating, or syncing supported */
-	return sys_mprotect(p, &ap, retval);
+			return sys___msync13(p, &msa, retval);
+		}
+	case SVR4_MC_ADVISE:
+		{
+			struct sys_madvise_args maa;
+
+			SCARG(&maa, addr) = SCARG(uap, addr);
+			SCARG(&maa, len) = SCARG(uap, len);
+			SCARG(&maa, behav) = (int)SCARG(uap, arg);
+
+			return sys_madvise(p, &maa, retval);
+		}
+	case SVR4_MC_LOCK:
+	case SVR4_MC_UNLOCK:
+	case SVR4_MC_LOCKAS:
+	case SVR4_MC_UNLOCKAS:
+		return EOPNOTSUPP;
+	default:
+		return ENOSYS;
+	}
 }
 
 
