@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypserv.acl.5,v 1.2 1997/10/02 14:16:52 lukem Exp $
+.\"	$NetBSD: ypserv.acl.5,v 1.2.2.1 1997/11/28 09:52:35 mellon Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -40,7 +40,9 @@ configuration file
 .Sh DESCRIPTION
 The 
 .Nm
-file controls which hosts can connect to the YP server.
+file controls which hosts can connect to the
+.Tn YP
+server.
 .Pp
 The format is more complex than the format for
 .Xr securenet 5 .
@@ -56,7 +58,9 @@ or
 .Em all
 hosts.
 .Pp
-The YP server reads the configuration file and build a list in memory.
+The
+.Tn YP
+server reads the configuration file and build a list in memory.
 This list is processed from the beginning for every incomming request.
 As soon a match is found in the list the search terminates and it
 returns success or failure depending on 
