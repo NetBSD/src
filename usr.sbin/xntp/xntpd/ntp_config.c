@@ -1067,7 +1067,7 @@ getconfig(argc, argv)
 			peerversion = 0;
 			peerkey = 0;
 			errflg = 0;
-			maskaddr.sin_addr.s_addr = ~ (u_long) 0;
+			maskaddr.sin_addr.s_addr = (u_int32_t) ~ (u_long) 0;
 			for (i = 2; i < ntokens; i++) {
 				switch (matchkey(tokens[i], res_keywords)) {
 				case CONF_RES_MASK:
