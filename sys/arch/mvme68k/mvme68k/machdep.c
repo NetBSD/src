@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1997/04/09 20:31:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1997/04/25 01:44:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,8 @@
 #include <sys/mount.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
@@ -81,6 +83,8 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <dev/cons.h>
+
+#include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
@@ -142,9 +146,19 @@ extern struct emul emul_svr4;
 #endif
 
 /* prototypes for local functions */ 
+caddr_t	allocsys __P((caddr_t));
 void	identifycpu __P((void));
 void	initcpu __P((void));
 void	dumpsys __P((void));
+
+int	cpu_dumpsize __P((void));
+int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+void	cpu_init_kcore_hdr __P((void));
+
+/*
+ * Machine-independent crash dump header info.
+ */
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -289,21 +303,21 @@ cpu_startup()
 {
 	extern char *kernel_text, *etext;
 	register unsigned i;
-	register caddr_t v, firstaddr;
+	register caddr_t v;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
-#ifdef BUFFERS_UNMANAGED
-	vm_offset_t bufmemp;
-	caddr_t buffermem;
-	int ix;
-#endif
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;
 #endif
+
+	/*
+	 * Initialize the kernel crash dump header.
+	 */
+	cpu_init_kcore_hdr();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -322,88 +336,16 @@ cpu_startup()
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available real memory address is in "firstaddr".
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Fine out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
 	 */
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
+	size = (vm_size_t)allocsys((caddr_t)0);
+	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if ((allocsys(v) - v) != size)
+		panic("startup: talbe size inconsistency");
 
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	
-	/*
-	 * Determine how many buffers to allocate.
-	 * We just allocate a flat 5%.  Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem / 20 / CLSIZE;
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
-	}
-	valloc(swbuf, struct buf, nswbuf);
-	valloc(buf, struct buf, nbuf);
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-#ifdef BUFFERS_UNMANAGED
-		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
-		if (buffermem == 0)
-			panic("startup: no room for buffers");
-#endif
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vm_size_t)(v - firstaddr) != size)
-		panic("startup: table size inconsistency");
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -417,9 +359,6 @@ again:
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-#ifdef BUFFERS_UNMANAGED
-	bufmemp = (vm_offset_t) buffermem;
-#endif
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -433,36 +372,9 @@ again:
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-#ifdef BUFFERS_UNMANAGED
-		/*
-		 * Move the physical pages over from buffermem.
-		 */
-		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
-			vm_offset_t pa;
-
-			pa = pmap_extract(pmap_kernel(), bufmemp);
-			if (pa == 0)
-				panic("startup: unmapped buffer");
-			pmap_remove(pmap_kernel(), bufmemp, bufmemp+CLBYTES);
-			pmap_enter(pmap_kernel(),
-				   (vm_offset_t)(curbuf + ix * CLBYTES),
-				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-			bufmemp += CLBYTES;
-		}
-#else
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
-#endif
 	}
-#ifdef BUFFERS_UNMANAGED
-#if 0
-	/*
-	 * We would like to free the (now empty) original address range
-	 * but too many bad things will happen if we try.
-	 */
-	kmem_free(kernel_map, (vm_offset_t)buffermem, bufpages*CLBYTES);
-#endif
-#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -532,6 +444,68 @@ again:
 }
 
 /*
+ * Allocate space for system data structures.  We are given
+ * a starting virtual address and we return a final virtual
+ * address; along the way, we set each data structure pointer.
+ *
+ * We call allocsys() with 0 to find out how much space we want,
+ * allocate that much and fill it with zeroes, and the call
+ * allocsys() again with the correct base virtual address.
+ */
+caddr_t
+allocsys(v)
+	caddr_t v;
+{
+
+#define valloc(name, type, num) \
+	    (name) = (type *)v; v = (caddr_t)((name)+(num))
+#define valloclim(name, type, num, lim) \
+	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
+	valloc(swapmap, struct map, nswapmap = maxproc * 2);
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
+
+	/*
+	 * Determine how many buffers to allocate.
+	 * We just allocate a flat 5%.  Insure a minimum of 16 buffers.
+	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 */
+	if (bufpages == 0)
+		bufpages = physmem / 20 / CLSIZE;
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+	return (v);
+}
+
+/*
  * Set registers on exec.
  * XXX Should clear registers except sp, pc,
  * but would break init; should be fixed soon.
@@ -548,58 +522,11 @@ setregs(p, pack, stack, retval)
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
 	frame->f_regs[A2] = (int)PS_STRINGS;
-#ifdef FPCOPROC
+
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-#endif
-#ifdef COMPAT_HPUX
-	p->p_md.md_flags &= ~MDP_HPUXMMAP;
-	if (p->p_emul == &emul_hpux) {
-		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
-		retval[0] = 0;		/* no float card */
-#ifdef FPCOPROC
-		retval[1] = 1;		/* yes 68881 */
-#else
-		retval[1] = 0;		/* no 68881 */
-#endif
-	}
-	/*
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
-	 *
-	 * Ensure we perform the right action on traps type 1 and 2:
-	 * If our parent is an HPUX process and we are being traced, turn
-	 * on HPUX style interpretation.  Else if we were using the HPUX
-	 * style interpretation, revert to the BSD interpretation.
-	 *
-	 * Note that we do this by changing the trap instruction in the
-	 * global "sigcode" array which then gets copied out to the user's
-	 * sigcode in the stack.  Since we are changing it in the global
-	 * array we must always reset it, even for non-HPUX processes.
-	 *
-	 * Note also that implementing it in this way creates a potential
-	 * race where we could have tweaked it for process A which then
-	 * blocks in the copyout to the stack and process B comes along
-	 * and untweaks it causing A to wind up with the wrong setting
-	 * when the copyout continues.  However, since we have already
-	 * copied something out to this user stack page (thereby faulting
-	 * it in), this scenerio is extremely unlikely.
-	 */
-	{
-		extern short sigcodetrap[];
-
-		if ((p->p_pptr->p_emul == &emul_hpux) &&
-		    (p->p_flag & P_TRACED)) {
-			p->p_md.md_flags |= MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E42;
-		} else {
-			p->p_md.md_flags &= ~MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E41;
-		}
-	}
-#endif
+	if (fputype)
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 }
 
 /*
@@ -818,6 +745,115 @@ cpu_reboot(howto, bootstr)
 }
 
 /*
+ * Initialize the kernel crash dump header.
+ */
+void
+cpu_init_kcore_hdr()
+{
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	extern char end[];
+
+	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr)); 
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = NBPG;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype	= mmutype;
+	m->sg_v		= SG_V;
+	m->sg_frame	= SG_FRAME;
+	m->sg_ishift	= SG_ISHIFT;
+	m->sg_pmask	= SG_PMASK;
+	m->sg40_shift1	= SG4_SHIFT1;
+	m->sg40_mask2	= SG4_MASK2;
+	m->sg40_shift2	= SG4_SHIFT2;
+	m->sg40_mask3	= SG4_MASK3;
+	m->sg40_shift3	= SG4_SHIFT3;
+	m->sg40_addr1	= SG4_ADDR1;
+	m->sg40_addr2	= SG4_ADDR2;
+	m->pg_v		= PG_V;
+	m->pg_frame	= PG_FRAME;
+
+	/*
+	 * Initialize pointer to kernel segment table.
+	 */
+	m->sysseg_pa = (u_int32_t)(pmap_kernel()->pm_stpa);
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 *
+	 * Since we're linked and loaded at the same place,
+	 * and the kernel is mapped va == pa, this is 0.
+	 */
+	m->reloc = 0;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (u_int32_t)end;
+
+	/*
+	 * The mvme68k has one contiguous memory segment.  Note,
+	 * RAM size is physmem + 1 to account for the msgbuf
+	 * page.
+	 *
+	 * XXX We'll have to change this a bit when we support
+	 * XXX adding VME memory cards.
+	 */
+	m->ram_segs[0].start = lowram;
+	m->ram_segs[0].size  = ctob(physmem + 1);
+}
+
+/*
+ * Compute the size of the machine-dependent crash dump header.
+ * Returns size in disk blocks.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	return (btodb(roundup(size, dbtob(1))));
+}
+
+/*
+ * Called by dumpsys() to dump the machine-dependent header.
+ */
+int
+cpu_dump(dump, blknop)
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t)); 
+	daddr_t *blknop;
+{
+	int buf[dbtob(1) / sizeof(int)]; 
+	cpu_kcore_hdr_t *chdr;
+	kcore_seg_t *kseg;
+	int error;
+
+	kseg = (kcore_seg_t *)buf;
+	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
+	    sizeof(int)];
+
+	/* Create the segment header. */
+	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg->c_size = dbtob(1) - ALIGN(sizeof(kcore_seg_t));
+
+	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
+	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	*blknop += btodb(sizeof(buf));
+	return (error);
+}
+
+/*
  * These variables are needed by /sbin/savecore
  */
 u_long	dumpmag = 0x8fca0101;	/* magic number */
@@ -830,11 +866,15 @@ long	dumplo = 0;		/* blocks */
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
+ *
+ * XXX This routine will need to change when we support
+ * XXX VME memory cards.
  */
 void
 cpu_dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int chdrsize;	/* size of the dump header */
+	int nblks;	/* size of the dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
@@ -845,27 +885,31 @@ cpu_dumpconf()
 	if (bdevsw[maj].d_psize == NULL)
 		return;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
+	chdrsize = cpu_dumpsize();
+
+	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
 
 	/*
-	 * XXX include the final RAM page which is not included in physmem.
+	 * Check do see if we will fit.  Note we always skip the
+	 * first CLBYTES in case there is a disk label there.
 	 */
-	dumpsize = physmem + 1;
+	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
+		dumpsize = 0;
+		dumplo = -1;
+		return;
+	}
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	/*
+	 * Put dump at the end of the partition.
+	 */
+	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
 }
 
 /*
- * Dump physical memory onto the dump device.
+ * Dump physical memory onto the dump device.  Called by cpu_reboot().
+ *
+ * XXX This routine will have to change when we support
+ * XXX VME memory cards.
  */
 void
 dumpsys()
@@ -877,12 +921,22 @@ dumpsys()
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
 
+	/* XXX initialized here because of gcc lossage */
+	maddr = lowram;
+	pg = 0;
+
 	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
 
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
+
+	/*
+	 * XXX When we support VME memory cards, we'll want to initialize
+	 * XXX the kcore header and call cpu_dumpconf() again here.
+	 */
+
 	if (dumpsize == 0) {  
 		cpu_dumpconf();
 		if (dumpsize == 0)
@@ -896,7 +950,12 @@ dumpsys()
 	printf("\ndumping to dev 0x%x, offset %d\n", dumpdev, dumplo);
 
 	printf("dump ");
-	maddr = lowram;
+
+	/* Write the dump header. */
+	error = cpu_dump(dump, &blkno);
+	if (error)
+		goto bad;
+
 	for (pg = 0; pg < dumpsize; pg++) {
 #define	NPGMB	(1024*1024/NBPG)
 		/* print out how many MBs we have dumped */
@@ -907,6 +966,7 @@ dumpsys()
 		    VM_PROT_READ, TRUE);
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
+ bad:
 		switch (error) {
 		case 0:
 			maddr += NBPG;
