@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.9 2004/04/23 21:13:07 itojun Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.10 2004/05/05 17:56:14 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.9 2004/04/23 21:13:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.10 2004/05/05 17:56:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -860,8 +860,12 @@ default_chip_map(sc, pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		if (interface & PCIIDE_INTERFACE_PCI(channel))
+			pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
+			    pciide_pci_intr);
+		else
+			pciide_mapregs_compat(pa, cp,
+			    cp->wdc_channel.ch_channel, &cmdsize, &ctlsize);
 		if (cp->wdc_channel.ch_flags & WDCF_DISABLED)
 			continue;
 		/*
@@ -905,6 +909,8 @@ next:
 			bus_space_unmap(cp->wdc_channel.ctl_iot,
 			    cp->wdc_channel.ctl_ioh, ctlsize);
 
+		} else {
+			wdcattach(&cp->wdc_channel);
 		}
 	}
 
