@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.2.2.3 2002/08/02 09:26:14 gmcgarry Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.2.2.4 2002/12/02 06:12:12 wdk Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -74,7 +74,7 @@ void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
  * MIPS2 LL instruction emulation state
  */
 struct {
-	struct proc *proc;
+	struct lwp *lwp;
 	vaddr_t addr;
 	u_int32_t value;
 } llstate;
@@ -303,7 +303,7 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	llstate.proc = curproc;
+	llstate.lwp = curlwp;
 	llstate.addr = vaddr;
 	llstate.value = *((u_int32_t *)t);
 
@@ -337,8 +337,8 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	 * Check that the process and address match the last
 	 * LL instruction.
 	 */
-	if (curproc == llstate.proc && vaddr == llstate.addr) {
-		llstate.proc = NULL;
+	if (curlwp == llstate.lwp && vaddr == llstate.addr) {
+		llstate.lwp = NULL;
 		/*
 		 * Check that the data at the address hasn't changed
 		 * since the LL instruction.

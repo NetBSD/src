@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.26 2002/11/23 23:47:41 wdk Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.27 2002/12/02 06:12:12 wdk Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.26 2002/11/23 23:47:41 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.27 2002/12/02 06:12:12 wdk Exp $");
 
 #include "opt_cputype.h"
 
@@ -1639,7 +1639,8 @@ upcallret(struct lwp *l)
 }
 
 void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct saframe *sf, frame;
 	struct frame *f;
@@ -1669,6 +1670,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	f->f_regs[A2] = nevents;
 	f->f_regs[A3] = ninterrupted;
 	f->f_regs[S8] = 0;
+	f->f_regs[RA] = 0;
 	f->f_regs[T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
 }
 
@@ -1725,7 +1727,7 @@ cpu_setmcontext(l, mcp, flags)
 		f->f_regs[MULLO] = gr[_REG_MDLO];
 		f->f_regs[MULHI] = gr[_REG_MDHI];
 		f->f_regs[CAUSE] = gr[_REG_CAUSE];
-		f->f_regs[PC] = gr[_REG_EPC];
+		f->f_regs[PC]    = gr[_REG_EPC];
 	}
 
 	/* Restore floating point register context, if any. */
