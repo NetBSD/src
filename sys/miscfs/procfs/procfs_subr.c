@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.44 2003/02/03 22:27:42 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.45 2003/02/03 22:29:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.44 2003/02/03 22:27:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.45 2003/02/03 22:29:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,12 +167,9 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 			case DTYPE_SOCKET:
 				vp->v_type = VSOCK;
 				break;
-			case DTYPE_KQUEUE:
-			case DTYPE_MISC:
+			default:
 				error = EOPNOTSUPP;
 				goto bad;
-			default:
-				panic("unknown file type %d\n", fp->f_type);
 			}
 		}
 		break;
