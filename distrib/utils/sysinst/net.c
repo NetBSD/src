@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.32 1998/08/05 07:44:58 hubertf Exp $	*/
+/*	$NetBSD: net.c,v 1.33 1998/09/17 16:45:36 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,10 +184,10 @@ config_network()
 		if (!pass) {
 			if (0 <= octet0 && octet0 <= 127)
 				strcpy(net_mask, "0xff000000");
-			else if (127 <= octet0 && octet0 <= 191)
+			else if (128 <= octet0 && octet0 <= 191)
 				strcpy(net_mask, "0xffff0000");
 			else if (192 <= octet0 && octet0 <= 223)
-				strcpy(net_mask, "0xffff0000");
+				strcpy(net_mask, "0xffffff00");
 		}
 		msg_prompt_add(MSG_net_mask, net_mask, net_mask, STRSIZE);
 		msg_prompt_add(MSG_net_defroute, net_defroute, net_defroute,
