@@ -81,7 +81,7 @@ int check_aout(int inf, const char *filename)
     if(read(inf, &eh, sizeof eh) != sizeof eh)
 	return 0;
 
-    if(N_BADMAG(*hdrp))
+    if(N_BADMAG(eh))
 	return 0;
 
     return 1;
@@ -120,15 +120,10 @@ int hide_aout(int inf, const char *filename)
     }
 
     /*
-     * Check the header and calculate offsets and sizes from it.
+     * Calculate offsets and sizes from the header.
      */
 
     hdrp = (struct exec *) aoutdata;
-
-    if(N_BADMAG(*hdrp)) {
-	fprintf(stderr, "%s: bad magic: not an a.out file\n", filename);
-	return 1;
-    }
 
 #ifdef __FreeBSD__
     textrel = (struct relocation_info *) (aoutdata + N_RELOFF(*hdrp));
