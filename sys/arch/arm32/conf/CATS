@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.27 2000/03/22 00:58:18 cgd Exp $
+#	$NetBSD: CATS,v 1.28 2000/03/26 04:31:39 tsutsui Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -349,7 +349,6 @@ ugen* at uhub? port ?
 # Audio support
 #audio*	at eap?
 #audio*	at sv?
-#audio*	at uaudio?
 
 vga*		at pci?
 wsdisplay*	at vga? console ?
