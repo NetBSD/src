@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.9 1998/08/06 19:16:37 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.10 1998/08/08 22:12:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,6 +232,8 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
 #define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
+
+#define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
 
 /*
  * Macro to create a media word.
