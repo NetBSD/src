@@ -1,4 +1,4 @@
-/*	$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $	*/
+/*	$NetBSD: lstConcat.c,v 1.10 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $";
+static char rcsid[] = "$NetBSD: lstConcat.c,v 1.10 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $");
+__RCSID("$NetBSD: lstConcat.c,v 1.10 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -66,6 +66,12 @@ __RCSID("$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $");
  *	If LST_CONCLINK is specified, the second list is destroyed since
  *	its pointers have been corrupted and the list is no longer useable.
  *
+ * Input:
+ *	l1		The list to which l2 is to be appended
+ *	l2		The list to append to l1
+ *	flags		LST_CONCNEW if LstNode's should be duplicated
+ *			LST_CONCLINK if should just be relinked
+ *
  * Results:
  *	SUCCESS if all went well. FAILURE otherwise.
  *
@@ -74,18 +80,14 @@ __RCSID("$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_Concat (l1, l2, flags)
-    Lst    	  	l1; 	/* The list to which l2 is to be appended */
-    Lst    	  	l2; 	/* The list to append to l1 */
-    int	   	  	flags;  /* LST_CONCNEW if LstNode's should be duplicated
-				 * LST_CONCLINK if should just be relinked */
+Lst_Concat(Lst l1, Lst l2, int flags)
 {
-    register ListNode  	ln;     /* original LstNode */
-    register ListNode  	nln;    /* new LstNode */
-    register ListNode  	last;   /* the last element in the list. Keeps
+    ListNode  	ln;     /* original LstNode */
+    ListNode  	nln;    /* new LstNode */
+    ListNode  	last;   /* the last element in the list. Keeps
 				 * bookkeeping until the end */
-    register List 	list1 = (List)l1;
-    register List 	list2 = (List)l2;
+    List 	list1 = (List)l1;
+    List 	list2 = (List)l2;
 
     if (!LstValid (l1) || !LstValid (l2)) {
 	return (FAILURE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.8 1999/09/15 04:16:31 mycroft Exp $	*/
+/*	$NetBSD: buf.h,v 1.9 2002/06/15 18:24:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -67,13 +67,13 @@ typedef struct Buffer {
 
 #define BUF_ERROR 256
 
-void Buf_OvAddByte __P((Buffer, int));
-void Buf_AddBytes __P((Buffer, int, const Byte *));
-Byte *Buf_GetAll __P((Buffer, int *));
-void Buf_Discard __P((Buffer, int));
-int Buf_Size __P((Buffer));
-Buffer Buf_Init __P((int));
-void Buf_Destroy __P((Buffer, Boolean));
-void Buf_ReplaceLastByte __P((Buffer, int));
+void Buf_OvAddByte(Buffer, int);
+void Buf_AddBytes(Buffer, int, const Byte *);
+Byte *Buf_GetAll(Buffer, int *);
+void Buf_Discard(Buffer, int);
+int Buf_Size(Buffer);
+Buffer Buf_Init(int);
+void Buf_Destroy(Buffer, Boolean);
+void Buf_ReplaceLastByte(Buffer, int);
 
 #endif /* _BUF_H */

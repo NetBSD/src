@@ -1,4 +1,4 @@
-/*	$NetBSD: lstIsAtEnd.c,v 1.7 1997/09/28 03:31:29 lukem Exp $	*/
+/*	$NetBSD: lstIsAtEnd.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstIsAtEnd.c,v 1.7 1997/09/28 03:31:29 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstIsAtEnd.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstIsAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstIsAtEnd.c,v 1.7 1997/09/28 03:31:29 lukem Exp $");
+__RCSID("$NetBSD: lstIsAtEnd.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -81,10 +81,9 @@ __RCSID("$NetBSD: lstIsAtEnd.c,v 1.7 1997/09/28 03:31:29 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 Boolean
-Lst_IsAtEnd (l)
-    Lst	    l;
+Lst_IsAtEnd(Lst l)
 {
-    register List list = (List) l;
+    List list = (List) l;
 
     return (!LstValid (l) || !list->isOpen ||
 	    (list->atEnd == Head) || (list->atEnd == Tail));

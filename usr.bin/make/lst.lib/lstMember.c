@@ -1,4 +1,4 @@
-/*	$NetBSD: lstMember.c,v 1.7 1997/09/28 03:31:31 lukem Exp $	*/
+/*	$NetBSD: lstMember.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstMember.c,v 1.7 1997/09/28 03:31:31 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstMember.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstMember.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstMember.c,v 1.7 1997/09/28 03:31:31 lukem Exp $");
+__RCSID("$NetBSD: lstMember.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -57,12 +57,10 @@ __RCSID("$NetBSD: lstMember.c,v 1.7 1997/09/28 03:31:31 lukem Exp $");
 #include    "lstInt.h"
 
 LstNode
-Lst_Member (l, d)
-    Lst	    	  	l;
-    ClientData	  	d;
+Lst_Member(Lst l, ClientData d)
 {
     List    	  	list = (List) l;
-    register ListNode	lNode;
+    ListNode	lNode;
 
     lNode = list->firstPtr;
     if (lNode == NilListNode) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $	*/
+/*	$NetBSD: lstForEachFrom.c,v 1.9 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $";
+static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.9 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $");
+__RCSID("$NetBSD: lstForEachFrom.c,v 1.9 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -74,15 +74,12 @@ __RCSID("$NetBSD: lstForEachFrom.c,v 1.8 2002/02/17 23:49:01 pk Exp $");
  */
 /*VARARGS2*/
 void
-Lst_ForEachFrom (l, ln, proc, d)
-    Lst	    	    	l;
-    LstNode    	  	ln;
-    register int	(*proc) __P((ClientData, ClientData));
-    register ClientData	d;
+Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(ClientData, ClientData),
+		ClientData d)
 {
-    register ListNode	tln = (ListNode)ln;
-    register List 	list = (List)l;
-    register ListNode	next;
+    ListNode	tln = (ListNode)ln;
+    List 	list = (List)l;
+    ListNode	next;
     Boolean 	    	done;
     int     	    	result;
 

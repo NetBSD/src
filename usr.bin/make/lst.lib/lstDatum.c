@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDatum.c,v 1.7 1997/09/28 03:31:19 lukem Exp $	*/
+/*	$NetBSD: lstDatum.c,v 1.8 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstDatum.c,v 1.7 1997/09/28 03:31:19 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstDatum.c,v 1.8 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDatum.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDatum.c,v 1.7 1997/09/28 03:31:19 lukem Exp $");
+__RCSID("$NetBSD: lstDatum.c,v 1.8 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -70,8 +70,7 @@ __RCSID("$NetBSD: lstDatum.c,v 1.7 1997/09/28 03:31:19 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ClientData
-Lst_Datum (ln)
-    LstNode	ln;
+Lst_Datum(LstNode ln)
 {
     if (ln != NILLNODE) {
 	return (((ListNode)ln)->datum);
