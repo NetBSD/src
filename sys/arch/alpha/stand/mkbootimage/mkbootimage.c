@@ -1,4 +1,4 @@
-/* $NetBSD: mkbootimage.c,v 1.1 1999/04/02 08:40:27 cgd Exp $ */
+/* $NetBSD: mkbootimage.c,v 1.2 1999/04/05 02:56:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -50,7 +50,7 @@ usage()
 {
 	fprintf(stderr,
 	    "usage: %s [-n] [-v] inputfile [outputfile]\n", __progname);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -62,7 +62,7 @@ main(int argc, char **argv)
 	char *outbuf;
 	size_t outbufsize;
 	ssize_t rv;
-	int c, verbose, nowrite, infd, outfd, i;
+	int c, verbose, nowrite, infd, outfd;
 
 	verbose = nowrite = 0;
 
@@ -84,12 +84,11 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1 && argc != 2) {
+	if (argc != 1 && argc != 2)
 		usage();
-	}
 
 	infile = argv[0];
-	outfile = argv[1];
+	outfile = argv[1];		/* NULL if argc == 1 */
 
 	if (verbose) {
 		fprintf(stderr, "input file: %s\n", infile);
@@ -97,15 +96,16 @@ main(int argc, char **argv)
 		    outfile != NULL ? outfile : "<stdout>");
 	}
 	if (sizeof (struct boot_block) != BOOT_BLOCK_BLOCKSIZE)
-		errx(1, "boot_block structure badly sized (build error)");
+		errx(EXIT_FAILURE,
+		    "boot_block structure badly sized (build error)");
 
 	/* Open the input file and check it out */
 	if ((infd = open(infile, O_RDONLY)) == -1)
-		err(1, "open %s", infile);
+		err(EXIT_FAILURE, "open %s", infile);
 	if (fstat(infd, &insb) == -1)
-		err(1, "fstat %s", infile);
+		err(EXIT_FAILURE, "fstat %s", infile);
 	if (!S_ISREG(insb.st_mode))
-		errx(1, "%s must be a regular file", infile);
+		errx(EXIT_FAILURE, "%s must be a regular file", infile);
 
 	/*
 	 * Allocate a buffer, with space to round up the input file
@@ -117,23 +117,22 @@ main(int argc, char **argv)
 
 	outbuf = malloc(outbufsize);
 	if (outbuf == NULL)
-		err(1, "allocating output buffer");
+		err(EXIT_FAILURE, "allocating output buffer");
 	memset(outbuf, 0, outbufsize);
 
 	/* read the file into the buffer, leaving room for the boot block */
 	rv = read(infd, outbuf + sizeof (struct boot_block), insb.st_size);
 	if (rv == -1)
-		err(1, "read %s", infile);
+		err(EXIT_FAILURE, "read %s", infile);
 	else if (rv != insb.st_size)
-		errx(1, "read %s: short read", infile);
+		errx(EXIT_FAILURE, "read %s: short read", infile);
 	(void)close(infd);
 
 	/* fill in the boot block fields, and checksum the boot block */
 	bb = (struct boot_block *)outbuf;
 	bb->bb_secsize = howmany(insb.st_size, BOOT_BLOCK_BLOCKSIZE);
 	bb->bb_secstart = 1;
-	for (i = 0; i < 63; i++)		/* XXX use something better */
-		bb->bb_cksum += ((u_int64_t *)bb)[i];
+	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
 
 	if (verbose) {
 		fprintf(stderr, "starting sector: %qu\n",
@@ -145,22 +144,22 @@ main(int argc, char **argv)
 	}
 
 	if (nowrite)
-		exit(0);
+		exit(EXIT_SUCCESS);
 
 	/* set up the output file descriptor */
 	if (outfile == NULL) {
 		outfd = STDOUT_FILENO;
 		outfile = "<stdout>";
 	} else if ((outfd = open(outfile, O_WRONLY|O_CREAT, 0666)) == -1)
-		err(1, "open %s", outfile);
+		err(EXIT_FAILURE, "open %s", outfile);
 
 	/* write the data */
 	rv = write(outfd, outbuf, outbufsize);
 	if (rv == -1)
-		err(1, "write %s", outfile);
+		err(EXIT_FAILURE, "write %s", outfile);
 	else if (rv != outbufsize)
-		errx(1, "write %s: short write", outfile);
+		errx(EXIT_FAILURE, "write %s: short write", outfile);
 	(void)close(outfd);
 
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
