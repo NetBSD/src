@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.33 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.34 2004/04/18 19:11:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.33 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.34 2004/04/18 19:11:39 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -120,10 +120,9 @@ x25_lxalloc(rt)
 	struct sockaddr *dst = rt_key(rt);
 	struct ifaddr *ifa;
 
-	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT);
+	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT|M_ZERO);
 	if (lx == 0)
 		return lx;
-	Bzero(lx, sizeof(*lx));
 	lx->lx_rt = rt;
 	lx->lx_family = dst->sa_family;
 	rt->rt_refcnt++;
