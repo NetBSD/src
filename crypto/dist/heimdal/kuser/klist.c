@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #include "rtbl.h"
 
 __RCSID("$Heimdal: klist.c,v 1.67 2002/08/20 09:05:18 joda Exp $"
-        "$NetBSD: klist.c,v 1.5 2002/09/12 13:19:05 joda Exp $");
+        "$NetBSD: klist.c,v 1.6 2003/05/15 20:44:14 lha Exp $");
 
 static char*
 printable_time(time_t t)
@@ -467,6 +467,7 @@ display_v4_tickets (int do_verbose)
      */
     return 0;
 }
+#endif /* KRB4 */
 
 /*
  * Print a list of all AFS tokens
@@ -497,11 +498,11 @@ display_tokens(int do_verbose)
 		break;
 	    continue;
 	}
-	if(parms.out_size >= sizeof(t))
+	if(parms.out_size > sizeof(t))
 	    continue;
 	if(parms.out_size < sizeof(size_secret_tok))
 	    continue;
-	t[parms.out_size] = 0;
+	t[min(parms.out_size,sizeof(t)-1)] = 0;
 	memcpy(&size_secret_tok, r, sizeof(size_secret_tok));
 	/* dont bother about the secret token */
 	r += size_secret_tok + sizeof(size_secret_tok);
@@ -537,7 +538,6 @@ display_tokens(int do_verbose)
 	putchar('\n');
     }
 }
-#endif /* KRB4 */
 
 /*
  * display the ccache in `cred_cache'
@@ -597,8 +597,8 @@ static int do_verbose	= 0;
 static int do_test	= 0;
 #ifdef KRB4
 static int do_v4	= 1;
-static int do_tokens	= 0;
 #endif
+static int do_tokens	= 0;
 static int do_v5	= 1;
 static char *cred_cache;
 static int do_flags = 0;
@@ -613,9 +613,9 @@ static struct getargs args[] = {
 #ifdef KRB4
     { "v4",			'4',	arg_flag, &do_v4,
       "display v4 tickets", NULL },
+#endif
     { "tokens",			'T',   arg_flag, &do_tokens,
       "display AFS tokens", NULL },
-#endif
     { "v5",			'5',	arg_flag, &do_v5,
       "display v5 cred cache", NULL},
     { "verbose",		'v', arg_flag, &do_verbose,
@@ -667,20 +667,24 @@ main (int argc, char **argv)
 	exit_status = display_v5_ccache (cred_cache, do_test, 
 					 do_verbose, do_flags);
 
-#ifdef KRB4
     if (!do_test) {
+#ifdef KRB4
 	if (do_v4) {
 	    if (do_v5)
 		printf ("\n");
 	    display_v4_tickets (do_verbose);
 	}
+#endif
 	if (do_tokens && k_hasafs ()) {
-	    if (do_v4 || do_v5)
+	    if (do_v5)
 		printf ("\n");
+#ifdef KRB4
+	    else if (do_v4)
+		printf ("\n");
+#endif
 	    display_tokens (do_verbose);
 	}
     }
-#endif
 
     return exit_status;
 }
