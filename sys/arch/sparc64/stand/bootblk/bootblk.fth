@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.4 1999/02/15 04:54:35 hubertf Exp $
+\	$NetBSD: bootblk.fth,v 1.5 2000/07/06 17:15:07 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -98,6 +98,18 @@ defer cif-seek ( low high ihandle -- -1|0|1 )
    rot drop				( s2 len )
 ;
 
+: strchr ( s1 l1 c -- s2 l2 )
+   begin
+      dup 2over 0= if			( s1 l1 c c s1  )
+         2drop drop exit then
+      c@ = if				( s1 l1 c )
+         drop exit then
+      -rot /c - swap ca1+		( c l2 s2 )
+     swap rot
+  again
+;
+
+   
 : cstr ( ptr -- str len )
    dup 
    begin dup c@ 0<>  while + repeat
@@ -452,6 +464,15 @@ h# 2000 buffer: indir-block
    then
 ;
 
+: boot-args ( -- boot-args )
+   " bootargs" chosen-phandle get-package-property  if
+      ." Could not find bootargs in /chosen" cr
+      abort
+   else
+      decode-string 2swap 2drop
+   then
+;
+
 2000 buffer: boot-path-str
 2000 buffer: boot-path-tmp
 
@@ -570,8 +591,13 @@ h# 5000 constant loader-base
    dup 0<> if  " to load-base init-program" evaluate then
 ;
 
-\ true to boot-debug?
 
-" /ofwboot" do-boot
+boot-args ascii V strchr 0<> swap drop if
+ true to boot-debug?
+then
+
+boot-args ascii D strchr 0= swap drop if
+  " /ofwboot" do-boot
+then exit
 
 
