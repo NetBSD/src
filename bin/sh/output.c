@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.22 2001/01/07 22:19:53 lukem Exp $	*/
+/*	$NetBSD: output.c,v 1.23 2001/01/07 23:39:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.22 2001/01/07 22:19:53 lukem Exp $");
+__RCSID("$NetBSD: output.c,v 1.23 2001/01/07 23:39:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,13 +335,24 @@ fmtstr(va_alist)
 
 static const char digit[] = "0123456789ABCDEF";
 
+#ifdef BSD4_4
+#define HAVE_VASPRINTF 1
+#endif
+
 
 void
 doformat(dest, f, ap)
 	struct output *dest;
 	const char *f;		/* format string */
 	va_list ap;
-	{
+{
+#if	HAVE_VASPRINTF
+	char *s;
+
+	vasprintf(&s, f, ap);
+	outstr(s, dest);
+	free(s);     
+#else	/* !HAVE_VASPRINTF */
 	char c;
 	char temp[TEMPSIZE];
 	int flushleft;
@@ -521,6 +532,7 @@ number:		  /* process a number */
 		}
 		f++;
 	}
+#endif	/* !HAVE_VASPRINTF */
 }
 
 
