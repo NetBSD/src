@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.101 2003/05/20 22:53:35 kristerw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.102 2003/06/26 16:41:32 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -217,7 +217,6 @@ extern void need_resched __P((struct cpu_info *));
 #define	X86_MAXPROCS		1
 
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_primary;
 
 #define	curcpu()		(&cpu_info_primary)
 
@@ -244,7 +243,7 @@ do {									\
 
 #define aston(p)		((p)->p_md.md_astpending = 1)
 
-#endif
+#endif /* MULTIPROCESSOR */
 
 extern u_int32_t cpus_attached;
 
@@ -329,7 +328,7 @@ struct cpu_cpuid_nameclass {
 #ifdef _KERNEL
 extern int biosbasemem;
 extern int biosextmem;
-extern int cpu_feature;
+extern unsigned int cpu_feature;
 extern int cpu;
 extern int cpu_class;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
