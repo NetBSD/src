@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.33 1999/02/10 21:56:23 mjacob Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.34 1999/02/11 09:49:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -520,15 +520,12 @@ adosfs_vget(mp, an, vpp)
 			vput(vp);
 			return (error);
 		}
-	}
-#if	THIS_WAS_WHAT_WAS_WANTED
 		ap->fsize = adoswordn(bp, ap->nwords - 47);
 		/*
 		 * Should ap->block be set to the real file header block?
 		 */
 		ap->block = ap->linkto;
 	}
-#endif
 
 	if (ap->type == AROOT) {
 		ap->adprot = 15;
