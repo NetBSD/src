@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.246 2003/10/17 04:45:40 sekiya Exp $
+.\"	$NetBSD: main,v 1.247 2003/11/02 01:51:38 grant Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1622,9 +1622,10 @@ If you're one of them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD core group:"
 .It Ta Ta
-.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
+.It Ta Allen Briggs Ta Mt briggs@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
+.It Ta Matt Thomas Ta Mt matt@NetBSD.org
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.org
 .It Ta Ta
 .
@@ -1678,8 +1679,9 @@ If you're one of them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
-.It Ta James Chacon Ta Mt jmc@NetBSD.org
+.It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Erik Berls Ta Mt cyber@NetBSD.org
+.It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
 .It Ta Perry Metzger Ta Mt perry@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
