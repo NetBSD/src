@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.15 2000/03/30 09:45:40 augustss Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.16 2001/11/05 18:02:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -94,7 +94,7 @@ raw_input(m0, va_alist)
 	va_end(ap);
 
 	last = 0;
-	for (rp = rawcb.lh_first; rp != 0; rp = rp->rcb_list.le_next) {
+	LIST_FOREACH(rp, &rawcb, rcb_list) {
 		if (rp->rcb_proto.sp_family != proto->sp_family)
 			continue;
 		if (rp->rcb_proto.sp_protocol  &&
