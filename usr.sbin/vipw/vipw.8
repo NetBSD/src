@@ -1,4 +1,4 @@
-.\"	$NetBSD: vipw.8,v 1.8 2000/08/04 14:58:52 ad Exp $
+.\"	$NetBSD: vipw.8,v 1.9 2000/12/06 14:04:25 tron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,9 @@
 .Nd edit the password file
 .Sh SYNOPSIS
 .Nm
+.Bk -words
+.Op Fl d Ar directory
+.Ek
 .Sh DESCRIPTION
 .Nm
 edits the password file after setting the appropriate locks,
@@ -72,6 +75,15 @@ to update the user database.  This is run in the background, and,
 at very large sites could take several minutes.  Until this update
 is completed, the password file is unavailable for other updates
 and the new information is not available to programs.
+.Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl d Ar directory
+Change the root directory of the generated files from
+.Dq Pa
+to
+.Ar directory .
+.El
 .Pp
 If a
 .Nm
