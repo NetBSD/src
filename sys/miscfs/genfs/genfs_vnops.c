@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.91 2004/10/04 00:28:30 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.92 2004/12/22 23:29:51 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.91 2004/10/04 00:28:30 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.92 2004/12/22 23:29:51 dbj Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
