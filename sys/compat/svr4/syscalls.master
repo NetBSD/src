@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 1998/12/18 18:49:59 drochner Exp $
+	$NetBSD: syscalls.master,v 1.42 1999/02/09 20:46:41 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -54,21 +54,24 @@
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int svr4_sys_open(char *path, int flags, int mode); }
+5	STD		{ int svr4_sys_open(const char *path, int flags, \
+			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	STD		{ int svr4_sys_wait(int *status); }
-8	STD		{ int svr4_sys_creat(char *path, int mode); }
+8	STD		{ int svr4_sys_creat(const char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
 10	NOARGS		{ int sys_unlink(char *path); }
-11	STD		{ int svr4_sys_execv(char *path, char **argp); }
+11	STD		{ int svr4_sys_execv(const char *path, char **argp); }
 12	NOARGS		{ int sys_chdir(char *path); }
 13	STD		{ int svr4_sys_time(svr4_time_t *t); }
-14	STD		{ int svr4_sys_mknod(char* path, int mode, int dev); }
+14	STD		{ int svr4_sys_mknod(const char* path, int mode, \
+			    int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
 			    int gid); } chown
 17	STD		{ int svr4_sys_break(caddr_t nsize); }
-18	STD		{ int svr4_sys_stat(char* path, struct svr4_stat* ub); }
+18	STD		{ int svr4_sys_stat(const char* path, \
+			    struct svr4_stat* ub); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
@@ -81,11 +84,11 @@
 27	STD		{ int svr4_sys_alarm(unsigned sec); }
 28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
 29	STD		{ int svr4_sys_pause(void); }
-30	STD		{ int svr4_sys_utime(char *path, \
-					     struct svr4_utimbuf *ubuf); }
+30	STD		{ int svr4_sys_utime(const char *path, \
+			     struct svr4_utimbuf *ubuf); }
 31	UNIMPL		was stty
 32	UNIMPL		was gtty
-33	STD		{ int svr4_sys_access(char *path, int flags); }
+33	STD		{ int svr4_sys_access(const char *path, int flags); }
 34	STD		{ int svr4_sys_nice(int prio); }
 35	UNIMPL		statfs
 36	NOARGS		{ int sys_sync(void); }
@@ -128,7 +131,7 @@
 57	STD		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
 			    void *a3); }
 58	NOARGS		{ int sys_fsync(int fd); }
-59	STD		{ int svr4_sys_execve(char *path, char **argp, \
+59	STD		{ int svr4_sys_execve(const char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
@@ -162,7 +165,7 @@
 			    struct svr4_strbuf *dat, int flags); }
 87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	STD		{ int svr4_sys_lstat(char *path, \
+88	STD		{ int svr4_sys_lstat(const char *path, \
 			    struct svr4_stat *ub); }
 89	NOARGS		{ int sys_symlink(char *path, char *link); }
 90	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
@@ -188,7 +191,7 @@
 			    struct svr4_ucontext *uc); }
 101	UNIMPL		evsys
 102	UNIMPL		evtrapret
-103	STD		{ int svr4_sys_statvfs(char *path, \
+103	STD		{ int svr4_sys_statvfs(const char *path, \
 			    struct svr4_statvfs *fs); }
 104	STD		{ int svr4_sys_fstatvfs(int fd, \
 			    struct svr4_statvfs *fs); }
@@ -202,7 +205,7 @@
 110	UNIMPL		acancel
 111	UNIMPL		async
 112	UNIMPL		priocntlsys
-113	STD		{ int svr4_sys_pathconf(char *path, int name); }
+113	STD		{ int svr4_sys_pathconf(const char *path, int name); }
 114	UNIMPL		mincore
 115	STD		{ void *svr4_sys_mmap(void *addr, \
 			    svr4_size_t len, int prot, int flags, int fd, \
@@ -215,9 +218,9 @@
 121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, u_int iovcnt); }
 122	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 			    u_int iovcnt); }
-123	STD		{ int svr4_sys_xstat(int two, char *path, \
+123	STD		{ int svr4_sys_xstat(int two, const char *path, \
 			    struct svr4_xstat *ub); }
-124	STD		{ int svr4_sys_lxstat(int two, char *path, \
+124	STD		{ int svr4_sys_lxstat(int two, const char *path, \
 			    struct svr4_xstat *ub); }
 125	STD		{ int svr4_sys_fxstat(int two, int fd, \
 			    struct svr4_xstat *sb); }
@@ -259,8 +262,8 @@
 151	UNIMPL
 152	UNIMPL		modctl
 153	STD		{ int svr4_sys_fchroot(int fd); }
-154	STD		{ int svr4_sys_utimes(char *path, \
-					      struct timeval *tptr); }
+154	STD		{ int svr4_sys_utimes(const char *path, \
+			    struct timeval *tptr); }
 155	STD		{ int svr4_sys_vhangup(void); }
 156	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
 157	NOARGS		{ int sys_getitimer(u_int which, \
@@ -335,13 +338,13 @@
 214	STD		{ void *svr4_sys_mmap64(void *addr, \
 			    svr4_size_t len, int prot, int flags, int fd, \
 			    svr4_off64_t pos); }
-215	STD		{ int svr4_sys_stat64(char* path, \
+215	STD		{ int svr4_sys_stat64(const char* path, \
 			    struct svr4_stat64 *sb); }
-216	STD		{ int svr4_sys_lstat64(char* path, \
+216	STD		{ int svr4_sys_lstat64(const char* path, \
 			    struct svr4_stat64 *sb); }
 217	STD		{ int svr4_sys_fstat64(int fd, \
 			    struct svr4_stat64 *sb); }
-218	STD		{ int svr4_sys_statvfs64(char *path, \
+218	STD		{ int svr4_sys_statvfs64(const char *path, \
 			    struct svr4_statvfs64 *fs); }
 219	STD		{ int svr4_sys_fstatvfs64(int fd, \
 			    struct svr4_statvfs64 *fs); }

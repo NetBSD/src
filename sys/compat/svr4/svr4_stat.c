@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.31 1999/01/20 22:09:17 kleink Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.32 1999/02/09 20:46:41 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ svr4_sys_lstat64(p, v, retval)
 	int			error;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, (char *) SCARG(uap, path));
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(struct stat));
