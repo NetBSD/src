@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.9 2003/07/13 01:01:50 igy Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.10 2003/07/13 02:11:58 igy Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.9 2003/07/13 01:01:50 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.10 2003/07/13 02:11:58 igy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,10 +165,8 @@ ixp12x0_attach(sc)
 		bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, PCI_COMMAND_STATUS_REG));
 #endif
 	/*
-	 * Initialize the bus space and DMA tags and the PCI chipset tag.
+	 * Initialize the PCI chipset tag.
 	 */
-	ixp12x0_io_bs_init(&sc->ia_pci_iot, sc);
-	ixp12x0_mem_bs_init(&sc->ia_pci_memt, sc);
 	ixp12x0_pci_init(&sc->ia_pci_chipset, sc);
 
 	/*
@@ -181,8 +179,8 @@ ixp12x0_attach(sc)
 	 */
 	pba.pba_busname = "pci";
 	pba.pba_pc = &sc->ia_pci_chipset;
-	pba.pba_iot = &sc->ia_pci_iot;
-	pba.pba_memt = &sc->ia_pci_memt;
+	pba.pba_iot = &ixp12x0_bs_tag;
+	pba.pba_memt = &ixp12x0_bs_tag;
 	pba.pba_dmat = &sc->ia_pci_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;	/* bus number = 0 */
