@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/10/06 16:50:39 wiz Exp $
+#	$NetBSD: Makefile,v 1.18 2003/10/20 01:15:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -27,13 +27,14 @@ CLEANFILES+=	${PROG}.1 ${PROG}.texi
 COPTS+=		-O1
 .endif
 
-${PROG}.1:	gawk.1
-		@-rm -f $@
-		cp $> $@
+BUILDSYMLINKS+=	gawk.1 ${PROG}.1
 
 ${PROG}.texi:	gawk.texi
-		@-rm -f $@
-		sed -e 's/gawk.info/awk.info/g' <$> >$@
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	rm -f $@
+	${_MKCMD}\
+	sed -e 's/gawk.info/awk.info/g' <$> >$@
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
