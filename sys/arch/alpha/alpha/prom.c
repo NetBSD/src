@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.34 1999/02/25 03:43:14 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.35 1999/02/26 03:59:14 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.34 1999/02/25 03:43:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.35 1999/02/26 03:59:14 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -56,10 +56,10 @@ int		alpha_console;
 
 extern struct prom_vec prom_dispatch_v;
 
+struct simplelock prom_slock;
+
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int		prom_mapped = 1;	/* Is PROM still mapped? */
-
-struct simplelock prom_slock;
 
 #if defined(MULTIPROCESSOR)
 pt_entry_t	*prom_lev1map, *saved_lev1map;
