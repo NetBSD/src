@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.75 2004/02/27 22:48:56 enami Exp $	*/
+/*	$NetBSD: kdump.c,v 1.76 2004/02/27 23:06:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.75 2004/02/27 22:48:56 enami Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.76 2004/02/27 23:06:02 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,8 +199,7 @@ main(argc, argv)
 			tracefile = argv[0];
 			argv++;
 			argc--;
-		}
-		else
+		} else
 			tracefile = DEF_TRACEFILE;
 	}
 
@@ -216,8 +215,8 @@ main(argc, argv)
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
 	while (fread_tail((char *)&ktr_header, sizeof(struct ktr_header), 1)) {
-		if (trpoints & (1<<ktr_header.ktr_type)
-		    && (do_pid == -1 || ktr_header.ktr_pid == do_pid))
+		if (trpoints & (1 << ktr_header.ktr_type) &&
+		    (do_pid == -1 || ktr_header.ktr_pid == do_pid))
 			col = dumpheader(&ktr_header);
 		else
 			col = -1;
@@ -413,8 +412,8 @@ ktrsyscall(ktr)
 	emul_changed = 0;
 
 	if (numeric ||
-	    ((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0)
-	     && mach_traps_dispatch(&ktr->ktr_code, &emul) == 0)) {
+	    ((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0) &&
+	    mach_traps_dispatch(&ktr->ktr_code, &emul) == 0)) {
 		sys_name = "?";
 		(void)printf("[%d]", ktr->ktr_code);
 	} else {
@@ -430,7 +429,7 @@ ktrsyscall(ktr)
 	}
 #undef NETBSD32_
 #endif
-																     
+
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	if (argcount) {
 		c = '(';
@@ -464,7 +463,7 @@ ktrsyscall(ktr)
 		} else if (strcmp(sys_name, "ptrace") == 0 && argcount >= 1) {
 			putchar('(');
 			if (strcmp(emul->name, "linux") == 0) {
-				if (*ap >= 0 && *ap < 
+				if (*ap >= 0 && *ap <
 				    sizeof(linux_ptrace_ops) /
 				    sizeof(linux_ptrace_ops[0]))
 					(void)printf("%s",
@@ -511,8 +510,8 @@ ktrsysret(ktr, len)
 	} else
 		emul = cur_emul;
 
-	if ((code >= emul->nsysnames || code < 0 || plain > 1) 
-	    && (mach_traps_dispatch(&code, &emul) == 0))
+	if ((code >= emul->nsysnames || code < 0 || plain > 1) &&
+	    (mach_traps_dispatch(&code, &emul) == 0))
 		(void)printf("[%d] ", code);
 	else
 		(void)printf("%s ", emul->sysnames[code]);
@@ -537,6 +536,7 @@ ktrsysret(ktr, len)
 void
 rprint(register_t ret)
 {
+
 	if (!plain) {
 		(void)printf("%ld", (long)ret);
 		if (!small(ret))
@@ -607,6 +607,7 @@ ktremul(name, len, bufsize)
 	char *name;
 	int len, bufsize;
 {
+
 	if (len >= bufsize)
 		len = bufsize - 1;
 
@@ -618,7 +619,7 @@ ktremul(name, len, bufsize)
 }
 
 static void
-hexdump_buf(vdp, datalen, word_sz) 
+hexdump_buf(vdp, datalen, word_sz)
 	const void *vdp;
 	int datalen;
 	int word_sz;
@@ -670,7 +671,7 @@ hexdump_buf(vdp, datalen, word_sz)
 			bp[(l ^ bswap) * bsize] = hex[c >> 4];
 			bp[(l ^ bswap) * bsize + 1] = hex[c & 0xf];
 			*cp++ = isgraph(c) ? c : '.';
-		};
+		}
 
 		printf("\t%-5.3x%.*s%.*s\n", off, width, bytes, l, chars);
 	}
@@ -709,7 +710,7 @@ visdump_buf(const void *vdp, int datalen, int col)
 			(void)putchar('\t');
 			col = 8;
 		}
-		switch(*cp) {
+		switch (*cp) {
 		case '\n':
 			col = 0;
 			(void)putchar('\n');
@@ -745,7 +746,7 @@ ktrgenio(ktr, len)
 	char *dp = (char *)ktr + sizeof (struct ktr_genio);
 
 	printf("fd %d %s %d bytes\n", ktr->ktr_fd,
-		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
+	    ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
 	if (maxdata == 0)
 		return;
 	if (maxdata > 0 && datalen > maxdata)
@@ -797,7 +798,7 @@ ktrpsig(v, len)
 	case sizeof(*psig):
 		if (si->si_code == 0) {
 			printf(": code=SI_USER sent by pid=%d, uid=%d)\n",
-			    si->si_pid, si->si_uid); 
+			    si->si_pid, si->si_uid);
 			return;
 		}
 
@@ -832,11 +833,11 @@ ktrpsig(v, len)
 		switch (si->si_signo) {
 		case SIGCHLD:
 			printf(": code=%s child pid=%d, uid=%d, "
-			    " status=%u, utime=%lu, stime=%lu)\n", 
+			    " status=%u, utime=%lu, stime=%lu)\n",
 			    code, si->si_pid,
 			    si->si_uid, si->si_status,
 			    (unsigned long) si->si_utime,
-			    (unsigned long) si->si_stime); 
+			    (unsigned long) si->si_stime);
 			return;
 		case SIGILL:
 		case SIGFPE:
@@ -881,7 +882,7 @@ ktruser(usr, len)
 
 	printf("\"%.*s: %d, ", KTR_USER_MAXIDLEN, usr->ktr_id, len);
 	dta = (unsigned char *)usr;
-	for(i=sizeof(struct ktr_user); i < len; i++)
+	for (i = sizeof(struct ktr_user); i < len; i++)
 		printf("%02x", (unsigned int) dta[i]);
 	printf("\"\n");
 }
@@ -905,7 +906,7 @@ ktrmmsg(mmsg, len)
 
 	if ((service_name = mach_service_name(id)) != NULL)
 		printf("%s%s [%d]\n", service_name, reply, mmsg->ktr_id);
-	else 
+	else
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
 	hexdump_buf(mmsg, len, word_size ? word_size : 4);
@@ -918,7 +919,7 @@ ktrmool(mool, len)
 {
 	size_t size = mool->size;
 
-	printf("%ld/0x%lx bytes at %p\n", 
+	printf("%ld/0x%lx bytes at %p\n",
 	    (u_long)size, (u_long)size, mool->uaddr);
 	mool++;
 	hexdump_buf(mool, size, word_size ? word_size : 4);
@@ -928,6 +929,7 @@ static const char *
 signame(long sig, int xlat)
 {
 	static char buf[64];
+
 	if (sig == 0)
 		return " 0";
 	else if (sig < 0 || sig >= NSIG) {
