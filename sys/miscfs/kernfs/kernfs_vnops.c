@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.95 2003/09/10 09:59:47 dan Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.96 2003/09/10 10:22:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.95 2003/09/10 09:59:47 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.96 2003/09/10 10:22:45 itojun Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -655,7 +655,7 @@ kernfs_getattr(v)
 	 * We don't guard the read from time(9) with splclock(9) since we
 	 * don't actually need to be THAT sure the access is atomic. 
 	 */
-	if (kfs->kfs_kt->kt_namlen == 8 && 
+	if (kfs->kfs_kt && kfs->kfs_kt->kt_namlen == 8 && 
 	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
 		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_ctime);
 	} else {
