@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 2002/10/24 13:56:45 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10 2002/10/31 14:52:30 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1458,7 +1458,7 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 				} else
 					diff &= ~1;
 
-				if ((u_int64_t)accmovi >= 0x100000000) {
+				if ((u_int64_t)accmovi >= 0x100000000ULL) {
 					sprintf(accmovi_str, "0x%08x%08x",
 					    (u_int)(accmovi >> 32),
 					    (u_int)accmovi);
