@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscall.h,v 1.3 2001/11/13 02:09:02 lukem Exp $ */
+/* $NetBSD: mach_syscall.h,v 1.4 2002/11/10 09:41:45 manu Exp $ */
 
 /*
  * System call numbers.
@@ -18,6 +18,9 @@
 
 /* syscall: "host_self_trap" ret: "mach_port_name_t" args: */
 #define	MACH_SYS_host_self_trap	29
+
+/* syscall: "msg_trap" ret: "mach_msg_return_t" args: "mach_msg_header_t *" "mach_msg_option_t" "mach_msg_size_t" "mach_msg_size_t" "mach_port_name_t" "mach_msg_timeout_t" "mach_port_name_t" */
+#define	MACH_SYS_msg_trap	31
 
 /* syscall: "msg_overwrite_trap" ret: "mach_kern_return_t" args: "mach_msg_header_t *" "mach_msg_option_t" "mach_msg_size_t" "mach_msg_size_t" "mach_port_name_t" "mach_msg_timeout_t" "mach_port_name_t" "mach_msg_header_t *" "mach_msg_size_t" */
 #define	MACH_SYS_msg_overwrite_trap	32
