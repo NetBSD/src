@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2003/10/20 00:12:10 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2003/11/07 17:00:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/10/20 00:12:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/11/07 17:00:19 augustss Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/10/20 00:12:10 matt Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
+#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/kgdb.h>
 #include <sys/malloc.h>
@@ -132,6 +133,21 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/10/20 00:12:10 matt Exp $");
 
 #include "ksyms.h"
 
+struct powerpc_bus_space pmppc_mem_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0, 0, 0xffffffff,
+	NULL,
+};
+struct powerpc_bus_space pmppc_pci_io_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0, CPC_PCI_IO_BASE, 0xffffffff,
+	NULL,
+};
+
+static char ex_storage[1][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+
+
 #ifdef KGDB
 char kgdb_devname[] = KGDB_DEVNAME;
 int comkgdbaddr = KGDB_DEVADDR;
@@ -159,12 +175,17 @@ void strayintr(int);
 
 void pmppc_setup(void);
 
+void setleds(int leds);
+
+/*
+ * Force cpu_info to be in the data segment to avoid the
+ * memset() blowing away the data set up by locore.S.
+ */
+struct cpu_info cpu_info[1] = {{{{1}}}};
+
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
-	extern void *startsym, *endsym;
-#endif
 	extern void consinit(void);
 	extern void ext_intr(void);
 	extern u_long ticks_per_sec;
@@ -188,10 +209,9 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	boothowto = BOOTHOWTO;
 #endif
 
-	pmppc_bus_space_init();
-
-	consinit();		/* XXX should not be here */
-	printf("console set up\n");
+	if (bus_space_init(&pmppc_mem_tag, "iomem",
+			   ex_storage[0], sizeof(ex_storage[0])))
+		panic("bus_space_init failed");
 
 	/*
 	 * Get CPU clock
@@ -215,6 +235,13 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 */
 	oea_init(ext_intr);
 
+	/*
+	 * Set up console.
+	 */
+	consinit();		/* XXX should not be here */
+
+	printf("console set up\n");
+
         /*
 	 * Set the page size.
 	 */
@@ -229,7 +256,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 #ifdef SYMTAB_SPACE
 	ksyms_init(0, NULL, NULL);
 #else
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	#error "No SYMTAB_SPACE"
 #endif
 #endif
 #ifdef IPKDB
@@ -262,24 +289,31 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 void
 cpu_startup()
 {
-	int msr;
+/*	int msr;*/
 
 	oea_startup(NULL);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
 	 */
-	pmppc_bus_space_mallocok();
+	bus_space_mallocok();
+
+	/* Set up the PCI bus tag. */
+	if (bus_space_init(&pmppc_pci_io_tag, "pcimem", NULL, 0))
+		panic("bus_space_init pci failed");
 
 	/* Set up interrupt controller */
 	cpc700_init_intr(&pmppc_mem_tag, CPC_UIC_BASE,
 	    CPC_INTR_MASK(PMPPC_I_ETH_INT), 0);
 
+#if 0
+/* XXX doesn't seem to be needed anymore */
 	/*
 	 * Now allow hardware interrupts.
 	 */
 	__asm __volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 	    : "=r"(msr) : "K"(PSL_EE));
+#endif
 }
 
 /*
@@ -303,7 +337,7 @@ consinit(void)
 
 	if(comcnattach(tag, CPC_COM0, 9600, CPC_COM_SPEED(a_config.a_bus_freq),
 	    COM_TYPE_NORMAL,
-	    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8))) 
+            ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 		panic("can't init serial console");
 	else
 		return;

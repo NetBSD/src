@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2003/07/15 02:54:41 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2003/11/07 17:00:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/07/15 02:54:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2003/11/07 17:00:19 augustss Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,17 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2003/07/15 02:54:41 lukem Exp $"
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pciconf.h>
 
+/*
+ * Address conversion as seen from a PCI master.
+ * XXX Shouldn't use 0x80000000, the actual value
+ * should come from the BAR.
+ */
+#define PHYS_TO_PCI_MEM(x)	((x) + 0x80000000)
+#define PCI_MEM_TO_PHYS(x)	((x) - 0x80000000)
+
+static bus_addr_t phys_to_pci(bus_dma_tag_t, bus_addr_t);
+static bus_addr_t pci_to_phys(bus_dma_tag_t, bus_addr_t);
+
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -85,7 +96,20 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	phys_to_pci,
+	pci_to_phys,
 };
+
+static bus_addr_t
+phys_to_pci(bus_dma_tag_t t, bus_addr_t a)
+{
+	return PHYS_TO_PCI_MEM(a);
+}
+
+static bus_addr_t pci_to_phys(bus_dma_tag_t t, bus_addr_t a)
+{
+	return PCI_MEM_TO_PHYS(a);
+}
 
 void
 pci_attach_hook(struct device *parent, struct device *self,
