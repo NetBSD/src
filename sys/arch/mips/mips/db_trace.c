@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2000/05/26 03:34:27 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 2000/05/26 20:59:00 mhitch Exp $	*/
 
 /*
  * Mach Operating System
@@ -194,7 +194,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			name, pc - func, (void *)ra, stacksize);
 
 		if (ra == pc) {
-			("*pr)("-- loop? --\n");
+			(*pr)("-- loop? --\n");
 			return;
 		}
 		sp += stacksize;
