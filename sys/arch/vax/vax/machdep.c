@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13 1995/06/05 16:26:59 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.14 1995/06/16 15:36:44 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -342,7 +342,9 @@ setstatclockrate()
 
 consinit()
 {
-	/* cninit(); */
+#ifdef DDB
+	ddb_init();
+#endif
 }
 
 struct sigretargs {
