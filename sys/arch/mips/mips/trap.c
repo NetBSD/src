@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.178 2003/06/28 14:21:00 darrenr Exp $	*/
+/*	$NetBSD: trap.c,v 1.179 2003/06/29 11:32:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2003/06/28 14:21:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.179 2003/06/29 11:32:11 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -131,9 +131,9 @@ const char *trap_type[] = {
 void trap(unsigned, unsigned, unsigned, unsigned, struct trapframe *);
 void ast(unsigned);
 
-extern vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
-extern void MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);
-extern void MachFPTrap(u_int32_t, u_int32_t, u_int32_t, struct frame *);
+vaddr_t MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);	/* XXX */
+void MachEmulateInst(u_int32_t, u_int32_t, u_int32_t, struct frame *);	/* XXX */
+void MachFPTrap(u_int32_t, u_int32_t, u_int32_t, struct frame *);	/* XXX */
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
@@ -704,8 +704,8 @@ extern char mips3_UserGenException[];
 extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
-extern int main(void *);
-extern void mips_idle(void);
+int main(void *);	/* XXX */
+void mips_idle(void);	/* XXX */
 
 /*
  *  stack trace code, also useful to DDB one day

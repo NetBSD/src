@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.3 2003/01/17 23:36:16 thorpej Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.4 2003/06/29 11:35:16 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -40,7 +40,7 @@
 #include <mips/vmparam.h>			/* for VM_MAX_ADDRESS */
 #include <mips/trap.h>
 
-extern	void MachEmulateFP(u_int32_t, struct frame *, u_int32_t);
+void MachEmulateFP(u_int32_t, struct frame *, u_int32_t);	/* XXX */
 
 static __inline void	send_sigsegv(u_int32_t, u_int32_t, struct frame *,
 			    u_int32_t);
