@@ -13,6 +13,11 @@ closelog(void)
 {
 }
 
+int
+setlogmask(int mask)
+{
+}
+
 void
 syslog(int fac, const char *fmt, ...)
 {
