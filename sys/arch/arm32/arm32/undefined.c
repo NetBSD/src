@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.16.8.1 2000/11/20 20:03:53 bouyer Exp $	*/
+/*	$NetBSD: undefined.c,v 1.16.8.2 2000/12/13 14:49:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -126,7 +126,6 @@ undefinedinstruction(frame)
 	u_int fault_pc;
 	int fault_instruction;
 	int fault_code;
-	u_quad_t sticks = 0;
 	int coprocessor;
 
 	/* Enable interrupts if they were enabled before the exception. */
@@ -168,9 +167,7 @@ undefinedinstruction(frame)
 		p = &proc0;
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		sticks = p->p_sticks;
-                  
-	/* Modify the fault_code to reflect the USR/SVC state at time of fault */
+		/* Modify the fault_code to reflect the USR/SVC state at time of fault */
 
 		fault_code = FAULT_USER;
 		p->p_md.md_regs = frame;
@@ -255,23 +252,11 @@ undefinedinstruction(frame)
 			}
 		}
 
-		/*
-		 * The profiling bit is commented out at the moment. This
-		 * can be reinstated later on. Currently addupc_task is
-		 * not written.
-		 */
-
-		if (p->p_flag & P_PROFIL) {
-			extern int psratio;
-			addupc_task(p, frame->tf_pc,
-			    (int)(p->p_sticks - sticks) * psratio);
-		}
-
 		curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 	}
 
 #else
-	userret(p, frame->tf_pc, sticks);
+	userret(p);
 #endif
 }
 

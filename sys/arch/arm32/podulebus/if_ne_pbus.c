@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.2 1998/10/28 00:13:53 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.2.12.1 2000/12/13 14:50:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ struct ne_clone {
 	},
 	/* Acorn EtherLan EtherH netslot interface */
 	{
-	  MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERLAN600A, EH600_REGSHIFT,
+	  MANUFACTURER_ICUBED, PODULE_ICUBED_ETHERLAN600AEH, EH600_REGSHIFT,
 	  EH600_NIC_OFFSET, EH600_NIC_SIZE, EH600_ASIC_OFFSET, EH600_ASIC_SIZE,
 	  NE_SPACE_FAST, NE_SPACE_FAST, 0, 0,
 	  "EtherLan 600A", eh600_ea , eh600_preattach, eh600_postattach

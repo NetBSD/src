@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12.2.1 2000/11/20 20:03:59 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.12.2.2 2000/12/13 14:50:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,29 +41,16 @@
 #ifndef _ARM32_ASM_H_
 #define _ARM32_ASM_H_
 
-#define _BEGIN_ENTRY_NP	.text; .align 0
-#define _END_ENTRY_NP
-
-#ifdef GPROF
-# define _BEGIN_ENTRY	_BEGIN_ENTRY_NP
-# define _END_ENTRY	_END_ENTRY_NP
-#else
-# define _BEGIN_ENTRY	_BEGIN_ENTRY_NP
-# define _END_ENTRY	_END_ENTRY_NP
-#endif
-
 #ifdef __ELF__
-#  define _C_FUNC(x)	x
-#  define _C_LABEL(x)	x
+# define _C_LABEL(x)	x
 #else
 # ifdef __STDC__
-#  define _C_FUNC(x)	_ ## x
 #  define _C_LABEL(x)	_ ## x
 # else
-#  define _C_FUNC(x)	_/**/x
 #  define _C_LABEL(x)	_/**/x
 # endif
 #endif
+#define	_ASM_LABEL(x)	x
 
 #ifdef __STDC__
 # define __CONCAT(x,y)	x ## y
@@ -72,7 +59,10 @@
 # define __CONCAT(x,y)	x/**/y
 # define __STRING(x)	"x"
 #endif
-#define	_ASM_FUNC(x)	x
+
+#ifndef _ALIGN_TEXT
+# define _ALIGN_TEXT .align 0
+#endif
 
 /*
  * gas/arm uses @ as a single comment character and thus cannot be used here
@@ -82,15 +72,22 @@
  */
 #define _ASM_TYPE_FUNCTION	#function
 #define _ASM_TYPE_OBJECT	#object
-#define _ENTRY(x)	.globl x; .type x,_ASM_TYPE_FUNCTION; x:
+#define _ENTRY(x) \
+	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
 
-#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
-#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
-			_END_ENTRY
-#define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
+#ifdef GPROF
+# define _PROF_PROLOGUE	\
+	mov ip,lr; bl mcount
+#else
+# define _PROF_PROLOGUE
+#endif
 
-#define	ENTRY_NP(y)	_BEGIN_ENTRY_NP; _ENTRY(_C_FUNC(y)); _END_ENTRY_NP
-#define	ASENTRY_NP(y)	_BEGIN_ENTRY_NP; _ENTRY(_ASM_FUNC(y)); _END_ENTRY_NP
+#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
+#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
+
+#define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
 
 #define	ASMSTR		.asciz
 

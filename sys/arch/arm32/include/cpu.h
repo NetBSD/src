@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19.2.1 2000/11/20 20:03:59 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19.2.2 2000/12/13 14:50:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -219,6 +219,8 @@
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame) ((current_intr_depth > 1) || (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
 
+#define	PROC_PC(p)	((p)->p_md.md_regs->tf_pc)
+
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -253,9 +255,19 @@ extern struct cpu_info cpu_info_store;
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern int current_intr_depth;
 
-/* stubs.c */
-void need_resched	__P((struct cpu_info *));
-void need_proftick	__P((struct proc *p));
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+int	want_resched;		/* resched() was called */
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
+
+/*
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the i386, request an ast to send us
+ * through trap(), marking the proc as needing a profiling tick.
+ */
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 /* locore.S */
 void atomic_set_bit	__P((u_int *address, u_int setmask));
@@ -266,7 +278,7 @@ struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
 /* ast.c */
-void userret		__P((register struct proc *p, int pc, u_quad_t oticks));
+void userret		__P((register struct proc *p));
 
 /* machdep.h */
 void bootsync		__P((void));

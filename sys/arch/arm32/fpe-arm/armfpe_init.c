@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.16.14.1 2000/11/20 20:03:58 bouyer Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.16.14.2 2000/12/13 14:50:05 bouyer Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -237,7 +237,7 @@ arm_fpe_exception(exception, fpframe, frame)
 
 	trapsignal(curproc, SIGFPE, exception << 8);
 
-	userret(curproc, frame->tf_pc, curproc->p_sticks);
+	userret(curproc);
 }
 
 

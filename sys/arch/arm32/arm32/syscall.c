@@ -1,4 +1,40 @@
-/*	$NetBSD: syscall.c,v 1.25.2.2 2000/12/08 09:26:24 bouyer Exp $	*/
+/*	$NetBSD: syscall.c,v 1.25.2.3 2000/12/13 14:49:54 bouyer Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,9 +76,7 @@
  * Created      : 09/11/94
  */
 
-#include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_pmap_debug.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
@@ -61,39 +95,24 @@
 #include <machine/frame.h>
 #include <machine/katelib.h>
 
-#include <arm32/arm32/disassem.h>
-
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-
 u_int arm700bugcount = 0;
-
-/* Macors to simplify the switch statement below */
-
-#define SYSCALL_SPECIAL_RETURN			\
-	userret(p, frame->tf_pc, sticks);	\
-	return;
 
 /*
  * syscall(frame):
  *
  * System call request from POSIX system call gate interface to kernel.
  */
-
 void
 syscall(frame, code)
 	trapframe_t *frame;
 	int code;
 {
-	caddr_t params;
+	caddr_t stackargs;
 	const struct sysent *callp;
 	struct proc *p;
-	int error, opc;
+	int error;
 	u_int argsize;
-	int args[8], rval[2];
-	int nsys;
-	u_quad_t sticks;
+	int *args, copyargs[8], rval[2];
 	int regparams;
 
 	/*
@@ -104,34 +123,14 @@ syscall(frame, code)
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 
+#ifdef DEBUG
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("syscall: not in SVC32 mode");
+#endif	/* DEBUG */
+
 	uvmexp.syscalls++;
-
-	/*
-	 * Trap SWI instructions executed in non-USR32 mode
-	 *
-	 * CONTINUE_AFTER_NONUSR_SYSCALL is used to determine whether the
-	 * kernel should continue running following a swi instruction in
-	 * non-USR32 mode. This was used for debugging and can problably
-	 * be removed altogether
-	 */
-
-#ifdef DIAGNOSTIC
-	if ((frame->tf_spsr & PSR_MODE) != PSR_USR32_MODE) {
-		printf("syscall: swi 0x%x from non USR32 mode\n", code);
-		printf("syscall: trapframe=%p\n", frame);
-
-#ifdef CONTINUE_AFTER_NONUSR_SYSCALL
-		printf("syscall: The system should now be considered very unstable :-(\n");
-		sigexit(curproc, SIGILL);
-
-		/* Not reached */
-
-		panic("syscall: How did we get here ?\n");
-#else
-		panic("syscall in non USR32 mode\n");
-#endif	/* CONTINUE_AFTER_NONUSR_SYSCALL */
-	}
-#endif	/* DIAGNOSTIC */
+	p = curproc;
+	p->p_md.md_regs = frame;
 
 #ifdef CPU_ARM7
 	/*
@@ -151,45 +150,17 @@ syscall(frame, code)
 	 * then we hit the bug.
 	 */
 	if ((ReadWord(frame->tf_pc - INSN_SIZE) & 0x0f000000) != 0x0f000000) {
-#ifdef ARM700BUGTRACK
-		/* Verbose bug tracking */
-
-		int loop;
-
-		printf("ARM700 just stumbled at 0x%08x\n", frame->tf_pc - INSN_SIZE);
-		printf("Code leading up to this was\n");
-		for (loop = frame->tf_pc - 32; loop < frame->tf_pc; loop += 4)
-			disassemble(loop);
-
-		printf("CPU ID=%08x\n", cpu_id());
-		printf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
-		printf("Page table entry for 0x%08x at %p = 0x%08x\n",
-		    frame->tf_pc - INSN_SIZE, vtopte(frame->tf_pc - INSN_SIZE),
-		    *vtopte(frame->tf_pc - INSN_SIZE));
-#endif	/* ARM700BUGTRACK */
-
 		frame->tf_pc -= INSN_SIZE;
 		++arm700bugcount;
-
-		userret(curproc, frame->tf_pc, curproc->p_sticks);
-
+		userret(p);
 		return;
 	}
 #endif	/* CPU_ARM7 */
 
-#ifdef DIAGNOSTIC
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("syscall: Not in SVC32 mode\n");
-#endif	/* DIAGNOSTIC */
-
-	p = curproc;
-	sticks = p->p_sticks;
-	p->p_md.md_regs = frame;
-
 	/*
 	 * Support for architecture dependant SWIs
 	 */
-	if (code > 0x00f00000) {
+	if (code & 0x00f00000) {
 		/*
 		 * Support for the Architecture defined SWI's in case the
 		 * processor does not support them.
@@ -204,47 +175,25 @@ syscall(frame, code)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - 4));
+			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - INSN_SIZE));
 			break;
 		}
 
-		userret(p, frame->tf_pc, sticks);
+		userret(p);
 		return;
 	}
 
-#ifdef PMAP_DEBUG
-	/* Debug info */
-    	if (pmap_debug_level >= -1)
-		printf("SYSCALL: code=%08x lr=%08x pid=%d\n",
-		    code, frame->tf_pc, p->p_pid);
-#endif	/* PMAP_DEBUG */
-
-	opc = frame->tf_pc;
-	params = (caddr_t)&frame->tf_r0;
-	regparams = 4;
-	nsys = p->p_emul->e_nsysent;
+	stackargs = (caddr_t)&frame->tf_r0;
+	regparams = 4 * sizeof(int);
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {	
-#if defined(DDB) && defined(PORTMASTER)
-	/* Sometimes I want to enter the debugger outside of the interrupt handler */
-	case 0x102e:
-		if (securelevel > 0) {
-			frame->tf_r0 = EPERM;
-			frame->tf_spsr |= PSR_C_bit;	/* carry bit */
-			SYSCALL_SPECIAL_RETURN;
-		}
-		Debugger();
-		SYSCALL_SPECIAL_RETURN;
-		break;
-#endif	/* DDB && PORTMASTER */
-
 	case SYS_syscall:
 		/* Don't have to look in user space, we have it in the trapframe */
-/*		code = fuword(params);*/
-		code = ReadWord(params);
-		params += sizeof(int);
-		regparams -= 1;
+/*		code = fuword(stackargs);*/
+		code = ReadWord(stackargs);
+		stackargs += sizeof(int);
+		regparams -= sizeof(int);
 		break;
 	
         case SYS___syscall:
@@ -252,10 +201,10 @@ syscall(frame, code)
 			break;
 
 		/* Since this will be a register we look in the trapframe not user land */
-/*		code = fuword(params + _QUAD_LOWWORD * sizeof(int));*/
-		code = ReadWord(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
-		regparams -= 2;
+/*		code = fuword(stackargs + _QUAD_LOWWORD * sizeof(int));*/
+		code = ReadWord(stackargs + _QUAD_LOWWORD * sizeof(int));
+		stackargs += sizeof(quad_t);
+		regparams -= sizeof(quad_t);
 		break;
 
         default:
@@ -263,34 +212,18 @@ syscall(frame, code)
 		break;
 	}
 
-	/* Validate syscall range */
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;            /* illegal */
-	else
-		callp += code;
-
-#ifdef VERBOSE_ARM32
-	/* Is the syscal valid ? */
-	if (callp->sy_call == sys_nosys) {
-		printf("syscall: nosys code=%d lr=%08x proc=%08x pid=%d %s\n",
-		    code, frame->tf_pc, (u_int)p, p->p_pid, p->p_comm);
-	}
-#endif
-
+	code &= (SYS_NSYSENT - 1);
+	callp += code;
 	argsize = callp->sy_argsize;
-	if (argsize > (regparams * sizeof(int)))
-		argsize = regparams*sizeof(int);
-	if (argsize)
-		bcopy(params, (caddr_t)args, argsize);
-
-	argsize = callp->sy_argsize;
-	if (callp->sy_argsize > (regparams * sizeof(int))
-	    && (error = copyin((caddr_t)frame->tf_usr_sp,
-	    (caddr_t)&args[regparams], argsize - (regparams * sizeof(int))))) {
-#ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, callp->sy_narg, args);
-#endif
-		goto bad;
+	if (argsize <= regparams)
+		args = (int *)stackargs;
+	else {
+		args = copyargs;
+		bcopy(stackargs, (caddr_t)args, regparams);
+		error = copyin((caddr_t)frame->tf_usr_sp,
+		    (caddr_t)args + regparams, argsize - regparams);
+		if (error)
+			goto bad;
 	}
 
 #ifdef SYSCALL_DEBUG
@@ -300,21 +233,13 @@ syscall(frame, code)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif
-	rval[0] = 0;
-	rval[1] = frame->tf_r1;
 
+	rval[0] = 0;
+	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
 
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 *
-		 * XXX fork now returns via the child_return so is this
-		 * needed ?
-		 */
-		p = curproc;
 		frame->tf_r0 = rval[0];
 		frame->tf_r1 = rval[1];
 		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
@@ -322,10 +247,9 @@ syscall(frame, code)
 
 	case ERESTART:
 		/*
-		 * Reconstruct the pc. opc contains the old pc address which is 
-		 * the instruction after the swi.
+		 * Reconstruct the pc to point at the swi.
 		 */
-		frame->tf_pc = opc - 4;
+		frame->tf_pc -= INSN_SIZE;
 		break;
 
 	case EJUSTRETURN:
@@ -333,38 +257,33 @@ syscall(frame, code)
 		break;
 
 	default:
-bad:
+	bad:
 		frame->tf_r0 = error;
 		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
 		break;
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval[0]);
+	scdebug_ret(p, code, error, rval);
 #endif
-
-	userret(p, frame->tf_pc, sticks);
-
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
-
 void
 child_return(arg)
 	void *arg;
 {
 	struct proc *p = arg;
-	/* See cpu_fork() */
 	struct trapframe *frame = p->p_md.md_regs;
 
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
 
-	userret(p, frame->tf_pc, 0);
-
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);

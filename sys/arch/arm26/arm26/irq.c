@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.6.2.2 2000/11/20 20:02:27 bouyer Exp $ */
+/* $NetBSD: irq.c,v 1.6.2.3 2000/12/13 14:49:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.6.2.2 2000/11/20 20:02:27 bouyer Exp $");
+__RCSID("$NetBSD: irq.c,v 1.6.2.3 2000/12/13 14:49:25 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -53,9 +53,13 @@ __RCSID("$NetBSD: irq.c,v 1.6.2.2 2000/11/20 20:02:27 bouyer Exp $");
 #include <arch/arm26/iobus/iocvar.h>
 
 #include "ioeb.h"
+#include "unixbp.h"
 
 #if NIOEB > 0
 #include <arch/arm26/ioc/ioebvar.h>
+#endif
+#if NUNIXBP > 0
+#include <arch/arm26/podulebus/unixbpvar.h>
 #endif
 
 extern struct cfdriver ioc_cd;
@@ -63,13 +67,14 @@ extern struct cfdriver ioc_cd;
 extern struct cfdriver ioeb_cd;
 #endif
 
-#define NIRQ 16
+#define NIRQ 20
 extern char *irqnames[];
 
 /*
  * Interrupt masks are held in 32-bit integers.  At present, the
  * bottom eight bits are interrupt register A on the IOC, and the next
- * eight are interrupt register B.  FIQs and the Unix backplane should
+ * eight are interrupt register B.  After that, on systems with Unix
+ * backplanes, there are four bits from there.  FIQs should
  * be represented eventually.
  */
 
@@ -96,7 +101,7 @@ irq_init(void)
 
 	irq_genmasks();
 	softintr_init();
-}	
+}
 
 /*
  * This is optimised for speed rather than generality.  It expects to
@@ -118,6 +123,9 @@ irq_handler(struct irqframe *irqf)
 #endif
 	/* Get the current interrupt state */
 	status = ioc_irq_status_full(ioc_cd.cd_devs[0]);
+#if NUNIXBP > 0
+	status |= unixbp_irq_status_full() << IRQ_UNIXBP_BASE;
+#endif
 
 	/* Get interrupt-disabling back to the IOC */
 	s = splhigh();
@@ -182,7 +190,11 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
 	MALLOC(new, struct irq_handler *, sizeof(struct irq_handler),
 	       M_DEVBUF, M_WAITOK);
 	new->irqnum = irqnum;
-	new->mask = 1 << irqnum; /* XXX unix BP etc */
+	new->mask = 1 << irqnum;
+#if NUNIXBP > 0
+	if (irqnum >= IRQ_UNIXBP_BASE)
+		new->mask |= 1 << IRQ_PIRQ;
+#endif
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
@@ -199,7 +211,11 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg)
 	}
 	if (new->mask & IOC_IRQ_CLEARABLE_MASK)
 		ioc_irq_clear(ioc_cd.cd_devs[0], new->mask);
-	/* XXX IOEB support needed */
+#if NIOEB > 0
+	else if ((h->mask & IOEB_IRQ_CLEARABLE_MASK) &&
+	    ioeb_cd.cd_ndevs > 0 && ioeb_cd.cd_devs[0] != NULL)
+		ioeb_irq_clear(ioeb_cd.cd_devs[0], h->mask);
+#endif
 	irq_genmasks();
 	return new;
 }
@@ -294,6 +310,9 @@ hardsplx(int s)
 	if (ioc_cd.cd_ndevs > 0 && ioc_cd.cd_devs != NULL &&
 	    ioc_cd.cd_devs[0] != NULL)
 		ioc_irq_setmask(ioc_cd.cd_devs[0], irqmask[s]);
+#if NUNIXBP > 0
+	unixbp_irq_setmask(irqmask[s] >> IRQ_UNIXBP_BASE);
+#endif
 	current_spl = s;
 	return was; /* Restore interrupt state */
 }

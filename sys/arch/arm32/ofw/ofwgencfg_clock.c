@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.6.14.1 2000/11/20 20:04:04 bouyer Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.6.14.2 2000/12/13 14:50:14 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -176,13 +176,6 @@ microtime(tvp)
 
 	oldtv = *tvp;
 	(void)splx(s);		
-}
-
-
-void
-need_proftick(p)
-	struct proc *p;
-{
 }
 
 /*

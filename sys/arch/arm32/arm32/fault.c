@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.43.2.2 2000/11/22 15:59:56 bouyer Exp $	*/
+/*	$NetBSD: fault.c,v 1.43.2.3 2000/12/13 14:49:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -143,7 +143,6 @@ data_abort_handler(frame)
 	u_int fault_instruction;
 	int fault_code;
 	int user;
-	u_quad_t sticks = 0;
 	int error;
 	void *onfault;
 
@@ -162,6 +161,11 @@ data_abort_handler(frame)
 	 */
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
+
+#ifdef DEBUG
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("data_abort_handler: not in SVC32 mode");
+#endif
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
@@ -233,8 +237,6 @@ copyfault:
 
 	/* Were we in user mode when the abort occurred ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		sticks = p->p_sticks;
-        
 		/*
 		 * Note that the fault was from USR mode.
 		 */
@@ -360,7 +362,7 @@ copyfault:
 				 * priveledged mode but uses USR mode
 				 * permissions for its accesses.
 				 */
-				userret(p, frame->tf_pc, p->p_sticks);
+				userret(p);
 				return;
 			}
 			map = kernel_map;
@@ -452,7 +454,7 @@ copyfault:
 out:
 	/* Call userret() if it was a USR mode fault */
 	if (user)
-		userret(p, frame->tf_pc, sticks);
+		userret(p);
 }
 
 
@@ -478,7 +480,6 @@ prefetch_abort_handler(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	u_int fault_instruction;
-	u_quad_t sticks;
 	pt_entry_t *pte;
 	int error;
 
@@ -490,12 +491,10 @@ prefetch_abort_handler(frame)
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 
-#ifdef DIAGNOSTIC
-	/* Paranoia: We should always be in SVC32 mode at this point */
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
-		panic("Fault handler not in SVC mode\n");
-	}
-#endif	/* DIAGNOSTIC */
+#ifdef DEBUG
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("prefetch_abort_handler: not in SVC32 mode");
+#endif
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
@@ -539,7 +538,6 @@ prefetch_abort_handler(frame)
 	/* Was the prefectch abort from USR32 mode ? */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		sticks = p->p_sticks;
 		p->p_md.md_regs = frame;
 	} else {
 		/*
@@ -563,7 +561,7 @@ prefetch_abort_handler(frame)
 		    fault_pc);
 #endif
 		trapsignal(p, SIGSEGV, fault_pc);
-		userret(p, frame->tf_pc, sticks);
+		userret(p);
 		return;
 	}
 
@@ -614,7 +612,7 @@ prefetch_abort_handler(frame)
 #endif	/* DIAGNOSTIC */
 	}
 
-	userret(p, frame->tf_pc, sticks);
+	userret(p);
 }
 
 int
