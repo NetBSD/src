@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.37 2004/03/24 19:14:07 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.38 2004/03/24 22:03:17 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ form_status(FORM *form)
 	snprintf(buf, sizeof(buf), "%s (%d/%d)",
 	    catgets(catalog, 4, 8, "Form Page:"),
 	    form_page(form)+1, form->max_page); /* XXX */
-	mvwaddstr(stdscr, ws.ws_row-3, 60, buf);
+	mvwaddstr(stdscr, ws.ws_row-3, 62, buf);
 	wrefresh(stdscr);
 }
 
