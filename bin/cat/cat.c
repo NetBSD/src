@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.24 2000/07/31 02:49:28 christos Exp $	*/
+/*	$NetBSD: cat.c,v 1.25 2001/01/03 14:29:24 mjl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.24 2000/07/31 02:49:28 christos Exp $");
+__RCSID("$NetBSD: cat.c,v 1.25 2001/01/03 14:29:24 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ main(argc, argv)
 			tflag = vflag = 1;	/* -t implies -v */
 			break;
 		case 'u':
-			setbuf(stdout, (char *)NULL);
+			setbuf(stdout, NULL);
 			break;
 		case 'v':
 			vflag = 1;
@@ -112,7 +112,7 @@ main(argc, argv)
 		default:
 		case '?':
 			(void)fprintf(stderr,
-			    "usage: cat [-benstuv] [-] [file ...]\n");
+			    "usage: cat [-befnstuv] [-] [file ...]\n");
 			exit(1);
 			/* NOTREACHED */
 		}
