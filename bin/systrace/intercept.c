@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.14 2003/06/03 04:33:44 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.15 2003/08/02 14:24:30 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.14 2003/06/03 04:33:44 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.15 2003/08/02 14:24:30 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,8 +252,6 @@ intercept_setpid(struct intercept_pid *icpid, uid_t uid, gid_t gid)
 
 	icpid->uid = uid;
 	icpid->gid = gid;
-	if (getcwd(icpid->cwd, sizeof(icpid->cwd)) == NULL)
-		err(1, "getcwd");
 	if ((pw = getpwuid(icpid->uid)) == NULL) {
 		snprintf(icpid->username, sizeof(icpid->username),
 		    "unknown(%d)", icpid->uid);
@@ -574,7 +572,6 @@ char *
 intercept_filename(int fd, pid_t pid, void *addr, int userp)
 {
 	static char cwd[2*MAXPATHLEN];
-	struct intercept_pid *icpid;
 	char *name;
 	int havecwd = 0;
 
@@ -596,13 +593,6 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 		if (getcwd(cwd, sizeof(cwd)) == NULL)
 			goto getcwderr;
 		havecwd = 1;
-	}
-
-	if (havecwd) {
-		/* Update cwd for process */
-		icpid = intercept_getpid(pid);
-		if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
-			errx(1, "cwd too long");
 	}
 
 	/* Need concatenated path for simplifypath */
@@ -861,7 +851,6 @@ intercept_child_info(pid_t opid, pid_t npid)
 	inpid->gid = ipid->gid;
 	strlcpy(inpid->username, ipid->username, sizeof(inpid->username));
 	strlcpy(inpid->home, ipid->home, sizeof(inpid->home));
-	strlcpy(inpid->cwd, ipid->cwd, sizeof(inpid->cwd));
 
 	/* XXX - keeps track of emulation */
 	intercept.clonepid(ipid, inpid);
