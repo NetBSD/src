@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.24 2003/09/06 22:55:06 erh Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.24.2.1 2004/07/19 09:02:16 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.24 2003/09/06 22:55:06 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.24.2.1 2004/07/19 09:02:16 tron Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -503,15 +503,11 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 	/* set up ep_emul_arg */
 	argp = malloc(sizeof(struct pecoff_args), M_TEMP, M_WAITOK);
 	epp->ep_emul_arg = argp;
-	argp->a_base = wp->w_base;
+	argp->a_abiversion = NETBSDPE_ABI_VERSION;
+	argp->a_zero = 0;
 	argp->a_entry = wp->w_base + ap->a_entry;
 	argp->a_end = epp->ep_daddr + epp->ep_dsize;
-	argp->a_subsystem = wp->w_subvers;
-	memcpy(argp->a_imghdr, wp->w_imghdr, sizeof(wp->w_imghdr));
-	/* imghdr RVA --> VA */
-	for (i = 0; i < 16; i++) {
-		argp->a_imghdr[i].i_vaddr += wp->w_base;
-	}
+	argp->a_opthdr = *wp;
 
 	/*
 	 * load dynamic linker
