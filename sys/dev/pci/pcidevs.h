@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.51 1998/01/09 06:54:54 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.52 1998/01/22 22:37:04 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.45 1997/11/16 22:33:21 christos Exp 
+ *	NetBSD: pcidevs,v 1.46 1998/01/22 22:36:16 mycroft Exp 
  */
 
 /*
@@ -788,6 +788,7 @@
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (\"Atlas\") */
 #define	PCI_PRODUCT_MATROX_MILLENNIUM	0x0519		/* MGA Millennium 2064W (\"Storm\") */
+#define	PCI_PRODUCT_MATROX_MILLENNIUM_II	0x051B		/* MGA Millennium II 2164W */
 #define	PCI_PRODUCT_MATROX_MYSTIQUE	0x102B		/* MGA 1064SG */
 
 /* Mylex products */
