@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.15 2002/04/18 12:19:06 martin Exp $ 
+ *	$Id: isic.c,v 1.16 2002/04/29 13:42:42 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.15 2002/04/18 12:19:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.16 2002/04/29 13:42:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -190,15 +190,19 @@ isicintr(void *arg)
 			}
 			if(ipac_irq_stat & IPAC_ISTA_ICD)
 			{
-				/* ISAC interrupt */
-				isic_isac_irq(sc, ISAC_READ(I_ISTA));
+				/* ISAC interrupt, Obey ISAC-IPAC differences */
+				u_int8_t isac_ista = ISAC_READ(I_ISTA);
+				if (isac_ista & 0xfe)
+					isic_isac_irq(sc, isac_ista & 0xfe);
+				if (isac_ista & 0x01) /* unexpected */
+					printf("%s: unexpected ipac timer2 irq\n", 
+					    sc->sc_dev.dv_xname);
 				was_ipac_irq = 1;
 			}
 			if(ipac_irq_stat & IPAC_ISTA_EXD)
 			{
-				/* force ISAC interrupt handling */
-				if (sc->sc_intr_valid == ISIC_INTR_VALID)
-					isic_isac_irq(sc, ISAC_ISTA_EXI);
+				/* ISAC EXI interrupt */
+				isic_isac_irq(sc, ISAC_ISTA_EXI);
 				was_ipac_irq = 1;
 			}
 	
