@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.2 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: sysdb,v 1.3 2000/07/26 00:11:49 lukem Exp $
 #
 
 # PROVIDE: databases
-# REQUIRE: systemfs
+# REQUIRE: mountcritremote
 
 . /etc/rc.subr
 
