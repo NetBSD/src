@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.6.6 1999/03/14 08:12:17 minoura Exp $
+#	$NetBSD: INSTALL,v 1.7.6.7 1999/03/14 12:25:03 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -192,6 +192,8 @@ grf0	at grfbus0			# multiplane graphics
 
 kbd0	at mfp0				# standard keyboard
 ite0	at grf0				# internal terminal emulator
+#options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
+					# see /sys/arch/x68k/dev/itevar.h
 #!pow0	at mfp0 flags 0			# power switch status; intr enabled
 #!pow1	at mfp0 flags 1			# power switch status; read only
 pseudo-device	pow		2	#! software power switch
