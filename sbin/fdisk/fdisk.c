@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.66 2003/07/07 11:45:00 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.67 2003/07/14 09:32:12 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.66 2003/07/07 11:45:00 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.67 2003/07/14 09:32:12 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1373,6 +1373,8 @@ intuit_translated_geometry(void)
 
 	/* Estimate the number of cylinders. */
 	xcylinders = disklabel.d_secperunit / xheads / xsectors;
+	if (disklabel.d_secperunit > xcylinders * xheads * xsectors)
+		xcylinders++;
 
 	/*
 	 * Now verify consistency with each of the partition table entries.
@@ -1382,18 +1384,20 @@ intuit_translated_geometry(void)
 	for (i = 0; i < NMBRPART * 2; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
+		if (c1 >= MAXCYL - 2)
+			continue;
 		if (xsectors * (c1 * xheads + h1) + s1 != a1)
 			return;
-		if (c1 >= xcylinders)
-			xcylinders = c1 + 1;
 	}
 
 
 	/* Everything checks out.
 	 * Reset the geometry to use for further calculations.
-	 * But cylinders cannot be > 1024, we set the max at the top.
+	 * But cylinders cannot be > 1024.
 	 */
-	if (dos_cylinders > xcylinders)
+	if (xcylinders > MAXCYL)
+		dos_cylinders = MAXCYL;
+	else
 		dos_cylinders = xcylinders;
 	dos_heads = xheads;
 	dos_sectors = xsectors;
