@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.29 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.30 2005/01/01 21:02:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -120,8 +120,6 @@ uvm_map_setup(struct vm_map *map, vaddr_t min, vaddr_t max, int flags)
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 	simple_lock_init(&map->flags_lock);
-	LIST_INIT(&map->kentry_free);
-	map->merged_entries = NULL;
 }
 
 
@@ -175,6 +173,16 @@ uvm_map_reference(struct vm_map *map)
 	map->ref_count++;
 	simple_unlock(&map->ref_lock);
 }
+
+MAP_INLINE struct vm_map_kernel *
+vm_map_to_kernel(struct vm_map *map)
+{
+
+	KASSERT(VM_MAP_IS_KERNEL(map));
+
+	return (struct vm_map_kernel *)map;
+}
+
 #endif /* _UVM_UVM_MAP_I_H_ */
 
 #endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */

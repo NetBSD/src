@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.91 2005/01/01 03:24:43 simonb Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.92 2005/01/01 21:02:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.91 2005/01/01 03:24:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.92 2005/01/01 21:02:13 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.91 2005/01/01 03:24:43 simonb Exp 
 
 #include <uvm/uvm_extern.h>
 
-static struct vm_map kmem_map_store;
+static struct vm_map_kernel kmem_map_store;
 struct vm_map *kmem_map = NULL;
 
 #include "opt_kmempages.h"

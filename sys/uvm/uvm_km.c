@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.70 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.71 2005/01/01 21:02:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,11 +134,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.70 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.71 2005/01/01 21:02:13 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 
@@ -154,7 +155,7 @@ struct vm_map *kernel_map = NULL;
  * local data structues
  */
 
-static struct vm_map		kernel_map_store;
+static struct vm_map_kernel	kernel_map_store;
 static struct vm_map_entry	kernel_first_mapent_store;
 
 /*
@@ -186,20 +187,21 @@ uvm_km_init(start, end)
 	 * have been allocated kernel space before installing.
 	 */
 
-	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
-	kernel_map_store.pmap = pmap_kernel();
+	uvm_map_setup_kernel(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
+	kernel_map_store.vmk_map.pmap = pmap_kernel();
 	if (start != base) {
 		int error;
 		struct uvm_map_args args;
 
-		error = uvm_map_prepare(&kernel_map_store, base, start - base,
+		error = uvm_map_prepare(&kernel_map_store.vmk_map,
+		    base, start - base,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED), &args);
 		if (!error) {
 			kernel_first_mapent_store.flags =
 			    UVM_MAP_KERNEL | UVM_MAP_FIRST;
-			error = uvm_map_enter(&kernel_map_store, &args,
+			error = uvm_map_enter(&kernel_map_store.vmk_map, &args,
 			    &kernel_first_mapent_store);
 		}
 
@@ -212,7 +214,7 @@ uvm_km_init(start, end)
 	 * install!
 	 */
 
-	kernel_map = &kernel_map_store;
+	kernel_map = &kernel_map_store.vmk_map;
 }
 
 /*
@@ -232,9 +234,11 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	vsize_t size;
 	int flags;
 	boolean_t fixed;
-	struct vm_map *submap;
+	struct vm_map_kernel *submap;
 {
 	int mapflags = UVM_FLAG_NOMERGE | (fixed ? UVM_FLAG_FIXED : 0);
+
+	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);	/* round up to pagesize */
 
@@ -260,22 +264,21 @@ uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 
 	pmap_reference(vm_map_pmap(map));
 	if (submap == NULL) {
-		submap = uvm_map_create(vm_map_pmap(map), *min, *max, flags);
+		submap = malloc(sizeof(*submap), M_VMMAP, M_WAITOK);
 		if (submap == NULL)
 			panic("uvm_km_suballoc: unable to create submap");
-	} else {
-		uvm_map_setup(submap, *min, *max, flags);
-		submap->pmap = vm_map_pmap(map);
 	}
+	uvm_map_setup_kernel(submap, *min, *max, flags);
+	submap->vmk_map.pmap = vm_map_pmap(map);
 
 	/*
 	 * now let uvm_map_submap plug in it...
 	 */
 
-	if (uvm_map_submap(map, *min, *max, submap) != 0)
+	if (uvm_map_submap(map, *min, *max, &submap->vmk_map) != 0)
 		panic("uvm_km_suballoc: submap allocation failed");
 
-	return(submap);
+	return(&submap->vmk_map);
 }
 
 /*

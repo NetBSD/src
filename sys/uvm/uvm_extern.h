@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.94 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.95 2005/01/01 21:02:13 yamt Exp $	*/
 
 /*
  *
@@ -597,7 +597,7 @@ vaddr_t			uvm_km_kmemalloc(struct vm_map *, struct
 			    uvm_object *, vsize_t, int);
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, boolean_t,
-			    struct vm_map *);
+			    struct vm_map_kernel *);
 vaddr_t			uvm_km_valloc1(struct vm_map *, vsize_t,
 			    vsize_t, voff_t, uvm_flag_t);
 vaddr_t			uvm_km_valloc(struct vm_map *, vsize_t);

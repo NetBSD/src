@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.40 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.41 2005/01/01 21:02:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -229,14 +229,22 @@ struct vm_map {
 	int			flags;		/* flags */
 	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
-	LIST_HEAD(, uvm_kmapent_hdr) kentry_free; /* Freelist of map entry */
-
-	struct vm_map_entry	*merged_entries;/* Merged entries, kept for
-						 * later splitting */
 
 #define	min_offset		header.end
 #define	max_offset		header.start
 };
+
+#if defined(_KERNEL)
+struct vm_map_kernel {
+	struct vm_map vmk_map;
+	LIST_HEAD(, uvm_kmapent_hdr) vmk_kentry_free;
+			/* Freelist of map entry */
+	struct vm_map_entry	*vmk_merged_entries;
+			/* Merged entries, kept for later splitting */
+};
+#endif /* defined(_KERNEL) */
+
+#define	VM_MAP_IS_KERNEL(map)	(vm_map_pmap(map) == pmap_kernel())
 
 /* vm_map flags */
 #define	VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable */
@@ -331,6 +339,11 @@ int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
 		    vaddr_t *);
 void		uvm_map_setup(struct vm_map *, vaddr_t, vaddr_t, int);
+void		uvm_map_setup_kernel(struct vm_map_kernel *,
+		    vaddr_t, vaddr_t, int);
+MAP_INLINE
+struct vm_map_kernel *
+		vm_map_to_kernel(struct vm_map *);
 int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
 MAP_INLINE
