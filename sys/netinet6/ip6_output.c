@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.50 2002/06/07 14:43:11 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.51 2002/06/07 14:48:56 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.50 2002/06/07 14:43:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.51 2002/06/07 14:48:56 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -183,7 +183,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			goto freehdrs;					\
 	}								\
     } while (0)
-	
+
 	bzero(&exthdrs, sizeof(exthdrs));
 	if (opt) {
 		/* Hop-by-Hop options header */
@@ -224,7 +224,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		/* no need to do IPsec. */
 		needipsec = 0;
 		break;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		if (sp->req == NULL) {
 			/* XXX should be panic ? */
@@ -1242,7 +1242,6 @@ ip6_ctloutput(op, so, level, optname, mp)
 
 	if (level == IPPROTO_IPV6) {
 		switch (op) {
-
 		case PRCO_SETOPT:
 			switch (optname) {
 			case IPV6_PKTOPTIONS:
