@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2000/06/09 09:05:02 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2001/02/19 22:56:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2000/06/09 09:05:02 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2001/02/19 22:56:22 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,6 @@ __RCSID("$NetBSD: main.c,v 1.20 2000/06/09 09:05:02 enami Exp $");
 
 #include "restore.h"
 #include "extern.h"
-
-extern char *__progname;	/* from crt0.o */
 
 int	bflag = 0, cvtflag = 0, dflag = 0, vflag = 0, yflag = 0;
 int	hflag = 1, mflag = 1, Nflag = 0;
@@ -294,22 +292,23 @@ main(argc, argv)
 static void
 usage()
 {
+	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
 	    "usage: %s -i [-cdhmvyN] [-b blocksize] [-f file] [-s fileno]\n",
-	    __progname);
+	    progname);
 	(void)fprintf(stderr,
 	    "\t%s -R [-cdvyN] [-b blocksize] [-f file] [-s fileno]\n",
-	    __progname);
+	    progname);
 	(void)fprintf(stderr,
 	    "\t%s -r [-cdvyN] [-b blocksize] [-f file] [-s fileno]\n",
-	    __progname);
+	    progname);
 	(void)fprintf(stderr,
 	    "\t%s -t [-cdhvy] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
-	    __progname);
+	    progname);
 	(void)fprintf(stderr,
 	    "\t%s -x [-cdhmvyN] [-b blocksize] [-f file] [-s fileno] [file ...]\n",
-	    __progname);
+	    progname);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.41 2000/12/01 12:48:09 simonb Exp $	*/
+/*	$NetBSD: newfs.c,v 1.42 2001/02/19 22:56:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.41 2000/12/01 12:48:09 simonb Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.42 2001/02/19 22:56:21 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,6 @@ int	unlabeled;
 #endif
 
 char	device[MAXPATHLEN];
-extern char *__progname;
 
 int
 main(int argc, char *argv[])
@@ -207,7 +206,7 @@ main(int argc, char *argv[])
 	int status;
 #endif
 
-	if (strstr(__progname, "mfs")) {
+	if (strstr(getprogname(), "mfs")) {
 		mfs = 1;
 		Nflag++;
 	}
@@ -712,11 +711,11 @@ usage(void)
 	if (mfs) {
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device mount-point\n",
-			__progname);
+			getprogname());
 	} else
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device%s\n",
-		    __progname,
+		    getprogname(),
 #ifdef COMPAT
 		    " [device-type]");
 #else

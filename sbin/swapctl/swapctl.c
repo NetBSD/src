@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.17 2000/11/17 12:35:09 lukem Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.18 2001/02/19 22:56:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -123,8 +123,6 @@ static	void swapon_command __P((int, char **));
 static	void swapoff_command __P((int, char **));
 #endif
 
-extern	char *__progname;	/* from crt0.o */
-
 int
 main(argc, argv)
 	int	argc;
@@ -132,13 +130,13 @@ main(argc, argv)
 {
 	int	c;
 
-	if (strcmp(__progname, "swapon") == 0) {
+	if (strcmp(getprogname(), "swapon") == 0) {
 		swapon_command(argc, argv);
 		/* NOTREACHED */
 	}
 
 #if 0
-	if (strcmp(__progname, "swapoff") == 0) {
+	if (strcmp(getprogname(), "swapoff") == 0) {
 		swapoff_command(argc, argv);
 		/* NOTREACHED */
 	}
@@ -334,8 +332,8 @@ swapon_command(argc, argv)
 	/* NOTREACHED */
 
  swapon_usage:
-	fprintf(stderr, "usage: %s -a [-t blk|noblk]\n", __progname);
-	fprintf(stderr, "       %s <path> ...\n", __progname);
+	fprintf(stderr, "usage: %s -a [-t blk|noblk]\n", getprogname());
+	fprintf(stderr, "       %s <path> ...\n", getprogname());
 	exit(1);
 }
 
@@ -400,7 +398,7 @@ set_dumpdev(path)
 	if (swapctl(SWAP_DUMPDEV, path, NULL) == -1)
 		warn("could not set dump device to %s", path);
 	else
-		printf("%s: setting dump device to %s\n", __progname, path);
+		printf("%s: setting dump device to %s\n", getprogname(), path);
 }
 
 static void
@@ -521,14 +519,14 @@ do_fstab(add)
 				gotone = 1;
 				printf(
 			    	"%s: adding %s as swap device at priority %d\n",
-				    __progname, fp->fs_spec, (int)priority);
+				    getprogname(), fp->fs_spec, (int)priority);
 			}
 		} else {
 			if (delete_swap(spec)) {
 				gotone = 1;
 				printf(
 				    "%s: removing %s as swap device\n",
-				    __progname, fp->fs_spec);
+				    getprogname(), fp->fs_spec);
 			}
 			if (cmd[0]) {
 				if (system(cmd) != 0) {
@@ -548,14 +546,15 @@ do_fstab(add)
 static void
 usage()
 {
+	const char *progname = getprogname();
 
 	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",
-	    __progname);
-	fprintf(stderr, "       %s -D dumppath\n", __progname);
-	fprintf(stderr, "       %s -U [-t blk|noblk]\n", __progname);
-	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
-	fprintf(stderr, "       %s -c -p priority path\n", __progname);
-	fprintf(stderr, "       %s -d path\n", __progname);
-	fprintf(stderr, "       %s -l | -s [-k]\n", __progname);
+	    progname);
+	fprintf(stderr, "       %s -D dumppath\n", progname);
+	fprintf(stderr, "       %s -U [-t blk|noblk]\n", progname);
+	fprintf(stderr, "       %s -a [-p priority] path\n", progname);
+	fprintf(stderr, "       %s -c -p priority path\n", progname);
+	fprintf(stderr, "       %s -d path\n", progname);
+	fprintf(stderr, "       %s -l | -s [-k]\n", progname);
 	exit(1);
 }

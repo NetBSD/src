@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.10 1999/10/27 22:29:06 mycroft Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.11 2001/02/19 22:56:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,8 +75,6 @@ char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
 const	char *cmdname;			/* command user issued */
 const	char *argnames;			/* helpstring: expected arguments */
 struct	scsi_addr dvaddr;		/* SCSI device's address */
-
-extern const char *__progname;		/* from crt0.o */
 
 void	device_format __P((int, char *[]));
 void	device_identify __P((int, char *[]));
@@ -170,7 +168,7 @@ usage()
 	int i;
 
 	fprintf(stderr, "Usage: %s device command [arg [...]]\n",
-	    __progname);
+	    getprogname());
 
 	fprintf(stderr, "   Commands pertaining to scsi devices:\n");
 	for (i=0; device_commands[i].cmd_name != NULL; i++)
