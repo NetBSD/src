@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.2.4.2 1997/10/15 21:53:14 thorpej Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.2.4.3 1997/10/16 00:51:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 
-#include <dev/isa/comvar.h>
+#include <dev/ic/comvar.h>
 
 struct com_isapnp_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
