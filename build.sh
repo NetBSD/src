@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.29 2001/12/03 08:18:00 jmc Exp $
+#  $NetBSD: build.sh,v 1.30 2001/12/04 04:28:23 jmc Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -58,7 +58,7 @@ getarch () {
 }
 
 getmakevar () {
-	cat <<EOF | $make -m ${TOP}/share/mk -s -f- _x_
+	$make -m ${TOP}/share/mk -s -f- _x_ <<EOF
 _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
@@ -243,6 +243,25 @@ if $do_rebuildmake; then
 	$runcmd rm -f usr.bin/make/*.o usr.bin/make/lst.lib/*.o
 fi
 
+USE_NEW_TOOLCHAIN=`getmakevar USE_NEW_TOOLCHAIN`
+if [ "${USE_NEW_TOOLCHAIN}" != "nowarn" ]; then
+	echo "ERROR: build.sh (new toolchain) is not yet enabled for"
+	echo
+	echo "MACHINE: ${MACHINE}"
+	echo "MACHINE_ARCH: ${MACHINE_ARCH}"
+	echo
+	echo "All builds for this platform should be done via a traditional make"
+	echo
+	echo "If you wish to test using the new toolchain set"
+	echo
+	echo "USE_NEW_TOOLCHAIN=yes"
+	echo
+	echo "in either the environment or mk.conf and rerun"
+	echo
+	echo "$0 $*"
+	exit 1
+fi
+
 # If TOOLDIR isn't already set, make objdirs in "tools" in case the
 # default setting from <bsd.own.mk> is used.
 if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
@@ -325,7 +344,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.29 2001/12/03 08:18:00 jmc Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.30 2001/12/04 04:28:23 jmc Exp $
 #
 
 EOF
