@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.14.4.1 2000/06/26 00:40:38 simonb Exp $	*/
+/*	$NetBSD: at.c,v 1.14.4.2 2001/02/03 21:01:33 he Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -54,6 +54,7 @@
 #include "parsetime.h"
 #include "perm.h"
 #include "pathnames.h"
+#include "stime.h"
 #define MAIN
 #include "privs.h"
 
@@ -69,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.14.4.1 2000/06/26 00:40:38 simonb Exp $");
+__RCSID("$NetBSD: at.c,v 1.14.4.2 2001/02/03 21:01:33 he Exp $");
 #endif
 #endif
 
@@ -577,10 +578,11 @@ main(argc, argv)
 	int c;
 	char queue = DEFAULT_AT_QUEUE;
 	char queue_set = 0;
+	char time_set = 0;
 	char *pgm;
 
-	int program = AT;		/* our default program */
-	char *options = "q:f:mvldbrVc";	/* default options for at */
+	int program = AT;			/* our default program */
+	char *options = "q:f:t:mvldbrVc";	/* default options for at */
 	int disp_version = 0;
 	time_t timer;
 
@@ -603,7 +605,7 @@ main(argc, argv)
 		options = "V";
 	} else if (strcmp(pgm, "batch") == 0) {
 		program = BATCH;
-		options = "f:q:mvV";
+		options = "f:q:t:mvV";
 	}
 
 	/* process whatever options we can process */
@@ -631,6 +633,10 @@ main(argc, argv)
 				usage();
 
 			queue_set = 1;
+			break;
+		case 't':	/* touch(1) date format */
+			timer = stime(optarg);
+			time_set = 1;
 			break;
 
 		case 'd':
@@ -698,7 +704,17 @@ main(argc, argv)
 		break;
 
 	case AT:
-		timer = parsetime(argc, argv);
+		if (argc > optind) {
+			/* -t and timespec argument are mutually exclusive */
+			if (time_set) {
+				usage();
+				exit(EXIT_FAILURE);
+			} else {
+				timer = parsetime(argc, argv);
+				time_set = 1;
+			}
+		}
+
 		if (atverify) {
 			struct tm *tm = localtime(&timer);
 			(void)fprintf(stderr, "%s\n", asctime(tm));
@@ -712,10 +728,18 @@ main(argc, argv)
 		else
 			queue = DEFAULT_BATCH_QUEUE;
 
-		if (argc > optind)
-			timer = parsetime(argc, argv);
-		else
+		if (argc > optind) {
+			/* -t and timespec argument are mutually exclusive */
+			if (time_set) {
+				usage();
+				exit(EXIT_FAILURE);
+			} else {
+				timer = parsetime(argc, argv);
+				time_set = 1;
+			}
+		} else if (!time_set) {
 			timer = time(NULL);
+		}
 
 		if (atverify) {
 			struct tm *tm = localtime(&timer);
