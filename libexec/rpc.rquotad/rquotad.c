@@ -26,6 +26,7 @@
 #include <ufs/ufs/quota.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/rquota.h>
+#include <arpa/inet.h>
 
 void rquota_svc __P((struct svc_req *request, SVCXPRT *transport));
 void exit_svc __P((int signo));
@@ -124,7 +125,8 @@ sendquota(request, transport)
 	struct timeval timev;
 
 	getq_args.gqa_pathp = NULL;	/* allocated by svc_getargs */
-	if (svc_getargs(transport, xdr_getquota_args, &getq_args) == 0) {
+	if (svc_getargs(transport, xdr_getquota_args,
+	    (caddr_t)&getq_args) == 0) {
 		svcerr_decode(transport);
 		return;
 	}
