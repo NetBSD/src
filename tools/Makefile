@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81.2.1 2004/06/17 08:06:20 tron Exp $
+#	$NetBSD: Makefile,v 1.81.2.1.2.1 2005/04/02 22:26:28 he Exp $
 
 .include <bsd.own.mk>
 
@@ -40,15 +40,15 @@ SUBDIR+=	groff
 SUBDIR+=	autoconf gettext
 .endif
 
-.if ${MACHINE} == ibmnws
+.if ${MACHINE} == "ibmnws"
 SUBDIR+=	ibmnws-ncdcs
 .endif
 
-.if ${MACHINE} == macppc
+.if ${MACHINE} == "macppc"
 SUBDIR+=	macppc-fixcoff
 .endif
 
-.if ${MACHINE} == prep
+.if ${MACHINE} == "prep"
 SUBDIR+=	prep-mkbootimage
 .endif
 
@@ -66,6 +66,10 @@ SUBDIR+=	sparkcrc
 
 .if (${MACHINE} == "sparc" || ${MACHINE} == "sparc64")
 SUBDIR+=	fgen
+.endif
+
+.if ${MACHINE} == "hp300"
+SUBDIR+=	hp300-mkboot
 .endif
 
 .endif	# ! NOSUBDIR					# }
