@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.29 1996/11/12 05:14:39 cgd Exp $
+#	$NetBSD: files.alpha,v 1.30 1996/11/17 02:05:29 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -7,6 +7,10 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+# this loses, but there's no way to define attributes which have attributes
+define	alpha_shared_intr
+file	arch/alpha/alpha/shared_intr.c	alpha_shared_intr | dec_eb164 |
+					dec_kn20aa
 
 #
 # Bus-independent devices
@@ -181,7 +185,7 @@ file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio: isabus
+device	sio: isabus, alpha_shared_intr
 attach	sio at pci
 device	pceb: isabus, eisabus
 attach	pceb at pci
