@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.11 2004/12/13 19:21:42 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.12 2004/12/13 19:22:57 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -840,7 +840,7 @@ ethfoo_dev_cloner(struct proc *p)
 
 	sc->sc_flags |= ETHFOO_INUSE;
 
-	return fdclone(p, fp, fd, &ethfoo_fileops, (void *)sc->sc_dev.dv_unit);
+	return fdclone(p, fp, fd, &ethfoo_fileops, (void *)(intptr_t)sc->sc_dev.dv_unit);
 }
 
 /*
@@ -874,7 +874,7 @@ ethfoo_cdev_close(dev_t dev, int flags, int fmt, struct proc *p)
 static int
 ethfoo_fops_close(struct file *fp, struct proc *p)
 {
-	int unit = (int)fp->f_data;
+	int unit = (intptr_t)fp->f_data;
 	struct ethfoo_softc *sc;
 	int error;
 
@@ -937,7 +937,7 @@ static int
 ethfoo_fops_read(struct file *fp, off_t *offp, struct uio *uio,
     struct ucred *cred, int flags)
 {
-	return ethfoo_dev_read((int)fp->f_data, uio, flags);
+	return ethfoo_dev_read((intptr_t)fp->f_data, uio, flags);
 }
 
 static int
@@ -1034,7 +1034,7 @@ static int
 ethfoo_fops_write(struct file *fp, off_t *offp, struct uio *uio,
     struct ucred *cred, int flags)
 {
-	return ethfoo_dev_write((int)fp->f_data, uio, flags);
+	return ethfoo_dev_write((intptr_t)fp->f_data, uio, flags);
 }
 
 static int
@@ -1098,7 +1098,7 @@ ethfoo_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 static int
 ethfoo_fops_ioctl(struct file *fp, u_long cmd, void *data, struct proc *p)
 {
-	return ethfoo_dev_ioctl((int)fp->f_data, cmd, (caddr_t)data, p);
+	return ethfoo_dev_ioctl((intptr_t)fp->f_data, cmd, (caddr_t)data, p);
 }
 
 static int
@@ -1167,7 +1167,7 @@ ethfoo_cdev_poll(dev_t dev, int events, struct proc *p)
 static int
 ethfoo_fops_poll(struct file *fp, int events, struct proc *p)
 {
-	return ethfoo_dev_poll((int)fp->f_data, events, p);
+	return ethfoo_dev_poll((intptr_t)fp->f_data, events, p);
 }
 
 static int
@@ -1216,7 +1216,7 @@ ethfoo_cdev_kqfilter(dev_t dev, struct knote *kn)
 static int
 ethfoo_fops_kqfilter(struct file *fp, struct knote *kn)
 {
-	return ethfoo_dev_kqfilter((int)fp->f_data, kn);
+	return ethfoo_dev_kqfilter((intptr_t)fp->f_data, kn);
 }
 
 static int
