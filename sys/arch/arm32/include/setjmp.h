@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.4 1997/10/14 09:20:32 mark Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.5 1998/08/04 02:01:17 mark Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
@@ -51,29 +51,29 @@
  * mysteriously.
  */
 
-#define JMPBUF_MAGIC__SETJMP	0x4278f500
-#define JMPBUF_MAGIC_SETJMP	0x4278f501
+#define _JB_MAGIC__SETJMP	0x4278f500
+#define _JB_MAGIC_SETJMP	0x4278f501
 
 /* Valid for all jmp_buf's */
 
-#define JMPBUF_MAGIC		 0
-#define JMPBUF_REG_F4		 1
-#define JMPBUF_REG_F5		 4
-#define JMPBUF_REG_F6		 7
-#define JMPBUF_REG_F7		10
-#define JMPBUF_REG_FPSR		13
-#define JMPBUF_REG_R4		14
-#define JMPBUF_REG_R5		15
-#define JMPBUF_REG_R6		16
-#define JMPBUF_REG_R7		17
-#define JMPBUF_REG_R8		18
-#define JMPBUF_REG_R9		19
-#define JMPBUF_REG_R10		20
-#define JMPBUF_REG_R11		21
-#define JMPBUF_REG_R12		22
-#define JMPBUF_REG_R13		23
-#define JMPBUF_REG_R14		24
+#define _JB_MAGIC		 0
+#define _JB_REG_F4		 1
+#define _JB_REG_F5		 4
+#define _JB_REG_F6		 7
+#define _JB_REG_F7		10
+#define _JB_REG_FPSR		13
+#define _JB_REG_R4		14
+#define _JB_REG_R5		15
+#define _JB_REG_R6		16
+#define _JB_REG_R7		17
+#define _JB_REG_R8		18
+#define _JB_REG_R9		19
+#define _JB_REG_R10		20
+#define _JB_REG_R11		21
+#define _JB_REG_R12		22
+#define _JB_REG_R13		23
+#define _JB_REG_R14		24
 
-/* Only valid with the JMPBUF_MAGIC_SETJMP magic */
+/* Only valid with the _JB_MAGIC_SETJMP magic */
 
-#define JMPBUF_SIGMASK		25
+#define _JB_SIGMASK		25
