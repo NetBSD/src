@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.8 2003/01/24 21:55:18 fvdl Exp $ */
+/* $NetBSD: lfs.c,v 1.9 2003/02/23 22:47:44 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -81,12 +81,6 @@
 #include <lib/libkern/libkern.h>
 #else
 #include <string.h>
-inline u_int
-max(a, b)
-        u_int a, b;
-{
-        return (a > b ? a : b);
-}
 #endif
 
 #include "stand.h"
