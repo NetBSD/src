@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.37 1998/07/06 06:51:39 mrg Exp $       */
+/*     $NetBSD: login.c,v 1.38 1998/07/11 08:12:51 mrg Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.37 1998/07/06 06:51:39 mrg Exp $");
+__RCSID("$NetBSD: login.c,v 1.38 1998/07/11 08:12:51 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: login.c,v 1.37 1998/07/06 06:51:39 mrg Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/file.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -273,6 +274,7 @@ main(argc, argv)
 			failures = 0;
 		}
 		(void)strncpy(tbuf, username, sizeof(tbuf) - 1);
+		tbuf[sizeof(tbuf) - 1] = '\0';
 
 		if ((pwd = getpwnam(username)) != NULL)
 			salt = pwd->pw_passwd;
@@ -544,10 +546,22 @@ main(argc, argv)
 			(void)printf(
 "Warning: your password has expired. Please change it as soon as possible.\n");
 		else {
+			int	status;
+
 			(void)printf(
 		    "Your password has expired. Please choose a new one.\n");
-			if (system(_PATH_BINPASSWD) != 0)
+			switch (fork()) {
+			case -1:
+				warn("fork");
 				sleepexit(1);
+			case 0:
+				execl(_PATH_BINPASSWD, "passwd", 0);
+				_exit(1);
+			default:
+				if (wait(&status) == -1 ||
+				    WEXITSTATUS(status))
+					sleepexit(1);
+			}
 		}
 	}
 
@@ -570,24 +584,24 @@ main(argc, argv)
 void
 dofork()
 {
-    int child;
+	int child;
 
-    if (!(child = fork()))
-	    return; /* Child process */
+	if (!(child = fork()))
+		return; /* Child process */
 
-    /* Setup stuff?  This would be things we could do in parallel with login */
-    (void) chdir("/");	/* Let's not keep the fs busy... */
-    
-    /* If we're the parent, watch the child until it dies */
-    while (wait(0) != child)
-	    ;
+	/* Setup stuff?  This would be things we could do in parallel with login */
+	(void) chdir("/");	/* Let's not keep the fs busy... */
 
-    /* Cleanup stuff */
-    /* Run kdestroy to destroy tickets */
-    kdestroy();
+	/* If we're the parent, watch the child until it dies */
+	while (wait(0) != child)
+		;
 
-    /* Leave */
-    exit(0);
+	/* Cleanup stuff */
+	/* Run kdestroy to destroy tickets */
+	kdestroy();
+
+	/* Leave */
+	exit(0);
 }
 #endif
 
@@ -653,6 +667,7 @@ void
 sigint(signo)
 	int signo;
 {
+
 	longjmp(motdinterrupt, 1);
 }
 
@@ -661,6 +676,7 @@ void
 timedout(signo)
 	int signo;
 {
+
 	(void)fprintf(stderr, "Login timed out after %d seconds\n", timeout);
 	exit(0);
 }
@@ -751,6 +767,7 @@ void
 sleepexit(eval)
 	int eval;
 {
+
 	(void)sleep(5);
 	exit(eval);
 }
