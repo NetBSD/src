@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.36.4.1 2000/06/27 21:45:17 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.36.4.2 2000/06/27 21:46:01 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -968,8 +968,7 @@ iyget(sc, iot, ioh, rxlen)
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&
 		    bcmp(eh->ether_dhost,
-		    	LLADDR(sc->sc_ethercom.ec_if.if_sadl), 
-			sizeof(eh->ether_dhost)) != 0) {
+		    	LLADDR(ifp->if_sadl), sizeof(eh->ether_dhost)) != 0) {
 
 			m_freem(top);
 			return;
@@ -1111,10 +1110,9 @@ iyioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)
-				    LLADDR(sc->sc_ethercom.ec_if.if_sadl);
+				    LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				    LLADDR(sc->sc_ethercom.ec_if.if_sadl),
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			iyinit(sc);
@@ -1304,7 +1302,7 @@ iy_mc_setup(sc)
 		break;
 	}
 	sc->tx_start = sc->tx_end;
-	sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags &= ~IFF_OACTIVE;
 	
 }
 
