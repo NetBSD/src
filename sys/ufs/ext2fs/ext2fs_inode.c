@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.29 2003/01/24 21:55:20 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.30 2003/01/25 16:40:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.29 2003/01/24 21:55:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.30 2003/01/25 16:40:28 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,8 @@ ext2fs_truncate(v)
 	daddr_t lastblock;
 	struct inode *oip;
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	/* XXX ondisk32 */
+	int32_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct m_ext2fs *fs;
 	int offset, size, level;
