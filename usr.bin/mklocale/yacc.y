@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.16 2003/03/10 21:18:50 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.17 2003/03/11 17:23:08 tshiozak Exp $	*/
 
 %{
 /*-
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.16 2003/03/10 21:18:50 tshiozak Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.17 2003/03/11 17:23:08 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,13 +72,13 @@ rune_map	maplower = { { 0, }, };
 rune_map	mapupper = { { 0, }, };
 rune_map	types = { { 0, }, };
 
-_RuneLocale	new_locale = { { 0, }, };
+_NBRuneLocale	new_locale = { { 0, }, };
 
-rune_t		charsetbits = (rune_t)0x00000000;
+__nbrune_t	charsetbits = (__nbrune_t)0x00000000;
 #if 0
-rune_t		charsetmask = (rune_t)0x0000007f;
+__nbrune_t	charsetmask = (__nbrune_t)0x0000007f;
 #endif
-rune_t		charsetmask = (rune_t)0xffffffff;
+__nbrune_t	charsetmask = (__nbrune_t)0xffffffff;
 
 void set_map __P((rune_map *, rune_list *, u_int32_t));
 void set_digitmap __P((rune_map *, rune_list *));
@@ -95,7 +95,7 @@ extern int	yylex __P((void));
 %}
 
 %union	{
-    rune_t	rune;
+    __nbrune_t	rune;
     int		i;
     char	*str;
 
@@ -292,12 +292,12 @@ main(ac, av)
     default:
 	goto usage;
     }
-    for (x = 0; x < _CACHED_RUNES; ++x) {
+    for (x = 0; x < _NB_CACHED_RUNES; ++x) {
 	mapupper.map[x] = x;
 	maplower.map[x] = x;
     }
-    new_locale.rl_invalid_rune = _DEFAULT_INVALID_RUNE;
-    memcpy(new_locale.rl_magic, _RUNE_MAGIC_1, sizeof(new_locale.rl_magic));
+    new_locale.rl_invalid_rune = _NB_DEFAULT_INVALID_RUNE;
+    memcpy(new_locale.rl_magic, _NB_RUNE_MAGIC_1, sizeof(new_locale.rl_magic));
 
     yyparse();
 
@@ -371,7 +371,7 @@ set_digitmap(map, list)
 	rune_map *map;
 	rune_list *list;
 {
-    rune_t i;
+    __nbrune_t i;
 
     while (list) {
 	rune_list *nlist = list->next;
@@ -394,12 +394,12 @@ add_map(map, list, flag)
 	rune_list *list;
 	u_int32_t flag;
 {
-    rune_t i;
+    __nbrune_t i;
     rune_list *lr = 0;
     rune_list *r;
-    rune_t run;
+    __nbrune_t run;
 
-    while (list->min < _CACHED_RUNES && list->min <= list->max) {
+    while (list->min < _NB_CACHED_RUNES && list->min <= list->max) {
 	if (flag)
 	    map->map[list->min++] |= flag;
 	else
@@ -633,7 +633,7 @@ dump_tables()
      * (Machines like Crays cannot share with little machines due to
      *  word size.  Sigh.  We tried.)
      */
-    for (x = 0; x < _CACHED_RUNES; ++x) {
+    for (x = 0; x < _NB_CACHED_RUNES; ++x) {
 	file_new_locale.frl_runetype[x] = htonl(types.map[x]);
 	file_new_locale.frl_maplower[x] = htonl(maplower.map[x]);
 	file_new_locale.frl_mapupper[x] = htonl(mapupper.map[x]);
@@ -753,7 +753,7 @@ dump_tables()
 
     fprintf(stderr, "\nMAPLOWER:\n\n");
 
-    for (x = 0; x < _CACHED_RUNES; ++x) {
+    for (x = 0; x < _NB_CACHED_RUNES; ++x) {
 	if (isprint(maplower.map[x]))
 	    fprintf(stderr, " '%c'", (int)maplower.map[x]);
 	else if (maplower.map[x])
@@ -772,7 +772,7 @@ dump_tables()
 
     fprintf(stderr, "\nMAPUPPER:\n\n");
 
-    for (x = 0; x < _CACHED_RUNES; ++x) {
+    for (x = 0; x < _NB_CACHED_RUNES; ++x) {
 	if (isprint(mapupper.map[x]))
 	    fprintf(stderr, " '%c'", (int)mapupper.map[x]);
 	else if (mapupper.map[x])
@@ -792,7 +792,7 @@ dump_tables()
 
     fprintf(stderr, "\nTYPES:\n\n");
 
-    for (x = 0; x < _CACHED_RUNES; ++x) {
+    for (x = 0; x < _NB_CACHED_RUNES; ++x) {
 	u_int32_t r = types.map[x];
 
 	if (r) {

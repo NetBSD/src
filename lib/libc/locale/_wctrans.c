@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans.c,v 1.2 2003/03/04 15:09:54 yamt Exp $	*/
+/*	$NetBSD: _wctrans.c,v 1.3 2003/03/11 17:23:07 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctrans.c,v 1.2 2003/03/04 15:09:54 yamt Exp $");
+__RCSID("$NetBSD: _wctrans.c,v 1.3 2003/03/11 17:23:07 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: _wctrans.c,v 1.2 2003/03/04 15:09:54 yamt Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "rune.h"
-#include "runetype.h"
 #include "rune_local.h"
 #include "_wctrans_local.h"
 
