@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.11 2000/07/30 21:38:03 briggs Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12 2000/07/31 22:40:28 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -175,21 +175,39 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 	bshp->bsr1 = mac68k_bsr1;
 	bshp->bsr2 = mac68k_bsr2;
 	bshp->bsr4 = mac68k_bsr4;
+	bshp->bsrs1 = mac68k_bsr1;
+	bshp->bsrs2 = mac68k_bsr2;
+	bshp->bsrs4 = mac68k_bsr4;
 	bshp->bsrm1 = mac68k_bsrm1;
 	bshp->bsrm2 = mac68k_bsrm2;
 	bshp->bsrm4 = mac68k_bsrm4;
+	bshp->bsrms1 = mac68k_bsrm1;
+	bshp->bsrms2 = mac68k_bsrm2;
+	bshp->bsrms4 = mac68k_bsrm4;
 	bshp->bsrr1 = mac68k_bsrr1;
 	bshp->bsrr2 = mac68k_bsrr2;
 	bshp->bsrr4 = mac68k_bsrr4;
+	bshp->bsrrs1 = mac68k_bsrr1;
+	bshp->bsrrs2 = mac68k_bsrr2;
+	bshp->bsrrs4 = mac68k_bsrr4;
 	bshp->bsw1 = mac68k_bsw1;
 	bshp->bsw2 = mac68k_bsw2;
 	bshp->bsw4 = mac68k_bsw4;
+	bshp->bsws1 = mac68k_bsw1;
+	bshp->bsws2 = mac68k_bsw2;
+	bshp->bsws4 = mac68k_bsw4;
 	bshp->bswm1 = mac68k_bswm1;
 	bshp->bswm2 = mac68k_bswm2;
 	bshp->bswm4 = mac68k_bswm4;
+	bshp->bswms1 = mac68k_bswm1;
+	bshp->bswms2 = mac68k_bswm2;
+	bshp->bswms4 = mac68k_bswm4;
 	bshp->bswr1 = mac68k_bswr1;
 	bshp->bswr2 = mac68k_bswr2;
 	bshp->bswr4 = mac68k_bswr4;
+	bshp->bswrs1 = mac68k_bswr1;
+	bshp->bswrs2 = mac68k_bswr2;
+	bshp->bswrs4 = mac68k_bswr4;
 	bshp->bssm1 = mac68k_bssm1;
 	bshp->bssm2 = mac68k_bssm2;
 	bshp->bssm4 = mac68k_bssm4;
@@ -335,21 +353,32 @@ mac68k_bus_space_handle_set_stride(bus_space_tag_t t, bus_space_handle_t *h,
 	h->bsr1 = mac68k_bsr1_gen;
 	h->bsr2 = mac68k_bsr2_gen;
 	h->bsr4 = mac68k_bsr4_gen;
+	h->bsrs2 = mac68k_bsrs2_gen;
+	h->bsrs4 = mac68k_bsrs4_gen;
 	h->bsrm1 = mac68k_bsrm1_gen;
 	h->bsrm2 = mac68k_bsrm2_gen;
 	h->bsrm4 = mac68k_bsrm4_gen;
+	h->bsrms2 = mac68k_bsrms2_gen;
+	h->bsrms4 = mac68k_bsrms4_gen;
 	h->bsrr1 = mac68k_bsrr1_gen;
 	h->bsrr2 = mac68k_bsrr2_gen;
 	h->bsrr4 = mac68k_bsrr4_gen;
+	h->bsrrs2 = mac68k_bsrrs2_gen;
+	h->bsrrs4 = mac68k_bsrrs4_gen;
 	h->bsw1 = mac68k_bsw1_gen;
 	h->bsw2 = mac68k_bsw2_gen;
 	h->bsw4 = mac68k_bsw4_gen;
-	h->bswm1 = mac68k_bswm1_gen;
+	h->bsws2 = mac68k_bsws2_gen;
+	h->bsws4 = mac68k_bsws4_gen;
 	h->bswm2 = mac68k_bswm2_gen;
 	h->bswm4 = mac68k_bswm4_gen;
+	h->bswms2 = mac68k_bswms2_gen;
+	h->bswms4 = mac68k_bswms4_gen;
 	h->bswr1 = mac68k_bswr1_gen;
 	h->bswr2 = mac68k_bswr2_gen;
 	h->bswr4 = mac68k_bswr4_gen;
+	h->bswrs2 = mac68k_bswrs2_gen;
+	h->bswrs4 = mac68k_bswrs4_gen;
 	h->bssm1 = mac68k_bssm1_gen;
 	h->bssm2 = mac68k_bssm2_gen;
 	h->bssm4 = mac68k_bssm4_gen;
@@ -386,12 +415,21 @@ mac68k_bsr2_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
 }
 
 u_int16_t
-mac68k_bsr2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsrs2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
 {
 	u_int16_t	v;
 
 	v = (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) << 8;
 	v |= (*(volatile u_int8_t *) (bsh->base + offset * bsh->stride));
+	return v;
+}
+
+u_int16_t
+mac68k_bsr2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+{
+	u_int16_t	v;
+
+	v = mac68k_bsrs2_gen(t, bsh, offset);
 	if (bsh->swapped) {
 		bswap16(v);
 	}
@@ -414,7 +452,7 @@ mac68k_bsr4_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
 }
 
 u_int32_t
-mac68k_bsr4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+mac68k_bsrs4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
 {
 	u_int32_t	v;
 
@@ -425,6 +463,15 @@ mac68k_bsr4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
 	v |= (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride));
 	v <<= 8;
 	v |= (*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride));
+	return v;
+}
+
+u_int32_t
+mac68k_bsr4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset)
+{
+	u_int32_t	v;
+
+	v = mac68k_bsrs4_gen(t, bsh, offset);
 	if (bsh->swapped) {
 		v = bswap32(v);
 	}
@@ -500,6 +547,15 @@ mac68k_bsrm2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 }
 
 void
+mac68k_bsrms2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
+	     u_int16_t *a, size_t c)
+{
+	while (c--) {
+		*a++ = bus_space_read_stream_2(t,*h,o);
+	}
+}
+
+void
 mac68k_bsrm4(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 	     u_int32_t *a, size_t c)
 {
@@ -541,6 +597,15 @@ mac68k_bsrm4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
 {
 	while (c--) {
 		*a++ = bus_space_read_4(t,*h,o);
+	}
+}
+
+void
+mac68k_bsrms4_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t o,
+	     u_int32_t *a, size_t c)
+{
+	while (c--) {
+		*a++ = bus_space_read_stream_4(t,*h,o);
 	}
 }
 
@@ -615,6 +680,16 @@ mac68k_bsrr2_gen(bus_space_tag_t t, bus_space_handle_t *h,
 }
 
 void
+mac68k_bsrrs2_gen(bus_space_tag_t t, bus_space_handle_t *h,
+	     bus_size_t o, u_int16_t *a, size_t c)
+{
+	while (c--) {
+		*a++ = bus_space_read_stream_2(t,*h,o);
+		o += 2;
+	}
+}
+
+void
 mac68k_bsrr4(bus_space_tag_t t, bus_space_handle_t *h,
 	     bus_size_t o, u_int32_t *a, size_t c)
 {
@@ -661,6 +736,16 @@ mac68k_bsrr4_gen(bus_space_tag_t t, bus_space_handle_t *h,
 }
 
 void
+mac68k_bsrrs4_gen(bus_space_tag_t t, bus_space_handle_t *h,
+	     bus_size_t o, u_int32_t *a, size_t c)
+{
+	while (c--) {
+		*a++ = bus_space_read_stream_4(t,*h,o);
+		o += 4;
+	}
+}
+
+void
 mac68k_bsw1(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 		 u_int8_t v)
 {
@@ -690,17 +775,24 @@ mac68k_bsw2_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 }
 
 void
-mac68k_bsw2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsws2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 		 u_int16_t v)
 {
 	u_int8_t	v1;
 
-	if (bsh->swapped) {
-		v = bswap16(v);
-	}
 	v1 = (v & 0xff00) >> 8;
 	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v1;
 	(*(volatile u_int8_t *) (bsh->base + offset * bsh->stride)) = v & 0xff;
+}
+
+void
+mac68k_bsw2_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+		 u_int16_t v)
+{
+	if (bsh->swapped) {
+		v = bswap16(v);
+	}
+	mac68k_bsws2_gen(t, bsh, offset, v);
 }
 
 void
@@ -719,14 +811,11 @@ mac68k_bsw4_swap(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 }
 
 void
-mac68k_bsw4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+mac68k_bsws4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 		 u_int32_t v)
 {
 	u_int8_t	v1,v2,v3;
 
-	if (bsh->swapped) {
-		v = bswap32(v);
-	}
 	v1 = (v & 0xff000000) >> 24;
 	v2 = (v & 0x00ff0000) >> 16;
 	v3 = (v & 0x0000ff00) >> 8;
@@ -734,6 +823,16 @@ mac68k_bsw4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
 	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v2;
 	(*(volatile u_int8_t *) (bsh->base + offset++ * bsh->stride)) = v3;
 	(*(volatile u_int8_t *) (bsh->base + offset * bsh->stride)) = v & 0xff;
+}
+
+void
+mac68k_bsw4_gen(bus_space_tag_t t, bus_space_handle_t *bsh, bus_size_t offset,
+		 u_int32_t v)
+{
+	if (bsh->swapped) {
+		v = bswap32(v);
+	}
+	mac68k_bsws4_gen(t, bsh, offset, v);
 }
 
 void
@@ -805,6 +904,15 @@ mac68k_bswm2_gen(bus_space_tag_t t, bus_space_handle_t *h,
 }
 
 void
+mac68k_bswms2_gen(bus_space_tag_t t, bus_space_handle_t *h,
+	bus_size_t o, u_int16_t *a, size_t c)
+{
+	while (c--) {
+		bus_space_write_stream_2(t,*h,o,*a++);
+	}
+}
+
+void
 mac68k_bswm4(bus_space_tag_t t, bus_space_handle_t *h,
 	bus_size_t o, u_int32_t *a, size_t c)
 {
@@ -846,6 +954,15 @@ mac68k_bswm4_gen(bus_space_tag_t t, bus_space_handle_t *h,
 {
 	while (c--) {
 		bus_space_write_4(t,*h,o,*a++);
+	}
+}
+
+void
+mac68k_bswms4_gen(bus_space_tag_t t, bus_space_handle_t *h,
+	bus_size_t o, u_int32_t *a, size_t c)
+{
+	while (c--) {
+		bus_space_write_stream_4(t,*h,o,*a++);
 	}
 }
 
@@ -920,6 +1037,16 @@ mac68k_bswr2_gen(bus_space_tag_t t, bus_space_handle_t *h,
 }
 
 void
+mac68k_bswrs2_gen(bus_space_tag_t t, bus_space_handle_t *h,
+			   bus_size_t o, u_int16_t *a, size_t c)
+{
+	while (c--) {
+		bus_space_write_stream_2(t,*h,o,*a++);
+		o += 2;
+	}
+}
+
+void
 mac68k_bswr4(bus_space_tag_t t, bus_space_handle_t *h,
 			   bus_size_t o, u_int32_t *a, size_t c)
 {
@@ -957,6 +1084,16 @@ mac68k_bswr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 
 void
 mac68k_bswr4_gen(bus_space_tag_t t, bus_space_handle_t *h,
+			   bus_size_t o, u_int32_t *a, size_t c)
+{
+	while (c--) {
+		bus_space_write_4(t,*h,o,*a++);
+		o += 4;
+	}
+}
+
+void
+mac68k_bswrs4_gen(bus_space_tag_t t, bus_space_handle_t *h,
 			   bus_size_t o, u_int32_t *a, size_t c)
 {
 	while (c--) {
