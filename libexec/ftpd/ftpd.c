@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.105 2000/09/28 17:49:06 jdolecek Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.106 2000/11/13 11:50:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.105 2000/09/28 17:49:06 jdolecek Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.106 2000/11/13 11:50:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2230,6 +2230,61 @@ passive(void)
 }
 
 /*
+ * convert protocol identifier to/from AF
+ */
+int
+lpsvproto2af(int proto)
+{
+
+	switch (proto) {
+	case 4:	return AF_INET;
+#ifdef INET6
+	case 6:	return AF_INET6;
+#endif
+	default: return -1;
+	}
+}
+
+int
+af2lpsvproto(int af)
+{
+
+	switch (af) {
+	case AF_INET:	return 4;
+#ifdef INET6
+	case AF_INET6:	return 6;
+#endif
+	default:	return -1;
+	}
+}
+
+int
+epsvproto2af(int proto)
+{
+
+	switch (proto) {
+	case 1:	return AF_INET;
+#ifdef INET6
+	case 2:	return AF_INET6;
+#endif
+	default: return -1;
+	}
+}
+
+int
+af2epsvproto(int af)
+{
+
+	switch (af) {
+	case AF_INET:	return 1;
+#ifdef INET6
+	case AF_INET6:	return 2;
+#endif
+	default:	return -1;
+	}
+}
+
+/*
  * 228 Entering Long Passive Mode (af, hal, h1, h2, h3,..., pal, p1, p2...)
  * 229 Entering Extended Passive Mode (|||port|)
  */
@@ -2245,31 +2300,17 @@ long_passive(char *cmd, int pf)
 		return;
 	}
 
-	if (pf != PF_UNSPEC) {
-		if (ctrl_addr.su_family != pf) {
-			switch (ctrl_addr.su_family) {
-			case AF_INET:
-				pf = 1;
-				break;
-			case AF_INET6:
-				pf = 2;
-				break;
-			default:
-				pf = 0;
-				break;
-			}
-			/*
-			 * XXX
-			 * only EPRT/EPSV ready clients will understand this
-			 */
-			if (strcmp(cmd, "EPSV") == 0 && pf) {
-				reply(522, "Network protocol mismatch, "
-					    "use (%d)", pf);
-			} else
-				reply(501, "Network protocol mismatch"); /*XXX*/
+	if (pf != PF_UNSPEC && ctrl_addr.su_family != pf) {
+		/*
+		 * XXX
+		 * only EPRT/EPSV ready clients will understand this
+		 */
+		if (strcmp(cmd, "EPSV") != 0)
+			reply(501, "Network protocol mismatch"); /*XXX*/
+		else
+			epsv_protounsupp("Network protocol mismatch");
 
-			return;
-		}
+		return;
 	}
  
 	if (pdata >= 0)
@@ -2330,6 +2371,102 @@ long_passive(char *cmd, int pf)
 	pdata = -1;
 	perror_reply(425, "Can't open passive connection");
 	return;
+}
+
+int
+extended_port(const char *arg)
+{
+#ifdef INET6	/*not really IPv6-only.  just to avoid the use of getaddrinfo*/
+	char *tmp = NULL;
+	char *result[3];
+	char *p, *q;
+	char delim;
+	struct addrinfo hints;
+	struct addrinfo *res = NULL;
+	int i;
+	unsigned long proto;
+
+	tmp = xstrdup(arg);
+	p = tmp;
+	delim = p[0];
+	p++;
+	memset(result, 0, sizeof(result));
+	for (i = 0; i < 3; i++) {
+		q = strchr(p, delim);
+		if (!q || *q != delim)
+			goto parsefail;
+		*q++ = '\0';
+		result[i] = p;
+		p = q;
+	}
+
+	/* some more sanity check */
+	p = NULL;
+	(void)strtoul(result[2], &p, 10);
+	if (!*result[2] || *p)
+		goto protounsupp;
+	p = NULL;
+	proto = strtoul(result[0], &p, 10);
+	if (!*result[0] || *p)
+		goto protounsupp;
+	 
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = epsvproto2af((int)proto);
+	if (hints.ai_family < 0)
+		goto protounsupp;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(result[1], result[2], &hints, &res))
+		goto parsefail;
+	if (res->ai_next)
+		goto parsefail;
+	if (sizeof(data_dest) < res->ai_addrlen)
+		goto parsefail;
+	memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
+	if (his_addr.su_family == AF_INET6 &&
+	    data_dest.su_family == AF_INET6) {
+		/* XXX more sanity checks! */
+		data_dest.su_sin6.sin6_scope_id =
+			his_addr.su_sin6.sin6_scope_id;
+	}
+
+	if (tmp != NULL)
+		free(tmp);
+	if (res)
+		freeaddrinfo(res);
+	return 0;
+
+parsefail:
+	reply(500, "Invalid argument, rejected.");
+	usedefault = 1;
+	return -1;
+
+protounsupp:
+	epsv_protounsupp("Protocol not supported");
+	usedefault = 1;
+	return -1;
+#else
+	reply(500, "Invalid argument, rejected.");
+	return -1;
+#endif
+}
+
+/*
+ * 522 Protocol not supported (proto,...)
+ * as we assume address family for control and data connections are the same,
+ * we do not return the list of address families we support - instead, we
+ * return the address family of the control connection.
+ */
+void
+epsv_protounsupp(const char *message)
+{
+	int proto;
+
+	proto = af2epsvproto(ctrl_addr.su_family);
+	if (proto < 0)
+		reply(501, "%s", message);	/*XXX*/
+	else
+		reply(522, "%s, use (%d)", message, proto);
 }
 
 /*

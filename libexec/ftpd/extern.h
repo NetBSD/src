@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.32 2000/09/15 14:55:16 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.33 2000/11/13 11:50:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,7 +131,13 @@ void	opts(const char *);
 void	parse_conf(const char *);
 void	pass(const char *);
 void	passive(void);
+int	lpsvproto2af(int);
+int	af2lpsvproto(int);
+int	epsvproto2af(int);
+int	af2epsvproto(int);
 void	long_passive(char *, int);
+int	extended_port(const char *);
+void	epsv_protounsupp(const char *);
 void	perror_reply(int, const char *);
 void	pwd(void);
 void	removedir(const char *);
