@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.100 1994/04/18 23:52:06 mycroft Exp $
+ *	$Id: machdep.c,v 1.101 1994/04/21 07:45:53 cgd Exp $
  */
 
 #include <stddef.h>
@@ -610,7 +610,7 @@ boot(arghowto)
 		for(;;);
 	}
 	howto = arghowto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
