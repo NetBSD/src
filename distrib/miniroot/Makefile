@@ -1,97 +1,41 @@
-#	$NetBSD: Makefile,v 1.48 2002/02/12 11:17:47 is Exp $
+#	$NetBSD: Makefile,v 1.49 2002/03/06 12:04:48 lukem Exp $
 
-.include "../../Makefile.inc"
+.include "${.CURDIR}/../Makefile.inc"
 .include <bsd.own.mk>
 .include <bsd.kernobj.mk>
 
-CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 
-.if exists(${ARCHDIR}/Makefile.inc)
-.include "${ARCHDIR}/Makefile.inc"
-.endif
-
-HOST_RAWPART!=	sysctl -n kern.rawpartition | tr '0-9a-f' 'a-p'
-VND?=		vnd0
-VND_DEV=	/dev/${VND}${HOST_RAWPART}
-VND_RDEV=	/dev/r${VND}${HOST_RAWPART}
-VND_GEOM?=
-IMAGE?=		miniroot.fs
-IMAGESIZE?=	14336 # 7MB in 512 byte blocks
-NEWFSOPTS?=
-MOUNT_POINT?=	/mnt
-BOOTINSTALL?=	true
-PRELABEL?=	true
-
-.ifdef DISKTYPE
-DISKTYPEARG=	-t ${DISKTYPE}
-.endif
-
+CRUNCHBIN=	instbin
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	${.CURDIR}/mtree.conf
-ICMD=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGE=		miniroot.fs
+IMAGEDEPENDS=	${CRUNCHBIN} install.sub install.sh upgrade.sh \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/services
+POPULATEENV+=	ARCHDIR=${ARCHDIR:Q} KERNOBJDIR=${KERNOBJDIR:Q}
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
+.include "${ARCHDIR}/Makefile.inc"
 
-.if !defined(DESTDIR) || ${DESTDIR} == ""
-all:
-	@echo setenv DESTDIR before making a miniroot!
-	@false
-.else
 
-all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig ${DISKTYPEARG} -v -c ${VND} ${IMAGE} ${VND_GEOM}
-	${PRELABEL}
-	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
-	${BOOTINSTALL}
-	mount -o async ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
-	REV=${DISTRIBREV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
-	    TARGDIR=${MOUNT_POINT} VND_RDEV=${VND_RDEV} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    sh ${.CURDIR}/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
+all:	check_DESTDIR .WAIT image
+	@true
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
-
-${CBIN}.conf: ${LISTS}
-	awk -f ${.CURDIR}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
-
-${CBIN}.mk: .EXEC
-${CBIN}.mk ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -f -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
-
-.if !defined(RELEASEDIR) || ${RELEASEDIR} == ""
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: ${IMAGE}
+release: check_RELEASEDIR .WAIT image
 	mkdir -p ${RELEASEDIR}/installation/miniroot
 	gzip -c -9 < ${.OBJDIR}/miniroot.fs \
 		> ${RELEASEDIR}/installation/miniroot/miniroot.fs.gz
-	${.CURDIR}/../sets/makesums \
+	sh ${DISTRIBDIR}/sets/makesums \
 		-t ${RELEASEDIR}/installation/miniroot miniroot.fs.gz
 
-.endif	# RELEASEDIR check
-.endif	# DESTDIR check
+image:	${IMAGE} image_md_post
 
-clean cleandir distclean:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	${CBIN}.conf *.o *.cro *.c
 
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.if defined(MAKEDEVTARGETS)
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.endif
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+.include <bsd.prog.mk>

@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/01/06 03:53:47 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/03/06 12:04:53 lukem Exp $
 
-VND=		vnd0c
-#IMAGESIZE?=	8192 # 512 byte blocks
-IMAGESIZE?=	65536 # 512 byte blocks: full 32-meg root.
-NEWFSOPTS?=	-c 32 -B le
-DISKTYPE?=	miniroot
-LABELPROTO?=	${.CURDIR}/../${MACHINE}/miniroot/diskimage.label.proto
+IMAGESIZE=	32m
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	all
+LISTS+=		${DISTRIBDIR}/common/list.sysinst
+MTREECONF+=	${.CURDIR}/mtree.usr.install
+IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.rcons \
+		${DESTDIR}/.profile ${DESTDIR}/boot.pmax \
+		${DESTDIR}/etc/disktab \
+		${KERNOBJDIR}/GENERIC/netbsd.aout \
+		${KERNOBJDIR}/GENERIC/netbsd.ecoff \
+		${KERNOBJDIR}/INSTALL/nfsnetbsd.ecoff
 
-#
-# install bootblock, so that we can boot from there
-#
-BOOTINSTALL= ${DESTDIR}/usr/mdec/installboot ${VND_RDEV} \
-	${DESTDIR}/usr/mdec/bootxx_ffs
-
-# Write preliminary Label so that newfs succeeds when updating label.
-PRELABEL=disklabel -rw ${VND_RDEV} ${DISKTYPE}
+# XXXIMAGE: installboot needs to be MI and work on image files
+image_md_post:
+	${DESTDIR}/usr/mdec/installboot ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs

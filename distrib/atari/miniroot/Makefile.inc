@@ -1,17 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/08/05 15:00:28 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/03/06 12:04:50 lukem Exp $
 
-VND=		vnd0c
-IMAGESIZE?=	2160 # 512 byte blocks
-NEWFSOPTS?=	-i 3052 -c 60 -B be
-DISKTYPE?=	floppybt
+IMAGESIZE=	1080k
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	floppy
+IMAGEDEPENDS+=	${ARCHDIR}/disktab.shadow ${ARCHDIR}/dot.profile \
+		${ARCHDIR}/install.md ${ARCHDIR}/termcap.vt
 
-#
-# Using libhack:opendir() causes linking errors
-#
-NOLIBHACKOPENDIR=1
-
-${CBIN}: libhack.o
-
-HACKSRC=../utils/libhack
-
+HACKSRC= ${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+
+${CRUNCHBIN}: libhack.o
