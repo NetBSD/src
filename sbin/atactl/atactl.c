@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.3 1998/11/23 23:02:58 kenh Exp $	*/
+/*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * wdctl(8) - a program to control wd (aka ATA) devices.
+ * atactl(8) - a program to control ATA devices.
  */
 
 #include <sys/param.h>
@@ -174,8 +174,8 @@ main(argc, argv)
 			    sizeof(dvname_store), 1);
 			if (fd == -1)
 				err(1, "%s", dvname);
-		}
-		err(1, "%s", dvname);
+		} else
+			err(1, "%s", dvname);
 	}
 
 	/*
