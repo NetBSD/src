@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.431 2001/03/29 22:40:06 fvdl Exp $
+#	$NetBSD: files,v 1.432 2001/03/31 00:26:53 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -530,6 +530,10 @@ file	dev/ic/dl10019.c		dl10019
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 device	we: ether, ifnet, arp, dp8390nic
 file	dev/ic/we.c			we
+
+# Allied-Telesis Ethernet driver based on Fujitsu MB8696xA controllers
+device	ate: arp, ether, ifnet, mb86960
+file	dev/ic/ate_subr.c		ate
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
