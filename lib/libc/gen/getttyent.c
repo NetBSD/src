@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.17 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.18 2000/07/07 08:03:37 itohy Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.17 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.18 2000/07/07 08:03:37 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,7 @@ getttyent()
 				;
 			continue;
 		}
-		while (isspace(*p))
+		while (isspace((unsigned char) *p))
 			++p;
 		if (*p && *p != '#')
 			break;
@@ -119,7 +119,7 @@ getttyent()
 	tty.ty_status = 0;
 	tty.ty_window = NULL;
 
-#define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && isspace(p[sizeof(e) - 1])
+#define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && isspace((unsigned char) p[sizeof(e) - 1])
 #define	vcmp(e)	!strncmp(p, e, sizeof(e) - 1) && p[sizeof(e) - 1] == '='
 	for (; *p; p = skip(p)) {
 		if (scmp(_TTYS_OFF))

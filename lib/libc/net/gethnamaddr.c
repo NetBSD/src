@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.34 2000/07/06 02:52:07 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.35 2000/07/07 08:03:38 itohy Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.34 2000/07/06 02:52:07 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.35 2000/07/07 08:03:38 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -591,7 +591,7 @@ gethostbyname2(name, af)
 	 * disallow names consisting only of digits/dots, unless
 	 * they end in a dot.
 	 */
-	if (isdigit(name[0]))
+	if (isdigit((u_char) name[0]))
 		for (cp = name;; ++cp) {
 			if (!*cp) {
 				if (*--cp == '.')
@@ -621,10 +621,10 @@ gethostbyname2(name, af)
 				h_errno = NETDB_SUCCESS;
 				return (&host);
 			}
-			if (!isdigit(*cp) && *cp != '.') 
+			if (!isdigit((u_char) *cp) && *cp != '.') 
 				break;
 		}
-	if ((isxdigit(name[0]) && strchr(name, ':') != NULL) ||
+	if ((isxdigit((u_char) name[0]) && strchr(name, ':') != NULL) ||
 	    name[0] == ':')
 		for (cp = name;; ++cp) {
 			if (!*cp) {
@@ -653,7 +653,7 @@ gethostbyname2(name, af)
 				h_errno = NETDB_SUCCESS;
 				return (&host);
 			}
-			if (!isxdigit(*cp) && *cp != ':' && *cp != '.') 
+			if (!isxdigit((u_char) *cp) && *cp != ':' && *cp != '.')
 				break;
 		}
 
