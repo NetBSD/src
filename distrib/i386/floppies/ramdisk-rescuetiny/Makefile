@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/06/24 12:15:58 veego Exp $
+#	$NetBSD: Makefile,v 1.8 2001/10/04 04:14:06 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -29,6 +29,7 @@ CRUNCHGEN?=	crunchgen
 RAMDISKSPC=	128
 RAMDISKCYLS=	21
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
+DBG=-Os
 
 realall: ${IMAGE}
 
@@ -74,6 +75,7 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 release:
 
 clean cleandir distclean:
+	if [ -f ${CBIN}.mk ]; then ${MAKE} -f ${CBIN}.mk clean; fi; \
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    *.o *.cro *.c ${IMAGE}.tmp tmplabel
 
