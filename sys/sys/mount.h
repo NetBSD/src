@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.108 2003/06/30 21:22:26 dbj Exp $	*/
+/*	$NetBSD: mount.h,v 1.109 2003/06/30 22:20:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -238,7 +238,8 @@ struct mount {
 	{ MNT_UPDATE,		1,	"being updated" }, \
 	{ MNT_DELEXPORT,	1,	"delete export list" }, \
 	{ MNT_RELOAD,		1,	"reload filesystem data" }, \
-	{ MNT_FORCE,		1,	"force unmount or readonly change" },
+	{ MNT_FORCE,		1,	"force unmount or readonly change" }, \
+	{ MNT_GETARGS,		1,	"retrieve mount arguments" },
 /*
  * Internal filesystem control flags.
  *
