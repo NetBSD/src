@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.7 2000/08/11 20:47:14 thorpej Exp $
+.\"	$NetBSD: eisa.4,v 1.8 2000/09/01 12:19:15 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -73,6 +73,11 @@ includes machine-independent
 drivers, sorted by device type
 and driver name:
 .Pp
+.Ss Disk and tape controllers
+.Bl -tag -width pcdisplay -offset indent
+.It cac
+Compaq array controllers.
+.El
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It ahb
@@ -136,6 +141,7 @@ supported bus variants.
 .Xr ahb 4 ,
 .Xr ahc 4 ,
 .Xr bha 4 ,
+.Xr cac 4 ,
 .Xr dpt 4 ,
 .Xr ep 4 ,
 .Xr fea 4 ,
