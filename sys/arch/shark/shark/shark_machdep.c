@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.17 2003/10/24 10:57:16 is Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.18 2003/11/02 10:13:23 martin Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.17 2003/10/24 10:57:16 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.18 2003/11/02 10:13:23 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -429,8 +429,9 @@ ofw_device_register(struct device *dev, void *aux)
 		struct ofisa_attach_args *aa = aux;
 		oba = &aa->oba;
 #if NWD > 0 || NSD > 0 || NCD > 0
-	} else if (parent == dev->dv_parent
-		   && !strcmp(parent->dv_cfdata->cf_name, "atabus")) {
+	} else if (dev->dv_parent->dv_parent != NULL
+		   && parent == dev->dv_parent->dv_parent
+		   && !strcmp(parent->dv_cfdata->cf_name, "wdc")) {
 #if NSD > 0 || NCD > 0
 		if (!strcmp(cd_name, "atapibus")) {
 			scsipidev = dev;
