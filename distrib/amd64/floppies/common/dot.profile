@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 2003/07/26 17:06:27 salo Exp $
+#	$NetBSD: dot.profile,v 1.3 2005/02/19 11:45:42 dsl Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,19 +35,13 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
+TERM=wsvt25
 HOME=/
 export HOME
 BLOCKSIZE=1k
 export BLOCKSIZE
 EDITOR=ed
 export EDITOR
-BOOTMODEL=@BOOTMODEL@
-export BOOTMODEL
-
-if [ "${BOOTMODEL}" = "big" ]; then
-	TERM=wsvt25
-fi
 export TERM
 
 umask 022
@@ -60,7 +54,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	stty newcrt werase ^W intr ^C kill ^U erase ^?
 	echo ''
 
 	# mount the ramdisk read write
