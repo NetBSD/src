@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.46 1997/04/21 14:47:37 cgd Exp $
+# $NetBSD: files.alpha,v 1.47 1997/06/06 23:49:38 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -29,6 +29,8 @@ define  wsconsdev {[console = -1]}
 define	alpha_shared_intr
 file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_eb64plus | dec_kn20aa | dec_kn8ae
+define	alpha_sgmap
+file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
 
 device	vga: wsconsdev
 file	arch/alpha/common/vga.c		vga
@@ -112,6 +114,10 @@ device	tcasic: tcbus
 attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_bus_mem.c	tcasic
+file	arch/alpha/tc/tc_dma.c		tcasic
+file	arch/alpha/tc/tc_dma_3000_300.c	tcasic & dec_3000_300
+file	arch/alpha/tc/tc_dma_3000_500.c	tcasic & dec_3000_500
+file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
@@ -219,36 +225,42 @@ include "dev/eisa/files.eisa"
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-device	apecs: pcibus
+device	apecs: pcibus, alpha_sgmap
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
 file	arch/alpha/pci/apecs_bus_io.c	apecs
 file	arch/alpha/pci/apecs_bus_mem.c	apecs
+file	arch/alpha/pci/apecs_dma.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
-device	lca: pcibus
+device	lca: pcibus, alpha_sgmap
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
 file	arch/alpha/pci/lca_bus_io.c	lca
 file	arch/alpha/pci/lca_bus_mem.c	lca
+file	arch/alpha/pci/lca_dma.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
 
-device	cia: pcibus
+device	cia: pcibus, alpha_sgmap
 attach	cia at mainbus
 file	arch/alpha/pci/cia.c		cia
 file	arch/alpha/pci/cia_bus_io.c	cia
 file	arch/alpha/pci/cia_bus_mem.c	cia
+file	arch/alpha/pci/cia_dma.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
 
-device	dwlpx:	pcibus
+device	dwlpx:	pcibus, alpha_sgmap
 attach	dwlpx at kft
 file	arch/alpha/pci/dwlpx.c		dwlpx
+file	arch/alpha/pci/dwlpx_dma.c	dwlpx
 file	arch/alpha/pci/dwlpx_pci.c	dwlpx
 file	arch/alpha/pci/pci_kn8ae.c	dwlpx
 file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
 
 # common support files
+file	arch/alpha/pci/pci_sgmap_pte32.c	dwlpx
+file	arch/alpha/pci/pci_sgmap_pte64.c	apecs | cia | lca
 file	arch/alpha/pci/pci_swiz_io_common.c	apecs | cia | dwlpx | lca
 file	arch/alpha/pci/pci_swiz_mem_common.c	apecs | cia | dwlpx | lca
 
@@ -319,6 +331,7 @@ file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
+file	arch/alpha/common/bus_dma.c
 file	dev/cons.c
 
 # Network protocol checksum routines
