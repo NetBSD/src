@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.46 1994/05/11 09:49:17 mycroft Exp $
+ *	$Id: fd.c,v 1.47 1994/05/27 13:00:27 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -867,7 +867,9 @@ again:
 		 block = (fd->sc_track * type->heads / type->step + head) * sectrac + sec;
 		 if (block != fd->sc_blkno) {
 			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+#ifdef DDB
 			 Debugger();
+#endif
 		 }}
 #endif
 		read = bp->b_flags & B_READ;
