@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mskanji.c,v 1.8 2003/12/29 17:59:03 yamt Exp $	*/
+/*	$NetBSD: citrus_mskanji.c,v 1.9 2005/02/10 19:03:51 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mskanji.c,v 1.8 2003/12/29 17:59:03 yamt Exp $");
+__RCSID("$NetBSD: citrus_mskanji.c,v 1.9 2005/02/10 19:03:51 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -431,7 +431,7 @@ _citrus_MSKanji_encoding_module_init(_MSKanjiEncodingInfo *  __restrict ei,
 				     size_t lenvar)
 {
 
-	_DIAGASSERT(cl != NULL);
+	_DIAGASSERT(ei != NULL);
 
 	return (0);
 }
