@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.2 2000/06/10 18:05:38 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.3 2000/07/08 20:41:12 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -449,8 +449,8 @@ struct option server_options [256] = {
 	{ "default-lease-time", "T",		&server_universe, 1 },
 	{ "max-lease-time", "T",		&server_universe, 2 },
 	{ "min-lease-time", "T",		&server_universe, 3 },
-	{ "dynamic-bootp-lease-cutoff", "L",	&server_universe, 4 },
-	{ "dynamic-bootp-lease-length", "T",	&server_universe, 5 },
+	{ "dynamic-bootp-lease-cutoff", "T",	&server_universe, 4 },
+	{ "dynamic-bootp-lease-length", "L",	&server_universe, 5 },
 	{ "boot-unknown-clients", "f",		&server_universe, 6 },
 	{ "dynamic-bootp", "f",			&server_universe, 7 },
 	{ "allow-bootp", "f",			&server_universe, 8 },

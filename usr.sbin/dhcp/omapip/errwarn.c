@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.1.1.1 2000/04/22 07:11:55 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.1.1.2 2000/07/08 20:40:57 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -72,7 +72,7 @@ void log_fatal (const char * fmt, ... )
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, mbuf);
+  syslog (log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
   /* Also log it to stderr? */
@@ -104,7 +104,7 @@ int log_error (const char * fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, mbuf);
+  syslog (log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -128,7 +128,7 @@ int log_info (const char *fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_INFO, mbuf);
+  syslog (log_priority | LOG_INFO, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -152,7 +152,7 @@ int log_debug (const char *fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_DEBUG, mbuf);
+  syslog (log_priority | LOG_DEBUG, "%s", mbuf);
 #endif
 
   if (log_perror) {
