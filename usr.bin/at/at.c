@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.20 2002/11/16 04:31:15 itojun Exp $	*/
+/*	$NetBSD: at.c,v 1.21 2004/10/30 16:55:06 dsl Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -70,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.20 2002/11/16 04:31:15 itojun Exp $");
+__RCSID("$NetBSD: at.c,v 1.21 2004/10/30 16:55:06 dsl Exp $");
 #endif
 #endif
 
@@ -88,7 +88,7 @@ char *namep;
 char atfile[FILENAME_MAX];
 
 char *atinput = (char *)0;	/* where to get input from */
-char atqueue = 0;		/* which queue to examine for jobs (atq) */
+unsigned char atqueue = 0;	/* which queue to examine for jobs (atq) */
 char atverify = 0;		/* verify time instead of queuing job */
 
 /* Function declarations */
@@ -97,7 +97,7 @@ static void sigc	(int);
 static void alarmc	(int);
 static char *cwdname	(void);
 static int  nextjob	(void);
-static void writefile	(time_t, char);
+static void writefile	(time_t, unsigned char);
 static void list_jobs	(void);
 static void process_jobs (int, char **, int);
 
@@ -163,7 +163,7 @@ nextjob(void)
 }
 
 static void
-writefile(time_t runtimer, char queue)
+writefile(time_t runtimer, unsigned char queue)
 {
 	/*
 	 * This does most of the work if at or batch are invoked for
@@ -334,7 +334,7 @@ writefile(time_t runtimer, char queue)
 				if (*ap == '\n')
 					(void)fprintf(fp, "\"\n\"");
 				else {
-					if (!isalnum(*ap)) {
+					if (!isalnum((unsigned char)*ap)) {
 						switch (*ap) {
 						case '%': case '/': case '{':
 						case '[': case ']': case '=':
@@ -364,7 +364,7 @@ writefile(time_t runtimer, char queue)
 		if (*ap == '\n')
 			(void)fprintf(fp, "\"\n\"");
 		else {
-			if (*ap != '/' && !isalnum(*ap))
+			if (*ap != '/' && !isalnum((unsigned char)*ap))
 				(void)fputc('\\', fp);
 
 			(void)fputc(*ap, fp);
@@ -420,7 +420,7 @@ list_jobs(void)
 	struct stat buf;
 	struct tm runtime;
 	unsigned long ctm;
-	char queue;
+	unsigned char queue;
 	int jobno;
 	time_t runtimer;
 	char timestr[TIMESIZE];
@@ -486,7 +486,7 @@ process_jobs(int argc, char **argv, int what)
 	DIR *spool;
 	struct dirent *dirent;
 	unsigned long ctm;
-	char queue;
+	unsigned char queue;
 	int jobno;
 
 	PRIV_START
@@ -561,7 +561,7 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	char queue = DEFAULT_AT_QUEUE;
+	unsigned char queue = DEFAULT_AT_QUEUE;
 	char queue_set = 0;
 	char time_set = 0;
 	char *pgm;
