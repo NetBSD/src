@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.60 2001/07/24 14:45:16 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.61 2001/09/25 10:28:16 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.60 2001/07/24 14:45:16 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.61 2001/09/25 10:28:16 agc Exp $");
 #endif
 #endif
 
@@ -33,6 +33,7 @@ __RCSID("$NetBSD: perform.c,v 1.60 2001/07/24 14:45:16 wiz Exp $");
 #include <err.h>
 #include "lib.h"
 #include "add.h"
+#include "verify.h"
 
 #include <signal.h>
 #include <string.h>
@@ -111,7 +112,7 @@ pkg_do(char *pkg)
 			    dbdir);
 		}
 	}
-	
+
 	/* Are we coming in for a second pass, everything already extracted?
 	 * (Slave mode) */
 	if (!pkg) {
@@ -193,6 +194,13 @@ pkg_do(char *pkg)
 			}
 			where_to = Home;
 			strcpy(pkg_fullname, tmppkg);
+
+			/* make sure the pkg is verified */
+			if (!verify(tmppkg)) {
+				warnx("Package %s will not be extracted", tmppkg);
+				goto bomb;
+			}
+		
 			cfile = fopen(CONTENTS_FNAME, "r");
 			if (!cfile) {
 				warnx("unable to open table of contents file `%s' - not a package?",
@@ -205,10 +213,16 @@ pkg_do(char *pkg)
 			strcpy(pkg_fullname, pkg);	/* copy for sanity's sake, could remove pkg_fullname */
 			if (strcmp(pkg, "-")) {
 			        /* not stdin */
-				if (!ispkgpattern(pkg_fullname)
-				    && stat(pkg_fullname, &sb) == FAIL) {
-					warnx("can't stat package file '%s'", pkg_fullname);
-					goto bomb;
+				if (!ispkgpattern(pkg_fullname)) {
+					if (stat(pkg_fullname, &sb) == FAIL) {
+						warnx("can't stat package file '%s'", pkg_fullname);
+						goto bomb;
+					}
+					/* make sure the pkg is verified */
+					if (!verify(pkg_fullname)) {
+						warnx("Package %s will not be extracted", pkg_fullname);
+						goto bomb;
+					}
 				}
 				(void) snprintf(extract_contents, sizeof(extract_contents), "--fast-read %s", CONTENTS_FNAME);
 				extract = extract_contents;
@@ -479,8 +493,9 @@ pkg_do(char *pkg)
 					if (cp) {
 						if (Verbose)
 							printf("Loading it from %s.\n", cp);
-						if (vsystem("%s/pkg_add %s%s%s %s%s",
+						if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
 							    BINDIR,
+							    get_verification(),
 							    Force ? "-f " : "",
 							    Prefix ? "-p " : "",
 							    Prefix ? Prefix : "",
@@ -503,6 +518,11 @@ pkg_do(char *pkg)
 					char   *saved_Current;	/* allocated/set by save_dirs(), */
 					char   *saved_Previous;	/* freed by restore_dirs() */
 					char   *cp, *new_pkg, *new_name;
+					char   *vertype;
+
+					if (strcmp(vertype = get_verification(), "none") != 0) {
+						(void) fprintf(stderr, "Warning: %s verification requested for a URL package\n", vertype);
+					}
 
 					new_pkg = pkg;
 					new_name = p->name;
