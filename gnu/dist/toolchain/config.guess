@@ -139,9 +139,6 @@ EOF
     arm:RISC*:1.[012]*:*|arm:riscix:1.[012]*:*)
 	echo arm-acorn-riscix${UNAME_RELEASE}
 	exit 0;;
-    arm32:NetBSD:*:*)
-	echo arm-unknown-netbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
-	exit 0 ;;
     SR2?01:HI-UX/MPP:*:*)
 	echo hppa1.1-hitachi-hiuxmpp
 	exit 0;;
@@ -513,8 +510,20 @@ EOF
 	exit 0 ;;
     *:NetBSD:*:*)
 	PATH=$PATH:/sbin:/usr/sbin
-	UNAME_MACHINE_ARCH=`(uname -p || sysctl -n hw.machine_arch) 2>/dev/null` || UNAME_MACHINE_ARCH=unknown
-	echo ${UNAME_MACHINE_ARCH}-unknown-netbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
+	UNAME_MACHINE_ARCH=`(uname -p || sysctl -n hw.machine_arch || echo unknown) 2>/dev/null`
+	case "${UNAME_MACHINE_ARCH}:${UNAME_RELEASE}" in
+	    arm26:*)			UNAME_MACHINE_ARCH=armv2;;
+	    arm32:*)			UNAME_MACHINE_ARCH=arm;;
+	    hp300:0*|hp300:1.[012]*)	UNAME_MACHINE_ARCH=m68k4k;;
+	    mips:*)			UNAME_MACHINE_ARCH=mipsel;;
+	    i386:*|m68k:*|ns32k:*|sparc:*|vax:*)
+		if echo __ELF__ | cc -E - | grep -q __ELF__; then
+		    UNAME_OBJFORMAT=
+		else
+		    UNAME_OBJFORMAT=elf
+		fi;;
+	esac
+	echo ${UNAME_MACHINE_ARCH}-unknown-netbsd${UNAME_OBJFORMAT}`echo ${UNAME_RELEASE} | sed -e 's/[-_].*/\./'`
 	exit 0 ;;
     *:OpenBSD:*:*)
 	echo ${UNAME_MACHINE}-unknown-openbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
