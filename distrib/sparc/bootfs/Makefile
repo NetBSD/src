@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/04/08 21:17:14 pk Exp $
+#	$NetBSD: Makefile,v 1.12 1999/10/18 20:13:56 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -69,5 +69,15 @@ depend install:
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=32k
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release: $(IMAGE)
+	gzip -c -9 < $(.OBJDIR)/boot-${REV}.fs \
+		> $(RELEASEDIR)/installation/bootfs/boot-${REV}.fs.gz
+.endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
