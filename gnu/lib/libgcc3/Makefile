@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/07/29 00:13:21 uwe Exp $
+#	$NetBSD: Makefile,v 1.6 2003/07/30 05:33:25 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,11 +15,12 @@ LIB=		gcc
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
 GNUHOSTDIST=	${DIST}
 GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc3/arch/${MACHINE_ARCH}
+GCCARCHXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3/arch/${MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
-		-I${DIST}/gcc/cp -I.
+		-I${DIST}/gcc/cp -I${GCCARCHXX} -I.
 
 LIB2FUNCS=	${G_LIB2FUNCS_1:=.c} ${G_LIB2FUNCS_2:=.c} ${G_LIB2FUNCS_ST:=.c}
 LIB2DIVMOD=	${G_LIB2_DIVMOD_FUNCS:=.c}
