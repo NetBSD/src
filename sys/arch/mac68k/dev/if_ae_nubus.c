@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.5 1997/02/28 08:56:06 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.6 1997/03/10 17:55:15 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -224,6 +224,11 @@ ae_nubus_attach(parent, self, aux)
 		for (i = 0; i < ETHER_ADDR_LEN; ++i)
 			sc->sc_arpcom.ac_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (FE_ROM_OFFSET + i));
+#else
+		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+			printf(": can't find MAC address\n");
+			break;
+		}
 #endif
 
 		success = 1;
