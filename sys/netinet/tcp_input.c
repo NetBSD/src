@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.202 2004/04/26 01:31:57 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.203 2004/04/26 03:54:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.202 2004/04/26 01:31:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.203 2004/04/26 03:54:28 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3859,8 +3859,8 @@ syn_cache_respond(sc, m)
 		*bp++ = TCPOLEN_SIGNATURE;
 		for (i = 0; i < TCP_SIGLEN; i++)
 			*bp++ = 0;
-		tcp_signature_compute(m, sizeof(struct ip), 0, optlen,
-			optp + 2, IPSEC_DIR_OUTBOUND);
+		tcp_signature_compute(m, th, -1, 0, optlen,
+		    optp + 2, IPSEC_DIR_OUTBOUND);
 		*bp++ = TCPOPT_NOP;
 		*bp++ = TCPOPT_EOL;
 		optp += TCPOLEN_SIGNATURE + 2;

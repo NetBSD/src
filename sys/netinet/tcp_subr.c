@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.166 2004/04/25 22:25:04 jonathan Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.167 2004/04/26 03:54:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.166 2004/04/25 22:25:04 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.167 2004/04/26 03:54:29 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -155,6 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.166 2004/04/25 22:25:04 jonathan Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netkey/key.h>
 #endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
@@ -1651,25 +1652,73 @@ tcp_signature_apply(void *fstate, caddr_t data, u_int len)
  * per-application flows, but it is unstable.
  */
 int
-tcp_signature_compute(struct mbuf *m, int off0, int len, int optlen,
-    u_char *buf, u_int direction)
+tcp_signature_compute(struct mbuf *m, struct tcphdr *th, int thoff,
+    int len, int optlen, u_char *buf, u_int direction)
 {
+#ifdef FAST_IPSEC
 	union sockaddr_union dst;
+#endif
 	MD5_CTX ctx;
 	int doff;
 	struct ip *ip;
 	struct ipovly *ipovly;
+	struct ip6_hdr *ip6;
 	struct secasvar *sav;
-	struct tcphdr *th;
-	u_short savecsum;
+	u_int16_t savecsum;
 	struct ippseudo ippseudo;
-
+	struct ip6_ext ip6e;
+	struct {
+		struct in6_addr src, dst;
+		u_int32_t len;
+		u_int8_t zero[3];
+		u_int8_t nxt;
+	} ip6pseudo;
+	u_int8_t nxt;
 
 	KASSERT(m != NULL /*, ("NULL mbuf chain")*/);
 	KASSERT(buf != NULL /*, ("NULL signature pointer")*/);
 
-	/* Extract the destination from the IP header in the mbuf. */
 	ip = mtod(m, struct ip *);
+	ip6 = NULL;
+	if (ip->ip_v == 6) {
+		ip = NULL;
+		ip6 = mtod(m, struct ip6_hdr *);
+	}
+
+	/* look for TCP header offset - it won't take too long */
+	if (thoff >= 0) {
+		nxt = IPPROTO_TCP;
+		goto found;
+	}
+
+	thoff = ip ? sizeof(*ip) : sizeof(*ip6);
+	nxt = ip ? ip->ip_p : ip6->ip6_nxt;
+
+	while (1) {
+		switch (nxt) {
+		case IPPROTO_TCP:
+			goto found;
+		case IPPROTO_AH:
+			m_copydata(m, thoff, sizeof(ip6e), (caddr_t)&ip6e);
+			thoff += (ip6e.ip6e_len + 2) << 2;
+			break;
+		case IPPROTO_DSTOPTS:
+		case IPPROTO_ROUTING:
+		case IPPROTO_HOPOPTS:
+			m_copydata(m, thoff, sizeof(ip6e), (caddr_t)&ip6e);
+			thoff += (ip6e.ip6e_len + 1) << 3;
+			break;
+		default:
+			return EINVAL;
+		}
+
+		nxt = ip6e.ip6e_nxt;
+	}
+
+found:
+
+#ifdef FAST_IPSEC
+	/* Extract the destination from the IP header in the mbuf. */
 	bzero(&dst, sizeof(union sockaddr_union));
 	dst.sa.sa_len = sizeof(struct sockaddr_in);
 	dst.sa.sa_family = AF_INET;
@@ -1678,16 +1727,21 @@ tcp_signature_compute(struct mbuf *m, int off0, int len, int optlen,
 
 	/* Look up an SADB entry which matches the address of the peer. */
 	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+#else
+	if (ip)
+		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
+		    (caddr_t)&ip->ip_dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+	else
+		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
+		    (caddr_t)&ip6->ip6_dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+#endif
 	if (sav == NULL) {
-		printf("%s: SADB lookup failed for %s\n", __func__,
-		    inet_ntoa(dst.sin.sin_addr));
+		printf("%s: SADB lookup failed\n", __func__);
 		return (EINVAL);
 	}
 
 	MD5Init(&ctx);
-	ipovly = (struct ipovly *)ip;
-	th = (struct tcphdr *)((u_char *)ip + off0);
-	doff = off0 + sizeof(struct tcphdr) + optlen;
+	doff = thoff + sizeof(struct tcphdr) + optlen;
 
 	/*
 	 * Step 1: Update MD5 hash with IP pseudo-header.
@@ -1698,12 +1752,24 @@ tcp_signature_compute(struct mbuf *m, int off0, int len, int optlen,
 	 * XXX One cannot depend on ipovly->ih_len here. When called from
 	 * tcp_output(), the underlying ip_len member has not yet been set.
 	 */
-	ippseudo.ippseudo_src = ipovly->ih_src;
-	ippseudo.ippseudo_dst = ipovly->ih_dst;
-	ippseudo.ippseudo_pad = 0;
-	ippseudo.ippseudo_p = IPPROTO_TCP;
-	ippseudo.ippseudo_len = htons(len + sizeof(struct tcphdr) + optlen);
-	MD5Update(&ctx, (char *)&ippseudo, sizeof(struct ippseudo));
+	if (ip) {
+		ipovly = (struct ipovly *)ip;
+		ippseudo.ippseudo_src = ipovly->ih_src;
+		ippseudo.ippseudo_dst = ipovly->ih_dst;
+		ippseudo.ippseudo_pad = 0;
+		ippseudo.ippseudo_p = IPPROTO_TCP;
+		ippseudo.ippseudo_len =
+		    htons(len + sizeof(struct tcphdr) + optlen);
+		MD5Update(&ctx, (char *)&ippseudo, sizeof(ippseudo));
+	} else {
+		ip6pseudo.src = ip6->ip6_src;
+		in6_clearscope(&ip6pseudo.src);
+		ip6pseudo.dst = ip6->ip6_dst;
+		in6_clearscope(&ip6pseudo.dst);
+		ip6pseudo.len = htonl(len + sizeof(struct tcphdr) + optlen);
+		ip6pseudo.nxt = IPPROTO_TCP;
+		MD5Update(&ctx, (char *)&ip6pseudo, sizeof(ip6pseudo));
+	}
 
 	/*
 	 * Step 2: Update MD5 hash with TCP header, excluding options.
@@ -1728,7 +1794,11 @@ tcp_signature_compute(struct mbuf *m, int off0, int len, int optlen,
 	MD5Final(buf, &ctx);
 
 	key_sa_recordxfer(sav, m);
+#ifdef FAST_IPSEC
 	KEY_FREESAV(&sav);
+#else
+	key_freesav(sav);
+#endif
 	return (0);
 }
 #endif /* TCP_SIGNATURE */
@@ -2347,8 +2417,7 @@ tcp_optlen(tp)
 		optlen += TCPOLEN_TSTAMP_APPA;
 
 #ifdef TCP_SIGNATURE
-#ifdef INET6
-	/* XXX: FreeBSD uses ((tp->t_inpcb->inp_vflag & INP_IPV6) == 0) */
+#if defined(INET6) && defined(FAST_IPSEC)
 	if (tp->t_family == AF_INET) 
 #endif
 	if (tp->t_flags & TF_SIGNATURE)

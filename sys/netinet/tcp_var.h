@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.110 2004/04/25 22:25:05 jonathan Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.111 2004/04/26 03:54:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -772,7 +772,8 @@ int	 tcp_respond(struct tcpcb *, struct mbuf *, struct mbuf *,
 void	 tcp_rmx_rtt(struct tcpcb *);
 void	 tcp_setpersist(struct tcpcb *);
 #ifdef TCP_SIGNATURE
-int	 tcp_signature_compute(struct mbuf *, int, int, int, u_char *, u_int);
+int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
+	    int, u_char *, u_int);
 #endif
 void	 tcp_slowtimo(void);
 struct mbuf *

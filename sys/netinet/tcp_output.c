@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.110 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.111 2004/04/26 03:54:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.110 2004/04/25 22:25:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.111 2004/04/26 03:54:29 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -902,8 +902,7 @@ send:
 	}
 
 #ifdef TCP_SIGNATURE
-#ifdef INET6
-	/* XXX: FreeBSD uses ((tp->t_inpcb->inp_vflag & INP_IPV6) == 0) */
+#if defined(INET6) && defined(FAST_IPSEC)
 	if (tp->t_family == AF_INET) 
 #endif
 	if (tp->t_flags & TF_SIGNATURE) {
@@ -1063,12 +1062,11 @@ send:
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
 #ifdef TCP_SIGNATURE
-#ifdef INET6
-	/* XXX: FreeBSD uses ((tp->t_inpcb->inp_vflag & INP_IPV6) == 0) */
+#if defined(INET6) && defined(FAST_IPSEC)
 	if (tp->t_family == AF_INET) /* XXX */
 #endif
 	if (tp->t_flags & TF_SIGNATURE)
-		tcp_signature_compute(m, sizeof(struct ip), len, optlen,
+		tcp_signature_compute(m, th, -1, len, optlen,
 		    (u_char *)(th + 1) + sigoff, IPSEC_DIR_OUTBOUND);
 #endif
 
