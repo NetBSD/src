@@ -1,0 +1,15 @@
+./usr/bin/compile_et		base-krb5-bin
+./usr/bin/kdestroy		base-krb5-bin
+./usr/bin/kinit			base-krb5-bin
+./usr/bin/klist			base-krb5-bin
+./usr/bin/kpasswd		base-krb5-bin
+./usr/bin/mk_cmds		base-krb5-bin
+./usr/bin/string2key		base-krb5-bin
+./usr/libexec/hpropd		base-krb5-bin
+./usr/libexec/kadmind		base-krb5-bin
+./usr/libexec/kpasswdd		base-krb5-bin
+./usr/sbin/hprop		base-krb5-bin
+./usr/sbin/kadmin		base-krb5-bin
+./usr/sbin/kdc			base-krb5-bin
+./usr/sbin/kstash		base-krb5-bin
+./usr/sbin/ktutil		base-krb5-bin

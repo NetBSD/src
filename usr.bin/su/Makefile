@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/08/23 23:03:44 lha Exp $
+#	$NetBSD: Makefile,v 1.34 2003/12/11 09:46:27 dyoung Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -19,17 +19,15 @@ CPPFLAGS+=-DLOGIN_CAP
 # list of groups.
 #CPPFLAGS+=-DSU_INDIRECT_GROUP
 
-.if (${USE_KERBEROS} != "no" || ${USE_KERBEROS4} != "no")
+.if (${USE_KERBEROS} != "no")
 .ifdef AFS
 DPADD+= ${LIBKAFS}
 LDADD+= -lkafs
 .endif
 
-.if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 DPADD+=	${LIBKRB5} ${LIBASN1}
 LDADD+= -lkrb5 -lasn1
-.endif
 
 .if (${USE_KERBEROS4} != "no")
 CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV

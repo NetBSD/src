@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.20 2003/07/23 13:35:14 itojun Exp $
+#	$NetBSD: Makefile,v 1.21 2003/12/11 09:46:27 dyoung Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -15,7 +15,7 @@ SRCS=	auth.c encrypt.c genget.c getent.c misc.c
 CPPFLAGS+= -DHAS_CGETENT
 CPPFLAGS+= -I${.CURDIR}
 
-.if (${USE_KERBEROS4} != "no") || (${USE_KERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 SRCS+=	enc_des.c
 CPPFLAGS+= -DENCRYPTION -DAUTHENTICATION
 CPPFLAGS+= -DDES_ENCRYPTION
@@ -26,11 +26,9 @@ CPPFLAGS+= -DKRB4
 CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
 .endif
 
-.if (${USE_KERBEROS} != "no")
 SRCS+=	kerberos5.c
 CPPFLAGS+= -DKRB5
 CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
-.endif
 .endif
 
 libinstall::
