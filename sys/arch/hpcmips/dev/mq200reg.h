@@ -1,7 +1,7 @@
-/*	$NetBSD: mq200reg.h,v 1.5 2001/03/11 13:53:31 takemura Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.6 2001/03/25 13:06:53 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2000 Takemura Shin
+ * Copyright (c) 2000, 2001 TAKEMURA Shin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,11 +68,24 @@
  */
 #define MQ200_MMR(n)		(MQ200_MM+(n)*4)
 #	define MQ200_MM00_ENABLE		(1<<0)
-#	define MQ200_MM00_RESET		(1<<1)
-#	define MQ200_MM00_DRAM_RESET	(1<<2)
-#	define MQ200_MM01_CLK_PLL1	(0<<0)
-#	define MQ200_MM01_CLK_BUS	(1<<0)
-#	define MQ200_MM01_CLK_PLL2	(1<<0)
+#	define MQ200_MM00_RESET			(1<<1)
+#	define MQ200_MM00_DRAM_RESET		(1<<2)
+#	define MQ200_MM01_CLK_PLL1		(0<<0)
+#	define MQ200_MM01_CLK_BUS		(1<<0)
+#	define MQ200_MM01_CLK_PLL2		(1<<0)
+#	define MQ200_MM01_SLOW_REFRESH_EN	(1<<1)
+#	define MQ200_MM01_CPU_PB_EN		(1<<2)
+#	define MQ200_MM01_GC1_PB_EN		(1<<3)
+#	define MQ200_MM01_GC2_PB_EN		(1<<4)
+#	define MQ200_MM01_STN_READ_PB_EN	(1<<5)
+#	define MQ200_MM01_STN_WRITE_PB_EN	(1<<6)
+#	define MQ200_MM01_GE_PB_EN		(1<<7)
+	/* bits 11-8 is reserved */
+#	define MQ200_MM01_REFRESH_SHIFT		12
+#	define MQ200_MM01_REFRESH_MASK		0x03fff000
+	/* bits 29 is reserved	*/
+#	define MQ200_MM01_DRAM_AUTO_REFRESH_EN	(1<<30)
+#	define MQ200_MM01_DRAM_STANDBY_EN	(1<<31)
 
 /*
  * Interrupt Controller
@@ -617,6 +630,7 @@
  */
 #define MQ200_PMCR	(MQ200_PM + 0x00)
 #	define MQ200_PMC_PLL1_N		(1<<0)
+#	define MQ200_PMC_PLL1_N_SHIFT	5
 #	define MQ200_PMC_PLL2_ENABLE	(1<<2)
 #	define MQ200_PMC_PLL3_ENABLE	(1<<3)
 #	define MQ200_PMC_IMMEDIATELY	(1<<5)
