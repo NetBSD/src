@@ -1,10 +1,10 @@
-/*	$NetBSD: if_fxp.c,v 1.3 1997/08/23 09:28:13 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.4 1997/08/25 22:39:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
  * All rights reserved.
  *
- * Modifications to support NetBSD:
+ * Modifications to support NetBSD and media selection:
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,7 @@
 #include <sys/syslog.h>
 
 #include <net/if.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -166,6 +167,49 @@ static u_char fxp_cb_config_template[] = {
 	0x5,	/* 21 */
 	0x0, 0x0
 };
+
+/* Supported media types. */
+struct fxp_supported_media {
+	const int	fsm_phy;	/* PHY type */
+	const int	*fsm_media;	/* the media array */
+	const int	fsm_nmedia;	/* the number of supported media */
+	const int	fsm_defmedia;	/* default media for this PHY */
+};
+
+const int fxp_media_standard[] = {
+	IFM_ETHER|IFM_10_T,
+	IFM_ETHER|IFM_10_T|IFM_FDX,
+	IFM_ETHER|IFM_100_TX,
+	IFM_ETHER|IFM_100_TX|IFM_FDX,
+	IFM_ETHER|IFM_AUTO,
+};
+#define	FXP_MEDIA_STANDARD_DEFMEDIA	(IFM_ETHER|IFM_AUTO)
+
+const int fxp_media_default[] = {
+	IFM_ETHER|IFM_MANUAL,		/* XXX IFM_AUTO ? */
+};
+#define	FXP_MEDIA_DEFAULT_DEFMEDIA	(IFM_ETHER|IFM_MANUAL)
+
+const struct fxp_supported_media fxp_media[] = {
+	{ FXP_PHY_DP83840, fxp_media_standard,
+	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
+	  FXP_MEDIA_STANDARD_DEFMEDIA },
+	{ FXP_PHY_DP83840A, fxp_media_standard,
+	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
+	  FXP_MEDIA_STANDARD_DEFMEDIA },
+	{ FXP_PHY_82555, fxp_media_standard,
+	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
+	  FXP_MEDIA_STANDARD_DEFMEDIA },
+	{ FXP_PHY_80C24, fxp_media_default,
+	  sizeof(fxp_media_default) / sizeof(fxp_media_default[0]),
+	  FXP_MEDIA_DEFAULT_DEFMEDIA },
+};
+#define	NFXPMEDIA (sizeof(fxp_media) / sizeof(fxp_media[0]))
+
+static int fxp_mediachange	__P((struct ifnet *));
+static void fxp_mediastatus	__P((struct ifnet *, struct ifmediareq *));
+
+void fxp_set_media		__P((struct fxp_softc *, int));
 
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
 static FXP_INTR_TYPE fxp_intr	__P((void *));
@@ -567,7 +611,8 @@ fxp_attach_common(sc, enaddr)
 	u_int8_t *enaddr;
 {
 	u_int16_t data;
-	int i;
+	int i, nmedia, defmedia;
+	const int *media;
 
 	/*
 	 * Reset to a stable state.
@@ -606,6 +651,31 @@ fxp_attach_common(sc, enaddr)
 	 * Read MAC address.
 	 */
 	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
+
+	/*
+	 * Initialize the media structures.
+	 */
+
+	media = fxp_media_default;
+	nmedia = sizeof(fxp_media_default) / sizeof(fxp_media_default[0]);
+	defmedia = FXP_MEDIA_DEFAULT_DEFMEDIA;
+
+	for (i = 0; i < NFXPMEDIA; i++) {
+		if (sc->phy_primary_device == fxp_media[i].fsm_phy) {
+			media = fxp_media[i].fsm_media;
+			nmedia = fxp_media[i].fsm_nmedia;
+			defmedia = fxp_media[i].fsm_defmedia;
+		}
+	}
+
+	ifmedia_init(&sc->sc_media, 0, fxp_mediachange, fxp_mediastatus);
+	for (i = 0; i < nmedia; i++) {
+		if (IFM_SUBTYPE(media[i]) == IFM_100_TX && sc->phy_10Mbps_only)
+			continue;
+		ifmedia_add(&sc->sc_media, media[i], 0, NULL);
+	}
+	ifmedia_set(&sc->sc_media, defmedia);
+
 	return (0);
 
  fail:
@@ -1258,8 +1328,26 @@ fxp_init(xsc)
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_RU_START);
 
 	/*
-	 * Toggle a few bits in the PHY.
+	 * Set current media.
 	 */
+	fxp_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+	splx(s);
+
+	/*
+	 * Start stats updater.
+	 */
+	timeout(fxp_stats_update, sc, hz);
+}
+
+void
+fxp_set_media(sc, media)
+	struct fxp_softc *sc;
+	int media;
+{
+
 	switch (sc->phy_primary_device) {
 	case FXP_PHY_DP83840:
 	case FXP_PHY_DP83840A:
@@ -1270,20 +1358,12 @@ fxp_init(xsc)
 		    FXP_DP83840_PCR_BIT10);	/* XXX I have no idea */
 		/* fall through */
 	case FXP_PHY_82555:
-		/*
-		 * If link0 is set, disable auto-negotiation and then:
-		 *	If link1 is unset = 10Mbps
-		 *	If link1 is set = 100Mbps
-		 *	If link2 is unset = half duplex
-		 *	If link2 is set = full duplex
-		 * XXX THIS IS BEGGING FOR IF_MEDIA!
-		 */
-		if (ifp->if_flags & IFF_LINK0) {
+		if (IFM_SUBTYPE(media) != IFM_AUTO) {
 			int flags;
 
-			flags = (ifp->if_flags & IFF_LINK1) ?
+			flags = (IFM_SUBTYPE(media) == IFM_100_TX) ?
 			    FXP_PHY_BMCR_SPEED_100M : 0;
-			flags |= (ifp->if_flags & IFF_LINK2) ?
+			flags |= (media & IFM_FDX) ?
 			    FXP_PHY_BMCR_FULLDUPLEX : 0;
 			fxp_mdi_write(sc, sc->phy_primary_addr,
 			    FXP_PHY_BMCR,
@@ -1310,15 +1390,59 @@ fxp_init(xsc)
 		     FXP_ARGS(sc), sc->phy_primary_device,
 		     sc->phy_primary_addr);
 	}
+}
 
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-	splx(s);
+/*
+ * Change media according to request.
+ */
+int
+fxp_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct fxp_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_media;
 
-	/*
-	 * Start stats updater.
-	 */
-	timeout(fxp_stats_update, sc, hz);
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	fxp_set_media(sc, ifm->ifm_media);
+	return (0);
+}
+
+/*
+ * Notify the world which media we're using.
+ */
+void
+fxp_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct fxp_softc *sc = ifp->if_softc;
+	int flags;
+
+	switch (sc->phy_primary_device) {
+	case FXP_PHY_DP83840:
+	case FXP_PHY_DP83840A:
+	case FXP_PHY_82555:
+		flags = fxp_mdi_read(sc, sc->phy_primary_addr, FXP_PHY_BMCR);
+		ifmr->ifm_active = IFM_ETHER;
+		if (flags & FXP_PHY_BMCR_AUTOEN)
+			ifmr->ifm_active |= IFM_AUTO;
+		else {
+			if (flags & FXP_PHY_BMCR_SPEED_100M)
+				ifmr->ifm_active |= IFM_100_TX;
+			else
+				ifmr->ifm_active |= IFM_10_T;
+
+			if (flags & FXP_PHY_BMCR_FULLDUPLEX)
+				ifmr->ifm_active |= IFM_FDX;
+		}
+		break;
+
+	case FXP_PHY_80C24:
+	default:
+		ifmr->ifm_active = IFM_ETHER|IFM_MANUAL; /* XXX IFM_AUTO ? */
+	}
 }
 
 /*
@@ -1453,6 +1577,7 @@ fxp_ioctl(ifp, command, data)
 	caddr_t data;
 {
 	struct fxp_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splimp();
@@ -1510,6 +1635,11 @@ fxp_ioctl(ifp, command, data)
 		fxp_init(sc);
 		error = 0;
 #endif /* __NetBSD__ */
+		break;
+
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
 
 	default:
