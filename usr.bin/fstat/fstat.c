@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95;*/
-static char *rcsid = "$Id: fstat.c,v 1.15 1996/02/20 16:04:47 fvdl Exp $";
+static char *rcsid = "$Id: fstat.c,v 1.16 1996/05/05 19:12:03 mhitch Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ main(argc, argv)
 	arg = 0;
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
-	while ((ch = getopt(argc, argv, "fnp:u:vNM")) != EOF)
+	while ((ch = getopt(argc, argv, "fnp:u:vN:M:")) != EOF)
 		switch((char)ch) {
 		case 'f':
 			fsflg = 1;
