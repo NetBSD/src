@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtworeg.h,v 1.1 1995/09/17 20:53:47 pk Exp $ */
+/*	$NetBSD: cgtworeg.h,v 1.2 1995/10/02 09:07:03 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -50,12 +50,14 @@
 
 #define CG2_BITPLANE_OFF	0
 #define CG2_BITPLANE_SIZE	0x100000
-#define CG2_PIXMAP_OFF		0x100000
+#define CG2_PIXMAP_OFF		(CG2_BITPLANE_OFF + CG2_BITPLANE_SIZE)
 #define CG2_PIXMAP_SIZE		0x100000
-#define CG2_ROPMEM_OFF		0x200000
+#define CG2_ROPMEM_OFF		(CG2_PIXMAP_OFF + CG2_PIXMAP_SIZE)
 #define CG2_ROPMEM_SIZE		0x100000
-#define CG2_CTLREG_OFF		0x300000
+#define CG2_CTLREG_OFF		(CG2_ROPMEM_OFF + CG2_ROPMEM_SIZE)
 #define CG2_CTLREG_SIZE		0x010600
+#define CG2_MAPPED_SIZE		(CG2_CTLREG_OFF + CG2_CTLREG_SIZE)
+
 
 /*
  * Control/status register.  The X server only appears to use update_cmap
