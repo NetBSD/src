@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153 2002/02/04 08:36:36 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.154 2002/05/31 19:59:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1686,7 +1686,7 @@ ctw_user:
 	bl,a	ctw_merge		! all ok if only 1
 	 std	%l0, [%sp]
 	add	%sp, 7*8, %g5		! check last addr too
-	add	%g6, 62, %g6		! restore %g6 to `pgofset'
+	add	%g6, 62, %g6		/* restore %g6 to `pgofset' */
 	PTE_OF_ADDR(%g5, %g7, ctw_invalid, %g6, NOP_ON_4M_3)
 	CMP_PTE_USER_WRITE(%g7, %g6, NOP_ON_4M_4)
 	be,a	ctw_merge		! all ok: store <l0,l1> and merge
@@ -2700,7 +2700,7 @@ nmi_sun4m:
 	bnz,a	1f			!
 	 mov	%o0, %o1		! shift int clear bit to SOFTINT 15
 
-	set	_C_LABEL(nmi_hard), %o3	! it's a hardint; switch handler
+	set	_C_LABEL(nmi_hard), %o3	/* it's a hardint; switch handler */
 
 	/*
 	 * Level 15 interrupts are nonmaskable, so with traps off,
@@ -2767,7 +2767,7 @@ nmi_sun4m:
 
 	!cmp	%o0, 0			! was this a soft nmi
 	!be	4f
-	!XXX - we need to unblock `mask all ints' only on a hard nmi
+	/* XXX - we need to unblock `mask all ints' only on a hard nmi */
 
 	! enable interrupts again (safe, we disabled traps again above)
 	sethi	%hi(ICR_SI_CLR), %o0
@@ -3461,7 +3461,7 @@ dostart:
 
 	set	0x44444230, %l3		! Is it DDB_MAGIC0?
 	cmp	%o5, %l3		! if so, need to relocate %o4
-	bne	3f			! if not, there's no bootloader info
+	bne	3f			/* if not, there's no bootloader info */
 
 					! note: %l4 set to KERNBASE above.
 	set	0xf8000000, %l5		! compute correction term:
@@ -4499,7 +4499,7 @@ idle_enter_no_schedlock:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 idle_leave:
 	/* Before we leave the idle loop, detain the scheduler lock */
-	nop;nop;nop;	! just wrote to %psr; delay before doing a `save'
+	nop;nop;nop;	/* just wrote to %psr; delay before doing a `save' */
 	SAVE_GLOBALS_AND_CALL(sched_lock_idle)
 	b,a	Lsw_scan
 #endif
