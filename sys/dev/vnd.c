@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.39 1997/06/08 15:55:34 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.40 1997/06/08 15:59:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -313,23 +313,8 @@ vndstrategy(bp)
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		VOP_UNLOCK(vnd->sc_vp);
 
-#define VND_FILLHOLES
-#ifdef VND_FILLHOLES
-		if (error == 0 && (long)nbn == -1) {
-			int rw = (flags & B_READ) ? UIO_READ : UIO_WRITE;
-			sz = resid;
-			error = vn_rdwr(rw, vnd->sc_vp, addr, sz,
-					bn, UIO_SYSSPACE,
-					IO_SYNC | IO_NODELOCKED,
-					vnd->sc_cred, &resid, bp->b_proc);
-			s = splbio();
-			bp->b_resid -= (sz - resid);
-			splx(s);
-		}
-#else
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
-#endif
 
 		/*
 		 * If there was an error or a hole in the file...punt.
@@ -340,14 +325,12 @@ vndstrategy(bp)
 		 * XXX we could deal with holes here but it would be
 		 * a hassle (in the write case).
 		 */
-		if (error || (long)nbn == -1) {
+		if (error) {
 			vnx->vx_error = error;
 			s = splbio();
 			if (vnx->vx_pending == 0) {
-				if (error) {
-					bp->b_error = error;
-					bp->b_flags |= B_ERROR;
-				}
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
 				putvndxfer(vnx);
 				biodone(bp);
 			}
