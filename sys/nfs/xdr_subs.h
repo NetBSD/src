@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xdr_subs.h	7.3 (Berkeley) 6/28/90
- *	$Id: xdr_subs.h,v 1.3 1993/05/20 03:19:19 cgd Exp $
+ *	$Id: xdr_subs.h,v 1.4 1993/06/03 01:12:47 cgd Exp $
  */
 
 #ifndef _NFS_XDR_SUBS_H_
@@ -48,15 +48,15 @@
 /* From xdr to machine */
 #define fxdr_unsigned(t, v)	((t)ntohl((long)(v)))
 #define	fxdr_time(f, t)		{((struct timeval *)(t))->tv_sec=ntohl( \
-				((struct timeval *)(f))->tv_sec); \
+				((struct nfsv2_time *)(f))->tv_sec); \
 				((struct timeval *)(t))->tv_usec=ntohl( \
-				((struct timeval *)(f))->tv_usec);}
+				((struct nfsv2_time *)(f))->tv_usec);}
 
 /* from machine to xdr */
 #define	txdr_unsigned(v)	(htonl((long)(v)))
-#define	txdr_time(f, t)		{((struct timeval *)(t))->tv_sec=htonl( \
+#define	txdr_time(f, t)		{((struct nfsv2_time *)(t))->tv_sec=htonl( \
 				((struct timeval *)(f))->tv_sec); \
-				((struct timeval *)(t))->tv_usec=htonl( \
+				((struct nfsv2_time *)(t))->tv_usec=htonl( \
 				((struct timeval *)(f))->tv_usec);}
 
 #endif /* !_NFS_XDR_SUBS_H_ */

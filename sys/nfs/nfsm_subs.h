@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsm_subs.h	7.11 (Berkeley) 4/16/91
- *	$Id: nfsm_subs.h,v 1.2 1993/05/20 03:19:06 cgd Exp $
+ *	$Id: nfsm_subs.h,v 1.3 1993/06/03 01:12:46 cgd Exp $
  */
 
 #ifndef _NFS_NFSM_SUBS_H_
@@ -282,6 +282,7 @@ extern struct mbuf *nfsm_reqh();
 		} \
 		tl = (u_long *)bp
 
+#if 0 /* va_atime.tv_usec is not unused (jfw@ksr.com 6/2/93) */
 #define	nfsm_srvfillattr \
 	fp->fa_type = vtonfs_type(vap->va_type); \
 	fp->fa_mode = vtonfs_mode(vap->va_type, vap->va_mode); \
@@ -302,5 +303,25 @@ extern struct mbuf *nfsm_reqh();
 	txdr_time(&vap->va_mtime, &fp->fa_mtime); \
 	fp->fa_ctime.tv_sec = txdr_unsigned(vap->va_ctime.tv_sec); \
 	fp->fa_ctime.tv_usec = txdr_unsigned(vap->va_gen)
+#else /* don't try to extend the poor NFS protocol */
+#define	nfsm_srvfillattr \
+	fp->fa_type = vtonfs_type(vap->va_type); \
+	fp->fa_mode = vtonfs_mode(vap->va_type, vap->va_mode); \
+	fp->fa_nlink = txdr_unsigned(vap->va_nlink); \
+	fp->fa_uid = txdr_unsigned(vap->va_uid); \
+	fp->fa_gid = txdr_unsigned(vap->va_gid); \
+	fp->fa_size = txdr_unsigned(vap->va_size); \
+	fp->fa_blocksize = txdr_unsigned(vap->va_blocksize); \
+	if (vap->va_type == VFIFO) \
+		fp->fa_rdev = 0xffffffff; \
+	else \
+		fp->fa_rdev = txdr_unsigned(vap->va_rdev); \
+	fp->fa_blocks = txdr_unsigned(vap->va_bytes / NFS_FABLKSIZE); \
+	fp->fa_fsid = txdr_unsigned(vap->va_fsid); \
+	fp->fa_fileid = txdr_unsigned(vap->va_fileid); \
+	txdr_time(&vap->va_atime, &fp->fa_atime); \
+	txdr_time(&vap->va_mtime, &fp->fa_mtime); \
+        txdr_time(&vap->va_ctime, &fp->fa_ctime);
+#endif
 
 #endif /* !_NFS_NFSM_SUBS_H_ */
