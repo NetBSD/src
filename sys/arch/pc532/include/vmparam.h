@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 1999/01/15 07:43:48 matthias Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 1999/01/16 20:39:03 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -158,8 +158,6 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-#define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
 #define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
