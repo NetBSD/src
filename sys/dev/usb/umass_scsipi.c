@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.2 2001/12/29 13:46:23 augustss Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.3 2001/12/29 13:52:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.2 2001/12/29 13:46:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.3 2001/12/29 13:52:21 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -177,6 +177,9 @@ umass_scsipi_setup(struct umass_softc *sc)
 
 	scbus = malloc(sizeof *scbus, M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->bus = &scbus->base;
+
+	/* Only use big commands for USB SCSI devices. */
+	sc->sc_busquirks |= PQUIRK_ONLYBIG;
 
 	/* Fill in the adapter. */
 	memset(&scbus->sc_adapter, 0, sizeof(scbus->sc_adapter));
