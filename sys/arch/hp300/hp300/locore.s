@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 2003/01/17 22:53:08 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.128 2003/02/02 10:24:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -390,7 +390,7 @@ Lstart3:
  * Prepare to enable MMU.
  * Since the kernel is not mapped logical == physical we must insure
  * that when the MMU is turned on, all prefetched addresses (including
- * the PC) are valid.  In order guarentee that, we use the last physical
+ * the PC) are valid.  In order guarantee that, we use the last physical
  * page (which is conveniently mapped == VA) and load it up with enough
  * code to defeat the prefetch, then we execute the jump back to here.
  *

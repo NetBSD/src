@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.4 2002/09/27 15:37:22 provos Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.5 2003/02/02 10:24:40 wiz Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa dma routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.4 2002/09/27 15:37:22 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.5 2003/02/02 10:24:40 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 
 			/*
 			 * Get the length and status of the packet. Only the
-			 * status is guarenteed to be at dma_mem_ptr, ie need
+			 * status is guaranteed to be at dma_mem_ptr, ie need
 			 * to check for wraparound before reading the length
 			 */
 			status = *((unsigned short *) dma_mem_ptr)++;
@@ -256,7 +256,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 				}
 				/*
 				 * save processing by always using a mbuf
-				 * cluster, guarenteed to fit packet
+				 * cluster, guaranteed to fit packet
 				 */
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {

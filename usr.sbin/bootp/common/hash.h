@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.3 2002/07/14 00:26:17 wiz Exp $	*/
+/*	$NetBSD: hash.h,v 1.4 2003/02/02 10:24:41 wiz Exp $	*/
 
 #ifndef	HASH_H
 #define HASH_H
@@ -82,7 +82,7 @@ SOFTWARE.
  *
  *	    A generalized hash function, hash_HashFunction(), is included
  *	    with this package to make things a little easier.  It is not
- *	    guarenteed to use the best hash algorithm in existence. . . .
+ *	    guaranteed to use the best hash algorithm in existence. . . .
  */
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.54 2003/01/28 22:35:07 wiz Exp $	*/
+/*	$NetBSD: hil.c,v 1.55 2003/02/02 10:24:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.54 2003/01/28 22:35:07 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.55 2003/02/02 10:24:39 wiz Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -290,7 +290,7 @@ hilopen(dev, flags, mode, p)
 	if (flags & FNONBLOCK)
 		dptr->hd_flags |= HIL_NOBLOCK;
 	/*
-	 * It is safe to flush the read buffer as we are guarenteed
+	 * It is safe to flush the read buffer as we are guaranteed
 	 * that no one else is using it.
 	 */
 	if ((dptr->hd_flags & HIL_OPENED) == 0) {

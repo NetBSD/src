@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.7 2003/01/06 13:05:09 wiz Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.8 2003/02/02 10:24:40 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.7 2003/01/06 13:05:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.8 2003/02/02 10:24:40 wiz Exp $");
 
 #include "opt_inet.h"
 
@@ -1627,7 +1627,7 @@ cs_process_rx_early(struct cs_softc *sc)
 	}
 	m->m_pkthdr.rcvif = ifp;
 	/*
-	 * save processing by always using a mbuf cluster, guarenteed to fit
+	 * save processing by always using a mbuf cluster, guaranteed to fit
 	 * packet
 	 */
 	MCLGET(m, M_DONTWAIT);
