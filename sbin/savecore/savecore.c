@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.57 2002/03/19 18:55:03 christos Exp $	*/
+/*	$NetBSD: savecore.c,v 1.58 2002/09/27 18:38:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.57 2002/03/19 18:55:03 christos Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.58 2002/09/27 18:38:53 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,7 +550,9 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    compress ? "compressed " : "", path);
 	for (; dumpsize > 0; dumpsize -= nr) {
-		(void)printf("%8dK\r", dumpsize / 1024);
+		char nbuf[7];
+		humanize_number(nbuf, 7, dumpsize, "", HN_AUTOSCALE, 0);
+		(void)printf("%7s\r", nbuf);
 		(void)fflush(stdout);
 		nr = read(ifd, buf, MIN(dumpsize, sizeof(buf)));
 		if (nr <= 0) {
