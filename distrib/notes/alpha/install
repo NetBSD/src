@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.10 1998/06/27 09:15:28 ross Exp $	
+	$NetBSD: install,v 1.11 1998/07/05 13:59:25 ross Exp $	
 
 0. Introduction
 
@@ -240,7 +240,15 @@
     If you have more space, we recommend devoting at least 32 MB,
     and preferably 48 MB, to the root partition. /usr will need
     150 MB or so if you're not installing X, 200 MB or so if you
-    are.
+    are. A typical organization is 50 MB for root, 150-250 MB for
+    swap, and the remaining space for /usr. With enough swap space
+    configured, you can make /tmp a nice, fast mfs. See man 8
+    mount_mfs, and note that the mfs will require swap space for
+    the largest planned amount of /tmp storage. It doesn't return
+    space when files are deleted, but just keeps it its own freelist
+    so the swap space required is equal to the highwater mark of
+    /tmp use, plus space required to back up main memory and store
+    inactive images.
 
     Once you've specified this information, the install script will
     write the disklabel, install boot blocks to make the disk
@@ -323,9 +331,9 @@
     Mirror sites are listed at: "http://www.netbsd.org/Sites/net.html".
     A typical session might be:
 
-        mkdir /mnt/var/tmp
-        cd /mnt/var/tmp
-        ftp ftp.netbsd.org
+        mkdir /mnt/usr/release
+        cd /mnt/usr/release
+        ftp 204.152.184.75	 (ftp.netbsd.org when this was written)
         [all the following commmands are given to the ftp program
             after logging in]
         prompt
@@ -346,7 +354,7 @@
 
         cd /mnt
 
-    For this and the following commands, replace `/mnt/var/tmp/'
+    For this and the following commands, replace `/mnt/usr/release/'
     with the path to your NFS volume or CD-ROM if that's how you
     chose to access your install files instead.
 
@@ -354,13 +362,13 @@
 
 	cd /mnt
         for i in base kern comp etc games man misc text; do
-            tar xpfz /mnt/var/tmp/$i.tgz;
+            tar xpfz /mnt/usr/release/$i.tgz;
 	done
 
     or (but do NOT unpack source/toolchain.tgz from / or /mnt) perhaps:
 
 	cd /mnt
-	for i in /mnt/var/tmp/[a-z]*.tgz; do
+	for i in /mnt/usr/release/[a-z]*.tgz; do
 	    echo $i
 	    tar xpfz $i
 	done
@@ -370,17 +378,26 @@
 	cd /mnt/dev
 	sh ./MAKEDEV all
 
-    You will now be ready to reboot from your hard disk. Type `sync'
-    twice to make sure all the data is written out to disk and then
-    type `halt' to halt your system and go back to the monitor. At
-    this point you should be able to reboot your system with
+    Unmount the file systems and halt. The exact instructions to
+    type here will depend on the file systems you created, but
+    typically the commands are:
+
+	cd /
+	umount /mnt/usr
+	umount /mnt
+	sync		# not needed but traditional
+	halt
+
+    You should now be at the SRM console's >>> prompt and can reboot
+    into the new configuration (possibly after an optional power cycle)
+    with a command such as:
 
         boot dka0
 
-    (or `boot dka100' if your disk drive is on ID 1, etc.--you can
-    usually use `show device' to see a full list of bootable devices
-    in your system). Your system will come up in single-user mode,
-    ready for you to configure it.
+    This command might be: `boot dka100' if your drive is on ID 1.
+    You can usually use `show device' to see a full list of bootable
+    devices in your system). Your system will come up in single-user
+    mode, ready for you to configure it.
 
 4.4 Optional Toolchain Source Module
 

@@ -1,4 +1,4 @@
-	$NetBSD: xfer,v 1.3 1998/01/09 18:45:40 perry Exp $	
+	$NetBSD: xfer,v 1.4 1998/07/05 13:59:25 ross Exp $	
 
 Installation is supported from several media types, including:
 
@@ -12,17 +12,18 @@ boot from) or you'll have to set up a server with BOOTP, TFTP and
 NFS to boot from as described later in this document.
 
 If you are using a UN*X-like system to write the floppy images to
-disks, you should use the "dd" command to copy the file system image
-(.fs file) directly to the raw floppy disk.  It is suggested that you
-read the dd(1) manual page or ask your system administrator to
-determine the correct set of arguments to use; it will be slightly
-different from system to system, and a comprehensive list of the
-possibilities is beyond the scope of this document.
+disks, you should use the "dd" command to copy the file system
+image ("floppy-144" file) directly to the raw floppy disk.  It is
+suggested that you read the dd(1) manual page or ask your system
+administrator to determine the correct set of arguments to use; it
+will be slightly different from system to system, and a comprehensive
+list of the possibilities is beyond the scope of this document. The
+command will look something like "dd if=floppy-144 bs=18k of=/dev/rfd0a".
 
-If you are using DOS to write the floppy image to disk, you should
-use the "rawrite" utility, provided in the "i386/utilities" directory
-of the NetBSD distribution.  It will write the file system image (.fs
-file) to disks.
+If you are using DOS to create the boot floppy, you should use the
+"rawrite" utility provided in the "i386/utilities" directory of
+the NetBSD distribution to write the file system image ("floppy-144"
+file) to a floppy.
 
 Note that, when installing or upgrading, the floppy can be
 write-protected if you wish. These systems mount ramdisks as their
