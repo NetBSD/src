@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.9 1998/03/24 00:23:55 jonathan Exp $ */
+/* $NetBSD: lk201.c,v 1.10 1999/01/28 10:20:10 jonathan Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -190,6 +190,8 @@ static u_char kbdInitString[] = {
 	LK_LED_DISABLE, LED_ALL,	/* clear keyboard leds */
 };
 
+static void (*raw_kbd_putc) __P((dev_t dev, int c)) = NULL;
+static dev_t lk_out_dev = NODEV;
 
 /*
  * Initialize the Keyboard.
@@ -205,9 +207,27 @@ KBDReset(kbddev, putc)
 	if (inKBDReset)
 		return;
 	inKBDReset = 1;
-	for (i = 0; i < sizeof(kbdInitString); i++)
+
+	/* XXX no way to disable keyclick from userspace */
+	for (i = 0; i < sizeof(kbdInitString); i++) {
+#ifdef LK_KEY_CLICK
 		(*putc)(kbddev, (int)kbdInitString[i]);
+		DELAY(20000);
+#endif
+	}
 	inKBDReset = 0;
+	raw_kbd_putc = putc;
+	lk_out_dev = kbddev;
+}
+
+void
+lk_bell(ring)
+	int ring;
+{
+	if ((!ring) || (lk_out_dev == NODEV) || (raw_kbd_putc == NULL))
+		return;
+	(*raw_kbd_putc)(lk_out_dev, LK_RING_BELL);
+	DELAY(20000);
 }
 
 /*
