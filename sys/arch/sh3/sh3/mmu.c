@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.4 2002/03/03 14:31:27 uch Exp $	*/
+/*	$NetBSD: mmu.c,v 1.5 2002/03/17 14:03:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,11 +62,7 @@ void (*__sh_mmu_ttb_write)(u_int32_t);
 void (*__sh_mmu_pte_setup)(vaddr_t, u_int32_t);
 
 /* Page table method (software) */
-vaddr_t sh3_mmu_pt_p1addr(vaddr_t);
-vaddr_t sh4_mmu_pt_p2addr(vaddr_t);
-vaddr_t (*__sh_mmu_pt_kaddr)(vaddr_t);
 u_int32_t (*__sh_mmu_pd_area)(u_int32_t);
-
 
 void
 sh_mmu_init()
@@ -82,7 +78,6 @@ sh_mmu_init()
 		__sh_tlb_invalidate_asid = sh3_tlb_invalidate_asid;
 		__sh_tlb_invalidate_all = sh3_tlb_invalidate_all;
 		__sh_tlb_reset = sh3_tlb_reset;
-		__sh_mmu_pt_kaddr = sh3_mmu_pt_p1addr;
 		__sh_mmu_pte_setup = sh3_mmu_pte_setup;
 		__sh_mmu_ttb_read = sh3_mmu_ttb_read;
 		__sh_mmu_ttb_write = sh3_mmu_ttb_write;
@@ -95,7 +90,6 @@ sh_mmu_init()
 		__sh_tlb_invalidate_asid = sh4_tlb_invalidate_asid;
 		__sh_tlb_invalidate_all = sh4_tlb_invalidate_all;
 		__sh_tlb_reset = sh4_tlb_reset;
-		__sh_mmu_pt_kaddr = sh4_mmu_pt_p2addr;
 		__sh_mmu_pte_setup = sh4_mmu_pte_setup;
 		__sh_mmu_ttb_read = sh4_mmu_ttb_read;
 		__sh_mmu_ttb_write = sh4_mmu_ttb_write;
@@ -221,55 +215,3 @@ sh4_mmu_pte_setup(vaddr_t va, u_int32_t pte)
 	}
 }
 #endif /* SH4 */
-
-/*
- * Page table utility. will be obsoleted.
- */
-#ifdef SH3
-/*
- * returns P1 address of U0, P0, P1 address.
- */
-vaddr_t
-sh3_mmu_pt_p1addr(vaddr_t va)	/* va = U0, P0, P1 */
-{
-	u_int32_t *pd, *pde, pte;
-	vaddr_t p1addr;
-
-	/* P1SEG */
-	if ((va & 0xc0000000) == 0x80000000)
-		return (va);
-
-	/* P0/U0SEG */
-	pd = (u_int32_t *)_reg_read_4(SH3_TTB);
-	pde = (u_int32_t *)(pd[va >> PDSHIFT] & PG_FRAME);
-	pte = pde[(va & PT_MASK) >> PGSHIFT];
-	p1addr = (pte & PG_FRAME) | (va & PGOFSET);
-
-	return (p1addr);
-}
-#endif /* SH3 */
-#ifdef SH4
-/*
- * returns P2 address of U0, P0, P1 address.
- */
-vaddr_t
-sh4_mmu_pt_p2addr(vaddr_t va)	/* va = U0, P0, P1 */
-{
-	u_int32_t *pd, *pde, pte;
-	vaddr_t p1addr;
-
-	sh_dcache_wbinv_all();
-
-	/* P1SEG */
-	if ((va & 0xc0000000) == 0x80000000)
-		return SH3_P1SEG_TO_P2SEG(va);
-
-	/* P0/U0SEG */
-	pd = (u_int32_t *)SH3_P1SEG_TO_P2SEG(_reg_read_4(SH4_TTB));
-	pde = (u_int32_t *)SH3_P1SEG_TO_P2SEG((pd[va >> PDSHIFT] & PG_FRAME));
-	pte = pde[(va & PT_MASK) >> PGSHIFT];
-	p1addr = (pte & PG_FRAME) | (va & PGOFSET);
-
-	return SH3_P1SEG_TO_P2SEG(p1addr);
-}
-#endif
