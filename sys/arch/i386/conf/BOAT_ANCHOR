@@ -1,7 +1,7 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.14 1993/05/20 14:32:20 cgd Exp $
+#	$Id: BOAT_ANCHOR,v 1.15 1993/05/26 10:15:05 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -39,7 +39,7 @@ pseudo-device	loop
 pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
-pseudo-device	pty	4
+pseudo-device	pty	32
 
 
 pseudo-device	bpfilter	4
