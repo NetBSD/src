@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1996/09/16 06:24:36 leo Exp $	*/
+/*	$NetBSD: genassym.c,v 1.11 1996/10/16 12:42:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -155,6 +155,7 @@ main(void)
 	printf("#define\tFR_SP %p\n", (void *)&frame->f_regs[15]);
 	printf("#define\tFR_HW %p\n", (void *)&frame->f_sr);
 	printf("#define\tFR_ADJ %p\n", (void *)&frame->f_stackadj);
+	printf("#define\tFR_SIZE %d\n", sizeof(struct trapframe));
 
 	printf("#define\tSP %d\n", SP);
 	printf("#define\tSYS_exit %d\n", SYS_exit);
