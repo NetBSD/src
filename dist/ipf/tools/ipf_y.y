@@ -358,10 +358,12 @@ ttllist:
 			{ DOREM(fr->fr_ttl = $3; fr->fr_mttl = 0xff;) }
 	;
 
-proto:	| protox protocol
+proto:	| protox protocol		{ yyresetdict(); }
 	;
 
-protox:	IPFY_PROTO			{ setipftype(); fr = frc; }
+protox:	IPFY_PROTO			{ setipftype();
+					  fr = frc;
+					  yysetdict(NULL); }
 	;
 
 ip:	srcdst flags icmp
@@ -557,31 +559,36 @@ starticmpcode:
 	'('				{ yysetdict(icmpcodewords); }
 	;
 
-srcdst:	IPFY_ALL
+srcdst:	| IPFY_ALL
 	| fromto
 	;
 
 protocol:
-	IPFY_TCPUDP			{ DOREM(fr->fr_flx |= FI_TCPUDP; \
-						fr->fr_mflx |= FI_TCPUDP;) }
-	| IPFY_TCP '/' IPFY_UDP		{ DOREM(fr->fr_flx |= FI_TCPUDP; \
-						fr->fr_mflx |= FI_TCPUDP;) }
-	| IPFY_TCP			{ DOREM(fr->fr_proto = IPPROTO_TCP; \
-						fr->fr_mproto = 0xff;) }
-	| IPFY_UDP			{ DOREM(fr->fr_proto = IPPROTO_UDP; \
-						fr->fr_mproto = 0xff;) }
-	| IPFY_ICMP			{ DOREM(fr->fr_proto = IPPROTO_ICMP; \
-						fr->fr_mproto = 0xff;) }
-	| IPFY_ESP			{ DOREM(fr->fr_proto = IPPROTO_ESP; \
-						fr->fr_mproto = 0xff;) }
-	| IPFY_AH			{ DOREM(fr->fr_proto = IPPROTO_AH; \
-						fr->fr_mproto = 0xff;) }
-	| YY_NUMBER			{ DOREM(fr->fr_proto = $1; \
-						fr->fr_mproto = 0xff;) }
-	| YY_STR			{ DOREM(fr->fr_proto = getproto($1); \
+	YY_NUMBER		{ DOREM(fr->fr_proto = $1; \
+					fr->fr_mproto = 0xff;) }
+	| YY_STR		{ if (!strcmp($1, "tcp-udp")) {
+					DOREM(fr->fr_flx |= FI_TCPUDP; \
+					      fr->fr_mflx |= FI_TCPUDP;)
+				  } else {
+					  DOREM(fr->fr_proto = getproto($1); \
 						fr->fr_mproto = 0xff;)
-					  free($1);
-					}
+				  }
+				  free($1);
+				}
+	| YY_STR nextstring YY_STR
+				{ if (!strcmp($1, "tcp") &&
+				      !strcmp($3, "udp")) {
+					DOREM(fr->fr_flx |= FI_TCPUDP; \
+					      fr->fr_mflx |= FI_TCPUDP;)
+				  } else
+					YYERROR;
+				  free($1);
+				  free($3);
+				}
+	;
+
+nextstring:
+	'/'			{ yysetdict(NULL); }
 	;
 
 fromto:	from srcobject to dstobject	{ yyexpectaddr = 0; yycont = NULL; }
