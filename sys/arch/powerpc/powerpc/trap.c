@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2002/06/17 16:33:15 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 2002/06/17 21:07:40 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -287,7 +287,7 @@ trap(frame)
 				params = args;
 			}
 
-			if ((error = trace_enter(p, code, args, rval)) != 0)
+			if ((error = trace_enter(p, code, params, rval)) != 0)
 				goto syscall_bad;
 
 			rval[0] = 0;
@@ -317,11 +317,10 @@ syscall_bad:
 				frame->cr |= 0x10000000;
 				break;
 			}
-
+			KERNEL_PROC_UNLOCK(p);
+			trace_exit(p, code, params, rval, error);
 		}
-		KERNEL_PROC_UNLOCK(p);
 
-		trace_exit(p, code, args, rval, error);
 
 		break;
 
