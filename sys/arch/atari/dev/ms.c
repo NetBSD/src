@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.5 1996/04/12 08:39:22 leo Exp $	*/
+/*	$NetBSD: ms.c,v 1.6 1996/04/23 11:02:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -131,6 +131,12 @@ int		size, type;
 
 	switch (type) {
 	    case KBD_JOY1_PKG:
+		/*
+		 * Ignore if in emulation mode
+		 */
+		if (ms->ms_emul3b)
+			return;
+
 		/*
 		 * There are some mice that have their middle button
 		 * wired to the 'up' bit of joystick 1....
