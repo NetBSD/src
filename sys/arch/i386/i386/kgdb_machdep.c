@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1997/07/05 20:44:57 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.2 1997/07/09 07:01:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -100,7 +100,6 @@ kgdb_signal(type)
 
 	case T_ASTFLT:
 	case T_DOUBLEFLT:
-	case T_MACHCHECK:
 		return (SIGEMT);
 
 	case T_ARITHTRAP:
