@@ -1,4 +1,4 @@
-/*	$NetBSD: readpassphrase.c,v 1.1.1.1 2001/09/27 02:01:02 itojun Exp $	*/
+/*	$NetBSD: readpassphrase.c,v 1.2 2004/11/03 21:01:45 dsl Exp $	*/
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
@@ -101,11 +101,11 @@ readpassphrase(prompt, buf, bufsiz, flags)
 		if (p < end) {
 			if ((flags & RPP_SEVENBIT))
 				ch &= 0x7f;
-			if (isalpha(ch)) {
+			if (isalpha((unsigned char)ch)) {
 				if ((flags & RPP_FORCELOWER))
-					ch = tolower(ch);
+					ch = tolower((unsigned char)ch);
 				if ((flags & RPP_FORCEUPPER))
-					ch = toupper(ch);
+					ch = toupper((unsigned char)ch);
 			}
 			*p++ = ch;
 		}

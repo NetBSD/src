@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.17 2003/07/10 01:09:43 lukem Exp $	*/
+/*	$NetBSD: canohost.c,v 1.18 2004/11/03 21:01:45 dsl Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: canohost.c,v 1.35 2002/11/26 02:38:54 stevesk Exp $");
-__RCSID("$NetBSD: canohost.c,v 1.17 2003/07/10 01:09:43 lukem Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.18 2004/11/03 21:01:45 dsl Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -70,8 +70,8 @@ get_remote_hostname(int socket, int verify_reverse_mapping)
 	 * of this software).
 	 */
 	for (i = 0; name[i]; i++)
-		if (isupper(name[i]))
-			name[i] = tolower(name[i]);
+		if (isupper((unsigned char)name[i]))
+			name[i] = tolower((unsigned char)name[i]);
 
 	if (!verify_reverse_mapping)
 		return xstrdup(name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.20 2003/07/24 15:31:53 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.21 2004/11/03 21:01:45 dsl Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
-__RCSID("$NetBSD: readconf.c,v 1.20 2003/07/24 15:31:53 itojun Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.21 2004/11/03 21:01:45 dsl Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -436,7 +436,7 @@ parse_flag:
 		value = strtol(arg, &endofnumber, 10);
 		if (arg == endofnumber)
 			fatal("%.200s line %d: Bad number.", filename, linenum);
-		switch (toupper(*endofnumber)) {
+		switch (toupper((unsigned char)*endofnumber)) {
 		case 'K':
 			value *= 1<<10;
 			break;

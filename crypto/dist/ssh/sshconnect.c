@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.28 2003/07/10 01:09:48 lukem Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.29 2004/11/03 21:01:45 dsl Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect.c,v 1.137 2002/11/21 23:03:51 deraadt Exp $");
-__RCSID("$NetBSD: sshconnect.c,v 1.28 2003/07/10 01:09:48 lukem Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.29 2004/11/03 21:01:45 dsl Exp $");
 
 #include <openssl/bn.h>
 
@@ -827,8 +827,8 @@ ssh_login(Sensitive *sensitive, const char *orighost,
 	/* Convert the user-supplied hostname into all lowercase. */
 	host = xstrdup(orighost);
 	for (cp = host; *cp; cp++)
-		if (isupper(*cp))
-			*cp = tolower(*cp);
+		if (isupper((unsigned char)*cp))
+			*cp = tolower((unsigned char)*cp);
 
 	/* Exchange protocol version identification strings with the server. */
 	ssh_exchange_identification();
