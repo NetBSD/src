@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.43 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.44 2003/11/03 03:05:25 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.43 2003/11/02 10:31:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.44 2003/11/03 03:05:25 ichiro Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -3498,7 +3498,7 @@ esh_write_eeprom(sc, addr, value)
 	u_int32_t value;
 {
 	int i, j;
-	u_int32_t shifted_value, tmp;
+	u_int32_t shifted_value, tmp = 0;
  
 	/* If the offset hasn't been added, add it.  Otherwise pass through */
 

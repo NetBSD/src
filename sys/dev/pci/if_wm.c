@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.59 2003/10/25 18:31:11 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.60 2003/11/03 03:05:25 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.59 2003/10/25 18:31:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.60 2003/11/03 03:05:25 ichiro Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3383,7 +3383,7 @@ static int
 wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
 {
 	struct wm_softc *sc = (void *) self;
-	uint32_t mdic;
+	uint32_t mdic = 0;
 	int i, rv;
 
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_READ | MDIC_PHYADD(phy) |
@@ -3424,7 +3424,7 @@ static void
 wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = (void *) self;
-	uint32_t mdic;
+	uint32_t mdic = 0;
 	int i;
 
 	CSR_WRITE(sc, WMREG_MDIC, MDIC_OP_WRITE | MDIC_PHYADD(phy) |
