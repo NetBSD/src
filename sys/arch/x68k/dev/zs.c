@@ -1,4 +1,4 @@
-/*    $NetBSD: zs.c,v 1.12.6.2 1998/12/27 14:13:04 minoura Exp $  */
+/*    $NetBSD: zs.c,v 1.12.6.3 1998/12/27 15:14:31 minoura Exp $  */
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -163,13 +163,13 @@ zs_match(parent, cf, aux)
 		if (zsaddr == (void*) zs_physaddr[i]) /* XXX */
 			break;
 
+	ia->ia_size = 8;
+	if (intio_map_allocate_region (parent, ia, INTIO_MAP_TESTONLY))
+		return 0;
+
 	if (zsaddr != (void*) zs_physaddr[i])
 		return 0;
 	if (badaddr(INTIO_ADDR(zsaddr)))
-		return 0;
-
-	ia->ia_size = 8;
-	if (intio_map_allocate_region (parent, ia, INTIO_MAP_TESTONLY))
 		return 0;
 
 	return (1);
