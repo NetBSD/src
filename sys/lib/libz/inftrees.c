@@ -1,4 +1,4 @@
-/*	$NetBSD: inftrees.c,v 1.1 1997/01/16 00:21:49 cgd Exp $	*/
+/*	$NetBSD: inftrees.c,v 1.2 1997/05/20 14:42:02 gwr Exp $	*/
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-1996 Mark Adler

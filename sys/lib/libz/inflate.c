@@ -1,4 +1,4 @@
-/*	$NetBSD: inflate.c,v 1.1 1997/01/16 00:21:48 cgd Exp $	*/
+/*	$NetBSD: inflate.c,v 1.2 1997/05/20 14:42:01 gwr Exp $	*/
 
 /* inflate.c -- zlib interface to inflate modules
  * Copyright (C) 1995-1996 Mark Adler
