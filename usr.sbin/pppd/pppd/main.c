@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.19 1996/08/10 20:39:36 explorer Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.20 1996/11/26 07:53:02 mikel Exp $";
 #endif
 
 #include <stdio.h>
@@ -175,9 +175,9 @@ main(argc, argv)
     progname = *argv;
 
     if (!options_from_file(_PATH_SYSOPTIONS, REQ_SYSOPTIONS, 0) ||
-	!options_for_tty() ||
 	!options_from_user() ||
-	!parse_args(argc-1, argv+1))
+	!parse_args(argc-1, argv+1) ||
+	!options_for_tty())
 	exit(1);
 
     if (!ppp_available()) {
