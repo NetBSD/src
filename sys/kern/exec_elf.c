@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.7 1996/06/13 18:35:25 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.8 1996/06/14 18:15:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -37,6 +37,8 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/syscall.h>
+#include <sys/signalvar.h>
 
 #include <sys/mman.h>
 #include <vm/vm.h>
@@ -73,6 +75,34 @@ static void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
 
 #define ELF_ALIGN(a, b) ((a) & ~((b) - 1))
+
+/*
+ * This is the basic elf emul. elf_probe_funcs may change to other emuls.
+ */
+extern char sigcode[], esigcode[];
+#ifdef SYSCALL_DEBUG
+extern char *syscallnames[];
+#endif
+
+struct emul emul_elf = {
+	"netbsd",
+	NULL,
+	sendsig,
+	SYS_syscall,
+	SYS_MAXSYSCALL,
+	sysent,
+#ifdef SYSCALL_DEBUG
+	syscallnames,
+#else
+	NULL,
+#endif
+	sizeof(AuxInfo) * ELF_AUX_ENTRIES,
+	elf_copyargs,
+	setregs,
+	sigcode,
+	esigcode,
+};
+
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -168,6 +198,9 @@ elf_check_header(eh, type)
 #ifdef sparc
 	case Elf32_em_sparc:
 #endif
+#ifdef mips
+	case Elf32_em_mips:
+#endif
 		break;
 
 	default:
@@ -194,7 +227,7 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	u_long *size;
 	int *prot;
 {
-	u_long uaddr, msize, rm, rf;
+	u_long uaddr, msize, psize, rm, rf;
 	long diff, offset;
 
 	/*
@@ -221,8 +254,24 @@ elf_load_psection(vcset, vp, ph, addr, size, prot)
 	offset = ph->p_offset - diff;
 	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
+	psize = round_page(*size);
 
-	NEW_VMCMD(vcset, vmcmd_map_readvn, *size, *addr, vp, offset, *prot);
+	if ((ph->p_flags & Elf32_pf_w) != 0) {
+		/*
+		 * Because the pagedvn pager can't handle zero fill of the last
+		 * data page if it's not page aligned we map the last page
+		 * readvn.
+		 */
+		psize = trunc_page(*size);
+		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+		    offset, *prot);
+		if(psize != *size)
+			NEW_VMCMD(vcset, vmcmd_map_readvn, *size - psize,
+			    *addr + psize, vp, offset + psize, *prot);
+	}
+	else
+		NEW_VMCMD(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+		    offset, *prot);
 
 	/*
          * Check if we need to extend the size of the segment
@@ -359,8 +408,6 @@ bad:
  * Then, mark the text image busy (so it can be demand paged) or error
  * out if this is not possible.  Finally, set up vmcmds for the
  * text, data, bss, and stack segments.
- *
- * XXX no demand paging (yet?)
  */
 int
 exec_elf_makecmds(p, epp)
@@ -400,7 +447,7 @@ exec_elf_makecmds(p, epp)
 	ph = (Elf32_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = elf_read_from(p, epp->ep_vp, eh->e_phoff,
-				    (caddr_t) ph, phsize)) != 0)
+	    (caddr_t) ph, phsize)) != 0)
 		goto bad;
 
 	epp->ep_tsize = ELF32_NO_ADDR;
@@ -420,6 +467,12 @@ exec_elf_makecmds(p, epp)
 		}
 	}
 
+  	/*
+	 * Setup things for native emulation.
+	 */
+	epp->ep_emul = &emul_elf;
+	pos = ELF32_NO_ADDR;
+
 	/*
 	 * On the same architecture, we may be emulating different systems.
 	 * See which one will accept this executable. This currently only
@@ -435,8 +488,16 @@ exec_elf_makecmds(p, epp)
 		for (i = 0; i < n && error; i++)
 			error = elf_probe_funcs[i](p, epp, eh, interp, &pos);
 
+#ifdef notyet
+		/*
+		 * We should really use a signature in our native binaries
+		 * and have our own probe function for matching binaries,
+		 * before trying the emulations. For now, if the emulation
+		 * probes failed we default to native.
+		 */
 		if (error)
 			goto bad;
+#endif
 	}
 
 	/*
@@ -500,7 +561,7 @@ exec_elf_makecmds(p, epp)
 	 * function, pick the same address that a non-fixed mmap(0, ..)
 	 * would (i.e. something safely out of the way).
 	 */
-	if (pos == ELF32_NO_ADDR)
+	if (pos == ELF32_NO_ADDR && epp->ep_emul == &emul_elf)
 		pos = round_page(epp->ep_daddr + MAXDSIZ);
 
 	/*
@@ -528,6 +589,11 @@ exec_elf_makecmds(p, epp)
 	} else
 		epp->ep_entry = eh->e_entry;
 
+#ifdef ELF_MAP_PAGE_ZERO
+	/* Dell SVR4 maps page zero, yeuch! */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, NBPG, 0, epp->ep_vp, 0,
+	    VM_PROT_READ);
+#endif
 	free((char *) ph, M_TEMP);
 	epp->ep_vp->v_flag |= VTEXT;
 	return exec_aout_setup_stack(p, epp);
