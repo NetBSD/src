@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.26 2000/01/01 21:57:45 sommerfeld Exp $	*/
+/*	$NetBSD: i82365.c,v 1.27 2000/01/02 02:08:07 sommerfeld Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1424,30 +1424,27 @@ pcic_chip_socket_disable(pch)
 	delay(300 * 1000);
 }
 
-
-
-
 static u_int8_t
 st_pcic_read(h, idx)
-     struct pcic_handle *h;
-     int idx;
+	struct pcic_handle *h;
+	int idx;
 {
-  if (idx != -1) {
-    bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX, h->sock + idx);
-  }
+	if (idx != -1)
+		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX,
+		    h->sock + idx);
 
-  return bus_space_read_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA);
+	return bus_space_read_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA);
 }
 
 static void
 st_pcic_write(h, idx, data)
-     struct pcic_handle *h;
-     int idx;
-     u_int8_t data;
+	struct pcic_handle *h;
+	int idx;
+	u_int8_t data;
 {
-  if (idx != -1) {
-    bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX, h->sock + idx);
-  }
+	if (idx != -1)
+		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX,
+		    h->sock + idx);
 
-  bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA, data);
+	bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA, data);
 }
