@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.53.4.1 1999/10/19 12:50:37 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.53.4.2 1999/11/03 23:40:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -954,7 +954,7 @@ ffs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 	do {
-		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 			return (0);
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.20.4.1 1999/10/19 12:50:49 fvdl Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.20.4.2 1999/11/03 23:40:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -106,7 +106,7 @@ int ufs_getlbns __P((struct vnode *, ufs_daddr_t, struct indir *, int *));
 /* ufs_ihash.c */
 void ufs_ihashinit __P((void));
 struct vnode *ufs_ihashlookup __P((dev_t, ino_t));
-struct vnode *ufs_ihashget __P((dev_t, ino_t));
+struct vnode *ufs_ihashget __P((dev_t, ino_t, int));
 void ufs_ihashins __P((struct inode *));
 void ufs_ihashrem __P((struct inode *));
 
