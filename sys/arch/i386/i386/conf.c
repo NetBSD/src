@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.158 2002/07/19 16:38:20 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.159 2002/08/02 00:45:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.158 2002/07/19 16:38:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.159 2002/08/02 00:45:37 thorpej Exp $");
 
 #include "opt_compat_svr4.h"
 #include "opt_systrace.h"
@@ -264,6 +264,9 @@ cdev_decl(clockctl);
 #include "kttcp.h"
 cdev_decl(kttcp);
 
+#include "dmoverio.h"
+cdev_decl(dmoverio);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -369,6 +372,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 90: system call tracing */
 #endif
 	cdev__oci_init(NKTTCP,kttcp),	/* 91: kernel ttcp helper */
+	cdev_clonemisc_init(NDMOVERIO,dmoverio),/* 92: data mover interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -502,6 +506,7 @@ static int chrtoblktbl[] = {
 	/* 89 */	NODEV,
 	/* 90 */	NODEV,
 	/* 91 */	NODEV,
+	/* 92 */	NODEV,
 };
 
 /*
