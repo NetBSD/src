@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.19 2002/10/18 02:40:10 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.20 2002/12/03 15:49:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -644,7 +644,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
-       	struct trapframe *tf;
+       	struct trapframe64 *tf;
 	vaddr_t addr;
 
 	tf = l->l_md.md_tf;
