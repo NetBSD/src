@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.13 2003/07/15 02:29:37 lukem Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.14 2003/11/03 20:32:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.13 2003/07/15 02:29:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.14 2003/11/03 20:32:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_area5 = __sh_hd64465_map_2page(0x14000000); /* area 5 */
 	sc->sc_area6 = __sh_hd64465_map_2page(0x18000000); /* area 6 */
 
-	if (sc->sc_area5 == NULL || sc->sc_area6 == NULL) {
+	if (sc->sc_area5 == 0 || sc->sc_area6 == 0) {
 		printf("%s: can't map memory.\n", sc->sc_dev.dv_xname);
 		if (sc->sc_area5)
 			uvm_km_free(kernel_map, sc->sc_area5, 0x03000000);
@@ -799,7 +799,7 @@ __sh_hd64465_map_2page(paddr_t pa)
 
 	/* allocate kernel virtual */
 	v = va = uvm_km_valloc(kernel_map, 0x03000000);
-	if (va == NULL) {
+	if (va == 0) {
 		PRINTF("can't allocate virtual for paddr 0x%08x\n",
 		    (unsigned)pa);
 
