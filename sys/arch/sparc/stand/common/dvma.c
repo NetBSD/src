@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.3 1999/02/15 18:59:36 pk Exp $	*/
+/*	$NetBSD: dvma.c,v 1.4 2000/02/15 12:18:05 pk Exp $	*/
 /*
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
@@ -51,20 +51,11 @@
 #define SA_MIN_VA	(RELOC - 0x40000)	/* XXX - magic constant */
 #define SA_MAX_VA	(SA_MIN_VA + DVMA_MAPLEN)
 
-#if 0
-#define	getsegmap(va)		(CPU_ISSUN4C \
-					? lduba(va, ASI_SEGMAP) \
-					: (lduha(va, ASI_SEGMAP)))
-#define	setsegmap(va, pmeg)	(CPU_ISSUN4C \
-					? stba(va, ASI_SEGMAP, pmeg) \
-					: stha(va, ASI_SEGMAP, pmeg))
-#else
 /*
  * This module is only used on sun4, so:
  */
 #define	getsegmap(va)		(lduha(va, ASI_SEGMAP))
 #define	setsegmap(va, pmeg)	do stha(va, ASI_SEGMAP, pmeg); while(0)
-#endif
 
 void
 dvma_init()
