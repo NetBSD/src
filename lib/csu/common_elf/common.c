@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.15 2004/08/26 20:57:47 thorpej Exp $ */
+/* $NetBSD: common.c,v 1.16 2004/08/26 21:01:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 static char *
-_strrchr(char *p, char ch)
+_strrchr(char *p, int ch)
 {
 	char *save;
 
