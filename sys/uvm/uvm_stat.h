@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.25 2002/11/02 07:40:49 perry Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.26 2003/02/09 22:33:18 pk Exp $	*/
 
 /*
  *
@@ -102,6 +102,7 @@ do { \
 
 struct uvm_history_ent {
 	struct timeval tv; 		/* time stamp */
+	int cpunum;
 	char *fmt; 			/* printf format */
 	size_t fmtlen;			/* length of printf format */
 	char *fn;			/* function name */
@@ -206,6 +207,7 @@ do { \
 	splx(_s_); \
 	if (!cold) \
 		microtime(&(NAME).e[_i_].tv); \
+	(NAME).e[_i_].cpunum = curcpu()->ci_cpuid; \
 	(NAME).e[_i_].fmt = (FMT); \
 	(NAME).e[_i_].fmtlen = strlen((NAME).e[_i_].fmt); \
 	(NAME).e[_i_].fn = _uvmhist_name; \
@@ -242,7 +244,7 @@ uvmhist_print(e)
 	struct uvm_history_ent *e;
 {
 	printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
-	printf("%s#%ld: ", e->fn, e->call);
+	printf("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
 	printf(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 	printf("\n");
 }
