@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.27 2004/05/25 20:42:41 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.28 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.27 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.28 2004/08/14 15:08:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.27 2004/05/25 20:42:41 thorpej Exp 
 
 struct wdc_isapnp_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	wdc_channel *wdc_chanlist[1];
-	struct	wdc_channel wdc_channel;
+	struct	ata_channel *wdc_chanlist[1];
+	struct	ata_channel ata_channel;
 	struct	ata_queue wdc_chqueue;
+	struct	wdc_regs wdc_regs;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -100,6 +101,7 @@ wdc_isapnp_attach(parent, self, aux)
 	void *aux;
 {
 	struct wdc_isapnp_softc *sc = (void *)self;
+	struct wdc_regs *wdr;
 	struct isapnp_attach_args *ipa = aux;
 	int i;
 
@@ -119,36 +121,37 @@ wdc_isapnp_attach(parent, self, aux)
 
 	printf(": %s %s\n", ipa->ipa_devident, ipa->ipa_devclass);
 
-	sc->wdc_channel.cmd_iot = ipa->ipa_iot;
-	sc->wdc_channel.ctl_iot = ipa->ipa_iot;
+	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
+	wdr->cmd_iot = ipa->ipa_iot;
+	wdr->ctl_iot = ipa->ipa_iot;
 	/*
 	 * An IDE controller can feed us the regions in any order. Pass
 	 * them along with the 8-byte region in sc_ad.ioh, and the other
 	 * (2 byte) region in auxioh.
 	 */
 	if (ipa->ipa_io[0].length == 8) {
-		sc->wdc_channel.cmd_baseioh = ipa->ipa_io[0].h;
-		sc->wdc_channel.ctl_ioh = ipa->ipa_io[1].h;
+		wdr->cmd_baseioh = ipa->ipa_io[0].h;
+		wdr->ctl_ioh = ipa->ipa_io[1].h;
 	} else {
-		sc->wdc_channel.cmd_baseioh = ipa->ipa_io[1].h;
-		sc->wdc_channel.ctl_ioh = ipa->ipa_io[0].h;
+		wdr->cmd_baseioh = ipa->ipa_io[1].h;
+		wdr->ctl_ioh = ipa->ipa_io[0].h;
 	}
 
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-		    sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
-		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
+		if (bus_space_subregion(wdr->cmd_iot,
+		    wdr->cmd_baseioh, i, i == 0 ? 4 : 1,
+		    &wdr->cmd_iohs[i]) != 0) {
 			printf(": couldn't subregion registers\n");
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->wdc_channel);
-	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
+	wdc_init_shadow_regs(&sc->ata_channel);
+	wdr->data32iot = wdr->cmd_iot;
+	wdr->data32ioh = wdr->cmd_iohs[0];
 
 	sc->sc_ic = ipa->ipa_ic;
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    ipa->ipa_irq[0].type, IPL_BIO, wdcintr, &sc->wdc_channel);
+	    ipa->ipa_irq[0].type, IPL_BIO, wdcintr, &sc->ata_channel);
 
 #ifdef notyet
 	if (ipa->ipa_ndrq > 0) {
@@ -162,14 +165,14 @@ wdc_isapnp_attach(parent, self, aux)
 #endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->wdc_chanlist[0] = &sc->ata_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.ch_channel = 0;
-	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+	sc->ata_channel.ch_channel = 0;
+	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 
-	wdcattach(&sc->wdc_channel);
+	wdcattach(&sc->ata_channel);
 }
 
 #ifdef notyet

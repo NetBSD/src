@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.41 2004/05/25 20:42:41 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.42 2004/08/14 15:08:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.41 2004/05/25 20:42:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.42 2004/08/14 15:08:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.41 2004/05/25 20:42:41 thorpej Exp $")
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	wdc_channel *wdc_chanlist[1];
-	struct	wdc_channel wdc_channel;
+	struct	ata_channel *wdc_chanlist[1];
+	struct	ata_channel ata_channel;
 	struct	ata_queue wdc_chqueue;
+	struct	wdc_regs wdc_regs;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -92,8 +93,10 @@ wdc_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct wdc_channel ch;
+	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;
+	struct wdc_softc wdc;
+	struct wdc_regs wdr;
 	int result = 0, i;
 
 	if (ia->ia_nio < 1)
@@ -111,24 +114,27 @@ wdc_isa_probe(parent, match, aux)
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
 		ia->ia_ndrq = 0;
 
+	memset(&wdc, 0, sizeof(wdc));
 	memset(&ch, 0, sizeof(ch));
+	ch.ch_wdc = &wdc;
+	wdc.regs = &wdr;
 
-	ch.cmd_iot = ia->ia_iot;
+	wdr.cmd_iot = ia->ia_iot;
 
-	if (bus_space_map(ch.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_baseioh))
+	if (bus_space_map(wdr.cmd_iot, ia->ia_io[0].ir_addr,
+	    WDC_ISA_REG_NPORTS, 0, &wdr.cmd_baseioh))
 		goto out;
 
 	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
-		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
-		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
+		if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
 	wdc_init_shadow_regs(&ch);
 
-	ch.ctl_iot = ia->ia_iot;
-	if (bus_space_map(ch.ctl_iot, ia->ia_io[0].ir_addr +
-	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &ch.ctl_ioh))
+	wdr.ctl_iot = ia->ia_iot;
+	if (bus_space_map(wdr.ctl_iot, ia->ia_io[0].ir_addr +
+	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 		goto outunmap;
 
 	result = wdcprobe(&ch);
@@ -141,9 +147,9 @@ wdc_isa_probe(parent, match, aux)
 		ia->ia_niomem = 0;
 	}
 
-	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
+	bus_space_unmap(wdr.ctl_iot, wdr.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
 outunmap:
-	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_ISA_REG_NPORTS);
+	bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_ISA_REG_NPORTS);
 out:
 	return (result);
 }
@@ -154,37 +160,39 @@ wdc_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct wdc_isa_softc *sc = (void *)self;
+	struct wdc_regs *wdr;
 	struct isa_attach_args *ia = aux;
 	int wdc_cf_flags = self->dv_cfdata->cf_flags;
 	int i;
 
-	sc->wdc_channel.cmd_iot = ia->ia_iot;
-	sc->wdc_channel.ctl_iot = ia->ia_iot;
+	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
+	wdr->cmd_iot = ia->ia_iot;
+	wdr->ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
-	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_io[0].ir_addr,
-	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh) ||
-	    bus_space_map(sc->wdc_channel.ctl_iot,
+	if (bus_space_map(wdr->cmd_iot, ia->ia_io[0].ir_addr,
+	    WDC_ISA_REG_NPORTS, 0, &wdr->cmd_baseioh) ||
+	    bus_space_map(wdr->ctl_iot,
 	      ia->ia_io[0].ir_addr + WDC_ISA_AUXREG_OFFSET,
-	      WDC_ISA_AUXREG_NPORTS, 0, &sc->wdc_channel.ctl_ioh)) {
+	      WDC_ISA_AUXREG_NPORTS, 0, &wdr->ctl_ioh)) {
 		printf(": couldn't map registers\n");
 		return;
 	}
 
 	for (i = 0; i < WDC_ISA_REG_NPORTS; i++) {
-		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
-		      sc->wdc_channel.cmd_baseioh, i, i == 0 ? 4 : 1,
-		      &sc->wdc_channel.cmd_iohs[i]) != 0) {
+		if (bus_space_subregion(wdr->cmd_iot,
+		      wdr->cmd_baseioh, i, i == 0 ? 4 : 1,
+		      &wdr->cmd_iohs[i]) != 0) {
 			printf(": couldn't subregion registers\n");
 			return;
 		}
 	}
-	wdc_init_shadow_regs(&sc->wdc_channel);
+	wdc_init_shadow_regs(&sc->ata_channel);
 
-	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
+	wdr->data32iot = wdr->cmd_iot;
+	wdr->data32ioh = wdr->cmd_iohs[0];
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_BIO, wdcintr, &sc->wdc_channel);
+	    IST_EDGE, IPL_BIO, wdcintr, &sc->ata_channel);
 
 #if 0
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
@@ -207,16 +215,16 @@ wdc_isa_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATAPI_NOSTREAM;
 
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->wdc_chanlist[0] = &sc->ata_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.ch_channel = 0;
-	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+	sc->ata_channel.ch_channel = 0;
+	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 
 	printf("\n");
 
-	wdcattach(&sc->wdc_channel);
+	wdcattach(&sc->ata_channel);
 }
 
 #if 0

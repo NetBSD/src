@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: rccide.c,v 1.9 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.9 2004/08/14 15:08:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.8 2004/08/13 03:12:59 thorpej Exp $");
 
 static void serverworks_chip_map(struct pciide_softc *,
 				 struct pci_attach_args *);
-static void serverworks_setup_channel(struct wdc_channel *);
+static void serverworks_setup_channel(struct ata_channel *);
 static int  serverworks_pci_intr(void *);
 static int  serverworkscsb6_pci_intr(void *);
 
@@ -146,6 +146,8 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 2;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -168,11 +170,11 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-serverworks_setup_channel(struct wdc_channel *chp)
+serverworks_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int channel = chp->ch_channel;
 	int drive, unit;
@@ -250,7 +252,7 @@ serverworks_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
@@ -261,7 +263,7 @@ serverworks_pci_intr(arg)
 		if ((dmastat & (IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 			continue;
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
@@ -280,13 +282,13 @@ serverworkscsb6_pci_intr(arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int i, crv;
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		/*
 		 * The CSB6 doesn't assert IDEDMA_CTL_INTR for non-DMA commands.
 		 * Until we find a way to know if the controller posted an

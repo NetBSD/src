@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.18 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.19 2004/08/14 15:08:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -268,8 +268,8 @@ CFATTACH_DECL(satalink, sizeof(struct pciide_softc),
 
 static void sii3112_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void sii3114_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void sii3112_drv_probe(struct wdc_channel*);
-static void sii3112_setup_channel(struct wdc_channel*);
+static void sii3112_drv_probe(struct ata_channel*);
+static void sii3112_setup_channel(struct ata_channel*);
 
 static const struct pciide_product_desc pciide_satalink_products[] =  {
 	{ PCI_PRODUCT_CMDTECH_3112,
@@ -485,6 +485,8 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	/* 
 	 * The 3112 either identifies itself as a RAID storage device
 	 * or a Misc storage device.  Fake up the interface bits for
@@ -569,7 +571,7 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 	};
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 
-	sc->wdc_chanarray[channel] = &cp->wdc_channel;
+	sc->wdc_chanarray[channel] = &cp->ata_channel;
 
 	/*
 	 * We must always keep the Interrupt Steering bit set in channel 2's
@@ -579,11 +581,11 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 		cp->idedma_cmd = IDEDMA_CMD_INT_STEER;
 
 	cp->name = channel_names[channel];
-	cp->wdc_channel.ch_channel = channel;
-	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
-	cp->wdc_channel.ch_queue =
+	cp->ata_channel.ch_channel = channel;
+	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	cp->ata_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
-	if (cp->wdc_channel.ch_queue == NULL) {
+	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -595,23 +597,24 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 static void
 sii3114_mapchan(struct pciide_channel *cp)
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
-	struct wdc_channel *wdc_cp = &cp->wdc_channel;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct ata_channel *wdc_cp = &cp->ata_channel;
+	struct wdc_regs *wdr = &sc->sc_wdcdev.regs[wdc_cp->ch_channel];
 	int i;
 
 	cp->compat = 0;
 	cp->ih = sc->sc_pci_ih;
 
-	wdc_cp->cmd_iot = sc->sc_ba5_st;
+	wdr->cmd_iot = sc->sc_ba5_st;
 	if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
 			satalink_ba5_regmap[wdc_cp->ch_channel].ba5_IDE_TF0,
-			9, &wdc_cp->cmd_baseioh) != 0) {
+			9, &wdr->cmd_baseioh) != 0) {
 		aprint_error("%s: couldn't subregion %s cmd base\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		goto bad;
 	}
 
-	wdc_cp->ctl_iot = sc->sc_ba5_st;
+	wdr->ctl_iot = sc->sc_ba5_st;
 	if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
 			satalink_ba5_regmap[wdc_cp->ch_channel].ba5_IDE_TF8,
 			1, &cp->ctl_baseioh) != 0) {
@@ -619,12 +622,12 @@ sii3114_mapchan(struct pciide_channel *cp)
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		goto bad;
 	}
-	wdc_cp->ctl_ioh = cp->ctl_baseioh;
+	wdr->ctl_ioh = cp->ctl_baseioh;
 
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdc_cp->cmd_iot, wdc_cp->cmd_baseioh,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 					i, i == 0 ? 4 : 1,
-					&wdc_cp->cmd_iohs[i]) != 0) {
+					&wdr->cmd_iohs[i]) != 0) {
 			aprint_error("%s: couldn't subregion %s channel "
 				     "cmd regs\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
@@ -632,13 +635,13 @@ sii3114_mapchan(struct pciide_channel *cp)
 		}
 	}
 	wdc_init_shadow_regs(wdc_cp);
-	wdc_cp->data32iot = wdc_cp->cmd_iot;
-	wdc_cp->data32ioh = wdc_cp->cmd_iohs[0];
+	wdr->data32iot = wdr->cmd_iot;
+	wdr->data32ioh = wdr->cmd_iohs[0];
 	wdcattach(wdc_cp);
 	return;
 
  bad:
-	cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+	cp->ata_channel.ch_flags |= ATACH_DISABLED;
 }
 
 static void
@@ -724,6 +727,8 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 4;
 
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
 	/* Map and establish the interrupt handler. */
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		aprint_error("%s: couldn't map native-PCI interrupt\n",
@@ -756,10 +761,11 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sii3112_drv_probe(struct wdc_channel *chp)
+sii3112_drv_probe(struct ata_channel *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct wdc_regs *wdr = &sc->sc_wdcdev.regs[chp->ch_channel];
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
 	int i;
@@ -824,18 +830,18 @@ sii3112_drv_probe(struct wdc_channel *chp)
 		 * XXX can detect an ATAPI device connected via a SATA/PATA
 		 * XXX bridge, so at least this is no worse.  --thorpej
 		 */
-		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
+		bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (0 << 4));
 		delay(10);	/* 400ns delay */
 		/* Save register contents. */
-		scnt = bus_space_read_1(chp->cmd_iot,
-				        chp->cmd_iohs[wd_seccnt], 0);
-		sn = bus_space_read_1(chp->cmd_iot,
-				      chp->cmd_iohs[wd_sector], 0);
-		cl = bus_space_read_1(chp->cmd_iot,
-				      chp->cmd_iohs[wd_cyl_lo], 0);
-		ch = bus_space_read_1(chp->cmd_iot,
-				      chp->cmd_iohs[wd_cyl_hi], 0);
+		scnt = bus_space_read_1(wdr->cmd_iot,
+				        wdr->cmd_iohs[wd_seccnt], 0);
+		sn = bus_space_read_1(wdr->cmd_iot,
+				      wdr->cmd_iohs[wd_sector], 0);
+		cl = bus_space_read_1(wdr->cmd_iot,
+				      wdr->cmd_iohs[wd_cyl_lo], 0);
+		ch = bus_space_read_1(wdr->cmd_iot,
+				      wdr->cmd_iohs[wd_cyl_hi], 0);
 #if 0
 		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->ch_channel,
@@ -862,13 +868,13 @@ sii3112_drv_probe(struct wdc_channel *chp)
 }
 
 static void
-sii3112_setup_channel(struct wdc_channel *chp)
+sii3112_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t idedma_ctl, dtm;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.ch_wdc;
+	struct pciide_softc *sc = (struct pciide_softc*)cp->ata_channel.ch_wdc;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
