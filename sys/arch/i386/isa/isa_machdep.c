@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22.4.3 1997/08/29 03:15:34 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22.4.4 1997/10/14 18:12:00 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -371,38 +371,48 @@ isa_intr_alloc(ic, mask, type, irq)
 	count = -1;
 
 	/* some interrupts should never be dynamically allocated */
-	mask &= 0xDEF8;
+	mask &= 0xdef8;
 
-	/* XXX some interrupts will be used later (6 for fdc, 12 for pms).
-	   the right answer is to do "breadth-first" searching of devices. */
-	mask &= 0xEFBF;
+	/*
+	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
+	 * the right answer is to do "breadth-first" searching of devices.
+	 */
+	mask &= 0xefbf;
 
-	for (i=0; i<ICU_LEN; i++) {
-		if (!LEGAL_IRQ(i) || !(mask & (1<<i)))
+	for (i = 0; i < ICU_LEN; i++) {
+		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
 
 		switch(intrtype[i]) {
 		case IST_NONE:
-			/* if nothing's using the irq, just return it */
+			/*
+			 * if nothing's using the irq, just return it
+			 */
 			*irq = i;
 			return (0);
+
 		case IST_EDGE:
 		case IST_LEVEL:
 			if (type != intrtype[i])
 				continue;
-			/* if the irq is shareable, count the number of other
-			   handlers, and if it's smaller than the last irq like
-			   this, remember it */
-			for (p = &intrhand[i], tmp = 0;
-			     (q = *p) != NULL;
+			/*
+			 * if the irq is shareable, count the number of other
+			 * handlers, and if it's smaller than the last irq like
+			 * this, remember it
+			 *
+			 * XXX We should probably also consider the
+			 * interrupt level and stick IPL_TTY with other
+			 * IPL_TTY, etc.
+			 */
+			for (p = &intrhand[i], tmp = 0; (q = *p) != NULL;
 			     p = &q->ih_next, tmp++)
 				;
-			if ((bestirq == -1) ||
-			    (count > tmp)) {
+			if ((bestirq == -1) || (count > tmp)) {
 				bestirq = i;
 				count = tmp;
 			}
 			break;
+
 		case IST_PULSE:
 			/* this just isn't shareable */
 			continue;
