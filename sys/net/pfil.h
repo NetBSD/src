@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.5 1997/02/19 23:09:56 scottr Exp $	*/
+/*	$NetBSD: pfil.h,v 1.6 1997/02/22 17:52:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -69,6 +69,9 @@ void	pfil_remove_hook __P((int (*func) __P((void *, int,
 #endif
 
 #if NIPFILTER > 0
+#ifdef PFIL_HOOKS
+#undef PFIL_HOOKS
+#endif
 #define PFIL_HOOKS
 #endif /* NIPFILTER */
 
