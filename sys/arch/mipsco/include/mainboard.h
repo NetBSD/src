@@ -1,4 +1,4 @@
-/*	$NetBSD: mainboard.h,v 1.2 2000/08/16 21:00:39 wdk Exp $	*/
+/*	$NetBSD: mainboard.h,v 1.3 2001/03/31 00:08:34 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,5 +71,11 @@
 #define    INT_SCC      0x04               /* Z8530 SCC */
 #define    INT_Kbd      0x02               /* Keyboard controller */
 #define    INT_ExpSlot  0x01               /* Expansion Slot */
+
+#define PIZAZZ_ISA_IOBASE	0x10000000 /* ISA Bus I/O */
+#define PIZAZZ_ISA_IOSIZE	0x00040000 /* 64k -> 256k */
+#define PIZAZZ_ISA_MEMBASE	0x14000000 /* ISA Bus Memory */
+#define PIZAZZ_ISA_MEMSIZE	0x00100000 /* 16MB -> 64MB */
+#define PIZAZZ_ISA_INTRLATCH	0x10400000 /* Interrupt Latch */
 
 #endif /* _MACHINE_MAINBOARD_H_ */
