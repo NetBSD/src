@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.25 1999/05/26 19:16:37 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.26 1999/05/28 20:31:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -151,64 +151,87 @@ struct vm_map {
 #define	VM_MAP_INTRSAFE		0x02		/* interrupt safe map */
 
 /*
- *	Macros:		vm_map_lock, etc.
- *	Function:
- *		Perform locking on the data portion of a map.
+ * VM map locking operations:
+ *
+ *	These operations perform locking on the data portion of the
+ *	map.
+ *
+ *	vm_map_lock_try: try to lock a map, failing if it is already locked.
+ *
+ *	vm_map_lock: acquire an exclusive (write) lock on a map.
+ *
+ *	vm_map_lock_read: acquire a shared (read) lock on a map.
+ *
+ *	vm_map_unlock: release an exclusive lock on a map.
+ *
+ *	vm_map_unlock_read: release a shared lock on a map.
+ *
+ * Note that "intrsafe" maps use only exclusive, spin locks.  We simply
+ * use the sleep lock's interlock for this.
  */
-
-#include <sys/time.h>
-#include <sys/proc.h>	/* XXX for curproc and p_pid */
-
-#define	vm_map_lock_drain_interlock(map) { \
-	lockmgr(&(map)->lock, LK_DRAIN|LK_INTERLOCK, \
-		&(map)->ref_lock); \
-	(map)->timestamp++; \
-}
-#ifdef DIAGNOSTIC
-#define	vm_map_lock(map) { \
-	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0) != 0) { \
-		panic("vm_map_lock: failed to get lock"); \
-	} \
-	(map)->timestamp++; \
-}
-#else
-#define	vm_map_lock(map) { \
-	lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0); \
-	(map)->timestamp++; \
-}
-#endif /* DIAGNOSTIC */
-#define	vm_map_unlock(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
-#define	vm_map_lock_read(map) \
-		lockmgr(&(map)->lock, LK_SHARED, (void *)0)
-#define	vm_map_unlock_read(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
-#define vm_map_set_recursive(map) { \
-	simple_lock(&(map)->lk_interlock); \
-	(map)->lk_flags |= LK_CANRECURSE; \
-	simple_unlock(&(map)->lk_interlock); \
-}
-#define vm_map_clear_recursive(map) { \
-	simple_lock(&(map)->lk_interlock); \
-	if ((map)->lk_exclusivecount <= 1) \
-		(map)->lk_flags &= ~LK_CANRECURSE; \
-	simple_unlock(&(map)->lk_interlock); \
-}
 
 #ifdef _KERNEL
 /* XXX: clean up later */
+#include <sys/time.h>
+#include <sys/proc.h>	/* XXX for curproc and p_pid */
+
 static __inline boolean_t vm_map_lock_try __P((vm_map_t));
 
 static __inline boolean_t
 vm_map_lock_try(map)
 	vm_map_t map;
 {
-	if (lockmgr(&(map)->lock, LK_EXCLUSIVE|LK_NOWAIT, (void *)0) != 0)
-		return(FALSE);
-	map->timestamp++;
-	return(TRUE);
+	boolean_t rv;
+
+	if (map->flags & VM_MAP_INTRSAFE)
+		rv = simple_lock_try(&map->lock.lk_intrlock);
+	else
+		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT, NULL) == 0);
+
+	if (rv)
+		map->timestamp++;
+
+	return (rv);
 }
+
+#ifdef DIAGNOSTIC
+#define	_vm_map_lock(map)						\
+do {									\
+	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, NULL) != 0)		\
+		panic("vm_map_lock: failed to get lock");		\
+} while (0)
+#else
+#define	_vm_map_lock(map)						\
+	(void) lockmgr(&(map)->lock, LK_EXCLUSIVE, NULL)
 #endif
+
+#define	vm_map_lock(map)						\
+do {									\
+	if ((map)->flags & VM_MAP_INTRSAFE)				\
+		simple_lock(&(map)->lock.lk_interlock);			\
+	else								\
+		_vm_map_lock((map));					\
+	(map)->timestamp++;						\
+} while (0)
+
+#ifdef DIAGNOSTIC
+#define	vm_map_lock_read(map)						\
+do {									\
+	if (map->flags & VM_MAP_INTRSAFE)				\
+		panic("vm_map_lock_read: intrsafe map");		\
+	(void) lockmgr(&(map)->lock, LK_SHARED, NULL);			\
+} while (0)
+#else
+#define	vm_map_lock_read(map)						\
+	(void) lockmgr(&(map)->lock, LK_SHARED, NULL)
+#endif
+
+#define	vm_map_unlock(map)						\
+	(void) lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
+
+#define	vm_map_unlock_read(map)						\
+	(void) lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
+#endif /* _KERNEL */
 
 /*
  *	Functions implemented as macros
