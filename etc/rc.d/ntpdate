@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.14 2003/10/29 19:00:14 fredb Exp $
+# $NetBSD: ntpdate,v 1.15 2003/12/04 18:28:54 drochner Exp $
 #
 
 # PROVIDE: ntpdate
@@ -24,8 +24,6 @@ ntpdate_start()
 							    print $3
 							  else
 							    print $2 }
-			/^multicastclient$/		{ print "224.0.1.1" }
-			/^multicastclient/		{ print $2 }
 		' </etc/ntp.conf`
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
