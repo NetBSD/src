@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.13 1996/04/02 15:05:47 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -191,9 +191,9 @@ __END_DECLS
 
 void	logpri __P((int));
 void	log __P((int, const char *, ...))
-    __attribute__((__format__(__kprintf__,2,3)));
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
 void	addlog __P((const char *, ...))
-    __attribute__((__format__(__kprintf__,1,2)));
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
 void	logwakeup __P((void));
 
 #endif /* !_KERNEL */
