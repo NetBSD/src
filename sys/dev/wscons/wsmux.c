@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.25 2001/11/19 00:37:22 augustss Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.26 2001/11/22 00:54:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.25 2001/11/19 00:37:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.26 2001/11/22 00:54:23 augustss Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -301,9 +301,9 @@ wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
 		/* Not open for read */
 		return (0);
 
+	wsmux_do_close(sc);
 	sc->sc_base.me_evp = NULL;
 	wsevent_fini(evar);
-	wsmux_do_close(sc);
 	return (0);
 }
 
