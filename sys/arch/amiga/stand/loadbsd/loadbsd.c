@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.20 1996/06/26 15:53:07 is Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.21 1996/08/02 18:00:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -111,8 +111,11 @@ void warnx __P((const char *, ...));
  *	2.14	06/26/96 is - Add first version of kludges needed to
  *		boot on DraCos. This can probably be done a bit more cleanly
  *		using TTRs, but it works for now.
+ *	2.15	07/28/96 is - Add first version of kludges needed to
+ *		get FusionForty kickrom'd memory back. Hope this doesn't
+ *		break anything else.
  */
-static const char _version[] = "$VER: LoadBSD 2.14 (26.6.96)";
+static const char _version[] = "$VER: LoadBSD 2.15 (28.7.96)";
 
 /*
  * Kernel startup interface version
@@ -550,6 +553,17 @@ get_mem_config(fmem, fmemsz, cmemsz)
 			if (seg == 0x280000 &&
 			    strcmp(mh->mh_Node.ln_Name, "zkick memory") == 0)
 				seg = 0x200000;
+			/*
+			 * or by Fusion Forty fastrom
+			 */
+			if ((seg & ~(1024*1024-1)) == 0x11000000) {
+				/* 
+				 * XXX we should test the name.
+				 * Unfortunately, the memory is just called
+				 * "32 bit memory" which isn't very specific.
+				 */
+				seg = 0x11000000;
+			}
 	
 			segsz = eseg - seg;
 			memlist.m_seg[nmem].ms_start = seg;
@@ -776,7 +790,7 @@ L1:	movql	#0,d2			| switch off cache to ensure we use
 |	moveb	#0,0x200003c9
 	rts
 
-| ---- copy kernel emd ----
+| ---- copy kernel end ----
 
 ckend:
 |	movew	#0x0ff,0xdff180		| petrol
@@ -951,3 +965,5 @@ sleep(u_int n)
 {
 	(void)TimeDelay(0L, n, 0L);
 }
+
+
