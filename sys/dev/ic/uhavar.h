@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.5 1997/06/06 23:31:07 thorpej Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.5.2.1 1997/07/01 17:35:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -45,13 +45,13 @@ struct uha_softc {
 	int sc_dmaflags;	/* bus-specific DMA map creation flags */
 
 	void (*start_mbox) __P((struct uha_softc *, struct uha_mscp *));
-	int (*poll) __P((struct uha_softc *, struct scsi_xfer *, int));
+	int (*poll) __P((struct uha_softc *, struct scsipi_xfer *, int));
 	void (*init) __P((struct uha_softc *));
 
 	struct uha_mscp *sc_mscphash[MSCP_HASH_SIZE];
 	TAILQ_HEAD(, uha_mscp) sc_free_mscp;
 	int sc_nummscps;
-	struct scsi_link sc_link;
+	struct scsipi_link sc_link;
 };
 
 struct uha_probe_data {

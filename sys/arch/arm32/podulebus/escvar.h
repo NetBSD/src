@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.2 1997/01/18 01:57:18 mark Exp $ */
+/* $NetBSD: escvar.h,v 1.2.6.1 1997/07/01 17:33:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -66,11 +66,11 @@ struct	esc_dma_chain {
 
 /*
  * This struct contains the necessary info for a pending request. Pointer to
- * a scsi_xfer struct.
+ * a scsipi_xfer struct.
  */
 struct	esc_pending {
 	TAILQ_ENTRY(esc_pending) link;
-	struct scsi_xfer	 *xs;
+	struct scsipi_xfer	 *xs;
 };
 
 /*
@@ -78,7 +78,7 @@ struct	esc_pending {
  * struct survives between scsi commands.
  */
 struct nexus {
-	struct	scsi_xfer 	*xs;		/* Pointer to request */
+	struct	scsipi_xfer 	*xs;		/* Pointer to request */
 
 	u_char			 ID;		/* ID message to be sent */
 	u_char			 clen;		/* scsi command length + */
@@ -156,7 +156,7 @@ struct nexus {
 
 struct	esc_softc {
 	struct	device		 sc_dev;	/* System required struct */
-	struct	scsi_link	 sc_link;	/* For sub devices */
+	struct	scsipi_link	 sc_link;	/* For sub devices */
 	irqhandler_t		 sc_ih;		/* Interrupt chain struct */
 
 	TAILQ_HEAD(,esc_pending) sc_xs_pending;
@@ -261,7 +261,7 @@ struct	esc_softc {
 
 void	escinitialize __P((struct esc_softc *sc));
 void	esc_minphys   __P((struct buf *bp));
-int	esc_scsicmd   __P((struct scsi_xfer *));
+int	esc_scsicmd   __P((struct scsipi_xfer *));
 void	escintr       __P((struct esc_softc *dev));
 
 #endif /* _ESCVAR_H_ */

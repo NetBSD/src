@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.1 1996/01/31 23:26:12 mark Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.1.10.1 1997/07/01 17:33:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -60,7 +60,7 @@
 
 /* Per-request state.  This is required in order to support reselection. */
 struct sci_req {
-	struct		scsi_xfer *sr_xs;	/* Pointer to xfer struct, NULL=unused */
+	struct		scsipi_xfer *sr_xs;	/* Pointer to xfer struct, NULL=unused */
 	int		sr_target, sr_lun;	/* For fast access */
 	void		*sr_dma_hand;		/* Current DMA hnadle */
 	u_char		*sr_dataptr;		/* Saved data pointer */
@@ -77,7 +77,7 @@ struct sci_req {
 
 struct ncr5380_softc {
 	struct device	sc_dev;
-	struct		scsi_link sc_link;
+	struct		scsipi_link sc_link;
 
 	/* Pointers to 5380 registers.  See ncr5380reg.h */
 	volatile u_char *sci_r0;
@@ -165,7 +165,7 @@ struct ncr5380_softc {
 void	ncr5380_init __P((struct ncr5380_softc *));
 void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
 int 	ncr5380_intr __P((struct ncr5380_softc *));
-int 	ncr5380_scsi_cmd __P((struct scsi_xfer *));
+int 	ncr5380_scsi_cmd __P((struct scsipi_xfer *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.9 1997/03/19 16:24:43 gwr Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.9.2.1 1997/07/01 17:34:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -41,8 +41,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 
@@ -63,14 +64,14 @@ void    wdsc_dmastop    __P((struct sbic_softc *));
 int     wdsc_dmaintr    __P((void *));
 int     wdsc_scsiintr   __P((void *));
 
-struct scsi_adapter wdsc_scsiswitch = {
+struct scsipi_adapter wdsc_scsiswitch = {
     sbic_scsicmd,
     sbic_minphys,
     0,          /* no lun support */
     0,          /* no lun support */
 };
 
-struct scsi_device wdsc_scsidev = {
+struct scsipi_device wdsc_scsidev = {
     NULL,       /* use default error handler */
     NULL,       /* do not have a start functio */
     NULL,       /* have no async handler */
@@ -134,15 +135,17 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sc->sc_dmastop = wdsc_dmastop;
     sc->sc_dmacmd  = 0;
 
-    sc->sc_link.channel        = SCSI_CHANNEL_ONLY_ONE;
+    sc->sc_link.scsipi_scsi.channel        = SCSI_CHANNEL_ONLY_ONE;
     sc->sc_link.adapter_softc  = sc;
-    sc->sc_link.adapter_target = 7;
+    sc->sc_link.scsipi_scsi.adapter_target = 7;
     sc->sc_link.adapter        = &wdsc_scsiswitch;
     sc->sc_link.device         = &wdsc_scsidev;
     sc->sc_link.openings       = 2;
-    sc->sc_link.max_target     = 7;
+    sc->sc_link.scsipi_scsi.max_target     = 7;
+	sc->sc_link.type = BUS_SCSI;
 
-    printf(": WD33C93 SCSI, target %d\n", sc->sc_link.adapter_target);
+    printf(": WD33C93 SCSI, target %d\n",
+		sc->sc_link.scsipi_scsi.adapter_target);
 
     sc->sc_cregs = (volatile void *)sys_pcc;
     sc->sc_sbicp = (sbic_regmap_p) PCC_VADDR(pa->pa_offset);

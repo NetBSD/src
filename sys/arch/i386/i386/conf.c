@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.85 1997/01/07 11:35:15 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.85.8.1 1997/07/01 17:33:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
 bdev_decl(sw);
 #include "fdc.h"
@@ -63,7 +63,7 @@ bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWD,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
@@ -177,6 +177,7 @@ cdev_decl(ccd);
 cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
+
 #include "ipfilter.h"
 
 struct cdevsw	cdevsw[] =
@@ -184,7 +185,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NWDC,wd),	/* 3: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd),	/* 3: ST506/ESDI/IDE disk */
 	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
@@ -206,8 +207,8 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_disk_init(NMD,md),		/* 24: memory disk driver */
-	cdev_notdef(),			/* 25 */
-	cdev_joy_init(NJOY,joy),        /* 26: joystick */
+	cdev_notdef(),				/* 25 */
+	cdev_joy_init(NJOY,joy),    /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.37 1997/04/01 16:31:45 matthias Exp $	*/
+/*	$NetBSD: ncr.c,v 1.37.2.1 1997/07/01 17:34:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -35,9 +35,10 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_message.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
@@ -80,14 +81,14 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
  */
 int ncr_default_options = 0;
 
-struct scsi_adapter ncr_switch = {
+struct scsipi_adapter ncr_switch = {
 	ncr5380_scsi_cmd,	/* scsi_cmd()				*/
 	minphys,		/* scsi_minphys()			*/
 	0,			/* open_target_lu()			*/
 	0			/* close_target_lu()			*/
 };
 
-struct scsi_device ncr_dev = {
+struct scsipi_device ncr_dev = {
 	NULL,			/* use default error handler		*/
 	NULL,			/* do not have a start functio		*/
 	NULL,			/* have no async handler		*/
@@ -144,11 +145,12 @@ ncr_attach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
-	sc->sc_link.channel        = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel        = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc  = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.scsipi_scsi.adapter_target = 7;
 	sc->sc_link.adapter        = &ncr_switch;
 	sc->sc_link.device	   = &ncr_dev;
+	sc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * Initialize NCR5380 register addresses.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.4 1997/06/06 23:31:00 thorpej Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.4.2.1 1997/07/01 17:34:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -68,7 +68,7 @@ struct aha_softc {
 	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
-	struct scsi_link sc_link;	/* prototype for devs */
+	struct scsipi_link sc_link;	/* prototype for devs */
 
 	char sc_model[18],
 	     sc_firmware[4];

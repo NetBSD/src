@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.17 1997/06/06 23:44:08 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.17.2.1 1997/07/01 17:35:30 bouyer Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -71,8 +71,9 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -120,7 +121,7 @@ struct wds_softc {
 	struct wds_scb *sc_scbhash[SCB_HASH_SIZE];
 	TAILQ_HEAD(, wds_scb) sc_free_scb, sc_waiting_scb;
 	int sc_numscbs, sc_mbofull;
-	struct scsi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_link sc_link;	/* prototype for subdevs */
 
 	int sc_revision;
 };
@@ -168,13 +169,13 @@ void	wds_attach __P((struct wds_softc *, struct wds_probe_data *));
 void	wds_init __P((struct wds_softc *));
 void	wds_inquire_setup_information __P((struct wds_softc *));
 void    wdsminphys __P((struct buf *));
-int     wds_scsi_cmd __P((struct scsi_xfer *));
+int     wds_scsi_cmd __P((struct scsipi_xfer *));
 void	wds_sense  __P((struct wds_softc *, struct wds_scb *));
-int	wds_poll __P((struct wds_softc *, struct scsi_xfer *, int));
+int	wds_poll __P((struct wds_softc *, struct scsipi_xfer *, int));
 int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
 void	wds_timeout __P((void *));
 
-struct scsi_adapter wds_switch = {
+struct scsipi_adapter wds_switch = {
 	wds_scsi_cmd,
 	wdsminphys,
 	0,
@@ -182,7 +183,7 @@ struct scsi_adapter wds_switch = {
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device wds_dev = {
+struct scsipi_device wds_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -340,18 +341,19 @@ wds_attach(sc, wpd)
 	wds_inquire_setup_information(sc);
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = wpd->sc_scsi_dev;
+	sc->sc_link.scsipi_scsi.adapter_target = wpd->sc_scsi_dev;
 	sc->sc_link.adapter = &wds_switch;
 	sc->sc_link.device = &wds_dev;
 	/* XXX */
 	/* I don't think the -ASE can handle openings > 1. */
 	/* It gives Vendor Error 26 whenever I try it.     */
 	sc->sc_link.openings = 1;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.type = BUS_SCSI;
 
 	/*
 	 * ask the adapter what subunits are present
@@ -396,7 +398,7 @@ AGAIN:
 
 #ifdef WDSDEBUG
 		if (wds_debug) {
-			u_char *cp = &scb->scsi_cmd;
+			u_char *cp = &scb->scsipi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 			printf("stat %x for mbi addr = 0x%08x, ",
@@ -746,7 +748,7 @@ wds_done(sc, scb, stat)
 	struct wds_scb *scb;
 	u_char stat;
 {
-	struct scsi_xfer *xs = scb->xs;
+	struct scsipi_xfer *xs = scb->xs;
 
 	/* XXXXX */
 
@@ -758,7 +760,8 @@ wds_done(sc, scb, stat)
 
 	/* Sense handling. */
 	if (xs->error == XS_SENSE) {
-		bcopy(&scb->sense_data, &xs->sense, sizeof (struct scsi_sense_data));
+		bcopy(&scb->sense_data, &xs->sense.scsi_sense,
+			sizeof (struct scsipi_sense_data));
 	} else {
 		if (xs->error == XS_NOERROR) {
 			/* If all went well, or an error is acceptable. */
@@ -827,7 +830,7 @@ wds_done(sc, scb, stat)
 
 	wds_free_scb(sc, scb);
 	xs->flags |= ITSDONE;
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 int
@@ -916,7 +919,7 @@ wds_init(sc)
 	}
 
 	init.opcode = WDSC_INIT;
-	init.scsi_id = sc->sc_link.adapter_target;
+	init.scsi_id = sc->sc_link.scsipi_scsi.adapter_target;
 	init.buson_t = 48;
 	init.busoff_t = 24;
 	init.xx = 0;
@@ -995,9 +998,9 @@ wdsminphys(bp)
  */
 int
 wds_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct wds_softc *sc = sc_link->adapter_softc;
 	struct wds_scb *scb;
 	struct wds_scat_gath *sg;
@@ -1037,7 +1040,8 @@ wds_scsi_cmd(xs)
 	bcopy(xs->cmd, &scb->cmd.scb, xs->cmdlen < 12 ? xs->cmdlen : 12);
 
 	/* Set up some of the command fields. */
-	scb->cmd.targ = (xs->sc_link->target << 5) | xs->sc_link->lun;
+	scb->cmd.targ = (xs->sc_link->scsipi_scsi.target << 5) |
+						xs->sc_link->scsipi_scsi.lun;
 
 	/* NOTE: cmd.write may be OK as 0x40 (disable direction checking)
 	 * on boards other than the WD-7000V-ASE. Need this for the ASE:
@@ -1070,7 +1074,7 @@ wds_scsi_cmd(xs)
 			 * Set up the scatter-gather block.
 			 */
 			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
+			    ("%d @0x%p:- ", xs->datalen, xs->data));
 
 			datalen = xs->datalen;
 			thiskv = (int)xs->data;
@@ -1082,7 +1086,7 @@ wds_scsi_cmd(xs)
 				/* put in the base address */
 				ltophys(thisphys, sg->seg_addr);
 
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
+				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%lx", thisphys));
 
 				/* do it at least once */
 				nextphys = thisphys;
@@ -1199,8 +1203,8 @@ wds_sense(sc, scb)
 	struct wds_softc *sc;
 	struct wds_scb *scb;
 {
-	struct scsi_xfer *xs = scb->xs;
-	struct scsi_sense *ss = (void *)&scb->sense.scb;
+	struct scsipi_xfer *xs = scb->xs;
+	struct scsipi_sense *ss = (void *)&scb->sense.scb;
 	int s;
 
 	/* XXXXX */
@@ -1218,15 +1222,15 @@ wds_sense(sc, scb)
 	/* Next, setup a request sense command block */
 	bzero(ss, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = xs->sc_link->lun << 5;
-	ss->length = sizeof(struct scsi_sense_data);
+	ss->byte2 = xs->sc_link->scsipi_scsi.lun << 5;
+	ss->length = sizeof(struct scsipi_sense_data);
 
 	/* Set up some of the command fields. */
 	scb->sense.targ = scb->cmd.targ;
 	scb->sense.write = 0x80;
 	scb->sense.opcode = WDSX_SCSICMD;
 	ltophys(KVTOPHYS(&scb->sense_data), scb->sense.data);
-	ltophys(sizeof(struct scsi_sense_data), scb->sense.len);
+	ltophys(sizeof(struct scsipi_sense_data), scb->sense.len);
 
 	s = splbio();
 	wds_queue_scb(sc, scb);
@@ -1247,7 +1251,7 @@ wds_sense(sc, scb)
 int
 wds_poll(sc, xs, count)
 	struct wds_softc *sc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1302,12 +1306,12 @@ wds_timeout(arg)
 	void *arg;
 {
 	struct wds_scb *scb = arg;
-	struct scsi_xfer *xs = scb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = scb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct wds_softc *sc = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.8 1997/02/26 22:29:12 gwr Exp $	*/
+/*	$NetBSD: ncr.c,v 1.8.2.1 1997/07/01 17:34:43 bouyer Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -98,9 +98,10 @@
 
 /* #include <sys/errno.h> */
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/uvax.h>
 #include <machine/ka410.h>
@@ -257,7 +258,7 @@ void si_dma_start __P((struct ncr5380_softc *));
 void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
 
-static struct scsi_adapter	si_ops = {
+static struct scsipi_adapter	si_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	si_minphys,			/* scsi_minphys()	*/
 	NULL,				/* open_target_lu()	*/
@@ -266,7 +267,7 @@ static struct scsi_adapter	si_ops = {
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
-static struct scsi_device si_dev = {
+static struct scsipi_device si_dev = {
 	NULL,		/* Use default error handler.	    */
 	NULL,		/* Use default start handler.		*/
 	NULL,		/* Use default async handler.	    */
@@ -385,11 +386,12 @@ si_attach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
-	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	ncr_sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
-	ncr_sc->sc_link.adapter_target = ca->ca_idval;
+	ncr_sc->sc_link.scsipi_scsi.adapter_target = ca->ca_idval;
 	ncr_sc->sc_link.adapter = &si_ops;
 	ncr_sc->sc_link.device = &si_dev;
+	ncr_sc->sc_link.type = BUS_SCSI;
 
 	si_set_portid(ca->ca_idval, ncr_sc->sc_dev.dv_unit);
 
@@ -622,7 +624,7 @@ si_dma_alloc(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 	struct buf *bp = sr->sr_xs->bp;
 	struct si_dma_handle *dh;
 	int i, xlen;
@@ -738,7 +740,7 @@ si_dma_free(ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 	struct buf *bp = sr->sr_xs->bp;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 

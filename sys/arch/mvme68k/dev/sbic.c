@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.5 1996/10/13 03:30:20 christos Exp $	*/
+/*	$NetBSD: sbic.c,v 1.5.8.1 1997/07/01 17:34:10 bouyer Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -60,8 +60,9 @@
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
@@ -94,8 +95,8 @@
 extern u_int kvtop();
 
 int     sbicicmd            __P((struct sbic_softc *, void *, int, void *, int));
-int     sbicgo              __P((struct sbic_softc *, struct scsi_xfer *));
-int     sbicdmaok           __P((struct sbic_softc *, struct scsi_xfer *));
+int     sbicgo              __P((struct sbic_softc *, struct scsipi_xfer *));
+int     sbicdmaok           __P((struct sbic_softc *, struct scsipi_xfer *));
 int     sbicwait            __P((sbic_regmap_p, u_char, int , int));
 int     sbiccheckdmap       __P((void *, u_long, u_long));
 u_char  sbicselectbus       __P((struct sbic_softc *));
@@ -358,13 +359,13 @@ sbic_load_ptrs(dev)
  *
  * it appears that the higher level code does nothing with LUN's
  * so I will too.  I could plug it in, however so could they
- * in scsi_scsi_cmd().
+ * in scsi_scsipi_cmd().
  */
 int
 sbic_scsicmd(xs)
-    struct scsi_xfer *xs;
+    struct scsipi_xfer *xs;
 {
-    struct scsi_link    *slp = xs->sc_link;
+    struct scsipi_link    *slp = xs->sc_link;
     struct sbic_softc   *dev = slp->adapter_softc;
     struct sbic_acb     *acb;
     int                 flags = xs->flags,
@@ -376,7 +377,7 @@ sbic_scsicmd(xs)
     if ( dev->sc_nexus && (flags & SCSI_POLL) )
         panic("sbic_scsicmd: busy");
 
-    if ( slp->target == slp->adapter_target )
+    if ( slp->scsipi_scsi.target == slp->scsipi_scsi.adapter_target )
         return ESCAPE_NOT_SUPPORTED;
 
     s = splbio();
@@ -389,7 +390,7 @@ sbic_scsicmd(xs)
     if ( acb == NULL ) {
 #ifdef DEBUG
         printf("sbic_scsicmd: unable to queue request for target %d\n",
-            slp->target);
+            slp->scsipi_scsi.target);
 #ifdef DDB
         Debugger();
 #endif
@@ -436,8 +437,8 @@ sbic_scsicmd(xs)
              */
             dev->sc_nexus   = acb;
             dev->sc_xs      = xs;
-            dev->target     = slp->target;
-            dev->lun        = slp->lun;
+            dev->target     = slp->scsipi_scsi.target;
+            dev->lun        = slp->scsipi_scsi.lun;
 
             stat = sbicicmd(dev, &acb->cmd, acb->clen,
                             acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
@@ -472,8 +473,8 @@ void
 sbic_sched(dev)
     struct sbic_softc *dev;
 {
-    struct scsi_xfer    *xs;
-    struct scsi_link    *slp = NULL;    /* Gag the compiler */
+    struct scsipi_xfer    *xs;
+    struct scsipi_link    *slp = NULL;    /* Gag the compiler */
     struct sbic_acb     *acb;
     int                 flags,
                         stat;
@@ -493,8 +494,8 @@ sbic_sched(dev)
         int     i, j;
 
         slp = acb->xs->sc_link;
-        i   = slp->target;
-        j   = 1 << slp->lun;
+        i   = slp->scsipi_scsi.target;
+        j   = 1 << slp->scsipi_scsi.lun;
 
         /*
          * We've found a potential command, but is the target/lun busy?
@@ -518,7 +519,8 @@ sbic_sched(dev)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("sbic_sched(%d,%d)\n", slp->target, slp->lun);
+        printf("sbic_sched(%d,%d)\n", slp->scsipi_scsi.target,
+			slp->scsipi_scsi.lun);
 #endif
 
     dev->sc_xs = xs = acb->xs;
@@ -528,8 +530,8 @@ sbic_sched(dev)
         sbicreset(dev);
 
     dev->sc_stat[0] = -1;
-    dev->target     = slp->target;
-    dev->lun        = slp->lun;
+    dev->target     = slp->scsipi_scsi.target;
+    dev->lun        = slp->scsipi_scsi.lun;
 
     if ( flags & SCSI_POLL || (!sbic_parallel_operations &&
                               (sbicdmaok(dev, xs) == 0)) )
@@ -549,14 +551,14 @@ sbic_scsidone(acb, stat)
     struct sbic_acb *acb;
     int             stat;
 {
-    struct scsi_xfer    *xs  = acb->xs;
-    struct scsi_link    *slp = xs->sc_link;
+    struct scsipi_xfer    *xs  = acb->xs;
+    struct scsipi_link    *slp = xs->sc_link;
     struct sbic_softc   *dev = slp->adapter_softc;
     int                 dosched = 0;
 
 #ifdef DIAGNOSTIC
     if ( acb == NULL || xs == NULL ) {
-        printf("sbic_scsidone -- (%d,%d) no scsi_xfer\n", dev->target, dev->lun);
+        printf("sbic_scsidone -- (%d,%d) no scsipi_xfer\n", dev->target, dev->lun);
 #ifdef DDB
         Debugger();
 #endif
@@ -571,10 +573,12 @@ sbic_scsidone(acb, stat)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("scsidone: (%d,%d)->(%d,%d)%02x\n", slp->target, slp->lun,
-                                                   dev->target, dev->lun, stat);
+        printf("scsidone: (%d,%d)->(%d,%d)%02x\n", slp->scsipi_scsi.target,
+			slp->scsipi_scsi.lun,
+            dev->target, dev->lun, stat);
 
-    if ( xs->sc_link->target == dev->sc_link.adapter_target )
+    if ( xs->sc_link->scsipi_scsi.target ==
+		dev->sc_link.scsipi_scsi.adapter_target )
         panic("target == hostid");
 #endif
 
@@ -584,30 +588,32 @@ sbic_scsidone(acb, stat)
             /*
              * Schedule a REQUEST SENSE
              */
-            struct scsi_sense *ss = (void *)&acb->cmd;
+            struct scsipi_sense *ss = (void *)&acb->cmd;
 
 #ifdef DEBUG
             if ( report_sense )
                 printf("sbic_scsidone: autosense %02x targ %d lun %d",
-                        acb->cmd.opcode, slp->target, slp->lun);
+                        acb->cmd.opcode, slp->scsipi_scsi.target,
+						slp->scsipi_scsi.lun);
 #endif
 
             bzero(ss, sizeof(*ss));
 
             ss->opcode          = REQUEST_SENSE;
-            ss->byte2           = slp->lun << 5;
-            ss->length          = sizeof(struct scsi_sense_data);
+            ss->byte2           = slp->scsipi_scsi.lun << 5;
+            ss->length          = sizeof(struct scsipi_sense_data);
 
             acb->clen           = sizeof(*ss);
-            acb->sc_kv.dc_addr  = (char *)&xs->sense;
-            acb->sc_kv.dc_count = sizeof(struct scsi_sense_data);
-            acb->pa_addr        = (char *)kvtop(&xs->sense); /* XXX check */
+            acb->sc_kv.dc_addr  = (char *)&xs->sense.scsi_sense;
+            acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
+            acb->pa_addr        = (char *)kvtop(&xs->sense.scsi_sense); /* XXX check */
             acb->flags          = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
 
             TAILQ_INSERT_HEAD(&dev->ready_list, acb, chain);
 
-            dev->sc_tinfo[slp->target].lubusy &= ~(1 << slp->lun);
-            dev->sc_tinfo[slp->target].senses++;
+            dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+				~(1 << slp->scsipi_scsi.lun);
+            dev->sc_tinfo[slp->scsipi_scsi.target].senses++;
 
             if ( dev->sc_nexus == acb ) {
                 dev->sc_nexus = NULL;
@@ -624,8 +630,8 @@ sbic_scsidone(acb, stat)
 
 #ifdef DEBUG
         if (report_sense)
-            printf(" => %02x %02x\n", xs->sense.flags, 
-			xs->sense.extra_bytes[3]);
+            printf(" => %02x %02x\n", xs->sense.scsi_sense.flags, 
+			xs->sense.scsi_sense.extra_bytes[3]);
 #endif
 
     } else {
@@ -646,7 +652,8 @@ sbic_scsidone(acb, stat)
         dev->sc_nexus = NULL;
         dev->sc_xs    = NULL;
 
-        dev->sc_tinfo[slp->target].lubusy &= ~(1 << slp->lun);
+        dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+			~(1 << slp->scsipi_scsi.lun);
 
         if ( dev->ready_list.tqh_first )
             dosched = 1;    /* start next command */
@@ -663,7 +670,8 @@ sbic_scsidone(acb, stat)
         for (a = dev->nexus_list.tqh_first; a; a = a->chain.tqe_next) {
             if ( a == acb ) {
                 TAILQ_REMOVE(&dev->nexus_list, acb, chain);
-                dev->sc_tinfo[slp->target].lubusy &= ~(1 << slp->lun);
+                dev->sc_tinfo[slp->scsipi_scsi.target].lubusy &=
+					~(1 << slp->scsipi_scsi.lun);
                 break;
             }
         }
@@ -686,9 +694,9 @@ sbic_scsidone(acb, stat)
     acb->flags = ACB_FREE;
     TAILQ_INSERT_HEAD(&dev->free_list, acb, chain);
 
-    dev->sc_tinfo[slp->target].cmds++;
+    dev->sc_tinfo[slp->scsipi_scsi.target].cmds++;
 
-    scsi_done(xs);
+    scsipi_done(xs);
 
     if ( dosched )
         sbic_sched(dev);
@@ -697,7 +705,7 @@ sbic_scsidone(acb, stat)
 int
 sbicdmaok(dev, xs)
     struct sbic_softc   *dev;
-    struct scsi_xfer    *xs;
+    struct scsipi_xfer    *xs;
 {
     if ( sbic_no_dma || xs->datalen & 0x03 || (int)xs->data & 0x03)
         return(0);
@@ -905,7 +913,7 @@ sbicreset(dev)
 
     s = splbio();
 
-    my_id = dev->sc_link.adapter_target & SBIC_ID_MASK;
+    my_id = dev->sc_link.scsipi_scsi.adapter_target & SBIC_ID_MASK;
 
     if (dev->sc_clkfreq < 110)
         my_id |= SBIC_ID_FS_8_10;
@@ -954,7 +962,7 @@ sbicerror(dev, csr)
     struct sbic_softc   *dev;
     u_char              csr;
 {
-    struct scsi_xfer    *xs  = dev->sc_xs;
+    struct scsipi_xfer    *xs  = dev->sc_xs;
 
 #ifdef DIAGNOSTIC
     if ( xs == NULL )
@@ -1570,7 +1578,7 @@ sbicxfdone(dev)
 int
 sbicgo(dev, xs)
     struct sbic_softc   *dev;
-    struct scsi_xfer    *xs;
+    struct scsipi_xfer    *xs;
 {
     struct sbic_acb *acb = dev->sc_nexus;
     sbic_regmap_p   regs = dev->sc_sbicp;
@@ -1582,8 +1590,8 @@ sbicgo(dev, xs)
                     asr,
                     *addr;
 
-    dev->target = xs->sc_link->target;
-    dev->lun    = xs->sc_link->lun;
+    dev->target = xs->sc_link->scsipi_scsi.target;
+    dev->lun    = xs->sc_link->scsipi_scsi.lun;
 
     usedma = sbicdmaok(dev, xs);
 
@@ -2502,8 +2510,8 @@ sbicnextstate(dev, csr, asr)
             for (acb = dev->nexus_list.tqh_first; acb;
                                                   acb = acb->chain.tqe_next) {
 
-                if ( acb->xs->sc_link->target == newtarget &&
-                     acb->xs->sc_link->lun    == newlun) {
+                if ( acb->xs->sc_link->scsipi_scsi.target == newtarget &&
+                     acb->xs->sc_link->scsipi_scsi.lun    == newlun) {
                     /*
                      * We've found the saved entry. Dequeue it, and 
                      * make it current again.

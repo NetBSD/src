@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.1 1996/09/25 21:07:56 jonathan Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.1.8.1 1997/07/01 17:35:41 bouyer Exp $	*/
 
 
 /*
@@ -68,7 +68,7 @@ struct asc_softc {
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
 #ifdef USE_NEW_SCSI
-	struct scsi_link sc_link;		/* scsi link struct */
+	struct scsipi_link sc_link;		/* scsipi link struct */
 #endif
 };
 typedef struct asc_softc *asc_softc_t;

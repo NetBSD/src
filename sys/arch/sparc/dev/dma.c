@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.44 1997/06/26 00:31:20 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.44.2.1 1997/07/01 17:34:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -47,8 +47,9 @@
 
 #include <sparc/sparc/cpuvar.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>

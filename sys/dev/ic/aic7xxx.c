@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.24 1997/06/09 01:51:03 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.24.2.1 1997/07/01 17:34:59 bouyer Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -127,12 +127,13 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_message.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_message.h>
 #if defined(__NetBSD__)
-#include <scsi/scsi_debug.h>
+#include <dev/scsipi/scsipi_debug.h>
 #endif
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsiconf.h>
 
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
@@ -153,6 +154,10 @@
 #include <dev/ic/aic7xxxvar.h>
 
 #define bootverbose	1
+
+#define AIC_SCSI_TARGET scsipi_scsi.target
+#define AIC_SCSI_LUN scsipi_scsi.lun
+#define AIC_SCSI_SENSE sense.scsi_sense
 
 #define DEBUGTARG	DEBUGTARGET
 #if DEBUGTARG < 0	/* Negative numbers for disabling cause warnings */
@@ -175,6 +180,9 @@ extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
 
 #if defined(__FreeBSD__)
 u_long ahc_unit = 0;
+#define AIC_SCSI_TARGET target
+#define AIC_SCSI_LUN lun
+#define AIC_SCSI_SENSE scsi_sence
 #endif
 
 #ifdef AHC_DEBUG
@@ -197,13 +205,13 @@ int ahc_broken_cache = 1;
 #define HWSCSIID	0x0f		/* our SCSI ID if Wide Bus */
 
 static void	 ahcminphys __P((struct buf *bp));
-static int32_t	 ahc_scsi_cmd __P((struct scsi_xfer *xs));
+static int32_t	 ahc_scsi_cmd __P((struct scsipi_xfer *xs));
 static inline void pause_sequencer __P((struct ahc_data *ahc));
 static inline void unpause_sequencer __P((struct ahc_data *ahc,
 					  int unpause_always));
 static inline void restart_sequencer __P((struct ahc_data *ahc));
 
-static struct scsi_adapter ahc_switch =
+static struct scsipi_adapter ahc_switch =
 {
         ahc_scsi_cmd,
         ahcminphys,
@@ -217,7 +225,7 @@ static struct scsi_adapter ahc_switch =
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
-static struct scsi_device ahc_dev =
+static struct scsipi_device ahc_dev =
 {
     NULL,                       /* Use default error handler */
     NULL,                       /* have a queue, served by this */
@@ -274,7 +282,7 @@ restart_sequencer(ahc)
  * Is device which is pointed by sc_link connected on second scsi bus ?
  */
 #define	IS_SCSIBUS_B(ahc, sc_link)	\
-	((sc_link)->scsibus == (ahc)->sc_link_b.scsibus)
+	((sc_link)->scsipi_scsi.scsibus == (ahc)->sc_link_b.scsipi_scsi.scsibus)
 
 /*
  * convert FreeBSD's SCSI symbols to NetBSD's
@@ -333,8 +341,8 @@ static void	ahc_construct_wdtr __P((struct ahc_data *ahc, int start_byte,
 
 #if defined(__NetBSD__)			/* XXX */
 static void	ahc_xxx_enqueue __P((struct ahc_data *ahc,
-		    struct scsi_xfer *xs, int infront));
-static struct scsi_xfer *ahc_xxx_dequeue __P((struct ahc_data *ahc));
+		    struct scsipi_xfer *xs, int infront));
+static struct scsipi_xfer *ahc_xxx_dequeue __P((struct ahc_data *ahc));
 #endif
 
 #if defined(__FreeBSD__)
@@ -650,18 +658,21 @@ ahc_attach(ahc)
 	ahc->sc_link.adapter_targ = ahc->our_id;
 	ahc->sc_link.fordriver = 0;
 #elif defined(__NetBSD__)
-	ahc->sc_link.adapter_target = ahc->our_id;
-	ahc->sc_link.channel = 0;
+	ahc->sc_link.type = BUS_SCSI;
+	ahc->sc_link.scsipi_scsi.adapter_target = ahc->our_id;
+	ahc->sc_link.scsipi_scsi.channel = 0;
 	/*
 	 * Set up max_target.
 	 */
-	ahc->sc_link.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
+	ahc->sc_link.scsipi_scsi.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
 	ahc->sc_link.adapter = &ahc_switch;
 	ahc->sc_link.opennings = 2;
 	ahc->sc_link.device = &ahc_dev;
+#ifndef __NetBSD__
 	ahc->sc_link.flags = DEBUGLEVEL;
+#endif
 
 	if(ahc->type & AHC_TWIN) {
 		/* Configure the second scsi bus */
@@ -671,8 +682,8 @@ ahc_attach(ahc)
 		ahc->sc_link_b.adapter_bus = 1;
 		ahc->sc_link_b.fordriver = (void *)SELBUSB;
 #elif defined(__NetBSD__)
-		ahc->sc_link_b.adapter_target = ahc->our_id_b;
-		ahc->sc_link_b.channel = 1;
+		ahc->sc_link_b.scsipi_scsi.adapter_target = ahc->our_id_b;
+		ahc->sc_link_b.scsipi_scsi.channel = 1;
 #endif
 	}
 
@@ -719,7 +730,7 @@ ahc_attach(ahc)
 	 */
 	if ((ahc->flags & AHC_CHANNEL_B_PRIMARY) == 0) {
 		/* make IS_SCSIBUS_B() == false, while probing channel A */
-		ahc->sc_link_b.scsibus = 0xff;
+		ahc->sc_link_b.scsipi_scsi.scsibus = 0xff;
 
 		config_found((void *)ahc, &ahc->sc_link, scsiprint);
 		if (ahc->type & AHC_TWIN)
@@ -955,7 +966,7 @@ ahc_intr(arg)
 	int     intstat;
 	u_char	status;
 	struct	scb *scb;
-	struct	scsi_xfer *xs;
+	struct	scsipi_xfer *xs;
 	struct	ahc_data *ahc = (struct ahc_data *)arg;
 
 	intstat = AHC_INB(ahc, INTSTAT);
@@ -1024,7 +1035,7 @@ ahc_intr(arg)
 			u_char	lastphase = AHC_INB(ahc, LASTPHASE);
 
 			xs = scb->xs;
-			sc_print_addr(xs->sc_link);
+			scsi_print_addr(xs->sc_link);
 
 			switch(lastphase) {
 				case P_DATAOUT:
@@ -1084,7 +1095,7 @@ ahc_intr(arg)
 			 */
 			flags = AHC_INB(ahc, FLAGS);
 			AHC_OUTB(ahc, MSG_LEN, 0);
-			ahc_unbusy_target(ahc, xs->sc_link->target,
+			ahc_unbusy_target(ahc, xs->sc_link->AIC_SCSI_TARGET,
 #if defined(__FreeBSD__)
 			 	((long)xs->sc_link->fordriver & SELBUSB)
 #elif defined(__NetBSD__)
@@ -1109,7 +1120,7 @@ ahc_intr(arg)
 			restart_sequencer(ahc);
 		}       
 		else if (!(status & BUSFREE)) {
-		      sc_print_addr(scb->xs->sc_link);
+		      scsi_print_addr(scb->xs->sc_link);
 		      printf("Unknown SCSIINT. Status = 0x%x\n", status);
 		      AHC_OUTB(ahc, CLRSINT1, status);
 		      unpause_sequencer(ahc, /*unpause_always*/TRUE);
@@ -1573,7 +1584,7 @@ ahc_handle_seqint(ahc, intstat)
 	case BAD_STATUS:
 	{
 		int	scb_index;
-		struct	scsi_xfer *xs;
+		struct	scsipi_xfer *xs;
 
 		/* The sequencer will notify us when a command
 		 * has an error that would be of interest to
@@ -1607,7 +1618,7 @@ ahc_handle_seqint(ahc, intstat)
 
 #ifdef AHC_DEBUG
 		if((ahc_debug & AHC_SHOWSCBS)
-		   && xs->sc_link->target == DEBUGTARGET)
+		   && xs->sc_link->AIC_SCSI_TARGET == DEBUGTARGET)
 			ahc_print_scb(scb);
 #endif
 		xs->status = scb->status;
@@ -1621,7 +1632,7 @@ ahc_handle_seqint(ahc, intstat)
 			if(ahc_debug & AHC_SHOWSENSE)
 			{
 
-				sc_print_addr(xs->sc_link);
+				scsi_print_addr(xs->sc_link);
 				printf("requests Check Status\n");
 			}
 #endif
@@ -1629,11 +1640,11 @@ ahc_handle_seqint(ahc, intstat)
 			if ((xs->error == XS_NOERROR)
 			    && !(scb->flags & SCB_SENSE)) {
 				struct ahc_dma_seg *sg = scb->ahc_dma;
-				struct scsi_sense *sc = &(scb->sense_cmd);
+				struct scsipi_sense *sc = &(scb->sense_cmd);
 #ifdef AHC_DEBUG
 				if (ahc_debug & AHC_SHOWSENSE)
 				{
-					sc_print_addr(xs->sc_link);
+					scsi_print_addr(xs->sc_link);
 					printf("Sending Sense\n");
 				}
 #endif
@@ -1642,11 +1653,11 @@ ahc_handle_seqint(ahc, intstat)
 #elif defined(__NetBSD__)
 				sc->opcode = REQUEST_SENSE;
 #endif
-				sc->byte2 =  xs->sc_link->lun << 5;
-				sc->length = sizeof(struct scsi_sense_data);
+				sc->byte2 =  xs->sc_link->AIC_SCSI_LUN << 5;
+				sc->length = sizeof(struct scsipi_sense_data);
 				sc->control = 0;
-				sg->addr = KVTOPHYS(&xs->sense);
-				sg->len = sizeof(struct scsi_sense_data);
+				sg->addr = KVTOPHYS(&xs->AIC_SCSI_SENSE);
+				sg->len = sizeof(struct scsipi_sense_data);
 
 				scb->control &= DISCENB;
 				scb->status = 0;
@@ -1691,7 +1702,7 @@ ahc_handle_seqint(ahc, intstat)
 			break;
 		case SCSI_BUSY:
 			xs->error = XS_BUSY;
-			sc_print_addr(xs->sc_link);
+			scsi_print_addr(xs->sc_link);
 			printf("Target Busy\n");
 			break;
 		case SCSI_QUEUE_FULL:
@@ -1699,14 +1710,14 @@ ahc_handle_seqint(ahc, intstat)
 			 * The upper level SCSI code will someday
 			 * handle this properly.
 			 */
-			sc_print_addr(xs->sc_link);
+			scsi_print_addr(xs->sc_link);
 			printf("Queue Full\n");
 			scb->flags |= SCB_ASSIGNEDQ;
 			STAILQ_INSERT_TAIL(&ahc->assigned_scbs,scb, links);
 			AHC_OUTB(ahc, RETURN_1, SEND_SENSE);
 			break;
 		default:
-			sc_print_addr(xs->sc_link);
+			scsi_print_addr(xs->sc_link);
 			printf("unexpected targ_status: %x\n", scb->status);
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
@@ -1716,7 +1727,7 @@ ahc_handle_seqint(ahc, intstat)
 	case RESIDUAL:
 	{
 		int scb_index;
-		struct scsi_xfer *xs;
+		struct scsipi_xfer *xs;
 
 		scb_index = AHC_INB(ahc, SCB_TAG);
 		scb = ahc->scbarray[scb_index];
@@ -1758,7 +1769,7 @@ ahc_handle_seqint(ahc, intstat)
 #endif
 #ifdef AHC_DEBUG
 			if (ahc_debug & AHC_SHOWMISC) {
-				sc_print_addr(xs->sc_link);
+				scsi_print_addr(xs->sc_link);
 				printf("Handled Residual of %ld bytes\n"
 				       ,xs->resid);
 			}
@@ -1769,7 +1780,7 @@ ahc_handle_seqint(ahc, intstat)
 	case ABORT_TAG:
 	{
 		int   scb_index;
-		struct scsi_xfer *xs;
+		struct scsipi_xfer *xs;
 
 		scb_index = AHC_INB(ahc, SCB_TAG);
 		scb = ahc->scbarray[scb_index];
@@ -1778,7 +1789,7 @@ ahc_handle_seqint(ahc, intstat)
 		 * We didn't recieve a valid tag back from
 		 * the target on a reconnect.
 		 */
-		sc_print_addr(xs->sc_link);
+		scsi_print_addr(xs->sc_link);
 		printf("invalid tag received -- sending ABORT_TAG\n");
 		xs->error = XS_DRIVER_STUFFUP;
 		untimeout(ahc_timeout, (caddr_t)scb);
@@ -1864,7 +1875,7 @@ ahc_handle_seqint(ahc, intstat)
 			found = ahc_reset_device(ahc, target,
 						 channel, SCB_LIST_NULL, 
 						 XS_NOERROR);
-			sc_print_addr(scb->xs->sc_link);
+			scsi_print_addr(scb->xs->sc_link);
 			printf("Bus Device Reset delivered. "
 			       "%d SCBs aborted\n", found);
 			ahc->in_timeout = FALSE;
@@ -1889,7 +1900,7 @@ ahc_handle_seqint(ahc, intstat)
 			| (AHC_INB(ahc, STCNT1) << 8)
 			| (AHC_INB(ahc, STCNT2) << 16);
 		overrun = 0x00ffffff - overrun;
-		sc_print_addr(scb->xs->sc_link);
+		scsi_print_addr(scb->xs->sc_link);
 		printf("data overrun of %d bytes detected."
 		       "  Forcing a retry.\n", overrun);
 		/*
@@ -1938,7 +1949,7 @@ ahc_done(ahc, scb)
 	struct ahc_data *ahc;
 	struct scb *scb;
 {
-	struct scsi_xfer *xs = scb->xs;
+	struct scsipi_xfer *xs = scb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_done\n"));
 	/*
@@ -1971,19 +1982,19 @@ ahc_done(ahc, scb)
 #ifdef AHC_TAGENABLE
 	if(xs->cmd->opcode == INQUIRY && xs->error == XS_NOERROR)
 	{
-		struct scsi_inquiry_data *inq_data;
-		u_short mask = 0x01 << (xs->sc_link->target |
+		struct scsipi_inquiry_data *inq_data;
+		u_short mask = 0x01 << (xs->sc_link->AIC_SCSI_TARGET |
 				(scb->tcl & 0x08));
 		/*
 		 * Sneak a look at the results of the SCSI Inquiry
 		 * command and see if we can do Tagged queing.  This
 		 * should really be done by the higher level drivers.
 		 */
-		inq_data = (struct scsi_inquiry_data *)xs->data;
+		inq_data = (struct scsipi_inquiry_data *)xs->data;
 		if((inq_data->flags & SID_CmdQue) && !(ahc->tagenable & mask))
 		{
 		        printf("%s: target %d Tagged Queuing Device\n",
-				ahc_name(ahc), xs->sc_link->target);
+				ahc_name(ahc), xs->sc_link->AIC_SCSI_TARGET);
 			ahc->tagenable |= mask;
 			if(ahc->maxhscbs >= 16 || (ahc->flags & AHC_PAGESCBS)) {
 				/* Default to 8 tags */
@@ -2005,7 +2016,7 @@ ahc_done(ahc, scb)
 	}
 #endif
 	ahc_free_scb(ahc, scb, xs->flags);
-	scsi_done(xs);
+	scsipi_done(xs);
 
 #if defined(__NetBSD__)			/* XXX */
 	/*
@@ -2364,14 +2375,14 @@ ahcminphys(bp)
 
 #if defined(__NetBSD__)			/* XXX */
 /*
- * Insert a scsi_xfer into the software queue.  We overload xs->free_list
+ * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
  * to to ensure we don't run into a queue resource shortage, and keep
  * a pointer to the last entry around to make insertion O(C).
  */
 static void
 ahc_xxx_enqueue(ahc, xs, infront)
 	struct ahc_data *ahc;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int infront;
 {
 
@@ -2387,15 +2398,15 @@ ahc_xxx_enqueue(ahc, xs, infront)
 }
 
 /*
- * Pull a scsi_xfer off the front of the software queue.  When we
+ * Pull a scsipi_xfer off the front of the software queue.  When we
  * pull the last one off, we need to clear the pointer to the last
  * entry.
  */
-static struct scsi_xfer *
+static struct scsipi_xfer *
 ahc_xxx_dequeue(ahc)
 	struct ahc_data *ahc;
 {
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 
 	xs = ahc->sc_xxxq.lh_first;
 	LIST_REMOVE(xs, free_list);
@@ -2410,11 +2421,11 @@ ahc_xxx_dequeue(ahc)
 /*
  * start a scsi operation given the command and
  * the data address, target, and lun all of which
- * are stored in the scsi_xfer struct
+ * are stored in the scsipi_xfer struct
  */
 static int32_t
 ahc_scsi_cmd(xs)
-        struct scsi_xfer *xs;
+        struct scsipi_xfer *xs;
 {
 	struct	scb *scb;
 	struct	ahc_dma_seg *sg;
@@ -2430,7 +2441,7 @@ ahc_scsi_cmd(xs)
 #endif
 
 	ahc = (struct ahc_data *)xs->sc_link->adapter_softc;
-	mask = (0x01 << (xs->sc_link->target
+	mask = (0x01 << (xs->sc_link->AIC_SCSI_TARGET
 #if defined(__FreeBSD__)
 				| ((u_long)xs->sc_link->fordriver & 0x08)));
 #elif defined(__NetBSD__)
@@ -2560,13 +2571,13 @@ ahc_scsi_cmd(xs)
 		scb->flags |= SCB_MSGOUT_SDTR;
 		ahc->sdtrpending |= mask;
 	}
-	scb->tcl = ((xs->sc_link->target << 4) & 0xF0) |
+	scb->tcl = ((xs->sc_link->AIC_SCSI_TARGET << 4) & 0xF0) |
 #if defined(__FreeBSD__)
 				  ((u_long)xs->sc_link->fordriver & 0x08) |
 #elif defined(__NetBSD__)
 				  (IS_SCSIBUS_B(ahc,xs->sc_link)? SELBUSB : 0)|
 #endif
-				  (xs->sc_link->lun & 0x07);
+				  (xs->sc_link->AIC_SCSI_LUN & 0x07);
 	scb->cmdlen = xs->cmdlen;
 	scb->cmdpointer = KVTOPHYS(xs->cmd);
 	xs->resid = 0;
@@ -2579,7 +2590,7 @@ ahc_scsi_cmd(xs)
 		 * Set up the scatter gather block
 		 */
 		SC_DEBUG(xs->sc_link, SDEV_DB4,
-			 ("%ld @%p:- ", xs->datalen, xs->data));
+			 ("%ld @%p:- ", (long)xs->datalen, xs->data));
 		datalen = xs->datalen;
 		thiskv = (unsigned long) xs->data;
 		thisphys = KVTOPHYS(thiskv);
@@ -2590,7 +2601,7 @@ ahc_scsi_cmd(xs)
 			/* put in the base address */
 			sg->addr = thisphys;
 
-			SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%lx", thisphys));
+			SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%lx", (u_long)thisphys));
 
 			/* do it at least once */
 			nextphys = thisphys;
@@ -2656,7 +2667,8 @@ ahc_scsi_cmd(xs)
 	}
 
 #ifdef AHC_DEBUG
-	if((ahc_debug & AHC_SHOWSCBS) && (xs->sc_link->target == DEBUGTARG))
+	if((ahc_debug & AHC_SHOWSCBS) &&
+		(xs->sc_link->AIC_SCSI_TARGET == DEBUGTARG))
 		ahc_print_scb(scb);
 #endif
 	s = splbio();
@@ -2949,7 +2961,7 @@ ahc_timeout(arg)
 	 */
 	pause_sequencer(ahc);
 
-	sc_print_addr(scb->xs->sc_link);
+	scsi_print_addr(scb->xs->sc_link);
 	printf("timed out ");
 	/*
 	 * Take a snapshot of the bus state and print out
@@ -3087,7 +3099,7 @@ ahc_timeout(arg)
 				ahc_send_scb(ahc, scb);
 				ahc_add_waiting_scb(ahc, scb);
 				timeout(ahc_timeout, (caddr_t)scb, (2 * hz));
-				sc_print_addr(scb->xs->sc_link);
+				scsi_print_addr(scb->xs->sc_link);
 				printf("BUS DEVICE RESET message queued.\n");
 				AHC_OUTB(ahc, SCBPTR, active_scb);
 				unpause_sequencer(ahc, /*unpause_always*/FALSE);
@@ -3098,7 +3110,7 @@ ahc_timeout(arg)
 				AHC_OUTB(ahc, MSG_LEN, 1);
 				AHC_OUTB(ahc, MSG0, MSG_BUS_DEV_RESET);
 				AHC_OUTB(ahc, SCSISIGO, bus_state|ATNO);
-				sc_print_addr(active_scbp->xs->sc_link);
+				scsi_print_addr(active_scbp->xs->sc_link);
 				printf("asserted ATN - device reset in "
 				       "message buffer\n");
 				active_scbp->flags |=   SCB_DEVICE_RESET

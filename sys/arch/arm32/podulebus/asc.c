@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16 1997/01/28 04:21:00 mark Exp $	*/
+/*	$NetBSD: asc.c,v 1.16.6.1 1997/07/01 17:33:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -53,8 +53,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
@@ -74,18 +75,18 @@ void asc_dmastop __P((struct sbic_softc *));
 int asc_dmanext __P((struct sbic_softc *));
 int asc_dmaintr __P((struct sbic_softc *));
 int asc_dmago	__P((struct sbic_softc *, char *, int, int));
-int asc_scsicmd __P((struct scsi_xfer *xs));
+int asc_scsicmd __P((struct scsipi_xfer *xs));
 int asc_intr	__P((void *arg));
 void asc_minphys __P((struct buf *bp));
 
-struct scsi_adapter asc_scsiswitch = {
+struct scsipi_adapter asc_scsiswitch = {
 	asc_scsicmd,
 	asc_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
 
-struct scsi_device asc_scsidev = {
+struct scsipi_device asc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
@@ -166,15 +167,16 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_sbicp = (sbic_regmap_p) (sc->sc_podule->mod_base + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
-	sbic->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sbic->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sbic->sc_link.adapter_softc = sbic;
-	sbic->sc_link.adapter_target = 7;
+	sbic->sc_link.scsipi_scsi.adapter_target = 7;
 	sbic->sc_link.adapter = &asc_scsiswitch;
 	sbic->sc_link.device = &asc_scsidev;
 	sbic->sc_link.openings = 1;	/* was 2 */
-	sbic->sc_link.max_target = 7;
+	sbic->sc_link.scsipi_scsi.max_target = 7;
+	sbic->sc_link.type = BUS_SCSI;
 
-	printf(" hostid=%d", sbic->sc_link.adapter_target);
+	printf(" hostid=%d", sbic->sc_link.scsipi_scsi.adapter_target);
 
 #if ASC_POLL > 0
         if (boot_args) {
@@ -421,9 +423,9 @@ asc_dump()
 
 int
 asc_scsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-/*	struct scsi_link *sc_link = xs->sc_link;*/
+/*	struct scsipi_link *sc_link = xs->sc_link;*/
 
 	/* ensure command is polling for the moment */
 #if ASC_POLL > 0
@@ -432,7 +434,7 @@ asc_scsicmd(xs)
 #endif
 
 /*	printf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
-	    sc_link->target, sc_link->lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
+	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
 	    xs->flags, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
 
 	return(sbic_scsicmd(xs));

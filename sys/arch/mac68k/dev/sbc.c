@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.28 1997/06/30 05:24:35 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.28.2.1 1997/07/01 17:34:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -58,9 +58,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
@@ -77,7 +78,7 @@ int	sbc_options = 0 /* | SBC_PDMA */;
 
 static	void	sbc_minphys __P((struct buf *bp));
 
-struct scsi_adapter	sbc_ops = {
+struct scsipi_adapter	sbc_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	sbc_minphys,			/* scsi_minphys()	*/
 	NULL,				/* open_target_lu()	*/
@@ -86,7 +87,7 @@ struct scsi_adapter	sbc_ops = {
 
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
-struct scsi_device sbc_dev = {
+struct scsipi_device sbc_dev = {
 	NULL,		/* Use default error handler.	    */
 	NULL,		/* Use default start handler.		*/
 	NULL,		/* Use default async handler.	    */
@@ -597,7 +598,7 @@ sbc_dma_alloc(ncr_sc)
 {
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
+	struct scsipi_xfer *xs = sr->sr_xs;
 	struct sbc_pdma_handle *dh;
 	int		i, xlen;
 

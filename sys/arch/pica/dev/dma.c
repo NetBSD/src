@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.8 1997/06/23 02:56:42 jonathan Exp $	*/
+/*	$NetBSD: dma.c,v 1.8.2.1 1997/07/01 17:34:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,8 +58,9 @@
 #include <machine/pte.h>
 #include <machine/pio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <pica/pica/pica.h>
 #include <pica/dev/dma.h>

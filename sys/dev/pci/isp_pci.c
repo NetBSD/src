@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.14 1997/06/08 22:15:34 thorpej Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.14.2.1 1997/07/01 17:35:35 bouyer Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -40,8 +40,9 @@
 #include <sys/device.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -55,9 +56,9 @@
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
 static int isp_pci_mbxdma __P((struct ispsoftc *));
-static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
+static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
 	ispreq_t *, u_int8_t *, u_int8_t));
-static void isp_pci_dmateardown __P((struct ispsoftc *, struct scsi_xfer *,
+static void isp_pci_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
 	u_int32_t));
 
 static void isp_pci_reset1 __P((struct ispsoftc *));
@@ -321,7 +322,7 @@ isp_pci_mbxdma(isp)
 static int
 isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	ispreq_t *rq;
 	u_int8_t *iptrp;
 	u_int8_t optr;
@@ -401,7 +402,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 static void
 isp_pci_dmateardown(isp, xs, handle)
 	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	u_int32_t handle;
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;

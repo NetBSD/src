@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.12 1997/04/28 21:59:23 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.12.2.1 1997/07/01 17:34:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,9 +90,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 #include <machine/obio.h>

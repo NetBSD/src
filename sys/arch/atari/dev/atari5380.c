@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.26 1997/06/04 14:34:03 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.26.2.1 1997/07/01 17:33:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,9 +35,10 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_message.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <m68k/asm_single.h>
 #include <m68k/cpu.h>

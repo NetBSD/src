@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_sbus.c,v 1.6 1997/06/08 06:35:45 thorpej Exp $	*/
+/*	$NetBSD: isp_sbus.c,v 1.6.2.1 1997/07/01 17:34:29 bouyer Exp $	*/
 
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -38,8 +38,9 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 #include <sparc/cpu.h>
@@ -56,9 +57,9 @@
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
 static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
 static int isp_sbus_mbxdma __P((struct ispsoftc *));
-static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
+static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsipi_xfer *,
 	ispreq_t *, u_int8_t *, u_int8_t));
-static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsi_xfer *,
+static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsipi_xfer *,
 	u_int32_t));
 
 static struct ispmdvec mdvec = {
@@ -254,7 +255,7 @@ isp_sbus_mbxdma(isp)
 static int
 isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	ispreq_t *rq;
 	u_int8_t *iptrp;
 	u_int8_t optr; 
@@ -303,7 +304,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 static void
 isp_sbus_dmateardown(isp, xs, handle)
 	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	u_int32_t handle;
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
