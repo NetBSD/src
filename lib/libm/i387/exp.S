@@ -34,9 +34,7 @@
  */
 
 #include <machine/asm.h>
-
-#define EDOM	$33
-#define ERANGE	$34
+#include "errno.h"
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(exp)
@@ -48,6 +46,8 @@ ENTRY(exp)
 	jne	Lnan
 	testw	$0x0500,%ax		/* Inf */
 	jne	Linf
+	testw	$0x????,%ax		/* Zero */
+	jne	Lzero
 #endif
 	fldl2e
 	fmulp				/* x * log2(e) */
@@ -62,18 +62,22 @@ ENTRY(exp)
 	ret
 
 #ifdef notyet
-Linf:					/* +-Inf */
+Lnan:
+	movl	EDOM,_errno
+	ret
+Linf:
 	movl	ERANGE,_errno
 	ftst
 	fstsw	%ax
 	testw	$0x0100,%ax
 	jne	Lminf
 	ret
-Lminf:					/* -Inf */
-	fldz
+Lminf:
+	fldz				
 	fstpl	st,st(%1)
 	ret
-Lnan:
-	movl	EDOM,_errno
+Lzero:
+	fld1
+	fstpl	st,%st(1)
 	ret
 #endif

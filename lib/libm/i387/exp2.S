@@ -34,9 +34,20 @@
  */
 
 #include <machine/asm.h>
+#include "errno.h"
 
 ENTRY(exp2)
 	fldl	4(%esp)
+#ifdef notyet
+	fxam
+	fstsw	%ax
+	testw	$0x0100,%ax		/* Nan */
+	jne	Lnan
+	testw	$0x0500,%ax		/* Inf */
+	jne	Linf
+	testw	$0x????,%ax		/* Zero */
+	jne	Lzero
+#endif
 	fstl	%st(1)
 	frndint				/* int(x) */
 	fstl	%st(2)
@@ -46,3 +57,24 @@ ENTRY(exp2)
 	faddp				/* 2^(fract(x)) */
 	fscale				/* 2^(fract(x)) * 2^(int(x)) = 2^x */
 	ret
+
+#ifdef notyet
+Lnan:
+	movl	EDOM,_errno
+	ret
+Linf:
+	movl	ERANGE,_errno
+	ftst
+	fstsw	%ax
+	testw	$0x0100,%ax
+	jne	Lminf
+	ret
+Lminf:
+	fldz				
+	fstpl	st,st(%1)
+	ret
+Lzero:
+	fld1
+	fstpl	st,st(%1)
+	ret
+#endif
