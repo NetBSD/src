@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.21 1997/09/30 17:29:40 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.21.2.1 1997/12/22 02:50:18 perry Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.21 1997/09/30 17:29:40 phil Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.21.2.1 1997/12/22 02:50:18 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -545,8 +545,8 @@ intuit_translated_geometry()
 		for (j = 0; j < 8; j++) {
 			if (get_mapping(j, &c2, &h2, &s2, &a2) < 0)
 				continue;
-			num = (quad_t)h1*(a2-s2) - h2*(a1-s1);
-			denom = (quad_t)c2*(a1-s1) - c1*(a2-s2);
+			num = (quad_t)h1*(a2-s2) - (quad_t)h2*(a1-s1);
+			denom = (quad_t)c2*(a1-s1) - (quad_t)c1*(a2-s2);
 			if (denom != 0 && num % denom == 0) {
 				heads = num / denom;
 				break;
