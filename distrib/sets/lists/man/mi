@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.374 2001/06/27 23:11:31 wiz Exp $
+# $NetBSD: mi,v 1.375 2001/07/01 02:56:21 gmcgarry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -869,6 +869,7 @@
 ./usr/share/man/cat4/usb.0			man-sys-catman
 ./usr/share/man/cat4/uscanner.0			man-sys-catman
 ./usr/share/man/cat4/usscanner.0		man-sys-catman
+./usr/share/man/cat4/userconf.0			man-sys-catman
 ./usr/share/man/cat4/uvisor.0			man-sys-catman
 ./usr/share/man/cat4/uyap.0			man-sys-catman
 ./usr/share/man/cat4/vax/acc.0			man-sys-catman
@@ -2409,6 +2410,7 @@
 ./usr/share/man/man4/usb.4			man-sys-man
 ./usr/share/man/man4/uscanner.4			man-sys-man
 ./usr/share/man/man4/usscanner.4		man-sys-man
+./usr/share/man/man4/userconf.4			man-sys-man
 ./usr/share/man/man4/uvisor.4			man-sys-man
 ./usr/share/man/man4/uyap.4			man-sys-man
 ./usr/share/man/man4/vax/acc.4			man-sys-man
