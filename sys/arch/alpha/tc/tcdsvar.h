@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdsvar.h,v 1.3 1996/04/12 06:10:18 cgd Exp $	*/
+/*	$NetBSD: tcdsvar.h,v 1.4 1996/09/09 18:10:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -94,12 +94,13 @@ void	tcds_scsi_reset __P((struct tcds_slotconfig *));
 /*
  * TCDS DMA functions (used the the 53c94 driver)
  */
-void	tcds_dma_reset	__P((struct tcds_slotconfig *));
-void	tcds_dma_enintr	__P((struct tcds_slotconfig *));
 int	tcds_dma_isintr	__P((struct tcds_slotconfig *));
-void	tcds_dma_start	__P((struct tcds_slotconfig *, caddr_t *,
-			    size_t *, int));
-int	tcds_dmaintr	__P((struct tcds_slotconfig *));
+void	tcds_dma_reset __P((struct tcds_slotconfig *));
+int	tcds_dma_intr __P((struct tcds_slotconfig *));
+int	tcds_dma_setup __P((struct tcds_slotconfig *, caddr_t *, size_t *,
+	    int, size_t *));
+void	tcds_dma_go __P((struct tcds_slotconfig *));
+int	tcds_dma_isactive __P((struct tcds_slotconfig *));
 
 /*
  * The TCDS (bus) cfdriver, so that subdevices can more
