@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.1 1996/06/23 00:10:26 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.2 1996/08/08 23:42:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ void extent_print __P((struct extent *));
 
 /* Simple case of extent_alloc_subregion() */
 #define extent_alloc(_ex, _size, _alignment, _boundary, _flags, _result) \
-	extent_alloc_subregiion((_ex), (_ex)->ex_start, (_ex)->ex_end,	\
+	extent_alloc_subregion((_ex), (_ex)->ex_start, (_ex)->ex_end,	\
 	(_size), (_alignment), (_boundary), (_flags), (_result))
 #endif /* _KERNEL */
 
