@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.14.8.1 2000/07/26 17:26:10 ad Exp $	*/
+/*	$NetBSD: pty.c,v 1.14.8.2 2001/05/15 21:30:36 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.14.8.1 2000/07/26 17:26:10 ad Exp $");
+__RCSID("$NetBSD: pty.c,v 1.14.8.2 2001/05/15 21:30:36 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,10 @@ __RCSID("$NetBSD: pty.c,v 1.14.8.1 2000/07/26 17:26:10 ad Exp $");
 #include <unistd.h>
 #include <util.h>
 
-#define TTY_LETTERS	"pqrstuvwxyzPQRST"
+/*
+ * XXX: `v' removed until no ports are using console devices which use ttyv0
+ */
+#define TTY_LETTERS	"pqrstuwxyzPQRST"
 
 int
 openpty(amaster, aslave, name, termp, winp)
