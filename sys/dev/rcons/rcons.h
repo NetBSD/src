@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.11 2000/03/23 07:01:42 thorpej Exp $ */
+/*	$NetBSD: rcons.h,v 1.12 2000/04/16 21:49:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,8 @@ struct rconsole {
 	int	rc_p1;			/* escape sequence parameter 1 */
 	int	rc_fgcolor;		/* current fg color */
 	int	rc_bgcolor;		/* current bg color */
-	long	rc_attr;		/* wscons text attribute */
+	long	rc_attr;		/* current wscons text attribute */
+	long	rc_defattr;		/* default text attribute */
 	long	rc_kern_attr;		/* kernel output attribute */
 	u_int	rc_wsflg;		/* wscons attribute flags */
 	u_int	rc_supwsflg;		/* supported attribute flags */
