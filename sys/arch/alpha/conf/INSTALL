@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 1999/11/15 20:07:21 dante Exp $
+# $NetBSD: INSTALL,v 1.33 1999/11/16 07:37:43 dan Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -189,6 +189,8 @@ ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
+we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
+we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers

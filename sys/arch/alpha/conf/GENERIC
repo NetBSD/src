@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 1999/11/15 20:07:21 dante Exp $
+# $NetBSD: GENERIC,v 1.136 1999/11/16 07:37:44 dan Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -247,6 +247,8 @@ lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
 depca1	at	isa? port 0x200 iomem 0xd8000 iosiz 0x8000 irq 10 	# DEPCA
 le*	at	depca?
+we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
+we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
