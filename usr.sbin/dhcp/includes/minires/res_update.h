@@ -16,7 +16,7 @@
  */
 
 /*
- *	$Id: res_update.h,v 1.1.1.1 2000/04/22 07:11:51 mellon Exp $
+ *	$Id: res_update.h,v 1.1.1.1.4.1 2001/04/04 20:56:32 he Exp $
  */
 
 #ifndef __RES_UPDATE_H
@@ -36,7 +36,8 @@ typedef struct ns_updrec {
 	ns_class r_class;		/* class number */
 	ns_type r_type;			/* type number */
 	u_int32_t r_ttl;		/* time to live */
-	unsigned char*	r_data;		/* rdata fields as text string */
+	const unsigned char *r_data;	/* rdata fields as text string */
+	unsigned char *r_data_ephem;	/* pointer to freeable r_data */
 	unsigned int r_size;		/* size of r_data field */
 	int r_opcode;			/* type of operation */
 		/* following fields for private use by the resolver/server

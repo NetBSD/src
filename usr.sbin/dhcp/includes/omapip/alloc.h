@@ -85,7 +85,8 @@ struct rc_history_entry {
 	rc_history [rc_history_index].addr = (y); \
 	rc_history [rc_history_index].refcnt = (z); \
 	if (++rc_history_index == RC_HISTORY_MAX) \
-		rc_history_index = 0;\
+		rc_history_index = 0; \
+	++rc_history_count; \
 	} while (0)
 #define rc_register_mdl(r, y, z) \
 	rc_register (__FILE__, __LINE__, r, y, z)
@@ -105,4 +106,5 @@ extern unsigned long dmalloc_cutoff_generation;
 #if defined (DEBUG_RC_HISTORY)
 extern struct rc_history_entry rc_history [RC_HISTORY_MAX];
 extern int rc_history_index;
+extern int rc_history_count;
 #endif
