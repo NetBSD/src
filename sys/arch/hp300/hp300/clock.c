@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2001/12/03 05:52:13 gmcgarry Exp $	*/
+/*	$NetBSD: clock.c,v 1.26 2001/12/08 04:04:49 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,11 +94,6 @@ clockattach(todr_chip_handle_t handle)
 		panic("clockattach: multiple clocks");
 
 	todr_handle = handle;
-
-#ifdef EVCNT_COUNTERS
-	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    dev->dv_xname, "intr");
-#endif
 }
 
 
