@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.74 1998/04/29 00:24:28 thorpej Exp $
+# $NetBSD: files.alpha,v 1.75 1998/05/13 21:59:32 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -32,7 +32,7 @@ defopt	NEW_SCC_DRIVER
 define	alpha_shared_intr
 file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_eb64plus | dec_kn20aa | dec_kn8ae |
-					dec_kn300
+					dec_kn300 | dec_550
 define	alpha_sgmap
 file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
 
@@ -293,6 +293,7 @@ file	arch/alpha/pci/pci_eb64plus_intr.s dec_eb64plus
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 file	arch/alpha/pci/pci_kn8ae.c	dec_kn8ae
 file	arch/alpha/pci/pci_kn300.c	dec_kn300
+file	arch/alpha/pci/pci_550.c	dec_550
 
 
 #
