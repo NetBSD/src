@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.17 2002/10/14 13:43:24 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.18 2003/04/07 07:08:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ where the different variables and functions are:
 .It Cm FOOIOCTL
 the name which will later be given in the
 .Xr ioctl 2
-system call as second argument, e.g.
+system call as second argument, e.g.,
 .Dl ioctl(s, FOOIOCTL, ...) .
 .It Fn fun
 a macro which can be one of
@@ -237,7 +237,7 @@ This is a unsigned 8 bit number.
 .It Ar pt
 This specifies the type of the passed parameter.
 This one gets internally transformed to the size of the parameter, so
-if you e.g. want to pass a structure, then you have to specify that
+for example, if you want to pass a structure, then you have to specify that
 structure and not a pointer to it or sizeof(struct foo)
 .El
 .Pp
@@ -267,7 +267,7 @@ driver_ioctl(..., u_long cmd, caddr_t data)
 }
 .Ed
 .Sh NOTES
-Note that if you e.g. try to read information from e.g. a ethernet
+Note that if you for example try to read information from a ethernet
 driver where the name of the card is included in the third argument
 (e.g., ioctl(s, READFROMETH, struct ifreq *)), then you have to use
 the _IOWR() form not the _IOR(), as passing the name of the card to the
