@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.23 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1993/12/22 04:00:31 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/01/11 19:42:53 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -114,12 +114,23 @@ struct nlist nl[] = {
 	{ "_cltb"},
 #define N_CLTPSTAT	28
 	{ "_cltpstat"},
+#define N_IGMPSTAT	29
+	{ "_igmpstat" },
+#define N_MRTPROTO	30
+	{ "_ip_mrtproto" },
+#define N_MRTSTAT	31
+	{ "_mrtstat" },
+#define N_MRTTABLE	32
+	{ "_mrttable" },
+#define N_VIFTABLE	33
+	{ "_viftable" },
 	"",
 };
 
 /* internet protocols */
 extern	int protopr();
 extern	int tcp_stats(), udp_stats(), ip_stats(), icmp_stats();
+extern	int igmp_stats();
 #ifdef NS
 /* ns protocols */
 extern	int nsprotopr();
@@ -151,6 +162,8 @@ struct protox {
 	  ip_stats,	"ip" },
 	{ -1,		N_ICMPSTAT,	1,	0,
 	  icmp_stats,	"icmp" },
+	{ -1,		N_IGMPSTAT,	1,	0,
+	  igmp_stats,	"igmp" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
@@ -203,6 +216,7 @@ int	Aflag;
 int	aflag;
 int	hflag;
 int	iflag;
+int	Mflag;
 int	mflag;
 int	nflag;
 int	pflag;
@@ -228,13 +242,17 @@ main(argc, argv)
 	int ch;
 	void usage(); 
 
-	while ((ch = getopt(argc, argv, "Aadf:hI:iM:mN:np:rstuw:")) != EOF)
+	while ((ch = getopt(argc, argv, "Aac:df:hI:iMmN:np:rstuw:")) != EOF)
 		switch((char)ch) {
 		case 'A':
 			Aflag = 1;
 			break;
 		case 'a':
 			aflag = 1;
+			break;
+		case 'c':
+			kmemf = optarg;
+			kflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -270,8 +288,7 @@ main(argc, argv)
 			iflag = 1;
 			break;
 		case 'M':
-			kmemf = optarg;
-			kflag = 1;
+			Mflag++;
 			break;
 		case 'm':
 			mflag = 1;
@@ -305,7 +322,6 @@ main(argc, argv)
 			break;
 		case 'w':
 			interval = atoi(optarg);
-			iflag = 1;
 			break;
 		case '?':
 		default:
@@ -381,6 +397,17 @@ main(argc, argv)
 				(off_t)nl[N_RTREE].n_value);
 		exit(0);
 	}
+	if (Mflag) {
+		if (sflag)
+			mrt_stats((off_t)nl[N_MRTPROTO].n_value,
+				  (off_t)nl[N_MRTSTAT].n_value);
+		else
+			mroutepr((off_t)nl[N_MRTPROTO].n_value,
+				 (off_t)nl[N_MRTTABLE].n_value,
+				 (off_t)nl[N_VIFTABLE].n_value);
+		exit(0);
+	}
+
     if (af == AF_INET || af == AF_UNSPEC) {
 	setprotoent(1);
 	setservent(1);
@@ -498,12 +525,12 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: netstat [-Aan] [-f address_family] [-M core] [-N system]\n");
+"usage: netstat [-Aan] [-f address_family] [-c core] [-N system]\n");
 	(void)fprintf(stderr,
-"               [-himnrs] [-f address_family] [-M core] [-N system]\n");
+"               [-himnrs] [-f address_family] [-c core] [-N system]\n");
 	(void)fprintf(stderr,
-"               [-n] [-I interface] [-M core] [-N system] [-w wait]\n");
+"               [-n] [-I interface] [-c core] [-N system] [-w wait]\n");
 	(void)fprintf(stderr,
-"               [-M core] [-N system] [-p protocol]\n");
+"               [-c core] [-N system] [-p protocol]\n");
 	exit(1);
 }
