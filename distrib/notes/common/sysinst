@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.49 2002/07/19 07:17:48 scottr Exp $
+.\"	$NetBSD: sysinst,v 1.50 2002/07/19 15:50:41 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,7 +117,8 @@ kernel has no sound support.
 The
 .Tn PCMCIA
 code might allocate your soundblaster's
-.Tn IRQ No and I/O ports to
+.Tn IRQ
+and I/O ports to
 .Tn PCMCIA
 devices, causing them not to work, or to lock up the system.
 This is especially bad if one of the devices in question is your ethernet card.
@@ -263,22 +264,25 @@ release.
 .To 2 "Possible hardware-specific issues"
 .Em Possible hardware-specific issues
 .(bullet
-.It
 .Em SCSI driver problems
 .Pp
 The SCSI driver used in the kernel on many older Macintosh systems is, by
-default, the ncrscsi driver. It contains a recognized but as yet unfixed
-bug that affects some disk drive/controller combinations,
-usually Quantum disks. Under heavy load these systems may hang or corrupt
+default, the ncrscsi driver.
+It contains a recognized but as yet unfixed bug that affects some
+disk drive/controller combinations, usually Quantum disks.
+Under heavy load these systems may hang or corrupt
 the file system; or, you may experience frequent
-.Pa Segmentation fault No and
-.Pa Illegal instruction
-errors that may or may not be consistently repeatable. This latter condition
-is particularly prevalent on systems with minimal RAM installed.
+.Em Segmentation fault
+and
+.Em Illegal instruction
+errors that may or may not be consistently repeatable.
+This latter condition is particularly prevalent on systems with
+minimal RAM installed.
 .Pp
 If either of these problems occur on your system you are advised to use the
-SBC variants of the Kernel and Installation Kernel. However, be aware that
-this issue does not affect e.g. Centris or Quadra systems.
+SBC variants of the Kernel and Installation Kernel.
+However, be aware that this issue does not affect
+e.g. Centris or Quadra systems.
 .Pp
 .It 
 .Em The 68LC040 processor
@@ -288,8 +292,8 @@ has known but unresolved problems running on the 68LC040 processor, the
 variant of the 68040 that does not contain the floating point unit (FPU).
 The kernel is thus forced to emulate the missing operations in software.
 Unfortunately the 68LC040 processor has a design problem that causes
-the emulation to fail intermittently. We hope to provide a solution
-for this issue in a future
+the emulation to fail intermittently.
+We hope to provide a solution for this issue in a future
 .Nx
 release.
 .Pp
@@ -318,7 +322,8 @@ If you wish to stop the installation, you may press
 at any time, but if you do, you'll have to begin the installation
 process again from scratch by running the
 .Pa /sysinst
-program from the command prompt. It is not necessary to reboot.
+program from the command prompt.
+It is not necessary to reboot.
 .It
 .To 2 "Quick install"
 .Em Quick install
@@ -354,9 +359,9 @@ A PC with a 386 or newer processor.
 .\} \" r_i386
 .if r_mac68k \{\
 .It
-A Macintosh with a 68020 and MMU, 68030 or 68RC040 processor. An FPU is
-not required but will be used if present (but see the note above regarding
-the 68LC040).
+A Macintosh with a 68020 and MMU, 68030 or 68RC040 processor.
+An FPU is not required but will be used if present
+(but see the note above regarding the 68LC040).
 .\}
 .It
 A CD-ROM drive
@@ -451,20 +456,22 @@ Create a Folder on your Mac OS disk for the
 .Nx*M
 components.
 .It
-Copy the Booter application into the newly created Folder. Expand the
-file if necessary to create the Mac OS executable.
+Copy the Booter application into the newly created Folder.
+Expand the file if necessary to create the Mac OS executable.
 .It
-Copy the Installation Kernels into the newly created Folder. It is not
-necessary to
+Copy the Installation Kernels into the newly created Folder.
+It is not necessary to
 .Ic gunzip
 compressed kernel files.
 .It
 Single-click on the Booter application icon then select the "Get Info"
-from the File Menu list.  Increase the memory allocation for the Booter
-to as much as possible for your system.  Having a large number of fonts,
-extensions or sounds installed on your system can cause memory exhaustion
-problems for the Booter if you don't do this.  Also, the extra memory
-is needed by the Booter to expand compressed kernels while booting.
+from the File Menu list.
+Increase the memory allocation for the Booter to as much as possible
+for your system.
+Having a large number of fonts, extensions or sounds installed on your system
+can cause memory exhaustion problems for the Booter if you don't do this.
+Also, the extra memory is needed by the Booter to expand compressed
+kernels while booting.
 .bullet)
 .\}
 .It
@@ -486,23 +493,28 @@ then select
 .Ic Change Monitor Depth
 and make sure B\*&W is highlighted.
 Close the window using the
-.Ic Close No button.
+.Ic Close
+button.
 .It
 From the
 .Ic Options
 pull-down menu select
 .Ic Boot Options .
 This will bring
-up an option panel.  Set the
+up an option panel.
+Set the
 .Ic Auto-set GMT Bias
 checkbox in the lower left and then select the
 .Ic Boot from Mac OS
-option at the top of the window. The
+option at the top of the window.
+The
 .Ic Set
-button on the right will become active. Use it to locate and
-select the Installation Kernel file appropiate for your hardware. This
-will be either
-.Pa netbsd-GENERIC.gz No or
+button on the right will become active.
+Use it to locate and
+select the Installation Kernel file appropiate for your hardware.
+This will be either
+.Pa netbsd-GENERIC.gz
+or
 .Pa netbsd-GENERICSBC.gz .
 Close the window using the
 .Ic Close
@@ -514,7 +526,8 @@ pull-down menu select the
 .Ic Boot Now ,
 or use the Apple-B (Command-B) key combination to start the
 .Nx
-boot process.  Do not move the mouse while the boot operation is in
+boot process.
+Do not move the mouse while the boot operation is in
 progress as this may leave the keyboard locked to
 .Nx .
 .Pp
@@ -676,29 +689,34 @@ Disable all forms of virtual memory (the Memory Control Panel, RAM Doubler,
 or other software-based memory enhancement products).
 .It
 Place the system in B\*&W Mode (1-bit color or grayscale) as shown in the
-Monitors Control Panel or in the Monitors options dialog of the Booter. You may
-choose to have the Booter do this for you automatically by selecting
+Monitors Control Panel or in the Monitors options dialog of the Booter.
+You may choose to have the Booter do this for you automatically by selecting
 the appropiate check box and radio button in the
-.Ic Monitors No dialog on the
-.Ic Options No menu .
+.Ic Monitors
+dialog on the
+.Ic Options
+menu.
 .bullet)
 .Pp
 It is probably best to boot your machine with all extensions turned off [1].
 You can do this by booting into Mac OS with the
-.Tn SHIFT No key held down.  You may
-have to restart your Macintosh for changes to take effect before
+.Key SHIFT
+key held down.
+You may have to restart your Macintosh for changes to take effect before
 proceeding.
 .(tag [1]
 .It [1]
 If your version of the Memory control panel does not have a 32-bit
 addressing mode radio button, this means that your system is already
-32-bit clean and is running in 32-bit addressing mode by default.  If the
-Booter complains that your are not in 32-bit mode, it may be necessary
+32-bit clean and is running in 32-bit addressing mode by default.
+If the Booter complains that your are not in 32-bit mode, it may be necessary
 for you to press the "Use Defaults" button in the Memory control panel to
-restore 32-bit addressing.  You should probably reboot after doing so.
+restore 32-bit addressing.
+You should probably reboot after doing so.
 If you have an older II-class system (including the II, IIx, IIcx,
 and SE/30), it is necessary to install Connectix's MODE32 to work around
-ROM issues which prevent you from enabling 32-bit addressing. Please see the
+ROM issues which prevent you from enabling 32-bit addressing.
+Please see the
 .Nx*M
 FAQ at
 .Lk http://www.netbsd.org/Ports/mac68k/faq/
@@ -712,25 +730,30 @@ Select
 .Ic Booting
 from the
 .Ic Options
-menu. Select the Kernel Location to be from Mac OS with the filename
+menu.
+Select the Kernel Location to be from Mac OS with the filename
 corresponding to the name of the Installation Kernel you are using.
 Typically this will be netbsd-INSTALL.gz.
 .Pp
 If you haven't already put your Macintosh into B\*&W mode, select the
-.Ic Monitor Options No from the
+.Ic Monitor Options
+from the
 .Ic Options
 menu and check the box for B\*&W mode.
 .Pp
 Try booting
 .Nx
 by selecting
-.Ic Boot Now No from the
-.Ic Options No menu.
+.Ic Boot Now
+from the
+.Ic Options
+menu.
 .Pp
 If the system does not come up, send mail to
 .Mt port-mac68k@netbsd.org
 describing your software, your hardware, and as complete a description of
-the problem as you can. As an alternative, try using the Traditional
+the problem as you can.
+As an alternative, try using the Traditional
 method of installation described in the next section.
 .\}
 .ie \n[acorn26]:\n[cats]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[walnut] \{\
@@ -893,15 +916,16 @@ your disk for use with
 .Nx .
 It does not support resizing existing
 .Tn Mac OS
-HFS disk partitions.  If
-there is insufficient Free space on the disk to support an installation of
+HFS disk partitions.
+If there is insufficient Free space on the disk to support an installation of
 .Nx
 you will need to backup, repartition and restore your existing
 .Tn Mac OS
-partitions before proceeding.  You may choose to use a Traditional method
-of creating disk partitions for
+partitions before proceeding.
+You may choose to use a Traditional method of creating disk partitions for
 .Nx 
-if you wish.  They can still be used by
+if you wish.
+They can still be used by
 .Ic sysinst
 for a
 .Nx
@@ -919,7 +943,7 @@ Skip this step if you are installing
 onto a dedicated drive.
 .Pp
 Go to the
-.Me "Utility Menu" No Ns ,
+.Me "Utility Menu" ,
 and select the
 .Me "Run /bin/sh"
 option which will give you a shell prompt.
@@ -946,15 +970,15 @@ Note that, as discussed above in the
 section, your
 .Em "A/UX Root"
 typically is the first partition
-.No ( Ns Em a No Ns )
+.Pq Em a
 and your
 .Em "A/UX Swap"
 typically is the second partition
-.No ( Ns Em b No Ns ).
+.Pq Em b .
 You may also find that your
 .Em "A/UX User"
 partition is the seventh partition
-.No ( Ns Em g No Ns ).
+.Pq Em g .
 For example:
 .(disp
 .Dl # Ic "disklabel wd0"
@@ -976,11 +1000,13 @@ Now, you need to create file systems on the partitions that
 will be using.
 .Pp
 .Em "Do not modify any partitions labeled"
-.Pa HFS No Em or Pa unknown No Ns .
+.Pa HFS
+.Em or
+.Pa unknown .
 The partitions you will be using have their
 .Pa fstype
 listed as
-.Pa 4.2BSD No Ns .
+.Pa 4.2BSD .
 .Pp
 Run the
 .Ic newfs
@@ -1017,10 +1043,10 @@ Now you need to mount your destination root partition:
 Make an
 .Pa fstab
 file for your new system (right now, you only really need to include
-.Pa / No ,
-.Pa /usr No ,
+.Pa / ,
+.Pa /usr ,
 and
-.Pa swap No ),
+.Pa swap ) ,
 for example:
 .Dl # Ic "mkdir /mnt/etc"
 .Dl # Ic "cat \*> /mnt/etc/fstab"
@@ -1035,7 +1061,7 @@ to erase everything on the current line, or
 to cancel the file creation, so you can start over.
 .Pp
 Great, now create the mountpoints for the file systems you listed in the
-.Pa fstab No Ns :
+.Pa fstab :
 .Dl # Ic "mkdir /mnt/usr"
 .Pp
 Clean up and return to
@@ -1108,9 +1134,9 @@ It does this by reading the Apple Disk Partition Map from the disk.
 If the disk does not have a Partition Map,
 .Ic sysinst
 will give you the option of writing one, but doing so will not make
-the disk a Mac OS bootable volume.  You will have the option of
-creating HFS partitions that may be subsequentially initialized
-and used under Mac OS though.
+the disk a Mac OS bootable volume.
+You will have the option of creating HFS partitions that may be
+subsequentially initialized and used under Mac OS though.
 .\}
 .Pp
 .if r_i386 \{\
@@ -1222,9 +1248,11 @@ whether you want to overwrite these.
 Definition of the NetBSD disklabel.
 .Pp
 The Apple Disk Partition Map is used to create an in-core map of the
-disk called the disklabel.  A minimum of two NetBSD partitions will
-be required, one for root and one for swap.  Up to eight partitions may
-be used by NetBSD.  Up to 32 partitions may exist on the disk which
+disk called the disklabel.
+A minimum of two NetBSD partitions will be required,
+one for root and one for swap.
+Up to eight partitions may be used by NetBSD.
+Up to 32 partitions may exist on the disk which
 can be any combination of Mac OS HFS, Free, Scratch and
 .Nx
 partitions, although only the first eight which meet the needs of
@@ -1233,9 +1261,10 @@ will be seen and mapped to the
 .Nx
 disklabel.
 .Pp
-Some partitions in the disklabel have a fixed purpose.  Partition 'a'
-is always the root partition, 'b' is the swap partition and 'c' is the
-entire disk.  Partitions 'd' through 'h' are available for other use.
+Some partitions in the disklabel have a fixed purpose.
+Partition 'a' is always the root partition, 'b' is the swap partition
+and 'c' is the entire disk.
+Partitions 'd' through 'h' are available for other use.
 Traditionally, 'g' is the partition mounted on the /usr directory, but
 this is historical practice, not a fixed value.
 .It
@@ -1245,17 +1274,20 @@ Disklabel (and the underlying Apple Disk Partition Map).
 .Pp
 You will be presented with the current layout of the disk as seen by
 .Nx ,
-and given a change to change it. (Even though
+and given a change to change it.
+(Even though
 .Nx
 can only use the first eight qualified partitions, all partitions
-found on the disk will be displayed.) The partitions found on the disk
-will be shown in the top section of the display.  Each will be identified
-with the name assigned by
+found on the disk will be displayed.)
+The partitions found on the disk will be shown in the top section of
+the display.
+Each will be identified with the name assigned by
 .Nx ,
-the current size, offset, type, use and mount point. The partition
-currently being modified will be highlighted in inverse video.  The
-bottom part of the display will list the operations which may be
-performed on the selected (highlighted) partition. The options are:
+the current size, offset, type, use and mount point.
+The partition currently being modified will be highlighted in inverse video.
+The bottom part of the display will list the operations which may be
+performed on the selected (highlighted) partition.
+The options are:
 .(bullet
 Select next partition
 .Pp
@@ -1264,12 +1296,12 @@ the current one selected for manipulation.
 .It
 Change selected partition
 .Pp
-This changes the type assigned to the partition.  A partition may be assigned
-for use as a
+This changes the type assigned to the partition.
+A partition may be assigned for use as a
 .Nx
 Root, SWAP, Usr, or Root&Usr; it may be assigned for use as a Mac OS HFS
-partition; a Scratch (for later reassignment); or a Free partition.  Free
-partitions which are physically adjacent to each other will be collapsed
+partition; a Scratch (for later reassignment); or a Free partition.
+Free partitions which are physically adjacent to each other will be collapsed
 into a single Free partition.
 .It
 Set mount point for partition
@@ -1279,32 +1311,35 @@ This designates the
 file system mount point for the partition, and gets transferred into
 the /etc/fstab definition so
 .Nx
-knows where to mount the file system on subsequent boots.  The option
-only applies to
+knows where to mount the file system on subsequent boots.
+The option only applies to
 .Nx
 Root, Usr, Root&Usr or Mac OS HFS partitions, although currently HFS access
-is not supported without optional software components.  A common set of
-predefined mount points (/usr, /home, /var, /tmp or None) will be
-presented to you to assist you in defining the most commonly used, but
-you may enter you own names if you choose.  Selecting "None" will clear
-the mount point name and keep the partition from being defined in the
-resulting /etc/fstab file.
+is not supported without optional software components.
+A common set of predefined mount points (/usr, /home, /var, /tmp or None)
+will be presented to you to assist you in defining the most commonly used,
+but you may enter you own names if you choose.
+Selecting "None" will clear the mount point name and keep the partition
+from being defined in the resulting
+.Pa /etc/fstab
+file.
 .It
 Split selected partition
 .Pp
 This option divides the selected partition into two separate partitions
-if there is space available in the Disk Partition Map.  You will be
-prompted for the size of the first segment and the remaining portion
-will be allocated to the second segment.  The first segment will be
-designated as a Scratch type, and the second will be designated as a Free
-type. To clear a split, or remerge two adjacent partitions into a
+if there is space available in the Disk Partition Map.
+You will be prompted for the size of the first segment and the remaining
+portion will be allocated to the second segment.
+The first segment will be designated as a Scratch type, and the second
+will be designated as a Free type.
+To clear a split, or remerge two adjacent partitions into a
 single one, change both to be Free types.
 .Ic sysinst
 will merge them and update the display.
 .Pp
 This is the primary option used to partition the disk since it allows
-you to sub-divide the selected partition into two partitions.  Changing
-the types associated with the resulting two parts, or splitting the
+you to sub-divide the selected partition into two partitions.
+Changing the types associated with the resulting two parts, or splitting the
 second part further sub-divides the original partition.
 .It
 Page Up, Page Down
@@ -1315,8 +1350,9 @@ eight partitions currently exist on the disk.
 Fix selected partition
 .Pp
 This option reviews the partition's size and starting address and fixes
-the values if they overlap any adjacent partition. This is primarily a
-debugging option and shouldn't be necesary during a normal installation.
+the values if they overlap any adjacent partition.
+This is primarily a debugging option and shouldn't be necesary during a
+normal installation.
 However, some 3rd party disk formatters have been known to create
 bogus entries in the Apple Disk Partition Map, and this option can aid
 is repairing these entries.
@@ -1324,9 +1360,9 @@ is repairing these entries.
 Exit
 .Pp
 This option completes the disk partitioning and returns you to the
-previous installation menu. At that point you will be given one last
-opportunity to bail out before committing the changes to the Disk
-Partition Map recorded on the disk.
+previous installation menu.
+At that point you will be given one last opportunity to bail out before
+committing the changes to the Disk Partition Map recorded on the disk.
 .bullet)
 .Pp
 .It
@@ -1336,12 +1372,15 @@ The simplest method of approaching disk partitioning with
 .Ic sysinst
 is to convert everything that can be used for
 .Nx
-into a Free type partition.  This will allow
+into a Free type partition.
+This will allow
 .Ic sysinst
-to collapse and merge all the available space.  Then cycle through the
-Select, Split, Select, Change, and Set Mount Point options for each of the
+to collapse and merge all the available space.
+Then cycle through the Select, Split, Select, Change, and Set Mount Point
+options for each of the
 .Nx
-partitions that are desired.  Since
+partitions that are desired.
+Since
 .Nx*M
 has a very specific
 mount order for partitions during system boot, it is best to create your
@@ -1350,20 +1389,22 @@ partitions in the following order:  Root, SWAP, Usr where the partitions
 will be mounted in order on 'a', 'b', 'g', 'd', 'e', 'f', and 'h'.
 .Pp
 At least one Root or Root&Usr is required, and a SWAP partition is
-highly desirable. As a general rule you will need twice as much swap
+highly desirable.
+As a general rule you will need twice as much swap
 space as you have RAM, more if you plan on running X, Web applications
-or doing heavy development in a multi-user environment.  The Root
-partition, if it is separate from your Usr, usually requires about
+or doing heavy development in a multi-user environment.
+The Root partition, if it is separate from your Usr, usually requires about
 24 MB.
 .Pp
 If multiple Root partitions are defined, the second is usually
 mounted on /altusr by default.
 .Nx*M
 automatically mounts all
-Root partitions after the first as Usr type partitions. However, it is best
-to be very specific about mount points and partition type and use.
-.bullet)
+Root partitions after the first as Usr type partitions.
+However, it is best to be very specific about mount points and partition
+type and use.
 .\}
+.bullet)
 .if r_i386 \{\
 .Pp
 If you want to use the entire disk for
@@ -1770,7 +1811,8 @@ This process will continue until all the sets have been loaded from floppy.
 .Pp
 .Nx*M
 does not currently have in-kernel support for
-.Tn Mac OS No HFS/HFS+ or AppleShare filesystems.
+.Tn Mac OS
+HFS/HFS+ or AppleShare filesystems.
 .Ic sysinst
 therefore can not access the file sets if they are on these filesystems.
 .\}
@@ -1891,20 +1933,21 @@ Congratulations, you have successfully installed
 .Pp
 To finalize the installation of
 .Nx*M
-certain parameters on the Cyclone firmware need to changed. The reason
-is that the Cyclone firmware is unable to boot anything other than an
-a.out format kernels.
+certain parameters on the Cyclone firmware need to changed.
+The reason is that the Cyclone firmware is unable to boot anything other
+than an a.out format kernels.
 .Pp
 Kernels created on a
 .Nx*V
-\*M system are natively ELF and converted to a.out. This conversion
-process loses the symbol information used for, amongst other things,
-kernel memory grovelers such as vmstat.  The workaround to the problem
-is to provide both the native ELF kernel (with all the symbol
-information) and the a.out kernel. These are available as /netbsd
-and /netbsd.aout respectively. As the a.out format kernel is not named
-in such a way that the Cyclone firmware will automatically find it the
-following command should be issued as the firmware prompt.
+\*M system are natively ELF and converted to a.out.
+This conversion process loses the symbol information used for,
+amongst other things, kernel memory grovelers such as vmstat.
+The workaround to the problem is to provide both the native ELF kernel
+(with all the symbol information) and the a.out kernel.
+These are available as /netbsd and /netbsd.aout respectively.
+As the a.out format kernel is not named in such a way that the
+Cyclone firmware will automatically find it the following command
+should be issued as the firmware prompt.
 .Pp
 .Dl boot> Ic "set boot wd0:/netbsd.aout"
 .Pp
