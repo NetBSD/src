@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.33 1999/12/30 00:31:02 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.34 2000/01/05 18:44:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -137,7 +137,8 @@ rcons_connect (info)
 
 	/* Choose 'Gallant' font if this is an 8-bit display */
 	if (ri.ri_depth == 8 && (cookie = wsfont_find("Gallant", 0, 0, 0)) > 0)
-		wsfont_lock(cookie, &ri.ri_font, WSFONT_L2R, WSFONT_L2R);
+		wsfont_lock(cookie, &ri.ri_font, WSDISPLAY_FONTORDER_L2R, 
+		    WSDISPLAY_FONTORDER_L2R);
 
 	/* Get operations set and set framebugger colormap */
 	if (rasops_init(&ri, 5000, 80))

@@ -1,4 +1,4 @@
-/* 	$NetBSD: gallant12x22.h,v 1.2 1999/05/18 21:51:58 ad Exp $ */
+/* 	$NetBSD: gallant12x22.h,v 1.3 2000/01/05 18:44:23 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,8 @@ struct wsdisplay_font gallant12x22 = {
 	12,				/* width */
 	22,				/* height */
 	2,				/* stride */
+	WSDISPLAY_FONTORDER_L2R,	/* bit order */
+	WSDISPLAY_FONTORDER_L2R,	/* byte order */
 	gallant12x22_data		/* data */
 };
  

@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.9 1999/12/15 15:27:57 ad Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.10 2000/01/05 18:44:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,8 @@
  * don't care about that aspect of the font. It returns a cookie which
  * we can use with the other functions. When more flexibility is required,
  * wsfont_enum() should be used. The last two parameters to wsfont_lock()
- * are the bit order and byte order required (WSFONT_L2R or WSFONT_R2L).
+ * are the bit order and byte order required (WSDISPLAY_FONTORDER_L2R or 
+ * WSDISPLAY_FONTORDER_R2L).
  *
  * Example:
  *
@@ -63,10 +64,6 @@
  */
 
 struct wsdisplay_font;
-
-/* Left to Right, Right to Left */
-#define WSFONT_L2R	(1)
-#define WSFONT_R2L	(2)
 
 /* For wsfont_add() */
 #define WSFONT_BUILTIN	(0x01)
