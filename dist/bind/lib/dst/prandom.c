@@ -1,7 +1,7 @@
-/*	$NetBSD: prandom.c,v 1.3 2001/05/17 23:00:18 itojun Exp $	*/
+/*	$NetBSD: prandom.c,v 1.3.2.1 2002/06/28 11:43:57 lukem Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/prandom.c,v 1.10 2001/02/12 23:13:46 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/prandom.c,v 1.12 2001/07/26 01:20:09 marka Exp";
 #endif
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -121,9 +121,9 @@ static int unix_cmd(dst_work *work);
 static int digest_file(dst_work *work);
 
 static void force_hash(dst_work *work, prand_hash *hash);
-static int do_hash(dst_work *work, prand_hash *hash, u_char *input,
+static int do_hash(dst_work *work, prand_hash *hash, const u_char *input,
 		   int size);
-static int my_digest(dst_work *tmp, u_char *input, int size);
+static int my_digest(dst_work *tmp, const u_char *input, int size);
 static prand_hash *get_hmac_key(int step, int block);
 
 static int own_random(dst_work *work);
@@ -259,11 +259,10 @@ do_ls(dst_work *work)
 	else if (i==1) /* if starting a new round cut what we accept */
 		d_round += (tv.tv_sec - d_round)/2;
 
-	if (buf.st_atime < d_round) 
+	if (buf.st_atime < (time_t)d_round) 
 		return (0);
 
-	EREPORT(("do_ls i %d filled %4d in_temp %4d\n",
-		 i-1, work->filled, work->in_temp));
+	EREPORT(("do_ls i %d filled %4d\n", i-1, work->filled));
 	memcpy(tmp_buff, &buf, sizeof(buf)); 
 	tb_i += sizeof(buf);
 
@@ -324,8 +323,7 @@ unix_cmd(dst_work *work)
 
 	if (cmds[cmd_index] == NULL)
 		cmd_index = 0;
-	EREPORT(("unix_cmd() i %d filled %4d in_temp %4d\n",
-		 cmd_index, work->filled, work->in_temp));
+	EREPORT(("unix_cmd() i %d filled %4d\n", cmd_index, work->filled));
 	pipe = popen(cmds[cmd_index++], "r");	/* execute the command */
 
 	while ((n = fread(buffer, sizeof(char), sizeof(buffer), pipe)) > 0) {
@@ -336,7 +334,7 @@ unix_cmd(dst_work *work)
 		cnt += do_time(work);
 	}
 	while ((n = fread(buffer, sizeof(char), sizeof(buffer), pipe)) > 0)
-		NULL; /* drain the pipe */
+		(void)NULL; /* drain the pipe */
 	pclose(pipe);
 	return (cnt);		/* read how many bytes where read in */
 }
@@ -379,7 +377,7 @@ digest_file(dst_work *work)
 	}
 	if (access(name, R_OK) || stat(name, &st))
 		return (0); /* no such file or not allowed to read it */
-	if (strncmp(name, "/proc/", 6) && st.st_mtime < f_round)  
+	if (strncmp(name, "/proc/", 6) && st.st_mtime < (time_t)f_round)  
 		return(0); /* file has not changed recently enough */
 	if (dst_sign_data(SIG_MODE_INIT, work->file_digest, &ctx, 
 			  NULL, 0, NULL, 0)) {
@@ -403,7 +401,7 @@ digest_file(dst_work *work)
 	}
 	else if (i > 0)
 		my_digest(work, buf, i);
-	my_digest(work, (u_char *)name, strlen(name));
+	my_digest(work, (const u_char *)name, strlen(name));
 	return (no + strlen(name));
 }
 
@@ -441,9 +439,10 @@ force_hash(dst_work *work, prand_hash *hash)
  *
  */
 static int
-do_hash(dst_work *work, prand_hash *hash, u_char *input, int size)
+do_hash(dst_work *work, prand_hash *hash, const u_char *input, int size)
 {
-	u_char *tmp = input, *tp;
+	const u_char *tmp = input;
+	u_char *save = NULL, *tp;
 	int i, cnt = size, n, needed, avail, dig, tmp_size = 0;
 
 	if (cnt <= 0 || input == NULL)
@@ -451,7 +450,7 @@ do_hash(dst_work *work, prand_hash *hash, u_char *input, int size)
 
 	if (hash->step > 1) {	/* if using subset of input data */
 		tmp_size = size / hash->step + 2;
-		tp = tmp = malloc(tmp_size);
+		tmp = tp = save = malloc(tmp_size);
 		for (cnt = 0, i = hash->curr; i < size; i += hash->step, cnt++)
 			*(tp++) = input[i];
 		/* calcutate the starting point in the next input set */
@@ -468,13 +467,13 @@ do_hash(dst_work *work, prand_hash *hash, u_char *input, int size)
 		if (hash->digested >= hash->block)
 			force_hash(work, hash);
 		if (work->needed < work->filled) {
-			if (tmp != input) 
-				SAFE_FREE2(tmp, tmp_size);
+			if (tmp_size > 0) 
+				SAFE_FREE2(save, tmp_size);
 			return (1);
 		}
 	}
 	if (tmp_size > 0)
-		SAFE_FREE2(tmp, tmp_size);
+		SAFE_FREE2(save, tmp_size);
 	return (0);
 }
 
@@ -484,7 +483,7 @@ do_hash(dst_work *work, prand_hash *hash, u_char *input, int size)
  * if work-block needs more data, keep filling with the rest of the input.
  */
 static int
-my_digest(dst_work *work, u_char *input, int size)
+my_digest(dst_work *work, const u_char *input, int size)
 {
 
 	int i, full = 0;
@@ -605,8 +604,8 @@ own_random(dst_work *work)
  * proceed while needed 
  */
 	while (work->filled < work->needed) {
-		EREPORT(("own_random r %08x b %6d t %6d f %6d\n",
-			 ran_val, bytes, work->in_temp, work->filled));
+		EREPORT(("own_random r %08x b %6d f %6d\n",
+			 ran_val, bytes, work->filled));
 /* pick a random number in the range of 0..7 based on that random number
  * perform some operations that yield random data
  */
@@ -842,8 +841,10 @@ dst_s_semi_random(u_char *output, int size)
 		i = dst_sign_data(SIG_MODE_ALL, my_key, NULL, 
 				  (u_char *) counter, hb_size,
 				  semi_old, sizeof(semi_old));
+#ifdef REPORT_ERRORS
 		if (i != hb_size)
 			EREPORT(("HMAC SIGNATURE FAILURE %d\n", i));
+#endif
 		cnt++;
 		if (size - out < i)	/* Not all data is needed */
 			semi_loc = i = size - out;
