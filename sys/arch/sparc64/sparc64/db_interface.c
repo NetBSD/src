@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2000/04/06 13:32:49 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.30 2000/04/14 08:29:03 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -839,6 +839,8 @@ db_dump_buf(addr, have_addr, count, modif)
 #include <uvm/uvm.h>
 
 void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
+extern void uvmhist_dump __P((struct uvm_history *));
+extern struct uvm_history_head uvm_histories;
 
 void
 db_uvmhistdump(addr, have_addr, count, modif)
@@ -847,8 +849,6 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern void uvmhist_dump __P((struct uvm_history *));
-	extern struct uvm_history_head uvm_histories;
 
 	uvmhist_dump(uvm_histories.lh_first);
 }
