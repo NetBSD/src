@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.7 2000/05/31 05:06:50 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.8 2000/07/09 07:14:18 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -245,7 +245,7 @@ Lmotommu0:
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0007		| movc d0,dtt1
 	.word	0xf4d8			| cinva bc
-	pflusha				| flush entire TLB
+	pflusha				| flush entire ATC
 	RELOC(proto040tc,a0)
 	movl	a0@,d0
 	.long	0x4e7b0003		| movc d0,tc
@@ -289,7 +289,7 @@ Lenab1:
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
 	addql	#4,sp
 Lenab2:
-	pflusha				| flush entire TLB 
+	pflusha				| flush entire ATC 
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
 	jeq	Lenab3			| yes, cache already on
 	tstl	_C_LABEL(mmutype)
@@ -1196,7 +1196,7 @@ LmotommuC:
 	pmove	a0@,crp			| load root pointer
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	rts				|   since pmove flushes TLB
+	rts				|   since pmove flushes ATC
 
 ENTRY(ploadw)
 #if defined(M68040)
