@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.24.2.8 2002/07/22 17:07:33 lukem Exp $
+.\"	$NetBSD: xfer,v 1.24.2.9 2002/07/22 17:19:14 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -577,7 +577,7 @@ procedure; you can't use some 1.2 MB floppies and some 1.44 MB floppies.
 .\} \" \n[i386]
 .el \{\
 You will need one sixth that number of 1.44 MB floppies.
-\} \" ! \n[i386]
+.\} \" ! \n[i386]
 .Pp
 Format all of the floppies with
 .Tn MS-DOS .
