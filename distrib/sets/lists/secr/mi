@@ -126,7 +126,7 @@
 ./usr/share/man/cat3/quad_cksum.0
 ./usr/share/man/cat3/random_key.0
 ./usr/share/man/cat3/setkey.0
-./usr/share/man/cat3/string_to_key.0
+./usr/share/man/cat3/des_string_to_key.0
 ./usr/share/man/cat3/tf_close.0
 ./usr/share/man/cat3/tf_get_cred.0
 ./usr/share/man/cat3/tf_get_pinst.0
