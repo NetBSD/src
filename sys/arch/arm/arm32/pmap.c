@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2001/08/11 13:20:19 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2001/08/11 14:47:56 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2001/08/11 13:20:19 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2001/08/11 14:47:56 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -192,9 +192,7 @@ char *memhook;
 pt_entry_t msgbufpte;
 extern caddr_t msgbufaddr;
 
-#ifdef DIAGNOSTIC
 boolean_t pmap_initialized = FALSE;	/* Has pmap_init completed? */
-#endif
 /*
  * locking data structures
  */
