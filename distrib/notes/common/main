@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.100 2001/01/15 15:53:22 taya Exp $
+.\"	$NetBSD: main,v 1.101 2001/01/16 16:57:08 nonaka Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1204,6 +1204,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Kevin Sullivan Ta Mt sullivan@netbsd.org
 .It Ta SUNAGAWA Keiki Ta Mt kei@netbsd.org
 .It Ta Kimmo Suominen Ta Mt kim@netbsd.org
+.It Ta Shin'ichiro TAYA Ta Mt taya@netbsd.org
 .It Ta Matt Thomas Ta Mt matt@netbsd.org
 .It Ta Christoph Toshok Ta Mt toshok@netbsd.org
 .It Ta UCHIYAMA Yasushi Ta Mt uch@netbsd.org
@@ -1220,7 +1221,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Jim Wise Ta Mt jwise@netbsd.org
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
-.It Ta Shin'ichiro TAYA Ta Mt taya@netbsd.org
 .
 .El
 .
