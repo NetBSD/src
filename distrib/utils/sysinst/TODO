@@ -1,10 +1,7 @@
 Things to do ....
 
 Phil:
-	-- Make sure booting from ramdisk and fixed disk does the proper
-           thing.  (Possibly adding a -m flag that says it is running in
-           a memory disk root environment ... that could be set from the
-           .profile on the ram disk.)  Things like having config_network()
+	-  Things like having config_network()
            possibly use the information on the fixed disk instead of having
            to ask everything.
 
@@ -25,34 +22,41 @@ Phil:
 
 Jonathan:
 
-    -- Clean up my DISKLABEL_CMD hack, make #define DISKLABEL_CMD
-       properly MD, or at least provide a way to  not write disklabels 
-       at on Amigas -- I assume Michael has something in his tree for that.
-
     -- fix "disklabel -r -w" vs. "disklabel -w": I still don't grok why
-	the  -r, and the manpage says it will lose totally on sparcs.
-	Phil, was there some reason to bypass the incore label on i386?
-	Can we jst do "disklabel -w" everywhere?
+        the  -r, and the manpage says it will lose totally on sparcs.
+        Phil, was there some reason to bypass the incore label on i386?
+        Can we jst do "disklabel -w" everywhere?
 
-    -- Make sure the in-memory disklabel structs are big enough
-     	for the largest possible value of getmaxpartitions().
-	Maybe allocate 32 entries and check at runtime that
-	getmaxparitions < 32?
-	(Yes, i forgot to check that when I first edited the code. Sorry.)
+    -- Michael bumped the in-memory disklabel struct up to 16 entries.
+	 Also add  a runtime check in case that grows in future (e.g., slices).
+	 Maybe bump to 32 entries just in case.
 
+    -- Fix sanity-check message code. It currently gets over-written
+	immediately by the following message.
 
-    -- add sanity-check  code that checks  that the
-           installed/upgraded  target  disk has minimal
-           prerequisites to boot.
+    --	check for disklabel edits changing active root partition.
+	reject.
 
-          Check for the following in the target root, in order of paranoia:
+    --  check for overlapping to-be-newfs'ed partitions before newfsing.
+	jump back to disklabel edit if any overlaps found.
+	needs to  skip getrawpartition() (and  c on i386).
 
-          /netbsd
-          /sbin
-          /sbin/init
-          /sbin/mount
-          /bin/
-          /bin/sh
-          /sbin/mount{ffs,nfs,maybe others that appear in target fstab?}
-          /etc/
-          /etc/fstab
+Somebody:
+    --  remove any possibl-stale ld.so.cache files from the target
+        /etc after unpacking sets. Maybe just don't copy ld.so.cache
+        from /etc.old?
+
+    --  set rc.configured, or just remind users to edit rc.conf?
+
+    --  pmax miniroots have tar in /bin.  Fix that, or get rid of 
+	hardcoded pathnames to /usr.    Maybe use stat() to do pathsearch
+	(/bin, /usr/bin) in current root  for tools (tar, gunzip, ...) 
+	not present on a `normal' root?
+
+    --  Do mkdir("/mnt2") before mounting sets, instead of relying
+	on the ramdisk/miniroot/  having /mnt2.
+
+    --  If we're doing a fresh install and there's already a label
+	on the disk, maybe use that intsead  of the compiled-in default
+	label?
+
