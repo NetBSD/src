@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/11/19 05:31:01 jmc Exp $
+#	$NetBSD: Makefile,v 1.15 2001/12/02 01:43:38 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -53,7 +53,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE} ${IMAGE}.tmp
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
