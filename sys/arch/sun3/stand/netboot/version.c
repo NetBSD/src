@@ -1,7 +1,11 @@
-/*	$NetBSD: version.c,v 1.2 1995/10/13 21:33:09 gwr Exp $ */
+/*	$NetBSD: version.c,v 1.3 1996/01/29 23:54:16 gwr Exp $ */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
  */
 
-char *version = "$Revision: 1.2 $";
+#ifdef	DATECODE
+char *version = DATECODE;
+#else
+char *version = "$Revision: 1.3 $";
+#endif
