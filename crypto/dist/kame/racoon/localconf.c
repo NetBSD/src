@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: localconf.c,v 1.2 2003/07/12 09:37:11 itojun Exp $");
+__RCSID("$NetBSD: localconf.c,v 1.3 2004/10/30 15:15:38 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,13 +192,13 @@ getpsk(str, len)
 			continue;
 
 		/* search the end of 1st string. */
-		for (p = buf; *p != '\0' && !isspace(*p); p++)
+		for (p = buf; *p != '\0' && !isspace((unsigned char)*p); p++)
 			;
 		if (*p == '\0')
 			continue;	/* no 2nd parameter */
 		*p = '\0';
 		/* search the 1st of 2nd string. */
-		while (isspace(*++p))
+		while (isspace((unsigned char)*++p))
 			;
 		if (*p == '\0')
 			continue;	/* no 2nd parameter */
