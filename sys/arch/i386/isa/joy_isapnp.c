@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.6.2.2 1997/10/31 20:58:58 mellon Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.6.2.3 1997/11/26 03:45:51 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@ joy_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	if (strcmp(ipa->ipa_devcompat, "PNPB02F") &&
-	    strcmp(ipa->ipa_devlogic, "ESS0001") &&
-	    strcmp(ipa->ipa_devlogic, "OPT0001"))
+	if (strcmp(ipa->ipa_devcompat, "PNPB02F") && /* generic */
+ 	    strcmp(ipa->ipa_devlogic, "CTL7002") && /* Creative Vibra16CL */
+	    strcmp(ipa->ipa_devlogic, "ESS0001") && /* ESS1868 */
+	    strcmp(ipa->ipa_devlogic, "OPT0001") && /* OPTi Audio 16 */
+	    strcmp(ipa->ipa_devlogic, "PNPB02F")) /* XXX broken GUS PnP */
 		return (0);
 
 	return 1;
