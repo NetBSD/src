@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.5 1995/09/18 20:24:53 chuck Exp $ */
+/*	$NetBSD: bootxx.c,v 1.6 1995/09/18 21:31:44 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -60,10 +60,11 @@ const char		progname[] = "bootxx";
 
 void	loadboot __P((struct open_file *, caddr_t));
 
+int
 main()
 {
 	char	*dummy;
-	int	n;
+	size_t	n;
 	register void (*entry)__P((caddr_t)) = (void (*)__P((caddr_t)))LOADADDR;
 
 	prom_init();
@@ -94,7 +95,7 @@ loadboot(f, addr)
 {
 	register int	i;
 	register char	*buf;
-	int		n;
+	size_t		n;
 	daddr_t		blk;
 
 	/*
