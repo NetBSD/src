@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.33 2002/02/15 07:33:49 simonb Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.34 2003/04/24 20:00:48 ragge Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.33 2002/02/15 07:33:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.34 2003/04/24 20:00:48 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,11 @@ static boolean_t db_aout_line_at_pc(db_symtab_t *, db_sym_t, char **, int *,
 static boolean_t db_aout_sym_numargs(db_symtab_t *, db_sym_t, int *, char **);
 static void	db_aout_forall(db_symtab_t *, db_forall_func_t db_forall_func,
 		    void *);
+static int db_add_symbol_table(char *, char *, const char *, char *);
+
+/* Only one symbol table, please */
+static db_symtab_t db_symtabs;
+
 
 const db_symformat_t db_symformat_aout = {
 	"a.out",
@@ -163,6 +168,8 @@ db_aout_lookup(db_symtab_t *stab, char *symstr)
 {
 	struct nlist *sp, *ep;
 
+	stab = &db_symtabs;
+
 	sp = (struct nlist *)stab->start;
 	ep = (struct nlist *)stab->end;
 
@@ -184,6 +191,8 @@ db_aout_search_symbol(db_symtab_t *symtab, db_addr_t off,
 	unsigned int	diff = *diffp;
 	struct nlist	*symp = 0;
 	struct nlist	*sp, *ep;
+
+	symtab = &db_symtabs;
 
 	sp = (struct nlist *)symtab->start;
 	ep = (struct nlist *)symtab->end;
@@ -245,6 +254,8 @@ db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
 	struct nlist	*sp, *ep;
 	unsigned long		sodiff = -1UL, lndiff = -1UL, ln = 0;
 	char			*fname = NULL;
+
+	symtab = &db_symtabs;
 
 	sp = (struct nlist *)symtab->start;
 	ep = (struct nlist *)symtab->end;
@@ -309,6 +320,8 @@ db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 	if (cursym == NULL)
 		return FALSE;
 
+	symtab = &db_symtabs;
+
 	addr = ((struct nlist *)cursym)->n_value;
 	sp = (struct nlist *)symtab->start;
 	ep = (struct nlist *)symtab->end;
@@ -340,6 +353,8 @@ db_aout_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
 {
 	static char suffix[2];
 	struct nlist *sp, *ep;
+
+	stab = &db_symtabs;
 
 	sp = (struct nlist *)stab->start;
 	ep = (struct nlist *)stab->end;
@@ -374,4 +389,20 @@ db_aout_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
 	}
 	return;
 }
+
+/*
+ * Add symbol table, with given name, to symbol tables.
+ */
+int
+db_add_symbol_table(char *start, char *end, const char *name, char *ref)
+{
+
+	db_symtabs.start = start;
+	db_symtabs.end = end;
+	db_symtabs.name = name;
+	db_symtabs.private = ref;
+
+	return(0);
+}
+
 #endif	/* DB_AOUT_SYMBOLS */
