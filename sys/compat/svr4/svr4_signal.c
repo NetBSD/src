@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.32 1999/01/12 00:16:40 kleink Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.33 1999/01/12 02:09:18 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -552,12 +552,12 @@ svr4_sys_context(p, v, retval)
 	*retval = 0;
 
 	switch (SCARG(uap, func)) {
-	case 0:
+	case SVR4_GETCONTEXT:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_getcontext(p, &uc, &p->p_sigmask);
 		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
 
-	case 1: 
+	case SVR4_SETCONTEXT: 
 		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
 		if (SCARG(uap, uc) == NULL)
 			exit1(p, W_EXITCODE(0, 0));
