@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.50 2001/03/16 13:43:32 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.51 2001/03/22 14:30:47 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -479,7 +479,7 @@ struct iy_softc *sc;
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
 	} else 
-		temp = MATCH_ID;
+		temp = MATCH_BRDCST;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
 
@@ -1336,7 +1336,7 @@ iy_mc_setup(sc)
 	last = sc->rx_size;
 
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
-	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_ID);
+	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_BRDCST);
 	/* XXX VOODOO */
 	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
 	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
@@ -1439,7 +1439,7 @@ setupmulti:
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
 	} else 
-		temp = MATCH_ID;
+		temp = MATCH_BRDCST;
 
 	bus_space_write_1(iot, ioh, RECV_MODES_REG, temp);
 	/* XXX VOODOO */
