@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rt6.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
+/*	$NetBSD: print-rt6.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -24,10 +24,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-rt6.c,v 1.18 2001/06/15 22:17:34 fenner Exp";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-rt6.c,v 1.23.2.3 2003/11/19 00:35:45 guy Exp";
 #else
-__RCSID("$NetBSD: print-rt6.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+__RCSID("$NetBSD: print-rt6.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
 #endif
 #endif
 
@@ -37,13 +37,7 @@ __RCSID("$NetBSD: print-rt6.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
 
 #ifdef INET6
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 #include <stdio.h>
 
@@ -51,6 +45,7 @@ __RCSID("$NetBSD: print-rt6.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
 
 #include "interface.h"
 #include "addrtoname.h"
+#include "extract.h"
 
 int
 rt6_print(register const u_char *bp, register const u_char *bp2)
@@ -79,13 +74,17 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 #ifndef IPV6_RTHDR_TYPE_0
 #define IPV6_RTHDR_TYPE_0 0
 #endif
+#ifndef IPV6_RTHDR_TYPE_2
+#define IPV6_RTHDR_TYPE_2 2
+#endif
 	case IPV6_RTHDR_TYPE_0:
+	case IPV6_RTHDR_TYPE_2:			/* Mobile IPv6 ID-20 */
 		dp0 = (struct ip6_rthdr0 *)dp;
 
 		TCHECK(dp0->ip6r0_reserved);
 		if (dp0->ip6r0_reserved || vflag) {
 			printf(", rsv=0x%0x",
-			    (u_int32_t)ntohl(dp0->ip6r0_reserved));
+			    EXTRACT_32BITS(&dp0->ip6r0_reserved));
 		}
 
 		if (len % 2 == 1)
@@ -95,7 +94,7 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 		for (i = 0; i < len; i++) {
 			if ((u_char *)(addr + 1) > ep)
 				goto trunc;
-		
+
 			printf(", [%d]%s", i, ip6addr_string(addr));
 			addr++;
 		}
@@ -110,6 +109,6 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 
  trunc:
 	fputs("[|srcrt]", stdout);
-	return 65535;		/* XXX */
+	return -1;
 }
 #endif /* INET6 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbutil.c,v 1.5 2002/05/31 09:45:46 itojun Exp $	*/
+/*	$NetBSD: smbutil.c,v 1.6 2004/09/27 23:04:25 dyoung Exp $	*/
 
 /*
  * Copyright (C) Andrew Tridgell 1995-1999
@@ -15,27 +15,18 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/smbutil.c,v 1.21 2002/04/26 05:12:40 guy Exp";
+static const char rcsid[] _U_ =
+     "@(#) Header: /tcpdump/master/tcpdump/smbutil.c,v 1.26.2.2 2003/11/16 08:51:56 guy Exp";
 #else
-__RCSID("$NetBSD: smbutil.c,v 1.5 2002/05/31 09:45:46 itojun Exp $");
+__RCSID("$NetBSD: smbutil.c,v 1.6 2004/09/27 23:04:25 dyoung Exp $");
 #endif
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <tcpdump-stdinc.h>
 
-#include <netinet/in.h>
-
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef TIME_WITH_SYS_TIME
-#include <time.h>
-#endif
 
 #include "interface.h"
 #include "extract.h"
@@ -268,10 +259,10 @@ print_asc(const unsigned char *buf, int len)
 	safeputchar(buf[i]);
 }
 
-static char *
+static const char *
 name_type_str(int name_type)
 {
-    char *f = NULL;
+    const char *f = NULL;
 
     switch (name_type) {
     case 0:    f = "Workstation"; break;
@@ -329,9 +320,9 @@ print_data(const unsigned char *buf, int len)
 
 
 static void
-write_bits(unsigned int val, char *fmt)
+write_bits(unsigned int val, const char *fmt)
 {
-    char *p = fmt;
+    const char *p = fmt;
     int i = 0;
 
     while ((p = strchr(fmt, '|'))) {
@@ -372,7 +363,7 @@ unistr(const u_char *s, int *len)
 	*len = 1;
     }
 
-    while (l < (sizeof(buf) - 1) && s[0] && s[1] == 0) {
+    while (l < (int)(sizeof(buf) - 1) && s[0] && s[1] == 0) {
 	buf[l] = s[0];
 	s += 2;
 	l++;
@@ -387,7 +378,7 @@ static const u_char *
 smb_fdata1(const u_char *buf, const char *fmt, const u_char *maxbuf)
 {
     int reverse = 0;
-    char *attrib_fmt = "READONLY|HIDDEN|SYSTEM|VOLUME|DIR|ARCHIVE|";
+    const char *attrib_fmt = "READONLY|HIDDEN|SYSTEM|VOLUME|DIR|ARCHIVE|";
     int len;
 
     while (*fmt && buf<maxbuf) {
@@ -412,8 +403,12 @@ smb_fdata1(const u_char *buf, const char *fmt, const u_char *maxbuf)
 
 	    p = strchr(++fmt, '}');
 	    l = PTR_DIFF(p, fmt);
+
+	    if ((unsigned int)l > sizeof(bitfmt) - 1)
+		    l = sizeof(bitfmt)-1;
+
 	    strncpy(bitfmt, fmt, l);
-	    bitfmt[l] = 0;
+	    bitfmt[l] = '\0';
 	    fmt = p + 1;
 	    write_bits(buf[0], bitfmt);
 	    buf++;
@@ -588,19 +583,21 @@ smb_fdata1(const u_char *buf, const char *fmt, const u_char *maxbuf)
 	case 'T':
 	  {
 	    time_t t;
-	    int x;
+	    struct tm *lt;
+	    const char *tstring;
+	    u_int32_t x;
 	    x = EXTRACT_LE_32BITS(buf);
 
 	    switch (atoi(fmt + 1)) {
 	    case 1:
-		if (x == 0 || x == -1 || x == 0xFFFFFFFF)
+		if (x == 0 || x == 0xFFFFFFFF)
 		    t = 0;
 		else
 		    t = make_unix_date(buf);
 		buf += 4;
 		break;
 	    case 2:
-		if (x == 0 || x == -1 || x == 0xFFFFFFFF)
+		if (x == 0 || x == 0xFFFFFFFF)
 		    t = 0;
 		else
 		    t = make_unix_date2(buf);
@@ -611,7 +608,15 @@ smb_fdata1(const u_char *buf, const char *fmt, const u_char *maxbuf)
 		buf += 8;
 		break;
 	    }
-	    printf("%s", t ? asctime(localtime(&t)) : "NULL\n");
+	    if (t != 0) {
+		lt = localtime(&t);
+		if (lt != NULL)
+		    tstring = asctime(lt);
+		else
+		    tstring = "(Can't convert time)\n";
+	    } else
+		tstring = "NULL\n";
+	    printf("%s", tstring);
 	    fmt++;
 	    while (isdigit((unsigned char)*fmt))
 		fmt++;
@@ -681,7 +686,7 @@ smb_fdata(const u_char *buf, const char *fmt, const u_char *maxbuf)
 		return(buf);
 	    memset(s, 0, sizeof(s));
 	    p = strchr(fmt, ']');
-	    if (p - fmt + 1 > sizeof(s)) {
+	    if ((size_t)(p - fmt + 1) > sizeof(s)) {
 		/* overrun */
 		return(buf);
 	    }
@@ -808,7 +813,7 @@ err_code_struct hard_msgs[] = {
 
 static struct {
     int code;
-    char *class;
+    const char *class;
     err_code_struct *err_msgs;
 } err_classes[] = {
     { 0, "SUCCESS", NULL },

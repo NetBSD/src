@@ -1,6 +1,6 @@
-/*	$NetBSD: timed.h,v 1.2 2003/08/07 09:21:13 agc Exp $	*/
+/*	$NetBSD: timed.h,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/timed.h,v 1.3 2000/12/17 23:07:51 guy Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/timed.h,v 1.5 2002/12/11 07:14:12 guy Exp (LBL) */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,14 +43,14 @@
 #define ANYADDR 	NULL
 
 struct tsp {
-	u_char	tsp_type;
-	u_char	tsp_vers;
-	u_short	tsp_seq;
+	u_int8_t	tsp_type;
+	u_int8_t	tsp_vers;
+	u_int16_t	tsp_seq;
 	union {
 		struct timeval tspu_time;
-		char tspu_hopcnt;
+		int8_t tspu_hopcnt;
 	} tsp_u;
-	char tsp_name[256];
+	int8_t tsp_name[256];
 };
 
 #define	tsp_time	tsp_u.tspu_time
