@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.40 2000/07/27 03:45:02 cgd Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.41 2000/07/27 03:57:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.40 2000/07/27 03:45:02 cgd Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.41 2000/07/27 03:57:50 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,12 +223,18 @@ main(argc, argv)
 		usage();
 
 	/* get group and owner id's */
-	if (group && !(gp = getgrnam(group)) && !isdigit((unsigned char)*group))
-		errx(1, "unknown group %s", group);
-	gid = (group) ? ((gp) ? gp->gr_gid : atoi(group)) : -1;
-	if (owner && !(pp = getpwnam(owner)) && !isdigit((unsigned char)*owner))
-		errx(1, "unknown user %s", owner);
-	uid = (owner) ? ((pp) ? pp->pw_uid : atoi(owner)) : -1;
+	if (unpriv)
+		uid = gid = -1;
+	else {
+		if (group && !(gp = getgrnam(group)) &&
+		    !isdigit((unsigned char)*group))
+			errx(1, "unknown group %s", group);
+		gid = (group) ? ((gp) ? gp->gr_gid : atoi(group)) : -1;
+		if (owner && !(pp = getpwnam(owner)) &&
+		    !isdigit((unsigned char)*owner))
+			errx(1, "unknown user %s", owner);
+		uid = (owner) ? ((pp) ? pp->pw_uid : atoi(owner)) : -1;
+	}
 
 	if (dodir) {
 		for (; *argv != NULL; ++argv)
@@ -251,7 +257,7 @@ main(argc, argv)
 		if (stat(*argv, &from_sb))
 			err(1, "%s", *argv);
 		if (!S_ISREG(to_sb.st_mode))
-			errx(1, "%s: %s", to_name, strerror(EFTYPE));
+			errx(1, "%s: not a regular file", to_name);
 		if (!dolink && to_sb.st_dev == from_sb.st_dev &&
 		    to_sb.st_ino == from_sb.st_ino)
 			errx(1, "%s and %s are the same file", *argv, to_name);
@@ -359,7 +365,7 @@ install(from_name, to_name, fset, flags)
 		if (stat(from_name, &from_sb))
 			err(1, "%s", from_name);
 		if (!S_ISREG(from_sb.st_mode))
-			errx(1, "%s: %s", from_name, strerror(EFTYPE));
+			errx(1, "%s: not a regular file", to_name);
 		/* Build the target path. */
 		if (flags & DIRECTORY) {
 			(void)snprintf(pathbuf, sizeof(pathbuf), "%s/%s",
@@ -442,16 +448,14 @@ install(from_name, to_name, fset, flags)
 		  err(1, "stripping %s", to_name);
 	}
 
-	if (!unpriv) {
-		/*
-		 * Set owner, group, mode for target; do the chown first,
-		 * chown may lose the setuid bits.
-		 */
-		if ((gid != -1 || uid != -1) && fchown(to_fd, uid, gid)) {
-			serrno = errno;
-			(void)unlink(to_name);
-			errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
-		}
+	/*
+	 * Set owner, group, mode for target; do the chown first,
+	 * chown may lose the setuid bits.
+	 */
+	if ((gid != -1 || uid != -1) && fchown(to_fd, uid, gid)) {
+		serrno = errno;
+		(void)unlink(to_name);
+		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
 	}
 	if (fchmod(to_fd, mode)) {
 		serrno = errno;
@@ -660,7 +664,7 @@ install_dir(path)
 	if (((gid != -1 || uid != -1) && chown(path, uid, gid)) ||
             chmod(path, mode)) {
                 warn("%s", path);
-        }
+	}
 }
 
 /*
