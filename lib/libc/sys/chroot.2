@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chroot.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: chroot.2,v 1.4 1993/11/29 21:25:02 jtc Exp $
+.\"	$Id: chroot.2,v 1.5 1994/04/19 00:10:56 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt CHROOT 2
@@ -75,8 +75,11 @@ A component of the path name is not a directory.
 .It Bq Er EINVAL
 The pathname contains a character with the high-order bit set.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 255 characters,
-or an entire path name exceeded 1023 characters.
+A component of a pathname exceeded 
+.Dv {NAME_MAX}
+characters, or an entire path name exceeded 
+.Dv {PATH_MAX}
+characters.
 .It Bq Er ENOENT
 The named directory does not exist.
 .It Bq Er EACCES
