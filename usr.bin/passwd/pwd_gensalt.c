@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.9 2002/11/16 04:41:50 itojun Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.10 2003/07/14 11:54:06 itojun Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pwd_gensalt.c,v 1.9 2002/11/16 04:41:50 itojun Exp $");
+__RCSID("$NetBSD: pwd_gensalt.c,v 1.10 2003/07/14 11:54:06 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -124,7 +124,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 			rounds = 4;
 		strlcpy(salt, bcrypt_gensalt(rounds), max);
 	} else {
-		strcpy(salt, ":");
+		strlcpy(salt, ":", max);
 		warnx("Unknown option %s.", now);
 	}
 
