@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 1998/10/01 00:42:37 jonathan Exp $	*/
+/*	$NetBSD: trap.h,v 1.9.2.1 1998/10/15 03:25:09 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,20 +43,6 @@
  */
 
 /*
- * special trap-handling support
- */
-
-/* Return the resulting PC as if the branch was executed.  */
-extern u_int MachEmulateBranch  __P((u_int* regs, u_int instPC,
-				     u_int fpcCSR, int allowNonBranch));
-
-#ifdef DEBUG
-extern int cpu_singlestep __P((register struct proc *p)); 
-extern int kdbpeek __P((vm_offset_t addr));
-#endif
-
-
-/*
  * Trap codes
  * also known in trap.c for name strings
  */
@@ -85,13 +71,3 @@ extern int kdbpeek __P((vm_offset_t addr));
 #define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
-
-#ifdef _KERNEL
-extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
-		u_int causeReg));
-#endif /* _KERNEL */
-
-#ifdef _KERNEL
-extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
-		u_int causeReg));
-#endif /* _KERNEL */

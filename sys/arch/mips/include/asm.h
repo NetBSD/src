@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 1997/07/20 09:47:03 jonathan Exp $	*/
+/*	$NetBSD: asm.h,v 1.13.10.1 1998/10/15 03:25:08 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,18 +58,52 @@
 #ifndef _MIPS_ASM_H
 #define _MIPS_ASM_H
 
-#include <machine/regdef.h>
+/*
+ * Symbolic register names
+ */
+#define zero	$0	/* always zero */
+#define AT	$at	/* assembler temporary */
+#define v0	$2	/* return value */
+#define v1	$3
+#define a0	$4	/* argument registers */
+#define a1	$5
+#define a2	$6
+#define a3	$7
+#define t0	$8	/* temp registers (not saved across subroutine calls) */
+#define t1	$9
+#define t2	$10
+#define t3	$11
+#define t4	$12
+#define t5	$13
+#define t6	$14
+#define t7	$15
+#define s0	$16	/* saved across subroutine calls (callee saved) */
+#define s1	$17
+#define s2	$18
+#define s3	$19
+#define s4	$20
+#define s5	$21
+#define s6	$22
+#define s7	$23
+#define t8	$24	/* two more temporary registers */
+#define t9	$25
+#define k0	$26	/* kernel temporary */
+#define k1	$27
+#define gp	$28	/* global pointer */
+#define sp	$29	/* stack pointer */
+#define s8	$30	/* one more callee saved */
+#define ra	$31	/* return address */
 
 /*
  * Define -pg profile entry code.
  * XXX assume .set noreorder for kernel, .set reorder for user code.
  */
-#define _KERN_MCOUNT \
-	.set noat; \
-	move $1,$31; \
-	jal _mcount; \
-	subu sp,sp,8; \
-	.set at;
+#define _KERN_MCOUNT		\
+	.set	noat;		\
+	move	$1,$31;		\
+	jal	_mcount;	\
+	subu	sp,sp,8;	\
+	.set at
 
 
 #ifdef GPROF
@@ -93,97 +127,93 @@
 #endif
 
 /*
- * LEAF(x)
- *
- *	Declare a leaf routine.
+ * LEAF
+ *	A leaf routine does
+ *	- call no other function,
+ *	- never use any register that callee-saved (S0-S8), and
+ *	- not use any local stack storage.
  */
-#define LEAF(x) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, 0, ra; \
+#define LEAF(x)				\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame sp, 0, ra;		\
 	MCOUNT
 
 /*
- * NLEAF(x)
- *
- *	Declare a non-profiled leaf routine.
+ * LEAF_NOPROFILE
+ *	No profilable leaf routine.
  */
-#define NLEAF(x) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, 0, ra
+#define LEAF_NOPROFILE(x)		\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame	sp, 0, ra
 
 /*
- * ALEAF -- declare alternate entry to a leaf routine.
+ * ALIAS
+ *	Global alias for a function, or alternate entry point
  */
+#define	ALIAS(x)			\
+	.globl	_C_LABEL(x);		\
+_C_LABEL(x):
+
 #ifdef USE_AENT
-#define AENT(x) \
+#define AENT(x)				\
 	.aent	x, 0
 #else
 #define AENT(x)
 #endif
-#define	ALEAF(x)					\
-	.globl	_C_LABEL(x);				\
-	AENT (_C_LABEL(x))				\
-_C_LABEL(x):
 
 /*
- * NON_LEAF(x)
- *
- *	Declare a non-leaf routine (a routine that makes other C calls).
+ * NESTED(x)
+ *	A function calls other functions and needs
+ *	therefore stack space to save/restore registers.
  */
-#define NON_LEAF(x, fsize, retpc) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, fsize, retpc; \
+#define NESTED(x, fsize, retpc)		\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0; 	\
+_C_LABEL(x): ;				\
+	.frame	sp, fsize, retpc;	\
 	MCOUNT
 
 /*
- * NNON_LEAF(x)
- *
- *	Declare a non-profiled non-leaf routine
- *	(a routine that makes other C calls).
+ * NESTED_NOPROFILE(x)
+ *	No profilable nested routine.
  */
-#define NNON_LEAF(x, fsize, retpc) \
-	.globl _C_LABEL(x); \
-	.ent _C_LABEL(x), 0; \
-_C_LABEL(x): ; \
-	.frame sp, fsize, retpc
+#define NESTED_NOPROFILE(x, fsize, retpc)	\
+	.globl	_C_LABEL(x);		\
+	.ent	_C_LABEL(x), 0;		\
+_C_LABEL(x): ;				\
+	.frame	sp, fsize, retpc
 
 /*
  * END(x)
- *
  *	Mark end of a procedure.
  */
 #define END(x) \
 	.end _C_LABEL(x)
 
-#define STAND_FRAME_SIZE	24
-#define STAND_RA_OFFSET		20
-
 /*
  * Macros to panic and printf from assembly language.
  */
-#define PANIC(msg) \
-	la	a0, 9f; \
-	jal	_C_LABEL(panic); \
+#define PANIC(msg)			\
+	la	a0, 9f;			\
+	jal	_C_LABEL(panic);	\
 	MSG(msg)
 
-#define	PRINTF(msg) \
-	la	a0, 9f; \
-	jal	_C_LABEL(printf); \
+#define	PRINTF(msg)			\
+	la	a0, 9f;			\
+	jal	_C_LABEL(printf);	\
 	MSG(msg)
 
-#define	MSG(msg) \
-	.rdata; \
-9:	.asciiz	msg; \
+#define	MSG(msg)			\
+	.rdata;				\
+9:	.asciiz	msg;			\
 	.text
 
-#define ASMSTR(str) \
-	.asciiz str; \
+#define ASMSTR(str)			\
+	.asciiz str;			\
 	.align	3
 
 #endif /* _MIPS_ASM_H */
