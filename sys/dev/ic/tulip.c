@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.3 1999/09/01 20:11:19 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.4 1999/09/01 20:56:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -631,9 +631,23 @@ tlp_watchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct tulip_softc *sc = ifp->if_softc;
+	int doing_setup, doing_transmit;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-	ifp->if_oerrors++;
+	doing_setup = (sc->sc_flags & TULIPF_DOING_SETUP);
+	doing_transmit = (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL);
+
+	if (doing_setup && doing_transmit) {
+		printf("%s: filter setup and transmit timeout\n",
+		    sc->sc_dev.dv_xname);
+		ifp->if_oerrors++;
+	} else if (doing_transmit) {
+		printf("%s: transmit timeout\n", sc->sc_dev.dv_xname);
+		ifp->if_oerrors++;
+	} else if (doing_setup)
+		printf("%s: filter setup timeout\n", sc->sc_dev.dv_xname);
+	else
+		printf("%s: spurious watchdog timeout\n", sc->sc_dev.dv_xname);
+
 	(void) tlp_init(sc);
 
 	/* Try to get more packets going. */
@@ -1091,6 +1105,15 @@ tlp_txintr(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
+	 * If we were doing a filter setup, check to see if it completed.
+	 */
+	if (sc->sc_flags & TULIPF_DOING_SETUP) {
+		TULIP_CDSDSYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		if ((sc->sc_setup_desc.td_status & TDSTAT_OWN) == 0)
+			sc->sc_flags &= ~TULIPF_DOING_SETUP;
+	}
+
+	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames that have been transmitted.
 	 */
@@ -1154,7 +1177,7 @@ tlp_txintr(sc)
 	 * If there are no more pending transmissions, cancel the watchdog
 	 * timer.
 	 */
-	if (txs == NULL)
+	if (txs == NULL && (sc->sc_flags & TULIPF_DOING_SETUP) == 0)
 		ifp->if_timer = 0;
 
 	/*
@@ -1497,7 +1520,7 @@ tlp_stop(sc, drain)
 		tlp_rxdrain(sc);
 	}
 
-	sc->sc_flags &= ~TULIPF_WANT_SETUP;
+	sc->sc_flags &= ~(TULIPF_WANT_SETUP|TULIPF_DOING_SETUP);
 
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
@@ -1740,7 +1763,8 @@ tlp_filter_setup(sc)
 	 * If there are transmissions pending, wait until they have
 	 * completed.
 	 */
-	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL) {
+	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL ||
+	    (sc->sc_flags & TULIPF_DOING_SETUP) != 0) {
 		sc->sc_flags |= TULIPF_WANT_SETUP;
 		DPRINTF(("%s: tlp_filter_setup: deferring\n",
 		    sc->sc_dev.dv_xname));
@@ -1910,7 +1934,7 @@ tlp_filter_setup(sc)
 	sc->sc_setup_desc.td_ctl =
 	    (TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
 	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_FS | TDCTL_Tx_LS |
-	    TDCTL_CH;
+	    TDCTL_Tx_IC | TDCTL_CH;
 	sc->sc_setup_desc.td_status = TDSTAT_OWN;
 	TULIP_CDSDSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1928,6 +1952,8 @@ tlp_filter_setup(sc)
 	 */
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
 
+	sc->sc_flags |= TULIPF_DOING_SETUP;
+
 	/*
 	 * Kick the transmitter; this will cause the Tulip to
 	 * read the setup descriptor.
@@ -1935,18 +1961,9 @@ tlp_filter_setup(sc)
 	/* XXX USE AUTOPOLLING? */
 	TULIP_WRITE(sc, CSR_TXPOLL, TXPOLL_TPD);
 
-	/*
-	 * Now wait for the OWN bit to clear.
-	 */
-	for (cnt = 0; cnt < 1000; cnt++) {
-		TULIP_CDSDSYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		if ((sc->sc_setup_desc.td_status & TDSTAT_OWN) == 0)
-			break;
-		delay(10);
-	}
-	if (sc->sc_setup_desc.td_status & TDSTAT_OWN)
-		printf("%s: filter setup failed to complete\n",
-		    sc->sc_dev.dv_xname);
+	/* Set up a watchdog timer in case the chip flakes out. */
+	ifp->if_timer = 5;
+
 	DPRINTF(("%s: tlp_filter_setup: returning\n", sc->sc_dev.dv_xname));
 }
 
