@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.30 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.31 2000/03/27 16:58:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,7 +92,6 @@ lock_data_t uvn_sync_lock;			/* locks sync operation */
 
 static int		   uvn_asyncget __P((struct uvm_object *, voff_t,
 					    int));
-struct uvm_object 	  *uvn_attach __P((void *, vm_prot_t));
 static void		   uvn_cluster __P((struct uvm_object *, voff_t,
 					   voff_t *, voff_t *));
 static void                uvn_detach __P((struct uvm_object *));
