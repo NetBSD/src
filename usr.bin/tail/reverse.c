@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)reverse.c	5.3 (Berkeley) 2/12/92";*/
-static char rcsid[] = "$Id: reverse.c,v 1.4 1994/04/24 20:19:18 deraadt Exp $";
+static char rcsid[] = "$Id: reverse.c,v 1.5 1994/11/23 07:11:03 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,16 +109,15 @@ r_reg(fp, style, off, sbp)
 	register int size;
 	register int llen;
 	register char *p;
-	int fd;
+	char *start;
 
 	if (!(size = sbp->st_size))
 		return;
 
-	fd = fileno(fp);
-	if ((p =
-	    mmap(NULL, size, PROT_READ, 0, fd, (off_t)0)) == (caddr_t)-1)
+	if ((start = mmap(NULL, (size_t)size,
+	   PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1)
 		err("%s", strerror(errno));
-	p += size - 1;
+	p = start + size - 1;
 
 	if (style == RBYTES && off < size)
 		size = off;
@@ -135,6 +134,8 @@ r_reg(fp, style, off, sbp)
 		}
 	if (llen)
 		WR(p, llen);
+	if (munmap(start, (size_t)sbp->st_size))
+		err("%s", strerror(errno));
 }
 
 typedef struct bf {
