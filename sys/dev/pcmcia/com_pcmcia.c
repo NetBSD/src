@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.3 1997/07/30 18:00:27 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.4 1997/07/31 00:43:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -89,9 +89,6 @@ com_pcmcia_match(parent, match, aux)
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
-
-	printf("com_pcmcia_match: %x %x %d\n", pa->manufacturer,
-	       pa->product, pa->pf->number);
 
 	if ((pa->manufacturer == PCMCIA_MANUFACTURER_3COM) &&
 	    (pa->product == PCMCIA_PRODUCT_3COM_3C562) &&
