@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.11 2002/02/19 23:11:28 lukem Exp $	*/
+/*	$NetBSD: rcache.c,v 1.11.2.1 2003/06/16 14:03:21 grant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.11 2002/02/19 23:11:28 lukem Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.11.2.1 2003/06/16 14:03:21 grant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ initcache(int cachesize, int readblksize)
 
 	nblksread = (readblksize + ufsib->ufs_bsize - 1) / ufsib->ufs_bsize;
 	if(cachesize == -1) {	/* Compute from memory available */
-		int usermem;
+		unsigned int usermem;
 		int mib[2] = { CTL_HW, HW_USERMEM };
 
 		len = sizeof(usermem);
