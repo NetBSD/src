@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 1997/10/20 00:45:05 fvdl Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 1997/10/20 09:02:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,7 +128,7 @@
 /* PTDPTDI<<PDSHIFT - UPAGES*NBPG */
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)0xefbfe000)
 /* PTDPTDI<<PDSHIFT + PTDPTDI<<PGSHIFT */
-#define VM_MAX_ADDRESS		((vm_offset_t)0xeffdf000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0xeffbf000)
 /* KPTDI<<PDSHIFT */
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf0000000)
 /* APTDPTDI<<PDSHIFT */
