@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.46 2000/09/26 18:22:12 jeffs Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.47 2000/10/04 08:46:21 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,49 +358,10 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	jal	_C_LABEL(trap)
 	mtc0	t0, MIPS_COP_0_STATUS
-/*
- * Restore user registers and return. NOTE: interrupts are enabled.
- */
-	addu	a1, sp, CALLFRAME_SIZ
-	lw	a0, FRAME_SR(a1)
-	lw	t0, FRAME_MULLO(a1)
-	lw	t1, FRAME_MULHI(a1)
-	mtc0	a0, MIPS_COP_0_STATUS	# this should disable interrupts
-	mtlo	t0
-	mthi	t1
-	move	k1, a1
-	lw	k0, FRAME_EPC(k1)	# might be changed in trap()
-	lw	AT, FRAME_AST(k1)
-	lw	v0, FRAME_V0(k1)
-	lw	v1, FRAME_V1(k1)
-	lw	a0, FRAME_A0(k1)
-	lw	a1, FRAME_A1(k1)
-	lw	a2, FRAME_A2(k1)
-	lw	a3, FRAME_A3(k1)
-	lw	t0, FRAME_T0(k1)
-	lw	t1, FRAME_T1(k1)
-	lw	t2, FRAME_T2(k1)
-	lw	t3, FRAME_T3(k1)
-	lw	t4, FRAME_T4(k1)
-	lw	t5, FRAME_T5(k1)
-	lw	t6, FRAME_T6(k1)
-	lw	t7, FRAME_T7(k1)
-	lw	s0, FRAME_S0(k1)
-	lw	s1, FRAME_S1(k1)
-	lw	s2, FRAME_S2(k1)
-	lw	s3, FRAME_S3(k1)
-	lw	s4, FRAME_S4(k1)
-	lw	s5, FRAME_S5(k1)
-	lw	s6, FRAME_S6(k1)
-	lw	s7, FRAME_S7(k1)
-	lw	t8, FRAME_T8(k1)
-	lw	t9, FRAME_T9(k1)
-	lw	gp, FRAME_GP(k1)
-	lw	sp, FRAME_SP(k1)
-	lw	s8, FRAME_S8(k1)
-	lw	ra, FRAME_RA(k1)
-	j	k0				# return to interrupted point
-	rfe
+
+	la	ra, _C_LABEL(mips1_xcpt_return)
+	j	ra				# pretend function return
+	nop
 	.set	at
 END(mips1_UserGenException)
 
@@ -474,51 +435,10 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
  */
 	jal	_C_LABEL(syscall)
 	mtc0	t0, MIPS_COP_0_STATUS
-/*
- * Restore user registers and return. NOTE: interrupts are enabled.
- */
-	.set	noat
-	addu	a1, sp, CALLFRAME_SIZ
-	lw	a0, FRAME_SR(a1)
-	lw	t0, FRAME_MULLO(a1)
-	lw	t1, FRAME_MULHI(a1)
-	mtc0	a0, MIPS_COP_0_STATUS		# IEc == 0, disable intr.
-	mtlo	t0
-	mthi	t1
-	move	k1, a1
-	lw	k0, FRAME_EPC(k1)		# might be changed in syscall()
-	lw	AT, FRAME_AST(k1)
-	.set	at
-	lw	v0, FRAME_V0(k1)
-	lw	v1, FRAME_V1(k1)
-	lw	a0, FRAME_A0(k1)
-	lw	a1, FRAME_A1(k1)
-	lw	a2, FRAME_A2(k1)
-	lw	a3, FRAME_A3(k1)
-	lw	t0, FRAME_T0(k1)
-	lw	t1, FRAME_T1(k1)
-	lw	t2, FRAME_T2(k1)
-	lw	t3, FRAME_T3(k1)
-	lw	t4, FRAME_T4(k1)
-	lw	t5, FRAME_T5(k1)
-	lw	t6, FRAME_T6(k1)
-	lw	t7, FRAME_T7(k1)
-	lw	s0, FRAME_S0(k1)
-	lw	s1, FRAME_S1(k1)
-	lw	s2, FRAME_S2(k1)
-	lw	s3, FRAME_S3(k1)
-	lw	s4, FRAME_S4(k1)
-	lw	s5, FRAME_S5(k1)
-	lw	s6, FRAME_S6(k1)
-	lw	s7, FRAME_S7(k1)
-	lw	t8, FRAME_T8(k1)
-	lw	t9, FRAME_T9(k1)
-	lw	gp, FRAME_GP(k1)
-	lw	sp, FRAME_SP(k1)
-	lw	s8, FRAME_S8(k1)
-	lw	ra, FRAME_RA(k1)
-	j	k0				# return to syscall point
-	rfe
+
+	la	ra, _C_LABEL(mips1_xcpt_return)
+	j	ra				# pretend function return
+	nop
 END(mips1_SystemCall)
 
 /*
@@ -1533,6 +1453,7 @@ LEAF(mips1_proc_trampoline)
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
+XLEAF(mips1_xcpt_return)
 	addu	a1, sp, CALLFRAME_SIZ	# a1 points exception frame
 	lw	a0, FRAME_SR(a1)
 	lw	t0, FRAME_MULLO(a1)
