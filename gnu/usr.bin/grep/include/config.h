@@ -297,7 +297,7 @@
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.5"
+#define VERSION "2.5.1"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
