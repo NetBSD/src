@@ -1,4 +1,4 @@
-.\"	$NetBSD: radio.4,v 1.4 2002/01/01 22:54:11 wiz Exp $
+.\"	$NetBSD: radio.4,v 1.5 2002/01/02 02:08:02 augustss Exp $
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
 .\"	$OpenBSD: radio.4,v 1.3 2001/12/05 10:58:54 mickey Exp $
 .\"
@@ -32,8 +32,6 @@
 .Nm radio
 .Nd device-independent radio driver layer
 .Sh SYNOPSIS
-.Cd option RADIO_TEA5759
-.Pp
 .Cd "radio* at az?"
 .Cd "radio* at mr?"
 .Cd "radio* at rt?"
@@ -49,17 +47,6 @@ The
 driver provides support for various FM radio cards.
 It provides an uniform programming interface layer above different underlying
 radio hardware drivers.
-.Pp
-Philips Semiconductors released two almost identical chips TEA5757 and
-TEA5759.
-The TEA5757 is used in FM-standards in which the local oscillator frequency
-is above the radio frequency (e.g. European and American standards).
-The TEA5759 is the version in which the oscillator frequency is below
-the radio frequency (e.g. Japanese standards).
-The option
-.Va RADIO_TEA5759
-changes the algotithm of frequency calculation for the tea5757 based cards
-to conform with the Japanese standards.
 .Pp
 For radio tuner controlling there is a single device file available:
 .Pa /dev/radio .
@@ -186,9 +173,3 @@ The
 .Nm
 driver was written by Vladimir Popov and Maxim Tsyplakov.
 The man page was written by Vladimir Popov.
-.Sh BUGS
-You can have only one card of the same type.
-For example, if you have two aztech FM tuners, the first card with jumper
-set to port 0x358 and the second one - to 0x350, you can use only one
-aztech card (in the kernel, that is) either with port 0x350 or 0x358.
-Don't even try to compile support for the second card into the kernel.
