@@ -1,4 +1,5 @@
-#	$NetBSD: LOADADDR,v 1.1.1.1 1996/02/29 11:36:48 leo Exp $
+#	$NetBSD: LOADADDR,v 1.2 2001/10/13 19:55:07 leo Exp $
 
-LOADADDR=	0x20000
-CPPFLAGS+=	-DLOADADDR="${LOADADDR}"
+LOADADDR=	0x20000		# Load address of 2nd level boot
+LOADADDR3=	0x28000		# Load address of 3rd level boot
+CPPFLAGS+=	-DLOADADDR="${LOADADDR}" -DLOADADDR3="${LOADADDR3}"
