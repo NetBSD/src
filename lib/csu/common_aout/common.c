@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.13 1998/10/19 01:35:00 matt Exp $	*/
+/*	$NetBSD: common.c,v 1.14 1999/01/28 23:59:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef DYNAMIC
 
 typedef int (*rtld_entry_fn) __P((int, struct crt_ldso *));
-static struct ld_entry	*ld_entry;
+static struct ld_entry	**ld_entry;
 
 static void
 __load_rtld(dp)
@@ -134,6 +134,7 @@ __load_rtld(dp)
 	/* Call Sun's ld.so entry point: version 1, offset crt */
 	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
 #else
+	ld_entry = &crt.crt_ldentry;
 	entry = (rtld_entry_fn)(crt.crt_ba + sizeof hdr);
 	if ((*entry)(CRT_VERSION_BSD_4, &crt) == -1) {
 		/* Feeble attempt to deal with out-dated ld.so */
@@ -143,11 +144,10 @@ __load_rtld(dp)
 		if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
 			_FATAL("ld.so failed\n");
 		}
-		ld_entry = dp->d_entry;
+		ld_entry = &dp->d_entry;
 		return;
 	}
-	ld_entry = crt.crt_ldentry;
-	atexit(ld_entry->dlexit);
+	atexit((*ld_entry)->dlexit);
 #endif
 
 #if defined(sun) && defined(DUPZFD)
@@ -168,20 +168,20 @@ dlopen(name, mode)
 	const char	*name;
 	int	mode;
 {
-	if (ld_entry == NULL)
+	if ((*ld_entry) == NULL)
 		return NULL;
 
-	return (ld_entry->dlopen)(name, mode);
+	return ((*ld_entry)->dlopen)(name, mode);
 }
 
 int
 dlclose(fd)
 	void	*fd;
 {
-	if (ld_entry == NULL)
+	if ((*ld_entry) == NULL)
 		return -1;
 
-	return (ld_entry->dlclose)(fd);
+	return ((*ld_entry)->dlclose)(fd);
 }
 
 void *
@@ -189,10 +189,10 @@ dlsym(fd, name)
 	void	*fd;
 	const char	*name;
 {
-	if (ld_entry == NULL)
+	if ((*ld_entry) == NULL)
 		return NULL;
 
-	return (ld_entry->dlsym)(fd, name);
+	return ((*ld_entry)->dlsym)(fd, name);
 }
 
 int
@@ -200,10 +200,10 @@ dlctl(fd, cmd, arg)
 	void	*fd, *arg;
 	int	cmd;
 {
-	if (ld_entry == NULL)
+	if ((*ld_entry) == NULL)
 		return -1;
 
-	return (ld_entry->dlctl)(fd, cmd, arg);
+	return ((*ld_entry)->dlctl)(fd, cmd, arg);
 }
 
 char *
@@ -211,8 +211,8 @@ dlerror()
 {
 	int     error;
 
-	if (ld_entry == NULL ||
-	    (*ld_entry->dlctl)(NULL, DL_GETERRNO, &error) == -1)
+	if ((*ld_entry) == NULL ||
+	    (*(*ld_entry)->dlctl)(NULL, DL_GETERRNO, &error) == -1)
 		return "Service unavailable";
 
 	return ((char *)(error == 0 ? NULL : strerror(error)));
@@ -223,10 +223,10 @@ dladdr(addr, dli)
 	void	*addr;
 	Dl_info	*dli;
 {
-	if (ld_entry == NULL || ld_entry->dladdr == NULL)
+	if ((*ld_entry) == NULL || (*ld_entry)->dladdr == NULL)
 		return (0);
 
-	return (ld_entry->dladdr)(addr, dli);
+	return ((*ld_entry)->dladdr)(addr, dli);
 }
 
 /*
