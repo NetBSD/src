@@ -1,17 +1,21 @@
-#	$NetBSD: Makefile,v 1.18 1998/07/01 10:52:10 ragge Exp $
+#	$NetBSD: Makefile,v 1.19 1998/10/09 06:12:31 matt Exp $
 #
 
-INCPATH=-I. -I../../../../.. -I../../../.. -I../../.. -I../.. -I../../../lib/libsa
+
 
 CC=	cc
 AS=	as
 
 BINOWN=	bin
 BINGRP=	bin
-S=      ../../..
+S=	${.CURDIR}/../../..
 RELOC=	200000
 XXRPB=	1F4240
-CFLAGS+=-O ${INCPATH} -DSTANDALONE -DXXRPB=0x$(XXRPB)
+#NETOPTS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
+NETOPTS=	-DSUPPORT_BOOTPARAMS
+
+INCPATH=-I${.CURDIR} -I$S -I${.CURDIR}/../.. -I$S/lib/libsa
+CFLAGS+=-O ${INCPATH} -DSTANDALONE -DXXRPB=0x$(XXRPB) ${NETOPTS}
 
 DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o mfm.o rom.o romread.o \
 	scsi_low.o scsi_hi.o sd.o netio.o if_le.o if_qe.o if_ze.o
@@ -31,21 +35,21 @@ libsvax.a: ${SVAX}
 	ranlib $@
 
 urem.o:	../vax/urem.s
-	${CC} -x assembler-with-cpp -E ../vax/urem.s | as -o urem.o
+	${CC} -x assembler-with-cpp -E ${.IMPSRC} | as -o urem.o
 
 udiv.o:	../vax/udiv.s
-	${CC} -x assembler-with-cpp -E ../vax/udiv.s | as -o udiv.o
+	${CC} -x assembler-with-cpp -E ${.IMPSRC} | as -o udiv.o
 
 str.o:	str.s
-	${CC} -x assembler-with-cpp -E str.s | as -o str.o
+	${CC} -x assembler-with-cpp -E ${.IMPSRC} | as -o str.o
 
 # startups
 
 start.o: start.s
-	${CC} -x assembler-with-cpp -E start.s | as -o start.o
+	${CC} -x assembler-with-cpp -E ${.IMPSRC} | as -o start.o
 
 srt0.o:	srt0.s
-	${CC} -x assembler-with-cpp -E srt0.s | as -o srt0.o
+	${CC} -x assembler-with-cpp -E ${.IMPSRC} | as -o srt0.o
 
 # 
 
@@ -80,31 +84,31 @@ copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
 #
 
 hp.o:	hp.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 ra.o:	ra.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 autoconf.o:	autoconf.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 conf.o:	conf.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 boot.o:	boot.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 copy.o:	copy.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 romread.o:	romread.s
-	${CC} -x assembler-with-cpp -E romread.s | as -o romread.o
+	${CC} -x assembler-with-cpp -E ${.IMPSRC} | as -o romread.o
 
 init.o:	init.c
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 bootxx.o: bootxx.c 
-	${CC} -c ${CFLAGS} $*.c
+	${CC} -c ${CFLAGS} ${.IMPSRC}
 
 #
 install: boot xxboot
@@ -122,3 +126,4 @@ clean:
 	rm -f conf.o boot.o rom.o racopy.o srt0.o devopen.o rootcopy.o \
 	copy copy.o init.o str.o vers.o
 
+.include <bsd.prog.mk>
