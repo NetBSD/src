@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.18 2001/05/15 20:51:30 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.19 2001/06/11 19:34:12 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.17 2001/05/06 15:09:33 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.18 2001/05/15 20:51:04 he Exp 
  */
 
 /*
@@ -941,6 +941,7 @@
 
 /* D-Link Systems products */
 #define	PCI_PRODUCT_DLINK_DFE550TX	0x1002		/* DFE-550TX 10/100 Ethernet */
+#define	PCI_PRODUCT_DLINK_DFE530TXPLUS	0x1300		/* DFE-530TXPLUS 10/100 Ethernet */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID */
