@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.51 2000/06/05 15:19:42 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.51.2.1 2000/07/04 01:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -541,9 +541,16 @@ ncr53c9x_select(sc, ecb)
 	 * expecting to come back due to an interrupt, because it is
 	 * always possible that the interrupt may never happen.
 	 */
-	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&ecb->xs->xs_callout, (ecb->timeout * hz) / 1000,
+	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0) {
+		int timeout = ecb->timeout;
+
+		if (hz > 100 && timeout > 1000)
+			timeout = (timeout / 1000) * hz;
+		else
+			timeout = (timeout * hz) / 1000;
+		callout_reset(&ecb->xs->xs_callout, timeout,
 		    ncr53c9x_timeout, ecb);
+	}
 
 	/*
 	 * The docs say the target register is never reset, and I
@@ -2179,6 +2186,8 @@ ncr53c9x_abort(sc, ecb)
 	ecb->flags |= ECB_ABORT;
 
 	if (ecb == sc->sc_nexus) {
+		int timeout;
+
 		/*
 		 * If we're still selecting, the message will be scheduled
 		 * after selection is complete.
@@ -2189,7 +2198,12 @@ ncr53c9x_abort(sc, ecb)
 		/*
 		 * Reschedule timeout.
 		 */
-		callout_reset(&ecb->xs->xs_callout, (ecb->timeout * hz) / 1000,
+		timeout = ecb->timeout;
+		if (hz > 100 && timeout > 1000)
+			timeout = (timeout / 1000) * hz;
+		else
+			timeout = (timeout * hz) / 1000;
+		callout_reset(&ecb->xs->xs_callout, timeout,
 		    ncr53c9x_timeout, ecb);
 	} else {
 		/* The command should be on the nexus list */
