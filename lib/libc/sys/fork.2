@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: fork.2,v 1.2 1993/08/01 07:43:10 mycroft Exp $
+.\"	$Id: fork.2,v 1.3 1993/10/04 18:16:06 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt FORK 2
@@ -39,6 +39,7 @@
 .Nm fork
 .Nd create a new process
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <unistd.h>
 .Ft pid_t
 .Fn fork void
