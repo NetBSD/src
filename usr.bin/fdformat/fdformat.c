@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.3 1997/06/16 02:10:45 jtk Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.4 1997/10/18 14:48:22 lukem Exp $	*/
 /*-
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  *
@@ -36,16 +36,17 @@
  * fdformat: format a floppy diskette, using interface provided in
  * <sys/fdio.h>
  */
+#include <sys/types.h>
+#include <sys/fdio.h>
+#include <sys/ioctl.h>
 
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <limits.h>
-#include <sys/types.h>
-#include <sys/fdio.h>
-#include <err.h>
 #include "pathnames.h"
 
 char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
@@ -62,8 +63,10 @@ char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
 
 #define ALLPARMS (MASK_NBPS|MASK_NCYL|MASK_NSPT|MASK_NTRK|MASK_STEPSPERCYL|MASK_GAPLEN|MASK_FILLBYTE|MASK_XFER_RATE|MASK_INTERLEAVE)
 
-int confirm(int);
-int verify_track(int, int, int, struct fdformat_parms *, char *);
+int	confirm(int);
+int	main __P((int, char **));
+void	usage __P((void));
+int	verify_track(int, int, int, struct fdformat_parms *, char *);
 
 int
 confirm(int def)
@@ -136,7 +139,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	char *fdbuf = NULL, *trackbuf;
+	char *fdbuf = NULL, *trackbuf = NULL;
 	int errcnt = 0;
 	int verify = 1;
 	int ch;
@@ -148,7 +151,7 @@ main(int argc, char *argv[])
 	struct fdformat_cmd cmd;
 	char *filename = _PATH_FLOPPY_DEV;
 	int fd;
-	register int trk, cyl;
+	int trk, cyl;
 
 	while ((ch = getopt(argc, argv, "f:t:nB:C:S:T:P:G:F:X:I:")) != -1)
 		switch (ch) {
