@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2002/04/05 16:58:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2002/04/05 22:17:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2002/04/05 16:58:05 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2002/04/05 22:17:41 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2811,44 +2811,42 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t *pde;
 	pt_entry_t *pte, *ptes;
 	paddr_t pa;
-	boolean_t rv = FALSE;
-	int l1_ptype, l2_ptype;
 
-	PDEBUG(5, printf("pmap_extract: pmap=%p, va=V%08lx\n", pmap, va));
+	PDEBUG(5, printf("pmap_extract: pmap=%p, va=0x%08lx -> ", pmap, va));
 
-	/*
-	 * Get the pte for this virtual address.
-	 */
+	ptes = pmap_map_ptes(pmap);		/* locks pmap */
+
 	pde = pmap_pde(pmap, va);
-	ptes = pmap_map_ptes(pmap);
 	pte = &ptes[arm_btop(va)]; 
 
-	l1_ptype = *pde & L1_TYPE_MASK;
-
-	if (l1_ptype == L1_TYPE_S) {
-		/* Extract the physical address from the pde */
+	if (pmap_pde_section(pde)) {
 		pa = (*pde & L1_S_FRAME) | (va & L1_S_OFFSET);
-		rv = TRUE;
-	} else if (l1_ptype == L1_TYPE_C) {
+		PDEBUG(5, printf("section pa=0x%08lx\n", pa));
+		goto out;
+	} else if (pmap_pde_page(pde) == 0 || pmap_pte_v(pte) == 0) {
+		PDEBUG(5, printf("no mapping\n"));
+		goto failed;
+	}
 
-		l2_ptype = *pte & L2_TYPE_MASK;
+	if ((*pte & L2_TYPE_MASK) == L2_TYPE_L) {
+		pa = (*pte & L2_L_FRAME) | (va & L2_L_OFFSET);
+		PDEBUG(5, printf("large page pa=0x%08lx\n", pa));
+		goto out;
+	}
 
-		if (l2_ptype == L2_TYPE_L) {
-			/* Extract the physical address from the pte */
-			pa = (*pte & L2_L_FRAME) | (va & L2_L_OFFSET);
-			rv = TRUE;
-		} else if (l2_ptype == L2_TYPE_S) {
-			/* Extract the physical address from the pte */
-			pa = (*pte & L2_S_FRAME) | (va & L2_S_OFFSET);
-			rv = TRUE;
-		};
-	};
-	/* if `rv' is still false then it wasnt meant to be .. and return FALSE */
+	pa = (*pte & L2_S_FRAME) | (va & L2_S_OFFSET);
+	PDEBUG(5, printf("small page pa=0x%08lx\n", pa));
 
-	if (rv && (pap != NULL)) *pap = pa;	/* only return when valid */
+ out:
+	if (pap != NULL)
+		*pap = pa;
 
-	pmap_unmap_ptes(pmap);
-	return (rv);
+	pmap_unmap_ptes(pmap);			/* unlocks pmap */
+	return (TRUE);
+
+ failed:
+	pmap_unmap_ptes(pmap);			/* unlocks pmap */
+	return (FALSE);
 }
 
 
