@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.4 2003/04/26 10:24:58 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.5 2003/05/01 20:46:20 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -81,6 +81,7 @@ static int ksymsinited = 0;
 static void ksyms_hdr_init(caddr_t hdraddr);
 static void ksyms_sizes_calc(void);
 static int ksyms_isopen;
+static int ksyms_maxlen;
 #endif
 
 #ifdef KSYMS_DEBUG
@@ -189,8 +190,14 @@ addsymtab(char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 
 	/* Change all symbols to be absolute references */
 	sym = (Elf_Sym *)tab->sd_symstart;
-	for (i = 0; i < tab->sd_symsize/sizeof(Elf_Sym); i++)
+	for (i = 0; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
 		sym[i].st_shndx = SHN_ABS;
+		if (sym[i].st_name == 0)
+			continue;
+		j = strlen(sym[i].st_name + tab->sd_strstart) + 1;
+		if (j > ksyms_maxlen)
+			ksyms_maxlen = j;
+	}
 
 	CIRCLEQ_INSERT_HEAD(&symtab_queue, tab, sd_queue);
 }
@@ -392,14 +399,16 @@ addsym(Elf_Sym *sym, char *name)
 		printf("addsym: name %s val %lx\n", name, (long)sym->st_value);
 #endif
 	if (cursyms == NSAVEDSYMS || 
-	    ((len = strlen(name)) + curnamep + 1) > SZSYMNAMES) {
+	    ((len = strlen(name) + 1) + curnamep) > SZSYMNAMES) {
 		printf("addsym: too many sumbols, skipping '%s'\n", name);
 		return;
 	}
 	strcpy(&symnames[curnamep], name);
 	savedsyms[cursyms] = *sym;
 	symnmoff[cursyms] = savedsyms[cursyms].st_name = curnamep;
-	curnamep += (len + 1);
+	curnamep += len;
+	if (len > ksyms_maxlen)
+		ksyms_maxlen = len;
 	cursyms++;
 }
 /*
@@ -469,6 +478,7 @@ ksyms_addsymtab(char *mod, void *symstart, vsize_t symsize,
 			/* Ok, save this symbol */
 			addsym(&sym[i], strstart + sym[i].st_name);
 	}
+
 	sym = malloc(sizeof(Elf_Sym)*cursyms, M_DEVBUF, M_WAITOK);
 	str = malloc(curnamep, M_DEVBUF, M_WAITOK);
 	memcpy(sym, savedsyms, sizeof(Elf_Sym)*cursyms);
@@ -771,12 +781,15 @@ ksymswrite(dev_t dev, struct uio *uio, int ioflag)
 int
 ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
-#ifdef notyet
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct symtab *st;
 	Elf_Sym *sym;
 	unsigned long val;
 	int error = 0;
+	char *str;
+
+	if (cmd == KIOCGVALUE || cmd == KIOCGSYMBOL)
+		str = malloc(ksyms_maxlen, M_DEVBUF, M_WAITOK);
 
 	switch (cmd) {
 	case KIOCGVALUE:
@@ -784,9 +797,9 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		 * Use the in-kernel symbol lookup code for fast
 		 * retreival of a value.
 		 */
-		if (error = copyinstr(kg->kg_name, symnm, maxsymnmsz, NULL))
+		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
-		if (error = ksyms_getval(NULL, symnm, &val, KSYMS_EXTERN))
+		if ((error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN)))
 			break;
 		error = copyout(&val, kg->kg_value, sizeof(long));
 		break;
@@ -796,10 +809,10 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		 * Use the in-kernel symbol lookup code for fast
 		 * retreival of a symbol.
 		 */
-		if (error = copyinstr(kg->kg_name, symnm, maxsymnmsz, NULL))
+		if ((error = copyinstr(kg->kg_name, str, ksyms_maxlen, NULL)))
 			break;
 		CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
-			if ((sym = findsym(symnm, st)) == NULL)
+			if ((sym = findsym(str, st)) == NULL)
 				continue;
 
 			/* Skip if bad binding */
@@ -826,7 +839,10 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		error = ENOTTY;
 		break;
 	}
-#endif
-	return ENOTTY;
+
+	if (cmd == KIOCGVALUE || cmd == KIOCGSYMBOL)
+		free(str, M_DEVBUF);
+
+	return error;
 }
 #endif
