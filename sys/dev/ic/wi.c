@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.69 2002/04/11 11:21:26 augustss Exp $	*/
+/*	$NetBSD: wi.c,v 1.70 2002/04/14 19:55:23 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.69 2002/04/11 11:21:26 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.70 2002/04/14 19:55:23 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -872,6 +872,16 @@ static int wi_read_record(sc, ltv)
 			p2ltv.wi_len = 2;
 			ltv = &p2ltv;
 			break;
+		case WI_RID_ROAMING_MODE:
+			if (sc->sc_firmware_type == WI_INTERSIL)
+				break;
+			/* not supported */
+			ltv->wi_len = 1;
+			return 0;
+		case WI_RID_MICROWAVE_OVEN:
+			/* not supported */
+			ltv->wi_len = 1;
+			return 0;
 		}
 	}
 
@@ -1024,6 +1034,16 @@ static int wi_write_record(sc, ltv)
 				p2ltv.wi_val = htole16(0x02);
 			ltv = &p2ltv;
 			break;
+
+		case WI_RID_ROAMING_MODE:
+			if (sc->sc_firmware_type == WI_INTERSIL)
+				break;
+			/* not supported */
+			return 0;
+
+		case WI_RID_MICROWAVE_OVEN:
+			/* not supported */
+			return 0;
 		}
 	}
 
@@ -1265,7 +1285,7 @@ wi_setdef(sc, wreq)
 		sc->wi_ap_density = le16toh(wreq->wi_val[0]);
 		break;
 	case WI_RID_CREATE_IBSS:
-		if (sc->sc_firmware_type == WI_LUCENT)
+		if (sc->sc_firmware_type != WI_INTERSIL)
 			sc->wi_create_ibss = le16toh(wreq->wi_val[0]);
 		break;
 	case WI_RID_OWN_CHNL:
@@ -1351,7 +1371,7 @@ wi_getdef(sc, wreq)
 		wreq->wi_val[0] = htole16(sc->wi_ap_density);
 		break;
 	case WI_RID_CREATE_IBSS:
-		if (sc->sc_firmware_type == WI_LUCENT)
+		if (sc->sc_firmware_type != WI_INTERSIL)
 			wreq->wi_val[0] = htole16(sc->wi_create_ibss);
 		break;
 	case WI_RID_OWN_CHNL:
@@ -1650,7 +1670,7 @@ wi_init(ifp)
 	WI_SETVAL(WI_RID_MAX_DATALEN, sc->wi_max_data_len);
 
 	/* Enable/disable IBSS creation. */
-	if (sc->sc_firmware_type == WI_LUCENT)
+	if (sc->sc_firmware_type != WI_INTERSIL)
 		WI_SETVAL(WI_RID_CREATE_IBSS, sc->wi_create_ibss);
 
 	/* Set the port type. */
@@ -2034,9 +2054,9 @@ wi_get_id(sc)
 		memset(&sver, 0, sizeof(sver));
 		sver.wi_type = WI_RID_SYMBOL_IDENTITY;
 		sver.wi_len = 7;
-		/* value should be "V2.00-11" */
+		/* value should be the format like "V2.00-11" */
 		if (wi_read_record(sc, (struct wi_ltv_gen *)&sver) == 0 &&
-		    *(p = (char *)sver.wi_str) == 'V' &&
+		    *(p = (char *)sver.wi_str) >= 'A' &&
 		    p[2] == '.' && p[5] == '-' && p[8] == '\0') {
 			sc->sc_firmware_type = WI_SYMBOL;
 			sc->sc_sta_firmware_ver = (p[1] - '0') * 10000 +
