@@ -244,6 +244,9 @@
 ./usr/X11R6/lib/X11/config/cray.cf
 ./usr/X11R6/lib/X11/config/fujitsu.cf
 ./usr/X11R6/lib/X11/config/generic.cf
+./usr/X11R6/lib/X11/config/gnu.cf
+./usr/X11R6/lib/X11/config/gnuLib.rules
+./usr/X11R6/lib/X11/config/gnuLib.tmpl
 ./usr/X11R6/lib/X11/config/host.def
 ./usr/X11R6/lib/X11/config/hp.cf
 ./usr/X11R6/lib/X11/config/hpLib.rules

@@ -424,6 +424,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/be
 ./usr/X11R6/lib/X11/xkb/symbols/bg
 ./usr/X11R6/lib/X11/xkb/symbols/ca
+./usr/X11R6/lib/X11/xkb/symbols/ca_enhanced
 ./usr/X11R6/lib/X11/xkb/symbols/cs
 ./usr/X11R6/lib/X11/xkb/symbols/ctrl
 ./usr/X11R6/lib/X11/xkb/symbols/de
@@ -457,6 +458,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc104
 ./usr/X11R6/lib/X11/xkb/symbols/pl
 ./usr/X11R6/lib/X11/xkb/symbols/pt
+./usr/X11R6/lib/X11/xkb/symbols/ralt
 ./usr/X11R6/lib/X11/xkb/symbols/ru
 ./usr/X11R6/lib/X11/xkb/symbols/se
 ./usr/X11R6/lib/X11/xkb/symbols/sgi
