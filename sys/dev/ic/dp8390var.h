@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.3 1997/10/15 05:48:56 explorer Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.4 1997/10/15 06:08:38 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -12,12 +12,6 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  */
-
-#include "rnd.h"
-
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #define INTERFACE_NAME_LEN	32
 
@@ -73,10 +67,6 @@ struct dp8390_softc {
 	int	(*ring_copy) __P((struct dp8390_softc *,
 		    int, caddr_t, u_short));
 	int	(*write_mbuf) __P((struct dp8390_softc *, struct mbuf *, int));
-
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
 };
 
 /*
@@ -123,10 +113,10 @@ struct dp8390_softc {
 /*
  * NIC register access macros
  */
-#define NIC_GET(t, h, reg)	bus_space_read_1(t, h,			\
-				    ((sc)->sc_reg_map[reg]))
-#define NIC_PUT(t, h, reg, val)	bus_space_write_1(t, h,			\
-				    ((sc)->sc_reg_map[reg]), (val))
+#define NIC_GET(t, h, reg)	(bus_space_read_1(t, h,			\
+				    ((sc)->sc_reg_map[reg])))
+#define NIC_PUT(t, h, reg, val)	(bus_space_write_1(t, h,		\
+				    ((sc)->sc_reg_map[reg]), (val)))
 
 int	dp8390_config __P((struct dp8390_softc *));
 void	dp8390_intr __P((void *, int));
