@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sigreturn.S,v 1.4 1994/08/01 19:37:14 phil Exp $
+ *	$Id: sigreturn.S,v 1.5 1996/11/30 02:31:52 jtc Exp $
  */
 
 #include "SYS.h"
@@ -26,7 +26,7 @@
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
-#ifdef PROF
+#ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x) \
 	.globl EX(x); \
@@ -35,7 +35,7 @@
 	.data; 1:; .long 0; \
 	.text; addr 1b(pc),r0; bsr mcount; \
 	restore [r0,r1,r2]
-#endif PROF
+#endif /* PROF */
 
 SYSCALL(sigreturn)
 	ret	0

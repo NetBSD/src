@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.3 1995/12/13 22:18:16 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.4 1996/11/30 02:34:51 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,20 +43,20 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sigreturn.S,v 1.3 1995/12/13 22:18:16 thorpej Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.4 1996/11/30 02:34:51 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
-#ifdef PROF
+#ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x) \
 	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,sp@-; .data; \
 	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
 	moveml sp@+,#0x0303
-#endif PROF
+#endif /* GPROF */
 
 ENTRY(sigreturn)
 	trap	#1		/* signals sigreturn() */

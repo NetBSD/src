@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
- *	$Id: sigreturn.S,v 1.2 1993/10/21 02:19:40 jtc Exp $
+ *	$Id: sigreturn.S,v 1.3 1996/11/30 02:31:51 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: sigreturn.S,v 1.2 1993/10/21 02:19:40 jtc Exp $"
+	.asciz "$Id: sigreturn.S,v 1.3 1996/11/30 02:31:51 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -47,12 +47,12 @@
 /*
  * We must preserve the state of the registers as the user has set them up.
  */
-#ifdef PROF
+#ifdef GPROF
 #undef ENTRY
 #define	ENTRY(x) \
 	.globl _/**/x; .align 2; _/**/x:  pusha ; \
 	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
-#endif /* PROF */
+#endif /* GPROF */
 
 SYSCALL(sigreturn)
 	ret
