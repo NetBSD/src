@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.36 2000/01/11 06:57:49 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.37 2000/02/11 19:22:54 thorpej Exp $	*/
 
 /*
  *
@@ -407,6 +407,11 @@ void 			uvm_vnp_terminate __P((struct vnode *));
 				/* terminate a uvm/uvn object */
 boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
+
+/* kern_malloc.c */
+void			kmeminit_nkmempages __P((void));
+void			kmeminit __P((void));
+extern int		nkmempages;
 
 #endif /* _KERNEL */
 
