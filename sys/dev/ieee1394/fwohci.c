@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.52 2002/02/18 09:10:44 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.53 2002/02/27 05:09:15 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.52 2002/02/18 09:10:44 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.53 2002/02/27 05:09:15 jmc Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -182,7 +182,7 @@ static void fwohci_show_phypkt(struct fwohci_softc *, u_int32_t);
 
 #define DPRINTF(x)      if (fwdebug) printf x
 #define DPRINTFN(n,x)   if (fwdebug>(n)) printf x
-int     fwdebug = 0;
+int     fwdebug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -2271,6 +2271,7 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	CFR_PUT_REFER(&cfr, 0x81, 6);		/* textual descriptor offset */
 	CFR_PUT_VALUE(&cfr, 0x13, 0x000001);	/* unit sw version */
 	CFR_PUT_REFER(&cfr, 0x81, 7);		/* textual descriptor offset */
+	CFR_PUT_REFER(&cfr, 0x95, 8);		/* Unit location */
 	CFR_END_UNIT(&cfr);
 
 	CFR_START_UNIT(&cfr, 6);
@@ -2284,37 +2285,54 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	CFR_PUT_DATA1(&cfr, 0);			/* minimal ASCII */
 	CFR_PUT_DATA4(&cfr, 'I', 'P', 'v', '4');
 	CFR_END_UNIT(&cfr);
+
+	CFR_START_UNIT(&cfr, 8);		/* Spec's valid addr range. */
+	CFR_PUT_DATA1(&cfr, FW_FIFO_HI);
+	CFR_PUT_DATA1(&cfr, (FW_FIFO_LO | 0x1));
+	CFR_PUT_DATA1(&cfr, FW_FIFO_HI);
+	CFR_PUT_DATA1(&cfr, FW_FIFO_LO);
+	CFR_END_UNIT(&cfr);
+	
 #endif /* INET */
 
 #ifdef INET6
 	/* IPv6 unit directory */
 	CFR_START_UNIT(&cfr, 4);
 	CFR_PUT_VALUE(&cfr, 0x12, 0x00005e);	/* unit spec id */
-	CFR_PUT_REFER(&cfr, 0x81, 8);		/* textual descriptor offset */
+	CFR_PUT_REFER(&cfr, 0x81, 9);		/* textual descriptor offset */
 	CFR_PUT_VALUE(&cfr, 0x13, 0x000002);	/* unit sw version */
 						/* XXX: TBA by IANA */
-	CFR_PUT_REFER(&cfr, 0x81, 9);		/* textual descriptor offset */
+	CFR_PUT_REFER(&cfr, 0x81, 10);		/* textual descriptor offset */
+	CFR_PUT_REFER(&cfr, 0x95, 11);		/* Unit location */
 	CFR_END_UNIT(&cfr);
 
-	CFR_START_UNIT(&cfr, 8);
+	CFR_START_UNIT(&cfr, 9);
 	CFR_PUT_VALUE(&cfr, 0, 0);		/* textual descriptor */
 	CFR_PUT_DATA1(&cfr, 0);			/* minimal ASCII */
 	CFR_PUT_DATA4(&cfr, 'I', 'A', 'N', 'A');
 	CFR_END_UNIT(&cfr);
 
-	CFR_START_UNIT(&cfr, 9);
+	CFR_START_UNIT(&cfr, 10);
 	CFR_PUT_VALUE(&cfr, 0, 0);		/* textual descriptor */
 	CFR_PUT_DATA1(&cfr, 0);
 	CFR_PUT_DATA4(&cfr, 'I', 'P', 'v', '6');
 	CFR_END_UNIT(&cfr);
+
+	CFR_START_UNIT(&cfr, 11);		/* Spec's valid addr range. */
+	CFR_PUT_DATA1(&cfr, FW_FIFO_HI);
+	CFR_PUT_DATA1(&cfr, (FW_FIFO_LO | 0x1));
+	CFR_PUT_DATA1(&cfr, FW_FIFO_HI);
+	CFR_PUT_DATA1(&cfr, FW_FIFO_LO);
+	CFR_END_UNIT(&cfr);
+	
 #endif /* INET6 */
 
 	fb->fb_off = cfr.ptr - hdr;
 #ifdef FW_DEBUG
-	DPRINTFN(2, ("%s: Config ROM:", sc->sc_sc1394.sc1394_dev.dv_xname));
+	DPRINTF(("%s: Config ROM:", sc->sc_sc1394.sc1394_dev.dv_xname));
 	for (i = 0; i < fb->fb_off; i++)
-		DPRINTFN(2, ("%s%08x", i&7?" ":"\n    ", hdr[i]));
-	DPRINTFN(2, ("\n"));
+		DPRINTF(("%s%08x", i&7?" ":"\n    ", hdr[i]));
+	DPRINTF(("\n"));
 #endif /* FW_DEBUG */
 
 	/*
@@ -2757,7 +2775,8 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 	fwohci_handler_set(sc, IEEE1394_TCODE_WRITE_REQ_BLOCK, offhi, offlo, 
 	    handler ? fwohci_if_input : NULL, handler);
 	fwohci_handler_set(sc, IEEE1394_TCODE_STREAM_DATA,
-	    (sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] & IEEE1394_ISOCH_MASK) | OHCI_ASYNC_STREAM,
+	    (sc->sc_csr[CSR_SB_BROADCAST_CHANNEL] & IEEE1394_ISOCH_MASK) |
+	    OHCI_ASYNC_STREAM,
 	    IEEE1394_TAG_GASP, handler ? fwohci_if_input : NULL, handler);
 	return 0;
 }
@@ -3287,7 +3306,7 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
 		if ((status != OHCI_CTXCTL_EVENT_ACK_COMPLETE) &&
 		    (status != OHCI_CTXCTL_EVENT_ACK_PENDING))
-			DPRINTF(("Got status packet: 0x%02x\n",
+			DPRINTFN(2, ("Got status packet: 0x%02x\n",
 			    (unsigned int)status));
 		fcb->count--;
 
