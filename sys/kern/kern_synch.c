@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.108 2002/05/21 01:38:27 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.109 2002/07/02 20:27:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,10 +78,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.108 2002/05/21 01:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.109 2002/07/02 20:27:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_kstack.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
@@ -847,6 +848,10 @@ mi_switch(struct proc *p)
 	 * scheduling flags.
 	 */
 	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
+
+#ifdef KSTACK_CHECK_MAGIC
+	kstack_check_magic(p);
+#endif
 
 	/*
 	 * Pick a new current process and switch to it.  When we

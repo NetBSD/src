@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.58 2002/05/15 06:57:49 matt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.59 2002/07/02 20:27:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,9 +67,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.58 2002/05/15 06:57:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.59 2002/07/02 20:27:48 yamt Exp $");
 
 #include "opt_kgdb.h"
+#include "opt_kstack.h"
 #include "opt_sysv.h"
 #include "opt_uvmhist.h"
 
@@ -294,6 +295,13 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
 		panic("uvm_fork: uvm_fault_wire failed: %d", error);
+
+#ifdef KSTACK_CHECK_MAGIC
+	/*
+	 * fill stack with magic number
+	 */
+	kstack_setup_magic(p2);
+#endif
 
 	/*
 	 * p_stats currently points at a field in the user struct.  Copy
