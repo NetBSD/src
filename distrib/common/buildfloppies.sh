@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.8 2004/06/12 18:39:53 dsl Exp $
+# $NetBSD: buildfloppies.sh,v 1.9 2005/03/04 16:01:58 dsl Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -114,7 +114,7 @@ fi
 
 #	check size against available number of disks
 #
-bytes=$( ls -l "${floppy}" | awk '{print $5}' )
+bytes=$( ls -ln "${floppy}" | awk '{print $5}' )
 blocks=$(roundup ${bytes} 512)
 	# when calculating numdisks, take into account:
 	#	a) the image already has an 8K tar header prepended
@@ -125,7 +125,7 @@ if [ -z "${maxdisks}" ]; then
 fi
 
 if [ ${numdisks} -gt ${maxdisks} ]; then
-	excess=$(( ( ${blocks} - (${floppysize} - 16) * ${maxdisks} ) * 512 ))
+	excess=$(( (${blocks}-16 - (${floppysize}-16) * ${maxdisks}) * 512 ))
 	echo 1>&2 \
 	    "$prog: Image is ${excess} bytes ($(( ${excess} / 1024 )) KB)"\
 	    "too big to fit on ${maxdisks} disk"$(plural ${maxdisks})
