@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.12 1999/06/08 10:35:36 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.13 2000/04/10 16:05:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -327,8 +327,8 @@
 /* IRSR -- Interrupt Receive Status Ragister */
 #define ASI_IRSR	0x49
 #define IRSR		0x00
-#define IRSR_BUSY	0x010
-#define IRSR_MID(x)	(x&0xf)
+#define IRSR_BUSY	0x020
+#define IRSR_MID(x)	(x&0x1f)
 
 /* IRDR -- Interrupt Receive Data Registers */
 #define ASI_IRDR	0x7f
