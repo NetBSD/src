@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.16 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: skey.c,v 1.17 2004/11/01 21:52:07 dsl Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.16 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: skey.c,v 1.17 2004/11/01 21:52:07 dsl Exp $");
 #endif
 
 #include <ctype.h>
@@ -106,7 +106,7 @@ main(int	argc, char **argv)
 	}
 
 	for(t = seed; *t; t++) {
-		if(!isalnum(*t))
+		if(!isalnum((unsigned char)*t))
 			errx(1, "seed must be alphanumeric");
 	}
 
