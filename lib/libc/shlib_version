@@ -1,4 +1,0 @@
-#	$NetBSD: shlib_version,v 1.50 1998/02/02 23:24:58 perry Exp $
-#
-major=12
-minor=25

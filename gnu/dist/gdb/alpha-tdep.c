@@ -1405,207 +1405,110 @@ search.  The only need to set it is when debugging a stripped executable.",
 }
 
 #ifdef NO_SINGLE_STEP
-/*
- * If NO_SINGLE_STEP defined, we're simulating single step with
- * breakpoints, either because the kernel doesn't provide it or
- * Just Because We Want To.
- */
+/* If NO_SINGLE_STEP defined, we're doing single step simulation.
+   The alpha does not have a "trace" mode (for H/W single step)
+   so either the kernel simulates it, or else we simulate it.
+   Some systems (i.e. NetBSD) choose not to do this work in the
+   kernel, so this section is used instead.  */
 
-/*
- * Branch types.  Only two types are distinguished:
- * conditional and unconditional.
- *
- * We don't bother to set breakpoint after an unconditional
- * branch, as it's (supposedly 8-) unconditional!
- */
-
-typedef enum {
-	Error, not_branch,
-	branch_conditional, branch_unconditional,
-} branch_type;
-
-/*
- * Information about the various breakpoints we may have set:
- * (1) their addresses, (2) whether or not we actually set them,
- * and (3) the previous contents of the memory.
- */
-
-static CORE_ADDR next_pc, target;
-static int brk_next_pc, brk_target;
-typedef char binsn_quantum[BREAKPOINT_MAX];
-static binsn_quantum brkmem_next_pc, brkmem_target;
-
-/*
- * Non-zero if we just simulated a single-step ptrace call.  This is
- * needed because we cannot remove the breakpoints in the inferior
- * process until after the `wait' in `wait_for_inferior'.
- */  
+/* Non-zero if we just simulated a single-step ptrace call.  This is
+   needed because we cannot remove the breakpoints in the inferior
+   process until after the `wait' in `wait_for_inferior'. */  
 
 int one_stepped;
 
-/*
- * single_step() is called just before we want to resume the inferior,
- * if we want to single-step it but there is no hardware or kernel
- * single-step support (as in NetBSD, on the Alpha).  We find all the
- * possible targets of the coming instruction and breakpoint them.
- *
- * single_step() is also called just after the inferior stops.  IF we
- * had set up a simulated single-step, we undo our damage.
- */
+CORE_ADDR target_addr;		/* Branch target offset, if we have a
+				   breakpoint there... */
+CORE_ADDR step_addr;		/* Offset of instruction after instruction
+				   to be stepped, if we have a breakpoint
+				   there. */
+
+char target_save[8];		/* Cache for instructions wiped out by */
+char step_save[8];		/* ...step breakpoint(s)... */
+
+/* single_step() is called just before we want to resume the inferior,
+   if we want to single-step it but there is no hardware or kernel
+   single-step support (as in NetBSD, on the Alpha).  We find all the
+   possible targets of the coming instruction and breakpoint them.
+
+   single_step() is also called just after the inferior stops.  If we
+   had set up a simulated single-step, we undo our damage.  */
 
 void
-single_step(ignore)
-	int ignore;			/* pid, but we don't need it. */
+single_step (ignore)
+     int ignore; /* pid, but we don't need it */
 {
-	branch_type br, isbranch();
-	CORE_ADDR pc;
-	unsigned int pc_instruction;
+  CORE_ADDR pc;
+  unsigned int instruction;
+  int offset;
+  union {
+    unsigned int code;			/* raw bits */
+    struct {				/* unknown format */
+      unsigned int unk:26;
+      unsigned int op:6;
+    } u;
+    struct {				/* memory format */
+      int disp:16;
+      unsigned int rb:5;
+      unsigned int ra:5;
+      unsigned int op:6;
+    } m;
+    struct {				/* branch format */
+      int disp:21;
+      unsigned int ra:5;
+      unsigned int op:6;
+    } b;
+  } insn;
 
-	pc = read_register(PC_REGNUM);
+  pc = read_register(PC_REGNUM);
 
-	if (one_stepped) {
-		/*
-		 * The inferior has stopped.  Adjust the PC to
-		 * deal with the breakpoint we just took and
-		 * clean up the breakpoints we set.
-		 */
+  if (one_stepped) {
+    /* Backup over the temporary breakpoint.  */
+    write_pc(pc - 4);
 
-		write_pc(pc - DECR_PC_AFTER_BREAK);
+    /* Remove our temporary breakpoints. */
+    if (step_addr) {
+      target_remove_breakpoint(step_addr, step_save);
+      step_addr = 0;
+    }
+    if (target_addr) {
+      target_remove_breakpoint(target_addr, target_save);
+      target_addr = 0;
+    }
 
-		/* If no breakpoints set, we have a problem. */
-		if (!brk_next_pc && !brk_target)
-			abort();
+    one_stepped = 0;
+    return;
+  }
 
-		if (brk_next_pc)
-			target_remove_breakpoint(next_pc, brkmem_next_pc);
+  /* Decode the instruction at the current PC and set breakpoints.  */
+  insn.code = read_memory_integer(pc, sizeof(instruction));
+  target_addr = step_addr = 0;
 
-		if (brk_target)
-			target_remove_breakpoint(target, brkmem_target);
+  /* Examine the opcode (top six bits). */
+  if ((insn.u.op & 0x30) == 0x30) {
+    /* Some sort of conditional branch.
+       Target is PC relative...  */
+    offset = insn.b.disp << 2;
+    target_addr = pc + 4 + offset;
+    step_addr   = pc + 4;
+  } else if (insn.u.op == 0x1a) {
+    /* Unconditional branch.
+       Target PC is in the REGISTER specified by the 5-bit
+       RB field of the instruction (bits, 25-21). */
+    target_addr = read_register(insn.m.rb) & ~3;
+  } else {
+    /* Not a branch, nothing special to do.
+       Set breakpoint at next PC. */
+    step_addr = pc + 4;
+  }
 
-		one_stepped = 0;
-		return;
-	}
+  if (step_addr)
+    target_insert_breakpoint(step_addr, step_save);
+  if (target_addr)
+    target_insert_breakpoint(target_addr, target_save);
 
-	pc_instruction = read_memory_integer(pc, sizeof(pc_instruction));
-	br = isbranch(pc_instruction, pc, &target);
-
-	switch (br) {
-	default:
-	case Error:
-		abort();
-
-	case not_branch:
-		next_pc = pc + 4;
-		brk_next_pc = 1;
-		brk_target = 0;
-		break;
-
-	case branch_unconditional:
-		brk_next_pc = 0;
-		brk_target = 1;
-		break;
-
-	case branch_conditional:
-		next_pc = pc + 4;
-		brk_next_pc = brk_target = 1;
-		break;
-	}
-	
-	if (brk_next_pc)
-		target_insert_breakpoint(next_pc, brkmem_next_pc);
-	if (brk_target)
-		target_insert_breakpoint(target, brkmem_target);
-
-	/* Let it go. */
-	one_stepped = 1;
+  /* Let it go. */
+  one_stepped = 1;
 }
 
-/*
- * Check instruction at ADDR to see if it is a branch or other
- * instruction whose target isn't pc+4.  All other instructions
- * will go to NPC or will trap.  Set *TARGET if we find a
- * candidate branch.
- */
-
-branch_type
-isbranch(instruction, addr, target)
-	unsigned int instruction;
-	CORE_ADDR addr, *target;
-{
-	branch_type val;
-	long offset;			/* Must be signed for sign-extend. */
-	union {
-		unsigned int code;			/* raw bits */
-		struct {				/* common bits */
-			unsigned int unk:26;
-			unsigned int op:6;
-		} common;
-		struct {				/* memory format */
-			         int disp:16;
-			unsigned int rb:5;
-			unsigned int ra:5;
-			unsigned int op:6;
-		} m;
-		struct {				/* branch format */
-				 int disp:21;
-			unsigned int ra:5;
-			unsigned int op:6;
-		} b;
-	} insn;
-
-	insn.code = instruction;
-	switch (insn.common.op) {
-	/*
-	 * memory-format branches.  all unconditional.
-	 */
-	case 0x1a:			/* JMP/RET/JSR/JSR_C; memory format */
-		val = branch_unconditional;
-
-		/*
-		 * Target PC is (contents of instruction's "RB") & ~3.
-		 */
-		*target = read_register(insn.m.rb) & ~3;
-		break;
-
-	/*
-	 * branch-format branches.  conditional unless otherwise noted.
-	 */
-	case 0x30:			/* BR; unconditional*/
-	case 0x31:			/* FBEQ */
-	case 0x32:			/* FBLT */
-	case 0x33:			/* FBLE */
-	case 0x34:			/* BSR; unconditional */
-	case 0x35:			/* FBNE */
-	case 0x36:			/* FBGE */
-	case 0x37:			/* FBGT */
-	case 0x38:			/* BLBC */
-	case 0x39:			/* BEQ */
-	case 0x3a:			/* BLT */
-	case 0x3b:			/* BLE */
-	case 0x3c:			/* BLBS */
-	case 0x3d:			/* BNE */
-	case 0x3e:			/* BGE */
-	case 0x3f:			/* BGT */
-
-		if (insn.b.op == 0x30 || insn.b.op == 0x34)
-			val = branch_unconditional;
-		else
-			val = branch_conditional;
-		
-		/*
-		 * Branch format is easy.
-		 * Target PC is (new PC) + (4 * sign-ext(displacement)).
-		 */
-		offset = 4 + (4 * insn.b.disp);
-		*target = addr + offset;
-		break;
-
-
-	default:
-		val = not_branch;
-		break;
-	}
-
-	return val;
-}
 #endif	/* NO_SINGLE_STEP */

@@ -1,9 +1,0 @@
-#!/bin/sh
-# $NetBSD: mr.etc.rc,v 1.1.1.1 1997/12/24 09:21:19 jeremy Exp $
-
-# This is run by /sbin/init as:
-#	/bin/sh /etc/rc
-# Just force init to go single-user...
-
-echo "/etc/rc: miniroot forces single-user mode..."
-exit 1

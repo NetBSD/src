@@ -1,4 +1,0 @@
-#	$NetBSD: Makefile.vax,v 1.4 1997/10/25 10:10:47 lukem Exp $
-#	from: @(#)Makefile.vax	6.1 (Berkeley) 3/3/91
-
-SRCS+=		tc-vax.c atof-vax.c
