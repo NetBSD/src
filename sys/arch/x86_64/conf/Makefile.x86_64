@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x86_64,v 1.10 2002/11/25 00:32:43 fvdl Exp $
+#	$NetBSD: Makefile.x86_64,v 1.11 2002/11/25 01:38:32 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -27,10 +27,6 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 X86_64=		$S/arch/x86_64
 GENASSYM=	${X86_64}/x86_64/genassym.cf
-
-DEFWARNINGS=no
-CWARNFLAGS+=    -Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
-CWARNFLAGS+=    -Wmissing-prototypes -Wstrict-prototypes -Wno-format
 
 ##
 ## (2) compile settings
