@@ -27,21 +27,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strncmp.S,v 1.3 1993/10/21 01:40:42 jtc Exp $
+ *	$Id: strncmp.S,v 1.4 1993/10/21 01:48:36 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strncmp.S,v 1.3 1993/10/21 01:40:42 jtc Exp $"
+	.asciz "$Id: strncmp.S,v 1.4 1993/10/21 01:48:36 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 
 /*
- * strncmp(s1, s2, n) 
- *	return an integer greater than, equal to, or less than 0, 
+ * strncmp(s1, s2, n)
+ *	return an integer greater than, equal to, or less than 0,
  *	according as the first n characters of string s1 is greater
- *	than, equal to, or less than the string s2.  
+ *	than, equal to, or less than the string s2.
  *
  * %eax - pointer to s1
  * %ecx - pointer to s2

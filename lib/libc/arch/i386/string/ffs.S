@@ -27,19 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ffs.S,v 1.2 1993/10/21 01:40:30 jtc Exp $
+ *	$Id: ffs.S,v 1.3 1993/10/21 01:48:32 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: ffs.S,v 1.2 1993/10/21 01:40:30 jtc Exp $"
+	.asciz "$Id: ffs.S,v 1.3 1993/10/21 01:48:32 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 
 /*
  * ffs(value)
- *	finds the first bit set in value and returns the index of 
+ *	finds the first bit set in value and returns the index of
  *	that bit.  Bits are numbered starting from 1, starting at the
  *	rightmost bit.  A return value of 0 means that the argument
  *	was zero.
