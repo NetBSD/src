@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.8 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.9 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.8 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.9 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	for (offs = 0; ; offs += size) {
 		size = sizeof buf;
 		error = vn_rdwr(UIO_READ, vp, buf, size, offs, UIO_SYSSPACE,
-		    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, p);
+		    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, NULL);
 		size -= resid;
 		if (error || size == 0)
 			break;

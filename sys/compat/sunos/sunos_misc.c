@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.129 2004/04/25 06:25:52 matt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.130 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.129 2004/04/25 06:25:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.130 2004/09/17 14:11:24 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -524,7 +524,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
