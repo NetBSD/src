@@ -308,7 +308,7 @@ ifile_p1:
 	|	TARGET_K '(' NAME ')'
 		{ lang_add_target($3); }
 	|	SEARCH_DIR '(' filename ')'
-		{ ldfile_add_library_path ($3, false); }
+		{ if (!config.no_std_path) ldfile_add_library_path ($3, false); }
 	|	OUTPUT '(' filename ')'
 		{ lang_add_output($3, 1); }
         |	OUTPUT_FORMAT '(' NAME ')'
