@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 2004/08/07 11:45:41 rearnsha Exp $ */
+/* $NetBSD: cpu.c,v 1.14 2004/08/07 12:07:08 rearnsha Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2004/08/07 11:45:41 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2004/08/07 12:07:08 rearnsha Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -155,7 +155,7 @@ cpu_identify()
 
 	cp_core = install_coproc_handler(CORE_UNKNOWN_HANDLER,
 	    cpu_undef_handler);
-	cp15 = install_coproc_handler(15, cpu_undef_handler);
+	cp15 = install_coproc_handler(SYSTEM_COPROC, cpu_undef_handler);
 	if (setjmp(&undef_jmp) == 0) {
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
