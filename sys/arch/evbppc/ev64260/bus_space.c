@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2003/03/06 20:15:24 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2003/03/07 18:24:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,31 +55,31 @@ static int memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
 	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 static void memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-struct powerpc_bus_space ev64260_pci0_mem_bs_tag = {
+struct powerpc_bus_space gt_pci0_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x81000000, 0x89000000,
 	NULL,
 	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-struct powerpc_bus_space ev64260_pci0_io_bs_tag = {
+struct powerpc_bus_space gt_pci0_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x00800000,
 	NULL,
 	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-struct powerpc_bus_space ev64260_pci1_mem_bs_tag = {
+struct powerpc_bus_space gt_pci1_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x89000000, 0x90000000,
 	NULL,
 	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-struct powerpc_bus_space ev64260_pci1_io_bs_tag = {
+struct powerpc_bus_space gt_pci1_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x88000000, 0x00000000, 0x00800000,
 	NULL,
 	memio_mmap, memio_map, memio_unmap, memio_alloc, memio_free
 };
-struct powerpc_bus_space ev64260_gt_mem_bs_tag = {
+struct powerpc_bus_space gt_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x00000000, 0x00010000,
 	NULL,
@@ -92,58 +92,58 @@ static char ex_storage[5][EXTENT_FIXED_STORAGE_SIZE(8)]
 static int extent_flags;
 
 void
-ev64260_bus_space_init(void)
+bus_space_init(void)
 {
 	int error;
 
-	ev64260_pci0_mem_bs_tag.pbs_extent = extent_create("pci0-mem",
-	    ev64260_pci0_mem_bs_tag.pbs_base,
-	    ev64260_pci0_mem_bs_tag.pbs_limit-1,
+	gt_pci0_mem_bs_tag.pbs_extent = extent_create("pci0-mem",
+	    gt_pci0_mem_bs_tag.pbs_base,
+	    gt_pci0_mem_bs_tag.pbs_limit-1,
 	    M_DEVBUF,
 	    ex_storage[0], sizeof(ex_storage[0]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-	ev64260_pci0_io_bs_tag.pbs_extent = extent_create("pci0-ioport",
-	    ev64260_pci0_io_bs_tag.pbs_base,
-	    ev64260_pci0_io_bs_tag.pbs_limit-1,
+	gt_pci0_io_bs_tag.pbs_extent = extent_create("pci0-ioport",
+	    gt_pci0_io_bs_tag.pbs_base,
+	    gt_pci0_io_bs_tag.pbs_limit-1,
 	    M_DEVBUF,
 	    ex_storage[1], sizeof(ex_storage[1]),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	error = extent_alloc_region(ev64260_pci0_io_bs_tag.pbs_extent,
+	error = extent_alloc_region(gt_pci0_io_bs_tag.pbs_extent,
 	    0x10000, 0x7F0000, EX_NOWAIT);
 	if (error)
-		panic("ev64260_bus_space_init: can't block out reserved "
+		panic("gt_bus_space_init: can't block out reserved "
 		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
 
-	ev64260_pci1_mem_bs_tag.pbs_extent = extent_create("pci1-iomem",
-	    ev64260_pci1_mem_bs_tag.pbs_base,
-	    ev64260_pci1_mem_bs_tag.pbs_limit-1,
+	gt_pci1_mem_bs_tag.pbs_extent = extent_create("pci1-iomem",
+	    gt_pci1_mem_bs_tag.pbs_base,
+	    gt_pci1_mem_bs_tag.pbs_limit-1,
 	    M_DEVBUF,
 	    ex_storage[2], sizeof(ex_storage[2]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-	ev64260_pci1_io_bs_tag.pbs_extent = extent_create("pci1-ioport",
-	    ev64260_pci1_io_bs_tag.pbs_base,
-	    ev64260_pci1_io_bs_tag.pbs_limit-1,
+	gt_pci1_io_bs_tag.pbs_extent = extent_create("pci1-ioport",
+	    gt_pci1_io_bs_tag.pbs_base,
+	    gt_pci1_io_bs_tag.pbs_limit-1,
 	    M_DEVBUF,
 	    ex_storage[3], sizeof(ex_storage[3]),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	error = extent_alloc_region(ev64260_pci1_io_bs_tag.pbs_extent,
+	error = extent_alloc_region(gt_pci1_io_bs_tag.pbs_extent,
 	     0x10000, 0x7F0000, EX_NOWAIT);
 	if (error)
-		panic("ev64260_bus_space_init: can't block out reserved "
+		panic("gt_bus_space_init: can't block out reserved "
 		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
 
-	ev64260_gt_mem_bs_tag.pbs_extent = extent_create("gtmem",
-	    ev64260_gt_mem_bs_tag.pbs_base,
-	    ev64260_gt_mem_bs_tag.pbs_limit-1,
+	gt_mem_bs_tag.pbs_extent = extent_create("gtmem",
+	    gt_mem_bs_tag.pbs_base,
+	    gt_mem_bs_tag.pbs_limit-1,
 	    M_DEVBUF,
 	    ex_storage[4], sizeof(ex_storage[4]),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
 
 void
-ev64260_bus_space_mallocok(void)
+bus_space_mallocok(void)
 {
 	extent_flags = EX_MALLOCOK;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2003/03/04 07:50:59 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2003/03/07 18:24:03 matt Exp $	*/
 
 /*
  * This is a total hack to workaround the fact that we have
@@ -13,13 +13,11 @@
 #ifdef PPC_IBM4XX
 #include <powerpc/ibm4xx/bus.h>
 #else
-#ifdef ev64260
 #define	PHYS_TO_BUS_MEM(t, addr)	(addr)	/* XXX */
 #define	BUS_MEM_TO_PHYS(t, addr)	(addr)	/* XXX */
 
-void ev64260_bus_space_init(void);
-void ev64260_bus_space_mallocok(void);
-#endif
+void bus_space_init(void);
+void bus_space_mallocok(void);
 
 #include <powerpc/bus.h>
 #endif
