@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.49 2001/05/30 15:24:27 lukem Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.50 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.49 2001/05/30 15:24:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.50 2001/06/05 04:53:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ dec_axppci_33_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		/* XXX */
 		{
@@ -194,7 +194,7 @@ dec_axppci_33_cons_init()
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
