@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.2 1997/01/12 19:12:24 tls Exp $	*/
+/*	$NetBSD: tty.c,v 1.3 1998/04/07 10:29:50 fair Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -104,6 +104,7 @@ tty_init(init_ttystate)
 {
 	int	do_close = 1;
 	int	tfd;
+	const char	*devtty = _PATH_TTY;
 
 	if (tty_fd >= 0) {
 		close(tty_fd);
@@ -113,7 +114,7 @@ tty_init(init_ttystate)
 
 	/* SCO can't job control on /dev/tty, so don't try... */
 #if !defined(__SCO__)
-	if ((tfd = open("/dev/tty", O_RDWR, 0)) < 0) {
+	if ((tfd = open(devtty, O_RDWR, 0)) < 0) {
 #ifdef __NeXT
 		/* rlogin on NeXT boxes does not set up the controlling tty,
 		 * so force it to be done here...
@@ -125,7 +126,7 @@ tty_init(init_ttystate)
 
 			if (s && (fd = open(s, O_RDWR, 0)) >= 0) {
 				close(fd);
-				tfd = open("/dev/tty", O_RDWR, 0);
+				tfd = open(devtty, O_RDWR, 0);
 			}
 		}
 #endif /* __NeXT */
@@ -135,8 +136,8 @@ tty_init(init_ttystate)
 		if (tfd < 0) {
 			tty_devtty = 0;
 			warningf(FALSE,
-				"No controlling tty (open /dev/tty: %s)",
-				strerror(errno));
+				"No controlling tty (open %s: %s)",
+				devtty, strerror(errno));
 		}
 # endif /* __mips  */
 	}
