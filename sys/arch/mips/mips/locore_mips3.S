@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.48 2000/09/08 07:24:42 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.49 2000/09/12 15:40:36 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2476,9 +2476,6 @@ END(mips3_write_count)
  *
  * On mips3, generates a hardint 5 interrupt request is generated
  * each time the COUNT register increments past the COMPARE register.
- *
- * (The mips interrupt mask defintions currently leaves this interrupt
- * unconditionally masked out on mips3 CPUs.)
  */
 LEAF(mips3_read_compare)
 	mfc0	v0, MIPS_COP_0_COMPARE
