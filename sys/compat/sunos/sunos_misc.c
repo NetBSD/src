@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.35 1994/11/20 21:31:12 deraadt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.36 1994/11/23 07:05:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -825,6 +825,14 @@ sunos_setrlimit(p, uap, retval)
 
 	return compat_43_setrlimit(p, uap, retval);
 }
+
+/* for the m68k machines */
+#ifndef PT_GETFPREGS
+#define PT_GETFPREGS -1
+#endif
+#ifndef PT_SETFPREGS
+#define PT_SETFPREGS -1
+#endif
 
 static int sreq2breq[] = {
 	PT_TRACE_ME,    PT_READ_I,      PT_READ_D,      -1,
