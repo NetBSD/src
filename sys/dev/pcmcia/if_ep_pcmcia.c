@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.50 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.51 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.50 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.51 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,36 +124,36 @@ const struct ep_pcmcia_product {
 	u_short		epp_chipset;	/* 3Com chipset used */
 	int		epp_flags;	/* initial softc flags */
 } ep_pcmcia_products[] = {
-	{ { "",		PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3C562,		0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C562,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { "",		PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3C589,		0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C589,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { "",		PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3CXEM556,	0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { "",	PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3CXEM556INT,	0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_3C509, 0 },
 
-	{ { "",		PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3C574,		0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C574,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
 
-	{ { "",		PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3CCFEM556BI,	0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
 
-	{ { "",		PCMCIA_VENDOR_3COM,
-	    PCMCIA_PRODUCT_3COM_3C1,		0 },
+	{ { PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C1,
+	    PCMCIA_CIS_INVALID },
 	  ELINK_CHIPSET_3C509, 0 },
-
-	{ { NULL } }
 };
+const size_t ep_pcmcia_nproducts =
+    sizeof(ep_pcmcia_products) / sizeof(ep_pcmcia_products[0]);
 
 int
 ep_pcmcia_match(parent, match, aux)
@@ -163,11 +163,13 @@ ep_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa,
-	    (const struct pcmcia_product *)ep_pcmcia_products,
-	    sizeof ep_pcmcia_products[0], NULL) != NULL)
-		return (1);
+	/* This is to differentiate the serial function of some cards. */
+	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
+		return (0);
 
+	if (pcmcia_product_lookup(pa, ep_pcmcia_products, ep_pcmcia_nproducts,
+	    sizeof(ep_pcmcia_products[0]), NULL))
+		return (1);
 	return (0);
 }
 
@@ -321,10 +323,9 @@ ep_pcmcia_attach(parent, self, aux)
 		break;
 	}
 
-	epp = (const struct ep_pcmcia_product *)pcmcia_product_lookup(pa,
-            (const struct pcmcia_product *)ep_pcmcia_products,
-            sizeof ep_pcmcia_products[0], NULL);
-	if (epp == NULL)
+	epp = pcmcia_product_lookup(pa, ep_pcmcia_products, ep_pcmcia_nproducts,
+	    sizeof(ep_pcmcia_products[0]), NULL);
+	if (!epp)
 		panic("ep_pcmcia_attach: impossible");
 
 	sc->bustype = ELINK_BUS_PCMCIA;
