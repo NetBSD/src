@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.40 2003/07/27 14:18:09 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.41 2003/08/22 05:06:38 itojun Exp $
 #
 ###########################################################################
 #
@@ -75,6 +75,7 @@
 #	lkm	loadable kernel modules interface
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
@@ -112,7 +113,7 @@ init|all)
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev bpf8 bpf9 bpf10 bpf11 random
-	makedev tun0 tun1 tun2 tun3 lkm ipl pf local
+	makedev tun0 tun1 tun2 tun3 lkm ipl pf crypto local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
 	makedev systrace
@@ -401,6 +402,12 @@ pf)
 	rm -f pf
 	mknod pf c 50 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 51 0
+	chmod 666 crypto
 	;;
 
 random)

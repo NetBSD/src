@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.25 2003/07/27 14:18:05 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.26 2003/08/22 05:06:34 itojun Exp $
 #
 ###########################################################################
 #
@@ -35,6 +35,7 @@
 #	fd	file descriptor device
 #	ipl	IP Filter
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	lkm	loadable kernel modules interface
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
@@ -279,6 +280,12 @@ pf)
 	rm -f pf
 	mknod pf c 39 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 40 0
+	chmod 666 crypto
 	;;
 
 random)

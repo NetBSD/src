@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.6 2003/07/27 14:18:15 itojun Exp $
+#	$NetBSD: majors.acorn32,v 1.7 2003/08/22 05:06:46 itojun Exp $
 #
 # Device majors for acorn32
 #
@@ -73,3 +73,4 @@ device-major	netsmb		char 87			netsmb
 device-major	nsmb		char 88			nsmb
 
 device-major	pf		char 89			pf
+device-major	crypto		char 90			opencrypto

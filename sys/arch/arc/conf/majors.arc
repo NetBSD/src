@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.5 2003/07/27 14:18:16 itojun Exp $
+#	$NetBSD: majors.arc,v 1.6 2003/08/22 05:06:47 itojun Exp $
 #
 # Device majors for arc
 #
@@ -50,3 +50,4 @@ device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 10	cgd
 device-major	ksyms		char 55			ksyms
 device-major	pf		char 56			pf
+device-major	crypto		char 57			opencrypto

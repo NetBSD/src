@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 2003/07/27 14:18:06 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.25 2003/08/22 05:06:35 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,7 +105,7 @@ init|all)
 	makedev tun0 tun1 tun2 tun3 raid0 raid1 raid2 raid3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
-	makedev ipl pf raid0 raid1 raid2 raid3
+	makedev ipl pf crypto raid0 raid1 raid2 raid3
 	makedev lkm random local
 	makedev clockctl
 	makedev systrace
@@ -290,6 +290,12 @@ pf)
 	rm -f pf
 	mknod pf c 78 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 79 0
+	chmod 666 crypto
 	;;
 
 opty)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.45 2003/07/27 14:18:07 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.46 2003/08/22 05:06:36 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -77,6 +77,7 @@
 #	ch*	SCSI media changer
 #	ipl	IP Filter device
 #	pf	PF packet filter
+#	crypto	hardware crypto access driver
 #	random	Random number generator
 #	systrace syscall tracer
 #
@@ -109,7 +110,7 @@ init|all)
 	makedev tun0 tun1
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
 	makedev cgd0 cgd1 cgd2 cgd3
-	makedev ipl pf random local
+	makedev ipl pf crypto random local
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev clockctl
@@ -343,6 +344,12 @@ pf)
 	rm -f pf
 	mknod pf c 43 0
 	chmod 600 pf
+	;;
+
+crypto)
+	rm -f crypto
+	mknod crypto c 44 0
+	chmod 666 crypto
 	;;
 
 random)
