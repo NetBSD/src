@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2003/01/18 19:11:07 christos Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5 2004/02/11 21:04:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,6 +151,21 @@ pthread__sp(void)
 	(freg)->__data, sizeof(struct fpreg));				\
 	/*LINTED precision loss */					\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_XREG_FLAG	_UC_FXSAVE
+
+#define PTHREAD_UCONTEXT_TO_XREG(xreg, uc)				\
+	(void)memcpy((xreg),						\
+	(uc)->uc_mcontext.__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm, \
+	sizeof(struct xmmregs))
+
+#define PTHREAD_XREG_TO_UCONTEXT(uc, xreg) do {				\
+	(void)memcpy(							\
+	(uc)->uc_mcontext.__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm, \
+	(xreg),								\
+	sizeof(struct xmmregs));					\
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_FXSAVE) & ~_UC_USER;	\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_I386_MD_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2003/01/20 00:53:55 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.4 2004/02/11 21:04:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,6 +101,25 @@ pthread__sp(void)
 		32 * 4);						\
 	(uc)->uc_mcontext.__fpregs.__fpu_fpscr = (freg)->fpscr;		\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_UCONTEXT_XREG_FLAG	_UC_POWERPC_VEC
+
+#define PTHREAD_UCONTEXT_TO_XREG(xreg, uc) do {				\
+	memcpy(((struct vreg *)(xreg))->vreg,				\
+		(uc)->uc_mcontext.__vrf.__vrs,				\
+		16 * _NVR);						\
+	((struct vreg *)(xreg))->vscr = (uc)->uc_mcontext.__vrf.__vscr;	\
+	((struct vreg *)(xreg))->vrsave = (uc)->uc_mcontext.__vrf.__vrsave; \
+	} while (/*CONSTCOND*/0)
+	
+#define PTHREAD_XREG_TO_UCONTEXT(uc, xreg) do {				\
+	memcpy((uc)->uc_mcontext.__vrf.__vrs,				\
+		((struct vreg *)(xreg))->vreg,				\
+		16 * _NVR);						\
+	(uc)->uc_mcontext.__vrf.__vscr = ((struct vreg *)(xreg))->vscr;	\
+	(uc)->uc_mcontext.__vrf.__vrsave = ((struct vreg *)(xreg))->vrsave; \
+	(uc)->uc_flags = ((uc)->uc_flags | _UC_POWERPC_VEC) & ~_UC_USER; \
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_POWERPC_MD_H */
