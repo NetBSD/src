@@ -1,4 +1,4 @@
-/*	$KAME: schedule.c,v 1.15 2001/04/03 15:51:57 thorpej Exp $	*/
+/*	$KAME: schedule.c,v 1.19 2001/11/05 10:53:19 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,6 +39,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "misc.h"
+#include "plog.h"
 #include "schedule.h"
 #include "var.h"
 #include "gcmalloc.h"
@@ -78,14 +80,18 @@ schedular()
 	now = current_time();
 
         for (p = TAILQ_FIRST(&sctree); p; p = next) {
+		/* if the entry has been daed, remove it */
 		if (p->dead)
 			goto next_schedule;
 
+		/* if the time hasn't come, proceed to the next entry */
 		if (now < p->xtime) {
 			next = TAILQ_NEXT(p, chain);
 			continue;
 		}
 
+		/* mark it with dead. and call the function. */
+		p->dead = 1;
 		if (p->func != NULL)
 			(p->func)(p->param);
 
@@ -191,6 +197,7 @@ sched_kill(sc)
 	return;
 }
 
+/* XXX this function is probably unnecessary. */
 void
 sched_scrub_param(param)
 	void *param;
@@ -198,8 +205,13 @@ sched_scrub_param(param)
 	struct sched *sc;
 
 	TAILQ_FOREACH(sc, &sctree, chain) {
-		if (sc->param == param)
+		if (sc->param == param) {
+			if (!sc->dead) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+				    "an undead schedule has been deleted.\n");
+			}
 			sched_kill(sc);
+		}
 	}
 }
 
@@ -294,10 +306,9 @@ getstdin()
 		sched_dump((caddr_t *)&scbuf, &len);
 		if (buf == NULL)
 			return;
-		for (p = scbuf; ; p++) {
+		for (p = scbuf; len; p++) {
 			printf("xtime=%ld\n", p->xtime);
-			if (p->last)
-				break;
+			len -= sizeof(*p);
 		}
 		racoon_free(scbuf);
 		return;

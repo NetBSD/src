@@ -1,4 +1,4 @@
-/*	$KAME: oakley.h,v 1.27 2001/08/17 10:50:27 sakane Exp $	*/
+/*	$KAME: oakley.h,v 1.28 2001/12/12 18:23:42 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,6 +78,7 @@
 #define   OAKLEY_ATTR_GRP_DESC_MODP3072		43072	/* make consensus  */
 #define   OAKLEY_ATTR_GRP_DESC_MODP4096		44096	/* at the bake off */
 #define   OAKLEY_ATTR_GRP_DESC_MODP8192		48192	/* in helsinki     */
+#define   OAKLEY_ATTR_GRP_DESC_MODP6144		46144	/* XXX */
 					/*	32768 - 65535 Private Use */
 #define OAKLEY_ATTR_GRP_TYPE		5 /* B */
 #define   OAKLEY_ATTR_GRP_TYPE_MODP		1
