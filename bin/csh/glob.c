@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.19 2001/11/03 13:35:39 lukem Exp $ */
+/* $NetBSD: glob.c,v 1.20 2002/03/08 16:37:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.19 2001/11/03 13:35:39 lukem Exp $");
+__RCSID("$NetBSD: glob.c,v 1.20 2002/03/08 16:37:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -687,8 +687,11 @@ backeval(Char *cp, bool literal)
 	    blkfree(pargv), pargv = 0, pargsiz = 0;
 	/* mg, 21.dec.88 */
 	arginp = cp;
-	while (*cp)
-	    *cp++ &= TRIM;
+	for (arginp = cp; *cp; cp++) {
+	    *cp &= TRIM;
+	    if (*cp == '\n' || *cp == '\r')
+		*cp = ';';
+	}
 
         /*
 	 * In the child ``forget'' everything about current aliases or
