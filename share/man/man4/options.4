@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.23 1997/08/29 10:38:02 kleink Exp $
+.\"	$NetBSD: options.4,v 1.24 1997/09/19 19:41:15 leo Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -231,6 +231,21 @@ Add hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes. See
 .Xr ktrace 1
 for details.
+.It Cd options MSGBUFSIZE=integer
+This option sets the size of the kernel message buffer. This buffer holds the
+kernel output of
+.Fn printf
+when not (yet) read by
+.Xr syslogd 8 .
+This is particularly useful when the system has crashed and you wish to lookup
+the kernel output from just before the crash. Also, since the autoconfig
+output becomes more and more verbose, it sometimes happens that the message
+buffer overflows before
+.Xr syslogd 8
+was able to read it.
+Note that not all systems are capable of obtaining a variable sized message
+buffer. There are also some systems on wich memory contents are not preserved
+accross reboots.
 .El
 .Ss File Systems
 .Bl -ohang

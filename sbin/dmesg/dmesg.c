@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.11 1997/09/14 08:53:46 lukem Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.12 1997/09/19 19:38:57 leo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.11 1997/09/14 08:53:46 lukem Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.12 1997/09/19 19:38:57 leo Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,8 @@ main(argc, argv)
 {
 	int ch, newl, skip;
 	char *p, *ep;
-	struct msgbuf *bufp, cur;
-	char *memf, *nlistf;
+	struct kern_msgbuf *bufp, cur;
+	char *memf, *nlistf, *bufdata;
 	kvm_t *kd;
 	char buf[5];
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	if (memf != NULL || nlistf != NULL)
 		setgid(getgid());
 
-	/* Read in kernel message buffer, do sanity checks. */
+	/* Read in message buffer header and data, and do sanity checks. */
 	if ((kd = kvm_open(nlistf, memf, NULL, O_RDONLY, "dmesg")) == NULL)
 		exit (1);
 	if (kvm_nlist(kd, nl) == -1)
@@ -120,21 +120,27 @@ main(argc, argv)
 	if (KREAD((long)bufp, cur))
 		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
 		    (unsigned long)bufp);
-	kvm_close(kd);
 	if (cur.msg_magic != MSG_MAGIC)
 		errx(1, "magic number incorrect");
-	if (cur.msg_bufx >= MSG_BSIZE)
+	bufdata = malloc(cur.msg_bufs);
+	if (bufdata == NULL)
+		errx(1, "couldn't allocate space for buffer data");
+	if (kvm_read(kd, (long)&bufp->msg_bufc, bufdata,
+			cur.msg_bufs) != cur.msg_bufs)
+		errx(1, "kvm_read: %s", kvm_geterr(kd));
+	kvm_close(kd);
+	if (cur.msg_bufx >= cur.msg_bufs)
 		cur.msg_bufx = 0;
 
 	/*
 	 * The message buffer is circular; start at the read pointer, and
 	 * go to the write pointer - 1.
 	 */
-	p = ep = cur.msg_bufc + (cur.msg_bufx - 1 + MSG_BSIZE) % MSG_BSIZE;
-	newl = skip = 0;
-	do {
-		if (++p == cur.msg_bufc + MSG_BSIZE)
-			p = cur.msg_bufc;
+	p = bufdata + cur.msg_bufx;
+	ep = bufdata + cur.msg_bufx - 1;
+	for (newl = skip = 0; p != ep; ++p) {
+		if (p == bufdata + cur.msg_bufs)
+			p = bufdata;
 		ch = *p;
 		/* Skip "\n<.*>" syslog sequences. */
 		if (skip) {
@@ -154,7 +160,7 @@ main(argc, argv)
 			(void)putchar(buf[0]);
 		else
 			(void)printf("%s", buf);
-	} while (p != ep);
+	}
 	if (!newl)
 		(void)putchar('\n');
 	exit(0);
