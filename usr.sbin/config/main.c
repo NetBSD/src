@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.94 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.95 2004/06/27 02:59:46 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1405,7 +1405,7 @@ logconfig_end(void)
 	fp = fopen("config_file.h", "w");
 	if(!fp) {
 		(void)fprintf(stderr,
-		    "config: cannot write to \"config_file.h\"");
+		    "config: cannot write to \"config_file.h\"\n");
 		exit(1);
 	}
 
