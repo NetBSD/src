@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.24 1996/11/07 07:32:29 matthias Exp $
+#	$NetBSD: files.pc532,v 1.25 1996/12/23 08:36:43 matthias Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -8,8 +8,8 @@ maxpartitions 8
 
 maxusers 2 16 64
 
-device	membus {[addr = -1], [irq = -1]}
-attach	membus at root
+device	mainbus {[addr = -1], [irq = -1]}
+attach	mainbus at root
 
 major	{vnd = 5}
 
@@ -20,17 +20,17 @@ file arch/pc532/dev/rd_root.c		ramdisk_hooks
 major	{rd = 3}
 
 #device timer
-#attach timer at membus
+#attach timer at mainbus
 #device clock
-#attach clock at membus
+#attach clock at mainbus
 file	arch/pc532/pc532/clock.c	# clock timer
 
 device	scn: tty
-attach	scn at membus
+attach	scn at mainbus
 file	arch/pc532/dev/scn.c		scn needs-flag
 
 device	lpt: ether, ifnet
-attach	lpt at membus
+attach	lpt at mainbus
 file	arch/pc532/dev/lpt.c		lpt needs-count
 
 include "../../../scsi/files.scsi"
@@ -39,10 +39,10 @@ major	{st = 2}
 major	{cd = 4}
 
 device	ncr: scsi, ncr5380sbc
-attach	ncr at membus
+attach	ncr at mainbus
 file	arch/pc532/dev/ncr.c		ncr needs-count
 device	aic: scsi
-attach	aic at membus
+attach	aic at mainbus
 file	arch/pc532/dev/aic.c		aic needs-count
 
 file	arch/pc532/fpu/ieee_dze.c
