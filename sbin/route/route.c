@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.30 1998/10/23 05:36:42 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.31 1999/07/02 15:29:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.30 1998/10/23 05:36:42 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.31 1999/07/02 15:29:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,9 @@ static void inet_makenetandmask __P((u_int32_t, struct sockaddr_in *));
 static int getaddr __P((int, char *, struct hostent **));
 static void flushroutes __P((int, char *[]));
 #ifndef SMALL
+#ifdef INET6
+static int prefixlen __P((char *));
+#endif
 static int x25_makemask __P((void));
 static void interfaces __P((void));
 static void monitor __P((void));
@@ -108,6 +111,9 @@ struct	ortentry route;
 union	sockunion {
 	struct	sockaddr sa;
 	struct	sockaddr_in sin;
+#ifdef INET6
+	struct	sockaddr_in6 sin6;
+#endif
 	struct	sockaddr_at sat;
 	struct	sockaddr_dl sdl;
 #ifndef SMALL
@@ -124,6 +130,9 @@ int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_int32_t  rtm_inits;
+#ifdef INET6
+char ntop_buf[INET6_ADDRSTRLEN];	/*for inet_ntop()*/
+#endif
 
 static void
 usage(cp)
@@ -253,6 +262,11 @@ flushroutes(argc, argv)
 			case K_INET:
 				af = AF_INET;
 				break;
+#ifdef INET6
+			case K_INET6:
+				af = AF_INET6;
+				break;
+#endif
 			case K_ATALK:
 				af = AF_APPLETALK;
 				break;
@@ -413,6 +427,19 @@ routename(sa)
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
 #ifndef SMALL
+#ifdef INET6
+	case AF_INET6:
+	    {	struct in6_addr in6;
+		int gap;
+
+		in6 = ((struct sockaddr_in6 *)sa)->sin6_addr;
+		gap = 24 - sa->sa_len;
+		if (gap > 0)
+			bzero((char *)(&in6 + 1) - gap, gap);
+		return ((char *)inet_ntop(AF_INET6, &in6, ntop_buf, sizeof(ntop_buf)));
+	    }
+#endif
+
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
 
@@ -515,6 +542,19 @@ netname(sa)
 		return (link_ntoa((struct sockaddr_dl *)sa));
 
 #ifndef SMALL
+#ifdef INET6
+	case AF_INET6:
+	    {	struct in6_addr in6;
+		int gap;
+
+		in6 = ((struct sockaddr_in6 *)sa)->sin6_addr;
+		gap = 24 - sa->sa_len;
+		if (gap > 0)
+			bzero((char *)(&in6 + 1) - gap, gap);
+		return ((char *)inet_ntop(AF_INET6, &in6, ntop_buf, sizeof(ntop_buf)));
+	    }
+#endif
+
 	case AF_NS:
 		return (ns_print((struct sockaddr_ns *)sa));
 
@@ -598,6 +638,20 @@ newroute(argc, argv)
 				af = AF_INET;
 				aflen = sizeof(struct sockaddr_in);
 				break;
+
+#ifdef INET6
+			case K_INET6:
+				af = AF_INET6;
+				aflen = sizeof(struct sockaddr_in6);
+				if (prefixlen("64") != 64) {
+					fprintf(stderr, "internal error:"
+						"setting prefixlen=64\n");
+					exit(1);
+				}
+				forcenet = 0;
+				ishost = 1;
+				break;
+#endif
 
 			case K_LINK:
 				af = AF_LINK;
@@ -696,6 +750,18 @@ newroute(argc, argv)
 			case K_NET:
 				forcenet++;
 				break;
+#ifdef INET6
+			case K_PREFIXLEN:
+				argc--;
+				if (prefixlen(*++argv) == 128) {
+					forcenet = 0;
+					ishost = 1;
+				} else {
+					forcenet = 1;
+					ishost = 0;
+				}
+				break;
+#endif
 			case K_MTU:
 			case K_HOPCOUNT:
 			case K_EXPIRE:
@@ -856,20 +922,20 @@ getaddr(which, s, hpp)
 	struct netent *np;
 	u_int32_t val;
 	char *t;
+	int afamily;  /* local copy of af so we can change it */
 
 	if (af == 0) {
 		af = AF_INET;
 		aflen = sizeof(struct sockaddr_in);
 	}
+	afamily = af;
 	rtm_addrs |= which;
 	switch (which) {
 	case RTA_DST:
 		su = &so_dst;
-		su->sa.sa_family = af;
 		break;
 	case RTA_GATEWAY:
 		su = &so_gate;
-		su->sa.sa_family = af;
 		break;
 	case RTA_NETMASK:
 		su = &so_mask;
@@ -879,7 +945,7 @@ getaddr(which, s, hpp)
 		break;
 	case RTA_IFP:
 		su = &so_ifp;
-		su->sa.sa_family = af;
+		afamily = AF_LINK;
 		break;
 	case RTA_IFA:
 		su = &so_ifa;
@@ -891,6 +957,7 @@ getaddr(which, s, hpp)
 		/*NOTREACHED*/
 	}
 	su->sa.sa_len = aflen;
+	su->sa.sa_family = afamily; /* cases that don't want it have left already */
 	if (strcmp(s, "default") == 0) {
 		switch (which) {
 		case RTA_DST:
@@ -903,8 +970,17 @@ getaddr(which, s, hpp)
 		}
 		return (0);
 	}
-	switch (af) {
+	switch (afamily) {
 #ifndef SMALL
+#ifdef INET6
+	case AF_INET6:
+		if (inet_pton(AF_INET6, s, (void *)&su->sin6.sin6_addr) == -1) {
+			(void) fprintf(stderr, "%s: bad value\n", s);
+			exit(1);
+		}
+		return 0;
+#endif
+
 	case AF_NS:
 		if (which == RTA_DST) {
 			extern short ns_bh[3];
@@ -995,6 +1071,33 @@ netdone:
 }
 
 #ifndef SMALL
+#ifdef INET6
+int
+prefixlen(s)
+	char *s;
+{
+	int len = atoi(s), q, r;
+
+	rtm_addrs |= RTA_NETMASK;	
+	if (len < -1 || len > 129) {
+		(void) fprintf(stderr, "%s: bad value\n", s);
+		exit(1);
+	}
+	
+	q = len >> 3;
+	r = len & 7;
+	so_mask.sin6.sin6_family = AF_INET6;
+	so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	memset((void *)&so_mask.sin6.sin6_addr, 0,
+		sizeof(so_mask.sin6.sin6_addr));
+	if (q > 0)
+		memset((void *)&so_mask.sin6.sin6_addr, 0xff, q);
+	if (r > 0)
+		*((u_char *)&so_mask.sin6.sin6_addr + q) = (0xff00 >> r) & 0xff;
+	return(len);
+}
+#endif
+
 int
 x25_makemask()
 {
@@ -1097,8 +1200,10 @@ monitor()
 		exit(0);
 	}
 	for(;;) {
+		long now;
 		n = read(s, msg, 2048);
-		(void) printf("got message of size %d\n", n);
+		now = time(NULL);
+		(void) printf("got message of size %d on %s", n, ctime(&now));
 		print_rtmsg((struct rt_msghdr *)msg, n);
 	}
 }
@@ -1201,6 +1306,9 @@ mask_addr()
 		return;
 	switch (so_dst.sa.sa_family) {
 	case AF_INET:
+#ifdef INET6
+	case AF_INET6:
+#endif
 	case AF_APPLETALK:
 #ifndef SMALL
 	case AF_NS:
@@ -1488,6 +1596,13 @@ sodump(su, which)
 		    which, link_ntoa(&su->sdl));
 		break;
 #ifndef SMALL
+#ifdef INET6
+	case AF_INET6:
+		(void) printf("%s: inet6 %s; ",
+		    which, inet_ntop(AF_INET6, &su->sin6.sin6_addr,
+				     ntop_buf, sizeof(ntop_buf)));
+		break;
+#endif
 	case AF_ISO:
 		(void) printf("%s: iso %s; ",
 		    which, iso_ntoa(&su->siso.siso_addr));
