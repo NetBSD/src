@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.21 1997/01/19 14:19:13 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.22 1997/02/01 10:45:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.21 1997/01/19 14:19:13 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.22 1997/02/01 10:45:03 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,6 @@ static char rcsid[] = "$NetBSD: ftp.c,v 1.21 1997/01/19 14:19:13 lukem Exp $";
 #include <varargs.h>
 
 #include "ftp_var.h"
-
-extern int h_errno;
 
 struct	sockaddr_in hisctladdr;
 struct	sockaddr_in data_addr;
@@ -290,6 +288,7 @@ void
 cmdabort()
 {
 
+	alarmtimer(0);
 	printf("\n");
 	(void) fflush(stdout);
 	abrtflag++;
@@ -476,6 +475,7 @@ void
 abortsend()
 {
 
+	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
 	printf("\nsend aborted\nwaiting for remote to finish abort\n");
@@ -650,16 +650,15 @@ sendrequest(cmd, local, remote, printnames)
 			for (bufp = buf; c > 0; c -= d, bufp += d)
 				if ((d = write(fileno(dout), bufp, c)) <= 0)
 					break;
-			if (hash && !progress) {
+			if (hash && (!progress || filesize < 0) ) {
 				while (bytes >= hashbytes) {
 					(void) putchar('#');
 					hashbytes += mark;
 				}
 				(void) fflush(stdout);
 			}
-			progressmeter(0);
 		}
-		if (hash && !progress && bytes > 0) {
+		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -677,7 +676,7 @@ sendrequest(cmd, local, remote, printnames)
 	case TYPE_A:
 		while ((c = getc(fin)) != EOF) {
 			if (c == '\n') {
-				while (hash && !progress &&
+				while (hash && (!progress || filesize < 0) &&
 				    (bytes >= hashbytes)) {
 					(void) putchar('#');
 					(void) fflush(stdout);
@@ -696,9 +695,8 @@ sendrequest(cmd, local, remote, printnames)
 				bytes++;
 			}
 #endif
-			progressmeter(0);
 		}
-		if (hash && !progress) {
+		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -713,8 +711,7 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		break;
 	}
-	if (bytes > 0)
-		progressmeter(1);
+	progressmeter(1);
 	if (closefunc != NULL)
 		(*closefunc)(fin);
 	(void) fclose(dout);
@@ -755,6 +752,7 @@ void
 abortrecv()
 {
 
+	alarmtimer(0);
 	mflag = 0;
 	abrtflag = 0;
 	printf("\nreceive aborted\nwaiting for remote to finish abort\n");
@@ -943,16 +941,15 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			if ((d = write(fileno(fout), buf, c)) != c)
 				break;
 			bytes += c;
-			if (hash && !progress) {
+			if (hash && (!progress || filesize < 0)) {
 				while (bytes >= hashbytes) {
 					(void) putchar('#');
 					hashbytes += mark;
 				}
 				(void) fflush(stdout);
 			}
-			progressmeter(0);
 		}
-		if (hash && !progress && bytes > 0) {
+		if (hash && (!progress || filesize < 0) && bytes > 0) {
 			if (bytes < mark)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -996,7 +993,7 @@ done:
 			if (c == '\n')
 				bare_lfs++;
 			while (c == '\r') {
-				while (hash && !progress &&
+				while (hash && (!progress || filesize < 0) &&
 				    (bytes >= hashbytes)) {
 					(void) putchar('#');
 					(void) fflush(stdout);
@@ -1018,7 +1015,6 @@ done:
 			(void) putc(c, fout);
 			bytes++;
 	contin2:	;
-			progressmeter(0);
 		}
 break2:
 		if (bare_lfs) {
@@ -1026,7 +1022,7 @@ break2:
 			    "mode\n", bare_lfs);
 			printf("File may not have transferred correctly.\n");
 		}
-		if (hash && !progress) {
+		if (hash && (!progress || filesize < 0)) {
 			if (bytes < hashbytes)
 				(void) putchar('#');
 			(void) putchar('\n');
@@ -1041,8 +1037,7 @@ break2:
 			warn("local: %s", local);
 		break;
 	}
-	if (bytes > 0)
-		progressmeter(1);
+	progressmeter(1);
 	if (closefunc != NULL)
 		(*closefunc)(fout);
 	(void) signal(SIGINT, oldintr);
@@ -1270,6 +1265,7 @@ void
 psabort()
 {
 
+	alarmtimer(0);
 	abrtflag++;
 }
 
@@ -1370,6 +1366,7 @@ void
 abortpt()
 {
 
+	alarmtimer(0);
 	printf("\n");
 	(void) fflush(stdout);
 	ptabflg++;

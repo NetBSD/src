@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 1997/01/30 03:36:26 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.3 1997/02/01 10:45:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.2 1997/01/30 03:36:26 thorpej Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.3 1997/02/01 10:45:08 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -378,12 +378,22 @@ remotemodtime(file, noisy)
 	return (rtime);
 }
 
+void
+updateprogressmeter()
+{
+
+	progressmeter(0);
+}
+
 /*
  * Display a transfer progress bar if progress is non-zero.
- * - Before transfer, set filesize to size of file (-1 = unknown),
- *   and call with flag < 0
- * - During transfer, update bytes and call with flag = 0
- * - After transfer, call with flag > 1
+ * SIGALRM is hijacked for use by this function.
+ * - Before the transfer, set filesize to size of file (or -1 if unknown),
+ *   and call with flag = -1. This starts the once per second timer,
+ *   and a call to updateprogressmeter() upon SIGALRM.
+ * - During the transfer, updateprogressmeter will call progressmeter
+ *   with flag = 0
+ * - After the transfer, call with flag = 1
  */
 static struct timeval start;
 
@@ -391,42 +401,40 @@ void
 progressmeter(flag)
 	int flag;
 {
-	static struct timeval before;
-	static int ttywidth;
-	struct winsize winsize;
-	struct timeval now, td;
+	/*
+	 * List of order of magnitude prefixes.
+	 * The last is `P', as 2^64 = 16384 Petabytes
+	 */
+	static const char prefixes[] = " KMGTP";
+
+	static struct timeval lastupdate;
+	static off_t lastsize;
+	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
 	double elapsed;
 	int ratio, barlength, i, remaining;
-	char prefixes[] = " KMGTP";	/* `P' because 2^64 = 16384 Petabytes */
+	char buf[256];
 
-	if (flag < 0)
+	if (flag == -1) {
 		(void) gettimeofday(&start, (struct timezone *)0);
+		lastupdate = start;
+		lastsize = restart_point;
+	}
+	(void) gettimeofday(&now, (struct timezone *)0);
 	if (!progress || filesize <= 0)
 		return;
-	if (flag < 0) {
-		before.tv_sec = -1;
-		if (ioctl(fileno(stdin), TIOCGWINSZ, &winsize) < 0)
-			ttywidth = 80;
-		else
-			ttywidth = winsize.ws_col;
-	} else if (flag == 0) {
-		(void) gettimeofday(&now, (struct timezone *)0);
-		if (now.tv_sec <= before.tv_sec)
-			return;
-	}
-	before = now;
 	cursize = bytes + restart_point;
 
 	ratio = cursize * 100 / filesize;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	printf("\r%3d%% ", ratio);
+	snprintf(buf, sizeof(buf), "\r%3d%% ", ratio);
 
 	barlength = ttywidth - 30;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
-		printf("|%.*s%*s|", i, 
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		    "|%.*s%*s|", i, 
 "*****************************************************************************"
 "*****************************************************************************",
 		    barlength - i, "");
@@ -438,28 +446,53 @@ progressmeter(flag)
 		i++;
 		abbrevsize >>= 10;
 	}
-	printf(" %5qd %c%c  ", abbrevsize, prefixes[i],
+	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+	    " %5qd %c%c ", abbrevsize, prefixes[i],
 	    prefixes[i] == ' ' ? ' ' : 'B');
+
+	timersub(&now, &lastupdate, &wait);
+	if (cursize > lastsize) {
+		lastupdate = now;
+		lastsize = cursize;
+		if (wait.tv_sec >= STALLTIME) {	/* fudge out stalled time */
+			start.tv_sec += wait.tv_sec;
+			start.tv_usec += wait.tv_usec;
+		}
+		wait.tv_sec = 0;
+	}
 
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+
 	if (bytes <= 0 || elapsed <= 0.0) {
-		printf("   --:--");
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		    "   --:-- ETA");
+	} else if (wait.tv_sec >= STALLTIME) {
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		    " - stalled -");
 	} else {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
 		i = remaining / 3600;
 		if (i)
-			printf("%2d:", i);
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			    "%2d:", i);
 		else
-			printf("   ");
+			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+			    "   ");
 		i = remaining % 3600;
-		printf("%02d:%02d", i / 60, i % 60);
+		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
+		    "%02d:%02d ETA", i / 60, i % 60);
 	}
-	printf(" ETA");
+	(void)write(STDOUT_FILENO, buf, strlen(buf));
 
-	if (flag > 0)
+	if (flag == -1) {
+		(void) signal(SIGALRM, updateprogressmeter);
+		alarmtimer(1);		/* set alarm timer for 1 Hz */
+	} else if (flag == 1) {
+		alarmtimer(0);
 		(void) putchar('\n');
+	}
 	fflush(stdout);
 }
 
@@ -514,17 +547,11 @@ void
 list_vertical(sl)
 	StringList *sl;
 {
-	static int ttywidth;
-	struct winsize winsize;
 	int i, j, w;
 	int columns, width, lines, items;
 	char *p;
 
 	width = items = 0;
-	if (fromatty && ioctl(fileno(stdin), TIOCGWINSZ, &winsize) != -1)
-		ttywidth = winsize.ws_col;
-	else
-		ttywidth = 80;
 
 	for (i = 0 ; i < sl->sl_cur ; i++) {
 		w = strlen(sl->sl_str[i]);
@@ -553,4 +580,35 @@ list_vertical(sl)
 			}
 		}
 	}
+}
+
+/*
+ * Update the global ttywidth value, using TIOCGWINSZ.
+ */
+void
+setttywidth(a)
+	int a;
+{
+	struct winsize winsize;
+
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) != -1)
+		ttywidth = winsize.ws_col;
+	else
+		ttywidth = 80;
+}
+
+/*
+ * Set the SIGALRM interval timer for wait seconds, 0 to disable.
+ */
+
+void
+alarmtimer(wait)
+	int wait;
+{
+	struct itimerval itv;
+
+	itv.it_value.tv_sec = wait;
+	itv.it_value.tv_usec = 0;
+	itv.it_interval = itv.it_value;
+	setitimer(ITIMER_REAL, &itv, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.1 1997/01/19 14:19:10 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.1 1997/01/19 14:19:10 lukem Exp $";
+static char rcsid[] = "$NetBSD: fetch.c,v 1.2 1997/02/01 10:45:00 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ static char rcsid[] = "$NetBSD: fetch.c,v 1.1 1997/01/19 14:19:10 lukem Exp $";
 
 #include <netinet/in.h>
 
+#include <arpa/ftp.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
@@ -70,6 +71,8 @@ static char rcsid[] = "$NetBSD: fetch.c,v 1.1 1997/01/19 14:19:10 lukem Exp $";
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 
+jmp_buf	httpabort;
+
 /*
  * Retrieve an http:// URL, via a proxy if necessary.
  * Modifies the string argument given.
@@ -83,10 +86,12 @@ http_get(line)
 	int i, out, port, s;
 	size_t buflen, len;
 	char c, *cp, *cp2, *savefile, *portnum, *path, buf[4096];
-	char *proxy, *host;
+	char *proxyenv, *proxy, *host;
+	sig_t oldintr;
 	off_t hashbytes;
 
 	s = -1;
+	proxy = NULL;
 
 	host = line + sizeof(HTTP_URL) - 1;
 	path = strchr(host, '/');		/* find path */
@@ -104,13 +109,13 @@ http_get(line)
 	if (EMPTYSTRING(savefile))
 		goto cleanup_http_get;
 
-	proxy = getenv(HTTP_PROXY);
-	if (proxy != NULL) {				/* use proxy */
-		if (strncmp(proxy, HTTP_URL, sizeof(HTTP_URL) - 1) != 0) {
-			warnx("Malformed proxy url: %s", proxy);
+	proxyenv = getenv(HTTP_PROXY);
+	if (proxyenv != NULL) {				/* use proxy */
+		if (strncmp(proxyenv, HTTP_URL, sizeof(HTTP_URL) - 1) != 0) {
+			warnx("Malformed proxy url: %s", proxyenv);
 			goto cleanup_http_get;
 		}
-		proxy = strdup(proxy);
+		proxy = strdup(proxyenv);
 		if (proxy == NULL)
 			errx(1, "Can't allocate memory for proxy url.");
 		host = proxy + sizeof(HTTP_URL) - 1;
@@ -144,7 +149,7 @@ http_get(line)
 
 		hp = gethostbyname(host);
 		if (hp == NULL) {
-			warnx("unknown host: %s", host);
+			warnx("%s: %s", host, hstrerror(h_errno));
 			goto cleanup_http_get;
 		}
 		if (hp->h_addrtype != AF_INET) {
@@ -175,13 +180,15 @@ http_get(line)
 		warn("Can't connect to %s", host);
 		goto cleanup_http_get;
 	}
-	printf("Connected to %s%s.\n", proxy ? "proxy " : "", host);
 
 	/*
 	 * Construct and send the request.  We're expecting a return
 	 * status of "200". Proxy requests don't want leading /.
 	 */
-	printf("Requesting %s%s\n", proxy ? "" : "/", path);
+	if (!proxy)
+		printf("Requesting %s:%d/%s\n", line, ntohs(port), path);
+	else
+		printf("Requesting %s (via %s)\n", line, proxyenv);
 	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\n\n",
 	    proxy ? "" : "/", path);
 	buflen = strlen(buf);
@@ -249,13 +256,20 @@ http_get(line)
 		goto cleanup_http_get;
 	}
 
+	/* Trap signals */
+	oldintr = NULL;
+	if (setjmp(httpabort)) {
+		if (oldintr)
+			(void) signal(SIGINT, oldintr);
+		goto cleanup_http_get;
+	}
+	oldintr = signal(SIGINT, aborthttp);
+
 	bytes = 0;
 	hashbytes = mark;
 	progressmeter(-1);
-		/* XXX trap signals... */
-	/*
-	 * Finally, suck down the file.
-	 */
+
+	/* Finally, suck down the file. */
 	i = 0;
 	while ((len = read(s, buf, sizeof(buf))) > 0) {
 		bytes += len;
@@ -274,7 +288,6 @@ http_get(line)
 			}
 			(void) fflush(stdout);
 		}
-		progressmeter(0);
 	}
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
@@ -286,14 +299,15 @@ http_get(line)
 		warn("Reading from socket");
 		goto cleanup_http_get;
 	}
-	if (bytes > 0)
-		progressmeter(1);
-	printf("Successfully retrieved file.\n");
+	progressmeter(1);
+	if (verbose)
+		printf("Successfully retrieved file.\n");
+	(void) signal(SIGINT, oldintr);
 
 	close(s);
 	close(out);
 	if (proxy)
-		free(host);
+		free(proxy);
 	return(0);
 
 improper:
@@ -304,6 +318,19 @@ cleanup_http_get:
 	if (proxy)
 		free(proxy);
 	return(-1);
+}
+
+/*
+ * Abort a http retrieval
+ */
+void
+aborthttp()
+{
+
+	alarmtimer(0);
+	printf("\nhttp fetch aborted\n");
+	(void) fflush(stdout);
+	longjmp(httpabort, 1);
 }
 
 /*
@@ -330,17 +357,20 @@ auto_fetch(argc, argv)
 	char *cp, *line, *host, *dir, *file, *portnum;
 	int rval, xargc, argpos;
 
-	rval = 0;
+	argpos = 0;
 
-	if (setjmp(toplevel))
-		exit(0);
+	if (setjmp(toplevel)) {
+		if (connected)
+			disconnect(0, NULL);
+		return(argpos + 1);
+	}
 	(void) signal(SIGINT, intr);
 	(void) signal(SIGPIPE, lostpeer);
 
 	/*
 	 * Loop through as long as there's files to fetch.
 	 */
-	for (argpos = 0 ; rval == 0 && argpos < argc ; free(line), argpos++) {
+	for (rval = 0; (rval == 0) && (argpos < argc); free(line), argpos++) {
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
 		host = dir = file = portnum = NULL;
@@ -423,7 +453,7 @@ auto_fetch(argc, argv)
 			}
 			setpeer(xargc, xargv);
 			if (connected == 0) {
-				warnx("Can't connect to host `%s'.", host);
+				warnx("Can't connect to host `%s'", host);
 				rval = argpos + 1;
 				continue;
 			}
@@ -460,11 +490,17 @@ auto_fetch(argc, argv)
 			continue;
 		}
 
+		if (!verbose)
+			printf("Retrieving %s/%s\n", dir ? dir : "", file);
+
 		/* Fetch the file. */
 		xargv[0] = "get";
 		xargv[1] = file;
 		xargv[2] = NULL;
 		get(2, xargv);
+
+		if ((code / 100) != COMPLETE)	/* XXX: is this valid? */
+			rval = argpos + 1;
 	}
 	if (connected && rval != -1)
 		disconnect(0, NULL);
