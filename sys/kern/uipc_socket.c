@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.92 2004/03/17 09:58:15 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.93 2004/03/17 10:03:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.92 2004/03/17 09:58:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.93 2004/03/17 10:03:26 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -147,6 +147,7 @@ int use_sosend_loan = 0;
 int use_sosend_loan = 1;
 #endif
 
+struct simplelock so_pendfree_slock = SIMPLELOCK_INITIALIZER;
 struct mbuf *so_pendfree;
 
 #ifndef SOMAXKVA
@@ -160,6 +161,11 @@ int sokvawaiters;
 #define	SOCK_LOAN_CHUNK		65536
 
 static size_t sodopendfree(struct socket *);
+static size_t sodopendfreel(struct socket *);
+
+/*
+ * sokvaalloc: allocate kva for loan.
+ */
 
 vaddr_t
 sokvaalloc(vsize_t len, struct socket *so)
@@ -167,33 +173,74 @@ sokvaalloc(vsize_t len, struct socket *so)
 	vaddr_t lva;
 	int s;
 
+	/*
+	 * reserve kva.
+	 */
+
+	s = splvm();
+	simple_lock(&so_pendfree_slock);
 	while (socurkva + len > somaxkva) {
-		if (sodopendfree(so))
+		size_t freed;
+
+		/*
+		 * try to do pendfree.
+		 */
+
+		freed = sodopendfreel(so);
+
+		/*
+		 * if some kva was freed, try again.
+		 */
+
+		if (freed)
 			continue;
+
 		SOSEND_COUNTER_INCR(&sosend_kvalimit);
-		s = splvm();
 		sokvawaiters++;
-		(void) tsleep(&socurkva, PVM, "sokva", 0);
+		(void) ltsleep(&socurkva, PVM, "sokva", 0, &so_pendfree_slock);
 		sokvawaiters--;
-		splx(s);
 	}
+	socurkva += len;
+	simple_unlock(&so_pendfree_slock);
+	splx(s);
+
+	/*
+	 * allocate kva.
+	 */
 
 	lva = uvm_km_valloc_wait(kernel_map, len);
 	if (lva == 0)
 		return (0);
-	socurkva += len;
 
 	return lva;
 }
 
+/*
+ * sokvafree: free kva for loan.
+ */
+
 void
 sokvafree(vaddr_t sva, vsize_t len)
 {
+	int s;
+
+	/*
+	 * free kva.
+	 */
 
 	uvm_km_free(kernel_map, sva, len);
+
+	/*
+	 * unreserve kva.
+	 */
+
+	s = splvm();
+	simple_lock(&so_pendfree_slock);
 	socurkva -= len;
 	if (sokvawaiters)
 		wakeup(&socurkva);
+	simple_unlock(&so_pendfree_slock);
+	splx(s);
 }
 
 static void
@@ -228,28 +275,58 @@ sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 static size_t
 sodopendfree(struct socket *so)
 {
-	struct mbuf *m;
-	size_t rv = 0;
 	int s;
+	size_t rv;
 
 	s = splvm();
+	simple_lock(&so_pendfree_slock);
+	rv = sodopendfreel(so);
+	simple_unlock(&so_pendfree_slock);
+	splx(s);
+
+	return rv;
+}
+
+/*
+ * sodopendfreel: free mbufs on "pendfree" list.
+ * unlock and relock so_pendfree_slock when freeing mbufs.
+ *
+ * => called with so_pendfree_slock held.
+ * => called at splvm.
+ */
+
+static size_t
+sodopendfreel(struct socket *so)
+{
+	size_t rv = 0;
+
+	LOCK_ASSERT(simple_lock_held(&so_pendfree_slock));
 
 	for (;;) {
+		struct mbuf *m;
+		struct mbuf *next;
+
 		m = so_pendfree;
 		if (m == NULL)
 			break;
-		so_pendfree = m->m_next;
-		splx(s);
+		so_pendfree = NULL;
+		simple_unlock(&so_pendfree_slock);
+		/* XXX splx */
 
-		rv += m->m_ext.ext_size;
-		sodoloanfree((m->m_flags & M_EXT_PAGES) ?
-		    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
-		    m->m_ext.ext_size);
-		s = splvm();
-		pool_cache_put(&mbpool_cache, m);
+		for (; m != NULL; m = next) {
+			next = m->m_next;
+
+			rv += m->m_ext.ext_size;
+			sodoloanfree((m->m_flags & M_EXT_PAGES) ?
+			    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
+			    m->m_ext.ext_size);
+			pool_cache_put(&mbpool_cache, m);
+		}
+
+		/* XXX splvm */
+		simple_lock(&so_pendfree_slock);
 	}
 
-	splx(s);
 	return (rv);
 }
 
@@ -259,16 +336,30 @@ soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	int s;
 
 	if (m == NULL) {
+
+		/*
+		 * called from MEXTREMOVE.
+		 */
+
 		sodoloanfree(NULL, buf, size);
 		return;
 	}
 
+	/*
+	 * postpone freeing mbuf.
+	 *
+	 * we can't do it in interrupt context
+	 * because we need to put kva back to kernel_map.
+	 */
+
 	s = splvm();
+	simple_lock(&so_pendfree_slock);
 	m->m_next = so_pendfree;
 	so_pendfree = m;
-	splx(s);
 	if (sokvawaiters)
 		wakeup(&socurkva);
+	simple_unlock(&so_pendfree_slock);
+	splx(s);
 }
 
 static long
