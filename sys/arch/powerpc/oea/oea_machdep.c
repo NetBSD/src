@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.17 2004/06/09 23:24:51 kleink Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.18 2004/06/23 22:04:44 kleink Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.17 2004/06/09 23:24:51 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.18 2004/06/23 22:04:44 kleink Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -260,6 +260,8 @@ oea_init(void (*handler)(void))
 #define	MTSPR_IBAT1L	0x7c1383a6
 #define	NOP		0x60000000
 #define	B		0x48000000
+#define	TLBSYNC		0x7c00046c
+#define	SYNC		0x7c0004ac
 
 #ifdef ALTIVEC
 #define	MFSPR_VRSAVE	0x7c0042a6
@@ -325,6 +327,24 @@ oea_init(void (*handler)(void))
 	 */
 	__syncicache((void *) trapstart,
 	    (uintptr_t) trapend - (uintptr_t) trapstart);
+
+	/*
+	 * If we are on a MPC601 processor, we need to zap any tlbsync
+	 * instructions into sync.  This differs from the above in
+	 * examing all kernel text, as opposed to just the exception handling.
+	 * We sync the icache on every instruction found since there are
+	 * only very few of them.
+	 */
+	if (cpuvers == MPC601) {
+		extern int kernel_text[], etext[];
+		int *ip;
+
+		for (ip = kernel_text; ip < etext; ip++)
+			if (*ip == TLBSYNC) {
+				*ip = SYNC;
+				__syncicache(ip, sizeof(*ip));
+		}
+	}
 
 	/*
 	 * external interrupt handler install
