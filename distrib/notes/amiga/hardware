@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.26 1998/10/29 20:57:03 is Exp $	
+	$NetBSD: hardware,v 1.27 1998/11/12 19:59:30 veego Exp $	
 
 NetBSD/amiga _VER runs on any Amiga that has a 68020 or better CPU with
 some form of MMU, and on 68060 DraCos.
@@ -65,6 +65,7 @@ Supported devices include:
 		ASDG Ethernet
 		A4066 Ethernet
 		Ariadne Ethernet
+		Ariadne II Ethernet
 		Quicknet Ethernet
 	ARCnet controllers:
 		A2060 ARCnet
