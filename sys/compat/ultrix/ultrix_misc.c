@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.59 2000/07/20 08:29:41 nisimura Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.60 2000/11/19 12:47:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -141,7 +141,7 @@ static int ultrix_to_bsd_flock __P((struct ultrix_flock *, struct flock *));
 static void bsd_to_ultrix_flock __P((struct flock *, struct ultrix_flock *));
 
 extern struct sysent ultrix_sysent[];
-extern char *ultrix_syscallnames[];
+extern const char * const ultrix_syscallnames[];
 
 
 /*
