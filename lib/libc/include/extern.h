@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2003/01/18 11:23:53 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2003/09/27 03:14:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -42,5 +42,5 @@ int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
 
 struct sigaction;
 int __sigaction_sigtramp __P((int, const struct sigaction *,
-    struct sigaction *, void *, int));
+    struct sigaction *, const void *, int));
 __END_DECLS
