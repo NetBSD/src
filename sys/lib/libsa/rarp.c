@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.5 1995/02/20 11:04:16 mycroft Exp $	*/
+/*	$NetBSD: rarp.c,v 1.6 1995/06/27 15:27:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -65,12 +65,18 @@ rarp_getipaddress(sock)
 	struct iodesc *d;
 	register struct ether_arp *ap;
 	struct {
-		u_char header[HEADER_SIZE];
-		struct ether_arp wrarp;
+		u_char header[ETHER_SIZE];
+		struct {
+			struct ether_arp arp;
+			u_char pad[18]; 	/* 60 - sizeof(arp) */
+		} data;
 	} wbuf;
 	struct {
-		u_char header[HEADER_SIZE];
-		struct ether_arp rrarp;
+		u_char header[ETHER_SIZE];
+		struct {
+			struct ether_arp arp;
+			u_char pad[24]; 	/* extra space */
+		} data;
 	} rbuf;
 
 #ifdef RARP_DEBUG
@@ -86,20 +92,19 @@ rarp_getipaddress(sock)
 		printf("rarp: d=%x\n", (u_int)d);
 #endif
 
-	ap = &wbuf.wrarp;
-	bzero(ap, sizeof(*ap));
-
+	bzero((char*)&wbuf.data, sizeof(wbuf.data));
+	ap = &wbuf.data.arp;
 	ap->arp_hrd = htons(ARPHRD_ETHER);
 	ap->arp_pro = htons(ETHERTYPE_IP);
 	ap->arp_hln = sizeof(ap->arp_sha); /* hardware address length */
 	ap->arp_pln = sizeof(ap->arp_spa); /* protocol address length */
-	ap->arp_op = htons(ARPOP_REQUEST);
+	ap->arp_op = htons(ARPOP_REVREQUEST);
 	bcopy(d->myea, ap->arp_sha, 6);
 	bcopy(d->myea, ap->arp_tha, 6);
 
 	if (sendrecv(d,
-	    rarpsend, ap, sizeof(*ap),
-	    rarprecv, &rbuf.rrarp, sizeof(rbuf.rrarp)) < 0) {
+	    rarpsend, &wbuf.data, sizeof(wbuf.data),
+	    rarprecv, &rbuf.data, sizeof(rbuf.data)) < 0) {
 		printf("No response for RARP request\n");
 		return(INADDR_ANY);
 	}
@@ -140,28 +145,65 @@ rarprecv(d, pkt, len, tleft)
 
 #ifdef RARP_DEBUG
  	if (debug)
- 		printf("rarprecv: called\n");
+		printf("rarprecv: ");
 #endif
 
 	len = readether(d, pkt, len, tleft);
-	if (len == -1 || len < sizeof(struct ether_arp))
+	if (len == -1 || len < sizeof(struct ether_arp)) {
+#ifdef RARP_DEBUG
+		if (debug)
+			printf("bad len=%d\n", len);
+#endif
 		goto bad;
+	}
 
 	eh = (struct ether_header *)pkt - 1;
-	if (ntohs(eh->ether_type) != ETHERTYPE_REVARP)
+	if (eh->ether_type != htons(ETHERTYPE_REVARP)) {
+#ifdef RARP_DEBUG
+		if (debug)
+			printf("bad type=0x%x\n", ntohs(eh->ether_type));
+#endif
 		goto bad;
+	}
 
+	/* Verify that this is the right packet. */
 	ap = (struct ether_arp *)pkt;
-	if (ntohs(ap->arp_op) != ARPOP_REPLY ||
-	    ntohs(ap->arp_pro) != ETHERTYPE_IP)
-		goto bad;
 
-	if (bcmp(ap->arp_tha, d->myea, 6))
+	if (ap->arp_op != htons(ARPOP_REVREPLY)) {
+#ifdef RARP_DEBUG
+		if (debug)
+			printf("bad op=0x%x\n", ntohs(ap->arp_op));
+#endif
 		goto bad;
+	}
+
+	if (ap->arp_pro != htons(ETHERTYPE_IP)) {
+#ifdef RARP_DEBUG
+		if (debug)
+			printf("bad procol=0x%x\n", ntohs(ap->arp_pro));
+#endif
+
+		goto bad;
+	}
+
+	if (bcmp(ap->arp_tha, d->myea, 6)) {
+#ifdef RARP_DEBUG
+		if (debug)
+			printf("wrong ether address\n");
+#endif
+		goto bad;
+	}
 
 	bcopy(ap->arp_tpa, (char *)&myip, sizeof(myip));
 	bcopy(ap->arp_spa, (char *)&rootip, sizeof(rootip));
 
+	d->myip = myip;
+#ifdef RARP_DEBUG
+	if (debug)
+		printf("myip=0x%x\n", myip);
+#endif
+
+	/* XXX - Compute our "natural" netmask? */
 	return (0);
 
 bad:
