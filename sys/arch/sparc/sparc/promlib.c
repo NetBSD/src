@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.1 1999/02/14 12:23:03 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.2 1999/02/18 17:23:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ getpropint(node, name, deflt)
 
 #if 0
 /*
- * search_prom() recursively searches a PROM tree for a given node
+ * prom_search() recursively searches a PROM tree for a given node
  */
 int
 prom_search(rootnode, name)
@@ -278,26 +278,26 @@ prom_search(rootnode, name)
 	int node = rootnode;
 	char buf[32];
 
+#define GPSA(nm)	getpropstringA(node, nm, buf, sizeof buf)
 	if (node == findroot() ||
-	    !strcmp("hierarchical", getpropstringA(node, "device_type", buf)))
+	    !strcmp("hierarchical", GPSA("device type")))
 		node = firstchild(node);
 
 	if (node == 0)
-		panic("search_prom: null node");
+		panic("prom_search: null node");
 
 	do {
-		if (strcmp(getpropstringA(node, "name", buf), name) == 0)
-			return (node);
+		if (strcmp(GPSA("name"), name) == 0)
+			return node;
 
-		if ( (strcmp(getpropstringA(node, "device_type", buf),
-			     "hierarchical") == 0
-		     || strcmp(getpropstringA(node, "name", buf), "iommu") == 0)
-		    && (rtnnode = search_prom(node, name)) != 0)
-			return (rtnnode);
+		if ((strcmp(GPSA("device_type"), "hierarchical") == 0 ||
+		    strcmp(GPSA("name"), "iommu") == 0)
+		    && (rtnnode = prom_search(node, name)) != 0)
+			return rtnnode;
 
-	} while ((node = nextsibling(node)));
+	} while ((node = nextsibling(node)) != NULL);
 
-	return (0);
+	return 0;
 }
 #endif
 
