@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.15 1997/07/29 22:26:01 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.16 1997/07/30 12:01:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -181,6 +181,7 @@ ncr53c9x_attach(sc, adapter, dev)
 	sc->sc_ccf &= 7;
 
 	/* Reset state & bus */
+	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
 	sc->sc_state = 0;
 	ncr53c9x_init(sc, 1);
 
@@ -304,11 +305,11 @@ ncr53c9x_init(sc, doreset)
 		/* Cancel any active commands. */
 		sc->sc_state = NCR_CLEANING;
 		if ((ecb = sc->sc_nexus) != NULL) {
-			ecb->xs->error = XS_DRIVER_STUFFUP;
+			ecb->xs->error = XS_TIMEOUT;
 			ncr53c9x_done(sc, ecb);
 		}
 		while ((ecb = sc->nexus_list.tqh_first) != NULL) {
-			ecb->xs->error = XS_DRIVER_STUFFUP;
+			ecb->xs->error = XS_TIMEOUT;
 			ncr53c9x_done(sc, ecb);
 		}
 	}
@@ -322,11 +323,10 @@ ncr53c9x_init(sc, doreset)
 	for (r = 0; r < 8; r++) {
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
-		int fl = sc->sc_dev.dv_cfdata->cf_flags;
 
-		ti->flags = ((sc->sc_minsync && !(fl & (1<<(r+8))))
+		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
 				? T_NEGOTIATE : 0) |
-				((fl & (1<<r)) ? T_RSELECTOFF : 0) |
+				((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
 				T_NEED_TO_RESET;
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
@@ -565,10 +565,8 @@ ncr53c9x_scsi_cmd(xs)
 	    sc_link->target));
 
 	flags = xs->flags;
-	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
+	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL)
 		return TRY_AGAIN_LATER;
-	}
 
 	/* Initialize ecb */
 	ecb->xs = xs;
@@ -739,7 +737,7 @@ ncr53c9x_done(sc, ecb)
 	if (xs->error == XS_NOERROR) {
 		xs->status = ecb->stat;
 		if ((ecb->flags & ECB_ABORT) != 0) {
-			xs->error = XS_DRIVER_STUFFUP;
+			xs->error = XS_TIMEOUT;
 		} else if ((ecb->flags & ECB_SENSE) != 0) {
 			xs->error = XS_SENSE;
 		} else if ((ecb->stat & ST_MASK) == SCSI_CHECK) {
@@ -1389,7 +1387,7 @@ ncr53c9x_intr(sc)
 				}
 				if (sc->sc_state == NCR_CONNECTED ||
 				    sc->sc_state == NCR_SELECTING) {
-					ecb->xs->error = XS_DRIVER_STUFFUP;
+					ecb->xs->error = XS_TIMEOUT;
 					ncr53c9x_done(sc, ecb);
 				}
 				return 1;
@@ -1530,7 +1528,7 @@ printf("%s: ILL: ESP100 work-around activated\n", sc->sc_dev.dv_xname);
 					goto out;
 				}
 
-				ecb->xs->error = XS_DRIVER_STUFFUP;
+				ecb->xs->error = XS_TIMEOUT;
 				goto finish;
 
 			case NCR_DISCONNECT:
@@ -2008,6 +2006,7 @@ ncr53c9x_timeout(arg)
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
+	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 	int s;
 
 	sc_print_addr(sc_link);
@@ -2028,12 +2027,22 @@ ncr53c9x_timeout(arg)
 	if (ecb->flags & ECB_ABORT) {
 		/* abort timed out */
 		printf(" AGAIN\n");
+
 		ncr53c9x_init(sc, 1);
 	} else {
 		/* abort the operation that has timed out */
 		printf("\n");
 		xs->error = XS_TIMEOUT;
 		ncr53c9x_abort(sc, ecb);
+
+		/* Disable sync mode if stuck in a data phase */
+		if (ecb == sc->sc_nexus &&
+		    (ti->flags & T_SYNCMODE) != 0 &&
+		    (sc->sc_phase & (MSGI|CDI)) == 0) {
+			sc_print_addr(sc_link);
+			printf("sync negotiation disabled\n");
+			sc->sc_cfflags |= (1<<(sc_link->target+8));
+		}
 	}
 
 	splx(s);
