@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 1999/05/20 20:15:27 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.149 1999/05/21 00:08:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -156,6 +156,8 @@ struct extent *dvmamap24;
 void	dumpsys __P((void));
 void	stackdump __P((void));
 
+caddr_t	mdallocsys __P((caddr_t));
+
 /*
  * Machine-dependent startup code
  */
@@ -203,16 +205,13 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	size = (vsize_t)allocsys(NULL, NULL);
+	size = (vsize_t)allocsys(NULL, mdallocsys);
 
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
 
-	if ((vsize_t)(allocsys(v, NULL) - v) != size)
+	if ((vsize_t)(allocsys(v, mdallocsys) - v) != size)
 		panic("startup: table size inconsistency");
-
-	if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
-		bufpages = (128 * (65536/MAXBSIZE));
 
         /*
          * allocate virtual and physical memory for the buffers.
@@ -308,6 +307,18 @@ cpu_startup()
 	bufinit();
 
 	pmap_redzone();
+}
+
+caddr_t
+mdallocsys(v)
+	caddr_t v;
+{
+
+	/* Clip bufpages if necessary. */
+	if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
+		bufpages = (128 * (65536/MAXBSIZE));
+
+	return (v);
 }
 
 /*
