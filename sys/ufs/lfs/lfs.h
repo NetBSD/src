@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs.h,v 1.25 2000/06/06 20:19:14 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.25.2.1 2000/09/14 18:50:17 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -85,28 +85,70 @@
  * Parameters and generic definitions
  */
 #define BW_CLEAN	1
-#define MIN_FREE_SEGS	4
+#define MIN_FREE_SEGS	2
 #define LFS_MAX_ACTIVE	10
 #define LFS_MAXDIROP	(desiredvnodes>>2)
 
 /* For convenience */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
+#define LFS_SET_UINO(ip, flags) do {                                    \
+        if (((flags) & IN_ACCESSED) && !((ip)->i_flag & IN_ACCESSED))   \
+                ++(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_CLEANING) && !((ip)->i_flag & IN_CLEANING))   \
+                ++(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_MODIFIED) && !((ip)->i_flag & IN_MODIFIED))   \
+                ++(ip)->i_lfs->lfs_uinodes;                             \
+        (ip)->i_flag |= (flags);                                        \
+} while(0)
+
+#define LFS_CLR_UINO(ip, flags) do {                                    \
+        if (((flags) & IN_ACCESSED) && ((ip)->i_flag & IN_ACCESSED))    \
+                --(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_CLEANING) && ((ip)->i_flag & IN_CLEANING))    \
+                --(ip)->i_lfs->lfs_uinodes;                             \
+        if (((flags) & IN_MODIFIED) && ((ip)->i_flag & IN_MODIFIED))    \
+                --(ip)->i_lfs->lfs_uinodes;                             \
+        (ip)->i_flag &= ~(flags);                                       \
+	if ((ip)->i_lfs->lfs_uinodes < 0) {                             \
+		panic("lfs_uinodes < 0");                               \
+	}                                                               \
+} while(0)
+
 
 #ifndef LFS_ATIME_IFILE
-# define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
+#define	LFS_ITIMES(ip, acc, mod, cre) {					\
+	if ((ip)->i_flag & IN_ACCESS) {					\
+		(ip)->i_ffs_atime = (acc)->tv_sec;			\
+		(ip)->i_ffs_atimensec = (acc)->tv_nsec;			\
+		LFS_SET_UINO(ip, IN_ACCESSED);				\
+	}								\
+	if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {			\
+		if ((ip)->i_flag & IN_UPDATE) {				\
+			(ip)->i_ffs_mtime = (mod)->tv_sec;		\
+			(ip)->i_ffs_mtimensec = (mod)->tv_nsec;		\
+			(ip)->i_modrev++;				\
+		}							\
+		if ((ip)->i_flag & IN_CHANGE) {				\
+			(ip)->i_ffs_ctime = (cre)->tv_sec;		\
+			(ip)->i_ffs_ctimensec = (cre)->tv_nsec;		\
+		}							\
+		LFS_SET_UINO(ip, IN_MODIFIED);				\
+	}								\
+	(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);		\
+}
 #else
 # define LFS_ITIMES(ip, acc, mod, cre) {                                \ 
 	struct buf *ibp;						\
 	IFILE *ifp;							\
 									\
         if ((ip)->i_flag & IN_ACCESS) {                         	\
-	LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);			\
+		LFS_IENTRY(ifp, ip->i_lfs, ip->i_number, ibp);		\
        		ifp->if_atime = (mod);					\
        		VOP_BWRITE(bp);						\
 		(ip)->i_flag &= ~IN_ACCESS;				\
         }                                                       	\
         if ((ip)->i_flag & (IN_CHANGE | IN_UPDATE)) {       		\
-                (ip)->i_flag |= IN_MODIFIED;                            \
+		LFS_SET_UINO(ip, IN_MODIFIED);				\
                 if ((ip)->i_flag & IN_UPDATE) {                         \
                         (ip)->i_ffs_mtime = (mod)->tv_sec;		\
                         (ip)->i_ffs_mtimensec = (mod)->tv_nsec;         \
@@ -121,7 +163,7 @@
 }
 #endif
 
-#define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & (IN_MODIFIED|IN_CLEANING)))
+#define WRITEINPROG(vp) (vp->v_dirtyblkhd.lh_first && !(VTOI(vp)->i_flag & (IN_MODIFIED|IN_ACCESSED|IN_CLEANING)))
 
 /* Here begins the berkeley code */
 
@@ -139,6 +181,7 @@ struct segusage {
 #define	SEGUSE_ACTIVE		0x01	/* segment is currently being written */
 #define	SEGUSE_DIRTY		0x02	/* segment has data in it */
 #define	SEGUSE_SUPERBLOCK	0x04	/* segment contains a superblock */
+#define SEGUSE_ERROR            0x08    /* cleaner: do not clean segment */
 	u_int32_t su_flags;
 };
 
@@ -175,7 +218,7 @@ struct dlfs {
         u_int32_t dlfs_bfree;     /* 36: number of free disk blocks */
         u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
         int32_t   dlfs_avail;     /* 44: blocks available for writing */
-        u_int32_t dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
+        int32_t   dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
         ufs_daddr_t  dlfs_idaddr; /* 52: inode file disk address */
         u_int32_t dlfs_ifile;     /* 56: inode file inode number */
         ufs_daddr_t  dlfs_lastseg; /* 60: address of last segment written */
@@ -220,9 +263,11 @@ struct dlfs {
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
 	/* XXX this is 2 bytes only to pad to a quad boundary */
 	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
-        int8_t    dlfs_pad[184];  /* 324: round to 512 bytes */
+	int32_t   dlfs_dmeta;     /* 324: total number of dirty summaries */
+	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
+        int8_t    dlfs_pad[176];  /* 332: round to 512 bytes */
 /* Checksum -- last valid disk field. */
-        u_int32_t dlfs_cksum;     /* 328: checksum for superblock checking */
+        u_int32_t dlfs_cksum;     /* 508: checksum for superblock checking */
 };
 
 /* Maximum number of io's we can have pending at once */
@@ -279,6 +324,9 @@ struct lfs {
 #define lfs_clean lfs_dlfs.dlfs_clean
 #define lfs_fsmnt lfs_dlfs.dlfs_fsmnt
 #define lfs_nclean lfs_dlfs.dlfs_nclean
+#define lfs_dmeta lfs_dlfs.dlfs_dmeta
+#define lfs_minfreeseg lfs_dlfs.dlfs_minfreeseg
+
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
@@ -306,6 +354,7 @@ struct lfs {
 	struct lock lfs_freelock;
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */
 	int       lfs_nadirop;		/* number of active dirop nodes */
+	long      lfs_ravail;           /* blocks pre-reserved for writing */
 };
 
 /*
@@ -347,8 +396,10 @@ struct ifile {
  * to pass information between the cleaner and the kernel.
  */
 typedef struct _cleanerinfo {
-	u_int32_t clean;		/* K: number of clean segments */
-	u_int32_t dirty;		/* K: number of dirty segments */
+	u_int32_t clean;		/* number of clean segments */
+	u_int32_t dirty;		/* number of dirty segments */
+	u_int32_t bfree;		/* disk blocks free */
+	int32_t   avail;		/* disk blocks available */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
@@ -494,15 +545,35 @@ struct segment {
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 };
 
+/*
+ * Macros for determining free space on the disk, with the variable metadata
+ * of segment summaries and inode blocks taken into account.
+ */
+/* Estimate number of clean blocks not available for writing */
+#define LFS_EST_CMETA(F) (int32_t)((((F)->lfs_dmeta *                        \
+				     (int64_t)(F)->lfs_nclean) /             \
+				      ((F)->lfs_nseg - (F)->lfs_nclean)))
+
+/* Estimate total size of the disk not including metadata */
+#define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
+
+/* Estimate number of blocks actually available for writing */
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta)
+
+/* Amount of non-meta space not available to mortal man */
+#define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *                      \
+                                   (u_int64_t)(F)->lfs_minfree) /            \
+			          100)
+
+/* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
-	(((C)->cr_uid == 0 && (F)->lfs_bfree >= (BB)) ||		\
-	((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
+	((((C) == NOCRED || (C)->cr_uid == 0) &&			\
+          LFS_EST_BFREE(F) >= (BB)) ||					\
+	 ((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
 
+/* Can an ordinary user write BB blocks */
 #define IS_FREESPACE(F, BB)						\
-	((F)->lfs_bfree > ((F)->lfs_dsize * (F)->lfs_minfree / 100 + (BB)))
-
-#define ISSPACE_XXX(F, BB)						\
-	((F)->lfs_bfree >= (BB))
+          (LFS_EST_BFREE(F) >= (BB) + LFS_EST_RSVD(F))
 
 /* Statistics Counters */
 struct lfs_stats {

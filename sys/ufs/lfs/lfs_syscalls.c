@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.41.4.3 2000/07/13 20:19:20 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.41.4.4 2000/09/14 18:50:19 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -169,6 +169,7 @@ sys_lfs_markv(p, v, retval)
 	int j;
 #endif
 	int numlocked=0, numrefed=0;
+	ino_t maxino;
 
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
@@ -180,7 +181,10 @@ sys_lfs_markv(p, v, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	
+
+	maxino = (dbtofsb(fs, VTOI(fs->lfs_ivnode)->i_ffs_blocks) -
+		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
+
 	origcnt = cnt = SCARG(uap, blkcnt);
 	start = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	error = copyin(SCARG(uap, blkiov), start, cnt * sizeof(BLOCK_INFO));
@@ -240,6 +244,11 @@ sys_lfs_markv(p, v, retval)
 			}
 		}
 #endif /* LFS_TRACK_IOS */
+		/* Bounds-check incoming data, avoid panic for failed VGET */
+		if (blkp->bi_inode <= 0 || blkp->bi_inode >= maxino) {
+			error = EINVAL;
+			goto again;
+		}
 		/*
 		 * Get the IFILE entry (only once) and see if the file still
 		 * exists.
@@ -255,7 +264,7 @@ sys_lfs_markv(p, v, retval)
 					iwritten++;
 #endif
 				if(lfs_fastvget_unlock) {
-					VOP_UNLOCK(vp,0);
+					VOP_UNLOCK(vp, 0);
 					numlocked--;
 				}
 				lfs_vunref(vp);
@@ -300,11 +309,11 @@ sys_lfs_markv(p, v, retval)
 				numrefed++;
 			}
 			if(error) {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG_LFS
 				printf("lfs_markv: lfs_fastvget failed with %d (ino %d, segment %d)\n", 
 				       error, blkp->bi_inode,
 				       datosn(fs, blkp->bi_daddr));
-#endif /* DIAGNOSTIC */
+#endif /* DEBUG_LFS */
 				/*
 				 * If we got EAGAIN, that means that the
 				 * Inode was locked.  This is
@@ -353,9 +362,7 @@ sys_lfs_markv(p, v, retval)
                                 if(ifp->if_daddr == blkp->bi_daddr
 				   || blkp->bi_daddr == LFS_FORCE_WRITE)
 				{
-					if(!(ip->i_flag & IN_CLEANING))
-						fs->lfs_uinodes++;
-				        ip->i_flag |= IN_CLEANING;
+					LFS_SET_UINO(ip, IN_CLEANING);
 				}
                                 brelse(bp);
                         }
@@ -440,7 +447,7 @@ sys_lfs_markv(p, v, retval)
 			iwritten++;
 #endif
 		if(lfs_fastvget_unlock) {
-			VOP_UNLOCK(vp,0);
+			VOP_UNLOCK(vp, 0);
 			numlocked--;
 		}
 		lfs_vunref(vp);
@@ -610,7 +617,7 @@ sys_lfs_bmapv(p, v, retval)
 			 */
 			if(v_daddr != LFS_UNUSED_DADDR) {
 				if(need_unlock) {
-					VOP_UNLOCK(vp,0);
+					VOP_UNLOCK(vp, 0);
 					numlocked--;
 				}
 				lfs_vunref(vp);
@@ -644,23 +651,29 @@ sys_lfs_bmapv(p, v, retval)
 					need_unlock = 0;
 					continue;
 				}
+				numrefed++;
 				if(VOP_ISLOCKED(vp)) {
-					/* printf("lfs_bmapv: inode %d inlocked\n",ip->i_number); */
+#ifdef DEBUG_LFS
+					printf("lfs_bmapv: inode %d inlocked\n",ip->i_number);
+#endif
+					v_daddr = LFS_UNUSED_DADDR;
 					need_unlock = 0;
+					lfs_vunref(vp);
+					--numrefed;
+					continue;
 				} else {
-					VOP_LOCK(vp,LK_EXCLUSIVE);
+					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					need_unlock = FVG_UNLOCK;
 					numlocked++;
 				}
-				numrefed++;
 			} else {
 				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
 				if(error) {
-					v_daddr = LFS_UNUSED_DADDR;
-					need_unlock = 0;
 #ifdef DEBUG_LFS
 					printf("lfs_bmapv: vget of ino %d failed with %d",blkp->bi_inode,error);
 #endif
+					v_daddr = LFS_UNUSED_DADDR;
+					need_unlock = 0;
 					continue;
 				} else {
 					need_unlock = FVG_PUT;
@@ -709,7 +722,7 @@ sys_lfs_bmapv(p, v, retval)
 	 */
 	if(v_daddr != LFS_UNUSED_DADDR) {
 		if(need_unlock) {
-			VOP_UNLOCK(vp,0);
+			VOP_UNLOCK(vp, 0);
 			numlocked--;
 		}
 		lfs_vunref(vp);
@@ -772,43 +785,24 @@ sys_lfs_segclean(p, v, retval)
 		return (EBUSY);
 	}
 	
-	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize) - 1;
-	fs->lfs_bfree += (sup->su_nsums * LFS_SUMMARY_SIZE / DEV_BSIZE) +
-		sup->su_ninos * btodb(fs->lfs_bsize);
+	fs->lfs_avail += fsbtodb(fs, fs->lfs_ssize);
+	if (sup->su_flags & SEGUSE_SUPERBLOCK)
+		fs->lfs_avail -= btodb(LFS_SBPAD);
+	fs->lfs_bfree += sup->su_nsums * btodb(LFS_SUMMARY_SIZE) +
+		fsbtodb(fs, sup->su_ninos);
+	fs->lfs_dmeta -= sup->su_nsums * btodb(LFS_SUMMARY_SIZE) +
+		fsbtodb(fs, sup->su_ninos);
+	if (fs->lfs_dmeta < 0)
+		fs->lfs_dmeta = 0;
 	sup->su_flags &= ~SEGUSE_DIRTY;
-#ifdef DEBUG_LFS
-	/* XXX KS - before we return, really empty the segment (i.e., fill
-	   it with zeroes).  This is only for debugging purposes. */
-	{
-		daddr_t start;
-		int offset, sizeleft, bufsize;
-		struct buf *zbp;
-		int s;
-
-		start = sntoda(fs, SCARG(uap, segment));
-		offset = (sup->su_flags & SEGUSE_SUPERBLOCK) ? LFS_SBPAD : 0;
-		sizeleft = fs->lfs_ssize * fs->lfs_bsize - offset;
-		while(sizeleft > 0) {
-			bufsize = (sizeleft < MAXPHYS) ? sizeleft : MAXPHYS;
-			zbp = lfs_newbuf(VTOI(fs->lfs_ivnode)->i_devvp, start+(offset/DEV_BSIZE), bufsize);
-			memset(zbp->b_data, 'Z', bufsize);
-			zbp->b_saveaddr = (caddr_t)fs;
-			s = splbio();
-			++zbp->b_vp->v_numoutput;
-			++fs->lfs_iocount;
-			splx(s);
-			VOP_STRATEGY(zbp);
-			offset += bufsize;
-			sizeleft -= bufsize;
-		}
-	}
-#endif
 	(void) VOP_BWRITE(bp);
 	
 	LFS_CLEANERINFO(cip, fs, bp);
 	++cip->clean;
 	--cip->dirty;
 	fs->lfs_nclean = cip->clean;
+	cip->bfree = fs->lfs_bfree;
+	cip->avail = fs->lfs_avail - fs->lfs_ravail;
 	(void) VOP_BWRITE(bp);
 	wakeup(&fs->lfs_avail);
 
@@ -908,7 +902,8 @@ lfs_fasthashget(dev, ino, need_unlock, vpp)
 	 */
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
 		if ((*vpp)->v_flag & VXLOCK) {
-			printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",ino);
+			printf("lfs_fastvget: vnode VXLOCKed for ino %d\n",
+			       ino);
 			clean_vnlocked++;
 #ifdef LFS_EAGAIN_FAIL
 			return EAGAIN;
@@ -920,15 +915,17 @@ lfs_fasthashget(dev, ino, need_unlock, vpp)
 			return EAGAIN;
 		}
 		if (VOP_ISLOCKED(*vpp)) {
+#ifdef DEBUG_LFS
 			printf("lfs_fastvget: ino %d inlocked by pid %d\n",
-			    ip->i_number, (*vpp)->v_lock.lk_lockholder);
+			       ip->i_number, (*vpp)->v_lock.lk_lockholder);
+#endif
 			clean_inlocked++;
 #ifdef LFS_EAGAIN_FAIL
 			lfs_vunref(*vpp);
 			return EAGAIN;
 #endif /* LFS_EAGAIN_FAIL */
 		} else {
-			VOP_LOCK(*vpp,LK_EXCLUSIVE);
+			vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 			*need_unlock |= FVG_UNLOCK;
 		}
 	} else
