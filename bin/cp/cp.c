@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cp.c	5.26 (Berkeley) 10/27/91";*/
-static char rcsid[] = "$Id: cp.c,v 1.8 1994/02/25 00:43:25 jtc Exp $";
+static char rcsid[] = "$Id: cp.c,v 1.9 1994/03/28 02:07:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -356,8 +356,8 @@ copy_file(fs, dne)
 	 * wins some CPU back.
 	 */
 	if (fs->st_size <= 8 * 1048576) {
-		if ((p = mmap(NULL, fs->st_size, PROT_READ,
-		    MAP_FILE, from_fd, (off_t)0)) == (char *)-1)
+		if ((p = mmap(NULL, fs->st_size, PROT_READ, 0, from_fd,
+		    (off_t)0)) == (char *)-1)
 			err("%s: %s", from.p_path, strerror(errno));
 		if (write(to_fd, p, fs->st_size) != fs->st_size)
 			err("%s: %s", to.p_path, strerror(errno));

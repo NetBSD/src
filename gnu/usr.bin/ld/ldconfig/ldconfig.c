@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.5 1994/01/29 02:03:31 jtc Exp $
+ *	$Id: ldconfig.c,v 1.6 1994/03/28 02:09:16 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -366,7 +366,7 @@ listhints()
 	}
 
 	msize = PAGSIZ;
-	addr = mmap(0, msize, PROT_READ, MAP_FILE|MAP_COPY, fd, 0);
+	addr = mmap(0, msize, PROT_READ, MAP_COPY, fd, 0);
 
 	if (addr == (caddr_t)-1) {
 		perror(_PATH_LD_HINTS);
@@ -386,7 +386,7 @@ listhints()
 
 	if (hdr->hh_ehints > msize) {
 		if (mmap(addr+msize, hdr->hh_ehints - msize,
-				PROT_READ, MAP_FILE|MAP_COPY|MAP_FIXED,
+				PROT_READ, MAP_COPY|MAP_FIXED,
 				fd, msize) != (caddr_t)(addr+msize)) {
 
 			perror(_PATH_LD_HINTS);
