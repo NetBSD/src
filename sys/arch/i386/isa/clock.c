@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.57 1999/02/07 16:18:00 drochner Exp $	*/
+/*	$NetBSD: clock.c,v 1.58 1999/02/07 17:29:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -104,6 +104,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <i386/isa/timerreg.h>
+#include <dev/clock_subr.h>
 
 #include "pcppi.h"
 #if (NPCPPI > 0)
@@ -128,18 +129,12 @@ void	sysbeep __P((int, int));
 void	rtcinit __P((void));
 int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
-static int yeartoday __P((int));
 int 	bcdtobin __P((int));
 int	bintobcd __P((int));
 
 
 __inline u_int mc146818_read __P((void *, u_int));
 __inline void mc146818_write __P((void *, u_int, u_int));
-
-#define	SECMIN	((unsigned)60)			/* seconds per minute */
-#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
-#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
 
 __inline u_int
 mc146818_read(sc, reg)
@@ -460,16 +455,6 @@ rtcput(regs)
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
-static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-static int
-yeartoday(year)
-	int year;
-{
-
-	return ((year % 4) ? 365 : 366);
-}
-
 int
 bcdtobin(n)
 	int n;
@@ -516,7 +501,7 @@ int rtc_update_century = 0;
 
 /*
  * Expand a two-digit year as read from the clock chip
- * into an offset relative to 1900.
+ * into full width.
  * Being here, deal with the CMOS century byte.
  */
 static int clock_expandyear __P((int));
@@ -527,7 +512,7 @@ clock_expandyear(clockyear)
 	int s, clockcentury, cmoscentury;
 
 	clockcentury = (clockyear < 70) ? 20 : 19;
-	clockyear = ((clockcentury == 20) ? clockyear + 100 : clockyear);
+	clockyear += 100 * clockcentury;
 
 	if (rtc_update_century < 0)
 		return (clockyear);
@@ -554,7 +539,7 @@ clock_expandyear(clockyear)
 		/* Kludge to roll over century. */
 		if ((rtc_update_century > 0) ||
 		    ((cmoscentury == 19) && (clockcentury == 20) &&
-		     (clockyear == 00))) {
+		     (clockyear == 2000))) {
 			printf("WARNING: Setting NVRAM century to %d\n",
 			       clockcentury);
 			s = splclock();
@@ -577,9 +562,7 @@ inittodr(base)
 	time_t base;
 {
 	mc_todregs rtclk;
-	time_t n;
-	int sec, min, hr, dom, mon, yr;
-	int i, days = 0;
+	struct clock_ymdhms dt;
 	int s;
 
 	/*
@@ -603,15 +586,17 @@ inittodr(base)
 		goto fstime;
 	}
 	splx(s);
+#ifdef DEBUG
+	printf("readclock: %x/%x/%x/%x/%x/%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
+	       rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
+#endif
 
-	sec = bcdtobin(rtclk[MC_SEC]);
-	min = bcdtobin(rtclk[MC_MIN]);
-	hr = bcdtobin(rtclk[MC_HOUR]);
-	dom = bcdtobin(rtclk[MC_DOM]);
-	mon = bcdtobin(rtclk[MC_MONTH]);
-	yr = bcdtobin(rtclk[MC_YEAR]);
-
-	yr = clock_expandyear(yr);
+	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
+	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
+	dt.dt_hour = bcdtobin(rtclk[MC_HOUR]);
+	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
+	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
+	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
 
 	/*
 	 * If time_t is 32 bits, then the "End of Time" is 
@@ -624,45 +609,33 @@ inittodr(base)
 	 * Note the code is self eliminating once time_t goes to 64 bits.
 	 */
 	if (sizeof(time_t) <= sizeof(int32_t)) {
-		if (yr >= 138) {
+		if (dt.dt_year >= 2038) {
 			printf("WARNING: RTC time at or beyond 2038.\n");
-			yr = 137;
+			dt.dt_year = 2037;
 			printf("WARNING: year set back to 2037.\n");
 			printf("WARNING: CHECK AND RESET THE DATE!\n");
 		}
 	}
 
-	n = sec + 60 * min + 3600 * hr;
-	n += (dom - 1) * 3600 * 24;
+	time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+#ifdef DEBUG
+	printf("=>%ld (%ld)\n", time.tv_sec, base);
+#endif
 
-	if (yeartoday(yr) == 366)
-		month[1] = 29;
-	for (i = mon - 2; i >= 0; i--)
-		days += month[i];
-	month[1] = 28;
-	for (i = 70; i < yr; i++)
-		days += yeartoday(i);
-	n += days * 3600 * 24;
-
-	n += rtc_offset * 60;
-
-	if (base < n - 5*SECYR)
+	if (base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
-	else if (base > n + 5*SECYR) {
+	else if (base > time.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 		goto fstime;
 	}
 
 	timeset = 1;
-	time.tv_sec = n;
-	time.tv_usec = 0;
 	return;
 
 fstime:
 	timeset = 1;
 	time.tv_sec = base;
-	time.tv_usec = 0;
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
@@ -673,8 +646,8 @@ void
 resettodr()
 {
 	mc_todregs rtclk;
-	time_t n;
-	int diff, i, j, century;
+	struct clock_ymdhms dt;
+	int century;
 	int s;
 
 	/*
@@ -689,35 +662,26 @@ resettodr()
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	diff = rtc_offset * 60;
-	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
-	rtclk[MC_SEC] = bintobcd(n % 60);
-	n /= 60;
-	rtclk[MC_MIN] = bintobcd(n % 60);
-	rtclk[MC_HOUR] = bintobcd(n / 60);
+	clock_secs_to_ymdhms(time.tv_sec - rtc_offset * 60, &dt);
 
-	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
-	rtclk[MC_DOW] = (n + 4) % 7;  /* 1/1/70 is Thursday */
+	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
+	rtclk[MC_MIN] = bintobcd(dt.dt_min);
+	rtclk[MC_HOUR] = bintobcd(dt.dt_hour);
+	rtclk[MC_DOW] = dt.dt_wday;
+	rtclk[MC_YEAR] = bintobcd(dt.dt_year % 100);
+	rtclk[MC_MONTH] = bintobcd(dt.dt_mon);
+	rtclk[MC_DOM] = bintobcd(dt.dt_day);
 
-	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
-		n -= i;
-
-	rtclk[MC_YEAR] = bintobcd((j - 1900)%100);
-	century = bintobcd(j/100);
-
-	if (i == 366)
-		month[1] = 29;
-	for (i = 0; n >= month[i]; i++)
-		n -= month[i];
-	month[1] = 28;
-	rtclk[MC_MONTH] = bintobcd(++i);
-
-	rtclk[MC_DOM] = bintobcd(++n);
-
+#ifdef DEBUG
+	printf("setclock: %x/%x/%x/%x/%x/%x\n", rtclk[MC_YEAR], rtclk[MC_MONTH],
+	       rtclk[MC_DOM], rtclk[MC_HOUR], rtclk[MC_MIN], rtclk[MC_SEC]);
+#endif
 	s = splclock();
 	rtcput(&rtclk);
-	if (rtc_update_century > 0)
+	if (rtc_update_century > 0) {
+		century = bintobcd(dt.dt_year / 100);
 		mc146818_write(NULL, NVRAM_CENTURY, century); /* XXX softc */
+	}
 	splx(s);
 }
 
