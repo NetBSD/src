@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.20 2003/05/10 23:12:43 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.21 2003/05/16 15:34:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.20 2003/05/10 23:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.21 2003/05/16 15:34:25 itojun Exp $");
 
 #include "rnd.h"
 
@@ -632,8 +632,8 @@ ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
 	lp->d_ncylinders = sc->sc_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	lp->d_type = DTYPE_LD;
-	strcpy(lp->d_typename, "unknown");
-	strcpy(lp->d_packname, "fictitious");
+	strlcpy(lp->d_typename, "unknown", sizeof(lp->d_typename));
+	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_secperunit = sc->sc_secperunit;
 	lp->d_rpm = 7200;
 	lp->d_interleave = 1;
