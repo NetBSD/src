@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.3 2002/08/09 04:17:26 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.4 2002/08/09 14:10:30 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -1070,7 +1070,9 @@ emac_wol_intr(void *arg)
 static int
 emac_serr_intr(void *arg)
 {
+#ifdef EMAC_EVENT_COUNTERS
 	struct emac_softc *sc = arg;
+#endif
 	u_int32_t esr;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_serr);
@@ -1088,7 +1090,9 @@ emac_serr_intr(void *arg)
 static int
 emac_txeob_intr(void *arg)
 {
+#ifdef EMAC_EVENT_COUNTERS
 	struct emac_softc *sc = arg;
+#endif
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_txintr);
 	emac_txreap(arg);
