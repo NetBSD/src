@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.33 1998/11/16 02:28:13 simonb Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.34 1999/03/13 23:17:04 ender Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -328,7 +328,7 @@ menu to complete the installation.
 
 message distset
 {The NetBSD distribution is broken into a collection of distribution
-sets.  There are some basic sets that are needed by all instalations
+sets.  There are some basic sets that are needed by all installations
 and there are some other sets that are not needed by all installations.
 You may choose to install all of them (Full installation) or you 
 select from the optional distribution sets.
