@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1999/01/16 13:27:30 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1999/07/20 01:28:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -61,6 +61,7 @@ PLAN	*c_follow __P((char ***, int));
 PLAN	*c_fstype __P((char ***, int));
 PLAN	*c_group __P((char ***, int));
 PLAN	*c_inum __P((char ***, int));
+PLAN	*c_iregex __P((char ***, int));
 PLAN	*c_links __P((char ***, int));
 PLAN	*c_ls __P((char ***, int));
 PLAN	*c_mmin __P((char ***, int));
@@ -75,6 +76,7 @@ PLAN	*c_print __P((char ***, int));
 PLAN	*c_print0 __P((char ***, int));
 PLAN	*c_printx __P((char ***, int));
 PLAN	*c_prune __P((char ***, int));
+PLAN	*c_regex __P((char ***, int));
 PLAN	*c_size __P((char ***, int));
 PLAN	*c_type __P((char ***, int));
 PLAN	*c_user __P((char ***, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.12 1999/01/16 13:27:31 simonb Exp $	*/
+/*	$NetBSD: option.c,v 1.13 1999/07/20 01:28:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.12 1999/01/16 13:27:31 simonb Exp $");
+__RCSID("$NetBSD: option.c,v 1.13 1999/07/20 01:28:42 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ static OPTION const options[] = {
 	{ "-fstype",	N_FSTYPE,	c_fstype,	1 },
 	{ "-group",	N_GROUP,	c_group,	1 },
 	{ "-inum",	N_INUM,		c_inum,		1 },
+	{ "-iregex",	N_IREGEX,	c_iregex,	1 },
 	{ "-links",	N_LINKS,	c_links,	1 },
 	{ "-ls",	N_LS,		c_ls,		0 },
 	{ "-mmin",	N_MMIN,		c_mmin,		1 },
@@ -94,6 +95,7 @@ static OPTION const options[] = {
 	{ "-print0",	N_PRINT0,	c_print0,	0 },
 	{ "-printx",	N_PRINTX,	c_printx,	0 },
 	{ "-prune",	N_PRUNE,	c_prune,	0 },
+	{ "-regex",	N_REGEX,	c_regex,	1 },
 	{ "-size",	N_SIZE,		c_size,		1 },
 	{ "-type",	N_TYPE,		c_type,		1 },
 	{ "-user",	N_USER,		c_user,		1 },
