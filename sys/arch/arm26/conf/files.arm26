@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.43 2001/12/20 01:20:24 thorpej Exp $
+# $NetBSD: files.arm26,v 1.44 2001/12/21 22:41:18 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -102,7 +102,8 @@ device	arcwskbd: wskbddev
 attach	arcwskbd at arckbd
 device	arcwsmouse: wsmousedev
 attach	arcwsmouse at arckbd
-file	arch/arm26/ioc/arckbd.c			arckbd		needs-flag
+file	arch/arm26/ioc/arckbd.c			arckbd | arcwskbd | arcwsmouse
+								needs-flag
 file	arch/arm26/ioc/arckbdmap.c		arckbd
 
 # On-board WD 1772 floppy controller (usually at bank 1 irq 12 fiq 0/1)
@@ -130,14 +131,16 @@ device	arcpp
 attach	arcpp at ioc
 file	arch/arm26/ioc/arcpp.c			arcpp		needs-flag
 
-include "dev/podulebus/files.podulebus"
 
 # Podule interface (podules listed later) (usually at bank 4 irq 13 fiq 6)
 #  Unix backplanes also use bank 6
 #  MEMC podules also use the iobus directly
-# XXX How on Earth do we codify all that?
 device	unixbp
 attach	unixbp at ioc
+
+# NB: files.podulebus must come after unixbp is defined, to get the
+# attachments in the right order.
+include "dev/podulebus/files.podulebus"
 attach	podulebus at ioc
 file	arch/arm26/podulebus/podulebus.c	podulebus
 file	arch/arm26/podulebus/podloader_asm.S	podloader	needs-flag
