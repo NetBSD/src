@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -13,36 +14,47 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Adam Glass.
- * 4. The name of the Author may not be used to endorse or promote products
+ * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.19 1994/07/11 03:41:29 gwr Exp $
+ *	$Id: locore.s,v 1.20 1994/09/20 16:52:28 gwr Exp $
  */
+
 #include "assym.s"
+#include <machine/trap.h>
 #include <machine/asm.h>
 #include <sys/syscall.h>
-					| remember this is a fun project :)
 
+| remember this is a fun project :)
 
+| Internal stack used during process switch.
 .globl tmpstk
 .data
 tmpstk_low:
 .space NBPG
-tmpstk:
+tmpstk:		|tmpstk_end
+
+| This is where the UPAGES get mapped.
 .set	_kstack,MONSHORTSEG
 .globl _kstack
+
+| Some other handy addresses, mostly so DDB can print meaningful things.
+.set	_prom_start,MONSTART
+.globl	_prom_start
+.set	_prom_base,PROM_BASE
+.globl	_prom_base
+
 .text
 .globl start; .globl _start
 
@@ -60,10 +72,10 @@ start: _start:
 	movsb d0, CONTEXT_REG		| now in context 0
 
 /*
- * In order to "move" the kernel to high memory, we are going to copy
- * the first 8 Mb of pmegs such that we will be mapped at the linked address.
- * This is all done by playing with the segment map, and then propigating it
- * to the other contexts.
+ * In order to "move" the kernel to high memory, we are going to copy the
+ * first 4 Mb of pmegs such that we will be mapped at the linked address.
+ * This is all done by playing with the segment map, and then propagating
+ * it to the other contexts.
  * We will unscramble which pmegs we actually need later.
  *
  */
@@ -73,13 +85,11 @@ percontext:					|loop among the contexts
 	movl #(SEGMAP_BASE+KERNBASE), a0	| base index into seg map
 
 perpmeg:
-
 	movsb d1, a0@				| establish mapping
 	addql #1, d1			
 	addl #NBSG, a0
-	cmpl #(MAINMEM_MONMAP / NBSG), d1	| are we done
+	cmpl #(0x400000 / NBSG), d1		| up to 4MB yet?
 	bne perpmeg
-
 
 	addql #1, d0				| next context ....
 	cmpl #CONTEXT_NUM, d0

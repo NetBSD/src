@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -13,22 +14,21 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Adam Glass.
- * 4. The name of the Author may not be used to endorse or promote products
+ * 4. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: isr.c,v 1.10 1994/07/25 18:28:04 gwr Exp $
+ *	$Id: isr.c,v 1.11 1994/09/20 16:52:27 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -37,7 +37,10 @@
 #include <sys/vmmeter.h>
 
 #include <net/netisr.h>
+
 #include <machine/cpu.h>
+#include <machine/mon.h>
+#include <machine/obio.h>
 #include <machine/isr.h>
 
 #include "vector.h"
@@ -52,7 +55,7 @@
  * 
  */
 
-extern char *interrupt_reg;
+volatile u_char *interrupt_reg;
 
 extern void level0intr(), level1intr(), level2intr(), level3intr(),
     level4intr(), level5intr(), level6intr(), level7intr();
@@ -76,10 +79,14 @@ struct isr *isr_array[NISR];
 
 void isr_init()
 {
-    int i;
+	int i;
 
-    for (i = 0; i < NISR; i++)
-	isr_array[i] = NULL;
+	for (i = 0; i < NISR; i++)
+		isr_array[i] = NULL;
+
+	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
+	if (!interrupt_reg)
+		mon_panic("interrupt reg VA not found\n");
 }
 
 void isr_add_custom(level, handler)
@@ -289,6 +296,8 @@ soft1intr(fp)
 		if (sun3sir.sir_which[SIR_SPARE3]) {
 			sun3sir.sir_which[SIR_SPARE3] = 0;
 			/* spare3intr(); */
+			/* XXX - For testing (db> w sun3sir 1) */
+			sun3_rom_abort();
 		}
 	}
 	return (1);

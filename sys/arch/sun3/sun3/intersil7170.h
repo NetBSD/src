@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/intersil7170.h,v 1.4 1994/02/04 08:20:57 glass Exp $
+ * $Id: intersil7170.h,v 1.5 1994/09/20 16:52:26 gwr Exp $
  */
 
 /*
@@ -52,9 +52,9 @@ struct intersil_map {		       /* from p. 7 of 10 */
 
 struct intersil7170 {
     struct intersil_map counters;
-    struct intersil_map ram;	/* should be ok as both are word aligned */
-    unsigned char interrupt_reg;
-    unsigned char command_reg;
+    struct intersil_map clk_ram;	/* should be ok as both are word aligned */
+    unsigned char clk_intr_reg;
+    unsigned char clk_cmd_reg;
 };
 
 /*  bit assignments for command register, p. 6 of 10, write-only */

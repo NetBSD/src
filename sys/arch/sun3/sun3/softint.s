@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,11 +36,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
+ *	from: Utah $Hdr: locore.s 1.58 91/04/22$
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp
- *	$Id: softint.s,v 1.6 1994/06/29 05:34:16 gwr Exp $
+ *
+ *	$Id: softint.s,v 1.7 1994/09/20 16:52:29 gwr Exp $
  */
 
 /*
@@ -60,10 +60,6 @@
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
-
-#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
-	.comm	_ssir,1
-#endif	/* NEED_SSIR */
 
 	.globl	_astpending
 rei:
@@ -114,40 +110,7 @@ Laststkadj:
 #endif
 
 Lchksir:
-#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
-	tstb	_ssir			| SIR pending?
-	jeq	Ldorte			| no, all done
-	movl	d0,sp@-			| need a scratch register
-	movw	sp@(4),d0		| get SR
-	andw	#PSL_IPL7,d0		| mask all but IPL
-	jne	Lnosir			| came from interrupt, no can do
-	movl	sp@+,d0			| restore scratch register
-Lgotsir:
-	movw	#SPL1,sr		| prevent others from servicing int
-	tstb	_ssir			| too late?
-	jeq	Ldorte			| yes, oh well...
-	clrl	sp@-			| stack adjust
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(FR_SP)		|    the users SP
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_SSIR,sp@-		| type == software interrupt
-	jbsr	_trap			| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#8,sp			| pop SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
-	rte
-#endif
-Lnosir:
-	movl	sp@+,d0			| restore scratch register
-#endif	/* NEED_SSIR */
-
+| Sun3 has real interrupt register (no need for simulated one).
 Ldorte:
 #ifdef STACKCHECK
 	movw	#SPL6,sr		| avoid trouble
@@ -187,25 +150,16 @@ Ldorte1:
 #endif
 	rte				| real return
 
-/* this code is un-altered from the hp300 version */
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
 
-ENTRY(spl0)
-	moveq	#0,d0
-	movw	sr,d0			| get old SR for return
-	movw	#PSL_LOWIPL,sr		| restore new SR
-#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
-	tstb	_ssir			| software interrupt pending?
-	jeq	Lspldone		| no, all done
-	subql	#4,sp			| make room for RTE frame
-	movl	sp@(4),sp@(2)		| position return address
-	clrw	sp@(6)			| set frame type 0
-	movw	#PSL_LOWIPL,sp@		| and new SR
-	jra	Lgotsir			| go handle it
-Lspldone:
-#endif	/* NEED_SSIR */
+| Set processor priority level calls.  Most are implemented with
+| inline asm expansions.  However, we need one instantiation here
+| in case some non-optimized code makes external references.
+| Most places will use the inlined function param.h supplies.
+	.globl	__spl
+__spl:
+	movl	sp@(4),d1
+	clrl	d0
+	movw	sr,d0
+	movw	d1,sr
 	rts
+

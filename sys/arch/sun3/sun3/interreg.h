@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/interreg.h,v 1.3 1994/02/04 08:20:55 glass Exp $
+ * $Id: interreg.h,v 1.4 1994/09/20 16:52:24 gwr Exp $
  */
 #define IREG_CLOCK_ENAB_7  0x80
 #define IREG_RESERVED      0x40
@@ -39,4 +39,6 @@
 #define IREG_SOFT_ENAB_1   0x02
 #define IREG_ALL_ENAB      0x01
 
-#define IREG_BITS "\20\8CLOCK_7\7RESERVED\6CLOCK_5\5VIDEO\4SOFT_3\3SOFT_2\2SOFT_1\1ALL\n"
+#define IREG_BITS "\20\8CLK7\7RSV6\6CLK5\5VIDEO\4SOFT3\3SOFT2\2SOFT1\1ALL\n"
+
+int set_clk_mode(u_char on, u_char off, int enable);

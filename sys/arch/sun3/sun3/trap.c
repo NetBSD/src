@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,7 +39,7 @@
  *
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.27 1994/07/19 02:45:55 gwr Exp $
+ *	$Id: trap.c,v 1.28 1994/09/20 16:52:30 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -353,39 +354,7 @@ trap(type, code, v, frame)
 
 	case T_ASTFLT|T_USER:	/* user async trap */
 		astpending = 0;
-#ifdef	NEED_SSIR	/* Now using isr_soft_request() */
-		/*
-		 * We check for software interrupts first.  This is because
-		 * they are at a higher level than ASTs, and on a VAX would
-		 * interrupt the AST.  We assume that if we are processing
-		 * an AST that we must be at IPL0 so we don't bother to
-		 * check.  Note that we ensure that we are at least at SIR
-		 * IPL while processing the SIR.
-		 */
-		spl1();
-		/*FALLTHROUGH*/
-
-	case T_SSIR:		/* software interrupt */
-	case T_SSIR|T_USER:
-		if (ssir & SIR_NET) {
-			siroff(SIR_NET);
-			cnt.v_soft++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			siroff(SIR_CLOCK);
-			cnt.v_soft++;
-			softclock();
-		}
-		/*
-		 * If this was not an AST trap, we are all done.
-		 */
-		if (type != (T_ASTFLT|T_USER)) {
-			cnt.v_trap--;
-			return;
-		}
-		spl0();
-#endif	/* NEED_SSIR */
+		/* T_SSIR is not used on a Sun3. */
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
