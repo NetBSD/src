@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12.6.1 2001/10/08 20:17:38 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.12.6.2 2001/11/10 21:28:04 scw Exp $
 
 SRCS+=	alloca.S fabs.S frexp.c infinity.c isinf.c isnan.c nanf.c
 SRCS+=	ashlsi3.S ashrsi3.S \
@@ -27,6 +27,8 @@ SRCS+=	setjmp.S __setjmp14.S
 SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 
+SRCS+=	makecontext.c resumecontext.S swapcontext.S
+
 .ifdef M68040
 SRCS+=	ldexp_040.c
 .elifdef M68060
@@ -38,3 +40,6 @@ SRCS+=	ldexp_881.c
 .endif
 LSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
 DPSRCS+= Lint_bswap16.c Lint_bswap32.c Lint_bswap64.c
+
+LSRCS+=	Lint_resumecontext.c Lint_swapcontext.c
+DPSRCS+= Lint_resumecontext.c Lint_swapcontext.c
