@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/01/10 15:17:31 pk Exp $
+#	$NetBSD: Makefile,v 1.14 2000/01/14 13:47:27 pk Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -59,7 +59,7 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
+	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:
