@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.67 2002/01/27 01:50:55 reinoud Exp $	*/
+/*	$NetBSD: var.c,v 1.68 2002/02/06 16:26:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.67 2002/01/27 01:50:55 reinoud Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.68 2002/02/06 16:26:12 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.67 2002/01/27 01:50:55 reinoud Exp $");
+__RCSID("$NetBSD: var.c,v 1.68 2002/02/06 16:26:12 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -218,6 +218,7 @@ static Boolean VarLoopExpand __P((GNode *, char *, Boolean, Buffer,
 static char *VarGetPattern __P((GNode *, int, char **, int, int *, int *,
 				VarPattern *));
 static char *VarQuote __P((char *));
+static char *VarChangeCase __P((char *, int));
 static char *VarModify __P((GNode *, char *, Boolean (*)(GNode *, char *,
 							 Boolean, Buffer,
 							 ClientData),
@@ -1600,6 +1601,37 @@ VarQuote(str)
     return str;
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * VarChangeCase --
+ *      Change the string to all uppercase or all lowercase
+ *
+ * Results:
+ *      The string with case changed
+ *
+ * Side Effects:
+ *      None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static char *
+VarChangeCase(str, upper)
+        char *str;                  /* String to modify */
+        int upper;                  /* TRUE -> uppercase, else lowercase */
+{
+   Buffer         buf;
+   int            (*modProc) __P((int));
+
+   modProc = (upper ? toupper : tolower);
+   buf = Buf_Init (MAKE_BSIZE);
+   for (; *str ; str++) {
+       Buf_AddByte(buf, (Byte) modProc(*str));
+   }
+   Buf_AddByte(buf, (Byte) '\0');
+   str = (char *) Buf_GetAll (buf, (int *) NULL);
+   Buf_Destroy (buf, FALSE);
+   return str;
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -1915,6 +1947,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *  	  	    	(pathname minus the suffix).
      *		  :O		("Order") Sort words in variable.
      *		  :u		("uniq") Remove adjacent duplicate words.
+     *		  :tu		Converts the variable contents to uppercase.
+     *		  :tl		Converts the variable contents to lowercase.
      *		  :?<true-value>:<false-value>
      *				If the variable evaluates to true, return
      *				true value, else return the second value.
@@ -2186,6 +2220,19 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    delim = '\0';
 		    if (v->flags & VAR_JUNK) {
 			v->flags |= VAR_KEEP;
+		    }
+		    break;
+		}
+	        case 't':
+		{
+		    if (tstr[1] != endc && tstr[1] != ':') {
+		        if (tstr[2] == endc || tstr[2] == ':') {
+                            if (tstr[1] == 'u' || tstr[1] == 'l') {
+                                newStr = VarChangeCase (str, (tstr[1] == 'u'));
+                                cp = tstr + 2;
+                                termc = *cp;
+                            }
+		        }
 		    }
 		    break;
 		}
