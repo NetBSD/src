@@ -1,4 +1,4 @@
-.\" $NetBSD: intro.4,v 1.17 2001/04/02 20:41:02 wiz Exp $
+.\" $NetBSD: intro.4,v 1.18 2001/04/02 21:20:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -156,12 +156,9 @@ bus and associated device drivers.
 .\"
 .Pp
 Console devices using ISA, EISA, or PCI video adaptors and standard
-AT or PS/2 keyboards are supported by either the
-.Xr pccons 4
-basic console driver or the
-.Xr vt  4
-multpilexed virtual-console driver and optionally one or more of the following
-pointers:
+AT or PS/2 keyboards are supported by the machine independent
+.Xr wscons 4
+console driver.
 .\"
 .\"
 .\"
