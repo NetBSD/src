@@ -186,3 +186,11 @@
 >31	byte		^4		8bit
 >30	byte		0		unpacked
 >30	byte		1		packed
+
+# Yamaha TX Wave audio files <collver1@attbi.com>
+0	string		LM8953		Yamaha TX Wave
+>22	byte		0x49		looped
+>22	byte		0xC9		non-looped
+>23	byte		1		33kHz
+>23	byte		2		50kHz
+>23	byte		3		16kHz
