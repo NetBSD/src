@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.33 2004/06/13 22:35:02 jmc Exp $
+#	$NetBSD: sets.subr,v 1.34 2004/07/23 15:11:26 erh Exp $
 #
 
 #
@@ -85,7 +85,7 @@ EOMAKE
 done
 IFS=$oIFS
 
-setsdir=$(dirname $0)
+setsdir=${0%/*}
 nlists="base comp etc games man misc text"
 case $x11_version in
 3)	xlists="xbase3 xcomp3 xcontrib3 xfont3 xmisc3 xserver3" ;;
@@ -120,7 +120,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.33 2004/06/13 22:35:02 jmc Exp $
+# 	# $NetBSD: sets.subr,v 1.34 2004/07/23 15:11:26 erh Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root

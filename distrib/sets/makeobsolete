@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.23 2004/01/03 02:38:58 lukem Exp $
+# $NetBSD: makeobsolete,v 1.24 2004/07/23 15:11:26 erh Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
 #    [-t target] [setname ...]
 #
 
-. $(dirname $0)/sets.subr
+. ${0%/*}/sets.subr
 lists=$nlists
 target=./dist
 obsolete=1

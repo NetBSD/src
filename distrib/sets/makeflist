@@ -1,12 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.70 2004/01/08 01:15:25 lukem Exp $
+# $NetBSD: makeflist,v 1.71 2004/07/23 15:11:26 erh Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-bxlo] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
-. ./sets.subr
+rundir=${0%/*}
+. ${rundir}/sets.subr
 lists=$nlists
 
 usage()
