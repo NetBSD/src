@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 1997/10/10 17:43:09 oki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 1997/10/12 12:15:15 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -61,7 +61,7 @@
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -296,7 +296,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -427,15 +427,6 @@ done:
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (error);
-}
-
-/* was this the boot device ? */
-int
-dk_establish(dk, dev)
-	struct dkdevice *dk;
-	struct device *dev;
-{
-	return 1;
 }
 
 /*
