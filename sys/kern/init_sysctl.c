@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.5 2003/12/06 21:33:51 martin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.6 2003/12/07 10:31:32 he Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,9 @@ static int sysctl_kern_cptime(SYSCTLFN_PROTO);
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 static int sysctl_kern_sysvipc(SYSCTLFN_PROTO);
 #endif /* defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM) */
+#if NPTY > 0
 static int sysctl_kern_maxptys(SYSCTLFN_PROTO);
+#endif /* NPTY > 0 */
 static int sysctl_kern_sbmax(SYSCTLFN_PROTO);
 static int sysctl_kern_urnd(SYSCTLFN_PROTO);
 static int sysctl_kern_lwp(SYSCTLFN_PROTO);
