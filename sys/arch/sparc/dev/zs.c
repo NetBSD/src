@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.27 1995/04/11 02:43:02 mycroft Exp $ */
+/*	$NetBSD: zs.c,v 1.28 1995/04/21 15:51:26 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,8 +109,6 @@ struct zsinfo {
 	volatile struct zsdevice *zi_zs;/* chip registers */
 	struct	zs_chanstate zi_cs[2];	/* channel A and B software state */
 };
-
-struct tty *zs_tty[NZS * 2];		/* XXX should be dynamic */
 
 /* Definition of the driver for autoconfig. */
 static int	zsmatch __P((struct device *, void *, void *));
@@ -264,12 +262,7 @@ zsattach(parent, dev, aux)
 	zi->zi_zs = addr;
 	unit = zs * 2;
 	cs = zi->zi_cs;
-
-	if(!zs_tty[unit])
-		zs_tty[unit] = ttymalloc();
-	tp = zs_tty[unit];
-	if(!zs_tty[unit+1])
-		zs_tty[unit+1] = ttymalloc();
+	cs->cs_ttyp = tp = ttymalloc();
 
 	/* link into interrupt list with order (A,B) (B=A+1) */
 	cs[0].cs_next = &cs[1];
@@ -283,8 +276,7 @@ zsattach(parent, dev, aux)
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
-		tp = ctp;
-	cs->cs_ttyp = tp;
+		cs->cs_ttyp = tp = ctp;
 #ifdef KGDB
 	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
@@ -300,7 +292,7 @@ zsattach(parent, dev, aux)
 	}
 	unit++;
 	cs++;
-	tp = zs_tty[unit];
+	cs->cs_ttyp = tp = ttymalloc();
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
@@ -308,8 +300,7 @@ zsattach(parent, dev, aux)
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
-		tp = ctp;
-	cs->cs_ttyp = tp;
+		cs->cs_ttyp = tp = ctp;
 #ifdef KGDB
 	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
@@ -659,9 +650,17 @@ zsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct tty *tp = zs_tty[minor(dev)];
+	register struct zs_chanstate *cs;
+	register struct zsinfo *zi;
+	register struct tty *tp;
+	int unit = minor(dev);
+
+	zi = zscd.cd_devs[unit >> 1];
+	cs = &zi->zi_cs[unit & 1];
+	tp = cs->cs_ttyp;
 
 	return (linesw[tp->t_line].l_read(tp, uio, flags));
+
 }
 
 int
@@ -670,9 +669,31 @@ zswrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register struct tty *tp = zs_tty[minor(dev)];
+	register struct zs_chanstate *cs;
+	register struct zsinfo *zi;
+	register struct tty *tp;
+	int unit = minor(dev);
+
+	zi = zscd.cd_devs[unit >> 1];
+	cs = &zi->zi_cs[unit & 1];
+	tp = cs->cs_ttyp;
 
 	return (linesw[tp->t_line].l_write(tp, uio, flags));
+}
+
+struct tty *
+zstty(dev)
+	dev_t dev;
+{
+	register struct zs_chanstate *cs;
+	register struct zsinfo *zi;
+	int unit = minor(dev);
+
+	zi = zscd.cd_devs[unit >> 1];
+	cs = &zi->zi_cs[unit & 1];
+
+	return (cs->cs_ttyp);
+
 }
 
 /*
