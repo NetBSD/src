@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.4.2.1 1997/02/16 12:10:58 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.4.2.2 1997/02/16 14:15:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,13 +41,8 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.4.2.1 1997/02/16 12:10:58 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.4.2.2 1997/02/16 14:15:35 mrg Exp $";
 #endif /* not lint */
-
-/*
- * $Source: /cvsroot/src/usr.bin/rsh/rsh.c,v $
- * $Header: /cvsroot/src/usr.bin/rsh/rsh.c,v 1.4.2.1 1997/02/16 12:10:58 mrg Exp $
- */
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -99,7 +94,7 @@ main(argc, argv)
 #ifdef IN_RCMD
 	char	*locuser = 0;
 	char	*loop;
-#endif
+#endif /* IN_RCMD */
 	void sendsig();
 
 	argoff = asrsh = dflag = nflag = 0;
@@ -133,29 +128,33 @@ main(argc, argv)
 
 	putenv("RCMD_LOOP=YES");
 
-#ifdef KERBEROS
-#ifdef CRYPT
-#define	OPTIONS	"8KLdek:l:nuwx"
-#else
-#define	OPTIONS	"8KLdek:l:nuw"
-#endif
-#else
-#define	OPTIONS	"8KLdel:nuw"
-#endif
+# ifdef KERBEROS
+#  ifdef CRYPT
+#   define	OPTIONS	"8KLdek:l:nu:wx"
+#  else
+#   define	OPTIONS	"8KLdek:l:nu:w"
+#  endif
+# else
+#  define	OPTIONS	"8KLdel:nu:w"
+# endif
 
 #else /* IN_RCMD */
 
-#ifdef KERBEROS
-#ifdef CRYPT
-#define	OPTIONS	"8KLdek:l:nwx"
-#else
-#define	OPTIONS	"8KLdek:l:nw"
-#endif
-#else
-#define	OPTIONS	"8KLdel:nw"
-#endif
+# ifdef KERBEROS
+#  ifdef CRYPT
+#   define	OPTIONS	"8KLdek:l:nwx"
+#  else
+#   define	OPTIONS	"8KLdek:l:nw"
+#  endif
+# else
+#  define	OPTIONS	"8KLdel:nw"
+# endif
 
 #endif /* IN_RCMD */
+
+	if (!(pw = getpwuid(uid = getuid())))
+		errx(1, "unknown user id");
+
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != EOF)
 		switch(ch) {
 		case 'K':
@@ -185,7 +184,7 @@ main(argc, argv)
 			break;
 #ifdef IN_RCMD
 		case 'u':
-			if (getuid() != 0)
+			if (getuid() != 0 && optarg && pw->pw_name && strcmp(pw->pw_name, optarg) != 0)
 				errx(1, "only super user can use the -u option");
 			locuser = optarg;
 			break;
@@ -223,8 +222,6 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!(pw = getpwuid(uid = getuid())))
-		errx(1, "unknown user id");
 	if (!user)
 		user = pw->pw_name;
 
