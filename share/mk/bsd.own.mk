@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.121 1999/06/06 09:25:38 pk Exp $
+#	$NetBSD: bsd.own.mk,v 1.122 1999/06/10 00:38:49 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -119,6 +119,11 @@ OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
 .endif
+
+# Location of the file that contains the major and minor numbers of the
+# version of a shared library.  If this file exists a shared library
+# will be built by <bsd.lib.mk>.
+SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 
 # GNU sources and packages sometimes see architecture names differently.
 # This table maps an architecture name to its GNU counterpart.
