@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.11 2001/02/19 09:53:50 enami Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.12 2001/05/26 12:31:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.11 2001/02/19 09:53:50 enami Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.12 2001/05/26 12:31:56 itojun Exp $");
 #endif
 #endif
 
@@ -172,7 +172,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		break;
 	case ICMP6_PACKET_TOO_BIG:
 		TCHECK(dp->icmp6_mtu);
-		printf("icmp6: too big %u\n", (u_int32_t)ntohl(dp->icmp6_mtu));
+		printf("icmp6: too big %u", (u_int32_t)ntohl(dp->icmp6_mtu));
 		break;
 	case ICMP6_TIME_EXCEEDED:
 		TCHECK(oip->ip6_dst);
