@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.17 2001/02/12 21:50:02 jdolecek Exp $
+$NetBSD: TODO,v 1.18 2001/05/15 22:38:40 jdolecek Exp $
 
 - convert the code to do caching in buffer cache indexed by
   file-vnode/file-offset so that NTFS would take advantage of UBC;
@@ -31,9 +31,6 @@ $NetBSD: TODO,v 1.17 2001/02/12 21:50:02 jdolecek Exp $
 - support mount update
 
 - really implement sync
-
-- change MALLOC()/FREE() to malloc()/free() where appropriate (if the
-  specified size if variable)
 
 - write necessary bits to support NTFS in libsa
 
