@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.8 1998/02/02 02:41:23 perry Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.9 1998/02/02 23:33:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.8 1998/02/02 02:41:23 perry Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.9 1998/02/02 23:33:44 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: getcwd.c,v 1.8 1998/02/02 02:41:23 perry Exp $");
 
 #ifdef __weak_alias
 __weak_alias(getcwd,_getcwd);
+__weak_alias(realpath,_realpath);
 #endif
 
 static char *getcwd_physical __P((char *, size_t));
@@ -170,7 +171,7 @@ loop:
 	 * Save the last component name and get the full pathname of
 	 * the current directory.
 	 */
-	(void)strcpy(wbuf, p);
+	(void)strncpy(wbuf, p, (sizeof(wbuf) - 1));
 
 	/*
 	 * Call the inernal internal version of getcwd which
@@ -194,8 +195,8 @@ loop:
 			goto err1;
 		}
 		if (rootd == 0)
-			(void)strcat(resolved, "/");
-		(void)strcat(resolved, wbuf);
+			(void)strcat(resolved, "/"); /* XXX: strcat is safe */
+		(void)strcat(resolved, wbuf);	/* XXX: strcat is safe */
 	}
 
 	/* Go back to where we came from. */
