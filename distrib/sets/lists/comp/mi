@@ -601,7 +601,6 @@
 ./usr/include/sys/clist.h
 ./usr/include/sys/conf.h
 ./usr/include/sys/core.h
-./usr/include/sys/cpu.h
 ./usr/include/sys/device.h
 ./usr/include/sys/dir.h
 ./usr/include/sys/dirent.h
@@ -717,6 +716,7 @@
 ./usr/include/ufs/ufs/ufs_extern.h
 ./usr/include/ufs/ufs/ufsmount.h
 ./usr/include/unistd.h
+./usr/include/util.h
 ./usr/include/utime.h
 ./usr/include/utmp.h
 ./usr/include/varargs.h
@@ -1182,6 +1182,8 @@
 ./usr/share/man/cat3/getdiskbyname.0
 ./usr/share/man/cat3/getdomainname.0
 ./usr/share/man/cat3/getdtablesize.0
+./usr/share/man/cat3/getmaxpartitions.0
+./usr/share/man/cat3/getrawpartition.0
 ./usr/share/man/cat3/getenv.0
 ./usr/share/man/cat3/getfsent.0
 ./usr/share/man/cat3/getfsfile.0
@@ -1279,6 +1281,10 @@
 ./usr/share/man/cat3/killpg.0
 ./usr/share/man/cat3/kvm.0
 ./usr/share/man/cat3/kvm_close.0
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat3/kvm_getargv.0
 ./usr/share/man/cat3/kvm_getenvv.0
 ./usr/share/man/cat3/kvm_geterr.0
