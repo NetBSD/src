@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.69 2000/04/03 18:12:12 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.69.4.1 2000/12/14 23:36:24 he Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -909,7 +909,7 @@ loop:
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -919,7 +919,7 @@ loop:
 	 * Force stale file system control information to be flushed.
 	 */
 	if ((error = VOP_FSYNC(pmp->pm_devvp, cred,
-	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, p)) != 0)
+	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p)) != 0)
 		allerror = error;
 #ifdef QUOTA
 	/* qsync(mp); */
