@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.73 1995/07/24 06:56:48 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.74 1995/08/05 23:48:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -654,47 +654,45 @@ void
 sdgetdisklabel(sd)
 	struct sd_softc *sd;
 {
+	struct disklabel *lp = &sd->sc_dk.dk_label;
 	char *errstring;
 
-	bzero(&sd->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(lp, sizeof(struct disklabel));
 	bzero(&sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
-	sd->sc_dk.dk_label.d_secsize = sd->params.blksize;
-	sd->sc_dk.dk_label.d_ntracks = sd->params.heads;
-	sd->sc_dk.dk_label.d_nsectors = sd->params.sectors;
-	sd->sc_dk.dk_label.d_ncylinders = sd->params.cyls;
-	sd->sc_dk.dk_label.d_secpercyl =
-	    sd->sc_dk.dk_label.d_ntracks * sd->sc_dk.dk_label.d_nsectors;
-	if (sd->sc_dk.dk_label.d_secpercyl == 0) {
-		sd->sc_dk.dk_label.d_secpercyl = 100;
+	lp->d_secsize = sd->params.blksize;
+	lp->d_ntracks = sd->params.heads;
+	lp->d_nsectors = sd->params.sectors;
+	lp->d_ncylinders = sd->params.cyls;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 100;
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
-	strncpy(sd->sc_dk.dk_label.d_typename, "SCSI disk", 16);
-	sd->sc_dk.dk_label.d_type = DTYPE_SCSI;
-	strncpy(sd->sc_dk.dk_label.d_packname, "fictitious", 16);
-	sd->sc_dk.dk_label.d_secperunit = sd->params.disksize;
-	sd->sc_dk.dk_label.d_rpm = 3600;
-	sd->sc_dk.dk_label.d_interleave = 1;
-	sd->sc_dk.dk_label.d_flags = 0;
+	strncpy(lp->d_typename, "SCSI disk", 16);
+	lp->d_type = DTYPE_SCSI;
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_secperunit = sd->params.disksize;
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
 
-	sd->sc_dk.dk_label.d_partitions[RAW_PART].p_offset = 0;
-	sd->sc_dk.dk_label.d_partitions[RAW_PART].p_size =
-	    sd->sc_dk.dk_label.d_secperunit *
-	    (sd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
-	sd->sc_dk.dk_label.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	sd->sc_dk.dk_label.d_npartitions = RAW_PART + 1;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
 
-	sd->sc_dk.dk_label.d_magic = DISKMAGIC;
-	sd->sc_dk.dk_label.d_magic2 = DISKMAGIC;
-	sd->sc_dk.dk_label.d_checksum = dkcksum(&sd->sc_dk.dk_label);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
 	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit,
-	    RAW_PART), sdstrategy, &sd->sc_dk.dk_label,
-	    &sd->sc_dk.dk_cpulabel)) {
+	    RAW_PART), sdstrategy, lp, &sd->sc_dk.dk_cpulabel)) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.41 1995/07/10 01:27:24 cgd Exp $	*/
+/*	$NetBSD: mcd.c,v 1.42 1995/08/05 23:47:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -639,35 +639,38 @@ void
 mcdgetdisklabel(sc)
 	struct mcd_softc *sc;
 {
+	struct disklabel *lp = &sc->sc_dk.dk_label;
 	
-	bzero(&sc->sc_dk.dk_label, sizeof(struct disklabel));
+	bzero(lp, sizeof(struct disklabel));
 	bzero(&sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
-	sc->sc_dk.dk_label.d_secsize = sc->blksize;
-	sc->sc_dk.dk_label.d_ntracks = 1;
-	sc->sc_dk.dk_label.d_nsectors = 100;
-	sc->sc_dk.dk_label.d_ncylinders = (sc->disksize / 100) + 1;
-	sc->sc_dk.dk_label.d_secpercyl =
-	    sc->sc_dk.dk_label.d_ntracks * sc->sc_dk.dk_label.d_nsectors;
+	lp->d_secsize = sc->blksize;
+	lp->d_ntracks = 1;
+	lp->d_nsectors = 100;
+	lp->d_ncylinders = (sc->disksize / 100) + 1;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	strncpy(sc->sc_dk.dk_label.d_typename, "Mitsumi CD-ROM", 16);
-	sc->sc_dk.dk_label.d_type = 0;	/* XXX */
-	strncpy(sc->sc_dk.dk_label.d_packname, "fictitious", 16);
-	sc->sc_dk.dk_label.d_secperunit = sc->disksize;
-	sc->sc_dk.dk_label.d_rpm = 300;
-	sc->sc_dk.dk_label.d_interleave = 1;
-	sc->sc_dk.dk_label.d_flags = D_REMOVABLE;
+	strncpy(lp->d_typename, "Mitsumi CD-ROM", 16);
+	lp->d_type = 0;	/* XXX */
+	strncpy(lp->d_packname, "fictitious", 16);
+	lp->d_secperunit = sc->disksize;
+	lp->d_rpm = 300;
+	lp->d_interleave = 1;
+	lp->d_flags = D_REMOVABLE;
 
-	sc->sc_dk.dk_label.d_partitions[0].p_offset = 0;
-	sc->sc_dk.dk_label.d_partitions[0].p_size =
-	    sc->sc_dk.dk_label.d_secperunit *
-	    (sc->sc_dk.dk_label.d_secsize / DEV_BSIZE);
-	sc->sc_dk.dk_label.d_partitions[0].p_fstype = FS_ISO9660;
-	sc->sc_dk.dk_label.d_npartitions = 1;
+	lp->d_partitions[0].p_offset = 0;
+	lp->d_partitions[0].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[0].p_fstype = FS_ISO9660;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
+	lp->d_npartitions = RAW_PART + 1;
 	
-	sc->sc_dk.dk_label.d_magic = DISKMAGIC;
-	sc->sc_dk.dk_label.d_magic2 = DISKMAGIC;
-	sc->sc_dk.dk_label.d_checksum = dkcksum(&sc->sc_dk.dk_label);
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 }
 
 int
