@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 2003/05/04 01:36:53 gmcgarry Exp $
+#	$NetBSD: GENERIC,v 1.21 2003/09/25 16:35:50 lonewolf Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.20 $"
+#ident		"GENERIC-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -224,6 +224,7 @@ hpc2 		at gio? addr 0x1f980000
 sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
 dsclock*	at hpc0 offset ?
+haltwo* 	at hpc0 offset ?
 
 #
 # As always, the zs chip is wired funny, so channel 1 is actually the
@@ -236,6 +237,8 @@ zstty*		at zsc? channel ?
 #pckbc0 	at pbus0 device ?
 
 scsibus*	at wdsc?		# HPC SCSI
+
+audio* 		at audiobus?
 
 # Pseudo-Devices
 
