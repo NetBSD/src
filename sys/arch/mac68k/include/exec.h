@@ -33,12 +33,28 @@
  */
 #ifndef _MACHINE_EXEC_H
 #define _MACHINE_EXEC_H
-#ident "$Id: exec.h,v 1.1.1.1 1993/09/29 06:09:23 briggs Exp $"
+#ident "$Id: exec.h,v 1.2 1993/10/18 09:47:29 pk Exp $"
 
 #include "sys/exec.h"
 
 #define MID_MACHINE	MID_M68K4K
 
 /* #define cpu_exec_makecmds(p,epp)	ENOEXEC */
+
+#define __LDPGSZ	/* ??? */
+
+/* Relocation format. */
+struct relocation_info_mac {
+	int r_address;			/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
+			 r_pcrel :  1,	/* 1 if value should be pc-relative */
+			r_length :  2,	/* log base 2 of value's width */
+			r_extern :  1,	/* 1 if need to add symbol to value */
+		       r_baserel :  1,	/* linkage table relative */
+		      r_jmptable :  1,	/* relocate to jump table */
+		      r_relative :  1,	/* load address relative */
+			  r_copy :  1;	/* run time copy */
+};
+#define relocation_info	relocation_info_mac
 
 #endif

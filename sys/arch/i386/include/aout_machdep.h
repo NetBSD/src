@@ -24,10 +24,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aout_machdep.h,v 1.3 1993/06/18 06:51:01 cgd Exp $
+ *	$Id: aout_machdep.h,v 1.4 1993/10/18 09:47:22 pk Exp $
  */
 
 #ifndef _I386_EXEC_H_
 #define _I386_EXEC_H_
+
+#define __LDPGSZ	4096
+
+/* Relocation format. */
+struct relocation_info_i386 {
+	int r_address;			/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
+			 r_pcrel :  1,	/* 1 if value should be pc-relative */
+			r_length :  2,	/* log base 2 of value's width */
+			r_extern :  1,	/* 1 if need to add symbol to value */
+		       r_baserel :  1,	/* linkage table relative */
+		      r_jmptable :  1,	/* relocate to jump table */
+		      r_relative :  1,	/* load address relative */
+			  r_copy :  1;	/* run time copy */
+};
+#define relocation_info	relocation_info_i386
 
 #endif  /* _I386_EXEC_H_ */
