@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.16 1997/04/04 15:35:58 augustss Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.17 1998/01/15 14:52:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -77,6 +77,8 @@ linux_sys_ioctl(p, v, retval)
 		return oss_ioctl_sequencer(p, LINUX_TO_OSS(v), retval);
 	case 'P':
 		return oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
+	case 'S':
+		return linux_ioctl_cdrom(p, uap, retval);
 	case 'T':
 		return linux_ioctl_termios(p, uap, retval);
 	case 0x89:
