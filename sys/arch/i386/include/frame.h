@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.2.5 2002/07/02 21:06:12 nathanw Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.2.6 2002/07/19 22:18:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,12 +168,12 @@ struct sigframe {
  * Scheduler activations upcall frame
  */
 struct saframe {
+	int		sa_ra;
 	int		sa_type;
 	struct sa_t**	sa_sas;
 	int		sa_events;
 	int		sa_interrupted;
 	void*		sa_arg;
-	sa_upcall_t	sa_upcall;
 };
 
 #endif  /* _I386_FRAME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.14 2002/07/12 01:39:46 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.15 2002/07/19 22:18:27 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -183,10 +183,7 @@ cpu_dumpconf()
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
 	struct trapframe *tf;
-
-	extern char sigcode[], upcallcode[];
 
 	tf = trapframe(l);
 
@@ -194,13 +191,13 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	 * Build context to run handler in.
 	 */
 	tf->fixreg[1] = (int)((struct saframe *)sp - 1);
-	tf->lr = (int)upcall;
+	tf->lr = 0;
 	tf->fixreg[3] = (int)type;
 	tf->fixreg[4] = (int)sas;
 	tf->fixreg[5] = (int)nevents;
 	tf->fixreg[6] = (int)ninterrupted;
 	tf->fixreg[7] = (int)ap;
-	tf->srr0 = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
-	    (caddr_t)upcallcode - (caddr_t)sigcode));
+	tf->srr0 = (int)upcall;
 
 }
+

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.16 2002/07/12 01:39:20 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.17 2002/07/19 22:18:28 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.16 2002/07/12 01:39:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.17 2002/07/19 22:18:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1629,15 +1629,12 @@ sendsig(catcher, sig, mask, code)
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
        	struct trapframe *tf;
-
-	extern char sigcode[], upcallcode[];
 
 	tf = l->l_md.md_tf;
 
-	tf->tf_regs[FRAME_PC] = ((u_int64_t)p->p_sigctx.ps_sigcode) +
-	    ((u_int64_t)upcallcode - (u_int64_t)sigcode);
+	tf->tf_regs[FRAME_PC] = (u_int64_t)upcall;
+	tf->tf_regs[FRAME_RA] = 0;
 	tf->tf_regs[FRAME_A0] = type;
 	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
 	tf->tf_regs[FRAME_A2] = nevents;
