@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.c,v 1.1 2003/06/25 09:51:27 tshiozak Exp $	*/
+/*	$NetBSD: citrus_csmapper.c,v 1.2 2003/07/16 08:05:27 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_csmapper.c,v 1.1 2003/06/25 09:51:27 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_csmapper.c,v 1.2 2003/07/16 08:05:27 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -270,7 +270,7 @@ find_best_pivot_lookup(const char *src, const char *dst, char *pivot,
 			break;
 		if (pa.norm < norm_min) {
 			norm_min = pa.norm;
-			strcpy(pivot_min, pa.dst);
+			strlcpy(pivot_min, pa.dst, sizeof(pivot_min));
 		}
 		ret = _lookup_seq_next(cl, NULL, &data);
 	}
