@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.12 1999/09/20 04:39:44 lukem Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.13 2001/02/08 18:33:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.12 1999/09/20 04:39:44 lukem Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.13 2001/02/08 18:33:50 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,6 +86,7 @@ bcopy(src0, dst0, length)
 	char *dst = dst0;
 	const char *src = src0;
 	size_t t;
+	unsigned long u;
 
 	_DIAGASSERT(dst0 != 0);
 	_DIAGASSERT(src0 != 0);
@@ -103,16 +104,16 @@ bcopy(src0, dst0, length)
 		/*
 		 * Copy forward.
 		 */
-		t = (long)src;	/* only need low bits */
-		if ((t | (long)dst) & wmask) {
+		u = (unsigned long)src;	/* only need low bits */
+		if ((u | (unsigned long)dst) & wmask) {
 			/*
 			 * Try to align operands.  This cannot be done
 			 * unless the low bits match.
 			 */
-			if ((t ^ (long)dst) & wmask || length < wsize)
+			if ((u ^ (unsigned long)dst) & wmask || length < wsize)
 				t = length;
 			else
-				t = wsize - (t & wmask);
+				t = wsize - (size_t)(u & wmask);
 			length -= t;
 			TLOOP1(*dst++ = *src++);
 		}
@@ -120,7 +121,7 @@ bcopy(src0, dst0, length)
 		 * Copy whole words, then mop up any trailing bytes.
 		 */
 		t = length / wsize;
-		TLOOP(*(word *)dst = *(word *)src; src += wsize; dst += wsize);
+		TLOOP(*(word *)(void *)dst = *(const word *)(const void *)src; src += wsize; dst += wsize);
 		t = length & wmask;
 		TLOOP(*dst++ = *src++);
 	} else {
@@ -131,17 +132,17 @@ bcopy(src0, dst0, length)
 		 */
 		src += length;
 		dst += length;
-		t = (long)src;
-		if ((t | (long)dst) & wmask) {
-			if ((t ^ (long)dst) & wmask || length <= wsize)
+		u = (unsigned long)src;
+		if ((u | (unsigned long)dst) & wmask) {
+			if ((u ^ (unsigned long)dst) & wmask || length <= wsize)
 				t = length;
 			else
-				t &= wmask;
+				t = (size_t)(u & wmask);
 			length -= t;
 			TLOOP1(*--dst = *--src);
 		}
 		t = length / wsize;
-		TLOOP(src -= wsize; dst -= wsize; *(word *)dst = *(word *)src);
+		TLOOP(src -= wsize; dst -= wsize; *(word *)(void *)dst = *(const word *)(const void *)src);
 		t = length & wmask;
 		TLOOP(*--dst = *--src);
 	}
