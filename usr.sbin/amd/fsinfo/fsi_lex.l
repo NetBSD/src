@@ -39,7 +39,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: fsi_lex.l,v 1.7 1997/09/26 17:00:32 christos Exp $
+ * $Id: fsi_lex.l,v 1.7.2.1 1997/10/26 20:59:36 mellon Exp $
  *
  */
 
@@ -221,6 +221,7 @@ yyerror(char *fmt, ...)
 
   /* this call will never happen */
   unput(0);
+  return 0;	/* XXX: quieten gcc */
 }
 
 
