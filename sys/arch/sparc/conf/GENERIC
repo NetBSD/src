@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.140 2002/10/06 02:12:02 provos Exp $
+# $NetBSD: GENERIC,v 1.141 2002/10/14 18:39:39 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.140 $"
+#ident 		"GENERIC-$Revision: 1.141 $"
 
 maxusers	32
 
@@ -426,6 +426,10 @@ pseudo-device	vnd	4
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
 pseudo-device	ccd	4
+
+## Cryptographic disk devices;  See cgd(4)
+
+#pseudo-device	cgd	4
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 

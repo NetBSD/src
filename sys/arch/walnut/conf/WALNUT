@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.26 2002/09/18 02:44:11 lukem Exp $
+#	$NetBSD: WALNUT,v 1.27 2002/10/14 18:39:41 elric Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -235,6 +235,7 @@ todclock0 at dsrtc?			# time-of-day device via rtc device
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		4	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device
