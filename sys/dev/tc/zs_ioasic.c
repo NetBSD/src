@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.13 2002/09/26 18:30:54 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.14 2002/09/26 20:37:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.13 2002/09/26 18:30:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.14 2002/09/26 20:37:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -203,8 +203,6 @@ struct cfattach zsc_ioasic_ca = {
 /* Interrupt handlers. */
 int	zs_ioasic_hardintr __P((void *));
 void	zs_ioasic_softintr __P((void *));
-
-extern struct cfdriver ioasic_cd;
 
 /*
  * Is the zs chip present?
