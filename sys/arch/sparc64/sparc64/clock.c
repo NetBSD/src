@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18 2000/03/19 14:41:49 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.19 2000/06/09 05:27:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,7 +451,14 @@ myetheraddr(cp)
 	u_char *cp;
 {
 	register struct clockreg *cl = clockreg;
-	register struct idprom *idp = &cl->cl_idprom;
+	register struct idprom *idp;
+
+	if (!cl) {
+		printf("myetheraddr: clockreg not setup yet\n");
+		return;
+	}
+
+	idp = &cl->cl_idprom;
 
 	cp[0] = idp->id_ether[0];
 	cp[1] = idp->id_ether[1];
