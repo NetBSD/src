@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2002/12/11 10:35:06 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.14 2003/02/25 08:09:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -51,18 +51,15 @@
 extern void	prom_patch __P((void));	/* prompatch.c */
 
 static int	bootoptions __P((char *));
-#if 0
-static void	promsyms __P((int, struct exec *));
-#endif
 
-int debug;
-int netif_debug;
+int	boothowto;
+int	debug;
+int	netif_debug;
+
+char	fbuf[80], dbuf[128];
+u_long	maxkernsize;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
-unsigned long		esym;
-char			*strtab;
-int			strtablen;
-char			fbuf[80], dbuf[128];
 
 int	main __P((void));
 typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
@@ -107,16 +104,44 @@ bootoptions(ap)
 	return (v);
 }
 
+static int
+loadk(char *kernel, u_long *marks)
+{
+	int fd, error;
+	u_long size;
+
+	if ((fd = open(kernel, 0)) < 0)
+		return (errno ? errno : ENOENT);
+
+	marks[MARK_START] = 0;
+	if ((error = fdloadfile(fd, marks, COUNT_KERNEL)) != 0)
+		goto out;
+
+	size = marks[MARK_END] - marks[MARK_START];
+	if (size > maxkernsize) {
+		printf("kernel too large: %lu"
+			" (maximum kernel size is %lu)\n",
+			marks[MARK_END] - marks[MARK_START],
+			maxkernsize);
+		error = EFBIG;
+		goto out;
+	}
+
+	marks[MARK_START] = 0;
+	error = fdloadfile(fd, marks, LOAD_KERNEL);
+out:
+	close(fd);
+	return (error);
+}
+
 int
 main()
 {
-	int	io, i;
+	int	error, i;
 	char	*kernel;
-	int	how;
 	u_long	marks[MARK_MAX], bootinfo;
 	struct btinfo_symtab bi_sym;
 	void	*arg;
-	u_long	maxkernsize;
 
 #ifdef HEAP_VARIABLE
 	{
@@ -147,7 +172,7 @@ main()
 	 */
 	prom_bootdevice = prom_getbootpath();
 	kernel = prom_getbootfile();
-	how = bootoptions(prom_getbootargs());
+	boothowto = bootoptions(prom_getbootargs());
 
 	if (kernel != NULL && *kernel != '\0') {
 		i = -1;	/* not using the kernels */
@@ -160,7 +185,7 @@ main()
 		/*
 		 * ask for a kernel first ..
 		 */
-		if (how & RB_ASKNAME) {
+		if (boothowto & RB_ASKNAME) {
 			printf("device[%s] (\"halt\" to halt): ",
 					prom_bootdevice);
 			gets(dbuf);
@@ -173,29 +198,19 @@ main()
 			if (fbuf[0])
 				kernel = fbuf;
 			else {
-				how &= ~RB_ASKNAME;
+				boothowto &= ~RB_ASKNAME;
 				i = 0;
 				kernel = kernels[i];
 			}
 		}
 
-		marks[MARK_START] = 0;
 		printf("Booting %s\n", kernel);
-		if ((io = loadfile(kernel, marks, COUNT_KERNEL)) != -1) {
-			close(io);
-			if (marks[MARK_END] - marks[MARK_START] > maxkernsize) {
-				printf("kernel too large: %lu"
-					" (maximum kernel size is %lu)\n",
-					marks[MARK_END] - marks[MARK_START],
-					maxkernsize);
-				how |= RB_ASKNAME;
-				continue;
-			}
-			marks[MARK_START] = 0;
-			if ((io = loadfile(kernel, marks, LOAD_KERNEL)) != -1) {
-				close(io);
-				break;
-			}
+		if ((error = loadk(kernel, marks)) == 0)
+			break;
+
+		if (error != ENOENT) {
+			printf("Cannot load %s: error=%d\n", kernel, error);
+			boothowto |= RB_ASKNAME;
 		}
 
 		/*
@@ -203,25 +218,20 @@ main()
 		 * prom bootfile, try the next one (if it exits).  otherwise,
 		 * go into askname mode.
 		 */
-		if ((how & RB_ASKNAME) == 0 &&
+		if ((boothowto & RB_ASKNAME) == 0 &&
 		    i != -1 && kernels[++i]) {
 			kernel = kernels[i];
 			printf(": trying %s...\n", kernel);
 		} else {
 			printf("\n");
-			how |= RB_ASKNAME;
+			boothowto |= RB_ASKNAME;
 		}
 	}
 
 	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
-#if 0
-	/* Old style cruft; works only with a.out */
-	marks[MARK_END] |= 0xf0000000;
-	(*(entry_t)marks[MARK_ENTRY])(arg, 0, 0, 0, marks[MARK_END],
-	    DDB_MAGIC1);
-#else
+
 	/* Should work with both a.out and ELF, but somehow ELF is busted */
 	bootinfo = bi_init(marks[MARK_END]);
 
@@ -245,7 +255,5 @@ main()
 	}
 
 	(*(entry_t)marks[MARK_ENTRY])(arg, 0, 0, 0, bootinfo, DDB_MAGIC2);
-#endif
-
 	_rtt();
 }
