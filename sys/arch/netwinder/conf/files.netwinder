@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.17 2001/11/24 01:44:53 thorpej Exp $
+#	$NetBSD: files.netwinder,v 1.18 2001/11/26 20:33:45 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -79,6 +79,9 @@ file	arch/netwinder/netwinder/netwinder_machdep.c
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
+
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 file	arch/arm/arm32/conf.c
 file	dev/cninit.c				!footbridge

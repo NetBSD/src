@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.12 2001/11/24 01:43:20 thorpej Exp $
+#	$NetBSD: files.cats,v 1.13 2001/11/26 20:33:44 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -81,6 +81,9 @@ file	arch/cats/cats/cats_machdep.c
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
+
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm32/isa/isapnp_machdep.c		isapnp

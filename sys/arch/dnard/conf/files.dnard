@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.15 2001/11/24 01:43:49 thorpej Exp $
+#	$NetBSD: files.dnard,v 1.16 2001/11/26 20:33:44 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -88,6 +88,9 @@ major	{cd = 26}
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
+
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 # Shark specific files
 file	arch/dnard/dnard/autoconf.c
