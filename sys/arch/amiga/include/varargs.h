@@ -1,9 +1,4 @@
 /*
- *	$Id: varargs.h,v 1.3 1994/04/10 02:28:40 chopps Exp $
+ *	$Id: varargs.h,v 1.4 1994/07/04 19:40:08 chopps Exp $
  */
-#ifndef _MACHINE_VARARGS_H_
-#define _MACHINE_VARARGS_H_
-
 #include <m68k/varargs.h>
-
-#endif
