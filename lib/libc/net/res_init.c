@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.43 2003/09/06 11:46:32 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.44 2003/09/06 22:47:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -55,7 +55,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.43 2003/09/06 11:46:32 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.44 2003/09/06 22:47:56 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -673,13 +673,13 @@ static void res_initid(void);
  */
 
 static u_int16_t
-pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
+pmod(u_int16_t gen, u_int16_t expo, u_int16_t mod)
 {
 	u_int16_t s, t, u;
 
 	s = 1;
 	t = gen;
-	u = exp;
+	u = expo;
 
 	while (u) {
 		if (u & 1)
