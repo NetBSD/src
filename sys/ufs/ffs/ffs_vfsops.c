@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.41 1998/07/05 08:49:48 jonathan Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.42 1998/08/09 20:15:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -141,7 +141,7 @@ ffs_mountroot()
 	simple_unlock(&mountlist_slock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	bzero(fs->fs_fsmnt, sizeof(fs->fs_fsmnt));
+	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
@@ -273,11 +273,11 @@ ffs_mount(mp, path, data, ndp, p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
-	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
-	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
+	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
+	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	if (fs->fs_fmod != 0) {	/* XXX */
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
@@ -337,7 +337,7 @@ ffs_reload(mountp, cred, p)
 		return (error);
 	fs = VFSTOUFS(mountp)->um_fs;
 	newfs = malloc(fs->fs_sbsize, M_UFSMNT, M_WAITOK);
-	bcopy(bp->b_data, newfs, fs->fs_sbsize);
+	memcpy(newfs, bp->b_data, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (VFSTOUFS(mountp)->um_flags & UFS_NEEDSWAP)
 		ffs_sb_swap((struct fs*)bp->b_data, newfs, 0);
@@ -353,9 +353,9 @@ ffs_reload(mountp, cred, p)
 	 * new superblock. These should really be in the ufsmount.	XXX
 	 * Note that important parameters (eg fs_ncg) are unchanged.
 	 */
-	bcopy(&fs->fs_csp[0], &newfs->fs_csp[0], sizeof(fs->fs_csp));
+	memcpy(&newfs->fs_csp[0], &fs->fs_csp[0], sizeof(fs->fs_csp));
 	newfs->fs_maxcluster = fs->fs_maxcluster;
-	bcopy(newfs, fs, (u_int)fs->fs_sbsize);
+	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
@@ -380,7 +380,7 @@ ffs_reload(mountp, cred, p)
 			    (struct csum*)fs->fs_csp[fragstoblks(fs, i)], size);
 		else
 #endif
-			bcopy(bp->b_data, fs->fs_csp[fragstoblks(fs, i)],
+			memcpy(fs->fs_csp[fragstoblks(fs, i)], bp->b_data,
 			    (size_t)size);
 		brelse(bp);
 	}
@@ -510,7 +510,7 @@ ffs_mountfs(devvp, mp, p)
 	}
 
 	fs = malloc((u_long)sbsize, M_UFSMNT, M_WAITOK);
-	bcopy(bp->b_data, fs, sbsize);
+	memcpy(fs, bp->b_data, sbsize);
 #ifdef FFS_EI
 	if (needswap)
 		ffs_sb_swap((struct fs*)bp->b_data, fs, 0);
@@ -527,7 +527,7 @@ ffs_mountfs(devvp, mp, p)
 		goto out2;
 	}
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	bzero((caddr_t)ump, sizeof *ump);
+	memset((caddr_t)ump, 0, sizeof *ump);
 	ump->um_fs = fs;
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
@@ -559,7 +559,7 @@ ffs_mountfs(devvp, mp, p)
 				(struct csum*)space, size);
 		else
 #endif
-			bcopy(bp->b_data, space, (u_int)size);
+			memcpy(space, bp->b_data, (u_int)size);
 			
 		fs->fs_csp[fragstoblks(fs, i)] = (struct csum *)space;
 		space += size;
@@ -743,8 +743,8 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
 	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);
@@ -866,7 +866,7 @@ ffs_vget(mp, ino, vpp)
 	}
 	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
 	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
-	bzero((caddr_t)ip, sizeof(struct inode));
+	memset((caddr_t)ip, 0, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
@@ -1065,7 +1065,7 @@ ffs_sbupdate(mp, waitfor)
 
 	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, 0);
-	bcopy(fs, bp->b_data, fs->fs_sbsize);
+	memcpy(bp->b_data, fs, fs->fs_sbsize);
 #ifdef FFS_EI
 	if (mp->um_flags & UFS_NEEDSWAP)
 		ffs_sb_swap(fs, (struct fs*)bp->b_data, 1);
@@ -1109,7 +1109,7 @@ ffs_cgupdate(mp, waitfor)
 			    (struct csum*)bp->b_data, size);
 		else
 #endif
-			bcopy(space, bp->b_data, (u_int)size);
+			memcpy(bp->b_data, space, (u_int)size);
 		space += size;
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);

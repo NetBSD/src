@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.11 1998/03/01 02:23:37 fvdl Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.12 1998/08/09 20:15:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -735,7 +735,7 @@ dqget(vp, id, ump, type, dqp)
 		desireddquot += DQUOTINC;
 	if (numdquot < desireddquot) {
 		dq = (struct dquot *)malloc(sizeof *dq, M_DQUOT, M_WAITOK);
-		bzero((char *)dq, sizeof *dq);
+		memset((char *)dq, 0, sizeof *dq);
 		numdquot++;
 	} else {
 		if ((dq = dqfreelist.tqh_first) == NULL) {
@@ -770,7 +770,7 @@ dqget(vp, id, ump, type, dqp)
 	auio.uio_procp = (struct proc *)0;
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
-		bzero((caddr_t)&dq->dq_dqb, sizeof(struct dqblk));
+		memset((caddr_t)&dq->dq_dqb, 0, sizeof(struct dqblk));
 	if (vp != dqvp)
 		VOP_UNLOCK(dqvp, 0);
 	if (dq->dq_flags & DQ_WANT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.4 1998/06/13 16:26:22 kleink Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.5 1998/08/09 20:15:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -99,7 +99,7 @@ ffs_dinode_swap(o, n)
 	n->di_mtimensec = bswap32(o->di_mtimensec);
 	n->di_ctime = bswap32(o->di_ctime);
 	n->di_ctimensec = bswap32(o->di_ctimensec);
-	bcopy(o->di_db, n->di_db, (NDADDR + NIADDR) * sizeof(u_int32_t));
+	memcpy(n->di_db, o->di_db, (NDADDR + NIADDR) * sizeof(u_int32_t));
 	n->di_flags = bswap32(o->di_flags);
 	n->di_blocks = bswap32(o->di_blocks);
 	n->di_gen = bswap32(o->di_gen);

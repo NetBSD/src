@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.45 1998/08/03 14:19:58 kleink Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.46 1998/08/09 20:15:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -748,7 +748,7 @@ ufs_whiteout(v)
 
 		newdir.d_ino = WINO;
 		newdir.d_namlen = cnp->cn_namelen;
-		bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
+		memcpy(newdir.d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 		newdir.d_type = DT_WHT;
 		/* byte order swapping handled by ufs_direnter2 */
 		error = ufs_direnter2(dvp, &newdir, cnp->cn_cred, cnp->cn_proc);
@@ -1425,7 +1425,7 @@ ufs_symlink(v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		bcopy(ap->a_target, (char *)ip->i_ffs_shortlink, len);
+		memcpy((char *)ip->i_ffs_shortlink, ap->a_target, len);
 		ip->i_ffs_size = len;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
