@@ -1,14 +1,11 @@
-#	$NetBSD: INSTALL,v 1.8 2000/09/25 11:46:40 abs Exp $
+#	$NetBSD: INSTALL,v 1.9 2000/09/25 13:54:52 abs Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
 
 include		"arch/vax/conf/std.vax"
 
-# Saving space
 makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
-#options        VNODE_OP_NOINLINE       # Don't inline vnode op calls
-#options        NFS_V2_ONLY             # Exclude NFS3 and NQNFS code
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -46,7 +43,7 @@ options 	MINIROOTSIZE=2276       # size of memory disk, in blocks
 #options 	GATEWAY
 options         INET
 
-# All supported filesystem types
+# File systems
 file-system 	FFS
 #file-system 	LFS
 #file-system 	MFS
@@ -59,9 +56,13 @@ file-system 	KERNFS
 #file-system 	UNION
 file-system 	CD9660
 
+# Filesystem options
 #options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
+#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 #options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 
