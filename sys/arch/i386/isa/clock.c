@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.18 1993/10/27 06:50:48 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.19 1993/10/29 21:40:34 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -392,7 +392,9 @@ delay(n)
 	 * we can take advantage of the intermediate 64-bit quantity to prevent
 	 * loss of significance.
 	 */
-	n -= 10;
+	n -= 5;
+	if (n < 0)
+		return;
 	{register int m;
 	__asm __volatile("mul %3"
 			 : "=a" (n), "=d" (m)
