@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.11 2001/01/08 18:58:56 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.12 2001/01/08 19:16:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.11 2001/01/08 18:58:56 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.12 2001/01/08 19:16:50 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -87,8 +87,6 @@ int stable_sort = 1;
 
 char toutpath[_POSIX_PATH_MAX];
 
-const char *tmpdir;	/* where temporary files should be put */
-
 static void cleanup __P((void));
 static void onsignal __P((int));
 static void usage __P((const char *));
@@ -119,8 +117,6 @@ main(argc, argv)
 	ftpos = fldtab;
 
 	fixit(&argc, argv);
-	if (!(tmpdir = getenv("TMPDIR")))
-		tmpdir = _PATH_TMP;
 
 	while ((ch = getopt(argc, argv, "bcdfik:mHno:rsSt:T:ux")) != -1) {
 		switch (ch) {
