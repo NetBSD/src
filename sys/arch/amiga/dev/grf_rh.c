@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.3 1994/10/26 02:03:13 cgd Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.4 1994/12/01 17:25:04 chopps Exp $	*/
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1221,7 +1221,7 @@ int  grfrhprint  __P((void *, char *));
 int  grfrhmatch  __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver grfrhcd = {
-	NULL, "grfrh", grfrhmatch, grfrhattach,
+	NULL, "grfrh", (cfmatch_t)grfrhmatch, grfrhattach,
 	DV_DULL, sizeof(struct grf_softc), NULL, 0
 };
 
@@ -1415,7 +1415,7 @@ rh_mode(gp, cmd, arg, a2, a3)
 		return(EINVAL);
 #endif
 	case GM_GRFIOCTL:
-		return(rh_ioctl (gp, (int) arg, (caddr_t) a2));
+		return(rh_ioctl (gp, (u_long) arg, (caddr_t) a2));
 
 	default:
 		break;
@@ -1427,7 +1427,7 @@ rh_mode(gp, cmd, arg, a2, a3)
 int
 rh_ioctl (gp, cmd, data)
 	register struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *data;
 {
 	switch (cmd) {

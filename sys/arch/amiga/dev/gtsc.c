@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.7 1994/10/26 02:03:37 cgd Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.8 1994/12/01 17:25:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -89,7 +89,7 @@ int gtsc_debug = 0;
 #endif
 
 struct cfdriver gtsccd = {
-	NULL, "gtsc", gtscmatch, gtscattach, 
+	NULL, "gtsc", (cfmatch_t)gtscmatch, gtscattach, 
 	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
 
 int

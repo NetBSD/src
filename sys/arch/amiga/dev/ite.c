@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.23 1994/10/26 02:03:53 cgd Exp $	*/
+/*	$NetBSD: ite.c,v 1.24 1994/12/01 17:25:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@ void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver itecd = {
-	NULL, "ite", itematch, iteattach, DV_DULL,
+	NULL, "ite", (cfmatch_t)itematch, iteattach, DV_DULL,
 	sizeof(struct ite_softc), NULL, 0 };
 
 int
@@ -131,7 +131,9 @@ itematch(pdp, cdp, auxp)
 	 * and thus no unit number.
 	 */
 	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
+		if (cdevsw[maj].d_open == 
+		    (int (*)__P((dev_t,int,int,struct proc *,struct file*)))
+		    iteopen)
 			break;
 	gp->g_itedev = makedev(maj, cdp->cf_unit);
 	return(1);
@@ -432,8 +434,9 @@ itewrite(dev, uio, flag)
 int
 iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd, flag;
+	u_long cmd;
 	caddr_t addr;
+	int flag;
 	struct proc *p;
 {
 	struct iterepeat *irp;
@@ -446,7 +449,7 @@ iteioctl(dev, cmd, addr, flag, p)
 
 	KDASSERT(tp);
 
-	error = (*linesw[tp->t_line].l_ioctl) (tp, cmd, addr, flag, p);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, addr, flag, p);
