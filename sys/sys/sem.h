@@ -38,7 +38,7 @@ struct semid_ds {
  */
 
 struct sembuf {
-    short		sem_num;	/* semaphore # */
+    ushort		sem_num;	/* semaphore # */
     short		sem_op;		/* semaphore operation */
     short		sem_flg;	/* operation flags */
 };
