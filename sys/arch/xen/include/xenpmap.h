@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.2 2004/04/24 19:43:53 cl Exp $	*/
 
 /*
  *
@@ -133,6 +133,7 @@ paddr_t *xpmap_phys_to_machine_mapping;
 } while (/*CONSTCOND*/0)
 #define PTE_SETBITS(_ptp,_bits) do {				\
 	xpq_queue_pte_update((_ptp), *(_ptp) | ((_bits) & ~PG_FRAME));	\
+	xpq_flush_queue();					\
 } while (/*CONSTCOND*/0)
 #define PDE_ATOMIC_SETBITS(_pdp,_bits) do {			\
 	xpq_queue_pde_update((_pdp), *(_pdp) | ((_bits) & ~PG_FRAME));	\
