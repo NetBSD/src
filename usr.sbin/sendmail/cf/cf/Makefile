@@ -10,12 +10,19 @@ RM=	rm -f
 
 .mc.cf:
 	$(RM) $@
-	(cd ${.CURDIR} && $(M4) ${@:R}.mc > ${.OBJDIR}/$@)
+	(cd ${.CURDIR} && $(M4) ${@:R}.mc > obj/$@)
 	$(CHMOD) $(ROMODE) $@
 
-ALL=	ucbarpa.cf ucbvax.cf vangogh.cf \
-	chez.cf python.cf \
-	sun-lamp.cf pain.cf boat-anchor.cf netbsd-proto.cf trinity.cf \
+ALL=	cs-hidden.cf cs-exposed.cf \
+	hpux-cs-exposed.cf hpux-cs-hidden.cf \
+	riscos-cs-exposed.cf \
+	sunos3.5-cs-exposed.cf sunos3.5-cs-hidden.cf \
+	sunos4.1-cs-exposed.cf sunos4.1-cs-hidden.cf \
+	ultrix4.1-cs-exposed.cf ultrix4.1-cs-hidden.cf \
+	osf1-cs-exposed.cf osf1-cs-hidden.cf \
+	mail.cs.cf mail.eecs.cf ucbvax.cf vangogh.cf \
+	chez.cf knecht.cf cogsci.cf alpha.cf s2k.cf auspex.cf \
+	python.cf \
 	clientproto.cf tcpproto.cf uucpproto.cf
 
 all: $(ALL)
@@ -24,10 +31,6 @@ clean cleandir:
 	$(RM) $(ALL) core
 
 depend install: 
-
-distribution:
-	install -c -o root -g wheel -m 444 netbsd-proto.cf \
-	    ${DESTDIR}/etc/sendmail.cf
 
 # this is overkill, but....
 M4FILES=\
@@ -59,7 +62,20 @@ M4FILES=\
 	../mailer/smtp.m4 \
 	../mailer/usenet.m4 \
 	../mailer/uucp.m4 \
+	../ostype/aix3.m4 \
+	../ostype/bsd4.3.m4 \
 	../ostype/bsd4.4.m4 \
+	../ostype/hpux.m4 \
+	../ostype/irix.m4 \
+	../ostype/linux.m4 \
+	../ostype/nextstep.m4 \
+	../ostype/osf1.m4 \
+	../ostype/riscos4.5.m4 \
+	../ostype/solaris2.m4 \
+	../ostype/sunos3.5.m4 \
+	../ostype/sunos4.1.m4 \
+	../ostype/svr4.m4 \
+	../ostype/ultrix4.1.m4 \
 	../siteconfig/uucp.cogsci.m4 \
 	../siteconfig/uucp.old.arpa.m4 \
 	../siteconfig/uucp.ucbarpa.m4 \

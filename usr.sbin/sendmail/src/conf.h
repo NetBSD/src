@@ -431,15 +431,9 @@ typedef int		pid_t;
 #if defined(__386BSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 # define HASUNSETENV	1	/* has unsetenv(3) call */
 # define HASSETSID	1	/* has the setsid(2) POSIX syscall */
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-# define HASUNAME       1 
-#endif
-#if defined(__NetBSD__) && ((NetBSD > 199307) || (NetBSD0_9 > 1))
-# undef SETPROCTITLE
-# define HASSETPROCTITLE
-# define setreuid(r,e)	__setreuid(r,e)
-# define GIDSET_T       gid_t
-#endif
+# ifdef __NetBSD__
+#  define HASUNAME	1	/* has uname(2) syscall */
+# endif
 # include <sys/cdefs.h>
 # define ERRLIST_PREDEFINED	/* don't declare sys_errlist */
 # ifndef LA_TYPE

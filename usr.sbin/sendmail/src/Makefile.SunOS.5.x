@@ -5,51 +5,55 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#  This has been tested on IRIX 4.0.4.
+#  This has been tested on Solaris 2.3.
 #
-#	@(#)Makefile.IRIX	8.4 (Berkeley) 4/11/94
+#	@(#)Makefile.SunOS.5.x	8.5 (Berkeley) 4/12/94
 #
-SHELL=	/bin/sh
 
 # use O=-O (usual) or O=-g (debugging)
-O=	-O
-CC=gcc
+# warning: do not use -O with gcc
+O=	
 
-# define the database mechanisms available for map & alias lookups:
+CC=	gcc
+
+# define the database mechanism used for alias lookups:
 #	-DNDBM -- use new DBM
-#	-DNEWDB -- use new Berkeley DB (requires -ldb)
-#	-DNIS -- include NIS support (requires -lsun)
+#	-DNEWDB -- use new Berkeley DB
+#	-DNIS -- include NIS support
 # The really old (V7) DBM library is no longer supported.
 # See READ_ME for a description of how these flags interact.
 #
-DBMDEF=	-DNDBM
+DBMDEF=	-DNDBM -DNIS
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF= -DIRIX
+# include -DSOLARIS_2_3 for version 2.3 and higher
+ENVDEF=	-DSOLARIS_2_3
 
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=
+INCDIRS=-I/usr/sww/include/db
 
 # library directories
-LIBDIRS=
+LIBDIRS=-L/usr/sww/lib
 
 # libraries required on your system
-LIBS= -lmld
-#LIBS= -lsun -ldb -lmld
+LIBS=	-lresolv -lsocket -lnsl -lelf
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
 BINDIR=	${DESTDIR}/usr/lib
 
 # location of sendmail.st file (usually /var/log or /usr/lib)
-STDIR=	${DESTDIR}/usr/lib
+STDIR=	${DESTDIR}/var/log
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/usr/lib
+HFDIR=	${DESTDIR}/etc/mail
 
 # additional .o files needed
 OBJADD=
+
+# things to be made before compilation begins
+BEFORE=	sysexits.h
 
 ###################  end of user configuration flags  ######################
 
@@ -61,10 +65,11 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 	savemail.o srvrsmtp.o stab.o stats.o sysexits.o \
 	trace.o udb.o usersmtp.o util.o version.o ${OBJADD}
 
-LINKS=	${DESTDIR}/usr/bsd/newaliases ${DESTDIR}/usr/bsd/mailq
+LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
 BINGRP=	sys
 BINMODE=6555
+INSTALL=/usr/ucb/install
 
 ALL=	sendmail aliases.0 mailq.0 newaliases.0 sendmail.0
 
@@ -72,6 +77,9 @@ all: ${ALL}
 
 sendmail: ${BEFORE} ${OBJS}
 	${CC} -o sendmail ${OBJS} ${LIBDIRS} ${LIBS}
+
+sysexits.h: /usr/ucbinclude/sysexits.h
+	ln -s /usr/ucbinclude/sysexits.h
 
 NROFF=	nroff -h
 
@@ -90,13 +98,11 @@ sendmail.0: sendmail.8
 install: install-sendmail install-docs
 
 install-sendmail: sendmail
-	install -u ${BINOWN} -g ${BINGRP} -m ${BINMODE} -f ${BINDIR} sendmail
+	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	cp /dev/null ${STDIR}/sendmail.st
-	chmod 644 ${STDIR}/sendmail.st
-	chown ${BINOWN} ${STDIR}/sendmail.st
-	chgrp ${BINGRP} ${STDIR}/sendmail.st
-	install -u ${BINOWN} -g ${BINGRP} -m 444 -f ${HFDIR} sendmail.hf
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	    ${STDIR}/sendmail.st
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: aliases.0 mailq.0 newaliases.0 sendmail.0
