@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.19 2000/12/13 18:13:08 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.20 2000/12/25 08:56:12 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,11 @@
 
 #include <uvm/uvm_extern.h>
 
+int mips_user_cacheflush __P((struct proc *p, vaddr_t va, int nbytes,
+	int whichcache));
+int mips_user_cachectl   __P((struct proc *p, vaddr_t va, int nbytes,
+	int ctl));
+
 int
 sys_sysarch(p, v, retval)
 	struct proc *p;
@@ -96,8 +101,8 @@ sys_sysarch(p, v, retval)
 
 
 /*
- * Hande a user-space  request to flush a given virutal address
- * rangefrom the i-cache, d-cache, or both.
+ * Handle a request to flush a given user virtual address
+ * range from the i-cache, d-cache, or both.
  */
 int
 mips_user_cacheflush(p, va, nbytes, whichcache)
@@ -106,7 +111,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 	int nbytes, whichcache;
 {
 
-	/* validate the cache we're going to  flush. */
+	/* validate the cache we're going to flush. */
 	switch (whichcache) {
 	    case ICACHE:
 	    case DCACHE:
@@ -127,7 +132,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 
 	/*
 	 * Invalidate each page in the virtual-address range,
-	 * by manually mapping to a  physical address and
+	 * by manually mapping to a physical address and
 	 * invalidating the PA.
 	 */
 	for (base = (void*) addr; nbytes > 0; base += len, nbytes -= len) {
@@ -143,7 +148,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 }
 
 /*
- * Hande a user-space to make a given range of virtual addresses
+ * Handle a request to make a given user virtual address range
  * non-cacheable.
  */
 int
@@ -152,7 +157,7 @@ mips_user_cachectl(p, va, nbytes, cachectl)
 	vaddr_t va;
 	int nbytes, cachectl;
 {
-	/* validate the cache we're going to  flush. */
+	/* validate the cache we're going to flush. */
 	switch (cachectl) {
 	case CACHEABLE:
 	case UNCACHEABLE:
@@ -167,8 +172,8 @@ mips_user_cachectl(p, va, nbytes, cachectl)
 	/*
 	 * Use the merged mips3 pmap cache-control functions to change
 	 * the cache attributes of each page in the virtual-address range,
-	 * by manually mapping to a  physical address and changing the
-	 * pmap attributes of the  PA of each page in the range.
+	 * by manually mapping to a physical address and changing the
+	 * pmap attributes of the PA of each page in the range.
 	 * Force misses on non-present pages to be sure the cacheable bits
 	 * get set.
 	 */
