@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.11 1995/05/03 19:20:15 ragge Exp $  */
+/*      $NetBSD: machdep.c,v 1.12 1995/05/06 00:08:28 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -46,16 +46,7 @@
  */
 
 #include "sys/param.h"
-#include "vax/include/sid.h"
 #include "sys/map.h"
-#include "buf.h"
-#include "mbuf.h"
-#include "vax/include/pte.h"
-#include "uba.h"
-#include "reboot.h"
-#include "sys/callout.h"
-#include "sys/device.h"
-#include "conf.h"
 #include "sys/proc.h"
 #include "sys/user.h"
 #include "sys/time.h"
@@ -63,16 +54,12 @@
 #include "sys/kernel.h"
 #include "sys/reboot.h"
 #include "sys/msgbuf.h"
-#include "vax/include/mtpr.h"
-#include "vax/include/cpu.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vax/include/macros.h"
-#include "vax/include/nexus.h"
-#include "vax/include/trap.h"
-#include "machine/reg.h"
-#include "net/netisr.h"
+#include "sys/buf.h"
+#include "sys/mbuf.h"
+#include "sys/reboot.h"
+#include "sys/conf.h"
+#include "sys/callout.h"
+#include "sys/device.h"
 #ifdef SYSVMSG
 #include "sys/msg.h"
 #endif
@@ -82,6 +69,16 @@
 #ifdef SYSVSHM
 #include "sys/shm.h"
 #endif
+#include "machine/sid.h"
+#include "machine/pte.h"
+#include "machine/mtpr.h"
+#include "machine/cpu.h"
+#include "machine/macros.h"
+#include "machine/nexus.h"
+#include "machine/trap.h"
+#include "machine/reg.h"
+#include "vm/vm_kern.h"
+#include "net/netisr.h"
 
 /*
  * We do these external declarations here, maybe they should be done 
@@ -128,15 +125,10 @@ cpu_startup() {
 	extern char *panicstr;
 
         /*
-         * Initialize error message buffer (at end of core).
-         * avail_end was pre-decremented in pmap_bootstrap to compensate.
+         * Initialize error message buffer.
          */
-#if 0
-        for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-                pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
-                    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
         msgbufmapped = 1;
-#endif
+
 #ifdef VAX750
 	if(cpunumber==VAX_750)
 		if(!mfpr(PR_TODR))
@@ -147,9 +139,9 @@ cpu_startup() {
          */
 	printf("%s\n", version);
 	printf("realmem = %d\n", avail_end);
-	physmem=btoc(avail_end); 
-	panicstr=NULL;
-	mtpr(AST_NO,PR_ASTLVL);
+	physmem = btoc(avail_end); 
+	panicstr = NULL;
+	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
 	dumpsize=physmem+1;
