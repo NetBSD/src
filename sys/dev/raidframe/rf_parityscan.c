@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.13 2002/07/13 20:14:34 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.14 2002/09/14 17:11:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.13 2002/07/13 20:14:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.14 2002/09/14 17:11:30 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -333,18 +333,24 @@ rf_TryToRedirectPDA(raidPtr, pda, parity)
 	if (raidPtr->Disks[pda->row][pda->col].status == rf_ds_reconstructing) {
 		if (rf_CheckRUReconstructed(raidPtr->reconControl[pda->row]->reconMap, pda->startSector)) {
 			if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
+#if RF_DEBUG_VERIFYPARITY
 				RF_RowCol_t or = pda->row, oc = pda->col;
 				RF_SectorNum_t os = pda->startSector;
+#endif
 				if (parity) {
 					(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+#if RF_DEBUG_VERIFYPARITY
 					if (rf_verifyParityDebug)
 						printf("VerifyParity: Redir P r %d c %d sect %ld -> r %d c %d sect %ld\n",
 						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+#endif
 				} else {
 					(raidPtr->Layout.map->MapSector) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+#if RF_DEBUG_VERIFYPARITY
 					if (rf_verifyParityDebug)
 						printf("VerifyParity: Redir D r %d c %d sect %ld -> r %d c %d sect %ld\n",
 						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+#endif
 				}
 			} else {
 				RF_RowCol_t spRow = raidPtr->Disks[pda->row][pda->col].spareRow;
