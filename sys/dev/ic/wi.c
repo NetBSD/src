@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.144 2003/11/16 09:02:42 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.145 2003/11/16 09:05:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.144 2003/11/16 09:02:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.145 2003/11/16 09:05:53 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -635,8 +635,8 @@ wi_init(struct ifnet *ifp)
 
 	/*
 	 * Initialize promisc mode.
-	 *	Being in the Host-AP mode causes a great
-	 *	deal of pain if primisc mode is set.
+	 *	Being in Host-AP mode causes a great
+	 *	deal of pain if promiscuous mode is set.
 	 *	Therefore we avoid confusing the firmware
 	 *	and always reset promisc mode in Host-AP
 	 *	mode.  Host-AP sees all the packets anyway.
