@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.8 2000/05/15 01:55:14 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.9 2000/05/15 01:55:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -309,7 +309,7 @@ STATIC int rtk_mii_readreg(sc, frame)
 {
 	int			i, ack, s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Set up frame for RX.
@@ -402,7 +402,7 @@ STATIC int rtk_mii_writereg(sc, frame)
 {
 	int			s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Set up frame for TX.
 	 */
@@ -1204,7 +1204,7 @@ STATIC void rtk_init(xsc)
 	u_int32_t		rxcfg;
 	u_int16_t		phy_bmcr = 0;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * XXX Hack for the 8139: the built-in autoneg logic's state
@@ -1394,7 +1394,7 @@ STATIC int rtk_ioctl(ifp, command, data)
 	struct ifreq		*ifr = (struct ifreq *) data;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:
