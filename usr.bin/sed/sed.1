@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.15 2002/01/23 19:07:34 atatat Exp $
+.\"	$NetBSD: sed.1,v 1.16 2002/02/07 04:28:14 ross Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -357,7 +357,7 @@ The end of each line is marked with a
 .It [2addr]n
 Write the pattern space to the standard output if the default output has
 not been suppressed, and replace the pattern space with the next line of
-input.
+input. The script is not restarted but continues with the next function.
 .sp
 .It [2addr]N
 Append the next line of input to the pattern space, using an embedded
