@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.2 1996/09/17 21:16:12 cgd Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.3 1996/10/17 03:08:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,8 +32,8 @@
 IMPORT(errno, 4)
 
 LEAF(ptrace, 4)
-	SETGP(pv)
+	LDGP(pv)
 	stl	zero, errno
-	SYSCALL_NOLABEL(ptrace)
+	CALLSYS_ERROR(ptrace)
 	RET
 END(ptrace)
