@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.69 2000/12/20 15:49:03 briggs Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70 2001/01/19 23:04:23 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ ncr53c9x_attach(sc, adapter, device)
 	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = (adapter) ? adapter : &ncr53c9x_adapter;
 	sc->sc_link.device = (device) ? device : &ncr53c9x_device;
-	sc->sc_link.openings = 32;
+	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
 	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
@@ -442,14 +442,13 @@ ncr53c9x_init(sc, doreset)
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
 
-		ti->flags = ((sc->sc_cfflags & (1<<(r+16))) ? T_TAGOFF : 0) |
-			((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
+		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
 			 ? 0 : T_SYNCHOFF) |
 			((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
 			T_NEED_TO_RESET;
 #ifdef DEBUG
 		if (ncr53c9x_notag)
-			ti->flags |= T_TAGOFF;
+			ti->flags &= ~T_TAG;
 #endif
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
@@ -940,7 +939,13 @@ ncr53c9x_ioctl(link, cmd, arg, flag, p)
 					sc->sc_dev.dv_xname, sp->sa_target);
 			ti->flags |= T_NEGOTIATE;
 		}
-		break;
+		if ((sp->sa_flags & SC_ACCEL_TAGS) != 0) {
+			if ((sc->sc_cfflags & (1<<((sp->sa_target)+16))) == 0) {
+				ti->flags |= T_TAG;
+				link->openings = 255;
+			}
+		}
+	break;
 	}
 	default:
 		error = ENOTTY;
@@ -987,7 +992,9 @@ ncr53c9x_sched(sc)
 		lun = sc_link->scsipi_scsi.lun;
 
 		/* Select type of tag for this command */
-		if ((ti->flags & (T_RSELECTOFF|T_TAGOFF)) != 0) 
+		if ((ti->flags & (T_RSELECTOFF)) != 0) 
+			tag = 0;
+		else if ((ti->flags & (T_TAG)) == 0)
 			tag = 0;
 		else if ((ecb->flags & ECB_SENSE) != 0)
 			tag = 0;
@@ -1504,7 +1511,7 @@ gotit:
 				NCR_MSGS(("(rejected sent tag)"));
 				NCRCMD(sc, NCRCMD_FLUSH);
 				DELAY(1);
-				ti->flags |= T_TAGOFF;
+				ti->flags &= ~T_TAG;
 				lun = ecb->xs->sc_link->scsipi_scsi.lun;
 				li = TINFO_LUN(ti, lun);
 				if (ecb->tag[0] &&
