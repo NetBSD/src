@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.1,v 1.1.2.5 2005/01/10 19:02:54 jmc Exp $
+#	$NetBSD: CHANGES-2.0.1,v 1.1.2.6 2005/01/10 22:04:25 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.0.1 
 release.
@@ -106,3 +106,9 @@ sys/arch/sh3/sh3/mmu_sh4.c			1.8
 	_cpu_exception_suspend()/_cpu_exception_resume() pair. Prevents 
 	spontaneous reboot under heavy load
 	[tsutsui, ticket #1072]
+
+sys/netinet/fil.c				patch
+
+	Pull revs 1.2-1.7 from sys/dist/ipf/netinet/fil.c from trunk to fix 
+	panics with ipf and IPv6. Fixes PR#28875 and #26839
+	[hubertf, ticket #1068]
