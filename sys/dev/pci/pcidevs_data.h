@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.54 1998/02/07 20:07:42 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.55 1998/02/27 11:46:25 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.49 1998/02/07 20:05:25 augustss Exp 
+ *	NetBSD: pcidevs,v 1.50 1998/02/27 11:45:51 mycroft Exp 
  */
 
 /*
@@ -1112,6 +1112,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "LeadTek Research",
 	    "S3 805",
+	},
+	{
+	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
+	    0,
+	    "Macronix",
+	    "PMAC 100/10base PCI MAC controller",
 	},
 	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,
