@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.79 1998/12/12 23:41:56 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.80 1998/12/13 00:11:37 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -978,6 +978,18 @@ struct ccb {
 	ncrcmd			patch[8];
 
 	/*
+	**	A copy of the SCSI command; this is where the script
+	**	reads it from.
+	*/
+	struct scsi_generic	scsi_cmd;
+
+	/*
+	**	The incoming sense data comes to here, and is copied
+	**	back into the scsipi_xfer.
+	*/
+	struct scsipi_sense_data sense_data;
+
+	/*
 	**	The general SCSI driver provides a
 	**	pointer to a control block.
 	*/
@@ -1470,7 +1482,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.79 1998/12/12 23:41:56 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.80 1998/12/13 00:11:37 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4808,6 +4820,15 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	};
 	cp->phys.header.lastp = cp->phys.header.savep;
 
+	/*
+	**	Copy the SCSI command into the ccb.
+	*/
+	memcpy(&cp->scsi_cmd, cmd, sizeof(cp->scsi_cmd));
+
+	/*
+	**	Make sure the sense buffer is empty.
+	*/
+	memset(&cp->sense_data, 0, sizeof(cp->sense_data));
 
 	/*----------------------------------------------------
 	**
@@ -4842,7 +4863,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	/*
 	**	command
 	*/
-	cp->phys.cmd.addr		= vtophys (cmd);
+	cp->phys.cmd.addr		= CCB_PHYS (cp, scsi_cmd);
 	cp->phys.cmd.size		= xp->cmdlen;
 	/*
 	**	sense command
@@ -4860,7 +4881,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	/*
 	**	sense data
 	*/
-	cp->phys.sense.addr		= vtophys (&cp->xfer->sense);
+	cp->phys.sense.addr		= CCB_PHYS (cp, sense_data);
 	cp->phys.sense.size		= sizeof(struct scsipi_sense_data);
 	/*
 	**	status
@@ -5038,6 +5059,13 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	if (xp->datalen != 0)
 		bus_dmamap_unload(np->sc_dmat, cp->xfer_dmamap);
 #endif
+
+	/*
+	**	Copyback the sense data.
+	**	XXX Only do this if we know there's sense data?
+	*/
+	memcpy(&xp->sense, &cp->sense_data, sizeof(xp->sense));
+
 	tp = &np->target[xp->sc_link->scsipi_scsi.target];
 	lp = tp->lp[xp->sc_link->scsipi_scsi.lun];
 
