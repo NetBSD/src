@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.10 1997/09/05 21:26:59 phil Exp $
+.\"	$NetBSD: fdisk.8,v 1.11 1997/09/14 14:05:34 lukem Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -63,25 +63,33 @@ An example follows:
 		end: cylinder  197, head  14, sector 33
 .Ed
 .Pp
-The disk is divided into three partitions that happen to fill the disk.
-The second partition overlaps the end of the first.
+This example disk is divided into three partitions that happen to fill the
+disk.  The second partition overlaps the end of the first.
 (Used for debugging purposes)
-.Bl -tag -width "cyl, sector and head"
+.Pp
+The various fields in each partition are:
+.Bl -tag -width "cylinder"
 .It Em "sysid"
 is used to label the partition.  NetBSD reserves the
 magic number 165 decimal (A5 in hex).
-.It Em "start and size"
-fields provide the start address
-and size of a partition in sectors.
+.It Xo
+.Em start ,
+.Em size
+.Xc
+start address and size of a partition in sectors.
 .It Em "flag 80"
 specifies that this is the active partition.
-.It Em "cyl, sector and head"
-fields are used to specify the beginning address
-and end address for the partition.
-.It Em "Note:"
+.It Xo
+.Em "cylinder" ,
+.Em "head" ,
+.Em "sector"
+.Xc
+the beginning or ending address of a partition.
+.El
+.Pp
+.Em "Note:"
 these numbers are calculated using BIOS's understanding of the disk geometry
 and saved in the bootblock.
-.El
 .Pp
 The flags
 .Fl a ,
@@ -109,9 +117,10 @@ will display the information again and ask if it is correct.
 will then procede to the next entry.
 .Pp
 Getting the
-.Em cyl, sector,
+.Em cylinder ,
+.Em head ,
 and
-.Em head
+.Em sector
 fields correct is tricky.
 So by default,
 they will be calculated for you;
@@ -188,7 +197,8 @@ use fdisk as part of an automatic installation process.  Using the
 flag with the
 .Fl u
 makes it impossible to specify the starting and ending
-.Em cylinder, head
+.Em cylinder ,
+.Em head
 and 
 .Em sector
 fields.  They will be automatically computed using the BIOS geometry.
