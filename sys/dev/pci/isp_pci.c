@@ -1,5 +1,5 @@
-/* $NetBSD: isp_pci.c,v 1.34 1999/01/30 07:08:04 mjacob Exp $ */
-/* release_01_29_99 */
+/* $NetBSD: isp_pci.c,v 1.35 1999/02/09 00:35:35 mjacob Exp $ */
+/* release_02_05_99 */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -146,6 +146,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
+	u_int32_t data;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
 	struct ispsoftc *isp = &pcs->pci_isp;
@@ -191,16 +192,7 @@ isp_pci_attach(parent, self, aux)
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
 	} else if (pa->pa_id == PCI_QLOGIC_ISP2100) {
-		u_int32_t data;
 		isp->isp_mdvec = &mdvec_2100;
-		if (ioh_valid == 0) {
-			printf("%s: warning, ISP2100 cannot use I/O Space"
-				" Mappings\n", isp->isp_name);
-		} else {
-			pcs->pci_st = iot;
-			pcs->pci_sh = ioh;
-		}
-
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
@@ -209,16 +201,30 @@ isp_pci_attach(parent, self, aux)
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
-
-		data = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			PCI_COMMAND_STATUS_REG);
-		data |= PCI_COMMAND_MASTER_ENABLE |
-			PCI_COMMAND_INVALIDATE_ENABLE;
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
-			PCI_COMMAND_STATUS_REG, data);
 	} else {
 		return;
 	}
+	/*
+	 * Make sure that command register set sanely.
+	 */
+	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	data |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_INVALIDATE_ENABLE;
+	/*
+	 * Not so sure about these- but I think it's important that they get
+	 * enabled......
+	 */
+	data |= PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
+	/*
+	 * Make sure that latency timer and cache line size is set sanely.
+	 */
+	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	data &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+	data &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+	data |= (0x40 << PCI_LATTIMER_SHIFT);
+	data |= (0x10 << PCI_CACHELINE_SHIFT);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
+
 #ifdef DEBUG
 	if (oneshot) {
 		oneshot = 0;
