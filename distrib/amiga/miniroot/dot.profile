@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1997/09/09 23:07:05 is Exp $
+#	$NetBSD: dot.profile,v 1.1.2.1 1997/11/09 20:16:45 mellon Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -41,8 +41,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 
 	# run update, so that installed software is written as it goes.
 	update
