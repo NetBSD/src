@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.17 2000/12/07 21:23:54 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.18 2000/12/19 00:36:54 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.15 2000/12/07 21:23:32 bjh21 Exp 
+ *	NetBSD: podules,v 1.16 2000/12/19 00:36:26 bjh21 Exp 
  */
 
 /*
@@ -160,8 +160,9 @@ static struct podule_description podules_icubed[] = {
 	{ PODULE_ICUBED_ETHERLAN700,	"EtherLan 700-series" },
 	{ PODULE_ICUBED_ETHERLAN100AEH,	"AEH77 (EtherLan 102)" },
 	{ PODULE_ICUBED_ETHERLAN200AEH,	"AEH79 (EtherLan 210)" },
-	{ PODULE_ICUBED_ETHERLAN600AEH,	"AEH60/AEH78 (EtherLan 602)" },
-	{ PODULE_ICUBED_ETHERLAN500AEH,	"AEH54/AEH75 (EtherLan 512)" },
+	{ PODULE_ICUBED_ETHERLAN600AEH,	"AEH62/78/99 (EtherLan 602)" },
+	{ PODULE_ICUBED_ETHERLAN500AEH,	"AEH75 (EtherLan 512)" },
+	{ PODULE_ICUBED_ETHERLAN700AEH,	"AEH98 (EtherLan 700-series)" },
 	{ PODULE_ICUBED_ETHERLAN100XXX,	"EtherLan 100???" },
 	{ 0x0000, NULL }
 };
