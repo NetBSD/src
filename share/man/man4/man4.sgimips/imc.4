@@ -1,10 +1,10 @@
-.\"	$NetBSD: imc.4,v 1.1 2002/05/19 20:38:52 pooka Exp $
+.\"	$NetBSD: imc.4,v 1.2 2002/05/19 20:47:26 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This document is derived from work contributed to The NetBSD Foundation
-.\" by Antti Kantee
+.\" by Antti Kantee.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -41,14 +41,16 @@
 .Nm imc
 .Nd Indy Memory Controller and system controller
 .Sh SYNOPSIS
-.Cd "imc0 at mainbus0 addr 0x1fa00000
+.Cd "imc0 at mainbus0 addr 0x1fa00000"
 .Sh DESCRIPTION
-The Indy Memory Controller is resposible for acting as an interface from
+The Indy Memory Controller is responsible for acting as an interface from
 the
-.Nm gio
-bus to the main memory and CPU. The
-.Nm imc
+.Xr gio 4
+bus to the main memory and CPU.  The
+.Nm
 is found in the Indy and Indigo2 machines.
+.Sh SEE ALSO
+.Xr gio 4
 .Sh HISTORY
 The
 .Nm
