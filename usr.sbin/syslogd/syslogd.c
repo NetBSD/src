@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.15 2004/11/17 02:15:50 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.16 2004/11/17 02:18:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.15 2004/11/17 02:15:50 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.16 2004/11/17 02:18:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1341,9 +1341,15 @@ domark(int signo)
 void
 logerror(const char *fmt, ...)
 {
+	static int logerror_running;
 	va_list ap;
 	char tmpbuf[BUFSIZ];
 	char buf[BUFSIZ];
+
+	/* If there's an error while trying to log an error, give up. */
+	if (logerror_running)
+		return;
+	logerror_running = 1;
 
 	va_start(ap, fmt);
 
@@ -1364,7 +1370,7 @@ logerror(const char *fmt, ...)
 	if (!daemonized && !Debug)
 		printf("%s\n", buf);
 
-	return;
+	logerror_running = 0;
 }
 
 void
