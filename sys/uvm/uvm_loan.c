@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.36 2001/12/31 19:21:36 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.37 2002/05/07 02:29:52 enami Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.36 2001/12/31 19:21:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.37 2002/05/07 02:29:52 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,8 @@ uvm_loanuobj(ufi, output, flags, va)
 	if (uobj->pgops->pgo_get) {	/* try locked pgo_get */
 		npages = 1;
 		pg = NULL;
-		error = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
+		error = (*uobj->pgops->pgo_get)(uobj,
+		    va - ufi->entry->start + ufi->entry->offset,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_LOCKED);
 	} else {
 		error = EIO;		/* must have pgo_get op */
@@ -477,7 +478,8 @@ uvm_loanuobj(ufi, output, flags, va)
 
 		/* locked: uobj */
 		npages = 1;
-		error = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
+		error = (*uobj->pgops->pgo_get)(uobj,
+		    va - ufi->entry->start + ufi->entry->offset,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_SYNCIO);
 		/* locked: <nothing> */
 
