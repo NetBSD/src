@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.3 1999/12/16 07:05:19 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.4 1999/12/18 05:51:35 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,13 +99,16 @@ PORT
 command for validity.
 The
 PORT
-command will fail if the IP address specified does not match the ftp
+command will fail if the IP address specified does not match the
+.Tn FTP
 command connection, or if the remote TCP port number is less than
 .Dv IPPORT_RESERVED .
 It is
 .Em strongly
 encouraged that this option be used, espcially for sites concerned
-with potential security problems with ftp bounce attacks.
+with potential security problems with
+.Tn FTP
+bounce attacks.
 If class is
 .Dq none
 or
