@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.6 1999/12/15 22:07:34 abs Exp $
+.\" $NetBSD: uaudio.4,v 1.7 2000/04/15 16:32:41 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,14 +41,88 @@
 .Nm uaudio
 .Nd USB audio device driver
 .Sh SYNOPSIS
-.Cd "uaudio*     at uhub?"
-.Cd "audio*      at uaudio?"
+.Cd "uaudio* at uhub?"
+.Cd "audio*  at uaudio?"
 .Pp
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB audio class devices.
+driver provides support for 
+.Tn USB
+audio class devices.
+.Pp
+A 
+.Tn USB
+audio device consists of a number of components:
+input terminals (e.g. USB digital input), output terminals (e.g.
+speakers), and a number of units in between (e.g. volume control).
+The following types of units are handled by the
+.Nm
+driver and are accessible via the mixer (see
+.Xr audio 4 )
+interface:
+.Bl -tag -width -offset 3n -compact
+.It mixer
+A mixer has a number of inputs an one output.  Each input has a control
+that determines its volume in the output.
+The name of the control is
+.Ar mixN-S ,
+where 
+.Ar N
+is a number that identifies which mixer it is and
+.Ar S
+which input.
+.It selector
+Not implemented yet.
+.It feature
+A feature unit changes the sound in some way, like bass, treble, or
+volume.
+The name of the control is
+.Ar feaN-S-F ,
+where 
+.Ar N
+is a number that identifies which feature unit it is,
+.Ar S
+which input, and
+.Ar F
+which feature is affected.
+.It processing
+A processing unit does one of a number of audio processing functions
+(e.g., channel up-down mixing, Dolby ProLogic, or chorus effects).
+The name of the on-off control is
+.Ar proN.M-enable ,
+where 
+.Ar N
+is a number that identifies which processing unit it is and
+.Ar M
+which kind.
+Depending on the type of processing unit there may be other controls
+as well.
+.It extension
+An extension unit performs some unspecified audio processing
+The name of the on-off control is
+.Ar extN-enable ,
+where 
+.Ar N
+is a number that identifies which processing unit it is.
+.El
+.Pp
+For more information the
+.Tn USB
+Audio class specification is indispensable
+reading.
+
+.Sh BUGS
+The mixer interface is really incomplete.
+.Pp
+There should be some heuristics that allows important controls,
+e.g., volume, to be identified and given its traditional name.
 .Sh SEE ALSO
+The 
+.Tn USB 
+specifications can be found at
+.Dv http://www.usb.org/developers/docs.htm .
+.Pp
 .Xr audio 4 ,
 .Xr usb 4
 .Sh HISTORY
