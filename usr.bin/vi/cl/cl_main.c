@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.2 1998/01/09 08:06:21 perry Exp $	*/
+/*	$NetBSD: cl_main.c,v 1.3 1999/02/19 21:25:02 abs Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -87,8 +87,10 @@ main(argc, argv)
 	 * We have to know what terminal it is from the start, since we may
 	 * have to use termcap/terminfo to find out how big the screen is.
 	 */
-	if ((ttype = getenv("TERM")) == NULL)
+	if ((ttype = getenv("TERM")) == NULL) {
+		fprintf(stderr,"WARNING: TERM environment variable not set.\n");
 		ttype = "unknown";
+	}
 	term_init(gp->progname, ttype);
 
 	/* Add the terminal type to the global structure. */
