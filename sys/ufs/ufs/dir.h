@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.7 1996/02/29 20:09:56 gwr Exp $	*/
+/*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -111,9 +111,7 @@ struct	direct {
  * the directory entry.  This requires the amount of space in struct direct
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
- * Note we have to override the DIRSIZ macro in <sys/dirent.h>
  */
-#undef	DIRSIZ
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define DIRSIZ(oldfmt, dp) \
     ((oldfmt) ? \
