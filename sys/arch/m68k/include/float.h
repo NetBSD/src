@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)float.h	7.1 (Berkeley) 5/8/90
- *	$Id: float.h,v 1.5 1994/04/10 02:22:10 chopps Exp $
+ *	$Id: float.h,v 1.6 1994/04/11 01:15:47 mycroft Exp $
  */
 #ifndef _M68K_FLOAT_H_
-#deifne _M68K_FLOAT_H_
+#define _M68K_FLOAT_H_
 
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
