@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.23 1997/07/11 03:47:53 mikel Exp $	*/
+/*	$NetBSD: login.c,v 1.24 1997/08/16 13:50:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.23 1997/07/11 03:47:53 mikel Exp $";
+__RCSID("$NetBSD: login.c,v 1.24 1997/08/16 13:50:46 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -81,6 +82,7 @@ void	 badlogin __P((char *));
 void	 checknologin __P((void));
 void	 dolastlog __P((int));
 void	 getloginname __P((void));
+int	 main __P((int, char *[]));
 void	 motd __P((void));
 int	 rootterm __P((char *));
 void	 sigint __P((int));
@@ -135,10 +137,12 @@ main(argc, argv)
 	char *domain, *p, *salt, *ttyn, *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
+	int need_chpass;
 
 	tbuf[0] = '\0';
 	rval = 0;
 	pwprompt = NULL;
+	need_chpass = 0;
 
 	(void)signal(SIGALRM, timedout);
 	(void)alarm(timeout);
@@ -301,7 +305,6 @@ main(argc, argv)
 			if (require_skey > 0)	/* -s */
 				p = skeypw;
 			else {
-				extern char *skey_keyinfo();
 				static char skprompt[80];
 				char *skinfo = skey_keyinfo(username);
 				
@@ -397,7 +400,9 @@ main(argc, argv)
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
 	if (pwd->pw_change)
-		if (tp.tv_sec >= pwd->pw_change) {
+		if (pwd->pw_change == _PASSWORD_CHGNOW)
+			need_chpass = 1;
+		else if (tp.tv_sec >= pwd->pw_change) {
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
 		} else if (pwd->pw_change - tp.tv_sec <
@@ -505,9 +510,26 @@ main(argc, argv)
 
 	/* Discard permissions last so can't get killed and drop core. */
 	if (rootlogin)
-		(void) setuid(0);
+		(void)setuid(0);
 	else
-		(void) setuid(pwd->pw_uid);
+		(void)setuid(pwd->pw_uid);
+
+	/* Wait to change password until we're unprivileged */
+	if (need_chpass) {
+#ifdef SKEY
+		/* If the user logged on using S/Key, don't force
+		 * a password change
+		 */
+		if (used_skey) {
+			(void)printf(
+"Warning: your password has expired. Please change it as soon as possible.\n");
+		} else
+#endif
+		(void)printf(
+		    "Your password has expired. Please choose a new one.\n");
+		if (system(_PATH_BINPASSWD) != 0)
+			sleepexit(1);
+	}
 
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);
