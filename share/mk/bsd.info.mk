@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.24 2001/11/28 20:19:08 tv Exp $
+#	$NetBSD: bsd.info.mk,v 1.25 2002/02/11 21:14:59 mycroft Exp $
 
 .include <bsd.init.mk>
 
@@ -47,13 +47,20 @@ _FDIR:=		${INFODIR_${F}:U${INFODIR}}		# dir overrides
 _FNAME:=	${INFONAME_${F}:U${INFONAME:U${F:T}}}	# name overrides
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
 
+.if !defined(UPDATE)
+${_F}!		${F} __infoinstall			# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
 ${_F}:		${F} __infoinstall			# install rule
-infoinstall::	${_F}
-.PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+infoinstall::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
 .undef _FDIR

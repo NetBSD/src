@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.56 2001/11/28 20:19:08 tv Exp $
+#	$NetBSD: bsd.doc.mk,v 1.57 2002/02/11 21:14:58 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -42,13 +42,20 @@ FILES?=		${SRCS}
 .for F in Makefile ${FILES:O:u} ${EXTRA}
 _F:=		${DESTDIR}${DOCDIR}/${DIR}/${F}		# installed path
 
+.if !defined(UPDATE)
+${_F}!		${F} __docinstall			# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
 ${_F}:		${F} __docinstall			# install rule
-docinstall::	${_F}
-.PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+docinstall::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
 .undef _F
