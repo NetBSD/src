@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.5 1997/10/15 05:01:44 lukem Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.6 1997/12/31 06:59:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.5 1997/10/15 05:01:44 lukem Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.6 1997/12/31 06:59:54 thorpej Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -318,11 +318,11 @@ ypproc_xfr_2_svc(argp, rqstp)
 		snprintf(port, sizeof(port), "%d", ypx->port);
 		ipadd = inet_ntoa(caller->sin_addr);
 		if (ipadd == NULL)
-			exit(1);	/* XXX report error ? */
+			_exit(1);	/* XXX report error ? */
 
 		execl(ypxfr_proc, "ypxfr", "-d", ypx->map_parms.domain,
 		    "-C", tid, prog, ipadd, port, ypx->map_parms.map, NULL);
-		exit(1);		/* XXX report error? */
+		_exit(1);		/* XXX report error? */
 	}
 
 	/*
