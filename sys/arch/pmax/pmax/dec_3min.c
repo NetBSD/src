@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.7 1999/03/29 16:50:35 drochner Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.8 1999/04/26 07:16:12 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.7 1999/03/29 16:50:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.8 1999/04/26 07:16:12 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ dec_3min_intr(cpumask, pc, status, cause)
 	static int warned = 0;
 #ifdef MIPS3
 	extern u_int32_t mips3_cycle_count __P((void));
-	extern u_int32_t latched_cycle_cnt;
+	extern unsigned latched_cycle_cnt;
 #endif
 
 	if (cpumask & MIPS_INT_MASK_4)
@@ -455,7 +455,7 @@ kn02ba_clkread()
 {
 #ifdef MIPS3
 	extern u_int32_t mips3_cycle_count __P((void));
-	extern u_int32_t latched_cycle_cnt;
+	extern unsigned latched_cycle_cnt;
 
 	if (CPUISMIPS3) {
 		u_int32_t mips3_cycles;
