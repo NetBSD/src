@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of July 26, 1999.
+The following sites mirror NetBSD as of August 13, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -40,11 +40,6 @@ If you wish to become a distribution site for NetBSD, contact
 .mirror "ftp.ravel.ufrj.br" \
 "Universidade Federal do Rio de Janeiro" \
 "ftp://ftp.ravel.ufrj.br/pub/NetBSD/"
-.
-.Country "Denmark"
-.mirror "ftp.dk.netbsd.org" \
-"Aalborg University" \
-"ftp://ftp.dk.netbsd.org/pub/NetBSD/"
 .
 .Country "Finland"
 .mirror "ftp.fi.netbsd.org" \
