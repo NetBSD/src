@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)sync.c	4.4 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: sync.c,v 1.4 1993/08/01 18:57:30 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)sync.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: sync.c,v 1.5 1994/09/20 04:18:12 mycroft Exp $";
 #endif /* not lint */
 
 main()
