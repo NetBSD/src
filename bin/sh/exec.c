@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)exec.c	5.2 (Berkeley) 3/13/91";
+static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -64,6 +64,7 @@ static char sccsid[] = "@(#)exec.c	5.2 (Berkeley) 3/13/91";
 #include "error.h"
 #include "init.h"
 #include "mystring.h"
+#include "jobs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -91,7 +92,7 @@ STATIC int builtinloc = -1;		/* index in path of %builtin, or -1 */
 #ifdef __STDC__
 STATIC void tryexec(char *, char **, char **);
 STATIC void execinterp(char **, char **);
-STATIC void printentry(struct tblentry *);
+STATIC void printentry(struct tblentry *, int);
 STATIC void clearcmdentry(int);
 STATIC struct tblentry *cmdlookup(char *, int);
 STATIC void delete_cmd_entry(void);
@@ -313,14 +314,6 @@ hashcmd(argc, argv)  char **argv; {
 	struct cmdentry entry;
 	char *name;
 
-	if (argc <= 1) {
-		for (pp = cmdtable ; pp < &cmdtable[CMDTABLESIZE] ; pp++) {
-			for (cmdp = *pp ; cmdp ; cmdp = cmdp->next) {
-				printentry(cmdp);
-			}
-		}
-		return 0;
-	}
 	verbose = 0;
 	while ((c = nextopt("rv")) != '\0') {
 		if (c == 'r') {
@@ -328,6 +321,14 @@ hashcmd(argc, argv)  char **argv; {
 		} else if (c == 'v') {
 			verbose++;
 		}
+	}
+	if (*argptr == NULL) {
+		for (pp = cmdtable ; pp < &cmdtable[CMDTABLESIZE] ; pp++) {
+			for (cmdp = *pp ; cmdp ; cmdp = cmdp->next) {
+				printentry(cmdp, verbose);
+			}
+		}
+		return 0;
 	}
 	while ((name = *argptr) != NULL) {
 		if ((cmdp = cmdlookup(name, 0)) != NULL
@@ -338,7 +339,7 @@ hashcmd(argc, argv)  char **argv; {
 		if (verbose) {
 			if (entry.cmdtype != CMDUNKNOWN) {	/* if no error msg */
 				cmdp = cmdlookup(name, 0);
-				printentry(cmdp);
+				printentry(cmdp, verbose);
 			}
 			flushall();
 		}
@@ -349,8 +350,9 @@ hashcmd(argc, argv)  char **argv; {
 
 
 STATIC void
-printentry(cmdp)
+printentry(cmdp, verbose)
 	struct tblentry *cmdp;
+	int verbose;
 	{
 	int index;
 	char *path;
@@ -368,6 +370,14 @@ printentry(cmdp)
 		out1fmt("builtin %s", cmdp->cmdname);
 	} else if (cmdp->cmdtype == CMDFUNCTION) {
 		out1fmt("function %s", cmdp->cmdname);
+		if (verbose) {
+			INTOFF;
+			name = commandtext(cmdp->param.func);
+			out1c(' ');
+			out1str(name);
+			ckfree(name);
+			INTON;
+		}
 #ifdef DEBUG
 	} else {
 		error("internal error: cmdtype %d", cmdp->cmdtype);
@@ -479,6 +489,7 @@ loop:
 			stunalloc(fullname);
 			goto success;
 		}
+#ifdef notdef
 		if (statb.st_uid == geteuid()) {
 			if ((statb.st_mode & 0100) == 0)
 				goto loop;
@@ -489,6 +500,7 @@ loop:
 			if ((statb.st_mode & 01) == 0)
 				goto loop;
 		}
+#endif
 		TRACE(("searchexec \"%s\" returns \"%s\"\n", name, fullname));
 		INTOFF;
 		cmdp = cmdlookup(name, 1);
@@ -568,12 +580,15 @@ changepath(newval)
 	int index;
 	int firstchange;
 	int bltin;
+	int hasdot;
 
 	old = pathval();
 	new = newval;
 	firstchange = 9999;	/* assume no change */
-	index = 0;
+	index = hasdot = 0;
 	bltin = -1;
+	if (*new == ':')
+		hasdot++;
 	for (;;) {
 		if (*old != *new) {
 			firstchange = index;
@@ -587,10 +602,17 @@ changepath(newval)
 		if (*new == '%' && bltin < 0 && prefix("builtin", new + 1))
 			bltin = index;
 		if (*new == ':') {
+			char c = *(new+1);
+
 			index++;
+			if (c == ':' || c == '\0' || (c == '.' && 
+			   ((c = *(new+2)) == ':' || c == '\0')))
+				hasdot++;
 		}
 		new++, old++;
 	}
+	if (hasdot && geteuid() == 0)
+		out2str("sh: warning: running as root with dot in PATH\n");
 	if (builtinloc < 0 && bltin >= 0)
 		builtinloc = bltin;		/* zap builtins */
 	if (builtinloc >= 0 && bltin < 0)
@@ -709,7 +731,6 @@ cmdlookup(name, add)
 	return cmdp;
 }
 
-
 /*
  * Delete the command entry returned on the last lookup.
  */
@@ -792,7 +813,7 @@ defun(name, func)
  * Delete a function if it exists.
  */
 
-void
+int
 unsetfunc(name)
 	char *name;
 	{
@@ -801,5 +822,7 @@ unsetfunc(name)
 	if ((cmdp = cmdlookup(name, 0)) != NULL && cmdp->cmdtype == CMDFUNCTION) {
 		freefunc(cmdp->param.func);
 		delete_cmd_entry();
+		return (0);
 	}
+	return (1);
 }

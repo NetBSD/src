@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,13 +35,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mknodes.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)mknodes.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -112,6 +112,7 @@ main(argc, argv)
 			parsenode();
 	}
 	output(argv[2]);
+	exit(0);
 }
 
 

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)output.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -136,6 +136,8 @@ outstr(p, file)
 	{
 	while (*p)
 		outc(*p++, file);
+	if (file == out2)
+		flushout(file);
 }
 
 
@@ -226,6 +228,15 @@ out1fmt(char *fmt, ...) {
 	va_end(ap);
 }
 
+void
+dprintf(char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	doformat(out2, fmt, ap);
+	va_end(ap);
+	flushout(out2);
+}
 
 void
 fmtstr(char *outbuf, int length, char *fmt, ...) {
@@ -274,6 +285,19 @@ out1fmt(va_alist)
 	va_end(ap);
 }
 
+void
+dprintf(va_alist)
+	va_dcl
+	{
+	va_list ap;
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, char *);
+	doformat(out2, fmt, ap);
+	va_end(ap);
+	flushout(out2);
+}
 
 void
 fmtstr(va_alist)
