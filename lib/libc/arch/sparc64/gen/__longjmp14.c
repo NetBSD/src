@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.3 2004/01/19 18:20:35 martin Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.4 2004/03/22 18:35:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,13 +62,11 @@ __longjmp14(jmp_buf env, int val)
 	if (sc->sc_sp == 0)
 		goto err;
 
-	/* Initialize context with current values */
-	getcontext(&uc);
-
 	/*
-	 * Set _UC_SIGMASK, _UC_CPU. No FPU data saved, so we can't restore
+	 * Set _UC_CPU. No FPU data saved, so we can't restore
 	 * that. Set _UC_{SET,CLR}STACK according to SS_ONSTACK
 	 */
+	memset(&uc, 0, sizeof(uc));
 	uc.uc_flags = _UC_CPU | (sc->sc_onstack ? _UC_SETSTACK : _UC_CLRSTACK);
 
 	/*
