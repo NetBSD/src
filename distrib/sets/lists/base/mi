@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.186 2000/10/25 00:01:05 thorpej Exp $
+# $NetBSD: mi,v 1.187 2000/11/02 20:51:58 veego Exp $
 .
 ./altroot
 ./bin
@@ -893,6 +893,8 @@
 ./usr/share/lkm/vfs
 ./usr/share/lkm/vfs/module
 ./usr/share/locale
+./usr/share/locale/da
+./usr/share/locale/da/LC_MESSAGES
 ./usr/share/locale/de
 ./usr/share/locale/de/LC_MESSAGES
 ./usr/share/locale/de/LC_MESSAGES/grep.mo
@@ -919,6 +921,8 @@
 ./usr/share/locale/pl
 ./usr/share/locale/pl/LC_MESSAGES
 ./usr/share/locale/pl/LC_MESSAGES/grep.mo
+./usr/share/locale/pt
+./usr/share/locale/pt/LC_MESSAGES
 ./usr/share/locale/pt_BR
 ./usr/share/locale/pt_BR/LC_MESSAGES
 ./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo
