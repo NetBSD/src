@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.10.2.5 2004/11/21 13:54:35 skrll Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.10.2.6 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.5 2004/11/21 13:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.6 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10.2.5 2004/11/21 13:54:35 skr
 #define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
 #endif
 
-int sunos_exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int sunos_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int sunos_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
+int sunos_exec_aout_prep_zmagic __P((struct lwp *, struct exec_package *));
+int sunos_exec_aout_prep_nmagic __P((struct lwp *, struct exec_package *));
+int sunos_exec_aout_prep_omagic __P((struct lwp *, struct exec_package *));
 
 int
 exec_sunos_aout_makecmds(l, epp)
@@ -77,13 +77,13 @@ exec_sunos_aout_makecmds(l, epp)
 
 	switch (sunmag->a_magic) {
 	case ZMAGIC:
-		error = sunos_exec_aout_prep_zmagic(l->l_proc, epp);
+		error = sunos_exec_aout_prep_zmagic(l, epp);
 		break;
 	case NMAGIC:
-		error = sunos_exec_aout_prep_nmagic(l->l_proc, epp);
+		error = sunos_exec_aout_prep_nmagic(l, epp);
 		break;
 	case OMAGIC:
-		error = sunos_exec_aout_prep_omagic(l->l_proc, epp);
+		error = sunos_exec_aout_prep_omagic(l, epp);
 		break;
 	}
 	return error;
@@ -115,8 +115,8 @@ exec_sunos_aout_makecmds(l, epp)
  * text, data, bss, and stack segments.
  */
 int
-sunos_exec_aout_prep_zmagic(p, epp)
-	struct proc *p;
+sunos_exec_aout_prep_zmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -147,15 +147,15 @@ sunos_exec_aout_prep_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
  * sunos_exec_aout_prep_nmagic(): Prepare a SunOS NMAGIC binary's exec package
  */
 int
-sunos_exec_aout_prep_nmagic(p, epp)
-	struct proc *p;
+sunos_exec_aout_prep_nmagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -184,15 +184,15 @@ sunos_exec_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
  * sunos_exec_aout_prep_omagic(): Prepare a SunOS OMAGIC binary's exec package
  */
 int
-sunos_exec_aout_prep_omagic(p, epp)
-	struct proc *p;
+sunos_exec_aout_prep_omagic(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
@@ -216,6 +216,6 @@ sunos_exec_aout_prep_omagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (*epp->ep_esch->es_setup_stack)(p, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 #endif /* !sparc */

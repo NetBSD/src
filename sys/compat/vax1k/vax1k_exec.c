@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.8.2.5 2004/09/21 13:26:14 skrll Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.8.2.6 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.5 2004/09/21 13:26:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.6 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.5 2004/09/21 13:26:14 skrll Exp
 #define COMPAT_43	/* enable 4.3BSD binaries for lkm */
 #endif
 
-int	exec_vax1k_prep_anymagic __P((struct proc *p, struct exec_package *epp,
+int	exec_vax1k_prep_anymagic __P((struct lwp *l, struct exec_package *epp,
 				      int, int));
 
 /*
@@ -83,7 +83,6 @@ exec_vax1k_makecmds(l, epp)
 	u_short mid;
 	int error;
 	struct exec *execp = epp->ep_hdr;
-	struct proc *p = l->l_proc;
 
 	if (epp->ep_hdrvalid < sizeof(struct exec))
 		return ENOEXEC;
@@ -96,16 +95,16 @@ exec_vax1k_makecmds(l, epp)
 
 	switch (midmag) {
 	case (MID_VAX1K << 16) | ZMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, 0, 0);
+		error = exec_vax1k_prep_anymagic(l, epp, 0, 0);
 		goto done;
 
 	case (MID_VAX1K << 16) | NMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp,
+		error = exec_vax1k_prep_anymagic(l, epp,
 						 sizeof(struct exec), 1);
 		goto done;
 
 	case (MID_VAX1K << 16) | OMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp,
+		error = exec_vax1k_prep_anymagic(l, epp,
 						 sizeof(struct exec), 0);
 		goto done;
 	}
@@ -117,16 +116,16 @@ exec_vax1k_makecmds(l, epp)
 	 */
 	switch (execp->a_midmag) {
 	case ZMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, VAX1K_LDPGSZ, 0);
+		error = exec_vax1k_prep_anymagic(l, epp, VAX1K_LDPGSZ, 0);
 		goto done;
 	
 	case NMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, 
+		error = exec_vax1k_prep_anymagic(l, epp, 
 					 	sizeof(struct exec), 1);
 		goto done;
 
 	case OMAGIC:
-		error = exec_vax1k_prep_anymagic(p, epp, 
+		error = exec_vax1k_prep_anymagic(l, epp, 
 					 	sizeof(struct exec), 0);
 		goto done;
 	}
@@ -151,8 +150,8 @@ done:
  *
  */
 int
-exec_vax1k_prep_anymagic(p, epp, text_foffset, textpad)
-	struct proc *p;
+exec_vax1k_prep_anymagic(l, epp, text_foffset, textpad)
+	struct lwp *l;
 	struct exec_package *epp;
 	int text_foffset, textpad;
 {
@@ -191,5 +190,5 @@ exec_vax1k_prep_anymagic(p, epp, text_foffset, textpad)
 	epp->ep_dsize += execp->a_bss;
 
 	/* finally, setup the stack ... */
-        return (*epp->ep_esch->es_setup_stack)(p, epp);
+        return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.45.2.3 2004/09/21 13:22:01 skrll Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.45.2.4 2005/02/04 07:09:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.45.2.3 2004/09/21 13:22:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.45.2.4 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,10 +226,10 @@ cgtwoattach(parent, self, aux)
 }
 
 int
-cgtwoopen(dev, flags, mode, p)
+cgtwoopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -239,12 +239,12 @@ cgtwoopen(dev, flags, mode, p)
 }
 
 int
-cgtwoioctl(dev, cmd, data, flags, p)
+cgtwoioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	register caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;

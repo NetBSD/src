@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.1.8.3 2004/09/21 13:24:07 skrll Exp $	*/
+/*	$NetBSD: bmd.c,v 1.1.8.4 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.1.8.3 2004/09/21 13:24:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.1.8.4 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ bmd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-bmdopen(dev_t dev, int oflags, int devtype, struct proc *p)
+bmdopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
@@ -230,7 +230,7 @@ bmdopen(dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 int
-bmdclose(dev_t dev, int fflag, int devtype, struct proc *p)
+bmdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 {
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc = bmd_cd.cd_devs[unit];
@@ -326,7 +326,7 @@ bmdstrategy(struct buf *bp)
 }
 
 int
-bmdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+bmdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;

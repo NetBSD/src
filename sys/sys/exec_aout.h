@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.31.2.4 2004/09/21 13:38:45 skrll Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.31.2.5 2005/02/04 07:09:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -195,14 +195,14 @@ int	exec_aout_makecmds __P((struct lwp *, struct exec_package *));
 /*
  * MI portion
  */
-int	exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
+int	exec_aout_prep_zmagic __P((struct lwp *, struct exec_package *));
+int	exec_aout_prep_nmagic __P((struct lwp *, struct exec_package *));
+int	exec_aout_prep_omagic __P((struct lwp *, struct exec_package *));
 
 /* For compatibility modules */
-int	exec_aout_prep_oldzmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_oldnmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_oldomagic __P((struct proc *, struct exec_package *));
+int	exec_aout_prep_oldzmagic __P((struct lwp *, struct exec_package *));
+int	exec_aout_prep_oldnmagic __P((struct lwp *, struct exec_package *));
+int	exec_aout_prep_oldomagic __P((struct lwp *, struct exec_package *));
 
 /*
  * MD portion

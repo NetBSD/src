@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.5.2.4 2004/09/21 13:25:13 skrll Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.5.2.5 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.4 2004/09/21 13:25:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.5 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,5 +196,5 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 		 epp->ep_entry));
 	
 	free(xs, M_TEMP);
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }

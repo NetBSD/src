@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.16.6.4 2005/01/24 08:35:10 skrll Exp $ */
+/*	$NetBSD: ms.c,v 1.16.6.5 2005/02/04 07:09:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.16.6.4 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.16.6.5 2005/02/04 07:09:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -217,7 +217,7 @@ ms_attach(struct device *parent, struct device *self, void *aux)
  ****************************************************************/
 
 int 
-msopen(dev_t dev, int flags, int mode, struct proc *p)
+msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
 	int unit;
@@ -232,7 +232,7 @@ msopen(dev_t dev, int flags, int mode, struct proc *p)
 	/* This is an exclusive open device. */
 	if (ms->ms_events.ev_io)
 		return (EBUSY);
-	ms->ms_events.ev_io = p;
+	ms->ms_events.ev_io = l->l_proc;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
 	ms->ms_ready = 1;		/* start accepting events */
@@ -247,7 +247,7 @@ msopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int 
-msclose(dev_t dev, int flags, int mode, struct proc *p)
+msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
 
@@ -270,7 +270,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 }
 
 int 
-msioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+msioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
 
@@ -310,12 +310,12 @@ msioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int 
-mspoll(dev_t dev, int events, struct proc *p)
+mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
 
 	ms = ms_cd.cd_devs[minor(dev)];
-	return (ev_poll(&ms->ms_events, events, p));
+	return (ev_poll(&ms->ms_events, events, l));
 }
 
 int

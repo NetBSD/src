@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56.2.5 2005/01/24 08:35:10 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.56.2.6 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56.2.5 2005/01/24 08:35:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56.2.6 2005/02/04 07:09:16 skrll Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -854,7 +854,7 @@ out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x)
 }
 
 int
-fdopen(dev_t dev, int flags, int mode, struct proc *p)
+fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
  	int unit;
 	struct fd_softc *fd;
@@ -901,7 +901,7 @@ fdopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-fdclose(dev_t dev, int flags, int mode, struct proc *p)
+fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
  	int unit = FDUNIT(dev);
 	struct fd_softc *fd = fd_cd.cd_devs[unit];
@@ -1506,7 +1506,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fdc_softc *fdc = (void*) fd->sc_dev.dv_parent;

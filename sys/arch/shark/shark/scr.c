@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10.2.3 2004/09/21 13:21:49 skrll Exp $	*/
+/*	$NetBSD: scr.c,v 1.10.2.4 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.10.2.3 2004/09/21 13:21:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.10.2.4 2005/02/04 07:09:16 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -852,7 +852,7 @@ static void initStates(struct scr_softc * sc)
 **     dev  - input : Device identifier consisting of major and minor numbers.
 **     flag - input : Indicates if this is a blocking I/O call.
 **     mode - not used.
-**     p    - input : Pointer to the proc structure of the process 
+**     l    - input : Pointer to the lwp structure of the light weight process 
 **            performing the open. 
 **
 **  IMPLICIT INPUTS:
@@ -873,11 +873,11 @@ static void initStates(struct scr_softc * sc)
 **     none.
 **--
 */
-int scropen(dev, flag, mode, p)
+int scropen(dev, flag, mode, l)
     dev_t       dev;
     int         flag;
     int         mode;
-struct proc *p;
+struct lwp *l;
 {
     int                  unit = SCRUNIT(dev);
     struct scr_softc     *sc;
@@ -956,11 +956,11 @@ struct proc *p;
 **     none.
 **--
 */
-int scrclose(dev, flag, mode, p)
+int scrclose(dev, flag, mode, l)
     dev_t       dev;
     int         flag;
     int         mode;
-    struct proc *p;
+    struct lwp *l;
 {
 #if 0
     int                unit = SCRUNIT(dev);
@@ -1034,7 +1034,7 @@ int scrclose(dev, flag, mode, p)
 ** 
 **     data - input/output : Direction depends on the command.
 **     flag - input : Not used by us but passed to line discipline and ttioctl
-**     p    - input : pointer to proc structure of user.
+**     l    - input : pointer to lwp structure of user.
 **     
 **  IMPLICIT INPUTS:
 **
@@ -1055,12 +1055,12 @@ int scrclose(dev, flag, mode, p)
 **--
 */
 int
-scrioctl(dev, cmd, data, flag, p)
+scrioctl(dev, cmd, data, flag, l)
     dev_t        dev;
     u_long       cmd;
     caddr_t      data;
     int          flag;
-struct proc  *p;
+struct lwp  *l;
 {
     int                 unit = SCRUNIT(dev);
     struct scr_softc*   sc  = scr_cd.cd_devs[unit];

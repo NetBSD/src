@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.59.2.4 2004/09/21 13:38:35 skrll Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.59.2.5 2005/02/04 07:09:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59.2.4 2004/09/21 13:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59.2.5 2005/02/04 07:09:29 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -129,7 +129,7 @@ nfs_boot_init(nd, lwp)
 #if defined(NFS_BOOT_BOOTSTATIC)
 	if (error && nfs_boot_bootstatic) {
 		printf("nfs_boot: trying static\n");
-		error = nfs_bootstatic(nd, procp);
+		error = nfs_bootstatic(nd, lwp);
 	}
 #endif
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)

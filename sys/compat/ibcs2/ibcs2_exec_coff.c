@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.4 2004/09/21 13:25:13 skrll Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.5 2005/02/04 07:09:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.4 2004/09/21 13:25:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.5 2005/02/04 07:09:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ exec_ibcs2_coff_prep_omagic(l, epp, fp, ap)
 			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 	
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -308,7 +308,7 @@ exec_ibcs2_coff_prep_nmagic(l, epp, fp, ap)
 			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 /*
@@ -519,7 +519,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 	}
 
 	
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
 static int

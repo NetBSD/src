@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36.2.5 2005/01/24 08:34:47 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.36.2.6 2005/02/04 07:09:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36.2.5 2005/01/24 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36.2.6 2005/02/04 07:09:16 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -832,7 +832,7 @@ out_fdc(struct fdc_softc *fdc, u_char x)
 }
 
 int 
-fdopen(dev_t dev, int flags, int fmt, struct proc *p)
+fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit, pmask;
 	struct fd_softc *fd;
@@ -880,7 +880,7 @@ fdopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 int 
-fdclose(dev_t dev, int flags, int fmt, struct proc *p)
+fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int pmask = (1 << DISKPART(dev));
@@ -1537,7 +1537,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int 
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fdformat_parms *form_parms;
@@ -1711,7 +1711,7 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, p);
+		error = fdformat(dev, fd_formb, l->l_proc);
 		free(fd_formb, M_TEMP);
 		return (error);
 
