@@ -64,6 +64,14 @@
 #include "sys/shm.h"
 #endif
 
+#ifdef SYSVMSG
+#include "sys/msg.h"
+#endif
+
+#ifdef SYSVSEM
+#include "sys/sem.h"
+#endif
+
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
@@ -193,6 +201,18 @@ again:
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 	/*
 	 * Determine how many buffers to allocate.
