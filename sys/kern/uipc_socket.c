@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.70 2002/07/03 21:39:41 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.71 2002/08/21 05:13:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.70 2002/07/03 21:39:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.71 2002/08/21 05:13:37 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -134,10 +134,10 @@ soinit(void)
 #endif /* SOSEND_COUNTERS */
 }
 
-#ifdef SOSEND_LOAN
-int use_sosend_loan = 1;
-#else
+#ifdef SOSEND_NO_LOAN
 int use_sosend_loan = 0;
+#else
+int use_sosend_loan = 1;
 #endif
 
 struct mbuf *so_pendfree;
