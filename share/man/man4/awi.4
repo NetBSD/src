@@ -1,4 +1,4 @@
-.\"     $NetBSD: awi.4,v 1.20 2003/05/06 10:46:42 jmmv Exp $
+.\"     $NetBSD: awi.4,v 1.21 2004/01/15 13:46:58 onoe Exp $
 .\"
 .\" Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,41 +138,15 @@ For DS radio cards,
 mediaopt can be used for
 .Xr wi 4
 compatible WaveLAN ad-hoc mode.
-.Pp
-To configure more detailed parameters for the
-.Nm
-driver,
-.Xr wiconfig 8
-can be used.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "awi0: unable to allocate memory space; using i/o only"
-Indicates that the driver was not able to allocate 32kb of PCMCIA bus
-address space into which to map the device; the driver will use the
-(slightly slower) i/o-space only access methods to read and write to
-the shared memory.  Since by default,
-.Nx
-only allocates 16kb of
-address space per PCMCIA controller, this message is in some sense to
-be expected and should not be a cause for alarm.
-See
-.Xr pcmcia 4
-for information on how to increase the memory available to the PCMCIA
-controller.
+.It "awi0: no suitable CIS info found"
+The device cannot be mapped due to conflict of the resource.
+Or, the device failed to initialize its firmware.
 .It "awi0: failed to complete selftest (%s)"
 The device failed to complete its self test.
 In some circumstances, resetting device after power on fails.
 Re-inserting the card or down-then-up interface may be helpful.
-.It "awi0: associated with %s ssid %s channel %d signal %d"
-The device has successfully synchronized with the identified Access
-Point or BSS and is ready to relay traffic.
-.It "awi0: authentication failed (reason %d)"
-.It "awi0: association failed (reason %d)"
-The access point refuses the authentication or association request
-from the device.
-.It "awi0: no recent beacons from %s; rescanning"
-The device has not heard a beacon from its currently associated Access
-Point recently, and is looking for a new access point.
 .It "awi0: transmit timeout"
 The device failed to generate an interrupt to acknowledge a
 transmitted packet.
