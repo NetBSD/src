@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.11 2003/08/07 16:43:12 agc Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.12 2003/09/23 03:19:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.11 2003/08/07 16:43:12 agc Exp $");
+__RCSID("$NetBSD: ns_ntoa.c,v 1.12 2003/09/23 03:19:28 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,8 @@ ns_ntoa(addr)
 	sprintf(obuf, "%x", ntohl(net.long_e));
 	cp = spectHex(obuf);
 	cp2 = cp + 1;
-	while (*up==0 && up < uplim) up++;
+	while (up < uplim && *up==0)
+		up++;
 	if (up == uplim) {
 		if (port) {
 			sprintf(cp, ".0");
