@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.11 2004/05/06 03:07:10 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.12 2004/05/06 07:11:40 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.11 2004/05/06 03:07:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.12 2004/05/06 07:11:40 dyoung Exp $");
 #endif
 
 /*
@@ -955,42 +955,45 @@ sysctl_ieee80211_verify(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 {
-	int rc, ieee80211_node_num;
-	struct sysctlnode *node;
+	int rc;
+	struct sysctlnode *cnode, *rnode;
 
-	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "net", NULL,
 	    NULL, 0, NULL, 0, CTL_NET, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
-	    NULL, 0, NULL, 0, CTL_NET, CTL_CREATE, CTL_EOL)) != 0)
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "link", NULL,
+	    NULL, 0, NULL, 0, PF_LINK, CTL_EOL)) != 0)
 		goto err;
 
-	ieee80211_node_num = node->sysctl_num;
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ieee80211", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
 
 #ifdef IEEE80211_DEBUG
 
 	/* control debugging printfs */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", NULL, sysctl_ieee80211_verify, 0, &ieee80211_debug, 0,
-	    CTL_NET, ieee80211_node_num, CTL_CREATE, CTL_EOL)) != 0)
+	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	ieee80211_debug_nodenum = node->sysctl_num;
+	ieee80211_debug_nodenum = cnode->sysctl_num;
 
 #endif /* IEEE80211_DEBUG */
 
 	/* control inactivity timer */
-	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "maxinact", NULL, sysctl_ieee80211_verify, 0, &ieee80211_inact_max,
-	    0, CTL_NET, ieee80211_node_num, CTL_CREATE, CTL_EOL)) != 0)
+	    0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	ieee80211_inact_max_nodenum = node->sysctl_num;
+	ieee80211_inact_max_nodenum = cnode->sysctl_num;
 
 	return;
 err:
