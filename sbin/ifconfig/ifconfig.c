@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.44 1998/08/06 19:22:00 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.45 1998/08/08 01:30:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.44 1998/08/06 19:22:00 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.45 1998/08/08 01:30:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,51 +150,70 @@ void	unsetmediaopt __P((char *, int));
 void	fixnsel __P((struct sockaddr_iso *));
 int	main __P((int, char *[]));
 
+/*
+ * Media stuff.  Whenever a media command is first performed, the
+ * currently select media is grabbed for this interface.  If `media'
+ * is given, the current media word is modifed.  `mediaopt' commands
+ * only modify the set and clear words.  They then operate on the
+ * current media word later.
+ */
+int	media_current;
+int	mediaopt_set;
+int	mediaopt_clear;
+
+int	deferred_actions;		/* Actions to be deferred */
+
+#define	DA_MEDIA	0x0001		/* media command */
+#define	DA_MEDIAOPTSET	0x0002		/* mediaopt command */
+#define	DA_MEDIAOPTCLR	0x0004		/* -mediaopt command */
+#define	DA_MEDIAOPT	(DA_MEDIAOPTSET|DA_MEDIAOPTCLR)
+
 #define	NEXTARG		0xffffff
 
 struct	cmd {
 	char	*c_name;
 	int	c_parameter;		/* NEXTARG means next argv */
+	int	c_deferred_action;	/* defered action */
 	void	(*c_func) __P((char *, int));
 } cmds[] = {
-	{ "up",		IFF_UP,		setifflags } ,
-	{ "down",	-IFF_UP,	setifflags },
-	{ "trailers",	-1,		notrailers },
-	{ "-trailers",	1,		notrailers },
-	{ "arp",	-IFF_NOARP,	setifflags },
-	{ "-arp",	IFF_NOARP,	setifflags },
-	{ "debug",	IFF_DEBUG,	setifflags },
-	{ "-debug",	-IFF_DEBUG,	setifflags },
-	{ "alias",	IFF_UP,		notealias },
-	{ "-alias",	-IFF_UP,	notealias },
-	{ "delete",	-IFF_UP,	notealias },
+	{ "up",		IFF_UP,		0,		setifflags } ,
+	{ "down",	-IFF_UP,	0,		setifflags },
+	{ "trailers",	-1,		0,		notrailers },
+	{ "-trailers",	1,		0,		notrailers },
+	{ "arp",	-IFF_NOARP,	0,		setifflags },
+	{ "-arp",	IFF_NOARP,	0,		setifflags },
+	{ "debug",	IFF_DEBUG,	0,		setifflags },
+	{ "-debug",	-IFF_DEBUG,	0,		setifflags },
+	{ "alias",	IFF_UP,		0,		notealias },
+	{ "-alias",	-IFF_UP,	0,		notealias },
+	{ "delete",	-IFF_UP,	0,		notealias },
 #ifdef notdef
 #define	EN_SWABIPS	0x1000
-	{ "swabips",	EN_SWABIPS,	setifflags },
-	{ "-swabips",	-EN_SWABIPS,	setifflags },
+	{ "swabips",	EN_SWABIPS,	0,		setifflags },
+	{ "-swabips",	-EN_SWABIPS,	0,		setifflags },
 #endif
-	{ "netmask",	NEXTARG,	setifnetmask },
-	{ "metric",	NEXTARG,	setifmetric },
-	{ "mtu",	NEXTARG,	setifmtu },
-	{ "broadcast",	NEXTARG,	setifbroadaddr },
-	{ "ipdst",	NEXTARG,	setifipdst },
+	{ "netmask",	NEXTARG,	0,		setifnetmask },
+	{ "metric",	NEXTARG,	0,		setifmetric },
+	{ "mtu",	NEXTARG,	0,		setifmtu },
+	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
+	{ "ipdst",	NEXTARG,	0,		setifipdst },
 #ifndef INET_ONLY
-	{ "range",	NEXTARG,	setatrange },
-	{ "phase",	NEXTARG,	setatphase },
-	{ "snpaoffset",	NEXTARG,	setsnpaoffset },
-	{ "nsellength",	NEXTARG,	setnsellength },
+	{ "range",	NEXTARG,	0,		setatrange },
+	{ "phase",	NEXTARG,	0,		setatphase },
+	{ "snpaoffset",	NEXTARG,	0,		setsnpaoffset },
+	{ "nsellength",	NEXTARG,	0,		setnsellength },
 #endif	/* INET_ONLY */
-	{ "link0",	IFF_LINK0,	setifflags } ,
-	{ "-link0",	-IFF_LINK0,	setifflags } ,
-	{ "link1",	IFF_LINK1,	setifflags } ,
-	{ "-link1",	-IFF_LINK1,	setifflags } ,
-	{ "link2",	IFF_LINK2,	setifflags } ,
-	{ "-link2",	-IFF_LINK2,	setifflags } ,
-	{ "media",	NEXTARG,	setmedia },
-	{ "mediaopt",	NEXTARG,	setmediaopt },
-	{ "-mediaopt",	NEXTARG,	unsetmediaopt },
-	{ 0,		0,		setifaddr },
-	{ 0,		0,		setifdstaddr },
+	{ "link0",	IFF_LINK0,	0,		setifflags } ,
+	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
+	{ "link1",	IFF_LINK1,	0,		setifflags } ,
+	{ "-link1",	-IFF_LINK1,	0,		setifflags } ,
+	{ "link2",	IFF_LINK2,	0,		setifflags } ,
+	{ "-link2",	-IFF_LINK2,	0,		setifflags } ,
+	{ "media",	NEXTARG,	DA_MEDIA,	setmedia },
+	{ "mediaopt",	NEXTARG,	DA_MEDIAOPTSET,	setmediaopt },
+	{ "-mediaopt",	NEXTARG,	DA_MEDIAOPTCLR,	unsetmediaopt },
+	{ 0,		0,		0,		setifaddr },
+	{ 0,		0,		0,		setifdstaddr },
 };
 
 void 	adjust_nsellength __P((void));
@@ -205,7 +224,6 @@ void 	printb __P((char *, unsigned short, char *));
 void 	status __P((const u_int8_t *, int));
 void 	usage __P((void));
 
-void	domediaopt __P((char *, int));
 const char *get_media_type_string __P((int));
 const char *get_media_subtype_string __P((int));
 int	get_media_subtype __P((int, const char *));
@@ -213,6 +231,8 @@ int	get_media_options __P((int, const char *));
 int	lookup_media_word __P((struct ifmedia_description *, int,
 	    const char *));
 void	print_media_word __P((int, int, int));
+void	process_media_commands __P((void));
+void	init_current_media __P((void));
 
 /*
  * XNS support liberally adapted from code written at the University of
@@ -368,9 +388,13 @@ main(argc, argv)
 				argc--, argv++;
 			} else
 				(*p->c_func)(argv[0], p->c_parameter);
+			deferred_actions |= p->c_deferred_action;
 		}
 		argc--, argv++;
 	}
+
+	/* Process any media commands that may have been issued. */
+	process_media_commands();
 
 #ifndef INET_ONLY
 
@@ -660,47 +684,85 @@ setifmtu(val, d)
 }
 
 void
+init_current_media()
+{
+	struct ifmediareq ifmr;
+
+	/*
+	 * If we have not yet done so, grab the currently-selected
+	 * media.
+	 */
+	if ((deferred_actions & (DA_MEDIA|DA_MEDIAOPT)) == 0) {
+		(void) memset(&ifmr, 0, sizeof(ifmr));
+		(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+
+		if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+			/*
+			 * If we get E2BIG, the kernel is telling us
+			 * that there are more, so we can ignore it.
+			 */
+			if (errno != E2BIG)
+				err(1, "SGIOCGIFMEDIA");
+		}
+
+		media_current = ifmr.ifm_current;
+	}
+
+	/* Sanity. */
+	if (IFM_TYPE(media_current) == 0)
+		errx(1, "%s: no link type?", name);
+}
+
+void
+process_media_commands()
+{
+
+	if ((deferred_actions & (DA_MEDIA|DA_MEDIAOPT)) == 0) {
+		/* Nothing to do. */
+		return;
+	}
+
+	/*
+	 * Media already set up, and commands sanity-checked.  Set/clear
+	 * any options, and we're ready to go.
+	 */
+	media_current |= mediaopt_set;
+	media_current &= ~mediaopt_clear;
+
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_media = media_current;
+
+	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
+		err(1, "SIOCSIFMEDIA");
+}
+
+void
 setmedia(val, d)
 	char *val;
 	int d;
 {
-	struct ifmediareq ifmr;
-	int first_type, subtype;
+	int type, subtype, inst;
 
-	(void) memset(&ifmr, 0, sizeof(ifmr));
-	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	init_current_media();
 
-	ifmr.ifm_count = 1;
-	ifmr.ifm_ulist = &first_type;
-	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
-		/*
-		 * If we get E2BIG, the kernel is telling us
-		 * that there are more, so we can ignore it.
-		 */
-		if (errno != E2BIG)
-			err(1, "SIOCGIFMEDIA");
-	}
+	/* Only one media command may be given. */
+	if (deferred_actions & DA_MEDIA)
+		errx(1, "only one `media' command may be issued");
 
-	if (ifmr.ifm_count == 0)
-		errx(1, "%s: no media types?", name);
+	/* Must not come after mediaopt commands */
+	if (deferred_actions & DA_MEDIAOPT)
+		errx(1, "may not issue `media' after `mediaopt' commands");
 
-	/*
-	 * We are primarily concerned with the top-level type.
-	 * However, "current" may be only IFM_NONE, so we just look
-	 * for the top-level type in the first "supported type"
-	 * entry.
-	 *
-	 * (I'm assuming that all supported media types for a given
-	 * interface will be the same top-level type..)
-	 */
-	subtype = get_media_subtype(IFM_TYPE(first_type), val);
+	type = IFM_TYPE(media_current);
+	inst = IFM_INST(media_current);
 
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_media = (ifmr.ifm_current & ~(IFM_NMASK|IFM_TMASK)) |
-	    IFM_TYPE(first_type) | subtype;
+	/* Look up the subtype. */
+	subtype = get_media_subtype(type, val);
 
-	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
-		err(1, "SIOCSIFMEDIA");
+	/* Build the new current media word. */
+	media_current = IFM_MAKEWORD(type, subtype, 0, inst);
+
+	/* Media will be set after other processing is complete. */
 }
 
 void
@@ -709,62 +771,36 @@ setmediaopt(val, d)
 	int d;
 {
 
-	domediaopt(val, 0);
+	init_current_media();
+
+	/* Can only issue `mediaopt' once. */
+	if (deferred_actions & DA_MEDIAOPTSET)
+		errx(1, "only one `mediaopt' command may be issued");
+
+	mediaopt_set = get_media_options(IFM_TYPE(media_current), val);
+
+	/* Media will be set after other processing is complete. */
 }
 
 void
 unsetmediaopt(val, d)
+	char *val;
 	int d;
-	char *val;
 {
 
-	domediaopt(val, 1);
-}
+	init_current_media();
 
-void
-domediaopt(val, clear)
-	char *val;
-	int clear;
-{
-	struct ifmediareq ifmr;
-	int *mwords, options;
+	/* Can only issue `-mediaopt' once. */
+	if (deferred_actions & DA_MEDIAOPTCLR)
+		errx(1, "only one `-mediaopt' command may be issued");
 
-	(void) memset(&ifmr, 0, sizeof(ifmr));
-	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	/* May not issue `media' and `-mediaopt'. */
+	if (deferred_actions & DA_MEDIA)
+		errx(1, "may not issue both `media' and `-mediaopt'");
 
-	/*
-	 * We must go through the motions of reading all
-	 * supported media because we need to know both
-	 * the current media type and the top-level type.
-	 */
+	mediaopt_clear = get_media_options(IFM_TYPE(media_current), val);
 
-	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
-		err(1, "SIOCGIFMEDIA");
-
-	if (ifmr.ifm_count == 0)
-		errx(1, "%s: no media types?", name);
-
-	mwords = (int *)malloc(ifmr.ifm_count * sizeof(int));
-	if (mwords == NULL)
-		err(1, "malloc");
-
-	ifmr.ifm_ulist = mwords;
-	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0)
-		err(1, "SIOCGIFMEDIA");
-
-	options = get_media_options(IFM_TYPE(mwords[0]), val);
-
-	free(mwords);
-
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_media = ifmr.ifm_current;
-	if (clear)
-		ifr.ifr_media &= ~options;
-	else
-		ifr.ifr_media |= options;
-
-	if (ioctl(s, SIOCSIFMEDIA, (caddr_t)&ifr) < 0)
-		err(1, "SIOCSIFMEDIA");
+	/* Media will be set after other processing is complete. */
 }
 
 struct ifmedia_description ifm_type_descriptions[] =
