@@ -1,4 +1,4 @@
-/*	$NetBSD: str.s,v 1.2 2000/04/22 20:29:58 ragge Exp $ */
+/*	$NetBSD: str.s,v 1.3 2000/07/13 03:13:05 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
 /*
  * atoi() used in devopen.
  */
-ENTRY(atoi, 0);
+ENTRY(atoi, 0)
 	movl	4(ap),r1
 	clrl	r0
 
@@ -59,7 +59,7 @@ ENTRY(atoi, 0);
  * index() small and easy.
  * doesnt work if we search for null.
  */
-ENTRY(index, 0);
+ENTRY(index, 0)
 	movq	4(ap),r0
 1:	cmpb	(r0), r1
 	beql	2f
@@ -71,7 +71,7 @@ ENTRY(index, 0);
 /*
  * cmpc3 is emulated on MVII.
  */
-ENTRY(bcmp, 0);
+ENTRY(bcmp, 0)
 	movl	4(ap), r2
 	movl	8(ap), r1
 	movl	12(ap), r0
@@ -84,15 +84,15 @@ ENTRY(bcmp, 0);
 /*
  * Is movc3/movc5 emulated on any CPU? I dont think so; use them here.
  */
-ENTRY(bzero,0);
+ENTRY(bzero,0)
 	movc5	$0,*4(ap),$0,8(ap),*4(ap)
 	ret
 
-ENTRY(bcopy,0);
+ENTRY(bcopy,0)
 	movc3	12(ap), *4(ap), *8(ap)
 	ret
 
-ENTRY(strlen, 0);
+ENTRY(strlen, 0)
 	movl	4(ap), r0
 1:	tstb	(r0)+
 	bneq	1b
@@ -138,7 +138,7 @@ ENTRY(strncpy, 0)
 
 ENTRY(strcat, 0)
 	pushl	4(ap)
-	calls	$1,_strlen
+	calls	$1,_C_LABEL(strlen)
 	addl2	4(ap),r0
 	movl	8(ap),r1
 1:	movb	(r1)+,(r0)+

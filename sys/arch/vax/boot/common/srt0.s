@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.5 2000/07/10 10:42:27 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.6 2000/07/13 03:13:05 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,6 @@
 
 #include "../include/asm.h"
 
-#define JSBENTRY(x)     .globl x ; .align 2 ; x :
 /*
  * Auto-moving startup code for standalone programs. Can be loaded
  * (almost) anywhere in memory but moves itself to the position
@@ -45,16 +44,16 @@
 nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
 	.globl	nisse
 
-JSBENTRY(_start)
+ALTENTRY(start)
 	nop;nop;
-	movl	$_start, sp	# Probably safe place for stack
+	movl	$_C_LABEL(start), sp	# Probably safe place for stack
 	pushr	$0x1fff		# save for later usage
 
-	subl3	$_start, $_edata, r0
-	movab	_start, r1
-	movl	$_start, r3
+	subl3	$_C_LABEL(start), $_C_LABEL(edata), r0
+	movab	_C_LABEL(start), r1
+	movl	$_C_LABEL(start), r3
 	movc3	r0,(r1),(r3)	# Kopiera text + data
-	subl3	$_edata, $_end, r2
+	subl3	$_C_LABEL(edata), $_C_LABEL(end), r2
 	movc5	$0,(r3),$0,r2,(r3) # Nolla bss också.
 
 	movpsl	-(sp)
@@ -71,7 +70,7 @@ ENTRY(machdep_start, 0)
 	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6
 	movl	20(ap), r9	# end of symbol table
-	movab	_bootrpb,r10	# get RPB address
+	movab	_C_LABEL(bootrpb),r10	# get RPB address
 	pushl	r10		# argument for new boot
 	ashl	$9,76(r10),r8	# memory size (COMPAT)
 	movl	$3,r11		# ask boot (COMPAT)
