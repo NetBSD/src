@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.12 2004/05/31 00:51:19 heas Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.13 2004/05/31 03:55:20 heas Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -52,7 +52,7 @@
 #endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
-#if (defined(__NetBSD_Version__) && __NetBSD_Version__ > 200000000)
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ > 200040000)
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
 #else
