@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.13 1999/02/27 17:37:25 sommerfe Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.14 1999/03/31 23:25:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,9 +38,11 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.13 1999/02/27 17:37:25 sommerfe Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.14 1999/03/31 23:25:46 thorpej Exp $");
 #endif
 #endif /* not lint */
+
+#define	__POOL_EXPOSE
 
 #include <sys/param.h>
 #include <sys/protosw.h>
