@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.8 2004/07/22 15:50:50 mycroft Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.8 2004/07/22 15:50:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -187,7 +187,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct atw_cardbus_product *acp;
 	bus_addr_t adr;
-	int rev;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -209,12 +208,13 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_intr_ack = atw_cardbus_intr_ack;
 
 	/* Get revision info. */
-	rev = PCI_REVISION(ca->ca_class);
+	sc->sc_rev = PCI_REVISION(ca->ca_class);
 
-	printf(": %s\n", acp->acp_product_name);
+	printf(": %s, revision %d.%d\n", acp->acp_product_name,
+	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 #if 0
-	printf("%s: pass %d.%d signature %08x\n", sc->sc_dev.dv_xname,
+	printf("%s: signature %08x\n", sc->sc_dev.dv_xname,
 	    (rev >> 4) & 0xf, rev & 0xf,
 	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
 #endif
