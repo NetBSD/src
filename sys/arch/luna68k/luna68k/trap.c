@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.18.4.7 2002/09/26 20:04:47 nathanw Exp $ */
+/* $NetBSD: trap.c,v 1.18.4.8 2002/10/05 05:06:27 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.7 2002/09/26 20:04:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.8 2002/10/05 05:06:27 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,7 +174,8 @@ again:
 
 	/* Invoke any pending upcalls. */
 	while (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+                sa_upcall_userret(l);
+
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
