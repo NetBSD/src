@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.16 1998/10/04 00:02:41 fvdl Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.17 1998/10/07 22:11:16 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,21 @@ linux_sys_sigsetmask(p, v, retval)
 	return (0);
 }
 
+int
+linux_sys_sigprocmask(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_rt_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(const linux_sigset_t *) set;
+		syscallarg(linux_sigset_t *) oset;
+	} */ *uap = v;
+
+	return(linux_sigprocmask1(p, SCARG(uap, how), 
+				SCARG(uap, set), SCARG(uap, oset));
+}
 
 /*
  * The deprecated pause(2), which is really just an instance
