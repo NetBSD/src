@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.21 1997/09/26 20:28:47 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.22 1997/09/29 19:05:53 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.21 1997/09/26 20:28:47 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.22 1997/09/29 19:05:53 christos Exp $");
 #endif
 #endif
 
@@ -50,9 +50,7 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.21 1997/09/26 20:28:47 christos Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#ifdef NetBSD1_2
 #include <util.h>
-#endif
 #ifdef PPP_FILTER
 #include <net/bpf.h>
 #endif
@@ -184,10 +182,16 @@ ppp_available()
     ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) >= 0;
     close(s);
 
+#ifdef __NetBSD__
+    no_ppp_msg = "\
+This system lacks kernel support for PPP.  To include PPP support\n\
+in the kernel, please read the ppp(4) manual page.\n";
+#else
     no_ppp_msg = "\
 This system lacks kernel support for PPP.  To include PPP support\n\
 in the kernel, please follow the steps detailed in the README.bsd\n\
 file in the ppp-2.2 distribution.\n";
+#endif
     return ok;
 }
 
