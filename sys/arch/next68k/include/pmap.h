@@ -1,4 +1,4 @@
-/* $ NetBSD: pmap.h,v 1.12 1998/08/22 10:55:34 scw Exp $ */
+/* $NetBSD: pmap.h,v 1.4 1999/02/15 04:54:34 hubertf Exp $ */
 
 /*
  * This file was taken from from mvme68k/include/pmap.h and
