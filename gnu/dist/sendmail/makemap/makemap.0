@@ -1,7 +1,5 @@
-
-
-
 MAKEMAP(8)                                             MAKEMAP(8)
+
 
 
 NNAAMMEE
@@ -58,18 +56,6 @@ DDEESSCCRRIIPPTTIIOONN
 
        --ee     Allow empty value (right hand side).
 
-
-
-
-                   Date: 2000/12/29 18:12:20                 1
-
-
-
-
-
-MAKEMAP(8)                                             MAKEMAP(8)
-
-
        --ff     Normally  all  upper  case  letters  in the key are
               folded to lower  case.   This  flag  disables  that
               behaviour.   This  is  intended to mesh with the -f
@@ -102,31 +88,4 @@ HHIISSTTOORRYY
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                   Date: 2000/12/29 18:12:20                 2
-
-
+                   Date: 2000/12/29 18:12:20        MAKEMAP(8)
