@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.2 2002/09/13 15:32:49 atatat Exp $
+.\"	$NetBSD: pmap.1,v 1.3 2002/09/17 19:54:28 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nd display process memory map
 .Sh SYNOPSIS
 .Nm
-.Op Fl adlmPsv
+.Op Fl adlmPRsv
 .Op Fl D Ar number
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -136,6 +136,13 @@ to print information about the given process.  If
 occurs last on the command line, the
 .Fl p
 is optional.
+.It Fl R
+Recurse into submaps.  In some cases, a vm_map_entry in the kernel
+will point to a submap.  Using this flag tells
+.Nm
+to print the entries of the submap as well.  The submap output is
+indented, and does not affect any total printed at the bottom of the
+output.
 .It Fl s
 The Solaris style output format, modeled after the Solaris command of
 the same name.  This is the default output style.
@@ -327,6 +334,11 @@ The
 utility and documentation was written by Andrew Brown
 .Aq atatat@netbsd.org .
 .Sh BUGS
+Very little will work unless
+.Nm
+is reading from the correct kernel in order to retrieve the
+proper symbol information.
+.Pp
 Since processes can change state while
 .Nm
 is running, some of the information printed may be inaccurate.  This
