@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.22 2000/05/04 17:33:03 ragge Exp $	*/
+/*	$NetBSD: route.h,v 1.23 2000/12/09 01:29:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -255,6 +255,7 @@ struct rttimer {
 
 struct rttimer_queue {
 	long				rtq_timeout;
+	unsigned long			rtq_count;
 	TAILQ_HEAD(, rttimer)		rtq_head;
 	LIST_ENTRY(rttimer_queue)	rtq_link;
 };
@@ -297,6 +298,7 @@ struct rttimer_queue *
 void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
 void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
 void	 rt_timer_remove_all __P((struct rtentry *));
+unsigned long	rt_timer_count __P((struct rttimer_queue *));
 void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));

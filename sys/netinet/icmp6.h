@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.15 2000/10/18 21:14:12 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.16 2000/12/09 01:29:48 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.24 2000/10/18 19:24:24 itojun Exp $	*/
 
 /*
@@ -557,7 +557,9 @@ struct icmp6stat {
 #define ICMPV6CTL_NODEINFO	13
 #define ICMPV6CTL_ERRPPSLIMIT	14	/* ICMPv6 error pps limitation */
 #define ICMPV6CTL_ND6_MAXNUDHINT	15
-#define ICMPV6CTL_MAXID		16
+#define ICMPV6CTL_MTUDISC_HIWAT	16
+#define ICMPV6CTL_MTUDISC_LOWAT	17
+#define ICMPV6CTL_MAXID		18
 
 #define ICMPV6CTL_NAMES { \
 	{ 0, 0 }, \
@@ -576,6 +578,8 @@ struct icmp6stat {
 	{ "nodeinfo", CTLTYPE_INT }, \
 	{ "errppslimit", CTLTYPE_INT }, \
 	{ "nd6_maxnudhint", CTLTYPE_INT }, \
+	{ "mtudisc_hiwat", CTLTYPE_INT }, \
+	{ "mtudisc_lowat", CTLTYPE_INT }, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1
@@ -598,7 +602,7 @@ void	icmp6_redirect_output __P((struct mbuf *, struct rtentry *));
 int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 struct	ip6ctlparam;
-void	icmp6_mtudisc_update __P((struct ip6ctlparam *));
+void	icmp6_mtudisc_update __P((struct ip6ctlparam *, int));
 void	icmp6_mtudisc_callback_register __P((void (*)(struct in6_addr *)));
 
 /* XXX: is this the right place for these macros? */
