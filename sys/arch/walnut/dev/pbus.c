@@ -1,4 +1,4 @@
-/* $NetBSD: pbus.c,v 1.6 2002/09/27 20:37:07 thorpej Exp $ */
+/* $NetBSD: pbus.c,v 1.7 2002/10/01 05:01:37 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -98,10 +98,8 @@ static void	pbus_attach(struct device *, struct device *, void *);
 static int	pbus_submatch(struct device *, struct cfdata *, void *);
 static int	pbus_print(void *, const char *);
 
-const struct cfattach pbus_ca = {
-	sizeof(struct device), pbus_match, pbus_attach
-};
-
+CFATTACH_DECL(pbus, sizeof(struct device),
+    pbus_match, pbus_attach, NULL, NULL)
 
 /*
  * Probe for the peripheral bus.
