@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.8 1998/10/31 01:44:16 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.9 1998/11/01 01:04:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ ne_isa_attach(parent, self, aux)
 								RTL0_8019ID0 &&
 		    bus_space_read_1(nict, nich, NERTL_RTL0_8019ID1) ==
 								RTL0_8019ID1) {
-			typestr = "NE2000 (RTL8019)"
+			typestr = "NE2000 (RTL8019)";
 			npp_init_media = rtl80x9_init_media;
 			dsc->sc_mediachange = rtl80x9_mediachange;
 			dsc->sc_mediastatus = rtl80x9_mediastatus;
