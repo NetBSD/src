@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/11/27 16:30:54 cl Exp $
+#	$NetBSD: Makefile,v 1.25 2004/01/02 01:37:53 lukem Exp $
 #
 
 WARNS=	2
@@ -30,7 +30,9 @@ CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
 
-assym.h: genassym.sh ${ARCHDIR}/genassym.cf
+assym.h: genassym.sh ${ARCHDIR}/genassym.cf \
+		pthread.h pthread_int.h pthread_md.h
+	${_MKTARGET_CREATE}
 	${HOST_SH} ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
@@ -70,9 +72,11 @@ SRCS+= pthread_md.c
 # The TSD routines are used in the implementation of profiling, and so
 # can't be profiled themselves.
 pthread_specific.po: pthread_specific.o
+	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
 
 _context_u.po: _context_u.o
+	${_MKTARGET_CREATE}
 	cp _context_u.o _context_u.po
 
 MAN+=	pthread.3 \
