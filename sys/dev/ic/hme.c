@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.35 2003/02/27 14:58:22 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.36 2003/04/26 22:08:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.35 2003/02/27 14:58:22 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.36 2003/04/26 22:08:29 wiz Exp $");
 
 #define HMEDEBUG
 
@@ -158,7 +158,7 @@ hme_config(sc)
 	 *	sc_erx		(Receiver Unit registers)
 	 *	sc_etx		(Transmitter Unit registers)
 	 *	sc_mac		(MAC registers)
-	 *	sc_mif		(Managment Interface registers)
+	 *	sc_mif		(Management Interface registers)
 	 *
 	 * the maximum bus burst size:
 	 *	sc_burst

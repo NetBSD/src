@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.76 2003/02/26 21:28:21 fvdl Exp $ */
+/*	$NetBSD: apm.c,v 1.77 2003/04/26 22:07:15 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.76 2003/02/26 21:28:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.77 2003/04/26 22:07:15 wiz Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -853,7 +853,7 @@ apm_devpowmgt_enable(onoff, dev)
 	regs.BX = dev;
 
 	/*
-	 * enable is auto BIOS managment.
+	 * enable is auto BIOS management.
 	 * disable is program control.
 	 */
 	regs.CX = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;

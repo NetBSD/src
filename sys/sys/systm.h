@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.159 2003/02/04 01:21:06 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.160 2003/04/26 22:07:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -290,7 +290,7 @@ void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
 
 /*
- * Power managment hooks.
+ * Power management hooks.
  */
 void	*powerhook_establish __P((void (*)(int, void *), void *));
 void	powerhook_disestablish __P((void *));

@@ -1640,7 +1640,7 @@ int *errcode;		/* pointer to error variable */
 		/*
 		 * Attempt to simplify the code a bit. The case where
 		 * RS = "" can also be described by a regexp, RS = "\n\n+".
-		 * The buffer managment and searching code can thus now
+		 * The buffer management and searching code can thus now
 		 * use a common case (the one for regexps) both when RS is
 		 * a regexp, and when RS = "". This particularly benefits
 		 * us for keeping track of how many newlines were matched

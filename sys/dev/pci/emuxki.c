@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.24 2003/03/17 12:29:09 toshii Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.25 2003/04/26 22:08:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.24 2003/03/17 12:29:09 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.25 2003/04/26 22:08:27 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -815,7 +815,7 @@ emuxki_shutdown(struct emuxki_softc *sc)
 	dmamem_free(sc->ptb, M_DEVBUF);
 }
 
-/* Emu10k1 Memory managment */
+/* Emu10k1 Memory management */
 
 static struct emuxki_mem *
 emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
@@ -905,7 +905,7 @@ emuxki_rmem_alloc(struct emuxki_softc *sc, size_t size,
 }
 
 /*
- * emuxki_channel_* : Channel managment functions
+ * emuxki_channel_* : Channel management functions
  * emuxki_chanparms_* : Channel parameters modification functions
  */
 
@@ -1161,7 +1161,7 @@ emuxki_channel_stop(struct emuxki_channel *chan)
 }
 
 /*
- * Voices managment
+ * Voices management
  * emuxki_voice_dataloc : use(play or rec) independant dataloc union helpers
  * emuxki_voice_channel_* : play part of dataloc union helpers
  * emuxki_voice_recsrc_* : rec part of dataloc union helpers
