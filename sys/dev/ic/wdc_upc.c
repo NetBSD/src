@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.1 2000/08/16 23:56:12 bjh21 Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.2 2000/10/14 23:45:57 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: wdc_upc.c,v 1.1 2000/08/16 23:56:12 bjh21 Exp $");
+__RCSID("$NetBSD: wdc_upc.c,v 1.2 2000/10/14 23:45:57 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -90,9 +90,9 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_wdc.sc_dev.dv_xname);
 		return;
 	}
+	printf("\n");
 	wdcattach(&sc->sc_channel);
 
 	upc_intr_establish(ua->ua_irqhandle, IPL_BIO, wdcintr,
 			   &sc->sc_channel);
-	printf("\n");
 }
