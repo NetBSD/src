@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.14 2001/01/27 11:42:41 jdolecek Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.15 2001/01/27 12:28:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,6 @@ struct kern_target {
 #define KTT_AVENRUN	53
 #define KTT_DEVICE	71
 #define	KTT_MSGBUF	89
-#define KTT_PHYSMEM	90
 	u_char kt_tag;
 	u_char kt_vtype;
 	mode_t kt_mode;
