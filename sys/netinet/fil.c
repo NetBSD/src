@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.17 2000/05/21 18:40:10 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.18 2000/05/23 05:56:48 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.7 2000/05/11 12:28:18 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.8 2000/05/22 10:26:09 darrenr Exp";
 #endif
 
 #if defined(_KERNEL) && defined(__FreeBSD_version) && \
@@ -105,9 +105,7 @@ extern	int	opts;
 
 # define	FR_VERBOSE(verb_pr)			verbose verb_pr
 # define	FR_DEBUG(verb_pr)			debug verb_pr
-# define	SEND_RESET(ip, qif, if, m, fin)		send_reset(ip, if)
 # define	IPLLOG(a, c, d, e)		ipllog()
-# define	FR_NEWAUTH(m, fi, ip, qif)	fr_newauth((mb_t *)m, fi, ip)
 #else /* #ifndef _KERNEL */
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
@@ -753,6 +751,16 @@ int out;
 	 */
 	m->m_flags &= ~M_CANFASTFWD;
 #  endif /* M_CANFASTFWD */
+#  ifdef CSUM_DELAY_DATA
+	/*
+	 * disable delayed checksums.
+	 */
+	if (m->m_pkthdr.csum_flags & CSUM_DELAY_DATA) {
+		in_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~CSUM_DELAY_DATA;
+	}
+#  endif /* CSUM_DELAY_DATA */
+
 
 	if ((ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP ||
 	     ip->ip_p == IPPROTO_ICMP)) {
@@ -916,7 +924,7 @@ int out;
 		 * then pretend we've dropped it already.
 		 */
 		if ((pass & FR_AUTH))
-			if (FR_NEWAUTH(m, fin, ip, qif) != 0)
+			if (fr_newauth((mb_t *)m, fin, ip) != 0)
 #ifdef	_KERNEL
 				m = *mp = NULL;
 #else
@@ -1052,12 +1060,11 @@ logit:
 					dst = 1;
 				else
 					dst = 0;
-				send_icmp_err(ip, ICMP_UNREACH, fin->fin_icode,
-					      fin, dst);
+				send_icmp_err(ip, ICMP_UNREACH, fin, dst);
 				ATOMIC_INCL(frstats[0].fr_ret);
 			} else if (((pass & FR_RETMASK) == FR_RETRST) &&
 				   !(fin->fin_fi.fi_fl & FI_SHORT)) {
-				if (SEND_RESET(ip, qif, ifp, fin) == 0) {
+				if (send_reset(ip, fin) == 0) {
 					ATOMIC_INCL(frstats[1].fr_ret);
 				}
 			}
@@ -1354,7 +1361,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.7 2000/05/11 12:28:18 darrenr Exp
+ * Id: fil.c,v 2.35.2.8 2000/05/22 10:26:09 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.5 2000/05/21 18:49:34 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.6 2000/05/23 06:11:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.6 2000/05/13 07:46:49 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.9 2000/05/22 12:48:28 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -144,7 +144,7 @@ static	int	frrequest __P((int, int, caddr_t, int));
 #endif
 #ifdef	_KERNEL
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
-static	int	send_ip __P((struct mbuf *, ip_t *, fr_info_t *, int));
+static	int	send_ip __P((ip_t *, fr_info_t *, struct mbuf *));
 # ifdef	__sgi
 extern  kmutex_t        ipf_rw;
 extern	KRWLOCK_T	ipf_mutex;
@@ -948,9 +948,9 @@ register struct uio *uio;
  * send_reset - this could conceivably be a call to tcp_respond(), but that
  * requires a large amount of setting up and isn't any more efficient.
  */
-int send_reset(fin, oip)
-fr_info_t *fin;
+int send_reset(oip, fin)
 struct ip *oip;
+fr_info_t *fin;
 {
 	struct tcphdr *tcp, *tcp2;
 	int tlen = 0, hlen;
@@ -990,7 +990,7 @@ struct ip *oip;
 # ifdef	USE_INET6
 	ip6 = (ip6_t *)ip;
 # endif
-	bzero((char *)ip, sizeof(*tcp2) + hlen)
+	bzero((char *)ip, sizeof(*tcp2) + hlen);
 	tcp2 = (struct tcphdr *)((char *)ip + hlen);
 
 	tcp2->th_sport = tcp->th_dport;
@@ -1008,7 +1008,7 @@ struct ip *oip;
 		ip6->ip6_dst = oip6->ip6_src;
 		tcp2->th_sum = in6_cksum(m, IPPROTO_TCP,
 					 sizeof(*ip6), sizeof(*tcp2));
-		return send_ip(m, oip, fin, hlen + sizeof(*tcp2));
+		return send_ip(oip, fin, m);
 	}
 # endif
 	ip->ip_p = IPPROTO_TCP;
@@ -1016,20 +1016,16 @@ struct ip *oip;
 	ip->ip_src.s_addr = oip->ip_dst.s_addr;
 	ip->ip_dst.s_addr = oip->ip_src.s_addr;
 	tcp2->th_sum = in_cksum(m, hlen + sizeof(*tcp2));
-	return send_ip(m, oip, fin, hlen + sizeof(*tcp2));
+	ip->ip_len = hlen + sizeof(*tcp2);
+	return send_ip(oip, fin, m);
 }
 
 
-static int send_ip(m, oip, fin, len)
-struct mbuf *m;
+static int send_ip(oip, fin, m)
 ip_t *oip;
 fr_info_t *fin;
-int len;
+struct mbuf *m;
 {
-# if (defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)) || \
-     (defined(_BSDI_VERSION) && (_BSDI_VERSION >= 199802))
-	struct route ro;
-# endif
 	ip_t *ip;
 
 	ip = mtod(m, ip_t *);
@@ -1039,7 +1035,6 @@ int len;
 		ip->ip_hl = (sizeof(*oip) >> 2);
 		ip->ip_v = IPVERSION;
 		ip->ip_tos = oip->ip_tos;
-		ip->ip_len = len;
 		ip->ip_id = oip->ip_id;
 		ip->ip_off = 0;
 # if (BSD < 199306) || defined(__sgi)
@@ -1061,40 +1056,17 @@ int len;
 # ifdef	IPSEC
 	m->m_pkthdr.rcvif = NULL;
 # endif
-# if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
-	{
-	int err;
-
-	bzero((char *)&ro, sizeof(ro));
-	err = ip_output(m, (struct mbuf *)0, &ro, 0, 0);
-	if (ro.ro_rt)
-		RTFREE(ro.ro_rt);
-	return err;
-	}
-# else
-	/*
-	 * extra 0 in case of multicast
-	 */
-#  if _BSDI_VERSION >= 199802
-	return ip_output(m, (struct mbuf *)0, &ro, 0, 0, NULL);
-#  else
-#   if	defined(__OpenBSD__)
-	return ip_output(m, (struct mbuf *)0, 0, 0, 0, NULL);
-#   else
-	return ip_output(m, (struct mbuf *)0, 0, 0, 0);
-#   endif
-#  endif
-# endif
+	return ipfr_fastroute(m, fin, NULL);
 }
 
 
-int send_icmp_err(oip, type, code, fin, dst)
+int send_icmp_err(oip, type, fin, dst)
 ip_t *oip;
-int type, code;
+int type;
 fr_info_t *fin;
 int dst;
 {
-	int err, hlen = 0, xtra = 0, iclen, ohlen = 0, avail;
+	int err, hlen = 0, xtra = 0, iclen, ohlen = 0, avail, code;
 	struct in_addr dst4;
 	struct icmp *icmp;
 	struct mbuf *m;
@@ -1108,6 +1080,7 @@ int dst;
 	if ((type < 0) || (type > ICMP_MAXTYPE))
 		return -1;
 
+	code = fin->fin_icode;
 #ifdef USE_INET6
 	if ((code < 0) || (code > sizeof(icmptoicmp6unreach)/sizeof(int)))
 		return -1;
@@ -1139,7 +1112,7 @@ int dst;
 	}
 
 #ifdef	USE_INET6
-	if (fin->fin_v == 6) {
+	else if (fin->fin_v == 6) {
 		hlen = sizeof(ip6_t);
 		ohlen = sizeof(ip6_t);
 		type = icmptoicmp6types[type];
@@ -1185,7 +1158,7 @@ int dst;
 	bzero((char *)ip, iclen);
 
 	icmp->icmp_type = type;
-	icmp->icmp_code = code;
+	icmp->icmp_code = fin->fin_icode;
 	icmp->icmp_cksum = 0;
 	if (avail) {
 		bcopy((char *)oip, (char *)&icmp->icmp_ip, MIN(ohlen, avail));
@@ -1219,8 +1192,10 @@ int dst;
 			      (char *)&icmp->icmp_ip + ohlen, avail);
 		icmp->icmp_cksum = ipf_cksum((u_short *)icmp,
 					     sizeof(*icmp) + 8);
+		ip->ip_len = iclen;
+		ip->ip_p = IPPROTO_ICMP;
 	}
-	err = send_ip(m, oip, fin, iclen);
+	err = send_ip(oip, fin, m);
 	return err;
 }
 
@@ -1263,10 +1238,10 @@ frdest_t *fdp;
 	register struct ip *ip, *mhip;
 	register struct mbuf *m = m0;
 	register struct route *ro;
-	int len, off, error = 0, hlen;
+	int len, off, error = 0, hlen, code;
+	struct ifnet *ifp, *sifp;
 	struct sockaddr_in *dst;
 	struct route iproute;
-	struct ifnet *ifp;
 	frentry_t *fr;
 
 	hlen = fin->fin_hlen;
@@ -1290,7 +1265,13 @@ frdest_t *fdp;
 	dst->sin_family = AF_INET;
 
 	fr = fin->fin_fr;
-	ifp = fdp->fd_ifp;
+	if (fdp)
+		ifp = fdp->fd_ifp;
+	else {
+		ifp = fin->fin_ifp;
+		dst->sin_addr = ip->ip_dst;
+	}
+
 	/*
 	 * In case we're here due to "to <if>" being used with "keep state",
 	 * check that we're going in the correct direction.
@@ -1299,9 +1280,10 @@ frdest_t *fdp;
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
 			return -1;
 		dst->sin_addr = ip->ip_dst;
-	} else
+	} else if (fdp)
 		dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
-# ifdef	__bsdi__
+
+# if BSD >= 199306
 	dst->sin_len = sizeof(*dst);
 # endif
 # if	(BSD >= 199306) && !defined(__NetBSD__) && !defined(__bsdi__) && \
@@ -1315,7 +1297,7 @@ frdest_t *fdp;
 	rtalloc(ro);
 # endif
 	if (!ifp) {
-		if (!(fin->fin_fr->fr_flags & FR_FASTROUTE)) {
+		if (!fr || !(fr->fr_flags & FR_FASTROUTE)) {
 			error = -2;
 			goto bad;
 		}
@@ -1345,8 +1327,10 @@ frdest_t *fdp;
 			ATOMIC_INCL(frstats[1].fr_acct);
 		}
 		fin->fin_fr = NULL;
-		(void) fr_checkstate(ip, fin);
-		(void) ip_natout(ip, fin);
+		if (!fr || !(fr->fr_flags & FR_RETMASK)) {
+			(void) fr_checkstate(ip, fin);
+			(void) ip_natout(ip, fin);
+		}
 	} else
 		ip->ip_sum = 0;
 	/*
@@ -1356,7 +1340,11 @@ frdest_t *fdp;
 # if	BSD >= 199306
 		int i = 0;
 
+#  ifdef	MCLISREFERENCED
 		if ((m->m_flags & M_EXT) && MCLISREFERENCED(m))
+#  else
+		if (m->m_flags & M_EXT)
+#  endif
 			i = 1;
 # endif
 # ifndef sparc
@@ -1486,12 +1474,13 @@ done:
 	return 0;
 bad:
 	if (error == EMSGSIZE) {
-		void *ifps = fin->fin_ifp;
-
+		sifp = fin->fin_ifp;
+		code = fin->fin_icode;
+		fin->fin_icode = ICMP_UNREACH_NEEDFRAG;
 		fin->fin_ifp = ifp;
-		(void) send_icmp_err(ip, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
-				     fin, 1);
-		fin->fin_ifp = ifps;
+		(void) send_icmp_err(ip, ICMP_UNREACH, fin, 1);
+		fin->fin_ifp = sifp;
+		fin->fin_icode = code;
 	}
 	m_freem(m);
 	goto done;

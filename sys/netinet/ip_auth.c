@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.1.1.10 2000/05/03 10:58:23 veego Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.1.1.11 2000/05/23 05:56:48 veego Exp $	*/
 
 /*
  * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.1 2000/04/25 16:18:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.2 2000/05/22 10:26:11 darrenr Exp";
 #endif
 
 #include <sys/errno.h>
@@ -202,17 +202,14 @@ fr_info_t *fin;
  * If we do, store it and wake up any user programs which are waiting to
  * hear about these events.
  */
-int fr_newauth(m, fin, ip
-#if defined(_KERNEL) && SOLARIS
-, qif)
-qif_t *qif;
-#else
-)
-#endif
+int fr_newauth(m, fin, ip)
 mb_t *m;
 fr_info_t *fin;
 ip_t *ip;
 {
+#if defined(_KERNEL) && SOLARIS
+	qif_t *qif = fin->fin_qif;
+#endif
 	int i;
 
 	if (fr_auth_lock)

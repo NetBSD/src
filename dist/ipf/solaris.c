@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.4 2000/05/21 18:49:39 veego Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.5 2000/05/23 06:11:31 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.15.2.2 2000/05/11 12:12:51 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.15.2.3 2000/05/22 10:26:17 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -540,6 +540,8 @@ int out;
 	u_short __ipoff;
 #endif
 tryagain:
+	ip = NULL;
+	m = NULL;
 	/*
 	 * If there is only M_DATA for a packet going out, then any header
 	 * information (which would otherwise appear in an M_PROTO mblk before
@@ -557,8 +559,16 @@ tryagain:
 		dl_unitdata_ind_t *dl = (dl_unitdata_ind_t *)bp;
 		if (dl->dl_primitive != DL_UNITDATA_IND &&
 		    dl->dl_primitive != DL_UNITDATA_REQ) {
-			frstats[out].fr_notdata++;
-			return 0;
+			ip = (ip_t *)dl;
+			if ((ip->ip_v == IPVERSION) &&
+			    (ip->ip_hl == (sizeof(*ip) >> 2)) &&
+			    (ntohs(ip->ip_len) == mt->b_wptr - mt->b_rptr)) {
+				off = 0;
+				m = mt;
+			} else {
+				frstats[out].fr_notdata++;
+				return 0;
+			}
 		}
 	}
 
@@ -566,8 +576,9 @@ tryagain:
 	 * Find the first data block, count the data blocks in this chain and
 	 * the total amount of data.
 	 */
-	for (m = mt; m && (MTYPE(m) != M_DATA); m = m->b_cont)
-		off = 0;	/* Any non-M_DATA cancels the offset */
+	if (ip == NULL)
+		for (m = mt; m && (MTYPE(m) != M_DATA); m = m->b_cont)
+			off = 0;	/* Any non-M_DATA cancels the offset */
 
 	if (!m) {
 		frstats[out].fr_nodata++;
@@ -674,7 +685,7 @@ fixalign:
 
 	if (((sap == 0) && (ip->ip_v != IP_VERSION))
 #if SOLARIS2 >= 8
-	    || ((sap == IP6_DL_SAP) && ((ip6->ip6_vfc) & 0xf0 != 6))
+	    || ((sap == IP6_DL_SAP) && ((ip6->ip6_vfc >> 4) != 6))
 #endif
 	) {
 		m->b_rptr -= off;
@@ -1597,7 +1608,9 @@ frdest_t *fdp;
 	mblk_t *mp = NULL;
 	size_t hlen = 0;
 	frentry_t *fr;
+	frdest_t fd;
 	ill_t *ifp;
+	qif_t *qif;
 	u_char *s;
 	int p;
 
@@ -1623,6 +1636,27 @@ frdest_t *fdp;
 		(*mpp)->b_prev = NULL;
 		freemsg(*mpp);
 		*mpp = mp;
+	}
+
+	if (!fdp) {
+		ipif_t *ipif;
+
+		ifp = fin->fin_ifp;
+		ipif = ifp->ill_ipif;
+		if (!ipif)
+			goto bad_fastroute;
+#if SOLARIS2 > 5
+		ir = ire_ctable_lookup(ipif->ipif_local_addr, 0, IRE_LOCAL,
+				       NULL, NULL, MATCH_IRE_TYPE);
+#else
+		ir = ire_lookup_myaddr(ipif->ipif_local_addr);
+#endif
+		if (!ir)
+			ir = (ire_t *)-1;
+
+                fd.fd_ifp = (struct ifnet *)ir;
+		fd.fd_ip = ip->ip_dst;
+		fdp = &fd;
 	}
 
 	ir = (ire_t *)fdp->fd_ifp;
@@ -1686,8 +1720,10 @@ frdest_t *fdp;
 				ATOMIC_INCL(frstats[1].fr_acct);
 			}
 			fin->fin_fr = NULL;
-			(void) fr_checkstate(ip, fin);
-			(void) ip_natout(ip, fin);
+			if (!fr || !(fr->fr_flags & FR_RETMASK)) {
+				(void) fr_checkstate(ip, fin);
+				(void) ip_natout(ip, fin);
+			}
 		}
 #ifndef	sparc
 		if (fin->fin_v == 4) {
@@ -1724,7 +1760,7 @@ frdest_t *fdp;
 				mp2 = copyb(mp);
 				if (!mp2)
 					goto bad_fastroute;
-				mp2->b_cont = mb;
+				linkb(mp2, mb);
 				mb = mp2;
 			}
 		}
