@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.9.4.2 2000/11/04 04:47:07 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.9.4.3 2000/11/04 06:53:18 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,14 +114,6 @@ on an NFS server, you will want to mount those file systems as well.
 To do this, you will need to enable the network:
 .Pp
 .Dl # Ic "sh /etc/rc.d/network start"
-.It
-Run the
-.Xr update 8
-daemon, to ensure that new programs
-are actually stored on disk.
-.\" XXX: this exist anymore?
-.Pp
-.Dl # Ic "update"
 .It
 Make sure you are in the root file system
 .Pq Pa /
