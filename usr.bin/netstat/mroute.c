@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.18 2004/09/04 23:35:43 manu Exp $	*/
+/*	$NetBSD: mroute.c,v 1.19 2004/09/06 14:51:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.18 2004/09/04 23:35:43 manu Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.19 2004/09/06 14:51:32 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,11 +288,11 @@ print_bw_meter(bw_meter, banner_printed)
 
 	/* The measured values */
 	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		sprintf(s1, "%llu", bw_meter->bm_measured.b_packets);
+		sprintf(s1, "%llu", (unsigned long long)bw_meter->bm_measured.b_packets);
 	else
 		sprintf(s1, "?");
 	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		sprintf(s2, "%llu", bw_meter->bm_measured.b_bytes);
+		sprintf(s2, "%llu", (unsigned long long)bw_meter->bm_measured.b_bytes);
 	else
 		sprintf(s2, "?");
 	sprintf(s0, "%lu.%lu|%s|%s",
@@ -311,11 +311,11 @@ print_bw_meter(bw_meter, banner_printed)
 
 	/* The threshold values */
 	if (bw_meter->bm_flags & BW_METER_UNIT_PACKETS)
-		sprintf(s1, "%llu", bw_meter->bm_threshold.b_packets);
+		sprintf(s1, "%llu", (unsigned long long)bw_meter->bm_threshold.b_packets);
 	else
 		sprintf(s1, "?");
 	if (bw_meter->bm_flags & BW_METER_UNIT_BYTES)
-		sprintf(s2, "%llu", bw_meter->bm_threshold.b_bytes);
+		sprintf(s2, "%llu", (unsigned long long)bw_meter->bm_threshold.b_bytes);
 	else
 		sprintf(s2, "?");
 	sprintf(s0, "%lu.%lu|%s|%s",
