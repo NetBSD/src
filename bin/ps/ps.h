@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.17 2000/06/07 04:58:02 simonb Exp $	*/
+/*	$NetBSD: ps.h,v 1.17.4.1 2002/04/23 20:41:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -58,9 +58,10 @@ typedef struct var {
 #define	COMM	0x01		/* needs exec arguments and environment (XXX) */
 #define	LJUST	0x02		/* left adjust on output (trailing blanks) */
 #define	INF127	0x04		/* 127 = infinity: if > 127, print 127. */
+#define LWP	0x08		/* dispatch to kinfo_lwp routine */
 	u_int	flag;
 				/* output routine */
-	void	(*oproc) __P((struct kinfo_proc2 *, struct varent *, int));
+	void	(*oproc) __P((void *, struct varent *, int));
 	short	width;		/* printing width */
 	/*
 	 * The following (optional) elements are hooks for passing information
@@ -77,5 +78,12 @@ typedef struct var {
 	double	longestpd;	/* longest positive double */
 	double	longestnd;	/* longest negative double */
 } VAR;
+
+#define OUTPUT(vent, ki, kl, mode) do {					\
+	if ((vent)->var->flag & LWP)					\
+		((vent)->var->oproc)((void *)(kl), (vent), (mode));	\
+	else								\
+		((vent)->var->oproc)((void *)(ki), (vent), (mode));	\
+	} while (/*CONSTCOND*/ 0)
 
 #include "extern.h"
