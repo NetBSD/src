@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.28 2001/04/03 15:08:38 chs Exp $	*/
+/*	$NetBSD: nfs.h,v 1.29 2001/07/01 02:13:35 gmcgarry Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -83,6 +83,9 @@
 #define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
 #ifdef _KERNEL
 extern int nfs_niothreads;              /* Number of async_daemons desired */
+#ifndef NFS_DEFAULT_NIOTHREADS
+#define NFS_DEFAULT_NIOTHREADS 4
+#endif
 #endif
 #define NFS_MAXGATHERDELAY	100	/* Max. write gather delay (msec) */
 #ifndef NFS_GATHERDELAY
