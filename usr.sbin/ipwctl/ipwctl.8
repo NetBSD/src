@@ -1,4 +1,4 @@
-.\" $NetBSD: ipwctl.8,v 1.5 2004/08/23 13:25:11 lukem Exp $
+.\" $NetBSD: ipwctl.8,v 1.6 2004/08/27 00:05:04 lukem Exp $
 .\" Id: ipwctl.8,v 1.1.2.1 2004/08/19 16:24:50 damien Exp
 .\"
 .\" Copyright (c) 2004
@@ -69,7 +69,7 @@ to the driver.
 .It Fl i Ar iface Fl k
 Kill (remove) the firmware and reset the adapter.
 .It Fl i Ar iface Fl r
-Displays the radio switch state (on or off).
+Display the radio switch state (on or off).
 .El
 .Sh FILES
 The firmware is not shipped with
@@ -81,12 +81,11 @@ The original archive is available from Intel at:
 .Pp
 .Bl -tag -width ipw2100-1.2-i.fw -compact
 .It Pa ipw2100-1.2.fw
-BSS mode (connection to an Access Point) firmware
+BSS mode (connection to an access point) firmware
 .It Pa ipw2100-1.2-i.fw
-BSS mode (point-to-point connection) firmware
+IBSS mode (point-to-point connection) firmware
 .It Pa ipw2100-1.2-p.fw
 Monitor mode firmware
-BSS mode (point-to-point connection)
 .El
 .Sh SEE ALSO
 .Xr ipw 4 ,
