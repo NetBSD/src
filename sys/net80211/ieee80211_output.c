@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.10 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.11 2004/01/13 23:37:30 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.9 2003/10/17 23:15:30 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.10 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.11 2004/01/13 23:37:30 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -104,7 +104,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_frame *wh;
 
-	KASSERT(ni != NULL, ("null node"));
+	IASSERT(ni != NULL, ("null node"));
 	ni->ni_inact = 0;
 
 	/*
@@ -305,7 +305,7 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 {
 	struct mbuf *m;
 
-	KASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
+	IASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
 #ifdef __FreeBSD__
 	if (pktlen <= MHLEN)
 		MGETHDR(m, flags, type);
@@ -336,7 +336,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int16_t capinfo;
 	int has_challenge, is_shared_key, ret, timer;
 
-	KASSERT(ni != NULL, ("null node"));
+	IASSERT(ni != NULL, ("null node"));
 
 	/*
 	 * Hold a reference on the node so it doesn't go away until after
