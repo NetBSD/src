@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/08 08:24:17 garbled Exp $
+#	$NetBSD: Makefile,v 1.5 2001/01/14 06:26:56 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -18,4 +18,3 @@ DPADD+= ${LIBUTIL} ${LIBCURSES} ${LIBCDK} ${LIBFORM} ${LIBM} \
 NLS=	C.msg
 
 .include <bsd.prog.mk>
-.include <bsd.nls.mk>
