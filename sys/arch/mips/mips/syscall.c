@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2002/02/02 20:28:59 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2002/03/05 14:23:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2002/02/02 20:28:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2002/03/05 14:23:50 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -146,7 +146,12 @@ void
 EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
-	mips_reg_t *args, copyargs[8], ov0;
+	register_t *args, copyargs[8];
+	register_t *rval;
+#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+	register_t copyrval[2];
+#endif
+	mips_reg_t ov0;
 	size_t code, numsys, nsaved, nargs;
 	const struct sysent *callp;
 	int error;
@@ -191,13 +196,13 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 			callp += p->p_emul->e_nosys;
 		else
 			callp += code;
-		nargs = callp->sy_argsize / sizeof(mips_reg_t);
+		nargs = callp->sy_argsize / sizeof(register_t);
 
 		if (nargs > nsaved) {
 			error = copyin(
-			    ((mips_reg_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
 			    (args + nsaved),
-			    (nargs - nsaved) * sizeof(mips_reg_t));
+			    (nargs - nsaved) * sizeof(register_t));
 			if (error)
 				goto bad;
 		}
@@ -210,14 +215,24 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 			callp += code;
 		nargs = callp->sy_narg;
 
-		if (nargs < 5)
-			args = &frame->f_regs[A0];
-		else {
+		if (nargs < 5) {
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+			args = (register_t *)&frame->f_regs[A0];
+#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+			args = copyargs;
+			args[0] = frame->f_regs[A0];
+			args[1] = frame->f_regs[A1];
+			args[2] = frame->f_regs[A2];
+			args[3] = frame->f_regs[A3];
+#else
+# error syscall not implemented for current MIPS ABI
+#endif
+		} else {
 			args = copyargs;
 			error = copyin(
-			    ((mips_reg_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
 			    (&copyargs[4]),
-			    (nargs - 4) * sizeof(mips_reg_t));
+			    (nargs - 4) * sizeof(register_t));
 			if (error)
 				goto bad;
 			args[0] = frame->f_regs[A0];
@@ -232,16 +247,27 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 	scdebug_call(p, code, (register_t *)args);
 #endif
 
-	frame->f_regs[V0] = 0;
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	rval = (register_t *)&frame->f_regs[V0];
+	rval[0] = 0;
+	/* rval[1] already has V1 */
+#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+	rval = copyrval;
+	rval[0] = 0;
+	rval[1] = frame->f_regs[V1];
+#endif
 
-	/* XXX register_t vs. mips_reg_t */
-	error = (*callp->sy_call)(p, args, (register_t *)&frame->f_regs[V0]);
+	error = (*callp->sy_call)(p, args, rval);
 
 	if (p->p_emul->e_errno)
 		error = p->p_emul->e_errno[error];
 
 	switch (error) {
 	case 0:
+#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+		frame->f_regs[V0] = rval[0];
+		frame->f_regs[V1] = rval[1];
+#endif
 		frame->f_regs[A3] = 0;
 		break;
 	case ERESTART:
@@ -258,7 +284,7 @@ EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, (register_t*) &frame->f_regs[V0]);
+	scdebug_ret(p, code, error, rval);
 #endif
 
 	userret(p);
@@ -268,7 +294,12 @@ void
 EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
-	mips_reg_t *args, copyargs[8], ov0;
+	register_t *args, copyargs[8];
+	register_t *rval;
+#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+	register_t copyrval[2];
+#endif
+	mips_reg_t ov0;
 	size_t code, numsys, nsaved, nargs;
 	const struct sysent *callp;
 	int error;
@@ -313,13 +344,13 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 			callp += p->p_emul->e_nosys;
 		else
 			callp += code;
-		nargs = callp->sy_argsize / sizeof(mips_reg_t);
+		nargs = callp->sy_argsize / sizeof(register_t);
 
 		if (nargs > nsaved) {
 			error = copyin(
-			    ((mips_reg_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
 			    (args + nsaved),
-			    (nargs - nsaved) * sizeof(mips_reg_t));
+			    (nargs - nsaved) * sizeof(register_t));
 			if (error)
 				goto bad;
 		}
@@ -332,14 +363,24 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 			callp += code;
 		nargs = callp->sy_narg;
 
-		if (nargs < 5)
-			args = &frame->f_regs[A0];
-		else {
+		if (nargs < 5) {
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+			args = (register_t *)&frame->f_regs[A0];
+#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+			args = copyargs;
+			args[0] = frame->f_regs[A0];
+			args[1] = frame->f_regs[A1];
+			args[2] = frame->f_regs[A2];
+			args[3] = frame->f_regs[A3];
+#else
+# error syscall not implemented for current MIPS ABI
+#endif
+		} else {
 			args = copyargs;
 			error = copyin(
-			    ((mips_reg_t *)(vaddr_t)frame->f_regs[SP] + 4),
+			    ((register_t *)(vaddr_t)frame->f_regs[SP] + 4),
 			    (&copyargs[4]),
-			    (nargs - 4) * sizeof(mips_reg_t));
+			    (nargs - 4) * sizeof(register_t));
 			if (error)
 				goto bad;
 			args[0] = frame->f_regs[A0];
@@ -351,26 +392,35 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, (register_t*)args);
+	scdebug_call(p, code, args);
 #endif
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL)) {
-		/* XXX register_t vs. mips_reg_t */
-		ktrsyscall(p, code, callp->sy_argsize, (register_t *)args);
-	}
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 
-	frame->f_regs[V0] = 0;
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+	rval = (register_t *)&frame->f_regs[V0];
+	rval[0] = 0;
+	/* rval[1] already has V1 */
+#elif _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+	rval = copyrval;
+	rval[0] = 0;
+	rval[1] = frame->f_regs[V1];
+#endif
 
-	/* XXX register_t vs. mips_reg_t */
-	error = (*callp->sy_call)(p, args, (register_t *)&frame->f_regs[V0]);
+	error = (*callp->sy_call)(p, args, rval);
 
 	if (p->p_emul->e_errno)
 		error = p->p_emul->e_errno[error];
 
 	switch (error) {
 	case 0:
+#if _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN
+		frame->f_regs[V0] = rval[0];
+		frame->f_regs[V1] = rval[1];
+#endif
 		frame->f_regs[A3] = 0;
 		break;
 	case ERESTART:
@@ -387,13 +437,13 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, (register_t *)&frame->f_regs[V0]);
+	scdebug_ret(p, code, error, rval);
 #endif
 
 	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, frame->f_regs[V0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
