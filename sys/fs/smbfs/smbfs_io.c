@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.12 2003/02/25 10:33:19 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.13 2003/03/24 13:52:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.12 2003/02/25 10:33:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.13 2003/03/24 13:52:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,9 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	/* vn types other than VREG unsupported */
 	KASSERT(vp->v_type == VREG);
 
-	SMBVDEBUG("ofs=%d,resid=%d\n",(int)uiop->uio_offset, uiop->uio_resid);
+	SMBVDEBUG("ofs=%lld,resid=%d\n",
+		(long long int) uiop->uio_offset,
+		uiop->uio_resid);
 	if (uiop->uio_offset < 0)
 		return EINVAL;
 /*	if (uiop->uio_offset + uiop->uio_resid > smp->nm_maxfilesize)
@@ -266,7 +268,8 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 			 */
 			smbfs_attr_cacheremove(vp);
 			error = VOP_GETATTR(vp, &vattr, cred, td);
-			if (error) return (error);
+			if (error)
+				return (error);
 #endif
 			uiop->uio_offset = np->n_size;
 		}
@@ -279,7 +282,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	}
 	smb_makescred(&scred, p, cred);
 	error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
-	SMBVDEBUG("after: ofs=%d,resid=%d\n",(int)uiop->uio_offset, uiop->uio_resid);
+	SMBVDEBUG("after: ofs=%lld,resid=%d,err=%d\n",(long long int)uiop->uio_offset, uiop->uio_resid, error);
 	if (!error) {
 		if (uiop->uio_offset > np->n_size) {
 			np->n_size = uiop->uio_offset;
