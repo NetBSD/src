@@ -96,8 +96,8 @@
       the two sets of lengths.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: inflate.c,v 1.1.1.1 1993/07/09 15:47:39 jtc Exp $";
+#ifdef RCSID
+static char rcsid[] = "$Id: inflate.c,v 1.2 1993/10/15 23:05:43 jtc Exp $";
 #endif
 
 #include <sys/types.h>
@@ -309,7 +309,8 @@ int *m;                 /* maximum lookup bits, returns actual */
   do {
     Tracecv(*p, (stderr, (n-i >= ' ' && n-i <= '~' ? "%c %d\n" : "0x%x %d\n"), 
 	    n-i, *p));
-    c[*p++]++;                  /* assume all entries <= BMAX */
+    c[*p]++;                    /* assume all entries <= BMAX */
+    p++;                      /* Can't combine with above line (Solaris bug) */
   } while (--i);
   if (c[0] == n)                /* null input--all zero length codes */
   {

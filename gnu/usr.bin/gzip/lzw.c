@@ -2,8 +2,8 @@
  * This is a dummy version avoiding patent problems.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: lzw.c,v 1.1.1.1 1993/07/09 15:47:39 jtc Exp $";
+#ifdef RCSID
+static char rcsid[] = "$Id: lzw.c,v 1.2 1993/10/15 23:05:44 jtc Exp $";
 #endif
 
 #include "tailor.h"
@@ -19,7 +19,8 @@ int lzw(in, out)
     if (msg_done) return ERROR;
     msg_done = 1;
     fprintf(stderr,"output in compress .Z format not supported\n");
-    in++, out++; /* avoid warnings on unused variables */
-    exit_code = ERROR;
+    if (in != out) { /* avoid warnings on unused variables */
+        exit_code = ERROR;
+    }
     return ERROR;
 }
