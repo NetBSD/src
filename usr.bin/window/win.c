@@ -1,6 +1,8 @@
+/*	$NetBSD: win.c,v 1.4 1995/09/28 10:35:03 tls Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Edward Wang at The University of California, Berkeley.
@@ -35,11 +37,12 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)win.c	3.25 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: win.c,v 1.3 1994/12/24 17:07:51 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: win.c,v 1.4 1995/09/28 10:35:03 tls Exp $";
+#endif
 #endif /* not lint */
-
-#include <string.h>
 
 #include "defs.h"
 #include "char.h"
