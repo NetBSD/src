@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.1 2004/04/16 14:52:52 dbj Exp $
+# $NetBSD: fixsb,v 1.2 2004/04/18 03:49:43 dbj Exp $
 #
 
 # PROVIDE: fixsb
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="fixsb"
+rcvar=$name
 start_cmd="fsck_start"
 stop_cmd=":"
 
