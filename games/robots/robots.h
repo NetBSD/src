@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.16 2003/08/07 09:37:37 agc Exp $	*/
+/*	$NetBSD: robots.h,v 1.17 2004/01/27 20:26:55 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,6 +32,7 @@
  */
 
 # include	<sys/ttydefaults.h>
+# include	<sys/endian.h>
 # include	<ctype.h>
 # include	<curses.h>
 # include	<err.h>
