@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.21 1997/07/20 19:20:01 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.22 1997/07/30 05:01:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.21 1997/07/20 19:20:01 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.22 1997/07/30 05:01:01 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,7 +507,7 @@ display(p, list)
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%lu", maxnlink);
 		d.s_nlink = strlen(buf);
-		(void)snprintf(buf, sizeof(buf), "%qu", maxsize);
+		(void)snprintf(buf, sizeof(buf), "%qu", (long long)maxsize);
 		d.s_size = strlen(buf);
 		d.s_user = maxuser;
 	}
