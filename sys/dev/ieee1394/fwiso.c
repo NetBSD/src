@@ -1,4 +1,4 @@
-/*	$NetBSD: fwiso.c,v 1.1 2002/12/04 00:28:43 haya Exp $	*/
+/*	$NetBSD: fwiso.c,v 1.2 2003/01/05 08:11:33 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2001 and 2002
@@ -875,6 +875,7 @@ fwiso_set_handler(struct fwiso_data *fd)
 	fd->fd_irtag = (*isc->sc1394_ir_open)((struct device *)isc,
 	    fd->fd_channel, fd->fd_tag, fd->fd_rsv_size, bufsize, flags);
 	if (fd->fd_irtag == NULL) {
+		splx(s);
 		return ENXIO;
 	}
 	fd->fd_flags |= FWISO_SETHANDLER;
