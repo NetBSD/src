@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.18 1997/02/09 21:19:04 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.19 1997/02/22 02:51:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@
 #include <sys/buf.h>
 #include <sys/stat.h>
 #include <sys/protosw.h>
+#include <sys/signalvar.h>
 
 #include <netinet/in.h>
 #include <nfs/rpcv2.h>
@@ -146,7 +147,7 @@ extern struct nfsstats nfsstats;
  *     nqsrv_locklease() is coded such that at least one of LC_LOCKED and
  *     LC_WANTED is set whenever a process is tsleeping in it. The exception
  *     is when a new lease is being allocated, since it is not in the timer
- *     queue yet. (Ditto for the splsoftclock() and splx(s) calls)
+ *     queue yet. (Ditto for the splsoftnet() and splx(s) calls)
  */
 int
 nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
@@ -177,7 +178,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 	if (error)
 		return (error);
 	*frev = vattr.va_filerev;
-	s = splsoftclock();
+	s = splsoftnet();
 	tlp = vp->v_lease;
 	if ((flags & ND_CHECK) == 0)
 		nfsstats.srvnqnfs_getleases++;
@@ -299,7 +300,7 @@ doreply:
 		panic("nfs_nqlease.c: Phoney lpp");
 	LIST_INSERT_HEAD(lpp, lp, lc_hash);
 	vp->v_lease = lp;
-	s = splsoftclock();
+	s = splsoftnet();
 	nqsrv_instimeq(lp, *duration);
 	splx(s);
 	*cachablep = 1;
@@ -986,7 +987,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	struct vnode *vp;
 	struct nfsreq myrep;
 	struct nfsuid *nuidp, *nnuidp;
-	int error = 0, vpid;
+	int error = 0, vpid, sleepreturn;
 
 	/*
 	 * First initialize some variables
@@ -1022,7 +1023,15 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	/*
 	 * Loop every second updating queue until there is a termination sig.
 	 */
+	sleepreturn = 0;
 	while ((nmp->nm_flag & NFSMNT_DISMNT) == 0) {
+	    if (sleepreturn == EINTR || sleepreturn == ERESTART) {
+		if (vfs_busy(nmp->nm_mountp) == 0 &&
+		    dounmount(nmp->nm_mountp, 0, p) != 0)
+			CLRSIG(p, CURSIG(p));
+		sleepreturn = 0;
+		continue;
+	    }
 	    if (nmp->nm_flag & NFSMNT_NQNFS) {
 		/*
 		 * If there are no outstanding requests (and therefore no
@@ -1114,10 +1123,8 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	     */
 	    if ((nmp->nm_flag & NFSMNT_DISMNT) == 0 &&
 		(nmp->nm_flag & (NFSMNT_WAITAUTH | NFSMNT_HASAUTH))) {
-		    error = tsleep((caddr_t)&nmp->nm_authstr, PSOCK | PCATCH,
-			"nqnfstimr", hz / 3);
-		    if (error == EINTR || error == ERESTART)
-			(void) dounmount(nmp->nm_mountp, MNT_FORCE, p);
+		    sleepreturn = tsleep((caddr_t)&nmp->nm_authstr,
+			PSOCK | PCATCH, "nqnfstimr", hz / 3);
 	    }
 	}
 
@@ -1194,7 +1201,7 @@ nqnfs_lease_updatetime(deltat)
 
 	if (nqnfsstarttime != 0)
 		nqnfsstarttime += deltat;
-	s = splsoftclock();
+	s = splsoftnet();
 	for (lp = nqtimerhead.cqh_first; lp != (void *)&nqtimerhead;
 	    lp = lp->lc_timer.cqe_next)
 		lp->lc_expiry += deltat;
