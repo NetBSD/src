@@ -25,9 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char *rcsid = "$Id: accountant.c,v 1.2 1993/05/03 03:06:33 cgd Exp $";
-#endif
+static char *rcsid = "$Id: accountant.c,v 1.3 1993/05/03 04:08:17 cgd Exp $";
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -52,10 +50,11 @@ int debug;
 #define dprintf		if (debug) printf
 #define dperror		if (debug) perror
 
-void usage(char *progname)
+void usage(void)
 {
-	printf("usage: %s [-d] [-f accounting log] [-F accounting device]\n",
-		progname);
+	fprintf(stderr, "usage: accountant [-V] [-d] [-s] [-f accounting log] [-F accounting device]\n");
+	fprintf(stderr, "                  [-m min_on pct] [-M max_off pct] [-t sleep time]\n");
+	exit(1);
 }
 
 void reinitfiles(int num)
@@ -113,8 +112,12 @@ main(argc, argv)
 	extern int optind;
 	FILE *pidf;
 
-	while ((ch = getopt(argc, argv, "df:F:")) != EOF) {
+	while ((ch = getopt(argc, argv, "Vdsf:F:m:M:t:?")) != EOF) {
 		switch ((char) ch) {
+		case 'V':	/* version */
+			fprintf(stderr, "version: %s\n", rcsid);
+			exit(0);
+			break;
 		case 'd':	/* debug it */
 			debug = 1;
 			break;
@@ -127,14 +130,29 @@ main(argc, argv)
 		case 'F':	/* set device */
 			acctdev = optarg;
 			break;
+		case 'm':	/* set min free */
+			min_on = atoi(optarg);
+			if (min_on < 0 || min_on > 100)
+				usage();
+			break;
+		case 'M':	/* set max free */
+			max_off = atoi(optarg);
+			if (max_off < 0 || max_off > 100)
+				usage();
+			break;
+		case 't':	/* set sleep time */
+			sleeptime = atoi(optarg);
+			if (sleeptime < 1)
+				usage();
+			break;
 		case '?':
 		default:
-			usage(argv[0]);
+			usage();
 		}
 	}
 
 	if (argc -= optind)
-		usage(argv[0]);
+		usage();
 
 	openlog("accountant", LOG_PERROR, LOG_DAEMON);
 
