@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.31 2002/07/31 00:20:52 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.32 2002/07/31 17:34:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -61,6 +61,7 @@
 #include <ddb/db_extern.h>
 
 #include <machine/bootconfig.h>
+#define	_ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -750,6 +751,8 @@ initarm(bootargs)
 		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
 #if NISADMA > 0
 		paddr_t istart, isize;
+		extern struct arm32_dma_range *footbridge_isa_dma_ranges;
+		extern int footbridge_isa_dma_nranges;
 #endif
 
 		if (start < physical_freestart)
@@ -762,8 +765,10 @@ initarm(bootargs)
 #endif
 
 #if NISADMA > 0
-		if (pmap_isa_dma_range_intersect(start, end - start,
-						 &istart, &isize)) {
+		if (arm32_dma_range_intersect(footbridge_isa_dma_ranges,
+					      footbridge_isa_dma_nranges,
+					      start, end - start,
+					      &istart, &isize)) {
 			/*
 			 * Place the pages that intersect with the
 			 * ISA DMA range onto the ISA DMA free list.

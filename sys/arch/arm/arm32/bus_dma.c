@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.14 2002/07/28 17:54:05 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15 2002/07/31 17:34:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
-int	_bus_dma_inrange(bus_dma_segment_t *, int, bus_addr_t);
+struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
+	    int, bus_addr_t);
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -571,16 +572,38 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	int error;
+	struct arm32_dma_range *dr;
+	int error, i;
+
 #ifdef DEBUG_DMA
-	printf("dmamem_alloc t=%p size=%lx align=%lx boundary=%lx segs=%p nsegs=%x rsegs=%p flags=%x\n",
-	    t, size, alignment, boundary, segs, nsegs, rsegs, flags);
-#endif	/* DEBUG_DMA */
-	error =  (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, trunc_page(physical_start), trunc_page(physical_end)));
+	printf("dmamem_alloc t=%p size=%lx align=%lx boundary=%lx "
+	    "segs=%p nsegs=%x rsegs=%p flags=%x\n", t, size, alignment,
+	    boundary, segs, nsegs, rsegs, flags);
+#endif
+
+	if ((dr = t->_ranges) != NULL) {
+		for (i = 0; i < t->_nranges; i++, dr++) {
+			if (dr->dr_len == 0) {
+				error = ENOMEM;
+				continue;
+			}
+			error = _bus_dmamem_alloc_range(t, size, alignment,
+			    boundary, segs, nsegs, rsegs, flags,
+			    trunc_page(dr->dr_sysbase),
+			    trunc_page(dr->dr_sysbase + dr->dr_len));
+			if (error == 0)
+				break;
+		}
+	} else {
+		error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+		    segs, nsegs, rsegs, flags, trunc_page(physical_start),
+		    trunc_page(physical_end));
+	}
+
 #ifdef DEBUG_DMA
 	printf("dmamem_alloc: =%d\n", error);
-#endif	/* DEBUG_DMA */
+#endif
+
 	return(error);
 }
 
@@ -749,6 +772,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
+	struct arm32_dma_range *dr;
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
@@ -777,9 +801,19 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/*
 		 * Make sure we're in an allowed DMA range.
 		 */
-		if (t->_ranges != NULL &&
-		    _bus_dma_inrange(t->_ranges, t->_nranges, curaddr) == 0)
-			return (EINVAL);
+		if (t->_ranges != NULL) {
+			/* XXX cache last result? */
+			dr = _bus_dma_inrange(t->_ranges, t->_nranges,
+			    curaddr);
+			if (dr == NULL)
+				return (EINVAL);
+			
+			/*
+			 * In a valid DMA range.  Translate the physical
+			 * memory address to an address in the DMA window.
+			 */
+			curaddr = (curaddr - dr->dr_sysbase) + dr->dr_busbase;
+		}
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -840,19 +874,20 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 /*
  * Check to see if the specified page is in an allowed DMA range.
  */
-int
-_bus_dma_inrange(bus_dma_segment_t *ranges, int nranges, bus_addr_t curaddr)
+struct arm32_dma_range *
+_bus_dma_inrange(struct arm32_dma_range *ranges, int nranges,
+    bus_addr_t curaddr)
 {
-	bus_dma_segment_t *ds;
+	struct arm32_dma_range *dr;
 	int i;
 
-	for (i = 0, ds = ranges; i < nranges; i++, ds++) {
-		if (curaddr >= ds->ds_addr &&
-		    round_page(curaddr) <= (ds->ds_addr + ds->ds_len))
-			return (1);
+	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
+		if (curaddr >= dr->dr_sysbase &&
+		    round_page(curaddr) <= (dr->dr_sysbase + dr->dr_len))
+			return (dr);
 	}
 
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -922,5 +957,45 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	*rsegs = curseg + 1;
 
+	return (0);
+}
+
+/*
+ * Check if a memory region intersects with a DMA range, and return the
+ * page-rounded intersection if it does.
+ */
+int
+arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
+    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep)
+{
+	struct arm32_dma_range *dr;
+	int i;
+
+	if (ranges == NULL)
+		return (0);
+
+	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
+		if (dr->dr_sysbase <= pa &&
+		    pa < (dr->dr_sysbase + dr->dr_len)) {
+			/*
+			 * Beginning of region intersects with this range.
+			 */
+			*pap = trunc_page(pa);
+			*sizep = round_page(min(pa + size,
+			    dr->dr_sysbase + dr->dr_len) - pa);
+			return (1);
+		}
+		if (pa < dr->dr_sysbase && dr->dr_sysbase < (pa + size)) {
+			/*
+			 * End of region intersects with this range.
+			 */
+			*pap = trunc_page(dr->dr_sysbase);
+			*sizep = round_page(min((pa + size) - dr->dr_sysbase,
+			    dr->dr_len));
+			return (1);
+		}
+	}
+
+	/* No intersection found. */
 	return (0);
 }
