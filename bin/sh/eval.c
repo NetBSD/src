@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.59 2002/05/15 16:33:35 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.60 2002/09/27 17:37:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.59 2002/05/15 16:33:35 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.60 2002/09/27 17:37:12 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,13 +514,11 @@ evalpipe(n)
 		prevfd = pip[0];
 		close(pip[1]);
 	}
-	INTON;
 	if (n->npipe.backgnd == 0) {
-		INTOFF;
 		exitstatus = waitforjob(jp);
 		TRACE(("evalpipe:  job done exit status %d\n", exitstatus));
-		INTON;
 	}
+	INTON;
 }
 
 
@@ -730,6 +728,7 @@ evalcommand(cmd, flags, backcmd)
 	    && (cmdentry.cmdtype != CMDBUILTIN
 		 || cmdentry.u.index == DOTCMD
 		 || cmdentry.u.index == EVALCMD))) {
+		INTOFF;
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
 		if (flags & EV_BACKCMD) {
@@ -739,6 +738,7 @@ evalcommand(cmd, flags, backcmd)
 		}
 		if (forkshell(jp, cmd, mode) != 0)
 			goto parent;	/* at end of routine */
+		INTON;
 		if (flags & EV_BACKCMD) {
 			FORCEINTON;
 			close(pip[0]);
@@ -874,14 +874,13 @@ cmddone:
 
 parent:	/* parent process gets here (if we forked) */
 	if (mode == 0) {	/* argument to fork */
-		INTOFF;
 		exitstatus = waitforjob(jp);
-		INTON;
 	} else if (mode == 2) {
 		backcmd->fd = pip[0];
 		close(pip[1]);
 		backcmd->jp = jp;
 	}
+	INTON;
 
 out:
 	if (lastarg)
