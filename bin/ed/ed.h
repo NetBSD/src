@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ed.h	5.5 (Berkeley) 3/28/93
- *	$Id: ed.h,v 1.14 1993/08/01 18:59:50 mycroft Exp $
+ *	$Id: ed.h,v 1.15 1993/08/30 02:20:26 alm Exp $
  */
 
 #include <unistd.h>
@@ -50,7 +50,7 @@
 #define BITS(type)  (BITSPERBYTE * (int)sizeof(type))
 #define CHARBITS    BITS(char)
 #define INTBITS     BITS(int)
-#define INTHIBIT    (1 << (INTBITS - 1))
+#define INTHIBIT    (unsigned) (1 << (INTBITS - 1))
 
 #define ERR		(-2)
 #define EMOD		(-3)

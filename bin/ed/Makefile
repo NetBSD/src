@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.14 1993/08/02 17:18:41 mycroft Exp $
+#	$Id: Makefile,v 1.15 1993/08/30 02:20:18 alm Exp $
 
 PROG=	ed
-CFLAGS+=-DVI_BANG -DDES -DGNU_REGEX
+CFLAGS+=-DVI_BANG -DDES
 SRCS=	ed.c re.c buf.c cbc.c
 LDADD=	-lgnuregex
 
