@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.25 2003/08/07 11:25:24 agc Exp $	*/
+/*	$NetBSD: common.c,v 1.26 2003/10/16 06:30:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.25 2003/08/07 11:25:24 agc Exp $");
+__RCSID("$NetBSD: common.c,v 1.26 2003/10/16 06:30:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ int
 getq(struct queue **namelist[])
 {
 	struct dirent *d;
-	struct queue *q, **queue;
+	struct queue *q, **queue, **nqueue;
 	struct stat stbuf;
 	DIR *dirp;
 	u_int nitems, arraysz;
@@ -263,11 +263,12 @@ getq(struct queue **namelist[])
 		 * realloc the maximum size.
 		 */
 		if (++nitems > arraysz) {
-			arraysz *= 2;
-			queue = (struct queue **)realloc(queue,
-				arraysz * sizeof(struct queue *));
-			if (queue == NULL)
+			nqueue = (struct queue **)realloc(queue,
+				arraysz * 2 * sizeof(struct queue *));
+			if (nqueue == NULL)
 				goto errdone;
+			queue = nqueue;
+			arraysz *= 2;
 		}
 		queue[nitems-1] = q;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $	*/
+/*	$NetBSD: buf.c,v 1.11 2003/10/16 06:31:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.10 2003/01/24 21:55:32 fvdl Exp $");
+__RCSID("$NetBSD: buf.c,v 1.11 2003/10/16 06:31:38 itojun Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -180,6 +180,7 @@ getblk(int fd, struct fs *fs, daddr_t blkno, int size)
 {
 	static int buftailinitted;
 	struct buf *bp;
+	void *n;
 
 	assert (fs != NULL);
 	if (debug & DEBUG_BUF_GETBLK)
@@ -212,9 +213,11 @@ getblk(int fd, struct fs *fs, daddr_t blkno, int size)
 	}
 	bp->b_bcount = size;
 	if (bp->b_data == NULL || bp->b_bcount > bp->b_bufsize) {
-		bp->b_bufsize = size;
-		if ((bp->b_data = realloc(bp->b_data, bp->b_bufsize)) == NULL)
+		n = realloc(bp->b_data, size);
+		if (n == NULL)
 			err(1, "getblk: realloc b_data %ld", bp->b_bcount);
+		bp->b_data = n;
+		bp->b_bufsize = size;
 	}
 
 	return (bp);

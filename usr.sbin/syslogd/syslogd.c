@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.61 2003/09/19 08:24:48 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.62 2003/10/16 06:22:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.61 2003/09/19 08:24:48 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.62 2003/10/16 06:22:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -568,19 +568,23 @@ usage(void)
 void
 logpath_add(char ***lp, int *szp, int *maxszp, char *new)
 {
+	char **nlp;
+	int newmaxsz;
 
 	dprintf("Adding `%s' to the %p logpath list\n", new, *lp);
 	if (*szp == *maxszp) {
 		if (*maxszp == 0) {
-			*maxszp = 4;	/* start of with enough for now */
+			newmaxsz = 4;	/* start of with enough for now */
 			*lp = NULL;
 		} else
-			*maxszp *= 2;
-		*lp = realloc(*lp, sizeof(char *) * (*maxszp + 1));
-		if (*lp == NULL) {
+			newmaxsz = *maxszp * 2;
+		nlp = realloc(*lp, sizeof(char *) * (newmaxsz + 1));
+		if (nlp == NULL) {
 			logerror("Couldn't allocate line buffer");
 			die(0);
 		}
+		*lp = nlp;
+		*maxszp = newmaxsz;
 	}
 	if (((*lp)[(*szp)++] = strdup(new)) == NULL) {
 		logerror("Couldn't allocate logpath");
