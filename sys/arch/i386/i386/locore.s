@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.162 1997/01/29 01:07:38 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.163 1997/03/12 19:49:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -416,7 +416,9 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Clear the BSS. */
 	movl	$RELOC(_edata),%edi
-	movl	$(((_end-_edata)+3)>>2),%ecx
+	movl	$(RELOC(_end)+3),%ecx
+	subl	%edi,%ecx
+	shrl	$2,%ecx
 	xorl	%eax,%eax
 	cld
 	rep
