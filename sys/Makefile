@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.52 2003/03/15 22:32:07 he Exp $
+#	$NetBSD: Makefile,v 1.53 2003/07/25 23:09:26 jonathan Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net netatalk netccitt netinet netinet6 netisdn netiso netkey \
-	netnatm netns netsmb nfs sys ufs uvm
+	netnatm netns netsmb nfs opencrypto sys ufs uvm
 
 .if (${MACHINE} != "evbppc")
 SUBDIR+=lkm
