@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.49 1998/06/30 08:27:39 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.50 1998/07/29 11:39:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -130,7 +130,6 @@ wssattach(sc)
 				       IPL_AUDIO, ad1848_intr, &sc->sc_ad1848);
 
 	ad1848_attach(&sc->sc_ad1848);
-	printf(": %s", sc->sc_ad1848.chip_name);
     
 #if 0 /* loses on CS423X chips */
 	version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) 
