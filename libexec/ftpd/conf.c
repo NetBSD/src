@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1998/04/01 14:31:59 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1998/06/03 09:21:46 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.11 1998/04/01 14:31:59 kleink Exp $");
+__RCSID("$NetBSD: conf.c,v 1.12 1998/06/03 09:21:46 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -322,7 +322,7 @@ show_chdir_messages(code)
 
 		/* Check if this directory has already been visited */
 	if (getcwd(cwd, sizeof(cwd) - 1) == NULL) {
-		syslog(LOG_WARNING, "can't malloc");
+		syslog(LOG_WARNING, "can't getcwd");
 		return;
 	}
 	if (sl_find(slist, cwd) != NULL)
