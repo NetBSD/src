@@ -1,4 +1,4 @@
-.\"	$NetBSD: moduli.5,v 1.8 2003/07/04 21:56:48 wiz Exp $
+.\"	$NetBSD: moduli.5,v 1.9 2005/02/07 12:26:56 simonb Exp $
 .\" $OpenBSD: moduli.5,v 1.7 2003/03/06 20:48:35 jmc Exp $
 .\"
 .\" Copyright 1997, 2000 William Allen Simpson <wsimpson@greendragon.com>
@@ -31,7 +31,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd July 28, 1997
+.Dd February 7, 2005
 .Dt MODULI 5
 .Os
 .Sh NAME
@@ -140,11 +140,16 @@ Specifies the best generator for a Diffie-Hellman exchange.
 .Fa Modulus : hex string .
 The prime modulus.
 .Pp
-The file is searched for moduli that meet the appropriate
+The file should be searched for moduli that meet the appropriate
 Time, Size and Generator criteria.
 When more than one meet the criteria,
 the selection should be weighted toward newer moduli,
 without completely disqualifying older moduli.
+.Pp
+Note that
+.Xr sshd 8
+uses only the Size criteria and then selects a modulus at random
+if more than one meet the Size criteria.
 .Sh FILES
 .Bl -tag -width /etc/moduli -compact
 .It Pa /etc/moduli
