@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.3 1997/04/27 21:10:06 thorpej Exp $	*/
+/*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -303,17 +303,16 @@ Lstop:
 
 ASENTRY_NOPROFILE(nmi)
 	movw	#18,BOOTTYPE		| mark as system switch
-	jsr	_C_LABEL(kbdnmi)	| clear the interrupt
-	jra	begin			| start over
+	jsr	_C_LABEL(kbdnmi)	| clear the interrupt, and
+					|   reset the system
+	stop	#0			| SCREEEECH!
 
 ENTRY_NOPROFILE(call_req_reboot)
 	jmp	0x1A4			| call ROM reboot function
 	rts				| XXX: just in case?
 
-#ifdef ROMPRF
 ENTRY_NOPROFILE(romout)
 	movl	sp@(4),d0		| line number
 	movl	sp@(8),a0		| string
 	jsr	0x150			| do it
 	rts
-#endif
