@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.14 1993/08/14 11:44:45 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.15 1993/08/14 11:47:51 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -857,7 +857,7 @@ kvm_procread(p, addr, buf, len)
                         if (read(mem, (char *)&pte, sizeof pte) == sizeof pte) {
                                 if (pte.pg_v) {
                                         memaddr = (long)ctob(pte.pg_pfnum) +
-							(addr % (1 << PGSHIFT));
+							(addr % (1 << CLSHIFT));
                                 }
                         } else {
                                 seterr("kvm_procread: read");
@@ -916,6 +916,7 @@ kvm_procreadstr(p, addr, buf, len)
 	char	a;
 
 	done = 0;
+	copy[0] = '\0';
 	while (len) {
 		little = kvm_procread(p, addr+done, copy, MIN(len, sizeof copy));
 		if (little<1)
@@ -924,8 +925,8 @@ kvm_procreadstr(p, addr, buf, len)
 		while (little--) {
 			len--;
 			if( (*buf++ = *pb++) == '\0' )
-			return done;
-		done++;
+				return done;
+			done++;
 		}
 	}
 	return done;
@@ -948,6 +949,7 @@ kvm_getargs(p, up)
 		sizeof(arginfo))
 		goto bad;
 
+	cmdbuf[0] = '\0';
 	cp = cmdbuf;
 	acp = arginfo.ps_argvstr;
 	left = ARG_MAX + 1;
