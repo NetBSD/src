@@ -1,4 +1,4 @@
-/* $NetBSD: pci_axppci_33.c,v 1.18 1998/04/16 19:50:55 thorpej Exp $ */
+/* $NetBSD: pci_axppci_33.c,v 1.19 1998/04/18 01:12:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.18 1998/04/16 19:50:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_axppci_33.c,v 1.19 1998/04/18 01:12:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,6 +86,9 @@ pci_axppci_33_pickintr(lcp)
 	pc->pc_intr_string = dec_axppci_33_intr_string;
 	pc->pc_intr_establish = dec_axppci_33_intr_establish;
 	pc->pc_intr_disestablish = dec_axppci_33_intr_disestablish;
+
+	/* Not supoprted on AXPpci33. */
+	pc->pc_pciide_compat_intr_establish = NULL;
 
 #if NSIO
 	sio_intr_setup(pc, iot);
