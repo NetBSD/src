@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.36 2003/01/23 15:05:46 gehenna Exp $	*/
+/*	$NetBSD: sem.c,v 1.37 2003/01/27 05:00:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@ const char *s_qmark;
 const char *s_none;
 
 static struct hashtab *cfhashtab;	/* for config lookup */
-static struct hashtab *devitab;		/* etc */
+struct hashtab *devitab;		/* etc */
 
 static struct attr errattr;
 static struct devbase errdev;
@@ -104,7 +104,6 @@ initsem(void)
 	cfhashtab = ht_new();
 	TAILQ_INIT(&allcf);
 
-	devitab = ht_new();
 	TAILQ_INIT(&alldevi);
 	errdev.d_name = "<internal>";
 
