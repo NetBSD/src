@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.1,v 1.7.2.1 1999/06/23 14:15:44 perry Exp $
+.\"	$NetBSD: man.1,v 1.7.2.2 2000/04/30 11:28:49 he Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,53 +39,67 @@
 .Sh NAME
 .Nm man
 .Nd display the on-line manual pages
+.Pq aka Dq Em man pages
 .Sh SYNOPSIS
-.Nm
-.Op Fl achw
+.Nm ""
+.Oo Fl acw Ns \&| Ns Fl h Oc
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
 .Op Ar section
 .Ar name Ar ...
+.Nm ""
+.Op Fl k
+.Op Fl C Ar file
+.Op Fl M Ar path
+.Op Fl m Ar path
+.Ar keyword Ar ...
 .Sh DESCRIPTION
 The
 .Nm
 utility
 displays the
 .Bx
-manual pages entitled
+man pages entitled
 .Ar name .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl a
-Display all of the manual pages for a specified
+Display all of the man pages for a specified
 .Ar section
 and
 .Ar name
 combination.
-(Normally, only the first manual page found is displayed.)
+(Normally, only the first man page found is displayed.)
 .It Fl C
 Use the specified 
 .Ar file
 instead of the default configuration file.
-This permits users to configure their own manual environment.
+This permits users to configure their own man environment.
 See
 .Xr man.conf 5
 for a description of the contents of this file.
 .It Fl c
-Copy the manual page to the standard output instead of using
+Copy the man page to the standard output instead of using
 .Xr more 1
 to paginate it.
 This is done by default if the standard output is not a terminal device.
 .It Fl h
 Display only the
 .Dq Tn SYNOPSIS
-lines of the requested manual pages.
+lines of the requested man pages,
+in the same manner as
+.Xr whatis 1 .
+.It Fl k
+Display the header lines for any man pages matching
+.Ar keyword Ns Pq s ,
+in the same manner as
+.Xr apropos 1 .
 .It Fl M
 Override the list of standard directories which
 .Nm
-searches for manual pages.
+searches for man pages.
 The supplied
 .Ar path
 must be a colon (``:'') separated list of directories.
@@ -98,7 +112,7 @@ configuration file.
 .It Fl m
 Augment the list of standard directories which
 .Nm
-searches for manual pages.
+searches for man pages.
 The supplied
 .Ar path
 must be a colon (``:'') separated list of directories.
@@ -113,7 +127,7 @@ is specified by the ``_subdir'' line in the
 .Nm
 configuration file.
 .It Fl w
-List the pathnames of the manual pages which
+List the pathnames of the man pages which
 .Nm
 would display for the specified
 .Ar section
@@ -134,14 +148,17 @@ configuration file (see
 specifies the possible
 .Ar section
 values that are currently available.
-If only a single argument is specified or if the first argument is
+Except when used with the
+.Ql Fl k
+option,
+if only a single argument is specified or if the first argument is
 not a valid section,
 .Nm
-assumes that the argument is the name of a manual page to be displayed.
+assumes that the argument is the name of a man page to be displayed.
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
-As some manual pages are intended only for specific architectures,
+As some man pages are intended only for specific architectures,
 .Nm
 searches any subdirectories,
 with the same name as the current architecture,
@@ -172,9 +189,13 @@ environment variable is null or not set, the standard pagination program
 will be used.
 .El
 .Sh FILES
-.Bl -tag -width /etc/man.conf -compact
+.Bl -hang -width /etc/man.conf -compact
 .It Pa /etc/man.conf
 default man configuration file.
+.It Pa /usr/{share,X11R6,X11,pkg,local}/man/whatis.db
+standard whatis/apropos database search path,
+set in
+.Pa /etc/man.conf Ns .
 .El
 .Sh SEE ALSO
 .Xr apropos 1 ,
@@ -183,12 +204,13 @@ default man configuration file.
 .Xr man.conf 5 ,
 .Xr mdoc 7 ,
 .Xr mdoc.samples 7
+.Sh STANDARDS
+.Nm ""
+conforms to
+.St -xcu5 .
+.\"and is expected to conform to
+.\".St -p1003.2-?? .
 .Sh BUGS
-The on-line manual pages are, by necessity, forgiving toward stupid
-display devices, causing a few manual pages to be not as nicely formatted
-as their typeset counterparts.
-.Sh HISTORY
-A
-.Nm
-command appeared in
-.At v6 .
+The on-line man pages are, by necessity, forgiving toward stupid
+display devices, causing a few man pages to be not as nicely formatted
+their typeset counterparts.
