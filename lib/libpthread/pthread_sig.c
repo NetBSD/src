@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.23 2003/10/16 13:38:28 yamt Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.24 2003/11/09 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.23 2003/10/16 13:38:28 yamt Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.24 2003/11/09 18:56:48 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -71,6 +71,9 @@ extern struct pthread_queue_t pthread__runqueue;
 
 extern pthread_spin_t pthread__allqueue_lock;
 extern struct pthread_queue_t pthread__allqueue;
+
+extern pthread_spin_t pthread__suspqueue_lock;
+extern struct pthread_queue_t pthread__suspqueue;
 
 static pthread_spin_t	pt_sigacts_lock;
 static struct sigaction pt_sigacts[_NSIG];
@@ -792,6 +795,11 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	 */
 	pthread_spinlock(self, &target->pt_statelock);
 	switch (target->pt_state) {
+	case PT_STATE_SUSPENDED:
+		pthread_spinlock(self, &pthread__runqueue_lock);
+		PTQ_REMOVE(&pthread__suspqueue, target, pt_runq);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
+		break;
 	case PT_STATE_RUNNABLE:
 		pthread_spinlock(self, &pthread__runqueue_lock);
 		PTQ_REMOVE(&pthread__runqueue, target, pt_runq);
