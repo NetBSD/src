@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.123 2003/03/04 05:50:22 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.124 2003/03/05 19:49:12 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3779,5 +3779,18 @@ sys/net/if_pppoe.c				1.40
 	(struct pppoe_softc *). Although we do not generate such tags, 
 	other hosts could and some actually do.
 	[aymeric, ticket #1187]
+
+	[Moved RC2 tag for this file]
+
+lib/libz/gzio.c					1.14
+
+	Fix for potential buffer overflow in snprintf() (from OpenBSD)
+	[groo, ticket #1194]
+
+lib/libz/gzio.c					1.15
+
+	Remove the HAS_* ifdefs which select [v]s{,n}printf.  Always choose 
+	the n version.
+	[groo, ticket #1193]
 
 	[Moved RC2 tag for this file]
