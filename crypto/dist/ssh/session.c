@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.13 2001/05/15 15:26:09 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.14 2001/06/14 02:42:31 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -409,9 +409,9 @@ do_authenticated1(Authctxt *authctxt)
 		 */
 		case SSH_CMSG_HAVE_KERBEROS_TGT:
 		    {
+#ifdef KRB5
 			extern int ssh_krb_auth;
 
-#ifdef KRB5
 			if (ssh_krb_auth == 5) {
 				extern krb5_principal tkt_client;
 				extern char *ssh_krb_user;
@@ -438,8 +438,8 @@ do_authenticated1(Authctxt *authctxt)
 
 				xfree(tgt.data);
 			}
-#endif /* KRB5 */
 			else
+#endif /* KRB5 */
 				log("Got TGT but didn't use Kerberos\n");
 			break;
 		    }
