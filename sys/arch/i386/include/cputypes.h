@@ -1,5 +1,4 @@
-
-/*	$NetBSD: cputypes.h,v 1.9 1997/10/17 18:05:44 bouyer Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -71,6 +70,6 @@
  */
 
 #define CPU_MAXMODEL	15	/* Models within family range 0-15 */
-#define CPU_DEFMODEL	16	/* Value we use for unknown model -> default  */
-#define CPU_MINFAMILY	 4	/* Lowest that can be returned by cpuid (486) */
-#define CPU_MAXFAMILY	 6	/* Highest we know of (686) */
+#define CPU_DEFMODEL	16	/* Value for unknown model -> default  */
+#define CPU_MINFAMILY	 4	/* Lowest that cpuid can return (486) */
+#define CPU_MAXFAMILY	 6	/* Highest we know (686) */
