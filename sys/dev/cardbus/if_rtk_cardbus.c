@@ -1,4 +1,5 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.1 2000/05/10 00:24:15 haya Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.2 2000/05/15 01:55:13 thorpej Exp $	*/
+
 /*
  * Copyright (c) 2000 Masanori Kanaoka
  * All rights reserved.
@@ -31,7 +32,7 @@
  *	Cardbus specific routines for RealTek 8139 ethernet adapter.
  *	Tested for 
  *		- elecom-Laneed	LD-10/100CBA (Accton MPX5030)
- *		- MELCO		LPC3-TX-CB   (RealTek 8138)
+ *		- MELCO		LPC3-TX-CB   (RealTek 8139)
  */
 
 #include "opt_inet.h"
@@ -98,21 +99,22 @@
 /*
  * Various supported device vendors/types and their names.
  */
-static struct rl_type rl_cardbus_devs[] = {
+static const struct rtk_type rtk_cardbus_devs[] = {
 	{ CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
-		"Accton MPX 5030/5038 10/100BaseTX" },
+		"Accton MPX 5030/5038 10/100BaseTX",
+		RL_8139 },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
-		"RealTek 8138 10/100BaseTX" },
-	{ 0, 0, NULL }
+		"RealTek 8138 10/100BaseTX", RL_8139 },
+	{ 0, 0, NULL, 0 }
 };
 
-const struct rl_type *rl_cardbus_lookup
+const struct rtk_type *rtk_cardbus_lookup
 	__P((const struct cardbus_attach_args *));
-static int rl_cardbus_match __P((struct device *, struct cfdata *, void *));
-static void rl_cardbus_attach __P((struct device *, struct device *, void *));
+static int rtk_cardbus_match __P((struct device *, struct cfdata *, void *));
+static void rtk_cardbus_attach __P((struct device *, struct device *, void *));
 
-struct rl_cardbus_softc {
-	struct rl_softc sc_rl;		/* real rl softc */ 
+struct rtk_cardbus_softc {
+	struct rtk_softc sc_rtk;	/* real rtk softc */ 
 
 	/* CardBus-specific goo. */
 	void *sc_ih;
@@ -127,18 +129,18 @@ struct rl_cardbus_softc {
 };
 
 struct cfattach rtk_cardbus_ca = {
-	sizeof(struct rl_cardbus_softc), rl_cardbus_match, rl_cardbus_attach,
+	sizeof(struct rtk_cardbus_softc), rtk_cardbus_match, rtk_cardbus_attach,
 };
 
-const struct rl_type *
-rl_cardbus_lookup(ca)
+const struct rtk_type *
+rtk_cardbus_lookup(ca)
 	const struct cardbus_attach_args *ca;
 {
-	struct rl_type		*t;
+	const struct rtk_type *t;
 
-	for (t = rl_cardbus_devs; t->rl_name != NULL; t++){ 	
-		if (CARDBUS_VENDOR(ca->ca_id) == t->rl_vid &&
-		    CARDBUS_PRODUCT(ca->ca_id)  == t->rl_did) {
+	for (t = rtk_cardbus_devs; t->rtk_name != NULL; t++){ 	
+		if (CARDBUS_VENDOR(ca->ca_id) == t->rtk_vid &&
+		    CARDBUS_PRODUCT(ca->ca_id) == t->rtk_did) {
 			return (t);
 		}
 	}
@@ -146,49 +148,49 @@ rl_cardbus_lookup(ca)
 }
 
 int
-rl_cardbus_match(parent, match, aux)
+rtk_cardbus_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (rl_cardbus_lookup(ca) != NULL)
+	if (rtk_cardbus_lookup(ca) != NULL)
 		return (1);
+
 	return (0);
 }
 
 
 void
-rl_cardbus_attach(parent, self, aux)
+rtk_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	int s, pmreg;
+	struct rtk_cardbus_softc *csc = (struct rtk_cardbus_softc *)self;
+	struct rtk_softc *sc = &csc->sc_rtk;
 	pcireg_t command;
-	struct rl_cardbus_softc *csc = (struct rl_cardbus_softc *)self;
-	struct rl_softc *sc = &csc->sc_rl;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	const struct rl_type *t;
+	const struct rtk_type *t;
 	bus_addr_t adr;
 	pcireg_t reg;
+	int pmreg;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
 
-	t = rl_cardbus_lookup(ca); 
+	t = rtk_cardbus_lookup(ca); 
 	if (t == NULL) { 
 		printf("\n"); 
-		panic("rl_cardbus_attach: impossible");
+		panic("rtk_cardbus_attach: impossible");
 	 } 
-	printf(": %s\n", t->rl_name); 
+	printf(": %s\n", t->rtk_name); 
 
-	s = splimp();
 	/*
 	 * Handle power management nonsense.
 	 */
@@ -228,7 +230,7 @@ rl_cardbus_attach(parent, self, aux)
 	 */
 #ifdef RL_USEIOSPACE
 	if (Cardbus_mapreg_map(ct, RL_PCI_LOIO, CARDBUS_MAPREG_TYPE_IO, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -241,7 +243,7 @@ rl_cardbus_attach(parent, self, aux)
 	}
 #else
 	if (Cardbus_mapreg_map(ct, RL_PCI_LOMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, &adr, &csc->sc_mapsize) == 0) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &csc->sc_mapsize) == 0) {
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -255,7 +257,7 @@ rl_cardbus_attach(parent, self, aux)
 #endif
 	else {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
-		goto fail;
+		return;
 	}
 	/* Make sure the right access type is on the CardBus bridge. */
 	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
@@ -284,32 +286,19 @@ rl_cardbus_attach(parent, self, aux)
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BHLC_REG, reg);
 	}
 
-	if (t->rl_did == CARDBUS_PRODUCT_ACCTON_MPX5030 ||
-		t->rl_did == CARDBUS_PRODUCT_REALTEK_RT8138){
-		sc->rl_type = RL_8139;
-
-	} else {
-		printf("%s: unknown device ID: 0x%x\n",
-		    sc->sc_dev.dv_xname, t->rl_did);
-		goto fail;
-	}
+	sc->rtk_type = t->rtk_type;
 
 	/* Allocate interrupt */
 	printf("%s: interrupting at %d\n",
 	    sc->sc_dev.dv_xname, csc->sc_intrline);
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET, 
-	    rl_intr, sc);
+	    rtk_intr, sc);
 	if (csc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt at %d\n",
 		    sc->sc_dev.dv_xname, csc->sc_intrline);
 		printf("\n");
-		goto fail;
+		return;
 	}
 
-	rl_attach(sc);
-
-fail:
-	splx(s);
-	return;
+	rtk_attach(sc);
 }
-
