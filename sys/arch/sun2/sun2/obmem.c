@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.2 2001/04/10 12:37:49 fredette Exp $	*/
+/*	$NetBSD: obmem.c,v 1.3 2001/06/14 15:57:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ static	int _obmem_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
 
-static struct sun2_bus_space_tag obmem_space_tag = {
+static struct sun68k_bus_space_tag obmem_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
 	_obmem_bus_map,			/* bus_space_map */ 
@@ -75,7 +75,9 @@ static struct sun2_bus_space_tag obmem_space_tag = {
 	NULL,				/* bus_space_subregion */
 	NULL,				/* bus_space_barrier */ 
 	obmem_bus_mmap,			/* bus_space_mmap */ 
-	NULL				/* bus_intr_establish */
+	NULL,				/* bus_intr_establish */
+	NULL,				/* bus_space_peek_N */
+	NULL				/* bus_space_poke_N */
 }; 
 
 static int
@@ -122,7 +124,7 @@ obmem_attach(parent, self, aux)
 	/*
 	 * Prepare the skeleton attach arguments for our devices.
 	 * The values we give in the locators are indications to
-	 * sun2_bus_search about which locators must and must not
+	 * sun68k_bus_search about which locators must and must not
 	 * be defined.
 	 */
 	sub_ca = *ca;
@@ -133,12 +135,12 @@ obmem_attach(parent, self, aux)
 	/* Find all `early' obmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		sub_ca.ca_name = *cpp;
-		(void)config_search(sun2_bus_search, self, &sub_ca);
+		(void)config_search(sun68k_bus_search, self, &sub_ca);
 	}
 
 	/* Find all other obmem devices */
 	sub_ca.ca_name = NULL;
-	(void)config_search(sun2_bus_search, self, &sub_ca);
+	(void)config_search(sun68k_bus_search, self, &sub_ca);
 }
 
 int
