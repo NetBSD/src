@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1994/10/26 08:24:33 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1994/12/05 19:27:20 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,6 +89,7 @@
 #define	SINCR	1		/* increment of stack/NBPG */
 
 #define	UPAGES	2		/* pages of u-area */
+#define USPACE (UPAGES * NBPG)
 
 /*
  * Constants related to network buffer management.
