@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.108 2003/07/18 08:30:07 lukem Exp $
+#	$NetBSD: build.sh,v 1.109 2003/07/20 09:26:49 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -310,6 +310,12 @@ getmakevar()
 	fi
 }
 
+setmakeenv()
+{
+	eval "$1='$2'; export $1"
+	makeenv="${makeenv} $1"
+}
+
 resolvepath()
 {
 	case "${OPTARG}" in
@@ -427,9 +433,7 @@ parseoptions()
 
 		-D)
 			eval ${optargcmd}; resolvepath
-			DESTDIR="${OPTARG}"
-			export DESTDIR
-			makeenv="${makeenv} DESTDIR"
+			setmakeenv DESTDIR "${OPTARG}"
 			;;
 
 		-d)
@@ -455,10 +459,8 @@ parseoptions()
 
 		-M)
 			eval ${optargcmd}; resolvepath
-			MAKEOBJDIRPREFIX="${OPTARG}"
-			export MAKEOBJDIRPREFIX
 			makeobjdir="${OPTARG}"
-			makeenv="${makeenv} MAKEOBJDIRPREFIX"
+			setmakeenv MAKEOBJDIRPREFIX "${OPTARG}"
 			;;
 
 			# -m overrides MACHINE_ARCH unless "-a" is specified
@@ -474,10 +476,8 @@ parseoptions()
 
 		-O)
 			eval ${optargcmd}; resolvepath
-			MAKEOBJDIR="\${.CURDIR:C,^$TOP,$OPTARG,}"
-			export MAKEOBJDIR
 			makeobjdir="${OPTARG}"
-			makeenv="${makeenv} MAKEOBJDIR"
+			setmakeenv MAKEOBJDIR "\${.CURDIR:C,^$TOP,$OPTARG,}"
 			;;
 
 		-o)
@@ -486,9 +486,7 @@ parseoptions()
 
 		-R)
 			eval ${optargcmd}; resolvepath
-			RELEASEDIR="${OPTARG}"
-			export RELEASEDIR
-			makeenv="${makeenv} RELEASEDIR"
+			setmakeenv RELEASEDIR "${OPTARG}"
 			;;
 
 		-r)
@@ -507,15 +505,11 @@ parseoptions()
 			;;
 
 		-U)
-			MKUNPRIVED=yes
-			export MKUNPRIVED
-			makeenv="${makeenv} MKUNPRIVED"
+			setmakeenv MKUNPRIVED yes
 			;;
 
 		-u)
-			MKUPDATE=yes
-			export MKUPDATE
-			makeenv="${makeenv} MKUPDATE"
+			setmakeenv MKUPDATE yes
 			;;
 
 		-V)
@@ -523,10 +517,7 @@ parseoptions()
 			case "${OPTARG}" in
 		    # XXX: consider restricting which variables can be changed?
 			[a-zA-Z_][a-zA-Z_0-9]*=*)
-				var=${OPTARG%%=*}
-				value=${OPTARG#*=}
-				eval "${var}=\"${value}\"; export ${var}"
-				makeenv="${makeenv} ${var}"
+				setmakeenv "${OPTARG%%=*}" "${OPTARG#*=}"
 				;;
 			*)
 				usage "-V argument must be of the form 'var=[value]'"
@@ -601,6 +592,7 @@ parseoptions()
 
 	# Set up default make(1) environment.
 	#
+	setmakeenv LC_ALL C
 	makeenv="${makeenv} TOOLDIR MACHINE MACHINE_ARCH MAKEFLAGS"
 	[ -z "${BUILDID}" ] || makeenv="${makeenv} BUILDID"
 	MAKEFLAGS="-m ${TOP}/share/mk ${MAKEFLAGS} MKOBJDIRS=${MKOBJDIRS-yes}"
@@ -792,7 +784,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.108 2003/07/18 08:30:07 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.109 2003/07/20 09:26:49 lukem Exp $
 #
 
 EOF
