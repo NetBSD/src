@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.41 1994/04/08 17:16:39 mycroft Exp $
+ *	$Id: if_ed.c,v 1.42 1994/04/14 03:54:07 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -395,12 +395,16 @@ ed_probe_WD80x3(sc, cf, ia)
 	 */
 	sc->ed_cr_rd2 = ED_CR_RD2;
 	if (sc->is790) {
+		u_char x;
 		sc->ed_cr_rd2 = 0;
 		/* Assemble together the encoded interrupt number. */
-		outb(ia->ia_iobase + 0x04, inb(ia->ia_iobase + 0x04) | 0x80);
-		iptr = ((inb(ia->ia_iobase + 0x0d) & 0x0c) >> 2) |
-		    ((inb(ia->ia_iobase + 0x0d) & 0x40) >> 4);
-		outb(ia->ia_iobase + 0x04, inb(ia->ia_iobase + 0x04) & ~0x80);
+		outb(ia->ia_iobase + ED_WD790_HWR,
+		    inb(ia->ia_iobase + ED_WD790_HWR) | ED_WD790_HWR_SWH);
+		x = inb(ia->ia_iobase + ED_WD790_GCR);
+		iptr = ((x & ED_WD790_GCR_IR2) >> 4) |
+		    ((x & (ED_WD790_GCR_IR1|ED_WD790_GCR_IR0)) >> 2);
+		outb(ia->ia_iobase + ED_WD790_HWR,
+		    inb(ia->ia_iobase + ED_WD790_HWR) & ~ED_WD790_HWR_SWH);
 		/*
 		 * Translate it using translation table, and check for
 		 * correctness.
@@ -412,7 +416,8 @@ ed_probe_WD80x3(sc, cf, ia)
 			return 0;
 		}
 		/* Enable the interrupt. */
-		outb(ia->ia_iobase + 0x06, inb(ia->ia_iobase + 0x06) | 0x01);
+		outb(ia->ia_iobase + ED_WD790_ICR,
+		    inb(ia->ia_iobase + ED_WD790_ICR) | ED_WD790_ICR_EIL);
 	} else if (sc->type & ED_WD_SOFTCONFIG) {
 		/* Assemble together the encoded interrupt number. */
 		iptr = (inb(ia->ia_iobase + ED_WD_ICR) & ED_WD_ICR_IR2) |
@@ -509,6 +514,7 @@ ed_probe_WD80x3(sc, cf, ia)
 				    inb(sc->asic_addr + ED_WD_LAAR);
 				outb(sc->asic_addr + ED_WD_LAAR,
 				    ED_WD_LAAR_M16EN);
+				(void) inb(0x84);
 			} else {
 				sc->wd_laar_proto =
 				    ED_WD_LAAR_L16EN | ED_WD_LAAR_M16EN |
@@ -547,6 +553,7 @@ ed_probe_WD80x3(sc, cf, ia)
 					sc->wd_laar_proto &= ~ED_WD_LAAR_M16EN;
 					outb(sc->asic_addr + ED_WD_LAAR,
 					    sc->wd_laar_proto);
+					(void) inb(0x84);
 				}
 				return 0;
 			}
@@ -562,6 +569,7 @@ ed_probe_WD80x3(sc, cf, ia)
 		if (isa16bit) {
 			sc->wd_laar_proto &= ~ED_WD_LAAR_M16EN;
 			outb(sc->asic_addr + ED_WD_LAAR, sc->wd_laar_proto);
+			(void) inb(0x84);
 		}
 	}
 
@@ -1375,6 +1383,14 @@ outloop:
 			case ED_VENDOR_WD_SMC:
 				outb(sc->asic_addr + ED_WD_LAAR,
 				    (sc->wd_laar_proto | ED_WD_LAAR_M16EN));
+				(void) inb(0x84);
+				if (sc->is790) {
+					outb(sc->asic_addr + ED_WD_MSR,
+					    ED_WD_MSR_MENB);
+					(void) inb(0x84);
+				}
+				(void) inb(0x84);
+				break;
 			}
 		}
 
@@ -1394,6 +1410,11 @@ outloop:
 			case ED_VENDOR_WD_SMC:
 				outb(sc->asic_addr + ED_WD_LAAR,
 				    sc->wd_laar_proto);
+				(void) inb(0x84);
+				if (sc->is790) {
+					outb(sc->asic_addr + ED_WD_MSR, 0x00);
+					(void) inb(0x84);
+				}
 				break;
 			}
 		}
@@ -1705,6 +1726,12 @@ edintr(sc)
 					sc->wd_laar_proto |= ED_WD_LAAR_M16EN;
 					outb(sc->asic_addr + ED_WD_LAAR,
 					    sc->wd_laar_proto);
+					(void) inb(0x84);
+					if (sc->is790) {
+						outb(sc->asic_addr + ED_WD_MSR,
+						    ED_WD_MSR_MENB);
+						(void) inb(0x84);
+					}
 				}
 
 				ed_rint(sc);
@@ -1715,6 +1742,12 @@ edintr(sc)
 					sc->wd_laar_proto &= ~ED_WD_LAAR_M16EN;
 					outb(sc->asic_addr + ED_WD_LAAR,
 					    sc->wd_laar_proto);
+					(void) inb(0x84);
+					if (sc->is790) {
+						outb(sc->asic_addr + ED_WD_MSR,
+						    0x00);
+						(void) inb(0x84);
+					}
 				}
 			}
 		}
