@@ -1,7 +1,7 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.2 2001/12/16 20:54:32 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.3 2002/02/11 19:00:07 reinoud Exp $
 REM
-REM Copyright (c) 2000, 2001 Reinoud Zandijk
+REM Copyright (c) 2000, 2001, 2002 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM ELF file reading based on work by Ben Harris
 REM All rights reserved.
@@ -28,11 +28,11 @@ REM THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 REM (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 REM THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 REM
-REM This file is part of NetBSD/arm32 -- a port of NetBSD to ARM6+ machines
+REM This file is part of NetBSD/acorn32 -- a port of NetBSD to ARM6+ machines
 REM This source contains pieces of code by Ben Harris (file structure)
 REM and Mark Brinicombe (DRAM/VRAM search)
 REM
-REM Purpose : Trying to boot NetBSD/arm32 !!
+REM Purpose : Trying to boot NetBSD/acorn32 !!
 
 
 ON ERROR REPORT:PRINT " at line ";ERL: PRINT'"Press key":QQ=GET:END
@@ -59,8 +59,8 @@ VDU 4, 28, (scwidth%-width%)/2, (scheigth%+heigth%)/2, (scwidth%+width%)/2, (sch
 COLOUR 128:CLS
 
 PRINT''
-PROCcenter("BtNetBSD 0.97")
-PROCcenter("booting NetBSD/arm32 on a RiscPC/RC7500/NC and Imago")
+PROCcenter("BtNetBSD 0.99")
+PROCcenter("booting NetBSD/acorn32 on a RiscPC/A7000/NC")
 PRINT''
 
 REM get argument string
@@ -83,16 +83,17 @@ REM   Declare a large array ... and then wipe it/map it in in the OS_Mem loop
 REM   the difference is that RO4 won't map it in by default and
 REM   that could trigger a OS_Memory bug ...
 SYS "OS_Memory", 6 TO ,memorytablesize%, nbpp% : REM get tablesize%
-memory_image_size% = HIMEM-512*1024     : REM keep a 512 Kb for vars
-DIM memory_image% memory_image_size%  : REM claim the space
+memory_image_size% = HIMEM-512*1024            : REM keep a 512 Kb for vars
+DIM memory_image% memory_image_size%           : REM claim the space
 
 bot_memory% = memory_image%
 top_memory% = memory_image% + memory_image_size%
 
 KERNEL_BASE = &F0000000
 
-MAX_RELOCPAGES = 2048
-MAX_RAMBANKS = 8
+MAX_RELOCPAGES = 4096
+MAX_DRAMBANKS = 32
+MAX_VRAMBANKS = 16
 
 twirl% = 0
 firstpage%  = (bot_memory% DIV nbpp%)+1
@@ -132,19 +133,18 @@ D% = L1pages_phys%
 E% = entry%
 
 IF debug% THEN
-  IF ((relocpos%-(relocinstr%+4)) MOD 12)<>0 THEN PRINT "Sanity check for relocation entries failed!"
+  IF ((relocpos%-(relocinstr%+4)) MOD 12)<>0 THEN ERROR 0,"Sanity check for relocation entries failed!"
   PRINT"Entering kernel at 0x";~entry%
-  OSCLI("Memoryi "+STR$~(FNblock_vaddr(start_kernelpage%)+(entry% MOD nbpp%)))
-  PRINT"Go for it (key)":qq=GET
-ELSE
-  PRINT ''"Press ESC to abort loader"
-  PRINT "Kernel will be started in ";
-  FOR secs%=startdelay% TO 1 STEP -1
-    PRINT ;secs%;"...";
-    tt=TIME: WHILE TIME-tt<=100: ENDWHILE : REM wait one second
-  NEXT
-  PRINT "start!"
+  REM  OSCLI("Memoryi "+STR$~(FNblock_vaddr(start_kernelpage%)+(entry% MOD nbpp%)))
+  REM  PRINT"Go for it (key)":qq=GET
 ENDIF
+PRINT ''"Press ESC to abort loader"
+PRINT "Kernel will be started in ";
+FOR secs%=startdelay% TO 1 STEP -1
+  PRINT ;secs%;"...";
+  tt=TIME: WHILE TIME-tt<=100: ENDWHILE : REM wait one second
+NEXT
+PRINT "start!"
 
 REM get ECID for each podule
 FOR pod% =-1 TO 8
@@ -160,7 +160,7 @@ REM Remove all cursors
 *pointer 0
 SYS "OS_RemoveCursors"
 
-REM XXX is this OK ?
+REM XXX is this OK ? What is this!
 DIM buf 8
 buf!?3 = 2: buf!4 = 0: SYS "OS_Word", 22, buf+3
 
@@ -221,22 +221,24 @@ DEF PROCload_kernel_elf(file%)
   start_kernelpage% = freepagesbase%
   pv_offset% = KERNEL_BASE - DRAM_addr%(0) : REM XXX hardcoded
 
-  REM load the code blocks ?
+  REM load the program blocks
   first% = TRUE
   FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
-    IF ph%!0 <> 1 THEN NEXT : REM We only do PT_LOAD
-    IF NOT first% THEN PRINT "+";
-    first%  = FALSE
-    offset% = ph%!4
-    vaddr%  = ph%!8
-    REM physaddr% = ph%!12
-    filesz% = ph%!16
-    memsz%  = ph%!20
-    flags%  = ph%!24
-    PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
-    REM freepagesbase% is updated
+    IF ph%!0 = 1 THEN
+      REM We only do PT_LOAD
+      IF NOT first% THEN PRINT "+";
+      first%  = FALSE
+      offset% = ph%!4
+      vaddr%  = ph%!8
+      REM physaddr% = ph%!12
+      filesz% = ph%!16
+      memsz%  = ph%!20
+      flags%  = ph%!24
+      PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+      REM freepagesbase% is updated
 
-    vfreebase% = vaddr% + memsz% : REM XXX
+      vfreebase% = vaddr% + memsz% : REM memsz% is the real size.... filesz can be only Text f.e.
+    ENDIF
   NEXT
 
   txtbase% = 0
@@ -255,7 +257,12 @@ DEF PROCload_kernel_elf(file%)
     FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
       IF sh%!4 = 2 THEN havesyms% = TRUE
     NEXT
-    IF INSTR(args$, "symtab")=0 THEN havesyms% = FALSE
+    IF havesyms% THEN
+      IF INSTR(args$, "symtab")=0 THEN havesyms% = FALSE
+      IF debug% THEN
+        IF havesyms% PRINT ;" (symbols avail) "; ELSE PRINT ;" (ignoring symbols) ";
+      ENDIF
+    ENDIF
     REM freepagesbase% points to first free relocation page
     IF havesyms% THEN
       REM vfreebase points to first free address in relocated area
@@ -279,7 +286,6 @@ DEF PROCload_kernel_elf(file%)
           PRINT "+";
           PROCload_chunk(file%, sh%!16, vfreebase%, sh%!20, sh%!20)
           !(FNblock_vaddr(mshdrspage%) + sh% - shdrs% + 16) = vfreebase% - ssym%
-                REM PROCwrite_word(mshdrs% + sh% - shdrs% + 16, freebase% - ssym%)
           vfreebase% += FNroundup(sh%!20, 4)
         ENDIF
       NEXT
@@ -288,17 +294,17 @@ DEF PROCload_kernel_elf(file%)
     ENDIF
   ENDIF
   PRINT " ";
-  REM XXX
 
   kernelpages% = freepagesbase% - start_kernelpage%
-  IF extradebug% THEN PRINT ''"Number of kernel pages ";kernelpages%;" (";kernelpages%*nbpp%;")"
- 
+  IF extradebug% THEN PRINT ''"Number of kernel pages ";kernelpages%;" (";kernelpages%*nbpp%;" bytes)"
+
   PROCfinish_relocationtable
 ENDPROC
 
 
 DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
   LOCAL paddr%, ppn%, fragaddr%, fragsz%
+
   REM offset%  offset in file
   REM vaddr%   indicates virtual address where stuff needs to be relocated to
   REM filesz%  number of bytes to read of `file' for this chunk
@@ -351,8 +357,6 @@ DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
 ENDPROC
 
 
-
-
 REM *****************************************************************************
 REM * A.OUT LOADER                                                              *
 REM *****************************************************************************
@@ -363,18 +367,16 @@ DEF PROCload_kernel_aout(file%)
   ssym% = 0 : esym% = 0
   SYS "OS_GBPB", 3, file%, hdr%, 32, 0
   bemagic% = (hdr%?0 << 24) OR (hdr%?1 <<16) OR (hdr%?2 << 8) OR hdr%?3
-  IF debug% THEN
-    CASE bemagic% AND &0000FFFF OF
-     WHEN &0107
-       PRINT "(OMAGIC) ";
-     WHEN &0108
-       PRINT "(NMAGIC) ";
-      WHEN &010B
-        PRINT "(ZMAGIC) ";
-      WHEN &00CC
-        PRINT "(QMAGIC) ";
-    ENDCASE
-  ENDIF
+  CASE bemagic% AND &0000FFFF OF
+    WHEN &0107
+      PRINT "(OMAGIC) ";
+    WHEN &0108
+      PRINT "(NMAGIC) ";
+    WHEN &010B
+      PRINT "(ZMAGIC) ";
+    WHEN &00CC
+      PRINT "(QMAGIC) ";
+  ENDCASE
   REM XXX: Assume ZMAGIC
 
   REM foooff% is byte offset in file.  foobasepage% is base page in RAM.
@@ -500,29 +502,51 @@ DEF PROCload_kernel_aout(file%)
  
   REM update new header structure
   new_hdr%!16 = symsize%
+  
+  REM mark highest virtual address free in NetBSD's mapping
+  vfreebase% = KERNEL_BASE + nbpp%*relocoff%
 
+  REM `patch' symbol table stuff
+  ssym% = 0
+  esym% = 0
+  
   PROCfinish_relocationtable
 ENDPROC
 
 
-DEF PROCfinish_relocationtable
-  REM place the arguments
-  argsbasepage% = freepagesbase%
-  argspages% = 1
-  argvirtualbase% = nbpp%*relocoff% + KERNEL_BASE
-  relocpos%!0 = FNblock_paddr(argsbasepage%)
-  relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
-  relocpos%!8 = nbpp%
-  relocpos% += 12
-  $(FNblock_vaddr(argsbasepage%)) = args$+CHR$0
-  freepagesbase% += argspages%
-  kernelpages% += argspages%
+REM *****************************************************************************
+REM * Common loader and relocate stuff                                          *
+REM *****************************************************************************
 
-  REM Align scratch to a 16 kb boundry just in case ... should be on physical XXX
-  offset% = FNroundup(relocoff%, 4) - relocoff%
-  freepagesbase% += offset%
-  kernelpages%   += offset%
-  relocoff%      += offset%
+DEF PROCfinish_relocationtable
+  REM align vfreebase% to a page
+  vfreebase% = FNroundup(vfreebase%, nbpp%)
+  relocoff% = (vfreebase% - KERNEL_BASE) DIV nbpp%
+
+  IF vfreebase% > (nbpp%*relocoff% + KERNEL_BASE) THEN
+    PRINT ''"WHOOAH!' : 0x", ~vfreebase%;" > 0x";~(nbpp%*relocoff%+KERNEL_BASE)
+    freepagesbase% += 16
+    kernelpages%   += 16
+    relocoff%      += 16
+  ENDIF
+
+  IF INSTR(args$, "oldkernel")>0 THEN
+    REM place the arguments in a block ... for the old bootloader's sake
+    argsbasepage% = freepagesbase%
+    argspages% = 1
+    argvirtualbase% = nbpp%*relocoff% + KERNEL_BASE
+    relocpos%!0 = FNblock_paddr(argsbasepage%)
+    relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
+    relocpos%!8 = nbpp%
+    relocpos% += 12
+    $(FNblock_vaddr(argsbasepage%)) = args$+CHR$0
+    freepagesbase% += argspages%
+    kernelpages%   += argspages%
+    IF debug% THEN PRINT "Args at 0x";~argvirtualbase%
+  ELSE
+    REM reserve some space for the MDF file
+    REM XXX not implemented yet XXX
+  ENDIF
 
   REM I give it a 48k scratch space
   scratchbasepage% = freepagesbase%
@@ -530,13 +554,12 @@ DEF PROCfinish_relocationtable
   scratchvirtualbase% = nbpp%*relocoff% + KERNEL_BASE
   freepagesbase% += scratchpages%
   kernelpages%   += scratchpages%
-  relocoff%      += scratchpages%
 
   REM Create one page for the initial vectors
   initvectorbasepage% = freepagesbase%
   initvectorpages%    = 1
   relocpos%!0 = FNblock_paddr(initvectorbasepage%)
-  relocpos%!4 = top_physdram% - 1*1024*1024 : relocnr%+=1: relocoff%+=1
+  relocpos%!4 = top_physdram% - 1*1024*1024 : relocnr%+=1
   relocpos%!8 = nbpp%
   relocpos% += 12
   freepagesbase% += initvectorpages%
@@ -548,10 +571,6 @@ DEF PROCfinish_relocationtable
 ENDPROC
 
 
-REM *****************************************************************************
-REM * Common loader and relocate stuff                                          *
-REM *****************************************************************************
-
 DEF PROCadd_pagetables
   REM DESTINATION MUST BE ON A 16kb boundary!!! (!!!!)
   REM get 4 pages on the top of physical memory (top_physdram%) and copy PT's in it
@@ -560,7 +579,7 @@ DEF PROCadd_pagetables
   FOR pg%=0 TO 3
     PROCcopy(FNblock_vaddr(freepagesbase% + pg%), bootpagetables% + pg%*nbpp%, nbpp%)
     relocpos%!0 = FNblock_paddr(freepagesbase%+pg%)
-    relocpos%!4 = addr%+pg%*nbpp%: relocnr%+=1: relocoff%+=1
+    relocpos%!4 = addr%+pg%*nbpp%: relocnr%+=1
     relocpos%!8 = nbpp%
     relocpos% += 12
   NEXT
@@ -599,7 +618,7 @@ DEF PROCcreate_relocate_mechanism
 
   relocatesize% = nbpp% + relocsize% : REM just ONE code page + relocation table
   PRINT ;"+";relocatesize%;
-  relocatepages% = relocatesize% DIV nbpp%
+  relocatepages% = FNroundup(relocatesize%, nbpp%) DIV nbpp%
   relocatebasepage% = freepagesbase%
   pg%=0
   WHILE pg%<relocatepages%
@@ -631,37 +650,139 @@ DEF PROCcreate_configuration
 
   REM fatal(swix(OS_ReadSysInfo, IN(R0)|OUT(R3), 2, &bootconfig.machine_id));
   SYS "OS_ReadSysInfo", 2 TO r0,r1,r2, machineId%
+
+  IF INSTR(args$, "oldkernel")>0 THEN
+    PROCold_configuration_structure
+  ELSE
+    PROCnew_configuration_structure
+  ENDIF
+ENDPROC
+
+
+DEF PROCnew_configuration_structure
+  FOR opt%=0 TO 2 STEP 2
+    P% = FNblock_vaddr(configurationbasepage%)
+    [OPT opt%
+    ; u_int magic
+        EQUD          &43112233 ; BOOTCONFIG_MAGIC
+    ; u_int bootconfig_version
+        EQUD          2
+
+    ; u_char machine_id[4]
+        EQUD          machineId%
+    ; char kernelname[80]
+        EQUS          LEFT$(file$+CHR$0+STRING$(80, " "), 80)
+    ; char args[512]
+        EQUS          args$+CHR$0
+        ]: P% += 512 - LEN(args$+CHR$0): [ OPT opt%
+
+    ; u_int kernvirtualbase             /* not used now */
+        EQUD 0
+    ; u_int kernphysicalbase            /* not used now */
+        EQUD 0
+    ; u_int kernsize
+        EQUD          kernelpages% * nbpp%
+    ; u_int scratchvirtualbase
+        EQUD          scratchvirtualbase%
+    ; u_int scratchphysicalbase
+        EQUD          scratchvirtualbase%
+    ; u_int scratchsize
+        EQUD          scratchpages% * nbpp%
+
+    ; u_int ksym_start
+        EQUD ssym%
+    ; u_int ksym_end
+        EQUD esym%
+
+    ; u_int MDFvirtualbase
+        EQUD 0
+    ; u_int MDFphysicalbase
+        EQUD 0
+    ; u_int MDFsize
+        EQUD 0
+    
+    ; u_int display_phys
+        EQUD          videomem_start%
+    ; u_int display_start
+        EQUD          videomem_start% ; screenstart (149)
+    ; u_int display_size
+        EQUD          display_size%   ; screensize  (150)
+    ; u_int width
+        EQUD          FNvdu_var(11)   ; acorn32 port needs 0..x-1
+    ; u_int heigth
+        EQUD          FNvdu_var(12)   ; acorn32 port needs 0..y-1
+    ; u_int log2_bpp
+        EQUD          FNvdu_var(9)    ; acorn32 port needs log(bitsperpixel)/log(2)
+    ; u_int framerate
+        EQUD          56 ; XXX why?
+    
+    ; char reserved[512]
+    ]: P% += 512: [ OPT opt%
+    
+    ; u_int pagesize
+        EQUD          nbpp%
+    ; u_int drampages
+        EQUD          totaldrampages%
+    ; u_int vrampages;
+        EQUD          totalvrampages%
+    ; u_int dramblocks
+        EQUD          dramblocks%
+    ; u_int vramblocks
+        EQUD          vramblocks%
+
+    ]
+    REM phys_mem dram[DRAM_BLOCKS]  <- 32
+    FOR I%=0 TO MAX_DRAMBANKS-1
+      [OPT opt%
+        ; address% : EQUD DRAM_addr%(I%)
+        ; length%  : EQUD DRAM_pages%(I%)
+        ; flags%   : EQUD 0
+      ]
+    NEXT
+    REM phys_mem vram[VRAM_BLOCKS]  <- 16
+    FOR I%=0 TO MAX_VRAMBANKS-1
+      [OPT opt%
+        ; address% : EQUD VRAM_addr%(I%)
+        ; length%  : EQUD VRAM_pages%(I%)
+        ; flags%   : EQUD 0
+      ]
+    NEXT
+  NEXT
+ENDPROC
+
+
+DEF PROCold_configuration_structure
   FOR opt%=0 TO 2 STEP 2
     P% = FNblock_vaddr(configurationbasepage%)
     [OPT opt%
     ;kernvirtualbase%
-      EQUD          0   ; not used
+        EQUD          0   ; not used
     ;kernphysicalbase%
-      EQUD          0   ; not used
+        EQUD          0   ; not used
     ;kernsize%
-      EQUD          kernelpages% * nbpp%
+        EQUD          kernelpages% * nbpp%
     ;argvirtualbase
-      EQUD          argvirtualbase%
+        EQUD          argvirtualbase%
     ;argphysicalbase
-      EQUD          FNblock_paddr(argsbasepage%)
+        EQUD          FNblock_paddr(argsbasepage%)
     ;argsize%
-      EQUD          nbpp%
+        EQUD          nbpp%
     ;scratchvirtualbase%
-      EQUD          scratchvirtualbase%
+        EQUD          scratchvirtualbase%
     ;scratchphysicalbase%
-      EQUD          scratchvirtualbase%
+        EQUD          scratchvirtualbase%
     ;scratchsize%
-      EQUD          scratchpages% * nbpp%
+        EQUD          scratchpages% * nbpp%
     ;display_start%
-      EQUD          videomem_start% ; screenstart (149)
+        EQUD          videomem_start% ; screenstart (149)
     ;display_size%
-      EQUD          display_size%   ; screensize  (150)
+        EQUD          display_size%   ; screensize  (150)
     ;width%
-      EQUD          FNvdu_var(11)   ; arm32 port needs 0..x-1
+        EQUD          FNvdu_var(11)   ; arm32 port needs 0..x-1
     ;height%
-      EQUD          FNvdu_var(12)   ; arm32 port needs 0..y-1
+        EQUD          FNvdu_var(12)   ; arm32 port needs 0..y-1
     ;bitsperpixel
-      EQUD          FNvdu_var(9)    ; arm32 port needs log(bitsperpixel)/log(2)
+        EQUD          FNvdu_var(9)    ; arm32 port needs log(bitsperpixel)/log(2)
     ]
     REM for compatibility for now just 4 DRAM and 1 VRAM
     FOR I%=0 TO 3
@@ -679,25 +800,25 @@ DEF PROCcreate_configuration
     NEXT
     [OPT opt%
     ;c_dramblocks%
-      EQUD          dramblocks%
+        EQUD          dramblocks%
     ;c_vramblocks%
-      EQUD          vramblocks%
+        EQUD          vramblocks%
     ;pagesize%
-      EQUD          nbpp%
+        EQUD          nbpp%
     ;drampages%
-      EQUD          totaldrampages%
+        EQUD          totaldrampages%
     ;vrampages%
-      EQUD          totalvrampages%
+        EQUD          totalvrampages%
     ;kernelname%
-      EQUS          LEFT$(file$+CHR$0+STRING$(80, " "), 80)
+        EQUS          LEFT$(file$+CHR$0+STRING$(80, " "), 80)
     ;framerate%
-      EQUD          56 ; XXXXX
+        EQUD          56 ; XXXXX
     ;machine_id%
-      EQUD          machineId%
+        EQUD          machineId%
     ;magic%
-      EQUD          &43112233 ; BOOTCONFIG_MAGIC
+        EQUD          &43112233 ; BOOTCONFIG_MAGIC
     ;display_phys%
-      EQUD          videomem_start%
+        EQUD          videomem_start%
     ]
   NEXT opt%
 ENDPROC
@@ -920,8 +1041,8 @@ ENDPROC
 DEF PROCget_memory_configuration
   REM Get memory distribution
   PRINT "Getting memory configuration ";
-  DIM DRAM_addr%(MAX_RAMBANKS), DRAM_pages%(MAX_RAMBANKS)
-  DIM VRAM_addr%(MAX_RAMBANKS), VRAM_pages%(MAX_RAMBANKS)
+  DIM DRAM_addr%(MAX_DRAMBANKS), DRAM_pages%(MAX_DRAMBANKS)
+  DIM VRAM_addr%(MAX_VRAMBANKS), VRAM_pages%(MAX_VRAMBANKS)
   DIM memorytable% memorytablesize%
   SYS "OS_Memory", 7, memorytable% : REM read table
   dramblocks% = 0: vramblocks% = 0: currentpages% = 0: currentadr% = 0
