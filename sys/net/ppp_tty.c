@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.2 1995/07/04 23:26:10 paulus Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.3 1995/10/05 05:55:14 mycroft Exp $	*/
 
 /*
  * ppp_tty.c - Point-to-Point Protocol (PPP) driver for asynchronous
@@ -201,6 +201,7 @@ pppopen(dev, tp)
     sc->sc_outm = NULL;
     pppgetm(sc);
     sc->sc_if.if_flags |= IFF_RUNNING;
+    sc->sc_if.if_baudrate = tp->t_ospeed;
 
     tp->t_sc = (caddr_t) sc;
     ttyflush(tp, FREAD | FWRITE);
@@ -575,6 +576,7 @@ pppstart(tp)
 
 	    /* Calculate the FCS for the first mbuf's worth. */
 	    sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, u_char *), m->m_len);
+	    sc->sc_if.if_lastchange = time;
 	}
 
 	for (;;) {
