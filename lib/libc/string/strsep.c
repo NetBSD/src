@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.11 2000/01/22 22:19:20 mycroft Exp $	*/
+/*	$NetBSD: strsep.c,v 1.12 2002/01/28 22:39:07 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,12 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.11 2000/01/22 22:19:20 mycroft Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.12 2002/01/28 22:39:07 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +53,9 @@ __RCSID("$NetBSD: strsep.c,v 1.11 2000/01/22 22:19:20 mycroft Exp $");
 #ifdef __weak_alias
 __weak_alias(strsep,_strsep)
 #endif
+#endif
 
+#if !HAVE_STRSEP
 /*
  * Get next token from string *stringp, where tokens are possibly-empty
  * strings separated by characters from delim.  
@@ -93,3 +98,4 @@ strsep(stringp, delim)
 	}
 	/* NOTREACHED */
 }
+#endif
