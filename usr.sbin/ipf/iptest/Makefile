@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1997/05/25 11:46:49 darrenr Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 1997/05/27 22:18:26 thorpej Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c

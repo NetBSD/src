@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.3 1997/05/25 11:45:49 darrenr Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.4 1997/05/27 22:16:46 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -37,7 +37,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.1.1.3 1997/05/25 11:45:49 darrenr Exp $";
+static	char	rcsid[] = "Id: parse.c,v 2.0.2.7 1997/05/08 11:24:09 darrenr Exp ";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
