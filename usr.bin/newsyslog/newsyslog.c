@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.40 2001/03/22 17:54:54 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.41 2001/05/06 21:03:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.40 2001/03/22 17:54:54 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.41 2001/05/06 21:03:25 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -596,6 +596,8 @@ log_trim(struct conf_entry *log)
 	/* If the newest historical log is to be compressed, do it here. */
 	if ((log->flags & (CE_PLAIN0 | CE_COMPRESS)) == CE_COMPRESS) {
 		snprintf(file1, sizeof (file1), "%s.0", log->logfile);
+		PRINFO(("sleep for 10 seconds before compressing...\n"));
+		sleep(10);
 		log_compress(log, file1);
 	}
 }
