@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.67 2001/03/07 23:07:13 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.68 2001/04/09 23:51:28 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4782,6 +4782,7 @@ bus_reset:
 
 				/* Will clear us from the bus */
 				restart_sequencer(ahc);
+				splx(s);
 				return;
 			}
 
@@ -4808,6 +4809,7 @@ bus_reset:
 				printf("%s: Hung target selection\n",
 				       ahc_name(ahc));
 				restart_sequencer(ahc);
+				splx(s);
 				return;
 			}
 
