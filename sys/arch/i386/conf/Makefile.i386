@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # from @(#)Makefile.i386	7.1 5/10/91
-# $Id: Makefile.i386,v 1.14 1993/06/06 23:29:03 cgd Exp $
+# $Id: Makefile.i386,v 1.15 1993/06/11 02:59:54 cgd Exp $
 #
 # Makefile for NetBSD
 #
@@ -47,7 +47,7 @@ SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; /usr/sbin/d
 # (XXX) ok, this is weird.  but we've got a working ed, and a broken ex, and
 # the script is identical for either... -- cgd
 #
-GPROF.EX=	/usr/src/lib/csu.i386/gprof.ex
+GPROF.EX=	/usr/src/lib/csu/i386/gprof.ex
 PROFILE_C=	${CC} -S -c ${CFLAGS} $< ; \
 		ed - $*.s < ${GPROF.EX} ; \
 		${AS} -o $@ $*.s ; \
