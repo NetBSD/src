@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.6 2001/12/23 13:10:46 takemura Exp $	*/
+/*	$NetBSD: cache.c,v 1.7 2001/12/28 04:06:07 shin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -520,6 +520,15 @@ primary_cache_is_2way:
 	switch (MIPS_PRID_IMPL(cpu_id)) {
 #ifdef MIPS3
 	case MIPS_R4000:
+		/*
+		 * R4000/R4400 always detects virtual alias as if
+		 * primary cache size is 32KB. Actual primary cache size
+		 * is ignored wrt VCED/VCEI.
+		 */
+		mips_cache_alias_mask =
+			(MIPS3_MAX_PCACHE_SIZE - 1) & ~(PAGE_SIZE - 1);
+		mips_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
+		/* FALLTHROUGH */
 	case MIPS_R4100:
 	case MIPS_R4300:
 	case MIPS_R4600:

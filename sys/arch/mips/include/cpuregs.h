@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.47 2001/10/16 16:31:34 uch Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.48 2001/12/28 04:06:06 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -483,6 +483,7 @@
  */
 #define MIPS_MIN_CACHE_SIZE	(16 * 1024)
 #define MIPS_MAX_CACHE_SIZE	(256 * 1024)
+#define MIPS3_MAX_PCACHE_SIZE	(32 * 1024)	/* max. primary cache size */
 
 /*
  * The floating point version and status registers.
