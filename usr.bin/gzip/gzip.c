@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.16 2004/06/18 10:01:29 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.17 2004/06/24 17:24:48 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.16 2004/06/18 10:01:29 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.17 2004/06/24 17:24:48 jmc Exp $");
 #endif /* not lint */
 
 /*
@@ -749,17 +749,14 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 
 		case GZSTATE_READ:
 			error = inflate(&z, Z_FINISH);
+			/* Z_BUF_ERROR goes with Z_FINISH... */
 			if (error == Z_STREAM_END || error == Z_BUF_ERROR) {
 				size_t wr = BUFLEN - z.avail_out;
 
-				/*
-				 * If there's nothing to output, we must
-				 * have an error...
-				 */
-				if (wr == 0) {
-					out_tot = -1;
+				/* Nothing left? */
+				if (wr == 0)
 					goto stop;
-				}
+
 				if (
 #ifndef SMALL
 				    /* don't write anything with -t */
