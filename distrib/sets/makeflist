@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.42 2002/02/27 10:42:55 lukem Exp $
+# $NetBSD: makeflist,v 1.43 2002/03/26 22:58:17 fredette Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -74,13 +74,17 @@ if [ -n "$1" ]; then
 	lists="$@"
 fi
 
-# Determine shlib type.
+# Determine lib type.
 if [ "$object_fmt" = "ELF" ]; then
 	shlib=elf
-elif [ "$machine_cpu" = "sh3" ]; then
-	shlib=
 else
 	shlib=aout
+fi
+stlib=$shlib
+
+# Turn off shlibs for some ports.
+if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
+	shlib=no
 fi
 
 # Turn off lintlibs for some ports.
@@ -99,7 +103,13 @@ for setname in $lists; do
 	if [ -f $setd/lists/$setname/md.${machine} ]; then
 		cat $setd/lists/$setname/md.${machine}
 	fi
-	if [ "$shlib" != "" ]; then
+	if [ -f $setd/lists/$setname/stl.mi ]; then
+		cat $setd/lists/$setname/stl.mi
+	fi
+	if [ -f $setd/lists/$setname/stl.${stlib} ]; then
+		cat $setd/lists/$setname/stl.${stlib}
+	fi
+	if [ "$shlib" != "no" ]; then
 		if [ -f $setd/lists/$setname/shl.mi ]; then
 			cat $setd/lists/$setname/shl.mi
 		fi
