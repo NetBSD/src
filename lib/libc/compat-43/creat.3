@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,18 +29,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)creat.2	6.10 (Berkeley) 6/23/91
-.\"	$NetBSD: creat.3,v 1.9 1997/10/09 10:08:02 lukem Exp $
+.\"     from: @(#)creat.2	8.1 (Berkeley) 6/2/93
+.\"	$NetBSD: creat.3,v 1.10 1998/02/02 06:26:34 perry Exp $
 .\"
-.Dd June 23, 1991
+.Dd June 2, 1993
 .Dt CREAT 3
 .Os BSD 4
 .Sh NAME
 .Nm creat
 .Nd create a new file
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/stat.h>
 .Fd #include <fcntl.h>
 .Ft int
 .Fn creat "const char *path" "mode_t mode"
