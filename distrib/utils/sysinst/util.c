@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.121 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.122 2004/06/12 19:18:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -807,6 +807,9 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	/* Configure the system */
 	if (sets_installed & SET_ETC)
 		run_makedev();
+
+	/* Save keybard type */
+	save_kb_encoding();
 
 	/* Other configuration. */
 	mnt_net_config();

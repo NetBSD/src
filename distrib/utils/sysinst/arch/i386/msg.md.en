@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.46 2004/05/08 14:25:59 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.47 2004/06/12 19:18:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,9 @@ message md_hello
 {If you booted from a floppy, you may now remove the disk.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {}
 
 message dobad144
 {Installing the bad block table ...
