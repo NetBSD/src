@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.41 1999/09/09 03:52:21 itohy Exp $ */
+/*	$NetBSD: apm.c,v 1.42 1999/11/06 01:14:02 enami Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -376,6 +376,12 @@ apm_resume(sc, regs)
 	struct apm_softc *sc;
 	struct bioscallregs *regs;
 {
+
+	/*
+	 * Some system requires its clock to be initialized after hybernation.
+	 */
+	initrtclock();
+
 	inittodr(time.tv_sec);
 	dopowerhooks(PWR_RESUME);
 	apm_record_event(sc, regs->BX);
