@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13.4.3 1999/07/31 18:52:38 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13.4.4 1999/08/06 12:50:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -169,7 +169,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	int i, delta, error, npages1, npages2;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
-	int ppb = max(bsize >> PAGE_SHIFT, PAGE_SIZE >> bshift);
+	int ppb = max(bsize >> PAGE_SHIFT, 1);
 	struct vm_page *pgs1[ppb], *pgs2[ppb];
 	UVMHIST_FUNC("ufs_balloc_range"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
