@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.10 1997/07/27 23:51:50 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.11 1997/07/31 22:33:11 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -97,7 +97,7 @@ struct lmcaudio_softc {
 
 int  lmcaudio_probe	__P((struct device *parent, void *match, void *aux));
 void lmcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
-int  lmcaudio_open	__P((dev_t dev, int flags));
+int  lmcaudio_open	__P((void *, int flags));
 void lmcaudio_close	__P((void *addr));
 int lmcaudio_drain	__P((void *addr));
 void lmcaudio_timeout	__P((void *arg));
@@ -241,32 +241,18 @@ lmcaudio_attach(parent, self, aux)
 int nauzero = 0;
 int ndmacall = 0;
 int
-lmcaudio_open(dev, flags)
-	dev_t dev;
+lmcaudio_open(addr, flags)
+	void *addr;
 	int flags;
 {
-	struct lmcaudio_softc *sc;
-	int unit = AUDIOUNIT (dev);
-	int s;
+	struct lmcaudio_softc *sc = addr;
 
 #ifdef DEBUG
 	printf("DEBUG: lmcaudio_open called\n");
 #endif
 
-	if (unit >= lmcaudio_cd.cd_ndevs)
-		return ENODEV;
-
-	sc = lmcaudio_cd.cd_devs[unit];
-
-	if (!sc)
-		return ENXIO;
-
-	s = splhigh();
-
-	if (sc->open != 0) {
-		(void)splx(s);
+	if (sc->open)
 		return EBUSY;
-	}
 
 	sc->open = 1;
 	ag.open = 1;
@@ -274,8 +260,6 @@ lmcaudio_open(dev, flags)
 
 	nauzero = 0;
 	ndmacall = 0;
-
-	(void)splx(s);
 
 	return 0;
 }
@@ -347,6 +331,7 @@ int    lmcaudio_getdev		 __P((void *, struct audio_device *));
 int    lmcaudio_set_port	 __P((void *, mixer_ctrl_t *));
 int    lmcaudio_get_port	 __P((void *, mixer_ctrl_t *));
 int    lmcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
+int    lmcaudio_get_props	 __P((void *));
 
 struct audio_device lmcaudio_device = {
 	"LMCAudio 16-bit",
@@ -410,7 +395,7 @@ lmcaudio_set_out_port(addr, port)
 	void *addr;
 	int port;
 {
-	register struct lmcaudio_softc *sc = addr;
+	struct lmcaudio_softc *sc = addr;
 	sc->outport = port;
 	return(0);
 }
@@ -419,7 +404,7 @@ int
 lmcaudio_get_out_port(addr)
 	void *addr;
 {
-	register struct lmcaudio_softc *sc = addr;
+	struct lmcaudio_softc *sc = addr;
 	return(sc->outport);
 }
 
@@ -428,7 +413,7 @@ lmcaudio_set_in_port(addr, port)
 	void *addr;
 	int port;
 {
-	register struct lmcaudio_softc *sc = addr;
+	struct lmcaudio_softc *sc = addr;
 	sc->inport = port;
 	return(0);
 }
@@ -437,7 +422,7 @@ int
 lmcaudio_get_in_port(addr)
 	void *addr;
 {
-	register struct lmcaudio_softc *sc = addr;
+	struct lmcaudio_softc *sc = addr;
 	return(sc->inport);
 }
 
@@ -573,11 +558,19 @@ lmcaudio_get_port(addr, cp)
 }
 
 int
-lmcaudio_query_devinfo(addr, dip)
+lmcaudio_get_props(addr)
 	void *addr;
-	register mixer_devinfo_t *dip;
+	mixer_devinfo_t *dip;
 {
 	return(0);
+}
+
+int
+lmcaudio_query_devinfo(addr, dip)
+	void *addr;
+	mixer_devinfo_t *dip;
+{
+	return(ENXIO);
 }
 
 struct audio_hw_if lmcaudio_hw_if = {
@@ -610,7 +603,7 @@ struct audio_hw_if lmcaudio_hw_if = {
 	0,
 	0,
 	0,
-	0
+	lmcaudio_get_props,
 };
 
 void
@@ -623,7 +616,7 @@ int
 lmcaudio_hw_attach(sc)
 	struct lmcaudio_softc *sc;
 {
-	return(audio_hardware_attach(&lmcaudio_hw_if, sc));
+	return(audio_hardware_attach(&lmcaudio_hw_if, sc, &sc->device));
 }
 
 int

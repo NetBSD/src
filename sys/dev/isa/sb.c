@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.52 1997/07/28 20:56:20 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.53 1997/07/31 22:33:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -67,7 +67,6 @@ struct audio_device sb_device = {
 	"sb"
 };
 
-int	sbopen __P((dev_t, int));
 int	sb_getdev __P((void *, struct audio_device *));
 
 /*
@@ -75,7 +74,7 @@ int	sb_getdev __P((void *, struct audio_device *));
  */
 
 struct audio_hw_if sb_hw_if = {
-	sbopen,
+	sbdsp_open,
 	sbdsp_close,
 	0,
 	sbdsp_query_encoding,
@@ -104,7 +103,7 @@ struct audio_hw_if sb_hw_if = {
 	sb_free,
 	sb_round,
         sb_mappage,
-	AUDIO_PROP_MMAP
+	sbdsp_get_props,
 };
 
 /*
@@ -253,7 +252,7 @@ sbattach(sc)
 
 	sbdsp_attach(sc);
 
-	if ((error = audio_hardware_attach(&sb_hw_if, sc)) != 0)
+	if ((error = audio_hardware_attach(&sb_hw_if, sc, &sc->sc_dev)) != 0)
 		printf("%s: could not attach to audio device driver (%d)\n",
 		    sc->sc_dev.dv_xname, error);
 }
@@ -291,29 +290,13 @@ sbforceintr(aux)
  */
 
 int
-sbopen(dev, flags)
-    dev_t dev;
-    int flags;
-{
-    struct sbdsp_softc *sc;
-    int unit = AUDIOUNIT(dev);
-    
-    if (unit >= sb_cd.cd_ndevs)
-	return ENODEV;
-    
-    sc = sb_cd.cd_devs[unit];
-    if (!sc)
-	return ENXIO;
-    
-    return sbdsp_open(sc, dev, flags);
-}
-
-int
 sb_getdev(addr, retp)
 	void *addr;
 	struct audio_device *retp;
 {
 	struct sbdsp_softc *sc = addr;
+	static char *names[] = SB_NAMES;
+	char *config;
 
 	if (sc->sc_model == SB_JAZZ)
 		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
@@ -322,7 +305,11 @@ sb_getdev(addr, retp)
 	sprintf(retp->version, "%d.%02d", 
 		SBVER_MAJOR(sc->sc_version),
 		SBVER_MINOR(sc->sc_version));
-	strncpy(retp->config, "sb", sizeof(retp->config));
+	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
+		config = names[sc->sc_model];
+	else
+		config = "??";
+	strncpy(retp->config, config, sizeof(retp->config));
 		
 	return 0;
 }

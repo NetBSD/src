@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.57 1997/07/28 20:56:09 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.58 1997/07/31 22:33:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -77,6 +77,7 @@
 #include <sys/signalvar.h>
 #include <sys/conf.h>
 #include <sys/audioio.h>
+#include <sys/device.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -127,7 +128,7 @@ void	audio_calc_blksize __P((struct audio_softc *, int));
 void	audio_fill_silence __P((struct audio_params *, u_char *, int));
 int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
 
-int	audio_hardware_attach __P((struct audio_hw_if *, void *));
+int	audio_hardware_attach __P((struct audio_hw_if *, void *, struct device *));
 void	audio_init_ringbuffer __P((struct audio_ringbuffer *));
 void	audio_initbufs __P((struct audio_softc *));
 static __inline int audio_sleep_timo __P((int *, char *, int));
@@ -142,7 +143,7 @@ void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
 
 /* The default audio mode: 8 kHz mono ulaw */
 struct audio_params audio_default = 
-	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0 };
+	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1 };
 
 #ifdef AUDIO_DEBUG
 void	audio_printsc __P((struct audio_softc *));
@@ -213,9 +214,10 @@ audio_free_ring(sc, r)
  * Called from hardware driver.
  */
 int
-audio_hardware_attach(hwp, hdlp)
+audio_hardware_attach(hwp, hdlp, dev)
 	struct audio_hw_if *hwp;
 	void *hdlp;
+	struct device *dev;
 {
 	struct audio_softc *sc;
 	int error;
@@ -262,7 +264,9 @@ audio_hardware_attach(hwp, hdlp)
 	    hwp->getdev == 0 ||
 	    hwp->set_port == 0 ||
 	    hwp->get_port == 0 ||
-	    hwp->query_devinfo == 0) {
+	    hwp->query_devinfo == 0 ||
+	    hwp->get_props == 0) {
+		printf("audio: missing method\n");
         	free(sc, M_DEVBUF);
 		return(EINVAL);
         }
@@ -270,6 +274,7 @@ audio_hardware_attach(hwp, hdlp)
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
+	sc->sc_dev = dev;
 
 	error = audio_alloc_ring(sc, &sc->sc_pr, AU_RING_SIZE);
 	if (error)
@@ -288,9 +293,7 @@ audio_hardware_attach(hwp, hdlp)
 	sc->sc_pparams = audio_default;
 	sc->sc_rparams = audio_default;
 
-#ifdef AUDIO_DEBUG
-	printf("audio: unit %d attached\n", n);
-#endif
+	printf("audio%d at %s\n", n, dev->dv_xname);
 	
 	return(0);
 }
@@ -583,7 +586,7 @@ audio_open(dev, flags, ifmt, p)
 	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0)
 		return (EBUSY);
 
-	error = hw->open(dev, flags);
+	error = hw->open(sc->hw_hdl, flags);
 	if (error)
 		return (error);
 
@@ -671,7 +674,8 @@ audio_open(dev, flags, ifmt, p)
 	sc->sc_eof = 0;
 
 	if ((flags & (FWRITE|FREAD)) == (FWRITE|FREAD))
-		sc->sc_full_duplex = (hw->props & AUDIO_PROP_FULLDUPLEX) != 0;
+		sc->sc_full_duplex = 
+		  (hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX) != 0;
 
 	if (flags & FWRITE)
 		audio_init_play(sc);
@@ -1101,6 +1105,8 @@ audio_write(dev, uio, ioflag)
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; 	/* and no more than we have */
 
+		/* Compensate for software coding expansion factor. */
+		cc = (cc + sc->sc_pparams.factor - 1) / sc->sc_pparams.factor;
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 1)
 		    printf("audio_write: uiomove cc=%d inp=%p, left=%d\n", cc, inp, uio->uio_resid);
@@ -1117,6 +1123,8 @@ audio_write(dev, uio, ioflag)
 		 * gotten a partial block. */
 		if (sc->sc_pparams.sw_code)
 			sc->sc_pparams.sw_code(sc->hw_hdl, inp, cc);
+		/* And adjust count after the expansion. */
+		cc *= sc->sc_pparams.factor;
 
 		einp = cb->inp + cc;
 		if (einp >= cb->end)
@@ -1278,12 +1286,13 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	/* GETPROPS contains the same info (and more) */
 	case AUDIO_GETFD:
 		DPRINTF(("AUDIO_GETFD\n"));
-		*(int *)addr = (hw->props & AUDIO_PROP_FULLDUPLEX) != 0;
+		*(int *)addr = 
+		  (hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX) != 0;
 		break;
 #endif
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
-		if (hw->props & AUDIO_PROP_FULLDUPLEX) {
+		if (hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX) {
 			if (hw->setfd)
 				error = hw->setfd(sc->hw_hdl, *(int *)addr);
 			else
@@ -1300,7 +1309,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 
 	case AUDIO_GETPROPS:
 		DPRINTF(("AUDIO_GETPROPS\n"));
-		*(int *)addr = hw->props;
+		*(int *)addr = hw->get_props(sc->hw_hdl);
 		break;
 
 	default:
@@ -1364,7 +1373,7 @@ audio_mmap(dev, off, prot)
 
 	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
 
-	if (!(hw->props & AUDIO_PROP_MMAP) || !hw->mappage)
+	if (!(hw->get_props(sc->hw_hdl) & AUDIO_PROP_MMAP) || !hw->mappage)
 		return -1;
 #if 0
 /* XXX
@@ -1842,6 +1851,8 @@ audiosetinfo(sc, ai)
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+		rp.sw_code = 0;
+		rp.factor = 1;
 		error = hw->set_params(sc->hw_hdl, AUMODE_RECORD, 
 				       &rp, &sc->sc_pparams);
 		if (error)
@@ -1852,6 +1863,8 @@ audiosetinfo(sc, ai)
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
+		pp.sw_code = 0;
+		pp.factor = 1;
 		error = hw->set_params(sc->hw_hdl, AUMODE_PLAY, 
 				       &pp, &sc->sc_rparams);
 		if (error)

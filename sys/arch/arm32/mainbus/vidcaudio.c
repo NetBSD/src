@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.15 1997/07/27 23:51:51 augustss Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.16 1997/07/31 22:33:13 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -98,7 +98,7 @@ struct vidcaudio_softc {
 
 int  vidcaudio_probe	__P((struct device *parent, void *match, void *aux));
 void vidcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
-int  vidcaudio_open	__P((dev_t dev, int flags));
+int  vidcaudio_open	__P((void *addr, int flags));
 void vidcaudio_close	__P((void *addr));
 
 int vidcaudio_intr	__P((void *arg));
@@ -238,37 +238,23 @@ vidcaudio_attach(parent, self, aux)
 }
 
 int
-vidcaudio_open(dev, flags)
-	dev_t dev;
+vidcaudio_open(addr, flags)
+	void *addr;
 	int flags;
 {
-	struct vidcaudio_softc *sc;
-	int unit = AUDIOUNIT(dev);
+	struct vidcaudio_softc *sc = addr;
 	int s;
 
 #ifdef DEBUG
 	printf("DEBUG: vidcaudio_open called\n");
 #endif
 
-	if (unit >= vidcaudio_cd.cd_ndevs)
-		return ENODEV;
-
-	sc = vidcaudio_cd.cd_devs[unit];
-
-	if (!sc)
-		return ENXIO;
-
-	s = splhigh();
-
-	if (sc->open != 0) {
-		(void)splx(s);
+	if (sc->open)
 		return EBUSY;
-	}
 
-	sc->open=1;
-	ag.open=1;
+	sc->open = 1;
+	ag.open = 1;
 
-	(void)splx(s);
 	return 0;
 }
  
@@ -310,6 +296,7 @@ int    vidcaudio_getdev		 __P((void *, struct audio_device *));
 int    vidcaudio_set_port	 __P((void *, mixer_ctrl_t *));
 int    vidcaudio_get_port	 __P((void *, mixer_ctrl_t *));
 int    vidcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
+int    vidcaudio_get_props	 __P((void *));
 
 struct audio_device vidcaudio_device = {
 	"VidcAudio 8-bit",
@@ -489,6 +476,11 @@ int vidcaudio_get_port ( void *addr, mixer_ctrl_t *cp )
 
 int vidcaudio_query_devinfo ( void *addr, mixer_devinfo_t *dip )
 {
+    return ENXIO;
+}
+
+int vidcaudio_get_props ( void *addr )
+{
     return 0;
 }
 
@@ -522,7 +514,7 @@ struct audio_hw_if vidcaudio_hw_if = {
     0,
     0,
     0,
-    0
+    vidcaudio_get_props,
 };
 
 void vidcaudio_dummy_routine ( void *arg )
@@ -534,7 +526,7 @@ void vidcaudio_dummy_routine ( void *arg )
 
 int vidcaudio_hw_attach ( struct vidcaudio_softc *sc )
 {
-    return ( audio_hardware_attach ( &vidcaudio_hw_if, sc ) );
+    return ( audio_hardware_attach ( &vidcaudio_hw_if, sc, &sc->device ) );
 }
 
 int vidcaudio_rate ( int rate )
