@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 1999/01/18 08:29:01 phil Exp $
+.\"	$NetBSD: install,v 1.10 2000/01/10 05:03:27 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ into RAM.
 .		Dl No \-\ load\ the Pa floppy-144.fs No at\ 0x260000
 .		Dl No \-\ run at 0x3BE020
 The boot program will ask you now for a kernel to load. Answer
-.		Ic md0a:/netbsd.gz
+.		Ic md0:/netbsd.gz
 .
 .		Em Serial Line
 Provided with the distribution is source for program called
