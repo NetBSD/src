@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.23 2002/07/14 15:27:58 wiz Exp $	*/
+/*	$NetBSD: common.c,v 1.24 2002/09/18 23:27:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.23 2002/07/14 15:27:58 wiz Exp $");
+__RCSID("$NetBSD: common.c,v 1.24 2002/09/18 23:27:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -394,11 +394,11 @@ done:
 void
 delay(int n)
 {
-	struct timeval tdelay;
+	struct timespec tdelay;
 
 	if (n <= 0 || n > 10000)
 		fatal("unreasonable delay period (%d)", n);
 	tdelay.tv_sec = n / 1000;
-	tdelay.tv_usec = n * 1000 % 1000000;
-	(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tdelay);
+	tdelay.tv_nsec = (n % 1000) * 1000000;
+	nanosleep(&tdelay, NULL);
 }
