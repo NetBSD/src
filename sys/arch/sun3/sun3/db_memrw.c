@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 1994/11/21 21:38:25 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 1994/11/28 19:17:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,6 +45,50 @@
 #include <machine/pte.h>
 
 /*
+ * Read one byte somewhere in the kernel.
+ * It does not matter if this is slow. -gwr
+ */
+static char
+db_read_data(src)
+	char *src;
+{
+	int		oldpte;
+	vm_offset_t pgva;
+	int ch;
+
+	pgva = sun3_trunc_page((long)src);
+	oldpte = get_pte(pgva);
+
+	if ((oldpte & PG_VALID) == 0) {
+		db_printf(" address 0x%x not a valid page\n", src);
+		return 0;
+	}
+	return (*src);
+}
+
+/*
+ * Read bytes from kernel address space for debugger.
+ * It does not matter if this is slow. -gwr
+ */
+void
+db_read_bytes(addr, size, data)
+	vm_offset_t	addr;
+	register int	size;
+	register char	*data;
+{
+	char	*src, *limit;
+
+	src = (char *)addr;
+	limit = src + size;
+
+	while (src < limit) {
+		*data = db_read_data(src);
+		data++;
+		src++;
+	}
+}
+
+/*
  * Write one byte somewhere in kernel text.
  * It does not matter if this is slow. -gwr
  */
@@ -73,6 +117,28 @@ db_write_text(dst, ch)
 }
 
 /*
+ * Write one byte somewhere outside kernel text.
+ * It does not matter if this is slow. -gwr
+ */
+static void
+db_write_data(dst, ch)
+	char *dst;
+	int ch;
+{
+	int		oldpte;
+	vm_offset_t pgva;
+
+	pgva = sun3_trunc_page((long)dst);
+	oldpte = get_pte(pgva);
+
+	if ((oldpte & (PG_VALID | PG_WRITE)) == 0) {
+		db_printf(" address 0x%x not a valid page\n", dst);
+		return;
+	}
+	*dst = (char) ch;
+}
+
+/*
  * Write bytes to kernel address space for debugger.
  */
 void
@@ -81,8 +147,8 @@ db_write_bytes(addr, size, data)
 	int	size;
 	char	*data;
 {
-	char	*dst, *limit;
 	extern char	start[], etext[] ;
+	char	*dst, *limit;
 
 	dst = (char *)addr;
 	limit = dst + size;
@@ -91,7 +157,7 @@ db_write_bytes(addr, size, data)
 		if ((dst >= start) && (dst < etext))
 			db_write_text(dst, *data);
 		else
-			*dst = *data;
+			db_write_data(dst, *data);
 		dst++;
 		data++;
 	}
