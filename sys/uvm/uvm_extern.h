@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.6 1999/08/02 23:16:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.23.2.1.2.7 1999/08/09 00:05:55 chs Exp $	*/
 
 /*
  *
@@ -47,6 +47,13 @@
  *
  * NOTE: vm system calls are prototyped in syscallargs.h
  */
+
+/*
+ * types
+ */
+
+/* byte offset within a uvm_object */
+typedef off_t		voff_t;
 
 /*
  * defines
@@ -301,14 +308,14 @@ void			uao_reference __P((struct uvm_object *));
 void			uao_reference_locked __P((struct uvm_object *));
 
 /* uvm_bio.c */
-void *			ubc_alloc __P((struct uvm_object *, vaddr_t, vsize_t *,
+void *			ubc_alloc __P((struct uvm_object *, voff_t, vsize_t *,
 				       int));
 void			ubc_release __P((void *, vsize_t));
-void			ubc_flush __P((struct uvm_object *, vaddr_t, vaddr_t));
+void			ubc_flush __P((struct uvm_object *, voff_t, voff_t));
 
 /* uvm_fault.c */
-int			uvm_fault __P((vm_map_t, vaddr_t, 
-				vm_fault_t, vm_prot_t));
+int			uvm_fault __P((vm_map_t, vaddr_t, vm_fault_t,
+				       vm_prot_t));
 				/* handle a page fault */
 
 /* uvm_glue.c */
@@ -359,7 +366,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 
 /* uvm_map.c */
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
-				struct uvm_object *, vaddr_t, uvm_flag_t));
+				struct uvm_object *, voff_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t, int));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
@@ -386,16 +393,16 @@ int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, vaddr_t, vsize_t));
+				caddr_t, voff_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
-				vaddr_t, struct vm_anon *, int, int, int));
+				voff_t, struct vm_anon *, int, int, int));
 #define	uvm_pagealloc(obj, off, anon, flags) \
 	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
 				UVM_PGA_STRAT_NORMAL, 0)
 void			uvm_pagerealloc __P((struct vm_page *, 
-					     struct uvm_object *, vaddr_t));
+					     struct uvm_object *, voff_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
 void			uvm_page_physload __P((vaddr_t, vaddr_t,
 					       vaddr_t, vaddr_t, int));
@@ -428,11 +435,11 @@ int			uvm_grow __P((struct proc *, vaddr_t));
 int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
 
 /* uvm_vnode.c */
-void			uvm_vnp_setsize __P((struct vnode *, u_quad_t));
+void			uvm_vnp_setsize __P((struct vnode *, voff_t));
 void			uvm_vnp_sync __P((struct mount *));
 void 			uvm_vnp_terminate __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
-void			uvn_findpages __P((struct uvm_object *, vaddr_t,
+void			uvn_findpages __P((struct uvm_object *, voff_t,
 					   int *, struct vm_page **, int));
 void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
 void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t));

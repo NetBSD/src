@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.7.4.6 1999/07/04 02:09:03 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.7.4.7 1999/08/09 00:05:57 chs Exp $	*/
 
 /*
  *
@@ -53,7 +53,7 @@ struct uvm_vnode {
 	struct uvm_object u_obj;	/* the actual VM object */
 	int u_flags;			/* flags */
 	int u_nio;			/* number of running I/O requests */
-	vsize_t u_size;			/* size of object */
+	voff_t u_size;			/* size of object */
 
 	/* the following entry is locked by uvn_wl_lock */
 	LIST_ENTRY(uvm_vnode) u_wlist;	/* list of writeable vnode objects */

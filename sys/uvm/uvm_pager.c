@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16.4.6 1999/08/02 23:37:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16.4.7 1999/08/09 00:05:56 chs Exp $	*/
 
 /*
  *
@@ -246,10 +246,10 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	struct uvm_object *uobj;	/* IN */
 	struct vm_page **pps, *center;  /* IN/OUT, IN */
 	int *npages, flags;		/* IN/OUT, IN */
-	vaddr_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
+	voff_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
 {
 	struct vm_page **ppsp, *pclust;
-	vaddr_t lo, hi, curoff;
+	voff_t lo, hi, curoff;
 	int center_idx, forward, incr;
 	UVMHIST_FUNC("uvm_mk_pcluster"); UVMHIST_CALLED(maphist);
 
@@ -274,8 +274,9 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 	}
 	if ((hi - lo) >> PAGE_SHIFT > *npages) { /* pps too small, bail out! */
 #ifdef DIAGNOSTIC
-		printf("uvm_mk_pcluster uobj %p npages %d lo 0x%lx hi 0x%lx flags 0x%x\n",
-		       uobj, *npages, lo, hi, flags);
+		printf("uvm_mk_pcluster uobj %p npages %d lo 0x%llx hi 0x%llx "
+		       "flags 0x%x\n", uobj, *npages, (long long)lo,
+		       (long long)hi, flags);
 #endif
 		pps[0] = center;
 		*npages = 1;
@@ -377,7 +378,7 @@ uvm_shareprot(entry, prot)
 {
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct vm_page *pp;
-	vaddr_t start, stop;
+	voff_t start, stop;
 	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
 
 	if (UVM_ET_ISSUBMAP(entry)) 
@@ -443,7 +444,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
 	int *npages;			/* IN/OUT */
 	int flags;			/* IN */
-	vaddr_t start, stop;		/* IN, IN */
+	voff_t start, stop;		/* IN, IN */
 {
 	int result;
 	daddr_t swblk;

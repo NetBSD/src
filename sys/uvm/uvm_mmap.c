@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19.4.5 1999/08/02 23:16:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19.4.6 1999/08/09 00:05:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -342,18 +342,6 @@ sys_mmap(p, v, retval)
 		flags = (flags & ~MAP_COPY) | MAP_PRIVATE;
 	if ((flags & (MAP_SHARED|MAP_PRIVATE)) == (MAP_SHARED|MAP_PRIVATE))
 		return (EINVAL);
-
-	/*
-	 * make sure that the newsize fits within a vaddr_t
-	 * XXX: need to revise addressing data types
-	 */
-	if (pos + size > (vaddr_t)-PAGE_SIZE) {
-#ifdef DEBUG
-		printf("mmap: pos=%qx, size=%lx too big\n", (long long)pos,
-		       (long)size);
-#endif
-		return (EINVAL);
-	}
 
 	/*
 	 * align file position and save offset.  adjust size.
@@ -1112,7 +1100,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	vm_prot_t prot, maxprot;
 	int flags;
 	caddr_t handle;		/* XXX: VNODE? */
-	vaddr_t foff;
+	voff_t foff;
 	vsize_t locklimit;
 {
 	struct uvm_object *uobj;
