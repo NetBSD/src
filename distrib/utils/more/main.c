@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2003/10/13 14:34:25 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2004/09/01 01:46:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -42,7 +42,7 @@ __COPYRIGHT(\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 2003/10/13 14:34:25 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2004/09/01 01:46:56 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ int	is_tty;
 char	*current_file, *previous_file, *current_name, *next_name;
 off_t	prev_pos;
 int	any_display;
-int	scroll;
+int	scroll_lines;
 int	ac;
 char	**av;
 int	curr_ac;
