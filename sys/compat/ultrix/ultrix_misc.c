@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: ultrix_misc.c,v 1.2 1994/06/15 05:18:10 glass Exp $
+ * $Id: ultrix_misc.c,v 1.3 1994/06/22 03:37:17 glass Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <ufs/dir.h>
+#include <sys/dir.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -81,6 +81,10 @@
 #include <netinet/in.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
 
 #include <vm/vm.h>
 
@@ -301,6 +305,22 @@ sun_mount(p, uap, retval)
 	return (mount(p, uap, retval));
 }
 
+#if defined(NFSCLIENT)
+async_daemon(p, uap, retval)
+      struct proc *p;
+      void *uap;
+      int *retval;
+{
+      struct nfssvc_args {
+              int flag;
+              caddr_t argp;
+      } args;
+
+      args.flag = NFSSVC_BIOD;
+      return nfssvc(p, &args, retval);
+}
+#endif /* NFSCLIENT */
+
 struct sun_sigpending_args {
 	int	*mask;
 };
@@ -391,7 +411,8 @@ again:
 	 * First we read into the malloc'ed buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
-	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, NULL, 0))
+	if (error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0,
+	    0))
 		goto out;
 	inp = buf;
 	outp = uap->buf;
@@ -833,20 +854,16 @@ sun_statfs(p, uap, retval)
 	int *retval;
 {
 	register struct mount *mp;
-	register struct nameidata *ndp;
 	register struct statfs *sp;
 	int error;
 	struct nameidata nd;
 
-	ndp = &nd;
-	ndp->ni_nameiop = LOOKUP | FOLLOW;
-	ndp->ni_segflg = UIO_USERSPACE;
-	ndp->ni_dirp = uap->path;
-	if (error = namei(ndp, p))
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->path, p);
+	if (error = namei(&nd))
 		return (error);
-	mp = ndp->ni_vp->v_mount;
+	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
-	vrele(ndp->ni_vp);
+	vrele(nd.ni_vp);
 	if (error = VFS_STATFS(mp, sp, p))
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
