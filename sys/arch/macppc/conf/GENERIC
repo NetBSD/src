@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2002/04/25 15:06:31 atatat Exp $
+# $NetBSD: GENERIC,v 1.128 2002/04/25 15:21:59 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.127 $"
+#ident 		"GENERIC-$Revision: 1.128 $"
 
 maxusers	32
 
@@ -46,7 +46,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -55,7 +55,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
 
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_09	# NetBSD 0.9,
@@ -349,13 +349,13 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_EVENODD=1
+# options 	RF_INCLUDE_RAID5_RS=1
+# options 	RF_INCLUDE_PARITYLOGGING=1
+# options 	RF_INCLUDE_CHAINDECLUSTER=1
+# options 	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
