@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.14 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: vif.c,v 1.15 2003/05/17 19:19:50 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -938,7 +938,7 @@ info_version(char *p, size_t l)
     /* skip over length */
     p[2] = 0;	/* zero out */
     p[3] = 0;	/* reserved fields */
-    strlcpy(p + 4, versionstring, l - 4);	/* XXX strncpy!!! */
+    strlcpy(p + 4, versionstring, l - 4);
 
     len = strlen(versionstring);
     return ((len + 3) / 4);
