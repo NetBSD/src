@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.1 1999/07/23 03:55:27 mcr Exp $
+.\"	$NetBSD: getopt_long.3,v 1.2 2000/04/02 20:30:07 christos Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,132 +33,27 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd November 19, 1998
+.Dd April 1, 2000
 .Dt GETOPT_LONG 3
-.Os NetBSD 4.4
+.Os 
 .Sh NAME
 .Nm getopt_long
 .Nd get long options from command line argument list
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
 .Fd #include <getopt.h>
-.Vt struct option {
-.Vt	char *	name;
-.Vt	int  has_arg;
-.Vt	int * flag;
-.Vt	int val;
-.Vt };
-.Vt extern char *optarg;
-.Vt extern int   optind;
-.Vt extern int   optopt;
-.Vt extern int   opterr;
-.Vt extern int   optreset;
 .Ft int
-.Fn getopt "int argc" "char * const *argv" "const char *optstring"
-.Ft int
-.Fn getopt_long "int argc" "char * const *argv" "const char *optstring"
-"struct options *long options" "int *index"
+.Fn getopt_long "int argc" "char * const *argv" "const char *optstring" "struct options *long options" "int *index"
 .Sh DESCRIPTION
 The
-.Fn getopt
-function incrementally parses a command line argument list
-.Fa argv
-and returns the next
-.Em known
-option character.
-An option character is
-.Em known
-if it has been specified in the string of accepted option characters,
-.Fa optstring .
-.Pp
-The 
 .Fn getopt_long
 function is similar to 
-.Fn getopt
+.Xr getopt 3
 but it accepts options in two forms: words and characters. The
 .Fn getopt_long
 function provides a superset of of the functionality of 
-.Fn getopt
-The additional functionality is described in the section GETOPT_LONG.
-.Pp
-The option string
-.Fa optstring
-may contain the following elements: individual characters, and
-characters followed by a colon to indicate an option argument
-is to follow.
-For example, an option string
-.Li "\&""x""
-recognizes an option
-.Dq Fl x ,
-and an option string
-.Li "\&""x:""
-recognizes an option and argument
-.Dq Fl x Ar argument .
-It does not matter to
-.Fn getopt
-if a following argument has leading white space.
-.Pp
-On return from
-.Fn getopt ,
-.Va optarg
-points to an option argument, if it is anticipated,
-and the variable
-.Va optind
-contains the index to the next
-.Fa argv
-argument for a subsequent call
-to
-.Fn getopt .
-The variable
-.Va optopt
-saves the last
-.Em known
-option character returned by
-.Fn getopt .
-.Pp
-The variable
-.Va opterr
-and
-.Va optind
-are both initialized to 1.
-The
-.Va optind
-variable may be set to another value before a set of calls to
-.Fn getopt
-in order to skip over more or less argv entries.
-.Pp
-In order to use
-.Fn getopt
-to evaluate multiple sets of arguments, or to evaluate a single set of
-arguments multiple times,
-the variable
-.Va optreset
-must be set to 1 before the second and each additional set of calls to
-.Fn getopt ,
-and the variable
-.Va optind
-must be reinitialized.
-.Pp
-The
-.Fn getopt
-function
-returns \-1
-when the argument list is exhausted, or a non-recognized
-option is encountered.
-The interpretation of options in the argument list may be cancelled
-by the option
-.Ql --
-(double dash) which causes
-.Fn getopt
-to signal the end of argument processing and returns \-1.
-When all options have been processed (i.e., up to the first non-option
-argument),
-.Fn getopt
-returns \-1.
-.Sh GETOPT_LONG
-.Pp
+.Xr getopt 3 .
 .Fn getopt_long
 can be used in two ways. In the first way, every long option understood
 by the program has a coresponding short option, and the option
@@ -166,7 +61,7 @@ structure is only used to translate from long option to short
 options. When used in this fashion, 
 .Fn getopt_long
 behaves identically to 
-.Fn getopt.
+.Xr getopt 3 .
 This is good way to add long option processing to an existing program
 with the minimum of rewriting.
 .Pp
@@ -186,12 +81,12 @@ When a long option is processed the call to
 .Fn getopt_long
 will return 0. For this reason, long option processing without
 shortcuts are not backwards compatible with 
-.Fn getopt.
+.Xr getopt 3 .
 .Pp
 It is possible to combine these methods, providing for long options
 processing with short option equivalents for some options. Less
 frequently used options would be processed as long options only.
-.Sh USAGE OF GETOPT_LONG
+.Sh USAGE
 .Pp
 The 
 .Fn getopt_long
@@ -199,10 +94,10 @@ call requires a structure to be initialized describing the long
 options. The structure is:
 .Bd -literal
 struct option {
-    char *	name;
-    int  has_arg;
-    int * flag;
-    int val;
+	char *name;
+	int has_arg;
+	int *flag;
+	int val;
 };
 .Ed
 .Pp
@@ -212,13 +107,13 @@ field should contain the option name without the leading double dash.
 .Pp
 The 
 .Fa has_arg
-field should be one of
-.Bl -tag
-.It no_argument
+field should be one of:
+.Bl -tag -width "optional_argument"
+.It Li no_argument
 no argument to the option is expect.
-.It required_argument
+.It Li required_argument
 an argument to the option is required.
-.It optional_argument
+.It Li optional_argument
 an argument to the option may be presented.
 .El
 .Pp
@@ -237,69 +132,8 @@ to NULL and setting
 .Fa val
 to the corresponding short option will make this function act just
 like
-.Fa getopt.
-.Sh DIAGNOSTICS
-If the
-.Fn getopt
-function encounters a character not found in the string
-.Fa optstring
-or detects
-a missing option argument it writes an error message to
-.Va stderr
-and returns
-.Ql ? .
-Setting
-.Va opterr
-to a zero will disable these error messages.
-If
-.Va optstring
-has a leading
-.Ql \&:
-then a missing option argument causes a
-.Ql \&:
-to be returned in addition to suppressing any error messages.
-.Pp
-Option arguments are allowed to begin with
-.Dq Li \- ;
-this is reasonable but
-reduces the amount of error checking possible.
-.Sh GETOPT_LONG
-.Sh EXTENSIONS
-The
-.Va optreset
-variable was added to make it possible to call the
-.Fn getopt
-function multiple times.
-This is an extension to the
-.St -p1003.2
-specification.
+.Xr getopt 3 .
 .Sh EXAMPLE
-.Bd -literal -compact
-extern char *optarg;
-extern int optind;
-int bflag, ch, fd;
-
-bflag = 0;
-while ((ch = getopt(argc, argv, "bf:")) != -1)
-	switch(ch) {
-	case 'b':
-		bflag = 1;
-		break;
-	case 'f':
-		if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
-			(void)fprintf(stderr,
-			    "myname: %s: %s\en", optarg, strerror(errno));
-			exit(1);
-		}
-		break;
-	case '?':
-	default:
-		usage();
-}
-argc -= optind;
-argv += optind;
-.Ed
-.Sh LONG EXAMPLE 
 .Bd -literal -compact
 extern char *optarg;
 extern int optind;
@@ -307,12 +141,11 @@ int bflag, ch, fd;
 int daggerset;
 
 /* options descriptor */
-static struct option longopts[] =
-{
-  {"buffy",       no_argument,       0, 'b'},
-  {"floride",     required_argument, 0, 'f'},
-  {"daggerset",   no_argument, &daggerset, 1},
-  {0, 		   0,                0, 0}
+static struct option longopts[] = {
+	{ "buffy",	no_argument,		0, 		'b' },
+	{ "floride",	required_argument,	0, 	       	'f' },
+	{ "daggerset",	no_argument,		&daggerset,	1 },
+	{ 0, 		0,			0, 		0 }
 };
 
 bflag = 0;
@@ -343,77 +176,105 @@ argv += optind;
 .Ed
 .Sh HISTORY
 The
-.Fn getopt
-function appeared
-.Bx 4.3 .
-The 
 .Fn getopt_long
-function first appeared in GNU libiberty. This implementation was
-imported to NetBSD from a Kerberos distribution.
+function first appeared in GNU libiberty. The first NetBSD implementation
+appeared in 1.5.
+.Sh IMPLEMENTATION DIFFERENCES
+.Pp
+This section describes difference between the GNU implementation
+found in glibc-2.1.3:
+.Bl -tag -width "xxx"
+.It Li o
+handling of - as first char of option string in presence of
+environment variable POSIXLY_CORRECT:
+.Bl -tag -width "NetBSD"
+.It Li GNU
+ignores POSIXLY_CORRECT and returns non-options as
+arguments to option '\1'.
+.It Li NetBSD
+honors POSIXLY_CORRECT and stop at the first non-option.
+.El
+.It Li o
+handling of :: in options string in presence of POSIXLY_CORRECT:
+.Bl -tag -width "NetBSD"
+.It Li Both
+GNU and NetBSD ignore POSIXLY_CORRECT here and take :: to
+mean the preceding option takes an optional argument.
+.El
+.It Li o
+return value in case of missing argument if first character
+(after + or -) in option string is not ':':
+.Bl -tag -width "NetBSD"
+.It Li GNU
+returns '?'
+.It NetBSD
+returns ':' (since NetBSD's getopt does).
+.El
+.It Li o
+handling of --a in getopt:
+.Bl -tag -width "NetBSD"
+.It Li GNU
+parses this as option '-', option 'a'.
+.It Li NetBSD
+parses this as '--', and return -1 (ignoring the a).  (Because 
+the original getopt does.)
+.El
+.It Li o
+setting of optopt for long options with flag != NULL:
+.Bl -tag -width "NetBSD"
+.It Li GNU
+sets optopt to val.
+.It Li NetBSD
+sets optopt to 0 (since val would never be returned).
+.El
+.It Li o
+handling of -W with W; in option string in getopt (not getopt_long):
+.Bl -tag -width "NetBSD"
+.It Li GNU
+causes a segfault.
+.It Li NetBSD
+returns -1, with optind pointing past the argument of -W 
+(as if `-W arg' were `--arg', and thus '--' had been found).
+.\" How should we treat W; in the option string when called via
+.\" getopt?  Ignore the ';' or treat it as a ':'? Issue a warning?
+.El
+.It Li o
+setting of optarg for long options without an argument that are
+invoked via -W (W; in option string):
+.Bl -tag -width "NetBSD"
+.It Li GNU
+sets optarg to the option name (the argument of -W).
+.It Li NetBSD
+sets optarg to NULL (the argument of the long option).
+.El
+.It Li o
+handling of -W with an argument that is not (a prefix to) a known
+long option (W; in option string):
+.Bl -tag -width "NetBSD"
+.It Li GNU
+returns -W with optarg set to the unknown option.
+.It Li NetBSD
+treats this as an error (unknown option) and return '?' with
+optopt set to 0 and optarg set to NULL (as GNU's man page
+documents).
+.El
+.It Li o
+The error messages are different.
+.It Li o
+NetBSD does not permute the argument vector at the same points in
+the calling sequence as GNU does.  The aspects normally used by
+the caller (ordering after -1 is returned, value of optind relative
+to current positions) are the same, though.  (We do fewer variable
+swaps.)
+.El
 .Sh BUGS
-The
-.Fn getopt
-function was once specified to return
-.Dv EOF
-instead of \-1.
-This was changed by
-.St -p1003.2-92
-to decouple
-.Fn getopt
-from
-.Pa <stdio.h> .
-.Pp
-A single dash
-.Dq Li -
-may be specified as an character in
-.Fa optstring ,
-however it should
-.Em never
-have an argument associated with it.
-This allows
-.Fn getopt
-to be used with programs that expect
-.Dq Li -
-as an option flag.
-This practice is wrong, and should not be used in any current development.
-It is provided for backward compatibility
-.Em only .
-By default, a single dash causes
-.Fn getopt
-to return \-1.
-This is, we believe, compatible with System V.
-.Pp
-It is also possible to handle digits as option letters.
-This allows
-.Fn getopt
-to be used with programs that expect a number
-.Pq Dq Li \&-\&3
-as an option.
-This practice is wrong, and should not be used in any current development.
-It is provided for backward compatibility
-.Em only .
-The following code fragment works in most cases.
-.Bd -literal -offset indent
-int length;
-char *p;
-
-while ((c = getopt(argc, argv, "0123456789")) != -1)
-	switch (c) {
-	case '0': case '1': case '2': case '3': case '4':
-	case '5': case '6': case '7': case '8': case '9':
-		p = argv[optind - 1];
-		if (p[0] == '-' && p[1] == ch && !p[2])
-			length = atoi(++p);
-		else
-			length = atoi(argv[optind] + 1);
-		break;
-	}
-}
-.Ed
-.Pp
 The 
 .Fa optional_argument
 always eats the following argument unless the argument is included via
 the 
 .Em --option=argument 
 notation.
+.Pp
+The implementation, can completelely replace
+.Xr getopt 3 ,
+but right now we are using separate code.
