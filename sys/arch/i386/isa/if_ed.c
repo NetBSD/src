@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.32 1994/02/20 04:05:26 mycroft Exp $
+ *	$Id: if_ed.c,v 1.33 1994/02/25 23:09:26 hpeyerl Exp $
  */
 
 #include "ed.h"
@@ -59,11 +59,6 @@
 #include <i386/isa/icu.h>
 #include <i386/isa/if_edreg.h>
 
-/* for backwards compatibility */
-#ifndef IFF_ALTPHYS
-#define IFF_ALTPHYS IFF_LINK0
-#endif
- 
 /*
  * ed_softc: per line info and status
  */
@@ -1015,11 +1010,11 @@ ed_attach(isa_dev)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	/*
-	 * Set default state for ALTPHYS flag (used to disable the tranceiver
+	 * Set default state for LINK0 flag (used to disable the tranceiver
 	 * for AUI operation), based on compile-time config option.
 	 */
 	if (isa_dev->id_flags & ED_FLAGS_DISABLE_TRANCEIVER)
-		ifp->if_flags |= IFF_ALTPHYS;
+		ifp->if_flags |= IFF_LINK0;
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -1057,7 +1052,7 @@ ed_attach(isa_dev)
 	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
 
 	printf("%s\n", ((sc->vendor == ED_VENDOR_3COM) &&
-	    (ifp->if_flags & IFF_ALTPHYS)) ? " tranceiver disabled" : "");
+	    (ifp->if_flags & IFF_LINK0)) ? " tranceiver disabled" : "");
 
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -1236,7 +1231,7 @@ ed_init(sc)
 	 * (there is no settable hardware default).
 	 */
 	if (sc->vendor == ED_VENDOR_3COM) {
-		if (ifp->if_flags & IFF_ALTPHYS)
+		if (ifp->if_flags & IFF_LINK0)
 			outb(sc->asic_addr + ED_3COM_CR, 0);
 		else
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
