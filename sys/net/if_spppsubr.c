@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.7 2000/03/23 07:03:25 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.8 2000/04/12 10:51:15 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -135,6 +135,7 @@
 #define PPP_PAP		0xc023		/* Password Authentication Protocol */
 #define PPP_CHAP	0xc223		/* Challenge-Handshake Auth Protocol */
 #define PPP_IPCP	0x8021		/* Internet Protocol Control Protocol */
+#define PPP_IPV6CP	0x8057		/* IPv6 Control Protocol */
 
 #define CONF_REQ	1		/* PPP configure request */
 #define CONF_ACK	2		/* PPP configure acknowledge */
@@ -509,6 +510,19 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif
+#ifdef INET6
+		case PPP_IPV6CP:
+			/* TBD */
+			m_freem (m);
+			return;
+		case PPP_IPV6:
+			/* XXX should check IPv6CP */
+			if (sp->pp_phase == PHASE_NETWORK) {
+				schednetisr (NETISR_IPV6);
+				inq = &ip6intrq;
+			}
+			break;
+#endif
 #ifdef IPX
 		case PPP_IPX:
 			/* IPX IPXCP not implemented yet */
@@ -562,6 +576,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		case ETHERTYPE_IP:
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
+			break;
+#endif
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			schednetisr (NETISR_IPV6);
+			inq = &ip6intrq;
 			break;
 #endif
 #ifdef IPX
@@ -751,7 +771,8 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
 			h->protocol = htons(PPP_IPV6);
-			if (sp->state[IDX_IPCP] != STATE_OPENED)
+			/* XXX should check IPv6CP */
+			if (sp->pp_phase != PHASE_NETWORK)
 				rv = ENETDOWN;
 		}
 		break;
