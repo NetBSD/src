@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.192 2004/04/14 18:07:52 ragge Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.193 2004/04/17 23:35:37 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.192 2004/04/14 18:07:52 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.193 2004/04/17 23:35:37 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1766,11 +1766,13 @@ after_listen:
 		if (todrop > tlen ||
 		    (todrop == tlen && (tiflags & TH_FIN) == 0)) {
 			/*
-			 * Any valid FIN must be to the left of the window.
-			 * At this point the FIN must be a duplicate or
-			 * out of sequence; drop it.
+			 * Any valid FIN or RST must be to the left of the
+			 * window.  At this point the FIN or RST must be a
+			 * duplicate or out of sequence; drop it.
 			 */
-			tiflags &= ~TH_FIN;
+			if (tiflags & TH_RST)
+				goto drop;
+			tiflags &= ~(TH_FIN|TH_RST);
 			/*
 			 * Send an ACK to resynchronize and drop any data.
 			 * But keep on processing for RST or ACK.
@@ -1813,6 +1815,12 @@ after_listen:
 	if (todrop > 0) {
 		tcpstat.tcps_rcvpackafterwin++;
 		if (todrop >= tlen) {
+			/*
+			 * The segment actually starts after the window.
+			 * th->th_seq + tlen - tp->rcv_nxt - tp->rcv_wnd >= tlen
+			 * th->th_seq - tp->rcv_nxt - tp->rcv_wnd >= 0
+			 * th->th_seq >= tp->rcv_nxt + tp->rcv_wnd
+			 */
 			tcpstat.tcps_rcvbyteafterwin += tlen;
 			/*
 			 * If a new connection request is received
@@ -1840,7 +1848,7 @@ after_listen:
 			 * window edge, and have to drop data and PUSH from
 			 * incoming segments.  Continue processing, but
 			 * remember to ack.  Otherwise, drop segment
-			 * and ack.
+			 * and (if not RST) ack.
 			 */
 			if (tp->rcv_wnd == 0 && th->th_seq == tp->rcv_nxt) {
 				tp->t_flags |= TF_ACKNOW;
@@ -1901,13 +1909,15 @@ after_listen:
 	}
 
 	/*
-	 * If a SYN is in the window, then this is an
-	 * error and we send an RST and drop the connection.
+	 * Since we've covered the SYN-SENT and SYN-RECEIVED states above
+	 * we must be in a synchronized state.  RFC791 states (under RST
+	 * generation) that any unacceptable segment (an out-of-order SYN
+	 * qualifies) received in a synchronized state must elicit only an
+	 * empty acknowledgment segment ... and the connection remains in
+	 * the same state.
 	 */
-	if (tiflags & TH_SYN) {
-		tp = tcp_drop(tp, ECONNRESET);
-		goto dropwithreset;
-	}
+	if (tiflags & TH_SYN)
+		goto dropafterack;
 
 	/*
 	 * If the ACK bit is off we drop the segment and return.
