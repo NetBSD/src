@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.1 2001/11/26 03:45:46 thorpej Exp $
+# $NetBSD: md.netwinder,v 1.2 2001/11/26 20:53:07 thorpej Exp $
 ./usr/include/netwinder			comp-c-include
 ./usr/include/netwinder/_G_config.h	comp-c-include
 ./usr/include/netwinder/ansi.h		comp-c-include
@@ -34,7 +34,6 @@
 ./usr/include/netwinder/pmap.h		comp-c-include
 ./usr/include/netwinder/proc.h		comp-c-include
 ./usr/include/netwinder/profile.h	comp-c-include
-./usr/include/netwinder/psl.h		comp-c-include
 ./usr/include/netwinder/ptrace.h	comp-c-include
 ./usr/include/netwinder/reg.h		comp-c-include
 ./usr/include/netwinder/setjmp.h	comp-c-include
