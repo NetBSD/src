@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.9 2000/07/10 08:11:31 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.10 2000/07/13 06:15:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.9 2000/07/10 08:11:31 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.10 2000/07/13 06:15:03 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.9 2000/07/10 08:11:31 tron Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fts.h>
 #include <locale.h>
 #include <paths.h>
@@ -456,9 +457,16 @@ nroff(gzFile *in)
 {
 	char tempname[MAXPATHLEN], buffer[65536], *data;
 	int tempfd, bytes, pipefd[2], status;
+	static int devnull = -1;
 	pid_t child;
 
 	if (gzrewind(in) < 0) {
+		perror(__progname);
+		return NULL;
+	}
+
+	if ((devnull < 0) &&
+	    ((devnull = open(_PATH_DEVNULL, O_WRONLY, 0)) < 0)) {
 		perror(__progname);
 		return NULL;
 	}
@@ -495,11 +503,19 @@ nroff(gzFile *in)
 		/* NOTREACHED */
 	case 0:
 		(void)close(pipefd[0]);
+		if (tempfd != STDIN_FILENO) {
+			(void)dup2(tempfd, STDIN_FILENO);
+			(void)close(tempfd);
+		}
 		if (pipefd[1] != STDOUT_FILENO) {
 			(void)dup2(pipefd[1], STDOUT_FILENO);
 			(void)close(pipefd[1]);
 		}
-		(void)execlp("nroff", "nroff", "-mandoc", tempname, NULL);
+		if (devnull != STDERR_FILENO) {
+			(void)dup2(devnull, STDERR_FILENO);
+			(void)close(devnull);
+		}
+		(void)execlp("nroff", "nroff", "-mandoc", NULL);
 		_exit(EXIT_FAILURE);
 	default:
 		(void)close(pipefd[1]);
