@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.19 2001/11/06 06:26:34 matt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.20 2001/11/06 08:14:27 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ stf_getsrcifa6(ifp)
 #if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
 	for (ia = ifp->if_addrlist; ia; ia = ia->ifa_next)
 #else
-	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list) {
+	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list)
 #endif
 	{
 		if (ia->ifa_addr == NULL)
