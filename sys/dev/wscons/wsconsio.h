@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.70 2004/08/26 16:48:06 jkunz Exp $ */
+/* $NetBSD: wsconsio.h,v 1.71 2005/01/31 06:07:32 joff Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -97,6 +97,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_SUN		16	/* Sun Type3/4 */
 #define	WSKBD_TYPE_SUN5		17	/* Sun Type5 */
 #define WSKBD_TYPE_SGI		18	/* SGI keyboard */
+#define WSKBD_TYPE_MATRIXKP	19	/* Matrix keypads/buttons */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
