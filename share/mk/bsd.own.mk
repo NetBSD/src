@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.160 2001/06/01 17:49:33 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.161 2001/06/02 01:53:29 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -124,6 +124,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 # GNU sources and packages sometimes see architecture names differently.
 # This table maps an architecture name to its GNU counterpart.
 # Use as so:  ${GNU_ARCH.${TARGET_ARCH}} or ${MACHINE_GNU_ARCH}
+.ifndef MACHINE_GNU_ARCH
 GNU_ARCH.alpha=alpha
 GNU_ARCH.arm26=armv2
 GNU_ARCH.arm32=arm
@@ -136,11 +137,24 @@ GNU_ARCH.powerpc=powerpc
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=sh
 GNU_ARCH.sparc=sparc
-GNU_ARCH.sparc64=sparc
+GNU_ARCH.sparc64=sparc64
 GNU_ARCH.vax=vax
+MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
+.endif
+
+# In order to identify NetBSD to GNU packages, we sometimes need
+# an "elf" tag for historically a.out platforms.
+.if ${OBJECT_FMT} == "ELF" &&
+    (${MACHINE_ARCH} == "i386" || \
+     ${MACHINE_ARCH} == "m68k" || \
+     ${MACHINE_ARCH} == "sparc")
+MACHINE_GNU_PLATFORM?= netbsdelf
+.else
+MACHINE_GNU_PLATFORM?= netbsd
+.endif
 
 # CPU model, derived from MACHINE_ARCH
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/}
+MACHINE_CPU?=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[bl]/sh3/}
 
 .if ${MACHINE_ARCH} == "mips"
 .BEGIN:
@@ -151,12 +165,6 @@ MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm26/arm/:S/arm32/arm/:C/sh3e[b
 .BEGIN:
 	@echo Must set MACHINE_ARCH to one of sh3eb or sh3el
 	@false
-.endif
-
-.if ${MACHINE_ARCH} == "sparc64"
-MACHINE_GNU_ARCH=${MACHINE_ARCH}
-.else
-MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 .endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
