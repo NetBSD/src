@@ -34,7 +34,7 @@
 #ifndef lint
 char copyright[] =
 "Copyright (c) 1989,1990,1991,1992 William F. Jolitz. All rights reserved.\n\
-Copyright (c) 1980, 1987, 1988, 1991 The Regents of the University\n\
+Copyright (c) 1980,1987,1988,1991 The Regents of the University\n\
 of California.  All rights reserved.\n";
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char sccsid[] = "@(#)login.c	5.73 (Berkeley) 6/29/91";
 #include <stdio.h>
 #include <string.h>
 #include <tzfile.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
@@ -103,7 +104,6 @@ main(argc, argv)
 	char localhost[MAXHOSTNAMELEN];
 	char *ctime(), *ttyname(), *stypeof(), *crypt(), *getpass();
 	time_t time();
-	off_t lseek();
 	void timedout();
 
 	(void)signal(SIGALRM, timedout);
