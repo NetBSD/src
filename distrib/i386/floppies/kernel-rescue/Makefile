@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/09/28 13:05:37 fvdl Exp $
+#	$NetBSD: Makefile,v 1.3 2001/06/24 12:09:04 veego Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -39,7 +39,8 @@ all: ${KERNELS}
 release:
 
 clean cleandir distclean:
-	rm -f *.core ${KERNELS}
+	rm -f *.core ${KERNELS} netbsd.INSTALL_TINY.symbols \
+		netbsd.INSTALL_SMALL.symbols
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
