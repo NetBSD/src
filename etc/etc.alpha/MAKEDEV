@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.28 1997/11/26 03:09:23 tv Exp $
+#	$NetBSD: MAKEDEV,v 1.29 1998/04/16 04:38:11 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -74,6 +74,7 @@
 #	mouse	mouse (provides events, for X11)
 #	random	Random number generator
 #	satlink* PlanetConnect satellite receiver driver
+#	speaker	PC speaker (IBM BASIC playstring emulation)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown
@@ -91,7 +92,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
 	sh $0 kbd mouse lpa0 lpt0 audio ipl wd0 wd1 fd0 fd1
-	sh $0 random satlink0 local
+	sh $0 random satlink0 speaker local
 	;;
 
 minimal)
@@ -331,6 +332,12 @@ satlink*)
 	rm -f satlink$unit
 	mknod satlink$unit c 38 $unit
 	chmod 444 satlink$unit
+	;;
+
+speaker)
+	rm -f speaker
+	mknod speaker c 41 0
+	chown root.wheel speaker
 	;;
 
 random)
