@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_zone.c,v 1.2 2003/06/27 17:53:31 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_zone.c,v 1.3 2003/07/01 08:33:06 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_zone.c,v 1.2 2003/06/27 17:53:31 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_mapper_zone.c,v 1.3 2003/07/01 08:33:06 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -329,6 +329,12 @@ _citrus_mapper_zone_mapper_init(struct _citrus_mapper_area *__restrict ma,
 	mz = malloc(sizeof(*mz));
 	if (mz == NULL)
 		return errno;
+
+	mz->mz_col.z_begin = mz->mz_col.z_end = 0;
+	mz->mz_row.z_begin = mz->mz_row.z_end = 0;
+	mz->mz_col_bits = 0;
+	mz->mz_row_offset = 0;
+	mz->mz_col_offset = 0;
 
 	_region_init(&r, (void *)var, lenvar);
 	_memstream_bind(&ms, &r);
