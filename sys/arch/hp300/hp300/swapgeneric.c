@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.10 1995/09/02 23:36:10 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.11 1995/09/03 00:07:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -164,10 +164,8 @@ gotit:
 		goto found;
 	}
 	for (gc = genericconf; gc->gc_driver; gc++) {
-#ifdef NFSCLIENT
 		if (bootdev == 0 && gc->gc_root != NODEV)
 			continue;
-#endif /* NFSCLIENT */
 		for (hd = hp_dinit; hd->hp_driver; hd++) {
 			if (hd->hp_alive == 0)
 				continue;
