@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.109 2000/05/26 21:20:33 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.110 2000/05/28 05:49:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -306,8 +306,6 @@ void	cpu_startup __P((void));
 void	cpu_configure __P((void));
 void	cpu_rootconf __P((void));
 void	cpu_dumpconf __P((void));
-void	cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
-
 
 #ifdef GPROF
 void	kmstartup __P((void));
