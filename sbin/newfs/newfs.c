@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.43 2001/07/29 09:55:22 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.44 2001/07/30 07:45:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.43 2001/07/29 09:55:22 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.44 2001/07/30 07:45:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,12 +403,13 @@ main(int argc, char *argv[])
 		if (Fflag && (stat(special, &st) != -1 && !S_ISREG(st.st_mode)))
 			errx(1, "%s is not a regular file", special);
 		if (Fflag && !Nflag) {	/* creating image in a regular file */
+			if (fssize == 0)
+				errx(1, "need to specify size when using -F");
 			fso = open(special, O_RDWR | O_CREAT | O_TRUNC, 0777);
 			if (fso == -1)
 				err(1, "can't open file %s", special);
-			fsi = dup(fso);
-			if (fssize == 0)
-				errx(1, "need to specify size when using -F");
+			if ((fsi = dup(fso)) == -1)
+				err(1, "can't dup(2) image fd");
 			if (ftruncate(fso, (off_t)fssize * sectorsize) == -1)
 				err(1, "can't resize %s to %d",
 				    special, fssize);
