@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.14 1999/09/26 03:39:02 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.15 1999/09/26 04:37:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -194,6 +194,9 @@ struct tlp_pci_quirks {
 	u_int8_t	tpq_oui[3];
 };
 
+void	tlp_pci_dec_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+
 void	tlp_pci_znyx_21040_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 void	tlp_pci_smc_21040_quirks __P((struct tulip_pci_softc *,
@@ -208,6 +211,18 @@ const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
 	{ tlp_pci_smc_21040_quirks,	{ 0x00, 0x00, 0xc0 } },
 	{ tlp_pci_cogent_21040_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_accton_21040_quirks,	{ 0x00, 0x00, 0xe8 } },
+	{ NULL,				{ 0, 0, 0 } }
+};
+
+const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
+	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
+	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
+	{ NULL,				{ 0, 0, 0 } }
+};
+
+const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
+	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
+	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -574,7 +589,7 @@ tlp_pci_attach(parent, self, aux)
 		/*
 		 * Deal with any quirks this board might have.
 		 */
-		/* XXX */
+		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21041_quirks);
 		break;
 
 	case TULIP_CHIP_21140:
@@ -600,7 +615,13 @@ tlp_pci_attach(parent, self, aux)
 		/*
 		 * Deal with any quirks this board might have.
 		 */
-		/* XXX */
+		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21140_quirks);
+
+		/*
+		 * Bail out now if we can't deal with this board.
+		 */
+		if (sc->sc_mediasw == NULL)
+			goto cant_cope;
 		break;
 
 	case TULIP_CHIP_82C168:
@@ -703,6 +724,24 @@ tlp_pci_shared_intr(arg)
 		rv |= tlp_intr(&slave->sc_tulip);
 	
 	return (rv);
+}
+
+void
+tlp_pci_dec_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * This isn't really a quirk-gathering device, really.  We
+	 * just want to get the spiffy DEC board name from the SROM.
+	 */
+	strcpy(sc->sc_name, "DEC ");
+
+	if (memcmp(&sc->sc_srom[29], "DE500", 5) == 0 ||
+	    memcmp(&sc->sc_srom[29], "DE450", 5) == 0)
+		memcpy(&sc->sc_name[4], &sc->sc_srom[29], 8);
 }
 
 void
