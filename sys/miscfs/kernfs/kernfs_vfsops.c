@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.38 2001/01/22 12:17:38 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.39 2001/02/04 10:20:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -107,8 +107,13 @@ kernfs_get_rrootdev()
 		return;
 	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
 		rrootdev = makedev(cmaj, minor(rootdev));
-		if (chrtoblk(rrootdev) == rootdev)
+		if (chrtoblk(rrootdev) == rootdev) {
+#ifdef KERNFS_DIAGNOSTIC
+	printf("kernfs_mount: rootdev = %u.%u; rrootdev = %u.%u\n",
+	    major(rootdev), minor(rootdev), major(rrootdev), minor(rrootdev));
+#endif
 			return;
+		}
 	}
 	rrootdev = NODEV;
 	printf("kernfs_get_rrootdev: no raw root device\n");
