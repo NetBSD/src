@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.50.2.3 1997/11/14 02:13:00 mellon Exp $	*/
+/*	$NetBSD: zs.c,v 1.50.2.4 1998/05/08 17:17:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -105,14 +105,6 @@ int zs_major = 12;
 #else
 # error "no suitable software interrupt bit"
 #endif
-
-/*
- * The next three variables provide a shortcut to the channel state
- * structure used by zscnputc().
- */
-int zs_console_unit = -1;
-int zs_console_channel = -1;
-struct zs_chanstate *zs_conschanstate;
 
 #define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
 
@@ -279,10 +271,6 @@ zs_attach(parent, self, aux)
 		zsc_args.hwflags = zs_hwflags[zs_unit][channel];
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
-		if (zs_unit == zs_console_unit &&
-		    channel == zs_console_channel) {
-			zs_conschanstate = cs;
-		}
 
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
@@ -701,6 +689,7 @@ zs_putc(arg, c)
 	register int s, rr0;
 
 	s = splhigh();
+
 	/* Wait for transmitter to become ready. */
 	do {
 		rr0 = zc->zc_csr;
@@ -708,27 +697,17 @@ zs_putc(arg, c)
 	} while ((rr0 & ZSRR0_TX_READY) == 0);
 
 	/*
-	 * If the transmitter was busy doing regular tty I/O (ZSWR1_TIE on),
-	 * defer our output until the transmit interrupt runs. We still
-	 * sync with TX_READY so we can get by with a single-char "queue".
+	 * Send the next character.
+	 * Now you'd think that this could be followed by a ZS_DELAY()
+	 * just like all the other chip accesses, but it turns out that
+	 * the `transmit-ready' interrupt isn't de-asserted until
+	 * some period of time after the register write completes
+	 * (more than a couple instructions).  So to avoid stray
+	 * interrupts we put in the 2us delay regardless of cpu model.
 	 */
-	if (zs_conschanstate && (zs_conschanstate->cs_preg[1] & ZSWR1_TIE)) {
-		/*
-		 * If a previous held character has not yet gone out, we can
-		 * send it now;  zsxint() will field the interrupt for our
-		 * char, but doesn't care. We're running at sufficiently
-		 * high spl for this to work.
-		 */
-		if (zs_conschanstate->cs_heldchar != 0)
-			zc->zc_data = zs_conschanstate->cs_heldchar;
-		zs_conschanstate->cs_heldchar = c;
-		ZS_DELAY();
-		splx(s);
-		return;
-	}
-
 	zc->zc_data = c;
-	ZS_DELAY();
+	delay(2);
+
 	splx(s);
 }
 
@@ -1007,8 +986,6 @@ setup_console:
 		cn = &consdev_tty;
 		cn->cn_dev = makedev(zs_major, zstty_unit);
 		cn->cn_pri = CN_REMOTE;
-		zs_console_unit = zs_unit;
-		zs_console_channel = channel;
 		break;
 
 	}
