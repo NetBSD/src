@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:54:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:14 lukem Exp $
+
+.include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -10,8 +12,8 @@ LIB=		printer
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mi
 
-SRCS=		AttrValid.c Init.c Oid.c Quarks.c Util.c attributes.c \
-		mediaSizes.c
+SRCS=		Init.c Quarks.c attributes.c Util.c mediaSizes.c Oid.c \
+		AttrValid.c
 
 CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xprint \
@@ -39,6 +41,6 @@ CLEANFILES+=		${BUILDOBJS}
 realall: ${BUILDOBJS}
 
 
+.include <bsd.x11.mk>
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-.include <bsd.x11.mk>

@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 23:21:11 lukem Exp $
+
+XMODULEDIR=	${X11ROOTDIR}/lib/modules
+
+.include "../Makefile.serverlib"
 
 .include <bsd.own.mk>
 
@@ -26,5 +30,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/fb \
 		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
