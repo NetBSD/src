@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.29 1998/10/13 14:43:39 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.30 1998/11/15 17:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.29 1998/10/13 14:43:39 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.30 1998/11/15 17:19:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -146,13 +146,25 @@ static int exponent __P((char *, int, int));
 
 #endif /* FLOATING_POINT */
 
+#ifdef lint
+static __inline void *__UNCONST __P((const void *));
+static __inline void *
+__UNCONST(v)
+	const void *v;
+{
+	/* LINTED */
+	return (void *) v;
+}
+#else
+#define __UNCONST(v)	(void *)(v)
+#endif
 
 /*
  * Macros for converting digits to letters and vice versa
  */
 #define	to_digit(c)	((c) - '0')
 #define is_digit(c)	((unsigned)to_digit(c) <= 9)
-#define	to_char(n)	((n) + '0')
+#define	to_char(n)	((char)((n) + '0'))
 
 /*
  * Flags used during conversion.
@@ -226,7 +238,7 @@ vfprintf(fp, fmt0, ap)
 	 * BEWARE, these `goto error' on error, and PAD uses `n'.
 	 */
 #define	PRINT(ptr, len) { \
-	iovp->iov_base = (void *)(ptr); \
+	iovp->iov_base = __UNCONST(ptr); \
 	iovp->iov_len = (len); \
 	uio.uio_resid += (len); \
 	iovp++; \
@@ -521,7 +533,7 @@ reswitch:	switch (ch) {
 				 * NUL in the first `prec' characters, and
 				 * strlen() will go further.
 				 */
-				char *p = memchr(cp, 0, prec);
+				char *p = memchr(cp, 0, (size_t)prec);
 
 				if (p != NULL) {
 					size = p - cp;
@@ -595,7 +607,8 @@ number:			if ((dprec = prec) >= 0)
 
 				case HEX:
 					do {
-						*--bp = xdigs[_uquad & 15];
+						*--bp = xdigs[(size_t)
+						    (_uquad & 15)];
 						_uquad >>= 4;
 					} while (_uquad);
 					break;
