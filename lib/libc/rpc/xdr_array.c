@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.3 1995/04/14 19:48:32 jtc Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.4 1995/04/14 20:30:16 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_array.c,v 1.3 1995/04/14 19:48:32 jtc Exp $";
+static char *rcsid = "$NetBSD: xdr_array.c,v 1.4 1995/04/14 20:30:16 jtc Exp $";
 #endif
 
 /*
@@ -51,9 +51,6 @@ static char *rcsid = "$NetBSD: xdr_array.c,v 1.3 1995/04/14 19:48:32 jtc Exp $";
 #include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-
-#define LASTUNSIGNED	((u_int)0-1)
-
 
 /*
  * XDR an array of arbitrary elements
@@ -113,7 +110,7 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	 * now we xdr each element of array
 	 */
 	for (i = 0; (i < c) && stat; i++) {
-		stat = (*elproc)(xdrs, target, LASTUNSIGNED);
+		stat = (*elproc)(xdrs, target);
 		target += elsize;
 	}
 
@@ -150,7 +147,7 @@ xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 
 	elptr = basep;
 	for (i = 0; i < nelem; i++) {
-		if (! (*xdr_elem)(xdrs, elptr, LASTUNSIGNED)) {
+		if (! (*xdr_elem)(xdrs, elptr)) {
 			return(FALSE);
 		}
 		elptr += elemsize;
