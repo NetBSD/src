@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.28.2.3 2002/01/08 00:32:03 nathanw Exp $
+#	$NetBSD: files.usb,v 1.28.2.4 2002/01/11 22:09:05 nathanw Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -104,6 +104,12 @@ attach	uirda at uhub
 file	dev/usb/uirda.c			uirda
 
 
+# SigmaTel IrDA bridge
+device	ustir: irbus, irdasir
+attach	ustir at uhub
+file	dev/usb/ustir.c			ustir
+
+
 # Misc
 # Diamond Multimedia Rio 500
 device	urio
@@ -121,7 +127,7 @@ attach	uyap at uhub
 file	dev/usb/uyap.c			uyap
 
 # D-Link DSB-R100 FM radio
-device	udsbr: radio
+device	udsbr: radiodev
 attach	udsbr at uhub
 file	dev/usb/udsbr.c			udsbr
 
