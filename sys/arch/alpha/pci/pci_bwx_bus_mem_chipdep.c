@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.12 2000/06/26 18:19:26 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.13 2000/11/29 05:53:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ void		__C(CHIP,_mem_copy_region_8) __P((void *, bus_space_handle_t,
 
 #ifndef	CHIP_MEM_EX_STORE
 static long
-    __C(CHIP,_mem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+    __C(CHIP,_mem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 #define	CHIP_MEM_EX_STORE(v)		(__C(CHIP,_mem_ex_storage))
 #define	CHIP_MEM_EX_STORE_SIZE(v)	(sizeof __C(CHIP,_mem_ex_storage))
 #endif
@@ -304,6 +304,11 @@ __C(CHIP,_bus_mem_init)(t, v)
 	    EX_NOWAIT|EX_NOCOALESCE);
 
         CHIP_MEM_EXTENT(v) = ex;
+
+#ifdef CHIP_MEM_INIT_HOOK
+	/* Call chip-specific init function. */
+	CHIP_MEM_INIT_HOOK(t, v);
+#endif
 }
 
 int
