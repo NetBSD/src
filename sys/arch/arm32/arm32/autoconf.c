@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1999/01/03 20:13:45 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1999/02/07 09:34:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,6 +41,8 @@
  *
  * Created      : 08/10/94
  */
+
+#include "opt_md.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
