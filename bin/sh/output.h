@@ -1,3 +1,5 @@
+/*	$NetBSD: output.h,v 1.10 1995/03/21 09:09:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)output.h	8.1 (Berkeley) 5/31/93
- *	$Id: output.h,v 1.9 1994/12/05 19:07:49 cgd Exp $
+ *	@(#)output.h	8.1 (Berkeley) 5/31/93
  */
 
 #ifndef OUTPUT_INCL

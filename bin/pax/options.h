@@ -1,3 +1,5 @@
+/*	$NetBSD: options.h,v 1.3 1995/03/21 09:07:32 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)options.h	8.2 (Berkeley) 4/18/94
- *	$Id: options.h,v 1.2 1994/06/13 16:34:07 jtc Exp $
+ *	@(#)options.h	8.2 (Berkeley) 4/18/94
  */
 
 /*

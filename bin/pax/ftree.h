@@ -1,3 +1,5 @@
+/*	$NetBSD: ftree.h,v 1.3 1995/03/21 09:07:23 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ftree.h	8.1 (Berkeley) 5/31/93
- *	$Id: ftree.h,v 1.2 1994/06/13 16:34:01 jtc Exp $
+ *	@(#)ftree.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: stat_flags.c,v 1.4 1995/03/21 09:06:38 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)stat_flags.c	8.2 (Berkeley) 7/27/94";*/
-static char *rcsid = "$Id: stat_flags.c,v 1.3 1994/12/27 23:14:52 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/27/94";
+#else
+static char rcsid[] = "$NetBSD: stat_flags.c,v 1.4 1995/03/21 09:06:38 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

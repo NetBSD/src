@@ -1,3 +1,5 @@
+$NetBSD: POSIX,v 1.9 1995/03/21 09:04:32 cgd Exp $
+
 This version of ed(1) is not strictly POSIX compliant, as described in
 the POSIX 1003.2 document.  The following is a summary of the omissions,
 extensions and possible deviations from POSIX 1003.2.

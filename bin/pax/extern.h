@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.4 1995/03/21 09:07:16 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.2 (Berkeley) 4/18/94
- *	$Id: extern.h,v 1.3 1994/12/04 07:11:52 cgd Exp $
+ *	@(#)extern.h	8.2 (Berkeley) 4/18/94
  */
 
 /*

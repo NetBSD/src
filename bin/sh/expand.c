@@ -1,3 +1,5 @@
+/*	$NetBSD: expand.c,v 1.17 1995/03/21 09:09:04 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)expand.c	8.2 (Berkeley) 10/22/93";*/
-static char *rcsid = "$Id: expand.c,v 1.16 1995/02/28 23:27:24 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)expand.c	8.2 (Berkeley) 10/22/93";
+#else
+static char rcsid[] = "$NetBSD: expand.c,v 1.17 1995/03/21 09:09:04 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

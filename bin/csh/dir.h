@@ -1,3 +1,5 @@
+/*	$NetBSD: dir.h,v 1.6 1995/03/21 09:02:44 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dir.h	8.1 (Berkeley) 5/31/93
- *	$Id: dir.h,v 1.5 1994/09/21 00:10:44 mycroft Exp $
+ *	@(#)dir.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

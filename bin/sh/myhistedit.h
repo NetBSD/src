@@ -1,3 +1,5 @@
+/*	$NetBSD: myhistedit.h,v 1.3 1995/03/21 09:09:43 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)myhistedit.h	8.1 (Berkeley) 5/31/93
- *	$Id: myhistedit.h,v 1.2 1994/06/11 16:12:17 mycroft Exp $
+ *	@(#)myhistedit.h	8.1 (Berkeley) 5/31/93
  */
 
 #include <histedit.h>

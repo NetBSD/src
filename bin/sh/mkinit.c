@@ -1,3 +1,5 @@
+/*	$NetBSD: mkinit.c,v 1.12 1995/03/21 09:09:36 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,8 +43,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkinit.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mkinit.c,v 1.11 1994/12/23 13:22:13 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mkinit.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: mkinit.c,v 1.12 1995/03/21 09:09:36 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: jobs.h,v 1.7 1995/03/21 09:09:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)jobs.h	8.1 (Berkeley) 5/31/93
- *	$Id: jobs.h,v 1.6 1994/06/11 16:12:02 mycroft Exp $
+ *	@(#)jobs.h	8.1 (Berkeley) 5/31/93
  */
 
 /* Mode argument to forkshell.  Don't change FORK_FG or FORK_BG. */

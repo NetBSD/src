@@ -1,3 +1,5 @@
+/*	$NetBSD: parser.c,v 1.24 1995/03/21 09:09:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)parser.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: parser.c,v 1.23 1995/01/23 06:33:05 christos Exp $";
+#if 0
+static char sccsid[] = "@(#)parser.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: parser.c,v 1.24 1995/03/21 09:09:59 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "shell.h"

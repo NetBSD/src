@@ -1,3 +1,5 @@
+/*	$NetBSD: char.h,v 1.6 1995/03/21 09:02:29 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)char.h	8.1 (Berkeley) 5/31/93
- *	$Id: char.h,v 1.5 1994/09/21 00:10:28 mycroft Exp $
+ *	@(#)char.h	8.1 (Berkeley) 5/31/93
  */
 
 #include <ctype.h>

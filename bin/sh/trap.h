@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.h,v 1.8 1995/03/21 09:10:29 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)trap.h	8.1 (Berkeley) 5/31/93
- *	$Id: trap.h,v 1.7 1994/12/23 13:24:45 cgd Exp $
+ *	@(#)trap.h	8.1 (Berkeley) 5/31/93
  */
 
 extern int pendingsigs;

@@ -1,3 +1,5 @@
+/*	$NetBSD: memalloc.h,v 1.9 1995/03/21 09:09:31 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)memalloc.h	8.1 (Berkeley) 5/31/93
- *	$Id: memalloc.h,v 1.8 1994/12/31 23:56:55 mycroft Exp $
+ *	@(#)memalloc.h	8.1 (Berkeley) 5/31/93
  */
 
 struct stackmark {

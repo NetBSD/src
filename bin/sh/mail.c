@@ -1,3 +1,5 @@
+/*	$NetBSD: mail.c,v 1.8 1995/03/21 09:09:22 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mail.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mail.c,v 1.7 1994/12/04 07:12:17 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mail.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: mail.c,v 1.8 1995/03/21 09:09:22 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

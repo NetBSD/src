@@ -1,3 +1,5 @@
+/*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
+
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
  * Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -26,7 +28,11 @@
  */
 
 #ifndef lint
+#if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
+#else
+static char rcsid[] = "$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "ed.h"

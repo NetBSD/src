@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: arith_lex.l,v 1.4 1995/03/21 09:08:45 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,8 +38,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)arith_lex.l	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: arith_lex.l,v 1.3 1994/07/15 23:45:40 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)arith_lex.l	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: arith_lex.l,v 1.4 1995/03/21 09:08:45 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "y.tab.h"

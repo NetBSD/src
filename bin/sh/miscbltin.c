@@ -1,3 +1,5 @@
+/*	$NetBSD: miscbltin.c,v 1.13 1995/03/21 09:09:33 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)miscbltin.c	8.2 (Berkeley) 4/16/94";*/
-static char *rcsid = "$Id: miscbltin.c,v 1.12 1994/12/05 19:07:45 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)miscbltin.c	8.2 (Berkeley) 4/16/94";
+#else
+static char rcsid[] = "$NetBSD: miscbltin.c,v 1.13 1995/03/21 09:09:33 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

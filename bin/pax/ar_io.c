@@ -1,3 +1,5 @@
+/*	$NetBSD: ar_io.c,v 1.4 1995/03/21 09:07:04 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -36,8 +38,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ar_io.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: ar_io.c,v 1.3 1994/06/14 00:40:58 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
+#else
+static char rcsid[] = "$NetBSD: ar_io.c,v 1.4 1995/03/21 09:07:04 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

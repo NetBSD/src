@@ -1,3 +1,5 @@
+/*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -36,8 +38,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ftree.c	8.2 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: ftree.c,v 1.3 1994/06/14 00:42:20 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
+#else
+static char rcsid[] = "$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

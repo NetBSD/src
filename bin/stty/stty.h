@@ -1,3 +1,5 @@
+/*	$NetBSD: stty.h,v 1.6 1995/03/21 09:11:31 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stty.h	8.1 (Berkeley) 5/31/93
- *	$Id: stty.h,v 1.5 1994/09/20 04:52:12 mycroft Exp $
+ *	@(#)stty.h	8.1 (Berkeley) 5/31/93
  */
 
 #include <sys/ioctl.h>

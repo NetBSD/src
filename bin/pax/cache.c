@@ -1,3 +1,5 @@
+/*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -36,8 +38,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cache.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: cache.c,v 1.3 1994/06/14 00:41:40 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

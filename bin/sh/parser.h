@@ -1,3 +1,5 @@
+/*	$NetBSD: parser.h,v 1.9 1995/03/21 09:10:01 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)parser.h	8.1 (Berkeley) 5/31/93
- *	$Id: parser.h,v 1.8 1995/01/23 06:33:06 christos Exp $
+ *	@(#)parser.h	8.1 (Berkeley) 5/31/93
  */
 
 /* control characters in argument strings */

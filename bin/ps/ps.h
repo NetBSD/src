@@ -1,3 +1,5 @@
+/*	$NetBSD: ps.h,v 1.6 1995/03/21 09:08:12 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
+
 /* undo.c: This file contains the undo routines for the ed line editor */
 /*-
  * Copyright (c) 1993 Andrew Moore, Talke Studio.
@@ -26,7 +28,11 @@
  */
 
 #ifndef lint
+#if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
+#else
+static char rcsid[] = "$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "ed.h"

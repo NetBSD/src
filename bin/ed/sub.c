@@ -1,3 +1,5 @@
+/*	$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $	*/
+
 /* sub.c: This file contains the substitution routines for the ed 
    line editor */
 /*-
@@ -27,7 +29,11 @@
  */
 
 #ifndef lint
+#if 0
 static char *rcsid = "@(#)sub.c,v 1.1 1994/02/01 00:34:44 alm Exp";
+#else
+static char rcsid[] = "$NetBSD: sub.c,v 1.4 1995/03/21 09:04:50 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "ed.h"

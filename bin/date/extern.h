@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.3 1995/03/21 09:03:52 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.1 (Berkeley) 5/31/93
- *	$Id: extern.h,v 1.2 1994/09/22 09:24:50 mycroft Exp $
+ *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
 int	netsettime __P((time_t));

@@ -1,3 +1,5 @@
+/*	$NetBSD: bltin.h,v 1.7 1995/03/21 09:10:46 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)bltin.h	8.1 (Berkeley) 5/31/93
- *	$Id: bltin.h,v 1.6 1994/06/11 16:12:42 mycroft Exp $
+ *	@(#)bltin.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

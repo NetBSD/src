@@ -1,3 +1,5 @@
+/*	$NetBSD: dd.h,v 1.4 1995/03/21 09:04:08 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dd.h	8.3 (Berkeley) 4/2/94
- *	$Id: dd.h,v 1.3 1994/09/22 09:25:06 mycroft Exp $
+ *	@(#)dd.h	8.3 (Berkeley) 4/2/94
  */
 
 /* Input/output stream state. */
