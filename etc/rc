@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.76 1997/04/29 04:58:38 scottr Exp $
+#	$NetBSD: rc,v 1.77 1997/05/11 05:08:16 cjs Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -327,7 +327,7 @@ fi
 
 if [ "$xntpd_flags" != NO ]; then
 	if [ "$xntpd_flags" = DEFAULT ]; then
-		xntpd_flags=""
+		xntpd_flags="-p /var/run/xntpd.pid"
 	fi
 	echo -n ' xntpd';		xntpd $xntpd_flags
 fi
