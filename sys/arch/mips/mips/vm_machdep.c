@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 1999/05/27 01:56:34 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41 1999/05/28 22:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40 1999/05/27 01:56:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 1999/05/28 22:59:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,34 +308,28 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t faddr, taddr;
-	vsize_t off;
-	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
-	u_int pt_mask;
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
+	p = bp->b_proc;
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
-	/*
-	 * The region is locked, so we expect that pmap_pte() will return
-	 * non-NULL.
-	 */
-	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
-	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
-	pt_mask = (CPUISMIPS3) ? (MIPS3_PG_V|MIPS3_PG_G|MIPS3_PG_D) :
-				 (MIPS1_PG_V|MIPS1_PG_G|MIPS1_PG_D);
-	do {
-		/* XXX should mark them PG_WIRED? */
-		tpte->pt_entry = fpte->pt_entry | pt_mask;
-		MachTLBUpdate(taddr, tpte->pt_entry);
-		tpte++, fpte++, taddr += PAGE_SIZE;
-		len -= PAGE_SIZE;
-	} while (len);
+	len = atop(len);
+	while (len--) {
+		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
+		if (pa == 0)
+			panic("vmapbuf: null page frame");
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
 }
 
 /*
@@ -346,8 +340,7 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t addr;
-	vsize_t off;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
