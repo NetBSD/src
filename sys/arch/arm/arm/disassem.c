@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.12 2002/03/10 15:47:43 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.13 2003/03/27 16:42:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.12 2002/03/10 15:47:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.13 2003/03/27 16:42:40 mycroft Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -85,11 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.12 2002/03/10 15:47:43 bjh21 Exp $");
  * c - comment field bits(0-23)
  * p - saved or current status register
  * F - PSR transfer fields
- * B - byte transfer flag
  * D - destination-is-r15 (P) flag on TST, TEQ, CMP, CMN
  * L - co-processor transfer size
  * S - set status flag
- * T - user mode transfer
  * P - fp precision
  * Q - fp precision (for ldf/stf)
  * R - fp rounding
@@ -121,21 +119,28 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
     { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
     { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
-    { 0x0e100000, 0x04000000, "str",	"BTdaW" },
-    { 0x0e100000, 0x04100000, "ldr",	"BTdaW" },
-    { 0x0c100010, 0x04000000, "str",	"BTdaW" },
-    { 0x0c100010, 0x04100000, "ldr",	"BTdaW" },
+    { 0x0d700010, 0x04200000, "strt",	"daW" },
+    { 0x0d700010, 0x04300000, "ldrt",	"daW" },
+    { 0x0d700010, 0x04600000, "strbt",	"daW" },
+    { 0x0d700010, 0x04700000, "ldrbt",	"daW" },
+    { 0x0c500010, 0x04000000, "str",	"daW" },
+    { 0x0c500010, 0x04100000, "ldr",	"daW" },
+    { 0x0c500010, 0x04400000, "strb",	"daW" },
+    { 0x0c500010, 0x04500000, "ldrb",	"daW" },
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
     { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
     { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
-    { 0x0e500ff0, 0x001000b0, "ldrh",	"daW" },
-    { 0x0e500ff0, 0x000000b0, "strh",	"daW" },
-    { 0x0e500ff0, 0x001000d0, "ldrsb",	"daW" },
-    { 0x0e500ff0, 0x001000f0, "ldrsh",	"daW" },
+    { 0x0e1000f0, 0x00100090, "ldrb",	"de" },
+    { 0x0e1000f0, 0x00000090, "strb",	"de" },
+    { 0x0e1000f0, 0x001000d0, "ldrsb",	"de" },
+    { 0x0e1000f0, 0x001000b0, "ldrh",	"de" },
+    { 0x0e1000f0, 0x000000b0, "strh",	"de" },
+    { 0x0e1000f0, 0x001000f0, "ldrsh",	"de" },
     { 0x0f200090, 0x00200090, "und",	"x" },	/* Before data processing */
     { 0x0e1000d0, 0x000000d0, "und",	"x" },	/* Before data processing */
-    { 0x0fb00ff0, 0x01000090, "swp",	"Bdmo" },
+    { 0x0ff00ff0, 0x01000090, "swp",	"dmo" },
+    { 0x0ff00ff0, 0x01400090, "swpb",	"dmo" },
     { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* Before data processing */
     { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },/* Before data processing */
     { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
@@ -259,6 +264,8 @@ static void disasm_register_shift(const disasm_interface_t *di, u_int insn);
 static void disasm_print_reglist(const disasm_interface_t *di, u_int insn);
 static void disasm_insn_ldrstr(const disasm_interface_t *di, u_int insn,
     u_int loc);
+static void disasm_insn_ldrhstrh(const disasm_interface_t *di, u_int insn,
+    u_int loc);
 static void disasm_insn_ldcstc(const disasm_interface_t *di, u_int insn,
     u_int loc);
 static u_int disassemble_readword(u_int address);
@@ -352,6 +359,10 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 		case 'a':
 			disasm_insn_ldrstr(di, insn, loc);
 			break;
+		/* e - address operand of ldrh/strh instruction */
+		case 'e':
+			disasm_insn_ldrhstrh(di, insn, loc);
+			break;
 		/* l - register list for ldm/stm instruction */
 		case 'l':
 			disasm_print_reglist(di, insn);
@@ -437,13 +448,8 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 			if (insn & 0x00100000)
 				di->di_printf("s");
 			break;
-		/* T - user mode transfer */
-		case 'T':
-			if ((insn & 0x01200000) == 0x00200000)
-				di->di_printf("t");
-			break;
-		case 'P':
 		/* P - fp precision */
+		case 'P':
 			di->di_printf("%s", insn_fpaprec(insn));
 			break;
 		/* Q - fp precision (for ldf/stf) */
@@ -567,28 +573,60 @@ disasm_print_reglist(const disasm_interface_t *di, u_int insn)
 static void
 disasm_insn_ldrstr(const disasm_interface_t *di, u_int insn, u_int loc)
 {
-	if ((((insn >> 16) & 0x0f) == 15) && ((insn & (1 << 21)) == 0)
-	    && ((insn & (1 << 24)) != 0) && ((insn & (1 << 25)) == 0)) {
+	int offset;
+
+	offset = insn & 0xfff;
+	if ((insn & 0x032f0000) == 0x010f0000) {
+		/* rA = pc, immediate index */
 		if (insn & 0x00800000)
-			loc += (insn & 0xfff);
+			loc += offset;
 		else
-			loc -= (insn & 0xfff);
+			loc -= offset;
 		di->di_printaddr(loc + 8);
  	} else {
 		di->di_printf("[r%d", (insn >> 16) & 0x0f);
-		di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
-
-		if (!(insn & 0x00800000))
-			di->di_printf("-");
-		if (insn & (1 << 25))
-			disasm_register_shift(di, insn);
-		else
-			di->di_printf("#0x%04x", insn & 0xfff);
+		if ((insn & 0x03000fff) != 0x01000000) {
+			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
+			if (!(insn & 0x00800000))
+				di->di_printf("-");
+			if (insn & (1 << 25))
+				disasm_register_shift(di, insn);
+			else
+				di->di_printf("#0x%03x", offset);
+		}
 		if (insn & (1 << 24))
 			di->di_printf("]");
 	}
 }
 
+static void
+disasm_insn_ldrhstrh(const disasm_interface_t *di, u_int insn, u_int loc)
+{
+	int offset;
+
+	offset = ((insn & 0xf00) >> 4) | (insn & 0xf);
+	if ((insn & 0x004f0000) == 0x004f0000) {
+		/* rA = pc, immediate index */
+		if (insn & 0x00800000)
+			loc += offset;
+		else
+			loc -= offset;
+		di->di_printaddr(loc + 8);
+ 	} else {
+		di->di_printf("[r%d", (insn >> 16) & 0x0f);
+		if ((insn & 0x01400f0f) != 0x01400000) {
+			di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
+			if (!(insn & 0x00800000))
+				di->di_printf("-");
+			if (insn & (1 << 22))
+				di->di_printf("#0x%02x", offset);
+			else
+				di->di_printf("r%d", (insn & 0x0f));
+		}
+		if (insn & (1 << 24))
+			di->di_printf("]");
+	}
+}
 
 static void
 disasm_insn_ldcstc(const disasm_interface_t *di, u_int insn, u_int loc)
