@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.33 1994/04/23 23:24:00 mycroft Exp $
+#	$Id: TRINITY,v 1.34 1994/04/24 21:58:24 mycroft Exp $
 #
 
 machine		"i386"
@@ -88,6 +88,17 @@ tape		st0	at scsibus1 slave ?
 tape		st1	at scsibus1 slave ?
 disk		cd0	at scsibus1 slave ?
 disk		cd1	at scsibus1 slave ?
+
+controller	aic0	at isa? port 0x340 irq 11 drq 6
+master		scsibus2 at aic0
+disk		sd0	at scsibus2 slave ?
+disk		sd1	at scsibus2 slave ?
+disk		sd2	at scsibus2 slave ?
+disk		sd3	at scsibus2 slave ?
+tape		st0	at scsibus2 slave ?
+tape		st1	at scsibus2 slave ?
+disk		cd0	at scsibus2 slave ?
+disk		cd1	at scsibus2 slave ?
 
 controller	wdc0	at isa? port "IO_WD1" irq 14
 disk		wd0	at wdc0 drive ?
