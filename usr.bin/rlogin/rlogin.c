@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.27 2002/11/16 04:42:26 itojun Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.28 2003/04/07 01:46:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.27 2002/11/16 04:42:26 itojun Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.28 2003/04/07 01:46:42 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,7 @@ main(int argc, char *argv[])
 	char *host, *p, *user, *name, term[1024] = "network";
 	speed_t ospeed;
 	struct sigaction sa;
+	char *service=NULL;
 	struct rlimit rlim;
 #ifdef KERBEROS
 	KTEXT_ST ticket;
@@ -173,6 +174,7 @@ main(int argc, char *argv[])
 	argoff = dflag = 0;
 	one = 1;
 	host = user = NULL;
+	sp = NULL;
 
 	if (strcmp(getprogname(), "rlogin") != 0) {
 		host = strdup(getprogname());
@@ -187,9 +189,9 @@ main(int argc, char *argv[])
 	}
 
 #ifdef KERBEROS
-#define	OPTIONS	"8EKLde:k:l:x"
+#define	OPTIONS	"8EKLde:p:k:l:x"
 #else
-#define	OPTIONS	"8EKLde:l:"
+#define	OPTIONS	"8EKLde:p:l:"
 #endif
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
@@ -221,6 +223,19 @@ main(int argc, char *argv[])
 #endif
 		case 'l':
 			user = optarg;
+			break;
+		case 'p':
+			/*HF*/
+			service = optarg;
+			sp = getservbyname(service, "tcp");
+			if (sp == NULL) {       /* number given, no name */
+				sp = malloc(sizeof(*sp));
+				memset(sp, 0, sizeof(*sp));
+				sp->s_name = service;
+				sp->s_port = atoi(service);
+				if (sp->s_port <= 0 || sp->s_port > IPPORT_ANONMAX)   
+					errx(1,"port must be between 1 and %d", IPPORT_ANONMAX);
+			}
 			break;
 #ifdef CRYPT
 #ifdef KERBEROS
@@ -262,17 +277,18 @@ main(int argc, char *argv[])
 		user = name;
 
 #ifdef KERBEROS
-	sp = NULL;
 	if (use_kerberos) {
-		sp = getservbyname((doencrypt ? "eklogin" : "klogin"), "tcp");
+		if (sp == NULL) {
+			sp = getservbyname((doencrypt ? "eklogin" : "klogin"), "tcp");
+		}
 		if (sp == NULL) {
 			use_kerberos = 0;
 			warning("can't get entry for %s/tcp service",
 			    doencrypt ? "eklogin" : "klogin");
 		}
 	}
-	if (sp == NULL)
 #endif
+	if (sp == NULL)
 		sp = getservbyname("login", "tcp");
 	if (sp == NULL)
 		errx(1, "login/tcp: unknown service.");
@@ -340,7 +356,8 @@ try_connect:
 			if (!(dest_realm = krb_realmofhost (host))) {
 				warnx("Unknown realm for host %s.", host);
 				use_kerberos = 0;
-				sp = getservbyname("login", "tcp");
+				if (service != NULL)
+					sp = getservbyname("login", "tcp");
 				goto try_connect;
 			}
 		}
@@ -357,12 +374,14 @@ try_connect:
 					warnx("Host %s not registered for %s",
 				       	      host, "Kerberos rlogin service");
 					use_kerberos = 0;
-					sp = getservbyname("login", "tcp");
+					if (service != NULL) 
+						sp = getservbyname("login", "tcp");
 					goto try_connect;
 				case NO_TKT_FIL:
 					if (through_once++) {
 						use_kerberos = 0;
-						sp = getservbyname("login", "tcp");
+						if (service != NULL) 
+							sp = getservbyname("login", "tcp");
 						goto try_connect;
 					}
 #ifdef notyet
@@ -376,7 +395,8 @@ try_connect:
 				      (rem == -1) ? "rcmd protocol failure" :
 				      krb_err_txt[rem]);
 				use_kerberos = 0;
-				sp = getservbyname("login", "tcp");
+				if (service != NULL) 
+					sp = getservbyname("login", "tcp");
 				goto try_connect;
 			}
 		}
@@ -956,7 +976,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: rlogin [ -%s]%s[-e char] [ -l username ] [username@]host\n",
+	    "usage: rlogin [ -%s]%s[-e char] [ -l username ] [-p port] [username@]host\n",
 #ifdef KERBEROS
 #ifdef CRYPT
 	    "8EKLdx", " [-k realm] ");
