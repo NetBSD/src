@@ -2226,7 +2226,7 @@ int fd, on;
 	ioctl(fd, TIOCMSET, &linestate);
 }
 #endif
-#ifdef __386BSD__
+#ifdef __NetBSD__
 setdtr(fd, on)
 int fd, on;
 {
