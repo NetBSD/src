@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.33 2000/03/07 00:39:18 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.34 2000/03/15 18:39:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -372,6 +372,12 @@ tlp_pci_attach(parent, self, aux)
 	 * followed by a 4 byte pad).
 	 */
 	sc->sc_regshift = 3;
+
+	/*
+	 * No power management hooks.
+	 * XXX Maybe we should add some!
+	 */
+	sc->sc_flags |= TULIPF_ENABLED;
 
 	/*
 	 * Get revision info, and set some chip-specific variables.

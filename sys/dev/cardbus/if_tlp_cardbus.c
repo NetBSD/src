@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.19 2000/03/14 02:08:21 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.20 2000/03/15 18:39:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,10 +40,6 @@
 /*
  * CardBus bus front-end for the Digital Semiconductor ``Tulip'' (21x4x)
  * Ethernet controller family driver.
- *
- * TODO:
- *
- *	- power management
  */
 
 #include "opt_inet.h"
@@ -116,13 +112,14 @@ struct tulip_cardbus_softc {
 	int	sc_csr;			/* CSR bits */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space
 					   region */
-	int	sc_attached;		/* device is attached */
 					/* product info */
 	const struct tulip_cardbus_product *sc_product;
 
 	int	sc_cben;		/* CardBus enables */
 	int	sc_bar_reg;		/* which BAR to use */
 	pcireg_t sc_bar_val;		/* value of the BAR */
+
+	int	sc_intrline;		/* interrupt line */
 };
 
 int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
@@ -152,6 +149,9 @@ const struct tulip_cardbus_product {
 };
 
 void	tlp_cardbus_setup __P((struct tulip_cardbus_softc *));
+
+int	tlp_cardbus_enable __P((struct tulip_softc *));
+void	tlp_cardbus_disable __P((struct tulip_softc *));
 
 void	tlp_cardbus_x3201_reset __P((struct tulip_softc *));
 
@@ -197,8 +197,6 @@ tlp_cardbus_attach(parent, self, aux)
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	const struct tulip_cardbus_product *tcp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	bus_addr_t adr;
@@ -221,6 +219,12 @@ tlp_cardbus_attach(parent, self, aux)
 	 * followed by a 4 byte pad).
 	 */
 	sc->sc_regshift = 3;
+
+	/*
+	 * Power management hooks.
+	 */
+	sc->sc_enable = tlp_cardbus_enable;
+	sc->sc_disable = tlp_cardbus_disable;
 
 	/*
 	 * Get revision info, and set some chip-specific variables.
@@ -344,24 +348,18 @@ tlp_cardbus_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * Map and establish the interrupt.
-	 */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_NET,
-	    tlp_intr, sc);
-	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, ca->ca_intrline);
-		return;
-	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
-	    ca->ca_intrline);
+	/* Remember which interrupt line. */
+	csc->sc_intrline = ca->ca_intrline;
 
 	/*
 	 * Finish off the attach.
 	 */
-	csc->sc_attached = 1;
 	tlp_attach(sc, enaddr);
+
+	/*
+	 * Power down the socket.
+	 */
+	Cardbus_function_disable(csc->sc_ct);
 }
 
 int
@@ -373,36 +371,82 @@ tlp_cardbus_detach(self, flags)
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;
-	int reg;
 
 #if defined(DIAGNOSTIC)
-	if (ct == NULL) {
+	if (ct == NULL)
 		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
-	}
 #endif
 
-	if (csc->sc_attached) {
-		rv = tlp_detach(sc);
-		if (rv)
-			return (rv);
-	}
+	rv = tlp_detach(sc);
+	if (rv)
+		return (rv);
 
 	/*
 	 * Unhook the interrupt handler.
 	 */
-	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+	if (csc->sc_ih != NULL)
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
 
 	/*
-	 * release bus space and close window
+	 * Release bus space and close window.
 	 */
-	if (csc->sc_csr & PCI_COMMAND_MEM_ENABLE)
-		reg = TULIP_PCI_MMBA;
-	else
-		reg = TULIP_PCI_IOBA;
-	Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, 
+	Cardbus_mapreg_unmap(ct, csc->sc_bar_reg, sc->sc_st, sc->sc_sh, 
 	    csc->sc_mapsize);
 
 	return (0);
+}
+
+int
+tlp_cardbus_enable(sc)
+	struct tulip_softc *sc;
+{
+	struct tulip_cardbus_softc *csc = (void *) sc;
+	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+
+	/*
+	 * Power on the socket.
+	 */
+	Cardbus_function_enable(ct);
+
+	/*
+	 * Set up the PCI configuration registers.
+	 */
+	tlp_cardbus_setup(csc);
+
+	/*
+	 * Map and establish the interrupt.
+	 */
+	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
+	    tlp_intr, sc);
+	if (csc->sc_ih == NULL) {
+		printf("%s: unable to establish interrupt at %d\n",
+		    sc->sc_dev.dv_xname, csc->sc_intrline);
+		Cardbus_function_disable(csc->sc_ct);
+		return (1);
+	}
+	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	    csc->sc_intrline);
+
+	return (0);
+}
+
+void
+tlp_cardbus_disable(sc)
+	struct tulip_softc *sc;
+{
+	struct tulip_cardbus_softc *csc = (void *) sc;
+	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+
+	/* Unhook the interrupt handler. */
+	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+	csc->sc_ih = NULL;
+
+	/* Power down the socket. */
+	Cardbus_function_disable(ct);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.52 2000/03/10 02:46:39 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.53 2000/03/15 18:39:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -153,6 +153,9 @@ int	tlp_add_rxbuf __P((struct tulip_softc *, int));
 void	tlp_idle __P((struct tulip_softc *, u_int32_t));
 void	tlp_srom_idle __P((struct tulip_softc *));
 int	tlp_srom_size __P((struct tulip_softc *));
+
+int	tlp_enable __P((struct tulip_softc *));
+void	tlp_disable __P((struct tulip_softc *));
 
 void	tlp_filter_setup __P((struct tulip_softc *));
 void	tlp_winb_filter_setup __P((struct tulip_softc *));
@@ -440,6 +443,13 @@ tlp_attach(sc, enaddr)
 	}
 
 	/*
+	 * From this point forward, the attachment cannot fail.  A failure
+	 * before this point releases all resources that may have been
+	 * allocated.
+	 */
+	sc->sc_flags |= TULIPF_ATTACHED;
+
+	/*
 	 * Reset the chip to a known state.
 	 */
 	tlp_reset(sc);
@@ -554,6 +564,12 @@ tlp_detach(sc)
 	struct tulip_rxsoft *rxs;
 	struct tulip_txsoft *txs;
 	int i;
+
+	/*
+	 * Suceed now if there isn't any work to do.
+	 */
+	if ((sc->sc_flags & TULIPF_ATTACHED) == 0)
+		return (0);
 
 	/* Unhook our tick handler. */
 	if (sc->sc_tick)
@@ -926,6 +942,8 @@ tlp_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
+		if ((error = tlp_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -977,18 +995,23 @@ tlp_ioctl(ifp, cmd, data)
 			 * stop it.
 			 */
 			tlp_stop(sc, 1);
+			tlp_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interfase it marked up and it is stopped, then
 			 * start it.
 			 */
+			if ((error = tlp_enable(sc)) != 0)
+				break;
 			error = tlp_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
+			if ((error = tlp_enable(sc)) != 0)
+				break;
 			error = tlp_init(sc);
 		}
 		break;
@@ -999,7 +1022,7 @@ tlp_ioctl(ifp, cmd, data)
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
 
-		if (error == ENETRESET) {
+		if (TULIP_IS_ENABLED(sc) && error == ENETRESET) {
 			/*
 			 * Multicast list has changed.  Set the filter
 			 * accordingly.
@@ -1020,7 +1043,8 @@ tlp_ioctl(ifp, cmd, data)
 	}
 
 	/* Try to get more packets going. */
-	tlp_start(ifp);
+	if (TULIP_IS_ENABLED(sc))
+		tlp_start(ifp);
 
 	splx(s);
 	return (error);
@@ -1041,6 +1065,11 @@ tlp_intr(arg)
 	int handled = 0, txthresh;
 
 	DPRINTF(sc, ("%s: tlp_intr\n", sc->sc_dev.dv_xname));
+
+#ifdef DEBUG
+	if (TULIP_IS_ENABLED(sc) == 0)
+		panic("%s: tlp_intr: not enabled\n", sc->sc_dev.dv_xname);
+#endif
 
 	/*
 	 * If the interface isn't running, the interrupt couldn't
@@ -1816,6 +1845,43 @@ tlp_init(sc)
 	if (error)
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
 	return (error);
+}
+
+/*
+ * tlp_enable:
+ *
+ *	Enable the Tulip chip.
+ */
+int
+tlp_enable(sc)
+	struct tulip_softc *sc;
+{
+
+	if (TULIP_IS_ENABLED(sc) == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+		sc->sc_flags |= TULIPF_ENABLED;
+	}
+	return (0);
+}
+
+/*
+ * tlp_disable:
+ *
+ *	Disable the Tulip chip.
+ */
+void
+tlp_disable(sc)
+	struct tulip_softc *sc;
+{
+
+	if (TULIP_IS_ENABLED(sc) && sc->sc_disable != NULL) {
+		(*sc->sc_disable)(sc);
+		sc->sc_flags &= ~TULIPF_ENABLED;
+	}
 }
 
 /*
@@ -2842,6 +2908,12 @@ tlp_mediastatus(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct tulip_softc *sc = ifp->if_softc;
+
+	if (TULIP_IS_ENABLED(sc) == 0) {
+		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
+		ifmr->ifm_status = 0;
+		return;
+	}
 
 	(*sc->sc_mediasw->tmsw_get)(sc, ifmr);
 }
