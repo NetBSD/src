@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 2004/03/25 18:50:50 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 2004/04/04 19:21:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2004/03/25 18:50:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2004/04/04 19:21:36 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -459,7 +459,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_addr = (void *)frame->srr0;
 			if (frame->srr1 & 0x100000) {
 				ksi.ksi_signo = SIGFPE;
-				ksi.ksi_code = 0;
+				ksi.ksi_code = get_fpu_fault_code();
 			} else if (frame->srr1 & 0x40000) {
 				ksi.ksi_code = ILL_PRVOPC;
 			} else
