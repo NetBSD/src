@@ -2,7 +2,7 @@
 # site-specific startup actions, daemons
 #
 #	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
-#	$Id: rc.local,v 1.10.2.1 1994/08/24 05:05:12 mycroft Exp $
+#	$Id: rc.local,v 1.10.2.2 1994/08/24 07:12:15 mycroft Exp $
 #
 
 if [ ! -f /etc/motd ]; then
@@ -10,13 +10,10 @@ if [ ! -f /etc/motd ]; then
 fi
 T=/tmp/_motd
 rm -f $T
-sysctl -n kern.version | head -1 > $T
+sysctl -n kern.version | sed 1q > $T
 echo "" >> $T
 sed '1,/^$/d' < /etc/motd >> $T
-# If you don't want the motd to always be updated, you could change the
-# following line to:
-#cmp -s $T /etc/motd || cp $T /etc/motd
-cp $T /etc/motd
+cmp -s $T /etc/motd || cp $T /etc/motd
 rm -f $T
 
 echo -n 'starting local daemons:'
