@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.6 2003/02/14 10:19:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.6 2003/02/14 10:19:14 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,121 +58,54 @@ netbsd32_wait4(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
-	struct proc *q = l->l_proc;
+	struct proc *parent = l->l_proc;
 	struct netbsd32_rusage ru32;
-	int nfound;
-	struct proc *p, *t;
+	struct proc *child;
 	int status, error;
 
 	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = -q->p_pgid;
+		SCARG(uap, pid) = -parent->p_pgid;
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
 		return (EINVAL);
 
-loop:
-	nfound = 0;
-	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
-		if (SCARG(uap, pid) != WAIT_ANY &&
-		    p->p_pid != SCARG(uap, pid) &&
-		    p->p_pgid != -SCARG(uap, pid))
-			continue;
-		nfound++;
-		if (p->p_stat == SZOMB) {
-			retval[0] = p->p_pid;
-
-			if (SCARG(uap, status)) {
-				status = p->p_xstat;	/* convert to int */
-				error = copyout((caddr_t)&status,
-				    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
-				    sizeof(status));
-				if (error)
-					return (error);
-			}
-			if (SCARG(uap, rusage)) {
-				netbsd32_from_rusage(p->p_ru, &ru32);
-				if ((error = copyout((caddr_t)&ru32,
-				    (caddr_t)NETBSD32PTR64(SCARG(uap, rusage)),
-				    sizeof(struct netbsd32_rusage))))
-					return (error);
-			}
-			/*
-			 * If we got the child via ptrace(2) or procfs, and
-			 * the parent is different (meaning the process was
-			 * attached, rather than run as a child), then we need
-			 * to give it back to the old parent, and send the
-			 * parent a SIGCHLD.  The rest of the cleanup will be
-			 * done when the old parent waits on the child.
-			 */
-			if ((p->p_flag & P_TRACED) && p->p_opptr != p->p_pptr){
-				t = p->p_opptr;
-				proc_reparent(p, t ? t : initproc);
-				p->p_opptr = NULL;
-				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-				psignal(p->p_pptr, SIGCHLD);
-				wakeup((caddr_t)p->p_pptr);
-				return (0);
-			}
-			p->p_xstat = 0;
-			ruadd(&q->p_stats->p_cru, p->p_ru);
-			pool_put(&rusage_pool, p->p_ru);
-
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(p);
-
-			LIST_REMOVE(p, p_list);	/* off zombproc */
-
-			LIST_REMOVE(p, p_sibling);
-
-			/*
-			 * Decrement the count of procs running with this uid.
-			 */
-			(void)chgproccnt(p->p_cred->p_ruid, -1);
-
-			/*
-			 * Free up credentials.
-			 */
-			if (--p->p_cred->p_refcnt == 0) {
-				crfree(p->p_cred->pc_ucred);
-				pool_put(&pcred_pool, p->p_cred);
-			}
-
-			/*
-			 * Release reference to text vnode
-			 */
-			if (p->p_textvp)
-				vrele(p->p_textvp);
-
-			pool_put(&proc_pool, p);
-			nprocs--;
-			return (0);
-		}
-		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
-		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
-			p->p_flag |= P_WAITED;
-			retval[0] = p->p_pid;
-
-			if (SCARG(uap, status)) {
-				status = W_STOPCODE(p->p_xstat);
-				error = copyout((caddr_t)&status,
-				    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
-				    sizeof(status));
-			} else
-				error = 0;
-			return (error);
-		}
-	}
-	if (nfound == 0)
-		return (ECHILD);
-	if (SCARG(uap, options) & WNOHANG) {
+	error =  find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
+					&child);
+	if (error != 0)
+		return error;
+	if (child == NULL) {
 		retval[0] = 0;
-		return (0);
+		return 0;
 	}
-	if ((error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0)) != 0)
-		return (error);
-	goto loop;
+
+	retval[0] = child->p_pid;
+	if (child->p_stat == SZOMB) {
+		if (SCARG(uap, status)) {
+			status = child->p_xstat;	/* convert to int */
+			error = copyout((caddr_t)&status,
+				    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
+				    sizeof(status));
+			if (error)
+				return error;
+		}
+		if (SCARG(uap, rusage)) {
+			netbsd32_from_rusage(child->p_ru, &ru32);
+			error = copyout((caddr_t)&ru32,
+				    (caddr_t)NETBSD32PTR64(SCARG(uap, rusage)),
+				    sizeof(struct netbsd32_rusage));
+			if (error)
+				return error;
+		}
+		proc_free(child);
+		return 0;
+	}
+
+	if (SCARG(uap, status)) {
+		status = W_STOPCODE(child->p_xstat);
+		return copyout((caddr_t)&status,
+			    (caddr_t)NETBSD32PTR64(SCARG(uap, status)),
+			    sizeof(status));
+	}
+	return 0;
 }
 
 int
