@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.20 1998/08/25 19:18:15 ross Exp $	*/
+/*	$NetBSD: pass5.c,v 1.20.4.1 1999/10/19 13:01:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.20 1998/08/25 19:18:15 ross Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.20.4.1 1999/10/19 13:01:29 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,11 @@ void
 pass5()
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos = 0;
+	int inomapsize, blkmapsize;
 	struct fs *fs = sblock;
 	ufs_daddr_t dbase, dmax;
 	ufs_daddr_t d;
-	long i, j;
+	long i, j, k;
 	struct csum *cs;
 	struct csum cstotal;
 	struct inodesc idesc[3];
@@ -130,6 +131,8 @@ pass5()
 		sumsize = &ocg->cg_iused[0] - (u_int8_t *)(&ocg->cg_btot[0]);
 		mapsize = &ocg->cg_free[howmany(fs->fs_fpg, NBBY)] -
 			(u_char *)&ocg->cg_iused[0];
+		blkmapsize = howmany(fs->fs_fpg, NBBY);
+		inomapsize = &ocg->cg_free[0] - (u_char *)&ocg->cg_iused[0];
 		ocg->cg_magic = CG_MAGIC;
 		savednrpos = fs->fs_nrpos;
 		fs->fs_nrpos = 8;
@@ -144,12 +147,12 @@ pass5()
 		    fs->fs_cpg * fs->fs_nrpos * sizeof(int16_t);
 		newcg->cg_freeoff =
 		    newcg->cg_iusedoff + howmany(fs->fs_ipg, NBBY);
-		if (fs->fs_contigsumsize <= 0) {
-			newcg->cg_nextfreeoff = newcg->cg_freeoff +
-			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY);
-		} else {
-			newcg->cg_clustersumoff = newcg->cg_freeoff +
-			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY) -
+		inomapsize = newcg->cg_freeoff - newcg->cg_iusedoff;
+		newcg->cg_nextfreeoff = newcg->cg_freeoff +
+		    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY);
+		blkmapsize = newcg->cg_nextfreeoff - newcg->cg_freeoff;
+		if (fs->fs_contigsumsize > 0) {
+			newcg->cg_clustersumoff = newcg->cg_nextfreeoff -
 			    sizeof(int32_t);
 			newcg->cg_clustersumoff =
 			    roundup(newcg->cg_clustersumoff, sizeof(int32_t));
@@ -166,7 +169,7 @@ pass5()
 		break;
 
 	default:
-		sumsize = 0;	/* keep lint happy */
+		inomapsize = blkmapsize = sumsize = 0;	/* keep lint happy */
 		errx(EEXIT, "UNKNOWN ROTATIONAL TABLE FORMAT %d",
 			fs->fs_postblformat);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $	*/
+/*	$NetBSD: utilities.c,v 1.25.4.1 1999/10/19 13:01:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.25.4.1 1999/10/19 13:01:30 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $");
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -100,6 +101,7 @@ reply(question)
 	printf("\n");
 	if (!persevere && (nflag || fswritefd < 0)) {
 		printf("%s? no\n\n", question);
+		resolved = 0;
 		return (0);
 	}
 	if (yflag || (persevere && nflag)) {
@@ -110,13 +112,17 @@ reply(question)
 		printf("%s? [yn] ", question);
 		(void) fflush(stdout);
 		c = getc(stdin);
-		while (c != '\n' && getc(stdin) != '\n')
-			if (feof(stdin))
+		while (c != '\n' && getc(stdin) != '\n') {
+			if (feof(stdin)) {
+				resolved = 0;
 				return (0);
+			}
+		}
 	} while (c != 'y' && c != 'Y' && c != 'n' && c != 'N');
 	printf("\n");
 	if (c == 'y' || c == 'Y')
 		return (1);
+	resolved = 0;
 	return (0);
 }
 
@@ -402,7 +408,8 @@ ufs_daddr_t
 allocblk(frags)
 	long frags;
 {
-	int i, j, k;
+	int i, j, k, cg, baseblk;
+	struct cg *cgp = cgrp;
 
 	if (frags <= 0 || frags > sblock->fs_frag)
 		return (0);
@@ -417,9 +424,21 @@ allocblk(frags)
 				j += k;
 				continue;
 			}
-			for (k = 0; k < frags; k++)
+			cg = dtog(sblock, i + j);
+			getblk(&cgblk, cgtod(sblock, cg), sblock->fs_cgsize);
+			if (!cg_chkmagic(cgp, 0))
+				pfatal("CG %d: BAD MAGIC NUMBER\n", cg);
+			baseblk = dtogd(sblock, i + j);
+			for (k = 0; k < frags; k++) {
 				setbmap(i + j + k);
+				clrbit(cg_blksfree(cgp, 0), baseblk + k);
+			}
 			n_blks += frags;
+			if (frags == sblock->fs_frag)
+				cgp->cg_cs.cs_nbfree--;
+			else
+				cgp->cg_cs.cs_nffree -= frags;
+			cgdirty();
 			return (i + j);
 		}
 	}
