@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.63 1999/10/16 23:53:28 wrstuden Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.64 1999/10/20 14:32:10 enami Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -756,7 +756,8 @@ msdosfs_unmount(mp, mntflags, p)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
-	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
+	if (pmp->pm_devvp->v_type != VBAD)
+		pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
 	{
 		struct vnode *vp = pmp->pm_devvp;
