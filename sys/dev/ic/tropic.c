@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+/*	$NetBSD: tropic.c,v 1.3 1999/04/29 15:47:02 bad Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -80,6 +80,8 @@
 #include <dev/ic/tropicreg.h>
 #include <dev/ic/tropicvar.h>
 
+static void tr_shutdown __P((void *));
+
 void	tr_rint __P((struct tr_softc *));
 void	tr_xint __P((struct tr_softc *));
 void	tr_oldxint __P((struct tr_softc *));
@@ -127,25 +129,25 @@ tropic_mediachange(sc)
 	case IFM_TOK_STP16:
 	case IFM_TOK_UTP16:
 		if ((sc->sc_init_status & RSP_16) == 0) {
-			tr_reset(sc);
-			if (tr_setspeed(sc, 16) == 0)
-				sc->sc_init_status |= RSP_16;
-			else
+			tr_stop(sc);
+			if (tr_setspeed(sc, 16))
 				return EINVAL;
-			tr_init(sc);
-			tr_sleep(sc);
+			if (tr_reset(sc))
+				return EINVAL;
+			if (tr_config(sc))
+				return EINVAL;
 		}
 		break;
 	case IFM_TOK_STP4:
 	case IFM_TOK_UTP4:
 		if ((sc->sc_init_status & RSP_16) != 0) {
-			tr_reset(sc);
-			if (tr_setspeed(sc, 4) == 0)
-				sc->sc_init_status &= ~RSP_16;
-			else
+			tr_stop(sc);
+			if (tr_setspeed(sc, 4))
 				return EINVAL;
-			tr_init(sc);
-			tr_sleep(sc);
+			if (tr_reset(sc))
+				return EINVAL;
+			if (tr_config(sc))
+				return EINVAL;
 		}
 		break;
 	}
@@ -169,41 +171,75 @@ int
 tr_config(sc)
 	struct tr_softc *sc;
 {
+	if (sc->sc_init_status & FAST_PATH_TRANSMIT) {
+		int i;
+
+		for (i=0; i < SRB_CFP_CMDSIZE; i++)
+			SRB_OUTB(sc, sc->sc_srb, i, 0);
+
+		SRB_OUTB(sc, sc->sc_srb, SRB_CMD, DIR_CONFIG_FAST_PATH_RAM);
+
+		SRB_OUTW(sc, sc->sc_srb, SRB_CFP_RAMSIZE,
+		    (16 + (sc->sc_nbuf * FP_BUF_LEN) / 8));
+		SRB_OUTW(sc, sc->sc_srb, SRB_CFP_BUFSIZE, FP_BUF_LEN);
+
+		/* tell adapter: command in SRB */
+		ACA_SETB(sc, ACA_ISRA_o, CMD_IN_SRB);
+
+		for (i = 0; i < 30000; i++) {
+			if (ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT)
+				break;
+			delay(100);
+		}
+
+		if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
+			printf("No response for fast path cfg\n");
+			return 1;
+		}
+
+		ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
+
+
+		if ((SRB_INB(sc, sc->sc_srb, SRB_RETCODE) != 0)) {
+			printf("cfg fast path returned: %02x\n",
+				SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
+			return 1;
+		}
+
+		sc->sc_txca = SRB_INW(sc, sc->sc_srb, SRB_CFPRESP_FPXMIT);
+		sc->sc_srb = SRB_INW(sc, sc->sc_srb, SRB_CFPRESP_SRBADDR);
+	}
+	else {
+		if (sc->sc_init_status & RSP_16)
+			sc->sc_maxmtu = sc->sc_dhb16maxsz;
+		else
+			sc->sc_maxmtu = sc->sc_dhb4maxsz;
+/*
+ * XXX Not completely true because Fast Path Transmit has 514 byte buffers
+ * XXX and TR_MAX_LINK_HDR is only correct when source-routing is used.
+ * XXX depending on wether source routing is used change the calculation
+ * XXX use IFM_TOK_SRCRT (IFF_LINK0)
+ * XXX recompute sc_minbuf !!
+ */
+		sc->sc_maxmtu -= TR_MAX_LINK_HDR;
+	}
+	return 0;
+}
+
+int
+tr_attach(sc)
+	struct tr_softc *sc;
+{
 	int	nmedia, *mediaptr, *defmediaptr;
 	int	i, temp;
 	u_int8_t myaddr[ISO88025_ADDR_LEN];
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	for (i = 0, temp = 0; i < ISO88025_ADDR_LEN; i++, temp += 4) {
-		myaddr[i] = (MM_INB(sc, (TR_MAC_OFFSET + temp)) & 0xf) << 4;
-		myaddr[i] |= MM_INB(sc, (TR_MAC_OFFSET + temp + 2)) & 0xf;
-	}
-
-	sc->sc_init_status = SRB_INB(sc, sc->sc_srb, SRB_INIT_STATUS);
-
-/*
- * MAX_MACFRAME_SIZE = DHB_SIZE - 6
- * IPMTU = MAX_MACFRAME_SIZE - (14 + 18 + 8)
- * (14 = header, 18 = sroute, 8 = llcsnap)
- */
-
-	/* XXX should depend on sc_resvdmem. */
-	if (MM_INB(sc, TR_RAM_OFFSET) == 0xB && sc->sc_memsize == 65536)
-		for (i = 0; i < 512; i++)
-			SR_OUTB(sc, 0xfe00 + i, 0);
-
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT) {
-		bus_size_t cfg_resp;
 		bus_size_t srb;
 		int	nbuf = 0;
 
 		srb = sc->sc_srb;
-		cfg_resp = sc->sc_srb;
-
-		for (i=0; i < SRB_CFP_CMDSIZE; i++)
-			SRB_OUTB(sc, sc->sc_srb, i, 0);
-
-		SRB_OUTB(sc, srb, SRB_CMD, DIR_CONFIG_FAST_PATH_RAM);
 
 		switch (sc->sc_memsize) {
 		case 65536:
@@ -225,41 +261,18 @@ tr_config(sc)
 
 		sc->sc_minbuf = ((sc->sc_maxmtu + 511) / 512) + 1;
 		sc->sc_nbuf = nbuf;
-		sc->sc_xmit_head = sc->sc_xmit_tail = 0;
-		SRB_OUTW(sc, srb, SRB_CFP_RAMSIZE,
-		    (16 + (nbuf * FP_BUF_LEN) / 8));
-		SRB_OUTW(sc, srb, SRB_CFP_BUFSIZE, FP_BUF_LEN);
 
-		/* tell adapter: command in SRB */
-		ACA_SETB(sc, ACA_ISRA_o, CMD_IN_SRB);
-
-		for (i = 0; i < 30000; i++) {
-			if (ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT)
-				break;
-			delay(100);
-		}
-
-		if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
-			printf("No response for fast path cfg\n");
-			return 1;
-		}
-
-		ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
-
-
-		if ((SRB_INB(sc, cfg_resp, SRB_RETCODE) != 0)) {
-			printf("cfg fast path returned: %02x\n",
-				SRB_INB(sc, cfg_resp, SRB_RETCODE));
-			return 1;
-		}
-
-		sc->sc_txca = SRB_INW(sc, cfg_resp, SRB_CFPRESP_FPXMIT);
-		sc->sc_srb = SRB_INW(sc, cfg_resp, SRB_CFPRESP_SRBADDR);
 /*
  *  Create circular queues caching the buffer pointers ?
  */
 	}
 	else {
+/*
+ * MAX_MACFRAME_SIZE = DHB_SIZE - 6
+ * IPMTU = MAX_MACFRAME_SIZE - (14 + 18 + 8)
+ * (14 = header, 18 = sroute, 8 = llcsnap)
+ */
+
 		switch (sc->sc_memsize) {
 		case 8192:
 			sc->sc_dhb4maxsz = 2048;
@@ -315,19 +328,10 @@ tr_config(sc)
 				sc->sc_dhb16maxsz = 8192;
 			break;
 		}
-		if (sc->sc_init_status & RSP_16)
-			sc->sc_maxmtu = sc->sc_dhb16maxsz;
-		else
-			sc->sc_maxmtu = sc->sc_dhb4maxsz;
-/*
- * XXX Not completely true because Fast Path Transmit has 514 byte buffers
- * XXX and TR_MAX_LINK_HDR is only correct when source-routing is used.
- * XXX depending on wether source routing is used change the calculation
- * XXX use IFM_TOK_SRCRT (IFF_LINK0)
- * XXX recompute sc_minbuf !!
- */
-		sc->sc_maxmtu -= TR_MAX_LINK_HDR;
 	}
+
+	if (tr_config(sc))
+		return 1;
 
 	/*
 	 * init network-visible interface 
@@ -419,7 +423,14 @@ tr_config(sc)
 		ifmedia_add(&sc->sc_media, IFM_TOKEN | IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_TOKEN | IFM_MANUAL);
 	}
+
 	if_attach(ifp);
+
+	for (i = 0, temp = 0; i < ISO88025_ADDR_LEN; i++, temp += 4) {
+		myaddr[i] = (MM_INB(sc, (TR_MAC_OFFSET + temp)) & 0xf) << 4;
+		myaddr[i] |= MM_INB(sc, (TR_MAC_OFFSET + temp + 2)) & 0xf;
+	}
+
 	token_ifattach(ifp, myaddr);
 
 	printf("\n%s: address %s ring speed %d Mbps\n",
@@ -429,6 +440,11 @@ tr_config(sc)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_IEEE802, sizeof(struct token_header));
 #endif
+
+/*
+ * XXX rnd stuff
+ */
+	shutdownhook_establish(tr_shutdown, sc);
 	return 0;
 }
 
@@ -477,26 +493,85 @@ tr_mediastatus(ifp, ifmr)
 		(*sc->sc_mediastatus)(sc, ifmr);
 }
 
+int
+tr_reset(sc)
+struct tr_softc *sc;
+{
+	int i;
+
+	tr_stop(sc);
+
+	/* 
+	 * Reset the card.
+	 */
+	/* latch on an unconditional adapter reset */
+	bus_space_write_1(sc->sc_piot, sc->sc_pioh, TR_RESET, 0);
+	delay(50000); /* delay 50ms */
+	/*
+	 * XXX set paging if we have the right type of card
+	 */
+	/* turn off adapter reset */
+	bus_space_write_1(sc->sc_piot, sc->sc_pioh, TR_RELEASE, 0);
+
+	/* Enable interrupts. */
+
+	ACA_SETB(sc, ACA_ISRP_e, INT_ENABLE);
+
+	/* Wait for an answer from the adapter. */
+
+	for (i = 0; i < 35000; i++) {
+		if (ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT)
+			break;
+		delay(100);
+	}
+
+	if ((ACA_RDB(sc, ACA_ISRP_o) & SRB_RESP_INT) == 0) {
+		printf("No response from adapter after reset\n");
+		return 1;
+	}
+	ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
+
+	ACA_OUTB(sc, ACA_RRR_e, (sc->sc_maddr >> 12));
+	sc->sc_srb = ACA_RDW(sc, ACA_WRBR);
+	if (SRB_INB(sc, sc->sc_srb, SRB_CMD) != 0x80) {
+		printf("Initialization incomplete, status: %02x\n",
+			SRB_INB(sc, sc->sc_srb, SRB_CMD));
+		return 1;
+	}
+	if (SRB_INB(sc, sc->sc_srb, SRB_INIT_BUC) != 0) {
+		printf("Bring Up Code %02x\n",
+		    SRB_INB(sc, sc->sc_srb, SRB_INIT_BUC));
+		return 1;
+	}
+
+	sc->sc_init_status = SRB_INB(sc, sc->sc_srb, SRB_INIT_STATUS);
+
+	sc->sc_xmit_head = sc->sc_xmit_tail = 0;
+
+	/* XXX should depend on sc_resvdmem. */
+	if (MM_INB(sc, TR_RAM_OFFSET) == 0xB && sc->sc_memsize == 65536)
+		for (i = 0; i < 512; i++)
+			SR_OUTB(sc, 0xfe00 + i, 0);
+	return 0;
+}
+
 /*
- * tr_reset - reset interface (issue a DIR CLOSE ADAPTER command)
+ * tr_stop - stop interface (issue a DIR CLOSE ADAPTER command)
  */
 void
-tr_reset(sc)
+tr_stop(sc)
 struct tr_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
-		bus_size_t srb;
-
-		srb =  sc->sc_srb;	
 /*
- * XXX transmitter cannot be used from now on
+ * transmitter cannot be used from now on
  */
 		ifp->if_flags |= IFF_OACTIVE;
 
 		/* Close command. */
-		SRB_OUTB(sc, srb, SRB_CMD, DIR_CLOSE);
+		SRB_OUTB(sc, sc->sc_srb, SRB_CMD, DIR_CLOSE);
 		/* Tell adapter: command in SRB. */
 		ACA_SETB(sc, ACA_ISRA_o, CMD_IN_SRB);
 
@@ -506,15 +581,24 @@ struct tr_softc *sc;
 	}
 }
 
+static void
+tr_shutdown(arg)
+	void *arg;
+{
+	struct tr_softc *sc = arg;
+
+	tr_stop(sc);
+}
+
 /*
  *  tr_init - initialize network interface, open adapter for packet
  *	     reception and start any pending output
  */
 void
-tr_init(v)
-	void *v;
+tr_init(arg)
+	void *arg;
 {
-	struct tr_softc *sc = v;
+	struct tr_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_size_t open_srb;
 	int s, num_dhb;
@@ -526,7 +610,7 @@ tr_init(v)
 	s = splimp();
 
 	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_xmit_head = sc->sc_xmit_tail = 0;
+	sc->sc_xmit_head = sc->sc_xmit_tail = 0; /* XXX tr_reset() */
 
 	open_srb = sc->sc_srb;
 
@@ -789,7 +873,7 @@ tr_intr(arg)
 #endif
 						sc->sc_xmit_correlator = 0;
 						untimeout(tr_timeout, sc);
-						wakeup(&sc->trsleep_event);
+						wakeup(&sc->tr_sleepevent);
 					}
 					else
 						tr_opensap(sc, LLC_SNAP_LSAP); 
@@ -818,12 +902,12 @@ tr_intr(arg)
 					ifp->if_flags &= ~IFF_UP;
 					ifp->if_flags &= ~IFF_OACTIVE;
 					untimeout(tr_timeout, sc);
-					wakeup(&sc->trsleep_event);
+					wakeup(&sc->tr_sleepevent);
 				}
 				break;
 			case DIR_SET_DEFAULT_RING_SPEED:
 				untimeout(tr_timeout, sc);
-				wakeup(&sc->trsleep_event);
+				wakeup(&sc->tr_sleepevent);
 				break;
 
 			case DLC_OPEN_SAP:     	/* Response to open sap cmd */
@@ -836,7 +920,7 @@ tr_intr(arg)
 				printf("%s: Token Ring opened\n",
 				    sc->sc_dev.dv_xname);
 				untimeout(tr_timeout, sc);
-				wakeup(&sc->trsleep_event);
+				wakeup(&sc->tr_sleepevent);
 				break;
 /* XXX DLC_CLOSE_SAP not needed ? */
 			case DLC_CLOSE_SAP: /* Response to close sap cmd */
@@ -1481,7 +1565,7 @@ caddr_t data;
 		 *       ie. adapter up but not running yet
 		 */
 		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_RUNNING) {
-			tr_reset(sc);
+			tr_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		}
 		else if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_UP) {
@@ -1622,7 +1706,7 @@ tr_sleep(sc)
 struct tr_softc *sc;
 {
 	timeout(tr_timeout, sc, hz*30);
-	sleep(&sc->trsleep_event, 1);
+	sleep(&sc->tr_sleepevent, 1);
 }
 
 void
@@ -1641,11 +1725,11 @@ struct ifnet	*ifp;
  *  tr_timeout - timeout routine if adapter does not open in 30 seconds
  */
 void
-tr_timeout(v)
-void	*v;
+tr_timeout(arg)
+void	*arg;
 {
-	struct tr_softc *sc = v;
+	struct tr_softc *sc = arg;
 
 	printf("Token Ring timeout\n");
-	wakeup(&sc->trsleep_event);
+	wakeup(&sc->tr_sleepevent);
 }
