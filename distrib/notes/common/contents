@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.28 2000/11/01 10:58:30 scw Exp $
+.\"	$NetBSD: contents,v 1.29 2000/11/03 23:23:47 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,7 +139,8 @@ this image.
 .if r_alpha \{\
 contains
 .Pa GENERIC.fs ,
-.No a Li GENERIC
+a
+.Li GENERIC
 kernel in a bootable file system image. This is used in some unusual
 installations as described in the next section.
 .\}
@@ -1001,7 +1002,9 @@ ramdisk image from tape. This must be the second file written to the tape.
 This is the
 .Nx
 \*M
-ramdisk image. It contains a GENERIC kernel and a built in RAMDISK
+ramdisk image. It contains a
+.Li GENERIC
+kernel and a built in RAMDISK
 with just enough tools to partition a disk, dump the miniroot kernel
 to it and make the disk bootable. This must be the third file written
 to the tape.
