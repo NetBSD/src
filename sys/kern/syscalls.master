@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 1995/01/06 00:08:17 cgd Exp $
+	$NetBSD: syscalls.master,v 1.27 1995/03/09 17:28:28 mycroft Exp $
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
 ; NetBSD system call name/number "master" file.
@@ -121,21 +121,21 @@
 63	COMPAT_43	{ int getkerninfo(int op, char *where, int *size, \
 			    int arg); }
 64	COMPAT_43	{ int getpagesize(void); }
-65	STD		{ int msync(caddr_t addr, int len); }
+65	STD		{ int msync(caddr_t addr, size_t len); }
 66	STD		{ int vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	STD		{ int sbrk(int incr); }
 70	STD		{ int sstk(int incr); }
-71	COMPAT_43	{ int mmap(caddr_t addr, int len, int prot, \
+71	COMPAT_43	{ int mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pos); }
 72	STD		{ int ovadvise(int anom); } vadvise
-73	STD		{ int munmap(caddr_t addr, int len); }
-74	STD		{ int mprotect(caddr_t addr, int len, int prot); }
-75	STD		{ int madvise(caddr_t addr, int len, int behav); }
+73	STD		{ int munmap(caddr_t addr, size_t len); }
+74	STD		{ int mprotect(caddr_t addr, size_t len, int prot); }
+75	STD		{ int madvise(caddr_t addr, size_t len, int behav); }
 76	OBSOL		vhangup
 77	OBSOL		vlimit
-78	STD		{ int mincore(caddr_t addr, int len, char *vec); }
+78	STD		{ int mincore(caddr_t addr, size_t len, char *vec); }
 79	STD		{ int getgroups(u_int gidsetsize, gid_t *gidset); }
 80	STD		{ int setgroups(u_int gidsetsize, gid_t *gidset); }
 81	STD		{ int getpgrp(void); }
