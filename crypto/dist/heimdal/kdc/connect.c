@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.1.1.1.2.2 2000/10/17 23:12:11 tv Exp $");
+RCSID("$Id: connect.c,v 1.1.1.1.2.3 2001/04/05 23:26:23 he Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -129,10 +129,18 @@ add_standard_ports (int family)
     add_port_service(family, "kerberos", 88, "tcp");
     add_port_service(family, "kerberos-sec", 88, "udp");
     add_port_service(family, "kerberos-sec", 88, "tcp");
-    add_port_service(family, "kerberos-iv", 750, "udp");
-    add_port_service(family, "kerberos-iv", 750, "tcp");
     if(enable_http)
 	add_port_service(family, "http", 80, "tcp");
+#ifdef KRB4
+    if(enable_v4) {
+	add_port_service(family, "kerberos-iv", 750, "udp");
+	add_port_service(family, "kerberos-iv", 750, "tcp");
+    }
+    if(enable_524) {
+	add_port_service(family, "krb524", 4444, "udp");
+	add_port_service(family, "krb524", 4444, "tcp");
+    }
+#endif
 #ifdef KASERVER
     if (enable_kaserver)
 	add_port_service(family, "afs3-kaserver", 7004, "udp");
@@ -195,7 +203,7 @@ struct descr {
     time_t timeout;
     struct sockaddr_storage __ss;
     struct sockaddr *sa;
-    int sock_len;
+    socklen_t sock_len;
     char addr_string[128];
 };
 
@@ -523,6 +531,12 @@ add_new_tcp (struct descr *d, int parent, int child)
 	return;
     }
 	    
+    if (s >= FD_SETSIZE) {
+	krb5_warnx(context, "socket FD too large");
+	close (s);
+	return;
+    }
+
     d[child].s = s;
     d[child].timeout = time(NULL) + TCP_TIMEOUT;
     d[child].type = SOCK_STREAM;
@@ -731,8 +745,9 @@ loop(void)
 	int min_free = -1;
 	int max_fd = 0;
 	int i;
+
 	FD_ZERO(&fds);
-	for(i = 0; i < ndescr; i++){
+	for(i = 0; i < ndescr; i++) {
 	    if(d[i].s >= 0){
 		if(d[i].type == SOCK_STREAM && 
 		   d[i].timeout && d[i].timeout < time(NULL)) {
@@ -743,8 +758,10 @@ loop(void)
 		}
 		if(max_fd < d[i].s)
 		    max_fd = d[i].s;
+		if (max_fd >= FD_SETSIZE)
+		    krb5_errx(context, 1, "fd too large");
 		FD_SET(d[i].s, &fds);
-	    }else if(min_free < 0 || i < min_free)
+	    } else if(min_free < 0 || i < min_free)
 		min_free = i;
 	}
 	if(min_free == -1){
