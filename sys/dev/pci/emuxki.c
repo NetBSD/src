@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.21 2003/03/16 13:34:24 toshii Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.22 2003/03/16 16:33:48 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.21 2003/03/16 13:34:24 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.22 2003/03/16 16:33:48 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1838,16 +1838,28 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 	if (p->channels != 1 && p->channels != 2)
 		return (EINVAL);/* Will change when streams come in use */
 
+	/*
+	 * Always use slinear_le for recording, as how to set otherwise
+	 * isn't known.
+	 */
+	if (mode == AUMODE_PLAY)
+		b16 = (p->precision == 16);
+	else {
+		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+		p->hw_precision = 16;
+		b16 = 1;
+		if (p->precision == 8)
+			p->factor *= 2;
+	}
+
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 		if (mode == AUMODE_PLAY) {
 			p->factor = 2;
 			p->sw_code = mulaw_to_slinear16_le;
 			b16 = 1;
-		} else {
-			p->sw_code = ulinear8_to_mulaw;
-			b16 = 0;
-		}
+		} else
+			p->sw_code = slinear16_to_mulaw_le;
 		break;
 
 	case AUDIO_ENCODING_ALAW:
@@ -1855,30 +1867,35 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 			p->factor = 2;
 			p->sw_code = alaw_to_slinear16_le;
 			b16 = 1;
-		} else {
-			p->sw_code = ulinear8_to_alaw;
-			b16 = 0;
-		}
+		} else
+			p->sw_code = slinear16_to_alaw_le;
 		break;
 
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8)
-			p->sw_code = change_sign8;
-		b16 = (p->precision == 16);
+		if (p->precision == 8) {
+			if (mode == AUMODE_PLAY)
+				p->sw_code = change_sign8;
+			else
+				p->sw_code = linear16_to_linear8_le;
+		}
 		break;
 
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 16)
 			p->sw_code = change_sign16_le;
-		b16 = (p->precision == 16);
+		else if (mode == AUMODE_RECORD)
+			p->sw_code = slinear16_to_ulinear8_le;
 		break;
 
 	case AUDIO_ENCODING_SLINEAR_BE:
 		if (p->precision == 16)
 			p->sw_code = swap_bytes;
-		else
-			p->sw_code = change_sign8;
-		b16 = (p->precision == 16);
+		else {
+			if (mode == AUMODE_PLAY)
+				p->sw_code = change_sign8;
+			else
+				p->sw_code = linear16_to_linear8_le;
+		}
 		break;
 
 	case AUDIO_ENCODING_ULINEAR_BE:
@@ -1887,8 +1904,8 @@ emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p)
 				p->sw_code = swap_bytes_change_sign16_le;
 			else
 				p->sw_code = change_sign16_swap_bytes_le;
-		}
-		b16 = (p->precision == 16);
+		} else if (mode == AUMODE_RECORD)
+			p->sw_code = slinear16_to_ulinear8_le;
 		break;
 
 	default:
