@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.14 2003/10/19 19:29:50 he Exp $	*/
+/*	$NetBSD: rapide.c,v 1.15 2003/12/02 23:47:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.14 2003/10/19 19:29:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.15 2003/12/02 23:47:20 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.14 2003/10/19 19:29:50 he Exp $");
 #include <acorn32/podulebus/rapidereg.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <dev/podulebus/podules.h>
 
@@ -196,7 +197,7 @@ rapide_attach(parent, self, aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ctlioh;
 	u_int iobase;
-	int channel;
+	int channel, i;
 	struct rapide_channel *rcp;
 	struct channel_softc *cp;
 	irqhandler_t *ihp;
@@ -268,17 +269,25 @@ rapide_attach(parent, self, aux)
 		cp->data32iot = iot;
 
 		if (bus_space_map(iot, iobase + rapide_info[channel].registers,
-		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_ioh))
+		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh))
 			continue;
+		for (i = 0; i < DRIVE_REGISTERS_SPACE; i++) {
+			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
+				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0) {
+				bus_space_unmap(iot, cp->cmd_baseioh,
+				    DRIVE_REGISTERS_SPACE);
+				continue;
+			}
+		}
 		if (bus_space_map(iot, iobase +
 		    rapide_info[channel].aux_register, 4, 0, &cp->ctl_ioh)) {
-			bus_space_unmap(iot, cp->cmd_ioh,
+			bus_space_unmap(iot, cp->cmd_baseioh,
 			   DRIVE_REGISTERS_SPACE);
 			continue;
 		}
 		if (bus_space_map(iot, iobase +
 		    rapide_info[channel].data_register, 4, 0, &cp->data32ioh)) {
-			bus_space_unmap(iot, cp->cmd_ioh,
+			bus_space_unmap(iot, cp->cmd_baseioh,
 			   DRIVE_REGISTERS_SPACE);
 			bus_space_unmap(iot, cp->ctl_ioh, 4);
 			continue;
