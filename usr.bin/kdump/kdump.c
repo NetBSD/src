@@ -238,7 +238,7 @@ int nsyscalls = sizeof (syscallnames) / sizeof (syscallnames[0]);
 static char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
-	"PT_KILL",	"PT_STEP",
+	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
 };
 
 ktrsyscall(ktr)
@@ -276,7 +276,7 @@ ktrsyscall(ktr)
 				ip++;
 				narg--;
 			} else if (ktr->ktr_code == SYS_ptrace) {
-				if (*ip <= PT_STEP && *ip >= 0)
+				if (*ip <=sizeof(ptrace_ops)/sizeof(ptrace_ops[0]) && *ip >= 0)
 					(void)printf("(%s", ptrace_ops[*ip]);
 				else
 					(void)printf("(%d", *ip);
