@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.1.2.7 2002/11/03 12:23:05 skrll Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.1.2.8 2002/12/20 01:07:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,6 +137,9 @@ pthread__stackid_setup(void *base, int size)
 	/* Set up an initial ucontext pointer to a "safe" area */
 	t->pt_uc =(ucontext_t *) ((char *)t->pt_stack.ss_sp + 
 	    t->pt_stack.ss_size - (pagesize/2));
+#ifdef _UC_UCONTEXT_ALIGN
+	t->pt_uc = (ucontext_t *)((uintptr_t)t->pt_uc & _UC_UCONTEXT_ALIGN);
+#endif
 
 	return t;
 }
