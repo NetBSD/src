@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.8 2005/01/10 02:08:51 lukem Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.9 2005/02/08 07:01:54 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -70,7 +70,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.8 2004/07/18 04:11:37 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.9 2004/12/09 19:41:26 darrenr Exp";
 #endif
 
 #ifdef __hpux

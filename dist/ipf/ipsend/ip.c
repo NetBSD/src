@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.6 2004/03/28 09:00:55 martti Exp $	*/
+/*	$NetBSD: ip.c,v 1.7 2005/02/08 07:01:53 martti Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 2.8 2004/01/08 13:34:31 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip.c,v 2.8.2.1 2004/10/19 12:31:48 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,7 +68,9 @@ struct	in_addr	gwip;
 
 	bcopy((char *)buf, s + sizeof(*eh), len);
 	if (gwip.s_addr == last_gw.s_addr)
+	    {
 		bcopy(last_arp, (char *)A_A eh->ether_dhost, 6);
+	    }
 	else if (arp((char *)&gwip, (char *)A_A eh->ether_dhost) == -1)
 	    {
 		perror("arp");
@@ -111,7 +113,9 @@ int	frag;
 
 	bzero((char *)A_A eh->ether_shost, sizeof(eh->ether_shost));
 	if (last_gw.s_addr && (gwip.s_addr == last_gw.s_addr))
+	    {
 		bcopy(last_arp, (char *)A_A eh->ether_dhost, 6);
+	    }
 	else if (arp((char *)&gwip, (char *)A_A eh->ether_dhost) == -1)
 	    {
 		perror("arp");
@@ -134,11 +138,7 @@ int	frag;
 	}
 
 	if (ip->ip_src.s_addr != local_ip.s_addr) {
-		if (arp((char *)&ip->ip_src, (char *)A_A local_arp) == -1)
-		    {
-			perror("arp");
-			return -2;
-		    }
+		(void) arp((char *)&ip->ip_src, (char *)A_A local_arp);
 		bcopy(local_arp, (char *)A_A eh->ether_shost,sizeof(last_arp));
 		local_ip = ip->ip_src;
 	} else

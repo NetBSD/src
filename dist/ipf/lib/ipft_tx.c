@@ -1,15 +1,15 @@
-/*	$NetBSD: ipft_tx.c,v 1.4 2004/11/13 19:16:10 he Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.5 2005/02/08 07:01:53 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipft_tx.c,v 1.15 2004/01/08 13:34:32 darrenr Exp
+ * Id: ipft_tx.c,v 1.15.2.2 2004/12/09 19:41:21 darrenr Exp
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 1.15 2004/01/08 13:34:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 1.15.2.2 2004/12/09 19:41:21 darrenr Exp";
 #endif
 
 #include <ctype.h>
@@ -256,6 +256,10 @@ int	*out;
 		}
 		*last++ = '\0';
 		tcp->th_sport = htons(tx_portnum(last));
+		if (ip->ip_p == IPPROTO_TCP) {
+			tcp->th_win = htons(4096);
+			TCP_OFF_A(tcp, sizeof(*tcp) >> 2);
+		}
 	}
 	ip->ip_src.s_addr = tx_hostnum(*cpp, &r);
 	cpp++;
@@ -280,6 +284,7 @@ int	*out;
 		extern	u_char	_tcp_flags[];
 		char	*s, *t;
 
+		tcp->th_flags = 0;
 		for (s = *cpp; *s; s++)
 			if ((t  = strchr(_tcp_flagset, *s)))
 				tcp->th_flags |= _tcp_flags[t - _tcp_flagset];
@@ -287,8 +292,8 @@ int	*out;
 			cpp++;
 		if (tcp->th_flags == 0)
 			abort();
-		tcp->th_win = htons(4096);
-		TCP_OFF_A(tcp, sizeof(*tcp) >> 2);
+		if (tcp->th_flags & TH_URG)
+			tcp->th_urp = htons(1);
 	} else if (*cpp && ip->ip_p == IPPROTO_ICMP) {
 		extern	char	*tx_icmptypes[];
 		char	**s, *t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.35 2004/10/01 15:20:33 christos Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.36 2005/02/08 07:01:56 martti Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.35 2004/10/01 15:20:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.36 2005/02/08 07:01:56 martti Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
