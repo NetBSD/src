@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.10 1994/06/29 06:38:42 cgd Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.11 1995/01/23 20:18:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -136,7 +136,11 @@ again:
 		}
 	}
 
-	len = min(so->so_snd.sb_cc, win) - off;
+	if (win < so->so_snd.sb_cc) {
+		len = win - off;
+		flags &= ~TH_FIN;
+	} else
+		len = so->so_snd.sb_cc - off;
 
 	if (len < 0) {
 		/*
@@ -157,10 +161,9 @@ again:
 	}
 	if (len > tp->t_maxseg) {
 		len = tp->t_maxseg;
+		flags &= ~TH_FIN;
 		sendalot = 1;
 	}
-	if (SEQ_LT(tp->snd_nxt + len, tp->snd_una + so->so_snd.sb_cc))
-		flags &= ~TH_FIN;
 
 	win = sbspace(&so->so_rcv);
 
@@ -322,9 +325,9 @@ send:
 	 */
 	 if (len > tp->t_maxseg - optlen) {
 		len = tp->t_maxseg - optlen;
+		flags &= ~TH_FIN;
 		sendalot = 1;
 	 }
-
 
 #ifdef DIAGNOSTIC
  	if (max_linkhdr + hdrlen > MHLEN)
