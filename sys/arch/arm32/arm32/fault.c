@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.11 1996/10/15 22:22:22 mark Exp $ */
+/* $NetBSD: fault.c,v 1.12 1996/10/16 19:32:13 ws Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -623,7 +623,7 @@ copyfault:
 
 		if ((fault_code & FAULT_USER) == 0
 		    && (va >= KERNEL_BASE || va <= VM_MIN_ADDRESS)) {
-			/* Was the fault due to the FPE/KGDB ? */
+			/* Was the fault due to the FPE/IPKDB ? */
  
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
 				printf("UND32 Data abort: '%s' status = %03x address = %08x PC = %08x\n",
