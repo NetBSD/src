@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.11 1998/10/15 00:47:28 ross Exp $ */
+/* $NetBSD: prom.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -47,15 +47,15 @@ typedef union {
 } prom_return_t;
 
 #ifdef _STANDALONE
-int	getchar __P((void));
-void	putchar __P((int));
+int	getchar(void);
+void	putchar(int);
 #endif
 
-void	prom_halt __P((int)) __attribute__((__noreturn__));
-int	prom_getenv __P((int, char *, int));
+void	prom_halt(int) __attribute__((__noreturn__));
+int	prom_getenv(int, char *, int);
 
-void	hwrpb_primary_init __P((void));
-void	hwrpb_restart_setup __P((void));
+void	hwrpb_primary_init(void);
+void	hwrpb_restart_setup(void);
 #endif
 
 /* Prom operation values. */
@@ -111,14 +111,14 @@ void	hwrpb_restart_setup __P((void));
 
 #ifndef ASSEMBLER
 #ifdef _KERNEL
-int	prom_enter __P((void));
-void	prom_leave __P((int));
+int	prom_enter(void);
+void	prom_leave(int);
 
-void	promcnputc __P((dev_t, int));
-int	promcngetc __P((dev_t));
-int	promcnlookc __P((dev_t, char *));
+void	promcnputc(dev_t, int);
+int	promcngetc(dev_t);
+int	promcnlookc(dev_t, char *);
 
-u_int64_t	prom_dispatch __P((u_int64_t, u_int64_t, u_int64_t, u_int64_t,
-		    u_int64_t));
+u_int64_t	prom_dispatch(u_int64_t, u_int64_t, u_int64_t, u_int64_t,
+		    u_int64_t);
 #endif /* _KERNEL */
 #endif /* ASSEMBLER */
