@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.23 2002/09/25 07:27:54 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.24 2002/09/25 14:35:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -472,7 +472,7 @@ _rtld_bind(obj, reloff)
 	const Obj_Entry *obj;
 	Elf_Word reloff;
 {
-	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
+	const Elf_Rela *rela = obj->pltrela + reloff;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);

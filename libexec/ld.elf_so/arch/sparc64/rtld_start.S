@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.9 2002/09/12 17:18:41 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.10 2002/09/25 14:35:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -164,10 +164,6 @@ _rtld_bind_start_0:	# (x, y)
 	add	%l3, %l4, %l5		/* %l5 = (i/5120)*160 + (i%5120)/24; */
 	add	%l5, %l6, %l5
 	
-	sllx	%l5, 1, %l6		/* Each element is an Elf_Rela which */
-	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
-	sllx	%l5, 3, %l5		/*  So multiply by 24. */
-	
 	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
 	 mov	%l5, %o1
 
@@ -181,10 +177,6 @@ _rtld_bind_start_0:	# (x, y)
 	.type	_rtld_bind_start_1,@function
 _rtld_bind_start_1:	# (x, y)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
-	
-	sllx	%o2, 1, %o3		/* Each element is an Elf_Rela which */
-	add	%o3, %o2, %o2		/*  is 3 longwords or 24 bytes. */
-	sllx	%o2, 3, %o2		/*  So multiply by 24. */
 	
 	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
 	
