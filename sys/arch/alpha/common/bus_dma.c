@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1.2.1 1997/06/05 18:33:46 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.1.2.2 1997/06/06 00:41:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.1 1997/06/05 18:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.2 1997/06/06 00:41:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,12 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
 	 * of ALLOCNOW notifes others that we've reserved these resources,
 	 * and they are not to be freed.
+	 *
+	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
+	 * the (nsegments - 1).
 	 */
 	mapsize = sizeof(struct alpha_bus_dmamap) +
-	    (sizeof(bus_dma_segment_t) * nsegments);
+	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DEVBUF,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
