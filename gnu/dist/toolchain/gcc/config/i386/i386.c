@@ -3355,17 +3355,7 @@ print_operand (file, x, code)
 	  if (GET_CODE (x) == CONST_INT || ! SHIFT_DOUBLE_OMITS_COUNT)
 	    {
 	      PRINT_OPERAND (file, x, 0);
-#ifndef __APPLE__
 	      fputs (AS2C (,) + 1, file);
-#else
-	      /* The above statement results in a " ," being spit out
-		 for both ANSI and traditional preprocessors.  However,
-		 Apple's GCC 3.1 (which has a custom preprocessor that
-		 support pre-compiled headers) that ships with OS X does
-		 not like the above construct, so we hand-craft it.
-		 --thorpej@netbsd.org  */
-#endif
-	      fputs (" ," + 1, file);
 	    }
 
 	  return;
