@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.10 2003/12/21 03:18:31 uwe Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.11 2003/12/23 03:18:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -213,8 +213,10 @@ hpcboot(void *arg)
 		if (MessageBox(menu._root->_window, TEXT("Push YES to boot."),
 		    TEXT("Last chance..."),
 		    MB_ICONWARNING | MB_YESNO) != IDYES)
+		{
 			error_message = TEXT("Canceled by user.\n");
 			goto failed_exit;
+		}
 	}
 
 	f._arch->jump(p, f._loader->tagStart());
