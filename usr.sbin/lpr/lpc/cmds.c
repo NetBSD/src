@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.14 2002/07/14 15:27:59 wiz Exp $	*/
+/*	$NetBSD: cmds.c,v 1.15 2003/05/17 20:46:43 itojun Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.14 2002/07/14 15:27:59 wiz Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.15 2003/05/17 20:46:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ static void
 cleanpr(void)
 {
 	int i, n;
-	char *cp, *cp1, *lp;
+	char *cp, *cp1, *lp, *ep;
 	struct dirent **queue;
 	int nitems;
 
@@ -310,6 +310,7 @@ cleanpr(void)
 	printf("%s:\n", printer);
 
 	/* XXX depends on SD being non nul */
+	ep = line + sizeof(line);
 	for (lp = line, cp = SD; (lp - line) < sizeof(line) &&
 	    (*lp++ = *cp++) != '\0'; )
 		;
@@ -337,8 +338,7 @@ cleanpr(void)
 				n++;
 			}
 			if (n == 0) {
-				strncpy(lp, cp, sizeof(line) - strlen(line) - 1);
-				line[sizeof(line) - 1] = '\0';
+				strlcpy(lp, cp, ep - lp);
 				unlinkf(line);
 			}
 		} else {
@@ -347,8 +347,7 @@ cleanpr(void)
 			 * been skipped above) or a tf file (which can always
 			 * be removed).
 			 */
-			strncpy(lp, cp, sizeof(line) - strlen(line) - 1);
-			line[sizeof(line) - 1] = '\0';
+			strlcpy(lp, cp, ep - lp);
 			unlinkf(line);
 		}
      	} while (++i < nitems);

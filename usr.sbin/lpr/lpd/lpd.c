@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.44 2002/10/26 01:46:31 thorpej Exp $	*/
+/*	$NetBSD: lpd.c,v 1.45 2003/05/17 20:46:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.44 2002/10/26 01:46:31 thorpej Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.45 2003/05/17 20:46:44 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -624,8 +624,7 @@ chkhost(struct sockaddr *f, int check_opts)
 			fatal("Host name for your address (%s) unknown", host);
 	}
 
-	(void)strncpy(fromb, host, sizeof(fromb) - 1);
-	fromb[sizeof(fromb) - 1] = '\0';
+	(void)strlcpy(fromb, host, sizeof(fromb));
 	from = fromb;
 
 	/* need address in stringform for comparison (no DNS lookup here) */
