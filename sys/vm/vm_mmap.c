@@ -219,7 +219,7 @@ smmap(p, uap, retval)
 	if (uap->prot & PROT_EXEC)
 		prot |= VM_PROT_EXECUTE;
 
-	error = vm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot
+	error = vm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
 			flags, handle, (vm_offset_t)uap->pos);
 	if (error == 0)
 		*retval = (int) addr;
