@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.95.2.4 2003/06/24 08:17:22 grant Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.95.2.5 2003/06/30 03:17:56 grant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.4 2003/06/24 08:17:22 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.95.2.5 2003/06/30 03:17:56 grant Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -722,6 +722,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * process it locally.
 	 */
 	if (ifp->if_bridge) {
+		/* clear M_PROMISC, in case the packets comes from a vlan */
+		m->m_flags &= ~M_PROMISC;
 		m = bridge_input(ifp, m);
 		if (m == NULL)
 			return;
@@ -732,29 +734,27 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * to "bridge" the packet locally.
 		 */
 		ifp = m->m_pkthdr.rcvif;
-	}
+	} else 
 #endif /* NBRIDGE > 0 */
-
-	/*
-	 * XXX This comparison is redundant if we are a bridge
-	 * XXX and processing the packet locally.
-	 */
-	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
-	    (ifp->if_flags & IFF_PROMISC) != 0 &&
-	    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-		   ETHER_ADDR_LEN) != 0) {
-		m_freem(m);
-		return;
+	{
+		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+		    (ifp->if_flags & IFF_PROMISC) != 0 &&
+		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			   ETHER_ADDR_LEN) != 0) {
+			m->m_flags |= M_PROMISC;
+		}
 	}
 
 #ifdef PFIL_HOOKS
-	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
-		return;
-	if (m == NULL)
-		return;
+	if ((m->m_flags & M_PROMISC) == 0) {
+		if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
+			return;
+		if (m == NULL)
+			return;
 
-	eh = mtod(m, struct ether_header *);
-	etype = ntohs(eh->ether_type);
+		eh = mtod(m, struct ether_header *);
+		etype = ntohs(eh->ether_type);
+	}
 #endif
 
 	/*
@@ -796,6 +796,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
 	case ETHERTYPE_PPPOE:
+		if (m->m_flags & M_PROMISC) {
+			m_freem(m);
+			return;
+		}
 #ifndef PPPOE_SERVER
 		if (m->m_flags & (M_MCAST | M_BCAST)) {
 			m_freem(m);
@@ -823,7 +827,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 #endif /* NPPPOE > 0 */
 	default:
-		; /* Nothing. */
+		if (m->m_flags & M_PROMISC) {
+			m_freem(m);
+			return;
+		}
 	}
 
 	/* Strip off the Ethernet header. */
