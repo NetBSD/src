@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.590 2003/11/22 20:56:53 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.591 2003/11/26 18:47:16 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.592 2003/11/22 20:54:01 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.593 2003/11/26 18:44:16 matt Exp 
  */
 
 /*
@@ -590,6 +590,7 @@
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics, Inc. */
+#define	PCI_VENDOR_PCHDTV	0x7063		/* pcHDTV */
 #define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_TRIGEM2	0x8800		/* Trigem Computer (2nd PCI Vendor ID) */
@@ -2065,6 +2066,9 @@
 #define	PCI_PRODUCT_OPTI_RM861HA	0xc861		/* RM861HA */
 #define	PCI_PRODUCT_OPTI_82C700	0xc700		/* 82C700 */
 #define	PCI_PRODUCT_OPTI_82C701	0xc701		/* 82C701 */
+
+/* pcHDTV products */
+#define	PCI_PRODUCT_PCHDTV_HD2000	0x2000		/* HD-2000 HDTV video capture */
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
