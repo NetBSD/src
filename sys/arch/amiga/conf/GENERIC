@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.119.2.6 2000/06/03 14:45:18 he Exp $
+#	$NetBSD: GENERIC,v 1.119.2.7 2000/07/05 19:11:35 he Exp $
 
 #
 #if 0
@@ -54,7 +54,7 @@ options 	INET		# IP networking support (Required)
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
