@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.9 1998/06/01 14:31:26 lukem Exp $	*/
+/*	$NetBSD: histedit.h,v 1.10 1998/07/29 02:26:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -104,9 +104,10 @@ void		 el_beep	__P((EditLine *));
 int		 el_parse	__P((EditLine *, int, char **)); 
 
 /*
- * Low level editline access function
+ * Low level editline access functions
  */
 int 		 el_set		__P((EditLine *, int, ...));
+int 		 el_get		__P((EditLine *, int, void *));
 
 /*
  * el_set/el_get parameters
@@ -123,6 +124,7 @@ int 		 el_set		__P((EditLine *, int, ...));
 #define	EL_ADDFN	9	/* , const char *, const char *	*/
 				/* , el_func_t);		*/
 #define EL_HIST		10	/* , hist_fun_t, const char *);	*/
+#define EL_EDITMODE	11	/* , int);			*/
 
 /*
  * Source named file or $PWD/.editrc or $HOME/.editrc

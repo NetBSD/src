@@ -1,6 +1,6 @@
-.\"	$NetBSD: editline.3,v 1.13 1998/06/08 10:56:43 lukem Exp $
+.\"	$NetBSD: editline.3,v 1.14 1998/07/29 02:26:00 lukem Exp $
 .\"
-.\" Copyright (c) 1997 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This file was contributed to The NetBSD Foundation by Luke Mewburn.
@@ -75,6 +75,8 @@
 .Fn el_parse "EditLine *e" "int argc" "char *argv[]"
 .Ft int
 .Fn el_set "EditLine *e" "int op" "..."
+.Ft int
+.Fn el_get "EditLine *e" "int op" "void *result"
 .Ft int
 .Fn el_source "EditLine *e" "const char *file"
 .Ft void
@@ -349,6 +351,48 @@ Defines which history function to use, which is usually
 .Fa ptr
 should be the value returned by
 .Fn history_init .
+.It Dv EL_EDITMODE , Fa "int flag"
+If
+.Fa flag
+is non-zero,
+editing is enabled (the default).
+Note that this is only an indication, and does not
+affect the operation of
+.Nm "" .
+At this time, it is the caller's responsibility to
+check this
+(using
+.Fn el_get )
+to determine if editing should be enabled or not.
+.El
+.It Fn el_get
+Get
+.Nm
+parameters.
+.Fa op
+determines which parameter to retrieve into
+.Fa result .
+.Pp
+The following values for
+.Fa op
+are supported, along with actual type of
+.Fa result :
+.Bl -tag -width 4n
+.It Dv EL_PROMPT , Fa "char *(*f)(EditLine *)"
+Return a pointer to the function that displays the prompt.
+.It Dv EL_EDITOR , Fa "const char *"
+Return the name of the editor, which will be one of
+.Dq emacs
+or
+.Dq vi .
+.It Dv EL_SIGNAL , Fa "int *"
+Return non-zero if
+.Nm
+has installed private signal handlers (see
+.Fn el_get
+above).
+.It Dv EL_EDITMODE, Fa "int *"
+Return non-zero if editing is enabled.
 .El
 .It Fn el_source
 Initialise
@@ -532,3 +576,22 @@ and this manual was written by Luke Mewburn.
 .Sh BUGS
 The tokenization functions are not publically defined in
 .Fd <histedit.h>
+.Pp
+At this time, it is the responsibility of the caller to
+check the result of the
+.Dv EL_EDITMODE
+operation of
+.Fn el_get
+(after an
+.Fn el_source
+or
+.Fn el_parse )
+to determine if
+.Nm
+should be used for further input.
+I.e.,
+.Dv EL_EDITMODE
+is purely an indication of the result of the most recent
+.Xr editrc 5
+.Ic edit
+command.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/11/13 04:43:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 1998/07/29 02:26:00 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -10,8 +10,8 @@ MAN=	editline.3 editrc.5
 
 MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 	editline.3 el_gets.3 editline.3 el_getc.3 editline.3 el_push.3 \
-	editline.3 el_parse.3 editline.3 el_set.3 editline.3 el_source.3 \
-	editline.3 el_resize.3 editline.3 el_line.3 \
+	editline.3 el_parse.3 editline.3 el_set.3 editline.3 el_get.3 \
+	editline.3 el_source.3 editline.3 el_resize.3 editline.3 el_line.3 \
 	editline.3 el_insertstr.3 editline.3 el_deletestr.3 \
 	editline.3 history_init.3 editline.3 history_end.3 editline.3 history.3
 

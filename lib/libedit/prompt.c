@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.3 1997/07/06 18:25:31 christos Exp $	*/
+/*	$NetBSD: prompt.c,v 1.4 1998/07/29 02:26:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)prompt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: prompt.c,v 1.3 1997/07/06 18:25:31 christos Exp $");
+__RCSID("$NetBSD: prompt.c,v 1.4 1998/07/29 02:26:01 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -128,3 +128,18 @@ prompt_set(el, prf)
     el->el_prompt.p_pos.h = 0;
     return 0;
 } /* end prompt_set */
+
+
+/* prompt_get():
+ *	Retrieve the prompt printing function
+ */
+protected int 
+prompt_get(el, prf)
+    EditLine *el;
+    el_pfunc_t *prf;
+{
+    if (prf == NULL)
+	return -1;
+    *prf = el->el_prompt.p_func;
+    return 0;
+} /* end prompt_get */

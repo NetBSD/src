@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.9 1998/05/20 01:01:00 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.10 1998/07/29 02:26:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.9 1998/05/20 01:01:00 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.10 1998/07/29 02:26:00 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -166,6 +166,8 @@ el_set(va_alist)
     op = va_arg(va, int);
 #endif
     
+    if (el == NULL)
+	return -1;
     switch (op) {
     case EL_PROMPT:
 	rv = prompt_set(el, va_arg(va, el_pfunc_t));
@@ -250,6 +252,14 @@ el_set(va_alist)
 	}
 	break;
 
+    case EL_EDITMODE:
+	if (va_arg(va, int))
+	    el->el_flags &= ~EDIT_DISABLED;
+	else
+	    el->el_flags |= EDIT_DISABLED;
+	rv = 0;
+	break;
+
     default:
 	rv = -1;
     }
@@ -257,6 +267,115 @@ el_set(va_alist)
     va_end(va);
     return rv;
 } /* end el_set */
+
+
+/* el_get():
+ *	retrieve the editline parameters
+ */
+public int
+el_get(el, op, ret)
+    EditLine *el;
+    int op;
+    void *ret;
+{
+    int rv;
+
+    if (el == NULL || ret == NULL)
+	return -1;
+    switch (op) {
+    case EL_PROMPT:
+	rv = prompt_get(el, (el_pfunc_t *)&ret);
+	break;
+
+    case EL_EDITOR:
+	rv = map_get_editor(el, (const char **)&ret);
+	break;
+
+    case EL_SIGNAL:
+	*((int *)ret) = (el->el_flags & HANDLE_SIGNALS);
+	rv = 0;
+	break;
+
+    case EL_EDITMODE:
+	*((int *)ret) = (!(el->el_flags & EDIT_DISABLED));
+	rv = 0;
+	break;
+
+#if 0 /*XXX*/
+    case EL_TERMINAL:
+	rv = term_get(el, (const char *)&ret);
+	break;
+
+    case EL_BIND:
+    case EL_TELLTC:
+    case EL_SETTC:
+    case EL_ECHOTC:
+    case EL_SETTY:
+	{
+	    char *argv[20];
+	    int i;
+	    for (i = 1; i < 20; i++)
+		if ((argv[i] = va_arg(va, char *)) == NULL)
+		     break;
+
+	    switch (op) {
+	    case EL_BIND:
+		argv[0] = "bind";
+		rv = map_bind(el, i, argv);
+		break;
+
+	    case EL_TELLTC:
+		argv[0] = "telltc";
+		rv = term_telltc(el, i, argv);
+		break;
+
+	    case EL_SETTC:
+		argv[0] = "settc";
+		rv = term_settc(el, i, argv);
+		break;
+
+	    case EL_ECHOTC:
+		argv[0] = "echotc";
+		rv = term_echotc(el, i, argv);
+		break;
+
+	    case EL_SETTY:
+		argv[0] = "setty";
+		rv = tty_stty(el, i, argv);
+		break;
+
+	    default:
+		rv = -1;
+		abort();
+		break;
+	    }
+	}
+	break;
+    
+    case EL_ADDFN:
+	{
+	    char 	*name = va_arg(va, char *);
+	    char 	*help = va_arg(va, char *);
+	    el_func_t    func = va_arg(va, el_func_t);
+	    rv = map_addfunc(el, name, help, func);
+	}
+	break;
+
+    case EL_HIST:
+	{
+	    hist_fun_t func = va_arg(va, hist_fun_t);
+	    ptr_t      ptr = va_arg(va, char *);
+	    rv = hist_set(el, func, ptr);
+	}
+	break;
+#endif /*XXX*/
+
+    default:
+	rv = -1;
+    }
+
+    return rv;
+} /* end el_get */
 
 
 /* el_line():
@@ -340,3 +459,31 @@ el_beep(el)
 {
     term_beep(el);
 }
+
+
+/* el_editmode()
+ *	Set the state of EDIT_DISABLED from the `edit' command.
+ */
+protected int
+/*ARGSUSED*/
+el_editmode(el, argc, argv)
+    EditLine *el;
+    int argc;
+    char **argv;
+{
+    const char *how;
+
+    if (argv == NULL || argc != 2 || argv[1] == NULL)
+	return -1;
+
+    how = argv[1];
+    if (strcmp(how, "on") == 0)
+	    el->el_flags &= ~EDIT_DISABLED;
+    else if (strcmp(how, "off") == 0)
+	    el->el_flags |= EDIT_DISABLED;
+    else {
+	(void) fprintf(el->el_errfile, "edit: Bad value `%s'.\n", how);
+	return -1;
+    }
+    return 0;
+} /* end el_editmode */
