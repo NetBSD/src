@@ -65,7 +65,7 @@ fetch_inferior_registers (regno)
      we have to do that first, since they're found in memory relative
      to the stack pointer.  */
   if (regno < O7_REGNUM  /* including -1 */
-      || regno >= Y_REGNUM
+      || regno >= PC_REGNUM
       || (!register_valid[SP_REGNUM] && regno < I7_REGNUM))
     {
       if (0 != ptrace (PT_GETREGS, inferior_pid,
