@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.33 1997/07/20 20:30:46 pk Exp $
+#	$NetBSD: files.isa,v 1.33.2.1 1997/07/30 07:05:29 marc Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -44,9 +44,6 @@ file	dev/isa/rtfps.c			rtfps
 #
 
 # 8250/16[45]50-based "com" ports
-device	com: tty
-file	dev/isa/com.c		com needs-flag
-
 attach	com at isa with com_isa
 file	dev/isa/com_isa.c		com_isa
 
@@ -138,9 +135,8 @@ file	dev/isa/elink.c			elink
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-device	ed: ether, ifnet, arp
-attach	ed at isa
-file	dev/isa/if_ed.c			ed
+attach	ed at isa with ed_isa
+file	dev/isa/if_ed_isa.c		ed_isa
 
 # 3Com 3C505
 device	eg: ether, ifnet, arp
@@ -242,6 +238,14 @@ file	dev/isa/wss.c			wss needs-flag
 device	gus: audio, isadma, ics2101, ad1848, mulaw
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
+
+# PCIC pcmcia contoller
+device	pcic {[controller = -1], [socket = -1]}
+attach	pcic at isa
+file	dev/isa/i82365.c		pcic
+
+# device declaration in dev/pcmcia/files.pcmcia
+attach	pcmcia at pcic
 
 #
 # PlanetConnect satellite receiver driver.

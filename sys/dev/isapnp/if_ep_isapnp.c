@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.7 1997/04/27 09:46:50 veego Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.7.4.1 1997/07/30 07:05:37 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -143,8 +143,8 @@ ep_isapnp_attach(parent, self, aux)
 	    strcmp(ipa->ipa_devlogic, "TCM5094") &&
 	    strcmp(ipa->ipa_devlogic, "TCM5095") &&
 	    strcmp(ipa->ipa_devlogic, "TCM5098")) {
-		epconfig(sc, EP_CHIPSET_UNKNOWN);	/* XXX: 3c515 ? */
+		epconfig(sc, EP_CHIPSET_UNKNOWN, NULL);	/* XXX: 3c515 ? */
 	} else {
-		epconfig(sc, EP_CHIPSET_3C509);
+		epconfig(sc, EP_CHIPSET_3C509, NULL);
 	}
 }

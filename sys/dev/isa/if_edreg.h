@@ -1,4 +1,4 @@
-/*	$NetBSD: if_edreg.h,v 1.15 1996/01/10 16:49:22 chuck Exp $	*/
+/*	$NetBSD: if_edreg.h,v 1.15.12.1 1997/07/30 07:05:33 marc Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -403,7 +403,9 @@
  * Register offsets/total
  */
 #define ED_NOVELL_NIC_OFFSET	0x00
+#define ED_NOVELL_NIC_PORTS	0x10
 #define ED_NOVELL_ASIC_OFFSET	0x10
+#define ED_NOVELL_ASIC_PORTS	0x10
 #define ED_NOVELL_IO_PORTS	32
 
 /*
