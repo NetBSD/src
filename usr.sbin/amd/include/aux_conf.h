@@ -1,5 +1,3 @@
-/* $NetBSD: aux_conf.h,v 1.6 2003/03/09 17:57:50 wiz Exp $ */
-
 /*
  * aux_conf.h:
  * This file gets "filled in" for each architecture.
@@ -52,8 +50,6 @@
 #define	NFS_SA_DREF(dst, src) { \
 		(dst)->addr = (struct sockaddr *) (src); \
 		(dst)->addrlen = sizeof(*src); \
-		(dst)->sotype = SOCK_DGRAM; \
-		(dst)->proto = 0; \
 	}
 /* End of included NFS_SA_DREF macro definition file */
 
@@ -67,29 +63,5 @@
 /* $srcdir/conf/hn_dref/hn_dref_default.h */
 #define NFS_HN_DREF(dst, src) (dst) = (src)
 /* End of included NFS_HN_DREF macro definition file */
-
-/*
- * The next line is a literal inclusion of a file which defines
- * necessary structures and functions for this system's flavor
- * of kernel-based autofs.
- * If it defines the wrong entry, check the AC_CHECK_AUTOFS_STYLE m4 macro
- * in $srcdir/m4/macros.
- */
-
-/*
- * Autofs is not supported on this platform,
- * so disable it if it gets detected.
- */
-
-#ifdef MNTTYPE_AUTOFS
-# undef MNTTYPE_AUTOFS
-#endif /* MNTTYPE_AUTOFS */
-#ifdef MNTTAB_TYPE_AUTOFS
-# undef MNTTAB_TYPE_AUTOFS
-#endif /* MNTTAB_TYPE_AUTOFS */
-#ifdef HAVE_FS_AUTOFS
-# undef HAVE_FS_AUTOFS
-#endif /* HAVE_FS_AUTOFS */
-/* End of included AUTOFS_STYLE macro definition file */
 
 #endif /* not _AUX_CONF_H */
