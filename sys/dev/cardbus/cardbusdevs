@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.22 2002/11/11 12:50:33 onoe Exp $
+$NetBSD: cardbusdevs,v 1.23 2002/11/11 14:15:48 kanaoka Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -53,6 +53,7 @@ vendor DLINK		0x1186	D-Link Systems
 vendor COREGA		0x1259	Corega
 vendor ALLIEDTELESYN	0x1259	Allied Telesyn International
 vendor ABOCOM		0x13d1	AboCom Systems
+vendor PLANEX		0x14ea	Planex Communications Inc
 vendor HAWKING		0x17b3	Hawking Technology
 vendor INTEL		0x8086	Intel
 vendor ADP		0x9004	Adaptec
@@ -112,6 +113,9 @@ product COREGA CB_TXD	0xa117	FEther CB-TXD 10/100 Ethernet
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
 product ABOCOM PCM200	0xab03	FE2500 10/100 Ethernet
 product ABOCOM FE2500MX	0xab08	FE2500MX 10/100 Ethernet
+
+/* Planex products */
+product PLANEX FNW_3603_TX 0xab06 FNW-3603-TX 10/100 Ethernet
 
 /* Hawking Technology products */
 product HAWKING PN672TX	0xab08	PN672TX 10/100 Ethernet
