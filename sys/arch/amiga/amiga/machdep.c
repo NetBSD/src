@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 1996/05/24 19:59:38 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 1996/05/25 17:08:51 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1208,7 +1208,7 @@ initcpu()
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoLev2intr, lev2intr;
+	extern u_int8_t DraCoIntr, DraCoLev2intr;
 #endif
 
 #ifdef M68060
@@ -1240,10 +1240,12 @@ initcpu()
 
 #ifdef DRACO
 	if (is_draco()) {
+		vectab[24+1] = &DraCoIntr;
 		vectab[24+2] = &DraCoLev2intr;
-		vectab[24+4] = &lev2intr;
-		vectab[24+5] = &lev2intr;
-		vectab[24+6] = &lev2intr;
+		vectab[24+3] = &DraCoIntr;
+		vectab[24+4] = &DraCoIntr;
+		vectab[24+5] = &DraCoIntr;
+		vectab[24+6] = &DraCoIntr;
 	}
 #endif
 	DCIS();
