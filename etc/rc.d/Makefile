@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.48 2004/05/16 09:53:10 lukem Exp $
+# $NetBSD: Makefile,v 1.49 2004/06/30 09:22:41 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ CONFIGFILES=\
 	mixerctl mopd motd mountall mountcritlocal mountcritremote mountd \
 	moused mrouted \
 	named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
-	poffd postfix powerd ppp pwcheck quota \
+	pf pflogd poffd postfix powerd ppp pwcheck quota \
 	racoon rpcbind raidframe raidframeparity rarpd rbootd root \
 	route6d routed rtadvd rtclocaltime rtsold rwho \
 	savecore screenblank sendmail securelevel smmsp sshd \
