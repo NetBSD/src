@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.6 2002/05/30 15:21:24 eeh Exp $
+#	$NetBSD: files.walnut,v 1.7 2002/08/01 23:15:38 simonb Exp $
 #
 # walnut-specific configuration info
 
@@ -63,6 +63,11 @@ file	arch/powerpc/ibm4xx/dev/com_mainbus.c	com_mainbus
 device	emac: ether, ifnet, arp, mii
 attach	emac at mainbus
 file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
+
+# Watchdog timer
+device	wdog: sysmon_wdog
+attach	wdog at mainbus
+file	arch/powerpc/ibm4xx/dev/wdog.c		wdog
 
 # PCI bus support
 include	"dev/pci/files.pci"
