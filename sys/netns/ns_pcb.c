@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.12 1997/07/18 19:30:41 thorpej Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.13 2000/02/01 00:20:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -192,11 +192,13 @@ ns_pcbconnect(nsp, nam)
 		 * If we found a route, use the address
 		 * corresponding to the outgoing interface
 		 */
-		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp))
+		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp)) {
 			for (ia = ns_ifaddr.tqh_first; ia != 0;
-			    ia = ia->ia_list.tqe_next)
+			    ia = ia->ia_list.tqe_next) {
 				if (ia->ia_ifp == ifp)
 					break;
+			}
+		}
 		if (ia == 0) {
 			u_int16_t fport = sns->sns_addr.x_port;
 			sns->sns_addr.x_port = 0;
