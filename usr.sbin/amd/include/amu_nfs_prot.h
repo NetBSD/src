@@ -1,7 +1,7 @@
-/* $NetBSD: amu_nfs_prot.h,v 1.9 2000/11/20 00:27:23 wiz Exp $ */
+/*	$NetBSD: amu_nfs_prot.h,v 1.10 2002/11/29 23:23:59 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_netbsd1_4.h,v 1.3 2000/01/12 16:44:49 ezk Exp
+ * Id: nfs_prot_netbsd1_4.h,v 1.7 2002/06/22 23:06:23 ezk Exp
  *
  */
 
@@ -103,10 +102,12 @@ typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
 #define na_ctime	ctime
 #define na_fileid	fileid
 #define na_fsid		fsid
+#define na_gid		gid
 #define na_mode		mode
 #define na_mtime	mtime
 #define na_nlink	nlink
 #define na_size		size
+#define na_uid		uid
 #define na_type		type
 #define ne_cookie	cookie
 #define ne_fileid	fileid
