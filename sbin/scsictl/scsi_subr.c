@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_subr.c,v 1.3 2001/04/17 13:31:00 ad Exp $	*/
+/*	$NetBSD: scsi_subr.c,v 1.4 2001/05/15 15:11:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
 
 #include "extern.h"
 
@@ -104,14 +104,14 @@ scsi_mode_sense(fd, pgcode, pctl, buf, len)
 	void *buf;
 	size_t len;
 {
-	struct scsi_mode_sense cmd;
+	struct scsipi_mode_sense cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
 	memset(buf, 0, len);
 
-	cmd.opcode = SCSI_MODE_SENSE;
+	cmd.opcode = MODE_SENSE;
 	cmd.page = pgcode | pctl;
-	cmd.length = len;
+	cmd.u_len.scsi.length = len;
 
 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_READ);
 }
@@ -123,12 +123,12 @@ scsi_mode_select(fd, pgcode, pctl, buf, len)
 	void *buf;
 	size_t len;
 {
-	struct scsi_mode_select cmd;
+	struct scsipi_mode_select cmd;
 
 	memset(&cmd, 0, sizeof(cmd));
 
-	cmd.opcode = SCSI_MODE_SELECT;
-	cmd.length = len;
+	cmd.opcode = MODE_SELECT;
+	cmd.u_len.scsi.length = len;
 
 	scsi_command(fd, &cmd, sizeof(cmd), buf, len, 10000, SCCMD_WRITE);
 }
