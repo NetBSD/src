@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.3 1994/12/08 09:30:50 jtc Exp $	*/
+/*	$NetBSD: hunt.c,v 1.4 1994/12/24 17:56:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: hunt.c,v 1.3 1994/12/08 09:30:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: hunt.c,v 1.4 1994/12/24 17:56:27 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -55,6 +55,7 @@ dead()
 	longjmp(deadline, 1);
 }
 
+long
 hunt(name)
 	char *name;
 {
@@ -89,10 +90,10 @@ hunt(name)
 			ioctl(FD, TIOCEXCL, 0);
 			ioctl(FD, TIOCHPCL, 0);
 			signal(SIGALRM, SIG_DFL);
-			return ((int)cp);
+			return ((long)cp);
 		}
 		(void)uu_unlock(uucplock);
 	}
 	signal(SIGALRM, f);
-	return (deadfl ? -1 : (int)cp);
+	return (deadfl ? -1 : (long)cp);
 }

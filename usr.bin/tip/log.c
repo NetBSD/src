@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 1994/12/08 09:30:53 jtc Exp $	*/
+/*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: log.c,v 1.3 1994/12/08 09:30:53 jtc Exp $";
+static char rcsid[] = "$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -54,7 +54,7 @@ logent(group, num, acu, message)
 {
 	char *user, *timestamp;
 	struct passwd *pwd;
-	long t;
+	time_t t;
 
 	if (flog == NULL)
 		return;
