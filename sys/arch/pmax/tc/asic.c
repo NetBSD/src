@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.35 1999/04/24 08:01:13 simonb Exp $	*/
+/*	$NetBSD: asic.c,v 1.36 1999/04/26 09:36:05 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,7 +45,6 @@
 
 #ifdef pmax
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/machdep.h>		/* XXX ioasic_init( */
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
@@ -263,36 +262,4 @@ ioasic_lance_dma_setup(v)
 	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
 	    IOASIC_CSR_DMAEN_LANCE;
 	tc_mb();
-}
-
-void ioasic_init(int flag);
-
-/*
- * Initialize the I/O asic
- */
-void
-ioasic_init(bogus)
-	int bogus; /* XXX */
-{
-	/* common across 3min, 3maxplus and maxine */
-        *(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-        *(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-
-#if 0
-        switch (systype) {
-        case DS_3MIN:
-        case DS_3MAXPLUS:
-        *(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-        *(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-        *(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
-                break;
-
-        case DS_MAXINE:
-        *(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-        *(volatile u_int *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
-        *(volatile u_int *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
-        *(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
-                break;
-        }
-#endif
 }
