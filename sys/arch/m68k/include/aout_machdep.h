@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.1 1996/09/08 00:57:29 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.2 1997/04/09 23:34:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,17 +30,14 @@
 #ifndef _M68K_EXEC_H_
 #define _M68K_EXEC_H_
 
-#ifndef __LDPGSZ	/* XXX */
 #define __LDPGSZ	8192
-#endif
 
 /*
  * Override the N_PAGSIZ() macro.
  * XXX Nicer way to do this?
  */
 #undef N_PAGSIZ
-#define N_PAGSIZ(ex)	(N_GETMID((ex)) == MID_M68K ? 8192 :		\
-			(N_GETMID((ex)) == MID_M68K4K ? 4096 : __LDPGSZ))
+#define	N_PAGSIZ(ex)	(N_GETMID((ex)) == MID_M68K4K ? 4096 : __LDPGSZ)
 
 /* Relocation format. */
 struct relocation_info_m68k {
