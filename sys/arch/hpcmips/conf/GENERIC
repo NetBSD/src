@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.27 2000/02/10 08:45:44 sato Exp $
+# 	$NetBSD: GENERIC,v 1.28 2000/02/11 03:20:17 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	8
 
@@ -113,7 +113,7 @@ vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
 options 	__NO_SOFT_SERIAL_INTERRUPT
-com*	at vrip? addr 0x0c000000 size 0x20 intr 9
+com*	at vrip? addr 0x0c000000 size 0x20 intr 9 pwctl PWCTL_COM0
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
