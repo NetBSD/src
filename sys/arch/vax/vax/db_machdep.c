@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.30 2001/06/06 06:29:36 chs Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.31 2001/06/12 13:22:06 ragge Exp $	*/
 
 /* 
  * :set tabs=4
@@ -56,6 +56,7 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/intr.h>
+#include <machine/rpb.h>
 #include <vax/vax/gencons.h>
 
 #include <ddb/db_sym.h>
@@ -217,6 +218,7 @@ kdb_trap(struct trapframe *frame)
 #endif
 	frame->sp = mfpr(PR_USP);
 #ifdef MULTIPROCESSOR
+	rpb.wait = 0;
 	resume_cpus();
 #endif
 }
@@ -320,8 +322,11 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 		return;
 	}
 
+#if 0
 	while (((u_int)(fp->vax_fp) > stackbase - 0x100) && 
 			((u_int)(fp->vax_fp) < (stackbase + USPACE))) {
+#endif
+	while (!IN_USERLAND(fp->vax_fp)) {
 		u_int pc = fp->vax_pc;
 
 		/*
@@ -421,11 +426,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 	/* Trace a panic */
-	if (! trace_proc) {
-		if (! panicstr) {
-			(*pr)("Not a panic, use trace/t to trace a process.\n");
-			return;
-		}
+	if (panicstr) {
 		(*pr)("panic: %s\n", panicstr);
 		/* xxx ? where did we panic and whose stack are we using? */
 #ifdef MULTIPROCESSOR
@@ -637,6 +638,9 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	stopcpu = ci;
 	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	db_printf("using cpu %ld", addr);
+	if (ci->ci_curproc)
+		db_printf(" in proc %d (%s)\n", ci->ci_curproc->p_pid,
+		    ci->ci_curproc->p_comm);
 }
 #endif
 
