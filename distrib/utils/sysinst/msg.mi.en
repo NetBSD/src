@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.91 2002/08/02 04:08:47 grant Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.92 2002/08/12 02:22:52 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -220,12 +220,12 @@ partition size has been truncated to %d %s.
 }
 
 message fspart
-{We now have your BSD-disklabel partitions as (Size and Offset in %s):
+{We now have your BSD-disklabel partitions as (Start, End and Size in %s):
 
 }
 
 message fspart_header
-{   Size      Offset    End       FStype Bsize Fsize Preserve Mount point
+{   Start     End       Size      FStype Bsize Fsize Preserve Mount point
    --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
