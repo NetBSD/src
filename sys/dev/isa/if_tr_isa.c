@@ -1,4 +1,6 @@
-/*	$NetBSD: if_tr_isa.c,v 1.7 2001/11/13 08:01:21 lukem Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.8 2002/01/07 21:47:09 thorpej Exp $	*/
+
+/* XXXJRT changes isa_attach_args too early!! */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.7 2001/11/13 08:01:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.8 2002/01/07 21:47:09 thorpej Exp $");
 
 #undef TRISADEBUG
 
@@ -95,7 +97,8 @@ bus_space_handle_t *pioh, *mmioh;
 	bus_size_t mmio;
 	u_int8_t s;
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ia->ia_iosize, 0, pioh)) {
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, pioh)) {
 		printf("tr_isa_map_io: can't map PIO ports\n");
 		return 1;
 	}
@@ -105,7 +108,7 @@ bus_space_handle_t *pioh, *mmioh;
 
 	if ((s & 0xfc) < ((TR_MMIO_MINADDR - TR_MMIO_OFFSET) >> 11) ||
 	    (s & 0xfc) > ((TR_MMIO_MAXADDR - TR_MMIO_OFFSET) >> 11)) {
-		bus_space_unmap(ia->ia_iot, *pioh, ia->ia_iosize);
+		bus_space_unmap(ia->ia_iot, *pioh, ia->ia_io[0].ir_size);
 		return 1;
 	}
 
@@ -113,7 +116,7 @@ bus_space_handle_t *pioh, *mmioh;
 	if (bus_space_map(ia->ia_memt, mmio, TR_MMIO_SIZE, 0, mmioh)) {
 		printf("tr_isa_map_io: can't map MMIO region 0x%05lx/%d\n",
 			mmio, TR_MMIO_SIZE);
-		bus_space_unmap(ia->ia_iot, *pioh, ia->ia_iosize);
+		bus_space_unmap(ia->ia_iot, *pioh, ia->ia_io[0].ir_size);
 		return 1;
 	}
 	return 0;
@@ -125,7 +128,7 @@ struct isa_attach_args *ia;
 bus_space_handle_t pioh, mmioh;
 {
 	bus_space_unmap(ia->ia_memt, mmioh, TR_MMIO_SIZE);
-	bus_space_unmap(ia->ia_iot, pioh, ia->ia_iosize);
+	bus_space_unmap(ia->ia_iot, pioh, ia->ia_io[0].ir_size);
 }
 
 static u_char tr_isa_id[] = {
@@ -148,6 +151,16 @@ tr_isa_probe(parent, match, aux)
 	bus_space_handle_t sramh, pioh, mmioh;
 	int probecode;
 	int matched = 0;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	for (i = 0; tr_isa_probe_list[i] != 0; i++) {
 		probecode = tr_isa_probe_list[i](parent, match, aux);
@@ -175,11 +188,19 @@ tr_isa_probe(parent, match, aux)
 	if (!matched) {
 		return 0;
 	}
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &sramh)) {
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
+	    ia->ia_iomem[0].ir_size, 0, &sramh)) {
 		printf("tr_isa_probe: can't map shared ram\n");
 		return 0;
 	}
-	bus_space_unmap(ia->ia_memt, sramh, ia->ia_msize);
+	bus_space_unmap(ia->ia_memt, sramh, ia->ia_iomem[0].ir_size);
+
+	ia->ia_nio = 1;
+	ia->ia_niomem = 1;
+	ia->ia_nirq = 1;
+
+	ia->ia_ndrq = 0;
+
 	return 1;
 }
 
@@ -201,15 +222,15 @@ tr_isa_attach(parent, self, aux)
 		printf("tr_isa_attach: IO space vanished\n");
 		return;
 	}
-	if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize, 0,
-	    &sc->sc_sramh)) {
+	if (bus_space_map(sc->sc_memt, ia->ia_iomem[0].ir_addr,
+	    ia->ia_iomem[0].ir_size, 0, &sc->sc_sramh)) {
 		printf("tr_isa_attach: shared ram space vanished\n");
 		return;
 	}
 	/* set ACA offset */
 	sc->sc_aca = TR_ACA_OFFSET;
-	sc->sc_memwinsz = ia->ia_msize;
-	sc->sc_maddr = ia->ia_maddr;
+	sc->sc_memwinsz = ia->ia_iomem[0].ir_size;
+	sc->sc_maddr = ia->ia_iomem[0].ir_addr;
 	/*
 	 * Determine total RAM on adapter and decide how much to use.
 	 * XXX Since we don't use RAM paging, use sc_memwinsz for now.
@@ -235,8 +256,8 @@ tr_isa_attach(parent, self, aux)
 /*
  * XXX 3Com 619 can use LEVEL intr
  */
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-					IPL_NET, tr_intr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, tr_intr, sc);
 }
 
 #ifdef TRISADEBUG

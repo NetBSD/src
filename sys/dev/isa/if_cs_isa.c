@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.5 2001/11/26 19:17:06 yamt Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.6 2002/01/07 21:47:06 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.5 2001/11/26 19:17:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.6 2002/01/07 21:47:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,19 +80,32 @@ cs_isa_probe(parent, cf, aux)
 	bus_space_handle_t ioh, memh;
 	int rv = 0, have_io = 0, have_mem = 0;
 	u_int16_t isa_cfg, isa_membase;
-	bus_addr_t maddr = ia->ia_maddr;
-	int irq = ia->ia_irq;
+	int maddr, irq;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	/*
 	 * Disallow wildcarded I/O base.
 	 */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
+
+	if (ia->ia_niomem > 0)
+		maddr = ia->ia_iomem[0].ir_addr;
+	else
+		maddr = ISACF_IOMEM_DEFAULT;
 
 	/*
 	 * Map the I/O space.
 	 */
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase, CS8900_IOSIZE, 0, &ioh))
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, CS8900_IOSIZE,
+	    0, &ioh))
 		goto out;
 	have_io = 1;
 
@@ -118,7 +131,8 @@ cs_isa_probe(parent, cf, aux)
 	 * If the IRQ or memory address were not specified, read the
 	 * ISA_CFG EEPROM location.
 	 */
-	if (maddr == ISACF_IOMEM_DEFAULT || irq == ISACF_IRQ_DEFAULT) {
+	if (maddr == ISACF_IOMEM_DEFAULT ||
+	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
 		if (cs_verify_eeprom(iot, ioh) == CS_ERROR) {
 			printf("cs_isa_probe: EEPROM bad or missing\n");
 			goto out;
@@ -133,13 +147,14 @@ cs_isa_probe(parent, cf, aux)
 	/*
 	 * If the IRQ wasn't specified, get it from the EEPROM.
 	 */
-	if (irq == ISACF_IRQ_DEFAULT) {
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
 		irq = isa_cfg & ISA_CFG_IRQ_MASK;
 		if (irq == 3)
 			irq = 5;
 		else
 			irq += 10;
-	}
+	} else
+		irq = ia->ia_irq[0].ir_irq;
 
 	/*
 	 * If the memory address wasn't specified, get it from the EEPROM.
@@ -176,11 +191,19 @@ cs_isa_probe(parent, cf, aux)
 		bus_space_unmap(memt, memh, CS8900_MEMSIZE);
 
 	if (rv) {
-		ia->ia_iosize = CS8900_IOSIZE;
-		ia->ia_maddr = maddr;
-		ia->ia_irq = irq;
-		if (ia->ia_maddr != ISACF_IOMEM_DEFAULT)
-			ia->ia_msize = CS8900_MEMSIZE;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = CS8900_IOSIZE;
+
+		if (maddr == ISACF_IOMEM_DEFAULT)
+			ia->ia_niomem = 0;
+		else {
+			ia->ia_niomem = 1;
+			ia->ia_iomem[0].ir_addr = maddr;
+			ia->ia_iomem[0].ir_size = CS8900_MEMSIZE;
+		}
+
+		ia->ia_nirq = 1;
+		ia->ia_irq[0].ir_irq = irq;
 	}
 	return (rv);
 }
@@ -198,15 +221,19 @@ cs_isa_attach(parent, self, aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 
-	isc->sc_drq = ia->ia_drq;
-	sc->sc_irq = ia->ia_irq;
+	if (ia->ia_ndrq > 0)
+		isc->sc_drq = ia->ia_drq[0].ir_drq;
+	else
+		isc->sc_drq = -1;
+
+	sc->sc_irq = ia->ia_irq[0].ir_irq;
 
 	printf("\n");
 
 	/*
 	 * Map the device.
 	 */
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize,
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, CS8900_IOSIZE,
 	    0, &sc->sc_ioh)) {
 		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
@@ -225,16 +252,16 @@ cs_isa_attach(parent, self, aux)
 	 * we set ourselves up to use memory mode forever.  Otherwise,
 	 * we fall back on I/O mode.
 	 */
-	if (ia->ia_maddr != ISACF_IOMEM_DEFAULT &&
-	    ia->ia_msize == CS8900_MEMSIZE &&
-	    CS8900_MEMBASE_ISVALID(ia->ia_maddr)) {
-		if (bus_space_map(sc->sc_memt, ia->ia_maddr, ia->ia_msize,
-		    0, &sc->sc_memh)) {
+	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	    ia->ia_iomem[0].ir_size == CS8900_MEMSIZE &&
+	    CS8900_MEMBASE_ISVALID(ia->ia_iomem[0].ir_addr)) {
+		if (bus_space_map(sc->sc_memt, ia->ia_iomem[0].ir_addr,
+		    CS8900_MEMSIZE, 0, &sc->sc_memh)) {
 			printf("%s: unable to map memory space\n",
 			    sc->sc_dev.dv_xname);
 		} else {
 			sc->sc_cfgflags |= CFGFLG_MEM_MODE;
-			sc->sc_pktpgaddr = ia->ia_maddr;
+			sc->sc_pktpgaddr = ia->ia_iomem[0].ir_addr;
 		}
 	}
 

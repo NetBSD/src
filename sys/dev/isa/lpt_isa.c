@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.51 2001/11/13 08:01:24 lukem Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.52 2002/01/07 21:47:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.51 2001/11/13 08:01:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.52 2002/01/07 21:47:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,12 +167,18 @@ lpt_isa_probe(parent, match, aux)
 #define	ABORT	goto out
 #endif
 
+	if (ia->ia_nio < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return (0);
 
 	iot = ia->ia_iot;
-	base = ia->ia_iobase;
+	base = ia->ia_io[0].ir_addr;;
 	if (bus_space_map(iot, base, LPT_NPORTS, 0, &ioh))
 		return 0;
 
@@ -202,8 +208,10 @@ lpt_isa_probe(parent, match, aux)
 	bus_space_write_1(iot, ioh, lpt_data, 0);
 	bus_space_write_1(iot, ioh, lpt_control, 0);
 
-	ia->ia_iosize = LPT_NPORTS;
-	ia->ia_msize = 0;
+	ia->ia_io[0].ir_size = LPT_NPORTS;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
 
 	rv = 1;
 
@@ -223,15 +231,17 @@ lpt_isa_attach(parent, self, aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	if (ia->ia_irq != IRQUNK)
-		printf("\n");
-	else
+	if (ia->ia_nirq < 1 ||
+	    ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+		sc->sc_irq = -1;
 		printf(": polled\n");
-
-	sc->sc_irq = ia->ia_irq;
+	} else {
+		sc->sc_irq = ia->ia_irq[0].ir_irq;
+		printf("\n");
+	}
 
 	iot = lsc->sc_iot = ia->ia_iot;
-	if (bus_space_map(iot, ia->ia_iobase, LPT_NPORTS, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, LPT_NPORTS, 0, &ioh)) {
 		printf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
@@ -239,8 +249,7 @@ lpt_isa_attach(parent, self, aux)
 
 	lpt_attach_subr(lsc);
 
-	if (ia->ia_irq != IRQUNK)
-		lsc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-		    IPL_TTY, lptintr, lsc);
+	if (sc->sc_irq != -1)
+		lsc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq,
+		    IST_EDGE, IPL_TTY, lptintr, lsc);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.53 2001/11/13 08:01:35 lukem Exp $	*/
+/*	$NetBSD: wt.c,v 1.54 2002/01/07 21:47:14 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.53 2001/11/13 08:01:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.54 2002/01/07 21:47:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,37 +187,56 @@ wtprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	int rv = 0;
+	int rv = 0, iosize;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
 
-	if (ia->ia_drq < 1 || ia->ia_drq > 3) {
-		printf("wtprobe: Bad drq=%d, should be 1..3\n", ia->ia_drq);
+	if (ia->ia_drq[0].ir_drq < 1 || ia->ia_drq[0].ir_drq > 3) {
+		printf("wtprobe: Bad drq=%d, should be 1..3\n",
+		    ia->ia_drq[0].ir_drq);
 		return (0);
 	}
 
+	iosize = AV_NPORT;
+
 	/* Map i/o space */
-	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, iosize, 0, &ioh))
 		return 0;
 
 	/* Try Wangtek. */
 	if (wtreset(iot, ioh, &wtregs)) {
-		ia->ia_iosize = WT_NPORT; /* XXX misleading */
+		iosize = WT_NPORT; /* XXX misleading */
 		rv = 1;
 		goto done;
 	}
 
 	/* Try Archive. */
 	if (wtreset(iot, ioh, &avregs)) {
-		ia->ia_iosize = AV_NPORT;
+		iosize = AV_NPORT;
 		rv = 1;
 		goto done;
 	}
 
 done:
+	if (rv) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = iosize;
+
+		ia->ia_nirq = 1;
+		ia->ia_ndrq = 1;
+
+		ia->ia_niomem = 0;
+	}
 	bus_space_unmap(iot, ioh, AV_NPORT);
 	return rv;
 }
@@ -237,7 +256,7 @@ wtattach(parent, self, aux)
 	bus_size_t maxsize;
 
 	/* Map i/o space */
-	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AV_NPORT, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -274,7 +293,7 @@ ok:
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
-	sc->chan = ia->ia_drq;
+	sc->chan = ia->ia_drq[0].ir_drq;
 
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
 		printf("%s: max DMA size %lu is less than required %d\n",
@@ -289,8 +308,8 @@ ok:
 		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, wtintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, wtintr, sc);
 }
 
 int

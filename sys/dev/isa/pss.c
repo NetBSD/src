@@ -1,4 +1,6 @@
-/*	$NetBSD: pss.c,v 1.58 2001/11/13 08:01:28 lukem Exp $	*/
+/*	$NetBSD: pss.c,v 1.59 2002/01/07 21:47:12 thorpej Exp $	*/
+
+/* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -51,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.58 2001/11/13 08:01:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.59 2002/01/07 21:47:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
