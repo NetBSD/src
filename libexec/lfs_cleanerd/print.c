@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 1998/10/07 15:00:34 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.6 1998/10/15 00:29:51 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.5 1998/10/07 15:00:34 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.6 1998/10/15 00:29:51 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,19 +171,19 @@ dump_super(lfsp)
 	syslog(LOG_DEBUG, "%s0x%X\t%s%d\t%s0x%qX\t%s%lu\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
-		"bmask    ", (u_quad_t)lfsp->lfs_bmask,
+		"bmask    ", (long long)lfsp->lfs_bmask,
 		"bshift   ", (u_long)lfsp->lfs_bshift);
 
 	syslog(LOG_DEBUG, "%s0x%qX\t\t%s%lu\t%s0x%qX\t%s%lu\n",
-		"ffmask   ", (u_quad_t)lfsp->lfs_ffmask,
+		"ffmask   ", (long long)lfsp->lfs_ffmask,
 		"ffshift  ", (u_long)lfsp->lfs_ffshift,
-		"fbmask   ", (u_quad_t)lfsp->lfs_fbmask,
+		"fbmask   ", (long long)lfsp->lfs_fbmask,
 		"fbshift  ", (u_long)lfsp->lfs_fbshift);
 
 	syslog(LOG_DEBUG, "%s%d\t\t%s0x%X\t%s0x%qx\n",
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
-		"maxfilesize  ", lfsp->lfs_maxfilesize);
+		"maxfilesize  ", (long long)lfsp->lfs_maxfilesize);
 
 	syslog(LOG_DEBUG, "Superblock disk addresses:\t");
 	for (i = 0; i < LFS_MAXNUMSB; i++) {

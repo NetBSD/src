@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.9 1998/10/07 15:00:34 christos Exp $	*/
+/*	$NetBSD: library.c,v 1.10 1998/10/15 00:29:51 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.9 1998/10/07 15:00:34 christos Exp $");
+__RCSID("$NetBSD: library.c,v 1.10 1998/10/15 00:29:51 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -592,8 +592,10 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 		}
 	} else {
                 if(debug > 1)
-                        syslog(LOG_DEBUG, "mmap_segment\tseg_daddr: %lu\tseg_size: %lu\tseg_offset: %qu\n",
-		    (u_long)seg_daddr, (u_long)ssize, seg_byte);
+                        syslog(LOG_DEBUG, "mmap_segment\tseg_daddr: %lu\t"
+				"seg_size: %lu\tseg_offset: %qu\n",
+			    (u_long)seg_daddr, (u_long)ssize,
+			    (long long)seg_byte);
             
 		/* malloc the space for the buffer */
 		*segbuf = malloc(ssize);

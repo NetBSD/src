@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 1998/10/07 15:00:34 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 1998/10/15 00:29:51 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.3 1998/10/07 15:00:34 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.4 1998/10/15 00:29:51 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,8 @@ get(fd, off, p, len)
             exit(1);
         }
 	if (rbytes != len) {
-            syslog(LOG_ERR, "Exiting: %s: short read (%d, not %d)", special, rbytes, len);
+            syslog(LOG_ERR, "Exiting: %s: short read (%d, not %d)",
+		special, rbytes, (int)len);
             exit(1);
         }
 }
