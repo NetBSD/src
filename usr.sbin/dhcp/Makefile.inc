@@ -30,6 +30,8 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+.include <bsd.obj.mk>
+
 .if exists(${.CURDIR}/../common/${__objdir})
 COBJDIR= ${.CURDIR}/../common/${__objdir}
 .else
