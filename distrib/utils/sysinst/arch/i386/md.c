@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4.2.8 1997/12/20 21:31:48 perry Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.9 1998/03/09 22:15:43 mellon Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -218,8 +218,10 @@ void md_pre_disklabel()
 	
 	for (i=0; i<4; i++)
 		if (part[i][SET])
-			run_prog("/sbin/fdisk -u -f -%d -s %d/%d/%d /dev/r%sd",
-				 i, part[i][ID], part[i][START],
+                      run_prog("/sbin/fdisk -u -f -%d -b %d/%d/%d "
+                               "-s %d/%d/%d /dev/r%sd",
+                               i, bcyl, bhead, bsec,
+                               part[i][ID], part[i][START],
 				 part[i][SIZE],  diskdev);
 
 	if (activepart >= 0)
