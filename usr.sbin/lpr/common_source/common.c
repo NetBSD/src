@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.20.4.1 2001/04/26 08:12:47 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.20 2000/04/25 02:34:49 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.20.4.1 2001/04/26 08:12:47 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,11 +234,12 @@ getq(namelist)
 	u_int nitems, arraysz;
 
 	seteuid(euid);
-	if ((dirp = opendir(SD)) == NULL)
+	dirp = opendir(SD);
+	seteuid(uid);
+	if (dirp == NULL)
 		return(-1);
 	if (fstat(dirp->dd_fd, &stbuf) < 0)
 		goto errdone;
-	seteuid(uid);
 
 	/*
 	 * Estimate the array size by taking the size of the directory file
@@ -254,8 +255,10 @@ getq(namelist)
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
 		seteuid(euid);
-		if (stat(d->d_name, &stbuf) < 0)
+		if (stat(d->d_name, &stbuf) < 0) {
+			seteuid(uid);
 			continue;	/* Doesn't exist */
+		}
 		seteuid(uid);
 		q = (struct queue *)malloc(sizeof(time_t)+strlen(d->d_name)+1);
 		if (q == NULL)
