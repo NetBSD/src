@@ -1,4 +1,4 @@
-#	$NetBSD: std.hp300,v 1.7 2000/06/22 20:27:52 fvdl Exp $
+#	$NetBSD: std.hp300,v 1.8 2001/01/02 04:28:38 simonb Exp $
 #
 # Options/devices that all hp300s should have
 #
@@ -6,4 +6,5 @@
 machine hp300 m68k
 
 options 	EXEC_AOUT	# support for exec'ing a.out
+options 	EXEC_ELF32	# support for exec'ing ELF
 options 	EXEC_SCRIPT	# support for #! scripts
