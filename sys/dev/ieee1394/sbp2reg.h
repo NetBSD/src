@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2reg.h,v 1.2 2002/11/22 16:28:57 jmc Exp $	*/
+/*	$NetBSD: sbp2reg.h,v 1.3 2002/12/06 02:14:59 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 #define SBP2_LOGGED_IN	0x1
 
 #define SBP2_MAX_RECONNECT	0xf
+#define SBP2_RECONNECT	0x4
 
 #define SBP2_CMDREG_AGENT_STATE			0x00
 #define SBP2_CMDREG_AGENT_RESET			0x04
