@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	5.24 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: comsat.c,v 1.3 1994/01/30 18:32:39 briggs Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.4 1994/02/01 00:32:22 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$Id: comsat.c,v 1.3 1994/01/30 18:32:39 briggs Exp $";
 #include <syslog.h>
 #include <ctype.h>
 #include <string.h>
+#include <pwd.h>
 #include <paths.h>
 
 int	debug = 0;
@@ -96,7 +97,7 @@ main(argc, argv)
 		exit(1);
 	}
 	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) < 0) {
-		syslog(LOG_ERR, ".main: %s: %m", _PATH_UTMP);
+		syslog(LOG_ERR, "main: %s: %m", _PATH_UTMP);
 		(void) recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
 	}
@@ -117,7 +118,7 @@ main(argc, argv)
 		if (!nutmp)		/* no one has logged in yet */
 			continue;
 		sigblock(sigmask(SIGALRM));
-		msgbuf[cc] = 0;
+		msgbuf[cc] = '\0';
 		(void)time(&lastmsgtime);
 		mailfor(msgbuf);
 		sigsetmask(0L);
@@ -183,14 +184,18 @@ notify(utp, offset)
 	register struct utmp *utp;
 	off_t offset;
 {
-	static char tty[20] = _PATH_DEV;
-	struct sgttyb gttybuf;
-	struct stat stb;
 	FILE *tp;
-	char name[sizeof(utmp[0].ut_name) + 1];
+	struct stat stb;
+	struct sgttyb gttybuf;
+	char tty[20], name[sizeof(utmp[0].ut_name) + 1];
 
-	(void)strncpy(tty + sizeof(_PATH_DEV) - 1, utp->ut_line,
-	    sizeof(utp->ut_line));
+	(void)snprintf(tty, sizeof(tty), "%s%.*s",
+	    _PATH_DEV, (int)sizeof(utp->ut_line), utp->ut_line);
+	if (index(tty + sizeof(_PATH_DEV) - 1, '/')) {
+		/* A slash is an attempt to break security... */
+		syslog(LOG_AUTH | LOG_NOTICE, "'/' in \"%s\"", tty);
+		return;
+	}
 	if (stat(tty, &stb) || !(stb.st_mode & S_IEXEC)) {
 		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", utp->ut_name, tty);
 		return;
@@ -224,17 +229,20 @@ jkfprintf(tp, name, offset)
 	register char *cp, ch;
 	register FILE *fi;
 	register int linecnt, charcnt, inheader;
-	struct stat st;
+	register struct passwd *p;
 	char line[BUFSIZ];
 
-	if (lstat(name, &st) != 0) {
-		syslog(LOG_ERR, "Unable to stat mail file.");
+	/* Set effective uid to user in case mail drop is on nfs */
+	if ((p = getpwnam(name)) == NULL) {
+		/*
+		 * If user is not in passwd file, assume that it's
+		 * an attempt to break security...
+		 */
+		syslog(LOG_AUTH | LOG_NOTICE, "%s not in passwd file", name);
 		return;
-	}
-	if (!(S_ISREG(st.st_mode))) {
-		syslog(LOG_ERR, "Mail file is not a regular file.");
-		return;
-	}
+	} else
+		(void) setuid(p->pw_uid);
+
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
 	(void)fseek(fi, offset, L_SET);
@@ -259,6 +267,7 @@ jkfprintf(tp, name, offset)
 		}
 		if (linecnt <= 0 || charcnt <= 0) {
 			(void)fprintf(tp, "...more...%s", cr);
+			fclose(fi);
 			return;
 		}
 		/* strip weird stuff so can't trojan horse stupid terminals */
@@ -272,4 +281,5 @@ jkfprintf(tp, name, offset)
 		--linecnt;
 	}
 	(void)fprintf(tp, "----%s\n", cr);
+	fclose(fi);
 }
