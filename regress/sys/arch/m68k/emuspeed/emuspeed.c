@@ -1,4 +1,4 @@
-/*	$NetBSD: emuspeed.c,v 1.3 1998/06/15 14:43:25 is Exp $	*/
+/*	$NetBSD: emuspeed.c,v 1.4 1999/01/31 10:28:57 is Exp $	*/
 
 #include <setjmp.h>
 #include <signal.h>
@@ -57,7 +57,7 @@ main(argc, argv)
 		fflush(stdout);
 
 		if (setjmp(jbuf)) {
-			printf("%15s    %s\n", "[unimplemented]", t->comment);
+			printf("%12s    %s\n", "[unimplemented]", t->comment);
 			continue;
 		}
 			
@@ -68,7 +68,7 @@ main(argc, argv)
 			t->func(count);
 			stop = clock();
 		} while ((stop - start) < PRECISION);
-		printf("%13d/s    %s\n",
+		printf("%10d/s    %s\n",
 		    CLOCKS_PER_SEC*(count /(stop - start)),
 		    t->comment);
 	}
