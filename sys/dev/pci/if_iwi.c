@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.2 2005/01/11 18:49:05 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.3 2005/01/11 18:54:18 skrll Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.2 2005/01/11 18:49:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.3 2005/01/11 18:54:18 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2915ABG driver
@@ -135,12 +135,10 @@ static __inline u_int32_t MEM_READ_4(struct iwi_softc *sc, u_int32_t addr)
 	return CSR_READ_4(sc, IWI_CSR_INDIRECT_DATA);
 }
 
-#define IWI_DEBUG
-
 #ifdef IWI_DEBUG
 #define DPRINTF(x)	if (iwi_debug > 0) printf x
 #define DPRINTFN(n, x)	if (iwi_debug >= (n)) printf x
-int iwi_debug = 2;
+int iwi_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
