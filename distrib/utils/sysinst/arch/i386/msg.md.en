@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.17 1999/07/04 09:41:03 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.18 1999/07/06 06:10:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -25,13 +25,13 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
@@ -59,12 +59,12 @@ message sectforward
 {Does your disk do AUTOMATIC sector forwarding?}
 
 message dlgeom
-{It appears that your disk, %s, has already been labeled with a BSD 
+{It appears that your disk, %s, has already been labeled with a BSD
 disklabel and the disklabel reports geometry that is different from
 the real geometry.  The two geometries are:
 
-disklabel:	%d cylinders, %d heads, %d sectors
-real geometry:	%d cylinders, %d heads, %d sectors
+disklabel:	%d cylinders, %d heads, %d sectors 
+real geometry:	%d cylinders, %d heads, %d sectors 
 }
 
 /* the %s's will expand into three character strings */
