@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fstab.c	5.15 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: fstab.c,v 1.3 1993/08/26 00:44:32 jtc Exp $";
+static char *rcsid = "$Id: fstab.c,v 1.4 1994/08/13 09:03:21 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/errno.h>
@@ -62,6 +62,8 @@ fstabscan()
 /* OLD_STYLE_FSTAB */
 		if (!strpbrk(cp, " \t")) {
 			_fs_fstab.fs_spec = strtok(cp, ":\n");
+			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
+				continue;
 			_fs_fstab.fs_file = strtok((char *)NULL, ":\n");
 			_fs_fstab.fs_type = strtok((char *)NULL, ":\n");
 			if (_fs_fstab.fs_type) {
@@ -194,6 +196,7 @@ error(err)
 
 	(void)write(STDERR_FILENO, "fstab: ", 7);
 	(void)write(STDERR_FILENO, _PATH_FSTAB, sizeof(_PATH_FSTAB) - 1);
+	(void)write(STDERR_FILENO, ": ", 2);
 	p = strerror(err);
 	(void)write(STDERR_FILENO, p, strlen(p));
 	(void)write(STDERR_FILENO, "\n", 1);
