@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.222 2004/05/25 01:15:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.223 2004/05/25 01:30:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3054,3 +3054,8 @@ sys/dev/pci/if_sk.c				1.9
 	worked ok as long as the init function was exclusively called at attach
 	time, when there was no configuration to be lost.
 	[kleink, ticket #382]
+
+distrib/sparc64/xminiroot/Makefile		1.24
+
+	Do not fail if directory sysinst exists.
+	[hannken, ticket #383]
