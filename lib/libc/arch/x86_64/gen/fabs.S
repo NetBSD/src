@@ -1,8 +1,8 @@
-/*	$NetBSD: fabs.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
+/*	$NetBSD: fabs.S,v 1.2 2004/02/26 19:19:06 drochner Exp $	*/
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fabs.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.2 2004/02/26 19:19:06 drochner Exp $")
 #endif
 
 /*
@@ -14,6 +14,6 @@ ENTRY(fabs)
 	movsd	%xmm0, -8(%rsp)
 	fldl	-8(%rsp)
 	fabs
-	fstp	-8(%rsp)
+	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
 	ret
