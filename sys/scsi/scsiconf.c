@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.61 1996/08/27 22:00:04 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.62 1996/08/28 18:47:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -98,12 +98,43 @@ struct cfdriver scsibus_cd = {
 int scsibusprint __P((void *, const char *));
 
 int
-scsibusmatch(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+scsiprint(aux, pnp)
+	void *aux;
+	const char *pnp;
 {
+	struct scsi_link *l = aux;
 
-	return 1;
+	/* only "scsibus"es can attach to "scsi"s; easy. */
+	if (pnp)
+		printf("scsibus at %s", pnp);
+
+	/* don't print channel if the controller says there can be only one. */
+	if (l->channel != SCSI_CHANNEL_ONLY_ONE)
+		printf(" channel %d", l->channel);
+
+	return (UNCONF);
+}
+
+int
+scsibusmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct scsi_link *l = aux;
+	int channel;
+
+	/*
+	 * Allow single-channel controllers to specify their channel
+	 * in a special way, so that it's not printed.
+	 */
+	channel = (l->channel != SCSI_CHANNEL_ONLY_ONE) ? l->channel : 0;
+
+	if (cf->scsicf_channel != channel &&
+	    cf->scsicf_channel != SCSI_CHANNEL_UNKNOWN)
+		return (0);
+
+	return (1);
 }
 
 /*
