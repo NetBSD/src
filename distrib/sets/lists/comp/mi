@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.142 1999/05/11 21:30:43 veego Exp $
+# $NetBSD: mi,v 1.143 1999/05/11 21:49:58 veego Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1050,6 +1050,7 @@
 ./usr/libdata/lint/llib-lstdc.ln
 ./usr/libdata/lint/llib-ltelnet.ln
 ./usr/libdata/lint/llib-ltermcap.ln
+./usr/libdata/lint/llib-lusb.ln
 ./usr/libdata/lint/llib-lutil.ln
 ./usr/libdata/lint/llib-lwrap.ln
 ./usr/libdata/lint/llib-ly.ln
