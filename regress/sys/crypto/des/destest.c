@@ -1,5 +1,5 @@
-/*	$NetBSD: destest.c,v 1.1.1.1 2000/11/01 15:33:23 itojun Exp $	*/
-/*	$KAME: destest.c,v 1.1 2000/11/01 09:36:30 itojun Exp $	*/
+/*	$NetBSD: destest.c,v 1.2 2000/11/08 06:02:02 itojun Exp $	*/
+/*	$KAME: destest.c,v 1.3 2000/11/08 05:58:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -92,6 +92,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <crypto/des/des.h>
 
@@ -234,8 +235,16 @@ main(argc, argv)
 	des_cblock in, out, outin;
 	int i;
 	int error = 0;
+	int rounds;
+
+	if (argc > 1)
+		rounds = atoi(argv[1]);
+	else
+		rounds = 1;
 
 	printf("Doing DES ecb\n");
+
+again:
 	for (i = 0; i < NUM_TESTS - 1; i++) {
 		des_set_key(&key_data[i], ks);
 		memcpy(in, plain_data[i],8);
@@ -256,6 +265,9 @@ main(argc, argv)
 			error = 1;
 		}
 	}
+
+	if (--rounds > 0)
+		goto again;
 
 	exit(error);
 }

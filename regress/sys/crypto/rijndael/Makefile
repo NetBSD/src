@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2000/11/08 05:14:57 itojun Exp $
-#	$KAME: Makefile,v 1.2 2000/11/01 15:28:11 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2000/11/08 06:02:02 itojun Exp $
+#	$KAME: Makefile,v 1.4 2000/11/08 05:58:26 itojun Exp $
 
 .include "../Makefile.inc"
 .include <bsd.own.mk>
@@ -12,7 +12,6 @@ CPPFLAGS+=	-I${SYSDIR} "-Dpanic(x)=abort()"
 
 .PATH:	${SYSDIR}/crypto/rijndael
 
-regress:
-	@${.OBJDIR}/${PROG}
+BENCHROUNDS=	100
 
 .include <bsd.prog.mk>
