@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpgetround.c,v 1.2 1999/12/26 00:22:32 shin Exp $	*/
+/*	$NetBSD: sf_fpgetround.c,v 1.3 2000/02/22 03:14:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -52,6 +52,8 @@
  * This could change in the future with new floating point emulators or
  * soft float FP libraries.
  */
+
+int _mips_sfp_getround __P((void));
 
 fp_rnd
 fpgetround()

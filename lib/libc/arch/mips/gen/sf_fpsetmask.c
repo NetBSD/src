@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpsetmask.c,v 1.2 1999/12/26 00:22:32 shin Exp $	*/
+/*	$NetBSD: sf_fpsetmask.c,v 1.3 2000/02/22 03:14:21 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,12 +7,13 @@
 
 #include <ieeefp.h>
 
+void _mips_sfp_setmask __P((int mask));
+
 fp_except
 fpsetmask(mask)
 	fp_except mask;
 {
 	fp_except old;
-	fp_except new;
 
 	old = _mips_sfp_getmask();
 	_mips_sfp_setmask(mask);
