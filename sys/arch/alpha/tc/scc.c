@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.40 1998/03/21 23:36:19 mjacob Exp $ */
+/* $NetBSD: scc.c,v 1.41 1998/03/22 08:24:52 jonathan Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -63,11 +63,12 @@
  *	@(#)scc.c	8.2 (Berkeley) 11/30/93
  */
 
-#include "opt_dec_3000_300.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.41 1998/03/22 08:24:52 jonathan Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.40 1998/03/21 23:36:19 mjacob Exp $");
+#ifdef alpha
+#include "opt_dec_3000_300.h"
+#endif
 
 #include "scc.h"
 #if NSCC > 0
@@ -112,8 +113,10 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.40 1998/03/21 23:36:19 mjacob Exp $");
 #include <alpha/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
+#ifdef alpha
 #undef	SCCDEV
 #define	SCCDEV		15			/* XXX */
+#endif
 
 /*
  * rcons glass-tty console (as used on pmax) needs lk-201 ASCII input
@@ -121,9 +124,18 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.40 1998/03/21 23:36:19 mjacob Exp $");
  * compile on Alphas.
  */
 #ifdef pmax
+#if NRASTERCONSOLE > 0
 #define HAVE_RCONS
+#endif
 extern int pending_remcons;
 #endif
+
+#ifdef alpha
+#define RASTER_CONSOLE() 1	/* Treat test for cn_screen as true */
+#define raster_console() 1	/* Treat test for cn_screen as true */
+#define CONSOLE_ON_UNIT(unit) 0	/* No raster console on Alphas */
+#endif
+
 
 #define	NSCCLINE	(NSCC*2)
 #define	SCCUNIT(dev)	(minor(dev) >> 1)
@@ -199,7 +211,7 @@ struct speedtab sccspeedtab[] = {
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int	sccmatch  __P((struct device * parent, struct cfdata *cf,
+static int	sccmatch  __P((struct device *parent, struct cfdata *cf,
 		    void *aux));
 static void	sccattach __P((struct device *parent, struct device *self,
 		    void *aux));
@@ -226,8 +238,9 @@ static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
 int	sccintr __P((void *));
+#ifdef alpha
 void	scc_alphaintr __P((int));
-
+#endif
 
 /*
  * console variables, for using serial console while still cold and
@@ -408,6 +421,9 @@ sccattach(parent, self, aux)
 	struct tty ctty;
 	int s;
 	extern int cputype;
+	int unit;
+
+	unit = sc->sc_dv.dv_unit;
 
 	/* Get the address, and check it for validity. */
 	sccaddr = (void *)d->iada_addr;
@@ -423,7 +439,7 @@ sccattach(parent, self, aux)
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 	if (major(cn_tab.cn_dev) == SCCDEV && cn_tab.cn_screen == 0 &&
 		SCCUNIT(cn_tab.cn_dev) == cp->pmax_unit)
 		DELAY(10000);
@@ -446,7 +462,7 @@ sccattach(parent, self, aux)
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
-	sc->scc_softCAR = 0x2;		/* XXX */
+	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags | 0x2;	/* XXX */
 
 	/* reset chip, initialize  register-copies in softc */
 	sccreset(sc);
@@ -474,7 +490,7 @@ sccattach(parent, self, aux)
 				 * works ok without it.
 				 */
 				KBDReset(ctty.t_dev, sccPutc);
-#endif
+#endif /* notyet */
 				DELAY(10000);
 				splx(s);
 			} else if (sc->sc_dv.dv_unit == 0) {
@@ -483,7 +499,7 @@ sccattach(parent, self, aux)
 				cterm.c_cflag = CS8 | PARENB | PARODD;
 				cterm.c_ospeed = cterm.c_ispeed = 4800;
 				(void) sccparam(&ctty, &cterm);
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 				DELAY(10000);
 				MouseInit(ctty.t_dev, sccPutc, sccGetc);
 				DELAY(10000);
@@ -499,12 +515,13 @@ sccattach(parent, self, aux)
 		cterm.c_ospeed = cterm.c_ispeed = 9600;
 		(void) sccparam(&ctty, &cterm);
 		DELAY(1000);
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 		cn_tab.cn_disabled = 0;
 #endif
 		splx(s);
 	}
 
+#ifdef alpha
 	/*
 	 * XXX
 	 * Unit 1 is the remote console, wire it up now.
@@ -520,6 +537,9 @@ sccattach(parent, self, aux)
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
 		printf("\n");
+#else	/* !alpha */
+	printf("\n");
+#endif	/* !alpha */
 }
 
 /*
@@ -598,6 +618,7 @@ sccopen(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit, line;
 	int s, error = 0;
+	int firstopen = 0;
 
 	unit = SCCUNIT(dev);
 	if (unit >= scc_cd.cd_ndevs)
@@ -619,6 +640,7 @@ sccopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
+		firstopen = 1;
 #ifndef PORTSELECTOR
 		if (tp->t_ispeed == 0) {
 #endif
@@ -650,7 +672,17 @@ sccopen(dev, flag, mode, p)
 	splx(s);
 	if (error)
 		return (error);
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+#ifdef HAVE_RCONS
+	/* handle raster console specially */
+	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) &&
+	    raster_console() && firstopen) {
+	  	extern struct tty *fbconstty;
+		tp->t_winsize = fbconstty->t_winsize;
+	}
+#endif /* HAVE_RCONS */		
+	return (error);
 }
 
 /*ARGSUSED*/
@@ -1054,11 +1086,11 @@ sccintr(xxxsc)
 		/*
 		 * Keyboard needs special treatment.
 		 */
-		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) /* && cn_tab.cn_screen */) {
-#ifdef KADB
+		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) && raster_console()) {
+#if defined(DDB) && defined(LK_DO)
 			if (cc == LK_DO) {
 				spl0();
-				kdbpanic();
+				Debugger();
 				return;
 			}
 #endif
@@ -1069,7 +1101,7 @@ sccintr(xxxsc)
 				(*sccDivertXInput)(cc);
 				continue;
 			}
-#ifdef TK_NOTYET
+#ifdef HAVE_RCONS
 			if ((cc = kbdMapChar(cc)) < 0)
 				continue;
 #endif
@@ -1135,7 +1167,7 @@ sccstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) /* && cn_tab.cn_screen */) {
+	if (tp == scctty(makedev(SCCDEV,SCCKBD_PORT)) && raster_console()) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -1299,20 +1331,32 @@ scc_modem_intr(dev)
 		car = value & ZSRR0_DCD;
 	}
 
+	/* Break on serial console drops into the debugger */
+	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+#ifdef DDB
+		splx(s);		/* spl0()? */
+		Debugger();
+		return;
+#else
+		/* XXX maybe fall back to PROM? */
+#endif
+	}
+
 	/*
 	 * The pmax driver follows carrier-detect. The Alpha does not.
-	 * XXX Why doesn't the Alpha driver follow carrier-detect?
-	 * (in the Alpha driver, this is an "#ifdef notdef").
-	 * Is it related to  console handling?
+	 * On pmax, ignore hups on a console tty.
+	 * On alpha, a no-op, for historical reasons. XXXXXX
 	 */
-#ifdef notdef
-	if (car) {
-		/* carrier present */
-		if (!(tp->t_state & TS_CARR_ON))
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-	} else if (tp->t_state & TS_CARR_ON)
-		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
-#endif
+#ifdef pmax
+	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+		if (car) {
+			/* carrier present */
+			if (!(tp->t_state & TS_CARR_ON))
+				(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+		} else if (tp->t_state & TS_CARR_ON)
+		  (void)(*linesw[tp->t_line].l_modem)(tp, 0);
+	}
+#endif	/* pmax */
 	splx(s);
 }
 
