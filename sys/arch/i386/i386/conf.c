@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.63 1995/04/10 10:01:58 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.64 1995/04/19 19:22:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -96,22 +96,19 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_pc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
-	dev_init(c,n,mmap), 0, D_TTY }
+	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), 0, D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_lpt_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, \
-	(dev_type_mmap((*))) enodev, 0 }
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, write, ioctl */
 #define	cdev_spkr_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, \
-	(dev_type_mmap((*))) enodev, 0 }
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -120,10 +117,10 @@ cdev_decl(ctty);
 cdev_decl(mm);
 cdev_decl(wd);
 #include "pty.h"
-#define	pts_tty		pt_tty
+#define	ptstty		pttty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
+#define	ptctty		pttty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
