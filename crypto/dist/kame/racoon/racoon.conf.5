@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.89 2001/08/17 07:16:38 itojun Exp $
+.\"	$KAME: racoon.conf.5,v 1.97 2002/03/05 15:34:59 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -277,13 +277,25 @@ will get DN from Subject field in the certificate.
 .El 
 .\"
 .It Ic peers_identifier Ar idtype ... ;
-specifies the peer's identifier as it is specified with
-.Ic my_identifier .
+specifies the peer's identifier to be received.
 If it is not defined then
 .Xr racoon 8
 will not verify the peer's identifier in ID payload transmitted from the peer.
-.Xr racoon 8
-will just warn it at the moment even if you defined it.
+If it is defined, the behavior of the verification depends on the flag of
+.Ic verify_identifier .
+The usage of
+.Ar idtype
+is same to
+.Ic my_identifier .
+.\"
+.It Ic verify_identifier (on \(ba off) ;
+If you want to verify the peer's identifier,
+set this to on.
+In this case, if the value defined by
+.Ic peers_identifier
+is not same to the peer's identifier in the ID payload,
+the negotiation will failed.
+The default is off.
 .\"
 .It Ic certificate_type Ar certspec ;
 specifies a certificate specification.
@@ -320,7 +332,7 @@ If you do not want to send a certificate request for some reason, set this to of
 The default is on.
 .\"
 .It Ic verify_cert (on \(ba off) ;
-If you do not want to verify the remote peer's certificate for some reason,
+If you do not want to verify the peer's certificate for some reason,
 set this to off.
 The default is on.
 .\"
@@ -335,6 +347,14 @@ They can be individually specified in each proposal.
 enable this to send an INITIAL-CONTACT message.
 The default value is
 .Ic on .
+This message is useful only when
+the implementation of the responder choices an old SA when there are multiple
+SAs which are different established time, and the initiator reboots.
+If racoon did not use the message,
+the responder would use an old SA even when an new SA was established.
+The KAME stack has the switch in the system wide value,
+net.key.preferred_oldsa.
+when the value is zero, the stack always use an new SA.
 .\"
 .It Ic passive (on \(ba off) ;
 If you do not want to initiate the negotiation, set this to on.
@@ -394,7 +414,10 @@ and the directive is set on, then
 will choice the first proposal in the
 SA payload from the initiator, and generate policy entries from the proposal.
 It is useful to negotiate with the client which is allocated IP address
-dynamically and the communication needs IPsec tunnel mode.
+dynamically.
+Note that inappropriate policy might be installed by the initiator
+because the responder just installs policies as the initiator proposes.
+So that other communication might fail if such policies installed.
 This directive is ignored in the initiator case.
 The default value is
 .Ic off .
@@ -415,7 +438,7 @@ specify the encryption algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
-.Ic des , 3des , blowfish , cast
+.Ic des , 3des , blowfish , cast128
 .\".Ic rc5 , idea
 for oakley.
 For other transforms, this statement should not be used.
@@ -520,23 +543,9 @@ See the
 .Ic proposal_check
 directive.
 .\"
-.It Ic identifier Ar idtype ;
-is obsolete.
-Instead use
-.Ic my_identifier
-directives.
-.\"
 .It Ic my_identifier Ar idtype ... ;
-specifies ID type to use for the phase 2 negotiation.
-address is used as the default.
-See the
-.Ic my_identifier
-directive above in
-.Ic remote
-for its usage.
-This is always for the initiator, not the responder.
-.Xr racoon 8
-as the responder can handle only the IP address type.
+is obsolete.
+It does not make sense to specify a identifier in the phase 2.
 .El
 .\"
 .Pp
