@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1999/06/30 18:30:42 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.3 2000/05/20 13:35:07 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,12 +30,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/reboot.h>
-
 #include "lib/libsa/stand.h"
+
+#include "machine/rpb.h"
+#include "machine/sid.h"
+#include "machine/pte.h"
+#define	VAX780 1
+#include "machine/ka750.h"
+
+#include "dev/bi/bireg.h"
+
 #include "vaxstand.h"
 
-unsigned int opendev;
+int	atoi(char *);
+int nexaddr, csrbase;
 
 int
 devopen(f, fname, file)
@@ -43,23 +51,30 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
-	int dev, ctlr, unit, part, adapt, i, a[4], x;
+	int dev, unit, ctlr, part, adapt, i, a[4], x;
+	int *mapregs;
 	struct devsw *dp;
 	extern int cnvtab[];
-	char *s, *c, *u;
+	char *s, *c;
 
-	dev   = B_TYPE(bootdev);
-	ctlr  = B_CONTROLLER(bootdev);
-	unit  = B_UNIT(bootdev);
-	part  = B_PARTITION(bootdev);
-	adapt = B_ADAPTOR(bootdev);
+	part = 0;
+
+	/*
+	 * Adaptor and controller are normally zero (or uninteresting),
+	 * but we need to do some conversion here anyway (if it's a 
+	 * manual boot, but that's checked by the device driver).
+	 * Set them to -1 to tell if it's a set number or default.
+	 */
+	dev = bootrpb.devtyp;
+	unit = bootrpb.unit;
+	adapt = ctlr = -1;
 
 	for (i = 0, dp = 0; i < ndevs; i++)
 		if (cnvtab[i] == dev)
 			dp = devsw + i;
 
 	x = 0;
-	if ((s = index(fname, '('))) {
+	if ((s = index((char *)fname, '('))) {
 		*s++ = 0;
 
 		for (i = 0, dp = devsw; i < ndevs; i++, dp++)
@@ -106,15 +121,51 @@ devopen(f, fname, file)
 	if (!dp->dv_open)
 		return(ENODEV);
 	f->f_dev = dp;
+	bootrpb.unit = unit;
+	bootrpb.devtyp = dev;
 
-	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
+	switch (vax_cputype) {
+	case VAX_750:
+		if (adapt < 0)
+			break;
+		nexaddr = (NEX750 + NEXSIZE * adapt);
+		csrbase = (adapt == 8 ? 0xffe000 : 0xfbe000);
+		break;
+	case VAX_780:
+	case VAX_8600:
+		if (adapt < 0)
+			break;
+		nexaddr = ((int)NEX780 + NEXSIZE * adapt);
+		csrbase = 0x2007e000 + 0x40000 * adapt;
+		break;
+	case VAX_8200:
+	case VAX_8800:
+	case VAX_TYP_8PS:
+		nexaddr = bootrpb.adpphy;
+		if (ctlr < 0)
+			break;
+		if (adapt < 0)
+			nexaddr = (bootrpb.adpphy & 0xff000000) + BI_NODE(ctlr);
+		else
+			nexaddr = BI_BASE(ctlr, adapt);
+		csrbase = 0; /* _may_ be a KDB */
+		break;
+#ifdef notyet
+	case VAX_6200:
+		...
+#endif
+	default:
+		nexaddr = 0; /* No map regs */
+		csrbase = 0x20000000;
+		/* Always map in the lowest 4M on qbus-based machines */
+		mapregs = (void *)0x20088000;
+		if (bootrpb.adpphy == 0x20087800)
+			for (i = 0; i < 8192; i++)
+				mapregs[i] = PG_V | i;
+		break;
+	}
 
-	if (dev > 95) { /* MOP boot over network, root & swap over NFS */
-		i = (*dp->dv_open)(f, dp->dv_name);
-	} else
-		i = (*dp->dv_open)(f, adapt, ctlr, unit, part);
-
-	return i;
+	return (*dp->dv_open)(f, adapt, ctlr, unit, part);
 
 usage:
 	printf("usage: dev(adapter,controller,unit,partition)file -asd\n");

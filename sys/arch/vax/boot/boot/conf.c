@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2000/04/24 21:46:07 matt Exp $ */
+/*	$NetBSD: conf.c,v 1.7 2000/05/20 13:35:07 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,27 +45,18 @@
 
 #include "vaxstand.h"
 
-int	raopen(),  rastrategy();
-int	hpopen(),  hpstrategy();
-int	ctuopen(),  ctustrategy();
-int     tmscpopen(), tmscpstrategy();
-int     romopen(), romstrategy();
-int     mfmopen(), mfmstrategy();
-int     sdopen(), sdstrategy();
-int	netopen(), netstrategy(), netclose();
-
 struct	devsw devsw[]={
 	SADEV("hp",hpstrategy, hpopen, nullsys, noioctl),
-	SADEV("qe",netstrategy, netopen, netclose, noioctl), /* DEQNA */
+	SADEV("qe",nodev, qeopen, qeclose, noioctl), /* DEQNA */
 	SADEV("ctu",ctustrategy, ctuopen, nullsys, noioctl),
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
-	SADEV("mt",tmscpstrategy, tmscpopen, nullsys, noioctl),
+	SADEV("mt",rastrategy, raopen, nullsys, noioctl),
         SADEV("rom",romstrategy, romopen, nullsys, noioctl),
         SADEV("rd",mfmstrategy, mfmopen, nullsys, noioctl),
         SADEV("sd",romstrategy, romopen, nullsys, noioctl),
 	SADEV("st",nullsys, nullsys, nullsys, noioctl),
-	SADEV("le",netstrategy, netopen, netclose, noioctl), /* LANCE */
-        SADEV("ze",netstrategy, netopen, netclose, noioctl), /* SGEC */
+	SADEV("le",nodev, leopen, leclose, noioctl), /* LANCE */
+        SADEV("ze",nodev, zeopen, zeclose, noioctl), /* SGEC */
 	SADEV("rl",romstrategy, romopen, nullsys, noioctl),
 };
 
@@ -96,15 +87,3 @@ struct fs_ops file_system[] = {
 };
 
 int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
-
-extern struct netif_driver qe_driver;
-extern struct netif_driver le_driver;
-extern struct netif_driver ze_driver;
- 
-struct netif_driver *netif_drivers[] = {
-	&qe_driver,
-	&le_driver,
-	&ze_driver,
-}; 
-int     n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
-

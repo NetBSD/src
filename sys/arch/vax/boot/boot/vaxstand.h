@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.2 2000/05/09 20:53:52 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.3 2000/05/20 13:35:07 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,31 +29,50 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
-#define MAXNMBA 8 /* Massbussadapters */
-#define MAXNUBA 8 /* Unibusadapters */
-#define	MAXMBAU	8 /* Units on an mba */
-
 /* Variables used in autoconf */
-extern int nmba, nuba, nbi, nsbi, nuda;
-extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr, *biaddr;
-extern int cpunumber, howto, bootdev;
-extern struct rpb *rpb;
+extern int askname;
+extern struct rpb bootrpb;
+extern int csrbase, nexaddr;
 
 /* devsw type definitions, used in bootxx and conf */
 #define SADEV(name,strategy,open,close,ioctl) \
-        { (char *)name, \
-         (int(*)(void *, int ,daddr_t , size_t, void *, size_t *))strategy, \
-         (int(*)(struct open_file *, ...))open, \
-         (int(*)(struct open_file *))close, \
-         (int(*)(struct open_file *,u_long, void *))ioctl}
+	{ (char *)name, \
+	 (int(*)(void *, int ,daddr_t , size_t, void *, size_t *))strategy, \
+	 (int(*)(struct open_file *, ...))open, \
+	 (int(*)(struct open_file *))close, \
+	 (int(*)(struct open_file *,u_long, void *))ioctl}
 
-#define	SDELAY(count) {volatile int i; for (i = count; i; i--);}
+#define SDELAY(count) {volatile int i; for (i = count; i; i--);}
 /*
  * Easy-to-use definitions
  */
-#define	min(x,y) (x < y ? x : y)
+#define min(x,y) (x < y ? x : y)
 
-char *index();
+struct netif_driver;
+
+char *index(char *, int);
+int net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr);
+
+/* device calls */
+int	raopen(struct open_file *, int, int, int, int),
+	    rastrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	hpopen(struct open_file *, int, int, int, int),
+	    hpstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	ctuopen(struct open_file *, int, int, int, int),
+	    ctustrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	tmscpopen(struct open_file *, int, int, int, int),
+	    tmscpstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	romopen(struct open_file *, int, int, int, int),
+	    romstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	mfmopen(struct open_file *, int, int, int, int),
+	    mfmstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	sdopen(struct open_file *),
+	    sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	leopen(struct open_file *, int, int, int, int),
+	    leclose(struct open_file *);
+int	qeopen(struct open_file *, int, int, int, int),
+	    qeclose(struct open_file *);
+int	zeopen(struct open_file *, int, int, int, int),
+	    zeclose(struct open_file *);
+int	netopen(struct open_file *), netclose(struct open_file *);
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2000/04/22 20:29:59 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.6 2000/05/20 13:35:07 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,8 @@
 
 #define V750UCODE(x)    ((x>>8)&255)
 
+#include "machine/rpb.h"
+
 #include "vaxstand.h"
 
 /*
@@ -49,15 +51,20 @@
  */
 
 char line[100];
-int	devtype, bootdev, howto, debug;
+int	bootdev, debug;
 extern	unsigned opendev;
-extern  unsigned *bootregs;
 
-void	usage(), boot(), halt();
+void	usage(char *), boot(char *), halt(char *);
+void	Xmain(struct rpb *);
+void	autoconf(void);
+int	getsecs(void);
+int	setjmp(int *);
+int	testkey(void);
+void	loadpcs(void);
 
 struct vals {
 	char	*namn;
-	void	(*func)();
+	void	(*func)(char *);
 	char	*info;
 } val[] = {
 	{"?", usage, "Show this help menu"},
@@ -76,18 +83,27 @@ char *filer[] = {
 };
 
 int jbuf[10];
-int sluttid, senast, skip;
+int sluttid, senast, skip, askname;
+struct rpb bootrpb;
 
-Xmain()
+void
+Xmain(struct rpb *prpb)
 {
-	int io, type, askname, filindex = 0;
+	int io, filindex = 0;
 	int j, nu;
 
+	/* First copy rpb/bqo to its new location */
+	bcopy((caddr_t)prpb, &bootrpb, sizeof(struct rpb));
+	if (prpb->iovec) {
+		bootrpb.iovec = (int)alloc(prpb->iovecsz);
+		bcopy((caddr_t)prpb->iovec, (caddr_t)bootrpb.iovec,
+		    prpb->iovecsz);
+	}
 	io = 0;
 	skip = 1;
 	autoconf();
 
-	askname = howto & RB_ASKNAME;
+	askname = bootrpb.rpb_bootr5 & RB_ASKNAME;
 	printf("\n\r>> NetBSD/vax boot [%s %s] <<\n", __DATE__, __TIME__);
 	printf(">> Press any key to abort autoboot  ");
 	sluttid = getsecs() + 5;
@@ -115,16 +131,14 @@ Xmain()
 
 	/* First try to autoboot */
 	if (askname == 0) {
-		type = (devtype >> B_TYPESHIFT) & B_TYPEMASK;
-		if ((unsigned)type < ndevs && devsw[type].dv_name)
-			while (filer[filindex]) {
-				errno = 0;
-				printf("> boot %s\n", filer[filindex]);
-				exec(filer[filindex++], 0, 0);
-				printf("boot failed: %s\n", strerror(errno));
-				if (testkey())
-					break;
-			}
+		while (filer[filindex]) {
+			errno = 0;
+			printf("> boot %s\n", filer[filindex]);
+			exec(filer[filindex++], 0, 0);
+			printf("boot failed: %s\n", strerror(errno));
+			if (testkey())
+				break;
+		}
 	}
 
 	/* If any key pressed, go to conversational boot */
@@ -154,19 +168,17 @@ Xmain()
 			(*v->func)(d);
 		else
 			printf("Unknown command: %s\n", c);
-			
 	}
 }
 
 void
-halt()
+halt(char *hej)
 {
 	asm("halt");
 }
 
 void
-boot(arg)
-	char *arg;
+boot(char *arg)
 {
 	char *fn = "netbsd";
 
@@ -190,11 +202,11 @@ fail:			printf("usage: boot [filename] [-asd]\n");
 
 		while (*++arg) {
 			if (*arg == 'a')
-				howto |= RB_ASKNAME;
+				bootrpb.rpb_bootr5 |= RB_ASKNAME;
 			else if (*arg == 'd')
-				howto |= RB_KDB;
+				bootrpb.rpb_bootr5 |= RB_KDB;
 			else if (*arg == 's')
-				howto |= RB_SINGLE;
+				bootrpb.rpb_bootr5 |= RB_SINGLE;
 			else
 				goto fail;
 		}
@@ -223,6 +235,7 @@ load:	exec(fn, 0, 0);
 })
 
 
+void
 loadpcs()
 {
 	static int pcsdone = 0;
@@ -296,7 +309,7 @@ loadpcs()
 }
 
 void
-usage()
+usage(char *hej)
 {
 	struct vals *v = &val[0];
 
