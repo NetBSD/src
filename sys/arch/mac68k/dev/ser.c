@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.5 1994/02/10 04:30:27 briggs Exp $
+ * $Id: ser.c,v 1.6 1994/06/26 12:57:27 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -98,7 +98,8 @@
 /*#define DEBUG*/
 #undef DEBUG
 
-volatile unsigned char *sccA = (unsigned char *) 0x50004000;
+volatile unsigned char *sccA = (unsigned char *) 0x50f04000;
+int			sccClkConst = 115200;
 
 static void	serstart __P((register struct tty *));
 static int	serparam __P((register struct tty *, register struct termios *));
