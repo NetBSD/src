@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/10/27 18:36:26 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2003/10/27 23:47:00 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2003/10/27 18:36:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/10/27 23:47:00 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -204,7 +204,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
         u_long first, last;
 	vsize_t size;
 	char *cp;
-	int i, howto;
+	int freqok, i, howto;
 	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
@@ -240,17 +240,24 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 
 	physmem = btoc(memsize);
 
+	/*
+	 * Use YAMON's CPU frequency if available.
+	 */
+	freqok = yamon_setcpufreq(1);
+
 	gt_pci_init(&mcp->mc_pc, &mcp->mc_gt);
 	malta_bus_io_init(&mcp->mc_iot, mcp);
 	malta_bus_mem_init(&mcp->mc_memt, mcp);
 	malta_dma_init(mcp);
 
 	/*
-	 * Calibrate the timer, delay() relies on this.
+	 * Calibrate the timer if YAMON failed to tell us.
 	 */
-	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
-	malta_cal_timer(&mcp->mc_iot, sh);
-	bus_space_unmap(&mcp->mc_iot, sh, 2);
+	if (!freqok) {
+		bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
+		malta_cal_timer(&mcp->mc_iot, sh);
+		bus_space_unmap(&mcp->mc_iot, sh, 2);
+	}
 
 #if NCOM > 0
 	/*
