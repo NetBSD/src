@@ -532,6 +532,7 @@
 ./usr/share/man/cat5/master.passwd.0
 ./usr/share/man/cat5/monthly.conf.0
 ./usr/share/man/cat5/motd.0
+./usr/share/man/cat5/named.conf.0
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
@@ -1622,6 +1623,7 @@
 ./usr/share/man/man5/master.passwd.5
 ./usr/share/man/man5/monthly.conf.5
 ./usr/share/man/man5/motd.5
+./usr/share/man/man5/named.conf.5
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/networks.5
