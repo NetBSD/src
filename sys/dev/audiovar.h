@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.8 1997/03/13 02:19:49 mycroft Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.9 1997/03/20 03:19:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -78,6 +78,9 @@ struct audio_buffer {
 	u_short	cb_pause;	/* io paused */
 	u_long	cb_drops;	/* missed samples from over/underrun */
 	u_long	cb_pdrops;	/* paused samples */
+
+	int	fill;		/* number of silence pad bytes */
+	u_char	*otp;		/* point where silence padding started */
 };
 
 /*
