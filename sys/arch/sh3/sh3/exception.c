@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.5 2003/01/18 06:33:43 thorpej Exp $	*/
+/*	$NetBSD: exception.c,v 1.6 2003/03/09 16:14:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -406,9 +406,13 @@ do {									\
 			map = kernel_map;
 			pmap = pmap_kernel();
 		} else {
-			TLB_ASSERT(va != 0 && l != NULL &&
+			TLB_ASSERT(l != NULL &&
 			    l->l_md.md_pcb->pcb_onfault != NULL,
 			    "invalid user-space access from kernel mode");
+			if (va == 0) {
+				tf->tf_spc = (int)l->l_md.md_pcb->pcb_onfault;
+				return;
+			}
 			map = &l->l_proc->p_vmspace->vm_map;
 			pmap = map->pmap;
 		}
