@@ -1,4 +1,4 @@
-.\" $NetBSD: gm.4,v 1.4 2003/07/26 20:17:35 salo Exp $
+.\" $NetBSD: gm.4,v 1.5 2003/09/26 18:38:04 mbw Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,13 +49,17 @@ The
 driver provides support for the GMac Ethernet hardware found mostly in
 the newest Apple PowerBooks G3s and most G4-based Apple hardware.
 .Pp
+This driver is now obsolete.  You should be using the
+.Xr gem 4
+driver.
+.Pp
 Wireless hardware is not supported by this driver, but by
 .Xr wi 4 .
 .Sh SEE ALSO
 .Xr bm 4 ,
 .Xr bmtphy 4 ,
 .Xr brgphy 4 ,
-.Xr de 4 ,
+.Xr gem 4 ,
 .Xr mc 4 ,
 .Xr mii 4 ,
 .Xr tlp 4 ,
@@ -64,7 +68,10 @@ Wireless hardware is not supported by this driver, but by
 The
 .Nm
 device driver appeared in
-.Nx 1.5 .
+.Nx 1.5 
+and is obsoleted by the
+.Xr gem 4
+driver.
 .Sh AUTHORS
 The
 .Nm
