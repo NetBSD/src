@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.32 2001/06/30 14:56:59 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.33 2001/06/30 15:39:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1445,8 +1445,7 @@ static int ti_gibinit(sc)
 
 	/* Tell the chip where to find the general information block. */
 	CSR_WRITE_4(sc, TI_GCR_GENINFO_HI, 0);
-	CSR_WRITE_4(sc, TI_GCR_GENINFO_LO, sc->info_dmaaddr +
-		    ((caddr_t)&sc->ti_rdata->ti_info - (caddr_t)sc->ti_rdata));
+	CSR_WRITE_4(sc, TI_GCR_GENINFO_LO, TI_CDGIBADDR(sc));
 
 	/* Load the firmware into SRAM. */
 	ti_loadfw(sc);
@@ -1456,12 +1455,11 @@ static int ti_gibinit(sc)
 	/* Set up the event ring and producer pointer. */
 	rcb = &sc->ti_rdata->ti_info.ti_ev_rcb;
 
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-		((caddr_t)&sc->ti_rdata->ti_event_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDEVENTADDR(sc, 0);
 	rcb->ti_flags = 0;
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_ev_prodidx_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_ev_prodidx_r
-				- (caddr_t)sc->ti_rdata);
+	    TI_CDEVPRODADDR(sc);
+
 	sc->ti_ev_prodidx.ti_idx = 0;
 	CSR_WRITE_4(sc, TI_GCR_EVENTCONS_IDX, 0);
 	sc->ti_ev_saved_considx = 0;
@@ -1485,14 +1483,11 @@ static int ti_gibinit(sc)
 	 * conserve memory.
 	 */
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_refresh_stats_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_info.ti_stats
-		    - (caddr_t)sc->ti_rdata);
+	    TI_CDSTATSADDR(sc);
 
 	/* Set up the standard receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_std_rx_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-		((caddr_t)&sc->ti_rdata->ti_rx_std_ring
-		 - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXSTDADDR(sc, 0);
 	rcb->ti_max_len = ETHER_MAX_LEN;
 	rcb->ti_flags = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
@@ -1504,8 +1499,7 @@ static int ti_gibinit(sc)
 
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-	    ((caddr_t)&sc->ti_rdata->ti_rx_jumbo_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXJUMBOADDR(sc, 0);
 	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
@@ -1521,8 +1515,7 @@ static int ti_gibinit(sc)
 	 * still there on the Tigon 1.
 	 */
 	rcb = &sc->ti_rdata->ti_info.ti_mini_rx_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-	    ((caddr_t)&sc->ti_rdata->ti_rx_mini_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXMINIADDR(sc, 0);
 	rcb->ti_max_len = MHLEN - ETHER_ALIGN;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		rcb->ti_flags = TI_RCB_FLAG_RING_DISABLED;
@@ -1539,13 +1532,11 @@ static int ti_gibinit(sc)
 	 * Set up the receive return ring.
 	 */
 	rcb = &sc->ti_rdata->ti_info.ti_return_rcb;
-	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-	    ((caddr_t)&sc->ti_rdata->ti_rx_return_ring - (caddr_t)sc->ti_rdata);
+	TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDRXRTNADDR(sc, 0);
 	rcb->ti_flags = 0;
 	rcb->ti_max_len = TI_RETURN_RING_CNT;
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_return_prodidx_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_return_prodidx_r
-		    - (caddr_t)sc->ti_rdata);
+	    TI_CDRTNPRODADDR(sc);
 
 	/*
 	 * Set up the tx ring. Note: for the Tigon 2, we have the option
@@ -1584,12 +1575,9 @@ static int ti_gibinit(sc)
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		TI_HOSTADDR(rcb->ti_hostaddr) = TI_TX_RING_BASE;
 	else
-		TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
-		    ((caddr_t)&sc->ti_rdata->ti_tx_ring
-		     - (caddr_t)sc->ti_rdata);
+		TI_HOSTADDR(rcb->ti_hostaddr) = TI_CDTXADDR(sc, 0);
 	TI_HOSTADDR(sc->ti_rdata->ti_info.ti_tx_considx_ptr) =
-	    sc->info_dmaaddr + ((caddr_t)&sc->ti_rdata->ti_tx_considx_r
-		    - (caddr_t)sc->ti_rdata);
+	    TI_CDTXCONSADDR(sc);
 
 	/* Set up tuneables */
 	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN) ||
