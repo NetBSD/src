@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_semaphore.c,v 1.5 2003/01/21 04:06:08 matt Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.6 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.5 2003/01/21 04:06:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.6 2003/11/13 13:40:39 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.5 2003/01/21 04:06:08 matt Exp 
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_services.h>
 #include <compat/mach/mach_syscallargs.h>
 
 /* Semaphore list, lock, pools */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.12 2003/11/11 18:12:40 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.13 2003/11/13 13:40:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_policy_t req_policy;
 	mach_msg_type_number_t req_count;
-	mach_integer_t req_base[5];
+	mach_integer_t req_base[0];
 	mach_boolean_t req_setlimit;
 } mach_thread_policy_request_t;
 
@@ -125,7 +125,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_thread_state_flavor_t req_flavor;
 	mach_msg_type_number_t req_count;
-	mach_natural_t req_state[144];
+	mach_natural_t req_state[0];
 } mach_thread_create_running_request_t;
 
 typedef struct {
@@ -178,7 +178,7 @@ typedef struct {
 	mach_ndr_record_t req_ndr;
 	mach_thread_state_flavor_t req_flavor;
 	mach_msg_type_number_t req_count;
-	mach_integer_t req_state[144];
+	mach_integer_t req_state[0];
 } mach_thread_set_state_request_t;
 	
 typedef struct {
@@ -187,12 +187,6 @@ typedef struct {
 	mach_kern_return_t rep_retval;
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_set_state_reply_t;
-
-int mach_thread_policy(struct mach_trap_args *);
-int mach_thread_create_running(struct mach_trap_args *);
-int mach_thread_info(struct mach_trap_args *);
-int mach_thread_get_state(struct mach_trap_args *);
-int mach_thread_set_state(struct mach_trap_args *);
 
 /* Theses are machine dependent functions */
 int mach_thread_get_state_machdep(struct lwp *, int, void *, int *);
