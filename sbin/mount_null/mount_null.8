@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.2 1995/03/18 14:57:46 cgd Exp $
+.\"	$NetBSD: mount_null.8,v 1.3 1995/07/12 07:08:27 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,17 +53,12 @@ The
 command creates a
 null layer, duplicating a sub-tree of the file system
 name space under another part of the global file system namespace.
-In this respect, it is
-similar to the loopback file system (see
-.Xr mount_lofs 8 ) .
-It differs from
-the loopback file system in two respects: it is implemented using
-a stackable layers techniques, and it's 
+It is implemented using a stackable layers technique, and its
 .Do
-null-node
-.Dc s
+null-nodes
+.Dc
 stack above
-all lower-layer vnodes, not just over directory vnodes.
+all lower-layer vnodes (not just above directory vnodes).
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -79,8 +74,6 @@ man page for possible options and their meanings.
 The null layer has two purposes.
 First, it serves as a demonstration of layering by proving a layer
 which does nothing.
-(It actually does everything the loopback file system does,
-which is slightly more than nothing.)
 Second, the null layer can serve as a prototype layer.
 Since it provides all necessary layer framework,
 new file system layers can be created very easily be starting
