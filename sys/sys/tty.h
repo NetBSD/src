@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.37 1997/10/09 12:50:03 mycroft Exp $	*/
+/*	$NetBSD: tty.h,v 1.38 1997/10/09 12:59:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -205,7 +205,7 @@ extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
-extern	 char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
+extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
 int	 b_to_q __P((const u_char *cp, int cc, struct clist *q));
 void	 catq __P((struct clist *from, struct clist *to));
