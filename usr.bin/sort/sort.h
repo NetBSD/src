@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.9 2001/01/12 19:41:13 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.10 2001/01/16 12:06:19 shin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -84,7 +84,7 @@
 /* length of record is currently limited to maximum string length (size_t) */
 typedef size_t length_t;
 
-#define SALIGN(n) ((n+1) & ~1)
+#define SALIGN(n) ((n+sizeof(length_t)-1) & ~(sizeof(length_t)-1))
 
 /* a record is a key/line pair starting at rec.data. It has a total length
  * and an offset to the start of the line half of the pair.
