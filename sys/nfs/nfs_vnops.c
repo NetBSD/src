@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.128 2001/02/06 11:40:02 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.129 2001/02/06 15:26:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2005,7 +2005,7 @@ nfs_rmdir(v)
 
 	if (dvp == vp) {
 		vrele(dvp);
-		vrele(dvp);
+		vput(dvp);
 		PNBUF_PUT(cnp->cn_pnbuf);
 		return (EINVAL);
 	}
@@ -2024,8 +2024,8 @@ nfs_rmdir(v)
 		VTONFS(dvp)->n_attrstamp = 0;
 	cache_purge(dvp);
 	cache_purge(vp);
-	vrele(vp);
-	vrele(dvp);
+	vput(vp);
+	vput(dvp);
 	/*
 	 * Kludge: Map ENOENT => 0 assuming that you have a reply to a retry.
 	 */
@@ -2567,7 +2567,6 @@ nfs_sillyrename(dvp, vp, cnp)
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;
-	struct vnode *newvp;
 	int error;
 	short pid;
 
@@ -2604,24 +2603,8 @@ nfs_sillyrename(dvp, vp, cnp)
 	error = nfs_renameit(dvp, cnp, sp);
 	if (error)
 		goto bad;
-	VOP_UNLOCK(vp, 0);
 	error = nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
 		cnp->cn_proc, &np);
-	newvp = NFSTOV(np);
-	if (newvp != vp) {
-		/*
-		 * XXX. If the server decides to change the handle
-		 * because of the rename, we're screwed. This is
-		 * "strongly discouraged" in the spec, but not
-		 * forbidden. Should just get a new nfsnode and
-		 * associate it with the vnode in this case.
-		 */
-		vput(newvp);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		error = EINVAL;
-		goto bad;
-	} else
-		vrele(vp);
 	np->n_sillyrename = sp;
 	return (0);
 bad:
