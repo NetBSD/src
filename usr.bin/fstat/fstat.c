@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: fstat.c,v 1.12 1994/12/24 16:38:43 cgd Exp $";
+static char *rcsid = "$Id: fstat.c,v 1.13 1995/02/15 02:10:41 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -308,6 +308,12 @@ dofiles(kp)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
 		dprintf(stderr, "can't read filedesc at %x for pid %d\n",
+			p->p_fd, Pid);
+		return;
+	}
+	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
+	    filed.fd_freefile > filed.fd_lastfile + 1) {
+		dprintf(stderr, "filedesc corrupted at %x for pid %d\n",
 			p->p_fd, Pid);
 		return;
 	}
