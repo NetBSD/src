@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.33 1995/01/26 06:14:14 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.34 1995/01/26 06:35:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -245,9 +245,6 @@ npxprobe1(ia)
 	 */
 	fninit();
 	delay(1000);		/* wait for any IRQ13 (fwait might hang) */
-
-	npx_intrs_while_probing = 0;
-	npx_traps_while_probing = 0;
 
 	/*
 	 * Check for a status of mostly zero.
