@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.5 2003/02/22 05:32:01 igy Exp $
+#	$NetBSD: NAPPI,v 1.6 2003/05/23 14:23:46 thorpej Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -174,3 +174,4 @@ pseudo-device	loop			# network loopback
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	ksyms			# /dev/ksyms
