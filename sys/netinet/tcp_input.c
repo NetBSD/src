@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.136 2002/03/12 04:36:47 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.137 2002/03/19 14:35:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.136 2002/03/12 04:36:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.137 2002/03/19 14:35:20 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -700,7 +700,9 @@ tcp_input(m, va_alist)
 		 * Make sure destination address is not multicast.
 		 * Source address checked in ip_input().
 		 */
-		if (IN_MULTICAST(ip->ip_dst.s_addr)) {
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
+
 			/* XXX stat */
 			goto drop;
 		}
@@ -2247,6 +2249,11 @@ dropwithreset:
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
+
+	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
+		goto drop;
+
     {
 	/*
 	 * need to recover version # field, which was overwritten on
