@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.189 1999/12/24 09:14:57 agc Exp $
+# $NetBSD: mi,v 1.190 2000/01/05 00:27:25 chopps Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -1363,6 +1363,8 @@
 ./usr/share/man/man4/ns.4
 ./usr/share/man/man4/nsip.4
 ./usr/share/man/man4/nsphy.4
+./usr/share/man/man4/ntwo.4
+./usr/share/man/man4/ntwoc.4
 ./usr/share/man/man4/null.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/opl.4
