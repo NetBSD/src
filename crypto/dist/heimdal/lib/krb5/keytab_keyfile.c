@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: keytab_keyfile.c,v 1.15 2002/10/21 15:42:06 joda Exp $"
-        "$NetBSD: keytab_keyfile.c,v 1.1.1.5 2003/05/15 20:28:47 lha Exp $");
+        "$NetBSD: keytab_keyfile.c,v 1.2 2004/11/05 22:41:38 dsl Exp $");
 
 /* afs keyfile operations --------------------------------------- */
 
@@ -105,7 +105,7 @@ get_cell_and_realm (krb5_context context,
     }
     /* uppercase */
     for (cp = buf; *cp != '\0'; cp++)
-	*cp = toupper(*cp);
+	*cp = toupper((unsigned char)*cp);
     
     d->realm = strdup (buf);
     if (d->realm == NULL) {
