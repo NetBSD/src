@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.31 2003/04/02 10:39:35 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.32 2003/04/02 22:38:22 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.31 2003/04/02 10:39:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.32 2003/04/02 22:38:22 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ ext2fs_update(v)
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
-	e2fs_isave(&ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
+	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
 	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&
 	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
