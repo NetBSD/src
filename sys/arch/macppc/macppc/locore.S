@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29 2000/11/25 15:49:43 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.30 2000/12/04 17:05:51 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,6 +60,9 @@
 	addis	r,r,_C_LABEL(cpu_info)@ha;			\
 	addi	r,r,_C_LABEL(cpu_info)@l;
 #endif
+
+#define	INTSTK	(8*1024)	/* 8K interrupt stack */
+#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals
