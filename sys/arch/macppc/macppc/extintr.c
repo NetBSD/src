@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.19 2000/12/17 23:24:25 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.20 2001/01/01 05:01:11 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -77,7 +77,6 @@ static __inline void openpic_eoi __P((int));
 static void do_pending_int __P((void));
 
 unsigned int imen = 0xffffffff;
-volatile int cpl, ipending;
 int imask[NIPL];
 
 int intrtype[NIRQ], intrmask[NIRQ], intrlevel[NIRQ];
@@ -89,6 +88,13 @@ static int virq_max = 0;
 static u_char *obio_base, *openpic_base;
 
 extern u_int *heathrow_FCR;
+
+#ifdef MULTIPROCESSOR
+#define ipending	(curcpu()->ci_ipending)
+#define cpl		(curcpu()->ci_cpl)
+#else
+volatile int cpl, ipending;
+#endif
 
 #define interrupt_reg	(obio_base + 0x10)
 
@@ -528,7 +534,13 @@ ext_intr()
 	int o_imen, r_imen;
 	int pcpl;
 	struct intrhand *ih;
-	volatile unsigned long int_state;
+	u_long int_state;
+
+#ifdef MULTIPROCESSOR
+	/* Only cpu0 can handle interrupts. */
+	if (cpu_number() != 0)
+		return;
+#endif
 
 	pcpl = splhigh();	/* Turn off all */
 
@@ -547,6 +559,7 @@ start:
 		imen |= r_imen;
 		enable_irq(~imen);
 	} else {
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 		ih = intrhand[irq];
 		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
@@ -555,6 +568,7 @@ start:
 
 		uvmexp.intrs++;
 		intrcnt[hwirq[irq]]++;
+		KERNEL_UNLOCK();
 	}
 
 	int_state &= ~r_imen;
@@ -632,6 +646,11 @@ do_pending_int()
 
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
+
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+#ifdef MULTIPROCESSOR
+	if (cpu_number() == 0) {
+#endif
 	if (!have_openpic) {
 		imen &= ~hwpend;
 		enable_irq(~imen);
@@ -650,6 +669,9 @@ do_pending_int()
 		if (have_openpic)
 			openpic_enable_irq(hwirq[irq], intrtype[irq]);
 	}
+#ifdef MULTIPROCESSOR
+	}
+#endif
 
 	/*out32rb(INT_ENABLE_REG, ~imen);*/
 
@@ -668,6 +690,7 @@ do_pending_int()
 		softserial();
 		intrcnt[CNT_SOFTSERIAL]++;
 	}
+	KERNEL_UNLOCK();
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	asm volatile("mtmsr %0" :: "r"(emsr));
