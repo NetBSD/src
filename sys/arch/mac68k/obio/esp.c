@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.21 1999/06/01 03:40:12 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.22 1999/06/09 03:41:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -399,11 +399,11 @@ int
 esp_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	register struct esp_softc *esc = (struct esp_softc *)sc;
-	register u_char	*p;
+	struct esp_softc *esc = (struct esp_softc *)sc;
 	volatile u_char *cmdreg, *intrreg, *statreg, *fiforeg;
-	register u_int	espphase, espstat, espintr;
-	register int	cnt;
+	u_char	*p;
+	u_int	espphase, espstat, espintr;
+	int	cnt, s;
 
 	if (esc->sc_active == 0) {
 		printf("dma_intr--inactive DMA\n");
@@ -450,11 +450,13 @@ esp_dma_intr(sc)
 
 		if (esc->sc_active) {
 			while (!(*statreg & 0x80));
+			s = splhigh();
 			espstat = *statreg;
 			espintr = *intrreg;
 			espphase = (espintr & NCRINTR_DIS)
 				    ? /* Disconnected */ BUSFREE_PHASE
 				    : espstat & PHASE_MASK;
+			splx(s);
 		}
 	} while (esc->sc_active && (espintr & NCRINTR_BS));
 	sc->sc_phase = espphase;
@@ -708,11 +710,22 @@ int
 esp_dualbus_intr(sc)
 	register struct ncr53c9x_softc *sc;
 {
-	if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80))
-		ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+	int	i = 0;
 
-	if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80))
-		ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
+	do {
+		if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80)) {
+			ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+			i++;
+		}
+
+		if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80)) {
+			ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
+			i++;
+		}
+		if (!i) {
+			delay(100); i++;
+		}
+	} while (!i);
 
 	return 0;
 }
