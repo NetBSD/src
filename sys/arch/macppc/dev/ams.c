@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.6 1999/06/17 06:59:05 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.7 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -551,16 +551,6 @@ ms_processevent(event, msc)
 #if NAED > 0
 	aed_input(&new_event);
 #endif
-}
-
-void
-extdms_complete(buffer, compdata, cmd)
-	caddr_t buffer, compdata;
-	int cmd;
-{
-	long *p = (long *)compdata;
-
-	*p= -1;
 }
 
 int
