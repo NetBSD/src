@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.31 1998/08/02 18:39:14 kleink Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.32 1999/02/26 23:38:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -190,6 +190,8 @@ vn_writechk(vp)
 
 /*
  * Vnode close call
+ *
+ * Note: takes an unlocked vnode, while VOP_CLOSE takes a locked node.
  */
 int
 vn_close(vp, flags, cred, p)
@@ -202,8 +204,9 @@ vn_close(vp, flags, cred, p)
 
 	if (flags & FWRITE)
 		vp->v_writecount--;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred, p);
-	vrele(vp);
+	vput(vp);
 	return (error);
 }
 

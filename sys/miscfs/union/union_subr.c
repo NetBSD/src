@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.27 1998/08/09 20:51:11 perry Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.28 1999/02/26 23:38:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -677,20 +677,16 @@ union_copyup(un, docopy, cred, p)
 		error = VOP_OPEN(lvp, FREAD, cred, p);
 		if (error == 0) {
 			error = union_copyfile(lvp, uvp, cred, p);
-			VOP_UNLOCK(lvp, 0);
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
 		}
+		VOP_UNLOCK(lvp, 0);
 #ifdef UNION_DIAGNOSTIC
 		if (error == 0)
 			uprintf("union: copied up %s\n", un->un_path);
 #endif
 
 	}
-	un->un_flags &= ~UN_ULOCK;
-	VOP_UNLOCK(uvp, 0);
 	union_vn_close(uvp, FWRITE, cred, p);
-	vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
-	un->un_flags |= UN_ULOCK;
 
 	/*
 	 * Subsequent IOs will go to the top layer, so

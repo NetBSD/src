@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.19 1998/03/01 02:22:27 fvdl Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.20 1999/02/26 23:38:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -248,8 +248,9 @@ check_shell:
 		 * list will be used.
 		 */
 		if ((epp->ep_flags & EXEC_HASFD) == 0) {
+			vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
 			VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
-			vrele(scriptvp);
+			vput(scriptvp);
 		}
 
 		/* free the old pathname buffer */
@@ -284,8 +285,9 @@ fail:
                 epp->ep_flags &= ~EXEC_HASFD;
                 (void) fdrelease(p, epp->ep_fd);
         } else if (scriptvp) {
+		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(scriptvp, FREAD, p->p_ucred, p);
-		vrele(scriptvp);
+		vput(scriptvp);
 	}
 
         FREE(epp->ep_ndp->ni_cnd.cn_pnbuf, M_NAMEI);
