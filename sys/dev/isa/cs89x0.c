@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.13 2000/02/08 18:40:51 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.14 2000/06/28 16:27:52 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -217,7 +217,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.21 2000/05/09 17:59:39 jhawk Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.22 2000/06/28 16:27:53 mrg Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -40,8 +40,6 @@
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
