@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.19 1996/03/09 23:38:34 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.20 1996/03/17 22:56:46 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,9 +78,12 @@ void	uba_dw780int __P((int));
 void	ubaerror __P((int, struct uba_softc *, int *, int *,
 	    struct uba_regs *));
 
-struct	cfdriver ubacd = {
-	NULL, "uba", uba_match, uba_attach, DV_DULL,
-	sizeof(struct uba_softc), 1
+struct	cfdriver uba_cd = {
+	NULL, "uba", DV_DULL, 1
+};
+
+struct	cfattach uba_ca = {
+	sizeof(struct uba_softc), uba_match, uba_attach
 };
 
 /* 
@@ -91,18 +94,22 @@ ubastray(arg)
 	int arg;
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
-	struct	uba_softc *sc = ubacd.cd_devs[arg];
+	struct	uba_softc *sc = uba_cd.cd_devs[arg];
 	struct  uba_regs *ur = sc->uh_uba;
 	int	vektor;
 
 	rbr = mfpr(PR_IPL);
-	if (sc->uh_type != DW780)
-		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
-	else
+#ifdef DW780
+	if (sc->uh_type == DW780)
 		vektor = ur->uba_brrvr[rbr - 0x14] >> 2;
+	else
+#endif
+		vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
 
 	if (cold) {
+#ifdef DW780
 		if (sc->uh_type != DW780)
+#endif
 			rcvec = vektor;
 	} else 
 		printf("uba%d: unexpected interrupt, vector %o, br %d\n",
@@ -257,7 +264,7 @@ ubaqueue(ui, onq)
 	register struct uba_driver *ud;
 	register int s, unit;
 
-	uh = ubacd.cd_devs[um->um_ubanum];
+	uh = uba_cd.cd_devs[um->um_ubanum];
 	ud = um->um_driver;
 	s = spluba();
 	/*
@@ -315,7 +322,7 @@ rwait:
 ubadone(um)
 	struct uba_ctlr *um;
 {
-	struct uba_softc *uh = ubacd.cd_devs[um->um_ubanum];
+	struct uba_softc *uh = uba_cd.cd_devs[um->um_ubanum];
 
 	if (um->um_driver->ud_xclu)
 		uh->uh_xclu = 0;
@@ -336,7 +343,7 @@ ubasetup(uban, bp, flags)
 	struct	buf *bp;
 	int	uban, flags;
 {
-	struct uba_softc *uh = ubacd.cd_devs[uban];
+	struct uba_softc *uh = uba_cd.cd_devs[uban];
 	struct pte *pte, *io;
 	int npf;
 	int pfnum, temp;
@@ -464,7 +471,7 @@ void
 ubarelse(uban, amr)
 	int uban, *amr;
 {
-	register struct uba_softc *uh = ubacd.cd_devs[uban];
+	register struct uba_softc *uh = uba_cd.cd_devs[uban];
 	register int bdp, reg, npf, s;
 	int mr;
  
@@ -599,7 +606,7 @@ ubareset(uban)
 	int uban;
 {
 	register struct cdevsw *cdp;
-	register struct uba_softc *uh = ubacd.cd_devs[uban];
+	register struct uba_softc *uh = uba_cd.cd_devs[uban];
 	int s;
 
 	s = spluba();
@@ -803,7 +810,7 @@ ubaerror(uban, uh, ipl, uvec, uba)
 ubameminit(uban)
 {
 	register struct uba_device *ui;
-	register struct uba_softc *uh = ubacd.cd_devs[uban];
+	register struct uba_softc *uh = uba_cd.cd_devs[uban];
 	caddr_t umembase, addr;
 #define	ubaoff(off)	((int)(off) & 0x1fff)
 
@@ -866,7 +873,7 @@ rmget(){
 ubamem(uban, addr, npg, doalloc)
 	int uban, addr, npg, doalloc;
 {
-	register struct uba_softc *uh = ubacd.cd_devs[uban];
+	register struct uba_softc *uh = uba_cd.cd_devs[uban];
 	register int a;
 	int s;
 
@@ -941,7 +948,7 @@ uba_dw780int(uba)
 	int	uba;
 {
 	int	br, svec, vec, arg;
-	struct	uba_softc *sc = ubacd.cd_devs[uba];
+	struct	uba_softc *sc = uba_cd.cd_devs[uba];
 	struct	uba_regs *ur = sc->uh_uba;
 	void	(*func)();
 
@@ -1199,7 +1206,7 @@ ubascan(parent, match)
 	}
 #endif
 	rcvec = 0x200;
-	i = (*cf->cf_driver->cd_match) (parent, dev, &ua);
+	i = (*cf->cf_attach->ca_match) (parent, dev, &ua);
 
 #ifdef DW780
 	if (sc->uh_type == DW780 && ubar->uba_sr) {
@@ -1214,7 +1221,7 @@ ubascan(parent, match)
 		goto fail;
 		
 	sc->uh_idsp[rcvec].hoppaddr = ua.ua_ivec;
-	sc->uh_idsp[rcvec].pushlarg = ua.ua_iarg;
+	sc->uh_idsp[rcvec].pushlarg = dev->dv_unit;
 	ua.ua_br = rbr;
 	ua.ua_cvec = rcvec;
 	ua.ua_iaddr = dev->dv_cfdata->cf_loc[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.4 1996/02/24 21:22:58 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.5 1996/03/17 22:56:39 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,8 +76,12 @@ void	mbaqueue __P((struct mba_device *));
 void	mbastart __P((struct mba_softc *));
 void	mbamapregs __P((struct mba_softc *));
 
-struct	cfdriver mbacd = {
-	NULL, "mba", mbamatch, mbaattach, DV_DULL, sizeof(struct mba_softc)
+struct	cfdriver mba_cd = {
+	NULL, "mba", DV_DULL
+};
+
+struct	cfattach mba_ca = {
+	sizeof(struct mba_softc), mbamatch, mbaattach
 };
 
 /*
@@ -163,7 +167,7 @@ void
 mbaintr(mba)
 	int	mba;
 {
-	struct	mba_softc *sc = mbacd.cd_devs[mba];
+	struct	mba_softc *sc = mba_cd.cd_devs[mba];
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	mba_device *md;
 	struct	buf *bp;

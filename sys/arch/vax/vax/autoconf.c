@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.9 1996/03/07 23:22:34 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.10 1996/03/17 22:56:25 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -420,15 +420,30 @@ mem_attach(parent, self, aux)
 
 }
 
-struct	cfdriver backplanecd =
-	{ 0, "backplane", backplane_match, backplane_attach,
-		DV_DULL, sizeof(struct device) };
+struct	cfdriver backplane_cd = {
+	NULL, "backplane", DV_DULL
+};
 
-struct	cfdriver cpucd =
-	{ 0, "cpu", cpu_match, cpu_attach, DV_CPU, sizeof(struct device) };
+struct	cfattach backplane_ca = {
+	sizeof(struct device), backplane_match, backplane_attach
+};
 
+struct	cfdriver cpu_cd = {
+	NULL, "cpu", DV_CPU
+};
 
-struct  cfdriver memcd =
-	{ 0, "mem", mem_match, mem_attach, DV_CPU, sizeof(struct mem_softc) };
+struct	cfattach cpu_backplane_ca = {
+	sizeof(struct device), cpu_match, cpu_attach
+};
 
+struct  cfdriver mem_cd = {
+	NULL, "mem", DV_CPU
+};
 
+struct	cfattach mem_backplane_ca = {
+	sizeof(struct device), mem_match, mem_attach
+};
+
+struct	cfattach mem_sbi_ca = {
+	sizeof(struct device), mem_match, mem_attach
+};

@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.15 1996/02/13 17:45:32 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.16 1996/03/17 22:56:18 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -229,6 +229,23 @@ _loswtch:	.globl	_loswtch
 	.data
 
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
+
+# Have bcopy and bzero here to be sure that system files that not gets
+# macros.h included will not complain.
+_bcopy:	.globl _bcopy
+	.word	0x0
+	movl	4(ap), r0
+	movl	8(ap), r1
+	movl	0xc(ap), r2
+	movc3	r2, (r0), (r1)
+	ret
+
+_bzero:	.globl	_bzero
+	.word	0x0
+	movl	4(ap), r0
+	movl	8(ap), r1
+	movc5	$0, (r0), $0, r1, (r0)
+	ret
 
 #ifdef DDB
 /*

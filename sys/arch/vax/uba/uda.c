@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.14 1996/03/07 23:25:56 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.15 1996/03/17 22:56:50 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -177,8 +177,12 @@ struct udastats {
 int	udamatch __P((struct device *, void *, void *));
 void	uda_attach __P((struct device *, struct device *, void *));
 
-struct	cfdriver udacd = {
-	NULL, "uda", udamatch, uda_attach, DV_DULL, sizeof(struct device)
+struct	cfdriver uda_cd = {
+	NULL, "uda", DV_DULL
+};
+
+struct	cfattach uda_ca = {
+	sizeof(struct device), udamatch, uda_attach
 };
 
 /*
@@ -298,7 +302,6 @@ void	udawatch();	/* watchdog timer */
  * Externals
  */
 int	hz;
-extern	struct cfdriver ubacd;
 
 /*
  * Poke at a supposed UDA50 to see if it is there.

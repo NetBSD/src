@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1996/02/02 18:09:07 mycroft Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.8 1996/03/17 22:56:15 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -77,14 +77,14 @@ extern	struct uba_driver hldriver;
 extern	struct uba_driver udadriver;
 extern	struct uba_driver kdbdriver;
 
-extern	struct cfdriver hpcd;
+extern	struct cfdriver hp_cd;
 
 struct	ngcconf {
 	struct	cfdriver *ng_cf;
 	dev_t	ng_root;
 } ngcconf[] = {
 #if NHP > 0
-	{ &hpcd,	makedev(0, 0), },
+	{ &hp_cd,	makedev(0, 0), },
 #endif
 	{ 0 },
 };
@@ -94,7 +94,7 @@ struct	genericconf {
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
-/*	{ (caddr_t)&hpcd,	"hp",	makedev(0, 0),	},
+/*	{ (caddr_t)&hp_cd,	"hp",	makedev(0, 0),	},
 	{ (caddr_t)&scdriver,	"up",	makedev(2, 0),	}, */
 #if NUDA > 0
 	{ (caddr_t)&udadriver,	"ra",	makedev(9, 0),	},

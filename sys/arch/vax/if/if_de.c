@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.16 1996/03/02 14:29:23 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.17 1996/03/17 22:56:33 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -152,9 +152,13 @@ void    derecv __P((int));
 void	de_setaddr __P((u_char *, int));
 
 
-struct  cfdriver decd =
-	{ 0,"de",dematch, deattach, DV_IFNET, sizeof(struct de_softc) };
+struct  cfdriver de_cd = {
+	NULL, "de", DV_IFNET
+};
 
+struct	cfattach de_ca = {
+	sizeof(struct de_softc), dematch, deattach
+};
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
@@ -268,7 +272,7 @@ deinit(unit)
 	struct de_ring *rp;
 	int s,incaddr;
 
-	ds = (struct de_softc *)decd.cd_devs[unit];
+	ds = (struct de_softc *)de_cd.cd_devs[unit];
 	ifp = &ds->ds_if;
 
 	/* not yet, if address still unknown */
@@ -367,7 +371,7 @@ destart(ifp)
 	struct ifnet *ifp;
 {
         int len;
-	register struct de_softc *ds = decd.cd_devs[ifp->if_unit];
+	register struct de_softc *ds = de_cd.cd_devs[ifp->if_unit];
 	volatile struct dedevice *addr = ds->ds_vaddr;
 	register struct de_ring *rp;
 	struct mbuf *m;
@@ -419,7 +423,7 @@ deintr(unit)
 	register struct ifxmt *ifxp;
 	short csr0;
 
-	ds = decd.cd_devs[unit];
+	ds = de_cd.cd_devs[unit];
 	addr = ds->ds_vaddr;
 
 
@@ -501,7 +505,7 @@ void
 derecv(unit)
 	int unit;
 {
-	register struct de_softc *ds = decd.cd_devs[unit];
+	register struct de_softc *ds = de_cd.cd_devs[unit];
 	register struct de_ring *rp;
 	int len;
 
@@ -579,7 +583,7 @@ deioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	register struct de_softc *ds = decd.cd_devs[ifp->if_unit];
+	register struct de_softc *ds = de_cd.cd_devs[ifp->if_unit];
 	int s = splnet(), error = 0;
 
 	switch (cmd) {
@@ -637,7 +641,7 @@ de_setaddr(physaddr, unit)
 	u_char	*physaddr;
 	int	unit;
 {
-	register struct de_softc *ds = decd.cd_devs[unit];
+	register struct de_softc *ds = de_cd.cd_devs[unit];
 	volatile struct dedevice *addr= ds->ds_vaddr;
 	
 	if (! (ds->ds_flags & DSF_RUNNING))

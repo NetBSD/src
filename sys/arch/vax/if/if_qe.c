@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.11 1996/02/11 13:47:59 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.12 1996/03/17 22:56:34 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -246,9 +246,13 @@ void	qeread __P((struct qe_softc *, struct ifrw *, int));
 void	qetimeout __P((int));
 void	qerestart __P((struct qe_softc *));
 
-struct	cfdriver qecd =
-	{ 0, "qe", qematch, qeattach, DV_IFNET, sizeof(struct qe_softc) };
+struct	cfdriver qe_cd = {
+	NULL, "qe", DV_IFNET
+};
 
+struct	cfattach qe_ca = {
+	sizeof(struct qe_softc), qematch, qeattach
+};
 
 #define	QEUNIT(x)	minor(x)
 /*
@@ -427,7 +431,7 @@ void
 qeinit(unit)
 	int unit;
 {
-	struct qe_softc *sc = (struct qe_softc *)qecd.cd_devs[unit];
+	struct qe_softc *sc = (struct qe_softc *)qe_cd.cd_devs[unit];
 	struct qedevice *addr = sc->qe_vaddr;
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	int i;
@@ -523,7 +527,7 @@ void
 qestart(ifp)
 	struct ifnet *ifp;
 {
-	register struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[ifp->if_unit];
 	volatile struct qedevice *addr = sc->qe_vaddr;
 	register struct qe_ring *rp;
 	register index;
@@ -607,7 +611,7 @@ qeintr(unit)
 	volatile struct qedevice *addr;
 	int buf_addr, csr;
 
-	sc = qecd.cd_devs[unit];
+	sc = qe_cd.cd_devs[unit];
 	addr = sc->qe_vaddr;
 	splx(sc->ipl);
 	if (!(sc->qe_flags & QEF_FASTTIMEO))
@@ -637,7 +641,7 @@ void
 qetint(unit)
 	int unit;
 {
-	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register struct qe_ring *rp;
 	register struct ifxmt *ifxp;
 	int status1, setupflag;
@@ -693,7 +697,7 @@ void
 qerint(unit)
 	int unit;
 {
-	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register struct qe_ring *rp;
 	register int nrcv = 0;
 	int len, status1, status2;
@@ -775,7 +779,7 @@ qeioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
+	struct qe_softc *sc = qe_cd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
@@ -831,7 +835,7 @@ qe_setaddr(physaddr, unit)
 	u_char *physaddr;
 	int unit;
 {
-	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_softc *sc = qe_cd.cd_devs[unit];
 	register int i;
 
 	for (i = 0; i < 6; i++)
@@ -952,7 +956,7 @@ qetimeout(unit)
 {
 	register struct qe_softc *sc;
 
-	sc = qecd.cd_devs[unit];
+	sc = qe_cd.cd_devs[unit];
 #ifdef notdef
 	log(LOG_ERR, "qe%d: transmit timeout, restarted %d\n",
 	     unit, sc->qe_restarts++);
