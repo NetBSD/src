@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5 2002/09/13 23:35:32 thorpej Exp $
+$NetBSD: README,v 1.6 2002/09/16 18:13:04 briggs Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -9,6 +9,8 @@ are listed.
 LINUX:
 
 * Tested on RedHat Linux 7.1 (i386).
+  Tested on RedHat Linux 7.3 (i686) on 16 Sep 2002.  Requires "LANG=C"
+  in the environment.
 
 * The gcc (and libstdc++, if needed) package must be installed, along
   with the typical system development packages (glibc-devel, etc.).
