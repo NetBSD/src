@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.612 2004/03/03 01:03:04 gavan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.613 2004/03/12 13:21:22 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.611 2004/02/26 17:12:09 drochner Exp 
+ *	NetBSD: pcidevs,v 1.613 2004/03/12 13:20:49 drochner Exp 
  */
 
 /*
@@ -1568,6 +1568,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_WL_2100	0x1043		/* PRO/Wireless LAN 2100 3B Mini PCI Adapter */
 #define	PCI_PRODUCT_INTEL_82597EX	0x1048		/* PRO/10GbE LR Server Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1050		/* PRO/100 VM Network Controller with 82562ET/EZ PHY */
+#define	PCI_PRODUCT_INTEL_82801EB_LAN	0x1051		/* 82801EB/ER 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M Network Controller */
 #define	PCI_PRODUCT_INTEL_82547GI	0x1075		/* i82547GI Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82541GI	0x1076		/* i82541GI Gigabit Ethernet */
