@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.41 2001/04/25 01:46:25 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.42 2001/07/13 05:37:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -183,7 +183,7 @@ void	yyerror(char *);
 
 #include <netinet/in.h>
 
-#ifdef BSD4_4
+#if defined(__NetBSD__)
 # define HAVE_SETPROCTITLE	1
 # define HAVE_SOCKADDR_SA_LEN	1
 #endif
