@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.33.4.1 2002/03/18 16:36:50 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.33.4.2 2002/03/22 00:40:10 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,4 +252,8 @@ define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
 define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
 
 # mutex fields
-define	MTX_WAITERS	offsetof(struct mutex, mtx_un.mtx_adapt.mtx_waiters)
+define	MTX_WAITERS	offsetof(kmutex_t, mtx_un.mtx_adapt.mtx_waiters)
+ifdef MUTEX_DEBUG
+define	MTX_DBG_LOCKED	 offsetof(kmutex_t, mtx_debug.mtx_locked)
+define	MTX_DBG_UNLOCKED offsetof(kmutex_t, mtx_debug.mtx_unlocked)
+endif

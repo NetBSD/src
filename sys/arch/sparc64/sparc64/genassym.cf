@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.8.1 2002/03/19 02:32:07 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.25.8.2 2002/03/22 00:41:54 thorpej Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -272,3 +272,7 @@ endif
 
 # mutex bits
 define	MUTEX_WAITERS	MUTEX_WAITERS
+ifdef MUTEX_DEBUG
+define	MTX_DBG_LOCKED	 offsetof(kmutex_t, mtx_debug.mtx_locked)
+define	MTX_DBG_UNLOCKED offsetof(kmutex_t, mtx_debug.mtx_unlocked)
+endif

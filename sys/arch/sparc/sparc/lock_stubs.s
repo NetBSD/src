@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.2.3 2002/03/18 22:34:26 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.2.4 2002/03/22 00:40:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * cases for mutexes, and provide helper routines for rwlocks.
  */
 
+#include "opt_lockdebug.h"
+
 #include <machine/asm.h>
 #include <machine/param.h>
 #include <sparc/sparc/vaddrs.h>
@@ -66,6 +68,9 @@ _ENTRY(_C_LABEL(mutex_enter))
 	sra	%o3, 4, %o1			! curproc >> 4
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
+#if defined(MUTEX_DEBUG)
+	st	%o7, [%o0 + MTX_DBG_LOCKED]
+#endif
 	retl
 	 st	%o1, [%o0]
 
@@ -82,6 +87,9 @@ _ENTRY(_C_LABEL(mutex_tryenter))
 	sra	%o3, 4, %o1			! curproc >> 4
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
+#if defined(MUTEX_DEBUG)
+	st	%o7, [%o0 + MTX_DBG_LOCKED]
+#endif
 	st	%o1, [%o0]
 	retl
 	 or	%g0, 1, %o0
@@ -109,6 +117,10 @@ _ENTRY(_C_LABEL(mutex_tryenter))
  * XXX BUT WE DON'T RIGHT NOW!
  */
 _ENTRY(_C_LABEL(mutex_exit))
+#if defined(MUTEX_DEBUG)
+	b	_C_LABEL(mutex_vector_exit)
+	 nop
+#else
 	sethi	%hi(curproc), %o3
 	ld	[%o3 + %lo(curproc)], %o3	! current thread
 	sra	%o3, 4, %o1			! curproc >> 4
@@ -127,6 +139,7 @@ _ENTRY(_C_LABEL(mutex_exit))
 	b,a	_C_LABEL(mutex_vector_exit)	! no, hard case
 1:	retl
 	 nop
+#endif /* MUTEX_DEBUG */
 
 /*
  * Interlock hash table, used by the rwlock helper routines.
