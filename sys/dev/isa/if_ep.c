@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.5 1993/12/20 09:05:55 mycroft Exp $
+ *	$Id: if_ep.c,v 1.6 1994/01/21 21:35:58 hpeyerl Exp $
  */
 /*
  * TODO: 
@@ -536,7 +536,7 @@ epread(sc)
 		++sc->ep_if.if_ierrors;
 		goto out;
 	}	
-	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 10 bits = RX bytes. */
+	save_totlen = totlen &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
 
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = 0;
