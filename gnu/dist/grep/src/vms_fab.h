@@ -1,3 +1,5 @@
+/*	$NetBSD: vms_fab.h,v 1.1.1.3 2003/01/26 23:15:30 wiz Exp $	*/
+
 /*
    This file includes the setup for the file access block for VMS.
    Written by Phillip C. Brisco 8/98.
@@ -6,6 +8,19 @@
 #include <rms.h>
 #include <ssdef.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <starlet.h>
+
+#if defined(VMS) && defined(__DECC) /* need function prototype */
+# if (__DECC_VER<50790004)           /* have an own one         */
+char *alloca(unsigned int);
+# else
+#  define alloca __ALLOCA
+# endif
+#endif
+
 
 struct FAB fab;
 struct NAM nam;
