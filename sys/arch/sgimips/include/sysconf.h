@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.3 2001/11/11 17:21:40 rafal Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.4 2004/01/13 14:18:56 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,8 @@ struct platform {
 	void	(*cons_init)(void);
 	void	(*iointr)(unsigned, unsigned, unsigned, unsigned);
 	void	(*intr_establish)(int , int, int (*)(void *), void *);
-	unsigned long (*clkread) __P((void));
+	unsigned long (*clkread) (void);
+	void	(*watchdog_reset)(void);
 };
 
 extern struct platform platform;
