@@ -1,4 +1,4 @@
-.\"	$NetBSD: iteconfig.8,v 1.7 1997/06/23 14:15:34 mrg Exp $
+.\"	$NetBSD: iteconfig.8,v 1.8 1997/10/17 09:54:27 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Christian E. Hopps
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nm iteconfig 
 .Nd modify console attributes at run time
 .Sh SYNOPSIS
-.Nm iteconfig
+.Nm
 .Op Fl i
 .Op Fl f Ar file
 .Op Fl v Ar volume
@@ -49,7 +49,7 @@
 .Op Fl y Ar offset
 .Op Ar color ...
 .Sh DESCRIPTION
-.Nm Iteconfig
+.Nm
 is used to modify or examine the attributes of the
 console bell and bitmapped console display.
 The console bell's volume, pitch, and count may be
@@ -58,7 +58,7 @@ the bitmapped display's width, height, horizontal and
 vertical offset, pixel depth, and color map.
 .Pp
 The following flags are interpreted by
-.Nm iteconfig :
+.Nm "" :
 .Bl -tag -width indent
 .It Fl i
 After processing all other arguments,
@@ -67,7 +67,7 @@ print information about the console's state.
 Open and use the terminal named by
 .Ar file
 rather than the default console
-.Nm "/dev/ttye0".
+.Pa /dev/ttye0 .
 .It Fl v
 Set the volume of the console bell to
 .Ar volume ,
