@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.h,v 1.4 1997/11/19 12:00:02 christos Exp $	*/
+/*	$NetBSD: chap_ms.h,v 1.5 1998/05/02 14:19:14 christos Exp $	*/
 
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
@@ -21,7 +21,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: chap_ms.h,v 1.1 1996/05/28 00:42:31 paulus Exp 
+ * Id: chap_ms.h,v 1.2 1997/11/27 06:08:10 paulus Exp 
  */
 
 #ifndef __CHAPMS_INCLUDE__
