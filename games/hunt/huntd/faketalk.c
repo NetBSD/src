@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.5 2001/01/09 23:49:54 lukem Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.6 2001/02/05 00:42:14 christos Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.5 2001/01/09 23:49:54 lukem Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.6 2001/02/05 00:42:14 christos Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -43,10 +43,10 @@ __RCSID("$NetBSD: faketalk.c,v 1.5 2001/01/09 23:49:54 lukem Exp $");
 
 extern	char		*my_machine_name;
 extern	char		*First_arg, *Last_arg;
+extern	char		**environ;
 
 static	void	do_announce __P((char *));
 SIGNAL_TYPE	exorcise __P((int));
-
 /*
  *	exorcise - disspell zombies
  */
@@ -72,7 +72,6 @@ faketalk()
 	int			service;	/* socket of service */
 	struct	sockaddr_in	des;		/* address of destination */
 	char			*a, *b;
-	extern	char		**environ;
 
 	(void) signal(SIGCHLD, exorcise);
 
@@ -189,7 +188,6 @@ do_announce(s)
 	char	*s;
 {
 	CTL_RESPONSE			response;
-	extern	struct	sockaddr_in	ctl_addr;
 
 	get_remote_name(s);	/* setup his_machine_addr, msg.r_name */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.5 2001/01/09 23:49:54 lukem Exp $	*/
+/*	$NetBSD: get_names.c,v 1.6 2001/02/05 00:42:15 christos Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.5 2001/01/09 23:49:54 lukem Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.6 2001/02/05 00:42:15 christos Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -22,8 +22,6 @@ __RCSID("$NetBSD: get_names.c,v 1.5 2001/01/09 23:49:54 lukem Exp $");
 # include	<unistd.h>
 # include	"hunt.h"
 # include	"talk_ctl.h"
-
-extern	CTL_MSG	msg;
 
 static	char	hostname[MAXHOSTNAMELEN + 1];
 char		*my_machine_name;
