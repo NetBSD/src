@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	5.69 (Berkeley) 10/17/92";*/
-static char rcsid[] = "$Id: ls.c,v 1.7 1993/08/07 03:56:58 mycroft Exp $";
+static char rcsid[] = "$Id: ls.c,v 1.8 1993/12/05 21:35:27 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,8 +70,13 @@ static void	 traverse __P((int, char **, int));
 static void (*printfcn) __P((DISPLAY *));
 static int (*sortfcn) __P((const FTSENT *, const FTSENT *));
 
+#define	BY_NAME	0
+#define	BY_SIZE	1
+#define	BY_TIME	2
+
 long blocksize;			/* block size units */
 int termwidth = 80;		/* default terminal width */
+int sortkey = BY_NAME;
 
 /* flags */
 int f_accesstime;		/* use time of last access */
@@ -91,7 +96,6 @@ int f_singlecol;		/* use single column output */
 int f_size;			/* list size in short listing */
 int f_statustime;		/* use time of last mode change */
 int f_dirname;			/* if precede with directory name */
-int f_timesort;			/* sort by time vice name */
 int f_type;			/* add type character for non-regular files */
 
 int
@@ -123,7 +127,7 @@ main(argc, argv)
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRTacdfgikloqrstu")) != EOF) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTacdfgikloqrstu")) != EOF) {
 		switch (ch) {
 		/*
 		 * The -1, -C and -l options all override each other so shell
@@ -192,6 +196,9 @@ main(argc, argv)
 		case 'r':
 			f_reversesort = 1;
 			break;
+		case 'S':
+			sortkey = BY_SIZE;
+			break;
 		case 's':
 			f_size = 1;
 			break;
@@ -199,7 +206,7 @@ main(argc, argv)
 			f_sectime = 1;
 			break;
 		case 't':
-			f_timesort = 1;
+			sortkey = BY_TIME;
 			break;
 		default:
 		case '?':
@@ -210,10 +217,11 @@ main(argc, argv)
 	argv += optind;
 
 	/*
-	 * If not -F, -i, -l, -s or -t options, don't require stat
+	 * If not -F, -i, -l, -S, -s or -t options, don't require stat
 	 * information.
 	 */
-	if (!f_inode && !f_longform && !f_size && !f_timesort && !f_type)
+	if (!f_inode && !f_longform && !f_size && !f_type &&
+	    sortkey == BY_NAME)
 		fts_options |= FTS_NOSTAT;
 
 	/*
@@ -231,23 +239,39 @@ main(argc, argv)
 
 	/* Select a sort function. */
 	if (f_reversesort) {
-		if (!f_timesort)
+		switch (sortkey) {
+		case BY_NAME:
 			sortfcn = revnamecmp;
-		else if (f_accesstime)
-			sortfcn = revacccmp;
-		else if (f_statustime)
-			sortfcn = revstatcmp;
-		else /* Use modification time. */
-			sortfcn = revmodcmp;
+			break;
+		case BY_SIZE:
+			sortfcn = revsizecmp;
+			break;
+		case BY_TIME:
+			if (f_accesstime)
+				sortfcn = revacccmp;
+			else if (f_statustime)
+				sortfcn = revstatcmp;
+			else
+				sortfcn = revmodcmp;
+			break;
+		}
 	} else {
-		if (!f_timesort)
+		switch (sortkey) {
+		case BY_NAME:
 			sortfcn = namecmp;
-		else if (f_accesstime)
-			sortfcn = acccmp;
-		else if (f_statustime)
-			sortfcn = statcmp;
-		else /* Use modification time. */
-			sortfcn = modcmp;
+			break;
+		case BY_SIZE:
+			sortfcn = sizecmp;
+			break;
+		case BY_TIME:
+			if (f_accesstime)
+				sortfcn = acccmp;
+			else if (f_statustime)
+				sortfcn = statcmp;
+			else
+				sortfcn = modcmp;
+			break;
+		}
 	}
 
 	/* Select a print function. */
