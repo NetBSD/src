@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.16 2000/12/01 09:48:56 chs Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.17 2001/02/04 10:55:58 mrg Exp $	 */
 
 /*
  *
@@ -181,6 +181,9 @@ uvm_hist(bitmask)
 
 	if ((bitmask & UVMHIST_PDHIST) || bitmask == 0)
 		hists[i++] = &pdhist;
+
+	if ((bitmask & UVMHIST_UBCHIST) || bitmask == 0)
+		hists[i++] = &ubchist;
 
 	hists[i] = NULL;
 
