@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.53 2002/09/19 08:12:52 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.54 2002/09/24 14:14:25 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.53 2002/09/19 08:12:52 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.54 2002/09/24 14:14:25 sommerfeld Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.70 2002/08/28 12:45:48 darrenr Exp";
@@ -1176,7 +1176,7 @@ tcp_mss_clamp(tcp, maxmss, fin, csump)
 			if (&cp[1] >= ep)
 				break;
 			advance = cp[1];
-			if (&cp[advance] >= ep)
+			if (&cp[advance] > ep)
 				break;
 			switch (opt) {
 			case TCPOPT_MAXSEG:
