@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.26 1999/09/23 11:04:33 enami Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.27 1999/09/30 22:57:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -189,7 +189,7 @@ wdc_atapi_send_cmd(sc_xfer)
 {
 	struct wdc_softc *wdc = (void*)sc_xfer->sc_link->adapter_softc;
 	struct wdc_xfer *xfer;
-	int flags = sc_xfer->flags;
+	int flags = sc_xfer->xs_control;
 	int channel = sc_xfer->sc_link->scsipi_atapi.channel;
 	int drive = sc_xfer->sc_link->scsipi_atapi.drive;
 	int s, ret;
@@ -197,11 +197,12 @@ wdc_atapi_send_cmd(sc_xfer)
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
 	    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
 
-	xfer = wdc_get_xfer(flags & SCSI_NOSLEEP ? WDC_NOSLEEP : WDC_CANSLEEP);
+	xfer = wdc_get_xfer((flags & XS_CTL_NOSLEEP) ?
+	    WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
 		return TRY_AGAIN_LATER;
 	}
-	if (sc_xfer->flags & SCSI_POLL)
+	if (sc_xfer->xs_control & XS_CTL_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->drive = drive;
 	xfer->c_flags |= C_ATAPI;
@@ -213,11 +214,12 @@ wdc_atapi_send_cmd(sc_xfer)
 	s = splbio();
 	wdc_exec_xfer(wdc->channels[channel], xfer);
 #ifdef DIAGNOSTIC
-	if ((sc_xfer->flags & SCSI_POLL) != 0 &&
-	    (sc_xfer->flags & ITSDONE) == 0)
+	if ((sc_xfer->xs_control & XS_CTL_POLL) != 0 &&
+	    (sc_xfer->xs_status & XS_STS_DONE) == 0)
 		panic("wdc_atapi_send_cmd: polled command not done");
 #endif
-	ret = (sc_xfer->flags & ITSDONE) ? COMPLETE : SUCCESSFULLY_QUEUED;
+	ret = (sc_xfer->xs_status & XS_STS_DONE) ?
+	    COMPLETE : SUCCESSFULLY_QUEUED;
 	splx(s);
 	return ret;
 }
@@ -232,7 +234,7 @@ wdc_atapi_start(chp, xfer)
 
 	WDCDEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
-	    sc_xfer->flags), DEBUG_XFERS);
+	    sc_xfer->xs_control), DEBUG_XFERS);
 	/* Adjust C_DMA, it may have changed if we are requesting sense */
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (sc_xfer->datalen > 0 || (xfer->c_flags & C_SENSE)))
@@ -240,7 +242,7 @@ wdc_atapi_start(chp, xfer)
 	else
 		xfer->c_flags &= ~C_DMA;
 	/* start timeout machinery */
-	if ((sc_xfer->flags & SCSI_POLL) == 0)
+	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
 		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
@@ -283,15 +285,15 @@ wdc_atapi_start(chp, xfer)
 	 * routine until command is done.
 	 */
 	if ((sc_xfer->sc_link->scsipi_atapi.cap  & ATAPI_CFG_DRQ_MASK) !=
-	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->flags & SCSI_POLL)) {
+	    ATAPI_CFG_IRQ_DRQ || (sc_xfer->xs_control & XS_CTL_POLL)) {
 		/* Wait for at last 400ns for status bit to be valid */
 		DELAY(1);
 		wdc_atapi_intr(chp, xfer, 0);
 	} else {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
 	}
-	if (sc_xfer->flags & SCSI_POLL) {
-		while ((sc_xfer->flags & ITSDONE) == 0) {
+	if (sc_xfer->xs_control & XS_CTL_POLL) {
+		while ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
 			DELAY(1);
 			wdc_atapi_intr(chp, xfer, 0);
@@ -370,9 +372,10 @@ wdc_atapi_intr(chp, xfer, irq)
 	}
 
 	if (xfer->c_flags & C_DMA) {
-		dma_flags = ((sc_xfer->flags & SCSI_DATA_IN) ||
+		dma_flags = ((sc_xfer->xs_control & XS_CTL_DATA_IN) ||
 		    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
-		dma_flags |= sc_xfer->flags & SCSI_POLL ? WDC_DMA_POLL : 0;
+		dma_flags |= sc_xfer->xs_control & XS_CTL_POLL ?
+		    WDC_DMA_POLL : 0;
 	}
 again:
 	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
@@ -436,7 +439,7 @@ again:
 			    chp->channel, xfer->drive, dma_flags);
 		}
 
-		if ((sc_xfer->flags & SCSI_POLL) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 		}
 		return 1;
@@ -444,7 +447,7 @@ again:
 	 case PHASE_DATAOUT:
 		/* write data */
 		WDCDEBUG_PRINT(("PHASE_DATAOUT\n"), DEBUG_INTR);
-		if ((sc_xfer->flags & SCSI_DATA_OUT) == 0 ||
+		if ((sc_xfer->xs_control & XS_CTL_DATA_OUT) == 0 ||
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
 			if (xfer->c_flags & C_DMA) {
@@ -513,7 +516,7 @@ again:
 			    xfer->c_bcount -= len;
 			}
 		}
-		if ((sc_xfer->flags & SCSI_POLL) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 		}
 		return 1;
@@ -521,7 +524,7 @@ again:
 	case PHASE_DATAIN:
 		/* Read data */
 		WDCDEBUG_PRINT(("PHASE_DATAIN\n"), DEBUG_INTR);
-		if (((sc_xfer->flags & SCSI_DATA_IN) == 0 &&
+		if (((sc_xfer->xs_control & XS_CTL_DATA_IN) == 0 &&
 		    (xfer->c_flags & C_SENSE) == 0) || 
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
@@ -589,7 +592,7 @@ again:
 			    xfer->c_bcount -=len;
 			}
 		}
-		if ((sc_xfer->flags & SCSI_POLL) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 		}
 		return 1;
@@ -768,7 +771,7 @@ piomode:
 		wdc_atapi_start(chp, xfer);
 		return 1;
 	}
-	if ((sc_xfer->flags & SCSI_POLL) == 0) {
+	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
 		xfer->c_intr = wdc_atapi_ctrl;
 	} else {
@@ -810,7 +813,7 @@ wdc_atapi_done(chp, xfer)
 	untimeout(wdctimeout, chp);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
-	sc_xfer->flags |= ITSDONE;
+	sc_xfer->xs_status |= XS_STS_DONE;
 	if (drvp->n_dmaerrs ||
 	  (sc_xfer->error != XS_NOERROR && sc_xfer->error != XS_SENSE &&
 	  sc_xfer->error != XS_SHORTSENSE)) {

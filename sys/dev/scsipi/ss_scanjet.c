@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.17 1999/04/05 19:19:34 mycroft Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.18 1999/09/30 22:57:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -284,11 +284,12 @@ scanjet_read(ss, bp)
 
 	/*
 	 * go ask the adapter to do all this for us
+	 * XXX really need NOSLEEP?
 	 */
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
-	    SCSI_NOSLEEP | SCSI_DATA_IN);
+	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
 	if (error) {
 		printf("%s: not queued, error %d\n", ss->sc_dev.dv_xname,
 		    error);
@@ -316,7 +317,7 @@ scanjet_ctl_write(ss, buf, size)
 
 	flags = 0;
 	if ((ss->flags & SSF_AUTOCONF) != 0)
-		flags |= SCSI_AUTOCONF;
+		flags |= XS_CTL_DISCOVERY;
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
@@ -324,7 +325,7 @@ scanjet_ctl_write(ss, buf, size)
 	return (scsipi_command(ss->sc_link,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_OUT));
+	    flags | XS_CTL_DATA_OUT));
 }
 
 
@@ -342,7 +343,7 @@ scanjet_ctl_read(ss, buf, size)
 
 	flags = 0;
 	if ((ss->flags & SSF_AUTOCONF) != 0)
-		flags |= SCSI_AUTOCONF;
+		flags |= XS_CTL_DISCOVERY;
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;
@@ -350,7 +351,7 @@ scanjet_ctl_read(ss, buf, size)
 	return (scsipi_command(ss->sc_link,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_IN));
+	    flags | XS_CTL_DATA_IN));
 }
 
 

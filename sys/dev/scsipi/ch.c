@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.39 1999/09/09 23:24:12 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.40 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ chattach(parent, self, aux)
 	 * Get information about the device.  Note we can't use
 	 * interrupts yet.
 	 */
-	if (ch_get_params(sc, SCSI_AUTOCONF|SCSI_IGNORE_MEDIA_CHANGE))
+	if (ch_get_params(sc, XS_CTL_DISCOVERY|XS_CTL_IGNORE_MEDIA_CHANGE))
 		printf("%s: offline\n", sc->sc_dev.dv_xname);
 	else {
 #define PLURAL(c)	(c) == 1 ? "" : "s"
@@ -275,7 +275,7 @@ chopen(dev, flags, fmt, p)
 	 * We ignore NOT READY in case e.g a magazine isn't actually
 	 * loaded into the changer or a tape isn't in the drive.
 	 */
-	error = scsipi_test_unit_ready(sc->sc_link, SCSI_IGNORE_NOT_READY);
+	error = scsipi_test_unit_ready(sc->sc_link, XS_CTL_IGNORE_NOT_READY);
 	if (error)
 		goto bad;
 
@@ -486,7 +486,8 @@ ch_interpret_sense(xs)
 		retval = SCSIRET_RETRY;
 		if (sc->sc_link->flags & SDEV_MEDIA_LOADED) {
 			sc->sc_link->flags &= ~SDEV_MEDIA_LOADED;
-			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) == 0) {
+			if ((xs->xs_control &
+			     XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
 				error = ch_get_params(sc, 0);
 				if (error)
 					retval = error;
@@ -497,7 +498,7 @@ ch_interpret_sense(xs)
 		 * Enqueue an Element-Status-Changed event, and wake up
 		 * any processes waiting for them.
 		 */
-		if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) == 0)
+		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0)
 			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
 	}
 
@@ -1001,7 +1002,7 @@ ch_getelemstatus(sc, first, count, data, datalen, flags)
 	 */
 	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, SCSI_DATA_IN));
+	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, XS_CTL_DATA_IN));
 }
 
 int
@@ -1069,7 +1070,7 @@ ch_setvoltag(sc, csvr)
 	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
-	    datalen ? SCSI_DATA_OUT : 0));
+	    datalen ? XS_CTL_DATA_OUT : 0));
 }
 
 int
@@ -1106,7 +1107,7 @@ ch_ielem(sc)
 
 	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    NULL, 0, CHRETRIES, tmo, NULL, SCSI_IGNORE_ILLEGAL_REQUEST));
+	    NULL, 0, CHRETRIES, tmo, NULL, XS_CTL_IGNORE_ILLEGAL_REQUEST));
 }
 
 /*
@@ -1142,7 +1143,7 @@ ch_get_params(sc, scsiflags)
 	error = scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | SCSI_DATA_IN);
+	    scsiflags | XS_CTL_DATA_IN);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -1175,7 +1176,7 @@ ch_get_params(sc, scsiflags)
 	error = scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | SCSI_DATA_IN);
+	    scsiflags | XS_CTL_DATA_IN);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
@@ -1195,7 +1196,7 @@ ch_get_params(sc, scsiflags)
 	 * If we need to do an Init-Element-Status, do that now that
 	 * we know what's in the changer.
 	 */
-	if ((scsiflags & SCSI_IGNORE_MEDIA_CHANGE) == 0) {
+	if ((scsiflags & XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
 		if ((sc->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 			error = ch_ielem(sc);
 		if (error == 0)
