@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.29 2002/10/17 00:32:36 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.30 2002/10/17 01:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.29 2002/10/17 00:32:36 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.30 2002/10/17 01:08:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: tar.c,v 1.29 2002/10/17 00:32:36 christos Exp $");
  * Routines for reading, writing and header identify of various versions of tar
  */
 
-static void expandname(ARCHD *, const char *, const char *);
+static int expandname(char *, size_t,  char **, const char *);
 static void longlink(ARCHD *);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
@@ -89,7 +89,7 @@ int is_gnutar;				/* behave like gnu tar; enable gnu
 static char *gnu_hack_string;		/* ././@LongLink hackery */
 static int gnu_hack_len;		/* len of gnu_hack_string */
 char *gnu_name_string;			/* ././@LongLink hackery name */
-char *gnu_link_string;			/* ././@LongLink hackery name */
+char *gnu_link_string;			/* ././@LongLink hackery link */
 
 /*
  * tar_endwr()
@@ -414,7 +414,12 @@ tar_rd(ARCHD *arcn, char *buf)
 	 * copy out the name and values in the stat buffer
 	 */
 	hd = (HD_TAR *)buf;
-	expandname(arcn, hd->name, hd->linkname);
+	if (hd->linkflag != LONGLINKTYPE && hd->linkflag != LONGNAMETYPE) {
+		arcn->nlen = expandname(arcn->name, sizeof(arcn->name),
+		    &gnu_name_string, hd->name);
+		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
+		    &gnu_link_string, hd->linkname);
+	}
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
@@ -771,14 +776,15 @@ ustar_rd(ARCHD *arcn, char *buf)
 		dest += cnt;
 		*dest++ = '/';
 		cnt++;
-	}
-	if (gnu_name_string) {
-		arcn->nlen = strlcpy(dest, gnu_name_string,
-		    sizeof(arcn->name) - cnt);
-		free(gnu_name_string);
-		gnu_name_string = NULL;
 	} else {
-		arcn->nlen = strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
+		cnt = 0;
+	}
+
+	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
+		arcn->nlen = expandname(dest, sizeof(arcn->name) - cnt,
+		    &gnu_name_string, hd->name);
+		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
+		    &gnu_link_string, hd->linkname);
 	}
 
 	/*
@@ -898,26 +904,17 @@ ustar_rd(ARCHD *arcn, char *buf)
 	return(0);
 }
 
-static void
-expandname(ARCHD *arcn, const char *name, const char *linkname)
+static int
+expandname(char *buf, size_t len,  char **gnu_name, const char *name)
 {
-	if (gnu_name_string) {
-		arcn->nlen = strlcpy(arcn->name, gnu_name_string,
-		    sizeof(arcn->name));
-		free(gnu_name_string);
-		gnu_name_string = NULL;
+	if (*gnu_name) {
+		len = strlcpy(buf, *gnu_name, len);
+		free(*gnu_name);
+		*gnu_name = NULL;
 	} else {
-		arcn->nlen = strlcpy(arcn->name, name, sizeof(arcn->name));
+		len = strlcpy(buf, name, len);
 	}
-	if (gnu_link_string) {
-		arcn->ln_nlen = strlcpy(arcn->ln_name, gnu_link_string,
-		    sizeof(arcn->ln_name));
-		free(gnu_link_string);
-		gnu_link_string = NULL;
-	} else {
-		arcn->ln_nlen = strlcpy(arcn->ln_name, linkname,
-		    sizeof(arcn->ln_name));
-	}
+	return len;
 }
 
 static void
