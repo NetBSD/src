@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.90 2001/12/19 15:20:19 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.91 2001/12/30 15:46:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.90 2001/12/19 15:20:19 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.91 2001/12/30 15:46:53 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -829,8 +829,9 @@ ffs_unmount(mp, mntflags, p)
 {
 	struct ufsmount *ump;
 	struct fs *fs;
-	int error, flags;
+	int error, flags, penderr;
 
+	penderr = 0;
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
@@ -848,13 +849,20 @@ ffs_unmount(mp, mntflags, p)
 		    fs->fs_fsmnt, fs->fs_pendingblocks, fs->fs_pendinginodes);
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
+		penderr = 1;
 	}
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
-		if (mp->mnt_flag & MNT_SOFTDEP)
-			fs->fs_flags &= ~FS_DOSOFTDEP;
-		fs->fs_clean = FS_ISCLEAN;
+		/*
+		 * XXXX don't mark fs clean in the case of softdep
+		 * pending block errors, until they are fixed.
+		 */
+		if (penderr == 0) {
+			if (mp->mnt_flag & MNT_SOFTDEP)
+				fs->fs_flags &= ~FS_DOSOFTDEP;
+			fs->fs_clean = FS_ISCLEAN;
+		}
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	if (ump->um_devvp->v_type != VBAD)
