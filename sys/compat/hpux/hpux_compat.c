@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.43 1998/10/19 22:31:50 tron Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.44 1998/12/10 17:13:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,12 +45,13 @@
 /*
  * Various HP-UX compatibility routines
  */
+#include "opt_sysv.h"
+#include "opt_compat_43.h"
 
 #ifndef COMPAT_43
 #define COMPAT_43
 #endif
 
-#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
