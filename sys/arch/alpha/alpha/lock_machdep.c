@@ -1,7 +1,7 @@
-/* $NetBSD: lock_machdep.c,v 1.1 1998/09/24 22:32:35 thorpej Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.2 1999/07/27 21:45:41 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.1 1998/09/24 22:32:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.2 1999/07/27 21:45:41 thorpej Exp $");
 
 /*
  * Machine-dependent spin lock operations.
@@ -51,40 +51,42 @@ __KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.1 1998/09/24 22:32:35 thorpej Exp
 #include <machine/alpha_cpu.h>
 
 void
-simple_lock_init(alp)
+cpu_simple_lock_init(alp)
 	__volatile struct simplelock *alp;
 {
 
-	alp->lock_data = 0;
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
 	alpha_mb();
 }
 
 void
-simple_lock(alp)
+cpu_simple_lock(alp)
 	__volatile struct simplelock *alp;
 {
 
 	/* atomic operation performs barrier */
-	while (alpha_atomic_testset_l((unsigned int *)&alp->lock_data, 1) == 0)
+	while (alpha_atomic_testset_l((unsigned int *)&alp->lock_data,
+	    SIMPLELOCK_LOCKED) == 0)
 		/* spin */ ;
 }
 
 int
-simple_lock_try(alp)
+cpu_simple_lock_try(alp)
 	__volatile struct simplelock *alp;
 {
 
 	/* atomic operation performs barrier */
-	if (alpha_atomic_testset_l((unsigned int *)&alp->lock_data, 1))
+	if (alpha_atomic_testset_l((unsigned int *)&alp->lock_data,
+	    SIMPLELOCK_LOCKED))
 		return (1);
 	return (0);
 }
 
 void
-simple_unlock(alp)
+cpu_simple_unlock(alp)
 	__volatile struct simplelock *alp;
 {
 
-	alp->lock_data = 0;
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
 	alpha_mb();
 }
