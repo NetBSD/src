@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.8.2.1 2004/07/10 13:29:23 tron Exp $	*/
+/*	$NetBSD: if_url.c,v 1.8.2.1.2.1 2005/01/24 21:42:31 he Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.8.2.1 2004/07/10 13:29:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.8.2.1.2.1 2005/01/24 21:42:31 he Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1114,7 +1114,8 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
-			url_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				url_setmulti(sc);
 			error = 0;
 		}
 		break;
