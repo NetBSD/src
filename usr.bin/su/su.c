@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.59 2005/01/07 22:34:20 manu Exp $	*/
+/*	$NetBSD: su.c,v 1.60 2005/01/08 08:45:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.59 2005/01/07 22:34:20 manu Exp $");
+__RCSID("$NetBSD: su.c,v 1.60 2005/01/08 08:45:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,17 @@ __RCSID("$NetBSD: su.c,v 1.59 2005/01/07 22:34:20 manu Exp $");
 static pam_handle_t *pamh;
 static struct pam_conv pamc;
 
-#define fatal(x) { pam_end(pamh, pam_err); err x; }
-#define fatalx(x) { pam_end(pamh, pam_err); errx x; }
+#define fatal(x) do { \
+	if (pam_err == PAM_SUCCESS) \
+		pam_end(pamh, pam_err); \
+	err x;  \
+} while (/*CONSTCOND*/ 0)
+#define fatalx(x) do { \
+	if (pam_err == PAM_SUCCESS) \
+		pam_end(pamh, pam_err); \
+	errx x; \
+} while (/*CONSTCOND*/ 0)
+
 #else
 #define fatal(x) err x
 #define fatalx(x) errx x
@@ -157,6 +166,10 @@ main(argc, argv)
 	char *tty; 
 	int pam_err, status;
 	pid_t pid;
+#ifdef notdef
+	extern int _openpam_debug;
+	_openpam_debug = 1;
+#endif
 #endif
 
 	asme = asthem = fastlogin = 0;
@@ -212,10 +225,12 @@ main(argc, argv)
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
+	/* get target login information, default to root */
+	user = *argv ? *argv : "root";
 
 #ifdef USE_PAM
 	pamc.conv = &openpam_ttyconv;
-	pam_start("su", username, &pamc, &pamh);
+	pam_start("su", user, &pamc, &pamh);
 
 	/* Fill in hostname, username and tty */	
 	if ((pam_err = pam_set_item(pamh, PAM_RUSER, username)) != PAM_SUCCESS)
@@ -254,7 +269,7 @@ main(argc, argv)
 
 pam_failed:
 	if (pam_err != PAM_SUCCESS) {
-		warn("PAM failed, fallback to plain old authentication");
+		warnx("PAM failed, fallback to plain old authentication");
 		pam_end(pamh, pam_err);
 		username = getlogin();
 	}	
@@ -296,8 +311,6 @@ pam_failed:
 			iscsh = NO;
 		}
 	}
-	/* get target login information, default to root */
-	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv-1;
 
 	if ((pwd = getpwnam(user)) == NULL)
@@ -408,8 +421,8 @@ badlogin:
 
 #ifdef USE_PAM
 	/* 
-	 * If PAM is in use, we must release PAM ressources and close
-	 * the session after su child exits. That require a fork now,
+	 * If PAM is in use, we must release PAM resources and close
+	 * the session after su child exits. That requires a fork now,
 	 * before we drop the root privs (needed for PAM)
 	 */
 	if (pam_err == PAM_SUCCESS) {
