@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2002/12/20 16:54:16 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2003/01/11 16:01:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -207,6 +207,7 @@ void
 cpu_startup()
 {
 	caddr_t v;
+	int sz;
 	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
@@ -235,10 +236,10 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+	sz = (int)allocsys(NULL, NULL);
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
-	if ((allocsys(v, NULL) - v) != size)
+	if ((allocsys(v, NULL) - v) != sz)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -935,7 +936,7 @@ news1700_init()
 	struct oidrom idrom;
 	const char *t;
 	u_char *p, *q;
-	int i;
+	u_int i;
 
 	dip_switch	= (u_char *)IIOV(0xe1c00100);
 	int_status	= (u_char *)IIOV(0xe1c00200);
@@ -954,6 +955,7 @@ news1700_init()
 	for (i = 0; i < sizeof(idrom); i++, p += 2)
 		*q++ = ((*p & 0x0f) << 4) | (*(p + 1) & 0x0f);
 
+	t = NULL;
 	for (i = 0; news68k_models[i].name != NULL; i++) {
 		if (news68k_models[i].id == idrom.id_model) {
 			t = news68k_models[i].name;
@@ -1062,12 +1064,13 @@ void intrhand_lev4(void);
 void (*sir_routines[NSIR])(void *);
 void *sir_args[NSIR];
 u_char ssir;
-int next_sir;
+u_int next_sir;
 
 void
 intrhand_lev2()
 {
-	int bit, s;
+	int s;
+	u_int bit;
 	u_char sintr;
 
 	/* disable level 2 interrupt */
