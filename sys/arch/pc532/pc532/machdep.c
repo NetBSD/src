@@ -170,7 +170,7 @@ _low_level_init ()
     WR_ADR(int, p1 + ix*4, 0x38000043 + ((ix - 0x200)<<12));
 
   /* SCSI "DMA" With A22 (EOP)  Addresses FFEFF000 - FFEFFFFF */
-  WR_ADR(int, p1 + 0x2ff*4, 0x388ff043);
+  WR_ADR(int, p1 + 0x2ff*4, 0x38400043);
 
   /* The e-prom  Addresses FFF00000 - FFF3FFFF */
   for (ix = 0x300; ix < 0x340; ix++)
