@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.45 1996/05/05 06:16:10 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.46 1996/05/06 06:40:03 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -53,7 +53,7 @@ file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 # Option 2 for ncr5380 support
 device	sbc: scsi, ncr5380sbc
 attach	sbc at obio
-file	arch/mac68k/dev/ncr_sbc.c	sbc
+file	arch/mac68k/dev/sbc.c		sbc
 
 device	ncr96scsi: scsi
 attach	ncr96scsi at obio
