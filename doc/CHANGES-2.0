@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.339 2004/07/15 21:44:25 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.340 2004/07/16 21:25:52 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5776,3 +5776,51 @@ sys/dev/pci/if_wm.c				1.73
 	a PCI device.  So instead of trying to find and print the
 	PCI bus properties mark it as a CSA device.
 	[tron, ticket #665]
+
+include/math.h					1.39 via patch
+
+	Move round() and roundf() to the C99 section, thereby fixing
+	a namespace issue.
+	[junyoung, ticket #666]
+
+tools/gcc/mknative-gcc				1.13
+gnu/dist/gcc/gcc/config/sh/t-netbsd		1.2
+gnu/lib/libgcc3/arch/alpha.mk			1.4
+gnu/lib/libgcc3/arch/arm.mk			1.4
+gnu/lib/libgcc3/arch/armeb.mk			1.6
+gnu/lib/libgcc3/arch/hppa.mk			1.5
+gnu/lib/libgcc3/arch/i386.mk			1.4
+gnu/lib/libgcc3/arch/m68000.mk			1.4
+gnu/lib/libgcc3/arch/m68k.mk			1.4
+gnu/lib/libgcc3/arch/mipseb.mk			1.4
+gnu/lib/libgcc3/arch/mipsel.mk			1.4
+gnu/lib/libgcc3/arch/ns32k.mk			1.4
+gnu/lib/libgcc3/arch/powerpc.mk			1.4
+gnu/lib/libgcc3/arch/sh3eb.mk			1.3
+gnu/lib/libgcc3/arch/sh3el.mk			1.4
+gnu/lib/libgcc3/arch/sh5el.mk			1.4
+gnu/lib/libgcc3/arch/sparc.mk			1.4
+gnu/lib/libgcc3/arch/sparc64.mk			1.4
+gnu/lib/libgcc3/arch/x86_64.mk			1.4
+gnu/lib/libgcc3/libgcc_s/Makefile		1.7
+gnu/dist/gcc/gcc/config/sh/libgcc-std.ver	1.1 (new)
+gnu/dist/gcc/gcc/gcc.c				1.9
+
+	Do the same thing as stock gcc, by using the symbol
+	versioning script to remove certain symbols from the
+	dynamic symbol table, and pull in libgcc_pic in the
+	-shared-libgcc case for the millicode platforms.
+	Fixes PR#22452.
+	[skrll, ticket #668]
+
+gnu/usr.bin/groff/tmac/mdoc.local		1.14-1.15 via patch
+
+	Add .Nx support for NetBSD-2.1 and NetBSD-3.0.
+	[wiz, ticket #669]
+
+sys/dev/pci/if_wm.c				1.74
+
+	Reduce transmit queue length to 16 for the Intel i82547 to
+	avoid FIFO overruns.  This fixes the horrible performance
+	problems reported in PR#23782.
+	[tron, ticket #670]
