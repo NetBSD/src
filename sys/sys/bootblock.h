@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.10 2002/06/02 10:44:30 isaki Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.11 2002/11/02 07:35:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ struct alpha_boot_block {
 		    _i++)						\
 			_cksum += _bb->bb_data[_i];			\
 		*(cksum) = _cksum;					\
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 /* ------------------------------------------
  * apple --
