@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.16 2003/10/25 18:28:31 christos Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.17 2004/01/04 01:29:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.16 2003/10/25 18:28:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.17 2004/01/04 01:29:11 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ USB_ATTACH(uhidev)
 	struct uhidev *dev;
 	int size, nrepid, repid, repsz;
 	int repsizes[256];
-	void *desc;
+	void *desc, *descptr = NULL;
 	usbd_status err;
 	char devinfo[1024];
 
@@ -157,21 +157,45 @@ USB_ATTACH(uhidev)
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
 	/* XXX need to extend this */
-	if (uaa->vendor == USB_VENDOR_WACOM &&
-	    uaa->product == USB_PRODUCT_WACOM_GRAPHIRE /* &&
+	if (uaa->vendor == USB_VENDOR_WACOM /* &&
 	    uaa->revision == 0x???? */) { /* XXX should use revision */
+		char reportbuf[] = {2, 2, 2};
+
 		/* The report descriptor for the Wacom Graphire is broken. */
-		size = sizeof uhid_graphire_report_descr;
+		switch (uaa->product) {
+		case USB_PRODUCT_WACOM_GRAPHIRE:
+			size = sizeof uhid_graphire_report_descr;
+			descptr = uhid_graphire_report_descr;
+			break;
+
+		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5: /* The 6x8 too? */
+			/*
+			 * The Graphire3 needs 0x0202 to be written to
+			 * feature report ID 2 before it'll start
+			 * returning digitizer data.
+			 */
+			usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 2,
+			    &reportbuf, sizeof(reportbuf));
+
+			size = sizeof uhid_graphire3_4x5_report_descr;
+			descptr = uhid_graphire3_4x5_report_descr;
+			break;
+		}
+
+	}
+
+	if (descptr) {
 		desc = malloc(size, M_USBDEV, M_NOWAIT);
 		if (desc == NULL)
 			err = USBD_NOMEM;
 		else {
 			err = USBD_NORMAL_COMPLETION;
-			memcpy(desc, uhid_graphire_report_descr, size);
+			memcpy(desc, descptr, size);
 		}
 	} else {
 		desc = NULL;
-		err = usbd_read_report_desc(uaa->iface, &desc, &size, M_USBDEV);
+		err = usbd_read_report_desc(uaa->iface, &desc, &size,
+		    M_USBDEV);
 	}
 	if (err) {
 		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
