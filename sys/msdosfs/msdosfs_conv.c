@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_conv.c,v 1.3 1994/03/03 00:51:33 paulus Exp $
+ *	$Id: msdosfs_conv.c,v 1.4 1994/04/07 02:24:17 cgd Exp $
  */
 
 /*
@@ -291,11 +291,11 @@ unix2dosfn(un, dn, unlen)
 	 * The filenames "." and ".." are handled specially, since they
 	 * don't follow dos filename rules.
 	 */
-	if (un[0] == '.' && un[1] == '\0') {
+	if (un[0] == '.' && unlen == 1) {
 		dn[0] = '.';
 		return;
 	}
-	if (un[0] == '.' && un[1] == '.' && un[2] == '\0') {
+	if (un[0] == '.' && un[1] == '.' && unlen == 2) {
 		dn[0] = '.';
 		dn[1] = '.';
 		return;
