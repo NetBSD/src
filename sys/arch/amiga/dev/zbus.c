@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.7 1995/08/18 15:58:30 chopps Exp $	*/
+/*	$NetBSD: zbus.c,v 1.8 1995/08/18 16:21:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -136,7 +136,8 @@ static struct preconfdata preconftab[] = {
 	{2193,	2, 0},	/* Spectrum mem */
 	{2193,	1, 0},	/* Spectrum regs */
 	{2195,	5, 0},	/* Piccolo mem */
-	{2195,	6, 0}	/* Piccolo regs */
+	{2195,	6, 0},	/* Piccolo regs */
+	{1030,	0, 0}	/* Ulwl board */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
