@@ -1,7 +1,7 @@
-/*	$NetBSD: bthcivar.h,v 1.1.6.3 2002/11/11 22:09:02 nathanw Exp $	*/
+/*	$NetBSD: bthcivar.h,v 1.1.6.4 2003/01/07 21:34:07 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,11 +45,4 @@ struct bthci_methods {
 	int (*bt_kqfilter)(void *h, struct knote *kn);
 };
 
-struct bthci_softc {
-	struct	device			sc_dev;
-	const struct bthci_methods	*sc_methods;
-	void				*sc_handle;
-	char				sc_open;
-};
-
-void bthci_frame_available(struct device *);
+struct btframe_methods;

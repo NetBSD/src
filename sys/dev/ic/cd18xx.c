@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.1.2.8 2003/01/03 17:07:39 thorpej Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.1.2.9 2003/01/07 21:34:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.1.2.8 2003/01/03 17:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.1.2.9 2003/01/07 21:34:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1267,7 +1267,7 @@ cd18xx_tint(sc, ns)
 
 	/* Disable transmit completion interrupts if we ran out of bytes. */
 	if (p->p_tbc == 0) {
-		/* Note that Tx interupts should already be enabled */
+		/* Note that Tx interrupts should already be enabled */
 		if (ISSET(p->p_srer, CD18xx_SRER_Tx)) {
 			DPRINTF(CDD_INTR, (", disabling tx interrupts"));
 			CLR(p->p_srer, CD18xx_SRER_Tx);

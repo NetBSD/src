@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.12 2003/01/03 17:08:18 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.13 2003/01/07 21:35:00 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.12 2003/01/03 17:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.13 2003/01/07 21:35:00 thorpej Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1050,13 +1050,13 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 					umass_dump_buffer(sc, sc->transfer_data,
 						sc->transfer_datalen, 48));
 
-		/* FALLTHROUGH, err == 0 (no data phase or successfull) */
+		/* FALLTHROUGH, err == 0 (no data phase or successful) */
 	case TSTATE_BBB_DCLEAR: /* stall clear after data phase */
 	case TSTATE_BBB_SCLEAR: /* stall clear after status phase */
 		/* Reading of CSW after bulk stall condition in data phase
 		 * (TSTATE_BBB_DATA2) or bulk-in stall condition after
 		 * reading CSW (TSTATE_BBB_SCLEAR).
-		 * In the case of no data phase or successfull data phase,
+		 * In the case of no data phase or successful data phase,
 		 * err == 0 and the following if block is passed.
 		 */
 		if (err) {	/* should not occur */
@@ -1073,7 +1073,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		if (sc->transfer_state == TSTATE_BBB_COMMAND ||
 		    sc->transfer_state == TSTATE_BBB_DATA ||
 		    sc->transfer_state == TSTATE_BBB_DCLEAR) {
-			/* After no data phase, successfull data phase and
+			/* After no data phase, successful data phase and
 			 * after clearing bulk-in/-out stall condition
 			 */
 			sc->transfer_state = TSTATE_BBB_STATUS1;
@@ -1558,7 +1558,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			else
 				status = STATUS_CMD_FAILED;
 
-			/* No sense, command successfull */
+			/* No sense, command successful */
 		} else {
 			/* Command Interrupt Data Block */
 			DPRINTF(UDMASS_CBI, ("%s: type=0x%02x, value=0x%02x\n",

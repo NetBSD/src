@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.16 2003/01/03 17:07:45 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.17 2003/01/07 21:34:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.16 2003/01/03 17:07:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.17 2003/01/07 21:34:29 thorpej Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -1067,7 +1067,7 @@ fwohci_desc_put(struct fwohci_softc *sc, struct fwohci_desc *fd, int ndesc)
 }
 
 /*
- * Asyncronous/Isochronous Transmit/Receive Context
+ * Asynchronous/Isochronous Transmit/Receive Context
  */
 static int
 fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
@@ -2140,7 +2140,7 @@ fwohci_it_ctx_clear(ieee1394_it_tag_t *it)
 
 
 /*
- * Asyncronous Receive Requests input frontend.
+ * Asynchronous Receive Requests input frontend.
  */
 static void
 fwohci_arrq_input(struct fwohci_softc *sc, struct fwohci_ctx *fc)
@@ -2431,8 +2431,6 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (ndesc > OHCI_DESC_MAX)
 		return ENOBUFS;
 
-	if (fc->fc_bufcnt > 50)			/*XXX*/
-		return ENOBUFS;
 	fb = malloc(sizeof(*fb), M_DEVBUF, M_WAITOK);
 	if (ndesc > 2) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, pkt->fp_dlen, 
@@ -5751,6 +5749,7 @@ fwohci_it_ctx_writedata(ieee1394_it_tag_t it, int ndata,
 				if (fwohci_itd_link(itc->itc_buf_linkend, itdn)) {
 					printf("fwohci_it_ctx_writedata:"
 					    " cannot link correctly\n");
+					splx(s);
 					return -1;
 				}
 				itc->itc_buf_linkend = itdn;

@@ -1,11 +1,11 @@
-/*	$NetBSD: scsipi_base.h,v 1.10.6.3 2003/01/07 21:34:50 thorpej Exp $	*/
+/*	$NetBSD: ubtreg.h,v 1.1.2.2 2003/01/07 21:34:58 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by David Sainty <David.Sainty@dtsp.co.nz>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,53 +36,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_SCSIPI_SCSIPI_BASE_H_
-#define _DEV_SCSIPI_SCSIPI_BASE_H_
-
-struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_periph *, int));
-void	scsipi_put_xs __P((struct scsipi_xfer *));
-
-static __inline struct scsipi_xfer *scsipi_make_xs __P((struct scsipi_periph *,
-	    struct scsipi_generic *, int cmdlen, u_char *data_addr,
-	    int datalen, int retries, int timeout, struct buf *,
-	    int flags)) __attribute__ ((__unused__));
-
-/*
- * Make a scsipi_xfer, and return a pointer to it.
- */
-
-static __inline struct scsipi_xfer *
-scsipi_make_xs(periph, scsipi_cmd, cmdlen, data_addr, datalen,
-    retries, timeout, bp, flags)
-	struct scsipi_periph *periph;
-	struct scsipi_generic *scsipi_cmd;
-	int cmdlen;
-	u_char *data_addr;
-	int datalen;
-	int retries;
-	int timeout;
-	struct buf *bp;
-	int flags;
-{
-	struct scsipi_xfer *xs;
-
-	if ((xs = scsipi_get_xs(periph, flags)) == NULL)
-		return (NULL);
-
-	/*
-	 * Fill out the scsipi_xfer structure.  We don't know whose context
-	 * the cmd is in, so copy it.
-	 */
-	memcpy(&xs->cmdstore, scsipi_cmd, cmdlen);
-	xs->cmd = &xs->cmdstore;
-	xs->cmdlen = cmdlen;
-	xs->data = data_addr;
-	xs->datalen = datalen;
-	xs->xs_retries = retries;
-	xs->timeout = timeout;
-	xs->bp = bp;
-
-	return (xs);
-}
-
-#endif /* _DEV_SCSIPI_SCSIPI_BASE_H_ */
+/* Event endpoint interval */
+#define UBT_EVENT_EP_INTERVAL	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7.2.9 2002/12/11 06:38:19 thorpej Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.2.10 2003/01/07 21:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.9 2002/12/11 06:38:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.7.2.10 2003/01/07 21:34:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1125,7 +1125,7 @@ mly_complete_event(struct mly_softc *mly, struct mly_ccb *mc)
 }
 
 /*
- * Process a controller event.  Called with interupts blocked (i.e., at
+ * Process a controller event.  Called with interrupts blocked (i.e., at
  * interrupt time).
  */
 static void

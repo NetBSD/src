@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.8.2.3 2002/11/11 22:10:18 nathanw Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.8.2.4 2003/01/07 21:34:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@ struct irframe_softc {
 	u_int				sc_speed;
 #endif
 };
-
-void irframe_frame_available(struct device *);
 
 #define IRDA_DEFAULT_SPEED	9600
 #define IRDA_DEFAULT_EBOFS	12

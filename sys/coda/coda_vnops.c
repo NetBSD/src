@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.23.2.9 2002/10/18 02:40:55 nathanw Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.23.2.10 2003/01/07 21:27:38 thorpej Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.23.2.9 2002/10/18 02:40:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.23.2.10 2003/01/07 21:27:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ coda_open(v)
     /* Check for open of control file. */
     if (IS_CTL_VP(*vpp)) {
 	/* XXX */
-	/* if (WRITEABLE(flag)) */ 
+	/* if (WRITABLE(flag)) */ 
 	if (flag & (FWRITE | O_TRUNC | O_CREAT | O_EXCL)) {
 	    MARK_INT_FAIL(CODA_OPEN_STATS);
 	    return(EACCES);

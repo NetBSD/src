@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.45.2.8 2002/10/18 02:42:18 nathanw Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.45.2.9 2003/01/07 21:34:33 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.45.2.8 2002/10/18 02:42:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.45.2.9 2003/01/07 21:34:33 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -984,7 +984,7 @@ iyintr(arg)
 
 		bitmask_snprintf(status, "\020\1RX_STP\2RX\3TX\4EXEC",
 				 sbuf, sizeof(sbuf));
-		printf("%s: got interupt %s", sc->sc_dev.dv_xname, sbuf);
+		printf("%s: got interrupt %s", sc->sc_dev.dv_xname, sbuf);
 
 		if (status & EXEC_INT) {
 			bitmask_snprintf(bus_space_read_1(iot, ioh, 0),

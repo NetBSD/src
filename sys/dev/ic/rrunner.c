@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.12 2002/11/11 22:09:57 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.13 2003/01/07 21:34:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.12 2002/11/11 22:09:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.13 2003/01/07 21:34:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -3204,7 +3204,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		misc_local_ctl = bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL);
 		value = misc_local_ctl & 
 			~(RR_LC_FAST_PROM | RR_LC_ADD_SRAM | RR_LC_PARITY_ON);
-		if (cmd == EIOCSEEPROM)   /* make writeable! */
+		if (cmd == EIOCSEEPROM)   /* make writable! */
 			value |= RR_LC_WRITE_PROM;
 		bus_space_write_4(iot, ioh, RR_MISC_LOCAL_CTL, value);
 	    

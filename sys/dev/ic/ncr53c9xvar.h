@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.7 2002/11/11 22:09:54 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.8 2003/01/07 21:34:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_NCR53C9XVAR_H_
+#define _DEV_IC_NCR53C9XVAR_H_
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -443,3 +446,5 @@ void	ncr53c9x_scsipi_request __P((struct scsipi_channel *chan,
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((void *));
 void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));
+
+#endif /* _DEV_IC_NCR53C9XVAR_H_ */

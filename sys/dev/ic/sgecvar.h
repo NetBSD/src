@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.2 2000/06/04 02:14:14 matt Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.2.4.1 2003/01/07 21:34:22 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_SGECVAR_H_
+#define _DEV_IC_SGECVAR_H_
 
 #define RXDESCS	30	/* # of receive descriptors */
 #define TXDESCS	60	/* # transmit descs */
@@ -67,3 +70,5 @@ struct	ze_softc {
 
 void	sgec_attach __P((struct ze_softc *));
 int	sgec_intr __P((struct ze_softc *));
+
+#endif /* _DEV_IC_SGECVAR_H_ */

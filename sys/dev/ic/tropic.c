@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.17.2.2 2001/11/14 19:14:39 nathanw Exp $	*/
+/*	$NetBSD: tropic.c,v 1.17.2.3 2003/01/07 21:34:26 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.17.2.2 2001/11/14 19:14:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.17.2.3 2003/01/07 21:34:26 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1482,7 +1482,7 @@ struct mbuf *m0;
  * We copy the trailer information and then all the normal
  * data into mbufs.
  *
- * called from tr_rint - receive interupt routine
+ * called from tr_rint - receive interrupt routine
  */
 struct mbuf *
 tr_get(sc, totlen, ifp)

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148.2.21 2003/01/03 17:08:23 thorpej Exp $
+$NetBSD: usbdevs,v 1.148.2.22 2003/01/07 21:35:03 thorpej Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -317,6 +317,7 @@ vendor AKAI		0x09e8	AKAI professional M.I.
 vendor ARESCOM		0x09f5	ARESCOM
 vendor BAY		0x09f9	Bay Associates
 vendor ALTERA		0x09fb	Altera
+vendor CSR		0x0a12	Cambridge Silicon Radio
 vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical
 vendor BOCASYSTEMS	0x0a43	Boca Systems
@@ -563,6 +564,9 @@ product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 
 /* Creative products */
 product CREATIVE NOMAD_II	0x1002	Nomad II MP3 player
+
+/* Cambridge Silicon Radio products */
+product CSR BLUETOOTH		0x0001	Bluetooth USB Adapter
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub

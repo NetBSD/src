@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.17.24.2 2002/08/01 02:45:43 nathanw Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.17.24.3 2003/01/07 21:34:49 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -52,6 +52,8 @@
 /*
  * SCSI command format
  */
+#ifndef _DEV_SCSIPI_SCSI_DISK_H_
+#define _DEV_SCSIPI_SCSI_DISK_H_
 
 /*
  * XXX Is this also used by ATAPI?
@@ -298,3 +300,5 @@ union scsi_disk_pages {
 		u_int8_t non_cache_segment_size[2];
 	} caching_params;
 };
+
+#endif /* _DEV_SCSIPI_SCSI_DISK_H_ */

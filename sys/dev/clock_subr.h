@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.7 2000/10/03 13:41:07 tsutsui Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.7.2.1 2003/01/07 21:33:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_CLOCK_SUBR_H_
+#define _DEV_CLOCK_SUBR_H_
 
 /*
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
@@ -96,3 +99,5 @@ typedef struct todr_chip_handle *todr_chip_handle_t;
 #define todr_setcal(ct, v)	((*(ct)->todr_settime)(ct, v))
 #define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
 					((*(ct)->todr_setwen)(ct, v))
+
+#endif /* _DEV_CLOCK_SUBR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_audio.c,v 1.8.2.1 2001/11/14 19:15:32 nathanw Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.8.2.2 2003/01/07 21:34:45 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp */
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.8.2.1 2001/11/14 19:15:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.8.2.2 2003/01/07 21:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,7 +494,7 @@ void msp_autodetect( bktr_ptr_t bktr ) {
   }
 
 
-  /* MSP3415D SPECIAL CASE Use the Tuner's Mono audio ouput for the MSP */
+  /* MSP3415D SPECIAL CASE Use the Tuner's Mono audio output for the MSP */
   /* (for Hauppauge 44xxx card with Tuner Type 0x2a) */
   else if (  ( (strncmp("3415D", bktr->msp_version_string, 5) == 0)
                &&(bktr->msp_use_mono_source == 1)
