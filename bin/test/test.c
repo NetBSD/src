@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.18 1997/10/19 17:54:18 mycroft Exp $	*/
+/*	$NetBSD: test.c,v 1.19 1998/07/28 11:41:59 mycroft Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.18 1997/10/19 17:54:18 mycroft Exp $");
+__RCSID("$NetBSD: test.c,v 1.19 1998/07/28 11:41:59 mycroft Exp $");
 #endif
 
 #include <sys/types.h>
@@ -334,9 +334,8 @@ binop()
 	case FILEQ:
 		return equalf (opnd1, opnd2);
 	default:
-		/* NOTREACHED */
 		abort();
-		return 0;
+		/* NOTREACHED */
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.25 1998/05/21 16:50:40 ross Exp $	*/
+/*	$NetBSD: cd.c,v 1.26 1998/07/28 11:41:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.25 1998/05/21 16:50:40 ross Exp $");
+__RCSID("$NetBSD: cd.c,v 1.26 1998/07/28 11:41:52 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,8 +120,7 @@ cdcmd(argc, argv)
 		}
 	}
 	error("can't cd to %s", dest);
-	/*NOTREACHED*/
-	return 0;
+	/* NOTREACHED */
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.22 1998/07/28 05:31:22 mycroft Exp $	*/
+/*	$NetBSD: cp.c,v 1.23 1998/07/28 11:41:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.22 1998/07/28 05:31:22 mycroft Exp $");
+__RCSID("$NetBSD: cp.c,v 1.23 1998/07/28 11:41:40 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,6 @@ main(argc, argv)
 		if (argc > 1) {
 			usage();
 			exit(1);
-			/* NOTREACHED */
 		}
 		/*
 		 * Need to detect the case:

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 1998/07/28 02:47:20 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 1998/07/28 11:41:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ void	goodbye __P((void));
 void	importpath __P((Char *));
 void	initdesc __P((void));
 void	pintr __P((int));
-void	pintr1 __P((bool));
+void	pintr1 __P((bool)) __attribute__((noreturn));
 void	printprompt __P((void));
 void	process __P((bool));
 void	rechist __P((void));
@@ -91,7 +91,7 @@ __dead	void stderror __P((int, ...)) __attribute__((noreturn));
 /*
  * exec.c
  */
-void	doexec __P((Char **, struct command *));
+void	doexec __P((Char **, struct command *)) __attribute__((noreturn));
 void	dohash __P((Char **, struct command *));
 void	dounhash __P((Char **, struct command *));
 void	dowhich __P((Char **, struct command *));
@@ -218,7 +218,7 @@ Char	 *strip __P((Char *));
 Char	 *quote __P((Char *));
 char	 *strsave __P((char *));
 char	 *strspl __P((char *, char *));
-void	  udvar __P((Char *));
+void	  udvar __P((Char *)) __attribute__((noreturn));
 
 #ifndef	SHORT_STRINGS
 # ifdef NOTUSED
