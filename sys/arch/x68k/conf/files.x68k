@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.23 1999/03/16 16:30:17 minoura Exp $
+#	$NetBSD: files.x68k,v 1.24 1999/03/30 04:25:07 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -9,6 +9,7 @@ defopt	opt_m060sp.h		M060SP
 
 defopt	opt_jupiter.h		JUPITER
 defopt	opt_panicbutton.h	PANICBUTTON
+defopt  opt_extmem.h		EXTENDED_MEMORY
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -72,6 +73,7 @@ file	arch/x68k/dev/grf_machdep.c	grf|ite
 file	arch/x68k/dev/grf_tv.c		grf|ite
 file	arch/x68k/dev/grf_gv.c		grf|ite
 
+defopt	opt_ite.h	ITE_KERNEL_ATTR
 device	ite: tty
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag

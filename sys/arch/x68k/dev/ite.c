@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.16 1999/03/24 14:11:47 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.17 1999/03/30 04:25:07 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@
 
 #include "bell.h"
 #include "kbd.h"
+
+#include "opt_ite.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
