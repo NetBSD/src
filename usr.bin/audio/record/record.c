@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.26 2002/02/10 13:23:27 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.27 2002/02/10 15:30:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -53,7 +53,7 @@
 audio_info_t info, oinfo;
 ssize_t	total_size = -1;
 const char *device;
-int	format = AUDIO_FORMAT_SUN;
+int	format = AUDIO_FORMAT_DEFAULT;
 char	*header_info;
 char	default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
 int	audiofd, outfd;
@@ -108,8 +108,8 @@ main(argc, argv)
 		case 'F':
 			format = audio_format_from_str(optarg);
 			if (format < 0)
-				errx(1, "Unknown audio format; "
-				    "supported formats: \"sun\" and \"wav\"");
+				errx(1, "Unknown audio format; supported "
+				    "formats: \"sun\", \"wav\", and \"none\"");
 			break;
 		case 'c':
 			decode_int(optarg, &channels);
@@ -267,6 +267,45 @@ main(argc, argv)
 	write_header();
 	total_size = 0;
 
+	if (verbose && conv_func) {
+		const char *s = NULL;
+
+		if (conv_func == swap_bytes)
+			s = "swap bytes (16 bit)";
+		else if (conv_func == swap_bytes32)
+			s = "swap bytes (32 bit)";
+		else if (conv_func == change_sign16_be)
+			s = "change sign (big-endian, 16 bit)";
+		else if (conv_func == change_sign16_le)
+			s = "change sign (little-endian, 16 bit)";
+		else if (conv_func == change_sign32_be)
+			s = "change sign (big-endian, 32 bit)";
+		else if (conv_func == change_sign32_le)
+			s = "change sign (little-endian, 32 bit)";
+		else if (conv_func == change_sign16_swap_bytes_be)
+			s = "change sign & swap bytes (big-endian, 16 bit)";
+		else if (conv_func == change_sign16_swap_bytes_le)
+			s = "change sign & swap bytes (little-endian, 16 bit)";
+		else if (conv_func == change_sign32_swap_bytes_be)
+			s = "change sign (big-endian, 32 bit)";
+		else if (conv_func == change_sign32_swap_bytes_le)
+			s = "change sign & swap bytes (little-endian, 32 bit)";
+		
+		if (s)
+			fprintf(stderr, "%s: converting, using function: %s\n",
+			    getprogname(), s);
+		else
+			fprintf(stderr, "%s: using unnamed conversion "
+					"function\n", getprogname());
+	}
+
+	if (verbose)
+		fprintf(stderr,
+		   "sample_rate=%d channels=%d precision=%d encoding=%s\n",
+		   info.record.sample_rate, info.record.channels,
+		   info.record.precision,
+		   audio_enc_from_val(info.record.encoding));
+
 	(void)gettimeofday(&start_time, NULL);
 	while (no_time_limit || timeleft(&start_time, &record_time)) {
 		if (read(audiofd, buffer, bufsize) != bufsize)
@@ -321,15 +360,16 @@ write_header_sun(hdrp, lenp, leftp)
 	static sun_audioheader auh;
 	int sunenc, oencoding = encoding;
 
+	/* only perform conversions if we don't specify the encoding */
 	switch (encoding) {
 	case AUDIO_ENCODING_ULINEAR_LE:
 #if BYTE_ORDER == LITTLE_ENDIAN
 	case AUDIO_ENCODING_ULINEAR:
 #endif
 		if (precision == 16)
-			conv_func = swap_bytes;
+			conv_func = change_sign16_swap_bytes_le;
 		else if (precision == 32)
-			conv_func = swap_bytes32;
+			conv_func = change_sign32_swap_bytes_le;
 		if (conv_func)
 			encoding = AUDIO_ENCODING_SLINEAR_BE;
 		break;
@@ -351,9 +391,9 @@ write_header_sun(hdrp, lenp, leftp)
 	case AUDIO_ENCODING_SLINEAR:
 #endif
 		if (precision == 16)
-			conv_func = change_sign16_swap_bytes_le;
+			conv_func = swap_bytes;
 		else if (precision == 32)
-			conv_func = change_sign32_swap_bytes_le;
+			conv_func = swap_bytes32;
 		if (conv_func)
 			encoding = AUDIO_ENCODING_SLINEAR_BE;
 		break;
@@ -376,6 +416,7 @@ write_header_sun(hdrp, lenp, leftp)
 			      "(precision %d);\nSun audio header not written",
 			      s, precision);
 		}
+		format = AUDIO_FORMAT_NONE;
 		conv_func = 0;
 		warned = 1;
 		return -1;
@@ -550,6 +591,7 @@ fmt_pcm:
 				warned = 1;
 			}
 		}
+		format = AUDIO_FORMAT_NONE;
 		return (-1);
 	}
 
@@ -637,6 +679,7 @@ write_header()
 	size_t hdrlen;
 
 	switch (format) {
+	case AUDIO_FORMAT_DEFAULT:
 	case AUDIO_FORMAT_SUN:
 		if (write_header_sun(&hdr, &hdrlen, &left) != 0)
 			return;
