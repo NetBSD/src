@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.34 2001/06/26 08:41:19 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.35 2001/06/28 10:40:04 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -298,6 +298,8 @@ awi_attach(sc)
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
 #ifdef __NetBSD__
+	ifp->if_init = awi_init;
+	ifp->if_stop = awi_stop;
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 #endif
 #ifdef __FreeBSD__
@@ -365,7 +367,7 @@ awi_detach(sc)
 
 	s = splnet();
 	sc->sc_invalid = 1;
-	awi_stop(sc);
+	awi_stop(ifp, 1);
 	while (sc->sc_sleep_cnt > 0) {
 		wakeup(sc);
 		(void)tsleep(sc, PWAIT, "awidet", 1);
@@ -377,11 +379,6 @@ awi_detach(sc)
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	if (sc->sc_enabled) {
-		if (sc->sc_disable)
-			(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
-	}
 	splx(s);
 	return 0;
 }
@@ -416,6 +413,7 @@ awi_power(sc, why)
 	struct awi_softc *sc;
 	int why;
 {
+	struct ifnet *ifp = sc->sc_ifp;
 	int s;
 	int ocansleep;
 
@@ -425,16 +423,11 @@ awi_power(sc, why)
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		if (sc->sc_enabled) {
-			awi_stop(sc);
-			if (sc->sc_disable)
-				(*sc->sc_disable)(sc);
-		}
+		awi_stop(ifp, 1);
 		break;
 	case PWR_RESUME:
-		if (sc->sc_enabled) {
-			sc->sc_enabled = 0;
-			awi_init(sc);
+		if (ifp->if_flags & IFF_UP) {
+			awi_init(ifp);
 			(void)awi_intr(sc);
 		}
 		break;
@@ -480,16 +473,13 @@ awi_ioctl(ifp, cmd, data)
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		sc->sc_format_llc = !(ifp->if_flags & IFF_LINK0);
-		if (!(ifp->if_flags & IFF_UP)) {
-			if (sc->sc_enabled) {
-				awi_stop(sc);
-				if (sc->sc_disable)
-					(*sc->sc_disable)(sc);
-				sc->sc_enabled = 0;
-			}
-			break;
-		}
-		error = awi_init(sc);
+		if (ifp->if_flags & IFF_UP) {
+			/* Do not reset if already associated */
+			if (!(ifp->if_flags & IFF_RUNNING))
+				awi_stop(ifp, 0);
+			error = awi_init(ifp);
+		} else if (sc->sc_enabled)
+			awi_stop(ifp, 1);
 		break;
 
 	case SIOCADDMULTI:
@@ -506,7 +496,7 @@ awi_ioctl(ifp, cmd, data)
 		 */
 		if (error == ENETRESET) {
 			if (sc->sc_enabled)
-				error = awi_init(sc);
+				error = awi_init(ifp);
 			else
 				error = 0;
 		}
@@ -535,8 +525,8 @@ awi_ioctl(ifp, cmd, data)
 		memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], nwid.i_nwid,
 		    nwid.i_len);
 		if (sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
+			awi_stop(ifp, 0);	/* force rescan */
+			error = awi_init(ifp);
 		}
 		break;
 	case SIOCG80211NWID:
@@ -548,6 +538,10 @@ awi_ioctl(ifp, cmd, data)
 		break;
 	case SIOCS80211NWKEY:
 		error = awi_wep_setnwkey(sc, (struct ieee80211_nwkey *)data);
+		if (error == 0 && sc->sc_enabled) {
+			awi_stop(ifp, 0);	/* force rescan */
+			error = awi_init(ifp);
+		}
 		break;
 	case SIOCG80211NWKEY:
 		error = awi_wep_getnwkey(sc, (struct ieee80211_nwkey *)data);
@@ -680,8 +674,8 @@ awi_media_change(ifp)
 		sc->sc_mib_local.Network_Mode = 1;
 	}
 	if (sc->sc_enabled) {
-		awi_stop(sc);
-		error = awi_init(sc);
+		awi_stop(ifp, 0);	/* force rescan */
+		error = awi_init(ifp);
 	}
 	return error;
 }
@@ -758,12 +752,12 @@ awi_intr(arg)
 }
 
 int
-awi_init(sc)
-	struct awi_softc *sc;
+awi_init(ifp)
+	struct ifnet *ifp;
 {
+	struct awi_softc *sc = ifp->if_softc;
 	int error, ostatus;
 	int n;
-	struct ifnet *ifp = sc->sc_ifp;
 #ifdef __FreeBSD__
 	struct ifmultiaddr *ifma;
 #else
@@ -822,8 +816,10 @@ awi_init(sc)
 			(*sc->sc_enable)(sc);
 		sc->sc_status = AWI_ST_INIT;
 		error = awi_init_hw(sc);
-		if (error)
+		if (error) {
+			awi_stop(ifp, 1);
 			return error;
+		}
 	}
 	ostatus = sc->sc_status;
 	sc->sc_status = AWI_ST_INIT;
@@ -832,7 +828,7 @@ awi_init(sc)
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_MAC)) != 0 ||
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_MGT)) != 0 ||
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_PHY)) != 0) {
-		awi_stop(sc);
+		awi_stop(ifp, 1);
 		return error;
 	}
 	if (ifp->if_flags & IFF_RUNNING)
@@ -849,14 +845,15 @@ awi_init(sc)
 }
 
 void
-awi_stop(sc)
-	struct awi_softc *sc;
+awi_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
-	struct ifnet *ifp = sc->sc_ifp;
+	struct awi_softc *sc = ifp->if_softc;
 	struct awi_bss *bp;
 
 	sc->sc_status = AWI_ST_INIT;
-	if (!sc->sc_invalid) {
+	if (sc->sc_enabled && !sc->sc_invalid) {
 		(void)awi_cmd_wait(sc);
 		if (sc->sc_mib_local.Network_Mode &&
 		    sc->sc_status > AWI_ST_AUTH)
@@ -871,6 +868,11 @@ awi_stop(sc)
 	while ((bp = TAILQ_FIRST(&sc->sc_scan)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_scan, bp, list);
 		free(bp, M_DEVBUF);
+	}
+	if (sc->sc_enabled && disable) {
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
 	}
 }
 

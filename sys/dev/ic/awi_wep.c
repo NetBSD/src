@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.7 2001/06/25 12:11:59 onoe Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.8 2001/06/28 10:40:04 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -164,10 +164,6 @@ awi_wep_setnwkey(sc, nwkey)
 	if (error == 0) {
 		sc->sc_wep_defkid = nwkey->i_defkid - 1;
 		error = awi_wep_setalgo(sc, nwkey->i_wepon);
-		if (error == 0 && sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
-		}
 	}
 	return error;
 }
