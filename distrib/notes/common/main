@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.38 1999/12/15 18:50:01 ws Exp $
+.\" $NetBSD: main,v 1.39 1999/12/18 22:59:24 pooka Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -855,6 +855,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Lonhyn T. Jasinskyj Ta Mt lonhyn@NetBSD.ORG
 .It Ta Chris Jones Ta Mt cjones@NetBSD.ORG
 .It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.ORG
+.It Ta Antti Kantee Ta Mt pooka@NetBSD.ORG
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
 .It Ta Klaus Klein Ta Mt kleink@NetBSD.ORG
 .It Ta John Kohl Ta Mt jtk@NetBSD.ORG
