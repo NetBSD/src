@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.9 2002/08/01 04:05:45 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.10 2002/08/27 20:06:36 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -192,7 +192,7 @@ cpu_getmcontext(l, mcp, flagp)
 {
 	const struct trapframe *tf = trapframe(l);
 	struct __gregs *gr = (struct __gregs *)mcp->__gregs;
-#ifndef PPC_IBM4XX
+#ifdef PPC_HAVE_FPU
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
@@ -207,11 +207,11 @@ cpu_getmcontext(l, mcp, flagp)
 	gr->__r_mq  = 0;				/* For now. */
 	*flagp |= _UC_CPU;
 
-#ifndef PPC_IBM4XX
+#ifdef PPC_HAVE_FPU
 	/* Save FPR context, if any. */
 	if ((pcb->pcb_flags & PCB_FPU) != 0) {
 		/* If we're the FPU owner, dump its context to the PCB first. */
-		if (l == curcpu()->ci_fpulwp)
+		if (pcb->pcb_fpcpu)
 			save_fpu_lwp(l);
 		(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpr,
 		    sizeof (mcp->__fpregs.__fpu_regs));
@@ -235,7 +235,7 @@ cpu_setmcontext(l, mcp, flags)
 {
 	struct trapframe *tf = trapframe(l);
 	struct __gregs *gr = (struct __gregs *)mcp->__gregs;
-#ifndef PPC_IBM4XX
+#ifdef PPC_HAVE_FPU
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
@@ -255,16 +255,14 @@ cpu_setmcontext(l, mcp, flags)
 		/* unused = gr->__r_mq; */
 	}
 
-#ifndef PPC_IBM4XX
+#ifdef PPC_HAVE_FPU
 	/* Restore FPR context, if any. */
 	if ((flags & _UC_FPU) && mcp->__fpregs.__fpu_valid != 0) {
+		/* XXX we don't need to save the state, just to drop it */
+		save_fpu_lwp(l);
 		(void)memcpy(&pcb->pcb_fpu.fpr, &mcp->__fpregs.__fpu_regs,
 		    sizeof (pcb->pcb_fpu.fpr));
 		pcb->pcb_fpu.fpscr = *(double *)&mcp->__fpregs.__fpu_fpscr;
-
-		/* If we're the FPU owner, force a reload from the PCB. */
-		if (l == curcpu()->ci_fpulwp)
-			enable_fpu();
 	}
 #endif
 
