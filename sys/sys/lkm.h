@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.16 1997/05/28 02:44:57 thorpej Exp $	*/
+/*	$NetBSD: lkm.h,v 1.17 1999/01/13 23:06:28 sommerfe Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -53,6 +53,7 @@ typedef enum loadmod {
 } MODTYPE;
 
 
+#define	LKM_OLDVERSION	1		/* version of module loader */
 #define	LKM_VERSION	1		/* version of module loader */
 #define	MAXLKMNAME	32
 
@@ -188,6 +189,12 @@ struct lkm_table {
 
 	int	(*entry) __P((struct lkm_table *, int, int));/* entry function */
 	union lkm_generic	private;	/* module private data */
+
+				/* ddb support */
+        u_long  syms;		/* start of symbol table */
+	u_long	sym_size;	/* size of symbol table (syms+strings) */
+	u_long	sym_offset;	/* offset of next symbol chunk */
+	u_long	sym_symsize;	/* size of symbol part only */
 };
 
 
@@ -283,14 +290,16 @@ extern int	lkmdispatch __P((struct lkm_table *, int));
 /*
  * IOCTL's recognized by /dev/lkm
  */
-#define	LMRESERV	_IOWR('K', 0, struct lmc_resrv)
+#define	LMRESERV_O	_IOWR('K', 0, struct lmc_oresrv)
 #define	LMLOADBUF	_IOW('K', 1, struct lmc_loadbuf)
 #define	LMUNRESRV	_IO('K', 2)
 #define	LMREADY		_IOW('K', 3, int)
+#define	LMRESERV	_IOWR('K', 4, struct lmc_resrv)
 
 #define	LMLOAD		_IOW('K', 9, struct lmc_load)
 #define	LMUNLOAD	_IOWR('K', 10, struct lmc_unload)
 #define	LMSTAT		_IOWR('K', 11, struct lmc_stat)
+#define	LMLOADSYMS	_IOW('K', 12, struct lmc_loadbuf)
 
 #define	MODIOBUF	512		/* # of bytes at a time to loadbuf */
 
@@ -307,7 +316,24 @@ struct lmc_resrv {
 	char	*name;		/* IN: name (must be provided */
 	int	slot;		/* OUT: allocated slot (module ID) */
 	u_long	addr;		/* OUT: Link-to address */
+				/* ddb support */
+	u_long  xxx_unused1;	/* unused */
+	u_long	sym_size;	/* IN: total size of symbol table */
+	u_long	xxx_unused2;	/* unused */
+	u_long	sym_symsize;	/* IN: size of symbol portion of symtable */
+	u_long	sym_addr;	/* OUT: address of symbol table */
 };
+
+/*
+ * (Compat with old kernels)
+ */
+struct lmc_oresrv {
+	u_long	size;		/* IN: size of module to reserve */
+	char	*name;		/* IN: name (must be provided */
+	int	slot;		/* OUT: allocated slot (module ID) */
+	u_long	addr;		/* OUT: Link-to address */
+};
+
 
 
 /*
