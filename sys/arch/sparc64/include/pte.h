@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 1999/06/05 21:58:18 eeh Exp $ */
+/*	$NetBSD: pte.h,v 1.6 2001/06/21 00:24:22 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -127,12 +127,29 @@ extern void tlb_flush_ctx __P((int ctx));
 #define TSB_TAG_VA(t)		((((int64_t)(t))<<TSB_TAG_VA_SHIFT))
 #define TSB_TAG(g,ctx,va)	((((u_int64_t)((g)!=0))<<63)|(((u_int64_t)(ctx)&CTX_MASK)<<TSB_TAG_CTX_SHIFT)|(((u_int64_t)va)>>TSB_TAG_VA_SHIFT))
 
+/* Page sizes */
+#define	PGSZ_8K			0
+#define	PGSZ_64K		1
+#define	PGSZ_512K		2
+#define	PGSZ_4M			3
+
+#define	PGSZ_SHIFT		61
+
+/*
+ * Why couldn't Sun pick better page sizes?
+ *
+ * Page sizes are 2**(12+(3*sz)), except for 8K which
+ * is 2**12+1 instead of 2**12.
+ */
+#define	PG_SZ(s)		(1<<(12+(s?(3*s):1)))
+#define	TLB_SZ(s)		(((uint64_t)(s))<<PGSZ_SHIFT)
+
 /* TLB data masks */
 #define TLB_V			0x8000000000000000LL
-#define TLB_8K			0x0000000000000000LL
-#define TLB_64K			0x2000000000000000LL
-#define TLB_512K		0x4000000000000000LL
-#define TLB_4M			0x6000000000000000LL
+#define TLB_8K			TLB_SZ(PGSZ_8K)
+#define TLB_64K			TLB_SZ(PGSZ_64K)
+#define TLB_512K		TLB_SZ(PGSZ_512K)
+#define TLB_4M			TLB_SZ(PGSZ_4M)
 #define TLB_SZ_MASK		0x6000000000000000LL
 #define TLB_NFO			0x1000000000000000LL
 #define TLB_IE			0x0800000000000000LL
@@ -192,7 +209,7 @@ extern void tlb_flush_ctx __P((int ctx));
         "b\3E\0"        "b\2P\0"        "b\1W\0"        "b\0G\0"
 
 #define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
-(((valid)?TLB_V:0LL)|(sz)|(((u_int64_t)(pa))&TLB_PA_MASK)|\
+(((valid)?TLB_V:0LL)|TLB_SZ(sz)|(((u_int64_t)(pa))&TLB_PA_MASK)|\
 ((cache)?((aliased)?TLB_CP:TLB_CACHE_MASK):TLB_E)|\
 ((priv)?TLB_P:0LL)|((write)?TLB_W:0LL)|((g)?TLB_G:0LL)|((ie)?TLB_IE:0LL))
 
