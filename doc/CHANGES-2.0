@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.378 2004/08/11 19:54:53 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.379 2004/08/11 19:56:09 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6381,3 +6381,9 @@ usr.sbin/pkg_install/info/perform.c		1.53
 	The fix is to only extract those +-files that are needed (as determined
 	by the command line options)
 	[hubertf, ticket #739]
+
+sys/compat/linux/common/linux_misc.c		1.126
+
+	Linux returns ENOMEM (not EFAULT) if the address specified in mprotect()
+	is not part of process address space.
+	[jdolecek, ticket #740]
