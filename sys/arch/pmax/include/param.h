@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1996/02/01 22:32:13 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.14 1996/03/01 23:30:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,9 @@
 /*
  * Machine dependent constants for DEC Station 3100.
  */
-#define	MACHINE	     "pmax"
-#define MACHINE_ARCH "mips"
-#define MID_MACHINE  MID_PMAX
+#define	MACHINE		"pmax"
+#define	MACHINE_ARCH	"mips"
+#define	MID_MACHINE	MID_PMAX
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
