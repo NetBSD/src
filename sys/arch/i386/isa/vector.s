@@ -9,24 +9,25 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
+#ifdef AUTO_EOI_1
 #define	ENABLE_ICU1 \
 	movb	$ICU_EOI,%al ;	/* as soon as possible send EOI ... */ \
 	FASTER_NOP ;		/* ... ASAP ... */ \
 	outb	%al,$IO_ICU1	/* ... to clear in service bit */
-#ifdef AUTO_EOI_1
-#undef	ENABLE_ICU1		/* we now use auto-EOI to reduce i/o */
-#define	ENABLE_ICU1
+#else /* AUTO_EOI_1 */
+#define	ENABLE_ICU1		/* we now use auto-EOI to reduce i/o */
 #endif
 
+#ifdef AUTO_EOI_2
 #define	ENABLE_ICU1_AND_2 \
 	movb	$ICU_EOI,%al ;	/* as above */ \
 	FASTER_NOP ; \
 	outb	%al,$IO_ICU2 ;	/* but do second icu first */ \
 	FASTER_NOP ; \
 	outb	%al,$IO_ICU1	/* then first icu */
-#ifdef AUTO_EOI_2
-#undef	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave ... */
-#define	ENABLE_ICU1_AND_2	/* ... but it works */
+#else /* AUTO_EOI_2 */
+#define	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave ... /
+				/* ... but it works */
 #endif
 
 /*
@@ -79,10 +80,10 @@
 	pushl	%ecx ; \
 	pushl	%edx ; \
 	pushl	%ds ; \
-	/* pushl	%es ; know compiler doesn't do string insns */ \
+	pushl	%es ; \
 	movl	$KDSEL,%eax ; \
 	movl	%ax,%ds ; \
-	/* movl	%ax,%es ; */ \
+	movl	%ax,%es ; \
 	SHOW_CLI ;		/* although it interferes with "ASAP" */ \
 	pushl	$unit ; \
 	call	handler ;	/* do the work ASAP */ \
@@ -91,7 +92,7 @@
 	incl	_cnt+V_INTR ;	/* book-keeping can wait */ \
 	COUNT_EVENT(_intrcnt_actv, id_num) ; \
 	SHOW_STI ; \
-	/* popl	%es ; */ \
+	popl	%es ; \
 	popl	%ds ; \
 	popl	%edx; \
 	popl	%ecx; \
