@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2003/04/04 22:38:05 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1822,6 +1822,25 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	struct pvo_entry *pvo;
 	register_t msr;
 	int s;
+
+	/*
+	 * If this is a kernel pmap lookup, also check the battable
+	 * and if we get a hit, translate the VA to a PA using the
+	 * BAT entries.  Don't check for VM_MAX_KENREL_ADDRESS is
+	 * that will wrap back to 0.
+	 */
+	if (pm == pmap_kernel() &&
+	    (va < VM_MIN_KERNEL_ADDRESS ||
+	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
+		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+		if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
+			register_t batl = battable[va >> ADDR_SR_SHFT].batl;
+			register_t mask = (~(batu & BAT_BL) << 15) & ~0x1ffffL;
+			*pap = (batl & mask) | (va & ~mask);
+			return TRUE;
+		}
+		return FALSE;
+	}
 	
 	s = splvm();
 	msr = pmap_interrupts_off();
