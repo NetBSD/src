@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_stats.c,v 1.1.1.2 2001/01/27 06:17:55 itojun Exp $	*/
+/*	$NetBSD: ns_stats.c,v 1.1.1.3 2002/06/20 10:29:59 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
-static const char rcsid[] = "Id: ns_stats.c,v 8.32 2000/11/29 06:56:05 marka Exp";
+static const char rcsid[] = "Id: ns_stats.c,v 8.34 2001/08/09 13:17:21 marka Exp";
 #endif /* not lint */
 
 /*
@@ -383,6 +383,11 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 #ifdef HAVE_GETRUSAGE
 # define tv_float(tv) ((tv).tv_sec + ((tv).tv_usec / 1000000.0))
 
+	UNUSED(ctx);
+	UNUSED(uap);
+	UNUSED(due);
+	UNUSED(inter);
+
 	getrusage(RUSAGE_SELF, &usage);
 	getrusage(RUSAGE_CHILDREN, &childu);
 
@@ -409,13 +414,13 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 			sprintf(buffer2, " %s=%lu", p_type(i), typestats[i]);
 			if (strlen(buffer) + strlen(buffer2) >
 			    sizeof(buffer) - 1) {
-				ns_info(ns_log_statistics, buffer);
+				ns_info(ns_log_statistics, "%s", buffer);
 				strcpy(buffer, header);
 			}
 			strcat(buffer, buffer2);
 		}
 	}
-	ns_info(ns_log_statistics, buffer);
+	ns_info(ns_log_statistics, "%s", buffer);
 
 	sprintf(header, "XSTATS %lu %lu", (u_long)timenow, (u_long)boottime);
 	strcpy(buffer, header);
@@ -423,12 +428,12 @@ ns_logstats(evContext ctx, void *uap, struct timespec due,
 		sprintf(buffer2, " %s=%lu",
 			statNames[i]?statNames[i]:"?", (u_long)globalStats[i]);
 		if (strlen(buffer) + strlen(buffer2) > sizeof(buffer) - 1) {
-			ns_info(ns_log_statistics, buffer);
+			ns_info(ns_log_statistics, "%s", buffer);
 			strcpy(buffer, header);
 		}
 		strcat(buffer, buffer2);
 	}
-	ns_info(ns_log_statistics, buffer);
+	ns_info(ns_log_statistics, "%s", buffer);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.h,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $	*/
+/*	$NetBSD: md5.h,v 1.1.1.2 2002/06/20 10:30:15 itojun Exp $	*/
 
 /* crypto/md/md5.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -82,7 +82,7 @@ typedef struct MD5state_st
 
 #ifndef NOPROTO
 void MD5_Init(MD5_CTX *c);
-void MD5_Update(MD5_CTX *c, unsigned char *data, unsigned long len);
+void MD5_Update(MD5_CTX *c, const unsigned char *data, unsigned long len);
 void MD5_Final(unsigned char *md, MD5_CTX *c);
 unsigned char *MD5(unsigned char *d, unsigned long n, unsigned char *md);
 #else

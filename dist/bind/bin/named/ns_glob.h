@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_glob.h,v 1.1.1.2 2001/01/27 06:17:12 itojun Exp $	*/
+/*	$NetBSD: ns_glob.h,v 1.1.1.3 2002/06/20 10:29:48 itojun Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	Id: ns_glob.h,v 8.56 2000/12/02 18:39:25 vixie Exp
+ *	Id: ns_glob.h,v 8.58 2002/06/05 04:53:50 marka Exp
  */
 
 /*
@@ -338,9 +338,11 @@ DECL	char *			user_name		INIT(NULL);
 DECL	gid_t			group_id;
 DECL	char *			group_name		INIT(NULL);
 DECL	char *			chroot_dir		INIT(NULL);
+DECL	char *			working_dir		INIT(NULL);
 
 DECL	int			loading			INIT(0);
 
 DECL	int			xfers_running		INIT(0);
 DECL	int			xfers_deferred		INIT(0);
 DECL	int			qserials_running	INIT(0);
+DECL	int			initial_configuration	INIT(1);

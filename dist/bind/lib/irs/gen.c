@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.2 2002/06/20 10:30:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gen.c,v 1.25 1999/10/13 16:39:29 vixie Exp";
+static const char rcsid[] = "Id: gen.c,v 1.26 2001/05/29 05:48:35 marka Exp";
 #endif
 
 /*
@@ -401,7 +401,10 @@ init_map_rules(struct gen_p *irs, const char *conf_file) {
 		char *tmp;
 		int n;
 
-		for (tmp = line; isascii(*tmp) && isspace(*tmp); tmp++)
+		for (tmp = line;
+		     isascii((unsigned char)*tmp) &&
+		     isspace((unsigned char)*tmp);
+		     tmp++)
 			(void)NULL;
 		if (*tmp == '#' || *tmp == '\n' || *tmp == '\0')
 			continue;

@@ -1,7 +1,7 @@
-/*	$NetBSD: ndc.c,v 1.1.1.3 2001/05/17 20:46:38 itojun Exp $	*/
+/*	$NetBSD: ndc.c,v 1.1.1.4 2002/06/20 10:30:04 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ndc.c,v 1.16.2.1 2001/04/26 02:56:10 marka Exp";
+static const char rcsid[] = "Id: ndc.c,v 1.21 2001/12/19 23:16:23 marka Exp";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ typedef void (*closure)(void *, const char *, int);
 
 static const char *	program = "amnesia";
 static enum { e_channel, e_signals } mode = e_channel;
-static char *	channel = _PATH_NDCSOCK;
+static const char *	channel = _PATH_NDCSOCK;
 static const char	helpfmt[] = "\t%-16s\t%s\n";
 static const char *	pidfile = _PATH_PIDFILE;
 static sockaddr_t	client, server;
@@ -79,23 +79,23 @@ static int		builtincmd(void);
 static void		command(void);
 static int		running(int, pid_t *);
 static void		command_channel(void);
-static void		channel_loop(char *, int, closure, void *);
+static void		channel_loop(const char *, int, closure, void *);
 static void		getpid_closure(void *, const char *, int);
 static void		banner(struct ctl_cctx *, void *, const char *, u_int);
 static void		done(struct ctl_cctx *, void *, const char *, u_int);
-static void		logger(enum ctl_severity, const char *fmt, ...);
+static void		logger(enum ctl_severity, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 static void		command_signals(void);
 static void		stop_named(pid_t);
 static void		start_named(const char *, int);
 static int		fgetpid(const char *, pid_t *);
-static int		get_sockaddr(char *, sockaddr_t *);
+static int		get_sockaddr(const char *, sockaddr_t *);
 static size_t		impute_addrlen(const struct sockaddr *);
 static void		vtrace(const char *, va_list);
-static void		trace(const char *, ...);
-static void		result(const char *, ...);
-static void		fatal(const char *, ...);
-static void		verror(const char *, va_list);
-static void		error(const char *, ...);
+static void		trace(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
+static void		result(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
+static void		fatal(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
+static void		verror(const char *, va_list) ISC_FORMAT_PRINTF(1, 0);
+static void		error(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
 
 static void
 usage(const char *fmt, ...) {
@@ -116,7 +116,7 @@ usage(const char *fmt, ...) {
 /* Public. */
 
 int
-main(int argc, char *argv[], char *envp[]) {
+main(int argc, char *argv[]) {
 	char *p;
 	int ch;
 
@@ -404,7 +404,7 @@ struct args {
 };
 
 static void
-channel_loop(char *cmdtext, int show, closure cl, void *ua) {
+channel_loop(const char *cmdtext, int show, closure cl, void *ua) {
 	struct ctl_cctx *ctl;
 	struct sockaddr *client_addr;
 	struct args a;
@@ -459,6 +459,8 @@ static void
 done(struct ctl_cctx *ctl, void *uap, const char *msg, u_int flags) {
 	struct args *a = uap;
 
+	UNUSED(ctl);
+
 	if (msg == NULL) {
 		trace("EOF");
 		doneflag = 1;
@@ -490,6 +492,7 @@ logger(enum ctl_severity ctlsev, const char *format, ...) {
 			verror(format, args);
 		break;
 	default:
+		va_end(args);
 		abort();
 	}
 	va_end(args);
@@ -509,7 +512,7 @@ static struct cmdsig {
 	{ "querylog", SIGWINCH, "toggle query logging" },
 	{ "qrylog", SIGWINCH, "alias for querylog" },
 #endif
-	{ NULL, 0 }
+	{ NULL, 0, NULL }
 };
 
 static void
@@ -601,15 +604,15 @@ fgetpid(const char *f, pid_t *pid) {
 	long t;
 
 	for (try = 0; try < 5; try++) {
-		trace("pidfile is \"%s\" (try #%d)", pidfile, try + 1);
-		if ((fp = fopen(pidfile, "r")) == NULL)
+		trace("pidfile is \"%s\" (try #%d)", f, try + 1);
+		if ((fp = fopen(f, "r")) == NULL)
 			trace("pid file (%s) unavailable - %s",
-			      pidfile, strerror(errno));
+			      f, strerror(errno));
 		else if (fscanf(fp, "%ld\n", &t) != 1)
-			trace("pid file (%s) format is bad", pidfile);
+			trace("pid file (%s) format is bad", f);
 		else if (*pid = (pid_t)t, fclose(fp), kill(*pid, 0) < 0)
 			trace("pid file (%s) contains unusable pid (%d) - %s",
-			      pidfile, *pid, strerror(errno));
+			      f, *pid, strerror(errno));
 		else {
 			trace("pid is %ld", (long)*pid);
 			return (1);
@@ -621,7 +624,7 @@ fgetpid(const char *f, pid_t *pid) {
 }
 
 static int
-get_sockaddr(char *name, sockaddr_t *addr) {
+get_sockaddr(const char *name, sockaddr_t *addr) {
 	char *slash;
 
 #ifndef NO_SOCKADDR_UN
@@ -653,7 +656,7 @@ get_sockaddr(char *name, sockaddr_t *addr) {
 
 static size_t
 impute_addrlen(const struct sockaddr *sa) {
-	if (sa == 0)
+	if (sa == NULL)
 		return (0);
 	switch (sa->sa_family) {
 	case AF_INET:
@@ -665,6 +668,7 @@ impute_addrlen(const struct sockaddr *sa) {
 	default:
 		abort();
 	}
+	/*NOTREACHED*/
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.1.1.2 2001/01/27 06:19:51 itojun Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.1.1.3 2002/06/20 10:30:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irs_data.c,v 1.15 2000/12/23 08:14:54 vixie Exp";
+static const char rcsid[] = "Id: irs_data.c,v 1.19 2001/08/20 07:08:41 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -32,6 +32,7 @@ static const char rcsid[] = "Id: irs_data.c,v 1.15 2000/12/23 08:14:54 vixie Exp
 
 #include <resolv.h>
 #include <stdio.h>
+#include <string.h>
 #include <isc/memcluster.h>
 
 #ifdef DO_PTHREADS
@@ -69,7 +70,7 @@ void
 net_data_destroy(void *p) {
 	struct net_data *net_data = p;
 
-	res_nclose(net_data->res);
+	res_ndestroy(net_data->res);
 	if (net_data->gr != NULL) {
 		(*net_data->gr->close)(net_data->gr);
 		net_data->gr = NULL;
@@ -154,7 +155,8 @@ net_data_create(const char *conf_file) {
 	if (net_data->res == NULL)
 		return (NULL);
 
-	if (res_ninit(net_data->res) == -1)
+	if ((net_data->res->options & RES_INIT) == 0 &&
+	    res_ninit(net_data->res) == -1)
 		return (NULL);
 
 	return (net_data);
@@ -167,6 +169,7 @@ net_data_minimize(struct net_data *net_data) {
 	res_nclose(net_data->res);
 }
 
+#ifdef _REENTRANT
 struct __res_state *
 __res_state(void) {
 	/* NULL param here means use the default config file. */
@@ -176,6 +179,7 @@ __res_state(void) {
 
 	return (&_res);
 }
+#endif
 
 int *
 __h_errno(void) {

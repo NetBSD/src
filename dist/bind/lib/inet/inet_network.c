@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.1.1.2 2002/06/20 10:30:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -67,7 +67,7 @@ again:
 	if (*cp == 'x' || *cp == 'X')
 		base = 16, cp++;
 	while ((c = *cp) != 0) {
-		if (isdigit(c)) {
+		if (isdigit((unsigned char)c)) {
 			if (base == 8 && (c == '8' || c == '9'))
 				return (INADDR_NONE);
 			val = (val * base) + (c - '0');
@@ -75,8 +75,9 @@ again:
 			digit = 1;
 			continue;
 		}
-		if (base == 16 && isxdigit(c)) {
-			val = (val << 4) + (c + 10 - (islower(c) ? 'a' : 'A'));
+		if (base == 16 && isxdigit((unsigned char)c)) {
+			val = (val << 4) +
+			      (c + 10 - (islower((unsigned char)c) ? 'a' : 'A'));
 			cp++;
 			digit = 1;
 			continue;
@@ -91,7 +92,7 @@ again:
 		*pp++ = val, cp++;
 		goto again;
 	}
-	if (*cp && !isspace(*cp))
+	if (*cp && !isspace(*cp&0xff))
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;
