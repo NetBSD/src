@@ -72,7 +72,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.4 1993/12/15 03:23:02 briggs Exp $
+ *	$Id: vmparam.h,v 1.5 1994/06/26 13:21:49 briggs Exp $
  */
 
 /*
@@ -132,7 +132,6 @@
  * Sizes of the system and user portions of the system page table.
  */
 /* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-/* ALICE 05/23/92 BG -- Why the hell isn't it, then?! */
 #define	SYSPTSIZE	(2 * NPTEPG)	/* 8mb */
 #define	USRPTSIZE 	(2 * NPTEPG)	/* 8mb */
 
@@ -150,17 +149,6 @@
  */
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	1024		/* 4mb */
-#endif
-
-/*
- * External IO space map size.
- * By default we make it large enough to map up to 3 DIO-II devices and
- * the complete DIO space.  For a 320-only configuration (which has no
- * DIO-II) you could define a considerably smaller region.
- */
-/* 06/03/92,19:03:56 BG This needs to map IO area and NuBus areas. */
-#ifndef EIOMAPSIZE
-#define EIOMAPSIZE	3584		/* 14mb */
 #endif
 
 /*
@@ -199,7 +187,6 @@
  * that we don't consider it worthwhile and swap it out to disk which costs
  * $30/mb or about $0.75.
  */
-/* ALICE 05/23/92 BG -- This is soooo obsolete. */
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
 
@@ -207,7 +194,6 @@
  * DISKRPM is used to estimate the number of paging i/o operations
  * which one can expect from a single disk controller.
  */
-/* ALICE 05/23/92 BG -- I changed this from 60 to 3600. */
 #define	DISKRPM		3600
 
 /*
@@ -242,12 +228,10 @@
  *	minfree is 64k bytes, but at most 1/2 of desfree
  */
 /* ALICE 05/23/92 BG -- I think we had better look these over carefully. */
-#define	LOTSFREE	(1024 * 1024)
+#define	LOTSFREE	(512 * 1024)
 #define	LOTSFREEFRACT	4
-#define	DESFREE		(512 * 1024)
+#define	DESFREE		(200 * 1024)
 #define	DESFREEFRACT	8
-#define	MINFREE		(128 * 1024)
-#define	MINFREEFRACT	2
 
 /*
  * There are two clock hands, initially separated by HANDSPREAD bytes
