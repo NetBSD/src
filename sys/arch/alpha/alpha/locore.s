@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 1996/08/20 23:18:44 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 1996/09/17 21:17:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -61,8 +61,8 @@ bootstack:
  * All arguments are passed to alpha_init().
  */
 NESTED_NOPROFILE(__start,1,0,ra,0,0)
-	br	pv,1f
-1:	SETGP(pv)
+	br	pv,Lstart1
+Lstart1: SETGP(pv)
 
 	/* Switch to the boot stack. */
 	lda	sp,bootstack
@@ -173,8 +173,8 @@ BSS(ssir, 8)
 IMPORT(astpending, 8)
 
 LEAF(exception_return, 1)			/* XXX should be NESTED */
-	br	pv, 1f
-1:	SETGP(pv)
+	br	pv, Ler1
+Ler1:	SETGP(pv)
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
@@ -470,7 +470,9 @@ LEAF(savefpstate, 1)
 	stt	$f25, (25 * 8)(t1)
 	stt	$f26, (26 * 8)(t1)
 	stt	$f27, (27 * 8)(t1)
+	.set noat
 	stt	$f28, (28 * 8)(t1)
+	.set at
 	stt	$f29, (29 * 8)(t1)
 	stt	$f30, (30 * 8)(t1)
 
@@ -559,8 +561,8 @@ LEAF(restorefpstate, 1)
  */
 
 LEAF(savectx, 1)
-	br	pv, 1f
-1:	SETGP(pv)
+	br	pv, Lsavectx1
+Lsavectx1: SETGP(pv)
 	stq	sp, U_PCB_HWPCB_KSP(a0)		/* store sp */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a0)	/* store s0 - s6 */
 	stq	s1, U_PCB_CONTEXT+(1 * 8)(a0)
@@ -592,14 +594,14 @@ IMPORT(Lev1map, 8)
  * profiling.
  */
 LEAF(idle, 0)
-	br	pv, 1f
-1:	SETGP(pv)
+	br	pv, Lidle1
+Lidle1:	SETGP(pv)
 	stq	zero, curproc			/* curproc <- NULL for stats */
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
-2:
+Lidle2:
 	ldl	t0, whichqs			/* look for non-empty queue */
-	beq	t0, 2b
+	beq	t0, Lidle2
 	CONST(ALPHA_PSL_IPL_HIGH, a0)		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
 	JMP(sw1)				/* jump back into the fray */
@@ -636,19 +638,19 @@ LEAF(cpu_switch, 0)
 	CONST(ALPHA_PSL_IPL_HIGH, a0)		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
 sw1:
-	br	pv, 1f
-1:	SETGP(pv)
+	br	pv, Lcs1
+Lcs1:	SETGP(pv)
 	ldl	t0, whichqs			/* look for non-empty queue */
 	beq	t0, idle			/* and if none, go idle */
 	mov	t0, t3				/* t3 = saved whichqs */
 	mov	zero, t2			/* t2 = lowest bit set */
-	blbs	t0, 3f				/* if low bit set, done! */
+	blbs	t0, Lcs3			/* if low bit set, done! */
 
-2:	srl	t0, 1, t0			/* try next bit */
+Lcs2:	srl	t0, 1, t0			/* try next bit */
 	addq	t2, 1, t2
-	blbc	t0, 2b				/* if clear, try again */
+	blbc	t0, Lcs2			/* if clear, try again */
 
-3:
+Lcs3:
 	/*
 	 * Remove process from queue
 	 */
@@ -658,22 +660,22 @@ sw1:
 
 	ldq	t4, PH_LINK(t0)			/* t4 = p = highest pri proc */
 	ldq	t5, P_FORW(t4)			/* t5 = p->p_forw */
-	bne	t4, 4f				/* make sure p != NULL */
-	PANIC("cpu_switch")			/* nothing in queue! */
+	bne	t4, Lcs4			/* make sure p != NULL */
+	PANIC("cpu_switch",Lcpu_switch_pmsg)	/* nothing in queue! */
 
-4:
+Lcs4:
 	stq	t5, PH_LINK(t0)			/* qp->ph_link = p->p_forw */
 	stq	t0, P_BACK(t5)			/* p->p_forw->p_back = qp */
 	stq	zero, P_BACK(t4)		/* firewall: p->p_back = NULL */
 	cmpeq	t0, t5, t0			/* see if queue is empty */
-	beq	t0, 5f				/* nope, it's not! */
+	beq	t0, Lcs5			/* nope, it's not! */
 
 	CONST(1, t0)				/* compute bit in whichqs */
 	sll	t0, t2, t0
 	xor	t3, t0, t3			/* clear bit in whichqs */
 	stl	t3, whichqs
 
-5:
+Lcs5:
 	/*
 	 * Switch to the new context
 	 */
@@ -749,6 +751,7 @@ sw1:
 	CONST(1, v0)				/* possible ret to savectx() */
 	RET
 	END(cpu_switch)
+
 
 /*
  * switch_trampoline()
@@ -835,9 +838,9 @@ LEAF(copystr, 4)
 	SETGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */
-	beq	a2, 2f			/* if (len == 0), bail out */
+	beq	a2, Lcopystr2		/* if (len == 0), bail out */
 
-1:
+Lcopystr1:
 	ldq_u	t1, 0(a0)		/* t1 = *from */
 	extbl	t1, a0, t1
 	ldq_u	t3, 0(a1)		/* set up t2 with quad around *to */
@@ -847,22 +850,22 @@ LEAF(copystr, 4)
 	stq_u	t3, 0(a1)		/* write out that quad */
 
 	subl	a2, 1, a2		/* len-- */
-	beq	t1, 2f			/* if (*from == 0), bail out */
+	beq	t1, Lcopystr2		/* if (*from == 0), bail out */
 	addq	a1, 1, a1		/* to++ */
 	addq	a0, 1, a0		/* from++ */
-	bne	a2, 1b			/* if (len != 0) copy more */
+	bne	a2, Lcopystr1		/* if (len != 0) copy more */
 
-2:
-	beq	a3, 3f			/* if (lenp != NULL) */
+Lcopystr2:
+	beq	a3, Lcopystr3		/* if (lenp != NULL) */
 	subl	t0, a2, t0		/* *lenp = (i - len) */
 	stq	t0, 0(a3)
-3:
-	beq	t1, 4f			/* *from == '\0'; leave quietly */
+Lcopystr3:
+	beq	t1, Lcopystr4		/* *from == '\0'; leave quietly */
 
 	CONST(ENAMETOOLONG, v0)		/* *from != '\0'; error. */
 	RET
 
-4:
+Lcopystr4:
 	mov	zero, v0		/* return 0. */
 	RET
 	END(copystr)
@@ -1525,8 +1528,8 @@ EXPORT(eintrcnt)
  *	Execute the PAL call.
  */
 LEAF(swpctxt,2)
-	beq	a1,1f
+	beq	a1,Lswpctxt1
 	stq	sp,0(a1)
-1:	call_pal PAL_OSF1_swpctx
+Lswpctxt1: call_pal PAL_OSF1_swpctx
 	RET
 	END(swpctxt)
