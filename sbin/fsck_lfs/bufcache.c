@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.1 2003/03/28 08:09:52 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.2 2003/03/31 19:56:59 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -132,8 +132,9 @@ bremfree(struct ubuf * bp)
 	 *
 	 * NB: This makes an assumption about how tailq's are implemented.
 	 */
-	if (bp->b_flags & B_LOCKED)
+	if (bp->b_flags & B_LOCKED) {
 		locked_queue_bytes -= bp->b_bcount;
+	}
 	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 			if (dp->tqh_last == &bp->b_freelist.tqe_next)

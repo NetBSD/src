@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.14 2003/03/28 08:09:53 perseant Exp $	 */
+/* $NetBSD: pass0.c,v 1.15 2003/03/31 19:56:59 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -109,9 +109,11 @@ void
 pass0()
 {
 	daddr_t daddr;
+	CLEANERINFO *cip;
 	IFILE *ifp;
 	struct ubuf *bp;
 	ino_t ino, plastino, nextino, *visited;
+	int writeit = 0;
 
 	/*
          * Check the inode free list for inuse inodes, and cycles.
@@ -163,6 +165,8 @@ pass0()
 		plastino = ino;
 		ino = nextino;
 	}
+
+
 	/*
 	 * Make sure all free inodes were found on the list
 	 */
@@ -184,4 +188,23 @@ pass0()
 		} else
 			brelse(bp);
 	}
+
+	LFS_CLEANERINFO(cip, fs, bp);
+	if (cip->free_head != fs->lfs_freehd) {
+		pwarn("! Free list head should be %d (was %d)\n",
+			fs->lfs_freehd, cip->free_head);
+		if (preen || reply("FIX")) {
+			cip->free_head = fs->lfs_freehd;
+			writeit = 1;
+		}
+	}
+	if (cip->free_tail != plastino) {
+		pwarn("! Free list tail should be %d (was %d)\n", plastino,
+			cip->free_tail);
+		if (preen || reply("FIX")) {
+			cip->free_tail = plastino;
+			writeit = 1;
+		}
+	}
+	LFS_SYNC_CLEANERINFO(cip, fs, bp, writeit);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.14 2003/03/29 00:09:43 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.15 2003/03/31 19:57:00 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -212,6 +212,8 @@ setup(const char *dev)
 #endif
 
 	if (debug) {
+		printf("idaddr    = 0x%lx\n", idaddr ? (unsigned long)idaddr :
+			(unsigned long)fs->lfs_idaddr);
 		printf("dev_bsize = %lu\n", dev_bsize);
 		printf("lfs_bsize = %lu\n", (unsigned long) fs->lfs_bsize);
 		printf("lfs_fsize = %lu\n", (unsigned long) fs->lfs_fsize);

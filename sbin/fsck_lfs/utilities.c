@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.11 2003/03/28 08:09:55 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.12 2003/03/31 19:57:00 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,10 +35,12 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-
-#include <ufs/ufs/dinode.h>
-#include <ufs/ufs/dir.h>
 #include <sys/mount.h>
+
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/dir.h>
+#define buf ubuf
+#define vnode uvnode
 #include <ufs/lfs/lfs.h>
 
 #include <err.h>
@@ -128,19 +130,25 @@ write_superblocks(void)
 void
 ckfini(int markclean)
 {
-	if (!nflag && locked_queue_bytes > 0) {
+	if (locked_queue_bytes > 0) {
 		if (preen || reply("WRITE CHANGES TO DISK") == 1) {
+			if (preen == 0)
+				pwarn("WRITING CHANGES TO DISK\n");
 			lfs_segwrite(fs, SEGM_CKP);
 			fsdirty = 0;
 			fsmodified = 1;
 		}
 	}
 
-	if (fsdirty && !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
+	if ((fs->lfs_flags & LFS_PF_CLEAN) == 0)
+		fsmodified = 1;
+	fs->lfs_pflags |= LFS_PF_CLEAN;
+
+	if (fsmodified && (preen || reply("UPDATE STANDARD SUPERBLOCK"))) {
 		sbdirty();
 		write_superblocks();
 	}
-	if (markclean && (fs->lfs_pflags & LFS_PF_CLEAN) == 0) {
+	if (markclean && fsmodified) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.
 		 */
@@ -157,6 +165,7 @@ ckfini(int markclean)
 					"\n***** FILE SYSTEM MARKED CLEAN *****\n");
 		}
 	}
+
 	if (debug)
 		bufstats();
 	(void) close(fsreadfd);

@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.1 2003/03/28 08:09:54 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.2 2003/03/31 19:57:00 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -803,6 +803,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 			memcpy(dp, (*bpp)->b_data + byteoffset, el_size);
 			dp += el_size;
 		}
+		bremfree(*bpp);
 		(*bpp)->b_flags |= B_BUSY;
 	}
 	if (fs->lfs_version == 1)
@@ -829,7 +830,7 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	for (bpp = sp->bpp, i = nblocks; i; bpp++, i--) {
 		bp = *bpp;
 #if 0
-		printf("i = %d, bp = %p, flags %x, bn = %" PRIx64 "\n",
+		printf("i = %d, bp = %p, flags %lx, bn = %" PRIx64 "\n",
 		       nblocks - i, bp, bp->b_flags, bp->b_blkno);
 		printf("  vp = %p\n", bp->b_vp);
 		if (bp->b_vp != fs->lfs_unlockvp)
@@ -844,7 +845,8 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 			else
 				written_indir += bp->b_bcount;
 		}
-		bp->b_flags &= ~(B_DELWRI | B_READ | B_GATHERED | B_ERROR);
+		bp->b_flags &= ~(B_DELWRI | B_READ | B_GATHERED | B_ERROR |
+				 B_LOCKED);
 		bwrite(bp);
 		written_bytes += bp->b_bcount;
 	}
