@@ -144,7 +144,7 @@ Batch mode is useful when running
 scripts.
 Prompts, informative messages and other user oriented message
 are turned off,
-and no startup files or environmental variables are read.
+and no startup files or environment variables are read.
 This is the POSIX 1003.2 interface for the historic
 .Dq \&\-
 argument.
@@ -1094,12 +1094,12 @@ Set searches to wrap around the end or beginning of the file.
 .It Sy "writeany, wa [off]"
 Turn off file-overwriting checks.
 .El
-.Sh ENVIRONMENTAL VARIABLES
+.Sh ENVIRONMENT VARIABLES
 .Bl -tag -width "COLUMNSXX" -compact
 .It Ev COLUMNS
 The number of columns on the screen.
 This value overrides any system or terminal specific values.
-If the COLUMNS environmental variable is not set when
+If the COLUMNS environment variable is not set when
 .Nm ex/vi
 runs, or the
 .Sy columns
@@ -1126,7 +1126,7 @@ command.
 .It Ev LINES
 The number of rows on the screen.
 This value overrides any system or terminal specific values.
-If the LINES environmental variable is not set when
+If the LINES environment variable is not set when
 .Nm ex/vi
 runs, or the
 .Sy lines
@@ -1145,7 +1145,7 @@ option).
 The user's terminal type.
 The default is the type
 .Dq unknown .
-If the TERM environmental variable is not set when
+If the TERM environment variable is not set when
 .Nm ex/vi
 runs, or the
 .Sy term
