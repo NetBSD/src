@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.41 2003/07/06 05:24:18 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.42 2003/08/17 03:45:19 kochi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.41 2003/07/06 05:24:18 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.42 2003/08/17 03:45:19 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -988,7 +988,12 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		AcpiLeaveSleepState((UINT8)state);
 		break;
 	case ACPI_STATE_S5:
-		AcpiEnterSleepStatePrep(ACPI_STATE_S5);
+		ret = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
+		if (ACPI_FAILURE(ret)) {
+			printf("acpi: failed preparing to sleep (%s)\n",
+			       AcpiFormatException(ret));
+			break;
+		}
 		acpi_md_OsDisableInterrupt();
 		AcpiEnterSleepState(ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
