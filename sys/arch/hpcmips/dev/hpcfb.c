@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.23 2000/12/21 03:30:36 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.24 2000/12/22 08:37:17 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.23 2000/12/21 03:30:36 sato Exp $";
+    "$Id: hpcfb.c,v 1.24 2000/12/22 08:37:17 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,13 +729,17 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
 #ifdef HPCFB_MULTI
+	if (!hpcfbconsole && sc->nscreens > 0)	/* XXXXX */
+		return ENOMEM;
+
 	if (sc->nscreens > HPCFB_MAX_SCREEN)
 		return (ENOMEM);
-
 
 	if (sc->screens[sc->nscreens] == NULL){
 		sc->screens[sc->nscreens] =
 			malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
+		if (sc->screens[sc->nscreens] == NULL)
+			return ENOMEM;
 		bzero(sc->screens[sc->nscreens], sizeof(struct hpcfb_devconfig));
 	}
 	dc = sc->screens[sc->nscreens];
@@ -751,6 +755,11 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 		dc->dc_tvram = 
 			malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
 				M_DEVBUF, M_WAITOK);
+		if (dc->dc_tvram == NULL){
+			free(sc->screens[sc->nscreens], M_DEVBUF);
+			sc->screens[sc->nscreens] = NULL;
+			return ENOMEM;
+		}
 		bzero(dc->dc_tvram, 
 				sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 	}
@@ -760,7 +769,6 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	sc->nscreens++;
 	*cookiep = dc; 
 	hpcfb_alloc_attr(*cookiep, 7, 0, 0, attrp);
-	hpcfb_eraserows(*cookiep, 0, dc->dc_rows, *attrp);
 #else /* HPCFB_MULTI */
 	if (sc->nscreens > 0)
 		return (ENOMEM);
