@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_locore.S,v 1.1.2.2 2002/08/27 23:45:05 nathanw Exp $	*/
+/*	$NetBSD: 4xx_locore.S,v 1.1.2.3 2002/12/19 15:52:19 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -329,7 +329,7 @@ ENTRY(cpu_preempt)
 	lis	8,_C_LABEL(sched_whichqs)@ha
 	lwz	4,_C_LABEL(sched_whichqs)@l(8)
 
-	lwz	3,L_PRIORITY(31)
+	lbz	3,L_PRIORITY(31)
 	li	9,2
 	srw	3,3,9			/* r3 = newlwp->l_priority / 4 */
 	li	9,1
