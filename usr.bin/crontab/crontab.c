@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: crontab.c,v 1.5 1993/11/10 12:35:06 cgd Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.6 1993/12/07 10:27:05 mycroft Exp $";
 #endif /* not lint */
 
 #define	MAIN_PROGRAM
@@ -44,13 +44,13 @@ usage()
 	exit(ERROR_EXIT);
 }
 
+static void parse_args(), list_cmd(), delete_cmd(), edit_cmd(), replace_cmd();
 
 main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
-	void	parse_args(), set_cron_uid(), set_cron_cwd(),
-		list_cmd(), delete_cmd(), edit_cmd(), replace_cmd();
+	void	set_cron_uid(), set_cron_cwd();
 
 	Pid = getpid();
 	ProgramName = argv[0];
@@ -210,13 +210,13 @@ list_cmd()
 	fclose(f);
 }
 
+static void poke_daemon();
 
 static void
 delete_cmd()
 {
 	extern	errno;
 	int	unlink();
-	void	poke_daemon();
 	char	n[MAX_FNAME];
 
 	log_it(RealUser, Pid, "DELETE", User);
