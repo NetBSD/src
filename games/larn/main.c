@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.11 1997/10/18 20:03:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.11 1997/10/18 20:03:27 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -31,7 +31,7 @@ static char     viewflag = 0;
  */
 u_char          restorflag = 0;	/* 1 means restore has been done	 */
 static char     cmdhelp[] = "\
-Cmd line format: larn [-slicnh] [-o<optsifle>] [-##] [++]\n\
+Cmd line format: larn [-slicnh] [-o<optsfile>] [-##] [++]\n\
   -s   show the scoreboard\n\
   -l   show the logfile (wizard id only)\n\
   -i   show scoreboard with inventories of dead characters\n\
