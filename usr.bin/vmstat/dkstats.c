@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.14 2002/01/28 02:15:15 simonb Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.15 2002/02/25 00:39:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -91,7 +91,7 @@ char		**dr_name;
 } while (/* CONSTCOND */0)
 
 /*
- * Dereference the namelist pointer `v' and fill in the local copy 
+ * Dereference the namelist pointer `v' and fill in the local copy
  * 'p' which is of size 's'.
  */
 #define	deref_nl(v, p, s) do {						\
@@ -150,7 +150,7 @@ dkswap(void)
 }
 
 /*
- * Read the disk statistics for each disk in the disk list. 
+ * Read the disk statistics for each disk in the disk list.
  * Also collect statistics for tty i/o and cpu ticks.
  */
 void
@@ -261,7 +261,8 @@ dkinit(int select)
 		}
 	} else {
 		/* Open the kernel. */
-		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
+		    errbuf)) == NULL)
 			errx(1, "kvm_openfiles: %s", errbuf);
 
 		/* Obtain the namelist symbols from the kernel. */
@@ -298,7 +299,7 @@ dkinit(int select)
 	last.dk_bytes = calloc(dk_ndrive, sizeof(u_int64_t));
 	cur.dk_select = calloc(dk_ndrive, sizeof(int));
 	cur.dk_name = calloc(dk_ndrive, sizeof(char *));
-	
+
 	if (cur.dk_time == NULL|| cur.dk_xfer == NULL ||
 	    cur.dk_seek == NULL || cur.dk_bytes == NULL ||
 	    last.dk_time == NULL || last.dk_xfer == NULL ||
@@ -339,7 +340,7 @@ dkinit(int select)
 }
 
 /*
- * Dereference the kernel pointer `kptr' and fill in the local copy 
+ * Dereference the kernel pointer `kptr' and fill in the local copy
  * pointed to by `ptr'.  The storage space must be pre-allocated,
  * and the size of the copy passed in `len'.
  */
