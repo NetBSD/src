@@ -1,7 +1,7 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 4/3/91
-#	$Id: Makefile,v 1.5 1993/08/07 03:14:51 mycroft Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$Id: Makefile,v 1.6 1994/09/22 09:24:35 mycroft Exp $
 
 PROG=	cp
-SRCS=	cp.c path.c
+SRCS=	cp.c utils.c
 
 .include <bsd.prog.mk>
