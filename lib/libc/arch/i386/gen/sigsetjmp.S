@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.13 1999/02/13 16:13:49 christos Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.14 1999/02/22 13:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.13 1999/02/13 16:13:49 christos Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.14 1999/02/22 13:07:14 christos Exp $")
 #endif
 
 ENTRY(sigsetjmp)
@@ -48,7 +48,7 @@ ENTRY(sigsetjmp)
 	movl	8(%esp),%eax
 	movl	%eax,28(%ecx)
 	testl	%eax,%eax
-	jz	1f
+	jz	2f
 
 	PIC_PROLOGUE
 	pushl	$0
@@ -62,7 +62,7 @@ ENTRY(sigsetjmp)
 
 	movl	4(%esp),%ecx
 	movl	%eax,24(%ecx)
-1:	movl	0(%esp),%edx
+2:	movl	0(%esp),%edx
 	movl	%edx, 0(%ecx)
 	movl	%ebx, 4(%ecx)
 	movl	%esp, 8(%ecx)
@@ -75,7 +75,7 @@ ENTRY(sigsetjmp)
 ENTRY(siglongjmp)
 	movl	4(%esp),%edx
 	cmpl	$0,28(%edx)
-	jz	1f
+	jz	2f
 
 	PIC_PROLOGUE
 	pushl	24(%edx)
@@ -87,7 +87,7 @@ ENTRY(siglongjmp)
 	addl	$4,%esp
 	PIC_EPILOGUE
 
-1:	movl	4(%esp),%edx
+2:	movl	4(%esp),%edx
 	movl	8(%esp),%eax
 	movl	0(%edx),%ecx
 	movl	4(%edx),%ebx
@@ -96,7 +96,7 @@ ENTRY(siglongjmp)
 	movl	16(%edx),%esi
 	movl	20(%edx),%edi
 	testl	%eax,%eax
-	jnz	2f
+	jnz	3f
 	incl	%eax
-2:	movl	%ecx,0(%esp)
+3:	movl	%ecx,0(%esp)
 	ret

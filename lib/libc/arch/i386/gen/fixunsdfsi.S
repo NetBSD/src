@@ -1,4 +1,4 @@
-/*	$NetBSD: fixunsdfsi.S,v 1.9 1997/07/16 14:37:17 christos Exp $	*/
+/*	$NetBSD: fixunsdfsi.S,v 1.10 1999/02/22 13:07:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: fixunsdfsi.S,v 1.9 1997/07/16 14:37:17 christos Exp $")
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.10 1999/02/22 13:07:14 christos Exp $")
 #endif
 
 ENTRY(__fixunsdfsi)
@@ -56,13 +56,13 @@ ENTRY(__fixunsdfsi)
 #endif
 	fstsw	%ax
 	sahf
-	jnb	1f
+	jnb	2f
 
 	fistpl	4(%esp)
 	movl	4(%esp),%eax
 	ret
 
-1:
+2:
 #ifdef PIC
 	PIC_PROLOGUE
 	leal	PIC_GOTOFF(fbiggestsigned),%eax
