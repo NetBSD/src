@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.48 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.49 2000/06/03 04:15:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -352,8 +352,8 @@ struct kinfo_proc2 {
 	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and p_nice. */
 	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
 
-	int16_t	p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
-	int16_t	p_acflag;		/* U_SHORT: Accounting flags. */
+	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
+	u_int16_t p_acflag;		/* U_SHORT: Accounting flags. */
 
 	char	p_comm[KI_MAXCOMLEN];
 
