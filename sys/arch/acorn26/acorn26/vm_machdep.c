@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.5 2003/07/14 15:17:16 lukem Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.6 2003/07/14 22:48:20 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -63,10 +63,10 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2003/07/14 22:48:20 lukem Exp $");
+
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2003/07/14 15:17:16 lukem Exp $");
-
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.2 2003/07/14 15:17:15 lukem Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.3 2003/07/14 22:48:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -37,12 +37,12 @@
  * but have no need to be coded in assembly.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.3 2003/07/14 22:48:20 lukem Exp $");
+
 #include "opt_lockdebug.h"
 
 #include <sys/param.h>
-
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.2 2003/07/14 15:17:15 lukem Exp $");
-
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/systm.h>

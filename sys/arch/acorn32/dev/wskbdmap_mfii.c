@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.1 2001/10/05 22:27:48 reinoud Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.2 2003/07/14 22:48:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
  * Created the RiscPC keyboard table on base of the XT table origionaly
  * created by Juergen Hannken-Illjes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2 2003/07/14 22:48:24 lukem Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
