@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.28 1996/05/22 13:56:31 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.29 1996/07/02 23:21:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -2017,7 +2017,7 @@ nfsrv_getstream(slp, waitflag)
 			slp->ns_flag |= SLP_LASTFRAG;
 		else
 			slp->ns_flag &= ~SLP_LASTFRAG;
-		if (slp->ns_reclen < NFS_MINPACKET || slp->ns_reclen > NFS_MAXPACKET) {
+		if (slp->ns_reclen > NFS_MAXPACKET) {
 			slp->ns_flag &= ~SLP_GETSTREAM;
 			return (EPERM);
 		}
