@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.14 1998/04/29 03:09:26 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.15 1998/05/12 18:40:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -147,6 +147,10 @@
 #define		HAE_IO_REG1_MASK	0x01ffffffUL
 #define		HAE_IO_REG2_START(x)	(((u_int32_t)(x) & 0xfe000000UL) << 0)
 #define		HAE_IO_REG2_MASK	0x01ffffffUL
+
+#define	CIA_CSR_CFG	(CIA_CSRS + 0x480)
+
+#define		CFG_CFG_MASK		0x00000003UL
 
 #define	CIA_CSR_CIA_ERR	(CIA_CSRS + 0x8200)
 
