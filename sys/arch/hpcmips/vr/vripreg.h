@@ -1,4 +1,4 @@
-/*	$NetBSD: vripreg.h,v 1.4 2001/08/04 14:08:46 sato Exp $	*/
+/*	$NetBSD: vripreg.h,v 1.5 2001/09/28 10:18:33 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -186,7 +186,7 @@
 
 #endif /* VRGROUP_4181 */
 
-#if defined VRGROUP_4122
+#if defined VRGROUP_4122_4131
 #define VRIP_BASE_ADDR		0x0f000000
 
 #define VRIP_BCU_ADDR		VR4122_BCU_ADDR	
@@ -219,7 +219,7 @@
 #define VRIP_PCICONF_ADDR	VR4122_PCICONF_ADDR	/* XXX: no register */
 #define VRIP_CSI_ADDR		VR4122_CSI_ADDR		/* XXX: no register */
 
-#endif /* VRGROUP_4122 */
+#endif /* VRGROUP_4122_4131 */
 
 #if defined VRGROUP_4102_4121
 #define VRIP_BASE_ADDR		0x0b000000
