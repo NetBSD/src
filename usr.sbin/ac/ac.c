@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.15 2003/05/17 18:55:18 itojun Exp $ */
+/* $NetBSD: ac.c,v 1.16 2003/09/19 06:19:02 itojun Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.15 2003/05/17 18:55:18 itojun Exp $");
+__RCSID("$NetBSD: ac.c,v 1.16 2003/09/19 06:19:02 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -224,6 +224,7 @@ static void
 find_login_ttys()
 {
 	struct ttyent *tty;
+	char (*nCon)[UT_LINESIZE];
 
 	if ((Con = malloc((Maxcon = 10) * sizeof(Con[0]))) == NULL)
 		err(1, "malloc");
@@ -232,10 +233,13 @@ find_login_ttys()
 	while ((tty = getttyent()) != NULL)
 		if ((tty->ty_status & TTY_ON) != 0 &&
 		    strstr(tty->ty_getty, "getty") != NULL) {
-			if (Ncon == Maxcon)
-				if ((Con = realloc(Con, (Maxcon += 10) *
+			if (Ncon == Maxcon) {
+				if ((nCon = realloc(Con, (Maxcon + 10) *
 				    sizeof(Con[0]))) == NULL)
 					err(1, "malloc");
+				Con = nCon;
+				Maxcon += 10;
+			}
 			(void)strncpy(Con[Ncon++], tty->ty_name, UT_LINESIZE);
 		}
 	endttyent();
