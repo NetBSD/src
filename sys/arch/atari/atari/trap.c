@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 1995/04/22 20:25:18 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.4 1995/04/22 20:49:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -752,7 +752,7 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (systab != p->p_emul->e_sysent)
+		if (systab != sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
