@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.31 2003/01/01 00:10:17 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.32 2004/04/22 00:17:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.31 2003/01/01 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.32 2004/04/22 00:17:10 itojun Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -61,7 +61,7 @@ CFATTACH_DECL(eisa, sizeof(struct device),
 
 int	eisasubmatch(struct device *, struct cfdata *, void *);
 int	eisaprint(void *, const char *);
-void	eisa_devinfo(const char *, char *);
+void	eisa_devinfo(const char *, char *, size_t);
 
 int
 eisamatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -83,7 +83,7 @@ eisaprint(void *aux, const char *pnp)
 	char devinfo[256]; 
 
 	if (pnp) {
-		eisa_devinfo(ea->ea_idstring, devinfo);
+		eisa_devinfo(ea->ea_idstring, devinfo, sizeof(devinfo));
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
 	aprint_normal(" slot %d", ea->ea_slot);
@@ -211,7 +211,7 @@ struct eisa_knowndev {
 #endif	/* EISAVEBSOSE */
 
 void
-eisa_devinfo(const char *id, char *cp)
+eisa_devinfo(const char *id, char *cp, size_t l)
 {
 #ifdef EISAVERBOSE
 	const char *name;
@@ -235,13 +235,13 @@ eisa_devinfo(const char *id, char *cp)
 	}
 
 	if (name == NULL)
-		sprintf(cp, "unknown device %s", id);
+		snprintf(cp, l, "unknown device %s", id);
 	else if (onlyvendor)
-		sprintf(cp, "unknown %s device %s", name, id);
+		snprintf(cp, l, "unknown %s device %s", name, id);
 	else
-		sprintf(cp, "%s", name);
+		snprintf(cp, l, "%s", name);
 #else	/* EISAVERBOSE */
 
-	sprintf(cp, "device %s", id);
+	snprintf(cp, l, "device %s", id);
 #endif	/* EISAVERBOSE */
 }

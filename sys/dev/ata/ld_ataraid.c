@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.10 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.11 2004/04/22 00:17:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.10 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.11 2004/04/22 00:17:10 itojun Exp $");
 
 #include "rnd.h"
 
@@ -161,7 +161,8 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		sprintf(unklev, "<unknown level 0x%x>", aai->aai_level);
+		snprintf(unklev, sizeof(unklev), "<unknown level 0x%x>",
+		    aai->aai_level);
 		level = unklev;
 	}
 

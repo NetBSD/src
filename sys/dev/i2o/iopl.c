@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.11 2002/10/02 16:33:51 thorpej Exp $	*/
+/*	$NetBSD: iopl.c,v 1.12 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.11 2002/10/02 16:33:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.12 2004/04/22 00:17:11 itojun Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -277,7 +277,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	case I2O_LAN_TYPE_FIBRECHANNEL:
 		typestr = "fibre channel";
 		addrstr = wwn;
-		sprintf(wwn, "%08x%08x",
+		snprintf(wwn, sizeof(wwn), "%08x%08x",
 		    ((u_int32_t *)param.p.ldi.hwaddr)[0],
 		    ((u_int32_t *)param.p.ldi.hwaddr)[1]);
 		iff = IFF_BROADCAST | IFF_MULTICAST;

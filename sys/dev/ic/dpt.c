@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.42 2003/10/25 18:35:42 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.43 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.42 2003/10/25 18:35:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.43 2004/04/22 00:17:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,8 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	char model[16];
 
 	ec = &sc->sc_ec;
-	sprintf(dpt_sig.dsDescription, "NetBSD %s DPT driver", osrelease);
+	snprintf(dpt_sig.dsDescription, sizeof(dpt_sig.dsDescription),
+	    "NetBSD %s DPT driver", osrelease);
 
 	/*
 	 * Allocate the CCB/status packet/scratch DMA map and load.

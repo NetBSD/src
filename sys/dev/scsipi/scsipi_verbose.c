@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.20 2004/03/16 19:10:44 bouyer Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.21 2004/04/22 00:17:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.20 2004/03/16 19:10:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.21 2004/04/22 00:17:13 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -604,12 +604,14 @@ static const struct {
 { 0x00, 0x00, NULL }
 };
 
-static __inline void asc2ascii __P((unsigned char, unsigned char, char *));
+static __inline void asc2ascii __P((unsigned char, unsigned char, char *,
+	size_t));
 
 static __inline void
-asc2ascii(asc, ascq, result)
+asc2ascii(asc, ascq, result, l)
 	unsigned char asc, ascq;
 	char *result;
+	size_t l;
 {
 	int i = 0;
 
@@ -620,14 +622,14 @@ asc2ascii(asc, ascq, result)
 	}
 	if (adesc[i].description == NULL) {
 		if (asc == 0x40 && ascq != 0)
-			(void)sprintf(result,
+			(void)snprintf(result, l,
 			    "Diagnostic Failure on Component 0x%02x",
 			    ascq & 0xff);
 		else
-			(void)sprintf(result, "ASC 0x%02x ASCQ 0x%02x",
+			(void)snprintf(result, l, "ASC 0x%02x ASCQ 0x%02x",
 			    asc & 0xff, ascq & 0xff);
 	} else
-		(void)strcpy(result, adesc[i].description);
+		(void)strlcpy(result, adesc[i].description, l);
 }
 
 void
@@ -767,12 +769,13 @@ scsipi_decode_sense(sinfo, flag)
 		(void) strcpy(rqsbuf, sense_keys[skey]);
 		return (rqsbuf);
 	} else if (flag == 1) {			/* ASC/ASCQ Only */
-		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf);
+		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf, sizeof(rqsbuf));
 		return (rqsbuf);
 	} else  if (flag == 2) {		/* Sense Key && ASC/ASCQ */
 		auto char localbuf[64];
-		asc2ascii(snsbuf[12], snsbuf[13], localbuf);
-		(void) sprintf(rqsbuf, "%s, %s", sense_keys[skey], localbuf);
+		asc2ascii(snsbuf[12], snsbuf[13], localbuf, sizeof(localbuf));
+		(void) snprintf(rqsbuf, sizeof(rqsbuf), "%s, %s",
+		    sense_keys[skey], localbuf);
 		return (rqsbuf);
 	} else if (flag == 3 && snsbuf[7] >= 9 && (snsbuf[15] & 0x80)) {
 		/*
@@ -781,13 +784,13 @@ scsipi_decode_sense(sinfo, flag)
 		switch (skey) {
 		case SKEY_ILLEGAL_REQUEST:
 			if (snsbuf[15] & 0x8)
-				(void)sprintf(rqsbuf,
+				(void)snprintf(rqsbuf, sizeof(rqsbuf),
 				    "Error in %s, Offset %d, bit %d",
 				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
 				    (snsbuf[16] & 0xff) << 8 |
 				    (snsbuf[17] & 0xff), snsbuf[15] & 0x7);
 			else
-				(void)sprintf(rqsbuf,
+				(void)snprintf(rqsbuf, sizeof(rqsbuf),
 				    "Error in %s, Offset %d",
 				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
 				    (snsbuf[16] & 0xff) << 8 |
@@ -796,11 +799,13 @@ scsipi_decode_sense(sinfo, flag)
 		case SKEY_RECOVERED_ERROR:
 		case SKEY_MEDIUM_ERROR:
 		case SKEY_HARDWARE_ERROR:
-			(void)sprintf(rqsbuf, "Actual Retry Count: %d",
+			(void)snprintf(rqsbuf, sizeof(rqsbuf),
+			    "Actual Retry Count: %d",
 			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		case SKEY_NOT_READY:
-			(void)sprintf(rqsbuf, "Progress Indicator: %d",
+			(void)snprintf(rqsbuf, sizeof(rqsbuf),
+			    "Progress Indicator: %d",
 			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		default:
