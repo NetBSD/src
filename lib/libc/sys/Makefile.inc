@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.25 1994/06/12 22:58:03 cgd Exp $
+#	$Id: Makefile.inc,v 1.26 1994/06/13 00:13:48 cgd Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -81,7 +81,7 @@ ${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-MAN2+=	accept.0 access.0 acct.0 adjtime.0 async_daemon.0 bind.0 brk.0 \
+MAN2+=	accept.0 access.0 acct.0 adjtime.0 bind.0 brk.0 \
 	chdir.0 chflags.0 chmod.0 chown.0 chroot.0 close.0 connect.0 \
 	dup.0 execve.0 _exit.0 fcntl.0 flock.0 fork.0 fsync.0 \
 	getdirentries.0 getdtablesize.0 getfh.0 getfsstat.0 \
