@@ -1,0 +1,48 @@
+#	$NetBSD: Makefile.common,v 1.1 2004/01/06 12:30:13 mrg Exp $
+
+# These define parts of the Xserver tree that are to be
+# conditionally compiled for different platforms.  See
+# below for descriptions of each variable.
+
+# XFree86 servers all need XFONT as well.
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "cats"
+XSERVER_NEEDS_XFONT=	yes
+XSERVER_XFREE86=	yes
+.endif
+
+.if ${MACHINE} == "macppc"
+XSERVER_XMACPPC=	yes
+.endif
+
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+XSERVER_XSUN=	yes
+.endif
+
+.if ${MACHINE} == "vax"
+XSERVER_HAS_CFB=	no
+XSERVER_HAS_FB=		no
+XSERVER_XVFB=		no
+.endif
+
+.if ${MACHINE} == "hpcmips"
+XSERVER_XHPC=		yes
+.endif
+
+# Does this server need Xfont/fontbase libraries?
+XSERVER_NEEDS_XFONT?=	no
+# Does this server use cfb* libraries?
+XSERVER_HAS_CFB?=	yes
+# Does this server use fb library?
+XSERVER_HAS_FB?=	yes
+
+# Does this platform build XFree86 X server?
+XSERVER_XFREE86?=	no
+# Does this platform build Xmacppc X server?
+XSERVER_XMACPPC?=	no
+# Does this platform build Xsun* X servers? (split?)
+XSERVER_XSUN?=	no
+# Does this platform build Xhpc X servers?
+XSERVER_XHPC?=	no
+# Does this platform build Xvfb X server?
+XSERVER_XVFB?=	no
