@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.9 1997/06/10 19:27:10 veego Exp $ */
+/*	$NetBSD: promdev.c,v 1.9.10.1 1998/01/26 22:04:23 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -45,7 +45,7 @@ extern int debug;
 static int promdev_inuse;
 
 static char *
-prom_mapin(u_long physaddr, int length, int maptype);
+dev_mapin(int maptype, u_long physaddr, int length);
 
 /*
  * Note: caller sets the fields:
@@ -61,13 +61,14 @@ prom_iopen(si)
 {
 	struct boottab *ops;
 	struct devinfo *dip;
-	int	error;
+	int	i, ctlr, error;
 
 	if (promdev_inuse)
 		return(EMFILE);
 
 	ops = si->si_boottab;
 	dip = ops->b_devinfo;
+	ctlr = si->si_ctlr;
 
 #ifdef DEBUG_PROM
 	if (debug) {
@@ -75,38 +76,32 @@ prom_iopen(si)
 		printf("d_devbytes=%d\n", dip->d_devbytes);
 		printf("d_dmabytes=%d\n", dip->d_dmabytes);
 		printf("d_localbytes=%d\n", dip->d_localbytes);
-		printf("d_stdcount=%d\n", dip->d_stdcount);
-		printf("d_stdaddrs[%d]=%x\n", si->si_ctlr,
-			   dip->d_stdaddrs[si->si_ctlr]);
 		printf("d_devtype=%d\n", dip->d_devtype);
 		printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
+		printf("d_stdcount=%d\n", dip->d_stdcount);
+		for (i = 0; i < dip->d_stdcount; i++)
+			printf("d_stdaddrs[i]=0x%x\n",
+				   i, dip->d_stdaddrs[0]);
 	}
 #endif
 
-	if (si->si_ctlr > dip->d_stdcount) {
-		printf("Invalid controller number\n");
-		return(ENXIO);
-	}
-
 	dvma_init();
 
-	if (dip->d_devbytes) {
-		si->si_devaddr = prom_mapin(dip->d_stdaddrs[si->si_ctlr],
-			dip->d_devbytes, dip->d_devtype);
+	if (dip->d_devbytes && dip->d_stdcount) {
+		if (ctlr >= dip->d_stdcount) {
+			printf("Invalid controller number\n");
+			return(ENXIO);
+		}
+		si->si_devaddr = dev_mapin(dip->d_devtype,
+			dip->d_stdaddrs[ctlr], dip->d_devbytes);
 #ifdef	DEBUG_PROM
 		if (debug)
-			printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
-				   si->si_devaddr, get_pte(si->si_devaddr));
+			printf("prom_iopen: devaddr=0x%x\n", si->si_devaddr);
 #endif
 	}
 
 	if (dip->d_dmabytes) {
-		int addr, size;
-		/* try page-aligned address... */
-		size = dip->d_dmabytes + NBPG;
-		addr = (int) dvma_alloc(size);
-		addr = m68k_round_page(addr);
-		si->si_dmaaddr = (char*) addr;
+		si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
 #ifdef	DEBUG_PROM
 		if (debug)
 			printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
@@ -193,19 +188,20 @@ static prom_mapinfo_cnt = sizeof(prom_mapinfo) / sizeof(prom_mapinfo[0]);
 static int prom_devmap = MONSHORTSEG;
 
 static char *
-prom_mapin(physaddr, length, maptype)
+dev_mapin(maptype, physaddr, length)
+	int maptype;
 	u_long physaddr;
-	int length, maptype;
+	int length;
 {
 	int i, pa, pte, va;
 
 	if (length > (4*NBPG))
-		panic("prom_mapin: length=%d\n", length);
+		panic("dev_mapin: length=%d\n", length);
 
 	for (i = 0; i < prom_mapinfo_cnt; i++)
 		if (prom_mapinfo[i].maptype == maptype)
 			goto found;
-	panic("prom_mapin: invalid maptype %d\n", maptype);
+	panic("dev_mapin: invalid maptype %d\n", maptype);
 found:
 
 	pte = prom_mapinfo[i].pgtype;
