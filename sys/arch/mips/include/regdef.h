@@ -1,4 +1,4 @@
-/*	$NetBSD: regdef.h,v 1.8 2002/03/05 14:17:16 simonb Exp $	*/
+/*	$NetBSD: regdef.h,v 1.9 2002/11/02 02:00:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,16 @@
 #define a1	$5
 #define a2	$6
 #define a3	$7
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	a4	$8
+#define	a5	$9
+#define	a6	$10
+#define	a7	$11
+#define	t0	$12	/* temp registers (not saved across subroutine calls) */
+#define	t1	$13
+#define	t2	$14
+#define	t3	$15
+#else
 #define t0	$8	/* temp registers (not saved across subroutine calls) */
 #define t1	$9
 #define t2	$10
@@ -60,6 +70,7 @@
 #define t5	$13
 #define t6	$14
 #define t7	$15
+#endif /* __mips_n32 || __mips_n64 */
 #define s0	$16	/* saved across subroutine calls (callee saved) */
 #define s1	$17
 #define s2	$18
