@@ -1,7 +1,7 @@
-/*	$NetBSD: complete.c,v 1.20 1999/02/18 23:08:41 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.21 1999/03/08 03:09:08 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.20 1999/02/18 23:08:41 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.21 1999/03/08 03:09:08 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -122,7 +122,7 @@ complete_ambiguous(word, list, words)
 			    lastmatch + wordlen, matchlen - wordlen);
 			if (el_insertstr(el, insertstr) == -1)
 				return (CC_ERROR);
-			else	
+			else
 				return (CC_REFRESH_BEEP);
 		}
 	}
@@ -218,7 +218,7 @@ complete_local(word, list)
 	for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
-		
+
 #ifndef __SVR4
 		if (len > dp->d_namlen)
 			continue;
