@@ -1,0 +1,2 @@
+# $NetBSD: md.ibmnws,v 1.1 2003/10/19 03:37:16 matt Exp $
+./usr/sbin/ncdcs			base-sysutil-root
