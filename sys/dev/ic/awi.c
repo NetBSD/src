@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.22 2000/07/10 12:32:53 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.23 2000/07/10 14:36:17 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -520,6 +520,13 @@ awi_ioctl(ifp, cmd, data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCS80211NWID:
+#ifdef __FreeBSD__
+		error = suser(curproc);
+#else
+		error = suser(curproc->p_ucred, &curproc->p_acflag);
+#endif
+		if (error)
+			break;
 		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
 		if (error)
 			break;
