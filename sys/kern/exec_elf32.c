@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.39 1998/10/03 20:39:32 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.40 1998/12/23 15:08:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -113,6 +113,11 @@ int	ELFNAME(load_file) __P((struct proc *, struct exec_package *, char *,
 void	ELFNAME(load_psection) __P((struct exec_vmcmd_set *, struct vnode *,
 	    Elf_Phdr *, Elf_Addr *, u_long *, int *));
 
+static int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
+    Elf_Ehdr *));
+static int ELFNAME2(netbsd,probe) __P((struct proc *, struct exec_package *,
+    Elf_Ehdr *, char *, Elf_Addr *));
+
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
 extern char *syscallnames[];
@@ -139,6 +144,7 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 
 int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *, char *, Elf_Addr *)) = {
+	ELFNAME2(netbsd,probe),
 #if defined(COMPAT_LINUX)
 	ELFNAME2(linux,probe),
 #endif
@@ -704,4 +710,81 @@ bad:
 	free((char *)ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
+}
+
+static int
+ELFNAME2(netbsd,signature)(p, epp, eh)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+{
+	Elf_Phdr *hph, *ph;
+	Elf_Note *np = NULL;
+	size_t phsize;
+	int error;
+
+	phsize = eh->e_phnum * sizeof(Elf_Phdr);
+	hph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)hph,
+	    phsize)) != 0)
+		goto out1;
+
+	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
+		if (ph->p_type != Elf_pt_note ||
+		    ph->p_filesz < sizeof(Elf_Note))
+			continue;
+
+		np = (Elf_Note *)malloc(ph->p_filesz + 1, M_TEMP, M_WAITOK);
+		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ph->p_offset,
+		    (caddr_t)np, ph->p_filesz)) != 0)
+			goto out2;
+
+		if (np->type != ELF_NOTE_TYPE_OSVERSION) {
+			free(np, M_TEMP);
+			np = NULL;
+			continue;
+		}
+
+		/* Check the name and description sizes. */
+		if (np->namesz != ELF_NOTE_NETBSD_NAMESZ ||
+		    np->descsz != ELF_NOTE_NETBSD_DESCSZ)
+			goto out3;
+
+		/* Is the name "NetBSD\0\0"? */
+		if (memcmp((np + 1), ELF_NOTE_NETBSD_NAME,
+		    ELF_NOTE_NETBSD_NAMESZ))
+			goto out3;
+
+		/* XXX: We could check for the specific emulation here */
+		/* All checks succeeded. */
+		error = 0;
+		goto out2;
+	}
+
+out3:
+	error = ENOEXEC;
+out2:
+	if (np)
+		free(np, M_TEMP);
+out1:
+	free(hph, M_TEMP);
+	return error;
+}
+
+static int
+ELFNAME2(netbsd,probe)(p, epp, eh, itp, pos)
+	struct proc *p;
+	struct exec_package *epp;
+	Elf_Ehdr *eh;
+	char *itp;
+	Elf_Addr *pos;
+{
+	int error;
+
+	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
+		return error;
+
+	epp->ep_emul = &ELFNAMEEND(emul_netbsd);
+	*pos = 0;
+	return 0;
 }
