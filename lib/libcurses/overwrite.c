@@ -1,4 +1,4 @@
-/*	$NetBSD: overwrite.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: overwrite.c,v 1.11 2000/04/11 13:57:10 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)overwrite.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: overwrite.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: overwrite.c,v 1.11 2000/04/11 13:57:10 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: overwrite.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
 #include <string.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * overwrite --
@@ -75,7 +76,7 @@ overwrite(win1, win2)
 		(void) memcpy(
 		    &win2->lines[y - win2->begy]->line[startx - win2->begx],
 		    &win1->lines[y - win1->begy]->line[startx - win1->begx],
-		    x * __LDATASIZE);
+		    (size_t) x * __LDATASIZE);
 		__touchline(win2, y, (int) (startx - win2->begx), (int) (endx - win2->begx),
 		    0);
 	}
