@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 1994/12/03 23:35:08 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 1995/01/21 00:12:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,8 +69,8 @@ struct	sysent	sysent[];
 int	nsysent;
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
-struct	sysent	sun_sysent[];
-int	nsun_sysent;
+struct	sysent	sunos_sysent[];
+int	nsunos_sysent;
 #endif
 
 char	*trap_type[] = {
@@ -592,12 +592,10 @@ trap(type, code, v, frame)
 			return;
 		}
 		spl0();
-#ifndef PROFTIMER
-		if ((p->p_flag & P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
-#endif
 		userret(p, frame.f_pc, sticks); 
 		return;
 	/*
@@ -655,8 +653,8 @@ syscall(code, frame)
 	switch (p->p_emul) {
 #ifdef COMPAT_SUNOS
 	case EMUL_SUNOS:
-		systab = sun_sysent;
-		numsys = nsun_sysent;
+		systab = sunos_sysent;
+		numsys = nsunos_sysent;
 
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
@@ -668,7 +666,7 @@ syscall(code, frame)
 		code = fuword ((caddr_t) frame.f_regs[SP]);
 
 		/*
-		 * XXX don't do this for sun_sigreturn, as there's no
+		 * XXX don't do this for sunos_sigreturn, as there's no
 		 * XXX stored pc on the stack to skip, the argument follows
 		 * XXX the syscall number without a gap.
 		 */
@@ -694,8 +692,18 @@ syscall(code, frame)
 
 	switch (code) {
 	case SYS_syscall:
+		/*
+		 * code is first argument, followed by actual args.
+		 */
 		code = fuword(params);
 		params += sizeof(int);
+		/*
+		 * XXX sigreturn requires special stack manipulation
+		 * that is only done if entered via the sigreturn
+		 * trap.  Cannot allow here, so make sure we fail.
+		 */
+		if (code == SYS_sigreturn)
+			code = numsys;
 		break;
 	case SYS___syscall:
 		if (systab != sysent)
