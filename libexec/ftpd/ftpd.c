@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.92 2000/06/02 14:47:19 explorer Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.93 2000/06/14 13:44:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.92 2000/06/02 14:47:19 explorer Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.93 2000/06/14 13:44:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.92 2000/06/02 14:47:19 explorer Exp $");
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -164,8 +165,6 @@ __RCSID("$NetBSD: ftpd.c,v 1.92 2000/06/02 14:47:19 explorer Exp $");
 #include "extern.h"
 #include "pathnames.h"
 #include "version.h"
-
-#include <stdarg.h>
 
 int	data;
 jmp_buf	urgcatch;
@@ -204,16 +203,9 @@ int epsvall = 0;
 int	swaitmax = SWAITMAX;
 int	swaitint = SWAITINT;
 
-#define CURCLASSTYPE	curclass.type == CLASS_GUEST  ? "GUEST"  : \
-		    	curclass.type == CLASS_CHROOT ? "CHROOT" : \
-		    	curclass.type == CLASS_REAL   ? "REAL"   : \
-			"<unknown>"
-
-static void	 ack(const char *);
 static int	 bind_pasv_addr(void);
 static int	 checkuser(const char *, const char *, int, int, char **);
 static int	 checkaccess(const char *);
-static FILE	*dataconn(const char *, off_t, const char *);
 static void	 dolog(struct sockaddr *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
@@ -221,7 +213,6 @@ static char	*gunique(const char *);
 static void	 lostconn(int);
 static void	 myoob(int);
 static int	 receive_data(FILE *, FILE *);
-static void	 replydirname(const char *, const char *);
 static int	 send_data(FILE *, FILE *, off_t, int);
 static struct passwd *sgetpwnam(const char *);
 
@@ -487,9 +478,9 @@ sgetpwnam(const char *name)
 	return (&save);
 }
 
-static int login_attempts;	/* number of failed login attempts */
-static int askpasswd;		/* had user command, ask for passwd */
-static char curname[10];	/* current USER name */
+static int	login_attempts;	/* number of failed login attempts */
+static int	askpasswd;	/* had user command, ask for passwd */
+static char	curname[10];	/* current USER name */
 
 /*
  * USER command.
@@ -1259,7 +1250,7 @@ getdatasock(const char *mode)
 	return (NULL);
 }
 
-static FILE *
+FILE *
 dataconn(const char *name, off_t size, const char *mode)
 {
 	char sizebuf[32];
@@ -1648,48 +1639,13 @@ receive_data(FILE *instr, FILE *outstr)
 }
 
 void
-statfilecmd(const char *filename)
-{
-	FILE *fin;
-	int c;
-	char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
-
-	argv[2] = (char *)filename;
-	fin = ftpd_popen(argv, "r", STDOUT_FILENO);
-	lreply(211, "status of %s:", filename);
-	while ((c = getc(fin)) != EOF) {
-		if (c == '\n') {
-			if (ferror(stdout)){
-				perror_reply(421, "control connection");
-				(void) ftpd_pclose(fin);
-				dologout(1);
-				/* NOTREACHED */
-			}
-			if (ferror(fin)) {
-				perror_reply(551, filename);
-				(void) ftpd_pclose(fin);
-				return;
-			}
-			(void) putchar('\r');
-			total_bytes++;
-			total_bytes_out++;
-		}
-		(void) putchar(c);
-		total_bytes++;
-		total_bytes_out++;
-	}
-	(void) ftpd_pclose(fin);
-	reply(211, "End of Status");
-}
-
-void
 statcmd(void)
 {
 	union sockunion *su = NULL;
 	static char ntop_buf[INET6_ADDRSTRLEN];
   	u_char *a, *p;
 	int ispassive, af;
-	off_t b, otbi, otbo, otb;
+	off_t otbi, otbo, otb;
 
 	a = p = (u_char *)NULL;
 
@@ -1712,69 +1668,49 @@ statcmd(void)
 		lreply(0, "Waiting for password");
 	else
 		lreply(0, "Waiting for user name");
-	b = printf("    TYPE: %s", typenames[type]);
-	total_bytes += b;
-	total_bytes_out += b;
-	if (type == TYPE_A || type == TYPE_E) {
-		b = printf(", FORM: %s", formnames[form]);
-		total_bytes += b;
-		total_bytes_out += b;
-	}
+	lreply(-2, "    TYPE: %s", typenames[type]);
+	if (type == TYPE_A || type == TYPE_E)
+		lreply(-2, ", FORM: %s", formnames[form]);
 	if (type == TYPE_L) {
 #if NBBY == 8
-		b = printf(" %d", NBBY);
+		lreply(-2, " %d", NBBY);
 #else
 			/* XXX: `bytesize' needs to be defined in this case */
-		b = printf(" %d", bytesize);
+		lreply(-2, " %d", bytesize);
 #endif
-		total_bytes += b;
-		total_bytes_out += b;
 	}
-	b = printf("; STRUcture: %s; transfer MODE: %s\r\n",
+	lreply(-1, "; STRUcture: %s; transfer MODE: %s",
 	    strunames[stru], modenames[mode]);
-	total_bytes += b;
-	total_bytes_out += b;
 	ispassive = 0;
 	if (data != -1) {
   		lreply(0, "Data connection open");
 		su = NULL;
 	} else if (pdata != -1) {
-		b = printf("                in Passive mode");
-		total_bytes += b;
-		total_bytes_out += b;
+		lreply(0, "in Passive mode");
 		su = (union sockunion *)&pasv_addr;
 		ispassive = 1;
 		goto printaddr;
 	} else if (usedefault == 0) {
 		if (epsvall) {
-			b = printf("211- EPSV only mode (EPSV ALL )\r\n");
-			total_bytes += b;
-			total_bytes_out += b;
+			lreply(0, "EPSV only mode (EPSV ALL)");
 			goto epsvonly;
 		}
-		b = printf("211- %s",
-			(data_dest.su_family == AF_INET) ? "PORT" : "LPRT");
-		total_bytes += b;
-		total_bytes_out += b;
 		su = (union sockunion *)&data_dest;
  printaddr:
-		/* PASV/PORT */
+							/* PASV/PORT */
 		if (su->su_family == AF_INET) {
-			if (ispassive)
-				b = printf("211- PASV ");
-			else
-				b = printf("211- PORT ");
 			a = (u_char *) &su->su_sin.sin_addr;
 			p = (u_char *) &su->su_sin.sin_port;
 #define UC(b) (((int) b) & 0xff)
-			b += printf("(%d,%d,%d,%d,%d,%d)\r\n",
+			lreply(0, "%s (%d,%d,%d,%d,%d,%d)",
+				ispassive ? "PASV" : "PORT" ,
 				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				UC(p[0]), UC(p[1]));
-			total_bytes += b;
-			total_bytes_out += b;
 		}
 
-		/* LPSV/LPRT */
+/* XXXLUKEM this code doesn't look right; speak to itojun */
+
+							/* LPSV/LPRT */
 	    {
 		int alen, af, i;
 
@@ -1797,16 +1733,11 @@ statcmd(void)
 			break;
 		}
 		if (af) {
-			if (ispassive)
-				b = printf("211- LPSV ");
-			else
-				b = printf("211- LPRT ");
-			printf("(%d,%d", af, alen);
+			lreply(-2, "    %s (%d,%d",
+			    ispassive ? "LPSV" : "LPRT", af, alen);
 			for (i = 0; i < alen; i++)
-				b += printf("%d,", UC(a[alen]));
-			b += printf("%d,%d,%d)\r\n", 2, UC(p[0]), UC(p[1]));
-			total_bytes += b;
-			total_bytes_out += b;
+				lreply(-2, "%d,", UC(a[alen]));
+			lreply(-1, "%d,%d,%d)", 2, UC(p[0]), UC(p[1]));
 #undef UC
 		}
 	    }
@@ -1826,16 +1757,11 @@ statcmd(void)
 		}
 		if (af) {
 			if (getnameinfo((struct sockaddr *)su, su->su_len,
-					ntop_buf, sizeof(ntop_buf), NULL, 0,
+				    ntop_buf, sizeof(ntop_buf), NULL, 0,
 					NI_NUMERICHOST) == 0) {
-				if (ispassive)
-					b = printf("211 - EPSV ");
-				else
-					b = printf("211 - EPRT ");
-				b += printf("(|%d|%s|%d|)\r\n",
-					af, ntop_buf, ntohs(su->su_port));
-				total_bytes += b;
-				total_bytes_out += b;
+				lreply(0, "%s (|%d|%s|%d|)",
+				    ispassive ? "EPSV" : "EPRT",
+				    af, ntop_buf, ntohs(su->su_port));
 			}
 		}
 	} else
@@ -1932,6 +1858,11 @@ fatal(const char *s)
 	/* NOTREACHED */
 }
 
+/*
+ * reply() --
+ *	display the final line of a reply, with a trailing CRLF
+ *	i.e, n + " " + fmt + CRLF
+ */
 void
 reply(int n, const char *fmt, ...)
 {
@@ -1952,6 +1883,14 @@ reply(int n, const char *fmt, ...)
 	}
 }
 
+/*
+ * lreply() --
+ *	depending on the value of n, display a line with a trailing CRLF:
+ *	n == -2		freeform text, but no trailing CRLF
+ *	n == -1		freeform text
+ *	n ==  0		prefix the message with 4 spaces
+ *	n  >  0		prefix the message with n + "-"
+ */
 void
 lreply(int n, const char *fmt, ...)
 {
@@ -1964,131 +1903,23 @@ lreply(int n, const char *fmt, ...)
 		case 0:
 			b += printf("    ");
 		case -1:
+		case -2:
 			break;
 		default:
 			b += printf("%d-", n);
 			break;
 	}
 	b += vprintf(fmt, ap);
-	b += printf("\r\n");
+	if (n != -2)
+		b += printf("\r\n");
 	total_bytes += b;
 	total_bytes_out += b;
-	(void)fflush(stdout);
-	if (debug) {
+	if (n != -2)
+		(void)fflush(stdout);
+	if (debug && n >= 0) {
 		syslog(LOG_DEBUG, "<--- %d- ", n);
 		vsyslog(LOG_DEBUG, fmt, ap);
 	}
-}
-
-static void
-ack(const char *s)
-{
-
-	reply(250, "%s command successful.", s);
-}
-
-void
-delete(const char *name)
-{
-	char *p = NULL;
-
-	if (remove(name) < 0) {
-		p = strerror(errno);
-		perror_reply(550, name);
-	} else
-		ack("DELE");
-	logcmd("delete", -1, name, NULL, NULL, p);
-}
-
-void
-cwd(const char *path)
-{
-
-	if (chdir(path) < 0)
-		perror_reply(550, path);
-	else {
-		show_chdir_messages(250);
-		ack("CWD");
-	}
-}
-
-static void
-replydirname(const char *name, const char *message)
-{
-	char npath[MAXPATHLEN];
-	int i;
-
-	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
-		npath[i] = *name;
-		if (*name == '"')
-			npath[++i] = '"';
-	}
-	npath[i] = '\0';
-	reply(257, "\"%s\" %s", npath, message);
-}
-
-void
-makedir(const char *name)
-{
-	char *p = NULL;
-
-	if (mkdir(name, 0777) < 0) {
-		p = strerror(errno);
-		perror_reply(550, name);
-	} else
-		replydirname(name, "directory created.");
-	logcmd("mkdir", -1, name, NULL, NULL, p);
-}
-
-void
-removedir(const char *name)
-{
-	char *p = NULL;
-
-	if (rmdir(name) < 0) {
-		p = strerror(errno);
-		perror_reply(550, name);
-	} else
-		ack("RMD");
-	logcmd("rmdir", -1, name, NULL, NULL, p);
-}
-
-void
-pwd(void)
-{
-	char path[MAXPATHLEN];
-
-	if (getcwd(path, sizeof(path) - 1) == NULL)
-		reply(550, "Can't get the current directory: %s.",
-		    strerror(errno));
-	else
-		replydirname(path, "is the current directory.");
-}
-
-char *
-renamefrom(const char *name)
-{
-	struct stat st;
-
-	if (stat(name, &st) < 0) {
-		perror_reply(550, name);
-		return (NULL);
-	}
-	reply(350, "File exists, ready for destination name");
-	return (xstrdup(name));
-}
-
-void
-renamecmd(const char *from, const char *to)
-{
-	char *p = NULL;
-
-	if (rename(from, to) < 0) {
-		p = strerror(errno);
-		perror_reply(550, "rename");
-	} else
-		ack("RNTO");
-	logcmd("rename", -1, from, to, NULL, p);
 }
 
 static void
@@ -2497,10 +2328,7 @@ send_file_list(const char *whichf)
 		while ((dir = readdir(dirp)) != NULL) {
 			char nbuf[MAXPATHLEN];
 
-			if (dir->d_name[0] == '.' && dir->d_namlen == 1)
-				continue;
-			if (dir->d_name[0] == '.' && dir->d_name[1] == '.' &&
-			    dir->d_namlen == 2)
+			if (ISDOTDIR(dir->d_name) || ISDOTDOTDIR(dir->d_name))
 				continue;
 
 			(void)snprintf(nbuf, sizeof(nbuf), "%s%s%s", dirname,
@@ -2579,7 +2407,6 @@ conffilename(const char *s)
  *	if elapsed != NULL, append "in xxx.yyy seconds"
  *	if error != NULL, append ": " + error
  */
-
 void
 logcmd(const char *command, off_t bytes, const char *file1, const char *file2,
 	const struct timeval *elapsed, const char *error)
