@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.32 1996/04/23 16:38:32 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.33 1996/04/23 17:03:04 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -504,8 +504,10 @@ serintr(unit)
 			log(LOG_WARNING, "ser0: %d ring buffer overflows.\n",
 			    ovfl);
 	}
+	s2 = splser();
 	if (sbcnt == 0 && (tp->t_state & TS_TBLOCK) == 0)
 		SETRTS(ciab.pra);	/* start accepting data again */
+	splx(s2);
 	splx(s1);
 }
 
