@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1 2001/12/17 21:39:52 fredette Exp $
+.\"	$NetBSD: install,v 1.2 2002/03/21 23:41:32 fredette Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,7 +156,7 @@ You can look at the route table using:
 .Pp
 Now mount the NFS file system containing the miniroot image:
 .Pp
-.Dl ssh\*> Ic "mount -r 192.233.20.195:/server/path /mnt"
+.Dl ssh\*> Ic "mount -o rdonly,-r=1024 192.233.20.195:/server/path /mnt"
 .Pp
 The procedure is simpler if you have space for an expanded
 (not compressed) copy of the miniroot image. In that case:
