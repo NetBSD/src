@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.23 1994/03/09 17:19:10 mycroft Exp $
+ *	$Id: if_ep.c,v 1.24 1994/03/14 06:57:25 hpeyerl Exp $
  */
 /*
  * TODO:
@@ -698,7 +698,7 @@ epread(sc)
 		top = sc->mb[sc->next_mb];
 		sc->mb[sc->next_mb] = 0;
 		if (top == 0) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			MGETHDR(top, M_DONTWAIT, MT_DATA);
 			if (top == 0)
 				goto out;
 		} else {	/* Convert one of our saved mbuf's */
@@ -706,7 +706,7 @@ epread(sc)
 			top->m_data = top->m_pktdat;
 			top->m_flags = M_PKTHDR;
 		}
-		insw(BASE + EP_W1_RX_PIO_RD_1, mtod(m, caddr_t) + m->m_len,
+		insw(BASE + EP_W1_RX_PIO_RD_1, mtod(top, caddr_t),
 		    sizeof(struct ether_header));
 		top->m_next = m0;
 		top->m_len = sizeof(struct ether_header);
