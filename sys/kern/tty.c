@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.9 2002/06/20 03:47:24 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.10 2002/06/24 22:10:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.9 2002/06/20 03:47:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.10 2002/06/24 22:10:59 nathanw Exp $");
 
 #include "opt_uconsole.h"
 
@@ -760,7 +760,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSETP:
 	case  TIOCSLTC:
 #endif
-		while (isbackground(curproc->l_proc, tp) &&
+		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
 		    !sigismasked(p, SIGTTOU)) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
@@ -1310,7 +1310,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	struct timeval	stime;
 
 	cc = tp->t_cc;
-	p = curproc->l_proc;
+	p = curproc;
 	error = 0;
 	has_stime = 0;
 	last_cc = 0;
@@ -1571,7 +1571,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	/*
 	 * Hang the process if it's in the background.
 	 */
-	p = curproc->l_proc;
+	p = curproc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
 	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.23.2.6 2002/04/01 07:48:26 nathanw Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.23.2.7 2002/06/24 22:11:42 nathanw Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -77,7 +77,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.23.2.6 2002/04/01 07:48:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.23.2.7 2002/06/24 22:11:42 nathanw Exp $");
 
 #include "ppp.h"
 
@@ -177,7 +177,7 @@ pppopen(dev, tp)
     dev_t dev;
     struct tty *tp;
 {
-    struct proc *p = curproc->l_proc;		/* XXX */
+    struct proc *p = curproc;		/* XXX */
     struct ppp_softc *sc;
     int error, s;
 

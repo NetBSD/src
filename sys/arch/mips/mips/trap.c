@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.9 2002/06/21 06:23:36 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.10 2002/06/24 22:06:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.9 2002/06/21 06:23:36 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.10 2002/06/24 22:06:04 nathanw Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -181,7 +181,7 @@ trap(status, cause, vaddr, opc, frame)
 {
 	int type, sig;
 	int ucode = 0;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p;
 	vm_prot_t ftype;
 	extern void fswintrberr(void);
@@ -211,12 +211,12 @@ trap(status, cause, vaddr, opc, frame)
 			USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, epc=0x%x, vaddr=0x%x\n",
 			status, cause, opc, vaddr);
-		if (curproc != NULL)
+		if (curlwp != NULL)
 			printf("pid=%d cmd=%s usp=0x%x ",
 			    p->p_pid, p->p_comm,
 			    (int)((struct frame *)l->l_md.md_regs)->f_regs[SP]);
 		else
-			printf("curproc == NULL ");
+			printf("curlwp == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
 #if defined(DDB)
 		kdb_trap(type, (mips_reg_t *) frame);
@@ -512,7 +512,7 @@ trap(status, cause, vaddr, opc, frame)
 		f = (struct frame *)l->l_md.md_regs;
 		savefpregs(l);		/* yield FPA */
 		loadfpregs(l);		/* load FPA */
-		fpcurproc = l;
+		fpcurlwp = l;
 		l->l_md.md_flags |= MDP_FPUSED;
 		f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
 		}
@@ -574,7 +574,7 @@ void
 ast(pc)
 	unsigned pc;		/* program counter where to continue */
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int sig;
 
@@ -1014,11 +1014,11 @@ done:
 		}
 	} else {
 finish:
-		if (curproc != NULL && curproc->l_proc != NULL)
+		if (curlwp != NULL && curproc != NULL)
 			(*printfn)("User-level: pid %d\n",
-			    	curproc->l_proc->p_pid);
+			    	curproc->p_pid);
 		else
-			(*printfn)("User-level: curproc NULL\n");
+			(*printfn)("User-level: curlwp NULL\n");
 	}
 }
 

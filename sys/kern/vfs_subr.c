@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.14 2002/06/20 03:47:28 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.15 2002/06/24 22:11:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.14 2002/06/20 03:47:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.146.2.15 2002/06/24 22:11:08 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -217,7 +217,7 @@ vfs_busy(mp, flags, interlkp)
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
 		if ((flags & LK_RECURSEFAIL) && mp->mnt_unmounter != NULL
-		    && mp->mnt_unmounter == curproc->l_proc)
+		    && mp->mnt_unmounter == curproc)
 			return (EDEADLK);
 		if (interlkp)
 			simple_unlock(interlkp);
@@ -419,7 +419,7 @@ getnewvnode(tag, mp, vops, vpp)
 {
 	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
@@ -1041,7 +1041,7 @@ checkalias(nvp, nvp_rdev, mp)
 	dev_t nvp_rdev;
 	struct mount *mp;
 {
-	struct proc *p = curproc->l_proc;       /* XXX */
+	struct proc *p = curproc;       /* XXX */
 	struct vnode *vp;
 	struct vnode **vpp;
 
@@ -1196,7 +1196,7 @@ void
 vput(vp)
 	struct vnode *vp;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1241,7 +1241,7 @@ void
 vrele(vp)
 	struct vnode *vp;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 #ifdef DIAGNOSTIC
 	if (vp == NULL)
@@ -1389,7 +1389,7 @@ vflush(mp, skipvp, flags)
 	struct vnode *skipvp;
 	int flags;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct vnode *vp, *nvp;
 	int busy = 0;
 
@@ -1620,7 +1620,7 @@ void
 vgone(vp)
 	struct vnode *vp;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	simple_lock(&vp->v_interlock);
 	vgonel(vp, p);
@@ -2449,7 +2449,7 @@ vfs_shutdown()
 {
 	struct buf *bp;
 	int iter, nbusy, nbusy_prev = 0, dcount, s;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
 	/* XXX we're certainly not running in proc0's context! */

@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.4.4.2 2001/08/30 23:43:40 nathanw Exp $
+# $NetBSD: genassym.cf,v 1.4.4.3 2002/06/24 22:03:08 nathanw Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -173,8 +173,8 @@ define	SYS___sigreturn14	SYS___sigreturn14
 define	SYS_exit		SYS_exit
 
 # CPU info
-define	CPU_INFO_CURPROC	offsetof(struct cpu_info, ci_curproc)
-define	CPU_INFO_FPCURPROC	offsetof(struct cpu_info, ci_fpcurproc)
+define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB_PADDR	offsetof(struct cpu_info, ci_idle_pcb_paddr)
 define	CPU_INFO_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)

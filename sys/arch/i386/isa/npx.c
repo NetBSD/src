@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.11 2002/04/17 00:03:23 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.12 2002/06/24 22:05:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.11 2002/04/17 00:03:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.12 2002/06/24 22:05:11 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -325,8 +325,8 @@ npxintr(void *arg)
 	IPRINTF(("Intr"));
 
 	if (l == 0 || npx_type == NPX_NONE) {
-		printf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
-		    l, curproc, npx_type);
+		printf("npxintr: p = %p, curlwp = %p, npx_type = %d\n",
+		    l, curlwp, npx_type);
 		panic("npxintr: came from nowhere");
 	}
 
@@ -344,10 +344,10 @@ npxintr(void *arg)
 
 #ifdef DIAGNOSTIC
 	/*
-	 * At this point, npxproc should be curproc.  If it wasn't, the TS bit
+	 * At this point, npxproc should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
 	 */
-	if (l != curproc)
+	if (l != curlwp)
 		panic("npxintr: wrong process");
 #endif
 

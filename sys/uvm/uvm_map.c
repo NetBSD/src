@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.11 2002/04/17 00:06:32 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.12 2002/06/24 22:12:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.11 2002/04/17 00:06:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.12 2002/06/24 22:12:52 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -534,7 +534,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	 * detect a popular device driver bug.
 	 */
 
-	KASSERT(curproc != NULL || map->flags & VM_MAP_INTRSAFE);
+	KASSERT(curlwp != NULL || map->flags & VM_MAP_INTRSAFE);
 
 	/*
 	 * check sanity of protection code

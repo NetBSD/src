@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28.4.7 2002/06/20 03:40:33 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28.4.8 2002/06/24 22:07:05 nathanw Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2001,7 +2001,7 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	DPRINTFN(ACTIVATE,
-	    ("pmap_activate: lwp %p (curproc %p)\n", l, curproc));
+	    ("pmap_activate: lwp %p (curlwp %p)\n", l, curlwp));
 
 	/*
 	 * XXX Normally performed in cpu_fork().
@@ -2015,7 +2015,7 @@ pmap_activate(struct lwp *l)
 	 * In theory, the SR registers need only be valid on return
 	 * to user space wait to do them there.
 	 */
-	if (l == curproc) {
+	if (l == curlwp) {
 		/* Store pointer to new current pmap. */
 		curpm = pmap;
 	}

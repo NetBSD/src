@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.23.8.4 2002/06/20 03:41:29 nathanw Exp $ */
+/*	$NetBSD: db_trace.c,v 1.23.8.5 2002/06/24 22:07:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -355,7 +355,7 @@ db_dump_trap(addr, have_addr, count, modif)
 		register char c, *cp = modif;
 		while ((c = *cp++) != 0)
 			if (c == 'u')
-				tf = curproc->l_md.md_tf;
+				tf = curlwp->l_md.md_tf;
 	}
 	/* Or an arbitrary trapframe */
 	if (have_addr)
@@ -411,7 +411,7 @@ db_dump_trap(addr, have_addr, count, modif)
 		  (unsigned long long)tf->tf_in[7]);
 #endif
 #if 0
-	if (tf == curproc->p_md.md_tf) {
+	if (tf == curlwp->p_md.md_tf) {
 		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);
 		db_printf("ins (from stack):\n%016llx %016llx %016llx %016llx\n",
 			  (int64_t)kstack->rw_local[0], (int64_t)kstack->rw_local[1],

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36.8.4 2002/06/20 03:37:52 nathanw Exp $ */
+/*	$NetBSD: clock.c,v 1.36.8.5 2002/06/24 22:03:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36.8.4 2002/06/20 03:37:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36.8.5 2002/06/24 22:03:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -402,7 +402,7 @@ clockopen(dev_t dev, int flags)
 int
 clockclose(dev_t dev, int flags)
 {
-	(void) clockunmmap(dev, (caddr_t)0, curproc->l_proc);	/* XXX */
+	(void) clockunmmap(dev, (caddr_t)0, curproc);	/* XXX */
 	stopclock();
 	clockon = 0;
 	return(0);
@@ -530,7 +530,7 @@ void
 initprofclock(void)
 {
 #if NCLOCK > 0
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 
 	/*
 	 * If the high-res timer is running, force profiling off.
@@ -611,7 +611,7 @@ profclock(caddr_t pc, int ps)
 	 */
 	if (USERMODE(ps)) {
 		if (p->p_stats.p_prof.pr_scale)
-			addupc(pc, &curproc->l_proc->p_stats.p_prof, 1);
+			addupc(pc, &curproc->p_stats.p_prof, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.13 2002/06/21 05:57:57 gmcgarry Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.14 2002/06/24 22:05:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigframe *fp, kf;
 	struct frame *frame;
@@ -493,7 +493,7 @@ cpu_getmcontext(l, mcp, flags)
 		 * save its FP state. Otherwise, its state is already
 		 * store in its PCB.
 		 */
-		if (l == curproc)
+		if (l == curlwp)
 			m68881_save(fpf);
 
 		mcp->__mc_pad.mc_frame.fpf_u1 = fpf->FPF_u1;
@@ -621,10 +621,10 @@ cpu_setmcontext(l, mcp, flags)
 
 		/*
 		 * We only need to restore FP state right now if we're
-		 * dealing with curproc. Otherwise, it'll be restored
+		 * dealing with curlwp. Otherwise, it'll be restored
 		 * (from the PCB) when this lwp is given the cpu.
 		 */
-		if (l == curproc)
+		if (l == curlwp)
 			m68881_restore(fpf);
 	}
 

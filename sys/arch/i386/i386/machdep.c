@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.19 2002/06/20 03:39:11 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.20 2002/06/24 22:04:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.19 2002/06/20 03:39:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.20 2002/06/24 22:04:56 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1975,7 +1975,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
@@ -3596,4 +3596,12 @@ cpu_setmcontext(l, mcp, flags)
 	}
 
 	return (0);
+}
+
+int
+cpu_getsp(struct lwp *l)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	return tf->tf_esp;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.4.4.2 2001/08/30 23:43:43 nathanw Exp $ */
+/* $NetBSD: ieeefp.h,v 1.4.4.3 2002/06/24 22:03:21 nathanw Exp $ */
 
 /* 
  * Written by J.T. Conklin, Apr 28, 1995
@@ -23,7 +23,7 @@ typedef int fp_except;
 #define	FP_AA_FLAGS (FP_X_INV | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP)
 
 #define float_raise(f)						\
-	do curproc->l_md.md_flags |= NETBSD_FLAG_TO_FP_C(f);	\
+	do curlwp->l_md.md_flags |= NETBSD_FLAG_TO_FP_C(f);	\
 	while(0)
 
 #define float_set_inexact()	float_raise(FP_X_IMP)

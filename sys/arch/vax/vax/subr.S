@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.2.2.5 2002/06/22 00:47:15 nathanw Exp $	   */
+/*	$NetBSD: subr.S,v 1.2.2.6 2002/06/24 22:08:58 nathanw Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -341,7 +341,7 @@ idle:
 
 JSBENTRY(Swtch)
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-	clrl	CI_CURPROC(%r1)		# Stop process accounting
+	clrl	CI_CURLWP(%r1)		# Stop process accounting
 	svpctx				# Save context if another CPU
 					# get control first (must be on
 					# the interrupt stack when idling)
@@ -368,7 +368,7 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 	movl	%r1,L_CPU(%r2)		# l->l_cpu = curcpu();
 #endif
 	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
-	movl	%r2,CI_CURPROC(%r1)	# set new process running
+	movl	%r2,CI_CURLWP(%r1)	# set new process running
 	clrl	CI_WANT_RESCHED(%r1)	# we are now changing process
 	movl	L_ADDR(%r2),%r0		# Get pointer to new pcb.
 	addl3	%r0,$IFTRAP,%r1		# Save for copy* functions.
@@ -410,7 +410,7 @@ _C_LABEL(tramp):
 
 ENTRY(cpu_preempt, 0)
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-	clrl	CI_CURPROC(%r1)		# Stop process accounting
+	clrl	CI_CURLWP(%r1)		# Stop process accounting
 	svpctx				# Now on interrupt stack
 
 	movl	8(%ap),%r0		# get new lwp
@@ -423,7 +423,7 @@ ENTRY(cpu_preempt, 0)
 	movl	r1,L_CPU(%r2)		# l->l_cpu = curcpu();
 #endif
 	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
-	movl	%r2,CI_CURPROC(%r1)	# set new process running
+	movl	%r2,CI_CURLWP(%r1)	# set new process running
 	movl	L_ADDR(%r2),%r0		# Get pointer to new pcb.
 	addl3	%r0,$IFTRAP,%r3		# Save for copy* functions.
 	mtpr	%r3,$PR_ESP		# Use ESP as CPU-specific pointer

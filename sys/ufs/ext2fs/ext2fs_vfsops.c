@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.5 2002/04/01 07:49:15 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.6 2002/06/24 22:12:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.5 2002/04/01 07:49:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.6 2002/06/24 22:12:22 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -160,7 +160,7 @@ ext2fs_mountroot()
 	extern struct vnode *rootvp;
 	struct m_ext2fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
 	int error;
 

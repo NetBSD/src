@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.9 2002/06/20 22:59:40 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.10 2002/06/24 22:10:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.9 2002/06/20 22:59:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.10 2002/06/24 22:10:52 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -155,7 +155,7 @@ uiomove(buf, n, uio)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && p != curproc->l_proc)
+	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
 		panic("uiomove proc");
 #endif
 	while (n > 0 && uio->uio_resid) {

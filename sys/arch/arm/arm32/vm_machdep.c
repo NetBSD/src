@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.7 2002/04/17 00:02:27 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.8 2002/06/24 22:03:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -118,11 +118,11 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curproc, &lwp0);
+		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
 #endif	/* PMAP_DEBUG */
 
 #if 0 /* XXX */
-	if (l1 == curproc) {
+	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}

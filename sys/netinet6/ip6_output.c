@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.9 2002/06/20 03:49:22 nathanw Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.10 2002/06/24 22:11:52 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.9 2002/06/20 03:49:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.31.2.10 2002/06/24 22:11:52 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1243,7 +1243,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 	struct mbuf *m = *mp;
 	int optval = 0;
 	int error = 0;
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	if (level == IPPROTO_IPV6) {
 		switch (op) {
@@ -1640,7 +1640,7 @@ ip6_pcbopts(pktopt, m, so)
 {
 	struct ip6_pktopts *opt = *pktopt;
 	int error = 0;
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int priv = 0;
 
 	/* turn off any old options. */
@@ -1690,7 +1690,7 @@ ip6_setmoptions(optname, im6op, m)
 	struct route_in6 ro;
 	struct sockaddr_in6 *dst;
 	struct in6_multi_mship *imm;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	if (im6o == NULL) {
 		/*

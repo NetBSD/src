@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.11 2002/06/20 03:41:30 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.12 2002/06/24 22:08:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -100,15 +100,15 @@
 #define	TF_I	TF_IN
 
 	
-#undef	CURPROC
+#undef	CURLWP
 #undef	CPCB
 #undef	FPLWP
 #ifndef MULTIPROCESSOR
-#define	CURPROC	_C_LABEL(curproc)
+#define	CURLWP	_C_LABEL(curlwp)
 #define CPCB	_C_LABEL(cpcb)
 #define	FPLWP	_C_LABEL(fplwp)
 #else
-#define	CURPROC	(CPUINFO_VA+CI_CURPROC)
+#define	CURLWP	(CPUINFO_VA+CI_CURLWP)
 #define CPCB	(CPUINFO_VA+CI_CPCB)
 #define	FPLWP	(CPUINFO_VA+CI_FPLWP)
 #endif
@@ -351,9 +351,9 @@
 	ba,pt	%xcc, 2f;			/* XXXX needs to change to CPUs idle proc */ \
 	 or	%l4, %lo(_C_LABEL(lwp0)), %l5;						     \
 1:											     \
-	sethi	%hi(CURPROC), %l4;		/* Use curproc */			     \
-	LDPTR	[%l4 + %lo(CURPROC)], %l5;						     \
-	brz,pn	%l5, 0b; nop;			/* If curproc is NULL need to use lwp0 */   \
+	sethi	%hi(CURLWP), %l4;		/* Use curlwp */			     \
+	LDPTR	[%l4 + %lo(CURLWP)], %l5;						     \
+	brz,pn	%l5, 0b; nop;			/* If curlwp is NULL need to use lwp0 */   \
 2:											     \
 	LDPTR	[%l5 + L_FPSTATE], %l6;		/* Save old fpstate */			     \
 	STPTR	%l0, [%l5 + L_FPSTATE];		/* Insert new fpstate */		     \
@@ -1551,7 +1551,7 @@ traceit:
 	 lduw	[%g2+TRACEPTR], %g3
 	rdpr	%tl, %g4
 	rdpr	%tt, %g5
-	set	CURPROC, %g6
+	set	CURLWP, %g6
 	cmp	%g4, 1
 	sllx	%g4, 13, %g4
 	bnz,a,pt	%icc, 3f
@@ -2549,7 +2549,7 @@ winfixspill:
 	lduw	[%g2+TRACEPTR], %g3
 	rdpr	%tl, %g4
 	mov	2, %g5
-	set	CURPROC, %g6
+	set	CURLWP, %g6
 	sllx	%g4, 13, %g4
 !	LDPTR	[%g6], %g6	! Never touch PID
 	clr	%g6		! DISABLE PID
@@ -2933,7 +2933,7 @@ winfixsave:
 	lduw	[%g2+TRACEPTR], %g3
 	rdpr	%tl, %g4
 	mov	3, %g5
-	set	CURPROC, %g6
+	set	CURLWP, %g6
 	sllx	%g4, 13, %g4
 !	LDPTR	[%g6], %g6	! Never do faultable loads
 	clr	%g6		! DISABLE PID
@@ -4681,9 +4681,9 @@ return_from_trap:
 	btst	TSTATE_PRIV, %g1			! returning to userland?
 #if 0
 	bnz,pt	%icc, 0f
-	 sethi	%hi(CURPROC), %o1
+	 sethi	%hi(CURLWP), %o1
 	call	_C_LABEL(rwindow_save)			! Flush out our pcb
-	 LDPTR	[%o1 + %lo(CURPROC)], %o0
+	 LDPTR	[%o1 + %lo(CURLWP)], %o0
 0:
 #endif
 	!!
@@ -4765,7 +4765,7 @@ rft_kernel:
 	 nop
 	lduw	[%g2+TRACEPTR], %g3
 	rdpr	%tl, %g4
-	set	CURPROC, %g6
+	set	CURLWP, %g6
 	sllx	%g4, 13, %g4
 	LDPTR	[%g6], %g6
 	clr	%g6		! DISABLE PID
@@ -5090,7 +5090,7 @@ badregs:
 	lduw	[%g2+TRACEPTR], %g3
 	rdpr	%tl, %g4
 	mov	1, %g5
-	set	CURPROC, %g6
+	set	CURLWP, %g6
 	sllx	%g4, 13, %g4
 	LDPTR	[%g6], %g6
 !	clr	%g6		! DISABLE PID
@@ -7278,7 +7278,7 @@ Lcopyfault:
  *	%l4 = lastproc
  *	%l5 = oldpsr (excluding ipl bits)
  *	%l6 = %hi(cpcb)
- *	%l7 = %hi(curproc)
+ *	%l7 = %hi(curlwp)
  *	%o0 = tmp 1
  *	%o1 = tmp 2
  *	%o2 = tmp 3
@@ -7290,7 +7290,7 @@ Lcopyfault:
 /*
  * switchexit is called only from cpu_exit() before the current process
  * has freed its vmspace and kernel stack; we must schedule them to be
- * freed.  (curproc is already NULL.)
+ * freed.  (curlwp is already NULL.)
  *
  * We lay the process to rest by changing to the `idle' kernel stack,
  * and note that the `last loaded process' is nonexistent.
@@ -7396,7 +7396,7 @@ ENTRY(switchexit)
 	 *	%l4 = lastproc
 	 *	%l5 = oldpsr (excluding ipl bits)
 	 *	%l6 = %hi(cpcb)
-	 *	%l7 = %hi(curproc)
+	 *	%l7 = %hi(curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o3 = whichqs
@@ -7408,7 +7408,7 @@ ENTRY(switchexit)
 	mov	CTX_SECONDARY, %o0
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	sethi	%hi(CPCB), %l6
-	sethi	%hi(CURPROC), %l7
+	sethi	%hi(CURLWP), %l7
 	ldxa	[%o0] ASI_DMMU, %l1		! Don't demap the kernel
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 	clr	%l4				! lastproc = NULL;
@@ -7443,7 +7443,7 @@ ENTRY(idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
 #endif
-	 STPTR	%g0, [%l7 + %lo(CURPROC)] ! curproc = NULL;
+	 STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 1:					! spin reading _whichqs until nonzero
 	wrpr	%g0, PSTATE_INTR, %pstate		! Make sure interrupts are enabled
 	wrpr	%g0, 0, %pil		! (void) spl0();
@@ -7528,7 +7528,7 @@ idlemsg1:	.asciz	" %x %x %x\r\n"
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  *
- * Apparently cpu_switch() is called with curproc as the first argument,
+ * Apparently cpu_switch() is called with curlwp as the first argument,
  * but no port seems to make use of that parameter.
  */
 	.globl	_C_LABEL(time)
@@ -7542,7 +7542,7 @@ ENTRY(cpu_switch)
 	 *	%l4 = lastproc
 	 *	%l5 = cpcb
 	 *	%l6 = %hi(CPCB)
-	 *	%l7 = %hi(CURPROC)
+	 *	%l7 = %hi(CURLWP)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -7581,12 +7581,12 @@ swdebug:	.word 0
 	sethi	%hi(CPCB), %l6
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2	! set up addr regs
 	LDPTR	[%l6 + %lo(CPCB)], %l5
-	sethi	%hi(CURPROC), %l7
+	sethi	%hi(CURLWP), %l7
 	stx	%o7, [%l5 + PCB_PC]	! cpcb->pcb_pc = pc;
-	LDPTR	[%l7 + %lo(CURPROC)], %l4	! lastproc = curproc;
+	LDPTR	[%l7 + %lo(CURLWP)], %l4	! lastproc = curlwp;
 	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 
-	STPTR	%g0, [%l7 + %lo(CURPROC)]	! curproc = NULL;
+	STPTR	%g0, [%l7 + %lo(CURLWP)]	! curlwp = NULL;
 
 Lsw_scan:
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
@@ -7669,7 +7669,7 @@ cpu_loadproc:
 	 *	%l4 = lastproc
 	 *	%l5 = cpcb
 	 *	%l6 = %hi(_cpcb)
-	 *	%l7 = %hi(_curproc)
+	 *	%l7 = %hi(_curlwp)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -7710,7 +7710,7 @@ cpu_loadproc:
 	 */
 	call	_C_LABEL(sched_unlock_idle)
 #endif
-	 STPTR	%l4, [%l7 + %lo(CURPROC)]	! restore old proc so we can save it
+	 STPTR	%l4, [%l7 + %lo(CURLWP)]	! restore old proc so we can save it
 
 	cmp	%l3, %l4			! p == lastproc?
 	be,a,pt	%xcc, Lsw_sameproc		! yes, go return 0
@@ -7774,7 +7774,7 @@ Lsw_load:
 	.text
 #endif
 	/* set new cpcb */
-	STPTR	%l3, [%l7 + %lo(CURPROC)]	! curproc = p;
+	STPTR	%l3, [%l7 + %lo(CURLWP)]	! curlwp = p;
 	STPTR	%l1, [%l6 + %lo(CPCB)]	! cpcb = newpcb;
 
 #ifdef SCHED_DEBUG
@@ -7926,7 +7926,7 @@ Lsw_havectx:
 	lduw	[%o2+TRACEPTR], %o3
 	rdpr	%tl, %o4
 	mov	4, %o5
-	set	CURPROC, %o0
+	set	CURLWP, %o0
 	sllx	%o4, 13, %o4
 	LDPTR	[%o0], %o0
 !	clr	%o0		! DISABLE PID
@@ -7974,7 +7974,7 @@ Lsw_sameproc:
 	GLOBTOLOC
 	set	1f, %o0
 	mov	%i0, %o2
-	set	CURPROC, %o3
+	set	CURLWP, %o3
 	LDPTR	[%o3], %o3
 	ld	[%o3 + P_VMSPACE], %o3
 	call	printf
@@ -8025,7 +8025,7 @@ ENTRY(cpu_preempt)
 	 *	%l4 = lastproc
 	 *	%l5 = cpcb
 	 *	%l6 = %hi(CPCB)
-	 *	%l7 = %hi(CURPROC)
+	 *	%l7 = %hi(CURLWP)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
@@ -8042,16 +8042,16 @@ ENTRY(cpu_preempt)
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2	! set up addr regs
 	ld	[%l3 + L_PRIORITY], %o4		! load which
 	
-	sethi	%hi(CURPROC), %l7
+	sethi	%hi(CURLWP), %l7
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 	
 	srl	%o4, 2, %o4			! convert pri -> queue number
 	stx	%o7, [%l5 + PCB_PC]		! cpcb->pcb_pc = pc;
 	
-	mov	%i0, %l4			! lastproc = curproc; (hope he's right)
+	mov	%i0, %l4			! lastproc = curlwp; (hope he's right)
 	sth	%o1, [%l5 + PCB_PSTATE]		! cpcb->pcb_pstate = oldpstate;
 
-	STPTR	%g0, [%l7 + %lo(CURPROC)]	! curproc = NULL;
+	STPTR	%g0, [%l7 + %lo(CURLWP)]	! curlwp = NULL;
 	
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
@@ -9421,18 +9421,18 @@ Lbcopy_block:
  * Next, allocate an aligned fpstate on the stack.  We will properly
  * nest calls on a particular stack so this should not be a problem.
  *
- * Now we grab either curproc (or if we're on the interrupt stack
+ * Now we grab either curlwp (or if we're on the interrupt stack
  * lwp0).  We stash its existing fpstate in a local register and
- * put our new fpstate in curproc->p_md.md_fpstate.  We point
- * fplwp at curproc (or lwp0) and enable the FPU.
+ * put our new fpstate in curlwp->p_md.md_fpstate.  We point
+ * fplwp at curlwp (or lwp0) and enable the FPU.
  *
  * If we are ever preempted, our FPU state will be saved in our
  * fpstate.  Then, when we're resumed and we take an FPDISABLED
  * trap, the trap handler will be able to fish our FPU state out
- * of curproc (or lwp0).
+ * of curlwp (or lwp0).
  *
  * On exiting this routine we undo the damage: restore the original
- * pointer to curproc->p_md.md_fpstate, clear our fplwp, and disable
+ * pointer to curlwp->p_md.md_fpstate, clear our fplwp, and disable
  * the MMU.
  *
  *
@@ -9446,7 +9446,7 @@ Lbcopy_block:
  * %l1		fplwp (hi bits only)
  * %l2		orig fplwp
  * %l3		orig fpstate
- * %l5		curproc
+ * %l5		curlwp
  * %l6		old fpstate
  *
  * Register ussage, Kernel and user:
@@ -9483,9 +9483,9 @@ Lbcopy_block:
 	ba,pt	%xcc, 2f				! XXXX needs to change to CPUs idle proc
 	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
 1:
-	sethi	%hi(CURPROC), %l4			! Use curproc
-	LDPTR	[%l4 + %lo(CURPROC)], %l5
-	brz,pn	%l5, 0b					! If curproc is NULL need to use lwp0
+	sethi	%hi(CURLWP), %l4			! Use curlwp
+	LDPTR	[%l4 + %lo(CURLWP)], %l5
+	brz,pn	%l5, 0b					! If curlwp is NULL need to use lwp0
 	 nop
 2:
 	LDPTR	[%l5 + L_FPSTATE], %l6			! Save old fpstate
@@ -10712,18 +10712,18 @@ Lbzero_block:
  * Next, allocate an aligned fpstate on the stack.  We will properly
  * nest calls on a particular stack so this should not be a problem.
  *
- * Now we grab either curproc (or if we're on the interrupt stack
+ * Now we grab either curlwp (or if we're on the interrupt stack
  * lwp0).  We stash its existing fpstate in a local register and
- * put our new fpstate in curproc->p_md.md_fpstate.  We point
- * fplwp at curproc (or lwp0) and enable the FPU.
+ * put our new fpstate in curlwp->p_md.md_fpstate.  We point
+ * fplwp at curlwp (or lwp0) and enable the FPU.
  *
  * If we are ever preempted, our FPU state will be saved in our
  * fpstate.  Then, when we're resumed and we take an FPDISABLED
  * trap, the trap handler will be able to fish our FPU state out
- * of curproc (or lwp0).
+ * of curlwp (or lwp0).
  *
  * On exiting this routine we undo the damage: restore the original
- * pointer to curproc->p_md.md_fpstate, clear our fplwp, and disable
+ * pointer to curlwp->p_md.md_fpstate, clear our fplwp, and disable
  * the MMU.
  *
  */
@@ -10756,9 +10756,9 @@ Lbzero_block:
 	ba,pt	%xcc, 2f				! XXXX needs to change to CPU's idle proc
 	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
 1:
-	sethi	%hi(CURPROC), %l4			! Use curproc
-	LDPTR	[%l4 + %lo(CURPROC)], %l5
-	brz,pn	%l5, 0b					! If curproc is NULL need to use lwp0
+	sethi	%hi(CURLWP), %l4			! Use curlwp
+	LDPTR	[%l4 + %lo(CURLWP)], %l5
+	brz,pn	%l5, 0b					! If curlwp is NULL need to use lwp0
 2:
 	mov	%i0, %o0
 	mov	%i2, %o2
@@ -12093,7 +12093,7 @@ _C_LABEL(intrcnt):
 	.space	16 * LNGSZ
 _C_LABEL(eintrcnt):
 
-	.comm	_C_LABEL(curproc), PTRSZ
+	.comm	_C_LABEL(curlwp), PTRSZ
 	.comm	_C_LABEL(promvec), PTRSZ
 	.comm	_C_LABEL(nwindows), 4
 

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.63.2.2 2001/08/30 23:43:40 nathanw Exp $ */
+/* $NetBSD: interrupt.c,v 1.63.2.3 2002/06/24 22:03:09 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.63.2.2 2001/08/30 23:43:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.63.2.3 2002/06/24 22:03:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			 * do so.
 			 */
 			if ((++ci->ci_schedstate.spc_schedticks & 0x3f) == 0 &&
-			    (l = ci->ci_curproc) != NULL && schedhz != 0)
+			    (l = ci->ci_curlwp) != NULL && schedhz != 0)
 				schedclock(l);
 		}
 		break;
@@ -390,11 +390,11 @@ fatal:
 	printf("    pc      = 0x%lx\n", framep->tf_regs[FRAME_PC]);
 	printf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
 	printf("    code    = 0x%lx\n", *(unsigned long *)(param + 0x10));
-	printf("    curproc = %p\n", curproc);
-	if (curproc != NULL)
+	printf("    curlwp = %p\n", curlwp);
+	if (curlwp != NULL)
 		printf("        pid = %d.%d, comm = %s\n", 
-		    curproc->l_proc->p_pid, curproc->l_lid,
-		    curproc->l_proc->p_comm);
+		    curproc->p_pid, curlwp->l_lid,
+		    curproc->p_comm);
 	printf("\n");
 	panic("machine check");
 }

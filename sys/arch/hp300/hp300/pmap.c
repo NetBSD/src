@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97.4.6 2002/06/20 03:38:39 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97.4.7 2002/06/24 22:04:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.4.6 2002/06/20 03:38:39 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.4.7 2002/06/24 22:04:37 nathanw Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -860,7 +860,7 @@ pmap_activate(l)
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
 	    ("pmap_activate(%p)\n", l));
 
-	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
+	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64.2.5 2002/06/20 03:38:51 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.6 2002/06/24 22:04:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.5 2002/06/20 03:38:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.6 2002/06/24 22:04:44 nathanw Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -656,7 +656,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *)curpcb);
 
 #ifdef DEBUG

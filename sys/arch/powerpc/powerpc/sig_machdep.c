@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.8.5 2002/05/29 21:31:55 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.8.6 2002/06/24 22:07:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,7 +57,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;

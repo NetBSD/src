@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.61.6.6 2002/06/20 03:41:29 nathanw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.61.6.7 2002/06/24 22:07:53 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -625,8 +625,8 @@ db_pmap_cmd(addr, have_addr, count, modif)
 				if (c == 'f')
 					full = 1;
 	}
-	if (curproc && curproc->l_proc->p_vmspace)
-		pm = curproc->l_proc->p_vmspace->vm_map.pmap;
+	if (curlwp && curproc->p_vmspace)
+		pm = curproc->p_vmspace->vm_map.pmap;
 	if (have_addr) {
 		pm = (struct pmap*)addr;
 	}
@@ -726,7 +726,7 @@ db_lwp_cmd(addr, have_addr, count, modif)
 {
 	struct lwp *l;
 
-	l = curproc;
+	l = curlwp;
 	if (have_addr) 
 		l = (struct lwp*) addr;
 	if (l == NULL) {
@@ -750,8 +750,8 @@ db_proc_cmd(addr, have_addr, count, modif)
 {
 	struct proc *p = NULL;
 
-	if (curproc)
-		p = curproc->l_proc;
+	if (curlwp)
+		p = curproc;
 	if (have_addr) 
 		p = (struct proc*) addr;
 	if (p == NULL) {
@@ -868,7 +868,7 @@ db_setpcb(addr, have_addr, count, modif)
 /* XXX Do we need to do the following too?: */
 			extern struct pcb *cpcb;
 
-			curproc = p;
+			curlwp = p;
 			cpcb = (struct pcb*)p->p_addr;
 #endif
 			if (p->p_vmspace->vm_map.pmap->pm_ctx) {
@@ -895,8 +895,8 @@ db_print_trace_entry(te, i)
 	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
 	db_printf(": ");
 	if ((te->tpc && !(te->tpc&0x3)) &&
-	    curproc &&
-	    (curproc->l_proc->p_pid == te->pid)) {
+	    curlwp &&
+	    (curproc->p_pid == te->pid)) {
 		db_disasm((u_long)te->tpc, 0);
 	} else db_printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78.8.3 2002/06/20 03:37:48 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78.8.4 2002/06/24 22:03:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78.8.3 2002/06/20 03:37:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78.8.4 2002/06/24 22:03:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,10 +401,10 @@ findroot(void)
 				    dkp->dk_driver->d_strategy)
 					break;
 			if (bdp->d_open(MAKEDISKDEV(4, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curproc->l_proc))
+			    FREAD | FNONBLOCK, 0, curproc))
 				continue;
 			bdp->d_close(MAKEDISKDEV(4, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curproc->l_proc);
+			    FREAD | FNONBLOCK, 0, curproc);
 			pp = &dkp->dk_label->d_partitions[0];
 			for (i = 0; i < dkp->dk_label->d_npartitions;
 			    i++, pp++) {

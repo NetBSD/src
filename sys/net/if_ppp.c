@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.67.2.7 2002/06/20 03:48:15 nathanw Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.67.2.8 2002/06/24 22:11:32 nathanw Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.67.2.7 2002/06/20 03:48:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.67.2.8 2002/06/24 22:11:32 nathanw Exp $");
 
 #include "ppp.h"
 
@@ -627,7 +627,7 @@ pppsioctl(ifp, cmd, data)
     u_long cmd;
     caddr_t data;
 {
-    struct proc *p = curproc->l_proc;	/* XXX */
+    struct proc *p = curproc;	/* XXX */
     struct ppp_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
     struct ifreq *ifr = (struct ifreq *)data;

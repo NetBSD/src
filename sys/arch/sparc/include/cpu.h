@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.5 2002/02/28 04:12:03 nathanw Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.6 2002/06/24 22:07:29 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,7 +83,7 @@
  * referenced in generic code
  */
 #define	curcpu()		(cpuinfo.ci_self)
-#define	curproc			(curcpu()->ci_curproc)
+#define	curlwp			(curcpu()->ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
 #define	cpu_swapin(p)		/* nothing */

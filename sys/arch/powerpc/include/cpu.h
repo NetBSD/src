@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.6 2002/04/01 07:42:03 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.7 2002/06/24 22:07:04 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -65,11 +65,11 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct device *ci_dev;		/* device of corresponding cpu */
-	struct lwp *ci_curproc;		/* current owner of the processor */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
 
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
-	struct lwp *ci_fpuproc;
+	struct lwp *ci_fpulwp;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
 	int ci_cpuid;
 
@@ -129,8 +129,8 @@ void	cpu_boot_secondary_processors(void);
 extern struct cpu_info cpu_info[];
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
-#define curproc			curcpu()->ci_curproc
-#define fpuproc			curcpu()->ci_fpuproc
+#define curlwp			curcpu()->ci_curlwp
+#define fpulwp			curcpu()->ci_fpulwp
 #define curpcb			curcpu()->ci_curpcb
 #define curpm			curcpu()->ci_curpm
 #define want_resched		curcpu()->ci_want_resched

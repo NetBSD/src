@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.10 2002/06/20 23:54:49 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.11 2002/06/24 22:10:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -462,7 +462,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr,
 /*
  * Quit the process. This will call cpu_exit, which will call cpu_switch,
  * so this can only be used meaningfully if you're willing to switch away.
- * Calling with l!=curproc would be weird.
+ * Calling with l!=curlwp would be weird.
  */
 void
 lwp_exit(struct lwp *l)

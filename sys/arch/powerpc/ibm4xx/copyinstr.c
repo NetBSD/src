@@ -1,4 +1,4 @@
-/*	$NetBSD: copyinstr.c,v 1.1.8.2 2001/11/05 19:46:15 briggs Exp $	*/
+/*	$NetBSD: copyinstr.c,v 1.1.8.3 2002/06/24 22:07:01 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@ int setfault(faultbuf);		/* defined in locore.S */
 int
 copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 {
-	struct pmap *pm = curproc->l_proc->p_vmspace->vm_map.pmap;
+	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int msr, pid, tmp, ctx;
 	faultbuf env;
 

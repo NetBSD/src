@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.41.2.6 2002/05/29 21:33:02 nathanw Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.41.2.7 2002/06/24 22:09:39 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.41.2.6 2002/05/29 21:33:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.41.2.7 2002/06/24 22:09:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -296,7 +296,7 @@ clean_pipe(p, path)
 	SCARG(&la, path) = tpath;
 
 	/* XXX NJWLWP */
-	if ((error = sys___lstat13(curproc, &la, &retval)) != 0)
+	if ((error = sys___lstat13(curlwp, &la, &retval)) != 0)
 		return 0;
 
 	if ((error = copyin(SCARG(&la, ub), &st, sizeof(st))) != 0)
@@ -315,7 +315,7 @@ clean_pipe(p, path)
 	SCARG(&ua, path) = SCARG(&la, path);
 
 	/* XXX NJWLWP */
-	if ((error = sys_unlink(curproc, &ua, &retval)) != 0) {
+	if ((error = sys_unlink(curlwp, &ua, &retval)) != 0) {
 		DPRINTF(("clean_pipe: unlink failed %d\n", error));
 		return error;
 	}
@@ -546,7 +546,7 @@ si_listen(fp, fd, ioc, p)
 	SCARG(&la, backlog) = 5;
 
 	/* XXX NJWLWP */
-	if ((error = sys_listen(curproc, &la, &retval)) != 0) {
+	if ((error = sys_listen(curlwp, &la, &retval)) != 0) {
 		DPRINTF(("SI_LISTEN: listen failed %d\n", error));
 		return error;
 	}
@@ -660,7 +660,7 @@ si_shutdown(fp, fd, ioc, p)
 	SCARG(&ap, s) = fd;
 
 	/* XXX NJWLWP */
-	return sys_shutdown(curproc, &ap, &retval);
+	return sys_shutdown(curlwp, &ap, &retval);
 }
 
 
@@ -848,7 +848,7 @@ ti_bind(fp, fd, ioc, p)
 	SCARG(&ba, namelen) = sasize;
 
 	/* XXX NJWLWP */
-	if ((error = sys_bind(curproc, &ba, &retval)) != 0) {
+	if ((error = sys_bind(curlwp, &ba, &retval)) != 0) {
 		DPRINTF(("TI_BIND: bind failed %d\n", error));
 		return error;
 	}
@@ -965,7 +965,7 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 			SCARG(&ap, asa) = sup;
 			SCARG(&ap, alen) = lenp;
 			/* XXX NJWLWP */
-			if ((error = sys_getsockname(curproc, &ap, retval)) != 0) {
+			if ((error = sys_getsockname(curlwp, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getsockname error\n"));
 				return error;
 			}
@@ -980,7 +980,7 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 			SCARG(&ap, asa) = sup;
 			SCARG(&ap, alen) = lenp;
 			/* XXX NJWLWP */
-			if ((error = sys_getpeername(curproc, &ap, retval)) != 0) {
+			if ((error = sys_getpeername(curlwp, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getpeername error\n"));
 				return error;
 			}
@@ -1115,7 +1115,7 @@ i_fdinsert(fp, p, retval, fd, cmd, dat)
 	SCARG(&d2p, to) = fdi.fd;
 
 	/* XXX NJWLWP */
-	if ((error = sys_dup2(curproc, &d2p, retval)) != 0) {
+	if ((error = sys_dup2(curlwp, &d2p, retval)) != 0) {
 		DPRINTF(("fdinsert: dup2(%d, %d) failed %d\n", 
 		    st->s_afd, fdi.fd, error));
 		return error;
@@ -1124,7 +1124,7 @@ i_fdinsert(fp, p, retval, fd, cmd, dat)
 	SCARG(&clp, fd) = st->s_afd;
 
 	/* XXX NJWLWP */
-	if ((error = sys_close(curproc, &clp, retval)) != 0) {
+	if ((error = sys_close(curlwp, &clp, retval)) != 0) {
 		DPRINTF(("fdinsert: close(%d) failed %d\n", 
 		    st->s_afd, error));
 		return error;
@@ -1159,7 +1159,7 @@ _i_bind_rsvd(fp, p, retval, fd, cmd, dat)
 	SCARG(&ap, mode) = S_IFIFO;
 
 	/* XXX NJWLWP */
-	return sys_mkfifo(curproc, &ap, retval);
+	return sys_mkfifo(curlwp, &ap, retval);
 }
 
 static int
@@ -1180,7 +1180,7 @@ _i_rele_rsvd(fp, p, retval, fd, cmd, dat)
 	SCARG(&ap, path) = dat;
 
 	/* XXXNJWLWP */
-	return sys_unlink(curproc, &ap, retval);
+	return sys_unlink(curlwp, &ap, retval);
 }
 
 static int
@@ -1263,7 +1263,7 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 	SCARG(&fa, fd) = fd;
 	SCARG(&fa, cmd) = F_GETFL;
 	/* XXX NJWLWP */
-	if ((error = sys_fcntl(curproc, &fa, &oflags)) != 0)
+	if ((error = sys_fcntl(curlwp, &fa, &oflags)) != 0)
 		return error;
 
 	/* update the flags */
@@ -1288,7 +1288,7 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 		SCARG(&fa, cmd) = F_SETFL;
 		SCARG(&fa, arg) = (void *) flags;
 		/* XXX NJWLWP */
-		if ((error = sys_fcntl(curproc, &fa, &flags)) != 0)
+		if ((error = sys_fcntl(curlwp, &fa, &flags)) != 0)
 			return error;
 	}
 
@@ -1297,7 +1297,7 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 		SCARG(&fa, cmd) = F_SETOWN;
 		SCARG(&fa, arg) = (void *)(u_long)p->p_pid;
 		/* XXX NJWLWP */
-		return sys_fcntl(curproc, &fa, &flags);
+		return sys_fcntl(curlwp, &fa, &flags);
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.38.6.3 2002/01/08 00:27:44 nathanw Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.38.6.4 2002/06/24 22:07:33 nathanw Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -239,8 +239,8 @@ struct cpu_info {
 	 * etc.
 	 */
 
-	struct	lwp	*ci_curproc;		/* CPU owner */
-	struct	lwp 	*fpproc;		/* FPU owner */
+	struct	lwp	*ci_curlwp;		/* CPU owner */
+	struct	lwp 	*fplwp;			/* FPU owner */
 	/* XXX */
 	void		*ci_ddb_regs;		/* DDB regs */
 

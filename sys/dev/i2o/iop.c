@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.10.2.12 2002/04/17 00:05:28 nathanw Exp $	*/
+/*	$NetBSD: iop.c,v 1.10.2.13 2002/06/24 22:09:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.12 2002/04/17 00:05:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.10.2.13 2002/06/24 22:09:50 nathanw Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -610,7 +610,7 @@ iop_reconf_thread(void *cookie)
 
 	sc = cookie;
 	chgind = sc->sc_chgind + 1;
-	l = curproc;
+	l = curlwp;
 
 	for (;;) {
 		DPRINTF(("%s: async reconfig: requested 0x%08x\n",
@@ -1093,9 +1093,9 @@ iop_hrt_get(struct iop_softc *sc)
 	struct i2o_hrt hrthdr, *hrt;
 	int size, rv;
 
-	PHOLD(curproc);
+	PHOLD(curlwp);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
-	PRELE(curproc);
+	PRELE(curlwp);
 	if (rv != 0)
 		return (rv);
 
@@ -1243,7 +1243,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	pgop->oat.group = htole16(group);
 
 	if (ii == NULL)
-		PHOLD(curproc);
+		PHOLD(curlwp);
 
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1, NULL);
@@ -1251,7 +1251,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
 
 	if (ii == NULL)
-		PRELE(curproc);
+		PRELE(curlwp);
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
@@ -1352,7 +1352,7 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 	pgop.oat.group = htole16(group);
 	pgop.oat.fields[0] = htole16(0);
 
-	PHOLD(curproc);
+	PHOLD(curlwp);
 	iop_msg_map(sc, im, mb, &pgop, sizeof(pgop), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 30000);
 	if (rv != 0)
@@ -1360,7 +1360,7 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 		    sc->sc_dv.dv_xname, tid, group);
 
 	iop_msg_unmap(sc, im);
-	PRELE(curproc);
+	PRELE(curlwp);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1491,14 +1491,14 @@ iop_systab_set(struct iop_softc *sc)
 		}
 	}
 
-	PHOLD(curproc);
+	PHOLD(curlwp);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1, NULL);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1, NULL);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
-	PRELE(curproc);
+	PRELE(curlwp);
 	return (rv);
 }
 

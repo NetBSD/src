@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.9.2.2 2002/02/28 23:56:12 nathanw Exp $ */
+/* $NetBSD: db_trace.c,v 1.9.2.3 2002/06/24 22:03:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9.2.2 2002/02/28 23:56:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9.2.3 2002/06/24 22:03:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		trace_thread |= c == 't';
 
 	if (!have_addr) {
-		p = curproc->l_proc;
+		p = curproc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
 		have_trapframe = 1;

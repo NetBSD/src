@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.6.5 2002/06/20 03:41:23 nathanw Exp $ */
+/*	$NetBSD: cpu.h,v 1.29.6.6 2002/06/24 22:07:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@
 
 struct cpu_info {
 	/* Most important fields first */
-	struct proc		*ci_curproc;
+	struct proc		*ci_curlwp;
 	struct pcb		*ci_cpcb;	/* also initial stack */
 	struct cpu_info		*ci_next;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.9 2002/06/20 03:38:04 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.10 2002/06/24 22:03:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -248,7 +248,7 @@ data_abort_handler(frame)
 	fault_code = fault_status & FAULT_TYPE_MASK;
 
 	/* Get the current lwp structure or lwp0 if there is none */
-	l = curproc == NULL ? &lwp0 : curproc;
+	l = curlwp == NULL ? &lwp0 : curlwp;
 	p = l->l_proc;
 
 	/*
@@ -307,8 +307,8 @@ copyfault:
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
 		    pcb, curpcb);
-		printf("data_abort: Alert ! proc(%p), curproc(%p)\n",
-		    p, curproc);
+		printf("data_abort: Alert ! proc(%p), curlwp(%p)\n",
+		    p, curlwp);
 	}
 #endif	/* DEBUG */
 
@@ -591,10 +591,10 @@ prefetch_abort_handler(frame)
 		panic("prefetch abort fixup failed\n");
 
 	/* Get the current proc structure or proc0 if there is none */
-	if ((l = curproc) == NULL) {
+	if ((l = curlwp) == NULL) {
 		l = &lwp0;
 #ifdef DEBUG
-		printf("Prefetch abort with curproc == 0\n");
+		printf("Prefetch abort with curlwp == 0\n");
 #endif
 	}
 	p = l->l_proc;
@@ -709,7 +709,7 @@ cowfault(va)
 	/* uvm_fault can't be called from within an interrupt */
 	KASSERT(current_intr_depth == 0);
 	
-	vm = curproc->l_proc->p_vmspace;
+	vm = curproc->p_vmspace;
 	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE);
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.11 2002/06/20 03:43:06 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.12 2002/06/24 22:09:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.11 2002/06/20 03:43:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.12 2002/06/24 22:09:32 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -870,7 +870,7 @@ out:
 		SCARG(&ia, fd) = SCARG(uap, fd);
 		SCARG(&ia, data) = SCARG(uap, data);
 		/* XXX NJWLWP */
-		error = sys_ioctl(curproc, &ia, retval);
+		error = sys_ioctl(curlwp, &ia, retval);
 	}
 
 	return error;
@@ -1083,7 +1083,7 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
 			sin6->sin6_scope_id = 0;
 		} else {
-			struct proc *p = curproc->l_proc;	/* XXX */
+			struct proc *p = curproc;	/* XXX */
 			int uid = p->p_cred && p->p_ucred ? 
 					p->p_ucred->cr_uid : -1;
 

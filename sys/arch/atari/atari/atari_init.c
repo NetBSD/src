@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.55.8.2 2001/11/17 23:18:02 scw Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.55.8.3 2002/06/24 22:04:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -560,7 +560,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 */
 	bzero((u_char *)proc0paddr, USPACE);
 	lwp0.l_addr = (struct user *)proc0paddr;
-	curproc = &lwp0;
+	curlwp = &lwp0;
 	curpcb  = &((struct user *)proc0paddr)->u_pcb;
 
 	/*

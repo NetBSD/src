@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10.8.2 2002/01/04 19:12:31 eeh Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.10.8.3 2002/06/24 22:08:14 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -85,7 +85,7 @@ process_read_regs(l, regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->l_proc->p_flag & P_32)) {
+	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy out regs */
 		regs->r_tstate = tf->tf_tstate;
 		regs->r_pc = tf->tf_pc;
@@ -121,7 +121,7 @@ process_write_regs(l, regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->l_proc->p_flag & P_32)) {
+	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in regs */
 		tf->tf_pc = regs->r_pc;
 		tf->tf_npc = regs->r_npc;
@@ -180,7 +180,7 @@ process_read_fpregs(l, regs)
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
-	if (!(curproc->l_proc->p_flag & P_32)) {
+	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */
 		/* NOTE: struct fpreg == struct fpstate */
 		if (l->l_md.md_fpstate)
@@ -208,7 +208,7 @@ process_write_fpregs(l, regs)
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
-	if (!(curproc->l_proc->p_flag & P_32)) {
+	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */
 		if (l->l_md.md_fpstate == NULL)
 			return EINVAL;

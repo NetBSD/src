@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66.4.3 2002/01/08 00:28:55 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.66.4.4 2002/06/24 22:09:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,7 +375,7 @@ Ltrap1:
  * command in d0, addr in a1, length in d1
  */
 ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curproc),%a0
+	movl	_C_LABEL(curlwp),%a0
 	movl	%a0@(L_PROC),%sp@-	| push curproc pointer
 	movl	%d1,%sp@-		| push length
 	movl	%a1,%sp@-		| push addr

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.3.2.5 2002/06/20 03:42:53 nathanw Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.3.2.6 2002/06/24 22:09:23 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.5 2002/06/20 03:42:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.6 2002/06/24 22:09:23 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -181,7 +181,7 @@ irix_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct proc *p = curlwp;
 	void *sp;
 	struct frame *f;
 	int onstack;
@@ -328,7 +328,7 @@ irix_set_sigcontext (scp, mask, code, p)
 	scp->isc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
 	if (scp->isc_ownedfp) {
 		/* if FPU has current state, save it first */
-		if (p == fpcurproc)
+		if (p == fpcurlwp)
 			savefpregs(p);
 		(void)memcpy(&scp->isc_fpregs, &p->p_addr->u_pcb.pcb_fpregs,
 		    sizeof(scp->isc_fpregs));
@@ -377,7 +377,7 @@ irix_set_ucontext(ucp, mask, code, p)
 #ifndef SOFTFLOAT
 	if (p->p_md.md_flags & MDP_FPUSED) {
 		/* if FPU has current state, save it first */
-		if (p == fpcurproc)
+		if (p == fpcurlwp)
 			savefpregs(p);
 		(void)memcpy(&ucp->iuc_mcontext.svr4___fpregs, 
 		    &p->p_addr->u_pcb.pcb_fpregs, 
@@ -495,8 +495,8 @@ irix_get_ucontext(ucp, p)
 #ifndef SOFTFLOAT
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (p == fpcurproc) 
-			fpcurproc = (struct proc *)0;
+		if (p == fpcurlwp) 
+			fpcurlwp = (struct proc *)0;
 		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, 
 		    &ucp->iuc_mcontext.svr4___fpregs,
 		    sizeof(p->p_addr->u_pcb.pcb_fpregs));
@@ -561,8 +561,8 @@ irix_get_sigcontext(scp, p)
 	if (scp->isc_ownedfp) {
 		/* Disable the FPU to fault in FP registers. */
 		f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
-		if (p == fpcurproc) 
-			fpcurproc = (struct proc *)0;
+		if (p == fpcurlwp) 
+			fpcurlwp = (struct proc *)0;
 		(void)memcpy(&p->p_addr->u_pcb.pcb_fpregs, &scp->isc_fpregs,
 		    sizeof(scp->isc_fpregs));
 		p->p_addr->u_pcb.pcb_fpregs.r_regs[32] = scp->isc_fpc_csr;

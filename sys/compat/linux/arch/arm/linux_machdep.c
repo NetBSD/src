@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6.2.6 2002/06/20 03:42:56 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.6.2.7 2002/06/24 22:09:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6.2.6 2002/06/20 03:42:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6.2.7 2002/06/24 22:09:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
@@ -319,5 +319,5 @@ linux_machdepioctl(p, v, retval)
 	}
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
-	return sys_ioctl(curproc, &bia, retval);
+	return sys_ioctl(curlwp, &bia, retval);
 }

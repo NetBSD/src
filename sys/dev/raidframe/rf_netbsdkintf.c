@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.10 2002/06/20 03:46:27 nathanw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.11 2002/06/24 22:10:12 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.10 2002/06/20 03:46:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.11 2002/06/24 22:10:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -493,7 +493,7 @@ raidsize(dev)
 	omask = rs->sc_dkdev.dk_openmask & (1 << part);
 	lp = rs->sc_dkdev.dk_label;
 
-	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curproc->l_proc))
+	if (omask == 0 && raidopen(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -502,7 +502,7 @@ raidsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc->l_proc))
+	if (omask == 0 && raidclose(dev, 0, S_IFBLK, curproc))
 		return (-1);
 
 	return (size);

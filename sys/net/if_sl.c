@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72.2.7 2002/04/01 07:48:22 nathanw Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72.2.8 2002/06/24 22:11:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.7 2002/04/01 07:48:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.8 2002/06/24 22:11:35 nathanw Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -255,7 +255,7 @@ slopen(dev, tp)
 	dev_t dev;
 	struct tty *tp;
 {
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 	struct sl_softc *sc;
 	int nsl;
 	int error;

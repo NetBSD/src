@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.1.10.4 2002/06/20 03:39:20 nathanw Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.1.10.5 2002/06/24 22:05:23 nathanw Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ syscall(code, frame)
 	uvmexp.syscalls++;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
-	l = curproc;
+	l = curlwp;
 	p = l->l_proc;
 	sticks = p->p_sticks;
 	l->l_md.md_regs = frame.f_regs;
@@ -281,7 +281,7 @@ syscall(code, frame)
 		 * Reinitialize lwp/proc pointers as they may be different
 		 * if this is a child returning from fork syscall.
 		 */
-		l = curproc;
+		l = curlwp;
 		p = l->l_proc;
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
@@ -355,7 +355,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	f->f_regs[D0] = 0;

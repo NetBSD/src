@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.7 2002/06/20 03:38:01 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.8 2002/06/24 22:03:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.7 2002/06/20 03:38:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.8 2002/06/24 22:03:48 nathanw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -126,7 +126,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 
 	if ((insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) &&
 	    code == FAULT_USER) {
-		trapsignal(curproc, SIGTRAP, 0);
+		trapsignal(curlwp, SIGTRAP, 0);
 		return 0;
 	}
 	return 1;
@@ -210,7 +210,7 @@ undefinedinstruction(trapframe_t *frame)
 		coprocessor = 0;
 
 	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
-	l = curproc == NULL ? &lwp0 : curproc;
+	l = curlwp == NULL ? &lwp0 : curlwp;
 	p = l->l_proc;
 
 #ifdef __PROG26

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11.2.5 2002/02/28 04:13:09 nathanw Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.2.6 2002/06/24 22:09:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.5 2002/02/28 04:13:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.11.2.6 2002/06/24 22:09:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,8 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 	/* XXX LOCKING XXX */
 	pd = proclists;
-	cp = curproc ? curproc->l_proc : 0;
-	cl = curproc;
+	cp = curproc;
+	cl = curlwp;
 	for (pd = proclists; pd->pd_list != NULL; pd++) {
 		LIST_FOREACH(p, pd->pd_list, p_list) {
 			pp = p->p_pptr;

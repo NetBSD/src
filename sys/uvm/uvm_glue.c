@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.13 2002/06/20 03:50:40 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.14 2002/06/24 22:12:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.13 2002/06/20 03:50:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.14 2002/06/24 22:12:50 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -159,8 +159,8 @@ uvm_useracc(addr, len, rw)
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-	/* XXX curproc */
-	map = &curproc->l_proc->p_vmspace->vm_map;
+	/* XXX curlwp */
+	map = &curproc->p_vmspace->vm_map;
 
 	vm_map_lock_read(map);
 	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),

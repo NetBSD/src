@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.133.2.8 2002/06/20 03:46:54 nathanw Exp $	*/
+/*	$NetBSD: uhci.c,v 1.133.2.9 2002/06/24 22:10:28 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.133.2.8 2002/06/20 03:46:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.133.2.9 2002/06/24 22:10:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1910,7 +1910,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		splx(s);
 	}
 
-	if (xfer->device->bus->intr_context || !curproc)
+	if (xfer->device->bus->intr_context || !curlwp)
 		panic("uhci_abort_xfer: not in process context\n");
 
 	/*

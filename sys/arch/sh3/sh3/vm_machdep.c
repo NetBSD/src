@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.6.2 2002/06/21 21:26:35 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.6.3 2002/06/24 22:07:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -97,7 +97,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	KDASSERT(!(l1 != curproc && l1 != &lwp0));
+	KDASSERT(!(l1 != curlwp && l1 != &lwp0));
 
 	/* Copy flags */
 	l2->l_md.md_flags = l1->l_md.md_flags;
@@ -265,7 +265,7 @@ cpu_exit(struct lwp *l, int proc)
 	uvmexp.swtch++;
 
 	/* Switch to lwp0 stack */
-	curproc = 0;
+	curlwp = 0;
 	curpcb = lwp0.l_md.md_pcb;
 	sf = &curpcb->pcb_sf;
 	__asm__ __volatile__(

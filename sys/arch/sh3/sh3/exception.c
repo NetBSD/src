@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.2.4.2 2002/06/21 21:26:31 thorpej Exp $	*/
+/*	$NetBSD: exception.c,v 1.2.4.3 2002/06/24 22:07:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -110,7 +110,7 @@ void ast(struct lwp *, struct trapframe *);
 
 /*
  * void general_exception(struct lwp *l, struct trapframe *tf):
- *	l  ... curproc when exception occur.
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  */
 void
@@ -195,7 +195,7 @@ general_exception(struct lwp *l, struct trapframe *tf)
 
 /*
  * void syscall(struct lwp *l, struct trapframe *tf):
- *	l  ... curproc when exception occur.
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	System call request from POSIX system call gate interface to kernel.
  */
@@ -335,7 +335,7 @@ syscall(struct lwp *l, struct trapframe *tf)
 
 /*
  * void tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va):
- *	l  ... curproc when exception occur.
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	va ... fault address.
  */
@@ -398,7 +398,7 @@ do {									\
 
 	/* Select address space */
 	if (usermode) {
-		TLB_ASSERT(l != NULL, "no curproc");
+		TLB_ASSERT(l != NULL, "no curlwp");
 		map = &l->l_proc->p_vmspace->vm_map;
 		pmap = map->pmap;
 	} else {
@@ -481,7 +481,7 @@ do {									\
 
 /*
  * void ast(struct lwp *l, struct trapframe *tf):
- *	l  ... curproc when exception occur.
+ *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	This is called when exception return. if return from kernel to user,
  *	handle asynchronous software traps and context switch if needed.
@@ -550,7 +550,7 @@ void
 startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	int error;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);

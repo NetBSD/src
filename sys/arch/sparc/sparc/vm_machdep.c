@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60.4.4 2002/01/08 00:27:52 nathanw Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.4.5 2002/06/24 22:07:49 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -223,18 +223,18 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-	if (l1 == curproc) {
+	if (l1 == curlwp) {
 		write_user_windows();
 		opcb->pcb_psr = getpsr();
 	}
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (l1->l_md.md_fpstate) {
-		if (l1 == cpuinfo.fpproc)
+		if (l1 == cpuinfo.fplwp)
 			savefpstate(l1->l_md.md_fpstate);
 		else if (l1->l_md.md_fpumid != -1)
 			panic("FPU on module %d; fix this", l1->l_md.md_fpumid);
@@ -310,9 +310,9 @@ cpu_exit(l, proc)
 	struct fpstate *fs;
 
 	if ((fs = l->l_md.md_fpstate) != NULL) {
-		if (l == cpuinfo.fpproc) {
+		if (l == cpuinfo.fplwp) {
 			savefpstate(fs);
-			cpuinfo.fpproc = NULL;
+			cpuinfo.fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
@@ -369,7 +369,7 @@ cpu_coredump(l, vp, cred, chdr)
 
 	md_core.md_tf = *l->l_md.md_tf;
 	if (l->l_md.md_fpstate) {
-		if (l == cpuinfo.fpproc)
+		if (l == cpuinfo.fplwp)
 			savefpstate(l->l_md.md_fpstate);
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else

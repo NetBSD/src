@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.22.6.5 2002/05/29 21:32:01 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.22.6.6 2002/06/24 22:08:18 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -506,7 +506,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct lwp *l = curproc;
+	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	register struct trapframe64 *tf;
 	struct svr4_sigframe *fp, frame;

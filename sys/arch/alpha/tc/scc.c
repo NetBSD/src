@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.54.4.6 2002/06/20 03:37:47 nathanw Exp $ */
+/* $NetBSD: scc.c,v 1.54.4.7 2002/06/24 22:03:22 nathanw Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.6 2002/06/20 03:37:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.7 2002/06/24 22:03:22 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -496,7 +496,7 @@ sccopen(dev, flag, mode, p)
 #endif
 		(void) sccparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->l_proc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	(void) sccmctl(sc, SCCLINE(dev), DML_DTR, DMSET);
 	s = spltty();

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.16.4.3 2002/06/20 03:37:29 nathanw Exp $ */
+/* $NetBSD: db_interface.c,v 1.16.4.4 2002/06/24 22:03:07 nathanw Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.4.3 2002/06/20 03:37:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.4.4 2002/06/24 22:03:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -150,8 +150,8 @@ db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 	struct trapframe *f = NULL;
 
 	if (vp->modif != NULL && *vp->modif == 'u') {
-		if (curproc != NULL)
-			f = curproc->l_md.md_tf;
+		if (curlwp != NULL)
+			f = curlwp->l_md.md_tf;
 	} else	f = DDB_REGS;
 	tfaddr = f == NULL ? &zeroval : &f->tf_regs[(u_long)vp->valuep];
 	switch (opcode) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67.2.6 2002/06/20 03:50:31 nathanw Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67.2.7 2002/06/24 22:12:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.6 2002/06/20 03:50:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.67.2.7 2002/06/24 22:12:33 nathanw Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -437,7 +437,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		needs_unlock = 0;
 		if (VOP_ISLOCKED(vp)) {
 			if (vp != fs->lfs_ivnode &&
-			    vp->v_lock.lk_lockholder != curproc->l_proc->p_pid) {
+			    vp->v_lock.lk_lockholder != curproc->p_pid) {
 #ifdef DEBUG_LFS
 				printf("lfs_writevnodes: not writing ino %d,"
 				       " locked by pid %d\n",

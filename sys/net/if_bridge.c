@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.2.2.6 2002/06/20 03:48:10 nathanw Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2.2.7 2002/06/24 22:11:28 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.6 2002/06/20 03:48:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.7 2002/06/24 22:11:28 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -406,7 +406,7 @@ int
 bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bridge_softc *sc = ifp->if_softc;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	union {
 		struct ifbreq ifbreq;
 		struct ifbifconf ifbifconf;

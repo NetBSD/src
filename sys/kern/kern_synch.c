@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.13 2002/06/20 03:47:16 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.14 2002/06/24 22:10:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.13 2002/06/20 03:47:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.14 2002/06/24 22:10:53 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -140,7 +140,7 @@ roundrobin(struct cpu_info *ci)
 
 	spc->spc_rrticks = rrticks;
 	
-	if (curproc != NULL) {
+	if (curlwp != NULL) {
 		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
@@ -369,7 +369,7 @@ int
 ltsleep(void *ident, int priority, const char *wmesg, int timo,
     __volatile struct simplelock *interlock)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct slpque *qp;
 	int sig, s;
@@ -381,7 +381,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	 * XXXSMP
 	 * This is probably bogus.  Figure out what the right
 	 * thing to do here really is.
-	 * Note that not sleeping if ltsleep is called with curproc == NULL 
+	 * Note that not sleeping if ltsleep is called with curlwp == NULL 
 	 * in the shutdown case is disgusting but partly necessary given
 	 * how shutdown (barely) works.
 	 */
@@ -745,7 +745,7 @@ wakeup_one(void *ident)
 void
 yield(void)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	int s;
 
 	SCHED_LOCK(s);
@@ -768,7 +768,7 @@ yield(void)
 void
 preempt(struct lwp *newl)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	int r, s;
 
 	if (l->l_flag & L_SA) {

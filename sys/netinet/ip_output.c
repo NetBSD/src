@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.83.2.10 2002/06/20 03:48:49 nathanw Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.83.2.11 2002/06/24 22:11:47 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.10 2002/06/20 03:48:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.83.2.11 2002/06/24 22:11:47 nathanw Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -942,7 +942,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	int error = 0;
 #ifdef IPSEC
 #ifdef __NetBSD__
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/*XXX*/
+	struct proc *p = curproc;	/*XXX*/
 #endif
 #endif
 

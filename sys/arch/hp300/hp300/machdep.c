@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.9 2002/06/21 06:01:06 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.10 2002/06/24 22:04:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.9 2002/06/21 06:01:06 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.10 2002/06/24 22:04:36 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -708,8 +708,8 @@ cpu_reboot(howto, bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->l_addr)
-		savectx(&curproc->l_addr->u_pcb);
+	if (curlwp && curlwp->l_addr)
+		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {
@@ -1229,7 +1229,7 @@ parityerror(fp)
 	if (!parityerrorfind())
 		printf("WARNING: transient parity error ignored\n");
 	else if (USERMODE(fp->f_sr)) {
-		struct proc *p = curproc->l_proc;
+		struct proc *p = curproc;
 		printf("pid %d: parity error\n", p->p_pid);
 		uprintf("sorry, pid %d killed due to memory parity error\n",
 			p->p_pid);

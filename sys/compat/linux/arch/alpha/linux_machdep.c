@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.9 2002/05/29 21:32:29 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.10 2002/06/24 22:09:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.9 2002/05/29 21:32:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.10 2002/06/24 22:09:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	int sig;
 	sigset_t *mask;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *sfp, sigframe;
 	int onstack;
@@ -225,7 +225,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	int sig;
 	sigset_t *mask;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *sfp, sigframe;
 	int onstack;
@@ -265,12 +265,12 @@ void setup_linux_sigframe(tf, sig, mask)
 	frametoreg(tf, (struct reg *)sigframe.sf_sc.sc_regs);
 	sigframe.sf_sc.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	if (l == fpcurproc) {
+	if (l == fpcurlwp) {
 	    alpha_pal_wrfen(1);
 	    savefpstate(&l->l_addr->u_pcb.pcb_fp);
 	    alpha_pal_wrfen(0);
 	    sigframe.sf_sc.sc_fpcr = l->l_addr->u_pcb.pcb_fp.fpr_cr;
-	    fpcurproc = NULL;
+	    fpcurlwp = NULL;
 	}
 	/* XXX ownedfp ? etc...? */
 
@@ -325,7 +325,7 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct trapframe *tf = l->l_md.md_tf;
 #ifdef notyet
 	struct linux_emuldata *edp;
@@ -407,8 +407,8 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 	regtoframe((struct reg *)context.sc_regs, l->l_md.md_tf);
 	alpha_pal_wrusp(context.sc_regs[R_SP]);
 
-	if (l == fpcurproc)
-	    fpcurproc = NULL;
+	if (l == fpcurlwp)
+	    fpcurlwp = NULL;
 
 	/* Restore fp regs and fpr_cr */
 	bcopy((struct fpreg *)context.sc_fpregs, &l->l_addr->u_pcb.pcb_fp,
@@ -524,7 +524,7 @@ linux_machdepioctl(p, v, retval)
 	}
 	SCARG(&bia, com) = com;
 	/* XXX njwlwp */
-	return sys_ioctl(curproc, &bia, retval);
+	return sys_ioctl(curlwp, &bia, retval);
 }
 
 /* XXX XAX fix this */

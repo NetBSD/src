@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.10 2002/06/20 03:50:04 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.11 2002/06/24 22:12:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.10 2002/06/20 03:50:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.11 2002/06/24 22:12:12 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2834,7 +2834,7 @@ nfs_strategy(v)
 	if (bp->b_flags & B_ASYNC)
 		p = NULL;
 	else
-		p = curproc->l_proc;	/* XXX */
+		p = curproc;	/* XXX */
 
 	/*
 	 * If the op is asynchronous and an i/o daemon is waiting
@@ -2946,7 +2946,7 @@ nfs_pathconf(v)
 		nfsm_reqhead(vp, NFSPROC_PATHCONF, NFSX_FH(1));
 		nfsm_fhtom(vp, 1);
 		nfsm_request(vp, NFSPROC_PATHCONF,
-		    curproc->l_proc, curproc->l_proc->p_ucred);	/* XXX */
+		    curproc, curproc->p_ucred);	/* XXX */
 		nfsm_postop_attr(vp, attrflag);
 		if (!error) {
 			nfsm_dissect(pcp, struct nfsv3_pathconf *,
@@ -2978,8 +2978,8 @@ nfs_pathconf(v)
 			nmp = VFSTONFS(vp->v_mount);
 			if ((nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 				if ((error = nfs_fsinfo(nmp, vp,
-				    curproc->l_proc->p_ucred, 
-				    curproc->l_proc)) != 0) /* XXX */
+				    curproc->p_ucred, 
+				    curproc)) != 0) /* XXX */
 					break;
 			for (l = 0, maxsize = nmp->nm_maxfilesize;
 			    (maxsize >> l) > 0; l++)

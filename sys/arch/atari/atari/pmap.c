@@ -234,7 +234,7 @@ static void	pmap_pvdump __P((paddr_t));
 #define pmap_pte_prot_chg(pte, np)	((np) ^ pmap_pte_prot(pte))
 
 #define active_pmap(pm)	\
-    ((pm) == pmap_kernel() || (pm) == curproc->l_proc->p_vmspace->vm_map.pmap)
+    ((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * Given a map and a machine independent protection code,
@@ -1255,7 +1255,7 @@ validate:
 #if DEBUG
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 && 
 	    pmap == pmap_kernel()) {
-		struct proc *cp = curproc ? curproc->l_proc : NULL;
+		struct proc *cp = curproc;
 		char *s;
 		if (va >= ATARI_UPTBASE && 
 		    va < (ATARI_UPTBASE + ATARI_UPTMAXSIZE))
@@ -1727,7 +1727,7 @@ pmap_activate(l)
 		printf("pmap_activate(%p)\n", l);
 #endif
 
-	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
+	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
 }
 
 /*

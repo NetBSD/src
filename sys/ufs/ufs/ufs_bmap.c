@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.10.2.3 2002/06/20 03:50:36 nathanw Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.10.2.4 2002/06/24 22:12:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.10.2.3 2002/06/20 03:50:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.10.2.4 2002/06/24 22:12:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
-			curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* XXX */
+			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp);
 				return (error);

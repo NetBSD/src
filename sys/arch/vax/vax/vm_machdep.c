@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75.4.5 2002/05/29 21:32:06 nathanw Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.75.4.6 2002/06/24 22:09:01 nathanw Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -128,10 +128,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 #ifdef DIAGNOSTIC
 	/*
-	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 * if p1 != curlwp && p1 == &proc0, we're creating a kernel thread.
 	 */
-	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 	/*

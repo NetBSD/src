@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.74.2.6 2002/04/01 07:47:50 nathanw Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.74.2.7 2002/06/24 22:10:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.6 2002/04/01 07:47:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.74.2.7 2002/06/24 22:10:39 nathanw Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -530,7 +530,7 @@ hardclock(struct clockframe *frame)
 	int ltemp;
 #endif
 
-	l = curproc;
+	l = curlwp;
 	if (l) {
 		p = l->l_proc;
 		/*
@@ -1347,7 +1347,7 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);			
 		}
 	}
-	l = curproc;
+	l = curlwp;
 	p = (l ? l->l_proc : 0);
 	if (CLKF_USERMODE(frame)) {
 		if (p->p_flag & P_PROFIL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39.12.1 2001/11/18 18:12:02 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.39.12.2 2002/06/24 22:05:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,8 +261,8 @@ profclock(pclk)
 	 * If this process is being profiled record the tick.
 	 */
 	if (USERMODE(pclk->ps)) {
-		if (curproc->l_proc->p_stats.p_prof.pr_scale)
-			addupc_task(&curproc->l_proc, pclk->pc, 1);
+		if (curproc->p_stats.p_prof.pr_scale)
+			addupc_task(&curproc, pclk->pc, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.

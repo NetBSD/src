@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108.4.5 2002/06/20 03:42:22 nathanw Exp $	   */
+/*	$NetBSD: pmap.c,v 1.108.4.6 2002/06/24 22:08:56 nathanw Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -515,7 +515,7 @@ update_pcbs(struct pmap *pm)
 		ps = ps->ps_next;
 	}
 
-	/* If curproc uses this pmap update the regs too */ 
+	/* If curlwp uses this pmap update the regs too */ 
 	if (pm == curproc->p_vmspace->vm_map.pmap) {
 		mtpr(pm->pm_p0br, PR_P0BR);
 		mtpr(pm->pm_p0lr|AST_PCB, PR_P0LR);
@@ -1624,7 +1624,7 @@ pmap_activate(struct lwp *l)
 	pmap->pm_share = ps;
 	ps->ps_pcb = pcb;
 
-	if (l == curproc) {
+	if (l == curlwp) {
 		mtpr(pmap->pm_p0br, PR_P0BR);
 		mtpr(pmap->pm_p0lr|AST_PCB, PR_P0LR);
 		mtpr(pmap->pm_p1br, PR_P1BR);
@@ -1634,8 +1634,9 @@ pmap_activate(struct lwp *l)
 }
 
 void	
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct pm_share *ps, *ops;
 	pmap_t pmap;
 	struct pcb *pcb;
@@ -1643,7 +1644,7 @@ pmap_deactivate(struct proc *p)
 	PMDEBUG(("pmap_deactivate: p %p\n", p));
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	pcb = &p->p_addr->u_pcb;
+	pcb = &l->l_addr->u_pcb;
 
 	ps = pmap->pm_share;
 	if (ps->ps_pcb == pcb) {
@@ -1759,15 +1760,16 @@ more_pventries()
  * Called when a process is about to be swapped, to remove the page tables.
  */
 void
-cpu_swapout(struct proc *p)
+cpu_swapout(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	pmap_t pm;
 
 	PMDEBUG(("Swapout pid %d\n", p->p_pid));
 
 	pm = p->p_vmspace->vm_map.pmap;
 	rmspace(pm);
-	pmap_deactivate(p);
+	pmap_deactivate(l);
 }
 
 /*
@@ -1775,17 +1777,17 @@ cpu_swapout(struct proc *p)
  * Be sure that all pages are valid.
  */
 void
-cpu_swapin(struct proc *p)
+cpu_swapin(struct lwp *l)
 {
 	struct pte *pte;
 	int i;
 
-	PMDEBUG(("Swapin pid %d\n", p->p_pid));
+	PMDEBUG(("Swapin pid %d.%d\n", l->l_proc->p_pid, l->l_lid));
 
-	pte = kvtopte((vaddr_t)p->p_addr);
+	pte = kvtopte((vaddr_t)l->l_addr);
 	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
 		pte[i].pg_v = 1;
-	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
-	pmap_activate(p);
+	kvtopte((vaddr_t)l->l_addr + REDZONEADDR)->pg_v = 0;
+	pmap_activate(l);
 }
 

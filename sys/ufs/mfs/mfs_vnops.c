@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.27.2.3 2002/01/08 00:34:56 nathanw Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.27.2.4 2002/06/24 22:12:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.3 2002/01/08 00:34:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.27.2.4 2002/06/24 22:12:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ mfs_strategy(v)
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
 	struct vnode *vp;
-	struct proc *p = curproc->l_proc;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");

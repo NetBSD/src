@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.8 2002/06/20 03:39:29 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.9 2002/06/24 22:05:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -578,7 +578,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)p->p_psstr;
+	frame->f_regs[A2] = (int)l->l_proc->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -606,8 +606,8 @@ cpu_reboot(howto, bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curproc && curproc->p_addr)
-		savectx(&curproc->p_addr->u_pcb);
+	if (curlwp && curlwp->p_addr)
+		savectx(&curlwp->p_addr->u_pcb);
 
 	/* If system is cold, just halt. */
 	if (cold) {

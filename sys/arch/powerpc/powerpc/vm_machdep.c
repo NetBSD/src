@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.4.5 2002/04/01 07:42:09 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.4.6 2002/06/24 22:07:15 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -93,10 +93,10 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 #ifdef DIAGNOSTIC
 	/*
-	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 * if p1 != curlwp && p1 == &proc0, we're creating a kernel thread.
 	 */
-	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 #ifdef PPC_HAVE_FPU

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.72.2.7 2002/06/20 03:39:49 nathanw Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.72.2.8 2002/06/24 22:05:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -180,7 +180,7 @@ LEAF(mips_wait_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	COP0_SYNC
 	nop
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop

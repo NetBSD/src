@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73.2.5 2002/02/28 04:06:11 nathanw Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.73.2.6 2002/06/24 22:03:19 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.5 2002/02/28 04:06:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.6 2002/06/24 22:03:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,11 +180,11 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 #ifdef DIAGNOSTIC
 	/*
-	 * If l1 != curproc && l1 == &lwp0, we are creating a kernel
+	 * If l1 != curlwp && l1 == &lwp0, we are creating a kernel
 	 * thread.
 	 */
-	if (l1 != curproc && l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 	/*

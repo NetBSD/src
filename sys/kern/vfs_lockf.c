@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.17.2.2 2001/11/14 19:16:48 nathanw Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.17.2.3 2002/06/24 22:11:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.2 2001/11/14 19:16:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.17.2.3 2002/06/24 22:11:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,8 @@ lf_advlock(ap, head, size)
 	TAILQ_INIT(&lock->lf_blkhd);
 	lock->lf_flags = ap->a_flags;
 	if (lock->lf_flags & F_POSIX) {
-		KASSERT(curproc->l_proc == (struct proc *)ap->a_id);
-		lock->lf_id = (caddr_t) curproc;
+		KASSERT(curproc == (struct proc *)ap->a_id);
+		lock->lf_id = (caddr_t) curlwp;
 	} else {
 		lock->lf_id = ap->a_id; /* Not a proc at all, but a file * */
 	}

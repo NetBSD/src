@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.20.2.11 2002/06/20 03:48:16 nathanw Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.20.2.12 2002/06/24 22:11:36 nathanw Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.11 2002/06/20 03:48:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.20.2.12 2002/06/24 22:11:36 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1140,7 +1140,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETAUTHFAILURE:
 	case SPPPSETDNSOPTS:
 	{
-		struct proc *p = curproc->l_proc;		/* XXX */
+		struct proc *p = curproc;		/* XXX */
 
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.34.4.3 2002/04/01 07:42:44 nathanw Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.34.4.4 2002/06/24 22:07:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -728,10 +728,10 @@ vmeintr4m(arg)
 	int s;
 
 	s = splhigh();
-	if (curproc == NULL)
+	if (curlwp == NULL)
 		xpcb = (struct pcb *)proc0paddr;
 	else
-		xpcb = &curproc->l_addr->u_pcb;
+		xpcb = &curlwp->l_addr->u_pcb;
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
 	vec = fkbyte(addr, xpcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11.2.2 2002/06/20 03:37:57 nathanw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11.2.3 2002/06/24 22:03:40 nathanw Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -502,7 +502,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curlwp))
 		useindex = 0;
 	else
 		useindex = 1;

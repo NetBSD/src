@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41.8.2 2001/11/18 18:09:34 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.41.8.3 2002/06/24 22:04:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,7 +94,7 @@ void	_delay __P((u_int));
  */
 #define HPMMMASK	0xF0000000
 #define ISHPMMADDR(v) \
-	((curproc->l_proc->p_md.mdp_flags & MDP_HPUXMMAP) && \
+	((curproc->p_md.mdp_flags & MDP_HPUXMMAP) && \
 	 ((unsigned)(v) & HPMMMASK) && \
 	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
 #define HPMMBASEADDR(v) \

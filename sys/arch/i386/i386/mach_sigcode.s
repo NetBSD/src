@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_sigcode.s,v 1.1.6.4 2002/06/20 03:39:11 nathanw Exp $	*/
+/*	$NetBSD: mach_sigcode.s,v 1.1.6.5 2002/06/24 22:04:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ IDTVEC(mach_trap)
 	pushl	$7		# size of instruction for restart
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
+	movl	_C_LABEL(curlwp),%edx	# get pointer to curlwp
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.74.2.6 2002/06/20 03:47:27 nathanw Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.74.2.7 2002/06/24 22:11:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.6 2002/06/20 03:47:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.74.2.7 2002/06/24 22:11:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ bio_doread(vp, blkno, size, cred, async)
 	int async;
 {
 	struct buf *bp;
-	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
 
 	bp = getblk(vp, blkno, size, 0, 0);
@@ -304,7 +304,7 @@ bwrite(bp)
 	struct buf *bp;
 {
 	int rv, sync, wasdelayed, s;
-	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct mount *mp;
@@ -404,7 +404,7 @@ void
 bdwrite(bp)
 	struct buf *bp;
 {
-	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
 	int s;
 
@@ -470,7 +470,7 @@ void
 bdirty(bp)
 	struct buf *bp;
 {
-	struct lwp *l  = (curproc != NULL ? curproc : &lwp0);	/* XXX */
+	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
 	int s;
 
@@ -647,7 +647,7 @@ start:
 	if (bp != NULL) {
 		s = splbio();
 		if (ISSET(bp->b_flags, B_BUSY)) {
-			if (curproc == uvm.pagedaemon_proc) {
+			if (curlwp == uvm.pagedaemon_proc) {
 				splx(s);
 				return NULL;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.47.4.5 2002/02/28 04:10:18 nathanw Exp $	*/
+/*	$NetBSD: mem.c,v 1.47.4.6 2002/06/24 22:05:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.5 2002/02/28 04:10:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.47.4.6 2002/06/24 22:05:01 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -80,7 +80,7 @@ mmopen(dev, flag, mode, p)
 	case DEV_IO:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
-			fp = curproc->l_md.md_regs;
+			fp = curlwp->l_md.md_regs;
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
@@ -199,7 +199,7 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	/*
 	 * /dev/mem is the only one that makes sense through this

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.2.4.3 2002/06/20 03:46:49 nathanw Exp $	*/
+/*	$NetBSD: ehci.c,v 1.2.4.4 2002/06/24 22:10:21 nathanw Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.3 2002/06/20 03:46:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.4 2002/06/24 22:10:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2240,7 +2240,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		return;
 	}
 
-	if (xfer->device->bus->intr_context || !curproc)
+	if (xfer->device->bus->intr_context || !curlwp)
 		panic("ehci_abort_xfer: not in process context\n");
 
 	/*

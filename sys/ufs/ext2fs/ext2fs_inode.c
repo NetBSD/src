@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.23.2.3 2001/11/14 19:18:53 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.23.2.4 2002/06/24 22:12:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.23.2.3 2001/11/14 19:18:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.23.2.4 2002/06/24 22:12:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->e2fs_bsize), lbn);
-		curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* pay for read */
+		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ext2fs_indirtrunc: bad buffer size");

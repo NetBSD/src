@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.22.4.3 2002/06/20 03:41:29 nathanw Exp $ */
+/*	$NetBSD: genassym.c,v 1.22.4.4 2002/06/24 22:07:56 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -151,7 +151,7 @@ main()
 	off("V_FAULTS", struct uvmexp, faults);
 
 	/* CPU info structure */
-	off("CI_CURPROC", struct cpu_info, ci_curproc);
+	off("CI_CURLWP", struct cpu_info, ci_curlwp);
 	off("CI_CPCB", struct cpu_info, ci_cpcb);
 	off("CI_NEXT", struct cpu_info, ci_next);
 	off("CI_FPLWP", struct cpu_info, ci_fplwp);

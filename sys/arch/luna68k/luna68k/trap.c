@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.18.4.4 2002/02/28 04:10:33 nathanw Exp $ */
+/* $NetBSD: trap.c,v 1.18.4.5 2002/06/24 22:05:21 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.4 2002/02/28 04:10:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18.4.5 2002/06/24 22:05:21 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -252,7 +252,7 @@ trap(type, code, v, frame)
 	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 
 	uvmexp.traps++;
-	l = curproc;
+	l = curlwp;
 	ucode = 0;
 
 	/* I have verified that this DOES happen! -gwr */
@@ -633,7 +633,7 @@ writeback(fp, docachepush)
 	int docachepush;
 {
 	struct fmt7 *f = &fp->f_fmt7;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int err = 0;
 	u_int fa;
@@ -898,7 +898,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",

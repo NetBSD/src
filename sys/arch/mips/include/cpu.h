@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57.2.7 2002/06/20 03:39:44 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.2.8 2002/06/24 22:05:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -325,7 +325,7 @@ struct clockframe {
 do {									\
 	want_resched = 1;						\
 	if (curproc != NULL)						\
-		aston(curproc->l_proc);					\
+		aston(curproc);					\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -355,7 +355,7 @@ extern int want_resched;		/* resched() was called */
 struct proc;
 struct user;
 
-extern struct lwp *fpcurproc;
+extern struct lwp *fpcurlwp;
 
 /* trap.c */
 void	netintr(void);

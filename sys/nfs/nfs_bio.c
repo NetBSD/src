@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.13 2002/06/20 03:50:01 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.14 2002/06/24 22:12:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.13 2002/06/20 03:50:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.14 2002/06/24 22:12:03 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -527,7 +527,7 @@ nfs_write(v)
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
 	if (uio->uio_segflg == UIO_USERSPACE && 
-	    uio->uio_procp != curproc->l_proc)
+	    uio->uio_procp != curproc)
 		panic("nfs_write proc");
 #endif
 	if (vp->v_type != VREG)
@@ -819,7 +819,7 @@ again:
 			error = tsleep(&nmp->nm_bufq, slpflag | PRIBIO,
 				"nfsaio", slptimeo);
 			if (error) {
-				if (nfs_sigintr(nmp, NULL, curproc->l_proc))
+				if (nfs_sigintr(nmp, NULL, curproc))
 					return (EINTR);
 				if (slpflag == PCATCH) {
 					slpflag = 0;
@@ -947,18 +947,18 @@ nfs_doio(bp, p)
 	    case VLNK:
 		uiop->uio_offset = (off_t)0;
 		nfsstats.readlink_bios++;
-		error = nfs_readlinkrpc(vp, uiop, curproc->l_proc->p_ucred);
+		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
 		break;
 	    case VDIR:
 		nfsstats.readdir_bios++;
 		uiop->uio_offset = bp->b_dcookie;
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
-			error = nfs_readdirplusrpc(vp, uiop, curproc->l_proc->p_ucred);
+			error = nfs_readdirplusrpc(vp, uiop, curproc->p_ucred);
 			if (error == NFSERR_NOTSUPP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
-			error = nfs_readdirrpc(vp, uiop, curproc->l_proc->p_ucred);
+			error = nfs_readdirrpc(vp, uiop, curproc->p_ucred);
 		if (!error) {
 			bp->b_dcookie = uiop->uio_offset;
 		}
@@ -1026,7 +1026,7 @@ nfs_doio(bp, p)
 			} else {
 				pushedrange = 0;
 			}
-			error = nfs_commit(vp, off, cnt, curproc->l_proc);
+			error = nfs_commit(vp, off, cnt, curproc);
 			if (error == 0) {
 				if (pushedrange) {
 					nfs_merge_commit_ranges(vp);
@@ -1065,7 +1065,7 @@ nfs_doio(bp, p)
 		if (np->n_pushhi - np->n_pushlo > nfs_commitsize) {
 			off = np->n_pushlo;
 			cnt = nfs_commitsize >> 1;
-			error = nfs_commit(vp, off, cnt, curproc->l_proc);
+			error = nfs_commit(vp, off, cnt, curproc);
 			if (!error) {
 				nfs_add_committed_range(vp, off, cnt);
 				nfs_del_tobecommitted_range(vp, off, cnt);
@@ -1128,7 +1128,7 @@ nfs_getpages(v)
 	if (np->n_rcred) {
 		crfree(np->n_rcred);
 	}
-	np->n_rcred = curproc->l_proc->p_ucred;
+	np->n_rcred = curproc->p_ucred;
 	crhold(np->n_rcred);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.5 2002/06/20 03:40:31 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.6 2002/06/24 22:07:03 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -138,7 +138,7 @@ int trapdebug = /* TDB_ALL */ 0;
 void
 trap(struct trapframe *frame)
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
 	int type = frame->exc;
 	int ftype, rv;
@@ -222,7 +222,7 @@ frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", (void *)va, frame->esr));
 
 DBPRINTF(TDB_ALL, ("trap(EXC_DSI|EXC_USER) at %x %s fault on %x %x\n", 
 frame->srr0, (ftype&VM_PROT_WRITE) ? "write" : "read", frame->dear, frame->esr));
-KASSERT(l == curproc && (l->l_stat == LSONPROC));
+KASSERT(l == curlwp && (l->l_stat == LSONPROC));
 		rv = uvm_fault(&p->p_vmspace->vm_map,
 			       trunc_page(frame->dear), 0, ftype);
 		if (rv == 0) {
@@ -446,7 +446,7 @@ ctx_setup(int ctx, int srr1)
 
 	/* Update PID if we're returning to user mode. */
 	if (srr1 & PSL_PR) {
-		pm = curproc->l_proc->p_vmspace->vm_map.pmap;
+		pm = curproc->p_vmspace->vm_map.pmap;
 		if (!pm->pm_ctx) {
 			ctx_alloc((struct pmap *)pm);
 		}
@@ -507,7 +507,7 @@ static int bigcopyout __P((const void *, void *, size_t ));
 int
 copyin(const void *udaddr, void *kaddr, size_t len)
 {
-	struct pmap *pm = curproc->l_proc->p_vmspace->vm_map.pmap;
+	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int msr, pid, tmp, ctx;
 	faultbuf env;
 
@@ -555,7 +555,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 {
 	const char *up;
 	char *kp = kaddr;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p;
 	int error;
 
@@ -587,7 +587,7 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 int
 copyout(const void *kaddr, void *udaddr, size_t len)
 {
-	struct pmap *pm = curproc->l_proc->p_vmspace->vm_map.pmap;
+	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
 	int msr, pid, tmp, ctx;
 	faultbuf env;
 
@@ -635,7 +635,7 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 {
 	char *up;
 	const char *kp = (char *)kaddr;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p;
 	int error;
 
@@ -765,7 +765,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC
@@ -785,7 +785,7 @@ void
 upcallret(arg)
 	void *arg;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	int sig;
 
 	/* Take pending signals. */

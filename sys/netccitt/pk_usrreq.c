@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.19.6.4 2001/11/14 19:17:39 nathanw Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.19.6.5 2002/06/24 22:11:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.19.6.4 2001/11/14 19:17:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.19.6.5 2002/06/24 22:11:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ pk_ctloutput(cmd, so, level, optname, mp)
 	struct mbuf   **mp;
 	int             cmd, level, optname;
 {
-	struct proc *p = (curproc ? curproc->l_proc : 0);	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	struct mbuf *m = *mp;
 	struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	int             error = EOPNOTSUPP;

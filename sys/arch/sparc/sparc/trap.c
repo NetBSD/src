@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.9 2002/06/21 06:56:34 gmcgarry Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.10 2002/06/24 22:07:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -262,7 +262,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC
@@ -296,7 +296,7 @@ static __inline void share_fpu(p, tf)
 	struct lwp *p;
 	struct trapframe *tf;
 {
-	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fpproc != p)
+	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fplwp != p)
 		tf->tf_psr &= ~PSR_EF;
 }
 
@@ -366,7 +366,7 @@ trap(type, psr, pc, tf)
 		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
 		/* NOTREACHED */
 	}
-	if ((l = curproc) == NULL)
+	if ((l = curlwp) == NULL)
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
@@ -375,11 +375,11 @@ trap(type, psr, pc, tf)
 
 #ifdef FPU_DEBUG
 	if (type != T_FPDISABLED && (tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != l)
+		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (0)");
 		savefpstate(l->l_md.md_fpstate);
 		l->l_md.md_fpumid = -1;
-		cpuinfo.fpproc = NULL;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -487,10 +487,10 @@ badtrap:
 		}
 #if notyet
 		simple_lock(&cpuinfo.fplock);
-		if (cpuinfo.fpproc != l) {		/* we do not have it */
-			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
-				savefpstate(cpuinfo.fpproc->l_md.md_fpstate);
-				cpuinfo.fpproc->l_md.md_fpumid = -1;
+		if (cpuinfo.fplwp != l) {		/* we do not have it */
+			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
+				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
+				cpuinfo.fplwp->l_md.md_fpumid = -1;
 			}
 			/*
 			 * On MP machines, some of the other FPUs might
@@ -509,18 +509,18 @@ badtrap:
 				UNLOCK_XPMSG();
 			}
 			loadfpstate(fs);
-			cpuinfo.fpproc = l;		/* now we do have it */
+			cpuinfo.fplwp = l;		/* now we do have it */
 			l->l_md.md_fpumid = cpuinfo.mid;
 		}
 		simple_unlock(&cpuinfo.fplock);
 #else
-		if (cpuinfo.fpproc != l) {		/* we do not have it */
+		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			int mid;
 
 			mid = l->l_md.md_fpumid;
-			if (cpuinfo.fpproc != NULL) {	/* someone else had it*/
-				savefpstate(cpuinfo.fpproc->l_md.md_fpstate);
-				cpuinfo.fpproc->l_md.md_fpumid = -1;
+			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
+				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
+				cpuinfo.fplwp->l_md.md_fpumid = -1;
 			}
 			/*
 			 * On MP machines, some of the other FPUs might
@@ -535,7 +535,7 @@ badtrap:
 				panic("fix this");
 			}
 			loadfpstate(fs);
-			cpuinfo.fpproc = l;		/* now we do have it */
+			cpuinfo.fplwp = l;		/* now we do have it */
 			l->l_md.md_fpumid = cpuinfo.mid;
 		}
 #endif
@@ -635,10 +635,10 @@ badtrap:
 		 * we must not save again later.)
 		 */
 		KERNEL_PROC_LOCK(l);
-		if (l != cpuinfo.fpproc)
+		if (l != cpuinfo.fplwp)
 			panic("fpe without being the FP user");
 		savefpstate(l->l_md.md_fpstate);
-		cpuinfo.fpproc = NULL;
+		cpuinfo.fplwp = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(l, l->l_md.md_fpstate);
 		KERNEL_PROC_UNLOCK(l);
@@ -811,7 +811,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	char bits[64];
 
 	uvmexp.traps++;
-	if ((l = curproc) == NULL)	/* safety check */
+	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
@@ -821,11 +821,11 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != l)
+		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (1)");
 		savefpstate(l->l_md.md_fpstate);
 		l->l_md.md_fpumid = -1;
-		cpuinfo.fpproc = NULL;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -992,18 +992,18 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	uvmexp.traps++;	/* XXXSMP */
 
-	if ((l = curproc) == NULL)	/* safety check */
+	if ((l = curlwp) == NULL)	/* safety check */
 		l = &lwp0;
 	p = l->l_proc;
 	sticks = p->p_sticks;
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != l)
+		if (cpuinfo.fplwp != l)
 			panic("FPU enabled but wrong proc (2)");
 		savefpstate(l->l_md.md_fpstate);
 		l->l_md.md_fpumid = -1;
-		cpuinfo.fpproc = NULL;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}
@@ -1259,7 +1259,7 @@ syscall(code, tf, pc)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;	/* XXXSMP */
-	l = curproc;
+	l = curlwp;
 	p = l->l_proc;
 
 #ifdef DIAGNOSTIC
@@ -1277,11 +1277,11 @@ syscall(code, tf, pc)
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
-		if (cpuinfo.fpproc != p)
+		if (cpuinfo.fplwp != p)
 			panic("FPU enabled but wrong proc (3)");
 		savefpstate(p->p_md.md_fpstate);
 		l->l_md.md_fpumid = -1;
-		cpuinfo.fpproc = NULL;
+		cpuinfo.fplwp = NULL;
 		tf->tf_psr &= ~PSR_EF;
 		setpsr(getpsr() & ~PSR_EF);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.46.2.6 2002/02/28 04:14:44 nathanw Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.46.2.7 2002/06/24 22:10:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.6 2002/02/28 04:14:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.7 2002/06/24 22:10:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	struct uio *uio;
 {
 	struct iovec *iovp;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int error, done, i, nobuf, s;
 	long todo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.51.2.8 2002/06/20 03:47:14 nathanw Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.51.2.9 2002/06/24 22:10:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.8 2002/06/20 03:47:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.51.2.9 2002/06/24 22:10:45 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -467,7 +467,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	lwpid_t lid;
 	int extflags;
 	cpuid_t cpu_id;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	int lock_shutdown_noblock = 0;
 	int s;
 

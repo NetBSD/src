@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43.8.3 2002/06/20 03:41:06 nathanw Exp $ */
+/*	$NetBSD: db_interface.c,v 1.43.8.4 2002/06/24 22:07:34 nathanw Exp $ */
 
 /*
  * Mach Operating System
@@ -347,7 +347,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 	struct lwp *l;
 	struct proc *p;
 
-	l = curproc;
+	l = curlwp;
 	if (have_addr) 
 		l = (struct lwp *) addr;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24.8.1 2002/03/29 23:22:45 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.24.8.2 2002/06/24 22:08:52 nathanw Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -77,7 +77,7 @@ define	KERNBASE	KERNBASE
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
-define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
+define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EXIT		offsetof(struct cpu_info, ci_exit)
 

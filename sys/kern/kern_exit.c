@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.12 2002/06/20 03:47:12 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.13 2002/06/24 22:10:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.12 2002/06/20 03:47:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.13 2002/06/24 22:10:41 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -374,16 +374,16 @@ exit1(struct lwp *l, int rv)
 	sigactsfree(p);
 
 	/*
-	 * Clear curproc after we've done all operations
+	 * Clear curlwp after we've done all operations
 	 * that could block, and before tearing down the rest
 	 * of the process state that might be used from clock, etc.
-	 * Also, can't clear curproc while we're still runnable,
+	 * Also, can't clear curlwp while we're still runnable,
 	 * as we're not on a run queue (we are current, just not
 	 * a proper proc any longer!).
 	 *
 	 * Other substructures are freed from wait().
 	 */
-	curproc = NULL;
+	curlwp = NULL;
 	limfree(p->p_limit);
 	pstatsfree(p->p_stats);
 	p->p_limit = NULL;
@@ -455,7 +455,7 @@ reaper(void *arg)
 	struct proc *p;
 	struct lwp *l;
 
-	KERNEL_PROC_UNLOCK(curproc);
+	KERNEL_PROC_UNLOCK(curlwp);
 
 	for (;;) {
 		simple_lock(&deadproc_slock);
@@ -474,7 +474,7 @@ reaper(void *arg)
 			/* Remove us from the deadlwp list. */
 			LIST_REMOVE(l, l_list);
 			simple_unlock(&deadproc_slock);
-			KERNEL_PROC_LOCK(curproc);
+			KERNEL_PROC_LOCK(curlwp);
 			
 			/*
 			 * Give machine-dependent code a chance to free any
@@ -502,12 +502,12 @@ reaper(void *arg)
 			}
 			/* XXXNJW where should this be with respect to 
 			 * the wakeup() above? */
-			KERNEL_PROC_UNLOCK(curproc);
+			KERNEL_PROC_UNLOCK(curlwp);
 		} else {
 			/* Remove us from the deadproc list. */
 			LIST_REMOVE(p, p_hash);
 			simple_unlock(&deadproc_slock);
-			KERNEL_PROC_LOCK(curproc);
+			KERNEL_PROC_LOCK(curlwp);
 
 			/*
 			 * Free the VM resources we're still holding on to.
@@ -522,7 +522,7 @@ reaper(void *arg)
 			/* Wake up the parent so it can get exit status. */
 			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
 				psignal(p->p_pptr, P_EXITSIG(p));
-			KERNEL_PROC_UNLOCK(curproc);
+			KERNEL_PROC_UNLOCK(curlwp);
 			wakeup((caddr_t)p->p_pptr);
 		}
 	}

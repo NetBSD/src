@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.5.2.8 2002/06/20 03:49:18 nathanw Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.5.2.9 2002/06/24 22:11:49 nathanw Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.5.2.8 2002/06/20 03:49:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.5.2.9 2002/06/24 22:11:49 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -355,7 +355,7 @@ in6_pcbsetport(laddr, in6p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		struct proc *p = (curproc ? curproc->l_proc : 0);/* XXX */
+		struct proc *p = curproc;/* XXX */
 
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);

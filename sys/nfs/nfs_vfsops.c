@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.7 2002/01/08 00:34:34 nathanw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.8 2002/06/24 22:12:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.7 2002/01/08 00:34:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.8 2002/06/24 22:12:11 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -298,7 +298,7 @@ nfs_mountroot()
 	long n;
 	int error;
 
-	procp = curproc->l_proc; /* XXX */
+	procp = curproc; /* XXX */
 
 	if (root_device->dv_class != DV_IFNET)
 		return (ENODEV);

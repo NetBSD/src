@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62.4.5 2002/02/28 04:08:22 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.62.4.6 2002/06/24 22:04:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -349,7 +349,7 @@ trap(type, code, v, frame)
 	int		i;
 	extern char	fubail[], subail[];
 
-	l = curproc;
+	l = curlwp;
 	sticks = ucode = 0;
 
 	uvmexp.traps++;
@@ -713,7 +713,7 @@ writeback(fp, docachepush)
 	int docachepush;
 {
 	struct fmt7 *f = &fp->f_fmt7;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	int	err = 0;
 	u_int	fa = 0;
@@ -978,7 +978,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	register struct proc *p = curproc->l_proc;
+	register struct proc *p = curproc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",

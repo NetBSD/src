@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27.6.2 2001/11/17 23:18:08 scw Exp $	*/
+/*	$NetBSD: clock.c,v 1.27.6.3 2002/06/24 22:04:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -345,7 +345,7 @@ profclock(pc, ps)
 	 */
 	if (USERMODE(ps)) {
 		if (p->p_stats.p_prof.pr_scale)
-			addupc(pc, &curproc->l_proc->p_stats.p_prof, 1);
+			addupc(pc, &curproc->p_stats.p_prof, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.77.2.4 2002/06/20 03:37:32 nathanw Exp $ */
+/* $NetBSD: trap.c,v 1.77.2.5 2002/06/24 22:03:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.2.4 2002/06/20 03:37:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.2.5 2002/06/24 22:03:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,10 +213,10 @@ printtrap(const u_long a0, const u_long a1, const u_long a2,
 	    framep->tf_regs[FRAME_RA]);
 	printf("CPU %lu    pv         = 0x%lx\n", cpu_id,
 	    framep->tf_regs[FRAME_T12]);
-	printf("CPU %lu    curproc    = %p\n", cpu_id, curproc);
-	if (curproc != NULL)
+	printf("CPU %lu    curlwp    = %p\n", cpu_id, curlwp);
+	if (curlwp != NULL)
 		printf("CPU %lu        pid = %d, comm = %s\n", cpu_id,
-		    curproc->l_proc->p_pid, curproc->l_proc->p_comm);
+		    curproc->p_pid, curproc->p_comm);
 	printf("\n");
 }
 
@@ -239,7 +239,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	int call_debugger = 1;
 #endif
 
-	l = curproc;
+	l = curlwp;
 
 	uvmexp.traps++;			/* XXXSMP: NOT ATOMIC */
 	ucode = 0;
@@ -552,7 +552,7 @@ dopanic:
 /*
  * Set the float-point enable for the current process, and return
  * the FPU context to the named process. If check == 0, it is an
- * error for the named process to already be fpcurproc.
+ * error for the named process to already be fpcurlwp.
  */
 void
 alpha_enable_fp(struct lwp *l, int check)
@@ -562,17 +562,17 @@ alpha_enable_fp(struct lwp *l, int check)
 #endif
 	struct cpu_info *ci = curcpu();
 
-	if (check && ci->ci_fpcurproc == l) {
+	if (check && ci->ci_fpcurlwp == l) {
 		alpha_pal_wrfen(1);
 		return;
 	}
-	if (ci->ci_fpcurproc == l)
-		panic("trap: fp disabled for fpcurproc == %p", l);
+	if (ci->ci_fpcurlwp == l)
+		panic("trap: fp disabled for fpcurlwp == %p", l);
 
-	if (ci->ci_fpcurproc != NULL)
+	if (ci->ci_fpcurlwp != NULL)
 		fpusave_cpu(ci, 1);
 
-	KDASSERT(ci->ci_fpcurproc == NULL);
+	KDASSERT(ci->ci_fpcurlwp == NULL);
 
 #if defined(MULTIPROCESSOR)
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
@@ -584,7 +584,7 @@ alpha_enable_fp(struct lwp *l, int check)
 	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
-	ci->ci_fpcurproc = l;
+	ci->ci_fpcurlwp = l;
 
 	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 
@@ -622,7 +622,7 @@ ast(struct trapframe *framep)
 	 * but roundrobin() (called via hardclock()) kicks us to
 	 * attempt to preempt the process running on our CPU.
 	 */
-	l = curproc;
+	l = curlwp;
 	if (l == NULL)
 		return;
 
@@ -1185,7 +1185,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.6 2000/08/20 21:50:08 thorpej Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.6.10.1 2002/06/24 22:04:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@ LEAF(vr_idle)
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
-	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop

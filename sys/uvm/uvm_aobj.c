@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.39.2.7 2002/06/20 03:50:38 nathanw Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.39.2.8 2002/06/24 22:12:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.39.2.7 2002/06/20 03:50:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.39.2.8 2002/06/24 22:12:47 nathanw Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -822,7 +822,7 @@ uao_put(uobj, start, stop, flags)
 	if (by_list) {
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
 		nextpg = TAILQ_FIRST(&uobj->memq);
-		PHOLD(curproc);
+		PHOLD(curlwp);
 	} else {
 		curoff = start;
 	}
@@ -916,7 +916,7 @@ uao_put(uobj, start, stop, flags)
 	simple_unlock(&uobj->vmobjlock);
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(curproc);
+		PRELE(curlwp);
 	}
 	return 0;
 }

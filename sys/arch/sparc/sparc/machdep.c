@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.10 2002/06/21 06:56:32 gmcgarry Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.11 2002/06/24 22:07:39 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -418,9 +418,9 @@ setregs(l, pack, stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (l == cpuinfo.fpproc) {
+		if (l == cpuinfo.fplwp) {
 			savefpstate(fs);
-			cpuinfo.fpproc = NULL;
+			cpuinfo.fplwp = NULL;
 		} else if (l->l_md.md_fpumid != -1)
 			panic("setreg: own FPU on module %d; fix this",
 				l->l_md.md_fpumid);
@@ -510,7 +510,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigframe *fp;
 	struct trapframe *tf;
@@ -950,9 +950,9 @@ cpu_reboot(howto, user_boot_string)
 		extern struct lwp lwp0;
 		extern int sparc_clock_time_is_ok;
 
-		/* XXX protect against curproc->p_stats.foo refs in sync() */
-		if (curproc == NULL)
-			curproc = &lwp0;
+		/* XXX protect against curlwp->p_stats.foo refs in sync() */
+		if (curlwp == NULL)
+			curlwp = &lwp0;
 		waittime = 0;
 		vfs_shutdown();
 
@@ -1221,11 +1221,11 @@ oldmon_w_trace(va)
 	u_long stop;
 	struct frame *fp;
 
-	if (curproc)
-		printf("curproc = %p, pid %d\n",
-			curproc, curproc->l_proc->p_pid);
+	if (curlwp)
+		printf("curlwp = %p, pid %d\n",
+			curlwp, curproc->p_pid);
 	else
-		printf("no curproc\n");
+		printf("no curlwp\n");
 
 	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
 	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
@@ -1292,10 +1292,10 @@ caddr_t addr;
 	}
 
 	s = splhigh();
-	if (curproc == NULL)
+	if (curlwp == NULL)
 		xpcb = (struct pcb *)proc0paddr;
 	else
-		xpcb = &curproc->l_addr->u_pcb;
+		xpcb = &curlwp->l_addr->u_pcb;
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
         res = xldcontrolb(addr, xpcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.15.4.2 2001/11/17 13:07:53 scw Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.15.4.3 2002/06/24 22:05:24 nathanw Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@netbsd.org
@@ -92,7 +92,7 @@ mappedcopyin(f, t, count)
 #ifdef DEBUG
 	if (mappedcopydebug & MDB_COPYIN)
 		printf("mappedcopyin(%p, %p, %lu), pid %d\n",
-		    fromp, top, (u_long)count, curproc->l_proc->p_pid);
+		    fromp, top, (u_long)count, curproc->p_pid);
 	mappedcopyincount++;
 #endif
 
@@ -102,7 +102,7 @@ mappedcopyin(f, t, count)
 	kva = (vaddr_t)CADDR1;
 	off = (int)((u_long)fromp & PAGE_MASK);
 	alignable = (off == ((u_long)top & PAGE_MASK));
-	upmap = vm_map_pmap(&curproc->l_proc->p_vmspace->vm_map);
+	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
 	while (count > 0) {
 		/*
 		 * First access of a page, use fubyte to make sure
@@ -151,7 +151,7 @@ mappedcopyout(f, t, count)
 #ifdef DEBUG
 	if (mappedcopydebug & MDB_COPYOUT)
 		printf("mappedcopyout(%p, %p, %lu), pid %d\n",
-		    fromp, top, (u_long)count, curproc->l_proc->p_pid);
+		    fromp, top, (u_long)count, curproc->p_pid);
 	mappedcopyoutcount++;
 #endif
 
@@ -161,7 +161,7 @@ mappedcopyout(f, t, count)
 	kva = (vaddr_t) CADDR2;
 	off = (int)((u_long)top & PAGE_MASK);
 	alignable = (off == ((u_long)fromp & PAGE_MASK));
-	upmap = vm_map_pmap(&curproc->l_proc->p_vmspace->vm_map);
+	upmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
 	while (count > 0) {
 		/*
 		 * First access of a page, use subyte to make sure

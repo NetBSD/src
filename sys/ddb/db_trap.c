@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.17.2.4 2002/02/28 20:25:04 nathanw Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.17.2.5 2002/06/24 22:09:42 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.17.2.4 2002/02/28 20:25:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trap.c,v 1.17.2.5 2002/06/24 22:09:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -72,20 +72,20 @@ db_trap(int type, int code)
 			    "(%d loads, %d stores),\n",
 			    db_inst_count, db_load_count, db_store_count);
 		}
-		if (curproc != NULL) {
+		if (curlwp != NULL) {
 			if (bkpt)
 				db_printf("Breakpoint");
 			else if (watchpt)
 				db_printf("Watchpoint");
 			else
 				db_printf("Stopped");
-			if (curproc->l_proc == NULL)
-				db_printf("; curproc = %p,"
-				    " curproc->l_proc is NULL at\t", curproc);
+			if (curproc == NULL)
+				db_printf("; curlwp = %p,"
+				    " curproc is NULL at\t", curlwp);
 			else
 				db_printf(" in pid %d.%d (%s) at\t", 
-				    curproc->l_proc->p_pid, curproc->l_lid,
-				    curproc->l_proc->p_comm);
+				    curproc->p_pid, curlwp->l_lid,
+				    curproc->p_comm);
 		} else if (bkpt)
 			db_printf("Breakpoint at\t");
 		else if (watchpt)

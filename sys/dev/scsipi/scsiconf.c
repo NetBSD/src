@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.11 2002/06/20 03:46:37 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.12 2002/06/24 22:10:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.11 2002/06/20 03:46:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.12 2002/06/24 22:10:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ scsi_probe_bus(sc, target, lun)
 	 */
 	if (chan->chan_adapter->adapt_ioctl != NULL)
 		(*chan->chan_adapter->adapt_ioctl)(chan, SCBUSIOLLSCAN, NULL,
-		    0, curproc->l_proc);
+		    0, curproc);
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
 		return (error);

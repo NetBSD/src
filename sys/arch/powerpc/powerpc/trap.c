@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.8 2002/06/20 03:40:35 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.9 2002/06/24 22:07:13 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,7 +94,7 @@ void
 trap(frame)
 	struct trapframe *frame;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l ? l->l_proc : NULL;
 	int type = frame->exc;
 	int ftype, rv;
@@ -727,7 +727,7 @@ startlwp(arg)
 {
 	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC

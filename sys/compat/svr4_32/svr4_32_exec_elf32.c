@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2.4.2 2001/11/14 19:13:29 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2.4.3 2002/06/24 22:09:41 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.2.4.2 2001/11/14 19:13:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.2.4.3 2002/06/24 22:09:41 nathanw Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -98,7 +98,7 @@ svr4_32_copyargs(pack, arginfo, stackp, argp)
 	 * linked binaries
 	 */
 	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
-		struct proc *p = curproc; /* XXXXX */
+		struct proc *p = curlwp; /* XXXXX */
 
 		a->a_type = AT_SUN_PLATFORM;
 		platform = a; /* Patch this later. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.13 2002/05/29 21:31:43 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.14 2002/06/24 22:05:05 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.13 2002/05/29 21:31:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.14 2002/06/24 22:05:05 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -376,7 +376,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct lwp *l = curproc;
+	register struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
@@ -549,7 +549,7 @@ void
 svr4_fasttrap(frame)
 	struct trapframe frame;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
 	l->l_md.md_regs = &frame;

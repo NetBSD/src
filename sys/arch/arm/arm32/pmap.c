@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.8 2002/06/20 03:38:05 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.9 2002/06/24 22:03:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.8 2002/06/20 03:38:05 nathanw Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.9 2002/06/24 22:03:54 nathanw Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -401,7 +401,7 @@ __inline static boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
 
-	if ((curproc && curproc->l_proc->p_vmspace->vm_map.pmap == pmap) ||
+	if ((curlwp && curproc->p_vmspace->vm_map.pmap == pmap) ||
 	    pmap == pmap_kernel())
 		return (TRUE);
 
@@ -1663,7 +1663,7 @@ pmap_activate(struct lwp *l)
 	PDEBUG(0, printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
 	    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
 
-	if (l == curproc) {
+	if (l == curlwp) {
 		PDEBUG(0, printf("pmap_activate: setting TTB\n"));
 		setttb((u_int)pcb->pcb_pagedir);
 	}
@@ -1723,11 +1723,11 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 		/* nothing mapped in so nothing to flush */
 		return (0);
 
-	/* Since we flush the cache each time we change curproc, we
+	/* Since we flush the cache each time we change curlwp, we
 	 * only need to flush the page if it is in the current pmap.
 	 */
-	if (curproc)
-		pmap = curproc->l_proc->p_vmspace->vm_map.pmap;
+	if (curlwp)
+		pmap = curproc->p_vmspace->vm_map.pmap;
 	else
 		pmap = pmap_kernel();
 
@@ -3034,7 +3034,7 @@ pmap_map_ptes(struct pmap *pmap)
 		return (pt_entry_t *)PTE_BASE;
 	}
 
-	l = curproc;
+	l = curlwp;
 	KDASSERT(l != NULL);
 	p = l->l_proc;
 
@@ -3068,10 +3068,10 @@ pmap_unmap_ptes(struct pmap *pmap)
 	if (pmap_is_curpmap(pmap)) {
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 	} else {
-		KDASSERT(curproc != NULL);
+		KDASSERT(curlwp != NULL);
 		simple_unlock(&pmap->pm_obj.vmobjlock);
 		simple_unlock(
-		    &curproc->l_proc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
+		    &curproc->p_vmspace->vm_map.pmap->pm_obj.vmobjlock);
 	}
 }
 
@@ -3391,7 +3391,7 @@ void
 pmap_procwr(struct proc *p, vaddr_t va, int len)
 {
 	/* We only need to do anything if it is the current process. */
-	if (curproc != NULL && p == curproc->l_proc)
+	if (curlwp != NULL && p == curproc)
 		cpu_icache_sync_range(va, len);
 }
 /*

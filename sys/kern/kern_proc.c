@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44.2.6 2002/04/17 00:06:18 nathanw Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.2.7 2002/06/24 22:10:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.6 2002/04/17 00:06:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.2.7 2002/06/24 22:10:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,8 +416,8 @@ enterpgrp(p, pgid, mksess)
 			p->p_flag &= ~P_CONTROLT;
 			pgrp->pg_session = sess;
 #ifdef DIAGNOSTIC
-			if (__predict_false(p != curproc->l_proc))
-				panic("enterpgrp: mksession and p != curproc");
+			if (__predict_false(p != curproc))
+				panic("enterpgrp: mksession and p != curlwp");
 #endif
 		} else {
 			SESSHOLD(p->p_session);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13.4.4 2002/02/28 04:12:02 nathanw Exp $ */
+/*	$NetBSD: fpu.c,v 1.13.4.5 2002/06/24 22:07:28 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -363,64 +363,64 @@ fpu_execute(fe, instr)
 			rs1 = fs->fs_regs[rs2];
 			goto mov;
 		case FMVIC >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVIC\n"));
-			cond = (curproc->l_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
+			cond = (curlwp->l_md.md_tf->tf_tstate>>TSTATE_CCR_SHIFT)&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVXC >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVXC\n"));
-			cond = (curproc->l_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
+			cond = (curlwp->l_md.md_tf->tf_tstate>>(TSTATE_CCR_SHIFT+XCC_SHIFT))&PSR_ICC;
 			if (instr.i_fmovcc.i_cond != cond) return(0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->l_md.md_tf->tf_global[rs1] != 0)
+			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] != 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRLEZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLEZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->l_md.md_tf->tf_global[rs1] > 0)
+			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] > 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRLZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRLZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->l_md.md_tf->tf_global[rs1] >= 0)
+			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] >= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRNZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRNZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->l_md.md_tf->tf_global[rs1] == 0)
+			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] == 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRGZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 == 0 || (int64_t)curproc->l_md.md_tf->tf_global[rs1] <= 0)
+			if (rs1 == 0 || (int64_t)curlwp->l_md.md_tf->tf_global[rs1] <= 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;			
 		case FMVRGEZ >> 2:
-			/* Presume we're curproc */
+			/* Presume we're curlwp */
 			DPRINTF(FPE_INSN, ("fpu_execute: FMVRGEZ\n"));
 			rs1 = instr.i_fmovr.i_rs1;
-			if (rs1 != 0 && (int64_t)curproc->l_md.md_tf->tf_global[rs1] < 0)
+			if (rs1 != 0 && (int64_t)curlwp->l_md.md_tf->tf_global[rs1] < 0)
 				return (0); /* success */
 			rs1 = fs->fs_regs[rs2];
 			goto mov;		

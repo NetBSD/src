@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.12.6.2 2002/06/21 21:26:30 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.12.6.3 2002/06/24 22:07:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ cpu_switch_search(struct lwp *oldlwp)
 	struct prochd *q;
 	struct lwp *l;
 
-	curproc = 0;
+	curlwp = 0;
 
 	SCHED_LOCK_IDLE();
 	while (sched_whichqs == 0) {
@@ -138,7 +138,7 @@ cpu_switch_search(struct lwp *oldlwp)
 		curpcb = l->l_md.md_pcb;
 		pmap_activate(l);
 	}
-	curproc = l;
+	curlwp = l;
 
 	return (l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.24.2.5 2002/05/04 20:06:01 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.24.2.6 2002/06/24 22:11:11 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.24.2.5 2002/05/04 20:06:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.24.2.6 2002/06/24 22:11:11 nathanw Exp $");
 
 #include <sys/param.h>
 
@@ -181,7 +181,7 @@ int cmd;
 
 static int ipl_remove()
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	char *name;
 	struct nameidata nd;
 	int error, i;
@@ -192,7 +192,7 @@ static int ipl_remove()
 			return (error);
 		VOP_LEASE(nd.ni_vp, p, p->p_ucred, LEASE_WRITE);
 #ifdef OpenBSD
-		VOP_LOCK(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+		VOP_LOCK(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY, curlwp);
 #else
 		vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 #endif
@@ -221,7 +221,7 @@ static int ipl_unload()
 
 static int ipl_load()
 {
-	struct proc *p = curproc->l_proc;
+	struct proc *p = curproc;
 	struct nameidata nd;
 	struct vattr vattr;
 	int error = 0, fmode = S_IFCHR|0600, i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.66.2.7 2002/06/20 03:50:02 nathanw Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.66.2.8 2002/06/24 22:12:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.7 2002/06/20 03:50:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.66.2.8 2002/06/24 22:12:08 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -515,7 +515,7 @@ nfs_receive(rep, aname, mp)
 	u_int32_t len;
 	struct mbuf **getnam;
 	int error, sotype, rcvflg;
-	struct proc *p = curproc->l_proc;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	/*
 	 * Set up arguments for soreceive()

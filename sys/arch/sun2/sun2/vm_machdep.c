@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5.4.5 2002/02/28 04:12:21 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5.4.6 2002/06/24 22:08:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -102,13 +102,13 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	/*
 	 * Before copying the PCB from the current process,
-	 * make sure it is up-to-date.  (l1 == curproc)
+	 * make sure it is up-to-date.  (l1 == curlwp)
 	 */
-	if (l1 == curproc)
+	if (l1 == curlwp)
 		savectx(p1pcb);
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curproc");
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 	/* copy over the machdep part of struct proc */

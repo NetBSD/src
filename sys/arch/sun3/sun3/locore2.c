@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.79.6.2 2001/11/18 19:39:01 scw Exp $	*/
+/*	$NetBSD: locore2.c,v 1.79.6.3 2002/06/24 22:08:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ _vm_init()
 	/*
 	 * Now that lwp0 exists, make it the "current" one.
 	 */
-	curproc = &lwp0;
+	curlwp = &lwp0;
 	curpcb = &proc0paddr->u_pcb;
 
 	/* This does most of the real work. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.37.2.5 2002/05/29 21:33:21 nathanw Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.37.2.6 2002/06/24 22:11:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.37.2.5 2002/05/29 21:33:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.37.2.6 2002/06/24 22:11:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ portal_open(v)
 		int i;
 		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
-			portal_closefd(curproc, *ip); /* XXXNJWLWP */
+			portal_closefd(curlwp, *ip); /* XXXNJWLWP */
 			ip++;
 		}
 	}
@@ -506,7 +506,7 @@ portal_open(v)
 	 */
  	fp = p->p_fd->fd_ofiles[fd];
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
-		portal_closefd(curproc, fd); /* XXXNJWLWP */
+		portal_closefd(curlwp, fd); /* XXXNJWLWP */
 		error = EACCES;
 		goto bad;
 	}

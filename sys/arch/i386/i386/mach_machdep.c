@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.2.4.4 2002/05/29 21:31:43 nathanw Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.2.4.5 2002/06/24 22:04:54 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.2.4.4 2002/05/29 21:31:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.2.4.5 2002/06/24 22:04:54 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -82,7 +82,7 @@ mach_trap(frame)
 	struct trapframe frame;
 {
 	extern struct emul emul_mach;
-	struct proc *p = curproc;
+	struct proc *p = curlwp;
 
 	p->p_md.md_regs = &frame;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.8 2002/04/01 07:49:06 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.9 2002/06/24 22:12:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.8 2002/04/01 07:49:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.9 2002/06/24 22:12:06 nathanw Exp $");
 
 #include "opt_nfs.h"
 
@@ -210,8 +210,8 @@ loop:
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
-	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->p_ucred, 
-	    curproc->l_proc);
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, 
+	    curproc);
 	if (error) {
 		vput(vp);
 		return error;

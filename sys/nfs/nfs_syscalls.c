@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.48.2.6 2002/06/20 03:50:03 nathanw Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.48.2.7 2002/06/24 22:12:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.6 2002/06/20 03:50:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.2.7 2002/06/24 22:12:09 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1011,7 +1011,7 @@ void
 start_nfsio(arg)
 	void *arg;
 {
-	nfssvc_iod(curproc);
+	nfssvc_iod(curlwp);
 	
 	kthread_exit(0);
 }

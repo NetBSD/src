@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.9.8.3 2002/05/29 21:31:58 nathanw Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.9.8.4 2002/06/24 22:07:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -73,7 +73,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sunos_sigframe *fp;
 	struct trapframe *tf;

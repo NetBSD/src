@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.21.2.6 2002/02/28 04:13:29 nathanw Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.21.2.7 2002/06/24 22:10:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.6 2002/02/28 04:13:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.21.2.7 2002/06/24 22:10:01 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1002,7 +1002,7 @@ esh_fpread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct iovec *iovp;
 	struct esh_softc *sc;
@@ -1163,7 +1163,7 @@ esh_fpwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct lwp *l = curproc;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct iovec *iovp;
 	struct esh_softc *sc;

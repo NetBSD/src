@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.31.8.4 2002/06/20 03:42:19 nathanw Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.31.8.5 2002/06/24 22:08:51 nathanw Exp $	*/
 
 /* 
  * :set tabs=4
@@ -416,7 +416,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	void		(*pr) __P((const char *, ...)); /* Print function */
 {
 	extern vaddr_t	proc0paddr;
-	struct lwp	*l = curproc;
+	struct lwp	*l = curlwp;
 	struct proc	*p = l->l_proc;
 	struct user	*uarea;
 	int		trace_proc;
@@ -476,7 +476,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 	} else {
 		if (trace_proc) {
-			l = curproc;
+			l = curlwp;
 			if (l == NULL) {
 				(*pr)("trace: no current process! (ignored)\n");
 				return;
@@ -644,9 +644,9 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	stopcpu = ci;
 	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	db_printf("using cpu %ld", addr);
-	if (ci->ci_curproc)
-		db_printf(" in proc %d (%s)\n", ci->ci_curproc->p_pid,
-		    ci->ci_curproc->p_comm);
+	if (ci->ci_curlwp)
+		db_printf(" in proc %d (%s)\n", ci->ci_curlwp->p_pid,
+		    ci->ci_curlwp->p_comm);
 }
 #endif
 
