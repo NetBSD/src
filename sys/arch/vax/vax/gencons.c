@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.34 2001/06/03 15:07:20 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.35 2001/06/12 13:18:38 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -64,7 +64,6 @@ static	struct gc_softc {
 	struct tty *gencn_tty;
 } gc_softc[4];
 
-static	int consopened = 0;
 static	int maxttys = 1;
 
 static	int pr_txcs[4] = {PR_TXCS, PR_TXCS1, PR_TXCS2, PR_TXCS3};
@@ -110,8 +109,6 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
-	if (unit == 0)
-		consopened = 1;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));
 }
@@ -121,8 +118,7 @@ gencnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 
-	if (minor(dev) == 0)
-		consopened = 0;
+	gc_softc[minor(dev)].alive = 0;
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 	return (0);
@@ -364,7 +360,7 @@ gencnpollc(dev_t dev, int pollflag)
 	if (pollflag)  {
 		mtpr(0, PR_RXCS);
 		mtpr(0, PR_TXCS); 
-	} else if (consopened) {
+	} else {
 		mtpr(GC_RIE, PR_RXCS);
 		mtpr(GC_TIE, PR_TXCS);
 	}
