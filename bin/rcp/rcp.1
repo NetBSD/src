@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: rcp.1,v 1.5 1995/03/21 08:19:04 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)rcp.1	6.14 (Berkeley) 7/27/91
-.\"	$Id: rcp.1,v 1.4 1993/08/01 07:48:06 mycroft Exp $
+.\"	@(#)rcp.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd July 27, 1991
+.Dd May 31, 1993
 .Dt RCP 1
 .Os BSD 4.3r
 .Sh NAME
@@ -40,12 +41,11 @@
 .Nd remote file copy
 .Sh SYNOPSIS
 .Nm rcp
-.Op Fl px
+.Op Fl Kpx
 .Op Fl k Ar realm
 .Ar file1 file2
 .Nm rcp
-.Op Fl px
-.Op Fl r
+.Op Fl Kprx
 .Op Fl k Ar realm
 .Ar file ...
 .Ar directory
@@ -60,11 +60,20 @@ form ``rname@rhost:path'', or a local file name (containing no `:' characters,
 or a `/' before any `:'s).
 .Pp
 .Bl -tag -width flag
-.It Fl r
-If any of the source files are directories,
+.It Fl K
+The
+.Fl K
+option turns off all Kerberos authentication.
+.It Fl k
+The
+.Fl k
+option requests
 .Nm rcp
-copies each subtree rooted at that name; in this case
-the destination must be a directory.
+to obtain tickets
+for the remote host in realm
+.Ar realm
+instead of the remote host's realm as determined by
+.Xr krb_realmofhost  3  .
 .It Fl p
 The
 .Fl p
@@ -79,16 +88,11 @@ are preserved if it already existed; otherwise the mode of the source file
 modified by the
 .Xr umask  2
 on the destination host is used.
-.It Fl k
-The
-.Fl k
-option requests
+.It Fl r
+If any of the source files are directories,
 .Nm rcp
-to obtain tickets
-for the remote host in realm
-.Ar realm
-instead of the remote host's realm as determined by
-.Xr krb_realmofhost  3  .
+copies each subtree rooted at that name; in this case
+the destination must be a directory.
 .It Fl x
 The
 .Fl x
