@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.12 1999/02/18 08:55:16 mycroft Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.12 1999/02/18 08:55:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.12 1999/02/18 08:55:16 mycroft Ex
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.14 2000/03/23 06:32:32 thorpej Exp $ */
+/* $NetBSD: promcons.c,v 1.15 2000/06/29 09:02:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.14 2000/03/23 06:32:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.15 2000/06/29 09:02:56 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.14 2000/03/23 06:32:32 thorpej Exp $"
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/conf.h>
 #include <machine/prom.h>

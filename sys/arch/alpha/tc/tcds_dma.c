@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.29 2000/06/02 04:35:06 nisimura Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.30 2000/06/29 09:02:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.29 2000/06/02 04:35:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.30 2000/06/29 09:02:58 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.29 2000/06/02 04:35:06 nisimura Exp $
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

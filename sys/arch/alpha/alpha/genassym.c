@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.29 2000/05/31 05:14:27 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.30 2000/06/29 09:02:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.29 2000/05/31 05:14:27 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.30 2000/06/29 09:02:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -80,7 +80,7 @@ __RCSID("$NetBSD: genassym.c,v 1.29 2000/05/31 05:14:27 thorpej Exp $");
 #include <machine/rpb.h>
 #include <machine/vmparam.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /* Note: Avoid /usr/include for cross compilation! */
 extern void printf __P((const char *fmt, ...));

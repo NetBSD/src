@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.48 2000/06/29 09:02:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.48 2000/06/29 09:02:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47 2000/05/28 23:05:19 thorpej Exp $");
 
 #include <machine/conf.h>
 
-#include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
+#include <uvm/uvm_extern.h>	/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
 
 #include "fdc.h"
 bdev_decl(fd);
