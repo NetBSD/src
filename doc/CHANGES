@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.355 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.356 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,3 +101,7 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	kernel: Add extensions to the autoconf(9) framework to allow device
 		detachment and bus rescans in a bus independant way, and
 		for better support of driver LKMs.  [drochner 20040819]
+	libc: Add optimized ffs(3) implementation for ARM architecture 5.
+		[rearnsha 20040821]
+	libc, libpthread: On ARM use interworking clean return sequences when
+		built for v4T or later.  [rearnsha 20040821]
