@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.31 2002/05/07 04:52:49 uwe Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.32 2002/05/10 20:45:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.31 2002/05/07 04:52:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.32 2002/05/10 20:45:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 	int bmcr, anar, gtcr;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
+//		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
 			(void) mii_phy_auto(sc, 1);
 		return;
 	}
@@ -341,23 +341,30 @@ void
 mii_phy_update(struct mii_softc *sc, int cmd)
 {
 	struct mii_data *mii = sc->mii_pdata;
+	int announce, s;
 
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
+		announce = mii_phy_statusmsg(sc);
 		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		mii_phy_statusmsg(sc);
 		sc->mii_media_active = mii->mii_media_active;
 		sc->mii_media_status = mii->mii_media_status;
+
+		if (announce) {
+			s = splnet();
+			rt_ifmsg(mii->mii_ifp);
+			splx(s);
+		}
 	}
 }
 
-void
+int
 mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
-	int s, baudrate, link_state, announce = 0;
+	int baudrate, link_state, announce = 0;
 
 	if (mii->mii_media_status & IFM_AVALID) {
 		if (mii->mii_media_status & IFM_ACTIVE)
@@ -384,11 +391,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 		announce = 1;
 	}
 
-	if (announce) {
-		s = splnet();
-		rt_ifmsg(ifp);
-		splx(s);
-	}
+	return (announce);
 }
 
 /*
