@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.77 2001/01/10 04:47:10 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.78 2001/01/10 17:49:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -213,6 +213,7 @@ ffs_mount(mp, path, data, ndp, p)
 			if (error)
 				return (error);
 			fs->fs_ronly = 1;
+			fs->fs_fmod = 0;
 		}
 
 		/*
