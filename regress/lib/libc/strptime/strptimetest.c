@@ -1,4 +1,4 @@
-/*	$NetBSD: strptimetest.c,v 1.1 2005/03/04 21:42:40 dsl Exp $	*/
+/*	$NetBSD: strptimetest.c,v 1.2 2005/03/05 07:48:47 martin Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -99,13 +99,13 @@ test(const char *buf, const char *fmt, int len, const tm_t *want)
 	if (len == -1) {
 		fprintf(stderr,
 		    "strptime(\"%.*s\" \"%s\", \"%s\", ...) ok so failed\n",
-		    np - buf, buf, np, fmt);
+		    (int)(np - buf), buf, np, fmt);
 		return 2;
 	}
 	if (np - buf != len) {
 		fprintf(stderr,
 		    "strptime(\"%.*s\" \"%s\", \"%s\", ...) failed len %d\n",
-		    np - buf, buf, np, fmt, len);
+		    (int)(np - buf), buf, np, fmt, len);
 		return 2;
 	}
 
