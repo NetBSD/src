@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmakefile.c	5.33 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkmakefile.c,v 1.21 1994/03/10 19:50:48 mycroft Exp $";
+static char rcsid[] = "$Id: mkmakefile.c,v 1.22 1994/03/10 22:09:51 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -449,7 +449,7 @@ do_load(f)
 	fputs("all:", f);
 	for (fl = conf_list; fl; fl = fl->f_next)
 		if (fl->f_type == SYSTEMSPEC)
-			fprintf(f, " %s", fl->f_needs);
+			fprintf(f, " %s", fl->f_needs->name);
 	putc('\n', f);
 }
 
