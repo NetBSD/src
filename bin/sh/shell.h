@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.11 2000/05/13 20:50:15 elric Exp $	*/
+/*	$NetBSD: shell.h,v 1.12 2000/05/13 21:11:16 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,7 @@
  * a quit signal will generate a core dump.
  */
 
+#include <sys/param.h>
 
 #define JOBS 1
 #ifndef BSD
