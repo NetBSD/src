@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.18.2.1 1998/11/09 06:06:36 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.18.2.2 1999/02/25 04:04:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -121,9 +121,10 @@ READ(v)
 			break;
 		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
 				UBC_READ);
+#ifdef DIAGNOSTIC
 		if (win == NULL)
 			panic(READ_S ": ubc_alloc -> NULL");
-
+#endif
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 		if (error)
@@ -200,55 +201,6 @@ READ(v)
 	return (error);
 }
 
-
-int
-ffs_mballoc(struct inode *, off_t, off_t, struct ucred *, int);
-
-int
-ffs_mballoc(ip, off, len, cred, flags)
-struct inode *ip;
-off_t off;
-off_t len;
-struct ucred *cred;
-int flags;
-{
-	struct fs *fs = ip->i_fs;
-	int lbn, bsize, delta, error;
-
-#define UBCSPEW 0
-#if UBCSPEW
-printf("ffs_mballoc vp %p off 0x%x len 0x%x\n",
-       ITOV(ip), (int)off, (int)len);
-#endif
-
-	while (len > 0) {
-		lbn = lblkno(fs, off);
-		bsize = min(fs->fs_bsize, blkoff(fs, off) + len);
-
-#if UBCSPEW
-printf("before ffs_balloc lbn %d bsize 0x%x blocks %d\n",
-       lbn, bsize, ip->i_ffs_blocks);
-#endif
-
-		if ((error = ffs_balloc(ip, lbn, bsize, cred, NULL, flags))) {
-			return error;
-		}
-
-#if UBCSPEW
-printf("after ffs_balloc %d\n", ip->i_ffs_blocks);
-#endif
-
-		delta = fs->fs_bsize - blkoff(fs, off);
-		len -= delta;
-		off += delta;
-	}
-
-	return 0;
-}
-
-
-
-
 /*
  * Vnode op for writing.
  */
@@ -322,23 +274,22 @@ WRITE(v)
 
 #ifdef UBC
 	if (vp->v_type == VREG) {
-		error = 0;
 
 	/*
 	 * make sure the range of file offsets to be written
 	 * is fully allocated.
 	 */
 
-	if ((error = ffs_mballoc(ip, uio->uio_offset, uio->uio_resid,
-				 ap->a_cred, 0))) {
+	if ((error = ffs_balloc_range(ip, uio->uio_offset, uio->uio_resid,
+				      ap->a_cred, 0))) {
 		return error;
 	}
 
-/*
- * XXX increase the vm notion of the size before copying anything
- * to satisfy the uvm_vnode size check.
- * this is should probably change with access_type arg.
- */
+	/*
+	 * XXX increase the vm notion of the size before copying anything
+	 * to satisfy the uvm_vnode size check.
+	 * this is should probably change with access_type arg.
+	 */
 
 	if (ip->i_ffs_size < uio->uio_offset + uio->uio_resid) {
 		ip->i_ffs_size = uio->uio_offset + uio->uio_resid;
@@ -355,13 +306,20 @@ WRITE(v)
 			break;
 		win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset, bytelen,
 				UBC_WRITE);
-		if (win == NULL)
+#ifdef DIAGNOSTIC
+		if (win == NULL) {
 			panic(WRITE_S ": ubc_alloc -> NULL");
-
+		}
+#endif
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
-		if (error)
+		if (error) {
+			/*
+			 * XXX zero out any part of the current window
+			 * that we might have failed to copyin.
+			 */
 			break;
+		}
 	}
 
 	}
@@ -382,8 +340,8 @@ WRITE(v)
 		else
 			flags &= ~B_CLRBUF;
 
-		error = ffs_balloc(ip,
-		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
+		error = ffs_balloc(ip, lbn, blkoffset + xfersize, ap->a_cred,
+				   &bp, NULL, flags, NULL);
 #endif
 		if (error)
 			break;
