@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.336 2004/07/14 14:26:51 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.337 2004/07/15 15:49:29 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5473,4 +5473,13 @@ sys/arch/amd64/conf/INSTALL			1.16
 
 	Add re; Realtek GbE.
 	[fvdl, ticket #655]
+
+distrib/notes/sgimips/hardware			1.11
+doc/CHANGES					1.333
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.11
+sys/arch/sgimips/mace/if_mec_mace.c		1.3-1.4
+sys/arch/sgimips/mace/if_mecreg.h		1.2
+
+	Add a working driver for O2 (IP32) on-board MACE MAC-110 Ethernet.
+	[tsutsui, ticket #652]
 
