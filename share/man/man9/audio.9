@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.19 2001/10/03 20:50:31 augustss Exp $
+.\"	$NetBSD: audio.9,v 1.20 2002/03/11 15:09:51 kent Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2000
+.Dd March 11, 2002
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -103,6 +103,18 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;			/* coding space change */
+	/*
+	 * The following four members represent what format is used in a
+	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
+	 * channels, the audio framework converts data.  Encoding and
+	 * precision are converted in sw_code().
+	 * set_params() should set correct values to them if no conversion is
+	 * neede.
+	 */
+	u_long	hw_sample_rate;
+	u_int	hw_encoding;
+	u_int	hw_precision;
+	u_int	hw_channels;
 };
 .Ed
 .Pp
@@ -190,15 +202,67 @@ The
 and
 .Va rec
 structures contain the encoding parameters that should be set.
+.Pp
 If the hardware requires software assistance with some encoding
 (e.g., it might be lacking mulaw support) it should fill the
 .Va sw_code
 and
 .Va factor
-fields of these structures.
+fields of these structures with translation information, and
+set to hw_* fields what format the hardware actually uses.
+For example, if
+.Va play
+requests [8000Hz, mulaw, 8bit, 1ch] and the hardware supports
+not 8bit mulaw but 16bit slinear_le, the driver should set
+.Va mulaw_to_slinear16_le
+to
+.Va sw_code ,
+2 to
+.Va factor ,
+.Dv AUDIO_ENCODING_SLINEAR_LE
+to 
+.Va hw_encoding
+and 16 to
+.Va hw_precision .
 The values of the structures may also be modified if the hardware
 cannot be set to exactly the requested mode (e.g. if the requested
 sampling rate is not supported, but one close enough is).
+.Pp
+The hardware driver can also request sampling rate conversion
+and mono-stereo conversion.  If
+.Va set_params
+sets to
+.Va hw_sampling_rate
+a value which is different than
+.Va sampling_rate
+or sets to
+.Va hw_channels
+a value which is different than
+.Va channels ,
+and set
+.Dv AUDIO_ENCODING_SLINEAR_LE
+to
+.Va hw_encoding ,
+the hardware independent driver performs sampling rate and/or mono-stereo
+conversion. If such conversion is not needed,
+.Va set_params
+must keep
+.Va sampling_rate
+and
+.Va channels
+are the same as
+.Va hw_sampling_rate
+and
+.Va hw_channels
+respectively.
+.Pp
+Note: The order of conversion is
+.Va sw_code 
+followed by sampling rate and mono-stereo in playing,
+and sampling rate and mono-stereo followed by
+.Va sw_code
+in recording.
+.Pp
 If the device does not have the
 .Dv AUDIO_PROP_INDEPENDENT
 property the same value is passed in both
