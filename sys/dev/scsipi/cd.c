@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.178 2003/02/05 21:38:41 pk Exp $	*/
+/*	$NetBSD: cd.c,v 1.179 2003/02/25 20:35:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.178 2003/02/05 21:38:41 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.179 2003/02/25 20:35:37 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -647,7 +647,7 @@ cdstrategy(bp)
 			}
 
 			/* Set up the IOP to the bounce buffer. */
-			simple_lock_init(&nbp->b_interlock);
+			BUF_INIT(nbp);
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
 			nbp->b_vp = NULLVP;
@@ -656,7 +656,6 @@ cdstrategy(bp)
 			nbp->b_bufsize = count;
 			nbp->b_data = bounce;
 
-			LIST_INIT(&nbp->b_dep);
 			nbp->b_rawblkno = blkno;
 
 			/* We need to do a read-modify-write operation */
@@ -889,6 +888,7 @@ cdbounce(bp)
 			}
 
 			/* Set up the IOP to the bounce buffer. */
+			BUF_INIT(nbp);
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
 			nbp->b_vp = NULLVP;
@@ -897,7 +897,6 @@ cdbounce(bp)
 			nbp->b_bufsize = bp->b_bufsize;
 			nbp->b_data = bp->b_data;
 
-			LIST_INIT(&nbp->b_dep);
 			nbp->b_rawblkno = bp->b_rawblkno;
 
 			/* We need to do a read-modify-write operation */

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.7 2003/02/05 21:38:40 pk Exp $ */
+/* $NetBSD: cgd.c,v 1.8 2003/02/25 20:35:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.7 2003/02/05 21:38:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.8 2003/02/25 20:35:34 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,7 +307,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return;
 	}
-	simple_lock_init(&cbp->cb_buf.b_interlock);
+	BUF_INIT(&cbp->cb_buf);
 	cbp->cb_buf.b_data = newaddr;
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = cgdiodone;
@@ -315,7 +315,6 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	cbp->cb_buf.b_dev = cs->sc_tdev;
 	cbp->cb_buf.b_blkno = bn;
 	cbp->cb_buf.b_vp = cs->sc_tvn;
-	LIST_INIT(&cbp->cb_buf.b_dep);
 	cbp->cb_buf.b_bcount = bp->b_bcount;
 
 	/* context for cgdiodone */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.58 2003/01/17 22:53:07 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.59 2003/02/25 20:35:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.58 2003/01/17 22:53:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.59 2003/02/25 20:35:31 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -352,11 +352,11 @@ sdgetcapacity(sc, dev)
 		bp = malloc(sizeof *bp, M_DEVBUF, M_WAITOK);
 		sc->sc_format_pid = curproc->p_pid;
 		memcpy(&sc->sc_cmdstore, &cap, sizeof cap);
+		BUF_INIT(bp);
 		bp->b_dev = dev;
 		bp->b_flags = B_READ | B_BUSY;
 		bp->b_data = (caddr_t)capbuf;
 		bp->b_bcount = capbufsize;
-		LIST_INIT(&bp->b_dep);
 		sdstrategy(bp);
 		i = biowait(bp) ? sc->sc_sensestore.status : 0;
 		free(bp, M_DEVBUF);
@@ -631,6 +631,7 @@ sdlblkstrat(bp, bsize)
 	    M_WAITOK | M_ZERO);
 	cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
 
+	BUF_INIT(cbp);
 	cbp->b_proc = curproc;		/* XXX */
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;

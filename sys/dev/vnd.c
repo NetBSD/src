@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.91 2003/02/05 21:38:39 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.92 2003/02/25 20:35:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.91 2003/02/05 21:38:39 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.92 2003/02/25 20:35:34 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -490,7 +490,7 @@ vndstrategy(bp)
 		s = splbio();
 		nbp = VND_GETBUF(vnd);
 		splx(s);
-		simple_lock_init(&nbp->vb_buf.b_interlock);
+		BUF_INIT(&nbp->vb_buf);
 		nbp->vb_buf.b_flags = flags;
 		nbp->vb_buf.b_bcount = sz;
 		nbp->vb_buf.b_bufsize = round_page((ulong)addr + sz)
@@ -501,7 +501,6 @@ vndstrategy(bp)
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
 		nbp->vb_buf.b_vp = NULLVP;
-		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		nbp->vb_xfer = vnx;
 

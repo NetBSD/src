@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.76 2003/02/05 21:38:46 pk Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.77 2003/02/25 20:35:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.76 2003/02/05 21:38:46 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.77 2003/02/25 20:35:41 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1286,7 +1286,7 @@ sw_reg_strategy(sdp, bp, bn)
 		 * cast pointers between the two structure easily.
 		 */
 		getvndbuf(nbp);
-		simple_lock_init(&nbp->vb_buf.b_interlock);
+		BUF_INIT(&nbp->vb_buf);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = sz;
@@ -1300,7 +1300,6 @@ sw_reg_strategy(sdp, bp, bn)
 		if (vp->v_type == VBLK) {
 			nbp->vb_buf.b_dev = vp->v_rdev;
 		}
-		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		nbp->vb_xfer = vnx;	/* patch it back in to vnx */
 
@@ -1699,7 +1698,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 
-	simple_lock_init(&bp->b_interlock);
+	BUF_INIT(bp);
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
@@ -1708,7 +1707,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_vp = swapdev_vp;
 	bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
-	LIST_INIT(&bp->b_dep);
 
 	/*
 	 * bump v_numoutput (counter of number of active outputs).

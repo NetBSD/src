@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.154 2003/02/05 21:38:40 pk Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.155 2003/02/25 20:35:36 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.154 2003/02/05 21:38:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.155 2003/02/25 20:35:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1840,15 +1840,13 @@ rf_DispatchKernelIO(queue, req)
 		bp->b_error = ENOMEM;
 		return (ENOMEM);
 	}
-	simple_lock_init(&raidbp->rf_buf.b_interlock);
+	BUF_INIT(&raidbp->rf_buf);
 
 	/*
 	 * context for raidiodone
 	 */
 	raidbp->rf_obp = bp;
 	raidbp->req = req;
-
-	LIST_INIT(&raidbp->rf_buf.b_dep);
 
 	switch (req->type) {
 	case RF_IO_TYPE_NOP:	/* used primarily to unlock a locked queue */

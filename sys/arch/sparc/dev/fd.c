@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.103 2003/02/05 21:38:38 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.104 2003/02/25 20:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -2115,7 +2115,7 @@ fdformat(dev, finfo, p)
 		return (ENOBUFS);
 
 	memset((void *)bp, 0, sizeof(struct buf));
-	simple_lock_init(&bp->b_interlock);
+	BUF_INIT(bp);
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
