@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.212 2004/05/20 05:25:29 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.213 2004/05/20 09:54:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1810,8 +1810,8 @@ sys/dev/microcode/isp/asm_2100.h		1.5
 
 gnu/dist/gcc/gcc/version.c			1.7
 
-bump version for SPARC fixes (from kjk via martin)
-[mrg, ticket #253]
+	bump version for SPARC fixes (from kjk via martin)
+	[mrg, ticket #253]
 
 
 share/man/man4/crypto.4				0-1.5
@@ -2645,3 +2645,41 @@ gnu/dist/cvs/src/stack.h			new file
 
 	Pullup to version 1.11.16
 	[christos, ticket #366]
+
+sys/dev/microcode/siop/ncr53cxxx.c		1.13
+
+	Make it compile with recent compilers.
+	[bouyer, ticket #348]
+
+usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.12
+
+	Make rpc.yppasswdd work if invoked with the "-noshell" option.
+	[wennmach, ticket #350]
+
+usr.bin/shuffle/shuffle.c			1.16
+
+	Teach getopt about the new -0 option. Fixes PR bin/25621.
+	[cube, ticket #351]
+
+sys/dev/sbus/stp4020.c				1.36
+
+	Handle STP4020_ISR0_SCINT (status change interrupt posted) - by
+	ignoring it.
+	[martin, ticket #352]
+
+distrib/pmax/ramdisk/Makefile			1.32
+sys/arch/pmax/conf/RAMDISK			1.6
+
+	Expand the ramdisk image size from 3m to 3148k so that the contents
+	fits again.
+	[he, ticket #353]
+
+lib/libc/sys/connect.2				1.26
+sys/kern/uipc_syscalls.c			1.87
+
+	Fix connect() "bug": If connect() is interrupted by a signal, the
+	connection attempt is terminated, so if a process needs frequent
+	timer interrupts it can't ever connect() to a machine far away.
+	Update connect manpage to reflect current changes.
+	[ragge, ticket #354]
+
