@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.9 2001/06/30 15:39:51 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.10 2001/06/30 15:57:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1147,6 +1147,67 @@ struct ti_softc {
 #define	TI_CDTXCONSADDR(sc)	((sc)->info_dmaaddr + TI_CDTXCONSOFF)
 #define	TI_CDGIBADDR(sc)	((sc)->info_dmaaddr + TI_CDGIBOFF)
 #define	TI_CDSTATSADDR(sc)	((sc)->info_dmaaddr + TI_CDSTATSOFF)
+
+#define	TI_CDRXSTDSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXSTDOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDRXJUMBOSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXJUMBOOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDRXMINISYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXMINIOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDRXRTNSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXRTNOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDEVENTSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDEVENTOFF((x)), sizeof(struct ti_event_desc), (ops))
+
+#define	TI_CDTXSYNC(sc, x, n, ops)					\
+do {									\
+	int __x, __n;							\
+									\
+	__x = (x);							\
+	__n = (n);							\
+									\
+	/* If it will wrap around, sync to the end of the ring. */	\
+	if ((__x + __n) > TI_TX_RING_CNT) {				\
+		bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,	\
+		    TI_CDTXOFF(__x), sizeof(struct ti_tx_desc) *	\
+		    (TI_TX_RING_CNT - __x), (ops));			\
+		__n -= (TI_TX_RING_CNT - __x);				\
+		__x = 0;						\
+	}								\
+									\
+	/* Now sync whatever is left. */				\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDTXOFF(__x), sizeof(struct ti_tx_desc) * (__n), (ops));	\
+} while (/*CONSTCOND*/0)
+
+#define	TI_CEVPRODSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDEVPRODOFF, sizeof(struct ti_producer), (ops))
+
+#define	TI_CDRTNPRODSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRTNPRODOFF, sizeof(struct ti_producer), (ops))
+
+#define	TI_CDTXCONSSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDTXCONSOFF, sizeof(struct ti_producer), (ops))
+
+#define	TI_CDGIBSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDGIBOFF, sizeof(struct ti_gib), (ops))
+
+#define	TI_CDSTATSSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDSTATSOFF, sizeof(struct ti_stats), (ops))
 
 /*
  * Microchip Technology 24Cxx EEPROM control bytes
