@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.1.1.1.2.1 1998/07/30 14:03:50 eeh Exp $ */
+/*	$NetBSD: cgsix.c,v 1.1.1.1.2.2 1998/08/02 00:06:47 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -374,8 +374,8 @@ cgsixioctl(dev, cmd, data, flags, p)
 			cc->cc_size = p->size;
 			count = p->size.y * 32 / NBBY;
 			bzero((caddr_t)cc->cc_bits, sizeof cc->cc_bits);
-			bcopy(p->mask, (caddr_t)cc->cc_bits[0], count);
-			bcopy(p->image, (caddr_t)cc->cc_bits[1], count);
+			copyin(p->mask, (caddr_t)cc->cc_bits[0], count);
+			copyin(p->image, (caddr_t)cc->cc_bits[1], count);
 			cg6_loadcursor(sc);
 		}
 		break;
@@ -631,7 +631,6 @@ cgsixmmap(dev, off, prot)
 					   sc->sc_paddr+u+mo->mo_physoff,
 					   BUS_SPACE_MAP_LINEAR, &bh))
 				return (-1);
-
 			return (bh);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3.2.1 1998/07/30 14:03:56 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3.2.2 1998/08/02 00:06:49 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -1454,18 +1454,18 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	if (IS_VM_PHYSADDR(pa)) {
 		pv = pa_to_pvh(pa);
 		aliased = (pv->pv_va&(PV_ALIAS|PV_NVC));
+		if ((tte.data.data = pseg_get(pm, va))<0 &&
+		    ((tte.data.data^pa)&TLB_PA_MASK)) {
+			vaddr_t entry;
+			
+			/* different mapping for this page exists -- remove it. */
+			entry = (tte.data.data&TLB_PA_MASK);
+			pmap_remove_pv(pm, va, entry);
+		}		
 	} else {
 		aliased = 0;
 	}
 	if (pa & PMAP_NVC) aliased = 1;
-	if ((tte.data.data = pseg_get(pm, va))<0 &&
-	    ((tte.data.data^pa)&TLB_PA_MASK)) {
-		vaddr_t entry;
-
-		/* different mapping for this page exists -- remove it. */
-		entry = (tte.data.data&TLB_PA_MASK);
-		pmap_remove_pv(pm, va, entry);
-	}		
 #ifdef NO_VCACHE
 	aliased = 1; /* Disable D$ */
 #endif
@@ -1721,7 +1721,8 @@ pmap_remove(pm, va, endva)
 			
 			/* First remove it from the pv_table */
 			entry = (data&TLB_PA_MASK);
-			pmap_remove_pv(pm, va, entry);
+			if (IS_VM_PHYSADDR(entry))
+				pmap_remove_pv(pm, va, entry);
 #ifdef ATTR
 			pmap_attributes[atop(entry)] = 0;
 #endif

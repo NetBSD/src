@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.1.1.1.2.1 1998/07/30 14:03:50 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.1.1.1.2.2 1998/08/02 00:06:46 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	/usr/ccs/bin/ld #Need to use Solaris ld to use the solaris loader
 MKDEP?=	mkdep
 STRIP?=	strip
+SIZE?=	size
 COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
@@ -87,7 +88,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
@@ -101,8 +102,10 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-.undef	.USE_GENASSYM_H
-.ifdef	.USE_GENASSYM_H
+# XXX fix me!
+USE_GENASSYM?=	yes
+
+.if ${USE_GENASSYM} == "no"
 assym.h: $S/kern/genassym.sh ${SPARC64}/sparc64/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    < ${SPARC64}/sparc64/genassym.cf > assym.h.tmp && \
@@ -175,7 +178,7 @@ depend: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
+
 # depend on network or filesystem configuration 
 uipc_proto.o vfs_conf.o: Makefile 
 

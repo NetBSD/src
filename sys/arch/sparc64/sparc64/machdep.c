@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.1 1998/07/30 14:03:56 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.3.2.2 1998/08/02 00:06:49 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1960,13 +1960,22 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 	int		flags;
 	bus_space_handle_t *hp;
 {
-	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
+	paddr_t pflags = 0;
+
+	/*
+	 * We need to do some magic involving flags and bus_type_t values to
+	 * determine exactly how this should be mapped.  But since pmap
+	 * doesn't support anything fancy, and we know that everything's in
+	 * I/O space, this mapped the same way, we'll fake it.
+	 */
+
+	 pflags = PMAP_NC;
+	*hp = (bus_space_handle_t)(paddr|pflags);
 	return (0);
 }
 
 /*
- * Establish a temporary bus mapping for device probing.
- */
+ * Establish a temporary bus mapping for device probing.  */
 int
 bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	bus_space_tag_t tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.1.1.1.2.1 1998/07/30 14:03:51 eeh Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.1.1.1.2.2 1998/08/02 00:06:48 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -277,3 +277,4 @@ struct sysioreg {
 #define INTVEC(x)	((x)&INTMAP_INR)
 #define INTSLOT(x)	(((x)>>3)&0x7)
 #define	INTPRI(x)	((x)&0x7)
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.2.1 1998/07/30 14:03:54 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.2.2.2 1998/08/02 00:06:49 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1018,7 +1018,7 @@ getprop_intr1(node, ip)
 	int *ip;
 {
 	int error, n;
-	struct sbus_intr *rip = NULL;
+	struct sbus_intr *sip = NULL;
 	int *interrupts;
 	char buf[32];
 
@@ -1044,7 +1044,7 @@ getprop_intr1(node, ip)
          * this.  Need to get to the vector.
 	 */
 	error = getpropA(node, "intr", sizeof(struct sbus_intr),
-			 &n, (void **)&rip);
+			 &n, (void **)&sip);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*ip = 0;
@@ -1053,8 +1053,8 @@ getprop_intr1(node, ip)
 		return (error);
 	}
 
-	*ip = rip[0].int_pri;
-	free(rip, M_DEVBUF);
+	*ip = sip[0].sbi_pri;
+	free(sip, M_DEVBUF);
 	return (0);
 }
 
