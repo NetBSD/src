@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.646 2004/08/26 13:16:09 itohy Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.647 2004/09/10 13:59:07 darrenr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.647 2004/08/26 13:14:59 itohy Exp 
+ *	NetBSD: pcidevs,v 1.648 2004/09/10 13:56:32 darrenr Exp 
  */
 
 /*
@@ -6440,6 +6440,10 @@ const struct pci_product pci_products[] = {
 	    "USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_EVDO,
+	    "Sierra Wireless AirCard 580",
+	},
+	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
 	    "FW322/323 IEEE 1394 Host Controller",
 	},
@@ -9648,4 +9652,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1837;
+const int pci_nproducts = 1838;
