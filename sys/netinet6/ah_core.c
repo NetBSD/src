@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.13 2000/01/06 07:31:10 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.14 2000/01/16 18:06:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -806,6 +806,7 @@ again:
 	case IPPROTO_UDP:
 	case IPPROTO_TCP:
 	case IPPROTO_ESP:
+	case IPPROTO_IPCOMP:
 		while (m) {
 			tlen = m->m_len - (p - mtod(m, u_char *));
 			(algo->update)(&algos, p, tlen);
@@ -1078,6 +1079,7 @@ again:
 	case IPPROTO_UDP:
 	case IPPROTO_TCP:
 	case IPPROTO_ESP:
+	case IPPROTO_IPCOMP:
 		while (m) {
 			tlen = m->m_len - (p - mtod(m, u_char *));
 			(algo->update)(&algos, p, tlen);
