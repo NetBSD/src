@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.54.2.3 2002/10/21 01:52:31 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.54.2.4 2003/01/26 09:40:35 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.54.2.3 2002/10/21 01:52:31 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.54.2.4 2003/01/26 09:40:35 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -1196,13 +1196,24 @@ getaddr(which, s, hpp)
 		hints.ai_family = afamily;	/*AF_INET6*/
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
-		if (getaddrinfo(s, "0", &hints, &res) != 0 ||
-		    res->ai_family != AF_INET6 ||
-		    res->ai_addrlen != sizeof(su->sin6)) {
+		if (getaddrinfo(s, "0", &hints, &res) != 0) {
+			hints.ai_flags = 0;
+			if (getaddrinfo(s, "0", &hints, &res) != 0) {
+				(void) fprintf(stderr, "%s: bad value\n", s);
+				exit(1);
+			}
+		}
+		if (sizeof(su->sin6) != res->ai_addrlen) {
 			(void) fprintf(stderr, "%s: bad value\n", s);
 			exit(1);
 		}
+		if (res->ai_next) {
+			(void) fprintf(stderr,
+			    "%s: resolved to multiple values\n", s);
+			exit(1);
+		}
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
+		freeaddrinfo(res);
 #ifdef __KAME__
 		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
 		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr)) &&
@@ -1212,10 +1223,12 @@ getaddr(which, s, hpp)
 			su->sin6.sin6_scope_id = 0;
 		}
 #endif
-		freeaddrinfo(res);
-		if (which == RTA_DST)
-			return inet6_makenetandmask(&su->sin6);
-		return 0;
+		if (hints.ai_flags == AI_NUMERICHOST) {
+			if (which == RTA_DST)
+				return (inet6_makenetandmask(&su->sin6));
+			return (0);
+		} else
+			return (1);
 	    }
 #endif
 
