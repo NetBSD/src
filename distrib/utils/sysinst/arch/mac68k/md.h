@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2002/10/20 22:06:17 rnestor Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/01/11 19:28:04 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <sys/disklabel.h>
+#include <sys/bootblock.h>
 
 /* md.h -- Machine specific definitions for the mac68k */
 
@@ -70,15 +71,15 @@ typedef struct {
 EXTERN MAP_TYPE map_types[]
 #ifdef MAIN
 = {
-	{MAP_RESERVED, PART_TYPE_DRIVER},
-	{MAP_RESERVED, PART_TYPE_DRIVER43},
-	{MAP_RESERVED, PART_TYPE_DRIVERATA},
-	{MAP_RESERVED, PART_TYPE_FWB_COMPONENT},
-	{MAP_MACOS,    PART_TYPE_MAC},
-	{MAP_NETBSD,   PART_TYPE_NETBSD},
-	{MAP_RESERVED, PART_TYPE_PARTMAP},
-	{MAP_OTHER,    PART_TYPE_SCRATCH},
-	{MAP_NETBSD,   PART_TYPE_UNIX},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVER},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVER43},
+	{MAP_RESERVED, APPLE_PART_TYPE_DRIVERATA},
+	{MAP_RESERVED, APPLE_PART_TYPE_FWB_COMPONENT},
+	{MAP_MACOS,    APPLE_PART_TYPE_MAC},
+	{MAP_NETBSD,   APPLE_PART_TYPE_NETBSD},
+	{MAP_RESERVED, APPLE_PART_TYPE_PARTMAP},
+	{MAP_OTHER,    APPLE_PART_TYPE_SCRATCH},
+	{MAP_NETBSD,   APPLE_PART_TYPE_UNIX},
 	{MAP_EOL,      NULL}
 }
 #endif
@@ -108,7 +109,7 @@ typedef struct {
         int usr_cnt;            /* number of usr partitions in map */
         int selected;           /* current partition selection in mblk */
 	int mblk[MAXPARTITIONS];/* map block number of usable partition */
-        struct part_map_entry *blk;
+        struct apple_part_map_entry *blk;
 } MAP;
 
 /*
@@ -126,16 +127,16 @@ EXTERN MAP map
 
 int	edit_diskmap (void);		
 void	disp_selected_part (int sel);
-int	whichType(struct part_map_entry *);
-char	*getFstype(struct part_map_entry *, int, char *);
-char	*getUse(struct part_map_entry *, int, char *);
-char	*getName(struct part_map_entry *, int, char *);
+int	whichType(struct apple_part_map_entry *);
+char	*getFstype(struct apple_part_map_entry *, int, char *);
+char	*getUse(struct apple_part_map_entry *, int, char *);
+char	*getName(struct apple_part_map_entry *, int, char *);
 int	stricmp(const char *c1, const char *c2);
 int	getFreeLabelEntry(char *);
 int	findStdType(int, char *, int, int *, int);
-void	setpartition(struct part_map_entry *, char *, int);
+void	setpartition(struct apple_part_map_entry *, char *, int);
 void	sortmerge(void);
-void	reset_part_flags(struct part_map_entry *);
+void	reset_part_flags(struct apple_part_map_entry *);
 int	check_for_errors(void);
 void	report_errors(void);
 void	set_fdisk_info (void);		/* write incore info into disk */
@@ -201,16 +202,21 @@ typedef struct {
  *  Has minimal entry for an old Apple SCSI driver, a newer 43 SCSI
  *  driver and an IDE driver (for those Macs with IDE). 
  */
-EXTERN struct part_map_entry new_map[]
+EXTERN struct apple_part_map_entry new_map[]
 #ifdef MAIN
 = {
-  {PART_ENTRY_MAGIC, 0xa5a5, 6,   1,   NEW_MAP_SIZE & 0x7e, "Apple",
-	"Apple_Partition_Map", 0,NEW_MAP_SIZE, 0x37},
-  {PART_ENTRY_MAGIC, 0, 6, 64, 32, "Macintosh", "Apple_Driver", 0,0,0x37},
-  {PART_ENTRY_MAGIC, 0, 6, 96, 64, "Macintosh", "Apple_Driver43", 0,0,0x37},
-  {PART_ENTRY_MAGIC, 0, 6, 160, 64, "Macintosh", "Apple_Driver_ATA", 0,0,0x37},
-  {PART_ENTRY_MAGIC, 0, 6, 224, 4096, "untitled", "Apple_HFS", 0,0,0x37},
-  {PART_ENTRY_MAGIC, 0, 6,4320, 0, "untitled", "Apple_Free", 0,0,0x37}
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0xa5a5, 6, 1, NEW_MAP_SIZE & 0x7e,
+	  "Apple", "Apple_Partition_Map", 0, NEW_MAP_SIZE, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 64, 32,
+	  "Macintosh", "Apple_Driver", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 96, 64,
+	  "Macintosh", "Apple_Driver43", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 160, 64,
+	  "Macintosh", "Apple_Driver_ATA", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6, 224, 4096,
+	  "untitled", "Apple_HFS", 0, 0, 0x37 },
+	{ APPLE_PART_MAP_ENTRY_MAGIC, 0, 6,4320, 0,
+	  "untitled", "Apple_Free", 0, 0, 0x37 }
 }
 #endif
 ;
