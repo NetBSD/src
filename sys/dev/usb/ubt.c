@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.8 2004/01/01 16:10:13 dsainty Exp $	*/
+/*	$NetBSD: ubt.c,v 1.9 2004/01/02 02:36:25 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.8 2004/01/01 16:10:13 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.9 2004/01/02 02:36:25 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,9 @@ ubt_aclrd_request(struct ubt_softc *sc)
 			USBD_NO_TIMEOUT, ubt_aclrd_cb);
 
 	status = usbd_transfer(sc->sc_aclrd_xfer);
-	if (status == USBD_IN_PROGRESS || USBD_CANCELLED)
+
+	/* Cancellation is normal on device shutdown */
+	if (status == USBD_IN_PROGRESS || status == USBD_CANCELLED)
 		return;
 
 	DPRINTFN(1,("%s: read request failed: %s\n", __func__,
