@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.1 2003/04/26 18:39:35 fvdl Exp $
+#	$NetBSD: Makefile.amd64,v 1.2 2003/05/04 12:03:41 fvdl Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ GENASSYM=	${AMD64}/amd64/genassym.cf
 ##
 ## (2) compile settings
 ##
-DEFCOPTS=	-O
+DEFCOPTS=	-O2
 CPPFLAGS+=	-Damd64 -Dx86_64
 CFLAGS+=	-mcmodel=kernel
 CFLAGS+=	-mno-red-zone
