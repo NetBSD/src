@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.11 2003/01/28 22:19:30 wiz Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.12 2003/07/14 06:08:05 itojun Exp $");
 #endif
 
 
@@ -337,7 +337,7 @@ readtab(int force)
 #ifdef DEBUG
 	if (debug > 3) {
 		char timestr[28];
-		strcpy(timestr, ctime(&(st.st_mtime)));
+		strlcpy(timestr, ctime(&(st.st_mtime)), sizeof(timestr));
 		/* zap the newline */
 		timestr[24] = '\0';
 		report(LOG_INFO, "bootptab mtime: %s",
@@ -805,7 +805,8 @@ eval_symbol(char **symbol, struct host *hp)
 	if ((*symbol)[0] == 'T') {	/* generic symbol */
 		(*symbol)++;
 		value = get_u_long(symbol);
-		sprintf(current_tagname, "T%d", value);
+		snprintf(current_tagname, sizeof(current_tagname),
+		    "T%d", value);
 		eat_whitespace(symbol);
 		if ((*symbol)[0] != '=') {
 			return E_SYNTAX_ERROR;
@@ -1210,10 +1211,10 @@ get_shared_string(char **src)
 	length = sizeof(retstring);
 	(void) get_string(src, retstring, &length);
 
-	s = (struct shared_string *) smalloc(sizeof(struct shared_string)
-										 + length);
+	s = (struct shared_string *) smalloc(sizeof(struct shared_string) +
+	    length);
 	s->linkcount = 1;
-	strcpy(s->string, retstring);
+	strlcpy(s->string, retstring, sizeof(retstring));
 
 	return s;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.12 2003/05/17 20:58:40 itojun Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.13 2003/07/14 06:08:04 itojun Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.12 2003/05/17 20:58:40 itojun Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.13 2003/07/14 06:08:04 itojun Exp $");
 #endif
 
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
@@ -487,7 +487,7 @@ ipaddr_string(struct in_addr *ina)
 	u_char *p;
 
 	p = (u_char *) ina;
-	sprintf(b, "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+	snprintf(b, sizeof(b), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
 	return (b);
 }
 
