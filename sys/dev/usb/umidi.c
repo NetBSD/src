@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.6 2001/04/07 22:01:34 tshiozak Exp $	*/
+/*	$NetBSD: umidi.c,v 1.7 2001/05/25 19:33:36 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -530,6 +530,7 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 
 	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	out_ep = in_ep = -1;
+	out_addr = in_addr = -1;
 
 	while (remain>=sizeof(usb_descriptor_t)) {
 		descsize = desc->bLength;
@@ -609,7 +610,7 @@ static usbd_status
 alloc_all_endpoints_genuine(struct umidi_softc *sc)
 {
 	usb_descriptor_t *desc;
-	int num_ep, i;
+	int num_ep;
 	size_t remain, descsize;
 	struct umidi_endpoint *p, *q, *lowest, *endep, tmpep;
 	int epaddr;
@@ -682,13 +683,14 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 			memcpy((void *)p, (void *)lowest, sizeof(tmpep));
 			memcpy((void *)lowest, (void *)&tmpep, sizeof(tmpep));
 		}
+		p->num_open = 0;
+		p++;
 	}
 	
 	sc->sc_out_ep = sc->sc_out_num_endpoints ? sc->sc_endpoints : NULL;
 	sc->sc_in_ep =
 	    sc->sc_in_num_endpoints ?
 		sc->sc_endpoints+sc->sc_out_num_endpoints : NULL;
-	sc->sc_endpoints[i].num_open = 0;
 
 	return USBD_NORMAL_COMPLETION;
 }
