@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28.2.2 2001/06/21 20:09:54 nathanw Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28.2.3 2001/11/17 01:49:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -204,6 +204,8 @@ void	signal_init __P((void));
 void	sigactsinit __P((struct proc *, struct proc *, int));
 void	sigactsunshare __P((struct proc *));
 void	sigactsfree __P((struct proc *));
+
+void	psendsig __P((struct lwp *l, sig_t action, int sig, sigset_t *returnmask, u_long code));
 
 /*
  * Machine-dependent functions:
