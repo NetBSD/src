@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: sort.h,v 1.4 2000/10/07 22:15:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,6 +47,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define NBINS 256
 #define MAXMERGE 16
