@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 1998/08/21 14:13:55 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.125 1998/08/23 10:01:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2078,28 +2078,21 @@ pv_changepte4_4c(pv0, bis, bic)
 
 			/* in hardware: fix hardware copy */
 			if (CTX_USABLE(pm,rp)) {
-#if defined(UVM)
 				/*
 				 * Bizarreness:  we never clear PG_W on
-				 * pager pages, nor PG_NC on DVMA pages.
+				 * pager pages.
 				 */
+#if defined(UVM)
 				if (bic == PG_W &&
 				    va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
 #else
 				extern vaddr_t pager_sva, pager_eva;
-
-				/*
-				 * Bizarreness:  we never clear PG_W on
-				 * pager pages, nor PG_NC on DVMA pages.
-				 */
 				if (bic == PG_W &&
 				    va >= pager_sva && va < pager_eva)
 					continue;
 #endif
-				if (bic == PG_NC &&
-				    va >= DVMA_BASE && va < DVMA_END)
-					continue;
+
 				setcontext4(pm->pm_ctxnum);
 				/* XXX should flush only when necessary */
 				tpte = getpte4(va);
@@ -2405,7 +2398,7 @@ pv_changepte4m(pv0, bis, bic)
 #if defined(UVM)
 			/*
 			 * Bizarreness:  we never clear PG_W on
-			 * pager pages, nor set PG_C on DVMA pages.
+			 * pager pages.
 			 */
 			if ((bic & PPROT_WRITE) &&
 			    va >= uvm.pager_sva && va < uvm.pager_eva)
@@ -2416,15 +2409,12 @@ pv_changepte4m(pv0, bis, bic)
 
 			/*
 			 * Bizarreness:  we never clear PG_W on
-			 * pager pages, nor set PG_C on DVMA pages.
+			 * pager pages.
 			 */
 			if ((bic & PPROT_WRITE) &&
 			    va >= pager_sva && va < pager_eva)
 				continue;
 #endif
-			if ((bis & SRMMU_PG_C) &&
-			    va >= DVMA_BASE && va < DVMA_END)
-				continue;
 
 			setcontext4m(pm->pm_ctxnum);
 
@@ -3296,21 +3286,22 @@ pmap_bootstrap4m(void)
 	/*
 	 * Reserve memory for I/O pagetables. This takes 64k of memory
 	 * since we want to have 64M of dvma space (this actually depends
-	 * on the definition of DVMA4M_BASE...we may drop it back to 32M).
-	 * The table must be aligned on a (-DVMA4M_BASE/NBPG) boundary
+	 * on the definition of IOMMU_DVMA_BASE...we may drop it back to 32M).
+	 * The table must be aligned on a (-IOMMU_DVMA_BASE/NBPG) boundary
 	 * (i.e. 64K for 64M of dvma space).
 	 */
 #ifdef DEBUG
-	if ((0 - DVMA4M_BASE) % (16*1024*1024))
-	    panic("pmap_bootstrap4m: invalid DVMA4M_BASE of 0x%x", DVMA4M_BASE);
+	if ((0 - IOMMU_DVMA_BASE) % (16*1024*1024))
+	    panic("pmap_bootstrap4m: invalid IOMMU_DVMA_BASE of 0x%x",
+		  IOMMU_DVMA_BASE);
 #endif
 
-	p = (caddr_t) roundup((u_int)p, (0 - DVMA4M_BASE) / 1024);
+	p = (caddr_t) roundup((u_int)p, (0 - IOMMU_DVMA_BASE) / 1024);
 	unavail_gap_start = (paddr_t)p - KERNBASE;
 
 	kernel_iopte_table = (u_int *)p;
 	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
-	p += (0 - DVMA4M_BASE) / 1024;
+	p += (0 - IOMMU_DVMA_BASE) / 1024;
 
 	pagetables_start = p;
 	/*
