@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.105 2000/07/07 08:20:50 itohy Exp $
+#	$NetBSD: Makefile.inc,v 1.106 2000/07/08 00:53:39 enami Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -213,7 +213,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=chdir.2 fchdir.2
-MLINKS+=chflags.2 fchflags.2
+MLINKS+=chflags.2 fchflags.2 chflags.2 lchflags.2
 MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
 MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=clock_settime.2 clock_gettime.2
