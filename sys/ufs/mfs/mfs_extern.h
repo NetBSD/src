@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.19 2004/04/21 01:05:46 christos Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.20 2004/05/20 06:34:33 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,10 @@ int	mfs_close	__P((void *));
 int	mfs_inactive	__P((void *));
 int	mfs_reclaim	__P((void *));
 int	mfs_print	__P((void *));
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_mfs_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 
 __END_DECLS
 
