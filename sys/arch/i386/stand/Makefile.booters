@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.25 2000/01/23 16:44:18 mycroft Exp $
+#	$NetBSD: Makefile.booters,v 1.26 2000/07/12 21:05:35 jdolecek Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -17,7 +17,8 @@ DOSSTART= start_dos.o doscommain.o
 CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
 
-CLEANFILES+= vers.c vers.o ${BASE}.list
+CLEANFILES+= vers.c ${BASE}.list
+SRCS+=	vers.c
 
 .BEGIN: machine
 .NOPATH: machine
@@ -66,25 +67,25 @@ LDFLAGS=-N -M -e _start
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
-vers.o: ${VERSIONFILE}
-	sh ${I386_STAND_DIR}/newvers.sh ${.ALLSRC} ${NEWVERSWHAT}
-	${COMPILE.c} vers.c
+.PHONY: vers.c
+vers.c: ${VERSIONFILE}
+	sh ${S}conf/newvers_stand.sh ${.ALLSRC} 'i386' ${NEWVERSWHAT}
 
-${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0 ${BSSTART} ${OBJS} \
-	vers.o ${LIBLIST} >${BASE}.list
+	${LIBLIST} >${BASE}.list
 
-${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${ROMSTART} ${OBJS} \
-	vers.o ${LIBLIST} >${BASE}.list
+	${LIBLIST} >${BASE}.list
 	objcopy --output-target=binary ${BASE}.sym ${BASE}.bin
 	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${BASE:Q}.bin \
 		ROMFILE=${.OBJDIR:Q}/${BASE:Q}.rom ROM_SIZE=${ROM_SIZE:Q})
 	rm -f ${BASE}.bin
 
-${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
+${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x100 ${DOSSTART} ${OBJS} \
-	vers.o ${LIBLIST} >${BASE}.list
+	${LIBLIST} >${BASE}.list
 	objcopy --output-target=binary ${BASE}.sym ${BASE}.com
 
 .include <bsd.prog.mk>
