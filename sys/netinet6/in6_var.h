@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.35 2003/08/07 16:33:26 agc Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.36 2003/10/15 01:28:28 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -271,13 +271,15 @@ struct	in6_aliasreq {
  * prefix related flags passed between kernel(NDP related part) and
  * user land command(ifconfig) and daemon(rtadvd).
  */
+struct prf_ra {
+	u_char onlink : 1;
+	u_char autonomous : 1;
+	u_char router : 1;
+	u_char reserved : 5;
+};
+
 struct in6_prflags {
-	struct prf_ra {
-		u_char onlink : 1;
-		u_char autonomous : 1;
-		u_char router : 1;
-		u_char reserved : 5;
-	} prf_ra;
+	struct prf_ra prf_ra;
 	u_char prf_reserved1;
 	u_short prf_reserved2;
 	/* want to put this on 4byte offset */
