@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.7 1999/09/16 00:06:46 sommerfeld Exp $	*/
+/*	$NetBSD: md5c.c,v 1.8 1999/10/16 19:06:48 ragge Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -30,9 +30,9 @@
  */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-#include <lib/libkern/libkern.h>
 #include <sys/param.h>
 #include <sys/md5.h>
+#include <lib/libkern/libkern.h>
 #else
 #include "namespace.h"
 #include <sys/types.h>
