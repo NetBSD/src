@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.74 2002/02/13 16:25:34 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.75 2002/03/05 16:16:03 simonb Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -47,8 +47,6 @@ defflag	opt_tx39xx.h	TX39XX TX3911 TX3912 TX3922
 file	arch/hpcmips/vr/vr.c		vr41xx	# NEC VR4000 series
 file	arch/hpcmips/vr/vr_idle.S	vr41xx
 file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
-
-file	arch/mips/mips/fp.S		softfloat
 
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/bus_dma.c
