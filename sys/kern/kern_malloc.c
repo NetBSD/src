@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.90 2004/09/04 23:30:07 manu Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.91 2005/01/01 03:24:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.90 2004/09/04 23:30:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.91 2005/01/01 03:24:43 simonb Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -314,7 +314,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
-			 * wait, if there is no map space avaiable, because
+			 * wait, if there is no map space available, because
 			 * it can't fix that problem.  Neither can we,
 			 * right now.  (We should release pages which
 			 * are completely free and which are in buckets

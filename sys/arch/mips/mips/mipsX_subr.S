@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.13 2003/08/07 16:28:33 agc Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.14 2005/01/01 03:24:43 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1788,7 +1788,7 @@ END(MIPSX(TLBRead))
  *
  *	Handle virtual coherency exceptions.
  *	Called directly from the mips3 execption-table code.
- *	only k0, k1 are avaiable on entry
+ *	only k0, k1 are available on entry
  *
  * Results:
  *	None.
