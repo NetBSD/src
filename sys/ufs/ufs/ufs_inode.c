@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.11 1998/06/08 04:27:52 scottr Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.12 1998/12/04 11:02:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -48,7 +48,6 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 
 #include <ufs/ufs/quota.h>

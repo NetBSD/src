@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.16 1998/09/01 03:11:08 thorpej Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.17 1998/12/04 11:02:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -50,7 +50,6 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 
