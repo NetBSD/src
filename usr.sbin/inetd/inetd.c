@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.78 2002/06/01 00:15:08 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.79 2002/06/01 00:28:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.78 2002/06/01 00:15:08 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.79 2002/06/01 00:28:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -387,6 +387,7 @@ uint32_t	machtime __P((void));
 int 		port_good_dg __P((struct sockaddr *sa));
 static int	getline __P((int, char *, int));
 int		main __P((int, char *[]));
+void		spawn __P((struct servtab *, int));
 #ifdef MULOG
 void		dolog __P((struct servtab *, int));
 static void	timeout __P((int));
@@ -431,7 +432,7 @@ struct biltin {
  * List must end with port number "0".
  */
 
-u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0};
+u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0 };
 
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
@@ -444,8 +445,7 @@ main(argc, argv)
 {
 	struct servtab *sep, *nsep;
 	struct sigvec sv;
-	int ch, dofork;
-	pid_t pid;
+	int ch;
 
 	while ((ch = getopt(argc, argv,
 #ifdef LIBWRAP
@@ -518,112 +518,127 @@ main(argc, argv)
 	}
 
 	for (;;) {
-	    int n, ctrl;
-	    fd_set readable;
+		int n, ctrl;
+		fd_set readable;
 
-	    if (nsock == 0) {
-		(void) sigblock(SIGBLOCK);
-		while (nsock == 0)
-		    sigpause(0L);
-		(void) sigsetmask(0L);
-	    }
-	    readable = allsock;
-	    if ((n = select(maxsock + 1, &readable, (fd_set *)0,
-		(fd_set *)0, (struct timeval *)0)) <= 0) {
-		    if (n == -1 && errno != EINTR) {
-			syslog(LOG_WARNING, "select: %m");
-			sleep(1);
-		    }
-		    continue;
-	    }
-	    for (sep = servtab; n && sep; sep = nsep) {
-	    nsep = sep->se_next;
-	    if (sep->se_fd != -1 && FD_ISSET(sep->se_fd, &readable)) {
-		n--;
-		if (debug)
-			fprintf(stderr, "someone wants %s\n", sep->se_service);
-		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
-			/* XXX here do the libwrap check-before-accept */
-			ctrl = accept(sep->se_fd, (struct sockaddr *)0,
-			    (int *)0);
-			if (debug)
-				fprintf(stderr, "accept, ctrl %d\n", ctrl);
-			if (ctrl < 0) {
-				if (errno != EINTR)
-					syslog(LOG_WARNING,
-					    "accept (for %s): %m",
-					    sep->se_service);
-				continue;
+		if (nsock == 0) {
+			(void) sigblock(SIGBLOCK);
+			while (nsock == 0)
+				sigpause(0L);
+			(void) sigsetmask(0L);
+		}
+		readable = allsock;
+		if ((n = select(maxsock + 1, &readable, (fd_set *)0,
+		    (fd_set *)0, (struct timeval *)0)) <= 0) {
+			if (n == -1 && errno != EINTR) {
+				syslog(LOG_WARNING, "select: %m");
+				sleep(1);
 			}
-		} else
-			ctrl = sep->se_fd;
-		(void) sigblock(SIGBLOCK);
-		pid = 0;
-#ifdef LIBWRAP_INTERNAL
-		dofork = 1;
-#else
-		dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
-#endif
-		if (dofork) {
-			if (sep->se_count++ == 0)
-			    (void)gettimeofday(&sep->se_time,
-			        (struct timezone *)0);
-			else if (sep->se_count >= sep->se_max) {
-				struct timeval now;
+			continue;
+		}
+		for (sep = servtab; n && sep; sep = nsep) {
+			nsep = sep->se_next;
+			if (sep->se_fd == -1 ||
+			    !FD_ISSET(sep->se_fd, &readable))
+				continue;
 
-				(void)gettimeofday(&now, (struct timezone *)0);
-				if (now.tv_sec - sep->se_time.tv_sec >
-				    CNT_INTVL) {
-					sep->se_time = now;
-					sep->se_count = 1;
-				} else {
-					syslog(LOG_ERR,
-			"%s/%s server failing (looping), service terminated\n",
-					    sep->se_service, sep->se_proto);
-					if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
-					    close(ctrl);
-					close_sep(sep);
-					sigsetmask(0L);
-					if (!timingout) {
-						timingout = 1;
-						alarm(RETRYTIME);
-					}
+			n--;
+			if (debug)
+				fprintf(stderr, "someone wants %s\n", sep->se_service);
+			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
+				/* XXX here do the libwrap check-before-accept */
+				ctrl = accept(sep->se_fd, (struct sockaddr *)0,
+				    (int *)0);
+				if (debug)
+					fprintf(stderr, "accept, ctrl %d\n",
+					    ctrl);
+				if (ctrl < 0) {
+					if (errno != EINTR)
+						syslog(LOG_WARNING,
+						    "accept (for %s): %m",
+						    sep->se_service);
 					continue;
 				}
-			}
-			pid = fork();
-			if (pid < 0) {
-				syslog(LOG_ERR, "fork: %m");
-				if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
-					close(ctrl);
-				sigsetmask(0L);
-				sleep(1);
-				continue;
-			}
-			if (pid != 0 && sep->se_wait) {
-				sep->se_wait = pid;
-				FD_CLR(sep->se_fd, &allsock);
-				nsock--;
-			}
-			if (pid == 0) {
-				sv.sv_mask = 0L;
-				sv.sv_handler = SIG_DFL;
-				sigvec(SIGPIPE, &sv, (struct sigvec *)0);
-				if (debug)
-					setsid();
-			}
+			} else
+				ctrl = sep->se_fd;
+			(void) sigblock(SIGBLOCK);
+			spawn(sep, ctrl);
 		}
-		sigsetmask(0L);
-		if (pid == 0) {
-			run_service(ctrl, sep);
-			if (dofork)
-				exit(0);
-		}
-		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
-			close(ctrl);
-	    }
-	    }
 	}
+}
+
+void
+spawn(sep, ctrl)
+	struct servtab *sep;
+	int ctrl;
+{
+	int dofork;
+	pid_t pid;
+	struct sigvec sv;
+
+	pid = 0;
+#ifdef LIBWRAP_INTERNAL
+	dofork = 1;
+#else
+	dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
+#endif
+	if (dofork) {
+		if (sep->se_count++ == 0)
+			(void)gettimeofday(&sep->se_time, (struct timezone *)0);
+		else if (sep->se_count >= sep->se_max) {
+			struct timeval now;
+
+			(void)gettimeofday(&now, (struct timezone *)0);
+			if (now.tv_sec - sep->se_time.tv_sec > CNT_INTVL) {
+				sep->se_time = now;
+				sep->se_count = 1;
+			} else {
+				syslog(LOG_ERR,
+			"%s/%s server failing (looping), service terminated\n",
+				    sep->se_service, sep->se_proto);
+				if (!sep->se_wait && sep->se_socktype ==
+				    SOCK_STREAM)
+					close(ctrl);
+				close_sep(sep);
+				sigsetmask(0L);
+				if (!timingout) {
+					timingout = 1;
+					alarm(RETRYTIME);
+				}
+				return;
+			}
+		}
+		pid = fork();
+		if (pid < 0) {
+			syslog(LOG_ERR, "fork: %m");
+			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+				close(ctrl);
+			sigsetmask(0L);
+			sleep(1);
+			return;
+		}
+		if (pid != 0 && sep->se_wait) {
+			sep->se_wait = pid;
+			FD_CLR(sep->se_fd, &allsock);
+			nsock--;
+		}
+		if (pid == 0) {
+			memset(&sv, 0, sizeof(sv));
+			sv.sv_mask = 0L;
+			sv.sv_handler = SIG_DFL;
+			sigvec(SIGPIPE, &sv, (struct sigvec *)0);
+			if (debug)
+				setsid();
+		}
+	}
+	sigsetmask(0L);
+	if (pid == 0) {
+		run_service(ctrl, sep);
+		if (dofork)
+			exit(0);
+	}
+	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+		close(ctrl);
 }
 
 void
