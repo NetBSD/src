@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.57 1998/02/10 14:08:48 mrg Exp $	*/
+/*	$NetBSD: proc.h,v 1.58 1998/02/14 00:37:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -59,6 +59,7 @@ struct	session {
 	struct	vnode *s_ttyvp;		/* Vnode of controlling terminal. */
 	struct	tty *s_ttyp;		/* Controlling terminal. */
 	char	s_login[MAXLOGNAME];	/* Setlogin() name. */
+	pid_t	s_sid;			/* session ID (pid of leader) */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.13 1996/10/13 02:21:38 christos Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.14 1998/02/14 00:37:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -76,7 +76,7 @@ procfs_dostatus(curp, p, pfs, uio)
 	ppid = p->p_pptr ? p->p_pptr->p_pid : 0,
 	pgid = p->p_pgrp->pg_id;
 	sess = p->p_pgrp->pg_session;
-	sid = sess->s_leader ? sess->s_leader->p_pid : 0;
+	sid = sess->s_sid;
 
 /* comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups ... */
 
