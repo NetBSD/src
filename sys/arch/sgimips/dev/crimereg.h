@@ -1,4 +1,4 @@
-/*	$NetBSD: crimereg.h,v 1.4 2002/12/23 20:04:22 pooka Exp $	*/
+/*	$NetBSD: crimereg.h,v 1.5 2002/12/28 16:40:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -132,6 +132,7 @@
 #define CRIME_DOG		(CRIME_BASE+0x030)
 #define CRIME_WATCHDOG		CRIME_DOG
 #define CRIME_TIME		(CRIME_BASE+0x038)
+#define CRIME_TIME_MASK		0x0000ffffffffffff
 #define CRIME_CPU_ERROR_ADDR	(CRIME_BASE+0x040)
 #define CRIME_CPU_ERROR_STAT	(CRIME_BASE+0x048)
 #define CRIME_CPU_ERROR_ENA	(CRIME_BASE+0x050)
