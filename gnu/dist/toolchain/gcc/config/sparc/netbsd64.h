@@ -151,7 +151,7 @@
 %{mcypress:-mcpu=cypress} \
 %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
 %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
-%{m64:-mptr64 -mcpu=ultrasparc -mstack-bias %{p*:-mcmodel=medlow} 
+%{m64:-mptr64 -mcpu=ultrasparc -mstack-bias %{p*:-mcmodel=medlow} \
 %{p:-mcmodel=medlow}} \
 "
 #else
