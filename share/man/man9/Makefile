@@ -1,12 +1,13 @@
-#       $NetBSD: Makefile,v 1.122 2002/08/28 07:56:31 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.123 2002/09/22 06:26:33 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	bitmask_snprintf.9 bcmp.9 bcopy.9 bzero.9 \
 	bufq.9 bus_dma.9 bus_space.9 \
-	callout.9 cardbus.9 cnmagic.9 config.9 cons.9 copy.9 \
-	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 cpu_fork.9 \
+	callout.9 cardbus.9 chooseproc.9 cnmagic.9 config.9 cons.9 copy.9 \
+	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 cpu_idle.9 \
+	cpu_fork.9 \
 	cpu_initclocks.9 cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_swapout.9 cpu_sysctl.9 cpu_wait.9 \
 	ctxsw.9 curproc.9 delay.9 disk.9 disklabel.9 \
@@ -17,14 +18,17 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	isapnp.9 itimerfix.9 kcopy.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
 	mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
-	microtime.9 mstohz.9 namecache.9 namei.9 \
+	microtime.9 mstohz.9 namecache.9 namei.9 need_resched.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
 	pmap.9 pmc.9 pool.9 powerhook_establish.9 ppsratecheck.9 properties.9 \
+	preempt.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
+	SCHED_LOCK.9 scheduler.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 sleep.9 softintr.9 \
-	spl.9 store.9 suser.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 \
+	spl.9 store.9 suser.9 suspendsched.9 \
+	tc.9 time.9 todr.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
@@ -311,8 +315,12 @@ MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
 	rt_timer.9 rt_timer_remove_all.9
+MLINKS+=SCHED_LOCK.9 SCHED_UNLOCK.9 \
+	SCHED_LOCK.9 sched_lock_idle.9 \
+	SCHED_LOCK.9 sched_unlock_idle.9
 MLINKS+=setjmp.9 longjmp.9
-MLINKS+=setrunqueue.9 remrunqueue.9
+MLINKS+=setrunqueue.9 remrunqueue.9 \
+	setrunqueue.9 nextrunqueue.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=signal.9 siginit.9 \
 	signal.9 sigactsinit.9 \
