@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.19 1998/01/28 02:22:14 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.20 1998/02/22 09:18:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -155,15 +155,17 @@ int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 int	 ffs __P((int));
 void	*memchr __P((const void *, int, size_t));
+void	*memcpy __P((void *, const void *, size_t));
+void	*memset __P((void *, int, size_t));
 u_long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
-size_t	 strlen __P((const char *));
 char	*strcat __P((char *, const char *));
-char	*strcpy __P((char *, const char *));
-char	*strncpy __P((char *, const char *, size_t));
 char	*strchr __P((const char *, int));
 int	 strcmp __P((const char *, const char *));
+char	*strcpy __P((char *, const char *));
+size_t	 strlen __P((const char *));
 int	 strncmp __P((const char *, const char *, size_t));
-int	 strncasecmp __P((const char *, const char *, size_t));
+char	*strncpy __P((char *, const char *, size_t));
 char	*strrchr __P((const char *, int));
+int	 strncasecmp __P((const char *, const char *, size_t));
