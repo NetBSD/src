@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.1 2001/10/29 23:23:43 augustss Exp $ */
+/* $NetBSD: moused.c,v 1.2 2001/10/29 23:38:42 augustss Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -915,6 +915,7 @@ moused(char *wsm)
 		continue;
 	    }
 	} else {
+#if 0
 	    /*  MouseRemote client connect/disconnect  */
 	    if ((rodent.mremsfd >= 0) && FD_ISSET(rodent.mremsfd, &fds)) {
 		mremote_clientchg(TRUE);
@@ -924,6 +925,7 @@ moused(char *wsm)
 		mremote_clientchg(FALSE);
 		continue;
 	    }
+#endif
 	    /* mouse movement */
 	    if (read(rodent.mfd, &b, 1) == -1) {
 		if (errno == EWOULDBLOCK)
@@ -1666,6 +1668,7 @@ r_protocol(u_char rBuf, mousestatus_t *act)
 	    act->button |= (act->obutton & MOUSE_BUTTON2DOWN)
 		| butmapmss[(pBuf[0] & MOUSE_MSS_BUTTONS) >> 4];
         
+#if 0
 	/* Send X10 btn events to remote client (ensure -128-+127 range) */
 	if ((rodent.rtype == MOUSE_PROTO_X10MOUSEREM) && 
 	    ((pBuf[0] & 0xFC) == 0x44) && (pBuf[2] == 0x3F)) {
@@ -1676,6 +1679,7 @@ r_protocol(u_char rBuf, mousestatus_t *act)
 	    }
 	    return 0;
 	}
+#endif
 
 	act->dx = (char)(((pBuf[0] & 0x03) << 6) | (pBuf[1] & 0x3F));
 	act->dy = (char)(((pBuf[0] & 0x0C) << 4) | (pBuf[2] & 0x3F));
