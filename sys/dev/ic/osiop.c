@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
+/*	$NetBSD: osiop.c,v 1.10 2003/02/18 16:36:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.10 2003/02/18 16:36:58 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -124,41 +124,6 @@ void scsi_period_to_osiop(struct osiop_softc *, int);
 void osiop_timeout(void *);
 
 int osiop_reset_delay = 250;	/* delay after reset, in milleseconds */
-
-#ifdef OSIOP_DEBUG_SYNC
-/*
- * sync period transfer lookup - only valid for 66MHz clock
- */
-static struct {
-	u_int8_t p;	/* period from sync request message */
-	u_int8_t r;	/* siop_period << 4 | sbcl */
-} sync_tab[] = {
-	{ 60/4, 0<<4 | 1},
-	{ 76/4, 1<<4 | 1},
-	{ 92/4, 2<<4 | 1},
-	{ 92/4, 0<<4 | 2},
-	{108/4, 3<<4 | 1},
-	{116/4, 1<<4 | 2},
-	{120/4, 4<<4 | 1},
-	{120/4, 0<<4 | 3},
-	{136/4, 5<<4 | 1},
-	{140/4, 2<<4 | 2},
-	{152/4, 6<<4 | 1},
-	{152/4, 1<<4 | 3},
-	{164/4, 3<<4 | 2},
-	{168/4, 7<<4 | 1},
-	{180/4, 2<<4 | 3},
-	{184/4, 4<<4 | 2},
-	{208/4, 5<<4 | 2},
-	{212/4, 3<<4 | 3},
-	{232/4, 6<<4 | 2},
-	{240/4, 4<<4 | 3},
-	{256/4, 7<<4 | 2},
-	{272/4, 5<<4 | 3},
-	{300/4, 6<<4 | 3},
-	{332/4, 7<<4 | 3}
-};
-#endif
 
 #ifdef OSIOP_DEBUG
 #define DEBUG_DMA	0x01
@@ -1854,26 +1819,9 @@ scsi_period_to_osiop(sc, target)
 	int target;
 {
 	int period, offset, sxfer, sbcl;
-#ifdef DEBUG_SYNC
-	int i;
-#endif
 
 	period = sc->sc_tinfo[target].period;
 	offset = sc->sc_tinfo[target].offset;
-#ifdef DEBUG_SYNC
-	sxfer = 0;
-	if (offset <= OSIOP_MAX_OFFSET)
-		sxfer = offset;
-	for (i = 0; i < sizeof(sync_tab) / sizeof(sync_tab[0]); i++) {
-		if (period <= sync_tab[i].p) {
-			sxfer |= sync_tab[i].r & 0x70;
-			sbcl = sync_tab[i].r & 0x03;
-			break;
-		}
-	}
-	printf("osiop sync old: osiop_sxfr %02x, osiop_sbcl %02x\n",
-	    sxfer, sbcl);
-#endif
 	for (sbcl = 1; sbcl < 4; sbcl++) {
 		sxfer = (period * 4 - 1) / sc->sc_tcp[sbcl] - 3;
 		if (sxfer >= 0 && sxfer <= 7)
