@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.38 2003/08/13 03:24:57 itojun Exp $	*/
+/* $NetBSD: cat.c,v 1.39 2003/08/25 16:38:55 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.38 2003/08/13 03:24:57 itojun Exp $");
+__RCSID("$NetBSD: cat.c,v 1.39 2003/08/25 16:38:55 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,7 @@ printescaped(const char *src)
 	char *retval;
 
 	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
+	if (len != 0 && SIZE_MAX/len <= 4) {
 		errx(EXIT_FAILURE, "%s: name too long", src);
 		/* NOTREACHED */
 	}
