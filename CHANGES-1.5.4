@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.128 2004/04/07 21:57:48 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.129 2004/04/07 22:08:03 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2480,8 +2480,13 @@ sys/net/if_vlan.c				1.37
 	Need to use m_freem(), not m_free().
 	[itojun, ticket #93]
 
-sys/netinet6/ip6_forward.c				patch
+sys/netinet6/ip6_forward.c			patch
 
 	Correctly look at outer IPv6 header when forwarding packet into ipsec 
 	tunnel.
 	[itojun, ticket #94]
+
+sys/netinet6/ip6_forward.c			1.38
+
+	Do not deref state.ro if it is NULL.
+	[itojun, ticket #96]
