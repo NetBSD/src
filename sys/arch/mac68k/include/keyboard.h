@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.h,v 1.3 1994/10/26 08:46:33 cgd Exp $	*/
+/*	$NetBSD: keyboard.h,v 1.4 1994/12/03 23:34:32 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -64,6 +64,12 @@
 
 #define ADBK_KEYVAL(key)	((key) & 0x7f)
 #define ADBK_PRESS(key)		(((key) & 0x80) == 0)
+#define ADBK_KEYDOWN(key)	(key)
+#define ADBK_KEYUP(key)		((key) | 0x80)
+#define ADBK_MODIFIER(key)	((((key) & 0x7f) == ADBK_SHIFT) || \
+				 (((key) & 0x7f) == ADBK_CONTROL) || \
+				 (((key) & 0x7f) == ADBK_FLOWER) || \
+				 (((key) & 0x7f) == ADBK_OPTION))
 
 #ifndef KEYBOARD_ARRAY
 extern unsigned char keyboard[128][3];

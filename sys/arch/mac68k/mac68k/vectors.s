@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.4 1994/10/26 08:47:19 cgd Exp $
+|	$NetBSD: vectors.s,v 1.5 1994/12/03 23:35:10 briggs Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
@@ -41,12 +41,14 @@
 	.globl	_spurintr,_lev1intr,_lev2intr,_lev3intr
 	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
 	.globl	_trap0,_trap1,_trap2,_trap15
+	.globl	_alinetrap
 	.globl	_fpfline, _fpunsupp, _fpfault
 	.globl	_trap12
+	.globl	_mrg_tracetrap
+	.globl	_jmp0panic
 
 Lvectab:
-/*	.long	0x4ef80400	 0: jmp 0x400:w (unused reset SSP) */
-	.long	0x60000400	/* 0: bra 0x400:w (unused reset SSP) */
+	.long	0x60000000+_jmp0panic	/* 0: bra 0x400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
 	.long	_addrerr	/* 3: address error */
@@ -55,8 +57,12 @@ Lvectab:
 	.long	_chkinst	/* 6: CHK instruction */
 	.long	_trapvinst	/* 7: TRAPV instruction */
 	.long	_privinst	/* 8: privilege violation */
+#if defined(MRG_TRACE)
+	.long	_mrg_tracetrap	/* 9: trace */
+#else /* MRG_TRACE */
 	.long	_trace		/* 9: trace */
-	.long	_illinst	/* 10: line 1010 emulator */
+#endif /* MRG_TRACE */
+	.long	_alinetrap	/* 10: line 1010 emulator ; see macromasm.s */
 	.long	_fpfline	/* 11: line 1111 emulator */
 	.long	_badtrap	/* 12: unassigned, reserved */
 	.long	_coperr		/* 13: coprocessor protocol violation */

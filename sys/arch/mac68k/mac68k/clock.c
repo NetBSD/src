@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1994/12/03 14:03:23 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 1994/12/03 23:34:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,7 +140,7 @@ enablertclock(void)
 {
    /* clear then enable clock interrupt. */
    via_reg(VIA1, vIFR) |= V1IF_T1;
-   via_reg(VIA1, vIER) = 0x80 | (V1IF_ADBRDY | V1IF_T1);
+   via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
 }
 
 void
@@ -302,7 +302,7 @@ u_long pramt_2_ugmt(u_long t)
 }
 
 	/* time booter left MacOS */
-unsigned long macos_boottime;
+u_long macos_boottime;
 	/* BIAS in minutes from GMT */
 long macos_gmtbias;
 
@@ -315,26 +315,20 @@ void inittodr(time_t base)
    u_long timbuf;
    u_long pramtime;
 
-   pramtime = pram_readtime();
-   timbuf = pramt_2_ugmt(pramtime);
-
-	/* Earlier than 1990 and later than 2010, assume PRAM was read */
-	/*  incorrectly. */
-   if(timbuf < DIFF19701990 || timbuf > DIFF19702010)
-      timbuf = macos_boottime;
+   timbuf = macos_boottime;
 
 	/* GMT bias is passwd in from Booter */
 	/* To get GMT, *subtract* GMTBIAS from *our* time */
 	/* (gmtbias is in minutes, mult by 60) */
    timbuf -= macos_gmtbias * 60;
 
-   if (base < 5*SECYR) {
+   if (base < 5 * SECYR) {
       printf("WARNING: file system time earlier than 1975\n");
       printf(" -- CHECK AND RESET THE DATE!\n");
       base = 21 * SECYR;	/* 1991 is our sane date */
    }
    
-   if (base > 40*SECYR) {
+   if (base > 40 * SECYR) {
       printf("WARNING: file system time later than 2010\n");
       printf(" -- CHECK AND RESET THE DATE!\n");
       base = 21 * SECYR;	/* 1991 is our sane date */
@@ -348,7 +342,7 @@ void inittodr(time_t base)
    }
 
    time.tv_sec = timbuf;
-   time.tv_usec = 0;	/* clear usec; Mac's PRAM clock stores only seconds */
+   time.tv_usec = 0;
 }
 
 /*
@@ -357,8 +351,8 @@ void inittodr(time_t base)
  */
 void resettodr(void)
 {
-   if(!pram_settime(ugmt_2_pramt(time.tv_sec)))
-      printf("WARNING: cannot set battery-backed clock.\n");
+	printf("resettodr: netbsd/mac does not yet support setting "
+		"internal clock.\n");
 }
 
 /*

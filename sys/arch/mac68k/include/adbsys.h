@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.2 1994/10/26 08:46:23 cgd Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.3 1994/12/03 23:34:28 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -74,11 +74,10 @@ typedef struct adb_event_s {
 
 /* a device on the ADB */
 typedef struct adb_dev_s{
+	int		addr;		/* current address */
 	int		default_addr;	/* startup address */
 	int		handler_id;	/* handler ID */
 } adb_dev_t;
-
-extern adb_dev_t adb_devs[ADB_MAX_DEVS];
 
 
 	/* Interesting default addresses */
@@ -97,25 +96,12 @@ extern adb_dev_t adb_devs[ADB_MAX_DEVS];
 #define ADBMS_200DPI	2
 
 
-/* Need to export for mac68k/machdep.c:setmachdep() */
-extern long adb_intr_II(void);
-extern long adb_intr_SI(void);
-extern long adb_intr_PB(void);
-
-
 	/* Get device info from ADB system */
 typedef struct adb_devinfo_s{
 	adb_dev_t	dev[ADB_MAX_DEVS];
+		/* [addr].addr == -1 if none */ 
 } adb_devinfo_t;
-#define ADBIOC_GETDEVS	_IOR('A', 128, adb_devinfo_t)
-
-
-	/* Set keyboard lights */
-typedef struct adb_setlights_s{
-	int addr;
-	unsigned int lights;
-} adb_setlights_t;
-#define ADBIOC_SETLIGHTS	_IOWR('A', 129, adb_setlights_t)
+#define ADBIOC_DEVSINFO	_IOR('A', 128, adb_devinfo_t)
 
 
 	/* Event auto-repeat */
@@ -125,3 +111,16 @@ typedef struct adb_rptinfo_s{
 } adb_rptinfo_t;
 #define ADBIOC_GETREPEAT	_IOR('A', 130, adb_rptinfo_t)
 #define ADBIOC_SETREPEAT	_IOW('A', 131, adb_rptinfo_t)
+
+
+	/* Reset and reinitialize */
+#define ADBIOC_RESET		_IO('A', 132)
+
+
+typedef struct adb_listencmd_s{
+	int address;		/* device address */
+	int reg;		/* register to which to send bytes */
+	int bytecnt;		/* number of bytes */
+	u_char bytes[8];	/* bytes */
+} adb_listencmd_t;
+#define ADBIOC_LISTENCMD	_IOW('A', 133, adb_listencmd_t)
