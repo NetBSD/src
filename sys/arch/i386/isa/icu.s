@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.50 1997/04/02 21:59:02 christos Exp $	*/
+/*	$NetBSD: icu.s,v 1.51 1997/11/16 12:30:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -102,7 +102,6 @@ IDTVEC(doreti)
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_ipending
 	jnc     1b			# some intr cleared the in-memory bit
-	cli
 	jmp	*_Xresume(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
