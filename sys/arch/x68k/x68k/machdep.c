@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2001/09/10 21:19:30 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2001/11/25 16:11:56 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -983,7 +983,9 @@ int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 void candbtimer __P((void *));
 
+#ifndef DDB
 static struct callout candbtimer_ch = CALLOUT_INITIALIZER;
+#endif
 
 void
 candbtimer(arg)
