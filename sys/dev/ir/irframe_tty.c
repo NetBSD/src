@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.16 2001/12/14 12:56:58 augustss Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.17 2001/12/20 09:26:35 augustss Exp $	*/
 
 /*
  * TODO
@@ -150,6 +150,7 @@ Static int	irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len);
 Static int	irt_putc(struct tty *tp, int c);
 Static void	irt_frame(struct irframet_softc *sc, u_char *buf, u_int len);
 Static void	irt_timeout(void *v);
+Static void	irt_ioctl(struct tty *tp, u_long cmd, void *arg);
 Static void	irt_setspeed(struct tty *tp, u_int speed);
 Static void	irt_setline(struct tty *tp, u_int line);
 Static void	irt_delay(struct tty *tp, u_int delay);
@@ -304,7 +305,7 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 		sc->sc_dongle = d;
 		break;
 	default:
-		error = EINVAL;
+		error = -1;
 		break;
 	}
 
@@ -730,20 +731,38 @@ irframet_get_turnarounds(void *h, int *turnarounds)
 }
 
 void
+irt_ioctl(struct tty *tp, u_long cmd, void *arg)
+{
+	int error;
+	dev_t dev;
+
+	dev = tp->t_dev;
+	error = cdevsw[major(dev)].d_ioctl(dev, cmd, arg, 0, curproc);
+#ifdef DIAGNOSTIC
+	if (error)
+		printf("irt_ioctl: cmd=0x%08lx error=%d\n", cmd, error);
+#endif
+}
+
+void
 irt_setspeed(struct tty *tp, u_int speed)
 {
 	struct termios tt;
 
-	ttioctl(tp, TIOCGETA,  (caddr_t)&tt, 0, curproc);
+	irt_ioctl(tp, TIOCGETA,  &tt);
 	tt.c_ispeed = tt.c_ospeed = speed;
-	ttioctl(tp, TIOCSETAF, (caddr_t)&tt, 0, curproc);
+	irt_ioctl(tp, TIOCSETAF, &tt);
 }
 
 void
 irt_setline(struct tty *tp, u_int line)
 {
-	int mline = line;
-	ttioctl(tp, TIOCMSET, (caddr_t)&mline, 0, curproc);
+	int mline;
+
+	irt_ioctl(tp, TIOCMGET, &mline);
+	mline &= ~(TIOCM_DTR | TIOCM_RTS);
+	mline |= line;
+	irt_ioctl(tp, TIOCMSET, (caddr_t)&mline);
 }
 
 void
@@ -787,12 +806,16 @@ irts_tekram(struct tty *tp, u_int speed)
 	irt_setspeed(tp, 9600);
 	irt_setline(tp, 0);
 	irt_delay(tp, 50);
+
 	irt_setline(tp, TIOCM_RTS);
 	irt_delay(tp, 1);
+
 	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
 	irt_delay(tp, 1);	/* 50 us */
+
 	irt_setline(tp, TIOCM_DTR);
 	irt_delay(tp, 1);	/* 7 us */
+
 	switch(speed) {
 	case 115200: s = TEKRAM_115200; break;
 	case 57600:  s = TEKRAM_57600; break;
@@ -803,6 +826,7 @@ irts_tekram(struct tty *tp, u_int speed)
 	}
 	irt_putc(tp, s);
 	irt_delay(tp, 100);
+
 	irt_setline(tp, TIOCM_DTR | TIOCM_RTS);
 	if (speed != 9600)
 		irt_setspeed(tp, speed);
