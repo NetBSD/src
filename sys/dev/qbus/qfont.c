@@ -1,4 +1,4 @@
-/*	$NetBSD: qfont.c,v 1.3 1999/06/20 17:55:12 ragge Exp $	*/
+/*	$NetBSD: qfont.c,v 1.4 1999/06/20 17:58:57 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.14 1999/06/20 17:53:33 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.15 1999/06/20 17:58:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -63,11 +63,8 @@
 
 #include "opt_ddb.h"
 
-#define KERNEL 1
-
 #include "qd.h"
 
-#if NQD > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -75,21 +72,26 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/buf.h>
 
 #include <vm/vm.h>
 
 #include <dev/cons.h>
 
-#include <machine/pte.h>
-#include <machine/cpu.h>
-#include <machine/qdioctl.h>
-#include <machine/qduser.h>	/* definitions shared with user level client */
-#include <machine/qdreg.h>	/* QDSS device register structures */
-#include <machine/sid.h>
+#include <machine/bus.h>
 #include <machine/scb.h>
 
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#ifdef __vax__
+#include <machine/sid.h>
+#include <machine/cpu.h>
+#include <machine/pte.h>
+#endif
+
+#include <dev/qbus/ubavar.h>
+
+#include <dev/qbus/qduser.h>
+#include <dev/qbus/qdreg.h>
+#include <dev/qbus/qdioctl.h>
 
 #include "ioconf.h"
 
@@ -109,6 +111,16 @@ struct qdflags {
 	u_short curs_thr;	/* cursor acceleration threshold level */
 	u_short tab_res;	/* tablet resolution factor */
 	u_short selmask;	/* mask for active qd select entries */
+};
+
+/*
+ * Softc struct to keep track of all states in this driver.
+ */
+struct	qd_softc {
+	struct	device sc_dev;
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t	sc_dmat;
 };
 
 /*
@@ -159,8 +171,8 @@ volatile struct pte *QVmap[NQD];
  * static storage used by multiple functions in this code  
  */
 int Qbus_unmap[NQD];		/* Qbus mapper release code */
-struct qdflags qdflags[NQD];	/* QDSS device status flags */
 struct qdmap qdmap[NQD];	/* QDSS register map structure */
+struct qdflags qdflags[NQD];	/* QDSS register map structure */
 caddr_t qdbase[NQD];		/* base address of each QDSS unit */
 struct buf qdbuf[NQD];		/* buf structs used by strategy */
 short qdopened[NQD];		/* graphics device is open exclusive use */
@@ -404,6 +416,8 @@ qdearly()
 	/* How to check for console on KA650? We assume that if there is a
 	 * QDSS, it is console.
 	 */
+#define	QIOPAGE	0x20000000	/* XXX */
+#define	UBAIOPAGES 16
 	tmp = QIOPAGE + ubdevreg(QDSSCSR);
 	if (badaddr((caddr_t)tmp, sizeof(short)))
 		return;
@@ -461,6 +475,7 @@ qdcninit(cndev)
 	 * Map q-bus memory used by qdss. (separate map)
 	 */
 	mapix = QMEMSIZE - (CHUNK * (unit + 1));
+#define	QMEM 0x30000000
 	(int)phys_adr = QMEM + mapix;
 	pmap_map((int)(qvmem[0]), (int)phys_adr, (int)(phys_adr + (CHUNK*NQD)),
 				    VM_PROT_READ|VM_PROT_WRITE);
@@ -512,6 +527,15 @@ qdcninit(cndev)
 	qd0cninited = 1;
 } /* qdcninit */
 
+/* see <sys/device.h> */
+struct cfattach qd_ca = {
+	sizeof(struct qd_softc), qd_match, qd_attach
+};
+
+#define	QD_RCSR(reg) \
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
+#define	QD_WCSR(reg, val) \
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, reg, val)
  
 /*
  *  Configure QDSS into Q memory and make it intrpt.
@@ -530,9 +554,10 @@ qd_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct qd_softc ssc;
+	struct qd_softc *sc = &ssc;
 	struct uba_attach_args *ua = aux;
 	struct uba_softc *uh = (void *)parent;
-	register int *reg = (int *)(ua->ua_addr);
 	register int unit;
 	volatile struct dga *dga;       /* pointer to gate array structure */
 	int vector;
@@ -542,15 +567,14 @@ qd_match(parent, match, aux)
 	u_int mapix;
 #endif
 
-#ifdef lint
-	br = 0; cvec = br; br = cvec; nNQD = br; br = nNQD;
-	qddint(0); qdaint(0); qdiint(0); (void)qdgetc();
-#endif
-
+	/* Create a "fake" softc with only a few fields used. */
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
+	sc->sc_dmat = ua->ua_dmat;
 	/*
 	 * calculate board unit number from I/O page register address  
 	 */
-	unit = (int) (((int)reg >> 1) & 0x0007);
+	unit = (int) (((int)sc->sc_ioh >> 1) & 0x0007);
 
 	/*
 	 * QDSS regs must be mapped to Qbus memory space at a 64kb
@@ -767,11 +791,6 @@ void qd_attach(parent, self, aux)
 
 } /* qdattach */
 
-/* see <sys/device.h> */
-struct cfattach qd_ca = {
-	sizeof(struct device), qd_match, qd_attach
-};
-
    
 /*ARGSUSED*/
 int
@@ -925,6 +944,12 @@ qdclose(dev, flag, mode, p)
 		* re-protect DMA buffer and free the map registers 
 		*/
 		if (qdflags[unit].mapped & MAPDMA) {
+			panic("Unmapping unmapped buffer");
+#ifdef notyet
+/*
+ * Ragge 990620:
+ * Can't happen because the buffer can't be mapped.
+ */
 			dga = (struct dga *) qdmap[unit].dga;
 			adder = (struct adder *) qdmap[unit].adder;
 			dga->csr &= ~DMA_IE;
@@ -945,6 +970,7 @@ qdclose(dev, flag, mode, p)
 			for (i = 0; i < vax_btop(DMAbuf_size); i++, ptep++)
 				*ptep = (*ptep & ~PG_PROT) | PG_V | PG_KW;
 			ubarelse(uh, &Qbus_unmap[unit]);
+#endif
 		}
 
 		/*
@@ -1222,6 +1248,12 @@ qdioctl(dev, cmd, datap, flags, p)
 
 		break;
 
+#ifdef notyet
+/*
+ * Ragge 999620:
+ * Can't map in the graphic buffer into user space for now.
+ * The best way to fix this is to convert this driver to wscons.
+ */
 	case QD_MAPIOBUF:
 		/*
 		 * do setup for DMA by user process	
@@ -1233,7 +1265,7 @@ qdioctl(dev, cmd, datap, flags, p)
 			+ (mfpr(PR_SBR) | 0x80000000));
 		for (i = 0; i < vax_btop(DMAbuf_size); i++, ptep++)
 			*ptep = (*ptep & ~PG_PROT) | PG_RW | PG_V;
-		mtpr(0, PR_TBIA);		/* invalidate translation buffer */
+		mtpr(0, PR_TBIA);	/* invalidate translation buffer */
 		/*
 		* set up QBUS map registers for DMA 
 		*/
@@ -1248,6 +1280,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		*/
 		*(int *)datap = (int) DMAheader[unit];
 		break;
+#endif
 
 	case QD_MAPSCROLL:
 		/*
@@ -1624,8 +1657,6 @@ qdread(dev, uio, flag)
 *
 ***************************************************************/
 
-int ubasetup __P((struct uba_softc *, struct buf *, int));
-
 void
 qd_strategy(bp)
 	register struct buf *bp;
@@ -1647,10 +1678,13 @@ qd_strategy(bp)
 	* init pointers 
 	*/
 	dga = (struct dga *) qdmap[unit].dga;
+panic("qd_strategy");
+#ifdef notyet
 	if ((QBAreg = ubasetup(uh, bp, 0)) == 0) {
 		printf("qd%d: qd_strategy: QBA setup error\n", unit);
 		goto STRAT_ERR;
 	}
+#endif
 	s = spl5();
 	qdflags[unit].user_dma = -1;
 	dga->csr |= DMA_IE;
@@ -1664,13 +1698,15 @@ qd_strategy(bp)
 		sleep((caddr_t)&qdflags[unit].user_dma, QDPRIOR);
 	}
 	splx(s);
+#ifdef notyet
 	ubarelse(uh, &QBAreg);
+#endif
 	if (!(dga->csr & DMA_ERR)) {
 		iodone(bp);
 		return;
 	}
 
-STRAT_ERR:
+/* STRAT_ERR: */
 	adder = (struct adder *) qdmap[unit].adder;
 	adder->command = CANCEL;	/* cancel adder activity */
 	dga->csr &= ~DMA_IE;
@@ -3799,6 +3835,3 @@ ERR:
 	return ;
 
 } /* write_ID */
-#endif
-
-
