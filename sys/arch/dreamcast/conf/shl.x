@@ -12,6 +12,7 @@ SECTIONS
     *(.rodata)
     *(.strings)
      etext = . ; 
+     _etext = . ;  /* XXX */
   }  > ram
   .tors :
   {
@@ -26,6 +27,7 @@ SECTIONS
   {
     *(.data)
      edata = . ; 
+     _edata = . ;  /* XXX */
   }  > ram
   .bss :
   {
@@ -33,6 +35,7 @@ SECTIONS
     *(.bss)
     *(COMMON)
      end = . ;  
+     _end = . ;  /* XXX */
   }  > ram
   .stack   :
   {
