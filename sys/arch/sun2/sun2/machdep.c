@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/04/18 03:45:10 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2001/04/24 04:31:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -355,6 +355,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -810,8 +811,10 @@ dumpsys()
 			printf("\r%4d", todo);
 		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
 		    VM_PROT_READ, VM_PROT_READ);
+		pmap_update();
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+		pmap_update();
 		if (error)
 			goto fail;
 		paddr += NBPG;
@@ -1153,6 +1156,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update();
 
 	return (0);
 }
@@ -1266,6 +1270,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		dva += pagesz;
 		sgsize -= pagesz;
 	}
+	pmap_update();
 
 	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
@@ -1435,6 +1440,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		va += sgsize;
 		buflen -= sgsize;
 	}
+	pmap_update();
 
 	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
@@ -1524,6 +1530,7 @@ _bus_dmamap_unload(t, map)
 		 * Unmap the DVMA addresses.
 		 */
 		pmap_remove(pmap_kernel(), dva, dva + len);
+		pmap_update();
 
 		/*
 		 * Free the DVMA addresses.

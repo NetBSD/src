@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.3 2001/02/01 19:56:44 thorpej Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.4 2001/04/24 04:30:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -598,6 +598,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
+	pmap_update();
 
 	return (0);
 }
@@ -620,6 +621,7 @@ gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 
 	size = round_page(size);
 	pmap_kremove((vaddr_t) kva, size);
+	pmap_update();
 	uvm_km_free(kernel_map, (vaddr_t) kva, size);
 }
 

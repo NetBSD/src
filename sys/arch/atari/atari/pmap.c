@@ -749,6 +749,7 @@ pmap_map(virt, start, end, prot)
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
+	pmap_update();
 	return(virt);
 }
 
@@ -2437,6 +2438,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((char *)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT,
 		    VM_PROT_DEFAULT|PMAP_WIRED);
+		pmap_update();
 #if defined(M68060)
 		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2000/06/29 07:19:10 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61 2001/04/24 04:31:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -347,6 +347,7 @@ pagemove(from, to, len)
 		tva += NBPG;
 		len -= NBPG;
 	}
+	pmap_update();
 }
 
 /*
@@ -396,6 +397,7 @@ vmapbuf(bp, len)
 		kva += NBPG;
 		len -= NBPG;
 	} while (len);
+	pmap_update();
 }
 
 /*

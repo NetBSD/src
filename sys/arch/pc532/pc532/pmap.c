@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 2001/04/22 23:42:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 2001/04/24 04:31:06 thorpej Exp $	*/
 
 /*
  *
@@ -1012,6 +1012,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_update();
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -1616,6 +1617,7 @@ pmap_map(va, spa, epa, prot)
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
+	pmap_update();
 	return va;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.10 2001/03/21 18:40:31 soren Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.11 2001/04/24 04:31:03 thorpej Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2001/03/21 18:40:31 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2001/04/24 04:31:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,6 +729,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 				_pmap_set_page_cacheinhibit(pmap_kernel(), va);
 		}
 	}
+	pmap_update();
 
 	if ( (flags & BUS_DMA_COHERENT) != 0 )
 		TBIAS();

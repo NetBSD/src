@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2001/04/08 08:53:31 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2001/04/24 04:31:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -393,6 +393,7 @@ restore_ofmap(ofmap, len)
 			len -= NBPG;
 		}
 	}
+	pmap_update();
 }
 
 /*
@@ -496,6 +497,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -747,6 +749,7 @@ mapiodev(pa, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
+	pmap_update();
 	return (void *)(va + off);
 }
 
