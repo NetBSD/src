@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.5 2001/05/01 12:36:55 toshii Exp $        */
+/*      $NetBSD: sa11x0_var.h,v 1.6 2001/06/20 02:19:55 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -46,6 +46,7 @@ struct sa11x0_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_gpioh;
+	bus_space_handle_t sc_ppch;
 	bus_space_handle_t sc_dmach;
 	u_int32_t sc_intrmask;
 };
@@ -66,4 +67,5 @@ struct sa11x0_attach_args {
 };
 
 void *sa11x0_intr_establish(sa11x0_chipset_tag_t, int, int, int, 
-			  int (*)(void *), void *);
+			    int (*)(void *), void *);
+void sa11x0_intr_disestablish(sa11x0_chipset_tag_t, void *);
