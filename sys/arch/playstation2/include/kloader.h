@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader.h,v 1.1 2001/10/16 15:38:55 uch Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,5 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void kloader_reboot_setup(const char *);
-void kloader_reboot(void);
+/* Playstaion 2 port kloader don't need bootinfo */
+#define	KLOADER_NO_BOOTINFO
+#define PG_VADDR(pg)	MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg))
+#include <dev/kloader.h>

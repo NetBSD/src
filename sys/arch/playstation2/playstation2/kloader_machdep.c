@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.2 2004/07/06 13:09:19 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.1 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -33,8 +33,49 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <dev/kloader.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.1 2004/07/06 13:09:18 uch Exp $");
 
-#define PG_VADDR(pg)	MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg))
+#include "debug_kloader.h"
 
+#include <sys/param.h>
+#include <sys/systm.h>
 
+#include <mips/cache.h>
+#include <machine/kloader.h>
+
+kloader_jumpfunc_t kloader_playstation2_jump;
+kloader_bootfunc_t kloader_playstation2_boot;
+void kloader_playstation2_reset(void);
+
+struct kloader_ops kloader_playstation2_ops = {
+	.jump = kloader_playstation2_jump,
+	.boot = kloader_playstation2_boot,
+	.reset = kloader_playstation2_reset,
+};
+
+void
+kloader_reboot_setup(const char *filename)
+{
+
+	__kloader_reboot_setup(&kloader_playstation2_ops, filename);
+}
+
+void
+kloader_playstation2_jump(kloader_bootfunc_t func, vaddr_t sp,
+    struct kloader_bootinfo *info, struct kloader_page_tag *tag)
+{
+
+	mips_icache_sync_all();
+
+	(*func)(info, tag);	/* 2nd-bootloader don't use stack */
+	/* NOTREACHED */
+}
+
+void
+kloader_playstation2_reset()
+{
+
+	((void (*)(void))0xbfc00000)();
+	/* NOTREACHED */
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2004/04/03 06:43:59 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2004/04/03 06:43:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2004/07/06 13:09:18 uch Exp $");
 
 #include "opt_ddb.h"
+#include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 
 #include <sys/param.h>
@@ -68,8 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2004/04/03 06:43:59 simonb Exp $");
 #include <machine/intr.h>/* hardintr_init */
 #include <playstation2/playstation2/sifbios.h>
 #include <playstation2/playstation2/interrupt.h>
-#ifdef KLOADER_KERNEL_PATH
-#include <playstation2/playstation2/kloader.h>
+
+#if defined KLOADER_KERNEL_PATH && !defined KLOADER
+#error "define KLOADER"
+#endif
+#ifdef KLOADER
+#include <machine/kloader.h>
 #endif
 
 /* For sysctl_hw */
@@ -213,6 +218,9 @@ cpu_startup()
 void
 cpu_reboot(int howto, char *bootstr)
 {
+#ifdef KLOADER
+	struct kloader_bootinfo kbi;
+#endif
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
@@ -229,7 +237,12 @@ cpu_reboot(int howto, char *bootstr)
 		howto |= RB_HALT;
 	}
 
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
+	/* No bootinfo is required. */
+	kloader_bootinfo_set(&kbi, 0, NULL, NULL, TRUE);
+#ifndef KLOADER_KERNEL_PATH
+#define	KLOADER_KERNEL_PATH	"/netbsd"
+#endif
 	if ((howto & RB_HALT) == 0)
 		kloader_reboot_setup(KLOADER_KERNEL_PATH);
 #endif
@@ -259,7 +272,7 @@ cpu_reboot(int howto, char *bootstr)
 	else if (howto & RB_HALT)
 		sifbios_halt(1); /* halt */
 	else {
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
 		kloader_reboot();
 		/* NOTREACHED */
 #endif

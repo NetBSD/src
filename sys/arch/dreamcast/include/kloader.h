@@ -1,7 +1,7 @@
-/* $NetBSD: kloader.h,v 1.1 2003/06/14 16:15:18 tsutsui Exp $ */
+/* $NetBSD: kloader.h,v 1.2 2004/07/06 13:09:19 uch Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,5 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-void kloader_reboot_setup(const char *);
-void kloader_reboot(void);
+/* Dreamcast port don't have bootinfo */
+#define	KLOADER_NO_BOOTINFO
+#define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
+#include <dev/kloader.h>

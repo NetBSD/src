@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2004/03/24 15:34:48 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2004/03/24 15:34:48 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2004/07/06 13:09:18 uch Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -205,6 +205,9 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 void
 cpu_reboot(int howto, char *bootstr)
 {
+#ifdef KLOADER
+	struct kloader_bootinfo kbi;
+#endif
 	static int waittime = -1;
 
 	if (cold) {
@@ -213,6 +216,8 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 #ifdef KLOADER
+	/* No bootinfo is required. */
+	kloader_bootinfo_set(&kbi, 0, NULL, NULL, TRUE);
 	if ((howto & RB_HALT) == 0) {
 		if ((howto & RB_STRING) && bootstr != NULL) {
 			printf("loading a new kernel: %s\n", bootstr);

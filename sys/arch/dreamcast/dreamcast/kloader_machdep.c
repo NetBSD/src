@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.2 2004/07/06 13:09:19 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.1 2004/07/06 13:09:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -33,8 +33,83 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <dev/kloader.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.1 2004/07/06 13:09:18 uch Exp $");
 
-#define PG_VADDR(pg)	MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg))
+#include "debug_kloader.h"
 
+#include <sys/param.h>
+#include <sys/systm.h>
 
+#include <sh3/mmu.h>
+#include <sh3/mmu_sh4.h>
+#include <sh3/cache.h>
+#include <sh3/cache_sh4.h>
+
+#include <machine/kloader.h>
+
+kloader_jumpfunc_t kloader_dreamcast_jump;
+kloader_bootfunc_t kloader_dreamcast_boot;
+
+struct kloader_ops kloader_dreamcast_ops = {
+	.jump = kloader_dreamcast_jump,
+	.boot = kloader_dreamcast_boot,
+};
+
+void
+kloader_reboot_setup(const char *filename)
+{
+
+	__kloader_reboot_setup(&kloader_dreamcast_ops, filename);
+}
+
+void
+kloader_dreamcast_jump(kloader_bootfunc_t func, vaddr_t sp,
+    struct kloader_bootinfo *info, struct kloader_page_tag *tag)
+{
+
+	sh_icache_sync_all();	/* also flush d-cache */
+
+	__asm__ __volatile__(
+	    	"mov	%0, r4;"
+		"mov	%1, r5;"
+		"jmp	@%2;"
+		"mov	%3, sp"
+		: : "r"(info), "r"(tag), "r"(func), "r"(sp));
+	/* NOTREACHED */
+}
+
+/* 
+ * 2nd-bootloader. Make sure that PIC and its size is lower than page size.
+ */
+void
+kloader_dreamcast_boot(struct kloader_bootinfo *kbi, struct kloader_page_tag *p)
+{
+	int tmp = 0;
+
+	/* Disable interrupt. block exception. */
+	__asm__ __volatile__(
+		"stc	sr, %1;"
+		"or	%0, %1;"
+		"ldc	%1, sr" : : "r"(0x500000f0), "r"(tmp));
+
+	/* Now I run on P1, TLB flush. and disable. */
+	SH4_TLB_DISABLE;
+
+	do {
+		u_int32_t *dst =(u_int32_t *)p->dst;
+		u_int32_t *src =(u_int32_t *)p->src;
+		u_int32_t sz = p->sz / sizeof (int);
+		while (sz--)
+			*dst++ = *src++;
+	} while ((p = (struct kloader_page_tag *)p->next) != 0);
+
+	SH7750_CACHE_FLUSH();
+
+	/* jump to kernel entry. */
+	__asm__ __volatile__(
+		"jmp	@%0;"
+		"nop;"
+		: : "r"(kbi->entry));
+	/* NOTREACHED */
+}
