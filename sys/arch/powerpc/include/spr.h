@@ -1,12 +1,12 @@
-#ifndef _SPR_H_
-#define	_SPR_H_
+#ifndef _POWERPC_SPR_H_
+#define	_POWERPC_SPR_H_
 
 #ifndef _LOCORE
-#define	mtspr(reg, val)						\
-	asm volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
-#define	mfspr(reg)						\
-	( { u_int32_t val;					\
-	  asm volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
+#define	mtspr(reg, val)							\
+	__asm __volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
+#define	mfspr(reg)							\
+	( { u_int32_t val;						\
+	  __asm __volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
 #endif /* _LOCORE */
 
@@ -170,4 +170,4 @@
 #define	TBR_TBL			0x10c	/* 468 Time Base Lower */
 #define	TBR_TBU			0x10d	/* 468 Time Base Upper */
 
-#endif /* !_SPR_H_ */
+#endif /* !_POWERPC_SPR_H_ */
