@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.35 2003/09/04 09:16:58 itojun Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.36 2003/10/23 20:55:08 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,8 +91,6 @@ struct inpcb {
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
 	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
-	LIST_ENTRY(inpcb) inp_ialink;
-	struct	in_ifaddr *inp_ia;	/* in_ifaddr which laddr is bound */
 };
 
 #define	inp_faddr	inp_ip.ip_dst

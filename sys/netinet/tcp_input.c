@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.184 2003/09/10 01:46:27 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.185 2003/10/23 20:55:08 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.184 2003/09/10 01:46:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.185 2003/10/23 20:55:08 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3188,16 +3188,9 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #ifdef INET
 	case AF_INET:
 		if (inp) {
-			struct in_ifaddr *ia;
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			inp->inp_options = ip_srcroute();
-			INADDR_TO_IA(inp->inp_laddr, ia);
-			KASSERT(ia != NULL); 
-			KASSERT(inp->inp_ia == NULL);
-			inp->inp_ia = ia; 
-			LIST_INSERT_HEAD(&ia->ia_inpcbs, inp, inp_ialink);
-			IFAREF(&ia->ia_ifa);
 			in_pcbstate(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
