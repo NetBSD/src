@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.1 2002/10/04 18:22:35 elric Exp $ */
+/* $NetBSD: cgdvar.h,v 1.2 2004/03/27 23:23:06 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,9 +71,12 @@ struct cgd_softc {
 	struct vnode		*sc_tvn;	/* target device's vnode */
 	dev_t			 sc_tdev;	/* target device */
 	char			*sc_tpath;	/* target device's path */
+	caddr_t			 sc_data;	/* emergency buffer */
+	int			 sc_data_used;	/* Really lame, we'll change */
 	size_t			 sc_tpathlen;	/* length of prior string */
 	struct cryptdata	 sc_cdata;	/* crypto data */
 	struct cryptfuncs	*sc_cfuncs;	/* encryption functions */
+	struct simplelock	 sc_slock;	/* our lock */
 };
 #endif
 
