@@ -5,6 +5,8 @@ cfb0	at tc?
 mfb0	at tc?
 sfb0	at tc?
 #sfb1	at tc?
+px0	at tc?
+
 
 # Configure DS5000/200 (3MAX) baseboard built-in "options", which
 # are clones of option cards,  before real TC-slot options.
