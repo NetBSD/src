@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112.2.3 1999/04/08 08:28:08 fair Exp $
+#	$NetBSD: Makefile,v 1.112.2.4 1999/04/10 04:43:50 fair Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -265,7 +265,12 @@ KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 # system can create more than one kernel from a single configuration
 # we figure out how many there are, what they're named, and move them
 # to binary/kernel/${KERNEL}.${CONFIGFILE}.gz - most often KERNEL will
-# simply be "netbsd".
+# simply be "netbsd". If we don't find the "config" line, assume the
+# kernel will be "netbsd" (some config files are simple additions on
+# GENERIC, and just include it).
+#
+GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
+		END{ if (found == 0) print "netbsd"; }'
 #
 snap_kern:
 	cd ${KERNCONFDIR} && config \
@@ -275,8 +280,7 @@ snap_kern:
 .endif
 	cd ${KERNOBJDIR}/GENERIC && ${MAKE} depend && ${MAKE} ${_J}
 	cd ${KERNOBJDIR}/GENERIC &&	\
-		tar cf - `awk '$$1=="config" {print $$2}'  \
-			${KERNCONFDIR}/GENERIC` |\
+		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
 		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern.tgz
 .for configfile in ${EXTRA_KERNELS}
 	cd ${KERNCONFDIR} && config \
@@ -286,7 +290,7 @@ snap_kern:
 .endif
 	cd ${KERNOBJDIR}/${configfile} && ${MAKE} depend && ${MAKE} ${_J}
 	cd ${KERNOBJDIR}/${configfile} &&	\
-		for kernel in `awk '$$1=="config" {print $$2}' \
+		for kernel in `${GETKERNELAWK} \
 			${KERNCONFDIR}/${configfile}` ; {   \
 		gzip -c -9 < $${kernel} > \
 			${RELEASEDIR}/binary/kernel/$${kernel}.${configfile}.gz ; }
