@@ -73,7 +73,6 @@
 ./usr/include/dev/ic/ns16550reg.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
-./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
@@ -517,7 +516,6 @@
 ./usr/include/netgroup.h
 ./usr/include/netinet/icmp_var.h
 ./usr/include/netinet/if_arc.h
-./usr/include/netinet/if_arp.h
 ./usr/include/netinet/if_ether.h
 ./usr/include/netinet/igmp.h
 ./usr/include/netinet/igmp_var.h
@@ -1257,8 +1255,6 @@
 ./usr/share/man/cat3/getdiskbyname.0
 ./usr/share/man/cat3/getdomainname.0
 ./usr/share/man/cat3/getdtablesize.0
-./usr/share/man/cat3/getmaxpartitions.0
-./usr/share/man/cat3/getrawpartition.0
 ./usr/share/man/cat3/getenv.0
 ./usr/share/man/cat3/getfsent.0
 ./usr/share/man/cat3/getfsfile.0
@@ -1274,6 +1270,7 @@
 ./usr/share/man/cat3/gethostid.0
 ./usr/share/man/cat3/gethostname.0
 ./usr/share/man/cat3/getloadavg.0
+./usr/share/man/cat3/getmaxpartitions.0
 ./usr/share/man/cat3/getmntinfo.0
 ./usr/share/man/cat3/getmode.0
 ./usr/share/man/cat3/getnetbyaddr.0
@@ -1290,6 +1287,7 @@
 ./usr/share/man/cat3/getpwent.0
 ./usr/share/man/cat3/getpwnam.0
 ./usr/share/man/cat3/getpwuid.0
+./usr/share/man/cat3/getrawpartition.0
 ./usr/share/man/cat3/getrpcbyname.0
 ./usr/share/man/cat3/getrpcbynumber.0
 ./usr/share/man/cat3/getrpcent.0
