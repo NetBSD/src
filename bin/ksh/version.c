@@ -5,4 +5,4 @@
 #include "sh.h"
 
 const char ksh_version [] =
-	"@(#)PD KSH v5.2.9 96/09/30";
+	"@(#)PD KSH v5.2.11 96/10/08";

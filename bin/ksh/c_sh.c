@@ -286,9 +286,11 @@ c_read(wp)
 
 	if ((cp = strchr(*wp, '?')) != NULL) {
 		*cp = 0;
-		if (Flag(FTALKING)) {
-			/* at&t says it prints prompt on fd if its open
+		if (isatty(fd)) {
+			/* at&t ksh says it prints prompt on fd if it's open
 			 * for writing and is a tty, but it doesn't do it
+			 * (it also doesn't check the interactive flag,
+			 * as is indicated in the Kornshell book).
 			 */
 			shellf("%s", cp+1);
 		}

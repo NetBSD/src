@@ -6,20 +6,22 @@
 #include <ctype.h>
 
 static void	readhere ARGS((struct ioword *iop));
-static int	getsc_ ARGS((void));
+static int	getsc__ ARGS((void));
 static void	getsc_line ARGS((Source *s));
 static char	*get_brace_var ARGS((XString *wsp, char *wp));
 static int	arraysub ARGS((char **strp));
-static const char *ungetsc_ ARGS((int c));
-static int	getsc_bn_ ARGS((void));
+static const char *ungetsc ARGS((int c));
+static int	getsc_bn ARGS((void));
+static void	gethere ARGS((void));
 
-static void gethere ARGS((void));
+static int backslash_skip;
+static int ignore_backslash_newline;
 
-/* optimized getsc_() */
-#define	getsc()	((*source->str != '\0') ? *source->str++ : getsc_())
-#define getsc_bn() (*source->str != '\0' && *source->str != '\\' \
-			? *source->str++ : getsc_bn_())
-#define	ungetsc(c) (source->str > source->start ? source->str-- : ungetsc_(c))
+/* optimized getsc_bn() */
+#define getsc()		(*source->str != '\0' && *source->str != '\\' \
+			 && !backslash_skip ? *source->str++ : getsc_bn())
+/* optimized getsc__() */
+#define	getsc_()	((*source->str != '\0') ? *source->str++ : getsc__())
 
 
 /*
@@ -50,6 +52,9 @@ yylex(cf)
   Again:
 	Xinit(ws, wp, 64, ATEMP);
 
+	backslash_skip = 0;
+	ignore_backslash_newline = 0;
+
 	if (cf&ONEWORD)
 		istate = SWORD;
 #ifdef KSH
@@ -63,9 +68,12 @@ yylex(cf)
 		istate = (cf & HEREDELIM) ? SHEREDELIM : SBASE;
 		while ((c = getsc()) == ' ' || c == '\t')
 			;
-		if (c == '#')
+		if (c == '#') {
+			ignore_backslash_newline++;
 			while ((c = getsc()) != '\0' && c != '\n')
 				;
+			ignore_backslash_newline--;
+		}
 		ungetsc(c);
 	}
 	if (source->flags & SF_ALIAS) {	/* trailing ' ' in alias definition */
@@ -137,23 +145,19 @@ yylex(cf)
 			switch (c) {
 			  case '\\':
 				c = getsc();
-				if (c != '\n') {
 #ifdef OS2
-					if (isalnum(c)) {
-						*wp++ = CHAR, *wp++ = '\\';
-						*wp++ = CHAR, *wp++ = c;
-					} else
+				if (isalnum(c)) {
+					*wp++ = CHAR, *wp++ = '\\';
+					*wp++ = CHAR, *wp++ = c;
+				} else 
 #endif
-						*wp++ = QCHAR, *wp++ = c;
-				} else
-					if (wp == Xstring(ws, wp)) {
-						Xfree(ws, wp);	/* free word */
-						goto Again;
-					}
+				if (c) /* trailing \ is lost */
+					*wp++ = QCHAR, *wp++ = c;
 				break;
 			  case '\'':
 				*++statep = state = SSQUOTE;
 				*wp++ = OQUOTE;
+				ignore_backslash_newline++;
 				break;
 			  case '"':
 				*++statep = state = SDQUOTE;
@@ -169,16 +173,16 @@ yylex(cf)
 			  case '\\':
 				c = getsc();
 				switch (c) {
-				  case '\n':
-					break;
 				  case '"': case '\\':
 				  case '$': case '`':
 					*wp++ = QCHAR, *wp++ = c;
 					break;
 				  default:
 					Xcheck(ws, wp);
-					*wp++ = CHAR, *wp++ = '\\';
-					*wp++ = CHAR, *wp++ = c;
+					if (c) { /* trailing \ is lost */
+						*wp++ = CHAR, *wp++ = '\\';
+						*wp++ = CHAR, *wp++ = c;
+					}
 					break;
 				}
 				break;
@@ -205,10 +209,10 @@ yylex(cf)
 					 * wrap @(...) around the pattern
 					 * (allows easy handling of ${a#b|c})
 					 */
-					c = getsc_bn();
+					c = getsc();
 					if (c == '#' || c == '%') {
 						*wp++ = CHAR, *wp++ = c;
-						if ((c2 = getsc_bn()) == c)
+						if ((c2 = getsc()) == c)
 							*wp++ = CHAR, *wp++ = c;
 						else
 							ungetsc(c2);
@@ -261,6 +265,7 @@ yylex(cf)
 			if (c == '\'') {
 				state = *--statep;
 				*wp++ = CQUOTE;
+				ignore_backslash_newline--;
 			} else
 				*wp++ = QCHAR, *wp++ = c;
 			break;
@@ -296,6 +301,7 @@ yylex(cf)
 					break;
 				  case '\'':
 					csstate = 4;
+					ignore_backslash_newline++;
 					break;
 				}
 				break;
@@ -313,8 +319,10 @@ yylex(cf)
 				break;
 
 			  case 4: /* single quotes */
-				if (c == '\'')
+				if (c == '\'') {
 					csstate = 0;
+					ignore_backslash_newline--;
+				}
 				break;
 			}
 			if (nparen == 0) {
@@ -388,8 +396,6 @@ yylex(cf)
 				state = *--statep;
 			} else if (c == '\\') {
 				switch (c = getsc()) {
-				  case '\n':
-					break;
 				  case '\\':
 				  case '$': case '`':
 					*wp++ = c;
@@ -401,8 +407,10 @@ yylex(cf)
 					}
 					/* fall through.. */
 				  default:
-					*wp++ = '\\';
-					*wp++ = c;
+					if (c) { /* trailing \ is lost */
+						*wp++ = '\\';
+						*wp++ = c;
+					}
 					break;
 				}
 			} else
@@ -445,13 +453,14 @@ yylex(cf)
 			 */
 			if (c == '\\') {
 				c = getsc();
-				if (c != '\n') {
+				if (c) { /* trailing \ is lost */
 					*wp++ = QCHAR;
 					*wp++ = c;
 				}
 			} else if (c == '\'') {
 				*++statep = state = SSQUOTE;
 				*wp++ = OQUOTE;
+				ignore_backslash_newline++;
 			} else if (c == '"') {
 				state = SHEREDQUOTE;
 				*wp++ = OQUOTE;
@@ -466,8 +475,19 @@ yylex(cf)
 				*wp++ = CQUOTE;
 				state = SHEREDELIM;
 			} else {
-				if (c == '\\' && (c = getsc()) == '\n')
-					break;
+				if (c == '\\') {
+					switch (c = getsc()) {
+					  case '\\': case '"':
+					  case '$': case '`':
+						break;
+					  default:
+						if (c) { /* trailing \ lost */
+							*wp++ = CHAR;
+							*wp++ = '\\';
+						}
+						break;
+					}
+				}
 				*wp++ = CHAR;
 				*wp++ = c;
 			}
@@ -538,7 +558,7 @@ Done:
 				iop->flag = c == c2 ?
 					  (c == '>' ? IOCAT : IOHERE) : IORDWR;
 				if (iop->flag == IOHERE)
-					if (getsc() == '-')
+					if ((c2 = getsc()) == '-')
 						iop->flag |= IOSKIP;
 					else
 						ungetsc(c2);
@@ -651,7 +671,7 @@ readhere(iop)
 	register int c;
 	char *volatile eof;
 	char *eofp;
-	int skiptabs, bn;
+	int skiptabs;
 	int i;
 
 	eof = evalstr(iop->delim, 0);
@@ -678,11 +698,13 @@ readhere(iop)
 		unwind(i);
 	}
 
-	bn = iop->flag & IOEVAL;
+	if (!(iop->flag & IOEVAL))
+		ignore_backslash_newline++;
+
 	for (;;) {
 		eofp = eof;
 		skiptabs = iop->flag & IOSKIP;
-		while ((c = (bn ? getsc_bn() : getsc())) != 0) {
+		while ((c = getsc()) != 0) {
 			if (skiptabs) {
 				if (c == '\t')
 					continue;
@@ -699,7 +721,7 @@ readhere(iop)
 			break;
 		ungetsc(c);
 		shf_write(eof, eofp - eof, shf);
-		while ((c = (bn ? getsc_bn() : getsc())) != '\n') {
+		while ((c = getsc()) != '\n') {
 			if (c == 0)
 				yyerror("here document `%s' unclosed\n", eof);
 			shf_putc(c, shf);
@@ -713,6 +735,8 @@ readhere(iop)
 	/*XXX add similar checks for write errors everywhere */
 	quitenv();
 	shf_close(shf);
+	if (!(iop->flag & IOEVAL))
+		ignore_backslash_newline--;
 }
 
 void
@@ -769,7 +793,7 @@ pushs(type, areap)
 }
 
 static int
-getsc_()
+getsc__()
 {
 	register Source *s = source;
 	register int c;
@@ -817,21 +841,40 @@ getsc_()
 				 && isspace(strchr(s->u.tblp->val.s, 0)[-1]))
 			{
 				source = s = s->next;	/* pop source stack */
+				/* Note that this alias ended with a space,
+				 * enabling alias expansion on the following
+				 * word.
+				 */
 				s->flags |= SF_ALIAS;
 			} else {
-				/* put a fake space at the end of the alias.
-				 * This keeps the current alias in the source
-				 * list so recursive aliases can be detected.
-				 * The addition of a space after an alias
-				 * never affects anything (I think).
+				/* At this point, we need to keep the current
+				 * alias in the source list so recursive
+				 * aliases can be detected and we also need
+				 * to return the next character.  Do this
+				 * by temporarily popping the alias to get
+				 * the next character and then put it back
+				 * in the source list with the SF_ALIASEND
+				 * flag set.
 				 */
-				s->flags |= SF_ALIASEND;
-				s->start = s->str = space;
+				source = s->next;	/* pop source stack */
+				source->flags |= s->flags & SF_ALIAS;
+				c = getsc__();
+				if (c) {
+					s->flags |= SF_ALIASEND;
+					s->ugbuf[0] = c; s->ugbuf[1] = '\0';
+					s->start = s->str = s->ugbuf;
+					s->next = source;
+					source = s;
+				} else {
+					s = source;
+					/* avoid reading eof twice */
+					s->str = NULL;
+				}
 			}
 			continue;
 
 		  case SREREAD:
-			if (s->start != s->u.ugbuf) /* yuck */
+			if (s->start != s->ugbuf) /* yuck */
 				afree(s->u.freeme, ATEMP);
 			source = s = s->next;
 			continue;
@@ -1086,7 +1129,7 @@ get_brace_var(wsp, wp)
 
 	state = PS_INITIAL;
 	while (1) {
-		c = getsc_bn();
+		c = getsc();
 		/* State machine to figure out where the variable part ends. */
 		switch (state) {
 		  case PS_INITIAL:
@@ -1119,7 +1162,7 @@ get_brace_var(wsp, wp)
 						*wp++ = *p++;
 					}
 					afree(tmp, ATEMP);
-					c = getsc();
+					c = getsc(); /* the ] */
 				}
 			}
 			break;
@@ -1161,7 +1204,7 @@ arraysub(strp)
 	Xinit(ws, wp, 32, ATEMP);
 
 	do {
-		c = getsc_bn();
+		c = getsc();
 		Xcheck(ws, wp);
 		*wp++ = c;
 		if (c == '[')
@@ -1178,9 +1221,11 @@ arraysub(strp)
 
 /* Unget a char: handles case when we are already at the start of the buffer */
 static const char *
-ungetsc_(c)
+ungetsc(c)
 	int c;
 {
+	if (backslash_skip)
+		backslash_skip--;
 	/* Don't unget eof... */
 	if (source->str == null && c == '\0')
 		return source->str;
@@ -1190,29 +1235,40 @@ ungetsc_(c)
 		Source *s;
 
 		s = pushs(SREREAD, source->areap);
-		s->u.ugbuf[0] = c; s->u.ugbuf[1] = '\0';
-		s->start = s->str = s->u.ugbuf;
+		s->ugbuf[0] = c; s->ugbuf[1] = '\0';
+		s->start = s->str = s->ugbuf;
 		s->next = source;
 		source = s;
 	}
 	return source->str;
 }
 
+
 /* Called to get a char that isn't a \newline sequence. */
 static int
-getsc_bn_ ARGS((void))
+getsc_bn ARGS((void))
 {
-	int c;
+	int c, c2;
+
+	if (ignore_backslash_newline)
+		return getsc_();
+
+	if (backslash_skip == 1) {
+		backslash_skip = 2;
+		return getsc_();
+	}
+
+	backslash_skip = 0;
 
 	while (1) {
 		c = getsc_();
-		if (c != '\\')
-			return c;
-		c = getsc();
-		if (c != '\n') {
-			ungetsc(c);
-			return '\\';
+		if (c == '\\') {
+			if ((c2 = getsc_()) == '\n')
+				/* ignore the \newline; get the next char... */
+				continue;
+			ungetsc(c2);
+			backslash_skip = 1;
 		}
-		/* ignore the \newline; get the next char... */
+		return c;
 	}
 }
