@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.7 2003/12/23 15:10:01 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.8 2003/12/23 15:24:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,17 +170,17 @@ MainTabWindow::layout()
 
 	HWND h;
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_V);
-	SetWindowPos(h, HWND_TOP, x, y, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_S);
-	SetWindowPos(h, HWND_TOP, x, y + 20, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 20, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_A);
-	SetWindowPos(h, HWND_TOP, x, y + 40, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 40, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_D);
-	SetWindowPos(h, HWND_TOP, x, y + 60, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 60, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_H);
-	SetWindowPos(h, HWND_TOP, x, y + 80, 120, 10, TRUE);
+	SetWindowPos(h, 0, x, y + 80, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_H_SPEED);
-	SetWindowPos(h, HWND_TOP, x + 100, y + 80, 120, 10, TRUE);
+	SetWindowPos(h, 0, x + 100, y + 80, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void
