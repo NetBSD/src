@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.2.2.1 2002/06/05 11:26:31 lukem Exp $
+# $NetBSD: list,v 1.2.2.2 2002/06/10 16:32:18 tv Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -127,7 +127,7 @@ SYMLINK	/usr/lib usr/libexec
 # libedit: ftp
 # libtermcap: ftp, less, vi
 # libutil: rdate
-COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib/ld.elf_so
+COPY	${DESTDIR}/usr/libexec/ld.elf_so	usr/lib/ld.elf_so	555
 COPY	${DESTDIR}/usr/lib/libc.so		usr/lib/libc.so
 LINK	usr/lib/libc.so				usr/lib/libc.so.12
 COPY	${DESTDIR}/usr/lib/libcurses.so		usr/lib/libcurses.so
