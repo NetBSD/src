@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.59 2003/02/19 12:01:17 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.60 2003/02/19 12:49:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.59 2003/02/19 12:01:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.60 2003/02/19 12:49:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,6 +512,9 @@ lfs_flush(struct lfs *fs, int flags)
 #endif
 		return;
 	}
+	/* XXX MP */
+	while (lfs_writing && (flags & SEGM_WRITERD))
+		ltsleep(&lfs_writing, PRIBIO + 1, "lfsflush", 0, 0);
 	lfs_writing = 1;
 	
 	lfs_subsys_pages = 0; /* XXXUBC need a better way to count this */
@@ -533,6 +536,7 @@ lfs_flush(struct lfs *fs, int flags)
 	LFS_DEBUG_COUNTLOCKED("flush");
 
 	lfs_writing = 0;
+	wakeup(&lfs_writing);
 }
 
 #define INOCOUNT(fs) howmany((fs)->lfs_uinodes, INOPB(fs))

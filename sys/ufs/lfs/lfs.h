@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.47 2003/02/18 14:58:31 soren Exp $	*/
+/*	$NetBSD: lfs.h,v 1.48 2003/02/19 12:49:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -844,7 +844,8 @@ struct segment {
 #define	SEGM_CLEAN	0x02		/* cleaner call; don't sort */
 #define	SEGM_SYNC	0x04		/* wait for segment */
 #define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
-#define SEGM_PAGEDAEMON 0x10		/* pagedaemon called us */
+#define SEGM_PAGEDAEMON	0x10		/* pagedaemon called us */
+#define SEGM_WRITERD	0x20		/* LFS writed called us */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
 	u_int32_t seg_iocount;		/* number of ios pending */
 	int	  ndupino;              /* number of duplicate inodes */

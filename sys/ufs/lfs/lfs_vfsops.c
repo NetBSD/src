@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.94 2003/02/19 12:22:51 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.95 2003/02/19 12:49:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.94 2003/02/19 12:22:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.95 2003/02/19 12:49:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -244,7 +244,7 @@ lfs_writerd(void *arg)
 				printf("daemon: lssp = %d, max %d\n",
 					lfs_subsys_pages, LFS_MAX_PAGES);
 #endif /* DEBUG_LFS_FLUSH */
-			lfs_flush(NULL, 0);
+			lfs_flush(NULL, SEGM_WRITERD);
 			lfs_do_flush = 0;
 		}
 		wakeup(&lfs_subsys_pages);
