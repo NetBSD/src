@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.524 2003/04/13 01:53:21 explorer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.525 2003/04/15 21:43:57 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.523 2003/04/13 01:53:00 explorer Exp 
+ *	NetBSD: pcidevs,v 1.524 2003/04/15 21:32:28 rjs Exp 
  */
 
 /*
@@ -4616,6 +4616,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Invertex",
 	    "AEON",
+	},
+	{
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
+	    0,
+	    "Integrated Technology Express, Inc.",
+	    "IT8152 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
@@ -11719,6 +11725,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DAVICOM, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Davicom Semiconductor",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ITE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Integrated Technology Express, Inc.",
 	    NULL,
 	},
 	{
