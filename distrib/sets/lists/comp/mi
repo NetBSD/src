@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.159 1999/09/13 18:45:27 kleink Exp $
+# $NetBSD: mi,v 1.160 1999/09/15 12:35:38 hubertf Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -3533,7 +3533,6 @@
 ./usr/share/man/man8/pvctxctl.8
 ./usr/share/man/man8/rtsold.8
 ./usr/share/man/man8/wiconfig.8
-./usr/share/misc/getopt
 ./usr/share/misc/indent.pro
 ./usr/share/misc/menu_sys.def
 ./usr/share/misc/msg_sys.def
