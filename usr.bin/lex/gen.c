@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/gen.c,v 1.7 1993/12/14 02:10:07 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/gen.c,v 1.8 1994/01/06 23:58:33 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -597,9 +597,8 @@ int worry_about_NULs;
 		}
 
 	else
-		yy_strcpy( char_map, useecs ?
-					"yy_ec[YY_SC_TO_UI(*yy_cp)]" :
-					"YY_SC_TO_UI(*yy_cp)" );
+		strcpy( char_map, useecs ? "yy_ec[YY_SC_TO_UI(*yy_cp)]" :
+					   "YY_SC_TO_UI(*yy_cp)" );
 
 	if ( worry_about_NULs && nultrans )
 		{
@@ -1056,7 +1055,7 @@ void make_tables()
 		indent_puts(
 		"YY_FATAL_ERROR( \"token too large, exceeds YYLMAX\" ); \\" );
 		indent_down();
-		indent_puts( "yy_strcpy( yytext, yytext_ptr ); \\" );
+		indent_puts( "yy_flex_strcpy( yytext, yytext_ptr ); \\" );
 		}
 
 	set_indent( 0 );

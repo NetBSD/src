@@ -26,10 +26,20 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.7 1993/12/09 19:06:10 jtc Exp $ (LBL) */
+/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.8 1994/01/06 23:58:26 jtc Exp $ (LBL) */
 
 #include <stdio.h>
 #include <ctype.h>
+
+#if HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#if __STDC__
+#include <stdlib.h>
+#endif
 
 /* Always be prepared to generate an 8-bit scanner. */
 #define CSIZE 256
@@ -604,12 +614,9 @@ extern int num_backing_up, bol_needed;
 void *allocate_array PROTO((int, int));
 void *reallocate_array PROTO((void*, int, int));
 
-void *yy_flex_alloc PROTO((int));
-void *yy_flex_realloc PROTO((void*, int));
-void yy_flex_free PROTO((void*));
-int yy_strcmp PROTO(( const char *s1, const char *s2 ));
-void yy_strcpy PROTO(( char *s1, const char *s2 ));
-int yy_strlen PROTO(( const char *s ));
+void *flex_alloc PROTO((unsigned int));
+void *flex_realloc PROTO((void*, unsigned int));
+void flex_free PROTO((void*));
 
 #define allocate_integer_array(size) \
 	(int *) allocate_array( size, sizeof( int ) )

@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/sym.c,v 1.5 1993/12/06 19:29:33 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/sym.c,v 1.6 1994/01/06 23:58:53 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -62,7 +62,7 @@ int table_size;
 
 	while ( sym_entry )
 		{
-		if ( ! yy_strcmp( sym, sym_entry->name ) )
+		if ( ! strcmp( sym, sym_entry->name ) )
 			{ /* entry already exists */
 			return -1;
 			}
@@ -72,7 +72,7 @@ int table_size;
 
 	/* create new entry */
 	new_entry = (struct hash_entry *)
-		yy_flex_alloc( sizeof( struct hash_entry ) );
+		flex_alloc( sizeof( struct hash_entry ) );
 
 	if ( new_entry == NULL )
 		flexfatal( "symbol table memory allocation failed" );
@@ -142,7 +142,7 @@ int table_size;
 
 	while ( sym_entry )
 		{
-		if ( ! yy_strcmp( sym, sym_entry->name ) )
+		if ( ! strcmp( sym, sym_entry->name ) )
 			return sym_entry;
 		sym_entry = sym_entry->next;
 		}

@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/misc.c,v 1.5 1993/12/06 19:29:27 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/misc.c,v 1.6 1994/01/06 23:58:47 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -41,7 +41,7 @@ int otoi PROTO((Char []));
 void add_action( new_text )
 char *new_text;
 	{
-	int len = yy_strlen( new_text );
+	int len = strlen( new_text );
 
 	while ( len + action_index >= action_size - 10 /* slop */ )
 		{
@@ -50,7 +50,7 @@ char *new_text;
 			reallocate_character_array( action_array, action_size );
 		}
 
-	yy_strcpy( &action_array[action_index], new_text );
+	strcpy( &action_array[action_index], new_text );
 
 	action_index += len;
 	}
@@ -70,7 +70,7 @@ int size, element_size;
 	if ( element_size * size <= 0 )
 		flexfatal( "request for < 1 byte in allocate_array()" );
 
-	mem = yy_flex_alloc( element_size * size );
+	mem = flex_alloc( element_size * size );
 
 	if ( mem == NULL )
 		flexfatal( "memory allocation failed in allocate_array()" );
@@ -182,7 +182,7 @@ register char *str;
 	for ( c = str; *c; ++c )
 		;
 
-	copy = (char *) yy_flex_alloc( (c - str + 1) * sizeof( char ) );
+	copy = (char *) flex_alloc( (c - str + 1) * sizeof( char ) );
 
 	if ( copy == NULL )
 		flexfatal( "dynamic memory failure in copy_string()" );
@@ -647,7 +647,7 @@ int size, element_size;
 		flexfatal(
 			"attempt to increase array size by less than 1 byte" );
 
-	new_array = yy_flex_realloc( array, size * element_size );
+	new_array = flex_realloc( array, size * element_size );
 
 	if ( new_array == NULL )
 		flexfatal( "attempt to increase array size failed" );
@@ -745,7 +745,7 @@ int element_v, element_n;
 void *yy_flex_xmalloc( size )
 int size;
 	{
-	void *result = yy_flex_alloc( size );
+	void *result = flex_alloc( size );
 
 	if ( ! result  )
 		flexfatal( "memory allocation failed in yy_flex_xmalloc()" );
