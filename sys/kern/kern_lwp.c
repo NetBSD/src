@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.13 2003/10/19 01:44:49 simonb Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.14 2003/10/30 23:31:21 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.13 2003/10/19 01:44:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.14 2003/10/30 23:31:21 cl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -248,7 +248,7 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	struct sys__lwp_continue_args /* {
 		syscallarg(lwpid_t) target;
 	} */ *uap = v;
-	int target_lid;
+	int s, target_lid;
 	struct proc *p = l->l_proc;
 	struct lwp *t;
 
@@ -261,7 +261,9 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	if (t == NULL)
 		return (ESRCH);
 
+	SCHED_LOCK(s);
 	lwp_continue(t);
+	SCHED_UNLOCK(s);
 
 	return (0);
 }
@@ -269,7 +271,6 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 void
 lwp_continue(struct lwp *l)
 {
-	int s;
 
 	DPRINTF(("lwp_continue of %d.%d (%s), state %d, wchan %p\n",
 	    l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_stat,
@@ -280,9 +281,7 @@ lwp_continue(struct lwp *l)
 
 	if (l->l_wchan == 0) {
 		/* LWP was runnable before being suspended. */
-		SCHED_LOCK(s);
 		setrunnable(l);
-		SCHED_UNLOCK(s);
 	} else {
 		/* LWP was sleeping before being suspended. */
 		l->l_stat = LSSLEEP;
