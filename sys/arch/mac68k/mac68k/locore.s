@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1995/07/08 04:25:07 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1995/07/17 01:31:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,10 +101,14 @@
  * (i.e. a bogus PC)  This is known to immediately follow the vector
  * table and is hence at 0x400 (see reset vector in vectors.s).
  */
-	.globl	_panic
+	.globl	_panic, _panicstr
 	.globl	_jmp0panic
 
 _jmp0panic:
+	tstl	_panicstr
+	jeq	jmp0panic
+	stop	#0x2700
+jmp0panic:
 	pea	Ljmp0panic
 	jbsr	_panic
 	/* NOTREACHED */
