@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/11 22:57:55 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1999/02/21 00:20:10 mjl Exp $
 
-SUBDIR+= libc
+SUBDIR+= libc libposix
 
 .include <bsd.subdir.mk>
