@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.2.4.14 1999/11/19 11:06:28 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.2.4.15 1999/11/30 08:49:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.14 1999/11/19 11:06:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.15 1999/11/30 08:49:54 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,21 +51,19 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.14 1999/11/19 11:06:28 nisimura E
 #include <pmax/ibus/ibusvar.h>
 
 void dec_5100_init __P((void));
-void dec_5100_bus_reset __P((void));
-void dec_5100_cons_init __P((void));
-void dec_5100_device_register __P((struct device *, void *));
-int  dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void dec_5100_bus_reset __P((void));
+static void dec_5100_cons_init __P((void));
+static void dec_5100_device_register __P((struct device *, void *));
+static int  dec_5100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void dec_5100_intr_establish __P((struct device *, void *,
 		int, int (*)(void *), void *));
 void dec_5100_intr_disestablish __P((struct device *, void *));
-void dec_5100_memerr __P((void));
+static void dec_5100_memerr __P((void));
 
 extern void kn230_wbflush __P((void));
 extern void prom_haltbutton __P((void));
 extern void dc_cnattach __P((paddr_t, int));
 extern void mips_set_wbflush __P((void (*)(void)));
-
-static u_int32_t kn230imsk;
 
 int _splraise_kn230 __P((int));
 int _spllower_kn230 __P((int));
@@ -117,18 +115,19 @@ dec_5100_init()
 	sprintf(cpu_model, "DECsystem 5100 (MIPSMATE)");
 }
 
-void
+static void
 dec_5100_bus_reset()
 {
 	u_int32_t icsr;
 
+	/* clear any memory error condition */
 	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= KN230_CSR_INTR_WMERR;
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 }
 
-void
+static void
 dec_5100_cons_init()
 {
 	/*
@@ -141,7 +140,7 @@ dec_5100_cons_init()
 	dc_cnattach(KN01_SYS_DZ, 0);
 }
 
-void
+static void
 dec_5100_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -149,7 +148,7 @@ dec_5100_device_register(dev, aux)
 	panic("dec_5100_device_register unimplemented");
 }
 
-struct {
+static const struct {
 	int cookie;
 	int intrbit;
 } kn230intrs[] = {
@@ -159,6 +158,7 @@ struct {
 	{ SYS_DEV_OPT0, KN230_CSR_INTR_OPT0 },
 	{ SYS_DEV_OPT1, KN230_CSR_INTR_OPT1 },
 };
+static u_int32_t kn230imsk;
 
 void
 dec_5100_intr_establish(ioa, cookie, level, func, arg)
@@ -175,7 +175,7 @@ dec_5100_intr_establish(ioa, cookie, level, func, arg)
 		if (kn230intrs[i].cookie == dev)
 			goto found;
 	}
-	panic("ibus_intr_establish: invalid cookie %d", dev);
+	panic("intr_establish: invalid cookie %d", dev);
 
 found:
 	intrtab[dev].ih_func = func;
@@ -193,10 +193,7 @@ dec_5100_intr_disestablish(dev, cookie)
 	printf("dec_5100_intr_distestablish: not implemented\n");
 }
 
-/*
- * Handle mipsmate interrupts.
- */
-int
+static int
 dec_5100_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -262,7 +259,7 @@ dec_5100_intr(cpumask, pc, status, cause)
  *
  * XXX drain writebuffer on contextswitch to avoid panic?
  */
-void
+static void
 dec_5100_memerr()
 {
 	u_int32_t icsr;

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.6.2.13 1999/11/19 11:06:27 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.14 1999/11/30 08:49:55 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.13 1999/11/19 11:06:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.14 1999/11/30 08:49:55 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,15 +95,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.13 1999/11/19 11:06:27 nisimura E
 #include "wsdisplay.h"
 
 void dec_3max_init __P((void));
-void dec_3max_bus_reset __P((void));
-void dec_3max_cons_init __P((void));
-void dec_3max_device_register __P((struct device *, void *));
-int  dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
-
-void kn02_intr_establish __P((struct device *, void *, int,
+static void dec_3max_bus_reset __P((void));
+static void dec_3max_cons_init __P((void));
+static void dec_3max_device_register __P((struct device *, void *));
+static int  dec_3max_intr __P((unsigned, unsigned, unsigned, unsigned));
+static void kn02_intr_establish __P((struct device *, void *, int,
 		int (*)(void *), void *));
-void kn02_intr_disestablish __P((struct device *, void *));
-
+static void kn02_intr_disestablish __P((struct device *, void *));
 static void dec_3max_memerr __P((void));
 
 extern void kn02_wbflush __P((void));
@@ -173,17 +171,18 @@ dec_3max_init()
 	strcpy(cpu_model, "DECstation 5000/200 (3MAX)");
 }
 
-void
+static void
 dec_3max_bus_reset()
 {
+	/* clear any memory error condition */
+
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_ERRADR) = 0;
 	kn02_wbflush();
-
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CHKSYN) = 0;
 	kn02_wbflush();
 }
 
-void
+static void
 dec_3max_cons_init()
 {
 	int kbd, crt, screen;
@@ -211,7 +210,7 @@ dec_3max_cons_init()
 	dc_cnattach(KN02_SYS_DZ, kbd);
 }
 
-void
+static void
 dec_3max_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -219,6 +218,53 @@ dec_3max_device_register(dev, aux)
 	panic("dec_3max_device_register unimplemented");
 }
 
+static const struct {
+	int cookie;
+	int intrbit;
+} kn02intrs[] = {
+	{ SYS_DEV_SCC0,  KN02_IP_DZ },
+	{ SYS_DEV_LANCE, KN02_IP_LANCE },
+	{ SYS_DEV_SCSI,	 KN02_IP_SCSI },
+	{ SYS_DEV_OPT0,  KN02_IP_SLOT0 },
+	{ SYS_DEV_OPT1,  KN02_IP_SLOT1 },
+	{ SYS_DEV_OPT2,  KN02_IP_SLOT2 },
+};
+
+static void
+kn02_intr_establish(ioa, cookie, level, func, arg)
+	struct device *ioa;
+	void *cookie, *arg;
+	int level;
+	int (*func) __P((void *));
+{
+	int dev, i;
+	u_int32_t csr;
+
+	dev = (int)cookie;
+
+	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
+		if (kn02intrs[i].cookie == dev)
+			goto found;
+	}
+	panic("intr_establish: invalid cookie %d", dev);
+
+found:
+	intrtab[dev].ih_func = func;
+	intrtab[dev].ih_arg = arg;
+
+	iplmask[level] |= (kn02intrs[i].intrbit << 16);
+	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
+	csr |= (kn02intrs[i].intrbit << 16);
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
+	kn02_wbflush();
+}
+
+static void
+kn02_intr_disestablish(dev, cookie)
+	struct device *dev;
+	void *cookie;
+{
+}
 
 #define	CALLINTR(slot) do {					\
 		ifound = 1;					\
@@ -226,10 +272,7 @@ dec_3max_device_register(dev, aux)
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	} while (0)
 
-/*
- * Handle 3MAX interrupts.
- */
-int
+static int
 dec_3max_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -334,31 +377,10 @@ static struct tc_slotdesc tc_kn02_slots[] = {
     { KV(KN02_PHYS_TC_7_START), C(SYS_DEV_BOGUS), },	/* 7 - system CSRs */
 };
 
-static struct tc_builtin tc_kn02_builtins[] = {
+static const struct tc_builtin tc_kn02_builtins[] = {
 	{ "KN02SYS ",	7, 0x0, C(SYS_DEV_BOGUS), },
 	{ "PMAD-AA ",	6, 0x0, C(SYS_DEV_LANCE), },
 	{ "PMAZ-AA ",	5, 0x0, C(SYS_DEV_SCSI), },
-};
-
-struct tcbus_attach_args kn02_tc_desc = { /* global not a const */
-	NULL, 0,
-	TC_SPEED_25_MHZ,
-	3, tc_kn02_slots,
-	3, tc_kn02_builtins,
-	kn02_intr_establish, kn02_intr_disestablish,
-	NULL,
-};
-
-struct {
-	int cookie;
-	int intrbit;
-} kn02intrs[] = {
-	{ SYS_DEV_SCC0,  KN02_IP_DZ },
-	{ SYS_DEV_LANCE, KN02_IP_LANCE },
-	{ SYS_DEV_SCSI,	 KN02_IP_SCSI },
-	{ SYS_DEV_OPT0,  KN02_IP_SLOT0 },
-	{ SYS_DEV_OPT1,  KN02_IP_SLOT1 },
-	{ SYS_DEV_OPT2,  KN02_IP_SLOT2 },
 };
 
 static struct ibus_attach_args kn02sys_devs[] = {
@@ -366,50 +388,23 @@ static struct ibus_attach_args kn02sys_devs[] = {
 	{ "dc",  	KV(KN02_SYS_DZ), C(SYS_DEV_SCC0), },
 };
 
-void
-kn02_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
-	void *cookie, *arg;
-	int level;
-	int (*func) __P((void *));
-{
-	int dev, i;
-	u_int32_t csr;
+struct tcbus_attach_args kn02_tc_desc = { /* global not a const */
+	NULL, 0,
+	TC_SPEED_25_MHZ,
+	KN02_TC_NSLOTS, tc_kn02_slots,
+	3, tc_kn02_builtins,
+	kn02_intr_establish, kn02_intr_disestablish,
+	NULL,
+};
 
-	dev = (int)cookie;
-
-	for (i = 0; i < sizeof(kn02intrs)/sizeof(kn02intrs[0]); i++) {
-		if (kn02intrs[i].cookie == dev)
-			goto found;
-	}
-	panic("ibus_intr_establish: invalid cookie %d", dev);
-
-found:
-	intrtab[dev].ih_func = func;
-	intrtab[dev].ih_arg = arg;
-
-	iplmask[level] |= (kn02intrs[i].intrbit << 16);
-	csr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) & 0x00ffff00;
-	csr |= (kn02intrs[i].intrbit << 16);
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR) = csr;
-	kn02_wbflush();
-}
-
-void
-kn02_intr_disestablish(dev, cookie)
-	struct device *dev;
-	void *cookie;
-{
-}
-
-int  kn02sys_match __P((struct device *, struct cfdata *, void *));
-void kn02sys_attach __P((struct device *, struct device *, void *));
+static int  kn02sys_match __P((struct device *, struct cfdata *, void *));
+static void kn02sys_attach __P((struct device *, struct device *, void *));
 
 struct cfattach kn02sys_ca = {
         sizeof(struct ibus_softc), kn02sys_match, kn02sys_attach,
 };
 
-int
+static int
 kn02sys_match(parent, cfdata, aux)
         struct device *parent;
         struct cfdata *cfdata;
@@ -423,7 +418,7 @@ kn02sys_match(parent, cfdata, aux)
 	return 1;
 }
 
-void
+static void
 kn02sys_attach(parent, self, aux)
         struct device *parent;
         struct device *self;
