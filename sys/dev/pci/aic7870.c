@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7870.c,v 1.6 1996/01/31 00:45:25 cgd Exp $	*/
+/*	$NetBSD: aic7870.c,v 1.7 1996/03/04 19:30:50 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -38,7 +38,7 @@
 #include <dev/ic/aic7xxxvar.h>
 
 
-#define PCI_BASEADR0		PCI_MAP_REG_START
+#define PCI_BASEADR0		PCI_MAPREG_START
 #define PCI_VENDORID(x)         ((x) & 0xFFFF)
 #define PCI_CHIPID(x)           (((x) >> 16) & 0xFFFF)
 
