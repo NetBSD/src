@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.9 1998/09/20 13:16:17 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.10 1998/09/20 19:00:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,14 +80,14 @@ struct wdc_softc { /* Per controller state */
 	/* mandatory fields */
 	int           cap;
 /* Capabilities supported by the controller */
-#define	WDC_CAPABILITY_DATA32 0x01     /* 32-bit data access */
-#define WDC_CAPABILITY_PIO    0x02	/* controller knows its PIO modes */
-#define	WDC_CAPABILITY_DMA    0x04	/* DMA */
-#define	WDC_CAPABILITY_UDMA   0x08	/* Ultra-DMA/33 */
-#define	WDC_CAPABILITY_HWLOCK 0x10	/* Needs to lock HW */
-#define	WDC_CAPABILITY_ATA_NOSTREAM 0x20 /* Don't use stream funcs on ATA */
-#define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x40 /* Don't use stream funcs on ATAPI */
-#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x80 /* only reset once */
+#define	WDC_CAPABILITY_DATA32 0x0001     /* 32-bit data access */
+#define WDC_CAPABILITY_PIO    0x0002	/* controller knows its PIO modes */
+#define	WDC_CAPABILITY_DMA    0x0004	/* DMA */
+#define	WDC_CAPABILITY_UDMA   0x0008	/* Ultra-DMA/33 */
+#define	WDC_CAPABILITY_HWLOCK 0x0010	/* Needs to lock HW */
+#define	WDC_CAPABILITY_ATA_NOSTREAM 0x0020 /* Don't use stream funcs on ATA */
+#define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0040 /* Don't use stream funcs on ATAPI */
+#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0080 /* only reset once */
 	u_int8_t      pio_mode; /* highest PIO mode supported */
 	u_int8_t      dma_mode; /* highest DMA mode supported */
 	int nchannels;	/* Number of channels on this controller */

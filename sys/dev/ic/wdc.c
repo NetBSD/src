@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.13 1998/09/20 13:16:16 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.14 1998/09/20 19:00:15 bouyer Exp $ */
 
 
 /*
@@ -245,19 +245,14 @@ wdcprobe(chp)
 		    "cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
-		if (sc == 0x01 && sn == 0x01) {
-			if (cl == 0x00 && ch == 0x00) { /* ATA sig */
-				chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
-				continue;
-			} else if (cl == 0x14 && ch == 0xeb) { /* ATAPI sig */
-				chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
-				continue;
-			}
+		if (sc == 0x01 && sn == 0x01 && cl == 0x14 && ch == 0xeb) {
+			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
+			continue;
 		}
 		/*
-		 * Maybe it's an old device. Test registers writability
-		 * (Error register not writable, but cyllo is),
-		 * then try an ATA command.
+		 * Maybe it's an old device, so don't rely on ATA sig.
+		 * Test registers writability (Error register not writable,
+		 * but cyllo is), then try an ATA command.
 		 */
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_error, 0x58);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo, 0xa5);
@@ -272,11 +267,18 @@ wdcprobe(chp)
 			ret_value &= ~(0x01 << drive);
 			continue;
 		}
+		if (wait_for_ready(chp, 10000) != 0) {
+			WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
+			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+			    chp->channel, drive), DEBUG_PROBE);
+			ret_value &= ~(0x01 << drive);
+			continue;
+		}
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_command,
 		    WDCC_DIAGNOSE);
 		if (wait_for_ready(chp, 10000) == 0) {
 			chp->ch_drive[drive].drive_flags |=
-			    DRIVE_ATA | DRIVE_OLD;
+			    DRIVE_ATA;
 		} else {
 			WDCDEBUG_PRINT(("%s:%d:%d: WDCC_DIAGNOSE failed\n",
 			    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
@@ -284,7 +286,6 @@ wdcprobe(chp)
 			ret_value &= ~(0x01 << drive);
 		}
 	}
-
 	return (ret_value);	
 }
 
@@ -294,7 +295,6 @@ wdcattach(chp)
 {
 	int channel_flags, ctrl_flags, i;
 	struct ata_atapi_attach aa_link;
-	struct ataparams params;
 
 	LIST_INIT(&xfer_free_list);
 	for (i = 0; i < 2; i++) {
@@ -349,15 +349,6 @@ wdcattach(chp)
 
 	for (i = 0; i < 2; i++) {
 		if ((chp->ch_drive[i].drive_flags & DRIVE_ATA) == 0) {
-			continue;
-		}
-		if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0 &&
-		    ata_get_params(&chp->ch_drive[i], AT_POLL, &params) !=
-		    CMD_OK) {
-			WDCDEBUG_PRINT(("%s:%d: drive %d: IDENTIFY failed\n",
-			    chp->wdc->sc_dev.dv_xname, chp->channel, i),
-			    DEBUG_PROBE);
-			chp->ch_drive[i].drive_flags &= ~DRIVE_ATA;
 			continue;
 		}
 		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
