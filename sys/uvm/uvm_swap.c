@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.27.4.2 1999/07/04 02:05:42 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.27.4.3 1999/07/31 19:03:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1716,6 +1716,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_rcred = bp->b_wcred = proc0.p_ucred;
+	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;
 	s = splbio();
@@ -1727,6 +1728,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if (swapdev_vp->v_type == VBLK)
 		bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bcount = npages << PAGE_SHIFT;
+	bp->b_bufsize = bp->b_bcount;
 
 	/* 
 	 * for pageouts we must set "dirtyoff" [NFS client code needs it].
