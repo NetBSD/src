@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.54 2001/08/14 06:00:15 agc Exp $
+.\"	$NetBSD: packages.7,v 1.55 2001/08/24 00:54:45 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd May 3, 2001
+.Dd Aug 20, 2001
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -98,6 +98,9 @@ Says that if Mesa is requested, a package should preferably use a
 GLX (hardware-accelerated) version of the Mesa library.
 .It BINPKG_SITES
 List of sites carrying binary pkgs. Variables
+.It LOCALPATCHES
+Directory for local patches that aren't part of pkgsrc. See
+pkgsrc/Packages.txt for more information.
 .Dq rel
 and
 .Dq arch
