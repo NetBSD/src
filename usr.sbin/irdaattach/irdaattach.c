@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaattach.c,v 1.4 2002/07/20 08:40:17 grant Exp $	*/
+/*	$NetBSD: irdaattach.c,v 1.5 2003/01/12 13:49:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ main(int argc, char **argv)
 	if (ioctl(fd, IRFRAMETTY_SET_DONGLE, &dongle) < 0)
 		err(1, "IRFRAMETTY_SET_DONGLE");
 
+	fflush(stdout);
 	if (opt_detach && daemon(0, 0) != 0)
 		err(1, "couldn't detach");
 	if (pr_pid)
