@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28 1998/04/17 17:39:22 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -413,7 +413,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register i;
+	register int i;
 	register struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||

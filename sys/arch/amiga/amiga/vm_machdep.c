@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1998/01/22 23:13:41 is Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35 1998/04/17 17:39:23 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -241,7 +241,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct md_core md_core;
 	struct coreseg cseg;
 	register struct user *up = p->p_addr;
-	register i;
+	register int i;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
