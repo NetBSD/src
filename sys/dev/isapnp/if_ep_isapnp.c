@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.6 1997/03/30 22:47:07 jonathan Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.7 1997/04/27 09:46:50 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -99,7 +99,11 @@ ep_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	if (strcmp(ipa->ipa_devlogic, "TCM5094"))
+	if (strcmp(ipa->ipa_devlogic, "TCM5090") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5091") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5094") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5095") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5098"))
 		return (0);
 
 	return (1);
@@ -134,6 +138,13 @@ ep_isapnp_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    IST_EDGE, IPL_NET, epintr, sc);
 
-	/* we can't easily tell if this is a 3c509B or 3c515 */
-	epconfig(sc, EP_CHIPSET_UNKNOWN);	/* XXX */
+	if (strcmp(ipa->ipa_devlogic, "TCM5090") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5091") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5094") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5095") &&
+	    strcmp(ipa->ipa_devlogic, "TCM5098")) {
+		epconfig(sc, EP_CHIPSET_UNKNOWN);	/* XXX: 3c515 ? */
+	} else {
+		epconfig(sc, EP_CHIPSET_3C509);
+	}
 }
