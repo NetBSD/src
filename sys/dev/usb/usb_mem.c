@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.2 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.3 1998/12/09 01:02:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * USB DMA memory allocation.
  * We need to allocate a lot of small (many 8 byte, some larger)
  * memory blocks that can be used for DMA.  Using the bus_dma
- * routines directly would uncur large overheads in space and time.
+ * routines directly would incur large overheads in space and time.
  */
 
 #include <sys/param.h>
@@ -49,6 +49,10 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+
+#ifdef DIAGNOSTIC
+#include <sys/proc.h>
+#endif
 
 #include <machine/bus.h>
 
@@ -87,6 +91,12 @@ LIST_HEAD(, usb_block_dma) usb_blk_freelist =
 LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
+/*
+ * XXX usb_block_allocmem() does not have any locks because
+ * it should never be called from an interrupt context, nor
+ * should should it block.  But is that true?
+ */
+
 usbd_status
 usb_block_allocmem(tag, size, align, dmap)
 	bus_dma_tag_t tag;
@@ -98,6 +108,13 @@ usb_block_allocmem(tag, size, align, dmap)
         usb_dma_block_t *p;
 
 	DPRINTFN(5, ("usb_block_allocmem: size=%d align=%d\n", size, align));
+
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usb_block_allocmem: in interrupt context\n");
+		return (USBD_NOMEM);
+	}
+#endif
 
 	/* First check the free list. */
 	for (p = LIST_FIRST(&usb_blk_freelist); p; p = LIST_NEXT(p, next)) {
@@ -154,6 +171,12 @@ void
 usb_block_real_freemem(p)
         usb_dma_block_t *p;
 {
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usb_block_real_freemem: in interrupt context\n");
+		return;
+	}
+#endif
 	bus_dmamap_unload(p->tag, p->map);
 	bus_dmamap_destroy(p->tag, p->map);
 	bus_dmamem_unmap(p->tag, p->kaddr, p->size);
@@ -170,6 +193,12 @@ void
 usb_block_freemem(p)
         usb_dma_block_t *p;
 {
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usb_block_freemem: in interrupt context\n");
+		return;
+	}
+#endif
 	DPRINTFN(6, ("usb_block_freemem: size=%d\n", p->size));
 	LIST_INSERT_HEAD(&usb_blk_freelist, p, next);
 }
@@ -185,6 +214,7 @@ usb_allocmem(tag, size, align, p)
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
 	int i;
+	int s;
 
 	/* If the request is large then just use a full block. */
 	if (size > USB_MEM_SMALL || align > USB_MEM_SMALL) {
@@ -198,6 +228,7 @@ usb_allocmem(tag, size, align, p)
 		return (r);
 	}
 	
+	s = splusb();
 	/* Check for free fragments. */
 	for (f = LIST_FIRST(&usb_frag_freelist); f; f = LIST_NEXT(f, next))
 		if (f->block->tag == tag)
@@ -216,6 +247,7 @@ usb_allocmem(tag, size, align, p)
 	p->block = f->block;
 	p->offs = f->offs;
 	LIST_REMOVE(f, next);
+	splx(s);
 	DPRINTFN(5, ("usb_allocmem: use frag=%p size=%d\n", f, (int)size));
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -226,6 +258,7 @@ usb_freemem(tag, p)
         usb_dma_t *p;
 {
 	struct usb_frag_dma *f;
+	int s;
 
 	if (p->block->fullblock) {
 		usb_block_freemem(p->block);
@@ -234,6 +267,8 @@ usb_freemem(tag, p)
 	f = KERNADDR(p);
 	f->block = p->block;
 	f->offs = p->offs;
+	s = splusb();
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
+	splx(s);
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
 }
