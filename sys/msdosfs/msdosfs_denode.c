@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.33 1998/08/09 20:52:20 perry Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.34 1998/09/01 04:04:10 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -55,6 +55,7 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -81,6 +82,8 @@ u_long dehash;			/* size of hash table - 1 */
 
 struct simplelock msdosfs_ihash_slock;
 
+struct pool msdosfs_denode_pool;
+
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
 static void msdosfs_hashrem __P((struct denode *));
@@ -90,6 +93,9 @@ msdosfs_init()
 {
 	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
 	simple_lock_init(&msdosfs_ihash_slock);
+	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
+	    "msdosnopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_MSDOSFSNODE);
 }
 
 static struct denode *
@@ -223,7 +229,7 @@ deget(pmp, dirclust, diroffset, depp)
 		*depp = 0;
 		return (error);
 	}
-	MALLOC(ldep, struct denode *, sizeof(struct denode), M_MSDOSFSNODE, M_WAITOK);
+	ldep = pool_get(&msdosfs_denode_pool, PR_WAITOK);
 	memset((caddr_t)ldep, 0, sizeof *ldep);
 	nvp->v_data = ldep;
 	ldep->de_vnode = nvp;
@@ -588,7 +594,7 @@ msdosfs_reclaim(v)
 #if 0 /* XXX */
 	dep->de_flag = 0;
 #endif
-	FREE(dep, M_MSDOSFSNODE);
+	pool_put(&msdosfs_denode_pool, dep);
 	vp->v_data = NULL;
 	return (0);
 }
