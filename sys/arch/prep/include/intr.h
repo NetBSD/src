@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2002/02/11 11:19:29 wiz Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2002/02/26 00:30:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ int  splsoftnet(void);
 void do_pending_int(void);
 
 void ext_intr(void);
+void ext_intr_ivr(void);
 
 void enable_intr(void);
 void disable_intr(void);
