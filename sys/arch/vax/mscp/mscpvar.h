@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.1 1996/07/01 20:41:38 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.2 1996/07/10 23:36:05 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -78,23 +78,27 @@ struct	mscp_ctlr {
 	    __P((struct device *, int));
 };
 
+struct mscp_softc;
+
 struct	mscp_device {
-	void	(*me_dgram)		/* error datagram */
-	    __P((struct device *, struct mscp *));
-	void	(*me_iodone)		/* normal I/O is done */
+	void	(*me_dgram)	/* error datagram */
+	    __P((struct device *, struct mscp *, struct mscp_softc *));
+	void	(*me_iodone)	/* normal I/O is done */
 	    __P((struct device *, struct buf *));
-	int	(*me_online)		/* drive on line */
+	int	(*me_online)	/* drive on line */
 	    __P((struct device *, struct mscp *));
-	int	(*me_gotstatus)		/* got unit status */
+	int	(*me_gotstatus)	/* got unit status */
 	    __P((struct device *, struct mscp *));
-	void	(*me_replace)		/* replace done */
+	void	(*me_replace)	/* replace done */
 	    __P((struct device *, struct mscp *));
-	int	(*me_ioerr)		/* read or write failed */
+	int	(*me_ioerr)	/* read or write failed */
 	    __P((struct device *, struct mscp *, struct buf *));
-	void	(*me_bb)		/* B_BAD io done */
+	void	(*me_bb)	/* B_BAD io done */
 	    __P((struct device *, struct mscp *, struct buf *));
-	void	(*me_fillin)		/* Fill in mscp info for this drive */
+	void	(*me_fillin)	/* Fill in mscp info for this drive */
 	    __P((struct buf *,struct mscp *));
+	void	(*me_cmddone)	/* Non-data transfer operation is done */
+	    __P((struct device *, struct mscp *));
 };
 
 /*
@@ -123,6 +127,7 @@ struct	mscp_attach_args {
  */
 struct	drive_attach_args {
 	struct	mscp *da_mp;	/* this devices response struct */
+	int	da_typ;		/* Parent of type */
 };
 
 /*
@@ -160,12 +165,14 @@ struct mscp_softc {
 	struct	mscp_ctlr *mi_mc;	/* Pointer to parent's mscp_ctlr */
 	struct	mscp_device *mi_me;	/* Pointer to child's mscp_device */
 	struct	device **mi_dp;		/* array of backpointers */
+	int	mi_driveno;		/* Max physical drive number found */
 	struct	mscp *mi_mscp;
 	int	mi_flags;
 	struct	mscp_pack *mi_uda;	/* virtual address */
 	struct	mscp_pack *mi_uuda;	/* (device-specific) address */
 	int	mi_type;
 	short	mi_ivec;		/* Interrupt vector to use */
+	short	mi_ierr;		/* Init err counter */
 	volatile short *mi_ip;        	/* initialisation and polling */
 	volatile short *mi_sa;        	/* status & address (read part) */
 	volatile short *mi_sw;        	/* status & address (write part) */
@@ -218,35 +225,7 @@ struct mscp_softc {
  * where `bp' is a transfer request, `dp' is a drive queue, and `um_tab'
  * is a controller queue.  (That is, the forward link for controller
  * queues is `b_forw'; for drive queues, it is `av_forw'.)
- *
- * Changed to new buf structure 940605/Ragge
  */
-#if 0
-#define MSCP_APPEND(bp, queue, link) { \
-	struct buf *tmp; \
-	\
-	(bp)->link = NULL; \
-	if ((queue)->b_actf == NULL) \
-		(queue)->b_actf = (bp); \
-	else { \
-		tmp=(queue)->b_actf; \
-		while(tmp->link) tmp=tmp->link; \
-		tmp->link = (bp); \
-	} \
-}
-#endif
-
-/* Old APPEND macro */
-#if 0
-#define APPEND(bp, queue, link) { \
-	(bp)->link = NULL; \
-	if ((queue)->b_actf == NULL) \
-		(queue)->b_actf = (bp); \
-	else \
-		(queue)->b_actl->link = (bp); \
-	(queue)->b_actl = (bp); \
-}
-#endif
 
 #define	MSCP_APPEND(bp, queue, link) {			\
 	(bp)->link = NULL;				\
@@ -263,5 +242,8 @@ void	mscp_printevent __P((struct mscp *));
 void	mscp_go __P((struct mscp_softc *, struct mscp *, int));
 void	mscp_requeue __P((struct mscp_softc *));
 void	mscp_dorsp __P((struct mscp_softc *));
-void	mscp_decodeerror __P((char *, struct mscp *));
+int	mscp_decodeerror __P((char *, struct mscp *, struct mscp_softc *));
 int	mscp_print __P((void *, char *));
+void	mscp_hexdump __P((struct mscp *));
+void	mscp_strategy __P((struct buf *, struct buf *, struct device *));
+void	mscp_printtype __P((int, int));
