@@ -2,6 +2,7 @@
  * NS32K Monitor SCSI high-level driver
  * Bruce Culbertson
  * 8 March 1990
+ * (This source is public domain source)
  *
  * There are three monitor SCSI commands.  "Read" and "write" I think are
  * fairly self explanatory once you read the help messages.  They, in fact,
