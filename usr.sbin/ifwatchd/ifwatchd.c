@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.18 2003/12/27 00:05:46 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.19 2004/01/04 22:19:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,8 @@
 #include <ifaddrs.h>
 #include <syslog.h>
 
-enum event { ARRIVAL, DEPARTURE, UP, DOWN };
+enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
+
 /* local functions */
 static void usage(void);
 static void dispatch(void*, size_t);
@@ -74,6 +75,7 @@ static void check_addrs(char *cp, int addrs, enum event ev);
 static void invoke_script(struct sockaddr *sa, struct sockaddr *dst, enum event ev, int ifindex, const char *ifname_hint);
 static void list_interfaces(const char *ifnames);
 static void check_announce(struct if_announcemsghdr *ifan);
+static void check_carrier(int if_index, int carrier);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
 static int find_interface(int index);
@@ -100,18 +102,23 @@ static const char *arrival_script = NULL;
 static const char *departure_script = NULL;
 static const char *up_script = NULL;
 static const char *down_script = NULL;
-static char DummyTTY[] = _PATH_DEVNULL;
-static char DummySpeed[] = "9600";
+static const char *carrier_script = NULL;
+static const char *no_carrier_script = NULL;
+static const char DummyTTY[] = _PATH_DEVNULL;
+static const char DummySpeed[] = "9600";
 static const char **scripts[] = {
 	&arrival_script,
 	&departure_script,
 	&up_script,
-	&down_script
+	&down_script,
+	&carrier_script,
+	&no_carrier_script
 };
 
 struct interface_data {
 	SLIST_ENTRY(interface_data) next;
 	int index;
+	int last_carrier_status;
 	char * ifname;
 };
 SLIST_HEAD(,interface_data) ifs = SLIST_HEAD_INITIALIZER(ifs);
@@ -124,19 +131,30 @@ main(int argc, char **argv)
 	char msg[2048], *msgp;
 
 	openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
-	while ((c = getopt(argc, argv, "qvhiu:d:A:D:")) != -1)
+	while ((c = getopt(argc, argv, "qvhic:n:u:d:A:D:")) != -1)
 		switch (c) {
 		case 'h':
 			usage();
 			return 0;
+
 		case 'i':
 			inhibit_initial = 1;
 			break;
+
 		case 'v':
 			verbose++;
 			break;
+
 		case 'q':
 			quiet = 1;
+			break;
+
+		case 'c':
+			carrier_script = optarg;
+			break;
+
+		case 'n':
+			no_carrier_script = optarg;
 			break;
 
 		case 'u':
@@ -174,6 +192,8 @@ main(int argc, char **argv)
 			up_script, down_script);
 		printf("arrival_script: %s\ndeparture_script: %s\n",
 			arrival_script, departure_script);
+		printf("carrier_script: %s\nno_carrier_script: %s\n",
+			carrier_script, no_carrier_script);
 		printf("verbosity = %d\n", verbose);
 	}
 
@@ -218,11 +238,14 @@ usage()
 	fprintf(stderr, 
 	    "usage:\n"
 	    "\tifwatchd [-hiqv] [-A arrival-script] [-D departure-script]\n"
-	    "\t\t  [-d down-script] [-u up-script] ifname(s)\n"
+	    "\t\t  [-d down-script] [-u up-script]\n"
+	    "\t\t  [-c carrier-script] [-n no-carrier-script] ifname(s)\n"
 	    "\twhere:\n"
 	    "\t -A <cmd> specify command to run on interface arrival event\n"
+	    "\t -c <cmd> specify command to run on interface carrier-detect event\n"
 	    "\t -D <cmd> specify command to run on interface departure event\n"
 	    "\t -d <cmd> specify command to run on interface down event\n"
+	    "\t -n <cmd> specify command to run on interface no-carrier-detect event\n"
 	    "\t -h       show this help message\n"
 	    "\t -i       no (!) initial run of the up script if the interface\n"
 	    "\t          is already up on ifwatchd startup\n"
@@ -236,6 +259,7 @@ static void
 dispatch(void *msg, size_t len)
 {
 	struct rt_msghdr *hd = msg;
+	struct if_msghdr *ifmp;
 	struct ifa_msghdr *ifam;
 	enum event ev;
 
@@ -249,6 +273,10 @@ dispatch(void *msg, size_t len)
 	case RTM_IFANNOUNCE:
 		rescan_interfaces();
 		check_announce((struct if_announcemsghdr *)msg);
+		return;
+	case RTM_IFINFO:
+		ifmp = (struct if_msghdr*)msg;
+		check_carrier(ifmp->ifm_index, ifmp->ifm_data.ifi_link_state);
 		return;
 	}
 	if (verbose)
@@ -380,7 +408,8 @@ invoke_script(sa, dest, ev, ifindex, ifname_hint)
 	}
 }
 
-static void list_interfaces(const char *ifnames)
+static void
+list_interfaces(const char *ifnames)
 {
 	char * names = strdup(ifnames);
 	char * name, *lasts;
@@ -392,6 +421,7 @@ static void list_interfaces(const char *ifnames)
 	    name = strtok_r(NULL, sep, &lasts)) {
 		p = malloc(sizeof(*p));
 		SLIST_INSERT_HEAD(&ifs, p, next);
+		p->last_carrier_status = -1;
 		p->ifname = strdup(name);
 		p->index = if_nametoindex(p->ifname);
 		if (!quiet)
@@ -401,6 +431,45 @@ static void list_interfaces(const char *ifnames)
 			    p->ifname, p->index);
 	}
 	free(names);
+}
+
+static void
+check_carrier(int if_index, int carrier_status)
+{
+	struct interface_data * p;
+	enum event ev;
+
+	SLIST_FOREACH(p, &ifs, next)
+		if (p->index == if_index)
+			break;
+
+	if (p == NULL)
+		return;
+
+	/* 
+	 * Treat it as an event worth handling if:
+	 * - the carrier status changed, or
+	 * - this is the first time we've been called, and
+	 * inhibit_initial is not set
+	 */
+
+	if ((carrier_status != p->last_carrier_status) ||
+	    ((p->last_carrier_status == -1) && !inhibit_initial)) {
+		switch (carrier_status) {
+		case LINK_STATE_UP:
+			ev = CARRIER;
+			break;
+		case LINK_STATE_DOWN:
+			ev = NO_CARRIER;
+			break;
+		default:
+			if (verbose)
+				printf("unknown link status ignored\n");
+			return;
+		}
+		invoke_script(NULL, NULL, ev, if_index, p->ifname);
+		p->last_carrier_status = carrier_status;
+	}
 }
 
 static void
