@@ -1,4 +1,4 @@
-/* $NetBSD: if_bcereg.h,v 1.3.2.2 2003/10/05 11:47:15 tron Exp $	 */
+/* $NetBSD: if_bcereg.h,v 1.3.2.3 2003/10/05 11:51:16 tron Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -138,71 +138,3 @@
 
 #define BCE_MIREG(x)	((x & 0x1F) << 18)
 #define BCE_MIPHY(x)	((x & 0x1F) << 23)
-
-/* transmit buffer max frags allowed */
-#define BCE_NTXFRAGS	16
-
-/* ring descriptor */
-struct bce_dma_slot {
-	unsigned long   ctrl;
-	unsigned long   addr;
-};
-#define CTRL_BC_MASK	0x1fff	/* buffer byte count */
-#define CTRL_EOT	0x10000000	/* end of descriptor table */
-#define CTRL_IOC	0x20000000	/* interrupt on completion */
-#define CTRL_EOF	0x40000000	/* end of frame */
-#define CTRL_SOF	0x80000000	/* start of frame */
-
-/* Packet status is returned in a pre-packet header */
-struct rx_pph {
-	unsigned short  len;
-	unsigned short  flags;
-	unsigned short  pad[12];
-};
-
-/* packet status flags bits */
-#define RXF_NO				0x8	/* odd number of nibbles */
-#define RXF_RXER			0x4	/* receive symbol error */
-#define RXF_CRC				0x2	/* crc error */
-#define RXF_OV				0x1	/* fifo overflow */
-
-/* number of descriptors used in a ring */
-#define BCE_NRXDESC		128
-#define BCE_NTXDESC		128
-
-/*
- * Mbuf pointers. We need these to keep track of the virtual addresses
- * of our mbuf chains since we can only convert from physical to virtual,
- * not the other way around.
- */
-struct bce_chain_data {
-	struct mbuf    *bce_tx_chain[BCE_NTXDESC];
-	struct mbuf    *bce_rx_chain[BCE_NRXDESC];
-	bus_dmamap_t    bce_tx_map[BCE_NTXDESC];
-	bus_dmamap_t    bce_rx_map[BCE_NRXDESC];
-};
-
-#define BCE_TIMEOUT		100	/* # 10us for mii read/write */
-
-struct bce_softc {
-	struct device   bce_dev;
-	struct ethercom ethercom;	/* interface info */
-	bus_space_handle_t bce_bhandle;
-	bus_space_tag_t bce_btag;
-	void           *bce_intrhand;
-	struct pci_attach_args bce_pa;
-	struct mii_data bce_mii;
-	u_int32_t       bce_phy;/* eeprom indicated phy */
-	struct ifmedia  bce_ifmedia;	/* media info *//* Check */
-	bus_dma_tag_t   bce_dmatag;
-	u_int8_t        enaddr[ETHER_ADDR_LEN];
-	struct bce_dma_slot *bce_rx_ring;	/* receive ring */
-	struct bce_dma_slot *bce_tx_ring;	/* transmit ring */
-	struct bce_chain_data bce_cdata;	/* mbufs */
-	bus_dmamap_t    bce_ring_map;
-	u_int32_t       bce_rxin;	/* last rx descriptor seen */
-	u_int32_t       bce_txin;	/* last tx descriptor seen */
-	int             bce_txsfree;	/* no. tx slots available */
-	int             bce_txsnext;	/* next available tx slot */
-	struct callout  bce_timeout;
-};
