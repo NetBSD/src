@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.6 1997/11/02 09:42:00 jonathan Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.7 1997/11/02 23:43:14 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,7 +64,7 @@ void do_upgrade(void)
 		return;
 
 	/* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
-	run_prog ("/bin/mv /mnt/etc /mnt/etc.old");
+	mv_within_target_or_die ("/etc", "/etc.old");
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */

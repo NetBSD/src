@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 1997/11/02 09:41:57 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 1997/11/02 23:43:11 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -253,3 +253,6 @@ void	trunc_target_file __P((const char *path));
 int	target_chdir __P(( const char *path));
 void	target_chdir_or_die __P((const char *dir));
 int	target_already_root __P((void));
+int	is_active_rootpart __P((const char *partname));
+void	dup_file_into_target __P((const char *filename));
+void	mv_within_target_or_die __P((const char *from, const char *to));
