@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1996/02/22 06:59:15 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/03/26 21:12:58 cgd Exp $
 
 PROG=	rdate
 SRCS=	rdate.c
+DPADD+= ${LIBUTIL}
+LDADD+= -lutil
 
 MAN=	rdate.8
 
