@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.104 2003/07/18 09:49:18 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.105 2003/07/18 10:29:37 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -422,8 +422,7 @@ get_via_localdir(void)
 again:
 	/* Complain if not a directory */
 	if (dir_exists_p(localfs_dir) == 0) {
-		msg_display_add(MSG_badlocalsetdir, localfs_dir);
-		process_menu(MENU_localdirbad, NULL);
+		process_menu(MENU_localdirbad, (void *)MSG_badlocalsetdir);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)
@@ -432,8 +431,7 @@ again:
 	
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(localfs_dir) == 0) {
-		msg_display_add(MSG_badsetdir, localfs_dir);
-		process_menu(MENU_localdirbad, NULL);
+		process_menu(MENU_localdirbad, (void *)MSG_badsetdir);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)

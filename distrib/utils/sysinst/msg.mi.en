@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.113 2003/07/11 15:28:59 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.114 2003/07/18 10:29:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -561,6 +561,10 @@ message nonet
 returned to the previous menu.
 }
 
+message netup
+{The following network interfaces are active: %s
+Does one of them connect to the required server?}
+
 message asknetdev
 {I have found the following network interfaces: %s
 \nWhich device shall I use?}
@@ -980,7 +984,7 @@ message nfs {nfs}
 message cdrom {cdrom}
 message floppy {floppy}
 message unmounted_fs {unmounted fs}
-message local_dir {local dir}
+message local_dir {local directory}
 message Select_your_distribution {Select your distribution}
 message Full_installation {Full installation}
 message Custom_installation {Custom installation}

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.7 2003/07/14 10:53:42 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.8 2003/07/18 10:29:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -267,16 +267,17 @@ menu localfsbadmount, title MSG_What_do_you_want_to_do;
 menu localdirsource, title MSG_Change;
 	display action
 		{ msg_display(MSG_localdir, localfs_dir); };
-	option MSG_Directory, action
-		{ msg_prompt(MSG_dir, localfs_dir, localfs_dir, STRSIZE); },
-		exit;
+	option MSG_Directory, exit, action
+	    { msg_prompt_win(MSG_dir, -1, 12, 0, 0, NULL, localfs_dir, 60); };
 	option MSG_Continue, exit;
 
 menu localdirbad, title MSG_What_do_you_want_to_do;
-	option MSG_Change_directory_path,  action
-		{ yesno = 1;
-	          msg_prompt(MSG_localdir, localfs_dir, localfs_dir, STRSIZE);
-		}, exit;
+	display action
+		{ msg_display(MSG_localdir, localfs_dir);
+		  msg_display_add(arg, localfs_dir); };
+	option MSG_Change_directory_path, exit,  action
+	    { yesno = 1;
+	      msg_prompt_win(MSG_dir, -1, 12, 0, 0, NULL, localfs_dir, 60); };
 	option MSG_Give_up, exit, action
 		{ yesno = 0; ignorerror = 0; };
 	option MSG_Ignore_continue_anyway, exit, action
