@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 2004/03/25 15:27:26 drochner Exp $	*/
+/*	$NetBSD: frame.h,v 1.6 2004/03/28 15:46:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,7 +176,6 @@ struct sigframe_siginfo {
 };
 
 #ifdef _KERNEL
-void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, void *, void *);
 #endif
 
