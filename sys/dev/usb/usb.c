@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.69 2002/04/23 06:34:11 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.70 2002/05/09 21:54:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.69 2002/04/23 06:34:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.70 2002/05/09 21:54:32 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ USB_ATTACH(usb)
 		USB_ATTACH_ERROR_RETURN;
 	}
 #else
-	callout_init(&sc->sc_bus->softi);
+	usb_callout_init(sc->sc_bus->softi);
 #endif
 #endif
 
