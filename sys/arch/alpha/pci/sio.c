@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.28 2000/06/04 19:14:25 cgd Exp $ */
+/* $NetBSD: sio.c,v 1.29 2000/06/05 21:47:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.28 2000/06/04 19:14:25 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.29 2000/06/05 21:47:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,11 +153,6 @@ sioattach(parent, self, aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 	sc->sc_is82c693 = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CONTAQ &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_82C693);
-
-#ifdef EVCNT_COUNTERS
-	evcnt_attach_dynamic(&sio_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dv.dv_xname, "intr");
-#endif
 
 	config_defer(self, sio_bridge_callback);
 }

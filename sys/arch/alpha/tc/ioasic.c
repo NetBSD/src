@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.31 2000/05/29 02:16:57 matt Exp $ */
+/* $NetBSD: ioasic.c,v 1.32 2000/06/05 21:47:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,20 +68,18 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.31 2000/05/29 02:16:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.32 2000/06/05 21:47:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
@@ -127,6 +125,7 @@ int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 struct ioasicintr {
 	int	(*iai_func) __P((void *));
 	void	*iai_arg;
+	struct evcnt iai_evcnt;
 } ioasicintrs[IOASIC_NCOOKIES];
 
 tc_addr_t ioasic_base;		/* XXX XXX XXX */
@@ -167,6 +166,8 @@ ioasicattach(parent, self, aux)
 	u_long ssr;
 #endif
 	u_long i, imsk;
+	const struct evcnt *pevcnt;
+	char *cp;
 
 	ioasicfound = 1;
 
@@ -202,9 +203,17 @@ ioasicattach(parent, self, aux)
 	/*
 	 * Set up interrupt handlers.
 	 */
+	pevcnt = tc_intr_evcnt(parent, ta->ta_cookie);
 	for (i = 0; i < IOASIC_NCOOKIES; i++) {
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
+
+		cp = malloc(12, M_DEVBUF, M_NOWAIT);
+		if (cp == NULL)
+			panic("ioasicattach");
+		sprintf(cp, "slot %lu", i);
+		evcnt_attach_dynamic(&ioasicintrs[i].iai_evcnt,
+		    EVCNT_TYPE_INTR, pevcnt, self->dv_xname, cp);
 	}
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, ioasic_intr, sc);
 
@@ -306,12 +315,7 @@ ioasic_intr(val)
 
 		sir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
-#ifdef EVCNT_COUNTERS
-	/* No interrupt counting via evcnt counters */ 
-	XXX BREAK HERE XXX
-#else /* !EVCNT_COUNTERS */
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_IOASIC + slot]++
-#endif /* EVCNT_COUNTERS */ 
+#define	INCRINTRCNT(slot)	ioasicintrs[slot].iai_evcnt.ev_count++
 
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
 #define	CHECKINTR(slot, bits)						\
