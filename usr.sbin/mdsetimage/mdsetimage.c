@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.4 1997/02/11 22:40:25 cgd Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.5 1997/09/30 06:20:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: mdsetimage.c,v 1.4 1997/02/11 22:40:25 cgd Exp $";
+static char *rcsid = "$NetBSD: mdsetimage.c,v 1.5 1997/09/30 06:20:18 scottr Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,6 +66,15 @@ static struct nlist md_root_nlist[] = {
 };
 
 int	verbose;
+#ifdef NLIST_AOUT
+/*
+ * Since we can't get the text address from an a.out executable, we
+ * need to be able to specify it.  Note: there's no way to test to
+ * see if the user entered a valid address!
+ */
+int	T_flag_specified;	/* the -T flag was specified */
+u_long	text_start;		/* Start of kernel text */
+#endif /* NLIST_AOUT */
 
 int
 main(argc, argv)
@@ -79,11 +88,18 @@ main(argc, argv)
 	char *mappedkfile;
 	int ch, kfd, fsfd, rv;
 
-	while ((ch = getopt(argc, argv, "v")) != -1)
+	while ((ch = getopt(argc, argv, "T:v")) != -1)
 		switch (ch) {
 		case 'v':
 			verbose = 1;
 			break;
+		case 'T':
+#ifdef NLIST_AOUT
+			T_flag_specified = 1;
+			text_start = strtoul(optarg, NULL, 0);
+			break;
+#endif /* NLIST_AOUT */
+			/* FALLTHROUGH */
 		case '?':
 		default:
 			usage();
@@ -201,9 +217,15 @@ find_md_root(fname, mappedfile, mappedsize, nl, rootoffp, rootsizep)
 		return (1);
 	}
 
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "%s is an %s binary\n", fname,
 		    exec_formats[i].name);
+#ifdef NLIST_AOUT
+		if (T_flag_specified)
+			fprintf(stderr, "kernel text loads at 0x%lx\n",
+			    text_start);
+#endif
+	}
 
 	if ((*exec_formats[i].findoff)(mappedfile, mappedsize,
 	    nl[X_MD_ROOT_SIZE].n_value, &rootsizeoff) != 0) {
