@@ -1,5 +1,5 @@
 /*
- *	$NetBSD: fdvar.h,v 1.2 1995/03/08 20:58:05 pk Exp $
+ *	$NetBSD: fdvar.h,v 1.3 1995/04/07 19:46:15 pk Exp $
  *
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -58,6 +58,11 @@ struct fdcio {
 	int	fdcio_tc;		/* pseudo-dma Terminal Count */
 	u_char	fdcio_status[FDC_NSTATUS];	/* copy of registers */
 	int	fdcio_nstat;		/* # of valid status bytes */
+
+	/*
+	 * Statictics.
+	 */
+	struct	evcnt	fdcio_intrcnt;
 };
 #endif /* LOCORE */
 
