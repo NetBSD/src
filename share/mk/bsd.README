@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.62 2000/05/02 11:44:20 simonb Exp $
+#	$NetBSD: bsd.README,v 1.63 2000/05/07 01:19:58 sjg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -629,12 +629,14 @@ to "none".  This is for compatibilty with older NetBSD build environments.
 The include file <bsd.obj.mk> defines targets related to the creation
 and use of separated object and source directories.
 
-make(1) looks for the existance of a subdirectory (or a symlink to a
-directory) of the source directory into which built targets should be
-placed.  If an environment variable named MAKEOBJDIR is set, make(1)
-uses its value as the name of the object directory; failing that, make
-first looks for a subdirectory named "obj.${MACHINE}", and if that
-doesn't exist, it looks for "obj".
+If an environment variable named MAKEOBJDIRPREFIX is set, make(1) uses
+${MAKEOBJDIRPREFIX}${.CURDIR} as the name of the object directory if
+it exists.  Otherwise make(1) looks for the existance of a
+subdirectory (or a symlink to a directory) of the source directory
+into which built targets should be placed.  If an environment variable
+named MAKEOBJDIR is set, make(1) uses its value as the name of the
+object directory; failing that, make first looks for a subdirectory
+named "obj.${MACHINE}", and if that doesn't exist, it looks for "obj".
 
 Object directories are not created automatically by make(1) if they
 don't exist; you need to run a separate "make obj".  (This will happen
@@ -661,5 +663,34 @@ USR_OBJMACHINE  If set, and the current directory is a subdirectory of
 		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
 		otherwise, create it in the corresponding subdirectory
 		of ${BSDOBJDIR}
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.kernobj.mk> defines variables related to the
+location of kernel sources and object directories.
+
+KERNSRCDIR	Is the location of the top of the kernel src.
+		It defaults to ${BSDSRCDIR}/sys, but the top-level
+		Makefile.inc sets it to ${ABSTOP}/sys (ABSTOP is the
+		absolute path to the directory where the top-level
+		Makefile.inc was found.
+
+KERNARCHDIR	Is the location of the machine dependent kernel
+		sources.  It defaults to arch/${MACHINE}
+		
+KERNCONFDIR	Is where the configuration files for kernels are
+		found; default is ${KERNSRCDIR}/${KERNARCHDIR}/conf.
+
+KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
+		instance will be compiled in ${KERNOBJDIR}/GENERIC.
+		The default value is
+		${MAKEOBJDIRPREFIX}${KERNSRCDIR}/${KERNARCHDIR}/compile
+		if it exists or the target 'obj' is being made.
+		Otherwise the default is
+		${KERNSRCDIR}/${KERNARCHDIR}/compile.
+
+It is important that Makefiles (such as those under src/distrib) that
+wish to find compiled kernels use bsd.kernobj.mk and ${KERNOBJDIR}
+rather than make assumptions about the location of the compiled kernel.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
