@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 1999/02/21 18:09:24 scw Exp $
+#	$NetBSD: MAKEDEV,v 1.20 1999/02/27 17:57:31 scw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -137,11 +137,12 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|sd*|vnd*)
+ccd*|sd*|vnd*|raid*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=5;	chr=17;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=8;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=6;	chr=19;;
+	raid*) name=raid;	unit=${i#raid};	blk=16;	chr=37;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
