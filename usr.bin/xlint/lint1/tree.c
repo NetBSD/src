@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.37 2004/06/20 22:20:17 jmc Exp $	*/
+/*	$NetBSD: tree.c,v 1.38 2004/09/12 08:58:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.37 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: tree.c,v 1.38 2004/09/12 08:58:52 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1911,6 +1911,8 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 
 	if (ot == FLOAT || ot == DOUBLE || ot == LDOUBLE) {
 		switch (nt) {
+		case BOOL:
+			max = 1;		min = 0;		break;
 		case CHAR:
 			max = CHAR_MAX;		min = CHAR_MIN;		break;
 		case UCHAR:
@@ -2253,6 +2255,7 @@ const char *
 basictyname(tspec_t t)
 {
 	switch (t) {
+	case BOOL:	return "_Bool";
 	case CHAR:	return "char";
 	case UCHAR:	return "unsigned char";
 	case SCHAR:	return "signed char";
@@ -2293,6 +2296,7 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 
 
 	switch (t) {
+	case BOOL:
 	case CHAR:
 	case UCHAR:
 	case SCHAR:

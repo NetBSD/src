@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.33 2004/06/20 22:20:16 jmc Exp $ */
+/* $NetBSD: decl.c,v 1.34 2004/09/12 08:58:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.33 2004/06/20 22:20:16 jmc Exp $");
+__RCSID("$NetBSD: decl.c,v 1.34 2004/09/12 08:58:52 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -102,6 +102,7 @@ initdecl(void)
 	typetab = xcalloc(NTSPEC, sizeof (type_t));
 	for (i = 0; i < NTSPEC; i++)
 		typetab[i].t_tspec = NOTSPEC;
+	typetab[BOOL].t_tspec = BOOL;
 	typetab[CHAR].t_tspec = CHAR;
 	typetab[SCHAR].t_tspec = SCHAR;
 	typetab[UCHAR].t_tspec = UCHAR;
@@ -400,6 +401,7 @@ tdeferr(type_t *td, tspec_t t)
 	case UCHAR:
 	case SCHAR:
 	case CHAR:
+	case BOOL:
 	case FUNC:
 	case ARRAY:
 	case PTR:
@@ -627,9 +629,9 @@ deftyp(void)
 	type_t	*tp;
 	scl_t	scl;
 
-	t = dcs->d_atyp;		/* CHAR, INT, FLOAT, DOUBLE, VOID */
-	s = dcs->d_smod;		/* SIGNED, UNSIGNED */
-	l = dcs->d_lmod;		/* SHORT, LONG, QUAD */
+	t = dcs->d_atyp;	/* BOOL, CHAR, INT, FLOAT, DOUBLE, VOID */
+	s = dcs->d_smod;	/* SIGNED, UNSIGNED */
+	l = dcs->d_lmod;	/* SHORT, LONG, QUAD */
 	tp = dcs->d_type;
 	scl = dcs->d_scl;
 
@@ -643,6 +645,8 @@ deftyp(void)
 
 	if (tp == NULL) {
 		switch (t) {
+		case BOOL:
+			break;
 		case NOTSPEC:
 			t = INT;
 			/* FALLTHROUGH */

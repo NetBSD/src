@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.7 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: lint.h,v 1.8 2004/09/12 08:58:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -52,6 +52,7 @@ typedef enum {
 	NOTSPEC = 0,
 	SIGNED,		/* keyword "signed", only used in the parser */
 	UNSIGN,		/* keyword "unsigned", only used in the parser */
+	BOOL,		/* _Bool */
 	CHAR,		/* char */
 	SCHAR,		/* signed char */
 	UCHAR,		/* unsigned char */
