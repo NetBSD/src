@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.18 2003/04/06 21:07:22 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.19 2003/04/08 03:49:46 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 13, 1997
+.Dd April 8, 2003
 .Dt BOOT 8 sparc
 .Os
 .Sh NAME
@@ -42,49 +42,45 @@
 system bootstrapping procedures
 .Sh SYNOPSIS
 .Nm boot
-.Op Fl n
-.Op Fl q
-.Op Fl d
+.Op Fl adqsv
 .Oo
 .Ar -- \*[Lt]boot string\*[Gt]
 .Oc
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery
+.Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed
 as described in
 .Xr fsck 8 .
 and unless this fails, the system will resume multi-user operations.
-.Pp
-.Sy Cold starts
+.Ss Cold starts
 The
 .Nx
 boot
 .Pa netbsd
 from partition a of the boot device,
 which must currently be an ``sd'' disk.
-.Pp
-The
-.Op Fl s
-flag to the boot loader will bring the system up in single-user mode.
-The
-.Op Fl a
-flag instructs the system to prompt for the location of the root filesystem
-and the primary swap partition.
-The
-.Op Fl d
-flag to the boot loader will bring the system up in debug mode.
+.Ss Boot program options
+.Bl -tag -width xxx
+.It Fl a
+Prompt for the root file system device, the system crash dump
+device, and the path to
+.Xr init 8 .
+.It Fl d
+Bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
-.Xr gdb 1 .
-The
-.Op Fl q
-flag to the boot loader would boot the system in
-quiet mode,
-.Op Fl v
-in verbose mode.
-Any extra flags or arguments, the after the -- separator,
+.Xr gdb 4 .
+.It Fl q
+Boot the system in quiet mode.
+.It Fl s
+Bring the system up in single-user mode.
+.It Fl v
+Boot the system in verbose mode.
+.El
+.Pp
+Any extra flags or arguments, or the
 .Ar \*[Lt]boot string\*[Gt]
-are passed to the boot PROM.
+after the -- separator are passed to the boot PROM.
 Other flags are currently ignored.
 .Pp
 The SPARC boot ROM comes in two flavours: an ``old-style'' ROM is used in
