@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.5 2002/11/28 07:02:20 junyoung Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.6 2003/01/27 14:46:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -119,7 +119,7 @@ struct vgascreen {
 	int active;
 	struct vga_scrmem *mem;
 	int encoding;
-	
+
 	int dispoffset;
 	int mindispoffset;
 	int maxdispoffset;
@@ -153,7 +153,7 @@ static struct videomode vga_console_modes[2] = {
 	/* 640x480 for 80x30 mode */
 	{
 		25175, 640, 664, 760, 800, 480, 491, 493, 525, 0
-	}	
+	}
 };
 
 static void vga_raster_init(struct vga_config *, bus_space_tag_t,
@@ -163,7 +163,7 @@ static void vga_raster_init_screen(struct vga_config *, struct vgascreen *,
 static void vga_raster_setup_font(struct vga_config *, struct vgascreen *);
 static void vga_setup_regs(struct videomode *, struct vga_moderegs *);
 static void vga_set_mode(struct vga_handle *, struct vga_moderegs *);
-static void vga_restore_screen(struct vgascreen *,	
+static void vga_restore_screen(struct vgascreen *,
 		const struct wsscreen_descr *, struct vga_scrmem *);
 static void vga_raster_cursor_init(struct vgascreen *, int);
 static void _vga_raster_putchar(void *, int, int, u_int, long,
@@ -269,12 +269,12 @@ const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_25lscreen,
 	&vga_30lscreen,
 	&vga_40lscreen,
-	&vga_50lscreen,	
+	&vga_50lscreen,
 }, *_vga_scrlist_mono[] = {
 	&vga_25lscreen_mono,
 	&vga_30lscreen_mono,
 	&vga_40lscreen_mono,
-	&vga_50lscreen_mono,	
+	&vga_50lscreen_mono,
 };
 
 const struct wsscreen_list vga_screenlist = {
@@ -337,7 +337,7 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 #else
 	scr = vga_console_vc.currenttype;
 #endif
-	vga_raster_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, 
+	vga_raster_init_screen(&vga_console_vc, &vga_console_screen, scr, 1,
 	    &defattr);
 
 	vga_console_screen.active = 1;
@@ -360,26 +360,26 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	u_int8_t mor;
 	struct vga_raster_font *vf;
 
-        vh->vh_iot = iot;
-        vh->vh_memt = memt;
+	vh->vh_iot = iot;
+	vh->vh_memt = memt;
 
-        if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
-                panic("vga_raster_init: couldn't map vga io");
+	if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
+		panic("vga_raster_init: couldn't map vga io");
 
 	/* read "misc output register" */
 	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, 0xc);
 	vh->vh_mono = !(mor & 1);
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
-		&vh->vh_ioh_6845))
-                panic("vga_raster_init: couldn't map 6845 io");
+	    &vh->vh_ioh_6845))
+		panic("vga_raster_init: couldn't map 6845 io");
 
-        if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
-                panic("vga_raster_init: couldn't map memory");
+	if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
+		panic("vga_raster_init: couldn't map memory");
 
-        if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh, 0, 0x10000,
-		&vh->vh_memh))
-                panic("vga_raster_init: mem subrange failed");
+	if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh, 0, 0x10000,
+	    &vh->vh_memh))
+		panic("vga_raster_init: mem subrange failed");
 
 	/* should only reserve the space (no need to map - save KVM) */
 	vc->vc_biostag = memt;
@@ -409,7 +409,7 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	int cpos;
 	int res;
 	struct vga_handle *vh;
-	
+
 	scr->cfg = vc;
 	scr->hdl = &vc->hdl;
 	scr->type = type;
@@ -442,21 +442,21 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 
 		scr->mem = boot_scrmem;
 		scr->active = 1;
-		
+
 		/* Save the current screen to memory. XXXBJY assume 80x25 */
 		for (i = 0; i < 80 * 25; i++) {
-			scr->mem[i].ch = bus_space_read_1(vh->vh_memt, 
+			scr->mem[i].ch = bus_space_read_1(vh->vh_memt,
 			    vh->vh_allmemh, 0x18000 + i * 2);
-			scr->mem[i].attr = bus_space_read_1(vh->vh_memt, 
-			    vh->vh_allmemh, 0x18000 + i * 2 + 1);			 
+			scr->mem[i].attr = bus_space_read_1(vh->vh_memt,
+			    vh->vh_allmemh, 0x18000 + i * 2 + 1);
 			scr->mem[i].enc = WSDISPLAY_FONTENC_IBM;
 		}
 
 		vga_raster_setscreentype(vc, type);
 
-		/* Clear the entire screen. */		
+		/* Clear the entire screen. */
 		vga_gdc_write(vh, mode, 0x02);
-		bus_space_set_region_4(vh->vh_memt, vh->vh_allmemh, 0, 0, 
+		bus_space_set_region_4(vh->vh_memt, vh->vh_allmemh, 0, 0,
 		    0x4000);
 
 		vga_restore_screen(scr, type, scr->mem);
@@ -508,8 +508,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 		vc = &vga_console_vc;
 		vga_console_attached = 1;
 	} else {
-		vc = malloc(sizeof(struct vga_config), M_DEVBUF, 
-		    M_WAITOK);
+		vc = malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
 		vga_raster_init(vc, iot, memt);
 	}
 
@@ -524,7 +523,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	aa.accessops = &vga_raster_accessops;
 	aa.accesscookie = vc;
 
-        config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -587,8 +586,8 @@ vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GVIDEO:
 #if 1
-		*(int *)data = (vga_get_video(vc) ? WSDISPLAYIO_VIDEO_ON :
-				WSDISPLAYIO_VIDEO_OFF);
+		*(int *)data = (vga_get_video(vc) ?
+		    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF);
 		return 0;
 #endif
 
@@ -616,7 +615,6 @@ vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EPASSTHROUGH);
 
 	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
-
 }
 
 static paddr_t
@@ -653,7 +651,7 @@ vga_raster_alloc_screen(void *v, const struct wsscreen_descr *type,
 		vc->active = scr;
 		vc->currenttype = type;
 	} else {
-		scr->mem = malloc(sizeof(struct vga_scrmem) * 
+		scr->mem = malloc(sizeof(struct vga_scrmem) *
 		    type->ncols * type->nrows, M_DEVBUF, M_WAITOK);
 		vga_raster_eraserows(scr, 0, type->nrows, *defattrp);
 	}
@@ -752,7 +750,7 @@ vga_switch_screen(struct vga_config *vc)
 		vga_6845_write(vh, startadrl, scr->dispoffset);
 	}
 
-	/* Clear the entire screen. */		
+	/* Clear the entire screen. */
 	vga_gdc_write(vh, mode, 0x02);
 	bus_space_set_region_4(vh->vh_memt, vh->vh_allmemh, 0, 0, 0x2000);
 
@@ -789,8 +787,8 @@ vga_raster_setup_font(struct vga_config *vc, struct vgascreen *scr)
 			return;
 		}
 	}
-	
-	cookie = wsfont_find(0, 0, scr->type->fontheight, 0,
+
+	cookie = wsfont_find(NULL, 0, scr->type->fontheight, 0,
 	    WSDISPLAY_FONTORDER_L2R, 0);
 	if (cookie == -1)
 		return;
@@ -817,7 +815,7 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
 		0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
 	};
-	
+
 	/*
 	 * Compute hsync and vsync polarity.
 	 */
@@ -840,7 +838,7 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 		else
 			regs->miscout = 0x23;
 	}
-	
+
 	/*
 	 * Time sequencer
 	 */
@@ -858,7 +856,7 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 		regs->ts[4] = 0x06;
 	else
 		regs->ts[4] = 0x0e;
-		
+
 	/*
 	 * CRTC controller
 	 */
@@ -868,7 +866,7 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 	regs->crtc[3] = (((mode->hsync_end >> 3) - 1) & 0x1f) | 0x80;
 	regs->crtc[4] = mode->hsync_start >> 3;
 	regs->crtc[5] = ((((mode->hsync_end >> 3) - 1) & 0x20) << 2)
-			    | (((mode->hsync_end >> 3)) & 0x1f);
+	    | (((mode->hsync_end >> 3)) & 0x1f);
 	regs->crtc[6] = (mode->vtotal - 2) & 0xff;
 	regs->crtc[7] = (((mode->vtotal - 2) & 0x100) >> 8)
 	    | (((mode->vdisplay - 1) & 0x100) >> 7)
@@ -900,7 +898,7 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 	else
 		regs->crtc[23] = 0xc3;
 	regs->crtc[24] = 0xff;
-			
+
 	/*
 	 * Graphics display controller
 	 */
@@ -940,12 +938,12 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 
 	/* Disable display. */
 	vga_ts_write(vh, mode, vga_ts_read(vh, mode) | 0x20);
-	
+
 	/* Write misc output register. */
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_MISC_DATAW,
 	    regs->miscout);
 
-	/* Set synchronous reset. */			  
+	/* Set synchronous reset. */
 	vga_ts_write(vh, syncreset, 0x01);
 	vga_ts_write(vh, mode, regs->ts[1] | 0x20);
 	for (i = 2; i < VGA_TS_NREGS; i++)
@@ -956,19 +954,19 @@ vga_set_mode(struct vga_handle *vh, struct vga_moderegs *regs)
 	/* Unprotect CRTC registers 0-7. */
 	_vga_crtc_write(vh, 17, _vga_crtc_read(vh, 17) & 0x7f);
 	/* Write CRTC registers. */
-	for (i = 0; i < VGA_CRTC_NREGS; i++) 
+	for (i = 0; i < VGA_CRTC_NREGS; i++)
 		_vga_crtc_write(vh, i, regs->crtc[i]);
-	
-	/* Write graphics display registers. */		
+
+	/* Write graphics display registers. */
 	for (i = 0; i < VGA_GDC_NREGS; i++)
 		_vga_gdc_write(vh, i, regs->gdc[i]);
-		
-	/* Write attribute controller registers. */	
-	for (i = 0; i < VGA_ATC_NREGS; i++) 
+
+	/* Write attribute controller registers. */
+	for (i = 0; i < VGA_ATC_NREGS; i++)
 		_vga_attr_write(vh, i, regs->atc[i]);
 
 	/* Enable display. */
-	vga_ts_write(vh, mode, vga_ts_read(vh, mode) & 0xdf);			
+	vga_ts_write(vh, mode, vga_ts_read(vh, mode) & 0xdf);
 }
 
 void
@@ -986,11 +984,11 @@ vga_raster_cursor_init(struct vgascreen *scr, int existing)
 		 */
 		memt = vh->vh_memt;
 		memh = vh->vh_memh;
-		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) + 
+		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) +
 		    scr->dispoffset / 8;
 
 		scr->cursortmp = scr->mem[off];
-		vga_raster_putchar(scr, scr->cursorrow, scr->cursorcol, 
+		vga_raster_putchar(scr, scr->cursorrow, scr->cursorcol,
 		    scr->cursortmp.ch, scr->cursortmp.attr ^ 0x77);
 	} else {
 		scr->cursortmp.ch = 0;
@@ -998,7 +996,7 @@ vga_raster_cursor_init(struct vgascreen *scr, int existing)
 		scr->cursortmp.second = 0;
 		scr->cursortmp.enc = WSDISPLAY_FONTENC_IBM;
 	}
-	
+
 	scr->cursoron = 1;
 }
 
@@ -1013,19 +1011,19 @@ vga_raster_cursor(void *id, int on, int row, int col)
 		off = scr->cursorrow * scr->type->ncols + scr->cursorcol;
 		if (scr->active) {
 			tmp = scr->encoding;
-			scr->encoding = scr->cursortmp.enc;			
+			scr->encoding = scr->cursortmp.enc;
 			if (scr->cursortmp.second)
-				vga_raster_putchar(id, scr->cursorrow, 
+				vga_raster_putchar(id, scr->cursorrow,
 				    scr->cursorcol - 1, scr->cursortmp.ch,
 				    scr->cursortmp.attr);
 			else
-				vga_raster_putchar(id, scr->cursorrow, 
+				vga_raster_putchar(id, scr->cursorrow,
 				    scr->cursorcol, scr->cursortmp.ch,
-				    scr->cursortmp.attr);			
+				    scr->cursortmp.attr);
 			scr->encoding = tmp;
-		}					   
+		}
 	}
-		
+
 	scr->cursorrow = row;
 	scr->cursorcol = col;
 
@@ -1038,13 +1036,13 @@ vga_raster_cursor(void *id, int on, int row, int col)
 		tmp = scr->encoding;
 		scr->encoding = scr->cursortmp.enc;
 		if (scr->cursortmp.second)
-			vga_raster_putchar(id, scr->cursorrow, 
+			vga_raster_putchar(id, scr->cursorrow,
 			    scr->cursorcol - 1, scr->cursortmp.ch,
 			    scr->cursortmp.attr ^ 0x77);
 		else
-			vga_raster_putchar(id, scr->cursorrow, 
+			vga_raster_putchar(id, scr->cursorrow,
 			    scr->cursorcol, scr->cursortmp.ch,
-			    scr->cursortmp.attr ^ 0x77);		
+			    scr->cursortmp.attr ^ 0x77);
 		scr->encoding = tmp;
 	}
 }
@@ -1053,13 +1051,13 @@ static int
 vga_raster_mapchar(void *id, int uni, u_int *index)
 {
 	struct vgascreen *scr = id;
-	
+
 	if (scr->encoding == WSDISPLAY_FONTENC_IBM)
 		return pcdisplay_mapchar(id, uni, index);
 	else {
 		*index = uni;
 		return 5;
-	}	
+	}
 }
 
 void
@@ -1069,9 +1067,9 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 	int off;
 	struct vga_raster_font *fs;
 	u_int tmp_ch;
-	
+
 	off = row * scr->type->ncols + col;
-	
+
 	LIST_FOREACH(fs, &scr->fontset, next) {
 		if ((scr->encoding == fs->font->encoding) &&
 		    (c >= fs->font->firstchar) &&
@@ -1079,7 +1077,7 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 		    (scr->type->fontheight == fs->font->fontheight)) {
 			if (scr->active) {
 				tmp_ch = c - fs->font->firstchar;
-				_vga_raster_putchar(scr, row, col, tmp_ch, 
+				_vga_raster_putchar(scr, row, col, tmp_ch,
 				    attr, fs);
 			}
 
@@ -1087,7 +1085,7 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 			scr->mem[off].attr = attr;
 			scr->mem[off].second = 0;
 			scr->mem[off].enc = fs->font->encoding;
-			
+
 			if (fs->font->stride == 2) {
 				scr->mem[off + 1].ch = c;
 				scr->mem[off + 1].attr = attr;
@@ -1095,17 +1093,19 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 				scr->mem[off + 1].enc = fs->font->encoding;
 			}
 
-			return;	
+			return;
 		}
 	}
 
 	/*
-	 * No match found. 
+	 * No match found.
 	 */
 	if (scr->active)
-		/* Put a single width space character no matter what the 
-		   actual width of the character is. */
-		_vga_raster_putchar(scr, row, col, 0x20, attr, 
+		/*
+		 * Put a single width space character no matter what the
+		 * actual width of the character is.
+		 */
+		_vga_raster_putchar(scr, row, col, 0x20, attr,
 		    &vga_console_fontset_ascii);
 	scr->mem[off].ch = c;
 	scr->mem[off].attr = attr;
@@ -1135,7 +1135,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 	fgcolor = fgansitopc[attr & 0x0f];
 #else
 	bgcolor = ((attr >> 4) & 0x0f);
-	fgcolor = attr & 0x0f;	
+	fgcolor = attr & 0x0f;
 #endif
 
 	if (fs->font->stride == 1) {
@@ -1163,7 +1163,7 @@ _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
 		vga_gdc_write(vh, mode, 0x02);
 		for (i = 0; i < fheight; i++) {
 			bus_space_write_1(memt, memh, rasoff, bgcolor);
-			bus_space_write_1(memt, memh, rasoff + 1, bgcolor);			
+			bus_space_write_1(memt, memh, rasoff + 1, bgcolor);
 			rasoff += scr->type->ncols;
 		}
 
@@ -1214,7 +1214,7 @@ vga_raster_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 	if (scr->active) {
 		for (i = 0; i < fheight; i++) {
 			bus_space_copy_region_1(memt, memh,
-			    rassrcoff + i * scr->type->ncols, memh, 
+			    rassrcoff + i * scr->type->ncols, memh,
 			    rasdstoff + i * scr->type->ncols, ncols);
 		}
 	}
@@ -1227,7 +1227,7 @@ vga_raster_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
 	int i;
 
 	if (scr->active == 0)
-		return; 
+		return;
 
 	for (i = startcol; i < startcol + ncols; i++)
 		vga_raster_putchar(id, row, i, ' ', fillattr);
@@ -1244,10 +1244,10 @@ vga_raster_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	bus_size_t srcoff, dstoff;
 	bus_size_t rassrcoff, rasdstoff;
 	int fheight;
-	
+
 	ncols = scr->type->ncols;
 	fheight = scr->type->fontheight;
-	
+
 	srcoff = srcrow * ncols;
 	dstoff = dstrow * ncols;
 	rassrcoff = srcoff * fheight;
@@ -1268,7 +1268,7 @@ vga_raster_copyrows(void *id, int srcrow, int dstrow, int nrows)
 			    <= scr->maxdispoffset)
 				scr->dispoffset += srcrow * ncols * fheight;
 			else {
-				bus_space_copy_region_1(memt, memh, 
+				bus_space_copy_region_1(memt, memh,
 				    scr->dispoffset + rassrcoff,
 				    memh, scr->mindispoffset,
 				    nrows * ncols * fheight);
@@ -1276,7 +1276,7 @@ vga_raster_copyrows(void *id, int srcrow, int dstrow, int nrows)
 			}
 			vga_6845_write(vh, startadrh, scr->dispoffset >> 8);
 			vga_6845_write(vh, startadrl, scr->dispoffset);
-			
+
 			if (cursoron)
 				/* Enable cursor. */
 				vga_raster_cursor(scr, 1, scr->cursorrow,
@@ -1286,7 +1286,7 @@ vga_raster_copyrows(void *id, int srcrow, int dstrow, int nrows)
 			    scr->dispoffset + rassrcoff, memh,
 			    scr->dispoffset + rasdstoff,
 			    nrows * ncols * fheight);
-	} 
+	}
 	memcpy(&scr->mem[dstoff], &scr->mem[srcoff],
 	    nrows * ncols * sizeof(struct vga_scrmem));
 }
@@ -1302,7 +1302,7 @@ vga_raster_eraserows(void *id, int startrow, int nrows, long fillattr)
 	bus_size_t rasoff, rascount;
 	int i;
 
-	off = startrow * scr->type->ncols; 
+	off = startrow * scr->type->ncols;
 	count = nrows * scr->type->ncols;
 	rasoff = off * scr->type->fontheight;
 	rascount = count * scr->type->fontheight;
@@ -1310,15 +1310,15 @@ vga_raster_eraserows(void *id, int startrow, int nrows, long fillattr)
 	if (scr->active) {
 		/* Paint background. */
 		vga_gdc_write(vh, mode, 0x02);
-		if (scr->type->ncols % 4 == 0) 
+		if (scr->type->ncols % 4 == 0)
 			/* We can speed up I/O */
 			for (i = rasoff; i < rasoff + rascount; i += 4)
-				bus_space_write_4(memt, memh, 
+				bus_space_write_4(memt, memh,
 				    scr->dispoffset + i, fillattr >> 4);
-		else 
+		else
 			for (i = rasoff; i < rasoff + rascount; i += 2)
-				bus_space_write_2(memt, memh, 
-				    scr->dispoffset + i, fillattr >> 4);					  
+				bus_space_write_2(memt, memh,
+				    scr->dispoffset + i, fillattr >> 4);
 	}
 	for (i = 0; i < count; i++) {
 		scr->mem[off + i].ch = ' ';
@@ -1366,7 +1366,7 @@ vga_restore_screen(struct vgascreen *scr,
 {
 	int i, j, off, tmp;
 
-	tmp = scr->encoding;		
+	tmp = scr->encoding;
 	for (i = 0; i < type->nrows; i++) {
 		for (j = 0; j < type->ncols; j++) {
 			off = i * type->ncols + j;
@@ -1386,7 +1386,7 @@ vga_raster_setscreentype(struct vga_config *vc,
 {
 	struct vga_handle *vh = &vc->hdl;
 	struct vga_moderegs moderegs;
-	
+
 	vga_setup_regs((struct videomode *)type->modecookie, &moderegs);
 	vga_set_mode(vh, &moderegs);
 }
