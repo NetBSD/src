@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: tcpdump2netbsd,v 1.1 2001/06/25 19:36:03 itojun Exp $
+#	$NetBSD: tcpdump2netbsd,v 1.2 2001/06/25 19:36:47 itojun Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# tcpdump2netbsd:  convert a tcpdump source tree into netbsd openssh tree
+# tcpdump2netbsd:  convert a tcpdump source tree into netbsd tcpdump tree
 
 ### Remove unnecessary subdirs
 rm -rf missing .cvsignore .devel lbl
