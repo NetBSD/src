@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.35 2003/08/07 16:31:11 agc Exp $ */
+/* $NetBSD: pckbd.c,v 1.36 2003/09/13 12:31:35 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.35 2003/08/07 16:31:11 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.36 2003/09/13 12:31:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,11 +537,12 @@ pckbd_input(vsc, data)
 	int data;
 {
 	struct pckbd_softc *sc = vsc;
-	int type, key;
+	int key;
+	u_int type;
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->rawkbd) {
-		char d = data;
+		u_char d = data;
 		wskbd_rawinput(sc->sc_wskbddev, &d, 1);
 		return;
 	}
@@ -565,7 +566,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		*(int *)data = WSKBD_TYPE_PC_XT;
 		return 0;
 	    case WSKBDIO_SETLEDS: {
-		char cmd[2];
+		u_char cmd[2];
 		int res;
 		cmd[0] = KBC_MODEIND;
 		cmd[1] = pckbd_led_encode(*(int *)data);
@@ -623,7 +624,7 @@ pckbd_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	int kbcslot;
 {
-	char cmd[1];
+	u_char cmd[1];
 	int res;
 
 	res = pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
