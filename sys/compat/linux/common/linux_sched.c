@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.13 2004/09/08 19:41:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.12 2003/01/18 21:21:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.13 2004/09/08 19:41:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -76,6 +76,17 @@ linux_sys_clone(l, v, retval)
 	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
 	 */
 	if (SCARG(uap, flags) & (LINUX_CLONE_PID|LINUX_CLONE_PTRACE))
+		return (EINVAL);
+
+	/*
+	 * Thread group implies shared signals. Shared signals
+	 * imply shared VM. This matches what Linux kernel does.
+	 */
+	if (SCARG(uap, flags) & LINUX_CLONE_THREAD
+	    && (SCARG(uap, flags) & LINUX_CLONE_SIGHAND) == 0)
+		return (EINVAL);
+	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND
+	    && (SCARG(uap, flags) & LINUX_CLONE_VM) == 0)
 		return (EINVAL);
 
 	flags = 0;
