@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.10 2001/09/02 00:13:08 reinoud Exp $	*/
+/*	$NetBSD: cmds.c,v 1.11 2002/07/06 22:01:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.10 2001/09/02 00:13:08 reinoud Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.11 2002/07/06 22:01:40 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,9 +167,7 @@ daydiff(char *hostname)
  * measurement.
  */
 void
-clockdiff(argc, argv)
-	int argc;
-	char *argv[];
+clockdiff(int argc, char *argv[])
 {
 	int measure_status;
 	extern int measure(u_long, u_long, char *, struct sockaddr_in*, int);
@@ -479,7 +477,7 @@ tracing(int argc, char *argv[])
 }
 
 int
-priv_resources()
+priv_resources(void)
 {
 	int port;
 	struct sockaddr_in sin;
