@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 1999/11/28 11:10:47 scottr Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 1999/12/12 08:18:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -203,7 +203,7 @@ cachectl1(req, addr, len, p)
 				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = addr & ~PGOFSET;
+				addr = m68k_trunc_page(addr);
 				inc = NBPG;
 			}
 		}
@@ -214,7 +214,7 @@ cachectl1(req, addr, len, p)
 			 * entire cache (XXX is this a rational thing to do?)
 			 */
 			if (!doall &&
-			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+			    (pa == 0 || m68k_page_offset(addr) == 0)) {
 				if (pmap_extract(p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;
