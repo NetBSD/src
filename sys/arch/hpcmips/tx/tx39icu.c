@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.9 2000/10/04 13:53:55 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.10 2000/10/22 10:42:32 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ tx39icu_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 2; /* 1st attach group of txsim */
+	return ATTACH_FIRST;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39var.h,v 1.7 2000/10/04 13:53:56 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.8 2000/10/22 10:42:33 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,43 +36,101 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+enum tx_chipset {
+	__TX391X,
+	__TX392X,
+};
+
+/* attach priority of TX-internal modules. */
+enum tx_attach_order {
+	ATTACH_FIRST	= 3,
+	ATTACH_NORMAL	= 2,
+	ATTACH_LAST	= 1,
+};
+
+/* unified I/O manager */
+enum txio_group {
+	MFIO = 0,
+	IO,
+	BETTY,
+	SNOWBALL,
+	PLUM,
+	NTXIO_GROUP
+};
+
+struct txio_ops;
+
 struct tx_chipset_tag {
+	enum tx_chipset tc_chipset;
 	void *tc_intrt;  /* interrupt tag */
 	void *tc_powert; /* power tag */
 	void *tc_clockt; /* clock/timer tag */
 	void *tc_soundt; /* sound tag */
-	void *tc_iomant; /* io manager tag */
+	struct txio_ops *tc_ioops[NTXIO_GROUP];
 	void *tc_videot; /* video chip tag */
 };
 
-typedef struct tx_chipset_tag* tx_chipset_tag_t;
+typedef struct tx_chipset_tag* tx_chipset_tag_t __attribute__((__unused__));
 typedef u_int32_t txreg_t; 
+extern struct tx_chipset_tag tx_chipset;
+#define tx_conf_get_tag() (&tx_chipset)
+
+#if defined TX391X && defined TX392X
+#define IS_TX391X(t)	((t)->tc_chipset == __TX391X)
+#define IS_TX392X(t)	((t)->tc_chipset == __TX392X)
+#elif defined TX391X
+#define IS_TX391X(t)	(1)
+#define IS_TX392X(t)	(0)
+#elif defined TX392X
+#define IS_TX391X(t)	(0)
+#define IS_TX392X(t)	(1)
+#endif
 
 void	tx_conf_register_intr(tx_chipset_tag_t, void *);
 void	tx_conf_register_power(tx_chipset_tag_t, void *);
 void	tx_conf_register_clock(tx_chipset_tag_t, void *);
 void	tx_conf_register_sound(tx_chipset_tag_t, void *);
-void	tx_conf_register_ioman(tx_chipset_tag_t, void *);
+void	tx_conf_register_ioman(tx_chipset_tag_t, struct txio_ops *);
 void	tx_conf_register_video(tx_chipset_tag_t, void *);
+
+/* Unified IO manager */
+struct txio_ops {
+	void *_v; /* context */
+	enum txio_group _group;
+	int (*_in)(void *, int);
+	void (*_out)(void *, int, int);
+	void (*_intr_map)(void *, int, int *, int *);
+	void *(*_intr_establish)(void *, int, int (*)(void *), void *);
+	void (*_intr_disestablish)(void *, void *);
+	void (*_update)(void *);	/* debug */
+	void (*_dump)(void *);		/* debug */
+};
+#define tx_ioman_T(g, ops, args...)					\
+({									\
+	struct txio_ops *__o = tx_chipset.tc_ioops[g];			\
+	KASSERT(__o);							\
+	__o->_##ops(__o->_v , ##args);					\
+})
+/* access ops */
+#define tx_ioman_in(g, args...)		tx_ioman_T(g, in, args)
+#define tx_ioman_out(g, args...)	tx_ioman_T(g, out, args)
+#define tx_ioman_intr_map(g, args...)	tx_ioman_T(g, intr_map, args)
+#define tx_ioman_intr_establish(g, args...)				\
+					tx_ioman_T(g, intr_establish, args)
+#define tx_ioman_intr_disestablish(g, args...)				\
+					tx_ioman_T(g, intr_disestablish, args)
+#define tx_ioman_update(g)		tx_ioman_T(g, update)
+#define tx_ioman_dump(g)		tx_ioman_T(g, dump)
 
 /*
  *	TX39 Internal Function Register access
  */
 #define TX39_SYSADDR_CONFIG_REG_KSEG1	0xb0c00000
-
-#ifdef TX39_PREFER_FUNCTION
-tx_chipset_tag_t tx_conf_get_tag(void);
-u_int32_t	 tx_conf_read(tx_chipset_tag_t, int);
-void		 tx_conf_write(tx_chipset_tag_t, int, txreg_t);
-#else /* TX39_PREFER_FUNCTION */
-extern struct tx_chipset_tag tx_chipset;
-#define tx_conf_read(t, reg) ((void)(t),				\
+#define tx_conf_read(t, reg) (						\
 	(*((volatile txreg_t *)(TX39_SYSADDR_CONFIG_REG_KSEG1 + (reg)))))
-#define tx_conf_write(t, reg, val) ((void)(t),				\
+#define tx_conf_write(t, reg, val) (					\
 	(*((volatile txreg_t *)(TX39_SYSADDR_CONFIG_REG_KSEG1 + (reg))) \
 	= (val)))
-#define tx_conf_get_tag() (&tx_chipset)
-#endif /* TX39_PREFER_FUNCTION */
 
 /*
  *	txsim attach arguments. (txsim ... TX System Internal Module)
@@ -144,7 +202,7 @@ extern u_int32_t tx39debugflag;
 	}								\
 	printf("\n");							\
 })
-#define bitdisp(a) __bitdisp(a, 0, 0, 0, 1)
+#define bitdisp(a) __bitdisp((a), 0, 0, 0, 1)
 #else /* TX39_DEBUG */
 #define __bitdisp(a, s, e, m, c)
 #define bitdisp(a)

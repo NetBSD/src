@@ -1,60 +1,57 @@
-/*	$NetBSD: txiomanvar.h,v 1.1 2000/01/16 21:47:00 uch Exp $ */
+/*	$NetBSD: txiomanvar.h,v 1.2 2000/10/22 10:42:33 uch Exp $ */
 
-/*
- * Copyright (c) 2000, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct txioman_attach_args {
-	char *tia_busname;
-	tx_chipset_tag_t tia_tc;
+struct txio_attach_args {
+	tx_chipset_tag_t taa_tc;	
+	enum txio_group taa_group;
+	int taa_edge;
+#define TXIO_POSEDGE	0x1
+#define TXIO_NEGEDGE	0x2
+#define TXIO_BOTHEDGE	0x3
+	int taa_type;
+	int taa_port;
+	int taa_id;
+	int taa_initial;
 };
 
-typedef struct txioman_tag *txioman_tag_t;
-
-struct txioman_tag {
-	void	*ti_v;
-
-	void	(*ti_led)	__P((txioman_tag_t, int, int));
-	void	(*ti_backlight)	__P((txioman_tag_t, int));
-
-	void	(*ti_uart_init) __P((txioman_tag_t));
-	void	(*ti_uarta_init) __P((txioman_tag_t, void*));
-#if not_required_yet
-	void	(*ti_uartb_init) __P((txioman_tag_t, void*));
-#endif
-};
-
-#define	txioman_led(t, type, onoff) \
-	(*((txioman_tag_t)(t->tc_iomant))->ti_led) \
-	(((txioman_tag_t)(t->tc_iomant))->ti_v, (type), (onoff))
-#define	txioman_backlight(t, onoff) \
-	(*((txioman_tag_t)(t->tc_iomant))->ti_backlight) \
-	(((txioman_tag_t)(t->tc_iomant))->ti_v, (onoff))
-#define	txioman_uart_init(t) \
-	(*((txioman_tag_t)(t->tc_iomant))->ti_uart_init) \
-	(((txioman_tag_t)(t->tc_iomant))->ti_v)
-#define	txioman_uarta_init(t, c) \
-	(*((txioman_tag_t)(t->tc_iomant))->ti_uarta_init) \
-	(((txioman_tag_t)(t->tc_iomant))->ti_v, (c))
+#define cf_type		cf_loc[TXIOMANIFCF_EVTYPE]
+#define cf_group	cf_loc[TXIOMANIFCF_GROUP]
+#define cf_port		cf_loc[TXIOMANIFCF_PORT]
+#define cf_id		cf_loc[TXIOMANIFCF_ID]
+#define cf_edge		cf_loc[TXIOMANIFCF_EDGE]
+#define cf_initial	cf_loc[TXIOMANIFCF_INITIAL]

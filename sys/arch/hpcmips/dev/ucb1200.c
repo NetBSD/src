@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.4 2000/03/12 15:36:11 uch Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.5 2000/10/22 10:42:31 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -47,7 +47,7 @@
 #include <hpcmips/dev/ucb1200reg.h>
 
 #ifdef UCB1200DEBUG
-int	ucb1200debug = 0;
+int	ucb1200debug = 1;
 #define	DPRINTF(arg) if (ucb1200debug) printf arg;
 #define	DPRINTFN(n, arg) if (ucb1200debug > (n)) printf arg;
 #else
@@ -56,7 +56,7 @@ int	ucb1200debug = 0;
 #endif
 
 struct ucbchild_state {
-	int (*cs_busy) __P((void*));
+	int (*cs_busy)(void *);
 	void *cs_arg;
 };
 
@@ -72,14 +72,14 @@ struct ucb1200_softc {
 	struct ucbchild_state sc_child[UCB1200_MODULE_MAX];
 };
 
-int	ucb1200_match	__P((struct device*, struct cfdata*, void*));
-void	ucb1200_attach	__P((struct device*, struct device*, void*));
-int	ucb1200_print	__P((void*, const char*));
-int	ucb1200_search	__P((struct device*, struct cfdata*, void*));
-int	ucb1200_check_id __P((u_int16_t, int));
+int	ucb1200_match(struct device *, struct cfdata *, void *);
+void	ucb1200_attach(struct device *, struct device *, void *);
+int	ucb1200_print(void *, const char *);
+int	ucb1200_search(struct device *, struct cfdata *, void *);
+int	ucb1200_check_id(u_int16_t, int);
 
 #ifdef UCB1200DEBUG
-void	ucb1200_dump	__P((struct ucb1200_softc*));
+void	ucb1200_dump(struct ucb1200_softc *);
 #endif
 
 struct cfattach ucb_ca = {
@@ -98,10 +98,7 @@ const struct ucb_id {
 };
 
 int
-ucb1200_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ucb1200_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct txsib_attach_args *sa = aux;
 	u_int16_t reg;
@@ -114,10 +111,7 @@ ucb1200_match(parent, cf, aux)
 }
 
 void
-ucb1200_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ucb1200_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsib_attach_args *sa = aux;
 	struct ucb1200_softc *sc = (void*)self;
@@ -144,10 +138,7 @@ ucb1200_attach(parent, self, aux)
 }
 
 int
-ucb1200_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ucb1200_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ucb1200_softc *sc = (void*)parent;
 	struct ucb1200_attach_args ucba;
@@ -165,17 +156,13 @@ ucb1200_search(parent, cf, aux)
 }
 
 int
-ucb1200_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+ucb1200_print(void *aux, const char *pnp)
 {
 	return pnp ? QUIET : UNCONF;
 }
 
 int
-ucb1200_check_id(idreg, print)
-	u_int16_t idreg;
-	int print;
+ucb1200_check_id(u_int16_t idreg, int print)
 {
 	int i;
 
@@ -193,11 +180,8 @@ ucb1200_check_id(idreg, print)
 }
 
 void
-ucb1200_state_install(dev, sfun, sarg, sid)
-	struct device *dev;
-	int (*sfun) __P((void*));
-	void *sarg;
-	int sid;
+ucb1200_state_install(struct device *dev, int (*sfun)(void *), void *sarg,
+		      int sid)
 {
 	struct ucb1200_softc *sc = (void*)dev;
 	
@@ -224,8 +208,7 @@ ucb1200_state_idle(dev)
 
 #ifdef UCB1200DEBUG
 void
-ucb1200_dump(sc)
-	struct ucb1200_softc *sc;
+ucb1200_dump(struct ucb1200_softc *sc)
 {
         const char *regname[] = {
                 "IO_DATA        ",
@@ -245,9 +228,11 @@ ucb1200_dump(sc)
                 "RESERVED       ",
                 "NULL           "
         };
-	tx_chipset_tag_t tc = sc->sc_tc;
+	tx_chipset_tag_t tc;
 	u_int16_t reg;
 	int i;
+
+	tc = sc->sc_tc;
 
 	printf("\n\t[UCB1200 register]\n");
 	for (i = 0; i < 16; i++) {

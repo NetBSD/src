@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39uart.c,v 1.4 2000/10/22 10:42:33 uch Exp $ */
+/*	$NetBSD: txioman_out.c,v 1.1 2000/10/22 10:42:33 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opt_tx39_debug.h"
-#include "opt_tx39uartdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,74 +44,63 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <machine/config_hook.h>
 #include <hpcmips/tx/tx39var.h>
-#include <hpcmips/tx/tx39uartvar.h>
+#include <hpcmips/tx/txiomanvar.h>
 
-#include "locators.h"
+int	txout_match(struct device *, struct cfdata *, void *);
+void	txout_attach(struct device *, struct device *, void *);
+int	txout_hook(void *, int, long, void *);
 
-int	tx39uart_match(struct device *, struct cfdata *, void *);
-void	tx39uart_attach(struct device *, struct device *, void *);
-int	tx39uart_print(void *, const char *);
-int	tx39uart_search(struct device *, struct cfdata *, void *);
-
-struct tx39uart_softc {
-	struct	device sc_dev;
-	tx_chipset_tag_t sc_tc;
-	int sc_enabled;
+struct txout_softc {
+	struct device sc_dev;
+	struct txio_ops *sc_ops;
+	int sc_port;
 };
 
-struct cfattach tx39uart_ca = {
-	sizeof(struct tx39uart_softc), tx39uart_match, tx39uart_attach
+struct cfattach txout_ca = {
+	sizeof(struct txout_softc), txout_match, txout_attach
 };
 
 int
-tx39uart_match(struct device *parent, struct cfdata *cf, void *aux)
+txout_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ATTACH_LAST;
+	return 1;
 }
 
 void
-tx39uart_attach(struct device *parent, struct device *self, void *aux)
+txout_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct txsim_attach_args *ta = aux;
-	struct tx39uart_softc *sc = (void *)self;
-	tx_chipset_tag_t tc;
+	struct txio_attach_args *taa = aux;
+	struct txout_softc *sc = (void *)self;
+	struct txio_ops *ops;
 
+	ops = sc->sc_ops = taa->taa_tc->tc_ioops[taa->taa_group];
+	if (ops == 0) {
+		printf(": I/O module not found.\n");
+		return;
+	}
 	printf("\n");
-	sc->sc_tc = tc = ta->ta_tc;
 
-	config_search(tx39uart_search, self, tx39uart_print);
+	sc->sc_port = taa->taa_port;
+
+	if (taa->taa_initial != -1) {
+		ops->_out(ops->_v, sc->sc_port, taa->taa_initial);
+	}
+
+	config_hook(taa->taa_type, taa->taa_id, CONFIG_HOOK_SHARE,
+		    txout_hook, sc);
 }
 
 int
-tx39uart_search(struct device *parent, struct cfdata *cf, void *aux)
+txout_hook(void *arg, int type, long id, void *msg)
 {
-	struct tx39uart_softc *sc = (void *)parent;
-	struct tx39uart_attach_args ua;
-	
-	ua.ua_tc	= sc->sc_tc;
-	ua.ua_slot	= cf->cf_loc[TXCOMIFCF_SLOT];
+	struct txout_softc *sc = arg;
+	struct txio_ops *ops = sc->sc_ops;	
 
-	if (ua.ua_slot == TXCOMIFCF_SLOT_DEFAULT) {
-		printf("tx39uart_search: wildcarded slot, skipping\n");
-		return 0;
-	}
-	
-	if (!(sc->sc_enabled & (1 << ua.ua_slot)) && /* not attached slot */
-	    (*cf->cf_attach->ca_match)(parent, cf, &ua)) {
-		config_attach(parent, cf, &ua, tx39uart_print);
-		sc->sc_enabled |= (1 << ua.ua_slot);
-	}
+	printf("%s: %d\n", __FUNCTION__, sc->sc_port);
+	ops->_out(ops->_v, sc->sc_port, (int)msg);
+	printf("done.\n");
 
 	return 0;
-}
-
-int
-tx39uart_print(void *aux, const char *pnp)
-{
-	struct tx39uart_attach_args *ua = aux;
-	
-	printf(" slot %d", ua->ua_slot);
-
-	return QUIET;
 }
