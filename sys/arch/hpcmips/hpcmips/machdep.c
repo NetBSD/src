@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2000/05/09 13:20:55 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2000/05/14 03:16:11 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2000/05/09 13:20:55 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2000/05/14 03:16:11 shin Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -731,15 +731,15 @@ cpu_intr(status, cause, pc, ipending)
 {
 	uvmexp.intrs++;
 
-#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
-	if (ipending & MIPS_INT_MASK_CLOCK) {
+#ifdef VR41X1
+	if (ipending & MIPS_INT_MASK_5) {
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
 		 */
 		mips3_write_compare(mips3_cycle_count());
 	}
-#endif /* MIPS3 && MIPS_INT_MASK_CLOCK */
+#endif
 
 	/* device interrupts */
 #ifdef ENABLE_MIPS_TX3900
