@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.34 2004/11/30 10:39:53 wiz Exp $	*/
+/*	$NetBSD: calendar.c,v 1.35 2004/12/06 20:38:43 jwise Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.34 2004/11/30 10:39:53 wiz Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.35 2004/12/06 20:38:43 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -245,7 +245,11 @@ isnow(endp)
 
 #define	F_ISMONTH	0x01
 #define	F_ISDAY		0x02
+#define F_WILDMONTH	0x04
+#define F_WILDDAY	0x08
+
 	flags = 0;
+
 	/* didn't recognize anything, skip it */
 	if (!(v1 = getfield(endp, &endp, &flags)))
 		return (0);
@@ -270,6 +274,16 @@ isnow(endp)
 			day = v2 ? v2 : 1;
 		}
 	}
+
+	if (flags & (F_WILDMONTH|F_WILDDAY))
+		return (1);
+
+	if ((flags & (F_WILDMONTH|F_ISDAY)) && (day == tp->tm_mday))
+		return (1);
+
+	if ((flags & (F_ISMONTH|F_WILDDAY)) && (month == tp->tm_mon + 1))
+		return (1);
+
 	if (flags & F_ISDAY)
 		day = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
 	day = cumdays[month] + day;
@@ -297,9 +311,15 @@ getfield(p, endp, flags)
 	for (; FLDCHAR(*p); ++p)
 		continue;
 	if (*p == '*') {			/* `*' is current month */
-		*flags |= F_ISMONTH;
-		*endp = p+1;
-		return (tp->tm_mon + 1);
+		if (!(*flags & F_ISMONTH)) {
+			*flags |= F_ISMONTH|F_WILDMONTH;
+			*endp = p+1;
+			return (tp->tm_mon + 1);
+		} else {
+			*flags |= F_ISDAY|F_WILDDAY;
+			*endp = p+1;
+			return (1);
+		}
 	}
 	if (isdigit((unsigned char)*p)) {
 		val = strtol(p, &p, 10);	/* if 0, it's failure */
