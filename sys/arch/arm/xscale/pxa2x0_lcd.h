@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.1 2002/10/19 19:31:40 bsh Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -87,9 +87,9 @@ struct pxa2x0_lcd_softc {
 	void *ih;			/* interrupt handler */
 };
 
-void pxa2x0_lcd_attach_sub( struct pxa2x0_softc *, 
-    struct pxa2x0_lcd_softc *, const struct lcd_panel_geometry * );
-void pxa2x0_lcd_start_dma( struct pxa2x0_lcd_softc *, struct pxa2x0_lcd_screen * );
+void pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *, struct pxaip_attach_args *,
+			   const struct lcd_panel_geometry *);
+void pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *, struct pxa2x0_lcd_screen *);
 
 struct lcd_panel_geometry {
 	short panel_width;
@@ -121,10 +121,10 @@ struct lcd_panel_geometry {
 	short end_frame_wait;		/* end of frame wait (EFW) */
 };
 
-void pxa2x0_lcd_geometry( struct pxa2x0_lcd_softc *,
+void pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
 		          const struct lcd_panel_geometry *);
 struct pxa2x0_lcd_screen *pxa2x0_lcd_new_screen( 
-	struct pxa2x0_lcd_softc *, int depth );
+	struct pxa2x0_lcd_softc *, int depth);
 
 /*
  * we need bits-per-pixel value to configure wsdisplay screen
