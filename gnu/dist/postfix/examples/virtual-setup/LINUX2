@@ -1,3 +1,0 @@
-On linux virtual interfaces can be set up with:
-ifconfig interface-name:alias-num virtual.host.addr
-route add virtual.host.addr dev interface-name:alias-num

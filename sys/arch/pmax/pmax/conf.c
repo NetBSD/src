@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 2002/02/24 00:39:36 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.44.6.1 2002/03/15 14:22:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,18 +156,23 @@ cdev_decl(uk);
 cdev_decl(vnd);
 cdev_decl(vnd);
 
-#include "dc.h"
-#include "dtop.h"
-#include "fb.h"
-#include "px.h"
-#include "rasterconsole.h"
-#include "scc.h"
-cdev_decl(dc);
-cdev_decl(dtop);
-cdev_decl(fb);
-cdev_decl(px);
-cdev_decl(rcons);
-cdev_decl(scc);
+#include "dz.h"
+#include "stic.h"
+#include "zstty.h"
+cdev_decl(dz);
+cdev_decl(stic);
+cdev_decl(zs);
+
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
+#include "wsfont.h"
+cdev_decl(wsdisplay);
+cdev_decl(wskbd);
+cdev_decl(wsmouse);
+cdev_decl(wsmux);
+cdev_decl(wsfont);
 
 /* a framebuffer with an attached mouse: */
 
@@ -191,9 +196,9 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
 	cdev_notdef(),			/* 13: ULTRIX up */
 	cdev_notdef(),			/* 14: ULTRIX tm */
-	cdev_tty_init(NDTOP,dtop),	/* 15: desktop bus interface */
-	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
-	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
+	cdev_notdef(),			/* 15: desktop bus interface */
+	cdev_tty_init(NDZ,dz),		/* 16: dc7085 serial interface */
+	cdev_tty_init(NZSTTY,zs),	/* 17: 82530 serial interface */
 	cdev_notdef(),			/* 18: ULTRIX ct */
 	cdev_notdef(),			/* 19: ULTRIX mt */
 	cdev_tty_init(NPTY,pts),	/* 20: ULTRIX pty slave	 */
@@ -263,24 +268,24 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 82: ULTRIX multimedia video out */
 	cdev_notdef(),		/* 83: ULTRIX fd */
 	cdev_notdef(),		/* 84: ULTRIX DTi */
-	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
-	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
-	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
-	cdev_notdef(),		/* 88: reserved for wscons fb */
-	cdev_notdef(),		/* 89: reserved for wscons kbd */
-	cdev_notdef(),		/* 90: reserved for wscons mouse */
-	cdev_ipf_init(NIPFILTER,ipl),	/* 91: ip-filter device */
-	cdev_rnd_init(NRND,rnd),	/* 92: random source pseudo-device */
-	cdev_bpftun_init(NTUN,tun),	/* 93: network tunnel */
-	cdev_lkm_init(NLKM,lkm),	/* 94: loadable module driver */
-	cdev_scsibus_init(NSCSIBUS,scsibus), /* 95: SCSI bus */
-	cdev_disk_init(NRAID,raid),	/* 96: RAIDframe disk driver */
-	cdev_disk_init(NMD,md),	/* 97: memory disk  driver */
-	cdev_fbm_init(NPX,px),	/* 98: PixelStamp board driver */
-	cdev_audio_init(NAUDIO,audio),  /* 99: generic audio I/O */
-	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 100: clockctl pseudo device */
-	cdev_notdef(),		/* 101: reserved for wsmux */
-	cdev_notdef(),		/* 102: reserved for wsfont */
+	cdev_notdef(),		/* 85: rcons pseudo-dev */
+	cdev_notdef(),		/* 86: frame buffer pseudo-device */
+	cdev_disk_init(NCCD,ccd),		/* 87: concatenated disk driver */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay),	/* 88: wscons fb */
+	cdev_mouse_init(NWSKBD,wskbd),		/* 89: wscons kbd */
+	cdev_mouse_init(NWSMOUSE,wsmouse),	/* 90: wscons mouse */
+	cdev_ipf_init(NIPFILTER,ipl),		/* 91: ip-filter device */
+	cdev_rnd_init(NRND,rnd),		/* 92: random source pseudo-device */
+	cdev_bpftun_init(NTUN,tun),		/* 93: network tunnel */
+	cdev_lkm_init(NLKM,lkm),		/* 94: loadable module driver */
+	cdev_scsibus_init(NSCSIBUS,scsibus),	/* 95: SCSI bus */
+	cdev_disk_init(NRAID,raid),		/* 96: RAIDframe disk driver */
+	cdev_disk_init(NMD,md),			/* 97: memory disk  driver */
+	cdev__ocm_init(NSTIC,stic),		/* 98: PixelStamp board driver */
+	cdev_audio_init(NAUDIO,audio),		/* 99: generic audio I/O */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 100 clockctl pseudo device */
+	cdev_mouse_init(NWSMUX,wsmux),		/* 101: wscons mux */
+	cdev_mouse_init(NWSFONT,wsfont),	/* 102: wscons fonts */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

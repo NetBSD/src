@@ -1,6 +1,0 @@
-# $NetBSD: TODO,v 1.15 2001/11/23 22:57:34 jdolecek Exp $
-
-Projects:
-* test the AHA-1640 driver - it should be working, but it's not confirmed
-  recently
-* IBM SCSI Adapter support

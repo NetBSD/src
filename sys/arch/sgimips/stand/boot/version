@@ -1,8 +1,0 @@
-$NetBSD: version,v 1.2 2001/11/21 23:33:17 thorpej Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-1.0:	Initial sgimips booter
-1.1:	Cleanup, pass bootinfo to kernel

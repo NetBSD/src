@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.35 2001/09/18 16:15:19 tsutsui Exp $ */
+/* $NetBSD: dec_3100.c,v 1.35.10.1 2002/03/15 14:22:46 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -83,12 +83,13 @@
 
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>
-#include <pmax/dev/pmvar.h>
-#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
 
-#include "rasterconsole.h"
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
+#include <dev/dec/dzkbdvar.h>
+
 #include "pm.h"
 
 void		dec_3100_init __P((void));		/* XXX */
@@ -145,21 +146,24 @@ dec_3100_bus_reset()
 static void
 dec_3100_cons_init()
 {
+	void dz_ibus_cnsetup(paddr_t);	/* XXX */
+	void dz_ibus_cnattach(void);	/* XXX */
+	int pm_cnattach(void);		/* XXX */
 	int kbd, crt, screen;
 
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0 && NPM > 0
+#if NPM > 0
 		if (pm_cnattach() > 0) {
-			dckbd_cnattach(KN01_SYS_DZ);
+			dz_ibus_cnsetup(KN01_SYS_DZ);
+			dzkbd_cnattach(NULL);
 			return;
 		}
-#else
-		printf("No framebuffer device configured: ");
-		printf("using serial console\n");
 #endif
+		printf("No framebuffer device configured.\n");
+		printf("Using serial console.\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -168,7 +172,8 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-	dc_cnattach(KN01_SYS_DZ, kbd);
+	dz_ibus_cnsetup(KN01_SYS_DZ);
+	dz_ibus_cnattach();
 }
 
 #define CALLINTR(vvv, cp0)					\

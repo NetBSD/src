@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.40 2001/09/18 16:15:20 tsutsui Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.40.10.1 2002/03/15 14:22:48 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.40 2001/09/18 16:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.40.10.1 2002/03/15 14:22:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,12 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.40 2001/09/18 16:15:20 tsutsui Exp 
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/memc.h>
 
-#include <pmax/dev/xcfbvar.h>
-#include <pmax/dev/dtopvar.h>
-#include <pmax/tc/sccvar.h>
-
-#include "rasterconsole.h"
-#include "xcfb.h"
+#include <dev/ic/z8530sc.h>                                          
+#include <dev/tc/zs_ioasicvar.h>
+#include "wsdisplay.h"
 
 void		dec_maxine_init __P((void));		/* XXX */
 static void	dec_maxine_bus_reset __P((void));
@@ -189,26 +186,21 @@ dec_maxine_cons_init()
 {
 	int kbd, crt, screen;
 	extern int tcfb_cnattach __P((int));		/* XXX */
+	extern void dtkbd_cnattach __P((void));		/* XXX */
 
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0
-		if (crt == 3) {
-#if NXCFB > 0
-			xcfb_cnattach();
-			dtikbd_cnattach();
-			return;
-#endif
-		}
-		else if (tcfb_cnattach(crt) > 0) {
-			dtikbd_cnattach();
+#if NWSDISPLAY > 0
+		if (tcfb_cnattach(crt) > 0) {
+			dtkbd_cnattach();
 			return;
 		}
 #endif
-		printf("No framebuffer device configured for slot %d: ", crt);
-		printf("using serial console\n");
+		printf("No framebuffer device configured for slot %d: \n",
+		    crt);
+		printf("Using serial console.\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -217,7 +209,7 @@ dec_maxine_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
-	scc_cnattach(ioasic_base, 0x100000);
+	zs_ioasic_cnattach(ioasic_base, 0x100000, 0);
 }
 
 static void
