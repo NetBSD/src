@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.33 2002/12/05 01:17:18 fvdl Exp $	*/
+/*	$NetBSD: target.c,v 1.34 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.33 2002/12/05 01:17:18 fvdl Exp $");
+__RCSID("$NetBSD: target.c,v 1.34 2003/01/10 20:00:28 christos Exp $");
 #endif
 
 /*
@@ -142,6 +142,7 @@ struct unwind_mount *unwind_mountlist = NULL;
 /*
  * debugging helper. curses...
  */
+#if defined(DEBUG)  ||	defined(DEBUG_ROOT)
 void
 backtowin()
 {
@@ -150,6 +151,7 @@ backtowin()
 	getchar();	/* wait for user to press return */
 	wrefresh(stdscr);
 }
+#endif
 
 /*
  * Get name of current root device  from kernel via sysctl. 
@@ -383,7 +385,7 @@ concat_paths(prefix, suffix)
 	const char* prefix;
 	const char *suffix;
 {
-	static char realpath[MAXPATHLEN];
+	static char real_path[MAXPATHLEN];
 
 	/* absolute prefix and null suffix? */
 	if (prefix[0] == '/' && suffix[0] == 0)
@@ -395,10 +397,11 @@ concat_paths(prefix, suffix)
 
 	/* avoid "//" */
 	if (suffix[0] == '/' || suffix[0] == 0)
-		snprintf(realpath, MAXPATHLEN, "%s%s", prefix, suffix);
+		snprintf(real_path, sizeof(real_path), "%s%s", prefix, suffix);
 	else
-		snprintf(realpath, MAXPATHLEN, "%s/%s", prefix, suffix);
-	return (realpath);
+		snprintf(real_path, sizeof(real_path), "%s/%s", 
+		    prefix, suffix);
+	return (real_path);
 }
 
 /*
@@ -437,6 +440,7 @@ make_target_dir(path)
 	make_prefixed_dir(target_prefix(), path);
 }
 
+#ifdef notdef
 /* Make a directory with a pathname in the currently-mounted root. */
 void
 make_ramdisk_dir(path)
@@ -446,7 +450,6 @@ make_ramdisk_dir(path)
 	make_prefixed_dir(path, "");
 }
 
-#if 0
 /* unused, will not work with new run.c */
 /*
  *
@@ -549,6 +552,7 @@ target_chdir_or_die(dir)
 	(void) do_target_chdir(dir, 1);
 }
 
+#ifdef notdef
 int
 target_chdir(dir)
 	const char *dir;
@@ -556,6 +560,7 @@ target_chdir(dir)
 
 	return(do_target_chdir(dir, 0));
 }
+#endif
 
 /*
  * Copy a file from the current root into the target system,
@@ -567,9 +572,9 @@ cp_to_target(srcpath, tgt_path)
 	const char *srcpath;
 	const char *tgt_path;
 {
-	const char *realpath = target_expand(tgt_path);
+	const char *real_path = target_expand(tgt_path);
 
-	return run_prog(0, NULL, "/bin/cp %s %s", srcpath, realpath);
+	return run_prog(0, NULL, "/bin/cp %s %s", srcpath, real_path);
 }
 
 /*
@@ -668,7 +673,7 @@ mount_with_unwind(fstype, from, on)
 void
 unwind_mounts()
 {
-	struct unwind_mount *m, *prev;
+	struct unwind_mount *m;
 	volatile static int unwind_in_progress = 0;
 
 	/* signal safety */
@@ -676,7 +681,6 @@ unwind_mounts()
 		return;
 	unwind_in_progress = 1;
 
-	prev = NULL;
 	for (m = unwind_mountlist; m;  ) {
 		struct unwind_mount *prev;
 #ifdef DEBUG_UNWIND
@@ -735,14 +739,14 @@ target_test(mode, path)
 	unsigned int mode;
 	const char *path;
 {
-	const char *realpath = target_expand(path);
+	const char *real_path = target_expand(path);
 	register int result;
 
-	result = !file_mode_match(realpath, mode);
-	scripting_fprintf(NULL, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", realpath);
+	result = !file_mode_match(real_path, mode);
+	scripting_fprintf(NULL, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", real_path);
 
 #if defined(DEBUG)
-	printf("target_test(%s %s) returning %d\n", test, realpath, result);
+	printf("target_test(%s %s) returning %d\n", test, real_path, result);
 #endif
 	return (result);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2002/12/05 01:17:16 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2003/01/10 20:00:28 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -157,7 +157,7 @@ main(argc, argv)
 	process_menu(MENU_netbsd);
 	
 	exit_cleanly = 1;
-	exit(0);
+	return (0);
 }
 	
 
@@ -380,7 +380,7 @@ void process_f_flag (char *f_name)
 	fprintf (stderr, msg_string(MSG_config_read_error), f_name);
   	exit (1);
   }
-  buffer[statinfo.st_size] = 0;
+  buffer[(size_t)statinfo.st_size] = 0;
 
   /* close the file */
   close (fd);
