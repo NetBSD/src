@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.36 2003/05/02 08:19:43 gmcgarry Exp $
+.\"	$NetBSD: isa.4,v 1.37 2003/05/06 08:27:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 16, 2002
+.Dd May 2, 2003
 .Dt ISA 4
 .Os
 .Sh NAME
@@ -305,11 +305,11 @@ There are two reasons this can happen:
 In anything other than i386, it would almost always mean that there is a
 driver attached to the IRQ, but it is the wrong driver.
 .It
-On i386, there is the more obscure issue of `default IR7's.
+On i386, there is the more obscure issue of `default IRQ7's.
 That is, when a device asserts an IRQ, but the IRQ is deasserted
 after the PIC latches the interrupt and before the CPU acknowledges
 it, the PIC just flat out lies about which IRQ it was.
-In is usually due to a suboptimally coded driver.
+It is usually due to a suboptimally coded driver.
 .El
 .El
 .Sh SEE ALSO
