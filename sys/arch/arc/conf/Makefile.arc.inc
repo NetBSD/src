@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc.inc,v 1.1 2000/12/03 07:46:43 matt Exp $
+#	$NetBSD: Makefile.arc.inc,v 1.2 2001/03/28 17:04:44 tsutsui Exp $
 
 CFLAGS+=	-mips2 -mcpu=r4000
 AFLAGS+=	-mips2
@@ -11,5 +11,5 @@ DEBUG_SYSTEM_LD_TAIL+=; \
 
 # XXX
 POST_STRIP_SYSTEM_LD_TAIL=; \
-		echo objcopy --output-target=ecoff-littlemips $@ $@.ecoff; \
-		objcopy --output-target=ecoff-littlemips $@ $@.ecoff
+		echo ${OBJCOPY} --output-target=ecoff-littlemips $@ $@.ecoff; \
+		${OBJCOPY} --output-target=ecoff-littlemips $@ $@.ecoff
