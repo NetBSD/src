@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.5 2000/01/24 07:25:02 mycroft Exp $
+# $NetBSD: md.macppc,v 1.6 2000/07/06 19:46:15 dmcmahill Exp $
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
@@ -18,3 +18,4 @@
 ./usr/mdec/installboot
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.elf
+./usr/mdec/ofwboot.xcf
