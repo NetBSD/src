@@ -1,4 +1,4 @@
-.\"	$NetBSD: j6x0tp.4,v 1.2 2003/11/05 02:38:23 uwe Exp $
+.\"	$NetBSD: j6x0tp.4,v 1.3 2003/11/05 08:21:32 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Valeriy E. Ushakov
 .\" All rights reserved.
@@ -36,28 +36,34 @@
 .Cd "j6x0tp* at adc?"
 .Cd "wsmouse* at j6x0tp? mux 0"
 .Cd "wskbd* at j6x0tp? mux 1"
+.Pp
+.Cd options J6X0TP_WSMOUSE_EXCLUSIVE
+.Cd options J6X0TP_SETTINGS_ICON_KEYSYM=keysym
+.Cd options J6X0TP_PGUP_ICON_KEYSYM=keysym
+.Cd options J6X0TP_PGDN_ICON_KEYSYM=keysym
+.Cd options J6X0TP_SWITCH_ICON_KEYSYM=keysym
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Jornada 680/690 touch-screen.
+driver provides support for the Jornada 680/690 touch-screen.
 .Pp
-Pen movements are passed to the
+Pen movements are passed to
 .Xr wsmouse 4
 as mouse clicks and drags.
 .Pp
 Taps on the on-screen
 .Dq HP hard icons
-are passed to the
+are passed to
 .Xr wskbd 4
 as key presses.
 .Pp
 The
 .Nm
 driver has the following config options.
-.Bl -ohang
+.Bl -ohang -offset indent
 .It Cd options J6X0TP_WSMOUSE_EXCLUSIVE
-Stop feeding intput to
-.Xr wskbd 4 ,
+Stop feeding input to
+.Xr wskbd 4
 when the attached
 .Xr wsmouse 4
 device is opened.
@@ -77,16 +83,16 @@ and
 respectively.
 It is possible to change the mapping at run time with
 .Xr wsconsctl 8 ,
-but for
+but for a
 .Dq keyboard
 as small as this one it is convenient to be able to change the
 defaults at compile time.
 .El
 .Sh SEE ALSO
 .Xr adc 4 ,
-.Xr tpctl 8 ,
 .Xr wskbd 4 ,
-.Xr wsmouse 4
+.Xr wsmouse 4 ,
+.Xr tpctl 8
 .Sh HISTORY
 The
 .Nm
