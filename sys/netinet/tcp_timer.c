@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.23 1997/12/09 21:59:17 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.24 1997/12/11 06:42:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -81,9 +81,7 @@ tcp_fasttimo()
 	    inp = inp->inp_queue.cqe_next) {
 		if ((tp = intotcpcb(inp)) != NULL &&
 		    (tp->t_flags & TF_DELACK)) {
-			tp->t_flags &= ~TF_DELACK;
 			tp->t_flags |= TF_ACKNOW;
-			tcpstat.tcps_delack++;
 			(void) tcp_output(tp);
 		}
 	}
