@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.15 1999/03/14 10:31:05 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.15.2.1 2000/01/21 00:31:32 he Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -702,27 +702,12 @@ nextdma_intr(arg)
 		next_dma_rotate(nd);
 		next_dma_setup_cont_regs(nd);
 
-		if (!(state & DMACSR_ENABLE)) {
-
-			DPRINTF(("Unexpected DMA shutdown, restarting\n"));
-
-			if (nd->_nd_map_cont) {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_SETSUPDATE | DMACSR_SETENABLE | nd->_nd_dmadir);
-			} else {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
-						DMACSR_SETENABLE | nd->_nd_dmadir);
-			}
-
+		if (nd->_nd_map_cont) {
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+				DMACSR_SETSUPDATE | DMACSR_CLRCOMPLETE | DMACSR_SETENABLE | nd->_nd_dmadir);
 		} else {
-
-			if (nd->_nd_map_cont) {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_SETSUPDATE | DMACSR_CLRCOMPLETE | nd->_nd_dmadir);
-			} else {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_CLRCOMPLETE | nd->_nd_dmadir);
-			}
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+				DMACSR_CLRCOMPLETE | DMACSR_SETENABLE | nd->_nd_dmadir);
 		}
 
 	}
