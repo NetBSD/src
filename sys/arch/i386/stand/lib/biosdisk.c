@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.6 1997/09/20 12:17:41 drochner Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.7 1997/10/13 09:26:29 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -148,13 +148,13 @@ biosdiskopen(struct open_file *f, ...)
 {
 	va_list ap;
 	struct biosdisk *d;
-	struct dos_partition *dptr;
-	int             sector;
-	int             error = 0, i;
-#ifndef NO_DISKLABEL
-	struct disklabel *lp;
 	int partition;
+#ifndef NO_DISKLABEL
+	struct dos_partition *dptr;
+	int sector, i;
+	struct disklabel *lp;
 #endif
+	int error = 0;
 
 	d = (struct biosdisk *) alloc(sizeof(struct biosdisk));
 	if (!d) {
@@ -173,12 +173,22 @@ biosdiskopen(struct open_file *f, ...)
 		goto out;
 	}
 
+	d->boff = 0;
+	bi_disk.labelsector = -1;
+	bi_disk.partition = partition = va_arg(ap, int);
+
+#ifndef NO_DISKLABEL
+	if (!(d->ll.dev & 0x80) /* floppy */
+	    || partition == RAW_PART)
+		goto nolabel;
+
 	/*
-	 * find NetBSD Partition in DOS partition table XXX check magic???
+	 * find NetBSD Partition in DOS partition table
+	 * XXX check magic???
 	 */
 	if (readsects(&d->ll, 0, 1, d->buf, 0)) {
 #ifdef DISK_DEBUG
-		printf("error reading mbr\n");
+		printf("error reading MBR\n");
 #endif
 		error = EIO;
 		goto out;
@@ -201,12 +211,7 @@ biosdiskopen(struct open_file *f, ...)
 		 */
 		sector = 0;
 	}
-	bi_disk.labelsector = -1;
-#ifdef NO_DISKLABEL
-	d->boff = sector;
-	(void)va_arg(ap, int); /* throw away partition */
-	bi_disk.partition = 0;
-#else
+
 	/* find partition in NetBSD disklabel */
 	if (readsects(&d->ll, sector + LABELSECTOR, 1, d->buf, 0)) {
 #ifdef DISK_DEBUG
@@ -215,9 +220,7 @@ biosdiskopen(struct open_file *f, ...)
 		error = EIO;
 		goto out;
 	}
-
 	lp = (struct disklabel *) (d->buf + LABELOFFSET);
-	bi_disk.partition = partition = va_arg(ap, int);
 	if (lp->d_magic != DISKMAGIC) {
 #ifdef DISK_DEBUG
 		printf("warning: no disklabel\n");
@@ -240,7 +243,8 @@ biosdiskopen(struct open_file *f, ...)
 		bcopy(lp->d_packname, bi_disk.label.packname, 16);
 		bi_disk.label.checksum = lp->d_checksum;
 	}
-#endif				/* NO_DISKLABEL */
+nolabel:
+#endif /* NO_DISKLABEL */
 
 #ifdef DISK_DEBUG
 	printf("partition @%d\n", d->boff);
