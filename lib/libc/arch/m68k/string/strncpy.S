@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.S,v 1.4 1995/11/28 23:41:05 thorpej Exp $	*/
+/*	$NetBSD: strncpy.S,v 1.5 1997/01/03 22:57:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,25 +43,25 @@
 #if 0
 	RCSID("from: @(#)strncpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strncpy.S,v 1.4 1995/11/28 23:41:05 thorpej Exp $")
+	RCSID("$NetBSD: strncpy.S,v 1.5 1997/01/03 22:57:08 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strncpy)
 	movl	sp@(4),d0		| return value is toaddr
 	movl	sp@(12),d1		| count
-	beq	scdone			| nothing to do
+	beq	Lscdone			| nothing to do
 	movl	sp@(8),a0		| a0 = fromaddr
 	movl	d0,a1			| a1 = toaddr
-scloop:
+Lscloop:
 	movb	a0@+,a1@+		| copy a byte
-	beq	scploop			| copied null, go pad if necessary
+	beq	Lscploop		| copied null, go pad if necessary
 	subql	#1,d1			| adjust count
-	bne	scloop			| more room, keep going
-scdone:
+	bne	Lscloop			| more room, keep going
+Lscdone:
 	rts
-scploop:
+Lscploop:
 	subql	#1,d1			| adjust count
-	beq	scdone			| no more room, all done
+	beq	Lscdone			| no more room, all done
 	clrb	a1@+			| clear a byte
-	jra	scploop			| keep going
+	jra	Lscploop		| keep going
