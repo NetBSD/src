@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.6 1999/09/14 05:52:23 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.7 1999/09/14 05:59:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ tlp_pci_attach(parent, self, aux)
 		break;
 
 	case TULIP_CHIP_WB89C840F:
-		sc->sc_regshift = 1;
+		sc->sc_regshift = 2;
 		break;
 
 	case TULIP_CHIP_AX88140:
