@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/20 06:20:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/09/30 06:41:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=	x11perf.c bitmaps.c do_tests.c do_simple.c do_rects.c do_valgc.c \
 	do_lines.c do_segs.c do_dots.c do_windows.c do_movewin.c do_text.c \
 	do_blt.c do_arcs.c do_tris.c do_complex.c do_traps.c
 
-CPPFLAGS+=	-DMITSHM -DXFT -DXRENDER -I${DESTDIR}/${X11INCDIR}/freetype2
+CPPFLAGS+=	-DMITSHM -DXFT -DXRENDER -I${DESTDIR}${X11INCDIR}/freetype2
 
 MAN=	Xmark.1 x11perf.1 x11perfcomp.1
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/30 06:41:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,8 @@ SRCS+=		atomcache.c cache.c cmap.c cmaputil.c dispatch.c extensions.c \
 		pm.c props.c reqtype.c resource.c swaprep.c swapreq.c \
 		tables.c tags.c unsquish.c utils.c wire.c zeropad.c
 
-CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
-		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/${PROG}/include \
 		${X11FLAGS.SERVER}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/23 23:21:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/30 06:41:29 lukem Exp $
 
 XMODULEDIR=	${X11ROOTDIR}/lib/modules/extensions
 
@@ -60,8 +60,8 @@ SRCS+=		GLcoremodule.c
 
 XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
-		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
  		-I${X11SRCDIR.xc}/extras/Mesa/include \
 		-I${X11SRCDIR.xc}/lib/GL/include \
  		-I${X11SRCDIR.xc}/extras/Mesa/src \

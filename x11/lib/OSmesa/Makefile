@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/14 07:06:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/09/30 06:41:30 lukem Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -44,7 +44,7 @@ SRCS=		osmesa.c accum.c api_arrayelt.c api_eval.c \
 		t_vb_points.c t_vb_render.c t_vb_texgen.c t_vb_texmat.c \
 		t_vb_vertex.c
 
-CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/lib/GL/include \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
 		${X11FLAGS.THREADLIB} \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/30 06:41:31 lukem Exp $
 
 NOMAN=		1
 
@@ -43,8 +43,8 @@ SRCS+=		xmlparse.c xmlrole.c xmltok.c
 
 .include "../../lib/expat/Makefile.expatdefs"
 
-HOST_CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR} \
-		-I${DESTDIR}/${X11INCDIR}/freetype2 \
+HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
+		-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.xc}/lib/expat \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT \
 		${EXPAT_FLAGS}
