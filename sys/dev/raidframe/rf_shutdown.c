@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.5 2000/01/08 22:57:31 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.6 2000/01/13 23:41:18 oster Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -59,7 +59,10 @@ _rf_ShutdownCreate(
          * Have to directly allocate memory here, since we start up before
          * and shutdown after RAIDframe internal allocation system.
          */
-	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), M_RAIDFRAME, M_WAITOK);
+	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
+		M_RAIDFRAME, M_WAITOK); */
+	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
+					   M_RAIDFRAME, M_NOWAIT);
 	if (ent == NULL)
 		return (ENOMEM);
 	ent->cleanup = cleanup;
