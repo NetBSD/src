@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
+.\"	$NetBSD: mount_msdos.8,v 1.11 1997/09/15 05:05:41 lukem Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nm mount_msdos
 .Nd mount an MS-DOS file system
 .Sh SYNOPSIS
-.Nm mount_msdos
+.Nm
 .Op Fl o Ar options
 .Op Fl u Ar uid
 .Op Fl g Ar gid
@@ -48,7 +48,7 @@
 .Pa node
 .Sh DESCRIPTION
 The
-.Nm mount_msdos
+.Nm
 command attaches the MS-DOS filesystem residing on
 the device
 .Pa special
@@ -108,7 +108,7 @@ If neither
 nor
 .Fl l
 are given,
-.Nm mount_msdos
+.Nm
 searches the root directory of the filesystem to
 be mounted for any existing Win'95 long filenames.
 If no such entries are found,
@@ -151,10 +151,10 @@ Note that Win'95 handles only access dates,
 but not access times.
 .Sh HISTORY
 The
-.Nm mount_msdos
+.Nm
 utility first appeared in NetBSD 0.9.
 Its predecessor, the
 .Nm mount_pcfs
 utility appeared in NetBSD 0.8, and was abandoned in favor
 of the more aptly-named
-.Nm mount_msdos .
+.Nm "" .
