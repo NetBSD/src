@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2002/05/31 11:31:30 augustss Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2003/01/28 01:08:05 kent Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -994,6 +994,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2002/08/25 20:20:01 fredette Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 2003/01/28 01:07:58 kent Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -312,6 +312,7 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* For devices that have a 24-bit address space */
 #define	BUS_DMA_24BIT		BUS_DMA_BUS1

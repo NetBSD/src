@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.37 2003/01/03 13:23:39 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.38 2003/01/28 01:08:06 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1283,6 +1283,7 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* For devices that have a 24-bit address space */
 #define BUS_DMA_24BIT		BUS_DMA_BUS1
