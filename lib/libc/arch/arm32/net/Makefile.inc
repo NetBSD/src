@@ -1,3 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 1997/10/06 00:03:13 mark Exp $
+# $NetBSD: Makefile.inc,v 1.3 1999/01/15 13:31:17 bouyer Exp $
 
-SRCS+= htonl.S htons.S ntohl.S ntohs.S
+# hton* and nto* functions provided by ../gen/byte_swap_*.S
+SRCS+= 
