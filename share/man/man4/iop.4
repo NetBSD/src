@@ -1,4 +1,4 @@
-.\"	$NetBSD: iop.4,v 1.6 2001/01/07 16:01:10 ad Exp $
+.\"	$NetBSD: iop.4,v 1.7 2001/03/20 13:09:19 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,17 +45,18 @@
 .Cd "iop* at pci? dev ? function ?"
 .Cd "iopsp*" at iop? tid ?
 .Cd "ld*" at iop? tid ?
+.Cd options I2OVERBOSE
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for
 .Tn PCI
-adapters conforming to the
+I/O processors conforming to the
 .Tn I2O
-specification, revision 1.5.
+specification, revision 1.5 and above.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in
-.Pa dev/i2o/i2ovar.h .
+.Pa dev/i2o/iopio.h .
 Note that the headers
 .Pa sys/types.h ,
 .Pa sys/device.h
@@ -89,17 +90,22 @@ The minimum timeout value that may be specified is 1000ms.  All other values
 must not exceed the
 .Nm
 driver's operational limits.
+.It Dv IOPIOCGSTATUS (struct iovec)
+Request the latest available status record from the IOP.  This special-case
+ioctl is provided as the I2O_EXEC_STATUS_GET message does not post replies,
+and can therefore not be safely issued using the IOPIOCPT ioctl.
+.El
+.Pp
+The following ioctls may block while attempting to acquire the
+.Nm
+driver's configuration lock, and may fail if the acquisition times out.
+.Bl -tag -width OTTF
 .It Dv IOPIOCGLCT (struct iovec)
 Retreive the
 .Nm
 driver's copy of the logical configuration table.  This copy of the LCT
 matches the current device configuration, but is not necessarily the latest
-available version of the LCT.  This ioctl may block while attempting to
-acquire a lock on the LCT, and may fail if the acquisition times out.
-.It Dv IOPIOCGSTATUS (struct iovec)
-Request the latest available status record from the IOP.  This special-case
-ioctl is provided as the I2O_EXEC_STATUS_GET message does not post replies,
-and can therefore not be safely issued using the IOPIOCPT ioctl.
+available version of the LCT.
 .It Dv IOPIOCRECONFIG
 Request that the
 .Nm
@@ -134,7 +140,7 @@ control device for IOP unit
 .Xr ld 4 ,
 .Xr iopctl 8
 .Pp
-http://www.i2osig.org/
+http://www.intelligent-io.com/
 .Sh AUTHOR
 The
 .Nm
