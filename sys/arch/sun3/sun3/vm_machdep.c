@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 1999/04/07 06:07:59 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 1999/05/13 21:58:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -75,8 +75,10 @@ extern void proc_trampoline __P((void));
  * than the parent.  Returns 1 in the child process, 0 in the parent.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *p1pcb = &p1->p_addr->u_pcb;
 	register struct pcb *p2pcb = &p2->p_addr->u_pcb;
@@ -120,6 +122,12 @@ cpu_fork(p1, p2)
 	p2tf = (struct trapframe *)((char*)p2pcb + USPACE-4) - 1;
 	p2->p_md.md_regs = (int *)p2tf;
 	bcopy(p1->p_md.md_regs, p2tf, sizeof(*p2tf));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		p2tf->tf_regs[15] = (u_int)stack + stacksize;
 
 	/*
 	 * Create a "switch frame" such that when cpu_switch returns,

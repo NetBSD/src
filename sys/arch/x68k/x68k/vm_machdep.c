@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1999/03/26 23:41:39 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1999/05/13 21:58:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,8 +72,10 @@
  * the frame pointers on the stack after copying.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -100,6 +102,13 @@ cpu_fork(p1, p2)
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_regs[15] = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
 	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
