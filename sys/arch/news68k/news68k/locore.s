@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 2002/05/30 21:49:20 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 2002/11/02 20:03:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -421,7 +421,7 @@ Lenab1:
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
 	addql	#4,%sp
 Lenab2:
-	jbsr	_C_LABEL(TBIA)		| invalidate TLB
+	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
 	jeq	Ltbia040		| yes, cache already on
 	pflusha
@@ -1201,137 +1201,6 @@ ENTRY(savectx)
 	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
 Lsvnofpsave:
 	moveq	#0,%d0			| return 0
-	rts
-
-/*
- * Invalidate entire TLB.
- */
-ENTRY(TBIA)
-_C_LABEL(_TBIA):
-	tstl	_C_LABEL(mmutype)	| MMU type?
-	pflusha				| flush entire TLB
-	jpl	Lmc68851a		| 68851 implies no d-cache
-	movc	%cacr,%d0
-	orl	#DC_CLR,%d0
-	movc	%d0,%cacr		| invalidate on-chip d-cache
-#if 0
-	jmp	_C_LABEL(_DCIA)
-#endif
-Lmc68851a:
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ENTRY(TBIS)
-	tstl	_C_LABEL(mmutype)	| MMU type?
-	movl	%sp@(4),%a0		| get addr to flush
-	jpl	Lmc68851b		| is 68851?
-	pflush	#0,#0,%a0@		| flush address from both sides
-	movc	%cacr,%d0
-	orl	#DC_CLR,%d0
-	movc	%d0,%cacr		| invalidate on-chip data cache
-	rts
-Lmc68851b:
-	pflushs	#0,#0,%a0@		| flush address from both sides
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-	tstl	_C_LABEL(mmutype)	| MMU type?
-	jpl	Lmc68851c		| 68851?
-	pflush #4,#4			| flush supervisor TLB entries
-	movc	%cacr,%d0
-	orl	#DC_CLR,%d0
-	movc	%d0,%cacr		| invalidate on-chip d-cache
-	rts
-Lmc68851c:
-	pflushs #4,#4			| flush supervisor TLB entries
-#if 0
-	jmp	_C_LABEL(_DCIS)
-#endif
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-	tstl	_C_LABEL(mmutype)	| MMU type?
-	jpl	Lmc68851d		| 68851?
-	pflush	#0,#4			| flush user TLB entries
-	movc	%cacr,%d0
-	orl	#DC_CLR,%d0
-	movc	%d0,%cacr		| invalidate on-chip d-cache
-	rts
-Lmc68851d:
-	pflushs	#0,#4			| flush user TLB entries
-#if 0
-	jmp	_C_LABEL(_DCIU)
-#endif
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-	movc	%cacr,%d0
-	orl	#IC_CLR,%d0
-	movc	%d0,%cacr		| invalidate i-cache
-#if 0
-	tstl	_C_LABEL(ectype)	| got external PAC?
-	jge	Lnocache1		| no, all done
-
-	movl	_C_LABEL(cache_clr),%a0
-	st	%a0@			| NEWS-OS does `st 0xe1900000'
-
-Lnocache1:
-#endif
-	rts
-
-/*
- * Invalidate data cache.
- * news68k external cache does not allow for invalidation of user/supervisor
- * portions. (probably...)
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- *
- * XXX: NEWS-OS *does* flush 68030 on-chip cache... Should this be done?
- */
-ENTRY(DCIA)
-ENTRY(DCIS)
-ENTRY(DCIU)
-_C_LABEL(_DCIA):
-_C_LABEL(_DCIS):
-_C_LABEL(_DCIU):
-#if 0
-	movc	%cacr,%d0
-	orl	#DC_CLR,%d0
-	movc	%d0,%cacr
-#endif
-	tstl	_C_LABEL(ectype)	| got external VAC?
-	jle	Lnocache2		| no, all done
-
-	movl	_C_LABEL(cache_clr),%a0
-	st	%a0@			| NEWS-OS does `st 0xe1900000'
-Lnocache2:
-	rts
-
-ENTRY(PCIA)
-#if 0
-	movc	%cacr,%d0
-	orl	#DC_CLR,%d0
-	movc	%d0,%cacr		| invalidate on-chip d-cache
-#endif
-	tstl	_C_LABEL(ectype)	| got external PAC?
-	jge	Lnocache6		| no, all done
-
-	movl	_C_LABEL(cache_clr),%a0
-	st	%a0@			| NEWS-OS does `st 0xe1900000'
-Lnocache6:
 	rts
 
 ENTRY(ecacheon)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 2002/10/20 02:37:38 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 2002/11/02 20:03:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -866,94 +866,6 @@ ASGLOBAL(fullcflush)
 	.long	0
 	.text
 #endif
-
-/*
- * Invalidate entire TLB.
- */
-ENTRY(TBIA)
-_C_LABEL(_TBIA):
-	pflusha
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate any TLB entry for given VA (TB Invalidate Single)
- */
-ENTRY(TBIS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush entire TLB
-#endif
-	movl	%sp@(4),%a0
-	pflush	#0,#0,%a0@		| flush address from both sides
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip data cache
-	rts
-
-/*
- * Invalidate supervisor side of TLB
- */
-ENTRY(TBIAS)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-	pflush	#4,#4			| flush supervisor TLB entries
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate user side of TLB
- */
-ENTRY(TBIAU)
-#ifdef DEBUG
-	tstl	_ASM_LABEL(fulltflush)	| being conservative?
-	jne	_C_LABEL(_TBIA)		| yes, flush everything
-#endif
-	pflush	#0,#4			| flush user TLB entries
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-	movl	#IC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate i-cache
-	rts
-
-/*
- * Invalidate data cache.
- * NOTE: we do not flush 68030 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
- */
-ENTRY(DCIA)
-__DCIA:
-	rts
-
-ENTRY(DCIS)
-__DCIS:
-	rts
-
-/*
- * Invalidate data cache.
- */
-ENTRY(DCIU)
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
-
-/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
-
-ENTRY(PCIA)
-	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
-	rts
 
 ENTRY(ecacheon)
 	rts

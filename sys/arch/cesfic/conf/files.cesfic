@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.6 2002/10/26 13:50:25 jdolecek Exp $
+#	$NetBSD: files.cesfic,v 1.7 2002/11/02 20:03:05 chs Exp $
 #
 # cesfic-specific configuration info
 
@@ -58,6 +58,7 @@ file	arch/cesfic/cesfic/pmap.c
 file	arch/cesfic/cesfic/pmap_bootstrap.c
 file	arch/cesfic/cesfic/sys_machdep.c
 file	arch/cesfic/cesfic/trap.c
+file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
