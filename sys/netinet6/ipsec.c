@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.54 2002/06/12 17:56:45 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.55 2002/06/13 05:10:13 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.54 2002/06/12 17:56:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.55 2002/06/13 05:10:13 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1242,7 +1242,8 @@ ipsec_deepcopy_policy(src)
 	}
 
 	if (src->spidx)
-		keydb_setsecpolicyindex(dst, src->spidx);
+		if (keydb_setsecpolicyindex(dst, src->spidx) != 0)
+			goto fail;
 
 	dst->req = newchain;
 	dst->state = src->state;
