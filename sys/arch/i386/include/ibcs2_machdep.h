@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.h,v 1.8 2000/12/02 16:13:34 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.9 2000/12/09 12:45:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,6 +55,5 @@ int	ibcs2_sys_sysmachine __P((struct proc *, void *, register_t *retval));
 
 /* i386 has separated ibcs2_syscall() from syscall() */
 #define IBCS2_MACHDEP_HAS_SEPARATED_SYSCALL
-void ibcs2_syscall __P((struct trapframe *));
 
 #endif /* !_I386_IBCS2_MACHDEP_H_ */
