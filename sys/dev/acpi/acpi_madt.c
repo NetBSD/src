@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.2 2003/01/07 18:46:49 fvdl Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.3 2003/01/07 23:05:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -80,6 +80,9 @@ acpi_madt_map(void)
 	if (AcpiGbl_XSDT == NULL)
 		return AE_NO_ACPI_TABLES;
 
+	if (AcpiGbl_MADT != NULL)
+		return AE_ALREADY_EXISTS;
+
 	xp = AcpiGbl_XSDT;
 	hdrp = &AcpiGbl_XSDT->Header;
 
@@ -99,18 +102,22 @@ acpi_madt_map(void)
 			    (ACPI_SIZE)header.Length, (void **)&AcpiGbl_MADT);
 			if (ACPI_FAILURE (Status))
 				return Status;
+			else
+				break;
 		}
 	}
 #ifdef ACPI_MADT_DEBUG
-	acpi_madt_print();
+	if (AcpiGbl_MADT != NULL)
+		acpi_madt_print();
 #endif
-	return AE_OK;
+	return AcpiGbl_MADT != NULL ? AE_OK : AE_NOT_FOUND;
 }
 
 void
 acpi_madt_unmap(void)
 {
 	AcpiOsUnmapMemory(AcpiGbl_MADT, AcpiGbl_MADT->Length);
+	AcpiGbl_MADT = NULL;
 }
 
 #ifdef ACPI_MADT_DEBUG
