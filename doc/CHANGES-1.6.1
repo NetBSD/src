@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.109 2003/02/11 08:52:18 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.110 2003/02/14 02:58:53 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3638,7 +3638,7 @@ sys/arch/sparc/sparc/autoconf.c			hand patch
 	[martin, ticket #1163]
 
 (Moved RC1 tag for distrib/utils/sysinst/util.c, share/man/man4/bge.4,
-share/man/man4/Makefile, distrib/sun3/miniroot/list, 
+share/man/man4/Makefile, distrib/sets/lists/man/mi, distrib/sun3/miniroot/list, 
 sys/arch/sparc/sparc/autoconf.c)
 
 share/man/man4/pppoe.4				1.16
@@ -3648,3 +3648,26 @@ share/man/man4/pppoe.4				1.16
 	[tron, ticket #1164]
 
 (Moved RC1 tag on this file)
+
+share/man/man9/Makefile				1.138 (hand patch)
+share/man/man9/access.9				1.10->0 (removed)
+distrib/sets/lists/comp/mi			1.534 (hand patch)
+distrib/sets/lists/comp/obsolete.mi		1.87 (hand patch)
+
+	Remove leftover pre-UVM manpages
+	[drochner, ticket #1160]
+
+
+distrib/utils/sysinst/net.c			1.83
+
+	After dhcp'ing rerun the interface get routine to pick up any 
+	new values like IP/netmask/etc. Fixes PR#20133
+	[grant, ticket #1165]
+
+distrib/utils/sysinst/util.c			1.82
+
+	Put a retry loop around the cd mount to try and handle slow cd 
+	spinup's that might return EIO on some systems. Fixes PR#20165
+	[grant, ticket #1166]
+
+(Moved RC1 tag for these last 6 files)
