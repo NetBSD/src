@@ -27,7 +27,7 @@ PROG   = dhcpd
 MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 
 DEBUG  = -g
-INCLUDES = -I.. $(BINDINC) -I../includes
+INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
 DHCPLIB = ../common/libdhcp.a ../omapip/libomapi.a $(BINDLIB)
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
@@ -54,7 +54,7 @@ install: all
 			$(DESTDIR)$(FFMANDIR)/dhcpd.leases$(FFMANEXT)
 
 depend:
-	makedepend $(INCLUDES) $(PREDEFINES) $(SRCS)
+	$(MKDEP) $(INCLUDES) $(PREDEFINES) $(SRCS)
 
 clean:
 	-rm -f $(OBJS)
@@ -64,6 +64,14 @@ realclean: clean
 
 distclean: realclean
 	-rm -f Makefile
+
+links:
+	@for foo in $(SRCS) $(MAN); do \
+	  if [ ! -b $$foo ]; then \
+	    rm -f $$foo; \
+	  fi; \
+	  ln -s $(TOP)/server/$$foo $$foo; \
+	done
 
 # These should only be done on 4.4 BSD-based systems, since the mandoc
 # macros aren't available on older unices.   Catted man pages are

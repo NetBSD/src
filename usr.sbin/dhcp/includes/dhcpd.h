@@ -261,12 +261,12 @@ struct lease {
 
 	u_int16_t flags;
 #       define STATIC_LEASE		1
-#	define PERSISTENT_FLAGS		(0)
+#	define PERSISTENT_FLAGS		(ON_ACK_QUEUE | ON_UPDATE_QUEUE)
 #	define MS_NULL_TERMINATION	8
 #	define ON_UPDATE_QUEUE		16
 #	define ON_ACK_QUEUE		32
-#	define EPHEMERAL_FLAGS		(MS_NULL_TERMINATION | \
-					 ON_ACK_QUEUE | ON_UPDATE_QUEUE)
+#	define EPHEMERAL_FLAGS		(MS_NULL_TERMINATION)
+
 	binding_state_t binding_state;	/* See failover.h, FTS_*. */
 	binding_state_t next_binding_state;	/* See failover.h, FTS_*. */
 	
@@ -665,6 +665,9 @@ struct client_config {
 	struct iaddrlist *reject_list;	/* Servers to reject. */
 
 	struct option_state *send_options;	/* Options to send. */
+	int omapi_port;			/* port on which to accept OMAPI
+					   connections, or -1 for no
+					   listener. */
 };
 
 /* Per-interface state used in the dhcp client... */
@@ -2278,5 +2281,5 @@ OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_state, dhcp_failover_state_t,
 OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_listener, dhcp_failover_listener_t,
 			 dhcp_type_failover_listener)
 OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_link, dhcp_failover_link_t,
-			 dhcp_type_failover_listener)
+			 dhcp_type_failover_link)
 #endif /* FAILOVER_PROTOCOL */

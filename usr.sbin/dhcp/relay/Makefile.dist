@@ -25,7 +25,7 @@ PROG   = dhcrelay
 MAN    = dhcrelay.8
 
 DEBUG  = -g
-INCLUDES = -I.. $(BINDINC) -I../includes
+INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
 DHCPLIB = ../common/libdhcp.a ../omapip/libomapi.a
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
@@ -48,7 +48,7 @@ install: all
 				$(DESTDIR)$(ADMMANDIR)/dhcrelay$(ADMMANEXT)
 
 depend:
-	makedepend $(INCLUDES) $(PREDEFINES) $(SRCS)
+	$(MKDEP) $(INCLUDES) $(PREDEFINES) $(SRCS)
 
 clean:
 	-rm -f $(OBJS) dhclient.o
@@ -58,6 +58,14 @@ realclean: clean
 
 distclean: realclean
 	-rm -f Makefile
+
+links:
+	@for foo in $(SRCS) $(MAN); do \
+	  if [ ! -b $$foo ]; then \
+	    rm -f $$foo; \
+	  fi; \
+	  ln -s $(TOP)/relay/$$foo $$foo; \
+	done
 
 # These should only be done on 4.4 BSD-based systems, since the mandoc
 # macros aren't available on older unices.   Catted man pages are

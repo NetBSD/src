@@ -55,3 +55,9 @@ distclean:
 		(cd $$dir; $(MAKE) distclean) || exit 1; \
 	 done
 	@rm -f Makefile
+
+links:
+	@for dir in ${SUBDIRS}; do \
+		echo "Making links in $$dir"; \
+		(cd $$dir; $(MAKE) links) || exit 1; \
+	 done

@@ -30,7 +30,7 @@ OBJ    = raw.o parse.o nit.o icmp.o dispatch.o conflex.o upf.o bpf.o socket.o \
 MAN    = dhcp-options.5 dhcp-contrib.5 dhcp-eval.5
 
 DEBUG  = -g
-INCLUDES = -I.. $(BINDINC) -I../includes
+INCLUDES = -I$(TOP) $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
 all:	libdhcp.a $(CATMANPAGES)
@@ -59,7 +59,7 @@ install: all
 				$(DESTDIR)$(FFMANDIR)/dhcp-contrib$(FFMANEXT)
 
 depend:
-	makedepend $(INCLUDES) $(PREDEFINES) $(SRC)
+	$(MKDEP) $(INCLUDES) $(PREDEFINES) $(SRC)
 
 clean:
 	-rm -f $(OBJ)
@@ -69,6 +69,14 @@ realclean: clean
 
 distclean: realclean
 	-rm -f Makefile
+
+links:
+	@for foo in $(SRC) $(MAN); do \
+	  if [ ! -b $$foo ]; then \
+	    rm -f $$foo; \
+	  fi; \
+	  ln -s $(TOP)/common/$$foo $$foo; \
+	done
 
 dhcp-options.cat5:	dhcp-options.man5
 	nroff -man dhcp-options.man5 >dhcp-options.cat5

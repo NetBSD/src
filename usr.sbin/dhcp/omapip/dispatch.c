@@ -252,6 +252,7 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	if (waiter && waiter -> ready)
 		return ISC_R_SUCCESS;
 	
+      again:
 	/* If we have no I/O state, we can't proceed. */
 	if (!(io = omapi_io_states.next))
 		return ISC_R_NOMORE;
@@ -281,15 +282,67 @@ isc_result_t omapi_one_dispatch (omapi_object_t *wo,
 	}
 
 	/* Wait for a packet or a timeout... XXX */
+#if defined (__linux__)
+#define fds_bits __fds_bits
+#endif
+	log_error ("dispatch: %d %x %x", max, r.fds_bits [0], w.fds_bits [0]);
 	count = select (max + 1, &r, &w, &x, t ? &to : (struct timeval *)0);
 
 	/* Get the current time... */
 	gettimeofday (&now, (struct timezone *)0);
 	cur_time = now.tv_sec;
 
-	/* Not likely to be transitory... */
-	if (count < 0)
-		return ISC_R_UNEXPECTED;
+	/* We probably have a bad file descriptor.   Figure out which one.
+	   When we find it, call the reaper function on it, which will
+	   maybe make it go away, and then try again. */
+	if (count < 0) {
+		struct timeval t0;
+
+		for (io = omapi_io_states.next; io; io = io -> next) {	
+			omapi_object_t *obj;
+			FD_ZERO (&r);
+			FD_ZERO (&w);
+			t0.tv_sec = t0.tv_usec = 0;
+
+			if (io -> readfd && io -> inner &&
+			    (desc = (*(io -> readfd)) (io -> inner)) >= 0) {
+			    FD_SET (desc, &r);
+			    log_error ("read check: %d %x %x",
+				       max, r.fds_bits [0], w.fds_bits [0]);
+			    count = select (desc + 1, &r, &w, &x, &t0);
+			   bogon:
+			    if (count < 0) {
+				log_error ("Bad descriptor %d.", desc);
+				for (obj = (omapi_object_t *)io;
+				     obj -> outer;
+				     obj = obj -> outer)
+					;
+				for (; obj; obj = obj -> inner)
+					log_error ("Object %lx %s",
+						   (unsigned long)obj,
+						   obj -> type -> name);
+				status = (*(io -> reaper)) (io -> inner);
+				goto again;
+			    }
+			}
+			
+			FD_ZERO (&r);
+			FD_ZERO (&w);
+			t0.tv_sec = t0.tv_usec = 0;
+
+			/* Same deal for write fdets. */
+			if (io -> writefd && io -> inner &&
+			    (desc = (*(io -> writefd)) (io -> inner)) >= 0) {
+				FD_SET (desc, &w);
+				log_error ("write check: %d %x %x",
+					   max,
+					   r.fds_bits [0], w.fds_bits [0]);
+				count = select (desc + 1, &r, &w, &x, &t0);
+				if (count < 0)
+					goto bogon;
+			}
+		}
+	}
 
 	for (io = omapi_io_states.next; io; io = io -> next) {
 		if (!io -> inner)
