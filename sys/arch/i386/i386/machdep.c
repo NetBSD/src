@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.355 1999/05/25 23:14:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.356 1999/05/25 23:19:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -380,7 +380,7 @@ cpu_startup()
 #if defined(PMAP_NEW)
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * NBPG,
-		    msgbuf_paddr + x * NBPG, VM_PROT_ALL);
+		    msgbuf_paddr + x * NBPG, VM_PROT_READ|VM_PROT_WRITE);
 #else
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbuf_vaddr + x * NBPG,
@@ -490,7 +490,7 @@ cpu_startup()
 	pmap_enter(pmap_kernel(),
 		   (vaddr_t)BIOSTRAMP_BASE,	/* virtual */
 		   (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		   VM_PROT_READ|VM_PROT_WRITE,	/* protection */
+		   VM_PROT_ALL,			/* protection */
 		   TRUE,			/* wired down */
 		   VM_PROT_READ|VM_PROT_WRITE);
 #endif
