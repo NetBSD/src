@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4,v 1.8 1998/04/30 08:50:11 fair Exp $
+.\"	$NetBSD: tp.4,v 1.8.4.1 1999/12/27 18:30:46 wrstuden Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -616,9 +616,8 @@ entity issues a
 .Dv SIGURG
 signal, indicating that
 disconnection has occurred.
-If the signal is issued during a
-a system call, the system call may be interrupted,
-in which case the
+If the signal is issued during a system call, the system call
+may be interrupted, in which case the
 .Va errno
 value upon return from the system call is
 .Er EINTR.

@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.2 1997/01/12 19:12:12 tls Exp $	*/
+/*	$NetBSD: sh.h,v 1.2.6.1 1999/12/27 18:27:04 wrstuden Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $NetBSD: sh.h,v 1.2 1997/01/12 19:12:12 tls Exp $ */
+/* $Id: sh.h,v 1.2.6.1 1999/12/27 18:27:04 wrstuden Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -30,6 +30,7 @@
 /* just a useful subset of what stdlib.h would have */
 extern char * getenv  ARGS((const char *));
 extern void * malloc  ARGS((size_t));
+extern void * realloc ARGS((void *, size_t));
 extern int    free    ARGS((void *));
 extern int    exit    ARGS((int));
 extern int    rand    ARGS((void));
@@ -205,17 +206,18 @@ typedef	RETSIGTYPE (*handler_t) ARGS((int));	/* signal handler */
 
 /* Special cases for execve(2) */
 #ifdef OS2
-extern int ksh_execve(char *cmd, char **args, char **env);
+extern int ksh_execve(char *cmd, char **args, char **env, int flags);
 #else /* OS2 */
 # if defined(OS_ISC) && defined(_POSIX_SOURCE)
 /* Kludge for ISC 3.2 (and other versions?) so programs will run correctly.  */
-#  define ksh_execve(p, av, ev) do { \
+#  define ksh_execve(p, av, ev, flags) \
+				do { \
 					__setostype(0); \
 					execve(p, av, ev); \
 					__setostype(1); \
 				} while (0)
 # else /* OS_ISC && _POSIX */
-#  define ksh_execve(p, av, ev)	execve(p, av, ev)
+#  define ksh_execve(p, av, ev, flags)	execve(p, av, ev)
 # endif /* OS_ISC && _POSIX */
 #endif /* OS2 */
 
@@ -237,8 +239,13 @@ extern int ksh_execve(char *cmd, char **args, char **env);
 # define ksh_jmp_buf		jmp_buf
 #endif /* HAVE_SIGSETJMP */
 
+#ifndef HAVE_DUP2
+extern int dup2 ARGS((int, int));
+#endif /* !HAVE_DUP2 */
+
 /* Find a integer type that is at least 32 bits (or die) - SIZEOF_* defined
- * by autoconf (assumes an 8 bit byte, but I'm not concerned)
+ * by autoconf (assumes an 8 bit byte, but I'm not concerned).
+ * NOTE: INT32 may end up being more than 32 bits.
  */
 #if SIZEOF_INT >= 4
 # define INT32	int
@@ -268,11 +275,15 @@ extern int ksh_execve(char *cmd, char **args, char **env);
 # define EXTERN_DEFINED
 #endif
 
+#ifdef OS2
+# define inDOS() (!(_emx_env & 0x200))
+#endif
+
 #ifndef EXECSHELL
 /* shell to exec scripts (see also $SHELL initialization in main.c) */
 # ifdef OS2
-#  define EXECSHELL	"c:\\os2\\cmd.exe"
-#  define EXECSHELL_STR	"OS2_SHELL"
+#  define EXECSHELL	(inDOS() ? "c:\\command.com" : "c:\\os2\\cmd.exe")
+#  define EXECSHELL_STR	(inDOS() ? "COMSPEC" : "OS2_SHELL")
 # else /* OS2 */
 #  define EXECSHELL	"/bin/sh"
 #  define EXECSHELL_STR	"EXECSHELL"
@@ -283,15 +294,16 @@ extern int ksh_execve(char *cmd, char **args, char **env);
  * ISROOTEDPATH() means a .. as the first component is a no-op,
  * ISRELPATH() means $PWD can be tacked on to get an absolute path.
  *
- * OS	Path		ISABSPATH	ISROOTEDPATH	ISRELPATH
- * unix	/foo		yes		yes		no
- * unix	foo		no		no		yes
- * unix	../foo		no		no		yes
- * os2	a:/foo		yes		yes		no
- * os2	a:foo		no		no		no
- * os2	/foo		no		yes		no
- * os2	foo		no		no		yes
- * os2	../foo		no		no		yes
+ * OS		Path		ISABSPATH	ISROOTEDPATH	ISRELPATH
+ * unix		/foo		yes		yes		no
+ * unix		foo		no		no		yes
+ * unix		../foo		no		no		yes
+ * os2+cyg	a:/foo		yes		yes		no
+ * os2+cyg	a:foo		no		no		no
+ * os2+cyg	/foo		no		yes		no
+ * os2+cyg	foo		no		no		yes
+ * os2+cyg	../foo		no		no		yes
+ * cyg 		//foo		yes		yes		no
  */
 #ifdef OS2
 # define PATHSEP        ';'
@@ -313,9 +325,15 @@ extern char *ksh_strrchr_dirsep(const char *path);
 # define DIRSEP         '/'
 # define DIRSEPSTR      "/"
 # define ISDIRSEP(c)    ((c) == '/')
+#ifdef __CYGWIN__
+#  define ISABSPATH(s) \
+       (((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])) || ISDIRSEP((s)[0]))
+#  define ISRELPATH(s) (!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
+#else /* __CYGWIN__ */
 # define ISABSPATH(s)	ISDIRSEP((s)[0])
-# define ISROOTEDPATH(s) ISABSPATH(s)
 # define ISRELPATH(s)	(!ISABSPATH(s))
+#endif /* __CYGWIN__ */
+# define ISROOTEDPATH(s) ISABSPATH(s)
 # define FILECHCONV(c)	c
 # define FILECMP(s1, s2) strcmp(s1, s2)
 # define FILENCMP(s1, s2, n) strncmp(s1, s2, n)
@@ -355,6 +373,7 @@ typedef INT32 Tflag;
 EXTERN	const char *kshname;	/* $0 */
 EXTERN	pid_t	kshpid;		/* $$, shell pid */
 EXTERN	pid_t	procpid;	/* pid of executing process */
+EXTERN	int	ksheuid;	/* effective uid of shell */
 EXTERN	int	exstat;		/* exit status */
 EXTERN	int	subst_exstat;	/* exit status of last $(..)/`..` */
 EXTERN	const char *safe_prompt; /* safe prompt if PS1 substitution fails */
@@ -375,6 +394,16 @@ EXTERN	Area	aperm;		/* permanent object space */
 #ifdef MEM_DEBUG
 # include "chmem.h" /* a debugging front end for malloc et. al. */
 #endif /* MEM_DEBUG */
+
+#ifdef KSH_DEBUG
+# define kshdebug_init()	kshdebug_init_()
+# define kshdebug_printf(a)	kshdebug_printf_ a
+# define kshdebug_dump(a)	kshdebug_dump_ a
+#else /* KSH_DEBUG */
+# define kshdebug_init()
+# define kshdebug_printf(a)
+# define kshdebug_dump(a)
+#endif /* KSH_DEBUG */
 
 
 /*
@@ -404,6 +433,7 @@ EXTERN	struct env {
 /* struct env.flag values */
 #define EF_FUNC_PARSE	BIT(0)	/* function being parsed */
 #define EF_BRKCONT_PASS	BIT(1)	/* set if E_LOOP must pass break/continue on */
+#define EF_FAKE_SIGDIE	BIT(2)	/* hack to get info from unwind to quitenv */
 
 /* Do breaks/continues stop at env type e? */
 #define STOP_BRKCONT(t)	((t) == E_NONE || (t) == E_PARSE \
@@ -427,7 +457,8 @@ EXTERN	struct env {
 #define OF_CMDLINE	0x01	/* command line */
 #define OF_SET		0x02	/* set builtin */
 #define OF_SPECIAL	0x04	/* a special variable changing */
-#define OF_ANY		(OF_CMDLINE | OF_SET | OF_SPECIAL)
+#define OF_INTERNAL	0x08	/* set internally by shell */
+#define OF_ANY		(OF_CMDLINE | OF_SET | OF_SPECIAL | OF_INTERNAL)
 
 struct option {
     const char	*name;	/* long name of option */
@@ -483,6 +514,7 @@ enum sh_flag {
 	FVIESCCOMPLETE,	/* enable ESC as file name completion in command mode */
 #endif
 	FXTRACE,	/* -x: execution trace */
+	FTALKING_I,	/* (internal): initial shell was interactive */
 	FNFLAGS /* (place holder: how many flags are there) */
 };
 
@@ -495,17 +527,19 @@ EXTERN	char	space [] I__(" ");
 EXTERN	char	newline [] I__("\n");
 EXTERN	char	slash [] I__("/");
 
-/* temp/here files. the file is removed when the struct is freed */
+enum temp_type {
+    TT_HEREDOC_EXP,	/* expanded heredoc */
+    TT_HIST_EDIT	/* temp file used for history editing (fc -e) */
+};
+typedef enum temp_type Temp_type;
+/* temp/heredoc files.  The file is removed when the struct is freed. */
 struct temp {
 	struct temp	*next;
 	struct shf	*shf;
 	int		pid;		/* pid of process parsed here-doc */
+	Temp_type	type;
 	char		*name;
 };
-
-/* here documents in functions are treated specially (the get removed when
- * shell exis) */
-EXTERN struct temp	*func_heredocs;
 
 /*
  * stdio and our IO routines
@@ -620,6 +654,7 @@ EXTERN int ifs0 I__(' ');	/* for "$*" */
 
 typedef struct {
 	int		optind;
+	int		uoptind;/* what user sees in $OPTIND */
 	char		*optarg;
 	int		flags;	/* see GF_* */
 	int		info;	/* see GI_* */
@@ -628,6 +663,7 @@ typedef struct {
 } Getopt;
 
 EXTERN Getopt builtin_opt;	/* for shell builtin commands */
+EXTERN Getopt user_opt;		/* parsing state for getopts builtin command */
 
 
 #ifdef KSH
@@ -690,6 +726,10 @@ EXTERN	int	x_cols I__(80);	/* tty columns */
 #  define KSH_SYSTEM_PROFILE "/etc/profile"
 # endif /* __NeXT */
 #endif /* KSH_SYSTEM_PROFILE */
+
+/* Used by v_evaluate() and setstr() to control action when error occurs */
+#define KSH_UNWIND_ERROR	0	/* unwind the stack (longjmp) */
+#define KSH_RETURN_ERROR	1	/* return 1/0 for success/failure */
 
 #include "shf.h"
 #include "table.h"

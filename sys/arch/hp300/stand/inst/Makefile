@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 1997/02/04 03:52:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.32.1 1999/12/27 18:31:59 wrstuden Exp $
 
 PROGAOUT=	inst
 PROGSOURCE=	inst.c
 NEWVERSWHAT=	"Miniroot Installer"
+
+CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
 
 install:
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \

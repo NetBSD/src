@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1999/09/16 12:23:20 takemura Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.8.1 1999/12/27 18:32:04 wrstuden Exp $
 
 HDR=../include/platid_generated.h
 MASK_HDR=../include/platid_mask.h
@@ -22,8 +22,9 @@ test: platid_test
 	diff  platid_test.out  platid_test.canon
 
 platid_test: platid.c platid_mask.c platid_test.c
-	ln -s ../include ./machine
+	ln -sf ../include ./machine
+	ln -sf ../../mips/include ./mips
 	$(HOST_CC) -I. -DPLATID_TEST platid.c platid_mask.c platid_test.c -o $@
 
 clean::
-	rm -rf platid_test platid_test.out $(GENERATEDS) machine
+	rm -rf platid_test platid_test.out $(GENERATEDS) machine mips

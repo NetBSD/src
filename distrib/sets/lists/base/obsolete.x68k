@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.x68k,v 1.1 1999/12/05 16:41:24 minoura Exp $
+# $NetBSD: obsolete.x68k,v 1.1.2.1 1999/12/27 18:28:33 wrstuden Exp $
 /usr/include/x68k
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h

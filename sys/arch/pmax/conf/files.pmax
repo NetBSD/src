@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.69 1999/07/07 00:05:30 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.69.8.1 1999/12/27 18:33:22 wrstuden Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -47,48 +47,33 @@ file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
 #
 include "dev/dec/files.dec"
 
-# 3100 and 5100 ibus
-define baseboard {}
-device kn01bus {}: baseboard
-attach kn01bus at mainbus
-
-device kn230bus {}: baseboard
-attach kn230bus at mainbus
-
-device ibus {}
-attach ibus at baseboard
-
+# 3100 and 5100 ibus under mainbus
+device ibus { [addr = -1] }
+attach ibus at mainbus with ibus_pmax
 file	arch/pmax/ibus/ibus.c		ibus
-file	arch/pmax/ibus/ibus_3100.c	ibus & dec_3100
-file	arch/pmax/ibus/ibus_5100.c	ibus & dec_5100
-
+file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
 
 #
-# TurboChannel Devices
+# TURBOchannel Devices
 #
-device tcasic {}
-attach tcasic	at mainbus
 include	"dev/tc/files.tc"
-#attach tc	at tcasic
-attach tc	at mainbus
-
-
-file	arch/pmax/tc/tcasic.c		tcasic
-file	arch/pmax/tc/tc_conf.c		tcasic
-file	arch/pmax/tc/tc_subr.c		tc	needs-flag
+attach	tc at mainbus with tcbus
+file	arch/pmax/tc/tcbus.c		tc
 file	arch/pmax/tc/tc_3max.c		tc & dec_3max
 file	arch/pmax/tc/tc_3min.c		tc & dec_3min
 file	arch/pmax/tc/tc_3maxplus.c	tc & dec_3maxplus
 file	arch/pmax/tc/tc_maxine.c	tc & dec_maxine
 
-#
-# The TurboChannel IOCTL ASIC. Present on IOASIC machines,
-# which is all turbochannel machines ever built except the 3MAX (5000/200).
+# 3MAX system slot as a TURBOchannel device
+attach	ibus at tc with kn02sys
+file	arch/pmax/ibus/ibus_3max.c	ibus & dec_3max
+
+# IOCTL ASIC as a TURBOchannel device
 #
 # device defined in files.tc:
 # device ioasic { offset = -1 }
 # attach ioasic at tc
-file	arch/pmax/tc/asic.c		ioasic
+file	arch/pmax/tc/ioasic.c		ioasic
 
 
 # Real-time clock (not optional)
@@ -118,13 +103,13 @@ file	arch/pmax/pmax/md_root.c	memory_disk_hooks
 major { md = 17 }
 
 #
-# Old 4.4bsd pmax-specific scsi driver (deprecated).
+# Old 4.4bsd pmax-specific SCSI driver (deprecated).
 #
 define	oldscsi {}
 device oldscsibus {target = -1, drive = -1}
 attach oldscsibus at oldscsi
 
-# asc: system-slot or turbochannel-option SCSI interface
+# asc: SCSI interface in TC option slot or in IOASIC slot
 #device asc: oldscsi,scsi
 device asc: oldscsi
 attach asc at ioasic with asc_ioasic
@@ -141,7 +126,6 @@ file	arch/pmax/dev/sii.c		sii needs-flag
 attach sii at ibus with sii_ds
 file	arch/pmax/dev/sii_ds.c		sii_ds
 
-
 device	tz: tape
 attach	tz at oldscsibus
 file	arch/pmax/dev/tz.c		tz needs-count
@@ -150,18 +134,12 @@ device	rz: disk
 attach	rz at oldscsibus
 file	arch/pmax/dev/rz.c		rz needs-count
 
-#
-# Optional device-drivers
-#
 
-# DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
-# For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an ASIC.
+# DC7085 (DZ-like four-port serial device) on ibus
 device dc: tty
 file	arch/pmax/dev/dc.c		dc
-attach dc at ioasic with dc_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dc_ioasic	needs-flag
 attach dc at ibus with dc_ds
-file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
+file	arch/pmax/dev/dc_ds.c		dc needs-flag
 
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
@@ -169,16 +147,19 @@ device dtop
 attach dtop at ioasic
 file	arch/pmax/dev/dtop.c		dtop needs-flag
 
+
 # LANCE ethernet driver.
 #   device defined in sys/conf/files.
-#   TC and ioasic attachment and files in sys/dev/tc/files.tc
+#   TC and IOASIC attachment and files in sys/dev/tc/files.tc
 
 attach le at ibus with le_pmax:		le24, le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
+
 # Raster operations for rcons. This isn't in the rcons section, since
 # it depends on fb devices for configuration glue. 
 include "dev/rasops/files.rasops"
+
 
 # 3100 (pmax) onboard framebuffer
 device pm: rasops1, rasops8
@@ -187,8 +168,9 @@ file	arch/pmax/dev/bt478.c		pm
 attach pm at ibus with pm_ds
 file	arch/pmax/dev/pm_ds.c		pm_ds
 
+
 #########################################################################
-# Turbochannel options.							#
+# TURBOchannel option cards.						#
 #########################################################################
 
 device cfb: rasops8
@@ -214,7 +196,7 @@ attach	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
 
-#  PixelStamp graphics boards
+# PixelStamp graphics boards
 device	px
 attach	px at tc
 file	arch/pmax/dev/px.c 		px needs-flag
@@ -236,7 +218,7 @@ file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
-file	arch/pmax/stand/lib/callvec.c
+file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
 file	arch/pmax/dev/findcons.c	# find and set up console.
 #file	arch/pmax/pmax/kadb.c		# obsolute kadb

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.6 1998/09/17 18:10:53 drochner Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.6.18.1 1999/12/27 18:35:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -343,7 +343,7 @@ wskbd_get_mapentry(mapdata, kc, mapentry)
 	mapentry->group2[0] = KS_voidSymbol;
 	mapentry->group2[1] = KS_voidSymbol;
 
-	for (cur = mapdata->layout; cur != 0; ) {
+	for (cur = mapdata->layout & ~KB_HANDLEDBYWSKBD; cur != 0; ) {
 		mp = mapdata->keydesc;
 		while (mp->map_size > 0) {
 			if (mp->name == cur)
@@ -414,7 +414,8 @@ wskbd_load_keymap(mapdata, map, maplen)
 	const struct wscons_keydesc *mp, *stack[10];
 	kbd_t cur;
 
-	for (cur = mapdata->layout, stack_ptr = 0; cur != 0; stack_ptr++) {
+	for (cur = mapdata->layout & ~KB_HANDLEDBYWSKBD, stack_ptr = 0;
+	     cur != 0; stack_ptr++) {
 		mp = mapdata->keydesc;
 		while (mp->map_size > 0) {
 			if (cur == 0 || mp->name == cur) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlockall.2,v 1.4 1999/06/18 05:37:30 thorpej Exp $
+.\"	$NetBSD: mlockall.2,v 1.4.4.1 1999/12/27 18:29:49 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,8 @@
 .Nm mlockall ,
 .Nm munlockall
 .Nd lock (unlock) the address space of a process
+.Sh LIBRARY
+.Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/mman.h>

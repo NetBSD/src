@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.15 1999/06/16 16:34:29 tron Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.15.2.1 1999/12/27 18:30:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.15 1999/06/16 16:34:29 tron Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.15.2.1 1999/12/27 18:30:16 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,6 +176,8 @@ main(argc, argv)
 	int opt, cmd_err;
 	pid_t childpid;
 	char *fs_name;			/* name of filesystem to clean */
+	time_t now, lasttime;
+	int loopcount;
 
 	cmd_err = debug = do_quit = 0;
 	clean_opts = 0;
@@ -236,13 +238,27 @@ main(argc, argv)
 	if (debug == 0) {
 		if (daemon(0, 0) == -1)
 			err(1, "lfs_cleanerd: couldn't become a daemon!");
+		lasttime=0;
+		loopcount=0;
 	    loop:
 		if((childpid=fork())<0) {
-			syslog(LOG_NOTICE,"lfs_cleanerd: couldn't fork, exiting: %m");
+			syslog(LOG_NOTICE,"%s: couldn't fork, exiting: %m",
+				fs_name);
 			exit(1);
 		}
 		if(childpid != 0) {
 			wait(NULL);
+			/* If the child is looping, give up */
+			++loopcount;
+			if((now=time(NULL)) - lasttime > TIME_THRESHOLD) {
+				loopcount=0;
+			}
+			lasttime = now;
+			if(loopcount > LOOP_THRESHOLD) {
+				syslog(LOG_ERR,"%s: cleanerd looping, exiting",
+					fs_name);
+				exit(1);
+			}
 			if (fs_getmntinfo(&lstatfsp, fs_name, MOUNT_LFS) == 0) {
 				/* fs has been unmounted(?); exit quietly */
 				syslog(LOG_INFO,"lfs_cleanerd: fs %s unmounted, exiting", fs_name);
@@ -369,7 +385,7 @@ clean_loop(fsp, nsegs, options)
 		 * clean space.
 		 */
 		if (getloadavg(loadavg, MAXLOADS) == -1) {
-			perror("getloadavg: failed\n");
+			perror("getloadavg: failed");
 			return (-1);
 		}
 		if (loadavg[ONE_MIN] < load_threshold
@@ -605,7 +621,7 @@ clean_segment(fsp, slp)
 
 	/* get the current disk address of blocks contained by the segment */
 	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, block_array, num_blocks) < 0) {
-		perror("clean_segment: lfs_bmapv failed\n");
+		perror("clean_segment: lfs_bmapv failed");
 		++cleaner_stats.segs_error;
 		free(block_array); /* XXX KS */
 		return -1;

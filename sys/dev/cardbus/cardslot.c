@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.5 1999/11/15 06:08:02 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.5.2.1 1999/12/27 18:34:39 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999

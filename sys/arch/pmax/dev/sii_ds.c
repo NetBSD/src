@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.8 1999/04/24 08:01:08 simonb Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.8.8.1 1999/12/27 18:33:25 wrstuden Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -115,7 +115,7 @@ sii_ds_attach(parent, self, aux)
 	siiattach(sc);
 
 	/* tie pseudo-slot to device */
-	ibus_intr_establish((void*)ia->ia_cookie, IPL_BIO, siiintr, sc);
+	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_BIO, siiintr, sc);
 	printf("\n");
 }
 

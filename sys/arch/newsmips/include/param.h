@@ -1,4 +1,4 @@
-/*	from $NetBSD: param.h,v 1.5.14.1 1999/12/21 23:16:07 wrstuden Exp $	*/
+/*	from $NetBSD: param.h,v 1.5.14.2 1999/12/27 18:33:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,9 +66,6 @@
 #define	DEF_BSHIFT	9		/* log2(DEF_BSIZE) */
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
 
 /*
  * Constants related to network buffer management.

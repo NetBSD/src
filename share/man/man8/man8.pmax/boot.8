@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 1998/03/23 03:47:18 jonathan Exp $
+.\"	$NetBSD: boot.8,v 1.5.6.1 1999/12/27 18:31:07 wrstuden Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -45,8 +45,8 @@ system bootstrapping procedures
 .Sh DESCRIPTION
 The
 .Nx
-kernel is started by placing it at the beginning of physical memory
-and transferring to the entry point.
+kernel is started by placing it near the beginning of physical
+memory and transferring to the entry point.
 Since the system is not reenterable,
 it is necessary to read it in from disk or tape
 each time it is to be bootstrapped.
@@ -75,14 +75,24 @@ a triplet in the form (x,y,z), followed by a filename to load.
 Within the triplet, x is the controller (always 0), y is the SCSI id of
 the drive to
 boot from or 0 for net boots, and z is the partition to boot from
-(usually 0 for SCSI devices, always zero for network booting.
-For network boots, () may be specified instead of (0,0,0).
+(usually 0 for SCSI devices, always zero for network booting).
+For both disk and network boots, () may be specified instead of
+(0,0,0).
 .Pp
 The filename is optional for bootp/tftp and mop booting, since in
 these cases the network protocol can be used to determine which
 file to boot.  When booting off the tape, no filename should be
-specified, and when booting off of disk, the filename of a kernel
-must be specified.  Generally, the kernel is named
+specified.  When booting off of disk, the filename is optional but is usually specified.  If no filename is
+specified when booting off disk, the following filenames are
+tried in order:
+.Nm netbsd.pmax ,
+.Nm netbsd ,
+.Nm netbsd.gz ,
+.Nm netbsd.bak ,
+.Nm netbsd.old ,
+.Nm onetbsd ,
+.Nm gennetbsd .
+Generally, the kernel is named
 .Nm netbsd.
 .Pp
 An example bootpath setting would be:
@@ -92,13 +102,7 @@ An example bootpath setting would be:
 setenv bootpath rz(0,1,0)netbsd
 .fi
 .Pp
-For automatic boots, the ROM automatically passes a
-.Fl a
-argument to the boot
-loader, requesting that
-.Nx
-attempt to come up to multi-user mode.   At the boot ROM prompt,
-the user may boot
+At the PROM prompt, the user may boot
 .Nx
 with either the
 .Nm auto
@@ -120,7 +124,9 @@ When either the
 or the
 .Nm auto
 command is issued with no arguments, the kernel specified in the bootpath
-environment variable is booted.   An alternative kernel may be specified
+environment variable is booted.   With the
+.Nm boot
+command, an alternative kernel may be specified
 with the
 .Fl f
 flag, followed by the path of the kernel to boot, as described above.
@@ -202,16 +208,14 @@ For example:
 boot 3/rz4/netbsd ns
 .fi
 .Sh SEE ALSO
-.Xr crash 8m ,
 .Xr ddb 4 ,
-.Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
-.Xr newfs 8 ,
+.Xr installboot 8 ,
 .Xr rc 8 ,
-.Xr shutdown 8 ,
-.Xr syslogd 8 ,
-.Xr reboot 8
+.Xr reboot 8 ,
+.Xr savecore 8 ,
+.Xr shutdown 8
 .Sh HISTORY
 The
 .Nm

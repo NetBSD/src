@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxxvar.h,v 1.1 1999/11/20 04:55:30 nisimura Exp $ */
+/* $NetBSD: vsxxxvar.h,v 1.1.2.1 1999/12/27 18:34:41 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.1 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.1.8.1 1999/12/27 18:34:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath

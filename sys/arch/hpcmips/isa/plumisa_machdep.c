@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.1 1999/11/21 06:46:02 uch Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.1.2.1 1999/12/27 18:32:06 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

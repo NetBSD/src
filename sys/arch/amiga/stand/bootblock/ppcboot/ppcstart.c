@@ -1,4 +1,4 @@
-/* $NetBSD: ppcstart.c,v 1.1 1999/11/28 22:10:48 is Exp $ */
+/* $NetBSD: ppcstart.c,v 1.1.2.1 1999/12/27 18:31:37 wrstuden Exp $ */
 
 /*
  * Copyright 1999 Ignatios Souvatzis. All rights reserved.

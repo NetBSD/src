@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.9 1999/03/16 01:19:14 garbled Exp $
+.\"	$NetBSD: ahc.4,v 1.9.6.1 1999/12/27 18:30:39 wrstuden Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -41,10 +41,10 @@ For one or more VL/EISA cards:
 .Cd controller ahc0
 \}
 \{For VL cards:
-.Cd ahc0	at isa? port ? irq ?
+.Cd ahc0 at isa? port ? irq ?
 .Pp
 For EISA cards:
-.Cd ahc*	at eisa? slot ?\}
+.Cd ahc* at eisa? slot ?\}
 .Pp
 .ie 0 \{
 For one or more PCI cards:
@@ -52,7 +52,7 @@ For one or more PCI cards:
 .Cd controller ahc0
 \}
 \{For PCI cards:
-.Cd ahc*	at pci? dev ? function ?\}
+.Cd ahc* at pci? dev ? function ?\}
 .Pp
 To enable tagged queueing:
 .Cd options AHC_TAGENABLE
@@ -125,6 +125,50 @@ Ensure that the jumpers setting the I/O area for the 284x match the
 slot into which the card is inserted to prevent conflicts with other
 .Tn EISA
 cards.
+.Sh HARDWARE
+Supported cards include:
+.Pp
+.Bl -tag -width xxxxxxxxxx -offset indent
+.It AHA-274x 
+.Tn Adaptec
+EISA SCSI adaptor
+.It AHA-284x 
+.Tn Adaptec
+VL SCSI adaptor
+.It AHA-2940 
+.Tn Adaptec
+PCI SCSI adaptor
+.It AHA-2940U
+.Tn Adaptec
+PCI Ultra SCSI adaptor
+.It AHA-2940AU
+.Tn Adaptec
+PCI Ultra SCSI adaptor
+.It AHA-2944
+.Tn Adaptec
+PCI SCSI adaptor
+.It AHA-2944U 
+.Tn Adaptec
+PCI SCSI adaptor
+.It AHA-3940 
+.Tn Adaptec
+PCI dual bus SCSI adaptor
+.It AHA-3940U
+.Tn Adaptec
+PCI dual bus Ultra SCSI adaptor
+.It Other
+EISA SCSI adaptors based on the
+.Tn Adaptec
+.Tn AIC-7770
+.It Other 
+PCI controllers based on the
+.Tn AIC-7850,
+.Tn AIC-7855,
+.Tn AIC-7860,
+.Tn AIC-7870,
+or
+.Tn AIC-7880
+.El
 .Sh BUGS
 Some
 .Tn Quantum

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 1999/07/30 04:07:23 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.20.2.1 1999/12/27 18:29:16 wrstuden Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -33,12 +33,21 @@ CPPFLAGS+=	-I${.CURDIR}/../arch \
 		-I${DIST} \
 		-I${DIST}/config \
 		-DIN_GCC -DNETBSD_NATIVE
+HOST_CPPFLAGS+= -I${.CURDIR}/../arch \
+		-I${.CURDIR}/../arch/${ARCHSUBDIR} \
+		-I${COMMONOBJ} \
+		-I${DIST} \
+		-I${DIST}/config \
+		-DIN_GCC -DNETBSD_NATIVE
 
 .if (${OBJECT_FMT} == "ELF" || defined(BOOTSTRAP_ELF))
 CPPFLAGS+=-DDEFAULT_ELF
 .endif
 
-HOST_CPPFLAGS=	${CPPFLAGS}
+.if (${MACHINE} == "hpcmips") # XXX
+CPPFLAGS+=-D${MACHINE}
+HOST_CPPFLAGS += -D${MACHINE}
+.endif
 
 .PATH:		${.CURDIR}/../arch \
 		${DIST} \

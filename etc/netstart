@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.62 1999/09/06 18:52:33 itojun Exp $
+#	$NetBSD: netstart,v 1.62.4.1 1999/12/27 18:28:49 wrstuden Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -89,7 +89,9 @@ if [ "$net_interfaces" != NO ]; then
 		elif [ -f /etc/ifconfig.$int ]; then
 			echo -n " $int"
 			(while read args; do
-				ifconfig $int $args
+				if [ -n "`eval echo '$args'`" ] ; then
+					ifconfig $int $args
+				fi
 			done) < /etc/ifconfig.$int
 		else
 			if ! checkyesno auto_ifconfig; then
@@ -118,6 +120,9 @@ fi
 # associated, then configure additional IP addresses for that interface.
 # The variable contains a list of "address netmask" pairs, with "netmask"
 # set to "-" if the interface default netmask is to be used.
+#
+# Note that $ifaliases_xxN works only with IPv4 addresses and considered
+# not recommended.  See below (/etc/ifaliases section) for alternative.
 # 
 if [ -n "$configured_interfaces" ]; then
 	echo 'adding interface aliases:';
@@ -144,6 +149,14 @@ done
 # addresses for each interface. It is formatted as a series of lines
 # that contain
 #	address interface netmask
+#
+# Note that /etc/ifaliases works only with IPv4 addresses and considered
+# not recommended.  Recommend using /etc/ifconfig.xxN like below instead
+# (/etc/ifconfig.xxN allows multiple lines):
+#	inet 10.1.1.1 netmask 0xffffff00
+#	inet 10.1.1.2 netmask 0xffffff00 alias
+#	inet6 fec0::1 prefixlen 64 alias
+#
 if [ -f /etc/ifaliases ]; then
 (
 	if [ "$done_aliases_message" != yes ]; then
@@ -186,10 +199,21 @@ fi
 
 # IPv6
 # Note that manual configuration can be done in the above, using ifconfig.
-dadcount=`sysctl -n net.inet6.ip6.dad_count 2>/dev/null`
-if [ "x$dadcount" = "x" ]; then
-	# IPv6 is not configured in the kernel.  do not bother.
-else
+if ifconfig lo0 inet6 >/dev/null 2>&1; then
+	# We have IPv6 support in kernel.
+
+	# disallow scoped unicast dest without outgoing scope identifiers.
+	route add -inet6 fe80:: -prefixlen 10 ::1 -reject
+	route add -inet6 fc80:: -prefixlen 10 ::1 -reject
+
+	# disallow "internal" addresses to appear on the wire.
+	# you may want to enable them for experiments.
+	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
+	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+
+	# sysctl is in /usr - need to ensure it is mounted
+	mount /usr >/dev/null 2>&1	
+
 	sysctl -w net.inet6.ip6.forwarding=0
 	sysctl -w net.inet6.ip6.accept_rtadv=0
 	if checkyesno ip6forwarding; then
@@ -205,10 +229,17 @@ else
 			rtsol $rtsol_flags
 		fi
 	fi
+
 	# wait till DAD is completed.
-	# outside of the loop in case ifconfig is used
+	# always invoke it in case if are configured manually by ifconfig
+	dadcount=`sysctl -n net.inet6.ip6.dad_count 2>/dev/null`
 	sleep $dadcount
 	sleep 1
+else
+	# We do not have IPv6 support in kernel.
+	if checkyesno ip6forwarding || checkyesno rtsol; then
+		echo "WARNING: ip6 requested without kernel IPv6 config"
+	fi
 fi
 
 if [ -s /etc/netstart.local ]; then

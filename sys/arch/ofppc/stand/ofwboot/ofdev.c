@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.3 1998/03/02 16:18:17 drochner Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.3.14.1 1999/12/27 18:33:17 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_mbr.h>
 
 #include <netinet/in.h>
 
@@ -202,16 +203,16 @@ search_label(devp, off, buf, lp, off0)
 
 	if (recursion++ <= 1)
 		off0 += off;
-	for (p = (struct mbr_partition *)(buf + MBRPARTOFF), i = 4;
+	for (p = (struct mbr_partition *)(buf + MBR_PARTOFF), i = 4;
 	     --i >= 0; p++) {
-		if (p->mbr_type == MBR_NETBSD
+		if (p->mbrp_typ == MBR_PTYPE_NETBSD
 #ifdef COMPAT_386BSD_MBRPART
-		    || (p->mbr_type == MBR_386BSD &&
+		    || (p->mbrp_typ == MBR_PTYPE_386BSD &&
 			(printf("WARNING: old BSD partition ID!\n"), 1)
 			/* XXX XXX - libsa printf() is void */ )
 #endif
 		    ) {
-			poff = get_long(&p->mbr_start) + off0;
+			poff = get_long(&p->mbrp_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
 				     DEV_BSIZE, buf, &read) == 0
 			    && read == DEV_BSIZE) {
@@ -225,8 +226,8 @@ search_label(devp, off, buf, lp, off0)
 				recursion--;
 				return ERDLAB;
 			}
-		} else if (p->mbr_type == MBR_EXTENDED) {
-			poff = get_long(&p->mbr_start);
+		} else if (p->mbrp_typ == MBR_PTYPE_EXT) {
+			poff = get_long(&p->mbrp_start);
 			if (!search_label(devp, poff, buf, lp, off0)) {
 				recursion--;
 				return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_3max.c,v 1.4 1999/12/11 13:49:18 simonb Exp $ */
+/* $NetBSD: ibus_3max.c,v 1.4.2.1 1999/12/27 18:33:26 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.4 1999/12/11 13:49:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.4.2.1 1999/12/27 18:33:26 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

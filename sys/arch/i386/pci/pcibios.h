@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.1 1999/11/17 01:16:37 thorpej Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.1.2.1 1999/12/27 18:32:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

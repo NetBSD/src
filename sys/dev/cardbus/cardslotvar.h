@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.4 1999/12/15 12:28:55 kleink Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.4.2.1 1999/12/27 18:34:39 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999

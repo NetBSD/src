@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.17 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.17.6.1 1999/12/27 18:30:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: if.c,v 1.17 1999/02/23 10:47:40 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.17.6.1 1999/12/27 18:30:32 wrstuden Exp $");
 #endif
 
 #include "defs.h"
@@ -737,6 +737,11 @@ ifinit(void)
 
 		ifam2 = (struct ifa_msghdr*)((char*)ifam + ifam->ifam_msglen);
 
+#ifdef RTM_OIFINFO
+		if (ifam->ifam_type == RTM_OIFINFO) {
+			continue; /* just ignore compat message */
+		}
+#endif
 		if (ifam->ifam_type == RTM_IFINFO) {
 			struct sockaddr_dl *sdl;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.44.14.1 1999/12/27 18:33:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -215,7 +215,8 @@ am7930attach_sbus(parent, self, aux)
 		return;
 	}
 	sc->sc_bh = bh;
-	am7930_sparc_attach(sc, sa->sa_pri);
+	if (sa->sa_nintr != 0)
+		am7930_sparc_attach(sc, sa->sa_pri);
 }
 
 void

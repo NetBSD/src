@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.5 1999/12/05 20:34:40 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.5.2.1 1999/12/27 18:29:15 wrstuden Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.

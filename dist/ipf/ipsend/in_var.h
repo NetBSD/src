@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.1.1.1 1999/12/11 22:24:08 veego Exp $	*/
+/*	$NetBSD: in_var.h,v 1.1.1.1.4.1 1999/12/27 18:27:59 wrstuden Exp $	*/
 
 /*	@(#)in_var.h 1.3 88/08/19 SMI; from UCB 7.1 6/5/86	*/
 

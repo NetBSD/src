@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.25 1999/02/17 06:45:38 scottr Exp $	*/
+/*	$NetBSD: rcp.c,v 1.25.6.1 1999/12/27 18:27:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.25 1999/02/17 06:45:38 scottr Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.25.6.1 1999/12/27 18:27:12 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(argc, argv)
 		errx(1, "unknown user %d", (int)userid);
 
 	if ((pwname = strdup(pwd->pw_name)) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 
 	rem = STDIN_FILENO;		/* XXX */
 
@@ -280,7 +280,7 @@ toremote(targ, argc, argv)
 			    strlen(src) + (tuser ? strlen(tuser) : 0) +
 			    strlen(thost) + strlen(targ) + CMDNEEDS + 20;
 			if (!(bp = malloc(len)))
-				err(1, "%s", "");
+				err(1, NULL);
 			if (host) {
 				*host++ = 0;
 				suser = argv[i];
@@ -305,7 +305,7 @@ toremote(targ, argc, argv)
 			if (rem == -1) {
 				len = strlen(targ) + CMDNEEDS + 20;
 				if (!(bp = malloc(len)))
-					err(1, "%s", "");
+					err(1, NULL);
 				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
 #ifdef KERBEROS
@@ -341,7 +341,7 @@ tolocal(argc, argv)
 			len = strlen(_PATH_CP) + strlen(argv[i]) +
 			    strlen(argv[argc - 1]) + 20;
 			if (!(bp = malloc(len)))
-				err(1, "%s", "");
+				err(1, NULL);
 			(void)snprintf(bp, len, "exec %s%s%s %s %s", _PATH_CP,
 			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 			    argv[i], argv[argc - 1]);
@@ -366,7 +366,7 @@ tolocal(argc, argv)
 		}
 		len = strlen(src) + CMDNEEDS + 20;
 		if ((bp = malloc(len)) == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 		(void)snprintf(bp, len, "%s -f %s", cmd, src);
 		rem = 
 #ifdef KERBEROS

@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586reg.h,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: via82c586reg.h,v 1.1.2.1 1999/12/27 18:32:27 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigsuspend.2,v 1.8 1998/08/29 08:32:42 lukem Exp $
+.\"	$NetBSD: sigsuspend.2,v 1.8.4.1 1999/12/27 18:29:53 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,8 @@
 .Sh NAME
 .Nm sigsuspend
 .Nd atomically release blocked signals and wait for interrupt
+.Sh LIBRARY
+.Lb libc
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
@@ -69,11 +71,12 @@ function
 always terminates by being interrupted, returning -1 with
 .Va errno
 set to
-.Dv EINTR .
+.Er EINTR .
 .Sh SEE ALSO
 .Xr sigprocmask 2 ,
 .Xr sigaction 2 ,
-.Xr sigsetops 3
+.Xr sigsetops 3 ,
+.Xr signal 7
 .Sh STANDARDS
 The
 .Nm sigsuspend

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1999/09/30 09:23:23 tron Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.4.1 1999/12/27 18:30:19 wrstuden Exp $
 
 PROG=	popen
 SRCS=	popen.c

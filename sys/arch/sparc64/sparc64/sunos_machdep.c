@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.6 1999/03/26 04:29:23 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.6.8.1 1999/12/27 18:34:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -89,7 +89,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sunos_sigframe *fp;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sunos_sigframe sf;
@@ -156,12 +156,12 @@ sunos_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("sunos_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 	if (rwindow_save(p) || 
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_long)oldsp)) {
+	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -210,7 +210,7 @@ sunos_sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct sunos_sigcontext sc, *scp;
 	sigset_t mask;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();

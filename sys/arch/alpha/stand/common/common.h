@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.11 1999/08/18 20:00:27 cgd Exp $ */
+/* $NetBSD: common.h,v 1.11.8.1 1999/12/27 18:31:29 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,8 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define	alpha_pal_imb()	__asm__("imb")
 
 void		OSFpal __P((void));
 void		init_prom_calls __P((void));

@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.11 1999/02/15 04:29:33 hubertf Exp $
+#	$NetBSD: files.powerpc,v 1.11.14.1 1999/12/27 18:33:39 wrstuden Exp $
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copyinstr.c
@@ -12,6 +12,8 @@ file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/pmap.c
 file	arch/powerpc/powerpc/process_machdep.c
+file	arch/powerpc/powerpc/sig_machdep.c
+file	arch/powerpc/powerpc/sigcode.S
 file	arch/powerpc/powerpc/subyte.c
 file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c

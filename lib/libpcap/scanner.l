@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.8 1999/07/05 20:01:09 mjacob Exp $	*/
+/*	$NetBSD: scanner.l,v 1.8.2.1 1999/12/27 18:30:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.8 1999/07/05 20:01:09 mjacob Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.8.2.1 1999/12/27 18:30:07 wrstuden Exp $");
 #endif
 #endif
 
@@ -151,6 +151,8 @@ outbound	return OUTBOUND;
 "=="			return '=';
 "<<"			return LSH;
 ">>"			return RSH;
+:{B}			{ yylval.e = pcap_ether_aton(((char *)yytext)+1);
+			  return AID; }
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
 			yylval.s = sdup((char *)yytext); return HID; }

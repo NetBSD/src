@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.54 1998/08/15 10:51:17 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.54.16.1 1999/12/27 18:34:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -362,9 +362,11 @@ am7990_tint(sc)
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd3 & LE_T3_RTRY) {
+#ifdef LEDEBUG
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname,
 				    tmd.tmd3 & LE_T3_TDR_MASK);
+#endif
 				ifp->if_collisions += 16;
 			}
 			ifp->if_oerrors++;
@@ -411,9 +413,19 @@ am7990_intr(arg)
 	if ((isr & LE_C0_INTR) == 0)
 		return (0);
 
+#ifdef __vax__
+	/*
+	 * DEC needs this write order to the registers, don't know
+	 * the results on other arch's.  Ragge 991029
+	 */
+	isr &= ~LE_C0_INEA;
+	(*sc->sc_wrcsr)(sc, LE_CSR0, isr);
+	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA);
+#else
 	(*sc->sc_wrcsr)(sc, LE_CSR0,
 	    isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_MISS | LE_C0_MERR |
 		   LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
+#endif
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
 #ifdef LEDEBUG

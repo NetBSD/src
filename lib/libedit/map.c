@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.9 1999/07/02 15:21:26 simonb Exp $	*/
+/*	$NetBSD: map.c,v 1.9.2.1 1999/12/27 18:29:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.9 1999/07/02 15:21:26 simonb Exp $");
+__RCSID("$NetBSD: map.c,v 1.9.2.1 1999/12/27 18:29:57 wrstuden Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1028,10 +1028,7 @@ map_init_vi(el)
     }
 
     map_init_meta(el);
-#ifdef notyet
-    if (0 /* XXX: USER has set LC_CTYPE */)
-	map_init_nls(el);
-#endif
+    map_init_nls(el);
 
     tty_bind_char(el, 1);
     term_bind_arrow(el);
@@ -1061,10 +1058,6 @@ map_init_emacs(el)
     }
 
     map_init_meta(el);
-#ifdef notyet
-    if (0 /* XXX: USER has set LC_CTYPE */)
-	map_init_nls(el);
-#endif
     map_init_nls(el);
 
     buf[0] = CONTROL('X');

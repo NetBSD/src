@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.3 1999/03/25 16:58:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.3.8.1 1999/12/27 18:34:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -41,12 +41,12 @@
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-compat_09_compat_netbsd32_ogetdomainname(p, v, retval)
+compat_09_netbsd32_ogetdomainname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_09_compat_netbsd32_ogetdomainname_args /* {
+	struct compat_09_netbsd32_ogetdomainname_args /* {
 		syscallarg(netbsd32_charp) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
@@ -59,12 +59,12 @@ compat_09_compat_netbsd32_ogetdomainname(p, v, retval)
 }
 
 int
-compat_09_compat_netbsd32_osetdomainname(p, v, retval)
+compat_09_netbsd32_osetdomainname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_09_compat_netbsd32_osetdomainname_args /* {
+	struct compat_09_netbsd32_osetdomainname_args /* {
 		syscallarg(netbsd32_charp) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
@@ -79,12 +79,12 @@ compat_09_compat_netbsd32_osetdomainname(p, v, retval)
 }
 
 int
-compat_09_compat_netbsd32_ouname(p, v, retval)
+compat_09_netbsd32_ouname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_09_compat_netbsd32_uname_args /* {
+	struct compat_09_netbsd32_uname_args /* {
 		syscallarg(netbsd32_outsnamep_t) name;
 	} */ *uap = v;
 	struct compat_09_sys_uname_args ua;

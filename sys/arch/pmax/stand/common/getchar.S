@@ -1,4 +1,4 @@
-/*	$NetBSD: getchar.S,v 1.1 1999/11/27 06:52:05 simonb Exp $	*/
+/*	$NetBSD: getchar.S,v 1.1.2.1 1999/12/27 18:33:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

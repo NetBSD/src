@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.13.10.1 1999/12/27 18:34:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -554,8 +554,8 @@ sequencerioctl(dev, cmd, addr, flag, p)
 		t = *(int *)addr;
 		if (t < 1)
 			t = 1;
-		if (t > 1000)
-			t = 1000;
+		if (t > 10000)
+			t = 10000;
 		sc->timer.timebase = t;
 		*(int *)addr = t;
 		RECALC_TICK(&sc->timer);

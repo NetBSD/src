@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.26 1999/09/05 14:26:33 jdolecek Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.26.8.1 1999/12/27 18:36:41 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,8 +45,15 @@
 #include <sys/namei.h>
 #include <sys/buf.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/kernel.h>
+
+#include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -267,7 +274,7 @@ searchloop:
 					slotstatus = FOUND;
 					slotoffset = dp->i_offset;
 					slotsize = ufs_rw16(ep->d_reclen,
-					    needswap);
+						needswap);
 				} else if (slotstatus == NONE) {
 					slotfreespace += size;
 					if (slotoffset == -1)
@@ -276,7 +283,7 @@ searchloop:
 						slotstatus = COMPACT;
 						slotsize = dp->i_offset +
 						    ufs_rw16(ep->d_reclen,
-						             needswap)
+							     needswap)
 						    - slotoffset;
 					}
 				}
@@ -288,12 +295,14 @@ searchloop:
 		 */
 		if (ep->d_ino) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-				if (vdp->v_mount->mnt_maxsymlinklen > 0 || needswap != 0)
+				if (vdp->v_mount->mnt_maxsymlinklen > 0 ||
+				    needswap != 0)
 					namlen = ep->d_namlen;
 				else
 					namlen = ep->d_type;
 #else
-				if (vdp->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0) 
+				if (vdp->v_mount->mnt_maxsymlinklen <= 0
+				    && needswap != 0) 
 					namlen = ep->d_type;
 				else
 				namlen = ep->d_namlen;
@@ -368,7 +377,7 @@ notfound:
 	     (nameiop == DELETE &&
 	      (ap->a_cnp->cn_flags & DOWHITEOUT) &&
 	      (ap->a_cnp->cn_flags & ISWHITEOUT))) &&
-	    (flags & ISLASTCN) && dp->i_ffs_nlink != 0) {
+	    (flags & ISLASTCN) && dp->i_ffs_effnlink != 0) {
 		/*
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
@@ -635,13 +644,13 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	if (dp->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0)
 		namlen = ep->d_type;
 	else
-		namlen = ep->d_namlen;
+	namlen = ep->d_namlen;
 #endif
 	if ((ufs_rw16(ep->d_reclen, needswap) & 0x3) != 0 ||
 	    ufs_rw16(ep->d_reclen, needswap) >
-	        DIRBLKSIZ - (entryoffsetinblock & (DIRBLKSIZ - 1)) ||
+		DIRBLKSIZ - (entryoffsetinblock & (DIRBLKSIZ - 1)) ||
 	    ufs_rw16(ep->d_reclen, needswap) <
-	        DIRSIZ(FSFMT(dp), ep, needswap) ||
+		DIRSIZ(FSFMT(dp), ep, needswap) ||
 	    namlen > MAXNAMLEN) {
 		/*return (1); */
 		printf("First bad, reclen=%x, DIRSIZ=%lu, namlen=%d, flags=%x "
@@ -667,65 +676,62 @@ bad:
 }
 
 /*
- * Write a directory entry after a call to namei, using the parameters
- * that it left in nameidata.  The argument ip is the inode which the new
- * directory entry will refer to.  Dvp is a pointer to the directory to
- * be written, which was left locked by namei. Remaining parameters
- * (dp->i_offset, dp->i_count) indicate how the space for the new
- * entry is to be obtained.
+ * Construct a new directory entry after a call to namei, using the
+ * parameters that it left in the componentname argument cnp. The
+ * argument ip is the inode to which the new directory entry will refer.
  */
-int
-ufs_direnter(ip, dvp, cnp)
+void
+ufs_makedirentry(ip, cnp, newdirp)
 	struct inode *ip;
-	struct vnode *dvp;
-	register struct componentname *cnp;
+	struct componentname *cnp;
+	struct direct *newdirp;
 {
-	register struct inode *dp;
-
-	/* In host byte order here, ufs_direnter2() will swap it. */
-	struct direct newdir;
-
 #ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & SAVENAME) == 0)
-		panic("direnter: missing name");
+		panic("makedirentry: missing name");
 #endif
-	dp = VTOI(dvp);
-	newdir.d_ino = ip->i_number;
-	newdir.d_namlen = cnp->cn_namelen;
-	memcpy(newdir.d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
-	if (dvp->v_mount->mnt_maxsymlinklen > 0)
-		newdir.d_type = IFTODT(ip->i_ffs_mode);
-	else
-		newdir.d_type = 0;
-
-	/*
-	 * Byte order swapping and new->old format conversion is handled by
-	 * ufs_direnter2().
-	 */
-	return (ufs_direnter2(dvp, &newdir, cnp->cn_cred, cnp->cn_proc));
+	newdirp->d_ino = ip->i_number;
+	newdirp->d_namlen = cnp->cn_namelen;
+	memcpy(newdirp->d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
+	if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0)
+		newdirp->d_type = IFTODT(ip->i_ffs_mode);
+	else {
+		newdirp->d_type = 0;
+	}
 }
 
 /*
- * Common entry point for directory entry removal used by ufs_direnter
- * and ufs_whiteout
+ * Write a directory entry after a call to namei, using the parameters
+ * that it left in nameidata. The argument dirp is the new directory
+ * entry contents. Dvp is a pointer to the directory to be written,
+ * which was left locked by namei. Remaining parameters (dp->i_offset,
+ * dp->i_count) indicate how the space for the new entry is to be obtained.
+ * Non-null bp indicates that a directory is being created (for the
+ * soft dependency code).
  */
 int
-ufs_direnter2(dvp, dirp, cr, p)
+ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	struct vnode *dvp;
+	struct vnode *tvp;
 	struct direct *dirp;
+	struct componentname *cnp;
+	struct buf *newdirbp;
+{
 	struct ucred *cr;
 	struct proc *p;
-{
 	int newentrysize;
 	struct inode *dp;
 	struct buf *bp;
-	struct iovec aiov;
-	struct uio auio;
 	u_int dsize;
 	struct direct *ep, *nep;
-	int error, loc, spacefree;
+	int error, ret, blkoff, loc, spacefree, flags;
 	char *dirbuf;
+	struct timespec ts;
 	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
+
+	error = 0;
+	cr = cnp->cn_cred;
+	p = cnp->cn_proc;
 
 	dp = VTOI(dvp);
 	newentrysize = DIRSIZ(0, dirp, 0);
@@ -738,11 +744,22 @@ ufs_direnter2(dvp, dirp, cr, p)
 		 * new entry into a fresh block.
 		 */
 		if (dp->i_offset & (DIRBLKSIZ - 1))
-			panic("ufs_direnter2: newblk");
-		auio.uio_offset = dp->i_offset;
+			panic("ufs_direnter: newblk");
+		flags = B_CLRBUF;
+		if (!DOINGSOFTDEP(dvp))
+			flags |= B_SYNC;
+		if ((error = VOP_BALLOC(dvp, (off_t)dp->i_offset, DIRBLKSIZ,
+		    cr, flags, &bp)) != 0) {
+			if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
+				bdwrite(newdirbp);
+			return (error);
+		}
+		dp->i_ffs_size = dp->i_offset + DIRBLKSIZ;
+		dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		uvm_vnp_setsize(dvp, dp->i_ffs_size);
 		dirp->d_reclen = ufs_rw16(DIRBLKSIZ, needswap);
 		dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
-		if (dvp->v_mount->mnt_maxsymlinklen <= 0)
+		if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 			if (needswap == 0) {
 #else
@@ -752,33 +769,44 @@ ufs_direnter2(dvp, dirp, cr, p)
 				dirp->d_namlen = dirp->d_type;
 				dirp->d_type = tmp;
 			}
-		auio.uio_resid = newentrysize;
-		aiov.iov_len = newentrysize;
-		aiov.iov_base = (caddr_t)dirp;
-		auio.uio_iov = &aiov;
-		auio.uio_iovcnt = 1;
-		auio.uio_rw = UIO_WRITE;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_procp = (struct proc *)0;
-		error = VOP_WRITE(dvp, &auio, IO_SYNC, cr);
-		if (DIRBLKSIZ >
-		    VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_bsize)
-			/* XXX should grow with balloc() */
-			panic("ufs_direnter2: frag size");
-		else if (!error) {
-			dp->i_ffs_size = roundup(dp->i_ffs_size, DIRBLKSIZ);
-			dp->i_flag |= IN_CHANGE;
 		}
+		blkoff = dp->i_offset &
+		    (VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_iosize - 1);
+		memcpy((caddr_t)bp->b_data + blkoff, (caddr_t)dirp,
+		    newentrysize);
+		if (DOINGSOFTDEP(dvp)) {
+			/*
+			 * Ensure that the entire newly allocated block is a
+			 * valid directory so that future growth within the
+			 * block does not have to ensure that the block is
+			 * written before the inode.
+			 */
+			blkoff += DIRBLKSIZ;
+			while (blkoff < bp->b_bcount) {
+				((struct direct *)
+				   (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
+				blkoff += DIRBLKSIZ;
+			}
+			softdep_setup_directory_add(bp, dp, dp->i_offset,
+			    ufs_rw32(dirp->d_ino, needswap), newdirbp);
+			bdwrite(bp);
+		} else {
+			error = VOP_BWRITE(bp);
+		}
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		ret = VOP_UPDATE(dvp, &ts, &ts, !DOINGSOFTDEP(dvp));
+		if (error == 0)
+			return (ret);
 		return (error);
 	}
 
 	/*
-	 * If dp->i_count is non-zero, then namei found space
-	 * for the new entry in the range dp->i_offset to
-	 * dp->i_offset + dp->i_count in the directory.
-	 * To use this space, we may have to compact the entries located
-	 * there, by copying them together towards the beginning of the
-	 * block, leaving the free space in one usable chunk at the end.
+	 * If dp->i_count is non-zero, then namei found space for the new
+	 * entry in the range dp->i_offset to dp->i_offset + dp->i_count
+	 * in the directory. To use this space, we may have to compact
+	 * the entries located there, by copying them together towards the
+	 * beginning of the block, leaving the free space in one usable
+	 * chunk at the end.
 	 */
 
 	/*
@@ -794,14 +822,16 @@ ufs_direnter2(dvp, dirp, cr, p)
 	 * Get the block containing the space for the new directory entry.
 	 */
 	error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, &dirbuf, &bp);
-	if (error)
+	if (error) {
+		if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
+			bdwrite(newdirbp);
 		return (error);
+	}
 	/*
 	 * Find space for the new entry. In the simple case, the entry at
 	 * offset base will have the space. If it does not, then namei
 	 * arranged that compacting the region dp->i_offset to
-	 * dp->i_offset + dp->i_count would yield the
-	 * space.
+	 * dp->i_offset + dp->i_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
 	dsize = DIRSIZ(FSFMT(dvp), ep, needswap);
@@ -819,7 +849,11 @@ ufs_direnter2(dvp, dirp, cr, p)
 		dsize = DIRSIZ(FSFMT(dvp), nep, needswap);
 		spacefree += ufs_rw16(nep->d_reclen, needswap) - dsize;
 		loc += ufs_rw16(nep->d_reclen, needswap);
-		memcpy((caddr_t)ep, (caddr_t)nep, dsize);
+		if (DOINGSOFTDEP(dvp))
+			softdep_change_directoryentry_offset(dp, dirbuf,
+			    (caddr_t)nep, (caddr_t)ep, dsize);
+		else
+			memcpy((caddr_t)ep, (caddr_t)nep, dsize);
 	}
 	/*
 	 * Update the pointer fields in the previous entry (if any),
@@ -829,18 +863,18 @@ ufs_direnter2(dvp, dirp, cr, p)
 	    (ufs_rw32(ep->d_ino, needswap) == WINO &&
 	     memcmp(ep->d_name, dirp->d_name, dirp->d_namlen) == 0)) {
 		if (spacefree + dsize < newentrysize)
-			panic("ufs_direnter2: compact1");
+			panic("ufs_direnter: compact1");
 		dirp->d_reclen = spacefree + dsize;
 	} else {
 		if (spacefree < newentrysize)
-			panic("ufs_direnter2: compact2");
+			panic("ufs_direnter: compact2");
 		dirp->d_reclen = spacefree;
 		ep->d_reclen = ufs_rw16(dsize, needswap);
 		ep = (struct direct *)((char *)ep + dsize);
 	}
 	dirp->d_reclen = ufs_rw16(dirp->d_reclen, needswap);
 	dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
-	if (dvp->v_mount->mnt_maxsymlinklen <= 0)
+	if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 		if (needswap == 0) {
 #else
@@ -850,11 +884,31 @@ ufs_direnter2(dvp, dirp, cr, p)
 			dirp->d_namlen = dirp->d_type;
 			dirp->d_type = tmp;
 		}
+	}
 	memcpy((caddr_t)ep, (caddr_t)dirp, (u_int)newentrysize);
-	error = VOP_BWRITE(bp);
+	if (DOINGSOFTDEP(dvp)) {
+		softdep_setup_directory_add(bp, dp,
+		    dp->i_offset + (caddr_t)ep - dirbuf,
+			ufs_rw32(dirp->d_ino, needswap), newdirbp);
+		bdwrite(bp);
+	} else {
+		error = VOP_BWRITE(bp);
+	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (!error && dp->i_endoff && dp->i_endoff < dp->i_ffs_size)
-		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
+	/*
+	 * If all went well, and the directory can be shortened, proceed
+	 * with the truncation. Note that we have to unlock the inode for
+	 * the entry that we just entered, as the truncation may need to
+	 * lock other inodes which can lead to deadlock if we also hold a
+	 * lock on the newly entered node.
+	 */
+	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_ffs_size) {
+		if (tvp != NULL)
+			VOP_UNLOCK(tvp, 0);
+		(void) VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC, cr, p);
+		if (tvp != NULL)
+			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
+	}
 	return (error);
 }
 
@@ -871,18 +925,20 @@ ufs_direnter2(dvp, dirp, cr, p)
  * to the size of the previous entry.
  */
 int
-ufs_dirremove(dvp, cnp)
+ufs_dirremove(dvp, ip, flags, isrmdir)
 	struct vnode *dvp;
-	struct componentname *cnp;
+	struct inode *ip;
+	int flags;
+	int isrmdir;
 {
-	register struct inode *dp;
+	struct inode *dp;
 	struct direct *ep;
 	struct buf *bp;
 	int error;
 
 	dp = VTOI(dvp);
 
-	if (cnp->cn_flags & DOWHITEOUT) {
+	if (flags & DOWHITEOUT) {
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
@@ -892,35 +948,41 @@ ufs_dirremove(dvp, cnp)
 			return (error);
 		ep->d_ino = ufs_rw32(WINO, UFS_MPNEEDSWAP(dvp->v_mount));
 		ep->d_type = DT_WHT;
-		error = VOP_BWRITE(bp);
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (error);
+		goto out;
 	}
+
+	if ((error = VOP_BLKATOFF(dvp,
+	    (off_t)(dp->i_offset - dp->i_count), (char **)&ep, &bp)) != 0)
+		return (error);
 
 	if (dp->i_count == 0) {
 		/*
 		 * First entry in block: set d_ino to zero.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (char **)&ep,
-				     &bp);
-		if (error)
-			return (error);
 		ep->d_ino = 0;
-		error = VOP_BWRITE(bp);
-		dp->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (error);
+	} else {
+		/*
+		 * Collapse new free space into previous entry.
+		 */
+		ep->d_reclen =
+		    ufs_rw16(ufs_rw16(ep->d_reclen,
+				      UFS_MPNEEDSWAP(dvp->v_mount))
+			     + dp->i_reclen, UFS_MPNEEDSWAP(dvp->v_mount));
 	}
-	/*
-	 * Collapse new free space into previous entry.
-	 */
-	error = VOP_BLKATOFF(dvp, (off_t)(dp->i_offset - dp->i_count),
-			     (char **)&ep, &bp);
-	if (error)
-		return (error);
-	ep->d_reclen = ufs_rw16(ufs_rw16(ep->d_reclen,
-	    UFS_MPNEEDSWAP(dvp->v_mount)) + dp->i_reclen,
-	    UFS_MPNEEDSWAP(dvp->v_mount));
-	error = VOP_BWRITE(bp);
+out:
+	if (ip) {
+		ip->i_ffs_effnlink--;
+		ip->i_flag |= IN_CHANGE;
+	}
+	if (DOINGSOFTDEP(dvp)) {
+		if (ip)
+			softdep_setup_remove(bp, dp, ip, isrmdir);
+		bdwrite(bp);
+	} else {
+		if (ip)
+			ip->i_ffs_nlink--;
+		error = VOP_BWRITE(bp);
+	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
 }
@@ -931,9 +993,11 @@ ufs_dirremove(dvp, cnp)
  * set up by a call to namei.
  */
 int
-ufs_dirrewrite(dp, ip, cnp)
-	struct inode *dp, *ip;
-	struct componentname *cnp;
+ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
+	struct inode *dp, *oip;
+	ino_t newinum;
+	int newtype;
+	int isrmdir;
 {
 	struct buf *bp;
 	struct direct *ep;
@@ -943,10 +1007,18 @@ ufs_dirrewrite(dp, ip, cnp)
 	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (char **)&ep, &bp);
 	if (error)
 		return (error);
-	ep->d_ino = ufs_rw32(ip->i_number, UFS_MPNEEDSWAP(vdp->v_mount));
+	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(vdp->v_mount));
 	if (vdp->v_mount->mnt_maxsymlinklen > 0)
-		ep->d_type = IFTODT(ip->i_ffs_mode);
-	error = VOP_BWRITE(bp);
+		ep->d_type = newtype;
+	oip->i_ffs_effnlink--;
+	oip->i_flag |= IN_CHANGE;
+	if (DOINGSOFTDEP(vdp)) {
+		softdep_setup_directory_change(bp, dp, oip, newinum, isrmdir);
+		bdwrite(bp);
+	} else {
+		oip->i_ffs_nlink--;
+		error = VOP_BWRITE(bp);
+	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
 }
@@ -974,7 +1046,7 @@ ufs_dirempty(ip, parentino, cred)
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
 	for (off = 0; off < ip->i_ffs_size;
-	     off += ufs_rw16(dp->d_reclen, UFS_IPNEEDSWAP(ip))) {
+	    off += ufs_rw16(dp->d_reclen, UFS_IPNEEDSWAP(ip))) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*
@@ -993,7 +1065,7 @@ ufs_dirempty(ip, parentino, cred)
 		/* accept only "." and ".." */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 		if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0 || 
-		    UFS_IPNEEDSWAP(ip) != 0)
+		   UFS_IPNEEDSWAP(ip) != 0)
 			namlen = dp->d_namlen;
 		else
 			namlen = dp->d_type;
@@ -1013,7 +1085,8 @@ ufs_dirempty(ip, parentino, cred)
 		 * 1 implies ".", 2 implies ".." if second
 		 * char is also "."
 		 */
-		if (namlen == 1)
+		if (namlen == 1 &&
+		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == ip->i_number)
 			continue;
 		if (dp->d_name[1] == '.' &&
 		    ufs_rw32(dp->d_ino, UFS_IPNEEDSWAP(ip)) == parentino)
@@ -1033,7 +1106,7 @@ ufs_checkpath(source, target, cred)
 	struct inode *source, *target;
 	struct ucred *cred;
 {
-	struct vnode *vp = vp = ITOV(target);
+	struct vnode *vp = ITOV(target);
 	int error, rootino, namlen;
 	struct dirtemplate dirbuf;
 	const int needswap = UFS_MPNEEDSWAP(vp->v_mount);
@@ -1054,18 +1127,18 @@ ufs_checkpath(source, target, cred)
 			break;
 		}
 		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
-			sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
-			IO_NODELOCKED, cred, NULL, (struct proc *)0);
+		    sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
+		    IO_NODELOCKED, cred, NULL, (struct proc *)0);
 		if (error != 0)
 			break;
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 		if (vp->v_mount->mnt_maxsymlinklen > 0 ||
-		    needswap != 0)
+			needswap != 0)
 			namlen = dirbuf.dotdot_namlen;
 		else
 			namlen = dirbuf.dotdot_type;
 #else
-		if (vp->v_mount->mnt_maxsymlinklen <= 0 &&
+		if (vp->v_mount->mnt_maxsymlinklen == 0 &&
 		    needswap != 0)
 			namlen = dirbuf.dotdot_type;
 		else

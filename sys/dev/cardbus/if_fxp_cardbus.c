@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.5 1999/12/12 17:46:37 thorpej Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.5.2.1 1999/12/27 18:34:40 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

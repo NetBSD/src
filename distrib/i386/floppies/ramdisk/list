@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.22 1999/09/07 06:54:21 christos Exp $
+#	$NetBSD: list,v 1.22.4.1 1999/12/27 18:28:21 wrstuden Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -70,7 +70,6 @@ SYMLINK	/bin/cat		usr/sbin/bad144
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
 SYMLINK	/bin/cat		usr/sbin/mbrlabel
-SYMLINK	/bin/cat		usr/sbin/update
 SYMLINK	/bin/cat		usr/sbin/wiconfig
 SPECIAL	/bin/rm ramdiskbin
 

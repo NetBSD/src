@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: wargames.sh,v 1.2 1995/04/22 07:53:44 cgd Exp $
+#	$NetBSD: wargames.sh,v 1.2.12.1 1999/12/27 18:29:06 wrstuden Exp $
 #
 # Copyright (c) 1985, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -37,10 +37,13 @@
 echo -n "Would you like to play a game? "
 read x
 
+x=`echo $x | sed 's/[^a-z0-9]//g'`
+
 if [ -f /usr/games/$x ] ; then
 	tput cl
 	exec /usr/games/$x
 else
-	echo "Funny, the only way to win is not to play at all."
+	# Original quote "Strange game, the only winning move is not to play."
+	echo "Strange, the only winning move is not to play."
 fi
 exit 0

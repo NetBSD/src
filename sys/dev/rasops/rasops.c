@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.19.6.1 1999/12/27 18:35:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19.6.1 1999/12/27 18:35:29 wrstuden Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19 1999/10/04 22:52:13 ad Exp $");
 #endif
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
-u_char rasops_cmap[256*3] = {
+const u_char rasops_cmap[256*3] = {
 	0x00, 0x00, 0x00, /* black */
 	0x7f, 0x00, 0x00, /* red */
 	0x00, 0x7f, 0x00, /* green */
@@ -78,10 +78,26 @@ u_char rasops_cmap[256*3] = {
 	0xff, 0x00, 0xff, /* magenta */
 	0x00, 0xff, 0xff, /* cyan */
 	0xff, 0xff, 0xff, /* white */
+
+	/*
+	 * For the cursor, we need at least the last (255th)
+	 * color to be white. Fill up white completely for
+	 * simplicity.
+	 */
+#define _CMWHITE 0xff, 0xff, 0xff,
+#define _CMWHITE16	_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
+			_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
+			_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
+			_CMWHITE _CMWHITE _CMWHITE _CMWHITE
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+#undef _CMWHITE16
+#undef _CMWHITE
 };
 
 /* True if color is gray */
-u_char rasops_isgray[16] = { 
+const u_char rasops_isgray[16] = { 
 	1, 0, 0, 0, 
 	0, 0, 0, 1,
 	1, 0, 0, 0,
@@ -97,14 +113,6 @@ static int	rasops_alloc_mattr __P((void *, int, int, int, long *));
 static void	rasops_do_cursor __P((struct rasops_info *));
 static void	rasops_init_devcmap __P((struct rasops_info *));
 
-/* Per-depth initalization functions */
-void	rasops1_init __P((struct rasops_info *));
-void	rasops2_init __P((struct rasops_info *));
-void	rasops8_init __P((struct rasops_info *));
-void	rasops15_init __P((struct rasops_info *));
-void	rasops24_init __P((struct rasops_info *));
-void	rasops32_init __P((struct rasops_info *));
-
 /*
  * Initalize a 'rasops_info' descriptor.
  */
@@ -113,6 +121,7 @@ rasops_init(ri, wantrows, wantcols)
 	struct rasops_info *ri;
 	int wantrows, wantcols;
 {
+
 #ifdef _KERNEL	
 	/* Select a font if the caller doesn't care */
 	if (ri->ri_font == NULL) {
@@ -152,18 +161,12 @@ rasops_init(ri, wantrows, wantcols)
 	}
 #endif
 
-	/* Fix colormap. We need this for the cursor to work. */
-	rasops_cmap[255*3+0] = 0xff;
-	rasops_cmap[255*3+1] = 0xff;
-	rasops_cmap[255*3+2] = 0xff;
-	
 	if (rasops_reconfig(ri, wantrows, wantcols))
 		return (-1);
  	
 	rasops_init_devcmap(ri);
 	return (0);
 }
-
 
 /*
  * Reconfigure (because parameters have changed in some way).
@@ -173,8 +176,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	struct rasops_info *ri;
 	int wantrows, wantcols;
 {
-	int bpp;
-	int s;
+	int bpp, s;
 	
 	s = splhigh();
 		
@@ -205,7 +207,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 		ri->ri_emuheight = ri->ri_height;
 	
 	/* Reduce width until aligned on a 32-bit boundary */
-	while ((ri->ri_emuwidth*bpp & 31) != 0)
+	while ((ri->ri_emuwidth * bpp & 31) != 0)
 		ri->ri_emuwidth--;
 	
 	ri->ri_cols = ri->ri_emuwidth / ri->ri_font->fontwidth;
@@ -257,46 +259,41 @@ rasops_reconfig(ri, wantrows, wantcols)
 	
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
-		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_REVERSE;
+		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
 		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
-		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_HILIT | 
-		    WSATTR_WSCOLORS | WSATTR_REVERSE;
+		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT | 
+		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}
 
 	switch (ri->ri_depth) {
-#if NRASOPS1
+#if NRASOPS1 > 0
 	case 1:
 		rasops1_init(ri);
 		break;
 #endif
-
-#if NRASOPS2
+#if NRASOPS2 > 0
 	case 2:
 		rasops2_init(ri);
 		break;
 #endif
-
-#if NRASOPS8
+#if NRASOPS8 > 0
 	case 8:
 		rasops8_init(ri);
 		break;
 #endif
-
-#if NRASOPS15 || NRASOPS16
+#if NRASOPS15 > 0 || NRASOPS16 > 0
 	case 15:
 	case 16:
 		rasops15_init(ri);
 		break;
 #endif
-
-#if NRASOPS24
+#if NRASOPS24 > 0
 	case 24:
 		rasops24_init(ri);
 		break;
 #endif
-
-#if NRASOPS32
+#if NRASOPS32 > 0
 	case 32:
 		rasops32_init(ri);
 		break;
@@ -311,7 +308,6 @@ rasops_reconfig(ri, wantrows, wantcols)
 	splx(s);
 	return (0);
 }
-
 
 /*
  * Map a character.
@@ -345,7 +341,6 @@ rasops_mapchar(cookie, c, cp)
 	return (5);
 }
 
-
 /*
  * Allocate a color attribute.
  */
@@ -363,7 +358,12 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 #endif
 	if ((flg & WSATTR_BLINK) != 0)
 		return (EINVAL);
-		
+
+	if ((flg & WSATTR_WSCOLORS) == 0) {
+		fg = WSCOL_WHITE;
+		bg = WSCOL_BLACK;
+	}
+
 	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
@@ -385,7 +385,6 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 	return (0);
 }
 
-
 /*
  * Allocate a mono attribute.
  */
@@ -397,12 +396,12 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 {
 	int swap;
 
-	fg = (fg == WSCOL_BLACK ? 0 : 1);
-	bg = (bg == WSCOL_BLACK ? 0 : 1);
-	
-	if ((flg & (WSATTR_BLINK | WSATTR_HILIT)) != 0)
+	if ((flg & (WSATTR_BLINK | WSATTR_HILIT | WSATTR_WSCOLORS)) != 0)
 		return (EINVAL);
-		
+
+	fg = 1;
+	bg = 0;
+
 	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
@@ -412,7 +411,6 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
 	return (0);
 }
-
 
 /*
  * Copy rows.
@@ -492,7 +490,6 @@ rasops_copyrows(cookie, src, dst, num)
 	}
 }
 
-
 /*
  * Copy columns. This is slow, and hard to optimize due to alignment,
  * and the fact that we have to copy both left->right and right->left.
@@ -552,7 +549,6 @@ rasops_copycols(cookie, row, src, dst, num)
 	}
 }
 
-
 /*
  * Turn cursor off/on.
  */
@@ -594,7 +590,6 @@ rasops_cursor(cookie, on, row, col)
 		ri->ri_flg &= ~RI_CURSOR;
 }
 
-
 /*
  * Make the device colormap
  */
@@ -602,7 +597,7 @@ static void
 rasops_init_devcmap(ri)
 	struct rasops_info *ri;
 {
-	u_char *p;
+	const u_char *p;
 	int i, c;
 	
 	switch (ri->ri_depth) {
@@ -663,7 +658,6 @@ rasops_init_devcmap(ri)
 	}
 }
 
-
 /*
  * Unpack a rasops attribute
  */
@@ -675,9 +669,9 @@ rasops_unpack_attr(attr, fg, bg, underline)
 	
 	*fg = ((u_int)attr >> 24) & 15;
 	*bg = ((u_int)attr >> 16) & 15;
-	*underline = (u_int)attr & 1;
+	if (underline != NULL)
+		*underline = (u_int)attr & 1;
 }
-
 
 /*
  * Erase rows. This isn't static, since 24-bpp uses it in special cases.
@@ -710,7 +704,7 @@ rasops_eraserows(cookie, row, num, attr)
 	clr = ri->ri_devcmap[(attr >> 16) & 15];
 
 	/* 
-	 * XXX the wsdisplay_emulops interface seems a little deficient in
+	 * XXX The wsdisplay_emulops interface seems a little deficient in
 	 * that there is no way to clear the *entire* screen. We provide a 
 	 * workaround here: if the entire console area is being cleared, and 
 	 * the RI_FULLCLEAR flag is set, clear the entire display.
@@ -751,7 +745,6 @@ rasops_eraserows(cookie, row, num, attr)
 	}
 }
 
-
 /*
  * Actually turn the cursor on or off. This does the dirty work for
  * rasops_cursor().
@@ -760,7 +753,7 @@ static void
 rasops_do_cursor(ri)
 	struct rasops_info *ri;
 {
-	int full1, height, cnt, slop1, slop2, row, col, mask;
+	int full1, height, cnt, slop1, slop2, row, col;
 	u_char *dp, *rp;
 	
 	row = ri->ri_crow;
@@ -768,8 +761,6 @@ rasops_do_cursor(ri)
 	
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
-	mask = ri->ri_devcmap[(ri->ri_flg & RI_FORCEMONO) != 0 ? 1 : 15];
-	
 	slop1 = (4 - ((int)rp & 3)) & 3;
 	
 	if (slop1 > ri->ri_xscale)
@@ -785,7 +776,7 @@ rasops_do_cursor(ri)
 			rp += ri->ri_stride;
 	
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp ^= mask;
+				*(int32_t *)dp ^= ~0;
 				dp += 4;
 			}
 		}
@@ -796,27 +787,26 @@ rasops_do_cursor(ri)
 			rp += ri->ri_stride;
 	
 			if (slop1 & 1)
-				*dp++ ^= mask;
+				*dp++ ^= ~0;
 
 			if (slop1 & 2) {
-				*(int16_t *)dp ^= mask;
+				*(int16_t *)dp ^= ~0;
 				dp += 2;
 			}
 	
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp ^= mask;
+				*(int32_t *)dp ^= ~0;
 				dp += 4;
 			}
 
 			if (slop2 & 1)
-				*dp++ ^= mask;
+				*dp++ ^= ~0;
 
 			if (slop2 & 2)
-				*(int16_t *)dp ^= mask;
+				*(int16_t *)dp ^= ~0;
 		}
 	}
 }
-
 
 /*
  * Erase columns.

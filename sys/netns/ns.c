@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.16 1998/09/13 15:21:32 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.16.16.1 1999/12/27 18:36:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -35,8 +35,6 @@
  *	@(#)ns.c	8.5 (Berkeley) 2/9/95
  */
 
-#include "opt_ns.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -53,8 +51,6 @@
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #include <netns/ns_var.h>
-
-#ifdef NS
 
 struct ns_ifaddrhead ns_ifaddr;
 int ns_interfaces;
@@ -340,4 +336,3 @@ ns_iaonnetof(dst)
 	}
 	return (ia_maybe);
 }
-#endif

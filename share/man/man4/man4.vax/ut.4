@@ -1,4 +1,4 @@
-.\"	$NetBSD: ut.4,v 1.5 1999/03/16 01:19:24 garbled Exp $
+.\"	$NetBSD: ut.4,v 1.5.6.1 1999/12/27 18:31:01 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,8 +42,8 @@
 .Tn UNIBUS TU45
 tri-density tape drive interface
 .Sh SYNOPSIS
-.Cd "controller ut0 at uba0 csr 0172440 vector utintr"
-.Cd "tape tj0 at ut0 drive 0"
+.Cd "ut0 at uba0 csr 0172440 vector utintr"
+.Cd "tj0 at ut0 drive 0"
 .Sh DESCRIPTION
 The 
 .Nm ut

@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.14 1999/06/24 20:16:31 tron Exp $
+.\"	$NetBSD: socket.2,v 1.14.4.1 1999/12/27 18:29:53 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,8 @@
 .Sh NAME
 .Nm socket
 .Nd create an endpoint for communication
+.Sh LIBRARY
+.Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
@@ -151,7 +153,7 @@ within a reasonable length of time, then
 the connection is considered broken and calls
 will indicate an error with
 -1 returns and with
-.Dv ETIMEDOUT
+.Er ETIMEDOUT
 as the specific code
 in the global variable
 .Va errno .

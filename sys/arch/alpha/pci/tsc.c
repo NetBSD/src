@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.1 1999/06/29 06:46:46 ross Exp $ */
+/* $NetBSD: tsc.c,v 1.1.14.1 1999/12/27 18:31:29 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1 1999/06/29 06:46:46 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.14.1 1999/12/27 18:31:29 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,8 @@ void tspattach(parent, self, aux)
 	    alphabus_dma_get_tag(&pcp->pc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &pcp->pc_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, tspprint);
 }
 

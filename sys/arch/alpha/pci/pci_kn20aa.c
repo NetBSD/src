@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.36 1999/02/12 06:25:13 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.36.14.1 1999/12/27 18:31:28 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.36 1999/02/12 06:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.36.14.1 1999/12/27 18:31:28 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.36 1999/02/12 06:25:13 thorpej Exp 
 #endif
 
 #include "sio.h"
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 #include <alpha/pci/siovar.h>
 #endif
 
@@ -86,7 +86,7 @@ pci_kn20aa_pickintr(ccp)
 	struct cia_config *ccp;
 {
 	int i;
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 	bus_space_tag_t iot = &ccp->cc_iot;
 #endif
 	pci_chipset_tag_t pc = &ccp->cc_pc;
@@ -105,7 +105,7 @@ pci_kn20aa_pickintr(ccp)
 		alpha_shared_intr_set_maxstrays(kn20aa_pci_intr, i,
 		    PCI_STRAY_MAX);
 
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 	kn20aa_enable_intr(KN20AA_PCEB_IRQ);
 #endif
@@ -274,7 +274,7 @@ kn20aa_iointr(framep, vec)
 		}
 		return;
 	}
-#if NSIO
+#if NSIO > 0 || NPCEB > 0
 	if (vec >= 0x800) {
 		sio_iointr(framep, vec);
 		return;

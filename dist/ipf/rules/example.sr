@@ -1,4 +1,4 @@
-#	$NetBSD: example.sr,v 1.1.1.1 1999/12/11 22:24:12 veego Exp $
+#	$NetBSD: example.sr,v 1.1.1.1.4.1 1999/12/27 18:28:06 wrstuden Exp $
 #
 # log all inbound packet on le0 which has IP options present
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: __isthreaded.c,v 1.1 1999/12/03 06:37:34 explorer Exp $	*/
+/*	$NetBSD: __isthreaded.c,v 1.1.2.1 1999/12/27 18:29:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.

@@ -34,7 +34,10 @@
 
 #define AOUT_MACHTYPE MID_M68K
 #define LOCAL_LABELS_FB
-    
+
+#define	REGISTER_PREFIX '%'
+#define	REGISTER_PREFIX_OPTIONAL
+
 #define tc_crawl_symbol_chain(a)	{;} /* not used */
 #define tc_headers_hook(a)		{;} /* not used */
 #define tc_aout_pre_write_hook(x)	{;} /* not used */

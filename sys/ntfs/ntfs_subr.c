@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.18 1999/10/01 20:01:20 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.18.2.1 1999/12/27 18:36:32 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -64,12 +64,14 @@ MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 
 static int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
 static int ntfs_findvattr __P((struct ntfsmount *, struct ntnode *, struct ntvattr **, struct ntvattr **, u_int32_t, const char *, size_t, cn_t));
+static int ntfs_uastricmp __P((const wchar *, size_t, const char *, size_t));
+static int ntfs_uastrcmp __P((const wchar *, size_t, const char *, size_t));
 
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
 static wchar *ntfs_toupper_tab;
-#define NTFS_U28(ch)		(((ch & 0xFF) == 0) ? '_' : (ch) & 0xFF)
-#define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[NTFS_U28(ch)])
+#define NTFS_U28(ch)		((((ch) & 0xFF) == 0) ? '_' : (ch) & 0xFF)
+#define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[(unsigned char)(ch)])
 static struct lock ntfs_toupper_lock;
 static signed int ntfs_toupper_usecount;
 
@@ -223,12 +225,11 @@ ntfs_ntvattrget(
 		dprintf(("ntfs_ntvattrget: attribute in ino: %d\n",
 				 aalp->al_inumber));
 
-/*
-		error = VFS_VGET(ntmp->ntm_mountp, aalp->al_inumber, &newvp);
-*/
+		/* this is not a main record, so we can't use just plain
+		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
-					VG_EXT, curproc, &newvp);
+				VG_EXT, curproc, &newvp);
 		if (error) {
 			printf("ntfs_ntvattrget: CAN'T VGET INO: %d\n",
 			       aalp->al_inumber);
@@ -270,7 +271,7 @@ ntfs_loadntnode(
 	struct attr    *ap;
 	struct ntvattr *nvap;
 
-	dprintf(("ntfs_loadnode: loading ino: %d\n",ip->i_number));
+	dprintf(("ntfs_loadntnode: loading ino: %d\n",ip->i_number));
 
 	MALLOC(mfrp, struct filerec *, ntfs_bntob(ntmp->ntm_bpmftrec),
 	       M_TEMP, M_WAITOK);
@@ -278,7 +279,7 @@ ntfs_loadntnode(
 	if (ip->i_number < NTFS_SYSNODESNUM) {
 		struct buf     *bp;
 
-		dprintf(("ntfs_loadnode: read system node\n"));
+		dprintf(("ntfs_loadntnode: read system node\n"));
 
 		bn = ntfs_cntobn(ntmp->ntm_mftcn) +
 			ntmp->ntm_bpmftrec * ip->i_number;
@@ -287,7 +288,7 @@ ntfs_loadntnode(
 			      bn, ntfs_bntob(ntmp->ntm_bpmftrec),
 			      NOCRED, &bp);
 		if (error) {
-			printf("ntfs_loadnode: BREAD FAILED\n");
+			printf("ntfs_loadntnode: BREAD FAILED\n");
 			brelse(bp);
 			goto out;
 		}
@@ -301,7 +302,7 @@ ntfs_loadntnode(
 			       ip->i_number * ntfs_bntob(ntmp->ntm_bpmftrec),
 			       ntfs_bntob(ntmp->ntm_bpmftrec), mfrp, NULL);
 		if (error) {
-			printf("ntfs_loadnode: ntfs_readattr failed\n");
+			printf("ntfs_loadntnode: ntfs_readattr failed\n");
 			goto out;
 		}
 	}
@@ -310,12 +311,12 @@ ntfs_loadntnode(
 	error = ntfs_procfixups(ntmp, NTFS_FILEMAGIC, (caddr_t)mfrp,
 				ntfs_bntob(ntmp->ntm_bpmftrec));
 	if (error) {
-		printf("ntfs_loadnode: BAD MFT RECORD %d\n",
+		printf("ntfs_loadntnode: BAD MFT RECORD %d\n",
 		       (u_int32_t) ip->i_number);
 		goto out;
 	}
 
-	dprintf(("ntfs_loadnode: load attrs for ino: %d\n",ip->i_number));
+	dprintf(("ntfs_loadntnode: load attrs for ino: %d\n",ip->i_number));
 	off = mfrp->fr_attroff;
 	ap = (struct attr *) ((caddr_t)mfrp + off);
 
@@ -333,7 +334,7 @@ ntfs_loadntnode(
 		ap = (struct attr *) ((caddr_t)mfrp + off);
 	}
 	if (error) {
-		printf("ntfs_loadnode: failed to load attr ino: %d\n",
+		printf("ntfs_loadntnode: failed to load attr ino: %d\n",
 		       ip->i_number);
 		goto out;
 	}
@@ -351,7 +352,7 @@ out:
 		
 /*
  * Routine locks ntnode and increase usecount, just opposite of
- * ntfs_ntput.
+ * ntfs_ntput().
  */
 int
 ntfs_ntget(ip)
@@ -360,17 +361,9 @@ ntfs_ntget(ip)
 	dprintf(("ntfs_ntget: get ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
+	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
-
-restart:
-	if (ip->i_lock) {
-		while (ip->i_lock) {
-			ip->i_lock = -1;
-			tsleep(&ip->i_lock, PVM, "ntnode", 0);
-		}
-		goto restart;
-	}
-	ip->i_lock = 1;
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
 
 	return 0;
 }
@@ -390,17 +383,17 @@ ntfs_ntlookup(
 {
 	struct ntnode  *ip;
 
-	dprintf(("ntfs_ntlookup: for ntnode %d\n", ino));
-	*ipp = NULL;
+	dprintf(("ntfs_ntlookup: looking for ntnode %d\n", ino));
 
 	do {
-		if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
-			ntfs_ntget(*ipp);
+		if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+			ntfs_ntget(ip);
 			dprintf(("ntfs_ntlookup: ntnode %d: %p, usecount: %d\n",
 				ino, ip, ip->i_usecount));
+			*ipp = ip;
 			return (0);
 		}
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
@@ -408,21 +401,21 @@ ntfs_ntlookup(
 	bzero((caddr_t) ip, sizeof(struct ntnode));
 
 	/* Generic initialization */
+	ip->i_devvp = ntmp->ntm_devvp;
+	ip->i_dev = ntmp->ntm_dev;
 	ip->i_number = ino;
 	ip->i_mp = ntmp;
-	ip->i_dev = ntmp->ntm_dev;
-	ip->i_uid = ntmp->ntm_uid;
-	ip->i_gid = ntmp->ntm_gid;
-	ip->i_mode = ntmp->ntm_mode;
-	ip->i_usecount++;
-
-	ip->i_lock = 1;
 
 	LIST_INIT(&ip->i_fnlist);
 
+	/* init lock and lock the newborn ntnode */
+	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
+	simple_lock_init(&ip->i_interlock);
+	ntfs_ntget(ip);
+
 	ntfs_nthashins(ip);
 
-	lockmgr(&ntfs_hashlock, LK_RELEASE, 0);
+	lockmgr(&ntfs_hashlock, LK_RELEASE, NULL);
 
 	*ipp = ip;
 
@@ -439,22 +432,27 @@ ntfs_ntlookup(
  * ntnode should be locked on entry, and unlocked on return.
  */
 void
-ntfs_ntput(
-	   struct ntnode *ip)
+ntfs_ntput(ip)
+	struct ntnode *ip;
 {
 	struct ntvattr *vap;
-
-	if (!ip->i_lock) printf("ntfs_ntput: NOT LOCKED");
 
 	dprintf(("ntfs_ntput: rele ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
+	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
+#ifdef DIAGNOSTIC
 	if (ip->i_usecount < 0) {
 		panic("ntfs_ntput: ino: %d usecount: %d \n",
 		      ip->i_number,ip->i_usecount);
-	} else if (ip->i_usecount == 0) {
+	}
+#endif
+
+	lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
+
+	if (ip->i_usecount == 0) {
 		dprintf(("ntfs_ntput: deallocating ntnode: %d\n",
 			ip->i_number));
 
@@ -469,37 +467,50 @@ ntfs_ntput(
 			ntfs_freentvattr(vap);
 		}
 		FREE(ip, M_NTFSNTNODE);
-	} else {
-		if (ip->i_lock < 0)
-			wakeup(&ip->i_lock);
-		ip->i_lock = 0;
 	}
+}
+
+/*
+ * increment usecount of ntnode 
+ */
+void
+ntfs_ntref(ip)
+	struct ntnode *ip;
+{
+	simple_lock(&ip->i_interlock);
+	ip->i_usecount++;
+	simple_unlock(&ip->i_interlock);
+
+	dprintf(("ntfs_ntref: ino %d, usecount: %d\n",
+		ip->i_number, ip->i_usecount));
+			
 }
 
 /*
  * Decrement usecount of ntnode.
  */
 void
-ntfs_ntrele(
-	    struct ntnode * ip)
+ntfs_ntrele(ip)
+	struct ntnode *ip;
 {
 	dprintf(("ntfs_ntrele: rele ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
+	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
 		panic("ntfs_ntrele: ino: %d usecount: %d \n",
 		      ip->i_number,ip->i_usecount);
+	simple_unlock(&ip->i_interlock);
 }
 
 /*
- * Deallocate all memory allocated for ntvattr by call to
- * ntfs_attrtontvattr and some other functions.
+ * Deallocate all memory allocated for ntvattr
  */
 void
-ntfs_freentvattr(
-		 struct ntvattr * vap)
+ntfs_freentvattr(vap)
+	struct ntvattr * vap;
 {
 	if (vap->va_flag & NTFS_AF_INRUN) {
 		if (vap->va_vruncn)
@@ -647,68 +658,46 @@ ntfs_runtovrun(
 }
 
 /*
- * Compare to unicode strings case insensible.
- */
-int
-ntfs_uustricmp(str1, str1len, str2, str2len)
-	const wchar *str1;
-	int str1len;
-	const wchar *str2;
-	int str2len;
-{
-	int             i;
-	int             res;
-
-	for (i = 0; i < str1len && i < str2len; i++) {
-		res = (int) NTFS_TOUPPER(str1[i]) -
-			(int) NTFS_TOUPPER(str2[i]);
-		if (res)
-			return res;
-	}
-	return (str1len - str2len);
-}
-
-/*
  * Compare unicode and ascii string case insens.
  */
-int
-ntfs_uastricmp(
-	       const wchar *str1,
-	       int str1len,
-	       const char *str2,
-	       int str2len)
+static int
+ntfs_uastricmp(ustr, ustrlen, astr, astrlen)
+	const wchar *ustr;
+	size_t ustrlen;
+	const char *astr;
+	size_t astrlen;
 {
-	int             i;
+	size_t             i;
 	int             res;
 
-	for (i = 0; i < str1len && i < str2len; i++) {
-		res = (int) NTFS_TOUPPER(str1[i]) -
-			(int) NTFS_TOUPPER((wchar) str2[i]);
+	for (i = 0; i < ustrlen && i < astrlen; i++) {
+		res = ((int) NTFS_TOUPPER(NTFS_U28(ustr[i]))) -
+			((int)NTFS_TOUPPER(astr[i]));
 		if (res)
 			return res;
 	}
-	return (str1len - str2len);
+	return (ustrlen - astrlen);
 }
 
 /*
  * Compare unicode and ascii string case sens.
  */
-int
-ntfs_uastrcmp(
-	      const wchar *str1,
-	      int str1len,
-	      const char *str2,
-	      int str2len)
+static int
+ntfs_uastrcmp(ustr, ustrlen, astr, astrlen)
+	const wchar *ustr;
+	size_t ustrlen;
+	const char *astr;
+	size_t astrlen;
 {
-	int             i;
+	size_t             i;
 	int             res;
 
-	for (i = 0; (i < str1len) && (i < str2len); i++) {
-		res = ((int) NTFS_U28(str1[i])) - ((int) str2[i]);
+	for (i = 0; (i < ustrlen) && (i < astrlen); i++) {
+		res = (int) (((char)NTFS_U28(ustr[i])) - astr[i]);
 		if (res)
 			return res;
 	}
-	return (str1len - str2len);
+	return (ustrlen - astrlen);
 }
 
 /* 
@@ -748,9 +737,6 @@ ntfs_fget(
 	MALLOC(fp, struct fnode *, sizeof(struct fnode), M_NTFSFNODE, M_WAITOK);
 	bzero(fp, sizeof(struct fnode));
 	dprintf(("ntfs_fget: allocating fnode: %p\n",fp));
-
-	fp->f_devvp = ntmp->ntm_devvp;
-	fp->f_dev = ntmp->ntm_dev;
 
 	fp->f_ip = ip;
 	fp->f_attrname = attrname;
@@ -870,7 +856,7 @@ ntfs_ntlookupfile(
 	char *attrname = NULL;
 	struct fnode   *nfp;
 	struct vnode   *nvp;
-
+	enum vtype	f_type;
 
 	error = ntfs_ntget(ip);
 	if (error)
@@ -925,7 +911,7 @@ ntfs_ntlookupfile(
 			 * has to come first, to break from this for loop
 			 * if needed, so we can dive correctly */
 			res = ntfs_uastricmp(iep->ie_fname, iep->ie_fnamelen,
-					fname, fnamelen);
+				fname, fnamelen);
 			if (res > 0) break;
 			if (res < 0) continue;
 
@@ -986,11 +972,11 @@ ntfs_ntlookupfile(
 			if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
 			   (nfp->f_attrtype == NTFS_A_DATA) &&
 			   (nfp->f_attrname == NULL))
-				nfp->f_type = VDIR;	
+				f_type = VDIR;	
 			else
-				nfp->f_type = VREG;	
+				f_type = VREG;	
 
-			nvp->v_type = nfp->f_type;
+			nvp->v_type = f_type;
 
 			if ((nfp->f_attrtype == NTFS_A_DATA) &&
 			    (nfp->f_attrname == NULL))
@@ -1058,7 +1044,6 @@ ntfs_isnamepermitted(
 		     struct ntfsmount * ntmp,
 		     struct attr_indexentry * iep)
 {
-
 	if (ntmp->ntm_flag & NTFS_MFLAG_ALLNAMES)
 		return 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.5 1999/09/13 10:31:44 itojun Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.5.8.1 1999/12/27 18:36:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,9 +31,20 @@
 #define	_SYS_CDEFS_ELF_H_
 
 #if defined(__sh3__)
-#define _C_LABEL(x)	__CONCAT(_,x)
+#define	_C_LABEL(x)	__CONCAT(_,x)
 #else
 #define	_C_LABEL(x)	x
+#endif
+
+#ifdef __STDC__
+#define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
+#else
+#if defined(__sh3__)
+#define	___RENAME(x)	____RENAME(_/**/x)
+#define	____RENAME(x)	__asm__(___STRING(x))
+#else
+#define	___RENAME(x)	__asm__(___STRING(x))
+#endif
 #endif
 
 #undef	__DO_NOT_DO_WEAK__		/* NO WEAK SYMS IN LIBC YET */
@@ -77,6 +88,8 @@
 #define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
 
 #define	__RCSID(_s)			__IDSTRING(rcsid,_s)
+#define	__SCCSID(_s)
+#define __SCCSID2(_s)
 #if 0	/* XXX userland __COPYRIGHTs have \ns in them */
 #define	__COPYRIGHT(_s)			__SECTIONSTRING(.copyright,_s)
 #else
@@ -85,6 +98,7 @@
 #endif
 
 #define	__KERNEL_RCSID(_n, _s)		__RCSID(_s)
+#define	__KERNEL_SCCSID(_n, _s)
 #if 0	/* XXX see above */
 #define	__KERNEL_COPYRIGHT(_n, _s)	__COPYRIGHT(_s)
 #else

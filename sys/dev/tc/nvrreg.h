@@ -1,4 +1,4 @@
-/* 	$NetBSD: nvrreg.h,v 1.1 1999/11/29 15:06:28 ad Exp $ 	*/
+/* 	$NetBSD: nvrreg.h,v 1.1.2.1 1999/12/27 18:35:37 wrstuden Exp $ 	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>

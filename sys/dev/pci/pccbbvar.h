@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.4 1999/11/01 08:58:45 haya Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.4.4.1 1999/12/27 18:35:21 wrstuden Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *

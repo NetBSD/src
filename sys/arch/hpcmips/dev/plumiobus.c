@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.2 1999/12/07 17:37:21 uch Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.2.2.1 1999/12/27 18:32:02 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

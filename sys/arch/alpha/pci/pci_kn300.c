@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.12 1999/04/16 21:29:47 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.12.8.1 1999/12/27 18:31:28 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12 1999/04/16 21:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12.8.1 1999/12/27 18:31:28 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.12 1999/04/16 21:29:47 thorpej Exp $
 #endif
 
 #include "sio.h"
-#if NSIO > 0
+#if NSIO > 0 || NPCEB > 0
 #include <alpha/pci/siovar.h>
 #endif
 
@@ -76,10 +76,11 @@ void	dec_kn300_intr_disestablish __P((void *, void *));
 #define	NPIN		4
 
 #define	NIRQ	(MAX_MC_BUS * MCPCIA_PER_MCBUS * MCPCIA_MAXSLOT * NPIN)
-static int savunit[NIRQ];
 static int savirqs[NIRQ];
 
 static struct alpha_shared_intr *kn300_pci_intr;
+
+static struct mcpcia_config *mcpcia_eisaccp = NULL;
 
 #ifdef EVCNT_COUNTERS
 struct evcnt kn300_intr_evcnt;
@@ -102,7 +103,6 @@ pci_kn300_pickintr(ccp, first)
 		kn300_pci_intr = alpha_shared_intr_alloc(NIRQ);
 		for (g = 0; g < NIRQ; g++) {
 			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 25);
-			savunit[g] = (char) -1;
 			savirqs[g] = (char) -1;
 		}
 		set_iointr(kn300_iointr);
@@ -117,20 +117,21 @@ pci_kn300_pickintr(ccp, first)
 	/* Not supported on KN300. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-#if NSIO > 0
 	if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
+		mcpcia_eisaccp = ccp;
+#if NSIO > 0 || NPCEB > 0
 		sio_intr_setup(pc, &ccp->cc_iot);
 		kn300_enable_intr(ccp, KN300_PCEB_IRQ);
-	}
 #endif
+	}
 }
 
 int     
 dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
-        void *ccv;
-        pcitag_t bustag; 
-        int buspin, line;
-        pci_intr_handle_t *ihp;
+	void *ccv;
+	pcitag_t bustag; 
+	int buspin, line;
+	pci_intr_handle_t *ihp;
 {
 	struct mcpcia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
@@ -156,14 +157,14 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
 	} else if (device >= 2 && device <= 5) {
 		mcpcia_irq = (device - 2) * 4;
 	} else {
-                printf("dec_kn300_intr_map: weird device number %d\n", device);
-                return(1);
+		printf("dec_kn300_intr_map: weird device number %d\n", device);
+		return(1);
 	}
 
 	/*
 	 * handle layout:
 	 *
-	 *	Determine kn300 IRQ:
+	 *	Determine kn300 IRQ (encoded in SCB vector):
 	 *	bits 0..1	buspin-1
 	 *	bits 2..4	PCI Slot (0..7- yes, some don't exist)
 	 *	bits 5..7	MID-4
@@ -177,7 +178,7 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
 		((device & 0x7)			<< 2)	|
 		((ccp->cc_mid - 4)		<< 5)	|
 		((7 - ccp->cc_gid)		<< 8)	|
-		(mcpcia_irq << 11);
+		(mcpcia_irq			<< 11);
 	return (0);
 }
 
@@ -186,7 +187,7 @@ dec_kn300_intr_string(ccv, ih)
 	void *ccv;
 	pci_intr_handle_t ih;
 {
-        static char irqstr[64];
+	static char irqstr[64];
 
 	sprintf(irqstr, "kn300 irq %ld", ih & 0x3ff);
 	return (irqstr);
@@ -200,6 +201,7 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
         int (*func) __P((void *));
         void *arg;
 {           
+	struct mcpcia_config *ccp = ccv;
 	void *cookie;
 	int irq;
 
@@ -208,10 +210,9 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
 	    level, func, arg, "kn300 irq");
 
 	if (cookie != NULL && alpha_shared_intr_isactive(kn300_pci_intr, irq)) {
-		struct mcpcia_config *ccp = ccv;
-		savunit[irq] = ccp->cc_sc->mcpcia_dev.dv_unit;
+		alpha_shared_intr_set_private(kn300_pci_intr, irq, ccp);
 		savirqs[irq] = (ih >> 11) & 0x1f;
-		kn300_enable_intr(ccv, (int)((ih >> 11) & 0x1f));
+		kn300_enable_intr(ccp, savirqs[irq]);
 		alpha_mb();
 	}
 	return (cookie);
@@ -219,8 +220,9 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
 
 void    
 dec_kn300_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+	void *ccv, *cookie;
 {
+
 	panic("dec_kn300_intr_disestablish not implemented");
 }
 
@@ -231,16 +233,20 @@ kn300_iointr(framep, vec)
 {
 	struct mcpcia_softc *mcp;
 	u_long irq;
-	extern struct cfdriver mcpcia_cd;
 
 	if (vec >= MCPCIA_VEC_EISA && vec < MCPCIA_VEC_PCI) {
-#if NSIO > 0
+#if NSIO > 0 || NPCEB > 0
 		sio_iointr(framep, vec);
 		return;
 #else
-		printf("kn300_iointr: (E)ISA interrupt support not configured"
-			" for vector 0x%x", vec);
-		kn300_disable_intr(mcpcia_eisaccp, KN300_PCEB_IRQ);
+		static const char *plaint = "kn300_iointr: (E)ISA interrupt "
+		    "support not configured for vector 0x%x";
+		if (mcpcia_eisaccp) {
+			kn300_disable_intr(mcpcia_eisaccp, KN300_PCEB_IRQ);
+			printf(plaint, vec);
+		} else {
+			panic(plaint, vec);
+		}
 #endif
 	} 
 
@@ -283,11 +289,11 @@ kn300_iointr(framep, vec)
 	 * Stray interrupt; disable the IRQ on the appropriate MCPCIA
 	 * if we've reached the limit.
 	 */
-	alpha_shared_intr_stray(kn300_pci_intr, savirqs[irq], "kn300 irq");
+	alpha_shared_intr_stray(kn300_pci_intr, irq, "kn300 irq");
 	if (ALPHA_SHARED_INTR_DISABLE(kn300_pci_intr, irq) == 0)
 		return;
 
-	mcp = mcpcia_cd.cd_devs[savunit[irq]];
+	mcp = alpha_shared_intr_get_private(kn300_pci_intr, irq);
 	kn300_disable_intr(mcp->mcpcia_cc, savirqs[irq]);
 }
 

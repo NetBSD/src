@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.10 1998/11/13 12:20:18 christos Exp $	*/
+/*	$NetBSD: vis.h,v 1.10.6.1 1999/12/27 18:29:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -77,8 +77,11 @@
 
 __BEGIN_DECLS
 char	*vis __P((char *, int, int, int));
+char	*svis __P((char *, int, int, int, const char *));
 int	strvis __P((char *, const char *, int));
+int	strsvis __P((char *, const char *, int, const char *));
 int	strvisx __P((char *, const char *, size_t, int));
+int	strsvisx __P((char *, const char *, size_t, int, const char *));
 int	strunvis __P((char *, const char *));
 #ifdef __LIBC12_SOURCE__
 int	unvis __P((char *, int, int *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.8 1998/02/10 01:27:23 perry Exp $	*/
+/*	$NetBSD: udp.h,v 1.8.20.1 1999/12/27 18:36:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -47,6 +47,6 @@ struct udphdr {
 	u_int16_t uh_dport;		/* destination port */
 	u_int16_t uh_ulen;		/* udp length */
 	u_int16_t uh_sum;		/* udp checksum */
-};
+} __attribute__((__packed__));
 
 #endif /* _NETINET_UDP_H_ */

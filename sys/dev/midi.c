@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.12 1999/09/09 10:24:45 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.12.6.1 1999/12/27 18:34:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ midi_attach(sc, parent)
 	sc->sc_dev = parent;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
-	printf(": <%s>\n", mi.name);
+	printf(": %s\n", mi.name);
 }
 
 int

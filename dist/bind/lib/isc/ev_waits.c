@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_waits.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: ev_waits.c,v 1.1.1.1.4.1 1999/12/27 18:27:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium

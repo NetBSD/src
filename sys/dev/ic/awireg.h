@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.2 1999/11/05 05:13:36 sommerfeld Exp $ */
+/* $NetBSD: awireg.h,v 1.2.6.1 1999/12/27 18:34:44 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 1999/09/18 00:23:37 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.19.2.1 1999/12/27 18:28:53 wrstuden Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,7 +45,7 @@
 #	fd*	"floppy" disk drives (3 1/2", 5 1/4") (not yet)
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
-#	md*	memory pseudo-disks
+#	md*	memory pseudo-disk devices
 #	vnd*	"file" pseudo-disks
 #	raid*	RAIDframe disk driver
 #	ccd*	contatenated disk devices
@@ -100,7 +100,7 @@ case $i in
 all)
 	sh $0 std fd sd0 sd1 sd2 st0 st1 cd0 cd1 wd0 wd1 md0
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
-	sh $0 random tty0 tty1 pty0 pty1 adb grf0 wscons
+	sh $0 random tty00 tty01 tty10 pty0 pty1 adb grf0 wscons
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 ipl usbs
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
@@ -108,7 +108,7 @@ all)
 	;;
 
 floppy)
-	sh $0 std sd0 sd1 sd2 tty0 tty1 pty0 wscons
+	sh $0 std sd0 sd1 sd2 tty00 tty01 pty0 wscons
 	sh $0 st0 st1 cd0 cd1 wd0 wd1 md0
 	;;
 
@@ -152,7 +152,6 @@ wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyEcfg
 	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
-	sh $0 ttyEcfg
 	sh $0 wsmux
 	;;
 
@@ -268,12 +267,20 @@ ttyU*)
 	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
-tty*)
-	unit=${i#???}
+tty0*)
+	unit=${i#????}
 	rm -f tty0$unit dty0$unit
 	mknod tty0$unit c 12 $(($unit + $dialin ))
 	mknod dty0$unit c 12 $(($unit + $dialout))
 	chown uucp.wheel tty0$unit dty0$unit
+	;;
+
+tty1*)
+	unit=${i#????}
+	rm -f tty1$unit dty1$unit
+	mknod tty1$unit c 45 $(($unit + $dialin ))
+	mknod dty1$unit c 45 $(($unit + $dialout))
+	chown uucp:wheel tty1$unit dty1$unit
 	;;
 
 pty*)
@@ -365,19 +372,14 @@ cd*)
 	;;
 
 md*)
-	case $i in
-	md*) name=md;	unit=${i#md};	chr=27;	blk=9;;
-	esac
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
-	;;
+	unit=${i#md}; blk=9; chr=27;
+	rm -f md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 16))
+	mknod md${unit}c b $blk $((($unit + 16) * 16))
+#	mknod rmd${unit} c $chr $((($unit + 16) * 16))
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
+	;;      
 
 bpf*|tun*)
 	case $i in

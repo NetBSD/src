@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.12 1998/04/01 22:59:25 mark Exp $	*/
+/*	$NetBSD: exception.S,v 1.12.18.1 1999/12/27 18:31:39 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -55,7 +55,7 @@
 	.align	0
 
 Lastpending:
-        .word   _astpending
+        .word   _C_LABEL(astpending)
 
 /*
  * General exception exit handler
@@ -96,7 +96,7 @@ do_ast:
 	str	r1, [r5]
 
 	mov	r0, sp			/* arg 0 = trap frame */
-	bl	_ast			/* call the AST handler */
+	bl	_C_LABEL(ast)		/* call the AST handler */
 	b	Lexception_exit_loop	/* Try and exit again */
 
 do_exit:
@@ -125,17 +125,17 @@ Ldata_abort_return:	/* XXX - could just straight to exception_exit */
 	b	exception_exit
 
 Ldata_abort_handler_address:
-	.word	_data_abort_handler_address
+	.word	_C_LABEL(data_abort_handler_address)
 
 	.data
-	.global	_data_abort_handler_address
-_data_abort_handler_address:
+	.global	_C_LABEL(data_abort_handler_address)
+_C_LABEL(data_abort_handler_address):
 	.word	abortdata
 
 	.text
 abortdata:
         add     r0, pc, #abortdatamsg - . - 8
-	b	_panic
+	b	_C_LABEL(panic)
 
 abortdatamsg:
         .asciz  "abortdata"
@@ -158,18 +158,18 @@ Lprefetch_abort_return:	/* XXX - could just straight to exception_exit */
 	b	exception_exit
 
 Lprefetch_abort_handler_address:
-	.word	_prefetch_abort_handler_address
+	.word	_C_LABEL(prefetch_abort_handler_address)
 
 	.data
-	.global	_prefetch_abort_handler_address
+	.global	_C_LABEL(prefetch_abort_handler_address)
 
-_prefetch_abort_handler_address:
+_C_LABEL(prefetch_abort_handler_address):
 	.word	abortprefetch
 
 	.text
 abortprefetch:
         add     r0, pc, #abortprefetchmsg - . - 8
-	b	_panic
+	b	_C_LABEL(panic)
 
 abortprefetchmsg:
         .asciz  "abortprefetch"
@@ -192,7 +192,7 @@ ASENTRY_NP(swi_entry)
 
 	mov	r0, sp			/* Pass the frame to any function */
 
-	bl	_syscall		/* It's a syscall ! */
+	bl	_C_LABEL(syscall)	/* It's a syscall ! */
 
 	ldr	r5, Lastpending		/* Get address of astpending */
 	mrs     r4, cpsr_all		/* Get CPSR */
@@ -215,7 +215,7 @@ do_swi_ast:
 	str	r1, [r5]
 
 	mov	r0, sp			/* arg 0 = trap frame */
-	bl	_ast			/* call the AST handler */
+	bl	_C_LABEL(ast)		/* call the AST handler */
 	b	swi_exit_loop		/* Try and exit again */
 
 
@@ -282,7 +282,7 @@ Lprenotuser_push:
  */
 Lgoipkdb:
 	mov	r0, sp
-	bl	_ipkdb_trap_glue
+	bl	_C_LABEL(ipkdb_trap_glue)
 	ldr	r1, Lipkdb_trap_return
 	str	r0,[r1]
 /*
@@ -367,7 +367,7 @@ Lundefined_handler_indirection:
 ENTRY_NP(undefinedinstruction_bounce)
 	PUSHFRAMEINSVC
 	mov	r0, sp
-	bl	_undefinedinstruction
+	bl	_C_LABEL(undefinedinstruction)
 
 	b	exception_exit
 
@@ -389,8 +389,8 @@ Lundefined_handler_indirection_data:
 	.word	0
 	.word	0
 
-	.global	_undefined_handler_address
-_undefined_handler_address:
-	.word	_undefinedinstruction_bounce
+	.global	_C_LABEL(undefined_handler_address)
+_C_LABEL(undefined_handler_address):
+	.word	_C_LABEL(undefinedinstruction_bounce)
 
 /* End of exception.S */

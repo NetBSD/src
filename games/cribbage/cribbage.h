@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.6 1999/09/10 00:03:14 jsm Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.6.2.1 1999/12/27 18:28:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -85,7 +85,7 @@ int	 getuchar __P((void));
 int	 incard __P((CARD *));
 int	 infrom __P((const CARD [], int, const char *));
 void	 instructions __P((void));
-int	 isone __P((CARD, const CARD [], int));
+int	 is_one __P((CARD, const CARD [], int));
 void	 makeboard __P((void));
 void	 makedeck __P((CARD []));
 void	 makeknown __P((const CARD [], int));

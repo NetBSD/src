@@ -1,4 +1,4 @@
-#	$NetBSD: makeconf.awk,v 1.6 1999/06/27 12:55:58 mrg Exp $
+#	$NetBSD: makeconf.awk,v 1.6.2.1 1999/12/27 18:28:25 wrstuden Exp $
 
 #
 # generate crunchgen(1) configuration file from `list' spec.
@@ -43,7 +43,7 @@ END {
 	# write crunchgen configuration
 
 	# default libs
-	printf("\nlibs -lrmt -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lkvm\n");
+	printf("\nlibs -lrmt -ledit -lutil -lcurses -ltermcap -lbz2 -lcrypt -ll -lm -lkvm\n");
 
 	# `prog' directives; print 8 to a line
 	column = 0;

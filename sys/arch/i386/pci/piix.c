@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
+/*	$NetBSD: piix.c,v 1.1.2.1 1999/12/27 18:32:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.1.1.1.4.1 1999/12/27 18:27:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcvar.h,v 1.4 1997/05/28 14:21:39 jonathan Exp $	*/
+/*	$NetBSD: dcvar.h,v 1.4.30.1 1999/12/27 18:33:23 wrstuden Exp $	*/
 
 /*
  * External declarations from DECstation dc serial driver.
@@ -19,11 +19,16 @@ struct dc_softc {
 	 */
 	int	dc_brk;
 
+	int	dc_flags;
+
 	char	dc_19200;		/* this unit supports 19200 */
 	char	dcsoftCAR;		/* mask, lines with carrier on (DSR) */
 	char	dc_rtscts;		/* mask, lines with hw flow control */
 	char	dc_modem;		/* mask, lines with  DTR wired  */
 };
+
+/* flags */
+#define DC_KBDMOUSE	0x01		/* keyboard and mouse attached */
 
 int	dcattach __P((struct dc_softc *sc, void *addr,
 			int dtrmask, int rts_ctsmask,
@@ -37,9 +42,6 @@ int	dcintr __P((void * xxxunit));
 extern int dcGetc __P ((dev_t dev));
 extern int dcparam __P((register struct tty *tp, register struct termios *t));
 extern void dcPutc __P((dev_t dev, int c));
-
-struct dc7085regs;
-void dc_consinit __P((dev_t dev, volatile struct dc7085regs *dcaddr));
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */

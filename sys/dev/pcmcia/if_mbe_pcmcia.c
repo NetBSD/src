@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.8 1999/08/24 17:47:44 tron Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.8.6.1 1999/12/27 18:35:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@ int	mbe_pcmcia_enable __P((struct mb86960_softc *));
 void	mbe_pcmcia_disable __P((struct mb86960_softc *));
 
 struct mbe_pcmcia_get_enaddr_args {
-	int got_enaddr;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 };
 int	mbe_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
@@ -99,6 +98,10 @@ struct mbe_pcmcia_product {
 	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	  0,				0,
 	  PCMCIA_STR_TDK_LAK_CD021BX },
+
+	{ PCMCIA_VENDOR_TDK,            PCMCIA_PRODUCT_TDK_LAK_CF010,
+	  0,                            0,
+	  PCMCIA_STR_TDK_LAK_CF010},
 #if 0 /* XXX 86960-based? */
 	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_DFL9610,
 	  1,				0,
@@ -112,6 +115,10 @@ struct mbe_pcmcia_product {
 	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA501,
 	  0,				0x20,
 	  PCMCIA_STR_FUJITSU_LA501 },
+
+	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA10S,
+	  0,				0,
+	  PCMCIA_STR_FUJITSU_LA10S },
 
 	{ 0,				0,
 	  0,				0,
@@ -161,6 +168,7 @@ mbe_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	struct mbe_pcmcia_get_enaddr_args pgea;
 	const struct mbe_pcmcia_product *mpp;
+	int rv;
 
 	mpp = mbe_pcmcia_lookup(pa);
 	if (mpp == NULL) {
@@ -205,22 +213,27 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	printf(": %s\n", mpp->mpp_name);
 
-	/* Read station address. */
-	pgea.got_enaddr = 0;
-	if (pcmcia_scan_cis(parent, mbe_pcmcia_get_enaddr, &pgea) == -1) {
+	/* Read station address from CIS. */
+	rv = pcmcia_scan_cis(parent, mbe_pcmcia_get_enaddr, &pgea);
+	if (rv == -1) {
 		printf("%s: Couldn't read CIS to get ethernet address\n",
 		    sc->sc_dev.dv_xname);
 		return;
-	} else if (!pgea.got_enaddr) {
+	} else if (rv == 0) {
 		printf("%s: Couldn't get ethernet address from CIS\n",
 		    sc->sc_dev.dv_xname);
 		return;
-	} else
+	}
+
 #ifdef DIAGNOSTIC
-		printf("%s: Ethernet address from CIS: %s\n",
-		    sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr))
+	if (rv != 1) {
+		printf("%s: pcmcia_scan_cis returns %d\n", sc->sc_dev.dv_xname,
+		    rv);
+		panic("mbe_pcmcia_attach");
+	}
+	printf("%s: Ethernet address from CIS: %s\n",
+	    sc->sc_dev.dv_xname, ether_sprintf(pgea.enaddr));
 #endif
-		;
 
 	/* Perform generic initialization. */
 	mb86960_attach(sc, MB86960_TYPE_86965, pgea.enaddr);
@@ -303,7 +316,6 @@ mbe_pcmcia_get_enaddr(tuple, arg)
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			p->enaddr[i] = pcmcia_tuple_read_1(tuple, i + 2);
-		p->got_enaddr = 1;
 		return (1);
 	}
 	return (0);

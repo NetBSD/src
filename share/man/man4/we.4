@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.8 1999/04/02 08:25:23 tron Exp $
+.\"	$NetBSD: we.4,v 1.8.4.1 1999/12/27 18:30:47 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,8 +40,8 @@
 .Os
 .Sh NAME
 .Nm we
-.Nd device driver for Western Digital/SMC WD80x3, SMC Elite Ultra,
-and SMC EtherEZ Ethernet cards
+.Nd Western Digital/SMC WD80x3, SMC Elite Ultra,
+and SMC EtherEZ Ethernet cards device driver
 .Sh SYNOPSIS
 .Cd "we0 at isa? port 0x280 iomem 0xd0000 irq 9"
 .Cd "we1 at isa? port 0x300 iomem 0xcc000 irq 10"
@@ -64,7 +64,7 @@ The values to add together for flags are:
 .It 2
 force adapter to be treated as 8bit, even if it probes
 as a 16bit interface. Improper use of this flag will make the
-driver fail or send invalid ethernet packets.
+driver fail or send invalid Ethernet packets.
 .It 4
 force adapter to be treated as 16bit, even if it probes
 as a 8bit interface. For example the COMPEX ENT/U boards
@@ -123,7 +123,7 @@ ring-buffer to store incoming packets.
 The 16bit boards (8013 series) have 16k of memory as well as
 fast memory access speed.  Typical memory access speed on these
 boards is about 4MB/second.  These boards generally have no
-problems keeping up with full ethernet speed and the ring-buffer
+problems keeping up with full Ethernet speed and the ring-buffer
 seldom overfills.
 
 However, the 8bit boards (8003) usually have only 8k bytes of shared

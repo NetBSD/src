@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.13 1999/09/18 19:38:48 jsm Exp $	*/
+/*	$NetBSD: io.c,v 1.13.2.1 1999/12/27 18:28:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.13 1999/09/18 19:38:48 jsm Exp $");
+__RCSID("$NetBSD: io.c,v 1.13.2.1 1999/12/27 18:28:59 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ infrom(hand, n, prompt)
 	for (;;) {
 		msg(prompt);
 		if (incard(&crd)) {	/* if card is full card */
-			if (!isone(crd, hand, n))
+			if (!is_one(crd, hand, n))
 				msg("That's not in your hand");
 			else {
 				for (i = 0; i < n; i++)
@@ -211,7 +211,7 @@ infrom(hand, n, prompt)
 					    hand[i].suit == crd.suit)
 						break;
 				if (i >= n) {
-			printf("\nINFROM: isone or something messed up\n");
+			printf("\nINFROM: is_one or something messed up\n");
 					exit(77);
 				}
 				return (i);

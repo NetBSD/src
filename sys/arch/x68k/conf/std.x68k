@@ -1,10 +1,14 @@
-#	$NetBSD: std.x68k,v 1.7 1999/03/30 04:27:08 minoura Exp $
+#	$NetBSD: std.x68k,v 1.7.14.1 1999/12/27 18:34:15 wrstuden Exp $
 
 #
 # Mandatory NetBSD/x68k kernel options.
 #
 
 machine		x68k m68k	# Machine architecture; required by config(8)
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1999/02/13 02:54:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.8.1 1999/12/27 18:33:16 wrstuden Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -28,9 +28,11 @@ CPPFLAGS+=	-DPOWERPC_BOOT_AOUT
 CPPFLAGS+=	-DPOWERPC_BOOT_ELF
 CPPFLAGS+=	-DCOMPAT_386BSD_MBRPART
 
-.BEGIN: ${.OBJDIR}/machine
-depend all: ${.OBJDIR}/machine
-CLEANFILES+= ${.OBJDIR}/machine
+.BEGIN:
+	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
+	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+
+CLEANFILES+= ${.OBJDIR}/machine  ${.OBJDIR}/powerpc
 
 ${.OBJDIR}/machine::
 	-rm -f $@

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1999/09/14 10:22:35 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.8.1 1999/12/27 18:33:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,8 +134,6 @@ void	delay __P((int));
 #ifdef _KERNEL
 extern int cpu;
 extern int cpu_class;
-extern int cpu_feature;
-extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass sh3_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass sh3_cpuid_cpus[];
 
@@ -184,28 +182,6 @@ int	math_emulate __P((struct trapframe *));
 void	child_return __P((struct proc *, int, int, int, struct trapframe));
 
 #endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_NKPDE		2	/* int: number of kernel PDEs */
-#define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
-#define	CPU_SETPRIVPROC		4	/* set current proc to piviledged proc
-					   */
-#define	CPU_DEBUGMODE		5	/* set debug mode */
-#define	CPU_LOADANDRESET	6	/* load kernel image and reset */
-#define	CPU_MAXID		7	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "nkpde", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "set_priv_proc", CTLTYPE_INT }, \
-	{ "debug_mode", CTLTYPE_INT }, \
-	{ "load_and_reset", CTLTYPE_INT }, \
-}
 
 #include <machine/sh3.h>
 

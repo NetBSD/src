@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1999/08/16 22:27:15 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.15.2.1 1999/12/27 18:32:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -144,6 +144,9 @@ cdev_decl(ulpt);
 #include "umodem.h"
 cdev_decl(umodem);
 
+#include "com.h"
+cdev_decl(com);
+
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: control tty */
@@ -190,6 +193,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ugen_init(NUGEN,ugen),	/* 42: USB generic driver */
 	cdev_mouse_init(NWSMUX,wsmux),  /* 43: ws multiplexor */
 	cdev_tty_init(NUMODEM,umodem),	/* 44: USB modem */
+	cdev_tty_init(NCOM,com),	/* 45: NS16x50 compatible ports */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -269,6 +273,7 @@ static int chrtoblktbl[] = {
 	/* 42 */	NODEV,
 	/* 43 */	NODEV,
 	/* 44 */	NODEV,
+	/* 45 */	NODEV,
 };
 
 /*

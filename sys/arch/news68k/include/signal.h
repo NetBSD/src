@@ -1,3 +1,3 @@
-/*	$NetBSD: signal.h,v 1.1 1999/12/09 14:53:13 tsutsui Exp $	*/
+/*	$NetBSD: signal.h,v 1.1.2.1 1999/12/27 18:32:59 wrstuden Exp $	*/
 
 #include <m68k/signal.h>

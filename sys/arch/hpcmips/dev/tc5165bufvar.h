@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165bufvar.h,v 1.1 1999/12/12 17:10:01 uch Exp $ */
+/*	$NetBSD: tc5165bufvar.h,v 1.1.2.1 1999/12/27 18:32:04 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

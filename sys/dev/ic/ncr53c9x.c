@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.6.1 1999/12/27 18:34:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -493,6 +493,7 @@ ncr53c9x_select(sc, ecb)
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
+	size_t dmasize;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
 		   target, lun, ecb->cmd.cmd.opcode));
@@ -515,12 +516,47 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
 
-	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
-		size_t dmasize;
+	if (ecb->flags & ECB_SENSE) {
+		/*
+		 * For REQUEST SENSE, we should not send an IDENTIFY or
+		 * otherwise mangle the target.  There should be no MESSAGE IN
+		 * phase.
+		 */
+		if (ncr53c9x_dmaselect) {
+			/* setup DMA transfer for command */
+			dmasize = clen = ecb->clen;
+			sc->sc_cmdlen = clen;
+			sc->sc_cmdp = (caddr_t)&ecb->cmd + 1;
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
+	
+			/* Program the SCSI counter */
+			NCR_WRITE_REG(sc, NCR_TCL, dmasize);
+			NCR_WRITE_REG(sc, NCR_TCM, dmasize >> 8);
+			if (sc->sc_cfg2 & NCRCFG2_FE) {
+				NCR_WRITE_REG(sc, NCR_TCH, dmasize >> 16);
+			}
 
+			/* load the count in */
+			NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
+
+			/* And get the targets attention */
+			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
+			NCRDMA_GO(sc);
+		} else {
+			/* Now the command into the FIFO */
+			cmd = (u_char *)&ecb->cmd.cmd;
+			clen = ecb->clen;
+			while (clen--)
+				NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+
+			NCRCMD(sc, NCRCMD_SELNATN);
+		}
+		return;
+	}
+
+	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
 		ecb->cmd.id = 
 		    MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
-
 
 		/* setup DMA transfer for command */
 		dmasize = clen = ecb->clen + 1;
@@ -1831,6 +1867,7 @@ printf("<<RESELECT CONT'd>>");
 			case 2:
 				/* Select stuck at Command Phase */
 				NCRCMD(sc, NCRCMD_FLUSH);
+				break;
 			case 4:
 				if (ncr53c9x_dmaselect &&
 				    sc->sc_cmdlen != 0)

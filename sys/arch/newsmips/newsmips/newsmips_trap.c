@@ -1,4 +1,4 @@
-/*	$NetBSD: newsmips_trap.c,v 1.5 1998/06/25 21:19:16 thorpej Exp $	*/
+/*	$NetBSD: newsmips_trap.c,v 1.5.14.1 1999/12/27 18:33:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,9 +63,7 @@
 
 #include <newsmips/dev/scc.h>
 
-#include "le.h"
-#include "kb.h"
-#include "ms.h"
+#include "sc.h"
 /*#include "lp.h"*/
 /*#include "fd.h"*/
 /*#include "sb.h"*/
@@ -75,14 +73,10 @@ void level0_intr __P((void));
 void level1_intr __P((void));
 void dma_intr __P((void));
 void print_int_stat __P((char *));
-void exec_hb_intr2 __P((void));
-void exec_hb_intr4 __P((void));
+void news3400_errintr __P((u_int));
 
-extern int leintr __P((int));
-extern int sc_intr __P((void));
-extern void kbm_rint __P((int));
-
-extern u_int intrcnt[];
+int sc_intr __P((void));
+void hb_intr_dispatch __P((int));
 
 static int badaddr_flag;
 
@@ -103,10 +97,12 @@ news3400_intr(mask, pc, statusReg, causeReg)
 		register int stat;
 
 		stat = *(volatile u_char *)INTST0;
+		stat &= INTST0_TIMINT|INTST0_KBDINT|INTST0_MSINT;
+		*(volatile u_char *)INTCLR0 = stat;
+
 		if (stat & INTST0_TIMINT) {	/* timer */
 			static int led_count = 0;
 
-			*(volatile u_char *)INTCLR0 = INTCLR0_TIMINT;
 			cf.pc = pc;
 			cf.sr = statusReg;
 			hardclock(&cf);
@@ -115,15 +111,12 @@ news3400_intr(mask, pc, statusReg, causeReg)
 				led_count = 0;
 				*(volatile u_char *)DEBUG_PORT ^= DP_LED1;
 			}
+			stat &= ~INTST0_TIMINT;
 		}
-#if NKB > 0
-		if (stat & INTST0_KBDINT)	/* keyboard */
-			kbm_rint(SCC_KEYBOARD);
-#endif
-#if NMS > 0
-		if (stat & INTST0_MSINT)	/* mouse */
-			kbm_rint(SCC_MOUSE);
-#endif
+
+		if (stat)
+			hb_intr_dispatch(2);
+
 		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MIPS_INT_MASK_2;
 	}
@@ -131,10 +124,9 @@ news3400_intr(mask, pc, statusReg, causeReg)
 	splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_2));
 
 	if (mask & MIPS_INT_MASK_5) {		/* level 5 interrupt */
-		printf("level 5 interrupt: PC %x CR %x SR %x\n",
-			pc, causeReg, statusReg);
-		/* causeReg &= ~MIPS_INT_MASK_5; */
-		/* panic("level 5 interrupt"); */
+		*(char *)INTCLR0 = INTCLR0_PERR;
+		news3400_errintr(pc);
+		causeReg &= ~MIPS_INT_MASK_5;
 	}
 	if (mask & MIPS_INT_MASK_4) {		/* level 4 interrupt */
 		/*
@@ -157,13 +149,12 @@ news3400_intr(mask, pc, statusReg, causeReg)
 		MIPS_SR_INT_ENA_CUR);
 }
 
-#ifdef notyet
-static void
-news3400_errintr()
+void
+news3400_errintr(pc)
+	u_int pc;
 {
-	panic("Memory error interrupt");
+	printf("Memory error interrupt(?) at 0x%x\n", pc);
 }
-#endif
 
 #include <newsmips/dev/dmac_0448.h>
 
@@ -188,25 +179,12 @@ level0_intr()
 	stat = *(volatile u_char *)INTST1 & LEVEL0_MASK;
 	*(u_char *)INTCLR1 = stat;
 
-	if (stat & INTST1_DMA)
-		dma_intr();
-	if (stat & INTST1_SLOT1) {
+	hb_intr_dispatch(0);
+
+	if (stat & INTST1_SLOT1)
 		intrcnt[SLOT1_INTR]++;
-		exec_hb_intr2();
-	}
-#if NLE > 0
-	if (stat & INTST1_SLOT3) {
-		int s, t;
-
-		s = splimp();
-		t = leintr(1);
-		splx(s);
-		if (t == 0)
-			exec_hb_intr4();
+	if (stat & INTST1_SLOT3)
 		intrcnt[SLOT3_INTR]++;
-	}
-#endif
-
 	if (stat & INTST1_EXT1)
 		print_int_stat("EXT #1");
 	if (stat & INTST1_EXT3)
@@ -243,21 +221,13 @@ level1_intr()
 		*(volatile u_char *)INTCLR1 = INTCLR1_BEEP;
 		print_int_stat("BEEP");
 	}
-	if (stat & INTST1_SCC) {
-		extern void zs_intr();
-
+	if (stat & INTST1_SCC)
 		intrcnt[SERIAL0_INTR]++;
-		zs_intr();
-		if (saved_inten1 & *(u_char *)INTST1 & INTST1_SCC)
-			zs_intr();
-	}
 
-#if NLE > 0
-	if (stat & INTST1_LANCE) {
+	if (stat & INTST1_LANCE)
 		intrcnt[LANCE_INTR]++;
-		leintr(0);
-	}
-#endif
+
+	hb_intr_dispatch(1);
 
 	*(u_char *)INTEN1 = saved_inten1;
 
@@ -292,6 +262,7 @@ level1_intr()
 
 /*
  * DMA interrupt service routine.
+ * XXX only SCSI works now.
  */
 void
 dma_intr()
@@ -315,9 +286,11 @@ dma_intr()
 			printf("dma_intr: MRQ\n");
 	}
 
+#if NSC > 0
 	/* SCSI Dispatch */
 	if (gstat & CH_INT(CH_SCSI))
 		sc_intr();
+#endif
 
 #if NFD > 0
         /* FDC Interrupt Dispatch */
@@ -349,14 +322,26 @@ print_int_stat(msg)
 	printf("INTST0=0x%x, INTST1=0x%x.\n", s0, s1);
 }
 
-void
-exec_hb_intr2()
+int
+news3400_badaddr(addr, size)
+	void *addr;
+	u_int size;
 {
-	printf("stray hb interrupt level 2\n");
-}
+	volatile int x;
 
-void
-exec_hb_intr4()
-{
-	printf("stray hb interrupt level 4\n");
+	badaddr_flag = 0;
+
+	switch (size) {
+	case 1:
+		x = *(volatile int8_t *)addr;
+		break;
+	case 2:
+		x = *(volatile int16_t *)addr;
+		break;
+	case 4:
+		x = *(volatile int32_t *)addr;
+		break;
+	}
+
+	return badaddr_flag;
 }

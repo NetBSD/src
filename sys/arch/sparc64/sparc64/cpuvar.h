@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.1.1.1.20.1 1999/12/27 18:33:59 wrstuden Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/device.h>
 
-#include <sparc/sparc64/cache.h>	/* for cacheinfo */
+#include <sparc64/sparc64/cache.h>	/* for cacheinfo */
 
 /*
  * CPU/MMU module information.

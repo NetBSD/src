@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.7 1999/04/18 01:53:15 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.7.4.1 1999/12/27 18:29:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -176,10 +176,10 @@ extern	int	nsdispatch	__P((void *, const ns_dtab [], const char *,
 				    const char *, const ns_src [], ...));
 
 #ifdef _NS_PRIVATE
-extern	void		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
+extern	int		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
 extern	void		 _nsdbtdump __P((const ns_dbt *));
 extern	const ns_dbt	*_nsdbtget __P((const char *));
-extern	void		 _nsdbtput __P((const ns_dbt *));
+extern	int		 _nsdbtput __P((const ns_dbt *));
 extern	void		 _nsyyerror __P((const char *));
 extern	int		 _nsyylex __P((void));
 extern	int		 _nsyylineno;

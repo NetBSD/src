@@ -1,4 +1,4 @@
-.\"	$NetBSD: il.4,v 1.5 1999/03/16 01:19:24 garbled Exp $
+.\"	$NetBSD: il.4,v 1.5.6.1 1999/12/27 18:31:00 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm il
 .Nd Interlan NI1010 10 Mb/s Ethernet interface
 .Sh SYNOPSIS
-.Cd "device il0 at uba0 csr 164000 vector ilrint ilcint"
+.Cd "il0 at uba0 csr 164000 vector ilrint ilcint"
 .Sh DESCRIPTION
 The
 .Nm il
@@ -81,7 +81,7 @@ family; the packet was dropped.
 .Pp
 .It il%d: setaddr didn't work.
 The interface was unable to reprogram
-its physical ethernet address.
+its physical Ethernet address.
 This may happen with very early models of the interface.
 This facility is used only when
 the controller is not the first network interface configured for

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.2 1999/12/07 17:08:10 uch Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.2.2.1 1999/12/27 18:32:13 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

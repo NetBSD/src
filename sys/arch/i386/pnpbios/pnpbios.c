@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.7 1999/12/13 20:12:22 drochner Exp $ */
+/* $NetBSD: pnpbios.c,v 1.7.2.1 1999/12/27 18:32:27 wrstuden Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.h,v 1.1 1997/08/09 05:51:58 jonathan Exp $	*/
+/* $NetBSD: mips_mcclock.h,v 1.1.28.1 1999/12/27 18:32:49 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -35,13 +35,11 @@
 #ifndef _MIPS_MCCLOCK_H_
 #define _MIPS_MCCLOCK_H_
 
-
 /*
  * Estimate CPU speed and multiplier for DELAY() by polling mcclock,
- * couting iterations of an  loop between successive ticks.
+ * counting iterations of an loop between successive ticks.
  */
-struct chiptime;
-unsigned mc_cpuspeed __P((volatile struct  chiptime *mcaddr, int clockmask));
+unsigned mc_cpuspeed __P((vaddr_t, int));
 
 /*
  * CPU speed in MHz, as estimated by mc_cpuspeed(). Read-only.

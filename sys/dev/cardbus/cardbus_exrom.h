@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.h,v 1.2 1999/12/15 12:28:54 kleink Exp $ */
+/* $NetBSD: cardbus_exrom.h,v 1.2.2.1 1999/12/27 18:34:37 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

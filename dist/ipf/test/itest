@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: itest,v 1.2 1999/12/11 23:22:14 veego Exp $
+#	$NetBSD: itest,v 1.2.4.1 1999/12/27 18:28:09 wrstuden Exp $
 #
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch

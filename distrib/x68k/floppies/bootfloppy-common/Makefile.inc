@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/07/06 16:22:59 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.10.4.1 1999/12/27 18:28:47 wrstuden Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -11,6 +11,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		xxx-${REV}.fs
+RAMDISKDIR?=	$(.CURDIR)/../ramdisk/
 KERN?=		netbsd-xxx
 KERNNAME?=	netbsd.xxx
 KERNSRC?=	${.CURDIR}/../../../../sys
@@ -18,9 +19,7 @@ GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list
-RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" | \
-	${MAKE} -s -f-
+RAMDISK	!=cd ${RAMDISKDIR}; ${MAKE} echoimage
 
 DISKTYPE=	floppy5
 
@@ -66,6 +65,14 @@ ${KERN}:
 
 ${GZNAME}: ${KERNNAME}
 	gzip -cv9 ${KERNNAME} > ${.TARGET}
+
+release:
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	-mkdir -p ${RELEASEDIR}/installation/misc
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	gzip <${IMAGE} >${RELEASEDIR}/installation/floppies/${IMAGE}.gz
+	cp -p ${KERNNAME} ${RELEASEDIR}/installation/misc
+	cp -p ${GZNAME} ${RELEASEDIR}/installation/misc
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}

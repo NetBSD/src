@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.38.6.1 1999/12/21 23:16:19 wrstuden Exp $    */
+/*      $NetBSD: param.h,v 1.38.6.2 1999/12/27 18:34:12 wrstuden Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -82,9 +82,6 @@
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(63 * 1024)	/* max raw I/O transfer size */
 #define	MAXBSIZE	0x4000		/* max FS block size - XXX */
-
-#define	CLSIZELOG2	0		/* XXX - die */
-#define	CLSIZE		1		/* XXX - die */
 
 #define	UPAGES		2		/* pages of u-area */
 #define USPACE		(NBPG*UPAGES)
@@ -216,10 +213,8 @@
 #define	spl6()		splx(0x16)
 #define	spl7()		splx(0x17)
 
-#if !defined(VAX410) && !defined(VAX43)
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
-#endif
 
 /* Prototype needed for delay() */
 #ifndef	_LOCORE

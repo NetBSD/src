@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.6 1999/07/03 14:42:39 kleink Exp $	*/
+/*	$NetBSD: pax.h,v 1.6.2.1 1999/12/27 18:27:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -85,6 +85,7 @@ typedef struct pattern {
 	int		flgs;		/* processing/state flags */
 #define MTCH		0x1		/* pattern has been matched */
 #define DIR_MTCH	0x2		/* pattern matched a directory */
+#define PTCHDIR		0x4		/* not pattern but chdir */
 	struct pattern	*fow;		/* next pattern */
 } PATTERN;
 
@@ -125,6 +126,8 @@ typedef struct {
 #define PAX_HLK		8		/* hard link */
 #define PAX_HRG		9		/* hard link to a regular file */
 #define PAX_CTG		10		/* high performance file */ 
+#define PAX_GLL		11		/* GNU long symlink */ 
+#define PAX_GLF		12		/* GNU long file */ 
 } ARCHD;
 
 /*

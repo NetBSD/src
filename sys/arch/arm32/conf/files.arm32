@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.78 1999/07/07 00:05:29 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.78.8.1 1999/12/27 18:31:41 wrstuden Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -358,7 +358,6 @@ file	netns/ns_cksum.c			ns
 
 # library functions
 file	arch/arm32/arm32/strstr.c
-file	arch/arm32/arm32/strtoul.c
 file	arch/arm32/arm32/bcopy_page.S
 file	arch/arm32/arm32/bcopyinout.S
 file	arch/arm32/arm32/copystr.S

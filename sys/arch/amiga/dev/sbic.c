@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.36 1999/10/04 20:28:01 is Exp $	*/
+/*	$NetBSD: sbic.c,v 1.36.6.1 1999/12/27 18:31:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -524,12 +524,11 @@ sbic_sched(dev)
 	dev->target = slp->scsipi_scsi.target;
 	dev->lun = slp->scsipi_scsi.lun;
 	if ( flags & XS_CTL_POLL || ( !sbic_parallel_operations
-				   && (/*phase == STATUS_PHASE ||*/
-				       sbicdmaok(dev, xs) == 0) ) )
+				   && (sbicdmaok(dev, xs) == 0)))
 		stat = sbicicmd(dev, slp->scsipi_scsi.target,
 			slp->scsipi_scsi.lun, &acb->cmd,
 		    acb->clen, acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
-	else if (sbicgo(dev, xs) == 0) {
+	else if (sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT) {
 		SBIC_TRACE(dev);
 		return;
 	} else
@@ -684,7 +683,8 @@ sbicdmaok(dev, xs)
 	struct sbic_softc *dev;
 	struct scsipi_xfer *xs;
 {
-	if (sbic_no_dma || xs->datalen & 0x1 || (u_int)xs->data & 0x3)
+	if (sbic_no_dma || !xs->datalen || xs->datalen & 0x1 ||
+	    (u_int)xs->data & 0x3)
 		return(0);
 	/*
 	 * controller supports dma to any addresses?
@@ -1408,7 +1408,7 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len)
 		 */
 		if (!( dev->sc_flags & SBICF_SELECTED )
 		    && sbicselectbus(dev, regs, target, lun, dev->sc_scsiaddr)) {
-			/*printf("sbicicmd trying to select busy bus!\n");*/
+			/* printf("sbicicmd: trying to select busy bus!\n"); */
 			dev->sc_flags &= ~SBICF_ICMD;
 			return(-1);
 		}
@@ -1685,7 +1685,7 @@ sbicgo(dev, xs)
 	 */
 	if (sbicselectbus(dev, regs, dev->target, dev->lun,
 	    dev->sc_scsiaddr)) {
-/*		printf("sbicgo: Trying to select busy bus!\n"); */
+		/* printf("sbicgo: Trying to select busy bus!\n"); */
 		SBIC_TRACE(dev);
 		return(0); /* Not done: needs to be rescheduled */
 	}

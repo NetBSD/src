@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.41 1999/09/18 00:23:37 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.41.2.1 1999/12/27 18:28:53 wrstuden Exp $
 #
 ###########################################################################
 #
@@ -46,7 +46,7 @@
 #	vnd*	vnode pseudo-disks
 #	raid*	RAIDframe disk driver
 #	ccd*	concatenated disk driver
-#	md*	memory pseudo-disks
+#	md*	memory pseudo-disk devices
 #	fd*	floppy disk drives (3 1/2")
 #
 # Terminal ports:
@@ -71,6 +71,7 @@
 #	ch*	SCSI changer
 #	adb	Apple Desktop Bus
 #	asc*	Apple Sound Chip
+#	cfs*	Venus cache driver, for Coda
 #
 
 dialin=0
@@ -90,7 +91,7 @@ all)
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11 random
 	sh $0 tun0 tun1 tun2 tun3 asc0 lkm ipl local
-	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 scsibus0 scsibus1 scsibus2 scsibus3 cfs0
 	;;
 
 std)
@@ -151,19 +152,14 @@ fd)
 	;;
 
 md*)
-	case $i in
-	md*) name=md;	unit=${i#md};	blk=13;	chr=32;;
-	esac
-	rm -f $name$unit? r$name$unit?
-	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
-	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-	chgrp operator $name$unit? r$name$unit?
-	chmod 640 $name$unit? r$name$unit?
-	;;
+	unit=${i#md}; blk=13; chr=32;
+	rm -f md${unit} md${unit}c rmd${unit}
+	mknod md${unit}  b $blk $((($unit +  0) * 8))
+	mknod md${unit}c b $blk $((($unit + 16) * 8))
+#	mknod rmd${unit} c $chr $((($unit + 16) * 8))
+	chgrp operator md${unit} md${unit}c #rmd${unit}
+	chmod 640 md${unit} md${unit}c #rmd${unit}
+	;;      
 
 ss*)
 	case $i in
@@ -349,6 +345,16 @@ scsibus*)
 	mknod scsibus$unit c 39 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+cfs*)
+	unit=${i#cfs}
+	cfs=cfs$unit
+	major=47
+	rm -f $cfs
+	mknod $cfs c $major $unit
+	chown root.wheel $cfs
+	chmod 600 $cfs
 	;;
 
 local)

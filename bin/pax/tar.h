@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.3 1995/03/21 09:07:51 cgd Exp $	*/
+/*	$NetBSD: tar.h,v 1.3.10.1 1999/12/27 18:27:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -63,6 +63,12 @@
 #define	DIRTYPE		'5'		/* Directory */
 #define	FIFOTYPE	'6'		/* FIFO */
 #define	CONTTYPE	'7'		/* high perf file */
+
+/*
+ * GNU tar compatibility;
+ */
+#define LONGLINKTYPE	'K'		/* Long Symlink */
+#define LONGNAMETYPE	'L'		/* Long File */
 
 /*
  * Mode field encoding of the different file types - values in octal

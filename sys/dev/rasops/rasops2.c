@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.3 1999/07/21 19:19:04 ad Exp $ */
+/* 	$NetBSD: rasops2.c,v 1.3.6.1 1999/12/27 18:35:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.3 1999/07/21 19:19:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.3.6.1 1999/12/27 18:35:30 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,16 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.3 1999/07/21 19:19:04 ad Exp $");
 #include <dev/rasops/rasops.h>
 #include <dev/rasops/rasops_masks.h>
 
-static void	rasops2_putchar __P((void *, int, int col, u_int, long));
-static void	rasops2_putchar8 __P((void *, int, int col, u_int, long));
-static void	rasops2_putchar12 __P((void *, int, int col, u_int, long));
-static void	rasops2_putchar16 __P((void *, int, int col, u_int, long));
 static void	rasops2_copycols __P((void *, int, int, int, int));
 static void	rasops2_erasecols __P((void *, int, int, int, long));
 static void	rasops2_do_cursor __P((struct rasops_info *));
+static void	rasops2_putchar __P((void *, int, int col, u_int, long));
+#ifndef RASOPS_SMALL
+static void	rasops2_putchar8 __P((void *, int, int col, u_int, long));
+static void	rasops2_putchar12 __P((void *, int, int col, u_int, long));
+static void	rasops2_putchar16 __P((void *, int, int col, u_int, long));
 static void	rasops2_makestamp __P((struct rasops_info *, long));
-
-void	rasops2_init __P((struct rasops_info *ri));
+#endif
 
 /* 
  * 4x1 stamp for optimized character blitting 
@@ -78,6 +78,7 @@ rasops2_init(ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
+#ifndef RASOPS_SMALL
 	case 8:
 		ri->ri_ops.putchar = rasops2_putchar8;
 		break;
@@ -87,8 +88,9 @@ rasops2_init(ri)
 	case 16:
 		ri->ri_ops.putchar = rasops2_putchar16;
 		break;
+#endif	/* !RASOPS_SMALL */
 	default:
-		panic("fontwidth not 8/12/16 - fixme!");
+		panic("fontwidth not 8/12/16 or RASOPS_SMALL - fixme!");
 		ri->ri_ops.putchar = rasops2_putchar;
 		break;
 	}
@@ -100,31 +102,7 @@ rasops2_init(ri)
 	}
 }
 
-
-/*
- * Recompute the blitting stamp.
- */
-static void
-rasops2_makestamp(ri, attr)
-	struct rasops_info *ri;
-	long attr;
-{
-	int i;
-	int32_t fg, bg;
-	
-	fg = ri->ri_devcmap[(attr >> 24) & 15] & 3;
-	bg = ri->ri_devcmap[(attr >> 16) & 15] & 3;
-	stamp_attr = attr;
-	
-	for (i = 0; i < 16; i++) {
-		stamp[i] = (i & 1 ? fg : bg);
-		stamp[i] |= (i & 2 ? fg : bg) << 2;
-		stamp[i] |= (i & 4 ? fg : bg) << 4;
-		stamp[i] |= (i & 8 ? fg : bg) << 6;
-	}
-}
-
-#if 0
+#ifdef notyet
 /*
  * Paint a single character. This is the generic version, this is ugly.
  */
@@ -254,6 +232,28 @@ rasops2_putchar(cookie, row, col, uc, attr)
 	/* XXX punt */
 }
 
+#ifndef RASOPS_SMALL
+/*
+ * Recompute the blitting stamp.
+ */
+static void
+rasops2_makestamp(ri, attr)
+	struct rasops_info *ri;
+	long attr;
+{
+	int i, fg, bg;
+	
+	fg = ri->ri_devcmap[(attr >> 24) & 15] & 3;
+	bg = ri->ri_devcmap[(attr >> 16) & 15] & 3;
+	stamp_attr = attr;
+	
+	for (i = 0; i < 16; i++) {
+		stamp[i] = (i & 1 ? fg : bg);
+		stamp[i] |= (i & 2 ? fg : bg) << 2;
+		stamp[i] |= (i & 4 ? fg : bg) << 4;
+		stamp[i] |= (i & 8 ? fg : bg) << 6;
+	}
+}
 
 /*
  * Put a single character. This is for 8-pixel wide fonts.
@@ -318,12 +318,11 @@ rasops2_putchar8(cookie, row, col, uc, attr)
 	}
 
 	/* Do underline */
-	if (attr & 1)
+	if ((attr & 1) != 0)
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
 		
 	stamp_mutex--;
 }
-
 
 /*
  * Put a single character. This is for 12-pixel wide fonts.
@@ -391,7 +390,7 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 	}
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		rp -= ri->ri_stride << 1;
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];
@@ -400,7 +399,6 @@ rasops2_putchar12(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
-
 
 /*
  * Put a single character. This is for 16-pixel wide fonts.
@@ -467,11 +465,12 @@ rasops2_putchar16(cookie, row, col, uc, attr)
 	}
 
 	/* Do underline */
-	if (attr & 1)
+	if ((attr & 1) != 0)
 		*(int32_t *)(rp - (ri->ri_stride << 1)) = stamp[15];
 		
 	stamp_mutex--;
 }
+#endif	/* !RASOPS_SMALL */
 
 /*
  * Grab routines common to depths where (bpp < 8)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.5 1999/07/22 20:14:29 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.5.2.1 1999/12/27 18:30:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.5 1999/07/22 20:14:29 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.5.2.1 1999/12/27 18:30:29 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: lfs.c,v 1.5 1999/07/22 20:14:29 perseant Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/lfs/lfs.h>
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -223,6 +224,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	off_t seg_seek;		/* Seek offset for a segment */
 	int ssize;		/* Segment size */
 	int sum_size;		/* Size of the summary block */
+	int warned_segtoobig=0;
 
 	lfsp = &lfs_default;
 
@@ -243,6 +245,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	if (bsize >= ssize)
 		fatal("block size must be < segment size");
 
+    tryagain:
 	/* Modify parts of superblock overridden by command line arguments */
 	if (bsize != DFL_LFSBLOCK || fsize != DFL_LFSFRAG) {
 		lfsp->lfs_bshift = log2(bsize);
@@ -290,8 +293,22 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_nclean = lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
 
-	if(lfsp->lfs_nseg < MIN_FREE_SEGS + 1)
-		fatal("Could not allocate %d segments; please decrease the segment size\n", MIN_FREE_SEGS+1);
+	if(lfsp->lfs_nseg < MIN_FREE_SEGS + 1
+	   || lfsp->lfs_nseg < LFS_MIN_SBINTERVAL + 1)
+	{
+		if(seg_size == 0 && ssize > (bsize<<1)) {
+			if(!warned_segtoobig)
+				fprintf(stderr,"Segment size %d is too large; trying smaller sizes...\n", ssize);
+			++warned_segtoobig;
+			ssize >>= 1;
+			goto tryagain;
+		}
+		fatal("Could not allocate enough segments with segment size %d and block size %d; please decrease the segment size.\n",
+			ssize, lfsp->lfs_bsize);
+	}
+	/* Inform them of success */
+	if(warned_segtoobig)
+		fprintf(stderr,"Using segment size %d\n", ssize);
 
 	/* 
 	 * The number of free blocks is set from the number of segments times
@@ -702,7 +719,7 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 	if (NDADDR+NINDIR(lfsp) < nblocks) {
 		fatal("File ino=%d requires more blocks than can be accommodated with a single indirect block; please increase segment or block size.",ino);
 	} else if (NDADDR < nblocks) {
-		printf("Using %d single indirect block(s) for inode %d\n",
+		fprintf(stderr,"Using %d single indirect block(s) for inode %d\n",
 		     (nblocks-NDADDR)/NINDIR(lfsp) + 1, ino);
 		dip->di_blocks += db_per_fb;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 1999/05/06 14:16:08 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.14.6.1 1999/12/27 18:32:53 wrstuden Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -151,6 +151,7 @@ define	PSL_IPL7		PSL_IPL7
 define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
+define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
 define	SPL2			PSL_S | PSL_IPL2
 define	SPL3			PSL_S | PSL_IPL3

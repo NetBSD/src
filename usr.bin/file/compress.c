@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.6 1998/09/20 15:27:15 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.6.4.1 1999/12/27 18:36:51 wrstuden Exp $	*/
 
 /*
  * compress routines:
@@ -7,23 +7,25 @@
  *	uncompress(method, old, n, newch) - uncompress old into new, 
  *					    using method, return sizeof new
  */
+#include "file.h"
+#ifdef __CYGWIN__
+#include <errno.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <string.h>
-#ifdef HAVE_CONFIG_H
-#include "config.h"
 #endif
+#include <string.h>
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
-#include "file.h"
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: compress.c,v 1.12 1998/06/27 13:57:23 christos Exp ")
+FILE_RCSID("@(#)Id: compress.c,v 1.14 1999/10/31 22:23:03 christos Exp ")
 #else
-__RCSID("$NetBSD: compress.c,v 1.6 1998/09/20 15:27:15 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.6.4.1 1999/12/27 18:36:51 wrstuden Exp $");
 #endif
 #endif
 

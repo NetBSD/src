@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.3 1999/11/27 03:10:16 simonb Exp $	*/
+/*	$NetBSD: startprog.S,v 1.3.2.1 1999/12/27 18:33:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_io.c,v 1.1 1999/06/29 06:46:46 ross Exp $ */
+/* $NetBSD: tsp_bus_io.c,v 1.1.14.1 1999/12/27 18:31:29 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.1 1999/06/29 06:46:46 ross Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tsp_bus_io.c,v 1.1.14.1 1999/12/27 18:31:29 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,5 +59,11 @@ typedef struct tsp_config *TSPCON;
 #define CHIP_IO_EXTENT(v)       (((TSPCON)(v))->pc_io_ex)
 
 #define CHIP_IO_SYS_START(v)    (((TSPCON)(v))->pc_iobase | P_PCI_IO)
+
+/*
+ * Tsunami core logic appears on EV6.  We require at least EV56
+ * support for the assembler to emit BWX opcodes.
+ */
+__asm(".arch ev6");
 
 #include <alpha/pci/pci_bwx_bus_io_chipdep.c>

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1999/05/23 02:45:19 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.12.2.1 1999/12/27 18:33:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -631,6 +631,18 @@ zssoft(arg)
 		if (zsc == NULL)
 			continue;
 		(void)zsc_intr_soft(zsc);
+#ifdef TTY_DEBUG
+		{
+			struct zstty_softc *zst0 = zsc->zsc_cs[0]->cs_private;
+			struct zstty_softc *zst1 = zsc->zsc_cs[1]->cs_private;
+			if (zst0->zst_overflows || zst1->zst_overflows ) {
+				struct trapframe *frame = (struct trapframe *)arg;
+
+				printf("zs silo overflow from %p\n",
+				       (long)frame->tf_pc);
+			}
+		}
+#endif
 	}
 	splx(s);
 	return (1);

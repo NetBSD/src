@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.9 1999/09/09 17:27:59 jsm Exp $	*/
+/*	$NetBSD: monop.h,v 1.9.2.1 1999/12/27 18:29:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -170,7 +170,7 @@ void next_play __P((void));
 int get_int __P((const char *));
 void set_ownlist __P((int));
 void is_monop __P((MON *, int));
-void isnot_monop __P((MON *));
+void is_not_monop __P((MON *));
 void list __P((void));
 void list_all __P((void));
 void quit __P((void));

@@ -1,6 +1,6 @@
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.1 1999/12/09 15:10:37 tsutsui Exp $
+#	$NetBSD: ttys,v 1.1.2.1 1999/12/27 18:28:54 wrstuden Exp $
 #
 # name	getty				type	status		comments
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/10/19 16:57:28 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.1.6.1 1999/12/27 18:29:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -507,7 +507,7 @@ void end_screen __P((void));
 void curs __P((int, int));
 void nocmov __P((int, int));
 void cmov __P((int, int));
-void xputc __P((int));
+int xputc __P((int));
 void xputs __P((char *));
 void cl_end __P((void));
 void clear_screen __P((void));

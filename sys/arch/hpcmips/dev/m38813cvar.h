@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813cvar.h,v 1.1 1999/12/08 15:51:07 uch Exp $ */
+/*	$NetBSD: m38813cvar.h,v 1.1.2.1 1999/12/27 18:32:02 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

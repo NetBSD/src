@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 1999/03/24 05:51:15 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.85.12.1 1999/12/27 18:34:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -405,16 +405,14 @@ trap(type, code, v, tf)
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 *
-	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: We should never get kernel-mode T_TRAP15
 	 * XXX: because locore.s now gives them special treatment.
 	 */
-	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* kernel breakpoint */
 		tf.tf_sr &= ~PSL_T;
 		goto done;
 
 	case T_TRACE|T_USER:	/* user trace trap */
-	case T_TRAP15|T_USER:	/* SUN user trace trap */
 #ifdef COMPAT_SUNOS
 		/*
 		 * SunOS uses Trap #2 for a "CPU cache flush"
@@ -428,6 +426,9 @@ trap(type, code, v, tf)
 			goto done;
 		}
 #endif
+		/* FALLTHROUGH */
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		tf.tf_sr &= ~PSL_T;
 		sig = SIGTRAP;
 		break;
@@ -538,7 +539,7 @@ trap(type, code, v, tf)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc((u_int)(USRSTACK-va)));
+				nss = btoc((u_int)(USRSTACK-va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)
@@ -586,7 +587,7 @@ finish:
 douret:
 	userret(p, &tf, sticks);
 
-done:
+done:;
 	/* XXX: Detect trap recursion? */
 }
 

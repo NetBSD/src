@@ -1,10 +1,10 @@
-.\"	$NetBSD: aout2hux.1,v 1.2 1999/03/17 16:38:12 minoura Exp $
+.\"	$NetBSD: aout2hux.1,v 1.2.6.1 1999/12/27 18:30:37 wrstuden Exp $
 .Dd Aug 13, 1998
 .Dt AOUT2HUX 1
 .Os
 .Sh NAME
 .Nm aout2hux
-.Nd convert a.out executable to Human68k .x format
+.Nd convert a.out/ELF executable to Human68k .x format
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar output_file
@@ -16,19 +16,21 @@
 .Nm
 reads two
 .Xr a.out 5
+or ELF
 format executables with different load addresses
 and generate Human68k
 .Sq Li \&.x
 format executable.
 .Pp
-The input a.out files must be static
+If the input files are a.out, they must be static
 .Dv OMAGIC
 /
 .Dv NMAGIC
-m68k executable.
-Two a.out executables must be created from the same objects,
+m68k executables.
+If the input files are ELF, they must be static m68k executables.
+Two input executables must be created from the same objects,
 and have different loading addresses.
-Each of the load address must be a hexadecimal number.
+Each of the load address is specified by a hexadecimal number.
 Load address shall be multiple of 4 for
 .Xr as 1
 and
@@ -54,8 +56,8 @@ from object files
 and
 .Pa b.o :
 .Bd -literal -offset indent
-cc -N -nostdlib -static -Wl,-T,0        -o aout1 a.o b.o
-cc -N -nostdlib -static -Wl,-T,10203040 -o aout2 a.o b.o
+cc -N -nostdlib -static -Wl,-Text,0        -o aout1 a.o b.o
+cc -N -nostdlib -static -Wl,-Text,10203040 -o aout2 a.o b.o
 aout2hux -o foo.x aout1 0 aout2 10203040
 .Ed
 .Pp

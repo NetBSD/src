@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.2 1999/09/25 10:52:51 uch Exp $ */
+/* $Id: platid_mask.h,v 1.2.6.1 1999/12/27 18:32:06 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -65,13 +65,9 @@ extern platid_t platid_mask_CPU_MIPS_TX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_MIPS_TX ((int)&platid_mask_CPU_MIPS_TX)
 #endif
-extern platid_t platid_mask_CPU_MIPS_TX_391X;
+extern platid_t platid_mask_CPU_MIPS_TX_3900;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define GENERIC_MIPS_TX_391X ((int)&platid_mask_CPU_MIPS_TX_391X)
-#endif
-extern platid_t platid_mask_CPU_MIPS_TX_3910;
-#ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define GENERIC_MIPS_TX_3910 ((int)&platid_mask_CPU_MIPS_TX_3910)
+#  define GENERIC_MIPS_TX_3900 ((int)&platid_mask_CPU_MIPS_TX_3900)
 #endif
 extern platid_t platid_mask_CPU_MIPS_TX_3911;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -81,9 +77,9 @@ extern platid_t platid_mask_CPU_MIPS_TX_3912;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_MIPS_TX_3912 ((int)&platid_mask_CPU_MIPS_TX_3912)
 #endif
-extern platid_t platid_mask_CPU_MIPS_TX_392X;
+extern platid_t platid_mask_CPU_MIPS_TX_3920;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define GENERIC_MIPS_TX_392X ((int)&platid_mask_CPU_MIPS_TX_392X)
+#  define GENERIC_MIPS_TX_3920 ((int)&platid_mask_CPU_MIPS_TX_3920)
 #endif
 extern platid_t platid_mask_CPU_MIPS_TX_3922;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -129,6 +125,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_320;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_320 ((int)&platid_mask_MACH_NEC_MCR_320)
 #endif
+extern platid_t platid_mask_MACH_NEC_MCR_FORDOCOMO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_FORDOCOMO ((int)&platid_mask_MACH_NEC_MCR_FORDOCOMO)
+#endif
 extern platid_t platid_mask_MACH_NEC_MCR_5XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_5XX ((int)&platid_mask_MACH_NEC_MCR_5XX)
@@ -145,6 +145,14 @@ extern platid_t platid_mask_MACH_NEC_MCR_520;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_520 ((int)&platid_mask_MACH_NEC_MCR_520)
 #endif
+extern platid_t platid_mask_MACH_NEC_MCR_520A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_520A ((int)&platid_mask_MACH_NEC_MCR_520A)
+#endif
+extern platid_t platid_mask_MACH_NEC_MCR_500A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_500A ((int)&platid_mask_MACH_NEC_MCR_500A)
+#endif
 extern platid_t platid_mask_MACH_NEC_MCR_7XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_7XX ((int)&platid_mask_MACH_NEC_MCR_7XX)
@@ -152,6 +160,10 @@ extern platid_t platid_mask_MACH_NEC_MCR_7XX;
 extern platid_t platid_mask_MACH_NEC_MCR_700;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define NEC_MCR_700 ((int)&platid_mask_MACH_NEC_MCR_700)
+#endif
+extern platid_t platid_mask_MACH_NEC_MCR_700A;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define NEC_MCR_700A ((int)&platid_mask_MACH_NEC_MCR_700A)
 #endif
 extern platid_t platid_mask_MACH_EVEREX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -241,6 +253,18 @@ extern platid_t platid_mask_MACH_SHARP_TRIPAD_PV6000;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_TRIPAD_PV6000 ((int)&platid_mask_MACH_SHARP_TRIPAD_PV6000)
 #endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS ((int)&platid_mask_MACH_SHARP_TELIOS)
+#endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HC;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS_HC ((int)&platid_mask_MACH_SHARP_TELIOS_HC)
+#endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ1;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS_HCAJ1 ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ1)
+#endif
 extern platid_t platid_mask_MACH_FUJITSU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define FUJITSU ((int)&platid_mask_MACH_FUJITSU)
@@ -320,4 +344,48 @@ extern platid_t platid_mask_MACH_COMPAQ_AERO_2130;
 extern platid_t platid_mask_MACH_COMPAQ_AERO_2140;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_AERO_2140 ((int)&platid_mask_MACH_COMPAQ_AERO_2140)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_PRESARIO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_PRESARIO ((int)&platid_mask_MACH_COMPAQ_PRESARIO)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_PRESARIO_21X;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_PRESARIO_21X ((int)&platid_mask_MACH_COMPAQ_PRESARIO_21X)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_PRESARIO_213;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_PRESARIO_213 ((int)&platid_mask_MACH_COMPAQ_PRESARIO_213)
+#endif
+extern platid_t platid_mask_MACH_VICTOR;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VICTOR ((int)&platid_mask_MACH_VICTOR)
+#endif
+extern platid_t platid_mask_MACH_VICTOR_INTERLINK;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VICTOR_INTERLINK ((int)&platid_mask_MACH_VICTOR_INTERLINK)
+#endif
+extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MP;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VICTOR_INTERLINK_MP ((int)&platid_mask_MACH_VICTOR_INTERLINK_MP)
+#endif
+extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC101;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define VICTOR_INTERLINK_MPC101 ((int)&platid_mask_MACH_VICTOR_INTERLINK_MPC101)
+#endif
+extern platid_t platid_mask_MACH_IBM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM ((int)&platid_mask_MACH_IBM)
+#endif
+extern platid_t platid_mask_MACH_IBM_WORKPAD;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM_WORKPAD ((int)&platid_mask_MACH_IBM_WORKPAD)
+#endif
+extern platid_t platid_mask_MACH_IBM_WORKPAD_Z50;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM_WORKPAD_Z50 ((int)&platid_mask_MACH_IBM_WORKPAD_Z50)
+#endif
+extern platid_t platid_mask_MACH_IBM_WORKPAD_2601_1AU;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM_WORKPAD_2601_1AU ((int)&platid_mask_MACH_IBM_WORKPAD_2601_1AU)
 #endif

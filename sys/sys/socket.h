@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.46 1999/07/03 13:37:34 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.46.8.1 1999/12/27 18:36:35 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -207,8 +207,8 @@ struct sockproto {
 
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
-	u_char	__ss_len;	/* address length */
-	u_char	__ss_family;	/* address family */
+	u_char	ss_len;		/* address length */
+	u_char	ss_family;	/* address family */
 	char	__ss_pad1[_SS_PAD1SIZE];
 	int64_t	__ss_align;	/* force desired structure storage alignment */
 	char	__ss_pad2[_SS_PAD2SIZE];
@@ -339,13 +339,15 @@ struct sockcred {
  */
 #define NET_RT_DUMP	1		/* dump; may limit to a.f. */
 #define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
-#define NET_RT_IFLIST	3		/* survey interface list */
-#define	NET_RT_MAXID	4
+#define NET_RT_OIFLIST	3		/* old NET_RT_IFLIST (pre 1.5) */
+#define NET_RT_IFLIST	4		/* survey interface list */
+#define	NET_RT_MAXID	5
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \
 	{ "dump", CTLTYPE_STRUCT }, \
 	{ "flags", CTLTYPE_STRUCT }, \
+	{ 0, 0 }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
 #endif /* !_XOPEN_SOURCE */

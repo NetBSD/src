@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.9 1999/07/13 11:12:49 scw Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.9.4.1 1999/12/27 18:30:27 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.9 1999/07/13 11:12:49 scw Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.9.4.1 1999/12/27 18:30:27 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: mount_cd9660 [-egr] [-o options] special node\n");
+		"usage: mount_cd9660 [-egjr] [-o options] special node\n");
 	exit(1);
 }

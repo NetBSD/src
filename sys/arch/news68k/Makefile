@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/09 14:53:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 1999/12/27 18:32:54 wrstuden Exp $
 
 # Makefile for news68k tags file
 

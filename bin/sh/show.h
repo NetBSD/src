@@ -1,4 +1,4 @@
-/*	$NetBSD: show.h,v 1.3 1997/04/11 22:58:40 christos Exp $	*/
+/*	$NetBSD: show.h,v 1.3.6.1 1999/12/27 18:27:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -41,6 +41,6 @@ void trace __P((const char *, ...));
 void trargs __P((char **));
 #ifdef DEBUG
 void trputc __P((int));
-void trputs __P((char *));
+void trputs __P((const char *));
 void opentrace __P((void));
 #endif

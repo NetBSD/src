@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 1999/09/07 15:45:09 perry Exp $
+# $NetBSD: mi,v 1.21.2.1 1999/12/27 18:28:39 wrstuden Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -206,6 +206,7 @@
 ./usr/share/examples/amd/cd
 ./usr/share/examples/amd/master
 ./usr/share/examples/amd/net
+./usr/share/examples/dhcp/dhcpd.conf
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV
 ./usr/share/examples/emul/svr4/etc/netconfig
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf

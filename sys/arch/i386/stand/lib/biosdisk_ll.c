@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.9 1999/05/04 17:14:55 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.9.6.1 1999/12/27 18:32:29 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -185,8 +185,8 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 			while ((nsec = do_read(d, dblk, maxsecs, trbuf)) < 0) {
 #ifdef DISK_DEBUG
 				if (!cold)
-					printf("read error C:%d H:%d S:%d-%d\n",
-					       cyl, head, sec, sec + nsec - 1);
+					printf("read error dblk %d-%d\n", dblk,
+					       dblk + maxsecs - 1);
 #endif
 				if (--retries >= 0)
 					continue;

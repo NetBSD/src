@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.17 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.17.8.1 1999/12/27 18:36:42 wrstuden Exp $	*/
 
 /*
  *
@@ -151,14 +151,8 @@ UVMHIST_DECL(pdhist);
  * uvm_sleep() function.
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define UVM_UNLOCK_AND_WAIT(event, lock, intr ,msg, timo) \
-	uvm_sleep(event, lock, intr, msg, timo)
-
-#else
 #define UVM_UNLOCK_AND_WAIT(event, lock, intr, msg, timo) \
-	uvm_sleep(event, NULL, intr, msg, timo)
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+	uvm_sleep(event, lock, intr, msg, timo)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

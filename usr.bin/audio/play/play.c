@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.12 1999/09/13 17:18:21 tron Exp $	*/
+/*	$NetBSD: play.c,v 1.12.2.1 1999/12/27 18:36:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -73,6 +73,7 @@ main(argc, argv)
 	size_t	len;
 	off_t	filesize;
 	int	ch;
+	int	exitstatus = EXIT_SUCCESS;
 	int	iflag = 0;
 	int	qflag = 0;
 	int	verbose = 0;
@@ -192,8 +193,11 @@ main(argc, argv)
 			ssize_t	hdrlen;
 
 			fd = open(*argv, O_RDONLY);
-			if (fd < 0)
-				err(1, "could not open %s", *argv);
+			if (fd < 0) {
+				warn("could not open %s", *argv);
+				exitstatus = EXIT_FAILURE;
+				continue;
+			}
 
 			if (fstat(fd, &sb) < 0)
 				err(1, "could not fstat %s", *argv);
@@ -207,7 +211,7 @@ main(argc, argv)
 			 * instead, so that filesystems, etc, that do not
 			 * support mmap() work
 			 */
-			if (addr == (void *)-1) {
+			if (addr == MAP_FAILED) {
 				play_fd(fd, *argv);
 				close(fd);
 				continue;
@@ -232,12 +236,12 @@ main(argc, argv)
 			}
 
 			filesize -= hdrlen;
-			(char *)addr += hdrlen;
+			addr = (char *)addr + hdrlen;
 
 			while (filesize > bufsize) {
 				if (write(audiofd, addr, bufsize) != bufsize)
 					err(1, "write failed");
-				(char *)addr += bufsize;
+				addr = (char *)addr + bufsize;
 				filesize -= bufsize;
 			}
 			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
@@ -255,7 +259,7 @@ main(argc, argv)
 		play_fd(STDIN_FILENO, "standard input");
 	}
 
-	exit(0);
+	exit(exitstatus);
 }
 
 /*
@@ -331,8 +335,10 @@ audioctl_write_fromhdr(hdr, fsz, fd)
 	if (ntohl(sunhdr->magic) == AUDIO_FILE_MAGIC) {
 		if (audio_get_sun_encoding(ntohl(sunhdr->encoding), 
 		    &info.play.encoding, &info.play.precision)) {
-			warnx("unknown supported Sun audio encoding format %d",
-			    sunhdr->encoding);
+			warnx("unknown unsupported Sun audio encoding format %d",
+			    ntohl(sunhdr->encoding));
+			if (fflag)
+				goto set_audio_mode;
 			return (-1);
 		}
 
@@ -381,13 +387,14 @@ set_audio_mode:
 			info.play.encoding = encoding;
 		if (precision)
 			info.play.precision = precision;
+		hdr_len = 0;
 	}
 	info.mode = AUMODE_PLAY_ALL;
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
 	
-	return (0);
+	return (hdr_len);
 }
 
 void
@@ -409,5 +416,5 @@ usage()
 	    "-m monitor volume\n\t"
 	    "-p output port\n\t"
 	    "-v volume\n");
-	exit(0);
+	exit(EXIT_FAILURE);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.14 1999/06/28 01:03:45 abs Exp $
+.\"	$NetBSD: yp.8,v 1.14.4.1 1999/12/27 18:31:04 wrstuden Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -131,7 +131,7 @@ The
 subsystem is conditionally started in
 .Pa /etc/rc .
 See the
-.Pa /etc/netstart
+.Pa /etc/rc.conf
 file for configuration variables.
 .Sh BUGS
 If
@@ -146,6 +146,8 @@ it hangs.
 .Xr hosts_access 5 ,
 .Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
+.Xr rc 8 ,
+.Xr rc.conf 5 ,
 .Xr ypbind 8 ,
 .Xr yppoll 8 , 
 .Xr ypset 8 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.7.14.1 1999/12/27 18:33:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ struct cfattach zsc_ca = {
 
 extern struct cfdriver zsc_cd;
 
-static void zshard __P((void *));
+static int zshard __P((void *));
 static void zssoft __P((void *));
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -188,18 +188,12 @@ zs_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int unit = cf->cf_unit;
-	void *va;
 
 	if (strcmp(ca->ca_name, "zsc"))
 		return 0;
 
-	va = zsaddr[unit];
-	if (va == NULL)
-		va = zsaddr[unit] = (void *)cf->cf_addr;
-
 	/* This returns -1 on a fault (bus error). */
-	if (badaddr(va, 1))
+	if (badaddr((char *)cf->cf_addr, 1))
 		return 0;
 
 	return 1;
@@ -217,17 +211,29 @@ zs_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct zsc_softc *zsc = (void *) self;
+	struct zsc_softc *zsc = (void *)self;
 	/* struct confargs *ca = aux; */
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
-	int s, zs_unit, channel;
+	int s, zs_unit, channel, intlevel;
 	static int didintr;
 
 	zs_unit = zsc->zsc_dev.dv_unit;
+	intlevel = zsc->zsc_dev.dv_cfdata->cf_level;
+	zsaddr[zs_unit] = (void *)zsc->zsc_dev.dv_cfdata->cf_addr;
 
-	printf("\n");
+	if (intlevel == -1) {
+#if 0
+		printf(": interrupt level not configured\n");
+		return;
+#else
+		printf(": interrupt level not configured; using");
+		intlevel = 1;
+#endif
+	}
+
+	printf(" level %d\n", intlevel);
 
 	/*
 	 * Initialize software state for each channel.
@@ -297,10 +303,8 @@ zs_attach(parent, self, aux)
 	 */
 	if (!didintr) {
 		didintr = 1;
-#if 0
-		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
-		isr_add_autovect(zshard, NULL, ca->ca_intpri);
-#endif
+
+		hb_intr_establish(intlevel, IPL_SERIAL, zshard, NULL);
 	}
 	/* XXX; evcnt_attach() ? */
 
@@ -339,12 +343,14 @@ static volatile int zssoftpending;
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
-static void
+static int
 zshard(arg)
 	void *arg;
 {
 	register struct zsc_softc *zsc;
 	register int unit, rval, softreq;
+
+	(void) *(volatile u_char *)SCCVECT;
 
 	rval = softreq = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
@@ -361,7 +367,7 @@ zshard(arg)
 		zssoftpending = 1;
 		zssoft(arg);	/*isr_soft_request(ZSSOFT_PRI);*/
 	}
-	return;
+	return rval;
 }
 
 /*
@@ -669,16 +675,4 @@ zscnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
-}
-
-/*
- * ZS vector interrupt service routine.
- */
-void
-zs_intr()
-{
-	int vec;
-
-	vec = *(volatile u_char *)SCCVECT;
-	zshard((void *)vec);		/* XXX vec is not used */
 }

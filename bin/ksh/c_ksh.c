@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.4 1998/11/04 18:27:20 christos Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.4.4.1 1999/12/27 18:27:01 wrstuden Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -7,6 +7,10 @@
 #include "sh.h"
 #include "ksh_stat.h"
 #include <ctype.h>
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#endif /* __CYGWIN__ */
 
 int
 c_cd(wp)
@@ -125,9 +129,12 @@ c_cd(wp)
 	/* Clear out tracked aliases with relative paths */
 	flushcom(0);
 
-	/* Set OLDPWD */
+	/* Set OLDPWD (note: unsetting OLDPWD does not disable this
+	 * setting in at&t ksh)
+	 */
 	if (current_wd[0])
-		setstr(oldpwd_s, current_wd);
+		/* Ignore failure (happens if readonly or integer) */
+		setstr(oldpwd_s, current_wd, KSH_RETURN_ERROR);
 
 	if (!ISABSPATH(Xstring(xs, xp))) {
 #ifdef OS2
@@ -147,8 +154,15 @@ c_cd(wp)
 
 	/* Set PWD */
 	if (pwd) {
-		set_current_wd(pwd);
-		setstr(pwd_s, pwd);
+#ifdef __CYGWIN__
+		char ptmp[PATH];  /* larger than MAX_PATH */
+		cygwin_conv_to_full_posix_path(pwd, ptmp);
+#else /* __CYGWIN__ */
+		char *ptmp = pwd;
+#endif /* __CYGWIN__ */
+		set_current_wd(ptmp);
+		/* Ignore failure (happens if readonly or integer) */
+		setstr(pwd_s, ptmp, KSH_RETURN_ERROR);
 	} else {
 		set_current_wd(null);
 		pwd = Xstring(xs, xp);
@@ -571,7 +585,7 @@ c_typeset(wp)
 	struct tbl *vp, **p;
 	Tflag fset = 0, fclr = 0;
 	int thing = 0, func = 0, local = 0;
-	const char *options = "L#R#UZ#fi#lrtux";	/* see comment below */
+	const char *options = "L#R#UZ#fi#lprtux";	/* see comment below */
 	char *fieldstr, *basestr;
 	int field, base;
 	int optc;
@@ -601,7 +615,7 @@ c_typeset(wp)
 	 * to get a number that is used with -L, -R, -Z or -i (eg, -1R2
 	 * sets right justify in a field of 12).  This allows options
 	 * to be grouped in an order (eg, -Lu12), but disallows -i8 -L3 and
-	 * does not allow the number to be specified as a seperate argument
+	 * does not allow the number to be specified as a separate argument
 	 * Here, the number must follow the RLZi option, but is optional
 	 * (see the # kludge in ksh_getopt()).
 	 */
@@ -609,11 +623,11 @@ c_typeset(wp)
 		flag = 0;
 		switch (optc) {
 		  case 'L':
-			flag |= LJUST;
+			flag = LJUST;
 			fieldstr = builtin_opt.optarg;
 			break;
 		  case 'R':
-			flag |= RJUST;
+			flag = RJUST;
 			fieldstr = builtin_opt.optarg;
 			break;
 		  case 'U':
@@ -621,36 +635,39 @@ c_typeset(wp)
 			 * upper/lower case.  If this option is changed,
 			 * need to change the -U below as well
 			 */
-			flag |= INT_U;
+			flag = INT_U;
 			break;
 		  case 'Z':
-			flag |= ZEROFIL;
+			flag = ZEROFIL;
 			fieldstr = builtin_opt.optarg;
 			break;
 		  case 'f':
 			func = 1;
 			break;
 		  case 'i':
-			flag |= INTEGER;
+			flag = INTEGER;
 			basestr = builtin_opt.optarg;
 			break;
 		  case 'l':
-			flag |= LCASEV;
+			flag = LCASEV;
 			break;
-		  case 'p': /* posix export/readonly -p flag */
+		  case 'p': /* posix export/readonly -p flag.
+			     * typset -p is the same as typeset (in pdksh);
+			     * here for compatability with ksh93.
+			     */
 			pflag = 1;
 			break;
 		  case 'r':
-			flag |= RDONLY;
+			flag = RDONLY;
 			break;
 		  case 't':
-			flag |= TRACE;
+			flag = TRACE;
 			break;
 		  case 'u':
-			flag |= UCASEV_AL;	/* upper case / autoload */
+			flag = UCASEV_AL;	/* upper case / autoload */
 			break;
 		  case 'x':
-			flag |= EXPORT;
+			flag = EXPORT;
 			break;
 		  case '?':
 			return 1;
@@ -687,8 +704,19 @@ c_typeset(wp)
 		return 1;
 	}
 	if (wp[builtin_opt.optind]) {
-		/* Take care of exclusions */
-		/* setting these attributes clears the others, unless they
+		/* Take care of exclusions.  
+		 * At this point, flags in fset are cleared in fclr and vise
+		 * versa.  This property should be preserved.
+		 */
+		if (fset & LCASEV)	/* LCASEV has priority over UCASEV_AL */
+			fset &= ~UCASEV_AL;
+		if (fset & LJUST)	/* LJUST has priority over RJUST */
+			fset &= ~RJUST;
+		if ((fset & (ZEROFIL|LJUST)) == ZEROFIL) { /* -Z implies -ZR */
+			fset |= RJUST;
+			fclr &= ~RJUST;
+		}
+		/* Setting these attributes clears the others, unless they
 		 * are also set in this command
 		 */
 		if (fset & (LJUST|RJUST|ZEROFIL|UCASEV_AL|LCASEV|INTEGER
@@ -696,26 +724,6 @@ c_typeset(wp)
 			fclr |= ~fset &
 				(LJUST|RJUST|ZEROFIL|UCASEV_AL|LCASEV|INTEGER
 				 |INT_U|INT_L);
-		fclr &= ~fset;	/* set wins */
-		if ((fset & (ZEROFIL|LJUST)) == ZEROFIL) {
-			fset |= RJUST;
-			fclr &= ~RJUST;
-		}
-		if (fset & LCASEV)	/* LCASEV has priority */
-			fclr |= UCASEV_AL;
-		else if (fset & UCASEV_AL)
-			fclr |= LCASEV;
-		if (fset & LJUST)	/* LJUST has priority */
-			fclr |= RJUST;
-		else if (fset & RJUST)
-			fclr |= LJUST;
-		if ((fset | fclr) & INTEGER) {
-			if (!(fset | fclr) & INT_U)
-				fclr |= INT_U;
-			if (!(fset | fclr) & INT_L)
-				fclr |= INT_L;
-		}
-		fset &= ~fclr; /* in case of something like -LR */
 	}
 
 	/* set variables and attributes */
@@ -740,7 +748,10 @@ c_typeset(wp)
 					f->flag &= ~fclr;
 				} else
 					fptreef(shl_stdout, 0,
-						"function %s %T\n",
+						f->flag & FKSH ?
+						    "function %s %T\n"
+						    : "%s() %T\n"
+						,
 						wp[i], f->val.t);
 			} else if (!typeset(wp[i], fset, fclr, field, base)) {
 				bi_errorf("%s: not identifier", wp[i]);
@@ -758,7 +769,9 @@ c_typeset(wp)
 		    if (flag && (vp->flag & flag) == 0)
 			    continue;
 		    if (thing == '-')
-			fptreef(shl_stdout, 0, "function %s %T\n",
+			fptreef(shl_stdout, 0, vp->flag & FKSH ?
+						    "function %s %T\n"
+						    : "%s() %T\n",
 				vp->name, vp->val.t);
 		    else
 			shprintf("%s\n", vp->name);
@@ -766,15 +779,37 @@ c_typeset(wp)
 	    }
 	} else {
 	    for (l = e->loc; l; l = l->next) {
-		for (p = tsort(&l->vars); (vp = *p++); )
+		for (p = tsort(&l->vars); (vp = *p++); ) {
+		    struct tbl *tvp;
+		    int any_set = 0;
+		    /*
+		     * See if the parameter is set (for arrays, if any
+		     * element is set).
+		     */
+		    for (tvp = vp; tvp; tvp = tvp->u.array)
+			if (tvp->flag & ISSET) {
+			    any_set = 1;
+			    break;
+			}
+		    /*
+		     * Check attributes - note that all array elements
+		     * have (should have?) the same attributes, so checking
+		     * the first is sufficient.
+		     *
+		     * Report an unset param only if the user has
+		     * explicitly given it some attribute (like export);
+		     * otherwise, after "echo $FOO", we would report FOO...
+		     */
+		    if (!any_set && !(vp->flag & USERATTRIB))
+			continue;
+		    if (flag && (vp->flag & flag) == 0)
+			continue;
 		    for (; vp; vp = vp->u.array) {
-			/* Report an unset param only if the user has
-			 * explicitly given it some attribute (like export);
-			 * otherwise, after "echo $FOO", we would report FOO...
+			/* Ignore array elements that aren't set unless there
+			 * are no set elements, in which case the first is
+			 * reported on
 			 */
-			if (!(vp->flag & ISSET) && !(vp->flag & USERATTRIB))
-			    continue;
-			if (flag && (vp->flag & flag) == 0)
+			if ((vp->flag&ARRAY) && any_set && !(vp->flag & ISSET))
 			    continue;
 			/* no arguments */
 			if (thing == 0 && flag == 0) {
@@ -803,15 +838,14 @@ c_typeset(wp)
 				shprintf("-u ");
 			    if ((vp->flag&INT_U)) 
 				shprintf("-U ");
+			    shprintf("%s\n", vp->name);
 			    if (vp->flag&ARRAY)
-				shprintf("%s[%d]\n", vp->name,vp->index);
-			    else
-				shprintf("%s\n", vp->name);
+				break;
 			} else {
 			    if (pflag)
 				shprintf("%s ",
 				    (flag & EXPORT) ?  "export" : "readonly");
-			    if (vp->flag&ARRAY)
+			    if ((vp->flag&ARRAY) && any_set)
 				shprintf("%s[%d]", vp->name, vp->index);
 			    else
 				shprintf("%s", vp->name);
@@ -828,7 +862,13 @@ c_typeset(wp)
 			    }
 			    shprintf(newline);
 			}
+			/* Only report first `element' of an array with
+			 * no set elements.
+			 */
+			if (!any_set)
+			    break;
 		    }
+		}
 	    }
 	}
 	return 0;
@@ -839,14 +879,20 @@ c_alias(wp)
 	char **wp;
 {
 	struct table *t = &aliases;
-	int rv = 0, rflag = 0, tflag, Uflag = 0;
+	int rv = 0, rflag = 0, tflag, Uflag = 0, pflag = 0;
+	int prefix = 0;
 	Tflag xflag = 0;
 	int optc;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "drtUx")) != EOF)
+	builtin_opt.flags |= GF_PLUSOPT;
+	while ((optc = ksh_getopt(wp, &builtin_opt, "dprtUx")) != EOF) {
+		prefix = builtin_opt.info & GI_PLUS ? '+' : '-';
 		switch (optc) {
 		  case 'd':
 			t = &homedirs;
+			break;
+		  case 'p':
+			pflag = 1;
 			break;
 		  case 'r':
 			rflag = 1;
@@ -865,7 +911,15 @@ c_alias(wp)
 		  case '?':
 			return 1;
 		}
+	}
 	wp += builtin_opt.optind;
+
+	if (!(builtin_opt.info & GI_MINUSMINUS) && *wp
+	    && (wp[0][0] == '-' || wp[0][0] == '+') && wp[0][1] == '\0')
+	{
+		prefix = wp[0][0];
+		wp++;
+	}
 
 	tflag = t == &taliases;
 
@@ -884,13 +938,19 @@ c_alias(wp)
 		return c_unalias((char **) args);
 	}
 
+	
 	if (*wp == NULL) {
 		struct tbl *ap, **p;
 
 		for (p = tsort(t); (ap = *p++) != NULL; )
 			if ((ap->flag & (ISSET|xflag)) == (ISSET|xflag)) {
-				shprintf("%s=", ap->name);
-				print_value_quoted(ap->val.s);
+				if (pflag)
+					shf_puts("alias ", shl_stdout);
+				shf_puts(ap->name, shl_stdout);
+				if (prefix != '+') {
+					shf_putc('=', shl_stdout);
+					print_value_quoted(ap->val.s);
+				}
 				shprintf(newline);
 			}
 	}
@@ -908,8 +968,13 @@ c_alias(wp)
 		if (val == NULL && !tflag && !xflag) {
 			ap = tsearch(t, alias, h);
 			if (ap != NULL && (ap->flag&ISSET)) {
-				shprintf("%s=", ap->name);
-				print_value_quoted(ap->val.s);
+				if (pflag)
+					shf_puts("alias ", shl_stdout);
+				shf_puts(ap->name, shl_stdout);
+				if (prefix != '+') {
+					shf_putc('=', shl_stdout);
+					print_value_quoted(ap->val.s);
+				}
 				shprintf(newline);
 			} else {
 				shprintf("%s alias not found\n", alias);
@@ -934,7 +999,11 @@ c_alias(wp)
 			} else
 				ap->flag &= ~ISSET;
 		}
-		ap->flag |= DEFINED|xflag;
+		ap->flag |= DEFINED;
+		if (prefix == '+')
+			ap->flag &= ~xflag;
+		else
+			ap->flag |= xflag;
 		if (val)
 			afree(alias, ATEMP);
 	}
@@ -1007,7 +1076,7 @@ c_let(wp)
 		bi_errorf("no arguments");
 	else
 		for (wp++; *wp; wp++)
-			if (!evaluate(*wp, &val, TRUE)) {
+			if (!evaluate(*wp, &val, KSH_RETURN_ERROR)) {
 				rv = 2;	/* distinguish error from zero result */
 				break;
 			} else
@@ -1123,9 +1192,8 @@ c_kill(wp)
 	int i, n, rv, sig;
 
 	/* assume old style options if -digits or -UPPERCASE */
-	if ((p = wp[1]) && *p == '-' && (digit(p[1]) ||
-	    isupper((unsigned char)p[1]))) {
-		if (!(t = gettrap(p + 1))) {
+	if ((p = wp[1]) && *p == '-' && (digit(p[1]) || isupper(p[1]))) {
+		if (!(t = gettrap(p + 1, TRUE))) {
 			bi_errorf("bad signal `%s'", p + 1);
 			return 1;
 		}
@@ -1139,7 +1207,7 @@ c_kill(wp)
 				lflag = 1;
 				break;
 			  case 's':
-				if (!(t = gettrap(builtin_opt.optarg))) {
+				if (!(t = gettrap(builtin_opt.optarg, TRUE))) {
 					bi_errorf("bad signal `%s'",
 						builtin_opt.optarg);
 					return 1;
@@ -1223,17 +1291,14 @@ c_kill(wp)
 	return rv;
 }
 
-static Getopt	user_opt;	/* parsing state for getopts builtin command */
-static int	getopts_noset;	/* stop OPTIND assign from resetting state */
-
 void
 getopts_reset(val)
 	int val;
 {
-	if (!getopts_noset && val >= 1) {
+	if (val >= 1) {
 		ksh_getopt_reset(&user_opt,
 			GF_NONAME | (Flag(FPOSIX) ? 0 : GF_PLUSOPT));
-		user_opt.optind = val;
+		user_opt.optind = user_opt.uoptind = val;
 	}
 }
 
@@ -1245,8 +1310,9 @@ c_getopts(wp)
 	const char *options;
 	const char *var;
 	int	optc;
+	int	ret;
 	char	buf[3];
-	struct tbl *vq;
+	struct tbl *vq, *voptarg;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
@@ -1309,26 +1375,30 @@ c_getopts(wp)
 	 * on this staying).
 	 */
 	if (optc != '?') {
-		getopts_noset = 1;
-		setint(global("OPTIND"), (long) user_opt.optind);
-		getopts_noset = 0;
+		user_opt.uoptind = user_opt.optind;
 	}
 
+	voptarg = global("OPTARG");
+	voptarg->flag &= ~RDONLY;	/* at&t ksh clears ro and int */
+	/* Paranoia: ensure no bizarre results. */
+	if (voptarg->flag & INTEGER)
+	    typeset("OPTARG", 0, INTEGER, 0, 0);
 	if (user_opt.optarg == (char *) 0)
-		unset(global("OPTARG"), 0);
+		unset(voptarg, 0);
 	else
-		setstr(global("OPTARG"), user_opt.optarg);
+		/* This can't fail (have cleared readonly/integer) */
+		setstr(voptarg, user_opt.optarg, KSH_RETURN_ERROR);
+
+	ret = 0;
 
 	vq = global(var);
-	if (vq->flag & RDONLY) {
-		bi_errorf("%s is readonly", var);
-		return 1;
-	}
+	/* Error message already printed (integer, readonly) */
+	if (!setstr(vq, buf, KSH_RETURN_ERROR))
+	    ret = 1;
 	if (Flag(FEXPORT))
 		typeset(var, EXPORT, 0, 0, 0);
-	setstr(vq, buf);
 
-	return optc < 0 ? 1 : 0;
+	return optc < 0 ? 1 : ret;
 }
 
 #ifdef EMACS

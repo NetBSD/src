@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.12 1999/09/25 17:49:28 is Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.12.8.1 1999/12/27 18:36:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,7 +45,7 @@
  */
 struct arc_addr {
 	u_int8_t  arc_addr_octet[1];
-};
+} __attribute__((__packed__));
 
 /*
  * Structure of a 2.5MB/s Arcnet header.
@@ -68,7 +68,7 @@ struct	arc_header {
 	u_int8_t  arc_type2;	/* same as arc_type */
 	u_int8_t  arc_flag2;	/* real flag value */
 	u_int16_t arc_seqid2;	/* real seqid value */
-};
+} __attribute__((__packed__));
 
 #define	ARC_ADDR_LEN		1
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 1999/08/21 19:26:18 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.1.2.1 1999/12/27 18:29:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Matt Thomas
@@ -34,7 +34,7 @@
 
 #include "common.h"
 
-static void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
+void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
     const Obj_Entry *, struct ps_strings *));
 
 __asm("
@@ -53,7 +53,7 @@ __start:
 	calls	$6,___start
 ");
 
-static void
+void
 ___start(argc, argv, envp, cleanup, obj, ps_strings)
 	int argc;
 	char **argv;
@@ -94,7 +94,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 1999/08/21 19:26:18 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.1.2.1 1999/12/27 18:29:25 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

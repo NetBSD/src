@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.10 1999/02/25 11:03:22 ross Exp $	*/
+/*	$NetBSD: table.c,v 1.10.6.1 1999/12/27 18:30:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.10 1999/02/25 11:03:22 ross Exp $");
+__RCSID("$NetBSD: table.c,v 1.10.6.1 1999/12/27 18:30:32 wrstuden Exp $");
 #endif
 
 #include "defs.h"
@@ -634,6 +634,9 @@ rtm_type_name(u_char type)
 		"RTM_RESOLVE",
 		"RTM_NEWADDR",
 		"RTM_DELADDR",
+#ifdef RTM_OIFINFO
+		"RTM_OIFINFO",
+#endif
 		"RTM_IFINFO"
 	};
 	static char name0[10];
@@ -1218,6 +1221,11 @@ read_rt(void)
 				ifinit_timer.tv_sec = now.tv_sec;
 			continue;
 		}
+#ifdef RTM_OIFINFO
+		if (m.r.rtm.rtm_type == RTM_OIFINFO) {
+			continue; /* ignore compat message */
+		}
+#endif
 
 		strcpy(str, rtm_type_name(m.r.rtm.rtm_type));
 		strp = &str[strlen(str)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.16 1998/12/09 12:42:27 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.16.4.1 1999/12/27 18:29:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -186,11 +186,15 @@ typedef struct {
 	((char *)(void *)&a)[3] = ((char *)(void *)&_tmp)[0];		\
 }
 #define	P_32_SWAP(a) {							\
-	u_int32_t _tmp = *(u_int32_t *)(void *)a;			\
-	((char *)(void *)a)[0] = ((char *)(void *)&_tmp)[3];		\
-	((char *)(void *)a)[1] = ((char *)(void *)&_tmp)[2];		\
-	((char *)(void *)a)[2] = ((char *)(void *)&_tmp)[1];		\
-	((char *)(void *)a)[3] = ((char *)(void *)&_tmp)[0];		\
+	char  _tmp[4];							\
+	_tmp[0] = ((char *)(void *)a)[0];				\
+	_tmp[1] = ((char *)(void *)a)[1];				\
+	_tmp[2] = ((char *)(void *)a)[2];				\
+	_tmp[3] = ((char *)(void *)a)[3];				\
+	((char *)(void *)a)[0] = _tmp[3];				\
+	((char *)(void *)a)[1] = _tmp[2];				\
+	((char *)(void *)a)[2] = _tmp[1];				\
+	((char *)(void *)a)[3] = _tmp[0];				\
 }
 #define	P_32_COPY(a, b) {						\
 	((char *)(void *)&(b))[0] = ((char *)(void *)&(a))[3];		\
@@ -211,9 +215,11 @@ typedef struct {
 	((char *)(void *)&a)[1] = ((char *)(void *)&_tmp)[0];		\
 }
 #define	P_16_SWAP(a) {							\
-	u_int16_t _tmp = *(u_int16_t *)(void *)a;			\
-	((char *)(void *)a)[0] = ((char *)(void *)&_tmp)[1];		\
-	((char *)(void *)a)[1] = ((char *)(void *)&_tmp)[0];		\
+	char  _tmp[2];							\
+	_tmp[0] = ((char *)(void *)a)[0];				\
+	_tmp[1] = ((char *)(void *)a)[1];				\
+	((char *)(void *)a)[0] = _tmp[1];				\
+	((char *)(void *)a)[1] = _tmp[0];				\
 }
 #define	P_16_COPY(a, b) {						\
 	((char *)(void *)&(b))[0] = ((char *)(void *)&(a))[1];		\

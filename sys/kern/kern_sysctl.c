@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.52 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.52.6.1 1999/12/27 18:35:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -104,6 +104,7 @@ sys___sysctl(p, v, retval)
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
+	size_t *oldlenp;
 
 	/*
 	 * all top-level sysctl names are non-terminal
@@ -162,9 +163,12 @@ sys___sysctl(p, v, retval)
 		return (EOPNOTSUPP);
 	}
 
-	if (SCARG(uap, oldlenp) &&
-	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
-		return (error);
+	oldlenp = SCARG(uap, oldlenp);
+	if (oldlenp) {
+		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))))
+			return (error);
+		oldlenp = &oldlen;
+	}
 	if (SCARG(uap, old) != NULL) {
 		if (!uvm_useracc(SCARG(uap, old), oldlen, B_WRITE))
 			return (EFAULT);
@@ -192,7 +196,7 @@ sys___sysctl(p, v, retval)
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
-	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
+	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
 			uvm_vsunlock(p, SCARG(uap, old), savelen);
@@ -521,7 +525,7 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	struct proc *ptmp;
+	struct proc *ptmp=NULL;
 	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
@@ -574,8 +578,11 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		 * area during the process, so we have to do it by hand.
 		 */
 		curlen = strlen(ptmp->p_limit->pl_corename) + 1;
-		if (oldp && *oldlenp < curlen)
+		if (oldlenp  && *oldlenp < curlen) {
+			if (!oldp)
+				*oldlenp = curlen;
 			return (ENOMEM);
+		}
 		if (newp) {
 			if (securelevel > 2)
 				return EPERM;
@@ -606,7 +613,7 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 				goto cleanup;
 			}
 		}
-		if (oldp) {
+		if (oldp && oldlenp) {
 			*oldlenp = curlen;
 			error = copyout(ptmp->p_limit->pl_corename, oldp,
 			    curlen);
@@ -658,6 +665,56 @@ cleanup:
 }
 
 /*
+ * Convenience macros.
+ */
+
+#define SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, valp, len) 		\
+	if (oldlenp) {							\
+		if (!oldp)						\
+			*oldlenp = len;					\
+		else {							\
+			if (*oldlenp < len)				\
+				return(ENOMEM);				\
+			*oldlenp = len;					\
+			error = copyout((caddr_t)valp, oldp, len);	\
+		}							\
+	}
+
+#define SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, valp, typ) \
+	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, valp, sizeof(typ))
+
+#define SYSCTL_SCALAR_NEWPCHECK_LEN(newp, newlen, len)	\
+	if (newp && newlen != len)			\
+		return (EINVAL);
+
+#define SYSCTL_SCALAR_NEWPCHECK_TYP(newp, newlen, typ)	\
+	SYSCTL_SCALAR_NEWPCHECK_LEN(newp, newlen, sizeof(typ))
+
+#define SYSCTL_SCALAR_NEWPCOP_LEN(newp, valp, len)	\
+	if (error == 0 && newp)				\
+		error = copyin(newp, valp, len);
+
+#define SYSCTL_SCALAR_NEWPCOP_TYP(newp, valp, typ)      \
+	SYSCTL_SCALAR_NEWPCOP_LEN(newp, valp, sizeof(typ))
+
+#define SYSCTL_STRING_CORE(oldp, oldlenp, str)		\
+	if (oldlenp) {					\
+		len = strlen(str) + 1;			\
+		if (!oldp)				\
+			*oldlenp = len;			\
+		else {					\
+			if (*oldlenp < len) {		\
+				err2 = ENOMEM;		\
+				len = *oldlenp;		\
+			} else				\
+				*oldlenp = len;		\
+			error = copyout(str, oldp, len);\
+			if (error == 0)			\
+				error = err2;		\
+		}					\
+	}
+
+/*
  * Validate parameters and get old / set new parameters
  * for an integer-valued sysctl function.
  */
@@ -671,17 +728,13 @@ sysctl_int(oldp, oldlenp, newp, newlen, valp)
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < sizeof(int))
-		return (ENOMEM);
-	if (newp && newlen != sizeof(int))
-		return (EINVAL);
-	*oldlenp = sizeof(int);
-	if (oldp)
-		error = copyout(valp, oldp, sizeof(int));
-	if (error == 0 && newp)
-		error = copyin(newp, valp, sizeof(int));
+	SYSCTL_SCALAR_NEWPCHECK_TYP(newp, newlen, int)
+	SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, valp, int)
+	SYSCTL_SCALAR_NEWPCOP_TYP(newp, valp, int)
+
 	return (error);
 }
+
 
 /*
  * As above, but read-only.
@@ -695,13 +748,11 @@ sysctl_rdint(oldp, oldlenp, newp, val)
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < sizeof(int))
-		return (ENOMEM);
 	if (newp)
 		return (EPERM);
-	*oldlenp = sizeof(int);
-	if (oldp)
-		error = copyout((caddr_t)&val, oldp, sizeof(int));
+
+	SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, &val, int)
+
 	return (error);
 }
 
@@ -719,15 +770,10 @@ sysctl_quad(oldp, oldlenp, newp, newlen, valp)
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < sizeof(quad_t))
-		return (ENOMEM);
-	if (newp && newlen != sizeof(quad_t))
-		return (EINVAL);
-	*oldlenp = sizeof(quad_t);
-	if (oldp)
-		error = copyout(valp, oldp, sizeof(quad_t));
-	if (error == 0 && newp)
-		error = copyin(newp, valp, sizeof(quad_t));
+	SYSCTL_SCALAR_NEWPCHECK_TYP(newp, newlen, quad_t)
+	SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, valp, quad_t)
+	SYSCTL_SCALAR_NEWPCOP_TYP(newp, valp, quad_t)
+
 	return (error);
 }
 
@@ -743,16 +789,13 @@ sysctl_rdquad(oldp, oldlenp, newp, val)
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < sizeof(quad_t))
-		return (ENOMEM);
 	if (newp)
 		return (EPERM);
-	*oldlenp = sizeof(quad_t);
-	if (oldp)
-		error = copyout((caddr_t)&val, oldp, sizeof(quad_t));
+
+	SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, &val, quad_t)
+
 	return (error);
 }
-
 
 /*
  * Validate parameters and get old / set new parameters
@@ -767,17 +810,13 @@ sysctl_string(oldp, oldlenp, newp, newlen, str, maxlen)
 	char *str;
 	int maxlen;
 {
-	int len, error = 0;
+	int len, error = 0, err2 = 0;
 
-	len = strlen(str) + 1;
-	if (oldp && *oldlenp < len)
-		return (ENOMEM);
 	if (newp && newlen >= maxlen)
 		return (EINVAL);
-	if (oldp) {
-		*oldlenp = len;
-		error = copyout(str, oldp, len);
-	}
+
+	SYSCTL_STRING_CORE(oldp, oldlenp, str);
+
 	if (error == 0 && newp) {
 		error = copyin(newp, str, newlen);
 		str[newlen] = 0;
@@ -795,16 +834,13 @@ sysctl_rdstring(oldp, oldlenp, newp, str)
 	void *newp;
 	char *str;
 {
-	int len, error = 0;
+	int len, error = 0, err2 = 0;
 
-	len = strlen(str) + 1;
-	if (oldp && *oldlenp < len)
-		return (ENOMEM);
 	if (newp)
 		return (EPERM);
-	*oldlenp = len;
-	if (oldp)
-		error = copyout(str, oldp, len);
+
+	SYSCTL_STRING_CORE(oldp, oldlenp, str);
+
 	return (error);
 }
 
@@ -823,16 +859,10 @@ sysctl_struct(oldp, oldlenp, newp, newlen, sp, len)
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < len)
-		return (ENOMEM);
-	if (newp && newlen > len)
-		return (EINVAL);
-	if (oldp) {
-		*oldlenp = len;
-		error = copyout(sp, oldp, len);
-	}
-	if (error == 0 && newp)
-		error = copyin(newp, sp, len);
+	SYSCTL_SCALAR_NEWPCHECK_LEN(newp, newlen, len)
+	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, sp, len)
+	SYSCTL_SCALAR_NEWPCOP_LEN(newp, sp, len)
+
 	return (error);
 }
 
@@ -849,13 +879,11 @@ sysctl_rdstruct(oldp, oldlenp, newp, sp, len)
 {
 	int error = 0;
 
-	if (oldp && *oldlenp < len)
-		return (ENOMEM);
 	if (newp)
 		return (EPERM);
-	*oldlenp = len;
-	if (oldp)
-		error = copyout(sp, oldp, len);
+
+	SYSCTL_SCALAR_CORE_LEN(oldp, oldlenp, sp, len)
+
 	return (error);
 }
 

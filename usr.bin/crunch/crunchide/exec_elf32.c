@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.6 1999/09/20 04:12:16 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.6.2.1 1999/12/27 18:36:48 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.6 1999/09/20 04:12:16 christos Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.6.2.1 1999/12/27 18:36:48 wrstuden Exp $");
 #endif
  
 #ifndef ELFSIZE
@@ -54,12 +54,6 @@ __RCSID("$NetBSD: exec_elf32.c,v 1.6 1999/09/20 04:12:16 christos Exp $");
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
 
 #include <sys/exec_elf.h>
-
-#define CONCAT(x,y)     __CONCAT(x,y)
-#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 struct listelem {
 	struct listelem *next;
@@ -145,7 +139,8 @@ ELFNAMEEND(check)(int fd, const char *fn)
 	if (read(fd, &eh, sizeof eh) != sizeof eh)
 		return 0;
 
-	if (memcmp(eh.e_ident, Elf_e_ident, Elf_e_siz))
+	if (memcmp(eh.e_ident, ELFMAG, SELFMAG) != 0 ||
+	    eh.e_ident[EI_CLASS] != ELFCLASS)
                 return 0;
 
         switch (eh.e_machine) {
@@ -207,7 +202,7 @@ ELFNAMEEND(hide)(int fd, const char *fn)
 			maxoff = shdrp[i].sh_offset;
 		}
 		switch (shdrp[i].sh_type) {
-		case Elf_sht_symtab:
+		case SHT_SYMTAB:
 			if (!weird && symtabsnum != -1) {
 				weird = 1;
 				weirdreason = "multiple symbol tables";
@@ -293,7 +288,7 @@ ELFNAMEEND(hide)(int fd, const char *fn)
 
 		/* if it's a keeper or is undefined, don't rename it. */
 		if (in_keep_list(symname) ||
-		    sp->st_shndx == Elf_eshn_undefined) {
+		    sp->st_shndx == SHN_UNDEF) {
 			newent_len = sprintf(nstrtabp + nstrtab_nextoff,
 			    "%s", symname) + 1;
 		} else {

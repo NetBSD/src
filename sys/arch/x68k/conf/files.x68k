@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.28 1999/09/23 15:24:34 minoura Exp $
+#	$NetBSD: files.x68k,v 1.28.8.1 1999/12/27 18:34:15 wrstuden Exp $
 #
 # new style config file for x68k architecture
 #
@@ -139,6 +139,7 @@ attach	fdc at intio
 device	fd: disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
+major	{fd = 2}
 
 #
 # SCSI drivers
@@ -170,6 +171,7 @@ file	arch/x68k/dev/pow.c		pow needs-count
 
 # memory disk
 file	arch/x68k/dev/md_root.c		memory_disk_hooks
+major	{md = 8}
 
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

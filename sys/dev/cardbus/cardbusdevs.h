@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusdevs.h,v 1.5 1999/12/11 22:22:54 explorer Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.5.2.1 1999/12/27 18:34:38 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.64 1999/08/27 01:14:15 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.64.8.1 1999/12/27 18:35:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -758,10 +758,10 @@ bitmask_snprintf(val, p, buf, buflen)
 	}
 
 	/*
-	 * If the value we printed was 0, or if we don't have room for
-	 * "<x>", we're done.
+	 * If the value we printed was 0 and we're using the old-style format,
+	 * or if we don't have room for "<x>", we're done.
 	 */
-	if (val == 0 || left < 3)
+	if (((val == 0) && (ch != '\177')) || left < 3)
 		return (buf);
 
 #define PUTBYTE(b, c, l)	\

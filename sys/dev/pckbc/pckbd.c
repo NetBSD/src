@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.20 1999/08/25 00:59:50 ross Exp $ */
+/* $NetBSD: pckbd.c,v 1.20.8.1 1999/12/27 18:35:25 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,9 +84,11 @@
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <machine/bus.h>
+
+#include <dev/isa/isavar.h>		/* XXX XXX XXX */
+
+#include <dev/ic/pckbcvar.h>
 
 #include <dev/pckbc/pckbdreg.h>
 #include <dev/pckbc/pckbdvar.h>

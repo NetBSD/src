@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 1999/09/12 01:17:43 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35.8.1 1999/12/27 18:36:45 wrstuden Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -88,6 +88,14 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 
 #include <machine/pmap.h>
 
+/*
+ * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
+ * bits, used to indicate the access type that was made (to seed modified
+ * and referenced information).
+ */
+#define	PMAP_WIRED	0x00000010	/* wired mapping */
+#define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
@@ -109,8 +117,8 @@ void		 pmap_copy __P((pmap_t,
 void		 pmap_copy_page __P((paddr_t, paddr_t));
 struct pmap 	 *pmap_create __P((void));
 void		 pmap_destroy __P((pmap_t));
-void		 pmap_enter __P((pmap_t,
-		    vaddr_t, paddr_t, vm_prot_t, boolean_t, vm_prot_t));
+int		 pmap_enter __P((pmap_t,
+		    vaddr_t, paddr_t, vm_prot_t, int));
 boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		 pmap_growkernel __P((vaddr_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 1999/12/14 11:17:26 dbj Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.2.1 1999/12/27 18:33:13 wrstuden Exp $	*/
 
 /*
  * This file was taken from sun3/sun3/kgdb_machdep.c

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.11 1999/02/12 11:25:23 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.11.8.1 1999/12/27 18:35:47 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -107,7 +107,8 @@ struct wsdisplay_accessops {
 	int	(*alloc_screen) __P((void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *));
 	void	(*free_screen) __P((void *, void *));
-	void	(*show_screen) __P((void *, void *));
+	int	(*show_screen) __P((void *, void *, int,
+				    void (*) (void *, int, int), void *));
 	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
 };
 
@@ -183,9 +184,17 @@ int wsdisplay_internal_ioctl __P((struct wsdisplay_softc *sc,
 				  u_long cmd, caddr_t data,
 				  int flag, struct proc *p));
 
-int wsdisplay_usl_ioctl __P((struct wsdisplay_softc *, struct wsscreen *,
+int wsdisplay_usl_ioctl1 __P((struct wsdisplay_softc *,
+			     u_long, caddr_t, int, struct proc *));
+
+int wsdisplay_usl_ioctl2 __P((struct wsdisplay_softc *, struct wsscreen *,
 			     u_long, caddr_t, int, struct proc *));
 
 int wsdisplay_cfg_ioctl __P((struct wsdisplay_softc *sc,
 			     u_long cmd, caddr_t data,
 			     int flag, struct proc *p));
+
+/*
+ * for general use
+ */
+void wsdisplay_switchtoconsole __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.5 1999/09/05 02:54:09 oster Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.5.8.1 1999/12/27 18:35:29 wrstuden Exp $	*/
 /*
  * rf_optnames.h
  */
@@ -102,6 +102,3 @@ RF_DBG_OPTION(totalInCoreLogCapacity, 1024 * 1024)	/* target bytes
 							 * logs */
 #endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
-#if DFSTRACE > 0
-RF_DBG_OPTION(DFSTraceAccesses, 0)
-#endif				/* DFSTRACE > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nis_gr.c,v 1.1.1.1 1999/11/20 18:54:10 veego Exp $	*/
+/*	$NetBSD: nis_gr.c,v 1.1.1.1.4.1 1999/12/27 18:27:42 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995

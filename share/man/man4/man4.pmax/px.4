@@ -1,3 +1,4 @@
+.\"	$NetBSD: px.4,v 1.6.4.1 1999/12/27 18:30:56 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -27,18 +28,16 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: px.4,v 1.6 1999/08/25 09:25:42 ad Exp $
-.\"
 .Dd April 26, 1999
 .Dt PX 4 pmax
 .Os
 .Sh NAME
 .Nm px
 .Nd
-TURBOchannel ``PixelStamp'' accelerated graphics boards
+driver for TURBOchannel ``PixelStamp'' accelerated graphics boards
 .Sh SYNOPSIS
-.Cd "px* at tc?"
-.Sh DESCRIPTION
+.Cd "px0 at tc?"
+.Sh HARDWARE
 The
 .Nm
 driver provides support for the
@@ -46,21 +45,16 @@ driver provides support for the
 .Tn PixelStamp 
 video display option cards:
 .Pp
-.Bl -tag -width 10n -offset indent -compact
-.It Sy PX
-(PMAG-C) 8 plane, 2D
-.It Sy PXG
-(PMAG-D) 8 plane, 3D, 128kB SRAM
-.It Sy PXG+
-(PMAG-E) 24 plane, 3D, 128kB SRAM
-.It Sy PXG+ Turbo
-(PMAG-F) 24 plane, 3D, 256kB SRAM, Z-Buffer
+.Bl -item -compact
+.It
+PMAG-C (PX) 8 plane, 2D
+.It
+PMAG-D (PXG) 8 plane, 3D, 128kB SRAM
+.It
+PMAG-E (PXG+) 24 plane, 3D, 128kB SRAM
+.It
+PMAG-F (PXG+ Turbo) 24 plane, 3D, 256kB SRAM, Z-Buffer
 .El
-.Pp
-.Tn PixelStamp
-based cards do not provide direct framebuffer access but instead use
-a packet-based protocol to communicate with the stamp, which in turn
-manipulates the framebuffer. 
 .Pp
 .Sh SEE ALSO
 .Xr rcons 4 ,
@@ -75,6 +69,9 @@ co-processor must first be added.
 The X server is a work in progress.
 .Pp
 3D geometry acceleration is not supported, and probably never will be.
+.Pp
+Only one of the listed boards can be installed at any given time. Work is
+underway to remove this restriction.
 .Sh AUTHOR
 Andy Doran
 .Aq ad@netbsd.org ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.15 1999/11/27 06:48:08 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.15.2.1 1999/12/27 18:33:33 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: machid.h,v 1.1 1999/12/09 14:53:17 tsutsui Exp $	*/
+/*	$NetBSD: machid.h,v 1.1.2.1 1999/12/27 18:33:01 wrstuden Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

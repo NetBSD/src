@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.18 1999/09/12 01:17:22 chs Exp $
+# 	$NetBSD: NONPLUS,v 1.18.8.1 1999/12/27 18:33:55 wrstuden Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -156,6 +156,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
+options		SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

@@ -1,4 +1,4 @@
-.\"	$NetBSD: zic.8,v 1.8 1998/10/04 19:27:55 kleink Exp $
+.\"	$NetBSD: zic.8,v 1.8.6.1 1999/12/27 18:29:56 wrstuden Exp $
 .TH ZIC 8
 .SH NAME
 zic \- time zone compiler
@@ -203,6 +203,7 @@ Recognized forms include:
 2:00	time in hours and minutes
 15:00	24-hour format time (for times after noon)
 1:28:14	time in hours, minutes, and seconds
+\-	equivalent to 0
 .fi
 .in -.5i
 .sp
@@ -411,4 +412,4 @@ the earliest transition time recorded in the compiled file is correct.
 /usr/share/zoneinfo	standard directory used for created files
 .SH "SEE ALSO"
 ctime(3), tzfile(5), zdump(8)
-.\" @(#)zic.8	7.18
+.\" @(#)zic.8	7.19

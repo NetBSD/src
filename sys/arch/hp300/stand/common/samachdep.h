@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.4 1999/07/31 17:20:22 thorpej Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.4.8.1 1999/12/27 18:31:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -69,6 +69,11 @@ extern	char *getmachineid();
 
 extern	int userom;
 extern	void romputchar __P((int));
+
+void	transfer __P((char *entry, int howto, int opendev, int conscode,
+	    char *lowram, char *esym));
+void	_transfer __P((char *entry, int howto, int opendev, int conscode,
+	    char *lowram, char *esym));
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 

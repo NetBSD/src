@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.19 1999/04/24 08:01:11 simonb Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.19.8.1 1999/12/27 18:33:28 wrstuden Exp $	*/
 
 /*
  * conf-glue.c:
@@ -23,7 +23,6 @@
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 
-#include <machine/autoconf.h>
 #include <pmax/dev/device.h>
 
 #define C (char *)
@@ -205,12 +204,9 @@ nomatch(parent, cf, aux)
 	void *aux;
 {
 #if /*def DEBUG*/ 0
-	struct confargs *ca = aux;
-
-	printf("nomatch  %s: %s: %s offset 0x%lx not yet done: %x\n",
-	        parent->dv_cfdata->cf_driver->cd_name,
-	       parent->dv_xname,
-	       ca->ca_name, ca->ca_offset);
+	printf("nomatch  %s: %s not yet done\n",
+		parent->dv_cfdata->cf_driver->cd_name,
+		parent->dv_xname);
 #endif
 	return 0;
 }
@@ -225,16 +221,12 @@ noattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-
-	/*XXX*/
 #ifdef DEBUG
-	printf("new attach  %s%d from %s: not yet done\n",
-	       ca->ca_name, self->dv_unit,
-	       parent->dv_xname);
+	printf("new attach  %s from %s: not yet done\n",
+		self->dv_xname, parent->dv_xname);
 #else
-	panic("Can't do new-config attach of old device %s%d\n",
-	      ca->ca_name, self->dv_unit);
+	panic("Can't do new-config attach of old device %s\n",
+		self->dv_xname);
 #endif
 	return;
 }

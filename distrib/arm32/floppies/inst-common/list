@@ -1,4 +1,4 @@
-# $NetBSD: list,v 1.1 1996/05/16 19:59:08 mark Exp $
+# $NetBSD: list,v 1.1.10.1 1999/12/27 18:28:18 wrstuden Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -62,7 +62,6 @@ SYMLINK	/bin/cat		usr/bin/wc
 SYMLINK	/bin/cat		usr/bin/xargs
 SYMLINK	/bin/cat		usr/sbin/chown
 SYMLINK	/bin/cat		usr/sbin/chroot
-SYMLINK	/bin/cat		usr/sbin/update
 SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.22 1998/07/05 06:49:18 jonathan Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.22.18.1 1999/12/27 18:36:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -39,9 +39,8 @@
  * Software interface driver for encapsulating ns in ip.
  */
 
-#include "opt_ns.h"			/* options NSIP */
+#include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
-#ifdef NSIP
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -478,4 +477,3 @@ nsip_rtchange(dst)
 		}
 	}
 }
-#endif

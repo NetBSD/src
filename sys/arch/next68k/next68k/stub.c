@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.1 1999/12/14 11:17:26 dbj Exp $	*/
+/*	$NetBSD: stub.c,v 1.1.2.1 1999/12/27 18:33:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

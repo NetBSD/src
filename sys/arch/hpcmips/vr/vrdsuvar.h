@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsuvar.h,v 1.1 1999/11/28 04:29:39 takemura Exp $	*/
+/*	$NetBSD: vrdsuvar.h,v 1.1.2.1 1999/12/27 18:32:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.

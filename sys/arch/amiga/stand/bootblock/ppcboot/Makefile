@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/11/28 22:10:48 is Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 1999/12/27 18:31:36 wrstuden Exp $
 
 ### what we need:
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.h,v 1.6 1999/07/31 18:41:15 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.h,v 1.6.8.1 1999/12/27 18:36:15 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * KAME Id: ip_ecn.h,v 1.1.4.1 1999/05/07 15:59:16 itojun Exp
+ * KAME Id: ip_ecn.h,v 1.2 1999/08/19 12:57:44 itojun Exp
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.

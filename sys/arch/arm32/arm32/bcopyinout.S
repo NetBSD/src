@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.19 1999/05/19 07:50:06 scw Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.19.6.1 1999/12/27 18:31:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -47,7 +47,7 @@
 	.text
 	.align	0
 Lcurpcb:
-	.word	_curpcb
+	.word	_C_LABEL(curpcb)
 
 Lvm_min_address:
 	.word	VM_MIN_ADDRESS
@@ -156,7 +156,7 @@ do_cowfault:
 	ldr	r3, Lpgbase
 	sub	r0, r6, r3
 	mov	r0, r0, lsl #(PGSHIFT-2)	/* calculate VA of page */
-	bl	_cowfault
+	bl	_C_LABEL(cowfault)
 	mov	r3, r0
 	ldmfd	sp!, {r0-r2, lr}
 	teq	r3, #0				/* check for error return */
@@ -235,7 +235,7 @@ Lcopyinoutpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Lcopyinouttext - . - 8
-	b	_panic
+	b	_C_LABEL(panic)
 
 Lcopyinouttext:
 	.asciz	"No valid PCB during copyinout() addr1=%08x addr2=%08x\n"

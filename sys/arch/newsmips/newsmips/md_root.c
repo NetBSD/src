@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1 1999/11/10 13:33:09 tsubai Exp $	*/
+/*	$NetBSD: md_root.c,v 1.1.4.1 1999/12/27 18:33:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
