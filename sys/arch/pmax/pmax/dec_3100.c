@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.26 2000/03/06 03:13:35 mhitch Exp $ */
+/* $NetBSD: dec_3100.c,v 1.27 2000/04/11 02:43:54 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -176,14 +176,14 @@ dec_3100_cons_init()
     } while (0)
 
 static int
-dec_3100_intr(cpumask, pc, status, cause)
-	unsigned cpumask;
-	unsigned pc;
+dec_3100_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
 	/* handle clock interrupts ASAP */
-	if (cpumask & MIPS_INT_MASK_3) {
+	if (ipending & MIPS_INT_MASK_3) {
 		struct clockframe cf;
 
 		__asm __volatile("lbu $0,48(%0)" ::
@@ -204,7 +204,7 @@ dec_3100_intr(cpumask, pc, status, cause)
 	CALLINTR(SYS_DEV_LANCE, MIPS_INT_MASK_1);
 	CALLINTR(SYS_DEV_SCC0, MIPS_INT_MASK_2);
 
-	if (cpumask & MIPS_INT_MASK_4) {
+	if (ipending & MIPS_INT_MASK_4) {
 		dec_3100_errintr();
 		intrcnt[ERROR_INTR]++;
 	}

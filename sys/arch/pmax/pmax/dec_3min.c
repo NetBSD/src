@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.38 2000/04/05 17:49:55 ad Exp $ */
+/* $NetBSD: dec_3min.c,v 1.39 2000/04/11 02:43:55 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.38 2000/04/05 17:49:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.39 2000/04/11 02:43:55 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,11 +323,11 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
     } while (0)
 
 static int
-dec_3min_intr(cpumask, pc, status, cause)
-	unsigned cpumask;
-	unsigned pc;
+dec_3min_intr(status, cause, pc, ipending)
 	unsigned status;
 	unsigned cause;
+	unsigned pc;
+	unsigned ipending;
 {
 	static int user_warned = 0;
 	static int intr_depth = 0;
@@ -336,10 +336,10 @@ dec_3min_intr(cpumask, pc, status, cause)
 	intr_depth++;
 	old_mask = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
 
-	if (cpumask & MIPS_INT_MASK_4)
+	if (ipending & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
-	if (cpumask & MIPS_INT_MASK_3) {
+	if (ipending & MIPS_INT_MASK_3) {
 		/* NB: status & MIPS_INT_MASK3 must also be set */
 		/* masked interrupts are still observable */
 		u_int32_t intr, imsk, can_serve, turnoff;
@@ -427,16 +427,16 @@ dec_3min_intr(cpumask, pc, status, cause)
 			printf("%s\n", "Power supply overheating");
 		}
 	}
-	if ((cpumask & MIPS_INT_MASK_0) && intrtab[SYS_DEV_OPT0].ih_func) {
+	if ((ipending & MIPS_INT_MASK_0) && intrtab[SYS_DEV_OPT0].ih_func) {
 		(*intrtab[SYS_DEV_OPT0].ih_func)(intrtab[SYS_DEV_OPT0].ih_arg);
 		intrcnt[SYS_DEV_OPT0]++;
  	}
 
-	if ((cpumask & MIPS_INT_MASK_1) && intrtab[SYS_DEV_OPT1].ih_func) {
+	if ((ipending & MIPS_INT_MASK_1) && intrtab[SYS_DEV_OPT1].ih_func) {
 		(*intrtab[SYS_DEV_OPT1].ih_func)(intrtab[SYS_DEV_OPT1].ih_arg);
 		intrcnt[SYS_DEV_OPT1]++;
 	}
-	if ((cpumask & MIPS_INT_MASK_2) && intrtab[SYS_DEV_OPT2].ih_func) {
+	if ((ipending & MIPS_INT_MASK_2) && intrtab[SYS_DEV_OPT2].ih_func) {
 		(*intrtab[SYS_DEV_OPT2].ih_func)(intrtab[SYS_DEV_OPT2].ih_arg);
 		intrcnt[SYS_DEV_OPT2]++;
 	}
@@ -447,7 +447,6 @@ done:
 	intr_depth--;
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = old_mask;
 
-	
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
