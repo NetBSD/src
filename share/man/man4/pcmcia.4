@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.5.2.2 2000/04/30 10:44:12 he Exp $
+.\" $NetBSD: pcmcia.4,v 1.5.2.3 2000/05/11 10:16:36 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,6 +73,8 @@ Ethernet card based on the Fujitsu MB86960A/MB86965A chipset.
 NE2000 compatible cards.
 .It sm
 Megahertz Ethernet card.
+.It wi
+Lucent WaveLan/IEEE 802.11 controller.
 .El
 .\"
 .Pp
@@ -97,7 +99,8 @@ The supported PCMCIA controllers are those that are i82365 compatible.
 .Xr ep 4 ,
 .Xr isa 4 ,
 .Xr ne 4 ,
-.Xr sm 4
+.Xr sm 4 ,
+.Xr wi 4
 .Sh HISTORY
 The
 .Nm
