@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 1998/08/21 14:13:54 pk Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.5 1998/09/26 20:14:48 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,11 +152,17 @@ kgdb_connect(verbose)
 #if NFB > 0
 	fb_unblank();
 #endif
+	/* While we're in the debugger, pause all other CPUs */
+	mp_pause_cpus();
+
 	if (verbose)
 		printf("kgdb waiting...");
 	__asm("ta %0" :: "n" (T_KGDB_EXEC));	/* trap into kgdb */
 
 	kgdb_debug_panic = 1;
+
+	/* Other CPUs can continue now */
+	mp_resume_cpus();
 }
 
 /*
