@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50.2.1 1999/11/01 06:19:13 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50.2.2 1999/11/01 07:00:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,14 +76,6 @@ int		booted_partition;
 static void findbootdev __P((void));
 static int target_to_unit __P((u_long, u_long, u_long));
 
-struct devnametobdevmaj mac68k_nam2blk[] = {
-	{ "sd",		4 },
-	{ "cd",		6 },
-	{ "md",		13 },
-	{ "fd",		21 },
-	{ NULL,		0 },
-};
-
 /*
  * cpu_configure:
  * called at boot time, configure all devices on the system
@@ -108,7 +100,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, mac68k_nam2blk);
+	setroot(booted_device, booted_partition);
 }
 
 /*
@@ -128,10 +120,10 @@ findbootdev()
 	booted_partition = 0;	/* Assume root is on partition a */
 
 	major = B_TYPE(bootdev);
-	for (i = 0; mac68k_nam2blk[i].d_name != NULL; i++)
-		if (major == mac68k_nam2blk[i].d_maj)
+	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
+		if (major == dev_name2blk[i].d_maj)
 			break;
-	if (mac68k_nam2blk[i].d_name == NULL)
+	if (dev_name2blk[i].d_name == NULL)
 		return;
 
 	unit = B_UNIT(bootdev);
@@ -140,7 +132,7 @@ findbootdev()
 	unit = target_to_unit(-1, unit, 0);
 	bootdev |= (unit << B_UNITSHIFT);
 
-	sprintf(buf, "%s%d", mac68k_nam2blk[i].d_name, unit);
+	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
 	for (dv = alldevs.tqh_first; dv != NULL;
 	    dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
