@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1997/09/20 12:36:07 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1998/03/31 05:29:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -217,7 +217,7 @@ print_banner(void)
  * note: normally, void main() wouldn't be legal, but this isn't a
  * hosted environment...
  */
-void
+int
 main()
 {
 	int currname;
@@ -261,6 +261,8 @@ main()
 		/* since it failed, try switching bootfile. */
 		currname = ++currname % NUMNAMES;
 	}
+
+	return (0);
 }
 
 /* ARGSUSED */
