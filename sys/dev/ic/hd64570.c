@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.3 1998/10/28 16:26:01 kleink Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.4 1998/12/09 23:25:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -339,9 +339,17 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	if (port == 0) {
 		scp->msci_off = SCA_MSCI_OFF_0;
 		scp->dmac_off = SCA_DMAC_OFF_0;
+		if(sc->parent != NULL)
+			ntwo_unit=sc->parent->dv_unit * 2 + 0;
+		else
+			ntwo_unit = 0;	/* XXX */
 	} else {
 		scp->msci_off = SCA_MSCI_OFF_1;
 		scp->dmac_off = SCA_DMAC_OFF_1;
+		if(sc->parent != NULL)
+			ntwo_unit=sc->parent->dv_unit * 2 + 1;
+		else
+			ntwo_unit = 1;	/* XXX */
 	}
 
 	sca_msci_init(sc, scp);
