@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.96 1994/10/20 16:36:21 mycroft Exp $
+ *	$Id: wd.c,v 1.97 1994/10/20 17:03:09 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -1100,6 +1100,7 @@ wdgetctlr(wd)
 		/* Update disklabel given drive information. */
 		wd->sc_dk.dk_label.d_ncylinders =
 		    wp->wdp_fixedcyl + wp->wdp_removcyl /*+- 1*/;
+		wd->sc_dk.dk_label.d_secsize = DEV_BSIZE;
 		wd->sc_dk.dk_label.d_ntracks = wp->wdp_heads;
 		wd->sc_dk.dk_label.d_nsectors = wp->wdp_sectors;
 		wd->sc_dk.dk_label.d_secpercyl =
