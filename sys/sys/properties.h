@@ -1,4 +1,4 @@
-/*	$NetBSD: properties.h,v 1.3 2003/07/04 07:41:18 itojun Exp $	*/
+/*	$NetBSD: properties.h,v 1.4 2003/07/04 07:42:04 itojun Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -49,8 +49,8 @@ typedef struct propdb *propdb_t;
 #define	PROP_CONST	0x80000000
 #define	PROP_ELSZ(x)	0x0fffffff
 
-propdb_t propdb_create(const char *name);
-void propdb_destroy(propdb_t db);
+propdb_t propdb_create(const char *);
+void propdb_destroy(propdb_t);
 
 int prop_set(propdb_t, opaque_t, const char *, void *, size_t, int, int);
 size_t prop_objs(propdb_t, opaque_t *, size_t);
