@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.51 2002/07/25 14:34:46 grant Exp $
+# $NetBSD: rc.subr,v 1.52 2002/08/26 17:46:57 abs Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,7 +62,7 @@ checkyesno()
 		return 1
 		;;
 	*)
-		warn "\$${1} is not set properly."
+		warn "\$${1} is not set properly - see rc.conf(5)."
 		return 1
 		;;
 	esac
