@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.26.2.1 1998/11/09 06:06:35 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.26.2.2 1999/02/25 04:00:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -308,9 +308,10 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 			/*
 			 * re-label cached pages, if any
 			 */
-			uvm_vnp_relocate(ITOV(ip), lblktosize(fs, lbprev),
-					 blkoff(fs, ip->i_ffs_size),
-					 fsbtodb(fs, bno));
+			uvm_vnp_setpageblknos(ITOV(ip), lblktosize(fs, lbprev),
+					      blkoff(fs, ip->i_ffs_size),
+					      fsbtodb(fs, bno), UFP_NOALLOC,
+					      FALSE);
 		}
 
 #if defined(UVM)
