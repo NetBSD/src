@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/10/11 09:34:27 mycroft Exp $
+#	$NetBSD: Makefile,v 1.17 1998/01/05 21:56:31 cgd Exp $
 
 SUBDIR=	ld ldconfig ldd
 
@@ -8,5 +8,4 @@ SUBDIR=	ld ldconfig ldd
 SUBDIR+= rtld
 .endif
 
-.include <bsd.prog.mk>
 .include <bsd.subdir.mk>
