@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.35 2001/06/13 10:46:04 wiz Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.36 2001/07/07 16:39:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -427,7 +427,7 @@ pdq_pci_attach(
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CFLT, data);
     }
 
-    bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
+    strcpy(sc->sc_if.if_xname, sc->sc_dev.dv_xname);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
