@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.9 2001/06/18 12:07:32 lukem Exp $
+#	$NetBSD: lorder.sh,v 1.10 2001/09/28 14:41:44 tv Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -68,8 +68,9 @@ R=`mktemp /tmp/_reference_.XXXXXX` || exit 1
 S=`mktemp /tmp/_symbol_.XXXXXX` || exit 1
 
 # remove temporary files on exit
-trap "rm -f $N $R $S; exit 0" EXIT
-trap "rm -f $N $R $S; exit 1" HUP INT QUIT PIPE TERM
+trap "rm -f $N $R $S; exit 0" 0
+trap "rm -f $N $R $S; exit 1" HUP INT QUIT PIPE TERM 2>/dev/null || \
+	trap "rm -f $N $R $S; exit 1" 1 2 3 13 15
 
 # if the line ends in a colon, assume it's the first occurrence of a new
 # object file.  Echo it twice, just to make sure it gets into the output.
