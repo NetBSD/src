@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.3 2002/10/04 06:02:38 explorer Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.4 2002/10/06 14:28:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -455,7 +455,6 @@ struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 
-struct mp_intr_map *lapic_ints[2]; /* XXX */
 int mp_isa_bus = -1;		/* XXX */
 int mp_eisa_bus = -1;		/* XXX */
 
@@ -1000,6 +999,9 @@ mpbios_int(ent, enttype, mpi)
 	u_int32_t type = entry->int_type;
 	u_int32_t flags = entry->int_flags;
 
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
 	switch (type) {
 	case MPS_INTTYPE_INT:
 		mpb = &(mp_busses[bus]);
@@ -1055,14 +1057,15 @@ mpbios_int(ent, enttype, mpi)
 			sc->sc_pins[pin].ip_map = mpi;
 		}
 	} else {
-		if (id != MPS_ALL_APICS)
-			panic("can't deal with not-all-lapics interrupt yet!");
 		if (pin >= 2)
 			printf("pin %d of local apic doesn't exist!\n", pin);
 		else {
 			mpi->ioapic = NULL;
 			mpi->ioapic_pin = pin;
-			lapic_ints[pin] = mpi;
+			for (CPU_INFO_FOREACH(cii, ci)) {
+				if (id == MPS_ALL_APICS || ci->ci_cpuid == id)
+					ci->ci_lapic_ints[pin] = mpi;
+			}
 		}
 	}
 	if (mp_verbose) {

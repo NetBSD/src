@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.2 2002/10/01 12:56:53 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.3 2002/10/06 14:28:55 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,9 +119,9 @@ extern struct mp_intr_map *lapic_ints[]; /* XXX header file? */
 void
 lapic_set_lvt ()
 {
-#ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
 
+#ifdef MULTIPROCESSOR
 	if (mp_verbose) {
 		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
@@ -129,10 +129,10 @@ lapic_set_lvt ()
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
-	if (lapic_ints[0])
-		i82489_writereg(LAPIC_LVINT0, lapic_ints[0]->redir);
-	if (lapic_ints[1])
-		i82489_writereg(LAPIC_LVINT1, lapic_ints[1]->redir);
+	if (ci->ci_lapic_ints[0])
+		i82489_writereg(LAPIC_LVINT0, ci->ci_lapic_ints[0]->redir);
+	if (ci->ci_lapic_ints[1])
+		i82489_writereg(LAPIC_LVINT1, ci->ci_lapic_ints[1]->redir);
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
