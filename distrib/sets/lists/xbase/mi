@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34 2004/01/19 00:32:41 lukem Exp $
+# $NetBSD: mi,v 1.35 2004/01/19 00:35:41 lukem Exp $
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
 ./usr/X11R6/bin/Xmark
@@ -251,6 +251,10 @@
 ./usr/X11R6/lib/X11/app-defaults/Xmessage-color
 ./usr/X11R6/lib/X11/app-defaults/Xmh
 ./usr/X11R6/lib/X11/app-defaults/Xsystrace
+./usr/X11R6/lib/X11/etc/sun.termcap			xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/etc/sun.terminfo			xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/etc/xterm.termcap			xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/etc/xterm.terminfo			xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/fs/config
 ./usr/X11R6/lib/X11/lbxproxy/AtomControl
 ./usr/X11R6/lib/X11/locale/C/XI18N_OBJS		-unknown-		share
