@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.56 2001/12/10 01:52:27 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.57 2001/12/31 22:34:39 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.56 2001/12/10 01:52:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.57 2001/12/31 22:34:39 chs Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -227,7 +227,7 @@ uvm_vslock(p, addr, len, access_type)
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	error = uvm_fault_wire(map, start, end, access_type);
+	error = uvm_fault_wire(map, start, end, VM_FAULT_WIRE, access_type);
 	return error;
 }
 
@@ -290,8 +290,8 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	 * Note the kernel stack gets read/write accesses right off
 	 * the bat.
 	 */
-	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
-	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
+	error = uvm_fault_wire(kernel_map, (vaddr_t)up, (vaddr_t)up + USPACE,
+	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
 		panic("uvm_fork: uvm_fault_wire failed: %d", error);
 
@@ -382,7 +382,7 @@ uvm_swapin(p)
 
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
-	error = uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE, VM_FAULT_WIRE,
 	    VM_PROT_READ | VM_PROT_WRITE);
 	if (error) {
 		panic("uvm_swapin: rewiring stack failed: %d", error);
