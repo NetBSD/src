@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.5 2001/11/04 19:32:32 thorpej Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.6 2001/11/08 03:20:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,9 +52,14 @@
 #define	I80312_PMMR_SIZE	0x00001000UL
 
 /*
+ * The PMMR registers below are defined as offsets from the i80312 PMMR
+ * base.
+ */
+
+/*
  * PCI-to-PCI Bridge Unit
  */
-#define	I80312_PPB_BASE		(I80312_PMMR_BASE)
+#define	I80312_PPB_BASE		(0)
 #define	I80312_PPB_SIZE		0x100
 /*
  * Performance Monitoring Unit
@@ -108,30 +113,81 @@
 #define	I80312_AAU_SIZE		0x100
 
 /*
- * Performance Monitoring Unit
+ * PCI-PCI Bridge Unit
+ *
+ * The PCI-PCI Bridge Unit supports both public (accessible to the
+ * host) and private (accessible only to the local system) devices:
+ *
+ *	---------
+ *		S_AD[11]
+ *		S_AD[12]
+ * Private	S_AD[13]
+ *		S_AD[14]
+ *		S_AD[15]
+ *	---------
+ *		S_AD[16]	SISR bit 9
+ *		S_AD[17]	SISR bit 8
+ *		S_AD[18]	SISR bit 7
+ * Public	S_AD[19]	SISR bit 6
+ * or		S_AD[20]	SISR bit 5
+ * Private	S_AD[21]	SISR bit 4
+ *		S_AD[22]	SISR bit 3
+ *		S_AD[23]	SISR bit 2
+ *		S_AD[24]	SISR bit 1
+ *		S_AD[25]	SISR bit 0
+ *	---------
+ *		S_AD[26]
+ *		S_AD[27]
+ * Public	S_AD[28]
+ *		S_AD[29]
+ *		S_AD[30]
+ *		S_AD[31]
+ *	---------
+ *
+ * Setting the specified SISR bit makes the corresponding S_AD line
+ * a private sevice.
  */
-#define	I80312_PMU_GTMR		(I80312_PMU_BASE + 0x00)
-#define	I80312_PMU_ESR		(I80312_PMU_BASE + 0x04)
-#define	I80312_PMU_EMISR	(I80312_PMU_BASE + 0x08)
-#define	I80312_PMU_GTSR		(I80312_PMU_BASE + 0x10)
-#define	I80312_PMU_PECR1	(I80312_PMU_BASE + 0x14)
-#define	I80312_PMU_PECR2	(I80312_PMU_BASE + 0x18)
-#define	I80312_PMU_PECR3	(I80312_PMU_BASE + 0x1c)
-#define	I80312_PMU_PECR4	(I80312_PMU_BASE + 0x20)
-#define	I80312_PMU_PECR5	(I80312_PMU_BASE + 0x24)
-#define	I80312_PMU_PECR6	(I80312_PMU_BASE + 0x28)
-#define	I80312_PMU_PECR7	(I80312_PMU_BASE + 0x2c)
-#define	I80312_PMU_PECR8	(I80312_PMU_BASE + 0x30)
-#define	I80312_PMU_PECR9	(I80312_PMU_BASE + 0x34)
-#define	I80312_PMU_PECR10	(I80312_PMU_BASE + 0x38)
-#define	I80312_PMU_PECR11	(I80312_PMU_BASE + 0x3c)
-#define	I80312_PMU_PECR12	(I80312_PMU_BASE + 0x40)
-#define	I80312_PMU_PECR13	(I80312_PMU_BASE + 0x44)
-#define	I80312_PMU_PECR14	(I80312_PMU_BASE + 0x48)
+#define	I80312_PPB_EBCR		0x40	/* Extended Bridge Control */
+#define	I80312_PPB_SISR		0x42	/* Secondary ID Select Register */
+#define	I80312_PPB_PBISR	0x44	/* Primary Bridge Int. Stat. */
+#define	I80312_PPB_SBISR	0x48	/* Secondary Bridge Int. Stat. */
+#define	I80312_PPB_SACR		XXX	/* Secondary Arb. Control */
+#define	I80312_PPB_PIRSR	XXX	/* PCI Int. Routing Select */
+#define	I80312_PPB_SIOBR	0x54	/* Secondary I/O Base Register */
+#define	I80312_PPB_SIOLR	0x55	/* Secondary I/O Limit Register */
+#define	I80312_PPB_SCDR		0x56	/* Secondary Clock Disable Register */
+#define	I80312_PPB_SMBR		0x58	/* Secondary Memory Base Register */
+#define	I80312_PPB_SMLR		0x5a	/* Secondary Memory Limit Register */
+#define	I80312_PPB_SDER		0x5c	/* Secondary Decode Enable Register */
+#define	I80312_PPB_QCR		0x5e	/* Queue Control Register */
 
 /*
+ * Performance Monitoring Unit
+ */
+#define	I80312_PMU_GTMR		0x00
+#define	I80312_PMU_ESR		0x04
+#define	I80312_PMU_EMISR	0x08
+#define	I80312_PMU_GTSR		0x10
+#define	I80312_PMU_PECR1	0x14
+#define	I80312_PMU_PECR2	0x18
+#define	I80312_PMU_PECR3	0x1c
+#define	I80312_PMU_PECR4	0x20
+#define	I80312_PMU_PECR5	0x24
+#define	I80312_PMU_PECR6	0x28
+#define	I80312_PMU_PECR7	0x2c
+#define	I80312_PMU_PECR8	0x30
+#define	I80312_PMU_PECR9	0x34
+#define	I80312_PMU_PECR10	0x38
+#define	I80312_PMU_PECR11	0x3c
+#define	I80312_PMU_PECR12	0x40
+#define	I80312_PMU_PECR13	0x44
+#define	I80312_PMU_PECR14	0x48
+
+/*
+ * Address Translation Unit
  * The first 64 bytes are identical to a PCI device's config space.
  */
+/*	BAR #0			0x10	Primary Inbound ATU Base Address */
 #define	I80312_ATU_PIAL		0x40	/* Pri. Inbound ATU Limit */
 #define	I80312_ATU_PIATV	0x44	/* Pri. Inbound ATU Translate Value */
 #define	I80312_ATU_SIAM		0x48	/* Sec. Inbound ATU Base Address */
@@ -169,6 +225,12 @@
 #define	I80312_ATU_SAIM		0xc0	/* Sec. ATU Interrupt Mask */
      /* not used		0xc4 .. 0xfc */
 
+#define	ATU_LIMIT(x) \
+	((0xffffffffUL - ((x) - 1)) & 0xfffffff0UL)
+
+/*
+ * Messaging Unit
+ */
      /* not used		0x00 .. 0x0c */
 #define	I80312_MSG_IM0		0x10	/* Inbound Message 0 */
 #define	I80312_MSG_IM1		0x14	/* Inbound Message 1 */
@@ -315,16 +377,26 @@
  * ATU Outbound Transaction Windows.
  */
 #define	I80312_PCI_XLATE_BASE	0x80000000UL
-#define	I80312_PCI_XLATE_SIZE	0x1001ffffUL
+#define	I80312_PCI_XLATE_SIZE	0x10020000UL
 
-#define	I80312_PCI_XLATE_MSIZE	0x03ffffffUL
-#define	I80312_PCI_XLATE_IOSIZE	0x0000ffffUL
+#define	I80312_PCI_XLATE_MSIZE	0x04000000UL	/* 64M */
+#define	I80312_PCI_XLATE_IOSIZE	0x00010000UL	/* 64K */
 
 #define	I80312_PCI_XLATE_PMW_BASE  (I80312_PCI_XLATE_BASE)
-#define	I80312_PCI_XLATE_PDW_BASE  (I80312_PCI_XLATE_BASE + 0x04000000UL)
-#define	I80312_PCI_XLATE_SMW_BASE  (I80312_PCI_XLATE_BASE + 0x08000000UL)
-#define	I80312_PCI_XLATE_SDW_BASE  (I80312_PCI_XLATE_BASE + 0x0c000000UL)
-#define	I80312_PCI_XLATE_PIOW_BASE (I80312_PCI_XLATE_BASE + 0x10000000UL)
-#define	I80312_PCI_XLATE_SIOW_BASE (I80312_PCI_XLATE_BASE + 0x10010000UL)
+
+#define	I80312_PCI_XLATE_PDW_BASE  (I80312_PCI_XLATE_PMW_BASE + \
+				    I80312_PCI_XLATE_MSIZE)
+
+#define	I80312_PCI_XLATE_SMW_BASE  (I80312_PCI_XLATE_PDW_BASE + \
+				    I80312_PCI_XLATE_MSIZE)
+
+#define	I80312_PCI_XLATE_SDW_BASE  (I80312_PCI_XLATE_SMW_BASE + \
+				    I80312_PCI_XLATE_MSIZE)
+
+#define	I80312_PCI_XLATE_PIOW_BASE (I80312_PCI_XLATE_SDW_BASE + \
+				    I80312_PCI_XLATE_MSIZE)
+
+#define	I80312_PCI_XLATE_SIOW_BASE (I80312_PCI_XLATE_PIOW_BASE + \
+				    I80312_PCI_XLATE_IOSIZE)
 
 #endif /* _ARM_XSCALE_I80312REG_H_ */
