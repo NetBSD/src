@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.9 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_expr.c,v 1.10 2000/07/08 21:35:32 eeh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -50,8 +50,25 @@ db_term(valuep)
 	t = db_read_token();
 	if (t == tIDENT) {
 	    if (!db_value_of_name(db_tok_string, valuep)) {
-		db_error("Symbol not found\n");
-		/*NOTREACHED*/
+		extern int  db_radix;
+		db_expr_t v = 0;
+		int	i, c, byte;
+
+		/* See if we can make a number out of all of it */
+		for (i=0; c = db_tok_string[i]; i++) {
+		    byte = 0;
+		    if (c >= '0' && c <= '9')
+			    byte = c - '0';
+		    else if (db_radix == 16 && c >= 'a' && c <= 'f')
+			    byte = c - 'a' + 10;
+		    else if (db_radix == 16 && c >= 'A' && c <= 'F')
+			    byte = c - 'A' + 10;
+		    else
+			    db_error("Symbol not found\n");
+			    /*NOTREACHED*/
+		    v = v * db_radix + byte;
+		}
+		*valuep = (db_expr_t)v;
 	    }
 	    return (TRUE);
 	}
