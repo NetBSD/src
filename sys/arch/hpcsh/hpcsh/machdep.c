@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2002/02/28 16:54:30 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2002/02/28 18:17:29 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -200,18 +200,18 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* ICU initiailze */
 	switch (cpu_product) {
 	case CPU_PRODUCT_7709A:
-		_reg_write_2(0xa4000016, 0); /* IPRC */
-		_reg_write_2(0xa4000018, 0); /* IPRD */
-		_reg_write_2(0xa400001a, 0); /* IPRE */
+		_reg_write_2(SH7709_IPRC, 0);
+		_reg_write_2(SH7709_IPRD, 0);
+		_reg_write_2(SH7709_IPRE, 0);
 		/* FALLTHROUGH */
 	case CPU_PRODUCT_7709:
-		_reg_write_2(0xfffffee2, 0); /* IPRA */
-		_reg_write_2(0xfffffee4, 0); /* IPRB */
+		_reg_write_2(SH3_IPRA, 0);
+		_reg_write_2(SH3_IPRB, 0);
 		break;
 	case CPU_PRODUCT_7750:
-		_reg_write_2(0xffd00004, 0); /* IPRA */
-		_reg_write_2(0xffd00008, 0); /* IPRB */
-		_reg_write_2(0xffd0000c, 0); /* IPRC */
+		_reg_write_2(SH4_IPRA, 0);
+		_reg_write_2(SH4_IPRB, 0);
+		_reg_write_2(SH4_IPRC, 0);
 		break;
 	}
 #if NHD64465IF > 0
