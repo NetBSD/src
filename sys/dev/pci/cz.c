@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.16.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.16.4.2 2001/09/26 15:28:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -906,8 +906,9 @@ cztty_findmajor(void)
 struct tty *
 czttytty(struct vnode *devvp)
 {
-	struct cztty_softc *sc = devvp->v_devcookie;
+	struct cztty_softc *sc;
 
+	sc = vdev_privdata(devvp);
 #ifdef DIAGNOSTIC
 	if (sc == NULL)
 		panic("czttytty");
@@ -966,10 +967,14 @@ cztty_shutdown(struct cztty_softc *sc)
 int
 czttyopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
-	struct cztty_softc *sc = CZTTY_SOFTC(devvp->v_rdev);
+	struct cztty_softc *sc;
 	struct cz_softc *cz;
 	struct tty *tp;
 	int s, error;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	sc = CZTTY_SOFTC(rdev);
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -977,7 +982,7 @@ czttyopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 	if (sc->sc_channel == CZTTY_CHANNEL_DEAD)
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	cz = CZTTY_CZ(sc);
 	tp = sc->sc_tty;
@@ -1058,7 +1063,7 @@ czttyopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 
 	splx(s);
 
-	error = ttyopen(tp, CZTTY_DIALOUT(devvp->v_rdev),
+	error = ttyopen(tp, CZTTY_DIALOUT(rdev),
 	    ISSET(flags, O_NONBLOCK));
 	if (error)
 		goto bad;
@@ -1089,8 +1094,11 @@ czttyopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 int
 czttyclose(struct vnode *devvp, int flags, int mode, struct proc *p)
 {
-	struct cztty_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct cztty_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -1119,9 +1127,11 @@ czttyclose(struct vnode *devvp, int flags, int mode, struct proc *p)
 int
 czttyread(struct vnode *devvp, struct uio *uio, int flags)
 {
-	struct cztty_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct cztty_softc *sc;
+	struct tty *tp;
 
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 	return ((*tp->t_linesw->l_read)(tp, uio, flags));
 }
 
@@ -1133,9 +1143,11 @@ czttyread(struct vnode *devvp, struct uio *uio, int flags)
 int
 czttywrite(struct vnode *devvp, struct uio *uio, int flags)
 {
-	struct cztty_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct cztty_softc *sc;
+	struct tty *tp;
 
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
 }
 
@@ -1150,8 +1162,11 @@ czttypoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct cztty_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct cztty_softc *sc;
+	struct tty *tp;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
@@ -1165,9 +1180,12 @@ int
 czttyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct cztty_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct cztty_softc *sc;
+	struct tty *tp;
 	int s, error;
+
+	sc = vdev_privdata(devvp);
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -1358,11 +1376,13 @@ cztty_to_tiocm(struct cztty_softc *sc)
 int
 czttyparam(struct tty *tp, struct termios *t)
 {
-	struct cztty_softc *sc = tp->t_devvp->v_devcookie;
-	struct cz_softc *cz = CZTTY_CZ(sc);
+	struct cztty_softc *sc;
+	struct cz_softc *cz;
 	u_int32_t rs_status;
 	int ospeed, cflag;
 
+	sc = vdev_privdata(tp->t_devvp);
+	cz = CZTTY_CZ(sc);
 	ospeed = t->c_ospeed;
 	cflag = t->c_cflag;
 
@@ -1497,8 +1517,10 @@ czttyparam(struct tty *tp, struct termios *t)
 void
 czttystart(struct tty *tp)
 {
-	struct cztty_softc *sc = tp->t_devvp->v_devcookie;
+	struct cztty_softc *sc;
 	int s;
+
+	sc = vdev_privdata(tp->t_devvp);
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))

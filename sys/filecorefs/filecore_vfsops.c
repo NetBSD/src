@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14.4.1 2001/09/18 19:13:52 fvdl Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.14.4.2 2001/09/26 15:28:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -117,13 +117,17 @@ filecore_mountroot()
 	if ((error = vfs_rootmountalloc(MOUNT_FILECORE, "root_device", &mp)) != 0)
 		return (error);
 
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+
 	args.flags = FILECOREMNT_ROOT;
 	if ((error = filecore_mountfs(rootvp, mp, p, &args)) != 0) {
+		VOP_UNLOCK(rootvp, 0);
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		return (error);
 	}
+	VOP_UNLOCK(rootvp, 0);
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
@@ -185,16 +189,17 @@ filecore_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return ENXIO;
 	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
 	if (p->p_ucred->cr_uid != 0) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
 		if (error) {
-			vrele(devvp);
+			vput(devvp);
 			return (error);
 		}
 	}
@@ -207,7 +212,7 @@ filecore_mount(mp, path, data, ndp, p)
 			vrele(devvp);
 	}
 	if (error) {
-		vrele(devvp);
+		vput(devvp);
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
@@ -216,6 +221,7 @@ filecore_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
+	VOP_UNLOCK(devvp, 0);
 	return 0;
 }
 

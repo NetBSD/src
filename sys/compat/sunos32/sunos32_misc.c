@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.9 2001/06/14 20:32:45 thorpej Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.9.4.1 2001/09/26 15:28:08 fvdl Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -1165,7 +1165,7 @@ sunos32_sys_vhangup(p, v, retval)
 
 	(void) ttywait(sp->s_ttyp);
 	if (sp->s_ttyvp)
-		VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
+		VOP_REVOKE(sp->s_ttyvp, REVOKEALIAS);
 	if (sp->s_ttyvp)
 		vrele(sp->s_ttyvp);
 	sp->s_ttyvp = NULL;

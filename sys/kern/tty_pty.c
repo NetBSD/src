@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.4.1 2001/09/07 04:45:38 thorpej Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.4.2 2001/09/26 15:28:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -269,13 +269,16 @@ ptsopen(devvp, flag, devtype, p)
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
+	dev_t rdev;
+	
+	rdev = vdev_rdev(devvp);
 
-	if ((error = check_pty(devvp->v_rdev)))
+	if ((error = check_pty(rdev)))
 		return (error);
 
-	pti = pt_softc[minor(devvp->v_rdev)];
+	pti = pt_softc[minor(rdev)];
 	tp = pti->pt_tty;
-	devvp->v_devcookie = pti;
+	vdev_setprivdata(devvp, pti);
 
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		ttychars(tp);		/* Set up default chars */
@@ -309,9 +312,12 @@ ptsclose(devvp, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
 	int error;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 	error = (*tp->t_linesw->l_close)(tp, flag);
 	error |= ttyclose(tp);
@@ -326,9 +332,12 @@ ptsread(devvp, uio, flag)
 	int flag;
 {
 	struct proc *p = curproc;
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
 	int error = 0;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 again:
 	if (pti->pt_flags & PF_REMOTE) {
@@ -379,8 +388,11 @@ ptswrite(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
 		return (EIO);
@@ -396,8 +408,11 @@ ptspoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
 		return (EIO);
@@ -413,7 +428,9 @@ void
 ptsstart(tp)
 	struct tty *tp;
 {
-	struct pt_softc *pti = tp->t_devvp->v_devcookie;
+	struct pt_softc *pti;
+
+	pti = vdev_privdata(tp->t_devvp);
 
 	if (ISSET(tp->t_state, TS_TTSTOP))
 		return;
@@ -429,8 +446,10 @@ ptsstop(tp, flush)
 	struct tty *tp;
 	int flush;
 {
-	struct pt_softc *pti = tp->t_devvp->v_devcookie;
+	struct pt_softc *pti;
 	int flag;
+
+	pti = vdev_privdata(tp->t_devvp);
 
 	/* note: FLUSHREAD and FLUSHWRITE already ok */
 	if (flush == 0) {
@@ -453,7 +472,9 @@ ptcwakeup(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct pt_softc *pti = tp->t_devvp->v_devcookie;
+	struct pt_softc *pti;
+
+	pti = vdev_privdata(tp->t_devvp);
 
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
@@ -475,13 +496,16 @@ ptcopen(devvp, flag, devtype, p)
 	struct pt_softc *pti;
 	struct tty *tp;
 	int error;
+	dev_t rdev;
 
-	if ((error = check_pty(devvp->v_rdev)))
+	rdev = vdev_rdev(devvp);
+
+	if ((error = check_pty(rdev)))
 		return (error);
 
-	pti = pt_softc[minor(devvp->v_rdev)];
+	pti = pt_softc[minor(rdev)];
 	tp = pti->pt_tty;
-	devvp->v_devcookie = pti;
+	vdev_setprivdata(devvp, pti);
 
 	if (tp->t_oproc)
 		return (EIO);
@@ -501,8 +525,11 @@ ptcclose(devvp, flag, devtype, p)
 	int flag, devtype;
 	struct proc *p;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
@@ -516,10 +543,13 @@ ptcread(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
 	char buf[BUFSIZ];
 	int error = 0, cc;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 	/*
 	 * We want to block until the slave
@@ -586,13 +616,16 @@ ptcwrite(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
+	struct tty *tp;
 	u_char *cp = NULL;
 	int cc = 0;
 	u_char locbuf[BUFSIZ];
 	int cnt = 0;
 	int error = 0;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
 
 again:
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -675,10 +708,16 @@ ptcpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
-	int revents = 0;
-	int s = splsoftclock();
+	struct pt_softc *pti;
+	struct tty *tp;
+	int revents;
+	int s;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
+	revents = 0;
+
+	s = splsoftclock();
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (ISSET(tp->t_state, TS_ISOPEN) &&
@@ -716,10 +755,10 @@ struct tty *
 ptytty(devvp)
 	struct vnode *devvp;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti;
 
-	return (tp);
+	pti = vdev_privdata(devvp);
+	return pti->pt_tty;
 }
 
 /*ARGSUSED*/
@@ -731,10 +770,14 @@ ptyioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct pt_softc *pti = devvp->v_devcookie;
-	struct tty *tp = pti->pt_tty;
-	u_char *cc = tp->t_cc;
+	struct pt_softc *pti;
+	struct tty *tp;
+	u_char *cc;
 	int stop, error, sig;
+
+	pti = vdev_privdata(devvp);
+	tp = pti->pt_tty;
+	cc = tp->t_cc;
 
 	/*
 	 * IF CONTROLLER STTY THEN MUST FLUSH TO PREVENT A HANG.
@@ -762,7 +805,7 @@ ptyioctl(devvp, cmd, data, flag, p)
 		}
 		return(0);
 	} else
-	if (cdevsw[major(devvp->v_rdev)].d_open == ptcopen)
+	if (cdevsw[major(vdev_rdev(devvp))].d_open == ptcopen)
 		switch (cmd) {
 
 		case TIOCGPGRP:

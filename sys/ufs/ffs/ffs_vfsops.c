@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.85.2.1 2001/09/18 19:14:02 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.85.2.2 2001/09/26 15:28:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -138,13 +138,19 @@ ffs_mountroot()
 		vrele(rootvp);
 		return (error);
 	}
+
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(rootvp, 0);
+
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
@@ -311,6 +317,9 @@ ffs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENXIO);
 	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
@@ -319,11 +328,9 @@ ffs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
 		if (error) {
-			vrele(devvp);
+			vput(devvp);
 			return (error);
 		}
 	}
@@ -340,17 +347,19 @@ ffs_mount(mp, path, data, ndp, p)
 				mp->mnt_flag &= ~MNT_ASYNC;
 			}
 		}
-	}
-	else {
+	} else {
 		if (devvp != ump->um_devvp)
 			error = EINVAL;	/* needs translation */
 		else
 			vrele(devvp);
 	}
 	if (error) {
-		vrele(devvp);
+		vput(devvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(devvp, 0);
+
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
 	memset(fs->fs_fsmnt + size, 0, sizeof(fs->fs_fsmnt) - size);
 	memcpy(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN);
@@ -587,9 +596,7 @@ ffs_mountfs(devvp, mp, p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);
 
@@ -597,10 +604,12 @@ ffs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return (error);
+	VOP_UNLOCK(devvp, 0);
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 
 	bp = NULL;
 	ump = NULL;
@@ -749,9 +758,7 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump, M_UFSMNT);
 		mp->mnt_data = (qaddr_t)0;

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.26.2.1 2001/09/18 19:13:48 fvdl Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.26.2.2 2001/09/26 15:28:07 fvdl Exp $	*/
 
 /*
  * 
@@ -264,7 +264,6 @@ coda_open(v)
 	return (error);
 
     /* We get the vnode back locked in both Mach and NetBSD.  Needs unlocked */
-    VOP_UNLOCK(vp, 0);
     /* Keep a reference until the close comes in. */
     vref(*vpp);                
 
@@ -290,6 +289,7 @@ coda_open(v)
 
     /* Open the cache file. */
     error = VOP_OPEN(vp, flag, cred, p, NULL); 
+    VOP_UNLOCK(vp, 0);
     return(error);
 }
 
@@ -431,13 +431,7 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
 	    }
-	    /* 
-	     * We get the vnode back locked in both Mach and
-	     * NetBSD.  Needs unlocked 
-	     */
-	    VOP_UNLOCK(cfvp, 0);
-	}
-	else {
+	} else {
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, (rw == UIO_READ ? FREAD : FWRITE), 
@@ -474,6 +468,12 @@ printf("coda_rdwr: Internally Opening %p\n", vp);
 	MARK_INT_GEN(CODA_CLOSE_STATS);
 	(void)VOP_CLOSE(vp, (rw == UIO_READ ? FREAD : FWRITE), cred, p);
     }
+
+    /* 
+     * We get the vnode back locked in both Mach and
+     * NetBSD.  Needs to be unlocked.
+     */
+    VOP_UNLOCK(cfvp, 0);
 
     /* Invalidate cached attributes if writing. */
     if (rw == UIO_WRITE)

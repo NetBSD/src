@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.7.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
+/*	$NetBSD: mly.c,v 1.7.4.2 2001/09/26 15:28:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2272,9 +2272,11 @@ mlyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct mly_softc *mly;
 
-	if ((mly = device_lookup(&mly_cd, minor(devvp->v_rdev))) == NULL)
+	if ((mly = device_lookup(&mly_cd, minor(vdev_rdev(devvp)))) == NULL)
 		return (ENXIO);
-	devvp->v_devcookie = mly;
+
+	vdev_setprivdata(devvp, mly)'
+
 	if ((mly->mly_state & MLY_STATE_INITOK) == 0)
 		return (ENXIO);
 	if ((mly->mly_state & MLY_STATE_OPEN) != 0)
@@ -2292,7 +2294,7 @@ mlyclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct mly_softc *mly;
 
-	mly = devvp->v_devcookie;
+	mly = vdev_privdata(devvp);
 	mly->mly_state &= ~MLY_STATE_OPEN;
 	return (0);
 }
@@ -2310,7 +2312,7 @@ mlyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	if (securelevel >= 2)
 		return (EPERM);
 
-	mly = devvp->v_devcookie;
+	mly = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case MLYIO_COMMAND:

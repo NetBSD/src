@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.16.2.3 2001/09/21 12:08:30 fvdl Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.16.2.4 2001/09/26 15:28:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,20 +165,21 @@ sequenceropen(devvp, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = SEQUENCERUNIT(devvp->v_rdev);
+	int unit;
 	struct sequencer_softc *sc;
 	struct midi_dev *md;
 	int nmidi;
 
 	DPRINTF(("sequenceropen\n"));
 
+	unit = SEQUENCERUNIT(vdev_rdev(devvp));
 	if (unit >= NSEQUENCER)
 		return (ENXIO);
 	sc = &seqdevs[unit];
 	if (sc->isopen)
 		return EBUSY;
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	if (SEQ_IS_OLD(unit))
 		sc->mode = SEQ_OLD;
@@ -316,9 +317,10 @@ sequencerclose(devvp, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	struct sequencer_softc *sc = devvp->v_devcookie;
+	struct sequencer_softc *sc;
 	int n, s;
 
+	sc = vdev_privdata(devvp);
 	DPRINTF(("sequencerclose: %p\n", sc));
 
 	seq_drain(sc);
@@ -396,10 +398,12 @@ sequencerread(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct sequencer_softc *sc = devvp->v_devcookie;
-	struct sequencer_queue *q = &sc->inq;
+	struct sequencer_softc *sc;
+	struct sequencer_queue *q;
 	seq_event_rec ev;
 	int error, s;
+
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
 		     sc, (int) uio->uio_resid, ioflag));
@@ -410,6 +414,7 @@ sequencerread(devvp, uio, ioflag)
 	}
 
 	error = 0;
+	q = &sc->inq;
 	while (SEQ_QEMPTY(q)) {
 		if (ioflag & IO_NDELAY)
 			return EWOULDBLOCK;
@@ -434,15 +439,18 @@ sequencerwrite(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct sequencer_softc *sc = devvp->v_devcookie;
-	struct sequencer_queue *q = &sc->outq;
+	struct sequencer_softc *sc;
+	struct sequencer_queue *q;
 	int error;
 	seq_event_rec cmdbuf;
 	int size;
 
+	sc = vdev_privdata(devvp);
+
 	DPRINTFN(2, ("sequencerwrite: %p, count=%d\n", sc, (int) uio->uio_resid));
 
 	error = 0;
+	q = &sc->outq;
 	size = sc->mode == SEQ_NEW ? sizeof cmdbuf : SEQOLD_CMDSIZE;
 	while (uio->uio_resid >= size) {
 		error = uiomove(&cmdbuf, size, uio);
@@ -487,12 +495,14 @@ sequencerioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sequencer_softc *sc = devvp->v_devcookie;
+	struct sequencer_softc *sc;
 	struct synth_info *si;
 	struct midi_dev *md;
 	int devno;
 	int error;
 	int t;
+
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(2, ("sequencerioctl: %p cmd=0x%08lx\n", sc, cmd));
 
@@ -640,9 +650,10 @@ sequencerpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct sequencer_softc *sc = devvp->v_devcookie;
+	struct sequencer_softc *sc;
 	int revents = 0;
 
+	sc = vdev_privdata(devvp);
 	DPRINTF(("sequencerpoll: %p events=0x%x\n", sc, events));
 
 	if (events & (POLLIN | POLLRDNORM))
@@ -1135,8 +1146,8 @@ midiseq_open(unit, flags, p)
 		vput(vp);
 		return NULL;
 	}
+	sc = vdev_privdata(vp);		/* safe, vp is locked */
 	VOP_UNLOCK(vp, 0);
-	sc = vp->v_devcookie;
 	sc->seqopen = 1;
 	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK);
 	sc->seq_md = md;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.6.1 2001/09/07 04:45:23 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.6.2 2001/09/26 15:28:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -401,13 +401,13 @@ midiopen(devvp, flags, ifmt, p)
 	struct midi_hw_if *hw;
 	int error;
 
-	sc = device_lookup(&midi_cd, MIDIUNIT(devvp->v_rdev));
+	sc = device_lookup(&midi_cd, MIDIUNIT(vdev_rdev(devvp)));
 	if (sc == NULL)
 		return (ENXIO);
 	if (sc->dying)
 		return (EIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	DPRINTF(("midiopen %p\n", sc));
 
@@ -446,14 +446,15 @@ midiclose(devvp, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	struct midi_softc *sc = devvp->v_devcookie;
-	struct midi_hw_if *hw = sc->hw_if;
+	struct midi_softc *sc;
+	struct midi_hw_if *hw;
 	int s, error;
+
+	sc = vdev_privdata(devvp);
 
 	DPRINTF(("midiclose %p\n", sc));
 
 	midi_start_output(sc, 0);
-	error = 0;
 	s = splaudio();
 	while (sc->outbuf.used > 0 && !error) {
 		DPRINTFN(2,("midiclose sleep used=%d\n", sc->outbuf.used));
@@ -461,6 +462,8 @@ midiclose(devvp, flags, ifmt, p)
 	}
 	splx(s);
 	sc->isopen = 0;
+
+	hw = sc->hw_if;
 	hw->close(sc->hw_hdl);
 #if NSEQUENCER > 0
 	sc->seqopen = 0;
@@ -475,12 +478,14 @@ midiread(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct midi_softc *sc = devvp->v_devcookie;
-	struct midi_buffer *mb = &sc->inbuf;
+	struct midi_softc *sc;
+	struct midi_buffer *mb;
 	int error;
 	u_char *outp;
 	int used, cc, n, resid;
 	int s;
+
+	sc = vdev_privdata(devvp);
 
 	DPRINTF(("midiread: %p, count=%lu\n", sc, 
 		 (unsigned long)uio->uio_resid));
@@ -490,6 +495,7 @@ midiread(devvp, uio, ioflag)
 
 	error = 0;
 	resid = uio->uio_resid;
+	mb = &sc->inbuf;
 	while (uio->uio_resid == resid && !error) {
 		s = splaudio();
 		while (mb->used <= 0) {
@@ -607,12 +613,14 @@ midiwrite(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct midi_softc *sc = devvp->v_devcookie;
-	struct midi_buffer *mb = &sc->outbuf;
+	struct midi_softc *sc;
+	struct midi_buffer *mb;
 	int error;
 	u_char *inp;
 	int used, cc, n;
 	int s;
+
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
 		     (unsigned long)uio->uio_resid));
@@ -621,6 +629,7 @@ midiwrite(devvp, uio, ioflag)
 		return EIO;
 
 	error = 0;
+	mb = &sc->outbuf;
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		if (mb->used >= mb->usedhigh) {
@@ -719,9 +728,11 @@ midiioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct midi_softc *sc = devvp->v_devcookie;
-	struct midi_hw_if *hw = sc->hw_if;
+	struct midi_softc *sc;
+	struct midi_hw_if *hw;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	DPRINTF(("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
 
@@ -760,6 +771,7 @@ midiioctl(devvp, cmd, addr, flag, p)
 #endif
 
 	default:
+		hw = sc->hw_if;
 		if (hw->ioctl)
 			error = hw->ioctl(sc->hw_hdl, cmd, addr, flag, p);
 		else
@@ -775,9 +787,14 @@ midipoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct midi_softc *sc = devvp->v_devcookie;
-	int revents = 0;
-	int s = splaudio();
+	struct midi_softc *sc;
+	int revents;
+	int s;
+
+	sc = vdev_privdata(devvp);
+
+	revents = 0;
+	s = splaudio();
 
 	DPRINTF(("midipoll: %p events=0x%x\n", sc, events));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.66.2.1 2001/09/18 19:14:02 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.66.2.2 2001/09/26 15:28:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -188,17 +188,23 @@ lfs_mountroot()
 		printf("lfs_mountroot: can't setup bdevvp's");
 		return (error);
 	}
+
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+
 	if ((error = vfs_rootmountalloc(MOUNT_LFS, "root_device", &mp))) {
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
 	if ((error = lfs_mountfs(rootvp, mp, p))) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(rootvp, 0);
+
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
@@ -279,6 +285,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		vrele(devvp);
 		return (ENXIO);
 	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
@@ -287,13 +296,11 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp, 0);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = lfs_mountfs(devvp, mp, p);		/* LFS */
@@ -304,9 +311,12 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 			vrele(devvp);
 	}
 	if (error) {
-		vrele(devvp);
+		vput(devvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(devvp, 0);
+
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;					/* LFS */
 	(void)copyinstr(path, fs->lfs_fsmnt, sizeof(fs->lfs_fsmnt) - 1, &size);
@@ -784,10 +794,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return (error);
+	VOP_UNLOCK(devvp, 0);
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		secsize = DEV_BSIZE;
 	else
 		secsize = dpart.disklab->d_secsize;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 
 	/* Don't free random space on error. */
 	bp = NULL;

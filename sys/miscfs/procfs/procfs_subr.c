@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.37 2001/03/29 22:41:52 fvdl Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.37.4.1 2001/09/26 15:28:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -415,6 +415,6 @@ procfs_revoke_vnodes(p, arg)
 		pnext = pfs->pfs_hash.le_next;
 		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
 		    vp->v_mount == mp)
-			VOP_REVOKE(vp, REVOKEALL);
+			VOP_REVOKE(vp, (REVOKEALIAS | REVOKECLONE));
 	}
 }

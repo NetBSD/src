@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.138.2.1 2001/09/07 04:45:22 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.138.2.2 2001/09/26 15:28:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -561,19 +561,22 @@ audioopen(devvp, flags, ifmt, p)
 	struct proc *p;
 {
 	struct audio_softc *sc;
+	dev_t rdev;
 	int error;
 
-	sc = device_lookup(&audio_cd, AUDIOUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+
+	sc = device_lookup(&audio_cd, AUDIOUNIT(rdev));
 	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(devvp->v_rdev)) {
+	switch (AUDIODEV(rdev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_open(devvp, sc, flags, ifmt, p);
@@ -599,10 +602,12 @@ audioclose(devvp, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	struct audio_softc *sc = devvp->v_devcookie;
+	struct audio_softc *sc;
 	int error;
 
-	switch (AUDIODEV(devvp->v_rdev)) {
+	sc = vdev_privdata(devvp);
+
+	switch (AUDIODEV(vdev_rdev(devvp))) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_close(sc, flags, ifmt, p);
@@ -626,14 +631,16 @@ audioread(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct audio_softc *sc = devvp->v_devcookie;
+	struct audio_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(devvp->v_rdev)) {
+	switch (AUDIODEV(vdev_rdev(devvp))) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_read(sc, uio, ioflag);
@@ -657,14 +664,16 @@ audiowrite(devvp, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct audio_softc *sc = devvp->v_devcookie;
+	struct audio_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(devvp->v_rdev)) {
+	switch (AUDIODEV(vdev_rdev(devvp))) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_write(sc, uio, ioflag);
@@ -690,14 +699,16 @@ audioioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct audio_softc *sc = devvp->v_devcookie;
+	struct audio_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(devvp->v_rdev)) {
+	switch (AUDIODEV(vdev_rdev(devvp))) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 	case AUDIOCTL_DEVICE:
@@ -721,14 +732,16 @@ audiopoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct audio_softc *sc = devvp->v_devcookie;
+	struct audio_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(devvp->v_rdev)) {
+	switch (AUDIODEV(vdev_rdev(devvp))) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_poll(sc, events, p);
@@ -752,14 +765,16 @@ audiommap(devvp, off, prot)
 	off_t off;
 	int prot;
 {
-	struct audio_softc *sc = devvp->v_devcookie;
+	struct audio_softc *sc;
 	paddr_t error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (-1);
 
 	sc->sc_refcnt++;
-	switch (AUDIODEV(devvp->v_rdev)) {
+	switch (AUDIODEV(vdev_rdev(devvp))) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
 		error = audio_mmap(sc, off, prot);
@@ -925,6 +940,9 @@ audio_open(devvp, sc, flags, ifmt, p)
 	int mode;
 	struct audio_hw_if *hw;
 	struct audio_info ai;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
 
 	hw = sc->hw_if;
 	if (!hw)
@@ -971,7 +989,7 @@ audio_open(devvp, sc, flags, ifmt, p)
 	 * The /dev/audio is always (re)set to 8-bit MU-Law mono
 	 * For the other devices, you get what they were last set to.
 	 */
-	if (ISDEVAUDIO(devvp->v_rdev)) {
+	if (ISDEVAUDIO(rdev)) {
 		/* /dev/audio */
 		sc->sc_rparams = audio_default;
 		sc->sc_pparams = audio_default;

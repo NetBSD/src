@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.5.8.1 2001/09/07 04:45:34 thorpej Exp $	*/
+/*	$NetBSD: urio.c,v 1.5.8.2 2001/09/26 15:28:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -298,7 +298,7 @@ urioopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	struct urio_softc *sc;
 	usbd_status err;
 
-	USB_GET_SC_OPEN(urio, URIOUNIT(devvp->v_rdev), sc);
+	USB_GET_SC_OPEN(urio, URIOUNIT(vdev_rdev(devvp)), sc);
 
 	DPRINTFN(5, ("urioopen: flag=%d, mode=%d, unit=%d\n", 
 		     flag, mode, URIOUNIT(dev)));
@@ -306,7 +306,7 @@ urioopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	if (sc->sc_dying)
 		return (EIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	if (sc->sc_in_pipe != NULL)
 		return (EBUSY);
@@ -332,7 +332,7 @@ urioclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(5, ("urioclose: flag=%d, mode=%d, unit=%d\n",
 		     flag, mode, URIOUNIT(dev)));
@@ -361,7 +361,7 @@ urioread(struct vnode *devvp, struct uio *uio, int flag)
 	u_int32_t n, tn;
 	int error = 0;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(5, ("urioread: %d\n", URIOUNIT(dev)));
 
@@ -418,7 +418,7 @@ uriowrite(struct vnode *devvp, struct uio *uio, int flag)
 	u_int32_t n;
 	int error = 0;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(5, ("uriowrite: unit=%d, len=%ld\n", URIOUNIT(dev), 
 		     (long)uio->uio_resid));
@@ -486,7 +486,7 @@ urioioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag,
 	void *ptr = NULL;
 	int error = 0;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);

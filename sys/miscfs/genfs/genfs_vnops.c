@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.36.2.1 2001/09/07 04:45:40 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.36.2.2 2001/09/26 15:28:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -257,14 +257,24 @@ genfs_revoke(v)
 	struct proc *p = curproc;	/* XXX */
 
 #ifdef DIAGNOSTIC
-	if ((ap->a_flags & REVOKEALL) == 0)
-		panic("genfs_revoke: not revokeall");
+	if ((ap->a_flags & (REVOKEALIAS | REVOKECLONE)) == 0)
+		panic("genfs_revoke: not revokealias or revokeclone");
 #endif
 
 	vp = ap->a_vp;
 	simple_lock(&vp->v_interlock);
 
-	if (vp->v_flag & VALIASED) {
+	/*
+	 * Rules:
+	 * - a cloned vnode has both VALIASED and VCLONED set
+	 * - an aliased vnode only has VALIASED set.
+	 * - revoking a cloned vnode will only revoke the vnode itself.
+	 * - revoking a normal vnode will revoke all aliased vnodes
+	 *   for the same device if REVOKEALIAS is set in the flags argument
+	 * - revoking a normal vnode will revoke cloned vnodes for the same
+	 *   device if REVOKECLONE is set.
+	 */
+	if ((vp->v_flag & (VALIASED | VCLONED)) == VALIASED) {
 		/*
 		 * If a vgone (or vclean) is already in progress,
 		 * wait until it is done and return.
@@ -286,6 +296,11 @@ genfs_revoke(v)
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
 				    vq->v_type != vp->v_type || vp == vq)
+				if ((ap->a_flags & REVOKECLONE) == 0 &&
+				    (vq->v_flag & VCLONED) != 0)
+					continue;
+				if ((ap->a_flags & REVOKEALIAS) == 0 &&
+				    (vq->v_flag & VCLONED) == 0)
 					continue;
 				simple_unlock(&spechash_slock);
 				vgone(vq);

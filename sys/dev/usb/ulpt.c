@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.42.4.1 2001/09/07 04:45:34 thorpej Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.42.4.2 2001/09/26 15:28:19 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -471,12 +471,16 @@ int ulptusein = 1;
 int
 ulptopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	u_char flags = ULPTFLAGS(devvp->v_rdev);
+	u_char flags;
 	struct ulpt_softc *sc;
 	usbd_status err;
 	int spin, error;
+	dev_t rdev;
 
-	USB_GET_SC_OPEN(ulpt, ULPTUNIT(devvp->v_rdev), sc);
+	rdev = vdev_rdev(devvp);
+	flags = ULPTFLAGS(rdev);
+
+	USB_GET_SC_OPEN(ulpt, ULPTUNIT(rdev), sc);
 
 	if (sc == NULL || sc->sc_iface == NULL || sc->sc_dying)
 		return (ENXIO);
@@ -484,7 +488,7 @@ ulptopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	if (sc->sc_state)
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
@@ -594,7 +598,7 @@ ulptclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct ulpt_softc *sc;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_state != ULPT_OPEN)
 		/* We are being forced to close before the open completed. */
@@ -667,7 +671,7 @@ ulptwrite(struct vnode *devvp, struct uio *uio, int flags)
 	struct ulpt_softc *sc;
 	int error;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.27.2.1 2001/09/07 04:45:26 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.27.2.2 2001/09/26 15:28:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -702,17 +702,20 @@ esh_fpopen(devvp, oflags, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *recv;
-	int ulp = ESHULP(devvp->v_rdev);
+	int ulp;
 	int error = 0;
 	bus_size_t size;
 	int rseg;
 	int s;
+	dev_t rdev;
 
-	sc = device_lookup(&esh_cd, ESHUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+	ulp = ESHULP(rdev);
+	sc = device_lookup(&esh_cd, ESHUNIT(rdev));
 	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 #ifdef ESH_PRINTF
 	printf("esh_fpopen:  opening board %d, ulp %d\n",
@@ -926,14 +929,16 @@ esh_fpclose(devvp, fflag, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *ring;
-	int ulp = ESHULP(devvp->v_rdev);
+	int ulp;
 	int index;
 	int error = 0;
 	int s;
 
-	sc = devvp->v_devcookie;
+	ulp = ESHULP(vdev_rdev(devvp));
 	if (ulp == HIPPI_ULP_802)
 		return (ENXIO);
+
+	sc = vdev_privdata(devvp);
 
 	s = splnet();
 
@@ -1002,7 +1007,7 @@ esh_fpread(devvp, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_fp_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int ulp = ESHULP(devvp->v_rdev);
+	int ulp;
 	int error;
 	int i;
 	int s;
@@ -1011,9 +1016,11 @@ esh_fpread(devvp, uio, ioflag)
 	printf("esh_fpread:  dev %x\n", dev);
 #endif
 
-	sc = devvp->v_devcookie;
+	ulp = ESHULP(vdev_rdev(devvp));
 	if (ulp == HIPPI_ULP_802)
 		return (ENXIO);
+
+	sc = vdev_privdata(devvp);
 
 	s = splnet();
 
@@ -1162,7 +1169,7 @@ esh_fpwrite(devvp, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_send_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int ulp = ESHULP(devvp->v_rdev);
+	int ulp;
 	int error;
 	int len;
 	int i;
@@ -1172,7 +1179,8 @@ esh_fpwrite(devvp, uio, ioflag)
 	printf("esh_fpwrite:  dev %x\n", dev);
 #endif
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
+	ulp = ESHULP(vdev_rdev(devvp));
 	if (ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
@@ -1315,9 +1323,11 @@ esh_fpstrategy(bp)
 	struct buf *bp;
 {
 	struct esh_softc *sc;
-	int ulp = ESHULP(bp->b_devvp->v_rdev);
+	int ulp;
 	int error = 0;
 	int s;
+
+	ulp = ESHULP(vdev_rdev(bp->b_devvp));
 
 #ifdef ESH_PRINTF
         printf("esh_fpstrategy:  starting, bcount %ld, flags %lx, dev %x\n"
@@ -1325,7 +1335,7 @@ esh_fpstrategy(bp)
 		bp->b_bcount, bp->b_flags, bp->b_dev, unit, ulp);
 #endif
 
-	sc = bp->b_devvp->v_devcookie;
+	sc = vdev_privdata(bp->b_devvp);
 
 	s = splnet();
 	if (ulp == HIPPI_ULP_802) {

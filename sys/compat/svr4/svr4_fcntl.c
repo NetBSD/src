@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.37 2001/06/14 20:32:45 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.37.4.1 2001/09/26 15:28:08 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ fd_revoke(p, fd, retval)
 		goto out;
 
 	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
-		VOP_REVOKE(vp, REVOKEALL);
+		VOP_REVOKE(vp, REVOKEALIAS);
 out:
 	vrele(vp);
 	return error;
