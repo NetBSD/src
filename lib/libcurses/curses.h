@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.41 2000/04/22 14:32:45 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.42 2000/04/24 14:09:43 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -514,6 +514,7 @@ int	 getmaxy(WINDOW *win);
 int	 getmaxx(WINDOW *win);
 int	 gettmode(void);
 bool	 has_colors(void);
+int      hline(chtype ch, int count);
 int	 idlok(WINDOW *win, bool bf);
 int	 init_color(short colour, short red, short green, short blue);
 int	 init_pair(short pair, short fore, short back);
@@ -525,8 +526,12 @@ int	 leaveok(WINDOW *win, bool bf);
 char	*longname(void);
 int      meta(WINDOW *win, bool bf);
 int	 mvcur(int ly, int lx, int y, int x);
+int      mvhline(int y, int x, chtype ch, int count);
 int	 mvprintw(int y, int x, const char *fmt, ...);
 int	 mvscanw(int y, int x, const char *fmt, ...);
+int      mvvline(int y, int x, chtype ch, int count);
+int      mvwhline(WINDOW *win, int y, int x, chtype ch, int count);
+int      mvwvline(WINDOW *win, int y, int x, chtype ch, int count);
 int	 mvwin(WINDOW *win, int y, int x);
 int	 mvwprintw(WINDOW *win, int y, int x, const char *fmt, ...);
 int	 mvwscanw(WINDOW *win, int y, int x, const char *fmt, ...);
@@ -557,6 +562,7 @@ int	 touchline(WINDOW *win, int start, int count);
 int	 touchoverlap(WINDOW *win1, WINDOW *win2);
 int	 touchwin(WINDOW *win);
 int      ungetch(int c);
+int      vline(chtype ch, int count);
 int	 vwprintw(WINDOW *win, const char *fmt, _BSD_VA_LIST_);
 int	 vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_);
 int	 waddch(WINDOW *win, chtype ch);
@@ -577,6 +583,7 @@ int	 wdeleteln(WINDOW *win);
 int	 werase(WINDOW *win);
 int	 wgetch(WINDOW *win);
 int	 wgetstr(WINDOW *win, char *str);
+int      whline(WINDOW *win, chtype ch, int count);
 chtype	 winch(WINDOW *win);
 int	 winsch(WINDOW *win, chtype ch);
 int	 winsdelln(WINDOW *win, int lines);
@@ -591,6 +598,7 @@ int	 wstandout(WINDOW *win);
 void	 wtimeout(WINDOW *win, int delay);
 int	 wunderend(WINDOW *win);
 int	 wunderscore(WINDOW *win);
+int      wvline(WINDOW *win, chtype ch, int count);
 
 /* Private functions that are needed for user programs prototypes. */
 int	 __cputchar(int);

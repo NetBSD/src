@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2000/04/22 13:29:01 blymn Exp $
+#	$NetBSD: Makefile,v 1.27 2000/04/24 14:09:41 blymn Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CPPFLAGS+=#-DTFILE=\"/dev/ttyp0\"
@@ -9,7 +9,7 @@ SRCS=	addbytes.c addch.c addnstr.c acs.c attributes.c background.c bell.c \
 	copywin.c cr_put.c ctrace.c cur_hash.c curses.c curs_set.c delch.c \
         deleteln.c delwin.c erase.c flushok.c fullname.c getch.c getstr.c \
         getyx.c id_subwins.c idlok.c inch.c initscr.c insch.c insdelln.c \
-        insertln.c keypad.c leaveok.c longname.c meta.c move.c mvwin.c \
+        insertln.c keypad.c leaveok.c line.c longname.c meta.c move.c mvwin.c \
         newwin.c nodelay.c notimeout.c overlay.c overwrite.c printw.c \
         putchar.c refresh.c scanw.c scroll.c scrollok.c setterm.c standout.c \
         timeout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c \
