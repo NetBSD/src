@@ -64,8 +64,8 @@ main()
 	vm_map_t map = (vm_map_t)0;
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
-        struct trapframe *tf = (struct trapframe *)0;
-        struct sigframe *sigf = (struct sigframe *)0;
+	struct trapframe *tf = (struct trapframe *)0;
+	struct sigframe *sigf = (struct sigframe *)0;
 	register unsigned i;
 
 	printf("#define\tI386_CR3PAT %d\n", I386_CR3PAT);
