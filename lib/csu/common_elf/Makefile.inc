@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2003/03/19 04:31:41 ross Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2003/03/19 16:54:25 ross Exp $
 
 .include <bsd.own.mk>
 
@@ -68,7 +68,7 @@ crtbegin.o: crtbegin.c
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-crtbeginS.o: crtbegin.c
+crtbeginS.o: crtbeginS.c
 	@echo "${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
@@ -80,7 +80,7 @@ crtend.o: crtend.c
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-crtendS.o: crtend.c
+crtendS.o: crtendS.c
 	@echo "${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.c} -DSHARED ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
