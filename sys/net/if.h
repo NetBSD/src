@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.54 2000/10/11 16:52:34 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.55 2000/12/13 22:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -210,6 +210,17 @@ struct if_data14 {
 
 /*
  * Structure defining a queue for a network interface.
+ */
+struct ifqueue {
+	struct	mbuf *ifq_head;
+	struct	mbuf *ifq_tail;
+	int	ifq_len;
+	int	ifq_maxlen;
+	int	ifq_drops;
+};
+
+/*
+ * Structure defining a queue for a network interface.
  *
  * (Would like to call this struct ``if'', but C isn't PL/1.)
  */
@@ -248,16 +259,17 @@ struct ifnet {				/* and the entries */
 		__P((struct ifnet *));
 	void	(*if_drain)		/* routine to release resources */
 		__P((struct ifnet *));
-	struct	ifqueue {
-		struct	mbuf *ifq_head;
-		struct	mbuf *ifq_tail;
-		int	ifq_len;
-		int	ifq_maxlen;
-		int	ifq_drops;
-	} if_snd;			/* output queue */
+#if 0 /* ALTQ */
+	struct ifaltq if_snd;		/* output queue (includes altq) */
+#else
+	struct ifqueue if_snd;		/* output queue */
+#endif
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
+#if 0
+	void	*if_bridge;		/* bridge glue */
+#endif
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -342,6 +354,17 @@ struct ifnet {				/* and the entries */
 		(ifq)->ifq_len--; \
 	} \
 }
+#define	IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
+#define	IF_PURGE(ifq)							\
+do {									\
+	struct mbuf *__m0;						\
+	IF_DEQUEUE((ifq), __m0);					\
+	if (__m0 == NULL)						\
+		break;							\
+	else								\
+		m_freem(__m0);						\
+} while (0)
+#define	IF_IS_EMPTY(ifq)	((ifq)->ifq_len == 0)
 
 #define	IFQ_MAXLEN	50
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
@@ -573,6 +596,93 @@ do {									\
 } while (0)
 #endif /* DIAGNOSTIC */
 #endif /* IFAREF_DEBUG */
+
+#ifdef ALTQ
+#define	ALTQ_DECL(x)		x
+
+#define IFQ_ENQUEUE(ifq, m, pattr, err)					\
+do {									\
+	if (ALTQ_IS_ENABLED((ifq)))					\
+		ALTQ_ENQUEUE((ifq), (m), (pattr), (err));		\
+	else {								\
+		if (IF_QFULL((ifq))) {					\
+			m_freem((m));					\
+			(err) = ENOBUFS;				\
+		} else {						\
+			IF_ENQUEUE((ifq), (m));				\
+			(err) = 0;					\
+		}							\
+	}								\
+	if ((err))							\
+		(ifq)->ifq_drops++;					\
+} while (0)
+
+#define IFQ_DEQUEUE(ifq, m)						\
+do {									\
+	if (TBR_IS_ENABLED((ifq)))					\
+		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
+	else if (ALTQ_IS_ENABLED((ifq)))				\
+		ALTQ_DEQUEUE((ifq), (m));				\
+	else								\
+		IF_POLL((ifq), (m));					\
+} while (0)
+
+#define	IFQ_PURGE(ifq)							\
+do {									\
+	if (ALTQ_IS_ENABLED((ifq)))					\
+		ALTQ_PURGE((ifq));					\
+	else								\
+		IF_PURGE((ifq));					\
+} while (0)
+
+#define	IFQ_SET_READY(ifq)						\
+do {									\
+	(ifq)->altq_flags |= ALTQF_READY;				\
+} while (0)
+
+#define	IFQ_CLASSIFY(ifq, m, af, pa)					\
+do {									\
+	if (ALTQ_IS_ENABLED((ifq))) {					\
+		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
+			(pa)->pattr_class = (*(ifq)->altq_classify)	\
+				((ifq)->altq_clfier, (m), (af));	\
+		(pa)->pattr_af = (af);					\
+		(pa)->pattr_hdr = mtod((m), caddr_t);			\
+	}								\
+} while (0)
+#else /* ! ALTQ */
+#define	ALTQ_DECL(x)		/* nothing */
+
+#define	IFQ_ENQUEUE(ifq, m, pattr, err)					\
+do {									\
+	if (IF_QFULL((ifq))) {						\
+		m_freem((m));						\
+		(err) = ENOBUFS;					\
+	} else {							\
+		IF_ENQUEUE((ifq), (m));					\
+		(err) = 0;						\
+	}								\
+	if ((err))							\
+		(ifq)->ifq_drops++;					\
+} while (0)
+
+#define	IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
+
+#define	IFQ_POLL(ifq, m)	IF_POLL((ifq), (m))
+
+#define	IFQ_PURGE(ifq)		IF_PURGE((ifq))
+
+#define	IFQ_SET_READY(ifq)	/* nothing */
+
+#define	IFQ_CLASSIFY(ifq, m, af, pa) /* nothing */
+
+#endif /* ALTQ */
+
+#define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
+#define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
+#define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
+#define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
+#define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
 
 struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
