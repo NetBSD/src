@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.3 1995/11/30 21:52:50 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.4 1996/03/27 10:20:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -128,7 +128,7 @@ Lvectab:
 	/*
 	 * MFP 1 auto vectors (ipl 6)
 	 */
-	.long	_badmfpint	|  64: parallel port - BUSY
+	.long	mfp_lpt		|  64: parallel port - BUSY
 	.long	_badmfpint	|  65: modem port 1 - DCD
 	.long	_badmfpint	|  66: modem port 1 - CTS
 	.long	_badmfpint	|  67: unassigned
