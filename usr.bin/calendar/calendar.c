@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.10 1997/08/26 19:58:11 thorpej Exp $	*/
+/*	$NetBSD: calendar.c,v 1.11 1997/10/18 12:27:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-static char rcsid[] = "$NetBSD: calendar.c,v 1.10 1997/08/26 19:58:11 thorpej Exp $";
+__RCSID("$NetBSD: calendar.c,v 1.11 1997/10/18 12:27:37 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -85,6 +85,7 @@ int	 getfield __P((char *, char **, int *));
 void	 getmmdd(struct tm *tp, char *ds);
 int	 getmonth __P((char *));
 int	 isnow __P((char *));
+int	 main __P((int, char **));
 FILE	*opencal __P((void));
 void	 settime __P((void));
 void	 usage __P((void));
@@ -98,13 +99,13 @@ main(argc, argv)
 	int ch;
 	char *caldir;
 
-	while ((ch = getopt(argc, argv, "-ad:f:l:w:")) != EOF)
+	while ((ch = getopt(argc, argv, "-ad:f:l:w:")) != -1)
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':
 			if (getuid()) {
 				errno = EPERM;
-				err(1, NULL);
+				err(1, "%s", "");
 			}
 			doall = 1;
 			break;
@@ -150,8 +151,8 @@ main(argc, argv)
 void
 cal()
 {
-	register int printing;
-	register char *p;
+	int printing;
+	char *p;
 	FILE *fp;
 	int ch;
 	char buf[2048 + 1];
@@ -174,19 +175,19 @@ cal()
 }
 
 struct iovec header[] = {
-	"From: ", 6,
-	NULL, 0,
-	" (Reminder Service)\nTo: ", 24,
-	NULL, 0,
-	"\nSubject: ", 10,
-	NULL, 0,
-	"'s Calendar\nPrecedence: bulk\n\n",  30,
+	{ "From: ", 6 },
+	{ NULL, 0 },
+	{ " (Reminder Service)\nTo: ", 24 },
+	{ NULL, 0 },
+	{ "\nSubject: ", 10 },
+	{ NULL, 0 },
+	{ "'s Calendar\nPrecedence: bulk\n\n",  30 },
 };
 
 /* 1-based month, 0-based days, cumulative */
 int daytab[][14] = {
-	0, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364,
-	0, -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365,
+	{ 0, -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 },
+	{ 0, -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 },
 };
 struct tm *tp;
 int *cumdays, offset, yrdays;
@@ -415,9 +416,9 @@ static char *months[] = {
 
 int
 getmonth(s)
-	register char *s;
+	char *s;
 {
-	register char **p;
+	char **p;
 
 	for (p = months; *p; ++p)
 		if (!strncasecmp(s, *p, 3))
@@ -431,9 +432,9 @@ static char *days[] = {
 
 int
 getday(s)
-	register char *s;
+	char *s;
 {
-	register char **p;
+	char **p;
 
 	for (p = days; *p; ++p)
 		if (!strncasecmp(s, *p, 3))
@@ -467,7 +468,6 @@ getmmdd(struct tm *tp, char *ds)
 	extern char *__progname;
 	int ok = FALSE;
 	struct tm ttm;
-	char *t;
 
 	ttm = *tp;
 	ttm.tm_isdst = -1;
