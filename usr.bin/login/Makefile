@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2000/06/23 06:01:16 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31 2000/07/23 22:23:14 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -21,11 +21,13 @@ LDADD+=	-lskey
 .if (${MKKERBEROS} != "no")
 SRCS+= k5login.c
 CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
-LDADD+= -lkrb5 -lcrypto -lasn1 -lcom_err -lroken
+LDADD+= -lkrb5 -lasn1
 
 SRCS+= klogin.c
 CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
 LDADD+= -lkrb
+
+LDADD+=	-lcrypto -lroken -lcom_err
 .endif
 
 .include <bsd.prog.mk>
