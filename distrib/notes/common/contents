@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.103 2004/08/20 22:26:38 hubertf Exp $
+.\"	$NetBSD: contents,v 1.104 2004/08/21 10:31:16 hubertf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ A gzipped
 .Nx
 kernel containing code for everything supported in this release.
 .if \n[hpcmips] \{\
-This kernel runs on Vr41xx and TX3922 CPU only.
+This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} .\" hpcmips
 .\} .\" !atari/mac68k/sgimips/evgppc
 .if \n[macppc]:\n[sparc]:\n[i386]:\n[amd64] \{\
@@ -1165,7 +1165,7 @@ support programs (like
 and
 .Ic chg_pid.ttp
 \(em see below) and a kernel.
-They are setup such that you can insert them'into
+They are setup such that you can insert them into
 your floppy drive, and start the programs from GEM.
 .Pp
 For the TT030 and Falcon, the (720 KB) floppy is named
@@ -1373,7 +1373,7 @@ The important files in this directory are as follows:
 .Nx*M
 kernel with system installer
 .Pq Ic sysinst .
-This kernel runs on Vr41xx and TX3922 CPU only.
+This kernel runs on Vr41xx and TX3922 CPUs only.
 .showsize 2 7
 .It Pa netbsd-TX3912.gz
 .Nx*M
@@ -1661,7 +1661,7 @@ FFS disk image of the installation filesystem.
 .It Pa netboot/
 .	(tag diskimage.tgz
 .	It Pa diskimage.tgz
-Minimal file set necessary for NFS-root installations; to be extraced on the 
+Minimal file set necessary for NFS-root installations; to be extracted on the 
 NFS server.
 .	tag)
 .tag)
@@ -1678,7 +1678,7 @@ An ECOFF
 version of the 
 .Li GENERIC_INDY
 kernel (gzipped).  This kernel can be used when booting machines
-whoose PROMs do not understand the ELF binary format.
+whose PROMs do not understand the ELF binary format.
 .It Pa netbsd-INDY_INSTALL.gz
 A gzipped
 .Li INDY_INSTALL
