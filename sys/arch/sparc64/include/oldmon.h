@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: oldmon.h,v 1.2 2001/12/04 00:53:19 darrenr Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -36,6 +36,10 @@
  */
 #ifndef _MACHINE_OLDMON_H
 #define _MACHINE_OLDMON_H
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  *     Structures, constants and defines for access to the sun monitor.

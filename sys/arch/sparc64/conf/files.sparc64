@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.55 2001/11/20 12:56:39 lukem Exp $
+#	$NetBSD: files.sparc64,v 1.56 2001/12/04 00:53:18 darrenr Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -7,6 +7,8 @@
 maxpartitions 8
 
 maxusers 2 8 1024
+
+defopt	opt_sparc_arch.h	SUN4U
 
 #
 # XXXXXXXXXXX
