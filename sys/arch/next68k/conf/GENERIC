@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2002/09/11 01:46:29 mycroft Exp $
+# $NetBSD: GENERIC,v 1.62 2002/09/11 04:17:01 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -129,7 +129,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 # NeXT specific options
 options 	M68040
-#options 	M68030
+options 	M68030
 options 	FPSP
 #options 	FPU_EMULATE
 
