@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.22 2003/08/28 19:53:32 wiz Exp $	*/
+/*	$NetBSD: emacs.c,v 1.23 2004/02/26 08:24:03 jdolecek Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.22 2003/08/28 19:53:32 wiz Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.23 2004/02/26 08:24:03 jdolecek Exp $");
 #endif
 
 
@@ -366,7 +366,7 @@ x_emacs(buf, len)
 
 	if (x_nextcmd >= 0) {
 		int off = source->line - x_nextcmd;
-		if (histptr - history >= off)
+		if (histptr - histlist >= off)
 			x_load_hist(histptr - off);
 		x_nextcmd = -1;
 	}
@@ -857,7 +857,7 @@ x_end_of_text(c)
 	return KEOL;
 }
 
-static int x_beg_hist(c) int c; { x_load_hist(history); return KSTD;}
+static int x_beg_hist(c) int c; { x_load_hist(histlist); return KSTD;}
 
 static int x_end_hist(c) int c; { x_load_hist(histptr); return KSTD;}
 
@@ -874,7 +874,7 @@ x_goto_hist(c)
 	int c;
 {
 	if (x_arg_defaulted)
-		x_load_hist(history);
+		x_load_hist(histlist);
 	else
 		x_load_hist(histptr + x_arg - source->line);
 	return KSTD;
@@ -886,7 +886,7 @@ x_load_hist(hp)
 {
 	int	oldsize;
 
-	if (hp < history || hp > histptr) {
+	if (hp < histlist || hp > histptr) {
 		x_e_putc(BEL);
 		return;
 	}
@@ -993,7 +993,7 @@ x_search(pat, sameline, offset)
 	register char **hp;
 	int i;
 
-	for (hp = x_histp - (sameline ? 0 : 1) ; hp >= history; --hp) {
+	for (hp = x_histp - (sameline ? 0 : 1) ; hp >= histlist; --hp) {
 		i = x_match(*hp, pat);
 		if (i >= 0) {
 			if (offset < 0)
