@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.33 2003/07/15 02:59:31 lukem Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.34 2004/10/30 18:08:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.33 2003/07/15 02:59:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.34 2004/10/30 18:08:34 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -713,7 +713,8 @@ mb8795_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			mb8795_init(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mb8795_init(sc);
 			error = 0;
 		}
 		break;

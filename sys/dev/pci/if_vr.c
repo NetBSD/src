@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.69 2004/08/21 22:48:18 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.70 2004/10/30 18:09:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.69 2004/08/21 22:48:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.70 2004/10/30 18:09:22 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -1251,7 +1251,8 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			vr_setmulti(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				vr_setmulti(sc);
 			error = 0;
 		}
 		break;

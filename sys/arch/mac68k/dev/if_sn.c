@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.34 2003/07/15 02:43:17 lukem Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.35 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34 2003/07/15 02:43:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.35 2004/10/30 18:08:34 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -337,9 +337,11 @@ snioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!
 			 */
-			temp = ifp->if_flags & IFF_UP;
-			snreset(sc);
-			ifp->if_flags |= temp;
+			if (ifp->if_flags & IFF_RUNNING) {
+				temp = ifp->if_flags & IFF_UP;
+				snreset(sc);
+				ifp->if_flags |= temp;
+			}
 			err = 0;
 		}
 		break;

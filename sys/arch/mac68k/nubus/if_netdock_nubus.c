@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.4 2003/07/15 02:43:23 lukem Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.5 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.4 2003/07/15 02:43:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.5 2004/10/30 18:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -442,9 +442,11 @@ netdock_ioctl(ifp, cmd, data)
 			err = ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (err == ENETRESET) {
-			temp = ifp->if_flags & IFF_UP;
-			netdock_reset(sc);
-			ifp->if_flags |= temp;
+			if (ifp->if_flags & IFF_RUNNING) {
+				temp = ifp->if_flags & IFF_UP;
+				netdock_reset(sc);
+				ifp->if_flags |= temp;
+			}
 			err = 0;
 		}
 		break;
