@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	7.25 (Berkeley) 5/15/91
- *	$Id: malloc.h,v 1.12 1993/12/06 05:01:59 hpeyerl Exp $
+ *	$Id: malloc.h,v 1.13 1993/12/21 07:58:37 cgd Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -102,7 +102,9 @@
 #define M_IPMADDR	51	/* internet multicast address */
 #define M_IFMADDR	52	/* link-level multicast address */
 #define M_MRTABLE	53	/* multicast routing tables */
-#define	M_LAST		M_MRTABLE
+#define M_LOFSMNT	54	/* Loopback FS mount structures */
+#define M_PORTALMNT	55	/* Portal FS mount structures */
+#define M_LAST		M_PORTALMNT
 
 #define INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -155,10 +157,12 @@
 	"miscfs mount",	/* 47 M_MISCFSMNT */ \
 	"isofs mount",	/* 48 M_ISOFSMNT */ \
 	"temp",		/* 49 M_TEMP */ \
-        "mcast opts",	/* 50 M_IPMOPTS */ \
-        "ip mcast",	/* 51 M_IPMADDR */ \
-        "if mcast",	/* 52 M_IFMADDR */ \
-        "mcast route",	/* 53 M_MRTABLE */ \
+	"mcast opts",	/* 50 M_IPMOPTS */ \
+	"ip mcast",	/* 51 M_IPMADDR */ \
+	"if mcast",	/* 52 M_IFMADDR */ \
+	"mcast route",	/* 53 M_MRTABLE */ \
+	"lofs mount",	/* 54 M_LOFSMNT */ \
+	"portal mount",	/* 55 M_PORTALMNT */ \
 }
 
 struct kmemstats {
