@@ -1,4 +1,4 @@
-#	$Id: Makefile.clnt,v 1.2 1995/07/24 19:12:48 cgd Exp $
+#	$NetBSD: Makefile.clnt,v 1.3 1995/07/25 22:20:19 gwr Exp $
 
 #	This Makefile builds a client used for testing.
 

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1995/07/24 19:12:18 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1995/07/25 22:20:13 gwr Exp $
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8

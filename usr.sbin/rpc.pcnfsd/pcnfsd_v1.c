@@ -1,3 +1,5 @@
+/*	$NetBSD: pcnfsd_v1.c,v 1.2 1995/07/25 22:21:19 gwr Exp $	*/
+
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v1.c 1.1 91/09/03 12:41:50 SMI */
 /*
 **=====================================================================

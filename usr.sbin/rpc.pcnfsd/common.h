@@ -1,3 +1,5 @@
+/*	$NetBSD: common.h,v 1.2 1995/07/25 22:20:26 gwr Exp $	*/
+
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.common.h 1.3 91/12/17 14:32:05 SMI */
 /*
 **=====================================================================

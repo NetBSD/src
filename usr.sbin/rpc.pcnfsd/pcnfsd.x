@@ -1,3 +1,5 @@
+/*	$NetBSD: pcnfsd.x,v 1.2 1995/07/25 22:20:33 gwr Exp $	*/
+
 /* The maximum number of bytes in a user name argument */
 const IDENTLEN = 32;
 /*  The maximum number of bytes in a password argument  */
