@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1995/07/08 04:25:13 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 1995/07/18 04:10:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -225,7 +225,7 @@ consinit(void)
 	}
 }
 
-#define CURRENTBOOTERVER	106
+#define CURRENTBOOTERVER	108
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -1801,9 +1801,13 @@ getenvvars()
 	/*
          * For now, we assume that the boot device is off the first controller.
          */
-	bootdev = (root_scsi_id << 16) | 4;
+	if (bootdev == 0) {
+		bootdev = (root_scsi_id << 16) | 4;
+	}
 
-	boothowto = getenv("SINGLE_USER");
+	if (boothowto == 0) {
+		boothowto = getenv("SINGLE_USER");
+	}
 
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
