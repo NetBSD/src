@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.4 1995/04/22 22:06:43 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.5 1995/05/21 10:52:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -490,7 +490,7 @@ iteioctl(dev, cmd, addr, flag, p)
 		return(0);
 	case ITEIOCSREPT:
 		irp = (struct iterepeat *)addr;
-		if (irp->start < ITEMINREPEAT && irp->next < ITEMINREPEAT)
+		if (irp->start < ITEMINREPEAT || irp->next < ITEMINREPEAT)
 			return(EINVAL);
 		start_repeat_timeo = irp->start;
 		next_repeat_timeo = irp->next;
