@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.6 1998/07/15 18:24:09 mjacob Exp $
+#	$NetBSD: disktab,v 1.7 1998/07/15 18:29:15 mjacob Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
 # the end, etc.  A good setup to make a disk image from...
@@ -17,7 +17,7 @@ rz28|RZ28|DEC RZ28 SCSI:\
 	:pc#4110480:oc#0:
 
 # Single Root Partition RZ29, Large Spare Partition on 'e'
-rz29|RZ28|DEC RZ28 SCSI:\
+rz29|RZ29|DEC RZ29 SCSI:\
 	:dt=SCSI:se#512:ns#113:nt#20:sc#2260:nc#3708:\
 	:rm#5400:\
 	:pa#2034000:oa#0:ta=4.2BSD:ba#8192:fa#1024:\
