@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.2 1995/09/29 03:57:48 cgd Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.3 1996/10/01 14:37:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -68,4 +68,16 @@ _kvm_kvatop(kd, va, pa)
 	/* don't forget k0seg translations! */
 
 	return (0);
+}
+
+/*
+ * Translate a physical address to a file-offset in the crash-dump.
+ */
+off_t   
+_kvm_pa2off(kd, pa)
+	kvm_t *kd;
+	u_long pa;
+{
+
+	return (-1);
 }
