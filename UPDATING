@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.82 2003/01/17 22:58:53 wiz Exp $
+$NetBSD: UPDATING,v 1.83 2003/01/29 09:17:08 kei Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -29,7 +29,7 @@ Recent changes:
 
 	The build system was modified to take advantage of
 	this option (using ${NETBSDSRCDIR}/etc), so if you
-	use USE_TOOLS==no, you may have to rebuild and
+	use USETOOLS==no, you may have to rebuild and
 	reinstall usr.bin/xinstall first.
 
 20021130:
