@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.15 1999/06/25 03:33:20 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.16 1999/07/30 16:23:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.15 1999/06/25 03:33:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.16 1999/07/30 16:23:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,13 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.15 1999/06/25 03:33:20 nisimura Exp $");
 #define	BYTE(base, index)	*((u_int8_t *)(base) + ((index)<<2))
 #define	HALF(base, index)	*((u_int16_t *)(base) + ((index)<<1))
 
-/* Bt431 hardware registers */
+/* Bt455 hardware registers */
 #define	bt_reg	0
 #define	bt_cmap	1
 #define	bt_clr	2
 #define	bt_ovly	3
 
-/* Bt455 hardware registers */
+/* Bt431 hardware registers */
 #define	bt_lo	0
 #define	bt_hi	1
 #define	bt_ram	2
@@ -129,8 +129,8 @@ struct mfb_softc {
 	int nscreens;
 };
 
-#define	MX_MAGIC_X 360
-#define	MX_MAGIC_Y 36
+#define	MX_MAGIC_X	360
+#define	MX_MAGIC_Y	36
 
 #define	MX_FB_OFFSET	0x200000
 #define	MX_FB_SIZE	 0x40000
@@ -324,10 +324,9 @@ mfbattach(parent, self, aux)
 	sc->sc_cursor.cc_magic.x = MX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = MX_MAGIC_Y;
 
-        tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, mfbintr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, mfbintr, sc);
 
 	mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 0;
 	junk = *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET);
 	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 1;
 
@@ -489,13 +488,12 @@ mfbintr(arg)
 {
 	struct mfb_softc *sc = arg;
 	caddr_t mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	void *vdac;
-	void *curs;
+	void *vdac, *curs;
 	int v;
 	volatile register int junk;
 	
 	junk = *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET);
-	/* *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 1; */
+	/* *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 0; */
 
 	if (sc->sc_changed == 0)
 		return (1);
@@ -566,8 +564,8 @@ mfbinit(dc)
 	struct fb_devconfig *dc;
 {
 	caddr_t mfbbase = (caddr_t)dc->dc_vaddr;
-	void *curs = (void *)(mfbbase + MX_BT431_OFFSET);
 	void *vdac = (void *)(mfbbase + MX_BT455_OFFSET);
+	void *curs = (void *)(mfbbase + MX_BT431_OFFSET);
 	int i;
 
 	SELECT431(curs, BT431_REG_COMMAND);
