@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.3 2001/09/24 23:49:34 eeh Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.4 2001/11/13 06:54:32 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
  * P4 and overlay plane support by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  * Overlay plane handling hints and ideas provided by Brad Spencer.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.4 2001/11/13 06:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
