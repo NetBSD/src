@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.c,v 1.27 2000/07/02 08:04:11 itojun Exp $	*/
-/*	$KAME: in6_pcb.c,v 1.55 2000/07/02 07:50:30 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.28 2000/07/06 12:51:41 itojun Exp $	*/
+/*	$KAME: in6_pcb.c,v 1.56 2000/07/03 13:23:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,6 @@ extern struct ifnet loif[NLOOP];
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif /* IPSEC */
 
 struct in6_addr zeroin6_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.65 2000/04/03 03:51:16 enami Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.66 2000/07/06 12:51:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -129,7 +129,6 @@
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
-#include <netkey/key_debug.h>
 #endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
