@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.12 2004/04/23 15:04:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.12 2004/04/23 15:04:27 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,31 +59,33 @@ __RCSID("$NetBSD: fdformat.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $");
 #include <unistd.h>
 #include "pathnames.h"
 
-char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
+static const char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
 
-#define MASK_NBPS	0x0001
-#define MASK_NCYL	0x0002
-#define MASK_NSPT	0x0004
-#define MASK_NTRK	0x0008
+#define MASK_NBPS		0x0001
+#define MASK_NCYL		0x0002
+#define MASK_NSPT		0x0004
+#define MASK_NTRK		0x0008
 #define MASK_STEPSPERCYL	0x0010
-#define MASK_GAPLEN	0x0020
-#define MASK_FILLBYTE	0x0040
-#define MASK_XFER_RATE	0x0080
-#define MASK_INTERLEAVE	0x0100
+#define MASK_GAPLEN		0x0020
+#define MASK_FILLBYTE		0x0040
+#define MASK_XFER_RATE		0x0080
+#define MASK_INTERLEAVE		0x0100
 
 #define ALLPARMS (MASK_NBPS|MASK_NCYL|MASK_NSPT|MASK_NTRK|MASK_STEPSPERCYL|MASK_GAPLEN|MASK_FILLBYTE|MASK_XFER_RATE|MASK_INTERLEAVE)
 
-int	confirm(int);
-int	main __P((int, char **));
-void	usage __P((void));
-int	verify_track(int, int, int, struct fdformat_parms *, char *);
+static int	confirm(int);
+static void	usage(void) __attribute__((__noreturn__));
+static int	verify_track(int, int, int, struct fdformat_parms *, char *);
+static int	wincolsize(void);
 
-int
+int	main(int, char **);
+
+static int
 confirm(int def)
 {
 	int ch;
 
-	printf(" Yes/no [%c]?", def ? 'y' : 'n');
+	(void)printf(" Yes/no [%c]?", def ? 'y' : 'n');
 	ch = getchar();
 	switch (ch) {
 	case 'y':
@@ -99,7 +101,7 @@ confirm(int def)
 	}		
 }
 
-int
+static int
 verify_track(int fd, int cyl, int trk, struct fdformat_parms *parms, char *buf)
 {
 	size_t tracksize;
@@ -109,44 +111,67 @@ verify_track(int fd, int cyl, int trk, struct fdformat_parms *parms, char *buf)
 	offset = tracksize * (cyl * parms->ntrk + trk); /* track offset */
 
 	if (lseek(fd, offset, SEEK_SET) == (off_t) -1) {
-		putchar('E');
+		(void)putchar('E');
 		return 1;
 	}
 	if (read(fd, buf, tracksize) != tracksize) {
-		putchar('E');
+		(void)putchar('E');
 		return 1;
 	} else
-		putchar('V');
+		(void)putchar('V');
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
-
-	fprintf(stderr,
-	    "usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n"
+	(void)fprintf(stderr,
+	    "Usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n"
 	    "\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n"
 	    "\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", getprogname());
 	exit(1);
 }
 
-#define numarg(which, maskn) \
- tmplong = strtol(optarg, &tmpcharp, 0); \
- if (*tmpcharp != '\0' || tmplong <= 0 || tmplong == LONG_MIN || tmplong == LONG_MAX) \
-     errx(1, "invalid numerical argument %s for " # which, optarg); \
- parms.which = tmplong; \
- parmmask |= MASK_##maskn
+static int
+wincolsize(void)
+{
+	struct winsize win;
 
-#define getparm(structname, maskname) \
-	if (cgetnum(fdbuf, # structname, &tmplong) == -1) \
-		errx(1, "parameter " # structname " missing for type %s", \
-		     optarg); \
-	parms.structname = tmplong; \
-	parmmask |= MASK_ ## maskname
+	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &win) == -1) {
+		warn("TIOCGWINSZ");
+		return 80;
+	}
+	return win.ws_col;
+}
 
-#define copyparm(which, mask) \
-	if ((parmmask & MASK_##mask) == 0) \
+#define numarg(which, maskn, op) 				\
+	do {							\
+		tmplong = strtol(optarg, &tmpcharp, 0); 	\
+		if (*tmpcharp != '\0' || tmplong op 0) 		\
+		    errx(1,					\
+			"Invalid numerical argument `%s' for " 	\
+			# which, optarg); 			\
+		if (errno == ERANGE && (tmplong == LONG_MIN ||	\
+		    tmplong == LONG_MAX)) 			\
+		    err(1,					\
+			"Bad numerical argument `%s' for " 	\
+			# which, optarg); 			\
+		parms.which = tmplong; 				\
+		parmmask |= MASK_##maskn;			\
+	} while (/* CONSTCOND */0)
+
+#define getparm(structname, maskname) 				\
+	do {							\
+		if (cgetnum(fdbuf, # structname, &tmplong) == -1) \
+			errx(1, "Parameter " # structname	\
+			    " missing for type `%s'", optarg);	\
+		parms.structname = tmplong; 			\
+		parmmask |= MASK_ ## maskname;			\
+	} while (/* CONSTCOND */0)
+
+
+#define copyparm(which, mask) 					\
+	if ((parmmask & MASK_##mask) == 0) 			\
 		parms.which = fetchparms.which
 
 int
@@ -162,9 +187,11 @@ main(int argc, char *argv[])
 	int parmmask = 0;
 	struct fdformat_parms parms, fetchparms;
 	struct fdformat_cmd cmd;
-	char *filename = _PATH_FLOPPY_DEV;
+	const char *filename = _PATH_FLOPPY_DEV;
 	int fd;
 	int trk, cyl;
+        int colcnt = 0;
+        int colsize = wincolsize();
 
 	while ((ch = getopt(argc, argv, "f:t:nB:C:S:T:P:G:F:X:I:")) != -1)
 		switch (ch) {
@@ -178,10 +205,10 @@ main(int argc, char *argv[])
 				     _PATH_FLOPPYTAB " for type %s", optarg);
 				break;
 			case -1:
-				errx(1, "unknown floppy disk type %s", optarg);
+				errx(1, "Unknown floppy disk type %s", optarg);
 				break;
 			default:
-				err(1, "problem accessing " _PATH_FLOPPYTAB);
+				err(1, "Problem accessing " _PATH_FLOPPYTAB);
 				break;
 			}
 
@@ -202,54 +229,50 @@ main(int argc, char *argv[])
 			verify = 0;
 			break;
 		case 'B':
-			numarg(nbps, NBPS);
+			numarg(nbps, NBPS, <=);
 			break;
 		case 'C':
-			numarg(ncyl, NCYL);
+			numarg(ncyl, NCYL, <=);
 			break;
 		case 'S':
-			numarg(nspt, NSPT);
+			numarg(nspt, NSPT, <=);
 			break;
 		case 'T':
-			numarg(ntrk, NTRK);
+			numarg(ntrk, NTRK, <=);
 			break;
 		case 'P':
-			numarg(stepspercyl, STEPSPERCYL);
+			numarg(stepspercyl, STEPSPERCYL, <=);
 			break;
 		case 'G':
-			numarg(gaplen, GAPLEN);
+			numarg(gaplen, GAPLEN, <=);
 			break;
-		case 'F':		/* special handling--0 is OK */
-			/*numarg(fillbyte, FILLBYTE);*/
-			tmplong = strtol(optarg, &tmpcharp, 0);
-			if (*tmpcharp != '\0' || tmplong < 0 ||
-			    tmplong == LONG_MIN || tmplong == LONG_MAX)
-				errx(1, "invalid numerical argument %s for fillbyte", optarg);
-			parms.fillbyte = tmplong;
-			parmmask |= MASK_FILLBYTE;
+		case 'F':
+			numarg(fillbyte, FILLBYTE, <);
 			break;
 		case 'X':
-			numarg(xfer_rate, XFER_RATE);
+			numarg(xfer_rate, XFER_RATE, <=);
 			break;
 		case 'I':
-			numarg(interleave, INTERLEAVE);
+			numarg(interleave, INTERLEAVE, <=);
 			break;
 		case '?':
 		default:
 			usage();
 		}
+
 	if (optind < argc)
 		usage();
 
 	fd = open(filename, O_RDWR);
 	if (fd == -1)
-		err(1, "cannot open %s", filename);
+		err(1, "Cannot open %s", filename);
 	if (ioctl(fd, FDIOCGETFORMAT, &fetchparms) == -1) {
 		if (errno == ENOTTY)
-			err(1, "device %s does not support floppy formatting",
+			err(1, "Device `%s' does not support floppy formatting",
 			    filename);
 		else
-			err(1, "cannot fetch current floppy formatting parameters");
+			err(1, "Cannot fetch current floppy"
+			    " formatting parameters");
 	}
 
 	copyparm(nbps, NBPS);
@@ -267,19 +290,23 @@ main(int argc, char *argv[])
 	tmpint = FDOPT_NORETRY|FDOPT_SILENT;
 	if (ioctl(fd, FDIOCSETOPTS, &tmpint) == -1 ||
 	    ioctl(fd, FDIOCSETFORMAT, &parms) == -1) {
-		warn("cannot set requested formatting parameters");
-		errx(1, "%d cylinders, %d tracks, %d sectors of %d bytes",
-		     parms.ncyl, parms.ntrk, parms.nspt, parms.nbps);
+		errx(1, "Cannot set requested formatting parameters:"
+		    " %d cylinders, %d tracks, %d sectors of %d bytes",
+		    parms.ncyl, parms.ntrk, parms.nspt, parms.nbps);
 	}
 
-	printf("Ready to format %s with %d cylinders, %d tracks, %d sectors of %d bytes\n(%d KB)",
-	       filename, parms.ncyl, parms.ntrk, parms.nspt, parms.nbps,
-	       parms.ncyl * parms.ntrk * parms.nspt * parms.nbps / 1024);
+	(void)printf("Ready to format %s with %d cylinders, %d tracks,"
+	    " %d sectors of %d bytes\n(%d KB)",
+	    filename, parms.ncyl, parms.ntrk, parms.nspt, parms.nbps,
+	    parms.ncyl * parms.ntrk * parms.nspt * parms.nbps / 1024);
 	if (!confirm(1))
-		errx(1,"formatting abandoned--not confirmed.");
+		errx(1,"Formatting abandoned -- not confirmed.");
 	
-	if (verify)
+	if (verify) {
 		trackbuf = malloc(parms.nbps * parms.nspt);
+		if (trackbuf == NULL)
+			warn("Cannot allocate verification buffer");
+	}
 
 	cmd.formatcmd_version = FDFORMAT_VERSION;
 	for (cyl = 0; cyl < parms.ncyl; cyl++) {
@@ -287,27 +314,34 @@ main(int argc, char *argv[])
 		for (trk = 0; trk < parms.ntrk; trk++) {
 			cmd.head = trk;
 			if (ioctl(fd, FDIOCFORMAT_TRACK, &cmd) == 0) {
-				putchar('F');
+                                if (verify && colsize) {
+                                        colcnt++;
+                                        if (colcnt % colsize == 0) {
+                                                (void)putchar('\n');
+                                                colcnt++;
+                                        }
+                                }
+				(void)putchar('F');
 				if (verify)
-					putchar('\b');
-				fflush(stdout);
+					(void)putchar('\b');
+				(void)fflush(stdout);
 				if (verify)
 					errcnt += verify_track(fd, cyl, trk,
-							       &parms,
-							       trackbuf);
+					    &parms, trackbuf);
 			} else if (errno == EINVAL) {
-				putchar('\n');
-				errx(1, "formatting botch at <%d,%d>",
+				(void)putchar('\n');
+				errx(1, "Formatting botch at <%d,%d>",
 				     cyl, trk);
 			} else if (errno == EIO) {
-				putchar('E');
-				fflush(stdout);
+				(void)putchar('E');
+				(void)fflush(stdout);
 				errcnt++;
 			}
 		}
 	}
-	putchar('\n');
+	(void)putchar('\n');
 	if (errcnt)
-		errx(1,"%d track formatting error%s", errcnt, errcnt==1?"":"s");
+		errx(1, "%d track formatting error%s",
+		    errcnt, errcnt == 1 ? "" : "s");
 	return 0;
 }
