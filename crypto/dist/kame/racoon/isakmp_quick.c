@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.92 2002/03/05 15:34:59 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.93 2002/05/07 17:47:55 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -87,7 +87,9 @@
 static vchar_t *quick_ir1mx __P((struct ph2handle *, vchar_t *, vchar_t *));
 static int get_sainfo_r __P((struct ph2handle *));
 static int get_proposal_r __P((struct ph2handle *));
+#ifdef INET6
 static u_int32_t setscopeid __P((struct sockaddr *, struct sockaddr *));
+#endif
 
 /* %%%
  * Quick Mode

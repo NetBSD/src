@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/04/26 02:25:15 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/05/13 02:10:35 itojun Exp $
 
 # point top of your KAME tree by ${KAMEROOT}
 LIBPFKEYSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/libipsec
@@ -15,6 +15,6 @@ LDSTATIC?=      -static
 
 DBG=	-g
 
-PKGVERSION=	netbsd-20020426
+PKGVERSION=	netbsd-20020507
 
 .include "../Makefile.inc"
