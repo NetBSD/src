@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.15 1999/10/01 18:17:13 thorpej Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.15.2.1 1999/10/19 17:47:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,10 +104,8 @@ struct bha_softc {
 #define	BHAF_STRICT_ROUND_ROBIN	0x20	/* device supports strict RR mode */
 
 	int sc_max_dmaseg;		/* maximum number of DMA segments */
-	int sc_hw_ccbs;			/* maximum number of CCBs (HW) */
-	int sc_max_ccbs;		/* maximum number of CCBs (SW) */
+	int sc_max_ccbs;		/* maximum number of CCBs (HW) */
 	int sc_cur_ccbs;		/* current number of CCBs */
-	int sc_mbox_count;		/* maximum number of mailboxes */
 
 	int sc_disc_mask;		/* mask of targets allowing discnnct */
 	int sc_ultra_mask;		/* mask of targets allowing ultra */
@@ -125,6 +123,7 @@ struct bha_softc {
 	struct bha_mbx_out *sc_cmbo;	/* Collection Mail Box out */
 	struct bha_mbx_out *sc_tmbo;	/* Target Mail Box out */
 
+	int sc_mbox_count;		/* number of mailboxes */
 	int sc_mbofull;			/* number of full Mail Box Out */
 
 	struct bha_mbx_in *sc_tmbi;	/* Target Mail Box in */
@@ -133,10 +132,9 @@ struct bha_softc {
 	TAILQ_HEAD(, bha_ccb)	sc_free_ccb,
 				sc_waiting_ccb,
 				sc_allocating_ccbs;
-	struct scsipi_link sc_link;	/* prototype for devs */
-	struct scsipi_adapter sc_adapter;
 
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_adapter sc_adapter;
+	struct scsipi_channel sc_channel;
 
 	char sc_model[7],
 	     sc_firmware[6];
