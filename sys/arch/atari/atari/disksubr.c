@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1996/10/04 07:02:17 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 1997/04/25 19:16:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -90,7 +90,9 @@ bounds_check_with_label(bp, lp, wlabel)
 			bp->b_flags |= B_ERROR;
 			return(-1);
 		}
-		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
+		if (lp->d_secsize < DEV_BSIZE)
+			maxsz = pp->p_size / (DEV_BSIZE / lp->d_secsize);
+		else maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 	} else {
 		maxsz = pp->p_size;
@@ -105,12 +107,13 @@ bounds_check_with_label(bp, lp, wlabel)
 			bp->b_resid = bp->b_bcount;
 			return(0);
 		}
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0 || bp->b_blkno < 0) {
+		if (bp->b_blkno > maxsz || bp->b_blkno < 0) {
 			bp->b_error = EINVAL;
 			bp->b_flags |= B_ERROR;
 			return(-1);
 		}
+		sz = maxsz - bp->b_blkno;
+
 		/* 
 		 * adjust count down
 		 */
