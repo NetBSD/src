@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.18 2000/06/28 17:13:03 mrg Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.19 2000/07/06 01:47:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -709,21 +709,19 @@ esh_fpopen(dev, oflags, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *recv;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int error = 0;
 	bus_size_t size;
 	int rseg;
 	int s;
 
-
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802)
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
-	sc = esh_cd.cd_devs[unit];
-
 #ifdef ESH_PRINTF
-	printf("esh_fpopen:  opening board %d, ulp %d\n", unit, ulp);
+	printf("esh_fpopen:  opening board %d, ulp %d\n",
+	    sc->sc_dev.dv_unit, ulp);
 #endif
 
 	/* If the card is not up, initialize it. */
@@ -933,25 +931,24 @@ esh_fpclose(dev, fflag, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *ring;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int index;
 	int error = 0;
 	int s;
 
-
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802)
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
 	s = splnet();
 
-	sc = esh_cd.cd_devs[unit];
 	ring = sc->sc_fp_recv[ulp];
 	ring_ctl = &sc->sc_recv_ring_table[ulp];
 	index = ring->ec_index;
 
 #ifdef ESH_PRINTF
-	printf("esh_fpclose:  closing unit %d, ulp %d\n", unit, ulp);
+	printf("esh_fpclose:  closing unit %d, ulp %d\n",
+	    sc->sc_dev.dv_unit, ulp);
 #endif
 	assert(ring);
 	assert(ring_ctl);
@@ -1010,7 +1007,6 @@ esh_fpread(dev, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_fp_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int flags = B_READ;
 	int error;
@@ -1021,13 +1017,12 @@ esh_fpread(dev, uio, ioflag)
 	printf("esh_fpread:  dev %x\n", dev);
 #endif
 
-	s = splnet();
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802) {
-		error = ENXIO;
-		goto fpread_done;
-	}
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
+		return (ENXIO);
 
-	sc = esh_cd.cd_devs[unit];
+	s = splnet();
+
 	ring = sc->sc_fp_recv[ulp];
 
 	if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
@@ -1183,7 +1178,6 @@ esh_fpwrite(dev, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_send_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int flags = B_WRITE;
 	int error;
@@ -1195,13 +1189,12 @@ esh_fpwrite(dev, uio, ioflag)
 	printf("esh_fpwrite:  dev %x\n", dev);
 #endif
 
-	s = splnet();
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802) {
-		error = EPROTOTYPE;  /* XXX:  Not really kosher, but obvious */
-		goto fpwrite_done;
-	}
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
+		return (ENXIO);
 
-	sc = esh_cd.cd_devs[unit];
+	s = splnet();
+
 	ring = &sc->sc_send;
 
 	if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
@@ -1349,7 +1342,6 @@ esh_fpstrategy(bp)
 	struct buf *bp;
 {
 	struct esh_softc *sc;
-	int unit = ESHUNIT(bp->b_dev);
 	int ulp = ESHULP(bp->b_dev);
 	int error = 0;
 	int s;
@@ -1359,15 +1351,15 @@ esh_fpstrategy(bp)
 	       "\tunit %x, ulp %d\n",
 		bp->b_bcount, bp->b_flags, bp->b_dev, unit, ulp);
 #endif
-        
+
+	sc = device_lookup(&esh_cd, ESHUNIT(bp->b_dev));
+
 	s = splnet();
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802) {
+	if (sc == NULL || ulp == HIPPI_ULP_802) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
 	}
-
-	sc = esh_cd.cd_devs[unit];
 
 	if (bp->b_bcount == 0)
 		goto done;

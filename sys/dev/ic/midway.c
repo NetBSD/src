@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.41 2000/06/28 17:13:01 mrg Exp $	*/
+/*	$NetBSD: midway.c,v 1.42 2000/07/06 01:47:38 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -3404,7 +3404,7 @@ int unit, level;
   u_int32_t ptr, reg;
 
   for (lcv = 0 ; lcv < en_cd.cd_ndevs ; lcv++) {
-    sc = (struct en_softc *) en_cd.cd_devs[lcv];
+    sc = device_lookup(&en_cd, lcv);
     if (sc == NULL) continue;
     if (unit != -1 && unit != lcv)
       continue;
@@ -3563,8 +3563,8 @@ int unit, addr, len;
   struct en_softc *sc;
   u_int32_t reg;
 
-  if (unit < 0 || unit > en_cd.cd_ndevs ||
-	(sc = (struct en_softc *) en_cd.cd_devs[unit]) == NULL) {
+  sc = device_lookup(&en_cd, unit);
+  if (sc == NULL) {
     printf("invalid unit number: %d\n", unit);
     return(0);
   }
