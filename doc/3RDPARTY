@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.130 2003/08/05 12:03:01 itojun Exp $
+#	$NetBSD: 3RDPARTY,v 1.131 2003/08/05 12:06:20 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -139,7 +139,7 @@ Current Vers:	?
 Maintainer:	Citrus
 Archive Site:	http://citrus.bsdclub.org/
 Mailing List:	bsd-locale@hauN.org
-Responsible:	itojun
+Responsible:	itojun, tshiozak
 Notes:
 language C multilingualization support suite using wchar_t and other standards.
 minoura_xpg4dl branch has work-in-progress integration (a little bit dated,
