@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
+/*	$NetBSD: utility.c,v 1.10 1996/09/27 02:30:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
+static char rcsid[] = "$NetBSD: utility.c,v 1.10 1996/09/27 02:30:05 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ fatalperror(f, msg)
 	fatal(f, buf);
 }
 
-char editedhost[32];
+char editedhost[MAXHOSTNAMELEN];
 
 	void
 edithost(pat, host)
