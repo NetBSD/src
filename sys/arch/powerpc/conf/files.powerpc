@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.37 2002/10/30 06:37:37 manu Exp $
+#	$NetBSD: files.powerpc,v 1.38 2002/10/30 06:41:46 manu Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -52,6 +52,13 @@ file	arch/powerpc/powerpc/trap.c			ppc_mpc6xx
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
+
+# MACH binary compatibility (COMPAT_MACH)
+include "compat/mach/files.mach"
+file	arch/powerpc/powerpc/mach_machdep.c		compat_mach
+file	arch/powerpc/powerpc/mach_sigcode.S		compat_mach
+file	arch/powerpc/powerpc/mach_syscall.c		compat_mach
+file	arch/powerpc/powerpc/macho_machdep.c		exec_macho
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"	
