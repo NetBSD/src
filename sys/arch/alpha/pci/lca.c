@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.27 1998/01/17 03:39:52 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.28 1998/05/14 00:01:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.27 1998/01/17 03:39:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.28 1998/05/14 00:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,10 @@ lcamatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* Make sure that we're looking for a LCA. */
-	if (strcmp(ca->ca_name, lca_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, lca_cd.cd_name) != 0)
 		return (0);
 
 	if (lcafound)

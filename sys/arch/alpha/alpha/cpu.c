@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.23 1998/01/12 10:21:02 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.24 1998/05/14 00:01:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 1998/01/12 10:21:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 1998/05/14 00:01:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ cpumatch(parent, cfdata, aux)
 	struct cfdata *cfdata;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0)
 		return (0);
 
 	/* XXX CHECK SLOT? */
@@ -72,7 +72,7 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
         struct pcs *p;
 #ifdef DEBUG
 	int needcomma;
@@ -80,12 +80,12 @@ cpuattach(parent, dev, aux)
 	u_int32_t major, minor;
 
 	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-	    (ca->ca_slot * hwrpb->rpb_pcs_size));
+	    (ma->ma_slot * hwrpb->rpb_pcs_size));
 	major = (p->pcs_proc_type & PCS_PROC_MAJOR) >> PCS_PROC_MAJORSHIFT;
 	minor = (p->pcs_proc_type & PCS_PROC_MINOR) >> PCS_PROC_MINORSHIFT;
 
-	printf(": ID %d%s, ", ca->ca_slot,
-	    ca->ca_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
+	printf(": ID %d%s, ", ma->ma_slot,
+	    ma->ma_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
 
 	switch (major) {
 	case PCS_PROC_EV3:
