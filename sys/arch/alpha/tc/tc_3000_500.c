@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.4.4.3 1996/06/13 18:35:35 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.4.4.4 1996/12/05 07:16:54 rat Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -64,13 +64,20 @@ struct tc_slotdesc tc_3000_500_slots[] = {
 int tc_3000_500_nslots =
     sizeof(tc_3000_500_slots) / sizeof(tc_3000_500_slots[0]);
 
-struct tc_builtin tc_3000_500_builtins[] = {
+struct tc_builtin tc_3000_500_graphics_builtins[] = {
 	{ "FLAMG-IO",	7, 0x00000000, C(TC_3000_500_DEV_IOASIC),	},
 	{ "PMAGB-BA",	7, 0x02000000, C(TC_3000_500_DEV_CXTURBO),	},
 	{ "PMAZ-DS ",	6, 0x00000000, C(TC_3000_500_DEV_TCDS),		},
 };
-int tc_3000_500_nbuiltins =
-    sizeof(tc_3000_500_builtins) / sizeof(tc_3000_500_builtins[0]);
+int tc_3000_500_graphics_nbuiltins = sizeof(tc_3000_500_graphics_builtins) /
+    sizeof(tc_3000_500_graphics_builtins[0]);
+
+struct tc_builtin tc_3000_500_nographics_builtins[] = {
+	{ "FLAMG-IO",	7, 0x00000000, C(TC_3000_500_DEV_IOASIC),	},
+	{ "PMAZ-DS ",	6, 0x00000000, C(TC_3000_500_DEV_TCDS),		},
+};
+int tc_3000_500_nographics_nbuiltins = sizeof(tc_3000_500_nographics_builtins) /
+    sizeof(tc_3000_500_nographics_builtins[0]);
 
 u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 	TC_3000_500_IR_OPT0,
