@@ -1,3 +1,4 @@
+/* $NetBSD: alpha-opc.c,v 1.3 1997/12/02 23:46:04 ross Exp $ */
 /* alpha-opc.c -- Alpha AXP opcode list
    Copyright 1996 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>,
