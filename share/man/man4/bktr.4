@@ -1,4 +1,4 @@
-.\" $NetBSD: bktr.4,v 1.6 2001/09/11 17:54:20 wiz Exp $
+.\" $NetBSD: bktr.4,v 1.7 2002/01/06 02:53:54 jmcneill Exp $
 .\"
 .\" Copyright (c) 2000 Thomas Klausner
 .\" 	All rights reserved.
@@ -31,6 +31,7 @@
 .Nd Brooktree 848 compatible TV card driver
 .Sh SYNOPSIS
 .Cd bktr* at pci? dev ? function ?
+.Cd radio* at bktr?
 .Pp
 .Cd options BKTR_OVERRIDE_CARD=n
 .Cd options BKTR_OVERRIDE_TUNER=n
@@ -193,6 +194,7 @@ teletext interface device
 .Sh SEE ALSO
 .Xr options 4 ,
 .Xr pci 4 ,
+.Xr radio 4 ,
 .Pa pkgsrc/audio/xmradio ,
 .Pa pkgsrc/graphics/fxtv
 .Sh HISTORY
