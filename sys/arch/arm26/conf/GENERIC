@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2000/12/20 22:17:31 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.17 2000/12/29 23:07:30 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -50,7 +50,6 @@ options 	FFS_EI		# FFS endianness-independence support
 options 	SOFTDEP		# FFS soft updates support.
 
 # Executable format options
-#options 	EXEC_AOUT
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
