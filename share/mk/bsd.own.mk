@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.395 2003/11/27 13:09:37 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.396 2003/11/27 13:10:00 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -44,7 +44,7 @@ HAVE_GCC3?=	yes
 #
 # Transitional for toolchain upgrade to binutils 2.14
 #
-#HAVE_BINUTILS214?=	no	# for now
+HAVE_BINUTILS214?=	no	# for now
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "armeb"
