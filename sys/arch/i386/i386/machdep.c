@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.23 2001/05/23 03:13:37 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.24 2001/05/26 22:13:09 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1331,9 +1331,6 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 	ci->ci_cpu_class = class;
 
-	/*
-	 * Get the cache info for this CPU, if we can.
-	 */
 #if defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * If we have a cycle counter, compute the approximate
@@ -1346,6 +1343,7 @@ identifycpu(struct cpu_info *ci)
 		last_tsc = rdtsc();
 		delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+		microtime_func = tsc_microtime;
 	}
 	/* XXX end XXX */
 #endif
@@ -1759,6 +1757,10 @@ cpu_reboot(howto, bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+#ifdef MULTIPROCESSOR
+	i386_broadcast_ipi(I386_IPI_HALT);
+#endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)

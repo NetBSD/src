@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.1.2.9 2001/01/04 04:44:32 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.1.2.10 2001/05/26 22:13:09 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@ void i386_ipi_flush_fpu(struct cpu_info *);
 void (*ipifunc[I386_NIPI])(struct cpu_info *) = 
 {
 	i386_ipi_halt,
+#if defined(I586_CPU) || defined(I686_CPU)
+	tsc_microset,
+#endif
 #if NNPX > 0
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
@@ -155,6 +158,8 @@ void
 i386_broadcast_ipi (int ipimask)
 {
 	struct cpu_info *ci, *self = curcpu();
+	int count = 0;
+
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -163,8 +168,11 @@ i386_broadcast_ipi (int ipimask)
 		if ((ci->ci_flags & CPUF_RUNNING) == 0)
 			continue;
 		i386_atomic_setbits_l(&ci->ci_ipis, ipimask);
+		count++;
 	}
-
+	if (!count)
+		return;
+	
 	i82489_writereg(LAPIC_ICRLO,
 	    LAPIC_IPI_VECTOR | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT |
 	    LAPIC_DEST_ALLEXCL);

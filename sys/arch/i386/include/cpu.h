@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.23 2001/05/07 21:15:05 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.24 2001/05/26 22:13:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -133,6 +133,14 @@ struct cpu_info {
 	struct trapframe *ci_ddb_regs;
 
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
+
+	/*
+	 * Variables used by tsc_microtime().
+	 */
+	struct timeval ci_tsc_time;
+	int64_t ci_tsc_tsc;
+	int64_t ci_tsc_ms_delta;
+	int64_t ci_tsc_denom;
 };
 
 /*
@@ -338,6 +346,11 @@ void	startrtclock __P((void));
 void	i8254_delay __P((int));
 void	i8254_microtime __P((struct timeval *));
 void	i8254_initclocks __P((void));
+
+/* tsc_microtime.c */
+
+void	tsc_microtime __P((struct timeval *));
+void	tsc_microset __P((struct cpu_info *));
 
 /* cpu.c */
 
