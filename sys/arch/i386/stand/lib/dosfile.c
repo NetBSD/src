@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.3 1997/06/13 13:36:08 drochner Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.4 1997/09/17 18:09:04 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -41,6 +41,7 @@
 #include <lib/libsa/stand.h>
 
 #include "diskbuf.h"
+#include "dosfile.h"
 
 extern int dosopen __P((char *));
 extern void dosclose __P((int));
@@ -52,6 +53,27 @@ struct dosfile {
 };
 
 extern int      doserrno;	/* in dos_file.S */
+
+static int dos2errno()
+{
+	int err;
+
+	switch(doserrno) {
+	    case 1:
+	    case 4:
+	    case 12:
+	    default:
+		err = EIO;
+	    case 2:
+	    case 3:
+		err = ENOENT;
+	    case 5:
+		err = EPERM;
+	    case 6:
+		err = EINVAL;
+	}
+	return(err);
+}
 
 int 
 dos_open(path, f)
@@ -67,9 +89,11 @@ dos_open(path, f)
 	df->off = 0;
 	df->doshandle = dosopen(path);
 	if (df->doshandle < 0) {
+#ifdef DEBUG
 		printf("DOS error %d\n", doserrno);
+#endif
 		free(df, sizeof(*df));
-		return (-1);
+		return (dos2errno());
 	}
 	f->f_fsdata = (void *) df;
 	return (0);
@@ -78,9 +102,9 @@ dos_open(path, f)
 int 
 dos_read(f, addr, size, resid)
 	struct open_file *f;
-	char           *addr;
-	u_int           size;
-	u_int          *resid;	/* out */
+	void           *addr;
+	size_t         size;
+	size_t         *resid;	/* out */
 {
 	struct dosfile *df;
 	int             got;
@@ -108,12 +132,14 @@ dos_read(f, addr, size, resid)
 			tgot = dosread(df->doshandle, diskbuf, tsize);
 
 			if (tgot < 0) {
+#ifdef DEBUG
 				printf("DOS error %d\n", doserrno);
-				return (-1);
+#endif
+				return (dos2errno());
 			}
 			bcopy(diskbuf, addr, tgot);
 
-			addr += tgot;
+			(unsigned long)addr += tgot;
 			lsize -= tgot;
 
 			if (tgot != tsize)
@@ -124,8 +150,10 @@ dos_read(f, addr, size, resid)
 		got = dosread(df->doshandle, addr, size);
 
 		if (got < 0) {
+#ifdef DEBUG
 			printf("DOS error %d\n", doserrno);
-			return (-1);
+#endif
+			return (dos2errno());
 		}
 	}
 
@@ -154,12 +182,11 @@ dos_close(f)
 int 
 dos_write(f, start, size, resid)
 	struct open_file *f;
-	char           *start;
-	u_int           size;
-	u_int          *resid;	/* out */
+	void           *start;
+	size_t          size;
+	size_t         *resid;	/* out */
 {
-	errno = EROFS;
-	return (-1);
+	return (EROFS);
 }
 
 int 
@@ -216,7 +243,7 @@ dos_seek(f, offset, where)
 	}
 	res = dosseek(df->doshandle, offset, doswhence);
 	if (res == -1) {
-		errno = EIO;
+		errno = dos2errno();
 		return (-1);
 	}
 #ifdef DOS_CHECK
