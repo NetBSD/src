@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.21 2001/11/13 01:10:50 lukem Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.21.8.1 2002/08/29 00:56:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,7 +77,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.21 2001/11/13 01:10:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.21.8.1 2002/08/29 00:56:54 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -467,7 +467,12 @@ tpip_output_dg(m0, va_alist)
 	bzero((caddr_t) ip, sizeof *ip);
 
 	ip->ip_p = IPPROTO_TP;
-	m->m_pkthdr.len = ip->ip_len = sizeof(struct ip) + datalen;
+	if (sizeof(struct ip) + datalen > IP_MAXPACKET) {
+		error = EMSGSIZE;
+		goto bad;
+	}
+	m->m_pkthdr.len = sizeof(struct ip) + datalen;
+	ip->ip_len = htons(sizeof(struct ip) + datalen);
 	ip->ip_ttl = MAXTTL;
 	/*
 	 * don't know why you need to set ttl; overlay doesn't even make this

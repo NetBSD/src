@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.138.2.3 2002/07/15 10:37:15 gehenna Exp $	*/
+/*	$NetBSD: param.h,v 1.138.2.4 2002/08/29 00:56:59 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * Don't forget to change conf/osrelease.sh too.
  */
 
-#define	__NetBSD_Version__	106040000	/* NetBSD 1.6D */
+#define	__NetBSD_Version__	106070000	/* NetBSD 1.6F */
 
 /*
  * Historical NetBSD #define
@@ -174,7 +174,7 @@
 #define	CBLOCK	64		/* Clist block size, must be a power of 2. */
 #define	CBQSIZE	(CBLOCK/NBBY)	/* Quote bytes/cblock - can do better. */
 				/* Data chars/clist. */
-#define	CBSIZE	(CBLOCK - sizeof(struct cblock *) - CBQSIZE)
+#define	CBSIZE	(CBLOCK - (int)sizeof(struct cblock *) - CBQSIZE)
 #define	CROUND	(CBLOCK - 1)	/* Clist rounding. */
 
 /*

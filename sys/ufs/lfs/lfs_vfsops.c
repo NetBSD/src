@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.74.2.4 2002/07/15 10:37:29 gehenna Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.74.2.5 2002/08/29 00:57:04 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74.2.4 2002/07/15 10:37:29 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.74.2.5 2002/08/29 00:57:04 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -965,7 +965,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;
-	mp->mnt_data = (qaddr_t)ump;
+	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_LFS);
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
@@ -1164,7 +1164,7 @@ out:
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
 		free(ump, M_UFSMNT);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return (error);
 }
@@ -1251,7 +1251,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

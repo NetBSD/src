@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.2.2 2002/07/15 10:36:50 gehenna Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.2.3 2002/08/29 00:56:42 gehenna Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.2.2 2002/07/15 10:36:50 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.2.3 2002/08/29 00:56:42 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2267,17 +2267,21 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			break;
 
 		case LCP_OPT_ASYNC_MAP:
-			/* Async control character map -- check to be zero. */
-			if (! p[2] && ! p[3] && ! p[4] && ! p[5]) {
-				if (debug)
-					addlog(" [empty]");
-				continue;
-			}
-			if (debug)
-				addlog(" [non-empty]");
-			/* suggest a zero one */
-			p[2] = p[3] = p[4] = p[5] = 0;
-			break;
+			/*
+			 * Async control character map -- just ignore it.
+			 *
+			 * Quote from RFC 1662, chapter 6:
+			 * To enable this functionality, synchronous PPP
+			 * implementations MUST always respond to the
+			 * Async-Control-Character-Map Configuration
+			 * Option with the LCP Configure-Ack.  However,
+			 * acceptance of the Configuration Option does
+			 * not imply that the synchronous implementation
+			 * will do any ACCM mapping.  Instead, all such
+			 * octet mapping will be performed by the
+			 * asynchronous-to-synchronous converter.
+			 */
+			continue;
 
 		case LCP_OPT_MRU:
 			/*
@@ -3814,7 +3818,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		/* Compute reply value. */
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
-		MD5Update(&ctx, sp->myauth.secret, strlen(sp->myauth.secret));
+		MD5Update(&ctx, sp->myauth.secret, sp->myauth.secret_len);
 		MD5Update(&ctx, value, value_len);
 		MD5Final(digest, &ctx);
 		dsize = sizeof digest;
@@ -3822,7 +3826,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		sppp_auth_send(&chap, sp, CHAP_RESPONSE, h->ident,
 			       sizeof dsize, (const char *)&dsize,
 			       sizeof digest, digest,
-			       strlen(sp->myauth.name),
+			       sp->myauth.name_len,
 			       sp->myauth.name,
 			       0);
 		break;
@@ -3909,14 +3913,14 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			break;
 		}
 		if (sp->hisauth.name != NULL && 
-		    (name_len != strlen(sp->hisauth.name)
+		    (name_len != sp->hisauth.name_len
 		    || memcmp(name, sp->hisauth.name, name_len) != 0)) {
 			log(LOG_INFO, SPP_FMT "chap response, his name ",
 			    SPP_ARGS(ifp));
 			sppp_print_string(name, name_len);
 			addlog(" != expected ");
 			sppp_print_string(sp->hisauth.name,
-					  strlen(sp->hisauth.name));
+					  sp->hisauth.name_len);
 			addlog("\n");
 		    goto chap_failure;
 		}
@@ -3944,8 +3948,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
-		MD5Update(&ctx, sp->hisauth.secret,
-			  strlen(sp->hisauth.secret));
+		MD5Update(&ctx, sp->hisauth.secret, sp->hisauth.secret_len);
 		MD5Update(&ctx, sp->myauth.challenge, sizeof(sp->myauth.challenge));
 		MD5Final(digest, &ctx);
 
@@ -4167,7 +4170,7 @@ sppp_chap_scr(struct sppp *sp)
 	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->confid[IDX_CHAP],
 		       sizeof clen, (const char *)&clen,
 		       sizeof(sp->myauth.challenge), sp->myauth.challenge,
-		       strlen(sp->myauth.name),
+		       sp->myauth.name_len,
 		       sp->myauth.name,
 		       0);
 }
@@ -4195,8 +4198,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	struct lcp_header *h;
 	int len, x;
 	u_char mlen;
-	char *name, *passwd;
-	int name_len, passwd_len;
+	char *name, *secret;
+	int name_len, secret_len;
 
 	len = m->m_pkthdr.len;
 	if (len < 5) {
@@ -4220,9 +4223,9 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		}
 		name = 1 + (u_char*)(h+1);
 		name_len = name[-1];
-		passwd = name + name_len + 1;
+		secret = name + name_len + 1;
 		if (name_len > len - 6 ||
-		    (passwd_len = passwd[-1]) > len - 6 - name_len) {
+		    (secret_len = secret[-1]) > len - 6 - name_len) {
 			if (debug) {
 				log(LOG_DEBUG, SPP_FMT "pap corrupted input "
 				    "<%s id=0x%x len=%d",
@@ -4243,12 +4246,14 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			    sppp_auth_type_name(PPP_PAP, h->type),
 			    h->ident, ntohs(h->len));
 			sppp_print_string((char*)name, name_len);
-			addlog(" passwd=");
-			sppp_print_string((char*)passwd, passwd_len);
+			addlog(" secret=");
+			sppp_print_string((char*)secret, secret_len);
 			addlog(">\n");
 		}
-		if (memcmp(name, sp->hisauth.name, name_len) != 0 ||
-		    memcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
+		if (name_len != sp->hisauth.name_len ||
+		    secret_len != sp->hisauth.secret_len ||
+		    memcmp(name, sp->hisauth.name, name_len) != 0 ||
+		    memcmp(secret, sp->hisauth.secret, secret_len) != 0) {
 			/* action scn, tld */
 			sp->pp_auth_failures++;
 			mlen = sizeof(FAILMSG) - 1;
@@ -4488,8 +4493,8 @@ sppp_pap_scr(struct sppp *sp)
 	}
 	
 	sp->confid[IDX_PAP] = ++sp->pp_seq[IDX_PAP];
-	pwdlen = strlen(sp->myauth.secret);
-	idlen = strlen(sp->myauth.name);
+	pwdlen = sp->myauth.secret_len;
+	idlen = sp->myauth.name_len;
 
 	sppp_auth_send(&pap, sp, PAP_REQ, sp->confid[IDX_PAP],
 		       sizeof idlen, (const char *)&idlen,
@@ -4971,12 +4976,12 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    cfg->myauth = (sp->myauth.proto == PPP_PAP) ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
 		if (cfg->myname_length == 0) {
 		    if (sp->myauth.name != NULL)
-			cfg->myname_length = strlen(sp->myauth.name)+1;
+			cfg->myname_length = sp->myauth.name_len + 1;
 		} else {
 		    if (sp->myauth.name == NULL) {
 			cfg->myname_length = 0;
 		    } else {
-			len = strlen(sp->myauth.name)+1;
+			len = sp->myauth.name_len + 1;
 			if (cfg->myname_length < len)
 			    return (ENAMETOOLONG);
 			error = copyout(sp->myauth.name, cfg->myname, len);
@@ -4985,12 +4990,12 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		}
 		if (cfg->hisname_length == 0) {
 		    if(sp->hisauth.name != NULL)
-			cfg->hisname_length = strlen(sp->hisauth.name)+1;
+			cfg->hisname_length = sp->hisauth.name_len + 1;
 		} else {
 		    if (sp->hisauth.name == NULL) {
 		    	cfg->hisname_length = 0;
 		    } else {
-			len = strlen(sp->hisauth.name)+1;
+			len = sp->hisauth.name_len + 1;
 			if (cfg->hisname_length < len)
 			    return (ENAMETOOLONG);
 			error = copyout(sp->hisauth.name, cfg->hisname, len);
@@ -5031,7 +5036,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 			sp->hisauth.name = NULL;
 			return error;
 		    }
-		    sp->hisauth.name[cfg->hisname_length-1] = 0;
+		    sp->hisauth.name_len = cfg->hisname_length - 1;
+		    sp->hisauth.name[sp->hisauth.name_len] = 0;
 		}
 		if (cfg->hissecret != NULL && cfg->hissecret_length > 0) {
 		    if (cfg->hissecret_length >= MCLBYTES)
@@ -5043,7 +5049,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    	sp->hisauth.secret = NULL;
 			return error;
 		    }
-		    sp->hisauth.secret[cfg->hissecret_length-1] = 0;
+		    sp->hisauth.secret_len = cfg->hissecret_length - 1;
+		    sp->hisauth.secret[sp->hisauth.secret_len] = 0;
 		}
 		if (cfg->myname != NULL && cfg->myname_length > 0) {
 		    if (cfg->myname_length >= MCLBYTES)
@@ -5055,7 +5062,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 			sp->myauth.name = NULL;
 			return error;
 		    }
-		    sp->myauth.name[cfg->myname_length-1] = 0;
+		    sp->myauth.name_len = cfg->myname_length - 1;
+		    sp->myauth.name[sp->myauth.name_len] = 0;
 		}
 		if (cfg->mysecret != NULL && cfg->mysecret_length > 0) {
 		    if (cfg->mysecret_length >= MCLBYTES)
@@ -5067,7 +5075,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    	sp->myauth.secret = NULL;
 			return error;
 		    }
-		    sp->myauth.secret[cfg->mysecret_length-1] = 0;
+		    sp->myauth.secret_len = cfg->mysecret_length - 1;
+		    sp->myauth.secret[sp->myauth.secret_len] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
 		if (cfg->myauth)
@@ -5076,6 +5085,10 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		if (cfg->hisauth)
 		    sp->hisauth.proto = (cfg->hisauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
 		sp->pp_auth_failures = 0;
+		if (sp->hisauth.proto != 0) 
+		    sp->lcp.opts |= (1 << LCP_OPT_AUTH_PROTO);
+		else
+		    sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
 	    }
 	    break;
 	case SPPPGETLCPCFG:

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.143.2.7 2002/07/20 11:35:15 gehenna Exp $	*/
+/*	$NetBSD: systm.h,v 1.143.2.8 2002/08/29 00:57:01 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -173,7 +173,7 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-void	*hashinit __P((int, enum hashtype, int, int, u_long *));
+void	*hashinit __P((u_int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
 int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
@@ -260,6 +260,7 @@ void	cpu_initclocks __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
+void	proftick __P((struct clockframe *));
 void	setstatclockrate __P((int));
 
 /*
@@ -316,7 +317,7 @@ void	doexithooks __P((struct proc *));
 int	trace_enter __P((struct proc *, register_t, void *, register_t []));
 void	trace_exit __P((struct proc *, register_t, void *, register_t [], int));
 
-int	uiomove __P((void *, int, struct uio *));
+int	uiomove __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));

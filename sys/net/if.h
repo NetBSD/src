@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.75.4.3 2002/07/15 10:36:47 gehenna Exp $	*/
+/*	$NetBSD: if.h,v 1.75.4.4 2002/08/29 00:56:41 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #if !defined(_XOPEN_SOURCE)
 
+#include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
 #include <net/pfil.h>
@@ -727,7 +728,7 @@ extern struct ifnet **ifindex2ifnet;
 #if 0
 struct ifnet loif[];
 #endif
-extern int if_index;
+extern u_int if_index;
 
 char	*ether_sprintf __P((const u_char *));
 

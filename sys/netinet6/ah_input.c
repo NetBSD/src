@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.32.4.2 2002/06/20 15:52:34 gehenna Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.32.4.3 2002/08/29 00:56:49 gehenna Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.32.4.2 2002/06/20 15:52:34 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.32.4.3 2002/08/29 00:56:49 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.32.4.2 2002/06/20 15:52:34 gehenna Ex
 
 #include <net/net_osdep.h>
 
-#define IPLEN_FLIPPED
+/*#define IPLEN_FLIPPED*/
 
 #ifdef INET
 void
@@ -275,7 +275,7 @@ ah4_input(m, va_alist)
 	 */
 
     {
-#if 1
+#if 0
 	/*
 	 * some of IP header fields are flipped to the host endian.
 	 * convert them back to network endian.  VERY stupid.
@@ -288,7 +288,7 @@ ah4_input(m, va_alist)
 		goto fail;
 	}
 	ipsecstat.in_ahhist[sav->alg_auth]++;
-#if 1
+#if 0
 	/*
 	 * flip them back.
 	 */
