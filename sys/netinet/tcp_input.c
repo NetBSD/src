@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.130 2001/09/11 21:03:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.131 2001/09/17 17:27:00 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -969,7 +969,7 @@ findpcb:
 #ifdef INET
 	case AF_INET:
 		switch (m->m_pkthdr.csum_flags &
-			((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_TCPv4) |
+			((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_TCPv4) |
 			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
 		case M_CSUM_TCPv4|M_CSUM_TCP_UDP_BAD:
 			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_bad);

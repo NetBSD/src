@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.19 2001/06/12 15:17:28 wiz Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.20 2001/09/17 17:27:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ ipflow_fastforward(
 	 * Verify the IP header checksum.
 	 */
 	switch (m->m_pkthdr.csum_flags &
-		((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_IPv4) |
+		((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		return (0);
