@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2004/12/29 15:49:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.93 2005/01/03 06:00:12 lukem Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -55,6 +55,7 @@ SUBDIR+=	i18n_module
 
 #
 # Libraries that depend upon any listed previously
+# (and those that depend upon these [and ...])
 #
 SUBDIR+=	.WAIT
 SUBDIR+=	libcdk 
@@ -66,6 +67,10 @@ SUBDIR+=	libkrb5
 .endif
 .if (${MKKERBEROS4} != "no")
 SUBDIR+=	libkrb
+.endif
+
+.if (${MKCRYPTO} != "no")
+SUBDIR+=	.WAIT libssh
 .endif
 
 SUBDIR+=	.WAIT libpam
