@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2002/09/12 14:50:31 joda Exp $
+# $NetBSD: Makefile,v 1.26 2002/09/12 15:29:02 joda Exp $
 
 NOLINT=		# defined
 
@@ -220,12 +220,12 @@ MLINKS=									   \
 	krb5_get_krbhst.3		krb5_get_krb_admin_hst.3	   \
 	krb5_get_krbhst.3		krb5_get_krb_changepw_hst.3	   \
 	krb5_init_context.3		krb5_free_context.3		   \
-	krb5_init_krbhst.3		krb5_krbhst_format_string.3	   \
-	krb5_init_krbhst.3		krb5_krbhst_free.3		   \
-	krb5_init_krbhst.3		krb5_krbhst_get_addrinfo.3	   \
-	krb5_init_krbhst.3		krb5_krbhst_next.3		   \
-	krb5_init_krbhst.3		krb5_krbhst_next_as_string.3	   \
-	krb5_init_krbhst.3		krb5_krbhst_reset.3		   \
+	krb5_krbhst_init.3		krb5_krbhst_format_string.3	   \
+	krb5_krbhst_init.3		krb5_krbhst_free.3		   \
+	krb5_krbhst_init.3		krb5_krbhst_get_addrinfo.3	   \
+	krb5_krbhst_init.3		krb5_krbhst_next.3		   \
+	krb5_krbhst_init.3		krb5_krbhst_next_as_string.3	   \
+	krb5_krbhst_init.3		krb5_krbhst_reset.3		   \
 	krb5_keytab.3			krb5_keytab_entry.3		   \
 	krb5_keytab.3			krb5_kt_add_entry.3		   \
 	krb5_keytab.3			krb5_kt_close.3			   \
@@ -266,9 +266,6 @@ MLINKS=									   \
 	krb5_warn.3			krb5_vwarnx.3			   \
 	krb5_warn.3			krb5_warnx.3
 
-krb5-types.h:
-	cp ${NETBSDSRCDIR}/include/heimdal/$@ $@
-
 INCSDIR=	/usr/include/krb5
 
 ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
@@ -283,7 +280,7 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-CLEANFILES=	${ERR_FILES} krb5_err.h heim_err.h krb5-types.h k524_err.h
+CLEANFILES=	${ERR_FILES} krb5_err.h heim_err.h k524_err.h
 
 ${SRCS:.c=.o}: krb5_err.h heim_err.h k524_err.h
 
