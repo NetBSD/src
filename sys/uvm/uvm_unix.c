@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.8 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.9 1999/12/04 23:14:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -147,7 +147,7 @@ uvm_grow(p, sp)
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
-	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
+	si = btoc(USRSTACK-sp) - vm->vm_ssize;
 	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize += si;
