@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.12 2002/04/10 23:35:07 martin Exp $ 
+ *	$Id: rc_config.c,v 1.13 2002/04/16 17:07:58 drochner Exp $ 
  *
  * $FreeBSD$
  *
@@ -85,8 +85,9 @@ configure(char *filename, int reread)
 	if(reread)
 	{
 		reset_scanner(yyin);
+		current_cfe = NULL;
 	}
-	
+
 	if (yyin == NULL)
 	{
 		log(LL_ERR, "cannot fopen file [%s]", filename);
