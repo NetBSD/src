@@ -1,4 +1,4 @@
-#	$Header: /cvsroot/src/bin/sh/Makefile,v 1.3 1993/03/23 00:27:30 cgd Exp $
+#	$Header: /cvsroot/src/bin/sh/Makefile,v 1.4 1993/05/04 13:56:27 mycroft Exp $
 
 PROG=	sh
 SRCS=	builtins.c cd.c dirent.c echo.c error.c eval.c exec.c expand.c \
@@ -21,6 +21,7 @@ builtins.h builtins.c: ${.CURDIR}/mkbuiltins ${.CURDIR}/builtins
 
 init.c: mkinit ${SRCS}
 	./mkinit '${CC} -c ${CFLAGS} init.c' ${.ALLSRC}
+	touch ${.TARGET}
 
 mkinit: ${.CURDIR}/mkinit.c
 	${CC} ${CFLAGS} ${.CURDIR}/mkinit.c -o $@
