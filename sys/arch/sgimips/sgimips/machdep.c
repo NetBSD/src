@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2004/01/03 04:26:34 lonewolf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2004/01/03 10:28:18 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2004/01/03 04:26:34 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.71 2004/01/03 10:28:18 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -229,23 +229,23 @@ mach_init(argc, argv, magic, btinfo)
 
 	uvm_setpagesize();
 
-	if (magic == BOOTINFO_MAGIC && btinfo != NULL) {
-#ifdef DEBUG
-		printf("Found bootinfo at %p\n", btinfo);
-#endif
-		bootinfo = btinfo;
-	}
+	nsym = 0;
+	ssym = esym = NULL;
+	kernend = round_page((vaddr_t) _end);
+	bi_syms = NULL;
+	bootinfo = NULL;
 
-	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
-	if (bi_syms != NULL) {
-		nsym = bi_syms->nsym;
-		ssym = (caddr_t) bi_syms->ssym;
-		esym = (caddr_t) bi_syms->esym;
-		kernend = round_page((vaddr_t) esym);
-	} else {
-		nsym = 0;
-		ssym = esym = NULL;
-		kernend = round_page((vaddr_t) _end);
+	if (magic == BOOTINFO_MAGIC && btinfo != NULL) {
+		printf("Found bootinfo at %p\n", btinfo);
+		bootinfo = btinfo;
+
+		bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+		if (bi_syms != NULL) {
+			nsym = bi_syms->nsym;
+			ssym = (caddr_t) bi_syms->ssym;
+			esym = (caddr_t) bi_syms->esym;
+			kernend = round_page((vaddr_t) esym);
+		}
 	}
 
 	/* Leave 1 page before kernel untouched as that's where our initial
