@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.60 2001/05/26 23:02:06 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.61 2001/06/09 13:51:49 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -243,7 +243,7 @@ drsc			amigappc
 drsupio			amiga
 drsupio			amigappc
 dsrtc			arm32
-dtide			arm26
+dtide			MI
 dtop			pmax
 dvbox			hp300
 dwlpx			alpha
