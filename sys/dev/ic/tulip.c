@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.88 2001/01/16 17:33:24 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.89 2001/01/17 19:37:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2973,15 +2973,26 @@ tlp_idle(sc, bits)
 	csr = TULIP_READ(sc, CSR_STATUS);
 	if ((csr & ackmask) != ackmask) {
 		if ((bits & OPMODE_ST) != 0 && (csr & STATUS_TPS) == 0 &&
-		    (csr & STATUS_TS) != STATUS_TS_STOPPED)
+		    (csr & STATUS_TS) != STATUS_TS_STOPPED) {
 			printf("%s: transmit process failed to idle: "
 			    "state %s\n", sc->sc_dev.dv_xname,
 			    tx_state_names[(csr & STATUS_TS) >> 20]);
+		}
 		if ((bits & OPMODE_SR) != 0 && (csr & STATUS_RPS) == 0 &&
-		    (csr & STATUS_RS) != STATUS_RS_STOPPED)
-			printf("%s: receive process failed to idle: "
-			    "state %s\n", sc->sc_dev.dv_xname,
-			    rx_state_names[(csr & STATUS_RS) >> 17]);
+		    (csr & STATUS_RS) != STATUS_RS_STOPPED) {
+			switch (sc->sc_chip) {
+			case TULIP_CHIP_AN983:
+			case TULIP_CHIP_AN985:
+				/*
+				 * Filter the message out on noisy chips.
+				 */
+				break;
+			default:
+				printf("%s: receive process failed to idle: "
+				    "state %s\n", sc->sc_dev.dv_xname,
+				    rx_state_names[(csr & STATUS_RS) >> 17]);
+			}
+		}
 	}
 	TULIP_WRITE(sc, CSR_STATUS, ackmask);
 }
