@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.36 2003/12/14 22:56:45 dsl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.37 2004/01/15 14:29:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -226,6 +226,8 @@ __END_DECLS
 
 #else
 
+void ktrinitheader(struct ktr_header *, struct proc *, int);
+int ktrwrite(struct proc *, struct ktr_header *);
 void ktrcsw(struct proc *, int, int);
 void ktremul(struct proc *);
 void ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
