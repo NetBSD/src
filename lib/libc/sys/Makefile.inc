@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.71.2.1 1997/10/21 18:58:19 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.71.2.2 1997/11/05 05:52:06 thorpej Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -53,20 +53,16 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
-LASM=	${ASM:.o=.ln}
 
 NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o sync.o
 PNOERR= ${NOERR:.o=.po}
 SNOERR= ${NOERR:.o=.so}
-LNOERR= ${NOERR:.o=.ln}
 
 PSEUDONOERR=	_exit.o
 PPSEUDONOERR=	${PSEUDONOERR:.o=.po}
 SPSEUDONOERR=	${PSEUDONOERR:.o=.so}
-LPSEUDONOERR=	${PSEUDONOERR:.o=.ln}
 
 OBJS+=	${ASM} ${NOERR} ${PSEUDONOERR}
-LOBJS+=	${LASM} ${LNOERR} ${LPSEUDONOERR}
 
 ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
@@ -90,12 +86,6 @@ ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
-
-${LASM} ${LNOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
-    ${.CURDIR}/sys/makelintstub
-	@echo creating ${.TARGET}
-	@sh ${.CURDIR}/sys/makelintstub ${.PREFIX} | \
-	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
@@ -147,11 +137,29 @@ ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LPSEUDONOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
-    ${.CURDIR}/sys/makelintstub
+# Lint stubs for all automatically-generated assembly stubs (GENERATED)
+LSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+DPSRCS+= LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
+
+CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+
+LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/_//} ${.PREFIX} | \
-	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
+	@${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
+
+LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
+
+LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
+    ${DESTDIR}/usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 execve.2 _exit.2 \
