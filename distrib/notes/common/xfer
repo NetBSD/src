@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.24.2.5 2002/07/11 18:41:45 thorpej Exp $
+.\"	$NetBSD: xfer,v 1.24.2.6 2002/07/20 02:30:21 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,7 +131,7 @@ Refer back to this section after you have done so.
 .if r_macppc \{\
 .(Note
 Some
-.Tn MacOS
+.Tn Mac OS
 .Ic ftp
 clients default to downloading files in
 .Sq ASCII
