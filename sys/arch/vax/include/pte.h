@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.4 1995/02/13 00:43:30 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.5 1995/08/21 03:28:50 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -65,6 +65,7 @@ typedef unsigned int	pt_entry_t;	/* Mach page table entry */
 #define PG_RW           0x20000000
 #define PG_KW           0x10000000
 #define PG_KR           0x18000000
+#define	PG_URKW		0x70000000
 #define PG_RO           0x78000000
 #define PG_NONE         0x00000000
 #define PG_M            0x04000000
