@@ -1,6 +1,6 @@
-/*	$NetBSD: types.h,v 1.1 1999/09/13 10:30:45 itojun Exp $	*/
+/*	$NetBSD: types.h,v 1.2 2002/02/28 03:17:27 simonb Exp $	*/
 #ifndef _EVBSH3_TYPES_H_
-#define _EVBSH3_TYPES_H_
+#define	_EVBSH3_TYPES_H_
 
 #include <sh3/types.h>
 
