@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.9 1996/03/05 20:39:32 scottr Exp $	*/
+/*	$NetBSD: mt.c,v 1.10 1996/03/06 06:22:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.9 1996/03/05 20:39:32 scottr Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.10 1996/03/06 06:22:06 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,8 @@ void status __P((struct mtget *));
 void usage __P((void));
 
 char	*host = NULL;	/* remote host (if any) */
+uid_t	uid;
+uid_t	euid;
 
 int
 main(argc, argv)
@@ -100,6 +102,10 @@ main(argc, argv)
 	struct mtop mt_com;
 	int ch, len, mtfd;
 	char *p, *tape;
+
+	uid = getuid();
+	euid = geteuid();
+	seteuid(uid);
 
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = DEFTAPE;
@@ -127,7 +133,7 @@ main(argc, argv)
 		if (rmthost(host) == 0)
 			exit(X_ABORT);
 	}
-	(void)setuid(getuid()); /* rmthost() is the only reason to be setuid */
+	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 
 	len = strlen(p = *argv++);
 	for (comp = com;; comp++) {
