@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1994/12/14 19:10:08 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1994/12/20 06:07:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -362,7 +362,7 @@ decl_ioctl(cnioctl);
 decl_select(cnselect);
 
 /* keyboard/display tty (internal, for console) */
-#include "kd.h"
+#define	NKD 1	/* #include "kd.h" */
 #if NKD > 0
 decl_open(kdopen);
 decl_close(kdclose);
