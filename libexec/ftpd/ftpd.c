@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.108 2000/11/13 15:11:57 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.109 2000/11/15 02:32:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.108 2000/11/13 15:11:57 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.109 2000/11/15 02:32:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,19 +334,23 @@ main(int argc, char *argv[])
 	 * necessary for anonymous ftp's that chroot and can't do it later.
 	 */
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
-	addrlen = sizeof(his_addr); /* xxx */
-	if (getpeername(0, (struct sockaddr *)&his_addr, &addrlen) < 0) {
+	memset((char *)&his_addr, 0, sizeof (his_addr));
+	addrlen = sizeof(his_addr.si_su);
+	if (getpeername(0, (struct sockaddr *)&his_addr.si_su, &addrlen) < 0) {
 		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
 		exit(1);
 	}
-	addrlen = sizeof(ctrl_addr);
+	his_addr.su_len = addrlen;
+	memset((char *)&ctrl_addr, 0, sizeof (ctrl_addr));
+	addrlen = sizeof(ctrl_addr.si_su);
 	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
 		syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
 		exit(1);
 	}
+	ctrl_addr.su_len = addrlen;
 #ifdef INET6
 	if (his_addr.su_family == AF_INET6
-	 && IN6_IS_ADDR_V4MAPPED(&his_addr.su_sin6.sin6_addr)) {
+	 && IN6_IS_ADDR_V4MAPPED(&his_addr.su_6addr)) {
 #if 1
 		/*
 		 * IPv4 control connection arrived to AF_INET6 socket.
@@ -354,26 +358,24 @@ main(int argc, char *argv[])
 		 *
 		 * The assumption is untrue on SIIT environment.
 		 */
-		union sockunion tmp_addr;
+		struct sockinet tmp_addr;
 		const int off = sizeof(struct in6_addr) - sizeof(struct in_addr);
 
 		tmp_addr = his_addr;
 		memset(&his_addr, 0, sizeof(his_addr));
-		his_addr.su_sin.sin_family = AF_INET;
-		his_addr.su_sin.sin_len = sizeof(his_addr.su_sin);
-		memcpy(&his_addr.su_sin.sin_addr,
-			&tmp_addr.su_sin6.sin6_addr.s6_addr[off],
-			sizeof(his_addr.su_sin.sin_addr));
-		his_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
+		his_addr.su_family = AF_INET;
+		his_addr.su_len = sizeof(his_addr.si_su.su_sin);
+		memcpy(&his_addr.su_addr, &tmp_addr.su_6addr.s6_addr[off],
+		    sizeof(his_addr.su_addr));
+		his_addr.su_port = tmp_addr.su_port;
 
 		tmp_addr = ctrl_addr;
 		memset(&ctrl_addr, 0, sizeof(ctrl_addr));
-		ctrl_addr.su_sin.sin_family = AF_INET;
-		ctrl_addr.su_sin.sin_len = sizeof(ctrl_addr.su_sin);
-		memcpy(&ctrl_addr.su_sin.sin_addr,
-			&tmp_addr.su_sin6.sin6_addr.s6_addr[off],
-			sizeof(ctrl_addr.su_sin.sin_addr));
-		ctrl_addr.su_sin.sin_port = tmp_addr.su_sin6.sin6_port;
+		ctrl_addr.su_family = AF_INET;
+		ctrl_addr.su_len = sizeof(ctrl_addr.si_su.su_sin);
+		memcpy(&ctrl_addr.su_addr, &tmp_addr.su_6addr.s6_addr[off],
+		    sizeof(ctrl_addr.su_addr));
+		ctrl_addr.su_port = tmp_addr.su_port;
 #else
 		while (fgets(line, sizeof(line), fd) != NULL) {
 			if ((cp = strchr(line, '\n')) != NULL)
@@ -389,7 +391,7 @@ main(int argc, char *argv[])
 
 		mapped = 1;
 	} else
-#endif
+#endif /* INET6 */
 		mapped = 0;
 #ifdef IP_TOS
 	if (!mapped && his_addr.su_family == AF_INET) {
@@ -401,19 +403,11 @@ main(int argc, char *argv[])
 #endif
 	/* if the hostname hasn't been given, attempt to determine it */ 
 	if (hostname[0] == '\0') {
-#ifdef NI_MAXHOST
-		if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
-		    hostname, sizeof(hostname), NULL, 0, 0) != 0)
+		if (getnameinfo((struct sockaddr *)&ctrl_addr.si_su,
+		    ctrl_addr.su_len, hostname, sizeof(hostname), NULL, 0, 0)
+		    != 0)
 			(void)gethostname(hostname, sizeof(hostname));
 		hostname[sizeof(hostname) - 1] = '\0';
-#else
-		struct hostent *hp;
-		if ((hp = gethostbyaddr((const char *)&ctrl_addr,
-		    ctrl_addr.su_len, AF_INET)) == NULL)
-			(void)gethostname(hostname, sizeof(hostname));
-		else
-		    (void)strlcpy(hostname, hp->h_name, sizeof(hostname));
-#endif
 	}
 
 	/* set this here so klogin can use it... */
@@ -680,7 +674,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 
 					/* have a host specifier */
 		if ((p = strchr(glob, '@')) != NULL) {
-			u_int32_t	net, mask, addr;
+			unsigned long	net, mask, addr;
 			int		bits;
 
 			*p++ = '\0';
@@ -690,7 +684,7 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 			    &net, sizeof(net))) != -1) {
 				net = ntohl(net);
 				mask = 0xffffffffU << (32 - bits);
-				addr = ntohl(his_addr.su_sin.sin_addr.s_addr);
+				addr = ntohl(his_addr.su_addr.s_addr);
 				if ((addr & mask) != net)
 					continue;
 
@@ -1354,7 +1348,7 @@ getdatasock(const char *mode)
 	data_source.su_port = htons(port);
 
 	for (tries = 1; ; tries++) {
-		if (bind(s, (struct sockaddr *)&data_source,
+		if (bind(s, (struct sockaddr *)&data_source.si_su,
 		    data_source.su_len) >= 0)
 			break;
 		if (errno != EADDRINUSE || tries > 10)
@@ -1392,16 +1386,16 @@ dataconn(const char *name, off_t size, const char *mode)
 	file_size = size;
 	byte_count = 0;
 	if (size != (off_t) -1)
-		(void)snprintf(sizebuf, sizeof(sizebuf), " (%qd byte%s)",
-		    (qdfmt_t)size, PLURAL(size));
+		(void)snprintf(sizebuf, sizeof(sizebuf), " (" LLF " byte%s)",
+		    (LLT)size, PLURAL(size));
 	else
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
-		union sockunion from;
-		int s, fromlen = sizeof(from);
+		struct sockinet from;
+		int s, fromlen = sizeof(from.su_len);
 
 		(void) alarm(curclass.timeout);
-		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
+		s = accept(pdata, (struct sockaddr *)&from.si_su, &fromlen);
 		(void) alarm(0);
 		if (s < 0) {
 			reply(425, "Can't open data connection.");
@@ -1445,26 +1439,16 @@ dataconn(const char *name, off_t size, const char *mode)
 	if (file == NULL) {
 		char hbuf[INET6_ADDRSTRLEN];
 		char pbuf[10];
-#ifdef NI_NUMERICHOST
-		(void)getnameinfo((struct sockaddr *)&data_source,
-		    data_source.su_len, hbuf, sizeof(hbuf),
-		    pbuf, sizeof(pbuf), NI_NUMERICHOST | NI_NUMERICSERV);
-#else
-		struct hostent *hp;
-		if ((hp = gethostbyaddr((const char *)&data_source,
-		    data_source.su_len, AF_INET)) == NULL)
-			(void)strcpy(hostname,
-			inet_ntoa(data_source.su_sin.sin_addr));
-		else
-		    (void)strlcpy(hostname, hp->h_name, sizeof(hostname));
-		(void)snprintf(pbuf, sizeof(pbuf), "%d", data_source.su_port);
-#endif
+
+		getnameinfo((struct sockaddr *)&data_source.si_su,
+		    data_source.su_len, hbuf, sizeof(hbuf), pbuf, sizeof(pbuf),
+		    NI_NUMERICHOST | NI_NUMERICSERV);
 		reply(425, "Can't create data socket (%s,%s): %s.",
 		      hbuf, pbuf, strerror(errno));
 		return (NULL);
 	}
 	data = fileno(file);
-	while (connect(data, (struct sockaddr *)&data_dest,
+	while (connect(data, (struct sockaddr *)&data_dest.si_su,
 	    data_dest.su_len) < 0) {
 		if (errno == EADDRINUSE && retry < swaitmax) {
 			sleep((unsigned) swaitint);
@@ -1514,7 +1498,7 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
 	switch (type) {
 
 	case TYPE_A:
- /* XXXX: rate limit ascii send (get) */
+ /* XXXLUKEM: rate limit ascii send (get) */
 		(void) alarm(curclass.timeout);
 		while ((c = getc(instr)) != EOF) {
 			byte_count++;
@@ -1721,7 +1705,7 @@ receive_data(FILE *instr, FILE *outstr)
 
 	case TYPE_A:
 		(void) alarm(curclass.timeout);
- /* XXXX: rate limit ascii receive (put) */
+ /* XXXLUKEM: rate limit ascii receive (put) */
 		while ((c = getc(instr)) != EOF) {
 			byte_count++;
 			total_data_in++;
@@ -1794,7 +1778,7 @@ receive_data(FILE *instr, FILE *outstr)
 void
 statcmd(void)
 {
-	union sockunion *su = NULL;
+	struct sockinet *su = NULL;
 	static char ntop_buf[INET6_ADDRSTRLEN];
   	u_char *a, *p;
 	int ispassive, af;
@@ -1805,18 +1789,9 @@ statcmd(void)
 	reply(-211, "%s FTP server status:", hostname);
 	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);
 	ntop_buf[0] = '\0';
-#ifdef NI_NUMERICHOST
-	(void)getnameinfo((struct sockaddr *)&his_addr, his_addr.su_len,
-	    ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST);
-#else
-	{
-		struct hostent *hp;
-		if ((hp = gethostbyaddr((const char *)&his_addr,
-		    his_addr.su_len, AF_INET)) != NULL)
-			(void)strlcpy(ntop_buf, hp->h_name, sizeof(ntop_buf));
-	}
-#endif
-	if (ntop_buf[0] != '\0' && strcmp(remotehost, ntop_buf) != 0)
+	if (!getnameinfo((struct sockaddr *)&his_addr.si_su, his_addr.su_len,
+			ntop_buf, sizeof(ntop_buf), NULL, 0, NI_NUMERICHOST)
+	    && strcmp(remotehost, ntop_buf) != 0)
 		reply(0, "Connected to %s (%s)", remotehost, ntop_buf);
 	else
 		reply(0, "Connected to %s", remotehost);
@@ -1850,7 +1825,7 @@ statcmd(void)
 		su = NULL;
 	} else if (pdata != -1) {
 		reply(0, "in Passive mode");
-		su = (union sockunion *)&pasv_addr;
+		su = (struct sockinet *)&pasv_addr;
 		ispassive = 1;
 		goto printaddr;
 	} else if (usedefault == 0) {
@@ -1858,12 +1833,12 @@ statcmd(void)
 			reply(0, "EPSV only mode (EPSV ALL)");
 			goto epsvonly;
 		}
-		su = (union sockunion *)&data_dest;
+		su = (struct sockinet *)&data_dest;
  printaddr:
 							/* PASV/PORT */
 		if (su->su_family == AF_INET) {
-			a = (u_char *) &su->su_sin.sin_addr;
-			p = (u_char *) &su->su_sin.sin_port;
+			a = (u_char *) &su->su_addr;
+			p = (u_char *) &su->su_port;
 #define UC(b) (((int) b) & 0xff)
 			reply(0, "%s (%d,%d,%d,%d,%d,%d)",
 				ispassive ? "PASV" : "PORT" ,
@@ -1878,16 +1853,16 @@ statcmd(void)
 		alen = 0;
 		switch (su->su_family) {
 		case AF_INET:
-			a = (u_char *) &su->su_sin.sin_addr;
-			p = (u_char *) &su->su_sin.sin_port;
-			alen = sizeof(su->su_sin.sin_addr);
+			a = (u_char *) &su->su_addr;
+			p = (u_char *) &su->su_port;
+			alen = sizeof(su->su_addr);
 			af = 4;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			a = (u_char *) &su->su_sin6.sin6_addr;
-			p = (u_char *) &su->su_sin6.sin6_port;
-			alen = sizeof(su->su_sin6.sin6_addr);
+			a = (u_char *) &su->su_6addr;
+			p = (u_char *) &su->su_port;
+			alen = sizeof(su->su_6addr);
 			af = 6;
 			break;
 #endif
@@ -1907,32 +1882,12 @@ statcmd(void)
 
 		/* EPRT/EPSV */
  epsvonly:
-		switch (su->su_family) {
-		case AF_INET:
-			af = 1;
-			break;
-		case AF_INET6:
-			af = 2;
-			break;
-		default:
-			af = 0;
-			break;
-		}
+		af = af2epsvproto(su->su_family);
 		ntop_buf[0] = '\0';
-		if (af) {
-#ifdef NI_NUMERICHOST
-			(void)getnameinfo((struct sockaddr *)su, su->su_len,
-			    ntop_buf, sizeof(ntop_buf), NULL, 0,
-			    NI_NUMERICHOST);
-#else
-			struct hostent *hp;
-
-			if ((hp = gethostbyaddr((const char *)su,
-			    su->su_len, AF_INET)) != NULL)
-				(void)strlcpy(ntop_buf, hp->h_name,
-				    sizeof(ntop_buf));
-#endif
-			if (ntop_buf[0] != '\0')
+		if (af > 0) {
+			if (getnameinfo((struct sockaddr *)&su->si_su,
+			    su->su_len, ntop_buf, sizeof(ntop_buf), NULL, 0,
+			    NI_NUMERICHOST) == 0)
 				reply(0, "%s (|%d|%s|%d|)",
 				    ispassive ? "EPSV" : "EPRT",
 				    af, ntop_buf, ntohs(su->su_port));
@@ -1941,28 +1896,31 @@ statcmd(void)
 		reply(0, "No data connection");
 
 	if (logged_in) {
-		reply(0, "Data sent:        %qd byte%s in %qd file%s",
-		    (qdfmt_t)total_data_out, PLURAL(total_data_out),
-		    (qdfmt_t)total_files_out, PLURAL(total_files_out));
-		reply(0, "Data received:    %qd byte%s in %qd file%s",
-		    (qdfmt_t)total_data_in, PLURAL(total_data_in),
-		    (qdfmt_t)total_files_in, PLURAL(total_files_in));
-		reply(0, "Total data:       %qd byte%s in %qd file%s",
-		    (qdfmt_t)total_data, PLURAL(total_data),
-		    (qdfmt_t)total_files, PLURAL(total_files));
+		reply(0,
+		    "Data sent:        " LLF " byte%s in " LLF " file%s",
+		    (LLT)total_data_out, PLURAL(total_data_out),
+		    (LLT)total_files_out, PLURAL(total_files_out));
+		reply(0,
+		    "Data received:    " LLF " byte%s in " LLF " file%s",
+		    (LLT)total_data_in, PLURAL(total_data_in),
+		    (LLT)total_files_in, PLURAL(total_files_in));
+		reply(0,
+		    "Total data:       " LLF " byte%s in " LLF " file%s",
+		    (LLT)total_data, PLURAL(total_data),
+		    (LLT)total_files, PLURAL(total_files));
 	}
 	otbi = total_bytes_in;
 	otbo = total_bytes_out;
 	otb = total_bytes;
-	reply(0, "Traffic sent:     %qd byte%s in %qd transfer%s",
-	    (qdfmt_t)otbo, PLURAL(otbo),
-	    (qdfmt_t)total_xfers_out, PLURAL(total_xfers_out));
-	reply(0, "Traffic received: %qd byte%s in %qd transfer%s",
-	    (qdfmt_t)otbi, PLURAL(otbi),
-	    (qdfmt_t)total_xfers_in, PLURAL(total_xfers_in));
-	reply(0, "Total traffic:    %qd byte%s in %qd transfer%s",
-	    (qdfmt_t)otb, PLURAL(otb),
-	    (qdfmt_t)total_xfers, PLURAL(total_xfers));
+	reply(0, "Traffic sent:     " LLF " byte%s in " LLF " transfer%s",
+	    (LLT)otbo, PLURAL(otbo),
+	    (LLT)total_xfers_out, PLURAL(total_xfers_out));
+	reply(0, "Traffic received: " LLF " byte%s in " LLF " transfer%s",
+	    (LLT)otbi, PLURAL(otbi),
+	    (LLT)total_xfers_in, PLURAL(total_xfers_in));
+	reply(0, "Total traffic:    " LLF " byte%s in " LLF " transfer%s",
+	    (LLT)otb, PLURAL(otb),
+	    (LLT)total_xfers, PLURAL(total_xfers));
 
 	if (logged_in) {
 		struct ftpconv *cp;
@@ -2069,17 +2027,9 @@ reply(int n, const char *fmt, ...)
 static void
 dolog(struct sockaddr *who)
 {
-#ifdef NI_MAXHOST
+
 	(void)getnameinfo(who, who->sa_len, remotehost, sizeof(remotehost),
 	    NULL, 0, 0);
-#else
-	struct hostent *hp;
-
-	if ((hp = gethostbyaddr((const char *)who, who->sa_len, 
-	    AF_INET)) == NULL)
-		strcpy(remotehost,
-		    inet_ntoa(((struct sockaddr_in *)who)->sin_addr));
-#endif
 
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
@@ -2139,12 +2089,13 @@ myoob(int signo)
 	if (strcasecmp(cp, "STAT\r\n") == 0) {
 		tmpline[0] = '\0';
 		if (file_size != (off_t) -1)
-			reply(213, "Status: %qd of %qd byte%s transferred",
-			    (qdfmt_t)byte_count, (qdfmt_t)file_size,
+			reply(213,
+			    "Status: " LLF " of " LLF " byte%s transferred",
+			    (LLT)byte_count, (LLT)file_size,
 			    PLURAL(byte_count));
 		else
-			reply(213, "Status: %qd byte%s transferred",
-			    (qdfmt_t)byte_count, PLURAL(byte_count));
+			reply(213, "Status: " LLF " byte%s transferred",
+			    (LLT)byte_count, PLURAL(byte_count));
 	}
 }
 
@@ -2157,7 +2108,7 @@ bind_pasv_addr(void)
 	len = pasv_addr.su_len;
 	if (curclass.portmin == 0 && curclass.portmax == 0) {
 		pasv_addr.su_port = 0;
-		return (bind(pdata, (struct sockaddr *)&pasv_addr, len));
+		return (bind(pdata, (struct sockaddr *)&pasv_addr.si_su, len));
 	}
 
 	if (passiveport == 0) {
@@ -2176,7 +2127,7 @@ bind_pasv_addr(void)
 			return (-1);
 		}
 		pasv_addr.su_port = htons(port);
-		if (bind(pdata, (struct sockaddr *)&pasv_addr, len) == 0)
+		if (bind(pdata, (struct sockaddr *)&pasv_addr.si_su, len) == 0)
 			break;
 		if (errno != EADDRINUSE)
 			return (-1);
@@ -2209,11 +2160,12 @@ passive(void)
 	if (bind_pasv_addr() < 0)
 		goto pasv_error;
 	len = pasv_addr.su_len;
-	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
+	if (getsockname(pdata, (struct sockaddr *) &pasv_addr.si_su, &len) < 0)
 		goto pasv_error;
+	pasv_addr.su_len = len;
 	if (listen(pdata, 1) < 0)
 		goto pasv_error;
-	a = (char *) &pasv_addr.su_sin.sin_addr;
+	a = (char *) &pasv_addr.su_addr;
 	p = (char *) &pasv_addr.su_port;
 
 #define UC(b) (((int) b) & 0xff)
@@ -2237,11 +2189,14 @@ lpsvproto2af(int proto)
 {
 
 	switch (proto) {
-	case 4:	return AF_INET;
+	case 4:
+		return AF_INET;
 #ifdef INET6
-	case 6:	return AF_INET6;
+	case 6:
+		return AF_INET6;
 #endif
-	default: return -1;
+	default:
+		return -1;
 	}
 }
 
@@ -2250,11 +2205,14 @@ af2lpsvproto(int af)
 {
 
 	switch (af) {
-	case AF_INET:	return 4;
+	case AF_INET:
+		return 4;
 #ifdef INET6
-	case AF_INET6:	return 6;
+	case AF_INET6:
+		return 6;
 #endif
-	default:	return -1;
+	default:
+		return -1;
 	}
 }
 
@@ -2263,11 +2221,14 @@ epsvproto2af(int proto)
 {
 
 	switch (proto) {
-	case 1:	return AF_INET;
+	case 1:
+		return AF_INET;
 #ifdef INET6
-	case 2:	return AF_INET6;
+	case 2:
+		return AF_INET6;
 #endif
-	default: return -1;
+	default:
+		return -1;
 	}
 }
 
@@ -2276,11 +2237,14 @@ af2epsvproto(int af)
 {
 
 	switch (af) {
-	case AF_INET:	return 1;
+	case AF_INET:
+		return 1;
 #ifdef INET6
-	case AF_INET6:	return 2;
+	case AF_INET6:
+		return 2;
 #endif
-	default:	return -1;
+	default:
+		return -1;
 	}
 }
 
@@ -2324,8 +2288,9 @@ long_passive(char *cmd, int pf)
 	if (bind_pasv_addr() < 0)
 		goto pasv_error;
 	len = pasv_addr.su_len;
-	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
+	if (getsockname(pdata, (struct sockaddr *) &pasv_addr.si_su, &len) < 0)
 		goto pasv_error;
+	pasv_addr.su_len = len;
 	if (listen(pdata, 1) < 0)
 		goto pasv_error;
 	p = (char *) &pasv_addr.su_port;
@@ -2335,15 +2300,17 @@ long_passive(char *cmd, int pf)
 	if (strcmp(cmd, "LPSV") == 0) {
 		switch (pasv_addr.su_family) {
 		case AF_INET:
-			a = (char *) &pasv_addr.su_sin.sin_addr;
-			reply(228, "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+			a = (char *) &pasv_addr.su_addr;
+			reply(228,
+    "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 				4, 4, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				2, UC(p[0]), UC(p[1]));
 			return;
 #ifdef INET6
 		case AF_INET6:
-			a = (char *) &pasv_addr.su_sin6.sin6_addr;
-			reply(228, "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+			a = (char *) &pasv_addr.su_6addr;
+			reply(228,
+    "Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 				6, 16,
 				UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
 				UC(a[4]), UC(a[5]), UC(a[6]), UC(a[7]),
@@ -2357,9 +2324,11 @@ long_passive(char *cmd, int pf)
 	} else if (strcmp(cmd, "EPSV") == 0) {
 		switch (pasv_addr.su_family) {
 		case AF_INET:
+#ifdef INET6
 		case AF_INET6:
+#endif
 			reply(229, "Entering Extended Passive Mode (|||%d|)",
-			ntohs(pasv_addr.su_port));
+			    ntohs(pasv_addr.su_port));
 			return;
 		}
 	} else {
@@ -2426,8 +2395,7 @@ extended_port(const char *arg)
 	if (his_addr.su_family == AF_INET6 &&
 	    data_dest.su_family == AF_INET6) {
 		/* XXX more sanity checks! */
-		data_dest.su_sin6.sin6_scope_id =
-			his_addr.su_sin6.sin6_scope_id;
+		data_dest.su_scope_id = his_addr.su_scope_id;
 	}
 
 	if (tmp != NULL)
@@ -2436,7 +2404,7 @@ extended_port(const char *arg)
 		freeaddrinfo(res);
 	return 0;
 
-parsefail:
+ parsefail:
 	reply(500, "Invalid argument, rejected.");
 	usedefault = 1;
 	if (tmp != NULL)
@@ -2445,7 +2413,7 @@ parsefail:
 		freeaddrinfo(res);
 	return -1;
 
-protounsupp:
+ protounsupp:
 	epsv_protounsupp("Protocol not supported");
 	usedefault = 1;
 	if (tmp != NULL)
@@ -2482,8 +2450,8 @@ epsv_protounsupp(const char *message)
  * The file named "local" is already known to exist.
  * Generates failure reply on error.
  *
- * XXX this function should under go changes similar to
- * the mktemp(3)/mkstemp(3) changes.
+ * XXX:	this function should under go changes similar to
+ *	the mktemp(3)/mkstemp(3) changes.
  */
 static char *
 gunique(const char *local)
@@ -2708,26 +2676,16 @@ logcmd(const char *command, off_t bytes, const char *file1, const char *file2,
 	if (logging <=1)
 		return;
 
-	if ((p = realpath(file1, realfile)) == NULL) {
-#if 0	/* XXX: too noisy */
-		syslog(LOG_WARNING, "realpath `%s' failed: %s",
-		    realfile, strerror(errno));
-#endif
+	if ((p = realpath(file1, realfile)) == NULL)
 		p = file1;
-	}
 	len = snprintf(buf, sizeof(buf), "%s %s", command, p);
 
 	if (bytes != (off_t)-1) {
 		len += snprintf(buf + len, sizeof(buf) - len,
-		    " = %qd byte%s", (qdfmt_t) bytes, PLURAL(bytes));
+		    " = " LLF " byte%s", (LLT) bytes, PLURAL(bytes));
 	} else if (file2 != NULL) {
-		if ((p = realpath(file2, realfile)) == NULL) {
-#if 0	/* XXX: too noisy */
-			syslog(LOG_WARNING, "realpath `%s' failed: %s",
-			    realfile, strerror(errno));
-#endif
+		if ((p = realpath(file2, realfile)) == NULL)
 			p = file2;
-		}
 		len += snprintf(buf + len, sizeof(buf) - len, " %s", p);
 	}
 
