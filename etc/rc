@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.137 1999/11/23 08:05:04 lukem Exp $
+#	$NetBSD: rc,v 1.138 1999/11/23 15:12:43 hubertf Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -267,6 +267,9 @@ if checkyesno portmap; then
 fi
 
 if checkyesno ypserv; then
+	checkyesno portmap || \
+	logger -s "WARNING: set portmap=YES in /etc/rc.conf if ypserv=YES."
+
         echo -n ' ypserv';              ypserv $ypserv_flags
 fi
 
@@ -275,6 +278,9 @@ if checkyesno ypbind; then
 fi
 
 if checkyesno yppasswdd; then
+	checkyesno ypserv || \
+	logger -s "WARNING: set ypserv=YES in /etc/rc.conf if yppasswdd=YES."
+
         echo -n ' rpc.yppasswdd';       rpc.yppasswdd $yppasswdd_flags
 fi
 
@@ -305,6 +311,10 @@ mount -a
 # now start the rpc servers, for NFS server/client.
 if checkyesno nfs_client || checkyesno nfs_server; then
 	echo -n 'starting nfs daemons:'
+
+	if checkyesno nfs_server && ! checkyesno portmap; then
+		logger -s "WARNING: set portmap=YES in /etc/rc.conf if nfs_server=YES."
+	fi
 
 	nfs_locking=NO
 
