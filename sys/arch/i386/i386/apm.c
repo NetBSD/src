@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.19 1997/01/04 03:04:25 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.20 1997/04/15 01:45:11 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -137,9 +137,7 @@ STATIC void apm_disconnect __P((void *));
 #endif
 STATIC void apm_perror __P((const char *, struct apmregs *, ...))
 	    __kprintf_attribute__((__format__(__printf__,1,3)));
-#if 0
 STATIC void apm_powmgt_enable __P((int));
-#endif
 STATIC void apm_powmgt_engage __P((int, u_int));
 #if 0
 STATIC void apm_devpowmgt_enable __P((int, u_int));
@@ -293,6 +291,7 @@ int apm_userstandbys = 0;
 int apm_suspends = 0;
 int apm_battlow = 0;
 int apm_damn_fool_bios = 0;
+int apm_op_inprog = 0;
 
 STATIC void
 apm_get_powstate(dev)
@@ -321,6 +320,10 @@ apm_standby()
 
 static int apm_evindex = 0;
 
+/*
+ * return 0 if the user will notice and handle the event,
+ * return 1 if the kernel driver should do so.
+ */
 STATIC int
 apm_record_event(sc, event_type)
 struct apm_softc *sc;
@@ -352,33 +355,42 @@ struct apmregs *regs;
 
 	switch(regs->bx) {
 	case APM_USER_STANDBY_REQ:
-		DPRINTF(("user wants STANDBY--fat chance\n"));
-		(void) apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_REJECTED);
-#ifndef APM_NO_STANDBY
+	    DPRINTF(("user standby requested\n"));
+#ifdef APM_NO_STANDBY
+		(void) apm_set_powstate(APM_DEV_ALLDEVS,
+					APM_LASTREQ_REJECTED);
+		apm_powmgt_enable(1);	/* in case BIOS hates being spurned */
+#else
 		if (apm_record_event(sc, regs->bx))
 			apm_userstandbys++;
+		apm_op_inprog++;
+		(void) apm_set_powstate(APM_DEV_ALLDEVS,
+					APM_LASTREQ_INPROG);
 #endif
 		break;
 	case APM_STANDBY_REQ:
 		DPRINTF(("standby requested\n"));
 		if (apm_standbys || apm_suspends)
 		    DPRINTF(("damn fool BIOS did not wait for answer\n"));
-#ifndef APM_NO_STANDBY
-		if (apm_record_event(sc, regs->bx)) {
-			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_INPROG);
-			apm_standbys++;
-		} else
-#endif
-			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_REJECTED);
-		break;
-	case APM_USER_SUSPEND_REQ:
-		DPRINTF(("user wants suspend--fat chance!\n"));
+#ifdef APM_NO_STANDBY
 		(void) apm_set_powstate(APM_DEV_ALLDEVS,
 					APM_LASTREQ_REJECTED);
+		apm_powmgt_enable(1);	/* in case BIOS hates being spurned */
+#else
+		if (apm_record_event(sc, regs->bx))
+			apm_standbys++;
+		apm_op_inprog++;
+		(void) apm_set_powstate(APM_DEV_ALLDEVS,
+					APM_LASTREQ_INPROG);
+#endif
+		break;
+	case APM_USER_SUSPEND_REQ:
+		DPRINTF(("user wants suspend\n"));
 		if (apm_record_event(sc, regs->bx))
 			apm_suspends++;
+		apm_op_inprog++;
+		(void) apm_set_powstate(APM_DEV_ALLDEVS,
+					APM_LASTREQ_INPROG);
 		break;
 	case APM_SUSPEND_REQ:
 		DPRINTF(("suspend requested\n"));
@@ -387,13 +399,11 @@ struct apmregs *regs;
 			/* just give up the fight */
 			apm_damn_fool_bios = 1;
 		}
-		if (apm_record_event(sc, regs->bx)) {
-			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_INPROG);
+		if (apm_record_event(sc, regs->bx))
 			apm_suspends++;
-		} else
-			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_REJECTED);
+		apm_op_inprog++;
+		(void) apm_set_powstate(APM_DEV_ALLDEVS,
+					APM_LASTREQ_INPROG);
 		break;
 	case APM_POWER_CHANGE:
 		DPRINTF(("power status change\n"));
@@ -409,7 +419,7 @@ struct apmregs *regs;
 		apm_record_event(sc, regs->bx);
 		break;
 	case APM_CRIT_RESUME:
-		DPRINTF(("system resumed without us!\n"));
+		DPRINTF(("resume from critical system suspend!\n"));
 		inittodr(time.tv_sec);
 		apm_record_event(sc, regs->bx);
 		break;
@@ -452,14 +462,23 @@ void *arg;
 	struct apmregs regs;
 	struct apm_softc *sc = arg;
 
-	while (apm_get_event(&regs) == 0 && !apm_damn_fool_bios) {
+	/*
+	 * tell the BIOS we're working on it, if asked to do a
+	 * suspend/standby
+	 */
+	if (apm_op_inprog)
+		apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
+
+	while (apm_get_event(&regs) == 0 && !apm_damn_fool_bios)
 		apm_event_handle(sc, &regs);
-	};
+
 	if (APM_ERR_CODE(&regs) != APM_ERR_NOEVENTS)
 		apm_perror("get event", &regs);
 	if (apm_suspends) {
+		apm_op_inprog = 0;
 		apm_suspend();
 	} else if (apm_standbys || apm_userstandbys) {
+		apm_op_inprog = 0;
 		apm_standby();
 	}
 	apm_suspends = apm_standbys = apm_battlow = apm_userstandbys = 0;
@@ -467,20 +486,17 @@ void *arg;
 	timeout(apm_periodic_check, sc, hz);
 }
 
-#if 0
 STATIC void
 apm_powmgt_enable(onoff)
 int onoff;
 {
 	struct apmregs regs;
-	regs.bx = apm_minver == 0 ? APM_MGT_ALL : APM_DEV_APM_BIOS;
+	regs.bx = apm_minver == 0 ? APM_MGT_ALL : APM_DEV_ALLDEVS;
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (APMCALL(APM_PWR_MGT_ENABLE, &regs) != 0)
-		apm_perror("power management enable <%s %s>", &regs,
-			   apm_minver == 0 ? "all" : "apmbios",
+		apm_perror("power management enable all <%s>", &regs,
 			   onoff ? "enable" : "disable");
 }
-#endif
 
 STATIC void
 apm_powmgt_engage(onoff, dev)
@@ -939,6 +955,14 @@ apmattach(parent, self, aux)
 			 &apminfo.apm_segsel,
 			 apmsc->sc_dev.dv_xname));
 		apm_set_ver(apmsc);
+		/*
+		 * enable power management if it's disabled.
+		 */
+		/* XXX some bogus APM BIOSes don't set the disabled bit in
+		   the connect state, yet still complain about the functions
+		   being disabled when other calls are made.  sigh. */
+		if (apminfo.apm_detail & APM_BIOS_PM_DISABLED)
+			apm_powmgt_enable(1);
 		/*
 		 * Engage cooperative power mgt (we get to do it)
 		 * on all devices (v1.1).
