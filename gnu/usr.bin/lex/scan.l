@@ -27,7 +27,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/scan.l,v 1.5 1993/12/06 19:29:31 jtc Exp $ */
+/* $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/scan.l,v 1.6 1993/12/09 19:06:27 jtc Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"
@@ -39,7 +39,7 @@
 	int flexscan()
 
 #define RETURNCHAR \
-	yylval = yytext[0]; \
+	yylval = (unsigned char) yytext[0]; \
 	return CHAR;
 
 #define RETURNNAME \
@@ -360,11 +360,11 @@ CCL_CHAR	([^\\\n\]]|{ESCSEQ})
 				}
 			}
 
-<SECT2>[/|*+?.()]	return (int) yytext[0];
+<SECT2>[/|*+?.()]	return (unsigned char) yytext[0];
 <SECT2>.		RETURNCHAR;
 
 
-<SC>[,*]		return (int) yytext[0];
+<SC>[,*]		return (unsigned char) yytext[0];
 <SC>">"			BEGIN(SECT2); return '>';
 <SC>">"/^		BEGIN(CARETISBOL); return '>';
 <SC>{SCNAME}		RETURNNAME;
