@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.25 2002/01/28 02:16:56 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.26 2002/05/22 13:12:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.25 2002/01/28 02:16:56 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.26 2002/05/22 13:12:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,13 +176,6 @@ main(int argc, char *argv[])
 		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL);
 		todo |= SHOW_STATS_X;
 	}
-
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
-	if (nlistf != NULL || memf != NULL)
-		setgid(getgid());
 
 	dkinit(0);
 	dkreadstats();
