@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.14 1998/07/21 00:40:17 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.15 1998/07/21 00:52:15 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -305,6 +305,7 @@ void	csCopyTxFrame __P((struct cs_softc *sc, struct mbuf *pMbufChain));
 void	csSetLadrFilt __P((struct cs_softc *sc, struct ethercom *ec));
 u_int16_t csHashIndex __P((char *addr));
 void	csCounterEvent __P((struct cs_softc * sc, u_int16_t cntEvent));
+void	csPrintRxErrors __P((struct cs_softc *sc, u_int16_t rxEvent));
 
 /*
  * GLOBAL DECLARATIONS
@@ -1560,6 +1561,29 @@ csTransmitEvent(sc, txEvent)
 	}
 }
 
+void
+csPrintRxErrors(sc, rxEvent)
+	struct cs_softc *sc;
+	u_int16_t rxEvent;
+{
+
+	if (rxEvent & RX_EVENT_RUNT)
+		printf("%s: runt\n", sc->sc_dev.dv_xname);
+
+	if (rxEvent & RX_EVENT_X_DATA)
+		printf("%s: extra data\n", sc->sc_dev.dv_xname);
+
+	if (rxEvent & RX_EVENT_CRC_ERR) {
+		if (rxEvent & RX_EVENT_DRIBBLE)
+			printf("%s: alignment error\n", sc->sc_dev.dv_xname);
+		else
+			printf("%s: CRC error\n", sc->sc_dev.dv_xname);
+	} else {
+		if (rxEvent & RX_EVENT_DRIBBLE)
+			printf("%s: dribble bits\n", sc->sc_dev.dv_xname);
+	}
+}
+
 void 
 csReceiveEvent(sc, rxEvent)
 	struct cs_softc *sc;
@@ -1572,32 +1596,12 @@ csReceiveEvent(sc, rxEvent)
 		/* Increment the input error count */
 		pIf->if_ierrors++;
 
-		/* If debugging is enabled then log error messages */
+		/*
+		 * If debugging is enabled then log error messages.
+		 */
 		if (pIf->if_flags & IFF_DEBUG) {
-			/* If an error bit is set */
 			if (rxEvent != REG_NUM_RX_EVENT) {
-				if (rxEvent & RX_EVENT_RUNT) {
-					printf("%s: runt\n",
-					    sc->sc_dev.dv_xname);
-				}
-				if (rxEvent & RX_EVENT_X_DATA) {
-					printf("%s: extra data\n",
-					    sc->sc_dev.dv_xname);
-				}
-				if (rxEvent & RX_EVENT_CRC_ERR) {
-					if (rxEvent & RX_EVENT_DRIBBLE) {
-						printf("%s: alignment error\n",
-						    sc->sc_dev.dv_xname);
-					} else {
-						printf("%s: CRC error\n",
-						    sc->sc_dev.dv_xname);
-					}
-				} else {
-					if (rxEvent & RX_EVENT_DRIBBLE) {
-						printf("%s: dribble bits\n",
-						    sc->sc_dev.dv_xname);
-					}
-				}
+				csPrintRxErrors(sc, rxEvent);
 
 				/*
 				 * Must read the length of all received
@@ -1942,35 +1946,11 @@ csProcessRxDMA(sc)
 
 				/*
 				 * If debugging is enabled then log error
-				 * messages
+				 * messages if we got any.
 				 */
-				if (pIf->if_flags & IFF_DEBUG) {
-					/* If an error bit is set */
-					if (status != REG_NUM_RX_EVENT) {
-						if (status & RX_EVENT_RUNT) {
-							printf("%s: runt\n",
-							  sc->sc_dev.dv_xname);
-						}
-						if (status & RX_EVENT_X_DATA) {
-							printf("%s: extra data\n",
-							  sc->sc_dev.dv_xname);
-						}
-						if (status & RX_EVENT_CRC_ERR) {
-							if (status & RX_EVENT_DRIBBLE) {
-								printf("%s: alignment error\n",
-								  sc->sc_dev.dv_xname);
-							} else {
-								printf("%s: CRC error\n",
-								  sc->sc_dev.dv_xname);
-							}
-						} else {
-							if (status & RX_EVENT_DRIBBLE) {
-								printf("%s: dribble bits\n",
-								  sc->sc_dev.dv_xname);
-							}
-						}
-					}
-				}
+				if ((pIf->if_flags & IFF_DEBUG) &&
+				    status != REG_NUM_RX_EVENT)
+					csPrintRxErrors(sc, status);
 			}
 			/*
 			 * now update the current frame pointer. the
