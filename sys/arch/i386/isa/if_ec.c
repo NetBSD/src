@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ec.c,v 1.9 1993/05/22 08:01:15 cgd Exp $
+ *	$Id: if_ec.c,v 1.10 1993/06/14 16:45:25 mycroft Exp $
  */
 
 /*
@@ -186,7 +186,7 @@ struct isa_device *is;
 /*
  *  All done. 
  */
-	return(8);
+	return(16);
 }
 
 ecattach(is)

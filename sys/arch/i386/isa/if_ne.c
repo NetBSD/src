@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.5 1993/05/22 08:01:23 cgd Exp $
+ *	$Id: if_ne.c,v 1.6 1993/06/14 16:45:28 mycroft Exp $
  */
 
 /*
@@ -230,7 +230,7 @@ word:
 	for(i=0; i < 6; i++)
 		ns->ns_addrp[i] = boarddata[i];
 	splx(s);
-	return (8);
+	return (16);
 }
 
 /*
