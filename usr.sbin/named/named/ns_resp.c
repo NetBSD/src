@@ -1,6 +1,6 @@
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: ns_resp.c,v 1.2 1997/04/13 10:51:45 mrg Exp $";
+static char rcsid[] = "$Id: ns_resp.c,v 1.3 1997/04/21 05:54:05 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -404,8 +404,9 @@ ns_resp(msg, msglen)
 			    from_addr.sin_addr.s_addr)
 				break;
 		if ((u_int)n >= qp->q_naddr) {
-			if (!haveComplained((char*)from_addr.sin_addr.s_addr,
-					    "unexpected source")) {
+			if (!haveComplained((char*)(long)
+			    from_addr.sin_addr.s_addr,
+			    "unexpected source")) {
 				syslog(LOG_INFO,
 				       "Response from unexpected source (%s)",
 				       sin_ntoa(&from_addr));
@@ -602,8 +603,9 @@ ns_resp(msg, msglen)
 					qp->q_addr[i].nretry = MAXRETRY;
 #ifdef LAME_LOGGING
 			if (class == C_IN &&
-			    !haveComplained((char*)nhash(sin_ntoa(&from_addr)),
-					    (char*)nhash(qp->q_domain)))
+			    !haveComplained((char*)(long)
+			      nhash(sin_ntoa(&from_addr)),
+			      (char*)(long)nhash(qp->q_domain)))
 				syslog(LAME_LOGGING,
 				      "Lame server on '%s' (in '%s'?): %s%s\n",
 				       qname, qp->q_domain, 
@@ -1181,7 +1183,8 @@ ns_resp(msg, msglen)
 	if (sendto(ds, (char*)qp->q_msg, qp->q_msglen, 0,
 		   (struct sockaddr *)nsa,
 		   sizeof(struct sockaddr_in)) < 0) {
-		if (!haveComplained((char*)nsa->sin_addr.s_addr, sendtoStr))
+		if (!haveComplained((char*)(long)nsa->sin_addr.s_addr,
+		    sendtoStr))
 			syslog(LOG_INFO, "ns_resp: sendto(%s): %m",
 			       sin_ntoa(nsa));
 		nameserIncr(nsa->sin_addr, nssSendtoErr);
@@ -1196,8 +1199,8 @@ ns_resp(msg, msglen)
 	return;
 
  formerr:
-	if (!haveComplained((char*)from_addr.sin_addr.s_addr,
-			    (char*)nhash(formerrmsg)))
+	if (!haveComplained((char*)(long)from_addr.sin_addr.s_addr,
+			    (char*)(long)nhash(formerrmsg)))
 		syslog(LOG_INFO, "Malformed response from %s (%s)\n",
 		       sin_ntoa(&from_addr), formerrmsg);
 #ifdef XSTATS
@@ -1684,8 +1687,9 @@ doupdate(msg, msglen, rrp, zone, savens, flags, cred)
 		else if (qname[0] == '\0')
 			qname[0] = '.';
 		if (bogus && ((dname[0] == '\0') && (zone == 0))) {
-			if (!haveComplained((char*)from_addr.sin_addr.s_addr,
-					    "bogus root NS"))
+			if (!haveComplained((char*)(long)
+			    from_addr.sin_addr.s_addr,
+			    "bogus root NS"))
 				syslog(LOG_NOTICE,
 			 "bogus root NS %s rcvd from %s on query for \"%s\"",
 				       data, sin_ntoa(&from_addr), qname);
@@ -1694,8 +1698,9 @@ doupdate(msg, msglen, rrp, zone, savens, flags, cred)
 		}
 #ifdef BOGUSNS
 		if (bogusns) {
-			if (!haveComplained((char*)from_addr.sin_addr.s_addr,
-					    "bogus nonroot NS"))
+			if (!haveComplained((char*)(long)
+			    from_addr.sin_addr.s_addr,
+			    "bogus nonroot NS"))
 				syslog(LOG_INFO,
 			"bogus nonroot NS %s rcvd from %s on query for \"%s\"",
 				       data, sin_ntoa(&from_addr), qname);
@@ -1761,8 +1766,8 @@ send_msg(msg, msglen, qp)
 		if (sendto(qp->q_dfd, (char*)msg, msglen, 0,
 			   (struct sockaddr *)&qp->q_from,
 			   sizeof(qp->q_from)) < 0) {
-			if (!haveComplained((char*)qp->q_from.sin_addr.s_addr,
-					    sendtoStr))
+			if (!haveComplained((char*)(long)
+			    qp->q_from.sin_addr.s_addr, sendtoStr))
 #if defined(SPURIOUS_ECONNREFUSED)
                            if (errno != ECONNREFUSED)
 #endif
@@ -2129,7 +2134,8 @@ sysquery(dname, class, type, nss, nsc, opcode)
 	if (sendto(qp->q_dfd, (char*)qp->q_msg, qp->q_msglen, 0,
 		   (struct sockaddr *)nsa,
 		   sizeof(struct sockaddr_in)) < 0) {
-		if (!haveComplained((char*)nsa->sin_addr.s_addr, sendtoStr))
+		if (!haveComplained((char*)(long)nsa->sin_addr.s_addr,
+		    sendtoStr))
 			syslog(LOG_INFO, "sysquery: sendto(%s): %m",
 			       sin_ntoa(nsa));
 		nameserIncr(nsa->sin_addr, nssSendtoErr);
