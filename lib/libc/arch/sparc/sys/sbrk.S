@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.6 1999/06/03 20:14:58 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.6.8.1 2000/08/22 07:25:27 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.6 1999/06/03 20:14:58 kleink Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.6.8.1 2000/08/22 07:25:27 kleink Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -53,11 +53,15 @@
 	.globl	_end
 	.globl	CURBRK
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
+
 	.data
 CURBRK:	.long	_end
 	.text
 
-ENTRY(sbrk)
+ENTRY(_sbrk)
 #ifdef PIC
 	PIC_PROLOGUE(%o5,%o4)
 	ld	[%o5 + CURBRK], %o2
