@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/01/07 04:47:10 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/03/25 07:43:50 lukem Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -57,10 +57,6 @@ ${CBIN}: libhack.o
 
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
-
-# turn off small gethostby* temporarily
-HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o localeconv.o perror.o setlocale.o strerror.o strsignal.o utmp.o yplib.o
-DBG=	-Os
 
 # Used in building bootfloppy
 echoimage:
