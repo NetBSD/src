@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.45 2001/12/21 08:54:54 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.46 2002/03/21 02:11:39 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.45 2001/12/21 08:54:54 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.46 2002/03/21 02:11:39 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -117,6 +117,7 @@ in6_pcballoc(so, head)
 	struct in6pcb *head;
 {
 	struct in6pcb *in6p;
+	int s;
 #ifdef IPSEC
 	int error;
 #endif
@@ -136,10 +137,12 @@ in6_pcballoc(so, head)
 		return error;
 	}
 #endif /* IPSEC */
+	s = splnet();
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;
 	in6p->in6p_next->in6p_prev = in6p;
+	splx(s);
 	if (ip6_v6only)
 		in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
 	so->so_pcb = (caddr_t)in6p;
@@ -437,6 +440,7 @@ in6_pcbdetach(in6p)
 	struct in6pcb *in6p;
 {
 	struct socket *so = in6p->in6p_socket;
+	int s;
 
 #ifdef IPSEC
 	ipsec6_delete_pcbpolicy(in6p);
@@ -456,9 +460,11 @@ in6_pcbdetach(in6p)
 	if (in6p->in6p_route.ro_rt)
 		rtfree(in6p->in6p_route.ro_rt);
 	ip6_freemoptions(in6p->in6p_moptions);
+	s = splnet();
 	in6p->in6p_next->in6p_prev = in6p->in6p_prev;
 	in6p->in6p_prev->in6p_next = in6p->in6p_next;
 	in6p->in6p_prev = NULL;
+	splx(s);
 	FREE(in6p, M_PCB);
 }
 
