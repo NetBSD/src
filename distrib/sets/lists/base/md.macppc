@@ -1,4 +1,8 @@
-# $NetBSD: md.macppc,v 1.7 2000/11/30 16:06:25 jdolecek Exp $
+# $NetBSD: md.macppc,v 1.8 2000/12/16 22:36:17 mycroft Exp $
+./dev/audio
+./dev/audioctl
+./dev/mixer
+./dev/sound
 ./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
