@@ -6883,16 +6883,38 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
+  const char *default_cpu = TARGET_CPU;
+  int default_arch, i;
+
+  /* Get the canonical name for the default target CPU. */
+  if (*default_cpu == 'm')
+    default_cpu++;
+  for (i = 0; i < n_archs; i++)
+    {
+      if (strcasecmp (default_cpu, archs[i].name) == 0)
+	{
+	  default_arch = archs[i].arch;
+	  for (i = 0; i < n_archs; i++)
+	  if (archs[i].arch == default_arch
+	      && !archs[i].alias)
+	    {
+	      default_cpu = archs[i].name;
+	      break;
+	    }
+	}
+    }
+      
   fprintf (stream, _("\
 680X0 options:\n\
 -l			use 1 word for refs to undefined symbols [default 2]\n\
 -m68000 | -m68008 | -m68010 | -m68020 | -m68030 | -m68040 | -m68060 |\n\
 -m68302 | -m68331 | -m68332 | -m68333 | -m68340 | -m68360 | -mcpu32 |\n\
 -m5200  | -m5202  | -m5204  | -m5206  | -m5206e | -m5307  | -m5407\n\
-			specify variant of 680X0 architecture [default 68020]\n\
+			specify variant of 680X0 architecture [default %s]\n\
 -m68881 | -m68882 | -mno-68881 | -mno-68882\n\
 			target has/lacks floating-point coprocessor\n\
-			[default yes for 68020, 68030, and cpu32]\n"));
+			[default yes for 68020, 68030, and cpu32]\n"),
+           default_cpu);
   fprintf (stream, _("\
 -m68851 | -mno-68851\n\
 			target has/lacks memory-management unit coprocessor\n\
@@ -7085,5 +7107,8 @@ void m68k_elf_final_processing()
    /* Set file-specific flags if this is a cpu32 processor */
    if (cpu_of_arch (current_architecture) & cpu32)
      elf_elfheader (stdoutput)->e_flags |= EF_CPU32;
+   else if ((cpu_of_arch (current_architecture) & m68000up)
+	    && !(cpu_of_arch (current_architecture) & m68020up))
+     elf_elfheader (stdoutput)->e_flags |= EF_M68000;
 }
 #endif
