@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.21 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.22 2000/02/06 08:06:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -507,7 +507,7 @@ udp6_ctlinput(cmd, sa, d)
 
 	/* translate addresses into internal form */
 	sa6 = *(struct sockaddr_in6 *)sa;
-	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
 		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 	if (ip6) {
