@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.7 1997/10/07 17:56:30 gwr Exp $ */
+/*	$NetBSD: dma.c,v 1.7.4.1 1998/01/27 19:50:50 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -52,8 +52,8 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <sun3x/dev/dmareg.h>
-#include <sun3x/dev/dmavar.h>
+#include <sun3/dev/dmareg.h>
+#include <sun3/dev/dmavar.h>
 
 /*
  * Pseudo-attach function.  Called from the esp driver during its

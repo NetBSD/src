@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.11 1997/01/27 21:59:50 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11.14.1 1998/01/27 19:51:00 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,12 +43,13 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
-
-#include <machine/control.h>
 #include <machine/db_machdep.h>
-#include <machine/machdep.h>
 #include <machine/pte.h>
+
+#include <sun3/sun3/machdep.h>
+#ifdef	_SUN3_
+#include <sun3/sun3/control.h>
+#endif	/* SUN3 */
 
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
@@ -116,14 +117,42 @@ db_mach_reboot(addr, have_addr, count, modif)
 
 
 static void pte_print __P((int));
-static char *pgt_names[] = {
-	"MEM", "OBIO", "VMES", "VMEL" };
 
+static void
+db_mach_pagemap(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	u_long va = trunc_page((u_long)addr);
+	int pte;
+#ifdef	_SUN3_
+	int sme;
+
+	sme = get_segmap(va);
+	if (sme == 0xFF) pte = 0;
+	else pte = get_pte(va);
+	db_printf("0x%08x [%02x] 0x%08x", va, sme, pte);
+#endif /* SUN3 */
+#ifdef	_SUN3X_
+	pte = get_pte(va);
+	db_printf("0x%08x 0x%08x", va, pte);
+#endif /* SUN3X */
+
+	pte_print(pte);
+	db_next = va + NBPG;
+}
+
+#ifdef	_SUN3_
 static void
 pte_print(pte)
 	int pte;
 {
 	int t;
+	static char *pgt_names[] = {
+		"MEM", "OBIO", "VMES", "VMEL",
+	};
 
 	if (pte & PG_VALID) {
 		db_printf(" V");
@@ -144,21 +173,25 @@ pte_print(pte)
 	}
 	else db_printf(" INVALID\n");
 }
+#endif	/* SUN3 */
 
+#ifdef	_SUN3X_
 static void
-db_mach_pagemap(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+pte_print(pte)
+	int pte;
 {
-	int pte, sme;
 
-	sme = get_segmap(addr);
-	if (sme == 0xFF) pte = 0;
-	else pte = get_pte(addr);
-
-	db_printf("0x%08x [%02x] 0x%08x", addr, sme, pte);
-	pte_print(pte);
-	db_next = addr + NBPG;
+	if (pte & MMU_SHORT_PTE_DT) {
+		if (pte & MMU_SHORT_PTE_CI)
+			db_printf(" CI");
+		if (pte & MMU_SHORT_PTE_M)
+			db_printf(" Mod");
+		if (pte & MMU_SHORT_PTE_USED)
+			db_printf(" Ref");
+		if (pte & MMU_SHORT_PTE_WP)
+			db_printf(" WP");
+		db_printf(" DT%d\n", pte & MMU_SHORT_PTE_DT);
+	}
+	else db_printf(" INVALID\n");
 }
+#endif	/* SUN3X */

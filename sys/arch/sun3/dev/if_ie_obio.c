@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.12 1997/12/08 21:49:50 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.12.2.1 1998/01/27 19:50:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/obio.h>
 #include <machine/idprom.h>
 #include <machine/vmparam.h>
 
@@ -91,10 +90,6 @@ ie_obio_match(parent, cf, args)
 {
 	struct confargs *ca = args;
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
@@ -123,7 +118,8 @@ ie_obio_attach(parent, self, args)
 	sc->sc_bzero = bzero;
 
 	/* Map in the control registers. */
-	sc->sc_reg = obio_mapin(ca->ca_paddr, sizeof(struct ieob));
+	sc->sc_reg = bus_mapin(ca->ca_bustype,
+		ca->ca_paddr, sizeof(struct ieob));
 
 	/*
 	 * The on-board "ie" is wired-up such that its

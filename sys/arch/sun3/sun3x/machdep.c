@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27.2.1 1998/01/26 19:51:23 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27.2.2 1998/01/27 19:51:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,16 +87,16 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <machine/dvma.h>
+#include <machine/idprom.h>
+#include <machine/kcore.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/dvma.h>
-#include <machine/kcore.h>
-#include <machine/db_machdep.h>
-#include <machine/idprom.h>
-#include <machine/machdep.h>
 
-extern char version[];
+#include <machine/db_machdep.h>
+
+#include <sun3/sun3/machdep.h>
 
 /* Defined in locore.s */
 extern char kernel_text[];
@@ -105,9 +105,9 @@ extern char etext[];
 
 int	physmem;
 int	fputype;
-
 caddr_t	msgbufaddr;
 
+/* Virtual page frame for /dev/mem (see mem.c) */
 vm_offset_t vmmap;
 
 /*
@@ -131,7 +131,7 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
-unsigned char cpu_machine_id = 0;
+u_char cpu_machine_id = 0;
 char *cpu_string = NULL;
 int cpu_has_vme = 0;
 int has_iocache = 0;
@@ -142,14 +142,18 @@ static void initcpu __P((void));
 /*
  * Console initialization: called early on from main,
  * before vm init or cpu_startup.  This system is able
- * to setup the console much earlier than here (thanks
- * to some help from the PROM monitor) so all that is
- * left to do here is the debugger stuff.
+ * to use the console for output immediately (via PROM)
+ * but can not use it for input until after this point.
  */
 void
 consinit()
 {
-	/* Note: cninit() done earlier.  (See _startup.c) */
+
+	/*
+	 * Switch from the PROM console (output only)
+	 * to our own console driver.
+	 */
+	cninit();
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -267,7 +271,8 @@ cpu_startup()
 	identifycpu();
 	initfpu();	/* also prints FPU type */
 
-	printf("real mem = %d\n", ctob(physmem));
+	size = ptoa(physmem);
+	printf("real  mem = %dK (0x%lx)\n", (size >> 10), size);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -341,7 +346,8 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
-	printf("avail mem = %d\n", (int) ptoa(cnt.v_free_count));
+	size = ptoa(cnt.v_free_count);
+	printf("avail mem = %dK (0x%lx)\n", (size >> 10), size);
 	printf("using %d buffers containing %d bytes of memory\n",
 		   nbuf, bufpages * CLBYTES);
 
@@ -439,17 +445,13 @@ identifycpu()
 {
 	unsigned char machtype;
 
-	/* Find the IDPROM and copy it to memory. */
-	/* Note: this needs to use peek_byte(). */
-	idprom_init();
-
 	machtype = identity_prom.idp_machtype;
-	if ((machtype & CPU_ARCH_MASK) != SUN3X_ARCH) {
-		printf("not a sun3x?\n");
+	if ((machtype & IDM_ARCH_MASK) != IDM_ARCH_SUN3X) {
+		printf("Bad IDPROM arch!\n");
 		sunmon_abort();
 	}
 
-	cpu_machine_id = machtype & SUN3X_IMPL_MASK;
+	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
 	case SUN3X_MACH_80:

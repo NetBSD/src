@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.4 1997/04/25 18:00:49 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.4.4.1 1998/01/27 19:51:24 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,18 +92,3 @@
 #define	OBIO_FDC    		0x6e000000	/* 3/80 only */
 #define	OBIO_PRINTER_PORT	0x6f00003c	/* 3/80 only */
 
-#ifdef	_KERNEL
-
-void	obio_init __P((void));
-caddr_t	obio_find_mapping __P((int pa, int size));
-caddr_t	obio_mapin __P((int, int));
-caddr_t	obio_vm_alloc __P((int));
-
-/*
- * These are some OBIO devices that need early init calls.
- */
-void	intreg_init __P((void));
-void	leds_init __P((void));
-void	zs_init __P((void));
-
-#endif	/* _KERNEL */

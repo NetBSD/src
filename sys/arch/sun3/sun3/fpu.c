@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.14 1997/10/06 19:58:03 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.14.4.1 1998/01/27 19:51:02 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * Floating Point Unit (MC68881)
+ * Floating Point Unit (MC68881/882)
  * Probe for the FPU at autoconfig time.
  */
 
@@ -51,10 +51,9 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/mon.h>
-#include <machine/control.h>
-#include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
+#include <sun3/sun3/machdep.h>
 
 static int fpu_probe __P((void));
 
@@ -72,12 +71,9 @@ void
 initfpu()
 {
 	char *descr;
-	int enab_reg;
 
 	/* Set the FPU bit in the "system enable register" */
-	enab_reg = get_control_byte(SYSTEM_ENAB);
-	enab_reg |= SYSTEM_ENAB_FPP;
-	set_control_byte(SYSTEM_ENAB, enab_reg);
+	enable_fpu(1);
 
 	fputype = fpu_probe();
 	if ((0 <= fputype) && (fputype <= 2))
@@ -89,9 +85,7 @@ initfpu()
 
 	if (fputype == 0) {
 		/* Might as well turn the enable bit back off. */
-		enab_reg = get_control_byte(SYSTEM_ENAB);
-		enab_reg &= ~SYSTEM_ENAB_FPP;
-		set_control_byte(SYSTEM_ENAB, enab_reg);
+		enable_fpu(0);
 	}
 }
 
@@ -110,5 +104,11 @@ fpu_probe()
 	/* This will trap if there is no FPU present. */
 	m68881_restore(&null_fpf);
 	nofault = NULL;
+
+	/* XXX - See atari version. */
+#ifdef	_SUN3X_
+	return(2);
+#else
 	return(1);
+#endif
 }

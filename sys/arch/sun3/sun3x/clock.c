@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 1998/01/12 20:35:11 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.14.4.1 1998/01/27 19:51:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,14 +72,14 @@
 #include <machine/cpu.h>
 #include <machine/idprom.h>
 #include <machine/leds.h>
-#include <machine/obio.h>
-#include <machine/machdep.h>
-
-#include <sun3/sun3/interreg.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170.h>
-#include "mostek48t02.h"
+
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3/interreg.h>
+
+#include <sun3/sun3x/mostek48t02.h>
 
 #define SUN3_470	Yes
 
@@ -136,10 +136,6 @@ oclock_match(parent, cf, args)
 	if (cf->cf_unit != 0)
 		return (0);
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	/*
 	 * The 3/80 can not probe the Intersil absent,
 	 * but it never has one, so "just say no."
@@ -169,7 +165,8 @@ oclock_attach(parent, self, args)
 	printf("\n");
 
 	/* Get a mapping for it. */
-	va = obio_mapin(ca->ca_paddr, sizeof(struct intersil7170));
+	va = bus_mapin(ca->ca_bustype,
+	    ca->ca_paddr, sizeof(struct intersil7170));
 	if (!va)
 		panic("oclock_attach");
 	intersil_va = va;
@@ -217,14 +214,9 @@ clock_match(parent, cf, args)
 	struct cfdata *cf;
     void *args;
 {
-	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
-		return (0);
-
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
 		return (0);
 
 	/* If intersil was found, use that. */
@@ -250,14 +242,11 @@ clock_attach(parent, self, args)
 	printf("\n");
 
 	/* Get a mapping for it. */
-	va = obio_mapin(ca->ca_paddr, sizeof(struct mostek_clkreg));
+	va = bus_mapin(ca->ca_bustype,
+	    ca->ca_paddr, sizeof(struct mostek_clkreg));
 	if (!va)
 		panic("clock_attach");
 	mostek_clk_va = va;
-
-	/* The 3/80 needs to override the LED pattern. */
-	if (cpu_machine_id == SUN3X_MACH_80)
-		leds_hydra();
 
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()

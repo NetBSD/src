@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.14 1998/01/12 20:32:24 thorpej Exp $	*/
+/*	$NetBSD: obmem.c,v 1.14.4.1 1998/01/27 19:51:11 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/obmem.h>
+#include <sun3/sun3/obmem.h>
 
 static int  obmem_match __P((struct device *, struct cfdata *, void *));
 static void obmem_attach __P((struct device *, struct device *, void *));
