@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30.2.2 2000/10/04 08:24:27 itojun Exp $
+# $NetBSD: GENERIC,v 1.30.2.3 2000/10/06 23:19:44 deberg Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.30.2.2 $"
+#ident 		"GENERIC-$Revision: 1.30.2.3 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -118,6 +118,7 @@ options 	NFS_BOOT_DHCP
 
 # wscons options
 options         RCONS_2BPP              # necessary for nextdisplay
+options         RCONS_16BPP		# necessary for color nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
