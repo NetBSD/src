@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_pci.S,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: bios_pci.S,v 1.2 1997/06/13 13:32:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,7 @@ ENTRY(pcibios_present)
 ok1:
 	data32
 	movl	$0,%ebx
-	mov %ax, %bx
+	mov	%eax, %ebx		# !!! at run time, it's mov %ax,%bx
 err1:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
@@ -116,7 +116,7 @@ ENTRY(pcibios_finddev)
 ok2:
 	data32
 	movl	$0,%edx
-	movb %ah, %dl
+	movb	%ah, %dl
 err2:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
@@ -162,7 +162,7 @@ ENTRY(pcibios_cfgread)
 ok3:
 	data32
 	movl	$0,%edx
-	movb %ah, %dl
+	movb	%ah, %dl
 err3:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
@@ -209,7 +209,7 @@ ENTRY(pcibios_cfgwrite)
 ok4:
 	data32
 	movl	$0,%edx
-	movb %ah, %dl
+	movb	%ah, %dl
 err4:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
