@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.12 1997/04/13 20:14:22 cgd Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.12.2.1 1997/05/13 03:48:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -133,8 +133,11 @@ bha_pci_attach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = pa->pa_dmat;
 	if (!bha_find(iot, ioh, &bpd))
 		panic("bha_pci_attach: bha_find failed");
+
+	sc->sc_dmaflags = 0;
 
 	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
