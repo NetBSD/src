@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.11 1994/03/08 10:48:49 chopps Exp $
+ *	$Id: autoconf.c,v 1.12 1994/03/28 06:15:55 chopps Exp $
  */
 
 /*
@@ -881,12 +881,27 @@ find_devs()
 	    {
 	    /* XXXX need to distinguish different controllers with a single driver */
 	    case PROD_IVS_VECTOR:
-	      /* XXXX Ouch! board addresss isn't Zorro II or Zorro III! */
+	      /*
+	       * XXXX Ouch! board addresss isn't Zorro II or Zorro III!
+	       * XXXX Kludge it up until I can do it better (MLH).
+	       */
 	      {
-		if (pmap_extract(zorro2map(0x00f00000)) == 0x00f00000) {
-		  /* remap to Vector pa */
+		/* XXXX pa 0x00f00000 shouldn't be used for anything */
+		if (pmap_extract(kernel_pmap, zorro2map(0x00f00000)) == 0x00f00000) {
+		  physaccess(zorro2map(0x00f00000),cd->cd_BoardAddr,
+		    0x10000, PG_W|PG_CI);
+		  hw->hw_kva = zorro2map(0x00f00000) + ((int)cd->cd_BoardAddr & PGOFSET);
+#ifdef DEBUG
+		  printf("IVS Vector: mapped to %x kva %x\n",
+		    zorro2map(0x00f00000), hw->hw_kva);
+#endif
 		}
+		else
+		  printf("Unable to map IVS Vector SCSI\n");
 	      }
+	      /* fall through */
+	    case PROD_IVS_TRUMPCARD:
+	      hw->hw_product = PROD_IVS_VECTOR;	/* another kludge */
 	      hw->hw_type = B_ZORROII | C_SCSI;
 	      break;
 

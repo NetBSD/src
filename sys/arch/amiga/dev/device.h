@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.9 1994/02/28 06:06:18 chopps Exp $
+ *	$Id: device.h,v 1.10 1994/03/28 06:16:19 chopps Exp $
  */
 
 struct driver {
@@ -173,6 +173,7 @@ struct amiga_hw {
 
 /* IVS */
 #define	MANUF_IVS		2112
+#define PROD_IVS_TRUMPCARD	52
 #define	PROD_IVS_VECTOR_ACC	242
 #define	PROD_IVS_VECTOR		243
 
