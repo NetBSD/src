@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.362 2003/09/22 01:25:06 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.363 2003/09/22 14:50:51 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -62,7 +62,19 @@ USE_TOOLS_TOOLCHAIN?=yes
 #
 # Transitional for toolchain upgrade to GDB5.3
 #
-HAVE_GDB53?=	no
+# not ported:
+#	${MACHINE_ARCH} == "alpha"
+#	${MACHINE_ARCH} == "arm"
+#	${MACHINE_ARCH} == "armeb"
+#	${MACHINE_ARCH} == "powerpc"
+#	${MACHINE_ARCH} == "sh3eb"
+#	${MACHINE_ARCH} == "sh3el"
+#	${MACHINE_ARCH} == "vax"
+# in progress:
+#	${MACHINE_ARCH} == "m68k"
+#	${MACHINE_ARCH} == "mipseb"
+#	${MACHINE_ARCH} == "mipsel"
+# working:
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
