@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.55 1998/06/07 20:33:22 mark Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.56 1998/07/26 12:00:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.55 1998/06/07 20:33:22 mark Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.56 1998/07/26 12:00:43 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1321,9 +1321,10 @@ getasciilabel(f, lp)
 	FILE *f;
 	struct disklabel *lp;
 {
-	char **cpp, *cp;
+	const char *const *cpp, *s;
+	char *cp;
 	struct partition *pp;
-	char *tp, *s, line[BUFSIZ];
+	char *tp, line[BUFSIZ];
 	int v, lineno = 0, errors = 0;
 
 	lp->d_bbsize = BBSIZE;				/* XXX */
