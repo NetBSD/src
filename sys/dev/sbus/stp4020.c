@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.17 2002/03/04 02:19:11 simonb Exp $ */
+/*	$NetBSD: stp4020.c,v 1.18 2002/03/08 21:33:43 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.17 2002/03/04 02:19:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.18 2002/03/08 21:33:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,8 @@ stp4020attach(parent, self, aux)
 		h->sock = i;
 		h->sc = sc;
 #ifdef STP4020_DEBUG
-		stp4020_dump_regs(h);
+		if (stp4020_debug)
+			stp4020_dump_regs(h);
 #endif
 		stp4020_attach_socket(h, sa->sa_frequency);
 	}
@@ -430,8 +431,7 @@ stp4020_attach_socket(h, speed)
 	 * Enable socket status change interrupts.
 	 * We use SB_INT[1] for status change interrupts.
 	 */
-	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v |= STP4020_ICR0_ALL_STATUS_IE | STP4020_ICR0_SCILVL_SB1;
+	v = STP4020_ICR0_ALL_STATUS_IE | STP4020_ICR0_SCILVL_SB1;
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* Get live status bits from ISR0 */
@@ -492,11 +492,9 @@ stp4020_event_thread(arg)
 		h = &sc->sc_socks[n];
 		switch (e->se_type) {
 		case STP4020_EVENT_INSERTION:
-			printf("pcmcia_card_attach for slot #%d\n", n);
 			pcmcia_card_attach(h->pcmcia);
 			break;
 		case STP4020_EVENT_REMOVAL:
-			printf("pcmcia_card_detach for slot #%d\n", n);
 			pcmcia_card_detach(h->pcmcia, DETACH_FORCE);
 			break;
 		default:
@@ -539,7 +537,7 @@ stp4020_statintr(arg)
 	 */
 	for (i = 0 ; i < STP4020_NSOCK; i++) {
 		struct stp4020_socket *h;
-		int v;
+		int v, cd_change = 0;
 
 		h = &sc->sc_socks[i];
 
@@ -556,14 +554,15 @@ stp4020_statintr(arg)
 #endif
 
 		/* Ack all interrupts at once */
-		stp4020_wr_sockctl(h, STP4020_ISR0_IDX,
-				   STP4020_ISR0_ALL_STATUS_IRQ);
+		stp4020_wr_sockctl(h, STP4020_ISR0_IDX, STP4020_ISR0_ALL_STATUS_IRQ);
 
 		if ((v & STP4020_ISR0_CDCHG) != 0) {
 			/*
 			 * Card status change detect
 			 */
-			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) != 0){
+			cd_change = 1;
+			r = 1;
+			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) == (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)){
 				if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
 					stp4020_queue_event(sc, i,
 						STP4020_EVENT_INSERTION);
@@ -579,31 +578,36 @@ stp4020_statintr(arg)
 			}
 		}
 
-		/* XXX - a bunch of unhandled conditions */
+		/* informational messages */
 		if ((v & STP4020_ISR0_BVD1CHG) != 0) {
-			printf("stp4020[%d]: Battery change 1\n", h->sock);
+			/* ignore if this is caused by insert or removal */
+			if (!cd_change)
+				printf("stp4020[%d]: Battery change 1\n", h->sock);
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_BVD2CHG) != 0) {
-			printf("stp4020[%d]: Battery change 2\n", h->sock);
+			/* ignore if this is caused by insert or removal */
+			if (!cd_change)
+				printf("stp4020[%d]: Battery change 2\n", h->sock);
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_RDYCHG) != 0) {
-			printf("stp4020[%d]: Ready/Busy change\n", h->sock);
+			DPRINTF(("stp4020[%d]: Ready/Busy change\n", h->sock));
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_WPCHG) != 0) {
-			printf("stp4020[%d]: Write protect change\n", h->sock);
+			DPRINTF(("stp4020[%d]: Write protect change\n", h->sock));
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_PCTO) != 0) {
-			printf("stp4020[%d]: Card access timeout\n", h->sock);
+			DPRINTF(("stp4020[%d]: Card access timeout\n", h->sock));
 			r = 1;
 		}
+
 	}
 
 	return (r);
@@ -655,6 +659,12 @@ stp4020_iointr(arg)
 		v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
 
 		if ((v & STP4020_ISR0_IOINT) != 0) {
+			/* we can not deny this is ours, no matter what the
+			   card driver says. */
+			r = 1;
+			/* ack interrupt */
+			stp4020_wr_sockctl(h, STP4020_ISR0_IDX, v);
+
 			/* It's a card interrupt */
 			if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
 				printf("stp4020[%d]: spurious interrupt?\n",
@@ -670,8 +680,6 @@ stp4020_iointr(arg)
 		}
 
 	}
-	if (r)
-		printf("stp4020_iointr() -> %d\n", r);
 
 	return (r);
 }
@@ -836,14 +844,12 @@ stp4020_chip_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
-	int i, v, cardtype;
+	int i, v;
 
 	/* this bit is mostly stolen from pcic_attach_card */
 
 	/* Power down the socket to reset it, clear the card reset pin */
-	v = stp4020_rd_sockctl(h, STP4020_ICR1_IDX);
-	v &= ~(STP4020_ICR1_MSTPWR|STP4020_ICR1_PCIFOE);
-	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
+	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, 0);
 
 	/*
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
@@ -852,8 +858,7 @@ stp4020_chip_socket_enable(pch)
 	stp4020_delay((300 + 100) * 1000);
 
 	/* Power up the socket */
-	v = stp4020_rd_sockctl(h, STP4020_ICR1_IDX);
-	v |= STP4020_ICR1_MSTPWR|STP4020_ICR1_PCIFOE;
+	v = STP4020_ICR1_MSTPWR;
 	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
 
 	/*
@@ -862,7 +867,7 @@ stp4020_chip_socket_enable(pch)
 	 */
 	stp4020_delay((100 + 20) * 1000);
 
-	v |= STP4020_ICR1_PCIFOE;
+	v |= STP4020_ICR1_PCIFOE|STP4020_ICR1_VPP1_VCC;
 	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
 
 	/*
@@ -894,27 +899,25 @@ stp4020_chip_socket_enable(pch)
 		return;
 	}
 
-	/* Set the card type */
-	cardtype = pcmcia_card_gettype(h->pcmcia);
-
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~STP4020_ICR0_IFTYPE;
-	v |= (cardtype == PCMCIA_IFTYPE_IO)
-			? STP4020_ICR0_IFTYPE_IO
-			: STP4020_ICR0_IFTYPE_MEM;
-	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
-
-	DPRINTF(("%s: stp4020_chip_socket_enable %02x cardtype %s\n",
-		h->sc->sc_dev.dv_xname, h->sock,
-		((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem")));
 
 	/*
-	 * Enable socket I/O interrupts.
+	 * Check the card type.
+	 * Enable socket I/O interrupts for IO cards.
 	 * We use level SB_INT[0] for I/O interrupts.
 	 */
-	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~STP4020_ICR0_IOILVL;
-	v |= STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL_SB0;
+	if (pcmcia_card_gettype(h->pcmcia) == PCMCIA_IFTYPE_IO) {
+		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE);
+		v |= STP4020_ICR0_IFTYPE_IO|STP4020_ICR0_IOIE
+		    |STP4020_ICR0_IOILVL_SB0|STP4020_ICR0_SPKREN;
+		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
+	} else {
+		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE
+		    |STP4020_ICR0_SPKREN|STP4020_ICR0_IOILVL_SB0
+		    |STP4020_ICR0_IOILVL_SB1|STP4020_ICR0_SPKREN);
+		v |= STP4020_ICR0_IFTYPE_MEM;
+		DPRINTF(("%s: configuring card for MEM ONLY useage\n", h->sc->sc_dev.dv_xname));
+	}
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 }
 
@@ -935,9 +938,7 @@ stp4020_chip_socket_disable(pch)
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* Power down the socket */
-	v = stp4020_rd_sockctl(h, STP4020_ICR1_IDX);
-	v &= ~(STP4020_ICR1_MSTPWR|STP4020_ICR1_PCIFOE);
-	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
+	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, 0);
 
 	/*
 	 * wait 300ms until power fails (Tpf).
