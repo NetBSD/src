@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_icmp.h	7.5 (Berkeley) 6/28/90
- *	$Id: ip_icmp.h,v 1.3 1993/05/20 03:50:22 cgd Exp $
+ *	$Id: ip_icmp.h,v 1.4 1994/01/08 23:50:44 mycroft Exp $
  */
 
 #ifndef _NETINET_IP_ICMP_H_
@@ -135,5 +135,12 @@ struct icmp {
 	(type) == ICMP_TSTAMP || (type) == ICMP_TSTAMPREPLY || \
 	(type) == ICMP_IREQ || (type) == ICMP_IREQREPLY || \
 	(type) == ICMP_MASKREQ || (type) == ICMP_MASKREPLY)
+
+#ifdef KERNEL
+void	icmp_error __P((struct mbuf *, int, int, struct in_addr));
+void	icmp_input __P((struct mbuf *, int));
+void	icmp_reflect __P((struct mbuf *));
+void	icmp_send __P((struct mbuf *, struct mbuf *));
+#endif
 
 #endif /* !_NETINET_IP_ICMP_H_ */

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_systm.h	7.4 (Berkeley) 6/28/90
- *	$Id: in_systm.h,v 1.3 1993/05/20 03:50:11 cgd Exp $
+ *	$Id: in_systm.h,v 1.4 1994/01/08 23:50:41 mycroft Exp $
  */
 
 #ifndef _NETINET_IN_SYSTM_H_
@@ -56,7 +56,7 @@ typedef u_long	n_long;			/* long as received from the net */
 typedef	u_long	n_time;			/* ms since 00:00 GMT, byte rev */
 
 #ifdef KERNEL
-n_time	iptime();
+n_time	iptime __P((void));
 #endif
 
 #endif /* !_NETINET_IN_SYSTM_H_ */
