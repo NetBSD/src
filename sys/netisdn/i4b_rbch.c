@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.8 2002/03/17 20:54:05 martin Exp $
+ *	$Id: i4b_rbch.c,v 1.9 2002/03/18 23:28:03 martin Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.8 2002/03/17 20:54:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.9 2002/03/18 23:28:03 martin Exp $");
 
 #include "isdnbchan.h"
 
@@ -476,6 +476,9 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 				NDBGL4(L4_RBCHDBG, "unit %d, error %d tsleep read", unit, error);
 				sc->sc_devstate &= ~ST_RDWAITDATA;
 				return(error);
+			} else if (!(sc->sc_devstate & ST_CONNECTED)) {
+				splx(s);
+				return 0;
 			}
 		}
 	}
@@ -590,6 +593,10 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 					splx(s);
 					NDBGL4(L4_RBCHDBG, "unit %d, error %d tsleep write", unit, error);
 					return(error);
+				}
+				else if (!(sc->sc_devstate & ST_CONNECTED)) {
+					splx(s);
+					return 0;
 				}
 			}
 		}
@@ -908,11 +915,12 @@ rbch_connect(void *softc, void *cdp)
 #endif		
 	if(!(sc->sc_devstate & ST_CONNECTED))
 	{
-		NDBGL4(L4_RBCHDBG, "B channel %d at BRI %d, wakeup", 
+		NDBGL4(L4_RBCHDBG, "B channel %d at BRI %d, wakeup",
 			cd->channelid, cd->bri);
 		sc->sc_devstate |= ST_CONNECTED;
 		sc->sc_cd = cdp;
 		wakeup((caddr_t)sc);
+		selwakeup(&sc->selp);
 	}
 }
 
@@ -950,8 +958,14 @@ rbch_disconnect(void *softc, void *cdp)
 #endif		
 
 	sc->sc_cd = NULL;
+	if (sc->sc_devstate & ST_RDWAITDATA)
+		wakeup(&sc->sc_ilt->rx_queue);
+	if (sc->sc_devstate & ST_WRWAITEMPTY)
+		wakeup(&sc->sc_ilt->tx_queue);
 
 	splx(s);
+
+	selwakeup(&sc->selp);
 }
 	
 /*---------------------------------------------------------------------------*
