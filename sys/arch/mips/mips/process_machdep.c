@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.7 1997/07/19 09:54:35 jonathan Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.8 1997/10/19 21:02:08 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass   
@@ -41,6 +41,9 @@
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.8 1997/10/19 21:02:08 jonathan Exp $");
+
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
  * Functions to be implemented here are:
@@ -75,6 +78,9 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
+extern struct proc *fpcurproc;			/* trap.c */
+
+extern void savefpregs __P((struct proc *));
 
 int
 process_read_regs(p, regs)
@@ -100,6 +106,39 @@ process_write_regs(p, regs)
 }
 
 int
+process_read_fpregs(p, regs)
+struct proc	*p;
+struct fpreg	*regs;
+{
+	if (p->p_md.md_flags & MDP_FPUSED) {
+		if (p == fpcurproc)
+			savefpregs(p);
+		bcopy(&p->p_addr->u_pcb.pcb_fpregs, regs,
+		    sizeof(struct fpreg));
+	}
+	else
+		bzero((caddr_t)regs, sizeof(struct fpreg));
+	return 0;
+}
+
+int
+process_write_fpregs(p, regs)
+struct proc	*p;
+struct fpreg	*regs;
+{
+	if ((p->p_md.md_flags & MDP_FPUSED) == 0)	/* XXX */
+		return EINVAL;
+
+	if (p->p_md.md_flags & MDP_FPUSED) {
+		if (p == fpcurproc)
+		  savefpregs(p);
+	}
+	
+	bcopy(regs, &p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
+	return 0;
+}
+
+int
 process_sstep(p, sstep)
 	struct proc *p;
 {
@@ -117,4 +156,3 @@ process_set_pc(p, addr)
 	p->p_md.md_regs[PC] = (int)addr;
 	return (0);
 }
-
