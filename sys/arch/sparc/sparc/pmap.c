@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 1999/01/16 20:43:22 chuck Exp $ */
+/*	$NetBSD: pmap.c,v 1.136 1999/02/14 12:48:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -792,7 +792,7 @@ void	pm_check_u __P((char *, struct pmap *));
 
 /*
  * Grab physical memory list and use it to compute `physmem' and
- * `avail_end'. The latter is used in conjuction with
+ * `avail_end'. The latter is used in conjunction with
  * `avail_start' to dispatch left-over physical pages to the
  * VM system.
  */
@@ -804,10 +804,9 @@ get_phys_mem()
 
 	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
 	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0) {
-		printf("pmap_bootstrap: no kernel memory?!\n");
-		callrom();
-	}
+	if (pmemarr[0].addr != 0)
+		panic("pmap_bootstrap: no memory?!");
+
 	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
 	for (physmem = 0, mp = pmemarr, i = npmemarr; --i >= 0; mp++)
 		physmem += btoc(mp->len);

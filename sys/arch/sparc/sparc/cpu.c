@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.86 1998/10/24 08:12:55 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.87 1999/02/14 12:48:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -408,7 +408,7 @@ extern void cpu_hatch __P((void));
 	 * caches off, hence no cache-coherency may be assumed.
 	 */
 	cpuinfo.cache_flush_all();
-	rom_cpustart(cpi->node, &oa, 0, pc);
+	prom_cpustart(cpi->node, &oa, 0, pc);
 
 	/*
 	 * Wait for this CPU to spin up.

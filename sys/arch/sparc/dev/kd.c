@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.3 1998/01/08 10:56:36 mrg Exp $	*/
+/*	$NetBSD: kd.c,v 1.4 1999/02/14 12:44:31 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,13 +55,11 @@
 #include <sys/device.h>
 
 #include <machine/bsd_openprom.h>
+#include <machine/promlib.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/kbd.h>
-#if defined(SUN4)
-#include <machine/oldmon.h>
-#endif
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 
@@ -441,12 +439,9 @@ kd_putfb(tp)
 		end = buf + len;
 		while (p < end)
 			*p++ &= 0x7f;
+
 		/* Now let the PROM print it. */
-		if (promvec->pv_romvec_vers > 2) {
-			(*promvec->pv_v2devops.v2_write)
-				(*promvec->pv_v2bootargs.v2_fd1, buf, len);
-		} else
-			(*promvec->pv_putstr)(buf, len);
+		prom_putstr(buf, len);
 	}
 }
 
@@ -564,13 +559,8 @@ kdcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	char c0 = (c & 0x7f);
 
-	if (promvec->pv_romvec_vers > 2)
-		(*promvec->pv_v2devops.v2_write)
-			(*promvec->pv_v2bootargs.v2_fd1, &c0, 1);
-	else
-		(*promvec->pv_putchar)(c);
+	prom_putchar(c);
 }
 
 static void

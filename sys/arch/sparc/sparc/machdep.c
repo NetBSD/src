@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 1999/01/16 20:43:22 chuck Exp $ */
+/*	$NetBSD: machdep.c,v 1.139 1999/02/14 12:48:02 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -812,14 +812,14 @@ cpu_reboot(howto, user_boot_string)
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
-		romhalt();
+		prom_halt();
 	}
 
 	printf("rebooting\n\n");
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
 		if (i > sizeof(str))
-			romboot(user_boot_string);	/* XXX */
+			prom_boot(user_boot_string);	/* XXX */
 		bcopy(user_boot_string, str, i);
 	} else {
 		i = 1;
@@ -836,7 +836,7 @@ cpu_reboot(howto, user_boot_string)
 		str[i] = 0;
 	} else
 		str[0] = 0;
-	romboot(str);
+	prom_boot(str);
 	/*NOTREACHED*/
 }
 
