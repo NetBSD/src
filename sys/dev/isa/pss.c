@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.33 1997/07/31 22:33:32 augustss Exp $	*/
+/*	$NetBSD: pss.c,v 1.34 1997/08/19 23:50:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1036,7 +1036,6 @@ pssattach(parent, self, aux)
     int iobase = ia->ia_iobase;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
-    int err;
     
     sc->sc_iobase = iobase;
     sc->sc_drq = ia->ia_drq;
@@ -1061,8 +1060,7 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    if ((err = audio_hardware_attach(&pss_audio_if, sc->ad1848_sc, &sc->ad1848_sc->sc_dev)) != 0)
-	printf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
+    audio_attach_mi(&pss_audio_if, 0, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.31 1997/08/04 22:13:34 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.32 1997/08/19 23:50:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -298,7 +298,6 @@ wssattach(parent, self, aux)
     struct wss_softc *sc = (struct wss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     int version;
-    int err;
     
     sc->sc_ad1848.sc_recdrq = ia->ia_drq;
     sc->sc_ad1848.sc_isa = parent;
@@ -322,8 +321,7 @@ wssattach(parent, self, aux)
 
     sc->sc_ad1848.parent = sc;
 
-    if ((err = audio_hardware_attach(&wss_hw_if, &sc->sc_ad1848, &sc->sc_dev)) != 0)
-	printf("wss: could not attach to audio pseudo-device driver (%d)\n", err);
+    audio_attach_mi(&wss_hw_if, 0, &sc->sc_ad1848, &sc->sc_dev);
 }
 
 static int
