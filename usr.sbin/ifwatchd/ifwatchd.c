@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.7 2002/04/15 17:32:18 tron Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.8 2002/04/15 20:42:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ check_addrs(cp, addrs, is_up)
 	    }
 	}
 	if (ifa != NULL)
-	   invoke_script(ifa, brd, is_up, ifndx);
+	    invoke_script(ifa, brd, is_up, ifndx);
 }
 
 static void
@@ -263,6 +263,14 @@ invoke_script(sa, dest, is_up, ifindex)
 	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ],
 	     *ifname, *cmd;
 	const char *script;
+
+	if (sa->sa_family == AF_INET6) {
+		struct sockaddr_in6 sin6;
+
+		(void) memcpy(&sin6, (struct sockaddr_in6 *)sa, sizeof (sin6));
+		if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
+			return;
+	}
 
 	daddr[0] = 0;
 	ifname = if_indextoname(ifindex, ifname_buf);
