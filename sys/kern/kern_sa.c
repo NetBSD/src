@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.7 2001/11/17 21:20:11 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.8 2001/11/17 21:26:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -265,7 +265,10 @@ sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 }
 
 /*
- * Set up the user-level stack and trapframe to do an upcall.  
+ * Set up the user-level stack and trapframe to do an upcall.
+ *
+ * NOTE: This routine WILL FREE "arg" in the case of failure!  Callers
+ * should not touch the "arg" pointer once calling sa_upcall().
  */
 
 int
@@ -281,16 +284,19 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	s = sadata_upcall_alloc();
 	l->l_flag |= L_SA;
 
-	/* Grab a stack */
-	if (!sd->sa_nstacks)
-		return (ENOMEM);
-	s->sau_stack = sd->sa_stacks[--sd->sa_nstacks];
-
 	s->sau_type = type;
 	s->sau_argsize = argsize;
 	s->sau_arg = arg;
 	s->sau_event = event;
 	s->sau_interrupted = interrupted;
+
+	/* Grab a stack */
+	if (!sd->sa_nstacks) {
+		sadata_upcall_free(s);
+		return (ENOMEM);
+	}
+	s->sau_stack = sd->sa_stacks[--sd->sa_nstacks];
+
 
 	LIST_INSERT_HEAD(&sd->sa_upcalls, s, sau_next);
 	l->l_flag |= L_SA_UPCALL;
