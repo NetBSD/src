@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/arp.c,v 1.1 1993/10/13 05:41:21 cgd Exp $ (LBL)
+ * from: @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp (LBL)
+ *	$Id: arp.c,v 1.2 1993/10/13 13:55:38 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -165,7 +166,7 @@ arprecv(d, pkt, len)
 		return (-1);
 	}
 
-	if (eh->ether_type != ETHERTYPE_ARP) {
+	if (ntohs(eh->ether_type) != ETHERTYPE_ARP) {
 		errno = 0;
 		return (-1);
 	}
