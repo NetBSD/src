@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.2 2000/08/22 21:22:50 bjh21 Exp $ */
+/* $NetBSD: autoconf.c,v 1.3 2001/08/25 17:55:24 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.2 2000/08/22 21:22:50 bjh21 Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.3 2001/08/25 17:55:24 bjh21 Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -51,6 +51,7 @@ cpu_configure()
 	config_rootfound("iobus", NULL);
 	config_rootfound("arcvideo", NULL);
 	spl0();
+	fiq_on();
 }
 
 void
