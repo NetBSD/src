@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.5 1994/05/05 05:36:08 cgd Exp $
+ *	$Id: proc.h,v 1.5.2.1 1994/08/15 22:20:11 mycroft Exp $
  */
 
 /*
@@ -39,4 +39,5 @@
  */
 struct mdproc {
 	int	*md_regs;		/* registers on current frame */
+	int	ibcs_sigflags;		/* iBCS2 signal semantics flags */
 };
