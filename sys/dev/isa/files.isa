@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.110 2001/02/24 01:59:47 lukem Exp $
+#	$NetBSD: files.isa,v 1.111 2001/03/02 22:53:20 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -391,7 +391,7 @@ file	dev/isa/satlink.c		satlink			needs-flag
 
 # ISA PC keyboard controller
 attach	pckbc at isa with pckbc_isa
-file	dev/isa/pckbc_isa.c		pckbc			needs-flag
+file	dev/isa/pckbc_isa.c		pckbc_isa
 
 # generic ISA VGA
 attach	vga at isa with vga_isa
