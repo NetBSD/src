@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.38 2001/12/01 22:11:13 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.39 2001/12/05 00:34:05 enami Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.38 2001/12/01 22:11:13 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.39 2001/12/05 00:34:05 enami Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -404,7 +404,6 @@ amap_extend(entry, addsize)
 	/* do am_bckptr */
 	oldbck = amap->am_bckptr;
 	memcpy(newbck, oldbck, sizeof(int) * amap->am_nslot);
-	memset(newbck + amap->am_nslot, 0, sizeof(int) * slotadded); /* XXX: needed? */
 	amap->am_bckptr = newbck;
 
 #ifdef UVM_AMAP_PPREF
