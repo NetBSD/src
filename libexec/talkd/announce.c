@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.5 1995/06/07 17:14:41 cgd Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.6 1996/07/17 18:46:58 rat Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,8 @@ announce_proc(request, remote_machine)
 	FILE *tf;
 	struct stat stbuf;
 
-	(void)sprintf(full_tty, "%s/%s", _PATH_DEV, request->r_tty);
+	(void)snprintf(full_tty, sizeof(full_tty), "%s/%s", _PATH_DEV, 
+	    request->r_tty);
 	if (access(full_tty, 0) != 0)
 		return (FAILED);
 	if ((tf = fopen(full_tty, "w")) == NULL)
@@ -153,28 +154,29 @@ print_mesg(tf, request, remote_machine)
 	gettimeofday(&clock, &zone);
 	clocktime = clock.tv_sec;
 	localclock = localtime(&clocktime);
-	(void)sprintf(line_buf[i], " ");
+	(void)snprintf(line_buf[i], N_CHARS, " ");
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	(void)sprintf(line_buf[i], "Message from Talk_Daemon@%s at %d:%02d ...",
-	hostname, localclock->tm_hour , localclock->tm_min );
+	(void)snprintf(line_buf[i], N_CHARS, 
+	    "Message from Talk_Daemon@%s at %d:%02d ...",
+	    hostname, localclock->tm_hour , localclock->tm_min );
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
 	vis_user = (char *) malloc(strlen(request->l_name) * 4 + 1);
 	strvis(vis_user, request->l_name, VIS_CSTYLE);
-	(void)sprintf(line_buf[i], "talk: connection requested by %s@%s.",
-		vis_user, remote_machine);
+	(void)snprintf(line_buf[i], N_CHARS, 
+	    "talk: connection requested by %s@%s.", vis_user, remote_machine);
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	(void)sprintf(line_buf[i], "talk: respond with:  talk %s@%s",
-		vis_user, remote_machine);
+	(void)snprintf(line_buf[i], N_CHARS,
+	    "talk: respond with:  talk %s@%s", vis_user, remote_machine);
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	(void)sprintf(line_buf[i], " ");
+	(void)snprintf(line_buf[i], N_CHARS, " ");
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
