@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.737 2004/12/06 19:34:01 cube Exp $
+# $NetBSD: mi,v 1.738 2004/12/23 23:14:05 he Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2688,6 +2688,7 @@
 ./usr/share/man/man4/aha.4			man-sys-man		.man
 ./usr/share/man/man4/ahb.4			man-sys-man		.man
 ./usr/share/man/man4/ahc.4			man-sys-man		.man
+./usr/share/man/man4/ahd.4			man-sys-man		.man
 ./usr/share/man/man4/ai.4			man-sys-man		.man
 ./usr/share/man/man4/aic.4			man-sys-man		.man
 ./usr/share/man/man4/akbd.4			man-sys-man		.man
