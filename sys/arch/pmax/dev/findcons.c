@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.12 1999/05/11 05:15:54 nisimura Exp $	*/
+/*	$NetBSD: findcons.c,v 1.13 1999/06/08 23:42:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.12 1999/05/11 05:15:54 nisimura Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.13 1999/06/08 23:42:36 simonb Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.12 1999/05/11 05:15:54 nisimura Exp $
 #include <sys/termios.h>
 
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/machdep.h>
 
 /*
  * Default consdev, for errors or warnings before
@@ -153,7 +154,6 @@ int	find_screen	__P((int prom_slot));
 int	find_serial	__P((int prom_slot));
 void	consinit	__P((void));
 
-extern void prom_findcons __P((int *, int *, int *));
 extern struct consdev promcd;
 
 /*
