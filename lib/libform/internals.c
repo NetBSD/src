@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.23 2002/05/20 15:00:11 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.24 2002/07/08 10:43:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -1246,11 +1246,18 @@ _formi_redraw_field(FORM *form, int field)
 	for (row = cur->row_count - cur->start_line; row < cur->rows; row++) {
 		wmove(form->scrwin, (int) (cur->form_row + row),
 		      (int) cur->form_col);
+
+		if (form->cur_field == field)
+			wattrset(form->scrwin, cur->fore);
+		else
+			wattrset(form->scrwin, cur->back);
+
 		for (i = 0; i < cur->cols; i++) {
 			waddch(form->scrwin, cur->pad);
 		}
 	}
 
+	wattrset(form->scrwin, cur->back);
 	return;
 }
 
@@ -1551,6 +1558,8 @@ _formi_manipulate_field(FORM *form, int c)
 	int len;
 	
 	cur = form->fields[form->cur_field];
+	if ((cur->buffers[0].string == NULL) || (cur->buffers[0].length == 0))
+		return E_REQUEST_DENIED;
 
 #ifdef DEBUG
 	fprintf(dbg, "entry: request is REQ_%s\n", reqs[c - REQ_MIN_REQUEST]);
