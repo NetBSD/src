@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.12 1996/10/17 02:52:26 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.13 1997/01/01 23:40:15 pk Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -57,7 +57,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-#include <dev/ramdisk.h>
+#include <dev/md.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
@@ -89,11 +89,11 @@ extern int nfs_mountroot();
 int do_mountroot();
 int (*mountroot)() = do_mountroot;
 
-#ifdef RAMDISK_HOOKS
-extern struct rd_conf *bootrd;
-#endif	/* RAMDISK_HOOKS */
+#ifdef MEMORY_DISK_HOOKS
+extern struct md_conf *bootmd;
+#endif	/* MEMORY_DISK_HOOKS */
 
-int load_ramdisc_from_floppy __P((struct rd_conf *rd, dev_t dev));
+int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
 
 
 int
@@ -101,25 +101,26 @@ do_mountroot()
 {
 	int error;
 
-#if (NFDC > 0 && NRD > 0 && defined(RAMDISK_HOOKS))
+#if (NFDC > 0 && NMD > 0 && defined(MEMORY_DISK_HOOKS))
 
 /*
- * Ok ideally the ramdisc would be loaded via the rd_open_hook() but since
+ * Ok ideally the memory disc would be loaded via the md_open_hook() but since
  * we are loading the ramdisc from floppy we only want to load it during
  * the boot and not at any other time.
  */
 
 /*
- * Ok bit of bodging here. The ramdisc minor is the unit number. However if booting
- * from the ramdisc we limit to always booting off minor 0 i.e. rd0 The ramdisc
- * device passed as the root device is only used to identify the ramdisc major. The
- * minor, instead of indicating the ramdisc unit is used to indicate the floppy
- * minor that should be used for loading the boot ramdisc which is unit 0.
+ * Ok bit of bodging here. The memory disc minor is the unit number. However
+ * if booting from the memory disc we limit to always booting off minor 0
+ * i.e. rd0. The memory disc device passed as the root device is only used to
+ * identify the memory disc major. The minor, instead of indicating the memory
+ * disc unit is used to indicate the floppy minor that should be used for
+ * loading the boot memory disc which is unit 0.
  */
 
 	if (major(rootdev) == 18 && bootrd) {
-		if (load_ramdisc_from_floppy(bootrd, makedev(17, minor(rootdev))) != 0)
-			panic("Failed to load ramdisc\n");
+		if (load_memory_disc_from_floppy(bootmd, makedev(17, minor(rootdev))) != 0)
+			panic("Failed to load memory disc\n");
 		boothowto |= RB_SINGLE;
 		rootdev = makedev(major(rootdev), 0);
 	}

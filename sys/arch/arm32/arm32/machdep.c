@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15 1996/12/27 01:53:41 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.16 1997/01/01 23:40:13 pk Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -131,7 +131,7 @@ int max_processes;
 int cpu_cache;
 int cpu_ctrl;
 
-u_int ramdisc_size;		/* Ramdisc size */
+u_int memory_disc_size;		/* Memory disc size */
 u_int videodram_size;		/* Amount of DRAM to reserve for video */
 vm_offset_t videodram_start;
 
@@ -1472,13 +1472,13 @@ initarm(prom_id)
 	cpu_cache = 0x03;
 	boothowto = 0;
 
-#ifndef RAMDISKSIZE
-#define RAMDISKSIZE	0
+#ifndef MEMORY_DISK_SIZE
+#define MEMORY_DISK_SIZE	0
 #endif
-	ramdisc_size = RAMDISKSIZE * 1024;
+	memory_disc_size = MEMORY_DISK_SIZE * 1024;
 
-#ifdef RAMDISK_HOOKS
-	boot_args = "root=/dev/rd0a swapsize=0";
+#ifdef MEMORY_DISK_HOOKS
+	boot_args = "root=/dev/md0a swapsize=0";
 #else
 	if (strcmp(prom_id->bootdev, "fd") == 0) {
 		boot_args = "root=/dev/fd0a swapsize=0";
@@ -2502,14 +2502,14 @@ process_kernel_args()
 				printf("Maximum \"in memory\" processes = %d\n",
 				    max_processes);
 		}
-		ptr = strstr(args, "ramdisc=");
+		ptr = strstr(args, "memory disc=");
 		if (ptr) {
-			ramdisc_size = (u_int)strtoul(ptr + 8, NULL, 10);
-			ramdisc_size *= 1024;
-			if (ramdisc_size < 32*1024)
-				ramdisc_size = 32*1024;
-			if (ramdisc_size > 2048*1024)
-				ramdisc_size = 2048*1024;
+			memory_disc_size = (u_int)strtoul(ptr + 8, NULL, 10);
+			memory_disc_size *= 1024;
+			if (memory_disc_size < 32*1024)
+				memory_disc_size = 32*1024;
+			if (memory_disc_size > 2048*1024)
+				memory_disc_size = 2048*1024;
 		}
 		ptr = strstr(args, "videodram=");
 		if (ptr) {
