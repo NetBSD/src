@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.7.4.17 1999/12/06 08:52:15 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.7.4.18 2000/02/03 09:34:45 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.17 1999/12/06 08:52:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.18 2000/02/03 09:34:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.17 1999/12/06 08:52:15 nisimura E
 #include <pmax/pmax/memc.h>
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-#include <pmax/tc/ioasicreg.h>
 #include <dev/ic/z8530sc.h>
 #include <pmax/tc/zs_ioasicvar.h>
 
@@ -138,6 +138,7 @@ dec_3min_init()
 	platform.cons_init = dec_3min_cons_init;
 	platform.device_register = dec_3min_device_register;
 	platform.iointr = dec_3min_intr;
+	platform.memsize = memsize_scan;
 	platform.clkread = kn02ba_clkread;
 
 	/* clear any memory errors from probes */
