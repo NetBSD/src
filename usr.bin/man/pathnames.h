@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1995/09/28 06:05:40 tls Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3.8.1 2000/04/30 11:30:42 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,9 @@
  *	@(#)pathnames.h	8.3 (Berkeley) 1/2/94
  */
 
+#include <paths.h>
+
 #define	_PATH_MANCONF	"/etc/man.conf"
 #define	_PATH_PAGER	"/usr/bin/more -s"
-#define	_PATH_TMP	"/tmp/man.XXXXXX"
 #define	_PATH_WHATIS	"whatis.db"
+#define	TMPFILE		"man.XXXXXX"
