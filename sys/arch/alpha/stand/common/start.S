@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.7 1999/03/31 03:04:21 cgd Exp $ */
+/* $NetBSD: start.S,v 1.8 1999/03/31 06:28:41 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -48,19 +48,19 @@ NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
 Lstartgp:
 	LDGP(pv)
 
-#ifndef PRIMARY_BOOTBLOCK
+#if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
 	lda	sp,start		/* start stack below text */
 	lda	sp,-ENTRY_FRAME(sp)
 
 	or	a0,zero,s0
-#endif
+#endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
 	lda	a0,_edata
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)
-#ifndef PRIMARY_BOOTBLOCK
+#if !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK)
 	or	s0,zero,a0
-#endif
+#endif /* !defined(PRIMARY_BOOTBLOCK) && !defined(UNIFIED_BOOTBLOCK) */
 
 	CALL(main_)			/* transfer to C */
 
