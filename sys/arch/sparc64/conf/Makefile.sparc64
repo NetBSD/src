@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.46 2002/06/04 21:39:12 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.47 2002/07/20 11:48:17 mrg Exp $
 
 #=========================================================================
 #
@@ -117,6 +117,12 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 ##
 ## (7) misc settings
 ##
+
+.if make(depend) || make(all) || make(dependall)
+.BEGIN:
+	@rm -f sparc && \
+		ln -s $S/arch/sparc/include sparc
+.endif
 
 ##
 ## (8) config(8) generated machinery
