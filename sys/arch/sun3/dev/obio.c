@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.30 1997/04/28 22:02:43 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.30.4.1 1997/10/14 10:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -319,7 +319,6 @@ obio_init()
 
 	/* Make the zs driver ready for console duty. */
 	zs_init();
-	cninit();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.14.2.1 1997/08/27 23:32:31 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.14.2.2 1997/10/14 10:24:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -659,6 +659,9 @@ struct _tulip_softc_t {
     tulip_srom_connection_t tulip_conntype;
     tulip_desc_t tulip_rxdescs[TULIP_RXDESCS];
     tulip_desc_t tulip_txdescs[TULIP_TXDESCS];
+#if defined(__NetBSD__) && NRND > 0
+    rndsource_element_t    tulip_rndsource;
+#endif
 };
 
 #if defined(IFM_ETHER)

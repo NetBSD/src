@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13.4.2 1997/09/22 06:33:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.4.3 1997/10/14 10:21:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,12 +90,15 @@
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 
+#include <sys/device.h>
 #include <x68k/x68k/iodevice.h>
 
 void initcpu __P((void));
 void identifycpu __P((void));
 void doboot __P((void))
     __attribute__((__noreturn__));
+int badaddr __P((caddr_t));
+int badbaddr __P((caddr_t));
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -139,6 +142,16 @@ extern	short exframesize[];
 extern struct emul emul_hpux;
 #endif
 
+/* prototypes for local functions */
+void    identifycpu __P((void));
+void    initcpu __P((void));
+
+/* functions called from locore.s */
+void    dumpsys __P((void));
+void    straytrap __P((int, u_short));
+void	nmihand __P((struct frame));
+void	intrhand __P((int));
+
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
@@ -181,8 +194,8 @@ consinit()
 void
 cpu_startup()
 {
-	register unsigned i;
-	register caddr_t v, firstaddr;
+	unsigned i;
+	caddr_t v, firstaddr;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -389,7 +402,7 @@ again:
  */
 void
 setregs(p, pack, stack)
-	register struct proc *p;
+	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
 {
@@ -607,11 +620,11 @@ sendsig(catcher, sig, mask, code)
 	int sig, mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp, *kfp;
-	register struct frame *frame;
-	register struct sigacts *psp = p->p_sigacts;
-	register short ft;
+	struct proc *p = curproc;
+	struct sigframe *fp, *kfp;
+	struct frame *frame;
+	struct sigacts *psp = p->p_sigacts;
+	short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
@@ -734,7 +747,7 @@ sendsig(catcher, sig, mask, code)
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
 	if (p->p_emul == &emul_hpux) {
-		register struct hpuxsigframe *hkfp;
+		struct hpuxsigframe *hkfp;
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
 		hkfp->hsf_signum = bsdtohpuxsig(kfp->sf_signum);
@@ -799,9 +812,9 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
+	struct sigcontext *scp;
+	struct frame *frame;
+	int rf;
 	struct sigcontext tsigc;
 	struct sigstate tstate;
 	int flags;
@@ -922,7 +935,7 @@ sys_sigreturn(p, v, retval)
 	 * the sigcontext structure.
 	 */
 	if (flags & SS_RTEFRAME) {
-		register int sz;
+		int sz;
 		
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
@@ -960,7 +973,7 @@ int	waittime = -1;
 
 void
 cpu_reboot(howto, bootstr)
-	register int howto;
+	int howto;
 	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
@@ -1059,6 +1072,8 @@ cpu_dumpconf()
 #define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
+vm_offset_t	reserve_dumppages __P((vm_offset_t));
+
 vm_offset_t
 reserve_dumppages(p)
 	vm_offset_t p;
@@ -1068,6 +1083,9 @@ reserve_dumppages(p)
 }
 
 #ifdef MACHINE_NONCONTIG
+static int find_range __P((vm_offset_t));
+static int find_next_range __P((vm_offset_t));
+
 static int
 find_range(pa)
 	vm_offset_t pa;
@@ -1112,9 +1130,9 @@ dumpsys()
 {
 	unsigned bytes, i, n;
 	int range;
-	register int maddr, psize;
-	register daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
+	int maddr, psize;
+	daddr_t blkno;
+	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 
 	/* Don't put dump messages in msgbuf. */
@@ -1277,9 +1295,9 @@ int	*nofault;
 
 int
 badaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -1294,9 +1312,9 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	register int i;
+	int i;
 	label_t	faultbuf;
 
 	nofault = (int *) &faultbuf;
@@ -1312,12 +1330,21 @@ badbaddr(addr)
 /*
  * XXX Why on earth isn't this in a common file?!
  */
+void	netintr __P((void));
+void	arpintr __P((void));
+void	atintr __P((void));
+void	ipintr __P((void));
+void	nsintr __P((void));
+void	clnintr __P((void));
+void	ccittintr __P((void));
+void	pppintr __P((void));
+
 void
 netintr()
 {
 #ifdef INET
-#include "ether.h"
-#if NETHER > 0
+#include "arp.h"
+#if NARP > 0
 	if (netisr & (1 << NETISR_ARP)) {
 		netisr &= ~(1 << NETISR_ARP);
 		arpintr();
@@ -1378,6 +1405,9 @@ struct si_callback {
 };
 
 static struct si_callback *si_callbacks = 0;
+
+void add_sicallback __P((void (*)(void *, void *), void *, void *));
+void rem_sicallback __P((void (*)(void *, void *)));
 
 void
 add_sicallback (function, rock1, rock2)
@@ -1445,6 +1475,7 @@ intrhand(sr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
+void candbtimer __P((void *));
 
 void
 candbtimer(arg)

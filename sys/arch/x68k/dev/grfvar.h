@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.1.1.1.12.1 1997/10/14 10:20:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,8 @@ struct	grf_lockpage {
 };
 #define gl_lockslot gl_locks[0]
 
+struct grf_softc;
+
 /*
  * Static configuration info for display types
  */
@@ -56,8 +58,8 @@ struct	grfsw {
 	int	gd_hwid;	/* id returned by hardware */
 	int	gd_swid;	/* id to be returned by software */
 	char	*gd_desc;	/* description printed at config time */
-	int	(*gd_init)();	/* boot time init routine */
-	int	(*gd_mode)();	/* misc function routine */
+	int	(*gd_init) __P((struct grf_softc *, caddr_t));
+	int	(*gd_mode) __P((struct grf_softc *, u_long, caddr_t));
 };
 
 /* per display info */

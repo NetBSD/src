@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1997/06/13 19:11:42 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.7.4.1 1997/10/14 10:21:27 thorpej Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -359,7 +359,7 @@
 193	UNIMPL
 194	NOARGS		{ int sys_getrlimit(u_int which, struct rlimit *rlp); }
 195	NOARGS		{ int sys_setrlimit(u_int which, struct rlimit *rlp); }
-196	NOARGS		{ int sys_getdirentries(int fd, char *buf, \
+196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 197	NOARGS		{ caddr_t sys_mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
@@ -396,3 +396,42 @@
 217	UNIMPL
 218	UNIMPL
 219	UNIMPL
+;
+; Syscalls 220-239 are reserved for syscalls imported from NetBSD
+;
+220	UNIMPL
+221	UNIMPL
+222	UNIMPL
+223	UNIMPL
+224	UNIMPL
+225	UNIMPL
+226	UNIMPL
+227	UNIMPL
+228	UNIMPL
+229	UNIMPL
+230	UNIMPL
+231	UNIMPL
+232	UNIMPL
+233	UNIMPL
+234	UNIMPL
+235	UNIMPL
+236	UNIMPL
+237	UNIMPL
+238	UNIMPL
+239	UNIMPL
+240	UNIMPL
+241	UNIMPL
+242	UNIMPL
+243	UNIMPL
+244	UNIMPL
+245	UNIMPL
+246	UNIMPL
+247	UNIMPL
+248	UNIMPL
+249	UNIMPL
+250	UNIMPL
+251	UNIMPL
+252	UNIMPL
+253	UNIMPL
+254	STD		{ int freebsd_sys_lchown(char *path, int uid, \
+			    int gid); }

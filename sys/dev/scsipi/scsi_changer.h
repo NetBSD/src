@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.8.2.2 1997/08/27 23:33:13 thorpej Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.8.2.3 1997/10/14 10:25:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -88,7 +88,7 @@ struct scsi_exchange_medium {
  * Cause the medium changer to check all elements for medium and any
  * other status relevant to the element.
  */
-struct scsi_initialize_elememt_status {
+struct scsi_initialize_element_status {
 	u_int8_t	opcode;
 #define INITIALIZE_ELEMENT_STATUS	0x07
 	u_int8_t	byte2;

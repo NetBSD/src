@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1996/06/16 09:07:59 oki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.10.1 1997/10/14 10:20:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,8 +40,17 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/disk.h>
 
 #define	b_cylin	b_resid
+
+/* was this the boot device ? */
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+}
 
 /*
  * Attempt to read a disk label from a device
@@ -61,13 +70,13 @@
 char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
-	register struct disklabel *lp;
+	void (*strat) __P((struct buf *));
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition *dp = osdep->dosparts;
 	struct dkbad *bdp = &osdep->bad;
-	register struct buf *bp;
+	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
 	int dospartoff, cyl, i;
@@ -239,13 +248,13 @@ done:
  */
 int
 setdisklabel(olp, nlp, openmask, osdep)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition *dp = osdep->dosparts;
-	register i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0
@@ -296,8 +305,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
-	register struct disklabel *lp;
+	void (*strat) __P((struct buf *));
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition *dp = osdep->dosparts;
@@ -427,15 +436,6 @@ done:
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (error);
-}
-
-/* was this the boot device ? */
-int
-dk_establish(dk, dev)
-	struct dkdevice *dk;
-	struct device *dev;
-{
-	return 1;
 }
 
 /*

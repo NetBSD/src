@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.7.2.2 1997/08/27 23:33:35 thorpej Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.7.2.3 1997/10/14 10:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -326,7 +326,8 @@ mustek_trigger_scanner(ss)
 
 	/* send the set window command to the scanner */
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_set_parms: set_window\n"));
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &window_cmd,
+	error = (*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &window_cmd,
 	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
 	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
 	if (error)
@@ -365,7 +366,8 @@ mustek_trigger_scanner(ss)
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &mode_cmd,
+	error = (*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &mode_cmd,
 	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
 	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
 	if (error)
@@ -402,7 +404,8 @@ mustek_trigger_scanner(ss)
 
 	/* send the command to the scanner */
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: start_scan\n"));
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &start_scan_cmd,
+	error = (*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &start_scan_cmd,
 	    sizeof(start_scan_cmd), NULL, 0,
 	    MUSTEK_RETRIES, 5000, NULL, 0);
 	if (error)
@@ -445,7 +448,8 @@ mustek_rewind_scanner(ss)
 		/* send the command to the scanner */
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("mustek_rewind_scanner: stop_scan\n"));
-		error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
+		error = (*sc_link->scsipi_cmd)(sc_link,
+		    (struct scsipi_generic *) &cmd,
 		    sizeof(cmd), NULL, 0, MUSTEK_RETRIES, 5000, NULL, 0);
 		if (error)
 			return (error);
@@ -483,7 +487,8 @@ mustek_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd, sizeof(cmd),
+	if ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, MUSTEK_RETRIES, 10000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
@@ -518,8 +523,9 @@ mustek_get_status(ss, timeout, update)
 
 	while (1) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("mustek_get_status: stat_cmd\n"));
-		error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
-		    sizeof(cmd), (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
+		error = (*sc_link->scsipi_cmd)(sc_link,
+		    (struct scsipi_generic *) &cmd, sizeof(cmd),
+		    (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
 		    5000, NULL, SCSI_DATA_IN);
 		if (error)
 			return (error);
@@ -597,6 +603,6 @@ mustek_compute_sizes(ss)
 
 	ss->sio.scan_lines =
 	    (ss->sio.scan_height * ss->sio.scan_y_resolution) / 1200;
-	ss->sio.scan_window_size = ss->sio.scan_lines * 
+	ss->sio.scan_window_size = ss->sio.scan_lines *
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.10.1 1997/08/23 07:10:44 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.10.2 1997/10/14 10:17:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -143,6 +143,8 @@ whichType(part)
 
 	if (strcmp(PART_DRIVER_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
+	if (strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0)
+		return 0;
 	if (strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
 	if (strcmp(PART_UNIX_TYPE, (char *)part->pmPartType) == 0) {
@@ -160,7 +162,7 @@ whichType(part)
 		if (bzb->bzbType == BZB_TYPESWAP)
 			return SWAP_PART;
 
-		return 0;
+		return SCRATCH_PART;
 	}
 	if (strcmp(PART_MAC_TYPE, (char *)part->pmPartType) == 0)
 		return HFS_PART;

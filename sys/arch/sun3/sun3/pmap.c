@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 1997/07/29 06:41:35 fair Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73.2.1 1997/10/14 10:19:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,20 +76,27 @@
 #include <sys/malloc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+#include <sys/kcore.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <machine/pte.h>
-#include <machine/control.h>
-
 #include <machine/cpu.h>
-#include <machine/mon.h>
-#include <machine/vmparam.h>
+#include <machine/control.h>
 #include <machine/dvma.h>
-#include <machine/pmap.h>
+#include <machine/kcore.h>
 #include <machine/machdep.h>
+#include <machine/mon.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+#include <machine/vmparam.h>
+
+/* This is defined in locore.s */
+extern char kernel_text[];
+
+/* These are defined by the linker */
+extern char etext[], edata[], end[];
 
 extern void copypage __P((const void*, void*));
 extern void zeropage __P((void*));
@@ -343,7 +350,9 @@ static struct context_state context_array[NCONTEXT];
  * to be used in copy/zero operations
  * (set in sun3_startup.c)
  */
-vm_offset_t tmp_vpages[2];
+vm_offset_t tmp_vpages[2] = {
+	MONSHORTSEG,
+	MONSHORTSEG + NBPG };
 int tmp_vpages_inuse;
 
 
@@ -357,7 +366,11 @@ static void context_allocate __P((pmap_t pmap));
 static void context_free __P((pmap_t pmap));
 static void context_init __P((void));
 
+static void sun3_pmeg_init __P((void));
+static void sun3_reserve_pmeg __P((int pmeg_num));
+
 static pmeg_t pmeg_allocate __P((pmap_t pmap, vm_offset_t va));
+static void pmeg_mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
 static void pmeg_release __P((pmeg_t pmegp));
 static void pmeg_free __P((pmeg_t pmegp, int segnum));
 static pmeg_t pmeg_cache __P((pmap_t pmap, vm_offset_t va));
@@ -606,6 +619,46 @@ sun3_reserve_pmeg(sme)
 	pmegp->pmeg_reserved++;	/* keep count, just in case */
 	TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
 	pmegp->pmeg_qstate = PMEGQ_NONE;
+}
+
+/*
+ * Examine PMEGs used by the monitor, and either
+ * reserve them (keep=1) or clear them (keep=0)
+ */
+static void
+pmeg_mon_init(sva, eva, keep)
+	vm_offset_t sva, eva;
+	int keep;	/* true: steal, false: clear */
+{
+	vm_offset_t pgva, endseg;
+	int pte, valid;
+	unsigned char sme;
+
+	sva &= ~(NBSG-1);
+
+	while (sva < eva) {
+		sme = get_segmap(sva);
+		if (sme != SEGINV) {
+#ifdef	DEBUG
+			mon_printf("mon va=0x%x seg=0x%x\n", sva, sme);
+#endif
+			valid = 0;
+			endseg = sva + NBSG;
+			for (pgva = sva; pgva < endseg; pgva += NBPG) {
+				pte = get_pte(pgva);
+				if (pte & PG_VALID) {
+					valid++;
+#ifdef	DEBUG
+					mon_printf("mon va=0x%x pte=0x%x\n", pgva, pte);
+#endif
+				}
+			}
+			if (keep && valid)
+				sun3_reserve_pmeg(sme);
+			else set_segmap(sva, SEGINV);
+		}
+		sva += NBSG;
+	}
 }
 
 static void
@@ -950,7 +1003,7 @@ pmeg_set_wiring(pmegp, va, flag)
 		pmegp->pmeg_wired &= ~mask;
 }
 
-void
+static void
 sun3_pmeg_init()
 {
 	int x;
@@ -1460,10 +1513,226 @@ pmap_common_init(pmap)
  * Prepare the kernel for VM operations.
  * This is called by sun3_startup:sun3_bootstrap()
  * after the "start/end" globals are set.
+ * This function must NOT leave context zero.
  */
 void
-pmap_bootstrap()
+pmap_bootstrap(nextva)
+	vm_offset_t nextva;
 {
+	MachMonRomVector *rvec;
+	vm_offset_t va, eva;
+	int i, pte, sme;
+
+	/**********************************************************
+	 * XXX:  Begin stuff moved from sun3_startup
+	 *********************************************************/
+	rvec = romVectorPtr;
+
+	/*
+	 * Determine the range of kernel virtual space available.
+	 * This is just page-aligned for now, so we can allocate
+	 * some special-purpose pages before rounding to a segment.
+	 */
+	virtual_avail = m68k_round_page(nextva);
+	virtual_end = VM_MAX_KERNEL_ADDRESS;
+
+	/*
+	 * Determine the range of physical memory available.
+	 * Physical memory at zero was remapped to KERNBASE.
+	 */
+	avail_start = virtual_avail - KERNBASE;
+	if (rvec->romvecVersion < 1) {
+		mon_printf("Warning: ancient PROM version=%d\n",
+				   rvec->romvecVersion);
+		/* Guess that PROM version 0.X used two pages. */
+		avail_end = *rvec->memorySize - (2*NBPG);
+	} else {
+		/* PROM version 1 or later. */
+		avail_end = *rvec->memoryAvail;
+	}
+	avail_end = m68k_trunc_page(avail_end);
+
+	/*
+	 * Steal some special-purpose, already mapped pages.
+	 * XXX: Get memory for pv_alloc/pv_free.
+	 */
+
+	/*
+	 * XXX - Make sure avail_start is within the low 1M range
+	 * that the Sun PROM guarantees will be mapped in?
+	 * Make sure it is below avail_end as well?
+	 */
+
+	/*
+	 * Done allocating PAGES of virtual space, so
+	 * clean out the rest of the last used segment.
+	 * After this point, virtual_avail is seg-aligned.
+	 */
+	va = virtual_avail;	/* will clear PTEs from here */
+	virtual_avail = m68k_round_seg(virtual_avail);
+	while (va < virtual_avail) {
+		set_pte(va, PG_INVAL);
+		va += NBPG;
+	}
+
+	/*
+	 * Now that we are done stealing physical pages, etc.
+	 * figure out which PMEGs are used by those mappings
+	 * and reserve them -- but first, init PMEG management.
+	 */
+	sun3_pmeg_init();
+
+	/*
+	 * Reserve PMEGS for kernel text/data/bss
+	 * and the misc pages taken above.
+	 */
+	va = VM_MIN_KERNEL_ADDRESS;
+	while (va < virtual_avail) {
+		sme = get_segmap(va);
+		if (sme == SEGINV) {
+			mon_printf("kernel text/data/bss not mapped\n");
+			sunmon_abort();
+		}
+		sun3_reserve_pmeg(sme);
+		va += NBSG;
+	}
+
+	/*
+	 * Unmap kernel virtual space (only segments.  if it squished ptes,
+	 * bad things might happen).  Also, make sure to leave no valid
+	 * segmap entries in the MMU unless pmeg_array records them.
+	 */
+	va = virtual_avail;
+	while (va < virtual_end) {
+		set_segmap(va, SEGINV);
+		va += NBSG;
+	}
+
+	/*
+	 * Clear-out pmegs left in DVMA space by the PROM.
+	 * DO NOT kill the last one! (owned by the PROM!)
+	 */
+	va  = m68k_trunc_seg(DVMA_SPACE_START);
+	eva = m68k_trunc_seg(DVMA_SPACE_END);  /* Yes trunc! */
+	while (va < eva) {
+		set_segmap(va, SEGINV);
+		va += NBSG;
+	}
+
+	/*
+	 * Reserve PMEGs used by the PROM monitor:
+	 *   need to preserve/protect mappings between
+	 *		MONSTART, MONEND.
+	 *   free up any pmegs in this range which have no mappings
+	 *   deal with the awful MONSHORTSEG/MONSHORTPAGE
+	 */
+	pmeg_mon_init(MONSTART, MONEND, TRUE);
+
+	/*
+	 * Make sure the hole between MONEND, MONSHORTSEG is clear.
+	 */
+	pmeg_mon_init(MONEND, MONSHORTSEG, FALSE);
+
+	/*
+	 * MONSHORTSEG contains MONSHORTPAGE which is a data page
+	 * allocated by the PROM monitor.
+	 */
+	sme = get_segmap(MONSHORTSEG);
+	sun3_reserve_pmeg(sme);
+	for (va = MONSHORTSEG;
+		 va < MONSHORTPAGE;
+		 va += NBPG)
+		set_pte(va, PG_INVAL);
+
+	/*
+	 * unmap user virtual segments
+	 */
+	va = 0;
+	while (va < KERNBASE) {	/* starts and ends on segment boundries */
+		set_segmap(va, SEGINV);
+		va += NBSG;
+	}
+
+	/*
+	 * Map the message buffer page (XXX non-cached)
+	 * This is put in physical page zero so it is
+	 * always in the same place after reboot.
+	 */
+	va = KERNBASE;
+	pte = get_pte(va);
+	pte |= PG_NC;
+	set_pte(va, pte);
+	/* Initialize msgbufaddr later, in machdep.c */
+
+	/* XXX - tmpstack page? */
+
+	/*
+	 * Verify protection bits on kernel text/data/bss
+	 * All of kernel text, data, and bss are cached.
+	 * Text is read-only (except in db_write_ktext).
+	 *
+	 * Note that the Sun PROM initialized the memory
+	 * mapping with everything non-cached...
+	 */
+
+	/* text */
+	va = (vm_offset_t) kernel_text;
+	eva = m68k_trunc_page(etext);
+	while (va < eva) {
+		pte = get_pte(va);
+		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
+			mon_printf("invalid page at 0x%x\n", va);
+		}
+		pte &= ~(PG_WRITE|PG_NC);
+		/* Kernel text is read-only */
+		pte |= (PG_SYSTEM);
+		set_pte(va, pte);
+		va += NBPG;
+	}
+
+	/* data and bss */
+	eva = m68k_round_page(end);
+	while (va < eva) {
+		pte = get_pte(va);
+		if ((pte & (PG_VALID|PG_TYPE)) != PG_VALID) {
+			mon_printf("invalid page at 0x%x\n", va);
+		}
+		pte &= ~(PG_NC);
+		pte |= (PG_SYSTEM | PG_WRITE);
+		set_pte(va, pte);
+		va += NBPG;
+	}
+
+	/*
+	 * Duplicate all mappings in the current context into
+	 * every other context.  We have to let the PROM do the
+	 * actual segmap manipulation because we can only switch
+	 * the MMU context after we are sure that the kernel text
+	 * is identically mapped in all contexts.  The PROM can
+	 * do the job using hardware-dependent tricks...
+	 */
+#ifdef	DIAGNOSTIC
+	/* Note: PROM setcxsegmap function needs sfc=dfs=FC_CONTROL */
+	if ((getsfc() != FC_CONTROL) || (getdfc() != FC_CONTROL)) {
+		mon_printf("pmap_bootstrap: bad dfc or sfc\n");
+		sunmon_abort();
+	}
+	/* Near the beginning of locore.s we set context zero. */
+	if (get_context() != 0) {
+		mon_printf("pmap_bootstrap: not in context zero?\n");
+		sunmon_abort();
+	}
+#endif
+	for (va = 0; va < (vm_offset_t) (NBSG * NSEGMAP); va += NBSG) {
+		sme = get_segmap(va); /* context zero */
+		for (i = 1; i < NCONTEXT; i++) {
+			(*rvec->setcxsegmap)(i, va, sme);
+		}
+	}
+
+	/**********************************************************
+	 * XXX:  End of stuff moved from sun3_startup
+	 *********************************************************/
 
 	/*
 	 * Reserve a segment for the kernel to use to access a pmeg
@@ -3310,20 +3579,29 @@ pmap_prefer(fo, va)
 }
 
 /*
- * Copy the kernel segmap into the passed buffer (256 bytes).
+ * Fill in the sun3x-specific part of the kernel core header
+ * for dumpsys().  (See machdep.c for the rest.)
  */
 void
-pmap_get_ksegmap(cp)
-	u_char *cp;
+pmap_kcore_hdr(sh)
+	struct sun3_kcore_hdr *sh;
 {
 	vm_offset_t va;
+	u_char *cp, *ep;
 
+	sh->segshift = SEGSHIFT;
+	sh->pg_frame = PG_FRAME;
+	sh->pg_valid = PG_VALID;
+
+	/* Copy the kernel segmap (256 bytes). */
 	va = KERNBASE;
+	cp = sh->ksegmap;
+	ep = cp + sizeof(sh->ksegmap);
 	do {
 		*cp = get_segmap(va);
-		cp++;
 		va += NBSG;
-	} while (va < 0x10000000);
+		cp++;
+	} while (cp < ep);
 }
 
 /*

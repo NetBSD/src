@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.4 1996/10/13 03:35:00 christos Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.4.10.1 1997/10/14 10:20:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <x68k/x68k/iodevice.h>
 #include <machine/opmbellio.h>
@@ -60,7 +61,7 @@
 #include <x68k/dev/opmbellvar.h>
 
 static u_int bell_pitchtokey __P((u_int));
-static void bell_timeout();
+static void bell_timeout __P((void *));
 
 struct bell_softc {
 	int sc_flags;
@@ -84,6 +85,17 @@ static struct opm_voice vtab[NBELL];
 #define BELLF_ON	0x20
 
 #define UNIT(x)		minor(x)
+
+cdev_decl(bell);
+void bell_on __P((struct bell_softc *sc));
+void bell_off __P((struct bell_softc *sc));
+void opm_bell __P((void));
+void opm_bell_on __P((void));
+void opm_bell_off __P((void));
+int opm_bell_setup __P((struct bell_info *));
+int bellmstohz __P((int));
+
+void bellattach __P((int));
 
 void
 bellattach(num)
@@ -123,9 +135,10 @@ bellattach(num)
 }
 
 int
-bellopen(dev, flags)
+bellopen(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	register int unit = UNIT(dev);
 	register struct bell_softc *sc = &bell_softc[unit];
@@ -142,15 +155,17 @@ bellopen(dev, flags)
 	return 0;
 }
 
-void
-bellclose(dev, flags)
+int
+bellclose(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	int unit = UNIT(dev);
 	struct bell_softc *sc = &bell_softc[unit];
 
 	sc->sc_flags &= ~BELLF_OPEN;
+	return 0;
 }
 
 int
@@ -407,7 +422,7 @@ opm_bell()
 
     if (sc->msec != 0) {
 	if (sc->sc_flags & BELLF_OUT) {
-	    bell_timeout();
+	    bell_timeout(0);
 	} else if (sc->sc_flags & BELLF_ON)
 	    return;
 
@@ -421,7 +436,8 @@ opm_bell()
 }
 
 static void
-bell_timeout()
+bell_timeout(arg)
+	void *arg;
 {
     struct bell_softc *sc = &bell_softc[0];
 
@@ -436,7 +452,7 @@ opm_bell_on()
     register struct bell_softc *sc = &bell_softc[0];
 
     if (sc->sc_flags & BELLF_OUT)
-	bell_timeout();
+	bell_timeout(0);
     if (sc->sc_flags & BELLF_ON)
 	return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_30.h,v 1.1 1997/06/02 20:26:40 leo Exp $	*/
+/*	$NetBSD: cacheops_30.h,v 1.1.4.1 1997/10/14 10:16:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@ ICPA_30()
 #define	DCIS_30()
 #define	DCIU_30()
 #define	DCIAS_30(va)
+#define	DCFA_30()
+#define	DCPA_30()
 
 
 void PCIA_30 __P((void));

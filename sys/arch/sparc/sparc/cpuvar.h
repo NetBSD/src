@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.4 1997/07/06 21:14:25 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.4.2.1 1997/10/14 10:18:46 thorpej Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- *  PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ *  BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -139,6 +139,9 @@ struct cpu_softc {
 
 	/* various flags to workaround anomalies in chips */
 	int		flags;		/* see CPUFLG_xxx, below */
+
+	/* Per processor counter register (sun4m only) */
+	struct counter_4m	*counterreg_4m;
 
 	/*
 	 * The following pointers point to processes that are somehow
@@ -267,4 +270,7 @@ void mmu_install_tables __P((struct cpu_softc *));
 void pmap_alloc_cpu __P((struct cpu_softc *));
 
 #define cpuinfo	(*(struct cpu_softc *)CPUINFO_VA)
+
+struct cpu_softc	**cpu_info;
+
 #endif	/* _sparc_cpuvar_h */

@@ -1,5 +1,5 @@
 #
-# $NetBSD: netbsd.S,v 1.3 1997/06/27 23:32:09 is Exp $
+# $NetBSD: netbsd060sp.S,v 1.4.2.2 1997/10/14 10:16:39 thorpej Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -158,22 +158,19 @@ user_read:
 #
 	.global	_060_dmem_read_byte
 _060_dmem_read_byte:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
-	bnes	dmrbs		|# supervisor
+	clrl	d1			|# return success
+	clrl	d0			|# clear whole longword
+	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	bnes	dmrbs			|# supervisor
 dmrbu:
-	clrl	sp@-		|# clear space on stack for result
-	movel	#0x1,sp@-	|# pass: # bytes to copy
-	pea	sp@(0x7)	|# pass: dst addr (stack)
-	movel	a0,sp@-		|# pass: src addr (user mem)
-	bsrl	_copyin		|# "copy in" the data
-	movel	d0,d1		|# return success
-	addl	#0xc,sp		|# delete params
-	movel	sp@+,d0		|# put answer in d0
-	rts
+	movl	_curpcb,a1		| fault handler
+	movl	#Lferr,a1@(64)		| set it
+	movsb	a0@,d0
+	bra	Lfdone
+
 dmrbs:
-	clrl	d0		|# clear whole longword
-	moveb	a0@,d0		|# fetch super byte
-	clrl	d1		|# return success
+	moveb	a0@,d0			|# fetch super byte
+	clrl	d1			|# return success
 	rts
 
 #
@@ -195,22 +192,17 @@ dmrbs:
 
 _060_imem_read_word:
 _060_dmem_read_word:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
-	bnes	dmrws		|# supervisor
+	clrl	d1			|# return success
+	clrl	d0			|# clear whole longword
+	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	bnes	dmrws			|# supervisor
 dmrwu:
-	clrl	sp@-		|# clear result space on stack
-	movel	#0x2,sp@-	|# pass: # bytes to copy
-	pea	sp@(0x6)	|# pass: dst addr (stack)
-	movel	a0,sp@-		|# pass: src addr (user mem)
-	bsrl	_copyin		|# "copy in" the data
-	movel	d0,d1		|# return success
-	addl	#0xc,sp		|# delete params
-	movel	sp@+,d0		|# put answer in d0
-	rts
+	movl	_curpcb,a1		| fault handler
+	movl	#Lferr,a1@(64)		| set it
+	movsw	a0@,d0
+	bra	Lfdone
 dmrws:
-	clrl	d0		|# clear whole longword
-	movew	a0@,d0		|# fetch super word
-	clrl	d1		|# return success
+	movew	a0@,d0			|# fetch super word
 	rts
 
 # 
@@ -235,21 +227,17 @@ dmrws:
 
 _060_imem_read_long:
 _060_dmem_read_long:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
-	bnes	dmrls		|# supervisor
+	clrl	d1			|# return success
+	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	bnes	dmrls			|# supervisor
 dmrlu:
-	subql	#0x4,sp		|# clear result space on stack
-	movel	#0x4,sp@-	|# pass: # bytes to copy
-	pea	sp@(0x4)	|# pass: dst addr (stack)
-	movel	a0,sp@-		|# pass: src addr (user mem)
-	bsrl	_copyin		|# "copy in" the data
-	movel	d0,d1		|# return success
-	addl	#0xc,sp		|# delete params
-	movel	sp@+,d0		|# put answer in d0
-	rts
+	movl	_curpcb,a1		| fault handler
+	movl	#Lferr,a1@(64)		| set it
+	movsl	a0@,d0
+	bra	Lfdone
 dmrls:
-	movel	a0@,d0		|# fetch super longword
-	clrl	d1		|# return success
+	movel	a0@,d0			|# fetch super longword
+	clrl	d1			|# return success
 	rts
 
 #
@@ -266,20 +254,16 @@ dmrls:
 #
 	.global	_060_dmem_write_byte
 _060_dmem_write_byte:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
-	bnes	dmwbs		|# supervisor
+	clrl	d1			|# return success
+	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	bnes	dmwbs			|# supervisor
 dmwbu:
-	movel	d0,sp@-		|# put src on stack
-	movel	#0x1,sp@-	|# pass: # bytes to copy
-	movel	a0,sp@-		|# pass: dst addr (user mem)
-	pea	sp@(0xb)	|# pass: src addr (stack)
-	bsrl	_copyout	|# "copy out" the data
-	movel	d0,d1		|# return success
-	addl	#0x10,sp	|# delete params + src
-	rts
+	movl	_curpcb,a1		| fault handler
+	movl	#Lferr,a1@(64)		| set it
+	movsb	d0,a0@
+	bra	Lfdone
 dmwbs:
-	moveb	d0,a0@		|# store super byte
-	clrl	d1		|# return success
+	moveb	d0,a0@			|# store super byte
 	rts
 
 #
@@ -296,20 +280,16 @@ dmwbs:
 #
 	.global	_060_dmem_write_word
 _060_dmem_write_word:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
-	bnes	dmwws		|# supervisor
+	clrl	d1			|# return success
+	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	bnes	dmwws			|# supervisor
 dmwwu:
-	movel	d0,sp@-		|# put src on stack
-	movel	#0x2,sp@-	|# pass: # bytes to copy
-	movel	a0,sp@-		|# pass: dst addr (user mem)
-	pea	sp@(0xa)	|# pass: src addr (stack)
-	bsrl	_copyout	|# "copy out" the data
-	movel	d0,d1		|# return success
-	addl	#0x10,sp	|# delete params + src
-	rts
+	movl	_curpcb,a1		| fault handler
+	movl	#Lferr,a1@(64)		| set it
+	movsw	d0,a0@
+	bra	Lfdone
 dmwws:
-	movew	d0,a0@		|# store super word
-	clrl	d1		|# return success
+	movew	d0,a0@			|# store super word
 	rts
 
 #
@@ -326,20 +306,23 @@ dmwws:
 #
 	.global	_060_dmem_write_long
 _060_dmem_write_long:
-	btst	#0x5,a6@(0x4)	|# check for supervisor state
-	bnes	dmwls		|# supervisor
+	clrl	d1			|# return success
+	btst	#0x5,a6@(0x4)		|# check for supervisor state
+	bnes	dmwls			|# supervisor
 dmwlu:
-	movel	d0,sp@-		|# put src on stack
-	movel	#0x4,sp@-	|# pass: # bytes to copy
-	movel	a0,sp@-		|# pass: dst addr (user mem)
-	pea	sp@(0x8)	|# pass: src addr (stack)
-	bsrl	_copyout	|# "copy out" the data
-	movel	d0,d1		|# return success
-	addl	#0x10,sp	|# delete params + src
-	rts
+	movl	_curpcb,a1		| fault handler
+	movl	#Lferr,a1@(64)		| set it
+	movsl	d0,a0@
+	bra	Lfdone
 dmwls:
-	movel	d0,a0@		|# store super longword
-	clrl	d1		|# return success
+	movel	d0,a0@			|# store super longword
+	rts
+
+############################################################################
+Lferr:
+	moveq	#-1,d1
+Lfdone:
+	clrl	a1@(64)	| clear fault handler
 	rts
 
 ############################################################################

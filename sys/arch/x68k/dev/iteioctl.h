@@ -38,7 +38,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: iteioctl.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+ *	$NetBSD: iteioctl.h,v 1.1.1.1.12.1 1997/10/14 10:20:26 thorpej Exp $
  */
 
 struct itewinsize {

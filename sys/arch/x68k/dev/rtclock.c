@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.2 1997/01/15 01:29:25 perry Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.2.8.1 1997/10/14 10:20:35 thorpej Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -55,9 +55,10 @@ static int  rtsettod __P((long));
  * the realtime clock.
  */
 u_long (*gettod) __P((void));
-int (*settod)();
+int (*settod) __P((long));
 
 static volatile union rtc *rtc_addr = 0;
+int rtclockinit __P((void));
 
 int
 rtclockinit()

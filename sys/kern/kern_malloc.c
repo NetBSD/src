@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.24 1997/02/02 21:22:16 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.24.8.1 1997/10/14 10:26:00 thorpej Exp $	*/
 
 /*
  * Copyright 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@ struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
-char *memname[] = INITKMEMNAMES;
+const char *memname[] = INITKMEMNAMES;
 
 #ifdef DIAGNOSTIC
 /*
@@ -109,7 +109,7 @@ malloc(size, type, flags)
 #ifdef DIAGNOSTIC
 	int32_t *end, *lp;
 	int copysize;
-	char *savedtype;
+	const char *savedtype;
 #endif
 #ifdef KMEMSTATS
 	register struct kmemstats *ksp = &kmemstats[type];

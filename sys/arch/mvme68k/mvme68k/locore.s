@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23.4.1 1997/09/16 03:49:01 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.23.4.2 1997/10/14 10:17:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,6 +164,7 @@ start:					| start of kernel and .text!
 	movl	0xfffe0778,a0@		| XXXCDC -- HARDWIRED HEX
 
 	/* initialize memory sizes (for pmap_bootstrap) */
+#ifndef MACHINE_NONCONTIG
 	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
@@ -174,6 +175,25 @@ start:					| start of kernel and .text!
 	subl	d0,d1			| compute amount of RAM present
 	RELOC(_physmem, a0)
 	movl	d1,a0@			| and physmem
+#else
+	/* initialise list of physical memory segments */
+	RELOC(_phys_seg_list, a0)
+	movl	a5,a0@			| phys_seg_list[0].ps_start
+	movl	0xfffe0774,d1		| End + 1 of onboard memory
+	movl	d1,a0@(4)		| phys_seg_list[0].ps_end
+	clrl	a0@(8)			| phys_seg_list[0].ps_startpage
+	movl	0xfffe0764,a0@(0x0c)	| Start of offboard segment
+	beq	Lsavmaxmem		| Jump if none defined
+	movl	0xfffe0768,d1		| End of offboard segment
+	addql	#1,d1			| +1
+	movl	d1,a0@(0x10)		| phys_seg_list[1].ps_end
+	clrl	a0@(0x14)		| phys_seg_list[1].ps_startpage
+Lsavmaxmem:
+	moveq	#PGSHIFT,d2
+	lsrl	d2,d1			| convert to page (click) number
+	RELOC(_maxmem, a0)
+	movl	d1,a0@			| save as maxmem
+#endif
 
 	jra	Lstart1
 Lnot147:
@@ -376,8 +396,7 @@ Lnocache0:
 /* final setup for C code */
 	movl	#_vectab,d0		| set VBR
 	movc	d0,vbr
-	jbsr	_isrinit		| be ready for stray ints
-	jbsr	_mvme68k_init		| early model-dependent init
+	jbsr	_mvme68k_init		| additional pre-main initialization
 	movw	#PSL_LOWIPL,sr		| lower SPL
 
 /*
@@ -1636,7 +1655,7 @@ _mmutype:
 _cputype:
 	.long	CPU_68030	| default to CPU_68030
 _fputype:
-	.long	FPU_68030	| default to FPU_68030
+	.long	FPU_68882	| default to FPU_68882
 _ectype:
 	.long	EC_NONE		| external cache type, default to none
 _protorp:

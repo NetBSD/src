@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.2.2.2 1997/08/27 23:33:30 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.2.2.3 1997/10/14 10:25:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -59,17 +59,17 @@ typedef	int	boolean;
  * The following documentation tries to describe the relationship between the
  * various structures defined in this file:
  *
- * each adapter type has a scsipi_adapter struct. This describes the adapter and
- *    identifies routines that can be called to use the adapter.
+ * each adapter type has a scsipi_adapter struct. This describes the adapter
+ *    and identifies routines that can be called to use the adapter.
  * each device type has a scsipi_device struct. This describes the device and
  *    identifies routines that can be called to use the device.
- * each existing device position (scsibus + target + lun or atapibus + drive) 
+ * each existing device position (scsibus + target + lun or atapibus + drive)
  *    can be described by a scsipi_link struct.
  *    Only scsipi positions that actually have devices, have a scsipi_link
  *    structure assigned. so in effect each device has scsipi_link struct.
  *    The scsipi_link structure contains information identifying both the
- *    device driver and the adapter driver for that position on that scsipi bus,
- *    and can be said to 'link' the two.
+ *    device driver and the adapter driver for that position on that scsipi
+ *    bus, and can be said to 'link' the two.
  * each individual scsipi bus has an array that points to all the scsipi_link
  *    structs associated with that scsipi bus. Slots with no device have
  *    a NULL pointer.
@@ -121,16 +121,16 @@ struct scsipi_device {
 	void	(*done)  __P((struct scsipi_xfer *));
 };
 
-/* 
+/*
  * These entrypoints are called by the high-end drivers to get services from
- * whatever low-end drivers they are attached to each adapter type has one of 
- * these statically allocated. 
+ * whatever low-end drivers they are attached to each adapter type has one of
+ * these statically allocated.
  */
 struct scsipi_adapter {
-	int	(*scsipi_cmd) __P((struct scsipi_xfer *)); 
+	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
 	void	(*scsipi_minphys) __P((struct buf *));
 	int	(*open_target_lu) __P((void));
-	int	(*close_target_lu) __P((void)); 
+	int	(*close_target_lu) __P((void));
 };
 
 /*
@@ -144,9 +144,9 @@ struct scsipi_adapter {
  */
 
 struct scsipi_link {
-	u_int8_t type;			/* device type, i.e. SCSI, ATAPI, ... */
-#define BUS_SCSI 0
-#define BUS_ATAPI 1
+	u_int8_t type;			/* device type, i.e. SCSI, ATAPI, ...*/
+#define BUS_SCSI		0
+#define BUS_ATAPI		1
 	u_int8_t openings;		/* available operations */
 	u_int8_t active;		/* operations in progress */
 	u_int8_t flags;			/* flags that all devices have */
@@ -164,8 +164,8 @@ struct scsipi_link {
 #define SDEV_NOMODESENSE	0x0010	/* removable media/optical drives */
 #define SDEV_NOSTARTUNIT	0x0020	/* do not issue start unit requests
 					   in sd.c */
-#define ADEV_CDROM		0x0100	/* device is a CD-ROM */  
-#define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */  
+#define ADEV_CDROM		0x0100	/* device is a CD-ROM */
+#define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */
 #define ADEV_NOCAPACITY		0x0400	/* no READ_CD_CAPACITY command */
 #define ADEV_NOTUR		0x0800	/* no TEST_UNIT_READY command */
 #define ADEV_NODOORLOCK		0x1000	/* device can't look door */
@@ -173,12 +173,12 @@ struct scsipi_link {
 
 	struct	scsipi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
-	struct scsipi_adapter *adapter;	/* adapter entry points etc. */
+	struct	scsipi_adapter *adapter;/* adapter entry points etc. */
 	void    *adapter_softc;		/* needed for call to foo_scsipi_cmd */
 	union {				/* needed for call to foo_scsipi_cmd */
 		struct scsi_link {
-			int  channel;	/* channel, i.e. bus # on controller */ 
- 
+			int channel;	/* channel, i.e. bus # on controller */
+
 			u_int8_t scsi_version;	/* SCSI-I, SCSI-II, etc. */
 			u_int8_t scsibus;	/* the Nth scsibus */
 			u_int8_t target;	/* targ of this dev */
@@ -198,16 +198,14 @@ struct scsipi_link {
 			u_int8_t atapibus;
 			u_int8_t cap;		/* drive capability */
 #define ACAP_DRQ_MPROC      0x0000  /* microprocessor DRQ */
-#define ACAP_DRQ_INTR       0x0100  /* interrupt DRQ */ 
+#define ACAP_DRQ_INTR       0x0100  /* interrupt DRQ */
 #define ACAP_DRQ_ACCEL      0x0200  /* accelerated DRQ */
 #define ACAP_LEN            0x0400  /* 16 bit commands */
 		} scsipi_atapi;
 	} _scsipi_link;
 	int (*scsipi_cmd) __P((struct scsipi_link *, struct scsipi_generic *,
-				int cmdlen, u_char *data_addr,
-				int datalen, int retries,
-				int timeout, struct buf *bp,
-				int flags));
+	    int cmdlen, u_char *data_addr, int datalen, int retries,
+	    int timeout, struct buf *bp, int flags));
 	int (*scsipi_interpret_sense) __P((struct scsipi_xfer *));
 	void (*sc_print_addr) __P((struct scsipi_link *sc_link));
 };
@@ -232,7 +230,8 @@ struct scsipi_xfer {
 	int	datalen;		/* data len (blank if uio) */
 	int	resid;			/* how much buffer was not touched */
 	int	error;			/* an error value */
-	struct	buf *bp;		/* If we need to associate with a buf */
+	struct	buf *bp;		/* If we need to associate with */
+					/* a buf */
 	union {
 		struct  scsipi_sense_data scsi_sense; /* 32 bytes */
 		u_int32_t atapi_sense;
@@ -296,12 +295,12 @@ struct scsipi_inquiry_pattern {
 struct scsipibus_attach_args {
 	struct scsipi_link *sa_sc_link;
 	struct scsipi_inquiry_pattern sa_inqbuf;
-	union { /* bus-type specific infos */
-		u_int8_t scsi_version; /* SCSI version */
+	union {				/* bus-type specific infos */
+		u_int8_t scsi_version;	/* SCSI version */
 	} scsipi_info;
 };
 
-/* 
+/*
  * this describes a quirk entry
  */
 

@@ -42,7 +42,7 @@
  *
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  *
- * $Id: zsvar.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+ *	$NetBSD: zsvar.h,v 1.1.1.1.12.1 1997/10/14 10:20:40 thorpej Exp $
  */
 
 /*

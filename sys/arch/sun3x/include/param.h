@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7.2.1 1997/09/22 06:32:49 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.7.2.2 1997/10/14 10:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,9 @@
 #define	KERN_END	0xFE000000	/* end of kernel virtual */
 
 #define	UPAGES		2		/* pages of u-area */
+
+#define MSGBUFOFF	0x200
+#define MSGBUFSIZE	(NBPG - MSGBUFOFF)
 
 #include <m68k/param.h>
 

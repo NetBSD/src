@@ -1,4 +1,4 @@
-/*	$NetBSD: dpme.h,v 1.6 1996/06/23 15:30:51 briggs Exp $	 */
+/*	$NetBSD: dpme.h,v 1.6.10.1 1997/10/14 10:17:12 thorpej Exp $	 */
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -95,4 +95,5 @@ struct blockzeroblock {
 #define PART_MAC_TYPE		"APPLE_HFS"
 #define PART_SCRATCH		"APPLE_SCRATCH"
 #define PART_DRIVER_TYPE	"APPLE_DRIVER"
+#define PART_DRIVER43_TYPE	"APPLE_DRIVER43"
 #define PART_PARTMAP_TYPE	"APPLE_PARTITION_MAP"

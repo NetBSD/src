@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.6 1996/10/13 03:34:42 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.6.10.1 1997/10/14 10:20:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -110,14 +110,23 @@ struct com_softc {
 
 int comprobe __P((struct device *, void *, void *));
 void comattach __P((struct device *, struct device *, void *));
+int comprobe1 __P((int));
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
+int comread __P((dev_t, struct uio *, int));
+int comwrite __P((dev_t, struct uio *, int));
+int comioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+struct tty *comtty __P((dev_t));
+void comstop __P((struct tty *, int));
 void comdiag __P((void *));
 int comintr __P((void *));
 void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 void cominit __P((int, int));
+int comspeed __P((long));
+
+static u_char tiocm_xxx2mcr __P((int));
 
 struct cfattach com_ca = {
 	sizeof(struct com_softc), comprobe, comattach,
@@ -1110,6 +1119,12 @@ comintr(arg)
  * Following are all routines needed for COM to act as console
  */
 #include <dev/cons.h>
+
+void comcnprobe __P((struct consdev *));
+void comcninit __P((struct consdev *));
+int comcngetc __P((dev_t));
+void comcnputc __P((dev_t, int));
+void comcnpollc __P((dev_t, int));
 
 void
 comcnprobe(cp)

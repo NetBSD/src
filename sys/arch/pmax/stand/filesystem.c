@@ -30,7 +30,7 @@
  *
  *	filesystem.c
  *
- *	$Id: filesystem.c,v 1.1 1995/10/26 01:29:34 jonathan Exp $
+ *	$NetBSD: filesystem.c,v 1.1.12.1 1997/10/14 10:18:07 thorpej Exp $
  */
 
 #include <stand.h>

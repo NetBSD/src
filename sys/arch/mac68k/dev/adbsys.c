@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.27.4.1 1997/08/23 07:09:54 thorpej Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.27.4.2 1997/10/14 10:16:50 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -420,12 +420,30 @@ adb_init()
 			}
 			break;
 		case ADBADDR_ABS:
-			printf("absolute positioning device (tablet?) (%d)",
-			    adbdata.devType);
+			switch (adbdata.devType) {
+			case ADB_ARTPAD:
+				printf("WACOM ArtPad II");
+				break;
+			default:
+				printf("abs. pos. device (tablet?) (%d)",
+				    adbdata.devType);
+				break;
+			}
 			break;
 		case ADBADDR_DATATX:
 			printf("data transfer device (modem?) (%d)",
 			    adbdata.devType);
+			break;
+		case ADBADDR_MISC:
+			switch (adbdata.devType) {
+			case ADB_POWERKEY:
+				printf("Sophisticated Circuits PowerKey");
+				break;
+			default:
+				printf("misc. device (remote control?) (%d)",
+				    adbdata.devType);
+				break;
+			}
 			break;
 		default:
 			printf("unknown type device, (def %d, handler %d)",

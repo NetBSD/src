@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.2.4.1 1997/08/23 07:12:19 thorpej Exp $	*/
+/*	$NetBSD: leds.c,v 1.2.4.2 1997/10/14 10:19:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ leds_intr()
 	led_countdown = ledpat.divisor - 1;
 
 	i = led_px;
-	set_control_byte((char *) DIAG_REG, ledpat.pat[i]);
+	set_control_byte(DIAG_REG, ledpat.pat[i]);
 
 	i = i+1;
 	if (i == ledpat.patlen)

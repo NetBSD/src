@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.5.2.1 1997/09/06 18:44:27 thorpej Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.5.2.2 1997/10/14 10:19:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -59,19 +59,10 @@
 #include "dvma.h"
 #include "promdev.h"
 
-/*
- * XXX - Should not be defined here.  There is no guarante
- * all PROM versions will put this at the same address.
- */
-#define	IDPROM_BASE	0xFEF047D8 /* XXX */
-
-
 #define	PKT_BUF_SIZE 2048
 
 int debug;
 int errno;
-
-static void _getether __P((u_char *));
 
 struct iodesc sockets[SOPEN_MAX];
 
@@ -83,27 +74,8 @@ static struct devdata {
 	int tbuf_len;
 	char *tbuf;
 	u_short dd_opens;
-	char dd_myea[6];
+	u_char dd_myea[6];
 } prom_dd;
-
-static struct idprom _idprom;
-
-
-void
-_getether(ea)
-	u_char *ea;
-{
-	u_char *src, *dst;
-	int len, x;
-
-	if (_idprom.idp_format == 0) {
-		dst = (char*)&_idprom;
-		src = (char*)IDPROM_BASE;
-		len = IDPROM_SIZE;
-		bcopy(src, dst, len);
-	}
-	MACPY(_idprom.idp_etheraddr, ea);
-}
 
 
 /*
@@ -176,7 +148,7 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	_getether(dd->dd_myea);
+	idprom_etheraddr(dd->dd_myea);
 	dd->dd_opens = 0;
 
 	return(dd);

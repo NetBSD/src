@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.10 1996/10/13 02:59:55 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.10.10.1 1997/10/14 10:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -65,6 +65,9 @@ in_addr_t	htonl __P((in_addr_t));
 in_port_t	htons __P((in_port_t));
 in_addr_t	ntohl __P((in_addr_t));
 in_port_t	ntohs __P((in_port_t));
+u_int16_t	bswap16 __P((u_int16_t));
+u_int32_t	bswap32 __P((u_int32_t));
+u_int64_t	bswap64 __P((u_int64_t));
 __END_DECLS
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.27.2.2 1997/08/27 23:33:05 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.27.2.3 1997/10/14 10:24:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -122,10 +122,12 @@ struct scsipi_device ch_switch = {
 int	ch_move __P((struct ch_softc *, struct changer_move *));
 int	ch_exchange __P((struct ch_softc *, struct changer_exchange *));
 int	ch_position __P((struct ch_softc *, struct changer_position *));
+int	ch_ielem __P((struct ch_softc *));
 int	ch_usergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, caddr_t, size_t));
 int	ch_get_params __P((struct ch_softc *, int));
-void	ch_get_quirks __P((struct ch_softc *, struct scsipi_inquiry_pattern *));
+void	ch_get_quirks __P((struct ch_softc *,
+	    struct scsipi_inquiry_pattern *));
 
 /*
  * SCSI changer quirks.
@@ -155,7 +157,7 @@ chmatch(parent, match, aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
+	    (caddr_t)ch_patterns, sizeof(ch_patterns) / sizeof(ch_patterns[0]),
 	    sizeof(ch_patterns[0]), &priority);
 
 	return (priority);
@@ -342,6 +344,10 @@ chioctl(dev, cmd, data, flags, p)
 		cp->cp_ndrives = sc->sc_counts[CHET_DT];
 		break;		}
 
+	case CHIOIELEM:
+		error = ch_ielem(sc);
+		break;
+
 	case CHIOGSTATUS:	{
 		struct changer_element_status *ces =
 		    (struct changer_element_status *)data;
@@ -402,8 +408,9 @@ ch_move(sc, cm)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
+	    100000, NULL, 0));
 }
 
 int
@@ -458,8 +465,9 @@ ch_exchange(sc, ce)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
+	    100000, NULL, 0));
 }
 
 int
@@ -496,8 +504,9 @@ ch_position(sc, cp)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
+	    100000, NULL, 0));
 }
 
 /*
@@ -562,6 +571,7 @@ ch_usergetelemstatus(sc, chet, uptr)
 	 */
 	st_hdr = (struct read_element_status_header *)data;
 	avail = _2btol(st_hdr->count);
+
 	if (avail != sc->sc_counts[chet])
 		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
 		    sc->sc_dev.dv_xname);
@@ -608,10 +618,31 @@ ch_getelemstatus(sc, first, count, data, datalen)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)data, datalen, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, SCSI_DATA_IN));
 }
 
+
+int
+ch_ielem(sc)
+	struct ch_softc *sc;
+{
+	struct scsi_initialize_element_status cmd;
+
+	/*
+	 * Build SCSI command.
+	 */
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = INITIALIZE_ELEMENT_STATUS;
+
+	/*
+	 * Send command to changer.
+	 */
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    NULL, 0, CHRETRIES, 100000, NULL, 0));
+}
 
 /*
  * Ask the device about itself and fill in the parameters in our
@@ -643,9 +674,10 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 |= 0x08;	/* disable block descriptors */
 	cmd.page = 0x1d;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
-	    6000, NULL, scsiflags | SCSI_DATA_IN);
+	error = (*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
+	    sizeof(sense_data), CHRETRIES, 6000, NULL,
+	    scsiflags | SCSI_DATA_IN);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -669,12 +701,16 @@ ch_get_params(sc, scsiflags)
 	bzero(&cmd, sizeof(cmd));
 	bzero(&sense_data, sizeof(sense_data));
 	cmd.opcode = SCSI_MODE_SENSE;
-	cmd.byte2 |= 0x08;	/* disable block descriptors */
+	/*
+	 * XXX: Note: not all changers can deal with disabled block descriptors
+	 */
+	cmd.byte2 = 0x08;	/* disable block descriptors */
 	cmd.page = 0x1f;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
-	    6000, NULL, scsiflags | SCSI_DATA_IN);
+	error = (*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
+	    sizeof(sense_data), CHRETRIES, 6000, NULL,
+	    scsiflags | SCSI_DATA_IN);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
@@ -708,7 +744,6 @@ ch_get_quirks(sc, inqbuf)
 	    (caddr_t)chquirks,
 	    sizeof(chquirks) / sizeof(chquirks[0]),
 	    sizeof(chquirks[0]), &priority);
-	if (priority != 0) {
+	if (priority != 0)
 		sc->sc_settledelay = match->cq_settledelay;
-	}
 }

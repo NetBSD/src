@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_cd.h,v 1.2.2.2 1997/08/27 23:32:54 thorpej Exp $	*/
+/*	$NetBSD: atapi_cd.h,v 1.2.2.3 1997/10/14 10:24:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define ATAPI_MODE_SELECT 0x55
+#define ATAPI_MODE_SELECT	0x55
 struct atapi_mode_select {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -41,9 +41,9 @@ struct atapi_mode_select {
 	u_int8_t unused2[7];
 };
 
-#define ATAPI_MODE_SENSE        0x5a
+#define ATAPI_MODE_SENSE	0x5a
 struct atapi_mode_sense {
-    u_int8_t opcode;
+	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t page;
 	u_int8_t reserved1[4];
@@ -52,94 +52,95 @@ struct atapi_mode_sense {
 };
 
 struct atapi_cap_page {
-   /* Capabilities page */ 
-    u_int8_t  page_code;
-    u_int8_t  param_len;      
-    u_int8_t  reserved2[2];
+	/* Capabilities page */
+	u_int8_t page_code;
+	u_int8_t param_len;  
+	u_int8_t reserved2[2];
 
 	u_int8_t cap1;
-#define AUDIO_PLAY 0x01				
-#define AUDIO_PLAY 0x01	/* audio play supported */
-#define AV_COMPOSITE	/* composite audio/video supported */
+#define AUDIO_PLAY 0x01		/* audio play supported */
+#define AV_COMPOSITE		/* composite audio/video supported */
 #define DA_PORT1		/* digital audio on port 1 */
 #define DA_PORT2		/* digital audio on port 2 */
 #define M2F1			/* mode 2 form 1 (XA) read */
 #define M2F2			/* mode 2 form 2 format */
-#define CD_MULTISESSION	/* multi-session photo-CD */
-    u_int8_t cap2;
-#define CD_DA 0x01		/* audio-CD read supported */
-#define CD_DA_STREAM 0x02	/* CD-DA streaming */
-#define RW_SUB 0x04			/* combined R-W subchannels */
-#define RW_SUB_CORR 0x08	/* R-W subchannel data corrected */
-#define C2_ERRP 0x10		/* C2 error pointers supported */
-#define ISRC 0x20			/* can return the ISRC */
-#define UPC 0x40			/* can return the catalog number UPC */
+#define CD_MULTISESSION		/* multi-session photo-CD */
+	u_int8_t cap2;
+#define CD_DA		0x01	/* audio-CD read supported */
+#define CD_DA_STREAM	0x02	/* CD-DA streaming */
+#define RW_SUB		0x04	/* combined R-W subchannels */
+#define RW_SUB_CORR	0x08	/* R-W subchannel data corrected */
+#define C2_ERRP		0x10	/* C2 error pointers supported */
+#define ISRC		0x20	/* can return the ISRC */
+#define UPC		0x40	/* can return the catalog number UPC */
 	u_int8_t m_status;
-#define CANLOCK 0x01		/* could be locked */
-#define LOCK_STATE 0x02		/* current lock state */
-#define PREVENT_JUMP 0x04	/* prevent jumper installed */
-#define CANEJECT 0x08		/* can eject */
-#define MECH_MASK 0xe0		/* loading mechanism type */
-#define MECH_CADDY      0x00
-#define MECH_TRAY       0x20
-#define MECH_POPUP      0x40
-#define MECH_CHANGER_INDIV    0x80
-#define MECH_CHANGER_CARTRIDGE  0xa0
+#define CANLOCK		0x01	/* could be locked */
+#define LOCK_STATE	0x02	/* current lock state */
+#define PREVENT_JUMP	0x04	/* prevent jumper installed */
+#define CANEJECT	0x08	/* can eject */
+#define MECH_MASK	0xe0	/* loading mechanism type */
+#define MECH_CADDY		0x00
+#define MECH_TRAY		0x20
+#define MECH_POPUP		0x40
+#define MECH_CHANGER_INDIV	0x80
+#define MECH_CHANGER_CARTRIDGE	0xa0
 	u_int8_t cap3;
-#define SEPARATE_VOL 0x01	/* independent volume of channels */
-#define SEPARATE_MUTE 0x02	/* independent mute of channels */
-#define SUPP_DISK_PRESENT 0x04 /* changer can report contents of slots */
-#define SSS 0x08			/* software slot selection */
-    u_int8_t max_speed[2];	/* max raw data rate in bytes/1000 */
-    u_int8_t max_vol_levels[2];	/* number of discrete volume levels */
-    u_int8_t buf_size[2];	/* internal buffer size in bytes/1024 */
-    u_int8_t cur_speed[2];	/* current data rate in bytes/1000  */
-    /* Digital drive output format description (optional?) */
-    u_int8_t  reserved3;
+#define SEPARATE_VOL	0x01	/* independent volume of channels */
+#define SEPARATE_MUTE	0x02	/* independent mute of channels */
+#define SUPP_DISK_PRESENT 0x04	/* changer can report contents of slots */
+#define SSS		0x08	/* software slot selection */
+	u_int8_t max_speed[2];	/* max raw data rate in bytes/1000 */
+	u_int8_t max_vol_levels[2]; /* number of discrete volume levels */
+	u_int8_t buf_size[2];	/* internal buffer size in bytes/1024 */
+	u_int8_t cur_speed[2];	/* current data rate in bytes/1000  */
+	/* Digital drive output format description (optional?) */
+	u_int8_t reserved3;
 	u_int8_t dig_output; /* Digital drive output format description */
-    u_int8_t  reserved4[2];
+	u_int8_t reserved4[2];
 };
 
-
 struct atapi_cdrom_page {
-  u_int8_t  page;
-  u_int8_t  length;
-  u_int8_t  reserved2;    
-  u_int8_t  inact_mult; 
-  u_int8_t spm[2];
-  u_int8_t fps[2];
+	u_int8_t page;
+	u_int8_t length;
+	u_int8_t reserved2;
+	u_int8_t inact_mult;
+	u_int8_t spm[2];
+	u_int8_t fps[2];
 };
 
 struct atapi_mode_data {
-  struct mode_header {  
-    u_int8_t length[2];     
-    u_int8_t medium;
-#define MDT_UNKNOWN     0x00
-#define MDT_DATA_120    0x01
-#define MDT_AUDIO_120   0x02
-#define MDT_COMB_120    0x03
-#define MDT_PHOTO_120   0x04
-#define MDT_DATA_80     0x05
-#define MDT_AUDIO_80    0x06
-#define MDT_COMB_80     0x07
-#define MDT_PHOTO_80    0x08
-#define MDT_NO_DISC     0x70
-#define MDT_DOOR_OPEN   0x71
-#define MDT_FMT_ERROR   0x72
-    u_int8_t reserved[5];
-  }   header;
-#define ATAPI_CDROM_PAGE  0x0d
-#define ATAPI_AUDIO_PAGE  0x0e
-#define ATAPI_AUDIO_PAGE_MASK 0x4e
-#define ATAPI_CAP_PAGE        0x2a
-  union {
-    u_int8_t            page_code;
-    struct atapi_cdrom_page    cdrom;
-    struct atapi_cap_page  cap;
-    struct cd_audio_page    audio;
-  }   page;
+	struct mode_header {
+		u_int8_t length[2];
+		u_int8_t medium;
+#define MDT_UNKNOWN	0x00
+#define MDT_DATA_120	0x01
+#define MDT_AUDIO_120	0x02
+#define MDT_COMB_120	0x03
+#define MDT_PHOTO_120	0x04
+#define MDT_DATA_80	0x05
+#define MDT_AUDIO_80	0x06
+#define MDT_COMB_80	0x07
+#define MDT_PHOTO_80	0x08
+#define MDT_NO_DISC	0x70
+#define MDT_DOOR_OPEN	0x71
+#define MDT_FMT_ERROR	0x72
+		u_int8_t reserved[5];
+	} header;
+#define ATAPI_CDROM_PAGE	0x0d
+#define ATAPI_AUDIO_PAGE	0x0e
+#define ATAPI_AUDIO_PAGE_MASK	0x4e
+#define ATAPI_CAP_PAGE		0x2a
+	union {
+		u_int8_t page_code;
+		struct atapi_cdrom_page cdrom;
+		struct atapi_cap_page cap;
+		struct cd_audio_page audio;
+	} page;
 };
-  
-#define AUDIOPAGESIZE   sizeof(struct cd_audio_page)+sizeof(struct mode_header) 
-#define CDROMPAGESIZE   sizeof(struct atapi_cdrom_page)+sizeof(struct mode_header) 
-#define CAPPAGESIZE     sizeof(struct atapi_cap_page)+sizeof(struct mode_header) 
+
+#define AUDIOPAGESIZE \
+	sizeof(struct cd_audio_page)+sizeof(struct mode_header)
+#define CDROMPAGESIZE \
+	sizeof(struct atapi_cdrom_page)+sizeof(struct mode_header)
+#define CAPPAGESIZE \
+	sizeof(struct atapi_cap_page)+sizeof(struct mode_header)

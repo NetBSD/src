@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.1 1994/12/03 23:34:31 briggs Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.1.14.1 1997/10/14 10:17:08 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Allen K. Briggs, Chris P. Caputo,
@@ -31,8 +31,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: iteioctl.h,v 1.1 1994/12/03 23:34:31 briggs Exp $
  *
  */
 

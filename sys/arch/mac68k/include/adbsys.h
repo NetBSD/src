@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.6.4.1 1997/08/23 07:10:37 thorpej Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.6.4.2 1997/10/14 10:17:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -123,6 +123,12 @@ typedef struct adb_dev_s{
 #define ADBMS_EXTENDED	4	/* Extended mouse protocol */
 #define ADBMS_USPEED	47	/* MicroSpeed mouse */
 
+	/* Interesting tablet handler ID */
+#define ADB_ARTPAD	58	/* WACOM ArtPad II tablet */
+
+	/* Interesting miscellaneous handler ID */
+#define ADB_POWERKEY	34	/* Sophisticated Circuits PowerKey */
+				/* (intelligent power tap) */
 
 	/* Get device info from ADB system */
 typedef struct adb_devinfo_s{

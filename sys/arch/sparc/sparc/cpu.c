@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52.2.4 1997/09/29 07:20:37 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.52.2.5 1997/10/14 10:18:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -285,7 +285,7 @@ cache_print(sc)
 	if (ci->c_split) {
 		char *sep = "";
 
-		printf("%s", (ci->c_physical ? " physical" : " "));
+		printf("%s", (ci->c_physical ? " physical " : " "));
 		if (ci->ic_totalsize > 0) {
 			printf("%s%dK instruction (%d b/l)", sep,
 			    ci->ic_totalsize/1024, ci->ic_linesize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.5 1997/01/31 02:17:46 thorpej Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.5.8.1 1997/10/14 10:21:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -257,6 +257,23 @@ freebsd_sys_chown(p, v, retval)
 
 	FREEBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chown(p, uap, retval);
+}
+
+int
+freebsd_sys_lchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct freebsd_sys_lchown_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	FREEBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return sys_lchown(p, uap, retval);
 }
 
 int

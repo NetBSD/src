@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6.4.1 1997/09/22 06:33:02 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6.4.2 1997/10/14 10:21:08 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -64,6 +64,8 @@ extern int protection_codes[];
 extern int pmap_aliasmask;
 #endif
 
+void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+
 #ifdef MACHINE_NONCONTIG
 static void setmemrange __P((void));
 #endif
@@ -100,12 +102,12 @@ extern caddr_t	msgbufaddr;
 void
 pmap_bootstrap(nextpa, firstpa)
 	vm_offset_t nextpa;
-	register vm_offset_t firstpa;
+	vm_offset_t firstpa;
 {
 	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
-	register st_entry_t protoste, *ste;
-	register pt_entry_t protopte, *pte, *epte;
+	st_entry_t protoste, *ste;
+	pt_entry_t protopte, *pte, *epte;
 
 	/*
 	 * Calculate important physical addresses:
@@ -191,7 +193,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 #if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
-		register int num;
+		int num;
 
 		/*
 		 * First invalidate the entire "segment table" pages
@@ -491,7 +493,7 @@ int i;
 	 * absolute "jmp" table.
 	 */
 	{
-		register int *kp;
+		int *kp;
 
 		kp = &RELOC(protection_codes, int);
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
@@ -525,7 +527,7 @@ int i;
 		 *	MAXKL2SIZE-1:	maps last-page page table
 		 */
 		if (RELOC(mmutype, int) == MMU_68040) {
-			register int num;
+			int num;
 			
 			kpm->pm_stfree = ~l2tobm(0);
 			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
@@ -553,7 +555,7 @@ int i;
 		va += NBPG;
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
 		va += NBPG;
-		RELOC(msgbufaddr, caddr_t) = va;
+		RELOC(msgbufaddr, caddr_t) = (caddr_t)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
@@ -602,7 +604,7 @@ setmemrange()
 			high[numranges] = 0;
 			/* range check */
 			for (s = min; s <= max; s += 0x00100000)
-				if (!badaddr(low[numranges] + s - 4))
+				if (!badaddr((caddr_t)low[numranges] + s - 4))
 					high[numranges] = low[numranges] + s;
 			if (low[numranges] < high[numranges]) {
 				numranges++;

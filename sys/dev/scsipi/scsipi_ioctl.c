@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.25.2.3 1997/09/22 06:33:41 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.25.2.4 1997/10/14 10:25:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -29,11 +29,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Contributed by HD Associates (hd@world.std.com).
  * Copyright (c) 1992, 1993 HD Associates
  *
- * Berkeley style copyright.  
+ * Berkeley style copyright.
  */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsiconf.h>
 #include <sys/scsiio.h>
+
 #include "scsibus.h"
 #include "atapibus.h"
 
@@ -65,10 +66,10 @@ struct scsi_ioctl {
 
 LIST_HEAD(, scsi_ioctl) si_head;
 
-struct scsi_ioctl *si_get __P((void));
-void si_free __P((struct scsi_ioctl *));
-struct scsi_ioctl *si_find __P((struct buf *));
-void scsistrategy __P((struct buf *));
+struct	scsi_ioctl *si_find __P((struct buf *));
+void	si_free __P((struct scsi_ioctl *));
+struct	scsi_ioctl *si_get __P((void));
+void	scsistrategy __P((struct buf *));
 
 struct scsi_ioctl *
 si_get()
@@ -129,13 +130,13 @@ scsipi_user_done(xs)
 	struct scsipi_link *sc_link;
 
 	bp = xs->bp;
-	if (!bp) {	/* ALL user requests must have a buf */
+	if (bp == NULL) {	/* ALL user requests must have a buf */
 		xs->sc_link->sc_print_addr(xs->sc_link);
 		printf("User command with no buf\n");
 		return;
 	}
 	si = si_find(bp);
-	if (!si) {
+	if (si == NULL) {
 		xs->sc_link->sc_print_addr(xs->sc_link);
 		printf("User command with no ioctl\n");
 		return;
@@ -149,12 +150,14 @@ scsipi_user_done(xs)
 	switch (xs->error) {
 	case XS_NOERROR:
 		SC_DEBUG(sc_link, SDEV_DB3, ("no error\n"));
-		screq->datalen_used = xs->datalen - xs->resid; /* probably rubbish */
+		screq->datalen_used =
+		    xs->datalen - xs->resid;	/* probably rubbish */
 		screq->retsts = SCCMD_OK;
 		break;
 	case XS_SENSE:
 		SC_DEBUG(sc_link, SDEV_DB3, ("have sense\n"));
-		screq->senselen_used = min(sizeof(xs->sense.scsi_sense), SENSEBUFLEN);
+		screq->senselen_used = min(sizeof(xs->sense.scsi_sense),
+		    SENSEBUFLEN);
 		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
 		break;
@@ -184,7 +187,7 @@ scsipi_user_done(xs)
 /* Pseudo strategy function
  * Called by scsipi_do_ioctl() via physio/physstrat if there is to
  * be data transfered, and directly if there is no data transfer.
- * 
+ *
  * Should I reorganize this so it returns to physio instead
  * of sleeping in scsiio_scsipi_cmd?  Is there any advantage, other
  * than avoiding the probable duplicate wakeup in iodone? [PD]
@@ -208,7 +211,7 @@ scsistrategy(bp)
 	int s;
 
 	si = si_find(bp);
-	if (!si) {
+	if (si == NULL) {
 		printf("user_strat: No ioctl\n");
 		error = EINVAL;
 		goto bad;
@@ -248,8 +251,9 @@ scsistrategy(bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= SCSI_ESCAPE;
 
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *)screq->cmd,
-	    screq->cmdlen, (u_char *)bp->b_data, screq->datalen,
+	error = (*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
+	    (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | SCSI_USER | SCSI_NOSLEEP);
 
@@ -299,14 +303,14 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 	case SCIOCCOMMAND:
 		if ((((scsireq_t *)addr)->flags & SCCMD_READ) == 0 &&
 		    (flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 		break;
 	default:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 	}
 
-	switch(cmd) {
+	switch (cmd) {
 	case SCIOCCOMMAND: {
 		scsireq_t *screq = (scsireq_t *)addr;
 		struct scsi_ioctl *si;
@@ -324,7 +328,7 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			si->si_uio.uio_resid = len;
 			si->si_uio.uio_offset = 0;
 			si->si_uio.uio_segflg = UIO_USERSPACE;
-			si->si_uio.uio_rw = 
+			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
 			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
@@ -342,7 +346,7 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		}
 		*screq = si->si_screq;
 		si_free(si);
-		return error;
+		return (error);
 	}
 	case SCIOCDEBUG: {
 		int level = *((int *)addr);
@@ -357,16 +361,15 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			sc_link->flags |= SDEV_DB3;
 		if (level & 8)
 			sc_link->flags |= SDEV_DB4;
-		return 0;
+		return (0);
 	}
 #if NSCSIBUS > 0
 	case SCIOCREPROBE: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
-		if (sca->type != TYPE_SCSI) {
-			return ENODEV;
-		}
-		return scsi_probe_busses(sca->addr.scsi.scbus, sca->addr.scsi.target,
-			sca->addr.scsi.lun);
+		if (sca->type != TYPE_SCSI)
+			return (ENODEV);
+		return (scsi_probe_busses(sca->addr.scsi.scbus,
+		    sca->addr.scsi.target, sca->addr.scsi.lun));
 	}
 #if defined(COMPAT_12) || defined(COMPAT_FREEBSD)
 	/* SCIOCREPROBE before ATAPI staff merge */
@@ -379,39 +382,42 @@ scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 #endif
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
-		return EINVAL;
+		return (EINVAL);
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
-		if (sc_link->type == BUS_SCSI) {
+
+		switch (sc_link->type) {
+		case BUS_SCSI:
 			sca->type = TYPE_SCSI;
 			sca->addr.scsi.scbus = sc_link->scsipi_scsi.scsibus;
 			sca->addr.scsi.target = sc_link->scsipi_scsi.target;
 			sca->addr.scsi.lun = sc_link->scsipi_scsi.lun;
-			return 0;
-		}
-		if (sc_link->type == BUS_ATAPI) {
+			return (0);
+		case BUS_ATAPI:
 			sca->type = TYPE_ATAPI;
 			sca->addr.atapi.atbus = sc_link->scsipi_atapi.atapibus;
 			sca->addr.atapi.drive = sc_link->scsipi_atapi.drive;
-			return 0;
+			return (0);
 		}
-		return ENXIO;
+		return (ENXIO);
 	}
 #if defined(COMPAT_12) || defined(COMPAT_FREEBSD)
 	/* SCIOCIDENTIFY before ATAPI staff merge */
 	case OSCIOCIDENTIFY: {
 		struct oscsi_addr *sca = (struct oscsi_addr *)addr;
 
-		if (sc_link->type != BUS_SCSI)
-			return (ENODEV);
-		sca->scbus = sc_link->scsipi_scsi.scsibus;
-		sca->target = sc_link->scsipi_scsi.target;
-		sca->lun = sc_link->scsipi_scsi.lun;
-		return (0);
+		switch (sc_link->type) {
+		case BUS_SCSI:
+			sca->scbus = sc_link->scsipi_scsi.scsibus;
+			sca->target = sc_link->scsipi_scsi.target;
+			sca->lun = sc_link->scsipi_scsi.lun;
+			return (0);
+		}
+		return (ENODEV);
 	}
 #endif
 	default:
-		return ENOTTY;
+		return (ENOTTY);
 	}
 
 #ifdef DIAGNOSTIC

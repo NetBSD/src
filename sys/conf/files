@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130.2.8 1997/10/14 00:53:35 thorpej Exp $
+#	$NetBSD: files,v 1.130.2.9 1997/10/14 10:21:59 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -60,6 +60,10 @@ file	ipkdb/ipkdb_ppp.c		ipkdbppp		needs-flag
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
+
+# Adaptec AIC-6[32]60 ICs
+device	aic: scsi
+file	dev/ic/aic6360.c		aic
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
 device	ahc: scsi
@@ -130,6 +134,10 @@ file	dev/ic/i82586.c			i82586
 device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
 
+# Interwave Am78C201 audio driver
+define	interwave
+file	dev/ic/interwave.c		interwave
+
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
 device	ne: ether, ifnet, arp, dp8390nic
@@ -156,6 +164,7 @@ pseudo-device md: disk
 
 pseudo-device pty: tty
 pseudo-device tb: tty
+pseudo-device rnd
 
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
@@ -194,6 +203,8 @@ file dev/ccd.c				ccd			needs-flag
 file dev/md.c				md			needs-count
 file dev/mulaw.c			mulaw
 file dev/vnd.c				vnd			needs-flag
+file dev/rnd.c				rnd			needs-flag
+file dev/rndpool.c			rnd			needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660
@@ -433,7 +444,7 @@ file netns/ns_pcb.c			ns
 file netns/ns_proto.c			ns
 file netns/spp_debug.c			ns
 file netns/spp_usrreq.c			ns
-file nfs/krpc_subr.c			nfs
+file nfs/krpc_subr.c			nfs & arp
 file nfs/nfs_bio.c			nfs
 file nfs/nfs_boot.c			nfs
 file nfs/nfs_bootdhcp.c 		nfs & arp
@@ -450,6 +461,7 @@ file nfs/nfs_vnops.c			nfs
 file ufs/ext2fs/ext2fs_alloc.c		ext2fs
 file ufs/ext2fs/ext2fs_balloc.c		ext2fs
 file ufs/ext2fs/ext2fs_bmap.c		ext2fs
+file ufs/ext2fs/ext2fs_bswap.c		ext2fs
 file ufs/ext2fs/ext2fs_inode.c		ext2fs
 file ufs/ext2fs/ext2fs_lookup.c		ext2fs
 file ufs/ext2fs/ext2fs_readwrite.c	ext2fs

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 1997/05/19 10:15:16 veego Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5.4.1 1997/10/14 10:21:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -60,7 +60,7 @@ sys_vtrace(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_vtrace_args /* {
+	struct sys_vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -100,8 +100,8 @@ sys_vtrace(p, v, retval)
 vdoualarm(arg)
 	void *arg;
 {
-	register int pid = (int)arg;
-	register struct proc *p;
+	int pid = (int)arg;
+	struct proc *p;
 
 	p = pfind(pid);
 	if (p)
@@ -140,7 +140,7 @@ cachectl(req, addr, len)
 
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
-		register int inc = 0;
+		int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end;
 #ifdef COMPAT_HPUX
@@ -257,7 +257,7 @@ dma_cachectl(addr, len)
 {
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
-		register int inc = 0;
+		int inc = 0;
 		int pa = 0;
 		caddr_t end;
 

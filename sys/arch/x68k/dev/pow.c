@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.5 1997/02/03 21:41:59 oki Exp $	*/
+/*	$NetBSD: pow.c,v 1.5.8.1 1997/10/14 10:20:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -45,6 +45,7 @@
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <machine/powioctl.h>
 #include <x68k/dev/powvar.h>
@@ -55,6 +56,12 @@
 #define rtc (IODEVbase->io_rtc)
 
 struct pow_softc pows[NPOW];
+
+cdev_decl(pow);
+
+void powattach __P((int));
+void powintr __P((void));
+static int setalarm __P((struct x68k_alarminfo *));
 
 /* ARGSUSED */
 void
@@ -96,9 +103,10 @@ powattach(num)
 
 /*ARGSUSED*/
 int
-powopen(dev, flags)
+powopen(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 
@@ -118,16 +126,19 @@ powopen(dev, flags)
 }
 
 /*ARGSUSED*/
-void
-powclose (dev, flags)
+int
+powclose (dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 
 	if (sc->status == POW_BUSY)
 		sc->status = POW_FREE;
 	sc->pid = 0;
+
+	return 0;
 }
 
 #define SRAMINT(offset)	(*((int*) (&sramtop[offset])))

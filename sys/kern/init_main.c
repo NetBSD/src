@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.101.4.1 1997/09/16 03:51:00 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.101.4.2 1997/10/14 10:25:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,8 @@
  *	@(#)init_main.c	8.9 (Berkeley) 1/21/94
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/filedesc.h>
 #include <sys/errno.h>
@@ -76,6 +78,9 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -102,7 +107,7 @@ struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	proc *curproc = &proc0;
-struct	proc *initproc, *pageproc;
+struct	proc *initproc;
 
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
@@ -185,6 +190,9 @@ main(framep)
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
+#if NRND > 0
+	rnd_init();
+#endif
 	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
@@ -551,7 +559,6 @@ start_pagedaemon(p)
 	/*
 	 * Now in process 2.
 	 */
-	pageproc = p;
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
 	vm_pageout();

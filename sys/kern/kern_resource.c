@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.39 1996/12/22 10:21:09 cgd Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.39.10.1 1997/10/14 10:26:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -263,11 +263,19 @@ dosetrlimit(p, which, limp)
 			limp->rlim_cur = maxsmap;
 		if (limp->rlim_max > maxsmap)
 			limp->rlim_max = maxsmap;
+
 		/*
-		 * Stack is allocated to the max at exec time with only
-		 * "rlim_cur" bytes accessible.  If stack limit is going
-		 * up make more accessible, if going down make inaccessible.
+		 * Stack is allocated to the max at exec time with
+		 * only "rlim_cur" bytes accessible (In other words,
+		 * allocates stack dividing two contiguous regions at
+		 * "rlim_cur" bytes boundary).
+		 *
+		 * Since allocation is done in terms of page, roundup
+		 * "rlim_cur" (otherwise, contiguous regions
+		 * overlap).  If stack limit is going up make more
+		 * accessible, if going down make inaccessible.
 		 */
+		limp->rlim_cur = round_page(limp->rlim_cur);
 		if (limp->rlim_cur != alimp->rlim_cur) {
 			vm_offset_t addr;
 			vm_size_t size;
@@ -282,10 +290,8 @@ dosetrlimit(p, which, limp)
 				size = alimp->rlim_cur - limp->rlim_cur;
 				addr = USRSTACK - alimp->rlim_cur;
 			}
-			addr = trunc_page(addr);
-			size = round_page(size);
-			(void) vm_map_protect(&p->p_vmspace->vm_map,
-					      addr, addr+size, prot, FALSE);
+			(void)vm_map_protect(&p->p_vmspace->vm_map,
+			    addr, addr+size, prot, FALSE);
 		}
 		break;
 

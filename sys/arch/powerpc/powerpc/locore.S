@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3.4.1 1997/09/01 20:14:24 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.4.2 1997/10/14 10:18:15 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -687,7 +687,7 @@ _C_LABEL(tlbdlmiss):
 	b	1b
 5:	/* not found anywhere */
 	mfsrr1	3
-	lis	1,0x40000000@@h		/* set dsisr<1> to flag pte not found */
+	lis	1,0x40000000@h		/* set dsisr<1> to flag pte not found */
 	mtctr	0			/* restore counter */
 	andi.	2,3,0xffff		/* clean upper srr1 */
 	mtsrr1	2

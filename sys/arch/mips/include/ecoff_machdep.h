@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.9.2.1 1997/09/29 07:20:23 thorpej Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.9.2.2 1997/10/14 10:17:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -42,9 +42,23 @@
         u_long gprmask; \
         u_long cprmask[4]; \
         u_long gp_value
+#ifdef _KERNEL
+#include <mips/cpu.h>		/* mips CPU architecture levels */
+#define _MIPS3_OK() CPUISMIPS3
+#else
+#define _MISP3_OK() 1
+#endif
 
-#define ECOFF_MAGIC_MIPSEL 0x0162
-#define ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEL)
+	
+#define ECOFF_MAGIC_MIPSEL	0x0162	/* mips1, little-endian */
+#define ECOFF_MAGIC_MIPSEL3	0x0142	/* mips3, little-endian */
+
+#define ECOFF_BADMAG(ep) \
+    (!								\
+	((ep)->f.f_magic == ECOFF_MAGIC_MIPSEL ||		\
+	 (_MIPS3_OK() && (ep)->f.f_magic == ECOFF_MAGIC_MIPSEL3)) \
+    )
+
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
 

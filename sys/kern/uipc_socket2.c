@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.20 1997/06/26 05:56:38 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.20.4.1 1997/10/14 10:26:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -52,9 +52,9 @@
  */
 
 /* strings for sleep message: */
-char	netio[] = "netio";
-char	netcon[] = "netcon";
-char	netcls[] = "netcls";
+const char	netio[] = "netio";
+const char	netcon[] = "netcon";
+const char	netcls[] = "netcls";
 
 u_long	sb_max = SB_MAX;		/* patchable */
 

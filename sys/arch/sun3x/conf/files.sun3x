@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.19.4.1 1997/08/27 22:55:47 thorpej Exp $
+#	$NetBSD: files.sun3x,v 1.19.4.2 1997/10/14 10:19:28 thorpej Exp $
 
 #
 # sun3x-specific configuration info
@@ -37,6 +37,12 @@ file arch/sun3/sun3/vm_machdep.c
 file arch/m68k/m68k/sig_machdep.c
 file dev/cons.c
 
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
 #
 # Bus types
 #
@@ -71,11 +77,31 @@ file arch/sun3x/dev/vme.c		vmes | vmel
 include "../../../dev/scsipi/files.scsipi"
 
 #
+# Devices and attributes needed below
+#
+device ie: ifnet, ether, arp
+file arch/sun3/dev/if_ie.c		ie
+
+device si: scsi, ncr5380sbc
+file	arch/sun3/dev/si.c		si
+
+define sunfb
+file arch/sun3/dev/fb.c			# sunfb needs-flag
+
+#
 # On-Board I/O (OBIO)
 #
 device idprom
 attach idprom at obio
 file arch/sun3x/dev/idprom.c		idprom
+
+device memerr
+attach memerr at obio
+file arch/sun3x/dev/memerr.c		memerr
+
+device intreg
+attach intreg at obio
+file arch/sun3/sun3/intreg.c		intreg
 
 device zsc {channel = -1}
 attach zsc at obio
@@ -93,26 +119,22 @@ attach oclock at obio
 file arch/sun3x/sun3x/clock.c		clock | oclock
 file dev/clock_subr.c			clock | oclock
 
-device memerr
-attach memerr at obio
-file arch/sun3x/dev/memerr.c		memerr
-
-device intreg
-attach intreg at obio
-file arch/sun3/sun3/intreg.c		intreg
-
 device iommu
 attach iommu at obio
 file arch/sun3x/sun3x/iommu.c		iommu
+
+# device defined above
+attach ie at obio with ie_obio
+file arch/sun3/dev/if_ie_obio.c 	ie
+
+# device defined in sys/conf/files
+attach le at obio
+file arch/sun3x/dev/if_le.c		le
 
 device esp: scsi, ncr53c9x
 attach esp at obio
 file arch/sun3x/dev/esp.c		esp
 file arch/sun3x/dev/dma.c		esp
-
-# device defined in sys/conf/files
-attach le at obio
-file arch/sun3x/dev/if_le.c		le
 
 # Floppy disk controller (fdc), floppy disk (fd)
 device fdc {}
@@ -127,34 +149,29 @@ attach pp at obio
 file arch/sun3x/dev/pp.c		pp needs-flag
 
 #
-# Sun-compatible Frame Buffers (?)
-#
-define sunfb
-file arch/sun3x/dev/fb.c			# sunfb needs-flag
-
-#
 # On-Board MEMory (OBMEM)
 #
 device bwtwo: sunfb
 attach bwtwo at obmem
 file arch/sun3x/dev/bw2.c		bwtwo needs-flag
 
-device cgtwo: sunfb
-attach cgtwo at vmes
-file arch/sun3x/dev/cg2.c		cgtwo needs-flag
-
 device cgfour: sunfb
 attach cgfour at obmem
 file arch/sun3x/dev/cg4.c		cgfour needs-flag
 
 #
-# VME
+# VME A16 (vmes)
 #
-device	xdc {drive = -1}
-attach	xdc at vmel
-device	xd: disk
-attach	xd at xdc
-file	arch/sun3x/dev/xd.c		xd needs-flag
+
+attach ie at vmes with ie_vmes
+file arch/sun3/dev/if_ie_vmes.c 	ie_vmes
+
+attach si at vmes with si_vmes
+file	arch/sun3/dev/si_vme.c		si_vmes
+
+device cgtwo: sunfb
+attach cgtwo at vmes
+file arch/sun3x/dev/cg2.c		cgtwo needs-flag
 
 device	xyc {drive = -1}
 attach	xyc at vmes
@@ -162,6 +179,15 @@ device	xy: disk
 attach	xy at xyc
 file	arch/sun3x/dev/xy.c		xy needs-flag
 
+#
+# VME A32 (vmel)
+#
+
+device	xdc {drive = -1}
+attach	xdc at vmel
+device	xd: disk
+attach	xd at xdc
+file	arch/sun3x/dev/xd.c		xd needs-flag
 
 
 #
@@ -196,9 +222,3 @@ major	{vnd=5}	# vnode pseudo-device
 major	{sd=7}	# SCSI disk
 major	{xd=10}	# Xylogics 7053
 major	{md=13}	# Memory disk (for mini-kernel)
-
-# Compatibility modules
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

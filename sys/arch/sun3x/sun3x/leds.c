@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.4 1997/05/16 05:47:14 jeremy Exp $	*/
+/*	$NetBSD: leds.c,v 1.4.4.1 1997/10/14 10:19:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ leds_init()
 
 /*
  * This is called by clock attach (on 3/80 only)
- * to let us have a change to change the pattern.
+ * to let us have a chance to change the pattern.
  * Note:  cpu_machine_id is not yet valid when 
  * leds_init() is called.
  */

@@ -42,7 +42,7 @@
  *	@(#)bsd_audioreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bsd_audioreg.h,v 1.3 92/06/07 21:12:50 mccanne Exp  (LBL)
- * $Id: bsd_audioreg.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+ * $NetBSD: bsd_audioreg.h,v 1.1.1.1.12.1 1997/10/14 10:20:06 thorpej Exp $
  */
 
 /*

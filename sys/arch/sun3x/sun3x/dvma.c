@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.3 1997/02/24 01:37:52 jeremy Exp $	*/
+/*	$NetBSD: dvma.c,v 1.3.4.1 1997/10/14 10:19:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@
  * The address returned by the allocation routine is a virtual address that
  * the requesting driver must use to access the buffer.  It is up to the
  * device driver to convert this virtual address into the appropriate slave
- * address that its device should issue to access the buffer.  (The will be
- * routines that will assist the driver in doing so.)
+ * address that its device should issue to access the buffer.  (There will be
+ * routines that assist the driver in doing so.)
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,4 +272,25 @@ dvma_mapout(dvma_addr, len)
 	rmfree(dvmamap, btoc(len), btoc(kva));
 	wakeup(dvmamap);
 	splx(s);
+}
+
+/*
+ * Allocate actual memory pages in DVMA space.
+ * (For sun3 compatibility - the ie driver.)
+ */
+void *
+dvma_malloc(bytes)
+	size_t bytes;
+{
+	void *new_mem, *dvma_mem;
+	vm_size_t new_size;
+
+	if (!bytes)
+		return NULL;
+	new_size = m68k_round_page(bytes);
+	new_mem = (void*)kmem_alloc(kernel_map, new_size);
+    if (!new_mem)
+		return NULL;
+	dvma_mem = dvma_mapin(new_mem, new_size, 1);
+	return (dvma_mem);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1997/06/01 01:27:51 oki Exp $	*/
+/*	$NetBSD: conf.c,v 1.10.4.1 1997/10/14 10:20:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,9 +45,7 @@
 
 bdev_decl(sw);
 #include "fd.h"
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 bdev_decl(fd);
-#undef	fdopen
 #include "sd.h"
 bdev_decl(sd);
 #include "cd.h"
@@ -65,9 +63,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0: */
 	bdev_notdef(),			/* 1: */
-#define	fdopen	Fdopen
 	bdev_disk_init(NFD,fd),		/* 2: floppy diskette */
-#undef	fdopen
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -158,9 +154,7 @@ cdev_decl(ccd);
 cdev_decl(vnd);
 cdev_decl(md);
 cdev_decl(st);
-#define	fdopen	Fdopen
 cdev_decl(fd);
-#undef	fdopen
 cdev_decl(kbd);
 cdev_decl(ms);
 dev_decl(filedesc,open);
@@ -186,6 +180,7 @@ cdev_decl(ch);
 #include "uk.h"
 cdev_decl(uk);
 #include "ipfilter.h"
+#include "rnd.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -207,9 +202,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_init(1,ms),		/* 15: /dev/mouse */
 	cdev_tty_init(NCOM,com),	/* 16: serial port */
 	cdev_gen_init(NAUDIO,audio),	/* 17: /dev/adpcm /dev/pcm /dev/audio */
-#define	fdopen	Fdopen
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
-#undef	fdopen
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
@@ -230,6 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 36: SCSI changer device */
 	cdev_ch_init(NUK,uk),		/* 37: SCSI unknown device */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 38: IP filter device */
+	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -287,7 +281,9 @@ static int chrtoblktbl[] = {
 	/* 28 */	NODEV,		/* 29 */	NODEV,
 	/* 30 */	NODEV,		/* 31 */	NODEV,
 	/* 32 */	NODEV,		/* 33 */	NODEV,
-	/* 34 */	15,		/* 33 */	NODEV,
+	/* 34 */	15,		/* 35 */	NODEV,
+	/* 36 */	NODEV,		/* 37 */	NODEV,
+	/* 38 */	NODEV,		/* 39 */	NODEV,
 };
 
 /*
