@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2001/01/11 14:24:04 minoura Exp $	*/
+/*	$NetBSD: mem.c,v 1.23 2001/02/21 05:53:35 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,7 @@
 
 #include <uvm/uvm_extern.h>
 
+extern caddr_t Segtabzero;
 static caddr_t devzeropage;
 
 #define mmread  mmrw
@@ -173,7 +174,6 @@ mmrw(dev, uio, flags)
 			 * is a global zeroed page, the null segment table.
 			 */
 			if (devzeropage == NULL) {
-				extern caddr_t Segtabzero;
 				devzeropage = Segtabzero;
 			}
 			c = min(iov->iov_len, NBPG);
