@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.108 1997/04/24 02:04:33 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.109 1997/04/24 08:05:17 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -2479,7 +2479,7 @@ edget(sc, src, total_len)
 		}
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(top);
 				return 0;
 			}

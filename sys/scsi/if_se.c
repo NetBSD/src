@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.6 1997/04/24 02:36:46 mycroft Exp $	*/
+/*	$NetBSD: if_se.c,v 1.7 1997/04/24 08:06:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -580,7 +580,7 @@ se_get(sc, data, totlen)
 		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(top);
 				return 0;
 			}

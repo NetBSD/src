@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.11 1997/04/24 02:04:39 mycroft Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.12 1997/04/24 08:05:23 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -887,7 +887,7 @@ iyget(sc, iot, ioh, rxlen)
 		}
 		if (rxlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(top);
 				goto dropped;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.20 1997/04/24 02:24:08 mycroft Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.21 1997/04/24 08:05:15 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -842,7 +842,7 @@ bah_srint(vsc, dummy)
 		
 			if (len1 >= MINCLSIZE) {
 				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0)
+				if ((m->m_flags & M_EXT) == 0) {
 					ifp->if_ierrors++;
 					goto cleanup;
 				}
