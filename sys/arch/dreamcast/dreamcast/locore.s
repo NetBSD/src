@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.1 2000/12/11 18:19:13 marcus Exp $	*/
+/*	$NetBSD: locore.s,v 1.2 2001/01/05 01:14:31 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -371,7 +371,7 @@ start_in_RAM:
 	mova	cache_on, r0
 	mov	r0, r5
 	mov.l	XLtoP2, r1
-	add	r1, r5
+	or	r1, r5
 	mova	main_label, r0
 	mov	r0, r2
 	mov.l	XL_SHREG_CCR, r3
