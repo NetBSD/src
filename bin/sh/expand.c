@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.59 2003/09/22 12:17:24 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.60 2003/12/21 08:32:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.59 2003/09/22 12:17:24 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.60 2003/12/21 08:32:39 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -611,9 +611,7 @@ evalvar(char *p, int flag)
 	varflags = (unsigned char)*p++;
 	subtype = varflags & VSTYPE;
 	var = p;
-	special = 0;
-	if (! is_name(*p))
-		special = 1;
+	special = !is_name(*p);
 	p = strchr(p, '=') + 1;
 again: /* jump here after setting a variable with ${var=text} */
 	if (special) {
