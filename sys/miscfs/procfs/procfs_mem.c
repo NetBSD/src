@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.19 1998/08/13 02:10:58 eeh Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.20 1999/02/25 21:54:53 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -222,8 +222,15 @@ procfs_domem(curp, p, pfs, uio)
 {
 	int error;
 
-	if (uio->uio_resid == 0)
+	size_t len;
+	vaddr_t	addr;
+
+	len = uio->uio_resid;
+
+	if (len == 0)
 		return (0);
+
+	addr = uio->uio_offset;
 
 	if ((error = procfs_checkioperm(curp, p)) != 0)
 		return (error);
@@ -237,6 +244,12 @@ procfs_domem(curp, p, pfs, uio)
 	error = uvm_io(&p->p_vmspace->vm_map, uio);
 	PRELE(p);
 	uvmspace_free(p->p_vmspace);
+
+#ifdef PMAP_NEED_PROCWR
+	if (uio->uio_rw == UIO_WRITE)
+		pmap_procwr(p, addr, len);
+#endif
+
 #else
 	PHOLD(p);
 	error = procfs_rwmem(p, uio);
