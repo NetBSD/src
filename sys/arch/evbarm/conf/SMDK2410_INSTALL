@@ -1,0 +1,10 @@
+#	$NetBSD: SMDK2410_INSTALL,v 1.1 2005/02/27 02:25:09 bsh Exp $
+#
+#	SMDK2410_INSTALL -- SMDK2410 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/SMDK2410"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
