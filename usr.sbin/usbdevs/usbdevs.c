@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.9 1999/05/16 18:00:35 tron Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.10 1999/06/30 06:23:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,10 +79,13 @@ usbdev(f, a, rec)
 
 	di.addr = a;
 	e = ioctl(f, USB_DEVICEINFO, &di);
-	if (e)
+	if (e) {
+		if (errno != ENXIO)
+			printf("addr %d: I/O error\n", a);
 		return;
+	}
+	printf("addr %d: ", a);
 	done[a] = 1;
-	printf("addr %d: ", di.addr);
 	if (verbose) {
 		if (di.lowspeed)
 			printf("low speed, ");
@@ -122,7 +125,10 @@ usbdev(f, a, rec)
 		printf("%*s", indent, "");
 		if (verbose)
 			printf("port %d ", p+1);
-		usbdev(f, di.ports[p], 1);
+		if (s == 0)
+			printf("addr 0 should never happen!\n");
+		else
+			usbdev(f, s, 1);
 		indent--;
 	}
 }
