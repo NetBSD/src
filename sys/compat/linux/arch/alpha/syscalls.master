@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2000/12/11 04:54:13 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.28 2000/12/11 04:55:50 mycroft Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -113,7 +113,7 @@
 			    int flags, caddr_t data); }
 22	UNIMPL		umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL
 26	STD		{ int linux_sys_ptrace(long request, long pid, \
 			  long addr, long data); }
@@ -139,7 +139,7 @@
 44	UNIMPL
 45	STD		{ int linux_sys_open(const char *path, int flags, int mode); }
 46	UNIMPL
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 ; ALIAS osf1_sys_sigprocmask(int how, unsigned long mask);
 ; XXX <- copied from osf1/syscalls.master
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
