@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.10 2003/01/03 19:01:09 lha Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.11 2003/10/17 16:00:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -365,34 +365,7 @@ struct vr_desc {
  * other PCI registers.
  */
 
-#define	VR_PCI_VENDOR_ID	0x00
-#define	VR_PCI_DEVICE_ID	0x02
-#define	VR_PCI_COMMAND		0x04
-#define	VR_PCI_STATUS		0x06
-#define VR_PCI_REVID		0x08
-#define	VR_PCI_CLASSCODE	0x09
-#define	VR_PCI_LATENCY_TIMER	0x0D
-#define	VR_PCI_HEADER_TYPE	0x0E
 #define	VR_PCI_LOIO		0x10
 #define	VR_PCI_LOMEM		0x14
-#define	VR_PCI_BIOSROM		0x30
-#define	VR_PCI_INTLINE		0x3C
-#define	VR_PCI_INTPIN		0x3D
-#define	VR_PCI_MINGNT		0x3E
-#define	VR_PCI_MINLAT		0x0F
 #define	VR_PCI_RESETOPT		0x48
 #define	VR_PCI_EEPROM_DATA	0x4C
-
-/* power management registers */
-#define	VR_PCI_CAPID		0xDC /* 8 bits */
-#define	VR_PCI_NEXTPTR		0xDD /* 8 bits */
-#define	VR_PCI_PWRMGMTCAP	0xDE /* 16 bits */
-#define	VR_PCI_PWRMGMTCTRL	0xE0 /* 16 bits */
-
-#define	VR_PSTATE_MASK		0x0003
-#define	VR_PSTATE_D0		0x0000
-#define	VR_PSTATE_D1		0x0002
-#define	VR_PSTATE_D2		0x0002
-#define	VR_PSTATE_D3		0x0003
-#define	VR_PME_EN		0x0010
-#define	VR_PME_STATUS		0x8000
