@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.3 2004/03/17 17:00:34 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.4 2004/03/29 04:09:45 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -175,7 +175,7 @@ ieee80211_rssadapt_lower_rate(struct ieee80211com *ic,
 	u_int16_t last_thr;
 	u_int i, thridx, top;
 
-	ra->ra_nok++;
+	ra->ra_nfail++;
 
 	if (id->id_rateidx >= rs->rs_nrates) {
 		RSSADAPT_PRINTF(("ieee80211_rssadapt_lower_rate: "
@@ -218,7 +218,7 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 	int j;
 #endif
 
-	ra->ra_nfail++;
+	ra->ra_nok++;
 
 	if (!ratecheck(&ra->ra_last_raise, &ra->ra_raise_interval))
 		return;
