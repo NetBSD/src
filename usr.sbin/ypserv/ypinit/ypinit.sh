@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.8 1998/06/08 06:29:25 lukem Exp $
+#	$NetBSD: ypinit.sh,v 1.9 2001/06/18 11:21:54 lukem Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -20,9 +20,8 @@ YPXFR=/usr/sbin/ypxfr
 
 progname=`basename $0`
 yp_dir=/var/yp
-tmpfile=/tmp/ypservers.$$
-
-trap 'rm -f ${tmpfile} ; exit 0' 0 2 3
+tmpfile=`mktemp /tmp/ypservers.XXXXXX` || exit 1
+trap "rm -f ${tmpfile} ; exit 0" EXIT INT QUIT
 
 umask 077				# protect created directories
 
@@ -137,8 +136,7 @@ __client_setup
 
 done=
 while [ -z "${done}" ]; do
-	rm -f ${tmpfile}
-	touch ${tmpfile}
+	> ${tmpfile}
 	cat <<__list_of_servers
 
 Please enter a list of YP servers, in order of preference.
@@ -189,7 +187,6 @@ done
 if [ -s ${tmpfile} ]; then
 	${INSTALL} -c -m 0444 ${tmpfile} ${binding_dir}/${domain}.ypservers
 fi
-rm -f ${tmpfile}
 
 if [ "${servertype}" = "client" ]; then
 	exit 0
