@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1.2.6 2001/12/29 18:19:31 sommerfeld Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.2.7 2002/05/05 23:30:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
  * this "instruction", acting as a sequence point for code generation.
  */
 
-#define __lockbarrier() __asm __volatile("":::"memory")
+#define __lockbarrier() __asm __volatile("": : :"memory")
 
 #ifdef LOCKDEBUG
 
