@@ -1,3 +1,5 @@
+/*	$NetBSD: amq.c,v 1.1.1.4 2001/05/13 17:50:15 veego Exp $	*/
+
 /*
  * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq.c,v 1.1.1.3 2001/05/13 17:34:30 veego Exp $
+ * Id: amq.c,v 1.7.2.5 2001/01/12 22:43:43 ro Exp
  *
  */
 
@@ -54,7 +56,7 @@ char copyright[] = "\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "$Id: amq.c,v 1.1.1.3 2001/05/13 17:34:30 veego Exp $";
+static char rcsid[] = "Id: amq.c,v 1.7.2.5 2001/01/12 22:43:43 ro Exp";
 static char sccsid[] = "%W% (Berkeley) %G%";
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
