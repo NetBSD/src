@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.4 1999/11/26 18:34:58 msaitoh Exp $ */
+/* 	$NetBSD: cdplay.c,v 1.5 2000/01/05 18:15:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -56,8 +56,13 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.4 1999/11/26 18:34:58 msaitoh Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.5 2000/01/05 18:15:20 ad Exp $");
 #endif /* not lint */
+
+#include <sys/endian.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/cdio.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -67,10 +72,6 @@ __RCSID("$NetBSD: cdplay.c,v 1.4 1999/11/26 18:34:58 msaitoh Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <sys/file.h>
-#include <sys/cdio.h>
-#include <sys/ioctl.h>
 
 #include <machine/disklabel.h>
 
@@ -199,6 +200,7 @@ main(argc, argv)
 	char **argv;
 {
 	char *arg, *p, buf[80];
+	static char defdev[16];
 	int cmd, len;
 	char *line;
 	const char *elline;
@@ -232,8 +234,6 @@ main(argc, argv)
 		usage();
 
 	if (!cdname) {
-		static char defdev[8];
-	
 		sprintf(defdev, "cd0%c", 'a' + RAW_PART);
 		cdname = defdev;
 	}
@@ -309,94 +309,76 @@ run(cmd, arg)
 	switch (cmd) {
 	case CMD_QUIT:
 		exit(0);
-
-	case CMD_INFO:
-		if (fd < 0 && !opencd())
+	
+	case CMD_CLOSE:
+		if (fd >= 0) {
+			ioctl(fd, CDIOCALLOW);
+			if ((rc = ioctl(fd, CDIOCCLOSE)) < 0)
+				return (rc);
+			close(fd);
+			fd = -1;
 			return (0);
-
-		return info(arg);
+		}
+		break;
+	}
+	
+	if (fd < 0 && !opencd())
+		return (0);
+	
+	switch (cmd) {
+	case CMD_INFO:
+		return (info(arg));
 
 	case CMD_STATUS:
-		if (fd < 0 && !opencd())
-			return (0);
-
-		return pstatus(arg);
+		return (pstatus(arg));
 
 	case CMD_PAUSE:
-		if (fd < 0 && !opencd())
-			return (0);
-
-		return ioctl(fd, CDIOCPAUSE);
+		return (ioctl(fd, CDIOCPAUSE));
 
 	case CMD_RESUME:
-		if (fd < 0 && !opencd())
-			return (0);
-
-		return ioctl(fd, CDIOCRESUME);
+		return (ioctl(fd, CDIOCRESUME));
 
 	case CMD_STOP:
-		if (fd < 0 && !opencd())
-			return (0);
-
 		rc = ioctl(fd, CDIOCSTOP);
 		ioctl(fd, CDIOCALLOW);
 		return (rc);
 
 	case CMD_RESET:
-		if (fd < 0 && !opencd())
-			return (0);
-
-		rc = ioctl(fd, CDIOCRESET);
-		if (rc < 0)
-			return rc;
+		if ((rc = ioctl(fd, CDIOCRESET)) < 0)
+			return (rc);
 		close(fd);
 		fd = -1;
 		return (0);
 
 	case CMD_EJECT:
-		if (fd < 0 && !opencd())
-			return (0);
-
 		ioctl(fd, CDIOCALLOW);
-		rc = ioctl(fd, CDIOCEJECT);
-		if (rc < 0)
+		if ((rc = ioctl(fd, CDIOCEJECT)) < 0)
 			return (rc);
 		return (0);
 
 	case CMD_CLOSE:
-		if (fd < 0 && !opencd())
-			return (0);
-
 		ioctl(fd, CDIOCALLOW);
-		rc = ioctl(fd, CDIOCCLOSE);
-		if (rc < 0)
+		if ((rc = ioctl(fd, CDIOCCLOSE)) < 0)
 			return (rc);
 		close(fd);
 		fd = -1;
 		return (0);
 
 	case CMD_PLAY:
-		if (fd < 0 && !opencd())
-			return (0);
-
 		while (isspace(*arg))
 			arg++;
-		return play(arg);
+		return (play(arg));
 
 	case CMD_SET:
 		if (!strcasecmp(arg, "msf"))
 			msf = 1;
+		else if (!strcasecmp(arg, "lba"))
+			msf = 0;
 		else
-			if (!strcasecmp(arg, "lba"))
-				msf = 0;
-			else
-				warnx("invalid command arguments");
+			warnx("invalid command arguments");
 		return (0);
 
 	case CMD_VOLUME:
-		if (fd < 0 && !opencd())
-			return (0);
-
 		if (!strncasecmp(arg, "left", strlen(arg)))
 			return (ioctl(fd, CDIOCSETLEFT));
 
@@ -412,7 +394,7 @@ run(cmd, arg)
 		if (!strncasecmp(arg, "mute", strlen(arg)))
 			return (ioctl(fd, CDIOCSETMUTE));
 
-		if (2 != sscanf(arg, "%d %d", &l, &r)) {
+		if (sscanf(arg, "%d %d", &l, &r) != 2) {
 			warnx("invalid command arguments");
 			return (0);
 		}
@@ -446,12 +428,12 @@ play(arg)
 
 	if (!arg || !*arg) {
 		/* Play the whole disc */
-		if (msf)
-			return play_blocks(0, msf2lba(toc_buffer[n].addr.msf.minute,
-				toc_buffer[n].addr.msf.second,
-				toc_buffer[n].addr.msf.frame));
+		if (!msf)
+			return (play_blocks(0, be32toh(toc_buffer[n].addr.lba)));
 		
-		return (play_blocks(0, ntohl(toc_buffer[n].addr.lba)));
+		return (play_blocks(0, msf2lba(toc_buffer[n].addr.msf.minute,
+		    toc_buffer[n].addr.msf.second, 
+		    toc_buffer[n].addr.msf.frame)));
 	}
 	
 	if (strchr(arg, '#')) {
@@ -468,7 +450,7 @@ play(arg)
 				    toc_buffer[n].addr.msf.second,
 				    toc_buffer[n].addr.msf.frame) - blk;
 			else
-				len = ntohl(toc_buffer[n].addr.lba) - blk;
+				len = be32toh(toc_buffer[n].addr.lba) - blk;
 		}
 		return (play_blocks(blk, len));
 	}
@@ -562,7 +544,7 @@ Play_Relative_Addresses:
 			ts = toc_buffer[tr1].addr.msf.second;
 			tf = toc_buffer[tr1].addr.msf.frame;
 		} else
-			lba2msf(ntohl(toc_buffer[tr1].addr.lba), &tm, &ts, &tf);
+			lba2msf(be32toh(toc_buffer[tr1].addr.lba), &tm, &ts, &tf);
 		if ((m1 > tm) || ((m1 == tm) && ((s1 > ts) || ((s1 == ts) && 
 		    (f1 > tf))))) {
 			printf("Track %d is not that long.\n", tr1);
@@ -603,7 +585,7 @@ Play_Relative_Addresses:
 					s2 = toc_buffer[n].addr.msf.second;
 					f2 = toc_buffer[n].addr.msf.frame;
 				} else {
-					lba2msf(ntohl(toc_buffer[n].addr.lba),
+					lba2msf(be32toh(toc_buffer[n].addr.lba),
 					    &tm, &ts, &tf);
 					m2 = tm;
 					s2 = ts;
@@ -622,7 +604,7 @@ Play_Relative_Addresses:
 					ts = toc_buffer[tr2].addr.msf.second;
 					tf = toc_buffer[tr2].addr.msf.frame;
 				} else
-					lba2msf(ntohl(toc_buffer[tr2].addr.lba),
+					lba2msf(be32toh(toc_buffer[tr2].addr.lba),
 					    &tm, &ts, &tf);
 				f2 += tf;
 				if (f2 >= 75) {
@@ -643,7 +625,7 @@ Play_Relative_Addresses:
 			ts = toc_buffer[n].addr.msf.second;
 			tf = toc_buffer[n].addr.msf.frame;
 		} else
-			lba2msf(ntohl(toc_buffer[n].addr.lba), &tm, &ts, &tf);
+			lba2msf(be32toh(toc_buffer[n].addr.lba), &tm, &ts, &tf);
 
 		if ((tr2 < n) && ((m2 > tm) || ((m2 == tm) && ((s2 > ts) || 
 		    ((s2 == ts) && (f2 > tf)))))) {
@@ -669,7 +651,7 @@ Try_Absolute_Timed_Addresses:
 				s2 = toc_buffer[n].addr.msf.second;
 				f2 = toc_buffer[n].addr.msf.frame;
 			} else {
-				lba2msf(ntohl(toc_buffer[n].addr.lba),
+				lba2msf(be32toh(toc_buffer[n].addr.lba),
 				    &tm, &ts, &tf);
 				m2 = tm;
 				s2 = ts;
@@ -858,7 +840,7 @@ prtrack(e, lastflag)
 		block = msf2lba(e->addr.msf.minute, e->addr.msf.second,
 		    e->addr.msf.frame);
 	} else {
-		block = ntohl(e->addr.lba);
+		block = be32toh(e->addr.lba);
 		lba2msf(block, &m, &s, &f);
 		/* Print track start */
 		printf("%2d:%02d.%02d  ", m, s, f);
@@ -872,7 +854,7 @@ prtrack(e, lastflag)
 		next = msf2lba(e[1].addr.msf.minute, e[1].addr.msf.second,
 		    e[1].addr.msf.frame);
 	else
-		next = ntohl(e[1].addr.lba);
+		next = be32toh(e[1].addr.lba);
 	len = next - block;
 	lba2msf(len, &m, &s, &f);
 
@@ -974,7 +956,7 @@ status(trk, min, sec, frame)
 		*sec = s.data->what.position.reladdr.msf.second;
 		*frame = s.data->what.position.reladdr.msf.frame;
 	} else {
-		lba2msf(ntohl(s.data->what.position.reladdr.lba), &mm, &ss, &ff);
+		lba2msf(be32toh(s.data->what.position.reladdr.lba), &mm, &ss, &ff);
 		*min = mm;
 		*sec = ss;
 		*frame = ff;
