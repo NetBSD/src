@@ -1,9 +1,9 @@
-/*	$NetBSD: param.h,v 1.1 2000/03/19 23:07:47 soren Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2000/03/20 12:26:11 soren Exp $	*/
 
 #include <mips/mips_param.h>
 
-#define	_MACHINE_ARCH	mipseb
-#define	MACHINE_ARCH	"mipseb"
+#define	_MACHINE_ARCH	mipsel
+#define	MACHINE_ARCH	"mipsel"
 #define	_MACHINE	cobalt
 #define	MACHINE		"cobalt"
 #define	MID_MACHINE	MID_MIPS
