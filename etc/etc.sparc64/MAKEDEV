@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.43 2002/10/26 13:15:05 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.44 2002/10/26 13:48:34 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -60,6 +60,15 @@
 #	cgd*	cryptographic disk devices
 #	raid*	RAIDframe disk driver
 #	md*	memory pseudo-disk devices
+# Console ports:
+#	console	standard console
+#	ttyE*	wscons
+# Pointing devices:
+#	mouse	standard sun mouse events
+#	wsmouse* wscons mouse events
+# Keyboard devices:
+#	kbd	standard sun keyboard events
+#	wskbd*	wscons keyboard events
 # Terminals:
 #	tty*	Z88530 serial controllers
 #	ttyC*	NS16550 serial controllers
@@ -103,6 +112,8 @@
 #	uk*	unknown SCSI device
 #	pci*	PCI bus access devices
 #	systrace syscall tracer
+#	wsmux*	wscons event multiplexor
+#	wsfont*	console font control
 #
 
 
