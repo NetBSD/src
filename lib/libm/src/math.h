@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.2 1994/09/25 17:27:56 jtc Exp $
+ * $NetBSD: math.h,v 1.3 1997/10/09 11:30:44 lukem Exp $
  */
 
 #ifndef _MATH_H_
@@ -168,7 +168,8 @@ extern double scalbn __P((double, int));
 /*
  * BSD math library entry points
  */
-extern double cabs();
+struct __cabsargs { double x; double y; };
+extern double cabs __P((struct __cabsargs));
 extern double drem __P((double, double));
 extern double expm1 __P((double));
 extern double log1p __P((double));
@@ -252,7 +253,8 @@ extern float scalbnf __P((float, int));
 /*
  * float versions of BSD math library entry points
  */
-extern float cabsf ();
+struct __cabsfargs { float x; float y; };
+extern float cabsf __P((struct __cabsfargs));
 extern float dremf __P((float, float));
 extern float expm1f __P((float));
 extern float log1pf __P((float));

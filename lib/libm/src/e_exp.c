@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_exp.c,v 1.8 1995/05/10 20:45:03 jtc Exp $";
+__RCSID("$NetBSD: e_exp.c,v 1.9 1997/10/09 11:28:53 lukem Exp $");
 #endif
 
 /* __ieee754_exp(x)
@@ -114,6 +115,8 @@ P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 	int32_t k,xsb;
 	u_int32_t hx;
 
+	hi = lo = 0;
+	k = 0;
 	GET_HIGH_WORD(hx,x);
 	xsb = (hx>>31)&1;		/* sign bit of x */
 	hx &= 0x7fffffff;		/* high word of |x| */
