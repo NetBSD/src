@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.16 2000/01/19 00:03:04 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.17 2000/03/16 18:08:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ void lfs_check_segsum __P((struct lfs *, struct segment *, char *, int));
 #endif /* DEBUG */
 
 /* lfs_inode.c */
-void lfs_init __P((void));
 struct dinode *lfs_ifind __P((struct lfs *, ino_t, struct buf *));
 
 /* lfs_segment.c */
@@ -167,6 +166,8 @@ int lfs_fastvget __P((struct mount *, ino_t, ufs_daddr_t, struct vnode **, struc
 struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
 
 /* lfs_vfsops.c */
+void lfs_init __P((void));
+void lfs_done __P((void));
 int lfs_mountroot __P((void));
 int lfs_mount __P((struct mount *, const char *, void *, struct nameidata *, struct proc *));
 int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));

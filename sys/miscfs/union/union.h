@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.11 1999/08/01 00:00:57 sommerfeld Exp $	*/
+/*	$NetBSD: union.h,v 1.12 2000/03/16 18:08:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -131,6 +131,7 @@ extern int (**union_vnodeop_p) __P((void *));
 extern struct vfsops union_vfsops;
 
 void union_init __P((void));
+void union_done __P((void));
 int union_freevp __P((struct vnode *));
 
 #endif /* _KERNEL */

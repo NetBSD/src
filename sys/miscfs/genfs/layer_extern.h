@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.2 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.3 2000/03/16 18:08:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -75,6 +75,7 @@
 
 /* misc routines in layer_subr.c */
 void	layerfs_init __P((void));
+void	layerfs_done __P((void));
 int	layer_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
 int	layer_node_create __P((struct mount *, struct vnode *, struct vnode **));
 struct vnode *

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.19 1999/02/26 23:44:47 wrstuden Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.20 2000/03/16 18:08:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -218,5 +218,6 @@ int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *, struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
 void msdosfs_init __P((void));
+void msdosfs_done __P((void));
 
 #endif /* _KERNEL */
