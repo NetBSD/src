@@ -1,4 +1,4 @@
-/*	$NetBSD: nice.c,v 1.9 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: nice.c,v 1.9.8.1 2002/06/04 11:42:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nice.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nice.c,v 1.9 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: nice.c,v 1.9.8.1 2002/06/04 11:42:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,11 +60,14 @@ int
 nice(incr)
 	int incr;
 {
-	int prio;
+	int prio, newprio;
 
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 0);
 	if (prio == -1 && errno)
 		return (-1);
-	return (setpriority(PRIO_PROCESS, 0, prio + incr));
+	newprio = prio + incr;
+	if (setpriority(PRIO_PROCESS, 0, newprio) != 0)
+		return (-1);
+	return (newprio);
 }
