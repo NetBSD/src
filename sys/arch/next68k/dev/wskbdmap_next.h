@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.h,v 1.1 1999/01/28 11:46:23 dbj Exp $	*/
+/*	$NetBSD: wskbdmap_next.h,v 1.1 1999/03/24 23:15:57 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
