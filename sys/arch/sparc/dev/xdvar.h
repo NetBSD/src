@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.3 1996/02/22 06:50:54 thorpej Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.4 1996/03/14 19:45:22 christos Exp $	*/
 
 /*
  *
@@ -151,12 +151,12 @@ struct xdc_softc {
   struct buf sc_wq;                /* queue'd IOPBs for this controller */
   char freereq[XDC_MAXIOPB];       /* free list (stack) */
   char waitq[XDC_MAXIOPB];         /* wait queue */
-  char nfree;                      /* number of iopbs free */
-  char nrun;                       /* number running */
-  char nwait;                      /* number of waiting iopbs */
-  char ndone;                      /* number of done IORQs */
-  char waithead;                   /* head of queue */
-  char waitend;                    /* end of queue */
+  u_char nfree;                    /* number of iopbs free */
+  u_char nrun;                     /* number running */
+  u_char nwait;                    /* number of waiting iopbs */
+  u_char ndone;                    /* number of done IORQs */
+  u_char waithead;                 /* head of queue */
+  u_char waitend;		   /* end of queue */
 };
 
 /*

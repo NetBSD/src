@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.2 1996/02/28 20:53:02 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.3 1996/03/14 19:44:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -77,6 +77,7 @@
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/pfourreg.h>
+#include <sparc/dev/dev_conf.h>
 
 /* per-display variables */
 struct cgfour_softc {
