@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.12 2001/01/07 22:59:25 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.13 2001/01/09 02:37:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -350,12 +350,14 @@ trap(frame)
 		if (simple_lock_held(&sched_lock))
 			goto we_re_toast;
 #endif		
+#ifdef MULTIPROCESSOR
 		/*
 		 * process doing kernel-mode page fault must have
 		 * been running with big lock held
 		 */
 		if ((p->p_flag & P_BIGLOCK) == 0)
 			goto we_re_toast;
+#endif
 
 		pcb = &p->p_addr->u_pcb;
 		/*
