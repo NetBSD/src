@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.8 2000/09/15 08:50:24 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.9 2001/01/22 22:28:44 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -306,6 +306,7 @@ ie_pcctwo_attach(parent, self, args)
 	sc->intrhook = ie_intrhook;
 	sc->memcopyin = ie_copyin;
 	sc->memcopyout = ie_copyout;
+	sc->ie_bus_barrier = NULL;
 	sc->ie_bus_read16 = ie_read_16;
 	sc->ie_bus_write16 = ie_write_16;
 	sc->ie_bus_write24 = ie_write_24;

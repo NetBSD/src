@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.4 2001/01/07 15:56:02 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.5 2001/01/22 22:28:43 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.4 2001/01/07 15:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.5 2001/01/22 22:28:43 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -136,6 +136,8 @@ ei_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ie.memcopyin = ei_copyin;
 	sc->sc_ie.memcopyout = ei_copyout;
+
+	sc->sc_ie.ie_bus_barrier = NULL;
 	sc->sc_ie.ie_bus_read16 = ei_read16;
 	sc->sc_ie.ie_bus_write16 = ei_write16;
 	sc->sc_ie.ie_bus_write24 = ei_write24;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.7 2000/06/28 16:27:54 mrg Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.8 2001/01/22 22:28:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ struct ix_softc {
 	bus_space_tag_t sc_regt;	/* space tag for registers */
 	bus_space_handle_t sc_regh;	/* space handle for registers */
 
+	u_int8_t	use_pio;	/* use PIO rather than shared mem */
 	u_int16_t	irq_encoded;	/* encoded IRQ */
 	void		*sc_ih;		/* interrupt handle */
 };
@@ -91,9 +92,12 @@ static int 	ix_intrhook __P((struct ie_softc *, int));
 static void     ix_copyin __P((struct ie_softc *, void *, int, size_t));
 static void     ix_copyout __P((struct ie_softc *, const void *, int, size_t));
 
+static void	ix_bus_barrier __P((struct ie_softc *, int, int, int));
+
 static u_int16_t ix_read_16 __P((struct ie_softc *, int));
 static void	ix_write_16 __P((struct ie_softc *, int, u_int16_t));
 static void	ix_write_24 __P((struct ie_softc *, int, int));
+static void	ix_zeromem  __P((struct ie_softc *, int, int));
 
 static void	ix_mediastatus __P((struct ie_softc *, struct ifmediareq *));
 
@@ -256,24 +260,51 @@ ix_copyin (sc, dst, offset, size)
         int offset;
         size_t size;
 {
-	int dribble;
+	int i, dribble;
 	u_int8_t* bptr = dst;
+	u_int16_t* wptr = dst;
+	struct ix_softc* isc = (struct ix_softc *) sc;
 
+	if (isc->use_pio) {
+		/* Reset read pointer to the specified offset */
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
+						  BUS_SPACE_BARRIER_READ);
+		bus_space_write_2(sc->bt, sc->bh, IX_READPTR, offset);
+		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2,
+						  BUS_SPACE_BARRIER_WRITE);
+	} else {
 	bus_space_barrier(sc->bt, sc->bh, offset, size,
 			  BUS_SPACE_BARRIER_READ);
+	}
 
 	if (offset % 2) {
+		if (isc->use_pio)
+			*bptr = bus_space_read_1(sc->bt, sc->bh, IX_DATAPORT);
+		else
 		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
 		offset++; bptr++; size--;
 	}
 
 	dribble = size % 2;
-	bus_space_read_region_2(sc->bt, sc->bh, offset, (u_int16_t *) bptr,
-				size >> 1);
+	wptr = (u_int16_t*) bptr;
+
+	if (isc->use_pio) {
+		for(i = 0; i <  size / 2; i++) {
+			*wptr = bus_space_read_2(sc->bt, sc->bh, IX_DATAPORT);
+			wptr++;
+		}
+	} else {
+		bus_space_read_region_2(sc->bt, sc->bh, offset, 
+					(u_int16_t *) bptr, size / 2);
+	}
 
 	if (dribble) {
 		bptr += size - 1;
 		offset += size - 1;
+
+		if (isc->use_pio)
+			*bptr = bus_space_read_1(sc->bt, sc->bh, IX_DATAPORT);
+		else
 		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
 	}
 }
@@ -285,27 +316,70 @@ ix_copyout (sc, src, offset, size)
         int offset;
         size_t size;
 {
-	int dribble;
+	int i, dribble;
 	int osize = size;
 	int ooffset = offset;
 	const u_int8_t* bptr = src;
+	const u_int16_t* wptr = src;
+	struct ix_softc* isc = (struct ix_softc *) sc;
+
+	if (isc->use_pio) {
+		/* Reset write pointer to the specified offset */
+		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+	}
 
 	if (offset % 2) {
+		if (isc->use_pio)
+			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, *bptr);
+		else
 		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 		offset++; bptr++; size--;
 	}
 
 	dribble = size % 2;
-	bus_space_write_region_2(sc->bt, sc->bh, offset, (u_int16_t *)bptr,
-				 size >> 1);
+	wptr = (u_int16_t*) bptr;
+
+	if (isc->use_pio) {
+		for(i = 0; i < size / 2; i++) {
+			bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, *wptr);
+			wptr++;
+		}
+	} else {
+		bus_space_write_region_2(sc->bt, sc->bh, offset, 
+					 (u_int16_t *)bptr, size / 2);
+	}
+
 	if (dribble) {
 		bptr += size - 1;
 		offset += size - 1;
+
+		if (isc->use_pio)
+			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, *bptr);
+		else
 		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 	}
 
+	if (isc->use_pio)
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+	else
 	bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
 			  BUS_SPACE_BARRIER_WRITE);
+}
+
+static void
+ix_bus_barrier(sc, offset, length, flags)
+        struct ie_softc *sc;
+        int offset, length, flags;
+{
+	struct ix_softc* isc = (struct ix_softc *) sc;
+
+	if (isc->use_pio)
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, flags);
+	else
+		bus_space_barrier(sc->bt, sc->bh, offset, length, flags);
 }
 
 static u_int16_t
@@ -313,8 +387,23 @@ ix_read_16 (sc, offset)
         struct ie_softc *sc;
         int offset;
 {
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_READ);
+	struct ix_softc* isc = (struct ix_softc *) sc;
+
+	if (isc->use_pio) {
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
+						  BUS_SPACE_BARRIER_READ);
+
+		/* Reset read pointer to the specified offset */
+		bus_space_write_2(sc->bt, sc->bh, IX_READPTR, offset);
+		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+
+		return bus_space_read_2(sc->bt, sc->bh, IX_DATAPORT);
+	} else {
+		bus_space_barrier(sc->bt, sc->bh, offset, 2, 
+						  BUS_SPACE_BARRIER_READ);
         return bus_space_read_2(sc->bt, sc->bh, offset);
+	}
 }
 
 static void
@@ -323,8 +412,22 @@ ix_write_16 (sc, offset, value)
         int offset;
         u_int16_t value;
 {
+	struct ix_softc* isc = (struct ix_softc *) sc;
+
+	if (isc->use_pio) {
+		/* Reset write pointer to the specified offset */
+		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+
+		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, value);
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+	} else {
         bus_space_write_2(sc->bt, sc->bh, offset, value);
-	bus_space_barrier(sc->bt, sc->bh, offset, 2, BUS_SPACE_BARRIER_WRITE);
+		bus_space_barrier(sc->bt, sc->bh, offset, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+	}
 }
 
 static void
@@ -332,9 +435,64 @@ ix_write_24 (sc, offset, addr)
         struct ie_softc *sc;
         int offset, addr;
 {
-        bus_space_write_4(sc->bt, sc->bh, offset, addr +
-			  (u_long) sc->sc_maddr - (u_long) sc->sc_iobase);
-	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
+	char* ptr;
+	struct ix_softc* isc = (struct ix_softc *) sc;
+	int val = addr + (u_long) sc->sc_maddr - (u_long) sc->sc_iobase;
+
+	if (isc->use_pio) {
+		/* Reset write pointer to the specified offset */
+		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+
+		ptr = (char*) &val;
+		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, 
+						  *((u_int16_t *)ptr));
+		bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, 
+						  *((u_int16_t *)(ptr + 2)));
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+	} else {
+        	bus_space_write_4(sc->bt, sc->bh, offset, val);
+		bus_space_barrier(sc->bt, sc->bh, offset, 4, 
+						  BUS_SPACE_BARRIER_WRITE);
+	}
+}
+
+static void
+ix_zeromem(sc, offset, count)
+        struct ie_softc *sc;
+        int offset, count;
+{
+	int i;
+	int dribble;
+	struct ix_softc* isc = (struct ix_softc *) sc;
+
+	if (isc->use_pio) {
+		/* Reset write pointer to the specified offset */
+		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, offset);
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+
+		if (offset % 2) {
+			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
+			count--;
+		}
+
+	        dribble = count % 2;
+		for(i = 0; i < count / 2; i++)
+			bus_space_write_2(sc->bt, sc->bh, IX_DATAPORT, 0);
+
+		if (dribble)
+			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
+
+		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2, 
+						  BUS_SPACE_BARRIER_WRITE);
+	} else {
+		bus_space_set_region_1(sc->bt, sc->bh, offset, 0, count);
+		bus_space_barrier(sc->bt, sc->bh, offset, count, 
+						  BUS_SPACE_BARRIER_WRITE);
+	}
 }
 
 static void
@@ -414,22 +572,24 @@ ix_match(parent, cf, aux)
 	 */
 
 	val = ix_read_eeprom(iot, ioh, 6) & 0xff;
-	DPRINTF(("memory config: 0x%02x\n", val));
-
-	for(i = 0; i < 8; i++) {
+	for(pg = 0; pg < 8; pg++) {
 		if (val & 1)
 			break;
 		val = val >> 1;
 	}
 
-	if (i == 8) {
+	if (pg == 8) {
 		DPRINTF(("Invalid or unsupported memory config\n"));
 		goto out;
 	}
 
-	maddr = 0xc0000 + (i * 0x4000);
+	maddr = 0xc0000 + (pg * 0x4000);
 
 	switch (val) {
+	case 0x00:
+		msize = 0;
+		break;
+
 	case 0x01:
 		msize = 16 * 1024;
 		break;
@@ -469,9 +629,6 @@ ix_match(parent, cf, aux)
 		goto out;
 	}
 
-	DPRINTF(("found %d byte memory region at %x\n",
-		ia->ia_msize, ia->ia_maddr));
-
 	/* need to put the 586 in RESET, and leave it */
 	bus_space_write_1(iot, ioh, IX_ECTRL, IX_RESET_586);
 
@@ -486,26 +643,24 @@ ix_match(parent, cf, aux)
 	}
 
 	/*
-	 * Size and test the memory on the board.  The size of the memory
-	 * can be one of 16k, 32k, 48k or 64k.  It can be located in the
-	 * address range 0xC0000 to 0xEFFFF on 16k boundaries.
+	 * Only do the following bit if using memory-mapped access.  For 
+	 * boards with no mapped memory, we use PIO.  We also use PIO for
+	 * boards with 16K of mapped memory, as those setups don't seem
+	 * to work otherwise.
 	 */
-	pg = (ia->ia_maddr & 0x3C000) >> 14;
+	if (msize != 0 && msize != 16384) {
+		/* Set board up with memory-mapping info */
 	adjust = IX_MCTRL_FMCS16 | (pg & 0x3) << 2;
 	decode = ((1 << (ia->ia_msize / 16384)) - 1) << pg;
 	edecode = ((~decode >> 4) & 0xF0) | (decode >> 8);
 
-	/* ZZZ This should be checked against eeprom location 6, low byte */
 	bus_space_write_1(iot, ioh, IX_MEMDEC, decode & 0xFF);
-
-	/* ZZZ This should be checked against eeprom location 1, low byte */
 	bus_space_write_1(iot, ioh, IX_MCTRL, adjust);
-
-	/* ZZZ Now if I could find this one I would have it made */
 	bus_space_write_1(iot, ioh, IX_MPCTRL, (~decode & 0xFF));
 
-	/* ZZZ I think this is location 6, high byte */
-	bus_space_write_1(iot, ioh, IX_MECTRL, edecode); /*XXX disable Exxx */
+		/* XXX disable Exxx */
+		bus_space_write_1(iot, ioh, IX_MECTRL, edecode); 
+	}
 
 	/*
 	 * Get the encoded interrupt number from the EEPROM, check it
@@ -555,14 +710,23 @@ ix_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 
 	int media;
-	u_short eaddrtemp;
+	int i, memsize;
 	u_int8_t bart_config;
 	bus_space_tag_t iot;
+	u_int8_t bpat, bval;
+	u_int16_t wpat, wval;
 	bus_space_handle_t ioh, memh;
 	u_short irq_encoded;
 	u_int8_t ethaddr[ETHER_ADDR_LEN];
 
 	iot = ia->ia_iot;
+
+	/* 
+	 * Shared memory access seems to fail on 16K mapped boards, so
+	 * disable shared memory access if the board is in 16K mode.  If 
+	 * no memory is mapped, we have no choice but to use PIO
+	 */
+	isc->use_pio = (ia->ia_msize <= (16 * 1024));
 
 	if (bus_space_map(iot, ia->ia_iobase,
 			  ia->ia_iosize, 0, &ioh) != 0) {
@@ -573,14 +737,16 @@ ix_attach(parent, self, aux)
 		return;
 	}
 
+	/* We map memory even if using PIO so something else doesn't grab it */
+	if (ia->ia_msize) {
 	if (bus_space_map(ia->ia_memt, ia->ia_maddr,
 			  ia->ia_msize, 0, &memh) != 0) {
-
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
 			sc->sc_dev.dv_xname, ia->ia_maddr,
 			ia->ia_maddr + ia->ia_msize - 1));
 		bus_space_unmap(iot, ioh, ia->ia_iosize);
 		return;
+	}
 	}
 
 	isc->sc_regt = iot;
@@ -590,15 +756,15 @@ ix_attach(parent, self, aux)
 	 * Get the hardware ethernet address from the EEPROM and
 	 * save it in the softc for use by the 586 setup code.
 	 */
-	eaddrtemp = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_HIGH);
-	ethaddr[1] = eaddrtemp & 0xFF;
-	ethaddr[0] = eaddrtemp >> 8;
-	eaddrtemp = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_MID);
-	ethaddr[3] = eaddrtemp & 0xFF;
-	ethaddr[2] = eaddrtemp >> 8;
-	eaddrtemp = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_LOW);
-	ethaddr[5] = eaddrtemp & 0xFF;
-	ethaddr[4] = eaddrtemp >> 8;
+	wval = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_HIGH);
+	ethaddr[1] = wval & 0xFF;
+	ethaddr[0] = wval >> 8;
+	wval = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_MID);
+	ethaddr[3] = wval & 0xFF;
+	ethaddr[2] = wval >> 8;
+	wval = ix_read_eeprom(iot, ioh, IX_EEPROM_ENET_LOW);
+	ethaddr[5] = wval & 0xFF;
+	ethaddr[4] = wval >> 8;
 
 	sc->hwinit = NULL;
 	sc->hwreset = ix_reset;
@@ -607,6 +773,14 @@ ix_attach(parent, self, aux)
 
 	sc->memcopyin = ix_copyin;
 	sc->memcopyout = ix_copyout;
+
+	/* If using PIO, make sure to setup single-byte read/write functions */
+	if (isc->use_pio) {
+		sc->ie_bus_barrier = ix_bus_barrier;
+	} else {
+		sc->ie_bus_barrier = NULL;
+	}
+
 	sc->ie_bus_read16 = ix_read_16;
 	sc->ie_bus_write16 = ix_write_16;
 	sc->ie_bus_write24 = ix_write_24;
@@ -616,12 +790,115 @@ ix_attach(parent, self, aux)
 	sc->sc_mediachange = NULL;
 	sc->sc_mediastatus = ix_mediastatus;
 
+	if (isc->use_pio) {
+		sc->bt = iot;
+		sc->bh = ioh;
+
+		/* 
+		 * If using PIO, the memory size is bounded by on-card memory, 
+		 * not by how much is mapped into the memory-mapped region, so 
+		 * determine how much total memory we have to play with here.  
+		 */
+		for(memsize = 64 * 1024; memsize; memsize -= 16 * 1024) {
+			/* warm up shared memory, the zero it all out */
+			ix_zeromem(sc, 0, 32);
+			ix_zeromem(sc, 0, memsize);
+
+			/* Reset write pointer to the start of RAM */
+			bus_space_write_2(iot, ioh, IX_WRITEPTR, 0);
+			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2, 
+						    BUS_SPACE_BARRIER_WRITE);
+
+			/* write test pattern */
+			for(i = 0; i < memsize; i += 2) {
+				bus_space_write_2(iot, ioh, IX_DATAPORT, wpat);
+				wpat += 3;
+			}
+
+			/* Flush all reads & writes to data port */
+			bus_space_barrier(iot, ioh, IX_DATAPORT, 2, 
+						    BUS_SPACE_BARRIER_READ |
+						    BUS_SPACE_BARRIER_WRITE);
+
+			/* Reset read pointer to beginning of card RAM */
+			bus_space_write_2(iot, ioh, IX_READPTR, 0);
+			bus_space_barrier(iot, ioh, IX_READPTR, 2, 
+						    BUS_SPACE_BARRIER_WRITE);
+
+			/* read and verify test pattern */
+			for(i = 0, wpat = 1; i < memsize; i += 2) {
+				wval = bus_space_read_2(iot, ioh, IX_DATAPORT);
+
+				if (wval != wpat)
+					break;
+
+				wpat += 3;
+			}
+
+			/* If we failed, try next size down */
+			if (i != memsize)
+				continue;
+
+			/* Now try it all with byte reads/writes */
+			ix_zeromem(sc, 0, 32);
+			ix_zeromem(sc, 0, memsize);
+
+			/* Reset write pointer to start of card RAM */
+			bus_space_write_2(iot, ioh, IX_WRITEPTR, 0);
+			bus_space_barrier(iot, ioh, IX_WRITEPTR, 2, 
+						    BUS_SPACE_BARRIER_WRITE);
+
+			/* write out test pattern */
+			for(i = 0, bpat = 1; i < memsize; i++) {
+				bus_space_write_1(iot, ioh, IX_DATAPORT, bpat);
+				bpat += 3;
+			}
+
+			/* Flush all reads & writes to data port */
+			bus_space_barrier(iot, ioh, IX_DATAPORT, 2, 
+						    BUS_SPACE_BARRIER_READ |
+						    BUS_SPACE_BARRIER_WRITE);
+
+			/* Reset read pointer to beginning of card RAM */
+			bus_space_write_2(iot, ioh, IX_READPTR, 0);
+			bus_space_barrier(iot, ioh, IX_READPTR, 2, 
+						    BUS_SPACE_BARRIER_WRITE);
+
+			/* read and verify test pattern */
+			for(i = 0, bpat = 1; i < memsize; i++) {
+				bval = bus_space_read_1(iot, ioh, IX_DATAPORT);
+
+				if (bval != bpat)
+				bpat += 3;
+			}
+
+			/* If we got through all of memory, we're done! */ 
+			if (i == memsize)
+				break;
+		}
+
+		/* Memory tests failed, punt... */
+		if (memsize == 0)  {
+			DPRINTF(("\n%s: can't determine size of on-card RAM\n",
+				sc->sc_dev.dv_xname));
+			bus_space_unmap(iot, ioh, ia->ia_iosize);
+			return;
+		}
+
+		sc->bt = iot;
+		sc->bh = ioh;
+
+		sc->sc_msize = memsize;
+		sc->sc_maddr = (void*) 0;
+	} else {
 	sc->bt = ia->ia_memt;
 	sc->bh = memh;
 
-	/* Map i/o space. */
 	sc->sc_msize = ia->ia_msize;
 	sc->sc_maddr = (void *)memh;
+	}
+
+	/* Map i/o space. */
 	sc->sc_iobase = (char *)sc->sc_maddr + sc->sc_msize - (1 << 24);
 
 	/* set up pointers to important on-card control structures */
@@ -633,11 +910,21 @@ ix_attach(parent, self, aux)
 	sc->buf_area_sz = sc->sc_msize - IE_ISCP_SZ - IE_SCB_SZ - IE_SCP_SZ;
 
 	/* zero card memory */
-	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, 32);
-	bus_space_set_region_1(sc->bt, sc->bh, 0, 0, sc->sc_msize);
+	ix_zeromem(sc, 0, 32);
+	ix_zeromem(sc, 0, sc->sc_msize);
 
 	/* set card to 16-bit bus mode */
-	bus_space_write_1(sc->bt, sc->bh, IE_SCP_BUS_USE((u_long)sc->scp), 0);
+	if (isc->use_pio) {
+		bus_space_write_2(sc->bt, sc->bh, IX_WRITEPTR, 
+				  	    IE_SCP_BUS_USE((u_long)sc->scp));
+		bus_space_barrier(sc->bt, sc->bh, IX_WRITEPTR, 2,
+					          BUS_SPACE_BARRIER_WRITE);
+
+		bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, 0);
+	} else {
+		bus_space_write_1(sc->bt, sc->bh, 
+				  IE_SCP_BUS_USE((u_long)sc->scp), 0);
+	}
 
 	/* set up pointers to key structures */
 	ix_write_24(sc, IE_SCP_ISCP((u_long)sc->scp), (u_long) sc->iscp);
@@ -645,12 +932,20 @@ ix_attach(parent, self, aux)
 	ix_write_24(sc, IE_ISCP_BASE((u_long)sc->iscp), (u_long) sc->iscp);
 
 	/* flush setup of pointers, check if chip answers */
+	if (isc->use_pio) {
+		bus_space_barrier(sc->bt, sc->bh, 0, IX_IOSIZE,
+				  BUS_SPACE_BARRIER_WRITE);
+	} else {
 	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
 			  BUS_SPACE_BARRIER_WRITE);
+	}
+
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: Can't talk to i82586!\n",
 			sc->sc_dev.dv_xname));
 		bus_space_unmap(iot, ioh, ia->ia_iosize);
+
+		if (ia->ia_msize)
 		bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
 		return;
 	}
@@ -681,10 +976,16 @@ ix_attach(parent, self, aux)
 	bus_space_write_1(iot, ioh, IX_IRQ,
 			  irq_encoded | IX_IRQ_ENABLE);
 
+	/* Flush all writes to registers */
+	bus_space_barrier(iot, ioh, 0, ia->ia_iosize, BUS_SPACE_BARRIER_WRITE);
+
 	isc->irq_encoded = irq_encoded;
 
 	i82586_attach(sc, "EtherExpress/16", ethaddr,
 		      ix_media, NIX_MEDIA, media);
+
+	if (isc->use_pio)
+		printf("%s: unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_dev.dv_xname, sc->sc_msize);
 
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 					IPL_NET, i82586_intr, sc);
