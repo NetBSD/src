@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.12 2003/02/19 09:21:15 dsl Exp $	*/
+/*	$NetBSD: do_command.c,v 1.13 2003/03/14 21:56:07 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.12 2003/02/19 09:21:15 dsl Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.13 2003/03/14 21:56:07 christos Exp $");
 #endif
 #endif
 
@@ -36,6 +36,10 @@ __RCSID("$NetBSD: do_command.c,v 1.12 2003/02/19 09:21:15 dsl Exp $");
 # include <syslog.h>
 #endif
 
+#ifdef LOGIN_CAP
+# include <pwd.h>
+# include <login_cap.h>
+#endif 
 
 static void		child_process __P((entry *, user *)),
 			do_univ __P((user *));
@@ -232,12 +236,20 @@ child_process(e, u)
 		 */
 		do_univ(u);
 
+#ifdef LOGIN_CAP
+		if (setusercontext(NULL, getpwuid(e->uid), e->uid,
+		    LOGIN_SETRESOURCES|LOGIN_SETPRIORITY|
+		    LOGIN_SETUMASK) != 0) {
+			syslog(LOG_ERR, "setusercontext failed");
+			_exit(ERROR_EXIT);
+		}
+#endif /* LOGIN_CAP */
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
 		 */
 		setgid(e->gid);
 # if defined(BSD)
-		initgroups(env_get("LOGNAME", e->envp), e->gid);
+		initgroups(usernm, e->gid);
 # endif
 		setuid(e->uid);		/* we aren't root after this... */
 		chdir(env_get("HOME", e->envp));
