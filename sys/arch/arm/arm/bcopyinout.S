@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.7 2002/10/12 12:20:09 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.8 2002/10/13 11:20:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,15 +41,14 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.7 2002/10/12 12:20:09 bjh21 Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.8 2002/10/13 11:20:37 bjh21 Exp $")	
 
 	.text
 	.align	0
 
 #ifdef MULTIPROCESSOR
-	/* FIXME: This is bogus in the general case. */
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
 #else
 .Lcurpcb:
 	.word _C_LABEL(curpcb)
@@ -88,8 +87,18 @@ ENTRY(copyin)
 	moveq	pc, lr
 
 	SAVE_REGS
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r2, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r2, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	add	r3, pc, #.Lcopyfault - . - 8
@@ -301,8 +310,18 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r2, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r2, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	add	r3, pc, #.Lcopyfault - . - 8
@@ -504,8 +523,18 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r2, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r2, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 	ldr	r5, [r4, #PCB_ONFAULT]
 	add	r3, pc, #.Lcopyfault - . - 8

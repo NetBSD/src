@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.6 2002/10/12 12:20:09 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.7 2002/10/13 11:20:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,16 +43,15 @@
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.6 2002/10/12 12:20:09 bjh21 Exp $")
+RCSID("$NetBSD: copystr.S,v 1.7 2002/10/13 11:20:38 bjh21 Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
 #ifdef MULTIPROCESSOR
-	/* FIXME: This is bogus in the general case. */
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
 #else
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
@@ -115,8 +114,18 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r3, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r3, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
@@ -162,8 +171,18 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
+#ifdef MULTIPROCESSOR
+	/* XXX Probably not appropriate for non-Hydra SMPs */
+	stmfd	sp!, {r0-r3, r14}
+	bl	_C_LABEL(cpu_number)
+	ldr	r4, .Lcpu_info
+	ldr	r4, [r4, r0, lsl #2]
+	ldr	r4, [r4, #CI_CURPCB]
+	ldmfd	sp!, {r0-r3, r14}
+#else
 	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
+#endif
 
 #ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
