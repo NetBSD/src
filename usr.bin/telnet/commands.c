@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.31 1999/07/28 06:35:15 abs Exp $	*/
+/*	$NetBSD: commands.c,v 1.32 1999/09/30 12:35:52 soren Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.31 1999/07/28 06:35:15 abs Exp $");
+__RCSID("$NetBSD: commands.c,v 1.32 1999/09/30 12:35:52 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -1460,7 +1460,7 @@ shell(argc, argv)
     err = (TerminalWindowSize(&oldrows, &oldcols) == 0) ? 1 : 0;
     switch(vfork()) {
     case -1:
-	perror("Fork failed\n");
+	perror("Fork failed");
 	break;
 
     case 0:
@@ -1481,7 +1481,7 @@ shell(argc, argv)
 		execl(shellp, shellname, "-c", &saveline[1], 0);
 	    else
 		execl(shellp, shellname, 0);
-	    perror("Execl");
+	    perror("execl");
 	    _exit(1);
 	}
     default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.15 1999/06/16 16:34:29 tron Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.16 1999/09/30 12:35:54 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.15 1999/06/16 16:34:29 tron Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.16 1999/09/30 12:35:54 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ clean_loop(fsp, nsegs, options)
 		 * clean space.
 		 */
 		if (getloadavg(loadavg, MAXLOADS) == -1) {
-			perror("getloadavg: failed\n");
+			perror("getloadavg: failed");
 			return (-1);
 		}
 		if (loadavg[ONE_MIN] < load_threshold
@@ -605,7 +605,7 @@ clean_segment(fsp, slp)
 
 	/* get the current disk address of blocks contained by the segment */
 	if (lfs_bmapv(&fsp->fi_statfsp->f_fsid, block_array, num_blocks) < 0) {
-		perror("clean_segment: lfs_bmapv failed\n");
+		perror("clean_segment: lfs_bmapv failed");
 		++cleaner_stats.segs_error;
 		free(block_array); /* XXX KS */
 		return -1;
