@@ -50,14 +50,20 @@
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/core.h>
+#include <sys/exec.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/reg.h>
 
 #include "npx.h"
+#if NNPX > 0
+extern struct proc *npxproc;
+#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -124,9 +130,8 @@ cpu_exit(p)
 {
 	extern int _default_ldt, currentldt;
 	struct vmspace *vm;
+
 #if NNPX > 0
-	extern struct proc *npxproc;
-	
 	if (npxproc == p)
 		npxexit();
 #endif
@@ -147,17 +152,54 @@ cpu_exit(p)
 }
 
 /*
- * Dump the machine specific header information at the start of a core dump.
+ * Dump the machine specific segment at the start of a core dump.
  */     
-cpu_coredump(p, vp, cred)
+int
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
+	int error;
+	register struct user *up = p->p_addr;
+	struct cpustate {
+		struct trapframe regs;
+		struct save87 fpstate;
+	} cpustate;
+	struct coreseg cseg;
 
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_I386, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(cpustate);
+
+	cpustate.regs = *(struct trapframe *)p->p_md.md_regs;
+#if NNPX > 0
+	if (p == npxproc)
+		npxsave(&cpustate.fpstate); /* ??? */
+	else
+#endif
+		bzero((caddr_t)&cpustate.fpstate, sizeof(cpustate.fpstate));
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_I386, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }
 
 /*

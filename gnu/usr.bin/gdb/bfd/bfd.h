@@ -22,7 +22,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: bfd.h,v 1.2 1994/04/28 17:10:42 phil Exp $
+	$Id: bfd.h,v 1.3 1994/05/25 11:23:52 pk Exp $
 */
 
 /* bfd.h -- The only header file required by users of the bfd library 
@@ -1562,6 +1562,7 @@ struct _bfd
       struct sgi_core_struct *sgi_core_data;
       struct lynx_core_struct *lynx_core_data;
       struct osf_core_struct *osf_core_data;
+      struct netbsd_core_struct *netbsd_core_data;
       PTR any;
       } tdata;
   

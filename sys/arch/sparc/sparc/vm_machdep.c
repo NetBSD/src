@@ -42,13 +42,14 @@
  *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.6 1994/05/24 03:33:38 deraadt Exp $
+ * $Id: vm_machdep.c,v 1.7 1994/05/25 10:59:09 pk Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/core.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -271,18 +272,44 @@ cpu_exit(p)
  * (should this be defined elsewhere?  machdep.c?)
  */
 int
-cpu_coredump(p, vp, cred)
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
+	int error;
 	register struct user *up = p->p_addr;
+	struct md_coredump md_core;
+	struct coreseg cseg;
 
-	up->u_md.md_tf = *p->p_md.md_tf;
-	if (p->p_md.md_fpstate)
-		up->u_md.md_fpstate = *p->p_md.md_fpstate;
-	else
-		bzero((caddr_t)&up->u_md.md_fpstate, sizeof(struct fpstate));
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)up, ctob(UPAGES), (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p));
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_SPARC, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(md_core);
+
+	md_core.md_tf = *p->p_md.md_tf;
+	if (p->p_md.md_fpstate) {
+		if (p == fpproc)
+			savefpstate(p->p_md.md_fpstate);
+		md_core.md_fpstate = *p->p_md.md_fpstate;
+	} else
+		bzero((caddr_t)&md_core.md_fpstate, sizeof(struct fpstate));
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_SPARC, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: solib.c,v 1.1 1994/01/28 12:40:39 pk Exp $
+	$Id: solib.c,v 1.2 1994/05/25 11:24:26 pk Exp $
 */
 
 
@@ -703,7 +703,8 @@ find_solib (so_list_ptr)
 	{
 	  if (!target_read_string((CORE_ADDR) LM_NAME (new), new -> so_name,
 		      MAX_PATH_SIZE - 1))
-	      error ("find_solib: Can't read pathname for load map\n");
+	      error ("find_solib: Can't read pathname for load map at %#x\n",
+			(u_long)LM_NAME (new));
 	  new -> so_name[MAX_PATH_SIZE - 1] = 0;
 	  solib_map_sections (new);
 	}      

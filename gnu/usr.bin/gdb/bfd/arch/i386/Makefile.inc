@@ -1,8 +1,8 @@
-# $Id: Makefile.inc,v 1.1 1994/01/28 12:38:17 pk Exp $
+# $Id: Makefile.inc,v 1.2 1994/05/25 11:24:10 pk Exp $
 
 SRCS+=		netbsd386.c cpu-i386.c
 
-CFLAGS+=	-DTRAD_CORE
+CFLAGS+=	-DNETBSD_CORE -DTRAD_CORE
 
 VECTORS=	-DDEFAULT_VECTOR=netbsd_386_vec \
 		-DSELECT_ARCHITECTURES=bfd_i386_arch \
