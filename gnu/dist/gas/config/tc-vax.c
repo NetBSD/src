@@ -2151,12 +2151,34 @@ main ()
 #define PC (15)
 
 int				/* return -1 or 0:15 */
-vax_reg_parse (c1, c2, c3)	/* 3 chars of register name */
-     char c1, c2, c3;		/* c3 == 0 if 2-character reg name */
+vax_reg_parse (c1, c2, c3, c4)	/* 3 chars of register name */
+     char c1, c2, c3, c4;	/* c3 == 0 if 2-character reg name */
 {
   int retval;		/* return -1:15 */
 
   retval = -1;
+
+#ifdef OBJ_ELF
+  if (c1 != '%')	/* register prefixes are mandatory for ELF */
+    return retval;
+  c1 = c2;
+  c2 = c3;
+  c3 = c4;
+#endif
+#ifdef OBJ_VMS
+  if (c4 != 0)		/* register prefixes are not allowed under VMS */
+    return retval;
+#endif
+#ifdef OBJ_AOUT
+  if (c1 == '%')	/* register prefixes are optional under a.out */
+    {
+      c1 = c2;
+      c2 = c3;
+      c3 = c4;
+    }
+  else if (c3 && c4)	/* can't be 4 characters long.  */
+    return retval;
+#endif
 
   if (isupper (c1))
     c1 = tolower (c1);
@@ -2565,9 +2587,11 @@ vip_op (optext, vopP)
 	   * name error. So again we don't need to check for early '\0'.
 	   */
 	  if (q[3] == ']')
-	    ndx = vax_reg_parse (q[1], q[2], 0);
+	    ndx = vax_reg_parse (q[1], q[2], 0, 0);
 	  else if (q[4] == ']')
-	    ndx = vax_reg_parse (q[1], q[2], q[3]);
+	    ndx = vax_reg_parse (q[1], q[2], q[3], 0);
+	  else if (q[5] == ']')
+	    ndx = vax_reg_parse (q[1], q[2], q[3], q[4]);
 	  else
 	    ndx = -1;
 	  /*
@@ -2620,9 +2644,11 @@ vip_op (optext, vopP)
 	       * name error. So again we don't need to check for early '\0'.
 	       */
 	      if (q[3] == ')')
-		reg = vax_reg_parse (q[1], q[2], 0);
+		reg = vax_reg_parse (q[1], q[2], 0, 0);
 	      else if (q[4] == ')')
-		reg = vax_reg_parse (q[1], q[2], q[3]);
+		reg = vax_reg_parse (q[1], q[2], q[3], 0);
+	      else if (q[5] == ')')
+		reg = vax_reg_parse (q[1], q[2], q[3], q[4]);
 	      else
 		reg = -1;
 	      /*
@@ -2692,8 +2718,11 @@ vip_op (optext, vopP)
 		q--;
 	      /* reverse over whitespace, but don't */
 	      /* run back over *p */
-	      if (q > p && q < p + 3)	/* room for Rn or Rnn exactly? */
-		reg = vax_reg_parse (p[0], p[1], q < p + 2 ? 0 : p[2]);
+	      /* room for Rn or Rnn (include prefix) exactly? */
+	      if (q > p && q < p + 4)
+		reg = vax_reg_parse (p[0], p[1],
+		  q < p + 2 ? 0 : p[2],
+		  q < p + 3 ? 0 : p[3]);
 	      else
 		reg = -1;	/* always comes here if no register at all */
 	      /*
