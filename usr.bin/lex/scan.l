@@ -27,7 +27,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: scan.l,v 1.10 1998/01/05 05:15:58 perry Exp $ */
+/* $NetBSD: scan.l,v 1.11 1998/02/22 12:08:35 christos Exp $ */
 
 #include "flexdef.h"
 #include "parse.h"
@@ -98,7 +98,7 @@ LEXOPT		[aceknopr]
 
 	int doing_codeblock = false;
 	int i;
-	Char nmdef[MAXLINE], myesc();
+	Char nmdef[MAXLINE];
 
 
 <INITIAL>{
@@ -434,7 +434,6 @@ LEXOPT		[aceknopr]
 
 	"{"{NAME}"}"	{
 			register Char *nmdefptr;
-			Char *ndlookup();
 
 			strcpy( nmstr, yytext + 1 );
 			nmstr[yyleng - 2] = '\0';  /* chop trailing brace */
