@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.3 1995/03/24 14:49:28 cgd Exp $	*/
+/*	$NetBSD: asic.c,v 1.4 1995/06/28 01:03:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -176,11 +176,10 @@ asic_intr_establish(ca, handler, val)
 	void *val;
 {
 
-	if (ca->ca_slot == ASIC_SLOT_RTC) {
-		if (val != NULL)
-			panic("set clock interrupt incorrectly");
-	        set_clockintr((void (*) __P((struct clockframe *)))handler);
-	}
+#ifdef DIAGNOSTIC
+	if (ca->ca_slot == ASIC_SLOT_RTC)
+		panic("setting clock interrupt incorrectly");
+#endif
 
 	/* XXX SHOULD NOT BE THIS LITERAL */
 	if (asic_slots[ca->ca_slot].as_handler != asic_intrnull)
