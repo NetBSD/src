@@ -2024,8 +2024,7 @@
       DONE;
     }
   if (flag_pic &&
-	(CONSTANT_P (operands[1])
-	|| CONSTANT_POOL_ADDRESS_P(operands[1])))
+      (CONSTANT_P (operands[1]) || CONSTANT_POOL_ADDRESS_P (operands[1])))
     operands[1] = legitimize_pic_address (operands[1], SImode,
 					  ((reload_in_progress
 					    || reload_completed)
@@ -3516,14 +3515,14 @@
     arm_ccfsm_state += 2;
     return \"\";
   }
-  return output_return_instruction (NULL, TRUE);
+  return output_return_instruction (NULL, TRUE, FALSE);
 }"
 [(set_attr "type" "load")])
 
 (define_insn ""
   [(set (pc)
         (if_then_else (match_operator 0 "comparison_operator"
-		       [(reg 24) (const_int 0)])
+		       [(match_operand 1 "cc_register" "") (const_int 0)])
                       (return)
                       (pc)))]
   "USE_RETURN_INSN"
@@ -3536,7 +3535,7 @@
     arm_ccfsm_state += 2;
     return \"\";
   }
-  return output_return_instruction (operands[0], TRUE);
+  return output_return_instruction (operands[0], TRUE, FALSE);
 }"
 [(set_attr "conds" "use")
  (set_attr "type" "load")])
@@ -3544,7 +3543,7 @@
 (define_insn ""
   [(set (pc)
         (if_then_else (match_operator 0 "comparison_operator"
-		       [(reg 24) (const_int 0)])
+		       [(match_operand 1 "cc_register" "") (const_int 0)])
                       (pc)
 		      (return)))]
   "USE_RETURN_INSN"
@@ -3557,11 +3556,7 @@
     arm_ccfsm_state += 2;
     return \"\";
   }
-  return output_return_instruction
-	(gen_rtx (reverse_condition (GET_CODE (operands[0])),
-		  GET_MODE (operands[0]), XEXP (operands[0], 0),
-		  XEXP (operands[0], 1)),
-	 TRUE);
+  return output_return_instruction (operands[0], TRUE, TRUE);
 }"
 [(set_attr "conds" "use")
  (set_attr "type" "load")])
@@ -5316,12 +5311,12 @@
   if (arm_ccfsm_state && arm_target_insn && INSN_DELETED_P (arm_target_insn))
   {
     arm_current_cc ^= 1;
-    output_return_instruction (NULL, TRUE);
+    output_return_instruction (NULL, TRUE, FALSE);
     arm_ccfsm_state = 0;
     arm_target_insn = NULL;
   }
 
-  output_return_instruction (NULL, FALSE);
+  output_return_instruction (NULL, FALSE, FALSE);
   return \"b%?\\t%a0\";
 }"
 [(set (attr "conds")
@@ -5347,12 +5342,12 @@
   if (arm_ccfsm_state && arm_target_insn && INSN_DELETED_P (arm_target_insn))
   {
     arm_current_cc ^= 1;
-    output_return_instruction (NULL, TRUE);
+    output_return_instruction (NULL, TRUE, FALSE);
     arm_ccfsm_state = 0;
     arm_target_insn = NULL;
   }
 
-  output_return_instruction (NULL, FALSE);
+  output_return_instruction (NULL, FALSE, FALSE);
   return \"b%?\\t%a1\";
 }"
 [(set (attr "conds")
@@ -5382,12 +5377,12 @@
   if (arm_ccfsm_state && arm_target_insn && INSN_DELETED_P (arm_target_insn))
   {
     arm_current_cc ^= 1;
-    output_return_instruction (NULL, TRUE);
+    output_return_instruction (NULL, TRUE, FALSE);
     arm_ccfsm_state = 0;
     arm_target_insn = NULL;
   }
 
-  output_return_instruction (NULL, FALSE);
+  output_return_instruction (NULL, FALSE, FALSE);
   return \"b%?\\t%a1\";
 }"
 [(set (attr "conds")
@@ -5395,104 +5390,6 @@
 		    (const_string "clob")
 		    (const_string "nocond")))
  (set_attr "length" "8")])
-
-;; If calling a subroutine and then jumping back to somewhere else, but not
-;; too far away, then we can set the link register with the branch address
-;; and jump direct to the subroutine.  On return from the subroutine
-;; execution continues at the branch; this avoids a prefetch stall.
-;; We use the length attribute (via short_branch ()) to establish whether or
-;; not this is possible, this is the same as the sparc does.
-
-(define_peephole
-  [(parallel[(call (mem:SI (match_operand:SI 0 "" "X"))
-                   (match_operand:SI 1 "general_operand" "g"))
-             (clobber (reg:SI 14))])
-   (set (pc)
-        (label_ref (match_operand 2 "" "")))]
-  "0 && GET_CODE (operands[0]) == SYMBOL_REF
-   && short_branch (INSN_UID (insn), INSN_UID (operands[2]))
-   && arm_insn_not_targeted (insn)"
-  "*
-{
-  int backward = arm_backwards_branch (INSN_UID (insn),
-				       INSN_UID (operands[2]));
-
-#if 0
-  /* Putting this in means that TARGET_6 code will ONLY run on an arm6 or
-   * above, leaving it out means that the code will still run on an arm 2 or 3
-   */
-  if (TARGET_6)
-    {
-      if (backward)
-	output_asm_insn (\"sub%?\\t%|lr, %|pc, #(8 + . -%l2)\", operands);
-      else
-	output_asm_insn (\"add%?\\t%|lr, %|pc, #(%l2 - . -8)\", operands);
-    }
-  else
-#endif
-    {
-      output_asm_insn (\"mov%?\\t%|lr, %|pc\\t%@ protect cc\", operands);
-      if (backward)
-	output_asm_insn (\"sub%?\\t%|lr, %|lr, #(4 + . -%l2)\", operands);
-      else
-	output_asm_insn (\"add%?\\t%|lr, %|lr, #(%l2 - . -4)\", operands);
-    }
-  return \"b%?\\t%a0\";
-}"
-[(set (attr "conds")
-      (if_then_else (eq_attr "cpu" "arm6")
-		    (const_string "clob")
-		    (const_string "nocond")))
- (set (attr "length")
-      (if_then_else (eq_attr "cpu" "arm6")
-		    (const_int 8)
-		    (const_int 12)))])
-
-(define_peephole
-  [(parallel[(set (match_operand:SI 0 "s_register_operand" "=r")
-		  (call (mem:SI (match_operand:SI 1 "" "X"))
-                        (match_operand:SI 2 "general_operand" "g")))
-             (clobber (reg:SI 14))])
-   (set (pc)
-        (label_ref (match_operand 3 "" "")))]
-  "0 && GET_CODE (operands[0]) == SYMBOL_REF
-   && short_branch (INSN_UID (insn), INSN_UID (operands[3]))
-   && arm_insn_not_targeted (insn)"
-  "*
-{
-  int backward = arm_backwards_branch (INSN_UID (insn),
-				       INSN_UID (operands[3]));
-
-#if 0
-  /* Putting this in means that TARGET_6 code will ONLY run on an arm6 or
-   * above, leaving it out means that the code will still run on an arm 2 or 3
-   */
-  if (TARGET_6)
-    {
-      if (backward)
-	output_asm_insn (\"sub%?\\t%|lr, %|pc, #(8 + . -%l3)\", operands);
-      else
-	output_asm_insn (\"add%?\\t%|lr, %|pc, #(%l3 - . -8)\", operands);
-    }
-  else
-#endif
-    {
-      output_asm_insn (\"mov%?\\t%|lr, %|pc\\t%@ protect cc\", operands);
-      if (backward)
-	output_asm_insn (\"sub%?\\t%|lr, %|lr, #(4 + . -%l3)\", operands);
-      else
-	output_asm_insn (\"add%?\\t%|lr, %|lr, #(%l3 - . -4)\", operands);
-    }
-  return \"b%?\\t%a1\";
-}"
-[(set (attr "conds")
-      (if_then_else (eq_attr "cpu" "arm6")
-		    (const_string "clob")
-		    (const_string "nocond")))
- (set (attr "length")
-      (if_then_else (eq_attr "cpu" "arm6")
-		    (const_int 8)
-		    (const_int 12)))])
 
 (define_split
   [(set (pc)
