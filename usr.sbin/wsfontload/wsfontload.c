@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.7 2001/09/04 17:59:04 drochner Exp $ */
+/* $NetBSD: wsfontload.c,v 1.8 2001/10/29 17:58:19 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -44,7 +44,7 @@
 
 #include <dev/wscons/wsconsio.h>
 
-#define DEFDEV		"/dev/ttyEcfg"
+#define DEFDEV		"/dev/wsfont"
 #define DEFWIDTH	8
 #define DEFHEIGHT	16
 #define DEFENC		WSDISPLAY_FONTENC_ISO
