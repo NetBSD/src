@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.3 2000/07/26 02:07:36 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.4 2000/09/16 14:04:30 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -588,7 +588,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 #define	OR_l0_l0	0xa0142000
 #define	SLLX_l0_32_l0	0xa12c3020
 #define	OR_l0_l1_l0	0xa0140011
-#define	JMPL_l0_o0	0x93c42000
+#define	JMPL_l0_o1	0x93c42000
 #define	MOV_g1_o0	0x90100001
 
 void _rtld_install_plt __P((Elf_Word *pltgot,	Elf_Addr proc));
@@ -604,7 +604,7 @@ _rtld_install_plt(pltgot, proc)
 	pltgot[3] = OR_l0_l0  | LOVAL((proc) >> 32);
 	pltgot[4] = SLLX_l0_32_l0;
 	pltgot[5] = OR_l0_l1_l0;
-	pltgot[6] = JMPL_l0_o0 | LOVAL(proc);
+	pltgot[6] = JMPL_l0_o1 | LOVAL(proc);
 	pltgot[7] = MOV_g1_o0;
 }
 
