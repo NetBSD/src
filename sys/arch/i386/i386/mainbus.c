@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 1996/11/22 00:19:08 jtk Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16 1996/11/28 02:43:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -74,6 +74,12 @@ union mainbus_attach_args {
 };
 
 /*
+ * This is set when the ISA bus is attached.  If it's not set by the
+ * time it's checked below, then mainbus attempts to attach an ISA.
+ */
+int	isa_has_been_seen;
+
+/*
  * Probe for the mainbus; always succeeds.
  */
 int
@@ -120,7 +126,7 @@ mainbus_attach(parent, self, aux)
 		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
-	if (1 /* XXX ISA NOT YET SEEN */) {
+	if (isa_has_been_seen == 0) {
 		mba.mba_iba.iba_busname = "isa";
 		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
 		mba.mba_iba.iba_memt = I386_BUS_SPACE_MEM;
