@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.52.2.1 2003/01/11 23:25:58 jmc Exp $ */
+/*	$NetBSD: fdisk.c,v 1.52.2.2 2003/06/02 15:11:30 tron Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.52.2.1 2003/01/11 23:25:58 jmc Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.52.2.2 2003/06/02 15:11:30 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -232,6 +232,7 @@ struct part_type {
 	{0xa8, "Apple UFS"},
 	{0xa9, "NetBSD"},
 	{0xab, "Apple Boot"},
+	{0xaf, "Apple HFS"},
 	{0xb1, reserved},
 	{0xb3, reserved},
 	{0xb4, reserved},
