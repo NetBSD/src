@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.4 1998/03/25 04:13:02 mhitch Exp $	*/
+/*	$NetBSD: rtld.h,v 1.5 1998/07/01 20:42:47 tv Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -50,7 +50,9 @@
 #define LIBDIRLEN	(sizeof LIBDIR - 1)
 #define SVR4_LIBDIRLEN	(sizeof SVR4_LIBDIR - 1)
 
+#ifndef	PAGESIZE
 #define PAGESIZE	CLBYTES
+#endif
 #define round_down(x)	((x) & ~(PAGESIZE-1))
 #define round_up(x)	round_down((x) + PAGESIZE - 1)
 
