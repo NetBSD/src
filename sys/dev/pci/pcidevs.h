@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.14 2001/03/22 02:44:38 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.15 2001/04/23 22:04:37 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.13 2001/03/20 17:23:32 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.14 2001/03/22 02:44:11 he Exp 
  */
 
 /*
@@ -619,6 +619,7 @@
 
 /* Accton products */
 #define	PCI_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
+#define	PCI_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 10/100 Ethernet */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
@@ -671,6 +672,7 @@
 
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* ADMtek AL981 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* ADMtek AN985 10/100 Ethernet */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
