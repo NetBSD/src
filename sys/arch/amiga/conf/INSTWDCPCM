@@ -1,4 +1,4 @@
-# $NetBSD: INSTWDCPCM,v 1.1.2.2 2000/09/02 21:40:18 is Exp $
+# $NetBSD: INSTWDCPCM,v 1.1.2.3 2000/11/02 23:38:22 tv Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -8,7 +8,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.1.2.2 $"
+#ident  		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -328,8 +328,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
-#rnd is EXPERIMENTAL at this point.
-#pseudo-device  rnd                     # /dev/random and in-kernel generator
+pseudo-device  rnd                      # /dev/random and in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
