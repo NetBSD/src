@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.7 1998/10/15 01:05:20 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.8 1998/11/19 02:44:40 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ main(argc, argv)
 		 * Installing a boot block on a CD-ROM image.
 		 */
 		cd9660 = 1;
-	} else if (strcmp(fssb.f_fstypename, MOUNT_FFS) != 0) {
+	} else if (!conblockmode && strcmp(fssb.f_fstypename, MOUNT_FFS) != 0) {
 		/*
 		 * Some other file system type, which is not FFS.
 		 * Can't handle these.
