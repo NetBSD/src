@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.27 2004/12/07 23:21:06 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.28 2005/01/07 02:08:34 ginsbach Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -185,6 +185,24 @@ struct scsi_synchronize_cache_10 {
 	u_int8_t control;
 };
 
+/*
+ * XXX Does ATAPI have an equivalent?
+ */
+#define SCSI_READ_DEFECT_DATA		0x37
+struct scsi_read_defect_data {
+	 u_int8_t opcode;
+	 u_int8_t byte2;
+#define RDD_PRIMARY	0x10
+#define RDD_GROWN	0x08
+#define RDD_BF		0x00
+#define RDD_BFIF	0x04
+#define RDD_PSF		0x05
+	 u_int8_t flags;
+	 u_int8_t reserved[4];
+	 u_int8_t length[2];
+	 u_int8_t control;
+};
+
 #define	SCSI_SYNCHRONIZE_CACHE_16	0x91
 struct scsi_synchronize_cache_16 {
 	u_int8_t opcode;
@@ -202,6 +220,17 @@ struct scsi_reassign_blocks_data {
 	u_int8_t length[2];
 	struct {
 		u_int8_t dlbaddr[4];
+	} defect_descriptor[1];
+};
+
+struct scsi_read_defect_data_data {
+	u_int8_t reserved;
+	u_int8_t flags;
+	u_int8_t length[2];
+	union scsi_defect_descriptor {
+		struct scsi_defect_descriptor_bf bf;
+		struct scsi_defect_descriptor_bfif bfif;
+		struct scsi_defect_descriptor_psf psf;
 	} defect_descriptor[1];
 };
 
