@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.54 2003/01/03 04:36:28 takemura Exp $ */
+/* $NetBSD: wsconsio.h,v 1.55 2003/01/31 23:28:30 thomas Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -93,6 +93,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_HIL		12	/* HIL keyboard */
 #define		WSKBD_TYPE_AMIGA	13	/* Amiga keyboard */
 #define		WSKBD_TYPE_MAPLE	14	/* Dreamcast Maple keyboard */
+#define		WSKBD_TYPE_ATARI	15	/* Atari keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
