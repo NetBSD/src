@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.71 2001/12/03 01:47:12 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.72 2001/12/14 23:56:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.71 2001/12/03 01:47:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.72 2001/12/14 23:56:21 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -171,7 +171,7 @@ struct aue_type {
 Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1},	  PNA|PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX2},	  PII },
- {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX3},	  0 },
+ {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE1000},	  LSYS },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX4},	  PNA },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX5},	  PNA },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX6},	  PII },
@@ -181,6 +181,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX10},	  0 },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_DSB650TX_PNA}, 0 },
  {{ USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_USB320_EC},	  0 },
+ {{ USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_SS1001},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS},	  PNA },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
@@ -653,6 +654,14 @@ aue_reset(struct aue_softc *sc)
 	if (i == AUE_TIMEOUT)
 		printf("%s: reset failed\n", USBDEVNAME(sc->aue_dev));
 
+#if 0
+	/* XXX what is mii_mode supposed to be */
+	if (sc->aue_mii_mode && (sc->aue_flags & PNA))
+		aue_csr_write_1(sc, AUE_GPIO1, 0x34);
+	else
+		aue_csr_write_1(sc, AUE_GPIO1, 0x26);
+#endif
+
 	/*
 	 * The PHY(s) attached to the Pegasus chip may be held
 	 * in reset until we flip on the GPIO outputs. Make sure
@@ -662,26 +671,16 @@ aue_reset(struct aue_softc *sc)
 	 * Note: We force all of the GPIO pins low first, *then*
 	 * enable the ones we want.
   	 */
-	aue_csr_write_1(sc, AUE_GPIO0, 
-	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
-  	aue_csr_write_1(sc, AUE_GPIO0,
-	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
-  
-#if 0
-	/* XXX what is mii_mode supposed to be */
-	if (sc->aue_mii_mode && (sc->aue_flags & PNA))
-		aue_csr_write_1(sc, AUE_GPIO1, 0x34);
-	else
-		aue_csr_write_1(sc, AUE_GPIO1, 0x26);
-#endif
-
-	/* Grrr. LinkSys has to be different from everyone else. */
 	if (sc->aue_flags & LSYS) {
+		/* Grrr. LinkSys has to be different from everyone else. */
 		aue_csr_write_1(sc, AUE_GPIO0, 
 		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
-		aue_csr_write_1(sc, AUE_GPIO0,
-		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1 | AUE_GPIO_OUT0);
+	} else {
+		aue_csr_write_1(sc, AUE_GPIO0, 
+		    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
 	}
+  	aue_csr_write_1(sc, AUE_GPIO0,
+	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 
 	if (sc->aue_flags & PII)
 		aue_reset_pegasus_II(sc);
