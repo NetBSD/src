@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.112 2004/09/23 10:45:08 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.113 2004/10/23 17:14:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.112 2004/09/23 10:45:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.113 2004/10/23 17:14:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -758,6 +758,22 @@ extern int numraid;
 extern struct device *raidrootdev;
 #endif
 
+/*
+ * The device and wedge that we booted from.  If booted_wedge is NULL,
+ * the we might consult booted_partition.
+ */
+struct device *booted_device;
+struct device *booted_wedge;
+int booted_partition;
+
+/*
+ * Use partition letters if it's a disk class but not a wedge.
+ * XXX Check for wedge is kinda gross.
+ */
+#define	DEV_USES_PARTITIONS(dv)						\
+	((dv)->dv_class == DV_DISK &&					\
+	 strcmp((dv)->dv_cfdata->cf_name, "dk") != 0)
+
 void
 setroot(bootdv, bootpartition)
 	struct device *bootdv;
@@ -839,7 +855,7 @@ setroot(bootdv, bootpartition)
 			printf("root device");
 			if (bootdv != NULL) {
 				printf(" (default %s", bootdv->dv_xname);
-				if (bootdv->dv_class == DV_DISK)
+				if (DEV_USES_PARTITIONS(bootdv))
 					printf("%c", bootpartition + 'a');
 				printf(")");
 			}
@@ -870,7 +886,7 @@ setroot(bootdv, bootpartition)
 		 * device, since we don't support dumps to the
 		 * network.
 		 */
-		if (rootdv->dv_class == DV_IFNET)
+		if (DEV_USES_PARTITIONS(rootdv) == 0)
 			defdumpdv = NULL;
 		else
 			defdumpdv = rootdv;
@@ -968,10 +984,14 @@ setroot(bootdv, bootpartition)
 		majdev = devsw_name2blk(bootdv->dv_xname, NULL, 0);
 		if (majdev >= 0) {
 			/*
-			 * Root is on a disk.  `bootpartition' is root.
+			 * Root is on a disk.  `bootpartition' is root,
+			 * unless the device does not use partitions.
 			 */
-			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit,
-			    bootpartition);
+			if (DEV_USES_PARTITIONS(bootdv))
+				rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit,
+				    bootpartition);
+			else
+				rootdev = makedev(majdev, bootdv->dv_unit);
 		}
 	} else {
 
@@ -1073,7 +1093,7 @@ setroot(bootdv, bootpartition)
 			goto nodumpdev;
 		}
 	} else {				/* (c) */
-		if (rootdv->dv_class == DV_IFNET)
+		if (DEV_USES_PARTITIONS(rootdv) == 0)
 			goto nodumpdev;
 		else {
 			dumpdv = rootdv;
@@ -1155,9 +1175,11 @@ getdisk(str, len, defpart, devp, isdump)
 				    'a' + MAXPARTITIONS - 1);
 #endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
-			if (dv->dv_class == DV_DISK)
+			if (DEV_USES_PARTITIONS(dv))
 				printf(" %s[a-%c]", dv->dv_xname,
 				    'a' + MAXPARTITIONS - 1);
+			else if (dv->dv_class == DV_DISK)
+				printf(" %s", dv->dv_xname);
 			if (isdump == 0 && dv->dv_class == DV_IFNET)
 				printf(" %s", dv->dv_xname);
 		}
@@ -1220,7 +1242,10 @@ parsedisk(str, len, defpart, devp)
 			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");
-			*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
+			if (DEV_USES_PARTITIONS(dv))
+				*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
+			else
+				*devp = makedev(majdev, dv->dv_unit);
 		}
 
 		if (dv->dv_class == DV_IFNET)
