@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.15 1999/03/13 15:16:48 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.16 1999/05/20 23:00:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,6 +47,7 @@
 #include <machine/vsbus.h>
 #include <machine/sid.h>
 #include <machine/cpu.h>
+#include <machine/ka420.h>
 
 #include "lkc.h"
 
@@ -487,8 +488,9 @@ smgprobe()
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
-		if (vax_confdata & 0x20) /* doesn't use graphics console */
-			break;
+		if ((vax_confdata & KA420_CFG_L3CON) ||
+		    (vax_confdata & KA420_CFG_MULTU))
+			break; /* doesn't use graphics console */
 		sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
 		if (sm_addr == 0)
 			return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.11 1999/03/27 15:33:46 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.12 1999/05/20 23:00:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -145,7 +145,8 @@ dz_vsbus_attach(parent, self, aux)
 
 	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
 	    (vax_boardtype == VAX_BTYP_48))
-		config_found(self, 0, dz_print);
+		if (cn_tab->cn_pri > CN_NORMAL) /* Passed cnsl detect */
+			config_found(self, 0, dz_print);
 }
 
 int
