@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.84 1997/07/15 11:19:20 veego Exp $
+#	$NetBSD: rc,v 1.85 1997/07/31 03:35:39 perry Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -269,7 +269,7 @@ then
 	'password file may be incorrect -- /etc/ptmp exists'
 fi
 
-virecovery=/var/tmp/vi.recover/recover.*
+virecovery=`echo /var/tmp/vi.recover/recover.*`
 if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 	echo preserving editor files
 	for i in $virecovery; do
