@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.33.2.4 2002/01/08 00:33:40 nathanw Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33.2.5 2002/01/09 02:53:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -182,7 +182,7 @@ int	procfs_root __P((struct mount *, struct vnode **));
 struct vattr;
 
 void	procfs_machdep_allocvp(struct vnode *);
-int	procfs_machdep_rw(struct proc *, struct proc *, struct pfsnode *,
+int	procfs_machdep_rw(struct proc *, struct lwp *, struct pfsnode *,
 	    struct uio *);
 int	procfs_machdep_getattr(struct vnode *, struct vattr *, struct proc *);
 #endif
