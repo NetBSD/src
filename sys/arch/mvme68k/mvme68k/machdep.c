@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86.4.12 2002/11/11 22:01:28 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.4.13 2002/12/03 22:39:25 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -788,7 +788,7 @@ cpu_reboot(howto, bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp && curlwp->l_addr)
-		savectx(curlwp->l_addr->u_pcb);
+		savectx(&curlwp->l_addr->u_pcb);
 
 	/* Save the RB_SBOOT flag. */
 	howto |= (boothowto & RB_SBOOT);
