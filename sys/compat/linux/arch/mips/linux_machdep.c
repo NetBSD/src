@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6 2001/11/17 20:49:14 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.7 2001/11/17 22:13:38 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2001/11/17 20:49:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.7 2001/11/17 22:13:38 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.6 2001/11/17 20:49:14 manu Exp $
 #include <machine/regnum.h>
 #include <machine/vmparam.h>
 #include <machine/locore.h>
+
+#include <mips/cache.h>
 
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
@@ -408,7 +410,8 @@ linux_sys_cacheflush(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	MachFlushCache();
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
 	return 0;
 }
 
@@ -473,7 +476,8 @@ linux_sys_sysmips(p, v, retval)
 	case LINUX_MIPS_FIXADE:		/* XXX not implemented */
 		break;
 	case LINUX_FLUSH_CACHE:
-		MachFlushCache();
+		mips_icache_sync_all();
+		mips_dcache_wbinv_all();
 		break;
 	case LINUX_MIPS_RDNVRAM:
 		return EIO;
