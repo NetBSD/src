@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scsi_ioctl.c,v 1.5 1994/04/11 03:54:04 mycroft Exp $
+ *	$Id: scsi_ioctl.c,v 1.6 1994/06/16 01:11:44 mycroft Exp $
  */
 
 /* 
@@ -268,7 +268,7 @@ scsistrategy(bp)
 		flags |= SCSI_ESCAPE;
 
 	err = scsi_scsi_cmd(sc_link, (struct scsi_generic *)screq->cmd,
-	    screq->cmdlen, (u_char *)bp->b_un.b_addr, screq->datalen,
+	    screq->cmdlen, (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | SCSI_USER);
 
@@ -355,7 +355,7 @@ scsi_do_ioctl(sc_link, cmd, addr, f)
 #endif
 		} else {
 			/* if no data, no need to translate it.. */
-			bp->b_un.b_addr = 0;
+			bp->b_data = 0;
 			bp->b_dev = -1; /* irrelevant info */
 			bp->b_flags = 0;
 			scsistrategy(bp);

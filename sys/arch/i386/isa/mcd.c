@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.15 1994/05/11 09:49:23 mycroft Exp $
+ *	$Id: mcd.c,v 1.16 1994/06/16 01:08:23 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -964,7 +964,7 @@ loop:
 			MCD_TRACE("doread: got data delay=%d\n",
 			    RDELAY_WAITREAD - mbx->count, 0, 0, 0);
 			/* Data is ready. */
-			addr = bp->b_un.b_addr + mbx->skip;
+			addr = bp->b_data + mbx->skip;
 			outb(iobase + mcd_ctl2, 0x04);	/* XXX */
 			for (i = 0; i < mbx->sz; i++)
 				*addr++	= inb(iobase + mcd_rdata);

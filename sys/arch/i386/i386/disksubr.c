@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.6 1994/03/08 02:38:08 cgd Exp $
+ *	$Id: disksubr.c,v 1.7 1994/06/16 01:07:30 mycroft Exp $
  */
 
 #include "param.h"
@@ -116,8 +116,8 @@ readdisklabel(dev, strat, lp, osdep)
 			goto done;
 		} else {
 			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_un.b_addr + DOSPARTOFF, dp,
-				NDOSPART * sizeof(*dp));
+			bcopy(bp->b_data + DOSPARTOFF, dp,
+			    NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++)
 				/* is this ours? */
 				if (dp->dp_size &&
@@ -156,8 +156,8 @@ readdisklabel(dev, strat, lp, osdep)
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
 		goto done;
-	} else for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*dlp));
+	} else for (dlp = (struct disklabel *)bp->b_data;
+	    dlp <= (struct disklabel *)(bp->b_data + DEV_BSIZE - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -196,7 +196,7 @@ readdisklabel(dev, strat, lp, osdep)
 			if (biowait(bp)) {
 				msg = "bad sector table I/O error";
 			} else {
-				db = (struct dkbad *)(bp->b_un.b_addr);
+				db = (struct dkbad *)(bp->b_data);
 #define DKBAD_MAGIC 0x4321
 				if (db->bt_mbz == 0
 					&& db->bt_flag == DKBAD_MAGIC) {
@@ -312,8 +312,8 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 		if ((error = biowait(bp)) == 0) {
-			bcopy(bp->b_un.b_addr + DOSPARTOFF, dp,
-				NDOSPART * sizeof(*dp));
+			bcopy(bp->b_data + DOSPARTOFF, dp,
+			    NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++)
 				if(dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
 					&& dospartoff == 0) {
@@ -343,9 +343,8 @@ writedisklabel(dev, strat, lp, osdep)
 	(*strat)(bp);
 	if (error = biowait(bp))
 		goto done;
-	for (dlp = (struct disklabel *)bp->b_un.b_addr;
-	    dlp <= (struct disklabel *)
-	      (bp->b_un.b_addr + lp->d_secsize - sizeof(*dlp));
+	for (dlp = (struct disklabel *)(bp->b_data);
+	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {

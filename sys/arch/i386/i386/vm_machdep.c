@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.24 1994/05/29 06:47:51 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.25 1994/06/16 01:07:32 mycroft Exp $
  */
 
 /*
@@ -382,12 +382,12 @@ vmapbuf(bp)
 
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_un.b_addr;
+	addr = bp->b_saveaddr = bp->b_data;
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
-	bp->b_un.b_addr = (caddr_t) (kva + off);
+	bp->b_data = (caddr_t) (kva + off);
 	while (npf--) {
 		pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)addr);
 		if (pa == 0)
@@ -407,7 +407,7 @@ vunmapbuf(bp)
 	register struct buf *bp;
 {
 	register int npf;
-	register caddr_t addr = bp->b_un.b_addr;
+	register caddr_t addr = bp->b_data;
 	vm_offset_t kva;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -415,7 +415,7 @@ vunmapbuf(bp)
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
-	bp->b_un.b_addr = bp->b_saveaddr;
+	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
 
