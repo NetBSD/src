@@ -1,4 +1,4 @@
-/*	$NetBSD: str.s,v 1.2 1996/08/02 16:18:40 ragge Exp $ */
+/*	$NetBSD: str.s,v 1.3 1997/03/15 13:04:30 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,11 +31,71 @@
  */
 
 /*
- * Small versions of the most common string functions not using any
+ * Small versions of the most common functions not using any
  * emulated instructions.
  */
 
 #include "../include/asm.h"
+
+/*
+ * atoi() used in devopen.
+ */
+ENTRY(atoi, 0);
+	movl	4(ap),r1
+	clrl	r0
+
+2:	movzbl	(r1)+,r2
+	cmpb	r2,$48
+	blss	1f
+	cmpb	r2,$57
+	bgtr	1f
+	subl2	$48,r2
+	mull2	$10,r0
+	addl2	r2,r0
+	brb	2b
+1:	ret
+
+/*
+ * index() small and easy.
+ * doesnt work if we search for null.
+ */
+ENTRY(index, 0);
+	movq	4(ap),r0
+1:	cmpb	(r0), r1
+	beql	2f
+	tstb	(r0)+
+	bneq	1b
+	clrl	r0
+2:	ret
+
+/*
+ * cmpc3 is emulated on MVII.
+ */
+ENTRY(bcmp, 0);
+	movl	4(ap), r2
+	movl	8(ap), r1
+	movl	12(ap), r0
+2:	cmpb	(r2)+, (r1)+
+	bneq	1f
+	decl	r0
+	bneq	2b
+1:	ret
+
+/*
+ * Is movc3/movc5 emulated on any CPU? I dont think so; use them here.
+ */
+ENTRY(bzero,0);
+	movl	4(ap), r0
+	movl	8(ap), r1
+	movc5	$0,(r0),$0,r1,(r0)
+	ret
+
+ENTRY(bcopy,0);
+	movl	4(ap), r0
+	movl	8(ap), r1
+	movl	12(ap), r2
+	movc3	r2, (r0), (r1)
+	ret
 
 ENTRY(strlen, 0);
 	movl	4(ap), r0

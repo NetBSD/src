@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1996/08/02 11:21:46 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.7 1997/03/15 13:04:23 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -128,3 +128,16 @@ autoconf()
 	}
 }
 
+/*
+ * Return seconds since sometime...
+ * Some VAXen doesn't have TODR, return a fake value...
+ */
+getsecs()
+{
+	static int fakesecs;
+	int todr = mfpr(PR_TODR);
+
+	if (todr)
+		return todr/100;
+	return ++fakesecs/100000;
+}

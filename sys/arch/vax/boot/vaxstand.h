@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.5 1996/08/02 11:22:56 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.6 1997/03/15 13:04:31 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,12 +54,4 @@ extern int cpunumber;
  */
 #define	min(x,y) (x < y ? x : y)
 
-/*
- * Device numbers gotten from boot prom.
- */
-#define	BDEV_MBA		0
-#define	BDEV_RK06		1
-#define	BDEV_RL02		2
-#define	BDEV_UDA		17
-#define	BDEV_TK50		18
-#define	BDEV_CONSOLE		64
+char *index();

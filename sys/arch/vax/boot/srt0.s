@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.7 1997/02/27 19:43:27 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.8 1997/03/15 13:04:29 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,8 +48,8 @@ _start:	.globl	_start
 
 	cmpl	ap, $-1		# Check if we are net-booted. XXX - kludge
 	beql	2f		# jump if not
-	movzbl	102(r11), r10	# Get bootdev from rpb. XXX - mixing with DEC
-	movzbl	48(r11), r11	# Get howto
+	movzbl	102(r11), r10	# Get bootdev from rpb.
+	movzwl	48(r11), r11	# Get howto
 
 2:	movl	$_start, sp	# Probably safe place for stack
 	subl2	$52, sp		# do not overwrite saved boot-registers
@@ -80,4 +80,5 @@ _hoppabort: .word 0x0
 # Restart after goodbye
 __rtt:	.globl	__rtt
 	.word 0x0
+	halt
 	jmp	_start
