@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: compat.c,v 1.5 1994/03/05 00:34:37 cgd Exp $";
+static char *rcsid = "$Id: compat.c,v 1.6 1994/03/07 22:22:01 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -159,6 +159,14 @@ CompatRunCommand (cmd, gn)
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
 
+    /* 
+     * Avoid clobbered variable warnings by forcing the compiler
+     * to ``unregister'' variables
+     */
+#if __GNUC__
+    (void) &av;
+    (void) &errCheck;
+#endif
     silent = gn->type & OP_SILENT;
     errCheck = !(gn->type & OP_IGNORE);
 
