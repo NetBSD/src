@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.63 2003/09/02 07:35:00 jlam Exp $	*/
+/*	$NetBSD: file.c,v 1.64 2003/09/23 09:36:06 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.63 2003/09/02 07:35:00 jlam Exp $");
+__RCSID("$NetBSD: file.c,v 1.64 2003/09/23 09:36:06 wiz Exp $");
 #endif
 #endif
 
@@ -490,30 +490,30 @@ write_file(char *name, char *str)
 void
 copy_file(char *dir, char *fname, char *to)
 {
-	char    cmd[FILENAME_MAX];
+	char    fpath[FILENAME_MAX];
 
-	if (fname[0] == '/')
-		(void) snprintf(cmd, sizeof(cmd), "cp -r %s %s", fname, to);
-	else
-		(void) snprintf(cmd, sizeof(cmd), "cp -r %s/%s %s", dir, fname, to);
-	if (vsystem("%s", cmd)) {
+	(void) snprintf(fpath, sizeof(fpath), "%s%s%s",
+			(fname[0] != '/') ? dir : "",
+			(fname[0] != '/') ? "/" : "",
+			fname);
+	if (fexec("cp", "-r", fpath, to, NULL)) {
 		cleanup(0);
-		errx(2, "could not perform '%s'", cmd);
+		errx(2, "could not perform 'cp -r %s %s'", fpath, to);
 	}
 }
 
 void
 move_file(char *dir, char *fname, char *to)
 {
-	char    cmd[FILENAME_MAX];
+	char    fpath[FILENAME_MAX];
 
-	if (fname[0] == '/')
-		(void) snprintf(cmd, sizeof(cmd), "mv %s %s", fname, to);
-	else
-		(void) snprintf(cmd, sizeof(cmd), "mv %s/%s %s", dir, fname, to);
-	if (vsystem("%s", cmd)) {
+	(void) snprintf(fpath, sizeof(fpath), "%s%s%s",
+			(fname[0] != '/') ? dir : "",
+			(fname[0] != '/') ? "/" : "",
+			fname);
+	if (fexec("mv", fpath, to, NULL)) {
 		cleanup(0);
-		errx(2, "could not perform '%s'", cmd);
+		errx(2, "could not perform 'mv %s %s'", fpath, to);
 	}
 }
 
@@ -521,29 +521,98 @@ move_file(char *dir, char *fname, char *to)
  * Unpack a tar file
  */
 int
-unpack(const char *pkg, const char *flist)
+unpack(const char *pkg, const char *extra1, const char *extra2)
 {
-	char    args[10] = "-";
-	const char *decompress_cmd;
+	const char *decompress_cmd[3];
 	const char *suf;
+	int     pipefds[2];
+	pid_t   pid;
+	int	state;
 
 	if (!IS_STDIN(pkg)) {
 		suf = suffix_of(pkg);
-		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2"))
-			decompress_cmd = BZIP2_CMD " -c -d";
-		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz"))
-			decompress_cmd = GZIP_CMD " -c -d";
-		else if (!strcmp(suf, "tar"))
-			decompress_cmd = "cat";
+		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2")) {
+			decompress_cmd[0] = BZIP2_CMD;
+			decompress_cmd[1] = "-c";
+			decompress_cmd[2] = "-d";
+		}
+		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz")) {
+			decompress_cmd[0] = GZIP_CMD;
+			decompress_cmd[1] = "-c";
+			decompress_cmd[2] = "-d";
+		}
+		else if (!strcmp(suf, "tar")) {
+			decompress_cmd[0] = "cat";
+			decompress_cmd[1] = NULL;
+			decompress_cmd[2] = NULL;
+		}
 		else
 			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
-	} else
-		decompress_cmd = GZIP_CMD " -c -d";
-	strlcat(args, "xpf -", sizeof(args));
-	if (vsystem("%s %s | %s %s %s", decompress_cmd, pkg, TAR_CMD, args, flist ? flist : "")) {
-		warnx("%s extract of %s failed!", TAR_CMD, pkg);
+	} else {
+		decompress_cmd[0] = GZIP_CMD;
+		decompress_cmd[1] = "-c";
+		decompress_cmd[2] = "-d";
+	}
+
+	/* Set up a pipe for passing the extracted contents, and fork off a decompress process. */
+	if (pipe(pipefds) == -1) {
+		warnx("cannot create pipe -- %s extract of %s failed!", TAR_CMD, pkg);
 		return 1;
 	}
+	if ((pid = fork()) == -1) {
+		warnx("cannot fork process for %s -- %s extract of %s failed!",
+		      decompress_cmd[0], TAR_CMD, pkg);
+		return 1;
+	}
+	if (pid == 0) {		/* The child */
+		if (dup2(pipefds[1], STDOUT_FILENO) == -1) {
+			warnx("dup2 failed before executing %s command",
+			      decompress_cmd[0]);
+			_exit(2);
+		}
+		close(pipefds[0]);
+		close(pipefds[1]);
+		if (decompress_cmd[1] != NULL)
+			execlp(decompress_cmd[0], decompress_cmd[0],
+			       decompress_cmd[1], decompress_cmd[2],
+			       pkg, NULL);
+		else
+			execlp(decompress_cmd[0], decompress_cmd[0],
+			       pkg, NULL);
+		warnx("failed to execute %s command", decompress_cmd[0]);
+		_exit(2);
+	}
+
+	/* Meanwhile, back in the parent process ... */
+	/* fork off an untar process */
+	if ((pid = fork()) == -1) {
+		warnx("cannot fork process for %s -- %s extract of %s failed!",
+		      TAR_CMD, TAR_CMD, pkg);
+		return 1;
+	}
+	if (pid == 0) {		/* The child */
+		if (dup2(pipefds[0], STDIN_FILENO) == -1) {
+			warnx("dup2 failed before executing %s command",
+			      TAR_CMD);
+			_exit(2);
+		}
+		close(pipefds[0]);
+		close(pipefds[1]);
+		execlp(TAR_CMD, TAR_CMD, "-xpf", "-", extra1, extra2, NULL);
+		warnx("failed to execute %s command", TAR_CMD);
+		_exit(2);
+	}
+
+
+	close(pipefds[0]);
+	close(pipefds[1]);
+
+	/* wait for tar exit so we are sure the needed files exist */
+	if (waitpid(pid, &state, 0) < 0) {
+		/* error has been reported by child */
+		return 1;
+	}
+
 	return 0;
 }
 
