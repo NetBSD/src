@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.230 2001/12/11 23:25:23 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.231 2001/12/12 00:50:27 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -88,8 +88,8 @@ TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
 .endif
 
 # Define default locations for common tools.
-AR=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
-AS=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
+AR?=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ar
+AS?=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-as
 ASN1_COMPILE=	${TOOLDIR}/bin/nbasn1_compile
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 COMPILE_ET=	${TOOLDIR}/bin/nbcompile_et
@@ -106,7 +106,7 @@ GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/nbgroff
 INDXBIB=	${TOOLDIR}/bin/nbindxbib
 INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/nbinstall
 INSTALL_INFO=	${TOOLDIR}/bin/nbinstall-info
-LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
+LD?=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
 LEX=		${TOOLDIR}/bin/nblex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} ${TOOLDIR}/bin/nblorder
@@ -118,18 +118,18 @@ MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/nbmkdep
 MKLOCALE=	${TOOLDIR}/bin/nbmklocale
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmsgc
 MTREE=		${TOOLDIR}/bin/nbmtree
-NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
+NM?=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
-OBJCOPY=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
-OBJDUMP=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
+OBJCOPY?=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objcopy
+OBJDUMP?=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-objdump
 PIC=		${TOOLDIR}/bin/nbpic
 PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
-RANLIB=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
+RANLIB?=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ranlib
 REFER=		${TOOLDIR}/bin/nbrefer
 RPCGEN=		${TOOLDIR}/bin/nbrpcgen
-SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
+SIZE?=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
 SOELIM=		${TOOLDIR}/bin/nbsoelim
-STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
+STRIP?=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
 TBL=		${TOOLDIR}/bin/nbtbl
 TSORT=		${TOOLDIR}/bin/nbtsort -q
 YACC=		${TOOLDIR}/bin/nbyacc
