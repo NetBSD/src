@@ -41,19 +41,18 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$NetBSD: kdump.c,v 1.13 1996/05/13 21:12:25 christos Exp $";
+static char *rcsid = "$NetBSD: kdump.c,v 1.14 1996/11/21 06:25:26 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#define _KERNEL
 #include <sys/errno.h>
+#undef _KERNEL
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
-#define _KERNEL
-#include <sys/errno.h>
-#undef _KERNEL
 
 #include <err.h>
 #include <signal.h>
