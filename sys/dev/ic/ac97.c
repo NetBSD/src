@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.53 2004/06/01 13:35:59 mrg Exp $ */
+/*      $NetBSD: ac97.c,v 1.54 2004/08/07 16:59:54 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.53 2004/06/01 13:35:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.54 2004/08/07 16:59:54 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,6 +407,9 @@ static const struct ac97_codecid {
 	/*
 	 * Realtek & Avance Logic
 	 *	http://www.realtek.com.tw/downloads/downloads1-3.aspx?lineid=5&famid=All&series=All&Spec=True
+	 *
+	 * ALC650 and ALC658 support VRA, but it supports only 8000, 11025,
+	 * 12000, 16000, 22050, 24000, 32000, 44100, and 48000 Hz.
 	 */
 	{ AC97_CODEC_ID('A', 'L', 'C', 0x00),
 	  0xfffffff0,			"Realtek RL5306"	},
@@ -417,13 +420,19 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x10),
 	  0xffffffff,			"Avance Logic ALC200/ALC201"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x20),
-	  0xffffffff,			"Avance Logic ALC650", ac97_alc650_init },
+	  0xfffffff0,			"Avance Logic ALC650", ac97_alc650_init },
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x30),
 	  0xffffffff,			"Avance Logic ALC101"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x40),
 	  0xffffffff,			"Avance Logic ALC202"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0x50),
 	  0xffffffff,			"Avance Logic ALC250"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x60),
+	  0xfffffff0,			"Avance Logic ALC655"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x80),
+	  0xfffffff0,			"Avance Logic ALC658"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 0x90),
+	  0xfffffff0,			"Avance Logic ALC850"	},
 	{ AC97_CODEC_ID('A', 'L', 'C', 0),
 	  AC97_VENDOR_ID_MASK,		"Realtek unknown"	},
 	{ AC97_CODEC_ID('A', 'L', 'G', 0),
