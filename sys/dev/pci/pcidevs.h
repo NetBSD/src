@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.133 1999/05/29 07:12:11 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.134 1999/06/02 08:57:02 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.126 1999/05/29 07:10:33 mrg Exp 
+ *	NetBSD: pcidevs,v 1.127 1999/06/02 08:56:03 drochner Exp 
  */
 
 /*
@@ -718,7 +718,7 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD5446	0x00b8		/* CL-GD5446 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD5480	0x00bc		/* CL-GD5480 */
 #define	PCI_PRODUCT_CIRRUS_CL_PD6729	0x1100		/* CL-PD6729 */
-#define	PCI_PRODUCT_CIRRUS_CL_PD6832	0x1100		/* CL-PD6832 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_CIRRUS_CL_PD6832	0x1110		/* CL-PD6832 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_CIRRUS_CL_PD6833	0x1113		/* CL-PD6833 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7542	0x1200		/* CL-GD7542 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
@@ -1103,6 +1103,7 @@
 #define	PCI_PRODUCT_SIS_900	0x0900		/* SiS900 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
+#define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
 
 /* Silicon Motion products */
