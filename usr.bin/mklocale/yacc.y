@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.12 2003/03/03 08:30:21 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.13 2003/03/03 08:49:16 tshiozak Exp $	*/
 
 %{
 /*-
@@ -47,7 +47,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.12 2003/03/03 08:30:21 tshiozak Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.13 2003/03/03 08:49:16 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -866,7 +866,7 @@ dump_tables()
 	    fprintf(stderr, " %4s", (r & _CTYPE_I) ? "ideo" : "");
 	    fprintf(stderr, " %4s", (r & _CTYPE_T) ? "spec" : "");
 	    fprintf(stderr, " %4s", (r & _CTYPE_Q) ? "phon" : "");
-            fprintf(stderr, " %1u", ((unsigned)r&_CTYPE_SWM)>>_CTYPE_SWS);
+            fprintf(stderr, " %1" PRIu32, (r & _CTYPE_SWM)>>_CTYPE_SWS);
 	    fprintf(stderr, "\n");
 	} else 
 	for (x = list->min; x <= list->max; ++x) {
@@ -889,7 +889,7 @@ dump_tables()
 		fprintf(stderr, " %4s", (r & _CTYPE_I) ? "ideo" : "");
 		fprintf(stderr, " %4s", (r & _CTYPE_T) ? "spec" : "");
 		fprintf(stderr, " %4s", (r & _CTYPE_Q) ? "phon" : "");
-                fprintf(stderr, " %1u", ((unsigned)r&_CTYPE_SWM)>>_CTYPE_SWS);
+                fprintf(stderr, " %1" PRIu32, (r & _CTYPE_SWM)>>_CTYPE_SWS);
 		fprintf(stderr, "\n");
 	    }
 	}
