@@ -29,54 +29,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)log.h	8.5 (Berkeley) 3/16/94
  */
 
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
+#define	LOG_NOTYPE		0
+#define	LOG_CURSOR_INIT		1
+#define	LOG_CURSOR_END		2
+#define	LOG_LINE_APPEND		3
+#define	LOG_LINE_DELETE		4
+#define	LOG_LINE_INSERT		5
+#define	LOG_LINE_RESET_F	6
+#define	LOG_LINE_RESET_B	7
+#define	LOG_MARK		8
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/time.h>
-
-#include <bitstring.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
-
-/*
- * v_zexit -- ZZ
- *	Save the file and exit.
- */
-int
-v_zexit(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
-
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
-
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
-
-	F_SET(sp, S_EXIT);
-	return (0);
-}
+int	log_backward __P((SCR *, EXF *, MARK *));
+int	log_cursor __P((SCR *, EXF *));
+int	log_end __P((SCR *, EXF *));
+int	log_forward __P((SCR *, EXF *, MARK *));
+int	log_init __P((SCR *, EXF *));
+int	log_line __P((SCR *, EXF *, recno_t, u_int));
+int	log_mark __P((SCR *, EXF *, LMARK *));
+int	log_setline __P((SCR *, EXF *));

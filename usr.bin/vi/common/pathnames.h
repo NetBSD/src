@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1992, 1993, 1994
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,54 +29,17 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)pathnames.h	8.7 (Berkeley) 3/28/94
  */
 
-#ifndef lint
-static const char sccsid[] = "@(#)v_zexit.c	8.12 (Berkeley) 8/17/94";
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/time.h>
-
-#include <bitstring.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-
-#include "compat.h"
-#include <db.h>
-#include <regex.h>
-
-#include "vi.h"
-#include "excmd.h"
-#include "vcmd.h"
-
-/*
- * v_zexit -- ZZ
- *	Save the file and exit.
- */
-int
-v_zexit(sp, ep, vp)
-	SCR *sp;
-	EXF *ep;
-	VICMDARG *vp;
-{
-	/* Write back any modifications. */
-	if (F_ISSET(ep, F_MODIFIED) &&
-	    file_write(sp, ep, NULL, NULL, NULL, FS_ALL))
-		return (1);
-
-	/* Check to make sure it's not a temporary file. */
-	if (file_m3(sp, ep, 0))
-		return (1);
-
-	/* Check for more files to edit. */
-	if (ex_ncheck(sp, 0))
-		return (1);
-
-	F_SET(sp, S_EXIT);
-	return (0);
-}
+#define	_PATH_BSHELL	"/bin/sh"
+#define	_PATH_DEVNULL	"/dev/null"
+#define	_PATH_EXRC	".exrc"
+#define	_PATH_NEXRC	".nexrc"
+#define	_PATH_PRESERVE	"/var/tmp/vi.recover"
+#define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
+#define	_PATH_SYSEXRC	"/etc/vi.exrc"
+#define	_PATH_TAGS	"tags"
+#define	_PATH_TMP	"/tmp"
+#define	_PATH_TTY	"/dev/tty"
