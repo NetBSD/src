@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.34 2003/03/01 07:57:33 enami Exp $ */
+/* $NetBSD: rm.c,v 1.35 2003/08/04 22:31:25 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -43,29 +43,32 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.34 2003/03/01 07:57:33 enami Exp $");
+__RCSID("$NetBSD: rm.c,v 1.35 2003/08/04 22:31:25 jschauma Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
-#include <locale.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
 #include <grp.h>
+#include <locale.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
-int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
+int dflag, eval, fflag, iflag, Pflag, stdin_ok, stdout_ok, vflag, Wflag;
 
 int	check(char *, char *, struct stat *);
 void	checkdot(char **);
+char 	*printescaped(const char *);
 void	rm_file(char **);
 void	rm_overwrite(char *, struct stat *);
 void	rm_tree(char **);
@@ -136,6 +139,7 @@ main(int argc, char *argv[])
 
 	if (*argv) {
 		stdin_ok = isatty(STDIN_FILENO);
+		stdout_ok = isatty(STDOUT_FILENO);
 
 		if (rflag)
 			rm_tree(argv);
@@ -153,7 +157,8 @@ rm_tree(char **argv)
 	FTS *fts;
 	FTSENT *p;
 	int flags, needstat, rval;
-
+	char *fn;
+			
 	/*
 	 * Remove a file hierarchy.  If forcing removal (-f), or interactive
 	 * (-i) or can't ask anyway (stdin_ok), don't stat the file.
@@ -175,16 +180,19 @@ rm_tree(char **argv)
 	    (int (*)(const FTSENT **, const FTSENT **))NULL)))
 		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
+	
 		switch (p->fts_info) {
 		case FTS_DNR:
 			if (!fflag || p->fts_errno != ENOENT) {
-				warnx("%s: %s",
-				    p->fts_path, strerror(p->fts_errno));
+				fn = printescaped(p->fts_path);
+				warnx("%s: %s", fn, strerror(p->fts_errno));
+				free(fn);
 				eval = 1;
 			}
 			continue;
 		case FTS_ERR:
-			errx(1, "%s: %s", p->fts_path, strerror(p->fts_errno));
+			errx(EXIT_FAILURE, "%s: %s", printescaped(p->fts_path),
+					strerror(p->fts_errno));
 			/* NOTREACHED */
 		case FTS_NS:
 			/*
@@ -194,8 +202,9 @@ rm_tree(char **argv)
 			if (fflag && NONEXISTENT(p->fts_errno))
 				continue;
 			if (needstat) {
-				warnx("%s: %s",
-				    p->fts_path, strerror(p->fts_errno));
+				fn = printescaped(p->fts_path);
+				warnx("%s: %s", fn, strerror(p->fts_errno));
+				free(fn);
 				eval = 1;
 				continue;
 			}
@@ -248,10 +257,15 @@ rm_tree(char **argv)
 			break;
 		}
 		if (rval != 0) {
-			warn("%s", p->fts_path);
+			fn = printescaped(p->fts_path);
+			warn("%s", fn);
+			free(fn);
 			eval = 1;
-		} else if (vflag)
-			(void)printf("%s\n", p->fts_path);
+		} else if (vflag) {
+			fn = printescaped(p->fts_path);
+			(void)printf("%s\n", fn);
+			free(fn);
+		}
 	}
 	if (errno)
 		err(1, "fts_read");
@@ -262,7 +276,7 @@ rm_file(char **argv)
 {
 	struct stat sb;
 	int rval;
-	char *f;
+	char *f, *fn;
 
 	/*
 	 * Remove a file.  POSIX 1003.2 states that, by default, attempting
@@ -275,19 +289,25 @@ rm_file(char **argv)
 				sb.st_mode = S_IFWHT|S_IWUSR|S_IRUSR;
 			} else {
 				if (!fflag || !NONEXISTENT(errno)) {
-					warn("%s", f);
+					fn = printescaped(f);
+					warn("%s", fn);
+					free(fn);
 					eval = 1;
 				}
 				continue;
 			}
 		} else if (Wflag) {
-			warnx("%s: %s", f, strerror(EEXIST));
+			fn = printescaped(f);
+			warnx("%s: %s", fn, strerror(EEXIST));
+			free(fn);
 			eval = 1;
 			continue;
 		}
 
 		if (S_ISDIR(sb.st_mode) && !dflag) {
-			warnx("%s: is a directory", f);
+			fn = printescaped(f);
+			warnx("%s: is a directory", fn);
+			free(fn);
 			eval = 1;
 			continue;
 		}
@@ -303,11 +323,16 @@ rm_file(char **argv)
 			rval = unlink(f);
 		}
 		if (rval && (!fflag || !NONEXISTENT(errno))) {
-			warn("%s", f);
+			fn = printescaped(f);
+			warn("%s", fn);
+			free(fn);
 			eval = 1;
 		}
-		if (vflag && rval == 0)
-			(void)printf("%s\n", f);
+		if (vflag && rval == 0) {
+			fn = printescaped(f);
+			(void)printf("%s\n", fn);
+			free(fn);
+		}
 	}
 }
 
@@ -329,6 +354,7 @@ rm_overwrite(char *file, struct stat *sbp)
 	off_t len;
 	int fd, wlen;
 	char buf[8 * 1024];
+	char *fn;
 
 	fd = -1;
 	if (sbp == NULL) {
@@ -360,7 +386,9 @@ rm_overwrite(char *file, struct stat *sbp)
 		return;
 
 err:	eval = 1;
-	warn("%s", file);
+	fn = printescaped(file);
+	warn("%s", fn);
+	free(fn);
 }
 
 int
@@ -368,11 +396,14 @@ check(char *path, char *name, struct stat *sp)
 {
 	int ch, first;
 	char modep[15];
+	char *fn;
 
 	/* Check -i first. */
-	if (iflag)
-		(void)fprintf(stderr, "remove %s? ", path);
-	else {
+	if (iflag) {
+		fn = printescaped(path);
+		(void)fprintf(stderr, "remove '%s'? ", fn);
+		free(fn);
+	} else {
 		/*
 		 * If it's not a symbolic link and it's unwritable and we're
 		 * talking to a terminal, ask.  Symbolic links are excluded
@@ -383,10 +414,12 @@ check(char *path, char *name, struct stat *sp)
 		    !(access(name, W_OK) && (errno != ETXTBSY)))
 			return (1);
 		strmode(sp->st_mode, modep);
-		(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
+		fn =  printescaped(path);
+		(void)fprintf(stderr, "override %s%s%s/%s for '%s'? ",
 		    modep + 1, modep[9] == ' ' ? "" : " ",
 		    user_from_uid(sp->st_uid, 0),
-		    group_from_gid(sp->st_gid, 0), path);
+		    group_from_gid(sp->st_gid, 0), fn);
+		free(fn);
 	}
 	(void)fflush(stderr);
 
@@ -434,6 +467,30 @@ checkdot(char **argv)
 		} else
 			++t;
 	}
+}
+
+char *
+printescaped(const char *src)
+{
+	size_t len;
+	char *retval;
+
+	len = strlen(src);
+	if (len != 0 && SIZE_T_MAX/len <= 4) {
+		errx(EXIT_FAILURE, "%s: name too long", src);
+		/* NOTREACHED */
+	}
+
+	retval = (char *)malloc(4*len+1);
+	if (retval != NULL) {
+		if (stdout_ok)
+			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
+		else
+			(void)strcpy(retval, src);
+		return retval;
+	} else
+		errx(EXIT_FAILURE, "out of memory!");
+		/* NOTREACHED */
 }
 
 void

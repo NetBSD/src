@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.21 2002/11/25 14:23:07 christos Exp $ */
+/* $NetBSD: kill.c,v 1.22 2003/08/04 22:31:24 jschauma Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.21 2002/11/25 14:23:07 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.22 2003/08/04 22:31:24 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,8 +92,11 @@ main(int argc, char *argv[])
 			if (isdigit((unsigned char)**argv) == 0)
 				usage();
 			numsig = strtol(*argv, &ep, 10);
-			if (*ep != '\0')
-				errx(1, "illegal signal number: %s", *argv);
+			if (*ep != '\0') {
+				errx(EXIT_FAILURE, "illegal signal number: %s",
+						*argv);
+				/* NOTREACHED */
+			}
 			if (numsig >= 128)
 				numsig -= 128;
 			if (numsig <= 0 || numsig >= NSIG)
@@ -124,8 +127,11 @@ main(int argc, char *argv[])
 				nosig(*argv);
 		} else if (isdigit((unsigned char)**argv)) {
 			numsig = strtol(*argv, &ep, 10);
-			if (!*argv || *ep)
-				errx(1, "illegal signal number: %s", *argv);
+			if (!*argv || *ep) {
+				errx(EXIT_FAILURE, "illegal signal number: %s",
+						*argv);
+				/* NOTREACHED */
+			}
 			if (numsig < 0 || numsig >= NSIG)
 				nosig(*argv);
 		} else
