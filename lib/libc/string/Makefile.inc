@@ -1,12 +1,12 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.53 2003/03/05 20:18:17 tshiozak Exp $
+#	$NetBSD: Makefile.inc,v 1.53.2.1 2004/07/12 20:54:25 he Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
 
-SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c strlcat.c strlcpy.c \
-	strmode.c strsignal.c strtok.c strtok_r.c strxfrm.c \
-	__strerror.c __strsignal.c
+SRCS+=	bm.c strcasecmp.c strcasestr.c strcoll.c strdup.c strerror.c \
+	strlcat.c strlcpy.c strmode.c strsignal.c strtok.c strtok_r.c \
+	strxfrm.c __strerror.c __strsignal.c
 
 # wide char
 SRCS+=	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
@@ -61,6 +61,7 @@ MLINKS+=strcat.3 strncat.3
 MLINKS+=strcmp.3 strncmp.3
 MLINKS+=strcpy.3 strncpy.3
 MLINKS+=strlcpy.3 strlcat.3
+MLINKS+=strstr.3 strcasestr.3
 MLINKS+=strtok.3 strtok_r.3
 MLINKS+=wmemchr.3 wmemcmp.3 wmemchr.3 wmemcpy.3 \
 	wmemchr.3 wmemmove.3 wmemchr.3 wmemset.3 \
