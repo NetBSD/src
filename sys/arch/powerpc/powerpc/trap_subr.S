@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.34 2003/02/03 17:10:11 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.35 2003/02/21 15:14:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -553,7 +553,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	cmpi	0,_s1_,MPC601;						\
 	bne	99f;			/* skip if not 601 */		\
 	CPU601_KERN_LEAVE_HOOK(_pmap_,_s1_);				\
-	xor	_s1_,_s1_,_s1_;						\
+	li	_s1_,0;							\
 	mtibatl	0,_s1_;			/* obliterate BATs */		\
 	mtibatl	1,_s1_;							\
 	mtibatl	2,_s1_;							\
@@ -1047,7 +1047,7 @@ _C_LABEL(ipkdbsbyte):
 	sync
 	icbi	0,9			/* and instruction caches */
 	mr	6,3
-	xor	3,3,3
+	li	3,0
 	stb	4,0(6)
 	dcbst	0,6			/* Now do appropriate flushes
 					   to data... */
