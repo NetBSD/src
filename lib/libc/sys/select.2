@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.20 2003/08/07 16:44:05 agc Exp $
+.\"	$NetBSD: select.2,v 1.21 2003/10/14 07:08:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -193,6 +193,16 @@ before the inclusion of
 .Aq Pa sys/types.h .
 The kernel will cope, and the userland libraries provided with the
 system are also ready for large numbers of file descriptors.
+.Pp
+Note:
+.Xr rpc 3
+library uses
+.Ft fd_set
+with the default FD_SETSIZE as part of its ABI.
+Therefore, programs that use
+.Xr rpc 3
+routines cannot change
+.Dv FD_SETSIZE .
 .Pp
 Alternatively, to be really safe, it is possible to allocate
 .Ft fd_set
