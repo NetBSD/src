@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.18 1997/08/24 22:31:23 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.19 1997/10/11 12:43:51 mycroft Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -379,7 +379,7 @@ aucc_query_encoding(addr, fp)
 {
 	switch (fp->index) {	
 	case 0:
-		strcpy(fp->name, AudioElinear);
+		strcpy(fp->name, AudioEslinear);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
@@ -835,7 +835,7 @@ aucc_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = AUCC_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCOutputs);
+		strcpy(dip->label.name, AudioCoutputs);
 		break;
 	default:
 		return ENXIO;

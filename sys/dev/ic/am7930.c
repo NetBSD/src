@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.30 1997/08/27 22:42:23 augustss Exp $	*/
+/*	$NetBSD: am7930.c,v 1.31 1997/10/11 12:44:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -761,13 +761,13 @@ amd7930_query_devinfo(addr, dip)
 		    dip->type = AUDIO_MIXER_CLASS;
 		    dip->mixer_class = SUNAUDIO_INPUT_CLASS;
 		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCInputs);
+		    strcpy(dip->label.name, AudioCinputs);
 		    break;
 	    case SUNAUDIO_OUTPUT_CLASS:
 		    dip->type = AUDIO_MIXER_CLASS;
 		    dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCOutputs);
+		    strcpy(dip->label.name, AudioCoutputs);
 		    break;
 	    default:
 		    return ENXIO;
