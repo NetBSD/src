@@ -38,20 +38,16 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)cbc.c	5.5 (Talke Studio) 6/27/91"; */
-static char rcsid[] = "$Id: cbc.c,v 1.7 1993/11/23 04:41:50 alm Exp $";
+static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
 
 #include "ed.h"
+
 
 /*
  * Define a divisor for rand() that yields a uniform distribution in the
@@ -104,7 +100,7 @@ char bits[] = {				/* used to extract bits from a char */
 };
 int pflag;				/* 1 to preserve parity bits */
 
-char des_buf[8];		/* shared buffer for get_des_char/put_des_char */
+unsigned char des_buf[8];	/* shared buffer for get_des_char/put_des_char */
 int des_ct = 0;			/* count for get_des_char/put_des_char */
 int des_n = 0;			/* index for put_des_char/get_des_char */
 
@@ -201,8 +197,6 @@ get_keyword()
 	return 0;
 }
 
-
-extern char errmsg[];
 
 /*
  * print a warning message and, possibly, terminate
