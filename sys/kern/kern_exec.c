@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.110.4.6 2002/01/12 01:02:48 he Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.110.4.7 2002/01/14 10:49:30 he Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -577,10 +577,12 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
+	p->p_flag &= ~P_INEXEC;
 	FREE(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
+	p->p_flag &= ~P_INEXEC;
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
 	 * get rid of the (new) address space we have created, if any, get rid
