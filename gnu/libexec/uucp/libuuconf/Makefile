@@ -1,5 +1,6 @@
+#	$NetBSD: Makefile,v 1.9 1997/10/18 05:47:54 lukem Exp $
+#
 # This is the Makefile for the Taylor UUCP uuconf library
-# $Id: Makefile,v 1.8 1997/05/31 21:21:27 cjs Exp $
 
 LIB=		uuconf
 SRCS=		addblk.c addstr.c allblk.c alloc.c base.c bool.c callin.c \
