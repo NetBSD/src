@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11 2003/10/28 02:51:56 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.12 2004/01/27 01:00:09 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -17,21 +17,32 @@ PAGE=letter
 # make its output acceptable to such programs.  This variable controls
 # only the default behaviour of grops; the behaviour can be changed at
 # runtime by the grops -b option (and so by groff -P-b).
+#
 # Use a value of 0 if your spoolers and previewers are able to handle
 # conforming PostScript correctly.
+#
 # Add 1 if no %%{Begin,End}DocumentSetup comments should be generated;
 # this is needed for early versions of TranScript that get confused by
 # anything between the %%EndProlog line and the first %%Page: comment.
+#
 # Add 2 if lines in included files beginning with %! should be
 # stripped out; this is needed for the OpenWindows 2.0 pageview previewer.
+#
 # Add 4 if %%Page, %%Trailer and %%EndProlog comments should be
 # stripped out of included files; this is needed for spoolers that
 # don't understand the %%{Begin,End}Document comments. I suspect this
 # includes early versions of TranScript.
+#
 # Add 8 if the first line of the PostScript output should be %!PS-Adobe-2.0
 # rather than %!PS-Adobe-3.0; this is needed when using Sun's Newsprint
 # with a printer that requires page reversal.
-BROKEN_SPOOLER_FLAGS=7
+#
+# Add 16 if no media size information should be used in the document
+# (don't use %%DocumentMedia and don't use the set-pagedevice PostScript
+# command).  This was the default in groff 1.18.1 and earlier and is needed
+# for older printers which don't understand PostScript LanguageLevel 2.
+#
+BROKEN_SPOOLER_FLAGS=23
 
 # DEVICE is the default device.
 DEVICE=ps
