@@ -1,5 +1,5 @@
-.\"	$NetBSD: getnameinfo.3,v 1.22 2003/04/16 13:34:42 wiz Exp $
-.\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.23 2003/04/30 06:30:48 itojun Exp $
+.\"	$KAME: getnameinfo.3,v 1.27 2003/04/30 06:06:42 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,11 +58,11 @@ The
 function is defined for protocol-independent address-to-nodename translation.
 Its functionality is a reverse conversion of
 .Xr getaddrinfo 3 ,
-and implements similar functionality with
+and implements similar functionality to
 .Xr gethostbyaddr 3
 and
 .Xr getservbyport 3
-in more sophisticated manner.
+in a more sophisticated manner.
 .Pp
 This function looks up an IP address and port number provided by the
 caller in the DNS and system-specific database, and returns text
@@ -185,16 +185,16 @@ flags are defined in
 .Ss Extension for scoped IPv6 address
 The implementation allows experimental numeric IPv6 address notation with
 scope identifier.
-IPv6 link-local address will appear as string like
+IPv6 link-local address will appear as a string like
 .Dq Li fe80::1%ne0 .
 Refer to
 .Xr getaddrinfo 3
 for the notation.
 .\"
 .Sh EXAMPLES
-The following code tries to get numeric hostname, and service name,
+The following code tries to get a numeric hostname, and service name,
 for given socket address.
-Observe that there is no hardcoded reference to particular address family.
+Observe that there is no hardcoded reference to a particular address family.
 .Bd -literal -offset indent
 struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
@@ -284,7 +284,7 @@ The error code can be found in errno.
 .Sh STANDARDS
 The
 .Fn getnameinfo
-function is defined IEEE POSIX 1003.1g draft specification,
+function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
