@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.449 2004/01/03 12:40:26 lukem Exp $
+# $NetBSD: mi,v 1.450 2004/01/03 13:50:26 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -432,7 +432,7 @@
 ./usr/bin/gzexe		base-util-bin
 ./usr/bin/gzip		base-util-bin
 ./usr/bin/head		base-util-bin
-./usr/bin/hesinfo	base-hesiod-bin
+./usr/bin/hesinfo	base-hesiod-bin	hesiod
 ./usr/bin/hexdump	base-util-bin
 ./usr/bin/host		base-netutil-bin
 ./usr/bin/hoststat	base-mailwrapper-bin
