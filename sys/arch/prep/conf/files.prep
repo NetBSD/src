@@ -1,10 +1,12 @@
-#	$NetBSD: files.prep,v 1.30 2002/04/25 20:38:18 nonaka Exp $
+#	$NetBSD: files.prep,v 1.31 2002/05/02 14:36:42 nonaka Exp $
 #
 # prep-specific configuration info
 #
 maxpartitions 8
 
 maxusers 2 8 64
+
+defflag	opt_residual.h	RESIDUAL_DATA_DUMP
 
 # IBM
 file	arch/prep/prep/ibm_machdep.c
