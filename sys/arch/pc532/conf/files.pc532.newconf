@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532.newconf,v 1.6 1995/01/18 08:13:35 phil Exp $
+#	$NetBSD: files.pc532.newconf,v 1.7 1995/01/19 07:02:31 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -15,12 +15,12 @@ major	{rd = 3}
 file	arch/pc532/pc532/clock.c	# clock timer
 
 device	scn at membus: tty
-file	arch/pc532/dev/nscn.c		scn needs-count
+file	arch/pc532/dev/scn.c		scn needs-count
 
 define	scsi {}
 
 device	ncr at membus: scsi
-file	arch/pc532/dev/nncr.c		ncr needs-count
+file	arch/pc532/dev/ncr.c		ncr needs-count
 device	dp at membus: scsi
 file	arch/pc532/dev/dp.c		dp needs-count
 device	aic at membus: scsi
