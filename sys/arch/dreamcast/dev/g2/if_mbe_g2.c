@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.2 2003/01/04 18:10:18 tsutsui Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.3 2003/02/05 12:03:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.2 2003/01/04 18:10:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.3 2003/02/05 12:03:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,8 +225,8 @@ mbe_g2_attach(parent, self, aux)
 	/* This interface is always enabled. */
 	sc->sc_stat |= FE_STAT_ENABLED;
 
-	/* The LAN-Adapter uses 8 bit bus mode. */
-	sc->sc_flags |= FE_FLAGS_SBW_BYTE;
+	/* The LAN-Adapter uses 8 bit bus mode and slow SRAM. */
+	sc->sc_flags |= FE_FLAGS_SBW_BYTE | FE_FLAGS_SRAM_150ns;
 
 	/*
 	 * Do generic MB86960 attach.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.55 2002/12/24 13:10:26 tsutsui Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.56 2003/02/05 12:03:54 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.55 2002/12/24 13:10:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.56 2003/02/05 12:03:54 tsutsui Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -154,9 +154,11 @@ mb86960_attach(sc, myea)
 	 * the driver performance.
 	 */
 	sc->proto_dlcr6 = FE_D6_BUFSIZ_32KB | FE_D6_TXBSIZ_2x4KB |
-	    FE_D6_BBW_BYTE | FE_D6_SBW_WORD | FE_D6_SRAM_100ns;
+	    FE_D6_BBW_BYTE | FE_D6_SRAM_100ns;
 	if (sc->sc_flags & FE_FLAGS_SBW_BYTE)
 		sc->proto_dlcr6 |= FE_D6_SBW_BYTE;
+	if (sc->sc_flags & FE_FLAGS_SRAM_150ns)
+		sc->proto_dlcr6 &= ~FE_D6_SRAM_100ns;
 
 	/*
 	 * Minimum initialization of the hardware.
