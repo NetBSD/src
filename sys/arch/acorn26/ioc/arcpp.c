@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.1 2002/03/24 15:47:15 bjh21 Exp $ */
+/* $NetBSD: arcpp.c,v 1.1.2.1 2002/05/16 15:38:27 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1 2002/03/24 15:47:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1.2.1 2002/05/16 15:38:27 gehenna Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -102,9 +102,16 @@ struct arcpp_softc {
 #define	ARCPPPRI	(PZERO+8)
 #define	ARCPP_BSIZE	1024
 
-cdev_decl(arcpp);
-
 extern struct cfdriver arcpp_cd;
+
+dev_type_open(arcppopen);
+dev_type_close(arcppclose);
+dev_type_write(arcppwrite);
+
+const struct cdevsw arcpp_cdevsw = {
+	arcppopen, arcppclose, noread, arcppwrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 #define	ARCPPUNIT(s)	(minor(s) & 0x1f)
 #define	ARCPPFLAGS(s)	(minor(s) & 0xe0)
@@ -315,11 +322,4 @@ arcppintr(void *arg)
 		wakeup((caddr_t)sc);
 
 	return 1;
-}
-
-int
-arcppioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-
-	return ENODEV;
 }

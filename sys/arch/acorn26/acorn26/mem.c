@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2002/03/24 15:46:46 bjh21 Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.2.1 2002/05/16 15:39:04 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,30 +59,14 @@
 caddr_t zeropage;
 int physlock;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	switch (minor(dev)) {
-	default:
-		break;
-	}
-	return (0);
-}
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap,
+};
 
 /*ARGSUSED*/
 int
