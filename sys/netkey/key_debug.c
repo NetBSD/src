@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.16 2001/08/02 12:10:15 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.17 2001/08/12 11:52:44 itojun Exp $	*/
 /*	$KAME: key_debug.c,v 1.25 2000/07/24 13:23:12 itojun Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #endif /* !_KERNEL */
-
-#if !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG))
 
 static void kdebug_sadb_prop __P((struct sadb_ext *));
 static void kdebug_sadb_identity __P((struct sadb_ext *));
@@ -738,5 +736,3 @@ ipsec_hexdump(buf, len)
 
 	return;
 }
-
-#endif /* !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG)) */
