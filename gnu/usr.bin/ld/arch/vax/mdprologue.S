@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.3 1998/08/18 18:46:16 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.4 1998/08/20 15:12:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -35,44 +35,39 @@
 
 	.text
 	.globl	_binder, _binder_entry
+	.globl	_GLOBAL_OFFSET_TABLE_
 
 /*
  *	_rtl(int version, struct crt_ldso *crtp)
  */
 
-_rtl:					# crt0 calls us here
-	.word	0			# no registers to save
-	movl	4(sp),r0		# load crtp into r0
-					# setup arguments for rtld()
-	# Add the 1st entry in the GOT (e.g. __DYNAMIC) to the base
-	# address of ld.so and pushd that onto the stack.
+_rtl:					/* crt0 calls us here */
+	.word	0			/* no registers to save */
+	movl	4(sp),r0		/* load crtp into r0 */
+					/* setup arguments for rtld() */
+	/*
+	 * Add the 1st entry in the GOT (e.g. __DYNAMIC) to the base
+	 * address of ld.so and pushd that onto the stack.
+	 */
 	addl3	_GLOBAL_OFFSET_TABLE_,(r0),-(sp)
-	pushl	r0			# 2nd arg == crtp
-	pushl	0(ap)			# 1st arg == version
-	calls	$3,_rtld		# _rtld(version, crtp, DYNAMIC)
+	pushl	r0			/* 2nd arg == crtp */
+	pushl	(ap)			/* 1st arg == version */
+	calls	$3,_rtld		/* _rtld(version, crtp, DYNAMIC) */
 	ret
 
- # First call to a procedure generally comes through here for binding.
- # We got here via JSB so now (sp) is pointing to the reloc_index
- # inside our jmpslot_t.  So we simply preserve our registers,
- # pushd the address again for _binder.  Save R0 on the stack that
- # the JSB used.  Call the actual function and return.
+/*
+ * First call to a procedure generally comes through here for binding.
+ * We got here via JSB so now (sp) is pointing to the reloc_index
+ * inside our jmpslot_t.  So we simply preserve our registers,
+ * pushd the address again for _binder.  Save R0 on the stack that
+ * the JSB used.  Call the actual function and return.
+ */
 
 _binder_entry:
-	pushl	r5
-	pushl	r4
-	pushl	r3
-	pushl	r2
-	pushl	r1
-	pushl	r0
+	pushr	$0x3f		/* save r0 to r5 */
 	pushl	24(sp)
-	calls	#1, _binder		# _binder(jsp)
+	calls	$1, _binder	/* _binder(jsp) */
 	movl	r0, 24(sp)
-	popl	r0
-	popl	r1
-	popl	r2
-	popl	r3
-	popl	r4
-	popl	r5
-	callg	(ap), @(sp)+		# return value from _binder() == actual
+	popr	$0x3f		/* restore r0 to r5 */
+	callg	(ap), *(sp)+	/* return value from _binder() == actual */
 	ret
