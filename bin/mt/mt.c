@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.34 2001/02/13 19:37:13 mason Exp $	*/
+/*	$NetBSD: mt.c,v 1.35 2001/02/13 19:39:34 mason Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.34 2001/02/13 19:37:13 mason Exp $");
+__RCSID("$NetBSD: mt.c,v 1.35 2001/02/13 19:39:34 mason Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ main(argc, argv)
 	switch (comp->c_spcl) {
 	case MTIOCTOP:
 		if (comp->c_code == MTASF) {
+
 			/* If mtget.mt_fileno was implemented, We could
 			   compute the minimal seek needed to position
 			   the tape.  Until then, rewind and seek from
