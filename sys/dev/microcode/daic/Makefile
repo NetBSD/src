@@ -31,3 +31,5 @@ cleandir:	clean
 all:	includes
 
 includes:	dnload.h
+
+install:
