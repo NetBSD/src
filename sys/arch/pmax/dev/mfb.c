@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.15 1996/08/27 02:32:51 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.16 1996/09/06 07:01:06 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -277,6 +277,9 @@ mfbinit(fi, mfbaddr, unit, silent)
 	int unit;
 	int silent;
 {
+
+	register int isconsole = 0;
+
 	/*
 	 * If this device is being intialized as the console, malloc()
 	 * is not yet up and we must use statically-allocated space.
@@ -284,6 +287,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 	if (fi == NULL) {
 		fi = &mfbfi;	/* XXX */
 		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+		isconsole = 1;
 	}
 	else {
 		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
@@ -353,7 +357,9 @@ mfbinit(fi, mfbaddr, unit, silent)
 	if (tb_kbdmouseconfig(fi))
 		return (0);
 
-	mfbInitColorMapBlack(fi, 0);
+	/* white-on-black if console, black-on-black otherwise. */
+	mfbInitColorMapBlack(fi, isconsole);
+
 
 	/*
 	 * Connect to the raster-console pseudo-driver.
