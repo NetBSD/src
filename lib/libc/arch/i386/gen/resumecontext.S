@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.2 2003/01/18 11:08:12 thorpej Exp $	&/
+/*	$NetBSD: resumecontext.S,v 1.3 2003/01/26 16:22:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.2 2003/01/18 11:08:12 thorpej Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.3 2003/01/26 16:22:01 fvdl Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
