@@ -1,6 +1,8 @@
+/*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,10 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)init_disp.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: init_disp.c,v 1.5 1994/03/28 11:17:16 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
+#endif
+static char rcsid[] = "$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -41,10 +45,13 @@ static char rcsid[] = "$Id: init_disp.c,v 1.5 1994/03/28 11:17:16 cgd Exp $";
  * as well as the signal handling routines.
  */
 
-#include "talk.h"
-#include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/ioctl_compat.h>
+
 #include <termios.h>
-#include <stdio.h>
+#include <signal.h>
+#include <err.h>
+#include "talk.h"
 
 /* 
  * Set up curses, catch the appropriate signals,
@@ -55,10 +62,8 @@ init_display()
 	void sig_sent();
 	struct sigvec sigv;
 
-	if (initscr() == NULL) {
-		printf("initscr failed: TERM is unset or unknown terminal type.\n");
-		exit(-1);
-	}
+	if (initscr() == NULL)
+		errx(1, "Terminal type unset or lacking necessary features.");
 	(void) sigvec(SIGTSTP, (struct sigvec *)0, &sigv);
 	sigv.sv_mask |= sigmask(SIGALRM);
 	(void) sigvec(SIGTSTP, &sigv, (struct sigvec *)0);

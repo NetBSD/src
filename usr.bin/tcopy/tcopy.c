@@ -1,6 +1,8 @@
+/*	$NetBSD: tcopy.c,v 1.3 1994/12/09 02:14:39 jtc Exp $	*/
+
 /*
- * Copyright (c) 1985, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,23 +34,31 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1985, 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1985, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tcopy.c	5.15 (Berkeley) 11/5/90";*/
-static char rcsid[] = "$Id: tcopy.c,v 1.2 1993/08/01 18:07:38 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)tcopy.c	8.2 (Berkeley) 4/17/94";
+#endif
+static char rcsid[] = "$NetBSD: tcopy.c,v 1.3 1994/12/09 02:14:39 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/signal.h>
-#include <sys/file.h>
+#include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
-#include <sys/errno.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "pathnames.h"
 
 #define	MAXREC	(64 * 1024)
@@ -56,22 +66,27 @@ static char rcsid[] = "$Id: tcopy.c,v 1.2 1993/08/01 18:07:38 mycroft Exp $";
 
 int	filen, guesslen, maxblk = MAXREC;
 long	lastrec, record, size, tsize;
+FILE	*msg = stdout;
 
+void	*getspace __P((int));
+void	 intr __P((int));
+void	 usage __P((void));
+void	 verify __P((int, int, char *));
+void	 writeop __P((int, int));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int optind, errno;
 	register int lastnread, nread, nw, inp, outp;
 	enum {READ, VERIFY, COPY, COPYVERIFY} op = READ;
 	sig_t oldsig;
 	int ch, needeof;
-	char *buff, *inf, *getspace();
-	void intr();
+	char *buff, *inf;
 
 	guesslen = 1;
-	while ((ch = getopt(argc, argv, "cs:v")) != EOF)
+	while ((ch = getopt(argc, argv, "cs:vx")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			op = COPYVERIFY;
@@ -86,6 +101,9 @@ main(argc, argv)
 			break;
 		case 'v':
 			op = VERIFY;
+			break;
+		case 'x':
+			msg = stderr;
 			break;
 		case '?':
 		default:
@@ -109,8 +127,8 @@ main(argc, argv)
 		if (op == READ)
 			op = COPY;
 		inf = argv[0];
-		if ((outp = open(argv[1], op == VERIFY ? O_RDONLY : O_RDWR,
-		    0666)) < 0) {
+		if ((outp = open(argv[1], op == VERIFY ? O_RDONLY :
+		    op == COPY ? O_WRONLY : O_RDWR, DEFFILEMODE)) < 0) {
 			perror(argv[1]);
 			exit(3);
 		}
@@ -149,15 +167,15 @@ main(argc, argv)
 		} else if (nread != lastnread) {
 			if (lastnread != 0 && lastnread != NOCOUNT) {
 				if (lastrec == 0 && nread == 0)
-					printf("%ld records\n", record);
+					fprintf(msg, "%ld records\n", record);
 				else if (record - lastrec > 1)
-					printf("records %ld to %ld\n",
+					fprintf(msg, "records %ld to %ld\n",
 					    lastrec, record);
 				else
-					printf("record %ld\n", lastrec);
+					fprintf(msg, "record %ld\n", lastrec);
 			}
 			if (nread != 0)
-				printf("file %d: block size %d: ",
+				fprintf(msg, "file %d: block size %d: ",
 				    filen, nread);
 			(void) fflush(stdout);
 			lastrec = record;
@@ -188,11 +206,12 @@ r1:		guesslen = 0;
 			record++;
 		} else {
 			if (lastnread <= 0 && lastnread != NOCOUNT) {
-				printf("eot\n");
+				fprintf(msg, "eot\n");
 				break;
 			}
-			printf("file %d: eof after %ld records: %ld bytes\n",
-				filen, record, size);
+			fprintf(msg,
+			    "file %d: eof after %ld records: %ld bytes\n",
+			    filen, record, size);
 			needeof = 1;
 			filen++;
 			tsize += size;
@@ -201,7 +220,7 @@ r1:		guesslen = 0;
 		}
 		lastnread = nread;
 	}
-	printf("total length: %ld bytes\n", tsize);
+	fprintf(msg, "total length: %ld bytes\n", tsize);
 	(void)signal(SIGINT, oldsig);
 	if (op == COPY || op == COPYVERIFY) {
 		writeop(outp, MTWEOF);
@@ -215,14 +234,13 @@ r1:		guesslen = 0;
 	exit(0);
 }
 
+void
 verify(inp, outp, outb)
 	register int inp, outp;
 	register char *outb;
 {
-	extern int errno;
 	register int eot, inmaxblk, inn, outmaxblk, outn;
 	register char *inb;
-	char *getspace();
 
 	inb = getspace(maxblk);
 	inmaxblk = outmaxblk = maxblk;
@@ -248,17 +266,20 @@ r1:		if ((outn = read(outp, outb, outmaxblk)) == -1) {
 			break;
 		}
 r2:		if (inn != outn) {
-			printf("tcopy: tapes have different block sizes; %d != %d.\n", inn, outn);
+			fprintf(msg,
+			    "%s: tapes have different block sizes; %d != %d.\n",
+			    "tcopy", inn, outn);
 			break;
 		}
 		if (!inn) {
 			if (eot++) {
-				printf("tcopy: tapes are identical.\n");
+				fprintf(msg, "tcopy: tapes are identical.\n");
 				return;
 			}
 		} else {
 			if (bcmp(inb, outb, inn)) {
-				printf("tcopy: tapes have different data.\n");
+				fprintf(msg,
+				    "tcopy: tapes have different data.\n");
 				break;
 			}
 			eot = 0;
@@ -268,31 +289,33 @@ r2:		if (inn != outn) {
 }
 
 void
-intr()
+intr(signo)
+	int signo;
 {
 	if (record)
 		if (record - lastrec > 1)
-			printf("records %ld to %ld\n", lastrec, record);
+			fprintf(msg, "records %ld to %ld\n", lastrec, record);
 		else
-			printf("record %ld\n", lastrec);
-	printf("interrupt at file %d: record %ld\n", filen, record);
-	printf("total length: %ld bytes\n", tsize + size);
+			fprintf(msg, "record %ld\n", lastrec);
+	fprintf(msg, "interrupt at file %d: record %ld\n", filen, record);
+	fprintf(msg, "total length: %ld bytes\n", tsize + size);
 	exit(1);
 }
 
-char *
+void *
 getspace(blk)
 	int blk;
 {
-	char *bp, *malloc();
+	void *bp;
 
-	if ((bp = malloc((u_int)blk)) == NULL) {
+	if ((bp = malloc((size_t)blk)) == NULL) {
 		fprintf(stderr, "tcopy: no memory\n");
 		exit(11);
 	}
-	return(bp);
+	return (bp);
 }
 
+void
 writeop(fd, type)
 	int fd, type;
 {
@@ -306,8 +329,9 @@ writeop(fd, type)
 	}
 }
 
+void
 usage()
 {
-	fprintf(stderr, "usage: tcopy [-cv] [-s maxblk] src [dest]\n");
+	fprintf(stderr, "usage: tcopy [-cvx] [-s maxblk] src [dest]\n");
 	exit(1);
 }
