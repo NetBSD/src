@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.12 2003/01/06 12:46:06 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.13 2003/04/06 15:56:59 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -413,7 +413,7 @@ the relevant PCMCIA socket for a PCMCIA controller.
 Optional callback, used by high-level drivers to get the fictitious geometry
 used by the controller's firmware for the specified periph.
 Returns 0 if successful.
-See adaptec drivers for details.
+See Adaptec drivers for details.
 .It int Fn adapt_accesschk "struct scsipi_periph *periph" "struct scsipi_inquiry_pattern *inqbuf"
 Optional callback; if present the mid-layer uses it to check if it can
 attach a driver to the specified periph.
