@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.11 2001/01/22 14:24:53 lukem Exp $
+$NetBSD: UPDATING,v 1.12 2001/01/24 12:35:48 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -170,3 +170,6 @@ Fix:	Try the following sequence of commands in the directory in question.
 
 Symptom:.../sysinst/run.c:xx: warning: initialization from incompatible pointer type
 Fix:	Rebuild and install usr.bin/menuc
+
+Symptom:mklocale not found during build in share/locale/ctype
+Fix:	Build and install usr.bin/mklocale
