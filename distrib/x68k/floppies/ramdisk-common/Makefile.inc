@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/03/28 04:33:25 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/04/28 07:31:54 isaki Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -53,7 +53,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=	${DISTRIBDIR}/utils/libhack
+HACKSRC=	${_SRC_TOP_}/distrib/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
 ${CBIN}:	libhack.o
 
