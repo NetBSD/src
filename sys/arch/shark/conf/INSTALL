@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15 2004/09/04 23:29:57 manu Exp $
+#	$NetBSD: INSTALL,v 1.16 2004/11/10 17:54:07 christos Exp $
 #
 #	Shark installation kernel
 #
@@ -94,6 +94,7 @@ options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 

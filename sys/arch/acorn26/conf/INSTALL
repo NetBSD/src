@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.7 2004/09/04 23:29:44 manu Exp $
+# $NetBSD: INSTALL,v 1.8 2004/11/10 17:54:02 christos Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -79,6 +79,7 @@ options 	INET6		# IPV6
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Binary compatibility with previous versions of NetBSD.
 # None yet, since NetBSD/arm26 hasn't been released.

@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.26 2004/09/04 23:29:57 manu Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.27 2004/11/10 17:54:07 christos Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -134,6 +134,7 @@ options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem

@@ -22,7 +22,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.255 $"
+#ident 		"GENERIC-$Revision: 1.256 $"
 
 maxusers 32
 
@@ -137,6 +137,8 @@ options 	COMPAT_OSF1
 
 # Linux binary compatibility
 options 	COMPAT_LINUX
+
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
 options 	SYSVMSG

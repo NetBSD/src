@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38 2004/09/04 23:29:50 manu Exp $
+# $NetBSD: GENERIC,v 1.39 2004/11/10 17:54:05 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -72,6 +72,7 @@ options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem
