@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.7 1995/11/03 16:47:46 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.8 1995/11/28 20:49:12 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -33,26 +33,20 @@
 #define ESP_DEBUG 0
 
 #define FREQTOCCF(freq)	(((freq + 4) / 5))
-#define	ESP_DEF_TIMEOUT 153
 
 /* esp revisions */
 #define	ESP100		0x01
 #define	ESP100A		0x02
 #define	ESP200		0x03
 
-/* Grabbed from Julians SCSI aha-drivers */
-#ifdef	DDB
-int	Debugger();
-#else	DDB
-#define	Debugger() panic("should call debugger here (esp.c)")
-#endif	DDB
-
+#if 0
 typedef caddr_t physaddr;
 
 struct esp_dma_seg {
 	physaddr	addr;
 	long		len;
 };
+#endif
 
 extern int delaycount;
 #define FUDGE(X)	((X)>>1) 	/* get 1 ms spincount */
@@ -99,10 +93,12 @@ struct esp_tinfo {
 	int	senses;		/* #request sense commands sent */
 	ushort	lubusy;		/* What local units/subr. are busy? */
 	u_char  flags;
-#define NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
-#define DO_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
-#define TARGET_BUSY	0x04	/* Target is busy, i.e. cmd in progress */
-#define T_XXX		0x08	/* Target is XXX */
+#define T_NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
+#define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
+#define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
+#define T_SYNCMODE	0x08	/* sync mode has been negotiated */
+#define T_XXX		0x10	/* Target is XXX */
+#define T_SYNCHNEGO	0x20	/* .. */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 } tinfo_t;
@@ -189,12 +185,12 @@ struct esp_softc {
 	u_char	sc_lastcmd;
 
 	/* Message stuff */
-	char	sc_msgpriq;	/* One or more messages to send (encoded) */
-	char	sc_msgout;	/* What message is on its way out? */
-	char	sc_omess[ESP_MAX_MSG_LEN];
+	u_char	sc_msgpriq;	/* One or more messages to send (encoded) */
+	u_char	sc_msgout;	/* What message is on its way out? */
+	u_char	sc_omess[ESP_MAX_MSG_LEN];
 	caddr_t	sc_omp;	/* Message pointer (for multibyte messages) */
 	size_t	sc_omlen;
-	char	sc_imess[ESP_MAX_MSG_LEN + 1];
+	u_char	sc_imess[ESP_MAX_MSG_LEN + 1];
 	caddr_t	sc_imp;	/* Message pointer (for multibyte messages) */
 	size_t	sc_imlen;
 
@@ -221,8 +217,11 @@ struct esp_softc {
 #define ESP_DOINGDMA	0x02	/* The FIFO data path is active! */
 #define ESP_BUSFREE_OK	0x04	/* Bus free phase is OK. */
 #define ESP_SYNCHNEGO	0x08	/* Synch negotiation in progress. */
-#define ESP_BLOCKED	0x10	/* Don't schedule new scsi bus operations */
+/*#define ESP_BLOCKED	0x10	* Don't schedule new scsi bus operations */
+#define ESP_DISCON	0x10	/* Target sent DISCONNECT msg */
 #define ESP_ABORTING	0x20	/* Bailing out */
+#define ESP_ICCS	0x40	/* Expect status phase results */
+#define ESP_WAITI	0x80	/* Waiting for non-DMA data to arrive */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
@@ -232,42 +231,6 @@ struct esp_softc {
 #define SEND_INIT_DET_ERR	0x10
 #define SEND_IDENTIFY  		0x20
 #define SEND_SDTR		0x40
-
-/*
- * Generic SCSI messages. For now we reject most of them.
- */
-/* Messages (1 byte) */		     /* I/T M(andatory) or (O)ptional */
-#define MSG_CMDCOMPLETE		0x00 /* M/M */
-#define MSG_EXTENDED		0x01 /* O/O */
-#define MSG_SAVEDATAPOINTER	0x02 /* O/O */
-#define MSG_RESTOREPOINTERS	0x03 /* O/O */
-#define MSG_DISCONNECT		0x04 /* O/O */
-#define MSG_INITIATOR_DET_ERR	0x05 /* M/M */
-#define MSG_ABORT		0x06 /* O/M */
-#define MSG_MESSAGE_REJECT	0x07 /* M/M */
-#define MSG_NOOP		0x08 /* M/M */
-#define MSG_PARITY_ERR		0x09 /* M/M */
-#define MSG_LINK_CMD_COMPLETE	0x0a /* O/O */
-#define MSG_LINK_CMD_COMPLETEF	0x0b /* O/O */
-#define MSG_BUS_DEV_RESET	0x0c /* O/M */
-#define MSG_ABORT_TAG		0x0d /* O/O */
-#define MSG_CLEAR_QUEUE		0x0e /* O/O */
-#define MSG_INIT_RECOVERY	0x0f /* O/O */
-#define MSG_REL_RECOVERY	0x10 /* O/O */
-#define MSG_TERM_IO_PROC	0x11 /* O/O */
-
-/* Messages (2 byte) */
-#define MSG_SIMPLE_Q_TAG	0x20 /* O/O */
-#define MSG_HEAD_OF_Q_TAG	0x21 /* O/O */
-#define MSG_ORDERED_Q_TAG	0x22 /* O/O */
-#define MSG_IGN_WIDE_RESIDUE	0x23 /* O/O */
-
-/* Identify message */
-#define ESP_MSG_IDENTIFY(lun)	(0x80|(lun & 0x7))	/* XXX 0xc0=selection on */
-#define ESP_MSG_ISIDENT(m)	((m) & 0x80)
-
-/* Extended messages (opcode) */
-#define MSG_EXT_SDTR		0x01
 
 /* SCSI Status codes */
 #define ST_GOOD			0x00
@@ -316,9 +279,6 @@ struct esp_softc {
 #define SAME_ESP(sc, bp, ca) \
 	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
-
-#define TARGETNAME(ecb) \
-	((struct device *)ecb->xs->sc_link->adapter_softc)->dv_xname
 
 /* DMA macros for ESP */
 #define	DMA_ENINTR(r)		((r->enintr)(r))
