@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipmon,v 1.7 2002/04/17 11:05:12 darrenr Exp $
+# $NetBSD: ipmon,v 1.8 2002/04/17 11:42:54 darrenr Exp $
 #
 
 # PROVIDE: ipmon
@@ -11,7 +11,11 @@
 
 name="ipmon"
 rcvar=$name
+
+load_rc_config $name
+
 command="/usr/sbin/${name}"
+
 if [ "${IPMON_DAEMON}" = "Y" ] ; then
 	IPMON_ARGS="-D ${IPMON_ARGS}"
 fi
@@ -30,5 +34,4 @@ fi
 
 command_args="${IPMON_ARGS} ${IPMON_LOG_OUTPUT}"
 
-load_rc_config $name
 run_rc_command "$1"
