@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.33 2002/07/09 01:12:35 hubertf Exp $	*/
+/*	$NetBSD: printjob.c,v 1.34 2002/07/14 15:28:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.33 2002/07/09 01:12:35 hubertf Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.34 2002/07/14 15:28:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,27 +119,27 @@ static char	pxwidth[10] = "-x";	/* page width in pixels */
 static char	tempfile[] = "errsXXXXXX"; /* file name for filter output */
 static char	width[10] = "-w";	/* page width in static characters */
 
-static void	abortpr __P((int));
-static void	banner __P((char *, char *));
-static int	dofork __P((int));
-static int	dropit __P((int));
-static void	init __P((void));
-static void	openpr __P((void));
-static void	opennet __P((char *));
-static void	opentty __P((void));
-static void	openrem __P((void));
-static int	print __P((int, char *));
-static int	printit __P((char *));
-static void	pstatus __P((const char *, ...))
+static void	abortpr(int);
+static void	banner(char *, char *);
+static int	dofork(int);
+static int	dropit(int);
+static void	init(void);
+static void	openpr(void);
+static void	opennet(char *);
+static void	opentty(void);
+static void	openrem(void);
+static int	print(int, char *);
+static int	printit(char *);
+static void	pstatus(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-static char	response __P((void));
-static void	scan_out __P((int, char *, int));
-static char	*scnline __P((int, char *, int));
-static int	sendfile __P((int, char *));
-static int	sendit __P((char *));
-static void	sendmail __P((char *, int));
-static void	setty __P((void));
-static void	alarmer __P((int));
+static char	response(void);
+static void	scan_out(int, char *, int);
+static char	*scnline(int, char *, int);
+static int	sendfile(int, char *);
+static int	sendit(char *);
+static void	sendmail(char *, int);
+static void	setty(void);
+static void	alarmer(int);
 
 void
 printjob(void)
@@ -989,10 +989,7 @@ banner(char *name1, char *name2)
 }
 
 static char *
-scnline(key, p, c)
-	int key;
-	char *p;
-	int c;
+scnline(int key, char *p, int c)
 {
 	int scnwidth;
 
@@ -1561,20 +1558,10 @@ setty(void)
 	return;
 }
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 static void
-#ifdef __STDC__
 pstatus(const char *msg, ...)
-#else
-pstatus(msg, va_alist)
-	char *msg;
-        va_dcl
-#endif
 {
 	int fd;
 	char *buf;
@@ -1587,11 +1574,7 @@ pstatus(msg, va_alist)
 		exit(1);
 	}
 	ftruncate(fd, 0);
-#ifdef __STDC__
 	va_start(ap, msg);
-#else
-	va_start(ap);
-#endif
 	(void)vasprintf(&buf, msg, ap);
 	va_end(ap);
 	/* XXX writev */

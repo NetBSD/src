@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.11 2002/07/08 14:05:38 wiz Exp $	*/
+/*	$NetBSD: lpq.c,v 1.12 2002/07/14 15:28:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.11 2002/07/08 14:05:38 wiz Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.12 2002/07/14 15:28:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,14 +75,12 @@ char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 uid_t	uid, euid;
 
-static int ckqueue __P((char *));
-static void usage __P((void));
-int main __P((int, char *[]));
+static int ckqueue(char *);
+static void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int	argc;
-	char	**argv;
+main(int argc, char *argv[])
 {
 	int	ch, aflag, lflag;
 	char	*buf, *cp;
@@ -159,8 +157,7 @@ main(argc, argv)
 }
 
 static int
-ckqueue(cap)
-	char *cap;
+ckqueue(char *cap)
 {
 	struct dirent *d;
 	DIR *dirp;
@@ -181,7 +178,7 @@ ckqueue(cap)
 }
 
 static void
-usage()
+usage(void)
 {
 	puts("usage: lpq [-a] [-l] [-Pprinter] [-w maxwait] [user ...] [job ...]");
 	exit(1);
