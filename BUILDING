@@ -453,6 +453,20 @@ BUILDING
                If you see build failures with -j, please save complete build
                logs so the failures can be analyzed.
 
+     -k kernel
+               Build a new kernel.  The kernel argument is the name of a con-
+               figuration file suitable for use by config(8).  If kernel does
+               not contain any `/' characters, the configuration file is ex-
+               pected to be found in the KERNCONFDIR directory, which is typi-
+               cally sys/arch/MACHINE/conf.  The new kernel will be built in a
+               subdirectory of KERNOBJDIR, which is typically
+               sys/arch/MACHINE/compile or an associated object directory.  In
+               order to ensure that the kernel is built using up-to-date
+               tools, it is strongly recommended that the tools be rebuilt
+               (using the -t option) in a separate invocation of build.sh pri-
+               or to using the -k option, or that the -t and -k options be
+               used together in a single invocation of build.sh.
+
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
                deduced from mach, unless -a is specified.  All cross builds
@@ -510,6 +524,29 @@ BUILDING
      This script can be symlinked into a directory listed in PATH, or called
      with an absolute path.
 
+EXAMPLES
+     ./build.sh -t
+               Build a new toolchain.
+
+     cd ${KERNCONFDIR} ; ${TOOLDIR}/bin/nbconfig GENERIC
+               Use the new version of config(8) to prepare to build a new
+               GENERIC kernel.
+
+     cd ${KERNOBJDIR}/GENERIC ; ${TOOLDIR}/bin/nbmake-${MACHINE} dependall
+               Use the new toolchain to build a new GENERIC kernel.
+
+     ./build.sh -t -k GENERIC
+               Build a new toolchain, and use the new toolchain to configure
+               and build a new GENERIC kernel.
+
+     ./build.sh -U -d
+               Using unprivileged mode, build a complete distribution in
+               DESTDIR.
+
+     ./build.sh -U -R /some/dir/RELEASE
+               Using unprivileged mode, build a complete release in the speci-
+               fied release directory.
+
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j, instead.
 
@@ -527,4 +564,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                        September 21, 2002                             8
+NetBSD                         October 21, 2002                              9
