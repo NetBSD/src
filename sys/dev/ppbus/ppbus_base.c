@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.6 2004/02/01 17:28:48 jdolecek Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.7 2004/02/10 18:13:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.6 2004/02/01 17:28:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.7 2004/02/10 18:13:12 jdolecek Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h" 
@@ -614,39 +614,40 @@ ppbus_scan_bus(struct device * dev)
 	/* Try IEEE1284 modes, one device only (no IEEE1284.3 support) */
 
 	error = ppbus_1284_negotiate(dev, PPBUS_NIBBLE, 0);
-	if(!(error)) 
-		printf("/NIBBLE");
-	else if((bus->sc_1284_state == PPBUS_ERROR) && (bus->sc_1284_error == 
-		PPBUS_NOT_IEEE1284))
-		goto end_scan;
+	if (error && bus->sc_1284_state == PPBUS_ERROR
+	    && bus->sc_1284_error == PPBUS_NOT_IEEE1284)
+		return (error);
 	ppbus_1284_terminate(dev);
 
+#if defined(PPBUS_VERBOSE) || defined(PPBUS_DEBUG)
+	/* IEEE1284 supported, print info */
+	printf("%s: IEEE1284 negotiation: modes %s",
+	    dev->dv_xname, "NIBBLE");
+
 	error = ppbus_1284_negotiate(dev, PPBUS_PS2, 0);
-	if(!(error))
+	if (!error)
 		printf("/PS2");
 	ppbus_1284_terminate(dev);
 
 	error = ppbus_1284_negotiate(dev, PPBUS_ECP, 0);
-	if(!(error)) 
+	if (!error) 
 		printf("/ECP");
 	ppbus_1284_terminate(dev);
-	
+
 	error = ppbus_1284_negotiate(dev, PPBUS_ECP, PPBUS_USE_RLE);
-	if(!(error))
+	if (!error)
 		printf("/ECP_RLE");
 	ppbus_1284_terminate(dev);
-	
+
 	error = ppbus_1284_negotiate(dev, PPBUS_EPP, 0);
-	if(!(error))
+	if (!error)
 		printf("/EPP");
 	ppbus_1284_terminate(dev);
-	
+
 	printf("\n");
+#endif /* PPBUS_VERBOSE || PPBUS_DEBUG */
 
 	return 0;
-
-end_scan:
-	return error;
 }
 
 #endif /* !DONTPROBE_1284 */
