@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.487 2002/10/04 18:42:34 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.488 2002/10/04 19:27:05 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.487 2002/10/04 18:42:34 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.488 2002/10/04 19:27:05 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3334,13 +3334,6 @@ init386(first_avail)
 	lgdt(&region);
 
 	cpu_init_idt();
-
-#ifdef I586_CPU
-	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
-#else
-	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-#endif
-	lidt(&region);
 
 #ifdef DDB
 	{
