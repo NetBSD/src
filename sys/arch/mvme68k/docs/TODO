@@ -1,0 +1,75 @@
+$NetBSD: TODO,v 1.5.6.2 2001/08/12 19:28:29 scw Exp $
+
+NetBSD/mvme68k's "ToDo" List (In no particular order)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+These are `difficulty' rated on a scale of 1-10, where `1' is easy.
+
+
+1.    [Partially Done]
+      Flesh out the "Memory Controller" (memc) driver (3)
+
+2.    Enhance the PCC2/MC2 driver to support its "Memory Controller"
+      functionality on older MVME1x2 boards. (2)
+
+3.    Support for "Industry Pack" modules (4)
+      (Need to come up with an MI interface for this, since various
+      other non-mvme68k SBCs have IP sites too)
+
+4.    [DONE]
+      Switch over to the MI mk48txx TOD-chip driver (1)
+      (I already have most of this done)
+
+5.    Support for the NVRAM part of the above chips (2)
+      (With a userland tool to read/write configuration details?)
+
+6.    Related to #5, add code to locore.s to verify the configuration
+      area of NVRAM is kosher (using a checksum) before using any values
+      from it (2)
+      (eg. at this time, bogus Offboard RAM details cause crashes)
+
+7.    Support for FLASH memory on MVME1x2 boards (3)
+      (Will probably need a userland tool of some sort)
+
+8.    Add support for the in-kernel FP emulator, so we can run on MVME
+      boards with the MC680LCx0 CPU variant (4)
+      (Easy enough to do; slightly harder to test)
+
+9.    Add "Bounce Buffers" to the VMEbus slave code (8)
+
+10.   Support the MVME boards as a slave in A16 address space (8)
+      (To be useful, this really needs "Bounce Buffer" support)
+
+11.   Enhance the MI VMEbus interface to provide generic GCSR access (6)
+      (Speak with Matthais Drochner <drochner@netbsd.org> about this one)
+
+12.   Enhance the VMEChip/VMEChip2 drivers to support #11 (3)
+
+13.   Fix the case where VMEbus RAM is mapped through a translated
+      address space on MVME boards with the VMEChip2 (2)
+
+14.   [DONE]
+      Add/Flesh out evcnt(9) support where useful (1)
+
+15.   [DONE. See osiop(4)]
+      The siop driver *badly* needs to be bus_space(9)'d, and made MI (5)
+      (Apparently, Manuel Bouyer (bouyer@netbsd.org) is working on this)
+
+16.   The sbic driver *badly* needs re-written from scratch, and made MI (5)
+      (This will be done when Frank van der Linden <fvdl@netbsd.org>
+      imports the PC98 code into the tree; it comes with a very nice
+      wd33c93 driver ;-)
+
+17.   Switch the install tools over to sysinst (3)
+      (Should be fairly easy, although sysinst doesn't do `tapes', so
+      there's a bunch of code to write)
+
+18.   [DONE]
+      Use hardware-assisted softints (3)
+      (What to do on MVME1x2 boards with no VMEChip2?)
+
+19.   Make the ZS driver *properly* MI (4)
+      (I already have patches for this. Unfortunately, it affects just
+      about every NetBSD architecture...)
+
+20.   Implement the MD parts of __HAVE_SYSCALL_INTERN (2)
