@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.23 2004/08/26 14:13:46 itohy Exp $
+#	$NetBSD: files.cardbus,v 1.24 2004/09/26 03:03:17 dyoung Exp $
 #
 # files.cardbus
 #
@@ -39,6 +39,12 @@ file	dev/cardbus/com_cardbus.c	com_cardbus
 #
 attach	atw at cardbus with atw_cardbus
 file	dev/cardbus/if_atw_cardbus.c	atw_cardbus
+
+#
+# Realtek RTL8180
+#
+attach	rtw at cardbus with rtw_cardbus
+file	dev/cardbus/if_rtw_cardbus.c	rtw_cardbus
 
 #
 # DECchip 21143 and clones.
