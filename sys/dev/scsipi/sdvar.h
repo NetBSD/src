@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.11 2000/01/22 16:35:25 drochner Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.12 2000/05/23 10:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct sd_softc {
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
 #define	SDF_FLUSHING	0x40		/* flushing, for sddone() */
+#define	SDF_RESTART	0x80		/* we issued a scsi_start command */
 	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct disk_parms {
 		u_long	heads;		/* number of heads */
