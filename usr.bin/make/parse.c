@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.30 1997/05/02 14:24:30 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.31 1997/05/07 13:12:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.30 1997/05/02 14:24:30 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.31 1997/05/07 13:12:33 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -431,7 +431,7 @@ ParseDoOp (gnp, opp)
 	 * sorry.
 	 */
 	Lst_ForEach(gn->parents, ParseLinkSrc, (ClientData)cohort);
-	cohort->type = OP_DOUBLEDEP|OP_INVISIBLE;
+	cohort->type = OP_DOUBLEDEP|OP_INVISIBLE|(gn->type & OP_PHONY);
 	(void)Lst_AtEnd(gn->cohorts, (ClientData)cohort);
 
 	/*
