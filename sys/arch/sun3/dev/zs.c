@@ -43,7 +43,7 @@
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
  * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.7 1994/05/30 06:22:36 glass Exp $
+ * $Id: zs.c,v 1.8 1994/06/28 21:42:32 gwr Exp $
  */
 
 /*
@@ -577,7 +577,12 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
+#if 0
 			tp->t_cflag = TTYDEF_CFLAG;
+#else
+			/* Make default same as PROM uses. */
+			tp->t_cflag = (CREAD | CS8 | HUPCL);
+#endif
 			tp->t_lflag = TTYDEF_LFLAG;
 			tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
 		}
