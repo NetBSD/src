@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.83 2003/01/27 22:38:24 pk Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.84 2003/02/04 01:21:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,9 +78,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.83 2003/01/27 22:38:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.84 2003/02/04 01:21:04 thorpej Exp $");
 
-#include "opt_callout.h"
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
 
@@ -96,9 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.83 2003/01/27 22:38:24 pk Exp $");
 #include <sys/timex.h>
 #include <sys/sched.h>
 #include <sys/time.h>
-#ifdef CALLWHEEL_STATS
-#include <sys/device.h>
-#endif
 
 #include <machine/cpu.h>
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -325,7 +321,7 @@ int	profhz;
 int	profsrc;
 int	schedhz;
 int	profprocs;
-int	softclock_running;		/* 1 => softclock() is running */
+int	hardclock_ticks;
 static int psdiv;			/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
@@ -344,74 +340,7 @@ int	shifthz;
 volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 
-/*
- * The callout mechanism is based on the work of Adam M. Costello and
- * George Varghese, published in a technical report entitled "Redesigning
- * the BSD Callout and Timer Facilities", and Justin Gibbs's subsequent
- * integration into FreeBSD, modified for NetBSD by Jason R. Thorpe.
- *
- * The original work on the data structures used in this implementation
- * was published by G. Varghese and A. Lauck in the paper "Hashed and
- * Hierarchical Timing Wheels: Data Structures for the Efficient
- * Implementation of a Timer Facility" in the Proceedings of the 11th
- * ACM Annual Symposium on Operating System Principles, Austin, Texas,
- * November 1987.
- */
-struct callout_queue *callwheel;
-int	callwheelsize, callwheelbits, callwheelmask;
-
-static struct callout *nextsoftcheck;	/* next callout to be checked */
-
-#ifdef CALLWHEEL_STATS
-int	     *callwheel_sizes;		/* per-bucket length count */
-struct evcnt callwheel_collisions;	/* number of hash collisions */
-struct evcnt callwheel_maxlength;	/* length of the longest hash chain */
-struct evcnt callwheel_count;		/* # callouts currently */
-struct evcnt callwheel_established;	/* # callouts established */
-struct evcnt callwheel_fired;		/* # callouts that fired */
-struct evcnt callwheel_disestablished;	/* # callouts disestablished */
-struct evcnt callwheel_changed;		/* # callouts changed */
-struct evcnt callwheel_softclocks;	/* # times softclock() called */
-struct evcnt callwheel_softchecks;	/* # checks per softclock() */
-struct evcnt callwheel_softempty;	/* # empty buckets seen */
-struct evcnt callwheel_hintworked;	/* # times hint saved scan */
-#endif /* CALLWHEEL_STATS */
-
-/*
- * This value indicates the number of consecutive callouts that
- * will be checked before we allow interrupts to have a chance
- * again.
- */
-#ifndef MAX_SOFTCLOCK_STEPS
-#define	MAX_SOFTCLOCK_STEPS	100
-#endif
-
-struct simplelock callwheel_slock;
-
-#define	CALLWHEEL_LOCK(s)						\
-do {									\
-	s = splsched();							\
-	simple_lock(&callwheel_slock);					\
-} while (/*CONSTCOND*/ 0)
-
-#define	CALLWHEEL_UNLOCK(s)						\
-do {									\
-	simple_unlock(&callwheel_slock);				\
-	splx(s);							\
-} while (/*CONSTCOND*/ 0)
-
-static void callout_stop_locked(struct callout *);
-
-/*
- * These are both protected by callwheel_lock.
- * XXX SHOULD BE STATIC!!
- */
-u_int64_t hardclock_ticks, softclock_ticks;
-
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-void	softclock(void *);
 void	*softclock_si;
-#endif
 
 /*
  * Initialize clock frequencies and start both clocks running.
@@ -527,7 +456,6 @@ hardclock(struct clockframe *frame)
 	extern long timedelta;
 	struct cpu_info *ci = curcpu();
 	struct ptimer *pt;
-	int s;
 #ifdef NTP
 	int time_update;
 	int ltemp;
@@ -574,6 +502,7 @@ hardclock(struct clockframe *frame)
 	 * if we are still adjusting the time (see adjtime()),
 	 * ``tickdelta'' may also be added in.
 	 */
+	hardclock_ticks++;
 	delta = tick;
 
 #ifndef NTP
@@ -888,21 +817,16 @@ hardclock(struct clockframe *frame)
 #endif /* NTP */
 
 	/*
+	 * Update real-time timeout queue.
 	 * Process callouts at a very low cpu priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
-	CALLWHEEL_LOCK(s);
-	hardclock_ticks++;
-	if (! TAILQ_EMPTY(&callwheel[hardclock_ticks & callwheelmask].cq_q)) {
-		CALLWHEEL_UNLOCK(s);
+	if (callout_hardclock()) {
 		if (CLKF_BASEPRI(frame)) {
 			/*
 			 * Save the overhead of a software interrupt;
 			 * it will happen as soon as we return, so do
 			 * it now.
-			 *
-			 * NOTE: If we're at ``base priority'', softclock()
-			 * was not already running.
 			 */
 			spllowersoftclock();
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
@@ -915,316 +839,8 @@ hardclock(struct clockframe *frame)
 			setsoftclock();
 #endif
 		}
-		return;
-	} else if (softclock_running == 0 &&
-		   (softclock_ticks + 1) == hardclock_ticks) {
-		softclock_ticks++;
 	}
-	CALLWHEEL_UNLOCK(s);
 }
-
-/*
- * Software (low priority) clock interrupt.
- * Run periodic events from timeout queue.
- */
-/*ARGSUSED*/
-void
-softclock(void *v)
-{
-	struct callout_queue *bucket;
-	struct callout *c;
-	void (*func)(void *);
-	void *arg;
-	int s, idx;
-	int steps = 0;
-
-	CALLWHEEL_LOCK(s);
-
-	softclock_running = 1;
-
-#ifdef CALLWHEEL_STATS
-	callwheel_softclocks.ev_count++;
-#endif
-
-	while (softclock_ticks != hardclock_ticks) {
-		softclock_ticks++;
-		idx = (int)(softclock_ticks & callwheelmask);
-		bucket = &callwheel[idx];
-		c = TAILQ_FIRST(&bucket->cq_q);
-		if (c == NULL) {
-#ifdef CALLWHEEL_STATS
-			callwheel_softempty.ev_count++;
-#endif
-			continue;
-		}
-		if (softclock_ticks < bucket->cq_hint) {
-#ifdef CALLWHEEL_STATS
-			callwheel_hintworked.ev_count++;
-#endif
-			continue;
-		}
-		bucket->cq_hint = UQUAD_MAX;
-		while (c != NULL) {
-#ifdef CALLWHEEL_STATS
-			callwheel_softchecks.ev_count++;
-#endif
-			if (c->c_time != softclock_ticks) {
-				if (c->c_time < bucket->cq_hint)
-					bucket->cq_hint = c->c_time;
-				c = TAILQ_NEXT(c, c_link);
-				if (++steps >= MAX_SOFTCLOCK_STEPS) {
-					nextsoftcheck = c;
-					/* Give interrupts a chance. */
-					CALLWHEEL_UNLOCK(s);
-					CALLWHEEL_LOCK(s);
-					c = nextsoftcheck;
-					steps = 0;
-				}
-			} else {
-				nextsoftcheck = TAILQ_NEXT(c, c_link);
-				TAILQ_REMOVE(&bucket->cq_q, c, c_link);
-#ifdef CALLWHEEL_STATS
-				callwheel_sizes[idx]--;
-				callwheel_fired.ev_count++;
-				callwheel_count.ev_count--;
-#endif
-				func = c->c_func;
-				arg = c->c_arg;
-				c->c_func = NULL;
-				c->c_flags &= ~CALLOUT_PENDING;
-				CALLWHEEL_UNLOCK(s);
-				(*func)(arg);
-				CALLWHEEL_LOCK(s);
-				steps = 0;
-				c = nextsoftcheck;
-			}
-		}
-		if (TAILQ_EMPTY(&bucket->cq_q))
-			bucket->cq_hint = UQUAD_MAX;
-	}
-	nextsoftcheck = NULL;
-	softclock_running = 0;
-	CALLWHEEL_UNLOCK(s);
-}
-
-/*
- * callout_setsize:
- *
- *	Determine how many callwheels are necessary and
- *	set hash mask.  Called from allocsys().
- */
-void
-callout_setsize(void)
-{
-
-	for (callwheelsize = 1; callwheelsize < ncallout; callwheelsize <<= 1)
-		/* loop */ ;
-	callwheelmask = callwheelsize - 1;
-}
-
-/*
- * callout_startup:
- *
- *	Initialize the callwheel buckets.
- */
-void
-callout_startup(void)
-{
-	int i;
-
-	for (i = 0; i < callwheelsize; i++) {
-		callwheel[i].cq_hint = UQUAD_MAX;
-		TAILQ_INIT(&callwheel[i].cq_q);
-	}
-
-	simple_lock_init(&callwheel_slock);
-
-#ifdef CALLWHEEL_STATS
-	evcnt_attach_dynamic(&callwheel_collisions, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "collisions");
-	evcnt_attach_dynamic(&callwheel_maxlength, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "maxlength");
-	evcnt_attach_dynamic(&callwheel_count, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "count");
-	evcnt_attach_dynamic(&callwheel_established, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "established");
-	evcnt_attach_dynamic(&callwheel_fired, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "fired");
-	evcnt_attach_dynamic(&callwheel_disestablished, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "disestablished");
-	evcnt_attach_dynamic(&callwheel_changed, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "changed");
-	evcnt_attach_dynamic(&callwheel_softclocks, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "softclocks");
-	evcnt_attach_dynamic(&callwheel_softempty, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "softempty");
-	evcnt_attach_dynamic(&callwheel_hintworked, EVCNT_TYPE_MISC,
-	    NULL, "callwheel", "hintworked");
-#endif /* CALLWHEEL_STATS */
-}
-
-/*
- * callout_init:
- *
- *	Initialize a callout structure so that it can be used
- *	by callout_reset() and callout_stop().
- */
-void
-callout_init(struct callout *c)
-{
-
-	memset(c, 0, sizeof(*c));
-}
-
-/*
- * callout_reset:
- *
- *	Establish or change a timeout.
- */
-void
-callout_reset(struct callout *c, int ticks, void (*func)(void *), void *arg)
-{
-	struct callout_queue *bucket;
-	int s;
-
-	if (ticks <= 0)
-		ticks = 1;
-
-	CALLWHEEL_LOCK(s);
-
-	/*
-	 * If this callout's timer is already running, cancel it
-	 * before we modify it.
-	 */
-	if (c->c_flags & CALLOUT_PENDING) {
-		callout_stop_locked(c);	/* Already locked */
-#ifdef CALLWHEEL_STATS
-		callwheel_changed.ev_count++;
-#endif
-	}
-
-	c->c_arg = arg;
-	c->c_func = func;
-	c->c_flags = CALLOUT_ACTIVE | CALLOUT_PENDING;
-	c->c_time = hardclock_ticks + ticks;
-
-	bucket = &callwheel[c->c_time & callwheelmask];
-
-#ifdef CALLWHEEL_STATS
-	if (! TAILQ_EMPTY(&bucket->cq_q))
-		callwheel_collisions.ev_count++;
-#endif
-
-	TAILQ_INSERT_TAIL(&bucket->cq_q, c, c_link);
-	if (c->c_time < bucket->cq_hint)
-		bucket->cq_hint = c->c_time;
-
-#ifdef CALLWHEEL_STATS
-	callwheel_count.ev_count++;
-	callwheel_established.ev_count++;
-	if (++callwheel_sizes[c->c_time & callwheelmask] >
-	    callwheel_maxlength.ev_count)
-		callwheel_maxlength.ev_count =
-		    callwheel_sizes[c->c_time & callwheelmask];
-#endif
-
-	CALLWHEEL_UNLOCK(s);
-}
-
-/*
- * callout_stop_locked:
- *
- *	Disestablish a timeout.  Callwheel is locked.
- */
-static void
-callout_stop_locked(struct callout *c)
-{
-	struct callout_queue *bucket;
-
-	/*
-	 * Don't attempt to delete a callout that's not on the queue.
-	 */
-	if ((c->c_flags & CALLOUT_PENDING) == 0) {
-		c->c_flags &= ~CALLOUT_ACTIVE;
-		return;
-	}
-
-	c->c_flags &= ~(CALLOUT_ACTIVE | CALLOUT_PENDING);
-
-	if (nextsoftcheck == c)
-		nextsoftcheck = TAILQ_NEXT(c, c_link);
-
-	bucket = &callwheel[c->c_time & callwheelmask];
-	TAILQ_REMOVE(&bucket->cq_q, c, c_link);
-	if (TAILQ_EMPTY(&bucket->cq_q))
-		bucket->cq_hint = UQUAD_MAX;
-#ifdef CALLWHEEL_STATS
-	callwheel_count.ev_count--;
-	callwheel_disestablished.ev_count++;
-	callwheel_sizes[c->c_time & callwheelmask]--;
-#endif
-
-	c->c_func = NULL;
-}
-
-/*
- * callout_stop:
- *
- *	Disestablish a timeout.  Callwheel is unlocked.  This is
- *	the standard entry point.
- */
-void
-callout_stop(struct callout *c)
-{
-	int s;
-
-	CALLWHEEL_LOCK(s);
-	callout_stop_locked(c);
-	CALLWHEEL_UNLOCK(s);
-}
-
-#ifdef CALLWHEEL_STATS
-/*
- * callout_showstats:
- *
- *	Display callout statistics.  Call it from DDB.
- */
-void
-callout_showstats(void)
-{
-	u_int64_t curticks;
-	int s;
-
-	s = splclock();
-	curticks = softclock_ticks;
-	splx(s);
-
-	printf("Callwheel statistics:\n");
-	printf("\tCallouts currently queued: %llu\n",
-	    (long long) callwheel_count.ev_count);
-	printf("\tCallouts established: %llu\n",
-	    (long long) callwheel_established.ev_count);
-	printf("\tCallouts disestablished: %llu\n",
-	    (long long) callwheel_disestablished.ev_count);
-	if (callwheel_changed.ev_count != 0)
-		printf("\t\tOf those, %llu were changes\n",
-		    (long long) callwheel_changed.ev_count);
-	printf("\tCallouts that fired: %llu\n",
-	    (long long) callwheel_fired.ev_count);
-	printf("\tNumber of buckets: %d\n", callwheelsize);
-	printf("\tNumber of hash collisions: %llu\n",
-	    (long long) callwheel_collisions.ev_count);
-	printf("\tMaximum hash chain length: %llu\n",
-	    (long long) callwheel_maxlength.ev_count);
-	printf("\tSoftclocks: %llu, Softchecks: %llu\n",
-	    (long long) callwheel_softclocks.ev_count,
-	    (long long) callwheel_softchecks.ev_count);
-	printf("\t\tEmpty buckets seen: %llu\n",
-	    (long long) callwheel_softempty.ev_count);
-	printf("\t\tTimes hint saved scan: %llu\n",
-	    (long long) callwheel_hintworked.ev_count);
-}
-#endif
 
 /*
  * Compute number of hz until specified time.  Used to compute second
