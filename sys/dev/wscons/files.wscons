@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.7 1998/06/15 17:51:56 drochner Exp $
+# $NetBSD: files.wscons,v 1.8 1998/06/20 19:17:47 drochner Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -43,6 +43,10 @@ file	dev/wscons/wsemul_dumb.c
 file	dev/wscons/wsemul_sun.c
 	    (wsdisplaydev | wsemuldisplaydev | wskbddev) & wsemul_sun
 file	dev/wscons/wsemul_vt100.c
+	    (wsdisplaydev | wsemuldisplaydev | wskbddev) & wsemul_vt100
+file	dev/wscons/wsemul_vt100_subr.c
+	    (wsdisplaydev | wsemuldisplaydev | wskbddev) & wsemul_vt100
+file	dev/wscons/wsemul_vt100_keys.c
 	    (wsdisplaydev | wsemuldisplaydev | wskbddev) & wsemul_vt100
 file	dev/wscons/wsevent.c
 	    wskbddev | wsmousedev
