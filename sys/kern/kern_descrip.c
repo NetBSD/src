@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.10 2002/06/20 03:47:10 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.11 2002/07/10 22:34:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.10 2002/06/20 03:47:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.11 2002/07/10 22:34:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,11 +136,11 @@ sys_dup(struct lwp *l, void *v, register_t *retval)
 	struct sys_dup_args /* {
 		syscallarg(int)	fd;
 	} */ *uap = v;
-	struct file 	*fp;
-	struct filedesc *fdp;
-	struct proc 	*p;
-	int 		old, new, error;
-	    
+	struct file	*fp;
+	struct filedesc	*fdp;
+	struct proc	*p;
+	int		old, new, error;
+
 	p = l->l_proc;
 	fdp = p->p_fd;
 	old = SCARG(uap, fd);
