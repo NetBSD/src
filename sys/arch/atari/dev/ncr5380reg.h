@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.3 1995/09/12 19:58:55 leo Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.4 1995/09/16 14:15:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -159,6 +159,18 @@
 struct	ncr_softc {
 	struct	device		sc_dev;
 	struct	scsi_link	sc_link;
+
+	/*
+	 * Some (pre-SCSI2) devices don't support select with ATN.
+	 * If the device responds to select with ATN by going into
+	 * command phase (ignoring ATN), then we flag it in the
+	 * following bitmask.
+	 * We also keep track of which devices have been selected
+	 * before.  This allows us to not even try raising ATN if
+	 * the target doesn't respond to it the first time.
+	 */
+	u_int8_t	sc_noselatn;
+	u_int8_t	sc_selected;
 };
 
 /*
