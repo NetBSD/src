@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1996/02/28 01:05:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 1996/03/03 16:49:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 
 #ifdef _KERNEL
 extern	int conscode;			/* select code of console device */
-extern	int conpri;			/* priority of console device */
 extern	int consinit_active;		/* hint for drivers */
 extern	caddr_t conaddr;		/* KVA of console device */
 extern	int convasize;			/* size of mapping at conaddr */
