@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.8 2001/02/19 23:03:51 cgd Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.9 2001/03/16 08:02:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.8 2001/02/19 23:03:51 cgd Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.9 2001/03/16 08:02:32 mycroft Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -152,7 +152,7 @@ get_lines(fname, linesp, nlinesp)
 {
 	FILE *fp;
 	char *line;
-	size_t size, nlines = 0, maxlines = 100;
+	size_t size, nlines = 0, maxlines = 128;
 	char **lines = emalloc(sizeof(char *) * maxlines);
 
 	if (strcmp(fname, "-") == 0)
@@ -168,7 +168,7 @@ get_lines(fname, linesp, nlinesp)
 		(void)memcpy(lines[nlines], line, size);
 		lines[nlines++][size] = '\0';
 		if (nlines >= maxlines) {
-			maxlines += 100;
+			maxlines *= 2;
 			lines = erealloc(lines, (sizeof(char *) * maxlines));
 		}
 	}
