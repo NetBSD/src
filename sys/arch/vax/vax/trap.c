@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.8.9 2002/09/26 20:04:54 nathanw Exp $     */
+/*	$NetBSD: trap.c,v 1.66.8.10 2002/10/05 07:29:24 gmcgarry Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/pool.h>
 
@@ -340,10 +341,10 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	exptr = l->l_addr->u_pcb.framep;
 	exptr->pc = pack->ep_entry + 2;
 	exptr->sp = stack;
-	exptr->r6 = stack;			/* for ELF */
-	exptr->r7 = 0;				/* for ELF */
-	exptr->r8 = 0;				/* for ELF */
-	exptr->r9 = (u_long) p->p_psstr;	/* for ELF */
+	exptr->r6 = stack;				/* for ELF */
+	exptr->r7 = 0;					/* for ELF */
+	exptr->r8 = 0;					/* for ELF */
+	exptr->r9 = (u_long) l->l_proc->p_psstr;	/* for ELF */
 }
 
 void

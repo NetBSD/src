@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.11 2002/09/17 21:18:35 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.12 2002/10/05 07:29:23 gmcgarry Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -527,11 +527,12 @@ struct trampoline {
 void
 sendsig(int sig, sigset_t *mask, u_long code)
 {
+	struct lwp *l = curlwp;
 	struct proc *p = curproc;
 	struct sigacts *ps = p->p_sigacts;
 	struct trampoline tramp;
 	struct sigcontext sigctx;
-	struct trapframe *tf = p->p_addr->u_pcb.framep;
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	int onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -565,7 +566,7 @@ sendsig(int sig, sigset_t *mask, u_long code)
 
 	if (copyout(&sigctx, (char *)tramp.scp, sizeof(struct sigcontext)) ||
 	    copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)))
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	case 2:
@@ -573,7 +574,7 @@ sendsig(int sig, sigset_t *mask, u_long code)
 		break;
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 	tf->psl = PSL_U | PSL_PREVU;
 	tf->ap = tramp.scp - sizeof(tramp);
