@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.10 2001/10/03 21:39:04 wiz Exp $
+.\" $NetBSD: pcap.3,v 1.11 2001/10/03 21:57:58 wiz Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Ft pcap_dumper_t *
 .Fn pcap_dump_open "pcap_t *p" "char *fname"
 .Ft char
-errbuf[PCAP_ERRBUF_SIZE];
+.Dv errbuf[PCAP_ERRBUF_SIZE];
 .Ft char *
 .Fn pcap_lookupdev "char *errbuf"
 .Ft int
@@ -116,12 +116,16 @@ fails and returns
 .Em NULL .
 .Pp
 .Fn pcap_open_offline
-is called to open a ``savefile'' for reading.
+is called to open a
+.Dq savefile
+for reading.
 .Fa fname
 specifies the name of the file to open.  The file has
 the same format as those used by
 .Xr tcpdump 8 .
-The name "-" in a synonym for
+The name
+.Dq \&-
+is a synonym for
 .Em stdin .
 .Fa ebuf
 is used to return error text and is only set when
@@ -130,7 +134,11 @@ fails and returns
 .Em NULL .
 .Pp
 .Fn pcap_dump_open
-is called to open a ``savefile'' for writing.  The name "-" in a synonym
+is called to open a
+.Dq savefile
+for writing.  The name
+.Dq \&-
+is a synonym
 for
 .Em stdout .
 .Em NULL
@@ -159,7 +167,7 @@ If there is an error,
 .Em NULL
 is returned and
 .Fa errbuf
-is filled in with with an appropriate error message.
+is filled in with an appropriate error message.
 .Pp
 .Fn pcap_lookupnet
 is used to determine the network number and mask
@@ -174,7 +182,7 @@ are
 pointers.
 A return of -1 indicates an error in which case
 .Fa errbuf
-is filled in with with an appropriate error message.
+is filled in with an appropriate error message.
 .Pp
 .Fn pcap_dispatch
 is used to collect and process packets.
@@ -200,15 +208,18 @@ and a
 pointer to the packet data.  The number of packets read is returned.
 Zero is returned when
 .Em EOF
-is reached in a ``savefile.''  A return of -1 indicates
-an error in which case
+is reached in a
+.Dq savefile .
+A return of -1 indicates an error in which case
 .Fn pcap_perror
 or
 .Fn pcap_geterr
 may be used to display the error text.
 .Pp
 .Fn pcap_dump
-outputs a packet to the ``savefile'' opened with
+outputs a packet to the
+.Dq savefile
+opened with
 .Fn pcap_dump_open .
 Note that its calling arguments are suitable for use with
 .Fn pcap_dispatch .
@@ -277,8 +288,9 @@ returns the snapshot length specified when
 was called.
 .Pp
 .Fn pcap_is_swapped
-returns true if the current ``savefile'' uses a different byte order
-than the current system.
+returns true if the current
+.Dq savefile
+uses a different byte order than the current system.
 .Pp
 .Fn pcap_major_version
 returns the major number of the version of the pcap used to write the
@@ -289,7 +301,8 @@ returns the minor number of the version of the pcap used to write the
 savefile.
 .Pp
 .Fn pcap_file
-returns the name of the ``savefile.''
+returns the name of the
+.Dq savefile .
 .Pp
 .Fn pcap_stats
 returns 0 and fills in a
@@ -303,7 +316,8 @@ or
 .Fn pcap_geterr .
 .Pp
 .Fn pcap_fileno
-returns the file descriptor number of the ``savefile.''
+returns the file descriptor number of the
+.Dq savefile .
 .Pp
 .Fn pcap_perror
 prints the text of the last pcap library error on
@@ -325,7 +339,8 @@ closes the files associated with
 and deallocates resources.
 .Pp
 .Fn pcap_dump_close
-closes the ``savefile.''
+closes the
+.Dq savefile .
 .Sh SEE ALSO
 .Xr tcpdump 8
 .Sh AUTHORS
