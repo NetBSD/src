@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.21 1994/09/27 01:34:04 deraadt Exp $
+ * $Id: trap.c,v 1.22 1994/10/20 04:46:32 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -743,7 +743,7 @@ syscall(code, tf, pc)
 	/* Callp currently points to syscall, which returns ENOSYS. */
 	if (code < nsys) {
 		callp += code;
-		i = callp->sy_narg;
+		i = callp->sy_argsize / sizeof(int);
 		if (i > nap) {	/* usually false */
 			if (i > 8)
 				panic("syscall nargs");
@@ -754,7 +754,8 @@ syscall(code, tf, pc)
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_narg, args.i);
+					    callp->sy_narg, callp->sy_argsize,
+					    args.i);
 #endif
 				goto bad;
 			}
@@ -764,7 +765,8 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg,
+		    callp->sy_argsize, args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	7.9 (Berkeley) 3/9/91
- *	$Id: types.h,v 1.6 1994/07/20 05:44:23 cgd Exp $
+ *	$Id: types.h,v 1.7 1994/10/20 04:46:53 cgd Exp $
  */
 #ifndef	_M68K_TYPES_H_
 #define	_M68K_TYPES_H_
@@ -60,5 +60,7 @@ typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
 typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
+
+typedef int32_t			register_t;
 
 #endif	/* !_M68K_TYPES_H_ */

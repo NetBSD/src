@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.28 1994/10/15 05:51:21 deraadt Exp $
+ * $Id: machdep.c,v 1.29 1994/10/20 04:46:28 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -310,7 +311,7 @@ setregs(p, entry, stack, retval)
 	struct proc *p;
 	u_long entry;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
@@ -512,13 +513,12 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 /* ARGSUSED */
-struct sigreturn_args {
-	struct sigcontext *scp;
-};
 sigreturn(p, uap, retval)
 	register struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct sigcontext *scp;
 	register struct trapframe *tf;
@@ -530,9 +530,9 @@ sigreturn(p, uap, retval)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: %s[%d], scp %x\n",
-		    p->p_comm, p->p_pid, uap->scp);
+		    p->p_comm, p->p_pid, SCARG(uap, scp));
 #endif
-	scp = uap->scp;
+	scp = SCARG(uap, sigcntxp);
 	if ((int)scp & 3 || useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
 		return (EINVAL);
 	tf = p->p_md.md_tf;
