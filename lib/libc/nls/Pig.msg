@@ -228,3 +228,5 @@ $ SIGUSR1
 30 Userway efinedday ignalsay 1
 $ SIGUSR2
 31 Userway efinedday ignalsay 2
+$ SIGPWR
+32 Owerpay ailfay/estartray
