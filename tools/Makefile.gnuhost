@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.11 2001/12/13 19:36:22 tv Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.12 2002/01/03 16:45:18 tv Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -67,11 +67,17 @@ INSTALL_TARGET?=install
 	@(cd build && ${CONFIGURE_ENV} sh ${DIST}/configure ${CONFIGURE_ARGS})
 	@touch $@
 
+# The .build_done timestamp is only updated if a file actually changes
+# in the build tree during "make all".  This way, if nothing has changed,
+# a "make install UPDATE=" will do nothing.
+
 .build_done: .configure_done
 	@(cd build && ${MAKE} ${MAKE_ARGS} ${ALL_TARGET})
-	@touch $@
+	@if [ ! -f .build_done ] || \
+		find build -type f -newer .build_done -print | grep -q ''; \
+		then echo build changed; touch $@; fi
 
-.install_done:
+.install_done: ${BUILD:D.build_done}
 .if defined(UPDATE)
 	@if [ ! -f .install_done ] || [ .build_done -nt .install_done ]; then \
 		(cd ${.OBJDIR}/build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET}); \
@@ -80,6 +86,8 @@ INSTALL_TARGET?=install
 	@(cd ${.OBJDIR}/build && ${MAKE} ${MAKE_ARGS} ${INSTALL_TARGET})
 .endif
 	@touch $@
+
+.PHONY: .build_done
 
 # Mapping to standard targets.
 
