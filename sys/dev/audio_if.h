@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.5 2004/12/25 13:25:16 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.6 2004/12/26 17:38:25 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -118,8 +118,6 @@ typedef struct stream_filter {
 	void (*dtor)(struct stream_filter *);
 	void (*set_fetcher)(struct stream_filter *, stream_fetcher_t *);
 	void (*set_inputbuffer)(struct stream_filter *, audio_stream_t *);
-	int (*get_input_size)(struct stream_filter *, int);
-	int (*get_output_size)(struct stream_filter *, int);
 } stream_filter_t;
 
 /**
