@@ -1,34 +1,17 @@
-/*	$NetBSD: mark.c,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: mark.c,v 1.4 2001/07/26 13:43:45 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
 #include "less.h"
-#include "position.h"
 
 extern IFILE curr_ifile;
 extern int sc_height;
@@ -45,17 +28,12 @@ struct mark {
 /*
  * The table of marks.
  * Each mark is identified by a lowercase or uppercase letter.
+ * The final one is lmark, for the "last mark"; addressed by the apostrophe.
  */
-#define	NMARKS		(2*26)		/* a-z, A-Z */
+#define	NMARKS		((2*26)+1)	/* a-z, A-Z, lastmark */
+#define	LASTMARK	(NMARKS-1)
 static struct mark marks[NMARKS];
 
-/*
- * Special mark for the "last mark"; addressed by the apostrophe.
- */
-static struct mark lmark;
-
-static struct mark *getumark __P((int));
-static struct mark *getmark __P((int));
 
 /*
  * Initialize the mark table to show no marks are set.
@@ -67,7 +45,6 @@ init_mark()
 
 	for (i = 0;  i < NMARKS;  i++)
 		marks[i].m_scrpos.pos = NULL_POSITION;
-	lmark.m_scrpos.pos = NULL_POSITION;
 }
 
 /*
@@ -136,7 +113,7 @@ getmark(c)
 		/*
 		 * The "last mark".
 		 */
-		m = &lmark;
+		m = &marks[LASTMARK];
 		break;
 	default:
 		/*
@@ -191,11 +168,13 @@ lastmark()
 {
 	struct scrpos scrpos;
 
+	if (ch_getflags() & CH_HELPFILE)
+		return;
 	get_scrpos(&scrpos);
 	if (scrpos.pos == NULL_POSITION)
 		return;
-	lmark.m_scrpos = scrpos;
-	lmark.m_ifile = curr_ifile;
+	marks[LASTMARK].m_scrpos = scrpos;
+	marks[LASTMARK].m_ifile = curr_ifile;
 }
 
 /*
@@ -217,7 +196,7 @@ gomark(c)
 	 * it has not been set to anything yet,
 	 * set it to the beginning of the current file.
 	 */
-	if (m == &lmark && m->m_scrpos.pos == NULL_POSITION)
+	if (m == &marks[LASTMARK] && m->m_scrpos.pos == NULL_POSITION)
 	{
 		m->m_ifile = curr_ifile;
 		m->m_scrpos.pos = ch_zero();
@@ -265,4 +244,18 @@ markpos(c)
 		return (NULL_POSITION);
 	}
 	return (m->m_scrpos.pos);
+}
+
+/*
+ * Clear the marks associated with a specified ifile.
+ */
+	public void
+unmark(ifile)
+	IFILE ifile;
+{
+	int i;
+
+	for (i = 0;  i < NMARKS;  i++)
+		if (marks[i].m_ifile == ifile)
+			marks[i].m_scrpos.pos = NULL_POSITION;
 }
