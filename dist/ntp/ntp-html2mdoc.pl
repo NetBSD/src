@@ -142,6 +142,7 @@ while (<>) {
 	s/\n+\s*/\n/g;
 	s/\n.Nm\n([,\.:]) /\n.Nm "" $1\n/g;
 	s/\n\.(Pa|%T) (.*)\n([,\.:]) /\n.$1 $2 $3\n/g;
+	s/\s+\n/\n/g;
 	s/\n$//;
 	print $_, "\n" if length > 0;
 }
