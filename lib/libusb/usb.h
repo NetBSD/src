@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.9 2000/08/20 15:57:02 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.10 2000/09/24 02:13:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -74,6 +74,7 @@ typedef struct hid_item {
 
 /* Obtaining a report descriptor, descr.c: */
 report_desc_t hid_get_report_desc(int file);
+report_desc_t hid_use_report_desc(unsigned char *data, unsigned int size);
 void hid_dispose_report_desc(report_desc_t);
 
 /* Parsing of a HID report descriptor, parse.c: */
@@ -87,6 +88,8 @@ int hid_locate(report_desc_t d, unsigned int usage, enum hid_kind k, hid_item_t 
 const char *hid_usage_page(int i);
 const char *hid_usage_in_page(unsigned int u);
 void hid_init(const char *file);
+int hid_parse_usage_in_page(const char *name);
+int hid_parse_usage_page(const char *name);
 
 /* Extracting/insertion of data, data.c: */
 int hid_get_data(const void *p, const hid_item_t *h);

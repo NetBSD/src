@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.11 2000/07/05 15:45:29 msaitoh Exp $
+.\"	$NetBSD: usb.3,v 1.12 2000/09/24 02:13:24 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Sh NAME
 .Nm usb ,
 .Nm hid_get_report_desc ,
+.Nm hid_use_report_desc ,
 .Nm hid_dispose_report_desc ,
 .Nm hid_start_parse ,
 .Nm hid_end_parse ,
@@ -48,6 +49,8 @@
 .Fd #include <usb.h>
 .Ft report_desc_t
 .Fn hid_get_report_desc "int file"
+.Ft report_desc_t
+.Fn hid_use_report_desc "unsigned char *data" "unsigned int size"
 .Ft void
 .Fn hid_dispose_report_desc "report_desc_t d"
 .Ft hid_data_t
@@ -90,13 +93,19 @@ A report descriptor can be obtained by calling
 .Fn hid_get_report_desc
 with a file descriptor obtained by opening a
 .Xr uhid 4
-device.
-When the report descriptor is no longer needed it should be freed
-by calling
+device. Alternatively a data buffer containing the report descriptor can be
+passed into
+.Fn hid_use_report_desc .
+The data is copied into an internal structure. When the report descriptor
+is no longer needed it should be freed by calling
 .Fn hid_dispose_report_desc .
 The type
 .Fa report_desc_t
 is opaque and should be used when calling the parsing functions.
+If
+.Fn hid_dispose_report_desc
+fails it will return
+.Fa NULL .
 .Ss DESCRIPTOR PARSING FUNCTIONS
 To parse the report descriptor the
 .Fn hid_start_parse
