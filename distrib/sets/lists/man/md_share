@@ -116,6 +116,7 @@
 ./usr/share/man/cat4/mac68k/ae.0
 ./usr/share/man/cat4/mac68k/autoconf.0
 ./usr/share/man/cat4/mac68k/intro.0
+./usr/share/man/cat4/mac68k/iwm.0
 ./usr/share/man/cat4/mac68k/kmem.0
 ./usr/share/man/cat4/mac68k/mainbus.0
 ./usr/share/man/cat4/mac68k/mc.0
@@ -413,6 +414,7 @@
 ./usr/share/man/man4/mac68k/ae.4
 ./usr/share/man/man4/mac68k/autoconf.4
 ./usr/share/man/man4/mac68k/intro.4
+./usr/share/man/man4/mac68k/iwm.4
 ./usr/share/man/man4/mac68k/kmem.4
 ./usr/share/man/man4/mac68k/mainbus.4
 ./usr/share/man/man4/mac68k/mc.4
