@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.28 1998/09/24 21:18:13 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.29 1998/10/06 21:10:46 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.28 1998/09/24 21:18:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.29 1998/10/06 21:10:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,6 +294,21 @@ hwrpb_checksum()
 }
 
 void
+hwrpb_primary_init()
+{
+	struct pcs *p;
+
+	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
+
+	/* Initialize the primary's HWPCB and the Virtual Page Table Base. */
+	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
+	    sizeof proc0.p_addr->u_pcb.pcb_hw);
+	hwrpb->rpb_vptb = VPTBASE;
+
+	hwrpb->rpb_checksum = hwrpb_checksum();
+}
+
+void
 hwrpb_restart_setup()
 {
 	struct pcs *p;
@@ -301,10 +316,6 @@ hwrpb_restart_setup()
 	/* Clear bootstrap-in-progress flag since we're done bootstrapping */
 	p = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	p->pcs_flags &= ~PCS_BIP;
-
-	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
-	    sizeof proc0.p_addr->u_pcb.pcb_hw);
-	hwrpb->rpb_vptb = VPTBASE;
 
 	/* when 'c'ontinuing from console halt, do a dump */
 	hwrpb->rpb_rest_term = (u_int64_t)&XentRestart;
