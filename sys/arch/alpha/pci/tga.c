@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.18 1997/04/13 22:09:32 cgd Exp $ */
+/* $NetBSD: tga.c,v 1.19 1997/07/23 08:05:36 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.18 1997/04/13 22:09:32 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.19 1997/07/23 08:05:36 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,11 @@ tga_getdevconfig(memt, pc, tag, dc)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    &dc->dc_pcipaddr, &pcisize, &flags))
 		return;
-	if (flags == 0)					/* XXX */
-		panic("tga memory not cachable");
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)		/* XXX */
+		panic("tga memory not cacheable");
 
-	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize, flags, &dc->dc_vaddr))
+	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize,
+	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_vaddr))
 		return;
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 
