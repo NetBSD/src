@@ -1,4 +1,4 @@
-/*	$NetBSD: tga.c,v 1.12.2.2 1996/12/08 00:31:36 cgd Exp $	*/
+/*	$NetBSD: tga.c,v 1.12.2.3 1997/01/25 01:33:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -47,9 +47,9 @@
 #include <alpha/pci/bt485reg.h>
 
 #include <dev/rcons/raster.h>
+#include <machine/wsconsio.h>
 #include <alpha/wscons/wscons_raster.h>
-#include <alpha/wscons/wsconsvar.h>
-#include <machine/fbio.h>
+#include <alpha/wscons/wsdisplayvar.h>
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
@@ -73,7 +73,7 @@ void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 
 struct tga_devconfig tga_console_dc;
 
-struct wscons_emulfuncs tga_emulfuncs = {
+struct wsdisplay_emulops tga_emulops = {
 	rcons_cursor,			/* could use hardware cursor; punt */
 	rcons_putstr,
 	rcons_copycols,
@@ -82,8 +82,13 @@ struct wscons_emulfuncs tga_emulfuncs = {
 	rcons_eraserows,
 };
 
-int	tgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	tgammap __P((void *, off_t, int));
+int	tga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	tga_mmap __P((void *, off_t, int));
+
+struct wsdisplay_accessops tga_accessops = {
+	tga_ioctl,
+	tga_mmap,
+};
 
 void	tga_blank __P((struct tga_devconfig *));
 void	tga_unblank __P((struct tga_devconfig *));
@@ -220,8 +225,7 @@ tgaattach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct tga_softc *sc = (struct tga_softc *)self;
-	struct wscons_attach_args waa;
-	struct wscons_odev_spec *wo;
+	struct wsemuldisplaydev_attach_args aa;
 	pci_intr_handle_t intrh;
 	const char *intrstr;
 	u_int8_t rev;
@@ -294,38 +298,21 @@ tgaattach(parent, self, aux)
 		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 		    intrstr);
 
-	waa.waa_isconsole = console;
+	aa.console = console;
+	aa.emulops = &tga_emulops;
+	aa.emulcookie = &sc->sc_dc->dc_rcons;
+	aa.nrows = sc->sc_dc->dc_rcons.rc_maxrow;
+	aa.ncols = sc->sc_dc->dc_rcons.rc_maxcol;
+	aa.crow = 0;			/* doesn't matter for console */
+	aa.ccol = 0;			/* doesn't matter for console */
+	aa.accessops = &tga_accessops;
+	aa.accesscookie = sc;
 
-	wo = &waa.waa_odev_spec;
-
-	wo->wo_emulfuncs = &tga_emulfuncs;
-	wo->wo_emulfuncs_cookie = &sc->sc_dc->dc_rcons;
-
-	wo->wo_ioctl = tgaioctl;
-	wo->wo_mmap = tgammap;
-	wo->wo_miscfuncs_cookie = sc;
-
-	wo->wo_nrows = sc->sc_dc->dc_rcons.rc_maxrow;
-	wo->wo_ncols = sc->sc_dc->dc_rcons.rc_maxcol;
-	wo->wo_crow = 0;
-	wo->wo_ccol = 0;
-
-	config_found(self, &waa, tgaprint);
+	config_found(self, &aa, wsemuldisplaydevprint);
 }
 
 int
-tgaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	if (pnp)
-		printf("wscons at %s", pnp);
-	return (UNCONF);
-}
-
-int
-tgaioctl(v, cmd, data, flag, p)
+tga_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
@@ -337,66 +324,80 @@ tgaioctl(v, cmd, data, flag, p)
 	const struct tga_ramdac_conf *tgar = dc->dc_tgaconf->tgac_ramdac;
 
 	switch (cmd) {
-	case FBIOGTYPE:
-#define fbt ((struct fbtype *)data)
-		fbt->fb_type = FBTYPE_TGA;
-		fbt->fb_height = sc->sc_dc->dc_ht;
-		fbt->fb_width = sc->sc_dc->dc_wid;
-		fbt->fb_depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
-		fbt->fb_cmsize = 256;		/* XXX ??? */
-		fbt->fb_size = sc->sc_dc->dc_tgaconf->tgac_cspace_size;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_TGA;
+		return (0);
+
+	case WSDISPLAYIO_GINFO:
+#define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
+		wsd_fbip->height = sc->sc_dc->dc_ht;
+		wsd_fbip->width = sc->sc_dc->dc_wid;
+		wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
+		wsd_fbip->cmsize = 256;		/* XXX ??? */
 #undef fbt
 		return (0);
 
-	case FBIOPUTCMAP:
-		return (*tgar->tgar_set_cmap)(dc, (struct fbcmap *)data);
+	case WSDISPLAYIO_GETCMAP:
+		return (*tgar->tgar_get_cmap)(dc,
+		    (struct wsdisplay_cmap *)data);
 
-	case FBIOGETCMAP:
-		return (*tgar->tgar_get_cmap)(dc, (struct fbcmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return (*tgar->tgar_set_cmap)(dc,
+		    (struct wsdisplay_cmap *)data);
 
-	case FBIOGATTR:
-		return (ENOTTY);			/* XXX ? */
-
-	case FBIOSVIDEO:
-		if (*(int *)data == FBVIDEO_OFF)
+	case WSDISPLAYIO_GVIDEO:
+		if (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF)
 			tga_blank(sc->sc_dc);
 		else
 			tga_unblank(sc->sc_dc);
 		return (0);
 
-	case FBIOGVIDEO:
-		*(int *)data = dc->dc_blanked ? FBVIDEO_OFF : FBVIDEO_ON;
+	case WSDISPLAYIO_SVIDEO:
+		*(u_int *)data = dc->dc_blanked ?
+		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
 		return (0);
 
-	case FBIOSCURSOR:
-		return (*tgar->tgar_set_cursor)(dc, (struct fbcursor *)data);
+	case WSDISPLAYIO_GCURPOS:
+		return (*tgar->tgar_get_curpos)(dc,
+		    (struct wsdisplay_curpos *)data);
 
-	case FBIOGCURSOR:
-		return (*tgar->tgar_get_cursor)(dc, (struct fbcursor *)data);
+	case WSDISPLAYIO_SCURPOS:
+		return (*tgar->tgar_set_curpos)(dc,
+		    (struct wsdisplay_curpos *)data);
 
-	case FBIOSCURPOS:
-		return (*tgar->tgar_set_curpos)(dc, (struct fbcurpos *)data);
+	case WSDISPLAYIO_GCURMAX:
+		return (*tgar->tgar_get_curmax)(dc,
+		    (struct wsdisplay_curpos *)data);
 
-	case FBIOGCURPOS:
-		return (*tgar->tgar_get_curpos)(dc, (struct fbcurpos *)data);
+	case WSDISPLAYIO_GCURSOR:
+		return (*tgar->tgar_get_cursor)(dc,
+		    (struct wsdisplay_cursor *)data);
 
-	case FBIOGCURMAX:
-		return (*tgar->tgar_get_curmax)(dc, (struct fbcurpos *)data);
+	case WSDISPLAYIO_SCURSOR:
+		return (*tgar->tgar_set_cursor)(dc,
+		    (struct wsdisplay_cursor *)data);
 	}
 	return (-1);
 }
 
 int
-tgammap(v, offset, prot)
+tga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
 	int prot;
 {
+
+	/* XXX NEW MAPPING CODE... */
+
+#if 1
 	struct tga_softc *sc = v;
 
 	if (offset > sc->sc_dc->dc_tgaconf->tgac_cspace_size)
 		return -1;
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
+#else
+	return (-1);
+#endif
 }
 
 void
@@ -406,9 +407,9 @@ tga_console(iot, memt, pc, bus, device, function)
 	int bus, device, function;
 {
 	struct tga_devconfig *dcp = &tga_console_dc;
-	struct wscons_odev_spec wo;
 
-	tga_getdevconfig(memt, pc, pci_make_tag(pc, bus, device, function), dcp);
+	tga_getdevconfig(memt, pc,
+	    pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
@@ -425,17 +426,8 @@ tga_console(iot, memt, pc, bus, device, function)
 	 */
 	(*dcp->dc_tgaconf->tgac_ramdac->tgar_init)(dcp, 0);
 
-	wo.wo_emulfuncs = &tga_emulfuncs;
-	wo.wo_emulfuncs_cookie = &dcp->dc_rcons;
-
-	/* ioctl and mmap are unused until real attachment. */
-
-	wo.wo_nrows = dcp->dc_rcons.rc_maxrow;
-	wo.wo_ncols = dcp->dc_rcons.rc_maxcol;
-	wo.wo_crow = 0;
-	wo.wo_ccol = 0;
-
-	wscons_attach_console(&wo);
+        wsdisplay_attach_console(&tga_emulops, &dcp->dc_rcons,
+	    dcp->dc_rcons.rc_maxrow, dcp->dc_rcons.rc_maxcol, 0, 0);
 }
 
 /*
@@ -467,50 +459,52 @@ tga_unblank(dc)
  * Functions to manipulate the built-in cursor handing hardware.
  */
 int
-tga_builtin_set_cursor(dc, fbc)
+tga_builtin_set_cursor(dc, cursorp)
 	struct tga_devconfig *dc;
-	struct fbcursor *fbc;
+	struct wsdisplay_cursor *cursorp;
 {
 	int v;
 #if 0
 	int count;
 #endif
 
-	v = fbc->set;
+	v = cursorp->which;
 #if 0
-	if (v & FB_CUR_SETCMAP)			/* XXX should be supported */
+	if (v & WSDISPLAY_CURSOR_DOCMAP)	/* XXX should be supported */
 		return EINVAL;
-	if (v & FB_CUR_SETSHAPE) {
-		if ((u_int)fbc->size.x != 64 || (u_int)fbc->size.y > 64)
+	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
+		if ((u_int)cursorp->size.x != 64 ||
+		    (u_int)cursorp->size.y > 64)
 			return (EINVAL);
 		/* The cursor is 2 bits deep, and there is no mask */
-		count = (fbc->size.y * 64 * 2) / NBBY;
-		if (!useracc(fbc->image, count, B_READ))
+		count = (cursorp->size.y * 64 * 2) / NBBY;
+		if (!useracc(cursorp->image, count, B_READ))
 			return (EFAULT);
 	}
-	if (v & FB_CUR_SETHOT)			/* not supported */
+	if (v & WSDISPLAY_CURSOR_DOHOT)		/* not supported */
 		return EINVAL;
 #endif
 
 	/* parameters are OK; do it */
-	if (v & FB_CUR_SETCUR) {
-		if (fbc->enable)
+	if (v & WSDISPLAY_CURSOR_DOCUR) {
+		if (cursorp->enable)
 			dc->dc_regs[TGA_REG_VVVR] |= 0x04;	/* XXX */
 		else
 			dc->dc_regs[TGA_REG_VVVR] &= ~0x04;	/* XXX */
 	}
 #if 0
-	if (v & FB_CUR_SETPOS) {
-		dc->dc_regs[TGA_REG_CXYR] =
-		    ((fbc->pos.y & 0xfff) << 12) | (fbc->pos.x & 0xfff);
+	if (v & WSDISPLAY_CURSOR_DOPOS) {
+		dc->dc_regs[TGA_REG_CXYR] = ((cursorp->pos.y & 0xfff) << 12) |
+		    (cursorp->pos.x & 0xfff);
 	}
-	if (v & FB_CUR_SETCMAP) {
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		/* XXX */
 	}
-	if (v & FB_CUR_SETSHAPE) {
+	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		dc->dc_regs[TGA_REG_CCBR] =
-		    (dc->dc_regs[TGA_REG_CCBR] & ~0xfc00) | (fbc->size.y << 10);
-		copyin(fbc->image, (char *)(dc->dc_vaddr +
+		    (dc->dc_regs[TGA_REG_CCBR] & ~0xfc00) |
+		    (cursorp->size.y << 10);
+		copyin(cursorp->image, (char *)(dc->dc_vaddr +
 		    (dc->dc_regs[TGA_REG_CCBR] & 0x3ff)),
 		    count);				/* can't fail. */
 	}
@@ -519,24 +513,25 @@ tga_builtin_set_cursor(dc, fbc)
 }
 
 int
-tga_builtin_get_cursor(dc, fbc)
+tga_builtin_get_cursor(dc, cursorp)
 	struct tga_devconfig *dc;
-	struct fbcursor *fbc;
+	struct wsdisplay_cursor *cursorp;
 {
 	int count, error;
 
-	fbc->set = FB_CUR_SETALL & ~(FB_CUR_SETHOT | FB_CUR_SETCMAP);
-	fbc->enable = (dc->dc_regs[TGA_REG_VVVR] & 0x04) != 0;
-	fbc->pos.x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
-	fbc->pos.y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
-	fbc->size.x = 64;
-	fbc->size.y = (dc->dc_regs[TGA_REG_CCBR] >> 10) & 0x3f;
+	cursorp->which = WSDISPLAY_CURSOR_DOALL &
+	    ~(WSDISPLAY_CURSOR_DOHOT | WSDISPLAY_CURSOR_DOCMAP);
+	cursorp->enable = (dc->dc_regs[TGA_REG_VVVR] & 0x04) != 0;
+	cursorp->pos.x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
+	cursorp->pos.y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
+	cursorp->size.x = 64;
+	cursorp->size.y = (dc->dc_regs[TGA_REG_CCBR] >> 10) & 0x3f;
 
-	if (fbc->image != NULL) {
-		count = (fbc->size.y * 64 * 2) / NBBY;
+	if (cursorp->image != NULL) {
+		count = (cursorp->size.y * 64 * 2) / NBBY;
 		error = copyout((char *)(dc->dc_vaddr +
 		      (dc->dc_regs[TGA_REG_CCBR] & 0x3ff)),
-		    fbc->image, count);
+		    cursorp->image, count);
 		if (error)
 			return (error);
 		/* No mask */
@@ -546,33 +541,33 @@ tga_builtin_get_cursor(dc, fbc)
 }
 
 int
-tga_builtin_set_curpos(dc, fbp)
+tga_builtin_set_curpos(dc, curposp)
 	struct tga_devconfig *dc;
-	struct fbcurpos *fbp;
+	struct wsdisplay_curpos *curposp;
 {
 
 	dc->dc_regs[TGA_REG_CXYR] =
-	    ((fbp->y & 0xfff) << 12) | (fbp->x & 0xfff);
+	    ((curposp->y & 0xfff) << 12) | (curposp->x & 0xfff);
 	return (0);
 }
 
 int
-tga_builtin_get_curpos(dc, fbp)
+tga_builtin_get_curpos(dc, curposp)
 	struct tga_devconfig *dc;
-	struct fbcurpos *fbp;
+	struct wsdisplay_curpos *curposp;
 {
 
-	fbp->x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
-	fbp->y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
+	curposp->x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
+	curposp->y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
 	return (0);
 }
 
 int
-tga_builtin_get_curmax(dc, fbp)
+tga_builtin_get_curmax(dc, curposp)
 	struct tga_devconfig *dc;
-	struct fbcurpos *fbp;
+	struct wsdisplay_curpos *curposp;
 {
 
-	fbp->x = fbp->y = 64;
+	curposp->x = curposp->y = 64;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tga_bt463.c,v 1.2 1996/04/12 06:09:13 cgd Exp $	*/
+/*	$NetBSD: tga_bt463.c,v 1.2.2.1 1997/01/25 01:33:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include <alpha/pci/tgavar.h>
 #include <alpha/pci/bt485reg.h>
 
-#include <machine/fbio.h>
+#include <machine/wsconsio.h>
 
 const struct tga_ramdac_conf tga_ramdac_bt463 = {
 	"Bt463",
