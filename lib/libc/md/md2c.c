@@ -1,4 +1,4 @@
-/*	$NetBSD: md2c.c,v 1.1 2001/03/19 04:13:17 atatat Exp $	*/
+/*	$NetBSD: md2c.c,v 1.2 2001/03/20 11:47:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,8 +125,7 @@ MD2Update(context, input, inputLen)
 		piece = 32 - context->i;
 		if ((inputLen - idx) < piece)
 			piece = inputLen - idx;
-		memcpy(&context->X[context->i], &input[idx],
-		    (unsigned long) piece);
+		memcpy(&context->X[context->i], &input[idx], (size_t)piece);
 		if ((context->i += piece) == 32)
 			MD2Transform(context); /* resets i */
 	}
@@ -152,7 +151,7 @@ MD2Final(digest, context)
 	MD2Update(context, &context->C[0], (unsigned int) sizeof(context->C));
 
 	/* copy out final digest */
-	memcpy(digest, &context->X[0], (unsigned long) 16);
+	memcpy(digest, &context->X[0], (size_t)16);
 
 	/* reset the context */
 	MD2Init(context);
