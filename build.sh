@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.4 2001/10/24 02:39:56 tv Exp $
+#  $NetBSD: build.sh,v 1.5 2001/10/24 14:00:24 bjh21 Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -17,8 +17,11 @@ bomb () {
 getarch () {
 	# Translate a MACHINE into a default MACHINE_ARCH.
 	case $MACHINE in
-		acorn32|cats|dnard|evbarm|hpcarm|netwinder)
+		dnard|evbarm|hpcarm)
 			MACHINE_ARCH=arm;;
+
+		acorn32|arm32|cats|netwinder)
+			MACHINE_ARCH=arm32;;
 
 		sun2)
 			MACHINE_ARCH=m68000;;
@@ -44,7 +47,7 @@ getarch () {
 		dreamcast|evbsh3|hpcsh)
 			MACHINE_ARCH=sh3el;;
 
-		alpha|arm26|i386|sparc|sparc64|vax|x86_64)
+		alpha|i386|sparc|sparc64|vax|x86_64)
 			MACHINE_ARCH=$MACHINE;;
 
 		*)	bomb "unknown target MACHINE: $MACHINE";;
@@ -189,7 +192,7 @@ if ${rebuildmake-false} || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; the
 	cat >$makeprog <<EOF
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.4 2001/10/24 02:39:56 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.5 2001/10/24 14:00:24 bjh21 Exp $
 #
 exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
 USETOOLS=yes USE_NEW_TOOLCHAIN=yes \${1+\$@}
