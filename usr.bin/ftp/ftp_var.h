@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.20.2.1 1997/11/18 01:01:37 mellon Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.20.2.2 1998/11/10 18:49:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -40,6 +40,10 @@
  */
 
 #include <sys/param.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <setjmp.h>
 #include <stringlist.h>
 
@@ -51,6 +55,7 @@
 
 #define HASHBYTES	1024
 #define FTPBUFLEN	MAXPATHLEN + 200
+#define MAX_IN_PORT_T	0xffffU
 
 #define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
 
@@ -96,6 +101,7 @@ int	code;			/* return/reply code for ftp command */
 int	crflag;			/* if 1, strip car. rets. on ascii gets */
 char	pasv[64];		/* passive port for proxy data connection */
 int	passivemode;		/* passive mode enabled */
+int	activefallback;		/* fall back to active mode if passive fails */
 char   *altarg;			/* argv[1] with no shell-like preprocessing  */
 char	ntin[17];		/* input translation table */
 char	ntout[17];		/* output translation table */
@@ -114,8 +120,10 @@ char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
+int	retry_connect;		/* seconds between retrying connection */
 int	ttywidth;		/* width of tty */
 char   *tmpdir;			/* temporary directory */
+FILE   *ttyout;			/* stdout, or stderr if retrieving to stdout */
 
 #ifndef SMALL
 int	  editing;		/* command line editing enabled */
@@ -135,9 +143,9 @@ char   *hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
 int	unix_proxy;		/* proxy is unix, can use binary for ascii */
 
-u_int16_t	ftpport;	/* port number to use for ftp connections */
-u_int16_t	httpport;	/* port number to use for http connections */
-u_int16_t	gateport;	/* port number to use for gateftp connections */
+in_port_t	ftpport;	/* port number to use for ftp connections */
+in_port_t	httpport;	/* port number to use for http connections */
+in_port_t	gateport;	/* port number to use for gateftp connections */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 
@@ -152,6 +160,13 @@ int     cpend;                  /* flag: if != 0, then pending server reply */
 int	mflag;			/* flag: if != 0, then active multi command */
 
 int	options;		/* used during socket creation */
+
+int	sndbuf_size;		/* socket send buffer size */
+int	sndbuf_manual;		/* sndbuf_size was set manually; override
+				   conf file */
+int	rcvbuf_size;		/* socket receive buffer size */
+int	rcvbuf_manual;		/* rcvbuf_size was set manually; override
+				   conf file */
 
 /*
  * Format of command table.
@@ -174,6 +189,6 @@ struct macel {
 	char *mac_end;		/* end of macro in macbuf */
 };
 
-int macnum;			/* number of defined macros */
+int	macnum;			/* number of defined macros */
 struct macel macros[16];
-char macbuf[4096];
+char	macbuf[4096];
