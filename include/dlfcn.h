@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.9 1998/09/05 13:11:07 pk Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.10 1999/05/19 14:50:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ extern void	*dlsym __P((void *, const char *));
 extern int	dladdr __P((void *, Dl_info *));
 extern int	dlctl __P((void *, int, void *));
 #endif
-extern char	*dlerror __P((void));
+extern __aconst char *dlerror __P((void));
 __END_DECLS
 
 /* Values for dlopen `mode'. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.14 1999/01/28 23:59:49 fvdl Exp $	*/
+/*	$NetBSD: common.c,v 1.15 1999/05/19 14:50:50 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ dlctl(fd, cmd, arg)
 	return ((*ld_entry)->dlctl)(fd, cmd, arg);
 }
 
-char *
+__aconst char *
 dlerror()
 {
 	int     error;

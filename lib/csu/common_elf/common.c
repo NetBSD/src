@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 1999/05/19 14:47:12 kleink Exp $	*/
+/*	$NetBSD: common.c,v 1.3 1999/05/19 14:50:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -116,7 +116,7 @@ dlctl(fd, cmd, arg)
 }
 #endif
 
-char *
+__aconst char *
 dlerror()
 {
 
