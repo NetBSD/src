@@ -1,3 +1,5 @@
+/*	$NetBSD: key_debug.c,v 1.5 1999/07/03 21:32:48 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME @(#)$Id: key_debug.c,v 1.4 1999/07/01 22:47:56 thorpej Exp $ */
+/* KAME @(#)$Id: key_debug.c,v 1.5 1999/07/03 21:32:48 thorpej Exp $ */
 
 #ifdef _KERNEL
 # define KERNEL

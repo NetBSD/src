@@ -1,3 +1,5 @@
+/*	$NetBSD: ipcomp_output.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
