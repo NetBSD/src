@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.3 1999/01/22 22:43:45 thorpej Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.4 1999/02/19 19:48:06 drochner Exp $	*/
 	
 /*
  * ROM startup
@@ -6,8 +6,8 @@
  */
 
 #include <machine/asm.h>
-
-#define CR0_PE 1
+#define	addr32	.byte 0x67
+#define	data32	.byte 0x66
 
 reloc = RELOC
 
@@ -16,23 +16,20 @@ reloc = RELOC
 #endif
 bootstack = BOOTSTACK
 
-#define opsize		.byte 0x66
-#define addrsize	.byte 0x67
-
 	.text
+textstart:
 
 /* At entry, the processor is in 16 bit real mode and the code is being
  * executed from an address it was not linked to. Code must be pic and
  * 32 bit sensitive until things are fixed up.
  */
-#ifdef BOOTROM
 	.word	0xaa55			/* bios extension signature */
 	.byte	0			/* no. of 512B blocks - set by genprom */
 	jmp	1f			/* enter from bios here */
 	.byte	0			/* checksum */
 #ifdef PCIROM
 	. = 0x18			/* required offset of pointer */
-	.word	(pcidata - reloc)
+	.word	(pcidata - textstart)
 pcidata:
 	.ascii	"PCIR"
 	.word	PCI_VID
@@ -47,15 +44,21 @@ pcidata:
 	.word	0			/* reserved */
 pcidataend:
 #endif
-1:	push	%eax
+1:
+	data32
+	pushl	%eax
 	push	%ds
-	xor	%eax,%eax
-	mov	%ax,%ds
+	xorl	%eax,%eax
+	movl	%ax, %ds
+
+	/* check signature */
 	.byte	0xa1			/* MOV 0x304,%ax */
 	.word	0x304
 	.byte	0x3d			/* CMP $0x4d52, %ax  == 'MR' */
 	.word	0x4d52
-	jz	2f
+	jz	2f	/* we have been here - don't clobber saved vector */
+
+	/* save old INT19 vector to a secret location (???) */
 	.byte	0xa1			/* MOV 0x64, %ax */
 	.word	0x64
 	.byte	0xa3			/* MOV %ax, 0x300 */
@@ -64,21 +67,92 @@ pcidataend:
 	.word	0x66
 	.byte	0xa3			/* MOV %ax, 0x302 */
 	.word	0x302
-	.byte	0xb8			/* MOV $_C_LABEL(start)-RELOCADDR, %ax */
-	.word	(_C_LABEL(start)-reloc)
+
+	/* set INT19 vector to our entry */
+	data32
+	movl	$(_C_LABEL(start)-reloc), %eax
 	.byte	0xa3			/* MOV %ax, 0x64 */
 	.word	0x64
-	mov	%cs,%ax
+	movl	%cs, %ax
 	.byte	0xa3			/* MOV %ax, 0x66 */
 	.word	0x66
+
+	/* set a signature (is this a save location?) */
 	.byte	0xb8			/* MOV 'MR',%ax */
 	.word	0x4d52
 	.byte	0xa3			/* MOV %ax, 0x304 */
 	.word	0x304
+
 2:	pop	%ds
-	pop	%eax
-	lret
+	data32
+	popl	%eax
+
+#ifdef ROMDEBUG
+	push	%ds
+	pushl	%eax
+	movl	%cs, %ax
+	movl	%ax, %ds
+	popl	%eax
+	data32
+	pushl	%esi
+	data32
+	movl $(imesg-textstart), %esi
+	data32
+	call message
+	data32
+	popl	%esi
+	pop	%ds
 #endif
+
+	lret
+
+#ifdef ROMDEBUG
+
+imesg:	.asciz "bsd rom installed\r\n"
+cmesg:	.asciz "bsd rom called\r\n"
+rmesg:	.asciz "bsd rom relocated\r\n"
+emesg:	.asciz "bsd rom done\r\n"
+
+/*
+ * message: write the message in %ds:%esi to console
+ */
+message:
+	data32
+	pushl	%eax
+	data32
+	pushl	%ebx
+	data32
+	pushl	%edx
+
+nextb:
+	cld
+	lodsb			/* load a byte into %al */
+	testb	%al, %al
+	data32
+	jz	done
+
+	movb	$0x0e, %ah
+	data32
+	movl	$0x0001, %ebx
+	int	$0x10
+
+	data32
+	jmp	nextb
+done:
+
+	movb	$0x00, %ah	/* wait for keypress */
+	int $0x16
+
+	data32
+	popl	%edx
+	data32
+	popl	%ebx
+	data32
+	popl	%eax
+	data32
+	ret
+
+#endif /* ROMDEBUG */
 
 /**************************************************************************
 START - Where all the fun begins....
@@ -88,52 +162,78 @@ ENTRY(start)
 	cli
 	cld
 
-#ifdef BOOTROM				/* relocate ourselves */
-        xor     %esi, %esi		/* zero for ROMs */
-#else
-	.byte	0xbe			/* MOV $0x100,%si -- 100h for .COM */
-	.word	0x100
+#ifdef ROMDEBUG
+	movl	%cs, %ax
+	movl	%ax, %ds
+	data32
+	movl $(cmesg-textstart), %esi
+	data32
+	call message
 #endif
-	xor	%edi,%edi
-	.byte	0xb8			/* MOV $RELOCADDR>>4, %ax */
-	.word	(reloc>>4)
-        mov     %ax, %es
-	.byte	0xb9			/* MOV $ROMSIZE, %cx */
-	.word   (_C_LABEL(edata)-reloc)
+
+	/* copy to reloc and jump to copy */
+        xorl	%esi, %esi
+	xorl	%edi, %edi
+	data32
+	movl	$(reloc>>4), %eax
+        movl	%ax, %es
+	data32
+	movl	$(_C_LABEL(edata)-reloc), %ecx
         cs
         rep
         movsb
-	opsize
-	ljmp	$(reloc>>4),$1f-reloc		/* Jmp to RELOC:1f */
+	data32
+	ljmp	$(reloc>>4), $1f-reloc		/* Jmp to RELOC:1f */
 1:
 	nop
-	mov	%cs,%ax
-	mov	%ax,%ds
-	mov	%ax,%es
-	mov	%ax,%ss
+	movl	%cs, %ax
+	movl	%ax, %ds
+	movl	%ax, %es
+	movl	%ax, %ss
+#if 0 /* XXX why doesn't this work? */
+	data32
+	movl	$bootstack, %eax
+	movl	%eax, %esp
+#else
 	.byte	0xb8			/* MOV $STACKADDR, %ax */
 	.word	bootstack
-	mov	%eax,%esp
+	movl	%eax, %esp
+#endif
 
 	/* clear bss */
-	xorl %eax,%eax
-	movl $_C_LABEL(edata),%edi
-	movl $_C_LABEL(end),%ecx
-	subl %edi,%ecx
+	xorl %eax, %eax
+	movl $_C_LABEL(edata), %edi
+	movl $_C_LABEL(end), %ecx
+	subl %edi, %ecx
 	cld
 	rep
 	stosb
 
-	opsize
+#ifdef ROMDEBUG
+	data32
+	movl $rmesg, %esi
+	data32
+	call message
+#endif
+
+	data32
 	call	_C_LABEL(real_to_prot)
 	call	_C_LABEL(main)
 
 	.globl	_C_LABEL(exit)
 _C_LABEL(exit):
 	call	_C_LABEL(prot_to_real)
-#ifdef BOOTROM
-	xor	%eax,%eax
-	mov	%ax,%ds
+
+#ifdef ROMDEBUG
+	data32
+	movl $emesg, %esi
+	data32
+	call message
+#endif
+
+	/* jump to saved vector */
+	xor	%eax, %eax
+	movl	%ax, %ds
 	.byte	0xa1			/* MOV 0x302, %ax */
 	.word	0x302
 	push	%eax
@@ -141,11 +241,6 @@ _C_LABEL(exit):
 	.word	0x300
 	push	%eax
 	lret
-#else
-	sti
-	movb $0x4c,%ah /* return */
-	int $0x21
-#endif
 
 /**************************************************************************
 GLOBAL DESCRIPTOR TABLE
@@ -185,21 +280,25 @@ gdtarg:
 	.word	gdtlen-1		/* limit */
 	.long	gdt			/* addr */
 
+CR0_PE		=	0x1
+
 /**************************************************************************
 REAL_TO_PROT - Go from REAL mode to Protected Mode
 **************************************************************************/
 ENTRY(real_to_prot)
 	cli
+
 	cs
-	addrsize
+	addr32
 	lgdt	gdtarg-reloc
-	mov	%cr0, %eax
-	opsize
-	or	$CR0_PE, %eax
+
+	movl	%cr0, %eax
+	data32
+	orl	$CR0_PE, %eax
 	mov	%eax, %cr0		/* turn on protected mode */
 
 	/* jump to relocation, flush prefetch queue, and reload %cs */
-	opsize
+	data32
 	ljmp	$bootcodeseg, $1f
 1:
 	/* reload other segment registers */
@@ -207,9 +306,9 @@ ENTRY(real_to_prot)
 	movl	%ax, %ds
 	movl	%ax, %es
 	movl	%ax, %ss
-	add	$reloc,%esp		/* Fix up stack pointer */
+	add	$reloc, %esp		/* Fix up stack pointer */
 	pop	%eax			/* Fix up return Address */
-	add	$reloc,%eax
+	add	$reloc, %eax
 	push	%eax
 	ret
 
@@ -219,32 +318,32 @@ PROT_TO_REAL - Go from Protected Mode to REAL Mode
 **************************************************************************/
 ENTRY(prot_to_real)
 	pop	%eax
-	sub	$reloc,%eax		/* Adjust return address */
+	sub	$reloc, %eax		/* Adjust return address */
 	push	%eax
-	sub	$reloc,%esp		/* Adjust stack pointer */
+	sub	$reloc, %esp		/* Adjust stack pointer */
 	ljmp	$bootrealseg, $1f	/* jump to a 16 bit segment */
 1:
 	/* clear the PE bit of CR0 */
 	mov	%cr0, %eax
-	opsize
-	andl 	$0!CR0_PE, %eax
+	data32
+	andl 	$~CR0_PE, %eax
 	mov	%eax, %cr0
 
 	/* make intersegment jmp to flush the processor pipeline
 	 * and reload CS register
 	 */
-	opsize
+	data32
 	ljmp	$(reloc)>>4, $2f-reloc
 2:
 	/* we are in real mode now
 	 * set up the real mode segment registers : DS, SS, ES
 	 */
-	mov	%cs, %ax
-	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %ss
+	movl	%cs, %ax
+	movl	%ax, %ds
+	movl	%ax, %es
+	movl	%ax, %ss
 	sti
-	opsize
+	data32
 	ret
 
 ENTRY(pbzero)
