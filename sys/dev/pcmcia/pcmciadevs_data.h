@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.106 2000/12/20 06:24:37 haya Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.107 2001/01/10 23:48:55 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
+ *	NetBSD: pcmciadevs,v 1.108 2001/01/10 23:47:56 ichiro Exp 
  */
 
 /*-
@@ -668,6 +668,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "MACNICA ME1 for JEIDA"	},
 	},
 	{
+	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
+	    PCMCIA_CIS_EMTAC_WLAN,
+	    0,
+	    "EMTAC Technology Corporation",
+	    "EMTAC A2424i 11Mbps WLAN Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -1190,6 +1197,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "RATOC System Inc.",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EMTAC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "EMTAC Technology Corporation",
 	    NULL,
 	},
 	{
