@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.12 1999/04/23 12:17:27 leo Exp $	
+.\"	$NetBSD: hardware,v 1.13 1999/04/28 19:02:56 leo Exp $	
 NetBSD/atari \*V runs on a TT030, Falcon and Hades. An FPU is not required.
 The minimum amount of RAM required is 4Mb. On the Hades, only the Tseng PCI
 VGA cards (et4000/et6000/et6100) are supported in the \*V release. When
@@ -28,13 +28,9 @@ Supported devices include:
 The builtin SCSI host adapter
 .	Bl -hyphen
 .		It
-Should support most SCSI-drives. The drives that are
-currently tested are:
-MAXTOR 7245S, MAXTOR 7080S, SEAGATE ST157N
+Should support most SCSI-drives.
 .		It
-Should support most tape drives. The drives that are
-currently tested are:
-TANDBERG 3600, TANDBERG 3800
+Should support most tape drives.
 .		It
 Should support most CD-ROM drives.
 .		It
@@ -55,13 +51,29 @@ A 3-button mouse (see build description in the FAQ!)
 .	It
 The parallel printer
 .	It
-Riebl (and possibly PAM) ethernet cards on the VME bus.
-.	It
-IDE interface on both Falcon and Hades
+IDE interface on both Falcon and Hades (includes ATAPI support)
 .	It
 The serial interface on the first 68901 UART (modem1)
 .	It
-ET4000/ET6000/ET6100-PCI (VGA) on the Hades.
+VME-bus devices (TT030/Hades)
+.	Bl -hyphen
+.		It
+BVME410 ethernet
+.		It
+Circad Leonardo 24-bit VME graphics adapter
+.		It
+Crazy Dots VME et4000 graphics adapter
+.		It
+Riebl (and possibly PAM) ethernet cards on the VME bus.
+.	El
+.	It
+PCI-bus devices (Hades only)
+.	Bl -hyphen
+.		It
+ET4000/ET6000/ET6100-PCI (VGA console)
+.		It
+Adaptec 2940U
+.	El
 .	It
 ISA-bus devices (Hades only)
 .	Bl -hyphen
@@ -71,4 +83,5 @@ Teles S0/16.3-ISA ISDN adapter (with I4B)
 .El
 .Pp
 This list is incomplete by definition. I can not test all SCSI peripherals,
-ISA cards or PCI cards...
+ISA cards or PCI cards... If you have problems with such a peripheral, please
+contact the port-atari mailing list.
