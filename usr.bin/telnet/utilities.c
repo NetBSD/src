@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.7 1998/03/04 13:51:58 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.7.10.1 2000/06/22 07:09:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.7 1998/03/04 13:51:58 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.7.10.1 2000/06/22 07:09:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,13 @@ __RCSID("$NetBSD: utilities.c,v 1.7 1998/03/04 13:51:58 christos Exp $");
 
 #if defined(TN3270)
 #include "../sys_curses/telextrn.h"
+#endif
+
+#ifdef AUTHENTICATION
+#include <libtelnet/auth.h>
+#endif
+#ifdef ENCRYPTION
+#include <libtelnet/encrypt.h>
 #endif
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
@@ -310,6 +317,7 @@ printsub(direction, pointer, length)
     int		  length;	/* length of suboption data */
 {
     register int i;
+    char buf[512];
     extern int want_status_response;
 
     if (showoptions || direction == 0 ||
@@ -499,6 +507,79 @@ printsub(direction, pointer, length)
 	    break;
 #endif
 
+#ifdef	ENCRYPTION
+	case TELOPT_ENCRYPT:
+		fprintf(NetTrace, "ENCRYPT");
+		if (length < 2) {
+			fprintf(NetTrace, " (empty suboption??\?)");
+			break;
+		}
+		switch (pointer[1]) {
+		case ENCRYPT_START:
+			fprintf(NetTrace, " START");
+			break;
+
+		case ENCRYPT_END:
+			fprintf(NetTrace, " END");
+			break;
+
+		case ENCRYPT_REQSTART:
+			fprintf(NetTrace, " REQUEST-START");
+			break;
+
+		case ENCRYPT_REQEND:
+			fprintf(NetTrace, " REQUEST-END");
+			break;
+
+		case ENCRYPT_IS:
+		case ENCRYPT_REPLY:
+			fprintf(NetTrace, " %s ", (pointer[1] == ENCRYPT_IS) ?
+			    "IS" : "REPLY");
+			if (length < 3) {
+				fprintf(NetTrace, " (partial suboption??\?)");
+				break;
+			}
+			if (ENCTYPE_NAME_OK(pointer[2]))
+				fprintf(NetTrace, "%s ",
+				    ENCTYPE_NAME(pointer[2]));
+			else
+				fprintf(NetTrace, " %d (unknown)", pointer[2]);
+
+			encrypt_printsub(&pointer[1], length - 1, buf,
+			    sizeof(buf));
+			fprintf(NetTrace, "%s", buf);
+			break;
+
+		case ENCRYPT_SUPPORT:
+			i = 2;
+			fprintf(NetTrace, " SUPPORT ");
+			while (i < length) {
+				if (ENCTYPE_NAME_OK(pointer[i]))
+					fprintf(NetTrace, "%s ",
+					    ENCTYPE_NAME(pointer[i]));
+				else
+					fprintf(NetTrace, "%d ", pointer[i]);
+				i++;
+			}
+			break;
+
+		case ENCRYPT_ENC_KEYID:
+			fprintf(NetTrace, " ENC_KEYID ");
+			goto encommon;
+
+		case ENCRYPT_DEC_KEYID:
+			fprintf(NetTrace, " DEC_KEYID ");
+			goto encommon;
+
+		default:
+			fprintf(NetTrace, " %d (unknown)", pointer[1]);
+		encommon:
+			for (i = 2; i < length; i++)
+				fprintf(NetTrace, " %d", pointer[i]);
+			break;
+		}
+		break;
+#endif	/* ENCRYPTION */
 
 	case TELOPT_LINEMODE:
 	    fprintf(NetTrace, "LINEMODE ");

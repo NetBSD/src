@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.6.4.1 2000/06/22 07:09:04 thorpej Exp $	*/
+/*	$NetBSD: key-proto.h,v 1.4.2.2 2000/06/22 07:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,67 +31,38 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)key-proto.h	8.1 (Berkeley) 6/4/93
  */
 
+/*
+ * Copyright (C) 1990 by the Massachusetts Institute of Technology
+ *
+ * Export of this software from the United States of America is assumed
+ * to require a specific license from the United States Government.
+ * It is the responsibility of any person or organization contemplating
+ * export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ */
+
+#ifndef	__KEY_PROTO__
+#define	__KEY_PROTO__
+
 #include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)authenc.c	8.2 (Berkeley) 5/30/95";
-#else
-__RCSID("$NetBSD: authenc.c,v 1.6.4.1 2000/06/22 07:09:04 thorpej Exp $");
+#define P __P
+
+int key_file_exists P((void));
+void key_lookup P((unsigned char *, Block));
+void key_stream_init P((Block, Block, int));
+unsigned char key_stream P((int, int));
 #endif
-#endif /* not lint */
-
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-#include "telnetd.h"
-#include <libtelnet/misc.h>
-
-	int
-telnet_net_write(str, len)
-	unsigned char *str;
-	int len;
-{
-	if (nfrontp + len < netobuf + BUFSIZ) {
-		memmove((void *)nfrontp, (void *)str, len);
-		nfrontp += len;
-		return(len);
-	}
-	return(0);
-}
-
-	void
-net_encrypt()
-{
-#ifdef	ENCRYPTION
-	char *s = (nclearto > nbackp) ? nclearto : nbackp;
-	if (s < nfrontp && encrypt_output) {
-		(*encrypt_output)((unsigned char *)s, nfrontp - s);
-	}
-	nclearto = nfrontp;
-#endif	/* ENCRYPTION */
-}
-
-	int
-telnet_spin()
-{
-	ttloop();
-	return(0);
-}
-
-	char *
-telnet_getenv(val)
-	char *val;
-{
-	return(getenv(val));
-}
-
-	char *
-telnet_gets(prompt, result, length, echo)
-	char *prompt;
-	char *result;
-	int length;
-	int echo;
-{
-	return((char *)0);
-}
-#endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */

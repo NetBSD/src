@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.6 1998/02/27 10:44:14 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.6.10.1 2000/06/22 07:09:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.6 1998/02/27 10:44:14 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.6.10.1 2000/06/22 07:09:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,10 @@ __RCSID("$NetBSD: terminal.c,v 1.6 1998/02/27 10:44:14 christos Exp $");
 
 #include "externs.h"
 #include "types.h"
+
+#ifdef ENCRYPTION
+#include <libtelnet/encrypt.h>
+#endif
 
 Ring		ttyoring, ttyiring;
 unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
@@ -213,13 +217,29 @@ getconnmode()
 setconnmode(force)
     int force;
 {
+#ifdef	ENCRYPTION
+    static int enc_passwd = 0;
+#endif
     register int newmode;
 
     newmode = getconnmode()|(force?MODE_FORCE:0);
 
     TerminalNewMode(newmode);
 
-
+#ifdef	ENCRYPTION
+    if ((newmode & (MODE_ECHO|MODE_EDIT)) == MODE_EDIT) {
+	if (my_want_state_is_will(TELOPT_ENCRYPT)
+				&& (enc_passwd == 0) && !encrypt_output) {
+	    encrypt_request_start(0, 0);
+	    enc_passwd = 1;
+	}
+    } else {
+	if (enc_passwd) {
+	    encrypt_request_end();
+	    enc_passwd = 0;
+	}
+    }
+#endif	/* ENCRYPTION */
 }
 
 

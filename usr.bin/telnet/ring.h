@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.h,v 1.7 1998/03/04 13:51:57 christos Exp $	*/
+/*	$NetBSD: ring.h,v 1.7.10.1 2000/06/22 07:09:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -54,6 +54,10 @@ typedef struct {
 			*bottom,	/* lowest address in buffer */
 			*top,		/* highest address+1 in buffer */
 			*mark;		/* marker (user defined) */
+#ifdef	ENCRYPTION
+    unsigned char	*clearto;	/* Data to this point is clear text */
+    unsigned char	*encryyptedto;	/* Data is encrypted to here */
+#endif	/* ENCRYPTION */
     int		size;		/* size in bytes of buffer */
     u_long	consumetime,	/* help us keep straight full, empty, etc. */
 		supplytime;
@@ -94,6 +98,11 @@ extern int
 	ring_full_consecutive P((Ring *ring)),
 	ring_at_mark P((Ring *ring));
 
+#ifdef	ENCRYPTION
+extern void
+	ring_encrypt P((Ring *ring, void (*func)(unsigned char *, int))),
+	ring_clearto P((Ring *ring));
+#endif	/* ENCRYPTION */
 
 extern void
 	ring_clear_mark P((Ring *ring)),

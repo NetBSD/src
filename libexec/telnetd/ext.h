@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.10 2000/01/13 13:11:31 ad Exp $	*/
+/*	$NetBSD: ext.h,v 1.10.4.1 2000/06/22 07:09:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -64,6 +64,9 @@ extern int	require_secure_login;
 #endif
 #if	defined(AUTHENTICATION)
 extern int	auth_level;
+#endif
+#if	defined(FORWARD)
+extern int	got_forwarded_creds;
 #endif
 
 extern slcfun	slctab[NSLC + 1];	/* slc mapping table */
@@ -186,6 +189,11 @@ extern void
 	wontoption P((int)),
 	writenet P((unsigned char *, int));
 
+#ifdef	ENCRYPTION
+extern int	(*decrypt_input) P((int));
+extern void	(*encrypt_output) P((unsigned char *, int));
+extern char	*nclearto;
+#endif	/* ENCRYPTION */
 
 
 /*
