@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.27 2003/03/10 00:56:38 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.28 2003/03/10 01:14:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.27 2003/03/10 00:56:38 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.28 2003/03/10 01:14:54 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -526,7 +526,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 
 	line = strdup(event_data);
 	if (line == NULL)
-		return NULL;
+		return 0;
 	for (; *cmd; cmd++) {
 		if (*cmd == ':')
 			continue;
@@ -555,7 +555,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 				what = realloc(from, size);
 				if (what == NULL) {
 					free(from);
-					return NULL;
+					return 0;
 				}
 				len = 0;
 				for (; *cmd && *cmd != delim; cmd++) {
@@ -568,7 +568,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 						    (size <<= 1));
 						if (nwhat == NULL) {
 							free(what);
-							return NULL;
+							return 0;
 						}
 						what = nwhat;
 					}
@@ -581,7 +581,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 					if (search) {
 						from = strdup(search);
 						if (from == NULL)
-							return NULL;
+							return 0;
 					} else {
 						from = NULL;
 						return (-1);
@@ -677,7 +677,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 
 	cmdsize = 1, cmdlen = 0;
 	if ((tempcmd = malloc(cmdsize)) == NULL)
-		return NULL;
+		return 0;
 	for (i = start; start <= i && i <= end; i++) {
 		int arr_len;
 
@@ -688,7 +688,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 			ntempcmd = realloc(tempcmd, cmdsize);
 			if (ntempcmd == NULL) {
 				free(tempcmd);
-				return NULL;
+				return 0;
 			}
 			tempcmd = ntempcmd;
 		}
@@ -724,7 +724,7 @@ history_expand(char *str, char **output)
 
 	*output = strdup(str);	/* do it early */
 	if (*output == NULL)
-		return NULL;
+		return 0;
 
 	if (str[0] == history_subst_char) {
 		/* ^foo^foo2^ is equivalent to !!:s^foo^foo2^ */
@@ -741,7 +741,7 @@ history_expand(char *str, char **output)
 			char *nresult = realloc(result, (size += len + 1));\
 			if (nresult == NULL) {				\
 				free(*output);				\
-				return NULL;				\
+				return 0;				\
 			}						\
 			result = nresult;				\
 		}							\
