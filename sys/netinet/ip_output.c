@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.61 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.62 1999/07/09 22:57:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,7 @@
  */
 
 #include "opt_pfil_hooks.h"
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>

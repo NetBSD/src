@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.49 1999/07/06 14:37:47 drochner Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.50 1999/07/09 22:57:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,9 @@
  *
  *	@(#)udp_usrreq.c	8.6 (Berkeley) 5/23/95
  */
+
+#include "opt_ipsec.h"
+
 #include "ipkdb.h"
 
 /* XXX MAPPED_ADDR_ENABLED should be revisited */
