@@ -1,4 +1,5 @@
 %{
+/*	$NetBSD: fgen.l,v 1.5 1999/02/15 04:54:37 hubertf Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.

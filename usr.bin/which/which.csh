@@ -1,4 +1,5 @@
 #!/bin/csh
+#	$NetBSD: which.csh,v 1.2 1999/02/15 04:54:37 hubertf Exp $
 #
 # DO NOT USE "csh -f"
 #

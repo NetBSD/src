@@ -1,4 +1,4 @@
-/*	$Id: if_ntwoc_pcireg.h,v 1.1 1998/07/26 03:28:28 explorer Exp $	*/
+/*	$NetBSD: if_ntwoc_pcireg.h,v 1.2 1999/02/15 04:54:35 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
