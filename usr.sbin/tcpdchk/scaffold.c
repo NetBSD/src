@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.2 1997/10/11 21:41:44 christos Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.3 1997/11/16 21:30:25 christos Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.2 1997/10/11 21:41:44 christos Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.3 1997/11/16 21:30:25 christos Exp $");
 #endif
 #endif
 
@@ -45,7 +45,7 @@ static struct hostent *dup_hostent __P((struct hostent *));
   */
 int     allow_severity = SEVERITY;
 int     deny_severity = LOG_WARNING;
-int     rfc931_timeout = RFC931_TIMEOUT;
+extern int rfc931_timeout; /* = RFC931_TIMEOUT; */
 
 /* dup_hostent - create hostent in one memory block */
 
