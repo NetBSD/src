@@ -43,4 +43,5 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/vsbus.h
+./usr/lib/c++rt0.o
 ./usr/lib/scrt0.o

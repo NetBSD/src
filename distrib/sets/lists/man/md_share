@@ -144,6 +144,7 @@
 ./usr/share/man/cat4/sparc/fd.0
 ./usr/share/man/cat4/sparc/fdc.0
 ./usr/share/man/cat4/sparc/kbd.0
+./usr/share/man/cat4/sparc/kmem.0
 ./usr/share/man/cat4/sparc/intro.0
 ./usr/share/man/cat4/sparc/le.0
 ./usr/share/man/cat4/sparc/mem.0
@@ -429,6 +430,7 @@
 ./usr/share/man/man4/sparc/fd.4
 ./usr/share/man/man4/sparc/fdc.4
 ./usr/share/man/man4/sparc/kbd.4
+./usr/share/man/man4/sparc/kmem.4
 ./usr/share/man/man4/sparc/intro.4
 ./usr/share/man/man4/sparc/le.4
 ./usr/share/man/man4/sparc/mem.4

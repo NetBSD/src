@@ -1005,7 +1005,6 @@
 ./usr/include/vm/vnode_pager.h
 ./usr/include/zconf.h
 ./usr/include/zlib.h
-./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libamu.a
@@ -3037,8 +3036,6 @@
 ./usr/share/mk/bsd.nls.mk
 ./usr/share/mk/bsd.obj.mk
 ./usr/share/mk/bsd.own.mk
-./usr/share/mk/bsd.port.mk
-./usr/share/mk/bsd.port.subdir.mk
 ./usr/share/mk/bsd.prog.mk
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
