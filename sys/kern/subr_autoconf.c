@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.75 2002/10/01 18:11:58 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.76 2002/10/04 01:50:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.75 2002/10/01 18:11:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.76 2002/10/04 01:50:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -117,6 +117,11 @@ extern short cfroots[];
  */
 struct cfdriverlist allcfdrivers = LIST_HEAD_INITIALIZER(&allcfdrivers);
 extern struct cfdriver * const cfdriver_list_initial[];
+
+/*
+ * Initial list of cfattach's.
+ */
+extern const struct cfattachinit cfattachinit[];
 
 /*
  * List of cfdata tables.  We always have one such list -- the one
@@ -182,16 +187,29 @@ static int config_initialized;		/* config_init() has been called. */
 void
 config_init(void)
 {
-	int i;
+	const struct cfattachinit *cfai;
+	int i, j;
 
 	if (config_initialized)
 		return;
 
 	/* allcfdrivers is statically initialized. */
-	for (i = 0; cfdriver_list_initial[i] != NULL; i++)
+	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
 		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
 			panic("configure: duplicate `%s' drivers",
 			    cfdriver_list_initial[i]->cd_name);
+	}
+
+	for (cfai = &cfattachinit[0]; cfai->cfai_name != NULL; cfai++) {
+		for (j = 0; cfai->cfai_list[j] != NULL; j++) {
+			if (config_cfattach_attach(cfai->cfai_name,
+						   cfai->cfai_list[j]) != 0)
+				panic("configure: duplicate `%s' attachment "
+				    "of `%s' driver",
+				    cfai->cfai_list[j]->ca_name,
+				    cfai->cfai_name);
+		}
+	}
 
 	TAILQ_INIT(&allcftables);
 	initcftable.ct_cfdata = cfdata;
@@ -257,6 +275,7 @@ config_cfdriver_attach(struct cfdriver *cd)
 			return (EEXIST);
 	}
 
+	LIST_INIT(&cd->cd_attach);
 	LIST_INSERT_HEAD(&allcfdrivers, cd, cd_list);
 
 	return (0);
@@ -276,6 +295,10 @@ config_cfdriver_detach(struct cfdriver *cd)
 			return (EBUSY);
 	}
 
+	/* ...and no attachments loaded. */
+	if (LIST_EMPTY(&cd->cd_attach) == 0)
+		return (EBUSY);
+
 	LIST_REMOVE(cd, cd_list);
 
 	KASSERT(cd->cd_devs == NULL);
@@ -291,27 +314,94 @@ config_cfdriver_lookup(const char *name)
 {
 	struct cfdriver *cd;
 
-	/*
-	 * It is sometimes necessary to use the autoconfiguration
-	 * framework quite early (e.g. to initialize the console).
-	 * We support this by noticing an empty cfdriver list and
-	 * searching the initial static list instead.
-	 */
-	if (LIST_EMPTY(&allcfdrivers)) {
-		int i;
-
-		for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
-			if (STREQ(cfdriver_list_initial[i]->cd_name, name))
-				return (cfdriver_list_initial[i]);
-		}
-	}
-
 	LIST_FOREACH(cd, &allcfdrivers, cd_list) {
 		if (STREQ(cd->cd_name, name))
 			return (cd);
 	}
 
 	return (NULL);
+}
+
+/*
+ * Add a cfattach to the specified driver.
+ */
+int
+config_cfattach_attach(const char *driver, struct cfattach *ca)
+{
+	struct cfattach *lca;
+	struct cfdriver *cd;
+
+	cd = config_cfdriver_lookup(driver);
+	if (cd == NULL)
+		return (ESRCH);
+
+	/* Make sure this attachment isn't already on this driver. */
+	LIST_FOREACH(lca, &cd->cd_attach, ca_list) {
+		if (STREQ(lca->ca_name, ca->ca_name))
+			return (EEXIST);
+	}
+
+	LIST_INSERT_HEAD(&cd->cd_attach, ca, ca_list);
+
+	return (0);
+}
+
+/*
+ * Remove a cfattach from the specified driver.
+ */
+int
+config_cfattach_detach(const char *driver, struct cfattach *ca)
+{
+	struct cfdriver *cd;
+	struct device *dev;
+	int i;
+
+	cd = config_cfdriver_lookup(driver);
+	if (cd == NULL)
+		return (ESRCH);
+
+	/* Make sure there are no active instances. */
+	for (i = 0; i < cd->cd_ndevs; i++) {
+		if ((dev = cd->cd_devs[i]) == NULL)
+			continue;
+		if (STREQ(dev->dv_cfdata->cf_atname, ca->ca_name))
+			return (EBUSY);
+	}
+
+	LIST_REMOVE(ca, ca_list);
+
+	return (0);
+}
+
+/*
+ * Look up a cfattach by name.
+ */
+static struct cfattach *
+config_cfattach_lookup_cd(struct cfdriver *cd, const char *atname)
+{
+	struct cfattach *ca;
+
+	LIST_FOREACH(ca, &cd->cd_attach, ca_list) {
+		if (STREQ(ca->ca_name, atname))
+			return (ca);
+	}
+
+	return (NULL);
+}
+
+/*
+ * Look up a cfattach by driver/attachment name.
+ */
+struct cfattach *
+config_cfattach_lookup(const char *name, const char *atname)
+{
+	struct cfdriver *cd;
+
+	cd = config_cfdriver_lookup(name);
+	if (cd == NULL)
+		return (NULL);
+
+	return (config_cfattach_lookup_cd(cd, atname));
 }
 
 /*
@@ -326,11 +416,18 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, cf, m->aux);
 	else {
-	        if (cf->cf_attach->ca_match == NULL) {
-			panic("mapply: no match function for '%s' device",
-			    cf->cf_name);
+		struct cfattach *ca;
+
+		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+		if (ca == NULL) {
+			/* No attachment for this entry, oh well. */
+			return;
 		}
-		pri = (*cf->cf_attach->ca_match)(m->parent, cf, m->aux);
+	        if (ca->ca_match == NULL) {
+			panic("mapply: no match function for '%s' attachment "
+			    "of '%s'", cf->cf_atname, cf->cf_name);
+		}
+		pri = (*ca->ca_match)(m->parent, cf, m->aux);
 	}
 	if (pri > m->pri) {
 		m->match = cf;
@@ -402,8 +499,15 @@ cfparent_match(struct device *parent, const struct cfparent *cfp)
 int
 config_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct cfattach *ca;
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+	if (ca == NULL) {
+		/* No attachment for this entry, oh well. */
+		return (0);
+	}
+
+	return ((*ca->ca_match)(parent, cf, aux));
 }
 
 /*
@@ -579,7 +683,7 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	struct device *dev;
 	struct cftable *ct;
 	struct cfdriver *cd;
-	const struct cfattach *ca;
+	struct cfattach *ca;
 	size_t lname, lunit;
 	const char *xunit;
 	int myunit;
@@ -587,7 +691,10 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
-	ca = cf->cf_attach;
+
+	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
+	KASSERT(ca != NULL);
+
 	if (ca->ca_devsize < sizeof(struct device))
 		panic("config_attach");
 
@@ -631,6 +738,8 @@ config_attach(struct device *parent, struct cfdata *cf, void *aux,
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
+	dev->dv_cfdriver = cd;
+	dev->dv_cfattach = ca;
 	dev->dv_unit = myunit;
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
@@ -708,7 +817,9 @@ config_detach(struct device *dev, int flags)
 #endif
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
-	ca = cf->cf_attach;
+
+	ca = config_cfattach_lookup_cd(cd, cf->cf_atname);
+	KASSERT(ca != NULL);
 
 	/*
 	 * Ensure the device is deactivated.  If the device doesn't
@@ -816,7 +927,7 @@ config_detach(struct device *dev, int flags)
 int
 config_activate(struct device *dev)
 {
-	const struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	const struct cfattach *ca = dev->dv_cfattach;
 	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)
@@ -834,7 +945,7 @@ config_activate(struct device *dev)
 int
 config_deactivate(struct device *dev)
 {
-	const struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	const struct cfattach *ca = dev->dv_cfattach;
 	int rv = 0, oflags = dev->dv_flags;
 
 	if (ca->ca_activate == NULL)

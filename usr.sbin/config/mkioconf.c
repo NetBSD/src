@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.67 2002/10/02 16:49:03 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.68 2002/10/04 01:50:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@ static int cforder(const void *, const void *);
 static int emitcfdata(FILE *);
 static int emitcfdrivers(FILE *);
 static int emitexterns(FILE *);
+static int emitcfattachinit(FILE *);
 static int emithdr(FILE *);
 static int emitloc(FILE *);
 static int emitpseudo(FILE *);
@@ -90,9 +91,10 @@ mkioconf(void)
 		return (1);
 	}
 	v = emithdr(fp);
-	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) || emitloc(fp) ||
-	    emitparents(fp) || emitcfdata(fp) || emitroots(fp) ||
-	    emitpseudo(fp) || emitvfslist(fp) ||
+	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) ||
+	    emitcfattachinit(fp) || emitloc(fp) || emitparents(fp) ||
+	    emitcfdata(fp) || emitroots(fp) || emitpseudo(fp) ||
+	    emitvfslist(fp) ||
 	    (do_devsw ? 0 : emitname2blk(fp))) {
 		if (v >= 0)
 			(void)fprintf(stderr,
@@ -230,11 +232,59 @@ emitexterns(FILE *fp)
 	TAILQ_FOREACH(da, &alldevas, d_next) {
 		if (!deva_has_instances(da, WILD))
 			continue;
-		if (fprintf(fp, "extern const struct cfattach %s_ca;\n",
+		if (fprintf(fp, "extern struct cfattach %s_ca;\n",
 			    da->d_name) < 0)
 			return (1);
 	}
+	return (0);
+}
+
+static int
+emitcfattachinit(FILE *fp)
+{
+	struct devbase *d;
+	struct deva *da;
+
 	NEWLINE;
+	TAILQ_FOREACH(d, &allbases, d_next) {
+		if (!devbase_has_instances(d, WILD))
+			continue;
+		if (d->d_ahead == NULL)
+			continue;
+
+		if (fprintf(fp,
+"static struct cfattach * const %s_cfattachinit[] = {\n\t",
+			    d->d_name) < 0)
+			return (1);
+		for (da = d->d_ahead; da != NULL; da = da->d_bsame) {
+			if (!deva_has_instances(da, WILD))
+				continue;
+			if (fprintf(fp, "&%s_ca, ", da->d_name) < 0)
+				return (1);
+		}
+		if (fprintf(fp, "NULL\n};\n") < 0)
+			return (1);
+	}
+
+	NEWLINE;
+	if (fprintf(fp,
+"const struct cfattachinit cfattachinit[] = {\n") < 0)
+		return (1);
+
+	TAILQ_FOREACH(d, &allbases, d_next) {
+		if (!devbase_has_instances(d, WILD))
+			continue;
+		if (d->d_ahead == NULL)
+			continue;
+
+		if (fprintf(fp, "\t{ \"%s\", %s_cfattachinit },\n",
+			    d->d_name, d->d_name) < 0)
+			return (1);
+	}
+
+	if (fprintf(fp, "\t{ NULL, NULL }\n};\n") < 0)
+		return (1);
+
 	return (0);
 }
 
@@ -408,10 +458,10 @@ struct cfdata cfdata[] = {\n\
 			loc = locbuf;
 		} else
 			loc = "loc";
-		if (fprintf(fp, "    {\"%s\",%s&%s_ca,%s%2d, %s, %7s, %#6x, ",
+		if (fprintf(fp, "    {\"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
 			    basename, strlen(basename) < 8 ? "\t\t"
 			    				   : "\t",
-			    attachment, strlen(attachment) < 3 ? "\t\t"
+			    attachment, strlen(attachment) < 5 ? "\t\t"
 			    				       : "\t",
 			    unit, state, loc, i->i_cfflags) < 0)
 			return (1);
