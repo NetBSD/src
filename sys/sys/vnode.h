@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.49 1998/03/01 09:35:52 ross Exp $	*/
+/*	$NetBSD: vnode.h,v 1.50 1998/06/05 19:47:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -221,7 +221,13 @@ extern int		vttoif_tab[];
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 #define	V_SAVEMETA	0x0002		/* vinvalbuf: leave indirect blocks */
 
+/*
+ * Flags to various vnode operations.
+ */
 #define REVOKEALL	0x0001		/* revoke: revoke all aliases */
+
+#define FSYNC_WAIT	0x0001		/* fsync: wait for completition */
+#define FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)
