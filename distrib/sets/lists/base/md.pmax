@@ -32,9 +32,6 @@
 ./usr/lib/libntp.so
 ./usr/lib/libntp.so.0
 ./usr/lib/libntp.so.0.0
-./usr/lib/libossaudio.so
-./usr/lib/libossaudio.so.0
-./usr/lib/libossaudio.so.0.0
 ./usr/lib/libpcap.so
 ./usr/lib/libpcap.so.0
 ./usr/lib/libpcap.so.0.0
