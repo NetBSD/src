@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2004/07/18 23:21:35 chs Exp $
+#	$NetBSD: genassym.cf,v 1.9 2004/08/26 16:52:27 jkunz Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -77,7 +77,7 @@ export	HPPA_BREAK_SET_PSW
 struct	hp700_int_reg
 member	INT_REG_REQ	int_reg_req
 member	INT_REG_BITS_MAP int_reg_bits_map
-export	INT_REG_BIT_REG_POS
+export	INT_REG_BIT_REG
 
 # pte things
 export	TLB_REF_POS
