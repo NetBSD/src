@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.22 2000/06/05 00:09:19 matt Exp $ */
+/*	$NetBSD: mba.c,v 1.22.2.1 2000/07/27 16:58:40 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -135,7 +135,7 @@ mbaattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set up interrupt vectors for this MBA.
 	 */
-	for (i = 14; i < 18; i++)
+	for (i = 0x14; i < 0x18; i++)
 		scb_vecalloc(vecnum(0, i, sa->sa_nexnum),
 		    mbaintr, sc, SCB_ISTACK, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
