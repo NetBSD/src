@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)logout.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: logout.c,v 1.2 1993/08/01 18:31:50 mycroft Exp $";
+static char rcsid[] = "$Id: logout.c,v 1.3 1994/04/01 03:06:41 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,7 +49,6 @@ logout(line)
 	register int fd;
 	UTMP ut;
 	int rval;
-	off_t lseek();
 	time_t time();
 
 	if ((fd = open(_PATH_UTMP, O_RDWR)) < 0)
@@ -61,7 +60,7 @@ logout(line)
 		bzero(ut.ut_name, UT_NAMESIZE);
 		bzero(ut.ut_host, UT_HOSTSIZE);
 		(void)time(&ut.ut_time);
-		(void)lseek(fd, -(long)sizeof(UTMP), L_INCR);
+		(void)lseek(fd, -(off_t)sizeof(UTMP), L_INCR);
 		(void)write(fd, (char *)&ut, sizeof(UTMP));
 		rval = 1;
 	}
