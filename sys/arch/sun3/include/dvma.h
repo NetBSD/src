@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.8 1998/01/22 23:45:05 gwr Exp $	*/
+/*	$NetBSD: dvma.h,v 1.8.2.1 1998/01/27 00:50:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,34 +37,22 @@
  */
 
 /*
- * DVMA (Direct Virtual Memory Access - like DMA)
+ * DVMA (Direct Virtual Memory Access)
  *
- * The Sun3 MMU is presented to secondary masters using DVMA.
- * Before such devices can access kernel memory, that memory
- * must be mapped into the kernel DVMA space.  All DVMA space
- * is presented as slave-accessible memory for VME and OBIO
- * devices, though not at the same address seen by the CPU.
- *
- * Note that while the DVMA harware makes the last 1MB visible
- * for secondary masters, the PROM "owns" the last page of it.
- * Also note that OBIO devices can actually see the last 16MB
- * of kernel virtual space.  That can be mostly ignored, except
- * when calculating the alias address for slave access.
+ * For the unfamiliar, this is just DMA where the device doing DMA
+ * operates in a virtual address space.  The virtual to physical
+ * translations are controlled by some sort of I/O MMU, which may
+ * be the same used by the CPU (sun3) or not (sun3x).  Usually, the
+ * virtual space accessed by DVMA devices is a small sub-range of
+ * the CPU virtual space, and that range is known as DVMA space.
  */
-#define DVMA_MAP_BASE	0x0FF00000
-#define DVMA_MAP_SIZE	0x00100000
-#define DVMA_MAP_AVAIL	(DVMA_MAP_SIZE-NBPG)
 
-/*
- * To convert an address in DVMA space to a slave address,
- * just use a logical AND with one of the following masks.
- * To convert back, just logical OR with the base address.
- */
-#define DVMA_OBIO_SLAVE_BASE	0x0F000000
-#define DVMA_OBIO_SLAVE_MASK	0x00FFffff	/* 16MB */
-
-#define DVMA_VME_SLAVE_BASE 	0x0FF00000
-#define DVMA_VME_SLAVE_MASK 	0x000Fffff	/*  1MB */
+#ifdef	_SUN3_
+#include <machine/dvma3.h>
+#endif	/* SUN3 */
+#ifdef	_SUN3X_
+#include <machine/dvma3x.h>
+#endif	/* SUN3X */
 
 void dvma_init __P((void));
 
