@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.2 1999/03/05 08:24:23 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.3 1999/03/08 02:07:42 scottr Exp $
 #
 # GENERIC
 
@@ -102,6 +102,10 @@ options 	NETATALK	# AppleTalk networking protocols
 # Warning, these may compile large string tables into the kernel!
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+
 # Mac-specific options
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
@@ -145,14 +149,11 @@ intvid0	at obio?			# Internal video hardware
 macvid*	at nubus?			# NuBus video card
 
 # Device-independent frame buffer interface
-grf*	at intvid?
-grf*	at macvid?
-
-# Integrated Terminal Emulator (console) support
-ite0	at grf?
+macfb*	at intvid?
+macfb*	at macvid?
 
 # Workstation Console devices
-#wsdisplay0 at fb? console ?
+wsdisplay0 at fb? console ?
 wskbd0	at akbd? console ?
 wsmouse0 at ams?
 
