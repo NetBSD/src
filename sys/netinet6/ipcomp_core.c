@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.8 2000/01/26 17:08:41 itojun Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.9 2000/01/31 14:19:04 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -46,6 +46,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -54,6 +55,7 @@
 #include <machine/cpu.h>
 
 #include <netinet6/ipcomp.h>
+#include <netinet6/ipsec.h>
 
 #include <machine/stdarg.h>
 
@@ -82,10 +84,6 @@ struct ipcomp_algorithm ipcomp_algorithms[] = {
 	{ deflate_compress, deflate_decompress, 90 },
 	{ NULL, NULL, 90 },
 };
-
-#ifdef __NetBSD__
-#define ovbcopy	bcopy
-#endif
 
 static void *
 deflate_alloc(aux, items, siz)
@@ -238,18 +236,18 @@ deflate_common(m, md, lenp, mode)
 		} else if (zerror == Z_STREAM_END)
 			break;
 		else {
-			printf("ipcomp_%scompress: %sflate: %s\n",
+			ipseclog((LOG_ERR, "ipcomp_%scompress: %sflate: %s\n",
 				mode ? "de" : "", mode ? "in" : "de",
-				zs.msg ? zs.msg : "unknown error");
+				zs.msg ? zs.msg : "unknown error"));
 			error = EINVAL;
 			goto fail;
 		}
 	}
 	zerror = mode ? inflateEnd(&zs) : deflateEnd(&zs);
 	if (zerror != Z_OK) {
-		printf("ipcomp_%scompress: %sflate: %s\n",
+		ipseclog((LOG_ERR, "ipcomp_%scompress: %sflate: %s\n",
 			mode ? "de" : "", mode ? "in" : "de",
-			zs.msg ? zs.msg : "unknown error");
+			zs.msg ? zs.msg : "unknown error"));
 		error = EINVAL;
 		goto fail;
 	}

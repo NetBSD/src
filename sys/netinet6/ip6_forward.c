@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.6 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.7 2000/01/31 14:19:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,6 +46,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
@@ -327,8 +328,37 @@ ip6_forward(m, srcrt)
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_toobig);
 		if (mcopy) {
 			u_long mtu;
+#ifdef IPSEC_IPV6FWD
+			struct secpolicy *sp;
+			int ipsecerror;
+			size_t ipsechdrsiz;
+#endif
 
 			mtu = rt->rt_ifp->if_mtu;
+#ifdef IPSEC_IPV6FWD
+			/*
+			 * When we do IPsec tunnel ingress, we need to play
+			 * with if_mtu value (decrement IPsec header size
+			 * from mtu value).  The code is much simpler than v4
+			 * case, as we have the outgoing interface for
+			 * encapsulated packet as "rt->rt_ifp".
+			 */
+			sp = ipsec6_getpolicybyaddr(mcopy, IPSEC_DIR_OUTBOUND,
+				IP_FORWARDING, &ipsecerror);
+			if (sp) {
+				ipsechdrsiz = ipsec6_hdrsiz(mcopy,
+					IPSEC_DIR_OUTBOUND, NULL);
+				if (ipsechdrsiz < mtu)
+					mtu -= ipsechdrsiz;
+			}
+
+			/*
+			 * if mtu becomes less than minimum MTU, 
+			 * tell minimum MTU (and I'll need to fragment it).
+			 */
+			if (mtu < IPV6_MMTU)
+				mtu = IPV6_MMTU;
+#endif
 			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
 		}
 		m_freem(m);
