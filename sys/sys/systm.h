@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.168 2003/10/31 03:28:14 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.169 2003/12/30 18:29:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -344,8 +344,6 @@ void	trace_exit __P((struct lwp *, register_t, void *, register_t [], int));
 int	uiomove __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
-caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
-
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
 #endif
