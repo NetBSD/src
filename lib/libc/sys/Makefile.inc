@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.54 1997/05/02 18:16:50 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.55 1997/05/14 13:33:23 kleink Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -65,7 +65,8 @@ LPSEUDONOERR=	${PSEUDONOERR:.o=.ln}
 OBJS+=	${ASM} ${NOERR} ${PSEUDONOERR}
 LOBJS+=	${LASM} ${LNOERR} ${LPSEUDONOERR}
 
-${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
@@ -73,31 +74,35 @@ ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@rm -f ${.TARGET}.o
 
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
-${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 .else
-${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 .endif
 
-${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LASM} ${LNOERR}: /usr/include/sys/syscall.h \
+${LASM} ${LNOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
-${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
@@ -105,18 +110,21 @@ ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@rm -f ${.TARGET}.o
 
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
-${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 .else
-${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 .endif
 
-${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
@@ -124,7 +132,7 @@ ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@rm -f ${.TARGET}.o
 
 ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    /usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
@@ -134,14 +142,14 @@ ${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    /usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 .else
 ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    /usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
@@ -149,7 +157,7 @@ ${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 .endif
 
 ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
-    /usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
@@ -157,7 +165,8 @@ ${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LPSEUDONOERR}: /usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
+${LPSEUDONOERR}: ${DESTDIR}/usr/include/sys/syscall.h \
+    ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/_//} ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
