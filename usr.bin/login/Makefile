@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2000/01/13 06:52:47 mjl Exp $
+#	$NetBSD: Makefile,v 1.28 2000/01/13 12:43:19 mjl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 SRCTOP=	../..
@@ -11,7 +11,7 @@ LDADD+=	-lutil -lcrypt
 BINOWN=	root
 BINMODE=4555
 INSTALLFLAGS=-fschg
-CFLAGS+=	-DLOGIN_CAP -g
+CPPFLAGS+=-DLOGIN_CAP
 
 .include <bsd.own.mk>
 
