@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.70 2001/10/28 16:53:21 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.71 2001/11/07 02:52:47 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -705,11 +705,14 @@ ukbd_set_leds(void *v, int leds)
 	struct ukbd_softc *sc = v;
 	u_int8_t res;
 
-	DPRINTF(("ukbd_set_leds: sc=%p leds=%d\n", sc, leds));
+	DPRINTF(("ukbd_set_leds: sc=%p leds=%d, sc_leds=%d\n",
+		 sc, leds, sc->sc_leds));
 
 	if (sc->sc_dying)
 		return;
 
+	if (sc->sc_leds == leds)
+		return;
 	sc->sc_leds = leds;
 	res = 0;
 	if (leds & WSKBD_LED_SCROLL)
@@ -763,6 +766,12 @@ ukbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (-1);
 }
 
+/*
+ * This is a hack to work around some broken ports that don't call
+ * cnpollc() before cngetc().
+ */
+static int pollenter, warned;
+
 /* Console interface. */
 void
 ukbd_cngetc(void *v, u_int *type, int *data)
@@ -770,6 +779,19 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	struct ukbd_softc *sc = v;
 	int s;
 	int c;
+	int broken;
+
+	if (pollenter == 0) {
+		if (!warned) {
+			printf("\n"
+"This port is broken, it does not call cnpollc() before calling cngetc().\n"
+"This should be fixed, but it will work anyway (for now).\n");
+			warned = 1;
+		}
+		broken = 1;
+		ukbd_cnpollc(v, 1);
+	} else
+		broken = 0;
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	s = splusb();
@@ -785,6 +807,8 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	*data = c & CODEMASK;
 	splx(s);
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
+	if (broken)
+		ukbd_cnpollc(v, 0);
 }
 
 void
@@ -796,6 +820,7 @@ ukbd_cnpollc(void *v, int on)
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
 	(void)usbd_interface2device_handle(sc->sc_iface,&dev);
+	if (on) pollenter++; else pollenter--;
 	usbd_set_polling(dev, on);
 }
 
