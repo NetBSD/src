@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotobyname_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $	*/
+/*	$NetBSD: getprotobyname_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getprotoname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotobyname_r.c,v 1.1 2004/02/19 19:21:44 christos Exp $");
+__RCSID("$NetBSD: getprotobyname_r.c,v 1.2 2004/03/04 02:30:41 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,6 +67,9 @@ getprotobyname_r(const char *name, struct protoent *pr,
 	}
 found:
 	if (!pd->stayopen)
-		endprotoent_r(pd);
+		if (pd->fp != NULL) {
+			(void)fclose(pd->fp);
+			pd->fp = NULL;
+		}
 	return p;
 }
