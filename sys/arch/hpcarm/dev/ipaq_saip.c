@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.5 2001/07/15 00:30:17 ichiro Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.6 2001/07/15 17:18:53 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -35,9 +35,11 @@
 #include <machine/bus.h>
 
 #include <hpcarm/sa11x0/sa11x0_var.h>
+#include <hpcarm/sa11x0/sa11x0_reg.h>
 #include <hpcarm/sa11x0/sa11x0_dmacreg.h>
 #include <hpcarm/sa11x0/sa11x0_ppcreg.h>
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>
+#include <hpcarm/sa11x0/sa11x0_sspreg.h>
 #include <hpcarm/dev/ipaq_saipvar.h>
 #include <hpcarm/dev/ipaq_gpioreg.h>
 
@@ -91,6 +93,11 @@ ipaq_attach(parent, self, aux)
 
 	sc->ipaq_egpio = EGPIO_INIT;
         bus_space_write_2(sc->sc_iot, sc->sc_egpioh, 0, sc->ipaq_egpio);
+
+	/* Map the SSP registers */
+	if (bus_space_map(sc->sc_iot, SASSP_BASE, SASSP_NPORTS, 0, &sc->sc_ssph))
+		panic("%s: unable to map SSP registers\n",
+			self->dv_xname);
 
 	sc->sc_ppch = psc->sc_ppch;
 	sc->sc_dmach = psc->sc_dmach;
