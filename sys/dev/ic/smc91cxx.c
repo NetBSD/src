@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.47 2004/08/08 16:20:43 mycroft Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.48 2004/08/09 13:52:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.47 2004/08/08 16:20:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.48 2004/08/09 13:52:21 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -530,8 +530,13 @@ smc91cxx_init(sc)
 	 */
 	SMC_SELECT_BANK(sc, 2);
 	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_RESET);
-	while (bus_space_read_2(bst, bsh, MMU_CMD_REG_W) & MMUCR_BUSY)
-		/* XXX bound this loop! */ ;
+	for (;;) {
+		tmp = bus_space_read_2(bst, bsh, MMU_CMD_REG_W);
+		if (tmp == 0xffff)	/* card went away! */
+			return;
+		if ((tmp & MMUCR_BUSY) == 0)
+			break;
+	}
 
 	/*
 	 * Disable all interrupts.
