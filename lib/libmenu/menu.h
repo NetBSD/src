@@ -1,7 +1,7 @@
-/*      $NetBSD: menu.h,v 1.3 1999/11/24 12:43:16 kleink Exp $	*/
+/*      $Id: menu.h,v 1.4 1999/12/16 12:08:07 blymn Exp $ */
 
 /*-
- * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
+ * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,7 @@ typedef struct __menu_str {
 typedef struct __menu MENU;
 typedef struct __item ITEM;
 
-typedef void (*_menui_menu_hook) (MENU *);
+typedef void (*Menu_Hook) (MENU *);
 
 struct __item {
         MENU_STR name;
@@ -129,11 +129,11 @@ struct __menu {
         ITEM **items; /* items associated with this menu */
         int  cur_item; /* item cursor is currently positioned at */
         int in_init; /* set when processing an init or term function call */
-        _menui_menu_hook menu_init; /* call this when menu is posted */
-        _menui_menu_hook menu_term; /* call this when menu is unposted */
-        _menui_menu_hook item_init; /* call this when menu posted & after
+        Menu_Hook menu_init; /* call this when menu is posted */
+        Menu_Hook menu_term; /* call this when menu is unposted */
+        Menu_Hook item_init; /* call this when menu posted & after
 				       current item changes */
-        _menui_menu_hook item_term; /* call this when menu unposted & just
+        Menu_Hook item_term; /* call this when menu unposted & just
 				       before current item changes */
         WINDOW *menu_win; /* the menu window */
         WINDOW *menu_subwin; /* the menu subwindow */
@@ -154,7 +154,7 @@ char menu_back __P((MENU *));
 char menu_fore __P((MENU *));
 void menu_format __P((MENU *, int *, int *));
 char menu_grey __P((MENU *));
-_menui_menu_hook menu_init __P((MENU *));
+Menu_Hook menu_init __P((MENU *));
 char *menu_mark __P((MENU *));
 OPTIONS menu_opts __P((MENU *));
 int menu_opts_off __P((MENU *, OPTIONS));
@@ -162,7 +162,7 @@ int menu_opts_on __P((MENU *, OPTIONS));
 int menu_pad __P((MENU *));
 char *menu_pattern __P((MENU *));
 WINDOW *menu_sub __P((MENU *));
-_menui_menu_hook menu_term __P((MENU *));
+Menu_Hook menu_term __P((MENU *));
 char *menu_unmark __P((MENU *));
 char *menu_userptr __P((MENU *));
 WINDOW *menu_win __P((MENU *));
@@ -172,14 +172,14 @@ int set_menu_back __P((MENU *, attr_t));
 int set_menu_fore __P((MENU *, attr_t));
 int set_menu_format __P((MENU *, int, int));
 int set_menu_grey __P((MENU *, attr_t));
-int set_menu_init __P((MENU *, _menui_menu_hook));
+int set_menu_init __P((MENU *, Menu_Hook));
 int set_menu_items __P((MENU *, ITEM **));
 int set_menu_mark __P((MENU *, char *));
 int set_menu_opts __P((MENU *, OPTIONS));
 int set_menu_pad __P((MENU *, int));
 int set_menu_pattern __P((MENU *, char *));
 int  set_menu_sub __P((MENU *, WINDOW *));
-int set_menu_term __P((MENU *, _menui_menu_hook));
+int set_menu_term __P((MENU *, Menu_Hook));
 int set_menu_unmark __P((MENU *, char *));
 int set_menu_userptr __P((MENU *, char *));
 int  set_menu_win __P((MENU *, WINDOW *));
@@ -190,30 +190,24 @@ int free_item __P((ITEM *));
 int item_count __P((MENU *));
 char *item_description __P((ITEM *));
 int item_index __P((ITEM *));
-_menui_menu_hook item_init __P((MENU *));
+Menu_Hook item_init __P((MENU *));
 char *item_name __P((ITEM *));
 OPTIONS item_opts __P((ITEM *));
 int item_opts_off __P((ITEM *, OPTIONS));
 int item_opts_on __P((ITEM *, OPTIONS));
-_menui_menu_hook item_term __P((MENU *));
+Menu_Hook item_term __P((MENU *));
 char *item_userptr __P((ITEM *));
 int item_value __P((ITEM *));
 int item_visible __P((ITEM *));
 ITEM **menu_items __P((MENU *));
 ITEM *new_item __P((char *, char *));
 int set_current_item __P((MENU *, ITEM *));
-int set_item_init __P((MENU *, _menui_menu_hook));
+int set_item_init __P((MENU *, Menu_Hook));
 int set_item_opts __P((ITEM *, OPTIONS));
-int set_item_term __P((MENU *, _menui_menu_hook));
+int set_item_term __P((MENU *, Menu_Hook));
 int set_item_userptr __P((ITEM *, char *));
 int set_item_value __P((ITEM *, int));
 
-#ifdef __LIBMENU_EXPOSE_PRIVATES__
-void __menui_draw_item __P((MENU *, int));
-
-/* stole this from curses.h */
-#define max(a,b)        ((a) > (b) ? a : b)
-#endif
 __END_DECLS
 
 #endif /* !_MENU_H_ */
