@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.19 2002/01/16 09:36:35 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.20 2002/03/07 21:16:24 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -410,3 +410,8 @@ gnu/usr.bin/gzip/gzip.c				1.9
 sys/arch/i386/i386/sys_machdep.c		patch
 
   Correct error in previous pull-up, to make this compile again.
+
+lib/libwrap/tcpd.h				1.9,1.11 via patch
+
+   Include required files, and wrap declarations in __BEGIN_DECLS/
+   __END_DECLS.
