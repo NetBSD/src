@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1997/05/25 18:42:55 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1997/06/12 15:03:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -530,8 +530,7 @@ loop:
 /*
  * Cross-check the configuration: make sure that each target device
  * or attribute (`at foo[0*?]') names at least one real device.  Also
- * see that the root, swap, and dump devices for all configurations
- * are there.
+ * see that the root and dump devices for all configurations are there.
  */
 int
 crosscheck()
@@ -557,9 +556,8 @@ crosscheck()
 		errs++;
 	}
 	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
-		if (cf->cf_root != NULL) {	/* i.e., not swap generic */
+		if (cf->cf_root != NULL) {	/* i.e., not root on ? */
 			errs += cfcrosscheck(cf, "root", cf->cf_root);
-			errs += cfcrosscheck(cf, "swap", cf->cf_swap);
 			errs += cfcrosscheck(cf, "dumps", cf->cf_dump);
 		}
 	}
