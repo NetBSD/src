@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.40 2003/08/07 11:25:17 agc Exp $	*/
+/*	$NetBSD: sem.c,v 1.41 2003/11/24 21:44:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,7 +210,7 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 		}
 	}
 
-	a = emalloc(sizeof *a);
+	a = ecalloc(1, sizeof *a);
 	if (ht_insert(attrtab, name, a)) {
 		free(a);
 		error("attribute `%s' already defined", name);
@@ -401,7 +401,7 @@ getdevbase(const char *name)
 	}
 	dev = ht_lookup(devbasetab, name);
 	if (dev == NULL) {
-		dev = emalloc(sizeof *dev);
+		dev = ecalloc(1, sizeof *dev);
 		dev->d_name = name;
 		dev->d_isdef = 0;
 		dev->d_major = NODEV;
@@ -531,7 +531,7 @@ getdevattach(const char *name)
 	}
 	deva = ht_lookup(devatab, name);
 	if (deva == NULL) {
-		deva = emalloc(sizeof *deva);
+		deva = ecalloc(1, sizeof *deva);
 		deva->d_name = name;
 		deva->d_bsame = NULL;
 		deva->d_isdef = 0;
@@ -767,7 +767,7 @@ addconf(struct config *cf0)
 	const char *name;
 
 	name = cf0->cf_name;
-	cf = emalloc(sizeof *cf);
+	cf = ecalloc(1, sizeof *cf);
 	if (ht_insert(cfhashtab, name, cf)) {
 		error("configuration `%s' already defined", name);
 		free(cf);
@@ -850,7 +850,7 @@ newdevi(const char *name, int unit, struct devbase *d)
 {
 	struct devi *i;
 
-	i = emalloc(sizeof *i);
+	i = ecalloc(1, sizeof *i);
 	i->i_name = name;
 	i->i_unit = unit;
 	i->i_base = d;
@@ -1129,7 +1129,7 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 		return;
 	}
 
-	dm = emalloc(sizeof(*dm));
+	dm = ecalloc(1, sizeof(*dm));
 	dm->dm_srcfile = yyfile;
 	dm->dm_srcline = currentline();
 	dm->dm_name = name;
@@ -1170,8 +1170,7 @@ getpspec(struct attr *attr, struct devbase *ab, int atunit)
 			return (p);
 	}
 
-	p = emalloc(sizeof(*p));
-	memset(p, 0, sizeof(*p));
+	p = ecalloc(1, sizeof(*p));
 
 	p->p_iattr = attr;
 	p->p_atdev = ab;
