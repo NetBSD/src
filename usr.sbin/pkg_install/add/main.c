@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.4 1997/10/17 14:53:37 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1998/10/03 16:24:07 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.4 1997/10/17 14:53:37 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 1998/10/03 16:24:07 hubertf Exp $");
 #endif
 #endif
 
@@ -127,9 +127,19 @@ main(int argc, char **argv)
 	    else if (isURL(*argv))	/* preserve URLs */
 		pkgs[ch] = strcpy(pkgnames[ch], *argv);
 	    else {			/* expand all pathnames to fullnames */
+		char *s;
+		    
 		if (fexists(*argv)) /* refers to a file directly */
 		    pkgs[ch] = realpath(*argv, pkgnames[ch]);
-		else {		/* look for the file in the expected places */
+		else if (ispkgpattern(*argv)
+			 && (s=findbestmatchingname(dirname_of(*argv),
+						    basename_of(*argv))) > 0) {
+		    if (Verbose)
+			printf("Using %s for %s\n",s, *argv);
+		    
+		    pkgs[ch] - realpath(s, pkgnames[ch]);
+		} else {
+		    /* look for the file(pattern) in the expected places */
 		    if (!(cp = fileFindByPath(NULL, *argv)))
 			warnx("can't find package '%s'", *argv);
 		    else
