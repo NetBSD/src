@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.2 1997/05/09 02:29:58 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.3 1997/05/09 10:44:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -42,7 +42,7 @@
  *	-p <pri>	use this priority
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #include <vm/vm_swap.h>
 
@@ -69,8 +69,6 @@ static	void del_swap __P((char *));
 #endif /* SWAP_OFF_WORKS */
 static	void do_fstab __P((void));
 static	void usage __P((void));
-
-#define DEBUG_SWAPON 1
 
 int
 main(argc, argv)
@@ -166,14 +164,8 @@ list_swap()
 	if (nswap < 1)
 		errx(1, "no swap devices configured");
 
-#ifdef DEBUG_SWAPON
-	fprintf(stderr, "SWAP_NSWAP returned %d\n", nswap);
-#endif
 	sep = (struct swapent *)malloc(nswap * sizeof(*sep));
 	rnswap = swapon(SWAP_STATS, (void *)sep, nswap);
-#ifdef DEBUG_SWAPON
-	fprintf(stderr, "SWAPSTATS returned %d\n", rnswap);
-#endif
 	if (nswap < 0)
 		errx(1, "SWAP_STATS");
 	if (nswap != rnswap)
@@ -183,8 +175,10 @@ list_swap()
 	 * XXX write me.  use kflag and BLOCKSIZE to determine size??  how
 	 * does df do it?  it uses getbsize(3) ...
 	 */
+	puts("Device   Avail(k) In Use(k)");
 	for (; rnswap-- > 0; sep++)
-		printf("0x%x\n", sep->se_dev);
+		printf("0x%-8x %-8d %-8d\n", sep->se_dev,
+		    dbtob(sep->se_nblks)/1024, dbtob(sep->se_inuse)/1024);
 }
 
 /*
