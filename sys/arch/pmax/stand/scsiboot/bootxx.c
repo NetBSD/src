@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.12 1999/03/14 00:57:07 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.13 1999/03/25 05:16:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,10 @@
 
 #include "byteswap.h"
 
-int	errno;
+int errno;
+
+int loadfile __P((char *name));
+extern int clear_cache __P((char *addr, int len));
 
 /*
  * This gets arguments from the PROM, calls other routines to open
@@ -56,7 +59,7 @@ int	errno;
  * The argument "-a" means vmunix should do an automatic reboot.
  */
 int
-_main(argc, argv)
+main(argc, argv)
 	int argc;
 	char **argv;
 {
@@ -69,95 +72,80 @@ _main(argc, argv)
 		argv++;
 	}
 	cp = *argv;
-	printf("Boot: %s\n", cp);
+
+#ifdef notused
+	printf(">> NetBSD/pmax Primary Boot\n");
+#endif
 	entry = loadfile(cp);
 	if (entry == -1)
-		return 0;
+		return (1);
 
-	printf("Starting at 0x%x\n\n", entry);
+	clear_cache((char *)RELOC, 1024 * 1024);
 	if (callv == &callvec)
 		((void (*)())entry)(argc, argv, 0, 0);
 	else
 		((void (*)())entry)(argc, argv, DEC_PROM_MAGIC, callv);
+	return (1);
 }
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
+int
 loadfile(fname)
 	register char *fname;
 {
-	register struct devices *dp;
 	register int fd, i, n;
-	struct exec aout;
 	char *buf;
+	Elf32_Ehdr ehdr;
+	Elf32_Phdr phdr;
+	char bootfname[64];
 
-	if ((fd = open(fname, 0)) < 0) {
-		printf("open(%s) failed: %d\n", fname, errno);
+	strcpy(bootfname, fname);
+	buf = bootfname;
+	while ((n = *buf++) != '\0') {
+		if (n == ')')
+			break;
+		if (n != '/')
+			continue;
+		while ((n = *buf++) != '\0')
+			if (n == '/')
+				break;
+		break;
+	}
+	strcpy(buf, "boot");
+	if ((fd = open(bootfname, 0)) < 0) {
+		printf("open %s: %d\n", bootfname, errno);
 		goto err;
 	}
 
 	/* read the exec header */
-	i = read(fd, (char *)&aout, sizeof(aout));
-	if (i != sizeof(aout)) {
-		printf("no aout header\n");
-		goto cerr;
-	} else if ((N_GETMAGIC(aout) != OMAGIC)
-		   && (aout.a_midmag & 0xfff) != OMAGIC) {
-		printf("%s: bad magic %x\n", fname, aout.a_midmag);
+	i = read(fd, (char *)&ehdr, sizeof(ehdr));
+	if ((i != sizeof(ehdr)) ||
+	    (bcmp(ehdr.e_ident, Elf32_e_ident, Elf32_e_siz) != 0)) {
+		printf("%s: No ELF header\n", bootfname);
 		goto cerr;
 	}
 
-	/* read the code ... */
-	printf("Size: %d", aout.a_text);
-#if 0
-	/* In an OMAGIC file, we're already there. */
-	if (lseek(fd, (off_t)N_TXTOFF(aout), 0) < 0) {
-		goto cerr;
+	for (i = 0; i < ehdr.e_phnum; i++) {
+		if (lseek(fd, (off_t) ehdr.e_phoff + i * sizeof(phdr), 0) < 0)
+			goto cerr;
+		if (read(fd, &phdr, sizeof(phdr)) != sizeof(phdr))
+			goto cerr;
+		if (phdr.p_type != Elf_pt_load)
+			continue;
+		if (lseek(fd, (off_t)phdr.p_offset, 0) < 0)
+			goto cerr;
+		if (read(fd, (char *)phdr.p_paddr, phdr.p_filesz) != phdr.p_filesz)
+			goto cerr;
 	}
-#endif
-	n = read(fd, buf = (char *)aout.a_entry, aout.a_text);
-	/* ... and initialized data */
-	printf("+%d", aout.a_data);
-	n += read(fd, buf + aout.a_text, aout.a_data);
-	i = aout.a_text + aout.a_data;
-
-	if (aout.a_syms) {
-		/*
-		 * Copy exec header to start of bss.
-		 * Load symbols into end + sizeof(int).
-		 */
-		memcpy(buf += i, (char *)&aout, sizeof(aout));
-		printf("+[%d]", aout.a_syms + 4);
-		n += read(fd, buf += aout.a_bss + 4, aout.a_syms + 4);
-		i += aout.a_syms + 4;
-		buf += aout.a_syms;
-		n += read(fd, buf + 4, *(long *)buf);
-		i += *(long *)buf;
-	}
-#ifndef SMALL
-	(void) close(fd);
-#endif
-	if (n < 0) {
-		printf("read error %d\n", errno);
-		goto err;
-	} else if (n != i) {
-		printf("read() short %d bytes\n", i - n);
-		goto err;
-		
-	}
-
-	/* kernel will zero out its own bss */
-	n = aout.a_bss;
-	printf("+%d\n", n);
-
-	return ((int)aout.a_entry);
+	return (ehdr.e_entry);
 
 cerr:
-#ifndef SMALL
+#ifndef UFS_NOCLOSE
 	(void) close(fd);
 #endif
 err:
-	printf("Can't boot '%s'\n", fname);
+	printf("Can't load '%s'\n", bootfname);
 	return (-1);
 }
