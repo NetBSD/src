@@ -1,4 +1,4 @@
-/*	$NetBSD*	*/
+/*	$NetBSD: iophyreg.h,v 1.2 1999/09/16 05:58:18 soren Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Soren S. Jorvang.
