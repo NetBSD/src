@@ -137,8 +137,8 @@ FreeBSD 4.0  |      |  |  |  | NetBSD 1.4.2    |             |
  |   FreeBSD 4.1.1  |  |  /  |    |            |             |
  |      |           |  | /   |    |            |             |
  |   FreeBSD 4.2   Darwin/   | NetBSD 1.4.3    |             |
- |      |         Mac OS X   |             OpenBSD 2.8     BSD/OS 4.2
- |      |             |      |                 |             |
+ |      |         Mac OS X   |    |        OpenBSD 2.8     BSD/OS 4.2
+ |      |             |      |    v            |             |
  |      |             |      |                 |             |
  |      |           10.0  NetBSD 1.5           |             |
  |   FreeBSD 4.3      |      |    |            |             |
@@ -157,7 +157,7 @@ FreeBSD 4.0  |      |  |  |  | NetBSD 1.4.2    |             |
  |      |             |      |                 |
  |      |             |   NetBSD 1.6           |
  |   FreeBSD 4.7      |      |                 |
- |      |             |      |                 |
+ |      |             |      |             OpenBSD 3.2
  |      v             |      |                 |
  |                    |      |                 |
 FreeBSD 5.0-current   |   NetBSD -current  OpenBSD -current
@@ -365,6 +365,7 @@ FreeBSD 4.6.2		2002-08-15 [FBD] (patch release)
 Mac OS X 10.2		2002-08-23 [APL]
 NetBSD 1.6		2002-09-14 [NBD]
 FreeBSD 4.7		2002-10-08 [FBD]
+OpenBSD 3.2		2002-11-01 [OBD]
 
 Bibliography
 ------------------------
@@ -389,7 +390,7 @@ Australian Computer Society, Hobart, August 1993.
 Peter H. Salus. Unix at 25. Byte Magazine, October 1994.
 URL: http://www.byte.com/art/9410/sec8/art3.htm (unreachable)
 
-Andreas Klemm, Lars K)Böller. If you're going to San Francisco ...
+Andreas Klemm, Lars Köller. If you're going to San Francisco ...
 Die freien BSD-Varianten von Unix. c't April 1997, page 368ff.
 
 BSD Release Announcements collection.
@@ -421,4 +422,4 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2001 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: ftp://ftp.freebsd.org/pub/FreeBSD/branches/-current/src/share/misc/bsd-family-tree
 
-$FreeBSD: src/share/misc/bsd-family-tree,v 1.67 2002/10/10 16:42:54 jhb Exp $
+$FreeBSD: src/share/misc/bsd-family-tree,v 1.68 2002/11/04 09:19:24 maxim Exp $
