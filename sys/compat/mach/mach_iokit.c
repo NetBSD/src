@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.9 2003/03/09 18:33:28 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.10 2003/03/29 11:04:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.9 2003/03/09 18:33:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.10 2003/03/29 11:04:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -684,6 +684,47 @@ mach_io_registry_entry_get_properties(args)
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_registry_entry_get_path(args)
+	struct mach_trap_args *args;
+{
+	mach_io_registry_entry_get_path_request_t *req = args->smsg;
+	mach_io_registry_entry_get_path_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	char location[] = ":/GossamerPE/pci@80000000/AppleGracklePCI/"
+	    "ATY,264LT-G@11/.Display_Video_ATI_mach64-01018002/"
+	    "display0/AppleBacklightDisplay";
+	char *cp;
+	size_t len, plen;
+
+	/* XXX Just return a dummy name for now */ 
+	len = req->req_count + strlen(location) - 1;
+	if (len > 512)
+		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
+	plen = (len & ~0x3UL) + 4;	/* Round to an int */
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) + 
+	    (plen - 512) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
+	rep->rep_count = len;
+
+	cp = &rep->rep_path[0];
+	memcpy(cp, &req->req_plane, req->req_count);
+	cp += (req->req_count - 1);	/* overwrite trailing \0 */
+	memcpy(cp, location, strlen(location));
+	cp += strlen(location);
+	*cp = '\0';
+
+	rep->rep_path[plen + 7] = 8;	/* Trailer */
+
+	*msglen = sizeof(*rep) + (plen - 512);
 	return 0;
 }
 
