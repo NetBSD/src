@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.4 2000/10/05 02:27:03 tv Exp $
+# $NetBSD: md.alpha,v 1.4.2.1 2003/02/03 05:18:45 jmc Exp $
 ./usr/X11R6/bin/X
-./usr/X11R6/bin/XalphaNetBSD
+./usr/X11R6/bin/XdecNetBSD
 ./usr/X11R6/lib/X11/rgb.db
