@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICADP,v 1.21 1996/05/07 00:59:59 thorpej Exp $
+#	$NetBSD: GENERICADP,v 1.22 1996/05/20 00:50:36 thorpej Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
@@ -160,6 +160,7 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 ep*	at eisa? slot ?				# 3C579 ethernet cards
+fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
