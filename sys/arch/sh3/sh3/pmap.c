@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2000/02/24 23:32:29 msaitoh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2000/04/02 20:39:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3300,7 +3300,7 @@ pmap_growkernel(maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-		if (pmap_initialized == FALSE) {
+		if (uvm.page_init_done == FALSE) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -3318,6 +3318,12 @@ pmap_growkernel(maxkvaddr)
 			kpm->pm_stats.resident_count++;
 			continue;
 		}
+
+		/*
+		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
+		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * INVOKED WHILE pmap_init() IS RUNNING!
+		 */
 
 		pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE);
 		/* PG_u not for kernel */
