@@ -788,7 +788,7 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, dsize, sc->sc_dnseg,
-	    sc->sc_descsize, 0, BUS_DMA_WAITOK, &sc->sc_ddmamap)) != 0) {
+	    dsize, 0, BUS_DMA_WAITOK, &sc->sc_ddmamap)) != 0) {
 		printf("%s: unable to create descriptor buffer DMA map, "
 		    "error = %d\n", sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_2;
