@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.81 2003/07/10 10:34:36 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.82 2003/07/18 02:52:51 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -30,8 +30,13 @@ MLINKS?=
 _MNUMBERS=	1 2 3 4 5 6 7 8 9
 .SUFFIXES:	${_MNUMBERS:@N@.$N@}
 
-MANCOMPRESS?=	${MANZ:Dgzip -cf}
-MANSUFFIX?=	${MANZ:D.gz}
+.if ${MKMANZ} == "no"
+MANCOMPRESS?=
+MANSUFFIX?=
+.else
+MANCOMPRESS?=	gzip -cf
+MANSUFFIX?=	.gz
+.endif
 
 # make MANCOMPRESS a filter, so it can be inserted on an as-needed basis
 .if !empty(MANCOMPRESS)
@@ -159,7 +164,7 @@ catlinks: catpages					# symlink install
 
 ##### Build and install rules (HTML pages)
 
-.if !defined(NOHTML)
+.if ${MKHTML} != "no"					# {
 installhtml:	htmlpages
 htmlpages::	# ensure target exists
 HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
@@ -194,7 +199,7 @@ htmlpages::	${_F}
 
 cleanhtml:
 	rm -f ${HTMLPAGES}
-.endif # !defined(NOHTML)
+.endif							# }
 
 ##### Clean rules
 .undef _F
