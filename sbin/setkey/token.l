@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.3 2000/10/03 21:48:33 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.4 2000/10/29 12:32:06 itojun Exp $	*/
 /*	$KAME: token.l,v 1.16 2000/08/28 16:41:10 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "vchar.h"
-#include "y.tab.h"
+#include "parse.h"
 
 #define DECHO \
 	if (f_debug) {printf("<%d>", yy_start); ECHO ; printf("\n"); }
