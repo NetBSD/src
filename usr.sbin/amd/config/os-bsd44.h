@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: os-bsd44.h,v 1.4 1994/01/05 05:51:01 deraadt Exp $
+ * $Id: os-bsd44.h,v 1.5 1994/04/14 03:21:36 cgd Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -161,6 +161,14 @@ XXX - Probably no hope of running Amd on this machine!
 
 #ifndef __NetBSD__
 #define NFSMNT_HOSTNAME	0		/* hostname on 4.4 is not optional */
+#endif
+
+#ifdef __NetBSD__
+/*
+ * Type of filesystem type
+ */
+#undef MTYPE_TYPE
+#define	MTYPE_TYPE	char *
 #endif
 
 struct mntent {
