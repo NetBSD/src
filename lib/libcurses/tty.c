@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.22 2000/06/15 21:20:16 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.23 2000/06/16 06:32:19 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.22 2000/06/15 21:20:16 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.23 2000/06/16 06:32:19 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -141,7 +141,7 @@ raw(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	useraw = __pfast = __rawmode = 1;
 	curt = &rawt;
@@ -154,7 +154,7 @@ noraw(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	useraw = __pfast = __rawmode = 0;
 	curt = &__baset;
@@ -167,7 +167,7 @@ cbreak(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	__rawmode = 1;
 	curt = useraw ? &rawt : &cbreakt;
@@ -180,7 +180,7 @@ nocbreak(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	__rawmode = 0;
 	curt = useraw ? &rawt : &__baset;
@@ -193,7 +193,7 @@ __delay(void)
  {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	rawt.c_cc[VMIN] = 1;
 	rawt.c_cc[VTIME] = 0;
@@ -211,7 +211,7 @@ __nodelay(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	rawt.c_cc[VMIN] = 0;
 	rawt.c_cc[VTIME] = 0;
@@ -229,7 +229,7 @@ __save_termios(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	ovmin = cbreakt.c_cc[VMIN];
 	ovtime = cbreakt.c_cc[VTIME];
@@ -240,7 +240,7 @@ __restore_termios(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	rawt.c_cc[VMIN] = ovmin;
 	rawt.c_cc[VTIME] = ovtime;
@@ -255,7 +255,7 @@ __timeout(int delay)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	ovmin = cbreakt.c_cc[VMIN];
 	ovtime = cbreakt.c_cc[VTIME];
@@ -275,7 +275,7 @@ __notimeout(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	rawt.c_cc[VMIN] = 1;
 	rawt.c_cc[VTIME] = 0;
@@ -293,7 +293,7 @@ echo(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	__echoit = 1;
 	return (OK);
@@ -304,7 +304,7 @@ noecho(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	__echoit = 0;
 	return (OK);
@@ -315,7 +315,7 @@ nl(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	rawt.c_iflag |= ICRNL;
 	rawt.c_oflag |= ONLCR;
@@ -334,7 +334,7 @@ nonl(void)
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	rawt.c_iflag &= ~ICRNL;
 	rawt.c_oflag &= ~ONLCR;
@@ -353,7 +353,7 @@ intrflush(WINDOW *win, bool bf)	/*ARGSUSED*/
 {
 	/* Check if we need to restart ... */
 	if (__endwin)
-		__endwin = 0;
+		__restartwin();
 
 	if (bf) {
 		rawt.c_lflag &= ~NOFLSH;
