@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.4 2003/05/04 10:01:19 tsutsui Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.5 2003/05/22 17:16:20 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ struct platform platform_acer_pica_61 = {
 	"PICA-61",
 	"MIPS MAG",
 	"",
-	"Pica-61",
+	"PICA-61",
 	"Acer",
 	150, /* MHz */
 	c_jazz_eisa_mainbusdevs,
