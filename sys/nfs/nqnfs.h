@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.2 1994/06/29 06:42:41 cgd Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.2.2.1 1994/08/19 12:10:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,9 +107,8 @@ struct nqhost {
 #define	lph_slp		lph_un.un_conn.conn_slp
 
 struct nqlease {
-	struct nqlease *lc_chain1[2];	/* Timer queue list (must be first) */
-	struct nqlease *lc_fhnext;	/* Fhandle hash list */
-	struct nqlease **lc_fhprev;
+	LIST_ENTRY(nqlease) lc_hash;	/* Fhandle hash list */
+	CIRCLEQ_ENTRY(nqlease) lc_timer; /* Timer queue list */
 	time_t		lc_expiry;	/* Expiry time (sec) */
 	struct nqhost	lc_host;	/* Host that got lease */
 	struct nqm	*lc_morehosts;	/* Other hosts that share read lease */
@@ -185,12 +184,15 @@ struct nqm {
 /*
  * List head for timer queue.
  */
-extern union nqsrvthead {
-	union	nqsrvthead *th_head[2];
-	struct	nqlease *th_chain[2];
-} nqthead;
-extern struct nqlease **nqfhead;
-extern u_long nqfheadhash;
+CIRCLEQ_HEAD(, nqlease) nqtimerhead;
+
+/*
+ * List head for the file handle hash table.
+ */
+#define	NQFHHASH(f) \
+	(&nqfhhashtbl[(*((u_long *)(f))) & nqfhhash])
+LIST_HEAD(nqfhhashhead, nqlease) *nqfhhashtbl;
+u_long nqfhhash;
 
 /*
  * Nqnfs return status numbers.
