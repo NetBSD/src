@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173 2004/11/08 16:11:02 kleink Exp $ */
+/*	$NetBSD: machdep.c,v 1.174 2004/11/13 08:12:50 grant Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 2004/11/08 16:11:02 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2004/11/13 08:12:50 grant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1798,7 +1798,7 @@ sparc_bus_unmap(t, bh, size)
 	if (PHYS_ASI(bh._asi)) return (0);
 
 	error = extent_free(io_space, va, size, EX_NOWAIT);
-	if (error) printf("sparc_bus_unmap: extent free sez %d\n", error);
+	if (error) printf("sparc_bus_unmap: extent_free returned %d\n", error);
 
 	pmap_remove(pmap_kernel(), va, endva);
 	return (0);
