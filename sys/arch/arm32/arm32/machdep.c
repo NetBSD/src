@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2001/02/28 18:15:43 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2001/03/04 01:50:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -116,6 +116,8 @@ int kernel_debug = 0;
 
 struct user *proc0paddr;
 
+char *booted_kernel;
+
 /* Prototypes */
 
 void consinit		__P((void));
@@ -141,10 +143,6 @@ extern void dumpsys	__P((void));
 extern void pmap_debug	__P((int level));
 #endif	/* PMAP_DEBUG */
 
-#if defined(SHARK)
-int shark_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-	void *newp, size_t newlen, struct proc *p);
-#endif
 /*
  * Debug function just to park the CPU
  */
@@ -618,15 +616,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
 			sizeof consdev));
 	}
-#if defined(SHARK)
 	case CPU_BOOTED_KERNEL: {
-		extern char *boot_kernel;
-		if (boot_kernel != NULL && boot_kernel[0] != '\0')
+		if (booted_kernel != NULL && booted_kernel[0] != '\0')
 			return sysctl_rdstring(oldp, oldlenp, newp,
-			    boot_kernel);
+			    booted_kernel);
 		return (EOPNOTSUPP);
 	}
-#endif
 
 	default:
 		return (EOPNOTSUPP);
