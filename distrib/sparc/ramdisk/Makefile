@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 1998/11/14 01:55:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1999/01/10 13:39:44 mrg Exp $
 
 TOP=		${.CURDIR}/..
+MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk.fs
@@ -21,9 +22,9 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-SIZE=		1584k
+SIZE=		1656k
 DISKTYPE=	instfs
-GEOM=		512/18/2/88
+GEOM=		512/18/2/92
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
@@ -33,8 +34,8 @@ all: ${CBIN}
 	newfs -m 0 -o space -i 4096 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
+	TOPDIR=${TOP} CURDIR=${MINIROOT} REALCURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
@@ -51,6 +52,13 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+
+# This is listed in ramdiskbin.conf but is built here.
+${CBIN}: libhack.o
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=${TOP}/../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
