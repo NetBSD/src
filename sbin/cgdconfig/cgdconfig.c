@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.14 2005/03/30 19:56:05 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.15 2005/03/30 20:59:34 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.14 2005/03/30 19:56:05 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.15 2005/03/30 20:59:34 elric Exp $");
 #endif
 
 #include <err.h>
@@ -146,10 +146,10 @@ main(int argc, char **argv)
 	char	cfile[FILENAME_MAX] = "";
 	char	outfile[FILENAME_MAX] = "";
 
+	setprogname(*argv);
 	eliminate_cores();
 	if (mlockall(MCL_FUTURE))
 		err(EXIT_FAILURE, "Can't lock memory");
-	setprogname(*argv);
 	p = params_new();
 	kg = NULL;
 
