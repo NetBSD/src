@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.24 2003/09/25 14:17:57 pooka Exp $ 
+ *	$Id: i4b_l4.c,v 1.25 2003/10/03 16:38:44 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.24 2003/09/25 14:17:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.25 2003/10/03 16:38:44 pooka Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -77,26 +77,27 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.24 2003/09/25 14:17:57 pooka Exp $");
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
 /*
- * BRIs (in userland sometimes called "controllers", but one controller
- * may have multiple BRIs, for example daic QUAD cards attach four BRIs).
+ * ISDNs, in userland sometimes called "controllers", but one controller
+ * may have multiple BRIs, for example daic QUAD cards attach four BRIs.
+ * An ISDN may also be a PRI (30 B channels).
  */
-static SLIST_HEAD(, isdn_l3_driver) bri_list = SLIST_HEAD_INITIALIZER(bri_list);
-static int next_bri = 0;
+static SLIST_HEAD(, isdn_l3_driver) isdnif_list = SLIST_HEAD_INITIALIZER(isdnif_list);
+static int next_isdnif = 0;
 
 /*
- * Attach a new L3 driver instance and return it's BRI identifier
+ * Attach a new L3 driver instance and return its ISDN identifier
  */
 struct isdn_l3_driver *
-isdn_attach_bri(const char *devname, const char *cardname, 
-    void *l1_token, const struct isdn_l3_driver_functions *l3driver)
+isdn_attach_isdnif(const char *devname, const char *cardname, 
+    void *l1_token, const struct isdn_l3_driver_functions *l3driver, int nbch)
 {
 	int s = splnet();
-	int l, bri = next_bri++;
+	int i, l, isdnif = next_isdnif++;
 	struct isdn_l3_driver *new_ctrl;
 
 	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, 0);
 	memset(new_ctrl, 0, sizeof *new_ctrl);
-	SLIST_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
+	SLIST_INSERT_HEAD(&isdnif_list, new_ctrl, l3drvq);
 	l = strlen(devname);
 	new_ctrl->devname = malloc(l + 1, M_DEVBUF, 0);
 	strlcpy(new_ctrl->devname, devname, l + 1);
@@ -106,11 +107,14 @@ isdn_attach_bri(const char *devname, const char *cardname,
 
 	new_ctrl->l3driver = l3driver;
 	new_ctrl->l1_token = l1_token;
-	new_ctrl->bri = bri;
+	new_ctrl->isdnif = isdnif;
 	new_ctrl->tei = -1;
 	new_ctrl->dl_est = DL_DOWN;
-	new_ctrl->bch_state[0] = BCH_ST_FREE;
-	new_ctrl->bch_state[1] = BCH_ST_FREE;
+	new_ctrl->nbch = nbch;
+
+	new_ctrl->bch_state = malloc(nbch * sizeof(int), M_DEVBUF, 0);
+	for (i = 0; i < nbch; i++)
+		new_ctrl->bch_state[i] = BCH_ST_FREE;
 
 	splx(s);
 
@@ -121,64 +125,64 @@ isdn_attach_bri(const char *devname, const char *cardname,
  * Detach a L3 driver instance
  */
 int
-isdn_detach_bri(struct isdn_l3_driver *l3drv)
+isdn_detach_isdnif(struct isdn_l3_driver *l3drv)
 {
 	struct isdn_l3_driver *sc;
 	int s = splnet();
-	int bri = l3drv->bri;
+	int isdnif = l3drv->isdnif;
 	int max;
 
-	i4b_l4_contr_ev_ind(bri, 0);
-	SLIST_REMOVE(&bri_list, l3drv, isdn_l3_driver, l3drvq);
+	i4b_l4_contr_ev_ind(isdnif, 0);
+	SLIST_REMOVE(&isdnif_list, l3drv, isdn_l3_driver, l3drvq);
 
 	max = -1;
-	SLIST_FOREACH(sc, &bri_list, l3drvq)
-		if (sc->bri > max)
-			max = sc->bri;
-	next_bri = max+1;
+	SLIST_FOREACH(sc, &isdnif_list, l3drvq)
+		if (sc->isdnif > max)
+			max = sc->isdnif;
+	next_isdnif = max+1;
 
-	free_all_cd_of_bri(bri);
+	free_all_cd_of_isdnif(isdnif);
 
 	splx(s);
 
 	free(l3drv, M_DEVBUF);
-	printf("BRI %d detached\n", bri);
+	printf("ISDN %d detached\n", isdnif);
 	return 1;
 }
 
 struct isdn_l3_driver *
-isdn_find_l3_by_bri(int bri)
+isdn_find_l3_by_isdnif(int isdnif)
 {
 	struct isdn_l3_driver *sc;
 
-	SLIST_FOREACH(sc, &bri_list, l3drvq)
-		if (sc->bri == bri)
+	SLIST_FOREACH(sc, &isdnif_list, l3drvq)
+		if (sc->isdnif == isdnif)
 			return sc;
 	return NULL;
 }
 
-int isdn_count_bri(int *mbri)
+int isdn_count_isdnif(int *misdnif)
 {
 	struct isdn_l3_driver *sc;
 	int count = 0;
-	int maxbri = -1;
+	int max_isdnif = -1;
 
-	SLIST_FOREACH(sc, &bri_list, l3drvq) {
+	SLIST_FOREACH(sc, &isdnif_list, l3drvq) {
 		count++;
-		if (sc->bri > maxbri)
-			maxbri = sc->bri;
+		if (sc->isdnif > max_isdnif)
+			max_isdnif = sc->isdnif;
 	}
 
-	if (mbri)
-		*mbri = maxbri;
+	if (misdnif)
+		*misdnif = max_isdnif;
 
 	return count;
 }
 
 void *
-isdn_find_softc_by_bri(int bri)
+isdn_find_softc_by_isdnif(int isdnif)
 {
-	struct isdn_l3_driver *sc = isdn_find_l3_by_bri(bri);
+	struct isdn_l3_driver *sc = isdn_find_l3_by_isdnif(isdnif);
 	if (sc == NULL)
 		return NULL;
 	/*
@@ -200,7 +204,7 @@ i4b_l4_daemon_attached(void)
 	struct isdn_l3_driver *d;
 
 	int x = splnet();
-	SLIST_FOREACH(d, &bri_list, l3drvq)
+	SLIST_FOREACH(d, &isdnif_list, l3drvq)
 	{
 		d->l3driver->N_MGMT_COMMAND(d, CMR_DOPEN, 0);
 	}
@@ -216,7 +220,7 @@ i4b_l4_daemon_detached(void)
 	struct isdn_l3_driver *d;
 
 	int x = splnet();
-	SLIST_FOREACH(d, &bri_list, l3drvq)
+	SLIST_FOREACH(d, &isdnif_list, l3drvq)
 	{
 		d->l3driver->N_MGMT_COMMAND(d, CMR_DCLOSE, 0);
 	}
@@ -326,10 +330,9 @@ i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 				i4b_unlink_bchandrvr(cd);
 			}
 		
-			if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
-			{
+			if ((cd->channelid >= 0)
+			     && (cd->channelid < d->nbch));
 				d->bch_state[cd->channelid] = BCH_ST_FREE;
-			}
 
 			cd->cdid = CDID_UNUSED;
 		}
@@ -342,7 +345,7 @@ i4b_l4_pdeact(struct isdn_l3_driver *d, int numactive)
 		md->header.type = MSG_PDEACT_IND;
 		md->header.cdid = -1;
 
-		md->controller = d->bri;
+		md->controller = d->isdnif;
 		md->numactive = numactive;
 
 		i4bputqueue_hipri(m);		/* URGENT !!! */
@@ -364,7 +367,7 @@ i4b_l4_l12stat(struct isdn_l3_driver *d, int layer, int state)
 		md->header.type = MSG_L12STAT_IND;
 		md->header.cdid = -1;
 
-		md->controller = d->bri;
+		md->controller = d->isdnif;
 		md->layer = layer;
 		md->state = state;
 
@@ -387,7 +390,7 @@ i4b_l4_teiasg(struct isdn_l3_driver *d, int tei)
 		md->header.type = MSG_TEIASG_IND;
 		md->header.cdid = -1;
 
-		md->controller = d->bri;
+		md->controller = d->isdnif;
 		md->tei = d->tei;
 
 		i4bputqueue(m);
@@ -544,7 +547,7 @@ i4b_l4_connect_ind(call_desc_t *cd)
 		mp->header.type = MSG_CONNECT_IND;
 		mp->header.cdid = cd->cdid;
 
-		mp->controller = cd->bri;
+		mp->controller = cd->isdnif;
 		mp->channel = cd->channelid;
 		mp->bprot = cd->bprot;
 
@@ -609,7 +612,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 
 		mp->header.type = MSG_CONNECT_ACTIVE_IND;
 		mp->header.cdid = cd->cdid;
-		mp->controller = cd->bri;
+		mp->controller = cd->isdnif;
 		mp->channel = cd->channelid;
 		if(cd->datetime[0] != '\0')
 			strlcpy(mp->datetime, cd->datetime,
@@ -640,7 +643,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 
 	d = cd->l3drv;
 
-	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
+	if((cd->channelid >= 0) && (cd->channelid < d->nbch))
 	{
 		d->bch_state[cd->channelid] = BCH_ST_FREE;
 		/*
@@ -652,7 +655,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 	else
 	{
 		/* no error, might be hunting call for callback */
-		NDBGL4(L4_MSG, "channel free not B1/B2 but %d!", cd->channelid);
+		NDBGL4(L4_MSG, "invalid channel %d for ISDN!", cd->channelid);
 	}
 	update_controller_leds(d);
 	
@@ -761,7 +764,7 @@ i4b_l4_proceeding_ind(call_desc_t *cd)
 
 		mp->header.type = MSG_PROCEEDING_IND;
 		mp->header.cdid = cd->cdid;
-		mp->controller = cd->bri;
+		mp->controller = cd->isdnif;
 		mp->channel = cd->channelid;
 		i4bputqueue(m);
 	}
