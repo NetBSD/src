@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 2002/04/07 10:40:04 hannken Exp $ */
+/*	$NetBSD: util.c,v 1.15 2002/12/10 13:05:09 itohy Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ static struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_ADB,		"adb" },
 	{ WSKBD_TYPE_HIL,		"hil" },
 	{ WSKBD_TYPE_AMIGA,		"amiga" },
+	{ WSKBD_TYPE_MAPLE,		"maple" },
 };
 
 static struct nameint mstype_tab[] = {
@@ -82,6 +83,7 @@ static struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_HIL,		"hil" },
 	{ WSMOUSE_TYPE_AMIGA,		"amiga" },
 	{ WSMOUSE_TYPE_MAXINE,		"dec-maxine" },
+	{ WSMOUSE_TYPE_MAPLE,		"maple" },
 };
 
 static struct nameint dpytype_tab[] = {
