@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.61 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: sfb.c,v 1.62 2003/12/17 03:59:33 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.61 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.62 2003/12/17 03:59:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,8 @@ static const struct wsdisplay_accessops sfb_accessops = {
 int  sfb_cnattach __P((tc_addr_t));
 static int  sfbintr __P((void *));
 static void sfbhwinit __P((caddr_t));
+static void sfb_cmap_init __P((struct sfb_softc *));
+static void sfb_screenblank __P((struct sfb_softc *, int));
 
 static int  get_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
 static int  set_cmap __P((struct sfb_softc *, struct wsdisplay_cmap *));
@@ -259,10 +261,8 @@ sfbattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap256 *cm;
-	const u_int8_t *p;
 	caddr_t asic;
-	int console, index;
+	int console;
 
 	console = (ta->ta_addr == sfb_consaddr);
 	if (console) {
@@ -284,13 +284,7 @@ sfbattach(parent, self, aux)
 	}
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
 
-	cm = &sc->sc_cmap;
-	p = rasops_cmap;
-	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
-		cm->r[index] = p[0];
-		cm->g[index] = p[1];
-		cm->b[index] = p[2];
-	}
+	sfb_cmap_init(sc);
 
 	sc->sc_vaddr = ta->ta_addr;
 	sc->sc_cursor.cc_magic.x = HX_MAGIC_X;
@@ -309,6 +303,23 @@ sfbattach(parent, self, aux)
 	waa.accesscookie = sc;
 
 	config_found(self, &waa, wsemuldisplaydevprint);
+}
+
+static void
+sfb_cmap_init(sc)
+	struct sfb_softc *sc;
+{
+	struct hwcmap256 *cm;
+	const u_int8_t *p;
+	int index;
+
+	cm = &sc->sc_cmap;
+	p = rasops_cmap;
+	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
+		cm->r[index] = p[0];
+		cm->g[index] = p[1];
+		cm->b[index] = p[2];
+	}
 }
 
 static void
@@ -388,7 +399,7 @@ sfbioctl(v, cmd, data, flag, p)
 {
 	struct sfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
-	int turnoff;
+	int turnoff, s;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -412,13 +423,7 @@ sfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
-		if (sc->sc_blanked ^ turnoff) {
-			caddr_t asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
-			*(u_int32_t *)(asic + SFB_ASIC_VIDEO_VALID)
-				= !turnoff;
-			tc_wmb();
-			sc->sc_blanked = turnoff;
-		}
+		sfb_screenblank(sc, turnoff);
 		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
@@ -431,8 +436,10 @@ sfbioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_SCURPOS:
+		s = spltty();
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
 		sc->sc_changed |= WSDISPLAY_CURSOR_DOPOS;
+		splx(s);
 		return (0);
 
 	case WSDISPLAYIO_GCURMAX:
@@ -445,8 +452,35 @@ sfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			s = spltty();
+			sfb_cmap_init(sc);
+			sc->sc_curenb = 0;
+			sc->sc_changed |= (WSDISPLAY_CURSOR_DOCUR |
+			    WSDISPLAY_CMAP_DOLUT);
+			splx(s);
+			sfb_screenblank(sc, 0);
+		}
+		return (0);
 	}
 	return (EPASSTHROUGH);
+}
+
+static void
+sfb_screenblank(sc, turnoff)
+	struct sfb_softc *sc;
+	int turnoff;
+{
+	struct rasops_info *ri;
+	caddr_t asic;
+
+	ri = sc->sc_ri;
+	asic = (caddr_t)ri->ri_hw + SFB_ASIC_OFFSET;
+	*(u_int32_t *)(asic + SFB_ASIC_VIDEO_VALID) = !turnoff;
+	tc_wmb();
+	sc->sc_blanked = turnoff;
 }
 
 static paddr_t
@@ -723,7 +757,7 @@ set_cmap(sc, p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
-	int error;
+	int error, s;
 
 	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return (EINVAL);
@@ -738,10 +772,12 @@ set_cmap(sc, p)
 	if (error)
 		return error;
 
+	s = spltty();
 	memcpy(&sc->sc_cmap.r[index], &cmap.r[index], count);
 	memcpy(&sc->sc_cmap.g[index], &cmap.g[index], count);
 	memcpy(&sc->sc_cmap.b[index], &cmap.b[index], count);
 	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
+	splx(s);
 	return (0);
 }
 
@@ -753,7 +789,7 @@ set_cursor(sc, p)
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
 	uint8_t r[2], g[2], b[2], image[512], mask[512];
-	int error;
+	int error, s;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
@@ -783,6 +819,7 @@ set_cursor(sc, p)
 			return error;
 	}
 
+	s = spltty();
 	if (v & WSDISPLAY_CURSOR_DOCUR)
 		sc->sc_curenb = p->enable;
 	if (v & WSDISPLAY_CURSOR_DOPOS)
@@ -802,6 +839,7 @@ set_cursor(sc, p)
 		memcpy(cc->cc_mask, mask, icount);
 	}
 	sc->sc_changed |= v;
+	splx(s);
 
 	return (0);
 #undef cc
