@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1998/09/05 14:46:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1998/11/14 01:45:23 mrg Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,6 +40,7 @@ all:	netbsd.ram.gz
 	# vnconfig -v -c ${VND_CDEV} ${IMAGE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -W ${VND_CDEV}
 	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
