@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.5 1996/10/13 03:06:31 christos Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.6 1996/10/15 21:33:51 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -36,30 +36,10 @@
  */
 
 /*
- * vidcaudio driver for RiscBSD by Melvin Tang-Richardson (c) 1995
+ * audio driver for the RiscPC 16 bit sound
  *
  * Interfaces with the NetBSD generic audio driver to provide SUN
  * /dev/audio (partial) compatibility.
- *
- * Do not include me in conf.c.  My interface is done by the generic
- * audio driver.  Put me in config file and files.arm32.  Do not put
- * the audio.c generic driver in them.  I do the autoconfig for it.
- *
- * The following files need to be altered
- *
- * [files.arm32]
- * device  vidcaudio at mainbus :audio
- * file    arch/arm32/mainbus/vidcaudio.c	vidcaudio needs-flag
- * major { audio=36 }
- *
- * [conf.c]
- * #include "audio.h"
- * cdev_decl(audio)
- *
- * cdev_audio_init(NAUDIO,audio)	/* 36: generic audio I/O */
- *
- * [GENERIC]
- * vidcaudio0	at mainbus? base 0x00000000
  *
  */
 
@@ -80,7 +60,7 @@
 #include <machine/irqhandler.h>
 #include <machine/iomd.h>
 #include <machine/vidc.h>
-#include <machine/katelib.h> /* ReadByte etc. */
+#include <machine/katelib.h>
 
 #include <arm32/mainbus/mainbus.h>
 #include "waveform.h"
@@ -119,7 +99,7 @@ struct vidcaudio_softc {
 	int outport;
 };
 
-int  vidcaudio_probe	__P((struct device *parent, struct device *match, void *aux));
+int  vidcaudio_probe	__P((struct device *parent, void *match, void *aux));
 void vidcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
 int  vidcaudio_open	__P((dev_t dev, int flags));
 void vidcaudio_close	__P((void *addr));
@@ -131,6 +111,8 @@ int vidcaudio_stereo	__P((int channel, int position));
 int vidcaudio_rate	__P((int rate));
 void vidcaudio_shutdown	__P((void));
 int vidcaudio_hw_attach	__P((struct vidcaudio_softc *sc));
+
+static int sound_dma_intr;
 
 struct cfattach vidcaudio_ca = {
 	sizeof(struct vidcaudio_softc), vidcaudio_probe, vidcaudio_attach
@@ -152,7 +134,7 @@ vidcaudio_beep_generate()
 int
 vidcaudio_probe(parent, match, aux)
 	struct device *parent;
-	struct device *match;
+	void *match;
 	void *aux;
 {
 	int id;
@@ -164,6 +146,13 @@ vidcaudio_probe(parent, match, aux)
 	switch (id) {
 	case RPC600_IOMD_ID:
 		return(1);
+		break;
+	case ARM7500_IOC_ID:
+#ifdef RC7500
+		return(0);
+#else
+		return(1);
+#endif
 		break;
 	default:
 		printf("vidcaudio: Unknown IOMD id=%04x", id);
@@ -182,6 +171,7 @@ vidcaudio_attach(parent, self, aux)
 {
 	struct mainbus_attach_args *mb = aux;
 	struct vidcaudio_softc *sc = (void *)self;
+	int id;
 
 	sc->iobase = mb->mb_iobase;
 
@@ -215,21 +205,38 @@ vidcaudio_attach(parent, self, aux)
 	ag.ih.ih_func = vidcaudio_intr;
 	ag.ih.ih_arg = NULL;
 	ag.ih.ih_level = IPL_NONE;
+	ag.ih.ih_name = "vidcaudio";
 
 	ag.intr = NULL;
-	ag.nextintr = NULL;
+/*	ag.nextintr = NULL;*/
 
-	disable_irq(IRQ_DMASCH0);
+	id = ReadByte(IOMD_ID0) | ReadByte(IOMD_ID1) << 8;
 
-	if (irq_claim(IRQ_DMASCH0, &(ag.ih)))
-		panic("vidcaudio: couldn't claim IRQ_DMASCH0");
+	switch (id) {
+#ifndef CPU_ARM7500
+	case RPC600_IOMD_ID:
+		sound_dma_intr = IRQ_DMASCH0;
+		break;
+#else
+	case ARM7500_IOC_ID:
+		sound_dma_intr = IRQ_SDMA;
+		break;
+#endif
+	}
 
-	disable_irq(IRQ_DMASCH0);
+	disable_irq(sound_dma_intr);
+
+	if (irq_claim(sound_dma_intr, &(ag.ih)))
+		panic("vidcaudio: couldn't claim IRQ %d\n", sound_dma_intr);
+
+	disable_irq(sound_dma_intr);
 
 	vidcaudio_dma_program(ag.silence, ag.silence+NBPG-16,
 	    vidcaudio_dummy_routine, NULL);
 
 	vidcaudio_hw_attach(sc);
+
+	printf("\n");
 
 #ifdef DEBUG
 	printf(" UNDER DEVELOPMENT (nuts)\n");
@@ -242,7 +249,7 @@ vidcaudio_open(dev, flags)
 	int flags;
 {
 	struct vidcaudio_softc *sc;
-	int unit = AUDIOUNIT (dev);
+	int unit = AUDIOUNIT(dev);
 	int s;
 
 #ifdef DEBUG
@@ -277,7 +284,7 @@ vidcaudio_close(addr)
 {
 	struct vidcaudio_softc *sc = addr;
 
-	vidcaudio_shutdown ();
+	vidcaudio_shutdown();
 
 #ifdef DEBUG
 	printf("DEBUG: vidcaudio_close called\n");
@@ -309,8 +316,8 @@ int    vidcaudio_set_in_port	 __P((void *, int));
 int    vidcaudio_get_in_port  	 __P((void *));
 int    vidcaudio_commit_settings __P((void *));
 u_int  vidcaudio_get_silence	 __P((int));
-void   vidcaudio_sw_encode	 __P((int, u_char *, int));
-void   vidcaudio_sw_decode	 __P((int, u_char *, int));
+void   vidcaudio_sw_encode	 __P((void *, int, u_char *, int));
+void   vidcaudio_sw_decode	 __P((void *, int, u_char *, int));
 int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_halt_output	 __P((void *));
@@ -480,7 +487,7 @@ u_int vidcaudio_get_silence ( int enc )
     return 0;
 }
 
-void vidcaudio_sw_encode ( int e, u_char *p, int cc )
+void vidcaudio_sw_encode ( void *addr, int e, u_char *p, int cc )
 {
 #ifdef DEBUG
     printf ( "DEBUG: sw_encode\n" );    
@@ -488,7 +495,7 @@ void vidcaudio_sw_encode ( int e, u_char *p, int cc )
     return;
 }
 
-void vidcaudio_sw_decode ( int e, u_char *p, int cc )
+void vidcaudio_sw_decode ( void *addr, int e, u_char *p, int cc )
 {
 #ifdef DEBUG
     printf ( "DEBUG: sw_decode\n" );    
@@ -718,7 +725,7 @@ printf ( "vidcaudio: start output\n" );
 #ifdef DEBUG
 	printf ( "SE" );
 #endif
-        enable_irq ( IRQ_DMASCH0 );
+        enable_irq(sound_dma_intr);
     }
     else
     {
@@ -755,7 +762,7 @@ printf ( "vidcaudio: stop output\n" );
 #endif
     WriteWord ( IOMD_SD0CURB, ag.silence );
     WriteWord ( IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30) );
-    disable_irq ( IRQ_DMASCH0 );
+    disable_irq(sound_dma_intr);
 }
 
 int vidcaudio_intr ( void *arg )
@@ -864,7 +871,7 @@ printf ( "i" );
 	ag.intr = vidcaudio_dummy_routine;	/* Already done this        */
 	ag.arg = NULL;
     }
-    return 0;
+    return(0);	/* Pass interrupt on down the chain */
 }
 
 
