@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.12 2001/02/19 22:44:41 cgd Exp $	*/
+/*	$NetBSD: mmap.c,v 1.13 2002/04/07 11:25:40 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ main(argc, argv)
 	printf(">>> MAPPING ANOTHER %d PAGE ANONYMOUS REGION <<<\n", npgs);
 
 	addr2 = mmap(NULL, npgs * pgsize, PROT_READ, MAP_ANON, -1, (off_t) 0);
-	if (addr == MAP_FAILED)
+	if (addr2 == MAP_FAILED)
 		err(1, "mmap anon #2");
 
 	printf("    CHECKING RESIDENCY\n");
@@ -269,7 +269,7 @@ main(argc, argv)
 
 	printf("    CHECKING RESIDENCY\n");
 
-	if (check_residency(addr2, npgs) != 0) {
+	if (check_residency(addr, npgs) != 0) {
 		printf("    RESIDENCY CHECK FAILED!\n");
 		ecode = 1;
 	}
