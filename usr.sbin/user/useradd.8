@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.9 2000/10/17 04:54:43 simonb Exp $ */
+.\" $NetBSD: useradd.8,v 1.10 2001/02/21 12:16:07 agc Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -246,6 +246,15 @@ file - they have the format:
 enables verbose mode - explain the commands as they are executed.
 .El
 .Pp
+Once the information has been verified,
+.Nm
+uses
+.Xr pwd_mkdb 8
+to update the user database.  This is run in the background, and,
+at very large sites could take several minutes.  Until this update
+is completed, the password file is unavailable for other updates
+and the new information is not available to programs.
+.Pp
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
@@ -258,6 +267,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .Xr chpass 1 ,
 .Xr passwd 5 ,
 .Xr group 5 ,
+.Xr pwd_mkdb 8 ,
 .Xr user 8 ,
 .Xr userdel 8 ,
 .Xr usermod 8
