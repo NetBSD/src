@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.21 2000/05/09 22:51:34 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.22 2000/05/10 14:26:06 pk Exp $	*/
 
 /*
  *
@@ -390,7 +390,7 @@ xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 	int nseg;
 	int error;
 
-	if ((error = bus_dmamem_alloc(tag, len, NBPG, 0,
+	if ((error = bus_dmamem_alloc(tag, len, 0, 0,
 				      seg, 1, &nseg, BUS_DMA_NOWAIT)) != 0) {
 		return (error);
 	}
