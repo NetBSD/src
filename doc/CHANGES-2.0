@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.168 2004/04/29 22:04:47 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.169 2004/04/30 03:42:20 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1708,3 +1708,9 @@ sys/arch/alpha/conf/ALPHA			1.192
 
 	scsibus* at scsi?
 	[fair, ticket #232]
+
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC_LAPTOP		patch
+
+	Comment out ichlpcib.
+	[minoura, ticket #233]
