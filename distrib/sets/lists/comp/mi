@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.761 2005/01/24 07:05:17 lukem Exp $
+#	$NetBSD: mi,v 1.762 2005/02/20 00:39:48 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1174,6 +1174,8 @@
 ./usr/include/pthread_queue.h			comp-c-include
 ./usr/include/pthread_types.h			comp-c-include
 ./usr/include/pwd.h				comp-c-include
+./usr/include/radlib.h				comp-c-include
+./usr/include/radlib_vs.h			comp-c-include
 ./usr/include/randomid.h			comp-c-include
 ./usr/include/ranlib.h				comp-c-include
 ./usr/include/re_comp.h				comp-c-include
