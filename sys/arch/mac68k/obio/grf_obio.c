@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.41.2.4 1999/11/28 07:33:30 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.41.2.5 1999/12/12 08:27:26 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -216,7 +216,7 @@ grfiv_attach(parent, self, aux)
 				sc->sc_fbofs = mac68k_vidphys - sc->sc_basepa;
 			} else {
 				sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-				sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+				sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 				length = mac68k_vidlen + sc->sc_fbofs;
 			}
 
@@ -275,7 +275,7 @@ grfiv_attach(parent, self, aux)
 			sc->sc_fbofs = mac68k_vidphys - sc->sc_basepa;
 		} else {
 			sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-			sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+			sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 			length = mac68k_vidlen + sc->sc_fbofs;
 		}
 
@@ -285,7 +285,7 @@ grfiv_attach(parent, self, aux)
 	case MACH_CLASSIIci:
 	case MACH_CLASSIIsi:
 		sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-		sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
 		printf(" @ %lx: RBV video subsystem, ",
@@ -312,7 +312,7 @@ grfiv_attach(parent, self, aux)
 		break;
 	default:
 		sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
-		sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
 		printf(" @ %lx: On-board video\n",
