@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.28 2001/01/05 02:02:57 lukem Exp $	*/
+/*	$NetBSD: pass2.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.28 2001/01/05 02:02:57 lukem Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.29 2001/01/09 05:51:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ void
 pass2()
 {
 	struct dinode *dp;
-	struct inoinfo **inpp, *inp;
+	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
 	struct dinode dino;
@@ -236,9 +236,29 @@ pass2()
 		(void)changeino(inp->i_number, "..", inp->i_parent);
 	}
 	/*
+	 * Create a list of children for each directory.
+	 */
+	inpend = &inpsort[inplast];
+	for (inpp = inpsort; inpp < inpend; inpp++) {
+		inp = *inpp;
+		inp->i_child = inp->i_sibling = inp->i_parentp = 0;
+		if (statemap[inp->i_number] == DFOUND)
+			statemap[inp->i_number] = DSTATE;
+	}
+	for (inpp = inpsort; inpp < inpend; inpp++) {
+		inp = *inpp;
+		if (inp->i_parent == 0 ||
+		    inp->i_number == ROOTINO)
+			continue;
+		pinp = getinoinfo(inp->i_parent);
+		inp->i_parentp = pinp;
+		inp->i_sibling = pinp->i_child;
+		pinp->i_child = inp;
+	}
+	/*
 	 * Mark all the directories that can be found from the root.
 	 */
-	propagate();
+	propagate(ROOTINO);
 }
 
 static int
