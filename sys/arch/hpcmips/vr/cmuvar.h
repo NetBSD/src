@@ -1,7 +1,7 @@
-/*	$NetBSD: cmuvar.h,v 1.3 2002/01/27 14:18:12 takemura Exp $	*/
+/*	$NetBSD: cmuvar.h,v 1.4 2002/02/02 10:50:08 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,6 +42,3 @@ struct vrcmu_chipset_tag {
 	void *cc_sc;
 	int (*cc_clock)(vrcmu_chipset_tag_t, u_int16_t, int);
 };
-
-/* Before autoconfiguration */
-void __vrcmu_supply(u_int16_t, int);

@@ -1,8 +1,8 @@
-/*	$NetBSD: cmu.c,v 1.8 2002/01/29 18:53:21 uch Exp $	*/
+/*	$NetBSD: cmu.c,v 1.9 2002/02/02 10:50:08 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
- * Copyright (c) 1999,2000 PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999, 2000, 2002 PocketBSD Project. All rights reserved.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -100,22 +100,6 @@ vrcmu_attach(struct device *parent, struct device *self, void *aux)
 	    CONFIG_HOOK_PMEVENT_HARDPOWER,
 	    CONFIG_HOOK_SHARE,
 	    vrcmu_hardpower, sc);
-}
-
-/* For serial console */
-void
-__vrcmu_supply(u_int16_t mask, int onoff)
-{
-	u_int16_t reg;
-	u_int32_t addr;
-
-	addr = MIPS_PHYS_TO_KSEG1(VRIP_CMU_ADDR);
-	reg = *((volatile u_int16_t *)addr);
-	if (onoff)
-		reg |= mask;
-	else
-		reg &= ~mask;
-	*((volatile u_int16_t *)addr) = reg;
 }
 
 int
