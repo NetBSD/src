@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.5 2002/09/20 15:00:06 mycroft Exp $	*/
+/*	$NetBSD: relay.c,v 1.6 2002/09/29 08:19:16 martti Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -19,7 +19,7 @@
 #include <net/if.h>
 #include <sys/socket.h>
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105000000)
-# include <sys/poll.h>
+# include <poll.h>
 # define USE_POLL
 #endif
 #include "ip_nat.h"
@@ -32,10 +32,14 @@ char	obuff[RELAY_BUFSZ];
 int relay(ifd, ofd, rfd)
 int ifd, ofd, rfd;
 {
-	fd_set	rfds, wfds;
 	char	*irh, *irt, *rrh, *rrt;
 	char	*iwh, *iwt, *rwh, *rwt;
 	int	nfd, n, rw;
+#ifdef USE_POLL
+	struct pollfd set[3];
+#else
+	fd_set	rfds, wfds;
+#endif
 
 	irh = irt = ibuff;
 	iwh = iwt = obuff;
