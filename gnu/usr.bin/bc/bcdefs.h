@@ -33,9 +33,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <ctype.h>
-#ifdef STRINGS_H
-#include <strings.h>
-#else
+#ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 #ifdef HAVE_LIMITS_H
