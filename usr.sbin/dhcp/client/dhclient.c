@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.39 2001/06/18 19:01:52 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.40 2001/06/23 00:10:07 christos Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3022,6 +3022,7 @@ void client_dns_update (struct client_state *client, int addp)
 				    &global_scope, oc, MDL))
 		return;
 
+#ifndef SMALL
 	/* Make a dhcid string out of either the client identifier,
 	   if we are sending one, or the interface's MAC address,
 	   otherwise. */
@@ -3040,10 +3041,12 @@ void client_dns_update (struct client_state *client, int addp)
 				    client_identifier.data,
 				    client_identifier.len);
 		data_string_forget (&client_identifier, MDL);
-	} else
+	}
+	else
 		result = get_dhcid (&ddns_dhcid, 0,
 				    client -> interface -> hw_address.hbuf,
 				    client -> interface -> hw_address.hlen);
+
 	if (!result) {
 		data_string_forget (&ddns_fwd_name, MDL);
 		return;
@@ -3074,4 +3077,5 @@ void client_dns_update (struct client_state *client, int addp)
 	
 	data_string_forget (&ddns_fwd_name, MDL);
 	data_string_forget (&ddns_dhcid, MDL);
+#endif
 }
