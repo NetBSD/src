@@ -1,0 +1,2 @@
+# $NetBSD: obsolete.arm26,v 1.1 2000/08/22 21:39:37 bjh21 Exp $
+/usr/include/arm26/spl.h
