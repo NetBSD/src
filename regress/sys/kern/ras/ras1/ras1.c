@@ -1,4 +1,4 @@
-/* $NetBSD: ras1.c,v 1.2 2002/08/29 03:45:33 gmcgarry Exp $ */
+/* $NetBSD: ras1.c,v 1.3 2004/01/02 22:16:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,11 @@ handler(int sig)
 int
 main(void)
 {
+
+#ifndef	__HAVE_RAS
+	printf("RAS is not supported on this architecture\n");
+	return 0;
+#endif
 
         signal(SIGVTALRM, handler);
 
