@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.1 2001/08/20 23:08:10 bjh21 Exp $	*/
+/*	$NetBSD: fiq.c,v 1.2 2001/08/21 22:40:39 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.1 2001/08/20 23:08:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.2 2001/08/21 22:40:39 bjh21 Exp $");
 
 #include <sys/systm.h>
 
@@ -49,8 +49,10 @@ fiq_claim(void *handler, size_t size)
 	if (size > 0x100)
 		return -1;
 	s = splhigh();
-	if (fiq_claimed)
+	if (fiq_claimed) {
+		splx(s);
 		return -1;
+	}
 	fiq_claimed = 1;
 	splx(s);
 	memcpy(fiqhandler, handler, size);
