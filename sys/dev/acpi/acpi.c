@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.58 2004/03/23 14:08:17 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.59 2004/03/23 19:00:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.58 2004/03/23 14:08:17 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.59 2004/03/23 19:00:03 drochner Exp $");
 
 #include "opt_acpi.h"
 
@@ -783,7 +783,7 @@ acpi_fixed_button_pressed(void *context)
  *	Evaluate an integer object.
  */
 ACPI_STATUS
-acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
+acpi_eval_integer(ACPI_HANDLE handle, char *path, ACPI_INTEGER *valp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;

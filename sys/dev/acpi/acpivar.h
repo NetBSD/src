@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.14 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.15 2004/03/23 19:00:03 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -261,7 +261,7 @@ extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 int		acpi_probe(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 
-ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, int *);
+ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, ACPI_INTEGER *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);
 ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, char *, ACPI_BUFFER *);
 
