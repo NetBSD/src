@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57.2.1 2002/12/01 12:03:45 he Exp $
+#	$NetBSD: Makefile,v 1.57.2.2 2002/12/06 23:29:26 he Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -55,7 +55,7 @@ mknodes: mknodes.c
 	(${MACHINE_CPU} == "arm")
 TARGET_CHARFLAG= -DTARGET_CHAR="unsigned char"
 .else
-TARGET_CHARFLAG= -DTARGET_CHAR="char"
+TARGET_CHARFLAG= -DTARGET_CHAR="signed char"
 .endif
 
 mksyntax: mksyntax.c
