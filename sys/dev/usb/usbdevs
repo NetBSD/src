@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.25 1999/04/27 18:08:35 augustss Exp $
+$NetBSD: usbdevs,v 1.26 1999/04/27 21:30:53 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,44 +42,42 @@ $NetBSD: usbdevs,v 1.25 1999/04/27 18:08:35 augustss Exp $
  */
 
 vendor NEC		0x0409	NEC
-vendor KODAK		0x040a	Eastman Kodak
-/* Computer Access Technology Corporation */
-vendor CATC		0x0423	CATC
-vendor GRAVIS		0x0428	Gravis
-vendor NANAO		0x0440	Nanao
-vendor UNIXTAR		0x0451  Unixtar
-vendor GENIUS		0x0458	Genius
+vendor KODAK		0x040a	Eastman Kodak co.
+vendor CATC		0x0423	Computer Access Technology Corp.
+vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
+vendor NANAO		0x0440	NANAO Corporation
+vendor UNIXTAR		0x0451  Texas Instruments
+vendor GENIUS		0x0458	KYE Systems Corp.
 vendor MICROSOFT	0x045e	Microsoft
-vendor KENSINGTON	0x0461	Kensington
-vendor CHERRY		0x046a	Cherry
-/* Behavior Technology Corporation */
-vendor BTC		0x046e	BTC
+vendor KENSINGTON	0x0461	Primax Electronics
+vendor CHERRY		0x046a	Cherry Mikroschalter GMBH
+vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
-vendor CONNECTIX	0x0478	Connectix
-vendor ACER		0x04a5	Acer Peripherals
+vendor CONNECTIX	0x0478	Connectix Corp.
+vendor ACER		0x04a5	Acer Peripheral Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
-vendor EPSON		0x04b8	Epson
-vendor 3COM		0x04c1	3Com
+vendor EPSON		0x04b8	Seiko Epson Corp.
+vendor 3COM		0x04c1	U.S. Robotics
 vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
-vendor JAZZ		0x04fa	Jazz
-vendor AKS		0x0529	Aladdin Knowledge Systems
-vendor VISION		0x0533	Vision
-vendor ATEN		0x0557	ATen
-vendor PERACOM		0x0565	Peracom
-vendor WACOM		0x056a	Wacom
+vendor JAZZ		0x04fa	Dallas Semiconductor
+vendor AKS		0x0529	Fast Security AG
+vendor VISION		0x0533	Alcatel Mobile Phones
+vendor ATEN		0x0557	ATEN International Co. ltd.
+vendor PERACOM		0x0565	Peracom Networks, Inc.
+vendor WACOM		0x056a	WACOM Co. Ltd.
 vendor EIZO		0x056d	EIZO
-vendor AGILER		0x056e	Agiler
-vendor IOMEGA		0x059b	Iomega
-vendor BELKIN		0x05ab	Belkin
-vendor LOGITECH		0x05ac	Logitech
+vendor AGILER		0x056e	Elecom Co., Ltd.
+vendor IOMEGA		0x059b	Iomega Corporation
+vendor BELKIN		0x05ab	In-System Design
+vendor LOGITECH		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
 vendor ADS		0x06e1	ADS Technologies
 vendor PLX		0x10b5	PLX
-vendor ENTREGA		0x1645	Entrega
 vendor INSIDEOUT	0x1608	Inside Out Networks
+vendor ENTREGA		0x1645	Entrega
 vendor INTEL		0x8086	Intel
 
 /*
