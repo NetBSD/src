@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.54 2001/10/19 17:05:26 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.55 2001/10/19 19:07:48 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -86,10 +86,13 @@ LFLAGS+=	-P${LPREFIX}
 YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
 .y.o: # remove to force use of .y.c->.c.o transforms
-.y.h: ${YHEADER:D${.TARGET:.h=.c}}
 .y:
 	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
 	${LINK.c} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
 	rm -f ${.TARGET:R}.tab.[ch]
 .y.c:
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
+
+.ifdef YHEADER
+.y.h: ${.TARGET:.h=.c}
+.endif
