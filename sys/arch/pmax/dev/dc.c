@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.67 2001/05/02 10:32:18 scw Exp $	*/
+/*	$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.67 2001/05/02 10:32:18 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -502,8 +502,7 @@ dcopen(dev, flag, mode, p)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
-		    TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
 		tp->t_wopen--;
 		if (error != 0)
 			break;
@@ -837,7 +836,7 @@ dcrint(sc)
 			}
 		}
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((caddr_t)&tp->t_rawq);
+			wakeup(&tp->t_rawq);
 #ifdef PORTSELECTOR
 			if (tp->t_wopen == 0)
 #endif
@@ -951,7 +950,7 @@ dcstart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.21 2000/06/26 04:55:54 simonb Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.22 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -76,7 +76,7 @@ fbclose(dev, flag, mode, p)
 	 */
 	lk_reset(fbtty->kbddev, fbtty->KBDPutc);
 
-	bzero((caddr_t)fi->fi_pixels, fi->fi_pixelsize);
+	memset(fi->fi_pixels, 0, fi->fi_pixelsize);
 	(*fi->fi_driver->fbd_poscursor)
 		(fi, fbtty->col * 8, fbtty->row * 15);
 	return (0);

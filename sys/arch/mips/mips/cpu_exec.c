@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.26 2000/11/27 13:25:24 tsutsui Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.27 2001/07/07 14:20:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,7 +189,7 @@ mips_elf_makecmds (p, epp)
 	}
 
 	/* See if it's got the basic elf magic number leadin... */
-	if (bcmp(ex->e_ident, ELFMAG, SELFMAG) != 0) {
+	if (memcmp(ex->e_ident, ELFMAG, SELFMAG) != 0) {
 		return ENOEXEC;
 	}
 

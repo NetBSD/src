@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.15 2000/01/10 03:24:31 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.16 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -298,6 +298,6 @@ bt478GetColorMap(fi, bits, index, count)
 	cmap_bits = (u_char *)bits;
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
-	bcopy (cmap, cmap_bits, count * 3);
+	memcpy(cmap_bits, cmap, count * 3);
 	return 0;
 }

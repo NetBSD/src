@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 2000/07/20 18:14:46 jeffs Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4 2001/07/07 14:20:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ kgdb_getregs(regs, gdb_regs)
 {
 	struct frame *f = (struct frame *)regs;
 
-	bzero(gdb_regs, KGDB_NUMREGS * sizeof(kgdb_reg_t));
+	memset(gdb_regs, 0, KGDB_NUMREGS * sizeof(kgdb_reg_t));
 	gdb_regs[ 1] = f->f_regs[AST];     /* AT */
 	gdb_regs[ 2] = f->f_regs[V0];      /* V0 */
 	gdb_regs[ 3] = f->f_regs[V1];      /* V1 */
