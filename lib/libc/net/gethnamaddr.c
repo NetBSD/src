@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.22 1999/07/19 17:43:59 tron Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.23 1999/07/19 19:42:27 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.22 1999/07/19 17:43:59 tron Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.23 1999/07/19 19:42:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,7 +124,7 @@ static char *__ypdomain;
 static struct hostent host;
 static char *host_aliases[MAXALIASES];
 static char hostbuf[8*1024];
-static u_char host_addr[16];	/* IPv4 or IPv6 */
+static u_int32_t host_addr[16 / sizeof(u_int32_t)];	/* IPv4 or IPv6 */
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
@@ -553,7 +553,8 @@ gethostbyname2(name, af)
 				 * Fake up a hostent as if we'd actually
 				 * done a lookup.
 				 */
-				if (inet_pton(af, name, host_addr) <= 0) {
+				if (inet_pton(af, name,
+				    (char *)host_addr) <= 0) {
 					h_errno = HOST_NOT_FOUND;
 					return (NULL);
 				}
@@ -586,7 +587,8 @@ gethostbyname2(name, af)
 				 * Fake up a hostent as if we'd actually
 				 * done a lookup.
 				 */
-				if (inet_pton(af, name, host_addr) <= 0) {
+				if (inet_pton(af, name,
+				    (char *)host_addr) <= 0) {
 					h_errno = HOST_NOT_FOUND;
 					return (NULL);
 				}
@@ -712,12 +714,12 @@ _gethtent()
 	if (!(cp = strpbrk(p, " \t")))
 		goto again;
 	*cp++ = '\0';
-	if (inet_pton(AF_INET6, p, host_addr) > 0) {
+	if (inet_pton(AF_INET6, p, (char *)host_addr) > 0) {
 		af = AF_INET6;
 		len = IN6ADDRSZ;
-	} else if (inet_pton(AF_INET, p, host_addr) > 0) {
+	} else if (inet_pton(AF_INET, p, (char *)host_addr) > 0) {
 		if (_res.options & RES_USE_INET6) {
-			map_v4v6_address((char*)host_addr, (char*)host_addr);
+			map_v4v6_address((char *)host_addr, (char *)host_addr);
 			af = AF_INET6;
 			len = IN6ADDRSZ;
 		} else {
@@ -1159,10 +1161,10 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 	hp->h_addrtype = af;
 	hp->h_length = len;
 	(void)memcpy(host_addr, uaddr, (size_t)len);
-	h_addr_ptrs[0] = (char *)&host_addr;
+	h_addr_ptrs[0] = (char *)host_addr;
 	h_addr_ptrs[1] = (char *)0;
 	if (af == AF_INET && (_res.options & RES_USE_INET6)) {
-		map_v4v6_address((char*)host_addr, (char*)host_addr);
+		map_v4v6_address((char *)host_addr, (char *)host_addr);
 		hp->h_addrtype = AF_INET6;
 		hp->h_length = IN6ADDRSZ;
 	}
