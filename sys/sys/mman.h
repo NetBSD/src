@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.27 2000/08/01 00:53:08 wiz Exp $	*/
+/*	$NetBSD: mman.h,v 1.28 2000/10/18 01:43:18 assar Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -50,7 +50,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #include <sys/ansi.h>
 
 #ifndef	mode_t
-typedef	__mode_t	mode_t
+typedef	__mode_t	mode_t;
 #define	mode_t		__mode_t
 #endif
 
