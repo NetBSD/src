@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.339 2001/05/11 08:55:50 bouyer Exp $
+#	$NetBSD: mi,v 1.340 2001/05/12 18:07:20 hubertf Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3046,6 +3046,7 @@
 ./usr/share/man/cat9/pool_create.0		comp-sys-catman
 ./usr/share/man/cat9/pool_destroy.0		comp-sys-catman
 ./usr/share/man/cat9/pool_get.0		comp-sys-catman
+./usr/share/man/cat9/pool_init.0		comp-sys-catman
 ./usr/share/man/cat9/pool_prime.0		comp-sys-catman
 ./usr/share/man/cat9/pool_put.0		comp-sys-catman
 ./usr/share/man/cat9/pool_sethiwat.0		comp-sys-catman
@@ -4995,6 +4996,7 @@
 ./usr/share/man/man9/pool_create.9		comp-sys-man
 ./usr/share/man/man9/pool_destroy.9		comp-sys-man
 ./usr/share/man/man9/pool_get.9		comp-sys-man
+./usr/share/man/man9/pool_init.9		comp-sys-man
 ./usr/share/man/man9/pool_prime.9		comp-sys-man
 ./usr/share/man/man9/pool_put.9		comp-sys-man
 ./usr/share/man/man9/pool_sethiwat.9		comp-sys-man

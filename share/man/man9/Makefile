@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.77 2001/05/11 08:51:15 bouyer Exp $
+#       $NetBSD: Makefile,v 1.78 2001/05/12 18:07:20 hubertf Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -102,8 +102,8 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
 MLINKS+=pci_configure_bus.9 pci_conf_interrupt.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
-	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
-	pool.9 pool_setlowat.9
+	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
+	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
 MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
