@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith_lex.l,v 1.12 2003/08/07 09:05:30 agc Exp $	*/
+/*	$NetBSD: arith_lex.l,v 1.13 2005/03/21 22:37:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith_lex.l	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith_lex.l,v 1.12 2003/08/07 09:05:30 agc Exp $");
+__RCSID("$NetBSD: arith_lex.l,v 1.13 2005/03/21 22:37:09 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: arith_lex.l,v 1.12 2003/08/07 09:05:30 agc Exp $");
 #include "arith.h"
 #include "error.h"
 #include "expand.h"
+#include "var.h"
 
 extern int yylval;
 extern char *arith_buf, *arith_startbuf;
@@ -57,9 +58,17 @@ extern char *arith_buf, *arith_startbuf;
 
 %%
 [ \t\n]	{ ; }
-0x[0-9a-fA-F]+	{ yylval = strtol(yytext, 0, 16); return(ARITH_NUM); }
-0[0-7]*		{ yylval = strtol(yytext, 0, 8); return(ARITH_NUM); }
-[1-9][0-9]*	{ yylval = strtol(yytext, 0, 10); return(ARITH_NUM); }
+0x[0-9a-fA-F]+	{ yylval = strtol(yytext, 0, 0); return(ARITH_NUM); }
+0[0-7]*		{ yylval = strtol(yytext, 0, 0); return(ARITH_NUM); }
+[1-9][0-9]*	{ yylval = strtol(yytext, 0, 0); return(ARITH_NUM); }
+[A-Za-z_][A-Za-z_0-9]*	{ char *v = lookupvar(yytext);
+			if (v) {
+				yylval = strtol(v, &v, 0);
+				if (*v == 0)
+					return ARITH_NUM;
+			}
+			error("arith: syntax error: \"%s\"", arith_startbuf);
+		}
 "("	{ return(ARITH_LPAREN); }
 ")"	{ return(ARITH_RPAREN); }
 "||"	{ return(ARITH_OR); }
@@ -82,7 +91,7 @@ extern char *arith_buf, *arith_startbuf;
 "-"	{ return(ARITH_SUB); }
 "~"	{ return(ARITH_BNOT); }
 "!"	{ return(ARITH_NOT); }
-.	{ error("arith: syntax error: \"%s\"\n", arith_startbuf); }
+.	{ error("arith: syntax error: \"%s\"", arith_startbuf); }
 %%
 
 void
