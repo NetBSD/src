@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.22 1998/01/08 23:03:27 thorpej Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.23 1998/02/06 00:14:57 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -92,23 +92,60 @@
  *
  *	Fields in this structure are locked either by the lock on the
  *	object that the page belongs to (O) or by the lock on the page
- *	queues (P).
+ *	queues (P) [or both].
  */
+
+#if defined(UVM)
+/*
+ * locking note: the mach version of this data structure had bit
+ * fields for the flags, and the bit fields were divided into two
+ * items (depending on who locked what).  some time, in BSD, the bit
+ * fields were dumped and all the flags were lumped into one short.
+ * that is fine for a single threaded uniprocessor OS, but bad if you
+ * want to actual make use of locking (simple_lock's).  so, we've
+ * seperated things back out again.
+ *
+ * note the page structure has no lock of its own.
+ */
+
+#include <uvm/uvm_extern.h>
+#include <vm/pglist.h>
+#else
 TAILQ_HEAD(pglist, vm_page);
+#endif /* UVM */
 
 struct vm_page {
-	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
-						 * queue or free list (P) */
-	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
-	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
+  TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
+					 * queue or free list (P) */
+  TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
+  TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-	vm_object_t		object;		/* which object am I in (O,P)*/
-	vm_offset_t		offset;		/* offset into object (O,P) */
+#if !defined(UVM) /* uvm uses obju */
+  vm_object_t		object;		/* which object am I in (O,P)*/
+#endif
+  vm_offset_t		offset;		/* offset into object (O,P) */
 
-	u_short			wire_count;	/* wired down maps refs (P) */
-	u_short			flags;		/* see below */
+#if defined(UVM)
+  struct uvm_object	*uobject;	/* object (O,P) */
+  struct vm_anon	*uanon;		/* anon (O,P) */
+  u_short		flags;		/* object flags [O] */
+  u_short		version;	/* version count [O] */
+  u_short		wire_count;	/* wired down map refs [P] */
+  u_short 		pqflags;	/* page queue flags [P] */
+  u_int			loan_count;	/* number of active loans
+					 * to read: [O or P]
+					 * to modify: [O _and_ P] */
+#else
+  u_short		wire_count;	/* wired down maps refs (P) */
+  u_short		flags;		/* see below */
+#endif
 
-	vm_offset_t		phys_addr;	/* physical address of page */
+  vm_offset_t		phys_addr;	/* physical address of page */
+#if defined(UVM) && defined(UVM_PAGE_TRKOWN)
+  /* debugging fields to track page ownership */
+  pid_t			owner;		/* proc that set PG_BUSY */
+  char			*owner_tag;	/* why it was set busy */
+#endif
 };
 
 /*
@@ -116,6 +153,38 @@ struct vm_page {
  *
  * Note: PG_FILLED and PG_DIRTY are added for the filesystems.
  */
+#if defined(UVM)
+
+/*
+ * locking rules:
+ *   PG_ ==> locked by object lock
+ *   PQ_ ==> lock by page queue lock 
+ *   PQ_FREE is locked by free queue lock and is mutex with all other PQs
+ *
+ * possible deadwood: PG_FAULTING, PQ_LAUNDRY
+ */
+#define	PG_CLEAN	0x0008		/* page has not been modified */
+#define	PG_BUSY		0x0010		/* page is in transit  */
+#define	PG_WANTED	0x0020		/* someone is waiting for page */
+#define	PG_TABLED	0x0040		/* page is in VP table  */
+#define	PG_FAKE		0x0200		/* page is placeholder for pagein */
+#define	PG_FILLED	0x0400		/* client flag to set when filled */
+#define	PG_DIRTY	0x0800		/* client flag to set when dirty */
+#define PG_RELEASED	0x1000		/* page released while paging */
+#define	PG_FAULTING	0x2000		/* page is being faulted in */
+#define PG_CLEANCHK	0x4000		/* clean bit has been checked */
+
+#define PQ_FREE		0x0001		/* page is on free list */
+#define PQ_INACTIVE	0x0002		/* page is in inactive list */
+#define PQ_ACTIVE	0x0004		/* page is in active list */
+#define PQ_LAUNDRY	0x0008		/* page is being cleaned now */
+#define PQ_ANON		0x0010		/* page is part of an anon, rather
+					   than an uvm_object */
+#define PQ_AOBJ		0x0020		/* page is part of an anonymous
+					   uvm_object */
+#define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
+
+#else
 #define	PG_INACTIVE	0x0001		/* page is in inactive list (P) */
 #define	PG_ACTIVE	0x0002		/* page is in active list (P) */
 #define	PG_LAUNDRY	0x0004		/* page is being cleaned now (P)*/
@@ -141,6 +210,7 @@ struct vm_page {
 #define	PG_FAULTING	0x2000		/* page is being faulted in */
 #define	PG_PAGEROWNED	0x4000		/* DEBUG: async paging op in progress */
 #define	PG_PTPAGE	0x8000		/* DEBUG: is a user page table page */
+#endif
 
 #if defined(MACHINE_NEW_NONCONTIG)
 /*
@@ -201,17 +271,15 @@ struct pglist	vm_page_queue_active;	/* active memory queue */
 extern
 struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
-extern
-vm_page_t	vm_page_array;		/* First resident page in table */
-
 
 #if defined(MACHINE_NEW_NONCONTIG)
 
 /*
  * physical memory config is stored in vm_physmem.
  */
-extern	struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
-extern	int vm_nphysseg;
+
+extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
+extern int vm_nphysseg;
 
 #else
 #if defined(MACHINE_NONCONTIG)
@@ -220,6 +288,8 @@ extern
 u_long	first_page;		/* first physical page number */
 extern
 int	vm_page_count;		/* How many pages do we manage? */
+extern
+vm_page_t	vm_page_array;		/* First resident page in table */
 
 #define	VM_PAGE_INDEX(pa) \
 		(pmap_page_index((pa)) - first_page)
@@ -236,11 +306,13 @@ extern
 vm_offset_t first_phys_addr;	/* physical address for first_page */
 extern
 vm_offset_t last_phys_addr;		/* physical address for last_page */
+extern
+vm_page_t	vm_page_array;		/* First resident page in table */
 
 #define	VM_PAGE_INDEX(pa) \
 	(atop((pa)) - first_page)
 
-#endif /* MACHINE_NONCONTIG */
+#endif	/* MACHINE_NONCONTIG */
 #endif /* MACHINE_NEW_NONCONTIG */
 
 /*
@@ -410,7 +482,15 @@ PHYS_TO_VM_PAGE(pa)
 
 #endif /* (OLD) MACHINE_NONCONTIG */
 
-#define	VM_PAGE_IS_FREE(entry)	((entry)->flags & PG_FREE)
+#if defined(UVM)
+
+#define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
+
+#else /* UVM */
+
+#define VM_PAGE_IS_FREE(entry)  ((entry)->flags & PG_FREE)
+
+#endif /* UVM */
 
 extern
 simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive
