@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.10 1994/12/01 17:25:23 chopps Exp $	*/
+/*	$NetBSD: itevar.h,v 1.11 1995/08/20 15:22:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -189,10 +189,10 @@ struct consdev;
 struct termios;
 
 /* console related function */
-void	ite_cnprobe __P((struct consdev *));
-void	ite_cninit __P((struct consdev *));
-int	ite_cngetc __P((dev_t));
-void	ite_cnputc __P((dev_t, int));
+void	itecnprobe __P((struct consdev *));
+void	itecninit __P((struct consdev *));
+int	itecngetc __P((dev_t));
+void	itecnputc __P((dev_t, int));
 void	ite_cnfinish __P((struct ite_softc *));
 
 /* standard ite device entry points. */
