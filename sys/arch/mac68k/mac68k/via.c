@@ -42,8 +42,10 @@
 #include "kernel.h"
 /* #include "stand.h" */
 
+static int	scsi_drq_intr(void), scsi_irq_intr(void);
+
 long via1_noint(), via2_noint();
-long adb_intr_II(), rtclock_intr(), scsi_drq_intr(), scsi_irq_intr(), profclock();
+long adb_intr_II(), rtclock_intr(), profclock();
 long nubus_intr();
 int  slot_noint();
 int VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
@@ -214,7 +216,9 @@ void via1_intr(struct frame *fp)
 		bitnum++;
 		bitmsk <<= 1;
 	}
+#ifdef DDB
    	if (mac68k_trip_debugger) Debugger();
+#endif
 }
 
 
@@ -339,4 +343,30 @@ int rbv_vidstatus(void)
 
    return(0);
 	return(montype);
+}
+
+extern int has53c96scsi,has5380scsi;
+
+static int
+scsi_irq_intr(void)
+{
+	if (has53c96scsi) {
+		if (ncr53c96_irq_intr()) return 1;
+	}
+	if (has5380scsi) {
+		if (ncr5380_irq_intr()) return 1;
+	}
+	return 0;
+}
+
+static int
+scsi_drq_intr(void)
+{
+	if (has53c96scsi) {
+		if (ncr53c96_drq_intr()) return 1;
+	}
+	if (has5380scsi) {
+		if (ncr5380_drq_intr()) return 1;
+	}
+	return 0;
 }
