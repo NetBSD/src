@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.10 2002/05/09 12:28:08 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10.2.1 2002/07/17 01:42:35 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -340,18 +340,19 @@ NENTRY(proc_trampoline)
 /*
  * sigcode:
  *	Signal trampoline. copied to top of user stack.
+ *
+ *	The kernel arranges for the signal handler to be invoked
+ *	directly.  This trampoline is used only to perform the
+ *	return.
+ *
+ *	On entry, the stack looks like this:
+ *
+ *	sp->	sigcontext structure
  */
 NENTRY(sigcode)
-	mov	r15,	r0
-	mov.l	@r0,	r4
-	add	#SIGF_HANDLER, r0
-	mov.l	@r0,	r0
-	jsr	@r0			/* (*sf_handler)(sf_signum) */
-	 nop
-	mov	r15,	r4
-	add	#SIGF_SC, r4
+	mov	r15, r4			/* get pointer to sigcontext */
 	mov.l	_L.SYS___sigreturn14, r0
-	trapa	#0x80			/* enter kernel with args on stack */
+	trapa	#0x80			/* and call sigreturn() */
 	mov.l	_L.SYS_exit, r0
 	trapa	#0x80			/* exit if sigreturn fails */
 	.align	2
