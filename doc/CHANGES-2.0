@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.524 2004/11/12 06:29:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.525 2004/11/12 06:30:49 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -8003,3 +8003,8 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Added Dell PERC 4/SC
 	[martti, ticket #953]
+
+share/man/man4/amr.4				1.9
+
+	Bump date for Dell PERC 4/SC support.
+	[martti, ticket #955]
