@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.18 1999/11/17 23:00:50 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.19 1999/11/26 09:12:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -610,7 +610,7 @@ umodemopen(dev, flag, mode, p)
 			return (ENOMEM);
 		}
 
-		umodemstartread(sc);
+		(void)umodemstartread(sc);
 	}
 	sc->sc_opening = 0;
 	wakeup(&sc->sc_opening);
@@ -651,8 +651,11 @@ umodemstartread(sc)
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, umodemreadcb);
 	err = usbd_transfer(sc->sc_ixfer);
-	if (err)
+	if (err != USBD_IN_PROGRESS) {
+		printf("%s: start read failed, err=%s\n", 
+		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		return (err);
+	}
 	return (USBD_NORMAL_COMPLETION);
 }
  
@@ -665,7 +668,6 @@ umodemreadcb(xfer, p, status)
 	struct umodem_softc *sc = (struct umodem_softc *)p;
 	struct tty *tp = sc->sc_tty;
 	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
-	usbd_status err;
 	u_int32_t cc;
 	u_char *cp;
 	int s;
@@ -693,11 +695,7 @@ umodemreadcb(xfer, p, status)
 	}
 	splx(s);
 
-	err = umodemstartread(sc);
-	if (err) {
-		printf("%s: read start failed\n", USBDEVNAME(sc->sc_dev));
-		/* XXX what should we dow now? */
-	}
+	(void)umodemstartread(sc);
 }
 
 int
