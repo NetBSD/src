@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.6 1997/04/16 23:26:06 thorpej Exp $
+#	$NetBSD: Makefile.ofppc,v 1.7 1997/04/19 01:47:24 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -105,9 +105,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${PPC}/hp300/genassym.cf
+assym.h: $S/kern/genassym.sh ${PPC}/powerpc/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${PPC}/hp300/genassym.cf > assym.h.tmp && \
+	    < ${PPC}/powerpc/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
