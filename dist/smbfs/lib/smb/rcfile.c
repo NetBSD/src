@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: rcfile.c,v 1.1.1.1 2003/02/16 08:15:08 jdolecek Exp $
+ * from: Id: rcfile.c,v 1.5 2001/04/16 12:46:46 bp Exp 
  */
 #include <sys/types.h>
 #include <sys/queue.h>
