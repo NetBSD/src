@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.27 2000/07/01 11:23:49 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.28 2000/07/01 18:03:41 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -643,6 +643,7 @@ sys/arch/mac68k/conf/GENERIC			1.101
 
 sys/arch/mac68k/nubus/if_ae_nubus.c		1.29
 sys/arch/mac68k/nubus/if_sn_nubus.c		1.20
+sys/arch/mac68k/dev/if_snvar.h			1.14
 
   Add support for the Macintosh LC Ethernet Adapter.  This was
   previously erroneously recognized as an 8390-based card, where
@@ -689,3 +690,22 @@ src/lib/libedit/el.c				1.17 via patch
 sys/dev/raidframe/rf_map.c			1.5
 
   Remove an incorrect printf.
+
+sys/netinet/ip_flow.c				1.16
+
+  Pass the correct destination address for the route-to-gateway
+  case.  Fixes PR#10483.
+
+distrib/utils/x_sh/Makefile			patch
+
+  Pull in test sources now that test is a shell builtin.
+
+distrib/notes/common/main			patch
+
+  Add major changes between 1.4.2 and 1.4.3.
+  Tweas for 1.4.3.
+
+sys/conf/osrelease.sh				patch
+sys/sys/param.h					patch
+
+  Bump version to NetBSD-1.4.3_ALPHA.
