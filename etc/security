@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.62 2001/10/01 02:21:20 atatat Exp $
+#	$NetBSD: security,v 1.63 2001/10/03 00:12:17 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -198,23 +198,28 @@ if checkyesno check_rootdotfiles; then
 			if egrep '^[ \t]*umask[ \t]+[0-7]+' $i > /dev/null ; then
 				umaskset=yes
 			fi
-			# double check the umask value itself; ensure that both the
-			# 020 and 002 bits are set.
-			# we handle this in decimal initially to extract the digits,
-			# and then extract the `2' bit of each digit.
-			# this is made especially painful because 
+			# Double check the umask value itself; ensure that
+			# both the 020 and 002 bits are set.
+			# We handle this in decimal initially to extract the
+			# digits, and then extract the `2' bit of each digit.
+			# This is made especially painful because 
 			# bitwise operations were left out of awk.
 			egrep '^[ \t]*umask[ \t]+[0-7]+' $i |
-			awk '{ g= ($2 % 100) - ($2 % 10);
-			       g /= 10;
-			       g = g % 4;
-			       g -= g % 2;
-			       if (g != 2) { print "\tRoot umask is group writeable" }
-			       o = ($2 % 10);
-			       o = o % 4;
-			       o -= o % 2;
-			       if (o != 2) { print "\tRoot umask is other writeable" } }' |
-			    sort -u >> $OUTPUT
+			awk '{
+				g= ($2 % 100) - ($2 % 10);
+				g /= 10;
+				g = g % 4;
+				g -= g % 2;
+				if (g != 2) {
+					print "\tRoot umask is group writeable"
+				}
+				o = ($2 % 10);
+				o = o % 4;
+				o -= o % 2;
+				if (o != 2) {
+					print "\tRoot umask is other writeable"
+			    	}
+			    }' | sort -u >> $OUTPUT
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/csh -f -s << end-of-csh > /dev/null 2>&1
@@ -432,11 +437,14 @@ fi
 # Mailboxes should be owned by user and unreadable.
 #
 if checkyesno check_varmail; then
-	ls -l /var/mail | sed 1d | \
-	awk '$3 != $9 \
-		{ print "user " $9 " mailbox is owned by " $3 }
-	     $1 != "-rw-------" \
-		{ print "user " $9 " mailbox is " $1 ", group " $4 }' > $OUTPUT
+	ls -l /var/mail | \
+	awk '	NR == 1 { next; }
+	    	$3 != $9 {
+			print "user " $9 " mailbox is owned by " $3
+		}
+		$1 != "-rw-------" {
+			print "user " $9 " mailbox is " $1 ", group " $4
+		}' > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking mailbox ownership.\n"
 		cat $OUTPUT
@@ -656,7 +664,7 @@ if checkyesno check_disklabels; then
 	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
-	disks=`iostat -x | sed 1d | awk '$1 !~ /^[cfm]d/ { print $1; }'`
+	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d/ { print $1; }'`
 	for i in $disks; do
 		dlf="$backup_dir/disklabel.$i"
 		disklabel $i > $dlf 2>/dev/null
