@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.10 1999/11/18 14:25:28 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.11 1999/11/29 02:28:19 jun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,10 @@ struct mbe_pcmcia_product {
 	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_CD021BX,
 	  0,				0,
 	  PCMCIA_STR_TDK_LAK_CD021BX },
+
+	{ PCMCIA_VENDOR_TDK,            PCMCIA_PRODUCT_TDK_LAK_CF010,
+	  0,                            0,
+	  PCMCIA_STR_TDK_LAK_CF010},
 #if 0 /* XXX 86960-based? */
 	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_DFL9610,
 	  1,				0,
