@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.110 2002/06/08 11:58:50 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.111 2002/06/13 05:12:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.110 2002/06/08 11:58:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.111 2002/06/13 05:12:12 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -370,7 +370,7 @@ if_attach(ifp)
 			 * If we hit USHRT_MAX, we skip back to 0 since
 			 * there are a number of places where the value
 			 * of if_index or if_index itself is compared
-			 * to to or stored in an unsigned short.  By
+			 * to or stored in an unsigned short.  By
 			 * jumping back, we won't botch those assignments
 			 * or comparisons.
 			 */
