@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.2.4.1 2002/11/01 11:13:06 tron Exp $ */
+/* $NetBSD: if_eh.c,v 1.2.4.2 2003/01/27 05:25:52 jmc Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2.4.1 2002/11/01 11:13:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2.4.2 2003/01/27 05:25:52 jmc Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -231,7 +231,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	/* dsc->rcr_proto? */
 
 	/* Follow NE2000 driver here. */
-        dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS;
+	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS;
 	if (sc->sc_flags & EHF_16BIT)
 		dsc->dcr_reg |= ED_DCR_WTS;
 
@@ -347,10 +347,15 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 	bus_space_handle_t nich = dsc->sc_regh;
 	bus_space_tag_t datat = sc->sc_datat;
 	bus_space_handle_t datah = sc->sc_datah;
-	int savelen;
+	int savelen, padlen;
 	int maxwait = 100;	/* about 120us */
 
 	savelen = m->m_pkthdr.len;
+	if (savelen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		padlen = ETHER_MIN_LEN - ETHER_CRC_LEN - savelen;
+		savelen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+	} else
+		padlen = 0;
 
 	/*
 	 * Set-up procedure per DP83902A data sheet:
@@ -412,6 +417,11 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 			if (m->m_len)
 				bus_space_write_multi_1(datat, datah, 0,
 				    mtod(m, u_int8_t *), m->m_len);
+		if (padlen) {
+			for(; padlen > 0; padlen--)
+				bus_space_write_1(asict, asich,
+				    NE2000_ASIC_DATA, 0);
+		}
 	} else {
 		/* NE2000s are a bit trickier. */
 		u_int8_t *data, savebyte[2];
@@ -482,6 +492,11 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 			savebyte[1] = 0;
 			bus_space_write_stream_2(datat, datah, 0,
 			    *(u_int16_t *)savebyte);
+		}
+		if (padlen)
+			for(; padlen > 0; padlen -= 2)
+				bus_space_write_stream_2(asict, asich,
+				    NE2000_ASIC_DATA, 0);
 		}
 	}
 	NIC_BARRIER(nict, nich);
