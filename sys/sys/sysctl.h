@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.8 2002/04/23 04:05:16 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.9 2002/04/23 21:52:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -439,6 +439,7 @@ struct kinfo_proc2 {
 struct kinfo_lwp {
 	u_int64_t l_forw;		/* PTR: linked run/sleep queue. */
 	u_int64_t l_back;
+	u_int64_t l_laddr;		/* PTR: Address of LWP */
 	u_int64_t l_addr;		/* PTR: Kernel virtual addr of u-area */
 	int32_t	l_lid;			/* LWPID_T: LWP identifier */
 	int32_t	l_flag;			/* INT: L_* flags. */
