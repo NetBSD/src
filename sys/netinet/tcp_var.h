@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.96 2003/03/01 04:40:28 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.97 2003/04/19 20:58:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -591,7 +591,8 @@ struct	tcpstat {
 #define	TCPCTL_RSTPPSLIMIT	24	/* RST pps limit */
 #define	TCPCTL_DELACK_TICKS	25	/* # ticks to delay ACK */
 #define	TCPCTL_INIT_WIN_LOCAL	26	/* initial window for local nets */
-#define	TCPCTL_MAXID		27
+#define	TCPCTL_IDENT		27	/* rfc 931 identd */
+#define	TCPCTL_MAXID		28
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -621,7 +622,15 @@ struct	tcpstat {
 	{ "rstppslimit", CTLTYPE_INT }, \
 	{ "delack_ticks", CTLTYPE_INT }, \
 	{ "init_win_local", CTLTYPE_INT }, \
+	{ "ident", CTLTYPE_STRUCT }, \
 }
+
+struct sysctl_tcp_ident_args {
+	struct in_addr raddr;
+	u_int rport;
+	struct in_addr laddr;
+	u_int lport;
+};
 
 #ifdef _KERNEL
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
