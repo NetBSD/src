@@ -1,5 +1,5 @@
-/*	$NetBSD: policy_token.l,v 1.5 2000/07/04 04:41:55 itojun Exp $	*/
-/*	$KAME: policy_token.l,v 1.10 2000/07/04 04:03:33 itojun Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.6 2001/08/31 09:53:23 itojun Exp $	*/
+/*	$KAME: policy_token.l,v 1.11 2000/12/01 10:08:29 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -57,6 +57,7 @@ int yylex __P((void));
 %}
 
 %option noyywrap
+%option nounput
 
 /* common section */
 nl		\n
