@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.259 2004/03/09 20:09:40 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.259.2.1 2004/04/29 05:45:55 jmc Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -136,6 +136,7 @@
 ./usr/X11R6/lib/X11/locale/vi_VN.tcvn
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii
 ./usr/X11R6/lib/X11/locale/zh_CN
+./usr/X11R6/lib/X11/locale/zh_CN.UTF-8
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk
 ./usr/X11R6/lib/X11/locale/zh_HK.big5
 ./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs
@@ -160,6 +161,7 @@
 ./usr/X11R6/lib/X11/xkb/compiled
 ./usr/X11R6/lib/X11/xkb/geometry
 ./usr/X11R6/lib/X11/xkb/geometry/digital
+./usr/X11R6/lib/X11/xkb/geometry/ibm
 ./usr/X11R6/lib/X11/xkb/geometry/sgi
 ./usr/X11R6/lib/X11/xkb/keycodes
 ./usr/X11R6/lib/X11/xkb/keycodes/digital
