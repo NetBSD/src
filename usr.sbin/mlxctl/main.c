@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2002/04/07 20:02:18 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.4.2.1 2003/07/28 18:14:50 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.4 2002/04/07 20:02:18 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.4.2.1 2003/07/28 18:14:50 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: main.c,v 1.4 2002/04/07 20:02:18 ad Exp $");
 const char	*mlxname;
 const char	*memf;
 const char	*nlistf;
+struct	mlx_cinfo ci;
 int	mlxfd = -1;
 int	verbosity;
 
@@ -132,6 +133,9 @@ main(int argc, char **argv)
 	}
 	if (cmd == maxcmd)
 		usage();
+
+	if (ioctl(mlxfd, MLX_GET_CINFO, &ci))
+		err(EXIT_FAILURE, "ioctl(MLX_GET_CINFO)");
 
 	if ((cmd->flags & CMD_DISKS) != 0) {
 		if (all)
