@@ -34,9 +34,7 @@
 #ifdef __STDC__
 #include <stdlib.h>
 #endif
-#ifdef _LIBC
-# include <unistd.h>
-#endif
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
