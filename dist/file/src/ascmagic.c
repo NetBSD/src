@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.3 2004/03/23 08:31:42 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.4 2004/12/13 10:24:52 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    This product includes software developed by Ian F. Darwin and others.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *  
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -57,9 +52,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.40 2003/11/20 00:25:39 christos Exp")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.41 2004/09/11 19:15:57 christos Exp")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.3 2004/03/23 08:31:42 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.4 2004/12/13 10:24:52 pooka Exp $");
 #endif
 #endif	/* lint */
 
