@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.61 2001/03/19 04:13:17 atatat Exp $	*/
+/*	$NetBSD: namespace.h,v 1.62 2001/03/31 18:58:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define daylight	_daylight
 #define err		_err
 #define errx		_errx
 #define fork		_fork
@@ -473,9 +474,6 @@
 #define timelocal		_timelocal
 #define timeoff			_timeoff
 #define times			_times
-#if 0
-#define timezone		_timezone
-#endif
 #define ttyname			_ttyname
 #define ttyslot			_ttyslot
 #define tzname			_tzname
