@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.30.4.1 2000/08/11 20:43:40 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.30.4.2 2000/09/05 18:07:04 matt Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -129,14 +129,37 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ht*|tm*|mt*|ts*|ut*|st*)
+st*)
+	case $i in
+	st*) name=st;	unit=${i#st};	blk=21; chr=60;;
+	esac
+	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
+	r$name$unit nr$name$unit er$name$unit enr$name$unit
+	mknod ${name}${unit}	b $blk $(($unit * 16+ 0))
+	mknod n${name}${unit}	b $blk $(($unit * 16+ 1))
+	mknod e${name}${unit}	b $blk $(($unit * 16+ 2))
+	mknod en${name}${unit}	b $blk $(($unit * 16+ 3))
+	mknod r${name}${unit}	c $chr $(($unit * 16+ 0))
+	mknod nr${name}${unit}	c $chr $(($unit * 16+ 1))
+	mknod er${name}${unit}	c $chr $(($unit * 16+ 2))
+	mknod enr${name}${unit} c $chr $(($unit * 16+ 3))
+	chgrp operator ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit}
+	chmod 660 ${name}${unit} n${name}${unit} \
+		e$name$unit en$name$unit \
+		r${name}${unit} nr${name}${unit} \
+		er${name}${unit} enr${name}${unit}
+	;;
+
+ht*|tm*|mt*|ts*|ut*)
 	case $i in
 	ht*) name=ht;	unit=${i#ht};	blk=1; chr=5 ;;
 	mt*) name=mt;	unit=${i#mt};	blk=15;	chr=38;;
 	tm*) name=tm;	unit=${i#tm};	blk=5; chr=14;;
 	ts*) name=ts;	unit=${i#ts};	blk=6; chr=16;;
 	ut*) name=ut;	unit=${i#ut};	blk=10; chr=17;;
-	st*) name=st;	unit=${i#st};	blk=21; chr=60;;
 	esac
 	case $unit in
 	[0-7])
