@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.77 2002/08/29 05:03:30 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.78 2002/09/02 21:09:50 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.77 2002/08/29 05:03:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.78 2002/09/02 21:09:50 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1091,12 +1091,22 @@ ReFault:
 				pmap_page_protect(anon->u.an_page,
 						  VM_PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
-				if (uobj)
-					/* if we were loaning */
-					anon->u.an_page->loan_count--;
+
 				anon->u.an_page->uanon = NULL;
 				/* in case we owned */
 				anon->u.an_page->pqflags &= ~PQ_ANON;
+
+				if (uobj) {
+					/* if we were receiver of loan */
+					anon->u.an_page->loan_count--;
+				} else {
+					/*
+					 * we were the lender (A->K); need
+					 * to remove the page from pageq's.
+					 */
+					uvm_pagedequeue(anon->u.an_page);
+				}
+
 				uvm_pageactivate(pg);
 				uvm_unlock_pageq();
 				if (uobj) {
@@ -1484,6 +1494,14 @@ Case2:
 				uvm_lock_pageq();
 				offset = uobjpage->offset;
 				uvm_pagerealloc(uobjpage, NULL, 0);
+
+				/*
+				 * if the page is no longer referenced by
+				 * an anon (i.e. we are breaking an O->K
+				 * loan), then remove it from any pageq's.
+				 */
+				if (uobjpage->uanon == NULL)
+					uvm_pagedequeue(uobjpage);
 
 				/*
 				 * at this point we have absolutely no
