@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2000/12/14 20:37:57 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.25 2000/12/18 14:37:17 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -75,7 +75,7 @@
 			    int dev); }
 15	STD		{ int linux_sys_chmod(const char *path, int mode); }
 ;16 lchown on i386; chown on m68k.
-16	STD		{ int linux_sys_chown(const char *path, \
+16	STD		{ int linux_sys_chown16(const char *path, \
 			    int uid, int gid); }
 17	OBSOL		break
 18	OBSOL		ostat
@@ -88,8 +88,8 @@
 20	NOARGS		{ pid_t sys_getpid(void); }
 21	UNIMPL		mount
 22	OBSOL		umount
-23	NOARGS		{ int sys_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
+23	STD		{ int linux_sys_setuid16(uid_t uid); }
+24	STD		{ uid_t linux_sys_getuid16(void); }
 25	STD		{ int linux_sys_stime(linux_time_t *t); }
 26	STD		{ int linux_sys_ptrace(int request, int pid, \
 			  int addr, int data); }
@@ -114,12 +114,12 @@
 43	STD		{ int linux_sys_times(struct times *tms); }
 44	OBSOL		prof
 45	STD		{ int linux_sys_brk(char *nsize); }
-46	NOARGS		{ int sys_setgid(gid_t gid); }
-47	NOARGS		{ gid_t sys_getgid(void); }
+46	NOARGS		{ int linux_sys_setgid16(gid_t gid); }
+47	NOARGS		{ gid_t linux_sys_getgid16(void); }
 48	STD		{ int linux_sys_signal(int signum, \
 			    linux_handler_t handler); }
-49	NOARGS		{ uid_t sys_geteuid(void); }
-50	NOARGS		{ gid_t sys_getegid(void); }
+49	NOARGS		{ uid_t linux_sys_geteuid16(void); }
+50	NOARGS		{ gid_t linux_sys_getegid16(void); }
 51	NOARGS		{ int sys_acct(char *path); }
 52	UNIMPL		umount
 53	OBSOL		lock
@@ -142,8 +142,8 @@
 			    struct linux_old_sigaction *osa); }
 68	STD		{ int linux_sys_siggetmask(void); }
 69	STD		{ int linux_sys_sigsetmask(linux_old_sigset_t mask); }
-70	STD		{ int linux_sys_setreuid(int ruid, int euid); }
-71	STD		{ int linux_sys_setregid(int rgid, int egid); }
+70	STD		{ int linux_sys_setreuid16(int ruid, int euid); }
+71	STD		{ int linux_sys_setregid16(int rgid, int egid); }
 72	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
 73	STD		{ int linux_sys_sigpending(linux_old_sigset_t *set); }
@@ -193,7 +193,7 @@
 93	UNIMPL		compat_43_sys_ftruncate
 #endif
 94	NOARGS		{ int sys_fchmod(int fd, int mode); }
-95	STD		{ int linux_sys_fchown(int fd, int uid, int gid); }
+95	STD		{ int linux_sys_fchown16(int fd, int uid, int gid); }
 96	NOARGS		{ int sys_getpriority(int which, int who); }
 97	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 98	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
@@ -346,24 +346,26 @@
 				struct linux_stat64 *sp); }
 197	STD		{ int linux_sys_fstat64(int fd, \
 				struct linux_stat64 *sp); }
-198	UNIMPL		lchown
-199	UNIMPL		getuid
-200	UNIMPL		getgid
-201	UNIMPL		geteuid
-202	UNIMPL		getegid
-203	UNIMPL		getreuid
-204	UNIMPL		getregid
+198	NOARGS		 { int sys___posix_chown(const char *path, uid_t uid, \
+				gid_t gid); }
+199	NOARGS		{ uid_t sys_getuid(void); }
+200	NOARGS		{ gid_t sys_getgid(void); }
+201	NOARGS		{ uid_t sys_geteuid(void); }
+202	NOARGS		{ gid_t sys_getegid(void); }
+203	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
+204	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 205	UNIMPL		getgroups
 206	UNIMPL		setgroups
-207	UNIMPL		fchown
+207	NOARGS		{ int sys___posix_fchown(int fd, uid_t uid, \
+				gid_t gid); }
 208	UNIMPL		setresuid
 209	UNIMPL		getresuid
 210	UNIMPL		setresgid
 211	UNIMPL		getresgid
-;212 chown on i386; lchown on m68k
-212	UNIMPL		lchown
-213	UNIMPL		setuid
-214	UNIMPL		setgid
+212	NOARGS		{ int sys___posix_lchown(const char *path, uid_t uid, \
+				gid_t gid); }
+213	NOARGS		{ int sys_setuid(uid_t uid); }
+214	NOARGS		{ int sys_setgid(gid_t gid); }
 215	UNIMPL		setfsuid
 216	UNIMPL		setfsgid
 217	UNIMPL		pivot_root
