@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.46 2004/05/22 17:31:37 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.47 2004/05/22 17:38:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,11 +48,8 @@
 /*
  * local prototypes
  */
-static int save_etc(void);
 static int save_X(void);
 static int merge_X(void);
-
-static int etc_saved;
 
 /*
  * Do the system upgrade.
