@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.130 1999/09/30 22:57:53 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.131 1999/10/17 09:44:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ cdattach(parent, cd, sc_link, ops)
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
 
-#if !defined(i386)
+#if !defined(i386) && !defined(vax)
 	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
 #endif
 
