@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.310 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.311 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -45,3 +45,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		merging them before dumping the profile buffers.  Written
 		by Nathan J. Williams, contributed by Wasabi Systems, Inc.
 		[thorpej 20040510]
+	xdm(1): use /var/db/xdm for the default authDir.  [lukem 20040512]
