@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.9 2002/07/31 12:44:15 grant Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.10 2002/08/02 04:08:47 grant Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -181,10 +181,13 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 		};
 	option "Punkt montazu", action 
 		{	if (PI_ISBSDFS(&bsdlabel[editpart]) ||
-			    bsdlabel[editpart].pi_fstype == FS_MSDOS)
-				msg_prompt_add (MSG_mountpoint, NULL,
+			    bsdlabel[editpart].pi_fstype == FS_MSDOS) {
+				msg_prompt_add (MSG_mountpoint,
+					fsmount[editpart],
 					fsmount[editpart], 20);
-			else {
+				if (strcmp(fsmount[editpart], "none") == 0)
+					fsmount[editpart][0] = '\0';
+			} else {
 				msg_display (MSG_nomount, 'a'+editpart);
 				process_menu (MENU_ok);
 			}
