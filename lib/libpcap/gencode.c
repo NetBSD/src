@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.6 1997/01/23 14:02:58 mrg Exp $	*/
+/*	$NetBSD: gencode.c,v 1.7 1997/03/15 18:34:01 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -37,7 +37,11 @@ struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 
 #include <stdlib.h>
 #include <memory.h>

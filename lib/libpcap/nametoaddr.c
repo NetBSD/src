@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.5 1996/12/13 08:26:07 mikel Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.6 1997/03/15 18:34:04 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -40,7 +40,11 @@ struct rtentry;
 
 #include <net/if.h>
 #include <netinet/in.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #include <arpa/inet.h>
 
 #include <ctype.h>

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: grammar.y,v 1.3 1996/12/13 08:26:05 mikel Exp $	*/
+/*	$NetBSD: grammar.y,v 1.4 1997/03/15 18:34:03 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -39,7 +39,11 @@ struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 
 #include <stdio.h>
 
