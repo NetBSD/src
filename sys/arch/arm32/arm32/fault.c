@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.35 1999/02/19 22:15:09 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.36 1999/02/19 22:32:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -173,6 +173,16 @@ data_abort_handler(frame)
 	/* Extract the fault code from the fault status */
 	fault_code = fault_status & FAULT_TYPE_MASK;
 
+	/* Get the current proc structure or proc0 if there is none */
+	if ((p = curproc) == NULL)
+		p = &proc0;
+
+	/*
+	 * can't use curpcb, as it might be NULL; and we have p in
+	 * a register anyway
+	 */
+	pcb = &p->p_addr->u_pcb;
+
 	/* fusubailout is used by [fs]uswintr to avoid page faulting */
 	if (pcb->pcb_onfault
 	    && ((fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P)
@@ -221,31 +231,10 @@ copyfault:
 	if (error == ABORT_FIXUP_FAILED)
 		panic("data abort fixup failed\n");
 
-	/* Get the current proc structure or proc0 if there is none */
-	if ((p = curproc) == NULL)
-		p = &proc0;
-
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("fault in process %p\n", p);
 #endif
-
-	/*
-	 * can't use curpcb, as it might be NULL; and we have p in
-	 * a register anyway
-	 */
-	pcb = &p->p_addr->u_pcb;
-	if (pcb == NULL) {
-		vm_offset_t va;
-        
-		va = trunc_page((vm_offset_t)fault_address);
-		if (pmap_handled_emulation(kernel_pmap, va))
-			return;
-		if (pmap_modified_emulation(kernel_pmap, va))
-			return;
-		report_abort(NULL, fault_status, fault_address, fault_pc);
-		panic("data_abort_handler: no pcb ... we're toast !\n");
-	}
 
 #ifdef DEBUG
 	/* Is this needed ? */
