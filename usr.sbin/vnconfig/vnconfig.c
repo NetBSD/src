@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.9 1997/06/23 21:11:08 thorpej Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.10 1997/07/08 06:37:16 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define VND_CONFIG	1
 #define VND_UNCONFIG	2
@@ -101,6 +102,7 @@
 int	verbose = 0;
 char	*tabname;
 
+int	config __P((char *, char *, char *, int));
 char	*rawdevice __P((char *));
 int	getgeom __P((struct vndgeom *, char *));
 void	usage __P((void));
@@ -163,14 +165,21 @@ config(dev, file, geom, action)
 	fd = open(rdev, O_RDWR, 0666);
 	if (fd < 0) {
 		warn(rdev);
+		(void) free(rdev);
 		return (1);
 	}
+	(void) free(rdev);
 
 	memset(&vndio, 0, sizeof(vndio));
+#ifdef __GNUC__
+	rv = 0;			/* XXX */
+#endif
 
 	vndio.vnd_file = file;
 	if (geom != NULL) {
 		rv = getgeom(&vndio.vnd_geom, geom);
+		if (rv != 0)
+			errx(1, "invalid geometry: %s", geom);
 		vndio.vnd_flags = VNDIOF_HASGEOM;
 	} else if (tabname != NULL) {
 		lp = getdiskbyname(tabname);
@@ -213,7 +222,7 @@ config(dev, file, geom, action)
 		}
 
 	}
- done:
+
 	(void) close(fd);
 	fflush(stdout);
 	return (rv < 0);
@@ -228,7 +237,7 @@ getgeom(vng, cp)
 
 #define	GETARG(arg) \
 	do { \
-		if (*cp == '\0') \
+		if (cp == NULL || *cp == '\0') \
 			return (1); \
 		arg = strsep(&cp, "/"); \
 		if (arg == NULL) \
@@ -269,13 +278,13 @@ rawdevice(dev)
 {
 	register char *rawbuf, *dp, *ep;
 	struct stat sb;
-	int len;
+	size_t len;
 
 	len = strlen(dev);
 	rawbuf = malloc(len + 2);
 	strcpy(rawbuf, dev);
 	if (stat(rawbuf, &sb) != 0 || !S_ISCHR(sb.st_mode)) {
-		dp = rindex(rawbuf, '/');
+		dp = strrchr(rawbuf, '/');
 		if (dp) {
 			for (ep = &rawbuf[len]; ep > dp; --ep)
 				*(ep+1) = *ep;
