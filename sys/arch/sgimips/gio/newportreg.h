@@ -1,5 +1,5 @@
 
-/*	$NetBSD: newportreg.h,v 1.1 2003/12/15 05:24:51 lonewolf Exp $	*/
+/*	$NetBSD: newportreg.h,v 1.2 2004/02/07 04:34:34 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -220,6 +220,14 @@
 #define  VC2_CONTROL_CROSSHAIR_CURSOR	0x0100
 #define  VC2_CONTROL_LARGE_CURSOR	0x0200
 #define  VC2_CONTROL_GENLOCK_1		0x0400
+
+#define VC2_IREG_CONFIG			0x1f
+#define VC2_IREG_CONFIG_SOFTRESET	0x01	/* active low */
+#define VC2_IREG_CONFIG_SLOWCLOCK	0x02
+#define VC2_IREG_CONFIG_CURSORERROR	0x04
+#define VC2_IREG_CONFIG_DIDERROR	0x08
+#define VC2_IREG_CONFIG_VTGERROR	0x10
+#define VC2_IREG_CONFIG_REVISION	0x70
 
 /* CMAP */
 

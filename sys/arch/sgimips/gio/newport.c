@@ -1,4 +1,4 @@
-/*	$NetBSD: newport.c,v 1.4 2004/01/26 11:00:47 lonewolf Exp $	*/
+/*	$NetBSD: newport.c,v 1.5 2004/02/07 04:34:34 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.4 2004/01/26 11:00:47 lonewolf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: newport.c,v 1.5 2004/02/07 04:34:34 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ struct newport_devconfig {
 	bus_space_handle_t	dc_sh;
 
 	int			dc_boardrev;
+	int			dc_vc2rev;
 	int			dc_cmaprev;
 	int			dc_xmaprev;
 	int			dc_rexrev;
@@ -503,11 +504,15 @@ newport_setup_hw(struct newport_devconfig *dc)
 	    (1 << REX3_DCBMODE_CSHOLD_SHIFT) |
 	    (1 << REX3_DCBMODE_CSSETUP_SHIFT));
 
+	scratch = vc2_read_ireg(dc, VC2_IREG_CONFIG);
+	dc->dc_vc2rev = (scratch & VC2_IREG_CONFIG_REVISION) >> 5;
+
 	scratch = rex3_read(dc, REX3_REG_DCBDATA0);
 
 	dc->dc_boardrev = (scratch >> 28) & 0x07;
 	dc->dc_cmaprev = scratch & 0x07;
 	dc->dc_xmaprev = xmap9_read(dc, XMAP9_DCBCRS_REVISION) & 0x07;
+	dc->dc_depth = ( (dc->dc_boardrev > 1) && (scratch & 0x80)) ? 8 : 24;
 
 	/* Setup cursor glyph */
 	curp = vc2_read_ireg(dc, VC2_IREG_CURSOR_ENTRY);
@@ -633,9 +638,9 @@ newport_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive(": Display adapter\n");
 
-	aprint_normal(": SGI NG1 (board revision %d, cmap revision %d, xmap revision %d), depth %d\n",
+	aprint_normal(": SGI NG1 (board revision %d, cmap revision %d, xmap revision %d, vc2 revision %d), depth %d\n",
 	    sc->sc_dc->dc_boardrev, sc->sc_dc->dc_cmaprev,
-	    sc->sc_dc->dc_xmaprev, sc->sc_dc->dc_depth);
+	    sc->sc_dc->dc_xmaprev, sc->sc_dc->dc_vc2rev, sc->sc_dc->dc_depth);
 
 	wa.scrdata = &newport_screenlist;
 	wa.accessops = &newport_accessops;
@@ -686,6 +691,8 @@ newport_cursor(void *c, int on, int row, int col)
 		/* Work around bug in some board revisions */
 		if (dc->dc_boardrev < 6)
 			x_offset = 21;
+		else if (dc->dc_vc2rev == 0) 
+			x_offset = 29;
 		else
 			x_offset = 31;
 
@@ -870,7 +877,12 @@ newport_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct proc *p)
 static paddr_t
 newport_mmap(void *c, off_t offset, int prot)
 {
-	return -1;
+	struct newport_devconfig *dc = c;
+
+	if ( offset >= 0xfffff)
+		return -1;
+
+	return mips_btop(dc->dc_addr + offset);
 }
 
 static int
