@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.7 1997/08/18 21:35:27 augustss Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.8 1997/08/25 19:03:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -312,9 +312,7 @@ main(int argc, char **argv)
     argc -= optind;
     argv += optind;
     
-    fd = open(file, O_RDWR);
-    if (fd < 0)
-	fd = open(file, O_WRONLY);
+    fd = open(file, O_WRONLY);
     if (fd < 0)
 	fd = open(file, O_RDONLY);
     if (fd < 0)
