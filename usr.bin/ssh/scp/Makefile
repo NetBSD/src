@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2001/02/26 20:40:27 he Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2001/12/10 23:54:51 he Exp $
 
 .include <bsd.own.mk>
 
 PROG=	scp
-SRCS=	scp.c log-client.c
+SRCS=	scp.c
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2001/02/26 20:42:02 he Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2001/12/10 23:54:51 he Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ MAN=	sftp-server.8
 
 BINDIR=	/usr/libexec
 
-SRCS=	sftp-server.c sftp-common.c log-server.c
+SRCS=	sftp-server.c sftp-common.c
 
 .include <bsd.prog.mk>
 
