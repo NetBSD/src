@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.22 1998/10/19 23:51:15 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.23 1998/11/03 05:04:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -202,7 +202,10 @@ fxp_scb_wait(sc)
 {
 	int i = 10000;
 
-	while (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) && --i);
+	while (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) && --i)
+		DELAY(1);
+	if (i == 0)
+		printf("%s: WARNING: SCB timed out!\n", sc->sc_dev.dv_xname);
 }
 
 static int fxp_match __P((struct device *, struct cfdata *, void *));
@@ -665,16 +668,17 @@ fxp_start(ifp)
 	struct fxp_softc *sc = ifp->if_softc;
 	struct fxp_cb_tx *txp;
 	bus_dmamap_t dmamap;
+	int old_queued;
 
 	/*
 	 * See if we need to suspend xmit until the multicast filter
 	 * has been reprogrammed (which can only be done at the head
 	 * of the command chain).
 	 */
-	if (sc->need_mcsetup)
+	if (sc->need_mcsetup || (old_queued = sc->tx_queued) >= FXP_NTXCB) {
+		ifp->if_flags |= IFF_OACTIVE;
 		return;
-
-	txp = NULL;
+	}
 
 	/*
 	 * We're finished if there is nothing more to add to the list or if
@@ -809,7 +813,7 @@ fxp_start(ifp)
 	 * We're finished. If we added to the list, issue a RESUME to get DMA
 	 * going again if suspended.
 	 */
-	if (txp != NULL) {
+	if (old_queued != sc->tx_queued) {
 		fxp_scb_wait(sc);
 		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_RESUME);
 
@@ -952,6 +956,7 @@ fxp_intr(arg)
 				sc->tx_queued--;
 			}
 			sc->cbl_first = txp;
+			ifp->if_flags &= ~IFF_OACTIVE;
 			if (sc->tx_queued == 0) {
 				ifp->if_timer = 0;
 				if (sc->need_mcsetup)
