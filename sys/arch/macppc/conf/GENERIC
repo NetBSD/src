@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24 1999/01/17 11:49:56 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.25 1999/02/04 15:04:58 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -103,12 +103,11 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 cpu*	at mainbus0
+pci*	at mainbus0 bus ?
 
-pci0	at mainbus0 bus ?
-pci1	at mainbus0 bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
-#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-#pci*	at ppb? bus ?
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
 
 #macofcons0	at pci? dev ? function ?	# Openfirmware console
 
