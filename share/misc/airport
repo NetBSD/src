@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.20 2003/02/17 12:19:27 simonb Exp $
+#	$NetBSD: airport,v 1.21 2003/05/10 19:38:06 salo Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -14,7 +14,7 @@ AIY:Atlantic City International, New Jersey, USA
 AKL:Auckland, New Zealand
 ALB:Albany, New York, USA
 AMM:Amman, Jordan
-AMS:Shiphol, Amsterdam, Netherlands
+AMS:Schiphol, Amsterdam, Netherlands
 ANC:Anchorage International, Alaska, USA
 ANU:Antigua, Leeward Islands
 ARN:Arlanda Airport, Stockholm, Sweden
@@ -43,6 +43,7 @@ BNE:Brisbane, Queensland, Australia
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
 BOS:Boston Logan International, Massachusetts, USA
 BPT:Beaumont, Texas, USA
+BTS:Bratislava [Milan Rastislav Stefanik/Ivanka], Slovakia
 BSD:Baoshan, China
 BTR:Baton Rouge, Louisiana, USA
 BTV:Burlington International, Vermont, USA
@@ -226,7 +227,7 @@ PIE:St. Petersburg/Clearwater, Florida, USA
 PIT:Pittsburgh International, Pennsylvania, USA
 PMI:Palma De Mallorca, Spain
 POS:Port Of Spain, Trinidad
-PRG:Prague, CS
+PRG:Prague [Ruzyne], Czech Republic
 PSP:Palm Springs Municipal, California, USA
 PTP:Pointe-a-Pitre, GP
 PVD:Providence Theodore Francis Green State, Rhode Island, USA
