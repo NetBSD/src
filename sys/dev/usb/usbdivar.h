@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.3 1998/07/24 21:02:51 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.4 1998/07/25 15:22:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct usbd_bus {
 	usbd_device_handle	devices[USB_MAX_DEVICES];
 	char			needs_explore;/* a hub a signalled a change */
 	struct usb_softc       *usbctl;
+	struct usb_device_stats	stats;
 };
 
 struct usbd_device {

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.1 1998/07/12 19:52:00 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.2 1998/07/25 15:22:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -305,6 +305,10 @@ usbioctl(dev, cmd, data, flag, p)
 			di->nports = 0;
 		break;
 	}
+
+	case USB_DEVICESTATS:
+		*(struct usb_device_stats *)data = sc->sc_bus->stats;
+		break;
 
 	default:
 		return (ENXIO);
