@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.2 1998/01/09 18:46:00 perry Exp $	
+	$NetBSD: prep.RISCOS,v 1.3 2000/10/03 23:19:11 lukem Exp $	
 
 These instructions are specific to NetBSD/arm32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+) running RiscOS, but may be relevant to futures
@@ -229,7 +229,7 @@ to be set aside for NetBSD.
 
 This card does not have a friendly WIMP-based interface on the SCSI
 management program, but the command line version is very good. You
-should run this in a task window (hit CTRL-F12):
+should run this in a task window (press CTRL-F12):
 	dir <location_of_scsidm>
 
 	scsidm
@@ -418,7 +418,7 @@ is composed of the following:
 (discop_swibase + (disc << 3) + partition)
 
 To mount the root partition of third Power-tec SCSI-2 disc the
-following commands can be used in task window (hit CTRL-F12) to
+following commands can be used in task window (press CTRL-F12) to
 find the argument to unixfs_mount:
         *basic
         PRINT ~(&40980 + (6 << 3) + 0)
