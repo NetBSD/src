@@ -1,4 +1,4 @@
-.\" $NetBSD: slhci.4,v 1.1 2002/08/11 13:24:55 isaki Exp $
+.\" $NetBSD: slhci.4,v 1.2 2002/08/20 16:39:09 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,13 +55,6 @@ driver provides support for ScanLogic SL811HS/T USB Host Controller.
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr usb 4
-.Sh BUGS
-There are many bugs.
-.Pp
-There is no support (yet) for Low Speed devices both
-connected directly or connected via external HUBs.
-.Pp
-There is no support yet bulk and isochronous transfers.
 .Sh HISTORY
 The
 .Nm
@@ -69,3 +62,10 @@ driver appeared in
 .Nx 1.7 .
 .Sh AUTHORS
 .An Tetsuya Isaki Aq isaki@netbsd.org
+.Sh BUGS
+There are many bugs.
+.Pp
+There is no support (yet) for Low Speed devices both
+connected directly or connected via external HUBs.
+.Pp
+There is no support yet bulk and isochronous transfers.
