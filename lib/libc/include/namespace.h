@@ -145,6 +145,7 @@
 #define catopen		_catopen
 #define err		_err
 #define errx		_errx
+#define isatty		_isatty
 #define isinf		_isinf
 #define isnan		_isnan
 #define strtoq		_strtoq
