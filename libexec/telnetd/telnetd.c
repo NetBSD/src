@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.39 2003/07/14 15:55:55 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.40 2003/07/14 16:17:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.39 2003/07/14 15:55:55 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.40 2003/07/14 16:17:37 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1148,12 +1148,10 @@ sendsusp()
 void
 recv_ayt()
 {
-#if	defined(SIGINFO)
 	if (slctab[SLC_AYT].sptr && *slctab[SLC_AYT].sptr != _POSIX_VDISABLE) {
 		(void) ioctl(pty, TIOCSIG, (char *)SIGINFO);
 		return;
 	}
-#endif
 	(void) output_data("\r\n[Yes]\r\n");
 }
 
