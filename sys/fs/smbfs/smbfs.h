@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.5 2003/03/02 22:06:51 jdolecek Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.6 2003/04/02 11:18:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -65,10 +65,6 @@ struct smbfs_args {
 };
 
 #ifdef _KERNEL
-
-#ifdef MALLOC_DECLARE
-MALLOC_DECLARE(M_SMBFSMNT);
-#endif
 
 struct smbnode;
 struct smb_share;
