@@ -1,3 +1,5 @@
+/*	$NetBSD: smbfs_io.c,v 1.2 2002/01/09 17:43:28 deberg Exp $	*/
+
 /*
  * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/fs/smbfs/smbfs_io.c,v 1.7 2001/12/02 08:56:58 bp Exp $
+ * FreeBSD: src/sys/fs/smbfs/smbfs_io.c,v 1.7 2001/12/02 08:56:58 bp Exp
  *
  */
 #include <sys/param.h>
@@ -38,7 +40,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
-#include <sys/bio.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -48,6 +49,7 @@
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 
+#ifndef __NetBSD__
 #include <vm/vm.h>
 #if __FreeBSD_version < 400000
 #include <vm/vm_prot.h>
@@ -57,6 +59,11 @@
 #include <vm/vm_object.h>
 #include <vm/vm_pager.h>
 #include <vm/vnode_pager.h>
+#else /* __NetBSD__ */
+#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
+#endif /* __NetBSD__ */
+
 /*
 #include <sys/ioccom.h>
 */
@@ -68,15 +75,21 @@
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
+#ifdef __NetBSD__
+#define PROC_LOCK(x) 
+#define PROC_UNLOCK(x)
+#endif
+
 /*#define SMBFS_RWGENERIC*/
 
 extern int smbfs_pbuf_freecnt;
 
 static int smbfs_fastlookup = 1;
 
+#ifndef __NetBSD__
 SYSCTL_DECL(_vfs_smbfs);
 SYSCTL_INT(_vfs_smbfs, OID_AUTO, fastlookup, CTLFLAG_RW, &smbfs_fastlookup, 0, "");
-
+#endif
 
 #define DE_SIZE	(sizeof(struct dirent))
 
@@ -94,7 +107,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 
 	np = VTOSMB(vp);
 	SMBVDEBUG("dirname='%s'\n", np->n_name);
-	smb_makescred(&scred, uio->uio_td, cred);
+	smb_makescred(&scred, uio->uio_procp, cred);
 	offset = uio->uio_offset / DE_SIZE; 	/* offset in the directory */
 	limit = uio->uio_resid / DE_SIZE;
 	if (uio->uio_resid < DE_SIZE || uio->uio_offset < 0)
@@ -183,7 +196,7 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 {
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
 	struct smbnode *np = VTOSMB(vp);
-	struct thread *td;
+	struct proc *p;
 	struct vattr vattr;
 	struct smb_cred scred;
 	int error, lks;
@@ -198,36 +211,36 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 		return EINVAL;
 /*	if (uiop->uio_offset + uiop->uio_resid > smp->nm_maxfilesize)
 		return EFBIG;*/
-	td = uiop->uio_td;
+	p = uiop->uio_procp;
 	if (vp->v_type == VDIR) {
-		lks = LK_EXCLUSIVE;/*lockstatus(&vp->v_lock, td);*/
+		lks = LK_EXCLUSIVE;/*lockstatus(&vp->v_lock, p);*/
 		if (lks == LK_SHARED)
-			vn_lock(vp, LK_UPGRADE | LK_RETRY, td);
+			vn_lock(vp, LK_UPGRADE | LK_RETRY);
 		error = smbfs_readvdir(vp, uiop, cred);
 		if (lks == LK_SHARED)
-			vn_lock(vp, LK_DOWNGRADE | LK_RETRY, td);
+			vn_lock(vp, LK_DOWNGRADE | LK_RETRY);
 		return error;
 	}
 
 /*	biosize = SSTOCN(smp->sm_share)->sc_txmax;*/
 	if (np->n_flag & NMODIFIED) {
 		smbfs_attr_cacheremove(vp);
-		error = VOP_GETATTR(vp, &vattr, cred, td);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return error;
 		np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 	} else {
-		error = VOP_GETATTR(vp, &vattr, cred, td);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return error;
 		if (np->n_mtime.tv_sec != vattr.va_mtime.tv_sec) {
-			error = smbfs_vinvalbuf(vp, V_SAVE, cred, td, 1);
+			error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 				return error;
 			np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 		}
 	}
-	smb_makescred(&scred, td, cred);
+	smb_makescred(&scred, p, cred);
 	return smb_read(smp->sm_share, np->n_fid, uiop, &scred);
 }
 
@@ -239,7 +252,6 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
 	struct proc *p;
-	struct thread *td;
 	int error = 0;
 
 	if (vp->v_type != VREG) {
@@ -251,12 +263,11 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		return EINVAL;
 /*	if (uiop->uio_offset + uiop->uio_resid > smp->nm_maxfilesize)
 		return (EFBIG);*/
-	td = uiop->uio_td;
-	p = td->td_proc;
+	p = uiop->uio_procp;
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
 			smbfs_attr_cacheremove(vp);
-			error = smbfs_vinvalbuf(vp, V_SAVE, cred, td, 1);
+			error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 				return error;
 		}
@@ -275,18 +286,18 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	if (uiop->uio_resid == 0)
 		return 0;
 	if (p && uiop->uio_offset + uiop->uio_resid > p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		PROC_LOCK(td->td_proc);
-		psignal(td->td_proc, SIGXFSZ);
-		PROC_UNLOCK(td->td_proc);
+		PROC_LOCK(p);
+		psignal(p, SIGXFSZ);
+		PROC_UNLOCK(p);
 		return EFBIG;
 	}
-	smb_makescred(&scred, td, cred);
+	smb_makescred(&scred, p, cred);
 	error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
 	SMBVDEBUG("after: ofs=%d,resid=%d\n",(int)uiop->uio_offset, uiop->uio_resid);
 	if (!error) {
 		if (uiop->uio_offset > np->n_size) {
 			np->n_size = uiop->uio_offset;
-			vnode_pager_setsize(vp, np->n_size);
+			uvm_vnp_setsize(vp, np->n_size);
 		}
 	}
 	return error;
@@ -296,7 +307,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
  * Do an I/O operation to/from a cache block.
  */
 int
-smbfs_doio(struct buf *bp, struct ucred *cr, struct thread *td)
+smbfs_doio(struct buf *bp, struct ucred *cr, struct proc *p)
 {
 	struct vnode *vp = bp->b_vp;
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
@@ -309,11 +320,11 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct thread *td)
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_td = td;
+	uiop->uio_procp = p;
 
-	smb_makescred(&scred, td, cr);
+	smb_makescred(&scred, p, cr);
 
-	if (bp->b_iocmd == BIO_READ) {
+	if (bp->b_flags == B_READ) {
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
 	    io.iov_base = bp->b_data;
 	    uiop->uio_rw = UIO_READ;
@@ -336,21 +347,19 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct thread *td)
 	    };
 	    if (error) {
 		bp->b_error = error;
-		bp->b_ioflags |= BIO_ERROR;
+		bp->b_flags |= B_ERROR;
 	    }
 	} else { /* write */
-	    if (((bp->b_blkno * DEV_BSIZE) + bp->b_dirtyend) > np->n_size)
-		bp->b_dirtyend = np->n_size - (bp->b_blkno * DEV_BSIZE);
-
-	    if (bp->b_dirtyend > bp->b_dirtyoff) {
-		io.iov_len = uiop->uio_resid = bp->b_dirtyend - bp->b_dirtyoff;
-		uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE + bp->b_dirtyoff;
-		io.iov_base = (char *)bp->b_data + bp->b_dirtyoff;
+		io.iov_len = uiop->uio_resid = bp->b_bcount;
+		uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
+		io.iov_base = bp->b_data;
 		uiop->uio_rw = UIO_WRITE;
-		bp->b_flags |= B_WRITEINPROG;
+		bp->b_flags |= B_BUSY;
 		error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
-		bp->b_flags &= ~B_WRITEINPROG;
+		bp->b_flags &= ~B_BUSY;
 
+
+#ifndef __NetBSD__ /* XXX */
 		/*
 		 * For an interrupted write, the buffer is still valid
 		 * and the write hasn't been pushed to the server yet,
@@ -386,17 +395,14 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct thread *td)
 			}
 			bp->b_dirtyoff = bp->b_dirtyend = 0;
 		}
-	    } else {
-		bp->b_resid = 0;
-		bufdone(bp);
-		return 0;
-	    }
+#endif /* !__NetBSD__ */
 	}
 	bp->b_resid = uiop->uio_resid;
-	bufdone(bp);
+	biodone(bp);
 	return error;
 }
 
+#ifndef __NetBSD__
 /*
  * Vnode op for VM getpages.
  * Wish wish .... get rid from multiple IO routines
@@ -409,7 +415,7 @@ smbfs_getpages(ap)
 		int a_count;
 		int a_reqpage;
 		vm_ooffset_t a_offset;
-	} */ *ap;
+		} */ *ap;
 {
 #ifdef SMBFS_RWGENERIC
 	return vop_stdgetpages(ap);
@@ -420,7 +426,7 @@ smbfs_getpages(ap)
 	vm_offset_t kva;
 	struct buf *bp;
 	struct vnode *vp;
-	struct thread *td;
+	struct proc *p;
 	struct ucred *cred;
 	struct smbmount *smp;
 	struct smbnode *np;
@@ -428,7 +434,7 @@ smbfs_getpages(ap)
 	vm_page_t *pages;
 
 	vp = ap->a_vp;
-	td = curthread;				/* XXX */
+	p = curproc;
 	cred = td->td_proc->p_ucred;		/* XXX */
 	np = VTOSMB(vp);
 	smp = VFSTOSMBFS(vp->v_mount);
@@ -623,17 +629,18 @@ smbfs_putpages(ap)
 	return rtvals[0];
 #endif /* SMBFS_RWGENERIC */
 }
+#endif /* !__NetBSD__ */
 
 /*
  * Flush and invalidate all dirty buffers. If another process is already
  * doing the flush, just wait for completion.
  */
 int
-smbfs_vinvalbuf(vp, flags, cred, td, intrflg)
+smbfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	struct vnode *vp;
 	int flags;
 	struct ucred *cred;
-	struct thread *td;
+	struct proc *p;
 	int intrflg;
 {
 	struct smbnode *np = VTOSMB(vp);
@@ -651,12 +658,12 @@ smbfs_vinvalbuf(vp, flags, cred, td, intrflg)
 	while (np->n_flag & NFLUSHINPROG) {
 		np->n_flag |= NFLUSHWANT;
 		error = tsleep((caddr_t)&np->n_flag, PRIBIO + 2, "smfsvinv", slptimeo);
-		error = smb_proc_intr(td->td_proc);
+		error = smb_proc_intr(p);
 		if (error == EINTR && intrflg)
 			return EINTR;
 	}
 	np->n_flag |= NFLUSHINPROG;
-	error = vinvalbuf(vp, flags, cred, td, slpflag, 0);
+	error = vinvalbuf(vp, flags, cred, p, slpflag, 0);
 	while (error) {
 		if (intrflg && (error == ERESTART || error == EINTR)) {
 			np->n_flag &= ~NFLUSHINPROG;
@@ -666,7 +673,7 @@ smbfs_vinvalbuf(vp, flags, cred, td, intrflg)
 			}
 			return EINTR;
 		}
-		error = vinvalbuf(vp, flags, cred, td, slpflag, 0);
+		error = vinvalbuf(vp, flags, cred, p, slpflag, 0);
 	}
 	np->n_flag &= ~(NMODIFIED | NFLUSHINPROG);
 	if (np->n_flag & NFLUSHWANT) {
