@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 2003/10/25 17:49:57 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 2003/11/18 11:37:39 chs Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.6 2003/10/25 17:49:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2003/11/18 11:37:39 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,12 +277,13 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t addr, kva;
+	vaddr_t uva, kva;
 	paddr_t pa;
 	vsize_t size, off;
 	int npf;
 	struct proc *p;
 	struct vm_map *map;
+	struct pmap *upmap, *kpmap;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -290,42 +291,25 @@ vmapbuf(bp, len)
 #endif
 	p = bp->b_proc;
 	map = &p->p_vmspace->vm_map;
+	upmap = vm_map_pmap(map);
+	kpmap = vm_map_pmap(phys_map);
 	bp->b_saveaddr = bp->b_data;
-	addr = (vaddr_t)bp->b_saveaddr;
-	off = addr & PGOFSET;
-	size = round_page(bp->b_bcount + off);
+	uva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	size = round_page(off + len);
 
-	/*
-	 * Note that this is an expanded version of:
-	 *   kva = uvm_km_valloc_wait(kernel_map, size);
-	 * We do it on our own here to be able to specify an offset to uvm_map
-	 * so that we can get all benefits of PMAP_PREFER.
-	 * - art@
-	 */
-	while (1) {
-		kva = vm_map_min(phys_map);
-		if (uvm_map(phys_map, &kva, size, NULL, addr, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0)
-			break;
-		tsleep(phys_map, PVM, "vallocwait", 0);
-	}
-
+	kva = uvm_km_valloc_prefer_wait(phys_map, size, uva);
 	bp->b_data = (caddr_t)(kva + off);
-	addr = trunc_page(addr);
 	npf = btoc(size);
 	while (npf--) {
-		/* not needed, thanks to PMAP_PREFER() */
-		/* fdcache(vm_map_pmap(map)->pmap_space, addr, PAGE_SIZE); */
-
-		if (pmap_extract(vm_map_pmap(map), addr, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-
-		addr += PAGE_SIZE;
+		pmap_enter(kpmap, kva, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
+	pmap_update(kpmap);
 }
 
 /*
@@ -336,7 +320,9 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t addr, off;
+	struct pmap *pmap;
+	vaddr_t addr;
+	vsize_t off;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -345,6 +331,9 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	pmap = vm_map_pmap(phys_map);
+	pmap_remove(pmap, addr, addr + len);
+	pmap_update(pmap);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
