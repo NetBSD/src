@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.7 2001/01/23 14:04:14 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.8 2001/01/23 21:56:17 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -238,6 +238,7 @@ USB_ATTACH(uplcom)
 	uca.iface = iface;
 	uca.methods = &uplcom_methods;
 	uca.arg = sc;
+	uca.info = NULL;
 
 	err = uplcom_init(sc);
 	if (err) {
