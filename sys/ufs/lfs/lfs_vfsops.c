@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.39 1999/10/18 19:52:25 wrstuden Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.39.2.1 1999/10/20 22:57:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -527,7 +527,8 @@ lfs_unmount(mp, mntflags, p)
 	vgone(fs->lfs_ivnode);
 
 	ronly = !fs->lfs_ronly;
-	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+	if (ump->um_devvp->v_type != VBAD)
+		ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
