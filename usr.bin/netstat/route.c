@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.32 1998/12/05 13:14:04 pk Exp $	*/
+/*	$NetBSD: route.c,v 1.33 1999/01/11 12:31:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.32 1998/12/05 13:14:04 pk Exp $");
+__RCSID("$NetBSD: route.c,v 1.33 1999/01/11 12:31:53 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,7 @@ p_sockaddr(sa, mask, flags, width)
 		break;
 	    }
 
+#ifndef SMALL
 	case AF_APPLETALK:
 	case 0:
 	    {
@@ -419,6 +420,7 @@ p_sockaddr(sa, mask, flags, width)
 	case AF_NS:
 		cp = ns_print((struct sockaddr *)sa);
 		break;
+#endif
 
 	case AF_LINK:
 	    {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1998/07/18 05:04:10 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1999/01/11 12:31:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 1998/07/18 05:04:10 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1999/01/11 12:31:53 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,7 @@ struct protox {
 	  0,		0,		0 }
 };
 
+#ifndef SMALL
 struct protox atalkprotox[] = {
 	{ N_DDPCB,	N_DDPSTAT,	1,	atalkprotopr,
 	  ddp_stats,	0,		"ddp" },
@@ -200,9 +201,13 @@ struct protox isoprotox[] = {
 	{ -1,		-1,		0,	0,
 	  0,		0,		0 }
 };
+#endif
 
-struct protox *protoprotox[] = { protox, atalkprotox,
-					 nsprotox, isoprotox, NULL };
+struct protox *protoprotox[] = { protox,
+#ifndef SMALL
+				 atalkprotox, nsprotox, isoprotox,
+#endif
+				 NULL };
 
 int main __P((int, char *[]));
 static void printproto __P((struct protox *, char *));
@@ -262,9 +267,11 @@ main(argc, argv)
 				errx(1, "%s: unknown address family",
 				    optarg);
 			break;
+#ifndef SMALL
 		case 'g':
 			gflag = 1;
 			break;
+#endif
 		case 'I':
 			iflag = 1;
 			interface = optarg;
@@ -404,6 +411,7 @@ main(argc, argv)
 			routepr(nl[N_RTREE].n_value);
 		exit(0);
 	}
+#ifndef SMALL
 	if (gflag) {
 		if (sflag)
 			mrt_stats(nl[N_MRTPROTO].n_value,
@@ -415,6 +423,7 @@ main(argc, argv)
 			    nl[N_VIFTABLE].n_value);
 		exit(0);
 	}
+#endif
 	if (af == AF_INET || af == AF_UNSPEC) {
 		setprotoent(1);
 		setservent(1);
@@ -429,6 +438,7 @@ main(argc, argv)
 		}
 		endprotoent();
 	}
+#ifndef SMALL
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
@@ -440,6 +450,7 @@ main(argc, argv)
 			printproto(tp, tp->pr_name);
 	if ((af == AF_LOCAL || af == AF_UNSPEC) && !sflag)
 		unixpr(nl[N_UNIXSW].n_value);
+#endif
 	exit(0);
 }
 
