@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 1995/02/22 08:18:18 mycroft Exp $ */
+/*	$NetBSD: boot.c,v 1.11 1995/06/25 23:26:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,8 @@ copyunix(io, addr)
 	printf("=0x%x\n", addr);
 
 #define DDB_MAGIC ( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
-	(*entry)(promvec, esym, DDB_MAGIC);
+	/* Note: args 2-4 not used due to conflicts with SunOS loaders */
+	(*entry)(promvec, 0, 0, 0, esym, DDB_MAGIC);
 	return;
 shread:
 	printf("Short read\n");
