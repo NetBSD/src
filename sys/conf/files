@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.655 2004/02/14 14:33:29 bjh21 Exp $
+#	$NetBSD: files,v 1.656 2004/02/14 16:35:58 junyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -467,19 +467,19 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-device wi: arp, wlan, ifnet
+device	wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
 
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
-device ath: arp, wlan, ifnet
+device	ath: arp, wlan, ifnet
 file	dev/ic/ath.c					ath
 file	dev/ic/athcompat.c				ath
 file	../contrib/sys/dev/ic/athhal_osdep.c		ath
 
 # ADMtek ADM8211 802.11
 #
-device atw: arp, wlan, ifnet, smc93cx6
+device	atw: arp, wlan, ifnet, smc93cx6
 file	dev/ic/atw.c			atw
 
 # 3Com Etherlink-III Ethernet controller
@@ -742,8 +742,8 @@ file	dev/ic/rtl81x9.c		rtk
 #
 device	wdc: ata
 
-device atabus: atapi,ata_hl
-attach atabus at ata
+device	atabus: atapi,ata_hl
+attach	atabus at ata
 file	dev/ic/wdc.c			atabus
 
 # CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
@@ -825,9 +825,9 @@ file	dev/ic/cs89x0.c			cs
 # Radio device attributes
 #
 define	tea5757
-file dev/ic/tea5757.c			tea5757
+file	dev/ic/tea5757.c		tea5757
 define	lm700x
-file dev/ic/lm700x.c			lm700x
+file	dev/ic/lm700x.c			lm700x
 
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
