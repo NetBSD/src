@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: parse.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/parse.c,v 4.14 1999/11/28 09:13:52 kardel RELEASE_19991128_A
@@ -31,9 +31,6 @@
 #if	!(defined(lint) || defined(__GNUC__))
 static char rcsid[] = "parse.c,v 4.14 1999/11/28 09:13:52 kardel RELEASE_19991128_A";
 #endif
-
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"

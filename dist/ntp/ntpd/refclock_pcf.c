@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_pcf.c,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_pcf.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * refclock_pcf - clock driver for the Conrad parallel port radio clock
@@ -10,8 +10,6 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_PCF)
 
-#include <time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
@@ -19,18 +17,20 @@
 #include "ntp_stdlib.h"
 
 /*
- * This driver supports the parallel port radio clocks sold by Conrad
+ * This driver supports the parallel port radio clock sold by Conrad
  * Electronic under order numbers 967602 and 642002.
  *
  * It requires that the local timezone be CET/CEST and that the pcfclock
- * device driver be installed.  A device driver for Linux 2.2 is available
- * at http://home.pages.de/~voegele/pcf.html.
+ * device driver be installed.  A device driver for Linux is available at
+ * http://home.pages.de/~voegele/pcf.html.  Information about a FreeBSD
+ * driver is available at http://schumann.cx/pcfclock/.
  */
 
 /*
  * Interface definitions
  */
-#define	DEVICE		"/dev/pcfclock%d"
+#define	DEVICE		"/dev/pcfclocks/%d"
+#define	OLDDEVICE	"/dev/pcfclock%d"
 #define	PRECISION	(-1)	/* precision assumed (about 0.5 s) */
 #define REFID		"PCF"
 #define DESCRIPTION	"Conrad parallel port radio clock"
@@ -69,17 +69,22 @@ pcf_start(
 {
 	struct refclockproc *pp;
 	int fd;
-	char device[20];
+	char device[128];
 
 	/*
 	 * Open device file for reading.
 	 */
 	(void)sprintf(device, DEVICE, unit);
+	fd = open(device, O_RDONLY);
+	if (fd == -1) {
+		(void)sprintf(device, OLDDEVICE, unit);
+		fd = open(device, O_RDONLY);
+	}
 #ifdef DEBUG
 	if (debug)
 		printf ("starting PCF with device %s\n",device);
 #endif
-	if ((fd = open(device, O_RDONLY)) == -1) {
+	if (fd == -1) {
 		return (0);
 	}
 	
@@ -94,6 +99,9 @@ pcf_start(
 	 */
 	peer->precision = PRECISION;
 	pp->clockdesc = DESCRIPTION;
+	/* one transmission takes 172.5 milliseconds since the radio clock
+	   transmits 69 bits with a period of 2.5 milliseconds per bit */
+	pp->fudgetime1 = 0.1725;
 	memcpy((char *)&pp->refid, REFID, 4);
 
 	return (1);
@@ -144,7 +152,7 @@ pcf_poll(
 	tm.tm_hour = buf[7] * 10 + buf[6];
 	tm.tm_min = buf[5] * 10 + buf[4];
 	tm.tm_sec = buf[3] * 10 + buf[2];
-	tm.tm_isdst = -1;
+	tm.tm_isdst = (buf[8] & 1) ? 1 : (buf[8] & 2) ? 0 : -1;
 
 	/*
 	 * Y2K convert the 2-digit year
@@ -190,9 +198,9 @@ pcf_poll(
 	pp->hour = tp->tm_hour;
 	pp->minute = tp->tm_min;
 	pp->second = tp->tm_sec;
-	pp->usec = buf[16] * 31250;
+	pp->nsec = buf[16] * 31250000;
 	if (buf[17] & 1)
-		pp->usec += 500000;
+		pp->nsec += 500000000;
 
 #ifdef DEBUG
 	if (debug)
@@ -206,10 +214,11 @@ pcf_poll(
 		return;
 	}
 	record_clock_stats(&peer->srcadr, pp->a_lastcode);
-	if (buf[1] & 1)
+	if ((buf[1] & 1) && !(pp->sloppyclockflag & CLK_FLAG2))
 		pp->leap = LEAP_NOTINSYNC;
 	else
 		pp->leap = LEAP_NOWARNING;
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
 }
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syslog.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_syslog.h,v 1.1.1.2 2003/12/04 16:05:22 drochner Exp $	*/
 
 /*
  * A hack for platforms which require specially built syslog facilities
@@ -7,10 +7,6 @@
 #ifndef NTP_SYSLOG_H
 #define NTP_SYSLOG_H
 
-#ifdef GIZMO
-# include "gizmo_syslog.h"
-#else /* !GIZMO */
-
 # ifdef VMS
 extern void msyslog();
 # else
@@ -18,10 +14,7 @@ extern void msyslog();
 #   include <syslog.h>
 #   endif
 # endif /* VMS */
-
 # include <stdio.h>
-
-#endif /* GIZMO */
 
 extern int syslogit;
 extern FILE *syslog_file;

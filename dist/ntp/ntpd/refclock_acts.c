@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.1.1.2 2000/04/22 14:53:24 simonb Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.1.1.3 2003/12/04 16:05:27 drochner Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/PTB Automated Computer Time
@@ -11,19 +11,18 @@
 
 #if defined(REFCLOCK) && (defined(CLOCK_ACTS) || defined(CLOCK_PTBACTS))
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-#ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
-#endif /* HAVE_SYS_IOCTL_H */
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_unixtime.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
 #include "ntp_control.h"
+
+#include <stdio.h>
+#include <ctype.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif /* HAVE_SYS_IOCTL_H */
 
 /* MUST BE AFTER LAST #include <config.h> !!! */
 
@@ -736,8 +735,9 @@ acts_receive (
 	 * waiting for carrier loss or long-space disconnect, but we do
 	 * these clumsy things anyway.
 	 */
-	record_clock_stats(&peer->srcadr, pp->a_lastcode);
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	pp->sloppyclockflag &= ~CLK_FLAG1;
 	up->pollcnt = 0;
 	(void)write(pp->io.fd, &hangup, 1);

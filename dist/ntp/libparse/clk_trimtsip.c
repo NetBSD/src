@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtsip.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: clk_trimtsip.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/clk_trimtsip.c,v 4.13 1999/11/28 09:13:51 kardel RELEASE_19991128_A
@@ -13,9 +13,6 @@
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_PARSE) && defined(CLOCK_TRIMTSIP)
-
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_syslog.h"
 #include "ntp_types.h"

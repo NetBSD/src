@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.1.1.2 2000/04/22 14:52:55 simonb Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.1.1.3 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -25,23 +25,15 @@ struct savekey {
 	struct savekey *next;
 	union {
 		long bogon;		/* Make sure nonempty */
-#ifdef	DES
-		u_int32 DES_key[2];	/* DES key */
-#endif
-#ifdef	MD5
 		u_char MD5_key[32];	/* MD5 key */
-#endif
 	} k;
 	keyid_t keyid;		/* key identifier */
 	u_short flags;		/* flags that wave */
 	u_long lifetime;	/* remaining lifetime */
-#ifdef	MD5
 	int keylen;		/* key length */
-#endif
 };
 
 #define	KEY_TRUSTED	0x001	/* this key is trusted */
-#define	KEY_DES		0x100	/* this is a DES type key */
 #define	KEY_MD5		0x200	/* this is a MD5 type key */
 
 /*
@@ -169,19 +161,11 @@ authhavekey(
 	}
 	cache_keyid = sk->keyid;
 	cache_flags = sk->flags;
-#ifdef	MD5
 	if (sk->flags & KEY_MD5) {
 		cache_key = sk->k.MD5_key;
 		cache_keylen = sk->keylen;
 		return (1);
 	}
-#endif
-#ifdef	DES
-	if (sk->flags & KEY_DES) {
-		cache_key = (u_char *)sk->k.DES_key;
-		return (1);
-	}
-#endif
 	return (0);
 }
 
@@ -316,61 +300,6 @@ authistrusted(
 }
 
 
-
-#ifdef	DES
-/*
- * DESauth_setkey - set a key into the key array
- */
-void
-DESauth_setkey(
-	keyid_t keyno,
-	const u_int32 *key
-	)
-{
-	struct savekey *sk;
-
-	/*
-	 * See if we already have the key.  If so just stick in the
-	 * new value.
-	 */
-	sk = key_hash[KEYHASH(keyno)];
-	while (sk != 0) {
-		if (keyno == sk->keyid) {
-			sk->k.DES_key[0] = key[0];
-			sk->k.DES_key[1] = key[1];
-			sk->flags |= KEY_DES;
-			if (cache_keyid == keyno)
-			    cache_flags = 0;
-			cache_keyid = 0;
-			return;
-		}
-		sk = sk->next;
-	}
-
-	/*
-	 * Need to allocate new structure.  Do it.
-	 */
-	if (authnumfreekeys == 0) {
-		if (auth_moremem() == 0)
-		    return;
-	}
-	sk = authfreekeys;
-	authfreekeys = sk->next;
-	authnumfreekeys--;
-
-	sk->k.DES_key[0] = key[0];
-	sk->k.DES_key[1] = key[1];
-	sk->keyid = keyno;
-	sk->flags = KEY_DES;
-	sk->lifetime = 0;
-	sk->next = key_hash[KEYHASH(keyno)];
-	key_hash[KEYHASH(keyno)] = sk;
-	authnumkeys++;
-	return;
-}
-#endif
-
-#ifdef	MD5
 void
 MD5auth_setkey(
 	keyid_t keyno,
@@ -427,7 +356,6 @@ MD5auth_setkey(
 	authnumkeys++;
 	return;
 }
-#endif
     
 /*
  * auth_delkeys - delete all known keys, in preparation for rereading
@@ -448,14 +376,13 @@ auth_delkeys(void)
 		 */
 		while (sk != 0 && sk->keyid <= NTP_MAXKEY) {
 			/*
-			 * Don't loose info which keys are trusted.
+			 * Don't lose info as to which keys are trusted.
 			 */
 			if (sk->flags & KEY_TRUSTED) {
+				skp = &(sk->next);
 				memset(&sk->k, 0, sizeof(sk->k));
 				sk->lifetime = 0;
-#ifdef MD5
 				sk->keylen = 0;
-#endif
 				sk = sk->next;
 			} else {
 				*skp = sk->next;
@@ -524,15 +451,9 @@ authencrypt(
 	if (!authhavekey(keyno))
 		return (0);
 
-#ifdef	DES
-	if (cache_flags & KEY_DES)
-		return (DESauthencrypt(cache_key, pkt, length));
-#endif
-
-#ifdef	MD5
 	if (cache_flags & KEY_MD5)
 		return (MD5authencrypt(cache_key, pkt, length));
-#endif
+
 	return (0);
 }
 
@@ -562,15 +483,8 @@ authdecrypt(
 	if (!authhavekey(keyno) || size < 4)
 		return (0);
 
-#ifdef	DES
-	if (cache_flags & KEY_DES)
-		return (DESauthdecrypt(cache_key, pkt, length, size));
-#endif
-
-#ifdef	MD5
 	if (cache_flags & KEY_MD5)
 		return (MD5authdecrypt(cache_key, pkt, length, size));
-#endif
 
 	return (0);
 }

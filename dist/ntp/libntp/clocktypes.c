@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktypes.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * Data for pretty printing clock types
@@ -86,8 +86,22 @@ struct clktype clktypes[] = {
 	  "PCF"},
 	{ REFCLK_WWV_AUDIO,	"WWV/H Audio Demodulator/Decoder (36)",
 	  "WWV_AUDIO"},
-	{ REFCLK_FG,	"Forum Graphic GPS Dating Station (37)",
+	{ REFCLK_FG,		"Forum Graphic GPS Dating Station (37)",
 	  "GPS_FG"},
+	{ REFCLK_HOPF_SERIAL,	"hopf Elektronic serial line receiver (38)",
+	  "HOPF_S"},
+	{ REFCLK_HOPF_PCI,	"hopf Elektronic PCI receiver (39)",
+	  "HOPF_P"},
+	{ REFCLK_JJY,		"JJY receiver (40)",
+	  "JJY"},
+	{ REFCLK_TT560,		"TrueTime 560 IRIG-B decoder (41)",
+	  "TT_IRIG"},
+	{ REFCLK_ZYFER,		"Zyfer GPStarplus receiver (42)",
+	  "GPS_ZYFER" },
+	{ REFCLK_RIPENCC,	"RIPE NCC Trimble driver (43)",
+	  "GPS_RIPENCC" },
+	{ REFCLK_NEOCLOCK4X,	"NeoClock4X DCF77 / TDF receiver (44)",
+	  "NEOCLK4X"},
 	{ -1,			"", "" }
 };
 

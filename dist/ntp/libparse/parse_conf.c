@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_conf.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: parse_conf.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/parse_conf.c,v 4.5 1999/11/28 09:13:53 kardel RELEASE_19991128_A
@@ -27,9 +27,6 @@
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_PARSE)
-
-#include <sys/types.h>
-#include <sys/time.h>
 
 #include "ntp_fp.h"
 #include "ntp_unixtime.h"

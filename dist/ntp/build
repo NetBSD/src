@@ -1,10 +1,29 @@
 #! /bin/sh
 
 LOGF=make.log
-
-CONFIG_ARGS="$@"
-
 IAM=`hostname || uname -n`
+
+case "$1" in
+ 0.*)
+    SIG=$1
+    shift
+    CONFIG_ARGS="$@"
+    KEY=`sed -e q < .buildkey`
+    case "$SIG" in
+     $KEY) ;;
+     *)
+	echo "Wrong directory for build on host $IAM"
+	echo "This is <`pwd`>"
+	echo "SIG is <$SIG>"
+	echo "KEY is <$KEY>"
+        exit 1
+        ;;
+    esac
+    ;;
+ *)
+    CONFIG_ARGS="$@"
+    ;;
+esac
 
 #set -e
 #set -x
@@ -28,11 +47,14 @@ case "$IAM" in
     ;;
 esac
 
-RSASUF=""
+KEYSUF=""
 
 case "$CONFIG_ARGS" in
- *--without-rsaref*)
-    [ -d rsaref2 ] && RSASUF="-norsa"
+ *--with-crypto=autokey*)
+    KEYSUF="-autokey"
+    ;;
+ *--without-crypto*)
+    KEYSUF="-noopenssl"
     ;;
 esac
 
@@ -44,7 +66,7 @@ case "$CC" in
     ;;
 esac
 
-BDIR="$BDIR$RSASUF$CCSUF"
+BDIR="$BDIR$KEYSUF$CCSUF"
 
 [ -d "$BDIR" ] || mkdir $BDIR
 [ -f "$BDIR/.buildcvo" ] || echo $CVO > $BDIR/.buildcvo
@@ -54,6 +76,8 @@ cd $BDIR
 
 (
 [ -f config.status ] || ../configure $CONFIG_ARGS
+
+./config.status
 
 case "$MAKE" in
  '') make && make check

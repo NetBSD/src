@@ -1,4 +1,4 @@
-/*	$NetBSD: sht.c,v 1.1.1.1 2000/03/29 12:38:59 simonb Exp $	*/
+/*	$NetBSD: sht.c,v 1.1.1.2 2003/12/04 16:05:35 drochner Exp $	*/
 
 /* 
  * sht.c - Testprogram for shared memory refclock
@@ -179,7 +179,7 @@ main (
 			    p->valid=1;
 		    }
 		    else {
-			    printf ("p->valid still set\n"); // not an error!
+			    printf ("p->valid still set\n"); /* not an error! */
 		    }
 	    }
 	    break;

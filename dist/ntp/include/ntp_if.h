@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_if.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_if.h,v 1.1.1.2 2003/12/04 16:05:22 drochner Exp $	*/
 
 /*
  * Sockets are not standard.
@@ -8,12 +8,6 @@
 #if defined(HAVE__SYS_SYNC_QUEUE_H) && defined(HAVE__SYS_SYNC_SEMA_H)
 # include "/sys/sync/queue.h"
 # include "/sys/sync/sema.h"
-#endif
-
-/* was: defined(SYS_AIX) */
-#if defined(TIME_WITH_SYS_TIME)
-# include <sys/time.h>
-# include <time.h>
 #endif
 
 /* was: (defined(SYS_SOLARIS) && !defined(bsd)) || defined(SYS_SUNOS4) */
@@ -29,27 +23,6 @@
 #ifdef HAVE_SYS_STROPTS_H
 # include <sys/stropts.h>
 #endif
-
-/* Was: #if defined(SYS_SVR4) */
-#if defined(USE_STREAMS_DEVICE_FOR_IF_CONFIG)
-# include <netinet/ip.h>
-# undef SIOCGIFCONF
-# undef SIOCGIFFLAGS
-# undef SIOCGIFADDR
-# undef SIOCGIFBRDADDR
-# undef SIOCGIFNETMASK
-# define SIOCGIFCONF	IPIOC_GETIFCONF
-# define SIOCGIFFLAGS	IPIOC_GETIFFLAGS
-# define SIOCGIFADDR	IPIOC_GETIFADDR
-# define SIOCGIFBRDADDR IPIOC_GETIFBRDADDR
-# define SIOCGIFNETMASK IPIOC_GETIFNETMASK
-#if 0	/* We don't need this now that sys/sockio.h is handled above */
-# else /* USE_STREAMS_DEVICE_FOR_IF_CONFIG */
-#  include <sys/sockio.h>
-#endif
-# endif /* USE_STREAMS_DEVICE_FOR_IF_CONFIG */
-/* was #endif SYS_SVR4 */
-
 
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>

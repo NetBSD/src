@@ -1,9 +1,11 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.1.1.2 2000/04/22 14:52:44 simonb Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.1.1.3 2003/12/04 16:05:22 drochner Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
  */
 #include <sys/types.h>
+#include <sys/socket.h>
+#include "ntp_rfc2553.h"
 
 #include "ntp_types.h"
 #include "ntp_string.h"
@@ -29,9 +31,12 @@
 # include <stdarg.h>
 extern	void	msyslog		P((int, const char *, ...))
 				__attribute__((__format__(__printf__, 2, 3)));
+extern	void	netsyslog	P((int, const char *, ...))
+				__attribute__((__format__(__printf__, 2, 3)));
 #else
 # include <varargs.h>
 extern	void msyslog		P(());
+extern	void netsyslog		P(());
 #endif
 
 extern	void	auth_delkeys	P((void));
@@ -62,20 +67,10 @@ extern	struct savekey *auth_findkey P((keyid_t));
 extern	int	auth_moremem	P((void));
 extern	int	ymd2yd		P((int, int, int));
 
-#ifdef	DES
-extern	int	DESauthdecrypt	P((u_char *, u_int32 *, int, int));
-extern	int	DESauthencrypt	P((u_char *, u_int32 *, int));
-extern	void	DESauth_setkey	P((keyid_t, const u_int32 *));
-extern	void	DESauth_subkeys	P((const u_int32 *, u_char *, u_char *));
-extern	void	DESauth_des	P((u_int32 *, u_char *));
-extern	int	DESauth_parity	P((u_int32 *));
-#endif	/* DES */
-
-#ifdef	MD5
 extern	int	MD5authdecrypt	P((u_char *, u_int32 *, int, int));
 extern	int	MD5authencrypt	P((u_char *, u_int32 *, int));
 extern	void	MD5auth_setkey	P((keyid_t, const u_char *, const int));
-#endif	/* MD5 */
+extern	u_int32	addr2refid	P((struct sockaddr_storage *));
 
 extern	int	atoint		P((const char *, long *));
 extern	int	atouint		P((const char *, u_long *));
@@ -83,8 +78,8 @@ extern	int	hextoint	P((const char *, u_long *));
 extern	char *	humandate	P((u_long));
 extern	char *	humanlogtime	P((void));
 extern	char *	inttoa		P((long));
-extern	char *	mfptoa		P((u_long, u_long, int));
-extern	char *	mfptoms		P((u_long, u_long, int));
+extern	char *	mfptoa		P((u_long, u_long, short));
+extern	char *	mfptoms		P((u_long, u_long, short));
 extern	const char * modetoa	P((int));
 extern  const char * eventstr   P((int));
 extern  const char * ceventstr  P((int));
@@ -92,16 +87,18 @@ extern	char *	statustoa	P((int, int));
 extern  const char * sysstatstr P((int));
 extern  const char * peerstatstr P((int));
 extern  const char * clockstatstr P((int));
-extern	u_int32	netof		P((u_int32));
+extern	struct sockaddr_storage* netof P((struct sockaddr_storage*));
 extern	char *	numtoa		P((u_int32));
 extern	char *	numtohost	P((u_int32));
+extern char * socktoa           P((struct sockaddr_storage *));
+extern char * socktohost        P((struct sockaddr_storage *));
 extern	int	octtoint	P((const char *, u_long *));
 extern	u_long	ranp2		P((int));
-extern	char *	refnumtoa	P((u_int32));
+extern	char *	refnumtoa	P((struct sockaddr_storage *));
 extern	int	tsftomsu	P((u_long, int));
 extern	char *	uinttoa		P((u_long));
 
-extern	int	decodenetnum	P((const char *, u_int32 *));
+extern	int	decodenetnum	P((const char *, struct sockaddr_storage *));
 
 extern	const char *	FindConfig	P((const char *));
 
@@ -155,9 +152,7 @@ extern HANDLE	hServDoneEvent;
 #endif
 
 /* systime.c */
-extern int	systime_10ms_ticks;	/* adj sysclock in 10ms increments */
-
-extern double	sys_maxfreq;		/* max frequency correction */
+extern double	sys_tick;		/* adjtime() resolution */
 
 /* version.c */
 extern const char *Version;		/* version declaration */

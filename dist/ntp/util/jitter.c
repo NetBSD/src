@@ -1,4 +1,4 @@
-/*	$NetBSD: jitter.c,v 1.1.1.1 2000/03/29 12:38:59 simonb Exp $	*/
+/*	$NetBSD: jitter.c,v 1.1.1.2 2003/12/04 16:05:34 drochner Exp $	*/
 
 /*
  * This program can be used to calibrate the clock reading jitter of a
@@ -8,8 +8,9 @@
  * analysis. From this you can determine the jitter and if the clock ever
  * runs backwards.
  */
-#include <sys/time.h>
+
 #include <stdio.h>
+#include <sys/time.h>
 
 #define NBUF 20002
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_machine.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_machine.h,v 1.1.1.2 2003/12/04 16:05:22 drochner Exp $	*/
 
 /*
  * Collect all machine dependent idiosyncrasies in one place.
@@ -8,11 +8,18 @@
 #define __ntp_machine
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#ifdef TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
 #endif
 
 #include "ntp_proto.h"
@@ -230,29 +237,60 @@ typedef unsigned long u_long;
 #endif /* 0 */
 
 /*
+ * Define these here for non-Windows NT systems
+ * SOCKET and INVALID_SOCKET are native macros
+ * on Windows NT and since they have different
+ * requirements we use them in the code and
+ * make them macros for everyone else
+ */
+#ifndef SYS_WINNT
+# define SOCKET	int
+# define INVALID_SOCKET	-1
+# define closesocket close
+#endif
+/*
  * Windows NT
  */
 #if defined(SYS_WINNT)
 # if !defined(HAVE_CONFIG_H)  || !defined(__config)
-    error "NT requires config.h to be included"
+# include <config.h>
 # endif /* HAVE_CONFIG_H) */
+# include <windows.h>
+# include <ws2tcpip.h>
+# include <winsock2.h>
 
-#if defined SYS_WINNT
 # define ifreq _INTERFACE_INFO
 # define ifr_flags iiFlags
 # define ifr_addr iiAddress.AddressIn
 # define ifr_broadaddr iiBroadcastAddress.AddressIn
 # define ifr_mask iiNetmask.AddressIn
-#endif /* SYS_WINNT */
+# define zz_family sin_family
 
+# define S_IFREG _S_IFREG
+# define stat _stat
 # define isascii __isascii
 # define isatty _isatty
 # define mktemp _mktemp
-# define getpid GetCurrentProcessId
-# include <windows.h>
-# include <ws2tcpip.h>
+# define unlink _unlink
+# define fileno _fileno
+# define write _write
+# define vsnprintf _vsnprintf
+# define snprintf _snprintf
+#ifndef close
+# define close _close
+#endif
 # undef interface
+# include <process.h>
+#define getpid _getpid
+/*
+ * Defining registers are not a good idea on Windows
+ * This gets rid of the usage
+ */
+#ifndef register
+# define register
+#endif
  typedef char *caddr_t;
+# define vsnprintf _vsnprintf
 #endif /* SYS_WINNT */
 
 int ntp_set_tod P((struct timeval *tvp, void *tzp));
@@ -429,6 +467,48 @@ struct servent *getservbyname P((char *name, char *type));
 # endif
 #endif	/* NTP_SYSCALLS_STD */
 
+#ifdef MPE
+# include <sys/types.h>
+# include <netinet/in.h>
+# include <stdio.h>
+# include <time.h>
+
+/* missing functions that are easily renamed */
+
+# define _getch getchar
+
+/* special functions that require MPE-specific wrappers */
+
+# define bind	__ntp_mpe_bind
+# define fcntl	__ntp_mpe_fcntl
+
+/* standard macros missing from MPE include files */
+
+# define IN_CLASSD(i)	((((long)(i))&0xf0000000)==0xe0000000)
+# define IN_MULTICAST IN_CLASSD
+# define ITIMER_REAL 0
+# define MAXHOSTNAMELEN 64
+
+/* standard structures missing from MPE include files */
+
+struct itimerval { 
+        struct timeval it_interval;    /* timer interval */
+        struct timeval it_value;       /* current value */
+};
+
+/* various declarations to make gcc stop complaining */
+
+extern int __filbuf(FILE *);
+extern int __flsbuf(int, FILE *);
+extern int gethostname(char *, int);
+extern unsigned long inet_addr(char *);
+extern char *strdup(const char *);
+
+/* miscellaneous NTP macros */
+
+# define HAVE_NO_NICE
+#endif /* MPE */
+
 #ifdef HAVE_RTPRIO
 # define HAVE_NO_NICE
 #else
@@ -471,6 +551,10 @@ struct servent *getservbyname P((char *name, char *type));
 # undef HAVE_SYSV_TTYS
 #endif
 
+#ifndef HAVE_TIMEGM
+extern time_t	timegm		P((struct tm *));
+#endif
+
 #ifdef HAVE_SYSV_TTYS
 # undef HAVE_BSD_TTYS
 #endif
@@ -490,8 +574,8 @@ struct servent *getservbyname P((char *name, char *type));
 #endif
 
 /*
- * Byte order woes.  The DES code is sensitive to byte order.  This
- * used to be resolved by calling ntohl() and htonl() to swap things
+ * Byte order woes.
+ * This used to be resolved by calling ntohl() and htonl() to swap things
  * around, but this turned out to be quite costly on Vaxes where those
  * things are actual functions.  The code now straightens out byte
  * order troubles on its own, with no performance penalty for little

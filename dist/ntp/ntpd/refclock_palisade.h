@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.h,v 1.1.1.1 2000/03/29 12:38:54 simonb Exp $	*/
+/*	$NetBSD: refclock_palisade.h,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -148,6 +148,7 @@ struct palisade_unit {
 	char		rpt_status;	/* TSIP Parser State */
 	short 		rpt_cnt;	/* TSIP packet length so far */
 	char 		rpt_buf[BMAX]; 	 /* packet assembly buffer */
+	int		type;		/* Clock mode type */
 };
 
 /*

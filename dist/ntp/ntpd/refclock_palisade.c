@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.1.1.2 2003/12/04 16:05:29 drochner Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -58,6 +58,11 @@
 #include "config.h"
 #endif
 
+#if defined(SYS_WINNT)
+#undef close
+#define close closesocket
+#endif
+
 #if defined(REFCLOCK) && (defined(PALISADE) || defined(CLOCK_PALISADE))
 
 #include "refclock_palisade.h"
@@ -89,6 +94,16 @@ struct refclock refclock_palisade = {
 };
 
 int day_of_year P((char *dt));
+
+/* Extract the clock type from the mode setting */
+#define CLK_TYPE(x) ((int)(((x)->ttl) & 0x7F))
+
+/* Supported clock types */
+#define CLK_TRIMBLE	0	/* Trimble Palisade */
+#define CLK_PRAECIS	1	/* Endrun Technologies Praecis */
+
+int praecis_msg;
+static void praecis_parse(struct recvbuf *rbufp, struct peer *peer);
 
 /*
  * palisade_start - open the devices and initialize data for processing
@@ -196,6 +211,19 @@ palisade_start (
 	}
 
 	memset((char *)up, 0, sizeof(struct palisade_unit));
+
+	up->type = CLK_TYPE(peer);
+	switch (up->type) {
+		case CLK_TRIMBLE:
+			/* Normal mode, do nothing */
+			break;
+		case CLK_PRAECIS:
+			msyslog(LOG_NOTICE, "Palisade(%d) Praecis mode enabled\n",unit);
+			break;
+		default:
+			msyslog(LOG_NOTICE, "Palisade(%d) mode unknown\n",unit);
+			break;
+	}
 
 	pp = peer->procptr;
 	pp->io.clock_recv = palisade_io;
@@ -337,7 +365,10 @@ TSIP_decode (
 		return 0;	
 	}
 
-	if (up->rpt_buf[0] == (char) 0x8f) {
+	/*
+	 * We cast both to u_char to as 0x8f uses the sign bit on a char
+	 */
+	if ((u_char) up->rpt_buf[0] == (u_char) 0x8f) {
 	/* 
 	 * Superpackets
 	 */
@@ -387,7 +418,7 @@ if (debug > 1) {
 		secint = (long) secs;
 		secfrac = secs - secint; /* 0.0 <= secfrac < 1.0 */
 
-		pp->usec = (long) (secfrac * 1000000); 
+		pp->nsec = (long) (secfrac * 1000000000); 
 
 		secint %= 86400;    /* Only care about today */
 		pp->hour = secint / 3600;
@@ -404,7 +435,7 @@ if (debug > 1) {
 	if (debug > 1)
 		printf("TSIP_decode: unit %d: %02X #%d %02d:%02d:%02d.%06ld %02d/%02d/%04d UTC %02d\n",
  			up->unit, mb(0) & 0xff, event, pp->hour, pp->minute, 
-			pp->second, pp->usec, mb(12), mb(11), pp->year, GPS_UTC_Offset);
+			pp->second, pp->nsec, mb(12), mb(11), pp->year, GPS_UTC_Offset);
 #endif
 		/* Only use this packet when no
 		 * 8F-AD's are being received
@@ -465,7 +496,7 @@ if (debug > 1) {
 			return 0;
 		}
 
-		pp->usec = (long) (getdbl((u_char *) &mb(3)) * 1000000);
+		pp->nsec = (long) (getdbl((u_char *) &mb(3)) * 1000000);
 
 		if ((pp->day = day_of_year(&mb(14))) < 0) 
 			break;
@@ -478,7 +509,7 @@ if (debug > 1) {
 	if (debug > 1)
 printf("TSIP_decode: unit %d: %02X #%d %02d:%02d:%02d.%06ld %02d/%02d/%04d UTC %02x %s\n",
  			up->unit, mb(0) & 0xff, event, pp->hour, pp->minute, 
-			pp->second, pp->usec, mb(15), mb(14), pp->year,
+			pp->second, pp->nsec, mb(15), mb(14), pp->year,
 			mb(19), *Tracking_Status[st]);
 #endif
 		return 1;
@@ -536,7 +567,7 @@ palisade_receive (
 		printf(
 	"palisade_receive: unit %d: %4d %03d %02d:%02d:%02d.%06ld\n",
 			up->unit, pp->year, pp->day, pp->hour, pp->minute, 
-			pp->second, pp->usec);
+			pp->second, pp->nsec);
 #endif
 
 	/*
@@ -546,7 +577,7 @@ palisade_receive (
 	 */
 
 	(void) sprintf(pp->a_lastcode,"%4d %03d %02d:%02d:%02d.%06ld",
-		   pp->year,pp->day,pp->hour,pp->minute, pp->second,pp->usec); 
+		   pp->year,pp->day,pp->hour,pp->minute, pp->second,pp->nsec); 
 	pp->lencode = 24;
 
 #ifdef PALISADE
@@ -573,7 +604,7 @@ palisade_receive (
 	    printf("palisade_receive: unit %d: %s\n",
 		   up->unit, prettydate(&pp->lastrec));
 #endif
-
+	pp->lastref = pp->lastrec;
 	refclock_receive(peer
 #ifdef PALISADE
 		, &pp->offset, 0, pp->dispersion,
@@ -622,10 +653,43 @@ palisade_poll (
 	if (pp->sloppyclockflag & CLK_FLAG2) 
 	    return;  /* using synchronous packet input */
 
+	if(up->type == CLK_PRAECIS) {
+		if(write(peer->procptr->io.fd,"SPSTAT\r\n",8) < 0)
+			msyslog(LOG_ERR, "Palisade(%d) write: %m:",unit);
+		else {
+			praecis_msg = 1;
+			return;
+		}
+	}
+
 	if (HW_poll(pp) < 0) 
 	    refclock_report(peer, CEVNT_FAULT); 
 }
 
+static void
+praecis_parse(struct recvbuf *rbufp, struct peer *peer)
+{
+	static char buf[100];
+	static int p = 0;
+	struct refclockproc *pp;
+
+	pp = peer->procptr;
+
+	memcpy(buf+p,rbufp->recv_space.X_recv_buffer, rbufp->recv_length);
+	p += rbufp->recv_length;
+
+	if(buf[p-2] == '\r' && buf[p-1] == '\n') {
+		buf[p-2] = '\0';
+		record_clock_stats(&peer->srcadr, buf);
+
+		p = 0;
+		praecis_msg = 0;
+
+		if (HW_poll(pp) < 0)
+			refclock_report(peer, CEVNT_FAULT);
+
+	}
+}
 
 static void
 palisade_io (
@@ -650,6 +714,13 @@ palisade_io (
 	peer = (struct peer *)rbufp->recv_srcclock;
 	pp = peer->procptr;
 	up = (struct palisade_unit *)pp->unitptr;
+
+	if(up->type == CLK_PRAECIS) {
+		if(praecis_msg) {
+			praecis_parse(rbufp,peer);
+			return;
+		}
+	}
 
 	c = (char *) &rbufp->recv_space;
 	d = c + rbufp->recv_length;
@@ -880,4 +951,6 @@ getint (
 return (short) (bp[1] + (bp[0] << 8));
 }
 
+#else
+int refclock_palisade_bs;
 #endif /* REFCLOCK */

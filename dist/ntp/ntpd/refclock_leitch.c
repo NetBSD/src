@@ -1,22 +1,22 @@
-/*	$NetBSD: refclock_leitch.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_leitch.c,v 1.1.1.2 2003/12/04 16:05:28 drochner Exp $	*/
 
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock
  */
+
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #if defined(REFCLOCK) && defined(CLOCK_LEITCH)
-
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
 
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 #ifdef STREAM
 #include <stropts.h>
@@ -448,6 +448,7 @@ leitch_receive(
 			leitch->state = STATE_IDLE;
 			break;
 		}
+		leitch->reftime1.l_uf = 0;
 #ifdef DEBUG
 		if (debug)
 		    fprintf(stderr, "%lu\n", (u_long)leitch->reftime1.l_ui);

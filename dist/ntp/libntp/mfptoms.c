@@ -1,4 +1,4 @@
-/*	$NetBSD: mfptoms.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: mfptoms.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * mfptoms - Return an asciized signed long fp number in milliseconds
@@ -10,7 +10,7 @@ char *
 mfptoms(
 	u_long fpi,
 	u_long fpf,
-	int ndec
+	short ndec
 	)
 {
 	int isneg;

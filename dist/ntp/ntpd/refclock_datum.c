@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_datum.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: refclock_datum.c,v 1.1.1.2 2003/12/04 16:05:27 drochner Exp $	*/
 
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
@@ -19,15 +19,14 @@
 ** Include Files
 */
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 #if defined(HAVE_BSD_TTYS)
 #include <sgtty.h>
@@ -46,10 +45,6 @@
 #include <sys/clkdefs.h>
 #endif /* WWVBCLK */
 #endif /* STREAM */
-
-#if defined (WWVBPPS)
-#include <sys/ppsclock.h>
-#endif /* WWVBPPS */
 
 #include "ntp_stdlib.h"
 
@@ -122,8 +117,8 @@
 */
 
 
-#define	PTSPRECISION	(-10)		/* precision assumed 1/1024 ms */
-#define	DATMREFID "DATM"		/* reference id */
+#define	PRECISION	(-10)		/* precision assumed 1/1024 ms */
+#define	REFID "DATM"			/* reference id */
 #define DATUM_DISPERSION 0		/* fixed dispersion = 0 ms */
 #define DATUM_MAX_ERROR 0.100		/* limits on sigma squared */
 
@@ -240,7 +235,6 @@ datum_pts_start(
 {
 	struct datum_pts_unit **temp_datum_pts_unit;
 	struct datum_pts_unit *datum_pts;
-
 #ifdef HAVE_TERMIOS
 	struct termios arg;
 #endif
@@ -306,6 +300,10 @@ datum_pts_start(
 	msyslog(LOG_ERR, "Datum_PTS: Termios not supported in this driver");
 	(void)close(datum_pts->PTS_fd);
 
+	peer->precision = PRECISION;
+	pp->clockdesc = DESCRIPTION;
+	memcpy((char *)&pp->refid, REFID, 4);
+
 	return 0;
 
 #endif
@@ -332,10 +330,6 @@ datum_pts_start(
 
 		return 0;
 	}
-
-	peer->precision = PTSPRECISION;
-	peer->stratum = 0;
-	memcpy((char *)&peer->refid, DATMREFID, 4);
 
 	/*
 	** Now add one to the number of units and return a successful code
@@ -440,7 +434,7 @@ datum_pts_poll(
 	)
 {
 	int i;
-	int index;
+	int unit_index;
 	int error_code;
 	struct datum_pts_unit *datum_pts;
 
@@ -453,10 +447,10 @@ datum_pts_poll(
 	** Find the right unit and send out a time request once it is found.
 	*/
 
-	index = -1;
+	unit_index = -1;
 	for (i=0; i<nunits; i++) {
 		if (datum_pts_unit[i]->unit == unit) {
-			index = i;
+			unit_index = i;
 			datum_pts = datum_pts_unit[i];
 			error_code = write(datum_pts->PTS_fd, TIME_REQUEST, 6);
 			if (error_code != 6) perror("TIME_REQUEST");
@@ -469,7 +463,7 @@ datum_pts_poll(
 	** Print out an error message if we could not find the right unit.
 	*/
 
-	if (index == -1) {
+	if (unit_index == -1) {
 
 #ifdef DEBUG_DATUM_PTC
 		if (debug)
@@ -720,6 +714,7 @@ datum_pts_receive(
 			       &datum_pts->yearstart,
 			       &datum_pts->lastref.l_ui) ) {
 
+			datum_pts->lastref.l_uf = 0;
 			error = datum_pts->lastref.l_ui - datum_pts->lastrec.l_ui;
 
 #ifdef DEBUG_DATUM_PTC
@@ -821,6 +816,7 @@ datum_pts_receive(
 	** necessary to use fudge factors in the ntp.conf file. Maybe later we will.
 	*/
       /*LFPTOD(&tstmp, doffset);*/
+	datum_pts->lastref = datum_pts->lastrec;
 	refclock_receive(datum_pts->peer);
 
 	/*

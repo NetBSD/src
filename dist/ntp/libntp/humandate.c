@@ -1,18 +1,13 @@
-/*	$NetBSD: humandate.c,v 1.1.1.1 2000/03/29 12:38:50 simonb Exp $	*/
+/*	$NetBSD: humandate.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
  */
 #include <stdio.h>
-#include "time.h"
 #include "ntp_fp.h"
-#include "ntp_unixtime.h"	/* includes <sys/time.h> */
+#include "ntp_unixtime.h"	/* includes <sys/time.h> and <time.h> */
 #include "lib_strbuf.h"
 #include "ntp_stdlib.h"
-
-#ifdef TIME_WITH_SYS_TIME
-#include <time.h>
-#endif
 
 static const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -31,11 +26,14 @@ humandate(
 	struct tm *tm;
 	time_t sec;
 
-	LIB_GETBUF(bp);
-	
 	sec = ntptime - JAN_1970;
 	tm = localtime(&sec);
 
+	if (!tm)
+		return "--- --- -- ---- --:--:--";
+
+	LIB_GETBUF(bp);
+	
 	(void) sprintf(bp, "%s, %s %2d %4d %2d:%02d:%02d",
 		       days[tm->tm_wday], months[tm->tm_mon], tm->tm_mday,
 		       1900+tm->tm_year, tm->tm_hour, tm->tm_min, tm->tm_sec);
@@ -54,6 +52,9 @@ humanlogtime(void)
 	time_t cursec = time((time_t *) 0);
 	struct tm *tm = localtime(&cursec);
 	
+	if (!tm)
+		return "-- --- --:--:--";
+
 	LIB_GETBUF(bp);
 	
 	(void) sprintf(bp, "%2d %s %02d:%02d:%02d",

@@ -1,10 +1,11 @@
-/*	$NetBSD: kern.c,v 1.1.1.1 2000/03/29 12:38:59 simonb Exp $	*/
+/*	$NetBSD: kern.c,v 1.1.1.2 2003/12/04 16:05:34 drochner Exp $	*/
 
 /*
  * This program simulates a first-order, type-II phase-lock loop using
  * actual code segments from modified kernel distributions for SunOS,
  * Ultrix and OSF/1 kernels. These segments do not use any licensed code.
  */
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
