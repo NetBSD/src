@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.13 1998/09/16 21:30:58 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ com_isa_probe(parent, match, aux)
 		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 			return 0;
 		}
-		rv = comprobe1(iot, ioh, iobase);
+		rv = comprobe1(iot, ioh);
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 	}
 
