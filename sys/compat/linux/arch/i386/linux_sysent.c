@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.29 2000/12/13 21:42:21 augustss Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.30 2000/12/18 14:38:13 fvdl Exp $ */
 
 /*
  * System call switch table.
@@ -57,8 +57,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_mknod },			/* 14 = mknod */
 	{ 2, s(struct linux_sys_chmod_args),
 	    linux_sys_chmod },			/* 15 = chmod */
-	{ 3, s(struct linux_sys_lchown_args),
-	    linux_sys_lchown },			/* 16 = lchown */
+	{ 3, s(struct linux_sys_lchown16_args),
+	    linux_sys_lchown16 },		/* 16 = lchown16 */
 	{ 1, s(struct linux_sys_break_args),
 	    linux_sys_break },			/* 17 = break */
 	{ 0, 0,
@@ -71,10 +71,10 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 21 = unimplemented mount */
 	{ 0, 0,
 	    sys_nosys },			/* 22 = unimplemented umount */
-	{ 1, s(struct sys_setuid_args),
-	    sys_setuid },			/* 23 = setuid */
+	{ 1, s(struct linux_sys_setuid16_args),
+	    linux_sys_setuid16 },		/* 23 = setuid16 */
 	{ 0, 0,
-	    sys_getuid },			/* 24 = getuid */
+	    linux_sys_getuid16 },		/* 24 = getuid16 */
 	{ 1, s(struct linux_sys_stime_args),
 	    linux_sys_stime },			/* 25 = stime */
 	{ 4, s(struct linux_sys_ptrace_args),
@@ -117,16 +117,16 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 44 = obsolete prof */
 	{ 1, s(struct linux_sys_brk_args),
 	    linux_sys_brk },			/* 45 = brk */
-	{ 1, s(struct sys_setgid_args),
-	    sys_setgid },			/* 46 = setgid */
+	{ 1, s(struct linux_sys_setgid16_args),
+	    linux_sys_setgid16 },		/* 46 = setgid16 */
 	{ 0, 0,
-	    sys_getgid },			/* 47 = getgid */
+	    linux_sys_getgid16 },		/* 47 = getgid16 */
 	{ 2, s(struct linux_sys_signal_args),
 	    linux_sys_signal },			/* 48 = signal */
 	{ 0, 0,
-	    sys_geteuid },			/* 49 = geteuid */
+	    linux_sys_geteuid16 },		/* 49 = geteuid16 */
 	{ 0, 0,
-	    sys_getegid },			/* 50 = getegid */
+	    linux_sys_getegid16 },		/* 50 = getegid16 */
 	{ 1, s(struct sys_acct_args),
 	    sys_acct },				/* 51 = acct */
 	{ 0, 0,
@@ -165,10 +165,10 @@ struct sysent linux_sysent[] = {
 	    linux_sys_siggetmask },		/* 68 = siggetmask */
 	{ 1, s(struct linux_sys_sigsetmask_args),
 	    linux_sys_sigsetmask },		/* 69 = sigsetmask */
-	{ 2, s(struct linux_sys_setreuid_args),
-	    linux_sys_setreuid },		/* 70 = setreuid */
-	{ 2, s(struct linux_sys_setregid_args),
-	    linux_sys_setregid },		/* 71 = setregid */
+	{ 2, s(struct linux_sys_setreuid16_args),
+	    linux_sys_setreuid16 },		/* 70 = setreuid16 */
+	{ 2, s(struct linux_sys_setregid16_args),
+	    linux_sys_setregid16 },		/* 71 = setregid16 */
 	{ 3, s(struct linux_sys_sigsuspend_args),
 	    linux_sys_sigsuspend },		/* 72 = sigsuspend */
 	{ 1, s(struct linux_sys_sigpending_args),
@@ -215,8 +215,8 @@ struct sysent linux_sysent[] = {
 	    compat_43_sys_ftruncate },		/* 93 = ftruncate */
 	{ 2, s(struct sys_fchmod_args),
 	    sys_fchmod },			/* 94 = fchmod */
-	{ 3, s(struct linux_sys_fchown_args),
-	    linux_sys_fchown },			/* 95 = fchown */
+	{ 3, s(struct linux_sys_fchown16_args),
+	    linux_sys_fchown16 },		/* 95 = fchown16 */
 	{ 2, s(struct sys_getpriority_args),
 	    sys_getpriority },			/* 96 = getpriority */
 	{ 3, s(struct sys_setpriority_args),
@@ -389,8 +389,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_pread },			/* 180 = pread */
 	{ 4, s(struct linux_sys_pwrite_args),
 	    linux_sys_pwrite },			/* 181 = pwrite */
-	{ 3, s(struct linux_sys_chown_args),
-	    linux_sys_chown },			/* 182 = chown */
+	{ 3, s(struct linux_sys_chown16_args),
+	    linux_sys_chown16 },		/* 182 = chown16 */
 	{ 2, s(struct sys___getcwd_args),
 	    sys___getcwd },			/* 183 = __getcwd */
 	{ 0, 0,
@@ -421,26 +421,26 @@ struct sysent linux_sysent[] = {
 	    linux_sys_lstat64 },		/* 196 = lstat64 */
 	{ 2, s(struct linux_sys_fstat64_args),
 	    linux_sys_fstat64 },		/* 197 = fstat64 */
+	{ 3, s(struct sys___posix_lchown_args),
+	    sys___posix_lchown },		/* 198 = __posix_lchown */
 	{ 0, 0,
-	    sys_nosys },			/* 198 = unimplemented lchown */
+	    sys_getuid },			/* 199 = getuid */
 	{ 0, 0,
-	    sys_nosys },			/* 199 = unimplemented getuid */
+	    sys_getgid },			/* 200 = getgid */
 	{ 0, 0,
-	    sys_nosys },			/* 200 = unimplemented getgid */
+	    sys_geteuid },			/* 201 = geteuid */
 	{ 0, 0,
-	    sys_nosys },			/* 201 = unimplemented geteuid */
-	{ 0, 0,
-	    sys_nosys },			/* 202 = unimplemented getegid */
-	{ 0, 0,
-	    sys_nosys },			/* 203 = unimplemented getreuid */
-	{ 0, 0,
-	    sys_nosys },			/* 204 = unimplemented getregid */
+	    sys_getegid },			/* 202 = getegid */
+	{ 2, s(struct sys_setreuid_args),
+	    sys_setreuid },			/* 203 = setreuid */
+	{ 2, s(struct sys_setregid_args),
+	    sys_setregid },			/* 204 = setregid */
 	{ 0, 0,
 	    sys_nosys },			/* 205 = unimplemented getgroups */
 	{ 0, 0,
 	    sys_nosys },			/* 206 = unimplemented setgroups */
-	{ 0, 0,
-	    sys_nosys },			/* 207 = unimplemented fchown */
+	{ 3, s(struct sys___posix_fchown_args),
+	    sys___posix_fchown },		/* 207 = __posix_fchown */
 	{ 0, 0,
 	    sys_nosys },			/* 208 = unimplemented setresuid */
 	{ 0, 0,
@@ -449,12 +449,12 @@ struct sysent linux_sysent[] = {
 	    sys_nosys },			/* 210 = unimplemented setresgid */
 	{ 0, 0,
 	    sys_nosys },			/* 211 = unimplemented getresgid */
-	{ 0, 0,
-	    sys_nosys },			/* 212 = unimplemented chown */
-	{ 0, 0,
-	    sys_nosys },			/* 213 = unimplemented setuid */
-	{ 0, 0,
-	    sys_nosys },			/* 214 = unimplemented setgid */
+	{ 3, s(struct sys___posix_chown_args),
+	    sys___posix_chown },		/* 212 = __posix_chown */
+	{ 1, s(struct sys_setuid_args),
+	    sys_setuid },			/* 213 = setuid */
+	{ 1, s(struct sys_setgid_args),
+	    sys_setgid },			/* 214 = setgid */
 	{ 0, 0,
 	    sys_nosys },			/* 215 = unimplemented setfsuid */
 	{ 0, 0,
