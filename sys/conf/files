@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.239 1998/08/28 07:44:12 augustss Exp $
+#	$NetBSD: files,v 1.240 1998/08/29 21:52:54 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -284,6 +284,11 @@ file	dev/ic/oplinstrs.c		opl
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
 file	dev/ic/ad1848.c			ad1848
+
+# LSI64854 DMA controller back-end
+define	lsi64854
+file	dev/ic/lsi64854.c		lsi64854
+
 
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
