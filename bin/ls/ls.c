@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.47 2003/05/07 13:23:32 simonb Exp $	*/
+/*	$NetBSD: ls.c,v 1.48 2003/05/11 08:06:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.47 2003/05/07 13:23:32 simonb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.48 2003/05/11 08:06:01 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,13 +152,17 @@ ls_main(int argc, char *argv[])
 			f_columnacross = f_longform = f_singlecol = f_stream =
 			    0;
 			break;
-		/* The -g option implies -l */
 		case 'g':
-			f_grouponly = 1;
-			/* FALLTHROUGH */
+			if (f_grouponly != -1)
+				f_grouponly = 1;
+			f_longform = 1;
+			f_column = f_columnacross = f_singlecol = f_stream = 0;
+			break;
 		case 'l':
 			f_longform = 1;
 			f_column = f_columnacross = f_singlecol = f_stream = 0;
+			/* Never let -g take precedence over -l. */
+			f_grouponly = -1;
 			break;
 		case 'm':
 			f_stream = 1;
@@ -246,6 +250,12 @@ ls_main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	/*
+	 * If both -g and -l options, let -l take precedence.
+	 */
+	if (f_grouponly == -1)
+		f_grouponly = 0;
 
 	/*
 	 * If not -F, -i, -l, -p, -S, -s or -t options, don't require stat
