@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 1995/02/14 22:40:00 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 1995/03/10 02:15:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -202,12 +202,12 @@ static u_char zs_init_reg[16] = {
 /* Find PROM mappings (for console support). */
 void zs_init()
 {
-	if (zsaddr[0] == NULL)
-		zsaddr[0] = (struct zsdevice *)
-			obio_find_mapping(OBIO_ZS, OBIO_ZS_SIZE);
-	if (zsaddr[1] == NULL)
-		zsaddr[1] = (struct zsdevice *)
-			obio_find_mapping(OBIO_KEYBD_MS, OBIO_ZS_SIZE);
+	int i;
+
+	for (i = 0; i < NZS; i++) {
+		zsaddr[i] = (struct zsdevice *)
+			obio_find_mapping(zs_physaddr[i], OBIO_ZS_SIZE);
+	}
 }	
 
 /*
@@ -220,9 +220,14 @@ zs_match(struct device *parent, void *vcf, void *args)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	int unit, x;
+	void *zsva;
 
 	unit = cf->cf_unit;
 	if (unit < 0 || unit >= NZS)
+		return (0);
+
+	zsva = zsaddr[unit];
+	if (zsva == NULL)
 		return (0);
 
 	if (ca->ca_paddr == -1)
@@ -230,7 +235,8 @@ zs_match(struct device *parent, void *vcf, void *args)
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = ZSHARD_PRI;
 
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
+	/* This returns -1 on a fault (bus error). */
+	x = peek_byte(zsva);
 	return (x != -1);
 }
 
@@ -259,10 +265,8 @@ zs_attach(struct device *parent, struct device *self, void *args)
 
 	printf(" softpri %d\n", ZSSOFT_PRI);
 
-	if (zsaddr[zs] == NULL) {
-		zsaddr[zs] = (struct zsdevice *)
-			obio_alloc(ca->ca_paddr, OBIO_ZS_SIZE);
-	}
+	if (zsaddr[zs] == NULL)
+		panic("zs_attach: zs%d not mapped\n", zs);
 	addr = zsaddr[zs];
 
 	if (!didintr) {
@@ -419,7 +423,7 @@ zscnprobe_kbd()
 static int
 zscnprobe(struct consdev *cn, int unit)
 {
-	int maj, eeCons;
+	int maj;
 
 	if (zsaddr[0] == NULL) {
 		mon_printf("zscnprobe: zs0 not mapped\n");
@@ -436,10 +440,8 @@ zscnprobe(struct consdev *cn, int unit)
 	cn->cn_dev = makedev(maj, unit);
 
 	/* Use EEPROM console setting to decide "remote" console. */
-	eeCons = ee_get_byte(EE_CONS_OFFSET, 0);
-
-	/* Hack: EE_CONS_TTYA + 1 == EE_CONS_TTYB */
-	if (eeCons == (EE_CONS_TTYA + unit)) {
+	/* Note: EE_CONS_TTYA + 1 == EE_CONS_TTYB */
+	if (ee_console == (EE_CONS_TTYA + unit)) {
 		cn->cn_pri = CN_REMOTE;
 	} else {
 		cn->cn_pri = CN_NORMAL;
@@ -803,6 +805,7 @@ zshard(int intrarg)
 #undef b
 	if (intflags & 1) {
 		if (zssoftpending == 0) {
+			/* We are at splzs here, so no need to lock. */
 			zssoftpending = ZSSOFT_PRI;
 			isr_soft_request(ZSSOFT_PRI);
 		}
@@ -834,8 +837,9 @@ zsrint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 			conk->conk_l1 = 0;	/* L1 went up */
 		else if (c == KBD_A && conk->conk_l1) {
 			zsabort();
-			conk->conk_l1 = 0;	/* we never see the up */
-			goto clearit;		/* eat the A after L1-A */
+			/* Debugger done.  Send L1-up in case X is running. */
+			conk->conk_l1 = 0;
+			c = (KBD_L1|KBD_UP);
 		}
 	}
 #ifdef KGDB
@@ -963,13 +967,18 @@ zssoft(int arg)
 	register struct tty *tp;
 	register int get, n, c, cc, unit, s;
 
+	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
 		return (0);
 
-	s = splzs();
-	zssoftpending = 0;
+	/*
+	 * The soft intr. bit will be set by zshard only if
+	 * the variable zssoftpending is zero.  The order of
+	 * these next two statements prevents our clearing
+	 * the soft intr bit just after zshard has set it.
+	 */
 	isr_soft_clear(ZSSOFT_PRI);
-	splx(s);
+	zssoftpending = 0;	/* Now zshard may set it again. */
 
 	for (cs = zslist; cs != NULL; cs = cs->cs_next) {
 		get = cs->cs_rbget;
