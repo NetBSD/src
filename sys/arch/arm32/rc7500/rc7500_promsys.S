@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_promsys.S,v 1.2 1997/10/14 10:49:56 mark Exp $	*/
+/*	$NetBSD: rc7500_promsys.S,v 1.3 1998/04/01 23:02:33 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -33,10 +33,6 @@
  */
 
 #include <machine/asm.h>
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
 
 ENTRY(prom_reboot)
 	stmdb	sp!, {lr}
