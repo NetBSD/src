@@ -1,3 +1,4 @@
+/*	$NetBSD: ttcompat.c,v 1.9 1995/11/15 22:50:00 pk Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
