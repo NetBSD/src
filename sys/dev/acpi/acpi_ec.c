@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.31 2004/05/01 12:03:48 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.32 2004/06/25 11:15:15 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.31 2004/05/01 12:03:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.32 2004/06/25 11:15:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,8 @@ EcWaitEventIntr(struct acpi_ec_softc *sc, EC_EVENT Event)
 
 		sc->sc_csrvalue = 0;
 		/* XXXJRT Sleeping with a lock held? */
-		if (tsleep(&sc->sc_csrvalue, 0, "EcWait", 1) != EWOULDBLOCK)
+		if (tsleep(&sc->sc_csrvalue, 0, "EcWait", (hz + 99) / 100)
+		    != EWOULDBLOCK)
 			EcStatus = sc->sc_csrvalue;
 		else
 			EcStatus = EC_CSR_READ(sc);
