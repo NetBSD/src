@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vfsops.c,v 1.7 1994/01/05 11:07:31 cgd Exp $
+ *	$Id: fdesc_vfsops.c,v 1.8 1994/01/09 17:33:06 ws Exp $
  */
 
 /*
@@ -285,6 +285,7 @@ fdesc_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
+	/* NFS mounting of fdesc doesn't make sense */
 	return (EOPNOTSUPP);
 }
 
@@ -292,6 +293,7 @@ fdesc_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
+	/* NFS mounting of fdesc doesn't make sense */
 	return (EOPNOTSUPP);
 }
 
