@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.3 2003/04/20 17:17:01 thorpej Exp $	*/
+/*	$NetBSD: becc.c,v 1.4 2003/05/23 05:21:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -232,9 +232,9 @@ becc_pcibus_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 
-	printf(" bus %d", pba->pba_bus);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }
