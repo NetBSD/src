@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.3 2001/06/27 02:46:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.55 2001/06/15 22:17:32 fenner Exp";
 #else
-__RCSID("$NetBSD: print-icmp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.3 2001/06/27 02:46:25 simonb Exp $");
 #endif
 #endif
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: print-icmp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
 #include <arpa/inet.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <netdb.h>
 
 #include "ip6.h"

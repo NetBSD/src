@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sctp.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
+/*	$NetBSD: print-sctp.c,v 1.3 2001/06/27 02:46:25 simonb Exp $	*/
 
 /* Copyright (c) 2001 NETLAB, Temple University
  * Copyright (c) 2001 Protocol Engineering Lab, University of Delaware
@@ -41,7 +41,7 @@
 static const char rcsid[] =
 "@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.3 2001/05/09 02:42:50 itojun Exp (NETLAB/PEL)";
 #else
-__RCSID("$NetBSD: print-sctp.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+__RCSID("$NetBSD: print-sctp.c,v 1.3 2001/06/27 02:46:25 simonb Exp $");
 #endif
 #endif
 
@@ -114,8 +114,8 @@ void sctp_print(const u_char *bp,        /* beginning of sctp packet */
 
   if (sctpPacketLength < sizeof(struct sctpHeader)) 
     {
-      (void)printf("truncated-sctp - %d bytes missing!", 
-		   sctpPacketLength-sizeof(struct sctpHeader));
+      (void)printf("truncated-sctp - %ld bytes missing!", 
+		   (long)sctpPacketLength-sizeof(struct sctpHeader));
       return;
     }
   
