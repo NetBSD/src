@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.67 2003/08/07 16:30:44 agc Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.68 2003/11/19 15:46:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.67 2003/08/07 16:30:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.68 2003/11/19 15:46:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,8 @@ ibcs2_sys_getdents(l, v, retval)
 	struct iovec aiov;
 	struct ibcs2_dirent idb;
 	off_t off;			/* true file offset */
-	int buflen, error, eofflag;
+	size_t buflen;
+	int error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
@@ -434,7 +435,7 @@ ibcs2_sys_getdents(l, v, retval)
 		error = EINVAL;
 		goto out1;
 	}
-	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buflen = min(MAXBSIZE, (size_t)SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
@@ -544,7 +545,8 @@ ibcs2_sys_read(l, v, retval)
 		ibcs2_ino_t ino;
 		char name[14];
 	} idb;
-	int buflen, error, eofflag;
+	size_t buflen;
+	int error, eofflag;
 	size_t size;
 	off_t *cookiebuf = NULL, *cookie;
 	off_t off;			/* true file offset */
@@ -566,7 +568,7 @@ ibcs2_sys_read(l, v, retval)
 		FILE_UNUSE(fp, p);
 		return sys_read(l, uap, retval);
 	}
-	buflen = min(MAXBSIZE, max(DEV_BSIZE, SCARG(uap, nbytes)));
+	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
