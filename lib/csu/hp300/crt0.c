@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)crt0.c	5.6 (Berkeley) 7/3/91";*/
-static char rcsid[] = "$Id: crt0.c,v 1.2 1993/08/01 18:44:28 mycroft Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.3 1993/08/09 05:47:02 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -56,8 +56,16 @@ static char rcsid[] = "$Id: crt0.c,v 1.2 1993/08/01 18:44:28 mycroft Exp $";
  *	allocated.
  */
 
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
 char **environ = (char **)0;
+static char empty[1];
+char *__progname = empty;
+#ifdef paranoid
 static int fd;
+#endif /* paranoid */
 
 extern	unsigned char	etext;
 extern	unsigned char	eprol asm ("eprol");
@@ -108,13 +116,18 @@ asm("eprol:");
 		fd = open("/dev/null", 2);
 	} while (fd >= 0 && fd < 3);
 	close(fd);
-#endif paranoid
+#endif /* paranoid */
 
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup(&eprol, &etext);
 #endif MCRT0
 	errno = 0;
+	if (argv[0])
+		if ((__progname = strrchr(argv[0], '/')) == NULL)
+			__progname = argv[0];
+		else
+			++__progname;
 	exit(main(kfp->kargc, argv, environ));
 }
 
