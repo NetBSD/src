@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)klogin.c	5.11 (Berkeley) 7/12/92";*/
-static char rcsid[] = "$Id: klogin.c,v 1.3 1994/03/30 02:49:33 cgd Exp $";
+/*static char sccsid[] = "from: @(#)klogin.c	8.1 (Berkeley) 6/9/93";*/
+static char rcsid[] = "$Id $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -46,6 +46,9 @@ static char rcsid[] = "$Id: klogin.c,v 1.3 1994/03/30 02:49:33 cgd Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define	INITIAL_TICKET	"krbtgt"
 #define	VERIFY_SERVICE	"rcmd"
@@ -73,6 +76,15 @@ klogin(pw, instance, localhost, password)
 	char tkt_location[MAXPATHLEN];
 	char *krb_get_phost();
 
+#ifdef SKEY
+	/*
+	 * We don't do s/key challenge and Kerberos at the same time
+	 */
+	if (strcasecmp(password, "s/key") == 0) {
+	    return (1);
+	}
+#endif
+
 	/*
 	 * Root logins don't use Kerberos.
 	 * If we have a realm, try getting a ticket-granting ticket
@@ -92,11 +104,9 @@ klogin(pw, instance, localhost, password)
 	 */
 
 	if (strcmp(instance, "root") != 0)
-		(void)sprintf(tkt_location, "%s_%d_%x", 
-		TKT_ROOT, pw->pw_uid, time(NULL));
-	else {
+		(void)sprintf(tkt_location, "%s%d", TKT_ROOT, pw->pw_uid);
+	else
 		(void)sprintf(tkt_location, "%s_root_%d", TKT_ROOT, pw->pw_uid);
-	}
 	krbtkfile_env = tkt_location;
 	(void)krb_set_tkt_string(tkt_location);
 
@@ -185,5 +195,62 @@ klogin(pw, instance, localhost, password)
 	    krb_err_txt[kerror]);
 	dest_tkt();
 	return(1);
+}
+
+void
+kdestroy()
+{
+        char *file = krbtkfile_env;
+	int i, fd;
+	extern int errno;
+	struct stat statb;
+	char buf[BUFSIZ];
+#ifdef TKT_SHMEM
+	char shmidname[MAXPATHLEN];
+#endif /* TKT_SHMEM */
+
+	if (krbtkfile_env == NULL)
+	    return;
+
+	errno = 0;
+	if (lstat(file, &statb) < 0)
+	    goto out;
+
+	if (!(statb.st_mode & S_IFREG)
+#ifdef notdef
+	    || statb.st_mode & 077
+#endif
+	    )
+		goto out;
+
+	if ((fd = open(file, O_RDWR, 0)) < 0)
+	    goto out;
+
+	bzero(buf, BUFSIZ);
+
+	for (i = 0; i < statb.st_size; i += BUFSIZ)
+	    if (write(fd, buf, BUFSIZ) != BUFSIZ) {
+		(void) fsync(fd);
+		(void) close(fd);
+		goto out;
+	    }
+
+	(void) fsync(fd);
+	(void) close(fd);
+
+	(void) unlink(file);
+
+out:
+	if (errno != 0) return;
+#ifdef TKT_SHMEM
+	/* 
+	 * handle the shared memory case 
+	 */
+	(void) strcpy(shmidname, file);
+	(void) strcat(shmidname, ".shm");
+	if (krb_shm_dest(shmidname) != KSUCCESS)
+	    return;
+#endif /* TKT_SHMEM */
+	return;
 }
 #endif
