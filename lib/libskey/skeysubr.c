@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.16 2000/07/06 22:30:19 mjl Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.17 2000/07/08 11:48:40 kleink Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -104,7 +104,7 @@ static int keycrunch_md4(char *result,       /* SKEY_BINKEY_SIZE result */
 {
 	char *buf;
 	MD4_CTX md;
-	unsigned int buflen;
+	size_t buflen;
 	u_int32_t results[4];
 
 	if ((buf = mkSeedPassword(seed, passwd, &buflen)) == NULL)
@@ -132,7 +132,7 @@ static int keycrunch_md5(char *result,		/* SKEY_BINKEY_SIZE result */
 	char *buf;
 	MD5_CTX md;
 	u_int32_t results[4];
-	unsigned int buflen;
+	size_t buflen;
 
 	if ((buf = mkSeedPassword(seed, passwd, &buflen)) == NULL)
 		return -1;
@@ -159,7 +159,7 @@ static int keycrunch_sha1(char *result,		/* SKEY_BINKEY_SIZE result */
 	char *buf;
 	SHA1_CTX sha;
 	u_int32_t results[5];
-	unsigned int buflen;
+	size_t buflen;
 	int i, j;
 
 	if ((buf = mkSeedPassword(seed, passwd, &buflen)) == NULL)
@@ -202,7 +202,7 @@ static int keycrunch_rmd160(char *result,	/* SKEY_BINKEY_SIZE result */
 	char *buf;
 	RMD160_CTX rmd;
 	u_int32_t results[5];
-	unsigned int buflen;
+	size_t buflen;
 
 	if ((buf = mkSeedPassword(seed, passwd, &buflen)) == NULL)
 		return -1;
