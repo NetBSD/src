@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.12 1999/06/07 00:24:16 mrg Exp $	*/
+/*	$NetBSD: modstat.c,v 1.13 1999/06/15 15:04:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.12 1999/06/07 00:24:16 mrg Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.13 1999/06/15 15:04:40 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ static char *type_names[] = {
 	"MISC"
 };
 
-#define POINTERSIZE (2 * sizeof(void*))
+#define POINTERSIZE ((int)(2 * sizeof(void*)))
 
 int
 dostat(devfd, modnum, modname)
