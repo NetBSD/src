@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.24 2000/10/25 10:46:58 shin Exp $
+.\"	$NetBSD: contents,v 1.25 2000/10/29 07:58:59 shin Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -500,7 +500,7 @@ the X servers.
 .if r_i386 .Em 2.7 MB gzipped, ? MB uncompressed
 .if r_atari .Em 2.5 MB gzipped, ? MB uncompressed
 .ie r_m68k .Em 2.5 MB gzipped, 7.9 MB uncompressed
-.if r_mips .Em 6.8 MB gzipped, 22.7 MB uncompressed
+.if r_mips .Em 3.2 MB gzipped, 11.4 MB uncompressed
 .if r_pc532 .Em ? MB gzipped, ? MB uncompressed
 .if r_powerpc .Em 2.9 MB gzipped, ? MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
@@ -534,7 +534,7 @@ Programs that were contributed to X.
 .if r_arm32 .Em 0.2 MB gzipped, ? MB uncompressed
 .if r_i386 .Em 0.2 MB gzipped, ? MB uncompressed
 .if r_m68k .Em 0.2 MB gzipped, 0.7 MB uncompressed
-.if r_mips .Em 2.7 MB gzipped, 8.3 MB uncompressed
+.if r_mips .Em 0.2 MB gzipped, 0.8 MB uncompressed
 .if r_pc532 .Em ? MB gzipped, ? MB uncompressed
 .if r_powerpc .Em 0.2 MB gzipped, ? MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
