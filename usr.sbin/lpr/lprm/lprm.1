@@ -133,8 +133,8 @@ daemon and the job number of the currently active job.
 .Xr lpq 1 ,
 .Xr lpd 8
 .Sh DIAGNOSTICS
-``Permission denied" if the user tries to remove files other than his
-own.
+.Dq Permission denied
+if the user tries to remove files other than his own.
 .Sh BUGS
 Since there are race conditions possible in the update of the lock file,
 the currently active job may be incorrectly identified.
