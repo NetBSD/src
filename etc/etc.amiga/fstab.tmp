@@ -1,8 +1,12 @@
 #
-#	$NetBSD: fstab.tmp,v 1.8 1995/10/09 02:25:44 chopps Exp $
+#	$NetBSD: fstab.tmp,v 1.9 1997/06/21 15:40:03 veego Exp $
 #
 #	fast file system on / root partition (NBR\7) lowest scsi disk unit
 /dev/sd0a	/	ffs	rw		1	1
+# All swap devices are now configured by swapctl(8), so a swap entry
+# is now needed for all swap partitions so that the "swapctl -A" in
+# /etc/rc will find them, or you will have no swap space.
+/dev/sd0b	none	swap	sw		0	0
 #	fast file system on /usr (NBU\7) next to lowest scsi disk unit
 /dev/sd0d	/usr	ffs	rw		1	2	
 #	virtual mem file system on /tmp using swap (NBS\0) scsi id 0 size 5M
