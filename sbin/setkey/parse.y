@@ -53,7 +53,7 @@
 #include "vchar.h"
 
 #define ATOX(c) \
-  (isdigit(c) ? (c - '0') : (isupper(c) ? (c - 'A' + 10) : (c - 'a' + 10)))
+  (isdigit((unsigned char)c) ? c - '0' : toupper((unsigned char)c) - 'A' + 10)
 
 u_int32_t p_spi;
 u_int p_ext, p_alg_enc, p_alg_auth, p_replay, p_mode;
