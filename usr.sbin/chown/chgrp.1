@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.5 1997/03/06 06:26:08 mikel Exp $
+.\"	$NetBSD: chgrp.1,v 1.6 1997/10/06 13:33:54 enami Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHGRP 1
@@ -47,7 +47,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl f
+.Op Fl fh
 .Ar group
 .Ar files ...
 .Sh DESCRIPTION
@@ -78,9 +78,15 @@ in the files instead of just the files themselves.
 .It Fl f
 The force option ignores errors, except for usage errors and doesn't
 query about strange modes (unless the user does not have proper permissions).
+.It Fl h
+If
+.Ar file
+is symbolic link, the group of the link is changed.
 .El
 .Pp
-Symbolic links don't have groups, so unless the 
+If
+.Fl h
+is not given, unless the 
 .Fl H
 or
 .Fl L
