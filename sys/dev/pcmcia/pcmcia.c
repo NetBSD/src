@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.62 2004/08/11 04:25:28 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.63 2004/08/11 04:35:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.62 2004/08/11 04:25:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.63 2004/08/11 04:35:35 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -543,8 +543,6 @@ pcmcia_function_enable(pf)
 	pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 
 	reg = 0;
-	if ((pf->cfe->flags & PCMCIA_CFE_IO16) == 0)
-		reg |= PCMCIA_CCR_STATUS_IOIS8;
 	if (pf->cfe->flags & PCMCIA_CFE_AUDIO)
 		reg |= PCMCIA_CCR_STATUS_AUDIO;
 	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, reg);
