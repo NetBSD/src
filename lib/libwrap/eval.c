@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.5 1999/07/03 12:30:41 simonb Exp $	*/
+/*	$NetBSD: eval.c,v 1.6 2002/06/06 21:42:42 itojun Exp $	*/
 
  /*
   * Routines for controlled evaluation of host names, user names, and so on.
@@ -25,7 +25,7 @@
 #if 0
 static char sccsid[] = "@(#) eval.c 1.3 95/01/30 19:51:45";
 #else
-__RCSID("$NetBSD: eval.c,v 1.5 1999/07/03 12:30:41 simonb Exp $");
+__RCSID("$NetBSD: eval.c,v 1.6 2002/06/06 21:42:42 itojun Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ char   *eval_user(request)
 struct request_info *request;
 {
     if (request->user[0] == 0) {
-	(void)strncpy(request->user, unknown, sizeof(request->user) - 1);
+	(void)strlcpy(request->user, unknown, sizeof(request->user));
 	if (request->sink == 0 && request->client->sin && request->server->sin)
 	    rfc931(request->client->sin, request->server->sin, request->user);
     }
@@ -66,7 +66,7 @@ char   *eval_hostaddr(host)
 struct host_info *host;
 {
     if (host->addr[0] == 0) {
-	(void)strncpy(host->addr, unknown, sizeof(host->addr) - 1);
+	(void)strlcpy(host->addr, unknown, sizeof(host->addr));
 	if (host->request->hostaddr != 0)
 	    host->request->hostaddr(host);
     }
@@ -79,7 +79,7 @@ char   *eval_hostname(host)
 struct host_info *host;
 {
     if (host->name[0] == 0) {
-	(void)strncpy(host->name, unknown, sizeof(host->name) - 1);
+	(void)strlcpy(host->name, unknown, sizeof(host->name));
 	if (host->request->hostname != 0)
 	    host->request->hostname(host);
     }
