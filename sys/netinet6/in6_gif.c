@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.35 2003/08/22 21:53:08 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.36 2003/09/05 23:20:50 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.35 2003/08/22 21:53:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.36 2003/09/05 23:20:50 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -163,7 +163,9 @@ in6_gif_output(ifp, family, m)
 	ip6->ip6_flow	= 0;
 	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc	|= IPV6_VERSION;
-	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len);
+#if 0	/* ip6->ip6_plen will be filled by ip6_output */
+	ip6->ip6_plen	= htons((u_int16_t)m->m_pkthdr.len);
+#endif
 	ip6->ip6_nxt	= proto;
 	ip6->ip6_hlim	= ip6_gif_hlim;
 	ip6->ip6_src	= sin6_src->sin6_addr;

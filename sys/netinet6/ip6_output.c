@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.68 2003/09/04 03:07:33 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.69 2003/09/05 23:20:50 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.68 2003/09/04 03:07:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.69 2003/09/05 23:20:50 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -902,12 +902,12 @@ skip_ipsec2:;
 				ip6stat.ip6s_odropped++;
 				goto sendorfree;
 			}
-			ip6f->ip6f_offlg = htons((u_short)((off - hlen) & ~7));
+			ip6f->ip6f_offlg = htons((u_int16_t)((off - hlen) & ~7));
 			if (off + len >= tlen)
 				len = tlen - off;
 			else
 				ip6f->ip6f_offlg |= IP6F_MORE_FRAG;
-			mhip6->ip6_plen = htons((u_short)(len + hlen +
+			mhip6->ip6_plen = htons((u_int16_t)(len + hlen +
 			    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
 			if ((m_frgpart = m_copy(m0, off, len)) == 0) {
 				error = ENOBUFS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.59 2003/09/04 09:17:08 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.60 2003/09/05 23:20:49 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.59 2003/09/04 09:17:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.60 2003/09/05 23:20:49 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -477,7 +477,7 @@ rip6_output(m, va_alist)
 	ip6->ip6_vfc  &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc  |= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
-	ip6->ip6_plen  = htons((u_short)plen);
+	ip6->ip6_plen  = htons((u_int16_t)plen);
 #endif
 	ip6->ip6_nxt   = in6p->in6p_ip6.ip6_nxt;
 	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);

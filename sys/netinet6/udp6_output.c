@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.16 2003/08/22 22:11:46 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.17 2003/09/05 23:20:49 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.16 2003/08/22 22:11:46 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.17 2003/09/05 23:20:49 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -119,7 +119,7 @@ udp6_output(in6p, m, addr6, control, p)
 	struct udphdr *udp6;
 	struct in6_addr *laddr, *faddr;
 	struct in6_addr laddr_mapped; /* XXX ugly */
-	u_short fport;
+	u_int16_t fport;
 	int error = 0;
 	struct ip6_pktopts opt, *stickyopt = in6p->in6p_outputopts;
 	int priv;
@@ -309,7 +309,7 @@ udp6_output(in6p, m, addr6, control, p)
 	udp6->uh_sport = in6p->in6p_lport; /* lport is always set in the PCB */
 	udp6->uh_dport = fport;
 	if (plen <= 0xffff)
-		udp6->uh_ulen = htons((u_short)plen);
+		udp6->uh_ulen = htons((u_int16_t)plen);
 	else
 		udp6->uh_ulen = 0;
 	udp6->uh_sum = 0;
@@ -321,7 +321,7 @@ udp6_output(in6p, m, addr6, control, p)
 		ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc 	|= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
-		ip6->ip6_plen	= htons((u_short)plen);
+		ip6->ip6_plen	= htons((u_int16_t)plen);
 #endif
 		ip6->ip6_nxt	= IPPROTO_UDP;
 		ip6->ip6_hlim	= in6_selecthlim(in6p,

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.78 2003/08/07 16:33:23 agc Exp $	*/
+/*	$NetBSD: in6.c,v 1.79 2003/09/05 23:20:50 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.78 2003/08/07 16:33:23 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.79 2003/09/05 23:20:50 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -2038,8 +2038,8 @@ ip6_sprintf(addr)
 	static char ip6buf[8][48];
 	int i;
 	char *cp;
-	const u_short *a = (const u_short *)addr;
-	const u_char *d;
+	const u_int16_t *a = (const u_int16_t *)addr;
+	const u_int8_t *d;
 	int dcolon = 0;
 
 	ip6round = (ip6round + 1) & 7;
