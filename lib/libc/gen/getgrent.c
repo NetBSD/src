@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.51 2004/10/29 06:32:08 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.52 2004/11/10 06:10:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.51 2004/10/29 06:32:08 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.52 2004/11/10 06:10:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -126,8 +126,6 @@ __RCSID("$NetBSD: getgrent.c,v 1.51 2004/10/29 06:32:08 lukem Exp $");
 #endif
 
 #define _GROUP_COMPAT	/* "group" defaults to compat, so always provide it */
-
-#define	GETGR_R_SIZE_MAX	1024	/* XXXLUKEM: move to {grp,unistd}.h ? */
 
 #ifdef __weak_alias
 __weak_alias(endgrent,_endgrent)
@@ -333,7 +331,7 @@ struct files_state {
 static struct files_state	_files_state;
 					/* storage for non _r functions */
 static struct group		_files_group;
-static char			_files_groupbuf[GETGR_R_SIZE_MAX];
+static char			_files_groupbuf[_GETGR_R_SIZE_MAX];
 
 static int
 _files_start(struct files_state *state)
@@ -377,7 +375,7 @@ _files_grscan(int *retval, struct group *grp, char *buffer, size_t buflen,
 	struct files_state *state, int search, const char *name, gid_t gid)
 {
 	int	rv;
-	char	filebuf[GETGR_R_SIZE_MAX], *ep;
+	char	filebuf[_GETGR_R_SIZE_MAX], *ep;
 
 	_DIAGASSERT(retval != NULL);
 	_DIAGASSERT(grp != NULL);
@@ -608,7 +606,7 @@ struct dns_state {
 static struct dns_state		_dns_state;
 					/* storage for non _r functions */
 static struct group		_dns_group;
-static char			_dns_groupbuf[GETGR_R_SIZE_MAX];
+static char			_dns_groupbuf[_GETGR_R_SIZE_MAX];
 
 static int
 _dns_start(struct dns_state *state)
@@ -931,7 +929,7 @@ struct nis_state {
 static struct nis_state		_nis_state;
 					/* storage for non _r functions */
 static struct group		_nis_group;
-static char			_nis_groupbuf[GETGR_R_SIZE_MAX];
+static char			_nis_groupbuf[_GETGR_R_SIZE_MAX];
 
 static int
 _nis_start(struct nis_state *state)
@@ -1268,7 +1266,7 @@ struct compat_state {
 static struct compat_state	_compat_state;
 					/* storage for non _r functions */
 static struct group		_compat_group;
-static char			_compat_groupbuf[GETGR_R_SIZE_MAX];
+static char			_compat_groupbuf[_GETGR_R_SIZE_MAX];
 
 static int
 _compat_start(struct compat_state *state)
@@ -1339,7 +1337,7 @@ _compat_grscan(int *retval, struct group *grp, char *buffer, size_t buflen,
 	struct compat_state *state, int search, const char *name, gid_t gid)
 {
 	int		rv;
-	char		filebuf[GETGR_R_SIZE_MAX], *ep;
+	char		filebuf[_GETGR_R_SIZE_MAX], *ep;
 
 	static const ns_dtab compatentdtab[] = {
 		NS_FILES_CB(_compat_grbad, "files")
