@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.32 1998/09/18 14:38:48 enami Exp $	*/
+/*	$NetBSD: boca.c,v 1.33 2000/05/20 18:25:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -192,7 +192,7 @@ bocaintr(arg)
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = bus_space_read_1(iot, sc->sc_slaveioh[0], 7) & alive;
+	bits = bus_space_read_1(iot, sc->sc_slaveioh[0], com_scratch) & alive;
 	if (bits == 0)
 		return (0);
 
@@ -209,7 +209,8 @@ bocaintr(arg)
 		TRY(6);
 		TRY(7);
 #undef TRY
-		bits = bus_space_read_1(iot, sc->sc_slaveioh[0], 7) & alive;
+		bits = bus_space_read_1(iot, sc->sc_slaveioh[0],
+		    com_scratch) & alive;
 		if (bits == 0)
 			return (1);
  	}
