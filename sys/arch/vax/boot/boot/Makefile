@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/05/23 21:58:19 ragge Exp $
+#	$NetBSD: Makefile,v 1.5 2000/03/04 16:17:46 ragge Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -13,6 +13,7 @@ CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE
 #CPPFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DDEV_DEBUG \
 #	-DRPC_DEBUG -DRARP_DEBUG -DPARANOID
 BINDIR=	/
+MDEC_DIR=/usr/mdec
 
 SA_AS=	library
 SAMISCMAKEFLAGS=SA_USE_CREAD=yes SA_INCLUDE_NET=yes
@@ -33,5 +34,10 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	/usr/sbin/mopa.out ${PROG} ${PROG}.mop
 	strip ${PROG}
 	size ${PROG}
+
+install:
+	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} ${DESTDIR}${BINDIR}
+	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} ${DESTDIR}${MDEC_DIR}
+	${INSTALL} -c -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG}.mop ${DESTDIR}${MDEC_DIR}
 
 .include <bsd.prog.mk>
