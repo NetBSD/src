@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.14 1999/07/25 22:50:28 ad Exp $	*/
+/*	$NetBSD: findcons.c,v 1.15 1999/08/02 12:52:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.14 1999/07/25 22:50:28 ad Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.15 1999/08/02 12:52:27 ad Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,7 +282,7 @@ pm_screen(crtslot)
 	base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
 	
 	if (fballoc(base, &fi))
-		return (1);
+		return (0);
 	
 	if (pminit(fi, base, 0, 1)) {
 		cd.cn_pri = CN_INTERNAL;
