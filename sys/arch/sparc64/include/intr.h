@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: intr.h,v 1.11 2004/05/20 00:56:12 petrov Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,30 +73,17 @@
 #define SPARC64_NIPIS		6
 
 #if defined(MULTIPROCESSOR)
-void	sparc64_ipi_init __P((void));
-void	sparc64_multicast_ipi __P((cpuset_t, u_long));
-void	sparc64_broadcast_ipi __P((u_long));
-void	sparc64_send_ipi __P((int, u_long));
-void	sparc64_ipi_halt_cpus __P((void));
-void	sparc64_ipi_pause_cpus __P((void));
-void	sparc64_ipi_resume_cpus __P((void));
-#else
-#define	sparc64_ipi_init()		((void)0)
-#define	sparc64_multicast_ipi(set,ipi)	((void)0)
-#define	sparc64_broadcast_ipi(ipi)	((void)0)
-#define	sparc64_send_ipi(cpu,ipi)	((void)0)
-#define	sparc64_ipi_halt_cpus()		((void)0)
-#define	sparc64_ipi_pause_cpus()	((void)0)
-#define	sparc64_ipi_resume_cpus()	((void)0)
+void	sparc64_ipi_init (void);
+void	sparc64_multicast_ipi (cpuset_t, u_long);
+void	sparc64_broadcast_ipi (u_long);
+void	sparc64_send_ipi (int, u_long);
+void	sparc64_ipi_halt_cpus (void);
+void	sparc64_ipi_pause_cpus (void);
+void	sparc64_ipi_resume_cpus (void);
 #endif
 
-void *
-softintr_establish __P((int level, void (*fun)(void *), void *arg));
-
-void
-softintr_disestablish __P((void *cookie));
-
-void
-softintr_schedule __P((void *cookie));
+void *softintr_establish (int level, void (*fun)(void *), void *arg);
+void  softintr_disestablish (void *cookie);
+void  softintr_schedule (void *cookie);
 
 #endif /* _SPARC64_INTR_H_ */
