@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.182 2002/01/27 13:23:18 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.183 2002/02/08 01:49:34 jmcneill Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -197,6 +197,7 @@ pcmcia*	at tcic? controller ? socket ?
 # ISA PCMCIA controllers
 pcic0 	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1 	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 tcic0 	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCI PCMCIA controllers
