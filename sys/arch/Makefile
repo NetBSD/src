@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/03/24 23:15:05 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.20.4.1 2002/05/28 23:08:59 tv Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -21,7 +21,7 @@ SUBDIR+= sparc64
 .if (${MACHINE} == hpcmips || ${MACHINE} == hpcsh)
 SUBDIR+= hpc
 .endif
-.if (${MACHINE} == sun2)
+.if (${MACHINE} == sun2 || ${MACHINE} == sun3)
 SUBDIR+= sun68k
 .endif
 
