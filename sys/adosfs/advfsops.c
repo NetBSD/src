@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.35.2.2 1999/10/18 05:04:41 cgd Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.35.2.3 1999/10/19 16:23:34 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -265,7 +265,9 @@ adosfs_mountfs(devvp, mp, p)
 	return(0);
 
 fail:
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void) VOP_CLOSE(devvp, FREAD, NOCRED, p);
+	VOP_UNLOCK(devvp, 0);
 	if (amp && amp->bitmap)
 		free(amp->bitmap, M_ADOSFSBITMAP);
 	if (amp)
