@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.5 2000/05/11 15:42:00 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.5.4.1 2001/05/01 12:27:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1281,9 +1281,15 @@ fdioctl(dev, cmd, addr, flag, p)
 	unsigned int scratch;
 	int il[FD_MAX_NSEC + 1];
 	register int i, j;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel;
+#endif
 
 	switch (cmd) {
 	case DIOCGDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+#endif
 		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
@@ -1293,6 +1299,13 @@ fdioctl(dev, cmd, addr, flag, p)
 		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
 			return EINVAL;
 
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCGDINFO) {
+			if (buffer.d_npartitions > OLDMAXPARTITIONS)
+				return ENOTTY;
+			memcpy(addr, &buffer, sizeof (struct olddisklabel));
+		} else
+#endif
 		*(struct disklabel *)addr = buffer;
 		return 0;
 
@@ -1303,15 +1316,30 @@ fdioctl(dev, cmd, addr, flag, p)
 		return 0;
 
 	case DIOCWDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+#endif
+	{
+		struct disklabel *lp;
+
 		if ((flag & FWRITE) == 0)
 			return EBADF;
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
 
-		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
+		error = setdisklabel(&buffer, lp, 0, NULL);
 		if (error)
 			return error;
 
 		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
 		return error;
+	}
 
 	case FDIOCGETFORMAT:
 		form_parms = (struct fdformat_parms *)addr;
