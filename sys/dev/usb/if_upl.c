@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.6 2000/08/12 14:35:20 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.7 2000/09/23 04:33:04 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1068,8 +1068,10 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		splx(s);
-		//if (sc->sc_flags & SC_DEBUG)
-		//printf("%s: input queue full\n", ifp->if_xname);
+#if 0
+		if (sc->sc_flags & SC_DEBUG)
+			printf("%s: input queue full\n", ifp->if_xname);
+#endif
 		ifp->if_iqdrops++;
 		return;
 	}
