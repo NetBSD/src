@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.c,v 1.7 1997/10/11 02:44:31 lukem Exp $	*/
+/*	$NetBSD: instr.c,v 1.8 1999/09/13 17:27:36 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: instr.c,v 1.7 1997/10/11 02:44:31 lukem Exp $");
+__RCSID("$NetBSD: instr.c,v 1.8 1999/09/13 17:27:36 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: instr.c,v 1.7 1997/10/11 02:44:31 lukem Exp $");
 
 #include <curses.h>
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,30 +62,41 @@ __RCSID("$NetBSD: instr.c,v 1.7 1997/10/11 02:44:31 lukem Exp $");
 void
 instructions()
 {
-	struct stat sb;
-	union wait pstat;
+	int pstat;
+	int fd;
 	pid_t pid;
-	char *pager, *path;
+	const char *path;
 
-	if (stat(_PATH_INSTR, &sb))
-		err(1, "stat %s", _PATH_INSTR);
 	switch (pid = vfork()) {
 	case -1:
 		err(1, "vfork");
 	case 0:
-		if (!(path = getenv("PAGER")))
-			path = _PATH_MORE;
-		if ((pager = strrchr(path, '/')) != NULL)
-			++pager;
-		pager = path;
-		execlp(path, pager, _PATH_INSTR, NULL);
+		/* Follow the same behaviour for pagers as defined in POSIX.2
+		 * for mailx and man.  We only use a pager if stdout is
+		 * a terminal, and we pass the file on stdin to sh -c pager.
+		 */
+		if (!isatty(1))
+			path = "cat";
+		else {
+			if (!(path = getenv("PAGER")) || (*path == 0))
+				path = _PATH_MORE;
+		}
+		if ((fd = open(_PATH_INSTR, O_RDONLY)) == -1) {
+			warn("open %s", _PATH_INSTR);
+			_exit(1);
+		}
+		if (dup2(fd, 0) == -1) {
+			warn("dup2");
+			_exit(1);
+		}
+		execl("/bin/sh", "sh", "-c", path, NULL);
 		warn("%s", "");
 		_exit(1);
 	default:
 		do {
-			pid = waitpid(pid, (int *)&pstat, 0);
+			pid = waitpid(pid, &pstat, 0);
 		} while (pid == -1 && errno == EINTR);
-		if (pid == -1 || pstat.w_status)
+		if (pid == -1 || WEXITSTATUS(pstat))
 			exit(1);
 	}
 }
