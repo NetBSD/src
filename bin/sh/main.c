@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2002/11/24 22:35:40 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2002/12/11 19:12:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.45 2002/11/24 22:35:40 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 2002/12/11 19:12:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: main.c,v 1.45 2002/11/24 22:35:40 christos Exp $");
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <locale.h>
 #include <fcntl.h>
 
 
@@ -109,6 +110,8 @@ main(int argc, char **argv)
 	struct stackmark smark;
 	volatile int state;
 	char *shinit;
+
+	setlocale(LC_ALL, "");
 
 #if PROFILE
 	monitor(4, etext, profile_buf, sizeof profile_buf, 50);
