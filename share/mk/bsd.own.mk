@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.221 2001/11/19 02:46:50 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.222 2001/11/19 04:44:32 perry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -30,6 +30,12 @@ CPPFLAG_ISYSTEM=	-isystem
 CPPFLAG_ISYSTEM=	-idirafter
 .endif
 
+.if empty(.MAKEFLAGS:M-V*)
+PRINTOBJDIR=	${MAKE} -V .OBJDIR
+.else
+PRINTOBJDIR=	echo # prevent infinite recursion
+.endif
+
 .if !defined(_SRC_TOP_)
 # Find the top of the source tree to see if we're inside of $BSDSRCDIR
 _SRC_TOP_!= cd ${.CURDIR}; while :; do \
@@ -39,6 +45,11 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 		cd ..; done 
 
 .MAKEOVERRIDES+=	_SRC_TOP_
+.endif
+
+.if !defined(_SRC_TOP_OBJ_)
+_SRC_TOP_OBJ_!=	cd ${_SRC_TOP_} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
 
 .if (${_SRC_TOP_} != "") && defined(USE_NEW_TOOLCHAIN)
@@ -54,12 +65,6 @@ USETOOLS?=	no
 .BEGIN:
 	@echo "USETOOLS=no, but this component requires a version-specific host toolchain"
 	@false
-.endif
-
-.if empty(.MAKEFLAGS:M-V*)
-PRINTOBJDIR=	${MAKE} -V .OBJDIR
-.else
-PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
 
 # Host platform information; may be overridden
@@ -187,12 +192,19 @@ LOCALEMODE?=	${NONBINMODE}
 COPY?=		-c
 PRESERVE?=	${UPDATE:D-p}
 RENAME?=	-r
-INSTPRIV?=	${UNPRIVILEGED:D-U}
+HRDLINK?=	-l h
+SYMLINK?=	-l s
+
+METALOG?=	${_SRC_TOP_OBJ_}/METALOG
+INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}}
 STRIPFLAG?=	-s
 
 .if ${NEED_OWN_INSTALL_TARGET} == "yes"
-INSTALL_DIR?=	${INSTALL} ${INSTPRIV} -d
-INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME} ${INSTPRIV}
+INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
+INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
+INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK}
+INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK}
+HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 .endif
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
