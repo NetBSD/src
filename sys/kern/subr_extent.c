@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.37 2000/08/12 16:29:36 sommerfeld Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.38 2000/08/12 23:56:50 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,8 @@ malloc(s, t, flags)		malloc(s)
 free(p, t)			free(p)
 #define	\
 tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
+#define	\
+ltsleep(chan,pri,str,timo,lck)	(EWOULDBLOCK)
 #define	\
 wakeup(chan)			((void)0)
 #define	\
