@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
+/*	$NetBSD: mtree.c,v 1.8 1997/08/20 15:14:52 agc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mtree.c,v 1.8 1997/08/20 15:14:52 agc Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $"
 extern int crc_total;
 
 int ftsoptions = FTS_PHYSICAL;
-int cflag, dflag, eflag, rflag, sflag, tflag, uflag;
+int cflag, dflag, eflag, rflag, sflag, tflag, uflag, Uflag;
 u_short keys;
 char fullpath[MAXPATHLEN];
 
@@ -74,10 +74,11 @@ main(argc, argv)
 	extern char *optarg;
 	int ch;
 	char *dir, *p;
+	int status;
 
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:tux")) != EOF)
+	while ((ch = getopt(argc, argv, "cdef:K:k:p:rs:tUux")) != EOF)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -118,6 +119,9 @@ main(argc, argv)
 		case 't':
 			tflag = 1;
 			break;
+		case 'U':
+			Uflag = uflag = 1;
+			break;
 		case 'u':
 			uflag = 1;
 			break;
@@ -144,13 +148,16 @@ main(argc, argv)
 		cwalk();
 		exit(0);
 	}
-	exit(verify());
+	status = verify();
+	if (Uflag & (status == MISMATCHEXIT))
+		status = 0;
+	exit(status);
 }
 
 static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: mtree [-cderux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
+"usage: mtree [-cderUux] [-f spec] [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }
