@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.709 2005/01/21 12:32:18 yamt Exp $
+#	$NetBSD: files,v 1.710 2005/01/31 06:09:03 joff Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -620,6 +620,10 @@ file	dev/ic/mb89352.c		spc
 define	hd44780
 file	dev/ic/hd44780_subr.c		hd44780
 file	dev/ic/lcdkp_subr.c		hd44780
+
+# Matrix keypad
+define	matrixkp
+file	dev/ic/matrixkp_subr.c		matrixkp
 
 # Hitachi HD64570 serial controller
 #
