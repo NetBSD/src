@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.10 2003/05/18 12:26:18 lukem Exp $
+.\" 	$NetBSD: db.1,v 1.11 2003/05/19 00:27:06 seb Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,6 +53,15 @@ databases
 .Op Fl KV
 .Op Fl Niq
 .Bk -words
+.Op Fl S Ar chr
+.Ek
+.Bk -words
+.Op Fl T Ar str
+.Ek
+.Bk -words
+.Op Fl X Ar str
+.Ek
+.Bk -words
 .Op Fl E Ar endian
 .Ek
 .Bk -words
@@ -71,6 +80,9 @@ databases
 .Fl d
 .Op Fl Niq
 .Bk -words
+.Op Fl U Ar chr
+.Ek
+.Bk -words
 .Op Fl E Ar endian
 .Ek
 .Bk -words
@@ -85,6 +97,9 @@ databases
 .Nm
 .Fl w
 .Op Fl Niq
+.Bk -words
+.Op Fl U Ar chr
+.Ek
 .Bk -words
 .Op Fl E Ar endian
 .Ek
@@ -210,6 +225,40 @@ Read mode specific options are:
 .Bl -tag -width Fl -offset indent
 .It Fl K
 Display key.
+.It Fl S Ar chr
+Specify items to
+.Xr strvis 3
+encode. The
+.Ar chr
+option-argument is a character specifying if the key
+.Pq Ar k ,
+the value
+.Pq Ar v
+or both
+.Pq Ar b
+should be encoded.
+.It Fl T Ar str
+Control how the items specified by the
+.Fl S
+option are encoded. The
+.Ar str
+option-argument is a string specifying
+.Xr strvis 3
+options. The string consists of the specification characters
+.Cm b , c , o ,
+.Cm s , t ,
+and
+.Cm w .
+See
+.Xr vis 1 's
+corresponding options for the meaning of these characters.
+.It Fl X Ar str
+When encoding items with
+.Fl S
+option also encode characters in
+.Ar str ,
+per
+.Xr svis 3 .
 .It Fl V
 Display value.
 .It Fl O Ar str
@@ -256,11 +305,33 @@ Defaults to
 .Sq 0644 .
 .
 .El
+.Pp
+Write and delete mode specific options are:
+.Bl -tag -width Fl -offset indent
+.
+.It Fl U Ar chr
+Specify items to
+.Xr strunvis 3
+decode. The
+.Ar chr
+option-argument is a character specifying if the key
+.Pq Ar k ,
+the value
+.Pq Ar v
+or both
+.Pq Ar b
+should be decoded.
+.
+.El
 .
 .Sh SEE ALSO
+.Xr vis 1 ,
 .Xr btree 3 ,
 .Xr db 3 ,
 .Xr hash 3 ,
+.Xr strunvis 3 ,
+.Xr strvis 3 ,
+.Xr svis 3 ,
 .Xr makemap 8
 .
 .Sh HISTORY
