@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.27 2004/02/29 22:04:11 oster Exp $
+.\"     $NetBSD: raid.4,v 1.28 2004/02/29 23:46:04 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,17 +74,17 @@
 .Cd options RF_DEBUG_PSS=n
 .Cd options RF_DEBUG_QUEUE=n
 .Cd options RF_DEBUG_QUIESCE=n
-.Cd options RF_DEBUG_STRIPELOCK=n
 .Cd options RF_DEBUG_RECON=n
+.Cd options RF_DEBUG_STRIPELOCK=n
 .Cd options RF_DEBUG_VALIDATE_DAG=n
 .Cd options RF_DEBUG_VERIFYPARITY=n
-.Cd options RF_INCLUDE_EVENODD=n
-.Cd options RF_INCLUDE_RAID5_RS=n
-.Cd options RF_INCLUDE_PARITYLOGGING=n
 .Cd options RF_INCLUDE_CHAINDECLUSTER=n
+.Cd options RF_INCLUDE_EVENODD=n
 .Cd options RF_INCLUDE_INTERDECLUSTER=n
 .Cd options RF_INCLUDE_PARITY_DECLUSTERING=n
 .Cd options RF_INCLUDE_PARITY_DECLUSTERING_DS=n
+.Cd options RF_INCLUDE_PARITYLOGGING=n
+.Cd options RF_INCLUDE_RAID5_RS=n
 .Pp
 .Cd "pseudo-device raid" Op Ar count
 .Sh DESCRIPTION
@@ -274,9 +274,9 @@ options RF_ACC_TRACE=1
 For extensive debugging there are a number of kernel options which
 will aid in performing extra diagnosis of various parts of the
 RAIDframe sub-systems.
-Note that in order to make full use of these options it is often 
-necessary to enable one or more debugging options as listed in 
-src/sys/dev/raidframe/rf_options.h.  
+Note that in order to make full use of these options it is often
+necessary to enable one or more debugging options as listed in
+.Pa src/sys/dev/raidframe/rf_options.h .
 As well, these options are also only typically useful for people who wish
 to debug various parts of RAIDframe.
 The options include:
@@ -292,12 +292,12 @@ Parity stripe status debugging is enabled with:
 options RF_DEBUG_PSS=1
 .Ed
 .Pp
-Additional debugging for queueing is enabled with:
+Additional debugging for queuing is enabled with:
 .Bd -unfilled -offset indent
 options RF_DEBUG_QUEUE=1
 .Ed
 .Pp
-Problems with non-quiescent filesystems should be easier to debug if
+Problems with non-quiescent file systems should be easier to debug if
 the following is enabled:
 .Bd -unfilled -offset indent
 options RF_DEBUG_QUIESCE=1
@@ -319,7 +319,7 @@ I/O access can be performed when the following is enabled:
 options RF_DEBUG_VALIDATE_DAG=1
 .Ed
 .Pp
-Additional diagnostics during parity verification is enabled with:
+Additional diagnostics during parity verification are enabled with:
 .Bd -unfilled -offset indent
 options RF_DEBUG_VERIFYPARITY=1
 .Ed
