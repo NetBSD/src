@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.52 2002/07/27 19:09:07 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.53 2002/07/28 15:12:29 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.52 2002/07/27 19:09:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.53 2002/07/28 15:12:29 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4195,7 +4195,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	struct lcp_header *h;
 	int len, x;
 	u_char mlen;
-	char *name, *secret, sname, ssecret;
+	char *name, *secret;
 	int name_len, secret_len;
 
 	len = m->m_pkthdr.len;
@@ -4247,14 +4247,10 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_string((char*)secret, secret_len);
 			addlog(">\n");
 		}
-		sname = name[name_len];
-		ssecret = secret[secret_len];
-		name[name_len] = '\0';
-		secret[secret_len] = '\0';
-		if (strcmp(name, sp->hisauth.name) != 0 ||
-		    strcmp(secret, sp->hisauth.secret) != 0) {
-			name[name_len] = sname;
-			secret[secret_len] = ssecret;
+		if (name_len != strlen(sp->hisauth.name) ||
+		    memcmp(name, sp->hisauth.name, name_len) != 0 ||
+		    secret_len != strlen(sp->hisauth.secret) ||
+		    memcmp(secret, sp->hisauth.secret, secret_len) != 0) {
 			/* action scn, tld */
 			sp->pp_auth_failures++;
 			mlen = sizeof(FAILMSG) - 1;
@@ -4265,8 +4261,6 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			pap.tld(sp);
 			break;
 		}
-		name[name_len] = sname;
-		secret[secret_len] = ssecret;
 		/* action sca, perhaps tlu */
 		if (sp->state[IDX_PAP] == STATE_REQ_SENT ||
 		    sp->state[IDX_PAP] == STATE_OPENED) {
