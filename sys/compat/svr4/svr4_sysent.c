@@ -11,6 +11,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
@@ -97,8 +98,8 @@ struct sysent svr4_sysent[] = {
 	    svr4_sys_fstat },			/* 28 = fstat */
 	{ 0, 0,
 	    sys_nosys },			/* 29 = unimplemented pause */
-	{ 0, 0,
-	    sys_nosys },			/* 30 = unimplemented utime */
+	{ 2, s(struct svr4_sys_utime_args),
+	    svr4_sys_utime },			/* 30 = utime */
 	{ 0, 0,
 	    sys_nosys },			/* 31 = unimplemented was stty */
 	{ 0, 0,
@@ -360,8 +361,8 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 152 = unimplemented modctl */
 	{ 1, s(struct svr4_sys_fchroot_args),
 	    svr4_sys_fchroot },			/* 153 = fchroot */
-	{ 0, 0,
-	    sys_nosys },			/* 154 = unimplemented utimes */
+	{ 2, s(struct svr4_sys_utimes_args),
+	    svr4_sys_utimes },			/* 154 = utimes */
 	{ 0, 0,
 	    svr4_sys_vhangup },			/* 155 = vhangup */
 	{ 1, s(struct svr4_sys_gettimeofday_args),
