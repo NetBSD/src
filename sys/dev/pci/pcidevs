@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.350 2001/08/28 23:53:14 tsubai Exp $
+$NetBSD: pcidevs,v 1.351 2001/08/30 16:21:42 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1134,6 +1134,8 @@ product HP J2585A	0x1030	J2585A
 /* Hi/Fn products */
 product HIFN 7751	0x0005	7751
 product HIFN 6500	0x0006	6500
+product HIFN 7811	0x0007	7811
+product HIFN 7951	0x0012	7951
 
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
