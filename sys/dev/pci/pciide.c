@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.89 2000/11/05 21:14:59 matt Exp $	*/
+/*	$NetBSD: pciide.c,v 1.90 2000/11/08 17:57:37 wrstuden Exp $	*/
 
 
 /*
@@ -1156,28 +1156,7 @@ void
 pciide_print_modes(cp)
 	struct pciide_channel *cp;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
-	int drive;
-	struct channel_softc *chp;
-	struct ata_drive_datas *drvp;
-
-	chp = &cp->wdc_channel;
-	for (drive = 0; drive < 2; drive++) {
-		drvp = &chp->ch_drive[drive];
-		if ((drvp->drive_flags & DRIVE) == 0)
-			continue;
-		printf("%s(%s:%d:%d): using PIO mode %d",
-		    drvp->drv_softc->dv_xname,
-		    sc->sc_wdcdev.sc_dev.dv_xname,
-		    chp->channel, drive, drvp->PIO_mode);
-		if (drvp->drive_flags & DRIVE_DMA)
-			printf(", DMA mode %d", drvp->DMA_mode);
-		if (drvp->drive_flags & DRIVE_UDMA)
-			printf(", Ultra-DMA mode %d", drvp->UDMA_mode);
-		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA))
-			printf(" (using DMA data transfers)");
-		printf("\n");
-	}
+	wdc_print_modes(&cp->wdc_channel);
 }
 
 void
