@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.67 2000/06/16 05:45:14 perseant Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.68 2000/06/27 23:39:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -1008,17 +1008,27 @@ ffs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
-			return (0);
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
+		return (0);
 
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_UFS, mp, ffs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
-		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
+
+	/*
+	 * If someone beat us to it while sleeping in getnewvnode(),
+	 * push back the freshly allocated vnode we don't need, and return.
+	 */
+	do {
+		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+			vinsheadfree(vp);
+			return (0);
+		}
+	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
 	 * XXX create another pool for MFS inodes?
