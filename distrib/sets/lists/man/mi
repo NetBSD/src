@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.179 1999/12/08 10:04:17 ad Exp $
+# $NetBSD: mi,v 1.180 1999/12/10 23:31:11 jlam Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -24,7 +24,6 @@
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/addr2line.0
-./usr/share/man/cat1/adduser.0
 ./usr/share/man/cat1/alias.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
@@ -121,10 +120,6 @@
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
 ./usr/share/man/cat1/grep.0
-./usr/share/man/cat1/group.0
-./usr/share/man/cat1/groupadd.0
-./usr/share/man/cat1/groupdel.0
-./usr/share/man/cat1/groupmod.0
 ./usr/share/man/cat1/groups.0
 ./usr/share/man/cat1/gunzip.0
 ./usr/share/man/cat1/gzcat.0
@@ -315,10 +310,6 @@
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
 ./usr/share/man/cat1/usbhidctl.0
-./usr/share/man/cat1/user.0
-./usr/share/man/cat1/useradd.0
-./usr/share/man/cat1/userdel.0
-./usr/share/man/cat1/usermod.0
 ./usr/share/man/cat1/users.0
 ./usr/share/man/cat1/uucp.0
 ./usr/share/man/cat1/uudecode.0
@@ -638,6 +629,7 @@
 ./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
+./usr/share/man/cat8/adduser.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/arp.0
@@ -703,6 +695,10 @@
 ./usr/share/man/cat8/getty.0
 ./usr/share/man/cat8/gifconfig.0
 ./usr/share/man/cat8/greconfig.0
+./usr/share/man/cat8/group.0
+./usr/share/man/cat8/groupadd.0
+./usr/share/man/cat8/groupdel.0
+./usr/share/man/cat8/groupmod.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hlfsd.0
 ./usr/share/man/cat8/identd.0
@@ -902,6 +898,10 @@
 ./usr/share/man/cat8/umount.0
 ./usr/share/man/cat8/unlink.0
 ./usr/share/man/cat8/usbdevs.0
+./usr/share/man/cat8/user.0
+./usr/share/man/cat8/useradd.0
+./usr/share/man/cat8/userdel.0
+./usr/share/man/cat8/usermod.0
 ./usr/share/man/cat8/uucico.0
 ./usr/share/man/cat8/uucpd.0
 ./usr/share/man/cat8/uugetty.0
@@ -931,7 +931,6 @@
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
 ./usr/share/man/man1/addr2line.1
-./usr/share/man/man1/adduser.8
 ./usr/share/man/man1/alias.1
 ./usr/share/man/man1/apply.1
 ./usr/share/man/man1/apropos.1
@@ -1028,10 +1027,6 @@
 ./usr/share/man/man1/getconf.1
 ./usr/share/man/man1/getopt.1
 ./usr/share/man/man1/grep.1
-./usr/share/man/man1/group.8
-./usr/share/man/man1/groupadd.8
-./usr/share/man/man1/groupdel.8
-./usr/share/man/man1/groupmod.8
 ./usr/share/man/man1/groups.1
 ./usr/share/man/man1/gunzip.1
 ./usr/share/man/man1/gzcat.1
@@ -1222,10 +1217,6 @@
 ./usr/share/man/man1/unvis.1
 ./usr/share/man/man1/uptime.1
 ./usr/share/man/man1/usbhidctl.1
-./usr/share/man/man1/user.8
-./usr/share/man/man1/useradd.8
-./usr/share/man/man1/userdel.8
-./usr/share/man/man1/usermod.8
 ./usr/share/man/man1/users.1
 ./usr/share/man/man1/uucp.1
 ./usr/share/man/man1/uudecode.1
@@ -1546,6 +1537,7 @@
 ./usr/share/man/man7/symlink.7
 ./usr/share/man/man8/ac.8
 ./usr/share/man/man8/accton.8
+./usr/share/man/man8/adduser.8
 ./usr/share/man/man8/amd.8
 ./usr/share/man/man8/amq.8
 ./usr/share/man/man8/arp.8
@@ -1611,6 +1603,10 @@
 ./usr/share/man/man8/getty.8
 ./usr/share/man/man8/gifconfig.8
 ./usr/share/man/man8/greconfig.8
+./usr/share/man/man8/group.8
+./usr/share/man/man8/groupadd.8
+./usr/share/man/man8/groupdel.8
+./usr/share/man/man8/groupmod.8
 ./usr/share/man/man8/halt.8
 ./usr/share/man/man8/hlfsd.8
 ./usr/share/man/man8/identd.8
@@ -1810,6 +1806,10 @@
 ./usr/share/man/man8/umount.8
 ./usr/share/man/man8/unlink.8
 ./usr/share/man/man8/usbdevs.8
+./usr/share/man/man8/user.8
+./usr/share/man/man8/useradd.8
+./usr/share/man/man8/userdel.8
+./usr/share/man/man8/usermod.8
 ./usr/share/man/man8/uucico.8
 ./usr/share/man/man8/uucpd.8
 ./usr/share/man/man8/uugetty.8
