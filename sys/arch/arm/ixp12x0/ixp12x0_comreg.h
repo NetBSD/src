@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_comreg.h,v 1.1 2002/07/15 16:27:17 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_comreg.h,v 1.2 2002/07/20 03:09:04 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -79,7 +79,7 @@
 #define	SR_TXR		0x04	/* Transmit FIFO Ready */
 #define SR_ROR		0x08	/* Receiver overrun */
 #define	SR_RXR		0x10	/* Receiver FIFO Ready */
-#define SR_TXE		0x20	/* Transmitter enable */
+#define SR_TXE		0x20	/* Transmit FIFO Empty */
 #define	SR_RXF		0x40	/* Receiver FIFO Full */
 #define	SR_TXF		0x80	/* Transmit FIFO Full */
 

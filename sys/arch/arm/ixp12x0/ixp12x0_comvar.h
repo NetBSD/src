@@ -1,4 +1,4 @@
-/*      $NetBSD: ixp12x0_comvar.h,v 1.1 2002/07/15 16:27:17 ichiro Exp $        */
+/*      $NetBSD: ixp12x0_comvar.h,v 1.2 2002/07/20 03:09:04 ichiro Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -97,6 +97,9 @@ struct ixpcom_softc {
 
 extern struct bus_space ixpcom_bs_tag;
 
+void	ixpcom_attach_subr(struct ixpcom_softc *);
+
+int	ixpcomintr(void* arg);
 int	ixpcomcnattach(bus_space_tag_t, bus_addr_t, int, tcflag_t);
 
 #endif /* _IXP12X0_COMVAR_H_ */

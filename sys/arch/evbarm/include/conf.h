@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 2002/02/28 03:17:27 simonb Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 2002/07/20 03:09:04 ichiro Exp $	*/
 
 #ifndef _EVBARM_CONF_H
 #define	_EVBARM_CONF_H
@@ -7,6 +7,7 @@
  * EVBARM specifc device includes go in here
  */
 #include "plcom.h"
+#include "ixpcom.h"
 
 #define	CONF_HAVE_PCI
 #define	CONF_HAVE_SCSIPI
