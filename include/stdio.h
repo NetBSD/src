@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.5 1993/10/04 18:50:23 jtc Exp $
+ *	$Id: stdio.h,v 1.6 1993/10/06 18:41:55 jtc Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -245,7 +245,6 @@ __END_DECLS
  * Functions defined in POSIX 1003.1.
  */
 #ifndef _ANSI_SOURCE
-#define	L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 #define	L_ctermid	1024	/* size for ctermid(); PATH_MAX */
 
 __BEGIN_DECLS
