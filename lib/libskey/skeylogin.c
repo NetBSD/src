@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.18 2003/03/09 00:46:07 lukem Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.19 2005/02/04 16:13:14 perry Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeylogin.c,v 1.18 2003/03/09 00:46:07 lukem Exp $");
+__RCSID("$NetBSD: skeylogin.c,v 1.19 2005/02/04 16:13:14 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -392,7 +392,7 @@ const char *skey_keyinfo(const char *username)
  * Returns: 0 success, -1 failure
  */
 
-int skey_passcheck (const char *username, char *passwd)
+int skey_passcheck(const char *username, char *passwd)
 {
 	int i;
 	struct skey skey;
