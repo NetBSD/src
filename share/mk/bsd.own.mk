@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.398 2003/12/04 09:29:35 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.399 2003/12/05 02:35:24 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -531,7 +531,7 @@ MK${var}:=	yes
 	DOC \
 	GCC GCCCMDS GDB \
 	HESIOD HTML \
-	IEEEFP INFO \
+	IEEEFP INET6 INFO \
 	KERBEROS KERBEROS4 \
 	LINKLIB LINT \
 	MAN \
@@ -631,7 +631,7 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in HESIOD KERBEROS KERBEROS4 SKEY YP
+.for var in HESIOD INET6 KERBEROS KERBEROS4 SKEY YP
 .if (${MK${var}} == "no")
 USE_${var}:= no
 .else
