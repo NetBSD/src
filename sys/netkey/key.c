@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.33 2000/09/20 00:42:47 itojun Exp $	*/
-/*	$KAME: key.c,v 1.154 2000/09/20 00:33:19 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.34 2000/09/20 19:55:05 itojun Exp $	*/
+/*	$KAME: key.c,v 1.155 2000/09/20 19:27:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -942,7 +942,7 @@ key_freesav(sav)
 
 	sav->refcnt--;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP freesav cause refcnt--:%d SA:%p SPI %d\n",
+		printf("DP freesav cause refcnt--:%d SA:%p SPI %u\n",
 			sav->refcnt, sav, (u_int32_t)ntohl(sav->spi)));
 
 	if (sav->refcnt == 0)
@@ -2923,11 +2923,17 @@ key_mature(sav)
 	mature = 0;
 
 	/* check SPI value */
-	if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
+	switch (sav->sah->saidx.proto) {
+	case IPPROTO_ESP:
+	case IPPROTO_AH:
+		if (ntohl(sav->spi) >= 0 && ntohl(sav->spi) <= 255) {
 #ifdef IPSEC_DEBUG
-		printf("key_mature: illegal range of SPI %d.\n", sav->spi);
+			printf("key_mature: illegal range of SPI %u.\n",
+			    (u_int32_t)ntohl(sav->spi));
 #endif
-		return EINVAL;
+			return EINVAL;
+		}
+		break;
 	}
 
 	/* check satype */
