@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.15 2003/11/18 08:49:18 wiz Exp $
+.\"	$NetBSD: fsync.2,v 1.16 2005/01/25 23:55:20 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,6 +80,16 @@ data for the specified range.
 .It Dv FFILESYNC
 Synchronize all modified file data and meta-data for the specified range.
 .El
+.Pp
+By default,
+.Fn fsync_range
+does not flush disk caches, assuming that storage media are able to ensure
+completed writes are transfered to media.
+The
+.Fa FDISKSYNC
+flag may be included in the
+.Fa how
+parameter to trigger flushing of all disk caches for the file.
 .Pp
 If the
 .Fa length

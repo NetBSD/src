@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.93 2005/01/25 09:50:31 drochner Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.94 2005/01/25 23:55:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.93 2005/01/25 09:50:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.94 2005/01/25 23:55:21 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -99,15 +99,27 @@ genfs_fsync(void *v)
 		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp, *dvp;
 	int wait;
+	int error;
 
 	wait = (ap->a_flags & FSYNC_WAIT) != 0;
 	vflushbuf(vp, wait);
 	if ((ap->a_flags & FSYNC_DATAONLY) != 0)
-		return (0);
+		error = 0;
 	else
-		return (VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0));
+		error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+		int l = 0;
+		if (VOP_BMAP(vp, 0, &dvp, NULL, NULL))
+			error = ENXIO;
+		else
+			error = VOP_IOCTL(dvp, DIOCCACHESYNC, &l, FWRITE,
+					  ap->a_p->p_ucred, ap->a_p);
+	}
+
+	return (error);
 }
 
 int

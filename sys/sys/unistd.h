@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.31 2004/11/10 04:02:52 lukem Exp $	*/
+/*	$NetBSD: unistd.h,v 1.32 2005/01/25 23:55:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -123,6 +123,7 @@
  */
 #define	FDATASYNC	0x0010	/* sync data and minimal metadata */
 #define	FFILESYNC	0x0020	/* sync data and metadata */
+#define	FDISKSYNC	0x0040	/* flush disk caches after sync */
 #endif
 
 /* configurable pathname variables; use as argument to pathconf(3) */
