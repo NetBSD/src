@@ -1,4 +1,4 @@
-/*	$NetBSD: battlestar.c,v 1.7 1999/07/21 03:56:53 hubertf Exp $	*/
+/*	$NetBSD: battlestar.c,v 1.8 1999/07/28 01:45:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: battlestar.c,v 1.7 1999/07/21 03:56:53 hubertf Exp $");
+__RCSID("$NetBSD: battlestar.c,v 1.8 1999/07/28 01:45:42 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -69,7 +69,10 @@ main(argc, argv)
 	/* Open the score file then revoke setgid privileges */
 	open_score_file();
 	setregid(getgid(), getgid());
-	initialize(argc < 2 || strcmp(argv[1], "-r"));
+
+	initialize((argc < 2) ? NULL : (strcmp(argv[1], "-r") ? argv[1]
+					: (argv[2] ? argv[2]
+					   : DEFAULT_SAVE_FILE)));
 start:
 	news();
 	beenthere[position]++;
