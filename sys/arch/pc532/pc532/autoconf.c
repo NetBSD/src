@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1996/10/23 07:46:04 matthias Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1996/11/24 13:35:08 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,6 +55,7 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <machine/autoconf.h>
 
 /*
  * The following several variables are related to
@@ -79,7 +80,7 @@ configure()
 
 	/* Find out what the hardware configuration looks like! */
 	if (config_rootfound("membus", "membus") == NULL)
-		panic ("No mem bus found!");
+		panic("No mem bus found!");
 
 	for (i = 0; i < NIPL; i++)
 		printf("%s%s=%x", i?", ":"", ipl_names[i], imask[i]);
@@ -112,8 +113,6 @@ swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks;
-	extern int Maxmem;
-
 
 	for (swp = swdevt; swp->sw_dev > 0; swp++)
 	{
@@ -222,12 +221,52 @@ membusprobe(parent, cf, aux)
 	return (strcmp(cf->cf_driver->cd_name, "membus") == 0);
 }
 
-static void
-membusattach(parent, self, args)
-	struct device *parent, *self;
- 	void *args;
+static int
+membusprint(aux, pnp)
+	void *aux;
+	char *pnp;
 {
-	printf ("\n");
-	while (config_found(self, NULL, NULL) != NULL)
-		;
+#if 0
+	struct confargs *ca = aux;
+
+	printf(" addr 0x%x", ca->ca_addr);
+	if (ca->ca_irq != -1) {
+		printf(", irq %d", ca->ca_irq & 15);
+		if (ca->ca_irq & 0xf0)
+			printf(", %d", ca->ca_irq >> 4);
+	}
+	if (ca->ca_flags != 0)
+		printf(", flags %d", ca->ca_flags);
+
+	printf("\n");
+#endif
+	return(UNCONF);
+}
+
+static void
+membusscan(parent, match)
+	struct device *parent;
+	void *match;
+{
+	struct cfdata *cf = match;
+	struct confargs ca;
+
+	ca.ca_addr  = cf->cf_loc[0];
+	ca.ca_irq   = cf->cf_loc[1];
+	ca.ca_flags = cf->cf_flags;
+
+	while ((*cf->cf_attach->ca_match)(parent, cf, &ca) > 0) {
+		config_attach(parent, cf, &ca, membusprint);
+		if (cf->cf_fstate != FSTATE_STAR)
+			break;
+	}
+}
+
+static void
+membusattach(parent, self, aux)
+	struct device *parent, *self;
+ 	void *aux;
+{
+	printf("\n");
+	config_scan(membusscan, self);
 }
