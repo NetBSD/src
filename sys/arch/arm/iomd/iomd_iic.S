@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_iic.S,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
+/*	$NetBSD: iomd_iic.S,v 1.3 2001/11/23 16:53:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -44,6 +44,8 @@
  *
  * Based of kate/display/iic.s
  */
+
+#include "assym.h"		/* for __PROG32 */
 
 #include <machine/asm.h>
 #include <machine/cpu.h>
