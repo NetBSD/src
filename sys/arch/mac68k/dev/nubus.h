@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
+/*	$NetBSD: nubus.h,v 1.18 1997/03/30 19:51:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -52,8 +52,12 @@
 #define  NUBUS_TYPE_LCD		0x0002
 #define   NUBUS_DRSW_APPLE	0x0001
 #define    NUBUS_DRHW_TFB	0x0001
+#define    NUBUS_DRHW_WVC	0x0006
 #define    NUBUS_DRHW_M2HRVC	0x0013
 #define    NUBUS_DRHW_MICRON	0x0146
+
+/* False DrHW values for video cards masquerading as other cards */
+#define    NUBUS_DRHW_SAM768	0x10000	/* Cornerstone/Samsung 768x1006 */
 
 #define NUBUS_CATEGORY_NETWORK	0x0004
 #define  NUBUS_TYPE_ETHERNET	0x0001
@@ -61,6 +65,7 @@
 #define   NUBUS_DRSW_GATOR	0x0103
 #define   NUBUS_DRSW_ASANTE	0x0104
 #define   NUBUS_DRSW_TECHWORKS	0x0109
+#define	  NUBUS_DRSW_DAYNA	0x010B
 #define   NUBUS_DRSW_FARALLON	0x010C
 #define   NUBUS_DRSW_FOCUS	0x011A
 #define    NUBUS_DRHW_INTERLAN	0x0100
