@@ -1,7 +1,8 @@
-/*	$NetBSD: com.c,v 1.6 1996/04/26 22:01:51 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.7 1996/06/03 22:30:36 mark Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,6 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
+ *	from: com.c,v 1.81 1996/05/05
  */
 
 /*
@@ -55,16 +57,18 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
-#include <machine/katelib.h>
 #include <machine/irqhandler.h>
+#include <machine/bus.h>
 #include <machine/io.h>
-#include <arm32/mainbus/comreg.h>
 #include <arm32/mainbus/mainbus.h>
-
+#include <arm32/mainbus/comreg.h>
+#include <arm32/mainbus/comvar.h>
 #define	com_lcr	com_cfcr
 
-#define	COM_IBUFSIZE	(2 * 256)
+#include "com.h"
+
+
+#define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
 
 struct com_softc {
@@ -76,33 +80,55 @@ struct com_softc {
 	int sc_floods;
 	int sc_errors;
 
+	int sc_halt;
+
 	int sc_iobase;
+
+	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
+
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
+#define	COM_HW_HAYESP	0x04
 #define	COM_HW_CONSOLE	0x40
 	u_char sc_swflags;
 #define	COM_SW_SOFTCAR	0x01
 #define	COM_SW_CLOCAL	0x02
 #define	COM_SW_CRTSCTS	0x04
 #define	COM_SW_MDMBUF	0x08
-	u_char sc_msr, sc_mcr, sc_lcr;
+	u_char sc_msr, sc_mcr, sc_lcr, sc_ier;
 	u_char sc_dtr;
 
 	u_char *sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
+void	comdiag		__P((void *));
+int	comspeed	__P((long));
+int	comparam	__P((struct tty *, struct termios *));
+void	comstart	__P((struct tty *));
+void	compoll		__P((void *));
+
+/* XXX: These belong elsewhere */
+cdev_decl(com);
+bdev_decl(com);
+
+struct consdev;
+void	comcnprobe	__P((struct consdev *));
+void	comcninit	__P((struct consdev *));
+int	comcngetc	__P((dev_t));
+void	comcnputc	__P((dev_t, int));
+void	comcnpollc	__P((dev_t, int));
+
+static u_char tiocm_xxx2mcr __P((int));
+
+/*
+ * XXX the following two cfattach structs should be different, and possibly
+ * XXX elsewhere.
+ */
 int comprobe __P((struct device *, void *, void *));
 void comattach __P((struct device *, struct device *, void *));
-int comopen __P((dev_t, int, int, struct proc *));
-int comclose __P((dev_t, int, int, struct proc *));
-void comdiag __P((void *));
-int comintr __P((void *));
-void compoll __P((void *));
-int comparam __P((struct tty *, struct termios *));
-void comstart __P((struct tty *));
-void cominit __P((int unit, int rate));
 
 struct cfattach com_ca = {
 	sizeof(struct com_softc), comprobe, comattach
@@ -112,13 +138,20 @@ struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
 
-int	comdefaultrate = TTYDEF_SPEED;
+void cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
+
 #ifdef COMCONSOLE
-int	comconsole = COMCONSOLE;
+int	comdefaultrate = CONSPEED;		/* XXX why set default? */
 #else
-int	comconsole = -1;
+int	comdefaultrate = TTYDEF_SPEED;
 #endif
+int	comconsaddr;
 int	comconsinit;
+int	comconsattached;
+bus_chipset_tag_t comconsbc;
+bus_io_handle_t comconsioh;
+tcflag_t comconscflag = TTYDEF_CFLAG;
+
 int	commajor;
 int	comsopen = 0;
 int	comevents = 0;
@@ -163,14 +196,16 @@ comspeed(speed)
 }
 
 int
-comprobe1(iobase)
+comprobe1(bc, ioh, iobase)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	int iobase;
 {
 
 	/* force access to id reg */
-	outb(iobase + com_lcr, 0);
-	outb(iobase + com_iir, 0);
-	if (inb(iobase + com_iir) & 0x38)
+	bus_io_write_1(bc, ioh, com_lcr, 0);
+	bus_io_write_1(bc, ioh, com_iir, 0);
+	if (bus_io_read_1(bc, ioh, com_iir) & 0x38)
 		return 0;
 
 	return 1;
@@ -181,14 +216,35 @@ comprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct mainbus_attach_args *mb = aux;
-	int iobase = mb->mb_iobase;
+	int iobase, needioh;
+	int rv = 1;
 
-	if (!comprobe1(iobase))
-		return 0;
+	/*
+	 * XXX should be broken out into functions for isa probe and
+	 * XXX for commulti probe, with a helper function that contains
+	 * XXX most of the interesting stuff.
+	 */
+
+	bc = NULL;
+	iobase = mb->mb_iobase;
+	needioh = 1;
+
+	/* if it's in use as console, it's there. */
+	if (iobase == comconsaddr && !comconsattached)
+		return(1);
+
+	if (needioh && bus_io_map(bc, iobase, COM_NPORTS, &ioh))
+		return(0);
+
+	rv = comprobe1(bc, ioh, iobase);
+	if (needioh)
+		bus_io_unmap(bc, ioh, COM_NPORTS);
 
 	mb->mb_iosize = COM_NPORTS;
-	return 1;
+	return (rv);
 }
 
 void
@@ -197,35 +253,64 @@ comattach(parent, self, aux)
 	void *aux;
 {
 	struct com_softc *sc = (void *)self;
+	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct mainbus_attach_args *mb = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	int iobase = mb->mb_iobase;
-/*	struct tty *tp;*/
 
-	sc->sc_iobase = iobase;
-	sc->sc_hwflags = ISSET(cf->cf_flags, COM_HW_NOIEN);
+	/*
+	 * XXX should be broken out into functions for isa attach and
+	 * XXX for commulti attach, with a helper function that contains
+	 * XXX most of the interesting stuff.
+	 */
+	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
-	if (sc->sc_dev.dv_unit == comconsole)
-		delay(1000);
+	/*
+	 * We're living on an isa.
+	 */
+	iobase = mb->mb_iobase;
+	bc = NULL;
+        if (iobase != comconsaddr) {
+                if (bus_io_map(bc, iobase, COM_NPORTS, &ioh))
+			panic("comattach: io mapping failed");
+	} else
+                ioh = comconsioh;
+
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	sc->sc_iobase = iobase;
+
+	if (iobase == comconsaddr) {
+		comconsattached = 1;
+
+		/* 
+		 * Need to reset baud rate, etc. of next print so reset
+		 * comconsinit.  Also make sure console is always "hardwired".
+		 */
+		delay(1000);			/* wait for output to finish */
+		comconsinit = 0;
+		SET(sc->sc_hwflags, COM_HW_CONSOLE);
+		SET(sc->sc_swflags, COM_SW_SOFTCAR);
+	}
 
 	/* look for a NS 16550AF UART with FIFOs */
-	outb(iobase + com_fifo,
+	bus_io_write_1(bc, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 	delay(100);
-	if (ISSET(inb(iobase + com_iir), IIR_FIFO_MASK) == IIR_FIFO_MASK)
-		if (ISSET(inb(iobase + com_fifo), FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
+	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_FIFO_MASK) == IIR_FIFO_MASK)
+		if (ISSET(bus_io_read_1(bc, ioh, com_fifo), FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 			printf(": ns16550a, working fifo\n");
 		} else
 			printf(": ns16550, broken fifo\n");
 	else
 		printf(": ns8250 or ns16450, no fifo\n");
-	outb(iobase + com_fifo, 0);
+	bus_io_write_1(bc, ioh, com_fifo, 0);
 
 	/* disable interrupts */
-	outb(iobase + com_ier, 0);
-	outb(iobase + com_mcr, 0);
+	bus_io_write_1(bc, ioh, com_ier, 0);
+	bus_io_write_1(bc, ioh, com_mcr, 0);
 
  	sc->sc_ih.ih_func = comintr;
  	sc->sc_ih.ih_arg = sc;
@@ -235,12 +320,13 @@ comattach(parent, self, aux)
  		if (irq_claim(mb->mb_irq, &sc->sc_ih))
 			panic("Cannot claim IRQ %d for com%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
 
+
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {
-		if (comconsole == unit)
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 			kgdb_dev = -1;	/* can't debug over console port */
 		else {
-			(void) cominit(unit, kgdb_rate);
+			cominit(bc, ioh, kgdb_rate);
 			if (kgdb_debug_init) {
 				/*
 				 * Print prefix of device name,
@@ -255,15 +341,9 @@ comattach(parent, self, aux)
 	}
 #endif
 
-	if (sc->sc_dev.dv_unit == comconsole) {
-		/*
-		 * Need to reset baud rate, etc. of next print so reset
-		 * comconsinit.  Also make sure console is always "hardwired".
-		 */
-		comconsinit = 0;
-		SET(sc->sc_hwflags, COM_HW_CONSOLE);
-		SET(sc->sc_swflags, COM_SW_SOFTCAR);
-	}
+	/* XXX maybe move up some? */
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		printf("%s: console\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -274,7 +354,8 @@ comopen(dev, flag, mode, p)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc;
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	struct tty *tp;
 	int s;
 	int error = 0;
@@ -298,7 +379,10 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = TTYDEF_CFLAG;
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			tp->t_cflag = comconscflag;
+		else
+			tp->t_cflag = TTYDEF_CFLAG;
 		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
 		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))
@@ -320,24 +404,57 @@ comopen(dev, flag, mode, p)
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
 		sc->sc_ibufend = sc->sc_ibuf + COM_IBUFSIZE;
 
-		iobase = sc->sc_iobase;
-		/* Set the FIFO threshold based on the receive speed. */
+		bc = sc->sc_bc;
+		ioh = sc->sc_ioh;
+#ifdef COM_HAYESP
+		/* Setup the ESP board */
+		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+			bus_io_handle_t hayespioh = sc->sc_hayespioh;
+
+			bus_io_write_1(bc, ioh, com_fifo,
+			     FIFO_DMA_MODE|FIFO_ENABLE|
+			     FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
+
+			/* Set 16550 compatibility mode */
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, 
+			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
+			     HAYESP_MODE_SCALE);
+
+			/* Set RTS/CTS flow control */
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_SETFLOWTYPE);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, HAYESP_FLOW_RTS);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, HAYESP_FLOW_CTS);
+
+			/* Set flow control levels */
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, 
+			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2,
+			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2,
+			     HAYESP_HIBYTE(HAYESP_RXLOWMARK));
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2,
+			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
+		} else
+#endif
 		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-			outb(iobase + com_fifo,
+			/* Set the FIFO threshold based on the receive speed. */
+			bus_io_write_1(bc, ioh, com_fifo,
 			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
 		/* flush any pending I/O */
-		while (ISSET(inb(iobase + com_lsr), LSR_RXRDY))
-			(void) inb(iobase + com_data);
+		while (ISSET(bus_io_read_1(bc, ioh, com_lsr), LSR_RXRDY))
+			(void) bus_io_read_1(bc, ioh, com_data);
 		/* you turn me on, baby */
 		sc->sc_mcr = MCR_DTR | MCR_RTS;
 		if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
 			SET(sc->sc_mcr, MCR_IENABLE);
-		outb(iobase + com_mcr, sc->sc_mcr);
-		outb(iobase + com_ier,
-		    IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+		bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
 
-		sc->sc_msr = inb(iobase + com_msr);
+		sc->sc_msr = bus_io_read_1(bc, ioh, com_msr);
 		if (ISSET(sc->sc_swflags, COM_SW_SOFTCAR) ||
 		    ISSET(sc->sc_msr, MSR_DCD) || ISSET(tp->t_cflag, MDMBUF))
 			SET(tp->t_state, TS_CARR_ON);
@@ -376,7 +493,8 @@ comclose(dev, flag, mode, p)
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int s;
 
 	/* XXX This is for cons.c. */
@@ -386,12 +504,12 @@ comclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = spltty();
 	CLR(sc->sc_lcr, LCR_SBREAK);
-	outb(iobase + com_lcr, sc->sc_lcr);
-	outb(iobase + com_ier, 0);
+	bus_io_write_1(bc, ioh, com_lcr, sc->sc_lcr);
+	bus_io_write_1(bc, ioh, com_ier, 0);
 	if (ISSET(tp->t_cflag, HUPCL) &&
 	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
 		/* XXX perhaps only clear DTR */
-		outb(iobase + com_mcr, 0);
+		bus_io_write_1(bc, ioh, com_mcr, 0);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	if (--comsopen == 0)
@@ -399,7 +517,7 @@ comclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
-	if (unit != comconsole) {
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		ttyfree(tp);
 		sc->sc_tty = 0;
 	}
@@ -465,7 +583,8 @@ comioctl(dev, cmd, data, flag, p)
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = com_cd.cd_devs[unit];
 	struct tty *tp = sc->sc_tty;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -478,29 +597,29 @@ comioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 	case TIOCSBRK:
 		SET(sc->sc_lcr, LCR_SBREAK);
-		outb(iobase + com_lcr, sc->sc_lcr);
+		bus_io_write_1(bc, ioh, com_lcr, sc->sc_lcr);
 		break;
 	case TIOCCBRK:
 		CLR(sc->sc_lcr, LCR_SBREAK);
-		outb(iobase + com_lcr, sc->sc_lcr);
+		bus_io_write_1(bc, ioh, com_lcr, sc->sc_lcr);
 		break;
 	case TIOCSDTR:
 		SET(sc->sc_mcr, sc->sc_dtr);
-		outb(iobase + com_mcr, sc->sc_mcr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCCDTR:
 		CLR(sc->sc_mcr, sc->sc_dtr);
-		outb(iobase + com_mcr, sc->sc_mcr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCMSET:
 		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	case TIOCMBIS:
 		SET(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		outb(iobase + com_mcr, sc->sc_mcr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
-		outb(iobase + com_mcr, sc->sc_mcr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 		break;
 	case TIOCMGET: {
 		u_char m;
@@ -520,7 +639,7 @@ comioctl(dev, cmd, data, flag, p)
 			SET(bits, TIOCM_DSR);
 		if (ISSET(m, MSR_RI | MSR_TERI))
 			SET(bits, TIOCM_RI);
-		if (inb(iobase + com_ier))
+		if (bus_io_read_1(bc, ioh, com_ier))
 			SET(bits, TIOCM_LE);
 		*(int *)data = bits;
 		break;
@@ -575,7 +694,8 @@ comparam(tp, t)
 	struct termios *t;
 {
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
 	tcflag_t oldcflag;
@@ -585,7 +705,7 @@ comparam(tp, t)
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 		return EINVAL;
 
-	lcr = sc->sc_lcr & LCR_SBREAK;
+	lcr = ISSET(sc->sc_lcr, LCR_SBREAK);
 
 	switch (ISSET(t->c_cflag, CSIZE)) {
 	case CS5:
@@ -615,41 +735,69 @@ comparam(tp, t)
 
 	if (ospeed == 0) {
 		CLR(sc->sc_mcr, MCR_DTR);
-		outb(iobase + com_mcr, sc->sc_mcr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 	}
 
 	/*
 	 * Set the FIFO threshold based on the receive speed, if we are
 	 * changing it.
 	 */
+#if 1
 	if (tp->t_ispeed != t->c_ispeed) {
-		if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-			outb(iobase + com_fifo,
+#else
+	if (1) {
+#endif
+		if (ospeed != 0) {
+			/*
+			 * Make sure the transmit FIFO is empty before
+			 * proceeding.  If we don't do this, some revisions
+			 * of the UART will hang.  Interestingly enough,
+			 * even if we do this will the last character is
+			 * still being pushed out, they don't hang.  This
+			 * seems good enough.
+			 */
+			while (ISSET(tp->t_state, TS_BUSY)) {
+				int error;
+
+				++sc->sc_halt;
+				error = ttysleep(tp, &tp->t_outq,
+				    TTOPRI | PCATCH, "comprm", 0);
+				--sc->sc_halt;
+				if (error) {
+					splx(s);
+					comstart(tp);
+					return (error);
+				}
+			}
+
+			bus_io_write_1(bc, ioh, com_lcr, lcr | LCR_DLAB);
+			bus_io_write_1(bc, ioh, com_dlbl, ospeed);
+			bus_io_write_1(bc, ioh, com_dlbh, ospeed >> 8);
+			bus_io_write_1(bc, ioh, com_lcr, lcr);
+			SET(sc->sc_mcr, MCR_DTR);
+			bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		} else
+			bus_io_write_1(bc, ioh, com_lcr, lcr);
+
+		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
+		    ISSET(sc->sc_hwflags, COM_HW_FIFO))
+			bus_io_write_1(bc, ioh, com_fifo,
 			    FIFO_ENABLE |
 			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
-	}
-
-	if (ospeed != 0) {
-		outb(iobase + com_lcr, lcr | LCR_DLAB);
-		outb(iobase + com_dlbl, ospeed);
-		outb(iobase + com_dlbh, ospeed >> 8);
-		outb(iobase + com_lcr, lcr);
-		SET(sc->sc_mcr, MCR_DTR);
-		outb(iobase + com_mcr, sc->sc_mcr);
 	} else
-		outb(iobase + com_lcr, lcr);
+		bus_io_write_1(bc, ioh, com_lcr, lcr);
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	if (!ISSET(t->c_cflag, CRTSCTS)) {
 		if (ISSET(sc->sc_mcr, MCR_DTR)) {
 			if (!ISSET(sc->sc_mcr, MCR_RTS)) {
 				SET(sc->sc_mcr, MCR_RTS);
-				outb(iobase + com_mcr, sc->sc_mcr);
+				bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 			}
 		} else {
 			if (ISSET(sc->sc_mcr, MCR_RTS)) {
 				CLR(sc->sc_mcr, MCR_RTS);
-				outb(iobase + com_mcr, sc->sc_mcr);
+				bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 			}
 		}
 		sc->sc_dtr = MCR_DTR | MCR_RTS;
@@ -671,10 +819,12 @@ comparam(tp, t)
 	    ISSET(oldcflag, MDMBUF) != ISSET(tp->t_cflag, MDMBUF) &&
 	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
 		CLR(sc->sc_mcr, sc->sc_dtr);
-		outb(iobase + com_mcr, sc->sc_mcr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 	}
 
+	/* Just to be sure... */
 	splx(s);
+	comstart(tp);
 	return 0;
 }
 
@@ -683,42 +833,69 @@ comstart(tp)
 	struct tty *tp;
 {
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int s;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_TTSTOP | TS_BUSY))
+	if (ISSET(tp->t_state, TS_BUSY))
 		goto out;
+	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP) ||
+	    sc->sc_halt > 0)
+		goto stopped;
 	if (ISSET(tp->t_cflag, CRTSCTS) && !ISSET(sc->sc_msr, MSR_CTS))
-		goto out;
+		goto stopped;
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup(&tp->t_outq);
 		}
 		if (tp->t_outq.c_cc == 0)
-			goto out;
+			goto stopped;
 		selwakeup(&tp->t_wsel);
 	}
 	SET(tp->t_state, TS_BUSY);
+
+	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
+		SET(sc->sc_ier, IER_ETXRDY);
+		bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+	}
+#ifdef COM_HAYESP
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+		u_char buffer[1024], *cp = buffer;
+		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
+		do
+			bus_io_write_1(bc, ioh, com_data, *cp++);
+		while (--n);
+	}
+	else
+#endif
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 		u_char buffer[16], *cp = buffer;
 		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
 		do {
-			outb(iobase + com_data, *cp++);
+			bus_io_write_1(bc, ioh, com_data, *cp++);
 		} while (--n);
 	} else
-		outb(iobase + com_data, getc(&tp->t_outq));
+		bus_io_write_1(bc, ioh, com_data, getc(&tp->t_outq));
 out:
+	splx(s);
+	return;
+stopped:
+	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
+		CLR(sc->sc_ier, IER_ETXRDY);
+		bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+	}
 	splx(s);
 }
 
 /*
  * Stop output on a line.
  */
-void
+int
 comstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -727,6 +904,7 @@ comstop(tp, flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	splx(s);
+	return 0;
 }
 
 void
@@ -808,7 +986,8 @@ compoll(arg)
 		    !ISSET(sc->sc_mcr, MCR_RTS)) {
 			/* XXX */
 			SET(sc->sc_mcr, MCR_RTS);
-			outb(sc->sc_iobase + com_mcr, sc->sc_mcr);
+			bus_io_write_1(sc->sc_bc, sc->sc_ioh, com_mcr,
+			    sc->sc_mcr);
 		}
 
 		splx(s);
@@ -835,33 +1014,53 @@ comintr(arg)
 	void *arg;
 {
 	struct com_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
+#ifdef COM_DEBUG
+	int n;
+	struct {
+		u_char iir, lsr, msr;
+	} iter[32];
+#endif
 
-	if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
+#ifdef COM_DEBUG
+	n = 0;
+	if (ISSET(iter[n].iir = bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
 		return (0);
+#else
+	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
+		return (0);
+#endif
 
 	tp = sc->sc_tty;
 
 	for (;;) {
-		lsr = inb(iobase + com_lsr);
+#ifdef COM_DEBUG
+		iter[n].lsr =
+#endif
+		lsr = bus_io_read_1(bc, ioh, com_lsr);
 
-		if (ISSET(lsr, LSR_RCV_MASK)) {
+		if (ISSET(lsr, LSR_RXRDY)) {
 			register u_char *p = sc->sc_ibufp;
 
 			comevents = 1;
 			do {
-				data = ISSET(lsr, LSR_RXRDY) ?
-				    inb(iobase + com_data) : 0;
+				data = bus_io_read_1(bc, ioh, com_data);
 				if (ISSET(lsr, LSR_BI)) {
+#ifdef notdef
+					printf("break %02x %02x %02x %02x\n",
+					    sc->sc_msr, sc->sc_mcr, sc->sc_lcr,
+					    sc->sc_dtr);
+#endif
 #ifdef DDB
-					if (sc->sc_dev.dv_unit == comconsole) {
+					if (ISSET(sc->sc_hwflags,
+					    COM_HW_CONSOLE)) {
 						Debugger();
 						goto next;
 					}
 #endif
-					data = '\0';
 				}
 				if (p >= sc->sc_ibufend) {
 					sc->sc_floods++;
@@ -874,22 +1073,30 @@ comintr(arg)
 					    ISSET(tp->t_cflag, CRTSCTS)) {
 						/* XXX */
 						CLR(sc->sc_mcr, MCR_RTS);
-						outb(iobase + com_mcr,
-						     sc->sc_mcr);
+						bus_io_write_1(bc, ioh, com_mcr,
+						    sc->sc_mcr);
 					}
 				}
 			next:
-				lsr = inb(iobase + com_lsr);
-			} while (ISSET(lsr, LSR_RCV_MASK));
+#ifdef COM_DEBUG
+				if (++n >= 32)
+					goto ohfudge;
+				iter[n].lsr =
+#endif
+				lsr = bus_io_read_1(bc, ioh, com_lsr);
+			} while (ISSET(lsr, LSR_RXRDY));
 
 			sc->sc_ibufp = p;
 		}
-#if 0
+#ifdef COM_DEBUG
 		else if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
 			printf("weird lsr %02x\n", lsr);
 #endif
 
-		msr = inb(iobase + com_msr);
+#ifdef COM_DEBUG
+		iter[n].msr =
+#endif
+		msr = bus_io_read_1(bc, ioh, com_msr);
 
 		if (msr != sc->sc_msr) {
 			delta = msr ^ sc->sc_msr;
@@ -898,7 +1105,7 @@ comintr(arg)
 			    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
 			    (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
 				CLR(sc->sc_mcr, sc->sc_dtr);
-				outb(iobase + com_mcr, sc->sc_mcr);
+				bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
 			}
 			if (ISSET(delta & msr, MSR_CTS) &&
 			    ISSET(tp->t_cflag, CRTSCTS)) {
@@ -908,16 +1115,36 @@ comintr(arg)
 		}
 
 		if (ISSET(lsr, LSR_TXRDY) && ISSET(tp->t_state, TS_BUSY)) {
-			CLR(tp->t_state, TS_BUSY);
-			if (ISSET(tp->t_state, TS_FLUSH))
-				CLR(tp->t_state, TS_FLUSH);
-			else
-				(*linesw[tp->t_line].l_start)(tp);
+			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+			if (sc->sc_halt > 0)
+				wakeup(&tp->t_outq);
+			(*linesw[tp->t_line].l_start)(tp);
 		}
 
-		if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
+#ifdef COM_DEBUG
+		if (++n >= 32)
+			goto ohfudge;
+		if (ISSET(iter[n].iir = bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
 			return (1);
+#else
+		if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
+			return (1);
+#endif
 	}
+#ifdef COM_DEBUG
+ohfudge:
+	printf("comintr: too many iterations");
+	for (n = 0; n < 32; n++) {
+		if ((n % 4) == 0)
+			printf("\ncomintr: iter[%02d]", n);
+		printf("  %02x %02x %02x", iter[n].iir, iter[n].lsr, iter[n].msr);
+	}
+	printf("\n");
+	printf("comintr: msr %02x mcr %02x lcr %02x ier %02x\n",
+	    sc->sc_msr, sc->sc_mcr, sc->sc_lcr, sc->sc_ier);
+	printf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
+	    sc->sc_tty->t_outq.c_cc);
+#endif
 }
 
 /*
@@ -929,8 +1156,18 @@ void
 comcnprobe(cp)
 	struct consdev *cp;
 {
+	/* XXX NEEDS TO BE FIXED XXX */
+	bus_chipset_tag_t bc = 0;
+	bus_io_handle_t ioh;
+	int found;
 
-	if (!comprobe1(CONADDR)) {
+	if (bus_io_map(bc, CONADDR, COM_NPORTS, &ioh)) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+	found = comprobe1(bc, ioh, CONADDR);
+	bus_io_unmap(bc, ioh, COM_NPORTS);
+	if (!found) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
@@ -954,27 +1191,35 @@ comcninit(cp)
 	struct consdev *cp;
 {
 
-	cominit(CONUNIT, comdefaultrate);
-	comconsole = CONUNIT;
+#if 0
+	XXX NEEDS TO BE FIXED XXX
+	comconsbc = ???;
+#endif
+	if (bus_io_map(comconsbc, CONADDR, COM_NPORTS, &comconsioh))
+		panic("comcninit: mapping failed");
+
+	cominit(comconsbc, comconsioh, comdefaultrate);
+	comconsaddr = CONADDR;
 	comconsinit = 0;
 }
 
 void
-cominit(unit, rate)
-	int unit, rate;
+cominit(bc, ioh, rate)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	int rate;
 {
 	int s = splhigh();
-	int iobase = CONADDR;
 	u_char stat;
 
-	outb(iobase + com_lcr, LCR_DLAB);
+	bus_io_write_1(bc, ioh, com_lcr, LCR_DLAB);
 	rate = comspeed(comdefaultrate);
-	outb(iobase + com_dlbl, rate);
-	outb(iobase + com_dlbh, rate >> 8);
-	outb(iobase + com_lcr, LCR_8BITS);
-	outb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY);
-	outb(iobase + com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
-	stat = inb(iobase + com_iir);
+	bus_io_write_1(bc, ioh, com_dlbl, rate);
+	bus_io_write_1(bc, ioh, com_dlbh, rate >> 8);
+	bus_io_write_1(bc, ioh, com_lcr, LCR_8BITS);
+	bus_io_write_1(bc, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
+	bus_io_write_1(bc, ioh, com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	stat = bus_io_read_1(bc, ioh, com_iir);
 	splx(s);
 }
 
@@ -983,13 +1228,14 @@ comcngetc(dev)
 	dev_t dev;
 {
 	int s = splhigh();
-	int iobase = CONADDR;
+	bus_chipset_tag_t bc = comconsbc;
+	bus_io_handle_t ioh = comconsioh;
 	u_char stat, c;
 
-	while (!ISSET(stat = inb(iobase + com_lsr), LSR_RXRDY))
+	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_RXRDY))
 		;
-	c = inb(iobase + com_data);
-	stat = inb(iobase + com_iir);
+	c = bus_io_read_1(bc, ioh, com_data);
+	stat = bus_io_read_1(bc, ioh, com_iir);
 	splx(s);
 	return c;
 }
@@ -1003,7 +1249,8 @@ comcnputc(dev, c)
 	int c;
 {
 	int s = splhigh();
-	int iobase = CONADDR;
+	bus_chipset_tag_t bc = comconsbc;
+	bus_io_handle_t ioh = comconsioh;
 	u_char stat;
 	register int timo;
 
@@ -1011,20 +1258,20 @@ comcnputc(dev, c)
 	if (dev != kgdb_dev)
 #endif
 	if (comconsinit == 0) {
-		(void) cominit(COMUNIT(dev), comdefaultrate);
+		cominit(bc, ioh, comdefaultrate);
 		comconsinit = 1;
 	}
 	/* wait for any pending transmission to finish */
 	timo = 50000;
-	while (!ISSET(stat = inb(iobase + com_lsr), LSR_TXRDY) && --timo)
+	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_TXRDY) && --timo)
 		;
-	outb(iobase + com_data, c);
+	bus_io_write_1(bc, ioh, com_data, c);
 	/* wait for this transmission to complete */
 	timo = 1500000;
-	while (!ISSET(stat = inb(iobase + com_lsr), LSR_TXRDY) && --timo)
+	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_TXRDY) && --timo)
 		;
 	/* clear any interrupts generated by this transmission */
-	stat = inb(iobase + com_iir);
+	stat = bus_io_read_1(bc, ioh, com_iir);
 	splx(s);
 }
 
