@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.69 2002/10/22 12:07:20 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.70 2002/12/23 12:13:44 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -561,6 +561,7 @@ int	 mvwprintw(WINDOW *, int, int, const char *, ...)
 int	 mvwscanw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__scanf__, 4, 5)));
 int	 napms(int);
+WINDOW	*newpad(int, int);
 SCREEN  *newterm(char *, FILE *, FILE *);
 WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
@@ -573,6 +574,8 @@ int	 notimeout(WINDOW *, bool);
 int	 overlay(const WINDOW *, WINDOW *);
 int	 overwrite(const WINDOW *, WINDOW *);
 int	 pair_content(short, short *, short *);
+int	 pnoutrefresh(WINDOW *, int, int, int, int, int, int);
+int	 prefresh(WINDOW *, int, int, int, int, int, int);
 int	 printw(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
 int	 raw(void);
@@ -588,6 +591,7 @@ int	 scrollok(WINDOW *, bool);
 int	 setterm(char *);
 SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
+WINDOW	*subpad(WINDOW *, int, int, int, int);
 WINDOW	*subwin(WINDOW *, int, int, int, int);
 int	 touchline(WINDOW *, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
