@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: atzsc.c,v 1.2 1994/05/11 19:06:41 chopps Exp $
+ *	$Id: atzsc.c,v 1.3 1994/05/16 04:55:08 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ atzsc_dmaintr()
 		}
 
 		if (dev->sc_flags & SBICF_INTR && stat & ISTR_INTS)
-			found += sbicintr(i);
+			found += sbicintr(dev);
 	}
 	return(found);
 }
