@@ -1,7 +1,7 @@
-/*	$NetBSD: iomd_irq.S,v 1.18 1998/07/07 03:05:16 mark Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.19 1998/09/05 04:05:31 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,26 +17,22 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * irq.S
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Low level irq and fiq handlers
  *
@@ -81,8 +77,8 @@ Lcurrent_spl_level:
 Lcurrent_intr_depth:
 	.word	_current_intr_depth
 
-	.text
-	.global	irq_entry
+Lspl_masks:
+	.word	_spl_masks
 
 /*
  * Regsister usage
@@ -98,8 +94,6 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-
-/*        mov     r11, #0x00000000*/	/* Trace back stops here */
 
 	/* Load r8 with the IOMD interrupt requests */
 
@@ -136,12 +130,10 @@ ASENTRY_NP(irq_entry)
 	str	r1, [r0]
 
 	/* Block the current requested interrupts */
-
 	ldr	r1, Ldisabled_mask
 	ldr	r0, [r1]
 	stmfd	sp!, {r0}
 	orr	r0, r0, r8
-	str	r0, [r1]
 
 	/*
  	 * Need to block all interrupts at the IPL or lower for
@@ -156,37 +148,37 @@ ASENTRY_NP(irq_entry)
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #0x00000001
-	ldr	r7, Lirqblock
+	mov	r9, #(_SPL_LEVELS - 1)
+	ldr	r7, Lspl_masks
 
-emulate_hwipl_loop:
-	tst	r8, r9
-	ldrne	r6, [r7]
-	orrne	r0, r0, r6
+Lfind_highest_ipl:
+	ldr	r2, [r7, r9, lsl #2]
+	tst	r8, r2
+	subeq	r9, r9, #1
+	beq	Lfind_highest_ipl
 
-	add	r7, r7, #4
-	mov	r9, r9, lsl #1		/* move on to next bit */
-#ifdef CPU_ARM7500
-	teq	r9, #0			/* done the last bit ? */
-#else
-	teq	r9, #(1 << 24)		/* done the last bit ? */
-#endif	/* CPU_ARM7500 */
-	bne	emulate_hwipl_loop	/* no - loop back. */
+	/* r9 = SPL level of highest priority interrupt */
+	add	r9, r9, #1
+	ldr	r2, [r7, r9, lsl #2]
+	mvn	r2, r2
+	orr	r0, r0, r2
 
 	str	r0, [r1]	
 
-	/* Update the IOMD irq masks */
+	ldr	r0, Lcurrent_spl_level
+	ldr	r1, [r0]
+	str	r9, [r0]
+	stmfd	sp!, {r1}
 
+	/* Update the IOMD irq masks */
 	bl	_irq_setmasks
 
         mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #irqhandlers - . - 8]
+	ldr	r7, [pc, #Lirqhandlers - . - 8]
         mov	r9, #0x00000001
-
-	stmfd	sp!, {r8}
 
 irqloop:
 	/* This would benefit from a special ffs type routine */
@@ -199,18 +191,15 @@ irqloop:
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	beq	_stray_irqhandler	/* call special handler */
 
-	ldr	r0, Lcnt
+        ldr	r0, Lcnt		/* Stat info */
 	ldr	r1, [r0, #(V_INTR)]
 	add	r1, r1, #0x00000001
 	str	r1, [r0, #(V_INTR)]
 
-irqchainloop:
-	add	lr, pc, #nextinchain - . - 8	/* return address */
-
-/*
- * XXX: Should stats be accumlated for every interrupt routine called
- * or for every physical interrupt that is serviced.
- */
+	/*
+	 * XXX: Should stats be accumlated for every interrupt routine
+	 * called or for every physical interrupt that is serviced.
+	 */
 
 #ifdef IRQSTATS
 	ldr	r0, Lintrcnt
@@ -222,9 +211,11 @@ irqchainloop:
 	str	r1, [r0]
 #endif	/* IRQSTATS */
 
+irqchainloop:
+	add	lr, pc, #nextinchain - . - 8	/* return address */
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
-	addeq	r0, sp, #8		/* ... stack frame */
+	addeq	r0, sp, #8		/* ... stack frame [XXX needs care] */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
 nextinchain:
@@ -246,7 +237,9 @@ nextirq:
 #endif	/* CPU_ARM7500 */
 	bne	irqloop			/* no - loop back. */
 
-	ldmfd	sp!, {r8}
+	ldmfd	sp!, {r2}
+	ldr	r1, Lcurrent_spl_level
+	str	r2, [r1]
 
 	/* Restore previous disabled mask */
 	ldmfd	sp!, {r2}
@@ -257,7 +250,6 @@ nextirq:
 	bl	_dosoftints		/* Handle the soft interrupts */
 
 	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
-
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
@@ -269,13 +261,11 @@ nextirq:
 	beq	irqast			/* call the AST handler */
 
 	/* Kill IRQ's in preparation for exit */
-
         mrs     r0, cpsr_all
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
 	/* Decrement the nest count */
-
 	ldr	r0, Lcurrent_intr_depth
 	ldr	r1, [r0]
 	sub	r1, r1, #1
@@ -283,7 +273,8 @@ nextirq:
 
 	PULLFRAMEFROMSVCANDEXIT
 
-	movs	pc, lr			/* Exit */
+	/* NOT REACHED */
+	b	. - 8
 
 	/*
 	 * Ok, snag with current intr depth ...
@@ -298,13 +289,11 @@ irqast:
 	str	r1, [r0]
 
 	/* Kill IRQ's so we atomically decrement current_intr_depth */
-
         mrs     r2, cpsr_all
         orr     r3, r2, #(I32_bit)
         msr     cpsr_all, r3
 
-	/* Decrement the nest count */
-
+	/* Decrement the interrupt nesting count */
 	ldr	r0, Lcurrent_intr_depth
 	ldr	r1, [r0]
 	sub	r1, r1, #1
@@ -316,15 +305,15 @@ irqast:
 	mov	r0, sp
 	bl	_ast
 
-/* Kill IRQ's in preparation for exit */
-
+	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
 	PULLFRAMEFROMSVCANDEXIT
 
-	movs	pc, lr			/* Exit */
+	/* NOT REACHED */
+	b	. - 8
 	
 
 Lspl_mask:
@@ -332,9 +321,6 @@ Lspl_mask:
 
 Lcurrent_mask:
 	.word	_current_mask		/* irq's that are usable */
-
-Lirqblock:
-	.word	_irqblock
 
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
@@ -373,7 +359,6 @@ ENTRY(irq_setmasks)
 	msr	cpsr_all, r3
 	mov	pc, lr
 
-
 Lcnt:
 #if defined(UVM)
 	.word	_uvmexp
@@ -385,7 +370,7 @@ Lintrcnt:
 	.word	_intrcnt
 
 
-irqhandlers:
+Lirqhandlers:
 	.word	_irqhandlers		/* Pointer to array of irqhandlers */
 
 Lastpending:
@@ -401,17 +386,17 @@ __intrnames:
 
 	.data
 
-        .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
+        .globl  _intrnames, _eintrnames, _intrcnt, _sintrcnt, _eintrcnt
 _intrnames:
 	.asciz	"interrupt  0 "
-	.asciz	"softnet      "	/* reserved0 */
+	.asciz	"interrupt  1 "	/* reserved0 */
 	.asciz	"interrupt  2 "
 	.asciz	"interrupt  3 "
 	.asciz	"interrupt  4 "
 	.asciz	"interrupt  5 "
 	.asciz	"interrupt  6 "
-	.asciz	"softclock    "	/* reserved1 */
-	.asciz	"softplip     " /* reserved2 */
+	.asciz	"interrupt  7 "	/* reserved1 */
+	.asciz	"interrupt  8 " /* reserved2 */
 	.asciz	"interrupt  9 "
 	.asciz	"interrupt 10 "
 	.asciz	"interrupt 11 "
@@ -435,16 +420,53 @@ _intrnames:
 	.asciz	"exp card 5   "
 	.asciz	"exp card 6   "
 	.asciz	"exp card 7   "
+
+_sintrnames:
+	.asciz	"softclock    "
+	.asciz	"softnet      "
+	.asciz	"softserial   "
+	.asciz	"softintr  3  "
+	.asciz	"softintr  4  "
+	.asciz	"softintr  5  "
+	.asciz	"softintr  6  "
+	.asciz	"softintr  7   "
+	.asciz	"softintr  8  "
+	.asciz	"softintr  9  "
+	.asciz	"softintr 10  "
+	.asciz	"softintr 11  "
+	.asciz	"softintr 12  "
+	.asciz	"softintr 13  "
+	.asciz	"softintr 14  "
+	.asciz	"softintr 15  "
+	.asciz	"softintr 16  "
+	.asciz	"softintr 17  "
+	.asciz	"softintr 18  "
+	.asciz	"softintr 19  "
+	.asciz	"softintr 20  "
+	.asciz	"softintr 21  "
+	.asciz	"softintr 22  "
+	.asciz	"softintr 23  "
+	.asciz	"softintr 24  "
+	.asciz	"softintr 25  "
+	.asciz	"softintr 26  "
+	.asciz	"softintr 27  "
+	.asciz	"softintr 28  "
+	.asciz	"softintr 29  "
+	.asciz	"softintr 30  "
+	.asciz	"softintr 31  "
 _eintrnames:
 
 	.bss
 	.align	0
 _intrcnt:
 	.space	32*4	/* XXX Should be linked to number of interrupts */
+
+_sintrcnt:
+	.space	32*4	/* XXX Should be linked to number of interrupts */
 _eintrcnt:
 
 #else	/* IRQSTATS */
-/* Dummy entries to keep vmstat happy */
+	/* Dummy entries to keep vmstat happy */
 
 	.text
         .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
