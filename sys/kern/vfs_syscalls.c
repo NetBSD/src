@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.66 1996/02/09 14:45:36 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.67 1996/02/09 15:39:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1070,12 +1070,11 @@ sys_unlink(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, DELETE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, UIO_USERSPACE,
+	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
 
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
@@ -1091,8 +1090,10 @@ sys_unlink(p, v, retval)
 		goto out;
 	}
 
+	if (vp->v_flag & VTEXT)
+		(void)vnode_pager_uncache(vp);
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-	(void)vnode_pager_uncache(vp);
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 out:
 	return (error);
