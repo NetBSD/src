@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.24 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.25 2002/10/27 21:43:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.24 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.25 2002/10/27 21:43:35 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -337,7 +337,7 @@ static char *
 _rl_compat_sub(const char *str, const char *what, const char *with,
     int globally)
 {
-	char *result, *r;
+	char *result;
 	const char *temp, *new;
 	int len, with_len, what_len, add;
 	size_t size, i;
