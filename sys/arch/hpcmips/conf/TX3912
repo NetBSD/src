@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.15 2000/04/09 14:14:50 uch Exp $
+#	$NetBSD: TX3912,v 1.16 2000/04/24 12:59:43 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -47,6 +47,7 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
+options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	COMPAT_43
 
 options 	SCSIVERBOSE	# human readable SCSI error messages
