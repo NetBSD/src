@@ -571,7 +571,8 @@ decl_attributes (node, attributes, prefix_attributes)
 	      format_kind = F_USER|F_SCAN;
 	    else
 	      {
-		error ("unrecognized format specifier for `%s'");
+		error_with_decl (decl,
+			"unrecognized format specifier for `%s'");
 		continue;
 	      }
 
