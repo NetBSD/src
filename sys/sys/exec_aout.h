@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.16 1996/09/30 16:35:11 ws Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.17 1996/10/08 13:10:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -166,6 +166,7 @@ struct exec {
 #define	N_STROFF(ex) \
 	(N_SYMOFF(ex) + (ex).a_syms)
 
+#include <machine/aout_machdep.h>
 
 #ifdef _KERNEL
 

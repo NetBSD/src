@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.60 1996/10/08 13:10:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -209,4 +209,3 @@ extern int	exec_maxhdrsz;
 #endif /* _KERNEL */
 
 #include <sys/exec_aout.h>
-#include <machine/exec.h>
