@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.54 2002/09/18 23:33:37 mycroft Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.55 2002/10/01 05:56:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.54 2002/09/18 23:33:37 mycroft Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.55 2002/10/01 05:56:12 itojun Exp $");
 #endif
 #endif
 
@@ -207,7 +207,6 @@ __RCSID("$NetBSD: traceroute.c,v 1.54 2002/09/18 23:33:37 mycroft Exp $");
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
@@ -233,6 +232,7 @@ __RCSID("$NetBSD: traceroute.c,v 1.54 2002/09/18 23:33:37 mycroft Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 #ifdef IPSEC
 #include <net/route.h>
 #include <netinet6/ipsec.h>
