@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 1998/02/22 14:48:27 drochner Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 1998/02/27 18:57:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -138,7 +138,7 @@ readdisklabel(dev, strat, lp, osdep)
 		if (!ourdp) {
 			for (i = 0; i < NDOSPART; i++) {
 				if (dp[i].dp_typ == DOSPTYP_386BSD) {
-					printf("old BSD partition ID!\n");
+					printf("WARNING: old BSD partition ID!\n");
 					ourdp = &dp[i];
 					break;
 				}
@@ -362,7 +362,7 @@ writedisklabel(dev, strat, lp, osdep)
 		if (!ourdp) {
 			for (i = 0; i < NDOSPART; i++) {
 				if (dp[i].dp_typ == DOSPTYP_386BSD) {
-					printf("old BSD partition ID!\n");
+					printf("WARNING: old BSD partition ID!\n");
 					ourdp = &dp[i];
 					break;
 				}
