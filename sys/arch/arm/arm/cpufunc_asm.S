@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.3 2001/06/03 18:32:33 chris Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.4 2001/06/05 09:19:33 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -871,3 +871,24 @@ ENTRY(sa110_context_switch)
  *  clean D cache entry and flush I cache entry
  *   for the moment use cache_purgeID_E
  */
+
+/* Random odd functions */
+
+/*
+ * Function to get the offset of a stored program counter from the
+ * instruction doing the store.  This offset is defined to be the same
+ * for all STRs and STMs on a given implementation.  Code based on
+ * section 2.4.3 of the ARM ARM (2nd Ed.), with modifications to work
+ * in 26-bit modes as well.
+ */
+ENTRY(get_pc_str_offset)
+	mov	ip, sp
+	stmfd	sp!, {ip, fp, lr, pc}
+	sub	fp, ip, #4
+	sub	sp, sp, #4
+	mov	r1, pc		/* R1 = addr of following STR */
+	mov	r0, r0
+	str	pc, [sp]	/* [SP] = . + offset */
+	ldr	r0, [sp]
+	sub	r0, r0, r1
+	ldmdb	fp, {sp, fp, pc}
