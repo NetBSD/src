@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: setjmp.S,v 1.2 1994/05/10 08:15:57 chopps Exp $"
+	.asciz "$Id: setjmp.S,v 1.3 1994/08/04 05:00:50 chopps Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -86,8 +86,8 @@ ENTRY(longjmp)
 	moveq	#1,d0		/* else make non-zero */
 ok:
 	moveml	a0@(28),#0x3CFC	/* restore non-scratch regs */
-	movl	a0,sp@-		/* let sigreturn */
-	jbsr	_sigreturn	/*   finish for us */
+	trap	#1		/* let sigreturn finish job */
+	jbsr	cerror		/* set errno */
 
 botch:
 	jbsr	_longjmperror
