@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.26 2003/02/19 23:55:48 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.27 2003/02/24 07:15:40 matt Exp $
 #
 # Makefile for NetBSD
 #
@@ -45,7 +45,9 @@ AFLAGS+=	${AOPTS}
 ##
 ## (3) libkern and compat
 ##
+.if !empty(IDENT:M-DLKM)
 KERN_AS=	obj
+.endif
 
 ##
 ## (4) local objects, compile rules, and dependencies
