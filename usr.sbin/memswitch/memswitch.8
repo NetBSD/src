@@ -1,0 +1,85 @@
+.\" $NetBSD: memswitch.8,v 1.1.1.1 1999/06/21 15:56:03 minoura Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Minoura Makoto.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the NetBSD
+.\"	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"/
+.Dd 
+.Dt MEMSWITCH 8 x68k
+.Os
+.Sh NAME
+.Nm memswitch
+.Nd get or set x68k memory switch
+.Sh SYNOPSIS
+.Nm
+.Fl a
+.Nm ""
+.Op Fl h
+.Op Fl n
+.Ar variable ...
+.Nm ""
+.Fl w Ar variable=value ...
+.Nm ""
+.Fl r Ar filename
+.Nm ""
+.Fl s Ar filename
+.Sh DESCRIPTION
+The
+.Nm
+command gets or sets the x68k memory switch stored in the non-volatile
+static ram.
+.Pp
+The first form shows the current values of all the variables of the memory
+switch.
+.Pp
+The second form shows the current values of the specified variables.  If the
+.Fl h
+flag is specified, a brief descriptions of the variables are displayed.
+The
+.Fl n
+flag suppresses printing of the variable name.
+.Pp
+The third form sets or modifies the specified variables to the given value.
+.Pp
+In the fourth and fifth form, the whole memory switch part of non-volatile
+SRAM is saved to, or restored from the specified file, respectively.
+.Sh FILES
+.Bl -tag -width /dev/sram
+.It Pa /dev/sram
+non-volatile static memory control device
+.El
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.5 .
