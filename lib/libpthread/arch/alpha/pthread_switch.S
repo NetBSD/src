@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.1 2001/09/25 19:49:06 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2001/12/17 22:07:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ NESTED(pthread__locked_switch, 3, CONTEXTSIZE + 32, ra, 0x00030000, 0)
 	/* Edit the context to make it continue below, rather than here */
 	lda	t3, 32(sp)
 	lda	t1, locked_return_point
-	stq	t1, UC_PC(t3)
+	stq	t1, (UC_GREGS + _REG_PC * 8)(t3)
 	
 	STACK_SWITCH(a1, t2)
 
