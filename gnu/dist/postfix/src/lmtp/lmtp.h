@@ -61,7 +61,7 @@ typedef struct LMTP_STATE {
 #define LMTP_FEATURE_8BITMIME	(1<<1)
 #define LMTP_FEATURE_PIPELINING	(1<<2)
 #define LMTP_FEATURE_SIZE	(1<<3)
-#define SMTP_FEATURE_AUTH	(1<<5)
+#define LMTP_FEATURE_AUTH	(1<<5)
 
  /*
   * lmtp.c

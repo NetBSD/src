@@ -154,6 +154,7 @@
 #include <watchdog.h>
 #include <clean_env.h>
 #include <argv.h>
+#include <safe.h>
 
 /* Global library. */
 
@@ -241,6 +242,16 @@ int     main(int argc, char **argv)
     msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
 
     /*
+     * The mail system must be run by the superuser so it can revoke
+     * privileges for selected operations. That's right - it takes privileges
+     * to toss privileges.
+     */
+    if (getuid() != 0)
+	msg_fatal("the master command is reserved for the superuser");
+    if (unsafe() != 0)
+	msg_fatal("the master command must not run as a set-uid process");
+
+    /*
      * If started from a terminal, get rid of any tty association. This also
      * means that all errors and warnings must go to the syslog daemon.
      */
@@ -256,8 +267,11 @@ int     main(int argc, char **argv)
      * when a service listens on many ports. In order to do this right we
      * must change the master-child interface so that descriptors do not need
      * to have fixed numbers.
+     * 
+     * In a child we need two descriptors for the flow control pipe, one for
+     * child->master status updates and at least one for listening.
      */
-    for (n = 0; n < 3; n++) {
+    for (n = 0; n < 5; n++) {
 	if (close_on_exec(dup(0), CLOSE_ON_EXEC) < 0)
 	    msg_fatal("dup(0): %m");
     }
@@ -349,6 +363,7 @@ int     main(int argc, char **argv)
      */
     master_config();
     master_sigsetup();
+    master_flow_init();
     msg_info("daemon started");
 
     /*

@@ -5,11 +5,10 @@
 /*	multi-threaded SMTP/LMTP test server
 /* SYNOPSIS
 /* .fi
-/*	\fBsmtp-sink\fR [\fB-cLpv\fR] [\fB-w \fIdelay\fR]
-/*	[\fBinet:\fR][\fIhost\fR]:\fIport\fR \fIbacklog\fR
+/*	\fBsmtp-sink\fR [\fIoptions\fR] [\fBinet:\fR][\fIhost\fR]:\fIport\fR
+/*	\fIbacklog\fR
 /*
-/*	\fBsmtp-sink\fR [\fB-cLpv\fR] [\fB-w \fIdelay\fR]
-/*	\fBunix:\fR\fIpathname\fR \fIbacklog\fR
+/*	\fBsmtp-sink\fR [\fIoptions\fR] \fBunix:\fR\fIpathname\fR \fIbacklog\fR
 /* DESCRIPTION
 /*	\fIsmtp-sink\fR listens on the named host (or address) and port.
 /*	It takes SMTP messages from the network and throws them away.
@@ -18,17 +17,33 @@
 /*	Connections can be accepted on IPV4 endpoints or UNIX-domain sockets.
 /*	IPV4 is the default.
 /*	This program is the complement of the \fIsmtp-source\fR program.
-/* .IP -c
+/*
+/*	Arguments:
+/* .IP \fB-c\fR
 /*	Display a running counter that is updated whenever an SMTP
 /*	QUIT command is executed.
-/* .IP -L
+/* .IP \fB-L\fR
 /*	Speak LMTP rather than SMTP.
-/* .IP -p
+/* .IP "\fB-n \fIcount\fR"
+/*	Terminate after \fIcount\fR sessions. This is for testing purposes.
+/* .IP \fB-p\fR
 /*	Disable ESMTP command pipelining.
-/* .IP -v
+/* .IP \fB-P\fR
+/*	Change the server greeting so that it appears to come through
+/*	a CISCO PIX system.
+/* .IP \fB-v\fR
 /*	Show the SMTP conversations.
-/* .IP "-w delay"
+/* .IP "\fB-w \fIdelay\fR"
 /*	Wait \fIdelay\fR seconds before responding to a DATA command.
+/* .IP [\fBinet:\fR][\fIhost\fR]:\fIport\fR
+/*	Listen on network interface \fIhost\fR (default: any interface)
+/*	TCP port \fIport\fR. Both \fIhost\fR and \fIport\fR may be
+/*	specified in numeric or symbolic form.
+/* .IP \fBunix:\fR\fIpathname\fR
+/*	Listen on the UNIX-domain socket at \fIpathname\fR.
+/* .IP \fIbacklog\fR
+/*	The maximum length the queue of pending connections,
+/*	as defined by the listen(2) call.
 /* SEE ALSO
 /*	smtp-source, SMTP/LMTP test message generator
 /* LICENSE
@@ -77,6 +92,7 @@
 
 typedef struct SINK_STATE {
     VSTREAM *stream;
+    VSTRING *buffer;
     int     data_state;
     int     (*read) (struct SINK_STATE *);
     int     rcpts;
@@ -90,17 +106,18 @@ typedef struct SINK_STATE {
 #define ST_CR_LF_DOT_CR_LF	5
 
 static int var_tmout;
-static int var_max_line_length;
+static int var_max_line_length = 2048;
 static char *var_myhostname;
-static VSTRING *buffer;
 static int command_read(SINK_STATE *);
 static int data_read(SINK_STATE *);
 static void disconnect(SINK_STATE *);
 static int count;
 static int counter;
+static int max_count;
 static int disable_pipelining;
 static int fixed_delay;
 static int enable_lmtp;
+static int pretend_pix;
 
 /* ehlo_response - respond to EHLO command */
 
@@ -197,11 +214,10 @@ static int data_read(SINK_STATE *state)
     struct data_trans *dp;
 
     /*
-     * We must avoid blocking I/O, so get out of here as soon as both the
-     * VSTREAM and kernel read buffers dry up.
+     * A read may result in EOF, but is never supposed to time out - a time
+     * out means that we were trying to read when no data was available.
      */
-    while (vstream_peek(state->stream) > 0
-	   || peekfd(vstream_fileno(state->stream)) > 0) {
+    for (;;) {
 	if ((ch = VSTREAM_GETC(state->stream)) == VSTREAM_EOF)
 	    return (-1);
 	for (dp = data_trans; dp->state != state->data_state; dp++)
@@ -224,8 +240,17 @@ static int data_read(SINK_STATE *state)
 		msg_info(".");
 	    dot_response(state);
 	    state->read = command_read;
+	    state->data_state = ST_ANY;
 	    break;
 	}
+
+	/*
+	 * We must avoid blocking I/O, so get out of here as soon as both the
+	 * VSTREAM and kernel read buffers dry up.
+	 */
+	if (vstream_peek(state->stream) <= 0
+	    && peekfd(vstream_fileno(state->stream)) <= 0)
+	    return (0);
     }
     return (0);
 }
@@ -258,9 +283,74 @@ static int command_read(SINK_STATE *state)
 {
     char   *command;
     SINK_COMMAND *cmdp;
+    int     ch;
+    struct cmd_trans {
+	int     state;
+	int     want;
+	int     next_state;
+    };
+    static struct cmd_trans cmd_trans[] = {
+	ST_ANY, '\r', ST_CR,
+	ST_CR, '\n', ST_CR_LF,
+    };
+    struct cmd_trans *cp;
 
-    smtp_get(buffer, state->stream, var_max_line_length);
-    if ((command = strtok(vstring_str(buffer), " \t")) == 0) {
+    /*
+     * A read may result in EOF, but is never supposed to time out - a time
+     * out means that we were trying to read when no data was available.
+     */
+    for (;;) {
+	if ((ch = VSTREAM_GETC(state->stream)) == VSTREAM_EOF)
+	    return (-1);
+
+	/*
+	 * Sanity check. We don't want to store infinitely long commands.
+	 */
+	if (VSTRING_LEN(state->buffer) >= var_max_line_length) {
+	    msg_warn("command line too long");
+	    return (-1);
+	}
+	VSTRING_ADDCH(state->buffer, ch);
+
+	/*
+	 * Try to match the current character desired by the state machine.
+	 * If that fails, try to restart the machine with a match for its
+	 * first state.
+	 */
+	for (cp = cmd_trans; cp->state != state->data_state; cp++)
+	     /* void */ ;
+	if (ch == cp->want)
+	    state->data_state = cp->next_state;
+	else if (ch == cmd_trans[0].want)
+	    state->data_state = cmd_trans[0].next_state;
+	else
+	    state->data_state = ST_ANY;
+	if (state->data_state == ST_CR_LF)
+	    break;
+
+	/*
+	 * We must avoid blocking I/O, so get out of here as soon as both the
+	 * VSTREAM and kernel read buffers dry up.
+	 */
+	if (vstream_peek(state->stream) <= 0
+	    && peekfd(vstream_fileno(state->stream)) <= 0)
+	    return (0);
+    }
+
+    /*
+     * Properly terminate the result, and reset the buffer write pointer for
+     * reading the next command. This is ugly, but not as ugly as trying to
+     * deal with all the early returns below.
+     */
+    vstring_truncate(state->buffer, VSTRING_LEN(state->buffer) - 2);
+    VSTRING_TERMINATE(state->buffer);
+    state->data_state = ST_ANY;
+    VSTRING_RESET(state->buffer);
+
+    /*
+     * Got a complete command line. Parse it.
+     */
+    if ((command = strtok(vstring_str(state->buffer), " \t")) == 0) {
 	smtp_printf(state->stream, "500 Error: unknown command");
 	return (0);
     }
@@ -321,7 +411,10 @@ static void disconnect(SINK_STATE *state)
 {
     event_disable_readwrite(vstream_fileno(state->stream));
     vstream_fclose(state->stream);
+    vstring_free(state->buffer);
     myfree((char *) state);
+    if (max_count > 0 && counter >= max_count)
+	exit(0);
 }
 
 /* connect_event - handle connection events */
@@ -350,9 +443,13 @@ static void connect_event(int unused_event, char *context)
 	non_blocking(fd, NON_BLOCKING);
 	state = (SINK_STATE *) mymalloc(sizeof(*state));
 	state->stream = vstream_fdopen(fd, O_RDWR);
+	state->buffer = vstring_alloc(1024);
 	state->read = command_read;
-	state->data_state = 0;
+	state->data_state = ST_ANY;
 	smtp_timeout_setup(state->stream, var_tmout);
+if (pretend_pix)
+	smtp_printf(state->stream, "220 ********");
+else
 	smtp_printf(state->stream, "220 %s ESMTP", var_myhostname);
 	event_enable_read(fd, read_event, (char *) state);
     }
@@ -362,7 +459,7 @@ static void connect_event(int unused_event, char *context)
 
 static void usage(char *myname)
 {
-    msg_fatal("usage: %s [-cLpv] [host]:port backlog", myname);
+    msg_fatal("usage: %s [-cLpPv] [-n count] [-w delay] [host]:port backlog", myname);
 }
 
 int     main(int argc, char **argv)
@@ -379,7 +476,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "cLpvw:")) > 0) {
+    while ((ch = GETOPT(argc, argv, "cLn:pPvw:")) > 0) {
 	switch (ch) {
 	case 'c':
 	    count++;
@@ -387,8 +484,14 @@ int     main(int argc, char **argv)
 	case 'L':
 	    enable_lmtp = 1;
 	    break;
+	case 'n':
+	    max_count = atoi(optarg);
+	    break;
 	case 'p':
 	    disable_pipelining = 1;
+	    break;
+	case 'P':
+	    pretend_pix=1;
 	    break;
 	case 'v':
 	    msg_verbose++;
@@ -409,7 +512,6 @@ int     main(int argc, char **argv)
     /*
      * Initialize.
      */
-    buffer = vstring_alloc(1024);
     var_myhostname = "smtp-sink";
     if (strncmp(argv[optind], "unix:", 5) == 0) {
 	sock = unix_listen(argv[optind] + 5, backlog, BLOCKING);

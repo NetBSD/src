@@ -95,6 +95,9 @@
 /*	Function to be executed prior to accepting a new connection.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
+/* .IP "MAIL_SERVER_IN_FLOW_DELAY (none)"
+/*	Pause $in_flow_delay seconds when no "mail flow control token"
+/*	is available. A token is consumed for each connection request.
 /* .PP
 /*	multi_server_disconnect() should be called by the application
 /*	when a client disconnects.
@@ -168,6 +171,7 @@
 #include <mail_conf.h>
 #include <timed_ipc.h>
 #include <resolve_local.h>
+#include <mail_flow.h>
 
 /* Process manager. */
 
@@ -190,6 +194,7 @@ static void (*multi_server_accept) (int, char *);
 static void (*multi_server_onexit) (char *, char **);
 static void (*multi_server_pre_accept) (char *, char **);
 static VSTREAM *multi_server_lock;
+static int multi_server_in_flow_delay;
 
 /* multi_server_exit - normal termination */
 
@@ -253,11 +258,21 @@ static void multi_server_execute(int unused_event, char *context)
 	event_request_timer(multi_server_timeout, (char *) 0, var_idle_limit);
 }
 
+/* multi_server_enable_read - enable read events */
+
+static void multi_server_enable_read(int unused_event, char *context)
+{
+    VSTREAM *stream = (VSTREAM *) context;
+
+    event_enable_read(vstream_fileno(stream), multi_server_execute, (char *) stream);
+}
+
 /* multi_server_wakeup - wake up application */
 
 static void multi_server_wakeup(int fd)
 {
     VSTREAM *stream;
+    char   *tmp;
 
     if (msg_verbose)
 	msg_info("connection established fd %d", fd);
@@ -265,8 +280,15 @@ static void multi_server_wakeup(int fd)
     close_on_exec(fd, CLOSE_ON_EXEC);
     client_count++;
     stream = vstream_fdopen(fd, O_RDWR);
+    tmp = concatenate(multi_server_name, " socket", (char *) 0);
+    vstream_control(stream, VSTREAM_CTL_PATH, tmp, VSTREAM_CTL_END);
+    myfree(tmp);
     timed_ipc_setup(stream);
-    event_enable_read(fd, multi_server_execute, (char *) stream);
+    if (multi_server_in_flow_delay && mail_flow_get(1) < 0)
+	event_request_timer(multi_server_enable_read, (char *) stream,
+			    var_in_flow_delay);
+    else
+	multi_server_enable_read(0, (char *) stream);
 }
 
 /* multi_server_accept_local - accept client connection request */
@@ -498,6 +520,9 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	case MAIL_SERVER_PRE_ACCEPT:
 	    multi_server_pre_accept = va_arg(ap, MAIL_SERVER_ACCEPT_FN);
 	    break;
+	case MAIL_SERVER_IN_FLOW_DELAY:
+	    multi_server_in_flow_delay = 1;
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -611,6 +636,8 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     }
     event_enable_read(MASTER_STATUS_FD, multi_server_abort, (char *) 0);
     close_on_exec(MASTER_STATUS_FD, CLOSE_ON_EXEC);
+    close_on_exec(MASTER_FLOW_READ, CLOSE_ON_EXEC);
+    close_on_exec(MASTER_FLOW_WRITE, CLOSE_ON_EXEC);
     watchdog = watchdog_create(var_daemon_timeout, (WATCHDOG_FN) 0, (char *) 0);
 
     /*

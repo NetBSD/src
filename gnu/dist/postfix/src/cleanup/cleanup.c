@@ -35,7 +35,7 @@
 /*	header addresses (i.e. strip host or domain information below
 /*	all domains listed in the \fBmasquerade_domains\fR parameter,
 /*	except for user names listed in \fBmasquerade_exceptions\fR).
-/*	Address masquerading does not affect envelope recipients.
+/*	By default, address masquerading does not affect envelope recipients.
 /* .IP \(bu
 /*	Optionally, expand envelope recipients according to information
 /*	found in the \fBvirtual\fR(5) lookup tables.
@@ -94,6 +94,10 @@
 /* .IP \fBsender_canonical_maps\fR
 /*	Address mapping lookup table for envelope and header sender
 /*	addresses.
+/* .IP \fBmasquerade_classes\fR
+/*      List of address classes subject to masquerading: zero or
+/*      more of \fBenvelope_sender\fR, \fBenvelope_recipient\fR,
+/*	\fBheader_sender\fR, \fBheader_recipient\fR.
 /* .IP \fBmasquerade_domains\fR
 /*	List of domains that hide their subdomain structure.
 /* .IP \fBmasquerade_exceptions\fR
@@ -107,6 +111,9 @@
 /*	Limit the number of envelope recipients that are remembered.
 /* .IP \fBheader_size_limit\fR
 /*	Limit the amount of memory in bytes used to process a message header.
+/* .IP \fBin_flow_delay\fR
+/*	Amount of time to pause before accepting a message, when the
+/*	message arrival rate exceeds the message delivery rate.
 /* .IP \fBextract_recipient_limit\fR
 /*	Limit the amount of recipients extracted from message headers.
 /* SEE ALSO
@@ -184,8 +191,12 @@ static void cleanup_service(VSTREAM *src, char *unused_service, char **argv)
      * can't read the client processing options we can pretty much forget
      * about the whole operation.
      */
-    mail_print(src, "%s", state->queue_id);
-    if (mail_scan(src, "%d", &flags) != 1) {
+    attr_print(src, ATTR_FLAG_NONE,
+	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, state->queue_id,
+	       ATTR_TYPE_END);
+    if (attr_scan(src, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &flags,
+		  ATTR_TYPE_END) != 1) {
 	state->errs |= CLEANUP_STAT_BAD;
 	flags = 0;
     }
@@ -223,7 +234,12 @@ static void cleanup_service(VSTREAM *src, char *unused_service, char **argv)
     /*
      * Finish this message, and report the result status to the client.
      */
-    mail_print(src, "%d", cleanup_close(state));
+    attr_print(src, ATTR_FLAG_NONE,
+	       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, cleanup_flush(state),
+	       ATTR_TYPE_STR, MAIL_ATTR_WHY, state->reason ?
+	       state->reason : "",
+	       ATTR_TYPE_END);
+    cleanup_free(state);
 
     /*
      * Cleanup.
@@ -271,5 +287,6 @@ int     main(int argc, char **argv)
 		       MAIL_SERVER_PRE_INIT, cleanup_pre_jail,
 		       MAIL_SERVER_POST_INIT, cleanup_post_jail,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
+		       MAIL_SERVER_IN_FLOW_DELAY,
 		       0);
 }

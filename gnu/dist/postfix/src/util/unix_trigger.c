@@ -15,6 +15,10 @@
 /*	unix_trigger() wakes up the named UNIX-domain server by making
 /*	a brief connection to it and writing the named buffer.
 /*
+/*	The connection is closed by a background thread. Some kernels
+/*	cannot handle client-side disconnect before the server has
+/*	received the message.
+/*
 /*	Arguments:
 /* .IP service
 /*	Name of the communication endpoint.
@@ -43,6 +47,7 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -51,13 +56,41 @@
 #include <msg.h>
 #include <connect.h>
 #include <iostuff.h>
+#include <mymalloc.h>
+#include <events.h>
 #include <trigger.h>
+
+struct unix_trigger {
+    int     fd;
+    char   *service;
+};
+
+/* unix_trigger_event - disconnect from peer */
+
+static void unix_trigger_event(int event, char *context)
+{
+    struct unix_trigger *up = (struct unix_trigger *) context;
+    static char *myname = "unix_trigger_event";
+
+    /*
+     * Disconnect.
+     */
+    if (event == EVENT_TIME)
+	msg_warn("%s: read timeout for service %s", myname, up->service);
+    event_disable_readwrite(up->fd);
+    event_cancel_timer(unix_trigger_event, context);
+    if (close(up->fd) < 0)
+	msg_warn("%s: close %s: %m", myname, up->service);
+    myfree(up->service);
+    myfree((char *) up);
+}
 
 /* unix_trigger - wakeup UNIX-domain server */
 
 int     unix_trigger(const char *service, const char *buf, int len, int timeout)
 {
     char   *myname = "unix_trigger";
+    struct unix_trigger *up;
     int     fd;
 
     if (msg_verbose > 1)
@@ -71,19 +104,28 @@ int     unix_trigger(const char *service, const char *buf, int len, int timeout)
 	    msg_warn("%s: connect to %s: %m", myname, service);
 	return (-1);
     }
+    close_on_exec(fd, CLOSE_ON_EXEC);
+
+    /*
+     * Stash away context.
+     */
+    up = (struct unix_trigger *) mymalloc(sizeof(*up));
+    up->fd = fd;
+    up->service = mystrdup(service);
 
     /*
      * Write the request...
      */
-    if (write_buf(fd, buf, len, timeout) < 0)
+    if (write_buf(fd, buf, len, timeout) < 0
+	|| write_buf(fd, "", 1, timeout) < 0)
 	if (msg_verbose)
 	    msg_warn("%s: write to %s: %m", myname, service);
 
     /*
-     * Disconnect.
+     * Wakeup when the peer disconnects, or when we lose patience.
      */
-    if (close(fd) < 0)
-	if (msg_verbose)
-	    msg_warn("%s: close %s: %m", myname, service);
+    if (timeout > 0)
+	event_request_timer(unix_trigger_event, (char *) up, timeout + 100);
+    event_enable_read(fd, unix_trigger_event, (char *) up);
     return (0);
 }

@@ -90,6 +90,7 @@ extern VSTREAM *vstream_fdopen(int, int);
 #define VSTREAM_GETCHAR()	VSTREAM_GETC(VSTREAM_IN)
 
 #define vstream_fileno(vp)	((vp)->fd)
+#define vstream_context(vp)	((vp)->context)
 #define vstream_ferror(vp)	vbuf_error(&(vp)->buf)
 #define vstream_feof(vp)	vbuf_eof(&(vp)->buf)
 #define vstream_ftimeout(vp)	vbuf_timeout(&(vp)->buf)

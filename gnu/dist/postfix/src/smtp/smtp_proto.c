@@ -82,6 +82,7 @@
 #include <vstring_vstream.h>
 #include <stringops.h>
 #include <mymalloc.h>
+#include <iostuff.h>
 
 /* Global library. */
 
@@ -174,6 +175,14 @@ int     smtp_helo(SMTP_STATE *state)
 			 session->namaddr, translit(resp->str, "\n", " ")));
 
     /*
+     * XXX Some PIX firewall versions require flush before ".<CR><LF>" so it
+     * does not span a packet boundary. This hurts performance so it is not
+     * on by default.
+     */
+    if (resp->str[strspn(resp->str, "20 *\t\n")] == 0)
+	state->features |= SMTP_FEATURE_MAYBEPIX;
+
+    /*
      * See if we are talking to ourself. This should not be possible with the
      * way we implement DNS lookups. However, people are known to sometimes
      * screw up the naming service. And, mailer loops are still possible when
@@ -188,9 +197,9 @@ int     smtp_helo(SMTP_STATE *state)
 	} else if (strcasecmp(word, "ESMTP") == 0)
 	    state->features |= SMTP_FEATURE_ESMTP;
     }
-    if (var_smtp_always_ehlo)
+    if (var_smtp_always_ehlo && (state->features & SMTP_FEATURE_MAYBEPIX) == 0)
 	state->features |= SMTP_FEATURE_ESMTP;
-    if (var_smtp_never_ehlo)
+    if (var_smtp_never_ehlo || (state->features & SMTP_FEATURE_MAYBEPIX) != 0)
 	state->features &= ~SMTP_FEATURE_ESMTP;
 
     /*
@@ -217,21 +226,30 @@ int     smtp_helo(SMTP_STATE *state)
      * overflow detection, ignore the message size limit advertised by the
      * SMTP server. Otherwise, we might do the wrong thing when the server
      * advertises a really huge message size limit.
+     * 
+     * XXX Allow for "code (SP|-) ehlo-keyword (SP|=) ehlo-param...", because
+     * MicroSoft implemented AUTH based on an old draft.
      */
     lines = resp->str;
     while ((words = mystrtok(&lines, "\n")) != 0) {
-	if (mystrtok(&words, "- ") && (word = mystrtok(&words, " \t")) != 0) {
+	if (mystrtok(&words, "- ") && (word = mystrtok(&words, " \t=")) != 0) {
 	    if (strcasecmp(word, "8BITMIME") == 0)
 		state->features |= SMTP_FEATURE_8BITMIME;
 	    else if (strcasecmp(word, "PIPELINING") == 0)
 		state->features |= SMTP_FEATURE_PIPELINING;
-	    else if (strcasecmp(word, "SIZE") == 0)
+	    else if (strcasecmp(word, "SIZE") == 0) {
 		state->features |= SMTP_FEATURE_SIZE;
+		if ((word = mystrtok(&words, " \t")) != 0) {
+		    if (!alldig(word))
+			msg_warn("bad size limit \"%s\" in EHLO reply from %s",
+				 word, session->namaddr);
+		    else
+			state->size_limit = off_cvt_string(word);
+		}
+	    }
 #ifdef USE_SASL_AUTH
 	    else if (var_smtp_sasl_enable && strcasecmp(word, "AUTH") == 0)
 		smtp_sasl_helo_auth(state, words);
-	    else if (var_smtp_sasl_enable && strncasecmp(word, "AUTH=", 5) == 0)
-		smtp_sasl_helo_auth(state, word + 5);
 #endif
 	    else if (strcasecmp(word, var_myhostname) == 0) {
 		msg_warn("host %s replied to HELO/EHLO with my own hostname %s",
@@ -243,7 +261,8 @@ int     smtp_helo(SMTP_STATE *state)
 	}
     }
     if (msg_verbose)
-	msg_info("server features: 0x%x", state->features);
+	msg_info("server features: 0x%x size %.0f",
+		 state->features, (double) state->size_limit);
 
 #ifdef USE_SASL_AUTH
     if (var_smtp_sasl_enable && (state->features & SMTP_FEATURE_AUTH))
@@ -300,6 +319,19 @@ int     smtp_xfer(SMTP_STATE *state)
 
 #define SENDING_MAIL \
 	(recv_state <= SMTP_STATE_DOT)
+
+    /*
+     * See if we should even try to send this message at all. This code sits
+     * here rather than in the EHLO processing code, because of future SMTP
+     * connection caching.
+     */
+    if (state->size_limit > 0 && state->size_limit < request->data_size) {
+	smtp_mesg_fail(state, 552,
+		    "message size %lu exceeds size limit %.0f of server %s",
+		       request->data_size, (double) state->size_limit,
+		       session->namaddr);
+	RETURN(0);
+    }
 
     /*
      * We use SMTP command pipelining if the server said it supported it.
@@ -487,9 +519,19 @@ int     smtp_xfer(SMTP_STATE *state)
 		     * rejected, ignore RCPT TO responses: all recipients are
 		     * dead already. When all recipients are rejected the
 		     * receiver may apply a course correction.
+		     * 
+		     * XXX 2821: Section 4.5.3.1 says that a 552 RCPT TO reply
+		     * must be treated as if the server replied with 452.
+		     * However, this causes "too much mail data" to be
+		     * treated as a recoverable error, which is wrong. I'll
+		     * stick with RFC 821.
 		     */
 		case SMTP_STATE_RCPT:
 		    if (!mail_from_rejected) {
+#ifdef notdef
+			if (resp->code == 552)
+			    resp->code = 452;
+#endif
 			if (resp->code / 100 == 2) {
 			    ++nrcpt;
 			} else {
@@ -623,6 +665,8 @@ int     smtp_xfer(SMTP_STATE *state)
 		if (prev_type != REC_TYPE_CONT)
 		    if (vstring_str(state->scratch)[0] == '.')
 			smtp_fputc('.', session->stream);
+		if (var_smtp_break_lines)
+		    rec_type = REC_TYPE_NORM;
 		if (rec_type == REC_TYPE_CONT)
 		    smtp_fwrite(vstring_str(state->scratch),
 				VSTRING_LEN(state->scratch),
@@ -636,6 +680,14 @@ int     smtp_xfer(SMTP_STATE *state)
 
 	    if (prev_type == REC_TYPE_CONT)	/* missing newline at end */
 		smtp_fputs("", 0, session->stream);
+	    if ((state->features & SMTP_FEATURE_MAYBEPIX) != 0
+		&& request->arrival_time < vstream_ftime(session->stream)
+		- var_smtp_pix_thresh) {
+		msg_info("%s: enabling PIX <CRLF>.<CRLF> workaround for %s",
+			 request->queue_id, session->namaddr);
+		vstream_fflush(session->stream);/* hurts performance */
+		sleep(var_smtp_pix_delay);	/* not to mention this */
+	    }
 	    if (vstream_ferror(state->src))
 		msg_fatal("queue file read error");
 	    if (rec_type != REC_TYPE_XTRA)

@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 LMTP(8)                                                   LMTP(8)
-
 
 <b>NAME</b>
        lmtp - Postfix local delivery via LMTP
@@ -59,22 +56,11 @@ LMTP(8)                                                   LMTP(8)
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc821.html">RFC 821</a> (SMTP protocol)
        <a href="http://www.faqs.org/rfcs/rfc1651.html">RFC 1651</a> (SMTP service extensions)
-
-
-
-                                                                1
-
-
-
-
-
-LMTP(8)                                                   LMTP(8)
-
-
        <a href="http://www.faqs.org/rfcs/rfc1870.html">RFC 1870</a> (Message Size Declaration)
        <a href="http://www.faqs.org/rfcs/rfc2033.html">RFC 2033</a> (LMTP protocol)
        <a href="http://www.faqs.org/rfcs/rfc2197.html">RFC 2197</a> (Pipelining)
        <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a> (AUTH command)
+       <a href="http://www.faqs.org/rfcs/rfc2821.html">RFC 2821</a> (SMTP protocol)
 
 <b>DIAGNOSTICS</b>
        Problems  and transactions are logged to <b>syslogd</b>(8).  Cor-
@@ -122,21 +108,9 @@ LMTP(8)                                                   LMTP(8)
               found in <b>services</b>(4).
 
 <b>Authentication</b> <b>controls</b>
-       <b>lmtp</b><i>_</i><b>enable</b><i>_</i><b>sasl</b><i>_</i><b>auth</b>
+       <b>lmtp</b><i>_</i><b>sasl</b><i>_</i><b>auth</b><i>_</i><b>enable</b>
               Enable  per-session  authentication as per <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a>
               (SASL).  By default, Postfix is built without  SASL
-
-
-
-                                                                2
-
-
-
-
-
-LMTP(8)                                                   LMTP(8)
-
-
               support.
 
        <b>lmtp</b><i>_</i><b>sasl</b><i>_</i><b>password</b><i>_</i><b>maps</b>
@@ -191,18 +165,6 @@ LMTP(8)                                                   LMTP(8)
        <i>transport_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
               Limit the number of parallel deliveries to the same
               destination  via  this  mail  delivery   transport.
-
-
-
-                                                                3
-
-
-
-
-
-LMTP(8)                                                   LMTP(8)
-
-
               <i>transport</i>  is  the name of the service as specified
               in the <b>master.cf</b> file.  The default limit is  taken
               from    the   <b>default</b><i>_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
@@ -256,19 +218,6 @@ LMTP(8)                                                   LMTP(8)
               Timeout for  sending  the  <b>DATA</b>  command,  and  for
               receiving the server response.
 
-
-
-
-
-                                                                4
-
-
-
-
-
-LMTP(8)                                                   LMTP(8)
-
-
        <b>lmtp</b><i>_</i><b>data</b><i>_</i><b>xfer</b><i>_</i><b>timeout</b>
               Timeout for sending the message content.
 
@@ -316,17 +265,6 @@ LMTP(8)                                                   LMTP(8)
        P.O. Box 830688, MC34
        Richardson, TX 75083, USA
 
-
-
-
-
-
-
-
-
-
-
-                                                                5
-
+                                                                1
 
 </pre> </body> </html>

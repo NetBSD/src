@@ -203,7 +203,10 @@ void    rewrite_addr(char *ruleset, char *addr, VSTRING *result)
 
 int     rewrite_proto(VSTREAM *stream)
 {
-    if (mail_scan(stream, "%s %s", ruleset, address) != 2)
+    if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_STR, MAIL_ATTR_RULE, ruleset,
+		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, address,
+		  ATTR_TYPE_END) != 2)
 	return (-1);
 
     rewrite_addr(vstring_str(ruleset), vstring_str(address), result);
@@ -212,7 +215,9 @@ int     rewrite_proto(VSTREAM *stream)
 	msg_info("`%s' `%s' -> `%s'", vstring_str(ruleset),
 		 vstring_str(address), vstring_str(result));
 
-    mail_print(stream, "%s", vstring_str(result));
+    attr_print(stream, ATTR_FLAG_NONE,
+	       ATTR_TYPE_STR, MAIL_ATTR_ADDR, vstring_str(result),
+	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream) != 0) {
 	msg_warn("write rewrite reply: %m");

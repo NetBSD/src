@@ -6,7 +6,8 @@
 /* SYNOPSIS
 /*	#include <domain_list.h>
 /*
-/*	DOMAIN_LIST *domain_list_init(pattern_list)
+/*	DOMAIN_LIST *domain_list_init(flags, pattern_list)
+/*	int	flags;
 /*	const char *pattern_list;
 /*
 /*	int	domain_list_match(list, name)
@@ -16,6 +17,8 @@
 /*	void domain_list_free(list)
 /*	DOMAIN_LIST *list;
 /* DESCRIPTION
+/*	This is a convenience wrapper around the match_list module.
+/*
 /*	This module implements tests for list membership of a host or
 /*	domain name.
 /*
@@ -30,9 +33,17 @@
 /*	insensitive. In order to reverse the result, precede a non-file
 /*	name pattern with an exclamation point (!).
 /*
-/*	domain_list_init() performs initializations. The argument is a
-/*	list of domain patterns, or the name of a file containing domain
-/*	patterns.
+/*	domain_list_init() performs initializations. The first argument
+/*	is the bit-wise OR of zero or more of the following:
+/* .RS
+/* .IP MATCH_FLAG_PARENT
+/*      The hostname pattern foo.com matches itself and any name below
+/*      the domain foo.com. If this flag is cleared, foo.com matches itself 
+/*	only, and .foo.com matches any name below the domain foo.com.
+/* .RE
+/*	Specify MATCH_FLAG_NONE to request none of the above.
+/*	The second argument is a list of domain patterns, or the name of
+/*	a file containing domain patterns.
 /*
 /*	domain_list_match() matches the specified host or domain name
 /*	against the specified pattern list.
@@ -62,32 +73,10 @@
 /* Utility library. */
 
 #include <match_list.h>
-#include <match_ops.h>
 
 /* Global library. */
 
 #include "domain_list.h"
-
-/* domain_list_init - initialize domain list */
-
-DOMAIN_LIST *domain_list_init(const char *patterns)
-{
-    return (match_list_init(patterns, 1, match_hostname));
-}
-
-/* domain_list_match - match host against domain list */
-
-int     domain_list_match(DOMAIN_LIST *list, const char *name)
-{
-    return (match_list_match(list, name));
-}
-
-/* domain_list_free - release storage */
-
-void    domain_list_free(DOMAIN_LIST *list)
-{
-    match_list_free(list);
-}
 
 #ifdef TEST
 
@@ -120,7 +109,7 @@ main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = domain_list_init(argv[optind]);
+    list = domain_list_init(MATCH_FLAG_PARENT, argv[optind]);
     host = argv[optind + 1];
     vstream_printf("%s: %s\n", host, domain_list_match(list, host) ?
 		   "YES" : "NO");

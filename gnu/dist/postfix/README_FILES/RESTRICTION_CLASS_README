@@ -1,0 +1,24 @@
+Per client/helo/sender/recipient UCE restrictions
+=================================================
+
+The Postfix SMTP server allows you to specify UCE restrictions on
+the right-hand side of SMTPD access tables, so that you can have
+different UCE restrictions for different clients or users.
+
+The only anomalies in this scheme are that (1) message header_checks
+and body_checks are still the same for every message, and (2) you
+must use a restriction class name (see below) if you want to specify
+a lookup table on the right-hand side of an access table (this is
+because Postfix needs to open those tables ahead of time).
+
+Restriction classes allow you to give easy-to-remember names to
+groups of UCE restrictions (such as permissive, restrictive, and
+so on).  For example in main.cf:
+
+    smtpd_restriction_classes = restrictive, permissive
+    restrictive = reject_unknown_sender reject_unknown_client ...
+    permissive = permit
+
+With this in place, you can use "restrictive" or "permissive" on
+the right-hand side of your per-client/helo/sender/recipient SMTPD
+access tables.

@@ -200,6 +200,9 @@ int     smtp_get(VSTRING *vp, VSTREAM *stream, int bound)
      * Allow for partial long lines (we will read the remainder later) and
      * allow for lines ending in bare LF. The idea is to be liberal in what
      * we accept, strict in what we send.
+     * 
+     * XXX 2821: Section 4.1.1.4 says that an SMTP server must not recognize
+     * bare LF as record terminator.
      */
     smtp_timeout_reset(stream);
     last_char = (bound == 0 ? vstring_get(vp, stream) :
@@ -224,11 +227,13 @@ int     smtp_get(VSTRING *vp, VSTREAM *stream, int bound)
 
 	/*
 	 * Strip off the record terminator: either CRLF or just bare LF.
+	 * 
+	 * XXX RFC 2821 disallows sending bare CR everywhere. We remove bare CR
+	 * if received before CRLF, and leave it alone otherwise.
 	 */
     case '\n':
-	if (VSTRING_LEN(vp) > 1 && vstring_end(vp)[-2] == '\r')
-	    vstring_truncate(vp, VSTRING_LEN(vp) - 2);
-	else
+	vstring_truncate(vp, VSTRING_LEN(vp) - 1);
+	while (VSTRING_LEN(vp) > 0 && vstring_end(vp)[-1] == '\r')
 	    vstring_truncate(vp, VSTRING_LEN(vp) - 1);
 	VSTRING_TERMINATE(vp);
 

@@ -44,7 +44,7 @@ destination's logfile, and the logfile is truncated to zero length;
 if mail is undeliverable it will be added back to the logfile.
 .sp
 If the destination is not eligible for a fast flush logfile,
-this request triggers delivery of all queued mail.
+this request is rejected (see below for status codes).
 .IP \fBTRIGGER_REQ_WAKEUP\fR
 This wakeup request from the master is an alternative way to
 request \fBFLUSH_REQ_REFRESH\fR.
@@ -72,6 +72,10 @@ The flush server rejected the request (bad request name, bad
 request parameter value).
 .IP \fBFLUSH_STAT_FAIL\fR
 The request failed.
+.IP \fBFLUSH_STAT_DENY\fR
+The request was denied because the destination domain is not
+eligible for fast flush service, or because the fast flush
+service is disabled.
 .SH SECURITY
 .na
 .nf
@@ -122,6 +126,10 @@ a send request for the corresponding destination.
 .IP \fBfast_flush_purge_time\fR
 Remove an empty "fast flush" logfile that was not updated in
 this amount of time (default time unit: days).
+.IP \fBparent_domain_matches_subdomains\fR
+List of Postfix features that use \fIdomain.name\fR patterns
+to match \fIsub.domain.name\fR (as opposed to
+requiring \fI.domain.name\fR patterns).
 .SH SEE ALSO
 .na
 .nf

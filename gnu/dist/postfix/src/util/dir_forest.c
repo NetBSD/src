@@ -104,7 +104,7 @@ char   *dir_forest(VSTRING *buf, const char *path, int depth)
     }
     VSTRING_TERMINATE(buf);
 
-    if (msg_verbose)
+    if (msg_verbose > 1)
 	msg_info("%s: %s -> %s", myname, path, vstring_str(buf));
     return (vstring_str(buf));
 }

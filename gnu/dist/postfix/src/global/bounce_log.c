@@ -24,6 +24,9 @@
 /*	BOUNCE_LOG *bounce_log_read(bp)
 /*	BOUNCE_LOG *bp;
 /*
+/*	BOUNCE_LOG *bounce_log_delrcpt(bp)
+/*	BOUNCE_LOG *bp;
+/*
 /*	void	bounce_log_rewind(bp)
 /*	BOUNCE_LOG *bp;
 /*
@@ -31,8 +34,7 @@
 /*	BOUNCE_LOG *bp;
 /* DESCRIPTION
 /*	This module implements a bounce/defer logfile API. Information
-/*	is sanitized for control and non-ASCII characters. Currently,
-/*	only the reading end is implemented.
+/*	is sanitized for control and non-ASCII characters.
 /*
 /*	bounce_log_open() opens the named bounce or defer logfile
 /*	and returns a handle that must be used for further access.
@@ -46,6 +48,9 @@
 /*	and the text that explains why the recipient was undeliverable.
 /*	bounce_log_read() returns a null pointer when no recipient was read,
 /*	otherwise it returns its argument.
+/*
+/*	bounce_log_delrcpt() marks the last accessed recipient record as
+/*	"deleted". This requires that the logfile is opened for update.
 /*
 /*	bounce_log_rewind() is a helper that seeks to the first recipient
 /*	in an open bounce or defer logfile (skipping over recipients that
@@ -92,6 +97,7 @@
 #include <sys_defs.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 /* Utility library. */
 
@@ -133,6 +139,7 @@ BOUNCE_LOG *bounce_log_open(const char *queue_name, const char *queue_id,
 	bp->fp = fp;
 	bp->buf = vstring_alloc(100);
 	bp->status = STREQ(queue_name, MAIL_QUEUE_DEFER) ? "4.0.0" : "5.0.0";
+	bp->offset = 0;
 	return (bp);
     }
 }
@@ -145,7 +152,8 @@ BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *bp)
     char   *text;
     char   *cp;
 
-    while (vstring_get_nonl(bp->buf, bp->fp) != VSTREAM_EOF) {
+    while ((bp->offset = vstream_ftell(bp->fp)),
+	   (vstring_get_nonl(bp->buf, bp->fp) != VSTREAM_EOF)) {
 
 	if (STR(bp->buf)[0] == 0)
 	    continue;
@@ -154,6 +162,12 @@ BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *bp)
 	 * Sanitize.
 	 */
 	cp = printable(STR(bp->buf), '?');
+
+	/*
+	 * Skip over deleted recipients.
+	 */
+	if (*cp == BOUNCE_LOG_STAT_DELETED)
+	    continue;
 
 	/*
 	 * Find the recipient address.
@@ -183,6 +197,21 @@ BOUNCE_LOG *bounce_log_read(BOUNCE_LOG *bp)
 	return (bp);
     }
     return (0);
+}
+
+/* bounce_log_delrcpt - mark recipient record as deleted */
+
+BOUNCE_LOG *bounce_log_delrcpt(BOUNCE_LOG *bp)
+{
+    long    current_offset;
+
+    current_offset = vstream_ftell(bp->fp);
+    if (vstream_fseek(bp->fp, bp->offset, SEEK_SET) < 0)
+	msg_fatal("bounce logfile %s seek error: %m", VSTREAM_PATH(bp->fp));
+    VSTREAM_PUTC(BOUNCE_LOG_STAT_DELETED, bp->fp);
+    if (vstream_fseek(bp->fp, current_offset, SEEK_SET) < 0)
+	msg_fatal("bounce logfile %s seek error: %m", VSTREAM_PATH(bp->fp));
+    return (bp);
 }
 
 /* bounce_log_close - close bounce reader stream */

@@ -262,6 +262,7 @@
 #include <mail_conf.h>
 #include <mail_params.h>
 #include <mail_proto.h>			/* QMGR_SCAN constants */
+#include <mail_flow.h>
 
 /* Master process interface */
 
@@ -293,6 +294,8 @@ int     var_qmgr_fudge;
 int     var_qmgr_hog;
 int     var_local_rcpt_lim;		/* XXX */
 int     var_local_con_lim;		/* XXX */
+int     var_proc_limit;
+bool    var_verp_bounce_off;
 
 static QMGR_SCAN *qmgr_incoming;
 static QMGR_SCAN *qmgr_deferred;
@@ -378,6 +381,8 @@ static int qmgr_loop(char *unused_name, char **unused_argv)
 {
     char   *in_path = 0;
     char   *df_path = 0;
+    int     token_count;
+    int     in_feed = 0;
 
     /*
      * This routine runs as part of the event handling loop, after the event
@@ -405,11 +410,27 @@ static int qmgr_loop(char *unused_name, char **unused_argv)
     if (qmgr_message_count < var_qmgr_active_limit
 	&& qmgr_recipient_count < var_qmgr_rcpt_limit)
 	if ((in_path = qmgr_scan_next(qmgr_incoming)) != 0)
-	    qmgr_active_feed(qmgr_incoming, in_path);
+	    in_feed = qmgr_active_feed(qmgr_incoming, in_path);
     if (qmgr_message_count < var_qmgr_active_limit
 	&& qmgr_recipient_count < var_qmgr_rcpt_limit)
 	if ((df_path = qmgr_scan_next(qmgr_deferred)) != 0)
 	    qmgr_active_feed(qmgr_deferred, df_path);
+
+    /*
+     * Global flow control. If enabled, slow down receiving processes that
+     * get ahead of the queue manager, but don't block them completely.
+     */
+    if (var_in_flow_delay > 0) {
+	token_count = mail_flow_count();
+	if (token_count < var_proc_limit) {
+	    if (in_feed != 0)
+		mail_flow_put(1);
+	    else if (qmgr_incoming->handle == 0)
+		mail_flow_put(var_proc_limit - token_count);
+	} else if (token_count > var_proc_limit) {
+	    mail_flow_get(token_count - var_proc_limit);
+	}
+    }
     if (in_path || df_path)
 	return (DONT_WAIT);
     return (WAIT_FOR_EVENT);
@@ -491,10 +512,12 @@ int     main(int argc, char **argv)
 	VAR_QMGR_HOG, DEF_QMGR_HOG, &var_qmgr_hog, 10, 100,
 	VAR_LOCAL_RCPT_LIMIT, DEF_LOCAL_RCPT_LIMIT, &var_local_rcpt_lim, 0, 0,
 	VAR_LOCAL_CON_LIMIT, DEF_LOCAL_CON_LIMIT, &var_local_con_lim, 0, 0,
+	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
 	0,
     };
     static CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_ALLOW_MIN_USER, DEF_ALLOW_MIN_USER, &var_allow_min_user,
+	VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
 	0,
     };
 

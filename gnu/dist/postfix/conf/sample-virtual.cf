@@ -16,8 +16,8 @@
 # It may take a minute or so before the change becomes visible.
 # Use "postfix reload" to eliminate the delay.
 #
-# virtual_maps = dbm:/etc/postfix/virtual
-# virtual_maps = hash:/etc/postfix/virtual
-# virtual_maps = hash:/etc/postfix/virtual, nis:virtual
-# virtual_maps = hash:/etc/postfix/virtual, netinfo:/virtual
+#virtual_maps = dbm:/etc/postfix/virtual
+#virtual_maps = hash:/etc/postfix/virtual
+#virtual_maps = hash:/etc/postfix/virtual, nis:virtual
+#virtual_maps = hash:/etc/postfix/virtual, netinfo:/virtual
 virtual_maps = 

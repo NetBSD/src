@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 TRANSPORT(5)                                         TRANSPORT(5)
-
 
 <b>NAME</b>
        transport - format of Postfix transport table
@@ -36,17 +33,19 @@ TRANSPORT(5)                                         TRANSPORT(5)
 <b>TABLE</b> <b>FORMAT</b>
        The format of the transport table is as follows:
 
-       blanks and comments
-              Blank lines are ignored,  as  are  lines  beginning
-              with `#'.
-
-       leading whitespace
-              Lines  that begin with whitespace continue the pre-
-              vious line.
-
        <i>pattern</i> <i>result</i>
               When <i>pattern</i> matches the  domain,  use  the  corre-
               sponding <i>result</i>.
+
+       blank lines and comments
+              Empty  lines and whitespace-only lines are ignored,
+              as are lines whose first  non-whitespace  character
+              is a `#'.
+
+       multi-line text
+              A  logical  line starts with non-whitespace text. A
+              line that starts with whitespace continues a  logi-
+              cal line.
 
        With lookups from indexed files such as DB or DBM, or from
        networked tables such as NIS, LDAP or  SQL,  patterns  are
@@ -58,18 +57,11 @@ TRANSPORT(5)                                         TRANSPORT(5)
 
        <i>.domain</i> <i>transport</i>:<i>nexthop</i>
               Mail for  any  subdomain  of  <i>domain</i>  is  delivered
-              through <i>transport</i> to <i>nexthop</i>.
-
-
-
-                                                                1
-
-
-
-
-
-TRANSPORT(5)                                         TRANSPORT(5)
-
+              through  <i>transport</i>  to  <i>nexthop</i>.  This applies only
+              when the string <b>transport</b><i>_</i><b>maps</b> is not listed in the
+              <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b> configuration set-
+              ting.  Otherwise, a domain name matches itself  and
+              its subdomains.
 
        Note:  transport  map entries take precedence over domains
        specified in the <b>mydestination</b> parameter. If you  use  the
@@ -125,18 +117,6 @@ TRANSPORT(5)                                         TRANSPORT(5)
        used. Specify [] around the hostname in order  to  disable
        MX lookups.
 
-
-
-
-                                                                2
-
-
-
-
-
-TRANSPORT(5)                                         TRANSPORT(5)
-
-
        The error mailer can be used to bounce mail:
 
             <b>.foo.org</b>       <b>error:mail</b> <b>for</b> <b>*.foo.org</b> <b>is</b> <b>not</b> <b>deliv-</b>
@@ -159,15 +139,20 @@ TRANSPORT(5)                                         TRANSPORT(5)
        table,  until  a  pattern is found that matches the search
        string.
 
-       Results are the same as with normal indexed file  lookups,
-       with  the additional feature that parenthesized substrings
-       from the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so  on.
+       Results are the same as with indexed  file  lookups,  with
+       the  additional feature that parenthesized substrings from
+       the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this topic. See the Postfix  <b>main.cf</b>  file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  topic.  See  the Postfix <b>main.cf</b> file for syntax
+       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
        command after a configuration change.
+
+       <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>
+              List  of Postfix features that use <i>domain.name</i> pat-
+              terns  to  match  <i>sub.domain.name</i>  (as  opposed  to
+              requiring <i>.domain.name</i> patterns).
 
        <b>transport</b><i>_</i><b>maps</b>
               List of transport lookup tables.
@@ -175,7 +160,7 @@ TRANSPORT(5)                                         TRANSPORT(5)
        Other parameters of interest:
 
        <b>default</b><i>_</i><b>transport</b>
-              The transport to use when no transport  is  explic-
+              The  transport  to use when no transport is explic-
               itly specified.
 
        <b>relayhost</b>
@@ -189,19 +174,8 @@ TRANSPORT(5)                                         TRANSPORT(5)
        <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
-
-
-
-                                                                3
-
-
-
-
-
-TRANSPORT(5)                                         TRANSPORT(5)
-
 
 <b>AUTHOR(S)</b>
        Wietse Venema
@@ -209,58 +183,6 @@ TRANSPORT(5)                                         TRANSPORT(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                4
-
+                                                                1
 
 </pre> </body> </html>

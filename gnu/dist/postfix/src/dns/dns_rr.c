@@ -26,6 +26,9 @@
 /*	DNS_RR	*dns_rr_sort(list, compar)
 /*	DNS_RR	*list
 /*	int	(*compar)(DNS_RR *, DNS_RR *);
+/*
+/*	DNS_RR	*dns_rr_shuffle(list)
+/*	DNS_RR	*list;
 /* DESCRIPTION
 /*	The routines in this module maintain memory for DNS resource record
 /*	information, and maintain lists of DNS resource records.
@@ -49,6 +52,8 @@
 /*	dns_rr_sort() sorts a list of resource records into ascending
 /*	order according to a user-specified criterion. The result is the
 /*	sorted list.
+/*
+/*	dns_rr_shuffle() randomly permutes a list of resource records.
 /* LICENSE
 /* .ad
 /* .fi
@@ -70,6 +75,7 @@
 
 #include <msg.h>
 #include <mymalloc.h>
+#include <myrand.h>
 
 /* DNS library. */
 
@@ -191,5 +197,49 @@ DNS_RR *dns_rr_sort(DNS_RR *list, int (*compar) (DNS_RR *, DNS_RR *))
      */
     myfree((char *) rr_array);
     dns_rr_sort_user = saved_user;
+    return (list);
+}
+
+/* dns_rr_shuffle - shuffle resource record list */
+
+DNS_RR *dns_rr_shuffle(DNS_RR *list)
+{
+    DNS_RR **rr_array;
+    DNS_RR *rr;
+    int     len;
+    int     i;
+    int     r;
+
+    /*
+     * Build linear array with pointers to each list element.
+     */
+    for (len = 0, rr = list; rr != 0; len++, rr = rr->next)
+	 /* void */ ;
+    rr_array = (DNS_RR **) mymalloc(len * sizeof(*rr_array));
+    for (len = 0, rr = list; rr != 0; len++, rr = rr->next)
+	rr_array[len] = rr;
+
+    /*
+     * Shuffle resource records.
+     */
+    for (i = 0; i < len; i++) {
+	r = myrand() % len;
+	rr = rr_array[i];
+	rr_array[i] = rr_array[r];
+	rr_array[r] = rr;
+    }
+
+    /*
+     * Fix the links.
+     */
+    for (i = 0; i < len - 1; i++)
+	rr_array[i]->next = rr_array[i + 1];
+    rr_array[i]->next = 0;
+    list = rr_array[0];
+
+    /*
+     * Cleanup.
+     */
+    myfree((char *) rr_array);
     return (list);
 }

@@ -227,6 +227,7 @@ struct QMGR_MESSAGE {
     char   *queue_name;			/* queue name */
     char   *queue_id;			/* queue file */
     char   *sender;			/* complete address */
+    char   *verp_delims;		/* VERP delimiters */
     char   *errors_to;			/* error report address */
     char   *return_receipt;		/* confirm receipt address */
     char   *filter_xport;		/* filtering transport */
@@ -269,7 +270,7 @@ extern void qmgr_deliver(QMGR_TRANSPORT *, VSTREAM *);
  /*
   * qmgr_active.c
   */
-extern void qmgr_active_feed(QMGR_SCAN *, const char *);
+extern int qmgr_active_feed(QMGR_SCAN *, const char *);
 extern void qmgr_active_drain(void);
 extern void qmgr_active_done(QMGR_MESSAGE *);
 
