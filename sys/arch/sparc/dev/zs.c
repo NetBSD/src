@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.5 1994/03/23 10:43:20 pk Exp $
+ * $Id: zs.c,v 1.6 1994/05/05 09:53:43 deraadt Exp $
  */
 
 /*
@@ -924,7 +924,7 @@ again:
 					tp->t_state &= ~TS_FLUSH;
 				else
 					ndflush(&tp->t_outq,
-					    (u_char *)cs->cs_tba - tp->t_outq.c_cf);
+					    cs->cs_tba - tp->t_outq.c_cf);
 				line->l_start(tp);
 				break;
 

@@ -42,7 +42,7 @@
  *	@(#)cons.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.6 1994/02/14 09:37:11 deraadt Exp $
+ * $Id: cons.c,v 1.7 1994/05/05 09:53:37 deraadt Exp $
  */
 
 /*
@@ -338,7 +338,7 @@ cnfbstart(tp)
 			(void) splsoftclock();
 			cnfbdma((void *)tp);
 		} else
-			timeout((timeout_t)cnfbdma, (caddr_t)tp, 1);
+			timeout(cnfbdma, tp, 1);
 	}
 	splx(s);
 }
