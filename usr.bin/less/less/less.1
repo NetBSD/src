@@ -456,13 +456,12 @@ full screen repaints are done by scrolling from the bottom of the screen.
 .IP -C
 The -C option is like -c, but the screen is cleared before it is repainted.
 .IP -d
-The -d option suppresses the error message
-normally displayed if the terminal is dumb;
-that is, lacks some important capability,
-such as the ability to clear the screen or scroll backward.
-The -d option does not otherwise change the behavior of
-.I less
-on a dumb terminal).
+The -d option causes the default prompt to include the basic directions
+``[Press space to continue, 'q' to quit.]''.  The -d
+option also causes the message ``[Press 'h' for instructions.]'' to be
+displayed when an invalid command is entered (normally, the bell is
+rung).  This option is useful in environments where users may not be
+experienced with pagers.
 .IP -D\fBx\fP\fIcolor\fP
 [MS-DOS only]
 Sets the color of the text displayed.
