@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.17 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: agp.c,v 1.18 2002/09/19 19:04:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.17 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.18 2002/09/19 19:04:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 {
 	/*
-	 * Find and the aperture. Don't map it (yet), this would
+	 * Find the aperture. Don't map it (yet), this would
 	 * eat KVA.
 	 */
 	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
