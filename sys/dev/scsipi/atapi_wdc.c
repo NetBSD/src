@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.83 2004/08/13 02:10:43 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.84 2004/08/13 02:16:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.83 2004/08/13 02:10:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.84 2004/08/13 02:16:40 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -910,9 +910,9 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 
 	WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 	scsipi_done(sc_xfer);
-	WDCDEBUG_PRINT(("wdcstart from wdc_atapi_done, flags 0x%x\n",
+	WDCDEBUG_PRINT(("atastart from wdc_atapi_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
-	wdcstart(chp);
+	atastart(chp);
 }
 
 static void

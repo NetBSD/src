@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.68 2004/08/13 02:10:43 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.69 2004/08/13 02:16:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.68 2004/08/13 02:10:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.69 2004/08/13 02:16:40 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -733,9 +733,9 @@ wdc_ata_bio_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	ata_bio->flags |= ATA_ITSDONE;
 	WDCDEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
-	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
+	WDCDEBUG_PRINT(("atastart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
-	wdcstart(chp);
+	atastart(chp);
 }
 
 static int
