@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.11 2001/02/21 21:39:57 jdolecek Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.12 2001/05/22 21:05:49 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -325,6 +325,13 @@ linux_termios_to_bsd_termios(lts, bts)
 	if (index & LINUX_CBAUDEX)
 		index = (index & ~LINUX_CBAUDEX) + LINUX_NSPEEDS - 1;
 	bts->c_ispeed = bts->c_ospeed = linux_speeds[index];
+	/*
+	 * A null c_ospeed causes NetBSD to hangup the terminal. 
+	 * Linux does not do this, and it sets c_ospeed to zero
+	 * sometimes. If it is null, we store -1 in the kernel
+	 */ 
+	if (bts->c_ospeed == 0)
+		bts->c_ospeed = -1;
 
 	bts->c_cc[VINTR] = lts->c_cc[LINUX_VINTR];
 	bts->c_cc[VQUIT] = lts->c_cc[LINUX_VQUIT];
@@ -419,6 +426,13 @@ bsd_termios_to_linux_termios(bts, lts)
 			break;
 		}
 	}
+	/*
+	 * A null c_ospeed causes NetBSD to hangup the terminal. 
+	 * Linux does not do this, and it sets c_ospeed to zero
+	 * sometimes. If it is null, we store -1 in the kernel
+	 */ 
+	if (bts->c_ospeed == -1)
+		bts->c_ospeed = 0;
 	lts->c_cflag |= mask;
 
 	lts->c_cc[LINUX_VINTR] = bts->c_cc[VINTR];
