@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.12 1996/06/29 00:51:49 jtc Exp $	*/
+/*	$NetBSD: popen.c,v 1.13 1997/07/13 19:16:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.12 1996/06/29 00:51:49 jtc Exp $";
+__RCSID("$NetBSD: popen.c,v 1.13 1997/07/13 19:16:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,8 +70,11 @@ popen(program, type)
 	struct pid *cur;
 	FILE *iop;
 	int pdes[2], pid;
+#ifdef __GNUC__
+	(void) &cur;
+#endif
 
-	if (*type != 'r' && *type != 'w' || type[1]) {
+	if ((*type != 'r' && *type != 'w') || type[1]) {
 		errno = EINVAL;
 		return (NULL);
 	}
