@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.14 2000/06/26 06:18:07 kleink Exp $
+#	$NetBSD: Makefile,v 1.15 2001/05/15 23:50:36 simonb Exp $
+
+.include <bsd.own.mk>
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I.
 
@@ -7,7 +9,10 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	eval.c exec.c expr.c history.c io.c jobs.c lex.c mail.c \
 	main.c misc.c path.c shf.c sigact.c syn.c table.c trap.c \
 	tree.c tty.c var.c version.c vi.c
-DPSRCS=	emacs.out siglist.out ksh.1
+DPSRCS=	emacs.out siglist.out
+.if (${MKMAN} != "no")
+DPSRCS+=ksh.1
+.endif
 
 # needs tbl for the man page.
 USETBL= 
