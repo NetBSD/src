@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.73 2004/02/20 05:16:54 uebayasi Exp $	*/
+/*	$NetBSD: options.c,v 1.74 2004/05/11 17:12:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.73 2004/02/20 05:16:54 uebayasi Exp $");
+__RCSID("$NetBSD: options.c,v 1.74 2004/05/11 17:12:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ __RCSID("$NetBSD: options.c,v 1.73 2004/02/20 05:16:54 uebayasi Exp $");
  */
 
 static int nopids;		/* tar mode: suppress "pids" for -p option */
-static char *flgch = FLGCH;	/* list of all possible flags (pax) */
+static char flgch[] = FLGCH;	/* list of all possible flags (pax) */
 static OPLIST *ophead = NULL;	/* head for format specific options -x */
 static OPLIST *optail = NULL;	/* option tail */
 
@@ -471,10 +471,10 @@ pax_options(int argc, char **argv)
 			/*
 			 * non-standard limit on read faults
 			 * 0 indicates stop after first error, values
-			 * indicate a limit, "NONE" try forever
+			 * indicate a limit, "none" try forever
 			 */
 			flg |= CEF;
-			if (strcmp(NONE, optarg) == 0)
+			if (strcmp(none, optarg) == 0)
 				maxflt = -1;
 			else if ((maxflt = atoi(optarg)) < 0) {
 				tty_warn(1,
@@ -1715,7 +1715,7 @@ printflg(unsigned int flg)
 static int
 c_frmt(const void *a, const void *b)
 {
-	return(strcmp(((FSUB *)a)->name, ((FSUB *)b)->name));
+	return(strcmp(((const FSUB *)a)->name, ((const FSUB *)b)->name));
 }
 
 /*

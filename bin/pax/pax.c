@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.33 2004/02/13 23:10:14 matt Exp $	*/
+/*	$NetBSD: pax.c,v 1.34 2004/05/11 17:12:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.33 2004/02/13 23:10:14 matt Exp $");
+__RCSID("$NetBSD: pax.c,v 1.34 2004/05/11 17:12:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ int	docrc;			/* check/create file crc */
 int	to_stdout;		/* extract to stdout */
 char	*dirptr;		/* destination dir in a copy */
 char	*ltmfrmt;		/* -v locale time format (if any) */
-char	*argv0;			/* root of argv[0] */
+const char *argv0;		/* root of argv[0] */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
 FILE	*listf;			/* file pointer to print file list to */
 char	*tempfile;		/* tempfile to use for mkstemp(3) */
@@ -240,7 +240,7 @@ int	secure = 1;		/* don't extract names that contain .. */
 int
 main(int argc, char **argv)
 {
-	char *tmpdir;
+	const char *tmpdir;
 	size_t tdlen;
 
 	setprogname(argv[0]);
