@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.103 2003/08/12 18:30:03 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.104 2003/08/13 06:01:02 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1167,4 +1167,10 @@ tools/host-mkdep/Makefile			1.8 via patch
 	Fix 2 remaining places items are depending on execute permissions
 	coming out from a cvs checkout on scripts.
 	[jmc, ticket #1404]
+
+usr.sbin/sup/source/supcmeat.c			1.28
+usr.sbin/sup/source/supfilesrv.c		1.26
+
+	Debian bug id "sup 1.8-8, bug #175327" - temporary file symlink race
+	[itojun, ticket #1391]
 
