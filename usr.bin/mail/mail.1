@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.16 2000/05/05 18:21:06 itojun Exp $
+.\"	$NetBSD: mail.1,v 1.16.4.1 2001/04/26 13:20:13 he Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -150,7 +150,7 @@ and
 moving backwards and forwards, and
 simple numbers.
 .Pp
-.Ss Disposing of mail.
+.Ss Disposing of mail
 After examining a message you can
 .Ic delete
 .Pq Ql Ic d
@@ -195,7 +195,7 @@ which prints the first few lines of a message could be used in
 .Dq Li top \&*
 to print the first few lines of all messages.
 .Pp
-.Ss Replying to or originating mail.
+.Ss Replying to or originating mail
 You can use the
 .Ic reply
 command to
@@ -221,7 +221,7 @@ message or to a shell to run some commands.
 (These options
 are given in the summary below.)
 .Pp
-.Ss Ending a mail processing session.
+.Ss Ending a mail processing session
 You can end a
 .Nm
 session with the
@@ -236,7 +236,7 @@ Unexamined messages go back to the post office.
 .Fl f
 option above).
 .Pp
-.Ss Personal and systemwide distribution lists.
+.Ss Personal and systemwide distribution lists
 It is also possible to create a personal distribution lists so that,
 for instance, you can send mail to
 .Dq Li cohorts
@@ -269,7 +269,7 @@ System wide
 are not expanded when the mail is sent,
 but any reply returned to the machine will have the system wide
 alias expanded as all mail goes through
-.Xr sendmail  .
+.Xr sendmail 8 .
 .Pp
 .Ss Network mail (ARPA, UUCP, Berknet)
 See
@@ -706,7 +706,7 @@ by the option
 Execute the indicated shell command, then return to the message.
 .It Ic \&~a
 Inserts the autograph string from the sign= option into the message.
-.It Ic \&~A 
+.It Ic \&~A
 Inserts the autograph string from the Sign= option into the message.
 .It Ic \&~b Ns Ar name ...
 Add the given names to the list of carbon copy recipients but do not make
