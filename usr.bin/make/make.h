@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.30 2000/12/30 02:05:21 sommerfeld Exp $	*/
+/*	$NetBSD: make.h,v 1.31 2001/01/01 15:50:23 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -232,6 +232,7 @@ typedef struct GNode {
 #define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
 #define	OP_MARK		0x01000000  /* Node found while expanding .ALLSRC */
 
+#define NoExecute(gn) ((gn->type & OP_MAKE) ? noRecursiveExecute : noExecute)
 /*
  * OP_NOP will return TRUE if the node with the given type was not the
  * object of a dependency operator
@@ -321,6 +322,7 @@ extern Boolean	compatMake;	/* True if we are make compatible */
 extern Boolean	ignoreErrors;  	/* True if should ignore all errors */
 extern Boolean  beSilent;    	/* True if should print no commands */
 extern Boolean  noExecute;    	/* True if should execute nothing */
+extern Boolean  noRecursiveExecute;    	/* True if should execute nothing */
 extern Boolean  allPrecious;   	/* True if every target is precious */
 extern Boolean  keepgoing;    	/* True if should continue on unaffected
 				 * portions of the graph when have an error
