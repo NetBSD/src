@@ -1,6 +1,8 @@
 #!/bin/sh -
 #
-#	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
+#	$NetBSD: MAKEDEV,v 1.5 1996/09/17 21:45:53 thorpej Exp $
+#
+#	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
 # Device "make" file.  Valid arguments:

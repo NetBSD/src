@@ -1,5 +1,6 @@
+#	$NetBSD: disktab,v 1.2 1996/09/17 21:45:55 thorpej Exp $
 #
-#	@(#)disktab	8.1 (Berkeley) 6/9/93
+#	from: @(#)disktab	8.1 (Berkeley) 6/9/93
 #
 
 # Disk geometry and partition layout tables. 
