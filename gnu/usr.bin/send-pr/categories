@@ -14,6 +14,7 @@ port-arm26
 port-arm32
 port-atari
 port-bebox
+port-cats
 port-cobalt
 port-dreamcast
 port-hp300
