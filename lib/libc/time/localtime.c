@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.2 1995/03/09 23:41:16 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.3 1995/03/10 05:57:35 jtc Exp $	*/
 
 #ifndef lint
 #ifndef NOID
@@ -190,11 +190,11 @@ detzcode(codep)
 const char * const	codep;
 {
 	register long	result;
-	register int	i;
 
-	result = 0;
-	for (i = 0; i < 4; ++i)
-		result = (result << 8) | (codep[i] & 0xff);
+	result = (codep[0] << 24) \
+	       | (codep[1] & 0xff) << 16 \
+	       | (codep[2] & 0xff) << 8
+	       | (codep[3] & 0xff);
 	return result;
 }
 
