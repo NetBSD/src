@@ -1,4 +1,4 @@
-/*	$NetBSD: ualarm.c,v 1.6 1997/07/21 14:07:43 jtc Exp $	*/
+/*	$NetBSD: ualarm.c,v 1.7 1997/11/25 18:02:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ualarm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ualarm.c,v 1.6 1997/07/21 14:07:43 jtc Exp $");
+__RCSID("$NetBSD: ualarm.c,v 1.7 1997/11/25 18:02:36 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +57,10 @@ __weak_alias(ualarm,_ualarm);
  * If ``reload'' is non-zero, keep generating SIGALRM
  * every ``reload'' microseconds after the first signal.
  */
-unsigned
+useconds_t
 ualarm(usecs, reload)
-	register unsigned usecs;
-	register unsigned reload;
+	useconds_t usecs;
+	useconds_t reload;
 {
 	struct itimerval new, old;
 
