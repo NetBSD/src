@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.26 1998/05/14 00:01:30 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 1998/05/14 00:01:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,7 @@ mbattach(parent, self, aux)
 	 */
 	cpuattachcnt = 0;
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-
-		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-		    (i * hwrpb->rpb_pcs_size));
+		pcsp = LOCATE_PCS(hwrpb, i);
 		if ((pcsp->pcs_flags & PCS_PP) == 0)
 			continue;
 
