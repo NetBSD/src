@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.27 2002/10/21 22:48:13 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.28 2002/10/22 00:06:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.27 2002/10/21 22:48:13 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.28 2002/10/22 00:06:46 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3763,7 +3763,9 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 
 	switch (tn->tn_op) {
 	case MINUS:
-		if (tn->tn_right->tn_op != CON)
+		if (tn->tn_right->tn_op == CVT)
+			return conaddr(tn->tn_right, symp, offsp);
+		else if (tn->tn_right->tn_op != CON)
 			return (-1);
 		/* FALLTHROUGH */
 	case PLUS:
