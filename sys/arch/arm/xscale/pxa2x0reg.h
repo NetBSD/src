@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.1 2002/10/19 19:31:40 bsh Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.2 2003/03/18 11:23:03 bsh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -86,7 +86,9 @@
 #define PXA2X0_I2C_SIZE		0x000016a4
 #define PXA2X0_I2S_BASE 	0x40400000
 #define PXA2X0_AC97_BASE	0x40500000
-#define PXA2X0_UDC_BASE 	0x40600000 /* USB Client */
+#define PXA2X0_AC97_SIZE	0x3fc
+#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client */
+#define PXA2X0_USBDC_SIZE 	0x0e04
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
 #define PXA2X0_ICP_BASE 	0x40800000
 #define PXA2X0_RTC_BASE 	0x40900000
@@ -101,6 +103,7 @@
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
 #define PXA2X0_SSP_BASE 	0x41000000
 #define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
+#define PXA2X0_MMC_SIZE		0x48
 #define PXA2X0_CLKMAN_BASE  	0x41300000 /* Clock Manager */
 #define PXA2X0_CLKMAN_SIZE	12
 #define PXA2X0_LCDC_BASE	0x44000000 /* LCD Controller */
@@ -113,6 +116,93 @@
 #define ICU_INT_HWMASK		0xffffff00
 #define PXA2X0_IRQ_MIN 8	/* 0..7 are not used by integrated 
 				   peripherals */
+
+#define PXA2X0_INT_GPIO0	8
+#define PXA2X0_INT_GPIO1	9
+#define PXA2X0_INT_GPION	10	/* irq from GPIO[2..80] */
+#define PXA2X0_INT_USB  	11
+#define PXA2X0_INT_PMU  	12
+#define PXA2X0_INT_I2S  	13
+#define PXA2X0_INT_AC97  	14
+#define PXA2X0_INT_LCD  	17
+#define PXA2X0_INT_I2C  	18
+#define PXA2X0_INT_ICP  	19
+#define PXA2X0_INT_STUART  	20
+#define PXA2X0_INT_BTUART  	21
+#define PXA2X0_INT_FFUART  	22
+#define PXA2X0_INT_MMC  	23
+#define PXA2X0_INT_SSP  	24
+#define PXA2X0_INT_DMA  	25
+#define PXA2X0_INT_OST0  	26
+#define PXA2X0_INT_OST1  	27
+#define PXA2X0_INT_OST2  	28
+#define PXA2X0_INT_OST3  	29
+#define PXA2X0_INT_RTCHZ  	30
+#define PXA2X0_INT_ALARM  	31	/* RTC Alarm interrupt */
+
+/* DMAC */
+#define DMAC_N_CHANNELS	16
+
+#define DMAC_DCSR(n)	((n)*4)
+#define  DCSR_BUSERRINTR    (1<<0)	/* bus error interrupt */
+#define  DCSR_STARTINR      (1<<1)	/* start interrupt */
+#define  DCSR_ENDINTR       (1<<2)	/* end interrupt */
+#define  DCSR_STOPSTATE     (1<<3)	/* channel is not running */
+#define  DCSR_REQPEND       (1<<8)	/* request pending */
+#define  DCSR_STOPIRQEN     (1<<29)     /* stop interrupt enable */
+#define  DCSR_NODESCFETCH   (1<<30)	/* no-descriptor fetch mode */
+#define  DCSR_RUN  	    (1<<31)
+#define DMAC_DINT 	0x00f0		/* DAM interrupt */
+#define DMAC_DRCMR(n)	(0x100+(n)*4)	/* Channel map register */
+#define  DRCMR_CHLNUM	0x0f		/* channel number */
+#define  DRCMR_MAPVLD	(1<<7)		/* map valid */
+#define DMAC_DDADR(n)	(0x0200+(n)*16)
+#define  DDADR_STOP	(1<<0)
+#define DMAC_DSADR(n)	(0x0204+(n)*16)
+#define DMAC_DTADR(n)	(0x0208+(n)*16)
+#define DMAC_DCMD(n)	(0x020c+(n)*16)
+#define  DCMD_LENGTH	0x1fff
+#define  DCMD_WIDTH_SHIFT  14
+#define  DCMD_WIDTH_0	(0<<DCMD_WIDTH_SHIFT)	/* for mem-to-mem transfer*/
+#define  DCMD_WIDTH_1	(1<<DCMD_WIDTH_SHIFT)
+#define  DCMD_WIDTH_2	(2<<DCMD_WIDTH_SHIFT)
+#define  DCMD_WIDTH_4	(3<<DCMD_WIDTH_SHIFT)
+#define  DCMD_SIZE_SHIFT  16
+#define  DCMD_SIZE_8	(1<<DCMD_SIZE_SHIFT)
+#define  DCMD_SIZE_16	(2<<DCMD_SIZE_SHIFT)
+#define  DCMD_SIZE_32	(3<<DCMD_SIZE_SHIFT)
+#define  DCMD_LITTLE_ENDIEN	(0<<18)
+#define	 DCMD_ENDIRQEN	  (1<<21)
+#define  DCMD_STARTIRQEN  (1<<22)
+#define  DCMD_FLOWTRG     (1<<28)	/* flow control by target */
+#define  DCMD_FLOWSRC     (1<<29)	/* flow control by source */
+#define  DCMD_INCTRGADDR  (1<<30)	/* increment target address */
+#define  DCMD_INCSRCADDR  (1<<31)	/* increment source address */
+
+/* DMA request index */
+#define DMAC_MAP_DREQ0    	0
+#define DMAC_MAP_DREQ1     	1
+#define DMAC_MAP_I2SRX     	2
+#define DMAC_MAP_I2STX     	3
+#define DMAC_MAP_BTURARTX	4
+/* ... */
+#define DMAC_MAP_AC97MODEMRX 	9
+#define DMAC_MAP_AC97MODEMTX 	10
+#define DMAC_MAP_AC97AUDIORX 	11
+#define DMAC_MAP_AC97AUDIOTX 	12
+/* ... */
+#define DMAC_MAP_USBEP(n)	(24+(n))   /* for endpoint 1..4,6..9,11..14 */
+
+
+#ifndef __ASSEMBLER__
+/* DMA descriptor */
+struct pxa2x0_dma_desc {
+    uint32_t	dd_ddadr;
+    uint32_t	dd_dsadr;
+    uint32_t	dd_dtadr;
+    uint32_t	dd_dcmd;		/* command and length */
+};
+#endif
 
 /* UART */
 #define PXA2X0_COM_FREQ   14745600L
@@ -250,30 +340,34 @@
 #define MEMCTL_MSC0	0x08	/* Asychronous Statis memory Control CS[01] */
 #define MEMCTL_MSC1	0x0c	/* Asychronous Statis memory Control CS[23] */
 #define MEMCTL_MSC2	0x10	/* Asychronous Statis memory Control CS[45] */
-#define  MSC2_RBUFF_SHIFT 15	/* return data buffer */
-#define  MSC2_RBUFF	(1<<MSC2_RBUFF_SHIFT)
-#define  MSC2_RRR_SHIFT   12  	/* recovery time */
-#define	 MSC2_RRR	(7<<MSC2_RRR_SHIFT)
-#define  MSC2_RDN_SHIFT    8	/* ROM delay next access */
-#define  MSC2_RDN	(0x0f<<MSC2_RDN_SHIFT)
-#define  MSC2_RDF_SHIFT    4	/*  ROM delay first access*/
-#define  MSC2_RDF  	(0x0f<<MSC2_RDF_SHIFT)
-#define  MSC2_RBW_SHIFT    3	/* 32/16 bit bus */
-#define  MSC2_RBW 	(1<<MSC2_RBW_SHIFT)
-#define  MSC2_RT_SHIFT	   0	/* type */
-#define  MSC2_RT 	(7<<MSC2_RT_SHIFT)
-#define  MSC2_RT_NONBURST	0
-#define  MSC2_RT_SRAM    	1
-#define  MSC2_RT_BURST4  	2
-#define  MSC2_RT_BURST8  	3
-#define  MSC2_RT_VLIO   	4
+#define  MSC_RBUFF_SHIFT 15	/* return data buffer */
+#define  MSC_RBUFF	(1<<MSC_RBUFF_SHIFT)
+#define  MSC_RRR_SHIFT   12  	/* recovery time */
+#define	 MSC_RRR	(7<<MSC_RRR_SHIFT)
+#define  MSC_RDN_SHIFT    8	/* ROM delay next access */
+#define  MSC_RDN	(0x0f<<MSC_RDN_SHIFT)
+#define  MSC_RDF_SHIFT    4	/*  ROM delay first access*/
+#define  MSC_RDF  	(0x0f<<MSC_RDF_SHIFT)
+#define  MSC_RBW_SHIFT    3	/* 32/16 bit bus */
+#define  MSC_RBW 	(1<<MSC_RBW_SHIFT)
+#define  MSC_RT_SHIFT	   0	/* type */
+#define  MSC_RT 	(7<<MSC_RT_SHIFT)
+#define  MSC_RT_NONBURST	0
+#define  MSC_RT_SRAM    	1
+#define  MSC_RT_BURST4  	2
+#define  MSC_RT_BURST8  	3
+#define  MSC_RT_VLIO   	 	4
 
-#define MEMCTL_MCMEM0	0x28	/* expansion memory timing configuration */
-#define MEMCTL_MCMEM1	0x2c	/* expansion memory timing configuration */
-#define MEMCTL_MCATT0	0x30
-#define MEMCTL_MCATT1	0x34
-#define MEMCTL_MCIO0	0x38
-#define MEMCTL_MCIO1	0x3c
+/* expansion memory timing configuration */
+#define MEMCTL_MCMEM(n)	(0x28+4*(n))
+#define MEMCTL_MCATT(n)	(0x30+4*(n))
+#define MEMCTL_MCIO(n)	(0x38+4*(n))
+
+#define  MC_HOLD_SHIFT	14
+#define  MC_ASST_SHIFT	7
+#define  MC_SET_SHIFT	0
+#define  MC_TIMING_VAL(hold,asst,set)	(((hold)<<MC_HOLD_SHIFT)| \
+		((asst)<<MC_ASST_SHIFT)|((set)<<MC_SET_SHIFT))
 
 #define MEMCTL_MECR	0x14	/* Expansion memory configuration */
 #define MECR_NOS	(1<<0)	/* Number of sockets */
@@ -324,4 +418,162 @@
 #define LCDC_FIDR1	0x218	/* DMA ch1 frame ID register */
 #define LCDC_LDCMD1	0x21c	/* DMA ch1 command register */
 
+/*
+ * MMC/SD controller
+ */
+#define MMC_STRPCL	0x00	/* start/stop MMC clock */
+#define  STRPCL_NOOP	0
+#define  STRPCL_STOP	1	/* stop MMC clock */
+#define  STRPCL_START	2	/* start MMC clock */
+#define MMC_STAT	0x04	/* status register */
+#define  STAT_READ_TIME_OUT   		(1<<0)
+#define  STAT_TIMEOUT_RESPONSE		(1<<1)
+#define  STAT_CRC_WRITE_ERROR		(1<<2)
+#define  STAT_CRC_READ_ERROR		(1<<3)
+#define  STAT_SPI_READ_ERROR_TOKEN	(1<<4)
+#define  STAT_RES_CRC_ERR		(1<<5)
+#define  STAT_XMIT_FIFO_EMPTY		(1<<6)
+#define  STAT_RECV_FIFO_FULL		(1<<7)
+#define  STAT_CLK_EN			(1<<8)
+#define  STAT_DATA_TRAN_DONE		(1<<11)
+#define  STAT_PRG_DONE			(1<<12)
+#define  STAT_END_CMD_RES		(1<<13)
+#define MMC_CLKRT	0x08	/* MMC clock rate */
+#define  CLKRT_20M	0
+#define  CLKRT_10M	1
+#define  CLKRT_5M	2
+#define  CLKRT_2_5M	3
+#define  CLKRT_1_25M	4
+#define  CLKRT_625K	5
+#define  CLKRT_312K	6
+#define MMC_SPI  	0x0c	/* SPI mode control */
+#define  SPI_EN  	(1<<0)	/* enable SPI mode */
+#define  SPI_CRC_ON	(1<<1)	/* enable CRC generation */
+#define  SPI_CS_EN	(1<<2)	/* Enable CS[01] */
+#define  SPI_CS_ADDRESS	(1<<3)	/* CS0/CS1 */
+#define MMC_CMDAT	0x10	/* command/response/data */
+#define  CMDAT_RESPONSE_FORMAT	0x03
+#define  CMDAT_RESPONSE_FORMAT_NO 0 /* no response */
+#define  CMDAT_RESPONSE_FORMAT_R1 1 /* R1, R1b, R4, R5 */
+#define  CMDAT_RESPONSE_FORMAT_R2 2
+#define  CMDAT_RESPONSE_FORMAT_R3 3
+#define  CMDAT_DATA_EN		(1<<2)
+#define  CMDAT_WRITE		(1<<3) /* 1=write 0=read operation */
+#define  CMDAT_STREAM_BLOCK	(1<<4) /* stream mode */
+#define  CMDAT_BUSY		(1<<5) /* busy signal is expected */
+#define  CMDAT_INIT		(1<<6) /* preceede command with 80 clocks */
+#define  CMDAT_MMC_DMA_EN	(1<<7) /* DMA enable */
+#define MMC_RESTO	0x14	/* expected response time out */
+#define MMC_RDTO 	0x18	/* expected data read time out */
+#define MMC_BLKLEN	0x1c	/* block length of data transaction */
+#define MMC_NOB  	0x20	/* number of blocks (block mode) */
+#define MMC_PRTBUF	0x24	/* partial MMC_TXFIFO written */
+#define  PRTBUF_BUF_PART_FULL (1<<0) /* buffer partially full */
+#define MMC_I_MASK	0x28	/* interrupt mask */
+#define MMC_I_REG	0x2c	/* interrupt register */
+#define  MMC_I_DATA_TRAN_DONE	(1<<0)
+#define  MMC_I_PRG_DONE		(1<<1)
+#define  MMC_I_END_CMD_RES	(1<<2)
+#define  MMC_I_STOP_CMD		(1<<3)
+#define  MMC_I_CLK_IS_OFF	(1<<4)
+#define  MMC_I_RXFIFO_RD_REQ	(1<<5)
+#define  MMC_I_TXFIFO_WR_REQ	(1<<6)
+#define MMC_CMD  	0x30	/* index of current command */
+#define MMC_ARGH 	0x34	/* MSW part of the current command arg */
+#define MMC_ARGL 	0x38	/* LSW part of the current command arg */
+#define MMC_RES  	0x3c	/* response FIFO */
+#define MMC_RXFIFO	0x40	/* receive FIFO */
+#define MMC_TXFIFO	0x44 	/* transmit FIFO */
+
+/*
+ * AC97
+ */
+#define AC97_GCR 	0x000c	/* Global control register */
+#define  GCR_GIE       	(1<<0)	/* interrupt enable */
+#define  GCR_COLD_RST	(1<<1)
+#define  GCR_WARM_RST	(1<<2)
+#define  GCR_ACLINK_OFF	(1<<3)
+#define  GCR_PRIRES_IEN	(1<<4)	/* Primary resume interrupt enable */
+#define  GCR_SECRES_IEN	(1<<5)	/* Secondary resume interrupt enable */
+#define  GCR_PRIRDY_IEN	(1<<8)	/* Primary ready interrupt enable */
+#define  GCR_SECRDY_IEN	(1<<9)	/* Primary ready interrupt enable */
+#define  GCR_SDONE_IE 	(1<<18)	/* Status done interrupt enable */
+#define  GCR_CDONE_IE	(1<<19)	/* Command done interrupt enable */
+
+#define AC97_GSR 	0x001c	/* Global status register */
+#define  GSR_GSCI	(1<<0)	/* codec GPI status change interrupt */
+#define  GSR_MIINT	(1<<1)	/* modem in interrupt */
+#define  GSR_MOINT	(1<<2)	/* modem out interrupt */
+#define  GSR_PIINT	(1<<5)	/* PCM in interrupt */
+#define  GSR_POINT	(1<<6)	/* PCM in interrupt */
+#define  GSR_MINT	(1<<7)	/* Mic in interrupt */
+#define  GSR_PCR	(1<<8)	/* primary code ready */
+#define  GSR_SCR	(1<<9)	/* secondary code ready */
+#define  GSR_PRIRES	(1<<10)	/* primary resume interrupt */
+#define  GSR_SECRES	(1<<11)	/* secondary resume interrupt */
+#define  GSR_BIT1SLT12	(1<<12)	/* Bit 1 of slot 12 */
+#define  GSR_BIT2SLT12	(1<<13)	/* Bit 2 of slot 12 */
+#define  GSR_BIT3SLT12	(1<<14)	/* Bit 3 of slot 12 */
+#define  GSR_RDCS 	(1<<15)	/* Read completion status */
+#define  GSR_SDONE 	(1<<18)	/* status done */
+#define  GSR_CDONE 	(1<<19)	/* command done */
+
+#define AC97_POCR 	0x0000	/* PCM-out control */
+#define AC97_PICR 	0x0004	/* PCM-in control */
+#define AC97_POSR 	0x0010	/* PCM-out status */
+#define AC97_PISR 	0x0014	/* PCM-out status */
+#define AC97_MCCR	0x0008	/* MIC-in control register */
+#define AC97_MCSR	0x0018	/* MIC-in status register */
+#define AC97_MICR	0x0100	/* Modem-in control register */
+#define AC97_MISR	0x0108	/* Modem-in status register */
+#define AC97_MOCR	0x0110	/* Modem-in control register */
+#define AC97_MOSR	0x0118	/* Modem-out status register */
+#define  AC97_FIFOE	(1<<4)	/* fifo error */
+
+#define AC97_CAR  	0x0020	/* Codec access register */
+#define  CAR_CAIP  	(1<<0)	/* Codec access in progress */
+
+#define AC97_PCDR	0x0040	/* PCM data register */
+#define AC97_MCDR 	0x0060	/* MIC-in data register */
+#define AC97_MODR 	0x0060	/* Modem data register */
+
+/* address to access codec registers */
+#define AC97_PRIAUDIO	0x0200	/* Primary audio codec */
+#define AC97_SECAUDIO	0x0300	/* Secondary autio codec */
+#define AC97_PRIMODEM	0x0400	/* Primary modem codec */
+#define AC97_SECMODEM	0x0500	/* Secondary modem codec */
+
+/*
+ * USB device controller
+ */
+#define USBDC_UDCCR	0x0000  /* UDC control register    */
+#define USBDC_UDCCS(n)	(0x0010+4*(n))  /* Endpoint Control/Status Registers */
+#define USBDC_UICR0	0x0050  /* UDC Interrupt Control Register 0  */
+#define USBDC_UICR1	0x0054  /* UDC Interrupt Control Register 1  */
+#define USBDC_USIR0	0x0058  /* UDC Status Interrupt Register 0  */
+#define USBDC_USIR1	0x005C  /* UDC Status Interrupt Register 1  */
+#define USBDC_UFNHR	0x0060  /* UDC Frame Number Register High  */
+#define USBDC_UFNLR	0x0064  /* UDC Frame Number Register Low  */
+#define USBDC_UBCR2	0x0068  /* UDC Byte Count Register 2  */
+#define USBDC_UBCR4	0x006C  /* UDC Byte Count Register 4  */
+#define USBDC_UBCR7	0x0070  /* UDC Byte Count Register 7  */
+#define USBDC_UBCR9	0x0074  /* UDC Byte Count Register 9  */
+#define USBDC_UBCR12	0x0078  /* UDC Byte Count Register 12  */
+#define USBDC_UBCR14	0x007C  /* UDC Byte Count Register 14  */
+#define USBDC_UDDR0	0x0080  /* UDC Endpoint 0 Data Register  */
+#define USBDC_UDDR1	0x0100  /* UDC Endpoint 1 Data Register  */
+#define USBDC_UDDR2	0x0180  /* UDC Endpoint 2 Data Register  */
+#define USBDC_UDDR3	0x0200  /* UDC Endpoint 3 Data Register  */
+#define USBDC_UDDR4	0x0400  /* UDC Endpoint 4 Data Register  */
+#define USBDC_UDDR5	0x00A0  /* UDC Endpoint 5 Data Register  */
+#define USBDC_UDDR6	0x0600  /* UDC Endpoint 6 Data Register  */
+#define USBDC_UDDR7	0x0680  /* UDC Endpoint 7 Data Register  */
+#define USBDC_UDDR8	0x0700  /* UDC Endpoint 8 Data Register  */
+#define USBDC_UDDR9	0x0900  /* UDC Endpoint 9 Data Register  */
+#define USBDC_UDDR10	0x00C0  /* UDC Endpoint 10 Data Register  */
+#define USBDC_UDDR11	0x0B00  /* UDC Endpoint 11 Data Register  */
+#define USBDC_UDDR12	0x0B80  /* UDC Endpoint 12 Data Register  */
+#define USBDC_UDDR13	0x0C00  /* UDC Endpoint 13 Data Register  */
+#define USBDC_UDDR14	0x0E00  /* UDC Endpoint 14 Data Register  */
+#define USBDC_UDDR15	0x00E0  /* UDC Endpoint 15 Data Register  */
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */
