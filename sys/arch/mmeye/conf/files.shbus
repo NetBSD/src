@@ -1,4 +1,4 @@
-#	$NetBSD: files.shbus,v 1.4 2000/02/24 17:07:35 msaitoh Exp $
+#	$NetBSD: files.shbus,v 1.5 2000/04/21 07:12:54 tsubai Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -13,25 +13,24 @@ device	shb {[port = -1], [size = 0],
 	     [irq = -1], [drq = -1], [drq2 = -1]}
 attach	shb at mainbus
 
-file arch/mmeye/mmeye/shb.c		shb needs-flag
+file	arch/mmeye/mmeye/shb.c			shb needs-flag
 
 # Misc devices
 
 device	wdog
 attach	wdog at shb
-file	arch/sh3/dev/wdog.c		wdog	needs-flag
+file	arch/sh3/dev/wdog.c			wdog needs-flag
 
 #
-# Serial and parallel drivers
+# Serial drivers
 #
-attach com at shb with com_sh
-file arch/mmeye/mmeye/com.c		com needs-flag
-file arch/mmeye/mmeye/com_sh.c		com_sh
+attach	com at shb with com_sh
+file	arch/mmeye/mmeye/com_sh.c		com_sh
 
 # never enable this entry
 #device	sci
 #attach	sci at shb
-#file	arch/sh3/dev/sci.c		sci needs-flag
+#file	arch/sh3/dev/sci.c			sci needs-flag
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
@@ -51,7 +50,7 @@ file	arch/sh3/dev/shpcic.c			shpcic
 
 # PCIC pcmcia contoller
 attach	shpcic at shb with pcic_shb
-file	arch/sh3/dev/pcic_shb.c		pcic_shb
+file	arch/sh3/dev/pcic_shb.c			pcic_shb
 file	arch/sh3/dev/pcic_shbsubr.c		pcic_shb
 
 # this wants to be probed as late as possible.
