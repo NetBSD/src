@@ -1,4 +1,4 @@
-.\"	$NetBSD: pstat.8,v 1.22 1999/11/18 08:34:38 enami Exp $
+.\"	$NetBSD: pstat.8,v 1.23 1999/12/08 22:01:53 msaitoh Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,18 +146,14 @@ Miscellaneous state variables encoded thus:
 .Bl -tag -width indent -compact
 .It T
 delay timeout in progress
-.It W
-waiting for open to complete
+.\" .It W
+.\" waiting for open to complete
 .It O
 open
 .It F
 outq has been flushed during DMA
 .It C
 carrier is on
-.It T
-delay timeout in progress
-.It F
-outq has been flushed during DMA
 .It B
 busy doing output
 .It A
@@ -170,6 +166,23 @@ output stopped
 further input blocked
 .It Y
 tty in async I/O mode
+.It D
+state for lowercase
+.Ql \e
+work
+.It E
+within a
+.Ql \e.../
+for PRTRUB
+.It L
+next character is literal
+.It P
+retyping suspended input 
+.Pq PENDIN
+.It N
+counting tab width, ignore FLUSHO
+.It \&>
+tty used for dialout
 .El
 .It SESS
 Session for which this is controlling terminal.
