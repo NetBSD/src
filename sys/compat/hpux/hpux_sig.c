@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.23 2002/07/04 23:32:09 thorpej Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.24 2002/11/27 16:44:02 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.23 2002/07/04 23:32:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.24 2002/11/27 16:44:02 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,16 +309,16 @@ hpux_sys_sigaction(p, v, retval)
 
 	sa = &action;
 	if (SCARG(uap, osa)) {
-		sa->sa_handler = bsa->sa_handler;
-		memset((caddr_t)&sa->sa_mask, 0, sizeof(sa->sa_mask));
-		bsdtohpuxmask(&bsa->sa_mask, &sa->sa_mask.sigset[0]);
-		sa->sa_flags = 0;
+		sa->hpux_sa_handler = bsa->sa_handler;
+		memset((caddr_t)&sa->hpux_sa_mask, 0, sizeof(sa->hpux_sa_mask));
+		bsdtohpuxmask(&bsa->sa_mask, &sa->hpux_sa_mask.sigset[0]);
+		sa->hpux_sa_flags = 0;
 		if (bsa->sa_flags & SA_ONSTACK)
-			sa->sa_flags |= HPUXSA_ONSTACK;
+			sa->hpux_sa_flags |= HPUXSA_ONSTACK;
 		if (bsa->sa_flags & SA_RESETHAND)
-			sa->sa_flags |= HPUXSA_RESETHAND;
+			sa->hpux_sa_flags |= HPUXSA_RESETHAND;
 		if (bsa->sa_flags & SA_NOCLDSTOP)
-			sa->sa_flags |= HPUXSA_NOCLDSTOP;
+			sa->hpux_sa_flags |= HPUXSA_NOCLDSTOP;
 		error = copyout(sa, SCARG(uap, osa), sizeof (action));
 		if (error)
 			return (error);
@@ -329,17 +329,17 @@ hpux_sys_sigaction(p, v, retval)
 		error = copyin(SCARG(uap, nsa), sa, sizeof(action));
 		if (error)
 			return (error);
-		if (sig == SIGCONT && sa->sa_handler == SIG_IGN)
+		if (sig == SIGCONT && sa->hpux_sa_handler == SIG_IGN)
 			return (EINVAL);
 
-		act.sa_handler = sa->sa_handler;
-		hpuxtobsdmask(sa->sa_mask.sigset[0], &act.sa_mask);
+		act.sa_handler = sa->hpux_sa_handler;
+		hpuxtobsdmask(sa->hpux_sa_mask.sigset[0], &act.sa_mask);
 		act.sa_flags = SA_RESTART;
-		if (sa->sa_flags & HPUXSA_ONSTACK)
+		if (sa->hpux_sa_flags & HPUXSA_ONSTACK)
 			act.sa_flags |= SA_ONSTACK;
-		if (sa->sa_flags & HPUXSA_RESETHAND)
+		if (sa->hpux_sa_flags & HPUXSA_RESETHAND)
 			act.sa_flags |= SA_RESETHAND;
-		if (sa->sa_flags & HPUXSA_NOCLDSTOP)
+		if (sa->hpux_sa_flags & HPUXSA_NOCLDSTOP)
 			act.sa_flags |= SA_NOCLDSTOP;
 
 		error = sigaction1(p, sig, &act, NULL, NULL, 0);

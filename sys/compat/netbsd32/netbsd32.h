@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.22 2002/10/23 13:16:40 scw Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.23 2002/11/27 16:44:02 atatat Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -349,9 +349,9 @@ struct netbsd32_shmid_ds14 {
 typedef netbsd32_pointer_t netbsd32_sigsetp_t;
 typedef netbsd32_pointer_t netbsd32_sigactionp_t;
 struct	netbsd32_sigaction {
-	netbsd32_voidp sa_handler;	/* signal handler */
-	sigset_t sa_mask;		/* signal mask to apply */
-	int	sa_flags;		/* see signal options below */
+	netbsd32_voidp netbsd32_sa_handler;	/* signal handler */
+	sigset_t netbsd32_sa_mask;		/* signal mask to apply */
+	int	netbsd32_sa_flags;		/* see signal options below */
 };
 
 typedef netbsd32_pointer_t netbsd32_sigaltstack13p_t;
