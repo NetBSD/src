@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.83 2000/08/20 21:50:11 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.84 2000/08/22 17:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,9 @@ __volatile u_int32_t sched_whichqs;	/* bitmap of non-empty queues */
 struct slpque sched_slpque[SLPQUE_TABLESIZE]; /* sleep queues */
 
 struct simplelock sched_lock = SIMPLELOCK_INITIALIZER;
+#if defined(MULTIPROCESSOR)
+struct lock kernel_lock;
+#endif
 
 void roundrobin(void *);
 void schedcpu(void *);
@@ -329,6 +332,40 @@ updatepri(struct proc *p)
 	resetpriority(p);
 }
 
+#if defined(MULTIPROCESSOR)
+/*
+ * XXX Need to tweak lockmgr() for this!
+ */
+static int
+kernel_lock_release_all(void)
+{
+	int count, s;
+
+	s = splsched();
+	count = kernel_lock.lk_exclusivecount;
+	KDASSERT(count > 0);
+	kernel_lock.lk_exclusivecount = 1;
+	kernel_lock.lk_recurselevel = 1;
+	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+	splx(s);
+
+	return (count);
+}
+
+static void
+kernel_lock_acquire_count(int flags, int count)
+{
+	int s;
+
+	s = splsched();
+	KDASSERT(count > 0);
+	spinlockmgr(&kernel_lock, flags, 0);
+	KDASSERT(kernel_lock.lk_exclusivecount == 1);
+	kernel_lock.lk_exclusivecount = count;
+	splx(s);
+}
+#endif /* MULTIPROCESSOR */
+
 /*
  * During autoconfiguration or after a panic, a sleep will simply
  * lower the priority briefly to allow interrupts, then return.
@@ -365,8 +402,8 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	int sig, s;
 	int catch = priority & PCATCH;
 	int relock = (priority & PNORELOCK) == 0;
-#if 0 /* XXXSMP */
-	int dobiglock;
+#if defined(MULTIPROCESSOR)
+	int dobiglock, held_count;
 #endif
 
 	/*
@@ -392,8 +429,8 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		return (0);
 	}
 
-#if 0 /* XXXSMP */
-	dobiglock = (p->p_flags & P_BIGLOCK) != 0;
+#if defined(MULTIPROCESSOR)
+	dobiglock = (p->p_flag & P_BIGLOCK) != 0;
 #endif
 
 #ifdef KTRACE
@@ -454,7 +491,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 			if (p->p_wchan != NULL)
 				unsleep(p);
 			p->p_stat = SONPROC;
-#if 0 /* XXXSMP */
+#if defined(MULTIPROCESSOR)
 			/*
 			 * We're going to skip the unlock, so
 			 * we don't need to relock after resume.
@@ -466,7 +503,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		}
 		if (p->p_wchan == NULL) {
 			catch = 0;
-#if 0 /* XXXSMP */
+#if defined(MULTIPROCESSOR)
 			/* See above. */
 			dobiglock = 0;
 #endif
@@ -478,7 +515,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	p->p_stat = SSLEEP;
 	p->p_stats->p_ru.ru_nvcsw++;
 
-#if 0 /* XXXSMP */
+#if defined(MULTIPROCESSOR)
 	if (dobiglock) {
 		/*
 		 * Release the kernel_lock, as we are about to
@@ -486,7 +523,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		 * held until cpu_switch() selects a new process
 		 * and removes it from the run queue.
 		 */
-		kernel_lock_release();
+		held_count = kernel_lock_release_all();
 	}
 #endif
 
@@ -506,13 +543,15 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	KDASSERT(p->p_cpu == curcpu());
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
 
-#if 0 /* XXXSMP */
+#if defined(MULTIPROCESSOR)
 	if (dobiglock) {
 		/*
 		 * Reacquire the kernel_lock now.  We do this after
-		 * we've released scheduler_slock to avoid deadlock.
+		 * we've released sched_lock to avoid deadlock,
+		 * and before we reacquire the interlock.
 		 */
-		kernel_lock_acquire(LK_EXCLUSIVE);
+		kernel_lock_acquire_count(LK_EXCLUSIVE|LK_CANRECURSE,
+		    held_count);
 	}
 #endif
 	p->p_flag &= ~P_SINTR;

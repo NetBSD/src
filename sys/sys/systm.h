@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.115 2000/08/18 19:14:34 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.116 2000/08/22 17:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -73,6 +73,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include <machine/endian.h>
@@ -334,5 +335,50 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 void scdebug_call __P((struct proc *, register_t, register_t[]));
 void scdebug_ret __P((struct proc *, register_t, int, register_t[]));
 #endif /* SYSCALL_DEBUG */
+
+#if defined(MULTIPROCESSOR)
+#include <sys/lock.h>
+
+extern struct lock kernel_lock;
+
+#define	KERNEL_LOCK_INIT()	spinlockinit(&kernel_lock, "klock", 0)
+
+/*
+ * Acquire/release kernel lock.
+ * Intended for use in the scheduler and the lower half of the kernel.
+ */
+#define	KERNEL_LOCK(flag)						\
+do {									\
+	SCHED_ASSERT_UNLOCKED();					\
+	spinlockmgr(&kernel_lock, (flag), 0);				\
+} while (0)
+
+#define	KERNEL_UNLOCK()		spinlockmgr(&kernel_lock, LK_RELEASE, 0)
+
+/*
+ * Acquire/release kernel lock on behalf of a process.
+ * Intended for use in the top half of the kernel.
+ */
+#define	KERNEL_PROC_LOCK(p)						\
+do {									\
+	KERNEL_LOCK(LK_EXCLUSIVE);					\
+	(p)->p_flag |= P_BIGLOCK;					\
+} while (0)
+
+#define	KERNEL_PROC_UNLOCK(p)						\
+do {									\
+	p->p_flag &= ~P_BIGLOCK;					\
+	KERNEL_UNLOCK();						\
+} while (0)
+
+#else /* ! MULTIPROCESSOR */
+
+#define	KERNEL_LOCK_INIT()		/* nothing */
+#define	KERNEL_LOCK(flag)		/* nothing */
+#define	KERNEL_UNLOCK()			/* nothing */
+#define	KERNEL_PROC_LOCK(p)		/* nothing */
+#define	KERNEL_PROC_UNLOCK(p)		/* nothing */
+
+#endif /* MULTIPROCESSOR */
 
 #endif	/* !_SYS_SYSTM_H_ */
