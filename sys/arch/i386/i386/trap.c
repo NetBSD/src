@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 1998/08/15 05:10:24 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.122 1998/08/16 00:42:51 rvb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -428,6 +428,8 @@ trap(frame)
 		extern vm_map_t kernel_map;
 		unsigned nss;
 
+		if (vm == NULL)
+			goto we_re_toast;
 		va = trunc_page((vaddr_t)rcr2());
 		/*
 		 * It is only a kernel address space fault iff:
