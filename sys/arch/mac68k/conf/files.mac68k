@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.39 1996/02/07 16:34:28 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.40 1996/02/22 23:36:03 gwr Exp $
 
 # mac68k-specific configuration info
 
@@ -48,6 +48,7 @@ device	sbc at mainbus: scsi, ncr5380sbc
 file	arch/mac68k/dev/ncr_sbc.c	sbc
 
 file	arch/m68k/m68k/copy.s
+file	arch/m68k/m68k/db_memrw.c	ddb
 include "../../m68k/fpe/files.fpe"
 
 file	arch/mac68k/mac68k/autoconf.c
