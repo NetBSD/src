@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.1.2.5 2003/01/03 17:36:14 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.1.2.6 2003/01/06 22:12:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,9 +157,8 @@ statintr_4m(void *cap)
 	counterreg4m->t_limit_nr = tmr_ustolim4m(newint);
 
 	/*
-	 * The factor 8 is only valid for stathz==100. For other
-	 * values we should compute a mask, approx.
-	 *	mask = round_power2(stathz / schedhz) - 1
+	 * The factor 8 is only valid for stathz==100.
+	 * See also clock.c
 	 */
 	if (curlwp && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
 		raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */

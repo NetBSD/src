@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.20 2003/01/03 17:40:56 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.21 2003/01/06 22:12:35 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -482,9 +482,10 @@ badtrap:
 		}
 #endif
 
-		KERNEL_PROC_LOCK(l);
 		if (fs == NULL) {
+			KERNEL_PROC_LOCK(l);
 			fs = malloc(sizeof *fs, M_SUBPROC, M_WAITOK);
+			KERNEL_PROC_UNLOCK(l);
 			*fs = initfpstate;
 			l->l_md.md_fpstate = fs;
 		}
@@ -514,6 +515,7 @@ badtrap:
 #if 1
 		if (cpuinfo.fplwp != l) {		/* we do not have it */
 			struct cpu_info *cpi;
+			FPU_LOCK();
 			if (cpuinfo.fplwp != NULL) {	/* someone else had it*/
 				savefpstate(cpuinfo.fplwp->l_md.md_fpstate);
 				cpuinfo.fplwp->l_md.md_fpu = NULL;
@@ -560,6 +562,7 @@ badtrap:
 			loadfpstate(fs);
 			cpuinfo.fplwp = l;		/* now we do have it */
 			l->l_md.md_fpumid = cpuinfo.mid;
+			FPU_UNLOCK();
 		}
 #endif
 		KERNEL_PROC_UNLOCK(l);
@@ -663,8 +666,11 @@ badtrap:
 		KERNEL_PROC_LOCK(l);
 		if (l != cpuinfo.fplwp)
 			panic("fpe without being the FP user");
+		FPU_LOCK();
 		savefpstate(l->l_md.md_fpstate);
 		cpuinfo.fplwp = NULL;
+		l->l_md.md_fpu = NULL;
+		FPU_UNLOCK();
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		fpu_cleanup(l, l->l_md.md_fpstate);
 		KERNEL_PROC_UNLOCK(l);

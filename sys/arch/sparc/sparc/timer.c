@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3.2.8 2003/01/03 17:36:14 thorpej Exp $ */
+/*	$NetBSD: timer.c,v 1.3.2.9 2003/01/06 22:12:33 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,14 +74,6 @@ static struct intrhand level10;
 static struct intrhand level14;
 
 
-void schedintr(void *v)
-{
-	struct lwp *l = curlwp;
-
-	if (l != NULL)
-		schedclock(l);
-}
-
 /*
  * sun4/sun4c/sun4m common timer attach code
  */
@@ -141,8 +133,6 @@ timerattach(cntreg, limreg)
 	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
-
-	schedhz = 12;
 }
 
 /*

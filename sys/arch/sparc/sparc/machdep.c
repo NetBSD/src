@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.24 2003/01/05 22:51:52 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.25 2003/01/06 22:12:30 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,6 +143,8 @@ struct vm_map *mb_map = NULL;
 extern paddr_t avail_end;
 
 int	physmem;
+
+struct simplelock fpulock = SIMPLELOCK_INITIALIZER;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -415,6 +417,7 @@ setregs(l, pack, stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
+		FPU_LOCK();
 		if ((cpi = l->l_md.md_fpu) != NULL) {
 			if (cpi->fplwp != l)
 				panic("FPU(%d): fplwp %p",
@@ -428,6 +431,7 @@ setregs(l, pack, stack)
 			cpi->fplwp = NULL;
 		}
 		l->l_md.md_fpu = NULL;
+		FPU_UNLOCK();
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
