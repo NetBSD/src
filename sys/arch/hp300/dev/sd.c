@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.62 2003/06/28 14:20:50 darrenr Exp $	*/
+/*	$NetBSD: sd.c,v 1.63 2003/06/29 15:58:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.62 2003/06/28 14:20:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.63 2003/06/29 15:58:20 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -510,10 +510,10 @@ sdgetinfo(dev)
 }
 
 int
-sdopen(dev, flags, mode, p)
+sdopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc;
@@ -569,10 +569,10 @@ sdopen(dev, flags, mode, p)
 }
 
 int
-sdclose(dev, flag, mode, p)
+sdclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
@@ -1060,12 +1060,12 @@ sdwrite(dev, uio, flags)
 }
 
 int
-sdioctl(dev, cmd, data, flag, p)
+sdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = sdunit(dev);
 	struct sd_softc *sc = sd_cd.cd_devs[unit];
@@ -1126,13 +1126,13 @@ sdioctl(dev, cmd, data, flag, p)
 
 	case SDIOCSFORMAT:
 		/* take this device into or out of "format" mode */
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
 			return(EPERM);
 
 		if (*(int *)data) {
 			if (sc->sc_format_pid >= 0)
 				return (EPERM);
-			sc->sc_format_pid = p->p_pid;
+			sc->sc_format_pid = l->l_proc->p_pid;
 		} else
 			sc->sc_format_pid = -1;
 		return (0);
@@ -1147,7 +1147,7 @@ sdioctl(dev, cmd, data, flag, p)
 		 * Save what user gave us as SCSI cdb to use with next
 		 * read or write to the char device.
 		 */
-		if (sc->sc_format_pid != p->p_pid)
+		if (sc->sc_format_pid != l->l_proc->p_pid)
 			return (EPERM);
 		if (legal_cmds[((struct scsi_fmt_cdb *)data)->cdb[0]] == 0)
 			return (EINVAL);
