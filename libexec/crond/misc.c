@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.3 1993/04/22 03:45:05 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.4 1993/05/11 08:16:03 glass Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -38,7 +38,9 @@ static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/misc.c,v 1.3 19
 #if defined(ATT)
 # include <fcntl.h>
 #endif
-
+#ifdef SYSLOG
+#include <syslog.h>
+#endif
 
 void log_it(), be_different(), acquire_daemonlock();
 
@@ -606,10 +608,12 @@ log_it(username, pid, event, detail)
 
 #endif /*SYSLOG*/
 
+#if DEBUGGING
 	if (DebugFlags) {
 		fprintf(stderr, "log_it: (%s %d) %s (%s)",
 			username, pid, event, detail);
 	}
+#endif
 }
 #endif /*LOG_FILE || SYSLOG */
 
