@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.28 2001/01/22 09:52:21 jdolecek Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -281,7 +281,7 @@ echo '
 #include <sys/buf.h>
 #include <sys/vnode.h>
 
-struct vnodeop_desc vop_default_desc = {
+const struct vnodeop_desc vop_default_desc = {
 	0,
 	"default",
 	0,
