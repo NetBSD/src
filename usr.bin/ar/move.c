@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -35,24 +35,23 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)move.c	5.6 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: move.c,v 1.2 1993/08/01 18:18:32 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)move.c	8.3 (Berkeley) 4/2/94";*/
+static char *rcsid = "$Id: move.c,v 1.3 1994/09/19 03:34:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <ar.h>
+#include <dirent.h>
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "archive.h"
 #include "extern.h"
 #include "pathnames.h"
-
-extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
-extern char *tname;                     /* temporary file "name" */
 
 /*
  * move --
@@ -61,10 +60,10 @@ extern char *tname;                     /* temporary file "name" */
  *	option selected members go after 'posname'.  If no options, members
  *	are moved to end of archive.
  */
+int
 move(argv)
 	char **argv;
 {
-	extern char *posarg, *posname;	/* positioning file names */
 	CF cf;
 	off_t size, tsize;
 	int afd, curfd, mods, tfd1, tfd2, tfd3;
@@ -110,10 +109,9 @@ move(argv)
 	}
 
 	if (mods) {
-		(void)fprintf(stderr, "ar: %s: archive member not found.\n",
-		    posarg);
+		warnx("%s: archive member not found", posarg);
 		close_archive(afd);
-		return(1);
+		return (1);
 	}
 	(void)lseek(afd, (off_t)SARMAG, SEEK_SET);
 
@@ -137,7 +135,7 @@ move(argv)
 
 	if (*argv) {
 		orphans(argv);
-		return(1);
+		return (1);
 	}
-	return(0);
+	return (0);
 }	

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	5.4 (Berkeley) 4/12/91
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:18:39 mycroft Exp $
+ *	from: @(#)pathnames.h	8.1 (Berkeley) 6/6/93
+ *	$Id: pathnames.h,v 1.3 1994/09/19 03:34:18 mycroft Exp $
  */
 
 #define	_NAME_ARTMP	"ar.XXXXXX"
