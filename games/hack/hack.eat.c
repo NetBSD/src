@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.eat.c,v 1.4 1997/10/19 16:57:53 christos Exp $	*/
+/*	$NetBSD: hack.eat.c,v 1.5 2001/03/25 20:44:00 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.eat.c,v 1.4 1997/10/19 16:57:53 christos Exp $");
+__RCSID("$NetBSD: hack.eat.c,v 1.5 2001/03/25 20:44:00 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -22,7 +22,7 @@ char            POISONOUS[] = "ADKSVabhks";
 #define FAINTED		5
 #define STARVED		6
 
-char           *hu_stat[] = {
+const char           *const hu_stat[] = {
 	"Satiated",
 	"        ",
 	"Hungry  ",
@@ -40,8 +40,8 @@ init_uhunger()
 }
 
 #define	TTSZ	SIZE(tintxts)
-struct {
-	char           *txt;
+const struct {
+	const char           *txt;
 	int             nut;
 }               tintxts[] = {
 	{ "It contains first quality peaches - what a surprise!", 40 },

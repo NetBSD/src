@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2001/02/05 00:37:43 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2001/03/25 20:43:58 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ void nomul __P((int));
 int abon __P((void));
 int dbon __P((void));
 void losestr __P((int));
-void losehp __P((int, char *));
+void losehp __P((int, const char *));
 void losehp_m __P((int, struct monst *));
 void losexp __P((void));
 int inv_weight __P((void));
@@ -82,7 +82,7 @@ int inv_cnt __P((void));
 long newuexp __P((void));
 
 /* hack.cmd.c */
-void rhack __P((char *));
+void rhack __P((const char *));
 int doextcmd __P((void));
 char lowc __P((int));
 char unctrl __P((int));
@@ -110,7 +110,7 @@ void set_wounded_legs __P((long, int));
 void heal_legs __P((void));
 
 /* hack.do_name.c */
-coord getpos __P((int, char *));
+coord getpos __P((int, const char *));
 int do_mname __P((void));
 void do_oname __P((struct obj *));
 int ddocall __P((void));
@@ -119,8 +119,8 @@ char *xmonnam __P((struct monst *, int));
 char *lmonnam __P((struct monst *));
 char *monnam __P((struct monst *));
 char *Monnam __P((struct monst *));
-char *amonnam __P((struct monst *, char *));
-char *Amonnam __P((struct monst *, char *));
+char *amonnam __P((struct monst *, const char *));
+char *Amonnam __P((struct monst *, const char *));
 char *Xmonnam __P((struct monst *));
 char *visctrl __P((int));
 
@@ -169,26 +169,26 @@ void done1 __P((int));
 void done_intr __P((int));
 void done_hangup __P((int));
 void done_in_by __P((struct monst *));
-void done __P((char *));
+void done __P((const char *));
 void topten __P((void));
 void outheader __P((void));
 struct toptenentry;
 int outentry __P((int, struct toptenentry *, int));
 char *itoa __P((int));
-char *ordin __P((int));
+const char *ordin __P((int));
 void clearlocks __P((void));
-void hangup __P((int));
+void hangup __P((int)) __attribute__((__noreturn__));
 char *eos __P((char *));
 void charcat __P((char *, int));
 void prscore __P((int, char **));
 
 /* hack.engrave.c */
 struct engr *engr_at __P((xchar, xchar));
-int sengr_at __P((char *, xchar, xchar));
+int sengr_at __P((const char *, xchar, xchar));
 void u_wipe_engr __P((int));
 void wipe_engr_at __P((xchar, xchar, xchar));
 void read_engr_at __P((int, int));
-void make_engr_at __P((int, int, char *));
+void make_engr_at __P((int, int, const char *));
 int doengrave __P((void));
 void save_engravings __P((int));
 void rest_engravings __P((int));
@@ -199,7 +199,7 @@ int hitmm __P((struct monst *, struct monst *));
 void mondied __P((struct monst *));
 void monstone __P((struct monst *));
 int fightm __P((struct monst *));
-int thitu __P((int, int, char *));
+int thitu __P((int, int, const char *));
 boolean hmon __P((struct monst *, struct obj *, int));
 int attack __P((struct monst *));
 
@@ -220,9 +220,9 @@ struct obj *o_on __P((unsigned int, struct obj *));
 struct trap *t_at __P((int, int));
 struct gold *g_at __P((int, int));
 struct obj *mkgoldobj __P((long));
-struct obj *getobj __P((char *, char *));
+struct obj *getobj __P((const char *, const char *));
 int ckunpaid __P((struct obj *));
-int ggetobj __P((char *, int (*fn)(struct obj *), int));
+int ggetobj __P((const char *, int (*fn)(struct obj *), int));
 int askchain __P((struct obj *, char *, int, int (*)(struct obj *), 
     int (*)(struct obj *), int));
 char obj_to_let __P((struct obj *));
@@ -247,7 +247,7 @@ int dosuspend __P((void));
 
 /* hack.lev.c */
 void savelev __P((int, xchar));
-void bwrite __P((int, char *, unsigned));
+void bwrite __P((int, const void *, unsigned));
 void saveobjchn __P((int, struct obj *));
 void savemonchn __P((int, struct monst *));
 void savegoldchn __P((int, struct gold *));
@@ -264,7 +264,7 @@ void impossible __P((const char *, ...))
 void stop_occupation __P((void));
 
 /* hack.makemon.c */
-struct monst *makemon __P((struct permonst *, int, int));
+struct monst *makemon __P((const struct permonst *, int, int));
 coord enexto __P((xchar, xchar));
 int goodpos __P((int, int));
 void rloc __P((struct monst *));
@@ -312,7 +312,7 @@ void mkgold __P((long, int, int));
 /* hack.mkshop.c */
 void mkshop __P((void));
 void mkzoo __P((int));
-struct permonst *morguemon __P((void));
+const struct permonst *morguemon __P((void));
 void mkswamp __P((void));
 int nexttodoor __P((int, int));
 int has_dnstairs __P((struct mkroom *));
@@ -323,8 +323,8 @@ int sq __P((int));
 
 /* hack.mon.c */
 void movemon __P((void));
-void justswld __P((struct monst *, char *));
-void youswld __P((struct monst *, int, int, char *));
+void justswld __P((struct monst *, const char *));
+void youswld __P((struct monst *, int, int, const char *));
 int dochugw __P((struct monst *));
 int dochug __P((struct monst *));
 int m_move __P((struct monst *, int));
@@ -332,7 +332,7 @@ void mpickgold __P((struct monst *));
 void mpickgems __P((struct monst *));
 int mfndpos __P((struct monst *, coord[9 ], int[9 ], int));
 int dist __P((int, int));
-void poisoned __P((char *, char *));
+void poisoned __P((const char *, const char *));
 void mondead __P((struct monst *));
 void replmon __P((struct monst *, struct monst *));
 void relmon __P((struct monst *));
@@ -340,9 +340,9 @@ void monfree __P((struct monst *));
 void dmonsfree __P((void));
 void unstuck __P((struct monst *));
 void killed __P((struct monst *));
-void kludge __P((char *, char *));
+void kludge __P((const char *, const char *));
 void rescham __P((void));
-int newcham __P((struct monst *, struct permonst *));
+int newcham __P((struct monst *, const struct permonst *));
 void mnexto __P((struct monst *));
 int ishuman __P((struct monst *));
 void setmangry __P((struct monst *));
@@ -367,8 +367,8 @@ char *sitoa __P((int));
 char *typename __P((int));
 char *xname __P((struct obj *));
 char *doname __P((struct obj *));
-void setan __P((char *, char *));
-char *aobjnam __P((struct obj *, char *));
+void setan __P((const char *, char *));
+char *aobjnam __P((struct obj *, const char *));
 char *Doname __P((struct obj *));
 struct obj *readobjnam __P((char *));
 
@@ -384,17 +384,17 @@ void page_more __P((FILE *, int));
 void set_whole_screen __P((void));
 int readnews __P((void));
 void set_pager __P((int));
-int page_line __P((char *));
-void cornline __P((int, char *));
+int page_line __P((const char *));
+void cornline __P((int, const char *));
 int dohelp __P((void));
-int page_file __P((char *, boolean));
+int page_file __P((const char *, boolean));
 int dosh __P((void));
 int child __P((int));
 
 /* hack.potion.c */
 int dodrink __P((void));
 void pluslvl __P((void));
-void strange_feeling __P((struct obj *, char *));
+void strange_feeling __P((struct obj *, const char *));
 void potionhit __P((struct monst *, struct obj *));
 void potionbreathe __P((struct obj *));
 int dodip __P((void));
@@ -408,7 +408,7 @@ void atl __P((int, int, int));
 void on_scr __P((int, int));
 void tmp_at __P((schar, schar));
 void Tmp_at __P((schar, schar));
-void setclipped __P((void));
+void setclipped __P((void)) __attribute__((__noreturn__));
 void at __P((xchar, xchar, int));
 void prme __P((void));
 int doredraw __P((void));
@@ -526,16 +526,17 @@ void stoned_dialogue __P((void));
 int doredotopl __P((void));
 void redotoplin __P((void));
 void remember_topl __P((void));
-void addtopl __P((char *));
-void xmore __P((char *));
+void addtopl __P((const char *));
+void xmore __P((const char *));
 void more __P((void));
-void cmore __P((char *));
+void cmore __P((const char *));
 void clrlin __P((void));
 void pline __P((const char *, ...))
     __attribute__((__format__(__printf__, 1, 2)));
-void vpline __P((const char *, va_list));
+void vpline __P((const char *, va_list))
+    __attribute__((__format__(__printf__, 1, 0)));
 void putsym __P((int));
-void putstr __P((char *));
+void putstr __P((const char *));
 
 /* hack.track.c */
 void initrack __P((void));
@@ -546,7 +547,7 @@ coord *gettrack __P((int, int));
 struct trap *maketrap __P((int, int, int));
 void dotrap __P((struct trap *));
 int mintrap __P((struct monst *));
-void selftouch __P((char *));
+void selftouch __P((const char *));
 void float_up __P((void));
 void float_down __P((void));
 void vtele __P((void));
@@ -561,18 +562,18 @@ void drown __P((void));
 
 /* hack.tty.c */
 void gettty __P((void));
-void settty __P((char *));
+void settty __P((const char *));
 void setctty __P((void));
 void setftty __P((void));
 void error __P((const char *, ...))
     __attribute__((__format__(__printf__, 1, 2),__noreturn__));
 void getlin __P((char *));
 void getret __P((void));
-void cgetret __P((char *));
-void xwaitforspace __P((char *));
+void cgetret __P((const char *));
+void xwaitforspace __P((const char *));
 char *parse __P((void));
 char readchar __P((void));
-void end_of_input __P((void));
+void end_of_input __P((void)) __attribute__((__noreturn__));
 
 /* hack.u_init.c */
 void u_init __P((void));
@@ -647,9 +648,9 @@ void setnotworn __P((struct obj *));
 void bhitm __P((struct monst *, struct obj *));
 int bhito __P((struct obj *, struct obj *));
 int dozap __P((void));
-char *exclam __P((int));
-void hit __P((char *, struct monst *, char *));
-void miss __P((char *, struct monst *));
+const char *exclam __P((int));
+void hit __P((const char *, struct monst *, const char *));
+void miss __P((const char *, struct monst *));
 struct monst *bhit __P((int, int, int, int,
     void (*)(struct monst *, struct obj *),
     int (*)(struct obj *, struct obj *),

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.apply.c,v 1.5 1997/10/19 16:57:32 christos Exp $	*/
+/*	$NetBSD: hack.apply.c,v 1.6 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.apply.c,v 1.5 1997/10/19 16:57:32 christos Exp $");
+__RCSID("$NetBSD: hack.apply.c,v 1.6 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -80,7 +80,7 @@ xit:
 /* ARGSUSED */
 static void
 use_camera(obj) /* */ 
-	struct obj     *obj;
+	struct obj     *obj __attribute__((__unused__));
 {
 	struct monst *mtmp;
 	if (!getdir(1)) {	/* ask: in what direction? */
@@ -246,7 +246,7 @@ bchit(ddx, ddy, range, sym)
 /* ARGSUSED */
 static void
 use_whistle(obj)
-	struct obj     *obj;
+	struct obj     *obj __attribute__((__unused__));
 {
 	struct monst *mtmp = fmon;
 	pline("You produce a high whistling sound.");
@@ -264,7 +264,7 @@ use_whistle(obj)
 /* ARGSUSED */
 static void
 use_magic_whistle(obj)
-	struct obj     *obj;
+	struct obj     *obj __attribute__((__unused__));
 {
 	struct monst *mtmp = fmon;
 	pline("You produce a strange whistling sound.");
@@ -317,7 +317,7 @@ dig()
 			}
 		}
 	} else if (dig_effort > 100) {
-		char  *digtxt;
+		const char  *digtxt;
 		struct obj *obj;
 
 		lev = &levl[dpx][dpy];

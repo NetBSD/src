@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.trap.c,v 1.5 1998/08/30 09:19:37 veego Exp $	*/
+/*	$NetBSD: hack.trap.c,v 1.6 2001/03/25 20:44:03 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.trap.c,v 1.5 1998/08/30 09:19:37 veego Exp $");
+__RCSID("$NetBSD: hack.trap.c,v 1.6 2001/03/25 20:44:03 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -14,9 +14,9 @@ __RCSID("$NetBSD: hack.trap.c,v 1.5 1998/08/30 09:19:37 veego Exp $");
 #include "extern.h"
 #include "def.mkroom.h"
 
-char            vowels[] = "aeiou";
+const char            vowels[] = "aeiou";
 
-char           *traps[] = {
+const char           *const traps[] = {
 	" bear trap",
 	"n arrow trap",
 	" dart trap",
@@ -243,7 +243,7 @@ mintrap(mtmp)
 
 void
 selftouch(arg)
-	char           *arg;
+	const char           *arg;
 {
 	if (uwep && uwep->otyp == DEAD_COCKATRICE) {
 		pline("%s touch the dead cockatrice.", arg);

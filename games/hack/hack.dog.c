@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.dog.c,v 1.4 1997/10/19 16:57:50 christos Exp $	*/
+/*	$NetBSD: hack.dog.c,v 1.5 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.dog.c,v 1.4 1997/10/19 16:57:50 christos Exp $");
+__RCSID("$NetBSD: hack.dog.c,v 1.5 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -15,11 +15,11 @@ __RCSID("$NetBSD: hack.dog.c,v 1.4 1997/10/19 16:57:50 christos Exp $");
 #include "def.edog.h"
 #include "def.mkroom.h"
 
-struct permonst li_dog =
+const struct permonst li_dog =
 {"little dog", 'd', 2, 18, 6, 1, 6, sizeof(struct edog)};
-struct permonst dog =
+const struct permonst dog =
 {"dog", 'd', 4, 16, 5, 1, 6, sizeof(struct edog)};
-struct permonst la_dog =
+const struct permonst la_dog =
 {"large dog", 'd', 6, 15, 4, 2, 4, sizeof(struct edog)};
 
 
@@ -131,13 +131,12 @@ dogfood(obj)
 
 /* return 0 (no move), 1 (move) or 2 (dead) */
 int
-dog_move(mtmp, after)
-	struct monst   *mtmp;
+dog_move(struct monst *mtmp, int after)
 {
 	int             nx, ny, omx, omy, appr, nearer, j;
 	int             udist, chi = 0, i, whappr;
 	struct monst   *mtmp2;
-	struct permonst *mdat = mtmp->data;
+	const struct permonst *mdat = mtmp->data;
 	struct edog    *edog = EDOG(mtmp);
 	struct obj     *obj;
 	struct trap    *trap;

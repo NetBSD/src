@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.6 1997/10/23 07:05:55 fair Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.7 2001/03/25 20:44:00 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.6 1997/10/23 07:05:55 fair Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.7 2001/03/25 20:44:00 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -335,7 +335,7 @@ mkgoldobj(q)
  */
 struct obj     *
 getobj(let, word)
-	char           *let, *word;
+	const char           *let, *word;
 {
 	struct obj     *otmp;
 	char            ilet, ilet1, ilet2;
@@ -508,7 +508,7 @@ ckunpaid(otmp)
 /* return the number of times fn was called successfully */
 int
 ggetobj(word, fn, max)
-	char *word;
+	const char *word;
 	int (*fn)  __P((struct obj *));
 	int max;
 {
@@ -799,7 +799,7 @@ dolook()
 {
 	struct obj     *otmp = NULL, *otmp0 = NULL;
 	struct gold    *gold = NULL;
-	char           *verb = Blind ? "feel" : "see";
+	const char     *verb = Blind ? "feel" : "see";
 	int             ct = 0;
 
 	if (!u.uswallow) {
@@ -866,6 +866,7 @@ stackobj(obj)
 int
 merged(otmp, obj, lose)
 	struct obj     *otmp, *obj;
+	int lose;
 {
 	if (obj->otyp == otmp->otyp &&
 	    obj->unpaid == otmp->unpaid &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: def.permonst.h,v 1.4 1997/10/19 16:57:19 christos Exp $	*/
+/*	$NetBSD: def.permonst.h,v 1.5 2001/03/25 20:43:58 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -7,12 +7,13 @@
 #ifndef _DEF_PERMONST_H_
 #define _DEF_PERMONST_H_
 struct permonst {
-	char *mname,mlet;
+	const char *mname;
+	char mlet;
 	schar mlevel,mmove,ac,damn,damd;
 	unsigned pxlth;
 };
 
-extern struct permonst mons[];
+extern const struct permonst mons[];
 #define PM_ACID_BLOB	&mons[7]
 #define	PM_ZOMBIE	&mons[13]
 #define	PM_PIERCER	&mons[17]

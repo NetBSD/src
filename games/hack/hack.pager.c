@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.5 1997/10/19 16:58:46 christos Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.6 2001/03/25 20:44:02 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.5 1997/10/19 16:58:46 christos Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.6 2001/03/25 20:44:02 jsm Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -69,7 +69,7 @@ static int      got_intrup;
 
 void
 intruph(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	got_intrup++;
 }
@@ -160,7 +160,7 @@ set_pager(mode)
 
 int
 page_line(s)			/* returns 1 if we should quit */
-	char           *s;
+	const char           *s;
 {
 	if (cury == LI - 1) {
 		if (!*s)
@@ -198,7 +198,7 @@ page_line(s)			/* returns 1 if we should quit */
 void
 cornline(mode, text)
 	int             mode;
-	char           *text;
+	const char           *text;
 {
 	static struct line {
 		struct line    *next_line;
@@ -307,14 +307,14 @@ dohelp()
 int
 page_file(fnam, silent)		/* return: 0 - cannot open fnam; 1 -
 				 * otherwise */
-	char           *fnam;
+	const char           *fnam;
 	boolean         silent;
 {
 #ifdef DEF_PAGER		/* this implies that UNIX is defined */
 	{
 		/* use external pager; this may give security problems */
 
-		int             fd = open(fnam, 0);
+		int             fd = open(fnam, O_RDONLY);
 
 		if (fd < 0) {
 			if (!silent)
@@ -399,7 +399,7 @@ union wait {			/* used only for the cast  (union wait *) 0  */
 #endif	/* NOWAITINCLUDE */
 
 int
-child(wt)
+child(int wt)
 {
 	int             status;
 	int             f;

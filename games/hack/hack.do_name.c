@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.4 1997/10/19 16:57:46 christos Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.5 2001/03/25 20:43:59 jsm Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.4 1997/10/19 16:57:46 christos Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.5 2001/03/25 20:43:59 jsm Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -16,7 +16,7 @@ __RCSID("$NetBSD: hack.do_name.c,v 1.4 1997/10/19 16:57:46 christos Exp $");
 coord
 getpos(force, goal)
 	int             force;
-	char           *goal;
+	const char           *goal;
 {
 	int             cx, cy, i, c;
 	coord           cc;
@@ -202,7 +202,7 @@ docall(obj)
 	*str1 = str;
 }
 
-char           *ghostnames[] = {/* these names should have length < PL_NSIZ */
+const char *const ghostnames[] = {/* these names should have length < PL_NSIZ */
 	"adri", "andries", "andreas", "bert", "david", "dirk", "emile",
 	"frans", "fred", "greg", "hether", "jay", "john", "jon", "kay",
 	"kenny", "maud", "michiel", "mike", "peter", "robert", "ron",
@@ -222,7 +222,7 @@ xmonnam(mtmp, vb)
 	switch (mtmp->data->mlet) {
 	case ' ':
 		{
-			char           *gn = (char *) mtmp->mextra;
+			const char           *gn = (char *) mtmp->mextra;
 			if (!*gn) {	/* might also look in scorefile */
 				gn = ghostnames[rn2(SIZE(ghostnames))];
 				if (!rn2(2))
@@ -277,7 +277,7 @@ Monnam(mtmp)
 char           *
 amonnam(mtmp, adj)
 	struct monst   *mtmp;
-	char           *adj;
+	const char           *adj;
 {
 	char           *bp = monnam(mtmp);
 	static char     buf[BUFSZ];	/* %% */
@@ -291,7 +291,7 @@ amonnam(mtmp, adj)
 char           *
 Amonnam(mtmp, adj)
 	struct monst   *mtmp;
-	char           *adj;
+	const char           *adj;
 {
 	char           *bp = amonnam(mtmp, adj);
 
