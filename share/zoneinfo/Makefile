@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2001/11/19 05:18:53 perry Exp $
+#	$NetBSD: Makefile,v 1.24 2001/11/24 21:37:23 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -8,9 +8,6 @@ MKOBJ=no
 # the time zone files, or adding it to a time zone file).
 # Alternately, if you discover you've got the wrong time zone, you can just
 #	zic -l rightzone
-
-# This line has been moved to /usr/src/etc/Makefile
-LOCALTIME=	US/Pacific
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
@@ -59,29 +56,38 @@ ZIC=zic
 posix_only: ${TDATA}
 	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA}
 
-.PHONY:	right_only
-right_only: leapseconds ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA}
-
-.PHONY:	other_two
-other_two: leapseconds ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA}
-	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA}
-
-.PHONY:	posix_right
-posix_right: posix_only other_two
-
-.PHONY:	right_posix
-right_posix: right_only other_two
+## XXX Is any of this needed, or is it just baggage that we never use?
+## XXX Commented out for now, pending an answer.
+#.PHONY:	right_only
+#right_only: leapseconds ${TDATA}
+#	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA}
+#
+#.PHONY:	other_two
+#other_two: leapseconds ${TDATA}
+#	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA}
+#	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA}
+#
+#.PHONY:	posix_right
+#posix_right: posix_only other_two
+#
+#.PHONY:	right_posix
+#right_posix: right_only other_two
 
 .if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
 	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES}
+	find ${TZDIR} -type d | xargs chmod u=rwX,go=rX
+	find ${TZDIR} -type f | xargs chmod a=r
 .if !defined(UNPRIVED)
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
+.else
+	find ${TZDIR} -type d | xargs -n 1 printf \
+		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" | \
+		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+	find ${TZDIR} -type f | xargs -n 1 printf \
+		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" | \
+		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
 .endif
-	find ${TZDIR} -type f | xargs chmod a=r
-	find ${TZDIR} -type d | xargs chmod u=rwX,go=rX
 .else
 afterinstall:
 .endif
