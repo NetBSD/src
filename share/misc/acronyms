@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.79 2001/03/01 22:35:52 lukem Exp $
+$NetBSD: acronyms,v 1.80 2001/03/01 22:46:13 lukem Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -99,6 +99,7 @@ PPL	pretty please
 QED	quod erat demonstrandum
 RFC	request for comments
 RL	real life
+RLC	rod length check
 ROTFL	rolling on the floor laughing
 RP	responsible person
 RSN	real soon now
