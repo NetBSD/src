@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.82 2001/10/31 18:30:18 jdolecek Exp $
+# $NetBSD: md.i386,v 1.83 2001/12/04 00:12:46 jdolecek Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
@@ -10,30 +10,12 @@
 ./usr/lib/libm387.so.0			base-sys-shlib
 ./usr/lib/libm387.so.0.0		base-sys-shlib
 ./usr/libexec/ld.so			base-sys-shlib
-./usr/lkm/adosfs.o			base-adosfs-lkm
-./usr/lkm/cd9660.o			base-sys-lkm
-./usr/lkm/coda.o			base-coda-lkm
-./usr/lkm/compat_freebsd.o		base-sys-lkm
 ./usr/lkm/compat_linux.o		base-sys-lkm
 ./usr/lkm/compat_svr4.o			base-sys-lkm
 ./usr/lkm/exec_freebsd_elf.o		base-sys-lkm
 ./usr/lkm/exec_freebsd_aout.o		base-sys-lkm
 ./usr/lkm/exec_linux_elf.o		base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o		base-sys-lkm
-./usr/lkm/ext2fs.o			base-ext2fs-lkm
-./usr/lkm/fdesc.o			base-miscfs-lkm
-./usr/lkm/filecorefs.o			base-filecorefs-lkm
-./usr/lkm/if_ipl.o			base-ipf-lkm
-./usr/lkm/lfs.o				base-sys-lkm
-./usr/lkm/kernfs.o			base-sys-lkm
-./usr/lkm/mfs.o				base-sys-lkm
-./usr/lkm/msdosfs.o			base-sys-lkm
-./usr/lkm/ntfs.o			base-ntfs-lkm
-./usr/lkm/nullfs.o			base-miscfs-lkm
-./usr/lkm/overlay.o			base-miscfs-lkm
-./usr/lkm/portal.o			base-miscfs-lkm
-./usr/lkm/procfs.o			base-sys-lkm
-./usr/lkm/umapfs.o			base-miscfs-lkm
 ./usr/mdec/biosboot.sym			base-sysutil-bin
 ./usr/mdec/biosboot_com0.sym		base-sysutil-bin
 ./usr/mdec/biosboot_resetvideo.sym	base-sysutil-bin
