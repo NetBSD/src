@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.7 2003/12/07 10:33:03 martin Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.8 2003/12/09 01:25:33 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -410,7 +410,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_STRING, "defcorename", NULL,
 		       sysctl_kern_defcorename, 0, defcorename, MAXPATHLEN,
 		       CTL_KERN, KERN_DEFCORENAME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "logsigexit", NULL,
 		       NULL, 0, &kern_logsigexit, 0,
 		       CTL_KERN, KERN_LOGSIGEXIT, CTL_EOL);
