@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.5 2002/02/28 04:12:49 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.6 2002/02/28 23:58:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.5 2002/02/28 04:12:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.6 2002/02/28 23:58:00 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -208,7 +208,7 @@ linux_sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_ss = tf->tf_ss;
 	frame.sf_sc.sc_err = tf->tf_err;
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
-	frame.sf_sc.sc_cr2 = p->p_addr->u_pcb.pcb_cr2;
+	frame.sf_sc.sc_cr2 = l->l_addr->u_pcb.pcb_cr2;
 
 	/* Save signal stack. */
 	/* Linux doesn't save the onstack flag in sigframe */
