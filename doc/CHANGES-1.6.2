@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.15 2003/06/16 12:57:12 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.16 2003/06/16 13:01:58 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -290,3 +290,8 @@ include/vis.h					1.13
 
 	this needs <sys/types.h>
 	[klienk, ticket #1210]
+
+usr.bin/menuc/menuc.1				1.12
+
+	Replace some \n with \en for correct display. Closes PR 18539.
+	[manu, ticket #1226]
