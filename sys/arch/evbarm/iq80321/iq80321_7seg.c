@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_7seg.c,v 1.1 2002/03/27 21:51:29 thorpej Exp $	*/
+/*	$NetBSD: iq80321_7seg.c,v 1.2 2002/04/12 20:50:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -49,12 +49,9 @@
 
 #define	WRITE(x, v)	*((__volatile uint8_t *) (x)) = (v)
 
-#define	ASCIIMAP_START	'0'
-#define	ASCIIMAP_END	'9'
-
 static int snakestate;
 
-static const uint8_t asciimap[] = {
+static const uint8_t digitmap[] = {
 /*	+#####+
  *	#     #
  *	#     #
@@ -176,20 +173,28 @@ static const uint8_t asciimap[] = {
 	SEG_D|SEG_E,
 };
 
+static uint8_t
+iq80321_7seg_xlate(char c)
+{
+	uint8_t rv;
+
+	if (c >= '0' && c <= '9')
+		rv = digitmap[c - '0'];
+	else if (c == '.')
+		rv = ~SEG_DP;
+	else
+		rv = 0xff;
+
+	return (rv);
+}
+
 void
 iq80321_7seg(char a, char b)
 {
 	uint8_t msb, lsb;
 
-	if (a < ASCIIMAP_START || a > ASCIIMAP_END)
-		msb = 0xff;
-	else
-		msb = asciimap[a - ASCIIMAP_START] | SEG_DP;
-
-	if (b < ASCIIMAP_START || b > ASCIIMAP_END)
-		lsb = 0xff;
-	else
-		lsb = asciimap[b - ASCIIMAP_START] | SEG_DP;
+	msb = iq80321_7seg_xlate(a);
+	lsb = iq80321_7seg_xlate(b);
 
 	snakestate = 0;
 
