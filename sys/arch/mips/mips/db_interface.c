@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2.6.1 1997/11/12 02:00:10 mellon Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2.6.2 1997/12/09 20:15:55 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -67,8 +67,8 @@ extern int	kdbpeek __P((vm_offset_t addr));
 extern void	kdbpoke __P((vm_offset_t addr, int newval));
 extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
      unsigned instPC, unsigned fpcCSR, int allowNonBranch));
-extern void mips1_dump_tlb __P((int, int));
-extern void mips3_dump_tlb __P((int, int));
+extern void mips1_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
+extern void mips3_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
 
 
 /*
@@ -243,17 +243,11 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 {
 	if (CPUISMIPS3) {
 #ifdef MIPS3
-		mips3_dump_tlb(0, 23);
-		(void)cngetc();
-		mips3_dump_tlb(24, 47);
+		mips3_dump_tlb(0, MIPS3_TLB_NUM_TLB_ENTRIES - 1, db_printf);
 #endif
 	} else {
 #ifdef MIPS1
-		mips1_dump_tlb(0, 22);
-		(void)cngetc();
-		mips1_dump_tlb(23, 45);
-		(void)cngetc();
-		mips1_dump_tlb(46, 63);
+		mips1_dump_tlb(0, MIPS1_TLB_NUM_TLB_ENTRIES - 1, db_printf);
 #endif
 	}
 }
