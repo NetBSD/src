@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.8.12.4 2004/04/15 23:56:23 marka Exp
+; Id: example.db.in,v 1.8.12.5 2004/05/05 01:32:15 marka Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -69,6 +69,10 @@ dynamic			A	10.53.0.3
 ; A insecure subdomain
 mustbesecure		NS	ns.mustbesecure
 ns.mustbesecure		A	10.53.0.3
+
+; A rfc2535 signed zone w/ CNAME
+rfc2535			NS	ns.rfc2535
+ns.rfc2535		A	10.53.0.3
 
 z			A	10.0.0.26
 

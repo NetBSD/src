@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.1.1.1 2004/05/17 23:45:03 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.2 2004/11/06 23:55:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.c,v 1.56.2.2.8.5 2004/03/08 09:04:50 marka Exp */
+/* Id: result.c,v 1.56.2.2.8.7 2004/06/11 00:31:01 marka Exp */
 
 #include <config.h>
 
@@ -98,7 +98,8 @@ static const char *text[ISC_R_NRESULTS] = {
 	"soft quota reached",			/* 55 */
 	"not a valid number",			/* 56 */
 	"disabled",				/* 57 */
-	"max size"				/* 58 */
+	"max size",				/* 58 */
+	"invalid address format"		/* 59 */
 };
 
 #define ISC_RESULT_RESULTSET			2
@@ -126,7 +127,7 @@ register_table(unsigned int base, unsigned int nresults, const char **text,
 	if (table == NULL)
 		return (ISC_R_NOMEMORY);
 	table->base = base;
-	table->last = base + nresults;
+	table->last = base + nresults - 1;
 	table->text = text;
 	table->msgcat = msgcat;
 	table->set = set;

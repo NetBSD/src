@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.1.1.1 2004/05/17 23:45:09 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.2 2004/11/06 23:56:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.70.2.20.2.17 2004/03/16 12:38:15 marka Exp */
+/* Id: parser.c,v 1.70.2.20.2.18 2004/05/15 03:46:13 jinmei Exp */
 
 #include <config.h>
 
@@ -1673,7 +1673,7 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 		}
 		if ((flags & CFG_ADDR_V6OK) != 0 &&
 		    strlen(s) <= 127U) {
-			char buf[128];
+			char buf[128]; /* see lib/bind9/getaddresses.c */
 			char *d; /* zone delimiter */
 			isc_uint32_t zone = 0; /* scope zone ID */
 
@@ -1684,6 +1684,7 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 
 			if (inet_pton(AF_INET6, buf, &in6a) == 1) {
 				if (d != NULL) {
+#ifdef ISC_PLATFORM_HAVESCOPEID
 					isc_result_t result;
 
 					result = isc_netscope_pton(AF_INET6,
@@ -1692,6 +1693,9 @@ token_addr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na) {
 								   &zone);
 					if (result != ISC_R_SUCCESS)
 						return (result);
+#else
+				return (ISC_R_BADADDRESSFORM);
+#endif
 				}
 
 				isc_netaddr_fromin6(na, &in6a);

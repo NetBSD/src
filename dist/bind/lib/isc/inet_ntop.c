@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.1 2004/05/17 23:45:02 christos Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.1.1.2 2004/11/06 23:55:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_ntop.c,v 1.12.12.3 2004/03/08 09:04:49 marka Exp";
+	"Id: inet_ntop.c,v 1.12.12.4 2004/08/28 06:25:21 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -29,6 +29,7 @@ static char rcsid[] =
 #include <string.h>
 
 #include <isc/net.h>
+#include <isc/print.h>
 
 #define NS_INT16SZ	 2
 #define NS_IN6ADDRSZ	16
