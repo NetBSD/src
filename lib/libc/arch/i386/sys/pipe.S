@@ -1,3 +1,5 @@
+/*	$NetBSD: pipe.S,v 1.4 1997/07/16 14:37:30 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,12 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pipe.s	5.1 (Berkeley) 4/23/90
- *	$Id: pipe.S,v 1.3 1994/01/24 19:24:43 jtc Exp $
  */
 
+#include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: pipe.S,v 1.3 1994/01/24 19:24:43 jtc Exp $"
+	RCSID("$NetBSD: pipe.S,v 1.4 1997/07/16 14:37:30 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

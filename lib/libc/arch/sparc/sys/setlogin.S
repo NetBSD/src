@@ -1,3 +1,5 @@
+/*	$NetBSD: setlogin.S,v 1.4 1997/07/16 14:38:00 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,12 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: setlogin.s,v 1.1 91/07/06 13:06:00 torek Exp
- * $Id: setlogin.S,v 1.3 1994/02/10 20:16:03 pk Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#include <machine/asm.h>
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)setlogin.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#else
+	RCSID("$NetBSD: setlogin.S,v 1.4 1997/07/16 14:38:00 christos Exp $")
+#endif
+#endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 

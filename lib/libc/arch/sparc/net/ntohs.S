@@ -1,3 +1,5 @@
+/*	$NetBSD: ntohs.S,v 1.3 1997/07/16 14:37:49 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,16 +37,18 @@
  * SUCH DAMAGE.
  *
  * from: Header: ntohs.s,v 1.1 92/06/25 12:47:07 torek Exp
- * $Id: ntohs.S,v 1.2 1996/11/16 20:53:28 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)ntohs.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: ntohs.S,v 1.3 1997/07/16 14:37:49 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* hostorder = ntohs(netorder) */
-
-#include <machine/asm.h>
 
 ENTRY(ntohs)
 	sethi	%hi(0xffff0000), %o1
