@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.10 2004/01/11 10:13:43 lukem Exp $
+#	$NetBSD: tc.mi,v 1.11 2004/01/13 06:27:16 lukem Exp $
 ./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/protoize				comp-c-bin
 ./usr/bin/unprotoize				comp-c-bin
@@ -10,8 +10,6 @@
 ./usr/include/g++/algobase.h			comp-cxx-include
 ./usr/include/g++/algorithm			comp-cxx-include
 ./usr/include/g++/alloc.h			comp-cxx-include
-./usr/include/g++/backward			comp-cxx-include
-./usr/include/g++/bits				comp-cxx-include
 ./usr/include/g++/bitset			comp-cxx-include
 ./usr/include/g++/builtinbuf.h			comp-cxx-include
 ./usr/include/g++/bvector.h			comp-cxx-include
@@ -40,7 +38,6 @@
 ./usr/include/g++/deque.h			comp-cxx-include
 ./usr/include/g++/editbuf.h			comp-cxx-include
 ./usr/include/g++/exception			comp-cxx-include
-./usr/include/g++/ext				comp-cxx-include
 ./usr/include/g++/floatio.h			comp-cxx-include
 ./usr/include/g++/fstream			comp-cxx-include
 ./usr/include/g++/fstream.h			comp-cxx-include
@@ -91,7 +88,6 @@
 ./usr/include/g++/sstream			comp-cxx-include
 ./usr/include/g++/stack				comp-cxx-include
 ./usr/include/g++/stack.h			comp-cxx-include
-./usr/include/g++/std				comp-cxx-include
 ./usr/include/g++/std/bastring.cc		comp-cxx-include
 ./usr/include/g++/std/bastring.h		comp-cxx-include
 ./usr/include/g++/std/complext.cc		comp-cxx-include
