@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.51 2002/06/11 17:26:52 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.52 2002/06/11 19:40:00 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.51 2002/06/11 17:26:52 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.52 2002/06/11 19:40:00 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -140,6 +140,7 @@ static int ipsec6_setspidx_ipaddr __P((struct mbuf *, struct secpolicyindex *));
 #endif
 static struct inpcbpolicy *ipsec_newpcbpolicy __P((void));
 static void ipsec_delpcbpolicy __P((struct inpcbpolicy *));
+static int ipsec_deepcopy_pcbpolicy __P((struct inpcbpolicy *));
 static struct secpolicy *ipsec_deepcopy_policy __P((struct secpolicy *src));
 static int ipsec_set_policy
 	__P((struct secpolicy **, int, caddr_t, size_t, int));
@@ -349,6 +350,8 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		pcbsp = sotoin6pcb(so)->in6p_sp;
 		break;
 #endif
+	default:
+		panic("ipsec4_getpolicybysock: unsupported address family\n");
 	}
 
 	/* if we have a cached entry, and if it is still valid, use it. */
@@ -426,8 +429,8 @@ ipsec4_getpolicybysock(m, dir, so, error)
 			}
 
 			/* no SP found */
-			if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD
-			 && ip4_def_policy.policy != IPSEC_POLICY_NONE) {
+			if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD &&
+			    ip4_def_policy.policy != IPSEC_POLICY_NONE) {
 				ipseclog((LOG_INFO,
 				    "fixed system default policy: %d->%d\n",
 				    ip4_def_policy.policy, IPSEC_POLICY_NONE));
@@ -477,8 +480,8 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		return NULL;
 
 	case IPSEC_POLICY_ENTRUST:
-		if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD
-		 && ip4_def_policy.policy != IPSEC_POLICY_NONE) {
+		if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD &&
+		    ip4_def_policy.policy != IPSEC_POLICY_NONE) {
 			ipseclog((LOG_INFO,
 			    "fixed system default policy: %d->%d\n",
 			    ip4_def_policy.policy, IPSEC_POLICY_NONE));
@@ -552,8 +555,8 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	}
 
 	/* no SP found */
-	if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD
-	 && ip4_def_policy.policy != IPSEC_POLICY_NONE) {
+	if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD &&
+	    ip4_def_policy.policy != IPSEC_POLICY_NONE) {
 		ipseclog((LOG_INFO, "fixed system default policy:%d->%d\n",
 			ip4_def_policy.policy,
 			IPSEC_POLICY_NONE));
@@ -653,8 +656,8 @@ ipsec6_getpolicybysock(m, dir, so, error)
 			}
 
 			/* no SP found */
-			if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD
-			 && ip6_def_policy.policy != IPSEC_POLICY_NONE) {
+			if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD &&
+			    ip6_def_policy.policy != IPSEC_POLICY_NONE) {
 				ipseclog((LOG_INFO,
 				    "fixed system default policy: %d->%d\n",
 				    ip6_def_policy.policy, IPSEC_POLICY_NONE));
@@ -704,8 +707,8 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		return NULL;
 
 	case IPSEC_POLICY_ENTRUST:
-		if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD
-		 && ip6_def_policy.policy != IPSEC_POLICY_NONE) {
+		if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD &&
+		    ip6_def_policy.policy != IPSEC_POLICY_NONE) {
 			ipseclog((LOG_INFO,
 			    "fixed system default policy: %d->%d\n",
 			    ip6_def_policy.policy, IPSEC_POLICY_NONE));
@@ -786,8 +789,8 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	}
 
 	/* no SP found */
-	if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD
-	 && ip6_def_policy.policy != IPSEC_POLICY_NONE) {
+	if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD &&
+	    ip6_def_policy.policy != IPSEC_POLICY_NONE) {
 		ipseclog((LOG_INFO, "fixed system default policy: %d->%d\n",
 		    ip6_def_policy.policy, IPSEC_POLICY_NONE));
 		ip6_def_policy.policy = IPSEC_POLICY_NONE;
@@ -852,6 +855,12 @@ ipsec4_setspidx_inpcb(m, pcb)
 	if (pcb->inp_sp->sp_out == NULL || pcb->inp_sp->sp_in == NULL)
 		panic("ipsec4_setspidx_inpcb: no sp_in/out found.\n");
 
+	if (pcb->inp_sp->sp_in->readonly || pcb->inp_sp->sp_out->readonly) {
+		error = ipsec_deepcopy_pcbpolicy(pcb->inp_sp);
+		if (error)
+			return error;
+	}
+
 	bzero(&pcb->inp_sp->sp_in->spidx, sizeof(*spidx));
 	bzero(&pcb->inp_sp->sp_out->spidx, sizeof(*spidx));
 
@@ -891,6 +900,12 @@ ipsec6_setspidx_in6pcb(m, pcb)
 		panic("ipsec6_setspidx_in6pcb: no in6p_sp found.\n");
 	if (pcb->in6p_sp->sp_out == NULL || pcb->in6p_sp->sp_in == NULL)
 		panic("ipsec6_setspidx_in6pcb: no sp_in/out found.\n");
+
+	if (pcb->in6p_sp->sp_in->readonly || pcb->in6p_sp->sp_out->readonly) {
+		error = ipsec_deepcopy_pcbpolicy(pcb->in6p_sp);
+		if (error)
+			return error;
+	}
 
 	bzero(&pcb->in6p_sp->sp_in->spidx, sizeof(*spidx));
 	bzero(&pcb->in6p_sp->sp_out->spidx, sizeof(*spidx));
@@ -1234,19 +1249,43 @@ ipsec_delpcbpolicy(p)
 
 /* initialize policy in PCB */
 int
-ipsec_init_policy(so, pcb_sp)
+ipsec_init_pcbpolicy(so, pcb_sp)
 	struct socket *so;
 	struct inpcbpolicy **pcb_sp;
 {
 	struct inpcbpolicy *new;
+	static int initialized = 0;
+	static struct secpolicy *in = NULL, *out = NULL;
 
 	/* sanity check. */
 	if (so == NULL || pcb_sp == NULL)
-		panic("ipsec_init_policy: NULL pointer was passed.\n");
+		panic("ipsec_init_pcbpolicy: NULL pointer was passed.\n");
+
+	if (!initialized) {
+		if ((in = key_newsp()) == NULL)
+			return ENOBUFS;
+		if ((out = key_newsp()) == NULL) {
+			key_freesp(in);
+			in = NULL;
+			return ENOBUFS;
+		}
+
+		in->state = IPSEC_SPSTATE_ALIVE;
+		in->policy = IPSEC_POLICY_ENTRUST;
+		in->spidx.dir = IPSEC_DIR_INBOUND;
+		in->readonly = 1;
+
+		out->state = IPSEC_SPSTATE_ALIVE;
+		out->policy = IPSEC_POLICY_ENTRUST;
+		out->spidx.dir = IPSEC_DIR_OUTBOUND;
+		out->readonly = 1;
+
+		initialized++;
+	}
 
 	new = ipsec_newpcbpolicy();
 	if (new == NULL) {
-		ipseclog((LOG_DEBUG, "ipsec_init_policy: No more memory.\n"));
+		ipseclog((LOG_DEBUG, "ipsec_init_pcbpolicy: No more memory.\n"));
 		return ENOBUFS;
 	}
 	bzero(new, sizeof(*new));
@@ -1256,19 +1295,11 @@ ipsec_init_policy(so, pcb_sp)
 	else
 		new->priv = 0;
 
-	if ((new->sp_in = key_newsp()) == NULL) {
-		ipsec_delpcbpolicy(new);
-		return ENOBUFS;
-	}
-	new->sp_in->state = IPSEC_SPSTATE_ALIVE;
-	new->sp_in->policy = IPSEC_POLICY_ENTRUST;
+	new->sp_in = in;
+	new->sp_in->refcnt++;
+	new->sp_out = out;
+	new->sp_out->refcnt++;
 
-	if ((new->sp_out = key_newsp()) == NULL) {
-		key_freesp(new->sp_in);
-		ipsec_delpcbpolicy(new);
-		return ENOBUFS;
-	}
-	new->sp_out->state = IPSEC_SPSTATE_ALIVE;
 	new->sp_out->policy = IPSEC_POLICY_ENTRUST;
 
 	*pcb_sp = new;
@@ -1278,26 +1309,42 @@ ipsec_init_policy(so, pcb_sp)
 
 /* copy old ipsec policy into new */
 int
-ipsec_copy_policy(old, new)
+ipsec_copy_pcbpolicy(old, new)
 	struct inpcbpolicy *old, *new;
+{
+
+	if (new->sp_in)
+		key_freesp(new->sp_in);
+	new->sp_in = old->sp_in;
+	new->sp_in->refcnt++;
+	if (new->sp_out)
+		key_freesp(new->sp_out);
+	new->sp_out = old->sp_out;
+	new->sp_out->refcnt++;
+	new->priv = old->priv;
+
+	return 0;
+}
+
+static int
+ipsec_deepcopy_pcbpolicy(pcb_sp)
+	struct inpcbpolicy *pcb_sp;
 {
 	struct secpolicy *sp;
 
-	sp = ipsec_deepcopy_policy(old->sp_in);
+	sp = ipsec_deepcopy_policy(pcb_sp->sp_in);
 	if (sp) {
-		key_freesp(new->sp_in);
-		new->sp_in = sp;
+		key_freesp(pcb_sp->sp_in);
+		pcb_sp->sp_in = sp;
 	} else
 		return ENOBUFS;
 
-	sp = ipsec_deepcopy_policy(old->sp_out);
+	sp = ipsec_deepcopy_policy(pcb_sp->sp_out);
 	if (sp) {
-		key_freesp(new->sp_out);
-		new->sp_out = sp;
+		key_freesp(pcb_sp->sp_out);
+		pcb_sp->sp_out = sp;
 	} else
 		return ENOBUFS;
-
-	new->priv = old->priv;
 
 	return 0;
 }
@@ -1386,8 +1433,8 @@ ipsec_set_policy(spp, optname, request, len, priv)
 
 	/* check policy type */
 	/* ipsec_set_policy() accepts IPSEC, ENTRUST and BYPASS. */
-	if (xpl->sadb_x_policy_type == IPSEC_POLICY_DISCARD
-	 || xpl->sadb_x_policy_type == IPSEC_POLICY_NONE)
+	if (xpl->sadb_x_policy_type == IPSEC_POLICY_DISCARD ||
+	    xpl->sadb_x_policy_type == IPSEC_POLICY_NONE)
 		return EINVAL;
 
 	/* check privileged socket */
@@ -1498,7 +1545,7 @@ ipsec4_get_policy(inp, request, len, mp)
 		sp = inp->inp_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
+		ipseclog((LOG_ERR, "ipsec4_get_policy: invalid direction=%u\n",
 			xpl->sadb_x_policy_dir));
 		return EINVAL;
 	}
@@ -1601,7 +1648,7 @@ ipsec6_get_policy(in6p, request, len, mp)
 		sp = in6p->in6p_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
+		ipseclog((LOG_ERR, "ipsec6_get_policy: invalid direction=%u\n",
 			xpl->sadb_x_policy_dir));
 		return EINVAL;
 	}

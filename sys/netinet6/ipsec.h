@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.26 2002/06/09 14:43:13 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.27 2002/06/11 19:40:00 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ struct secpolicyindex {
 struct secpolicy {
 	LIST_ENTRY(secpolicy) chain;
 
+	int readonly;			/* write prohibited */
 	int refcnt;			/* reference count */
 	struct secpolicyindex spidx;	/* selector */
 	u_int32_t id;			/* It's unique number on the system. */
@@ -345,8 +346,8 @@ struct inpcb;
 #ifdef INET6
 struct in6pcb;
 #endif
-extern int ipsec_init_policy __P((struct socket *so, struct inpcbpolicy **));
-extern int ipsec_copy_policy
+extern int ipsec_init_pcbpolicy __P((struct socket *so, struct inpcbpolicy **));
+extern int ipsec_copy_pcbpolicy
 	__P((struct inpcbpolicy *, struct inpcbpolicy *));
 extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.65 2002/05/30 05:51:21 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.66 2002/06/11 19:40:00 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.65 2002/05/30 05:51:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.66 2002/06/11 19:40:00 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -7104,10 +7104,12 @@ key_init()
 #ifdef INET
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
 	ip4_def_policy.refcnt++;	/*never reclaim this*/
+	ip4_def_policy.readonly = 1;
 #endif
 #ifdef INET6
 	ip6_def_policy.policy = IPSEC_POLICY_NONE;
 	ip6_def_policy.refcnt++;	/*never reclaim this*/
+	ip6_def_policy.readonly = 1;
 #endif
 
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
