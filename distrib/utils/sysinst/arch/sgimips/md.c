@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1.2.1 2002/07/19 01:41:19 lukem Exp $	*/
+/*	$NetBSD: md.c,v 1.1.2.2 2003/06/30 02:42:38 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <util.h>
+#include <errno.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -55,24 +56,13 @@
 int
 md_get_info(void)
 {	struct disklabel disklabel;
-	int fd;
-	char devname[100];
 
-	snprintf(devname, 100, "/dev/r%sc", diskdev);
-
-	fd = open(devname, O_RDONLY, 0);
-	if (fd < 0) {
+	if (get_real_geom(diskdev, &disklabel) == 0) {
 		endwin();
-		fprintf (stderr, "Can't open %s\n", devname);
+		fprintf (stderr, "Can't get disklabel for %s: %s\n", diskdev,
+		    strerror(errno));
 		exit(1);
 	}
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		endwin();
-		fprintf (stderr, "Can't read disklabel on %s.\n", devname);
-		close(fd);
-		exit(1);
-	}
-	close(fd);
 
 	dlcyl = disklabel.d_ncylinders;
 	dlhead = disklabel.d_ntracks;
@@ -84,7 +74,6 @@ md_get_info(void)
 	dlcyl  = disk->dd_cyl;
 	dlhead = disk->dd_head;
 	dlsec  = disk->dd_sec;
-	dlsize = dlcyl*dlhead*dlsec;
 	fsdsize = dlsize;
 	fsdmb = fsdsize / MEG;
 
@@ -126,6 +115,7 @@ md_make_bsd_partitions(void)
 	int part, partsize, partstart, remain;
 	char isize[SSTRSIZE];
 	int maxpart = getmaxpartitions();
+	struct disklabel l;
 
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
@@ -287,6 +277,30 @@ md_make_bsd_partitions(void)
 
 		/* Verify Partitions. */
 		process_menu(MENU_fspartok);
+		break;
+	case 4: /* use existing parts */
+		if (get_real_geom(diskdev, &l) == 0) {
+			msg_display(MSG_abort);
+			return 0;
+		}
+#define p l.d_partitions[i]
+		for (i = 0; i < getmaxpartitions(); i++) {
+			/*
+			 * Make sure to not overwrite the raw partition, or
+			 * the boot partition.
+			 */
+			if (i == 2 || i == 3)
+				continue;
+
+			bsdlabel[i].pi_size = p.p_size;
+			bsdlabel[i].pi_offset = p.p_offset;
+			bsdlabel[i].pi_fstype = p.p_fstype;
+			bsdlabel[i].pi_bsize  = p.p_fsize * p.p_frag;
+			bsdlabel[i].pi_fsize  = p.p_fsize;
+		}
+#undef p
+		msg_display(MSG_postuseexisting);
+		getchar();
 		break;
 	}
 
