@@ -34,7 +34,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)setlogin.s	5.1 (Berkeley) 5/6/91"*/
-	.asciz "$Id: setlogin.S,v 1.2 1993/12/18 01:05:16 jtc Exp $"
+	.asciz "$Id: setlogin.S,v 1.3 1994/01/27 14:45:55 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -48,6 +48,6 @@ SYSCALL(setlogin)
 	movl	a1@(___logname_valid:w),a1
 	clrl	a1@
 #else
-	movl	#0,___logname_valid
+	clrl	___logname_valid
 #endif
 	rts				/* setlogin(name) */

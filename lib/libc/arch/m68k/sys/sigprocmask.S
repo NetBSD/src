@@ -38,17 +38,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90"*/
-	.asciz "$Id: sigprocmask.S,v 1.1 1993/11/25 23:39:35 paulus Exp $"
+	.asciz "$Id: sigprocmask.S,v 1.2 1994/01/27 14:45:56 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
-
-	.even
-err:
-#ifdef	PIC
-	movl	d0,sp@-
-#endif
-	jra	cerror
 
 ENTRY(sigprocmask)
 	tstl	sp@(8)			/* check new sigset pointer */
@@ -70,3 +63,8 @@ doit:
 out:
 	clrl	d0
 	rts
+err:
+#ifdef	PIC
+	movl	d0,sp@-
+#endif
+	jra	cerror

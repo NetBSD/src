@@ -38,8 +38,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: Ovfork.S,v 1.2 1993/12/04 18:59:42 briggs Exp $"
+	.asciz "$Id: Ovfork.S,v 1.3 1994/01/27 14:45:52 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
+
+#include "SYS.h"
 
 /*
  * @(#)vfork.s	4.1 (Berkeley) 12/21/80
@@ -57,22 +59,17 @@
  * with a ret off this stack... we do the ret before we vfork!
  */
 
-	vfork = 66
-.globl	_vfork
-
-	.even
-
-_vfork:
+ENTRY(vfork)
 	movl	sp@+,a0
-	movl	#vfork,d0
+	movl	#SYS_vfork,d0
 	trap	#0
-	jcc	vforkok
-	jra	verror
-vforkok:
+	jcs	err
 	tstl	d1		/* child process ? */
-	jne	child		/* yes */
-	jcc 	parent		/* if c-bit not set, fork ok */
-verror:
+	jeq	parent
+	clrl	d0
+parent:
+	jmp	a0@
+err:
 	.globl	_errno
 #ifdef	PIC
 	movel	#__GLOBAL_OFFSET_TABLE_,a1
@@ -83,8 +80,4 @@ verror:
 	movl	d0,_errno
 #endif
 	moveq	#-1,d0
-	jmp	a0@
-child:
-	clrl	d0
-parent:
 	jmp	a0@
