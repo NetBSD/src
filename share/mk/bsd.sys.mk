@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.82 2002/11/25 03:03:13 thorpej Exp $
+#	$NetBSD: bsd.sys.mk,v 1.83 2002/12/21 12:58:13 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -87,6 +87,7 @@ PAX?=		pax
 PWD_MKDB?=	pwd_mkdb
 RPCGEN?=	rpcgen
 STRIP?=		strip
+SUNLABEL?=	sunlabel
 
 .SUFFIXES:	.m .o .ln .lo
 
