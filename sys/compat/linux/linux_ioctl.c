@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.1 1995/02/28 23:24:58 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.2 1995/06/22 21:34:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -42,10 +42,14 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
+#include <sys/exec.h>
+#include <net/if.h>
+#include <sys/sockio.h>
 
 #include <sys/syscallargs.h>
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_ioctl.h>
+#include <compat/linux/linux_sockio.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_syscallargs.h>
 
@@ -636,6 +640,12 @@ linux_ioctl(p, uap, retval)
 		break;
 	case LINUX_TIOCNOTTY:
 		SCARG(&ia, com) = TIOCNOTTY;
+		break;
+	case LINUX_SIOCADDMULTI:
+		SCARG(&ia, com) = SIOCADDMULTI;
+		break;
+	case LINUX_SIOCDELMULTI:
+		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
 	default:
 		return EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.3 1995/04/04 04:21:30 mycroft Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.4 1995/06/22 21:34:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -42,6 +42,7 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 

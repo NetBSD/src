@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.7 1995/05/28 10:20:46 mycroft Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.8 1995/06/22 21:34:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -50,6 +50,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_util.c,v 1.2 1995/03/05 23:23:49 fvdl Exp $	*/
+/* 	$NetBSD: linux_util.c,v 1.3 1995/06/22 21:34:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -41,6 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 
 #include <compat/linux/linux_util.h>
 

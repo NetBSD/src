@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.3 1995/03/10 22:55:04 fvdl Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.4 1995/06/22 21:34:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -44,6 +44,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/exec.h>
 
 #include <sys/syscallargs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_util.h,v 1.3 1995/04/07 22:23:27 fvdl Exp $	*/
+/*	$NetBSD: linux_util.h,v 1.4 1995/06/22 21:34:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,6 @@
 #define	_LINUX_UTIL_H_
 
 #include <machine/vmparam.h>
-#include <sys/exec.h>
 #include <sys/cdefs.h>
 
 #define cvtto_linux_mask(flags,bmask,lmask) (((flags) & bmask) ? lmask : 0)
