@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.3 2000/06/08 06:01:27 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.4 2000/06/26 04:55:46 simonb Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -321,15 +321,15 @@ grfpoll(dev, events, p)
 	return EINVAL;
 }
 
-int
+paddr_t
 grfmmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
-	u_long addr;
+	paddr_t addr;
 	int unit = GRFUNIT(dev);
 
 	if (grf_softc == NULL || unit >= numgrf)
@@ -347,7 +347,7 @@ grfmmap(dev, off, prot)
 	else
 		addr = (-1);	/* XXX bogus */
 
-	return (int)addr;
+	return addr;
 }
 
 int

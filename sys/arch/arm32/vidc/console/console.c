@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.18 2000/03/23 06:35:17 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.19 2000/06/26 04:55:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -671,14 +671,14 @@ physconioctl(dev, cmd, data, flag, p)
 	return(ENOTTY);
 }
 
-int
+paddr_t
 physconmmap(dev, offset, nprot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int nprot;
 {
 	struct vconsole *vc = find_vc(dev);
-	u_int physaddr;
+	paddr_t physaddr;
 
 	if (minor(dev) < 64) {
 		log(LOG_WARNING, "You should no longer use ttyv to mmap a frame buffer\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.1 2000/05/09 21:56:04 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.2 2000/06/26 04:55:27 simonb Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.1 2000/05/09 21:56:04 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.2 2000/06/26 04:55:27 simonb Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -78,7 +78,7 @@ static void arcvideo_await_vsync __P((struct device *self));
 static int arcvideo_intr __P((void *cookie));
 static int arcvideo_ioctl __P((void *cookie, u_long cmd, caddr_t data,
 			       int flag, struct proc *p));
-static int arcvideo_mmap __P((void *cookie, off_t off, int prot));
+static paddr_t arcvideo_mmap __P((void *cookie, off_t off, int prot));
 static int arcvideo_alloc_screen __P((void *cookie,
 				      const struct wsscreen_descr *scr,
 				      void **scookiep, int *curxp, int *curyp,
@@ -451,7 +451,7 @@ arcvideo_ioctl(cookie, cmd, data, flag, p)
 	return -1;
 }
 
-static int
+static paddr_t
 arcvideo_mmap(cookie, off, prot)
 	void *cookie;
 	off_t off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 2000/03/04 07:27:50 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 2000/06/26 04:56:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,12 +59,6 @@
 
 extern unsigned int avail_end;
 caddr_t zeropage;
-
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
-
 
 /*ARGSUSED*/
 int
@@ -163,10 +157,11 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.24 2000/06/24 21:47:28 pk Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.25 2000/06/26 04:56:33 simonb Exp $	*/
 
 /*
  *
@@ -136,7 +136,7 @@ udv_attach(arg, accessprot, off, size)
 {
 	dev_t device = *((dev_t *) arg);
 	struct uvm_device *udv, *lcv;
-	int (*mapfn) __P((dev_t, int, int));
+	paddr_t (*mapfn) __P((dev_t, off_t, int));
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
@@ -147,18 +147,15 @@ udv_attach(arg, accessprot, off, size)
 
 	mapfn = cdevsw[major(device)].d_mmap;
 	if (mapfn == NULL ||
-			mapfn == (int (*) __P((dev_t, int, int))) enodev ||
-			mapfn == (int (*) __P((dev_t, int, int))) nullop)
+			mapfn == (paddr_t (*) __P((dev_t, off_t, int))) enodev ||
+			mapfn == (paddr_t (*) __P((dev_t, off_t, int))) nullop)
 		return(NULL);
 
 	/*
-	 * As long as the device d_mmap interface gets an "int"
-	 * offset, we have to watch out not to overflow its
-	 * numeric range. (assuming it will be interpreted as
-	 * "unsigned")
+	 * Negative offsets on the object are not allowed.
 	 */
-	if (((off + size - 1) & (u_int)-1) != off + size - 1)
-		return (0);
+	if (off < 0)
+		return(NULL);
 
 	/*
 	 * Check that the specified range of the device allows the
@@ -413,10 +410,10 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct uvm_device *udv = (struct uvm_device *)uobj;
 	vaddr_t curr_va;
 	int curr_offset;
-	paddr_t paddr;
-	int lcv, retval, mdpgno;
+	paddr_t paddr, mdpgno;
+	int lcv, retval;
 	dev_t device;
-	int (*mapfn) __P((dev_t, int, int));
+	paddr_t (*mapfn) __P((dev_t, off_t, int));
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);

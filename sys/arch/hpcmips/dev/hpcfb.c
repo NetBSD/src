@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.6 2000/05/08 21:56:32 uch Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.7 2000/06/26 04:55:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.6 2000/05/08 21:56:32 uch Exp $";
+    "$Id: hpcfb.c,v 1.7 2000/06/26 04:55:41 simonb Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ void	hpcfbattach __P((struct device *, struct device *, void *));
 int	hpcfbprint __P((void *aux, const char *pnp));
 
 int	hpcfb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	hpcfb_mmap __P((void *, off_t, int));
+paddr_t	hpcfb_mmap __P((void *, off_t, int));
 static int	hpcfb_init __P((struct hpcfb_fbconf *fbconf,
 				struct hpcfb_devconfig *dc));
 static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -542,7 +542,7 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 	return (ENOTTY); /* Inappropriate ioctl for device */
 }
 
-int
+paddr_t
 hpcfb_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

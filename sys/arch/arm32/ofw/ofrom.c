@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.7 1999/11/13 00:30:29 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.8 2000/06/26 04:55:30 simonb Exp $	*/
 
 /*
  * Copyright 1998
@@ -199,10 +199,11 @@ ofromrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 ofrommmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct ofrom_softc *sc;
 	int unit = minor(dev);

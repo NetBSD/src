@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.22 1999/07/08 18:05:26 thorpej Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.23 2000/06/26 04:55:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -801,10 +801,10 @@ vidcconsole_swapin(vc)
 
 }
 
-int
+paddr_t
 vidcconsole_mmap(vc, offset, nprot)
 	struct vconsole *vc;
-	int offset;
+	off_t offset;
 	int nprot;
 {
 	if ((u_int)offset >= videomemory.vidm_size)
