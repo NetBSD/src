@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.60 2003/01/18 07:40:45 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.61 2003/01/20 01:35:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.60 2003/01/18 07:40:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.61 2003/01/20 01:35:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,13 +1095,12 @@ ibcs2_sys_nice(l, v, retval)
 		syscallarg(int) incr;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int error;
 	struct sys_setpriority_args sa;
 
 	SCARG(&sa, which) = PRIO_PROCESS;
 	SCARG(&sa, who) = 0;
 	SCARG(&sa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
-	if ((error = sys_setpriority(l, &sa, retval)) != 0)
+	if (sys_setpriority(l, &sa, retval) != 0)
 		return EPERM;
 	*retval = p->p_nice - NZERO;
 	return 0;
@@ -1172,14 +1171,13 @@ ibcs2_sys_plock(l, v, retval)
 		syscallarg(int) cmd;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int error;
 #define IBCS2_UNLOCK	0
 #define IBCS2_PROCLOCK	1
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
 	
-        if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+        if (suser(p->p_ucred, &p->p_acflag) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
