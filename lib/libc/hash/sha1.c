@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.1 1999/02/04 05:08:58 explorer Exp $	*/
+/*	$NetBSD: sha1.c,v 1.2 1999/05/03 14:37:25 christos Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -85,10 +85,10 @@ void SHA1Transform(state, buffer)
 
 #ifdef SHA1HANDSOFF
     static u_char workspace[64];
-    block = (CHAR64LONG16 *)workspace;
+    block = (CHAR64LONG16 *)(void *)workspace;
     (void)memcpy(block, buffer, 64);
 #else
-    block = (CHAR64LONG16 *)buffer;
+    block = (CHAR64LONG16 *)(void *)buffer;
 #endif
 
     /* Copy context->state[] to working vars */
