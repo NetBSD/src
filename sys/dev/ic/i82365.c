@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.49 2000/02/22 02:38:26 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.50 2000/02/25 04:24:37 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -320,8 +320,10 @@ pcic_attach_socket(h)
 	paa.iosize = sc->iosize;
 
 	h->pcmcia = config_found_sm(&sc->dev, &paa, pcic_print, pcic_submatch);
-	if (h->pcmcia == NULL)
+	if (h->pcmcia == NULL) {
+		h->flags &= ~PCIC_FLAG_SOCKETP;
 		return;
+	}
 
 	/*
 	 * queue creation of a kernel thread to handle insert/removal events.
