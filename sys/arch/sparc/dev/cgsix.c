@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.43 1999/03/24 05:51:10 mrg Exp $ */
+/*	$NetBSD: cgsix.c,v 1.44 1999/07/30 18:11:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,9 +137,11 @@ static struct fbdriver cg6_fbdriver = {
  * Unlike the bw2 and cg3 drivers, we do not need to provide an rconsole
  * interface, as the cg6 is fast enough.. but provide a knob to turn it
  * on anyway.
+ *
+ * Actually, the new rasops stuff is a LOT faster!  --thorpej
  */
 #ifdef RASTERCONSOLE
-int cgsix_use_rasterconsole = 0;
+int cgsix_use_rasterconsole = 1;
 #endif
 
 static void cg6_reset __P((struct cgsix_softc *));
