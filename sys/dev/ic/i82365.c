@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.8 1998/02/01 23:36:23 marc Exp $	*/
+/*	$NetBSD: i82365.c,v 1.9 1998/05/05 00:37:24 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1070,11 +1070,28 @@ pcic_chip_socket_enable(pch)
 
 	pcic_write(h, PCIC_PWRCTL, 0);
 
+	/* 
+	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
+	 * we are changing Vcc (Toff).
+	 */
+	delay((300 + 100) * 1000);
+
 	/* power up the socket */
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE);
-	delay(10000);
+
+	/*
+	 * wait 100ms until power raise (Tpr) and 20ms to become
+	 * stable (Tsu(Vcc)).
+	 */
+	delay((100 + 20) * 1000);
+
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_OE);
+
+	/*
+	 * hold RESET at least 10us.
+	 */
+	delay(10);
 
 	/* clear the reset flag */
 
@@ -1130,4 +1147,9 @@ pcic_chip_socket_disable(pch)
 	/* power down the socket */
 
 	pcic_write(h, PCIC_PWRCTL, 0);
+
+	/*
+	 * wait 300ms until power fails (Tpf).
+	 */
+	delay(300 * 1000);
 }
