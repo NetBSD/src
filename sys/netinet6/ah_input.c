@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.41 2003/08/06 14:47:32 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.42 2003/09/28 04:45:14 mycroft Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.41 2003/08/06 14:47:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.42 2003/09/28 04:45:14 mycroft Exp $");
 
 #include "opt_inet.h"
 
@@ -387,30 +387,6 @@ ah4_input(m, va_alist)
 			ipsecstat.in_inval++;
 			goto fail;
 		}
-
-#if 1
-		/*
-		 * Should the inner packet be considered authentic?
-		 * My current answer is: NO.
-		 *
-		 * host1 -- gw1 === gw2 -- host2
-		 *	In this case, gw2 can trust the	authenticity of the
-		 *	outer packet, but NOT inner.  Packet may be altered
-		 *	between host1 and gw1.
-		 *
-		 * host1 -- gw1 === host2
-		 *	This case falls into the same scenario as above.
-		 *
-		 * host1 === host2
-		 *	This case is the only case when we may be able to leave
-		 *	M_AUTHIPHDR and M_AUTHIPDGM set.
-		 *	However, if host1 is wrongly configured, and allows
-		 *	attacker to inject some packet with src=host1 and
-		 *	dst=host2, you are in risk.
-		 */
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-#endif
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
@@ -830,15 +806,6 @@ ah6_input(mp, offp, proto)
 			ipsec6stat.in_inval++;
 			goto fail;
 		}
-
-#if 1
-		/*
-		 * should the inner packet be considered authentic?
-		 * see comment in ah4_input().
-		 */
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-#endif
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
