@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.115 2001/05/06 14:32:35 fvdl Exp $	*/
+/*	$NetBSD: pciide.c,v 1.116 2001/05/06 20:06:35 fvdl Exp $	*/
 
 
 /*
@@ -161,8 +161,8 @@ static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
 static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 
-void amd756_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void amd756_setup_channel __P((struct channel_softc*));
+void amd7x6_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void amd7x6_setup_channel __P((struct channel_softc*));
 
 void apollo_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void apollo_setup_channel __P((struct channel_softc*));
@@ -286,7 +286,12 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC756_IDE,
 	  0,
 	  "Advanced Micro Devices AMD756 IDE Controller",
-	  amd756_chip_map
+	  amd7x6_chip_map
+	},
+	{ PCI_PRODUCT_AMD_PBC766_IDE,
+	  0,
+	  "Advanced Micro Devices AMD766 IDE Controller",
+	  amd7x6_chip_map
 	},
 	{ 0,
 	  0,
@@ -1823,7 +1828,7 @@ piix_setup_sidetim_timings(mode, dma, channel)
 }
 
 void
-amd756_chip_map(sc, pa)
+amd7x6_chip_map(sc, pa)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
@@ -1848,20 +1853,24 @@ amd756_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 4;
-	sc->sc_wdcdev.set_modes = amd756_setup_channel;
+
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_AMD_PBC766_IDE)
+		sc->sc_wdcdev.UDMA_cap = 5;
+	else
+		sc->sc_wdcdev.UDMA_cap = 4;
+	sc->sc_wdcdev.set_modes = amd7x6_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_CHANSTATUS_EN);
+	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN);
 
-	WDCDEBUG_PRINT(("amd756_chip_map: Channel enable=0x%x\n", chanenable),
+	WDCDEBUG_PRINT(("amd7x6_chip_map: Channel enable=0x%x\n", chanenable),
 	    DEBUG_PROBE);
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 
-		if ((chanenable & AMD756_CHAN_EN(channel)) == 0) {
+		if ((chanenable & AMD7X6_CHAN_EN(channel)) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
@@ -1870,20 +1879,20 @@ amd756_chip_map(sc, pa)
 		    pciide_pci_intr);
 
 		if (pciide_chan_candisable(cp))
-			chanenable &= ~AMD756_CHAN_EN(channel);
+			chanenable &= ~AMD7X6_CHAN_EN(channel);
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		if (cp->hw_ok == 0)
 			continue;
 
-		amd756_setup_channel(&cp->wdc_channel);
+		amd7x6_setup_channel(&cp->wdc_channel);
 	}
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_CHANSTATUS_EN,
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN,
 	    chanenable);
 	return;
 }
 
 void
-amd756_setup_channel(chp)
+amd7x6_setup_channel(chp)
 	struct channel_softc *chp;
 {
 	u_int32_t udmatim_reg, datatim_reg;
@@ -1898,10 +1907,10 @@ amd756_setup_channel(chp)
 #endif
 
 	idedma_ctl = 0;
-	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
-	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_UDMA);
-	datatim_reg &= ~AMD756_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~AMD756_UDMA_MASK(chp->channel);
+	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM);
+	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA);
+	datatim_reg &= ~AMD7X6_DATATIM_MASK(chp->channel);
+	udmatim_reg &= ~AMD7X6_UDMA_MASK(chp->channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -1921,10 +1930,10 @@ amd756_setup_channel(chp)
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			udmatim_reg |= AMD756_UDMA_EN(chp->channel, drive) |
-			    AMD756_UDMA_EN_MTH(chp->channel, drive) |
-			    AMD756_UDMA_TIME(chp->channel, drive,
-				amd756_udma_tim[drvp->UDMA_mode]);
+			udmatim_reg |= AMD7X6_UDMA_EN(chp->channel, drive) |
+			    AMD7X6_UDMA_EN_MTH(chp->channel, drive) |
+			    AMD7X6_UDMA_TIME(chp->channel, drive,
+				amd7x6_udma_tim[drvp->UDMA_mode]);
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {
@@ -1937,7 +1946,9 @@ amd756_setup_channel(chp)
 			 * PCIIDE_AMD756_ENABLEDMA. It causes a hard hang if
 			 * triggered. 
 			 */
-			if (AMD756_CHIPREV_DISABLEDMA(rev)) {
+			if (sc->sc_pp->ide_product ==
+			      PCI_PRODUCT_AMD_PBC756_IDE &&
+			    AMD756_CHIPREV_DISABLEDMA(rev)) {
 				printf("%s:%d:%d: multi-word DMA disabled due "
 				    "to chip revision\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,
@@ -1965,10 +1976,10 @@ pio:		/* setup PIO mode */
 			drvp->DMA_mode = mode - 2;
 		}
 		datatim_reg |=
-		    AMD756_DATATIM_PULSE(chp->channel, drive,
-			amd756_pio_set[mode]) |
-		    AMD756_DATATIM_RECOV(chp->channel, drive,
-			amd756_pio_rec[mode]);
+		    AMD7X6_DATATIM_PULSE(chp->channel, drive,
+			amd7x6_pio_set[mode]) |
+		    AMD7X6_DATATIM_RECOV(chp->channel, drive,
+			amd7x6_pio_rec[mode]);
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
@@ -1977,8 +1988,8 @@ pio:		/* setup PIO mode */
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_DATATIM, datatim_reg);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_UDMA, udmatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM, datatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA, udmatim_reg);
 }
 
 void
