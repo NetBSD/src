@@ -1,3 +1,5 @@
+/*	$NetBSD: cvt.c,v 1.2 1997/06/17 18:56:10 christos Exp $	*/
+
 /*
  * Quick hack to convert old binary sup when.collection files into 
  * the new ascii format.

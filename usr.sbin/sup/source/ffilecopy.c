@@ -1,3 +1,5 @@
+/*	$NetBSD: ffilecopy.c,v 1.4 1997/06/17 18:56:15 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.

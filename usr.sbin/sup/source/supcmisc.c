@@ -1,3 +1,5 @@
+/*	$NetBSD: supcmisc.c,v 1.6 1997/06/17 18:56:50 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -26,43 +28,6 @@
  * sup misc. routines, include list processing.
  **********************************************************************
  * HISTORY
- * $Log: supcmisc.c,v $
- * Revision 1.5  1996/12/31 18:08:06  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.4  1996/12/23 19:42:19  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.3  1996/09/05 16:50:10  christos
- * - for portability make sure that we never use "" as a pathname, always convert
- *   it to "."
- * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
- * - use POSIX signals and wait macros
- * - add -S silent flag, so that the client does not print messages unless there
- *   is something wrong
- * - use flock or lockf as appropriate
- * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
- *   don't depend on the major() = 255 hack; it only works on legacy systems.
- * - use gzip -cf to make sure that gzip compresses the file even when the file
- *   would expand.
- * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
- *
- * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
- * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
- *
- * Revision 1.2  1995/06/03 21:21:57  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
- *
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 1.5  92/08/11  12:07:22  mrt
  * 	Added release to FILEWHEN name.
  * 	Brad's changes: delinted and updated variable arguement usage.

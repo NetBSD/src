@@ -1,3 +1,5 @@
+/*	$NetBSD: supmsg.c,v 1.5 1997/06/17 18:57:00 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -29,23 +31,6 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
- *
- * $Log: supmsg.c,v $
- * Revision 1.4  1996/12/31 18:08:09  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.3  1996/12/23 19:42:23  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.2  1993/08/04 17:46:23  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
  *
  * Revision 2.4  92/09/09  22:05:17  mrt
  * 	Moved PFI definition under __STDC__ conditional since it

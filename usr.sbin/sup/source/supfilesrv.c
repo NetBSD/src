@@ -1,3 +1,5 @@
+/*	$NetBSD: supfilesrv.c,v 1.14 1997/06/17 18:56:57 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -42,64 +44,6 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
- *
- * $Log: supfilesrv.c,v $
- * Revision 1.13  1997/06/17 18:37:59  christos
- * Avoid coredump in svrfinishup.
- *
- * Revision 1.12  1997/02/26 15:06:46  christos
- * compare only the prefix "nfs", not the whole word, so we match "nfs3" too.
- *
- * Revision 1.11  1996/12/31 18:08:08  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.10  1996/12/23 19:42:22  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.9  1996/09/05 16:50:12  christos
- * - for portability make sure that we never use "" as a pathname, always convert
- *   it to "."
- * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
- * - use POSIX signals and wait macros
- * - add -S silent flag, so that the client does not print messages unless there
- *   is something wrong
- * - use flock or lockf as appropriate
- * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
- *   don't depend on the major() = 255 hack; it only works on legacy systems.
- * - use gzip -cf to make sure that gzip compresses the file even when the file
- *   would expand.
- * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
- *
- * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
- * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
- *
- * Revision 1.8  1995/10/29 23:54:49  christos
- * - runio fails when result != 0 not only < 0
- * - print vis-encoded file in the scanner.
- *
- * Revision 1.7  1995/06/24 16:21:55  christos
- * - Don't use system(3) to fork processes. It is a big security hole.
- * - Encode the filenames in the scan files using strvis(3), so filenames
- *   that contain newlines or other weird characters don't break the scanner.
- *
- * Revision 1.6  1995/06/03 21:22:00  christos
- * Changes to write ascii timestamps in the when files.
- * Looked into making it 64 bit clean, but it is hopeless.
- * Added little program to convert from the old timestamp files
- * into the new ones.
- *
- * Revision 1.5  1993/08/04 17:46:21  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.3  1993/06/05  21:32:17  cgd
- * use daemon() to put supfilesrv into daemon mode...
- *
- * Revision 1.2  1993/05/24  17:57:31  brezak
- * Remove netcrypt.c. Remove unneeded files. Cleanup make.
  *
  * Revision 1.20  92/09/09  22:05:00  mrt
  * 	Added Brad's change to make sendfile take a va_list.

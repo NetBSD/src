@@ -1,3 +1,5 @@
+/*	$NetBSD: expand.c,v 1.7 1997/06/17 18:56:13 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.

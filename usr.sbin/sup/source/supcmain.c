@@ -1,3 +1,5 @@
+/*	$NetBSD: supcmain.c,v 1.8 1997/06/17 18:56:46 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -172,46 +174,6 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
- *
- * $Log: supcmain.c,v $
- * Revision 1.7  1996/12/31 18:08:04  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.6  1996/12/23 19:42:17  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.5  1996/09/05 16:50:08  christos
- * - for portability make sure that we never use "" as a pathname, always convert
- *   it to "."
- * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
- * - use POSIX signals and wait macros
- * - add -S silent flag, so that the client does not print messages unless there
- *   is something wrong
- * - use flock or lockf as appropriate
- * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
- *   don't depend on the major() = 255 hack; it only works on legacy systems.
- * - use gzip -cf to make sure that gzip compresses the file even when the file
- *   would expand.
- * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
- *
- * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
- * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
- *
- * Revision 1.4  1995/09/16 19:01:25  glass
- * if the function returns nothing, declare it void
- *
- * Revision 1.3  1993/08/04 17:46:17  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.2  1993/05/24  17:57:28  brezak
- * Remove netcrypt.c. Remove unneeded files. Cleanup make.
- *
- * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.6  92/08/11  12:06:59  mrt
  * 	Merged in Brad's changes. Made resource pausing code conditional

@@ -1,3 +1,5 @@
+/*	$NetBSD: supcdefs.h,v 1.5 1997/06/17 18:56:44 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -31,36 +33,6 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
- *
- * $Log: supcdefs.h,v $
- * Revision 1.4  1996/12/23 19:42:16  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.3  1996/09/05 16:50:07  christos
- * - for portability make sure that we never use "" as a pathname, always convert
- *   it to "."
- * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
- * - use POSIX signals and wait macros
- * - add -S silent flag, so that the client does not print messages unless there
- *   is something wrong
- * - use flock or lockf as appropriate
- * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
- *   don't depend on the major() = 255 hack; it only works on legacy systems.
- * - use gzip -cf to make sure that gzip compresses the file even when the file
- *   would expand.
- * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
- *
- * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
- * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
- *
- * Revision 1.2  1993/08/04 17:46:16  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.6  92/08/11  12:06:52  mrt
  * 	Added CFURELSUF  - use-release-suffix flag
