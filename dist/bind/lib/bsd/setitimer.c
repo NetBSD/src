@@ -1,5 +1,7 @@
+/*	$NetBSD: setitimer.c,v 1.1.1.1.2.1 2002/06/28 11:41:29 lukem Exp $	*/
+
 #ifndef LINT
-static const char rcsid[] = "$Id: setitimer.c,v 1.1.1.1 2001/05/17 22:48:45 itojun Exp $";
+static const char rcsid[] = "Id: setitimer.c,v 8.4 1999/10/13 16:39:21 vixie Exp";
 #endif
 
 #include "port_before.h"

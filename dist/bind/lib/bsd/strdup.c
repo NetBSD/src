@@ -1,3 +1,5 @@
+/*	$NetBSD: strdup.c,v 1.1.1.1.2.1 2002/06/28 11:41:46 lukem Exp $	*/
+
 #include "port_before.h"
 
 #include <stdlib.h>
