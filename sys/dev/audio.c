@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.170 2002/12/20 18:30:01 fredette Exp $	*/
+/*	$NetBSD: audio.c,v 1.171 2002/12/31 00:33:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.170 2002/12/20 18:30:01 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.171 2002/12/31 00:33:10 augustss Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -872,7 +872,7 @@ audio_calcwater(struct audio_softc *sc)
 	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
 		sc->sc_pr.usedlow -= sc->sc_pr.blksize;
 	sc->sc_rr.usedhigh =
-		sc->sc_pr.end - sc->sc_pr.start - sc->sc_pr.blksize;
+		sc->sc_rr.end - sc->sc_rr.start - sc->sc_rr.blksize;
 	sc->sc_rr.usedlow = 0;
 }
 
