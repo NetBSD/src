@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.51 2002/09/19 22:04:34 lukem Exp $
+# $NetBSD: makeflist,v 1.52 2002/10/06 17:28:47 thorpej Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -99,6 +99,11 @@ unset _lists
 
 for setname in $lists; do
 	cat $setd/lists/$setname/mi
+	# XXX MIPS does not support rescue right now.
+	if [ -f $setd/lists/$setname/rescue.mi -a \
+	     ${machine_cpu} != "mips" ]; then
+		cat $setd/lists/$setname/rescue.mi
+	fi
 	if [ "$machine" != "$machine_arch" ]; then
 		# Prefer an ad.${machine_arch} over an ad.${machine_cpu},
 		# since the arch-specific one will be more specific than
