@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/18/90
-#	$Id: Makefile,v 1.6 1994/12/22 12:30:12 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1994/12/23 01:13:58 jtc Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 MAN=	lorder.1
 
