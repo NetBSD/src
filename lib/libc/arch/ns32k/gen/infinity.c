@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: infinity.c,v 1.2 1995/09/20 22:34:03 phil Exp $";
+static char rcsid[] = "$Id: infinity.c,v 1.3 1996/04/04 23:45:18 phil Exp $";
 #endif /* not lint */
 
 /* infinity.c */
@@ -7,4 +7,4 @@ static char rcsid[] = "$Id: infinity.c,v 1.2 1995/09/20 22:34:03 phil Exp $";
 #include <math.h>
 
 /* bytes for +Infinity on a ns32k */
-char __infinity[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x7f };
+char __infinity[] = { 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
