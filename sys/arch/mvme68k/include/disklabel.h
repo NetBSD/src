@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1996/04/26 19:40:54 chuck Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 1996/05/07 23:23:34 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -36,7 +36,7 @@
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		2
 
-#define	PARTITIONSHIFT	4
+#define	PARTITIONSHIFT	3 /* was 4 */
 
 #define LABELSECTOR     0                       /* sector containing label */
 #define LABELOFFSET	0			/* offset of label in sector */
