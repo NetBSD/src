@@ -67,7 +67,7 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
 		call and library manual pages.
-		[ XXXK gzipped, XXXM uncompressed ]
+		[ 4M gzipped, 12M uncompressed ]
 
 	etc10	This distribution set contains the system
 		configuration files that reside in /etc and in several
@@ -76,27 +76,27 @@ subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ XXXK gzipped, XXXM uncompressed ]
+		[ 50K gzipped, 280K uncompressed ]
 
 	games10	This set includes the games and their manual pages.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 1M gzipped, 3M uncompressed ]
 
 	man10	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 730K gzipped, 3M uncompressed ]
 
 	misc10	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 2M gzipped, 6M uncompressed ]
 
 	text10	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 784K gzipped, 3M uncompressed ]
 
 The amiga security distribution set is named "secr10" and can be found
 in the "amiga/security" subdirectory of the NetBSD 1.0 distribution
@@ -105,7 +105,7 @@ algorithm) and the binaries which depend on it.  It can only be found
 on those sites which carry the complete NetBSD distribution and that
 can legally obtain it.  (Remember, because of United States law, this
 distribution set may not be exported to locations outside of the
-United States and Canada.)  [ XXXM gzipped, XXXM uncompressed ]
+United States and Canada.)  [ 119K gzipped, 300K uncompressed ]
 
 The amiga binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set

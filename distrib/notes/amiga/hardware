@@ -14,18 +14,18 @@ Here is a table of recommended HD partition sizes for a full install:
 	local (/local)	up to you
 
 As you may note the recommended size of /usr is 20M greater than
-needed this is to leave room for a kernel source and compile tree
+needed. This is to leave room for a kernel source and compile tree
 as you will probably want to compile your own kernel. (GENERIC is
 large and bulky to accommodate all people).
 
 Supported devices include:
-	A4000 IDE controller.
+	A4000/A1200 IDE controller.
 	SCSI host adapters:
 		33c93 based boards: A2091, A3000 and GVP series II.
 		53c80 based boards: 12 Gauge, IVS and Wordsync.
-		53c710 based boards: Magnum, Warp Engine and Zues.
+		53c710 based boards: A4091, Magnum, Warp Engine and Zeus.
 	Video controllers:
-		ECS, AGA and A2024 built in on all amigas.
+		ECS, AGA and A2024 built in on various amigas.
 		Retina Z2 and Retina Z3.
 	Ethernet controllers:
 		A2065 Ethernet
