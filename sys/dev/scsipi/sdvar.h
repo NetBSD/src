@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.14 2001/05/22 18:59:57 mjacob Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.15 2001/05/23 02:16:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #endif
 
 #ifndef	SD_IO_TIMEOUT
-#define	SDT_IO_IMEOUT	(60 * 1000)
+#define	SD_IO_TIMEOUT	(60 * 1000)
 #endif
 
 struct sd_ops;
