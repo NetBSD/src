@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.18 1998/07/21 01:17:14 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.19 1998/07/21 19:54:56 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -347,9 +347,9 @@ cs_probe(parent, cf, aux)
 	switch (CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_PRODUCT_ID) &
 	    PROD_ID_MASK) {
 	case PROD_ID_CS8900:
-#ifdef notyet			/* XXX why not? */
+#ifdef notyet
 	case PROD_ID_CS8920:
-	case PROD_ID_CS892X:
+	case PROD_ID_CS8920M:
 #endif
 		rv = 1;
 	}
@@ -403,8 +403,8 @@ cs_attach(parent, self, aux)
 	case PROD_ID_CS8920:
 		chipname = "CS8920";
 		break;
-	case PROD_ID_CS892X:
-		chipname = "CS892x";
+	case PROD_ID_CS8920M:
+		chipname = "CS8920M";
 		break;
 	default:
 		panic("cs_attach: impossible");
