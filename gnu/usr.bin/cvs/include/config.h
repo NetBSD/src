@@ -205,6 +205,9 @@
 /* Define if you have the strtoul function.  */
 #define HAVE_STRTOUL 1
 
+/* Define if you have the mkstemp function.  */
+#define HAVE_MKSTEMP 1
+
 /* Define if you have the tempnam function.  */
 #define HAVE_TEMPNAM 1
 
