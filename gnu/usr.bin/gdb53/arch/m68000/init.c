@@ -115,8 +115,8 @@ initialize_all_files (void)
   _initialize_copying ();
   _initialize_m68k_tdep ();
   _initialize_m68knbsd_tdep ();
-  _initialize_nbsd_thread ();
   _initialize_corelow ();
+  _initialize_nbsd_thread ();
   _initialize_solib ();
   _initialize_svr4_solib ();
   _initialize_ser_hardwire ();

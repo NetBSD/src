@@ -123,6 +123,7 @@ initialize_all_files (void)
   _initialize_copying ();
   _initialize_sparc_tdep ();
   _initialize_sparnbsd_tdep ();
+  _initialize_corelow ();
   _initialize_solib ();
   _initialize_svr4_solib ();
   _initialize_ser_hardwire ();
@@ -189,5 +190,4 @@ initialize_all_files (void)
   _initialize_tuiWin ();
   _initialize_tui_out ();
 #endif
-  _initialize_corelow ();
 }
