@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.11 1994/12/13 18:31:52 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.12 1994/12/31 01:04:00 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -117,7 +117,6 @@ struct ncr5380_softc {
     struct scsi_link sc_link;
 };
 
-static u_int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
 static void		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
@@ -140,11 +139,8 @@ static char scsi_name[] = "si";
 struct scsi_adapter	ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
 	ncr5380_minphys,		/* scsi_minphys()	*/
-	0,				/* open_target_lu()	*/
-	0,				/* close_target_lu()	*/
-	ncr5380_adapter_info,		/* adapter_info()	*/
-	scsi_name,			/* name			*/
-	0, 0				/* spare[2]		*/
+	NULL,				/* open_target_lu()	*/
+	NULL,				/* close_target_lu()	*/
 };
 
 /* This is copied from julian's bt driver */
@@ -154,9 +150,6 @@ struct scsi_device ncr_dev = {
 	NULL,		/* Use default start handler.		*/
 	NULL,		/* Use default async handler.	    */
 	NULL,		/* Use default "done" routine.	    */
-	"si",		/* name of device type */
-	0,			/* device type dependent flags */
-	0, 0		/* spare[2] */
 };
 
 extern int	matchbyname();
@@ -206,29 +199,44 @@ si_attach(parent, self, args)
 	register volatile sci_regmap_t *regs;
 	struct confargs *ca = args;
 	int unit = self->dv_unit;
-	caddr_t dvma_malloc();	/* XXX */
 
-    printf("\n");
+	switch (ca->ca_bustype) {
 
-	regs = (sci_regmap_t *)
-		obio_alloc(ca->ca_paddr, OBIO_NCR_SCSI_SIZE);
+	case BUS_OBIO:
+		regs = (sci_regmap_t *)
+			obio_alloc(ca->ca_paddr, sizeof(*regs));
+		isr_add_autovect(ncr5380_intr, (void *)ncr5380,
+						 ca->ca_intpri);
+		break;
+
+#ifdef	notyet	/* XXX */
+	case BUS_VME16:
+		regs = (sci_regmap_t *)
+			bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(*regs));
+		isr_add_vectored(ncr5380_intr, (void *)ncr5380,
+						 ca->ca_intpri, ca->ca_intvec);
+		break;
+#endif
+
+	default:
+		printf("unknown\n");
+		return;
+	}
 
 	ncr5380->sc_regs = regs;
+
+	/*
+	 * fill in the prototype scsi_link.
+	 */
     ncr5380->sc_link.scsibus = unit;	/* needed? */
     ncr5380->sc_link.adapter_softc = ncr5380;
-    ncr5380->sc_link.adapter_targ = 7;
+    ncr5380->sc_link.adapter_target = 7;
     ncr5380->sc_link.adapter = &ncr5380_switch;
     ncr5380->sc_link.device = &ncr_dev;
+    ncr5380->sc_link.openings = 1;
 
-	isr_add_autovect(ncr5380_intr, (void *)ncr5380, ca->ca_intpri);
-
+    printf("\n");
 	config_found(self, &(ncr5380->sc_link), si_print);
-}
-
-static u_int
-ncr5380_adapter_info(struct ncr5380_softc *ncr5380)
-{
-	return 1;
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
@@ -267,9 +275,11 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 			return(SUCCESSFULLY_QUEUED);
 		} else {
 			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
+#if 0
 			if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
-				return (HAD_ERROR);
+				return (COMPLETE);
 			}
+#endif
 			return (COMPLETE);
 		}
 	}
@@ -295,7 +305,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		case COMPLETE:
 		case SUCCESSFULLY_QUEUED:
 			r = SUCCESSFULLY_QUEUED;
-			if (xs->flags&SCSI_NOMASK)
+			if (xs->flags & SCSI_POLL)
 				r = COMPLETE;
 			break;
 		default:
@@ -414,12 +424,14 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	int	s;
 	int	sense;
 
-/*	ncr5380_show_scsi_cmd(xs); */
+	/*	ncr5380_show_scsi_cmd(xs); */
+	/* XXX - At autoconfig time, this lowers the spl... */
 	s = splbio();
 	sense = si_generic( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
 	splx(s);
+	xs->error = XS_NOERROR;
 	if (sense) {
 		switch (sense) {
 			case 0x02:	/* Check condition */
@@ -438,16 +450,15 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 					    sizeof(struct scsi_sense_data));
 				splx(s);
 				xs->error = XS_SENSE;
-				return HAD_ERROR;
+				break;
 			case 0x08:	/* Busy */
 				xs->error = XS_BUSY;
-				return HAD_ERROR;
+				break;
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				return HAD_ERROR;
+				break;
 		}
 	}
-	xs->error = XS_NOERROR;
 	return (COMPLETE);
 }
 
