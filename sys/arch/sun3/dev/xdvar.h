@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.4 1997/10/17 03:47:56 gwr Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.5 1998/01/26 21:03:43 gwr Exp $	*/
 
 /*
  *
@@ -140,9 +140,11 @@ struct xdc_softc {
 
   struct xdc *xdc;                 /* vaddr of vme registers */
 
-  struct xd_softc *sc_drives[XDC_MAXDEV];   /* drives on this controller */
+  int bustype;                     /* from attach args */
   int ipl;                         /* interrupt level */
   int vector;                      /* interrupt vector */
+
+  struct xd_softc *sc_drives[XDC_MAXDEV];   /* drives on this controller */
 
   struct xd_iorq *reqs;            /* i/o requests */
   struct xd_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
