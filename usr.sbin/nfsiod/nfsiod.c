@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $	*/
+/*	$NetBSD: nfsiod.c,v 1.13 1997/10/08 16:55:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsiod.c	8.4 (Berkeley) 5/3/95"
 #else
-static char rcsid[] = "$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $";
+static char rcsid[] = "$NetBSD: nfsiod.c,v 1.13 1997/10/08 16:55:44 kleink Exp $";
 #endif
 #endif not lint
 
@@ -96,7 +96,7 @@ main(argc, argv)
 #define	MAXNFSDCNT      20
 #define	DEFNFSDCNT       1
 	num_servers = DEFNFSDCNT;
-	while ((ch = getopt(argc, argv, "n:")) != EOF)
+	while ((ch = getopt(argc, argv, "n:")) != -1)
 		switch (ch) {
 		case 'n':
 			num_servers = atoi(optarg);
