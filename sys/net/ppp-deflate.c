@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.6 1998/05/02 14:34:25 christos Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.7 2000/08/25 21:25:14 thorpej Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -125,7 +125,7 @@ zalloc(notused, items, size)
 {
     void *ptr;
 
-    MALLOC(ptr, void *, items * size, M_DEVBUF, M_NOWAIT);
+    ptr = malloc(items * size, M_DEVBUF, M_NOWAIT);
     return ptr;
 }
 
@@ -134,7 +134,7 @@ zfree(notused, ptr)
     void *notused;
     void *ptr;
 {
-    FREE(ptr, M_DEVBUF);
+    free(ptr, M_DEVBUF);
 }
 
 /*
