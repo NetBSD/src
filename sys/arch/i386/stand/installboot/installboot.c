@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.11 1999/01/17 18:16:16 he Exp $	 */
+/* $NetBSD: installboot.c,v 1.12 1999/01/28 22:47:25 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -45,8 +45,8 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <err.h>
-#include <errno.h>
 #include <a.out.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <stdlib.h>
@@ -55,12 +55,14 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
+#include "loadfile.h"
 #include "installboot.h"
 
 #include "bbinfo.h"
 
 #define DEFBBLKNAME "boot"
 
+static u_long checkspace __P((u_long, size_t));
 char *loadprotoblocks __P((char *, size_t *));
 static int devread __P((int, void *, daddr_t, size_t, char *));
 static int add_fsblk __P((struct fs *, daddr_t, int));
@@ -83,17 +85,80 @@ struct nlist nl[] = {
 int verbose = 0;
 int conblockmode, conblockstart;
 
+u_long marks[MARK_MAX];
+
+u_long bp, ep;
+
+
+static u_long checkspace(p, c)
+	u_long p;
+	size_t c;
+{
+	u_long np;
+	if (bp > p + c)
+		return p;
+
+	c = p + c - bp + 10240;
+	np = (u_long)realloc((void *) bp, c);
+
+	if (np != marks[MARK_START])
+		p += (long)np - (long)bp;
+
+	bp = np;
+	ep = bp + p;
+	return p;
+}
+
+ssize_t vread(f, p, v, c)
+	int f;
+	u_long p;
+	u_long *v;
+	size_t c;
+{
+	int e, i = p != *v;
+
+	*v = checkspace(p, c);
+	if ((e = read(f, (void *)*v, c)) != c)
+		return e;
+	if (i)
+		*v += c;
+	return c;
+}
+
+void vcopy(s, d, v, c)
+	u_long s;
+	u_long d;
+	u_long *v;
+	size_t c;
+{
+	int i = d != *v;
+
+	*v = checkspace(d, c);
+	(void)memcpy((void *)*v, (const void *)s, c);
+	if (i)
+		*v += c;
+}
+
+void vzero(d, v, c)
+	u_long d;
+	u_long *v;
+	size_t c;
+{
+	int i = d != *v;
+
+	*v = checkspace(d, c);
+	(void)memset((void *)*v, 0, c);
+	if (i)
+		*v += c;
+}
+
 char *
 loadprotoblocks(fname, size)
 	char *fname;
 	size_t *size;
 {
 	int fd;
-	size_t tdsize;	/* text+data size */
-	size_t bbsize;	/* boot block size (block aligned) */
-	char *bp;
 	struct nlist *nlp;
-	struct exec eh;
 
 	fd = -1;
 	bp = NULL;
@@ -111,34 +176,15 @@ loadprotoblocks(fname, size)
 		}
 	}
 
-	if ((fd = open(fname, O_RDONLY)) < 0) {
-		warn("open: %s", fname);
-		return NULL;
-	}
-	if (read(fd, &eh, sizeof(eh)) != sizeof(eh)) {
-		warn("read: %s", fname);
-		goto bad;
-	}
-	if (N_GETMAGIC(eh) != OMAGIC) {
-		warn("bad magic: 0x%lx", eh.a_midmag);
-		goto bad;
-	}
-	/*
-	 * We need only text and data.
-	 */
-	tdsize = (size_t)(eh.a_text + eh.a_data);
-	bbsize = roundup(tdsize, DEV_BSIZE);
+	bp = marks[MARK_START] = (u_long) malloc(10240);
+	ep = bp + 10240;
 
-	if ((bp = calloc(bbsize, 1)) == NULL) {
-		warnx("malloc: %s: no memory", fname);
-		goto bad;
-	}
-	/* read the rest of the file. */
-	if (read(fd, bp, tdsize) != tdsize) {
-		warn("read: %s", fname);
-		goto bad;
-	}
-	*size = bbsize;		/* aligned to DEV_BSIZE */
+	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+		return NULL;
+
+	(void)close(fd);
+
+	*size = roundup((marks[MARK_END] - bp), DEV_BSIZE);
 
 	/* NOSTRICT */
 	fraglist = (struct fraglist *) (bp + nl[X_fraglist].n_value);
@@ -149,21 +195,17 @@ loadprotoblocks(fname, size)
 	}
 	if (verbose) {
 		(void) fprintf(stderr, "%s: entry point %#lx\n", fname,
-			       eh.a_entry);
+			       marks[MARK_START]);
 		(void) fprintf(stderr, "proto bootblock size %ld\n",
 			       (long)*size);
 		(void) fprintf(stderr, "room for %d filesystem blocks"
 			       " at %#lx\n", fraglist->maxentries,
 			       nl[X_fraglist].n_value);
 	}
-	(void) close(fd);
-	return bp;
-
+	return (char *) bp;
 bad:
 	if (bp)
-		free(bp);
-	if (fd >= 0)
-		(void) close(fd);
+		free((void *)bp);
 	return NULL;
 }
 
