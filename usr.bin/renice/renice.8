@@ -1,4 +1,4 @@
-.\"	$NetBSD: renice.8,v 1.5 1997/10/19 14:01:33 lukem Exp $
+.\"	$NetBSD: renice.8,v 1.6 1998/12/19 21:07:12 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: renice.8,v 1.5 1997/10/19 14:01:33 lukem Exp $
+.\"	$NetBSD: renice.8,v 1.6 1998/12/19 21:07:12 christos Exp $
 .\"
 .Dd June 9, 1993
 .Dt RENICE 8
@@ -48,11 +48,26 @@
 .Ar pid ...
 .Oc
 .Oo
-.Op Fl g
+.Fl g
 .Ar pgrp ...
 .Oc
 .Oo
-.Op Fl u
+.Fl u
+.Ar user ...
+.Oc
+.Nm ""
+.Fl n
+.Ar increment
+.Oo
+.Op Fl p
+.Ar pid ...
+.Oc
+.Oo
+.Fl g
+.Ar pgrp ...
+.Oc
+.Oo
+.Fl u
 .Ar user ...
 .Oc
 .Sh DESCRIPTION
@@ -79,6 +94,10 @@ Options supported by
 Force 
 .Ar who
 parameters to be interpreted as process group ID's.
+.It Fl n
+Instead of changing the specified processes to the given priority,
+interpret the following argument as an increment to be applied to
+the current priority of each process.
 .It Fl u
 Force the
 .Ar who
