@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2003/06/11 16:24:13 manu Exp $
+# $NetBSD: GENERIC,v 1.159 2003/07/24 21:03:05 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 maxusers	32
 
@@ -145,6 +145,21 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
+
+# Optional Mac keyboard tweaks
+
+# Tweak the keyboard driver to treat the caps lock key on an ADB
+# keyboard as a control key; requires special remapping because of
+# ADB's strange emulation of a mechanically-locked key.
+#options	CAPS_IS_CONTROL
+
+# On Mac laptops, several function keys double as "hot keys"
+# (brightness, volume, eject) when the Fn modifier is held down.  Mac
+# OS X likes to reprogram the keyboard controller to send hot key
+# events when Fn is not held down and send function key events when it
+# is.  This option transforms the non-keyboard "button" events back
+# into function key events.
+#options	FORCE_FUNCTION_KEYS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
