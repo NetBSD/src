@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.25 1995/10/05 08:50:02 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.26 1995/10/10 01:27:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -38,7 +38,8 @@
 /*
  * mapping routines for old line discipline (yuck)
  */
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_FREEBSD)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,4 +465,4 @@ ttcompatsetlflags(tp, t)
 	t->c_lflag = lflag;
 	t->c_cflag = cflag;
 }
-#endif	/* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 */
+#endif	/* COMPAT_43 || COMPAT_SUNOS || COMPAT_SVR4 || COMPAT_FREEBSD */
