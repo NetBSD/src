@@ -1,4 +1,4 @@
-.\"	$NetBSD: comsat.8,v 1.5 1997/10/20 02:27:53 enami Exp $
+.\"	$NetBSD: comsat.8,v 1.6 1998/07/04 19:38:39 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Nd biff server
 .Sh SYNOPSIS
 .Nm
+.Op Fl l
 .Sh DESCRIPTION
 .Nm
 is the server process which receives reports of incoming mail
@@ -74,6 +75,18 @@ the message header other than the
 or
 .Dq Subject
 lines are not included in the displayed message.
+.Sh OPTIONS
+The
+.Nm
+program supports this option:
+.Bl -tag -width 12345
+.It Fl l
+The
+.Fl l
+option turns on
+.Xr syslogd 8
+log messages.
+.El
 .Sh FILES
 .Bl -tag -width /var/run/utmp -compact
 .It Pa /var/run/utmp
@@ -81,7 +94,8 @@ to find out who's logged on and on what terminals
 .El
 .Sh SEE ALSO
 .Xr biff 1 ,
-.Xr inetd 8
+.Xr inetd 8 ,
+.Xr syslogd 8 .
 .Sh BUGS
 The message header filtering is prone to error.
 The density of the information presented is near the theoretical minimum.
