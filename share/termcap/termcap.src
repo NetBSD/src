@@ -900,6 +900,15 @@ x68k|x68k-ite|NetBSD/x68k ITE:\
 	:co#96:li#32:\
 	:%1=\E[28~:kC=\E[9~:tc=vt220:
 
+# NetBSD "wscons" emulator in vt220 mode
+# These are micro-minimal and probably need to be redone for real
+# after the manner of the pcvt entries.
+wsvt25|NetBSD wscons in 25 line DEC VT220 mode:\
+	:co#80:li#25:tc=vt220:
+
+wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta:\
+	:co#80:li#25:km:tc=vt220:
+
 #### FreeBSD console entries
 #
 # From: Andrey Chernov <ache@astral.msk.su> 29 Mar 1996
