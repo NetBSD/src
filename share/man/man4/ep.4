@@ -1,3 +1,7 @@
+.\"	$NetBSD: ep.4,v 1.11 1997/02/17 12:05:02 jonathan Exp $
+.\"
+.\" Copyright (c) 1997 Jonathan Stone
+.\" All rights reserved.
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -11,8 +15,9 @@
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
+.\"    must display the following acknowledgements:
 .\"      This product includes software developed by Herb Peyerl
+.\"      This product includes software developed by Jonathan Stone
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -27,24 +32,66 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ep.4,v 1.10 1995/07/11 01:49:42 jtc Exp $
-.\"
 .Dd February 04, 1993
 .Dt EP 4
 .Os
 .Sh NAME
 .Nm ep
-.Nd Ethernet driver for 3Com Etherlink III (3c5x9)
+.Nd Ethernet driver for 3Com Etherlink III family (3c5x9, etc)
 .Sh SYNOPSIS
-.Cd "ep? at isa? port ? irq ?"
+.Cd "ep? at isa?  port ? irq ?"
+.Cd "ep* at isapnp?"
+.Cd "ep* at eisa? slot ?"
+.Cd "ep* at pci?  dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm ep
-device driver supports the 3c509 (ISA) and 3c579 (EISA) cards.
-Various models of these cards come with a different assortment of
-connectors:
+device driver supports the 3Com Etherlink III family of cards on Alpha
+and i386 CPUs.  Supported Etherlink II cards include:
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxx
+.It 3c509
+ISA 10Mbit card, in BNC and multiport variants
+.It 3c509B
+ISA plug-and-play  10Mbit card, in BNC and multiport variants
+.It 3c515
+ISA 10Mbit and 10/100 card with busmastering capability (untested)
+.It 3c579
+EISA 10Mbit card, in BNC and muiltport variants
+.It 3c592
+EISA 10Mbit card with busmastering capability
+.It 3c597
+EISA 10/100Mbit card with busmastering capability
+.It 3c590
+PCI 10Mbit multiport card with busmastering capability
+.It 3c595
+PCI 10/100Mbit multiport card with busmastering capability
+.It 3c900
+PCI 10Mbit card  in UTP and multiport variants
+.It 3c905
+PCI 10/100Mbit cards
+.El
+
+The
+.Nm ep
+driver provides full support for the 10Mbit-only cards.
+Due to limitations in 
+.Xr ifconfig 8 ,
+the
+.Nm ep
+driver does not provide  full support for  selecting and switching
+media  on the 10/100 cards. (In all other respects, the
+.Nm ep
+driver supports the 10/100 cards as completely as the 10Mbit cards.)
+The
+.Nm ep
+driver also works with 3c589 PCMCIA cards, if pre-configured to
+work as ISA devices. NetBSD does not include PCMCIA support at this time.
+.Sh 10MBIT MEDIA SELECTION
+Various models of these cards come with a different assortment of
+media. Supported 10Mbit Ethernet media include:
+.Pp
+.Bl -tag -width xxxxxxxxxxxxxxxx
 .It AUI/DIX
 Standard 15 pin connector
 .It 10Base2
@@ -53,12 +100,15 @@ BNC, also known as thin-net
 UTP, also known as twisted pair
 .El
 .Pp
-The default port to use is the BNC. To choose an alternate port,
+The
+.Nm 
+driver defaults to using the BNC port.
+To choose an alternate port,
 use the following flag combinations with
 .Xr ifconfig 8
 or in your /etc/hostname.ep? file.
 .Pp
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxxxxxxxxxxxx
 .It -link0
 Use the BNC port (default).
 .It \ link0 -link1
@@ -83,6 +133,32 @@ to be found at, but it is not necessary.
 The cards are sufficiently intelligent to tell us where they
 actually live on the ISA bus.
 .Pp
+Some models of 3c5x9 have all three connectors on them.
+In the case of these cards; you must configure the transceiver type
+with the 3Com supplied DOS configuration disk before the link0/link1
+flags will operate correctly. (This is a bug).
+.Pp
+.Sh 100MBIT MEDIA SELECTION
+Supported 100Mbit Ethernet media include:
+.Pp
+.Bl -tag -width xxxxxxxxxxxxxxxx
+.It 100baseTX
+100Mbit Ethernet over Cat-5 unshielded twisted pair
+.It 100baseFX
+100Mbit Ethernet over fibre-optic media
+.It 100baseT4
+100Mbit Ethernet over all four pairs of Cat-3 UTP
+.It MII
+Media Independent Interface connector.
+.El
+.Pp
+.Xr ifconfig 8
+does not properly support selecting 100Mbit media. To
+change media, you must configure the desired media with the 3Com
+supplied DOS configuration disk before booting or installing NetBSD.
+Set the media you want to use as the default in the config utility.
+
+Even then, the link0/link1 flags will have no effect on 100Mbit cards.
 .Sh NOTES
 The 3c509 card has no jumpers to set the address.
 3Com supplies software to set the address of the card in software.
@@ -91,11 +167,13 @@ scan operation at IO address 0x100.
 Beware!
 Avoid placing other cards at that address!
 .Pp
-Some models of 3c5x9 have all three connectors on them.
-In the case of these cards; you must configure the transceiver type
-with the 3Com supplied DOS configuration disk before the link0/link1
-flags will operate correctly.
-.Pp
+The 3Com configuration utilities can `autosense' the active media and
+save it as default.  The saved default medium is the media active at
+the time the configuration utility was run.  The
+.Nm ep
+driver does not yet re-autosense the active media at boot time;
+it simply uses the media type sensed and saved when the configuration
+utility was run.
 .Sh DIAGNOSTICS
 ep0: reset (status: %x)
 .in +4
@@ -111,6 +189,13 @@ ep0: 3c509 in test mode. Erase pencil mark!
 This means that someone has scribbled with pencil in the test area on the
 card.  Erase the pencil mark and reboot.  (This is not a joke).
 .in -4
+.Sh BUGS
+.Xr ifconfig 8
+and the link0/link1/link2  interface flags need to be extended to handle
+the four additional media types available with Fast (100Mbit)
+Ethernet. 
+The requirement to pre-configure combo cards should be removed.
+Support for autosensing the active media should be added to the driver.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
