@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.1 1999/05/01 04:57:16 cgd Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.2 1999/05/04 02:45:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -67,7 +67,6 @@
 #include <sys/socketvar.h>
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
