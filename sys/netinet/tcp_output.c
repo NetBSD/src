@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.122 2005/03/06 00:52:25 matt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.123 2005/03/06 03:41:36 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.122 2005/03/06 00:52:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.123 2005/03/06 03:41:36 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -739,7 +739,7 @@ again:
 			sack_rxmit = 1;
 			sendalot = 1;
 		}
-	} while (0);
+	} while (/*CONSTCOND*/0);
 
 	/*
 	 * If in persist timeout with window of 0, send 1 byte.
