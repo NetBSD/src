@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.31 2001/02/04 19:34:08 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.32 2002/08/01 20:05:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.31 2001/02/04 19:34:08 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.32 2002/08/01 20:05:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: print.c,v 1.31 2001/02/04 19:34:08 christos Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <utmp.h>
 
 #include "ls.h"
 #include "extern.h"
