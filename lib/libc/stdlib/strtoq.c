@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoq.c,v 1.8 1998/01/30 23:38:08 perry Exp $	*/
+/*	$NetBSD: strtoq.c,v 1.9 1998/02/03 01:45:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoq.c,v 1.8 1998/01/30 23:38:08 perry Exp $");
+__RCSID("$NetBSD: strtoq.c,v 1.9 1998/02/03 01:45:08 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,11 @@ _strtoq(nptr, endptr, base)
 	register quad_t acc, cutoff;
 	register int c;
 	register int neg, any, cutlim;
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &acc; (void) &cutoff;
+#endif
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
