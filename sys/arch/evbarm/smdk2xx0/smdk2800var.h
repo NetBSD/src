@@ -41,7 +41,7 @@
 /*
  * Address to map I/O registers in early initialize stage.
  */
-#define	SMDK2800_IO_AREA_VBASE	0xfd000000
-#define SMDK2800_VBASE_FREE	0xfd200000
+#define	SMDK2800_IO_AREA_VBASE	0xfd000000 /* 2MBytes */
+#define	SMDK2800_MEMORY_DISK_VADDR	0xfd200000
 
 #endif	/* _EVBARM_SMDK2XX0_SMDK2800VAR_H */
