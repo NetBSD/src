@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.1 2002/05/24 04:02:49 itojun Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.2 2003/04/17 00:31:04 thorpej Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include <string.h>
 #include <pwd.h>
 
-#include "blf.h"
+#include "blowfish.c"
 
 /* This implementation is adaptable to current computing power.
  * You can have up to 2^31 rounds which should be enough for some
