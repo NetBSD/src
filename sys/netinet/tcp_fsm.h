@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.6 1994/10/14 16:01:48 mycroft Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.7 1997/06/18 10:05:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -51,7 +51,7 @@
 #define	TCPS_CLOSE_WAIT		5	/* rcvd fin, waiting for close */
 /* states > TCPS_CLOSE_WAIT are those where user has closed */
 #define	TCPS_FIN_WAIT_1		6	/* have closed, sent fin */
-#define	TCPS_CLOSING		7	/* closed xchd FIN; await FIN ACK */
+#define	TCPS_CLOSING		7	/* closed xchd FIN; await ACK */
 #define	TCPS_LAST_ACK		8	/* had fin and close; await FIN ACK */
 /* states > TCPS_CLOSE_WAIT && < TCPS_FIN_WAIT_2 await ACK of FIN */
 #define	TCPS_FIN_WAIT_2		9	/* have closed, fin is acked */
@@ -71,7 +71,7 @@
 u_char	tcp_outflags[TCP_NSTATES] = {
     TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
     TH_ACK, TH_ACK,
-    TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
+    TH_FIN|TH_ACK, TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
 };
 #endif
 
