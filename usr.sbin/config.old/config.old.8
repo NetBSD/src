@@ -101,16 +101,14 @@ exists and places all output files there.
 The output of
 .Nm config
 consists of a number of files; for the
-.Tn VAX ,
+.Tn i386 ,
 they are:
 .Pa ioconf.c ,
 a description
 of what I/O devices are attached to the system;
-.Pa ubglue.s ,
+.Pa vector.s ,
 a set of interrupt service routines for devices
-attached to the
-.Tn UNIBUS ;
-.Pa ubvec.s ,
+attached to the bus plus
 offsets into a structure used for counting per-device interrupts;
 .Pa Makefile ,
 used by
@@ -141,20 +139,20 @@ should be run again.
 Attempts to compile a system that had configuration errors
 are likely to fail.
 .Sh FILES
-.Bl -tag -width /sys/conf/Makefile.vax -compact
-.It Pa /sys/conf/Makefile.vax
+.Bl -tag -width /sys/i386/conf/Makefile.i386 -compact
+.It Pa /sys/i386/conf/Makefile.i386
 generic makefile for the
-.Tn VAX
+.Tn i386
 .It Pa /sys/conf/files
 list of common files system is built from
-.It Pa /sys/conf/files.vax
+.It Pa /sys/i386/conf/files.i386
 list of
-.Tn VAX
+.Tn i386
 specific files
-.It Pa /sys/conf/devices.vax
+.It Pa /sys/i386/conf/devices.i386
 name to major device mapping file for the
-.Tn VAX
-.It Pa /sys/conf/files. Ns Em ERNIE
+.Tn i386
+.It Pa /sys/i386/conf/files. Ns Em ERNIE
 list of files specific to
 .Em ERNIE
 system
