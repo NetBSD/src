@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.18 2001/12/19 18:35:35 thorpej Exp $
+#	$NetBSD: Makefile.arm26,v 1.19 2002/01/07 21:15:50 bjh21 Exp $
 
 # Makefile for NetBSD
 #
@@ -24,6 +24,7 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 ## (1) port identification
 ##
+ARM=		$S/arch/arm
 ARM26=		$S/arch/arm26
 GENASSYM=	${ARM26}/arm26/genassym.cf
 
@@ -43,11 +44,14 @@ AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o
+MD_OBJS=	vectors.o locore.o
 MD_CFILES=
-MD_SFILES=	${ARM26}/arm26/locore.S
+MD_SFILES=	${ARM}/arm/vectors.S ${ARM26}/arm26/locore.S
 
 locore.o: ${ARM26}/arm26/locore.S assym.h
+	${NORMAL_S}
+
+vectors.o: ${ARM}/arm/vectors.S
 	${NORMAL_S}
 
 ##
