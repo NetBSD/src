@@ -1,4 +1,4 @@
-/*	$NetBSD: icureg.h,v 1.7 2002/02/11 11:44:36 takemura Exp $	*/
+/*	$NetBSD: icureg.h,v 1.8 2003/04/01 02:45:34 igy Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -37,6 +37,7 @@
 
 /*
  *	ICU (Interrupt Control UNIT) Registers definitions
+ *		start 0x0A000080 (vr4181)
  *		start 0x0B000080 (vr4102/4111/4121)
  *		start 0x0F000080 (vr4122)
  */
