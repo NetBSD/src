@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.84 2003/12/03 21:58:49 cube Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.85 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.84 2003/12/03 21:58:49 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.85 2003/12/04 13:57:31 keihan Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -579,7 +579,7 @@ SIP_DECL(lookup)(const struct pci_attach_args *pa)
  * send the output of "pcictl dump ..." of the device to me so that your
  * card will use the 64-bit data path when plugged into a 64-bit slot.
  *
- *	-- Jason R. Thorpe <thorpej@netbsd.org>
+ *	-- Jason R. Thorpe <thorpej@NetBSD.org>
  *	   June 30, 2002
  */
 static int

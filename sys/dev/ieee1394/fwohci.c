@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.81 2003/10/26 21:03:34 fvdl Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.82 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,16 +40,16 @@
  * IEEE1394 Open Host Controller Interface
  *	based on OHCI Specification 1.1 (January 6, 2000)
  * The first version to support network interface part is wrtten by
- * Atsushi Onoe <onoe@netbsd.org>.
+ * Atsushi Onoe <onoe@NetBSD.org>.
  */
 
 /*
  * The first version to support isochronous acquisition part is wrtten
- * by HAYAKAWA Koichi <haya@netbsd.org>.
+ * by HAYAKAWA Koichi <haya@NetBSD.org>.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.81 2003/10/26 21:03:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.82 2003/12/04 13:57:30 keihan Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.104 2003/11/02 11:07:45 wiz Exp $ */
+/* $NetBSD: isp.c,v 1.105 2003/12/04 13:57:30 keihan Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -21,7 +21,7 @@
  *	sys/pci/isp_pci.c
  *	sys/sbus/isp_sbus.c
  *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
  * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
  * Linux versions. This tends to be an interesting maintenance problem.
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.104 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.105 2003/12/04 13:57:30 keihan Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>

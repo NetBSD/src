@@ -1,11 +1,11 @@
-/*	$NetBSD: cmpci.c,v 1.21 2003/11/22 16:48:14 itohy Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.22 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI <tshiozak@netbsd.org> .
+ * by Takuya SHIOZAKI <tshiozak@NetBSD.org> .
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by ITOH Yasufumi.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.21 2003/11/22 16:48:14 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.22 2003/12/04 13:57:31 keihan Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x

@@ -1,12 +1,12 @@
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.6 1998/02/22 08:15:00 mycroft Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.7 2003/12/04 13:57:31 keihan Exp $")
 #endif
 
 ENTRY(strlen)
