@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.7 2003/04/04 20:09:07 matt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.8 2003/05/27 11:39:50 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -339,12 +339,27 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 	gtpci_write(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno),
 	    0xffffffff);
 
-	/*
-	 * Enable internal arbiter
-	 */
-        data = gtpci_read(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno));
-        data |= PCI_ARBCTL_EN;
-        gtpci_write(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno), data);
+#ifndef GT_PCI0_EXT_ARBITER
+#define	GT_PCI0_EXT_ARBITER 0
+#endif
+#ifndef GT_PCI1_EXT_ARBITER
+#define	GT_PCI1_EXT_ARBITER 0
+#endif
+
+	if ((!GT_PCI0_EXT_ARBITER && gtpc->gtpc_busno == 0) ||
+	    (!GT_PCI1_EXT_ARBITER && gtpc->gtpc_busno == 1)) {
+		/*
+		 * Enable internal arbiter
+		 */
+		data = gtpci_read(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno));
+		data |= PCI_ARBCTL_EN;
+		gtpci_write(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno), data);
+	} else {
+		/*
+		 * Make sure the internal arbiter is disabled
+		 */
+		gtpci_write(gtpc, PCI_ARBITER_CONTROL(gtpc->gtpc_busno), 0);
+	}
 
 	/*
 	 * Make the GT reflects reality.
