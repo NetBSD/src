@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.1 2000/12/29 20:14:04 bjh21 Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.2 2001/07/16 05:50:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,7 +45,7 @@ SYSCALL(setlogin)
 	/* Setup the GOT */
 	ldr	r0, got
 	add	r0, pc, r0
-L1:
+.L1:
 	ldr	r1, Llogname
 	ldr	r1, [r0, r1]
 #else
@@ -62,8 +62,8 @@ L1:
 #ifdef PIC
 	.align	0
 got:
-	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
+	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
 #endif
 
 Llogname:
-	.word	_C_LABEL(__logname_valid)
+	.word	PIC_SYM(_C_LABEL(__logname_valid), GOT)
