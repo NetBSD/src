@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.105 2000/10/20 18:46:10 briggs Exp $
+#	$NetBSD: Makefile.inc,v 1.106 2001/02/19 22:14:20 cgd Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -10,14 +10,14 @@ SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	execle.c execlp.c execv.c execvp.c fmtcheck.c fmtmsg.c fnmatch.c \
 	fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \
 	getdomainname.c getgrent.c getgrouplist.c gethostname.c \
-	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
-	getpagesize.c getpass.c getpwent.c getsubopt.c getttyent.c \
+	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
+	getpass.c getprogname.c getpwent.c getsubopt.c getttyent.c \
 	getusershell.c __glob13.c glob.c initgroups.c isascii.c isatty.c \
 	isctype.c lockf.c nice.c nlist.c nlist_aout.c nlist_coff.c \
 	nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
 	pause.c popen.c psignal.c pwcache.c pw_scan.c raise.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setdomainname.c \
-	sethostname.c setjmperr.c setmode.c setproctitle.c \
+	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	siginterrupt.c __siglist14.c siglist.c signal.c \
 	__signame14.c signame.c __sigsetops14.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c times.c \
@@ -42,7 +42,7 @@ MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
-	getpwent.3 getttyent.3 getusershell.3 glob.3 \
+	getprogname.3 getpwent.3 getttyent.3 getusershell.3 glob.3 \
 	initgroups.3 isalnum.3 isalpha.3 isascii.3 isblank.3 \
 	iscntrl.3 isdigit.3 isgraph.3 isinf.3 islower.3 isprint.3 \
 	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
@@ -83,6 +83,7 @@ MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 	getnetgrent.3 setnetgrent.3
+MLINKS+=getprogname.3 setprogname.3
 MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 	getpwent.3 getpwuid.3 getpwent.3 setpwent.3
 # getpwent.3 setpwfile.3 - deprecated
