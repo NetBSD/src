@@ -1,4 +1,4 @@
-/*	$NetBSD: mfm.c,v 1.2 2000/05/20 13:30:03 ragge Exp $	*/
+/*	$NetBSD: mfm.c,v 1.3 2000/07/19 00:58:25 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -92,8 +92,8 @@ static int mfm_rxprepare(void);
 static int mfm_command(int cmd);
 static int mfm_rxselect(int unit);
 static int mfm_rdselect(int unit);
-static int mfm_rxstrategy(void *f, int func, daddr_t dblk, u_int size, void *buf, u_int *rsize);
-static int mfm_rdstrategy(void *f, int func, daddr_t dblk, u_int size, void *buf, u_int *rsize);
+static int mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize);
+static int mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize);
 /*
  * we have to wait 0.7 usec between two accesses to any of the
  * dkc-registers, on a VS2000 with 1 MIPS, this is roughly one
@@ -367,7 +367,8 @@ mfmopen(f, adapt, ctlr, unit, part)
 	char *msg;
 	struct disklabel *lp = &mfmlabel;
 	struct mfm_softc *msc = &mfm_softc;
-	int  i, err;
+	int err;
+	size_t i;
 
 	bzero(lp, sizeof(struct disklabel));
 	msc->unit = unit;
@@ -455,7 +456,7 @@ mfmopen(f, adapt, ctlr, unit, part)
 }
 
 int
-mfm_rxstrategy(void *f, int func, daddr_t dblk, u_int size, void *buf, u_int *rsize) {
+mfm_rxstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize) {
 	struct mfm_softc *msc = f;
 	struct disklabel *lp;
 	int	block, sect, head, cyl, scount, res;
@@ -540,7 +541,7 @@ mfm_rxstrategy(void *f, int func, daddr_t dblk, u_int size, void *buf, u_int *rs
 }
 
 int
-mfm_rdstrategy(void *f, int func, daddr_t dblk, u_int size, void *buf, u_int *rsize) {
+mfm_rdstrategy(void *f, int func, daddr_t dblk, size_t size, void *buf, size_t *rsize) {
 	struct mfm_softc *msc = f;
 	struct disklabel *lp;
 	int	block, sect, head, cyl, scount, cmd, res;
