@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getgrent.3	6.8 (Berkeley) 4/20/91
-.\"	$Id: getgrent.3,v 1.5 1993/10/15 00:09:56 jtc Exp $
+.\"	$Id: getgrent.3,v 1.6 1993/10/25 23:36:51 jtc Exp $
 .\"
 .Dd April 20, 1991
 .Dt GETGRENT 3
@@ -53,11 +53,11 @@
 .Fn getgrnam "const char *name"
 .Ft struct group *
 .Fn getgrgid "gid_t gid"
-.Ft struct group *
+.Ft int
 .Fn setgroupent "int stayopen"
 .\" .Ft void
 .\" .Fn setgrfile "const char *name"
-.Ft int
+.Ft void
 .Fn setgrent void
 .Ft void
 .Fn endgrent void
@@ -115,7 +115,7 @@ functionality as the group file may be updated.
 The
 .Fn setgrent
 function
-is identical to
+is equivalent to
 .Fn setgroupent
 with an argument of zero.
 .Pp
@@ -131,17 +131,15 @@ and
 .Fn getgrgid ,
 return a pointer to the group entry if successful; if end-of-file
 is reached or an error occurs a null pointer is returned.
-The functions
+The
 .Fn setgroupent
-and
-.Fn setgrent
-return the value 1 if successful, otherwise the value
+function returns the value 1 if successful, otherwise the value
 0 is returned.
-The functions
+The 
 .Fn endgrent
 and
-.Fn setgrfile
-have no return value.
+.Fn setgrent
+functions have no return value.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group

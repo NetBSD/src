@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getpwent.3	6.8 (Berkeley) 4/19/91
-.\"	$Id: getpwent.3,v 1.3 1993/10/25 22:23:39 jtc Exp $
+.\"	$Id: getpwent.3,v 1.4 1993/10/25 23:36:54 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETPWENT 3
@@ -119,7 +119,7 @@ program is running.
 The
 .Fn setpwent
 function
-is identical to
+is equivalent to
 .Fn setpassent
 with an argument of zero.
 .Pp
@@ -142,15 +142,15 @@ and
 .Fn getpwuid ,
 return a valid pointer to a passwd structure on success
 and a null pointer if end-of-file is reached or an error occurs.
-The functions
+The
 .Fn setpassent
-and
-.Fn setpwent
-return 0 on failure and 1 on success.
+function returns 0 on failure and 1 on success.
 The
 .Fn endpwent
-function
-has no return value.
+and 
+.Fn setpwent
+functions
+have no return value.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /var/db/pwd.db

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getgrent.c	5.9 (Berkeley) 4/1/91";*/
-static char *rcsid = "$Id: getgrent.c,v 1.4 1993/08/26 00:44:37 jtc Exp $";
+static char *rcsid = "$Id: getgrent.c,v 1.5 1993/10/25 23:36:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -112,10 +112,10 @@ start_gr()
 	return((_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0);
 }
 
-int
+void
 setgrent()
 {
-	return(setgroupent(0));
+	(void) setgroupent(0);
 }
 
 int

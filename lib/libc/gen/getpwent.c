@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getpwent.c	5.21 (Berkeley) 3/14/91";*/
-static char *rcsid = "$Id: getpwent.c,v 1.8 1993/10/25 22:23:40 jtc Exp $";
+static char *rcsid = "$Id: getpwent.c,v 1.9 1993/10/25 23:36:55 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -373,20 +373,19 @@ setpassent(stayopen)
 {
 	_pw_keynum = 0;
 	_pw_stayopen = stayopen;
-	return(1);
-}
-
-void
-setpwent()
-{
-	_pw_keynum = 0;
-	_pw_stayopen = 0;
 #ifdef YP
 	__ypmode = 0;
 	if(__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
 #endif
+	return(1);
+}
+
+void
+setpwent()
+{
+	(void) setpassent(0);
 }
 
 void
