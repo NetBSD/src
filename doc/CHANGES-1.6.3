@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.80 2004/04/12 05:28:36 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.81 2004/04/12 05:29:52 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -567,3 +567,9 @@ sys/arch/hp300/dev/hil.c			patch
 	Include "ite.h" before the first reference of NITE.
 	Fixes panic with unknown type keyboards (including JP one).
 	[tsutsui, ticket #1668]
+
+usr.sbin/racoon/racoon/Makefile			1.20
+
+	Do not compile in print-isakmp.c, as src/dist/tcpdump contains ancient 
+	version which could be vulnerable to attacks.
+	[itojun, ticket #1669]
