@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.80 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.81 2003/11/21 21:20:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.80 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.81 2003/11/21 21:20:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,6 +733,7 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				errx(1, "%s: write: %s",
 				    to_name, strerror(serrno));
 			}
+			(void)munmap(p, size);
 		} else {
 mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
