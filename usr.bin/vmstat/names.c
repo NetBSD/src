@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.16 1995/05/07 22:16:23 cgd Exp $	*/
+/*	$NetBSD: names.c,v 1.17 1995/07/23 18:09:27 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,6 +72,14 @@ read_names()
 #endif
 
 #if defined(__alpha__)
+int
+read_names()
+{
+	return 1;
+}
+#endif
+
+#if defined(vax)
 int
 read_names()
 {
