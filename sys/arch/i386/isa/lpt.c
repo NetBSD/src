@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.14 1993/10/29 20:03:39 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.15 1993/10/29 21:04:20 mycroft Exp $
  */
 
 /*
@@ -124,9 +124,9 @@ struct	cfdriver lptcd =
 
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	isready(inb(iobase + lpt_status), sc)
+#define	NOT_READY()	notready(inb(iobase + lpt_status), sc)
 
-static int isready __P((u_char, struct lpt_softc *));
+static int notready __P((u_char, struct lpt_softc *));
 static void lptout __P((struct lpt_softc *));
 static int pushbytes __P((struct lpt_softc *));
 
@@ -364,7 +364,7 @@ lptopen(dev, flag)
 }
 
 static int
-isready(status, sc)
+notready(status, sc)
 	u_char status;
 	struct lpt_softc *sc;
 {
@@ -377,7 +377,7 @@ isready(status, sc)
 	else if (status & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
 
-	return status;
+	return status & LPS_MASK;
 }
 
 static void
