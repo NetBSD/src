@@ -31,8 +31,6 @@ i[3456]86-sequent-bsd*)	HDEFINES=-Dshared=genshared ;;
 i[3456]86-sequent-sysv4*) ;;
 i[3456]86-sequent-sysv*)	HDEFINES=-Dshared=genshared ;;
 
-mips*-dec-netbsd*)	;;
-mips*-*-openbsd*)	;;
 mips*-dec-*)		HDEFINES="-G 4"	;;
 mips*-sgi-irix3*)	HDEFINES="-G 4" ;;
 mips*-sgi-irix4*)	HDEFINES="-G 4" ;;
@@ -40,7 +38,6 @@ mips*-sgi-irix6*)	host64=true
 			HOST_64BIT_TYPE="long long";
 			HOST_U_64BIT_TYPE="unsigned long long";
 			;;
-mips*-*-sysv4*)		;;
 mips*-*-sysv*)		HDEFINES="-G 4" ;;
 mips*-*-riscos*)	HDEFINES="-G 4" ;;
 

@@ -1,5 +1,5 @@
-/* BFD back-end for NetBSD/sparc a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 97, 1998 Free Software Foundation, Inc.
+/* BFD back-end for NetBSD/pmax (historic) a.out-ish binaries.
+   Copyright (C) 1990, 1991, 1992 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -15,22 +15,23 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-#define BYTES_IN_WORD	4
-#define TARGET_IS_BIG_ENDIAN_P
+#define	BYTES_IN_WORD	4
+#undef TARGET_IS_BIG_ENDIAN_P
 
-/* SPARC chips use either 4K or 8K pages, but object files always
-   assume 8K page alignment so they will work on either one. */
-#define TARGET_PAGE_SIZE 0x2000
+#define	TARGET_PAGE_SIZE	4096
+#define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
-#define DEFAULT_ARCH	bfd_arch_sparc
-#define DEFAULT_MID 	M_SPARC_NETBSD
+#define	DEFAULT_ARCH	bfd_arch_mips
+#define	DEFAULT_MID 	M_PMAX_NETBSD
 
-#define MY(OP) CAT(sparcnetbsd_,OP)
+#define MY(OP) CAT(mipselnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
-#define TARGETNAME "a.out-sparc-netbsd"
+#define TARGETNAME "a.out-mipsel-netbsd"
 
-#define CHOOSE_RELOC_SIZE(X) obj_reloc_entry_size (X) = RELOC_EXT_SIZE;
+#define SET_ARCH_MACH(abfd, execp) \
+	bfd_default_set_arch_mach(abfd, DEFAULT_ARCH, 3000); \
+	netbsd_choose_reloc_size(abfd);
 
 #include "netbsd.h"

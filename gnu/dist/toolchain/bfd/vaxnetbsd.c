@@ -20,11 +20,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	BYTES_IN_WORD	4
 #undef TARGET_IS_BIG_ENDIAN_P
 
-#define	TARGET_PAGE_SIZE	1024
+#define	TARGET_PAGE_SIZE	4096
 #define	SEGMENT_SIZE	TARGET_PAGE_SIZE
 
 #define	DEFAULT_ARCH	bfd_arch_vax
 #define	DEFAULT_MID 	M_VAX_NETBSD
+#define	ADDITIONAL_MID	M_VAX1K_NETBSD
+#define MACHTYPE_OK(m) ((m) == DEFAULT_MID || (m) == ADDITIONAL_MID || \
+			(m) == M_UNKNOWN)
+
+/* XXX Recognize kernels, which have little-endian ULTRIX magic */
+#define SWAP_MAGIC(ext) (bfd_getb32(ext) == 0x0b010000 ? 0x008c010b : bfd_getb32(ext))
 
 #define MY(OP) CAT(vaxnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
