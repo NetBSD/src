@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.h,v 1.6 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_dagfuncs.h,v 1.7 2004/01/10 17:04:44 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -82,8 +82,6 @@ extern int (*rf_RecoveryXorUndoFunc) (RF_DagNode_t *);
 /* macros for manipulating the param[3] in a read or write node */
 #define RF_CREATE_PARAM3(pri, wru) (((RF_uint64)(((wru&0xFFFFFF)<<8)|((pri)&0xF)) ))
 #define RF_EXTRACT_PRIORITY(_x_)     ((((unsigned) ((unsigned long)(_x_))) >> 0) & 0x0F)
-#define RF_EXTRACT_LOCK_FLAG(_x_)    ((((unsigned) ((unsigned long)(_x_))) >> 4) & 0x1)
-#define RF_EXTRACT_UNLOCK_FLAG(_x_)  ((((unsigned) ((unsigned long)(_x_))) >> 5) & 0x1)
 #define RF_EXTRACT_RU(_x_)           ((((unsigned) ((unsigned long)(_x_))) >> 8) & 0xFFFFFF)
 
 #endif				/* !_RF__RF_DAGFUNCS_H_ */
