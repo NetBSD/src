@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.45 2003/08/23 16:42:41 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.46 2003/09/03 21:36:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.45 2003/08/23 16:42:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.46 2003/09/03 21:36:31 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -399,7 +399,7 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	u_int16_t tag, len;
 	u_int16_t session, plen;
 	struct pppoe_softc *sc;
-	const char *err_msg = NULL;
+	const char *err_msg, *err_txt;
 	u_int8_t *ac_cookie;
 	size_t ac_cookie_len;
 #ifdef PPPOE_SERVER
@@ -409,9 +409,11 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	struct pppoehdr *ph;
 	struct pppoetag *pt;
 	struct mbuf *n;
-	int noff, err;
+	int noff, err, errortag;
 	struct ether_header *eh;
 
+	err_msg = err_txt = NULL;
+	errortag = 0;
 	if (m->m_len < sizeof(*eh)) {
 		m = m_pullup(m, sizeof(*eh));
 		if (!m)
@@ -485,9 +487,9 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				break;
 			n = m_pulldown(m, off + sizeof(*pt), len, &noff);
 			if (!n) {
-				err_msg = "TAG HUNIQUE ERROR";
 				m = NULL;
-				goto done;
+				err_msg = "TAG HUNIQUE ERROR";
+				break;
 			}
 #ifdef PPPOE_SERVER
 			hunique = mtod(n, caddr_t) + noff;
@@ -511,19 +513,30 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;
 		case PPPOE_TAG_SNAME_ERR:
 			err_msg = "SERVICE NAME ERROR";
+			errortag = 1;
 			break;
 		case PPPOE_TAG_ACSYS_ERR:
 			err_msg = "AC SYSTEM ERROR";
+			errortag = 1;
 			break;
 		case PPPOE_TAG_GENERIC_ERR:
 			err_msg = "GENERIC ERROR";
+			errortag = 1;
 			break;
 		}
 		if (err_msg) {
-			printf("%s: %s\n",
-			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe",
-			    err_msg);
-			goto done;
+			err_txt = "";
+			if (errortag && len) {
+				n = m_pulldown(m, off + sizeof(*pt), len,
+				    &noff);
+				if (n)
+					err_txt = mtod(n, caddr_t) + noff;
+			}
+			printf("%s: %s: %*s\n",
+			    sc ? sc->sc_sppp.pp_if.if_xname : "pppoe*",
+			    err_msg, len, err_txt);
+			if (errortag)
+				goto done;
 		}
 		off += sizeof(*pt) + len;
 	}
