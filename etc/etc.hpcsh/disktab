@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.1 2001/01/17 05:27:15 itojun Exp $
+#	$NetBSD: disktab,v 1.2 2001/02/28 15:43:39 uch Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -26,24 +26,3 @@
 #	f[a-h]	partition fragment sizes in bytes
 #	t[a-h]	partition types (filesystem, swap, etc)
 #
-# All partition sizes reserve space for bad sector tables.
-# (5 cylinders needed for maintenance + replacement sectors)
-#
-
-floppy|floppy3|3in|3.5in High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
-	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#2880:ob#0:\
-	:pc#2880:oc#0:
-
-floppy5|5in|5.25in High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#15:nc#80:\
-	:pa#2400:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#2400:ob#0:bb#4096:fb#512:\
-	:pc#2400:oc#0:bc#4096:fc#512:
-
-floppy288|2.88MB 3.5in Extra High Density Floppy:\
-	:ty=floppy:se#512:nt#2:rm#300:ns#36:nc#80:\
-	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD:\
-	:pb#5760:ob#0:\
-	:pc#5760:oc#0:
