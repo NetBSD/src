@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 1997/06/10 07:54:44 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.42 1997/06/10 19:32:15 veego Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -54,17 +54,17 @@
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 
+#define SEGSHIFT	17	        /* LOG2(NBSG) */
+#define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
+
+#define	MAXBSIZE	0x8000		/* max FS block size - XXX */
+
 #define	KERNBASE	0x0E000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
 #define	KERN_END	0x0FE00000	/* end of kernel virtual */
 
 #include <m68k/param.h>
-
-#define SEGSHIFT	17	        /* LOG2(NBSG) */
-#define NBSG		0x20000 	/* bytes/segment */
-#define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
-
-#define	MAXBSIZE	0x8000		/* max FS block size - XXX */
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
