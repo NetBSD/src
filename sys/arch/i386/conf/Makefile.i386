@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # from @(#)Makefile.i386	7.1 5/10/91
-# $Id: Makefile.i386,v 1.22 1993/07/18 10:08:22 mycroft Exp $
+# $Id: Makefile.i386,v 1.23 1993/07/18 16:44:16 cgd Exp $
 #
 # Makefile for NetBSD
 #
@@ -22,7 +22,7 @@
 #
 TOUCH=	touch -f -c
 LD=	/usr/bin/ld
-CC=	gcc 
+CC=	cc 
 CPP=	cpp
 
 S=	../../../..
