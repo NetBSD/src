@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aha1542.c,v 1.28 1994/04/29 23:15:51 cgd Exp $
+ *	$Id: aha1542.c,v 1.29 1994/05/03 20:53:54 mycroft Exp $
  */
 
 /*
@@ -419,9 +419,8 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
 		i = 20000;	/*do this for upto about a second */
 		while (--i) {
 			sts = inb(AHA_CTRL_STAT_PORT);
-			if (sts & AHA_IDLE) {
+			if (sts & AHA_IDLE)
 				break;
-			}
 			delay(50);
 		}
 		if (!i) {
@@ -453,8 +452,9 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
 			delay(50);
 		}
 		if (!i) {
-			printf("%s: aha_cmd, cmd/data port full\n",
-				aha->sc_dev.dv_xname);
+			if (opcode != AHA_INQUIRE)
+				printf("%s: aha_cmd, cmd/data port full\n",
+					aha->sc_dev.dv_xname);
 			outb(AHA_CTRL_STAT_PORT, AHA_SRST);
 			return ENXIO;
 		}
@@ -473,8 +473,10 @@ aha_cmd(aha, icnt, ocnt, wait, retval, opcode, args)
 			delay(50);
 		}
 		if (!i) {
-			printf("%s: aha_cmd, cmd/data port empty %d\n",
-				aha->sc_dev.dv_xname, ocnt);
+			if (opcode != AHA_INQUIRE)
+				printf("%s: aha_cmd, cmd/data port empty %d\n",
+					aha->sc_dev.dv_xname, ocnt);
+			outb(AHA_CTRL_STAT_PORT, AHA_SRST);
 			return ENXIO;
 		}
 		oc = inb(AHA_CMD_DATA_PORT);
@@ -874,26 +876,38 @@ aha_find(aha)
 
 	/*
 	 * Assume we have a board at this stage, do an adapter inquire
-	 * to find out what type of controller it is
+	 * to find out what type of controller it is.  If the command
+	 * fails, we assume it's either a crusty board or an old 1542
+	 * clone, and skip the board-specific stuff.
 	 */
-	aha_cmd(aha, 0, sizeof(inquire), 1 ,&inquire, AHA_INQUIRE);
-#ifdef	AHADEBUG
+	if (aha_cmd(aha, 0, sizeof(inquire), 1, &inquire, AHA_INQUIRE)) {
+		/*
+		 * aha_cmd() already started the reset.  It's not clear we
+		 * even need to bother here.
+		 */
+		for (i = AHA_RESET_TIMEOUT; i; i--) {
+			sts = inb(AHA_CTRL_STAT_PORT);
+			if (sts == (AHA_IDLE | AHA_INIT))
+				break;
+			delay(1000);
+		}
+		if (!i) {
+#ifdef AHADEBUG
+			printf("aha_init: soft reset failed\n");
+#endif /* AHADEBUG */
+			return ENXIO;
+		}
+#ifdef AHADEBUG
+		printf("aha_init: inquire command failed\n");
+#endif /* AHADEBUG */
+		goto noinquire;
+	}
+#ifdef AHADEBUG
 	printf("%s: inquire %x, %x, %x, %x\n",
 		aha->sc_dev.dv_xname,
 		inquire.boardid, inquire.spec_opts,
 		inquire.revision_1, inquire.revision_2);
 #endif	/* AHADEBUG */
-	/*
-	 * XXX The Buslogic 545S gets the AHA_INQUIRE command wrong,
-	 * they only return one byte which causes us to print an error,
-	 * so if the boardid comes back as 0x20, tell the user why they
-	 * get the "cmd/data port empty" message
-	 */
-	if (inquire.boardid == 0x20) {
-		/* looks like a Buslogic 545 */
-		printf("%s: above cmd/data port empty due to Buslogic 545\n",
-			aha->sc_dev.dv_xname);
-	}
 	/*
 	 * If we are a 1542C or 1542CF disable the extended bios so that the
 	 * mailbox interface is unlocked.
@@ -912,6 +926,7 @@ aha_find(aha)
 		aha_cmd(aha, 2, 0, 0, 0, AHA_MBX_ENABLE,
 			0, extbios.mailboxlock);
 	}
+noinquire:
 
 	/*
 	 * setup dma channel from jumpers and save int
