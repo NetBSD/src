@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145.2.2 2004/06/30 21:07:33 jdc Exp $
+# $NetBSD: GENERIC,v 1.145.2.3 2004/07/15 20:19:16 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.145.2.2 $"
+#ident 		"GENERIC-$Revision: 1.145.2.3 $"
 
 maxusers	16
 
@@ -68,6 +68,7 @@ options 	NTP			# network time protocol
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
