@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 1998/03/02 17:00:02 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 1998/05/03 13:02:22 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #define USRTEXT		0x400
-#define USRSTACK	0x7fffe000 /* XXX should be KERNBASE */
+#define USRSTACK	KERNBASE
 
 /*
  * Virtual memory related constants, all in bytes
