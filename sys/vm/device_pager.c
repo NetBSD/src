@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.20 1996/02/10 00:07:59 christos Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.21 1996/03/16 23:15:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -115,7 +115,7 @@ dev_pager_alloc(handle, size, prot, foff)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_alloc(%p, %x, %x, %x)\n",
+		printf("dev_pager_alloc(%p, %lx, %x, %lx)\n",
 		       handle, size, prot, foff);
 #endif
 #ifdef DIAGNOSTIC
@@ -335,7 +335,7 @@ dev_pager_haspage(pager, offset)
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_haspage(%p, %x)\n", pager, offset);
+		printf("dev_pager_haspage(%p, %lx)\n", pager, offset);
 #endif
 	return(TRUE);
 }
