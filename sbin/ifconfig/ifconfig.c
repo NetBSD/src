@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.120 2001/10/24 22:10:15 atatat Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.121 2001/11/02 05:57:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.120 2001/10/24 22:10:15 atatat Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.121 2001/11/02 05:57:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -701,30 +701,30 @@ getsock(naf)
 }
 
 int
-getinfo(ifr)
-	struct ifreq *ifr;
+getinfo(giifr)
+	struct ifreq *giifr;
 {
 
 	getsock(af);
 	if (s < 0)
 		err(EXIT_FAILURE, "socket");
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) == -1) {
-		warn("SIOCGIFFLAGS %s", ifr->ifr_name);
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)giifr) == -1) {
+		warn("SIOCGIFFLAGS %s", giifr->ifr_name);
 		return (-1);
 	}
-	flags = ifr->ifr_flags;
-	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) == -1) {
-		warn("SIOCGIFMETRIC %s", ifr->ifr_name);
+	flags = giifr->ifr_flags;
+	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)giifr) == -1) {
+		warn("SIOCGIFMETRIC %s", giifr->ifr_name);
 		metric = 0;
 	} else
-		metric = ifr->ifr_metric;
-	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) == -1)
+		metric = giifr->ifr_metric;
+	if (ioctl(s, SIOCGIFMTU, (caddr_t)giifr) == -1)
 		mtu = 0;
 	else
-		mtu = ifr->ifr_mtu;
+		mtu = giifr->ifr_mtu;
 
 	memset(&g_ifcr, 0, sizeof(g_ifcr));
-	strcpy(g_ifcr.ifcr_name, ifr->ifr_name);
+	strcpy(g_ifcr.ifcr_name, giifr->ifr_name);
 	(void) ioctl(s, SIOCGIFCAP, (caddr_t) &g_ifcr);
 
 	return (0);
@@ -735,7 +735,7 @@ printall(ifname)
 	const char *ifname;
 {
 	struct ifaddrs *ifap, *ifa;
-	struct ifreq ifr;
+	struct ifreq paifr;
 	const struct sockaddr_dl *sdl = NULL;
 	int idx;
 	char *p;
@@ -745,10 +745,10 @@ printall(ifname)
 	p = NULL;
 	idx = 0;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
-		if (sizeof(ifr.ifr_addr) >= ifa->ifa_addr->sa_len) {
-			memcpy(&ifr.ifr_addr, ifa->ifa_addr,
+		memset(&paifr, 0, sizeof(paifr));
+		strncpy(paifr.ifr_name, ifa->ifa_name, sizeof(paifr.ifr_name));
+		if (sizeof(paifr.ifr_addr) >= ifa->ifa_addr->sa_len) {
+			memcpy(&paifr.ifr_addr, ifa->ifa_addr,
 			    ifa->ifa_addr->sa_len);
 		}
 
@@ -762,7 +762,7 @@ printall(ifname)
 		name[sizeof(name) - 1] = '\0';
 		p = ifa->ifa_name;
 
-		if (getinfo(&ifr) < 0)
+		if (getinfo(&paifr) < 0)
 			continue;
 		if (bflag && (ifa->ifa_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)))
 			continue;
@@ -871,7 +871,7 @@ setifaddr(addr, param)
 	const char *addr;
 	int param;
 {
-	struct ifreq *ifr;		/* XXX */
+	struct ifreq *siifr;		/* XXX */
 
 	/*
 	 * Delay the ioctl to set the interface addr until flags are all set.
@@ -882,9 +882,9 @@ setifaddr(addr, param)
 	if (newaddr == -1)
 		newaddr = 1;
 	if (doalias == 0 && afp->af_gifaddr != 0) {
-		ifr = (struct ifreq *)afp->af_ridreq;
-		(void) strncpy(ifr->ifr_name, name, sizeof(ifr->ifr_name));
-		ifr->ifr_addr.sa_family = afp->af_af;
+		siifr = (struct ifreq *)afp->af_ridreq;
+		(void) strncpy(siifr->ifr_name, name, sizeof(siifr->ifr_name));
+		siifr->ifr_addr.sa_family = afp->af_af;
 		if (ioctl(s, afp->af_gifaddr, afp->af_ridreq) == 0)
 			clearaddr = 1;
 		else if (errno == EADDRNOTAVAIL)
@@ -932,21 +932,21 @@ settunnel(src, dst)
 
 #ifdef INET6
 	if (req.addr.ss_family == AF_INET6) {
-		struct sockaddr_in6 *s, *d;
+		struct sockaddr_in6 *s6, *d;
 
-		s = (struct sockaddr_in6 *)&req.addr;
+		s6 = (struct sockaddr_in6 *)&req.addr;
 		d = (struct sockaddr_in6 *)&req.dstaddr;
-		if (s->sin6_scope_id != d->sin6_scope_id) {
+		if (s6->sin6_scope_id != d->sin6_scope_id) {
 			errx(1, "scope mismatch");
 			/* NOTREACHED */
 		}
 #ifdef __KAME__
 		/* embed scopeid */
-		if (s->sin6_scope_id && 
-		    (IN6_IS_ADDR_LINKLOCAL(&s->sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&s->sin6_addr))) {
-			*(u_int16_t *)&s->sin6_addr.s6_addr[2] =
-			    htons(s->sin6_scope_id);
+		if (s6->sin6_scope_id && 
+		    (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr) ||
+		     IN6_IS_ADDR_MC_LINKLOCAL(&s6->sin6_addr))) {
+			*(u_int16_t *)&s6->sin6_addr.s6_addr[2] =
+			    htons(s6->sin6_scope_id);
 		}
 		if (d->sin6_scope_id && 
 		    (IN6_IS_ADDR_LINKLOCAL(&d->sin6_addr) ||
@@ -2047,7 +2047,7 @@ void
 in_alias(creq)
 	struct ifreq *creq;
 {
-	struct sockaddr_in *sin;
+	struct sockaddr_in *iasin;
 	int alias;
 
 	if (lflag)
@@ -2084,20 +2084,20 @@ in_alias(creq)
 			warn("SIOCGIFALIAS");
 	}
 
-	sin = (struct sockaddr_in *)&addreq.ifra_addr;
-	printf("\tinet %s%s", alias ? "alias " : "", inet_ntoa(sin->sin_addr));
+	iasin = (struct sockaddr_in *)&addreq.ifra_addr;
+	printf("\tinet %s%s", alias ? "alias " : "", inet_ntoa(iasin->sin_addr));
 
 	if (flags & IFF_POINTOPOINT) {
-		sin = (struct sockaddr_in *)&addreq.ifra_dstaddr;
-		printf(" -> %s", inet_ntoa(sin->sin_addr));
+		iasin = (struct sockaddr_in *)&addreq.ifra_dstaddr;
+		printf(" -> %s", inet_ntoa(iasin->sin_addr));
 	}
 
-	sin = (struct sockaddr_in *)&addreq.ifra_mask;
-	printf(" netmask 0x%x", ntohl(sin->sin_addr.s_addr));
+	iasin = (struct sockaddr_in *)&addreq.ifra_mask;
+	printf(" netmask 0x%x", ntohl(iasin->sin_addr.s_addr));
 
 	if (flags & IFF_BROADCAST) {
-		sin = (struct sockaddr_in *)&addreq.ifra_broadaddr;
-		printf(" broadcast %s", inet_ntoa(sin->sin_addr));
+		iasin = (struct sockaddr_in *)&addreq.ifra_broadaddr;
+		printf(" broadcast %s", inet_ntoa(iasin->sin_addr));
 	}
 	printf("\n");
 }
@@ -2107,7 +2107,7 @@ in_status(force)
 	int force;
 {
 	struct ifaddrs *ifap, *ifa;
-	struct ifreq ifr;
+	struct ifreq isifr;
 
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
@@ -2116,13 +2116,13 @@ in_status(force)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		if (sizeof(ifr.ifr_addr) < ifa->ifa_addr->sa_len)
+		if (sizeof(isifr.ifr_addr) < ifa->ifa_addr->sa_len)
 			continue;
 
-		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
-		memcpy(&ifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
-		in_alias(&ifr);
+		memset(&isifr, 0, sizeof(isifr));
+		strncpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
+		memcpy(&isifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		in_alias(&isifr);
 	}
 	freeifaddrs(ifap);
 }
@@ -2273,7 +2273,7 @@ in6_status(force)
 	int force;
 {
 	struct ifaddrs *ifap, *ifa;
-	struct in6_ifreq ifr;
+	struct in6_ifreq isifr;
 
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
@@ -2282,13 +2282,13 @@ in6_status(force)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
-		if (sizeof(ifr.ifr_addr) < ifa->ifa_addr->sa_len)
+		if (sizeof(isifr.ifr_addr) < ifa->ifa_addr->sa_len)
 			continue;
 
-		memset(&ifr, 0, sizeof(ifr));
-		strncpy(ifr.ifr_name, ifa->ifa_name, sizeof(ifr.ifr_name));
-		memcpy(&ifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
-		in6_alias(&ifr);
+		memset(&isifr, 0, sizeof(isifr));
+		strncpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
+		memcpy(&isifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		in6_alias(&isifr);
 	}
 	freeifaddrs(ifap);
 }
@@ -2397,7 +2397,7 @@ iso_status(force)
 	int force;
 {
 	struct sockaddr_iso *siso;
-	struct iso_ifreq ifr;
+	struct iso_ifreq isoifr;
 
 	getsock(AF_ISO);
 	if (s < 0) {
@@ -2405,22 +2405,23 @@ iso_status(force)
 			return;
 		err(EXIT_FAILURE, "socket");
 	}
-	(void) memset(&ifr, 0, sizeof(ifr));
-	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFADDR_ISO, (caddr_t)&ifr) == -1) {
+	(void) memset(&isoifr, 0, sizeof(isoifr));
+	(void) strncpy(isoifr.ifr_name, name, sizeof(isoifr.ifr_name));
+	if (ioctl(s, SIOCGIFADDR_ISO, (caddr_t)&isoifr) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			(void) memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
+			(void) memset(&isoifr.ifr_Addr, 0,
+			    sizeof(isoifr.ifr_Addr));
 		} else
 			warn("SIOCGIFADDR_ISO");
 	}
-	(void) strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
-	siso = &ifr.ifr_Addr;
+	(void) strncpy(isoifr.ifr_name, name, sizeof isoifr.ifr_name);
+	siso = &isoifr.ifr_Addr;
 	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
-	if (ioctl(s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) == -1) {
+	if (ioctl(s, SIOCGIFNETMASK_ISO, (caddr_t)&isoifr) == -1) {
 		if (errno == EADDRNOTAVAIL)
-			memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
+			memset(&isoifr.ifr_Addr, 0, sizeof(isoifr.ifr_Addr));
 		else
 			warn("SIOCGIFNETMASK_ISO");
 	} else {
@@ -2430,14 +2431,15 @@ iso_status(force)
 		printf("\n\t\tnetmask %s ", iso_ntoa(&siso->siso_addr));
 	}
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) == -1) {
+		if (ioctl(s, SIOCGIFDSTADDR_ISO, (caddr_t)&isoifr) == -1) {
 			if (errno == EADDRNOTAVAIL)
-			    memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
+			    memset(&isoifr.ifr_Addr, 0,
+				sizeof(isoifr.ifr_Addr));
 			else
 			    warn("SIOCGIFDSTADDR_ISO");
 		}
-		(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-		siso = &ifr.ifr_Addr;
+		(void) strncpy(isoifr.ifr_name, name, sizeof (isoifr.ifr_name));
+		siso = &isoifr.ifr_Addr;
 		printf("--> %s ", iso_ntoa(&siso->siso_addr));
 	}
 	putchar('\n');
@@ -2451,33 +2453,33 @@ SIN(ridreq.ifr_addr), SIN(addreq.ifra_addr),
 SIN(addreq.ifra_mask), SIN(addreq.ifra_broadaddr)};
 
 void
-in_getaddr(s, which)
-	const char *s;
+in_getaddr(str, which)
+	const char *str;
 	int which;
 {
-	struct sockaddr_in *sin = sintab[which];
+	struct sockaddr_in *gasin = sintab[which];
 	struct hostent *hp;
 	struct netent *np;
 
-	sin->sin_len = sizeof(*sin);
+	gasin->sin_len = sizeof(*gasin);
 	if (which != MASK)
-		sin->sin_family = AF_INET;
+		gasin->sin_family = AF_INET;
 
 	if (which == ADDR) {
 		char *p = NULL;
-		if ((p = strrchr(s, '/')) != NULL) {
+		if ((p = strrchr(str, '/')) != NULL) {
 			*p = '\0';
 			in_getprefix(p + 1, MASK);
 		}
 	}
 
-	if (inet_aton(s, &sin->sin_addr) == 0) {
-		if ((hp = gethostbyname(s)) != NULL)
-			(void) memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
-		else if ((np = getnetbyname(s)) != NULL)
-			sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
+	if (inet_aton(str, &gasin->sin_addr) == 0) {
+		if ((hp = gethostbyname(str)) != NULL)
+			(void) memcpy(&gasin->sin_addr, hp->h_addr, hp->h_length);
+		else if ((np = getnetbyname(str)) != NULL)
+			gasin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
 		else
-			errx(1, "%s: bad value", s);
+			errx(1, "%s: bad value", str);
 	}
 }
 
@@ -2486,21 +2488,21 @@ in_getprefix(plen, which)
 	const char *plen;
 	int which;
 {
-	register struct sockaddr_in *sin = sintab[which];
+	register struct sockaddr_in *igsin = sintab[which];
 	register u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 32))
 		errx(1, "%s: bad value", plen);
-	sin->sin_len = sizeof(*sin);
+	igsin->sin_len = sizeof(*igsin);
 	if (which != MASK)
-		sin->sin_family = AF_INET;
+		igsin->sin_family = AF_INET;
 	if ((len == 0) || (len == 32)) {
-		memset(&sin->sin_addr, 0xff, sizeof(struct in_addr));
+		memset(&igsin->sin_addr, 0xff, sizeof(struct in_addr));
 		return;
 	}
-	memset((void *)&sin->sin_addr, 0x00, sizeof(sin->sin_addr));
-	for (cp = (u_char *)&sin->sin_addr; len > 7; len -= 8)
+	memset((void *)&igsin->sin_addr, 0x00, sizeof(igsin->sin_addr));
+	for (cp = (u_char *)&igsin->sin_addr; len > 7; len -= 8)
 		*cp++ = 0xff;
 	if (len)
 		*cp = 0xff << (8 - len);
@@ -2510,8 +2512,8 @@ in_getprefix(plen, which)
  * Print a value a la the %b format of the kernel's printf
  */
 void
-printb(s, v, bits)
-	const char *s;
+printb(str, v, bits)
+	const char *str;
 	unsigned short v;
 	const char *bits;
 {
@@ -2519,9 +2521,9 @@ printb(s, v, bits)
 	char c;
 
 	if (bits && *bits == 8)
-		printf("%s=%o", s, v);
+		printf("%s=%o", str, v);
 	else
-		printf("%s=%x", s, v);
+		printf("%s=%x", str, v);
 	bits++;
 	if (bits) {
 		putchar('<');
@@ -2547,8 +2549,8 @@ SIN6(in6_ridreq.ifr_addr), SIN6(in6_addreq.ifra_addr),
 SIN6(in6_addreq.ifra_prefixmask), SIN6(in6_addreq.ifra_dstaddr)};
 
 void
-in6_getaddr(s, which)
-	const char *s;
+in6_getaddr(str, which)
+	const char *str;
 	int which;
 {
 #if defined(__KAME__) && defined(KAME_SCOPEID)
@@ -2562,13 +2564,13 @@ in6_getaddr(s, which)
 #if 0 /* in_getaddr() allows FQDN */
 	hints.ai_flags = AI_NUMERICHOST;
 #endif
-	error = getaddrinfo(s, "0", &hints, &res);
+	error = getaddrinfo(str, "0", &hints, &res);
 	if (error)
-		errx(1, "%s: %s", s, gai_strerror(error));
+		errx(1, "%s: %s", str, gai_strerror(error));
 	if (res->ai_next)
-		errx(1, "%s: resolved to multiple hosts", s);
+		errx(1, "%s: resolved to multiple hosts", str);
 	if (res->ai_addrlen != sizeof(struct sockaddr_in6))
-		errx(1, "%s: bad value", s);
+		errx(1, "%s: bad value", str);
 	memcpy(sin6, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) && sin6->sin6_scope_id) {
@@ -2577,23 +2579,23 @@ in6_getaddr(s, which)
 		sin6->sin6_scope_id = 0;
 	}
 #else
-	struct sockaddr_in6 *sin = sin6tab[which];
+	struct sockaddr_in6 *gasin = sin6tab[which];
 
-	sin->sin6_len = sizeof(*sin);
+	gasin->sin6_len = sizeof(*gasin);
 	if (which != MASK)
-		sin->sin6_family = AF_INET6;
+		gasin->sin6_family = AF_INET6;
 
 	if (which == ADDR) {
 		char *p = NULL;
-		if((p = strrchr(s, '/')) != NULL) {
+		if((p = strrchr(str, '/')) != NULL) {
 			*p = '\0';
 			in6_getprefix(p + 1, MASK);
 			explicit_prefix = 1;
 		}
 	}
 
-	if (inet_pton(AF_INET6, s, &sin->sin6_addr) != 1)
-		errx(1, "%s: bad value", s);
+	if (inet_pton(AF_INET6, str, &gasin->sin6_addr) != 1)
+		errx(1, "%s: bad value", str);
 #endif
 }
 
@@ -2602,21 +2604,21 @@ in6_getprefix(plen, which)
 	const char *plen;
 	int which;
 {
-	register struct sockaddr_in6 *sin = sin6tab[which];
+	register struct sockaddr_in6 *gpsin = sin6tab[which];
 	register u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 128))
 		errx(1, "%s: bad value", plen);
-	sin->sin6_len = sizeof(*sin);
+	gpsin->sin6_len = sizeof(*gpsin);
 	if (which != MASK)
-		sin->sin6_family = AF_INET6;
+		gpsin->sin6_family = AF_INET6;
 	if ((len == 0) || (len == 128)) {
-		memset(&sin->sin6_addr, 0xff, sizeof(struct in6_addr));
+		memset(&gpsin->sin6_addr, 0xff, sizeof(struct in6_addr));
 		return;
 	}
-	memset((void *)&sin->sin6_addr, 0x00, sizeof(sin->sin6_addr));
-	for (cp = (u_char *)&sin->sin6_addr; len > 7; len -= 8)
+	memset((void *)&gpsin->sin6_addr, 0x00, sizeof(gpsin->sin6_addr));
+	for (cp = (u_char *)&gpsin->sin6_addr; len > 7; len -= 8)
 		*cp++ = 0xff;
 	if (len)
 		*cp = 0xff << (8 - len);
@@ -2627,23 +2629,23 @@ prefix(val, size)
 	void *val;
 	int size;
 {
-	register u_char *name = (u_char *)val;
+	register u_char *pname = (u_char *)val;
 	register int byte, bit, plen = 0;
 
 	for (byte = 0; byte < size; byte++, plen += 8)
-		if (name[byte] != 0xff)
+		if (pname[byte] != 0xff)
 			break;
 	if (byte == size)
 		return (plen);
 	for (bit = 7; bit != 0; bit--, plen++)
-		if (!(name[byte] & (1 << bit)))
+		if (!(pname[byte] & (1 << bit)))
 			break;
 	for (; bit != 0; bit--)
-		if (name[byte] & (1 << bit))
+		if (pname[byte] & (1 << bit))
 			return(0);
 	byte++;
 	for (; byte < size; byte++)
-		if (name[byte])
+		if (pname[byte])
 			return(0);
 	return (plen);
 }
@@ -2779,12 +2781,12 @@ setnsellength(val, d)
 }
 
 void
-fixnsel(s)
-	struct sockaddr_iso *s;
+fixnsel(siso)
+	struct sockaddr_iso *siso;
 {
-	if (s->siso_family == 0)
+	if (siso->siso_family == 0)
 		return;
-	s->siso_tlen = nsellength;
+	siso->siso_tlen = nsellength;
 }
 
 void
