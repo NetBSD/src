@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.5 1996/09/17 01:32:22 jonathan Exp $ */
+/*	$NetBSD: SYS.h,v 1.6 1996/10/19 00:25:22 jtc Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -78,3 +78,22 @@
 			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
 #endif	/* !ABICALLS */
 #endif /* traditional C */
+
+/*
+ * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls 
+ * that never fail.
+ * 
+ * XXX - This should be optimized.
+ */
+#define SYSCALL_NOERROR(x) \
+	SYSCALL(x)
+   
+/* 
+ * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls  
+ * that never fail.
+ * 
+ * XXX - This should be optimized.
+ */
+#define SYSCALL_NOERROR(x) \
+#define RSYSCALL_NOERROR(x) \
+	RSYSCALL(x)
