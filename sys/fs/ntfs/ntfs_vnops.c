@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.2 2003/04/09 16:02:18 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.3 2003/04/09 16:12:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.2 2003/04/09 16:02:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.3 2003/04/09 16:12:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ ntfs_inactive(ap)
 	if (ntfs_prtactive && vp->v_usecount != 0)
 		vprint("ntfs_inactive: pushing active", vp);
 
-	VOP__UNLOCK(vp, 0, ap->a_p);
+	VOP_UNLOCK(vp, 0);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
@@ -309,6 +309,13 @@ ntfs_print(ap)
 		struct vnode *a_vp;
 	} */ *ap;
 {
+	struct ntnode *ip = VTONT(ap->a_vp);
+
+	printf("tag VT_NTFS, ino %u, flag %#x, usecount %d, nlink %ld\n",
+	    ip->i_number, ip->i_flag, ip->i_usecount, ip->i_nlink);
+	printf("       ");
+	lockmgr_printinfo(ap->a_vp->v_vnlock);
+	printf("\n");
 	return (0);
 }
 
@@ -795,12 +802,12 @@ ntfs_lookup(ap)
 		dprintf(("ntfs_lookup: faking .. directory in %d\n",
 			 dip->i_number));
 
+		VOP_UNLOCK(dvp, 0);
+		cnp->cn_flags |= PDIRUNLOCK;
+
 		error = ntfs_ntvattrget(ntmp, dip, NTFS_A_NAME, NULL, 0, &vap);
 		if(error)
 			return (error);
-
-		VOP__UNLOCK(dvp,0,cnp->cn_proc);
-		cnp->cn_flags |= PDIRUNLOCK;
 
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
@@ -808,13 +815,13 @@ ntfs_lookup(ap)
 				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
-			if (VN_LOCK(dvp,LK_EXCLUSIVE|LK_RETRY,cnp->cn_proc)==0)
+			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			error = VN_LOCK(dvp, LK_EXCLUSIVE, cnp->cn_proc);
+			error = vn_lock(dvp, LK_EXCLUSIVE);
 			if (error) {
 				vput( *(ap->a_vpp) );
 				return (error);
@@ -831,8 +838,10 @@ ntfs_lookup(ap)
 		dprintf(("ntfs_lookup: found ino: %d\n", 
 			VTONT(*ap->a_vpp)->i_number));
 
-		if(!lockparent || !(cnp->cn_flags & ISLASTCN))
-			VOP__UNLOCK(dvp, 0, cnp->cn_proc);
+		if(!lockparent || (cnp->cn_flags & ISLASTCN) == 0) {
+			VOP_UNLOCK(dvp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 	}
 
 	if (cnp->cn_flags & MAKEENTRY)
