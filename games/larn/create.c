@@ -1,10 +1,10 @@
-/* $NetBSD: create.c,v 1.7 2004/01/27 20:30:30 jsm Exp $	 */
+/* $NetBSD: create.c,v 1.8 2005/02/25 15:04:43 simonb Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.7 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: create.c,v 1.8 2005/02/25 15:04:43 simonb Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -110,8 +110,8 @@ makemaze(k)
 	int             i, j, tmp;
 	int             z;
 	if (k > 1 && (rnd(17) <= 4 || k == MAXLEVEL - 1 || k == MAXLEVEL + MAXVLEVEL - 1)) {
-		if (cannedlevel(k));
-		return;		/* read maze from data file */
+		if (cannedlevel(k))
+			return;		/* read maze from data file */
 	}
 	if (k == 0)
 		tmp = 0;
