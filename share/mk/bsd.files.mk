@@ -1,9 +1,10 @@
-#	$NetBSD: bsd.files.mk,v 1.33 2004/03/19 06:10:27 jmc Exp $
+#	$NetBSD: bsd.files.mk,v 1.33.2.1 2004/03/31 07:53:03 tron Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
 
 .include <bsd.init.mk>
+.include <bsd.sys.mk>
 
 .if !target(__fileinstall)
 ##### Basic targets
