@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.12 2001/11/21 12:28:23 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.13 2001/11/23 01:16:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -181,6 +181,7 @@ typedef u_int32_t ehci_link_t;
 #define  EHCI_LINK_QH		0x2
 #define  EHCI_LINK_SITD		0x4
 #define  EHCI_LINK_FSTN		0x6
+#define EHCI_LINK_ADDR(x)	((x) &~ 0x1f)
 
 typedef u_int32_t ehci_physaddr_t;
 
@@ -205,7 +206,6 @@ typedef struct {
 	ehci_link_t	qtd_altnext;
 	u_int32_t	qtd_status;
 #define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
-#define EHCI_QTD_SET_STATUS(x)	((x) << 0)
 #define  EHCI_QTD_ACTIVE	0x80
 #define  EHCI_QTD_HALTED	0x40
 #define  EHCI_QTD_BUFERR	0x20
