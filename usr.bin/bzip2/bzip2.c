@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.2 1998/09/14 02:37:24 ross Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.3 1999/04/07 17:58:49 tron Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- A block-sorting, lossless compressor        bzip2.c ---*/
@@ -767,7 +767,7 @@ Bool fileExists ( Char* name )
 /*--
   if in doubt, return True
 --*/
-Bool notAStandardFile ( Char* name )
+Bool notAStandardFile ( Char* name , IntNative allowSymbolicLinks )
 {
    IntNative      i;
    struct MY_STAT statBuf;
@@ -775,6 +775,7 @@ Bool notAStandardFile ( Char* name )
    i = MY_LSTAT ( name, &statBuf );
    if (i != 0) return True;
    if (MY_S_IFREG(statBuf.st_mode)) return False;
+   if (allowSymbolicLinks && S_ISLNK(statBuf.st_mode)) return False;
    return True;
 }
 
@@ -878,7 +879,7 @@ void compress ( Char *name )
                 progName, inName );
       return;
    }
-   if ( srcMode != SM_I2O && notAStandardFile ( inName )) {
+   if ( srcMode != SM_I2O && notAStandardFile ( inName, False )) {
       fprintf ( stderr, "%s: Input file %s is not a normal file, skipping.\n",
                 progName, inName );
       return;
@@ -1003,7 +1004,7 @@ void uncompress ( Char *name )
                 progName, inName );
       return;
    }
-   if ( srcMode != SM_I2O && notAStandardFile ( inName )) {
+   if ( srcMode != SM_I2O && notAStandardFile ( inName, srcMode == SM_F2O )) {
       fprintf ( stderr, "%s: Input file %s is not a normal file, skipping.\n",
                 progName, inName );
       return;
@@ -1133,7 +1134,7 @@ void testf ( Char *name )
                 progName, inName );
       return;
    }
-   if ( srcMode != SM_I2O && notAStandardFile ( inName )) {
+   if ( srcMode != SM_I2O && notAStandardFile ( inName, True )) {
       fprintf ( stderr, "%s: Input file %s is not a normal file, skipping.\n",
                 progName, inName );
       return;
