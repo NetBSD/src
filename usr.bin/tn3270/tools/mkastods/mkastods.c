@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastods.c,v 1.6 2002/01/31 19:36:51 tv Exp $	*/
+/*	$NetBSD: mkastods.c,v 1.6.2.1 2002/12/01 12:20:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
@@ -44,13 +47,10 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkastods.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkastods.c,v 1.6 2002/01/31 19:36:51 tv Exp $");
+__RCSID("$NetBSD: mkastods.c,v 1.6.2.1 2002/12/01 12:20:00 he Exp $");
 #endif
 #endif /* not lint */
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
 #include "../api/asc_ebc.h"
 #include "../api/ebc_disp.h"
 
