@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.10 2003/06/29 22:31:11 fvdl Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.11 2003/08/02 12:11:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10 2003/06/29 22:31:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.11 2003/08/02 12:11:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -736,6 +736,10 @@ ntfs_root(
 	return (0);
 }
 
+/*
+ * Do operations associated with quotas, not supported
+ */
+/* ARGSUSED */
 static int
 ntfs_quotactl ( 
 	struct mount *mp,
@@ -744,7 +748,7 @@ ntfs_quotactl (
 	caddr_t arg,
 	struct proc *p)
 {
-	printf("\nntfs_quotactl():\n");
+
 	return EOPNOTSUPP;
 }
 

@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
+$NetBSD: TODO,v 1.2 2003/08/02 12:11:56 jdolecek Exp $
 
 - convert the code to do caching in buffer cache indexed by
   file-vnode/file-offset so that NTFS would take advantage of UBC;
@@ -26,6 +26,7 @@ $NetBSD: TODO,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
 	(from Semen Ustimenko <semenu@FreeBSD.org>)
   generally, better write support
 
+- once writing would work, consider quota support
 
 - support mount update
 
