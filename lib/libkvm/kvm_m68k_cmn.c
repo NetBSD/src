@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.9 1999/07/02 15:28:50 simonb Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.10 2000/10/10 20:44:16 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.9 1999/07/02 15:28:50 simonb Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.10 2000/10/10 20:44:16 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -222,7 +222,7 @@ vatop_030(kd, stpa, va, pa)
 
 	return (h->page_size - offset);
 invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -307,6 +307,6 @@ vatop_040(kd, stpa, va, pa)
 	return (h->page_size - offset);
 
 invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
