@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.1.2.3 2002/12/11 06:12:19 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.1.2.4 2003/01/03 16:55:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,6 +155,15 @@ statintr_4m(void *cap)
 	 * interrupt was raised.
 	 */
 	counterreg4m->t_limit_nr = tmr_ustolim4m(newint);
+
+	/*
+	 * The factor 8 is only valid for stathz==100. For other
+	 * values we should compute a mask, approx.
+	 *	mask = round_power2(stathz / schedhz) - 1
+	 */
+	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
+		raise_ipi(&cpuinfo, IPL_SCHED); /* sched_cookie->pil */
+
 	return (1);
 }
 
@@ -220,6 +229,5 @@ timerattach_obio_4m(struct device *parent, struct device *self, void *aux)
 	timerreg4m->t_cfg = 0;
 
 	timerattach(&counterreg4m->t_counter, &counterreg4m->t_limit);
-
 	timerok = 1;
 }

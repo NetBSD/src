@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.124.4.13 2002/12/29 19:40:21 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.124.4.14 2003/01/03 16:55:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -226,8 +226,13 @@ alloc_cpuinfo()
 	pmap_update(pmap_kernel());
 
 	bzero((void *)cpi, sz);
+#if 0
 	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
 	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
+#else
+	cpi->eintstack = (void *)((vaddr_t)cpi + sz - USPACE);
+	cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
+#endif
 
 	return (cpi);
 }
@@ -290,10 +295,78 @@ cpu_mainbus_attach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	int mid;
+	struct { u_int32_t va; u_int32_t size; } *mbprop = NULL;
+	struct openprom_addr *rrp = NULL;
+	struct cpu_info *cpi;
+	int mid, node;
+	int error, n;
 
-	mid = (ma->ma_node != 0) ? PROM_getpropint(ma->ma_node, "mid", 0) : 0;
-	cpu_attach((struct cpu_softc *)self, ma->ma_node, mid);
+	node = ma->ma_node;
+	mid = (node != 0) ? PROM_getpropint(node, "mid", 0) : 0;
+	cpu_attach((struct cpu_softc *)self, node, mid);
+
+	cpi = ((struct cpu_softc *)self)->sc_cpuinfo;
+	if (cpi == NULL)
+		return;
+
+	/*
+	 * Map CPU mailbox if available
+	 */
+	if (node != 0 && (error = PROM_getprop(node, "mailbox-virtual",
+					sizeof(*mbprop),
+					&n, (void **)&mbprop)) == 0) {
+		cpi->mailbox = mbprop->va;
+		free(mbprop, M_DEVBUF);
+	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
+					sizeof(struct openprom_addr),
+					&n, (void **)&rrp)) == 0) {
+		if (rrp[0].oa_space != 0)
+			panic("%s: mailbox in I/O space", self->dv_xname);
+
+		/* XXX - map cached/uncached? If cached, deal with
+		 *	 cache congruency!
+		 */
+		if (bus_space_map(ma->ma_bustag,
+				BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
+				rrp[0].oa_size,
+				BUS_SPACE_MAP_LINEAR, 
+				&cpi->mailbox) != 0)
+			panic("%s: can't map cpu mailbox", self->dv_xname);
+		free(rrp, M_DEVBUF);
+	}
+
+	/*
+	 * Map Module Control Space if available
+	 */
+	if (cpi->mxcc == 0)
+		/* We only know what it means on MXCCs */
+		return;
+
+	rrp = NULL;
+	if (node == 0 || (error = PROM_getprop(node, "reg",
+					sizeof(struct openprom_addr),
+					&n, (void **)&rrp)) != 0)
+		return;
+
+	/* register set #0 is the MBus port register */
+	if (bus_space_map(ma->ma_bustag,
+			BUS_ADDR(rrp[0].oa_space, rrp[0].oa_base),
+			rrp[0].oa_size,
+			BUS_SPACE_MAP_LINEAR, 
+			&cpi->ci_mbusport) != 0) {
+		panic("%s: can't map cpu regs", self->dv_xname);
+	}
+	/* register set #1: MCXX control */
+	if (bus_space_map(ma->ma_bustag,
+			BUS_ADDR(rrp[1].oa_space, rrp[1].oa_base),
+			rrp[1].oa_size,
+			BUS_SPACE_MAP_LINEAR, 
+			&cpi->ci_mxccregs) != 0) {
+		panic("%s: can't map cpu regs", self->dv_xname);
+	}
+	/* register sets #3 and #4 are E$ cache data and tags */
+
+	free(rrp, M_DEVBUF);
 }
 
 #if defined(SUN4D)
@@ -377,6 +450,7 @@ static	struct cpu_softc *bootcpu;
 		 */
 		getcpuinfo(cpi, node);
 #else
+		sc->sc_cpuinfo = NULL;
 		printf(": no SMP support in kernel\n");
 		return;
 #endif
@@ -612,8 +686,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		p->arg1 = arg1;
 		p->arg2 = arg2;
 		p->arg3 = arg3;
-		cpi->intreg_4m->pi_set = PINTR_SINTRLEV(13);/*xcall_cookie->pil*/
-		/*was: raise_ipi(cpi);*/
+		raise_ipi(cpi,13);/*xcall_cookie->pil*/
 	}
 
 	/*
@@ -682,10 +755,9 @@ mp_pause_cpus()
 		if (CPU_NOTREADY(cpi))
 			continue;
 
-		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_PAUSECPU;
 		cpi->flags &= ~CPUFLG_GOTMSG;
-		cpi->intreg_4m->pi_set = PINTR_SINTRLEV(13);/*xcall_cookie->pil*/
+		raise_ipi(cpi,15);	/* high priority intr */
 	}
 	UNLOCK_XPMSG();
 }
@@ -837,6 +909,9 @@ int srmmu_get_asyncflt __P((u_int *, u_int *));
 int hypersparc_get_asyncflt __P((u_int *, u_int *));
 int cypress_get_asyncflt __P((u_int *, u_int *));
 int no_asyncflt_regs __P((u_int *, u_int *));
+
+int	(*moduleerr_handler) __P((void));
+int viking_module_error(void);
 
 struct module_info module_unknown = {
 	CPUTYP_UNKNOWN,
@@ -1514,6 +1589,8 @@ viking_hotfix(sc)
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 		sc->zero_page = pmap_zero_page_viking_mxcc;
 		sc->copy_page = pmap_copy_page_viking_mxcc;
+		moduleerr_handler = viking_module_error;
+
 		/*
 		 * Ok to cache PTEs; set the flag here, so we don't
 		 * uncache in pmap_bootstrap().
@@ -1525,6 +1602,8 @@ viking_hotfix(sc)
 	} else {
 		sc->cache_flush = viking_cache_flush;
 	}
+	if (cpus != NULL && cpus[0]->mxcc != sc->mxcc)
+		panic("[MXCC module mismatch]");
 
 	/* XXX! */
 	if (sc->mxcc)
@@ -1549,6 +1628,37 @@ viking_mmu_enable()
 	} else
 		pcr &= ~VIKING_PCR_TC;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+}
+
+int
+viking_module_error(void)
+{
+	u_int64_t v;
+	int n, fatal = 0;
+
+	/* Report on MXCC error registers in each module */
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi->ci_mxccregs == 0) {
+			printf("\tMXCC registers not mapped\n");
+			continue;
+		}
+
+		printf("module%d:\n", cpi->ci_cpuid);
+		v = *((u_int64_t *)(cpi->ci_mxccregs + 0xe00));
+		printf("\tmxcc error 0x%llx\n", v);
+		v = *((u_int64_t *)(cpi->ci_mxccregs + 0xb00));
+		printf("\tmxcc status 0x%llx\n", v);
+		v = *((u_int64_t *)(cpi->ci_mxccregs + 0xc00));
+		printf("\tmxcc reset 0x%llx", v);
+		if (v & MXCC_MRST_WD)
+			printf(" (WATCHDOG RESET)"), fatal = 1;
+		if (v & MXCC_MRST_SI)
+			printf(" (SOFTWARE RESET)"), fatal = 1;
+		printf("\n");
+	}
+	return (fatal);
 }
 #endif /* SUN4M || SUN4D */
 

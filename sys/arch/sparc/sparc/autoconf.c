@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.13 2002/12/29 19:40:17 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.14 2003/01/03 16:55:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1041,13 +1041,13 @@ mbprint(aux, name)
 	struct mainbus_attach_args *ma = aux;
 
 	if (name)
-		printf("%s at %s", ma->ma_name, name);
+		aprint_normal("%s at %s", ma->ma_name, name);
 	if (ma->ma_paddr)
-		printf(" %saddr 0x%lx",
+		aprint_normal(" %saddr 0x%lx",
 			BUS_ADDR_IOSPACE(ma->ma_paddr) ? "io" : "",
 			(u_long)BUS_ADDR_PADDR(ma->ma_paddr));
 	if (ma->ma_pri)
-		printf(" ipl %d", ma->ma_pri);
+		aprint_normal(" ipl %d", ma->ma_pri);
 	return (UNCONF);
 }
 

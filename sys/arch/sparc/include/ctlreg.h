@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.22.12.1 2002/08/27 23:45:34 nathanw Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.22.12.2 2003/01/03 16:55:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -183,7 +183,12 @@
 #define MXCC_STREAM_DATA	0x1c00000	/* Stream data register */
 #define MXCC_STREAM_SRC		0x1c00100	/* Stream source register */
 #define MXCC_STREAM_DST		0x1c00200	/* Stream dest register */
+#define MXCC_BIST		0x1c00800	/* Builtin self test register */
 #define MXCC_CTRLREG		0x1c00a00	/* Control register for MXCC */
+#define MXCC_STATREG		0x1c00b00	/* Status register for MXCC */
+#define MXCC_MRST		0x1c00c00	/* Module reset register */
+#define MXCC_ERROR		0x1c00e00	/* Error register */
+#define MXCC_MBUSPORT		0x1c00f00	/* MBus port register */
 
 /* Bits in MXCC_CTRLREG */
 #define MXCC_CTRLREG_HC		0x1	/* Half cache (Xbus only) */
@@ -195,6 +200,10 @@
 #define MXCC_CTRLREG_WI		0x40	/* Write invalidate (Xbus only) */
 #define MXCC_CTRLREG_BWC_MASK	0x180	/* Bus watch count (Xbus only) */
 #define MXCC_CTRLREG_RC		0x200	/* Read reference count */
+
+/* Bits in MXCC_MRST */
+#define MXCC_MRST_SI		0x00000002	/* Software Internal reset */
+#define MXCC_MRST_WD		0x00000004	/* Watchdog reset */
 
 /*
  * Stream register usage:
@@ -237,6 +246,7 @@
 #define SRMMU_AFSR	0x00000500	/* Asynchronous fault status reg (HS) */
 #define SRMMU_AFAR	0x00000600	/* Asynchronous fault address reg (HS)*/
 #define SRMMU_PCFG	0x00000600	/* Processor configuration reg (TURBO)*/
+#define SRMMU_RST	0x00000700	/* Reset reg */
 #define SRMMU_TLBCTRL	0x00001000	/* TLB replacement control reg */
 
 
@@ -408,6 +418,9 @@
 #define TLBC_DISABLE	0x00000020	/* Disable replacement counter */
 #define TLBC_RCNTMASK	0x0000001f	/* Replacement counter (0-31) */
 
+/* [4m] SRMMU Reset Register bits */
+#define SRMMU_RST_SI	0x00000002	/* Software Internal reset */
+#define SRMMU_RST_WD	0x00000004	/* Watchdog reset */
 
 /*
  * The Ross Hypersparc has an Instruction Cache Control Register (ICCR)

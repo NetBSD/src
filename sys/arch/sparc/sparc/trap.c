@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106.8.17 2002/12/29 19:40:33 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.106.8.18 2003/01/03 16:55:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -594,8 +594,9 @@ badtrap:
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: pcb<-stack: 0x%x\n",
-				p->p_comm, p->p_pid, tf->tf_out[6]);
+			printf("cpu%d:%s[%d]: rwindow: pcb<-stack: 0x%x\n",
+				cpuinfo.ci_cpuid, p->p_comm, p->p_pid,
+				tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(l, SIGILL);
@@ -618,16 +619,18 @@ badtrap:
 		KERNEL_PROC_LOCK(l);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
-				p->p_comm, p->p_pid, tf->tf_out[6]);
+			printf("cpu%d:%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
+				cpuinfo.ci_cpuid, p->p_comm, p->p_pid,
+				tf->tf_out[6]);
 #endif
 		write_user_windows();
 		if (rwindow_save(l) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(l, SIGILL);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
-				p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
+			printf("cpu%d:%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
+				cpuinfo.ci_cpuid, p->p_comm, p->p_pid,
+				pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
 			sigexit(l, SIGILL);
@@ -771,13 +774,13 @@ rwindow_save(l)
 		return (0);
 #ifdef DEBUG
 	if (rwindow_debug)
-		printf("%s[%d]: rwindow: pcb->stack:",
-			l->l_proc->p_comm, l->l_proc->p_pid);
+		printf("cpu%d:%s[%d]: rwindow: pcb->stack:",
+			cpuinfo.ci_cpuid, p->p_comm, p->p_pid);
 #endif
 	do {
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf(" 0x%x", rw[1].rw_in[6]);
+			printf(" [%d]0x%x", cpuinfo.ci_cpuid, rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
@@ -992,7 +995,7 @@ out:
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
-#endif /* Sun4/Sun4C */
+#endif /* SUN4 || SUN4C */
 }
 
 #if defined(SUN4M)	/* 4m version of mem_access_fault() follows */
@@ -1257,7 +1260,7 @@ out_nounlock:
 	else
 		KERNEL_UNLOCK();
 }
-#endif
+#endif /* SUN4M */
 
 /*
  * System calls.  `pc' is just a copy of tf->tf_pc.
