@@ -1,11 +1,11 @@
-#	$Id: Makefile,v 1.7 1993/11/21 20:19:15 brezak Exp $
+#	$Id: Makefile,v 1.8 1994/01/28 00:31:32 cgd Exp $
 
 PROG =	rpc.rusersd
 SRCS =	rusersd.c rusers_proc.c
 MAN8 =	rpc.rusersd.0
 
-DPADD=	${LIBRPCSVC} ${LIBUTIL}
-LDADD=	-lrpcsvc -lutil
+DPADD=	${LIBRPCSVC}
+LDADD=	-lrpcsvc
 
 .if exists(/usr/include/X11/extensions/xidle.h)
 CFLAGS+= -DXIDLE
