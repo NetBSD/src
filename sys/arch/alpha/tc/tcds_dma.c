@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.27 1999/02/12 01:49:07 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.28 1999/03/15 05:28:07 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.27 1999/02/12 01:49:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.28 1999/03/15 05:28:07 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,7 @@ tcds_dma_intr(sc)
 	struct ncr53c9x_softc *nsc = &sc->sc_asc->sc_ncr53c9x;
 	bus_dmamap_t map = sc->sc_dmamap;
 	u_int32_t dud;
-	int trans = 0, resid = 0;
+	int trans, resid;
 	u_int32_t *addr, dudmask;
 	u_int8_t tcl, tcm, tch;
 	bus_addr_t pa;
@@ -161,6 +161,7 @@ tcds_dma_intr(sc)
 		return 0;
 	}
 
+	resid = 0;
 	if (!sc->sc_iswrite &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
@@ -180,8 +181,8 @@ tcds_dma_intr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("tcds_dma %d: xfer (%d) > req (%ld)\n",
-		    sc->sc_slot, trans, sc->sc_dmasize);
+		printf("tcds_dma %d: xfer (%d) > req (%d)\n",
+		    sc->sc_slot, trans, (int)sc->sc_dmasize);
 		trans = sc->sc_dmasize;
 	}
 
@@ -282,7 +283,8 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmalen = len;
 	sc->sc_iswrite = datain;
 
-	NCR_DMA(("tcds_dma %d: start %ld@%p,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
+	NCR_DMA(("tcds_dma %d: start %d@%p,%d\n", sc->sc_slot,
+		(int)*sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -292,7 +294,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	size = min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 	*dmasize = sc->sc_dmasize = size;
 
-	NCR_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
+	NCR_DMA(("dma_start: dmasize = %d\n", (int)sc->sc_dmasize));
 
 	if (bus_dmamap_load(sc->sc_dmat, map, *addr, size,
 	    NULL, BUS_DMA_NOWAIT)) {
