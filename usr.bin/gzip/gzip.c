@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.63 2004/08/30 14:36:51 dsl Exp $	*/
+/*	$NetBSD: gzip.c,v 1.64 2004/08/31 10:14:30 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.63 2004/08/30 14:36:51 dsl Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.64 2004/08/31 10:14:30 he Exp $");
 #endif /* not lint */
 
 /*
@@ -1284,7 +1284,8 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 				else
 					dp++;
 				snprintf(outfile, outsize, "%.*s%.*s",
-						dp - file, file, rbytes, name);
+						(int) (dp - file), 
+						file, (int) rbytes, name);
 			}
 		}
 	}
