@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/07/08 20:30:14 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2001/07/08 23:59:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -39,6 +39,7 @@
 #include <mips/cpuregs.h>
 
 #include <machine/autoconf.h>
+#include <machine/machtype.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
@@ -49,8 +50,6 @@ static int	mainbus_match(struct device *, struct cfdata *, void *);
 static void	mainbus_attach(struct device *, struct device *, void *);
 static int	mainbus_search(struct device *, struct cfdata *, void *);
 int		mainbus_print(void *, const char *);
-
-int		atoi(char *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
@@ -71,31 +70,14 @@ mainbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
-	struct arcbios_component *root;
-	struct arcbios_sysid *sysidp;
-	int i = 0;
+	struct mainbus_attach_args ma;
 
-	root = ARCBIOS->GetChild(NULL);
-	printf(": %s", root->Identifier);
-
-	sysidp = ARCBIOS->GetSystemId();
-	printf(" [%s, %s]", sysidp->Vendor, sysidp->Serial);
+	printf(": %s [%s, %s]", arcbios_system_identifier,
+	    arcbios_sysid_vendor, arcbios_sysid_product);
 
 	printf("\n");
 
-	for (i = 0; root->Identifier[i] != '\0'; i++) {
-		if (root->Identifier[i] >= '0' &&
-		    root->Identifier[i] <= '9') {
-			ma->ma_arch = atoi(&root->Identifier[i]);
-			break;
-		}
-	}
-
-	if (ma->ma_arch <= 0)
-		panic("invalid architecture");
-
-	config_search(mainbus_search, self, ma);
+	config_search(mainbus_search, self, &ma);
 }
 
 static int
@@ -107,6 +89,7 @@ mainbus_search(parent, cf, aux)
 	struct mainbus_attach_args *ma = aux;
 
 	do {
+		ma->ma_name = NULL;
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
 		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
@@ -131,29 +114,4 @@ mainbus_print(aux, pnp)
 		printf(" addr 0x%lx", ma->ma_addr);
 
 	return UNCONF;
-}
-
-int     
-atoi(s) 
-	char *s;
-{       
-	int n, neg;
-
-	n = 0;
-	neg = 0;
-
-	while (*s == '-') {
-		s++;
-		neg = !neg;
-	}
-
-	while (*s != '\0') {
-		if (*s < '0' && *s > '9')
-			break;
-
-		n = (10 * n) + (*s - '0');
-		s++;
-	}
-
-	return (neg ? -n : n);
 }
