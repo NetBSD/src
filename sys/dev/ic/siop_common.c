@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.6 2000/07/24 15:15:01 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -72,7 +72,7 @@ siop_common_reset(sc)
 	    SCNTL0_ARB_MASK | SCNTL0_EPC | SCNTL0_AAP);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL1, 0);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3, sc->clock_div);
-	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCXFER, 0);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER, 0);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DIEN, 0xff);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SIEN0,
 	    0xff & ~(SIEN0_CMP | SIEN0_SEL | SIEN0_RSL));
@@ -263,9 +263,9 @@ siop_sdtr_neg(siop_cmd)
 					sc->targets[target]->id &=
 					    ~(SCNTL3_ULTRA << 24);
 				sc->targets[target]->id &=
-				    ~(SCXFER_MO_MASK << 8);
+				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
-				    (offset & SCXFER_MO_MASK) << 8;
+				    (offset & SXFER_MO_MASK) << 8;
 				goto end;
 			}
 		}
@@ -281,7 +281,7 @@ reject:
 		    target);
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
 		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
-		sc->targets[target]->id &= ~(SCXFER_MO_MASK << 8);
+		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
 	} else { /* target initiated sync neg */
 #ifdef DEBUG
 		printf("sdtr (target): sync %d offset %d\n", sync, offset);
@@ -314,9 +314,9 @@ reject:
 					sc->targets[target]->id &=
 					    ~(SCNTL3_ULTRA << 24);
 				sc->targets[target]->id &=
-				    ~(SCXFER_MO_MASK << 8);
+				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
-				    (offset & SCXFER_MO_MASK) << 8;
+				    (offset & SXFER_MO_MASK) << 8;
 				siop_cmd->siop_table->msg_out[0] = MSG_EXTENDED;
 				siop_cmd->siop_table->msg_out[1] =
 				    MSG_EXT_SDTR_LEN;
@@ -334,7 +334,7 @@ async:
 		    sc->sc_dev.dv_xname, target);
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
 		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
-		sc->targets[target]->id &= ~(SCXFER_MO_MASK << 8);
+		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
 		siop_cmd->siop_table->msg_out[0] = MSG_EXTENDED;
 		siop_cmd->siop_table->msg_out[1] = MSG_EXT_SDTR_LEN;
 		siop_cmd->siop_table->msg_out[2] = MSG_EXT_SDTR;
@@ -351,7 +351,7 @@ end:
 	siop_cmd->siop_table->id = htole32(sc->targets[target]->id);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
 	    (sc->targets[target]->id >> 24) & 0xff);
-	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCXFER,
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
 	    (sc->targets[target]->id >> 8) & 0xff);
 	if (send_msgout) {
 		siop_cmd->siop_table->t_msgout.addr = htole32(siop_cmd->dsa);

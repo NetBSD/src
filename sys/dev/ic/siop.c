@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.27 2000/07/27 21:28:17 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.28 2000/10/06 16:35:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -54,7 +54,7 @@
 #include <dev/ic/siopvar.h>
 #include <dev/ic/siopvar_common.h>
 
-#undef DEBUG
+#define DEBUG
 #undef DEBUG_DR
 #undef DEBUG_INTR
 #undef DEBUG_SHED
@@ -128,7 +128,16 @@ siop_shed_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_sheddma, 0, NBPG, ops);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_sheddma, 0, 2*NBPG, ops);
+}
+
+static __inline__ void siop_resel_sync __P((struct siop_softc *, int));
+static __inline__ void
+siop_resel_sync(sc, ops)
+	struct siop_softc *sc;
+	int ops;
+{
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_sheddma, NBPG, NBPG, ops);
 }
 
 void
@@ -175,34 +184,35 @@ siop_attach(sc)
 		}
 		sc->sc_scriptaddr = sc->sc_scriptdma->dm_segs[0].ds_addr;
 	}
-	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
-	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	error = bus_dmamem_alloc(sc->sc_dmat, 2 * NBPG, 
+	    2 * NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to allocate scheduler DMA memory, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, 2 * NBPG,
 	    (caddr_t *)&sc->sc_shed, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		printf("%s: unable to map scheduler DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
-	    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_sheddma);
+	error = bus_dmamap_create(sc->sc_dmat, 2 * NBPG, 1,
+	    2 * NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_sheddma);
 	if (error) {
 		printf("%s: unable to create scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_sheddma, sc->sc_shed,
-	    NBPG, NULL, BUS_DMA_NOWAIT);
+	    2 * NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
+	sc->sc_resel = &sc->sc_shed[NBPG / sizeof(int32_t)];
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->cmds);
 	/* compute number of scheduler slots */
@@ -211,10 +221,17 @@ siop_attach(sc)
 	    - sizeof(endslot_script) /* memory needed at end of scheduler */
 	    ) / (sizeof(slot_script) - 8);
 	sc->sc_currshedslot = 0;
+	/* compute number of reselect slots */
+	sc->sc_nreselslots = (
+	    NBPG /* memory size allocated for reselect script */
+	    - sizeof(reselected_end_script) /* memory needed at end */
+	    ) / (sizeof(reselected_script) - 16);
 #ifdef DEBUG
-	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d\n",
+	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d "
+	    "nresel %d\n",
 	    sc->sc_dev.dv_xname, (int)sizeof(siop_script),
-	    sc->sc_scriptaddr, sc->sc_script, sc->sc_nshedslots);
+	    (u_int32_t)sc->sc_scriptaddr, sc->sc_script, sc->sc_nshedslots,
+	    sc->sc_nreselslots);
 #endif
 
 	sc->sc_link.adapter_softc = sc;
@@ -285,6 +302,14 @@ siop_reset(sc)
 			    E_script_abs_shed_Used[j] * 4,
 			    sc->sc_sheddma->dm_segs[0].ds_addr);
 		}
+		for (j = 0; j <
+		    (sizeof(E_abs_find_dsa_Used) /
+		    sizeof(E_abs_find_dsa_Used[0]));
+		    j++) {
+			bus_space_write_4(sc->sc_ramt, sc->sc_ramh,
+			    E_abs_find_dsa_Used[j] * 4,
+			    sc->sc_sheddma->dm_segs[0].ds_addr + NBPG);
+		}
 	} else {
 		for (j = 0;
 		    j < (sizeof(siop_script) / sizeof(siop_script[0])); j++) {
@@ -295,7 +320,14 @@ siop_reset(sc)
 		    sizeof(E_script_abs_shed_Used[0]));
 		    j++) {
 			sc->sc_script[E_script_abs_shed_Used[j]] =
-				htole32(sc->sc_sheddma->dm_segs[0].ds_addr);
+			    htole32(sc->sc_sheddma->dm_segs[0].ds_addr);
+		}
+		for (j = 0; j <
+		    (sizeof(E_abs_find_dsa_Used) /
+		    sizeof(E_abs_find_dsa_Used[0]));
+		    j++) {
+			sc->sc_script[E_abs_find_dsa_Used[j]] =
+			    htole32(sc->sc_sheddma->dm_segs[0].ds_addr + NBPG);
 		}
 	}
 	/* copy and init the scheduler slots script */
@@ -330,6 +362,25 @@ siop_reset(sc)
 	}
 	scr[E_endslot_abs_reselect_Used[0]] = 
 	    htole32(sc->sc_scriptaddr + Ent_reselect);
+
+	/* The reselect script */
+	for (i = 0; i < sc->sc_nreselslots; i++) {
+		scr = &sc->sc_resel[(Ent_res_nextld / 4) * i];
+		for (j = 0; j <
+		    (sizeof(reselected_script) / sizeof(reselected_script[0]));
+		    j++) {
+			scr[j] = htole32(reselected_script[j]);
+		}
+		scr[E_resel_abs_selected_Used[0]] =
+		    htole32(sc->sc_scriptaddr + Ent_selected);
+	}
+	/* The final int */
+	scr = &sc->sc_resel[(Ent_res_nextld / 4) * sc->sc_nreselslots];
+	for (j = 0; j <
+	    (sizeof(reselected_end_script) / sizeof(reselected_end_script[0]));
+	    j++) {
+		scr[j] = htole32(reselected_end_script[j]);
+	}
 
 	/* start script */
 	if ((sc->features & SF_CHIP_RAM) == 0) {
@@ -866,7 +917,7 @@ scintr:
 			    siop_cmd->dsa);
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCNTL3,
 			    (sc->targets[target]->id >> 24) & 0xff);
-			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCXFER,
+			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SXFER,
 			    (sc->targets[target]->id >> 8) & 0xff);
 			/* no table to flush */
 			CALL_SCRIPT(Ent_selected);
@@ -988,7 +1039,16 @@ siop_scsicmd_end(siop_cmd)
 {
 	struct scsipi_xfer *xs = siop_cmd->xs;
 	struct siop_softc *sc = siop_cmd->siop_target->siop_sc;
+	u_int32_t *scr;
 
+	/* remove from reselect slot */
+	siop_resel_sync(sc, BUS_DMASYNC_POSTWRITE);
+#ifdef DEBUG_SHED
+	printf("freeing resel %d\n", siop_cmd->reselslot);
+#endif
+	scr = &sc->sc_resel[(Ent_res_nextld / 4) * siop_cmd->reselslot];
+	scr[Ent_rtarget / 4] = htole32(0x808400ff);
+	siop_resel_sync(sc, BUS_DMASYNC_PREWRITE);
 	if (siop_cmd->status != CMDST_SENSE_DONE &&
 	    xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1271,10 +1331,10 @@ siop_start(sc)
 	struct siop_softc *sc;
 {
 	struct siop_cmd *siop_cmd;
-	u_int32_t *scr;
+	u_int32_t *scr, *rscr;
 	u_int32_t dsa;
 	int timeout;
-	int target, lun, slot;
+	int target, lun, slot, resel;
 	int newcmd = 0; 
 
 	/*
@@ -1318,6 +1378,22 @@ siop_start(sc)
 			if (siop_cmd->status != CMDST_READY &&
 			    siop_cmd->status != CMDST_SENSE)
 				continue;
+			/* find a reselect slot */
+			for (resel = 0; resel < sc->sc_nreselslots; resel++) {
+				/* if target is 0xff the slot is free */
+				rscr = &sc->sc_resel[
+				    (Ent_res_nextld / 4) * resel];
+				if ((htole32(rscr[Ent_rtarget / 4]) & 0xff)
+				    == 0xff)
+					break;
+			}
+			if (resel == sc->sc_nreselslots) {
+#ifdef DEBUG
+				printf("%s: out of reselect slot\n",
+					sc->sc_dev.dv_xname);
+#endif
+				goto end; /* no free slot */
+			}
 			/* find a free scheduler slot and load it */
 			for (; slot < sc->sc_nshedslots; slot++) {
 				scr = &sc->sc_shed[(Ent_nextslot / 4) * slot];
@@ -1328,8 +1404,7 @@ siop_start(sc)
 				if (scr[Ent_slot / 4 + 1] == 0)
 					continue;
 #ifdef DEBUG_SHED
-				printf("using slot %d for DSA 0x%lx\n", slot,
-				    (u_long)siop_cmd->dsa);
+				printf("using slot %d resel %d for DSA 0x%lx\n", slot, resel, (u_long)siop_cmd->dsa);
 #endif
 				/* note that we started a new command */
 				newcmd = 1;
@@ -1340,12 +1415,35 @@ siop_start(sc)
 					siop_cmd->status = CMDST_SENSE_ACTIVE;
 				else
 					panic("siop_start: bad status");
-				/* patch script with DSA addr */
+				/* patch scripts with DSA addr */
 				dsa = siop_cmd->dsa;
+				/*
+				 * first reselect script
+				 * 0x808400xx is 'JUMP foo if not 0xxx'
+				 * we need target | 0x80 for the IDENTIFY cmd.
+				 */ 
+				rscr[Ent_rtarget / 4] =
+				    htole32(0x80840080 | target);
+				rscr[Ent_rlun / 4] =
+				    htole32(0x80840000 | lun);
 				/*
 				 * 0x78000000 is a 'move data8 to reg'. data8
 				 * is the second octet, reg offset is the third.
 				 */
+				rscr[Ent_rdsa0 / 4] =
+				    htole32(0x78100000 |
+				    ((dsa & 0x000000ff) <<  8));
+				rscr[Ent_rdsa1 / 4] =
+				    htole32(0x78110000 |
+				    ( dsa & 0x0000ff00       ));
+				rscr[Ent_rdsa2 / 4] =
+				    htole32(0x78120000 |
+				    ((dsa & 0x00ff0000) >>  8));
+				rscr[Ent_rdsa3 / 4] =
+				    htole32(0x78130000 |
+				    ((dsa & 0xff000000) >> 16));
+				siop_cmd->reselslot = resel;
+				/* now scheduler slot */
 				scr[Ent_idsa0 / 4] =
 				    htole32(0x78100000 |
 				    ((dsa & 0x000000ff) <<  8));
