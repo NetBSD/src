@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.5 1997/05/08 21:24:42 gwr Exp $	*/
+/*	$NetBSD: dir.h,v 1.6 2001/11/12 21:58:18 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -55,6 +55,7 @@ typedef struct Path {
 } Path;
 
 void Dir_Init __P((const char *));
+void Dir_InitDot __P((void));
 void Dir_End __P((void));
 Boolean Dir_HasWildcards __P((char *));
 void Dir_Expand __P((char *, Lst, Lst));
