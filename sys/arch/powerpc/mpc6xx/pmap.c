@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2002/01/02 00:51:37 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2002/03/08 20:48:33 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -193,10 +193,19 @@ u_long pmap_upvop_maxfree;
 u_long pmap_mpvop_free;
 u_long pmap_mpvop_maxfree;
 
-STATIC void *pmap_pool_ualloc(unsigned long, int, int);
-STATIC void *pmap_pool_malloc(unsigned long, int, int);
-STATIC void pmap_pool_ufree(void *, unsigned long, int);
-STATIC void pmap_pool_mfree(void *, unsigned long, int);
+STATIC void *pmap_pool_ualloc(struct pool *, int);
+STATIC void *pmap_pool_malloc(struct pool *, int);
+
+STATIC void pmap_pool_ufree(struct pool *, void *);
+STATIC void pmap_pool_mfree(struct pool *, void *);
+
+static struct pool_allocator pmap_pool_mallocator = {
+	pmap_pool_malloc, pmap_pool_mfree, 0,
+};
+
+static struct pool_allocator pmap_pool_uallocator = {
+	pmap_pool_ualloc, pmap_pool_ufree, 0,
+};
 
 #if defined(DEBUG) || defined(PMAPCHECK) || defined(DDB)
 void pmap_pte_print(volatile pte_t *pt);
@@ -792,8 +801,8 @@ pmap_init(void)
 
 	s = splvm();
 	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
-	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl", NBPG,
-	    pmap_pool_malloc, pmap_pool_mfree, M_VMPMAP);
+	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl",
+	    &pmap_pool_mallocator);
 
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 
@@ -1454,8 +1463,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	/*
 	 * If we aren't overwriting an mapping, try to allocate
 	 */
-	if ((flags & PMAP_CANFAIL) == 0)
-		poolflags |= PR_URGENT;
 	pmap_interrupts_restore(msr);
 	pvo = pool_get(pl, poolflags);
 	msr = pmap_interrupts_off();
@@ -2321,12 +2328,9 @@ pmap_pvo_verify(void)
 
 
 void *
-pmap_pool_ualloc(unsigned long size, int flags, int tag)
+pmap_pool_ualloc(struct pool *pp, int flags)
 {
 	struct pvo_page *pvop;
-
-	if (size != PAGE_SIZE)
-		panic("pmap_pool_alloc: size(%lu) != PAGE_SIZE", size);
 
 	pvop = SIMPLEQ_FIRST(&pmap_upvop_head);
 	if (pvop != NULL) {
@@ -2337,17 +2341,14 @@ pmap_pool_ualloc(unsigned long size, int flags, int tag)
 	if (uvm.page_init_done != TRUE) {
 		return (void *) uvm_pageboot_alloc(PAGE_SIZE);
 	}
-	return pmap_pool_malloc(size, flags, tag);
+	return pmap_pool_malloc(pp, flags);
 }
 
 void *
-pmap_pool_malloc(unsigned long size, int flags, int tag)
+pmap_pool_malloc(struct pool *pp, int flags)
 {
 	struct pvo_page *pvop;
 	struct vm_page *pg;
-
-	if (size != PAGE_SIZE)
-		panic("pmap_pool_alloc: size(%lu) != PAGE_SIZE", size);
 
 	pvop = SIMPLEQ_FIRST(&pmap_mpvop_head);
 	if (pvop != NULL) {
@@ -2370,7 +2371,7 @@ pmap_pool_malloc(unsigned long size, int flags, int tag)
 }
 
 void
-pmap_pool_ufree(void *va, unsigned long size, int tag)
+pmap_pool_ufree(struct pool *pp, void *va)
 {
 	struct pvo_page *pvop;
 #if 0
@@ -2387,11 +2388,9 @@ pmap_pool_ufree(void *va, unsigned long size, int tag)
 }
 
 void
-pmap_pool_mfree(void *va, unsigned long size, int tag)
+pmap_pool_mfree(struct pool *pp, void *va)
 {
 	struct pvo_page *pvop;
-	if (size != PAGE_SIZE)
-		panic("pmap_pool_alloc: size(%lu) != PAGE_SIZE", size);
 
 	pvop = va;
 	SIMPLEQ_INSERT_HEAD(&pmap_mpvop_head, pvop, pvop_link);
@@ -2874,12 +2873,11 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #endif
 
 	pool_init(&pmap_upvo_pool, sizeof(struct pvo_entry),
-	    sizeof(struct pvo_entry), 0, 0, "pmap_upvopl", NBPG,
-	    pmap_pool_ualloc, pmap_pool_ufree, M_VMPMAP);
+	    sizeof(struct pvo_entry), 0, 0, "pmap_upvopl",
+	    &pmap_pool_uallocator);
 
 	pool_setlowat(&pmap_upvo_pool, 252);
 
 	pool_init(&pmap_pool, sizeof(struct pmap),
-	    sizeof(void *), 0, 0, "pmap_pl", NBPG,
-	    pmap_pool_ualloc, pmap_pool_ufree, M_VMPMAP);
+	    sizeof(void *), 0, 0, "pmap_pl", &pmap_pool_uallocator);
 }

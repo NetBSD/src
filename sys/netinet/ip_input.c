@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.145 2002/02/25 02:17:55 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.146 2002/03/08 20:48:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.145 2002/02/25 02:17:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.146 2002/03/08 20:48:43 thorpej Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -318,7 +318,7 @@ ip_init()
 	int i;
 
 	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
-	    0, NULL, NULL, M_IPQ);
+	    NULL);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)

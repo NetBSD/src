@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.29 2002/02/22 08:23:16 enami Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.30 2002/03/08 20:48:45 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.29 2002/02/22 08:23:16 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.30 2002/03/08 20:48:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1067,53 +1067,39 @@ softdep_initialize()
 	    &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
 	pool_init(&sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TEMP);
+	    &pool_allocator_nointr);
 	for (i = 0; i < PCBPHASHSIZE; i++) {
 		LIST_INIT(&pcbphashhead[i]);
 	}
 
 	pool_init(&pagedep_pool, sizeof(struct pagedep), 0, 0, 0,
-	    "pagedeppl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_PAGEDEP);
+	    "pagedeppl", &pool_allocator_nointr);
 	pool_init(&inodedep_pool, sizeof(struct inodedep), 0, 0, 0,
-	    "inodedeppl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_INODEDEP);
+	    "inodedeppl", &pool_allocator_nointr);
 	pool_init(&newblk_pool, sizeof(struct newblk), 0, 0, 0,
-	    "newblkpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_NEWBLK);
+	    "newblkpl", &pool_allocator_nointr);
 	pool_init(&bmsafemap_pool, sizeof(struct bmsafemap), 0, 0, 0,
-	    "bmsafemappl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_BMSAFEMAP);
+	    "bmsafemappl", &pool_allocator_nointr);
 	pool_init(&allocdirect_pool, sizeof(struct allocdirect), 0, 0, 0,
-	    "allocdirectpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_ALLOCDIRECT);
+	    "allocdirectpl", &pool_allocator_nointr);
 	pool_init(&indirdep_pool, sizeof(struct indirdep), 0, 0, 0,
-	    "indirdeppl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_INDIRDEP);
+	    "indirdeppl", &pool_allocator_nointr);
 	pool_init(&allocindir_pool, sizeof(struct allocindir), 0, 0, 0,
-	    "allocindirpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_ALLOCINDIR);
+	    "allocindirpl", &pool_allocator_nointr);
 	pool_init(&freefrag_pool, sizeof(struct freefrag), 0, 0, 0,
-	    "freefragpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_FREEFRAG);
+	    "freefragpl", &pool_allocator_nointr);
 	pool_init(&freeblks_pool, sizeof(struct freeblks), 0, 0, 0,
-	    "freeblkspl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_FREEBLKS);
+	    "freeblkspl", &pool_allocator_nointr);
 	pool_init(&freefile_pool, sizeof(struct freefile), 0, 0, 0,
-	    "freefilepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_FREEFILE);
+	    "freefilepl", &pool_allocator_nointr);
 	pool_init(&diradd_pool, sizeof(struct diradd), 0, 0, 0,
-	    "diraddpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_DIRADD);
+	    "diraddpl", &pool_allocator_nointr);
 	pool_init(&mkdir_pool, sizeof(struct mkdir), 0, 0, 0,
-	    "mkdirpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_MKDIR);
+	    "mkdirpl", &pool_allocator_nointr);
 	pool_init(&dirrem_pool, sizeof(struct dirrem), 0, 0, 0,
-	    "dirrempl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_DIRREM);
+	    "dirrempl", &pool_allocator_nointr);
 	pool_init(&newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
-	    "newdirblkpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_NEWDIRBLK);
+	    "newdirblkpl", &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.117 2001/12/31 22:34:40 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.118 2002/03/08 20:48:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.117 2001/12/31 22:34:40 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.118 2002/03/08 20:48:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -365,13 +365,11 @@ uvm_map_init()
 	 * initialize the map-related pools.
 	 */
 	pool_init(&uvm_vmspace_pool, sizeof(struct vmspace),
-	    0, 0, 0, "vmsppl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	    0, 0, 0, "vmsppl", &pool_allocator_nointr);
 	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
-	    0, 0, 0, "vmmpepl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	    0, 0, 0, "vmmpepl", &pool_allocator_nointr);
 	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
-	    0, 0, 0, "vmmpekpl", 0, NULL, NULL, M_VMMAP);
+	    0, 0, 0, "vmmpekpl", NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.22 2002/02/28 04:43:16 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.23 2002/03/08 20:48:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.22 2002/02/28 04:43:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.23 2002/03/08 20:48:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1815,8 +1815,7 @@ sysctl_dopipe(name, namelen, oldp, oldlenp, newp, newlen)
 void
 pipe_init(void)
 {
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
-		0, NULL, NULL, M_PIPE);
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl", NULL);
 }
 
 #endif /* __NetBSD __ */

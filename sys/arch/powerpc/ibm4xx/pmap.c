@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2001/11/26 23:26:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2002/03/08 20:48:33 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -521,8 +521,7 @@ pmap_init(void)
 	splx(s);
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", 0,
-		  NULL, NULL, 0);
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
 }
 
 /*

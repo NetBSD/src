@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.48 2001/11/08 02:39:08 lukem Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.49 2002/03/08 20:48:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.48 2001/11/08 02:39:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.49 2002/03/08 20:48:45 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -130,8 +130,7 @@ ext2fs_init()
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
 	 */
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
-	    "ext2fsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_EXT2FSNODE);
+	    "ext2fsinopl", &pool_allocator_nointr);
 }
 
 void

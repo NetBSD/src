@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2002/03/06 10:55:21 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2002/03/08 20:48:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2002/03/06 10:55:21 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2002/03/08 20:48:29 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1150,7 +1150,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	 */
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+		  &pool_allocator_nointr);
 	
 	cpu_dcache_wbinv_all();
 }

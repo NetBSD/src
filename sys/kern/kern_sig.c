@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.119 2001/12/18 15:51:52 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.120 2002/03/08 20:48:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.119 2001/12/18 15:51:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.120 2002/03/08 20:48:40 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -106,7 +106,7 @@ signal_init(void)
 {
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.134 2002/01/24 02:12:29 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.135 2002/03/08 20:48:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.134 2002/01/24 02:12:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.135 2002/03/08 20:48:44 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2659,7 +2659,7 @@ syn_cache_init()
 
 	/* Initialize the syn cache pool. */
 	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
-	    "synpl", 0, NULL, NULL, M_PCB);
+	    "synpl", NULL);
 }
 
 void

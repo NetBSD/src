@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2002/02/27 16:09:51 pk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2002/03/08 20:48:35 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1523,8 +1523,7 @@ pmap_init()
 	}
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", 0,
-		  NULL, NULL, 0);
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.57 2002/02/12 00:52:33 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.58 2002/03/08 20:48:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.57 2002/02/12 00:52:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.58 2002/03/08 20:48:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,13 @@ int	max_protohdr;
 int	max_hdr;
 int	max_datalen;
 
-void	*mclpool_alloc __P((unsigned long, int, int));
-void	mclpool_release __P((void *, unsigned long, int));
+void	*mclpool_alloc __P((struct pool *, int));
+void	mclpool_release __P((struct pool *, void *));
+
+struct pool_allocator mclpool_allocator = {
+	mclpool_alloc, mclpool_release, 0,
+};
+
 static struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
 
 const char mclpool_warnmsg[] =
@@ -121,9 +126,8 @@ void
 mbinit()
 {
 
-	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
-	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", 0, mclpool_alloc,
-	    mclpool_release, 0);
+	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
+	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
 
 	pool_cache_init(&mbpool_cache, &mbpool, NULL, NULL, NULL);
 	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
@@ -218,10 +222,9 @@ sysctl_dombuf(name, namelen, oldp, oldlenp, newp, newlen)
 }
 
 void *
-mclpool_alloc(sz, flags, mtype)
-	unsigned long sz;
+mclpool_alloc(pp, flags)
+	struct pool *pp;
 	int flags;
-	int mtype;
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -229,10 +232,9 @@ mclpool_alloc(sz, flags, mtype)
 }
 
 void
-mclpool_release(v, sz, mtype)
+mclpool_release(pp, v)
+	struct pool *pp;
 	void *v;
-	unsigned long sz;
-	int mtype;
 {
 
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.92 2002/02/28 21:59:23 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.93 2002/03/08 20:48:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.92 2002/02/28 21:59:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.93 2002/03/08 20:48:46 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1249,7 +1249,7 @@ ffs_init()
 	ufs_init();
 
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FFSNODE);
+	    &pool_allocator_nointr);
 }
 
 void

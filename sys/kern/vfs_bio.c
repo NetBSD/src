@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.78 2002/02/10 23:14:18 chs Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.79 2002/03/08 20:48:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.78 2002/02/10 23:14:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.79 2002/03/08 20:48:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,7 @@ bufinit()
 	 * which are strictly I/O control blocks, not buffer cache
 	 * buffers.
 	 */
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", 0,
-	    NULL, NULL, M_DEVBUF);
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
