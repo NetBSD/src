@@ -1,7 +1,7 @@
 #
 #	TDR -- Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.20.2.4 1993/09/30 20:15:24 mycroft Exp $
+#	$Id: TDR,v 1.20.2.5 1993/10/06 12:15:32 mycroft Exp $
 #
 
 # standard options
@@ -33,10 +33,11 @@ options		"TCP_COMPAT_42"		# 4.2 networking ABI
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
+options		FASTLINKS		# fast symbolic links in FFS
 #options	MFS			# memory file system; uses RAM and swap
 options		NFSSERVER		# Network File System server
 options		NFSCLIENT		# Network File System client
-#options	ISOFS			# ISO 9660 (CD-ROM) file system, with RR
+#options	ISOFS			# ISO 9660 CD-ROM file system, with RR
 #options	MSDOSFS			# MS-DOS FAT file system
 options		FDESC			# /dev/fd
 options		KERNFS			# kernel file system; recommended
