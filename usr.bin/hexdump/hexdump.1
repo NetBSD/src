@@ -1,4 +1,4 @@
-.\"	$NetBSD: hexdump.1,v 1.9 1998/02/20 23:45:27 jeremy Exp $
+.\"	$NetBSD: hexdump.1,v 1.10 1999/03/07 11:29:59 mycroft Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,15 +40,21 @@
 .Nm hexdump
 .Nd ascii, decimal, hexadecimal, octal dump
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl bcCdovx
+.Bk -words
 .Op Fl e Ar format_string
+.Ek
+.Bk -words
 .Op Fl f Ar format_file
+.Ek
+.Bk -words
 .Op Fl n Ar length
+.Ek
 .Bk -words
 .Op Fl s Ar skip
 .Ek
-.Ar file  ...
+.Ar file ...
 .Sh DESCRIPTION
 The hexdump utility is a filter which displays the specified files, or
 the standard input, if no files are specified, in a user specified

@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchide.1,v 1.5 1997/08/02 21:30:15 perry Exp $
+.\"	$NetBSD: crunchide.1,v 1.6 1999/03/07 11:29:59 mycroft Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -31,10 +31,16 @@
 .Nm crunchide
 .Nd hides symbol names from ld, for crunching programs together
 .Sh SYNOPSIS
-.Nm crunchide
+.Nm ""
+.Bk -words
 .Op Fl f Ar keep-list-file
+.Ek
+.Bk -words
 .Op Fl k Ar keep-symbol
+.Ek
+.Bk -words
 .Op Ar object-file ...
+.Ek
 .Sh DESCRIPTION
 .Nm Crunchide
 hides the global symbols of

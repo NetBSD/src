@@ -1,4 +1,4 @@
-.\"	$NetBSD: join.1,v 1.5 1997/10/19 03:32:12 lukem Exp $
+.\"	$NetBSD: join.1,v 1.6 1999/03/07 11:30:00 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"   The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)join.1	8.3 (Berkeley) 4/28/95
-.\"	$NetBSD: join.1,v 1.5 1997/10/19 03:32:12 lukem Exp $
+.\"	$NetBSD: join.1,v 1.6 1999/03/07 11:30:00 mycroft Exp $
 .\"
 .Dd April 28, 1995
 .Dt JOIN 1
@@ -44,20 +44,25 @@
 .Nm join
 .Nd relational database operator
 .Sh SYNOPSIS
-.Nm
+.Nm ""
+.Bk -words
 .Oo
 .Fl a Ar file_number | Fl v Ar file_number
 .Oc
-.Op Fl e Ar string
-.Op Fl j Ar file_number field
-.Op Fl o Ar list
+.Ek
 .Bk -words
+.Op Fl e Ar string
+.Ek
+.Bk -words
+.Op Fl j Ar file_number field
+.Ek
+.Bk -words
+.Op Fl o Ar list
 .Ek
 .Op Fl t Ar char
 .Op Fl \&1 Ar field
 .Op Fl \&2 Ar field
-.Ar file1
-.Ar file2
+.Ar file1 file2
 .Sh DESCRIPTION
 The join utility performs an ``equality join'' on the specified files
 and writes the result to the standard output.

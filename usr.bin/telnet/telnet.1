@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.9 1997/06/03 06:31:20 mikel Exp $
+.\"	$NetBSD: telnet.1,v 1.10 1999/03/07 11:30:02 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,27 +42,39 @@
 .Tn TELNET
 protocol
 .Sh SYNOPSIS
-.Nm telnet
+.Nm ""
 .Op Fl 8
 .Op Fl E
 .Op Fl F
 .Op Fl K
 .Op Fl L
+.Bk -words
 .Op Fl S Ar tos
+.Ek
+.Bk -words
 .Op Fl X Ar authtype
+.Ek
 .Op Fl a
 .Op Fl c
 .Op Fl d
+.Bk -words
 .Op Fl e Ar escapechar
+.Ek
 .Op Fl f
+.Bk -words
 .Op Fl k Ar realm
+.Ek
+.Bk -words
 .Op Fl l Ar user
+.Ek
+.Bk -words
 .Op Fl n Ar tracefile
+.Ek
 .Op Fl r
 .Op Fl x
 .Oo
 .Ar host
-.Op port
+.Op Ar port
 .Oc
 .Sh DESCRIPTION
 The
