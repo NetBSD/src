@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.26 2001/08/18 16:09:07 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.27 2001/08/22 18:56:06 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -301,3 +301,9 @@ distrib/i386/floppies/ramdisk-big/ramdiskbin.conf	1.6 via patch
 
   Adapt to new DHCP code layout: don't specify explicit object files,
   and copy dhclient-script from the right place.
+
+lib/libc/gen/__fts13.c				1.35
+
+  Add a fts_safe_changedir() function to do sanity checking of paths
+  passed to chdir().  Avoids a race condition when parent paths or
+  symlinks are moved mid-traversal.
