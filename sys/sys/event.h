@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.12 2002/10/10 18:44:44 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.13 2002/10/16 19:50:08 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -134,7 +134,7 @@ struct kfilter_mapping {
 
 #ifdef _KERNEL
 
-#define	KNOTE(list, hint)	if ((list) != NULL) knote(list, hint)
+#define	KNOTE(list, hint)	if (!SLIST_EMPTY(list)) knote(list, hint)
 
 /*
  * Flag indicating hint is a signal.  Used by EVFILT_SIGNAL, and also
