@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.14 2001/01/19 09:02:40 kleink Exp $	*/
+/*	$NetBSD: scanner.l,v 1.15 2002/12/19 16:33:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.14 2001/01/19 09:02:40 kleink Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.15 2002/12/19 16:33:48 hannken Exp $");
 #endif
 #endif
 
@@ -229,6 +229,7 @@ not		return '!';
 len|length	return LEN;
 inbound		return INBOUND;
 outbound	return OUTBOUND;
+vlan		return VLAN;
 
 [ \n\t]			;
 [+\-*/:\[\]!<>()&|=]	return yytext[0];

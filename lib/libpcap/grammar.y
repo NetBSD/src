@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: grammar.y,v 1.8 2001/01/19 09:02:40 kleink Exp $	*/
+/*	$NetBSD: grammar.y,v 1.9 2002/12/19 16:33:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: grammar.y,v 1.56 96/11/02 21:54:55 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.8 2001/01/19 09:02:40 kleink Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.9 2002/12/19 16:33:48 hannken Exp $");
 #endif
 #endif
 
@@ -124,6 +124,7 @@ pcap_parse()
 %token	LSH RSH
 %token  LEN
 %token  IPV6 ICMPV6 AH ESP
+%token	VLAN
 
 %type	<s> ID
 %type	<e> EID
@@ -282,6 +283,8 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| BYTE NUM byteop NUM	{ $$ = gen_byteop($3, $2, $4); }
 	| INBOUND		{ $$ = gen_inbound(0); }
 	| OUTBOUND		{ $$ = gen_inbound(1); }
+	| VLAN pnum		{ $$ = gen_vlan($2); }
+	| VLAN			{ $$ = gen_vlan(-1); }
 	;
 relop:	  '>'			{ $$ = BPF_JGT; }
 	| GEQ			{ $$ = BPF_JGE; }
