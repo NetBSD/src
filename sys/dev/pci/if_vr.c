@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.50 2001/07/19 16:36:15 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.51 2001/07/23 17:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1112,7 +1112,8 @@ vr_init(ifp)
 				vr_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			VR_INIT_RXDESC(sc, i);
 	}
 	sc->vr_rxptr = 0;
 

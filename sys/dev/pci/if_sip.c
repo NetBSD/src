@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.41 2001/07/19 16:36:14 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.42 2001/07/23 17:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -2030,7 +2030,8 @@ SIP_DECL(init)(struct ifnet *ifp)
 				SIP_DECL(rxdrain)(sc);
 				goto out;
 			}
-		}
+		} else
+			SIP_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 #ifdef DP83820
