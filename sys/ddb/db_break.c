@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.17 2002/02/15 07:33:49 simonb Exp $	*/
+/*	$NetBSD: db_break.c,v 1.18 2003/04/29 17:06:03 scw Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.17 2002/02/15 07:33:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.18 2003/04/29 17:06:03 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -103,7 +103,7 @@ db_set_breakpoint(struct vm_map *map, db_addr_t addr, int count)
 	}
 
 	bkpt->map = map;
-	bkpt->address = addr;
+	bkpt->address = BKPT_ADDR(addr);
 	bkpt->flags = 0;
 	bkpt->init_count = count;
 	bkpt->count = count;
@@ -122,7 +122,7 @@ db_delete_breakpoint(struct vm_map *map, db_addr_t addr)
 	     (bkpt = *prev) != 0;
 	     prev = &bkpt->link) {
 		if (db_map_equal(bkpt->map, map) &&
-		    (bkpt->address == addr)) {
+		    (bkpt->address == BKPT_ADDR(addr))) {
 			*prev = bkpt->link;
 			break;
 		}
@@ -144,7 +144,7 @@ db_find_breakpoint(struct vm_map *map, db_addr_t addr)
 	     bkpt != 0;
 	     bkpt = bkpt->link)
 		if (db_map_equal(bkpt->map, map) &&
-		    (bkpt->address == addr))
+		    (bkpt->address == BKPT_ADDR(addr)))
 			return (bkpt);
 
 	return (0);
