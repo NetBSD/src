@@ -1,4 +1,4 @@
-/*	$NetBSD: lshrdi3.c,v 1.4 1997/07/13 20:01:50 christos Exp $	*/
+/*	$NetBSD: lshrdi3.c,v 1.5 1998/01/29 03:23:42 mouse Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)lshrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: lshrdi3.c,v 1.4 1997/07/13 20:01:50 christos Exp $");
+__RCSID("$NetBSD: lshrdi3.c,v 1.5 1998/01/29 03:23:42 mouse Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,6 +58,8 @@ __lshrdi3(a, shift)
 {
 	union uu aa;
 
+	if (shift == 0)
+		return(a);
 	aa.q = a;
 	if (shift >= LONG_BITS) {
 		aa.ul[L] = aa.ul[H] >> (shift - LONG_BITS);
