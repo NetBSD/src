@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.12 1997/03/11 21:22:51 christos Exp $
+.\"	$NetBSD: ping.8,v 1.13 1997/03/18 19:06:53 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
-.Op Fl dfnqrvDPQRL
+.Op Fl dfnoqrvDPQRL
 .Op Fl c Ar count
 .Op Fl g Ar gateway
 .Op Fl i Ar wait
@@ -122,6 +122,8 @@ mode of behavior.
 .It Fl n
 Numeric output only.
 No attempt will be made to lookup symbolic names for host addresses.
+.It Fl o
+Exit successfully after receiving one reply packet.
 .It Fl p Ar pattern
 You may specify up to 16 ``pad'' bytes to fill out the packet you send.
 This is useful for diagnosing data-dependent problems in a network.

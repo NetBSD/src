@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.24 1997/03/13 16:19:10 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.25 1997/03/18 19:06:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.24 1997/03/13 16:19:10 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.25 1997/03/18 19:06:51 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -110,6 +110,7 @@ static char rcsid[] = "$NetBSD: ping.c,v 1.24 1997/03/13 16:19:10 christos Exp $
 #define F_TTL		0x0400		/* Time to live */
 #define F_HDRINCL	0x0800		/* Include our ip headers */
 #define F_SOURCE_ADDR	0x1000		/* Source address */
+#define F_ONCE		0x2000		/* exit(0) after receiving 1 reply */
 
 #define MULTICAST_NOLOOP 1		/* multicast options */
 #define MULTICAST_TTL	 2
@@ -231,7 +232,7 @@ main(int argc, char *argv[])
 		tcsetattr (0, TCSANOW, &ts);
 	}
 #endif
-	while ((c = getopt(argc, argv, "c:dDfg:h:i:I:l:Lnp:PqRQrs:t:T:vw:")) != -1) {
+	while ((c = getopt(argc, argv, "c:dDfg:h:i:I:l:Lnop:PqRQrs:t:T:vw:")) != -1) {
 		switch (c) {
 		case 'c':
 			npackets = strtol(optarg, &p, 0);
@@ -264,6 +265,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			pingflags |= F_NUMERIC;
+			break;
+		case 'o':
+			pingflags |= F_ONCE;
 			break;
 		case 'p':		/* fill buffer with user pattern */
 			if (pingflags & F_PING_RANDOM)
@@ -591,6 +595,8 @@ doit(void)
 		(void)gettimeofday(&now, 0);
 		pr_pack(packet, cc, &from);
 		if (nreceived >= npackets)
+			finish(0);
+		if (nreceived > 0 && (pingflags & F_ONCE))
 			finish(0);
 	}
 	/*NOTREACHED*/
