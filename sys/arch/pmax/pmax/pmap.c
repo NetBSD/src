@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1995/04/10 12:42:20 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1995/04/10 12:45:59 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -216,8 +216,8 @@ pmap_bootstrap(firstaddr)
 	/* XXX need to decide how to set cnt.v_page_size */
 	pmaxpagesperpage = 1;
 
-	simple_lock_init(&kernel_pmap_store.pm_lock);
-	kernel_pmap_store.pm_count = 1;
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap_kernel()->pm_count = 1;
 }
 
 /*
