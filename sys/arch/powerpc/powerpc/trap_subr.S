@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.19 2002/04/22 18:31:11 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,8 +41,8 @@
 /*
  * Data used during primary/secondary traps/interrupts
  */
-#define	tempsave	0x2e0	/* primary save area for trap handling */
-#define	disisave	0x3e0	/* primary save area for dsi/isi traps */
+#define	tempsave	EXC_MCHK+0xe0 /* primary save area for trap handling */
+#define	disisave	EXC_DSI+0xe0  /* primary save area for dsi/isi traps */
 
 /*
  * XXX Interrupt and spill stacks need to be per-CPU.
