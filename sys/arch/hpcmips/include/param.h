@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2001/05/30 12:28:43 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2001/06/13 06:03:11 enami Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,14 +100,14 @@
 #endif
 #endif
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
 
 extern void delay __P((int n));
 extern int cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+
+#include <machine/intr.h>
 
 #endif	/* !_LOCORE */
 #endif	/* _KERNEL */
