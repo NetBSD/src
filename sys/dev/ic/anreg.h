@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.3 2000/12/12 05:11:15 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.4 2000/12/19 08:00:56 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -163,7 +163,7 @@
 #define AN_EV_RX		0x0001	/* async rx completed */
 
 #define AN_INTRS	\
-	(AN_EV_RX|AN_EV_TX|AN_EV_TX_EXC|AN_EV_ALLOC|AN_EV_LINKSTAT)
+	(AN_EV_RX|AN_EV_TX|AN_EV_TX_EXC|AN_EV_ALLOC|AN_EV_LINKSTAT|AN_EV_CMD)
 
 /* Host software registers */
 #define AN_SW0			0x28
