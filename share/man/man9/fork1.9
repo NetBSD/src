@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork1.9,v 1.10 2004/03/11 14:21:25 pooka Exp $
+.\"	$NetBSD: fork1.9,v 1.11 2004/03/13 20:50:17 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,8 +55,8 @@ This function is used primarily to implement the
 .Xr fork 2
 and
 .Xr vfork 2
-system calls, but is versatile enough to be used as a backend for e.g.
-the
+system calls, but is versatile enough to be used as a backend for
+e.g. the
 .Xr __clone 2
 call.
 .Pp
@@ -104,7 +104,9 @@ by using the
 and
 .Ar stacksize
 arguments, respectively.
-Values NULL and 0, respectively, will give the child the default values
+Values
+.Dv NULL
+and 0, respectively, will give the child the default values
 for the machine architecture in question.
 .Pp
 The arguments
@@ -112,7 +114,8 @@ The arguments
 and
 .Ar arg
 can be used to specify a kernel function to called for child return handling
-instead of child_return().
+instead of
+.Fn child_return .
 These are used for example in starting the init process and creating kernel
 threads.
 .Pp
