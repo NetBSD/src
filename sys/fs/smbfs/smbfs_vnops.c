@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.3 2003/02/18 20:07:50 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.4 2003/02/19 12:44:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1047,7 +1047,7 @@ smbfs_advlock(v)
 	struct vnode *vp = ap->a_vp;
 	struct smbnode *np = VTOSMB(vp);
 	struct flock *fl = ap->a_fl;
-	caddr_t id = (caddr_t)1 /* ap->a_id */;
+	int id = 1 /* ap->a_id */;
 /*	int flags = ap->a_flags;*/
 	struct proc *p = curproc;
 	struct smb_cred scred;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.3 2003/02/18 12:52:34 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.4 2003/02/19 12:44:47 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -127,7 +127,7 @@ smbfs_smb_lockandx(struct smbnode *np, int op, u_int32_t pid, off_t start, off_t
 }
 
 int
-smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
+smbfs_smb_lock(struct smbnode *np, int op, int id,
 	off_t start, off_t end,	struct smb_cred *scred)
 {
 	struct smb_share *ssp = np->n_mount->sm_share;
@@ -138,7 +138,7 @@ smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
 		 */
 		return EINVAL;
 	else
-		return smbfs_smb_lockandx(np, op, (u_int32_t)id, start, end, scred);
+		return smbfs_smb_lockandx(np, op, id, start, end, scred);
 }
 
 int
