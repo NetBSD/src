@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.28 2002/09/17 21:22:09 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.29 2002/09/19 20:56:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.28 2002/09/17 21:22:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.29 2002/09/19 20:56:43 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1118,6 +1118,23 @@ issignal(struct lwp *l)
 	dolock = (l->l_flag & L_SINTR) == 0;
 	locked = !dolock;
 	p = l->l_proc;
+
+	if (p->p_stat == SSTOP) {
+		/*
+		 * The process is stopped/stopping. Stop ourselves now that
+		 * we're on the kernel/userspace boundary.
+		 */
+		if (dolock)
+			SCHED_LOCK(s);
+		l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		mi_switch(l, NULL);
+		SCHED_ASSERT_UNLOCKED();
+		if (dolock)
+			splx(s);
+		else
+			dolock = 1;
+	}
 	for (;;) {
 		sigpending1(p, &ss);
 		if (p->p_flag & P_PPWAIT)
@@ -1285,11 +1302,10 @@ proc_stop(struct proc *p)
 	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
 
-
 	/* 
-	 * Put as many LWP's as possible in stopped state.
-	 * Any in uninterruptable sleep will notice the stopped state as 
-	 * they try to return.
+	 * Put as many LWP's as possible in stopped state. 
+	 * Sleeping ones will notice the stopped state as they try to
+	 * return to userspace.
 	 */
 	   
 	for (l = LIST_FIRST(&p->p_lwps); l != NULL; 
@@ -1312,19 +1328,20 @@ proc_stop(struct proc *p)
 			remrunqueue(l);
 			l->l_stat = LSSTOP;
 			p->p_nrlwps--;
-		} else if (l->l_stat == LSSLEEP) {
-			/* Note: this puts all sleeping LWPs into LSSTOP.
-			 * Formerly, uninterruptably sleeping procs were
-			 * left to discover the STOP signal on their
-			 * way back to userspace, but that's harder 
-			 * with multiple LWPs. 
-			 * XXX This should be okay, but.....
-			 */
-			l->l_stat = LSSTOP;
-		} else if ((l->l_stat == LSSUSPENDED) || 
+		} else if ((l->l_stat == LSSLEEP) ||
+		    (l->l_stat == LSSUSPENDED) || 
 		    (l->l_stat == LSZOMB) ||
-			(l->l_stat == LSDEAD)) {
-			/* Don't do anything. These guys aren't going anywhere.
+		    (l->l_stat == LSDEAD)) {
+			/*
+			 * Don't do anything; let sleeping LWPs
+			 * discover the stopped state of the process
+			 * on their way out of the kernel; otherwise,
+			 * things like NFS threads that sleep with
+			 * locks will block the rest of the system
+			 * from getting any work done.
+			 *
+			 * Suspended/dead/zombie LWPs aren't going
+			 * anywhere, so we don't need to touch them.
 			 */
 		}
 #ifdef DIAGNOSTIC
