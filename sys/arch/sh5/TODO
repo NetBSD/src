@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.1 2002/09/22 20:54:33 scw Exp $
+$NetBSD: TODO,v 1.2 2002/09/28 13:06:49 scw Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,7 +49,7 @@ In no particular order:
 6.	libkern needs sh5-specific optimised versions of key functions.
 	Most of these can be used by libc too.
 
-7.	Support for more of the on-chip peripherals, such as DMA and PCI.
+7.	Support for more of the on-chip peripherals, such as the DMAC.
 
 8.	Test the whole lot using a 64-bit kernel/userland.
 
