@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1.1.1 2003/01/17 14:54:33 wiz Exp $	*/
+/*	$NetBSD: key.c,v 1.1.1.2 2004/07/12 23:26:52 wiz Exp $	*/
 
 /* key.c -- Generated array containing function names.
 
@@ -144,5 +144,5 @@ FUNCTION_KEY function_key_array[] = {
 /* Commands found in "./variables.c". */
    { "describe-variable", A_describe_variable },
    { "set-variable", A_set_variable },
-   (char *)0
+   { (char *)NULL, 0 }
 };

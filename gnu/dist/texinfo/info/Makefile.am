@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.3 2003/04/05 23:09:26 karl Exp
+# Id: Makefile.am,v 1.2 2004/01/09 09:07:44 dirt Exp
 # Makefile.am for texinfo/info.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -19,12 +19,14 @@ bin_PROGRAMS = ginfo infokey
 transform = s/ginfo/info/; $(program_transform_name)
 
 localedir = $(datadir)/locale
+infodir2 = $(datadir)/info
 
 # -I. for funs.h.
 # Automake puts -I.. and -I$(srcdir) into DEFS by default, but
 # we need to override it, so include them ourselves.
 INCLUDES = -I. -I$(top_srcdir)/lib -I../intl -I.. -I$(srcdir)
-DEFS += -DINFODIR=\"$(infodir)\" -DLOCALEDIR=\"$(localedir)\"
+DEFS += -DLOCALEDIR=\"$(localedir)\" -DINFODIR=\"$(infodir)\" \
+	-DINFODIR2=\"$(infodir2)\"
 LDADD = ../lib/libtxi.a $(TERMLIBS) $(LIBINTL)
 
 # The files `doc.c' and `funs.h' are created by ./makedoc run over the source

@@ -1,4 +1,4 @@
-EXTRA_DIST = nls.m4 po.m4  \
+EXTRA_DIST = intmax.m4 longdouble.m4 longlong.m4 printf-posix.m4 signed.m4 size_max.m4 wchar_t.m4 wint_t.m4 xsize.m4  nls.m4 po.m4  \
   check-decl.m4 \
   codeset.m4 \
   gettext.m4 \
@@ -19,5 +19,6 @@ EXTRA_DIST = nls.m4 po.m4  \
   prereq.m4 \
   progtest.m4 \
   stdint_h.m4 \
+  strcase.m4 \
   uintmax_t.m4 \
   ulonglong.m4

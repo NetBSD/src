@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.7 2003/04/05 23:09:26 karl Exp
+# Id: Makefile.am,v 1.6 2004/04/09 21:32:06 karl Exp
 # Makefile.am for texinfo/util.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -26,13 +26,19 @@ localedir = $(datadir)/locale
 INCLUDES = -I$(top_srcdir)/lib -I../intl -DLOCALEDIR=\"$(localedir)\"
 LDADD = ../lib/libtxi.a $(LIBINTL)
 
+dist_pkgdata_DATA = texinfo.dtd texinfo.xsl
+pkgdata_DATA = texinfo.cat
+
+# we don't actually use version.texi in the rule, but it's one way of
+# noticing when the version changes.
+texinfo.cat: texinfo-cat.in $(top_srcdir)/doc/version.texi
+	sed 's/__VERSION__/@VERSION@/g' $< >$@
+
 # Most of these are for fun.  The only one that's really supported is texi2dvi.
 # 
-# automake.diff is necessary to apply if you change configure.ac, are
-# building from cvs, or otherwise need to run automake.  Otherwise
-# install-info will be built on every make, and make distcleancheck will
-# fail.  (These bugs have been reported [several times] to bug-automake.)
-# 
 EXTRA_DIST = README deref.c dir-example fix-info-dir fixfonts \
-  fixref.gawk gen-dir-node infosrch install-info-html outline.gawk \
-  prepinfo.awk tex3patch texi-docstring-magic.el texi2dvi txitextest
+  fixref.gawk gdoc gen-dir-node gendocs.sh gendocs_template infosrch \
+  install-info-html outline.gawk \
+  prepinfo.awk tex3patch texi-docstring-magic.el texi2dvi txitextest \
+  $(dist_pkgdata_DATA) texinfo-cat.in
+CLEANFILES = $(pkgdata_DATA)
