@@ -50,5 +50,3 @@ DESC: DESC.proto
 	    -e "s/^vert .*$$/vert `echo $(RES) / $(LPI) | bc`/" \
 	    -e "s/^fonts .*$$/fonts `set $(FONTS); echo $$#` $(FONTS)/" \
 	    $(.CURDIR)/DESC.proto >$@
-
-.include "${.CURDIR}/../Makefile.dev"
