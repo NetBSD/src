@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.3 2000/01/22 09:31:35 mjl Exp $
+.\"	$NetBSD: login.conf.5,v 1.4 2000/02/04 02:17:16 mjl Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -162,6 +162,10 @@ Initial priority (nice) level.
 .sp
 .It requirehome Ta bool Ta Dv false Ta
 Require home directory to login.
+.\"
+.sp
+.It setenv Ta list Ta "" Ta
+Comma separated list of environment variables and values to be set.
 .\"
 .sp
 .It shell Ta program Ta "" Ta
