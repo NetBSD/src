@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1994/12/14 19:11:17 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1995/01/25 04:48:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,37 +92,37 @@ int	ttselect	__P((dev_t, int, struct proc *));
 bdev_decl(no);	/* dummy declarations */
 
 #include "rz.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(rz);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),		/* 0: SCSI disk */
-	bdev_notdef(),		/* 1: vax ht */
-	bdev_disk_init(NVN,vn),	/* 2: vnode disk driver (swap to files) */
-	bdev_notdef(),		/* 3: vax rk*/
-	bdev_swap_init(),	/* 4: swap pseudo-device*/
-	bdev_notdef(),		/* 5: vax tm */
-	bdev_notdef(),		/* 6: vax ts */
-	bdev_notdef(),		/* 7: vax mt */
-	bdev_notdef(),		/* 8: vax tu */
-	bdev_notdef(),		/* 9: ?? */
-	bdev_notdef(),		/*10: ut */
-	bdev_notdef(),		/*11: 11/730 idc */
-	bdev_notdef(),		/*12: rx */
-	bdev_notdef(),		/*13: uu */
-	bdev_notdef(),		/*14: rl */
-	bdev_notdef(),		/*15: tmscp */
-	bdev_notdef(),		/*16: cs */
-	bdev_notdef(),		/*17: md */
-	bdev_notdef(),		/*18: st */
-	bdev_notdef(),		/*19: sd */
-	bdev_notdef(),		/*20: tz */
-	bdev_disk_init(NRZ,rz),	/*21: SCSI disk */
-	bdev_notdef(),		/*22: ?? */
-	bdev_notdef(),		/*23: mscp */
+	bdev_notdef(),			/* 0: SCSI disk */
+	bdev_notdef(),			/* 1: vax ht */
+	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
+	bdev_notdef(),			/* 3: vax rk*/
+	bdev_swap_init(),		/* 4: swap pseudo-device*/
+	bdev_notdef(),			/* 5: vax tm */
+	bdev_notdef(),			/* 6: vax ts */
+	bdev_notdef(),			/* 7: vax mt */
+	bdev_notdef(),			/* 8: vax tu */
+	bdev_notdef(),			/* 9: ?? */
+	bdev_notdef(),			/*10: ut */
+	bdev_notdef(),			/*11: 11/730 idc */
+	bdev_notdef(),			/*12: rx */
+	bdev_notdef(),			/*13: uu */
+	bdev_notdef(),			/*14: rl */
+	bdev_notdef(),			/*15: tmscp */
+	bdev_notdef(),			/*16: cs */
+	bdev_notdef(),			/*17: md */
+	bdev_notdef(),			/*18: st */
+	bdev_notdef(),			/*19: sd */
+	bdev_notdef(),			/*20: tz */
+	bdev_disk_init(NRZ,rz),		/*21: SCSI disk */
+	bdev_notdef(),			/*22: ?? */
+	bdev_notdef(),			/*23: mscp */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -250,9 +250,9 @@ cdev_decl(rz);
 #include "tz.h"
 cdev_decl(tz);
 
-cdev_decl(vn);
+cdev_decl(vnd);
 /* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c,n) { \
+#define	cdev_vnd_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
@@ -298,7 +298,7 @@ struct cdevsw	cdevsw[] =
 	cdev_pm_init(NPM,pm),		/* 8: frame buffer */
 	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
-	cdev_vn_init(NVN,vn),		/* 11: vnode disk */
+	cdev_vnd_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 12: berkeley packet filter */
 	cdev_pm_init(NCFB,cfb),		/* 13: color frame buffer */
 	cdev_pm_init(NXCFB,xcfb),	/* 14: maxine color frame buffer */

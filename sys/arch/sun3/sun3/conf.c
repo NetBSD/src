@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1995/01/16 22:59:42 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1995/01/25 04:48:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -197,24 +197,24 @@ decl_ioctl(chioctl);
 #define	chioctl		ndef_ioctl
 #endif
 
-#define	NVN 0 /* #include "vn.h" XXX */
-#if NVN > 0
-decl_open(vnopen);
-decl_close(vnclose);
-decl_strategy(vnstrategy);
-decl_ioctl(vnioctl);
-decl_dump(vndump);
-decl_psize(vnsize);
-decl_read(vnread);
-decl_write(vnwrite);
+#define	NVND 0 /* #include "vn.h" XXX */
+#if NVND > 0
+decl_open(vndopen);
+decl_close(vndclose);
+decl_strategy(vndstrategy);
+decl_ioctl(vndioctl);
+decl_dump(vnddump);
+decl_psize(vndsize);
+decl_read(vndread);
+decl_write(vndwrite);
 #else
-#define	vnopen		ndef_open
-#define	vnclose		ndef_close
-#define	vnread		ndef_read
-#define	vnwrite		ndef_write
-#define	vnstrategy	ndef_strategy
-#define	vnioctl		ndef_ioctl
-#define	vndump		ndef_dump
+#define	vndopen		ndef_open
+#define	vndclose	ndef_close
+#define	vndread		ndef_read
+#define	vndwrite	ndef_write
+#define	vndstrategy	ndef_strategy
+#define	vndioctl	ndef_ioctl
+#define	vnddump		ndef_dump
 #define	vnsize		ndef_psize
 #endif
 

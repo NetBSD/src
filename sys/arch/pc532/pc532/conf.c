@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1995/01/18 08:14:31 phil Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1995/01/25 04:48:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -90,12 +90,12 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(st);
 bdev_decl(sd);
 bdev_decl(cd);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 
 #define	bdev_rd_init(c,n) { \
@@ -113,12 +113,12 @@ bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NSD,sd),	/* 0: scsi disk */
-	bdev_swap_init(),	/* 1: swap pseudo-device */
-	bdev_tape_init(NST,st),	/* 2: scsi tape */
-	bdev_rd_init(NRD,rd),	/* 3: ram disk */
-	bdev_disk_init(NCD,cd),	/* 4: scsi cdrom */
-	bdev_disk_init(NVN,vn),	/* 5: vnode disk driver (swap to files) */
+	bdev_disk_init(NSD,sd),		/* 0: scsi disk */
+	bdev_swap_init(),		/* 1: swap pseudo-device */
+	bdev_tape_init(NST,st),		/* 2: scsi tape */
+	bdev_rd_init(NRD,rd),		/* 3: ram disk */
+	bdev_disk_init(NCD,cd),		/* 4: scsi cdrom */
+	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -225,7 +225,7 @@ cdev_decl(log);
 cdev_decl(sd);
 cdev_decl(st);
 cdev_decl(cd);
-cdev_decl(vn);
+cdev_decl(vnd);
 
 #include "scn.h"	/* Serial driver. */
 cdev_decl(scn);
@@ -282,7 +282,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 10: scsi tape */
 	cdev_fd_init(1,fd),		/* 11: file descriptor pseudo-dev */
 	cdev_disk_init(NCD,cd),		/* 12: concatenated disk */
-	cdev_disk_init(NVN,vn),		/* 13: vnode disk */
+	cdev_disk_init(NVND,vnd),	/* 13: vnode disk */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 14: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 15: network tunnel */
 	cdev_notdef(),			/* 16: */

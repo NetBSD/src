@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1994/12/14 19:13:04 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1995/01/25 04:48:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -90,23 +90,23 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "wd.h"
 #include "id.h"
-#include "vn.h"
+#include "vnd.h"
 
 bdev_decl(sd);
 bdev_decl(wd);
 bdev_decl(id);
-bdev_decl(vn);
+bdev_decl(vnd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),		/* 0 */
-	bdev_disk_init(NSD,sd),	/* 1: SCSI disk */
-	bdev_disk_init(NWD,wd),	/* 2: WD winchester/floppy ctrler */
-	bdev_swap_init(),	/* 3: swap pseudo-device */
-	bdev_disk_init(NID,id),	/* 4: IDE disk */
-	bdev_notdef(),		/* 5 */
-	bdev_disk_init(NVN,vn),	/* 6: vnode disk driver (swap to files) */
-	bdev_notdef(),		/* 7 */
+	bdev_notdef(),			/* 0 */
+	bdev_disk_init(NSD,sd),		/* 1: SCSI disk */
+	bdev_disk_init(NWD,wd),		/* 2: WD winchester/floppy ctrler */
+	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_disk_init(NID,id),		/* 4: IDE disk */
+	bdev_notdef(),			/* 5 */
+	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
+	bdev_notdef(),			/* 7 */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -234,9 +234,9 @@ cdev_decl(gsp);
 	dev_init(c,n,map), 0 }
 
 
-cdev_decl(vn);
+cdev_decl(vnd);
 /* open, read, write, ioctl -- XXX should be a disk */
-#define	cdev_vn_init(c,n) { \
+#define	cdev_vnd_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
@@ -281,7 +281,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17: concatenated disk */
 	cdev_notdef(),			/* 18: mapped clock */
-	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
+	cdev_vnd_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_notdef(),			/* 20: exabyte tape */
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
