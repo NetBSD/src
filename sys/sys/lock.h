@@ -1,3 +1,5 @@
+/*	$NetBSD: lock.h,v 1.2 1997/07/06 12:32:38 fvdl Exp $	*/
+
 /* 
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +41,16 @@
 
 #ifndef	_LOCK_H_
 #define	_LOCK_H_
+
+#define NCPUS 1		/* XXX */
+
+/*
+ * Placeholder for simple lock structure until spinlocks are
+ * really used an machine-dependently defined.
+ */
+struct simplelock {
+	int lock_data;
+};
 
 /*
  * The general lock structure.  Provides for multiple shared locks,
@@ -159,6 +171,7 @@ void	lockinit __P((struct lock *, int prio, char *wmesg, int timo,
 int	lockmgr __P((__volatile struct lock *, u_int flags,
 			struct simplelock *, struct proc *p));
 int	lockstatus __P((struct lock *));
+void	lockmgr_printinfo __P((struct lock *));
 
 #ifdef DEBUG
 void _simple_unlock __P((__volatile struct simplelock *alp, const char *, int));

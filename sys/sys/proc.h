@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.49 1997/04/28 04:49:35 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.50 1997/07/06 12:32:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -160,6 +160,9 @@ struct	proc {
 	int	p_siglist;		/* Signals arrived but not delivered. */
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
+
+	short   p_locks;		/* DEBUG: lockmgr count of held locks */
+	short   p_simple_locks;		/* DEBUG: count of held simple locks */
 
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
