@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.12 1999/04/01 19:36:09 drochner Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.13 1999/04/28 23:24:42 fvdl Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -182,6 +182,7 @@ again1:
 #endif
 
 	/* didn't find either NetBSD or 386BSD partitions */
+noboot:
 	data32
 	movl	$enoboot, %esi
 	data32
@@ -189,6 +190,57 @@ again1:
 
 
 found:
+/*
+ * See if we night need int13 extensions. Compute the total number
+ * of CHS addressable sectors, and compare them to what we need
+ * The reason to avoid int13 extensions as much as possible, is
+ * that they're apparently buggy in some BIOSs.
+ */
+	pushl	%ebx		/* save partition entry */
+	pushl	%edx		/* save drive number */
+
+	data32
+	xorl	%ecx,%ecx
+	data32
+	xorl	%eax,%eax
+
+	movl	%ebx,%esi
+
+	movb	$8,%ah
+	int	$0x13
+
+	shrl	$8,%edx
+	incl	%edx		/* dx now has #heads */
+
+	movl	%ecx,%eax
+	andl	$0x3f,%eax	/* ax has #sectors */
+
+	movl	%ecx,%ebx
+	shrl	$8,%ecx
+	andl	$0xc0,%ebx
+	shll	$2,%ebx
+	orl	%ebx,%ecx
+	incl	%ecx		/* cx has #cylinders */
+
+	mul	%edx		/* h * s (will fit in 16 bits) */
+	data32
+	mul	%ecx		/* eax = c * h * s */
+	data32
+
+	data32
+	addr32
+	movl	8(%esi),%ebx
+	data32
+	addl	$LOADSZ+1, %ebx	/* ebx = maximum sector # we need */
+
+	data32
+	cmpl	%eax, %ebx
+
+	popl	%edx
+	popl	%ebx
+	jl	tradint13
+
+1:
 /*
  * First we check for int13 extensions.
  * If they work, let's use them.
@@ -205,8 +257,8 @@ found:
  *			%bx = 0xaa55
  *			%cx = API subset bitmap, &1 -> extended disk access
  */
-	pushl	%ebx		/* save partition entry */
-	pushl	%edx		/* save drive number */
+	pushl	%ebx
+	pushl	%edx
 	movb	$0x41, %ah
 	data32
 	movl	$0x55aa, %bx
@@ -355,7 +407,7 @@ done:
 	ret
 
 eread:	.asciz		"Read error\r\n"
-enoboot: .asciz		"No bootable partition\r\n"
+enoboot: .asciz		"No NetBSD part\r\n"
 efail: .asciz		"Boot failed\r\n"
 
 /* throw in a partition in case we are block0 as well */
