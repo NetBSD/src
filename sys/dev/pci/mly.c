@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.17 2003/01/06 13:05:15 wiz Exp $	*/
+/*	$NetBSD: mly.c,v 1.18 2003/03/31 03:23:38 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.17 2003/01/06 13:05:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.18 2003/03/31 03:23:38 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1621,11 +1621,11 @@ mly_ccb_free(struct mly_softc *mly, struct mly_ccb *mc)
 }
 
 /*
- * Allocate and initialise command and packet structures.
+ * Allocate and initialize command and packet structures.
  *
  * If the controller supports fewer than MLY_MAX_CCBS commands, limit our
  * allocation to that number.  If we don't yet know how many commands the
- * controller supports, allocate a very small set (suitable for initialisation
+ * controller supports, allocate a very small set (suitable for initialization
  * purposes only).
  */
 static int
@@ -2107,7 +2107,7 @@ mly_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data,
 }
 
 /*
- * Handshake with the firmware while the card is being initialised.
+ * Handshake with the firmware while the card is being initialized.
  */
 static int
 mly_fwhandshake(struct mly_softc *mly) 
@@ -2117,19 +2117,19 @@ mly_fwhandshake(struct mly_softc *mly)
 
 	spinup = 0;
 
-	/* Set HM_STSACK and let the firmware initialise. */
+	/* Set HM_STSACK and let the firmware initialize. */
 	mly_outb(mly, mly->mly_idbr, MLY_HM_STSACK);
 	DELAY(1000);	/* too short? */
 
-	/* If HM_STSACK is still true, the controller is initialising. */
+	/* If HM_STSACK is still true, the controller is initializing. */
 	if (!mly_idbr_true(mly, MLY_HM_STSACK))
 		return (0);
 
-	printf("%s: controller initialisation started\n",
+	printf("%s: controller initialization started\n",
 	    mly->mly_dv.dv_xname);
 
 	/*
-	 * Spin waiting for initialisation to finish, or for a message to be
+	 * Spin waiting for initialization to finish, or for a message to be
 	 * delivered.
 	 */
 	while (mly_idbr_true(mly, MLY_HM_STSACK)) {
@@ -2173,7 +2173,7 @@ mly_fwhandshake(struct mly_softc *mly)
 			return (ENXIO);
 
 		default:
-			printf("%s: unknown initialisation code 0x%x\n",
+			printf("%s: unknown initialization code 0x%x\n",
 			    mly->mly_dv.dv_xname, error);
 			break;
 		}
