@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154.2.4 2001/08/24 04:20:00 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.5 2001/08/30 23:22:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -593,10 +593,6 @@ startlwp(arg)
 	int err;
 	ucontext_t *uc = arg;
 	struct lwp *l = curproc;
-	struct trapframe *tf;
-
-	tf = l->l_md.md_regs;
-
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 #if DIAGNOSTIC
