@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.16 2001/08/12 18:33:13 scw Exp $	*/
+/*      $NetBSD: clock.c,v 1.17 2002/02/12 20:38:36 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 #include <machine/psl.h>
 #include <machine/bus.h>
 
-#include <mvme68k/mvme68k/clockvar.h>
+#include <dev/mvme/clockvar.h>
 
 static	struct clock_attach_args *clock_args;
 static	todr_chip_handle_t todr_handle;
