@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.16 1994/07/03 11:57:56 briggs Exp $
+ *	$Id: locore.s,v 1.17 1994/07/04 22:41:47 briggs Exp $
  */
 
 #include "assym.s"
@@ -891,7 +891,6 @@ _esym:		.long	0
  * at 0.
  *
  * ALICE: A4 contains the address of the very last page of memory
- * BARF: Make sure stand sets D6 and D7 for boothowto and bootdev
  */
 print1:
 	.asciz	"Booting properly, 0xF0F0 should be "
@@ -939,7 +938,7 @@ start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
 
 | Give ourself a stack
-	movl	#tmpstk,sp		| give ourselves a temporary stack
+	lea	tmpstk,sp		| give ourselves a temporary stack
 	movl	#CACHE_OFF,d0
 	movc	d0, cacr
 
@@ -964,6 +963,8 @@ start:
 	jbsr	_gray_bar		| first graybar call (we need stack).
 	jbsr	_setmachdep		| Set some machine-dep stuff
 
+	jbsr	_vm_set_page_size	| Set the vm system page size, now.
+
 	tstl	_cpu040
 	beq	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
@@ -985,7 +986,11 @@ start:
 
 	jbsr	_gray_bar
 	movel	#0x0, d0
-	.word	0x4e7b, 0x0003
+	.word	0x4e7b, 0x0004		| Disable itt0
+	.word	0x4e7b, 0x0005		| Disable itt1
+	.word	0x4e7b, 0x0006		| Disable dtt0
+	.word	0x4e7b, 0x0007		| Disable dtt1
+	.word	0x4e7b, 0x0003		| Disable MMU
 	jbsr	_gray_bar
 
 	jbsr	_macserinit		| For debugging
@@ -1628,6 +1633,7 @@ Ldoproc0:				| The 040 comes back here...
 /* set kernel stack, user SP, and initial pcb */
 	lea	_kstack,a1		| proc0 kernel stack
 	lea	a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
+	jbsr	_TBIA			| invalidate TLB
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	_proc0paddr,a1		| get proc0 pcb addr
