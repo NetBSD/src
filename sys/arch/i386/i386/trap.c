@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 1995/03/14 14:43:59 scottb Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 1995/03/22 23:25:13 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -306,6 +306,8 @@ trap(frame)
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
+		if (p == 0)
+			goto we_re_toast;
 		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
