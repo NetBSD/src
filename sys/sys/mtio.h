@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: mtio.h,v 1.3 1993/05/20 16:22:46 cgd Exp $
+ *	$Id: mtio.h,v 1.3.4.1 1993/11/25 20:17:45 mycroft Exp $
  */
 
 #ifndef _SYS_MTIO_H_
-#define _SYS_MTIO_H_
+#define _SYS_MTIO_H_ 1
 
 /*
  * Structures and definitions for mag tape io control commands
@@ -58,6 +58,21 @@ struct mtop {
 #define MTNOP		7	/* no operation, sets status only */
 #define MTCACHE		8	/* enable controller cache */
 #define MTNOCACHE	9	/* disable controller cache */
+#if defined(__386BSD__)
+
+/* Set block size for device. If device is a variable size dev		*/
+/* a non zero parameter will change the device to a fixed block size	*/
+/* device with block size set to that of the parameter passed in.	*/
+/* Resetting the block size to 0 will restore the device to a variable	*/
+/* block size device. */
+
+#define MTSETBSIZ	10
+
+/* Set density values for device. Thye aredefined in  the SCSI II spec	*/
+/* and range from 0 to 0x17. Sets the value for the openned mode only	*/
+
+#define MTSETDNSTY	11
+#endif
 
 /* structure for MTIOCGET - mag tape get status command */
 
@@ -68,6 +83,18 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
+#if defined (__386BSD__)
+	daddr_t mt_blksiz;	/* presently operatin blocksize */
+	daddr_t mt_density;	/* presently operatin density */
+	daddr_t mt_blksiz0;	/* blocksize for mode 0 */
+	daddr_t mt_blksiz1;	/* blocksize for mode 1 */
+	daddr_t mt_blksiz2;	/* blocksize for mode 2 */
+	daddr_t mt_blksiz3;	/* blocksize for mode 3 */
+	daddr_t mt_density0;	/* density for mode 0 */
+	daddr_t mt_density1;	/* density for mode 1 */
+	daddr_t mt_density2;	/* density for mode 2 */
+	daddr_t mt_density3;	/* density for mode 3 */
+#endif
 /* the following two are not yet implemented */
 	daddr_t	mt_fileno;	/* file number of current position */
 	daddr_t	mt_blkno;	/* block number of current position */
@@ -103,7 +130,7 @@ struct mtget {
 #define MTIOCEEOT	_IO('m', 4)			/* enable EOT error */
 
 #ifndef KERNEL
-#define	DEFTAPE	"/dev/rmt12"
+#define	DEFTAPE	"/dev/nrst0"
 #endif
 
 #ifdef	KERNEL
@@ -119,5 +146,4 @@ struct mtget {
 #define	T_6250BPI	020		/* select 6250 bpi */
 #define	T_BADBPI	030		/* undefined selection */
 #endif
-
-#endif /* !_SYS_MTIO_H_ */
+#endif /* _SYS_MTIO_H_ */
