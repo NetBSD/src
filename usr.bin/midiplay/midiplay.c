@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.4 1998/08/13 17:20:07 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.5 1998/08/13 18:26:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -520,7 +520,7 @@ main(argc, argv)
 	}
 	midireset();
 	if (example)
-		playdata(sample, sizeof sample, "<Sample>");
+		playdata(sample, sizeof sample, "<Gubben Noa>");
 	else if (argc == 0)
 		playfile(stdin, "<stdin>");
 	else
