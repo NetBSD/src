@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.13 2004/12/04 14:26:01 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.14 2005/01/01 09:13:14 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.130 2004/09/09 22:08:42 dhartmei Exp $ */
 
 /*
@@ -2945,8 +2945,17 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		m_freem(*mp);
 		*mp = NULL;
 		return EHOSTUNREACH;
-	} else
-		return (0);
+	}
+
+	/*
+	 * we're not compatible with fast-forward.
+	 */
+
+	if (dir == PFIL_IN) {
+		(*mp)->m_flags &= ~M_CANFASTFWD;
+	}
+
+	return (0);
 }
 
 #ifdef INET6
