@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.8 1994/06/29 06:32:12 cgd Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.8.2.1 1994/07/24 02:47:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -159,8 +159,11 @@ check_shell:
 	 * close all open fd's when the start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
-	if (VOP_ACCESS(epp->ep_vp, VREAD, p->p_ucred, p) == EACCES ||
-	    script_sbits) {
+	if (VOP_ACCESS(epp->ep_vp, VREAD, p->p_ucred, p) == EACCES
+#ifdef SETUIDSCRIPTS
+	    || script_sbits
+#endif
+	    ) {
 		struct file *fp;
 		extern struct fileops vnops;
 
