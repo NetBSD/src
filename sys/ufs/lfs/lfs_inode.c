@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.72 2003/04/02 10:39:41 fvdl Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.73 2003/04/10 04:15:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.72 2003/04/02 10:39:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.73 2003/04/10 04:15:38 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -513,14 +513,19 @@ lfs_truncate(void *v)
 	 */
 	bn = oip->i_ffs1_db[lastblock];
 	if (bn != 0) {
-		long oldspace, newspace, olddspace;
+		long oldspace, newspace;
+#if 0
+		long olddspace;
+#endif
 
 		/*
 		 * Calculate amount of space we're giving
 		 * back as old block size minus new block size.
 		 */
 		oldspace = blksize(fs, oip, lastblock);
+#if 0
 		olddspace = oip->i_lfs_fragsize[lastblock];
+#endif
 
 		oip->i_size = oip->i_ffs1_size = length;
 		newspace = blksize(fs, oip, lastblock);
