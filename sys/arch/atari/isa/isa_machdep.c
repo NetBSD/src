@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 1998/08/15 03:02:34 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 1998/11/26 13:34:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -43,6 +43,8 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
+
+#include <m68k/asm_single.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -145,27 +147,37 @@ int	sr;
 	/*
 	 * Disable the interrupts
 	 */
-	if (slot == 0)
+	if (slot == 0) {
 		MFP->mf_imrb  &= ~(IB_ISA1);
-	else MFP->mf_imra &= ~(IA_ISA2);
+	}
+	else {
+		MFP->mf_imra &= ~(IA_ISA2);
+	}
 
 	if ((sr & PSL_IPL) >= (iinfo_p->ipl & PSL_IPL)) {
 		/*
 		 * We're running at a too high priority now.
 		 */
 		add_sicallback((si_farg)iifun, (void*)slot, 0);
+		isa_delayed++;
 	}
 	else {
 		s = splx(iinfo_p->ipl);
-		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
-		splx(s);
-
-		/*
-		 * Re-enable interrupts after handling
-		 */
-		if (slot == 0)
+		if (slot == 0) {
+			do {
+				single_inst_bclr_b(MFP->mf_iprb, IB_ISA1);
+				(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+			} while (MFP->mf_iprb & IB_ISA1);
 			MFP->mf_imrb  |= IB_ISA1;
-		else MFP->mf_imra |= IA_ISA2;
+		}
+		else {
+			do {
+				single_inst_bclr_b(MFP->mf_ipra, IA_ISA2);
+				(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+			} while (MFP->mf_ipra & IA_ISA2);
+			MFP->mf_imra |= IA_ISA2;
+		}
+		splx(s);
 	}
 	return 1;
 }
