@@ -89,5 +89,3 @@ distrib-dirs:
 	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
 
 .include <bsd.prog.mk>
-#
-#	$Id: Makefile,v 1.7 1993/04/10 11:11:40 cgd Exp $
