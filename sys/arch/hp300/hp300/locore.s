@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 1997/04/13 02:37:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 1997/04/14 02:28:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -381,7 +381,7 @@ Lenab2:
 	orl	#MMU_CEN,a0@(MMUCMD)	| turn on external cache
 Lnocache0:
 /* Final setup for call to main(). */
-	jbsr	_isrinit		| initialize interrupt handlers
+	jbsr	_intr_init		| initialize interrupt handlers
 	jbsr	_hp300_calibrate_delay	| calibrate delay() loop
 
 /*
@@ -915,7 +915,7 @@ Lbrkpt3:
 #define INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
 
 	/* Externs. */
-	.globl	_hilint, _isrdispatch, _nmihand
+	.globl	_hilint, _intr_dispatch, _nmihand
 	.globl	_hardclock, _statintr
 
 _spurintr:	/* Level 0 */
@@ -935,7 +935,7 @@ _intrhand:	/* Levels 2 through 5 */
 	INTERRUPT_SAVEREG
 	movw	sp@(22),sp@-		| push exception vector info
 	clrw	sp@-
-	jbsr	_isrdispatch		| call dispatch routine
+	jbsr	_intr_dispatch		| call dispatch routine
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 	jra	rei			| all done
