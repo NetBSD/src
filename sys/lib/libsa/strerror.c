@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.11 1996/10/13 02:29:08 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.12 1997/01/25 00:37:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -70,6 +70,10 @@ static	char ebuf[64];
 		return "Exec format error";
 	case EIO:
 		return "Input/output error";
+	case EINVAL:
+		return "Invalid argument";
+	case ENOTDIR:
+		return "Not a directory";
 
 	default:
 		sprintf(ebuf, "Unknown error: code %d", err);
