@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.98 2004/05/26 14:07:50 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.99 2004/05/27 09:08:28 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -784,4 +784,14 @@ gnu/dist/toolchain/gcc/config/m68k/m68k.c	1.3
 	different condition to determine whether to save and restore the
 	register, so the patch cannot be the same.
 	[skrll, ticket #1699]
+
+sys/compat/linux/arch/m68k/linux_syscall.h	regen
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
+sys/compat/linux/arch/m68k/linux_syscalls.c	regen
+sys/compat/linux/arch/m68k/linux_sysent.c	regen
+sys/compat/linux/arch/m68k/syscalls.master	patch
+
+	Correct incorrect definition of system call 194 (linux_sys_ftruncate64)
+	caused by the patch for ticket #1686.
+	[skrll, ticket #1701]
 
