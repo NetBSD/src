@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 1997/05/30 01:55:09 cjs Exp $
+#	$NetBSD: Makefile,v 1.16 1997/05/31 21:22:10 cjs Exp $
 
 LIB=	compat
 NOPIC=
-
-# this library needed only during build
-NOINSTALL=1
 
 CPPFLAGS=	${COMPATCPPFLAGS}
 
@@ -16,5 +13,8 @@ SRCS=	compat_exec.c compat_util.c kern_exit_43.c kern_info_09.c \
 .if (${MACHINE_ARCH} != "alpha")
 SRCS+=	kern_ipc_10.c 
 .endif
+
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.23 1997/05/27 17:45:59 cjs Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.24 1997/05/31 21:22:00 cjs Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>

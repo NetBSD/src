@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/05/30 14:06:34 cjs Exp $
-
-.include <bsd.own.mk>	# for BUILDDIR
+#	$NetBSD: Makefile,v 1.19 1997/05/31 21:21:37 cjs Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
@@ -9,10 +7,8 @@ PICFLAG=-fpic -fno-function-cse
 CFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS
 ASFLAGS+=-k
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic
-# XXX The ELF ports do not currently use this ld.so, so we don't have to
-# worry about their linker not accepting -nostdlib.
-.if defined(BUILDDIR)
-LDFLAGS+= -nostdlib -L${BUILDDIR}/usr/lib
+.if defined(DESTDIR)
+LDFLAGS+= -nostdlib -L${DESTDIR}/usr/lib
 .endif
 LDADD+=	-lc_pic
 DPADD+=	${LIBC_PIC}

@@ -1,34 +1,9 @@
-#	$NetBSD: bsd.own.mk,v 1.49 1997/05/30 21:46:02 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.50 1997/05/31 21:21:58 cjs Exp $
 
-# This file may be included multiple times without harm.
-
-# Use global build config file if we have one
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
 .elif exists(/etc/mk.conf)
 .include "/etc/mk.conf"
-.endif
-
-# BUILDCONF is our build configuration file. Search upwards in
-# the tree starting in the current directory for it.
-.if ! defined(BUILDCONF)
-BUILDCONF != \
-    d=${.CURDIR}; \
-    while [ $$d != / ]; do \
-	if [ -f $$d/Build.conf ]; then \
-	    break; \
-	fi; \
-	d=`dirname $$d`; \
-    done; \
-    if [ -f $$d/Build.conf ]; then \
-	echo $$d/Build.conf; \
-    else \
-	echo; \
-    fi
-MAKEFLAGS += "BUILDCONF=\"${BUILDCONF}\""
-.endif
-.if exists(${BUILDCONF})
-.include "${BUILDCONF}"
 .endif
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
@@ -44,55 +19,6 @@ SKEY=		yes
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
 BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
-
-# set OBJDIR to our actual tree for this build, if we use one
-.if ! defined(OBJDIR)
-.if defined(BSDOBJDIR)
-.if defined(USR_OBJMACHINE)
-OBJDIR=	${BSDOBJDIR}.${MACHINE}
-.else
-OBJDIR=	${BSDOBJDIR}
-.endif
-.endif
-.endif
-.if defined(OBJDIR) && ! exists(${OBJDIR})
-.undef OBJDIR
-.endif
-
-# Don't use a build directory at all if we're not under BSDSRCDIR. This is
-# a bit of a hack; we should possibly generalise object directories so that
-# they can be used outside the BSD tree.
-.if defined(BSDSRCDIR)
-insrcdir != \
-	x=${.CURDIR}; \
-	if [ \"$${x\#${BSDSRCDIR}}\" = \"$$x\" ]; then \
-		echo no; \
-	else \
-		echo yes; \
-	fi
-.if ${insrcdir} == "no"
-.undef OBJDIR
-.endif	# ${insrcdir}
-.undef insrcdir
-.else
-.undef OBJDIR
-.endif
-
-# BUILDDIR is where we install libraries, include files, etc. that
-# are used during the build. If no build tree (OBJDIR) is available,
-# this is DESTDIR or just nothing at all (root of current system).
-.if ! defined(BUILDDIR)
-.if defined(OBJDIR) && exists(${OBJDIR})
-.if defined(OBJMACHINE) && !defined(USR_OBJMACHINE)
-BUILDDIR= ${OBJDIR}/build.${MACHINE}
-.else
-BUILDDIR= ${OBJDIR}/build
-.endif	# defined(OBJMACHINE)
-.else
-BUILDDIR= ${DESTDIR}
-.undef OBJDIR		# we are really building against DESTDIR, not BUILDDIR
-.endif	# defined(OBJDIR) && exists(${OBJDIR})
-.endif # ! defined(BUILDDIR)
 
 BINGRP?=	bin
 BINOWN?=	bin

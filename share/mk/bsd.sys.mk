@@ -1,11 +1,11 @@
-#	$NetBSD: bsd.sys.mk,v 1.7 1997/05/27 18:09:00 cjs Exp $
+#	$NetBSD: bsd.sys.mk,v 1.8 1997/05/31 21:22:01 cjs Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
 CFLAGS+= -Werror
 
-.if defined(BUILDDIR)
-CPPFLAGS+= -nostdinc -idirafter ${BUILDDIR}/usr/include
+.if defined(DESTDIR)
+CFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
 
 # Helpers for cross-compiling

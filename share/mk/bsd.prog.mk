@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.85 1997/05/26 03:58:41 cjs Exp $
+#	$NetBSD: bsd.prog.mk,v 1.86 1997/05/31 21:21:59 cjs Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -17,43 +17,44 @@ CFLAGS+=	${COPTS}
 # ELF platforms depend on crtbegin.o and crtend.o
 .if (${MACHINE_ARCH} == "alpha")   || \
     (${MACHINE_ARCH} == "powerpc")
-LIBCRTBEGIN?=	${BUILDDIR}/usr/lib/crtbegin.o
-LIBCRTEND?=	${BUILDDIR}/usr/lib/crtend.o
+LIBCRTBEGIN?=	${DESTDIR}/usr/lib/crtbegin.o
+LIBCRTEND?=	${DESTDIR}/usr/lib/crtend.o
 .else
 LIBCRTBEGIN?=
 LIBCRTEND?=
 .endif
 
-LIBCRT0?=	${BUILDDIR}/usr/lib/crt0.o
-LIBC?=		${BUILDDIR}/usr/lib/libc.a
-LIBC_PIC?=	${BUILDDIR}/usr/lib/libc_pic.a
-LIBCOMPAT?=	${BUILDDIR}/usr/lib/libcompat.a
-LIBCRYPT?=	${BUILDDIR}/usr/lib/libcrypt.a
-LIBCURSES?=	${BUILDDIR}/usr/lib/libcurses.a
-LIBDBM?=	${BUILDDIR}/usr/lib/libdbm.a
-LIBDES?=	${BUILDDIR}/usr/lib/libdes.a
-LIBEDIT?=	${BUILDDIR}/usr/lib/libedit.a
-LIBGCC?=	${BUILDDIR}/usr/lib/libgcc.a
-LIBGNUMALLOC?=	${BUILDDIR}/usr/lib/libgnumalloc.a
-LIBKDB?=	${BUILDDIR}/usr/lib/libkdb.a
-LIBKRB?=	${BUILDDIR}/usr/lib/libkrb.a
-LIBKVM?=	${BUILDDIR}/usr/lib/libkvm.a
-LIBL?=		${BUILDDIR}/usr/lib/libl.a
-LIBM?=		${BUILDDIR}/usr/lib/libm.a
-LIBMP?=		${BUILDDIR}/usr/lib/libmp.a
-LIBNTP?=	${BUILDDIR}/usr/lib/libntp.a
-LIBPC?=		${BUILDDIR}/usr/lib/libpc.a
-LIBPCAP?=	${BUILDDIR}/usr/lib/libpcap.a
-LIBPLOT?=	${BUILDDIR}/usr/lib/libplot.a
-LIBRESOLV?=	${BUILDDIR}/usr/lib/libresolv.a
-LIBRPCSVC?=	${BUILDDIR}/usr/lib/librpcsvc.a
-LIBSKEY?=	${BUILDDIR}/usr/lib/libskey.a
-LIBTERMCAP?=	${BUILDDIR}/usr/lib/libtermcap.a
-LIBTELNET?=	${BUILDDIR}/usr/lib/libtelnet.a
-LIBUTIL?=	${BUILDDIR}/usr/lib/libutil.a
-LIBWRAP?=	${BUILDDIR}/usr/lib/libwrap.a
-LIBY?=		${BUILDDIR}/usr/lib/liby.a
-LIBZ?=		${BUILDDIR}/usr/lib/libz.a
+LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+LIBC?=		${DESTDIR}/usr/lib/libc.a
+LIBC_PIC?=	${DESTDIR}/usr/lib/libc_pic.a
+LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
+LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
+LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
+LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
+LIBDES?=	${DESTDIR}/usr/lib/libdes.a
+LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
+LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
+LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
+LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
+LIBL?=		${DESTDIR}/usr/lib/libl.a
+LIBM?=		${DESTDIR}/usr/lib/libm.a
+LIBMP?=		${DESTDIR}/usr/lib/libmp.a
+LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
+LIBPC?=		${DESTDIR}/usr/lib/libpc.a
+LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
+LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
+LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
+LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
+LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
+LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
+LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
+LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
+LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
+LIBY?=		${DESTDIR}/usr/lib/liby.a
+LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
@@ -89,17 +90,17 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS}
-.if defined(BUILDDIR)
-# link against the libs in BUILDDIR
+.if defined(DESTDIR)
+
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${BUILDDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${LIBCRTEND}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${LIBCRTEND}
 
 .else
-# link against libs in system we're running
+
 ${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
-.endif	# defined(BUILDDIR)
+.endif	# defined(DESTDIR)
 .endif	# defined(OBJS) && !empty(OBJS)
 
 .if	!defined(MAN)

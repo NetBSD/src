@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/26 03:57:44 cjs Exp $
-
-.include <bsd.own.mk>	# for BUILDDIR
+#	$NetBSD: Makefile,v 1.6 1997/05/31 21:21:54 cjs Exp $
 
 PROG=	ld.elf_so
 
@@ -30,20 +28,7 @@ STRIPFLAG=
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 
-.if defined(BUILDDIR)
 includes:
-	@cd ${.CURDIR}; for i in $(HDRS); do \
-	    j="cmp -s $$i ${BUILDDIR}/usr/include/$$i || \
-	    install -d ${BUILDDIR}/usr/include && \
-	    ${INSTALL} -c -m 444 $$i ${BUILDDIR}/usr/include"; \
-	    echo $$j; \
-	    eval "$$j"; \
-	done
-.else
-includes: beforeinstall
-.endif
-
-beforeinstall:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \

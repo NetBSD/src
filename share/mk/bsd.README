@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.28 1997/05/29 06:26:35 mikel Exp $
+#	$NetBSD: bsd.README,v 1.29 1997/05/31 21:21:55 cjs Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -7,52 +7,6 @@ convention, named with the suffix ".mk".
 
 Note, this file is not intended to replace reading through the .mk
 files for anything tricky.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-CONFIGURATION:
-
-`Global' configuration variables you wish to use for all builds
-may be placed in the file pointed to by the MAKECONF variable, or
-/etc/mk.conf if MAKECONF is unset. Configuration for a certain
-directory tree may be placed in Build.conf at the root of that
-tree. The first instance of make will search from the source
-directory upwards for a Build.conf file; when it finds one, it will
-include it and remember the location in the BUILDCONF variable,
-which will be passed on to any further instances of make in MAKEFLAGS.
-If you wish to use a specific Build.conf file, you can just specify
-it (using a full path) in the BUILDCONF variable when you run make.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-
-BUILD DIRECTORIES:
-
-These makefiles use the concept of a `build directory,' which holds
-include files and libraries that the programs are built against.
-This allows you to build an entire new system, including new
-libraries, without having to install its include files or libraries
-into the currently running system.
-
-When you start make it will check for the existence of the directory
-named in BSDOBJDIR, with your architecture name appended if
-USR_OBJMACHINE is defined. If that directory exists, it assumes
-that you are compiling your object files to it  and it will create
-a subdirectory under it called `build' to be your build directory.
-`make includes' will install include files to that, rather than to
-DESTDIR, and when the libraries are compiled links to them will be
-placed in the build directory as well.
-
-Please note that for this to work BSDOBJDIR must be set while you
-are doing your compile, not just while you're doing the `make obj'
-(as previously). The actual location of the object files will still
-be wherever the symbolic links for `obj' or `obj.machine' in your
-source tree point.
-
-If you are not using a separate object tree (you are putting the
-object files in the source directories or in obj directories under
-the source directories), DESTDIR will be used as the build directory,
-and you will need to install include files and libraries there by
-hand before you can compile other programs.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -163,13 +117,10 @@ a few global "feature configuration" parameters.
 
 It has no targets.
 
-This file is safe to include more than once, and may be included
-at the top of your makefile, rather than the bottom, if your makefile
-needs any of the information it defines.
-
-To get system- and build-specific configuration parameters, bsd.own.mk
-will look for the MAKECONF and BUILDCONF files as described under
-the `Configuration' section above.
+To get system-specific configuration parameters, bsd.own.mk will try to
+include the file specified by the "MAKECONF" variable.  If MAKECONF is not
+set, or no such file exists, the system make configuration file, /etc/mk.conf
+is included.  These files may define any of the variables described below.
 
 bsd.own.mk sets the following variables, if they are not already defined
 (defaults are in brackets):
@@ -454,19 +405,12 @@ from bsd.lib.mk and bsd.prog.mk.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-The include file <bsd.inc.mk> defines the following targets:
+The include file <bsd.inc.mk> defines the includes target and uses two
+variables:
 
-	install:
-		Install the include files in their final home,
-		under DESTDIR.
+INCS	The list of include files
 
-	includes:
-		Install the include files under BUILDDIR.
-
-INCS		The list of include files
-
-INCSDIR		The location to install the include files (relative
-		to DESTDIR or BUILDDIR).
+INCSDIR	The location to install the include files.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

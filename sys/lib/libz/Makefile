@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/30 01:55:12 cjs Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/31 21:22:13 cjs Exp $
 
 LIB=	z
 NOPIC=
 NOPROFILE=
-
-# this library needed only during build
-NOINSTALL=1
 
 CPPFLAGS=	-I. ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
 
@@ -20,6 +17,9 @@ SRCS=	${LIBZSRCS}
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o
+
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
 
