@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_fromdos.c,v 1.5 1997/09/28 13:31:46 drochner Exp $	 */
+/*	$NetBSD: exec_fromdos.c,v 1.6 1997/11/03 18:06:22 drochner Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -94,6 +94,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	u_long		extmem;
 
 #ifdef XMS
+	u_long xmsmem;
 	physaddr_t tmpbuf = 0;
 	physaddr_t origadr = 0;
 #endif
@@ -141,8 +142,18 @@ exec_netbsd(file, loadaddr, boothowto)
 	extmem = getextmem();
 
 #ifdef XMS
-	if ((getextmem1() == 0) && (extmem = checkxms())) {
+	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
 	        u_long kernsize;
+
+		/*
+		 * With "CONSERVATIVE_MEMDETECT", extmem is 0 because
+		 *  getextmem() is getextmem1(). Without, the "smart"
+		 *  methods could fail to report all memory as well.
+		 * xmsmem is a few kB less than the actual size, but
+		 *  better than nothing.
+		 */
+		if (xmsmem > extmem)
+			extmem = xmsmem;
 
 		/* Approximate a size for the temporary buffer needed.
 		 * Can't calculate the real size right now because we don't
@@ -160,7 +171,7 @@ exec_netbsd(file, loadaddr, boothowto)
 		kernsize = (kernsize + 1023) / 1024;
 		tmpbuf = xmsalloc(kernsize);
 		if (!tmpbuf)
-		    return(ENOMEM);
+			return(ENOMEM);
 		origadr = cp;
 		cp = tmpbuf;
 	}
