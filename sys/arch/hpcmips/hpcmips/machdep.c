@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2001/06/13 06:03:11 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2001/06/13 06:03:11 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
@@ -156,6 +156,9 @@ static struct consdev bicons = cons_init(bicons);
 #ifdef NFS
 extern int nfs_mountroot __P((void));
 extern int (*mountroot) __P((void));
+#endif
+#ifdef MEMORY_DISK_DYNAMIC
+void md_root_setconf(caddr_t, size_t);
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -422,8 +425,14 @@ mach_init(argc, argv, bi)
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
-	if (boothowto & RB_MINIROOT)
-		kernend += round_page(mfs_initminiroot(kernend));
+	if (boothowto & RB_MINIROOT) {
+		size_t fssz;
+		fssz = round_page(mfs_initminiroot(kernend));
+#ifdef MEMORY_DISK_DYNAMIC
+		md_root_setconf((caddr_t)kernend, fssz);
+#endif
+		kernend += fssz;
+	}
 #endif
 
 #ifdef DDB
