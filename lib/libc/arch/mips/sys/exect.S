@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.S,v 1.4 1996/09/16 18:11:49 jonathan Exp $	*/
+/*	$NetBSD: exect.S,v 1.5 1996/09/17 01:32:43 jonathan Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,14 +39,24 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)exect.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: exect.S,v 1.4 1996/09/16 18:11:49 jonathan Exp $")
+	ASMSTR("$NetBSD: exect.S,v 1.5 1996/09/17 01:32:43 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef ABICALLS
+	.abicalls
+#endif
+
 LEAF(exect)
+#ifdef ABICALLS
+	.set    noreorder
+	.cpload t9
+	.set    reorder
+#endif
 	li	v0, SYS_execve
 	syscall
 	bne	a3, zero, 1f
 	j	ra
 1:
-	j	_C_LABEL(cerror)
+	la      t9, _C_LABEL(cerror)
+	jr      t9
 END(exect)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.4 1996/09/16 18:12:07 jonathan Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.5 1996/09/17 01:32:57 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,10 +40,19 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigprocmask.S,v 1.4 1996/09/16 18:12:07 jonathan Exp $")
+	ASMSTR("$NetBSD: sigprocmask.S,v 1.5 1996/09/17 01:32:57 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef ABICALLS
+	.abicalls
+#endif
+
 LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
+#ifdef ABICALLS
+	.set    noreorder
+	.cpload t9
+	.set    reorder
+#endif
 	bne	a1, zero, gotptr	# if new sigset pointer not null
 	li	a0, 1			# how = SIG_BLOCK
 	b	doit			# mask = zero
@@ -59,5 +68,6 @@ out:
 	move	v0, zero
 	j	ra
 err:
-	j	_C_LABEL(cerror)
+	la	t9, _C_LABEL(cerror)
+	jr	t9
 END(sigprocmask)
