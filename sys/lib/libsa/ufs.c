@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.31 2003/01/24 21:55:18 fvdl Exp $	*/
+/*	$NetBSD: ufs.c,v 1.32 2003/02/23 22:47:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -80,12 +80,6 @@
 #include <lib/libkern/libkern.h>
 #else
 #include <string.h>
-inline u_int
-max(a, b)
-        u_int a, b;
-{
-        return (a > b ? a : b);
-}
 #endif
 
 #include "stand.h"
@@ -758,8 +752,8 @@ ffs_oldfscompat(fs)
 {
 	int i;
 
-	fs->fs_npsect = max(fs->fs_npsect, fs->fs_nsect);	/* XXX */
-	fs->fs_interleave = max(fs->fs_interleave, 1);		/* XXX */
+	fs->fs_npsect = MAX(fs->fs_npsect, fs->fs_nsect);	/* XXX */
+	fs->fs_interleave = MAX(fs->fs_interleave, 1);		/* XXX */
 	if (fs->fs_postblformat == FS_42POSTBLFMT)		/* XXX */
 		fs->fs_nrpos = 8;				/* XXX */
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
