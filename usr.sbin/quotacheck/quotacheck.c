@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.30 2004/01/05 17:26:57 wiz Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.31 2004/01/05 17:43:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.30 2004/01/05 17:26:57 wiz Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.31 2004/01/05 17:43:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,7 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if ((argc == 0 && !aflag) || (argc > 0 && aflag))
+	if ((argc == 0 && !aflag) || (argc > 0 && aflag) || (!aflag && maxrun))
 		usage();
 	if (!gflag && !uflag) {
 		gflag++;
