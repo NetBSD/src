@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.15 1996/05/26 04:00:49 mrg Exp $	*/
+/*	$NetBSD: mt.c,v 1.16 1996/08/08 09:16:08 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.15 1996/05/26 04:00:49 mrg Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.16 1996/08/08 09:16:08 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,11 +66,17 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.15 1996/05/26 04:00:49 mrg Exp $";
 
 #include "mt.h"
 
+/* pseudo ioctl constants */
+#define MTASF	100
+
 struct commands {
-	char *c_name;
+	const char *c_name;
 	int c_code;
 	int c_ronly;
-} com[] = {
+};
+
+const struct commands com[] = {
+	{ "asf",	MTASF,  1 },
 	{ "blocksize",	MTSETBSIZ, 1 },
 	{ "bsf",	MTBSF,	1 },
 	{ "bsr",	MTBSR,	1 },
@@ -89,6 +95,11 @@ struct commands {
 	{ NULL }
 };
 
+/* this is a hack */
+#define IOCTL(fd, cmd, arg) (host \
+			     ? rmtioctl(arg) \
+			     : ioctl(fd, cmd, arg))
+
 void printreg __P((char *, u_int, char *));
 void status __P((struct mtget *));
 void usage __P((void));
@@ -102,11 +113,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct commands *comp;
+	register const struct commands *comp;
 	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
 	char *p, *tape;
+	int count;
 
 	uid = getuid();
 	euid = geteuid();
@@ -152,19 +164,51 @@ main(argc, argv)
 	if ((mtfd = host ? rmtopen(tape, flags) : open(tape, flags,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH)) < 0)
 		err(2, "%s", tape);
-	if (comp->c_code != MTNOP) {
-		mt_com.mt_op = comp->c_code;
+
+	if (comp->c_code == MTASF) {
+		/* If mtget.mt_fileno was implemented, We could
+		   compute the minimal seek needed to position
+		   the tape.  Until then, rewind and seek from
+		   begining-of-tape */
+
+		/* zero is a valid count */
 		if (*argv) {
-			mt_com.mt_count = strtol(*argv, &p, 10);
-			if (mt_com.mt_count <= 0 || *p)
+			count = strtol(*argv, &p, 10);
+			if (count < 0 || *p)
 				errx(2, "%s: illegal count", *argv);
 		}
 		else
-			mt_com.mt_count = 1;
-		if ((host ? rmtioctl(mt_com.mt_op, mt_com.mt_count) :
-		    ioctl(mtfd, MTIOCTOP, &mt_com)) < 0)
+			count = 1;
+
+		mt_com.mt_op = MTREW;
+		mt_com.mt_count = 1;
+		if (IOCTL(mtfd, MTIOCTOP, &mt_com) < 0)
+			err(2, "%s", tape);
+		
+		mt_com.mt_op = MTFSF;
+		mt_com.mt_count = count;
+		if (IOCTL(mtfd, MTIOCTOP, &mt_com) < 0)
+			err(2, "%s", tape);
+
+	} else if (comp->c_code != MTNOP) {
+
+		/* zero is *not* a valid count */
+		if (*argv) {
+			count = strtol(*argv, &p, 10);
+			if (count <= 0 || *p)
+				errx(2, "%s: illegal count", *argv);
+		}
+		else
+			count = 1;
+
+		mt_com.mt_op = comp->c_code;
+		mt_com.mt_count = count;
+
+		if (IOCTL(mtfd, MTIOCTOP, &mt_com) < 0)
 			err(2, "%s: %s", tape, comp->c_name);
+
 	} else {
+
 		if (host)
 			status(rmtstatus());
 		else {

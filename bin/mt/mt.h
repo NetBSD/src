@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.h,v 1.1 1996/03/05 20:39:36 scottr Exp $	*/
+/*	$NetBSD: mt.h,v 1.2 1996/08/08 09:16:10 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 void	rmtclose __P((void));
 int	rmthost __P((char *host));
 int	rmtopen __P((char *tape, int mode));
-int	rmtioctl __P((int command, int count));
+int	rmtioctl __P((struct mtop *arg));
 struct mtget *rmtstatus __P((void));
 
 void	interrupt __P((int signo));	/* in case operator bangs on console */
