@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.7 1997/06/06 23:26:04 veego Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.8 1997/06/08 10:48:02 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -37,7 +37,7 @@ void mips1_vector_init __P((void));
 void mips3_vector_init __P((void));
 
 /* the following is used externally (sysctl_hw) */
-char	machine_arch[] = "mips";	/* cpu "architecture" */
+char	machine_arch[] = MACHINE_ARCH;	/* cpu "architecture" */
 
 #ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
 /*
