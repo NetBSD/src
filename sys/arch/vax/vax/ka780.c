@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.21 2002/10/04 17:09:51 matt Exp $ */
+/*	$NetBSD: ka780.c,v 1.22 2003/07/15 02:15:04 lukem Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -37,6 +37,9 @@
 /*
  * 780-specific code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.22 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

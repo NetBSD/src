@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi_mainbus.c,v 1.4 2002/10/02 16:02:36 thorpej Exp $	   */
+/*	$NetBSD: xmi_mainbus.c,v 1.5 2003/07/15 02:15:06 lukem Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xmi_mainbus.c,v 1.5 2003/07/15 02:15:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82 2003/06/29 22:29:07 fvdl Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.83 2003/07/15 02:15:06 lukem Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2003/07/15 02:15:06 lukem Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.15 2003/01/30 00:28:19 matt Exp $	*/
+/*	$NetBSD: crl.c,v 1.16 2003/07/15 02:15:03 lukem Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -38,6 +38,9 @@
  * TO DO (tef  7/18/85):
  *	1) change printf's to log() instead???
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.16 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

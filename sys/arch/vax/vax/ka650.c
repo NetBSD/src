@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.26 2003/07/15 02:15:04 lukem Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,9 @@
 /*
  * vax650-specific code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.26 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
