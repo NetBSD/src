@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_dtablesize.c,v 1.5 1996/12/17 03:27:08 mrg Exp $	*/
+/*	$NetBSD: rpc_dtablesize.c,v 1.6 1996/12/17 22:00:39 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.5 1996/12/17 03:27:08 mrg Exp $";
+static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.6 1996/12/17 22:00:39 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -46,7 +46,8 @@ int
 _rpc_dtablesize()
 {
 	static int size;
-	int mib[2], len;
+	int mib[2];
+	size_t len;
 	
 	if (size == 0) {
 		mib[0] = CTL_KERN;
