@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2003/07/15 03:35:57 lukem Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 2003/08/08 00:52:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2003/07/15 03:35:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2003/08/08 00:52:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -192,22 +192,41 @@ do {									\
 	case SH_INTEVT_SCI_TEI:
 		SH_IPR(B, 4, level);
 		break;
-	case SH7709_INTEVT2_SCIF_ERI:
-	case SH7709_INTEVT2_SCIF_RXI:
-	case SH7709_INTEVT2_SCIF_BRI:
-	case SH7709_INTEVT2_SCIF_TXI:
-		SH7709_IPR(E, 4, level);
-		break;
-	case SH7709_INTEVT2_IRQ4:
-		SH7709_IPR(D, 0, level);
-		break;
-	case SH4_INTEVT_SCIF_ERI:
-	case SH4_INTEVT_SCIF_RXI:
-	case SH4_INTEVT_SCIF_BRI:
-	case SH4_INTEVT_SCIF_TXI:
-		SH4_IPR(C, 4, level);
-		break;
 	}
+
+	if (CPU_IS_SH3)
+		switch (evtcode) {
+		case SH7709_INTEVT2_IRQ0:
+			SH7709_IPR(C, 0, level);
+			break;
+		case SH7709_INTEVT2_PINT07:
+			SH7709_IPR(D, 12, level);
+			break;
+		case SH7709_INTEVT2_PINT8F:
+			SH7709_IPR(D, 8, level);
+			break;
+		case SH7709_INTEVT2_IRQ4:
+			SH7709_IPR(D, 0, level);
+			break;
+		case SH7709_INTEVT2_SCIF_ERI:
+		case SH7709_INTEVT2_SCIF_RXI:
+		case SH7709_INTEVT2_SCIF_BRI:
+		case SH7709_INTEVT2_SCIF_TXI:
+			SH7709_IPR(E, 4, level);
+			break;
+		case SH7709_INTEVT2_ADC:
+			SH7709_IPR(E, 0, level);
+			break;
+		}
+	else
+		switch (evtcode) {
+		case SH4_INTEVT_SCIF_ERI:
+		case SH4_INTEVT_SCIF_RXI:
+		case SH4_INTEVT_SCIF_BRI:
+		case SH4_INTEVT_SCIF_TXI:
+			SH4_IPR(C, 4, level);
+			break;
+		}
 }
 
 /*
