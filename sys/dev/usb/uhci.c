@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.17 1998/12/28 21:05:47 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.18 1998/12/29 04:15:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ void		uhci_exit_ctl_q __P((uhci_softc_t *, uhci_soft_qh_t *));
 void		uhci_free_std_chain __P((uhci_softc_t *, 
 					 uhci_soft_td_t *, uhci_soft_td_t *));
 usbd_status	uhci_alloc_std_chain __P((struct uhci_pipe *, uhci_softc_t *,
-					  int, int, usb_dma_t *, 
+					  int, int, int, usb_dma_t *, 
 					  uhci_soft_td_t **,
 					  uhci_soft_td_t **));
 void		uhci_timo __P((void *));
@@ -710,6 +710,7 @@ uhci_check_intr(sc, ii)
 {
 	struct uhci_pipe *upipe;
 	uhci_soft_td_t *std, *lstd;
+	u_int32_t status;
 
 	DPRINTFN(15, ("uhci_check_intr: ii=%p\n", ii));
 #ifdef DIAGNOSTIC
@@ -730,10 +731,15 @@ uhci_check_intr(sc, ii)
 	/* If the last TD is still active the whole transfer probably is. */
 	if (lstd->td->td_status & UHCI_TD_ACTIVE) {
 		DPRINTFN(15, ("uhci_check_intr: active ii=%p\n", ii));
-		for (std = ii->stdstart; std != lstd; std = std->td->link.std)
-			if (std->td->td_status & UHCI_TD_STALLED)
+		for (std = ii->stdstart; std != lstd; std = std->td->link.std){
+			status = std->td->td_status;
+			if ((status & UHCI_TD_STALLED) ||
+			     (status & (UHCI_TD_SPD | UHCI_TD_ACTIVE)) == 
+			     UHCI_TD_SPD)
 				goto done;
-		DPRINTFN(15, ("uhci_check_intr: ii=%p still active\n", ii));
+		}
+		DPRINTFN(15, ("uhci_check_intr: ii=%p std=%p still active\n",
+			      ii, ii->stdstart));
 		return;
 	}
  done:
@@ -769,6 +775,8 @@ uhci_ii_done(ii, timo)
 #endif
 
 	/* The transfer is done, compute length and status. */
+	/* XXX stop at first inactive to get toggle right. */
+	/* XXX Is this correct for control xfers? */
 	for (len = status = 0, std = ii->stdstart; 
 	     std != 0; 
 	     std = std->td->link.std) {
@@ -1088,27 +1096,28 @@ uhci_free_std_chain(sc, std, stdend)
 }
 
 usbd_status
-uhci_alloc_std_chain(upipe, sc, len, rd, dma, sp, ep)
+uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
 	struct uhci_pipe *upipe;
 	uhci_softc_t *sc;
-	int len, rd;
+	int len, rd, spd;
 	usb_dma_t *dma;
 	uhci_soft_td_t **sp, **ep;
 {
 	uhci_soft_td_t *p, *lastp;
 	uhci_physaddr_t lastlink;
-	u_int32_t ls;
 	int i, ntd, l, tog, maxp;
+	u_int32_t status;
 	int addr = upipe->pipe.device->address;
 	int endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 
-	DPRINTFN(15, ("uhci_alloc_std_chain: len=%d\n", len));
+	DPRINTFN(15, ("uhci_alloc_std_chain: addr=%d endpt=%d len=%d ls=%d "
+		      "spd=%d\n", addr, endpt, len, 
+		      upipe->pipe.device->lowspeed, spd));
 	if (len == 0) {
 		*sp = *ep = 0;
 		DPRINTFN(-1,("uhci_alloc_std_chain: len=0\n"));
 		return (USBD_NORMAL_COMPLETION);
 	}
-	ls = upipe->pipe.device->lowspeed ? UHCI_TD_LS : 0;
 	maxp = UGETW(upipe->pipe.endpoint->edesc->wMaxPacketSize);
 	if (maxp == 0) {
 		printf("uhci_alloc_std_chain: maxp=0\n");
@@ -1122,6 +1131,11 @@ uhci_alloc_std_chain(upipe, sc, len, rd, dma, sp, ep)
 	lastp = 0;
 	lastlink = UHCI_PTR_T;
 	ntd--;
+	status = UHCI_TD_SET_ERRCNT(2) | UHCI_TD_ACTIVE;
+	if (upipe->pipe.device->lowspeed)
+		status |= UHCI_TD_LS;
+	if (spd)
+		status |= UHCI_TD_SPD;
 	for (i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
 		if (!p) {
@@ -1132,7 +1146,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, dma, sp, ep)
 		p->td->td_link = lastlink;
 		lastp = p;
 		lastlink = p->physaddr;
-		p->td->td_status = UHCI_TD_SET_ERRCNT(2) | ls | UHCI_TD_ACTIVE;
+		p->td->td_status = status;
 		if (i == ntd) {
 			/* last TD */
 			l = len % maxp;
@@ -1203,6 +1217,7 @@ uhci_device_bulk_start(reqh)
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret1;
 	r = uhci_alloc_std_chain(upipe, sc, len, isread, 
+				 reqh->flags & USBD_SHORT_XFER_OK,
 				 dmap, &xfer, &xferend);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret2;
@@ -1361,7 +1376,9 @@ uhci_device_intr_start(reqh)
 	r = usb_allocmem(sc->sc_dmatag, len, 0, dmap);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret1;
-	r = uhci_alloc_std_chain(upipe, sc, len, 1, dmap, &xfer, &xferend);
+	r = uhci_alloc_std_chain(upipe, sc, len, 1,
+ 				 reqh->flags & USBD_SHORT_XFER_OK,
+				 dmap, &xfer, &xferend);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret2;
 	xferend->td->td_status |= UHCI_TD_IOC;
@@ -1527,6 +1544,7 @@ uhci_device_request(reqh)
 			goto ret1;
 		upipe->pipe.endpoint->toggle = 1;
 		r = uhci_alloc_std_chain(upipe, sc, len, isread, 
+					 reqh->flags & USBD_SHORT_XFER_OK,
 					 dmap, &xfer, &xferend);
 		if (r != USBD_NORMAL_COMPLETION)
 			goto ret2;
@@ -1821,8 +1839,9 @@ uhci_intr_done(ii)
 		uhci_soft_td_t *xfer, *xferend;
 
 		/* This alloc cannot fail since we freed the chain above. */
-		uhci_alloc_std_chain(upipe, sc, reqh->length, 1, dma,
-				     &xfer, &xferend);
+		uhci_alloc_std_chain(upipe, sc, reqh->length, 1,
+				     reqh->flags & USBD_SHORT_XFER_OK,
+				     dma, &xfer, &xferend);
 		xferend->td->td_status |= UHCI_TD_IOC;
 
 #ifdef USB_DEBUG
