@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.14 1998/07/16 07:08:26 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.15 1998/07/23 17:56:00 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -633,16 +633,17 @@ void process_menu (int num)
 				__m_endwin = 1;
 			}
 			if (m->opts[sel].opt_action)
-				(*m->opts[sel].opt_action)();
+				done = (*m->opts[sel].opt_action)();
 			if (m->opts[sel].opt_menu != -1) {
 				if (m->opts[sel].opt_flags & OPT_SUB)
 					process_menu (m->opts[sel].opt_menu);
 				else
 					num = m->opts[sel].opt_menu;
 			}
-				
-			if (m->opts[sel].opt_flags & OPT_EXIT) 
-				done = TRUE;
+
+                        if (m->opts[sel].opt_flags & OPT_EXIT) 
+                                done = TRUE;
+ 				
 		} else
 			done = TRUE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1998/07/16 07:08:26 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1998/07/23 17:56:00 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,31 +58,34 @@ char  ent_text[5][50] = {"name: ", "strt: ", "city: ", "opt 4", "NUM: "};
 
 /* opt processing routines .. */
 
-void opt_1 (void);
+int opt_1 (void);
 
-void opt_1 (void)
+int opt_1 (void)
 {
 	msg_clear();
 	msg_prompt (MSG_name, "", &ent_text[0][6], 40);
 	msg_clear();
+	return 0;
 }
 
-void opt_2 (void);
+int opt_2 (void);
 
-void opt_2 (void)
+int opt_2 (void)
 {
 	msg_clear();
 	msg_prompt (MSG_street, "", &ent_text[1][6], 40);
 	msg_clear();
+	return 0;
 }
 
-void opt_3 (void);
+int opt_3 (void);
 
-void opt_3 (void)
+int opt_3 (void)
 {
 	msg_clear();
 	msg_prompt (MSG_city, "", &ent_text[2][6], 40);
 	msg_clear();
+	return 0;
 }
 
 
