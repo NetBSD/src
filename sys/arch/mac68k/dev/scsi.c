@@ -1,4 +1,9 @@
-/*	$NetBSD: scsi.c,v 1.18 1995/08/12 20:31:06 mycroft Exp $	*/
+/*	$NetBSD: scsi.c,v 1.19 1995/09/03 03:39:38 briggs Exp $	*/
+
+/*
+ * This driver is obsolete as of 2 September 1995.  mac68k5380.c should
+ * be used instead if at all possible.  [briggs 2Sept95]
+ */
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
