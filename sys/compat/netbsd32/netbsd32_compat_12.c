@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.10.2.5 2002/05/29 21:32:48 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.10.2.6 2002/08/23 02:37:09 petrov Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.10.2.5 2002/05/29 21:32:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.10.2.6 2002/08/23 02:37:09 petrov Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -82,8 +82,8 @@ netbsd32_stat12_to_netbsd32(sp12, sp32)
 }
 
 int
-compat_12_netbsd32_reboot(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_reboot(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -93,12 +93,12 @@ compat_12_netbsd32_reboot(p, v, retval)
 	struct compat_12_sys_reboot_args ua;
 
 	NETBSD32TO64_UAP(opt);
-	return (compat_12_sys_reboot(p, &ua, retval));
+	return (compat_12_sys_reboot(l, &ua, retval));
 }
 
 int
-compat_12_netbsd32_msync(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_msync(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -111,12 +111,12 @@ compat_12_netbsd32_msync(p, v, retval)
 	NETBSD32TOX64_UAP(addr, caddr_t);
 	NETBSD32TOX_UAP(len, size_t);
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
-	return (sys___msync13(p, &ua, retval));
+	return (sys___msync13(l, &ua, retval));
 }
 
 int
-compat_12_netbsd32_oswapon(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_oswapon(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -128,15 +128,16 @@ compat_12_netbsd32_oswapon(p, v, retval)
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = (void *)(u_long)SCARG(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
-	return (sys_swapctl(p, &ua, retval));
+	return (sys_swapctl(l, &ua, retval));
 }
 
 int
-compat_12_netbsd32_stat12(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_stat12(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct compat_12_netbsd32_stat12_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat12p_t) ub;
@@ -153,7 +154,7 @@ compat_12_netbsd32_stat12(p, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
-	rv = compat_12_sys_stat(p, &ua, retval);
+	rv = compat_12_sys_stat(l, &ua, retval);
 	if (rv)
 		return (rv);
 
@@ -164,8 +165,8 @@ compat_12_netbsd32_stat12(p, v, retval)
 }
 
 int
-compat_12_netbsd32_fstat12(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_fstat12(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -181,7 +182,7 @@ compat_12_netbsd32_fstat12(p, v, retval)
 
 	NETBSD32TO64_UAP(fd);
 	SCARG(&ua, sb) = &sb12;
-	rv = compat_12_sys_fstat(p, &ua, retval);
+	rv = compat_12_sys_fstat(l, &ua, retval);
 	if (rv)
 		return (rv);
 
@@ -192,11 +193,12 @@ compat_12_netbsd32_fstat12(p, v, retval)
 }
 
 int
-compat_12_netbsd32_lstat12(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_lstat12(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct compat_12_netbsd32_lstat12_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_stat12p_t) ub;
@@ -213,7 +215,7 @@ compat_12_netbsd32_lstat12(p, v, retval)
 	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
-	rv = compat_12_sys_lstat(p, &ua, retval);
+	rv = compat_12_sys_lstat(l, &ua, retval);
 	if (rv)
 		return (rv);
 
@@ -224,8 +226,8 @@ compat_12_netbsd32_lstat12(p, v, retval)
 }
 
 int
-compat_12_netbsd32_getdirentries(p, v, retval)
-	struct proc *p;
+compat_12_netbsd32_getdirentries(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -242,5 +244,5 @@ compat_12_netbsd32_getdirentries(p, v, retval)
 	NETBSD32TO64_UAP(count);
 	NETBSD32TOP_UAP(basep, long);
 
-	return (compat_12_sys_getdirentries(p, &ua, retval));
+	return (compat_12_sys_getdirentries(l, &ua, retval));
 }

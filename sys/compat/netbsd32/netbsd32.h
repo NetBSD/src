@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.17.2.4 2002/05/29 21:32:47 nathanw Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.17.2.5 2002/08/23 02:37:09 petrov Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -534,7 +534,7 @@ typedef struct firm_event32 {
 #define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
 #define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
 
-int	coredump_netbsd32(struct proc *, struct vnode *, struct ucred *);
+int	coredump_netbsd32(struct lwp *, struct vnode *, struct ucred *);
 
 /*
  * random other stuff
@@ -542,6 +542,6 @@ int	coredump_netbsd32(struct proc *, struct vnode *, struct ucred *);
 #include <compat/common/compat_util.h>
 
 void netbsd32_from_stat43 __P((struct stat43 *, struct netbsd32_stat43 *));
-int netbsd32_execve2(struct proc *, struct sys_execve_args *, register_t *);
+int netbsd32_execve2(struct lwp *, struct sys_execve_args *, register_t *);
  
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */
