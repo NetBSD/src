@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2003/03/15 07:19:20 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2003/04/09 22:37:32 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,8 @@ struct pmap {
 typedef	struct pmap *pmap_t;
 
 #ifdef	_KERNEL
+#include <sys/systm.h>
+
 extern register_t iosrtable[];
 extern int pmap_use_altivec;
 extern struct pmap kernel_pmap_;
@@ -89,6 +91,8 @@ int pmap_pte_spill(struct pmap *, vaddr_t);
 #define	PMAP_NC			0x1000
 
 #define PMAP_STEAL_MEMORY
+static __inline paddr_t vtophys (vaddr_t);
+
 #if 1
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
@@ -100,19 +104,18 @@ int pmap_pte_spill(struct pmap *, vaddr_t);
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
 #endif
+#define POOL_VTOPHYS(va)	vtophys((vaddr_t) va)
 
-static __inline paddr_t vtophys (vaddr_t);
 
 static __inline paddr_t
 vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
-	/* XXX should check battable */
-
 	if (pmap_extract(pmap_kernel(), va, &pa))
 		return pa;
-	return va;
+	KASSERT(0);
+	return (paddr_t) -1;
 }
 
 #endif	/* _KERNEL */
