@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.25 1996/07/02 21:21:57 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.26 1997/05/11 05:41:13 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -720,7 +720,7 @@ sunos_sys_ioctl(p, v, retval)
 		sunos_aui.record.waiting = 0;
 		sunos_aui.play.eof = 0;
 		sunos_aui.record.eof = 0;
-		sunos_aui.monitor_gain = aui.__spare; /* XXX */
+		sunos_aui.monitor_gain = 0; /* aui.__spare; XXX */
 		/*XXXsunos_aui.output_muted = 0;*/
 		/*XXX*/sunos_aui.reserved[0] = 0;
 		/*XXX*/sunos_aui.reserved[1] = 0;
@@ -743,7 +743,7 @@ sunos_sys_ioctl(p, v, retval)
 
 		aui.play = *(struct audio_prinfo *)&sunos_aui.play;
 		aui.record = *(struct audio_prinfo *)&sunos_aui.record;
-		aui.__spare = sunos_aui.monitor_gain;
+		/* aui.__spare = sunos_aui.monitor_gain; */
 		aui.blocksize = ~0;
 		aui.hiwat = ~0;
 		aui.lowat = ~0;
