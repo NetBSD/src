@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	5.9 (Berkeley) 4/3/91
- *	$Id: limits.h,v 1.2 1993/08/01 18:44:50 mycroft Exp $
+ *	$Id: limits.h,v 1.3 1993/09/21 21:55:40 jtc Exp $
  */
 
 #ifndef _LIMITS_H_
@@ -52,10 +52,11 @@
 #define	_POSIX2_BC_DIM_MAX	2048
 #define	_POSIX2_BC_SCALE_MAX	99
 #define	_POSIX2_BC_STRING_MAX	1000
-#define	_POSIX2_EQUIV_CLASS_MAX	2
+#define	_POSIX2_COLL_WEIGHTS_MAX	2
 #define	_POSIX2_EXPR_NEST_MAX	32
 #define	_POSIX2_LINE_MAX	2048
 #define	_POSIX2_RE_DUP_MAX	255
+#define _POSIX2_VERSION		199209
 
 #include <machine/limits.h>
 #include <sys/syslimits.h>
