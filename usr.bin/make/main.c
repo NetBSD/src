@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2000/12/30 02:52:03 sommerfeld Exp $	*/
+/*	$NetBSD: main.c,v 1.60 2000/12/30 14:21:23 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.59 2000/12/30 02:52:03 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.60 2000/12/30 14:21:23 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.59 2000/12/30 02:52:03 sommerfeld Exp $");
+__RCSID("$NetBSD: main.c,v 1.60 2000/12/30 14:21:23 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1383,6 +1383,7 @@ Fatal(va_alist)
 #endif
 	if (jobsRunning)
 		Job_Wait();
+	Job_TokenFlush();
 
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
