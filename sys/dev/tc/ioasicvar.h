@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.7 1999/03/17 18:24:57 ross Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.8 1999/03/28 17:47:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -59,9 +59,13 @@ struct ioasic_softc {
 	tc_addr_t sc_base;
 	void	*sc_cookie;
 
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_lance_dmam;
 };
+
+extern struct cfdriver ioasic_cd;
 
 /*
  * XXX Some drivers need direct access to IOASIC registers.
