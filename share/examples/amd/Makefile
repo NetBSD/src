@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2000/11/20 00:47:10 wiz Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
-FILES=	cd master net
+FILES=	amd.conf cd net
 FILESDIR=/usr/share/examples/amd
 .endif
 MKOBJ=	no
