@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43 2004/03/14 18:18:54 chs Exp $ */
+/*	$NetBSD: cpu.h,v 1.44 2004/06/18 00:05:05 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -306,6 +306,9 @@ void	intr_establish __P((int level, struct intrhand *));
 /* cpu.c */
 paddr_t	cpu_alloc	__P((void));
 void	cpu_start	__P((int));
+
+#define mp_pause_cpus()		sparc64_ipi_pause((void*)0)
+#define mp_resume_cpus()	sparc64_ipi_resume_cpus()
 
 /* disksubr.c */
 struct dkbad;
