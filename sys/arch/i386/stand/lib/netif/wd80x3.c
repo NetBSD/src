@@ -1,4 +1,4 @@
-/*	$NetBSD: wd80x3.c,v 1.5 1998/02/16 11:22:00 drochner Exp $	*/
+/*	$NetBSD: wd80x3.c,v 1.6 1999/02/19 19:30:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ we_params()
 
 int
 EtherInit(myadr)
-char *myadr;
+	unsigned char *myadr;
 {
 	const char *typestr;
 	u_int8_t x;
