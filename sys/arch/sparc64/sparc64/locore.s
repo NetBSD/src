@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 2000/07/24 14:55:56 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.87 2000/07/24 15:57:07 mycroft Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -8526,7 +8526,7 @@ ENTRY(pmap_zero_page)
 	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
-	 set	INTSTACK, %l4
+	 set	INTSTACK-STKB, %l4
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
@@ -8825,7 +8825,7 @@ ENTRY(pmap_copy_page)
 	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
-	 set	INTSTACK, %l4
+	 set	INTSTACK-STKB, %l4
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
@@ -9767,20 +9767,17 @@ Lbzero_block:
 	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
 	sethi	%hi(FPPROC), %l1
 	LDPTR	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
-	btst	1, %sp
-	add	%sp, (CC64FSZ+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	add	%l0, BIAS, %l3
-	movnz	%xcc, %l3, %l0
+	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
 	brz,pt	%l2, 1f					! fpproc == NULL?
 	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
 	LDPTR	[%l2 + P_FPSTATE], %l3
 	brz,pn	%l3, 1f					! Make sure we have an fpstate
 	 mov	%l3, %o0
 	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4				! Are we on intr stack?
+	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
 	cmp	%sp, %l4
 	bgu,pt	%xcc, 1f
-	 set	INTSTACK, %l4
+	 set	INTSTACK-STKB, %l4
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
@@ -9812,22 +9809,17 @@ Lbzero_block:
 	 dec	8, %i1
 
 2:
-	brz,pt	%i2, 4f					! Do we have a pattern to load?
-	 fzero	%f0					! Set up FPU
+#ifdef _LP64
+	stx	%i2, [%sp + BIAS + 0x50]		! Flush this puppy to RAM
+	membar	#StoreLoad
+	ldd	[%sp + BIAS + 0x50], %f0
+#else
+	stw	%i2, [%sp + 0x28]			! Flush this puppy to RAM
+	membar	#StoreLoad
+	ld	[%sp + 0x28], %f0
+	fmovsa	%icc, %f0, %f1
+#endif
 
-	btst	1, %fp
-	bnz,pt	%icc, 3f				! 64-bit stack?
-	 nop
-	stw	%i2, [%sp + 0x8]			! Flush this puppy to RAM
-	membar	#StoreLoad
-	ld	[%sp + 0x8], %f0
-	ba,pt	%icc, 4f
-	 fmovsa	%icc, %f0, %f1
-3:
-	stx	%i2, [%sp + BIAS + 0x8]		! Flush this puppy to RAM
-	membar	#StoreLoad
-	ldd	[%sp + BIAS + 0x8], %f0
-4:
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
 	fmovda	%icc, %f0, %f6
@@ -9835,14 +9827,6 @@ Lbzero_block:
 	fmovda	%icc, %f0, %f10
 	fmovda	%icc, %f0, %f12
 	fmovda	%icc, %f0, %f14
-	fmovda	%icc, %f0, %f16				! And second bank
-	fmovda	%icc, %f0, %f18
-	fmovda	%icc, %f0, %f20
-	fmovda	%icc, %f0, %f22
-	fmovda	%icc, %f0, %f24
-	fmovda	%icc, %f0, %f26
-	fmovda	%icc, %f0, %f28
-	fmovda	%icc, %f0, %f30
 
 	!! Remember: we were 8 bytes too far
 	dec	56, %i1			! Go one iteration too far
