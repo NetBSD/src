@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.12 2002/05/22 15:40:49 wiz Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.13 2002/08/03 01:06:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.12 2002/05/22 15:40:49 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.13 2002/08/03 01:06:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -291,74 +291,7 @@ rf_MarkFailuresInASMList(raidPtr, asm_h)
 		}
 	}
 }
-/*****************************************************************************************
- *
- * DuplicateASM -- duplicates an ASM and returns the new one
- *
- ****************************************************************************************/
-RF_AccessStripeMap_t *
-rf_DuplicateASM(asmap)
-	RF_AccessStripeMap_t *asmap;
-{
-	RF_AccessStripeMap_t *new_asm;
-	RF_PhysDiskAddr_t *pda, *new_pda, *t_pda;
 
-	new_pda = NULL;
-	new_asm = rf_AllocAccessStripeMapComponent();
-	memcpy((char *) new_asm, (char *) asmap, sizeof(RF_AccessStripeMap_t));
-	new_asm->numFailedPDAs = 0;	/* ??? */
-	new_asm->failedPDAs[0] = NULL;
-	new_asm->physInfo = NULL;
-	new_asm->parityInfo = NULL;
-	new_asm->next = NULL;
-
-	for (pda = asmap->physInfo; pda; pda = pda->next) {	/* copy the physInfo
-								 * list */
-		t_pda = rf_AllocPhysDiskAddr();
-		memcpy((char *) t_pda, (char *) pda, sizeof(RF_PhysDiskAddr_t));
-		t_pda->next = NULL;
-		if (!new_asm->physInfo) {
-			new_asm->physInfo = t_pda;
-			new_pda = t_pda;
-		} else {
-			new_pda->next = t_pda;
-			new_pda = new_pda->next;
-		}
-		if (pda == asmap->failedPDAs[0])
-			new_asm->failedPDAs[0] = t_pda;
-	}
-	for (pda = asmap->parityInfo; pda; pda = pda->next) {	/* copy the parityInfo
-								 * list */
-		t_pda = rf_AllocPhysDiskAddr();
-		memcpy((char *) t_pda, (char *) pda, sizeof(RF_PhysDiskAddr_t));
-		t_pda->next = NULL;
-		if (!new_asm->parityInfo) {
-			new_asm->parityInfo = t_pda;
-			new_pda = t_pda;
-		} else {
-			new_pda->next = t_pda;
-			new_pda = new_pda->next;
-		}
-		if (pda == asmap->failedPDAs[0])
-			new_asm->failedPDAs[0] = t_pda;
-	}
-	return (new_asm);
-}
-/*****************************************************************************************
- *
- * DuplicatePDA -- duplicates a PDA and returns the new one
- *
- ****************************************************************************************/
-RF_PhysDiskAddr_t *
-rf_DuplicatePDA(pda)
-	RF_PhysDiskAddr_t *pda;
-{
-	RF_PhysDiskAddr_t *new;
-
-	new = rf_AllocPhysDiskAddr();
-	memcpy((char *) new, (char *) pda, sizeof(RF_PhysDiskAddr_t));
-	return (new);
-}
 /*****************************************************************************************
  *
  * routines to allocate and free list elements.  All allocation routines zero the
