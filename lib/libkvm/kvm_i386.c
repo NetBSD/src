@@ -37,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: kvm_i386.c,v 1.2 1994/05/09 07:01:14 cgd Exp $";
+static char *rcsid = "$Id: kvm_i386.c,v 1.3 1994/05/18 09:31:52 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -154,8 +154,7 @@ _kvm_uvatop(kd, p, va, pa)
 	u_long va;
 	u_long *pa;
 {
-#ifdef notdef
-	struct vmspace *vms = p->p_vmspace;
+	struct vmspace vms;
 	struct pde pde, *pdeloc;
 	struct pte pte, *pteloc;
 	u_long kva, offset;
@@ -163,30 +162,29 @@ _kvm_uvatop(kd, p, va, pa)
 	if (va >= KERNBASE)
 		goto invalid;
 
-	kva = (u_long)vms->vm_pmap.pm_pdir;
-	if (kvm_read(kd, kva, (char *)&pdeloc, sizeof(pdeloc)) !=
-	    sizeof(pdeloc))
-		goto invalid;
-	if (pdeloc == 0)
+	/* XXX - should be passed a `kinfo_proc *' here */
+	if (kvm_read(kd, (u_long)p->p_vmspace, (char *)&vms, sizeof(vms)) !=
+	    sizeof(vms))
 		goto invalid;
 
-	pdeloc += va >> PDSHIFT;
+	pdeloc = (struct pde *)vms.vm_pmap.pm_pdir + (va >> PDSHIFT);
 	if (kvm_read(kd, (u_long)pdeloc, (char *)&pde, sizeof(pde)) !=
 	    sizeof(pde))
 		goto invalid;
 	if (pde.pd_v == 0)
 		goto invalid;
 
-	pteloc = ((struct pte *)pde.pd_pfnum) + btop(va & PT_MASK);
-	if (KREAD(kd, (u_long)pteloc, &pte))
+	pteloc = (struct pte *)ptob(pde.pd_pfnum) + btop(va & PT_MASK);
+	if (lseek(kd->pmfd, (off_t)(u_long)pteloc, 0) != (off_t)(u_long)pteloc)
+		goto invalid;
+	if (read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte))
 		goto invalid;
 	if (pte.pg_v == 0)
 		goto invalid;
 
 	offset = va & PGOFSET;
-	*pa = pte.pg_pfnum + offset;
+	*pa = (u_long)ptob(pte.pg_pfnum) + offset;
 	return (NBPG - offset);
-#endif
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
