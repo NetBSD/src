@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.12 2000/09/22 16:35:00 pooka Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.13 2002/05/18 07:00:45 pooka Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -7,12 +7,15 @@
  * Public Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
  * @(#)list.c 1.18 9/23/86 Public Domain - gnu
- * Id: is_tar.c,v 1.13 2000/08/05 17:36:48 christos Exp 
+ * Id: is_tar.c,v 1.14 2002/05/16 18:45:56 christos Exp 
  *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -23,9 +26,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: is_tar.c,v 1.13 2000/08/05 17:36:48 christos Exp ")
+FILE_RCSID("@(#)Id: is_tar.c,v 1.14 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.12 2000/09/22 16:35:00 pooka Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.13 2002/05/18 07:00:45 pooka Exp $");
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.27 2002/01/31 22:43:53 tv Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.28 2002/05/18 07:00:44 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,20 +36,20 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#ifdef QUICK
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef QUICK
 #include <sys/mman.h>
 #endif
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.44 2001/08/01 14:03:19 christos Exp ")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.46 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.27 2002/01/31 22:43:53 tv Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.28 2002/05/18 07:00:44 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -321,6 +321,8 @@ signextend(m, v)
 		case STRING:
 		case PSTRING:
 			break;
+		case REGEX:
+			break;
 		default:
 			magwarn("can't happen: m->type=%d\n",
 				m->type);
@@ -487,6 +489,7 @@ parse(magicp, nmagicp, l, action)
 #define NLDATE		5
 #define NBELDATE	7
 #define NLELDATE	7
+#define NREGEX		5
 
 	if (*l == 'u') {
 		++l;
@@ -542,6 +545,9 @@ parse(magicp, nmagicp, l, action)
 	} else if (strncmp(l, "leldate", NLELDATE)==0) {
 		m->type = LELDATE;
 		l += NLELDATE;
+	} else if (strncmp(l, "regex", NREGEX)==0) {
+		m->type = REGEX;
+		l += sizeof("regex");
 	} else {
 		magwarn("type %s invalid", l);
 		return -1;
@@ -706,7 +712,7 @@ getvalue(m, p)
 {
 	int slen;
 
-	if (m->type == STRING || m->type == PSTRING) {
+	if (m->type == STRING || m->type == PSTRING || m->type == REGEX) {
 		*p = getstr(*p, m->value.s, sizeof(m->value.s), &slen);
 		m->vallen = slen;
 	} else
@@ -929,7 +935,7 @@ eatsize(p)
 }
 
 /*
- * handle an mmaped file.
+ * handle a compiled file.
  */
 static int
 apprentice_map(magicp, nmagicp, fn, action)

@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.12 2002/04/09 15:10:17 bjh21 Exp $	*/
+/*	$NetBSD: readelf.c,v 1.13 2002/05/18 07:00:46 pooka Exp $	*/
 
 #include "file.h"
 
@@ -18,9 +18,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.17 2000/08/05 19:00:12 christos Exp ")
+FILE_RCSID("@(#)Id: readelf.c,v 1.20 2002/05/16 18:57:11 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.12 2002/04/09 15:10:17 bjh21 Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.13 2002/05/18 07:00:46 pooka Exp $");
 #endif
 #endif
 
@@ -177,9 +177,9 @@ dophn_exec(class, swap, fd, off, num, size)
 	size_t size;
 {
 	Elf32_Phdr ph32;
-	Elf32_Nhdr *nh32;
+	Elf32_Nhdr *nh32 = NULL;
 	Elf64_Phdr ph64;
-	Elf64_Nhdr *nh64;
+	Elf64_Nhdr *nh64 = NULL;
 	char *linking_style = "statically";
 	char *shared_libraries = "";
 	char nbuf[BUFSIZ];
@@ -369,9 +369,9 @@ dophn_core(class, swap, fd, off, num, size)
 	size_t size;
 {
 	Elf32_Phdr ph32;
-	Elf32_Nhdr *nh32;
+	Elf32_Nhdr *nh32 = NULL;
 	Elf64_Phdr ph64;
-	Elf64_Nhdr *nh64;
+	Elf64_Nhdr *nh64 = NULL;
 	size_t offset, nameoffset, noffset, reloffset;
 	unsigned char c;
 	int i, j;
@@ -572,6 +572,12 @@ tryelf(fd, buf, nbytes)
 	} u;
 	int class;
 	int swap;
+
+	/*
+	 * If we can't seek, it must be a pipe, socket or fifo.
+	 */
+	if((lseek(fd, (off_t)0, SEEK_SET) == (off_t)-1) && (errno == ESPIPE))
+		fd = pipe2file(fd, buf, nbytes);
 
 	/*
 	 * ELF executables have multiple section headers in arbitrary

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.24 2001/09/09 10:46:36 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.25 2002/05/18 07:00:45 pooka Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -26,6 +26,8 @@
  *
  * 4. This notice may not be removed or altered.
  */
+#include "file.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -52,16 +54,19 @@
 #include <locale.h>
 #endif
 
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>	/* for long options (is this portable?)*/
+#endif
+
 #include <netinet/in.h>		/* for byte swapping */
 
-#include "file.h"
 #include "patchlevel.h"
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.59 2001/07/23 00:02:32 christos Exp ")
+FILE_RCSID("@(#)Id: file.c,v 1.62 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.24 2001/09/09 10:46:36 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.25 2002/05/18 07:00:45 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -71,6 +76,11 @@ __RCSID("$NetBSD: file.c,v 1.24 2001/09/09 10:46:36 pooka Exp $");
 #else
 # define USAGE  "Usage: %s [-bciknsvz] [-f namefile] [-m magicfiles] file...\n"
 #endif
+
+#ifdef __EMX__
+static char *apptypeName = NULL;
+int os2_apptype (const char *fn, char *buf, int nb);
+#endif /* __EMX__ */
 
 #ifndef MAGIC
 # define MAGIC "/etc/magic"
@@ -104,6 +114,9 @@ int lineno;		/* line number in the magic file	*/
 
 static void	unwrap		__P((char *fn));
 static void	usage		__P((void));
+#ifdef HAVE_GETOPT_H
+static void	help		__P((void));
+#endif
 #if 0
 static int	byteconv4	__P((int, int, int));
 static short	byteconv2	__P((int, int, int));
@@ -123,9 +136,38 @@ main(argc, argv)
 	int action = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
 	char *mime, *home, *usermagic;
 	struct stat sb;
+#define OPTSTRING	"bcdf:ikm:nsvzCL"
+#ifdef HAVE_GETOPT_H
+	int longindex;
+	static struct option long_options[] =
+	{
+		{"version", 0, 0, 'v'},
+		{"help", 0, 0, 0},
+		{"brief", 0, 0, 'b'},
+		{"checking-printout", 0, 0, 'c'},
+		{"debug", 0, 0, 'd'},
+		{"files-from", 1, 0, 'f'},
+		{"mime", 0, 0, 'i'},
+		{"keep-going", 0, 0, 'k'},
+#ifdef S_IFLNK
+		{"dereference", 0, 0, 'L'},
+#endif
+		{"magic-file", 1, 0, 'm'},
+		{"uncompress", 0, 0, 'z'},
+		{"no-buffer", 0, 0, 'n'},
+		{"special-files", 0, 0, 's'},
+		{"compile", 0, 0, 'C'},
+		{0, 0, 0, 0},
+	};
+#endif
 
 #ifdef LC_CTYPE
 	setlocale(LC_CTYPE, ""); /* makes islower etc work for other langs */
+#endif
+
+#ifdef __EMX__
+	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
+	_wildcard(&argc, &argv);
 #endif
 
 	if ((progname = strrchr(argv[0], '/')) != NULL)
@@ -148,8 +190,19 @@ main(argc, argv)
 			}
 		}
 
-	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzCL")) != -1)
+#ifndef HAVE_GETOPT_H
+	while ((c = getopt(argc, argv, OPTSTRING)) != -1)
+#else
+	while ((c = getopt_long(argc, argv, OPTSTRING, long_options,
+	    &longindex)) != -1)
+#endif
 		switch (c) {
+#ifdef HAVE_GETOPT_H
+		case 0 :
+			if (longindex == 1)
+				help();
+			break;
+#endif
 		case 'b':
 			++bflag;
 			break;
@@ -406,7 +459,7 @@ process(inname, wid)
 		ckfputs(iflag ? "application/x-empty" : "empty", stdout);
 	else {
 		buf[nbytes++] = '\0';	/* null-terminate it */
-		match = tryit(buf, nbytes, zflag);
+		match = tryit(inname, buf, nbytes, zflag);
 	}
 
 #ifdef BUILTIN_ELF
@@ -452,12 +505,27 @@ process(inname, wid)
 
 
 int
-tryit(buf, nb, zflag)
-	unsigned char *buf;
-	int nb, zflag;
+tryit(fn, buf, nb, zfl)
+	const char *fn;		/* file name*/
+	unsigned char *buf;	/* buffer */
+	int nb, zfl;
 {
+
+	/*
+	 * The main work is done here!
+	 * We have the file name and/or the data buffer to be identified. 
+	 */
+
+#ifdef __EMX__
+	/*
+	 * Ok, here's the right place to add a call to some os-specific
+	 * routine, e.g.
+	 */
+	if (os2_apptype(fn, buf, nb) == 1)
+	       return 'o';
+#endif
 	/* try compression stuff */
-	if (zflag && zmagic(buf, nb))
+	if (zfl && zmagic(fn, buf, nb))
 		return 'z';
 
 	/* try tests in /etc/magic (or surrogate magic file) */
@@ -469,7 +537,7 @@ tryit(buf, nb, zflag)
 		return 'a';
 
 	/* abandon hope, all ye who remain here */
-	ckfputs("data", stdout);
+	ckfputs(iflag ? "application/octet-stream" : "data", stdout);
 		return '\0';
 }
 
@@ -478,5 +546,37 @@ usage()
 {
 	(void)fprintf(stderr, USAGE, progname);
 	(void)fprintf(stderr, "Usage: %s -C [-m magic]\n", progname);
+#ifdef HAVE_GETOPT_H
+	(void)fputs("Try `file --help' for more information.\n", stderr);
+#endif
 	exit(1);
 }
+
+#ifdef HAVE_GETOPT_H
+static void
+help()
+{
+	puts(
+"Usage: file [OPTION]... [FILE]...
+Determine file type of FILEs.
+
+  -m, --magic-file LIST      use LIST as a colon-separated list of magic
+                               number files
+  -z, --uncompress           try to look inside compressed files
+  -b, --brief                do not prepend filenames to output lines
+  -c, --checking-printout    print the parsed form of the magic file, use in
+                               conjunction with -m to debug a new magic file
+                               before installing it
+  -f, --files-from FILE      read the filenames to be examined from FILE
+  -i, --mime                 output mime type strings
+  -k, --keep-going           don't stop at the first match
+  -L, --dereference          causes symlinks to be followed
+  -n, --no-buffer            do not buffer output
+  -s, --special-files        treat special (block/char devices) files as
+                             ordinary ones
+      --help                 display this help and exit
+      --version              output version information and exit"
+);
+	exit(0);
+}
+#endif

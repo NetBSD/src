@@ -1,4 +1,4 @@
-$NetBSD: magic.mime.in,v 1.1.1.1 2002/05/18 06:45:50 pooka Exp $
+$NetBSD: magic.mime.in,v 1.2 2002/05/18 07:00:46 pooka Exp $
 # Magic data for KMimeMagic (originally for file(1) command)
 #
 # The format is 4-5 columns:
