@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.46 2003/10/30 20:29:54 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.47 2003/10/31 17:22:28 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.46 2003/10/30 20:29:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.47 2003/10/31 17:22:28 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -271,20 +271,21 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Bring ACPI on-line.
-	 *
-	 * Note that we request that _STA (device init) and _INI (object init)
-	 * methods not be run.
-	 *
-	 * XXX We need to arrange for the object init pass after we have
-	 * XXX attached all of our children.
 	 */
 #ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_ENABLE)
 		acpi_osd_debugger();
 #endif
-	rv = AcpiEnableSubsystem(ACPI_NO_DEVICE_INIT | ACPI_NO_OBJECT_INIT);
+
+	rv = AcpiEnableSubsystem(0);
 	if (rv != AE_OK) {
 		printf("%s: unable to enable ACPI: %d\n",
+		    sc->sc_dev.dv_xname, rv);
+		return;
+	}
+	rv = AcpiInitializeObjects(0);
+	if (rv != AE_OK) {
+		printf("%s: unable to initialize ACPI objects: %d\n",
 		    sc->sc_dev.dv_xname, rv);
 		return;
 	}
