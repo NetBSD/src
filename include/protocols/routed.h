@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.11 1998/02/10 00:38:19 perry Exp $	*/
+/*	$NetBSD: routed.h,v 1.12 2002/11/30 04:02:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -102,7 +102,9 @@ struct netauth {
 		int8_t	md5_auth_len;	/* 16 */
 		u_int32_t md5_seqno;	/* sequence number */
 		u_int32_t rsvd[2];	/* must be 0 */
-#define	    RIP_AUTH_MD5_LEN RIP_AUTH_PW_LEN
+#define	    RIP_AUTH_MD5_KEY_LEN   RIP_AUTH_PW_LEN
+#define	    RIP_AUTH_MD5_HASH_XTRA (sizeof(struct netauth)-sizeof(struct a_md5))
+#define	    RIP_AUTH_MD5_HASH_LEN  (RIP_AUTH_MD5_KEY_LEN+RIP_AUTH_MD5_HASH_XTRA)
 	    } a_md5;
 	} au;
 };
@@ -137,7 +139,7 @@ struct rip {
 #define	RIPCMD_MAX		6
 
 #ifdef RIPCMDS
-char *ripcmds[RIPCMD_MAX] = {
+const char *ripcmds[RIPCMD_MAX] = {
 	"#0", "REQUEST", "RESPONSE", "TRACEON", "TRACEOFF"
 };
 #endif
