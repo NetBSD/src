@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.5 1993/04/09 16:24:26 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.6 1993/04/15 07:57:57 deraadt Exp $";
 
 /*
  * code to manage AT bus
@@ -81,8 +81,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/isa.c,v 1.5
 #define	DMA2_FFC	(IO_DMA2 + 2*12)	/* clear first/last FF */
 
 int config_isadev(struct isa_device *, u_short *);
-#ifdef notyet
-struct rlist *isa_iomem;
+void config_attach(struct isa_driver *, struct isa_device *);
 
 /*
  * Configure all ISA devices
@@ -93,99 +92,14 @@ isa_configure() {
 
 	splhigh();
 	INTREN(IRQ_SLAVE);
-	/*rlist_free(&isa_iomem, 0xa0000, 0xfffff);*/
-	for (dvp = isa_devtab_tty; dvp; dvp++)
-			(void) config_isadev(dvp, &ttymask);
-	for (dvp = isa_devtab_bio; dvp; dvp++)
-			(void) config_isadev(dvp, &biomask);
-	for (dvp = isa_devtab_net; dvp; dvp++)
-			(void) config_isadev(dvp, &netmask);
-	for (dvp = isa_devtab_null; dvp; dvp++)
-			(void) config_isadev(dvp, 0);
-#include "sl.h"
-#if NSL > 0
-	netmask |= ttymask;
-	ttymask |= netmask;
-#endif
-/* printf("biomask %x ttymask %x netmask %x\n", biomask, ttymask, netmask); */
-	splnone();
-}
-
-/*
- * Configure an ISA device.
- */
-config_isadev(isdp, mp)
-	struct isa_device *isdp;
-	u_short *mp;
-{
-	struct isa_driver *dp;
-	static short drqseen, irqseen;
- 
-	if (dp = isdp->id_driver) {
-		/* if a device with i/o memory, convert to virtual address */
-		if (isdp->id_maddr) {
-			extern unsigned int atdevbase;
-
-			isdp->id_maddr -= IOM_BEGIN;
-			isdp->id_maddr += atdevbase;
-		}
-		isdp->id_alive = (*dp->probe)(isdp);
-		if (isdp->id_alive) {
-
-			printf("%s%d at port 0x%x ", dp->name,
-				isdp->id_unit, isdp->id_iobase);
-
-			/* check for conflicts */
-			if (irqseen & isdp->id_irq) {
-				printf("INTERRUPT CONFLICT - irq%d\n",
-					ffs(isdp->id_irq) - 1);
-				return (0);
-			}
-			if (isdp->id_drq != -1
-				&& (drqseen & (1<<isdp->id_drq))) {
-				printf("DMA CONFLICT - drq%d\n", isdp->id_drq);
-				return (0);
-			}
-			/* NEED TO CHECK IOMEM CONFLICT HERE */
-
-			/* allocate and wire in device */
-			if(isdp->id_irq) {
-				int intrno;
-
-				intrno = ffs(isdp->id_irq)-1;
-				printf("irq %d ", intrno);
-				INTREN(isdp->id_irq);
-				if(mp)INTRMASK(*mp,isdp->id_irq);
-				setidt(NRSVIDT + intrno, isdp->id_intr,
-					 SDT_SYS386IGT, SEL_KPL);
-				irqseen |= isdp->id_irq;
-			}
-			if (isdp->id_drq != -1) {
-				printf("drq %d ", isdp->id_drq);
-				drqseen |=  1 << isdp->id_drq;
-			}
-
-			(*dp->attach)(isdp);
-
-			printf("on isa\n");
-		}
-		return (1);
-	} else	return(0);
-}
-#else /* notyet */
-/*
- * Configure all ISA devices
- */
-isa_configure() {
-	struct isa_device *dvp;
-	struct isa_driver *dp;
-
-	splhigh();
-	INTREN(IRQ_SLAVE);
-	for (dvp = isa_devtab_tty; config_isadev(dvp,&ttymask); dvp++);
-	for (dvp = isa_devtab_bio; config_isadev(dvp,&biomask); dvp++);
-	for (dvp = isa_devtab_net; config_isadev(dvp,&netmask); dvp++);
-	for (dvp = isa_devtab_null; config_isadev(dvp,0); dvp++);
+	for (dvp = isa_devtab_tty; config_isadev(dvp,&ttymask); dvp++)
+		;
+	for (dvp = isa_devtab_bio; config_isadev(dvp,&biomask); dvp++)
+		;
+	for (dvp = isa_devtab_net; config_isadev(dvp,&netmask); dvp++)
+		;
+	for (dvp = isa_devtab_null; config_isadev(dvp,0); dvp++)
+		;
 #include "sl.h"
 #if NSL > 0
 	netmask |= ttymask;
@@ -233,7 +147,8 @@ config_isadev(isdp, mp)
 				printf("flags 0x%x ", isdp->id_flags);
 			printf("on isa\n");
 
-			(*dp->attach)(isdp);
+			config_attach(dp, isdp);
+
 			if(isdp->id_irq) {
 				int intrno;
 
@@ -248,7 +163,42 @@ config_isadev(isdp, mp)
 		return (1);
 	} else	return(0);
 }
-#endif /* (!) notyet */
+
+void
+config_attach(struct isa_driver *dp, struct isa_device *isdp)
+{
+	extern struct isa_device isa_subdev[];
+	struct isa_device *dvp;
+
+	if(isdp->id_masunit==-1) {
+		(*dp->attach)(isdp);
+		return;
+	}
+
+	if(isdp->id_masunit==0) {
+		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
+			if (dvp->id_driver != dp)
+				continue;
+			if (dvp->id_masunit != isdp->id_masunit)
+				continue;
+			if (dvp->id_physid == -1)
+				continue;
+			(*dp->attach)(dvp);
+		}
+		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
+			if (dvp->id_driver != dp)
+				continue;
+			if (dvp->id_masunit != isdp->id_masunit)
+				continue;
+			if (dvp->id_physid != -1)
+				continue;
+			(*dp->attach)(dvp);
+		}
+		return;
+	}
+	printf("id_masunit has weird value\n");
+}
+
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
