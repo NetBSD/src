@@ -83,7 +83,7 @@ INC_DIR	= ../include
 all: $(LIB)
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
 
@@ -887,6 +887,7 @@ vstring_vstream.o: vstream.h
 vstring_vstream.o: vstring_vstream.h
 watchdog.o: watchdog.c
 watchdog.o: sys_defs.h
+watchdog.o: posix_signals.h
 watchdog.o: msg.h
 watchdog.o: mymalloc.h
 watchdog.o: watchdog.h

@@ -1,3 +1,31 @@
+Major changes with postfix-19991231-pl11:
+=========================================
+
+On RedHat Linux 7.0, you must install the db3-devel RPM before you
+can compile the Postfix source code.
+
+This release folds in some code changes from the snapshot releases
+that address some anomalies in queue manager scheduling behavior:
+
+- The queue manager could schedule too many connections to the same
+  destination (same domain name spelled in upper and lower case).
+
+- The queue manager could schedule too few connections to the same
+  destination (back off even in case of successful delivery).
+
+- The confusing site_hog_factor is disabled by default. It caused
+  unnecessary mail delivery delays on inbound mail gateways.
+
+Incompatible changes with postfix-19991231-pl10:
+================================================
+
+Berkeley DB support has changed for Solaris, HP-UX, UNIXWARE, IRIX.
+On these systems, Postfix must no longer use DB 1.85 compatibility
+mode, because that mode loses the file lock while building a table,
+so that table lookups fail and mail is lost. See the DB_README file
+for instructions on how to build Postfix with third-party Berkeley
+DB support.
+
 Major changes with postfix-19991231-pl08:
 =========================================
 

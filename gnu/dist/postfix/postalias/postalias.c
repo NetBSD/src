@@ -252,6 +252,12 @@ static void postalias(char *map_type, char *path_name,
     }
 
     /*
+     * Update or append sendmail and NIS signatures.
+     */
+    if ((open_flags & O_TRUNC) == 0)
+	mkmap->dict->flags |= DICT_FLAG_DUP_REPLACE;
+
+    /*
      * Sendmail compatibility: add the @:@ signature to indicate that the
      * database is complete. This might be needed by NIS clients running
      * sendmail.

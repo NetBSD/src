@@ -143,11 +143,11 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
 		    || sane_link(tmpfile, newfile) < 0)) {
 		vstring_sprintf(why, "link to %s: %m", newfile);
 	    } else {
-		if (unlink(tmpfile) < 0)
-		    msg_warn("remove %s: %m", tmpfile);
 		status = 0;
 	    }
 	}
+	if (unlink(tmpfile) < 0)
+	    msg_warn("remove %s: %m", tmpfile);
     }
     set_eugid(var_owner_uid, var_owner_gid);
 

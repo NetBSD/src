@@ -26,7 +26,7 @@ $(PROG): $(OBJS) $(LIBS)
 	./$(PROG) -d |egrep -v '^(myhostname|mydomain|mynetworks) ' >$@
 
 Makefile: Makefile.in
-	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs; cat $?) >$@
+	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../makedefs && cat $?) >$@
 
 test:	$(TESTPROG)
 
