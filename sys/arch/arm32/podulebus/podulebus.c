@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.30 1998/07/07 03:05:16 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.31 1998/08/25 21:56:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -54,6 +54,7 @@
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
 #include <machine/pte.h>
+#include <machine/vmparam.h>
 #include <arm32/iomd/iomdreg.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
