@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.4 2003/07/15 00:24:52 lukem Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.5 2003/10/30 22:03:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.4 2003/07/15 00:24:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.5 2003/10/30 22:03:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,9 @@ becc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			}
 			break;
 		default:
-			break;
+			printf("becc_pci_intr_map: bogus pin: %d\n",
+			    pa->pa_intrpin);
+			return (1);
 		}
 	} else {
 		switch (pa->pa_intrpin) {
