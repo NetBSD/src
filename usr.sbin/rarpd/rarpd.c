@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.31 1999/01/11 22:40:01 kleink Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.32 1999/02/13 19:58:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.31 1999/01/11 22:40:01 kleink Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.32 1999/02/13 19:58:29 thorpej Exp $");
 #endif
 
 
@@ -635,15 +635,16 @@ rarp_process(ii, pkt)
 		rarperr(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
-	for (; ii != NULL; ii = ii->ii_alias) {
+	for (;; ii = ii->ii_alias) {
 		target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
 		    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
 		if (target_ipaddr != 0)
 			break;
+		if (ii->ii_alias == NULL)
+			break;
 	}
 
 	if (target_ipaddr == 0) {
-
 		in.s_addr = ii->ii_ipaddr & ii->ii_netmask;
 		rarperr(NONFATAL, "cannot find %s on net %s",
 		    ename, inet_ntoa(in));
