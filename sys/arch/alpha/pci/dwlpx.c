@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.17 1998/06/06 23:11:52 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.18 1999/02/12 06:09:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.17 1998/06/06 23:11:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.18 1999/02/12 06:09:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ dwlpx_iointr(framep, vec)
 	ionode = (vec >> 8) & 0xf;
 	hosenum = (vec >> 4) & 0x7;
 	if (ionode >= DWLPX_NIONODE || hosenum >= DWLPX_NHOSE) {
-		panic("dwlpx_iointr: mangled vector %x", vec);
+		panic("dwlpx_iointr: mangled vector 0x%lx", vec);
 		/* NOTREACHED */
 	}
 	sc = dwlps[ionode][hosenum];
