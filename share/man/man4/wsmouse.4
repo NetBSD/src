@@ -1,0 +1,63 @@
+.\" $NetBSD: wsmouse.4,v 1.1 1999/03/22 19:15:03 drochner Exp $
+
+.Dd March 20, 1999
+.Os
+.Dt WSMOUSE 4
+.Sh NAME
+.Nm wsmouse
+.Nd generic mouse support in wscons
+
+.Sh SYNOPSIS
+.Cd "wsmouse*   at pms?"
+(PS/2 mouse)
+.Cd "wsmouse*   at pmsi?"
+(
+.Dq Intellimouse
+-compatible wheel mouse with PS/2 interface)
+.Cd "wsmouse*   at ums?"
+(USB mouse)
+.Cd "wsmouse*   at lms?"
+(Logitech bus mouse, i386 only)
+.Cd "wsmouse*   at mms?"
+(Microsoft InPort mouse, i386 only)
+.Cd "wsmouse0   at ams?"
+(Apple ADB mouse)
+
+.Sh DESCRIPTION
+The
+.Nm
+driver is an abstraction layer for mice within the
+.Xr wscons 4
+framework. It is attached to the hardware specific keyboard drivers and
+provides a character device interface. For use with X servers,
+.Dq mouse events
+can be generated.
+.Pp
+The
+.Nm
+driver provides a number of ioctl functions to control
+various parameters. A complete list is in
+.Pa /usr/include/dev/wscons/wsconsio.h .
+The
+.Xr wsconsctl 8
+utility gives access to these variables.
+
+.Sh FILES
+.Bl -item
+.It
+.Pa /dev/wsmouse*
+.It
+.Pa /usr/include/dev/wscons/wsconsio.h .
+.El
+
+.Sh BUGS
+There is little support for hot insertion and
+removal.
+
+.Sh SEE ALSO
+.Xr wscons 4 ,
+.Xr wsconsctl 8 ,
+.Xr pms 4 ,
+.Xr lms 4 ,
+.Xr mms 4 ,
+.Xr ums 4
