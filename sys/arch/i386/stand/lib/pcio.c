@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.9 1999/04/14 11:17:05 drochner Exp $	 */
+/*	$NetBSD: pcio.c,v 1.10 1999/09/10 16:23:55 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -302,8 +302,17 @@ awaitkey(timeout, tell)
 	i = timeout * POLL_FREQ;
 
 	while (i) {
-		if (tell && (i % POLL_FREQ) == 0)
-			printf("%d\b", i/POLL_FREQ);
+		if (tell && (i % POLL_FREQ) == 0) {
+			char numbuf[20];
+			int len, j;
+
+			sprintf(numbuf, "%d ", i/POLL_FREQ);
+			len = strlen(numbuf);
+			for (j = 0; j < len; j++)
+				numbuf[len + j] = '\b';
+			numbuf[len + j] = '\0';
+			printf(numbuf);
+		}
 		if (iskey()) {
 			/* flush input buffer */
 			while (iskey())
