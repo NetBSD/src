@@ -1,4 +1,0 @@
-# $NetBSD: md.mvme68k,v 1.4 1999/04/19 03:11:34 simonb Exp $
-./etc/fstab.nfs
-./etc/fstab.sd
-./etc/ld.so.conf

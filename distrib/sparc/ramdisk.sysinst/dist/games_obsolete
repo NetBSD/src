@@ -1,8 +1,0 @@
-$NetBSD: games_obsolete,v 1.1 1999/04/30 05:09:45 abs Exp $
-/usr/games/chess
-/usr/games/hide/chess
-/usr/share/games/atc/ATC_scores
-/usr/share/games/gnuchess.book
-/usr/share/games/larn/lfortune
-/usr/share/man/cat6/chess.0
-/usr/share/man/man6/chess.6

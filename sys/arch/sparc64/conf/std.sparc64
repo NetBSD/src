@@ -1,9 +1,0 @@
-#	$NetBSD: std.sparc64,v 1.5 1999/05/23 11:08:01 mrg Exp $
-
-#
-# Mandatory NetBSD/sparc kernel options.
-#
-
-machine		sparc64		# Machine architecture; required by config(8)
-
-options 	EXEC_SCRIPT	# execve(2) support for scripts

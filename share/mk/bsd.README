@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.51 1999/07/26 02:01:47 mrg Exp $
+#	$NetBSD: bsd.README,v 1.51.2.1 1999/08/10 00:43:35 mcr Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -97,6 +97,12 @@ MKPROFILE	If "no", don't build or install the profiling libraries.
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKINFO=no MKMAN=no
 		MKNLS=no".  I.e, don't build catman pages, documentation,
 		Info documentation, man pages, NLS files, ...
+
+MORTALINSTALL	If "yes", then omit setting group and ownership on
+		all files that are installed. This can be used to
+		permit non-root to install files, particularly
+		useful when working across NFS, or when $DESTDIR
+		is local. Do not use on production systems.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.30 1999/03/10 06:34:19 ross Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.30.4.1 1999/08/10 00:43:36 mcr Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -68,8 +68,13 @@ ${DESTDIR}${KMODDIR}/${PROG}: .MADE
 
 .PRECIOUS: ${DESTDIR}${KMODDIR}/${PROG}
 ${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
+.if ${MORTALINSTALL} != "no"
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} \
+		-m ${KMODMODE} ${.ALLSRC} ${.TARGET}
+.else
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${KMODOWN} -g ${KMODGRP} \
 		-m ${KMODMODE} ${.ALLSRC} ${.TARGET}
+.endif
 .endif
 
 lint: ${LOBJS}

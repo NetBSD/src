@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.46 1999/04/16 18:56:19 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.46.2.1 1999/08/10 00:43:37 mcr Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -48,8 +48,13 @@ MANPAGES=	${MAN}
 CATPAGES=	${MANPAGES:C/(.*).([1-9])/\1.cat\2/}
 .endif
 
-MINSTALL=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${MANOWN} \
-			-g ${MANGRP} -m ${MANMODE}
+.if ${MORTALINSTALL} != "no"
+MINSTALL=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} \
+			-m ${MANMODE}
+.else
+MINSTALL=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${MANOWN} -g ${MANGRP} \
+			-m ${MANMODE}
+.endif
 
 .if defined(MANZ)
 # chown and chmod are done afterward automatically
