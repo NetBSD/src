@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.51 2000/04/14 06:26:54 simonb Exp $	*/
+/*	$NetBSD: pstat.c,v 1.52 2000/06/12 13:30:04 assar Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.51 2000/04/14 06:26:54 simonb Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.52 2000/06/12 13:30:04 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,20 +427,26 @@ ufs_getflags(vp, ip, flags)
 	 */
 
 	flag = ip->i_flag;
-	if (flag & IN_RENAME)
-		*flags++ = 'R';
-	if (flag & IN_UPDATE)
-		*flags++ = 'U';
 	if (flag & IN_ACCESS)
 		*flags++ = 'A';
 	if (flag & IN_CHANGE)
 		*flags++ = 'C';
+	if (flag & IN_UPDATE)
+		*flags++ = 'U';
 	if (flag & IN_MODIFIED)
 		*flags++ = 'M';
+	if (flag & IN_ACCESSED)
+		*flags++ = 'a';
+	if (flag & IN_RENAME)
+		*flags++ = 'R';
 	if (flag & IN_SHLOCK)
 		*flags++ = 'S';
 	if (flag & IN_EXLOCK)
 		*flags++ = 'E';
+	if (flag & IN_CLEANING)
+		*flags++ = 'c';
+	if (flag & IN_ADIROP)
+		*flags++ = 'a';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';
@@ -538,6 +544,12 @@ nfs_print(vp)
 		*flags++ = 'O';
 	if (flag & NQNFSEVICTED)
 		*flags++ = 'G';
+	if (flag & NACC)
+		*flags++ = 'A';
+	if (flag & NUPD)
+		*flags++ = 'U';
+	if (flag & NCHG)
+		*flags++ = 'C';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';
@@ -787,6 +799,9 @@ ttyprt(tp)
 		break;
 	case STRIPDISC:
 		(void)printf("strip\n");
+		break;
+	case HDLCDISC:
+		(void)printf("hdlc\n");
 		break;
 	default:
 		(void)printf("%d\n", tp->t_line);
