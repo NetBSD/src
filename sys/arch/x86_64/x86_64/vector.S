@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.6 2002/06/05 14:59:37 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.7 2002/06/05 19:16:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,18 +81,10 @@
 
 /*****************************************************************************/
 
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-
 #define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
 
 #define	BPTTRAP(a)	ZTRAP(a)
-
-#define CPUVAR(off)	%gs:CPU_INFO_/**/off
 
 	.text
 IDTVEC(trap00)
@@ -437,15 +429,42 @@ _C_LABEL(osyscall_return):
 
 #define MY_COUNT _C_LABEL(uvmexp)
 
+#ifdef __STDC__
+#define XINTR(irq_num)		Xintr ## irq_num
+#define XHOLD(irq_num)		Xhold ## irq_num
+#define XSTRAY(irq_num)		Xstray ## irq_num
+#else
 #define	XINTR(irq_num)		Xintr/**/irq_num
 #define	XHOLD(irq_num)		Xhold/**/irq_num
 #define	XSTRAY(irq_num)		Xstray/**/irq_num
+#endif
+
+#ifdef __STDC__
+#define XRESUME_VEC(irq_num)                                            \
+	ALIGN_TEXT; .globl Xresume ## irq_num; Xresume ## irq_num:
+#define XRECURSE_VEC(irq_num)                                           \
+	ALIGN_TEXT; .globl Xrecurse ## irq_num; Xrecurse ## irq_num:
+#define XSTRAY_VEC(irq_num)                                             \
+	ALIGN_TEXT; .globl Xstray ## irq_num; Xstray ## irq_num:
+#define XHOLD_VEC(irq_num)                                              \
+	ALIGN_TEXT; .globl Xhold ## irq_num; Xhold ## irq_num:
+#else
+#define XRESUME_VEC(irq_num)                                            \
+ 	ALIGN_TEXT; .globl Xresume/**/irq_num; Xresume/**/irq_num:
+#define XRECURSE_VEC(irq_num)                                           \
+ 	ALIGN_TEXT; .globl Xrecurse/**/irq_num; Xrecurse/**/irq_num:
+#define XSTRAY_VEC(irq_num)                                             \
+	ALIGN_TEXT; .globl Xstray/**/irq_num; Xstray/**/irq_num:
+#define XHOLD_VEC(irq_num)                                              \
+	ALIGN_TEXT; .globl Xhold/**/irq_num; Xhold/**/irq_num:
+#endif /* __STDC__ */
+
 
 #define	INTR(irq_num, icu, ack) \
-IDTVEC(resume/**/irq_num)						;\
+XRESUME_VEC(irq_num)							;\
 	cli								;\
 	jmp	1f							;\
-IDTVEC(recurse/**/irq_num)						;\
+XRECURSE_VEC(irq_num)							;\
 	movq	%rsp,%r10						;\
 	movl	%ss,%r11d						;\
 	pushq	%r11							;\
@@ -492,13 +511,13 @@ XINTR(irq_num):								;\
 	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-IDTVEC(stray/**/irq_num)						;\
+XSTRAY_VEC(irq_num)							;\
 	movq	$irq_num,%rdi						;\
 	call	_C_LABEL(isa_strayintr)					;\
 	leaq	_C_LABEL(strayintrcnt)(%rip),%rdi			;\
 	incl	(4*(irq_num))(%rdi)					;\
 	jmp	5b							;\
-IDTVEC(hold/**/irq_num)							;\
+XHOLD_VEC(irq_num)							;\
 	leaq	_C_LABEL(ipending)(%rip),%rdi				;\
 	orb	$IRQ_BIT(irq_num),IRQ_BYTE(irq_num)(%rdi)		;\
 	INTRFASTEXIT
