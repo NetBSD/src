@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.1.2.1 1997/07/01 16:52:34 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.1.2.2 1997/08/14 11:06:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -512,7 +512,7 @@ show_scsipi_cmd(xs)
 		while (i < xs->cmdlen) {
 			if (i)
 				printf(",");
-			printf("%x", b[i++]);
+			printf("0x%x", b[i++]);
 		}
 		printf("-[%d bytes]\n", xs->datalen);
 		if (xs->datalen)

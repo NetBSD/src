@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.3.2.1 1997/07/01 17:34:07 bouyer Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.3.2.2 1997/08/14 11:06:04 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -51,8 +51,8 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include "sbcreg.h"
-#include "sbcvar.h"
+#include <mac68k/dev/sbcreg.h>
+#include <mac68k/dev/sbcvar.h>
 
 /*
  * From Guide to the Macintosh Family Hardware, pp. 137-143

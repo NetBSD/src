@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.47.2.3 1997/07/30 16:23:46 bouyer Exp $
+# $NetBSD: files.alpha,v 1.47.2.4 1997/08/14 11:06:16 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -12,6 +12,7 @@ defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 defopt	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 defopt	DEC_3000_300	# Pelican etc:	3000/300*
 defopt	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+defopt	DEC_550		# Miata:	Personal Workstation (550)
 defopt	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 defopt	DEC_EB164	# EB164:	AlphaPC 164
 defopt	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
@@ -23,7 +24,7 @@ defopt	FIX_UNALIGNED_VAX_FP
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
-define  wsconsdev {[console = -1]}
+define	wsconsdev {[console = -1]}
 
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
@@ -87,7 +88,7 @@ file	arch/alpha/wscons/ms.c		wscons
 # TurboLaser Bus Support
 #
 
-device	tlsb { node = -1 ,  offset = -1  }
+device	tlsb { node = -1, offset = -1 }
 attach	tlsb at mainbus
 file	arch/alpha/tlsb/tlsb.c		tlsb & dec_kn8ae
 
@@ -226,7 +227,17 @@ include "dev/eisa/files.eisa"
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-device	apecs: pcibus, alpha_sgmap
+define	alpha_pci_swiz_bus
+file	arch/alpha/pci/pci_swiz_io_common.c	alpha_pci_swiz_bus
+file	arch/alpha/pci/pci_swiz_mem_common.c	alpha_pci_swiz_bus
+
+define	alpha_pci_sgmap_pte32
+file	arch/alpha/pci/pci_sgmap_pte32.c	alpha_pci_sgmap_pte32
+
+define	alpha_pci_sgmap_pte64
+file	arch/alpha/pci/pci_sgmap_pte64.c	alpha_pci_sgmap_pte64
+
+device	apecs: pcibus, alpha_sgmap, alpha_pci_swiz_bus, alpha_pci_sgmap_pte64
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
 file	arch/alpha/pci/apecs_bus_io.c	apecs
@@ -234,36 +245,31 @@ file	arch/alpha/pci/apecs_bus_mem.c	apecs
 file	arch/alpha/pci/apecs_dma.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
-device	lca: pcibus, alpha_sgmap
+device	cia: pcibus, alpha_sgmap, alpha_pci_swiz_bus, alpha_pci_sgmap_pte64
+attach	cia at mainbus
+file	arch/alpha/pci/cia.c		cia
+file	arch/alpha/pci/cia_dma.c	cia
+file	arch/alpha/pci/cia_pci.c	cia
+file	arch/alpha/pci/cia_swiz_bus_io.c cia
+file	arch/alpha/pci/cia_swiz_bus_mem.c cia
+file	arch/alpha/pci/cia_swiz_pci.c	cia
+
+device	dwlpx:	pcibus, alpha_sgmap, alpha_pci_swiz_bus, alpha_pci_sgmap_pte32
+attach	dwlpx at kft
+file	arch/alpha/pci/dwlpx.c		dwlpx
+file	arch/alpha/pci/dwlpx_dma.c	dwlpx
+file	arch/alpha/pci/dwlpx_pci.c	dwlpx
+file	arch/alpha/pci/pci_kn8ae.c	dwlpx	# XXX doesn't really fit here
+file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
+file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
+
+device	lca: pcibus, alpha_sgmap, alpha_pci_swiz_bus, alpha_pci_sgmap_pte64
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
 file	arch/alpha/pci/lca_bus_io.c	lca
 file	arch/alpha/pci/lca_bus_mem.c	lca
 file	arch/alpha/pci/lca_dma.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
-
-device	cia: pcibus, alpha_sgmap
-attach	cia at mainbus
-file	arch/alpha/pci/cia.c		cia
-file	arch/alpha/pci/cia_bus_io.c	cia
-file	arch/alpha/pci/cia_bus_mem.c	cia
-file	arch/alpha/pci/cia_dma.c	cia
-file	arch/alpha/pci/cia_pci.c	cia
-
-device	dwlpx:	pcibus, alpha_sgmap
-attach	dwlpx at kft
-file	arch/alpha/pci/dwlpx.c		dwlpx
-file	arch/alpha/pci/dwlpx_dma.c	dwlpx
-file	arch/alpha/pci/dwlpx_pci.c	dwlpx
-file	arch/alpha/pci/pci_kn8ae.c	dwlpx
-file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
-file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
-
-# common support files
-file	arch/alpha/pci/pci_sgmap_pte32.c	dwlpx
-file	arch/alpha/pci/pci_sgmap_pte64.c	apecs | cia | lca
-file	arch/alpha/pci/pci_swiz_io_common.c	apecs | cia | dwlpx | lca
-file	arch/alpha/pci/pci_swiz_mem_common.c	apecs | cia | dwlpx | lca
 
 # CPU support files
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
@@ -346,6 +352,7 @@ file	arch/alpha/alpha/promcons.c
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
+file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
 file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
