@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.69 2001/10/14 00:42:31 lukem Exp $
+#	$NetBSD: security,v 1.70 2001/10/15 03:00:22 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -840,7 +840,7 @@ fi
 echo $MP > $TMP1			# always add /etc/master.passwd
 for file in $special_files; do
 	[ ! -s $file ] && continue
-	mtree -D -k type -f $file -I nomail |
+	mtree -D -k type -f $file -I nodiff |
 	    sed '/^type=file/!d ; s/type=file \.//'
 done >> $TMP1
 sort -u $TMP1 > $TMP2
