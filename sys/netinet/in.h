@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.63 2003/11/10 20:50:29 jonathan Exp $	*/
+/*	$NetBSD: in.h,v 1.64 2003/11/19 18:39:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -381,7 +381,8 @@ struct ip_mreq {
 #define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
 #define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
 #define	IPCTL_IFQ	       21	/* ipintrq node */
-#define	IPCTL_MAXID	       22
+#define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
+#define	IPCTL_MAXID	       23
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -406,6 +407,7 @@ struct ip_mreq {
 	{ "grettl", CTLTYPE_INT }, \
 	{ "checkinterface", CTLTYPE_INT }, \
 	{ "ifq", CTLTYPE_NODE }, \
+	{ "random_id", CTLTYPE_INT }, \
 }
 #endif /* _NETBSD_SOURCE */
 
