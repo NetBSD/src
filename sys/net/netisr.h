@@ -1,4 +1,4 @@
-/*	$NetBSD: netisr.h,v 1.8 1994/06/29 06:36:31 cgd Exp $	*/
+/*	$NetBSD: netisr.h,v 1.9 1994/07/26 18:57:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -42,10 +42,10 @@
  * The software interrupt level for the network is higher than the software
  * level for the clock (so you can enter the network in routines called
  * at timeout time).
+ *
+ * The routine to request a network software interrupt, setsoftnet(),
+ * is defined in the machine-specific include files.
  */
-#if defined(vax) || defined(tahoe)
-#define	setsoftnet()	mtpr(SIRR, 12)
-#endif
 
 /*
  * Each ``pup-level-1'' input queue has a bit in a ``netisr'' status
