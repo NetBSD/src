@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.51 1998/03/12 01:24:52 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.52 1998/03/12 02:59:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,10 @@
  *
  * Notes:
  *
- *	All page table access is done via K0SEG.
+ *	All page table access is done via K0SEG.  The one exception
+ *	to this is for kernel mappings.  Since all kernel page
+ *	tables are pre-allocated, we can use the Virtual Page Table
+ *	to access PTEs that map K1SEG addresses.
  *
  *	Kernel page table pages are statically allocated in
  *	pmap_bootstrap(), and are never freed.  In the future,
@@ -148,7 +151,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.51 1998/03/12 01:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.52 1998/03/12 02:59:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1133,6 +1136,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 #ifdef PMAPSTATS
 		enter_stats.kernel++
 #endif
+#ifdef DEBUG
 		/*
 		 * All kernel level 2 and 3 page tables are
 		 * pre-allocated and mapped in.  Therefore, the
@@ -1142,6 +1146,20 @@ pmap_enter(pmap, va, pa, prot, wired)
 			panic("pmap_enter: kernel level 1 PTE not valid");
 		if (pmap_pte_v(pmap_l2pte(pmap, va)) == 0)
 			panic("pmap_enter: kernel level 2 PTE not valid");
+
+		/*
+		 * Get the PTE that will map the page.
+		 */
+		pte = pmap_l3pte(pmap, va);
+#else
+		/*
+		 * All kernel level 2 and 3 page tables are
+		 * pre-allocated and mapped in, so we can use
+		 * the Virtual Page Table to get the PTE for
+		 * kernel mappings.
+		 */
+		pte = &VPT[VPT_INDEX(va)];
+#endif
 	} else {
 		pt_entry_t *l1pte, *l2pte;
 
@@ -1192,9 +1210,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 				    "0x%lx\n", pmap_pte_pa(l2pte));
 #endif
 		}
-	}
 
-	pte = pmap_l3pte(pmap, va);
+		/*
+		 * Get the PTE that will map the page.
+		 */
+		pte = pmap_l3pte(pmap, va);
+	}
 
 	/*
 	 * Check to see if the old mapping is valid.  If not, validate the
@@ -2034,7 +2055,11 @@ pmap_emulate_reference(p, v, user, write)
 	if (v >= VM_MIN_KERNEL_ADDRESS) {
 		if (user)
 			panic("pmap_emulate_reference: user ref to kernel");
+#ifdef DEBUG
 		pte = pmap_l3pte(pmap_kernel(), v);
+#else
+		pte = &VPT[VPT_INDEX(v)];
+#endif
 	} else {
 #ifdef DIAGNOSTIC
 		if (p == NULL)
