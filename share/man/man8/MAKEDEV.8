@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.1 2003/10/24 20:26:57 jdolecek Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.2 2003/10/24 23:44:15 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 24, 2003
+.Dd October 25, 2003
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -116,17 +116,23 @@ SCSI tapes, see
 QIC-interfaced (e.g. not SCSI) 3M cartridge tape, see
 .Xr \&wt 4
 . It Ar ht#
-MASSBUS TM03 and TU??
+MASSBUS TM03 and TU??, see
+.Xr \&vax/ht 4
 . It Ar mt#
-MSCP tapes (e.g. TU81, TK50)
+MSCP tapes (e.g. TU81, TK50), see
+.Xr \&vax/mt 4
 . It Ar tm#
-UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11)
+UNIBUS TM11 and TE10 emulations (e.g. Emulex TC-11), see
+.Xr \&vax/tm 4
 . It Ar ts#
-UNIBUS TS11
+UNIBUS TS11, see
+.Xr \&vax/ts 4
 . It Ar ut#
-UNIBUS TU45 emulations (e.g. si 9700)
+UNIBUS TU45 emulations (e.g. si 9700), see
+.Xr \&vax/ut 4
 . It Ar uu#
-TU58 cassettes on DL11 controller
+TU58 cassettes on DL11 controller, see
+.Xr \&vax/uu 4
 . El
 .It Disks :
 . Bl -tag -width 0123456789 -compact
@@ -149,17 +155,24 @@ SCSI disks, see
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
 .Xr \&wd 4
 . It Ar bmd#
-Nereid bank memory disks
+Nereid bank memory disks, see
+.Xr \&x68k/bmd 4
 . It Ar ed#
-IBM PS/2 ESDI disk devices
+IBM PS/2 ESDI disk devices, see
+.Xr \&edc 4
 . It Ar fd#
-``floppy'' disk drives (3 1/2``, 5 1/4'')
+``floppy'' disk drives (3 1/2``, 5 1/4''), see
+.Xr \&amiga/fdc 4 ,
+.Xr \&i386/fdc 4
 . It Ar gdrom#
-Dreamcast ``gigadisc'' CD-ROM drive
+Dreamcast ``gigadisc'' CD-ROM drive, see
+.Xr \&dreamcast/gdrom 4
 . It Ar hk#
-UNIBUS RK06 and RK07
+UNIBUS RK06 and RK07, see
+.Xr \&vax/hk 4
 . It Ar hp#
-MASSBUS RM??
+MASSBUS RM??, see
+.Xr \&vax/hp 4
 . It Ar ld#
 Logical disk devices (e.g., hardware RAID), see
 .Xr \&ld 4
@@ -176,13 +189,16 @@ MSCP disks (RA??, RD??)
 . It Ar rb#
 730 IDC w/ RB80 and/or RB02
 . It Ar rd#
-HDC9224 RD disks on VS2000
+HDC9224 RD disks on VS2000, see
+.Xr \&hp300/rd 4
 . It Ar rl#
-UNIBUS RL02
+UNIBUS RL02, see
+.Xr \&vax/rl 4
 . It Ar rx#
 MSCP floppy disk (RX33/50/...)
 . It Ar up#
-Other UNIBUS devices (e.g. on Emulex SC-21V controller)
+Other UNIBUS devices (e.g. on Emulex SC-21V controller), see
+.Xr \&vax/up 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
 .Xr \&vnd 4
@@ -197,11 +213,15 @@ Xylogic 450/451 disks
 wscons mouse events, see
 .Xr \&wsmouse 4
 . It Ar lms#
-Logitech bus mouse
+Logitech bus mouse, see
+.Xr \&i386/lms 4
 . It Ar mms#
-Microsoft bus mouse
+Microsoft bus mouse, see
+.Xr \&dreamcast/mms 4 ,
+.Xr \&i386/mms 4
 . It Ar qms#
-``quadrature mouse''
+``quadrature mouse'', see
+.Xr \&acorn32/qms 4
 . It Ar pms#
 PS/2 mouse
 . It Ar mouse
@@ -213,7 +233,11 @@ Mouse (provides events, for X11)
 wscons keyboard events, see
 .Xr \&wskbd 4
 . It Ar kbd
-Raw keyboard (provides events, for X11)
+Raw keyboard (provides events, for X11), see
+.Xr \&acorn32/kbd 4 ,
+.Xr \&sparc/kbd 4 ,
+.Xr \&sun2/kbd 4 ,
+.Xr \&sun3/kbd 4
 . It Ar kbdctl
 Keyboard control
 . El
@@ -228,11 +252,15 @@ SB1250 (``sbscn'') serial ports (sbmips), see
 . It Ar ttyE#
 wscons - Workstation console (``wscons'') glass-tty emulators
 . It Ar ttyCZ?
-Cyclades-Z multiport serial boards. Each ``unit'' makes 64 ports.
+Cyclades-Z multiport serial boards. Each ``unit'' makes 64 ports., see
+.Xr \&cz 4
 . It Ar ttyCY?
-Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports.
+Cyclom-Y multiport serial boards. Each ``unit'' makes 32 ports., see
+.Xr \&cy 4
 . It Ar ttye#
-ITE bitmapped consoles
+ITE bitmapped consoles, see
+.Xr \&amiga/ite 4 ,
+.Xr \&hp300/ite 4
 . It Ar ttyv0
 pccons
 . It Ar ttyC?
@@ -242,7 +270,8 @@ SA1110 serial port (hpcarm)
 . It Ar ttyTX?
 TX39 internal serial ports (hpcmips)
 . It Ar ttyB?
-DEC 3000 ZS8530 (``scc'') serial ports (alpha)
+DEC 3000 ZS8530 (``scc'') serial ports (alpha), see
+.Xr \&scc 4
 . It Ar ttyA#
 Mfc serial ports (amiga)
 . It Ar ttyB#
@@ -258,25 +287,30 @@ UART on first 68901 (formerly mdm01) (atari)
 . It Ar ixpcom
 IXP12x0 COM ports
 . It Ar dca#
-HP200/300 single port serial interface
+HP200/300 single port serial interface, see
+.Xr \&hp300/dca 4
 . It Ar dcm#
-HP200/300 4 port serial mux interface
+HP200/300 4 port serial mux interface, see
+.Xr \&hp300/dcm 4
 . It Ar apci#
-HP400 4 port serial mux interface
+HP400 4 port serial mux interface, see
+.Xr \&hp300/apci 4
 . It Ar ttya
-'ttya' system console (luna68k)
+``ttya'' system console (luna68k)
 . It Ar ttyb
 Second system serial port (luna68k)
 . It Ar tty#
 Onboard serial ports (mvme68k) On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3. On the mvme167, and '177: ttyC1, ttyC2 and ttyC3. Note that tty[CZ]0 is grabbed by the console device so is not created by default, see
 .Xr \&tty 4
 . It Ar dc#
-PMAX 4 channel serial interface (kbd, mouse, modem, printer)
+PMAX 4 channel serial interface (kbd, mouse, modem, printer), see
+.Xr \&pmax/dc 4
 . It Ar scc#
 82530 serial interface (pmax), see
 .Xr \&scc 4
 . It Ar ttyZ#
-Zilog 8530 (``zstty'') serial ports
+Zilog 8530 (``zstty'') serial ports, see
+.Xr \&zstty 4
 . It Ar tty[abcd]
 Built-in serial ports (sparc)
 . It Ar tty#
@@ -289,40 +323,56 @@ Built-in serial ports (sun2, sun3)
 . It Ar ttyC?
 pccons (arc)
 . It Ar dz#
-UNIBUS DZ11 and DZ32 (vax)
+UNIBUS DZ11 and DZ32 (vax), see
+.Xr \&vax/dz 4
 . It Ar dh#
-UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11) (vax)
+UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11) (vax), see
+.Xr \&vax/dh 4
 . It Ar dmf#
-UNIBUS DMF32 (vax)
+UNIBUS DMF32 (vax), see
+.Xr \&vax/dmf 4
 . It Ar dhu#
-UNIBUS DHU11 (vax)
+UNIBUS DHU11 (vax), see
+.Xr \&vax/dhu 4
 . It Ar dmz#
-UNIBUS DMZ32 (vax)
+UNIBUS DMZ32 (vax), see
+.Xr \&vax/dmz 4
 . It Ar dl#
-UNIBUS DL11 (vax)
+UNIBUS DL11 (vax), see
+.Xr \&vax/dl 4
 . El
 .It Terminal multiplexors :
 . Bl -tag -width 0123456789 -compact
 . It Ar apci#
-HP400 4 port serial mux interface
+HP400 4 port serial mux interface, see
+.Xr \&hp300/apci 4
 . It Ar dc#
-4 channel serial interface (keyboard, mouse, modem, printer)
+4 channel serial interface (keyboard, mouse, modem, printer), see
+.Xr \&pmax/dc 4
 . It Ar dca#
-HP200/300 single port serial interface
+HP200/300 single port serial interface, see
+.Xr \&hp300/dca 4
 . It Ar dcm#
-HP200/300 4 port serial mux interface
+HP200/300 4 port serial mux interface, see
+.Xr \&hp300/dcm 4
 . It Ar dh#
-UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11)
+UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11), see
+.Xr \&vax/dh 4
 . It Ar dhu#
-UNIBUS DHU11
+UNIBUS DHU11, see
+.Xr \&vax/dhu 4
 . It Ar dl#
-UNIBUS DL11
+UNIBUS DL11, see
+.Xr \&vax/dl 4
 . It Ar dmf#
-UNIBUS DMF32
+UNIBUS DMF32, see
+.Xr \&vax/dmf 4
 . It Ar dmz#
-UNIBUS DMZ32
+UNIBUS DMZ32, see
+.Xr \&vax/dmz 4
 . It Ar dz#
-UNIBUS DZ11 and DZ32
+UNIBUS DZ11 and DZ32, see
+.Xr \&vax/dz 4
 . It Ar scc#
 82530 serial interface, see
 .Xr \&scc 4
@@ -330,7 +380,8 @@ UNIBUS DZ11 and DZ32
 .It Call units :
 . Bl -tag -width 0123456789 -compact
 . It Ar dn#
-UNIBUS DN11 and emulations (e.g. Able Quadracall)
+UNIBUS DN11 and emulations (e.g. Able Quadracall), see
+.Xr \&vax/dn 4
 . El
 .It Pseudo terminals :
 . Bl -tag -width 0123456789 -compact
@@ -347,7 +398,11 @@ First 2 ptys, for install media use only
 . It Ar arcpp#
 Archimedes parallel port
 . It Ar lpt#
-Stock lp
+Stock lp, see
+.Xr \&acorn32/lpt 4 ,
+.Xr \&i386/lpt 4 ,
+.Xr \&mvme68k/lpt 4 ,
+.Xr \&pc532/lpt 4
 . It Ar lpa#
 Interruptless lp
 . It Ar par#
@@ -374,7 +429,8 @@ USB Diamond Rio 500 devices, see
 USB scanners, see
 .Xr \&uscanner 4
 . It Ar ttyU#
-USB modems
+USB modems, see
+.Xr \&ucom 4
 . El
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
@@ -399,55 +455,74 @@ Trace device, see
 .It Video devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar bwtwo#
-Monochromatic frame buffer
+Monochromatic frame buffer, see
+.Xr \&sparc/bwtwo 4 ,
+.Xr \&sun2/bwtwo 4 ,
+.Xr \&sun3/bwtwo 4
 . It Ar cgtwo#
-8-bit color frame buffer
+8-bit color frame buffer, see
+.Xr \&sparc/cgtwo 4 ,
+.Xr \&sun3/cgtwo 4
 . It Ar cgthree#
-8-bit color frame buffer
+8-bit color frame buffer, see
+.Xr \&sparc/cgthree 4
 . It Ar cgfour#
-8-bit color frame buffer
+8-bit color frame buffer, see
+.Xr \&sparc/cgfour 4 ,
+.Xr \&sun3/cgfour 4
 . It Ar cgsix#
-Accelerated 8-bit color frame buffer
+Accelerated 8-bit color frame buffer, see
+.Xr \&sparc/cgsix 4
 . It Ar cgeight#
-24-bit color frame buffer
+24-bit color frame buffer, see
+.Xr \&sparc/cgeight 4
 . It Ar etvme
-Tseng et-compatible cards on VME
+Tseng et-compatible cards on VME (atari)
 . It Ar ik#
-UNIBUS interface to Ikonas frame buffer
+UNIBUS interface to Ikonas frame buffer, see
+.Xr \&vax/ik 4
 . It Ar leo
-Circad Leonardo VME-bus true color
+Circad Leonardo VME-bus true color (atari)
 . It Ar ps#
-UNIBUS interface to Picture System 2
+UNIBUS interface to Picture System 2, see
+.Xr \&vax/ps 4
 . It Ar qv#
 QVSS (MicroVAX) display
 . It Ar tcx#
-Accelerated 8/24-bit color frame buffer
+Accelerated 8/24-bit color frame buffer, see
+.Xr \&sparc/tcx 4
 . El
 .It Maple bus devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar maple
-Maple bus control devices
+Maple bus control devices, see
+.Xr \&dreamcast/maple 4
 . It Ar mlcd#
-Maple bus LCD devices
+Maple bus LCD devices, see
+.Xr \&dreamcast/mlcd 4
 . It Ar mmem#
-Maple bus storage devices
+Maple bus storage devices, see
+.Xr \&dreamcast/mmem 4
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar ad#
-UNIBUS interface to Data Translation A/D converter
+UNIBUS interface to Data Translation A/D converter, see
+.Xr \&vax/ad 4
 . It Ar agp#
 AGP GART devices, see
 .Xr \&agp 4
 . It Ar altq
 ALTQ control interface
 . It Ar apm
-Power management device
+Power management device, see
+.Xr \&i386/apm 4
 . It Ar audio#
 Audio devices, see
 .Xr \&audio 4
 . It Ar beep
-PC speaker
+PC speaker, see
+.Xr \&acorn32/beep 4
 . It Ar bell#
 OPM bell device (x86k)
 . It Ar bktr
@@ -479,14 +554,17 @@ DPT/Adaptec EATA RAID management interface, see
 DPT/Adaptec I2O RAID management interface, see
 .Xr \&dpti 4
 . It Ar fb#
-Generic framebuffer pseudo-device
+PMAX generic framebuffer pseudo-device, see
+.Xr \&pmax/fb 4
 . It Ar fd
-File descriptors, see
-.Xr \&fd 4
+File descriptors
 . It Ar grf#
-Graphics frame buffer device
+Graphics frame buffer device, see
+.Xr \&amiga/grf 4 ,
+.Xr \&hp300/grf 4
 . It Ar hil
-HP300 HIL input devices
+HP300 HIL input devices, see
+.Xr \&hp300/hil 4
 . It Ar icp
 ICP-Vortex/Intel RAID control interface, see
 .Xr \&icp 4
@@ -501,7 +579,9 @@ IP Filter
 IrDA physical frame, see
 .Xr \&irframe 4
 . It Ar ite#
-Terminal emulator interface to HP300 graphics devices
+Terminal emulator interface to HP300 graphics devices, see
+.Xr \&amiga/ite 4 ,
+.Xr \&hp300/ite 4
 . It Ar joy#
 Joystick device, see
 .Xr \&joy 4
@@ -512,7 +592,8 @@ Kernel ttcp helper device, see
 Loadable kernel modules interface, see
 .Xr \&lkm 4
 . It Ar magma#
-Magma multiport serial/parallel cards
+Magma multiport serial/parallel cards, see
+.Xr \&sparc/magma 4
 . It Ar midi#
 MIDI, see
 .Xr \&midi 4
@@ -523,7 +604,8 @@ Mylex DAC960 control interface, see
 Mylex AcceleRAID/eXtremeRAID control interface, see
 .Xr \&mly 4
 . It Ar np#
-UNIBUS Ethernet co-processor interface, for downloading.
+UNIBUS Ethernet co-processor interface, for downloading., see
+.Xr \&vax/np 4
 . It Ar nsmb#
 SMB requester, see
 .Xr \&nsmb 4
@@ -533,9 +615,10 @@ OpenFirmware accessor
 PCI bus access devices, see
 .Xr \&pci 4
 . It Ar pf
-PF packet filter
+PF packet filter (not in tree)
 . It Ar pow#
-Power management device (x86k)
+Power management device (x86k), see
+.Xr \&x68k/pow 4
 . It Ar px#
 PixelStamp Xserver access, see
 .Xr \&px 4
@@ -546,7 +629,10 @@ Radio devices, see
 Random number generator, see
 .Xr \&rnd 4
 . It Ar rtc#
-Atari RealTimeClock
+RealTimeClock, see
+.Xr \&atari/rtc 4 ,
+.Xr \&hp300/rtc 4 ,
+.Xr \&pmppc/rtc 4
 . It Ar satlink#
 PlanetConnect satellite receiver driver
 . It Ar scsibus#
@@ -570,7 +656,8 @@ SCSI scanner, see
 . It Ar stic#
 PixelStamp interface chip
 . It Ar sysmon
-System Monitoring hardware
+System Monitoring hardware, see
+.Xr \&envsys 4
 . It Ar systrace
 Syscall tracer, see
 .Xr \&systrace 4
@@ -584,7 +671,8 @@ Network tunnel driver, see
 Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar veriexec
-Verified executable fingerprint loader
+Verified executable fingerprint loader, see
+.Xr \&verifiedexec 4
 . It Ar vmegen#
 Generic VME access
 . It Ar view#
