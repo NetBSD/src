@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.40 2000/08/12 14:52:44 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.41 2000/08/17 23:16:16 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -312,8 +312,9 @@ struct umass_softc {
 	unsigned char		drive;
 #	define DRIVE_GENERIC		0	/* use defaults for this one */
 #	define ZIP_100			1	/* to be used for quirks */
-#	define SHUTTLE_EUSB		2
-
+#	define ZIP_250			2
+#	define SHUTTLE_EUSB		3
+#	define INSYSTEM_USBCABLE	4
 	unsigned char		quirks;
 	/* The drive does not support Test Unit Ready. Convert to
 	 * Start Unit.
@@ -712,6 +713,14 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		return (UMATCH_VENDOR_PRODUCT_REV);
 	}
 
+	if (UGETW(dd->idVendor) == USB_VENDOR_INSYSTEM
+	    && UGETW(dd->idProduct) == USB_PRODUCT_INSYSTEM_USBCABLE) {
+		sc->drive = INSYSTEM_USBCABLE;
+		sc->proto = PROTO_ATAPI | PROTO_CBI;
+		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
+		return(UMATCH_VENDOR_PRODUCT);
+	}
+
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_MASS)
 		return (UMATCH_NONE);
@@ -868,6 +877,17 @@ USB_ATTACH(umass)
 	}
 	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sSubclass, 
 	       sProto);
+
+	if (sc->drive == INSYSTEM_USBCABLE) {
+		err = usbd_set_interface(0, 1);
+		if (err) {
+			DPRINTF(UDMASS_USB, ("%s: could not switch to "
+					     "Alt Interface %d\n",
+					     USBDEVNAME(sc->sc_dev), 1));
+			umass_disco(sc);
+			USB_ATTACH_ERROR_RETURN;
+                }
+        }
 
 	/*
 	 * In addition to the Control endpoint the following endpoints
