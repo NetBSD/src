@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.6 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.7 2004/07/04 13:09:12 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,6 +102,9 @@ struct cs_softc {
 
 	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* MAC address */
 
+	int	eeprom_size;		/* how large is the eeprom (in bytes) */
+	u_int16_t *eeprom_data;		/* copy of the eeprom data */
+
 #if NRND > 0
 	rndsource_element_t rnd_source; /* random source */
 #endif
@@ -174,6 +177,7 @@ struct cs_softc {
 #define CFGFLG_ATTACHED     0x0040 /* XXX should not be here? */
 #define CFGFLG_CARDBUS_HACK 0x0080
 #define CFGFLG_ENABLED      0x0100 /* XXX should not be here? */
+#define CFGFLG_PARSE_EEPROM 0x0200
 #define CFGFLG_NOT_EEPROM   0x8000
 
 
