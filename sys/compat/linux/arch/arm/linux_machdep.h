@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.3 2002/02/15 16:47:59 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.4 2003/03/01 04:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -76,5 +76,7 @@ struct linux_sigframe {
 	struct	linux_sigcontext sf_sc;
 	unsigned long	sf_extramask[LINUX__NSIG_WORDS - 1];
 };
+
+void linux_syscall_intern __P((struct proc *));
 
 #endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_syscall.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.9 2003/03/01 04:36:38 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2003/03/01 04:36:38 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -110,11 +110,77 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.8 2003/01/17 22:28:48 thorpej Ex
 #define LINUX_ARM_NR_BASE	0x9f0000
 #define LINUX_SYS_ARMBASE	0x000100 /* Must agree with syscalls.master */
 
-/* XXX */
-void linux_syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn);
+void linux_syscall_intern(struct proc *);
+void linux_syscall_plain(struct trapframe *, struct lwp *, u_int32_t);
+void linux_syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
 
 void
-linux_syscall(trapframe_t *frame, struct lwp *l, u_int32_t insn)
+linux_syscall_intern(struct proc *p)
+{
+#ifdef KTRACE
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+		p->p_md.md_syscall = linux_syscall_fancy;
+		return;
+	}
+#endif
+#ifdef SYSTRACE
+	if (p->p_flag & P_SYSTRACE) {
+		p->p_md.md_syscall = linux_syscall_fancy;
+		return;
+	}
+#endif
+	p->p_md.md_syscall = linux_syscall_plain;
+}
+
+void
+linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
+{
+	const struct sysent *callp;
+	struct proc *p = l->l_proc;
+	int code, error;
+	u_int nargs;
+	register_t *args, rval[2];
+
+	code = insn & 0x00ffffff;
+	/* Remap ARM-specific syscalls onto the end of the standard range. */
+	if (code > LINUX_ARM_NR_BASE)
+		code = code - LINUX_ARM_NR_BASE + LINUX_SYS_ARMBASE;
+	code &= LINUX_SYS_NSYSENT - 1;
+
+	/* Linux passes all arguments in order in registers, which is nice. */
+	args = &frame->tf_r0;
+	callp = p->p_emul->e_sysent + code;
+	nargs = callp->sy_argsize / sizeof(register_t);
+
+	rval[0] = 0;
+	rval[1] = 0;
+	error = (*callp->sy_call)(l, args, rval);
+
+	switch (error) {
+	case 0:
+		frame->tf_r0 = rval[0];
+		break;
+
+	case ERESTART:
+		/* Reconstruct the pc to point at the swi.  */
+ 		frame->tf_pc -= INSN_SIZE;
+		break;
+
+	case EJUSTRETURN:
+		/* nothing to do */
+		break;
+
+	default:
+		error = native_to_linux_errno[error];
+		frame->tf_r0 = error;
+		break;
+	}
+
+	userret(l);
+}
+
+void
+linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 {
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
