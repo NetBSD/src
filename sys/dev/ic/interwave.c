@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.19 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: interwave.c,v 1.20 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.19 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.20 2004/04/22 00:17:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,8 @@ iwreset(sc, warm)
 
 	sc->vers = reg >> 4;
 	if (!warm)
-		sprintf(iw_device.version, "%d.%d", sc->vers, sc->revision);
+		snprintf(iw_device.version, sizeof(iw_device.version), "%d.%d",
+		    sc->vers, sc->revision);
 
 	IW_WRITE_GENERAL_1(IDECI, 0x7f);	/* irqs and codec decode
 						 * enable */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.42 2003/12/09 19:43:54 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.43 2004/04/22 00:17:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.42 2003/12/09 19:43:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.43 2004/04/22 00:17:10 itojun Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -223,7 +223,7 @@ static inline void	iop_outl_msg(struct iop_softc *, int, u_int32_t);
 
 static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *, int, int);
-static void	iop_devinfo(int, char *);
+static void	iop_devinfo(int, char *, size_t);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
 static int	iop_submatch(struct device *, struct cfdata *, void *);
@@ -854,7 +854,7 @@ iop_adjqparam(struct iop_softc *sc, int mpi)
 }
 
 static void
-iop_devinfo(int class, char *devinfo)
+iop_devinfo(int class, char *devinfo, size_t l)
 {
 #ifdef I2OVERBOSE
 	int i;
@@ -864,12 +864,12 @@ iop_devinfo(int class, char *devinfo)
 			break;
 	
 	if (i == sizeof(iop_class) / sizeof(iop_class[0]))
-		sprintf(devinfo, "device (class 0x%x)", class);
+		snprintf(devinfo, l, "device (class 0x%x)", class);
 	else
-		strcpy(devinfo, iop_class[i].ic_caption);
+		strlcpy(devinfo, iop_class[i].ic_caption, l);
 #else
 
-	sprintf(devinfo, "device (class 0x%x)", class);
+	snprintf(devinfo, l, "device (class 0x%x)", class);
 #endif
 }
 
@@ -882,7 +882,7 @@ iop_print(void *aux, const char *pnp)
 	ia = aux;
 
 	if (pnp != NULL) {
-		iop_devinfo(ia->ia_class, devinfo);
+		iop_devinfo(ia->ia_class, devinfo, sizeof(devinfo));
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
 	aprint_normal(" tid %d", ia->ia_tid);

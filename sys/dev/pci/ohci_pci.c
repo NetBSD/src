@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.24 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.24 2004/04/22 00:17:12 itojun Exp $");
 
 #include "ehci.h"
 
@@ -148,11 +148,10 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
-		strncpy(sc->sc.sc_vendor, vendor, 
-			sizeof(sc->sc.sc_vendor) - 1);
+		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
 	else
-		sprintf(sc->sc.sc_vendor, "vendor 0x%04x", 
-			PCI_VENDOR(pa->pa_id));
+		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {

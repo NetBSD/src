@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.12 2002/10/02 16:52:24 thorpej Exp $	*/
+/*	$NetBSD: oak.c,v 1.13 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.12 2002/10/02 16:52:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.13 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 
@@ -199,7 +199,8 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Provide an override for the host id */
 	sc->sc_ncr5380.sc_channel.chan_id = 7;
-	sprintf(hi_option, "%s.hostid", sc->sc_ncr5380.sc_dev.dv_xname);
+	snprintf(hi_option, sizeof(hi_option), "%s.hostid",
+	    sc->sc_ncr5380.sc_dev.dv_xname);
 	(void)get_bootconf_option(boot_args, hi_option,
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_channel.chan_id);
 	sc->sc_ncr5380.sc_adapter.adapt_minphys = minphys;

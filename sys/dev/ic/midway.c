@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.63 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: midway.c,v 1.64 2004/04/22 00:17:11 itojun Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.63 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.64 2004/04/22 00:17:11 itojun Exp $");
 
 #include "opt_natm.h"
 
@@ -1293,9 +1293,10 @@ caddr_t data;
 	case SIOCGPVCSIF:
 		if (ifp != &sc->enif) {
 #ifdef __NetBSD__
-		  strcpy(ifr->ifr_name, sc->enif.if_xname);
+		  strlcpy(ifr->ifr_name, sc->enif.if_xname,
+		      sizeof(ifr->ifr_name));
 #else
-		  sprintf(ifr->ifr_name, "%s%d",
+		  snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%s%d",
 			  sc->enif.if_name, sc->enif.if_unit);
 #endif
 		}
@@ -1312,10 +1313,11 @@ caddr_t data;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
 #ifdef __NetBSD__
-		    strcpy(ifr->ifr_name, sifp->if_xname);
+		    strlcpy(ifr->ifr_name, sifp->if_xname,
+		        sizeof(ifr->ifr_name));
 #else
-		    sprintf(ifr->ifr_name, "%s%d",
-			    sifp->if_name, sifp->if_unit);
+		    snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%s%d",
+		        sifp->if_name, sifp->if_unit);
 #endif
 #if defined(__KAME__) && defined(INET6)
 		    /* get EUI64 for PVC, from ATM hardware interface */
@@ -3932,10 +3934,11 @@ static int en_pvctx(sc, pvcreq)
 		struct pvcsif *pvcsif = (struct pvcsif *)ifp;
 
 #ifdef __NetBSD__
-    		strcpy(pvcreq->pvc_ifname, sc->enif.if_xname);
+    		strlcpy(pvcreq->pvc_ifname, sc->enif.if_xname,
+		    sizeof(pvcreq->pvc_ifname));
 #else
-    		sprintf(pvcreq->pvc_ifname, "%s%d",
-			sc->enif.if_name, sc->enif.if_unit);
+    		snprintf(pvcreq->pvc_ifname, sizeof(pvcreq->pvc_ifname), "%s%d",
+		    sc->enif.if_name, sc->enif.if_unit);
 #endif
 		ATM_PH_FLAGS(&api.aph) =
 			(ATM_PH_FLAGS(pvc_aph) & (ATM_PH_AAL5|ATM_PH_LLCSNAP));
@@ -3996,10 +3999,11 @@ static int en_pvctxget(sc, pvcreq)
 	else {
 		/* pvc subinterface */
 #ifdef __NetBSD__
-		strcpy(pvcreq->pvc_ifname, sc->enif.if_xname);
+		strlcpy(pvcreq->pvc_ifname, sc->enif.if_xname,
+		    sizeof(pvcreq->pvc_ifname));
 #else
-		sprintf(pvcreq->pvc_ifname, "%s%d",
-			sc->enif.if_name, sc->enif.if_unit);
+		snprintf(pvcreq->pvc_ifname, sizeof(pvcreq->pvc_ifname), "%s%d",
+		    sc->enif.if_name, sc->enif.if_unit);
 #endif
 
 		pvcsif = (struct pvcsif *)ifp;

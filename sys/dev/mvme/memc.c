@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.2 2003/07/14 15:47:20 lukem Exp $	*/
+/*	$NetBSD: memc.c,v 1.3 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.2 2003/07/14 15:47:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.3 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -588,11 +588,12 @@ memecc_log_error(struct memc_softc *sc, u_int8_t errlog, int off, int mbepanic)
 			strcpy(syntext, "Invalid!");
 		else
 		if ((syncode & MEMECC_SYN_CHECKBIT_ERR) != 0)
-			sprintf(syntext, "Checkbit#%d", bitnum);
+			snprintf(syntext, sizeof(syntext),
+			    "Checkbit#%d", bitnum);
 		else {
 			addr |= (u_int32_t) (bank << 2);
-			sprintf(syntext, "DRAM Bank %c, Bit#%d",
-			    'A' + bank, bitnum);
+			snprintf(syntext, sizeof(syntext),
+			    "DRAM Bank %c, Bit#%d", 'A' + bank, bitnum);
 		}
 	} else if ((errlog & MEMECC_ERROR_LOGGER_MBE) != 0)
 		etype = "Uncorrectable";

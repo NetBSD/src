@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.13 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.14 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.13 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.14 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ mca_print(aux, pnp)
 	char devinfo[256];
 
 	if (pnp) {
-		mca_devinfo(ma->ma_id, devinfo);
+		mca_devinfo(ma->ma_id, devinfo, sizeof(devinfo));
 		aprint_normal("%s slot %d: %s", pnp, ma->ma_slot + 1, devinfo);
 	}
 

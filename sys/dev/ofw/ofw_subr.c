@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.8 2003/01/06 13:26:27 wiz Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.9 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.8 2003/01/06 13:26:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.9 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,11 +190,10 @@ of_packagename(phandle, buf, bufsize)
 	/* check that we could get the name, and that it's not too long. */
 	if (l < 0 ||
 	    (l == OFW_PATH_BUF_SIZE && pbuf[OFW_PATH_BUF_SIZE - 1] != '\0')) {
-		/* XXX should use snprintf! */
 		if (bufsize >= 25)
-			sprintf(buf, "??? (phandle 0x%x)", phandle);
+			snprintf(buf, bufsize, "??? (phandle 0x%x)", phandle);
 		else if (bufsize >= 4)
-			strcpy(buf, "???");
+			strlcpy(buf, "???", bufsize);
 		else
 			panic("of_packagename: bufsize = %d is silly",
 			    bufsize);
@@ -202,9 +201,8 @@ of_packagename(phandle, buf, bufsize)
 	} else {
 		pbuf[l] = '\0';
 		lastslash = strrchr(pbuf, '/');
-		strncpy(buf, (lastslash == NULL) ? pbuf : (lastslash + 1),
+		strlcpy(buf, (lastslash == NULL) ? pbuf : (lastslash + 1),
 		    bufsize);
-		buf[bufsize - 1] = '\0'; /* in case it's fills the buffer. */
 		rv = 0;
 	}
 

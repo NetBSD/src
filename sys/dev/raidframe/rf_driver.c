@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.100 2004/04/10 05:52:33 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.101 2004/04/22 00:17:12 itojun Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.100 2004/04/10 05:52:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.101 2004/04/22 00:17:12 itojun Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -840,15 +840,15 @@ rf_ConfigureDebug(RF_Config_t *cfgPtr)
 void
 rf_print_panic_message(int line, char *file)
 {
-	sprintf(rf_panicbuf,"raidframe error at line %d file %s",
-		line, file);
+	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
+	    "raidframe error at line %d file %s", line, file);
 }
 
 #ifdef RAID_DIAGNOSTIC
 void
 rf_print_assert_panic_message(int line,	char *file, char *condition)
 {
-	sprintf(rf_panicbuf,
+	snprintf(rf_panicbuf, sizeof(rf_panicbuf),
 		"raidframe error at line %d file %s (failed asserting %s)\n",
 		line, file, condition);
 }
