@@ -1,14 +1,14 @@
-# $NetBSD: INSTALL,v 1.12 2000/12/29 22:36:51 is Exp $
+# $NetBSD: INSTALL,v 1.13 2001/01/21 20:41:40 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.154 2000/12/29 22:31:56 is Exp $
+#$ NetBSD: GENERIC,v 1.155 2001/01/21 20:38:20 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.12 $"
+#ident  		"GENERIC-$Revision: 1.13 $"
 
 makeoptions	COPTS="-Os"
 
@@ -274,31 +274,31 @@ cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
-idesc0		at mainbus0		# A4000 & A1200 IDE
-scsibus*	at idesc0
+#idesc0		at mainbus0		# A4000 & A1200 IDE
+#scsibus*	at idesc0
 
-#<<< comment out the idesc entries above if the following wdc/atapibus lines >>>
+#<<< comment out the wdc/atapibus entries below if the idesc lines above >>>
 #<<< are uncommented >>>
-#wdc0		at mainbus0		# A4000 & A1200 IDE bus
-#wd*		at wdc? drive ?		#  + drives
-#atapibus*	at wdc? channel ?	# ATAPI bus
-#cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
-#sd*		at atapibus? drive ?	# ATAPI disk drives
+wdc0		at mainbus0		# A4000 & A1200 IDE bus
+wd*		at wdc? drive ?		#  + drives
+atapibus*	at wdc? channel ?	# ATAPI bus
+cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ?	# ATAPI disk drives
 
-#pccard0		at mainbus0
-#pcmcia*		at pccard0
-#com*		at pcmcia? function ?		# Modems and serial cards
-#pcmcom*		at pcmcia? function ?		# PCMCIA multi-port serial cards
-#aic*		at pcmcia? function ?		# Adaptec APA-1460 SCSI
-##wdc*		at pcmcia? function ?
-#awi*		at pcmcia? function ?		# BayStack 650 (802.11FH)
-##ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-#mbe*		at pcmcia? function ?		# MB8696x based Ethernet
-#ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
-#sm*		at pcmcia? function ?		# Megahertz Ethernet
-#mhzc*		at pcmcia? function ?    # Megahertz Ethernet/Modem combo cards
-#com*		at mhzc?
-#sm*		at mhzc?
+pccard0		at mainbus0
+pcmcia*		at pccard0
+com*		at pcmcia? function ?		# Modems and serial cards
+pcmcom*		at pcmcia? function ?		# PCMCIA multi-port serial cards
+aic*		at pcmcia? function ?		# Adaptec APA-1460 SCSI
+wdc*		at pcmcia? function ?
+awi*		at pcmcia? function ?		# BayStack 650 (802.11FH)
+ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*		at pcmcia? function ?		# MB8696x based Ethernet
+ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
+sm*		at pcmcia? function ?		# Megahertz Ethernet
+mhzc*		at pcmcia? function ?    # Megahertz Ethernet/Modem combo cards
+com*		at mhzc?
+sm*		at mhzc?
 
 drsc0		at mainbus0		# DraCo scsi
 scsibus*	at drsc0
@@ -324,7 +324,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
-pseudo-device	pty			# pseudo-terminals
+pseudo-device	pty 2			# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
