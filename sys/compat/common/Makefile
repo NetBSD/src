@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/05/07 14:28:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.24 1999/08/25 04:47:12 thorpej Exp $
 
 LIB=	compat
 MKPIC=	no
@@ -22,6 +22,9 @@ SRCS+=	kern_xxx_12.c vfs_syscalls_12.c vm_12.c
 
 # Compatibility code for NetBSD 1.3
 SRCS+=	kern_sig_13.c
+
+# Compatibility code for NetBSD 1.4
+SRCS+=	sysv_ipc_14.c sysv_msg_14.c sysv_shm_14.c sysv_sem_14.c
 
 # really, all machines where sizeof(int) != sizeof(long) (LP64)
 .if (${MACHINE_ARCH} != "alpha")
