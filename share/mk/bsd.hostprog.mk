@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.8 2000/10/31 10:49:02 itojun Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.9 2001/01/04 23:52:00 garbled Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -20,12 +20,14 @@ CFLAGS+=	${COPTS}
 LIBBZ2?=	/usr/lib/libbz2.a
 LIBC?=		/usr/lib/libc.a
 LIBC_PIC?=	/usr/lib/libc_pic.a
+LIBCDK?=	/usr/lib/libcdk.a
 LIBCOMPAT?=	/usr/lib/libcompat.a
 LIBCRYPT?=	/usr/lib/libcrypt.a
 LIBCURSES?=	/usr/lib/libcurses.a
 LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
+LIBFORM?=	/usr/lib/libform.a
 LIBGCC?=	/usr/lib/libgcc.a
 LIBGNUMALLOC?=	/usr/lib/libgnumalloc.a
 LIBINTL?=	/usr/lib/libintl.a
