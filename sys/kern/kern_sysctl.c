@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.72 2000/06/16 00:18:09 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73 2000/06/16 00:57:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1033,9 +1033,15 @@ sysctl_sysvipc(name, namelen, where, sizep)
 	void *where;
 	size_t *sizep;
 {
+#ifdef SYSVMSG
 	struct msg_sysctl_info *msgsi;
+#endif
+#ifdef SYSVSEM
 	struct sem_sysctl_info *semsi;
+#endif
+#ifdef SYSVSHM
 	struct shm_sysctl_info *shmsi;
+#endif
 	size_t infosize, dssize, tsize, buflen;
 	void *buf = NULL, *buf2;
 	char *start;
@@ -1102,21 +1108,27 @@ sysctl_sysvipc(name, namelen, where, sizep)
 	memset(buf, 0, min(tsize, buflen));
 
 	switch (*name) { 
+#ifdef SYSVMSG
 	case KERN_SYSVIPC_MSG_INFO:
 		msgsi = (struct msg_sysctl_info *)buf;
 		buf2 = &msgsi->msgids[0];
 		msgsi->msginfo = msginfo;
 		break;
+#endif
+#ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
 		semsi = (struct sem_sysctl_info *)buf;
 		buf2 = &semsi->semids[0];
 		semsi->seminfo = seminfo;
 		break;
+#endif
+#ifdef SYSVSHM
 	case KERN_SYSVIPC_SHM_INFO:
 		shmsi = (struct shm_sysctl_info *)buf;
 		buf2 = &shmsi->shmids[0];
 		shmsi->shminfo = shminfo;
 		break;
+#endif
 	}
 	buflen -= infosize;
 
@@ -1129,15 +1141,21 @@ sysctl_sysvipc(name, namelen, where, sizep)
 				break;
 			}
 			switch (*name) { 
+#ifdef SYSVMSG
 			case KERN_SYSVIPC_MSG_INFO:
 				FILL_MSG(msqids[i], msgsi->msgids[i]);
 				break;
+#endif
+#ifdef SYSVSEM
 			case KERN_SYSVIPC_SEM_INFO:
 				FILL_SEM(sema[i], semsi->semids[i]);
 				break;
+#endif
+#ifdef SYSVSHM
 			case KERN_SYSVIPC_SHM_INFO:
 				FILL_SHM(shmsegs[i], shmsi->shmids[i]);
 				break;
+#endif
 			}
 			buflen -= dssize;
 		}
