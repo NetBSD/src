@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.32 1999/02/23 03:20:03 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.33 1999/02/24 19:25:56 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.32 1999/02/23 03:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.33 1999/02/24 19:25:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,10 @@ prom_enter()
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 	pt_entry_t *lev1map;
+
+	/*
+	 * XXX THIS IS COMPLETELY BROKEN ON MULTIPROCESSOR SYSTEMS!
+	 */
 
 	if (!prom_mapped) {
 		if (!pmap_uses_prom_console())
