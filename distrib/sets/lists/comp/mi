@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.240 2000/06/27 09:00:15 mrg Exp $
+#	$NetBSD: mi,v 1.241 2000/06/29 12:03:10 mrg Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1100,7 +1100,6 @@
 ./usr/include/util.h		comp-c-include
 ./usr/include/utime.h		comp-c-include
 ./usr/include/utmp.h		comp-c-include
-./usr/include/uvm		comp-c-include
 ./usr/include/uvm/uvm.h		comp-c-include
 ./usr/include/uvm/uvm_amap.h		comp-c-include
 ./usr/include/uvm/uvm_amap_i.h		comp-c-include
@@ -1131,7 +1130,6 @@
 ./usr/include/uvm/uvm_vnode.h		comp-c-include
 ./usr/include/varargs.h		comp-c-include
 ./usr/include/vis.h		comp-c-include
-./usr/include/vm/vm.h		comp-c-include
 ./usr/include/wchar.h		comp-c-include
 ./usr/include/zconf.h		comp-c-include
 ./usr/include/zlib.h		comp-c-include
