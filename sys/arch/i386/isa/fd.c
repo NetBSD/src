@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.90.4.1 1996/08/30 19:59:52 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.90.4.2 1996/08/31 05:16:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -573,7 +573,7 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
-	b->b_resid = b->b_bcount;
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
 
