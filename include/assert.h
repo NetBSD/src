@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.6 1994/10/26 00:55:44 cgd Exp $	*/
+/*	$NetBSD: assert.h,v 1.7 1998/11/14 16:30:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,16 +49,21 @@
 #undef _assert
 
 #ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
-#else
-#define	_assert(e)	assert(e)
-#ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
-#else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, "e"))
-#endif
-#endif
+# ifndef lint
+#  define assert(e)	((void)0)
+#  define _assert(e)	((void)0)
+# else /* !lint */
+#  define assert(e)
+#  define _assert(e)
+# endif /* lint */
+#else /* !NDEBUG */
+# define _assert(e)	assert(e)
+# ifdef __STDC__
+#  define assert(e) 	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+# else	/* PCC */
+#  define assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, "e"))
+# endif
+#endif /* NDEBUG */
 
 #include <sys/cdefs.h>
 
