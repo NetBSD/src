@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$Id: krb4encpwd.c,v 1.1.1.2 2000/12/29 01:42:35 assar Exp $");
+RCSID("$Id: krb4encpwd.c,v 1.1.1.3 2001/09/17 12:09:46 assar Exp $");
 
 #ifdef	KRB4_ENCPWD
 /*
@@ -74,7 +74,6 @@ RCSID("$Id: krb4encpwd.c,v 1.1.1.2 2000/12/29 01:42:35 assar Exp $");
 #include <pwd.h>
 #include <stdio.h>
 
-#include <des.h>
 #include <krb.h>
 #include <stdlib.h>
 #include <string.h>

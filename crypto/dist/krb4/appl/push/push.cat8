@@ -1,13 +1,13 @@
 
-PUSH(8)                     System Manager's Manual                    PUSH(8)
+PUSH(8)                  UNIX System Manager's Manual                  PUSH(8)
 
 NNAAMMEE
      ppuusshh - fetch mail via POP
 
 SSYYNNOOPPSSIISS
      ppuusshh [--44 | ----kkrrbb44] [--55 | ----kkrrbb55] [--vv | ----vveerrbboossee] [--ff | ----ffoorrkk] [--ll |
-     ----lleeaavvee] [----ffrroomm] [--cc | ----ccoouunntt] [----hheeaaddeerr] [--pp _p_o_r_t_-_s_p_e_c | ----ppoorrtt==_p_o_r_t_-
-     _s_p_e_c] _p_o_-_b_o_x _f_i_l_e_n_a_m_e
+     ----lleeaavvee] [----ffrroomm] [--cc | ----ccoouunntt] [----hheeaaddeerrss=_h_e_a_d_e_r_s] [--pp _p_o_r_t_-_s_p_e_c |
+     ----ppoorrtt=_p_o_r_t_-_s_p_e_c] _p_o_-_b_o_x _f_i_l_e_n_a_m_e
 
 DDEESSCCRRIIPPTTIIOONN
      ppuusshh retrieves mail from the post office box _p_o_-_b_o_x, and stores the mail
@@ -43,10 +43,10 @@ DDEESSCCRRIIPPTTIIOONN
      --cc, ----ccoouunntt
              first print how many messages and bytes there are.
 
-     ----hheeaaddeerr
-             which header from should print.
+     ----hheeaaddeerrss=_h_e_a_d_e_r_s
+             a list of comma-separated headers that should get printed.
 
-     --pp _p_o_r_t_-_s_p_e_c, ----ppoorrtt==_p_o_r_t_-_s_p_e_c
+     --pp _p_o_r_t_-_s_p_e_c, ----ppoorrtt=_p_o_r_t_-_s_p_e_c
              use this port instead of the default `kpop' or `1109'.
 
      The default is to first try Kerberos 5 authentication and then, if that
@@ -57,11 +57,11 @@ EENNVVIIRROONNMMEENNTT
              points to the post office, if no other hostname is specified.
 
 EEXXAAMMPPLLEESS
-           $ push cornfield:roosta ~/.gnus-crash-box
+           $ push cornfield:roosta ~/.emacs-mail-crash-box
 
      tries to fetch mail for the user _r_o_o_s_t_a from the post office at
-     ``cornfield'', and stores the mail in _~_/_._g_n_u_s_-_c_r_a_s_h_-_b_o_x (you are using
-     Gnus, aren't you?)
+     ``cornfield'', and stores the mail in _~_/_._e_m_a_c_s_-_m_a_i_l_-_c_r_a_s_h_-_b_o_x (you are
+     using Gnus, aren't you?)
 
            $ push --from -5 havregryn
 
@@ -69,7 +69,7 @@ EEXXAAMMPPLLEESS
      using Kerberos 5.
 
 SSEEEE AALLSSOO
-     movemail(8),  popper(8),  from(1),  pfrom(1)
+     from(1),  pfrom(1),  movemail(8),  popper(8)
 
 HHIISSTTOORRYY
      ppuusshh was written while waiting for mmoovveemmaaiill to finish getting the mail.

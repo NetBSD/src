@@ -284,13 +284,7 @@ If you need to change the default behavior, configure understands the
 following options:
 
 `--enable-shared'
-     Create shared versions of the Kerberos libraries. Not really
-     recommended and might not work on all systems.
-
-`--with-ld-flags='FLAGS
-     This allows you to specify which extra flags to pass to `ld'. Since
-     this _overrides_ any choices made by configure, you should only use
-     this if you know what you are doing.
+     Create shared versions of the Kerberos libraries.
 
 `--with-cracklib='DIR
      Use cracklib for password quality control in `kadmind'. This
@@ -348,8 +342,7 @@ following options:
      `/usr/afsws'.
 
 `--enable-rxkad'
-     Build the rxkad library.  Normally automatically included if there
-     is AFS.
+     Build the rxkad library.
 
 `--disable-dynamic-afs'
      The AFS support in AIX consists of a shared library that is loaded
@@ -526,7 +519,14 @@ File: kth-krb.info,  Node: Digital SIA,  Next: IRIX,  Prev: Authentication modul
 Digital SIA
 -----------
 
-To install the SIA module you will have to do the following:
+How to install the SIA module depends on which OS version you're
+running. Tru64 5.0 have a new command, `siacfg', which makes this
+process quite simple. If you have this program, you should just be able
+to run:
+     siacfg -a KRB4 /usr/athena/lib/libsia_krb4.so
+
+On older versions, or if you want to do it by hand, you have to do the
+following (not tested by us on Tru64 5.0):
 
    * Make sure `libsia_krb4.so' is available in `/usr/athena/lib'. If
      `/usr/athena' is not on local disk, you might want to put it in
@@ -642,26 +642,47 @@ File: kth-krb.info,  Node: PAM,  Prev: IRIX,  Up: Authentication modules
 PAM
 ---
 
-The PAM module was written more out of curiosity that anything else. It
-has not been updated for quite a while, but it seems to mostly work on
-both Linux and Solaris.
+Currently the PAM module has only been tested under Linux and SunOS5
+(aka Solaris). Probably it will also work on other systems but that has
+not yet been tried by us.
 
-To use this module you should:
+To build the module the argument `--enable-shared' must be passed to
+`configure'. This is necessary because PAM modules are loaded as shared
+libraries. Note that the shared libraries must also be available during
+runtime for the PAM module to operate correctly. You may pass the
+argument `debug' to the PAM module to trace configuration errors.
 
-   * Make sure `pam_krb4.so' is available in `/usr/athena/lib'. You
-     might actually want it on local disk, so `/lib/security' might be a
-     better place if `/usr/athena' is not local.
+As an alternative to building shared libraries it is possible to build a
+stand-alone PAM module, i.e a module that does not depend on any of the
+Kerberos shared-libraries. To do this archive (`.a') libraries
+containing position independent code are required. The following steps
+can be used to build a stand-alone PAM module:
 
-   * Look at `pam.conf.add' for examples of what to add to
-     `/etc/pam.conf'.
+     datan$ env CFLAGS=-fpic ./configure
+     datan$ make
+     datan$ cd lib/auth/pam
+     datan$ make
+     datan$ make install
 
-There is currently no support for changing kerberos passwords. Use
-kpasswd instead.
+Note that `--enable-shared' should not be passed to configure, setting
+`CFLAGS' takes care of that. The module will be functional even if the
+Kerberos libraries can not be loaded.
 
-See also Derrick J Brashear's `<shadow@dementia.org>' Kerberos PAM
-module at
-<ftp://ftp.dementia.org/pub/pam>. It has a lot more features, and it is
-also more in line with other PAM modules.
+To use the module you should:
+
+   * Make sure that `pam_krb4.so' is available in `/usr/athena/lib'.
+     You might want to keep the module locally instead, `/lib/security'
+     can be a better alternative if `/usr/athena' is not on local disk.
+
+   * Look at `krb4-1.0.2/lib/auth/pam/pam.conf.add' for examples of what
+     to add to `/etc/pam.conf' (or the files in `/etc/pam.d').
+
+The PAM module currently has no support for changing kerberos
+passwords. Use kpasswd instead.
+
+The PAM module was greatly influenced by Derrick J Brashear's
+`<shadow@dementia.org>' Kerberos PAM module that can be found at
+<ftp://ftp.dementia.org/pub/pam>.
 
 
 File: kth-krb.info,  Node: How to set up a realm,  Next: One-Time Passwords,  Prev: Installing programs,  Up: Top
@@ -852,7 +873,9 @@ things that are not normally used. It consists of a number of `VARIABLE
 = VALUE' pairs, blank lines and lines beginning with a hash (#) are
 ignored.
 
-The currently defined variables are:
+The currently defined variables are listed below.  For the boolean/flag
+variables the value should be any of the strings `true' or `yes' or any
+non-zero integer.
 
 `kdc_timeout'
      The time in seconds to wait for an answer from the KDC (the
@@ -882,7 +905,8 @@ The currently defined variables are:
      `/etc/srvtab'.
 
 `nat_in_use'
-     If the client is behind a Network Address Translator (NAT).
+     A flag to indicated that the client is behind a Network Address
+     Translator (NAT).
 
 `reverse_lsb_test'
      Reverses the test used by `krb_mk_safe', `krb_rd_safe',
@@ -1334,8 +1358,8 @@ zephyr.zephyr
 afs or afs.CELLNAME
      Andrew File System
 
-To create these keys you will use the the `ksrvutil' program.  Perform
-the following:
+To create these keys you will use the `ksrvutil' program.  Perform the
+following:
 
      bar# ksrvutil -p nisse.admin get
      Name [rcmd]: <>
@@ -1720,10 +1744,10 @@ constraints, and similar. The N32 format is the default format from IRIX
 You select ABI at compile time, and you can do this with the
 `--with-mips-abi' configure option. The valid arguments are `o32',
 `n32', and `64', N32 is the default. Libraries for the three different
-ABI:s are normally installed installed in different directories (`lib',
-`lib32', and `lib64'). If you want more than one set of libraries you
-have to reconfigure and recompile for each ABI, but you should probably
-install only N32 binaries.
+ABI:s are normally installed in different directories (`lib', `lib32',
+and `lib64'). If you want more than one set of libraries you have to
+reconfigure and recompile for each ABI, but you should probably install
+only N32 binaries.
 
 GCC had had some known problems with the different ABI:s. Old GCC could
 only handle O32, newer GCC can handle N32, and 64, but not O32, but in
@@ -1747,7 +1771,7 @@ AIX problems
 `appl/telnet/telnetd/sys_term.c' (and possibily `appl/bsd/forkpty.c'),
 if used with too much optimization.
 
-Some versions of the `xlc' preprocessor doesn't recognise the
+Some versions of the `xlc' preprocessor do not recognise the
 (undocumented) `-qnolm' option. If this option is passed to the
 preprocessor (like via the configuration file `/etc/ibmcxx.cfg',
 configure will fail.
@@ -2211,43 +2235,43 @@ Node: Introduction1673
 Node: What is Kerberos?3278
 Node: Installing programs8218
 Node: Installing from source8876
-Node: Installing a binary distribution14070
-Node: Finishing the installation14498
-Node: .klogin17649
-Node: Authentication modules19059
-Node: Digital SIA19667
-Node: IRIX23714
-Node: PAM24738
-Node: How to set up a realm25573
-Node: How to set up the kerberos server26157
-Node: Choose a realm name26787
-Ref: Choose a realm name-Footnote-127316
-Node: Choose a kerberos server27447
-Node: Install the configuration files28439
-Node: Install the /etc/services34598
-Node: Install the kerberos server35172
-Node: Set up the server35729
-Node: Add a few important principals38284
-Node: Start the server40146
-Node: Try to get tickets40640
-Node: Create initial ACL for the admin server41486
-Node: Start the admin server42447
-Node: Add users to the database42928
-Node: Automate the startup of the servers44005
-Node: Install the client programs44346
-Node: Install the kerberised services46197
-Node: Install a slave kerberos server51959
-Node: Cross-realm functionality55030
-Node: One-Time Passwords57167
-Node: What are one time passwords?57581
-Node: When to use one time passwords?58212
-Node: Configuring OTPs59567
-Node: Resolving frequent problems61720
-Node: Problems compiling Kerberos62024
-Node: Problems with firewalls67407
-Node: Common error messages70070
-Node: Is Kerberos year 2000 safe?73564
-Node: Acknowledgments74534
-Node: Index77697
+Node: Installing a binary distribution13739
+Node: Finishing the installation14167
+Node: .klogin17318
+Node: Authentication modules18728
+Node: Digital SIA19336
+Node: IRIX23699
+Node: PAM24723
+Node: How to set up a realm26598
+Node: How to set up the kerberos server27182
+Node: Choose a realm name27812
+Ref: Choose a realm name-Footnote-128341
+Node: Choose a kerberos server28472
+Node: Install the configuration files29464
+Node: Install the /etc/services35775
+Node: Install the kerberos server36349
+Node: Set up the server36906
+Node: Add a few important principals39461
+Node: Start the server41323
+Node: Try to get tickets41817
+Node: Create initial ACL for the admin server42663
+Node: Start the admin server43624
+Node: Add users to the database44105
+Node: Automate the startup of the servers45182
+Node: Install the client programs45523
+Node: Install the kerberised services47374
+Node: Install a slave kerberos server53132
+Node: Cross-realm functionality56203
+Node: One-Time Passwords58340
+Node: What are one time passwords?58754
+Node: When to use one time passwords?59385
+Node: Configuring OTPs60740
+Node: Resolving frequent problems62893
+Node: Problems compiling Kerberos63197
+Node: Problems with firewalls68569
+Node: Common error messages71232
+Node: Is Kerberos year 2000 safe?74726
+Node: Acknowledgments75696
+Node: Index78859
 
 End Tag Table

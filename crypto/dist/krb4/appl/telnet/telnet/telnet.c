@@ -36,7 +36,7 @@
 #include <termcap.h>
 #endif
 
-RCSID("$Id: telnet.c,v 1.1.1.2 2000/12/29 01:42:40 assar Exp $");
+RCSID("$Id: telnet.c,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $");
 
 #define	strip(x) (eight ? (x) : ((x) & 0x7f))
 
@@ -579,7 +579,7 @@ mklist(char *buf, char *name)
 #define ISASCII(c) (!((c)&0x80))
 		if ((c == ' ') || !ISASCII(c))
 			n = 1;
-		else if (islower(c))
+		else if (islower((unsigned char)c))
 			*cp = toupper(c);
 	}
 
@@ -637,15 +637,21 @@ static char termbuf[1024];
 static int
 telnet_setupterm(const char *tname, int fd, int *errp)
 {
-	if (tgetent(termbuf, tname) == 1) {
-		termbuf[1023] = '\0';
-		if (errp)
-			*errp = 1;
-		return(0);
-	}
+#ifdef HAVE_TGETENT
+    if (tgetent(termbuf, tname) == 1) {
+	termbuf[1023] = '\0';
 	if (errp)
-		*errp = 0;
-	return(-1);
+	    *errp = 1;
+	return(0);
+    }
+    if (errp)
+	*errp = 0;
+    return(-1);
+#else
+    strlcpy(termbuf, tname, sizeof(termbuf));
+    if(errp) *errp = 1;
+    return 0;
+#endif
 }
 
 int resettermname = 1;
@@ -1414,9 +1420,15 @@ unsigned char *opt_replyend;
 void
 env_opt_start()
 {
-	if (opt_reply)
-		opt_reply = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
-	else
+	if (opt_reply) {
+		void *tmp = realloc (opt_reply, OPT_REPLY_SIZE);
+		if (tmp != NULL) {
+			opt_reply = tmp;
+		} else {
+			free (opt_reply);
+			opt_reply = NULL;
+		}
+	} else
 		opt_reply = (unsigned char *)malloc(OPT_REPLY_SIZE);
 	if (opt_reply == NULL) {
 /*@*/		printf("env_opt_start: malloc()/realloc() failed!!!\n");
@@ -1464,14 +1476,16 @@ env_opt_add(unsigned char *ep)
 				strlen((char *)ep) + 6 > opt_replyend)
 	{
 		int len;
+		void *tmp;
 		opt_replyend += OPT_REPLY_SIZE;
 		len = opt_replyend - opt_reply;
-		opt_reply = (unsigned char *)realloc(opt_reply, len);
-		if (opt_reply == NULL) {
+		tmp = realloc(opt_reply, len);
+		if (tmp == NULL) {
 /*@*/			printf("env_opt_add: realloc() failed!!!\n");
 			opt_reply = opt_replyp = opt_replyend = NULL;
 			return;
 		}
+		opt_reply = tmp;
 		opt_replyp = opt_reply + len - (opt_replyend - opt_replyp);
 		opt_replyend = opt_reply + len;
 	}
@@ -2272,6 +2286,7 @@ sendnaws()
     if (my_state_is_wont(TELOPT_NAWS))
 	return;
 
+#undef PUTSHORT
 #define	PUTSHORT(cp, x) { if ((*cp++ = ((x)>>8)&0xff) == IAC) *cp++ = IAC; \
 			    if ((*cp++ = ((x))&0xff) == IAC) *cp++ = IAC; }
 

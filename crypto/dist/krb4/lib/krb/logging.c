@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,13 +34,19 @@
 #include "krb_locl.h"
 #include <klog.h>
 
-RCSID("$Id: logging.c,v 1.1.1.2 2000/12/29 01:43:17 assar Exp $");
+RCSID("$Id: logging.c,v 1.1.1.3 2001/09/17 12:09:54 assar Exp $");
 
 struct krb_log_facility {
     char filename[MaxPathLen]; 
     FILE *file; 
     krb_log_func_t func;
 };
+
+static int log_tty(FILE *, const char *, va_list)
+    __attribute__((__format__(__printf__, 2, 0)));
+static int
+log_with_timestamp_and_nl(FILE *file, const char *format, va_list args)
+    __attribute__((__format__(__printf__, 2, 0)));
 
 int
 krb_vlogger(struct krb_log_facility *f, const char *format, va_list args)
