@@ -1,11 +1,17 @@
-/*	$NetBSD: setup.c,v 1.9 1999/09/08 21:17:55 jsm Exp $	*/
+/*	$NetBSD: setup.c,v 1.10 1999/09/19 18:14:52 jsm Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
  */
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include "include.h"
+
+int main __P((int, char *[]));
+void Error __P((const char *, const char *)) __attribute__((__noreturn__));
+double drandom __P((void));
+
 /**/
 /************************************************************************
 /
@@ -36,7 +42,7 @@
 /	put in these files.
 /	Also, the monster binary data base is created here.
 /
-/************************************************************************/
+/ ************************************************************************/
 
 static const char *const files[] = {		/* all files to create */
 	_PATH_MONST,
@@ -129,6 +135,9 @@ main(argc, argv)
     else
 	{
 	fwrite(&Enrgyvoid, SZ_VOIDSTRUCT, 1, fp);
+	fflush(fp);
+	if (ferror(fp))
+	    Error("Writing %s.\n", path);
 	fclose(fp);
 	}
 
@@ -165,6 +174,9 @@ main(argc, argv)
 		fwrite((char *) &Curmonster, SZ_MONSTERSTRUCT, 1, Monstfp);
 		}
 	    fclose(fp);
+	    fflush(Monstfp);
+	    if (ferror(Monstfp))
+		Error("Writing %s.\n", path);
 	    fclose(Monstfp);
 	    }
 	}
@@ -232,8 +244,9 @@ main(argc, argv)
 / DESCRIPTION:
 /	Print an error message, then exit.
 /
-/************************************************************************/
+/ ************************************************************************/
 
+void
 Error(str, file)
 	const char	*str, *file;
 {
@@ -264,7 +277,7 @@ Error(str, file)
 /
 / DESCRIPTION: 
 /
-/************************************************************************/
+/ ************************************************************************/
 
 double
 drandom()
