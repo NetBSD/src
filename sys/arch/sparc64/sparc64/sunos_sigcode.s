@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sigcode.s,v 1.1.10.3 2002/06/20 03:41:34 nathanw Exp $	*/
+/*	$NetBSD: sunos_sigcode.s,v 1.1.10.4 2002/08/23 02:47:07 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
@@ -95,7 +95,7 @@ sunos_sigcode:
 	/*
 	 * The next 2 instructions are skipped for signal trampolines.
 	 */
-	mov	SYS_exit, %g1		! XXX we should abort
+	mov	SUNOS_SYS_exit, %g1		! XXX we should abort
 	t	ST_SYSCALL
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should

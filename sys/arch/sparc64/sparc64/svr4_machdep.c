@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.22.6.8 2002/08/01 02:43:50 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.22.6.9 2002/08/23 02:47:08 petrov Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -622,6 +622,7 @@ svr4_trap(type, l)
 	int	type;
 	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int n;
 	struct trapframe64 *tf = l->l_md.md_tf;
 

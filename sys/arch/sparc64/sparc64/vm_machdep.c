@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.10 2002/07/12 01:39:50 nathanw Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.11 2002/08/23 02:47:08 petrov Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -283,8 +283,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	} else
 		l2->l_md.md_fpstate = NULL;
 
-	if (p1->p_flag & P_32)
-		p2->p_flag |= P_32;
+	if (l1->l_proc->p_flag & P_32)
+		l2->l_proc->p_flag |= P_32;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
@@ -335,6 +335,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	if (l1 == &lwp0)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
+	else
+		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT); 
 
 
 #ifdef NOTDEF_DEBUG
@@ -415,50 +417,50 @@ cpu_coredump(l, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(md_core);
 
 	/* Copy important fields over. */
-	md_core.md_tf.tf_tstate = p->p_md.md_tf->tf_tstate;
-	md_core.md_tf.tf_pc = p->p_md.md_tf->tf_pc;
-	md_core.md_tf.tf_npc = p->p_md.md_tf->tf_npc;
-	md_core.md_tf.tf_y = p->p_md.md_tf->tf_y;
-	md_core.md_tf.tf_tt = p->p_md.md_tf->tf_tt;
-	md_core.md_tf.tf_pil = p->p_md.md_tf->tf_pil;
-	md_core.md_tf.tf_oldpil = p->p_md.md_tf->tf_oldpil;
+	md_core.md_tf.tf_tstate = l->l_md.md_tf->tf_tstate;
+	md_core.md_tf.tf_pc = l->l_md.md_tf->tf_pc;
+	md_core.md_tf.tf_npc = l->l_md.md_tf->tf_npc;
+	md_core.md_tf.tf_y = l->l_md.md_tf->tf_y;
+	md_core.md_tf.tf_tt = l->l_md.md_tf->tf_tt;
+	md_core.md_tf.tf_pil = l->l_md.md_tf->tf_pil;
+	md_core.md_tf.tf_oldpil = l->l_md.md_tf->tf_oldpil;
 
-	md_core.md_tf.tf_global[0] = p->p_md.md_tf->tf_global[0];
-	md_core.md_tf.tf_global[1] = p->p_md.md_tf->tf_global[1];
-	md_core.md_tf.tf_global[2] = p->p_md.md_tf->tf_global[2];
-	md_core.md_tf.tf_global[3] = p->p_md.md_tf->tf_global[3];
-	md_core.md_tf.tf_global[4] = p->p_md.md_tf->tf_global[4];
-	md_core.md_tf.tf_global[5] = p->p_md.md_tf->tf_global[5];
-	md_core.md_tf.tf_global[6] = p->p_md.md_tf->tf_global[6];
-	md_core.md_tf.tf_global[7] = p->p_md.md_tf->tf_global[7];
+	md_core.md_tf.tf_global[0] = l->l_md.md_tf->tf_global[0];
+	md_core.md_tf.tf_global[1] = l->l_md.md_tf->tf_global[1];
+	md_core.md_tf.tf_global[2] = l->l_md.md_tf->tf_global[2];
+	md_core.md_tf.tf_global[3] = l->l_md.md_tf->tf_global[3];
+	md_core.md_tf.tf_global[4] = l->l_md.md_tf->tf_global[4];
+	md_core.md_tf.tf_global[5] = l->l_md.md_tf->tf_global[5];
+	md_core.md_tf.tf_global[6] = l->l_md.md_tf->tf_global[6];
+	md_core.md_tf.tf_global[7] = l->l_md.md_tf->tf_global[7];
 
-	md_core.md_tf.tf_out[0] = p->p_md.md_tf->tf_out[0];
-	md_core.md_tf.tf_out[1] = p->p_md.md_tf->tf_out[1];
-	md_core.md_tf.tf_out[2] = p->p_md.md_tf->tf_out[2];
-	md_core.md_tf.tf_out[3] = p->p_md.md_tf->tf_out[3];
-	md_core.md_tf.tf_out[4] = p->p_md.md_tf->tf_out[4];
-	md_core.md_tf.tf_out[5] = p->p_md.md_tf->tf_out[5];
-	md_core.md_tf.tf_out[6] = p->p_md.md_tf->tf_out[6];
-	md_core.md_tf.tf_out[7] = p->p_md.md_tf->tf_out[7];
+	md_core.md_tf.tf_out[0] = l->l_md.md_tf->tf_out[0];
+	md_core.md_tf.tf_out[1] = l->l_md.md_tf->tf_out[1];
+	md_core.md_tf.tf_out[2] = l->l_md.md_tf->tf_out[2];
+	md_core.md_tf.tf_out[3] = l->l_md.md_tf->tf_out[3];
+	md_core.md_tf.tf_out[4] = l->l_md.md_tf->tf_out[4];
+	md_core.md_tf.tf_out[5] = l->l_md.md_tf->tf_out[5];
+	md_core.md_tf.tf_out[6] = l->l_md.md_tf->tf_out[6];
+	md_core.md_tf.tf_out[7] = l->l_md.md_tf->tf_out[7];
 
 #ifdef DEBUG
-	md_core.md_tf.tf_local[0] = p->p_md.md_tf->tf_local[0];
-	md_core.md_tf.tf_local[1] = p->p_md.md_tf->tf_local[1];
-	md_core.md_tf.tf_local[2] = p->p_md.md_tf->tf_local[2];
-	md_core.md_tf.tf_local[3] = p->p_md.md_tf->tf_local[3];
-	md_core.md_tf.tf_local[4] = p->p_md.md_tf->tf_local[4];
-	md_core.md_tf.tf_local[5] = p->p_md.md_tf->tf_local[5];
-	md_core.md_tf.tf_local[6] = p->p_md.md_tf->tf_local[6];
-	md_core.md_tf.tf_local[7] = p->p_md.md_tf->tf_local[7];
+	md_core.md_tf.tf_local[0] = l->l_md.md_tf->tf_local[0];
+	md_core.md_tf.tf_local[1] = l->l_md.md_tf->tf_local[1];
+	md_core.md_tf.tf_local[2] = l->l_md.md_tf->tf_local[2];
+	md_core.md_tf.tf_local[3] = l->l_md.md_tf->tf_local[3];
+	md_core.md_tf.tf_local[4] = l->l_md.md_tf->tf_local[4];
+	md_core.md_tf.tf_local[5] = l->l_md.md_tf->tf_local[5];
+	md_core.md_tf.tf_local[6] = l->l_md.md_tf->tf_local[6];
+	md_core.md_tf.tf_local[7] = l->l_md.md_tf->tf_local[7];
 
-	md_core.md_tf.tf_in[0] = p->p_md.md_tf->tf_in[0];
-	md_core.md_tf.tf_in[1] = p->p_md.md_tf->tf_in[1];
-	md_core.md_tf.tf_in[2] = p->p_md.md_tf->tf_in[2];
-	md_core.md_tf.tf_in[3] = p->p_md.md_tf->tf_in[3];
-	md_core.md_tf.tf_in[4] = p->p_md.md_tf->tf_in[4];
-	md_core.md_tf.tf_in[5] = p->p_md.md_tf->tf_in[5];
-	md_core.md_tf.tf_in[6] = p->p_md.md_tf->tf_in[6];
-	md_core.md_tf.tf_in[7] = p->p_md.md_tf->tf_in[7];
+	md_core.md_tf.tf_in[0] = l->l_md.md_tf->tf_in[0];
+	md_core.md_tf.tf_in[1] = l->l_md.md_tf->tf_in[1];
+	md_core.md_tf.tf_in[2] = l->l_md.md_tf->tf_in[2];
+	md_core.md_tf.tf_in[3] = l->l_md.md_tf->tf_in[3];
+	md_core.md_tf.tf_in[4] = l->l_md.md_tf->tf_in[4];
+	md_core.md_tf.tf_in[5] = l->l_md.md_tf->tf_in[5];
+	md_core.md_tf.tf_in[6] = l->l_md.md_tf->tf_in[6];
+	md_core.md_tf.tf_in[7] = l->l_md.md_tf->tf_in[7];
 #endif
 	if (l->l_md.md_fpstate) {
 		if (l == fplwp) {

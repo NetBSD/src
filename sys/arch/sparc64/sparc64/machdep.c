@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.14 2002/08/01 02:43:48 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.15 2002/08/23 02:47:06 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/map.h>
 #include <sys/buf.h>
@@ -319,7 +320,7 @@ setregs(l, pack, stack)
 #endif
 
 	/* Clear the P_32 flag. */
-	p->p_flag &= ~P_32;
+	l->l_proc->p_flag &= ~P_32;
 
 	/* Don't allow misaligned code by default */
 	l->l_md.md_flags &= ~MDP_FIXALIGN;
