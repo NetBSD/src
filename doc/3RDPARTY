@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.234 2004/07/26 22:03:02 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.235 2004/07/28 23:32:03 heas Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -549,7 +549,7 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/sbin/pfctl and src/libexec/{spamd*,ftp-proxy}.
 
 Package:	postfix
-Version:	2.1.1
+Version:	2.1.4
 Current Vers:	2.1.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
