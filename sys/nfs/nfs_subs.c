@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.33 1996/10/25 23:14:09 cgd Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.34 1996/12/02 22:55:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -520,7 +520,6 @@ static short *nfsrv_v3errmap[] = {
 	nfsv3err_commit,
 };
 
-extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern struct nfsrtt nfsrtt;
 extern time_t nqnfsstarttime;
 extern int nqsrv_clockskew;
@@ -1117,9 +1116,10 @@ nfs_init()
 		nfs_ticks = 1;
 #ifdef NFSCLIENT
 	/* Ensure async daemons disabled */
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		nfs_iodwant[i] = (struct proc *)0;
-	TAILQ_INIT(&nfs_bufq);
+		nfs_iodmount[i] = (struct nfsmount *)0;
+	}
 	nfs_nhinit();			/* Init the nfsnode table */
 #endif /* NFSCLIENT */
 #ifdef NFSSERVER
