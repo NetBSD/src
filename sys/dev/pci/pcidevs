@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.671 2004/12/06 12:54:37 cube Exp $
+$NetBSD: pcidevs,v 1.672 2004/12/07 04:28:07 jdarrow Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -581,6 +581,7 @@ vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
 vendor CAVIUM		0x177d	Cavium
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
+vendor BELKIN		0x1799	Belkin
 vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst
 vendor I4		0x17cf	I4
@@ -1088,6 +1089,9 @@ product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
 product AVM FRITZ_PCI_V2_ISDN	0x0e00	Fritz!PCI v2.0 ISDN Interface
 product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
+
+/* Belkin products */
+product BELKIN F5D6020V3	0x6020	F5D6020v3 802.11b
 
 /* Stallion products */
 product STALLION EC8_32		0x0000	EC8/32
