@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.18 1998/10/10 00:28:28 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.19 1998/10/10 00:36:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -305,6 +305,7 @@ struct scsipi_xfer {
 #define XS_SELTIMEOUT	3	/* The device timed out.. turned off?	  */
 #define XS_TIMEOUT	4	/* The Timeout reported was caught by SW  */
 #define XS_BUSY		5	/* The device busy, try again later?	  */
+#define	XS_RESET	6	/* bus was reset; possible retry command  */
 
 /*
  * This describes matching information for scsipi_inqmatch().  The more things
