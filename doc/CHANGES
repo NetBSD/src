@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.165 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.166 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -406,3 +406,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	tftpd(8), tftp(1): Add support for rfcs 2347, 2348, and 2349,
 		tftp 'blksize', 'timeout', and 'tsize' options.  Contributed
 		by Wasabi Systems.  [briggs 20030610]
+	hunt(6), huntd(6): Synced with current version from 2003-04-16,
+		which is BSD licensed [wiz 20030610]
