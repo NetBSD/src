@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.53 2000/02/22 23:13:15 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.54 2000/02/23 02:04:21 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -660,6 +660,9 @@ raidclose(dev, flags, fmt, p)
 		   Device shutdown has taken care of setting the 
 		   clean bits if RAIDF_INITED is not set 
 		   mark things as clean... */
+#ifdef DEBUG
+		printf("Last one on raid%d.  Updating status.\n",unit);
+#endif
 		rf_update_component_labels( raidPtrs[unit] );
 	}
 
@@ -1078,7 +1081,6 @@ raidioctl(dev, cmd, data, flag, p)
 			for(column=0;column<raidPtr->numCol;column++) {
 				diskPtr = &raidPtr->Disks[row][column];
 				ci_label.blockSize = diskPtr->blockSize;
-				ci_label.numBlocks = diskPtr->numBlocks;
 				ci_label.partitionSize = diskPtr->partitionSize;
 				ci_label.column = column;
 				raidwrite_component_label( 
@@ -2596,7 +2598,7 @@ if (raidautoconfig) {
 			if (!raidread_component_label(dev, vp, clabel)) {
 				/* Got the label.  Does it look reasonable? */
 				if (rf_reasonable_label(clabel) &&
-				    (clabel->partitionSize == 
+				    (clabel->partitionSize <= 
 				     label.d_partitions[i].p_size)) {
 #if DEBUG
 					printf("Component on: %s%c: %d\n", 
@@ -2763,6 +2765,7 @@ rf_does_it_fit(cset, ac)
 	/* If this one matches the *first* one in the set, that's good
 	   enough, since the other members of the set would have been
 	   through here too... */
+	/* note that we are not checking partitionSize here.. */
 
 	clabel1 = cset->ac->clabel;
 	clabel2 = ac->clabel;
@@ -2902,6 +2905,7 @@ rf_set_autoconfig(raidPtr, new_value)
 	dev_t dev;
 	int row, column;
 
+	raidPtr->autoconfigure = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
 		for(column=0; column<raidPtr->numCol; column++) {
 			dev = raidPtr->Disks[row][column].dev;
@@ -2924,6 +2928,7 @@ rf_set_rootpartition(raidPtr, new_value)
 	dev_t dev;
 	int row, column;
 
+	raidPtr->root_partition = new_value;
 	for(row=0; row<raidPtr->numRow; row++) {
 		for(column=0; column<raidPtr->numCol; column++) {
 			dev = raidPtr->Disks[row][column].dev;
@@ -2993,14 +2998,17 @@ raid_init_component_label(raidPtr, clabel)
 	clabel->sectPerSU = raidPtr->Layout.sectorsPerStripeUnit;
 	clabel->SUsPerPU = raidPtr->Layout.SUsPerPU;
 	clabel->SUsPerRU = raidPtr->Layout.SUsPerRU;
+
+	clabel->blockSize = raidPtr->bytesPerSector;
+	clabel->numBlocks = raidPtr->sectorsPerDisk;
+
 	/* XXX not portable */
 	clabel->parityConfig = raidPtr->Layout.map->parityConfig;
-	/* XXX THIS SHOULD BE SET RIGHT!! */
-	clabel->maxOutstanding = 100;
-	clabel->autoconfigure = 0;
-	clabel->root_partition = 0;
+	clabel->maxOutstanding = raidPtr->maxOutstanding;
+	clabel->autoconfigure = raidPtr->autoconfigure;
+	clabel->root_partition = raidPtr->root_partition;
 	clabel->last_unit = raidPtr->raidid;
-	clabel->config_order = 0;
+	clabel->config_order = raidPtr->config_order;
 }
 
 int
@@ -3086,10 +3094,13 @@ rf_auto_config_set(cset,unit)
 			printf("init returned: %d\n",retcode);
 		}
 		rf_markalldirty( raidPtrs[raidID] );
+		raidPtrs[raidID]->autoconfigure = 1; /* XXX do this here? */
 		if (cset->ac->clabel->root_partition==1) {
 			/* everything configured just fine.  Make a note
 			   that this set is eligible to be root. */
 			cset->rootable = 1;
+			/* XXX do this here? */
+			raidPtrs[raidID]->root_partition = 1; 
 		}
 	}
 
