@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.15 1998/12/29 16:02:55 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.16 1999/01/01 15:18:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,12 @@ typedef u_int8_t uWord[2];
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
 #define USETW(w,v) ((w)[0] = (u_int8_t)(v), (w)[1] = (u_int8_t)((v) >> 8))
 #define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
+typedef u_int8_t uDWord[4];
+#define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
+#define USETDW(w,v) ((w)[0] = (u_int8_t)(v), \
+		     (w)[1] = (u_int8_t)((v) >> 8), \
+		     (w)[2] = (u_int8_t)((v) >> 16), \
+		     (w)[3] = (u_int8_t)((v) >> 24))
 /* 
  * On little-endian machines that can handle unanliged accesses
  * (e.g. i386) these macros can be replaced by the following.
@@ -326,7 +332,7 @@ typedef struct {
 #define UCLASS_AUDIO		1
 #define  USUBCLASS_AUDIOCONTROL	1
 #define  USUBCLASS_AUDIOSTREAM	2
-#define UCLASS_CDC		2
+#define UCLASS_CDC		2 /* communication */
 #define  USUBCLASS_ABSTRACT_CONTROL_MODEL	2
 #define   UPROTO_CDC_AT		1
 #define UCLASS_HID		3
@@ -480,5 +486,6 @@ struct usb_device_stats {
 #define USB_GET_STRING_DESC	_IOWR('U', 110, struct usb_string_desc)
 #define USB_DO_REQUEST		_IOWR('U', 111, struct usb_ctl_request)
 #define USB_GET_DEVICEINFO	_IOR ('U', 112, struct usb_device_info)
+#define USB_SET_SHORT_XFER	_IOW ('U', 113, int)
 
 #endif /* _USB_H_ */
