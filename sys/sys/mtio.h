@@ -1,4 +1,4 @@
-/*	$NetBSD: mtio.h,v 1.15 1997/09/29 19:25:26 mjacob Exp $	*/
+/*	$NetBSD: mtio.h,v 1.16 1998/07/03 20:25:20 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -96,7 +96,7 @@ struct mtget {
 #define	MT_ISMT		0x04		/* TM78/TU78 Massbus */
 #define	MT_ISUT		0x05		/* SI TU-45 emulation on Unibus */
 #define	MT_ISCPC	0x06		/* SUN */
-#define	MT_ISAR		0x07		/* SUN */
+#define	MT_ISAR		0x07		/* SUN - Also "GENERIC SCSI" */
 #define	MT_ISTMSCP	0x08		/* DEC TMSCP protocol (TU81, TK50) */
 #define MT_ISCY		0x09		/* CCI Cipher */
 #define MT_ISCT		0x0a		/* HP 1/4 tape */
@@ -114,6 +114,25 @@ struct mtget {
 #define MT_ISMFOUR	0x11		/* M4 Data 1/2 9track drive */
 #define MT_ISTK50	0x12		/* DEC SCSI TK50 */
 #define MT_ISMT02	0x13		/* Emulex MT02 SCSI tape controller */
+
+/* bits defined for the mt_dsreg field */
+#define	MT_DS_RDONLY	0x10		/* tape mounted readonly */
+#define	MT_DS_MOUNTED	0x03		/* tape mounted (for control opens) */
+
+/*
+ * For the mt_erreg field.....This is supposed to be a *generic*
+ * MT interface, so we cannot overload it with SCSI specific entities,
+ * (like ASC/ASCQ) nor is there enough room to put all the information
+ * in that is desirable. This whole structure should be redone.
+ *
+ * In the interim, this will be considered device-specific. For SCSI,
+ * this will be taken to mean the last Sense Key seen. It is not
+ * guaranteed to always be sensibly associated with any command.
+ */
+
+/*
+ * The action of a MTIOCGET command clears mt_dsreg, mt_erreg, and mt_resid
+ */
 
 /* mag tape io control commands */
 #define	MTIOCTOP	_IOW('m', 1, struct mtop)	/* do a mag tape op */
