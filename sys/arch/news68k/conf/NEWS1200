@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.18 2002/04/25 15:06:33 atatat Exp $
+# 	$NetBSD: NEWS1200,v 1.19 2002/06/17 05:14:19 lukem Exp $
 
 #	news1200 config file
 #
@@ -145,3 +145,4 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	clockctl		# user control of clock subsystem

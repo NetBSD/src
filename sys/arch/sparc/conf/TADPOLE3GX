@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.15 2002/05/14 14:27:33 lukem Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.16 2002/06/17 05:14:25 lukem Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -330,3 +330,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

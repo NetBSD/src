@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.16 2002/04/25 15:06:20 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.17 2002/06/17 05:14:03 lukem Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.16 $"
+#ident		"GENERIC-$Revision: 1.17 $"
 
 # estimated number of users
 maxusers	32
@@ -344,6 +344,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"

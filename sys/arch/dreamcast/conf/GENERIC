@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24 2002/05/03 01:36:02 thorpej Exp $
+# $NetBSD: GENERIC,v 1.25 2002/06/17 05:14:08 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -142,3 +142,4 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	clockctl		# user control of clock subsystem

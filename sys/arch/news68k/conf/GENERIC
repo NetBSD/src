@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.33 2002/04/25 15:06:33 atatat Exp $
+# $NetBSD: GENERIC,v 1.34 2002/06/17 05:14:18 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.34 $"
 
 maxusers	8
 
@@ -221,3 +221,4 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	clockctl		# user control of clock subsystem
