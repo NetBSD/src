@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.9 1999/08/18 16:25:52 augustss Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.10 1999/09/04 18:56:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -66,7 +66,8 @@ MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 /* table for mapping Unicode chars into uppercase; it's filled upon first
  * ntfs mount, freed upon last ntfs umount */
 static wchar *ntfs_toupper_tab;
-#define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[ch & 0xFF])
+#define NTFS_U28(ch)		(((ch & 0xFF) == 0) ? '_' : (ch) & 0xFF)
+#define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[NTFS_U28(ch)])
 static struct lock ntfs_toupper_lock;
 static signed int ntfs_toupper_usecount;
 
@@ -161,7 +162,8 @@ ntfs_ntvattrget(
 	/* Scan $ATTRIBUTE_LIST for requested attribute */
 	len = lvap->va_datalen;
 	MALLOC(alpool, caddr_t, len, M_TEMP, M_WAITOK);
-	error = ntfs_readntvattr_plain(ntmp, ip, lvap, 0, len, alpool, &len);
+	error = ntfs_readntvattr_plain(ntmp, ip, lvap, 0, len, alpool, &len,
+			NULL);
 	if (error)
 		goto out;
 
@@ -183,7 +185,7 @@ ntfs_ntvattrget(
 
 #define AALPCMP(aalp,type,name,namelen) (				\
   (aalp->al_type == type) && (aalp->al_namelen == namelen) &&		\
-  !uastrcmp(aalp->al_name,aalp->al_namelen,name,namelen) )
+  !ntfs_uastrcmp(aalp->al_name,aalp->al_namelen,name,namelen) )
 
 		if (AALPCMP(aalp, type, name, namelen) &&
 		    (!nextaalp || (nextaalp->al_vcnstart > vcn) ||
@@ -296,7 +298,7 @@ ntfs_loadntnode(
 		vp = ntmp->ntm_sysvn[NTFS_MFTINO];
 		error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
 			       ip->i_number * ntfs_bntob(ntmp->ntm_bpmftrec),
-			       ntfs_bntob(ntmp->ntm_bpmftrec), mfrp);
+			       ntfs_bntob(ntmp->ntm_bpmftrec), mfrp, NULL);
 		if (error) {
 			printf("ntfs_loadnode: ntfs_readattr failed\n");
 			goto out;
@@ -662,7 +664,6 @@ ntfs_runtovrun(
  */
 int
 ntfs_uustricmp(
-	       struct ntfsmount * ntmp,
 	       wchar * str1,
 	       int str1len,
 	       wchar * str2,
@@ -685,7 +686,6 @@ ntfs_uustricmp(
  */
 int
 ntfs_uastricmp(
-	       struct ntfsmount * ntmp,
 	       const wchar *str1,
 	       int str1len,
 	       const char *str2,
@@ -708,7 +708,6 @@ ntfs_uastricmp(
  */
 int
 ntfs_uastrcmp(
-	      struct ntfsmount *ntmp,
 	      const wchar *str1,
 	      int str1len,
 	      const char *str2,
@@ -718,7 +717,7 @@ ntfs_uastrcmp(
 	int             res;
 
 	for (i = 0; (i < str1len) && (i < str2len); i++) {
-		res = ((int) str1[i]) - ((int) str2[i]);
+		res = ((int) NTFS_U28(str1[i])) - ((int) str2[i]);
 		if (res)
 			return res;
 	}
@@ -837,19 +836,19 @@ ntfs_ntlookupattr(
 		namelen -= syslen;
 
 		adp = ntmp->ntm_ad;
-		for (i = 0; i < ntmp->ntm_adnum; i++){
-			if((syslen == adp->ad_namelen) && 
-			   (!strncmp(sys,adp->ad_name,syslen))) {
-				*attrtype = adp->ad_type;
-				if(namelen) {
-					MALLOC((*attrname), char *, namelen,
-						M_TEMP, M_WAITOK);
-					memcpy((*attrname), name, namelen);
-					(*attrname)[namelen] = '\0';
-				}
-				return (0);
+		for (i = 0; i < ntmp->ntm_adnum; i++, adp++){
+			if (syslen != adp->ad_namelen || 
+			   strncmp(sys, adp->ad_name, syslen) != 0)
+				continue;
+
+			*attrtype = adp->ad_type;
+			if (namelen) {
+				MALLOC((*attrname), char *, namelen,
+					M_TEMP, M_WAITOK);
+				memcpy((*attrname), name, namelen);
+				(*attrname)[namelen] = '\0';
 			}
-			adp++;
+			return (0);
 		}
 		return (ENOENT);
 	}
@@ -886,6 +885,11 @@ ntfs_ntlookupfile(
 	int             error, res, anamelen, fnamelen;
 	const char     *fname,*aname;
 	u_int32_t       aoff;
+	int attrtype = NTFS_A_DATA;
+	char *attrname = NULL;
+	struct fnode   *nfp;
+	struct vnode   *nvp;
+
 
 	error = ntfs_ntget(ip);
 	if (error)
@@ -919,7 +923,7 @@ ntfs_ntlookupfile(
 	MALLOC(rdbuf, caddr_t, blsize, M_TEMP, M_WAITOK);
 
 	error = ntfs_readattr(ntmp, ip, NTFS_A_INDXROOT, "$I30",
-			       0, rdsize, rdbuf);
+			       0, rdsize, rdbuf, NULL);
 	if (error)
 		goto fail;
 
@@ -928,105 +932,97 @@ ntfs_ntlookupfile(
 	do {
 		iep = (struct attr_indexentry *) (rdbuf + aoff);
 
-		while (!(iep->ie_flag & NTFS_IEFLAG_LAST) && (rdsize > aoff)) {
+		for (; !(iep->ie_flag & NTFS_IEFLAG_LAST) && (rdsize > aoff);
+			aoff += iep->reclen,
+			iep = (struct attr_indexentry *) (rdbuf + aoff))
+		{
 			ddprintf(("scan: %d, %d\n",
 				  (u_int32_t) iep->ie_number,
 				  (u_int32_t) iep->ie_fnametype));
-			res = ntfs_uastricmp(ntmp, iep->ie_fname,
-					     iep->ie_fnamelen, fname,
-					     fnamelen);
-			if (res == 0) {
-				/* Matched something (case ins.) */
-				if (iep->ie_fnametype == 0 ||
-				    !(ntmp->ntm_flag & NTFS_MFLAG_CASEINS))
-					res = ntfs_uastrcmp(ntmp,
-							    iep->ie_fname,
-							    iep->ie_fnamelen,
-							    fname,
-							    fnamelen);
-				if (res == 0) {
-					int attrtype = NTFS_A_DATA;
-					char *attrname = NULL;
-					struct fnode   *nfp;
-					struct vnode   *nvp;
 
-					if (aname) {
-						error = ntfs_ntlookupattr(ntmp,
-							aname, anamelen,
-							&attrtype, &attrname);
-						if (error)
-							goto fail;
-					}
+			/* check the name - the case-insensitible check
+			 * has to come first, to break from this for loop
+			 * if needed, so we can dive correctly */
+			res = ntfs_uastricmp(iep->ie_fname, iep->ie_fnamelen,
+					fname, fnamelen);
+			if (res > 0) break;
+			if (res < 0) continue;
 
-					/* Check if we've found ourself */
-					if ((iep->ie_number == ip->i_number) &&
-					    (attrtype == fp->f_attrtype) &&
-					    ((!attrname && !fp->f_attrname) ||
-					     (attrname && fp->f_attrname &&
-					      !strcmp(attrname, fp->f_attrname)))) {
-						VREF(vp);
-						*vpp = vp;
-						goto fail;
-					}
+			if (iep->ie_fnametype == 0 ||
+			    !(ntmp->ntm_flag & NTFS_MFLAG_CASEINS))
+			{
+				res = ntfs_uastrcmp(iep->ie_fname,
+					iep->ie_fnamelen, fname, fnamelen);
+				if (res != 0) continue;
+			}
 
-					/* vget node, but don't load it */
-					error = ntfs_vgetex(ntmp->ntm_mountp,
-							   iep->ie_number,
-							   attrtype,
-							   attrname,
-							   LK_EXCLUSIVE,
-							   VG_DONTLOADIN | 
-							    VG_DONTVALIDFN,
-							   curproc,
-							   &nvp);
-					if(error)
-						goto fail;
+			if (aname) {
+				error = ntfs_ntlookupattr(ntmp,
+					aname, anamelen,
+					&attrtype, &attrname);
+				if (error)
+					goto fail;
+			}
 
-					nfp = VTOF(nvp);
+			/* Check if we've found ourself */
+			if ((iep->ie_number == ip->i_number) &&
+			    (attrtype == fp->f_attrtype) &&
+			    ((!attrname && !fp->f_attrname) ||
+			     (attrname && fp->f_attrname &&
+			      !strcmp(attrname, fp->f_attrname))))
+			{
+				VREF(vp);
+				*vpp = vp;
+				goto fail;
+			}
 
-					if (nfp->f_flag & FN_VALID) {
-						*vpp = nvp;
-						goto fail;
-					}
+			/* vget node, but don't load it */
+			error = ntfs_vgetex(ntmp->ntm_mountp,
+				   iep->ie_number, attrtype, attrname,
+				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
+				   curproc, &nvp);
+			if (error)
+				goto fail;
 
-					nfp->f_fflag = iep->ie_fflag;
-					nfp->f_pnumber = iep->ie_fpnumber;
-					nfp->f_times = iep->ie_ftimes;
+			nfp = VTOF(nvp);
 
-					if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
-					   (nfp->f_attrtype == NTFS_A_DATA) &&
-					   (nfp->f_attrname == NULL))
-						nfp->f_type = VDIR;	
-					else
-						nfp->f_type = VREG;	
+			if (nfp->f_flag & FN_VALID) {
+				*vpp = nvp;
+				goto fail;
+			}
 
-					nvp->v_type = nfp->f_type;
+			nfp->f_fflag = iep->ie_fflag;
+			nfp->f_pnumber = iep->ie_fpnumber;
+			nfp->f_times = iep->ie_ftimes;
 
-					if ((nfp->f_attrtype == NTFS_A_DATA) &&
-					    (nfp->f_attrname == NULL)) {
-						/* Opening default attribute */
-						nfp->f_size = iep->ie_fsize;
-						nfp->f_allocated = iep->ie_fallocated;
-						nfp->f_flag |= FN_PRELOADED;
-					} else {
-						error = ntfs_filesize(ntmp, nfp,
-							    &nfp->f_size,
-							    &nfp->f_allocated);
-						if (error) {
-							vput(nvp);
-							goto fail;
-						}
-					}
+			if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
+			   (nfp->f_attrtype == NTFS_A_DATA) &&
+			   (nfp->f_attrname == NULL))
+				nfp->f_type = VDIR;	
+			else
+				nfp->f_type = VREG;	
 
-					nfp->f_flag &= ~FN_VALID;
-					*vpp = nvp;
+			nvp->v_type = nfp->f_type;
+
+			if ((nfp->f_attrtype == NTFS_A_DATA) &&
+			    (nfp->f_attrname == NULL))
+			{
+				/* Opening default attribute */
+				nfp->f_size = iep->ie_fsize;
+				nfp->f_allocated = iep->ie_fallocated;
+				nfp->f_flag |= FN_PRELOADED;
+			} else {
+				error = ntfs_filesize(ntmp, nfp,
+					    &nfp->f_size, &nfp->f_allocated);
+				if (error) {
+					vput(nvp);
 					goto fail;
 				}
-			} else if (res > 0)
-				break;
+			}
 
-			aoff += iep->reclen;
-			iep = (struct attr_indexentry *) (rdbuf + aoff);
+			nfp->f_flag &= ~FN_VALID;
+			*vpp = nvp;
+			goto fail;
 		}
 
 		/* Dive if possible */
@@ -1038,7 +1034,7 @@ ntfs_ntlookupfile(
 			rdsize = blsize;
 
 			error = ntfs_readattr(ntmp, ip, NTFS_A_INDX, "$I30",
-					     ntfs_cntob(cn), rdsize, rdbuf);
+					ntfs_cntob(cn), rdsize, rdbuf, NULL);
 			if (error)
 				goto fail;
 
@@ -1151,7 +1147,7 @@ ntfs_ntreaddir(
 		}
 		MALLOC(bmp, u_char *, bmvap->va_datalen, M_TEMP, M_WAITOK);
 		error = ntfs_readattr(ntmp, ip, NTFS_A_INDXBITMAP, "$I30", 0,
-				       bmvap->va_datalen, bmp);
+				       bmvap->va_datalen, bmp, NULL);
 		if (error)
 			goto fail;
 
@@ -1188,7 +1184,7 @@ ntfs_ntreaddir(
 			 attrnum, (u_int32_t) blnum, cnum, num, aoff));
 		rdsize = (attrnum == NTFS_A_INDXROOT) ? vap->va_datalen : blsize;
 		error = ntfs_readattr(ntmp, ip, attrnum, "$I30",
-				   ntfs_cntob(blnum * cpbl), rdsize, rdbuf);
+				ntfs_cntob(blnum * cpbl), rdsize, rdbuf, NULL);
 		if (error)
 			goto fail;
 
@@ -1204,23 +1200,24 @@ ntfs_ntreaddir(
 				sizeof(struct attr_indexroot);
 
 		iep = (struct attr_indexentry *) (rdbuf + aoff);
-		while (!(iep->ie_flag & NTFS_IEFLAG_LAST) && (rdsize > aoff)) {
-			if (ntfs_isnamepermitted(ntmp, iep)) {
-				if (cnum >= num) {
-					fp->f_lastdnum = cnum;
-					fp->f_lastdoff = aoff;
-					fp->f_lastdblnum = blnum;
-					fp->f_lastdattr = attrnum;
+		for (; !(iep->ie_flag & NTFS_IEFLAG_LAST) && (rdsize > aoff);
+			aoff += iep->reclen,
+			iep = (struct attr_indexentry *) (rdbuf + aoff))
+		{
+			if (!ntfs_isnamepermitted(ntmp, iep)) continue;
 
-					*riepp = iep;
+			if (cnum >= num) {
+				fp->f_lastdnum = cnum;
+				fp->f_lastdoff = aoff;
+				fp->f_lastdblnum = blnum;
+				fp->f_lastdattr = attrnum;
 
-					error = 0;
-					goto fail;
-				}
-				cnum++;
+				*riepp = iep;
+
+				error = 0;
+				goto fail;
 			}
-			aoff += iep->reclen;
-			iep = (struct attr_indexentry *) (rdbuf + aoff);
+			cnum++;
 		}
 
 		if (iavap) {
@@ -1354,14 +1351,15 @@ ntfs_filesize(
  */
 int
 ntfs_writeattr_plain(
-		     struct ntfsmount * ntmp,
-		     struct ntnode * ip,
-		     u_int32_t attrnum,	
-		     char *attrname,
-		     off_t roff,
-		     size_t rsize,
-		     void *rdata,
-		     size_t * initp)
+	struct ntfsmount * ntmp,
+	struct ntnode * ip,
+	u_int32_t attrnum,	
+	char *attrname,
+	off_t roff,
+	size_t rsize,
+	void *rdata,
+	size_t * initp,
+	struct uio *uio)
 {
 	size_t          init;
 	int             error = 0;
@@ -1382,7 +1380,7 @@ ntfs_writeattr_plain(
 			 (u_int32_t) vap->va_vcnend));
 		error = ntfs_writentvattr_plain(ntmp, ip, vap,
 					 off - ntfs_cntob(vap->va_vcnstart),
-					 towrite, data, &init);
+					 towrite, data, &init, uio);
 		if (error) {
 			printf("ntfs_writeattr_plain: " \
 			       "ntfs_writentvattr_plain failed: o: %d, s: %d\n",
@@ -1410,108 +1408,104 @@ ntfs_writeattr_plain(
  */
 int
 ntfs_writentvattr_plain(
-			struct ntfsmount * ntmp,
-			struct ntnode * ip,
-			struct ntvattr * vap,
-			off_t roff,
-			size_t rsize,
-			void *rdata,
-			size_t * initp)
+	struct ntfsmount * ntmp,
+	struct ntnode * ip,
+	struct ntvattr * vap,
+	off_t roff,
+	size_t rsize,
+	void *rdata,
+	size_t * initp,
+	struct uio *uio)
 {
 	int             error = 0;
 	int             off;
+	int             cnt;
+	cn_t            ccn, ccl, cn, left, cl;
+	caddr_t         data = rdata;
+	struct buf     *bp;
+	size_t          tocopy;
 
 	*initp = 0;
-	if (vap->va_flag & NTFS_AF_INRUN) {
-		int             cnt;
-		cn_t            ccn, ccl, cn, left, cl;
-		caddr_t         data = rdata;
-		struct buf     *bp;
-		size_t          tocopy;
 
-		ddprintf(("ntfs_writentvattr_plain: data in run: %d chains\n",
-			 vap->va_vruncnt));
+	if (vap->va_flag & NTFS_AF_INRUN == 0) {
+		printf("ntfs_writevattr_plain: CAN'T WRITE RES. ATTRIBUTE\n");
+		return ENOTTY;
+	}
 
-		off = roff;
-		left = rsize;
-		ccl = 0;
-		ccn = 0;
-		cnt = 0;
-		while (left && (cnt < vap->va_vruncnt)) {
-			ccn = vap->va_vruncn[cnt];
-			ccl = vap->va_vruncl[cnt];
+	ddprintf(("ntfs_writentvattr_plain: data in run: %d chains\n",
+		 vap->va_vruncnt));
 
-			ddprintf(("ntfs_writentvattr_plain: " \
-				 "left %d, cn: 0x%x, cl: %d, off: %d\n", \
-				 (u_int32_t) left, (u_int32_t) ccn, \
-				 (u_int32_t) ccl, (u_int32_t) off));
+	off = roff;
+	left = rsize;
+	ccl = 0;
+	ccn = 0;
+	cnt = 0;
+	for (; left && (cnt < vap->va_vruncnt); cnt++) {
+		ccn = vap->va_vruncn[cnt];
+		ccl = vap->va_vruncl[cnt];
 
-			if (ntfs_cntob(ccl) < off) {
-				off -= ntfs_cntob(ccl);
-				cnt++;
-				continue;
-			}
-			if (ccn || ip->i_number == NTFS_BOOTINO) { /* XXX */
-				ccl -= ntfs_btocn(off);
-				cn = ccn + ntfs_btocn(off);
-				off = ntfs_btocnoff(off);
+		ddprintf(("ntfs_writentvattr_plain: " \
+			 "left %d, cn: 0x%x, cl: %d, off: %d\n", \
+			 (u_int32_t) left, (u_int32_t) ccn, \
+			 (u_int32_t) ccl, (u_int32_t) off));
 
-				while (left && ccl) {
+		if (ntfs_cntob(ccl) < off) {
+			off -= ntfs_cntob(ccl);
+			cnt++;
+			continue;
+		}
+		if (!ccn && ip->i_number != NTFS_BOOTINO)
+			continue; /* XXX */
+
+		ccl -= ntfs_btocn(off);
+		cn = ccn + ntfs_btocn(off);
+		off = ntfs_btocnoff(off);
+
+		while (left && ccl) {
 #if defined(__FreeBSD__)
-					tocopy = min(left,
-						  min(ntfs_cntob(ccl) - off,
-						      MAXBSIZE - off));
+			tocopy = min(left,
+				  min(ntfs_cntob(ccl) - off, MAXBSIZE - off));
 #else
-					/* under NetBSD, bread() can read
-					 * maximum one block worth of data */
-					tocopy = min(left,
-						ntmp->ntm_bps - off);
+			/* under NetBSD, bread() can read
+			 * maximum one block worth of data */
+			tocopy = min(left, ntmp->ntm_bps - off);
 #endif
-					cl = ntfs_btocl(tocopy + off);
-					ddprintf(("ntfs_writentvattr_plain: " \
-						"write: cn: 0x%x cl: %d, " \
-						"off: %d len: %d, left: %d\n",
-						(u_int32_t) cn, 
-						(u_int32_t) cl, 
-						(u_int32_t) off, 
-						(u_int32_t) tocopy, 
-						(u_int32_t) left));
-					if ((off == 0) && 
-					    (tocopy == ntfs_cntob(cl))) {
-						bp = getblk(ntmp->ntm_devvp,
-							    ntfs_cntobn(cn),
-							    ntfs_cntob(cl),
-							    0, 0);
-						clrbuf(bp);
-					} else {
-						error = bread(ntmp->ntm_devvp,
-							      ntfs_cntobn(cn),
-							      ntfs_cntob(cl),
-							      NOCRED, &bp);
-						if (error) {
-							brelse(bp);
-							return (error);
-						}
-					}
-					memcpy(bp->b_data + off, data, tocopy);
-					bawrite(bp);
-					data = data + tocopy;
-					*initp += tocopy;
-					off = 0;
-					left -= tocopy;
-					cn += cl;
-					ccl -= cl;
+			cl = ntfs_btocl(tocopy + off);
+			ddprintf(("ntfs_writentvattr_plain: write: " \
+				"cn: 0x%x cl: %d, off: %d len: %d, left: %d\n",
+				(u_int32_t) cn, (u_int32_t) cl, 
+				(u_int32_t) off, (u_int32_t) tocopy, 
+				(u_int32_t) left));
+			if ((off == 0) && (tocopy == ntfs_cntob(cl)))
+			{
+				bp = getblk(ntmp->ntm_devvp, ntfs_cntobn(cn),
+					    ntfs_cntob(cl), 0, 0);
+				clrbuf(bp);
+			} else {
+				error = bread(ntmp->ntm_devvp, ntfs_cntobn(cn),
+					      ntfs_cntob(cl), NOCRED, &bp);
+				if (error) {
+					brelse(bp);
+					return (error);
 				}
 			}
-			cnt++;
+			if (uio)
+				uiomove(bp->b_data + off, tocopy, uio);
+			else
+				memcpy(bp->b_data + off, data, tocopy);
+			bawrite(bp);
+			data = data + tocopy;
+			*initp += tocopy;
+			off = 0;
+			left -= tocopy;
+			cn += cl;
+			ccl -= cl;
 		}
-		if (left) {
-			printf("ntfs_writentvattr_plain: POSSIBLE RUN ERROR\n");
-			error = EINVAL;
-		}
-	} else {
-		printf("ntfs_writevattr_plain: CAN'T WRITE RES. ATTRIBUTE\n");
-		error = ENOTTY;
+	}
+
+	if (left) {
+		printf("ntfs_writentvattr_plain: POSSIBLE RUN ERROR\n");
+		error = EINVAL;
 	}
 
 	return (error);
@@ -1524,13 +1518,14 @@ ntfs_writentvattr_plain(
  */
 int
 ntfs_readntvattr_plain(
-			struct ntfsmount * ntmp,
-			struct ntnode * ip,
-			struct ntvattr * vap,
-			off_t roff,
-			size_t rsize,
-			void *rdata,
-			size_t * initp)
+	struct ntfsmount * ntmp,
+	struct ntnode * ip,
+	struct ntvattr * vap,
+	off_t roff,
+	size_t rsize,
+	void *rdata,
+	size_t * initp,
+	struct uio *uio)
 {
 	int             error = 0;
 	int             off;
@@ -1598,7 +1593,13 @@ ntfs_readntvattr_plain(
 						brelse(bp);
 						return (error);
 					}
-					memcpy(data, bp->b_data + off, tocopy);
+					if (uio) {
+						uiomove(bp->b_data + off,
+							tocopy, uio);
+					} else {
+						memcpy(data, bp->b_data + off,
+							tocopy);
+					}
 					brelse(bp);
 					data = data + tocopy;
 					*initp += tocopy;
@@ -1617,7 +1618,12 @@ ntfs_readntvattr_plain(
 					(u_int32_t) left));
 				left -= tocopy;
 				off = 0;
-				bzero(data, tocopy);
+				if (uio) {
+					size_t remains = tocopy;
+					for(; remains; remains++)
+						uiomove("", 1, uio);
+				} else 
+					bzero(data, tocopy);
 				data = data + tocopy;
 			}
 			cnt++;
@@ -1628,7 +1634,10 @@ ntfs_readntvattr_plain(
 		}
 	} else {
 		ddprintf(("ntfs_readnvattr_plain: data is in mft record\n"));
-		memcpy(rdata, vap->va_datap + roff, rsize);
+		if (uio) 
+			uiomove(vap->va_datap + roff, rsize, uio);
+		else
+			memcpy(rdata, vap->va_datap + roff, rsize);
 		*initp += rsize;
 	}
 
@@ -1642,14 +1651,15 @@ ntfs_readntvattr_plain(
  */
 int
 ntfs_readattr_plain(
-		     struct ntfsmount * ntmp,
-		     struct ntnode * ip,
-		     u_int32_t attrnum,	
-		     char *attrname,
-		     off_t roff,
-		     size_t rsize,
-		     void *rdata,
-		     size_t * initp)
+	struct ntfsmount * ntmp,
+	struct ntnode * ip,
+	u_int32_t attrnum,	
+	char *attrname,
+	off_t roff,
+	size_t rsize,
+	void *rdata,
+	size_t * initp,
+	struct uio *uio)
 {
 	size_t          init;
 	int             error = 0;
@@ -1670,7 +1680,7 @@ ntfs_readattr_plain(
 			 (u_int32_t) vap->va_vcnend));
 		error = ntfs_readntvattr_plain(ntmp, ip, vap,
 					 off - ntfs_cntob(vap->va_vcnstart),
-					 toread, data, &init);
+					 toread, data, &init, uio);
 		if (error) {
 			printf("ntfs_readattr_plain: " \
 			       "ntfs_readntvattr_plain failed: o: %d, s: %d\n",
@@ -1698,13 +1708,14 @@ ntfs_readattr_plain(
  */
 int
 ntfs_readattr(
-	       struct ntfsmount * ntmp,
-	       struct ntnode * ip,
-	       u_int32_t attrnum,
-	       char *attrname,
-	       off_t roff,
-	       size_t rsize,
-	       void *rdata)
+	struct ntfsmount * ntmp,
+	struct ntnode * ip,
+	u_int32_t attrnum,
+	char *attrname,
+	off_t roff,
+	size_t rsize,
+	void *rdata,
+	struct uio *uio)
 {
 	int             error = 0;
 	struct ntvattr *vap;
@@ -1745,21 +1756,33 @@ ntfs_readattr(
 			error = ntfs_readattr_plain(ntmp, ip, attrnum,
 						  attrname, ntfs_cntob(cn),
 					          ntfs_cntob(NTFS_COMPUNIT_CL),
-						  cup, &init);
+						  cup, &init, NULL);
 			if (error)
 				break;
 
 			tocopy = min(left, ntfs_cntob(NTFS_COMPUNIT_CL) - off);
 
 			if (init == ntfs_cntob(NTFS_COMPUNIT_CL)) {
-				memcpy(data, cup + off, tocopy);
+				if (uio)
+					uiomove(cup + off, tocopy, uio);
+				else
+					memcpy(data, cup + off, tocopy);
 			} else if (init == 0) {
-				bzero(data, tocopy);
+				if (uio) {
+					size_t remains = tocopy;
+					for(; remains; remains--)
+						uiomove("", 1, uio);
+				}
+				else
+					bzero(data, tocopy);
 			} else {
 				error = ntfs_uncompunit(ntmp, uup, cup);
 				if (error)
 					break;
-				memcpy(data, uup + off, tocopy);
+				if (uio)
+					uiomove(uup + off, tocopy, uio);
+				else
+					memcpy(data, uup + off, tocopy);
 			}
 
 			left -= tocopy;
@@ -1772,7 +1795,7 @@ ntfs_readattr(
 		FREE(cup, M_NTFSDECOMP);
 	} else
 		error = ntfs_readattr_plain(ntmp, ip, attrnum, attrname,
-					     roff, rsize, rdata, &init);
+					     roff, rsize, rdata, &init, uio);
 	ntfs_ntvattrrele(vap);
 	return (error);
 }
@@ -1955,7 +1978,7 @@ ntfs_toupper_use(mp, ntmp)
 	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
 		goto out;
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
-			0, 256*sizeof(wchar), (char *) ntfs_toupper_tab);
+			0, 256*sizeof(wchar), (char *) ntfs_toupper_tab, NULL);
 	vput(vp);
 
     out:
