@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.92 2001/07/02 14:51:38 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.93 2001/07/02 15:33:29 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -5425,7 +5425,7 @@ sys/dev/pci/pciide.c				1.94
   immediately with a lost interrupt on udma mode 2, downgrades to mode 1
   at which point it silently corrupts data on high disk activity.
 
-sys/arch/powerprc/powerpc/trap.c		1.48 via patch
+sys/arch/powerpc/powerpc/trap.c			1.48 via patch
 
   Record any stack growth.  This fixes a serious problem with core dumps.
   Without this change, coredumps will only contain one page of stack
