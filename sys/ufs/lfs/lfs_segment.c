@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.8 2000/01/15 17:51:34 he Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.9 2000/01/15 18:01:45 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ lfs_vflush(vp)
 	struct inode *ip;
 	struct lfs *fs;
 	struct segment *sp;
-	struct buf *bp, *nbp;
+	struct buf *bp, *nbp, *tbp, *tnbp;
 	int error, s;
 
 	ip = VTOI(vp);
@@ -203,6 +203,28 @@ lfs_vflush(vp)
 			fs->lfs_uinodes--;
 		} else
 			ip->i_flag |= IN_MODIFIED;
+		/*
+		 * Toss any cleaning buffers that have real counterparts
+		 * to avoid losing new data
+		 */
+		s = splbio();
+		for(bp=vp->v_dirtyblkhd.lh_first; bp; bp=nbp) {
+			nbp = bp->b_vnbufs.le_next;
+			if(bp->b_flags & B_CALL) {
+				for(tbp=vp->v_dirtyblkhd.lh_first; tbp;
+				    tbp=tnbp)
+				{
+					tnbp = tbp->b_vnbufs.le_next;
+					if(tbp->b_vp == bp->b_vp
+					   && tbp->b_lblkno == bp->b_lblkno
+					   && tbp != bp)
+					{
+						lfs_freebuf(bp);
+					}
+				}
+			}
+		}
+		splx(s);
 	}
 
 	/* If the node is being written, wait until that is done */
@@ -364,6 +386,7 @@ lfs_writevnodes(fs, mp, sp, op)
 		}
 
 		if(op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM
+		   && vp != fs->lfs_flushvp
 		   && !(ip->i_flag & IN_CLEANING)) {
 			vndebug(vp,"cleaning");
 			continue;
@@ -491,24 +514,24 @@ lfs_segwrite(mp, flags)
 	 * If we're cleaning we only write cleaning and ifile blocks, and
 	 * no dirops, since otherwise we'd risk corruption in a crash.
 	 */
-	if(fs->lfs_flushvp)
-		lfs_writevnodes(fs, mp, sp, VN_REG);
-	else if(sp->seg_flags & SEGM_CLEAN)
+	if(sp->seg_flags & SEGM_CLEAN)
 		lfs_writevnodes(fs, mp, sp, VN_CLEAN);
 	else {
 		lfs_writevnodes(fs, mp, sp, VN_REG);
-		while(fs->lfs_dirops)
-			if((error = tsleep(&fs->lfs_writer, PRIBIO + 1,
-					"lfs writer", 0)))
-			{
-				free(sp->bpp, M_SEGMENT);
-				free(sp, M_SEGMENT); 
-				return (error);
-			}
-		fs->lfs_writer++;
-		writer_set=1;
-		lfs_writevnodes(fs, mp, sp, VN_DIROP);
-		((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+		if(!fs->lfs_dirops || !fs->lfs_flushvp) {
+			while(fs->lfs_dirops)
+				if((error = tsleep(&fs->lfs_writer, PRIBIO + 1,
+						"lfs writer", 0)))
+				{
+					free(sp->bpp, M_SEGMENT);
+					free(sp, M_SEGMENT); 
+					return (error);
+				}
+			fs->lfs_writer++;
+			writer_set=1;
+			lfs_writevnodes(fs, mp, sp, VN_DIROP);
+			((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+		}
 	}	
 
 	/*
@@ -617,6 +640,21 @@ lfs_writefile(fs, sp, vp)
 	fip->fi_version = ifp->if_version;
 	brelse(bp);
 	
+	if(sp->seg_flags & SEGM_CLEAN)
+	{
+		lfs_gather(fs, sp, vp, lfs_match_fake);
+		/*
+		 * For a file being flushed, we need to write *all* blocks.
+		 * This means writing the cleaning blocks first, and then
+		 * immediately following with any non-cleaning blocks.
+		 * The same is true of the Ifile since checkpoints assume
+		 * that all valid Ifile blocks are written.
+		 */
+	   	if(IS_FLUSHING(fs,vp) || VTOI(vp)->i_number == LFS_IFILE_INUM)
+			lfs_gather(fs, sp, vp, lfs_match_data);
+	} else
+		lfs_gather(fs, sp, vp, lfs_match_data);
+
 	/*
 	 * It may not be necessary to write the meta-data blocks at this point,
 	 * as the roll-forward recovery code should be able to reconstruct the
@@ -626,23 +664,13 @@ lfs_writefile(fs, sp, vp)
 	 * vnode is being flushed (for reuse by vinvalbuf); or (2) we are
 	 * checkpointing.
 	 */
-	if((sp->seg_flags & SEGM_CLEAN)
-	   && VTOI(vp)->i_number != LFS_IFILE_INUM
-	   && !IS_FLUSHING(fs,vp))
-	{
-		lfs_gather(fs, sp, vp, lfs_match_fake);
-	} else
-		lfs_gather(fs, sp, vp, lfs_match_data);
-
 	if(lfs_writeindir
 	   || IS_FLUSHING(fs,vp)
 	   || (sp->seg_flags & SEGM_CKP))
 	{
 		lfs_gather(fs, sp, vp, lfs_match_indir);
 		lfs_gather(fs, sp, vp, lfs_match_dindir);
-/* XXX KS - when is TRIPLE not true? */ /* #ifdef TRIPLE */
 		lfs_gather(fs, sp, vp, lfs_match_tindir);
-/* #endif */
 	}
 	fip = sp->fip;
 	if (fip->fi_nblocks != 0) {
