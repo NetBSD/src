@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	5.44 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mount.c,v 1.9 1994/04/14 03:25:14 cgd Exp $";
+static char rcsid[] = "$Id: mount.c,v 1.10 1994/04/15 00:47:33 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -200,7 +200,7 @@ main(argc, argv, arge)
 			exit(1);
 		}
 		for (i = 0; i < mntsize; i++) {
-			if (badvfstype(mntbuf[i].f_type, vfslist))
+			if (badvfstype(mntbuf[i].f_fstypename, vfslist))
 				continue;
 			prmount(mntbuf[i].f_mntfromname, mntbuf[i].f_mntonname,
 				mntbuf[i].f_flags);
