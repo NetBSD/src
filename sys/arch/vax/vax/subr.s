@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.19 1997/11/03 20:00:21 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.20 1997/11/04 20:52:29 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -58,26 +58,6 @@ _idsptch:	pushr	$0x3f
 		rei
 _eidsptch:
 
-		.globl	_subyte
-_subyte:	.word 0x0
-		movl	4(ap),r0
-#		probew	$3,$1,(r0)
-#		beql	suerr
-		movb	8(ap),(r0)
-		clrl	r0
-		ret
-
-suerr:		movl	$-1,r0
-		ret
-
-                .globl  _fubyte
-_fubyte:        .word 0x0
-                movl    4(ap),r0
-#                prober  $3,$1,(r0)
-#                beql    suerr
-                movzbl	(r0),r0
-                ret
-
 ENTRY(badaddr,0)			# Called with addr,b/w/l
 		mfpr	$0x12,r0
 		mtpr	$0x1f,$0x12
@@ -107,67 +87,7 @@ ENTRY(badaddr,0)			# Called with addr,b/w/l
 		movl	r3,r0
 		ret
 
-#
-# Speeded up locopyin/locopyout written by Ken Wellsch.
-#
-# locopyin (from, to, len, addr) copies from userspace to kernelspace.
-#       addr is iftrap addr for faulting.
-#
-	.globl  _locopyin
-	.align  2
-
-_locopyin:      .word   0x3c    # save R2|R3|R4|R5
-
-	movl     4(ap),r4       # stash userspace address
-	movl    12(ap),r3       # and length in case of fault?
-
-	brb     copyio
-
-#
-# locopyout (from, to, len, addr) copies from kernelspace to userspace.
-#       addr is iftrap addr for faulting.
-#
-	.globl  _locopyout
-	.align  2
-
-_locopyout:     .word   0x3c    # save R2|R3|R4|R5
-
-	movl    8(ap),r4	# stash userspace address
-	movl    12(ap),r3       # and length in case of fault?
-
-copyio:
-
-	movl    12(ap),r2       # len
-	beql    5f
-
-	movl    16(ap),r0       # Get fault pointer flag
-	movl    $cio,(r0)       # and stuff return address into it
-
-	movl    4(ap),r0	# from
-	movl    8(ap),r1	# to
-
-	ashl    $-3,r2,r5       # convert length to quad words
-	beql    2f
-1: 
-	movq    (r0)+,(r1)+     # do the copying in large hunks
-	sobgtr  r5,1b	   	# (although movc3 is twice as fast
-				# alas movc5 clobbers [r0-r5] thus
-				# damaging the magic r3/r4 pair)
-2:
-	bicl3   $-8,r2,r5       # compute trailing bytes (<=7)
-	beql    4f
-3:
-	movb    (r0)+,(r1)+
-	sobgtr  r5,3b
-4:
-	movl    16(ap),r0	# remove fault address
-	clrl    (r0)
-5:
-	clrl    r0		# flag the successful operation
-cio:
-	ret
-
-
+#if 0
 #
 # copystr(from, to, maxlen, *copied, addr)
 # Only used in kernel mode, doesnt check accessability.
@@ -208,10 +128,7 @@ cs:	ret
 1:	movc3	r2,(r4),(r5)
 	movl	$ENAMETOOLONG, r0
 	ret
-
-	.data
-
-_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
+#endif
 
 # Have bcopy and bzero here to be sure that system files that not gets
 # macros.h included will not complain.
@@ -297,8 +214,6 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 # cpu_switch, cpu_exit and the idle loop implemented in assembler 
 # for efficiency. r0 contains pointer to last process.
 #
-_pcbvirt:	.long 0
-noque:		.asciz	"swtch"
 
 JSBENTRY(Swtch)
 	clrl	_curproc		# Stop process accounting
@@ -312,6 +227,7 @@ JSBENTRY(Swtch)
 	bvc	1f			# check if something on queue
 	pushab	noque
 	calls	$1,_panic
+noque:	.asciz	"swtch"
 #endif
 1:	bneq	2f			# more processes on queue?
 	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
@@ -322,7 +238,7 @@ JSBENTRY(Swtch)
 	bneq	1f			# No, continue
 	rsb
 1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
-	movl	r0,_pcbvirt		# Save for copy* functions.
+	addl3	r0,$IFTRAP,pcbtrap	# Save for copy* functions.
 
 #
 # Nice routine to get physical from virtual adresses.
@@ -360,24 +276,103 @@ ENTRY(cpu_exit,0)
 	brw	Swtch
 
 
-#ifdef notyet
+#
+# copy/fetch/store routines. 
+#
 
-#
-# They both are the same.
-#
 	.globl	_copyin, _copyout
 _copyout:
-_copyin:.word 0x40	# save r6
-	mfpr	$PR_PCBB, r6
-	addl2	0x80000064, r6
-	moval	1f, (r6)
-	movl	4(ap), r1
-	movl	8(ap), r2
-	movc3	12(ap), (r1), (r2)
-1:	clrl	(r6)
+_copyin:.word 0
+	moval	1f,*pcbtrap
+	movl	4(ap),r1
+	movl	8(ap),r2
+	movc3	12(ap),(r1), (r2)
+1:	clrl	*pcbtrap
 	ret
 
-Idealet inline:
-	movl _curpcb,r6;moval 1f,64(r6);movc3 %1,(%2),(%3);clrl (r6);movl r0,%0
+_copystr:	.globl	_copystr,_copyinstr,_copyoutstr
+_copyinstr:
+_copyoutstr:
+	.word	0
+	movl	4(ap),r4	# from
+	movl	8(ap),r5	# to
+	movl	12(ap),r2	# len
+	movl	16(ap),r3	# copied
 
+	moval	2f,*pcbtrap
+#if VAX630 || VAX410
+	cmpl	_vax_cputype,$VAX_TYP_UV2
+	bneq	4f		# Check if locc emulated
+
+	movl	r2,r0
+7:	movb	(r4)+,(r5)+
+	beql	6f
+	sobgtr	r0,7b
+	brb 1f
+
+6:	tstl	r3
+	beql	5f
+	incl	r2
+	subl3	r0,r2,(r3)
+5:	clrl	r0
+	clrl	*pcbtrap
+	ret
 #endif
+4:	locc	$0,r2,(r4)	# check for null byte
+	beql	1f
+
+	subl3	r0,r2,r1	# Calculate len to copy
+	incl	r1		# Copy null byte also
+	tstl	r3
+	beql	3f
+	movl	r1,(r3)		# save len copied
+3:	movc3	r1,(r4),(r5)
+	brb	2f
+
+1:	movl	$ENAMETOOLONG,r0
+2:	clrl	*pcbtrap
+	ret
+
+ENTRY(subyte,0)
+	moval	1f,*pcbtrap
+	movl	4(ap),r0
+	movb	8(ap),(r0)
+	clrl	r1
+1:	clrl	*pcbtrap
+	movl	r1,r0
+	ret
+
+ENTRY(suword,0)
+	moval	1f,*pcbtrap
+	movl	4(ap),r0
+	movl	8(ap),(r0)
+	clrl	r1
+1:	clrl	*pcbtrap
+	movl	r1,r0
+	ret
+
+ENTRY(suswintr,0)
+	moval	1f,*pcbtrap
+	movl	4(ap),r0
+	movw	8(ap),(r0)
+	clrl	r1
+1:	clrl	*pcbtrap
+	movl	r1,r0
+	ret
+
+ENTRY(fuswintr,0)
+	moval	1f,*pcbtrap
+	movl    4(ap),r0
+	movzwl	(r0),r1
+1:	clrl	*pcbtrap
+	movl	r1,r0
+	ret
+
+#
+# data department
+#
+	.data
+
+_memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
+pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
+
