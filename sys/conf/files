@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.707 2005/01/13 20:16:02 petrov Exp $
+#	$NetBSD: files,v 1.707.2.1 2005/01/16 15:05:11 kent Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -30,6 +30,8 @@ defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 defflag				BUFQ_PRIOCSCAN
 defflag				BUFQ_READPRIO
 defflag				NEW_BUFQ_STRATEGY	# same as BUFQ_READPRIO
+
+defparam opt_audio.h		AUDIO_KMIXER
 
 defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
