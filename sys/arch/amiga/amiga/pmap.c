@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1998/01/06 07:02:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1998/01/22 23:13:40 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1591,7 +1591,15 @@ validate:
 	if (wired)
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
+#if defined(M68060)
+#if defined(M68040) || defined(M68030) || defined(M68020)
+		npte |= (cputype == CPU_68060 ? PG_CIN : PG_CI);
+#else
+		npte |= PG_CIN;
+#endif
+#else
 		npte |= PG_CI;
+#endif
 #if defined(M68040) || defined(M68060)
 	else if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW &&
 	    (kernel_copyback || pmap != pmap_kernel()))
