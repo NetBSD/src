@@ -1,3 +1,3 @@
-/*	$NetBSD: pcibvar.h,v 1.1 2002/03/07 14:44:05 simonb Exp $	*/
+/*	$NetBSD: pcibvar.h,v 1.2 2002/03/18 10:10:17 simonb Exp $	*/
 
-extern struct evbmips_isa_chipset *pcib_ic;
+extern struct mips_isa_chipset *pcib_ic;

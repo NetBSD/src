@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.1 2002/03/07 14:44:05 simonb Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2 2002/03/18 10:10:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -57,6 +57,6 @@ pciide_machdep_compat_intr_establish(struct device *dev,
 
 	if (pc->pc_pciide_compat_intr_establish == NULL)
 		return (NULL);
-	return (evbmips_pciide_compat_intr_establish(pc, dev, pa, chan,
+	return (mips_pciide_compat_intr_establish(pc, dev, pa, chan,
 	    func, arg));
 }
