@@ -1,4 +1,4 @@
-/*	$NetBSD: getmode.c,v 1.5 2004/01/12 02:23:37 simonb Exp $	*/
+/*	$NetBSD: getmode.c,v 1.6 2004/01/13 00:53:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ setmode(const char *str)
 mode_t
 getmode(const void *mp, mode_t mode)
 {
-	mode_t m; 
+	mode_t m;
 
 	m = *((const mode_t *)mp);
 
