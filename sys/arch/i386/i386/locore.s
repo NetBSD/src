@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97 1994/11/07 05:32:50 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.98 1994/11/14 23:35:48 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -236,23 +236,24 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	jnz	try586
 is486:	movl	$CPU_486,_cpu-KERNBASE
 
-	/* check for Cyrix 486DLC -- based on check routine  */
-	/* documented in "Cx486SLC/e SMM Programmer's Guide" */
-	xorw	%dx,%dx
-	cmpw	%dx,%dx			# set flags to known state
-	pushfw
-	popw	%cx			# store flags in ecx
-	movw	$0xffff,%ax
-	movw	$0x0004,%bx
-	divw	%bx
-	pushfw
-	popw	%ax
-	andw	$0x08d5,%ax		# mask off important bits
-	andw	$0x08d5,%cx
-	cmpw	%ax,%cx
-	jnz	2f			# if flags changed, Intel chip
+	/*
+	 * Check for Cyrix CPU by seeing if the flags change during a divide.
+	 * This is documented in the Cx486SLC/e SMM Programmer's Guide.
+	 */
+	xorl	%edx,%edx
+	cmpl	%edx,%edx		# set flags to known state
+	pushfl
+	popl	%ecx			# store flags in ecx
+	movl	$-1,%eax
+	movl	$4,%ebx
+	divl	%ebx			# do a long division
+	pushfl
+	popl	%eax
+	xorl	%ecx,%eax		# are the flags different?
+	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
+	jne	2f			# yes; must not be Cyrix CPU
 
-	movl	$CPU_486DLC,_cpu-KERNBASE # set CPU value for Cyrix
+	movl	$CPU_486DLC,_cpu-KERNBASE 		# set CPU type
 	movl	$0x69727943,_cpu_vendor-KERNBASE	# store vendor string
 	movw	$0x0078,_cpu_vendor-KERNBASE+4
 
@@ -1527,6 +1528,7 @@ ENTRY(idle)
 	testl	%ecx,%ecx
 	jnz	sw1
 	sti
+	hlt
 	jmp	_idle
 
 #ifdef DIAGNOSTIC
