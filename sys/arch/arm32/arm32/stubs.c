@@ -1,7 +1,7 @@
-/*	$NetBSD: stubs.c,v 1.25 1998/08/08 23:39:39 mycroft Exp $	*/
+/*	$NetBSD: stubs.c,v 1.26 1998/09/05 04:00:30 mark Exp $	*/
 
 /*
- * Copyright (c) 1994,1995 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,15 +17,16 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -33,10 +34,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * stubs.c
  *
  * Routines that are temporary or do not have a home yet.
  *
@@ -65,7 +62,6 @@ extern dev_t dumpdev;
 extern BootConfig bootconfig;
 
 /* These queue functions are candiates for arm32/machdep.c */
-
 struct queue {
 	struct queue *q_next, *q_prev;
 };
@@ -79,8 +75,8 @@ _insque(v1, v2)
 	void *v1;
 	void *v2;
 {
-	register struct queue *elem = v1, *head = v2;
-	register struct queue *next;
+	struct queue *elem = v1, *head = v2;
+	struct queue *next;
 
 	next = head->q_next;
 	elem->q_next = next;
@@ -97,8 +93,8 @@ void
 _remque(v)
 	void *v;
 {
-	register struct queue *elem = v;
-	register struct queue *next, *prev;
+	struct queue *elem = v;
+	struct queue *next, *prev;
 
 	next = elem->q_next;
 	prev = elem->q_prev;
@@ -274,36 +270,53 @@ beep_generate()
 #endif /* NBEEP */
 
 
+/* This is interrupt / SPL related */
+
 int current_spl_level = _SPL_HIGH;
 u_int spl_masks[_SPL_LEVELS];
-
+u_int spl_smasks[_SPL_LEVELS];
 int safepri = _SPL_0;
 
 void
 set_spl_masks()
 {
-	spl_masks[_SPL_0]	= 0xffffffff;
-	spl_masks[_SPL_SOFT]	= ~(IRQMASK_ALLSOFT);
-	spl_masks[_SPL_BIO]	= irqmasks[IPL_BIO];
-	spl_masks[_SPL_NET]	= irqmasks[IPL_NET];
-	spl_masks[_SPL_TTY]	= irqmasks[IPL_TTY];
-	spl_masks[_SPL_IMP]	= irqmasks[IPL_IMP];
-	spl_masks[_SPL_AUDIO]	= irqmasks[IPL_AUDIO];
-	spl_masks[_SPL_CLOCK]	= irqmasks[IPL_CLOCK];
-	spl_masks[_SPL_HIGH]	= 0x00000000;
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		spl_masks[loop] = 0xffffffff;
+		spl_smasks[loop] = 0;
+	}
+
+	spl_masks[_SPL_BIO]	   = irqmasks[IPL_BIO];
+	spl_masks[_SPL_NET]	   = irqmasks[IPL_NET];
+	spl_masks[_SPL_SOFTSERIAL] = irqmasks[IPL_TTY];
+	spl_masks[_SPL_TTY]	   = irqmasks[IPL_TTY];
+	spl_masks[_SPL_IMP]	   = irqmasks[IPL_IMP];
+	spl_masks[_SPL_AUDIO]	   = irqmasks[IPL_AUDIO];
+	spl_masks[_SPL_CLOCK]	   = irqmasks[IPL_CLOCK];
+	spl_masks[_SPL_HIGH]	   = irqmasks[IPL_HIGH];
+	spl_masks[_SPL_SERIAL]	   = irqmasks[IPL_SERIAL];
+
+	spl_smasks[_SPL_0] = 0xffffffff;
+	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_SERIAL);
+	for (loop = 0; loop < _SPL_SOFTNET; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_NET);
+	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
+		spl_smasks[loop] |= SOFTIRQ_BIT(SOFTIRQ_CLOCK);
 }
 
+#ifdef DIAGNOSTIC
 void
 dump_spl_masks()
 {
-	printf("spl0=%08x splsoft=%08x splbio=%08x splnet=%08x\n",
-	    spl_masks[_SPL_0], spl_masks[_SPL_SOFT], spl_masks[_SPL_BIO],
-	    spl_masks[_SPL_NET]);
-	printf("spltty=%08x splimp=%08x splaudio=%08x splclock=%08x\n",
-	    spl_masks[_SPL_TTY], spl_masks[_SPL_IMP], spl_masks[_SPL_AUDIO],
-	    spl_masks[_SPL_CLOCK]);
-	printf("splhigh=%08x\n",
-	    spl_masks[_SPL_HIGH]);
+	int loop;
+
+	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		    spl_masks[loop], loop, spl_smasks[loop]);
+	}
 }
+#endif
 
 /* End of stubs.c */
