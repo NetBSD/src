@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.1 2000/05/09 21:55:58 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.2 2000/08/13 12:31:26 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -217,7 +217,7 @@ file	arch/arm26/arm26/bus.c
 file	arch/arm26/arm26/conf.c
 file	arch/arm26/arm26/cons_machdep.c
 file	arch/arm26/arm26/copyinout.S
-file	arch/arm26/arm26/copyinoutstr.c
+#file	arch/arm26/arm26/copyinoutstr.c
 #file	arch/arm26/arm26/copystr.S
 file	arch/arm26/arm26/except.c
 file	arch/arm26/arm26/irq.c
