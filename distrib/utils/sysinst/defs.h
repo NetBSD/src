@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.91 2003/06/16 10:42:47 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.92 2003/06/25 15:45:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,6 +144,8 @@ typedef struct _partinfo {
 
 
 /* variables */
+
+EXTERN int debug;		/* set by -D option */
 
 EXTERN char rel[SSTRSIZE] INIT(REL);
 EXTERN char machine[SSTRSIZE] INIT(MACH);

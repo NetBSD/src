@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.6 2003/06/16 19:42:13 dsl Exp $
+/*	$NetBSD: aout2elf.c,v 1.7 2003/06/25 15:45:21 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *
  */
 
-/* aout2elf.c -- routines for upgrading an a.out system to elf */
+/* aout2elf.c -- routines for upgrading an a.out system to ELF */
 
 #include <sys/param.h>
 #include <sys/exec.h>
