@@ -1,4 +1,4 @@
-|	$NetBSD: SRT0.S,v 1.2 1997/03/13 17:52:48 gwr Exp $
+|	$NetBSD: SRT0.S,v 1.3 1997/10/06 19:43:24 gwr Exp $
 
 | Copyright (c) 1995 Gordon W. Ross
 | All rights reserved.
@@ -30,6 +30,8 @@
 
 |	SRT0.S - Stand-alone Run-Time startup code, part 0
 	.file	"SRT0.S"
+	.set	IC_CLEAR,0x3119
+
 	.text
 	.globl	__estack
 __estack:
@@ -51,6 +53,9 @@ Lcp:
 	movl	a0@+, a1@+
 	dbra	d0, Lcp
 
+| Clear the I-cache in case the copied code was cached.
+	movl	#IC_CLEAR, d0
+	movc	d0, cacr
 | Force a long jump to the relocated code (not pc-relative)
 	lea	restart:l, a0
 	jmp	a0@
@@ -82,6 +87,13 @@ _reset:
 	.globl	_getvbr
 _getvbr:
 	movc	vbr, d0
+	rts
+
+| function to clear the I-cache
+	.globl	_ICIA
+_ICIA:
+	movl	#IC_CLEAR, d0
+	movc	d0, cacr
 	rts
 
 | function to flush the ATC of cached entries.
