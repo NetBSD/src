@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.22 1993/11/11 01:22:33 jtc Exp $
+#	$Id: Makefile.inc,v 1.23 1993/11/14 12:40:23 cgd Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen
@@ -11,10 +11,10 @@ SRCS+=	alarm.c assert.c clock.c ctermid.c ctime.c ctype_.c cuserid.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
 	infinity.c initgroups.c insque.c isatty.c isctype.c isinf.c  \
 	lfind.c lsearch.c \
+	msgctl.c msgget.c msgsnd.c msgrcv.c \
 	mktemp.c nice.c nlist.c pause.c popen.c psignal.c raise.c remque.c \
-	scandir.c setjmperr.c \
-	setmode.c setrgid.c setruid.c \
-	shmat.c shmctl.c shmdt.c shmget.c \
+	scandir.c semconfig.c semctl.c semget.c semop.c setjmperr.c setmode.c \
+	setrgid.c setruid.c shmat.c shmctl.c shmdt.c shmget.c \
 	siginterrupt.c \
 	siglist.c signal.c signame.c sigsetops.c sleep.c syslog.c \
 	termios.c time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c \
