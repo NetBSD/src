@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.28 2004/08/11 06:16:10 mycroft Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.29 2004/08/11 06:30:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.28 2004/08/11 06:16:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.29 2004/08/11 06:30:15 mycroft Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -764,10 +764,10 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 	hd64461pcmcia_power_off(channel);
 	hd64461pcmcia_power_on(channel);
 
-
-	/* assert reset */
+	/* assert reset, set card type to memory */
 	r = hd64461_reg_read_1(gcr);
 	r |= HD64461_PCCGCR_PCCR;
+	r &= ~HD64461_PCC0GCR_P0PCCT;
 	hd64461_reg_write_1(gcr, r);
 
 	/*
