@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.56 1995/01/26 12:05:54 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.57 1995/01/30 11:34:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -230,21 +230,22 @@ sdopen(dev, flag, fmt)
 			return ENXIO;
 	} else {
 		sd->flags |= SDF_LOCKED;
-		sc_link->flags |= SDEV_OPEN;
 
 		/* Check that it is still responding and ok. */
 		if (error = scsi_test_unit_ready(sc_link,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
-			goto bad;
-
-		/* Lock the pack in. */
-		if (error = scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
-			goto bad;
+			goto bad3;
 
 		/* Start the pack spinning if necessary. */
 		if (error = scsi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
+			goto bad3;
+
+		sc_link->flags |= SDEV_OPEN;
+
+		/* Lock the pack in. */
+		if (error = scsi_prevent(sc_link, PR_PREVENT,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
 			goto bad;
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
@@ -300,6 +301,7 @@ bad:
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
 
+bad3:
 		sd->flags &= ~SDF_LOCKED;
 		if ((sd->flags & SDF_WANTED) != 0) {
 			sd->flags &= ~SDF_WANTED;
