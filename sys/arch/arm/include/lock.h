@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2002/10/07 23:19:49 bjh21 Exp $	*/
+/*	$NetBSD: lock.h,v 1.4 2003/09/26 22:46:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,11 +47,6 @@
 
 #ifndef _ARM_LOCK_H_
 #define	_ARM_LOCK_H_
-
-typedef	__volatile int		__cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	1
-#define	__SIMPLELOCK_UNLOCKED	0
 
 static __inline int
 __swp(int __val, __volatile int *__ptr)

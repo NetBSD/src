@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2003/02/14 03:02:41 itohy Exp $	*/
+/*	$NetBSD: lock.h,v 1.6 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,11 +42,6 @@
 
 #ifndef _SH3_LOCK_H_
 #define	_SH3_LOCK_H_
-
-typedef	__volatile unsigned char __cpu_simple_lock_t;
-
-#define	__SIMPLELOCK_LOCKED	0x80
-#define	__SIMPLELOCK_UNLOCKED	0
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
