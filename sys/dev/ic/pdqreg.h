@@ -1,5 +1,3 @@
-/*	$NetBSD: pdqreg.h,v 1.1.1.3 1996/05/20 00:20:45 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
@@ -23,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdqreg.h,v 1.9 1996/05/16 14:25:26 thomas Exp
+ * Id: pdqreg.h,v 1.11 1997/03/21 21:16:04 thomas Exp
  *
  */
 
@@ -35,7 +33,11 @@
 #ifndef _PDQREG_H
 #define	_PDQREG_H
 
+#if !defined(KERNEL) && !defined(_KERNEL)
 #include <stddef.h>
+#elif !defined(offsetof)
+#define	offsetof(t, m)	((char *) (&((t *)0L)->m) - (char *) 0L)
+#endif
 #if defined(PDQTEST) && !defined(PDQ_NDEBUG)
 #include <assert.h>
 #define	PDQ_ASSERT	assert
@@ -354,13 +356,17 @@ typedef struct {
 #endif
 } pdq_descriptor_block_t;
 
+#define	PDQ_SIZE_COMMAND_RESPONSE	512
+
 typedef struct {
     /*
      * These value manage the available space in command/response
      * buffer area.
      */
-    pdq_physaddr_t ci_pa_bufstart;
-    pdq_uint8_t *ci_bufstart;
+    pdq_physaddr_t ci_pa_request_bufstart;
+    pdq_uint8_t *ci_request_bufstart;
+    pdq_physaddr_t ci_pa_response_bufstart;
+    pdq_uint8_t *ci_response_bufstart;
     /*
      * Bitmask of commands to sent to the PDQ
      */
@@ -373,6 +379,11 @@ typedef struct {
     pdq_uint32_t ci_response_producer;
     pdq_uint32_t ci_request_completion;
     pdq_uint32_t ci_response_completion;
+    /*
+     *
+     */
+    pdq_physaddr_t ci_pa_request_descriptors;
+    pdq_physaddr_t ci_pa_response_descriptors;
 } pdq_command_info_t;
 
 #define	PDQ_SIZE_UNSOLICITED_EVENT	512
@@ -382,6 +393,7 @@ typedef struct _pdq_unsolicited_event_t pdq_unsolicited_event_t;
 
 typedef struct {
     pdq_physaddr_t ui_pa_bufstart;
+    pdq_physaddr_t ui_pa_descriptors;
     pdq_unsolicited_event_t *ui_events;
 
     pdq_uint32_t ui_free;
@@ -412,6 +424,7 @@ typedef struct {
 
 typedef struct {
     void *rx_buffers;
+    pdq_physaddr_t rx_pa_descriptors;
 
     pdq_uint32_t rx_target;
     pdq_uint32_t rx_free;
@@ -423,6 +436,7 @@ typedef struct {
     pdq_databuf_queue_t tx_txq;
     pdq_txdesc_t tx_hdrdesc;
     pdq_uint8_t tx_descriptor_count[256];
+    pdq_physaddr_t tx_pa_descriptors;
 
     pdq_uint32_t tx_free;
     pdq_uint32_t tx_producer;
@@ -445,6 +459,9 @@ struct _pdq_t {
 #define	PDQ_RUNNING	0x0008
 #define	PDQ_PRINTCHARS	0x0010
 #define	PDQ_TXOK	0x0020
+#define	PDQ_WANT_FDX	0x0040
+#define	PDQ_IS_FDX	0x0080
+#define	PDQ_IS_ONRING	0x0100
     const char *pdq_os_name;
     void *pdq_os_ctx;
     pdq_uint32_t pdq_unit;
@@ -473,7 +490,8 @@ typedef enum {
     PDQC_DEV_SPECIFIC_GET=13,
     PDQC_SNMP_SET=14,
     PDQC_SMT_MIB_GET=16,
-    PDQC_SMT_MIB_SET=17
+    PDQC_SMT_MIB_SET=17,
+    PDQC_BOGUS_CMD=18
 } pdq_cmd_code_t;
 
 typedef enum {
@@ -558,6 +576,11 @@ typedef enum {
     PDQI_EMAC_RTOKEN_TIMEOUT=43,
     PDQI_FULL_DUPLEX_ENABLE=44
 } pdq_item_code_t;
+
+typedef enum {
+    PDQSNMP_EOL=0,
+    PDQSNMP_FULL_DUPLEX_ENABLE=0x2F11
+} pdq_snmp_item_code_t;
 
 enum _pdq_boolean_t {
     PDQ_FALSE=0,
@@ -958,6 +981,16 @@ typedef struct {
 } pdq_response_dec_ext_mib_get_t;
 
 #define	PDQ_SIZE_RESPONSE_DEC_EXT_MIB_GET	0x50
+
+typedef struct {
+    pdq_cmd_code_t snmp_set_op;
+    struct {
+	pdq_item_code_t item_code;
+	pdq_uint32_t item_value;
+	pdq_port_type_t item_port;
+    } snmp_set_items[7];
+    pdq_item_code_t snmp_set_eol_item_code;
+} pdq_cmd_snmp_set_t;
 
 typedef enum {
     PDQ_CALLER_ID_NONE=0,

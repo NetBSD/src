@@ -1,5 +1,3 @@
-/*	$NetBSD: if_fta.c,v 1.1.1.1 1996/05/20 00:20:50 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
@@ -23,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fta.c,v 1.3 1996/05/17 01:15:18 thomas Exp
+ * Id: if_fta.c,v 1.4 1997/03/21 13:45:45 thomas Exp
  *
  */
 
@@ -48,12 +46,12 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
+#include <net/if_fddi.h>
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
-#include <net/if_fddi.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -66,7 +64,11 @@
 static int
 pdq_tc_match(
     struct device *parent,
+#ifdef __BROKEN_INDIRECT_CONFIG
     void *match,
+#else
+    struct cfdata *match,
+#endif
     void *aux)
 {
     struct tc_attach_args *ta = (struct tc_attach_args *) aux;
@@ -86,26 +88,32 @@ pdq_tc_attach(
     pdq_softc_t * const sc = (pdq_softc_t *) self;
     struct tc_attach_args * const ta = (struct tc_attach_args *) aux;
 
-    sc->sc_bc = ta->ta_bc;
+    /*
+     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
+     * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
+     */
+    sc->sc_csrtag = ta->ta_memt;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    if (bus_mem_map(sc->sc_bc, ta->ta_addr + PDQ_TC_CSR_OFFSET,
-		    PDQ_TC_CSR_SPACE, 0, &sc->sc_membase))
+    if (bus_space_map(sc->sc_csrtag, ta->ta_addr + PDQ_TC_CSR_OFFSET,
+		      PDQ_TC_CSR_SPACE, 0, &sc->sc_membase)) {
+	printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
 	return;
+    }
 
-    sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFTA);
     if (sc->sc_pdq == NULL) {
 	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
 	return;
     }
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+
     pdq_ifattach(sc, NULL);
 
-    tc_intr_establish(sc->sc_bc, ta->ta_cookie, TC_IPL_NET,
+    tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NET,
 		      (int (*)(void *)) pdq_interrupt, sc->sc_pdq);
 
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
