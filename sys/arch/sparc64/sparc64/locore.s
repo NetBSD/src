@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.150 2002/03/21 06:56:31 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.151 2002/04/16 23:09:37 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -371,9 +371,11 @@
 	brz,pt	%l3, 1f;			/* Skip if no fpstate */     \
 	 STPTR	%l6, [%l5 + P_FPSTATE];		/* Restore old fpstate */    \
 									     \
+	mov	%l3, %o0;						     \
 	call	_C_LABEL(loadfpstate);		/* Re-load orig fpstate */   \
-	 mov	%l3, %o0;						     \
-1:
+1: \
+	 membar	#Sync;				/* Finish all FP ops */
+
 	
 
 	.data
@@ -918,8 +920,8 @@ ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
-	 xor	%g1, %g4, %g4		!					Compare TLB tags
-	brnz,pn	%g4, data_miss		!					Got right tag?
+	 cmp	%g1, %g4		!					Compare TLB tags
+	bnz,pn	%xcc, data_miss		!					Got right tag?
 	 nop
 	CLRTT
 #ifdef TRAPSTATS
@@ -1157,8 +1159,8 @@ kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	ldxa	[%g0] ASI_DMMU, %g1	! Hard coded for unified 8K TSB		Load DMMU tag target register
 	ldda	[%g2] ASI_NUCLEUS_QUAD_LDD, %g4	!				Load TSB tag and data into %g4 and %g5
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
-	 xor	%g1, %g4, %g4		!					Compare TLB tags
-	brnz,pn	%g4, data_miss		!					Got right tag?
+	 cmp	%g1, %g4		!					Compare TLB tags
+	bnz,pn	%xcc, data_miss		!					Got right tag?
 	 nop
 	CLRTT
 #ifdef TRAPSTATS
@@ -5900,10 +5902,7 @@ _C_LABEL(cpu_initialize):
  * and 64-bit cells.  The cells we'll allocate off the stack for simplicity.
  */
 	.align 8
-	.globl	_C_LABEL(openfirmware)
-	.proc 1
-	FTYPE(openfirmware)
-_C_LABEL(openfirmware):
+ENTRY(openfirmware)
 	sethi	%hi(romp), %o4
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
@@ -5991,10 +5990,7 @@ _C_LABEL(openfirmware):
  *
  */
 	.align 8
-	.globl	_C_LABEL(tlb_flush_pte)
-	.proc 1
-	FTYPE(tlb_flush_pte)
-_C_LABEL(tlb_flush_pte):
+ENTRY(tlb_flush_pte)
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -6091,10 +6087,7 @@ _C_LABEL(tlb_flush_pte):
  *
  */
 	.align 8
-	.globl	_C_LABEL(tlb_flush_ctx)
-	.proc 1
-	FTYPE(tlb_flush_ctx)
-_C_LABEL(tlb_flush_ctx):
+ENTRY(tlb_flush_ctx)
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -6175,10 +6168,7 @@ _C_LABEL(tlb_flush_ctx):
  *
  */
 	.align 8
-	.globl	_C_LABEL(blast_vcache)
-	.proc 1
-	FTYPE(blast_vcache)
-_C_LABEL(blast_vcache):
+ENTRY(blast_vcache)
 /*
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
@@ -6205,10 +6195,7 @@ _C_LABEL(blast_vcache):
  *
  */
 	.align 8
-	.globl	_C_LABEL(blast_icache)
-	.proc 1
-	FTYPE(blast_icache)
-_C_LABEL(blast_icache):
+ENTRY(blast_icache)
 /*
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
@@ -6230,14 +6217,11 @@ _C_LABEL(blast_icache):
 /*
  * dcache_flush_page(vaddr_t pa)
  *
- * Clear one page from D$ and I$.
+ * Clear one page from D$.
  *
  */
 	.align 8
-	.globl	_C_LABEL(dcache_flush_page)
-	.proc 1
-	FTYPE(dcache_flush_page)
-_C_LABEL(dcache_flush_page):
+ENTRY(dcache_flush_page)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 #endif
@@ -6263,6 +6247,23 @@ _C_LABEL(dcache_flush_page):
 2:
 	brnz,pt	%o5, 1b
 	 inc	16, %o4
+	
+	sethi	%hi(KERNBASE), %o5
+	flush	%o5
+	retl
+	 membar	#Sync
+
+/*
+ * icache_flush_page(vaddr_t pa)
+ *
+ * Clear one page from I$.
+ *
+ */
+	.align 8
+ENTRY(icache_flush_page)
+#ifndef _LP64
+	COMBINE(%o0, %o1, %o0)
+#endif
 
 #ifdef SPITFIRE
 	!!
@@ -6303,10 +6304,7 @@ _C_LABEL(dcache_flush_page):
  *
  */
 	.align 8
-	.globl	_C_LABEL(cache_flush_virt)
-	.proc 1
-	FTYPE(cache_flush_virt)
-_C_LABEL(cache_flush_virt):
+ENTRY(cache_flush_virt)
 	brz,pn	%o1, 2f		! What? nothing to clear?
 	 add	%o0, %o1, %o2
 	mov	0x1ff, %o3
@@ -6359,11 +6357,8 @@ _C_LABEL(cache_flush_virt):
  *	non-zero, E$.  (E$ is not supported yet).
  */
 
-		.align 8
-	.globl	_C_LABEL(cache_flush_phys)
-	.proc 1
-	FTYPE(cache_flush_phys)
-_C_LABEL(cache_flush_phys):
+	.align 8
+ENTRY(cache_flush_phys)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 	COMBINE(%o2, %o3, %o1)
@@ -6569,7 +6564,8 @@ _C_LABEL(esigcode):
 #ifdef GPROF
 	.globl	_mcount
 #define	ENTRY(x) \
-	.globl _C_LABEL(x); _C_LABEL(x): ; \
+	.globl _C_LABEL(x); .proc 1; .type _C_LABEL(x),@function; \
+_C_LABEL(x): ; \
 	.data; \
 	.align 8; \
 0:	.uaword 0; .uaword 0; \
@@ -6580,7 +6576,8 @@ _C_LABEL(esigcode):
 	or	%o0, %lo(0b), %o0; \
 	restore
 #else
-#define	ENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
+#define	ENTRY(x)	.globl _C_LABEL(x); .proc 1; \
+	.type _C_LABEL(x),@function; _C_LABEL(x):
 #endif
 #define	ALTENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
 
@@ -7370,8 +7367,7 @@ ENTRY(switchexit)
  * idles here waiting for something to come ready.
  * The registers are set up as noted above.
  */
-	.globl	idle
-idle:
+ENTRY(idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
 #endif
@@ -8378,255 +8374,26 @@ ENTRY(pmap_zero_page)
 	.text
 3:
 #endif
-#ifndef PMAP_PHYS_PAGE
-/*
- * Here we use VIS instructions to do a block clear of a page.
- * First we will tickle the FPU.  If is was not not enabled this
- * should cause a trap.  The trap will check if they belong to a
- * user process and if so save them and clear %fprs.  It will
- * also enable FP in PSTATE.
- *
- * We may now check the contents of %fprs.  If either the upper
- * or lower FPU is dirty then that means some other kernel routine
- * is using the FPU and we should use the slow routine.
- *
- * Otherwise, we zero out the FP registers we'll use.  Then we map
- * the page into the special VA we use for this purpose.  When we're
- * done, we clear %fprs, so we'll know we can use it the nest time.
- */
-	sethi	%hi(_C_LABEL(vmmap)), %o2	! Get VA
-	LDPTR	[%o2 + %lo(_C_LABEL(vmmap))], %o2
-	brz,pn	%o2, pmap_zero_phys		! Only do VIS if traps are enabled
-	 or	%o2, 0x020, %o3			! Nucleus flush page
-
-#ifdef PMAP_FPSTATE
-#ifndef NEW_FPSTATE
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	rd	%fprs, %l1			! Save old fprs so we can restore it later
-	andn	%l0, BLOCK_ALIGN, %l0		! And make it block aligned
-	call	_C_LABEL(savefpstate)
-	 mov	%l0, %o0
-	mov	%i0, %o0
-	mov	%i2, %o2
-	mov	%i3, %o3
-	wr	%g0, FPRS_FEF, %fprs
-#else	/* NEW_FPSTATE */
-/*
- * New version, new scheme:
- *
- * Here we use VIS instructions to do a block clear of a page.
- * But before we can do that we need to save and enable the FPU.
- * The last owner of the FPU registers is fpproc, and
- * fpproc->p_md.md_fpstate is the current fpstate.  If that's not
- * null, call savefpstate() with it to store our current fp state.
- *
- * Next, allocate an aligned fpstate on the stack.  We will properly
- * nest calls on a particular stack so this should not be a problem.
- *
- * Now we grab either curproc (or if we're on the interrupt stack
- * proc0).  We stash its existing fpstate in a local register and
- * put our new fpstate in curproc->p_md.md_fpstate.  We point
- * fpproc at curproc (or proc0) and enable the FPU.
- *
- * If we are ever preempted, our FPU state will be saved in our
- * fpstate.  Then, when we're resumed and we take an FPDISABLED
- * trap, the trap handler will be able to fish our FPU state out
- * of curproc (or proc0).
- *
- * On exiting this routine we undo the damage: restore the original
- * pointer to curproc->p_md.md_fpstate, clear our fpproc, and disable
- * the MMU.
- *
- */
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	sethi	%hi(FPPROC), %l1
-	LDPTR	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	brz,pt	%l2, 1f					! fpproc == NULL?
-	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
-	LDPTR	[%l2 + P_FPSTATE], %l3
-	brz,pn	%l3, 1f					! Make sure we have an fpstate
-	 mov	%l3, %o0
-	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
-	cmp	%sp, %l4
-	bgu,pt	%xcc, 1f
-	 set	INTSTACK-STKB, %l4
-	cmp	%sp, %l4
-	blu	%xcc, 1f
-0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
-	ba,pt	%xcc, 2f
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
-1:
-	sethi	%hi(CURPROC), %l4			! Use curproc
-	LDPTR	[%l4 + %lo(CURPROC)], %l5
-	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
-2:
-	mov	%i0, %o0
-	mov	%i2, %o2
-	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
-	mov	%i3, %o3
-	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
-	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
-	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif	/* NEW_FPSTATE */
-#else	/* PMAP_FPSTATE */
-	!!
-	!! Don't use FP regs if the kernel's already using them
-	!!
-	rd	%fprs, %o1			! Read old %fprs
-	sethi	%hi(FPPROC), %o4		! Also load fpproc
-	btst	FPRS_DU|FPRS_DL, %o1		! Is it dirty?
-	LDPTR	[%o4 + %lo(FPPROC)], %o4
-	bz,pt	%icc, 1f			! No, use fpregs
-	 bset	FPRS_FEF, %o1
-	brz,pn	%o4, pmap_zero_phys		! No userland fpstate so do this the slow way
-1:
-	 wr	%o1, 0, %fprs			! Enable the FPU
-#endif	/* PMAP_FPSTATE */
-
-#ifdef DEBUG
-	sethi	%hi(paginuse), %o4		! Prevent this from nesting
-	lduw	[%o4 + %lo(paginuse)], %o5
-	tst	%o5
-	tnz	%icc, 1
-	bnz,pn	%icc, pmap_zero_phys
-	 inc	%o5
-	stw	%o5, [%o4 + %lo(paginuse)]
-#endif
-
-	rdpr	%pil, %g1
-	wrpr	%g0, PIL_HIGH, %pil			! s = splhigh()
-
-	fzero	%f0				! Set up FPU
-	fzero	%f2
-	fzero	%f4
-	fzero	%f6
-	fzero	%f8
-	fzero	%f10
-	fzero	%f12
-	fzero	%f14
-
-	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Do the demap
-	membar	#Sync				! No real reason for this XXXX
-
-	sethi	%hi(0x80000000), %o4		! Setup TTE:
-	sllx	%o4, 32, %o4			!  V = 1
-	or	%o4, TTE_CP|TTE_P|TTE_W|TTE_L, %o4	!  CP=1|P=1|W=1|L=1
-	or	%o4, %o0, %o4			!  PA
-
-	mov	TLB_TAG_ACCESS, %o5
-	stxa	%o2, [%o5] ASI_DMMU		! Store new address for mapping
-	membar	#Sync				! No real reason for this XXXX
-	stxa	%o4, [%g0] ASI_DMMU_DATA_IN	! Store TTE for new mapping
-	membar	#Sync
-
-	set	NBPG, %o4
-1:
-	stda	%f0, [%o2] ASI_BLK_COMMIT_P		! Store 64 bytes
-	add	%o2, 64, %o2
-	dec	128, %o4
-	stda	%f0, [%o2] ASI_BLK_COMMIT_P		! Store 64 bytes
-	brgz,pt %o4, 1b
-	 add	%o2, 64, %o2
-
-	membar	#Sync				! Finish the operation
-	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the page again
-	membar	#Sync				! No real reason for this XXXX
-
-#ifdef PARANOID
-	!!
-	!! Use phys accesses to verify page is clear
-	!!
-	set	NBPG, %o4
-1:
-	DLFLUSH(%o0,%o2)
-	ldxa	[%o0] ASI_PHYS_CACHED, %o1
-	DLFLUSH2(%o2)
-	dec	8, %o4
-	tst	%o1
-	tnz	%icc, 1
-	brnz,pt	%o4, 1b
-	 inc	8, %o0
-
-	sethi	%hi(paginuse), %o4		! Prevent this from nesting
-	stw	%g0, [%o4 + %lo(paginuse)]
-
-#endif
-
-	wrpr	%g1, 0, %pil			! splx(s)
-
-#ifdef PMAP_FPSTATE
-#ifndef NEW_FPSTATE
-	btst	FPRS_DU|FPRS_DL, %l1		! Anything to restore?
-	bz,pt	%icc, 1f
-	 nop
-	call	_C_LABEL(loadfpstate)
-	 mov	%l0, %o0
-1:
-!	return			! Does this work?
-	 wr	%l1, 0, %fprs
-	ret
-	 restore
-#else /* NEW_FPSTATE */
-#ifdef DEBUG
-	LDPTR	[%l1 + %lo(FPPROC)], %l7
-	cmp	%l7, %l5
-	tnz	1		! fpproc has changed!
-	LDPTR	[%l5 + P_FPSTATE], %l7
-	cmp	%l7, %l0
-	tnz	1		! fpstate has changed!
-#endif
-	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
-	STPTR	%l6, [%l5 + P_FPSTATE]			! Restore old fpstate
-	wr	%g0, 0, %fprs				! Disable FPU
-	ret
-	 restore
-#endif /* NEW_FPSTATE */
-#else /* PMAP_FPSTATE */
-	retl					! Any other mappings have inconsistent D$
-	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
-#endif /* PMAP_FPSTATE */
-pmap_zero_phys:
-#endif /* PMAP_PHYS_PAGE */
-#if 1
 	set	NBPG, %o2		! Loop count
-	clr	%o1
+	wr	%g0, ASI_PHYS_CACHED, %asi
 1:
-	dec	8, %o2
-	stxa	%g0, [%o0] ASI_PHYS_CACHED
-	inc	8, %o0
-	stxa	%g0, [%o1] ASI_DCACHE_TAG
-	brgz	%o2, 1b
-	 inc	16, %o1
+	/* Unroll the loop 8 times */
+	stxa	%g0, [%o0 + 0x00] %asi
+	deccc	0x40, %o2
+	stxa	%g0, [%o0 + 0x08] %asi
+	stxa	%g0, [%o0 + 0x10] %asi
+	stxa	%g0, [%o0 + 0x18] %asi
+	stxa	%g0, [%o0 + 0x20] %asi
+	stxa	%g0, [%o0 + 0x28] %asi
+	stxa	%g0, [%o0 + 0x30] %asi
+	stxa	%g0, [%o0 + 0x38] %asi
+	bg,pt	%icc, 1b
+	 inc	0x40, %o0
 
 	sethi	%hi(KERNBASE), %o3
 	flush	%o3
 	retl
-	 nop
-#else
-	set	NBPG-8, %o1
-	add	%o1, %o0, %o1
-1:
-	stxa	%g0, [%o0] ASI_PHYS_CACHED
-	cmp	%o0, %o1
-	blt	1b
-	 inc	8, %o0
-	ba	_C_LABEL(blast_vcache)	! Clear out D$ and return
-	 nop
-	retl
-	 nop
-#endif
+	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Make C code happy
 /*
  * pmap_copy_page(src, dst)
  *
@@ -8671,324 +8438,45 @@ ENTRY(pmap_copy_page)
 	.text
 3:
 #endif
-#ifndef PMAP_PHYS_PAGE
-/*
- * Here we use VIS instructions to do a block clear of a page.
- * First we zero out the FP registers we'll use.  If they were
- * dirty this should cause a trap to save them.
- * Then we need to turn off interrupts so we don't have to deal
- * with possibly saving or restoring state.  Then we map the page
- * into the special VA we use for this purpose.
- *
- * NB:	 THIS WILL ALWAYS ENABLE INTERRUPTS IN PSTATE ON EXIT
- */
-	sethi	%hi(_C_LABEL(vmmap)), %o2	! Get VA
-	LDPTR	[%o2 + %lo(_C_LABEL(vmmap))], %o2
-	brz,pn	%o2, pmap_copy_phys
-	 or	%o2, 0x020, %o3			! Nucleus flush page
-
-#ifdef PMAP_FPSTATE
-#ifndef NEW_FPSTATE
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	andn	%l0, BLOCK_ALIGN, %l0		! And make it block aligned
-	rd	%fprs, %l1			! Save old fprs so we can restore it later
-	call	_C_LABEL(savefpstate)
-	 mov	%l0, %o0
-	mov	%i0, %o0
-	mov	%i1, %o1
-	mov	%i2, %o2
-	mov	%i3, %o3
-	wr	%g0, FPRS_FEF, %fprs
-#else	/* NEW_FPSTATE */
-/*
- * New version, new scheme:
- *
- * Here we use VIS instructions to do a block clear of a page.
- * But before we can do that we need to save and enable the FPU.
- * The last owner of the FPU registers is fpproc, and
- * fpproc->p_md.md_fpstate is the current fpstate.  If that's not
- * null, call savefpstate() with it to store our current fp state.
- *
- * Next, allocate an aligned fpstate on the stack.  We will properly
- * nest calls on a particular stack so this should not be a problem.
- *
- * Now we grab either curproc (or if we're on the interrupt stack
- * proc0).  We stash its existing fpstate in a local register and
- * put our new fpstate in curproc->p_md.md_fpstate.  We point
- * fpproc at curproc (or proc0) and enable the FPU.
- *
- * If we are ever preempted, our FPU state will be saved in our
- * fpstate.  Then, when we're resumed and we take an FPDISABLED
- * trap, the trap handler will be able to fish our FPU state out
- * of curproc (or proc0).
- *
- * On exiting this routine we undo the damage: restore the original
- * pointer to curproc->p_md.md_fpstate, clear our fpproc, and disable
- * the MMU.
- *
- */
-	!!
-	!! This code will allow us to save the fpstate around this
-	!! routine and nest FP use in the kernel
-	!!
-	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	sethi	%hi(FPPROC), %l1
-	LDPTR	[%l1 + %lo(FPPROC)], %l2		! Load fpproc
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
-	brz,pt	%l2, 1f					! fpproc == NULL?
-	 andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
-	LDPTR	[%l2 + P_FPSTATE], %l3
-	brz,pn	%l3, 1f					! Make sure we have an fpstate
-	 mov	%l3, %o0
-	call	_C_LABEL(savefpstate)			! Save the old fpstate
-	 set	EINTSTACK-STKB, %l4			! Are we on intr stack?
-	cmp	%sp, %l4
-	bgu,pt	%xcc, 1f
-	 set	INTSTACK-STKB, %l4
-	cmp	%sp, %l4
-	blu	%xcc, 1f
-0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
-	ba,pt	%xcc, 2f
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+#if 1
+	/*
+	 * XXXX
+	 * We will make use of all global regs.  This may cause problems
+	 * if we ever decide to store static data in a global reg, like
+	 * a pointer to curcpu or something.
+	 */
+	set	NBPG, %o2
+	wr	%g0, ASI_PHYS_CACHED, %asi
 1:
-	sethi	%hi(CURPROC), %l4			! No, use curproc
-	LDPTR	[%l4 + %lo(CURPROC)], %l5
-	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
-2:
-	mov	%i0, %o0
-	mov	%i2, %o2
-	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
-	mov	%i3, %o3
-	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
-	STPTR	%l5, [%l1 + %lo(FPPROC)]		! Set new fpproc
-	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-#endif	/* NEW_FPSTATE */
-#else	/* PMAP_FPSTATE */
-	!!
-	!! Don't use FP regs if the kernel's already using them
-	!!
-	rd	%fprs, %o5			! Read old %fprs
-	sethi	%hi(FPPROC), %o4		! Also load fpproc
-	btst	FPRS_DU|FPRS_DL, %o5		! Is it dirty?
-	LDPTR	[%o4 + %lo(FPPROC)], %o4
-	bz,pt	%icc, 1f			! No, use fpregs
-	 bset	FPRS_FEF, %o5
-	brz,pn	%o4, pmap_copy_phys		! No userland fpstate so do this the slow way
-1:
-	 wr	%o5, 0, %fprs			! Enable the FPU
-#endif	/* PMAP_FPSTATE */
-
-#ifdef DEBUG
-	sethi	%hi(paginuse), %o4		! Prevent this from nesting
-	lduw	[%o4 + %lo(paginuse)], %o5
-	tst	%o5
-	tnz	%icc, 1
-	bnz,pn	%icc, pmap_copy_phys
-	 inc	%o5
-	stw	%o5, [%o4 + %lo(paginuse)]
-#endif	/*  DEBUG */
-
-	rdpr	%pil, %g1
-	wrpr	%g0, 15, %pil			! s = splhigh();
-
-	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Do the demap
-	sethi	%hi(NBPG), %o4
-	membar	#Sync				! No real reason for this XXXX
-	add	%o3, %o4, %o3
-	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the next page too
-	membar	#Sync				! No real reason for this XXXX
-
-	sethi	%hi(0x80000000), %o4		! Setup TTE:
-	sllx	%o4, 32, %o4			!  V = 1
-	or	%o4, TTE_CP|TTE_P|TTE_W|TTE_L, %o4	!  CP=1|P=1|W=1|L=1
-	or	%o4, %o0, %o0			! TTE for source page XXX Should be RO
-	or	%o4, %o1, %o1			! TTE for dest page
-
-	mov	TLB_TAG_ACCESS, %o5
-	stxa	%o2, [%o5] ASI_DMMU		! Store new address for mapping
-	membar	#Sync				! No real reason for this XXXX
-	stxa	%o0, [%g0] ASI_DMMU_DATA_IN	! Store TTE for new mapping
-	membar	#Sync
-
-	sethi	%hi(NBPG), %o4
-	add	%o2, %o4, %o4			! %o4 point to dest
-	stxa	%o4, [%o5] ASI_DMMU		! Store new address for mapping
-	membar	#Sync				! No real reason for this XXXX
-	stxa	%o1, [%g0] ASI_DMMU_DATA_IN	! Store TTE for new mapping
-	membar	#Sync
-
-	set	NBPG, %o5			! # bytes to move
-
-	ldda	[%o2] ASI_BLK_P, %f0		! Load 1st bank
-	dec	BLOCK_SIZE, %o5
-	add	%o2, BLOCK_SIZE, %o2
-1:
-	membar	#StoreLoad
-	ldda	[%o2] ASI_BLK_P, %f16		! Load 2nd bank
-	dec	BLOCK_SIZE, %o5
-	add	%o2, BLOCK_SIZE, %o2
-
-	membar	#LoadStore
-	fmovd	%f14, %f14			! Sync 1st bank
-	stda	%f0, [%o4] ASI_BLK_COMMIT_P	! Store 1st bank
-	brlez,pn	%o5, 1f			! Finished?
-	 add	%o4, BLOCK_SIZE, %o4
-
-	membar	#StoreLoad
-	ldda	[%o2] ASI_BLK_P, %f0		! Load 1st bank
-	dec	BLOCK_SIZE, %o5
-	add	%o2, BLOCK_SIZE, %o2
-
-	membar	#LoadStore
-	fmovd	%f30, %f30			! Sync 2nd bank
-	stda	%f16, [%o4] ASI_BLK_COMMIT_P	! Store 2nd bank
-	brgz,pt	%o5, 1b				! Finished?
-	 add	%o4, BLOCK_SIZE, %o4
-
-	!!
-	!! If we got here we have loaded bank 1 and stored bank 2
-	!!
-	membar	#Sync
-	fmovd	%f14, %f14			! Sync 1st bank
-	stda	%f0, [%o4] ASI_BLK_COMMIT_P	! Store 1st bank
-	ba,pt	%icc, 2f			! Finished?
-	 add	%o4, BLOCK_SIZE, %o4
-
-1:
-	!!
-	!! If we got here we have loaded bank 2 and stored bank 1
-	!!
-	membar	#Sync
-	fmovd	%f30, %f30			! Sync 2nd bank
-	stda	%f16, [%o4] ASI_BLK_COMMIT_P	! Store 2nd bank
-	add	%o4, BLOCK_SIZE, %o4
-
-2:
-	membar	#Sync				! Finish the operation
-	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the dest page again
-	sethi	%hi(NBPG), %o4
-	membar	#Sync				! No real reason for this XXXX
-	sub	%o3, %o4, %o3
-	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the source page again
-	membar	#Sync				! No real reason for this XXXX
-
-#ifdef PARANOID
-	!!
-	!! Use phys accesses to verify copy
-	!!
-	sethi	%hi(0x80000000), %o4		! Setup TTE:
-	sllx	%o4, 32, %o4			!  V = 1
-	or	%o4, TTE_CP|TTE_P|TTE_W|TTE_L, %o4	!  CP=1|P=1|W=1|L=1
-	andn	%o1, %o4, %o0			! Clear out TTE to get PADDR
-	andn	%o1, %o4, %o1			! Clear out TTE to get PADDR
-
-	set	NBPG, %o3
-
-1:
-	DLFLUSH(%o0,%o2)
-	ldxa	[%o0] ASI_PHYS_CACHED, %o4
-	DLFLUSH2(%o2)
-	DLFLUSH(%o1,%o2)
-	ldxa	[%o1] ASI_PHYS_CACHED, %o5
-	DLFLUSH2(%o2)
-	dec	8, %o3
-	cmp	%o4, %o5
-	tne	%icc, 1
-	inc	8, %o0
-	brnz,pt	%o4, 1b
-	 inc	8, %o1
-
-	sethi	%hi(paginuse), %o4		! Prevent this from nesting
-	stw	%g0, [%o4 + %lo(paginuse)]
-#endif	/* PARANOID */
-
-	wrpr	%g1, 0, %pil			! splx(s)
-
-#ifdef PMAP_FPSTATE
-#ifndef NEW_FPSTATE
-	btst	FPRS_DU|FPRS_DL, %l1		! Anything to restore?
-	bz,pt	%icc, 1f
-	 nop
-	call	_C_LABEL(loadfpstate)
-	 mov	%l0, %o0
-1:
-!	return			! Does this work?
-	 wr	%l1, 0, %fprs
-	ret
-	 restore
-#else	/* NEW_FPSTATE */
-#ifdef DEBUG
-	LDPTR	[%l1 + %lo(FPPROC)], %l7
-	cmp	%l7, %l5
-	tnz	1		! fpproc has changed!
-	LDPTR	[%l5 + P_FPSTATE], %l7
-	cmp	%l7, %l0
-	tnz	1		! fpstate has changed!
-#endif	/* DEBUG */
-	STPTR	%g0, [%l1 + %lo(FPPROC)]		! Clear fpproc
-	STPTR	%l6, [%l5 + P_FPSTATE]			! Save old fpstate
-	wr	%g0, 0, %fprs				! Disable FPU
-	ret
-	 restore
-#endif	/* NEW_FPSTATE */
-#else	/* PMAP_FPSTATE */
-	ba	_C_LABEL(blast_vcache)
-	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
-
-	retl					! Any other mappings have inconsistent D$
-	 wr	%g0, 0, %fprs			! Turn off FPU and mark as clean
-#endif	/* PMAP_FPSTATE */
-pmap_copy_phys:
-#endif	/* PMAP_PHYS_PAGE */
-#if 0
-	/* This is the short, slow, safe version that uses %g1 */
-
-	set	NBPG, %o3
-	clr	%o2
-	mov	%g1, %o4		! Save g1
-1:
-	DLFLUSH(%o0,%g1)
-	ldxa	[%o0] ASI_PHYS_CACHED, %g1
-	inc	8, %o0
-	stxa	%g1, [%o1] ASI_PHYS_CACHED
-	inc	8, %o1
-
-	dec	8, %o3
-	stxa	%g0, [%o2] ASI_DCACHE_TAG! Blast away at the D$
-	brnz,pt	%o3, 1b
-	 inc	16, %o2
-	mov	%o4, %g1
-	sethi	%hi(KERNBASE), %o5
-	flush	%o5
+	ldxa	[%o0 + 0x00] %asi, %g1
+	ldxa	[%o0 + 0x08] %asi, %o3
+	ldxa	[%o0 + 0x10] %asi, %o4
+	ldxa	[%o0 + 0x18] %asi, %o5
+	inc	0x20, %o0
+	deccc	0x20, %o2
+	stxa	%g1, [%o1 + 0x00] %asi
+	stxa	%o3, [%o1 + 0x08] %asi
+	stxa	%o4, [%o1 + 0x10] %asi
+	stxa	%o5, [%o1 + 0x18] %asi
+	bg,pt	%icc, 1b		! We don't care about pages >4GB
+	 inc	0x20, %o1
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi
 	retl
-	 nop
+	 clr	%g4			! Restore g4
 #else
 	set	NBPG, %o3
 	add	%o3, %o0, %o3
 	mov	%g1, %o4		! Save g1
 1:
-	DLFLUSH(%o0,%g1)
 	ldxa	[%o0] ASI_PHYS_CACHED, %g1
 	inc	8, %o0
 	cmp	%o0, %o3
 	stxa	%g1, [%o1] ASI_PHYS_CACHED
-	DLFLUSH(%o1,%g1)
 	bl,pt	%icc, 1b		! We don't care about pages >4GB
 	 inc	8, %o1
-#if 0
-	ba	_C_LABEL(blast_vcache)	! Clear out D$ and return
-	 mov	%o4, %g1		! Restore g1
-#endif
 	retl
 	 mov	%o4, %g1		! Restore g1
 #endif
-
 /*
  * extern int64_t pseg_get(struct pmap* %o0, vaddr_t addr %o1);
  *
@@ -11201,7 +10689,7 @@ Lbzero_block:
 	!! Remember: we were 8 bytes too far
 	dec	56, %i2					! Go one iteration too far
 5:
-	stda	%f0, [%i0] ASI_BLK_P			! Store 64 bytes
+	stda	%f0, [%i0] ASI_STORE			! Store 64 bytes
 	deccc	BLOCK_SIZE, %i2
 	bg,pt	%icc, 5b
 	 inc	BLOCK_SIZE, %i0
@@ -12328,7 +11816,7 @@ ENTRY(longjmp)
 	 *
 	 *  %o0 = *ts
 	 */
-	ENTRY(savetstate)
+ENTRY(savetstate)
 	mov	%o0, %o1
 	CHKPT(%o4,%o3,0x28)
 	rdpr	%tl, %o0
@@ -12362,7 +11850,7 @@ ENTRY(longjmp)
 	 *
 	 * Maybe this should be re-written to increment tl instead of decrementing.
 	 */
-	ENTRY(restoretstate)
+ENTRY(restoretstate)
 	CHKPT(%o4,%o3,0x36)
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	brz,pn	%o0, 2f
@@ -12393,7 +11881,7 @@ ENTRY(longjmp)
 	/*
 	 * Switch to context in %o0
 	 */
-	ENTRY(switchtoctx)
+ENTRY(switchtoctx)
 #ifdef SPITFIRE
 	set	DEMAP_CTX_SECONDARY, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP
@@ -12417,7 +11905,7 @@ ENTRY(longjmp)
 	/*
 	 * Convert to 32-bit stack then call OF_sym2val()
 	 */
-	ENTRY(_C_LABEL(OF_sym2val32))
+ENTRY(OF_sym2val32)
 	save	%sp, -CC64FSZ, %sp
 	btst	7, %i0
 	bnz,pn	%icc, 1f
@@ -12433,7 +11921,7 @@ ENTRY(longjmp)
 	/*
 	 * Convert to 32-bit stack then call OF_val2sym()
 	 */
-	ENTRY(_C_LABEL(OF_val2sym32))
+ENTRY(OF_val2sym32)
 	save	%sp, -CC64FSZ, %sp
 	btst	7, %i0
 	bnz,pn	%icc, 1f
