@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.58 2004/08/10 19:15:08 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.59 2004/08/10 23:34:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.58 2004/08/10 19:15:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.59 2004/08/10 23:34:06 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -149,20 +149,19 @@ pcmcia_card_attach(dev)
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
 	struct pcmcia_attach_args paa;
-	int attached;
+	int attached = 0;
 
 	/*
 	 * this is here so that when socket_enable calls gettype, trt happens
 	 */
 	SIMPLEQ_FIRST(&sc->card.pf_head) = NULL;
 
-	pcmcia_chip_socket_enable(sc->pct, sc->pch);
+	pcmcia_socket_enable(dev);
 
 	pcmcia_read_cis(sc);
-
-	pcmcia_chip_socket_disable(sc->pct, sc->pch);
-
 	pcmcia_check_cis_quirks(sc);
+
+	pcmcia_socket_disable(dev);
 
 	/*
 	 * bail now if the card has no functions, or if there was an error in
@@ -170,14 +169,12 @@ pcmcia_card_attach(dev)
 	 */
 
 	if (sc->card.error)
-		return (1);
+		goto done;
 	if (SIMPLEQ_EMPTY(&sc->card.pf_head))
-		return (1);
+		goto done;
 
 	if (pcmcia_verbose)
 		pcmcia_print_cis(sc);
-
-	attached = 0;
 
 	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
 		if (SIMPLEQ_EMPTY(&pf->cfe_head))
@@ -211,6 +208,7 @@ pcmcia_card_attach(dev)
 			attached++;
 	}
 
+done:
 	return (attached ? 0 : 1);
 }
 
@@ -428,20 +426,28 @@ pcmcia_function_init(pf, cfe)
 	pf->cfe = cfe;
 }
 
-void pcmcia_socket_enable(dev)
+void
+pcmcia_socket_enable(dev)
 	struct device *dev;
 {
 	struct pcmcia_softc *sc = (void *)dev;
 
-	pcmcia_chip_socket_enable(sc->pct, sc->pch);
+	if (sc->sc_enabled_count++ == 0)
+		pcmcia_chip_socket_enable(sc->pct, sc->pch);
+	DPRINTF(("%s: ++enabled_count = %d\n", sc->dev.dv_xname,
+		 sc->sc_enabled_count));
 }
 
-void pcmcia_socket_disable(dev)
+void
+pcmcia_socket_disable(dev)
 	struct device *dev;
 {
 	struct pcmcia_softc *sc = (void *)dev;
 
-	pcmcia_chip_socket_disable(sc->pct, sc->pch);
+	if (--sc->sc_enabled_count == 0)
+		pcmcia_chip_socket_disable(sc->pct, sc->pch);
+	DPRINTF(("%s: --enabled_count = %d\n", sc->dev.dv_xname,
+		 sc->sc_enabled_count));
 }
 
 /* Enable a PCMCIA function */
@@ -461,10 +467,7 @@ pcmcia_function_enable(pf)
 	 * Increase the reference count on the socket, enabling power, if
 	 * necessary.
 	 */
-	if (sc->sc_enabled_count++ == 0)
-		pcmcia_chip_socket_enable(sc->pct, sc->pch);
-	DPRINTF(("%s: ++enabled_count = %d\n", sc->dev.dv_xname,
-		 sc->sc_enabled_count));
+	pcmcia_socket_enable(&sc->dev);
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
@@ -582,11 +585,8 @@ bad:
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
 	 */
-	if (--sc->sc_enabled_count == 0)
-		pcmcia_chip_socket_disable(sc->pct, sc->pch);
-	DPRINTF(("%s: --enabled_count = %d\n", sc->dev.dv_xname,
-		 sc->sc_enabled_count));
 	printf("%s: couldn't map the CCR\n", pf->child->dv_xname);
+	pcmcia_socket_disable(&sc->dev);
 
 	return (error);
 }
@@ -596,6 +596,7 @@ void
 pcmcia_function_disable(pf)
 	struct pcmcia_function *pf;
 {
+	struct pcmcia_softc *sc = pf->sc;
 	struct pcmcia_function *tmp;
 	int reg;
 
@@ -609,7 +610,7 @@ pcmcia_function_disable(pf)
 		goto out;
 	}
 
-	if (pcmcia_mfc(pf->sc)) {
+	if (pcmcia_mfc(sc)) {
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		reg &= ~(PCMCIA_CCR_OPTION_FUNC_ENABLE|
 			 PCMCIA_CCR_OPTION_ADDR_DECODE|
@@ -624,7 +625,7 @@ pcmcia_function_disable(pf)
 	 */
 
 	pf->pf_flags &= ~PFF_ENABLED;
-	SIMPLEQ_FOREACH(tmp, &pf->sc->card.pf_head, pf_list) {
+	SIMPLEQ_FOREACH(tmp, &sc->card.pf_head, pf_list) {
 		if ((tmp->pf_flags & PFF_ENABLED) &&
 		    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
 		    ((pf->ccr_base + PCMCIA_CCR_SIZE) <=
@@ -643,10 +644,7 @@ out:
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
 	 */
-	if (--pf->sc->sc_enabled_count == 0)
-		pcmcia_chip_socket_disable(pf->sc->pct, pf->sc->pch);
-	DPRINTF(("%s: --enabled_count = %d\n", pf->sc->dev.dv_xname,
-		 pf->sc->sc_enabled_count));
+	pcmcia_socket_disable(&sc->dev);
 }
 
 int
