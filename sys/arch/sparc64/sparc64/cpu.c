@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2001/12/31 07:30:46 matt Exp $ */
+/*	$NetBSD: cpu.c,v 1.18 2001/12/31 16:26:10 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -293,9 +293,13 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
 	cacheinfo.ic_l2linesize = i;
-	cacheinfo.ic_totalsize = l *
-		PROM_getpropint(node, "icache-nlines", 64) *
+	cacheinfo.ic_totalsize =
+		PROM_getpropint(node, "icache-size", 0) *
 		PROM_getpropint(node, "icache-associativity", 1);
+	if (cacheinfo.ic_totalsize == 0)
+		cacheinfo.ic_totalsize = l *
+			PROM_getpropint(node, "icache-nlines", 64) *
+			PROM_getpropint(node, "icache-associativity", 1);
 
 	cachesize = cacheinfo.ic_totalsize /
 	    PROM_getpropint(node, "icache-associativity", 1);
@@ -308,9 +312,13 @@ cpu_attach(parent, dev, aux)
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
 	cacheinfo.dc_l2linesize = i;
-	cacheinfo.dc_totalsize = l *
-		PROM_getpropint(node, "dcache-nlines", 128) *
+	cacheinfo.dc_totalsize =
+		PROM_getpropint(node, "dcache-size", 0) *
 		PROM_getpropint(node, "dcache-associativity", 1);
+	if (cacheinfo.dc_totalsize == 0)
+		cacheinfo.dc_totalsize = l *
+			PROM_getpropint(node, "dcache-nlines", 128) *
+			PROM_getpropint(node, "dcache-associativity", 1);
 
 	cachesize = cacheinfo.dc_totalsize /
 	    PROM_getpropint(node, "dcache-associativity", 1);
@@ -373,7 +381,7 @@ cpu_attach(parent, dev, aux)
 		       (long)cacheinfo.ec_totalsize/1024,
 		       (long)cacheinfo.ec_linesize);
 	}
-	printf(" \n");
+	printf("\n");
 	cache_enable();
 
 	/*
