@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.2 2003/08/12 08:24:04 bsh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.1 2003/08/09 19:38:53 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.2 2003/08/12 08:24:04 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,29 +187,31 @@ sacc_obio_intr(void *arg)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, SACCIC_INTSTATCLR1);
 	DPRINTF(("sacc_obio_intr_dispatch: %x %x\n", intstat.lo, intstat.hi));
 
-	for( i=0;  intstat.lo | intstat.hi ; ++i){
-		if (intstat.lo & (1U<<i)) {
-			/*
-			 * Clear intr status before calling intr handlers.
-			 * This cause stray interrupts, but clearing
-			 * after calling intr handlers cause intr lossage.
-			 */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-					  SACCIC_INTSTATCLR0, (1U<<i) );
+	while ((i = find_first_bit(intstat.lo)) >= 0) {
 
-			for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
-				softintr_schedule(ih->ih_soft);
+		/*
+		 * Clear intr status before calling intr handlers.
+		 * This cause stray interrupts, but clearing
+		 * after calling intr handlers cause intr lossage.
+		 */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				  SACCIC_INTSTATCLR0, 1U<<i );
 
-			intstat.lo &= ~(1U<<i);
-		}
-		if (intstat.hi & (1U<<i)) {
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-					  SACCIC_INTSTATCLR1, 1 << i);
-			for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
-				softintr_schedule(ih->ih_soft);
+		for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
+			softintr_schedule(ih->ih_soft);
 
-			intstat.hi &= ~(1U<<i);
-		}
+		intstat.lo &= ~(1U<<i);
 	}
+
+	while ((i = find_first_bit(intstat.hi)) >= 0) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+				  SACCIC_INTSTATCLR1, 1U<<i);
+
+		for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
+			softintr_schedule(ih->ih_soft);
+
+		intstat.hi &= ~(1U<<i);
+	}
+
 	return 1;
 }
