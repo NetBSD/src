@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.72 2002/02/21 21:59:16 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.73 2002/02/21 22:39:17 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.72 2002/02/21 21:59:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.73 2002/02/21 22:39:17 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -555,8 +555,6 @@ in_rt_walktree(rn, v)
 		    rt_mask(rt), rt->rt_flags, NULL)) != 0) {
 			log(LOG_WARNING, "ifa_rt_walktree: unable to delete "
 			    "rtentry. error= %d", error);
-		} else {
-			IFAFREE(&ia->ia_ifa);
 		}
 	}
 	return 0;
