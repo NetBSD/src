@@ -1,0 +1,141 @@
+#	$NetBSD: files.iomd,v 1.1 2002/06/16 12:11:24 bjh21 Exp $
+#
+# IOMD-specific configuration data
+#
+
+# IOMD device
+# parent to kbd, qms, opms, iic
+# also provides irq and timer services
+device	iomd {}
+attach	iomd at mainbus
+file	arch/arm/iomd/iomd.c			iomd		needs-flag
+file	arch/arm/iomd/iomd_io.c			iomd
+file	arch/arm/iomd/iomd_io_asm.S		iomd
+file	arch/arm/iomd/iomd_irq.S		iomd
+file	arch/arm/iomd/iomd_irqhandler.c		iomd
+file	arch/arm/iomd/iomd_fiq.S		iomd
+file	arch/arm/iomd/iomd_dma.c		iomd
+
+# IIC device
+device	iic { addr = -1 }
+file	arch/arm/iomd/iic.c			iic		needs-flag
+
+attach	iic at iomd with iic_iomd
+file	arch/arm/iomd/iic_iomd.c		iic_iomd
+file	arch/arm/iomd/iomd_iic.S		iic_iomd
+
+# IIC based RTC
+define	todservice {}
+device	rtc : todservice
+attach	rtc at iic
+file	arch/arm/iomd/rtc.c			rtc		needs-flag
+
+device	todclock
+attach	todclock at todservice
+file	arch/arm/iomd/todclock.c		todclock	needs-count
+
+# IOMD mouse devices
+# clock device
+device	clock
+attach	clock at iomd
+file	arch/arm/iomd/iomd_clock.c		iomd
+
+#
+# wscons
+#
+
+# Include MI WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+# wscons quadmouse device
+device	wsqms : wsmousedev
+file	arch/arm/iomd/wsqms.c			wsqms		needs-flag
+
+attach wsqms at iomd with wsqms_iomd
+file	arch/arm/iomd/wsqms_iomd.c		wsqms_iomd
+
+# RPC wscons keyboard driver
+device	rpckbd : wskbddev
+file	arch/arm/iomd/rpckbd.c			rpckbd		needs-flag
+file	arch/acorn32/dev/wskbdmap_mfii.c	rpckbd
+
+attach rpckbd at iomd with rpckbd_iomd
+file	arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
+
+# VIDC device
+# parent to vidcconsole, vidcaudio, beep
+device	vidc { [base = -1], [dack = -1], [irq = -1] }
+attach	vidc at mainbus
+file	arch/arm/iomd/vidc20.c			vidc		needs-count
+
+# VIDC video wscons device
+device	vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev
+attach	vidcvideo at vidc
+file	arch/arm/iomd/vidc20config.c		vidcvideo	needs-flag
+file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
+
+# Audio devices
+device	beep
+attach	beep at vidc
+file	arch/arm/iomd/beep.c			beep		needs-flag
+
+device	sysbeep
+attach	sysbeep at vidc with sysbeep_vidc
+file	arch/arm/iomd/sysbeep_vidc.c		sysbeep_vidc
+
+device	vidcaudio: audiobus
+attach	vidcaudio at vidc
+file	arch/arm/iomd/vidcaudio.c		vidcaudio	needs-flag
+
+device	lmcaudio: audiobus
+attach	lmcaudio at vidc
+file	arch/arm/iomd/lmcaudio.c		lmcaudio	needs-flag
+file	arch/arm/iomd/lmc1982.S			lmcaudio
+
+#
+# Old console devices.
+#
+
+# quadmouse device
+device	qms
+file	arch/arm/iomd/qms.c			qms		needs-flag
+
+attach	qms at iomd with qms_iomd
+file	arch/arm/iomd/qms_iomd.c		qms_iomd
+
+# PS/2 mouse device
+device	opms: tty
+file	arch/arm/iomd/opms.c			opms & opms_iomd needs-flag
+
+attach	opms at iomd with opms_iomd
+file	arch/arm/iomd/opms_iomd.c		opms_iomd
+
+# Standard keyboard driver (obsolete ... old vidc console)
+device	kbd
+file	arch/arm/iomd/kbd.c			kbd		needs-flag
+
+attach	kbd at iomd with kbd_iomd
+file	arch/arm/iomd/kbd_iomd.c		kbd_iomd
+
+device	vidcconsole
+attach	vidcconsole at vidc
+file	arch/arm/iomd/console/vidcconsole.c	vidcconsole	needs-count
+file	arch/arm/iomd/console/consinit.c	vidc		needs-count
+device	vt: tty
+attach	vt at vidc
+
+file	dev/cninit.c				vt
+file	arch/arm/iomd/console/console.c		vt		needs-count
+file	arch/arm/iomd/console/vidcrender.c	vt
+file	arch/arm/iomd/console/vidc_mc.S		vt
+file	arch/arm/iomd/console/vidc.c		vt
+file	arch/arm/iomd/console/vt220.c		vt
+file	arch/arm/iomd/console/debugconsole.c 	vt
+file	arch/arm/iomd/console/dumb.c 		vt
+
+#
+# we need this for rpcwskbd.c to compile
+#
+include "dev/pckbc/files.pckbc"
