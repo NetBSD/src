@@ -1,4 +1,4 @@
-/*	$NetBSD: mips.c,v 1.1 1999/02/09 18:16:33 tv Exp $	*/
+/*	$NetBSD: mips.c,v 1.2 1999/02/09 18:19:32 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mips.c,v 1.1 1999/02/09 18:16:33 tv Exp $");
+__RCSID("$NetBSD: mips.c,v 1.2 1999/02/09 18:19:32 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: mips.c,v 1.1 1999/02/09 18:16:33 tv Exp $");
 static Sym indirectchild;
 
 void
-findcall(parentp, p_lowpc, p_highpc)
+mips_find_call(parentp, p_lowpc, p_highpc)
 	Sym	*parentp;
 	bfd_vma	p_lowpc;
 	bfd_vma	p_highpc;
@@ -96,12 +96,12 @@ findcall(parentp, p_lowpc, p_highpc)
 			if (destpc >= s_lowpc && destpc <= s_highpc) {
 				childp = sym_lookup(&symtab, destpc);
 				if (childp != 0 && childp->addr == destpc)
-					addarc(parentp, childp, 0L);
+					arc_add(parentp, childp, 0L);
 			}
 		} else if ((op & 0xfc00f83f) == 0x0000f809)
 			/*
 			 * A jalr -- an indirect call.
 			 */
-			addarc(parentp, &indirectchild, 0L);
+			arc_add(parentp, &indirectchild, 0L);
 	}
 }
