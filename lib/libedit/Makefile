@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1998/07/29 02:26:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 1999/03/04 11:45:22 itohy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -62,5 +62,11 @@ test.o:	${.CURDIR}/TEST/test.c
 	
 test:	libedit.a test.o 
 	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
+
+# minimal dependency to make "make depend" optional
+editline.o editline.po editline.so editline.ln:	\
+	common.h emacs.h fcns.c fcns.h help.c help.h vi.h
+readline.o readline.po readline.so readline.ln:	\
+	common.h emacs.h fcns.h help.h vi.h
 
 .include <bsd.lib.mk>
