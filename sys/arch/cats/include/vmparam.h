@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2002/06/22 10:15:30 chris Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2002/06/22 20:39:18 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,6 +36,8 @@
 #ifndef	_ARM32_VMPARAM_H_
 #define	_ARM32_VMPARAM_H_
 
+#ifdef _KERNEL
+
 #include <arm/arm32/vmparam.h>
 
 /*
@@ -71,6 +73,11 @@
  * Size of available KVM space, note that growkernel will grow into this.
  */
 #define KERNEL_VM_SIZE	0x0C000000
+
+/*
+ * Override the default pager_map size, there's not enough KVA.
+ */
+#define PAGER_MAP_SIZE		(4 * 1024 * 1024)
 
 /*
  * Size of User Raw I/O map
@@ -119,5 +126,7 @@
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
+
+#endif /* _KERNEL */
 
 #endif	/* _ARM32_VMPARAM_H_ */
