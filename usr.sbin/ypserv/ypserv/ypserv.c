@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.14 2001/02/19 23:22:52 cgd Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.15 2001/10/16 01:51:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.14 2001/02/19 23:22:52 cgd Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.15 2001/10/16 01:51:27 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -333,12 +333,12 @@ main(argc, argv)
 	 * v4-in-v6 to confuse things.
 	 */
 	if (udp6sock != -1 && setsockopt(udp6sock, IPPROTO_IPV6,
-	    IPV6_BINDV6ONLY, &one, sizeof(one)) < 0) {
+	    IPV6_V6ONLY, &one, sizeof(one)) < 0) {
 		_msgout(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
 		exit(1);
 	}
 	if (tcp6sock != -1 && setsockopt(tcp6sock, IPPROTO_IPV6,
-	    IPV6_BINDV6ONLY, &one, sizeof(one)) < 0) {
+	    IPV6_V6ONLY, &one, sizeof(one)) < 0) {
 		_msgout(LOG_ERR, "can't disable v4-in-v6 on TCP socket");
 		exit(1);
 	}
