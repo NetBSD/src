@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.628 2004/07/04 08:37:58 wiz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.629 2004/07/05 19:13:17 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.629 2004/07/04 05:51:58 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.630 2004/07/05 19:12:30 mycroft Exp 
  */
 
 /*
@@ -8053,19 +8053,19 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
 	    0,
 	    "ServerWorks",
-	    "OSB4 ISA bridge",
+	    "OSB4 southbridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5,
 	    0,
 	    "ServerWorks",
-	    "CSB5 ISA bridge",
+	    "CSB5 southbridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6,
 	    0,
 	    "ServerWorks",
-	    "CSB6 ISA bridge",
+	    "CSB6 southbridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
@@ -8104,10 +8104,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CSB6 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_LPC,
+	    0,
+	    "ServerWorks",
+	    "CSB5 ISA/LPC bridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_LPC,
 	    0,
 	    "ServerWorks",
-	    "CSB6 LPC bridge",
+	    "CSB6 ISA/LPC bridge",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
