@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.485 2002/10/03 19:39:51 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.486 2002/10/04 08:44:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.485 2002/10/03 19:39:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.486 2002/10/04 08:44:08 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1586,7 +1586,10 @@ identifycpu(struct cpu_info *ci)
 {
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
-	int family, model, step, modif;
+	int family, model, modif;
+#ifdef CPUDEBUG
+	int step;
+#endif
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
@@ -1613,8 +1616,8 @@ identifycpu(struct cpu_info *ci)
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
-		step = ci->ci_signature & 0xf;
 #ifdef CPUDEBUG
+		step = ci->ci_signature & 0xf;
 		printf("%s: family %x model %x step %x\n", cpuname, family,
 			model, step);
 #endif
