@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: _setjmp.S,v 1.6 2002/03/27 18:38:50 matt Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.7 2002/03/28 04:16:54 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,8 +62,8 @@ ENTRY(_setjmp, 0)
 	bbc	$13,6(%fp),1f		# was this a callg?
 	addl3	$1,(%ap),%r1		# get real arg count+1 for calls
 1:	moval	20(%fp)[%r1],8(%r0)	# save sp of caller
-	movpsl	24(%r1)			# save current psl
-	movw	4(%fp),24(%r1)		# save psw of caller
+	movpsl	24(%r0)			# save current psl
+	movw	4(%fp),24(%r0)		# save psw of caller
 	movq	%r6,44(%r0)		# save r6/r7
 	movq	%r8,52(%r0)		# save r8/r9
 	movq	%r10,60(%r0)		# save r10/r11
