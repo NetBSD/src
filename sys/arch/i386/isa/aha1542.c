@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.10 1994/02/02 19:21:26 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.11 1994/03/25 10:19:30 mycroft Exp $
  */
 
 /*
@@ -229,8 +229,7 @@ struct aha_config {
 		u_char:5;
 };
 
-struct	aha_inquire
-{
+struct aha_inquire {
 	u_char	boardid;		/* type of board */
 					/* 0x20 = BusLogic 545, but it gets
 					   the command wrong, only returns
@@ -247,8 +246,7 @@ struct	aha_inquire
 	u_char	revision_2;		/* firmware revision [0-9A-Z] */
 };
 
-struct	aha_extbios
-{
+struct aha_extbios {
 	u_char	flags;			/* Bit 3 == 1 extended bios enabled */
 	u_char	mailboxlock;		/* mail box lock code to unlock it */
 };
@@ -314,8 +312,7 @@ int aha_set_bus_speed __P((struct aha_softc *));
 int aha_bus_speed_check __P((struct aha_softc *, int));
 void aha_timeout __P((caddr_t));
 
-struct scsi_adapter aha_switch =
-{
+struct scsi_adapter aha_switch = {
 	aha_scsi_cmd,
 	ahaminphys,
 	0,
@@ -325,8 +322,7 @@ struct scsi_adapter aha_switch =
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device aha_dev =
-{
+struct scsi_device aha_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -335,8 +331,7 @@ struct scsi_device aha_dev =
 	0
 };
 
-struct cfdriver ahacd =
-{
+struct cfdriver ahacd = {
 	NULL,
 	"aha",
 	ahaprobe,
@@ -567,9 +562,6 @@ ahaattach(parent, self, aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct aha_softc *aha = (void *)self;
-
-	/* need to recalculate */
-	aha->kv_phys_xor = (long int) aha ^ (KVTOPHYS(aha));
 
 	aha_init(aha);
 

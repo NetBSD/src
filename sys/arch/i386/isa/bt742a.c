@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.8 1994/02/02 19:21:34 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.9 1994/03/25 10:19:39 mycroft Exp $
  */
 
 /*
@@ -351,8 +351,7 @@ void bt_print_ccb __P((struct bt_ccb *));
 void bt_print_active_ccbs __P((struct bt_softc *));
 #endif
 
-struct scsi_adapter bt_switch =
-{
+struct scsi_adapter bt_switch = {
 	bt_scsi_cmd,
 	btminphys,
 	0,
@@ -362,8 +361,7 @@ struct scsi_adapter bt_switch =
 };
 
 /* the below structure is so we have a default dev struct for out link struct */
-struct scsi_device bt_dev =
-{
+struct scsi_device bt_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -372,8 +370,7 @@ struct scsi_device bt_dev =
 	0
 };
 
-struct cfdriver btcd =
-{
+struct cfdriver btcd = {
 	NULL,
 	"bt",
 	btprobe,
