@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.7.2.2 2001/05/01 17:05:50 he Exp $	*/
+/*	$NetBSD: ca.c,v 1.7.2.3 2001/05/10 08:42:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.7.2.2 2001/05/01 17:05:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.7.2.3 2001/05/10 08:42:44 he Exp $");
 
 #include "rnd.h"
 
@@ -380,9 +380,9 @@ caioctl(dev, cmd, addr, flag, p)
 		    /*sc->sc_dk.dk_openmask : */0, sc->sc_dk.dk_cpulabel);
 		if (error == 0 && (cmd == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
-		    || cmd == ODIOCWDINFO)
+		    || cmd == ODIOCWDINFO
 #endif
-		    )
+		    ))
 			error = writedisklabel(CALABELDEV(dev), castrategy, 
 			    sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 
