@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.23 2000/08/21 03:53:55 castor Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -107,6 +107,8 @@
 #define	WDCC_DIAGNOSE	0x90	/* controller diagnostic */
 #define	WDCC_IDP	0x91	/* initialize drive parameters */
 
+#define	WDCC_SMART	0xb0	/* Self Monitoring, Analysis & Reporting Tech */
+
 #define	WDCC_READMULTI	0xc4	/* read multiple */
 #define	WDCC_WRITEMULTI	0xc5	/* write multiple */
 #define	WDCC_SETMULTI	0xc6	/* set multiple mode */
@@ -129,7 +131,7 @@
 #define WDCC_STANDBY_IMMED 0xe0	/* enter standby mode */
 #define WDCC_CHECK_PWR	0xe5	/* check power mode */
 
-/* Subcommands for SET_FEATURES (features register ) */
+/* Subcommands for SET_FEATURES (features register) */
 #define WDSF_EN_WR_CACHE	0x02
 #define WDSF_SET_MODE    	0x03
 #define WDSF_REASSIGN_EN	0x04
@@ -146,6 +148,19 @@
 #define WDSF_READAHEAD_EN	0xAA
 #define WDSF_PREFETCH_SET	0xAB
 #define WDSF_POD_EN             0xCC
+
+/* Subcommands for SMART (features register) */
+#define WDSM_RD_DATA		0xd0
+#define WDSM_ATTR_AUTOSAVE_EN	0xd2
+#define WDSM_SAVE_ATTR		0xd3
+#define WDSM_EXEC_OFFL_IMM	0xd4
+#define WDSM_ENABLE_OPS		0xd8
+#define WDSM_DISABLE_OPS	0xd9
+#define WDSM_STATUS		0xda
+
+#define WDSMART_CYL_LO		0x4f
+#define WDSMART_CYL_HI		0xc2
+
 
 /* parameters uploaded to device/heads register */
 #define	WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
