@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1996/10/22 21:23:49 cgd Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1996/11/27 01:24:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -146,8 +146,18 @@ struct alpha_bus_space {
 	(*(t)->__abs_opname(r,sz))((t)->abs_cookie, h, o)
 #define	__abs_ws(sz, t, h, o, v)					\
 	(*(t)->__abs_opname(w,sz))((t)->abs_cookie, h, o, v)
+#ifndef DEBUG
 #define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c)
+#else
+#define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
+    do {								\
+	if (((unsigned long)a & (sz - 1)) != 0)				\
+		panic("bus non-single %d-byte unaligned (to %p) at %s:%d", \
+		    sz, a, __FILE__, __LINE__);				\
+	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c);	\
+    } while (0)
+#endif
 
 
 /*
