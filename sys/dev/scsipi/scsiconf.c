@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.161 2001/08/31 07:09:41 augustss Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.162 2001/10/16 13:33:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -490,6 +490,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "HITACHI", "DK515C",		"CP16"},  PQUIRK_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
 	 "HITACHI", "DK515C",		"CP15"},  PQUIRK_NOSTARTUNIT},
+	{{T_DIRECT, T_FIXED,
+	 "MICROP",  "1548-15MZ1077801", "HZ2P"},  PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
 	 "HP      ", "C372",             ""},     PQUIRK_NOTAG},
 	{{T_DIRECT, T_FIXED,
