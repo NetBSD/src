@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.123 2001/09/26 20:53:08 eeh Exp $ */
+/*	$NetBSD: cpu.c,v 1.124 2001/10/03 09:40:12 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -202,9 +202,7 @@ alloc_cpuinfo()
 	/* Map the pages */
 	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		va += NBPG;
 	}
 	pmap_update(pmap_kernel());
