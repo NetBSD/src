@@ -23,15 +23,28 @@
 
 #define TARGET_BYTES_BIG_ENDIAN 0
 
-#ifndef OBJ_VMS
-#ifndef BFD_ASSEMBLER
-enum reloc_type {
-  NO_RELOC, NO_RELOC2, RELOC_32, RELOC_GLOB_DAT, RELOC_JMP_TBL, RELOC_JMP_SLOT
-};
+#ifdef OBJ_AOUT
+#ifdef TE_NetBSD
+#define	TARGET_FORMAT "a.out-vax-netbsd"
+#endif
+#ifndef TARGET_FORMAT
+#define	TARGET_FORMAT "a.out-vax-bsd"
 #endif
 #endif
+
+#ifdef OBJ_VMS
+#define	TARGET_FORMAT "vms-vax"
+#endif
+
+#ifdef OBJ_ELF
+#define	TARGET_FORMAT "elf32-vax"
+#endif
+
+#define	BFD_ARCH	bfd_arch_vax	/* for non-BFD_ASSEMBLER */
+#define	TARGET_ARCH	bfd_arch_vax	/* BFD_ASSEMBLER */
+
+#define NO_RELOC	BFD_RELOC_NONE
 #define NOP_OPCODE	0x01
-#define	NEED_FX_R_TYPE	1
 
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */
@@ -41,6 +54,20 @@ long md_chars_to_number PARAMS ((unsigned char *, int));
 
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
+
+/* This expression evaluates to false if the relocation is for a local object
+   for which we still want to do the relocation at runtime.  True if we
+   are willing to perform this relocation while building the .o file.  If
+   the reloc is against an externally visible symbol, then the assembler
+   should never do the relocation.  */
+
+#define	TC_RELOC_RTSYM_LOC_FIXUP(FIX)			\
+	((FIX)->fx_addsy == NULL			\
+	 || (! S_IS_EXTERNAL ((FIX)->fx_addsy)		\
+	     && ! S_IS_WEAK ((FIX)->fx_addsy)		\
+	     && S_IS_DEFINED ((FIX)->fx_addsy)		\
+	     && ! S_IS_COMMON ((FIX)->fx_addsy)))
+
 
 /*
  * Local Variables:

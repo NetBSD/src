@@ -116,6 +116,7 @@ static boolean uses_apcs_26      = false;
 static boolean atpcs             = false;
 static boolean support_interwork = false;
 static boolean uses_apcs_float   = false;
+/*static boolean pic_code          = false;*/
 #endif
 
 /* This array holds the chars that always start a comment.  If the

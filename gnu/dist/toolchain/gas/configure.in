@@ -186,6 +186,7 @@ changequote([,])dnl
       arm-*-linux*aout*)	        fmt=aout em=linux ;;
       arm*-*-linux-gnu* | arm*-*-uclinux*)	
 					fmt=elf  em=linux ;;
+      arm*-*-netbsdelf*)		fmt=elf em=nbsd bfd_gas=yes ;;
       arm-*-netbsd*)	                fmt=aout em=nbsd ;;
       arm-*-oabi | thumb-*-oabi)        fmt=elf ;;
       arm-epoc-pe | thumb-epoc-pe)      fmt=coff em=epoc-pe ;;
@@ -426,6 +427,7 @@ changequote([,])dnl
       v850e-*-*)	    fmt=elf bfd_gas=yes ;;
       v850ea-*-*)	    fmt=elf bfd_gas=yes ;;
 
+      vax-*-netbsdelf*)     fmt=elf  em=nbsd bfd_gas=yes ;;
       vax-*-netbsd*)        fmt=aout em=nbsd ;;
       vax-*-bsd* | vax-*-ultrix*)
 			    fmt=aout ;;
