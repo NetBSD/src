@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.5 2001/04/28 14:48:40 augustss Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.6 2001/05/02 11:24:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,6 +94,9 @@ const struct scsipi_bustype umass_atapi_bustype = {
 int
 umass_attach_bus(struct umass_softc *sc)
 {
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	/*
 	 * Fill in the adapter.
 	 */
@@ -109,7 +112,7 @@ umass_attach_bus(struct umass_softc *sc)
 	/* fill in the channel */
 	memset(&sc->bus.sc_channel, 0, sizeof(sc->bus.sc_channel));
 	sc->bus.sc_channel.chan_adapter = &sc->bus.sc_adapter;
-	sc->bus.sc_channel.chan_channel = 1;
+	sc->bus.sc_channel.chan_channel = 0;
 	sc->bus.sc_channel.chan_flags = SCSIPI_CHAN_OPENINGS;
 	sc->bus.sc_channel.chan_openings = 1;
 	sc->bus.sc_channel.chan_max_periph = 1;
@@ -123,6 +126,8 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.sc_channel.chan_nluns = sc->maxlun + 1;
 		sc->bus.sc_channel.chan_id = UMASS_SCSIID_HOST;
 		sc->bus.sc_channel.type = BUS_SCSI;
+		sc->bus.sc_child =
+		    config_found(&sc->sc_dev, &sc->bus.sc_channel, scsipiprint);
 		break;
 
 #if NATAPIBUS > 0
@@ -136,9 +141,11 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.aa.sc_aa.aa_channel = 0;
 		sc->bus.aa.sc_aa.aa_openings = 1;
 		sc->bus.aa.sc_aa.aa_drv_data = &sc->bus.aa.sc_aa_drive;
-		sc->bus.aa.sc_aa.aa_bus_private = &sc->bus.sc_atapi_adapter;
+		sc->bus.aa.sc_aa.aa_bus_private = &sc->bus.sc_channel;
 		if (sc->quirks & NO_TEST_UNIT_READY)
 			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOTUR;
+		sc->bus.sc_child =
+		    config_found(&sc->sc_dev, &sc->bus.aa.sc_aa, scsipiprint);
 		break;
 #endif
 
@@ -148,11 +155,6 @@ umass_attach_bus(struct umass_softc *sc)
 		return (1);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
-
-	sc->bus.sc_child =
-	    config_found(&sc->sc_dev, &sc->bus.sc_channel, scsipiprint);
 	if (sc->bus.sc_child == NULL) {
 		/* Not an error, just not a complete success. */
 		return (1);
