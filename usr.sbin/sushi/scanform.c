@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.32 2004/03/09 19:10:20 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.33 2004/03/09 20:26:24 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -551,10 +551,12 @@ my_driver(FORM * form, int c, char *path)
 	case QUIT:
 		/* do something useful */
 		if (form_driver(form, REQ_VALIDATION) == E_OK) {
-			if (process_form(form, path) == 0)
+			if ((i = process_form(form, path)) == 0)
 				return TRUE;
+			else if (i == -1)
+				return FALSE;
 			else
-				return(2); /* special meaning */
+				return 2; /* special meaning */
 		}
 		/* NOTREACHED */
 		break;
@@ -850,10 +852,23 @@ process_form(FORM *form, char *path)
 	int fc, lcnt, i, j;
 	FIELD **f;
 	char **args, **nargs;
+	CDKLABEL *label;
+	char *msg[1];
+	int key;
 
 	/* handle the preform somewhere else */
 	if (strcmp("pre", form_userptr(form)) == 0)
 		return(process_preform(form, path));
+
+	*msg = catgets(catalog, 3, 17, "Are you sure? (Y/n)");
+	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, 1, TRUE, FALSE);
+	activateCDKLabel(label, NULL);
+	key = waitCDKLabel(label, 0);
+	destroyCDKLabel(label);
+	touchwin(stdscr);
+	wrefresh(stdscr);
+	if (key != 13 && key != 10 && key != 121 && key != 89) /* enter y Y */
+		return -1;
 
 	if (lang_id == NULL) {
 		snprintf(file, sizeof(file), "%s/%s", path, EXECFILE);
