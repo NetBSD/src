@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.2 1993/05/22 07:58:28 cgd Exp $
+ *	$Id: pmap.h,v 1.3 1994/05/17 10:28:30 cgd Exp $
  */
 
 #ifndef	_PMAP_MACHINE_
@@ -68,8 +68,8 @@ extern pmap_t		kernel_pmap;
  */
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
-		(pcbp)->pcb_ustp = \
-		    hp300_btop(pmap_extract(kernel_pmap, (pmapp)->pm_stab)); \
+		(pcbp)->pcb_ustp = hp300_btop(pmap_extract(kernel_pmap, \
+		    (vm_offset_t)(pmapp)->pm_stab)); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
