@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.64 2001/01/14 02:38:16 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.65 2002/03/23 05:18:23 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,9 +104,6 @@ distribution_sets_exist_p(path)
 	int result;
 
 	result = 1;
-	snprintf(buf, STRSIZE, "%s/%s", path, "kern.tgz");
-	result = result && file_exists_p(buf);
-
 	snprintf(buf, STRSIZE, "%s/%s", path, "etc.tgz");
 	result = result && file_exists_p(buf);
 
