@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.9 1998/02/09 17:43:48 perry Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.10 2000/06/26 15:59:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -56,19 +56,26 @@
 #ifndef _NET_IF_DL_H_
 #define _NET_IF_DL_H_
 
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	sa_family_t
+#endif
+
 /*
  * Structure of a Link-Level sockaddr:
  */
 struct sockaddr_dl {
-	u_char	  sdl_len;	/* Total length of sockaddr */
-	u_char	  sdl_family;	/* AF_DLI */
-	u_int16_t sdl_index;	/* if != 0, system given index for interface */
-	u_char	  sdl_type;	/* interface type */
-	u_char	  sdl_nlen;	/* interface name length, no trailing 0 reqd. */
-	u_char	  sdl_alen;	/* link level address length */
-	u_char	  sdl_slen;	/* link layer selector length */
-	char	  sdl_data[12];	/* minimum work area, can be larger;
-				   contains both if name and ll address */
+	u_char	    sdl_len;	/* Total length of sockaddr */
+	sa_family_t sdl_family;	/* AF_DLI */
+	u_int16_t   sdl_index;	/* if != 0, system given index for interface */
+	u_char	    sdl_type;	/* interface type */
+	u_char	    sdl_nlen;	/* interface name length, no trailing 0 reqd. */
+	u_char	    sdl_alen;	/* link level address length */
+	u_char	    sdl_slen;	/* link layer selector length */
+	char	    sdl_data[12]; /* minimum work area, can be larger;
+				     contains both if name and ll address */
 };
 
 #define LLADDR(s) ((caddr_t)((s)->sdl_data + (s)->sdl_nlen))
