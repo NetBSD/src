@@ -9,7 +9,7 @@
  * Kristoffer Eriksson <ske@pkmab.se>
  */
  
-/* $Id: match.S,v 1.5 1993/12/08 21:11:45 mycroft Exp $ */
+/* $Id: match.S,v 1.6 1993/12/08 21:31:59 mycroft Exp $ */
 
 /* Preprocess with -DNO_UNDERLINE if your C compiler does not prefix
  * external symbols with an underline character '_'.
@@ -158,7 +158,7 @@ maxmatch:
 
 /* ======================== 680x0 version ================================= */
 
-#if defined(m68k)||defined(__mc68000__)||defined(__MC68000__)
+#if defined(m68k)||defined(mc68k)||defined(__mc68000__)||defined(__MC68000__)
 #  ifndef mc68000
 #    define mc68000
 #  endif
@@ -216,7 +216,7 @@ maxmatch:
 #  define TEXT			.text
 #  define FILE(filename)	.even
 #  define invert_maybe(src,dst)	src,dst
-#  if defined(sun) || defined(m68k)
+#  if defined(sun) || defined(mc68k) || defined(__NetBSD__)
 #    define imm(data)		#data
 #  else
 #    define imm(data)		\#data
@@ -224,7 +224,7 @@ maxmatch:
 #  define reg(register)		register
 
 #  define blos			bcss
-#  if defined(sun) || defined(m68k)
+#  if defined(sun) || defined(mc68k) || defined(__NetBSD__)
 #    define movel		movl
 #    define movew		movw
 #    define moveb		movb
