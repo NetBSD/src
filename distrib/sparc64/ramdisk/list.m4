@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.1 2000/08/10 14:38:53 mrg Exp $
+#	$NetBSD: list.m4,v 1.2 2000/08/19 13:33:01 mrg Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -53,24 +53,24 @@ LINK	ramdiskbin			sbin/swapctl
 LINK	ramdiskbin			sbin/umount
 ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/fdisk)
 ifelse(MACHINE,i386,	LINK	ramdiskbin	sbin/mbrlabel)
-SYMLINK	/bin/cat		usr/bin/chgrp
-SYMLINK	/bin/cat		usr/bin/ftp
-SYMLINK	/bin/cat		usr/bin/gunzip
-SYMLINK	/bin/cat		usr/bin/gzcat
-SYMLINK	/bin/cat		usr/bin/gzip
-SYMLINK	/bin/cat		usr/bin/less
-SYMLINK	/bin/cat		usr/bin/more
-SYMLINK	/bin/cat		usr/bin/sed
-SYMLINK	/bin/cat		usr/bin/tar
-SYMLINK	/bin/cat		usr/bin/tip
-SYMLINK	/bin/cat		usr/mdec/installboot
-SYMLINK	/bin/cat		usr/sbin/chown
-SYMLINK	/bin/cat		usr/sbin/chroot
-ifelse(MACHINE,i386,	SYMLINK	/bin/cat	usr/sbin/bad144)
-ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	usr/sbin/chat)
-ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	usr/sbin/pppd)
-ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	usr/bin/getopt)
-ifelse(MACHINE,sparc,	SYMLINK	/bin/cat	sbin/sysctl)
+LINK	ramdiskbin		usr/bin/chgrp
+LINK	ramdiskbin		usr/bin/ftp
+LINK	ramdiskbin		usr/bin/gunzip
+LINK	ramdiskbin		usr/bin/gzcat
+LINK	ramdiskbin		usr/bin/gzip
+LINK	ramdiskbin		usr/bin/less
+LINK	ramdiskbin		usr/bin/more
+LINK	ramdiskbin		usr/bin/sed
+LINK	ramdiskbin		usr/bin/tar
+LINK	ramdiskbin		usr/bin/tip
+LINK	ramdiskbin		usr/mdec/installboot
+LINK	ramdiskbin		usr/sbin/chown
+LINK	ramdiskbin		usr/sbin/chroot
+ifelse(MACHINE,i386,	LINK	ramdiskbin	usr/sbin/bad144)
+ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/sbin/chat)
+ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/sbin/pppd)
+ifelse(MACHINE,sparc64,	LINK	ramdiskbin	usr/bin/getopt)
+ifelse(MACHINE,sparc64,	LINK	ramdiskbin	sbin/sysctl)
 SPECIAL	/bin/rm ramdiskbin
 
 # various files that we need in /etc for the install
@@ -122,5 +122,4 @@ COPY	${OBJDIR}/dot.profile			.profile
 #the lists of obsolete files used by sysinst  
 SPECIAL sh ${CURDIR}/../../sets/makeobsolete -b -s ${CURDIR}/../../sets -t ./dist
 
-ifelse(MACHINE,sparc64, COPY SRCDIR/sys/arch/sparc64/compile/GENERIC/netbsd netbsd)
-ifelse(MACHINE,sparc64, COPY SRCDIR/sys/arch/sparc64/compile/GENERIC/netbsd netbsd)
+ifelse(MACHINE,sparc64, SPECIAL gzip -9 < ${SRCDIR}/sys/arch/sparc64/compile/GENERIC/netbsd > netbsd)
