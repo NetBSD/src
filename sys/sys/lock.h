@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.11 1998/09/24 22:30:11 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.12 1998/09/26 20:14:53 christos Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -203,9 +203,9 @@ void simple_lock_init __P((struct simplelock *alp));
 #else
 /* single-processor; no locking neecessary */
 #define	simple_lock_init(alp)	(alp)->lock_data = 0
-#define	simple_lock(alp)	(void)(alp)
-#define	simple_lock_try(alp)	((void)(alp), (1))	/* always succeeds */
-#define	simple_unlock(alp)	(void)(alp)
+#define	simple_lock(alp)
+#define	simple_lock_try(alp)	(1)	/* always succeeds */
+#define	simple_unlock(alp)
 #endif /* MULTIPROCESSOR */
 #endif /* LOCKDEBUG */
 
