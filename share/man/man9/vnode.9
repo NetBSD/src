@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.6 2002/02/13 08:18:56 ross Exp $
+.\"     $NetBSD: vnode.9,v 1.7 2002/06/11 23:56:21 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,7 @@ There is a unique vnode allocated for each active file, directory,
 mounted-on file, fifo, domain socket, symbolic link and device.  The
 kernel has no concept of a file's structure and so it relies on the
 information stored in the vnode to describe the file.  Thus, the vnode
-associated with a file holds all the adminstration information
+associated with a file holds all the administration information
 pertaining to it.
 .Pp
 When a process requests an operation on a file, the vfs interface
@@ -224,7 +224,7 @@ This vnode has an alias.
 This vnode is involved in a directory operation.  This flag is used
 exclusively by LFS.
 .It VLAYER
-This vnode is on a layer filesystem.
+This vnode is on a layer file system.
 .It VONWORKLST
 This vnode is on syncer work-list.
 .It VDIRTY
@@ -333,7 +333,7 @@ is on the freelist is used again, the user must call
 to increment the reference count and retrieve it from the freelist.
 When a user wants a new vnode for another file
 .Fn getnewvnode
-is invoked to remove a vnode from the freelist and initialise it for
+is invoked to remove a vnode from the freelist and initialize it for
 the new file.
 .Pp
 The type of object the vnode represents is recorded by
@@ -362,7 +362,7 @@ The vnode represents a pipe.
 The vnode represents a bad file (not currently used).
 .El
 .Pp
-Vnode tag types are used by external programs only (eg
+Vnode tag types are used by external programs only (e.g.,
 .Xr pstat 8 ) ,
 and should never be inspected by the kernel.  Its use is deprecated
 since new
@@ -425,7 +425,14 @@ All vnode locking operations use
 This lock is acquired by calling
 .Xr vn_lock 9
 and released by calling
-.Xr vn_unlock 9 .
+.Xr VOP_UNLOCK 9 .
+The reason for this asymmetry is that
+.Xr vn_lock 9
+is a wrapper for
+.Xr VOP_LOCK 9
+with extra checks, while the unlocking step usually does not need
+additional checks and thus has no wrapper.
+.Pp
 The vnode locking operation is complicated because it is used for many
 purposes.  Sometimes it is used to bundle a series of vnode operations
 (see
@@ -447,7 +454,7 @@ For leaf file systems (such as ffs, lfs, msdosfs, etc),
 .Em v_vnlock
 will point to
 .Em v_lock .
-For stacked filesystems,
+For stacked file systems,
 .Em v_vnlock
 will generally point to
 .Em v_vlock
@@ -721,7 +728,7 @@ is a string to prefix the information dump of vnode
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or utilising the vnode
+source tree where actual code implementing or utilizing the vnode
 framework can be found.  All pathnames are relative to
 .Pa /usr/src .
 .Pp
@@ -742,7 +749,7 @@ The vnode framework is implemented within the file
 The locking protocol is inconsistent.  Many vnode operations are
 passed locked vnodes on entry but release the lock before they exit.
 The locking protocol is used in some places to attempt to make a
-series of operations atomic (eg access check then operation).  This
+series of operations atomic (e.g., access check then operation).  This
 does not work for non-local file systems that do not support locking
 (e.g. NFS).  The
 .Nm
