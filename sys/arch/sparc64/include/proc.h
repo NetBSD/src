@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2003/08/07 16:29:49 agc Exp $ */
+/*	$NetBSD: proc.h,v 1.5 2005/01/02 00:14:46 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@ struct mdlwp {
 /*
  * Machine-dependent part of the proc structure for SPARC.
  */
+/* LINTED 0 sized structure */
 struct mdproc {
 };
 
