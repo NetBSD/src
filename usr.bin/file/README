@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.6 1998/09/20 15:27:15 christos Exp $
+$NetBSD: README,v 1.6.10.1 2000/09/30 06:20:43 simonb Exp $
 ** README for file(1) Command **
 @(#) Id: README,v 1.22 1997/11/05 16:03:18 christos Exp 
 
@@ -81,7 +81,7 @@ file, apply this patch [which is going to be in the next version of gzip]:
       }
       bytes_in += (ulg)insize;
 
-E-mail: christos@astron.com, moraes@deshaw.com
+E-mail: christos@astron.com
 
 Phone: Do not even think of telephoning me about this program. Send cash first!
 

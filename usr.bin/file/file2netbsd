@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: file2netbsd,v 1.4 2000/05/14 22:53:38 christos Exp $
+#	$NetBSD: file2netbsd,v 1.4.4.1 2000/09/30 06:20:45 simonb Exp $
 #
 #  Perl script to convert a standard distribution directory for file into
 #	a NetBSD source tree.
@@ -18,7 +18,7 @@
 #  Written by Christos Zoulas July 17, 1997 for file-3.26
 #
 
-$version = "3.31";
+$version = "3.32";
 
 # definitions ...
 
@@ -28,7 +28,7 @@ $version = "3.31";
 @filef = ("LEGAL.NOTICE", "MAINT", "magic.mime",
 	  "README", "apprentice.c", "ascmagic.c",
 	  "compress.c", "file.c", "file.h", "fsmagic.c",
-	  "internat.c", "is_tar.c", "names.h", "patchlevel.h",
+	  "is_tar.c", "names.h", "patchlevel.h",
 	  "print.c", "readelf.c", "readelf.h", "softmagic.c", "tar.h");
 #
 # Utility Subroutines
@@ -173,7 +173,7 @@ system("cat $srcdir/Header > $targetdir/usr.bin/file/Header");
 system("cat $srcdir/Localstuff > $targetdir/usr.bin/file/Localstuff");
 
 print "Populating the usr.bin/file/magdir directory.\n";
-system("cp -rp $srcdir/Magdir/* $targetdir/usr.bin/file/magdir; chmod -R ug+w magdir");
+system("cp -rp $srcdir/Magdir/* $targetdir/usr.bin/file/magdir; chmod -R ug+w $targetdir/usr.bin/file/magdir");
 
 #
 # Build makefiles
@@ -245,7 +245,7 @@ FILES=		${MFILES}
 
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
-		print.c compress.c readelf.c internat.c
+		print.c compress.c readelf.c 
 CPPFLAGS+=	-DMAGIC='"$(MAGIC)"' -DHAVE_CONFIG_H -I${.CURDIR}
 CPPFLAGS+=	-DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
@@ -345,5 +345,5 @@ magic:
 #define PACKAGE "file"
 
 /* Version number of package */
-#define VERSION "3.31"
+#define VERSION "3.32"
 
