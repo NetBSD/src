@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.129 2003/06/26 02:08:19 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.130 2003/06/26 02:09:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.129 2003/06/26 02:08:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.130 2003/06/26 02:09:27 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -143,7 +143,7 @@ roundrobin(struct cpu_info *ci)
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 
 	spc->spc_rrticks = rrticks;
-	
+
 	if (curlwp != NULL) {
 		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
@@ -194,7 +194,7 @@ roundrobin(struct cpu_info *ci)
  * We now need to prove two things:
  *	1) Given factor ** (5 * loadavg) ~= .1, prove factor == b/(b+1)
  *	2) Given b/(b+1) ** power ~= .1, prove power == (5 * loadavg)
- *	
+ *
  * Facts:
  *         For x close to zero, exp(x) =~ 1 + x, since
  *              exp(x) = 0! + x**1/1! + x**2/2! + ... .
@@ -267,7 +267,7 @@ schedcpu(void *arg)
 		minslp = 2;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			l->l_swtime++;
-			if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP || 
+			if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
 			    l->l_stat == LSSUSPENDED) {
 				l->l_slptime++;
 				minslp = min(minslp, l->l_slptime);
@@ -394,7 +394,7 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 	 * XXXSMP
 	 * This is probably bogus.  Figure out what the right
 	 * thing to do here really is.
-	 * Note that not sleeping if ltsleep is called with curlwp == NULL 
+	 * Note that not sleeping if ltsleep is called with curlwp == NULL
 	 * in the shutdown case is disgusting but partly necessary given
 	 * how shutdown (barely) works.
 	 */
@@ -545,7 +545,7 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 		simple_lock(interlock);
 
 	/* XXXNJW this is very much a kluge.
-	 * revisit. a better way of preventing looping/hanging syscalls like 
+	 * revisit. a better way of preventing looping/hanging syscalls like
 	 * wait4() and _lwp_wait() from wedging an exiting process
 	 * would be preferred.
 	 */
@@ -608,7 +608,7 @@ awaken(struct lwp *l)
 {
 
 	SCHED_ASSERT_LOCKED();
-	    
+
 	if (l->l_slptime > 1)
 		updatepri(l);
 	l->l_slptime = 0;
@@ -675,7 +675,7 @@ sched_wakeup(const void *ident)
  restart:
 	for (q = &qp->sq_head; (l = *q) != NULL; ) {
 #ifdef DIAGNOSTIC
-		if (l->l_back || (l->l_stat != LSSLEEP && 
+		if (l->l_back || (l->l_stat != LSSLEEP &&
 		    l->l_stat != LSSTOP && l->l_stat != LSSUSPENDED))
 			panic("wakeup");
 #endif
@@ -715,7 +715,7 @@ wakeup_one(const void *ident)
 
 	for (q = &qp->sq_head; (l = *q) != NULL; q = &l->l_forw) {
 #ifdef DIAGNOSTIC
-		if (l->l_back || (l->l_stat != LSSLEEP && 
+		if (l->l_back || (l->l_stat != LSSLEEP &&
 		    l->l_stat != LSSTOP && l->l_stat != LSSUSPENDED))
 			panic("wakeup_one");
 #endif
@@ -817,7 +817,7 @@ preempt(int more)
  * the sched_lock held.
  * Switch to "new" if non-NULL, otherwise let cpu_switch choose
  * the next lwp.
- * 
+ *
  * Returns 1 if another process was actually run.
  */
 int
@@ -862,7 +862,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * process was running.
 	 */
 	microtime(&tv);
-	u = p->p_rtime.tv_usec + 
+	u = p->p_rtime.tv_usec +
 	    (tv.tv_usec - spc->spc_runtime.tv_usec);
 	s = p->p_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
 	if (u < 0) {
@@ -1079,14 +1079,14 @@ resetpriority(struct lwp *l)
 
 	SCHED_ASSERT_LOCKED();
 
-	newpriority = PUSER + p->p_estcpu + 
+	newpriority = PUSER + p->p_estcpu +
 			NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	l->l_usrpri = newpriority;
 	resched_proc(l, l->l_usrpri);
 }
 
-/* 
+/*
  * Recompute priority for all LWPs in a process.
  */
 void
@@ -1123,7 +1123,7 @@ schedclock(struct lwp *l)
 	SCHED_LOCK(s);
 	resetpriority(l);
 	SCHED_UNLOCK(s);
-	    
+
 	if (l->l_priority >= PUSER)
 		l->l_priority = l->l_usrpri;
 }
@@ -1135,7 +1135,7 @@ suspendsched()
 	int s;
 
 	/*
-	 * Convert all non-P_SYSTEM LSSLEEP or LSRUN processes to 
+	 * Convert all non-P_SYSTEM LSSLEEP or LSRUN processes to
 	 * LSSUSPENDED.
 	 */
 	proclist_lock_read();
@@ -1174,14 +1174,14 @@ suspendsched()
 
 #ifndef __HAVE_MD_RUNQUEUE
 
-/*      
+/*
  * The primitives that manipulate the run queues.  whichqs tells which
  * of the 32 queues qs have processes in them.  Setrunqueue puts processes
  * into queues, remrunqueue removes them from queues.  The running process is
  * on no queue, other processes are on a queue related to p->p_priority,
  * divided by 4 actually to shrink the 0-127 range of priorities into the 32
  * available queues.
- */     
+ */
 
 void
 setrunqueue(struct lwp *l)
