@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/28 01:32:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/02/26 00:57:12 lukem Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -85,34 +85,34 @@ update_inc:
 DES_SHLIB_MAJOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-major
 DES_SHLIB_MINOR != cd ${.CURDIR}/../libdes && ${MAKE} -B print-shlib-minor
 
-LINKS+= ${LIBDIR}/libcrypto.a ${LIBDIR}/libdes.a
+SYMLINKS+=	libcrypto.a ${LIBDIR}/libdes.a
 
 .if ${MKPROFILE} != "no"
-LINKS+= ${LIBDIR}/libcrypto_p.a ${LIBDIR}/libdes_p.a
+SYMLINKS+=	libcrypto_p.a ${LIBDIR}/libdes_p.a
 .endif
 
 .if ${MKPIC} != "no"
 
 .if ${MKPICINSTALL} != "no"
-LINKS+= ${LIBDIR}/libcrypto_pic.a ${LIBDIR}/libdes_pic.a
+SYMLINKS+=	libcrypto_pic.a ${LIBDIR}/libdes_pic.a
 .endif
 
 .if exists(${.CURDIR}/shlib_version)
-LINKS+=	${_LIBSODIR}/libcrypto.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	${_LIBSODIR}/libdes.so.${DES_SHLIB_MAJOR}.${DES_SHLIB_MINOR}
+SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		${_LIBSODIR}/libdes.so.${DES_SHLIB_MAJOR}.${DES_SHLIB_MINOR}
 .if ${_LIBSODIR} != ${LIBDIR}
-SYMLINKS+=${_LIBSODIR}/libcrypto.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	${LIBDIR}/libdes.so.${DES_SHLIB_MAJOR}.${DES_SHLIB_MINOR}
+SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+		${LIBDIR}/libdes.so.${DES_SHLIB_MAJOR}.${DES_SHLIB_MINOR}
 .endif
 
 .if (${OBJECT_FMT} == "ELF")
-LINKS+=	${_LIBSODIR}/libcrypto.so.${SHLIB_MAJOR} \
-	${_LIBSODIR}/libdes.so.${DES_SHLIB_MAJOR}
-LINKS+=	${_LIBSODIR}/libcrypto.so ${_LIBSODIR}/libdes.so
+SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR} \
+		${_LIBSODIR}/libdes.so.${DES_SHLIB_MAJOR}
+SYMLINKS+=	libcrypto.so ${_LIBSODIR}/libdes.so
 .if ${_LIBSODIR} != ${LIBDIR}
-SYMLINKS+=	${_LIBSODIR}/libcrypto.so.${SHLIB_MAJOR} \
+SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR} \
 		${LIBDIR}/libdes.so.${DES_SHLIB_MAJOR}
-SYMLINKS+=	${_LIBSODIR}/libcrypto.so ${LIBDIR}/libdes.so
+SYMLINKS+=	libcrypto.so ${LIBDIR}/libdes.so
 .endif
 .endif
 .endif	# exists shlib_version
