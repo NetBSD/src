@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.5 1995/02/15 23:55:54 briggs Exp $	*/
+/*	$NetBSD: pram.c,v 1.6 1995/09/17 18:50:17 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -37,6 +37,7 @@
 /* #include "stand.h"  */
 #include "via.h"
 #include "pram.h"
+#include "macrom.h"
 
 #if DEBUG
 char *convtime(unsigned long t)
@@ -119,7 +120,11 @@ pram_readtime(void)
 {
    unsigned long	timedata;
 
-   timedata = getPramTime();
+   if (0 == jClkNoMem)
+	timedata = 0;	/* cause comparision of MacOS boottime */
+			/* and PRAM time to fail */
+   else
+	timedata = getPramTime();
 #if DEBUG
    printf("time read from PRAM: 0x%x\n", timedata);
    printf("Date and time: %s\n",convtime(timedata));
@@ -131,5 +136,8 @@ pram_readtime(void)
 void
 pram_settime(unsigned long time)
 {
+   if (0 == jClkNoMem)
+	return;
+   else
 	return setPramTime(time);
 }
