@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.118 2003/05/26 13:11:36 jmmv Exp $
+$NetBSD: acronyms,v 1.119 2003/06/10 19:11:10 wiz Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -181,6 +181,7 @@ SWMBO	she who must be obeyed
 TANSTAAFL	there ain't no such thing as a free lunch
 TBC	to be continued
 TBD	to be {decided,determined,done}
+TBOMK	the best of my knowledge
 TIA	thanks in advance
 TINC	there is no cabal
 TLA	three letter acronym
@@ -188,6 +189,7 @@ TLB	translation lookaside buffer
 TMA	too many abbreviations
 TMI	too much information
 TOEFL	test of english as a foreign language
+TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTYL	talk to you later
 TWIAVBP	the world is a very big place
