@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2003/06/29 22:29:06 fvdl Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2003/07/15 02:15:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * bus_dma routines for vax. File copied from arm32/bus_dma.c.
  * NetBSD: bus_dma.c,v 1.11 1998/09/21 22:53:35 thorpej Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2003/07/15 02:15:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.8 2002/09/28 09:53:08 ragge Exp $	*/
+/*	$NetBSD: ka680.c,v 1.9 2003/07/15 02:15:04 lukem Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -33,6 +33,9 @@
 
 /* Done by Michael Kukat (michael@unixiron.org) */
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.9 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

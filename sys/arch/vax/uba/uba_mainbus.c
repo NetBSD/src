@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.5 2002/10/02 16:02:34 thorpej Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.6 2003/07/15 02:15:02 lukem Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -36,6 +36,9 @@
  *	@(#)uba.c	7.10 (Berkeley) 12/16/90
  *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.6 2003/07/15 02:15:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.9 2002/09/28 09:53:08 ragge Exp $	*/
+/*	$NetBSD: ka670.c,v 1.10 2003/07/15 02:15:04 lukem Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.10 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.4 2001/09/16 16:34:35 wiz Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.5 2003/07/15 02:15:05 lukem Exp $	*/
 /*
  * Copyright (c) 1985, 1986 Regents of the University of California.
  * All rights reserved.
@@ -33,6 +33,9 @@
  *
  *	@(#)ns_cksum.c	7.6 (Berkeley) 12/16/90
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.5 2003/07/15 02:15:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.21 2000/06/29 07:14:26 mrg Exp $	*/
+/*	$NetBSD: ka630.c,v 1.22 2003/07/15 02:15:04 lukem Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +33,9 @@
  *
  *	@(#)ka630.c	7.8 (Berkeley) 5/9/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.22 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.7 2002/10/23 09:12:37 jdolecek Exp $	*/
+/*	$NetBSD: crx.c,v 1.8 2003/07/15 02:15:03 lukem Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -40,6 +40,9 @@
 /*
  * Routines to handle the console RX50.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.8 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

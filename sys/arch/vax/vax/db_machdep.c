@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.35 2003/01/20 04:45:56 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.36 2003/07/15 02:15:03 lukem Exp $	*/
 
 /* 
  * :set tabs=4
@@ -37,6 +37,10 @@
  * Interface to new debugger.
  * Taken from i386 port and modified for vax.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.36 2003/07/15 02:15:03 lukem Exp $");
+
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 

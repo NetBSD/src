@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.11 2003/01/01 02:29:38 thorpej Exp $ */
+/*	$NetBSD: ibus.c,v 1.12 2003/07/15 02:15:03 lukem Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.12 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

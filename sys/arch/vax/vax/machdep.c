@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.136 2003/06/23 11:01:49 martin Exp $	 */
+/* $NetBSD: machdep.c,v 1.137 2003/07/15 02:15:05 lukem Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -45,6 +45,9 @@
  * 
  * @(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2003/07/15 02:15:05 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"

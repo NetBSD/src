@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2001/01/28 20:47:45 ragge Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.12 2003/07/15 02:15:03 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.61 2002/10/26 13:50:48 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.62 2003/07/15 02:15:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)conf.c	7.18 (Berkeley) 5/9/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62 2003/07/15 02:15:03 lukem Exp $");
 
 #include "opt_cputype.h"
 

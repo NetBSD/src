@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.14 2002/06/04 19:04:32 ragge Exp $ */
+/*	$NetBSD: scb.c,v 1.15 2003/07/15 02:15:05 lukem Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,6 +32,9 @@
 /*
  * Routines for dynamic allocation/release of SCB vectors.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scb.c,v 1.15 2003/07/15 02:15:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

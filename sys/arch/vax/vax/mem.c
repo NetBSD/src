@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 2003/04/01 15:23:07 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.27 2003/07/15 02:15:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,9 @@
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27 2003/07/15 02:15:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

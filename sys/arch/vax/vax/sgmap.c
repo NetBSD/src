@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.10 2002/09/27 15:37:00 provos Exp $ */
+/* $NetBSD: sgmap.c,v 1.11 2003/07/15 02:15:05 lukem Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.11 2003/07/15 02:15:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

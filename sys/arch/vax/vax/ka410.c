@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.24 2000/06/29 07:14:25 mrg Exp $ */
+/*	$NetBSD: ka410.c,v 1.25 2003/07/15 02:15:03 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka410.c,v 1.25 2003/07/15 02:15:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

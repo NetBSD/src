@@ -1,4 +1,4 @@
-/*	$NetBSD: yyyin_cksum.c,v 1.4 1996/01/06 16:50:55 ragge Exp $	*/
+/*	$NetBSD: yyyin_cksum.c,v 1.5 2003/07/15 02:15:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: yyyin_cksum.c,v 1.5 2003/07/15 02:15:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

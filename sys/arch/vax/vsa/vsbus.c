@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.43 2003/06/18 08:58:42 drochner Exp $ */
+/*	$NetBSD: vsbus.c,v 1.44 2003/07/15 02:15:07 lukem Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.44 2003/07/15 02:15:07 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

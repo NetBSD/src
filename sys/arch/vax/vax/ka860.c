@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.22 2003/01/19 22:29:23 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.23 2003/07/15 02:15:04 lukem Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,6 +38,9 @@
  * VAX 8600 specific routines.
  * Also contains abus spec's and memory init routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.23 2003/07/15 02:15:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.30 2002/12/29 20:12:19 ad Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.31 2003/07/15 02:15:06 lukem Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.31 2003/07/15 02:15:06 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

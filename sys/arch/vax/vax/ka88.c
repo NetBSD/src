@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.5 2002/10/02 16:02:36 thorpej Exp $	*/
+/*	$NetBSD: ka88.c,v 1.6 2003/07/15 02:15:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -37,6 +37,9 @@
  * TODO:
  *	- Machine check code
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.6 2003/07/15 02:15:04 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 
