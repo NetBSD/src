@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2003/12/23 14:44:07 rtr Exp $
+#	$NetBSD: Makefile,v 1.8 2004/01/03 02:05:49 takemura Exp $
 
 .include <bsd.own.mk>
 
-.if ${MACHINE} != "sparc" && ${MACHINE} != "sparc64"
+.if ${MACHINE} != "sparc" && ${MACHINE} != "sparc64" && ${MACHINE} != "hpcmips"
 SUBDIR.md=fontbase Xfont
 .endif
 
