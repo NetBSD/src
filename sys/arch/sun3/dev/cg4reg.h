@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4reg.h,v 1.1 1995/03/10 01:51:07 gwr Exp $	*/
+/*	$NetBSD: cg4reg.h,v 1.2 1995/04/07 02:47:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,11 @@
  */
 
 /* Size that can be mapped. */
-#define	CG4_FBSIZE		0x100000	/* size of frame buffer */
+#define	CG4_OVERLAY_SIZE	 0x20000	/* size of overlay plane */
+#define	CG4_ENABLE_SIZE 	 0x20000	/* size of enable plane */
+#define	CG4_PIXMAP_SIZE		0x100000	/* size of frame buffer */
+#define	CG4_MMAP_SIZE		0x140000	/* total mapping size */
+
 
 /*
  * cgthree display registers.  Much like bwtwo registers, except that
@@ -56,4 +60,4 @@
 #define CG4REG_CMAP		0
 #define CG4REG_OVERLAY	0x200000
 #define CG4REG_ENABLE	0x400000
-#define CG4REG_COLOR	0x600000
+#define CG4REG_PIXMAP	0x600000
