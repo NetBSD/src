@@ -1,5 +1,5 @@
 #
-#	GENERIC -- everything that's currently supported
+#	VOYAGER -- Mark's master development machine
 #
 
 include	"std.arm32"
@@ -55,8 +55,6 @@ options		INET		# IP + ICMP + TCP + UDP
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
 
-options		PLIP
-
 # Compatibility options
 
 options		COMPAT_43
@@ -73,8 +71,9 @@ options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
 # Device options
 
-options		RAMDISK_HOOKS	
+options		RAMDISK_HOOKS	# boottime setup of ramdisk
 options		RAMDISK_SIZE=0	# Size in KBytes
+options		PLIP		# Build plip device into lpt driver
 
 # Development options
 
@@ -100,12 +99,12 @@ mainbus0 at root
 cpu0 at mainbus?
 
 # The hydra multiprocessor device
-hydra0 at mainbus?
+hydrabus0 at mainbus?
 
-#cpu1 at hydra?
-#cpu2 at hydra?
-#cpu3 at hydra?
-#cpu4 at hydra?
+#cpu1 at hydrabus?
+#cpu2 at hydrabus?
+#cpu3 at hydrabus?
+#cpu4 at hydrabus?
 
 # The vidc
 vidcvideo0	at mainbus?
