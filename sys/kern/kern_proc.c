@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.79 2004/10/01 16:30:53 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.79 2004/10/01 16:30:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80 2004/10/03 22:26:35 yamt Exp $");
 
 #include "opt_kstack.h"
 
@@ -1085,8 +1085,13 @@ kstack_check_magic(const struct lwp *l)
 }
 #endif /* KSTACK_CHECK_MAGIC */
 
+/* XXX shouldn't be here */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	PROCLIST_ASSERT_LOCKED_READ()	\
 	KASSERT(lockstatus(&proclist_lock) == LK_SHARED)
+#else
+#define	PROCLIST_ASSERT_LOCKED_READ()	/* nothing */
+#endif
 
 int
 proclist_foreach_call(struct proclist *list,
