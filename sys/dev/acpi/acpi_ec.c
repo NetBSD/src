@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.13 2003/11/01 08:14:39 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.14 2003/11/01 08:27:37 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.13 2003/11/01 08:14:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.14 2003/11/01 08:27:37 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,10 +698,6 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 			    sc->sc_dev.dv_xname);
 		sc->sc_flags &= ~EC_F_PENDQUERY;
 	}
-
-	if (AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR) != AE_OK)
-		printf("%s: EcRequest: unable to clear EC GPE\n",
-		    sc->sc_dev.dv_xname);
 
 	EcUnlock(sc);
 
