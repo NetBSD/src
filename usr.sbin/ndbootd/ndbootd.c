@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.2 2001/05/22 14:41:59 fredette Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.3 2001/05/23 02:59:35 fredette Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -25,10 +25,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* <<Header: /data/home/fredette/project/THE-WEIGHT-CVS/ndbootd/ndbootd.c,v 1.7 2001/05/22 13:13:20 fredette Exp >> */
+/* <<Header: /data/home/fredette/project/THE-WEIGHT-CVS/ndbootd/ndbootd.c,v 1.8 2001/05/23 02:35:36 fredette Exp >> */
 
 /*
  * <<Log: ndbootd.c,v >>
+ * Revision 1.8  2001/05/23 02:35:36  fredette
+ * Changed many debugging printfs to compile quietly on the
+ * alpha.  Patch from Andrew Brown <atatat@atatdot.net>.
+ *
  * Revision 1.7  2001/05/22 13:13:20  fredette
  * Ran indent(1) with NetBSD's KNF-approximating profile.
  *
@@ -68,7 +72,7 @@
  *
  */
 
-static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.7 2001/05/22 13:13:20 fredette Exp >>";
+static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.8 2001/05/23 02:35:36 fredette Exp >>";
 
 /* includes: */
 #include "ndbootd.h"
@@ -570,7 +574,7 @@ where OPTIONS are:\n\
 		    < (sizeof(struct ether_header)
 			+ sizeof(struct ip)
 			+ sizeof(struct ndboot_packet))) {
-			_NDBOOTD_DEBUG((fp, "ignoring a too-short packet of length %d", packet_length));
+			_NDBOOTD_DEBUG((fp, "ignoring a too-short packet of length %ld", (long) packet_length));
 			continue;
 		}
 #ifdef HAVE_STRICT_ALIGNMENT
@@ -592,7 +596,7 @@ where OPTIONS are:\n\
 		    != (sizeof(struct ether_header)
 			+ (ip_packet->ip_hl << 2)
 			+ sizeof(struct ndboot_packet))) {
-			_NDBOOTD_DEBUG((fp, "ignoring a packet with bad total length %d", packet_length));
+			_NDBOOTD_DEBUG((fp, "ignoring a packet with bad total length %ld", (long) packet_length));
 			continue;
 		}
 		/* if we need to, refresh our RARP cache: */
@@ -850,10 +854,10 @@ where OPTIONS are:\n\
 
 					file_offset = ((block_number - NDBOOTD_BOOT1_BLOCK_FIRST) * NDBOOT_BSIZE) + byte_offset;
 					if (lseek(boot1_fd, file_offset, SEEK_SET) < 0) {
-						_NDBOOTD_DEBUG((fp, "could not seek %s to block %d offset %d: %s",
+						_NDBOOTD_DEBUG((fp, "could not seek %s to block %ld offset %ld: %s",
 							boot1_file_name,
-							(block_number - NDBOOTD_BOOT1_BLOCK_FIRST),
-							byte_offset,
+							(long) (block_number - NDBOOTD_BOOT1_BLOCK_FIRST),
+							(long) byte_offset,
 							strerror(errno)));
 						break;
 					}
@@ -867,13 +871,13 @@ where OPTIONS are:\n\
 						byte_count_read = byte_count_wanted;
 					}
 					if (byte_count_read != byte_count_wanted) {
-						_NDBOOTD_DEBUG((fp, "could not read %d bytes at block %d offset %d from %s: %s (read %d bytes)",
-							byte_count_wanted,
-							(block_number - NDBOOTD_BOOT1_BLOCK_FIRST),
-							byte_offset,
+						_NDBOOTD_DEBUG((fp, "could not read %ld bytes at block %ld offset %ld from %s: %s (read %ld bytes)",
+							(long) byte_count_wanted,
+							(long) (block_number - NDBOOTD_BOOT1_BLOCK_FIRST),
+							(long) byte_offset,
 							boot1_file_name,
 							strerror(errno),
-							byte_count_read));
+							(long) byte_count_read));
 						break;
 					}
 				}
@@ -898,10 +902,10 @@ where OPTIONS are:\n\
 
 					file_offset = ((block_number - NDBOOTD_BOOT2_BLOCK_FIRST) * NDBOOT_BSIZE) + byte_offset;
 					if (lseek(boot2_fd, file_offset, SEEK_SET) < 0) {
-						_NDBOOTD_DEBUG((fp, "could not seek %s to block %d offset %d: %s",
+						_NDBOOTD_DEBUG((fp, "could not seek %s to block %ld offset %ld: %s",
 							boot2_file_name,
-							(block_number - NDBOOTD_BOOT2_BLOCK_FIRST),
-							byte_offset,
+							(long) (block_number - NDBOOTD_BOOT2_BLOCK_FIRST),
+							(long) byte_offset,
 							strerror(errno)));
 						break;
 					}
@@ -915,13 +919,13 @@ where OPTIONS are:\n\
 						byte_count_read = byte_count_wanted;
 					}
 					if (byte_count_read != byte_count_wanted) {
-						_NDBOOTD_DEBUG((fp, "could not read %d bytes at block %d offset %d from %s: %s (read %d bytes)",
-							byte_count_wanted,
-							(block_number - NDBOOTD_BOOT2_BLOCK_FIRST),
-							byte_offset,
+						_NDBOOTD_DEBUG((fp, "could not read %ld bytes at block %ld offset %ld from %s: %s (read %ld bytes)",
+							(long) byte_count_wanted,
+							(long) (block_number - NDBOOTD_BOOT2_BLOCK_FIRST),
+							(long) byte_offset,
 							boot2_file_name,
 							strerror(errno),
-							byte_count_read));
+							(long) byte_count_read));
 						break;
 					}
 				}
