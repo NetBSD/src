@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.2 2000/01/24 01:32:00 augustss Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.3 2000/01/24 22:05:53 chopps Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -106,7 +106,7 @@
 
 /* ammount of time to consider start/join failed */
 #ifndef	RAY_START_TIMEOUT
-#define	RAY_START_TIMEOUT	(3 * hz)
+#define	RAY_START_TIMEOUT	(30 * hz)
 #endif
 
 /*
@@ -492,8 +492,9 @@ ray_attach(parent, self, aux)
 		goto fail;
 	}
 
-	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_COMMON, RAY_SRAM_MEM_BASE,
-	    RAY_SRAM_MEM_SIZE, &sc->sc_mem, &memoff, &sc->sc_window)) {
+	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON,
+	    RAY_SRAM_MEM_BASE, RAY_SRAM_MEM_SIZE, &sc->sc_mem, &memoff,
+	    &sc->sc_window)) {
 		printf(": can\'t map shared memory\n");
 		pcmcia_mem_free(sc->sc_pf, &sc->sc_mem);
 		goto fail;
@@ -575,8 +576,8 @@ ray_attach(parent, self, aux)
 	    sizeof(struct ieee80211_frame) + sizeof(struct ether_header);
 
 	ifmedia_init(&sc->sc_media, 0, ray_media_change, ray_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ADHOC, 0, sc);
-	ifmedia_add(&sc->sc_media, IFM_INFRA, 0, sc);
+	ifmedia_add(&sc->sc_media, IFM_ADHOC, 0, 0);
+	ifmedia_add(&sc->sc_media, IFM_INFRA, 0, 0);
 	if (sc->sc_mode == SC_MODE_ADHOC)
 		ifmedia_set(&sc->sc_media, IFM_ADHOC);
 	else
@@ -963,6 +964,8 @@ ray_ioctl(ifp, cmd, data)
 		break;
 	}
 
+	RAY_DPRINTF(("%s: ioctl: returns %d\n", ifp->if_xname, error));
+
 	splx(s);
 
 	return (error);
@@ -985,7 +988,17 @@ static int
 ray_media_change(ifp)
 	struct ifnet *ifp;
 {
-	/* XXX choose between adhoc and infra */
+	struct ray_softc *sc;
+
+	sc = ifp->if_softc;
+	RAY_DPRINTF(("%s: media change cur %d\n", ifp->if_xname,
+	    sc->sc_media.ifm_cur->ifm_media));
+	if (sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC)
+		sc->sc_mode = SC_MODE_ADHOC;
+	else
+		sc->sc_mode = SC_MODE_INFRA;
+	if (sc->sc_mode != sc->sc_omode)
+		ray_start_join_net(sc);
 	return (0);
 }
 
@@ -998,6 +1011,8 @@ ray_media_status(ifp, imr)
 
 	sc = ifp->if_softc;
 
+	RAY_DPRINTF(("%s: media status\n", ifp->if_xname));
+
 	imr->ifm_status = IFM_AVALID;
 	if (sc->sc_havenet)
 		imr->ifm_status |= IFM_ACTIVE;
@@ -1007,8 +1022,6 @@ ray_media_status(ifp, imr)
 	else
 		imr->ifm_active = IFM_INFRA;
 }
-
-
 
 /*
  * called to start from ray_intr.  We don't check for pending
@@ -1112,13 +1125,18 @@ ray_intr_start(sc)
 		eh = (struct ether_header *)((u_int8_t *)iframe + tmplen);
 		iframe->i_fc[0] =
 		    (IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA);
-		iframe->i_fc[1] = IEEE80211_FC1_RCVFROM_TERMINAL;
+		if (sc->sc_mode == SC_MODE_ADHOC) {
+			iframe->i_fc[1] = IEEE80211_FC1_RCVFROM_TERMINAL;
+			memcpy(iframe->i_addr1, eh->ether_dhost,ETHER_ADDR_LEN);
+			memcpy(iframe->i_addr2, eh->ether_shost,ETHER_ADDR_LEN);
+			memcpy(iframe->i_addr3, sc->sc_bssid, ETHER_ADDR_LEN);
+		} else {
+			iframe->i_fc[1] = IEEE80211_FC1_RCVFROM_AP;
+			memcpy(iframe->i_addr1, sc->sc_bssid,ETHER_ADDR_LEN);
+			memcpy(iframe->i_addr2, eh->ether_shost,ETHER_ADDR_LEN);
+			memmove(iframe->i_addr3,eh->ether_dhost,ETHER_ADDR_LEN);
+		}
 		iframe->i_dur[0] = iframe->i_dur[1] = 0;
-
-		/* XXX this only supports ad-hoc [dst, src, bssid] */
-		memcpy(iframe->i_addr1, eh->ether_dhost, ETHER_ADDR_LEN);
-		memcpy(iframe->i_addr2, eh->ether_shost, ETHER_ADDR_LEN);
-		memcpy(iframe->i_addr3, sc->sc_bssid, ETHER_ADDR_LEN);
 		iframe->i_seq[0] = iframe->i_seq[1] = 0;
 
 		/* if not using crummy E2 in 802.11 make it LLC/SNAP */
@@ -2549,6 +2567,9 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 		if (np.p_net_type != sc->sc_mode)
 			return (ray_start_join_net);
 	}
+	RAY_DPRINTF(("%s: net start/join nwid %.32s bssid %s inited %d\n",
+	    sc->sc_xname, sc->sc_cnwid, ether_sprintf(sc->sc_bssid),
+		SRAM_READ_FIELD_1(sc, ccs, ray_cmd_net, c_inited)));
 
 	/* network is now active */
 	sc->sc_havenet = 1;
