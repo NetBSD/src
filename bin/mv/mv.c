@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.14 1997/10/08 11:26:04 kleink Exp $	*/
+/*	$NetBSD: mv.c,v 1.15 1997/10/19 02:17:37 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.14 1997/10/08 11:26:04 kleink Exp $");
+__RCSID("$NetBSD: mv.c,v 1.15 1997/10/19 02:17:37 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ do_move(from, to)
 	 *	message to the standard error and do nothing more with the
 	 *	current source file...
 	 */
-	if (!stat(to, &sb)) {
+	if (!lstat(to, &sb)) {
 		if ((S_ISDIR(sb.st_mode)) ? rmdir(to) : unlink(to)) {
 			warn("can't remove %s", to);
 			return (1);
@@ -227,9 +227,9 @@ do_move(from, to)
 
 	/*
 	 * (5)	The file hierarchy rooted in source_file shall be duplicated
-	 *	as a file hiearchy rooted in the destination path...
+	 *	as a file hierarchy rooted in the destination path...
 	 */
-	if (stat(from, &sb)) {
+	if (lstat(from, &sb)) {
 		warn("%s", from);
 		return (1);
 	}
