@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.30 2002/07/10 15:00:35 fredb Exp $	*/
+/*	$NetBSD: auth.c,v 1.31 2002/08/02 02:52:07 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -62,7 +62,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.69 2001/03/12 22:50:01 paulus Exp "
 #else
-__RCSID("$NetBSD: auth.c,v 1.30 2002/07/10 15:00:35 fredb Exp $");
+__RCSID("$NetBSD: auth.c,v 1.31 2002/08/02 02:52:07 christos Exp $");
 #endif
 #endif
 
@@ -76,11 +76,11 @@ __RCSID("$NetBSD: auth.c,v 1.30 2002/07/10 15:00:35 fredb Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <utmp.h>
 #include <fcntl.h>
 #if defined(_PATH_LASTLOG) && defined(_linux_)
 #include <lastlog.h>
 #endif
+#include <util.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -1265,7 +1265,12 @@ plogout()
     tty = devnam;
     if (strncmp(tty, "/dev/", 5) == 0)
 	tty += 5;
+#ifdef SUPPORT_UTMP
     logwtmp(tty, "", "");		/* Wipe out utmp logout entry */
+#endif
+#ifdef SUPPORT_UTMPX
+    logwtmpx(tty, "", "", DEAD_PROCESS, 0);	/* Wipe out utmp logout entry */
+#endif
 #endif /* ! USE_PAM */
     logged_in = 0;
 }

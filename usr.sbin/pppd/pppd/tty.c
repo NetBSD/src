@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.3 2002/07/31 14:59:10 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.4 2002/08/02 02:52:07 christos Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.6 2001/03/12 22:59:01 paulus Exp "
 #else
-__RCSID("$NetBSD: tty.c,v 1.3 2002/07/31 14:59:10 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.4 2002/08/02 02:52:07 christos Exp $");
 #endif
 #endif
 
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: tty.c,v 1.3 2002/07/31 14:59:10 christos Exp $");
 #include <fcntl.h>
 #include <syslog.h>
 #include <netdb.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.7 2002/05/29 19:06:33 christos Exp $	*/
+/*	$NetBSD: utils.c,v 1.8 2002/08/02 02:52:07 christos Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -24,7 +24,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.13 2001/03/16 02:08:13 paulus Exp "
 #else
-__RCSID("$NetBSD: utils.c,v 1.7 2002/05/29 19:06:33 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.8 2002/08/02 02:52:07 christos Exp $");
 #endif
 #endif
 
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: utils.c,v 1.7 2002/05/29 19:06:33 christos Exp $");
 #include <fcntl.h>
 #include <syslog.h>
 #include <netdb.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <sys/param.h>
 #include <sys/types.h>

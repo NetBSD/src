@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2002/07/01 22:19:38 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2002/08/02 02:52:07 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.105 2001/03/12 22:58:59 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.40 2002/07/01 22:19:38 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2002/08/02 02:52:07 christos Exp $");
 #endif
 #endif
 
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: main.c,v 1.40 2002/07/01 22:19:38 itojun Exp $");
 #include <fcntl.h>
 #include <syslog.h>
 #include <netdb.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <sys/param.h>
