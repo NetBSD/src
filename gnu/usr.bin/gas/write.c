@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.8 1993/11/25 01:07:48 paulus Exp $";
+static char rcsid[] = "$Id: write.c,v 1.9 1993/12/05 12:44:13 pk Exp $";
 #endif
 
 #include "as.h"
@@ -1021,12 +1021,19 @@ segT this_segment_type; /* N_TYPE bits for segment. */
 			}
 		} /* if sub_symbolP */
 		
-#ifdef	PIC
+#ifdef PIC
+		/*
+		 * Bring _GLOBAL_OFFSET_TABLE_ forward, now we've had the
+		 * chance to collapse any accompanying symbols into a number.
+		 * This is the sequel of the hack in expr.c to parse operands
+		 * of the form `_GLOBAL_OFFSET_TABLE_+(L1-L2)'. Note that
+		 * _GLOBAL_OFFSET_TABLE_ can only be an "add symbol".
+		 */ 
 		if (add_symbolP == NULL && fixP->fx_gotsy != NULL) {
-		    add_symbolP = fixP->fx_addsy = fixP->fx_gotsy;
-		    add_symbol_segment = S_GET_SEGMENT(add_symbolP);
+			add_symbolP = fixP->fx_addsy = fixP->fx_gotsy;
+			add_symbol_segment = S_GET_SEGMENT(add_symbolP);
 		}
-#endif	/* PIC */
+#endif
 
 		if (add_symbolP) {
 			if (add_symbol_segment == this_segment_type && pcrel) {
