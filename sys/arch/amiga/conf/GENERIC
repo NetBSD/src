@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.103 1998/03/22 23:12:50 is Exp $
+#	$NetBSD: GENERIC,v 1.104 1998/04/07 19:43:08 is Exp $
 
 #
 # GENERIC AMIGA
@@ -199,10 +199,12 @@ ite5		at grf5			# terminal emulators for grf's
 ite6		at grf6			# terminal emulators for grf's
 ite7		at grf7			# terminal emulators for grf's
 
-msc0		at zbus0		# A2232 MSC multiport serial.
-mfc0		at zbus0		# MultiFaceCard I/O board
-mfcs0		at mfc0 unit 0		# MFC serial
-mfcs1		at mfc0 unit 1		# MFC serial
+# XXX mfs and msc don't compile currently
+
+#msc0		at zbus0		# A2232 MSC multiport serial.
+#mfc0		at zbus0		# MultiFaceCard I/O board
+#mfcs0		at mfc0 unit 0		# MFC serial
+#mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp0		at mfc0 unit 0		# MFC parallel [not available yet]
 #mfc1		at zbus0		# MultiFaceCard 2nd I/O board
 #mfcs2		at mfc1 unit 0
@@ -217,7 +219,8 @@ com*		at hyper? port ?	# Hypercom3/4 serial ports
 # Amiga Mainboard devices (sans graphics and keyboard)
 #
 
-ser0		at mainbus0		# Amiga onboard serial
+#XXX ser doesn't compile currenlty:
+#ser0		at mainbus0		# Amiga onboard serial
 par0		at mainbus0		# Amiga onboard parallel
 ms*		at mainbus0		# Amiga mice
 fdc0		at mainbus0		# Amiga FDC
