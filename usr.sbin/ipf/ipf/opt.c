@@ -1,4 +1,4 @@
-/*	$NetBSD: opt.c,v 1.1.1.5 1997/07/05 05:12:39 darrenr Exp $	*/
+/*	$NetBSD: opt.c,v 1.1.1.6 1997/09/21 16:47:50 veego Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,6 +9,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -19,12 +20,13 @@
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
+#include <arpa/inet.h>
 #include <netinet/ip_compat.h>
 #include "ipf.h"
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: opt.c,v 1.1.1.5 1997/07/05 05:12:39 darrenr Exp $";
+static	char	rcsid[] = "Id: opt.c,v 2.0.2.7 1997/09/10 13:08:23 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -65,7 +67,9 @@ struct	ipopt_names	secclass[] = {
 	{ 0, 0, 0, NULL }	/* must be last */
 };
 
+
 static	u_char	seclevel __P((char *));
+int addipopt __P((char *, struct ipopt_names *, int, char *));
 
 static u_char seclevel(slevel)
 char *slevel;
@@ -84,14 +88,70 @@ char *slevel;
 }
 
 
-u_32_t buildopts(cp, op)
+int addipopt(op, io, len, class)
+char *op;
+struct ipopt_names *io;
+int len;
+char *class;
+{
+	int olen = len;
+	struct in_addr ipadr;
+	u_short val;
+	u_char lvl;
+	char *s;
+
+	if ((len + io->on_siz) > 48) {
+		fprintf(stderr, "options too long\n");
+		return 0;
+	}
+	len += io->on_siz;
+	*op++ = io->on_value;
+	if (io->on_siz > 1) {
+		s = op;
+		*op++ = io->on_siz;
+		*op++ = IPOPT_MINOFF;
+
+		if (class) {
+			switch (io->on_value)
+			{
+			case IPOPT_SECURITY :
+				lvl = seclevel(class);
+				*(op - 1) = lvl;
+				break;
+			case IPOPT_LSRR :
+			case IPOPT_SSRR :
+				ipadr.s_addr = inet_addr(class);
+				s[IPOPT_OLEN] = IPOPT_MINOFF - 1 + 4;
+				bcopy((char *)&ipadr, op, sizeof(ipadr));
+				break;
+			case IPOPT_SATID :
+				val = atoi(class);
+				bcopy((char *)&val, op, 2);
+				break;
+			}
+		}
+
+		op += io->on_siz - 3;
+		if (len & 3) {
+			*op++ = IPOPT_NOP;
+			len++;
+		}
+	}
+	if (opts & OPT_DEBUG)
+		fprintf(stderr, "bo: %s %d %#x: %d\n",
+			io->on_name, io->on_value, io->on_bit, len);
+	return len - olen;
+}
+
+
+u_32_t buildopts(cp, op, len)
 char *cp, *op;
+int len;
 {
 	struct ipopt_names *io;
-	u_char lvl;
 	u_32_t msk = 0;
 	char *s, *t;
-	int len = 0;
+	int inc;
 
 	for (s = strtok(cp, ","); s; s = strtok(NULL, ",")) {
 		if ((t = strchr(s, '=')))
@@ -99,30 +159,10 @@ char *cp, *op;
 		for (io = ionames; io->on_name; io++) {
 			if (strcasecmp(s, io->on_name) || (msk & io->on_bit))
 				continue;
-			if ((len + io->on_siz) > 48) {
-				fprintf(stderr, "options too long\n");
-				return 0;
+			if ((inc = addipopt(op, io, len, t))) {
+				op += inc;
+				len += inc;
 			}
-			len += io->on_siz;
-			*op++ = io->on_value;
-			if (io->on_siz > 1) {
-				*op++ = io->on_siz;
-				*op++ = IPOPT_MINOFF;
-
-				if (t && !strcasecmp(s, "sec-class")) {
-					lvl = seclevel(t);
-					*(op - 1) = lvl;
-				}
-				op += io->on_siz - 3;
-				if (len & 3) {
-					*op++ = IPOPT_NOP;
-					len++;
-				}
-			}
-			if (opts & OPT_DEBUG)
-				fprintf(stderr, "bo: %s %d %#x: %d\n",
-					io->on_name, io->on_value,
-					io->on_bit, len);
 			msk |= io->on_bit;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.5 1997/07/05 05:12:51 darrenr Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.6 1997/09/21 16:48:10 veego Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -43,7 +43,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_tx.c,v 1.1.1.5 1997/07/05 05:12:51 darrenr Exp $";
+static	char	rcsid[] = "Id: ipft_tx.c,v 2.0.2.7 1997/08/26 12:52:03 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -328,7 +328,7 @@ int	*out;
 		u_long	olen;
 
 		cpp++;
-		olen = buildopts(*cpp, ipopts);
+		olen = buildopts(*cpp, ipopts, (ip->ip_hl - 5) << 2);
 		if (olen) {
 			bcopy(ipopts, (char *)(ip + 1), olen);
 			ip->ip_hl += olen >> 2;

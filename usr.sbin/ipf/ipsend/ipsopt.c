@@ -1,23 +1,25 @@
-/*	$NetBSD: ipsopt.c,v 1.1.1.2 1997/05/27 22:18:17 thorpej Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.1.1.3 1997/09/21 16:49:13 veego Exp $	*/
 
 /*
- * (C)opyright 1995 by Darren Reed.
+ * (C)opyright 1995-1997 by Darren Reed.
  *
- * This code may be freely distributed as long as it retains this notice
- * and is not changed in any way.  The author accepts no responsibility
- * for the use of this software.  I hate legaleese, don't you ?
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
 #endif
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <arpa/inet.h>
 #include <netinet/ip_compat.h>
 
 
@@ -40,7 +42,7 @@ struct ipopt_names {
 struct ipopt_names ionames[] = {
 	{ IPOPT_EOL,	0x01,	1, "eol" },
 	{ IPOPT_NOP,	0x02,	1, "nop" },
-	{ IPOPT_RR,	0x04,	7, "rr" },	/* 1 route */
+	{ IPOPT_RR,	0x04,	3, "rr" },	/* 1 route */
 	{ IPOPT_TS,	0x08,	8, "ts" },	/* 1 TS */
 	{ IPOPT_SECURITY, 0x08,	11, "sec-level" },
 	{ IPOPT_LSRR,	0x10,	7, "lsrr" },	/* 1 route */
@@ -61,8 +63,10 @@ struct	ipopt_names secnames[] = {
 };
 
 
-u_short seclevel __P((char *));
-u_long optname __P((char *, char *));
+u_short	seclevel __P((char *));
+u_long	optname __P((char *, char *));
+int	addipopt __P((char *, struct ipopt_names *, int, char *));
+u_32_t	buildopts __P((char *, char *, int));
 
 
 u_short seclevel(slevel)
@@ -82,14 +86,82 @@ char *slevel;
 }
 
 
-u_long optname(cp, op)
+int addipopt(op, io, len, class)
+char *op;
+struct ipopt_names *io;
+int len;
+char *class;
+{
+	struct in_addr ipadr;
+	int olen = len, srr = 0;
+	u_short val;
+	u_char lvl;
+	char *s = op, *t;
+
+	if ((len + io->on_siz) > 48) {
+		fprintf(stderr, "options too long\n");
+		return 0;
+	}
+	len += io->on_siz;
+	*op++ = io->on_value;
+	if (io->on_siz > 1) {
+		/*
+		 * Allow option to specify RR buffer length in bytes.
+		 */
+		if (io->on_value == IPOPT_RR) {
+			val = (class && *class) ? atoi(class) : 4;
+			*op++ = val + io->on_siz;
+			len += val;
+		} else
+			*op++ = io->on_siz;
+		*op++ = IPOPT_MINOFF;
+
+		while (class && *class) {
+			t = NULL;
+			switch (io->on_value)
+			{
+			case IPOPT_SECURITY :
+				lvl = seclevel(class);
+				*(op - 1) = lvl;
+				break;
+			case IPOPT_LSRR :
+			case IPOPT_SSRR :
+				if ((t = strchr(class, ',')))
+					*t = '\0';
+				ipadr.s_addr = inet_addr(class);
+				srr++;
+				bcopy((char *)&ipadr, op, sizeof(ipadr));
+				op += sizeof(ipadr);
+				break;
+			case IPOPT_SATID :
+				val = atoi(class);
+				bcopy((char *)&val, op, 2);
+				break;
+			}
+
+			if (t)
+				*t++ = ',';
+			class = t;
+		}
+		if (srr)
+			s[IPOPT_OLEN] = IPOPT_MINOFF - 1 + 4 * srr;
+		if (io->on_value == IPOPT_RR)
+			op += val;
+		else
+			op += io->on_siz - 3;
+	}
+	return len - olen;
+}
+
+
+u_32_t buildopts(cp, op, len)
 char *cp, *op;
+int len;
 {
 	struct ipopt_names *io;
-	u_short lvl;
-	u_long msk = 0;
+	u_32_t msk = 0;
 	char *s, *t;
-	int len = 0;
+	int inc, lastop = -1;
 
 	for (s = strtok(cp, ","); s; s = strtok(NULL, ",")) {
 		if ((t = strchr(s, '=')))
@@ -97,21 +169,10 @@ char *cp, *op;
 		for (io = ionames; io->on_name; io++) {
 			if (strcasecmp(s, io->on_name) || (msk & io->on_bit))
 				continue;
-			if ((len + io->on_siz) > 48) {
-				fprintf(stderr, "options too long\n");
-				return 0;
-			}
-			len += io->on_siz;
-			*op++ = io->on_value;
-			if (io->on_siz > 1) {
-				*op++ = io->on_siz;
-				*op++ = IPOPT_MINOFF;
-
-				if (t && !strcasecmp(s, "sec-level")) {
-					lvl = seclevel(t);
-					bcopy(&lvl, op, sizeof(lvl));
-				}
-				op += io->on_siz - 3;
+			lastop = io->on_value;
+			if ((inc = addipopt(op, io, len, t))) {
+				op += inc;
+				len += inc;
 			}
 			msk |= io->on_bit;
 			break;
@@ -121,7 +182,24 @@ char *cp, *op;
 			return 0;
 		}
 	}
-	*op++ = IPOPT_EOL;
-	len++;
+
+	if (len & 3) {
+		while (len & 3) {
+			*op++ = ((len & 3) == 3) ? IPOPT_EOL : IPOPT_NOP;
+			len++;
+		}
+	} else {
+		if (lastop != IPOPT_EOL) {
+			if (lastop == IPOPT_NOP)
+				*(op - 1) = IPOPT_EOL;
+			else {
+				*op++ = IPOPT_NOP;
+				*op++ = IPOPT_NOP;
+				*op++ = IPOPT_NOP;
+				*op = IPOPT_EOL;
+				len += 4;
+			}
+		}
+	}
 	return len;
 }
