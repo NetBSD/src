@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$NetBSD: checkvers,v 1.5 2000/07/22 16:04:57 erh Exp $
+#	$NetBSD: checkvers,v 1.6 2000/08/09 23:41:27 gmcgarry Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,7 +182,7 @@ for f in $VERFILES ; do
     # here, whether given to us or built, so always
     # pass the -f flag.
     (cd `dirname $f` ;
-    "$EXECDIR"/checkver $QUIET -f "$LIBLIST" "$LIBNAME" ;
+    "sh $EXECDIR"/checkver $QUIET -f "$LIBLIST" "$LIBNAME" ;
     exit $?)
     ERR=$?
     if [ $ERR -eq 2 ] ; then
