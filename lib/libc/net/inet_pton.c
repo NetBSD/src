@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_pton.c,v 1.2 1997/04/13 10:30:46 mrg Exp $	*/
+
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +17,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: inet_pton.c,v 1.1.1.1 1997/04/13 09:12:15 mrg Exp $";
+#if 0
+static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp";
+#else
+static char rcsid[] = "$NetBSD: inet_pton.c,v 1.2 1997/04/13 10:30:46 mrg Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -24,9 +30,9 @@ static char rcsid[] = "$Id: inet_pton.c,v 1.1.1.1 1997/04/13 09:12:15 mrg Exp $"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "../conf/portability.h"
 
 /*
  * WARNING: Don't even consider trying to compile this on a system where

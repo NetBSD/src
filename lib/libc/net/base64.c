@@ -1,3 +1,5 @@
+/*	$NetBSD: base64.c,v 1.2 1997/04/13 10:30:31 mrg Exp $	*/
+
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -39,6 +41,11 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE, EVEN
  * IF IBM IS APPRISED OF THE POSSIBILITY OF SUCH DAMAGES.
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$NetBSD: base64.c,v 1.2 1997/04/13 10:30:31 mrg Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 
 #include <sys/types.h>
 #include <sys/param.h>
