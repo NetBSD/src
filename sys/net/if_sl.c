@@ -64,7 +64,7 @@
  * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
-/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.3 1993/03/25 00:27:58 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.4 1993/03/25 10:08:55 cgd Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "sl.h"
@@ -650,7 +650,6 @@ slinput(c, tp)
 
 	++sc->sc_bytesrcvd;
 	++sc->sc_if.if_ibytes;
-	c &= 0xff;			/* XXX */
 
 #ifdef ABT_ESC
 	if (sc->sc_flags & SC_ABORT) {
@@ -718,7 +717,6 @@ slinput(c, tp)
 			 */
 			bcopy(sc->sc_buf, chdr, CHDR_LEN);
 #endif
-
 		if ((c = (*sc->sc_buf & 0xf0)) != (IPVERSION << 4)) {
 			if (c & 0x80)
 				c = TYPE_COMPRESSED_TCP;
