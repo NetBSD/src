@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.5 1998/11/25 22:17:08 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.6 1998/12/29 15:29:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,9 +95,12 @@ usbdev(f, a, rec)
 		else
 			printf("unconfigured, ");
 	}
-	printf("%s, %s", di.product, di.vendor);
-	if (verbose)
-		printf(", rev %s", di.revision);
+	if (verbose) {
+		printf("%s(0x%04x), %s(0x%04x), rev %s",
+		       di.product, di.productNo,
+		       di.vendor, di.vendorNo, di.revision);
+	} else
+		printf("%s, %s", di.product, di.vendor);
 	printf("\n");
 	if (!rec)
 		return;
