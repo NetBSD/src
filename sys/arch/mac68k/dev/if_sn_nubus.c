@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.9 1997/04/22 13:45:39 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.10 1997/04/22 20:32:08 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -75,8 +75,8 @@ sn_nubus_match(parent, cf, aux)
 	bus_space_handle_t bsh;
 	int rv;
 
-	if (bus_space_map(na->na_tag, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
-	    0, &bsh))
+	if (bus_space_map(na->na_tag,
+	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh))
 		return (0);
 
 	rv = 0;
@@ -107,12 +107,14 @@ sn_nubus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-        struct sn_softc *sc = (void *)self;
-        struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
-	int		i, success, offset;
+	struct sn_softc *sc = (void *)self;
+	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
+	int i, success, offset;
 	bus_space_tag_t	bst;
-	bus_space_handle_t	bsh, tmp_bsh;
+	bus_space_handle_t bsh, tmp_bsh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+
+	(void)(&offset);	/* Work around lame gcc initialization bug */
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
@@ -125,23 +127,23 @@ sn_nubus_attach(parent, self, aux)
 
 	success = 0;
 
-        sc->bitmode = 1;		/* 32-bit card */
-        sc->slotno = na->slot;
+	sc->bitmode = 1;		/* 32-bit card */
+	sc->slotno = na->slot;
 
-        switch (sn_nb_card_vendor(na)) {
+	switch (sn_nb_card_vendor(na)) {
 	case AE_VENDOR_DAYNA:
-                sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
-			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
+		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
 
-		if (bus_space_subregion(bst, bsh, 0x00180000, SN_REGSIZE,
-					&sc->sc_regh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x00180000, SN_REGSIZE, &sc->sc_regh)) {
 			printf(": failed to map register space.\n");
 			break;
 		}
 
-		if (bus_space_subregion(bst, bsh, 0x00ffe004, ETHER_ADDR_LEN,
-					&tmp_bsh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x00ffe004, ETHER_ADDR_LEN, &tmp_bsh)) {
 			printf(": failed to map ROM space.\n");
 			break;
 		}
@@ -150,21 +152,21 @@ sn_nubus_attach(parent, self, aux)
 
 		offset = 2;
 		success = 1;
-                break;
+		break;
 
 	case AE_VENDOR_APPLE:
-                sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
-			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
+		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
 
-		if (bus_space_subregion(bst, bsh, 0x0, SN_REGSIZE,
-					&sc->sc_regh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x0, SN_REGSIZE, &sc->sc_regh)) {
 			printf(": failed to map register space.\n");
 			break;
 		}
 
-		if (bus_space_subregion(bst, bsh, 0x40000, ETHER_ADDR_LEN,
-					&tmp_bsh)) {
+		if (bus_space_subregion(bst, bsh,
+		    0x40000, ETHER_ADDR_LEN, &tmp_bsh)) {
 			printf(": failed to map ROM space.\n");
 			break;
 		}
@@ -173,22 +175,21 @@ sn_nubus_attach(parent, self, aux)
 
 		offset = 0;
 		success = 1;
-                break;
+		break;
 
-        default:
-                /*
-                 * You can't actually get this default, the snmatch
-                 * will fail for unknown hardware. If you're adding support
-                 * for a new card, the following defaults are a
-                 * good starting point.
-                 */
-                sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
-			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+	default:
+		/*
+		 * You can't actually get this default, the snmatch
+		 * will fail for unknown hardware. If you're adding support
+		 * for a new card, the following defaults are a
+		 * good starting point.
+		 */
+		sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
+		    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
-		offset = 0;
 		success = 0;
 		printf(": unknown card: attachment incomplete.\n");
-        }
+	}
 
 	if (!success) {
 		bus_space_unmap(bst, bsh, NBMEMSIZE);
@@ -260,9 +261,6 @@ sn_nb_card_vendor(na)
 		vendor = AE_VENDOR_DAYNA;
 		break;
 	default:
-#ifdef DIAGNOSTIC
-		printf("Unknown ethernet drsw: %x\n", na->drsw);
-#endif
 		vendor = AE_VENDOR_UNKNOWN;
 	}
 	return vendor;
