@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 1996/09/07 12:40:24 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 1996/09/09 16:38:52 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,6 +54,8 @@ bdev_decl(sd);
 bdev_decl(vnd);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -63,7 +65,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_notdef(),			/* 4 */
 	bdev_notdef(),			/* 5 */
-	bdev_notdef(),			/* 6 */
+	bdev_disk_init(NRD,rd),		/* 6: ram disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
 	bdev_disk_init(NSD,sd),		/* 8: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 9: vnode disk driver */
@@ -126,6 +128,11 @@ cdev_decl(kbd);
 cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
+cdev_decl(rd);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -160,10 +167,12 @@ struct cdevsw	cdevsw[] =
 	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
-	cdev_notdef(),			/* 28 */
+	cdev_disk_init(NRD,rd),		/* 28: ram disk driver */
 	cdev_mouse_init(NWSCONS,kbd),	/* 29: /dev/kbd XXX */
 	cdev_mouse_init(NWSCONS,ms),	/* 30: /dev/mouse XXX */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
+	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -233,10 +242,12 @@ static int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	7,
-	/* 28 */	NODEV,
+	/* 28 */	6,
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
 };
 
 /*
