@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.71 2001/08/06 10:25:00 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.72 2001/11/04 20:55:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -224,7 +224,7 @@ in_pcbbind(v, nam, p)
 	int error;
 #endif
 
-	if (in_ifaddr.tqh_first == 0)
+	if (TAILQ_FIRST(&in_ifaddr) == 0)
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
@@ -359,7 +359,7 @@ in_pcbconnect(v, nam)
 		return (EAFNOSUPPORT);
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
-	if (in_ifaddr.tqh_first != 0) {
+	if (TAILQ_FIRST(&in_ifaddr) != 0) {
 		/*
 		 * If the destination address is INADDR_ANY,
 		 * use any local address (likely loopback).
@@ -368,15 +368,18 @@ in_pcbconnect(v, nam)
 		 * which supports broadcast. (loopback does not)
 		 */
 
-		if (in_nullhost(sin->sin_addr))
-			sin->sin_addr = in_ifaddr.tqh_first->ia_addr.sin_addr;
-		else if (sin->sin_addr.s_addr == INADDR_BROADCAST)
-		    for (ia = in_ifaddr.tqh_first; ia != NULL;
-		      ia = ia->ia_list.tqe_next)
-			if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
-			    sin->sin_addr = ia->ia_broadaddr.sin_addr;
-			    break;
+		if (in_nullhost(sin->sin_addr)) {
+			sin->sin_addr =
+			    TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr;
+		} else if (sin->sin_addr.s_addr == INADDR_BROADCAST) {
+			TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+				if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
+					sin->sin_addr =
+					    ia->ia_broadaddr.sin_addr;
+					break;
+				}
 			}
+		}
 	}
 	/*
 	 * If we haven't bound which network number to use as ours,
@@ -434,8 +437,7 @@ in_pcbconnect(v, nam)
 			sin->sin_port = fport;
 			if (ia == 0) {
 				/* Find 1st non-loopback AF_INET address */
-				for (ia = in_ifaddr.tqh_first ; ia != NULL;
-				     ia = ia->ia_list.tqe_next) {
+				TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 					if ((ia->ia_ifp->if_flags &
 					     IFF_LOOPBACK) == 0)
 						break;
@@ -605,8 +607,8 @@ in_pcbnotify(table, faddr, fport_arg, laddr, lport_arg, errno, notify)
 
 	nmatch = 0;
 	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
-	for (inp = head->lh_first; inp != NULL; inp = ninp) {
-		ninp = inp->inp_hash.le_next;
+	for (inp = LIST_FIRST(head); inp != NULL; inp = ninp) {
+		ninp = LIST_NEXT(inp, inp_hash);
 		if (in_hosteq(inp->inp_faddr, faddr) &&
 		    inp->inp_fport == fport &&
 		    inp->inp_lport == lport &&
@@ -630,10 +632,10 @@ in_pcbnotifyall(table, faddr, errno, notify)
 	if (in_nullhost(faddr) || notify == 0)
 		return;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;
+	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	    inp != (void *)&table->inpt_queue;
 	    inp = ninp) {
-		ninp = inp->inp_queue.cqe_next;
+		ninp = CIRCLEQ_NEXT(inp, inp_queue);
 		if (in_hosteq(inp->inp_faddr, faddr))
 			(*notify)(inp, errno);
 	}
@@ -648,10 +650,10 @@ in_pcbpurgeif0(table, ifp)
 	struct ip_moptions *imo;
 	int i, gap;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;
+	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	    inp != (void *)&table->inpt_queue;
 	    inp = ninp) {
-		ninp = inp->inp_queue.cqe_next;
+		ninp = CIRCLEQ_NEXT(inp, inp_queue);
 		imo = inp->inp_moptions;
 		if (imo != NULL) {
 			/*
@@ -686,10 +688,10 @@ in_pcbpurgeif(table, ifp)
 {
 	struct inpcb *inp, *ninp;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;
+	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	    inp != (void *)&table->inpt_queue;
 	    inp = ninp) {
-		ninp = inp->inp_queue.cqe_next;
+		ninp = CIRCLEQ_NEXT(inp, inp_queue);
 		if (inp->inp_route.ro_rt != NULL &&
 		    inp->inp_route.ro_rt->rt_ifp == ifp)
 			in_rtchange(inp, 0);
@@ -761,9 +763,7 @@ in_pcblookup_port(table, laddr, lport_arg, lookup_wildcard)
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
 		if (inp->inp_lport != lport)
 			continue;
 		wildcard = 0;
@@ -807,7 +807,7 @@ in_pcblookup_connect(table, faddr, fport_arg, laddr, lport_arg)
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
 	head = INPCBHASH_CONNECT(table, faddr, fport, laddr, lport);
-	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+	LIST_FOREACH(inp, head, inp_hash) {
 		if (in_hosteq(inp->inp_faddr, faddr) &&
 		    inp->inp_fport == fport &&
 		    inp->inp_lport == lport &&
@@ -825,7 +825,7 @@ in_pcblookup_connect(table, faddr, fport_arg, laddr, lport_arg)
 
 out:
 	/* Move this PCB to the head of hash chain. */
-	if (inp != head->lh_first) {
+	if (inp != LIST_FIRST(head)) {
 		LIST_REMOVE(inp, inp_hash);
 		LIST_INSERT_HEAD(head, inp, inp_hash);
 	}
@@ -843,13 +843,13 @@ in_pcblookup_bind(table, laddr, lport_arg)
 	u_int16_t lport = lport_arg;
 
 	head = INPCBHASH_BIND(table, laddr, lport);
-	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+	LIST_FOREACH(inp, head, inp_hash) {
 		if (inp->inp_lport == lport &&
 		    in_hosteq(inp->inp_laddr, laddr))
 			goto out;
 	}
 	head = INPCBHASH_BIND(table, zeroin_addr, lport);
-	for (inp = head->lh_first; inp != NULL; inp = inp->inp_hash.le_next) {
+	LIST_FOREACH(inp, head, inp_hash) {
 		if (inp->inp_lport == lport &&
 		    in_hosteq(inp->inp_laddr, zeroin_addr))
 			goto out;
@@ -864,7 +864,7 @@ in_pcblookup_bind(table, laddr, lport_arg)
 
 out:
 	/* Move this PCB to the head of hash chain. */
-	if (inp != head->lh_first) {
+	if (inp != LIST_FIRST(head)) {
 		LIST_REMOVE(inp, inp_hash);
 		LIST_INSERT_HEAD(head, inp, inp_hash);
 	}
@@ -965,9 +965,7 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 		sin->sin_port = fport;
 		if (ia == 0) {
 			/* Find 1st non-loopback AF_INET address */
-			for (ia = in_ifaddr.tqh_first;
-			     ia != NULL;
-			     ia = ia->ia_list.tqe_next) {
+			TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
 					break;
 			}

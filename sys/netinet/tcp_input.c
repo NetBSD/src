@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.131 2001/09/17 17:27:00 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.132 2001/11/04 20:55:28 matt Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -304,8 +304,8 @@ tcp_reass(tp, th, m, tlen)
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = tp->segq.lh_first; q != NULL; q = nq) {
-		nq = q->ipqe_q.le_next;
+	for (p = NULL, q = LIST_FIRST(&tp->segq); q != NULL; q = nq) {
+		nq = LIST_NEXT(q, ipqe_q);
 		/*
 		 * If the received segment is just right after this
 		 * fragment, merge the two together and then check
@@ -510,7 +510,7 @@ present:
 	 */
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		return (0);
-	q = tp->segq.lh_first;
+	q = LIST_FIRST(&tp->segq);
 	if (q == NULL || q->ipqe_seq != tp->rcv_nxt)
 		return (0);
 	if (tp->t_state == TCPS_SYN_RECEIVED && q->ipqe_len)
@@ -1348,7 +1348,7 @@ after_listen:
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
-		    tp->segq.lh_first == NULL &&
+		    LIST_FIRST(&tp->segq) == NULL &&
 		    tlen <= sbspace(&so->so_rcv)) {
 			/*
 			 * this is a pure, in-sequence data packet
@@ -2075,7 +2075,7 @@ dodata:							/* XXX */
 		/* NOTE: this was TCP_REASS() macro, but used only once */
 		TCP_REASS_LOCK(tp);
 		if (th->th_seq == tp->rcv_nxt &&
-		    tp->segq.lh_first == NULL &&
+		    LIST_FIRST(&tp->segq) == NULL &&
 		    tp->t_state == TCPS_ESTABLISHED) {
 			TCP_SETUP_ACK(tp, th);
 			tp->rcv_nxt += tlen;
