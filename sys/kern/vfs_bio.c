@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.52 1997/07/08 22:03:30 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.52.6.1 1998/10/29 02:42:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -219,7 +219,7 @@ bread(vp, blkno, size, cred, bpp)
 	 * valid contents. Also, B_ERROR is not set, otherwise
 	 * getblk() would not have returned them.
 	 */
-	if (ISSET(bp->b_flags, B_DELWRI))
+	if (ISSET(bp->b_flags, B_DONE|B_DELWRI))
 		return (0);
 
 	/*
@@ -264,8 +264,8 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 	 * valid contents. Also, B_ERROR is not set, otherwise
 	 * getblk() would not have returned them.
 	 */
-	if (ISSET(bp->b_flags, B_DELWRI))
-		SET(bp->b_flags, B_DONE);
+	if (ISSET(bp->b_flags, B_DONE|B_DELWRI))
+		return (0);
 
 	/*
 	 * Otherwise, we had to start a read for it; wait until
@@ -403,8 +403,7 @@ bdwrite(bp)
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
-	CLR(bp->b_flags, B_NEEDCOMMIT);
-	SET(bp->b_flags, B_DONE);
+	CLR(bp->b_flags, B_NEEDCOMMIT|B_DONE);
 	brelse(bp);
 }
 
@@ -439,7 +438,7 @@ brelse(bp)
 
 	/* Wake up any proceeses waiting for _this_ buffer to become free. */
 	if (ISSET(bp->b_flags, B_WANTED)) {
-		CLR(bp->b_flags, B_WANTED);
+		CLR(bp->b_flags, B_WANTED|B_AGE);
 		wakeup(bp);
 	}
 
@@ -479,7 +478,7 @@ brelse(bp)
 		 */
 		if (bp->b_vp)
 			brelvp(bp);
-		CLR(bp->b_flags, B_DELWRI);
+		CLR(bp->b_flags, B_DONE|B_DELWRI);
 		if (bp->b_bufsize <= 0)
 			/* no data */
 			bufq = &bufqueues[BQ_EMPTY];
@@ -506,7 +505,7 @@ brelse(bp)
 
 already_queued:
 	/* Unlock the buffer. */
-	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_BUSY | B_NOCACHE));
+	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_CACHE);
 
 	/* Allow disk interrupts. */
 	splx(s);
@@ -585,6 +584,11 @@ start:
 		}
 
 		if (!ISSET(bp->b_flags, B_INVAL)) {
+#ifdef DIAGNOSTIC
+			if (ISSET(bp->b_flags, B_DONE|B_DELWRI) &&
+			    bp->b_bcount < size)
+				panic("getblk: block size invariant failed");
+#endif
 			SET(bp->b_flags, (B_BUSY | B_CACHE));
 			bremfree(bp);
 			splx(s);
