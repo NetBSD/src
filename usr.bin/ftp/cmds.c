@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.25 1997/07/20 09:45:38 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.26 1997/07/21 14:03:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.25 1997/07/20 09:45:38 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.26 1997/07/21 14:03:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1923,7 +1923,7 @@ restart(argc, argv)
 	else {
 		restart_point = atol(argv[1]);
 		printf("Restarting at %qd. Execute get, put or append to"
-			"initiate transfer\n", restart_point);
+			"initiate transfer\n", (long long)restart_point);
 	}
 }
 
@@ -2015,7 +2015,7 @@ sizecmd(argc, argv)
 	}
 	size = remotesize(argv[1], 1);
 	if (size != -1)
-		printf("%s\t%qd\n", argv[1], size);
+		printf("%s\t%qd\n", argv[1], (long long)size);
 	code = size;
 }
 
