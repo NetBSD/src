@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.6 1996/04/12 06:09:03 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.7 1996/04/13 00:22:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -262,12 +262,12 @@ sio_intr_string(v, irq)
 	void *v;
 	int irq;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
 		panic("sio_intr_string: bogus IRQ 0x%x\n", irq);
 
-	sprintf(irqstr, "irq %d", irq);
+	sprintf(irqstr, "ISA irq %d", irq);
 	return (irqstr);
 }
 
