@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.4 2004/04/24 17:35:27 cl Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.5 2004/04/24 18:24:14 cl Exp $	*/
 
 /*
  * 
@@ -34,7 +34,7 @@ struct hypervisor_attach_args {
 	const char 		*haa_busname;
 };
 
-struct xenc_attach_args {
+struct xencons_attach_args {
 	const char 		*xa_device;
 };
 

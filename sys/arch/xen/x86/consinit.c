@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2004/04/24 18:24:14 cl Exp $	*/
 /*	NetBSD: consinit.c,v 1.3 2003/06/14 17:01:15 thorpej Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
 
 #include "opt_kgdb.h"
 
@@ -202,8 +202,8 @@ dokbd:
 	}
 #endif
 #if (XEN > 0)
-	if (!strcmp(consinfo->devname, "xen")) {
-		xencn_attach();
+	if (!strcmp(consinfo->devname, "xencons")) {
+		xenconscn_attach();
 		printf("NetBSD Xen console attached.\n");
 		return;
 	}
