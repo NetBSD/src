@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/17 02:55:40 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1998/08/17 22:29:56 tv Exp $
 
 PROG=		f771
 SRCS=		bad.c bit.c bld.c com.c data.c equiv.c expr.c global.c \
@@ -9,6 +9,7 @@ SRCS=		bad.c bit.c bld.c com.c data.c equiv.c expr.c global.c \
 F=		${.CURDIR}/../../../dist/gcc/f
 CPPFLAGS+=	-I${F} -I.
 CLEANFILES+=	${FINIFILES} fini fini.lo proj.lo
+DPSRCS+=	${FINIFILES}
 
 fini: fini.lo proj.lo
 	${HOST_LINK.c} -o $@ $>
