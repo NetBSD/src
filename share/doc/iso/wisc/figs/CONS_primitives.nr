@@ -1,3 +1,5 @@
+.\"	$NetBSD: CONS_primitives.nr,v 1.2 1998/01/09 06:34:55 perry Exp $
+.\"
 .(b
 .TS
 tab(+) center expand box;

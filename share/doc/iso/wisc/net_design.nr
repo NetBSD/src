@@ -1,3 +1,5 @@
+.\"	$NetBSD: net_design.nr,v 1.2 1998/01/09 06:34:48 perry Exp $
+.\"
 .NC "The Design of the ARGO Network Layer"
 .sh 1 "Connectionless Network Layer
 .pp

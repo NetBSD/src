@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.2 1998/01/09 06:34:35 perry Exp $
 #
 #	Makefile for the tp documents:
 #   design: TP design/source guide
