@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.15 1998/08/03 14:16:04 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.16 1999/03/22 19:14:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -106,6 +106,7 @@
 #define	_PC_NO_TRUNC		 8
 #define	_PC_VDISABLE		 9
 #define	_PC_SYNC_IO		10
+#define	_PC_FILESIZEBITS	11
 
 /* configurable system variables */
 #define	_SC_ARG_MAX		 1
