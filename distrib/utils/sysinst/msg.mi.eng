@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.35 1999/03/28 17:12:12 kleink Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.36 1999/03/31 00:44:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,41 +131,6 @@ need to know whether I'm currently running out of the target root
 I can't tell unless you mount the root.
 
 I'm aborting back to the main menu so you can fork a subshell.
-}
-
-message scsigeom1
-{It appears that your disk, %s, has already been labeled with a BSD 
-disklabel and the disklabel reports geometry that is different from
-the the real geometry.  Also, the reported geometry does not address all
-possible sectors on your disk.  Your disk has %d sectors.
-
-disklabel: %d cylinders, %d heads, %d sectors = %d total sectors
-reported geom: %d cylinders, %d heads, %d sectors = %d total sectors
-
-It may be possible to choose a fake geometry for your BSD disklabel that
-addresses most of your sectors.
-}
-
-message scsigeom2
-{Your disk, %s, reports a geometry that does not address all possible sectors
-on your disk.  Your disk has %d sectors.
-
-reported geom: %d cylinders, %d heads, %d sectors = %d total sectors
-
-It may be possible to choose a fake geometry for your BSD disklabel that
-addresses most of your sectors.
-}
-
-message scsi_fake
-{Your SCSI disk has %d total sectors.  The following are possible choices
-for fake geometries.  At least the last one is the reported geometry.
-
-1: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
-2: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
-3: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
-4: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
-5: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
-
 }
 
 message cylinders
@@ -690,3 +655,10 @@ message config_open_error
 message config_read_error
 {Could not read config file %s\n}
 
+message nobiosgeom
+{Sysinst could not automatically determine the BIOS geometry of the disk.
+The physical geometry is % cylinders %d sectors %d heads\n}
+
+message biosguess
+{Using the information already on the disk, my best guess for the BIOS
+geometry is %d cylinders %d sectors %d heads\n}

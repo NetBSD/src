@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1999/03/14 14:19:06 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.14 1999/03/31 00:44:50 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,13 +82,9 @@ int	md_get_info (void)
 	dlcylsize = disklabel.d_secpercyl;
 
 	disktype = "SCSI";
-	if (disk->dd_cyl * disk->dd_head * disk->dd_sec != disk->dd_totsec)
-		if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
-		    || disk->dd_sec != dlsec)
-			process_menu (MENU_scsigeom1);
-		else
-			process_menu (MENU_scsigeom2);
-
+	dlcyl  = disk->dd_cyl;
+	dlhead = disk->dd_head;
+	dlsec  = disk->dd_sec;
 	dlsize = dlcyl*dlhead*dlsec;
 	fsdsize = dlsize;
 	fsdmb = fsdsize / MEG;
@@ -152,21 +148,21 @@ int md_make_bsd_partitions (void)
 	emptylabel(bsdlabel);
 
 	/* Partitions C and D are predefined. */
-	bsdlabel[C][D_FSTYPE] = T_UNUSED;
-	bsdlabel[C][D_OFFSET] = 0;
-	bsdlabel[C][D_SIZE] = dlsize;
+	bsdlabel[C].pi_fstype = FS_UNUSED;
+	bsdlabel[C].pi_offset = 0;
+	bsdlabel[C].pi_size = dlsize;
 
 	/* Standard fstypes */
-	bsdlabel[A][D_FSTYPE] = T_42BSD;
-	bsdlabel[B][D_FSTYPE] = T_SWAP;
-	bsdlabel[D][D_FSTYPE] = T_UNUSED;
-	bsdlabel[D][D_FSTYPE] = T_BOOT;
-	bsdlabel[D][D_OFFSET] = dlsize - BOOT_SIZE;
-	bsdlabel[D][D_SIZE]   = BOOT_SIZE;
-	bsdlabel[E][D_FSTYPE] = T_UNUSED;
-	bsdlabel[F][D_FSTYPE] = T_UNUSED;
-	bsdlabel[G][D_FSTYPE] = T_UNUSED;
-	bsdlabel[H][D_FSTYPE] = T_UNUSED;
+	bsdlabel[A].pi_fstype = FS_BSDFFS;
+	bsdlabel[B].pi_fstype = FS_SWAP;
+	bsdlabel[D].pi_fstype = FS_UNUSED;
+	bsdlabel[D].pi_fstype = FS_BOOT;
+	bsdlabel[D].pi_offset = dlsize - BOOT_SIZE;
+	bsdlabel[D].pi_size   = BOOT_SIZE;
+	bsdlabel[E].pi_fstype = FS_UNUSED;
+	bsdlabel[F].pi_fstype = FS_UNUSED;
+	bsdlabel[G].pi_fstype = FS_UNUSED;
+	bsdlabel[H].pi_fstype = FS_UNUSED;
 	fsdsize -= BOOT_SIZE;
 	partstart = 0;
 
@@ -177,10 +173,10 @@ int md_make_bsd_partitions (void)
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
-		bsdlabel[A][D_OFFSET] = partstart;
-		bsdlabel[A][D_SIZE] = partsize;
-		bsdlabel[A][D_BSIZE] = 8192;
-		bsdlabel[A][D_FSIZE] = 1024;
+		bsdlabel[A].pi_offset = partstart;
+		bsdlabel[A].pi_size = partsize;
+		bsdlabel[A].pi_bsize = 8192;
+		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 
@@ -189,17 +185,17 @@ int md_make_bsd_partitions (void)
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart;
-		bsdlabel[B][D_OFFSET] = partstart;
-		bsdlabel[B][D_SIZE] = partsize;
+		bsdlabel[B].pi_offset = partstart;
+		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
 
 		/* /usr */
 		partsize = fsdsize - partstart;
-		bsdlabel[E][D_FSTYPE] = T_42BSD;
-		bsdlabel[E][D_OFFSET] = partstart;
-		bsdlabel[E][D_SIZE] = partsize;
-		bsdlabel[E][D_BSIZE] = 8192;
-		bsdlabel[E][D_FSIZE] = 1024;
+		bsdlabel[E].pi_fstype = FS_BSDFFS;
+		bsdlabel[E].pi_offset = partstart;
+		bsdlabel[E].pi_size = partsize;
+		bsdlabel[E].pi_bsize = 8192;
+		bsdlabel[E].pi_fsize = 1024;
 		strcpy (fsmount[E], "/usr");
 
 		break;
@@ -216,10 +212,10 @@ int md_make_bsd_partitions (void)
 		msg_prompt (MSG_askfsroot, isize, isize, SSTRSIZE,
 			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[A][D_OFFSET] = partstart;
-		bsdlabel[A][D_SIZE] = partsize;
-		bsdlabel[A][D_BSIZE] = 8192;
-		bsdlabel[A][D_FSIZE] = 1024;
+		bsdlabel[A].pi_offset = partstart;
+		bsdlabel[A].pi_size = partsize;
+		bsdlabel[A].pi_bsize = 8192;
+		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 		
@@ -233,8 +229,8 @@ int md_make_bsd_partitions (void)
 		msg_prompt_add (MSG_askfsswap, isize, isize, SSTRSIZE,
 			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[B][D_OFFSET] = partstart;
-		bsdlabel[B][D_SIZE] = partsize;
+		bsdlabel[B].pi_offset = partstart;
+		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
 		
 		/* /usr */
@@ -246,11 +242,11 @@ int md_make_bsd_partitions (void)
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		if (remain - partsize < sizemult)
 			partsize = remain;
-		bsdlabel[E][D_FSTYPE] = T_42BSD;
-		bsdlabel[E][D_OFFSET] = partstart;
-		bsdlabel[E][D_SIZE] = partsize;
-		bsdlabel[E][D_BSIZE] = 8192;
-		bsdlabel[E][D_FSIZE] = 1024;
+		bsdlabel[E].pi_fstype = FS_BSDFFS;
+		bsdlabel[E].pi_offset = partstart;
+		bsdlabel[E].pi_size = partsize;
+		bsdlabel[E].pi_bsize = 8192;
+		bsdlabel[E].pi_fsize = 1024;
 		strcpy (fsmount[E], "/usr");
 		partstart += partsize;
 
@@ -260,7 +256,7 @@ int md_make_bsd_partitions (void)
 		if (remain > 0)
 			msg_display (MSG_otherparts);
 		while (remain > 0 && part <= H) {
-			if (bsdlabel[part][D_FSTYPE] == T_UNUSED) {
+			if (bsdlabel[part].pi_fstype == FS_UNUSED) {
 				partsize = fsdsize - partstart;
 				snprintf (isize, SSTRSIZE, "%d",
 					  partsize/sizemult);
@@ -272,11 +268,11 @@ int md_make_bsd_partitions (void)
 						  dlcylsize);
 				if (remain - partsize < sizemult)
 					partsize = remain;
-				bsdlabel[part][D_FSTYPE] = T_42BSD;
-				bsdlabel[part][D_OFFSET] = partstart;
-				bsdlabel[part][D_SIZE] = partsize;
-				bsdlabel[part][D_BSIZE] = 8192;
-				bsdlabel[part][D_FSIZE] = 1024;
+				bsdlabel[part].pi_fstype = FS_BSDFFS;
+				bsdlabel[part].pi_offset = partstart;
+				bsdlabel[part].pi_size = partsize;
+				bsdlabel[part].pi_bsize = 8192;
+				bsdlabel[part].pi_fsize = 1024;
 				msg_prompt_add (MSG_mountpoint, NULL,
 						fsmount[part], 20);
 				partstart += partsize;

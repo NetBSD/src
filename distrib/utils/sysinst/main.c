@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1999/03/31 00:44:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,6 +66,10 @@ int scripting;			/* are we building a script? */
 FILE *log;			/* log file */
 FILE *script;			/* script file */
 
+#ifdef DEBUG
+extern int log_flip __P((void));
+#endif
+
 int
 main(argc, argv)
 	int argc;
@@ -75,6 +79,9 @@ main(argc, argv)
 	int ch;
 
 	logging = 0; /* shut them off unless turned on by the user */
+#ifdef DEBUG
+	log_flip();
+#endif
 	scripting = 0;
 
 	/* Check for TERM ... */

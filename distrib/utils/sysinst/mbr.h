@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.3 1998/07/21 14:53:36 rvb Exp $	*/
+/*	$NetBSD: mbr.h,v 1.4 1999/03/31 00:44:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -44,15 +44,26 @@
 
 /* constants and defines */
 
+#include <sys/disklabel_mbr.h>
+
+/*      
+ * XXX  
+ */     
+#define MBR_SECSIZE     512
+
+#define MBR_PUT_LSCYL(c)		((c) & 0xff)
+#define MBR_PUT_MSCYLANDSEC(c,s)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
+
 /* incore fdisk (mbr, bios) geometry */
 EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
 
 /* incore copy of  MBR partitions */
-enum info {ID,SIZE,START,FLAG,SET};
-EXTERN int part[4][5] INIT({{0}});
+EXTERN struct mbr_partition *part;
 EXTERN int activepart;
 EXTERN int bsdpart;			/* partition in use by NetBSD */
 EXTERN int usefull;			/* on install, clobber entire disk */
+
+extern char mbr[];
 
 
 /* from mbr.c */
@@ -60,9 +71,16 @@ void	set_fdisk_geom __P((void));	/* edit incore BIOS geometry */
 void	disp_cur_geom __P((void));
 int	check_geom __P((void));		/* primitive geometry sanity-check */
 
-int	edit_mbr __P((void));		
-int 	partsoverlap __P((int, int));	/* primive partition sanity-check */
+int	edit_mbr __P((struct mbr_partition *));		
+int 	partsoverlap __P((struct mbr_partition *, int, int));
 
-/* from fdisk.c */
-void	get_fdisk_info __P((void));	/* read from disk into core */
-void	set_fdisk_info __P((void));	/* write incore info into disk */
+/* from mbr.c */
+ 
+int     read_mbr __P((char *, char *, int));
+int     write_mbr __P((char *, char *, int));
+int     valid_mbr __P((char *));
+int	guess_biosgeom_from_mbr __P((char *, int *, int *, int *));
+int	md_bios_info __P((char *));
+void	set_bios_geom __P((int, int, int));
+int	otherpart __P((int));
+int	ourpart __P((int));

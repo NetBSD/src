@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.11 1998/11/25 12:50:56 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.12 1999/03/31 00:44:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -135,43 +135,6 @@ votre partition de swap).
 Je ne peux pas le savoir tant que vous ne montez pas la racine de destination.
 
 J'abandonne et retourne au menu principal pour que vous lanciez un shell.
-}
-
-message scsigeom1
-{Il me semble que votre disque a déjà un label BSD et ce label montre que
-la géométrie utilisée est différente de la géométrie réelle. Mais surtout, la
-géométrie trouvée n'utilise pas l'ensemble des secteurs de votre disque. Votre
-disque a %d secteurs.
-
-Disklabel : %d cylindres, %d têtes, %d secteurs = %d secteurs au total.
-Géométrie : %d cylindres, %d têtes, %d secteurs = %d secteurs au total.
-
-Il doit être possible d'utiliser un label BSD avec une géométrie fictive qui
-utilise la majorité des secteurs de votre disque.
-}
-
-message scsigeom2
-{La géométrie trouvée sur votre disque %s n'utilise pas l'ensemble des secteurs
-Votre disque a %d secteurs.
-
-Géométrie : %d cylindres, %d têtes, %d secteurs = %d secteurs au total.
-
-Il doit être possible d'utiliser un label BSD avec une géométrie fictive qui
-utilise la majorité des secteurs de votre disque.
-}
-
-
-message scsi_fake
-{Votre disque SCSI a %d secteurs au total. Vous trouverez ci dessous des choix
-possibles de géométries fictives. Le dernier choix représente la géométrie
-trouvée sur votre disque.
-
-1: %6d cylindres * %6d têtes * %6d secteurs = %8d secteurs au total.
-2: %6d cylindres * %6d têtes * %6d secteurs = %8d secteurs au total.
-3: %6d cylindres * %6d têtes * %6d secteurs = %8d secteurs au total.
-4: %6d cylindres * %6d têtes * %6d secteurs = %8d secteurs au total.
-5: %6d cylindres * %6d têtes * %6d secteurs = %8d secteurs au total.
-
 }
 
 message cylinders

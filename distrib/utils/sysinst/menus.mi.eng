@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.23 1999/03/14 14:19:05 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.24 1999/03/31 00:44:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,45 +100,6 @@ menu noyes, title "  yes or no?  ";
 menu ok, title "  Hit enter to continue  ";
 	option "ok", exit;
 
-menu scsigeom1, title "  Choose an option";
-	display action {
-		msg_display (MSG_scsigeom1, diskdev, disk->dd_totsec,
-			dlcyl, dlhead, dlsec, dlcyl*dlhead*dlsec, 
-			disk->dd_cyl, disk->dd_head, disk->dd_sec,
-			disk->dd_cyl * disk->dd_head * disk->dd_sec);
-	};
-	option "Use real geometry", exit, action {
-			dlcyl  = disk->dd_cyl;
-			dlhead = disk->dd_head;
-			dlsec  = disk->dd_sec;
-		};
-	option "Use disklabel geometry", exit, action {
-			disk->dd_cyl = dlcyl;
-			disk->dd_head = dlhead;
-			disk->dd_sec = dlsec;
-		};
-	option "Choose a fake geometry", action { scsi_fake ();}, exit;
-
-menu scsigeom2, title "  Choose an option";
-	display action {
-		msg_display (MSG_scsigeom2, diskdev, disk->dd_totsec,
-			disk->dd_cyl, disk->dd_head, disk->dd_sec,
-			disk->dd_cyl * disk->dd_head * disk->dd_sec);
-	};
-	option "Use real geometry", exit, action {
-			dlcyl  = disk->dd_cyl;
-			dlhead = disk->dd_head;
-			dlsec  = disk->dd_sec;
-		};
-	option "Choose a fake geometry", action { scsi_fake ();}, exit;
-
-menu scsi_fake, title "  Choose a geometry";
-	option "Geometry 1", action { fake_sel = 0; }, exit;
-	option "Geometry 2", action { fake_sel = 1; }, exit;
-	option "Geometry 3", action { fake_sel = 2; }, exit;
-	option "Geometry 4", action { fake_sel = 3; }, exit;
-	option "Geometry 5", action { fake_sel = 4; }, exit;
-
 menu layout, title  "  Choose your installation  ";
 	option "Standard", 	  exit, action { layoutkind = 1; };
 	option "Standard with X", exit, action { layoutkind = 2; };
@@ -181,31 +142,31 @@ menu edfspart, title "  Change what? ", exit, y=15;
 			if (size == -1)
 				size = dlsize - start;
 			if (editpart == 1 && 
-			    bsdlabel[editpart][D_FSTYPE] == T_SWAP)
+			    bsdlabel[editpart].pi_fstype == FS_SWAP)
 				size -= swapadj;
 			if (start + size > dlsize)
 				size = dlsize - start;
-			bsdlabel[editpart][D_OFFSET] = start;
-			bsdlabel[editpart][D_SIZE] = size;
+			bsdlabel[editpart].pi_offset = start;
+			bsdlabel[editpart].pi_size = size;
 		};
 	option "Bsize/Fsize", action 
 		{	char buf[40]; int i;
 
-			if (bsdlabel[editpart][D_FSTYPE] != T_42BSD) {
+			if (bsdlabel[editpart].pi_fstype != FS_BSDFFS) {
 				msg_display (MSG_not42bsd, 'a'+editpart);
 				process_menu (MENU_ok);
 				return FALSE;
 			}
 			msg_prompt_add (MSG_bsize, NULL, buf, 40);
 			i = atoi(buf);
-			bsdlabel[editpart][D_BSIZE] = i;
+			bsdlabel[editpart].pi_bsize = i;
 			msg_prompt_add (MSG_fsize, NULL, buf, 40);
 			i = atoi(buf);
-			bsdlabel[editpart][D_FSIZE] = i;
+			bsdlabel[editpart].pi_fsize = i;
 		};
 	option "Mount point", action 
-		{	if (bsdlabel[editpart][D_FSTYPE] == T_42BSD ||
-			    bsdlabel[editpart][D_FSTYPE] == T_MSDOS)
+		{	if (bsdlabel[editpart].pi_fstype == FS_BSDFFS ||
+			    bsdlabel[editpart].pi_fstype == FS_MSDOS)
 				msg_prompt_add (MSG_mountpoint, NULL,
 					fsmount[editpart], 20);
 			else {
@@ -216,24 +177,24 @@ menu edfspart, title "  Change what? ", exit, y=15;
 
 menu selfskind, title "  Select the type ", y=15;
 	option "4.2BSD", exit, action 
-			{ bsdlabel[editpart][D_FSTYPE] = T_42BSD;
-			  bsdlabel[editpart][D_BSIZE]  = 8192;
-			  bsdlabel[editpart][D_FSIZE]  = 1024;
+			{ bsdlabel[editpart].pi_fstype = FS_BSDFFS;
+			  bsdlabel[editpart].pi_bsize  = 8192;
+			  bsdlabel[editpart].pi_fsize  = 1024;
 			};
 	option "unused", exit, action 
-			{ bsdlabel[editpart][D_FSTYPE] = T_UNUSED;
-			  bsdlabel[editpart][D_BSIZE]  = 0;
-			  bsdlabel[editpart][D_FSIZE]  = 0;
+			{ bsdlabel[editpart].pi_fstype = FS_UNUSED;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
 			};
 	option "swap", exit, action 
-			{ bsdlabel[editpart][D_FSTYPE] = T_SWAP;
-			  bsdlabel[editpart][D_BSIZE]  = 0;
-			  bsdlabel[editpart][D_FSIZE]  = 0;
+			{ bsdlabel[editpart].pi_fstype = FS_SWAP;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
 			};
 	option "msdos", exit, action 
-			{ bsdlabel[editpart][D_FSTYPE] = T_MSDOS;
-			  bsdlabel[editpart][D_BSIZE]  = 0;
-			  bsdlabel[editpart][D_FSIZE]  = 0;
+			{ bsdlabel[editpart].pi_fstype = FS_MSDOS;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
 			};
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 1999/03/14 14:19:06 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.21 1999/03/31 00:44:49 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,116 +40,133 @@
 
 #include <stdio.h>
 #include <util.h>
+#include <sys/param.h>
+#include <machine/cpu.h>
+#include <sys/sysctl.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
 
-int mbr_present;
+char mbr[16 * 512];	/* Entire first track, for possible boot selector */
+int mbr_present, mbr_len;
 int c1024_resp;
+struct disklist *disklist = NULL;
+struct nativedisk_info *nativedisk;
+struct biosdisk_info *biosdisk = NULL;
+
+static int md_read_bootcode __P((char *, char *, size_t));
 
 /* prototypes */
 
 
-int md_get_info()
+int
+md_get_info()
 {
+	read_mbr(diskdev, mbr, sizeof mbr);
+	if (!valid_mbr(mbr)) {
+		memset(&mbr[MBR_PARTOFF], 0,
+		    NMBRPART * sizeof (struct mbr_partition));
+		/* XXX check result and give up if < 0 */
+		mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
+	} else
+		mbr_len = MBR_SECSIZE;
+	md_bios_info(diskdev);
 
-	get_fdisk_info();
+	return edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
 
-	/* Check fdisk information */
-	if (part[0][ID] == 0 && part[1][ID] == 0 && part[2][ID] == 0 &&
-	    part[3][ID] == 0) {
-		mbr_present = 0;
-		process_menu(MENU_nobiosgeom);
-	} else {
-		mbr_present = 1;
-		msg_display(MSG_confirmbiosgeom);
-		process_menu(MENU_confirmbiosgeom);
-	}
-
-	/* Ask about disk type ... */
-	if (strncmp(disk->dd_name, "wd", 2) == 0) {
-		process_menu(MENU_wdtype);
-		disktype = "ST506";
-		/* Check against disk geometry. */
-		if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
-		    || disk->dd_sec != dlsec)
-			process_menu (MENU_dlgeom);
-	} else {
-		disktype = "SCSI";
-		if (disk->dd_cyl * disk->dd_head * disk->dd_sec !=
-		    disk->dd_totsec)
-		{
-			if (disk->dd_cyl != dlcyl || disk->dd_head != dlhead
-			    || disk->dd_sec != dlsec)
-				process_menu (MENU_scsigeom1);
-			else
-				process_menu (MENU_scsigeom2);
-		}
-	}
-
-	/* Compute the full sizes ... */
-	dlcylsize = dlhead*dlsec;
-	dlsize = dlcyl*dlcylsize;
-	bcylsize = bhead*bsec;
-	bsize = bcyl*bcylsize;
-
-	msg_display(MSG_diagcyl);
-	process_menu(MENU_noyes);
-	if (yesno) {
-		dlcyl--;
-		dlsize -= dlcylsize;
-		if (dlsize < bsize)
-			bcyl = dlsize / bcylsize;
-	}
-	return edit_mbr();
+	/*
+	 * XXX Check for > 8G, and ask if NetBSD MBR is to be used
+ 	 * if ext13 supported.
+	 */
 }
 
-void md_pre_disklabel()
+/*
+ * Read MBR code from a file. It may be a maximum of "len" bytes
+ * long. This function skips the partition table. Space for this
+ * is assumed to be in the file, but a table already in the buffer
+ * is not overwritten.
+ */
+static int
+md_read_bootcode(path, buf, len)
+	char *path, *buf;
+	size_t len;
 {
-	/* Fdisk the disk! */
-	printf ("%s", msg_string (MSG_dofdisk));
+	int fd, cc;
+	struct stat st;
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	if (fstat(fd, &st) < 0 || st.st_size > len || st.st_size < MBR_SECSIZE){
+		close(fd);
+		return -1;
+	}
+	if (read(fd, buf, MBR_PARTOFF) != MBR_PARTOFF) {
+		close(fd);
+		return -1;
+	}
+	if (lseek(fd, MBR_MAGICOFF, SEEK_SET) < 0) {
+		close(fd);
+		return -1;
+	}
+	cc = read(fd, &buf[MBR_MAGICOFF], st.st_size - MBR_MAGICOFF);
+
+	close(fd);
+
+	return (cc + MBR_MAGICOFF);
+}
+
+void
+md_pre_disklabel()
+{
+	printf("%s", msg_string (MSG_dofdisk));
 
 	/* write edited MBR onto disk. */
-	set_fdisk_info ();
+	write_mbr(diskdev, mbr, sizeof mbr);
 }
 
-void md_post_disklabel (void)
+void
+md_post_disklabel(void)
 {
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
-		printf ("%s", msg_string (MSG_dobad144));
+		printf("%s", msg_string(MSG_dobad144));
 		run_prog(0, 1, "/usr/sbin/bad144 %s 0", diskdev);
 	}
 }
 
-void md_post_newfs (void)
+void
+md_post_newfs(void)
 {
 	/* boot blocks ... */
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog (0, 1, "/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
+	printf(msg_string(MSG_dobootblks), diskdev);
+	run_prog(0, 1, "/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
 		  "/dev/r%sa", diskdev);
 }
 
-void md_copy_filesystem (void)
+void
+md_copy_filesystem(void)
 {
 	if (target_already_root()) {
 		return;
 	}
 
 	/* Copy the instbin(s) to the disk */
-	printf ("%s", msg_string(MSG_dotar));
+	printf("%s", msg_string(MSG_dotar));
 	run_prog(0, 0, "pax -X -r -w -pe / /mnt");
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
-	cp_to_target ("/usr/share/misc/termcap", "/.termcap");
+	cp_to_target("/tmp/.hdprofile", "/.profile");
+	cp_to_target("/usr/share/misc/termcap", "/.termcap");
 }
 
 
 
-int md_make_bsd_partitions (void)
+int
+md_make_bsd_partitions(void)
 {
 	FILE *f;
 	int i;
@@ -160,11 +177,11 @@ int md_make_bsd_partitions (void)
 
 editlab:
 	/* Ask for layout type -- standard or special */
-	msg_display (MSG_layout,
+	msg_display(MSG_layout,
 			(1.0*fsptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
-	process_menu (MENU_layout);
+	process_menu(MENU_layout);
 
 	if (layoutkind == 3) {
 		ask_sizemult();
@@ -178,21 +195,21 @@ editlab:
 	emptylabel(bsdlabel);
 
 	/* Partitions C and D are predefined. */
-	bsdlabel[C][D_FSTYPE] = T_UNUSED;
-	bsdlabel[C][D_OFFSET] = ptstart;
-	bsdlabel[C][D_SIZE] = fsptsize;
+	bsdlabel[C].pi_fstype = FS_UNUSED;
+	bsdlabel[C].pi_offset = ptstart;
+	bsdlabel[C].pi_size = fsptsize;
 	
-	bsdlabel[D][D_FSTYPE] = T_UNUSED;
-	bsdlabel[D][D_OFFSET] = 0;
-	bsdlabel[D][D_SIZE] = fsdsize;
+	bsdlabel[D].pi_fstype = FS_UNUSED;
+	bsdlabel[D].pi_offset = 0;
+	bsdlabel[D].pi_size = fsdsize;
 
 	/* Standard fstypes */
-	bsdlabel[A][D_FSTYPE] = T_42BSD;
-	bsdlabel[B][D_FSTYPE] = T_SWAP;
-	bsdlabel[E][D_FSTYPE] = T_UNUSED;
-	bsdlabel[F][D_FSTYPE] = T_UNUSED;
-	bsdlabel[G][D_FSTYPE] = T_UNUSED;
-	bsdlabel[H][D_FSTYPE] = T_UNUSED;
+	bsdlabel[A].pi_fstype = FS_BSDFFS;
+	bsdlabel[B].pi_fstype = FS_SWAP;
+	bsdlabel[E].pi_fstype = FS_UNUSED;
+	bsdlabel[F].pi_fstype = FS_UNUSED;
+	bsdlabel[G].pi_fstype = FS_UNUSED;
+	bsdlabel[H].pi_fstype = FS_UNUSED;
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
@@ -203,10 +220,10 @@ editlab:
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 				   dlcylsize) - partstart;
-		bsdlabel[A][D_OFFSET] = partstart;
-		bsdlabel[A][D_SIZE] = partsize;
-		bsdlabel[A][D_BSIZE] = 8192;
-		bsdlabel[A][D_FSIZE] = 1024;
+		bsdlabel[A].pi_offset = partstart;
+		bsdlabel[A].pi_size = partsize;
+		bsdlabel[A].pi_bsize = 8192;
+		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 
@@ -215,17 +232,17 @@ editlab:
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
-		bsdlabel[B][D_OFFSET] = partstart;
-		bsdlabel[B][D_SIZE] = partsize;
+		bsdlabel[B].pi_offset = partstart;
+		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
 
 		/* /usr */
 		partsize = fsptsize - (partstart - ptstart);
-		bsdlabel[E][D_FSTYPE] = T_42BSD;
-		bsdlabel[E][D_OFFSET] = partstart;
-		bsdlabel[E][D_SIZE] = partsize;
-		bsdlabel[E][D_BSIZE] = 8192;
-		bsdlabel[E][D_FSIZE] = 1024;
+		bsdlabel[E].pi_fstype = FS_BSDFFS;
+		bsdlabel[E].pi_offset = partstart;
+		bsdlabel[E].pi_size = partsize;
+		bsdlabel[E].pi_bsize = 8192;
+		bsdlabel[E].pi_fsize = 1024;
 		strcpy (fsmount[E], "/usr");
 
 		break;
@@ -243,10 +260,10 @@ editlab:
 		msg_prompt (MSG_askfsroot, isize, isize, 20,
 			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[A][D_OFFSET] = partstart;
-		bsdlabel[A][D_SIZE] = partsize;
-		bsdlabel[A][D_BSIZE] = 8192;
-		bsdlabel[A][D_FSIZE] = 1024;
+		bsdlabel[A].pi_offset = partstart;
+		bsdlabel[A].pi_size = partsize;
+		bsdlabel[A].pi_bsize = 8192;
+		bsdlabel[A].pi_fsize = 1024;
 		strcpy (fsmount[A], "/");
 		partstart += partsize;
 		remain -= partsize;
@@ -256,12 +273,12 @@ editlab:
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
 			   dlcylsize) - partstart - swapadj;
-		snprintf (isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
+		snprintf(isize, 20, "%d", partsize/sizemult);
+		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
 			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
-		bsdlabel[B][D_OFFSET] = partstart;
-		bsdlabel[B][D_SIZE] = partsize;
+		bsdlabel[B].pi_offset = partstart;
+		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
 		remain -= partsize;
 		
@@ -279,11 +296,11 @@ editlab:
 			if (partsize > 0) {
 				if (remain - partsize < sizemult)
 					partsize = remain;
-				bsdlabel[part][D_FSTYPE] = T_42BSD;
-				bsdlabel[part][D_OFFSET] = partstart;
-				bsdlabel[part][D_SIZE] = partsize;
-				bsdlabel[part][D_BSIZE] = 8192;
-				bsdlabel[part][D_FSIZE] = 1024;
+				bsdlabel[part].pi_fstype = FS_BSDFFS;
+				bsdlabel[part].pi_offset = partstart;
+				bsdlabel[part].pi_size = partsize;
+				bsdlabel[part].pi_bsize = 8192;
+				bsdlabel[part].pi_fsize = 1024;
 				if (part == E)
 					strcpy (fsmount[E], "/usr");
 				msg_prompt_add (MSG_mountpoint, fsmount[part],
@@ -306,12 +323,15 @@ editlab:
 		return 0;
 	}
 
-	if ((bsdlabel[A][D_OFFSET] + bsdlabel[A][D_SIZE]) / bcylsize > 1024) {
+	/*
+	 * XXX check for int13 extensions.
+	 */
+	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_size) / bcylsize > 1024) {
 		process_menu(MENU_cyl1024);
 		/* XXX UGH! need arguments to process_menu */
 		switch (c1024_resp) {
 		case 1:
-			edit_mbr();
+			edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
 			/*FALLTHROUGH*/
 		case 2:
 			goto editlab;
@@ -342,13 +362,13 @@ editlab:
 	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
 	for (i=0; i<8; i++) {
 		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i][D_SIZE],
-			       'a'+i, bsdlabel[i][D_OFFSET],
-			       'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD)
+			       'a'+i, bsdlabel[i].pi_size,
+			       'a'+i, bsdlabel[i].pi_offset,
+			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
-				       'a'+i, bsdlabel[i][D_BSIZE],
-				       'a'+i, bsdlabel[i][D_FSIZE]);
+				       'a'+i, bsdlabel[i].pi_bsize,
+				       'a'+i, bsdlabel[i].pi_fsize);
 		if (i < 7)
 			(void)fprintf (f, "\\\n");
 		else
@@ -363,12 +383,12 @@ editlab:
 
 /* Upgrade support */
 int
-md_update (void)
+md_update(void)
 {
 	endwin();
-	md_copy_filesystem ();
+	md_copy_filesystem();
 	md_post_newfs();
-	puts (CL);
+	puts(CL);
 	wrefresh(stdscr);
 	return 1;
 }
@@ -395,4 +415,64 @@ md_cleanup_install(void)
 	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
 	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
+}
+
+int
+md_bios_info(dev)
+	char *dev;
+{
+	int mib[2], i, len;
+	struct biosdisk_info *bip;
+	struct nativedisk_info *nip = NULL, *nat;
+	int cyl, head, sec;
+
+	if (disklist == NULL) {
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_DISKINFO;
+		if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0)
+			goto nogeom;
+		disklist = (struct disklist *)malloc(len);
+		sysctl(mib, 2, disklist, &len, NULL, 0);
+	}
+
+	nativedisk = NULL;
+
+	for (i = 0; i < disklist->dl_nnativedisks; i++) {
+		nat = &disklist->dl_nativedisks[i];
+		if (!strcmp(dev, nat->ni_devname)) {
+			nativedisk = nip = nat;
+			break;
+		}
+	}
+	if (nip == NULL) {
+nogeom:
+		msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+		if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+			msg_display_add(MSG_biosguess, cyl, head, sec);
+			set_bios_geom(cyl, head, sec);
+		} else
+			set_bios_geom(dlcyl, dlhead, dlsec);
+		biosdisk = NULL;
+	} else if (nip->ni_nmatches == 1) {
+		bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
+		msg_display(MSG_onebiosmatch);
+		msg_printf_add("%6x%10d%7d%10d\n", bip->bi_dev - 0x80,
+		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
+		process_menu(MENU_biosonematch);
+	} else {
+		msg_display(MSG_biosmultmatch);
+		for (i = 0; i < nip->ni_nmatches; i++) {
+			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[i]];
+			msg_printf_add("%d: %6x%10d%7d%10d\n", i,
+			    bip->bi_dev - 0x80, bip->bi_cyl, bip->bi_head,
+			    bip->bi_sec);
+		}
+		process_menu(MENU_biosmultmatch);
+	}
+	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))
+		bsize = dlsize;
+	else
+		bsize = bcyl * bhead * bsec;
+	bcylsize = bhead * bsec;
+	return 0;
 }

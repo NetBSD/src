@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.9 1999/01/21 08:02:18 garbled Exp $ */
+/*	$NetBSD: mbr.c,v 1.10 1999/03/31 00:44:48 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,59 +38,75 @@
  *
  */
 
+/*
+ * Following applies to the geometry guessing code
+ */
+
+/*
+ * Mach Operating System
+ * Copyright (c) 1992 Carnegie Mellon University
+ * All Rights Reserved.
+ *
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
+ * the rights to redistribute these changes.
+ */
+
 /* mbr.c -- DOS Master Boot Record editing code */
 
+#include <sys/param.h>
+#include <sys/types.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <util.h>
 #include "defs.h"
+#include "mbr.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+#include "endian.h"
 
 struct part_id {
 	int id;
 	char *name;
 } part_ids[] = {
 	{0, "unused"},
-	{1, "Primary DOS, 12 bit FAT"},
-	{4, "Primary DOS, 16 bit FAT <32M"},
-	{5, "Extended DOS"},
-	{6, "Primary DOS, 16-bit FAT >32MB"},
-	{7, "NTFS"},
-	{131, "Linux native"},
-	{131, "Linux swap"},
-	{165, "old NetBSD/FreeBSD/386BSD"},
-	{169, "NetBSD"},
+	{MBR_PTYPE_FAT12, "Primary DOS, 12 bit FAT"},
+	{MBR_PTYPE_FAT16S, "Primary DOS, 16 bit FAT <32M"},
+	{MBR_PTYPE_EXT, "Extended DOS"},
+	{MBR_PTYPE_FAT16B, "Primary DOS, 16-bit FAT >32MB"},
+	{MBR_PTYPE_NTFS, "NTFS"},
+	{MBR_PTYPE_LNXSWAP, "Linux swap"},
+	{MBR_PTYPE_LNXEXT2, "Linux native"},
+	{MBR_PTYPE_386BSD, "old NetBSD/FreeBSD/386BSD"},
+	{MBR_PTYPE_NETBSD, "NetBSD"},
 	{-1, "Unknown"},
 };
 
-/*
- * Define symbolic name for MBR IDs if undefined, for backwards
- * source compatibility.
- */
-#ifndef DOSPTYP_NETBSD
-#define DOSPTYP_NETBSD	0xa9
-#endif
-#ifndef DOSPTYP_386BSD
-#define DOSPTYP_386BSD	0xa5
-#endif
+int dosptyp_nbsd = MBR_PTYPE_NETBSD;
 
-/*
- * Which MBR partition ID to use for a newly-created NetBSD partition.
- * Left patchable as we're in the middle of changing partition IDs.
- */
-#ifdef notyet
-#define DOSPTYP_OURS	DOSPTYP_NETBSD	/* NetBSD >= 1.3D */
-#else
-#define DOSPTYP_OURS	DOSPTYP_386BSD	/* 386bsd, FreeBSD, old NetBSD */
-#endif
+static int get_mapping __P((struct mbr_partition *, int, int *, int *, int *,
+			    long *absolute));
+static void convert_mbr_chs __P((int, int, int, u_int8_t *, u_int8_t *,
+				 u_int8_t *, u_int32_t));
 
-int dosptyp_nbsd = DOSPTYP_OURS;	
-
-/* prototypes */
-int otherpart __P((int id));
-int ourpart __P((int id));
-int edit_mbr __P((void));
 
 /*
  * First, geometry  stuff...
@@ -107,22 +123,21 @@ check_geom()
  * store in globals.
  */
 void
-set_fdisk_geom()
+set_bios_geom(cyl, head, sec)
+	int cyl, head, sec;
 {
 	char res[80];
 
 	msg_display_add(MSG_setbiosgeom);
-	disp_cur_geom();
-	msg_printf_add("\n");
-	snprintf(res, 80, "%d", bcyl);
+	snprintf(res, 80, "%d", cyl);
 	msg_prompt_add(MSG_cylinders, res, res, 80);
 	bcyl = atoi(res);
 
-	snprintf(res, 80, "%d", bhead);
+	snprintf(res, 80, "%d", head);
 	msg_prompt_add(MSG_heads, res, res, 80);
 	bhead = atoi(res);
 
-	snprintf(res, 80, "%d", bsec);
+	snprintf(res, 80, "%d", sec);
 	msg_prompt_add(MSG_sectors, res, res, 80);
 	bsec = atoi(res);
 }
@@ -144,7 +159,7 @@ otherpart(id)
 	int id;
 {
 
-	return (id != 0 && id != DOSPTYP_386BSD && id != DOSPTYP_NETBSD);
+	return (id != 0 && id != MBR_PTYPE_386BSD && id != MBR_PTYPE_NETBSD);
 }
 
 int
@@ -152,18 +167,22 @@ ourpart(id)
 	int id;
 {
 
-	return (id != 0 && (id == DOSPTYP_386BSD || id == DOSPTYP_NETBSD));
+	return (id == MBR_PTYPE_386BSD || id == MBR_PTYPE_NETBSD);
 }
 
 /*
  * Let user change incore Master Boot Record partitions via menu.
  */
 int
-edit_mbr()
+edit_mbr(partition)
+	struct mbr_partition *partition;
 {
 	int i, j;
 
 	/* Ask full/part */
+
+	/* XXX this sucks ("part" is used in menus, no param passing there) */
+	part = partition;
 	msg_display(MSG_fullpart, diskdev);
 	process_menu(MENU_fullpart);
 
@@ -174,10 +193,10 @@ edit_mbr()
 
 		int i;
 		/* Count nonempty, non-BSD partitions. */
-		for (i = 0; i < 4; i++) {
-			otherparts += otherpart(part[0][ID]);
+		for (i = 0; i < NMBRPART; i++) {
+			otherparts += otherpart(part[0].mbrp_typ);
 			/* check for dualboot *bsd too */
-			ourparts += ourpart(part[0][ID]);
+			ourparts += ourpart(part[0].mbrp_typ);
 		}					  
 
 		/* Ask if we really want to blow away non-NetBSD stuff */
@@ -192,17 +211,13 @@ edit_mbr()
 		}
 
 		/* Set the partition information for full disk usage. */
-		part[0][ID] = part[0][SIZE] = 0;
-		part[0][SET] = 1;
-		part[1][ID] = part[1][SIZE] = 0;
-		part[1][SET] = 1;
-		part[2][ID] = part[2][SIZE] = 0;
-		part[2][SET] = 1;
-		part[3][ID] = dosptyp_nbsd;
-		part[3][SIZE] = bsize - bsec;
-		part[3][START] = bsec;
-		part[3][FLAG] = 0x80;
-		part[3][SET] = 1;
+		part[0].mbrp_typ = part[0].mbrp_size = 0;
+		part[1].mbrp_typ = part[1].mbrp_size = 0;
+		part[2].mbrp_typ = part[2].mbrp_size = 0;
+		part[3].mbrp_typ = dosptyp_nbsd;
+		part[3].mbrp_size = bsize - bsec;
+		part[3].mbrp_start = bsec;
+		part[3].mbrp_flag = 0x80;
 
 		ptstart = bsec;
 		ptsize = bsize - bsec;
@@ -219,7 +234,7 @@ edit_mbr()
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
 		for (i = 0; i<4; i++)
-			if (part[i][FLAG] != 0)
+			if (part[i].mbrp_flag != 0)
 				activepart = i;
 		do {
 			process_menu (MENU_editparttable);
@@ -231,17 +246,17 @@ edit_mbr()
 			yesno = 0;
 			for (i=0; i<4; i++) {
 				/* Count 386bsd/FreeBSD/NetBSD(old) partitions */
-				if (part[i][ID] == DOSPTYP_386BSD) {
+				if (part[i].mbrp_typ == MBR_PTYPE_386BSD) {
 					freebsdpart = i;
 					numfreebsd++;
 				}
 				/* Count NetBSD-only partitions */
-				if (part[i][ID] == DOSPTYP_NETBSD) {
+				if (part[i].mbrp_typ == MBR_PTYPE_NETBSD) {
 					bsdpart = i;
 					numbsd++;
 				}
 				for (j = i+1; j<4; j++)
-				       if (partsoverlap(i,j))
+				       if (partsoverlap(part, i,j))
 					       overlap = 1;
 			}
 
@@ -270,8 +285,8 @@ edit_mbr()
 			process_menu(MENU_ok);
 		}
 			
-		ptstart = part[bsdpart][START];
-		ptsize = part[bsdpart][SIZE];
+		ptstart = part[bsdpart].mbrp_start;
+		ptsize = part[bsdpart].mbrp_size;
 		fsdsize = dlsize;
 		if (ptstart + ptsize < bsize)
 			fsptsize = ptsize;
@@ -292,26 +307,28 @@ edit_mbr()
 }
 
 int
-partsoverlap(i, j)
+partsoverlap(part, i, j)
+	struct mbr_partition *part;
 	int i;
 	int j;
 {
 
-	if (part[i][SIZE] == 0 || part[j][SIZE] == 0)
+	if (part[i].mbrp_size == 0 || part[j].mbrp_size == 0)
 		return 0;
 
 	return 
-		(part[i][START] < part[j][START] &&
-		 part[i][START] + part[i][SIZE] > part[j][START])
+		(part[i].mbrp_start < part[j].mbrp_start &&
+		 part[i].mbrp_start + part[i].mbrp_size > part[j].mbrp_start)
 		||
-		(part[i][START] > part[j][START] &&
-		 part[i][START] < part[j][START] + part[j][SIZE])
+		(part[i].mbrp_start > part[j].mbrp_start &&
+		 part[i].mbrp_start < part[j].mbrp_start + part[j].mbrp_size)
 		||
-		(part[i][START] == part[j][START]);
+		(part[i].mbrp_start == part[j].mbrp_start);
 }
 
 void
-disp_cur_part(sel, disp)
+disp_cur_part(part, sel, disp)
+	struct mbr_partition *part;
 	int sel;
 	int disp;
 {
@@ -325,21 +342,249 @@ disp_cur_part(sel, disp)
 	for (i = start; i < stop; i++) {
 		if (sel == i)
 			msg_standout();
-		if (part[i][SIZE] == 0 && part[i][START] == 0)
+		if (part[i].mbrp_size == 0 && part[i].mbrp_start == 0)
 			msg_printf_add("%d %36s  ", i, "");
 		else {
-			rsize = part[i][SIZE] / sizemult;
-			if (part[i][SIZE] % sizemult)
+			rsize = part[i].mbrp_size / sizemult;
+			if (part[i].mbrp_size % sizemult)
 				rsize++;
-			rend = (part[i][START] + part[i][SIZE]) / sizemult;
-			if ((part[i][SIZE] + part[i][SIZE]) % sizemult)
+			rend = (part[i].mbrp_start + part[i].mbrp_size) / sizemult;
+			if ((part[i].mbrp_size + part[i].mbrp_size) % sizemult)
 				rend++;
 			msg_printf_add("%d %12d%12d%12d  ", i,
-			    part[i][START] / sizemult, rsize, rend);
+			    part[i].mbrp_start / sizemult, rsize, rend);
 		}
 		for (j = 0; part_ids[j].id != -1 &&
-			    part_ids[j].id != part[i][ID]; j++);
-		msg_printf_add ("%s\n", part_ids[j].name);
-		if (sel == i) msg_standend();
+			    part_ids[j].id != part[i].mbrp_typ; j++);
+		msg_printf_add("%s\n", part_ids[j].name);
+		if (sel == i)
+			msg_standend();
 	}
+}
+
+int
+read_mbr(disk, buf, len)
+	char *disk, *buf;
+	int len;
+{
+	char diskpath[MAXPATHLEN];
+	int fd, i;
+	struct mbr_partition *mbrp;
+
+	/* Open the disk. */
+	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
+	if (fd < 0) 
+		return -1;
+
+	if (lseek(fd, MBR_BBSECTOR * MBR_SECSIZE, SEEK_SET) < 0) {
+		close(fd);
+		return -1;
+	}
+	if (read(fd, buf, len) < len) {
+		close(fd);
+		return -1;
+	}
+
+	if (valid_mbr(buf)) {
+		mbrp = (struct mbr_partition *)&buf[MBR_PARTOFF];
+		for (i = 0; i < NMBRPART; i++) {
+			if (mbrp[i].mbrp_typ != 0) {
+				mbrp[i].mbrp_start =
+				    le_to_native32(mbrp[i].mbrp_start);
+				mbrp[i].mbrp_size =
+				    le_to_native32(mbrp[i].mbrp_size);
+			}
+		}
+	}
+
+	(void)close(fd);
+	return 0;
+}
+
+int
+write_mbr(disk, buf, len)
+	char *disk, *buf;
+	int len;
+{
+	char diskpath[MAXPATHLEN];
+	int fd, i, ret = 0;
+	struct mbr_partition *mbrp;
+	u_int32_t pstart, psize;
+
+	/* Open the disk. */
+	fd = opendisk(disk, O_WRONLY, diskpath, sizeof(diskpath), 0);
+	if (fd < 0) 
+		return -1;
+
+	if (lseek(fd, MBR_BBSECTOR * MBR_SECSIZE, SEEK_SET) < 0) {
+		close(fd);
+		return -1;
+	}
+
+	mbrp = (struct mbr_partition *)&buf[MBR_PARTOFF];
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbrp[i].mbrp_typ != 0) {
+			pstart = mbrp[i].mbrp_start;
+			psize = mbrp[i].mbrp_size;
+			mbrp[i].mbrp_start = native_to_le32(pstart);
+			mbrp[i].mbrp_size = native_to_le32(psize);
+			convert_mbr_chs(bcyl, bhead, bsec,
+			    &mbrp[i].mbrp_scyl, &mbrp[i].mbrp_shd,
+			    &mbrp[i].mbrp_ssect, pstart);
+			convert_mbr_chs(bcyl, bhead, bsec,
+			    &mbrp[i].mbrp_ecyl, &mbrp[i].mbrp_ehd,
+			    &mbrp[i].mbrp_esect, pstart + psize);
+		}
+	}
+
+	if (write(fd, buf, len) < 0)
+		ret = -1;
+
+	(void)close(fd);
+	return ret;
+}
+
+int
+valid_mbr(buf)
+	char *buf;
+{
+	int magic;
+
+	magic = *((int *)&buf[MBR_MAGICOFF]);
+
+	return (le_to_native16(magic) == MBR_MAGIC);
+}
+
+static void
+convert_mbr_chs(cyl, head, sec, cylp, headp, secp, relsecs)
+	int cyl, head, sec;
+	u_int8_t *cylp, *headp, *secp;
+	u_int32_t relsecs;
+{
+	unsigned int tcyl, temp, thead, tsec;
+
+	temp = head * sec;
+	tcyl = relsecs / temp;
+
+	if (tcyl >= 1024) {
+		*cylp = *headp = *secp = 0xff;
+		return;
+	}
+
+	relsecs %= temp;
+	thead = relsecs / sec;
+
+	tsec = (relsecs % sec) + 1;
+
+	*cylp = MBR_PUT_LSCYL(tcyl);
+	*headp = thead;
+	*secp = MBR_PUT_MSCYLANDSEC(tcyl, tsec);
+}
+
+/*
+ * This function is ONLY to be used as a last resort to provide a
+ * hint for the user. Ports should provide a more reliable way
+ * of getting the BIOS geometry. The i386 code, for example,
+ * uses the BIOS geometry as passed on from the bootblocks,
+ * and only uses this as a hint to the user when that information
+ * is not present, or a match could not be made with a NetBSD
+ * device.
+ */
+int
+guess_biosgeom_from_mbr(buf, cyl, head, sec)
+	char *buf;
+	int *cyl, *head, *sec;
+{
+	struct mbr_partition *parts = (struct mbr_partition *)&buf[MBR_PARTOFF];
+	int cylinders = -1, heads = -1, sectors = -1, i, j;
+	int c1, h1, s1, c2, h2, s2;
+	long a1, a2;
+	quad_t num, denom;
+
+	*cyl = *head = *sec = -1;
+
+	/* Try to deduce the number of heads from two different mappings. */
+	for (i = 0; i < NMBRPART * 2; i++) {
+		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
+			continue;
+		for (j = 0; j < 8; j++) {
+			if (get_mapping(parts, j, &c2, &h2, &s2, &a2) < 0)
+				continue;
+			num = (quad_t)h1*(a2-s2) - (quad_t)h2*(a1-s1);
+			denom = (quad_t)c2*(a1-s1) - (quad_t)c1*(a2-s2);
+			if (denom != 0 && num % denom == 0) {
+				heads = num / denom;
+				break;
+			}
+		}
+		if (heads != -1)	
+			break;
+	}
+
+	if (heads == -1)
+		return -1;
+
+	/* Now figure out the number of sectors from a single mapping. */
+	for (i = 0; i < NMBRPART * 2; i++) {
+		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
+			continue;
+		num = a1 - s1;
+		denom = c1 * heads + h1;
+		if (denom != 0 && num % denom == 0) {
+			sectors = num / denom;
+			break;
+		}
+	}
+
+	if (sectors == -1)
+		return -1;
+
+	/*
+	 * Estimate the number of cylinders.
+	 * XXX relies on get_disks having been called.
+	 */
+	cylinders = disk->dd_totsec / heads / sectors;
+
+	/* Now verify consistency with each of the partition table entries.
+	 * Be willing to shove cylinders up a little bit to make things work,
+	 * but translation mismatches are fatal. */
+	for (i = 0; i < NMBRPART * 2; i++) {
+		if (get_mapping(parts, i, &c1, &h1, &s1, &a1) < 0)
+			continue;
+		if (sectors * (c1 * heads + h1) + s1 != a1)
+			return -1;
+		if (c1 >= cylinders)
+			cylinders = c1 + 1;
+	}
+
+	/* Everything checks out.  Reset the geometry to use for further
+	 * calculations. */
+	*cyl = cylinders;
+	*head = heads;
+	*sec = sectors;
+	return 0;
+}
+
+static int
+get_mapping(parts, i, cylinder, head, sector, absolute)
+	struct mbr_partition *parts;
+	int i, *cylinder, *head, *sector;
+	long *absolute;
+{
+	struct mbr_partition *part = &parts[i / 2];
+
+	if (part->mbrp_typ == 0)
+		return -1;
+	if (i % 2 == 0) {
+		*cylinder = MBR_PCYL(part->mbrp_scyl, part->mbrp_ssect);
+		*head = part->mbrp_shd;
+		*sector = MBR_PSECT(part->mbrp_ssect) - 1;
+		*absolute = part->mbrp_start;
+	} else {
+		*cylinder = MBR_PCYL(part->mbrp_ecyl, part->mbrp_esect);
+		*head = part->mbrp_ehd;
+		*sector = MBR_PSECT(part->mbrp_esect) - 1;
+		*absolute = part->mbrp_start + part->mbrp_size - 1;
+	}
+	return 0;
 }
