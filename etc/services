@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.23 1997/10/04 09:11:55 mrg Exp $
+#	$NetBSD: services,v 1.24 1997/10/04 13:22:54 mrg Exp $
 #
 # Network services, Internet style
 #
@@ -21,12 +21,12 @@ daytime		13/udp
 netstat		15/tcp
 qotd		17/tcp		quote
 msp		18/tcp		# message send protocol
-msp		18/udp		# message send protocol
+msp		18/udp
 chargen		19/tcp		ttytst source
 chargen		19/udp		ttytst source
 ftp-data	20/tcp		# default ftp data port
-ftp		21/tcp
-ssh		22/tcp
+ftp		21/tcp		# File Transfer Protocol
+ssh		22/tcp		# Secure Shell
 ssh		22/udp
 telnet		23/tcp
 # 24 - private
@@ -44,7 +44,7 @@ bootps		67/tcp		# BOOTP server
 bootps		67/udp
 bootpc		68/tcp		# BOOTP client
 bootpc		68/udp
-tftp		69/udp
+tftp		69/udp		# Trivial File Transfer Protocol
 gopher		70/tcp		# Internet Gopher
 gopher		70/udp
 rje		77/tcp		netrjs
@@ -66,7 +66,7 @@ pop2		109/tcp		postoffice	# POP version 2
 pop2		109/udp
 pop3		110/tcp		# POP version 3
 pop3		110/udp
-sunrpc		111/tcp
+sunrpc		111/tcp		# Remote Procedure Call
 sunrpc		111/udp
 auth		113/tcp		authentication tap ident
 sftp		115/tcp
@@ -122,14 +122,14 @@ nip		376/udp				# Amiga Envoy Net Inquiry Prot.
 #
 # UNIX specific services
 #
-exec		512/tcp
-biff		512/udp		comsat
-login		513/tcp
-who		513/udp		whod
-shell		514/tcp		cmd		# no passwords used
-syslog		514/udp
+exec		512/tcp				# Remote execution
+biff		512/udp		comsat		# Biff the dog
+login		513/tcp				# Remote login
+who		513/udp		whod		# Remote who
+shell		514/tcp		cmd		# Remote command shell
+syslog		514/udp				# System logger
 printer		515/tcp		spooler		# line printer spooler
-talk		517/udp
+talk		517/udp				# Talk protocols
 ntalk		518/udp
 route		520/udp		router routed	# RIP
 timed		525/udp		timeserver
@@ -190,5 +190,6 @@ supfiledbg	1127/tcp		# SUP debugging
 #
 nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
-ircd		6667/tcp		# Often used IRC port.
+X11		6000/tcp		# X Window System
+ircd		6667/tcp		# Often used IRC port (also see 194)
 hunt		26740/udp		# multi-player/multi-host maze-wars
