@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.2 1997/01/22 23:20:03 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.3 1997/01/22 23:53:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,14 +30,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * ECOFF will likely never be supported, because of its wacky way of
- * storing symbols and strings.
- */
 #ifdef __alpha__
+#define	NLIST_ECOFF
 #define	NLIST_ELF64
 #else
 #define	NLIST_AOUT
+/* #define	NLIST_ECOFF */
 /* #define	NLIST_ELF32 */
 /* #define	NLIST_ELF64 */
 #endif
@@ -45,6 +43,10 @@
 #ifdef NLIST_AOUT
 int	check_aout(int, const char *);
 int	hide_aout(int, const char *);
+#endif
+#ifdef NLIST_ECOFF
+int	check_ecoff(int, const char *);
+int	hide_ecoff(int, const char *);
 #endif
 #ifdef NLIST_ELF32
 int	check_elf32(int, const char *);

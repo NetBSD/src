@@ -198,6 +198,9 @@ struct {
 #ifdef NLIST_AOUT
 	{	"a.out",	check_aout,	hide_aout,	},
 #endif
+#ifdef NLIST_ECOFF
+	{	"ECOFF",	check_ecoff,	hide_ecoff,	},
+#endif
 #ifdef NLIST_ELF32
 	{	"ELF32",	check_elf32,	hide_elf32,	},
 #endif
