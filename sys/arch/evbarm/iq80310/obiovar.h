@@ -1,7 +1,7 @@
-/*	$NetBSD: obiovar.h,v 1.3 2003/06/15 19:03:47 thorpej Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.4 2003/06/16 17:40:52 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -41,8 +41,9 @@
 struct obio_attach_args {
 	bus_space_tag_t oba_st;		/* bus space tag */
 	bus_addr_t oba_addr;		/* address of device */
-	int oba_irq;			/* CPLD interrupt bit # */
+	bus_size_t oba_size;		/* size of device */
 	int oba_width;			/* bus width */
+	int oba_irq;			/* CPLD interrupt bit # */
 };
 
 extern struct bus_space obio_bs_tag;
