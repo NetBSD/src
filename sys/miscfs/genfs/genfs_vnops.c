@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.57 2002/05/06 00:42:22 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.58 2002/05/09 07:14:37 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.57 2002/05/06 00:42:22 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.58 2002/05/09 07:14:37 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1177,7 +1177,7 @@ genfs_putpages(void *v)
 			 * the array of pages.
 			 */
 
-			npages = MIN(n, (endoff - off) >> PAGE_SHIFT) - 1;
+			npages = n - 1;
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
 			    &pgs[nback + 1],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);
@@ -1197,6 +1197,8 @@ genfs_putpages(void *v)
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
+			if (tpg->offset < startoff || tpg->offset >= endoff)
+				continue;
 			if (flags & PGO_DEACTIVATE &&
 			    (tpg->pqflags & PQ_INACTIVE) == 0 &&
 			    tpg->wire_count == 0) {
