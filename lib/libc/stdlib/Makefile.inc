@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile.inc,v 1.27 1995/12/28 08:51:55 thorpej Exp $
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.26 1995/04/25 15:36:39 ragge Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib

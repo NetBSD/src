@@ -1,3 +1,5 @@
+/*	$NetBSD: atof.c,v 1.7 1995/12/28 08:52:05 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)atof.c	5.3 (Berkeley) 1/8/93";*/
-static char *rcsid = "$Id: atof.c,v 1.6 1995/02/28 01:46:30 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)atof.c	5.3 (Berkeley) 1/8/93";
+#else
+static char *rcsid = "$NetBSD: atof.c,v 1.7 1995/12/28 08:52:05 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: calloc.c,v 1.6 1995/12/28 08:52:12 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)calloc.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: calloc.c,v 1.5 1993/11/30 21:55:35 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)calloc.c	5.6 (Berkeley) 2/23/91";
+#else
+static char *rcsid = "$NetBSD: calloc.c,v 1.6 1995/12/28 08:52:12 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>

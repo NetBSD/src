@@ -1,3 +1,5 @@
+/*	$NetBSD: abort.c,v 1.6 1995/12/28 08:51:57 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1985 Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)abort.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: abort.c,v 1.5 1995/02/28 01:46:24 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)abort.c	5.11 (Berkeley) 2/23/91";
+#else
+static char *rcsid = "$NetBSD: abort.c,v 1.6 1995/12/28 08:51:57 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>

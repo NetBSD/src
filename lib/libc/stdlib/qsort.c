@@ -1,3 +1,5 @@
+/*	$NetBSD: qsort.c,v 1.5 1995/12/28 08:52:36 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)qsort.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: qsort.c,v 1.4 1994/06/16 05:26:39 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)qsort.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: qsort.c,v 1.5 1995/12/28 08:52:36 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
