@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/23 19:16:54 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/03/28 20:41:45 thorpej Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -8,9 +8,10 @@ MAXIMAGESIZE= 2097152	# 2M
 LOADADDR= 0xa0200000
 
 CPPFLAGS+= -DCONSPEED=115200
+CPPFLAGS+= -DCONADDR=0xfe810000UL
 
 LDSCRIPT= ${.CURDIR}/ldscript
 
-SRCS+=	iq80310_cons.c i80312_mem.c
+SRCS+=	ns16550.c i80312_mem.c
 
 .include "${S}/arch/evbarm/stand/gzboot/Makefile.gzboot"
