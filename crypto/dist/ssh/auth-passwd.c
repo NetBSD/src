@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.8 2003/07/10 01:09:41 lukem Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.9 2003/07/23 03:52:17 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,8 +37,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.27 2002/05/24 16:45:16 stevesk Exp $");
-__RCSID("$NetBSD: auth-passwd.c,v 1.8 2003/07/10 01:09:41 lukem Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.28 2003/07/22 13:35:22 markus Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.9 2003/07/23 03:52:17 itojun Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -67,14 +67,6 @@ auth_password(Authctxt *authctxt, const char *password)
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
-		if (ret == 1 || ret == 0)
-			return ret;
-		/* Fall back to ordinary passwd authentication. */
-	}
-#endif
-#ifdef KRB4
-	if (options.kerberos_authentication == 1) {
-		int ret = auth_krb4_password(authctxt, password);
 		if (ret == 1 || ret == 0)
 			return ret;
 		/* Fall back to ordinary passwd authentication. */

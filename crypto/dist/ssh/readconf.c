@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.18 2003/07/10 01:09:46 lukem Exp $	*/
+/*	$NetBSD: readconf.c,v 1.19 2003/07/23 03:52:19 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,8 +13,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
-__RCSID("$NetBSD: readconf.c,v 1.18 2003/07/10 01:09:46 lukem Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.115 2003/07/22 13:35:22 markus Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.19 2003/07/23 03:52:19 itojun Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -96,14 +96,8 @@ typedef enum {
 	oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
 	oPasswordAuthentication, oRSAAuthentication,
 	oChallengeResponseAuthentication, oXAuthLocation,
-#if defined(KRB4) || defined(KRB5)
-	oKerberosAuthentication,
-#endif
-#if defined(AFS) || defined(KRB5)
-	oKerberosTgtPassing,
-#endif
-#ifdef AFS
-	oAFSTokenPassing,
+#ifdef KRB5
+	oKerberosAuthentication, oKerberosTgtPassing,
 #endif
 	oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward,
 	oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
@@ -117,7 +111,7 @@ typedef enum {
 	oHostKeyAlgorithms, oBindAddress, oSmartcardDevice,
 	oClearAllForwardings, oNoHostAuthenticationForLocalhost,
 	oEnableSSHKeysign, oRekeyLimit,
-	oDeprecated
+	oDeprecated, oUnsupported
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -143,17 +137,17 @@ static struct {
 	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
 	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
 	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	{ "kerberosauthentication", oKerberosAuthentication },
-#endif
-#if defined(AFS) || defined(KRB5)
 	{ "kerberostgtpassing", oKerberosTgtPassing },
 	{ "kerberos5tgtpassing", oKerberosTgtPassing },		/* alias */
-	{ "kerberos4tgtpassing", oKerberosTgtPassing },		/* alias */
+#else
+	{ "kerberosauthentication", oUnsupported },
+	{ "kerberostgtpassing", oUnsupported },
+	{ "kerberos5tgtpassing", oUnsupported },		/* alias */
 #endif
-#ifdef AFS
-	{ "afstokenpassing", oAFSTokenPassing },
-#endif
+	{ "kerberos4tgtpassing", oUnsupported },		/* alias */
+	{ "afstokenpassing", oUnsupported },
 	{ "fallbacktorsh", oDeprecated },
 	{ "usersh", oDeprecated },
 	{ "identityfile", oIdentityFile },
@@ -364,19 +358,12 @@ parse_flag:
 	case oChallengeResponseAuthentication:
 		intptr = &options->challenge_response_authentication;
 		goto parse_flag;
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	case oKerberosAuthentication:
 		intptr = &options->kerberos_authentication;
 		goto parse_flag;
-#endif
-#if defined(AFS) || defined(KRB5)
 	case oKerberosTgtPassing:
 		intptr = &options->kerberos_tgt_passing;
-		goto parse_flag;
-#endif
-#ifdef AFS
-	case oAFSTokenPassing:
-		intptr = &options->afs_token_passing;
 		goto parse_flag;
 #endif
 	case oBatchMode:
@@ -776,14 +763,9 @@ initialize_options(Options * options)
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
 	options->challenge_response_authentication = -1;
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	options->kerberos_authentication = -1;
-#endif
-#if defined(AFS) || defined(KRB5)
 	options->kerberos_tgt_passing = -1;
-#endif
-#ifdef AFS
-	options->afs_token_passing = -1;
 #endif
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
@@ -854,17 +836,11 @@ fill_default_options(Options * options)
 		options->pubkey_authentication = 1;
 	if (options->challenge_response_authentication == -1)
 		options->challenge_response_authentication = 1;
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = 1;
-#endif
-#if defined(AFS) || defined(KRB5)
 	if (options->kerberos_tgt_passing == -1)
 		options->kerberos_tgt_passing = 1;
-#endif
-#ifdef AFS
-	if (options->afs_token_passing == -1)
-		options->afs_token_passing = 1;
 #endif
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;

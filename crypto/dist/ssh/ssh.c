@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.28 2003/07/10 01:09:48 lukem Exp $	*/
+/*	$NetBSD: ssh.c,v 1.29 2003/07/23 03:52:22 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,8 +41,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.190 2003/02/06 09:27:29 markus Exp $");
-__RCSID("$NetBSD: ssh.c,v 1.28 2003/07/10 01:09:48 lukem Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.198 2003/07/22 13:35:22 markus Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.29 2003/07/23 03:52:22 itojun Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -156,9 +156,7 @@ usage(void)
 	     _PATH_SSH_USER_CONFFILE);
 	fprintf(stderr, "  -A          Enable authentication agent forwarding.\n");
 	fprintf(stderr, "  -a          Disable authentication agent forwarding (default).\n");
-#ifdef AFS
-	fprintf(stderr, "  -k          Disable Kerberos ticket and AFS token forwarding.\n");
-#endif				/* AFS */
+	fprintf(stderr, "  -k          Disable Kerberos ticket forwarding.\n");
 	fprintf(stderr, "  -X          Enable X11 connection forwarding.\n");
 	fprintf(stderr, "  -x          Disable X11 connection forwarding (default).\n");
 	fprintf(stderr, "  -i file     Identity for public key authentication "
@@ -303,12 +301,13 @@ again:
 		case 'A':
 			options.forward_agent = 1;
 			break;
-#ifdef AFS
 		case 'k':
+#ifdef KRB5
 			options.kerberos_tgt_passing = 0;
-			options.afs_token_passing = 0;
-			break;
+#else
+			fprintf(stderr, "no support for kerberos.\n");
 #endif
+			break;
 		case 'i':
 			if (stat(optarg, &st) < 0) {
 				fprintf(stderr, "Warning: Identity file %s "
