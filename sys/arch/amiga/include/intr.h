@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2000/01/15 15:04:21 aymeric Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2000/01/23 21:04:22 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 /* not used yet, should reflect psl.h */
 #define IPL_BIO		3
 #define IPL_NET		3
+#define IPL_SERIAL	4
 #define IPL_TTY		4
 
 
