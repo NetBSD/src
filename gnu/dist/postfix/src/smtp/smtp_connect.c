@@ -81,7 +81,6 @@
 /* System library. */
 
 #include <sys_defs.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -111,7 +110,6 @@
 #include <inet_addr_list.h>
 #include <iostuff.h>
 #include <timed_connect.h>
-#include <get_port.h>
 #include <stringops.h>
 
 /* Global library. */
@@ -134,45 +132,19 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 				               VSTRING *why)
 {
     char   *myname = "smtp_connect_addr";
-#ifdef INET6
-    struct sockaddr_storage ss;
-#else
-    struct sockaddr ss;
-#endif
-    struct sockaddr *sa;
-    struct sockaddr_in *sin;
-#ifdef INET6
-    struct sockaddr_in6 *sin6;
-#endif
-    SOCKADDR_SIZE salen;
-#ifdef INET6
-    char hbuf[NI_MAXHOST];
-#else
-    char hbuf[sizeof("255.255.255.255") + 1];
-#endif
-    int     sock = -1;
+    struct sockaddr_in sin;
+    int     sock;
     INET_ADDR_LIST *addr_list;
     int     conn_stat;
     int     saved_errno;
     VSTREAM *stream;
     int     ch;
-
-    sa = (struct sockaddr *)&ss;
-    sin = (struct sockaddr_in *)&ss;
-#ifdef INET6
-    sin6 = (struct sockaddr_in6 *)&ss;
-#endif
+    unsigned long inaddr;
 
     /*
      * Sanity checks.
      */
-#ifdef INET6
-    if (((addr->type==T_A) && (addr->data_len > sizeof(sin->sin_addr))) ||
-	((addr->type==T_AAAA) && (addr->data_len > sizeof(sin6->sin6_addr))))
-#else
-    if (addr->data_len > sizeof(sin->sin_addr))
-#endif
-    {
+    if (addr->data_len > sizeof(sin.sin_addr)) {
 	msg_warn("%s: skip address with length %d", myname, addr->data_len);
 	smtp_errno = SMTP_RETRY;
 	return (0);
@@ -181,39 +153,17 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
     /*
      * Initialize.
      */
-    switch (addr->type) {
-#ifdef INET6
-    case T_AAAA:
-	memset(sin6, 0, sizeof(*sin6));
-	sin6->sin6_family = AF_INET6;
-	salen = sizeof(*sin6);
-	break;
-#endif
-    default: /* T_A: */
-	memset(sin, 0, sizeof(*sin));
-	sin->sin_family = AF_INET;
-	salen = sizeof(*sin);
-	break;
-    }
-#ifdef HAS_SA_LEN
-    sa->sa_len = salen;
-#endif
-    if ((sock = socket(sa->sa_family, SOCK_STREAM, 0)) < 0)
-	msg_warn("%s: socket: %m", myname);
-		    
+    memset((char *) &sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+
+    if ((sock = socket(sin.sin_family, SOCK_STREAM, 0)) < 0)
+	msg_fatal("%s: socket: %m", myname);
+
     /*
      * Allow the sysadmin to specify the source address, for example, as "-o
      * smtp_bind_address=x.x.x.x" in the master.cf file.
      */
     if (*var_smtp_bind_addr) {
-#ifndef INET6
-	struct sockaddr_in sin;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-#ifdef HAS_SA_LEN
-	sin.sin_len = sizeof(sin);
-#endif
 	sin.sin_addr.s_addr = inet_addr(var_smtp_bind_addr);
 	if (sin.sin_addr.s_addr == INADDR_NONE)
 	    msg_fatal("%s: bad %s parameter: %s",
@@ -222,25 +172,6 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	    msg_warn("%s: bind %s: %m", myname, inet_ntoa(sin.sin_addr));
 	if (msg_verbose)
 	    msg_info("%s: bind %s", myname, inet_ntoa(sin.sin_addr));
-#else
-	char hbufl[NI_MAXHOST];
-	struct addrinfo hints, *res;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = sa->sa_family;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE|AI_NUMERICHOST;
-	snprintf(hbufl, sizeof(hbufl)-1, "%s", var_smtp_bind_addr);
-	if (getaddrinfo(hbufl, NULL, &hints, &res) == 0) {
-	    (void)getnameinfo(res->ai_addr, res->ai_addrlen, hbufl,
-	        sizeof(hbufl), NULL, 0, NI_NUMERICHOST);
-	    if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
-		msg_warn("%s: bind %s: %m", myname, hbufl);
-	    freeaddrinfo(res);
-	    if (msg_verbose)
-		msg_info("%s: bind %s", myname, hbufl);
-	}
-#endif
     }
 
     /*
@@ -248,17 +179,8 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
      * the mail appears to come from the "right" machine address.
      */
     else if ((addr_list = own_inet_addr_list())->used == 1) {
-#ifndef INET6
-	struct sockaddr_in sin;
-	unsigned long inaddr;	/*XXX BAD!*/
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-#ifdef HAS_SA_LEN
-	sin.sin_len = sizeof(sin);
-#endif
 	memcpy((char *) &sin.sin_addr, addr_list->addrs, sizeof(sin.sin_addr));
-	inaddr = (unsigned long)ntohl(sin.sin_addr.s_addr);
+	inaddr = ntohl(sin.sin_addr.s_addr);
 	if (!IN_CLASSA(inaddr)
 	    || !(((inaddr & IN_CLASSA_NET) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)) {
 	    if (bind(sock, (struct sockaddr *) & sin, sizeof(sin)) < 0)
@@ -266,91 +188,30 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
 	    if (msg_verbose)
 		msg_info("%s: bind %s", myname, inet_ntoa(sin.sin_addr));
 	}
-#else
-	char hbufl[NI_MAXHOST];
-	struct addrinfo hints, *res = NULL, *loopback = NULL;
-	SOCKADDR_SIZE salen;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = sa->sa_family;
-	hints.ai_socktype = SOCK_STREAM;
-	if (getaddrinfo(NULL, "0", &hints, &loopback) != 0)
-	    loopback = NULL;
-
-	/*
-	 * getnameinfo -> getaddrinfo loop is here so that we can
-	 * get rid of port.
-	 */
-#ifdef HAS_SA_LEN
-	salen = ((struct sockaddr *)(addr_list->addrs))->sa_len;
-#else
-	salen = SA_LEN((struct sockaddr *)addr_list->addrs);
-#endif
-	(void)getnameinfo((struct sockaddr *)addr_list->addrs, salen,
-	    hbufl, sizeof(hbufl), NULL, 0, NI_NUMERICHOST);
-	hbufl[sizeof(hbufl)-1] = 0;
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = sa->sa_family;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE|AI_NUMERICHOST;
-	if (getaddrinfo(hbufl, NULL, &hints, &res) == 0 &&
-	    !(res->ai_addrlen == loopback->ai_addrlen &&
-	      memcmp(res->ai_addr, loopback->ai_addr, res->ai_addrlen) == 0)) {
-	    if (bind(sock, res->ai_addr, res->ai_addrlen) < 0)
-		msg_warn("%s: bind %s: %m", myname, hbufl);
-	    if (msg_verbose)
-		msg_info("%s: bind %s", myname, hbufl);
-	}
-	if (res)
-	    freeaddrinfo(res);
-	if (loopback)
-	    freeaddrinfo(loopback);
-#endif
     }
 
     /*
      * Connect to the SMTP server.
      */
-    switch (addr->type) {
-#ifdef INET6
-    case T_AAAA:
-	/* XXX scope unfriendly */
-	memset(sin6, 0, sizeof(*sin6));
-	sin6->sin6_port = port;
-	sin6->sin6_family = AF_INET6;
-	salen = sizeof(*sin6);
-	memcpy(&sin6->sin6_addr, addr->data, sizeof(sin6->sin6_addr));
-	inet_ntop(AF_INET6, &sin6->sin6_addr, hbuf, sizeof(hbuf));
-	break;
-#endif
-    default: /* T_A */
-	memset(sin, 0, sizeof(*sin));
-	sin->sin_port = port;
-	sin->sin_family = AF_INET;
-	salen = sizeof(*sin);
-	memcpy(&sin->sin_addr, addr->data, sizeof(sin->sin_addr));
-	inet_ntop(AF_INET, &sin->sin_addr, hbuf, sizeof(hbuf));
-	break;
-    }
-#ifdef HAS_SA_LEN
-    sa->sa_len = salen;
-#endif
+    sin.sin_port = port;
+    memcpy((char *) &sin.sin_addr, addr->data, sizeof(sin.sin_addr));
 
     if (msg_verbose)
 	msg_info("%s: trying: %s[%s] port %d...",
-		 myname, addr->name, hbuf, ntohs(port));
+		 myname, addr->name, inet_ntoa(sin.sin_addr), ntohs(port));
     if (var_smtp_conn_tmout > 0) {
 	non_blocking(sock, NON_BLOCKING);
-	conn_stat = timed_connect(sock, sa, salen, var_smtp_conn_tmout);
+	conn_stat = timed_connect(sock, (struct sockaddr *) & sin,
+				  sizeof(sin), var_smtp_conn_tmout);
 	saved_errno = errno;
 	non_blocking(sock, BLOCKING);
 	errno = saved_errno;
     } else {
-	conn_stat = connect(sock, sa, salen);
+	conn_stat = connect(sock, (struct sockaddr *) & sin, sizeof(sin));
     }
     if (conn_stat < 0) {
 	vstring_sprintf(why, "connect to %s[%s]: %m",
-			addr->name, hbuf);
+			addr->name, inet_ntoa(sin.sin_addr));
 	smtp_errno = SMTP_RETRY;
 	close(sock);
 	return (0);
@@ -360,8 +221,8 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
      * Skip this host if it takes no action within some time limit.
      */
     if (read_wait(sock, var_smtp_helo_tmout) < 0) {
-	vstring_sprintf(why, "connect to %s [%s]: read timeout",
-			addr->name, hbuf);
+	vstring_sprintf(why, "connect to %s[%s]: read timeout",
+			addr->name, inet_ntoa(sin.sin_addr));
 	smtp_errno = SMTP_RETRY;
 	close(sock);
 	return (0);
@@ -372,8 +233,8 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
      */
     stream = vstream_fdopen(sock, O_RDWR);
     if ((ch = VSTREAM_GETC(stream)) == VSTREAM_EOF) {
-	vstring_sprintf(why, "connect to %s [%s]: server dropped connection",
-			addr->name, hbuf);
+	vstring_sprintf(why, "connect to %s[%s]: server dropped connection",
+			addr->name, inet_ntoa(sin.sin_addr));
 	smtp_errno = SMTP_RETRY;
 	vstream_fclose(stream);
 	return (0);
@@ -385,7 +246,7 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
      */
     if (ch == '4' && var_smtp_skip_4xx_greeting) {
 	vstring_sprintf(why, "connect to %s[%s]: server refused mail service",
-			addr->name, hbuf);
+			addr->name, inet_ntoa(sin.sin_addr));
 	smtp_errno = SMTP_RETRY;
 	vstream_fclose(stream);
 	return (0);
@@ -396,12 +257,12 @@ static SMTP_SESSION *smtp_connect_addr(DNS_RR *addr, unsigned port,
      */
     if (ch == '5' && var_smtp_skip_5xx_greeting) {
 	vstring_sprintf(why, "connect to %s[%s]: server refused mail service",
-			addr->name, hbuf);
+			addr->name, inet_ntoa(sin.sin_addr));
 	smtp_errno = SMTP_RETRY;
 	vstream_fclose(stream);
 	return (0);
     }
-    return (smtp_session_alloc(stream, addr->name, hbuf));
+    return (smtp_session_alloc(stream, addr->name, inet_ntoa(sin.sin_addr)));
 }
 
 /* smtp_connect_host - direct connection to host */
@@ -411,7 +272,7 @@ SMTP_SESSION *smtp_connect_host(char *host, unsigned port, VSTRING *why)
     SMTP_SESSION *session = 0;
     DNS_RR *addr_list;
     DNS_RR *addr;
-    
+
     /*
      * Try each address in the specified order until we find one that works.
      * The addresses belong to the same A record, so we have no information
@@ -518,7 +379,6 @@ static char *smtp_parse_destination(char *destination, char *def_service,
 	    msg_fatal("unknown service: %s/%s", service, protocol);
 	*portp = sp->s_port;
     }
-
     return (buf);
 }
 
