@@ -42,6 +42,7 @@
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
 ./usr/lib/libpcap_pic.a
+./usr/lib/libposix_pic.a
 ./usr/lib/libresolv_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libstdc++_pic.a
