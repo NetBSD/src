@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.17 1998/05/14 20:49:55 drochner Exp $ */
+/* $NetBSD: sfb.c,v 1.18 1998/06/21 09:54:28 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.17 1998/05/14 20:49:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.18 1998/06/21 09:54:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ tc_addr_t sfb_consaddr;
 
 struct wsdisplay_emulops sfb_emulfuncs = {
 	rcons_cursor,			/* could use hardware cursor; punt */
-	rcons_putstr,
+	rcons_putchar,
 	rcons_copycols,
 	rcons_erasecols,
 	rcons_copyrows,

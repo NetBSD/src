@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.1 1998/05/28 16:51:50 drochner Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.2 1998/06/21 09:51:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -82,7 +82,7 @@ struct cfattach pcdisplay_ca = {
 
 const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_cursor,
-	pcdisplay_putstr,
+	pcdisplay_putchar,
 	pcdisplay_copycols,
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
