@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)list.h	5.3 (Berkeley) 6/1/90
- *	$Id: list.h,v 1.2 1993/08/01 18:12:02 mycroft Exp $
+ *	$Id: list.h,v 1.3 1994/03/05 00:34:51 cgd Exp $
  */
 
 /*
@@ -296,4 +296,4 @@ void 	List_Move();    /* move an element elsewhere in a list */
 
 #define LIST_ATREAR(headerPtr) (((List_Links *) headerPtr)->prevPtr)
 
-#endif _LIST
+#endif /* _LIST */

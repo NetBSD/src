@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sprite.h	5.3 (Berkeley) 6/1/90
- *	$Id: sprite.h,v 1.2 1993/08/01 18:11:57 mycroft Exp $
+ *	$Id: sprite.h,v 1.3 1994/03/05 00:35:07 cgd Exp $
  */
 
 /*
@@ -87,7 +87,7 @@ typedef int  ReturnStatus;
  * by user processes.
  */
 
-#define NIL 		0xFFFFFFFF
+#define NIL 		~0
 #define USER_NIL 	0
 #ifndef NULL
 #define NULL	 	0
