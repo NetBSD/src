@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.10 2003/08/07 16:43:27 agc Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.11 2003/10/23 20:06:16 jmc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.10 2003/08/07 16:43:27 agc Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.11 2003/10/23 20:06:16 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,11 +55,10 @@ __RCSID("$NetBSD: gettemp.c,v 1.10 2003/08/07 16:43:27 agc Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "reentrant.h"
-
 #if HAVE_CONFIG_H
 #define	GETTEMP		gettemp
 #else
+#include "reentrant.h"
 #include "local.h"
 #define	GETTEMP		__gettemp
 #endif
