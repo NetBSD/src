@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.89 2000/11/12 03:08:44 hubertf Exp $
+.\"	$NetBSD: main,v 1.90 2000/11/12 03:22:47 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -237,7 +237,7 @@ Support for
 Joliet extensions to the ISO9660 CD file system.
 .It
 Improved file system vnode locking mechanisms,
-thus resolving a source of many panics in the past.
+thus resolving a source of some panics in the past.
 .It
 Support for NFS (and RPC) over IPv6.
 .It
