@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.54 2001/03/21 22:42:28 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.55 2001/03/28 11:12:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -264,7 +264,6 @@ const char *getprogname __P((void)) __attribute__((__const__));
 void	setprogname __P((const char *));
 
 quad_t	 qabs __P((quad_t));
-qdiv_t	 qdiv __P((quad_t, quad_t));
 quad_t	 strtoq __P((const char * __restrict, char ** __restrict, int));
 u_quad_t strtouq __P((const char * __restrict, char ** __restrict, int));
 
@@ -275,6 +274,11 @@ size_t	shquotev __P((int argc, char * const * argv, char *buf,
 	    size_t bufsize));
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
+
+#if !defined(_ANSI_SOURCE) && !defined(_ISOC99_SOURCE) && \
+    !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+qdiv_t	 qdiv __P((quad_t, quad_t));
+#endif
 __END_DECLS
 
 #endif /* !_STDLIB_H_ */
