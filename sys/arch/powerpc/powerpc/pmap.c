@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2001/07/22 13:08:09 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -388,8 +388,8 @@ pmap_bootstrap(kernelstart, kernelend)
 		 */
 		if (sz == 0) {
 		empty:
-			memcpy(mp, mp + 1,
-			      (cnt - (mp - avail)) * sizeof *mp);
+			memmove(mp, mp + 1,
+				(cnt - (mp - avail)) * sizeof *mp);
 			cnt--;
 			mp--;
 			continue;
@@ -402,7 +402,7 @@ pmap_bootstrap(kernelstart, kernelend)
 			if (s < mp1->start)
 				break;
 		if (mp1 < mp) {
-			memcpy(mp1 + 1, mp1, (char *)mp - (char *)mp1);
+			memmove(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
 		} else {
@@ -441,15 +441,15 @@ pmap_bootstrap(kernelstart, kernelend)
 			if (s)
 				mp->size = s;
 			else {
-				memcpy(mp, mp + 1,
-				      (cnt - (mp - avail)) * sizeof *mp);
+				memmove(mp, mp + 1,
+					(cnt - (mp - avail)) * sizeof *mp);
 				mp = avail;
 			}
 			break;
 		}
 		if (s != 0) {
-			memcpy(mp + 1, mp,
-			      (cnt - (mp - avail)) * sizeof *mp);
+			memmove(mp + 1, mp,
+				(cnt - (mp - avail)) * sizeof *mp);
 			mp++->size = s;
 			cnt++;
 		}
@@ -481,7 +481,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	mp->size -= sz;
 	mp->start += sz;
 	if (mp->size <= 0)
-		memcpy(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
+		memmove(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 	for (i = 0; i < ptab_cnt; i++)
 		LIST_INIT(potable + i);
 	LIST_INIT(&pv_page_freelist);
@@ -502,7 +502,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	msgbuf_paddr = mp->start + mp->size - sz;
 	mp->size -= sz;
 	if (mp->size <= 0)
-		memcpy(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
+		memmove(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
 	for (mp = avail; mp->size; mp++)
