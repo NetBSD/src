@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.13 2001/09/11 22:52:54 wiz Exp $
+.\"	$NetBSD: tl.4,v 1.14 2001/09/22 16:36:23 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -54,7 +54,7 @@ in baseboard and PCI variants (10bT-only variant untested).
 in baseboard variant only (the PCI variant doesn't use the same chip !).
 .It It Baseboard Compaq Deskpro 4000 5233MMX Ethernet
 (This has been tested on the Deskpro 4000M only).
-.It TI TravelMate 5000 series laptop docking station's Ethernet board.
+.It TI TravelMate 5000 series laptop docking station's Ethernet board .
 .El
 .Sh MEDIA SELECTION
 The different models of the supported boards come with some subset of RJ-45,
@@ -73,13 +73,12 @@ specified to
 .Xr ifconfig 8
 or in your /etc/ifconfig.tl? file.
 .in -4
+.Sh SEE ALSO
+.Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr ifconfig 8
 .Sh BUGS
 The board marked as untested will always claim having an AUI connector, where
 it may be a BNC one.
-.Pp
-.Sh SEE ALSO
-.Xr ifconfig 8 ,
-.Xr ifmedia 4 ,
-.Xr netintro 4 ,
-.Xr pci 4 ,
-.Xr mii 4
