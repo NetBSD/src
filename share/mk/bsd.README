@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.110 2003/01/24 02:06:37 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.111 2003/04/11 22:40:31 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -290,6 +290,13 @@ Additionally, the following variables may be set by bsd.own.mk or in a
 make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 bsd.own.mk):
+
+MKPICLIB	bsd.own.mk provides a default for this variable, which is
+		used by bsd.lib.mk.  The default value is provided by
+		bsd.own.mk since non-library Makefiles may need to check
+		its value in order to generate proper dependencies against
+		libraries used only during the build process (which would
+		not be installed into the destination directory).
 
 MKCRYPTO	If set to "no", no cryptography support will be built
 		into the system.  Defaults to "yes".

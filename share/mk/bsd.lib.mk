@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.213 2003/03/30 00:35:07 thorpej Exp $
+#	$NetBSD: bsd.lib.mk,v 1.214 2003/04/11 22:40:31 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -103,17 +103,6 @@ CPPPICFLAGS?= -DPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
 
-.elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
-
-# On MIPS, all libs are compiled with ABIcalls (and are thus PIC),
-# not just sharedlibs.
-MKPICLIB= no
-
-.elif ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
-
-# On the VAX, all object are PIC by default, not just sharedlibs.
-MKPICLIB= no
-
 .elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
        ${OBJECT_FMT} == "ELF"
 
@@ -148,8 +137,6 @@ CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
 
 .endif
-
-MKPICLIB?= yes
 
 .if ${MKPICLIB} != "no"
 CSHLIBFLAGS+= ${CPICFLAGS}
