@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.9 1999/12/08 15:56:03 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.10 1999/12/09 01:56:23 sato Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -108,7 +108,7 @@ file arch/hpcmips/isa/isa_machdep.c		vrisab
 
 device vrbcu
 attach vrbcu at vrip
-file arch/hpcmips/vr/bcu_vrip.c			vrbcu
+file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
 
 device vrkiu: wskbddev
 attach vrkiu at vrip
@@ -124,7 +124,7 @@ defopt	PCKBD_LAYOUT
 
 device vrpmu
 attach vrpmu at vrip
-file arch/hpcmips/vr/vrpmu.c			vrpmu
+file arch/hpcmips/vr/vrpmu.c			vrpmu needs-flag
 
 device vrdsu
 attach vrdsu at vrip
