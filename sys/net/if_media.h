@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
+/*	$NetBSD: if_media.h,v 1.23 2000/03/06 20:50:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -144,6 +144,8 @@ struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm, int flags,
 /* Delete all media for a given media instance */
 void	ifmedia_delete_instance __P((struct ifmedia *, int));
 
+/* Compute baudrate for a given media. */
+int	ifmedia_baudrate __P((int));
 #endif /*_KERNEL */
 
 /*
@@ -411,6 +413,50 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
 									\
 	{ 0, NULL },							\
+}
+
+/*
+ * Baudrate descriptions for the various media types.
+ */
+struct ifmedia_baudrate {
+	int	ifmb_word;		/* media word */
+	int	ifmb_baudrate;		/* corresponding baudrate */
+};
+
+#define	IFM_BAUDRATE_DESCRIPTIONS {					\
+	{ IFM_ETHER|IFM_10_T,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_2,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_5,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_100_TX,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_FX,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_T4,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_VG,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_T2,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_1000_SX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_10_STP,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_FL,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_1000_LX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_TX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
+									\
+	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
+	{ IFM_TOKEN|IFM_TOK_STP16,	IF_Mbps(16) },			\
+	{ IFM_TOKEN|IFM_TOK_UTP4,	IF_Mbps(4) },			\
+	{ IFM_TOKEN|IFM_TOK_UTP16,	IF_Mbps(16) },			\
+									\
+	{ IFM_FDDI|IFM_FDDI_SMF,	IF_Mbps(100) },			\
+	{ IFM_FDDI|IFM_FDDI_MMF,	IF_Mbps(100) },			\
+	{ IFM_FDDI|IFM_FDDI_UTP,	IF_Mbps(100) },			\
+									\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1, IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5, IF_Mbps(5) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11, IF_Mbps(11) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
+									\
+	{ 0, 0 },							\
 }
 
 /*

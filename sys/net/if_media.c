@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.8 2000/01/26 21:58:17 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.9 2000/03/06 20:50:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -407,6 +407,29 @@ ifmedia_delete_instance(ifm, inst)
 			free(ife, M_DEVBUF);
 		}
 	}
+}
+
+/*
+ * Compute the interface `baudrate' from the media, for the interface
+ * metrics (used by routing daemons).
+ */
+struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
+    IFM_BAUDRATE_DESCRIPTIONS;
+
+int
+ifmedia_baudrate(mword)
+	int mword;
+{
+	int i;
+
+	for (i = 0; ifmedia_baudrate_descriptions[i].ifmb_word != 0; i++) {
+		if ((mword & (IFM_NMASK|IFM_TMASK)) ==
+		    ifmedia_baudrate_descriptions[i].ifmb_word)
+			return (ifmedia_baudrate_descriptions[i].ifmb_baudrate);
+	}
+
+	/* Not known. */
+	return (0);
 }
 
 #ifdef IFMEDIA_DEBUG
