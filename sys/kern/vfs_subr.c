@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.121 2000/03/16 18:08:20 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.122 2000/03/17 01:25:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -614,16 +614,14 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1,
 			    "vbwait", 0);
 		}
-		if (vp->v_dirtyblkhd.lh_first != NULL || vp->v_mount == NULL ||
-		    !(vp->v_mount->mnt_flag & MNT_SOFTDEP)) {
-			splx(s);
-			if ((error = VOP_FSYNC(vp, cred, FSYNC_WAIT, p)) != 0)
-			        return (error);
-			s = splbio();
-			if (vp->v_numoutput > 0 ||
-			    vp->v_dirtyblkhd.lh_first != NULL)
-			        panic("vinvalbuf: dirty bufs");
-		}
+		splx(s);
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, p);
+		if (error != 0)
+		        return (error);
+		s = splbio();
+		if (vp->v_numoutput > 0 ||
+		    vp->v_dirtyblkhd.lh_first != NULL)
+		        panic("vinvalbuf: dirty bufs");
 		splx(s);
 	}
 
