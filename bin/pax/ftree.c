@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.9 1999/10/22 20:59:08 is Exp $	*/
+/*	$NetBSD: ftree.c,v 1.10 2000/02/17 03:12:24 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.9 1999/10/22 20:59:08 is Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.10 2000/02/17 03:12:24 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ __RCSID("$NetBSD: ftree.c,v 1.9 1999/10/22 20:59:08 is Exp $");
  * pax, they are read from stdin
  */
 
-static FTS *ftsp = NULL;		/* curent FTS handle */
+static FTS *ftsp = NULL;		/* current FTS handle */
 static int ftsopts;			/* options to be used on fts_open */
 static char *farray[2];			/* array for passing each arg to fts */
 static FTREE *fthead = NULL;		/* head of linked list of file args */
@@ -220,7 +220,7 @@ ftree_sel(arcn)
 	 * when file trees are supplied pax as args. The list is not used when
 	 * the trees are read from stdin.
 	 */
-	if (ftcur != NULL) 
+	if (ftcur != NULL)
 		ftcur->refcnt = 1;
 
 	/*
@@ -314,7 +314,7 @@ ftree_arg()
 		if (fthead == NULL) {
 			/*
 			 * the user didn't supply any args, get the file trees
-			 * to process from stdin; 
+			 * to process from stdin;
 			 */
 			if (fgets(farray[0], PAXPATHLEN+1, stdin) == NULL)
 				return(-1);
@@ -345,7 +345,7 @@ ftree_arg()
 		 * watch it, fts wants the file arg stored in a array of char
 		 * ptrs, with the last one a null. we use a two element array
 		 * and set farray[0] to point at the buffer with the file name
-		 * in it. We cannnot pass all the file args to fts at one shot
+		 * in it. We cannot pass all the file args to fts at one shot
 		 * as we need to keep a handle on which file arg generates what
 		 * files (the -n and -d flags need this). If the open is
 		 * successful, return a 0.
@@ -379,7 +379,7 @@ next_file(arcn)
 	/*
 	 * ftree_sel() might have set the ftree_skip flag if the user has the
 	 * -n option and a file was selected from this file arg tree. (-n says
-	 * only one member is matched for each pattern) ftree_skip being 1 
+	 * only one member is matched for each pattern) ftree_skip being 1
 	 * forces us to go to the next arg now.
 	 */
 	if (ftree_skip) {

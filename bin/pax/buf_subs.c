@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.12 2000/02/17 03:06:13 itohy Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.13 2000/02/17 03:12:23 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.12 2000/02/17 03:06:13 itohy Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.13 2000/02/17 03:12:23 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: buf_subs.c,v 1.12 2000/02/17 03:06:13 itohy Exp $");
  */
 
 #define MINFBSZ		512		/* default block size for hole detect */
-#define MAXFLT          10              /* default media read error limit */
+#define MAXFLT		10		/* default media read error limit */
 
 /*
  * Need to change bufmem to dynamic allocation when the upper
@@ -75,8 +75,8 @@ static char bufmem[MAXBLK+BLKMULT];	/* i/o buffer + pushback id space */
 static char *buf;			/* normal start of i/o buffer */
 static char *bufend;			/* end or last char in i/o buffer */
 static char *bufpt;			/* read/write point in i/o buffer */
-int blksz = MAXBLK;                    	/* block input/output size in bytes */
-int wrblksz;                      	/* user spec output size in bytes */
+int blksz = MAXBLK;			/* block input/output size in bytes */
+int wrblksz;				/* user spec output size in bytes */
 int maxflt = MAXFLT;			/* MAX consecutive media errors */
 int rdblksz;				/* first read blksize (tapes only) */
 off_t wrlimit;				/* # of bytes written per archive vol */
@@ -106,10 +106,10 @@ wr_start()
 	 * archive that might be hard to read elsewhere. If all ok, we then
 	 * open the first archive volume
 	 */
-	if (!wrblksz)  
+	if (!wrblksz)
 		wrblksz = frmt->bsz;
 	if (wrblksz > MAXBLK) {
-		tty_warn(1, "Write block size of %d too large, maximium is: %d",
+		tty_warn(1, "Write block size of %d too large, maximum is: %d",
 			wrblksz, MAXBLK);
 		return(-1);
 	}
@@ -120,7 +120,7 @@ wr_start()
 	}
 
 	/*
-	 * we only allow wrblksz to be used with all archive operations 
+	 * we only allow wrblksz to be used with all archive operations
 	 */
 	blksz = rdblksz = wrblksz;
 	if ((ar_open(arcname) < 0) && (ar_next() < 0))
@@ -155,7 +155,7 @@ rd_start()
 	if ((act == APPND) && wrblksz) {
 		if (wrblksz > MAXBLK) {
 			tty_warn(1,
-			    "Write block size %d too large, maximium is: %d",
+			    "Write block size %d too large, maximum is: %d",
 			    wrblksz, MAXBLK);
 			return(-1);
 		}
@@ -204,13 +204,13 @@ cp_start()
  *	the start of the header of the first file added to the archive. The
  *	format specific end read function tells us how many bytes to move
  *	backwards in the archive to be positioned BEFORE the trailer. Two
- *	different postions have to be adjusted, the O.S. file offset (e.g. the
+ *	different positions have to be adjusted, the O.S. file offset (e.g. the
  *	position of the tape head) and the write point within the data we have
  *	stored in the read (soon to become write) buffer. We may have to move
  *	back several records (the number depends on the size of the archive
  *	record and the size of the format trailer) to read up the record where
  *	the first byte of the trailer is recorded. Trailers may span (and
- *	overlap) record boundries.
+ *	overlap) record boundaries.
  *	We first calculate which record has the first byte of the trailer. We
  *	move the OS file offset back to the start of this record and read it
  *	up. We set the buffer write pointer to be at this byte (the byte where
@@ -222,7 +222,7 @@ cp_start()
  *	about the conditions under which they will allow a write to occur.
  *	Often devices restrict the conditions where writes can be made writes,
  *	so it may not be feasable to append archives stored on all types of
- *	devices. 
+ *	devices.
  * Return:
  *	0 for success, -1 for failure
  */
@@ -320,7 +320,7 @@ appnd_start(skcnt)
 	tty_warn(1, "Unable to rewrite archive trailer, cannot append.");
 	return(-1);
 }
-	
+
 /*
  * rd_sync()
  *	A read error occurred on this archive volume. Resync the buffer and
@@ -400,7 +400,7 @@ rd_sync()
  * pback()
  *	push the data used during the archive id phase back into the I/O
  *	buffer. This is required as we cannot be sure that the header does NOT
- *	overlap a block boundry (as in the case we are trying to recover a
+ *	overlap a block boundary (as in the case we are trying to recover a
  *	flawed archived). This was not designed to be used for any other
  *	purpose. (What software engineering, HA!)
  *	WARNING: do not even THINK of pback greater than BLKMULT, unless the
@@ -424,7 +424,7 @@ pback(pt, cnt)
 
 /*
  * rd_skip()
- *	skip foward in the archive during a archive read. Used to get quickly
+ *	skip forward in the archive during a archive read. Used to get quickly
  *	past file data and padding for files the user did NOT select.
  * Return:
  *	0 if ok, -1 failure, and 1 when EOF on the archive volume was detected.
@@ -444,7 +444,7 @@ rd_skip(skcnt)
 	off_t skipped = 0;
 
 	/*
-	 * consume what data we have in the buffer. If we have to move foward
+	 * consume what data we have in the buffer. If we have to move forward
 	 * whole records, we call the low level skip function to see if we can
 	 * move within the archive without doing the expensive reads on data we
 	 * do not want.
@@ -497,7 +497,7 @@ rd_skip(skcnt)
 	return(0);
 }
 
-/* 
+/*
  * wr_fin()
  *	flush out any data (and pad if required) the last block. We always pad
  *	with zero (even though we do not have to). Padding with 0 makes it a
@@ -526,7 +526,7 @@ wr_fin()
  *	by format specific write routines to pass a file header). On failure we
  *	punt. We do not allow the user to continue to write flawed archives.
  *	We assume these headers are not very large (the memory copy we use is
- *	a bit expensive). 
+ *	a bit expensive).
  * Return:
  *	0 if buffer was filled ok, -1 o.w. (buffer flush failure)
  */
@@ -620,7 +620,7 @@ rd_wrbuf(in, cpcnt)
 
 /*
  * wr_skip()
- *	skip foward during a write. In other words add padding to the file.
+ *	skip forward during a write. In other words add padding to the file.
  *	we add zero filled padding as it makes flawed archives much easier to
  *	recover from. the caller tells us how many bytes of padding to add
  *	This routine was not designed to add HUGE amount of padding, just small
@@ -760,7 +760,7 @@ rd_wrfile(arcn, ofd, left)
 	int isem = 1;
 	int rem;
 	int sz = MINFBSZ;
- 	struct stat sb;
+	struct stat sb;
 	u_long crc = 0L;
 
 	/*
@@ -769,11 +769,11 @@ rd_wrfile(arcn, ofd, left)
 	 */
 	if (ofd == -1)
 		sz = PAXPATHLEN+1;
-        else if (fstat(ofd, &sb) == 0) {
+	else if (fstat(ofd, &sb) == 0) {
 		if (sb.st_blksize > 0)
 			sz = (int)sb.st_blksize;
-        } else
-                syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+	} else
+		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
 	rem = sz;
 	*left = 0L;
 
@@ -812,7 +812,7 @@ rd_wrfile(arcn, ofd, left)
 	/*
 	 * if the last block has a file hole (all zero), we must make sure this
 	 * gets updated in the file. We force the last block of zeros to be
-	 * written. just closing with the file offset moved foward may not put
+	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
 	if (ofd != -1 && isem && (arcn->sb.st_size > 0L))
@@ -821,7 +821,7 @@ rd_wrfile(arcn, ofd, left)
 	/*
 	 * if we failed from archive read, we do not want to skip
 	 */
-	if ((size > 0L) && (*left == 0L)) 
+	if ((size > 0L) && (*left == 0L))
 		return(-1);
 
 	/*
@@ -873,11 +873,11 @@ cp_file(arcn, fd1, fd2)
 	 * pass the blocksize of the file being written to the write routine,
 	 * if the size is zero, use the default MINFBSZ
 	 */
-        if (fstat(fd2, &sb) == 0) {
+	if (fstat(fd2, &sb) == 0) {
 		if (sb.st_blksize > 0)
 			sz = sb.st_blksize;
-        } else
-                syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+	} else
+		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
 	rem = sz;
 
 	/*
@@ -913,7 +913,7 @@ cp_file(arcn, fd1, fd2)
 	/*
 	 * if the last block has a file hole (all zero), we must make sure this
 	 * gets updated in the file. We force the last block of zeros to be
-	 * written. just closing with the file offset moved foward may not put
+	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
 	if (!no_hole && isem && (arcn->sb.st_size > 0L))
@@ -1032,7 +1032,7 @@ buf_flush(bufcnt)
 		/*
 		 * write a block and check if it all went out ok
 		 */
-		cnt = ar_write(buf, blksz); 
+		cnt = ar_write(buf, blksz);
 		if (cnt == blksz) {
 			/*
 			 * the write went ok

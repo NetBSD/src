@@ -1,4 +1,4 @@
-/*	$NetBSD: cpio.c,v 1.8 1998/02/28 15:53:00 mrg Exp $	*/
+/*	$NetBSD: cpio.c,v 1.9 2000/02/17 03:12:23 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cpio.c,v 1.8 1998/02/28 15:53:00 mrg Exp $");
+__RCSID("$NetBSD: cpio.c,v 1.9 2000/02/17 03:12:23 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ int cpio_swp_head;		/* binary cpio header byte swap */
  * cpio_strd()
  *	Fire up the hard link detection code
  * Return:
- *      0 if ok -1 otherwise (the return values of lnk_start())
+ *	0 if ok -1 otherwise (the return values of lnk_start())
  */
 
 #if __STDC__
@@ -98,7 +98,7 @@ cpio_strd()
  *	mode; looking for a valid header), and cnt (which starts at zero)
  *	which is used to count the number of empty blocks we have seen so far.
  * Return:
- *	0 if a valid trailer, -1 if not a valid trailer, 
+ *	0 if a valid trailer, -1 if not a valid trailer,
  */
 
 #if __STDC__
@@ -296,10 +296,10 @@ rd_ln_nm(arcn)
 
 /*
  * cpio_id()
- *      determine if a block given to us is a valid extended byte oriented
+ *	determine if a block given to us is a valid extended byte oriented
  *	cpio header
  * Return:
- *      0 if a valid header, -1 otherwise
+ *	0 if a valid header, -1 otherwise
  */
 
 #if __STDC__
@@ -382,8 +382,8 @@ cpio_rd(arcn, buf)
 
 	if (((arcn->sb.st_mode&C_IFMT) != C_ISLNK)||(arcn->sb.st_size == 0)) {
 		/*
-	 	 * no link name to read for this file
-	 	 */
+		 * no link name to read for this file
+		 */
 		arcn->ln_nlen = 0;
 		arcn->ln_name[0] = '\0';
 		return(com_rd(arcn));
@@ -404,9 +404,9 @@ cpio_rd(arcn, buf)
 
 /*
  * cpio_endrd()
- *      no cleanup needed here, just return size of the trailer (for append)
+ *	no cleanup needed here, just return size of the trailer (for append)
  * Return:
- *      size of trailer header in this format
+ *	size of trailer header in this format
  */
 
 #if __STDC__
@@ -443,7 +443,7 @@ cpio_stwr()
  *	copy the data in the ARCHD to buffer in extended byte oriented cpio
  *	format.
  * Return
- *      0 if file has data to be written after the header, 1 if file has NO
+ *	0 if file has data to be written after the header, 1 if file has NO
  *	data to write after the header, -1 if archive write failed
  */
 
@@ -514,7 +514,7 @@ cpio_wr(arcn)
 	 */
 	if (ul_asc((u_long)MAGIC, hd->c_magic, sizeof(hd->c_magic), OCT) ||
 	    ul_asc((u_long)arcn->sb.st_dev, hd->c_dev, sizeof(hd->c_dev),
-	        OCT) ||
+		OCT) ||
 	    ul_asc((u_long)arcn->sb.st_ino, hd->c_ino, sizeof(hd->c_ino),
 		OCT) ||
 	    ul_asc((u_long)arcn->sb.st_mode, hd->c_mode, sizeof(hd->c_mode),
@@ -578,11 +578,11 @@ cpio_wr(arcn)
 
 /*
  * vcpio_id()
- *      determine if a block given to us is a valid system VR4 cpio header
- *	WITHOUT crc. WATCH it the magic cookies are in OCTAL, the header 
+ *	determine if a block given to us is a valid system VR4 cpio header
+ *	WITHOUT crc. WATCH it the magic cookies are in OCTAL, the header
  *	uses HEX
  * Return:
- *      0 if a valid header, -1 otherwise
+ *	0 if a valid header, -1 otherwise
  */
 
 #if __STDC__
@@ -603,10 +603,10 @@ vcpio_id(blk, size)
 
 /*
  * crc_id()
- *      determine if a block given to us is a valid system VR4 cpio header
+ *	determine if a block given to us is a valid system VR4 cpio header
  *	WITH crc. WATCH it the magic cookies are in OCTAL the header uses HEX
  * Return:
- *      0 if a valid header, -1 otherwise
+ *	0 if a valid header, -1 otherwise
  */
 
 #if __STDC__
@@ -627,9 +627,9 @@ crc_id(blk, size)
 
 /*
  * crc_strd()
- w	set file data CRC calculations. Fire up the hard link detection code
+ *	set file data CRC calculations. Fire up the hard link detection code
  * Return:
- *      0 if ok -1 otherwise (the return values of lnk_start())
+ *	0 if ok -1 otherwise (the return values of lnk_start())
  */
 
 #if __STDC__
@@ -719,7 +719,7 @@ vcpio_rd(arcn, buf)
 		return(-1);
 
 	/*
-	 * skip padding. header + filename is aligned to 4 byte boundries
+	 * skip padding. header + filename is aligned to 4 byte boundaries
 	 */
 	if (rd_skip((off_t)(VCPIO_PAD(sizeof(HD_VCPIO) + nsz))) < 0)
 		return(-1);
@@ -753,9 +753,9 @@ vcpio_rd(arcn, buf)
 
 /*
  * vcpio_endrd()
- *      no cleanup needed here, just return size of the trailer (for append)
+ *	no cleanup needed here, just return size of the trailer (for append)
  * Return:
- *      size of trailer header in this format
+ *	size of trailer header in this format
  */
 
 #if __STDC__
@@ -828,13 +828,13 @@ vcpio_wr(arcn)
 	 */
 	if (docrc) {
 		if (ul_asc((u_long)VCMAGIC, hd->c_magic, sizeof(hd->c_magic),
-	    		OCT) ||
+			OCT) ||
 		    ul_asc((u_long)arcn->crc,hd->c_chksum,sizeof(hd->c_chksum),
-	    		HEX))
+			HEX))
 			goto out;
 	} else {
 		if (ul_asc((u_long)VMAGIC, hd->c_magic, sizeof(hd->c_magic),
-	    		OCT) ||
+			OCT) ||
 		    ul_asc((u_long)0L, hd->c_chksum, sizeof(hd->c_chksum),HEX))
 			goto out;
 	}
@@ -891,11 +891,11 @@ vcpio_wr(arcn)
 	    ul_asc((u_long)arcn->sb.st_uid, hd->c_uid, sizeof(hd->c_uid),
 		HEX) ||
 	    ul_asc((u_long)arcn->sb.st_gid, hd->c_gid, sizeof(hd->c_gid),
-    		HEX) ||
+		HEX) ||
 	    ul_asc((u_long)arcn->sb.st_mtime, hd->c_mtime, sizeof(hd->c_mtime),
-    		HEX) ||
+		HEX) ||
 	    ul_asc((u_long)arcn->sb.st_nlink, hd->c_nlink, sizeof(hd->c_nlink),
-    		HEX) ||
+		HEX) ||
 	    ul_asc((u_long)MAJOR(arcn->sb.st_dev),hd->c_maj, sizeof(hd->c_maj),
 		HEX) ||
 	    ul_asc((u_long)MINOR(arcn->sb.st_dev),hd->c_min, sizeof(hd->c_min),
@@ -957,10 +957,10 @@ vcpio_wr(arcn)
 
 /*
  * bcpio_id()
- *      determine if a block given to us is a old binary cpio header
+ *	determine if a block given to us is a old binary cpio header
  *	(with/without header byte swapping)
  * Return:
- *      0 if a valid header, -1 otherwise
+ *	0 if a valid header, -1 otherwise
  */
 
 #if __STDC__
@@ -1021,7 +1021,7 @@ bcpio_rd(arcn, buf)
 	hd = (HD_BCPIO *)buf;
 	if (cpio_swp_head) {
 		/*
-		 * header has swapped bytes on 16 bit boundries
+		 * header has swapped bytes on 16 bit boundaries
 		 */
 		arcn->sb.st_dev = (dev_t)(RSHRT_EXT(hd->h_dev));
 		arcn->sb.st_ino = (ino_t)(RSHRT_EXT(hd->h_ino));
@@ -1066,7 +1066,7 @@ bcpio_rd(arcn, buf)
 		return(-1);
 
 	/*
-	 * header + file name are aligned to 2 byte boundries, skip if needed
+	 * header + file name are aligned to 2 byte boundaries, skip if needed
 	 */
 	if (rd_skip((off_t)(BCPIO_PAD(sizeof(HD_BCPIO) + nsz))) < 0)
 		return(-1);
@@ -1097,9 +1097,9 @@ bcpio_rd(arcn, buf)
 
 /*
  * bcpio_endrd()
- *      no cleanup needed here, just return size of the trailer (for append)
+ *	no cleanup needed here, just return size of the trailer (for append)
  * Return:
- *      size of trailer header in this format
+ *	size of trailer header in this format
  */
 
 #if __STDC__
@@ -1121,7 +1121,7 @@ bcpio_endrd()
  *	always check the conversion is ok. nobody in his their right mind
  *	should write an achive in this format...
  * Return
- *      0 if file has data to be written after the header, 1 if file has NO
+ *	0 if file has data to be written after the header, 1 if file has NO
  *	data to write after the header, -1 if archive write failed
  */
 

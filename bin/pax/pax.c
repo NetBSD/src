@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.11 1999/11/01 01:35:59 mrg Exp $	*/
+/*	$NetBSD: pax.c,v 1.12 2000/02/17 03:12:25 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.11 1999/11/01 01:35:59 mrg Exp $");
+__RCSID("$NetBSD: pax.c,v 1.12 2000/02/17 03:12:25 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
 /*
  *	PAX - Portable Archive Interchange
  *
- * 	A utility to read, write, and write lists of the members of archive
+ *	A utility to read, write, and write lists of the members of archive
  *	files and copy directory hierarchies. A variety of archive formats
  *	are supported (some are described in POSIX 1003.1 10.1):
  *
@@ -123,7 +123,7 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  *
  * 1	READ ENHANCEMENTS
  * 1.1	Operations which read archives will continue to operate even when
- *	processing archives which may be damaged, truncated, or fail to meet 
+ *	processing archives which may be damaged, truncated, or fail to meet
  *	format specs in several different ways. Damaged sections of archives
  *	are detected and avoided if possible. Attempts will be made to resync
  *	archive read operations even with badly damaged media.
@@ -138,7 +138,7 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  * 1.5	The user is notified whenever something is found during archive
  *	read operations which violates spec (but the read will continue).
  * 1.6	Multiple archive volumes can be read and may span over different
- *	archive devices 
+ *	archive devices
  * 1.7	Rigidly restores all file attributes exactly as they are stored on the
  *	archive.
  * 1.8	Modification change time ranges can be specified via multiple -T
@@ -148,13 +148,13 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  *	-U options.
  * 1.10	Files can be selected based on group (group name or gid) via one o
  *	more -G options.
- * 1.11	File modification time can be checked against exisiting file after
+ * 1.11	File modification time can be checked against existing file after
  *	name modification (-Z)
  *
  * 2	WRITE ENHANCEMENTS
  * 2.1	Write operation will stop instead of allowing a user to create a flawed
  *	flawed archive (due to any problem).
- * 2.2	Archives writtens by pax are forced to strictly conform to both the
+ * 2.2	Archives written by pax are forced to strictly conform to both the
  *	archive and pax the spceific format specifications.
  * 2.3	Blocking size and format is rigidly enforced on writes.
  * 2.4	Formats which may exhibit header overflow problems (they have fields
@@ -164,11 +164,11 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  *	these fields. This removes any restrictions on using these archive
  *	formats on large file systems.
  * 2.5	Multiple archive volumes can be written and may span over different
- *	archive devices 
+ *	archive devices
  * 2.6	A archive volume record limit allows the user to specify the number
  *	of bytes stored on an archive volume. When reached the user is
  *	prompted for the next archive volume. This is specified with the
- *	non-standard -B flag. THe limit is rounded up to the next blocksize.
+ *	non-standard -B flag. The limit is rounded up to the next blocksize.
  * 2.7	All archive padding during write use zero filled sections. This makes
  *	it much easier to pull data out of flawed archive during read
  *	operations.
@@ -203,15 +203,15 @@ sigset_t s_mask;		/* signal mask for cleanup critical sect */
  *	more -G options.
  * 3.8	Symlinks which appear on the command line can be followed (without
  *	following other symlinks; -H flag)
- * 3.9  File inode change time can be checked against exisiting file before
+ * 3.9	File inode change time can be checked against existing file before
  *	name modification (-D)
- * 3.10 File inode change time can be checked against exisiting file after
+ * 3.10	File inode change time can be checked against existing file after
  *	name modification (-Y)
- * 3.11	File modification time can be checked against exisiting file after
+ * 3.11	File modification time can be checked against existing file after
  *	name modification (-Z)
  *
  * 4	GENERAL ENHANCEMENTS
- * 4.1	Internal structure is designed to isolate format dependent and 
+ * 4.1	Internal structure is designed to isolate format dependent and
  *	independent functions. Formats are selected via a format driver table.
  *	This encourages the addition of new archive formats by only having to
  *	write those routines which id, read and write the archive header.
@@ -238,7 +238,7 @@ main(argc, argv)
 	 * parse options, determine operational mode, general init
 	 */
 	options(argc, argv);
-        if ((gen_init() < 0) || (tty_init() < 0))
+	if ((gen_init() < 0) || (tty_init() < 0))
 		return(exit_val);
 
 	(void)time(&starttime);
@@ -246,7 +246,7 @@ main(argc, argv)
 	(void)signal(SIGINFO, ar_summary);
 #endif
 	/*
-	 * select a primary operation mode 
+	 * select a primary operation mode
 	 */
 	switch(act) {
 	case EXTRACT:
@@ -361,7 +361,7 @@ gen_init()
 	/*
 	 * Handle posix locale
 	 *
-	 * set user defines time printing format for -v option 
+	 * set user defines time printing format for -v option
 	 */
 	ltmfrmt = getenv("LC_TIME");
 
@@ -383,27 +383,27 @@ gen_init()
 	n_hand.sa_handler = sig_cleanup;
 
 	if ((sigaction(SIGHUP, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGHUP, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGTERM, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGTERM, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGINT, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGINT, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGQUIT, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGQUIT, &o_hand, &o_hand) < 0))
 		goto out;
 
 	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) &&
-	    (o_hand.sa_handler == SIG_IGN) && 
+	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGXCPU, &o_hand, &o_hand) < 0))
 		goto out;
 
