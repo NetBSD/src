@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.7 2002/06/02 14:44:44 drochner Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.8 2003/07/15 01:31:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.8 2003/07/15 01:31:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 

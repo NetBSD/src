@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.5 2002/10/02 15:45:17 thorpej Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.6 2003/07/15 01:37:32 lukem Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.6 2003/07/15 01:37:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.1 2002/03/07 14:44:03 simonb Exp $	*/
+/*	$NetBSD: leds.c,v 1.2 2003/07/15 01:37:33 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.2 2003/07/15 01:37:33 lukem Exp $");
 
 #include <sys/types.h>
 

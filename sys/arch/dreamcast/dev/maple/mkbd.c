@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.18 2002/12/10 13:18:04 itohy Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.19 2003/07/15 01:31:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -31,6 +31,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.19 2003/07/15 01:31:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
