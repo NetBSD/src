@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3x,v 1.9 1997/03/14 23:27:34 mycroft Exp $
+#	$NetBSD: Makefile.sun3x,v 1.10 1997/03/17 20:59:48 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -113,9 +113,6 @@ SYSTEM_LD_TAIL+=; \
 		${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-S
-# XXX - temporary:
-SYSTEM_LD_TAIL+=; \
-		dbsym $@
 .endif
 
 # LOAD+
@@ -186,24 +183,23 @@ depend: .depend
 #
 # For cross-compilation, the "gcc -M" mkdep script is convenient,
 # but that does not correctly make rules from *.s files.  The
-# easiest compromise is to just list those dependencies here.
-locore.o: assym.h machine/trap.h m68k/trap.h
-copy.o:   assym.h $S/sys/errno.h
+# easiest work-around is to just list those dependencies here.
+locore.o:   assym.h m68k/asm.h m68k/trap.h
+copy.o:     assym.h m68k/asm.h $S/sys/errno.h
+bcopy.o:    assym.h m68k/asm.h
+copypage.o: assym.h m68k/asm.h
 
 # depend on root or device configuration
-autoconf.o conf.o: Makefile
+conf.o: Makefile
  
 # depend on network or filesystem configuration 
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
-db_machdep.o dvma.o machdep.o pmap.o sun3x_startup.o vm_machdep.o: Makefile
-
-# depends on DDB symbol space
-db_aout.o : Makefile
+db_machdep.o dvma.o machdep.o pmap.o _startup.o vm_machdep.o: Makefile
 
 # depends on KGDBDEV, KGDBRATE
 kgdb_stub.o: Makefile
