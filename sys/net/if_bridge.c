@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.11 2003/03/19 10:34:34 bouyer Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.12 2003/05/14 23:18:29 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,11 +82,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.11 2003/03/19 10:34:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.12 2003/05/14 23:18:29 itojun Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "bpfilter.h"
-#include "rnd.h"
 
 #include <sys/param.h> 
 #include <sys/kernel.h>
@@ -97,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.11 2003/03/19 10:34:34 bouyer Exp $"
 #include <sys/systm.h>
 #include <sys/proc.h> 
 #include <sys/pool.h>
-
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1764,12 +1759,7 @@ bridge_rtable_init(struct bridge_softc *sc)
 	for (i = 0; i < BRIDGE_RTHASH_SIZE; i++)
 		LIST_INIT(&sc->sc_rthash[i]);
 
-#if NRND > 0
-	rnd_extract_data(&sc->sc_rthash_key, sizeof(sc->sc_rthash_key),
-	    RND_EXTRACT_ANY);
-#else
-	sc->sc_rthash_key = random();
-#endif /* NRND > 0 */
+	sc->sc_rthash_key = arc4random();
 
 	LIST_INIT(&sc->sc_rtlist);
 

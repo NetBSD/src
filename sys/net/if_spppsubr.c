@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.64 2003/05/14 22:41:40 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.65 2003/05/14 23:16:44 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.64 2003/05/14 22:41:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.65 2003/05/14 23:16:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1241,7 +1241,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 			++sp->pp_loopcnt;
 
 			/* Generate new local sequence number */
-			sp->pp_seq[IDX_LCP] = random();
+			sp->pp_seq[IDX_LCP] = arc4random();
 			break;
 		}
 		sp->pp_loopcnt = 0;
@@ -2459,7 +2459,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				if (magic == ~sp->lcp.magic) {
 					if (debug)
 						addlog(" magic glitch");
-					sp->lcp.magic = random();
+					sp->lcp.magic = arc4random();
 				} else {
 					sp->lcp.magic = magic;
 					if (debug)
@@ -2642,7 +2642,7 @@ sppp_lcp_scr(struct sppp *sp)
 
 	if (sp->lcp.opts & (1 << LCP_OPT_MAGIC)) {
 		if (! sp->lcp.magic)
-			sp->lcp.magic = random();
+			sp->lcp.magic = arc4random();
 		opt[i++] = LCP_OPT_MAGIC;
 		opt[i++] = 6;
 		opt[i++] = sp->lcp.magic >> 24;
@@ -4124,7 +4124,7 @@ sppp_chap_tlu(struct sppp *sp)
 		 * Compute the re-challenge timeout.  This will yield
 		 * a number between 300 and 810 seconds.
 		 */
-		i = 300 + ((unsigned)(random() & 0xff00) >> 7);
+		i = 300 + ((unsigned)(arc4random() & 0xff00) >> 7);
 
 		callout_reset(&sp->ch[IDX_CHAP], i * hz, chap.TO, sp);
 	}
@@ -4180,8 +4180,7 @@ sppp_chap_tld(struct sppp *sp)
 static void
 sppp_chap_scr(struct sppp *sp)
 {
-	struct timeval tv;
-	u_int32_t *ch, seed;
+	u_int32_t *ch;
 	u_char clen;
 
 	if (sp->myauth.name == NULL) {
@@ -4193,12 +4192,10 @@ sppp_chap_scr(struct sppp *sp)
 
 	/* Compute random challenge. */
 	ch = (u_int32_t *)sp->myauth.challenge;
-	microtime(&tv);
-	seed = tv.tv_sec ^ tv.tv_usec;
-	ch[0] = seed ^ random();
-	ch[1] = seed ^ random();
-	ch[2] = seed ^ random();
-	ch[3] = seed ^ random();
+	ch[0] = arc4random();
+	ch[1] = arc4random();
+	ch[2] = arc4random();
+	ch[3] = arc4random();
 	clen = 16;	/* 4 * sizeof(u_int32_t) */
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
