@@ -32,6 +32,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.4  1995/06/03 21:21:56  christos
+ * Changes to write ascii timestamps in the when files.
+ * Looked into making it 64 bit clean, but it is hopeless.
+ * Added little program to convert from the old timestamp files
+ * into the new ones.
+ *
  * Revision 1.3  1993/08/04 17:46:18  brezak
  * Changes from nate for gzip'ed sup
  *
@@ -138,6 +144,11 @@ int docompress=FALSE;			/* Do we do compression? */
 extern COLLECTION *thisC;		/* collection list pointer */
 extern int rpauseflag;			/* don't disable resource pausing */
 extern int portdebug;			/* network debugging ports */
+
+#if __STDC__
+int done(int,char *,...);
+int goaway(char *,...);
+#endif
 
 /*************************************************
  ***    U P G R A D E   C O L L E C T I O N    ***
@@ -302,7 +313,6 @@ int *tout;
 setup (t)
 register TREE *t;
 {
-	char buf[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
 	register int f,x;
 	struct stat sbuf;
@@ -329,14 +339,7 @@ register TREE *t;
 		(void) sprintf (relsufix,".%s",thisC->Crelease);
 	else
 		relsufix[0] = '\0';
-	(void) sprintf (buf,FILEWHEN,collname,relsufix);
-	f = open (buf,O_RDONLY,0);
-	if (f >= 0) {
-		if (read(f,(char *)&lasttime,sizeof(long)) != sizeof(long))
-			lasttime = 0;
-		(void) close (f);
-	} else
-		lasttime = 0;
+	lasttime = getwhen(collname,relsufix);
 	/* setup for msgsetup */
 	basedir = thisC->Chbase;
 	basedev = sbuf.st_dev;
@@ -1332,8 +1335,7 @@ int x;
 		(void) requestend ();
 		return;
 	}
-	f = open (fname,(O_WRONLY|O_CREAT|O_TRUNC),0644);
-	if (f < 0) {
+	if (!putwhen(fname, scantime)) {
 		notify ("SUP: Can't record current time in %s: %s\n",
 			fname,errmsg (-1));
 		Tfree (&lastT);
@@ -1342,8 +1344,6 @@ int x;
 		(void) requestend ();
 		return;
 	}
-	(void) write (f,(char *)&scantime,sizeof(int));
-	(void) close (f);
 	if (protver >= 6) {
 		/* At this point we have let the server go */
 		/* "I'm sorry, we've had to let you go" */

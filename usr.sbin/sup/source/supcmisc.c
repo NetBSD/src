@@ -27,6 +27,12 @@
  **********************************************************************
  * HISTORY
  * $Log: supcmisc.c,v $
+ * Revision 1.2  1995/06/03 21:21:57  christos
+ * Changes to write ascii timestamps in the when files.
+ * Looked into making it 64 bit clean, but it is hopeless.
+ * Added little program to convert from the old timestamp files
+ * into the new ones.
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -73,6 +79,9 @@ static LIST *uidL[LISTSIZE];		/* uid and gid lists */
 static LIST *gidL[LISTSIZE];
 
 extern COLLECTION *thisC;		/* collection list pointer */
+#if __STDC__
+int notify (char *, ...);
+#endif
 
 /*************************************************
  ***    P R I N T   U P D A T E   T I M E S    ***
@@ -92,14 +101,7 @@ prtime ()
 	if (chdir (thisC->Cbase) < 0)
 		logerr ("Can't change to base directory %s for collection %s",
 			thisC->Cbase,thisC->Cname);
-	(void) sprintf (buf,FILEWHEN,thisC->Cname,relsufix);
-	f = open (buf,O_RDONLY,0);
-	if (f >= 0) {
-		if (read(f,(char *)&twhen,sizeof(long)) != sizeof(long))
-			twhen = 0;
-		(void) close (f);
-	} else
-		twhen = 0;
+	twhen = getwhen(thisC->Cname,relsufix);
 	(void) strcpy (buf,ctime (&twhen));
 	buf[strlen(buf)-1] = '\0';
 	loginfo ("Last update occurred at %s for collection %s",

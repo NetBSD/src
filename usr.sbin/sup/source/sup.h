@@ -39,6 +39,12 @@
  *	across the network to save BandWidth
  *
  * $Log: sup.h,v $
+ * Revision 1.3  1995/06/03 21:21:54  christos
+ * Changes to write ascii timestamps in the when files.
+ * Looked into making it 64 bit clean, but it is hopeless.
+ * Added little program to convert from the old timestamp files
+ * into the new ones.
+ *
  * Revision 1.2  1993/08/04 17:46:15  brezak
  * Changes from nate for gzip'ed sup
  *
@@ -255,3 +261,5 @@ typedef struct tliststruct TREELIST;
 /* scm and stree external declarations */
 char *remotehost();
 TREE *Tinsert(),*Tsearch(),*Tlookup();
+long getwhen();
+int putwhen();
