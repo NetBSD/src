@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.20 1999/04/13 22:34:05 jonathan Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.21 1999/08/19 08:06:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,6 +146,8 @@ struct ep_eisa_product {
 	  0,				EISA_PRODUCT_TCM5092 },
 	{ "TCM5093",			ELINK_CHIPSET_3C509,
 	  0,				EISA_PRODUCT_TCM5093 },
+	{ "TCM5094",			ELINK_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5094 },
 
 	/*
 	 * Note: The 3c597 Fast Etherlink MII (TCM5972) is an
