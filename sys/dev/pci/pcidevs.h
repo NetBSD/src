@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.189 2000/01/09 09:20:01 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.190 2000/01/11 17:21:02 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.182 2000/01/09 09:19:26 soren Exp 
+ *	NetBSD: pcidevs,v 1.183 2000/01/11 17:20:24 matt Exp 
  */
 
 /*
@@ -1054,6 +1054,10 @@
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+
+/* Linear Systems / CompuModules */
+#define	PCI_PRODUCT_LINEARSYS_DVB_TX	0x7629		/* DVB Transmitter */
+#define	PCI_PRODUCT_LINEARSYS_DVB_RX	0x7630		/* DVB Receiver */
 
 /* Lite-On products */
 #define	PCI_PRODUCT_LITEON_82C168	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */

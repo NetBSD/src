@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.187 2000/01/09 09:20:02 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.188 2000/01/11 17:21:02 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.182 2000/01/09 09:19:26 soren Exp 
+ *	NetBSD: pcidevs,v 1.183 2000/01/11 17:20:24 matt Exp 
  */
 
 /*
@@ -2126,6 +2126,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "LeadTek Research",
 	    "S3 805",
+	},
+	{
+	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_TX,
+	    0,
+	    "Linear Systems",
+	    "DVB Transmitter",
+	},
+	{
+	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_RX,
+	    0,
+	    "Linear Systems",
+	    "DVB Receiver",
 	},
 	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168,
