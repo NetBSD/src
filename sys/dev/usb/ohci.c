@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.18 1998/12/29 03:01:44 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.19 1998/12/29 05:08:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -822,6 +822,8 @@ ohci_intr_done(sc, reqh)
 		xfer->td->td_flags = LE(
 			OHCI_TD_IN | OHCI_TD_NOCC | 
 			OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
+		if (reqh->flags & USBD_SHORT_XFER_OK)
+			xfer->td->td_flags |= LE(OHCI_TD_R);
 		xfer->td->td_cbp = LE(DMAADDR(dma));
 		xfer->nexttd = tail;
 		xfer->td->td_nexttd = LE(tail->physaddr);
@@ -1011,7 +1013,8 @@ ohci_device_request(reqh)
 			goto bad4;
 		xfer->td->td_flags = LE(
 			(isread ? OHCI_TD_IN : OHCI_TD_OUT) | OHCI_TD_NOCC |
-			OHCI_TD_TOGGLE_1 | OHCI_TD_NOINTR);
+			OHCI_TD_TOGGLE_1 | OHCI_TD_NOINTR |
+			(reqh->flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0));
 		xfer->td->td_cbp = LE(DMAADDR(dmap));
 		xfer->nexttd = stat;
 		xfer->td->td_nexttd = LE(stat->physaddr);
@@ -1918,7 +1921,8 @@ ohci_device_bulk_start(reqh)
 	xfer = opipe->tail;
 	xfer->td->td_flags = LE(
 		(isread ? OHCI_TD_IN : OHCI_TD_OUT) | OHCI_TD_NOCC |
-		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
+		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY |
+		(reqh->flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0));
 	xfer->td->td_cbp = LE(DMAADDR(dmap));
 	xfer->nexttd = tail;
 	xfer->td->td_nexttd = LE(tail->physaddr);
@@ -2044,6 +2048,8 @@ ohci_device_intr_start(reqh)
 	xfer->td->td_flags = LE(
 		OHCI_TD_IN | OHCI_TD_NOCC | 
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
+	if (reqh->flags & USBD_SHORT_XFER_OK)
+		xfer->td->td_flags |= LE(OHCI_TD_R);
 	xfer->td->td_cbp = LE(DMAADDR(dmap));
 	xfer->nexttd = tail;
 	xfer->td->td_nexttd = LE(tail->physaddr);
