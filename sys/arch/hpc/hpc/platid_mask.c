@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.12 2001/07/11 10:00:08 ichiro Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.13 2001/09/04 08:46:59 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -71,6 +71,14 @@ platid_t platid_mask_CPU_MIPS_VR_4122 = {{
 	PLATID_CPU_MIPS_VR_4122,
 	PLATID_WILD
 }};
+platid_t platid_mask_CPU_MIPS_VR_4131 = {{
+	PLATID_CPU_MIPS_VR_4131,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_MIPS_VR_4181A = {{
+	PLATID_CPU_MIPS_VR_4181A,
+	PLATID_WILD
+}};
 platid_t platid_mask_CPU_MIPS_TX = {{
 	PLATID_CPU_MIPS_TX,
 	PLATID_WILD
@@ -93,6 +101,10 @@ platid_t platid_mask_CPU_MIPS_TX_3920 = {{
 }};
 platid_t platid_mask_CPU_MIPS_TX_3922 = {{
 	PLATID_CPU_MIPS_TX_3922,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_MIPS_TX_3927 = {{
+	PLATID_CPU_MIPS_TX_3927,
 	PLATID_WILD
 }};
 #endif /* hpcmips */
@@ -232,6 +244,18 @@ platid_t platid_mask_MACH_NEC_MCR_530A = {{
 platid_t platid_mask_MACH_NEC_MCR_SIGMARION = {{
 	PLATID_CPU_MIPS_VR_4121,
 	PLATID_MACH_NEC_MCR_SIGMARION
+}};
+platid_t platid_mask_MACH_NEC_MCR_550 = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_NEC_MCR_550
+}};
+platid_t platid_mask_MACH_NEC_MCR_450 = {{
+	PLATID_CPU_MIPS_VR_4121,
+	PLATID_MACH_NEC_MCR_450
+}};
+platid_t platid_mask_MACH_NEC_MCR_SIGMARION2 = {{
+	PLATID_CPU_MIPS_VR_4131,
+	PLATID_MACH_NEC_MCR_SIGMARION2
 }};
 platid_t platid_mask_MACH_NEC_MCR_7XX = {{
 	PLATID_CPU_MIPS_VR_41XX,
@@ -599,6 +623,10 @@ platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC303 = {{
 	PLATID_CPU_MIPS_VR_4122,
 	PLATID_MACH_VICTOR_INTERLINK_MPC303
 }};
+platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC304 = {{
+	PLATID_CPU_MIPS_VR_4122,
+	PLATID_MACH_VICTOR_INTERLINK_MPC304
+}};
 #endif /* hpcmips */
 #ifdef hpcmips
 platid_t platid_mask_MACH_IBM = {{
@@ -762,3 +790,35 @@ platid_t platid_mask_MACH_LGE_PHENOM_H220C = {{
 	PLATID_MACH_LGE_PHENOM_H220C
 }};
 #endif /* hpcsh */
+#ifdef hpcmips
+platid_t platid_mask_MACH_LASER5 = {{
+	PLATID_WILD,
+	PLATID_MACH_LASER5
+}};
+platid_t platid_mask_MACH_LASER5_L = {{
+	PLATID_WILD,
+	PLATID_MACH_LASER5_L
+}};
+platid_t platid_mask_MACH_LASER5_L_CARD = {{
+	PLATID_CPU_MIPS_VR_4181,
+	PLATID_MACH_LASER5_L_CARD
+}};
+platid_t platid_mask_MACH_LASER5_L_BOARD = {{
+	PLATID_CPU_MIPS_VR_4122,
+	PLATID_MACH_LASER5_L_BOARD
+}};
+#endif /* hpcmips */
+#ifdef hpcmips
+platid_t platid_mask_MACH_AGENDA = {{
+	PLATID_WILD,
+	PLATID_MACH_AGENDA
+}};
+platid_t platid_mask_MACH_AGENDA_VR = {{
+	PLATID_WILD,
+	PLATID_MACH_AGENDA_VR
+}};
+platid_t platid_mask_MACH_AGENDA_VR_VR3 = {{
+	PLATID_CPU_MIPS_VR_4181,
+	PLATID_MACH_AGENDA_VR_VR3
+}};
+#endif /* hpcmips */

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.12 2001/07/11 10:00:08 ichiro Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.13 2001/09/04 08:47:00 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -56,6 +56,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("MIPS VR 4181") },
 	{ &platid_mask_CPU_MIPS_VR_4122,
 	 TEXT("MIPS VR 4122") },
+	{ &platid_mask_CPU_MIPS_VR_4131,
+	 TEXT("MIPS VR 4131") },
+	{ &platid_mask_CPU_MIPS_VR_4181A,
+	 TEXT("MIPS VR 4181A") },
 	{ &platid_mask_CPU_MIPS_TX,
 	 TEXT("MIPS TX") },
 	{ &platid_mask_CPU_MIPS_TX_3900,
@@ -68,6 +72,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("MIPS TX 3920") },
 	{ &platid_mask_CPU_MIPS_TX_3922,
 	 TEXT("MIPS TX 3922") },
+	{ &platid_mask_CPU_MIPS_TX_3927,
+	 TEXT("MIPS TX 3927") },
 #endif /* hpcmips */
 #ifdef hpcsh
 	{ &platid_mask_CPU_SH,
@@ -140,6 +146,12 @@ struct platid_name platid_name_table[] = {
 	 TEXT("NEC MobilePro 780") },
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION,
 	 TEXT("DoCoMo sigmarion") },
+	{ &platid_mask_MACH_NEC_MCR_550,
+	 TEXT("NEC MC-R550") },
+	{ &platid_mask_MACH_NEC_MCR_450,
+	 TEXT("NEC MC-R450") },
+	{ &platid_mask_MACH_NEC_MCR_SIGMARION2,
+	 TEXT("DoCoMo sigmarionII") },
 	{ &platid_mask_MACH_NEC_MCR_7XX,
 	 TEXT("NEC MC-R700 series") },
 	{ &platid_mask_MACH_NEC_MCR_700,
@@ -332,6 +344,8 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Victor InterLink MPC101") },
 	{ &platid_mask_MACH_VICTOR_INTERLINK_MPC303,
 	 TEXT("Victor InterLink MPC303") },
+	{ &platid_mask_MACH_VICTOR_INTERLINK_MPC304,
+	 TEXT("Victor InterLink MPC304") },
 #endif /* hpcmips */
 #ifdef hpcmips
 	{ &platid_mask_MACH_IBM,
@@ -417,9 +431,27 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_LGE,
 	 TEXT("LGE") },
 	{ &platid_mask_MACH_LGE_PHENOM,
-	 TEXT("LGEPhenom") },
+	 TEXT("LGE Phenom") },
 	{ &platid_mask_MACH_LGE_PHENOM_H220C,
 	 TEXT("LGE H-220C") },
 #endif /* hpcsh */
+#ifdef hpcmips
+	{ &platid_mask_MACH_LASER5,
+	 TEXT("LASER5") },
+	{ &platid_mask_MACH_LASER5_L,
+	 TEXT("LASER5 L-") },
+	{ &platid_mask_MACH_LASER5_L_CARD,
+	 TEXT("LASER5 L-CARD+") },
+	{ &platid_mask_MACH_LASER5_L_BOARD,
+	 TEXT("LASER5 L-BOARD") },
+#endif /* hpcmips */
+#ifdef hpcmips
+	{ &platid_mask_MACH_AGENDA,
+	 TEXT("AGENDA") },
+	{ &platid_mask_MACH_AGENDA_VR,
+	 TEXT("AGENDA VR") },
+	{ &platid_mask_MACH_AGENDA_VR_VR3,
+	 TEXT("AGENDA VR3+") },
+#endif /* hpcmips */
 };
 int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);
