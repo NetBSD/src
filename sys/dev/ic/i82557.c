@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.83 2004/04/28 03:37:58 briggs Exp $	*/
+/*	$NetBSD: i82557.c,v 1.84 2004/04/28 15:25:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.83 2004/04/28 03:37:58 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.84 2004/04/28 15:25:45 briggs Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1144,6 +1144,8 @@ fxp_intr(void *arg)
 		}
 
 		if (statack & FXP_SCB_STATACK_RNR) {
+			fxp_scb_wait(sc);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_ABORT);
 			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
 			fxp_scb_wait(sc);
 			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
