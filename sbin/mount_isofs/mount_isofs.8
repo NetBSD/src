@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: mount_isofs.8,v 1.1 1993/07/20 00:51:02 cgd Exp $
+.\"	$Id: mount_isofs.8,v 1.2 1993/07/28 00:57:11 cgd Exp $
 .\"
 .Dd July 19, 1993
 .Dt MOUNT_MSDOS 8
@@ -59,13 +59,13 @@ used unless the
 .Fl norrip
 flag is used.  If that option is given to
 .Nm
-the Rockridge extsions will be ignored.
+then the Rockridge extensions will be ignored.
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
 mount_isofs /dev/cd0d /cdrom
 mount_isofs \-norrip /dev/cd0d /cdrom
 mount \-t isofs /dev/cd0d /cdrom
-mount \-t isofs \-norrip /dev/cd0d /cdrom
+mount \-t isofs \-o \-norrip /dev/cd0d /cdrom
 .Ed
 .Sh SEE ALSO
 .Xr mount 2 ,
@@ -89,5 +89,10 @@ utility first appeared in NetBSD 0.8.
 Handling of Rockridge extensions was added for NetBSD 0.9.
 .Sh AUTHORS
 .Bl -tag
-Atsushi Murai, amurai@spec.co.jp, wrote the Rockridge support.
+Pace Willisson <pace@blitz.com>, <pace@bsdi.com> wrote the
+original version of the ISO-9660 filesystem.
+.Pp
+Atsushi Murai <amurai@spec.co.jp> wrote the Rockridge support.
+.Pp
+Chris Demetriou <cgd@berkeley.edu> wrote the man page.
 .El

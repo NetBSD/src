@@ -5,11 +5,12 @@ DOC=	14.edit
 
 SRCS=	edittut.ms
 MACROS=	-ms
+CLEANFILES+=	editvindex
 
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}
 
 # index for versatec is different from the one in edit.tut
 # because the fonts are different and entries reference page
@@ -17,4 +18,4 @@ ${DOC}.${PRINTER}: ${SRCS}
 # you should just use the index in edit.tut, and ignore editvindex.
 
 editvindex:
-	( cd ${.CURDIR} ; ${TROFF} ${MACROS} -n22 edit.vindex
+	( cd ${.CURDIR} ; ${ROFF} ${MACROS} -n22 edit.vindex ) > ${.TARGET}
