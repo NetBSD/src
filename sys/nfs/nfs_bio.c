@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.94 2003/04/15 13:48:40 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.95 2003/04/18 15:19:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.94 2003/04/15 13:48:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.95 2003/04/18 15:19:02 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1031,6 +1031,8 @@ nfs_doio_write(bp, uiop)
 					nfs_add_committed_range(vp, off, cnt);
 				}
 			}
+		} else {
+			error = 0;
 		}
 		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
 		if (!error) {
