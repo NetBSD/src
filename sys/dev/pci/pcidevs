@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.272 2000/11/14 16:20:20 bouyer Exp $
+$NetBSD: pcidevs,v 1.273 2000/11/18 05:29:00 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,9 @@ product 3DLABS DELTA		0x0003	GLINT DELTA
 product 3DLABS PERMEDIA		0x0004	GLINT Permedia
 product 3DLABS 500MX		0x0006	GLINT 500MX
 product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
+product 3DLABS GAMMA		0x0008	GLINT GAMMA
+product 3DLABS PERMEDIA2V	0x0009	GLINT Permedia 2V
+product 3DLABS PERMEDIA3	0x000a	GLINT Permedia 3
 
 /* 3ware products */
 product	3WARE ESCALADE	0x1000	Escalade IDE RAID
