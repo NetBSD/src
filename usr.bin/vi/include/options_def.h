@@ -10,8 +10,8 @@
 #define O_COMMENT 9
 #define O_DIRECTORY 10
 #define O_EDCOMPATIBLE 11
-#define O_ESCAPETIME 12
-#define O_ERRORBELLS 13
+#define O_ERRORBELLS 12
+#define O_ESCAPETIME 13
 #define O_EXRC 14
 #define O_EXTENDED 15
 #define O_FILEC 16
