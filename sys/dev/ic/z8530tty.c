@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.54 1999/01/13 11:55:20 christos Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.55 1999/01/25 17:53:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -933,15 +933,10 @@ zsparam(tp, t)
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
-	 * explicit request. Do this only if we have enabled interrupts on
-	 * this pin. mac68k and macppc serial ports might have a clock on
-	 * DCD, and so it makes no sense to pass the clock state further up
-	 * the tty system.
+	 * explicit request.
 	 */
-	if (ISSET(cs->cs_rr0_mask, ZSRR0_DCD)) {
-		(void) (*linesw[tp->t_line].l_modem)(tp,
-				ISSET(cs->cs_rr0, ZSRR0_DCD));
-	}
+	(void) (*linesw[tp->t_line].l_modem)(tp,
+			ISSET(cs->cs_rr0, ZSRR0_DCD));
 
 	if (!ISSET(cflag, CHWFLOW)) {
 		if (zst->zst_tx_stopped) {
