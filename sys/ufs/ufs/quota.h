@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.8 2000/03/16 18:26:49 jdolecek Exp $	*/
+/*	$NetBSD: quota.h,v 1.9 2001/02/23 02:25:11 eeh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -105,8 +105,8 @@ struct dqblk {
 	u_int32_t dqb_ihardlimit;	/* maximum # allocated inodes + 1 */
 	u_int32_t dqb_isoftlimit;	/* preferred inode limit */
 	u_int32_t dqb_curinodes;	/* current # allocated inodes */
-	time_t	  dqb_btime;		/* time limit for excessive disk use */
-	time_t	  dqb_itime;		/* time limit for excessive files */
+	int32_t	  dqb_btime;		/* time limit for excessive disk use */
+	int32_t	  dqb_itime;		/* time limit for excessive files */
 };
 
 #ifdef _KERNEL
