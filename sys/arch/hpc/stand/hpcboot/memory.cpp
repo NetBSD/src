@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.3 2001/05/08 18:51:23 uch Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.4 2001/05/16 08:37:44 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,10 +165,11 @@ BOOL
 MemoryManager::getPage(vaddr_t &vaddr, paddr_t &paddr)
 {
 	/* get plain page from the top */
-	int idx = --_naddr_table;
-
-	if (idx < 0 || _addr_table == NULL)
+	if (_addr_table_idx >= _naddr_table ||
+	    _addr_table == NULL)
 		return FALSE;
+
+	int idx = --_naddr_table;
 
 	AddressTranslationTable *tab = &_addr_table[idx];
 	vaddr = tab->vaddr;
