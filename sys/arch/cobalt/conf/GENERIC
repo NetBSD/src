@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.14 2000/12/19 10:42:04 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.15 2001/02/16 19:48:05 soren Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -12,7 +12,7 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-options 	LKM		# loadable kernel modules
+#options 	LKM		# loadable kernel modules
 #options 	NTP		# network time protocol
 #options 	UCONSOLE	# users can redirect console (unsafe)
 
