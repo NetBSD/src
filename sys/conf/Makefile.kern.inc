@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.42 2003/11/06 08:23:22 jdolecek Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.43 2003/11/11 21:26:53 enami Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -263,11 +263,12 @@ SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .depend: ${SRCS} assym.h config_time.h
-	${MKDEP} ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
-	${MKDEP} -a ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
+	${MKDEP} -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
+	${MKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}
 	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} ${CPPFLAGS}
+	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep -- \
+	    ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 .endif
