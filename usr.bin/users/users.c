@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.3 1994/12/06 07:32:29 jtc Exp $	*/
+/*	$NetBSD: users.c,v 1.4 1994/12/07 00:21:14 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,23 +43,27 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$Id: users.c,v 1.3 1994/12/06 07:32:29 jtc Exp $";
+static char rcsid[] = "$NetBSD: users.c,v 1.4 1994/12/07 00:21:14 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <utmp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <err.h>
 
-#define	MAXUSERS	200
+typedef char	namebuf[UT_NAMESIZE];
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	register int cnt, ncnt;
+	namebuf *names = NULL;
+	register int ncnt = 0;
+	register int nmax = 0;
+	int cnt;
 	struct utmp utmp;
-	char names[MAXUSERS][UT_NAMESIZE];
 	int ch, scmp();
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
@@ -73,20 +77,27 @@ main(argc, argv)
 	argv += optind;
 
 	if (!freopen(_PATH_UTMP, "r", stdin)) {
-		(void)fprintf(stderr, "users: can't open %s.\n", _PATH_UTMP);
-		exit(1);
+		err(1, "can't open %s", _PATH_UTMP);
+		/* NOTREACHED */
 	}
-	for (ncnt = 0;
-	    fread((char *)&utmp, sizeof(utmp), 1, stdin) == 1;)
+
+	while (fread((char *)&utmp, sizeof(utmp), 1, stdin) == 1) {
 		if (*utmp.ut_name) {
-			if (ncnt == MAXUSERS) {
-				(void)fprintf(stderr,
-				    "users: too many users.\n");
-				break;
+			if (ncnt >= nmax) {
+				nmax += 32;
+				names = realloc(names, 
+					sizeof (*names) * nmax);
+
+				if (!names) {
+					err(1, NULL);
+					/* NOTREACHED */
+				}
 			}
+
 			(void)strncpy(names[ncnt], utmp.ut_name, UT_NAMESIZE);
 			++ncnt;
 		}
+	}
 
 	if (ncnt) {
 		qsort(names, ncnt, UT_NAMESIZE, scmp);
@@ -100,7 +111,7 @@ main(argc, argv)
 }
 
 scmp(p, q)
-	char *p, *q;
+	void *p, *q;
 {
-	return(strncmp(p, q, UT_NAMESIZE));
+	return(strncmp((char *) p, (char *) q, UT_NAMESIZE));
 }
