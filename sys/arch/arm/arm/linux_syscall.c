@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2002/01/17 17:26:03 bjh21 Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.1 2002/01/17 17:26:03 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,9 +71,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * syscall entry handling
- *
- * Created      : 09/11/94
+ * ARMLinux emulation: syscall entry handling
  */
 
 #include "opt_ktrace.h"
@@ -81,14 +79,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: syscall.c,v 1.5 2002/01/17 17:26:03 bjh21 Exp $");
+__RCSID("$NetBSD: linux_syscall.c,v 1.1 2002/01/17 17:26:03 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
-#include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #ifdef KTRACE
@@ -102,156 +99,23 @@ __RCSID("$NetBSD: syscall.c,v 1.5 2002/01/17 17:26:03 bjh21 Exp $");
 #include <machine/pcb.h>
 #include <arm/swi.h>
 
-#ifdef arm26
-#include <machine/machdep.h>
-#endif
-
-#ifdef CPU_ARM7
-struct evcnt arm700bugcount =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
-#endif
+#include <compat/linux/common/linux_errno.h>
+#include <compat/linux/linux_syscall.h>
 
 void
-swi_handler(trapframe_t *frame)
-{
-	struct proc *p;
-	u_int32_t insn;
-
-	/*
-	 * Enable interrupts if they were enabled before the exception.
-	 * Since all syscalls *should* come from user mode it will always
-	 * be safe to enable them, but check anyway. 
-	 */
-#ifdef arm26
-	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-#else
-	if (!(frame->tf_spsr & I32_bit))
-		enable_interrupts(I32_bit);
-#endif
-
-#ifdef arm26
-	frame->tf_pc += INSN_SIZE;
-#endif
-
-	/* XXX fuword? */
-#ifdef __PROG32
-	insn = *(u_int32_t *)(frame->tf_pc - INSN_SIZE);
-#else
-	insn = *(u_int32_t *)((frame->tf_r15 & R15_PC) - INSN_SIZE);
-#endif
-
-	p = curproc;
-	p->p_addr->u_pcb.pcb_tf = frame;
-
-#ifdef CPU_ARM7
-	/*
-	 * This code is only needed if we are including support for the ARM7
-	 * core. Other CPUs do not need it but it does not hurt.
-	 */
-
-	/*
-	 * ARM700/ARM710 match sticks and sellotape job ...
-	 *
-	 * I know this affects GPS/VLSI ARM700/ARM710 + various ARM7500.
-	 *
-	 * On occasion data aborts are mishandled and end up calling
-	 * the swi vector.
-	 *
-	 * If the instruction that caused the exception is not a SWI
-	 * then we hit the bug.
-	 */
-	if ((insn & 0x0f000000) != 0x0f000000) {
-		frame->tf_pc -= INSN_SIZE;
-		/*
-		 * Yuck.  arm700bugcount should be per-CPU and
-		 * attached at the same time as the CPU.
-		 */
-		if (!cold && arm700bugcount.ev_list.tqe_next == NULL)
-			evcnt_attach_static(&arm700bugcount);
-		++arm700bugcount.ev_count;
-		userret(p);
-		return;
-	}
-#endif	/* CPU_ARM7 */
-
-	uvmexp.syscalls++;
-
-	(*(void(*)(struct trapframe *, struct proc *, u_int32_t))
-	    (p->p_emul->e_syscall))(frame, p, insn);
-}
-
-#define MAXARGS 8
-
-void
-syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
+linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 {
 	const struct sysent *callp;
 	int code, error;
-	u_int nap, nargs;
-	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+	u_int nargs;
+	register_t *args, rval[2];
 
-	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
-	case SWI_OS_ARM: /* ARM-defined SWIs */
-		code = insn & 0x00ffffff;
-		switch (code) {
-		case SWI_IMB:
-		case SWI_IMBrange:
-			/*
-			 * Do nothing as there is no prefetch unit that needs
-			 * flushing
-			 */
-			break;
-		default:
-			/* Undefined so illegal instruction */
-			trapsignal(p, SIGILL, insn);
-			break;
-		}
+	code = insn & (LINUX_SYS_NSYSENT - 1);
 
-		userret(p);
-		return;
-	case 0x000000: /* Old unofficial NetBSD range. */
-	case SWI_OS_NETBSD: /* New official NetBSD range. */
-		nap = 4;
-		break;
-	default:
-		/* Undefined so illegal instruction */
-		trapsignal(p, SIGILL, insn);
-		userret(p);
-		return;
-	}
-
-	code = insn & 0x000fffff;
-
-	ap = &frame->tf_r0;
-	callp = p->p_emul->e_sysent;
-
-	switch (code) {	
-	case SYS_syscall:
-		code = *ap++;
-		nap--;
-		break;
-        case SYS___syscall:
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
-		break;
-	}
-
-	code &= (SYS_NSYSENT - 1);
-	callp += code;
+	/* Linux passes all arguments in order in registers, which is nice. */
+	args = &frame->tf_r0;
+	callp = p->p_emul->e_sysent + code;
 	nargs = callp->sy_argsize / sizeof(register_t);
-	if (nargs <= nap)
-		args = ap;
-	else {
-		KASSERT(nargs <= MAXARGS);
-		memcpy(copyargs, ap, nap * sizeof(register_t));
-		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
-		    (nargs - nap) * sizeof(register_t));
-		if (error)
-			goto bad;
-		args = copyargs;
-	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
@@ -268,20 +132,11 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 	switch (error) {
 	case 0:
 		frame->tf_r0 = rval[0];
-		frame->tf_r1 = rval[1];
-
-#ifdef __PROG32
-		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
-#else
-		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
-#endif
 		break;
 
 	case ERESTART:
-		/*
-		 * Reconstruct the pc to point at the swi.
-		 */
-		frame->tf_pc -= INSN_SIZE;
+		/* Reconstruct the pc to point at the swi.  */
+ 		frame->tf_pc -= INSN_SIZE;
 		break;
 
 	case EJUSTRETURN:
@@ -289,13 +144,8 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 		break;
 
 	default:
-	bad:
+		error = native_to_linux_errno[error];
 		frame->tf_r0 = error;
-#ifdef __PROG32
-		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
-#else
-		frame->tf_r15 |= R15_FLAG_C;	/* carry bit */
-#endif
 		break;
 	}
 
@@ -308,26 +158,3 @@ syscall(struct trapframe *frame, struct proc *p, u_int32_t insn)
 		ktrsysret(p, code, error, rval[0]);
 #endif
 }
-
-void
-child_return(arg)
-	void *arg;
-{
-	struct proc *p = arg;
-	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
-
-	frame->tf_r0 = 0;
-#ifdef __PROG32
-		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
-#else
-		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
-#endif
-
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
-#endif
-}
-
-/* End of syscall.c */
