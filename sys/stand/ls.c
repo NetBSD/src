@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/11/93";*/
-static char rcsid[] = "$NetBSD: ls.c,v 1.5 1994/06/29 06:43:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: ls.c,v 1.6 1996/10/10 23:32:59 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,11 +57,11 @@ main()
 			exit();
 		ip = &iob[fd - 3].i_ino;
 		if ((ip->di_mode & IFMT) != IFDIR) {
-			printf("ls: not a directory\n");
+			kprintf("ls: not a directory\n");
 			continue;
 		}
 		if (ip->di_size == 0) {
-			printf("ls: zero length directory\n");
+			kprintf("ls: zero length directory\n");
 			continue;
 		}
 		ls(fd);
@@ -78,7 +78,7 @@ getfile(prompt, mode)
 	char buf[100];
 
 	do {
-		printf("%s: ", prompt);
+		kprintf("%s: ", prompt);
 		gets(buf);
 		if (buf[0] == CTRL('d') && buf[1] == 0)
 			return (-1);
@@ -95,7 +95,7 @@ ls(fd)
 	register char *dp;
 	char dirbuf[DIRBLKSIZ];
 
-	printf("\ninode\tname\n");
+	kprintf("\ninode\tname\n");
 	while ((size = read(fd, dirbuf, DIRBLKSIZ)) == DIRBLKSIZ)
 		for (dp = dirbuf; (dp < (dirbuf + size)) &&
 		    (dp + ((DP *)dp)->d_reclen) < (dirbuf + size);
@@ -103,10 +103,10 @@ ls(fd)
 			if (((DP *)dp)->d_ino == 0)
 				continue;
 			if (((DP *)dp)->d_namlen > MAXNAMLEN+1) {
-				printf("Corrupt file name length!  Run fsck soon!\n");
+				kprintf("Corrupt file name length!  Run fsck soon!\n");
 				return;
 			}
-			printf("%d\t%s\n", ((DP *)dp)->d_ino,
+			kprintf("%d\t%s\n", ((DP *)dp)->d_ino,
 			    ((DP *)dp)->d_name);
 		}
 }

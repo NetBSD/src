@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.5 1996/08/28 19:00:21 cgd Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.6 1996/10/10 23:41:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -141,7 +141,7 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sc->sc_link.device         = &wdsc_scsidev;
     sc->sc_link.openings       = 2;
 
-    printf(": WD33C93 SCSI, target %d\n", sc->sc_link.adapter_target);
+    kprintf(": WD33C93 SCSI, target %d\n", sc->sc_link.adapter_target);
 
     sc->sc_cregs = (volatile void *)sys_pcc;
     sc->sc_sbicp = (sbic_regmap_p) PCC_VADDR(pa->pa_offset);
@@ -250,7 +250,7 @@ wdsc_dmanext(dev)
         /*
          * Shouldn't happen !!
          */
-        printf("wdsc_dmanext at end !!!\n");
+        kprintf("wdsc_dmanext at end !!!\n");
         wdsc_dmastop(dev);
         return(0);
     }

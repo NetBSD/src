@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.2 1996/08/27 21:56:19 cgd Exp $	*/
+/*	$NetBSD: vme.c,v 1.3 1996/10/10 23:41:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe
@@ -121,7 +121,7 @@ vmechip_print(aux, cp)
 			panic("vmechip_print: impossible bustype");
 		}
 
-		printf("%s at %s", busname, cp);
+		kprintf("%s at %s", busname, cp);
 	}
 
 	return (UNCONF);
@@ -159,7 +159,7 @@ vme_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	printf("\n");
+	kprintf("\n");
 
 	/* We know va_bustype == VME_Dxx */
 	(void) config_search(vme_search, self, args);
@@ -180,7 +180,7 @@ vme_search(parent, match, aux)
 
 	/* Send in the clones. */
 	if (cf->cf_fstate == FSTATE_STAR) {
-		printf("vme_search: device `%s' is cloned\n", name);
+		kprintf("vme_search: device `%s' is cloned\n", name);
 		panic("clone devices not allowed on VME");
 	}
 
@@ -199,12 +199,12 @@ vme_search(parent, match, aux)
 	/* atype checked later */
 
 	if (va->va_ipl == -1) {
-		printf("vme_search: device `%s%d' has wildcarded ipl\n",
+		kprintf("vme_search: device `%s%d' has wildcarded ipl\n",
 		    name, unit);
 		reject = 1;
 	}
 	if (va->va_vec == -1) {
-		printf("vme_search: device `%s%d' has wildcarded vec\n",
+		kprintf("vme_search: device `%s%d' has wildcarded vec\n",
 		    name, unit);
 		reject = 1;
 	}
@@ -218,20 +218,20 @@ vme_search(parent, match, aux)
 		break;	/* Just fine. */
 
 	case -1:	/* wildcarded */
-		printf("vme_search: device `%s%d' has wildcarded atype\n",
+		kprintf("vme_search: device `%s%d' has wildcarded atype\n",
 		    name, unit);
 		reject = 1;
 		break;
 
 	default:
-		printf("vme_search: device `%s%d' has invalid atype `%d'\n",
+		kprintf("vme_search: device `%s%d' has invalid atype `%d'\n",
 		    name, unit, va->va_atype);
 		reject = 1;
 		break;
 	}
 
 	if (reject) {
-		printf("vme_search: rejecting device `%s%d'\n", name, unit);
+		kprintf("vme_search: rejecting device `%s%d'\n", name, unit);
 		return (0);
 	}
 
@@ -252,9 +252,9 @@ vme_print(aux, cp)
 	struct vme_attach_args *va = aux;
 
 	if (cp)
-		printf("device at %s", cp);
+		kprintf("device at %s", cp);
 
-	printf(" atype %d addr 0x%lx ipl %d vec 0x%x", va->va_atype,
+	kprintf(" atype %d addr 0x%lx ipl %d vec 0x%x", va->va_atype,
 	    va->va_addr, va->va_ipl, va->va_vec);
 
 	return (UNCONF);
@@ -284,7 +284,7 @@ vmeintr_disestablish(ipl, vec)
 	/* Disable VME IRQ if possible. */
 	switch (sys_vmechip->sc_irqref[ipl]) {
 	case 0:
-		printf("vmeintr_disestablish: nothing using IRQ %d\n", ipl);
+		kprintf("vmeintr_disestablish: nothing using IRQ %d\n", ipl);
 		panic("vmeintr_disestablish");
 		/* NOTREACHED */
 

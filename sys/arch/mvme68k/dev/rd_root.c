@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.1 1996/05/20 01:17:31 chuck Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.2 1996/10/10 23:41:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,7 +60,7 @@ rd_attach_hook(unit, rd)
 		rd->rd_addr = (caddr_t) rd_root_image;
 		rd->rd_size = (size_t)  rd_root_size;
 		rd->rd_type = RD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		kprintf(" fixed, %d blocks", MINIROOTSIZE);
 	}
 }
 

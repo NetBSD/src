@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.67 1996/05/24 02:04:29 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.68 1996/10/10 23:34:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -375,20 +375,20 @@ stattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	printf("\n");
-	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
+	kprintf("\n");
+	kprintf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
 	if (scsi_test_unit_ready(sc_link,
 	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,
 	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE))
-		printf("drive empty\n");
+		kprintf("drive empty\n");
 	else {
-		printf("density code 0x%x, ", st->media_density);
+		kprintf("density code 0x%x, ", st->media_density);
 		if (st->media_blksize > 0)
-			printf("%d-byte", st->media_blksize);
+			kprintf("%d-byte", st->media_blksize);
 		else
-			printf("variable");
-		printf(" blocks, write-%s\n",
+			kprintf("variable");
+		kprintf(" blocks, write-%s\n",
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
 
@@ -492,7 +492,7 @@ stopen(dev, flags, mode, p)
 	 * Only allow one at a time
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
-		printf("%s: already open\n", st->sc_dev.dv_xname);
+		kprintf("%s: already open\n", st->sc_dev.dv_xname);
 		return EBUSY;
 	}
 
@@ -672,7 +672,7 @@ st_mount_tape(dev, flags)
 			return error;
 	}
 	if ((error = st_mode_select(st, 0)) != 0) {
-		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
+		kprintf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		return error;
 	}
 	scsi_prevent(sc_link, PR_PREVENT,
@@ -843,7 +843,7 @@ ststrategy(bp)
 	 */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		if (bp->b_bcount % st->blksize) {
-			printf("%s: bad request, must be multiple of %d\n",
+			kprintf("%s: bad request, must be multiple of %d\n",
 			    st->sc_dev.dv_xname, st->blksize);
 			bp->b_error = EIO;
 			goto bad;
@@ -854,7 +854,7 @@ ststrategy(bp)
 	 */
 	else if (bp->b_bcount < st->blkmin ||
 		 (st->blkmax && bp->b_bcount > st->blkmax)) {
-		printf("%s: bad request, must be between %d and %d\n",
+		kprintf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
 		goto bad;
@@ -1026,7 +1026,7 @@ ststart(v)
 		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
 		    100000, bp, flags | SCSI_NOSLEEP))
-			printf("%s: not queued\n", st->sc_dev.dv_xname);
+			kprintf("%s: not queued\n", st->sc_dev.dv_xname);
 	} /* go back and see if we can cram more work in.. */
 }
 
@@ -1212,7 +1212,7 @@ try_new_value:
 	 * drive. If not, put it back the way it was.
 	 */
 	if ((error = st_mode_select(st, 0)) != 0) {/* put it back as it was */
-		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
+		kprintf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		st->density = hold_density;
 		st->blksize = hold_blksize;
 		if (st->blksize)
@@ -1727,7 +1727,7 @@ st_interpret_sense(xs)
 				bp->b_resid = xs->resid;
 			if (sense->error_code & SSD_ERRCODE_VALID &&
 			    (xs->flags & SCSI_SILENT) == 0)
-				printf("%s: block wrong size, %d blocks residual\n",
+				kprintf("%s: block wrong size, %d blocks residual\n",
 				    st->sc_dev.dv_xname, info);
 
 			/*
@@ -1768,7 +1768,7 @@ st_interpret_sense(xs)
 				 * the record was bigger than the read
 				 */
 				if ((xs->flags & SCSI_SILENT) == 0)
-					printf("%s: %d-byte record too big\n",
+					kprintf("%s: %d-byte record too big\n",
 					    st->sc_dev.dv_xname,
 					    xs->datalen - info);
 				return EIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.6 1996/09/12 05:04:18 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.7 1996/10/10 23:40:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe
@@ -136,7 +136,7 @@ pccattach(parent, self, args)
 	pccsc->sc_pcc = sys_pcc;
 	pccsc->sc_pcc->int_vectr = PCC_VECBASE;
 
-	printf(": Peripheral Channel Controller, "
+	kprintf(": Peripheral Channel Controller, "
 	    "rev %d, vecbase 0x%x\n", pccsc->sc_pcc->pcc_rev,
 	    pccsc->sc_pcc->int_vectr);
 
@@ -185,11 +185,11 @@ pccprint(aux, cp)
 	struct pcc_attach_args *pa = aux;
 
 	if (cp)
-		printf("%s at %s", pa->pa_name, cp);
+		kprintf("%s at %s", pa->pa_name, cp);
 
-	printf(" offset 0x%lx", pa->pa_offset);
+	kprintf(" offset 0x%lx", pa->pa_offset);
 	if (pa->pa_ipl != -1)
-		printf(" ipl %d", pa->pa_ipl);
+		kprintf(" ipl %d", pa->pa_ipl);
 
 	return (UNCONF);
 }
@@ -205,12 +205,12 @@ pccintr_establish(pccvec, hand, lvl, arg)
 {
 
 	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
-		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
+		kprintf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_establish");
 	}
 
 	if ((lvl < 1) || (lvl > 7)) {
-		printf("pcc: illegal interrupt level: %d\n", lvl);
+		kprintf("pcc: illegal interrupt level: %d\n", lvl);
 		panic("pccintr_establish");
 	}
 
@@ -223,7 +223,7 @@ pccintr_disestablish(pccvec)
 {
 
 	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
-		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
+		kprintf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_establish");
 	}
 

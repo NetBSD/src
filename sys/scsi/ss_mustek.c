@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.5 1996/10/10 23:34:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -108,16 +108,16 @@ mustek_attach(ss, sa)
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
-	printf("\n%s: ", ss->sc_dev.dv_xname);
+	kprintf("\n%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model which determines resolutions */
 	if (!bcmp(sa->sa_inqbuf->product, "MFS-06000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_06000CX;
-		printf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
+		kprintf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "MFS-12000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_12000CX;
-		printf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
+		kprintf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_attach: scanner_type = %d\n",
@@ -485,7 +485,7 @@ mustek_read(ss, bp)
 	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, MUSTEK_RETRIES, 10000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
-		printf("%s: not queued\n", ss->sc_dev.dv_xname);
+		kprintf("%s: not queued\n", ss->sc_dev.dv_xname);
 	else {
 		ss->sio.scan_lines -= lines_to_read;
 		ss->sio.scan_window_size -= bp->b_bcount;
@@ -533,12 +533,12 @@ mustek_get_status(ss, timeout, update)
 		bytes_per_line = _2ltol(data.bytes_per_line);
 		lines = _3ltol(data.lines);
 		if (lines != ss->sio.scan_lines) {
-			printf("mustek: lines actual(%d) != computed(%ld)\n",
+			kprintf("mustek: lines actual(%d) != computed(%ld)\n",
 			    lines, ss->sio.scan_lines);
 			return (EIO);
 		}
 		if (bytes_per_line * lines != ss->sio.scan_window_size) {
-			printf("mustek: win-size actual(%d) != computed(%ld)\n",
+			kprintf("mustek: win-size actual(%d) != computed(%ld)\n",
 			    bytes_per_line * lines, ss->sio.scan_window_size);
 		    return (EIO);
 		}

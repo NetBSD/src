@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.1 1996/04/26 19:00:14 chuck Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.2 1996/10/10 23:41:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ vmechip_pcc_attach(parent, self, aux)
 
 	sys_vme_pcc = vme;
 
-	printf(": Type 1 VMEchip, scon jumper %s\n",
+	kprintf(": Type 1 VMEchip, scon jumper %s\n",
 	    (vme->vme_scon & VME1_SCON_SWITCH) ? "enabled" : "disabled");
 
 	/* Attach children. */
@@ -157,11 +157,11 @@ vmechip_pcc_translate_addr(start, len, bustype, atype, addrp)
 			break;
 
 		default:
-			printf("vmechip: impossible atype `%d'\n", atype);
+			kprintf("vmechip: impossible atype `%d'\n", atype);
 			panic("vmechip_pcc_translate_addr");
 		}
 
-		printf("vmechip: can't map %s atype %d addr 0x%lx len 0x%x\n", 
+		kprintf("vmechip: can't map %s atype %d addr 0x%lx len 0x%x\n", 
 		    vmes_cd.cd_name, atype, start, len);
 		break;
 
@@ -189,11 +189,11 @@ vmechip_pcc_translate_addr(start, len, bustype, atype, addrp)
 			break;
 
 		default:
-			printf("vmechip: impossible atype `%d'\n", atype);
+			kprintf("vmechip: impossible atype `%d'\n", atype);
 			panic("vmechip_pcc_translate_addr");
 		}
 
-		printf("vmechip: can't map %s atype %d addr 0x%lx len 0x%x\n", 
+		kprintf("vmechip: can't map %s atype %d addr 0x%lx len 0x%x\n", 
 		    vmel_cd.cd_name, atype, start, len);
 		break;
 
