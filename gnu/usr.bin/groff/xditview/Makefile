@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1994/02/05 01:37:16 jtc Exp $
+#	$Id: Makefile,v 1.5 1994/02/14 17:27:49 jtc Exp $
 
 .if exists(/usr/X11)
 XINCDIR=	/usr/X11/include
@@ -30,7 +30,7 @@ DPADD+=		$(LIBM)
 afterinstall:
 		install -c -o $(BINOWN) -g $(BINGRP) -m 444 \
 			$(.CURDIR)/GXditview.ad \
-			$(DESTDIR)$(XLIBDIR)/X11/app-defaults
+			$(DESTDIR)$(XLIBDIR)/X11/app-defaults/GXditview
 .endif
 
 .include <bsd.prog.mk>
