@@ -121,6 +121,7 @@ sys/dev/pci/ahc_pci.c
 sys/dev/pci/bha_pci.c
 sys/dev/pci/isp_pci.c
 sys/dev/pci/ncr.c
+sys/dev/pci/ncr_reg.h
 sys/dev/tc/asc.c
 sys/dev/tc/ascvar.h
 sys/sys/scsiio.h
