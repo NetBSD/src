@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.37 2004/08/21 23:48:33 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.38 2005/02/24 08:04:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.37 2004/08/21 23:48:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.38 2005/02/24 08:04:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct ex_pci_softc {
 	bus_space_handle_t sc_funch;
 
 	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
-	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
+	pcireg_t psc_regs[0x40>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci device tag */
 
 	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
