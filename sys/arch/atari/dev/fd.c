@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 1995/05/05 16:38:05 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 1995/05/14 15:47:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -803,7 +803,7 @@ struct fd_softc	*sc;
 			bcopy(sc->io_data, sc->bounceb, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
-	st_dmaaddr((caddr_t)phys_addr);	/* DMA address setup */
+	st_dmaaddr_set((caddr_t)phys_addr);	/* DMA address setup */
 
 #ifdef FLP_DEBUG
 	printf("fd_xfer:Start io (io_addr:%x)\n", kvtop(sc->io_data));
