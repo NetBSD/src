@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 1999/03/28 20:21:51 sommerfe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 1999/03/29 06:24:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -328,6 +328,7 @@ vmapbuf(bp, len)
 	vm_offset_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
 	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+	int pages;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -363,10 +364,8 @@ vmapbuf(bp, len)
 	} else 
 		cpu_cache_purgeID();
 
-	do {
+	for (pages = len >> PAGE_SHIFT; pages; pages--)
 		*tpte++ = *fpte++;
-		len -= PAGE_SIZE;
-	} while (len > 0);
 
 	if (len <= 0x1000)
 		cpu_tlb_flushID_SE(taddr);
@@ -386,7 +385,7 @@ vunmapbuf(bp, len)
 {
 	vm_offset_t addr, off;
 	pt_entry_t *pte;
-	int tlen;
+	int pages;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -414,11 +413,8 @@ vunmapbuf(bp, len)
 	else
 		cpu_cache_purgeID();
 
-	tlen = len;
-	do {
+	for (pages = len >> PAGE_SHIFT; pages; pages--)
 		*pte++ = 0;
-		tlen -= PAGE_SIZE;
-	} while (tlen > 0);
 
 	if (len <= 0x1000)
 		cpu_tlb_flushID_SE(addr);
