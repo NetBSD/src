@@ -1,4 +1,4 @@
-.\" $NetBSD: daic.4,v 1.3 2001/04/09 13:15:47 wiz Exp $
+.\" $NetBSD: daic.4,v 1.4 2001/06/12 14:41:40 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Martin Husemann <martin@rumolt.teuto.de>
 .\" All rights reserved.
@@ -9,7 +9,7 @@
 .\" 1. Redistributions of source code must retain the above copyright
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
-.\"    derived from this software withough specific prior written permission
+.\"    derived from this software without specific prior written permission
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: daic.4,v 1.3 2001/04/09 13:15:47 wiz Exp $
+.\"	$Id: daic.4,v 1.4 2001/06/12 14:41:40 wiz Exp $
 .\"
 .\"	last edit-date: [Tue Dec 14 22:14:17 1999]
 .\"
@@ -60,7 +60,7 @@ All lower layer isdn control is handled by the card. This should
 allow you to run any national isdn protocol delivered by EICON.Diehl
 for your card, but the driver has only been tested with the DSS1
 protocol and some parts of the cards interface are isdn protocol
-dependend.
+dependent.
 .Pp
 The
 .Nm
@@ -81,7 +81,7 @@ to list all available controllers (and ports). You have to select the
 correct isdn protocol file for your isdn interface, see the Diehl documentation
 for details.
 .Pp
-The cards bootstrap process involves another file, which is independend
+The cards bootstrap process involves another file, which is independent
 of the card type you use and the protocol you run. It is called
 .Nm download.bin
 in current versions of the Diehl software distribution and has to be
@@ -90,7 +90,7 @@ copied to the kernel compile directory under
 and converted into a header file used when compiling the kernel by running
 .Nm make
 in that directory. Your kernel compile will fail and remind you of this
-if you forget to do this. Due to copright restrictions we cannot distribute
+if you forget to do this. Due to copyright restrictions we cannot distribute
 the driver with this file integrated. But if you own a card, you do have
 the file (or can get it from the Diehl web server).
 .Sh BUGS
