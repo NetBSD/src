@@ -56,7 +56,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 /* On NetBSD, the magic number is always in ntohl's "network" (big-endian)
    format.  */
+#ifndef SWAP_MAGIC
 #define SWAP_MAGIC(ext) bfd_getb32 (ext)
+#endif
 
 /* On NetBSD, the entry point may be taken to be the start of the text
    section.  */
