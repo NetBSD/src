@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.2 1997/12/01 23:25:40 pk Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.3 1998/06/18 22:08:43 pk Exp $	*/
 
 /*
  *
@@ -46,6 +46,7 @@
 
 struct xd_iorq {
 	struct xd_iopb *iopb;		/* address of matching iopb */
+	struct xd_iopb *dmaiopb;	/* DMA address of above */
 	struct xdc_softc *xdc;		/* who we are working with */
 	struct xd_softc *xd;		/* which disk */
 	int ttl;			/* time to live */
