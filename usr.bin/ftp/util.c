@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.64 1999/09/27 23:09:45 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.65 1999/09/28 06:47:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.64 1999/09/27 23:09:45 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.65 1999/09/28 06:47:42 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -157,12 +157,17 @@ setpeer(argc, argv)
 		/*
 		 * Set up defaults for FTP.
 		 */
-		(void)strcpy(typename, "ascii"), type = TYPE_A;
+		(void)strlcpy(typename, "ascii", sizeof(typename));
+		type = TYPE_A;
 		curtype = TYPE_A;
-		(void)strcpy(formname, "non-print"), form = FORM_N;
-		(void)strcpy(modename, "stream"), mode = MODE_S;
-		(void)strcpy(structname, "file"), stru = STRU_F;
-		(void)strcpy(bytename, "8"), bytesize = 8;
+		(void)strlcpy(formname, "non-print", sizeof(formname));
+		form = FORM_N;
+		(void)strlcpy(modename, "stream", sizeof(modename));
+		mode = MODE_S;
+		(void)strlcpy(structname, "file", sizeof(structname));
+		stru = STRU_F;
+		(void)strlcpy(bytename, "8", sizeof(bytename));
+		bytesize = 8;
 		if (autologin)
 			(void)ftp_login(argv[1], NULL, NULL);
 
@@ -199,7 +204,7 @@ setpeer(argc, argv)
 			 * for text files unless changed by the user.
 			 */
 			type = 0;
-			(void)strcpy(typename, "binary");
+			(void)strlcpy(typename, "binary", sizeof(typename));
 			if (overbose)
 			    fprintf(ttyout,
 				"Using %s mode to transfer files.\n",
@@ -261,8 +266,8 @@ ftp_login(host, user, pass)
 			 */
 			len = strlen(pass) + 2;
 			anonpass = xmalloc(len);
-			strlcpy(anonpass, pass, len);
-			strlcat(anonpass, "@",  len);
+			(void)strlcpy(anonpass, pass, len);
+			(void)strlcat(anonpass, "@",  len);
 			pass = anonpass;
 			freepass = 1;
 		}
@@ -308,9 +313,9 @@ ftp_login(host, user, pass)
 
 		len = strlen(user) + 1 + strlen(host) + 1;
 		nuser = xmalloc(len);
-		strlcpy(nuser, user, len);
-		strlcat(nuser, "@",  len);
-		strlcat(nuser, host, len);
+		(void)strlcpy(nuser, user, len);
+		(void)strlcat(nuser, "@",  len);
+		(void)strlcat(nuser, host, len);
 		freeuser = 1;
 		user = nuser;
 	}
@@ -347,7 +352,7 @@ ftp_login(host, user, pass)
 	connected = -1;
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
-			(void)strcpy(line, "$init");
+			(void)strlcpy(line, "$init", sizeof(line));
 			makeargv();
 			domacro(margc, margv);
 			break;
@@ -432,9 +437,9 @@ remglob(argv, doswitch, errbuf)
                 return (cp);
         }
         if (ftemp == NULL) {
-		strlcpy(temp, tmpdir,	sizeof(temp));
-		strlcat(temp, "/",	sizeof(temp));
-		strlcat(temp, TMPFILE,	sizeof(temp));
+		(void)strlcpy(temp, tmpdir,	sizeof(temp));
+		(void)strlcat(temp, "/",	sizeof(temp));
+		(void)strlcat(temp, TMPFILE,	sizeof(temp));
                 if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);
@@ -508,34 +513,33 @@ confirm(cmd, file)
 }
 
 /*
- * Glob a local file name specification with
- * the expectation of a single return value.
- * Can't control multiple values being expanded
- * from the expression, we return only the first.
+ * Glob a local file name specification with the expectation of a single
+ * return value. Can't control multiple values being expanded from the
+ * expression, we return only the first.
+ * Returns NULL on error, or a pointer to a buffer containing the filename
+ * that's the caller's responsiblity to free(3) when finished with.
  */
-int
-globulize(cpp)
-	char **cpp;
+char *
+globulize(pattern)
+	const char *pattern;
 {
 	glob_t gl;
 	int flags;
+	char *p;
 
 	if (!doglob)
-		return (1);
+		return (xstrdup(pattern));
 
 	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 	memset(&gl, 0, sizeof(gl));
-	if (glob(*cpp, flags, NULL, &gl) || gl.gl_pathc == 0) {
-		warnx("%s: not found", *cpp);
+	if (glob(pattern, flags, NULL, &gl) || gl.gl_pathc == 0) {
+		warnx("%s: not found", pattern);
 		globfree(&gl);
-		return (0);
+		return (NULL);
 	}
-		/* XXX: caller should check if *cpp changed, and
-		 *	free(*cpp) if that is the case
-		 */
-	*cpp = xstrdup(gl.gl_pathv[0]);
+	p = xstrdup(gl.gl_pathv[0]);
 	globfree(&gl);
-	return (1);
+	return (p);
 }
 
 /*

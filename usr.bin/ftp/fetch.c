@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.77 1999/09/27 23:09:43 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.78 1999/09/28 06:47:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.77 1999/09/27 23:09:43 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.78 1999/09/28 06:47:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -149,18 +149,16 @@ auth_url(challenge, response, guser, gpass)
 		size_t len = ep - cp;
 
 		realm = (char *)xmalloc(len + 1);
-		strncpy(realm, cp, len);
-		realm[len] = '\0';
+		(void)strlcpy(realm, cp, len + 1);
 	} else {
 		warnx("Unsupported WWW Authentication challenge - `%s'",
 		    challenge);
 		goto cleanup_auth_url;
 	}
 
-	if (guser != NULL) {
-		strncpy(user, guser, sizeof(user) - 1);
-		user[sizeof(user) - 1] = '\0';
-	} else {
+	if (guser != NULL)
+		(void)strlcpy(user, guser, sizeof(user));
+	else {
 		fprintf(ttyout, "Username for `%s': ", realm);
 		(void)fflush(ttyout);
 		if (fgets(user, sizeof(user) - 1, stdin) == NULL)
@@ -174,16 +172,16 @@ auth_url(challenge, response, guser, gpass)
 
 	clen = strlen(user) + strlen(pass) + 2;	/* user + ":" + pass + "\0" */
 	clear = (char *)xmalloc(clen);
-	strlcpy(clear, user, clen);
-	strlcat(clear, ":", clen);
-	strlcat(clear, pass, clen);
+	(void)strlcpy(clear, user, clen);
+	(void)strlcat(clear, ":", clen);
+	(void)strlcat(clear, pass, clen);
 	if (gpass == NULL)
 		memset(pass, '\0', strlen(pass));
 
 						/* scheme + " " + enc + "\0" */
 	rlen = strlen(scheme) + 1 + (clen + 2) * 4 / 3 + 1;
 	*response = (char *)xmalloc(rlen);
-	strlcpy(*response, scheme, rlen);
+	(void)strlcpy(*response, scheme, rlen);
 	len = strlcat(*response, " ", rlen);
 	base64_encode(clear, clen, *response + len);
 	memset(clear, '\0', clen);
@@ -337,8 +335,7 @@ cleanup_parse_url:
 	else {
 		len = ep - url;
 		thost = (char *)xmalloc(len + 1);
-		strncpy(thost, url, len);
-		thost[len] = '\0';
+		(void)strlcpy(thost, url, len + 1);
 		if (*type == FTP_URL_T)	/* skip first / for ftp URLs */
 			ep++;
 		*path = xstrdup(ep);
@@ -1495,9 +1492,9 @@ fetch_ftp(url)
 	}
 
 	if (dirhasglob) {
-		strlcpy(rempath, dir,	sizeof(rempath));
-		strlcat(rempath, "/",	sizeof(rempath));
-		strlcat(rempath, file,	sizeof(rempath));
+		(void)strlcpy(rempath, dir,	sizeof(rempath));
+		(void)strlcat(rempath, "/",	sizeof(rempath));
+		(void)strlcat(rempath, file,	sizeof(rempath));
 		file = rempath;
 	}
 
