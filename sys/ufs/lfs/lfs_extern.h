@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.50.2.5 2004/09/21 13:39:15 skrll Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.50.2.6 2004/10/30 09:17:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_do_segclean(struct lfs *, unsigned long);
 void lfs_fakebuf_iodone(struct buf *);
 int lfs_segwait(fsid_t *, struct timeval *);
-int lfs_bmapv(struct lwp *, fsid_t *, struct block_info *, int);
+int lfs_bmapv(struct proc *, fsid_t *, struct block_info *, int);
 int lfs_markv(struct proc *, fsid_t *, struct block_info *, int);
 
 /* lfs_vfsops.c */
