@@ -76,7 +76,7 @@
 
 /*
  *	ATARI physical map management code.
- *	For 68020/68030 machines with 68551, or 68030 MMUs
+ *	For 68020/68030 machines with 68851, or 68030 MMUs
  *	Don't even pay lip service to multiprocessor support.
  *
  *	will only work for PAGE_SIZE == NBPG

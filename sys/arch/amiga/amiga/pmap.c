@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2001/11/19 06:40:11 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2001/11/24 06:53:16 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 
 /*
  *	AMIGA physical map management code.
- *	For 68020/68030 machines with 68551, or 68030 MMUs
+ *	For 68020/68030 machines with 68851, or 68030 MMUs
  *	Don't even pay lip service to multiprocessor support.
  *
  *	will only work for PAGE_SIZE == NBPG

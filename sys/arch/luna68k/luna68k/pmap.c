@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.18 2001/11/19 06:40:13 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.19 2001/11/24 06:53:18 isaki Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  *	We assume TLB entries don't have process tags (except for the
  *	supervisor/user distinction) so we only invalidate TLB entries
  *	when changing mappings for the current (or kernel) pmap.  This is
- *	technically not true for the 68551 but we flush the TLB on every
+ *	technically not true for the 68851 but we flush the TLB on every
  *	context switch, so it effectively winds up that way.
  *
  *	Bitwise and/or operations are significantly faster than bitfield

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2001/11/19 06:40:15 chs Exp $        */
+/*	$NetBSD: pmap.c,v 1.39 2001/11/24 06:53:19 isaki Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -88,7 +88,7 @@
  *
  * Supports:
  *	68020 with HP MMU	models 320, 350
- *	68020 with 68551 MMU	models 318, 319, 330 (all untested)
+ *	68020 with 68851 MMU	models 318, 319, 330 (all untested)
  *	68030 with on-chip MMU	models 340, 360, 370, 345, 375, 400
  *	68040 with on-chip MMU	models 380, 425, 433
  *
@@ -98,7 +98,7 @@
  *	We assume TLB entries don't have process tags (except for the
  *	supervisor/user distinction) so we only invalidate TLB entries
  *	when changing mappings for the current (or kernel) pmap.  This is
- *	technically not true for the 68551 but we flush the TLB on every
+ *	technically not true for the 68851 but we flush the TLB on every
  *	context switch, so it effectively winds up that way.
  *
  *	Bitwise and/or operations are significantly faster than bitfield
