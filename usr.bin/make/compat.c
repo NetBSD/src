@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.50 2003/09/08 23:54:54 lukem Exp $	*/
+/*	$NetBSD: compat.c,v 1.51 2003/09/09 16:16:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.50 2003/09/08 23:54:54 lukem Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.51 2003/09/09 16:16:02 lukem Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.50 2003/09/08 23:54:54 lukem Exp $");
+__RCSID("$NetBSD: compat.c,v 1.51 2003/09/09 16:16:02 lukem Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -354,9 +354,19 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	    } else if (WIFEXITED(reason)) {
 		status = WEXITSTATUS(reason);		/* exited */
 		if (status != 0) {
-		    printf("\n*** Failed target:  %s\n*** Failed command: %s\n",
-			gn->name, cmd);
-		    printf ("*** Error code %d", status);
+		    printf("\n*** Failed target:  %s\n*** Failed command: ",
+			gn->name);
+		    for (cp = cmd; *cp; ) {
+    			if (isspace((unsigned char)*cp)) {
+			    putchar(' ');
+			    while (isspace((unsigned char)*cp))
+				cp++;
+			} else {
+			    putchar(*cp);
+			    cp++;
+			}
+		    }
+		    printf ("\n*** Error code %d", status);
 		}
 	    } else {
 		status = WTERMSIG(reason);		/* signaled */
