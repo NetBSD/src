@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.50 2001/07/18 18:21:05 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.51 2001/07/18 20:19:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1947,9 +1947,17 @@ scsipi_completion_thread(arg)
 		s = splbio();
 		xs = TAILQ_FIRST(&chan->chan_complete);
 		if (xs == NULL &&
-		    (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) == 0) {
+		    (chan->chan_flags &
+		     (SCSIPI_CHAN_SHUTDOWN | SCSIPI_CHAN_CALLBACK)) == 0) {
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
+			splx(s);
+			continue;
+		}
+		if (chan->chan_flags & SCSIPI_CHAN_CALLBACK) {
+			/* call chan_callback from thread context */
+			chan->chan_flags &= ~SCSIPI_CHAN_CALLBACK;
+			chan->chan_callback(chan, chan->chan_callback_arg);
 			splx(s);
 			continue;
 		}
@@ -1957,19 +1965,23 @@ scsipi_completion_thread(arg)
 			splx(s);
 			break;
 		}
-		TAILQ_REMOVE(&chan->chan_complete, xs, channel_q);
-		splx(s);
+		if (xs) {
+			TAILQ_REMOVE(&chan->chan_complete, xs, channel_q);
+			splx(s);
 
-		/*
-		 * Have an xfer with an error; process it.
-		 */
-		(void) scsipi_complete(xs);
+			/*
+			 * Have an xfer with an error; process it.
+			 */
+			(void) scsipi_complete(xs);
 
-		/*
-		 * Kick the queue; keep it running if it was stopped
-		 * for some reason.
-		 */
-		scsipi_run_queue(chan);
+			/*
+			 * Kick the queue; keep it running if it was stopped
+			 * for some reason.
+			 */
+			scsipi_run_queue(chan);
+		} else {
+			splx(s);
+		}
 	}
 
 	chan->chan_thread = NULL;
@@ -2000,6 +2012,33 @@ scsipi_create_completion_thread(arg)
 		    chan->chan_channel);
 		panic("scsipi_create_completion_thread");
 	}
+}
+
+/*
+ * scsipi_thread_call_callback:
+ *
+ * 	request to call a callback from the completion thread
+ */
+int
+scsipi_thread_call_callback(chan, callback, arg)
+	struct scsipi_channel *chan;
+	void (*callback) __P((struct scsipi_channel *, void *));
+	void *arg;
+{
+	int s;
+
+	s = splbio();
+	if (chan->chan_flags & SCSIPI_CHAN_CALLBACK) {
+		splx(s);
+		return EBUSY;
+	}
+	scsipi_channel_freeze(chan, 1);
+	chan->chan_callback = callback;
+	chan->chan_callback_arg = arg;
+	chan->chan_flags |= SCSIPI_CHAN_CALLBACK;
+	wakeup(&chan->chan_complete);
+	splx(s);
+	return(0);
 }
 
 /*
@@ -2271,6 +2310,62 @@ scsipi_async_event_channel_reset(chan)
 	}
 }
 
+/*
+ * scsipi_target_detach:
+ *
+ *	detach all periph associated with a I_T
+ * 	must be called from valid thread context
+ */
+int
+scsipi_target_detach(chan, target, lun, flags)
+	struct scsipi_channel *chan;
+	int target, lun;
+	int flags;
+{
+	struct scsipi_periph *periph;
+	int ctarget, mintarget, maxtarget;
+	int clun, minlun, maxlun;
+	int error;
+
+	if (target == -1) {
+		mintarget = 0;
+		maxtarget = chan->chan_ntargets;
+	} else {
+		if (target == chan->chan_id)
+			return EINVAL;
+		if (target < 0 || target >= chan->chan_ntargets)
+			return EINVAL;
+		mintarget = target;
+		maxtarget = target + 1;
+	}
+
+	if (lun == -1) {
+		minlun = 0;
+		maxlun = chan->chan_nluns;
+	} else {
+		if (lun < 0 || lun >= chan->chan_nluns)
+			return EINVAL;
+		minlun = lun;
+		maxlun = lun + 1;
+	}
+
+	for (ctarget = 0; ctarget < chan->chan_ntargets; ctarget++) {
+		if (ctarget == chan->chan_id)
+			continue;
+
+		for (clun = minlun; clun < maxlun; clun++) {
+			periph = scsipi_lookup_periph(chan, target, clun);
+			if (periph == NULL)
+				continue;
+			error = config_detach(periph->periph_dev, flags);
+			if (error)
+				return (error);
+			scsipi_remove_periph(chan, periph);
+			free(periph, M_DEVBUF);
+		}
+	}
+	return(0);
+}
 
 /*
  * scsipi_adapter_addref:
