@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/07 08:38:02 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2001/01/30 12:42:44 tsutsui Exp $
+
+.include <bsd.prog.mk>
 
 COMMON=	${.CURDIR}/../common
 COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
@@ -43,5 +45,3 @@ m68k::
 ${PROG}: ${OBJS} machine m68k
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
 	${SIZE} ${PROG}
-
-.include <bsd.prog.mk>
