@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.14 2000/09/30 14:05:48 jhawk Exp $	*/
+/*	$NetBSD: whois.c,v 1.15 2000/10/04 20:09:05 mjl Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,7 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.14 2000/09/30 14:05:48 jhawk Exp $");
+__RCSID("$NetBSD: whois.c,v 1.15 2000/10/04 20:09:05 mjl Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -312,12 +312,12 @@ int main(argc, argv)
   
 #ifdef RIPE
 #ifdef NETWORKUPDATE
-    while ((ch = getopt(argc, argv, "46h:p:")) != EOF)
+    while ((ch = getopt(argc, argv, "46h:p:")) != -1)
 #else
-  while ((ch = getopt(argc, argv, "46acFg:h:i:LmMp:rs:SRt:T:v:")) != EOF)
+  while ((ch = getopt(argc, argv, "46acFg:h:i:LmMp:rs:SRt:T:v:")) != -1)
 #endif
 #else
-    while ((ch = getopt(argc, argv, "46h:p:")) != EOF)
+    while ((ch = getopt(argc, argv, "46h:p:")) != -1)
 #endif
       switch((char)ch) {
       case '4':

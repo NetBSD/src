@@ -1,4 +1,4 @@
-/*	$NetBSD: bdes.c,v 1.2 2000/06/16 17:16:33 thorpej Exp $	*/
+/*	$NetBSD: bdes.c,v 1.3 2000/10/04 20:09:05 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: bdes.c,v 1.2 2000/06/16 17:16:33 thorpej Exp $");
+__RCSID("$NetBSD: bdes.c,v 1.3 2000/10/04 20:09:05 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ main(int ac, char *av[])
 
 	/* process the argument list */
 	kflag = 0;
-	while ((i = getopt(argc, argv, "abdF:f:k:m:o:pv:")) != EOF)
+	while ((i = getopt(argc, argv, "abdF:f:k:m:o:pv:")) != -1)
 		switch(i) {
 		case 'a':		/* key is ASCII */
 			keybase = KEY_ASCII;
