@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.10 2000/10/11 14:46:02 is Exp $	*/
+/*	$NetBSD: fgen.l,v 1.11 2001/02/05 01:47:01 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -90,7 +90,6 @@ int tokenizer = 0;
 Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
-int	main __P((int, char *[]));
 void	token_err __P((int, char *, char *, char *, ...))
 	__attribute__((__format__(__printf__, 4, 5)));
 YY_DECL;
