@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.22 2000/04/17 17:30:48 drochner Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.23 2000/04/18 14:48:53 tron Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.22 2000/04/17 17:30:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.23 2000/04/18 14:48:53 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ static struct alpha_bus_space tc_mem_space = {
 	tc_mem_free,
 
 	/* get kernel virtual address */
-	tc_mem_vaddr;
+	tc_mem_vaddr,
 
 	/* barrier */
 	tc_mem_barrier,
