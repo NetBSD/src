@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.2 2001/09/07 15:54:17 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.3 2001/09/07 15:57:41 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -77,8 +77,6 @@ static void	knote_attach(struct knote *kn, struct filedesc *fdp);
 static void	knote_drop(struct knote *kn, struct proc *p);
 static void	knote_enqueue(struct knote *kn);
 static void	knote_dequeue(struct knote *kn);
-static struct knote *knote_alloc(void);
-static void	knote_free(struct knote *kn);
 
 static void	filt_kqdetach(struct knote *kn);
 static int	filt_kqueue(struct knote *kn, long hint);
@@ -618,7 +616,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	if (kev->flags & EV_ADD) {		/* add knote */
 
 		if (kn == NULL) {		/* create new knote */
-			kn = knote_alloc();
+			kn = pool_get(&knote_pool, PR_WAITOK);
 			if (kn == NULL) {
 				error = ENOMEM;
 				goto done;
@@ -1018,7 +1016,7 @@ kqueue_close(struct file *fp, struct proc *p)
 			if (kq == kn->kn_kq) {
 				kn->kn_fop->f_detach(kn);
 				FILE_UNUSE(kn->kn_fp, p);
-				knote_free(kn);
+				pool_put(&knote_pool, kn);
 				*knp = kn0;
 			} else {
 				knp = &SLIST_NEXT(kn, kn_link);
@@ -1035,7 +1033,7 @@ kqueue_close(struct file *fp, struct proc *p)
 				if (kq == kn->kn_kq) {
 					kn->kn_fop->f_detach(kn);
 		/* XXX non-fd release of kn->kn_ptr */
-					knote_free(kn);
+					pool_put(&knote_pool, kn);
 					*knp = kn0;
 				} else {
 					knp = &SLIST_NEXT(kn, kn_link);
@@ -1200,7 +1198,7 @@ knote_drop(struct knote *kn, struct proc *p)
 		knote_dequeue(kn);
 	if (kn->kn_fop->f_isfd)
 		FILE_UNUSE(kn->kn_fp, p);
-	knote_free(kn);
+	pool_put(&knote_pool, kn);
 }
 
 
@@ -1241,24 +1239,4 @@ knote_dequeue(struct knote *kn)
 	kn->kn_status &= ~KN_QUEUED;
 	kq->kq_count--;
 	splx(s);
-}
-
-/*
- * Create a new knote.
- */
-static struct knote *
-knote_alloc(void)
-{
-
-	return (pool_get(&knote_pool, PR_WAITOK));
-}
-
-/*
- * Free a knote.
- */
-static void
-knote_free(struct knote *kn)
-{
-
-	pool_put(&knote_pool, kn);
 }
