@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.39 1998/01/25 14:50:47 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.40 1998/01/27 13:14:07 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -289,6 +289,11 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  the same file.
 # checksum		- Use files/md5 to ensure that your distfiles are valid.
 # makesum		- Generate files/md5 (only do this for your own ports!).
+# readme		- Create a README.html file describing the category or package
+# mirror-distfiles	- Mirror the distfile(s) if they are freely redistributable
+#			Setting MIRROR_DISTFILE to "no" in the package Makefile
+#			will override the default "yes", and the distfile will
+#			not be fetched.
 #
 # Default sequence for "all" is:  fetch checksum extract patch configure build
 #
@@ -1055,7 +1060,7 @@ do-fetch:
 # This is for the use of sites which store distfiles which others may
 # fetch - only fetch the distfile if it is allowed to be
 # re-distributed freely
-mirror:
+mirror-distfiles:
 .if (${MIRROR_DISTFILE} == "yes")
 	@make fetch __ARCH_OK=yes NO_IGNORE=yes
 .endif
