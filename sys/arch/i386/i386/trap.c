@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.3 2000/08/07 01:08:50 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.4 2000/08/18 13:55:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,6 +183,7 @@ userret(p, pc, oticks)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
+
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
@@ -366,12 +367,16 @@ trap(frame)
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGBUS, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGILL, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -390,12 +395,16 @@ trap(frame)
 				goto trace;
 			return;
 		}
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, rv, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
+		KERNEL_PROC_LOCK(p);		
 		trapsignal(p, SIGKILL, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 #endif
 	}
@@ -403,16 +412,28 @@ trap(frame)
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
+		KERNEL_PROC_LOCK(p);		
 		trapsignal(p, SIGFPE, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
+		KERNEL_PROC_LOCK(p);		
 		trapsignal(p, SIGFPE, frame.tf_err);
+		KERNEL_PROC_UNLOCK(p);		
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (p == 0)
 			goto we_re_toast;
+
+		/*
+		 * process doing kernel-mode page fault must have
+		 * been running with big lock held
+		 */
+		if ((p->p_flag & P_BIGLOCK) == 0)
+			goto we_re_toast;
+
 		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
@@ -425,17 +446,21 @@ trap(frame)
 		if (frame.tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
-		/* FALLTHROUGH */
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vaddr_t va;
-		register struct vmspace *vm = p->p_vmspace;
+		register struct vmspace *vm;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 		unsigned nss;
 
+		KERNEL_PROC_LOCK(p);
+	faultcommon:
+		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
 		va = trunc_page((vaddr_t)rcr2());
@@ -488,8 +513,11 @@ trap(frame)
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
-			if (type == T_PAGEFLT)
+			if (type == T_PAGEFLT) {
+				KERNEL_UNLOCK();
 				return;
+			}
+			KERNEL_PROC_UNLOCK(p);
 			goto out;
 		}
 
@@ -500,6 +528,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
+
 		if (rv == KERN_RESOURCE_SHORTAGE) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
@@ -509,6 +538,10 @@ trap(frame)
 		} else {
 			trapsignal(p, SIGSEGV, T_PAGEFLT);
 		}
+		if (type == T_PAGEFLT)
+			KERNEL_UNLOCK();
+		else
+			KERNEL_PROC_UNLOCK(p);
 		break;
 	}
 
@@ -524,7 +557,9 @@ trap(frame)
 #ifdef MATH_EMULATE
 	trace:
 #endif
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGTRAP, type &~ T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 #if	NISA > 0 || NMCA > 0
@@ -566,6 +601,10 @@ out:
 }
 
 #if defined(I386_CPU)
+
+#ifdef MULTIPROCESSOR
+/* XXX XXX XXX */
+#endif
 /*
  * Compensate for 386 brain damage (missing URKR)
  */
@@ -753,6 +792,7 @@ syscall(frame)
 				goto bad;
 		}
 	}
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif /* SYSCALL_DEBUG */
@@ -768,6 +808,7 @@ syscall(frame)
 		/*
 		 * Reinitialize proc pointer `p' as it may be different
 		 * if this is a child returning from fork syscall.
+		 * XXX is this still needed??
 		 */
 		p = curproc;
 		frame.tf_eax = rval[0];
@@ -800,6 +841,7 @@ syscall(frame)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
+	KERNEL_PROC_UNLOCK(p);
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -816,6 +858,8 @@ child_return(arg)
 
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
+
+	KERNEL_PROC_UNLOCK(p);
 
 	userret(p, tf->tf_eip, 0);
 #ifdef KTRACE
