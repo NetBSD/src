@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";*/
-static char *rcsid = "$Id: getrpcent.c,v 1.1 1993/10/07 07:29:52 cgd Exp $";
+static char *rcsid = "$Id: getrpcent.c,v 1.2 1994/09/15 02:11:17 deraadt Exp $";
 #endif
 
 /*
@@ -41,10 +41,6 @@ static char *rcsid = "$Id: getrpcent.c,v 1.1 1993/10/07 07:29:52 cgd Exp $";
 #include <sys/types.h>
 #include <string.h>
 #include <rpc/rpc.h>
-#ifdef YP
-#include <rpcsvc/yp_prot.h>
-#include <rpcsvc/ypclnt.h>
-#endif
 
 /*
  * Internet version.
@@ -56,16 +52,7 @@ struct rpcdata {
 	char	*rpc_aliases[MAXALIASES];
 	struct	rpcent rpc;
 	char	line[BUFSIZ+1];
-#ifdef	YP
-	char	*domain;
-	char	*current;
-	int	currentlen;
-#endif
 } *rpcdata;
-
-#ifdef	YP
-static int	__yp_nomap = 0;
-#endif	/* YP */
 
 static	struct rpcent *interpret();
 struct	hostent *gethostent();
@@ -91,36 +78,9 @@ getrpcbynumber(number)
 {
 	register struct rpcdata *d = _rpcdata();
 	register struct rpcent *p;
-#ifdef	YP
-	int reason;
-	char adrstr[16];
-#endif
 
 	if (d == 0)
 		return (0);
-#ifdef	YP
-        if (!__yp_nomap && _yp_check(&d->domain)) {
-                sprintf(adrstr, "%d", number);
-                reason = yp_match(d->domain, "rpc.bynumber", adrstr, strlen(adrstr),
-                                  &d->current, &d->currentlen);
-                switch(reason) {
-                case 0:
-                        break;
-                case YPERR_MAP:
-                        __yp_nomap = 1;
-                        goto no_yp;
-                        break;
-                default:
-                        return(0);
-                        break;
-                }
-                d->current[d->currentlen] = '\0';
-                p = interpret(d->current, d->currentlen);
-                (void) free(d->current);
-                return p;
-        }
-no_yp:
-#endif	/* YP */
 	setrpcent(0);
 	while (p = getrpcent()) {
 		if (p->r_number == number)
@@ -158,16 +118,6 @@ setrpcent(f)
 
 	if (d == 0)
 		return;
-#ifdef	YP
-        if (!__yp_nomap && _yp_check(NULL)) {
-                if (d->current)
-                        free(d->current);
-                d->current = NULL;
-                d->currentlen = 0;
-                return;
-        }
-        __yp_nomap = 0;
-#endif	/* YP */
 	if (d->rpcf == NULL)
 		d->rpcf = fopen(RPCDB, "r");
 	else
@@ -182,16 +132,6 @@ endrpcent()
 
 	if (d == 0)
 		return;
-#ifdef	YP
-        if (!__yp_nomap && _yp_check(NULL)) {
-        	if (d->current && !d->stayopen)
-                        free(d->current);
-                d->current = NULL;
-                d->currentlen = 0;
-                return;
-        }
-        __yp_nomap = 0;
-#endif	/* YP */
 	if (d->rpcf && !d->stayopen) {
 		fclose(d->rpcf);
 		d->rpcf = NULL;
@@ -204,43 +144,9 @@ getrpcent()
 	struct rpcent *hp;
 	int reason;
 	register struct rpcdata *d = _rpcdata();
-#ifdef	YP
-	char *key = NULL, *val = NULL;
-	int keylen, vallen;
-#endif
 
 	if (d == 0)
 		return(NULL);
-#ifdef	YP
-        if (!__yp_nomap && _yp_check(&d->domain)) {
-                if (d->current == NULL && d->currentlen == 0) {
-                        reason = yp_first(d->domain, "rpc.bynumber",
-                                          &d->current, &d->currentlen,
-                                          &val, &vallen);
-                } else {
-                        reason = yp_next(d->domain, "rpc.bynumber",
-                                         d->current, d->currentlen,
-                                         &d->current, &d->currentlen,
-                                         &val, &vallen);
-                }
-                switch(reason) {
-                case 0:
-                        break;
-                case YPERR_MAP:
-                        __yp_nomap = 1;
-                        goto no_yp;
-                        break;
-                default:
-                        return(0);
-                        break;
-                }
-                val[vallen] = '\0';
-                hp = interpret(val, vallen);
-                (void) free(val);
-                return hp;
-        }
-no_yp:
-#endif	/* YP */
 	if (d->rpcf == NULL && (d->rpcf = fopen(RPCDB, "r")) == NULL)
 		return (NULL);
         if (fgets(d->line, BUFSIZ, d->rpcf) == NULL)
