@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.27 2001/07/09 21:46:20 reinoud Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.28 2001/07/10 00:04:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -55,8 +55,6 @@
 #include <machine/cpu.h>
 #include <machine/katelib.h>
 
-#include "podulebus.h"
-
 irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;
 
@@ -72,11 +70,8 @@ extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
 
-static int irq_expcard0_base;
-
 /* Prototypes */
 
-int podule_irqhandler		__P((void));
 extern void zero_page_readonly	__P((void));
 extern void zero_page_readwrite	__P((void));
 extern int fiq_setregs		__P((fiqhandler_t *));
@@ -109,11 +104,9 @@ irq_init()
 
 	switch (IOMD_ID) {
 	case RPC600_IOMD_ID:
-		irq_expcard0_base = RPC600_IOMD_IRQ_EXPCARD0;
 		break;
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-		irq_expcard0_base = ARM7500_IOC_IRQ_EXPCARD0;
 		IOMD_WRITE_BYTE(IOMD_IRQMSKC, 0x00);
 		IOMD_WRITE_BYTE(IOMD_IRQMSKD, 0x00);
 		break;
@@ -284,20 +277,6 @@ irq_claim(irq, handler)
 			/* No handlers for this irq so nothing to block */
 			irqblock[loop] = 0;
 	}
-
-#if NPODULEBUS > 0
-	/*
-	 * Is this an expansion card IRQ and is there a PODULE IRQ handler
-	 * installed ?
-	 * If not panic as the podulebus irq handler should have been installed
-	 * when the podulebus was attached.
-	 *
-	 * The podule IRQ's need to be fixed ASAP
-	 */
-	if (irq >= irq_expcard0_base && irqhandlers[IRQ_PODULE] == NULL)
-		panic("Podule IRQ %d claimed but no podulebus handler installed\n",
-		    irq);
-#endif	/* NPODULEBUS */
 
 	enable_irq(irq);
 	set_spl_masks();
