@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.5 1996/07/10 22:52:36 explorer Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.6 1996/08/05 21:18:56 soda Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -247,9 +247,12 @@ ahc_eisa_match(parent, match, aux)
 
 	/* must match one of our known ID strings */
 	if (strcmp(ea->ea_idstring, "ADP7770") &&
-	    strcmp(ea->ea_idstring, "ADP7771") &&
-	    strcmp(ea->ea_idstring, "ADP7756") && /* XXX - not EISA, but VL */
-	    strcmp(ea->ea_idstring, "ADP7757"))	  /* XXX - not EISA, but VL */
+	    strcmp(ea->ea_idstring, "ADP7771")
+#if 0
+	    && strcmp(ea->ea_idstring, "ADP7756") /* not EISA, but VL */
+	    && strcmp(ea->ea_idstring, "ADP7757") /* not EISA, but VL */
+#endif
+	    )
 		return (0);
 
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
@@ -349,12 +352,14 @@ ahc_eisa_attach(parent, self, aux)
 	} else if (strcmp(ea->ea_idstring, "ADP7771") == 0) {
 		model = EISA_PRODUCT_ADP7771;
 		type = AHC_274;
+#if 0
 	} else if (strcmp(ea->ea_idstring, "ADP7756") == 0) {
 		model = EISA_PRODUCT_ADP7756;
 		type = AHC_284;
 	} else if (strcmp(ea->ea_idstring, "ADP7757") == 0) {
 		model = EISA_PRODUCT_ADP7757;
 		type = AHC_284;
+#endif
 	} else {
 		panic("ahc_eisa_attach: Unknown device type %s\n",
 		      ea->ea_idstring);
