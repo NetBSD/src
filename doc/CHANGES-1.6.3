@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.62 2004/04/05 19:26:44 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.63 2004/04/06 05:25:58 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -383,3 +383,12 @@ gnu/dist/toolchain/gcc/config/arm/arm.c		patch
 
 	Fixes bad code generation that could cause X crashes.
 	[is, ticket #1647]
+
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_fxp_pci.c			patch
+
+	Pull in changes to support the Intel 82801EB/ER (ICH5) Controller. 
+	PR#25002
+	[briggs, ticket #1648]
