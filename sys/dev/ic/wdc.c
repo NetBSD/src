@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.169 2004/01/03 22:56:53 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.170 2004/01/03 23:59:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.169 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.170 2004/01/03 23:59:58 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -851,7 +851,7 @@ wdc_reset_channel(struct ata_drive_datas *drvp, int flags)
 		}
 		chp->ch_flags |= WDCF_TH_RESET;
 		chp->ch_queue->queue_freeze++;
-		wakeup(&chp->thread);
+		wakeup(&chp->ch_thread);
 		return;
 	}
 	(void) wdcreset(chp, RESET_POLL);
@@ -1099,7 +1099,7 @@ wdcwait(struct wdc_channel *chp, int mask, int bits, int timeout, int flags)
 					panic("wdcwait: queue_freeze");
 #endif
 				chp->ch_queue->queue_freeze++;
-				wakeup(&chp->thread);
+				wakeup(&chp->ch_thread);
 				return(WDCWAIT_THR);
 			}
 		}
