@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.17 1999/03/19 22:06:36 thorpej Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.18 2000/02/09 22:41:53 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ struct ld_entry {
 	void	*(*dlsym) __P((void *, const char *));
 	int	(*dlctl) __P((void *, int, void *));
 	void	(*dlexit) __P((void));
-	int	(*dladdr) __P((void *, Dl_info *));
+	int	(*dladdr) __P((const void *, Dl_info *));
 	void	(*dlrsrvd[2]) __P((void));
 };
 
