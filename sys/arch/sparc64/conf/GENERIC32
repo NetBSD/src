@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.34 2002/04/12 08:11:21 gmcgarry Exp $
+# 	$NetBSD: GENERIC32,v 1.35 2002/04/17 02:22:55 mycroft Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 maxusers	64
 
@@ -394,7 +394,6 @@ qe*		at qec?
 # PCI network interfaces
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet UT
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -413,11 +412,7 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139 UT
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet UT
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # MII/PHY support

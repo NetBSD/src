@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2002/04/12 08:11:06 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.126 2002/04/17 02:22:53 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.126 $"
 
 maxusers	32
 
@@ -150,7 +150,6 @@ pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
@@ -160,11 +159,7 @@ lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
-tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
-#options 	TLP_MATCH_21040
-#options 	TLP_MATCH_21041
-#options 	TLP_MATCH_21140
-#options 	TLP_MATCH_21142
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
