@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.4 2001/09/15 12:47:06 uch Exp $ */
+/*	$NetBSD: plumohci.c,v 1.5 2001/11/18 08:19:39 takemura Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -45,8 +45,8 @@
 #include <sys/mbuf.h>
 #include <uvm/uvm_extern.h>
 
-#define _HPCMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
+#include <machine/bus_dma_hpcmips.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -75,21 +75,26 @@ int __plumohci_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
     int, size_t, caddr_t *, int);
 void __plumohci_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 
-struct hpcmips_bus_dma_tag plumohci_bus_dma_tag = {
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	__plumohci_dmamap_sync,
-	__plumohci_dmamem_alloc,
-	__plumohci_dmamem_free,
-	__plumohci_dmamem_map,
-	__plumohci_dmamem_unmap,
-	_bus_dmamem_mmap,
-	NULL
+struct bus_dma_tag_hpcmips plumohci_bus_dma_tag = {
+	{
+		NULL,
+		{
+			_hpcmips_bd_map_create,
+			_hpcmips_bd_map_destroy,
+			_hpcmips_bd_map_load,
+			_hpcmips_bd_map_load_mbuf,
+			_hpcmips_bd_map_load_uio,
+			_hpcmips_bd_map_load_raw,
+			_hpcmips_bd_map_unload,
+			__plumohci_dmamap_sync,
+			__plumohci_dmamem_alloc,
+			__plumohci_dmamem_free,
+			__plumohci_dmamem_map,
+			__plumohci_dmamem_unmap,
+			_hpcmips_bd_mem_mmap,
+		},
+	},
+	NULL,
 };
 
 struct plumohci_shm {
@@ -128,8 +133,8 @@ plumohci_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status r;
 
 	sc->sc.iot = pa->pa_iot;
-	sc->sc.sc_bus.dmatag = &plumohci_bus_dma_tag;
-	sc->sc.sc_bus.dmatag->_dmamap_chipset_v = sc;
+	sc->sc.sc_bus.dmatag = &plumohci_bus_dma_tag.bdt;
+	plumohci_bus_dma_tag._dmamap_chipset_v = sc;
 
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, PLUM_OHCI_REGBASE, OHCI_PAGE_SIZE, 
@@ -199,9 +204,10 @@ plumohci_intr(void *arg)
  */
 
 void
-__plumohci_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+__plumohci_dmamap_sync(bus_dma_tag_t tx, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
+	struct bus_dma_tag_hpcmips *t = (struct bus_dma_tag_hpcmips *)tx;
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 
 	/*
@@ -212,10 +218,11 @@ __plumohci_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 }
 
 int
-__plumohci_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags)
+__plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
+    bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
+    int nsegs, int *rsegs, int flags)
 {
+	struct bus_dma_tag_hpcmips *t = (struct bus_dma_tag_hpcmips *)tx;
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 	struct plumohci_shm *ps;
 	bus_space_handle_t bsh;
@@ -254,8 +261,9 @@ __plumohci_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 }
 
 void
-__plumohci_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
+__plumohci_dmamem_free(bus_dma_tag_t tx, bus_dma_segment_t *segs, int nsegs)
 {
+	struct bus_dma_tag_hpcmips *t = (struct bus_dma_tag_hpcmips *)tx;
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 	struct plumohci_shm *ps;
 
@@ -276,9 +284,10 @@ __plumohci_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 }
 
 int
-__plumohci_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+__plumohci_dmamem_map(bus_dma_tag_t tx, bus_dma_segment_t *segs, int nsegs,
     size_t size, caddr_t *kvap, int flags)
 {
+	struct bus_dma_tag_hpcmips *t = (struct bus_dma_tag_hpcmips *)tx;
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 	struct plumohci_shm *ps;
 

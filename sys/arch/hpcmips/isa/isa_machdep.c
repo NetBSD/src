@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.17 2001/10/24 04:09:23 shin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.18 2001/11/18 08:19:40 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,13 +41,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
-#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/bus.h>
+#include <machine/bus_space_hpcmips.h>
 
 #include <dev/hpc/hpciovar.h>
 
@@ -142,6 +143,7 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 	struct hpcio_attach_args *haa = aux;
 	struct vrisab_softc *sc = (void*)self;
 	struct isabus_attach_args iba;
+	struct bus_space_tag_hpcmips *iot, *memt;
 	bus_addr_t offset;
 	int i;
     
@@ -154,21 +156,15 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate ISA memory space */
 	iba.iba_memt    = hpcmips_alloc_bus_space_tag();
-	strcpy(iba.iba_memt->t_name, "ISA mem");
 	offset = sc->sc_dev.dv_cfdata->cf_loc[VRISABIFCF_ISAMEMOFFSET];
-	iba.iba_memt->t_base = VR_ISA_MEM_BASE + offset;
-	iba.iba_memt->t_size = VR_ISA_MEM_SIZE - offset;
-	hpcmips_init_bus_space_extent(iba.iba_memt);
+	hpcmips_init_bus_space(iba.iba_memt, haa->haa_iot, "ISA mem",
+	    VR_ISA_MEM_BASE + offset, VR_ISA_MEM_SIZE - offset);
 
 	/* Allocate ISA port space */
 	iba.iba_iot     = hpcmips_alloc_bus_space_tag();
-	strcpy(iba.iba_iot->t_name, "ISA port");
-	/* Platform dependent setting. */
 	offset = sc->sc_dev.dv_cfdata->cf_loc[VRISABIFCF_ISAPORTOFFSET];
-	iba.iba_iot->t_base = VR_ISA_PORT_BASE + offset;
-	iba.iba_iot->t_size = VR_ISA_PORT_SIZE - offset;
-
-	hpcmips_init_bus_space_extent(iba.iba_iot);
+	hpcmips_init_bus_space(iba.iba_iot, haa->haa_iot, "ISA port",
+	    VR_ISA_PORT_BASE + offset, VR_ISA_PORT_SIZE - offset);
 
 #ifdef DEBUG_FIND_PCIC
 #warning DEBUG_FIND_PCIC
@@ -177,9 +173,11 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 	/* Initialize ISA IRQ <-> GPIO mapping */
 	for (i = 0; i < INTR_NIRQS; i++)
 		sc->sc_intr_map[i] = -1;
+	iot = (struct bus_space_tag_hpcmips *)iba.iba_iot;
+	memt = (struct bus_space_tag_hpcmips *)iba.iba_memt;
 	printf(": ISA port %#x-%#x mem %#x-%#x\n",
-	    iba.iba_iot->t_base, iba.iba_iot->t_base + iba.iba_iot->t_size,
-	    iba.iba_memt->t_base, iba.iba_memt->t_base + iba.iba_memt->t_size);
+	    iot->base, iot->base + iot->size,
+	    memt->base, memt->base + memt->size);
 	config_found(self, &iba, vrisabprint);
 #endif
 
