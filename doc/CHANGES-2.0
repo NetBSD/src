@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.446 2004/09/16 03:22:41 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.447 2004/09/16 03:23:54 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7336,3 +7336,9 @@ sys/arch/xen/include/if_xennetvar.h		1.3
 
 	Actually mix samples into the kernel RNG pool.
 	[tls, ticket #846]
+
+sys/kern/kern_clock.c				1.92
+
+	Add 50Hz support -- this will allow 'options NTP' to work on the Xen
+	port, once the Xen port's timer interrupts are made somewhat more sane.
+	[tls, ticket #847]
