@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/09 23:34:31 jmc Exp $
+#	$NetBSD: Makefile,v 1.9 2002/01/03 16:38:50 tv Exp $
 
 MODULE=		groff
 
@@ -17,43 +17,27 @@ build/Makefile: .configure_done
 
 .PATH:		${.CURDIR}/../../share/tmac
 
+_installtmac: .USE
+.if defined(UPDATE)
+	@if ! cmp ${.ALLSRC} ${.TARGET} >/dev/null 2>&1; then \
+		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
+		${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
+	fi
+.else
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
+.endif
+
 .for F in andoc doc doc-ditroff doc-common doc-nroff doc-syms doc2html
 afterinstall:	${TMACDIR}/tmac.${F}
 .PHONY:		${TMACDIR}/tmac.${F}
-# Get the hard coded path out of any files and put ${TMACDIR} in it's place
-${TMACDIR}/tmac.${F}: ${F}
-	@sed -e "s:/usr/share/tmac:${TMACDIR}:g" < ${.ALLSRC} > build/tmac/${F}.sed
-.if defined(UPDATE)
-	@if ! cmp build/tmac/${F}.sed ${.TARGET} 2>/dev/null; then \
-		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} build/tmac/${F}.sed ${.TARGET}; \
-		${HOST_INSTALL_FILE} -m ${NONBINMODE} build/tmac/${F}.sed ${.TARGET}; \
-	fi
-.else
-	${HOST_INSTALL_FILE} -m ${NONBINMODE} build/tmac/${F}.sed ${.TARGET}
-.endif
+${TMACDIR}/tmac.${F}: ${F} _installtmac
 .endfor
 
 afterinstall: ${TMACDIR}/tmac.an.old
-${TMACDIR}/tmac.an.old: ${DIST}/tmac/tmac.an
-.if defined(UPDATE)
-	@if ! cmp ${.ALLSRC} ${.TARGET} 2>/dev/null; then \
-		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
-		${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
-	fi
-.else
-	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
-.endif
+${TMACDIR}/tmac.an.old: ${DIST}/tmac/tmac.an _installtmac
 
 afterinstall: ${TMACDIR}/tmac.an
-${TMACDIR}/tmac.an: ${TMACDIR}/tmac.andoc
-.if defined(UPDATE)
-	@if ! cmp ${.ALLSRC} ${.TARGET} 2>/dev/null; then \
-		echo ${HOST_INSTALL_FILE:Q} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
-		${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}; \
-	fi
-.else
-	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} ${.TARGET}
-.endif
+${TMACDIR}/tmac.an: ${TMACDIR}/tmac.andoc _installtmac
 
 .for F in eqn groff indxbib pic refer soelim tbl
 afterinstall: ${TOOLDIR}/bin/nb${F}
