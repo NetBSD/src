@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.8 2001/08/26 02:47:38 matt Exp $
+#	$NetBSD: files.sandpoint,v 1.9 2001/10/11 03:52:13 briggs Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -104,6 +104,7 @@ file	arch/sandpoint/isa/isadma_machdep.c	isa
 file	arch/sandpoint/isa/isaclock.c		isa
 
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 include "dev/pckbc/files.pckbc"
 
