@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.6 2002/06/27 23:21:34 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.7 2002/06/27 23:56:20 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1512,6 +1512,65 @@ bge_blockinit(sc)
 	return(0);
 }
 
+static const struct bge_product {
+	pci_vendor_id_t		bp_vendor;
+	pci_product_id_t	bp_product;
+	const char		*bp_name;
+} bge_products[] = {
+	/*
+	 * The BCM5700 documentation seems to indicate that the hardware
+	 * still has the Alteon vendor ID burned into it, though it
+	 * should always be overridden by the value in the EEPROM.  We'll
+	 * check for it anyway.
+	 */
+	{ PCI_VENDOR_ALTEON,
+	  PCI_PRODUCT_ALTEON_BCM5700,
+	  "Broadcom BCM5700 Gigabit Ethernet" },
+	{ PCI_VENDOR_ALTEON,
+	  PCI_PRODUCT_ALTEON_BCM5701,
+	  "Broadcom BCM5701 Gigabit Ethernet" },
+
+	{ PCI_VENDOR_ALTIMA,
+	  PCI_PRODUCT_ALTIMA_AC1000,
+	  "Altima AC1000 Gigabit Ethernet" },
+	{ PCI_VENDOR_ALTIMA,
+	  PCI_PRODUCT_ALTIMA_AC9100,
+	  "Altima AC9100 Gigabit Ethernet" },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5700,
+	  "Broadcom BCM5700 Gigabit Ethernet" },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5701,
+	  "Broadcom BCM5700 Gigabit Ethernet" },
+
+	{ PCI_VENDOR_SCHNEIDERKOCH,
+	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
+	  "SysKonnect SK-9DX1 Gigabit Ethernet" },
+
+	{ PCI_VENDOR_3COM,
+	  PCI_PRODUCT_3COM_3C996,
+	  "3Com 3c996 Gigabit Ethernet" },
+
+	{ 0,
+	  0,
+	  NULL },
+};
+
+static const struct bge_product *
+bge_lookup(const struct pci_attach_args *pa)
+{
+	const struct bge_product *bp;
+
+	for (bp = bge_products; bp->bp_name != NULL; bp++) {
+		if (PCI_VENDOR(pa->pa_id) == bp->bp_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == bp->bp_product)
+			return (bp);
+	}
+
+	return (NULL);
+}
+
 /*
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match. Note
@@ -1528,35 +1587,7 @@ bge_probe(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
-	/*
-	 * Various supported device vendors/types and their
-	 * names. Note: the spec seems to indicate that the hardware
-	 * still has Alteon's vendor ID burned into it, though it will
-	 * always be overriden by the vendor ID in the EEPROM. Just to
-	 * be safe, we cover all possibilities.
-	 */
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTEON &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_BCM5700 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_BCM5701))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTIMA &&
-	    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC1000) ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTIMA_AC9100))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5700 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5701))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SCHNEIDERKOCH &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1)
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3COM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3C996)
+	if (bge_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
@@ -1569,6 +1600,7 @@ bge_attach(parent, self, aux)
 {
 	struct bge_softc	*sc = (struct bge_softc *)self;
 	struct pci_attach_args	*pa = aux;
+	const struct bge_product *bp;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
@@ -1581,14 +1613,15 @@ bge_attach(parent, self, aux)
 	caddr_t			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype;
-	char			devinfo[256];
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
 
+	bp = bge_lookup(pa);
+	KASSERT(bp != NULL);
+
 	sc->bge_pa = *pa;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	printf(": %s, rev. 0x%02x\n", bp->bp_name, PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Map control/status registers.
