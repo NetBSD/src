@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2003/11/04 02:19:28 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 2003/11/06 00:41:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60 2003/11/04 02:19:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2003/11/06 00:41:21 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -233,6 +233,7 @@ trap(frame)
 #ifdef CINVSMALL
 	extern char cinvstart[], cinvend[];
 #endif
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
@@ -343,7 +344,12 @@ trap(frame)
 	}
 
 	case T_ILL | T_USER:		/* privileged instruction fault */
-		trapsignal(l, SIGILL, type &~ T_USER);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_code = ILL_PRVOPC;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		goto out;
 
 	case T_AST | T_USER:		/* Allow process switch */
@@ -356,7 +362,12 @@ trap(frame)
 
 	case T_OVF | T_USER:
 	case T_DVZ | T_USER:
-		trapsignal(l, SIGFPE, type &~ T_USER);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_code = ksi.ksi_trap == T_OVF ? FPE_FLTOVF : FPE_FLTDIV;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		goto out;
 
 	case T_SLAVE | T_USER: {
@@ -381,7 +392,12 @@ trap(frame)
 			restore_fpu_context(pcb);
 		}
 		sfsr(fsr);
-		trapsignal(l, sig, 0x80000000 | fsr);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_trap = 0x80000000 | fsr;
+		ksi.ksi_code = sig == SIGFPE ? FPE_FLTOVF : FPE_FLTINV;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		goto out;
 	}
 
@@ -414,7 +430,7 @@ trap(frame)
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
 		struct vm_map *map;
-		int rv;
+		int rv, sig;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 		unsigned nss;
@@ -489,10 +505,16 @@ trap(frame)
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, T_ABT);
+			sig = SIGKILL;
 		} else {
-			trapsignal(l, SIGSEGV, T_ABT);
+			sig = SIGSEGV;
 		}
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = sig;
+		ksi.ksi_trap = T_ABT;
+		ksi.ksi_code = sig == SIGKILL ? SI_NOINFO : SEGV_MAPERR;
+		ksi.ksi_addr = (void *)frame.tf_tear;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		l->l_flag &= ~L_SA_PAGEFAULT;
 		break;
 	}
@@ -501,7 +523,12 @@ trap(frame)
 	case T_BPT | T_USER: 	/* breakpoint instruction */
 	case T_DBG | T_USER: 	/* debug trap */
 	trace:
-		trapsignal(l, SIGTRAP, type &~ T_USER);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_code = ksi.ksi_trap == T_TRC ? TRAP_TRACE : TRAP_BRKPT;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 
 	case T_NMI:		/* non-maskable interrupt */
