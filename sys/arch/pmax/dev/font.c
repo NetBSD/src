@@ -1,4 +1,4 @@
-/*	$NetBSD: font.c,v 1.5 1995/09/16 02:05:11 jonathan Exp $ */
+/*	$NetBSD: font.c,v 1.6 1995/09/24 23:13:00 jonathan Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1995
@@ -55,18 +55,19 @@
 #include "myfbdevice.h"
 #endif
 
-#include <sparc/rcons/raster.h>
+#include <dev/rcons/rcons.h>
+#include <dev/rcons/raster.h>
 
-#include <pmax/dev/qvss.h>
+#include <pmax/dev/qvss.h>	/* Little-endian font for rcons */
 
 void
-rcons_font(fb)
-	register struct fbdevice *fb;
+rcons_font(rc)
+	register struct rconsole *rc;
 {
 
 	/* XXX really rather get this from the prom */
-	fb->fb_font = &qvss;
+	rc->rc_font = &qvss;
 
 	/* Get distance to top and bottom of font from font origin */
-	fb->fb_font_ascent = -(fb->fb_font->chars)['a'].homey;
+	rc->rc_font_ascent = -(rc->rc_font->chars)['a'].homey;
 }
