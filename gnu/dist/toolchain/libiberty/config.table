@@ -4,7 +4,9 @@ case "${host}" in
   *-*-cxux7*)		frag=mh-cxux7 ;;
   *-*-freebsd2.1.*)	frag=mh-fbsd21 ;;
   *-*-freebsd2.2.[012])	frag=mh-fbsd21 ;;
+  i370-*-opened*)       frag=mh-openedition ;;
   i[345]86-*-windows*)	frag=mh-windows ;;
+  *-*-beos*)		frag=mh-beos ;;
 esac
 
 frags=$frag
@@ -56,4 +58,4 @@ else
 fi
 
 frag=xhost-mkfrag
-${CONFIG_SHELL} ${libiberty_topdir}/move-if-change temp-frag xhost-mkfrag
+${CONFIG_SHELL-/bin/sh} ${libiberty_topdir}/move-if-change temp-frag xhost-mkfrag

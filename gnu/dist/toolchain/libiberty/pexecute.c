@@ -1,6 +1,6 @@
 /* Utilities to execute a program in a subprocess (possibly linked by pipes
    with other subprocesses), and wait for it.
-   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1996-2000 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -29,6 +29,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -156,6 +159,8 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
   FILE *argfile;
   int i, el = flags & PEXECUTE_SEARCH ? 4 : 0;
 
+  if (temp_base == 0)
+    temp_base = choose_temp_base ();
   scmd = (char *) xmalloc (strlen (program) + strlen (temp_base) + 6 + el);
   rf = scmd + strlen(program) + 2 + el;
   sprintf (scmd, "%s%s @%s.gp", program,
@@ -276,6 +281,45 @@ fix_argv (argvec)
 
         argvec[i] = temp;
       }
+
+  for (i = 0; argvec[i] != 0; i++)
+    {
+      if (strpbrk (argvec[i], " \t"))
+        {
+	  int len, trailing_backslash;
+	  char *temp;
+
+	  len = strlen (argvec[i]);
+	  trailing_backslash = 0;
+
+	  /* There is an added complication when an arg with embedded white
+	     space ends in a backslash (such as in the case of -iprefix arg
+	     passed to cpp). The resulting quoted strings gets misinterpreted
+	     by the command interpreter -- it thinks that the ending quote
+	     is escaped by the trailing backslash and things get confused. 
+	     We handle this case by escaping the trailing backslash, provided
+	     it was not escaped in the first place.  */
+	  if (len > 1 
+	      && argvec[i][len-1] == '\\' 
+	      && argvec[i][len-2] != '\\')
+	    {
+	      trailing_backslash = 1;
+	      ++len;			/* to escape the final backslash. */
+	    }
+
+	  len += 2;			/* and for the enclosing quotes. */
+
+	  temp = xmalloc (len + 1);
+	  temp[0] = '"';
+	  strcpy (temp + 1, argvec[i]);
+	  if (trailing_backslash)
+	    temp[len-2] = '\\';
+	  temp[len-1] = '"';
+	  temp[len] = '\0';
+
+	  argvec[i] = temp;
+	}
+    }
 
   return (const char * const *) argvec;
 }
@@ -612,7 +656,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
      const char *program;
      char * const *argv;
      const char *this_pname;
-     const char *temp_base;
+     const char *temp_base ATTRIBUTE_UNUSED;
      char **errmsg_fmt, **errmsg_arg;
      int flags;
 {
@@ -719,7 +763,7 @@ int
 pwait (pid, status, flags)
      int pid;
      int *status;
-     int flags;
+     int flags ATTRIBUTE_UNUSED;
 {
   /* ??? Here's an opportunity to canonicalize the values in STATUS.
      Needed?  */
