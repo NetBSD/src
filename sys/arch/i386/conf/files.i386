@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.165 2000/08/21 07:39:45 itohy Exp $
+#	$NetBSD: files.i386,v 1.166 2000/09/07 17:20:58 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -42,6 +42,9 @@ defopt	opt_pcibios.h PCIBIOS PCIBIOSVERBOSE
 	PCIBIOS_ADDR_FIXUP PCIBIOS_BUS_FIXUP
 	PCIBIOS_INTR_FIXUP PCIBIOS_INTR_FIXUP_FORCE
 	PCIBIOS_INTR_GUESS PCIBIOS_IRQS_HINT PCIINTR_DEBUG
+
+# Large page size
+defopt	LARGEPAGES
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
