@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2002/03/23 02:22:57 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.13 2002/04/05 16:58:04 thorpej Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,7 +61,6 @@ define	PTE_BASE		PTE_BASE
 
 define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
-define	PDSHIFT			PDSHIFT
 
 define	P_TRACED		P_TRACED
 define	P_PROFIL		P_PROFIL

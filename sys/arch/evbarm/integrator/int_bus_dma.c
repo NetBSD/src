@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.6 2002/03/24 03:37:25 thorpej Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.7 2002/04/05 16:58:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@ integrator_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 				cpu_dcache_wbinv_range(va, NBPG);
 				cpu_drain_writebuf();
 				ptep = vtopte(va);
-				*ptep = ((*ptep) & (~PT_C | PT_B));
+				*ptep &= ~(L2_C | L2_B);
 				tlb_flush();
 			}
 #ifdef DEBUG_DMA
