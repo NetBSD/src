@@ -1,0 +1,6 @@
+It is advised that the user read the sshd(8) manpage before editing any
+of the defaults provided.  Some of these options can seriously degrade
+the security of your system.  The defaults provided are generally considered
+to be fairly secure.
+
+$NetBSD: help,v 1.1 2001/08/02 05:41:19 garbled Exp $
