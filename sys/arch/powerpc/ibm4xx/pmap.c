@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2002/11/24 17:05:45 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2003/01/04 18:04:43 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -728,7 +728,9 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa)
 for (npv = pv; npv; npv = npv->pv_next)
 if (npv->pv_va == va && npv->pv_pm == pm) {
 printf("Duplicate pv: va %lx pm %p\n", va, pm);
+#ifdef DDB
 Debugger();
+#endif
 return (1);
 }
 
