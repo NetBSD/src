@@ -1,13 +1,13 @@
-#	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
+#	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
-.if exists(${.CURDIR}/../Makefile.inc)
+.if !defined(NOINCLUDE) && exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
 .SUFFIXES: .out .o .c .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 .8.0 .7.0 .6.0 .5.0 .4.0 .3.0 .2.0 .1.0:
-	nroff -mandoc ${.IMPSRC} > ${.TARGET}
+	nroff -man ${.IMPSRC} > ${.TARGET}
 
 CFLAGS+=${COPTS}
 
@@ -25,6 +25,7 @@ LIBDES?=	/usr/lib/libdes.a
 LIBL?=		/usr/lib/libl.a
 LIBKDB?=	/usr/lib/libkdb.a
 LIBKRB?=	/usr/lib/libkrb.a
+LIBKVM?=	/usr/lib/libkvm.a
 LIBM?=		/usr/lib/libm.a
 LIBMP?=		/usr/lib/libmp.a
 LIBPC?=		/usr/lib/libpc.a
@@ -50,7 +51,7 @@ OBJS+=  ${SRCS:R:S/$/.o/g}
 ${PROG}: ${OBJS} ${LIBC} ${DPADD}
 	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 
-.else defined(PROG)
+.else defined(SRCS)
 
 SRCS= ${PROG}.c
 
@@ -67,7 +68,12 @@ MKDEP=	-p
 MAN1=	${PROG}.0
 .endif
 .endif
+.if !defined(NOMAN)
 MANALL=	${MAN1} ${MAN2} ${MAN3} ${MAN4} ${MAN5} ${MAN6} ${MAN7} ${MAN8}
+.else
+MANALL=
+.endif
+manpages: ${MANALL}
 
 _PROGSUBDIR: .USE
 .if defined(SUBDIR) && !empty(SUBDIR)
@@ -82,17 +88,19 @@ _PROGSUBDIR: .USE
 	done
 .endif
 
+.if !target(all)
 .MAIN: all
 all: ${PROG} ${MANALL} _PROGSUBDIR
+.endif
 
 .if !target(clean)
 clean: _PROGSUBDIR
-	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES}
+	rm -f a.out [Ee]rrs mklog ${PROG}.core ${PROG} ${OBJS} ${CLEANFILES}
 .endif
 
 .if !target(cleandir)
 cleandir: _PROGSUBDIR
-	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES}
+	rm -f a.out [Ee]rrs mklog ${PROG}.core ${PROG} ${OBJS} ${CLEANFILES}
 	rm -f .depend ${MANALL}
 .endif
 
@@ -116,7 +124,7 @@ afterinstall:
 realinstall: _PROGSUBDIR
 .if defined(PROG)
 	install ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${PROG} ${DESTDIR}${BINDIR}
+	    ${INSTALLFLAGS} ${PROG} ${DESTDIR}${BINDIR}
 .endif
 .if defined(HIDEGAME)
 	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG}; \
@@ -135,8 +143,7 @@ realinstall: _PROGSUBDIR
 	done; true
 .endif
 
-install: maninstall
-maninstall: afterinstall
+install: afterinstall maninstall
 afterinstall: realinstall
 realinstall: beforeinstall
 .endif
@@ -164,14 +171,31 @@ obj: _PROGSUBDIR
 .endif
 .endif
 
+.if !target(objdir)
+.if defined(NOOBJ)
+objdir: _PROGSUBDIR
+.else
+objdir: _PROGSUBDIR
+	@cd ${.CURDIR}; \
+	here=`pwd`; dest=/usr/obj/`echo $$here | sed 's,/usr/src/,,'`; \
+	if test -d /usr/obj -a ! -d $$dest; then \
+		mkdir -p $$dest; \
+	else \
+		true; \
+	fi;
+.endif
+.endif
+
 .if !target(tags)
 tags: ${SRCS} _PROGSUBDIR
 .if defined(PROG)
-	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC} | \
-	    sed "s;\${.CURDIR}/;;" > tags
+	-ctags -f /dev/stdout ${.ALLSRC} | \
+	    sed "s;${.CURDIR}/;;" > ${.CURDIR}/tags
 .endif
 .endif
 
 .if !defined(NOMAN)
 .include <bsd.man.mk>
+.else
+maninstall:
 .endif

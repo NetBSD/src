@@ -1,23 +1,39 @@
-#	@(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
-
-PRINTER=psc
+#	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
-EQN?=		deqn -P${PRINTER}
-GREMLIN?=	grn -P${PRINTER}
+EQN?=		eqn
+GREMLIN?=	grn
 GRIND?=		vgrind -f
 INDXBIB?=	indxbib
-PIC?=		pic -P${PRINTER}
+PIC?=		pic
 REFER?=		refer
-ROFF?=		ditroff -t ${MACROS} ${PAGES} -P${PRINTER}
+ROFF?=		groff -M/usr/share/tmac -M/usr/old/lib/tmac ${MACROS} ${PAGES}
 SOELIM?=	soelim
-TBL?=		dtbl -P${PRINTER}
+TBL?=		tbl
 
 .PATH: ${.CURDIR}
 
+.if !target(all)
+.MAIN: all
+all: paper.ps
+.endif
+
+.if !target(paper.ps)
+paper.ps: ${SRCS}
+	${ROFF} ${SRCS} > ${.TARGET}
+.endif
+
 .if !target(print)
-print: paper.${PRINTER}
-	lpr -P${PRINTER} paper.${PRINTER}
+print: paper.ps
+	lpr -P${PRINTER} paper.ps
+.endif
+
+.if !target(manpages)
+manpages:
+.endif
+
+.if !target(obj)
+obj:
 .endif
 
 clean cleandir:
