@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.102 2003/05/12 03:01:16 lukem Exp $
+#	$NetBSD: build.sh,v 1.103 2003/05/17 07:52:52 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -186,7 +186,16 @@ getarch()
 		MACHINE_ARCH=powerpc
 		;;
 
-	evbsh3|mmeye)
+	evbsh3-e[bl])
+		MACHINE_ARCH=sh3${MACHINE##*-}
+		makewrappermachine=${MACHINE}
+		MACHINE=${MACHINE%-e[bl]}
+		;;
+
+	evbsh3)			# no default MACHINE_ARCH
+		;;
+
+	mmeye)
 		MACHINE_ARCH=sh3eb
 		;;
 
@@ -774,7 +783,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.102 2003/05/12 03:01:16 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.103 2003/05/17 07:52:52 lukem Exp $
 #
 
 EOF
