@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 2002/02/27 01:20:55 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 2002/05/07 03:28:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,7 @@
 
 #include <uvm/uvm_extern.h>
 
-extern char *vmmap;            /* poor name! */
+char *kvm_start = (char *)VM_MIN_KERNEL_ADDRESS;
 extern paddr_t avail_end;
 caddr_t zeropage;
 
@@ -96,7 +96,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	vm_prot_t prot;
 
 	if (minor(dev) == DEV_MEM) {
-		/* lock against other uses of shared vmmap */
+		/* lock against other uses of shared kvm_start */
 		while (physlock > 0) {
 			physlock++;
 			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
@@ -121,14 +121,14 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)kvm_start,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + NBPG);
+			error = uiomove((caddr_t)kvm_start + o, c, uio);
+			pmap_remove(pmap_kernel(), (vaddr_t)kvm_start,
+			    (vaddr_t)kvm_start + NBPG);
 			pmap_update(pmap_kernel());
 			break;
 
@@ -137,7 +137,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < SH3_P1SEG_BASE)
 				return (EFAULT);
-			if (v + c > avail_end + sh3_round_page(MSGBUFSIZE) &&
+			if (v + c > SH3_PHYS_TO_P1SEG(avail_end +
+					sh3_round_page(MSGBUFSIZE)) &&
 			    (v < SH3_P3SEG_BASE || !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
 				return (EFAULT);
