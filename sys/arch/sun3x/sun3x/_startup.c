@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.12 1997/03/13 17:40:36 gwr Exp $	*/
+/*	$NetBSD: _startup.c,v 1.13 1997/03/24 17:57:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@ int mmutype = -1;	/* MMU_68030 */
 /*
  * Now our own stuff.
  */
-int boothowto = RB_SINGLE | RB_KDB; 	/* XXX - For now... */
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
