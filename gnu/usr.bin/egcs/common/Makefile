@@ -1,12 +1,17 @@
-#	$NetBSD: Makefile,v 1.3 1998/04/01 21:13:24 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/04/02 03:33:31 tv Exp $
 
 .include "../Makefile.inc"
 
 LIB=	cc1
 
 NOMAN=
-NOPIC=
 NOPROFILE=
+
+.if defined(CC1_SHLIB)
+CPICFLAGS=-fPIC -DPIC
+.else
+NOPIC=
+.endif
 
 MD= $(DIST)/config/$(MACHINE_ARCH)/$(MACHINE_ARCH).md
 
@@ -17,7 +22,7 @@ CPPFLAGS+=	-DTARGET_NAME=\"$(target_alias)\"
 
 SRCS= \
 	$(MACHINE_ARCH).c alias.c bc-arity.h bc-emit.c bc-opcode.h \
-	bc-opname.h bc-optab.c bi-reverse.c bitmap.c c-aux-info.c c-common.c \
+	bc-opname.h bc-optab.c bitmap.c c-aux-info.c c-common.c \
 	c-convert.c c-decl.c c-iterate.c c-lang.c c-lex.c c-parse.h c-pragma.c \
 	c-typeck.c caller-save.c calls.c combine.c convert.c cse.c dbxout.c \
 	dwarf2out.c dwarfout.c emit-rtl.c explow.c expmed.c expr.c except.c \
@@ -147,6 +152,7 @@ bi-opcode.o: bi-opcode.c
 
 bi-opcode: bi-opcode.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
 	$(CC) -o bi-opcode bi-opcode.o bi-parser.o bi-lexer.o bi-reverse.o obstack.o
+CLEANFILES+= bi-reverse.o
 
 bi-opname.o: bi-opname.c
 
@@ -178,7 +184,7 @@ c-parse.c: c-parse.y
 	mv -f c.tab.c c-parse.c
 	mv -f c.tab.h c-parse.h
 
-# only needed during build
+# XXX need to figure out how to install only the shlib and not the .a files
 libinstall::
 
 .include <bsd.lib.mk>
