@@ -1,4 +1,4 @@
-.\"	$NetBSD: progress.1,v 1.3 2003/01/22 03:40:33 enami Exp $
+.\"	$NetBSD: progress.1,v 1.4 2003/02/10 23:59:16 grant Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,8 +83,6 @@ is specified, calculate the length using
 .Sh EXIT STATUS
 .Nm
 exits 0 on success.
-.\" .Sh ENVIRONMENT
-.\" .Sh FILES
 .Sh EXAMPLES
 The command
 .Ic progress -zf file.tar.gz tar xf -
@@ -102,10 +100,8 @@ If it is preferred to monitor the progress of the decompression
 process (unlikely), then
 .Ic progress -f file.tar.gz tar zxf -
 could be used.
-.\".Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr ftp 1
-.\" .Sh STANDARDS
 .Sh HISTORY
 .Nm
 first appeared in
@@ -124,4 +120,3 @@ difficult to read some error messages, both those produced by the
 pipeline, as well as those produced by
 .Nm
 itself.
-.\" .Sh SECURITY CONSIDERATIONS
