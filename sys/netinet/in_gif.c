@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.5 1999/07/09 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.6 1999/08/20 10:07:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -267,6 +267,9 @@ in_gif_input(m, va_alist)
 		 || sc->gif_pdst->sa_family != AF_INET) {
 			continue;
 		}
+
+		if ((sc->gif_if.if_flags & IFF_UP) == 0)
+			continue;
 
 		if ((sc->gif_if.if_flags & IFF_LINK0)
 		 && satosin(sc->gif_psrc)->sin_addr.s_addr == ip->ip_dst.s_addr
