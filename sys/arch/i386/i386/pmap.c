@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.10 1993/12/14 13:02:52 mycroft Exp $
+ *	$Id: pmap.c,v 1.11 1993/12/15 14:47:38 mycroft Exp $
  */
 
 /*
@@ -564,7 +564,7 @@ pmap_remove(pmap, sva, eva)
 
 		/* only check once in a while */
 		if (!(sva & PT_MASK)) {
-			if (!pmap_pde_v(pmap_pde(pmap, i386_ptob(sva)))) {
+			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
 				/* We can race ahead here, straight to next pde.. */
 				sva += NBPD -NBPG;
 				pte += i386_btop(NBPD) -1;
@@ -742,7 +742,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 		/* only check once in a while */
 		if (!(sva & PT_MASK)) {
-			if (!pmap_pde_v(pmap_pde(pmap, i386_ptob(sva)))) {
+			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
 				/* We can race ahead here, straight to next pde.. */
 				sva += NBPD -NBPG;
 				pte += i386_btop(NBPD) -1;
