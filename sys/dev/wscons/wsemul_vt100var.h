@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.3 1998/08/12 20:04:12 drochner Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.4 1998/12/04 20:48:04 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -59,8 +59,8 @@ struct wsemul_vt100_emuldata {
 #define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
 	long curattr;			/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
-	int scrreg_startrow;
-	int scrreg_nrows;
+	u_int scrreg_startrow;
+	u_int scrreg_nrows;
 	char *tabs;
 	char *dblwid;
 	int dw;
@@ -72,12 +72,12 @@ struct wsemul_vt100_emuldata {
 	int sschartab; /* single shift */
 
 	int nargs;
-	u_int args[VT100_EMUL_NARGS];	/* command args */
+	u_int args[VT100_EMUL_NARGS]; /* numeric command args (CSI/DCS) */
 
 	char modif1;	/* {>?} in VT100_EMUL_STATE_CSI */
 	char modif2;	/* {!"$&} in VT100_EMUL_STATE_CSI */
 
-	int designating;	/* substate in VT100_EMUL_STATE_DESIGNATE */
+	int designating;	/* substate in VT100_EMUL_STATE_SCS* */
 
 	int dcstype;		/* substate in VT100_EMUL_STATE_STRING */
 	char *dcsarg;
@@ -85,7 +85,7 @@ struct wsemul_vt100_emuldata {
 #define DCS_MAXLEN 256 /* ??? */
 #define DCSTYPE_TABRESTORE 1 /* DCS2$t */
 
-	int savedcursor_row, savedcursor_col;
+	u_int savedcursor_row, savedcursor_col;
 	long savedattr;
 	int savedattrflags, savedfgcol, savedbgcol;
 	int savedchartab0, savedchartab1;
@@ -96,9 +96,10 @@ struct wsemul_vt100_emuldata {
 #define	ARG(n)			(edp->args[(n)])
 #define	DEF1_ARG(n)		(ARG(n) ? ARG(n) : 1)
 #define	DEFx_ARG(n, x)		(ARG(n) ? ARG(n) : (x))
-#define ROWS_ABOVE		(edp->crow - edp->scrreg_startrow)
-#define	ROWS_BELOW		(edp->scrreg_startrow + edp->scrreg_nrows \
-					- edp->crow - 1)
+/* the following two can be negative if we are outside the scrolling region */
+#define ROWS_ABOVE	((int)edp->crow - (int)edp->scrreg_startrow)
+#define ROWS_BELOW	((int)(edp->scrreg_startrow + edp->scrreg_nrows) \
+					- (int)edp->crow - 1)
 #define CHECK_DW do { \
 	if (edp->dblwid && edp->dblwid[edp->crow]) { \
 		edp->dw = 1; \
