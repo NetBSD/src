@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.2 2001/05/02 13:34:33 minoura Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.3 2001/05/03 02:09:11 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -133,10 +133,9 @@ msm6258_ulinear8_to_adpcm(void *hdl, u_char *p, int cc)
 	register int i;
 	u_char f;
 
-	for (i = 0; i < cc; i += 2) {
+	for (i = 0; i < cc; i++) {
 		f = pcm2adpcm_step(p[i], y, x);
-		p[i] = f + (pcm2adpcm_step(p[i+1], y, x) << 4);
-		p[i+1] = 0;
+		p[i] = f + (pcm2adpcm_step(p[i], y, x) << 4);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.1 2001/05/02 13:00:20 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.2 2001/05/03 02:09:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -100,8 +100,8 @@ static size_t vs_round_buffersize __P((void *, int, size_t));
 static int  vs_get_props __P((void *));
 
 /* lower functions */
-static u_long vs_round_sr(u_long);
-static void vs_set_sr(struct vs_softc *sc, u_long);
+static int vs_round_sr(u_long);
+static void vs_set_sr(struct vs_softc *sc, int);
 static inline void vs_set_po(struct vs_softc *sc, u_long);
 static int adpcm_estimindex[];
 static int adpcm_estim[];
@@ -160,18 +160,18 @@ static struct audio_device vs_device = {
 };
 
 struct {
-	u_long low;
 	u_long rate;
 	u_char clk;
 	u_char den;
 } vs_l2r[] = {
-	{ 13021, VS_RATE_15K, VS_CLK_8MHZ, VS_SRATE_512 },
-	{  9115, VS_RATE_10K, VS_CLK_8MHZ, VS_SRATE_768 },
-	{  6510, VS_RATE_7K,  VS_CLK_8MHZ, VS_SRATE_1024},
-	{  4557, VS_RATE_5K,  VS_CLK_4MHZ, VS_SRATE_768 },
-	{     0, VS_RATE_3K,  VS_CLK_4MHZ, VS_SRATE_1024}
+	{ VS_RATE_15K, VS_CLK_8MHZ, VS_SRATE_512 },
+	{ VS_RATE_10K, VS_CLK_8MHZ, VS_SRATE_768 },
+	{ VS_RATE_7K,  VS_CLK_8MHZ, VS_SRATE_1024},
+	{ VS_RATE_5K,  VS_CLK_4MHZ, VS_SRATE_768 },
+	{ VS_RATE_3K,  VS_CLK_4MHZ, VS_SRATE_1024}
 };
 
+#define NUM_RATE	(sizeof(vs_l2r)/sizeof(vs_l2r[0]))
 
 static int
 vs_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -258,24 +258,24 @@ vs_dmaintr(void *hdl)
 
 	if (sc->sc_pintr) {
 		/* start next transfer */
-		sc->sc_current.dmap += sc->sc_current.rawblk;
-		if (sc->sc_current.dmap + sc->sc_current.rawblk
+		sc->sc_current.dmap += sc->sc_current.blksize;
+		if (sc->sc_current.dmap + sc->sc_current.blksize
 			> sc->sc_current.bufsize)
 			sc->sc_current.dmap -= sc->sc_current.bufsize;
 		dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc,
 					sc->sc_current.xfer,
 					sc->sc_current.dmap,
-					sc->sc_current.hwblk);
+					sc->sc_current.blksize);
 		sc->sc_pintr(sc->sc_parg);
 	} else if (sc->sc_rintr) {
 		/* start next transfer */
-		sc->sc_current.dmap += sc->sc_current.rawblk;
-		if (sc->sc_current.dmap + sc->sc_current.rawblk
+		sc->sc_current.dmap += sc->sc_current.blksize;
+		if (sc->sc_current.dmap + sc->sc_current.blksize
 			>= sc->sc_current.bufsize)
 		dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc,
 					sc->sc_current.xfer,
 					sc->sc_current.dmap,
-					sc->sc_current.hwblk);
+					sc->sc_current.blksize);
 		sc->sc_rintr(sc->sc_rarg);
 	} else {
 		printf ("vs_dmaintr: spurious interrupt\n");
@@ -349,15 +349,30 @@ vs_query_encoding(void *hdl, struct audio_encoding *fp)
 	return 0;
 }
 
-static u_long
+static int
 vs_round_sr(u_long rate)
 {
 	int i;
-	for (i = 0; i < 5; i++) {
-		if (rate >= vs_l2r[i].low)
-			return vs_l2r[i].rate;
+	int diff = rate;
+	int nearest = 0;
+
+	for (i = 0; i < NUM_RATE; i++) {
+		if (rate >= vs_l2r[i].rate) {
+			if (rate - vs_l2r[i].rate < diff) {
+				diff = rate - vs_l2r[i].rate;
+				nearest = i;
+			}
+		} else {
+			if (vs_l2r[i].rate - rate < diff) {
+				diff = vs_l2r[i].rate - rate;
+				nearest = i;
+			}
+		}
 	}
-	/*NOTREACHED*/
+	if (diff * 100 / rate > 15)
+		return -1;
+	else
+		return nearest;
 }
 
 static int
@@ -367,10 +382,10 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	struct vs_softc *sc = hdl;
 	struct audio_params *p;
 	int mode;
+	int rate;
 
 	DPRINTF(("vs_set_params: setmode=%d, usemode=%d\n", setmode, usemode));
 
-	sc->sc_current.pdenom = 1;
 	/* set first record info, then play info */
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = (mode == AUMODE_RECORD) ? AUMODE_PLAY : -1) {
@@ -382,8 +397,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		if (p->channels != 1)
 			return (EINVAL);
 
-		p->sample_rate = vs_round_sr(p->sample_rate);
-
+		rate = p->sample_rate;
 		p->sw_code = NULL;
 		p->factor = 1;
 		switch (p->encoding) {
@@ -392,7 +406,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 				return EINVAL;
 			if (mode == AUMODE_PLAY) {
 				p->sw_code = msm6258_mulaw_to_adpcm;
-				sc->sc_current.pdenom = 2;
+				rate = p->sample_rate * 2;
 			} else {
 				p->sw_code = msm6258_adpcm_to_mulaw;
 				p->factor = 2;
@@ -404,7 +418,7 @@ vs_set_params(void *hdl, int setmode, int usemode,
 				return EINVAL;
 			if (mode == AUMODE_PLAY) {
 				p->sw_code = msm6258_ulinear8_to_adpcm;
-				sc->sc_current.pdenom = 2;
+				rate = p->sample_rate * 2;
 			} else {
 				p->sw_code = msm6258_adpcm_to_ulinear8;
 				p->factor = 2;
@@ -413,34 +427,34 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		case AUDIO_ENCODING_ADPCM:
 			if (p->precision != 4)
 				return EINVAL;
-			p->sw_code = NULL;
 			break;
 		default:
 			DPRINTF(("vs_set_params: mode=%d, encoding=%d\n",
 				mode, p->encoding));
 			return (EINVAL);
 		}
+		rate = vs_round_sr(rate);
+		if (rate < 0)
+			return (EINVAL);
+		if (mode == AUMODE_PLAY)
+			sc->sc_current.prate = rate;
+		else
+			sc->sc_current.rrate = rate;
 	}
 
 	return 0;
 }
 
 static void
-vs_set_sr(struct vs_softc *sc, u_long rate)
+vs_set_sr(struct vs_softc *sc, int rate)
 {
-	int	i;
-	for (i = 0; i < 5; i++) {
-		if (rate >= vs_l2r[i].low) {
-			bus_space_write_1(sc->sc_iot, sc->sc_ppi, PPI_PORTC,
-					  (bus_space_read_1 (sc->sc_iot,
-							     sc->sc_ppi,
-							     PPI_PORTC) & 0xf0)
-					  | vs_l2r[i].den);
-			adpcm_chgclk(vs_l2r[i].clk);
-			return;
-		}
-	}
-	/*NOTREACHED*/
+	DPRINTF(("setting sample rate to %d, %d\n",
+		 rate, (int)vs_l2r[rate].rate));
+	bus_space_write_1(sc->sc_iot, sc->sc_ppi, PPI_PORTC,
+			  (bus_space_read_1 (sc->sc_iot, sc->sc_ppi,
+					     PPI_PORTC) & 0xf0)
+			  | vs_l2r[rate].den);
+	adpcm_chgclk(vs_l2r[rate].clk);
 }
 
 static inline void
@@ -467,8 +481,7 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 
 	sc->sc_pintr = intr;
 	sc->sc_parg  = arg;
-	sc->sc_current.rawblk = bsize;
-	sc->sc_current.hwblk = bsize / sc->sc_current.pdenom;;
+	sc->sc_current.blksize = bsize;
 	sc->sc_current.bufsize = (char*)end - (char*)start;
 	sc->sc_current.dmap = 0;
 
@@ -482,8 +495,9 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 		return (EINVAL);
 	}
 
-	vs_set_sr(sc, p->sample_rate);
+	vs_set_sr(sc, sc->sc_current.prate);
 	vs_set_po(sc, VS_PANOUT_LR);
+
 	xf = dmac_alloc_xfer (chan, sc->sc_dmat, vd->vd_map);
 	sc->sc_current.xfer = xf;
 	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
@@ -492,10 +506,9 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	xf->dx_ocr = DMAC_OCR_DIR_MTD;
 	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
 	xf->dx_device = sc->sc_addr + MSM6258_DATA*2 + 1;
-	if (sc->sc_current.pdenom == 2)
-		chan->ch_ocr |= DMAC_OCR_SIZE_BYTE_NOPACK;
+
 	dmac_load_xfer (chan->ch_softc, xf);
-	dmac_start_xfer_offset (chan->ch_softc, xf, 0, sc->sc_current.hwblk);
+	dmac_start_xfer_offset (chan->ch_softc, xf, 0, sc->sc_current.blksize);
 	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
 
 	return 0;
@@ -508,6 +521,8 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *vd;
+	struct dmac_dma_xfer *xf;
+	struct dmac_channel_stat *chan = sc->sc_dma_ch;
 
 	DPRINTF(("vs_trigger_input\n"));
 	DPRINTF(("trigger_input: start=%p, bsize=%d, intr=%p, arg=%p\n",
@@ -515,8 +530,7 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 
 	sc->sc_rintr = intr;
 	sc->sc_rarg  = arg;
-	sc->sc_current.rawblk = bsize;
-	sc->sc_current.hwblk = bsize;
+	sc->sc_current.blksize = bsize;
 	sc->sc_current.bufsize = (char*)end - (char*)start;
 	sc->sc_current.dmap = 0;
 
@@ -530,14 +544,18 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 		return (EINVAL);
 	}
 
-	vs_set_sr(sc, p->sample_rate);
-	sc->sc_current.xfer
-	    = dmac_prepare_xfer (sc->sc_dma_ch, sc->sc_dmat, vd->vd_map,
-				 DMAC_OCR_DIR_DTM,
-				 DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT,
-				 sc->sc_addr + MSM6258_DATA*2);
-	dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc, sc->sc_current.xfer,
-				0, sc->sc_current.hwblk);
+	vs_set_sr(sc, sc->sc_current.rrate);
+	xf = dmac_alloc_xfer (chan, sc->sc_dmat, vd->vd_map);
+	sc->sc_current.xfer = xf;
+	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
+			DMAC_DCR_OPS_8BIT);
+	chan->ch_ocr = DMAC_OCR_REQG_EXTERNAL;
+	xf->dx_ocr = DMAC_OCR_DIR_DTM;
+	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
+	xf->dx_device = sc->sc_addr + MSM6258_DATA*2 + 1;
+
+	dmac_load_xfer (chan->ch_softc, xf);
+	dmac_start_xfer_offset (chan->ch_softc, xf, 0, sc->sc_current.blksize);
 	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
 
 	return 0;

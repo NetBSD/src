@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.1 2001/05/02 13:00:20 minoura Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.2 2001/05/03 02:09:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -95,8 +95,8 @@ struct vs_softc {
 
 	struct {
 		struct dmac_dma_xfer *xfer;
-		int pdenom;
-		int bufsize, rawblk, hwblk;
+		int prate, rrate;
+		int bufsize, blksize;
 		int dmap;
 	} sc_current;
 
