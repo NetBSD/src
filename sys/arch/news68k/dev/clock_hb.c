@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.6 2000/10/04 16:35:43 tsutsui Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.7 2000/10/05 19:04:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ void	clock_hb_attach __P((struct device *, struct device *, void *));
 void	clock_hb_initclocks __P((int, int));
 void	clock_intr __P((struct clockframe *));
 
-static void leds_intr __P((void));
+static __inline void leds_intr __P((void));
 
 extern void _isr_clock __P((void));	/* locore.s */
 
@@ -176,13 +176,11 @@ clock_intr(cf)
 	*ctrl_timer = 1;
 	intrcnt[CLOCK_LEVEL]++;
 
-	{
 	/* Entertainment! */
 #ifdef	LED_IDLE_CHECK
 	if (cf.cf_pc == (long)_Idle)
 #endif
 		leds_intr();
-	}
 
 	/* Call common clock interrupt handler. */
 	hardclock(cf);
@@ -193,7 +191,7 @@ clock_intr(cf)
 #define LED0	0x01
 #define LED1	0x02
 
-static void
+static __inline void
 leds_intr()
 {
 	static u_char led_countdown, led_stat;
@@ -208,7 +206,5 @@ leds_intr()
 	*ctrl_led = i;
 	led_stat = i;
 	led_countdown = hz;
-
-	return;
 }
 
