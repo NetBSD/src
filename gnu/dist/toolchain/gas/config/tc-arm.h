@@ -178,6 +178,18 @@ void armelf_frob_symbol PARAMS ((symbolS *, int *));
 #define LOCAL_LABEL_PREFIX '.'
 #endif
 
+extern boolean pic_code;
+
+/* This expression evaluates to false if the relocation is for a local 
+   object for which we still want to do the relocation at runtime.
+   True if we are willing to perform this relocation while building  
+   the .o file.
+
+   If the reloc is against an externally visible symbol, then the
+   a.out assembler should not do the relocation if generating PIC */
+
+#define obj_relocate_extern   (!pic_code)
+
 /* This expression evaluates to false if the relocation is for a local object
    for which we still want to do the relocation at runtime.  True if we
    are willing to perform this relocation while building the .o file.
@@ -207,5 +219,8 @@ void armelf_frob_symbol PARAMS ((symbolS *, int *));
 #else
 #define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
 #endif
+
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)\
+	parse_cons_expression_arm(EXP)
      
 /* end of tc-arm.h */
