@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.13 2002/06/02 13:47:02 itojun Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.14 2002/07/14 16:32:48 wiz Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.13 2002/06/02 13:47:02 itojun Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.14 2002/07/14 16:32:48 wiz Exp $");
 #endif
 #endif
 
@@ -89,11 +89,7 @@ __RCSID("$NetBSD: mrinfo.c,v 1.13 2002/06/02 13:47:02 itojun Exp $");
 #include <sys/time.h>
 #include "defs.h"
 #include <arpa/inet.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #define DEFAULT_TIMEOUT	4	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to ask each router */
@@ -107,22 +103,21 @@ int	target_level = 0;
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see COPY_TABLES macro called in kern.c) */
 
-char *			inet_name __P((u_int32_t addr));
-void			ask __P((u_int32_t dst));
-void			ask2 __P((u_int32_t dst));
-int			get_number __P((int *var, int deflt, char ***pargv,
-					int *pargc));
-u_int32_t			host_addr __P((char *name));
-void			usage __P((void));
+char *			inet_name(u_int32_t addr);
+void			ask(u_int32_t dst);
+void			ask2(u_int32_t dst);
+int			get_number(int *var, int deflt, char ***pargv,
+				   int *pargc);
+u_int32_t		host_addr(char *name);
+void			usage(void);
 
 /* to shut up -Wstrict-prototypes */
-int			main __P((int argc, char *argv[]));
+int			main(int argc, char *argv[]);
 /* log() prototyped in defs.h */
 
 
 char   *
-inet_name(addr)
-	u_int32_t  addr;
+inet_name(u_int32_t addr)
 {
 	struct hostent *e;
 	struct in_addr in;
@@ -143,16 +138,8 @@ inet_name(addr)
  * message and the current debug level.  For errors of severity LOG_ERR or
  * worse, terminate the program.
  */
-#ifdef __STDC__
 void
 log(int severity, int syserr, const char *format, ...)
-#else
-void 
-log(severity, syserr, format, va_alist)
-	int     severity, syserr;
-	const char   *format;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char    fmt[100];
@@ -173,11 +160,7 @@ log(severity, syserr, format, va_alist)
 			strcat(fmt, "warning - ");
 		strncat(fmt, format, 80);
 		format = fmt;
-#ifdef __STDC__
 		va_start(ap, format);
-#else
-		va_start(ap);
-#endif
 		vfprintf(stderr, format, ap);
 		va_end(ap);
 		if (syserr == 0)
@@ -194,16 +177,14 @@ log(severity, syserr, format, va_alist)
  * Send a neighbors-list request.
  */
 void 
-ask(dst)
-	u_int32_t  dst;
+ask(u_int32_t dst)
 {
 	send_igmp(our_addr, dst, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS,
 			htonl(MROUTED_LEVEL), 0);
 }
 
 void 
-ask2(dst)
-	u_int32_t  dst;
+ask2(u_int32_t dst)
 {
 	send_igmp(our_addr, dst, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS2,
 			htonl(MROUTED_LEVEL), 0);
@@ -213,10 +194,8 @@ ask2(dst)
  * Process an incoming neighbor-list message.
  */
 void 
-accept_neighbors(src, dst, p, datalen, level)
-	u_int32_t	src, dst, level;
-	u_char	*p;
-	int     datalen;
+accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
+		 u_int32_t level)
 {
 	u_char *ep = p + datalen;
 #define GET_ADDR(a) (a = ((u_int32_t)*p++ << 24), a += ((u_int32_t)*p++ << 16),\
@@ -224,10 +203,10 @@ accept_neighbors(src, dst, p, datalen, level)
 
 	printf("%s (%s):\n", inet_fmt(src, s1), inet_name(src));
 	while (p < ep) {
-		register u_int32_t laddr;
-		register u_char metric;
-		register u_char thresh;
-		register int ncount;
+		u_int32_t laddr;
+		u_char metric;
+		u_char thresh;
+		int ncount;
 
 		GET_ADDR(laddr);
 		laddr = htonl(laddr);
@@ -235,7 +214,7 @@ accept_neighbors(src, dst, p, datalen, level)
 		thresh = *p++;
 		ncount = *p++;
 		while (--ncount >= 0) {
-			register u_int32_t neighbor;
+			u_int32_t neighbor;
 			GET_ADDR(neighbor);
 			neighbor = htonl(neighbor);
 			printf("  %s -> ", inet_fmt(laddr, s1));
@@ -246,10 +225,8 @@ accept_neighbors(src, dst, p, datalen, level)
 }
 
 void 
-accept_neighbors2(src, dst, p, datalen, level)
-	u_int32_t	src, dst, level;
-	u_char	*p;
-	int     datalen;
+accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
+		  u_int32_t level)
 {
 	u_char *ep = p + datalen;
 	u_int broken_cisco = ((level & 0xffff) == 0x020a); /* 10.2 */
@@ -264,11 +241,11 @@ accept_neighbors2(src, dst, p, datalen, level)
 	printf ("]:\n");
 	
 	while (p < ep) {
-		register u_char metric;
-		register u_char thresh;
-		register u_char flags;
-		register int ncount;
-		register u_int32_t laddr = *(u_int32_t*)p;
+		u_char metric;
+		u_char thresh;
+		u_char flags;
+		int ncount;
+		u_int32_t laddr = *(u_int32_t*)p;
 
 		p += 4;
 		metric = *p++;
@@ -280,7 +257,7 @@ accept_neighbors2(src, dst, p, datalen, level)
 		if (broken_cisco && ncount > 15)	/* dumb Ciscos */
 			ncount = ncount & 0xf;
 		while (--ncount >= 0 && p < ep) {
-			register u_int32_t neighbor = *(u_int32_t*)p;
+			u_int32_t neighbor = *(u_int32_t*)p;
 			p += 4;
 			printf("  %s -> ", inet_fmt(laddr, s1));
 			printf("%s (%s) [%d/%d", inet_fmt(neighbor, s1),
@@ -305,9 +282,7 @@ accept_neighbors2(src, dst, p, datalen, level)
 }
 
 int 
-get_number(var, deflt, pargv, pargc)
-	int    *var, *pargc, deflt;
-	char ***pargv;
+get_number(int *var, int deflt, char ***pargv, int *pargc)
 {
 	if ((*pargv)[0][2] == '\0') {	/* Get the value from the next
 					 * argument */
@@ -331,7 +306,7 @@ get_number(var, deflt, pargv, pargc)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "Usage: mrinfo [-n] [-t timeout] [-r retries] [router]\n");
@@ -339,9 +314,7 @@ usage()
 }
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	int tries;
 	int trynew;
@@ -449,7 +422,7 @@ main(argc, argv)
 		fd_set  fds;
 		struct timeval tv, now;
 		int     count, recvlen, dummy = 0;
-		register u_int32_t src, dst, group;
+		u_int32_t src, dst, group;
 		struct ip *ip;
 		struct igmp *igmp;
 		int     ipdatalen, iphdrlen, igmpdatalen;
@@ -572,81 +545,53 @@ main(argc, argv)
 }
 
 /* dummies */
-void accept_probe(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	char *p;
-	int datalen;
+void accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
+		  u_int32_t level)
 {
 }
-void accept_group_report(src, dst, group, r_type)
-	u_int32_t src, dst, group;
-	int r_type;
+void accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group,
+			 int r_type)
 {
 }
-void accept_neighbor_request2(src, dst)
-	u_int32_t src, dst;
+void accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 {
 }
-void accept_report(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	char *p;
-	int datalen;
+void accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
+		   u_int32_t level)
 {
 }
-void accept_neighbor_request(src, dst)
-	u_int32_t src, dst;
+void accept_neighbor_request(u_int32_t src, u_int32_t dst)
 {
 }
-void accept_prune(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+void accept_prune(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void accept_graft(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+void accept_graft(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void accept_g_ack(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+void accept_g_ack(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void add_table_entry(origin, mcastgrp)
-	u_int32_t origin, mcastgrp;
+void add_table_entry(u_int32_t origin, u_int32_t mcastgrp)
 {
 }
-void check_vif_state()
+void check_vif_state(void)
 {
 }
-void accept_leave_message(src, dst, group)
-	u_int32_t src, dst, group;
+void accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
 {
 }
-void accept_mtrace(src, dst, group, data, no, datalen)
-	u_int32_t src, dst, group;
-	char *data;
-	u_int no;
-	int datalen;
+void accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group, char *data,
+		   u_int no, int datalen)
 {
 }
-void accept_membership_query(src, dst, group, tmo)
-	u_int32_t src, dst, group;
-	int tmo;
+void accept_membership_query(u_int32_t src, u_int32_t dst, u_int32_t group,
+			     int tmo)
 {
 }
-void accept_info_request(src, dst, p, datalen)
-	u_int32_t src, dst;
-	u_char *p;
-	int datalen;
+void accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
 }
-void accept_info_reply(src, dst, p, datalen)
-	u_int32_t src, dst;
-	u_char *p;
-	int datalen;
+void accept_info_reply(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
 }
