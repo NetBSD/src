@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7 2000/01/23 10:01:44 tsubai Exp $	*/
+/*	$NetBSD: obio.c,v 1.8 2000/02/07 20:30:05 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -153,12 +153,28 @@ obio_attach(parent, self, aux)
 	}
 }
 
+static char *skiplist[] = {
+	"interrupt-controller",
+	"gpio",
+	"escc-legacy",
+	"timer",
+	"i2c"
+	"power-mgt",
+};
+
+#define N_LIST (sizeof(skiplist) / sizeof(skiplist[0]))
+
 int
 obio_print(aux, obio)
 	void *aux;
 	const char *obio;
 {
 	struct confargs *ca = aux;
+	int i;
+
+	for (i = 0; i < N_LIST; i++)
+		if (strcmp(ca->ca_name, skiplist[i]) == 0)
+			return QUIET;
 
 	if (obio)
 		printf("%s at %s", ca->ca_name, obio);
