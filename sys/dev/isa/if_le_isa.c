@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.12 1997/09/10 03:05:39 mycroft Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.13 1997/09/10 03:31:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -302,7 +302,8 @@ found:
 	 * XXX Should always unmap, and re-map in if_le_isa_attach().
 	 */
 
-	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_DUM | csr);
+	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_DUM | DEPCA_CSR_IEN |
+	    csr);
 
 	ia->ia_iosize = 16;
 	ia->ia_drq = DRQUNK;
