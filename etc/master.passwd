@@ -7,4 +7,4 @@ games:*:7:13::0:0:Games pseudo-user:/usr/games:
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 nobody:*:32767:9999::0:0:Unprivileged user:/nonexistent:/dev/null
 ingres:*:267:74::0:0:& Group:/usr/ingres:/bin/csh
-falcon:*:32766:31::0:0:Prof. Steven &:/usr/games:/usr/games/wargames
+falken:*:32766:31::0:0:Prof. Stephen &:/usr/games:/usr/games/wargames
