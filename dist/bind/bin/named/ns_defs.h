@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_defs.h,v 1.5 2002/06/20 11:42:57 itojun Exp $	*/
+/*	$NetBSD: ns_defs.h,v 1.6 2002/06/28 06:11:48 itojun Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	Id: ns_defs.h,v 8.120 2002/05/24 03:04:56 marka Exp
+ *	Id: ns_defs.h,v 8.121 2002/06/26 03:27:19 marka Exp
  */
 
 /*
@@ -439,6 +439,7 @@ enum zonetype { z_nil, z_master, z_slave, z_hint, z_stub, z_forward,
 #define XFER_SUCCESSAXFR 4              /* named-xfr recived a xfr */
 #define XFER_SUCCESSIXFR 5              /* named-xfr recived a ixfr */
 #define XFER_SUCCESSAXFRIXFRFILE 6      /* named-xfr received AXFR for IXFR */
+#define XFER_REFUSED 7      		/* one master returned REFUSED */
 #define XFER_ISAXFR     -1              /* the last XFR is AXFR */
 #define XFER_ISIXFR     -2              /* the last XFR is IXFR */
 #define XFER_ISAXFRIXFR	-3		/* the last XFR is AXFR but we must create IXFR base */
