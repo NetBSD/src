@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2001/05/14 18:23:13 drochner Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2001/05/16 18:49:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,10 +106,6 @@ extern	unsigned short cesfic_ttyipl;
 extern	unsigned short cesfic_impipl;
 #endif /* _KERNEL && !_LOCORE */
 
-/* These spl calls are _not_ to be used by machine-independent code. */
-#define splhil()	_splraise(PSL_S|PSL_IPL1)
-#define splkbd()	splhil()
-
 /* These spl calls are used by machine-independent code. */
 #define	spllowersoftclock() spl1()
 #define	splsoft()	splraise1()
@@ -118,10 +114,9 @@ extern	unsigned short cesfic_impipl;
 #define splbio()	_splraise(cesfic_bioipl)
 #define splnet()	_splraise(cesfic_netipl)
 #define spltty()	_splraise(cesfic_ttyipl)
-#define splimp()	_splraise(cesfic_impipl)
+#define splvm()		_splraise(cesfic_impipl)
 #define splclock()	spl6()
 #define splstatclock()	spl6()
-#define splvm()		spl6()
 #define splhigh()	spl7()
 #define splsched()	spl7()
 #define spllock()	spl7()
