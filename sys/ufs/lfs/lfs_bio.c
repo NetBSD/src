@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.30 2000/09/13 00:07:56 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.31 2000/11/12 07:58:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,9 +154,7 @@ lfs_reserve(fs, vp, nb)
 
 		/* Wake up the cleaner */
 		LFS_CLEANERINFO(cip, fs, bp);
-		cip->bfree = fs->lfs_bfree;
-		cip->avail = fs->lfs_avail - fs->lfs_ravail;
-		(void) VOP_BWRITE(bp); /* Ifile */
+		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 		wakeup(&lfs_allclean_wakeup);
 		wakeup(&fs->lfs_nextseg);
 			
@@ -279,9 +277,7 @@ lfs_bwrite_ext(bp, flags)
 			 * so it CANT_WAIT.
 			 */
 			LFS_CLEANERINFO(cip, fs, cbp);
-			cip->bfree = fs->lfs_bfree;
-			cip->avail = fs->lfs_avail;
-			(void) VOP_BWRITE(cbp);
+			LFS_SYNC_CLEANERINFO(cip, fs, cbp, 0);
 
 			printf("lfs_bwrite: out of available space, "
 			       "waiting on cleaner\n");
