@@ -1,11 +1,9 @@
 /* TODO
 Add intrinfo.
-USB 2 reset is 50 ms?
-Frame lengths of control and bulk are 64, 512?
 Indicator light bit.
 Check 7.1.7.3
 */
-/*	$NetBSD: ehci.c,v 1.12 2001/11/20 14:28:44 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.13 2001/11/20 16:08:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +52,7 @@ Check 7.1.7.3
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.12 2001/11/20 14:28:44 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.13 2001/11/20 16:08:10 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1427,11 +1425,11 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			v &= ~ (EHCI_PS_PE | EHCI_PS_PR);
 			EOWRITE4(sc, port, v | EHCI_PS_PR);
 			/* Wait for reset to complete. */
-			usb_delay_ms(&sc->sc_bus, USB_PORT_RESET_DELAY * 2);
+			usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
 			/* Terminate reset sequence. */
 			EOWRITE4(sc, port, v);
 			/* Wait for HC to complete reset. */
-			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE * 2);
+			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE);
 			v = EOREAD4(sc, port);
 			DPRINTF(("ehci after reset, status=0x%08x\n", v));
 			if (v & EHCI_PS_PR) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.55 2001/11/20 13:46:09 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.56 2001/11/20 16:08:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -179,6 +179,9 @@ typedef struct {
 #define UF_DEVICE_REMOTE_WAKEUP	1
 
 #define USB_MAX_IPACKET		8 /* maximum size of the initial packet */
+
+#define USB_2_MAX_CTRL_PACKET	64
+#define USB_2_MAX_BULK_PACKET	512
 
 typedef struct {
 	uByte		bLength;
@@ -468,6 +471,7 @@ typedef struct {
 #if 0
 /* These are the values from the spec. */
 #define USB_PORT_RESET_DELAY	10  /* ms */
+#define USB_PORT_ROOT_RESET_DELAY 50  /* ms */
 #define USB_PORT_RESET_SETTLE	10  /* ms */
 #define USB_PORT_POWERUP_DELAY	100 /* ms */
 #define USB_SET_ADDRESS_SETTLE	2   /* ms */
@@ -478,8 +482,9 @@ typedef struct {
 #else
 /* Allow for marginal (i.e. non-conforming) devices. */
 #define USB_PORT_RESET_DELAY	50  /* ms */
+#define USB_PORT_ROOT_RESET_DELAY 250  /* ms */
 #define USB_PORT_RESET_RECOVERY	50  /* ms */
-#define USB_PORT_POWERUP_DELAY	200 /* ms */
+#define USB_PORT_POWERUP_DELAY	300 /* ms */
 #define USB_SET_ADDRESS_SETTLE	10  /* ms */
 #define USB_RESUME_DELAY	(50*5)  /* ms */
 #define USB_RESUME_WAIT		50  /* ms */

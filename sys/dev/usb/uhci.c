@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.144 2001/11/20 13:48:32 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.145 2001/11/20 16:08:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.144 2001/11/20 13:48:32 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.145 2001/11/20 16:08:10 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3220,7 +3220,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_RESET:
 			x = URWMASK(UREAD2(sc, port));
 			UWRITE2(sc, port, x | UHCI_PORTSC_PR);
-			usb_delay_ms(&sc->sc_bus, 50); /*XXX USB v1.1 7.1.7.3 */
+			usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);
 			delay(100);
 			x = UREAD2(sc, port);

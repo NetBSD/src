@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.109 2001/11/20 13:48:32 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.110 2001/11/20 16:08:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.109 2001/11/20 13:48:32 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.110 2001/11/20 16:08:10 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2508,8 +2508,9 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			DPRINTFN(5,("ohci_root_ctrl_transfer: reset port %d\n",
 				    index));
 			OWRITE4(sc, port, UPS_RESET);
-			for (i = 0; i < 10; i++) {
-				usb_delay_ms(&sc->sc_bus, 10); /* XXX */
+			for (i = 0; i < 5; i++) {
+				usb_delay_ms(&sc->sc_bus,
+					     USB_PORT_ROOT_RESET_DELAY);
 				if ((OREAD4(sc, port) & UPS_RESET) == 0)
 					break;
 			}
