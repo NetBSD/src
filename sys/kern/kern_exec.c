@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.175 2003/11/12 21:07:38 dsl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.176 2003/11/17 22:52:09 cl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.175 2003/11/12 21:07:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.176 2003/11/17 22:52:09 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -545,12 +545,8 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	p->p_nlwpid = 1;
 
 	/* Release any SA state. */
-	if (p->p_sa) {
-		p->p_flag &= ~P_SA;
-		free(p->p_sa->sa_stacks, M_SA);
-		pool_put(&sadata_pool, p->p_sa);
-		p->p_sa = NULL;
-	}
+	if (p->p_sa)
+		sa_release(p);
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
