@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1994/12/30 05:09:00 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1995/01/18 08:14:33 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -136,6 +136,8 @@ umprintf (char *fmt,...)
 {} /* Dummy procedure. */
 #endif
 
+int low_mem_map;
+
 void
 _low_level_init ()
 {
@@ -147,7 +149,8 @@ _low_level_init ()
 
   mem_size = ram_size(end);
   physmem = btoc(mem_size);
-  start_page = (((int)&end + NS532_PAGE_SIZE) & ~(NS532_PAGE_SIZE-1)) & 0xffffff;
+  start_page = (((int)&end + NS532_PAGE_SIZE) & ~(NS532_PAGE_SIZE-1))
+    & 0xffffff;
   avail_start = start_page; 
   avail_end   = mem_size - NS532_PAGE_SIZE;
   
@@ -217,7 +220,7 @@ _low_level_init ()
 	5-7 will be allocated as 2nd level page tables by pmap_bootstrap.
    */
 
-  p2 = (int) avail_start;
+  low_mem_map = p2 = (int) avail_start;
   avail_start += NS532_PAGE_SIZE;
   bzero ((char *)p2, NS532_PAGE_SIZE);
   WR_ADR(int,p0+4*pdei(KERNBASE), p2 + 3);
@@ -707,11 +710,12 @@ boot(arghowto)
 
 		/*
 		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
+		 * will be out of synch; adjust it now. (non panic!)
 		 */
-		resettodr();
+		if (panicstr == 0)
+			resettodr();
 
-		DELAY(10000);			/* wait for printf to finish */
+		DELAY(10000);		/* wait for printf to finish */
 	}
 	splhigh();
 	devtype = major(rootdev);
@@ -1094,7 +1098,7 @@ void reboot_cpu()
   extern void low_level_reboot();
   
   /* Point Low MEMORY to Kernel Memory! */
-  PTD[0] =  PTD[pdei(KERNBASE)];
+  *((int *)PTD) =  low_mem_map+3; /* PTD[pdei(KERNBASE)]; */
   low_level_reboot();
 
 }

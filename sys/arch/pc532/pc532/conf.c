@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1994/12/22 08:33:41 phil Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1995/01/18 08:14:31 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -117,7 +117,7 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(),	/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),	/* 2: scsi tape */
 	bdev_rd_init(NRD,rd),	/* 3: ram disk */
-	bdev_disk_init(NCD,cd),	/* 4: concatenated disk driver */
+	bdev_disk_init(NCD,cd),	/* 4: scsi cdrom */
 	bdev_disk_init(NVN,vn),	/* 5: vnode disk driver (swap to files) */
 };
 
@@ -248,6 +248,15 @@ cdev_decl(bpf);
 	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
 	(dev_type_map((*))) enodev, 0 }
 
+#include "lpt.h"
+cdev_decl(lpt);
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, 0, seltrue, \
+	(dev_type_map((*))) enodev, 0 }
+
 #include "tun.h"
 cdev_decl(tun);
 /* open, close, read, write, ioctl, select -- XXX should be generic device */
@@ -277,7 +286,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpf_init(NBPFILTER,bpf),	/* 14: berkeley packet filter */
 	cdev_tun_init(NTUN,tun),	/* 15: network tunnel */
 	cdev_notdef(),			/* 16: */
-	cdev_notdef()			/* 17: */
+	cdev_lpt_init(NLPT, lpt),	/* 17: Centronix */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

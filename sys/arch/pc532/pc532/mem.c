@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1994/10/26 08:25:10 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1995/01/18 08:14:35 phil Exp $	*/
 
 /*-
  * Copyright (c) 1988 University of Utah.
@@ -250,7 +250,41 @@ mmrw(dev, uio, flags)
 #define RAMD_ADR	0x200000	
 #endif
 
+/* config stuff .... */
+
+#include <sys/device.h>
+
+static int rdmatch(struct device *parent, struct device *self, void *aux);
+static void rdattach(struct device *parent, struct device *self, void *aux);
+
+struct cfdriver rdcd =
+      {	NULL, "rd", rdmatch, rdattach,
+	DV_DISK, sizeof(struct device), NULL, 0 };
+
 u_char ram_disk[RAMD_SIZE];
+
+
+static int
+rdmatch(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
+{
+	if (strcmp(*((char **) aux), rdcd.cd_name)) {
+		return 0;
+	}
+	return 1;
+}
+
+static void
+rdattach(parent, self, aux)
+	struct device	*parent, *self;
+	void		*aux;
+{
+	printf("\n");
+}
+
+
+/* operational routines */
 
 int rdopen(dev_t dev, int flag)
 {
@@ -298,4 +332,5 @@ void load_ram_disk()
 {
   bcopy ((char *)RAMD_ADR, ram_disk, RAMD_SIZE);
 }
+
 #endif
