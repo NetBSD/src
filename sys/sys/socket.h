@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.57 2000/07/05 02:47:23 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.58 2000/07/28 09:33:28 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,12 +78,12 @@
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
-#define sa_family_t	sa_family_t
+#define sa_family_t	__sa_family_t
 #endif
 
 #ifndef socklen_t
 typedef __socklen_t	socklen_t;
-#define socklen_t	socklen_t
+#define socklen_t	__socklen_t
 #endif
 
 /*

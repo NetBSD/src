@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.37 2000/07/23 19:25:58 mycroft Exp $	*/
+/*	$NetBSD: stdio.h,v 1.38 2000/07/28 09:38:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -335,7 +335,7 @@ __END_DECLS
     (_XOPEN_SOURCE - 0) >= 500 || defined(_LARGEFILE_SOURCE)
 #ifndef	off_t
 typedef	__off_t		off_t;
-#define	off_t		off_t
+#define	off_t		__off_t
 #endif /* off_t */
 
 __BEGIN_DECLS
