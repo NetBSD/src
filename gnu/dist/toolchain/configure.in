@@ -871,6 +871,9 @@ case "${target}" in
   mips*-*-bsd*)
     noconfigdirs="$noconfigdirs gprof target-libgloss target-libffi"
     ;;
+  mips*-*-netbsd*)
+    noconfigdirs="$noconfigdirs target-libgloss target-libffi"
+    ;;
   mipstx39-*-*)
     noconfigdirs="$noconfigdirs gprof target-libffi"   # same as generic mips
     target_configdirs="${target_configdirs} target-bsp target-libstub target-cygmon"
