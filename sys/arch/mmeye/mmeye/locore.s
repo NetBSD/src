@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 1999/12/21 21:41:58 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 1999/12/26 20:32:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -873,7 +873,7 @@ XL_KernelSp:	.long	KernelSp
  * Switch to proc0's saved context and deallocate the address space and kernel
  * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
  */
-	.globl	_proc0
+	.globl	_C_LABEL(proc0)
 ENTRY(switch_exit)
 	mov	r4, r8			/* old process */
 	mov.l	XLproc0, r9
