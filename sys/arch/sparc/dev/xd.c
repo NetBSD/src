@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.3 1995/07/05 19:55:02 pk Exp $ */
+/* $NetBSD: xd.c,v 1.4 1995/08/01 21:06:55 pk Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.3 1995/07/05 19:55:02 pk Exp $
+ * id: $Id: xd.c,v 1.4 1995/08/01 21:06:55 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -285,21 +285,23 @@ int xdcmatch(parent, match, aux)
 	struct romaux *ra = &ca->ca_ra;
 	struct xdc *xdc;
 	int     del = 0;
+	void	*vaddr;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
 	if (cputyp == CPU_SUN4) {
-		if ((u_long) ca->ca_ra.ra_paddr & PGOFSET)
-			(u_long) ca->ca_ra.ra_vaddr |=
-				((u_long) ca->ca_ra.ra_paddr & PGOFSET);
-		xdc = (struct xdc *) ra->ra_vaddr;
+		vaddr = ra->ra_vaddr;
+		if ((u_long) ra->ra_paddr & PGOFSET)
+			(u_long) vaddr |= ((u_long) ra->ra_paddr & PGOFSET);
+		xdc = (struct xdc *) vaddr;
 		if (probeget(&xdc->xdc_csr, 1) == -1)
 			return (0);
 		xdc->xdc_csr = XDC_RESET;
 		XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
 		if (del <= 0)
 			return (0);
+		ra->ra_len = NBPG;
 	}
 	return (1);
 }
