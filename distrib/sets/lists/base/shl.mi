@@ -1,8 +1,8 @@
-# $NetBSD: shl.mi,v 1.83 2000/07/06 22:33:50 mjl Exp $
+# $NetBSD: shl.mi,v 1.84 2000/07/08 13:47:34 kleink Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libasn1.so.2.0
 ./usr/lib/libbz2.so.0.0
-./usr/lib/libc.so.12.63
+./usr/lib/libc.so.12.64
 ./usr/lib/libcom_err.so.3.0
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcrypto.so.0.1
