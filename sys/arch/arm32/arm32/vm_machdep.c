@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 1999/03/30 15:13:42 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41 1999/03/30 21:01:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -84,6 +84,7 @@ int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
 extern void proc_trampoline	__P((void));
 
+int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
@@ -231,11 +232,18 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
+	int i;
+
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
+
+	/* Make sure the pages are *really* wired. */
+	for (i = 0; i < UPAGES; i++)
+		pmap_modified_emulation(kernel_map->pmap,
+		    (vaddr_t)p->p_addr + (i << PGSHIFT));
 
 	/* Map the system page */
 	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000, systempage.pv_pa,
@@ -247,6 +255,7 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
+
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
