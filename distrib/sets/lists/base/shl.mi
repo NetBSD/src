@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.78.2.3 2000/07/17 05:59:56 mrg Exp $
+# $NetBSD: shl.mi,v 1.78.2.4 2000/07/17 19:55:50 mjl Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libasn1.so.2.0
 ./usr/lib/libbz2.so.0.0
@@ -31,7 +31,7 @@
 ./usr/lib/libposix.so.0.1
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libroken.so.8.1
-./usr/lib/libskey.so.0.0
+./usr/lib/libskey.so.1.0
 ./usr/lib/libsl.so.1.0
 ./usr/lib/libss.so.3.0
 ./usr/lib/libssl.so.1.0
