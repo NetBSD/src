@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.77 2003/11/17 21:34:27 jonathan Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,8 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.77 2003/11/17 21:34:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.78 2003/11/19 18:39:34 jonathan Exp $");
 
+#include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
