@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.4.2.1 1997/05/13 03:04:39 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.4.2.2 1997/05/17 00:37:08 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -559,7 +559,7 @@ aha_create_ccbs(sc, mem, size)
 		goto have_mem;
 
 	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, &seg, 1, &rseg,
+	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (error);
@@ -1012,7 +1012,7 @@ aha_init(sc)
 	/*
 	 * Allocate the mailbox.
 	 */
-	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, &seg, 1,
+	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
 	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))

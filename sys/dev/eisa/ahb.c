@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.8.2.1 1997/05/13 03:00:00 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.8.2.2 1997/05/17 00:34:13 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -538,7 +538,7 @@ ahb_create_ecbs(sc)
 	int rseg, error;
 
 	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, &seg, 1, &rseg,
+	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (error);

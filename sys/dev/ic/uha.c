@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.7.2.1 1997/05/13 03:04:45 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.7.2.2 1997/05/17 00:37:11 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -284,7 +284,7 @@ uha_create_mscps(sc, mem, size)
 		goto have_mem;
 
 	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, &seg, 1, &rseg,
+	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT);
 	if (error)
 		return (error);
