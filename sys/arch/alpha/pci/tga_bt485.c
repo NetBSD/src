@@ -1,4 +1,4 @@
-/*	$NetBSD: tga_bt485.c,v 1.3 1996/07/09 00:55:05 cgd Exp $	*/
+/*	$NetBSD: tga_bt485.c,v 1.4 1996/11/13 21:13:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,10 +28,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <vm/vm.h>
 
 #include <dev/pci/pcivar.h>
 #include <machine/tgareg.h>
@@ -198,7 +200,7 @@ tga_bt485_set_cmap(dc, fbc)
 	struct fbcmap *fbc;
 {
 	struct bt485data *data = dc->dc_ramdac_private;
-	int error, count, index, s;
+	int count, index, s;
 
 	if ((u_int)fbc->index >= 256 ||
 	    ((u_int)fbc->index + (u_int)fbc->count) > 256)
@@ -255,7 +257,7 @@ tga_bt485_set_cursor(dc, fbc)
 	struct fbcursor *fbc;
 {
 	struct bt485data *data = dc->dc_ramdac_private;
-	int error, count, index, v, s;
+	int count, index, v, s;
 
 	v = fbc->set;
 
@@ -397,7 +399,6 @@ tga_bt485_get_curmax(dc, fbp)
 	struct tga_devconfig *dc;
 	struct fbcurpos *fbp;
 {
-	struct bt485data *data = dc->dc_ramdac_private;
 
 	fbp->x = fbp->y = CURSOR_MAX_SIZE;
 	return (0);

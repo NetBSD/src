@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1996/10/13 02:59:35 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1996/11/13 21:13:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -76,7 +76,7 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -189,13 +189,13 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp; 
 	struct disklabel *dlp;
-	int error = 0, cyl, i;
+	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
@@ -204,7 +204,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;           /* get current label */
 	(*strat)(bp);
-	if (error = biowait(bp))
+	if ((error = biowait(bp)) != 0)
 		goto done;
 
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12 1996/10/13 19:57:49 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13 1996/11/13 21:13:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,9 +49,10 @@ struct logout {
 	/* Unspecified. */
 };
 
-void		machine_check __P((struct trapframe *, unsigned long,
+static void	machine_check __P((struct trapframe *, unsigned long,
 		    unsigned long));
 static void	nullintr __P((void *, unsigned long));
+static void	real_clockintr __P((void *, unsigned long));
 
 static void	(*iointr) __P((void *, unsigned long)) = nullintr;
 static void	(*clockintr) __P((void *, unsigned long)) = nullintr;
@@ -128,7 +129,7 @@ set_iointr(niointr)
 	iointr = niointr;
 }
 
-void
+static void
 machine_check(framep, vector, param)
 	struct trapframe *framep;
 	unsigned long vector, param;
@@ -179,7 +180,6 @@ badaddr(addr, size)
 	void *addr;
 	size_t size;
 {
-	int rv;
 	long rcpt;
 
 	/* Get rid of any stale machine checks that have been waiting.  */

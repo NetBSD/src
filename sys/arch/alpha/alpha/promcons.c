@@ -1,4 +1,4 @@
-/*	$NetBSD: promcons.c,v 1.3 1996/05/30 18:44:30 cgd Exp $	*/
+/*	$NetBSD: promcons.c,v 1.4 1996/11/13 21:13:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -42,10 +42,15 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
+#include <machine/prom.h>
+
 static struct  tty *prom_tty[1];
 
-void promstart(), promtimeout();
-int promparam();
+cdev_decl(prom);
+
+void	promstart __P((struct tty *));
+void	promtimeout __P((void *));
+int	promparam __P((struct tty *, struct termios *));
 
 int
 promopen(dev, flag, mode, p)
@@ -54,7 +59,6 @@ promopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	u_short iobase;
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout = 0;
@@ -206,9 +210,10 @@ promstop(tp, flag)
 }
 
 void
-promtimeout(tp)
-	struct tty *tp;
+promtimeout(v)
+	void *v;
 {
+	struct tty *tp = v;
 	u_char c;
 
 	while (promcnlookc(tp->t_dev, &c)) {

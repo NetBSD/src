@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.7 1996/10/13 03:00:45 christos Exp $	*/
+/*	$NetBSD: wscons.c,v 1.8 1996/11/13 21:13:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -491,5 +491,5 @@ wscons_cnpollc(dev, i)
 	int i;
 {
 
-	kbd_cngetc(dev, i);		/* XXX XXX */
+	kbd_cnpollc(dev, i);		/* XXX XXX */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.26 1996/10/16 05:07:57 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.27 1996/11/13 21:13:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -106,7 +106,7 @@
 #include <alpha/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
-extern void ttrstrt	__P((void *));
+cdev_decl(scc);
 
 #undef	SCCDEV
 #define	SCCDEV		15			/* XXX */
@@ -290,6 +290,7 @@ scc_consinit(dev, sccaddr)
 	splx(s);
 }
 
+#ifndef alpha
 void
 scc_oconsinit(sc, dev)
 	struct scc_softc *sc;
@@ -311,6 +312,7 @@ scc_oconsinit(sc, dev)
 	DELAY(1000);
 	splx(s);
 }
+#endif
 
 /*
  * Test to see if device is present.
@@ -983,7 +985,7 @@ sccintr(xxxsc)
 	    if (rr2 == 6) {	/* strange, distinguished value */
 		SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
 		if (rr3 == 0)
-			return;
+			return 1;
 	    }
 
 	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.8 1996/11/11 20:59:02 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.9 1996/11/13 21:13:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -143,12 +143,12 @@ struct rpb {
 	vm_offset_t	rpb_memdat_off;		/*  C8: memory data offset */
 	vm_offset_t	rpb_condat_off;		/*  D0: config data offset */
 	vm_offset_t	rpb_fru_off;		/*  D8: FRU table offset */
-	long		(*rpb_save_term)();	/*  E0: terminal save */
-	long		rpb_save_term_val;	/*  E8: */
-	long		(*rpb_rest_term)();	/*  F0: terminal restore */
-	long		rpb_rest_term_val;	/*  F8: */
-	long		(*rpb_restart)();	/* 100: restart */
-	long		rpb_restart_val;	/* 108: */
+	u_int64_t	rpb_save_term;		/*  E0: terminal save */
+	u_int64_t	rpb_save_term_val;	/*  E8: */
+	u_int64_t	rpb_rest_term;		/*  F0: terminal restore */
+	u_int64_t	rpb_rest_term_val;	/*  F8: */
+	u_int64_t	rpb_restart;		/* 100: restart */
+	u_int64_t	rpb_restart_val;	/* 108: */
 	u_int64_t	rpb_reserve_os;		/* 110: */
 	u_int64_t	rpb_reserve_hw;		/* 118: */
 	u_int64_t	rpb_checksum;		/* 120: HWRPB checksum */
@@ -157,10 +157,6 @@ struct rpb {
 	vm_offset_t	rpb_dsrdb_off;		/* 138: HWRPB + DSRDB offset */
 	u_int64_t	rpb_tbhint[8];		/* 149: TB hint block */
 };
-
-#ifdef _KERNEL
-extern struct rpb *hwrpb;
-#endif
 
 /*
  * PCS: Per-CPU information.
@@ -320,8 +316,8 @@ struct ctb {
  * CRD: Console Routine Descriptor
  */
 struct crd {
-	int64_t	descriptor;
-	int	(*code)();
+	int64_t		descriptor;
+	u_int64_t	entry_va;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1996/11/12 05:14:37 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1996/11/13 21:13:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -92,6 +92,14 @@
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
 #endif
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
 #include "ppp.h"
 #if NPPP > 0
 #include <net/ppp_defs.h>
@@ -101,8 +109,6 @@
 #include "le_ioasic.h"			/* for le_iomem creation */
 
 vm_map_t buffer_map;
-
-void dumpsys __P((void));
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -150,9 +156,6 @@ u_int64_t	cycles_per_usec;
 /* some memory areas for device DMA.  "ick." */
 caddr_t		le_iomem;		/* XXX iomem for LANCE DMA */
 
-/* Interrupt vectors (in locore) */
-extern int XentInt(), XentArith(), XentMM(), XentIF(), XentUna(), XentSys();
-
 /* number of cpus in the box.  really! */
 int		ncpus;
 
@@ -164,9 +167,14 @@ int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 
-void	identifycpu();
+int	cpu_dump __P((void));
+int	cpu_dumpsize __P((void));
+void	dumpsys __P((void));
+void	identifycpu __P((void));
+void	netintr __P((void));
+void	printregs __P((struct reg *));
 
-int
+void
 alpha_init(pfn, ptb)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
@@ -567,8 +575,6 @@ unknown_cputype:
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
 			ncpus++;
 	}
-
-	return (0);
 }
 
 void
@@ -687,7 +693,7 @@ cpu_startup()
 	 * Note that bootstrapping is finished, and set the HWRPB up
 	 * to do restarts.
 	 */
-	hwrbp_restart_setup();
+	hwrpb_restart_setup();
 }
 
 void
@@ -1550,6 +1556,9 @@ delay(n)
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
+void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+	    u_long, register_t *));
+
 void
 cpu_exec_ecoff_setregs(p, epp, stack, retval)
 	struct proc *p;

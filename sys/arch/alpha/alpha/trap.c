@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16 1996/10/13 02:59:48 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.17 1996/11/13 21:13:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -46,11 +46,25 @@
 
 struct proc *fpcurproc;		/* current user of the FPU */
 
+void		userret __P((struct proc *, u_int64_t, u_quad_t));
+
+unsigned long	Sfloat_to_reg __P((unsigned int));
+unsigned int	reg_to_Sfloat __P((unsigned long));
+unsigned long	Tfloat_reg_cvt __P((unsigned long));
+#ifdef FIX_UNALIGNED_VAX_FP
+unsigned long	Ffloat_to_reg __P((unsigned int));
+unsigned int	reg_to_Ffloat __P((unsigned long));
+unsigned long	Gfloat_reg_cvt __P((unsigned long));
+#endif
+
+int		unaligned_fixup __P((unsigned long, unsigned long,
+		    unsigned long, struct proc *));
+
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
-static __inline void
+void
 userret(p, pc, oticks)
 	register struct proc *p;
 	u_int64_t pc;
@@ -104,7 +118,6 @@ trap(a0, a1, a2, entry, framep)
 	const unsigned long a0, a1, a2, entry;
 	struct trapframe *framep;
 {
-	extern char fswintr[];
 	register struct proc *p;
 	register int i;
 	u_int64_t ucode;
@@ -114,12 +127,15 @@ trap(a0, a1, a2, entry, framep)
 	cnt.v_trap++;
 	p = curproc;
 	ucode = 0;
-	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0) {
-		user = 1;
+	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
+	if (user)  {
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
-	} else
-		user = 0;
+	} else {
+#ifdef DIAGNOSTIC
+		sticks = 0xdeadbeef;		/* XXX for -Wuninitialized */
+#endif
+	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -257,7 +273,6 @@ panic("foo");
 			register vm_map_t map;
 			vm_prot_t ftype;
 			int rv;
-			extern int fswintrberr();
 			extern vm_map_t kernel_map;
 
 #ifdef NEW_PMAP
@@ -311,6 +326,10 @@ panic("foo");
 			case 1:			/* store instruction */
 				ftype = VM_PROT_WRITE;
 				break;
+#ifdef DIAGNOSTIC
+			default:		/* XXX gcc -Wuninitialized */
+				goto dopanic;
+#endif
 			}
 	
 			va = trunc_page((vm_offset_t)a0);

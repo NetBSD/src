@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.4 1996/10/23 04:12:21 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.5 1996/11/13 21:13:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -125,12 +125,17 @@ struct wscons_mdev_spec pms_mdev_spec = {
 	pms_disable,
 };
 
+static void pms_flush __P((void));
+static void pms_dev_cmd __P((u_char));
+static void pms_aux_cmd __P((u_char));
+static void pms_pit_cmd __P((u_char));
+
 static inline void
 pms_flush()
 {
 	u_char c;
 
-	while (c = bus_space_read_1(pms_iot, pms_status_ioh, 0) & 0x03)
+	while ((c = bus_space_read_1(pms_iot, pms_status_ioh, 0) & 0x03) != 0)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
@@ -287,7 +292,6 @@ pmsintr(arg)
 	static u_char buttons;
 	u_char changed;
 	static char dx, dy;
-	u_char buffer[5];
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.2 1996/09/15 17:15:29 cgd Exp $ */
+/*	$NetBSD: ms.c,v 1.3 1996/11/13 21:13:40 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,10 +56,13 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 #include <machine/vuid_event.h>
 #include <alpha/wscons/event_var.h>
 #include <alpha/wscons/wsconsvar.h>
+
+cdev_decl(ms);
 
 struct ms_softc {
 	struct device *ms_dev;
@@ -176,7 +179,7 @@ msopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int s, error;
+	int error;
 
 	if (ms_softc.ms_dev == NULL)	/* never attached! */
 		return (ENXIO);
@@ -245,7 +248,6 @@ msioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int s;
 
 	switch (cmd) {
 

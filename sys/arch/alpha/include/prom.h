@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.4 1996/10/15 23:52:49 cgd Exp $	*/
+/*	$NetBSD: prom.h,v 1.5 1996/11/13 21:13:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,8 +29,8 @@
 
 #ifndef	ASSEMBLER
 struct prom_vec {
-	int	(*routine)();
-	struct crd *routine_arg;
+	u_int64_t	routine;
+	void		*routine_arg;
 };
 
 /* The return value from a prom call. */
@@ -79,8 +79,26 @@ void	hwrpb_restart_setup __P((void));
  * either don't need to copy anything, or don't need the copy because it's
  * already being done elsewhere, are defined here.
  */
-#define	prom_close(chan)	prom_dispatch(PROM_R_CLOSE, chan)
-#define	prom_read(chan, len, buf, blkno) \
-	prom_dispatch(PROM_R_READ, chan, len, buf, blkno)
-#define	prom_write(chan, len, buf, blkno) \
-	prom_dispatch(PROM_R_WRITE, chan, len, buf, blkno)
+#define	prom_close(chan)						\
+	prom_dispatch(PROM_R_CLOSE, chan, 0, 0, 0)
+#define	prom_read(chan, len, buf, blkno)				\
+	prom_dispatch(PROM_R_READ, chan, len, (u_int64_t)buf, blkno)
+#define	prom_write(chan, len, buf, blkno)				\
+	prom_dispatch(PROM_R_WRITE, chan, len, (u_int64_t)buf, blkno)
+#define	prom_putstr(chan, str, len)					\
+	prom_dispatch(PROM_R_PUTS, chan, (u_int64_t)str, len, 0)
+#define	prom_getc(chan)							\
+	prom_dispatch(PROM_R_GETC, chan, 0, 0, 0)
+#define prom_getenv_disp(id, buf, len)					\
+	prom_dispatch(PROM_R_GETENV, id, (u_int64_t)buf, len, 0)
+
+#ifndef ASSEMBLER
+#ifdef _KERNEL
+void	promcnputc __P((dev_t, int));
+int	promcngetc __P((dev_t));
+int	promcnlookc __P((dev_t, char *));
+
+u_int64_t	prom_dispatch __P((u_int64_t, u_int64_t, u_int64_t, u_int64_t,
+		    u_int64_t));
+#endif /* _KERNEL */
+#endif /* ASSEMBLER */

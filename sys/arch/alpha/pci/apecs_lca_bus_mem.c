@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_lca_bus_mem.c,v 1.5 1996/08/27 16:29:24 cgd Exp $	*/
+/*	$NetBSD: apecs_lca_bus_mem.c,v 1.6 1996/11/13 21:13:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,7 +37,9 @@
 #include <machine/bus.h>
 
 #include <alpha/pci/apecsreg.h>
+#include <alpha/pci/apecsvar.h>
 #include <alpha/pci/lcareg.h>
+#include <alpha/pci/lcavar.h>
 
 #if (APECS_PCI_SPARSE != LCA_PCI_SPARSE) || (APECS_PCI_DENSE != LCA_PCI_DENSE)
 #error Memory addresses do not match up?
@@ -46,21 +48,21 @@
 #define	CHIP	apecs_lca
 
 /* Dense region 1 */
-#define	CHIP_D_MEM_W1_START(v)	0x00000000
-#define	CHIP_D_MEM_W1_END(v)	0xffffffff
+#define	CHIP_D_MEM_W1_START(v)	0x00000000UL
+#define	CHIP_D_MEM_W1_END(v)	0xffffffffUL
 #define	CHIP_D_MEM_W1_BASE(v)	APECS_PCI_DENSE
-#define	CHIP_D_MEM_W1_MASK(v)	0xffffffff
+#define	CHIP_D_MEM_W1_MASK(v)	0xffffffffUL
 
 /* Sparse region 1 */
-#define	CHIP_S_MEM_W1_START(v)	0x00000000
-#define	CHIP_S_MEM_W1_END(v)	0x00ffffff
+#define	CHIP_S_MEM_W1_START(v)	0x00000000UL
+#define	CHIP_S_MEM_W1_END(v)	0x00ffffffUL
 #define	CHIP_S_MEM_W1_BASE(v)	APECS_PCI_SPARSE
-#define	CHIP_S_MEM_W1_MASK(v)	0x07ffffff
+#define	CHIP_S_MEM_W1_MASK(v)	0x07ffffffUL
 
 /* Sparse region 2 */
-#define	CHIP_S_MEM_W2_START(v)	0x01000000		/* XXX from HAXR1 */
-#define	CHIP_S_MEM_W2_END(v)	0xfeffffff		/* XXX from HAXR1 */
+#define	CHIP_S_MEM_W2_START(v)	0x01000000UL		/* XXX from HAXR1 */
+#define	CHIP_S_MEM_W2_END(v)	0xfeffffffUL		/* XXX from HAXR1 */
 #define	CHIP_S_MEM_W2_BASE(v)	APECS_PCI_SPARSE
-#define	CHIP_S_MEM_W2_MASK(v)	0x07ffffff
+#define	CHIP_S_MEM_W2_MASK(v)	0x07ffffffUL
 
 #include "pcs_bus_mem_common.c"

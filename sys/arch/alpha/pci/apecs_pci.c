@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs_pci.c,v 1.9 1996/10/13 03:00:02 christos Exp $	*/
+/*	$NetBSD: apecs_pci.c,v 1.10 1996/11/13 21:13:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -113,6 +113,11 @@ apecs_conf_read(cpv, tag, offset)
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
 
+#ifdef DIAGNOSTIC
+	s = 0;					/* XXX gcc -Wuninitialized */
+	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+#endif
+
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
 	if (secondary) {
@@ -158,6 +163,11 @@ apecs_conf_write(cpv, tag, offset, data)
 	pcireg_t *datap;
 	int s, secondary;
 	int32_t old_haxr2;					/* XXX */
+
+#ifdef DIAGNOSTIC
+	s = 0;					/* XXX gcc -Wuninitialized */
+	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);

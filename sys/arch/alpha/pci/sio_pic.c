@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.14 1996/10/23 04:12:33 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.15 1996/11/13 21:13:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -69,7 +69,7 @@ bus_space_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
  * the list.  The handler is called with its (single) argument.
  */
 struct intrhand {
-	int	(*ih_fun)();
+	int	(*ih_fun) __P((void *));
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
@@ -113,6 +113,8 @@ u_int8_t initial_elcr[2];
 #define	INITIALLY_ENABLED(irq)		((irq) == 2 ? 1 : 0)
 #define	INITIALLY_LEVEL_TRIGGERED(irq)	0
 #endif
+
+void	sio_setirqstat __P((int, int, int));
 
 void
 sio_setirqstat(irq, enabled, type)
@@ -341,7 +343,7 @@ sio_intr_disestablish(v, cookie)
 	void *cookie;
 {
 
-	printf("sio_intr_disestablish(%lx)\n", cookie);
+	printf("sio_intr_disestablish(%p)\n", cookie);
 	/* XXX */
 
 	/* XXX NEVER ALLOW AN INITIALLY-ENABLED INTERRUPT TO BE DISABLED */

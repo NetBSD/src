@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1996/08/20 23:00:25 cgd Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1996/11/13 21:13:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,14 +55,19 @@
 
 #include <vm/vm.h>
 
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
+
 caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -70,15 +75,17 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
 }
 
 /*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
@@ -181,7 +188,7 @@ kmemphys:
 int
 mmmmap(dev, off, prot)
 	dev_t dev;
-	vm_offset_t off;
+	int off;			/* XXX */
 	int prot;
 {
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 1996/05/30 23:08:36 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4 1996/11/13 21:13:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -82,6 +82,8 @@ union q_util {
 	u_int64_t q;
 };
 
+u_int64_t	in_cksumdata __P((caddr_t buf, int len));
+
 u_int64_t
 in_cksumdata(buf, len)
 	register caddr_t buf;
@@ -92,7 +94,6 @@ in_cksumdata(buf, len)
 	u_int64_t prefilled;
 	int offset;
 	union q_util q_util;
-	union l_util l_util;
 
 	if ((3 & (long) lw) == 0 && len == 20) {
 	     sum = (u_int64_t) lw[0] + lw[1] + lw[2] + lw[3] + lw[4];

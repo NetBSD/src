@@ -1,4 +1,4 @@
-/*	$NetBSD: sio.c,v 1.12 1996/10/23 04:12:33 cgd Exp $	*/
+/*	$NetBSD: sio.c,v 1.13 1996/11/13 21:13:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -84,7 +84,6 @@ siomatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
@@ -99,7 +98,6 @@ pcebmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
