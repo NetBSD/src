@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.72 2004/04/11 02:42:25 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.73 2004/04/11 02:55:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -748,3 +748,8 @@ sys/dev/ic/mpt_netbsd.c				1.8
 	Set the DMA SGL length correctly if the DMA request must be chained 
 	because it is too large to fit in one SGL. PR#24967
 	[briggs, ticket #113]
+
+sys/arch/hp300/stand/common/clock.c		1.5
+
+	Fix yet another y2k+1 bug.
+	[tsutsui, ticket #115]
