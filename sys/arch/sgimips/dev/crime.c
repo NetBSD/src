@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.2 2000/06/29 15:44:10 soren Exp $	*/
+/*	$NetBSD: crime.c,v 1.3 2001/05/11 02:25:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -94,7 +94,7 @@ crime_attach(parent, self, aux)
 
 	rev = bus_space_read_4(ma->ma_iot, ma->ma_ioh, 4) & 0xff;
 
-	major = rev > 4;
+	major = rev >> 4;
 	minor = rev & 0x0f;
 
 	if (major == 0 && minor == 0)
