@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.9 2000/09/25 03:51:28 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.10 2001/06/13 16:05:59 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <machine/config_hook.h>
 
 #include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vrpmuvar.h>
 #include <hpcmips/vr/vrpmureg.h>
 
@@ -130,6 +131,11 @@ vrpmuattach(parent, self, aux)
 	if (!(sc->sc_handler = 
 	      vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
 				  vrpmu_intr, sc))) {
+		printf (": can't map interrupt line.\n");
+		return;
+	}
+	if (!vrip_intr_establish(va->va_vc, VRIP_INTR_BAT, IPL_TTY,
+				  vrpmu_intr, sc)) {
 		printf (": can't map interrupt line.\n");
 		return;
 	}
