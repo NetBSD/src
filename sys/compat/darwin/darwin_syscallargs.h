@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.25 2003/06/05 12:28:01 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.26 2003/09/02 21:31:03 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -66,6 +66,12 @@ struct bsd_sys_chown_args {
 	syscallarg(const char *) path;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
+};
+
+struct darwin_sys_getfsstat_args {
+	syscallarg(struct darwin_statfs *) buf;
+	syscallarg(long) bufsize;
+	syscallarg(int) flags;
 };
 
 struct bsd_sys_mount_args {
@@ -178,9 +184,14 @@ struct bsd_sys_utimes_args {
 	syscallarg(const struct timeval *) tptr;
 };
 
-struct bsd_sys_statfs_args {
+struct darwin_sys_statfs_args {
 	syscallarg(const char *) path;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct darwin_statfs *) buf;
+};
+
+struct darwin_sys_fstatfs_args {
+	syscallarg(int) fd;
+	syscallarg(struct darwin_statfs *) buf;
 };
 
 struct bsd_sys_getfh_args {
@@ -263,7 +274,7 @@ int	bsd_sys_mknod(struct lwp *, void *, register_t *);
 int	bsd_sys_chmod(struct lwp *, void *, register_t *);
 int	bsd_sys_chown(struct lwp *, void *, register_t *);
 int	sys_obreak(struct lwp *, void *, register_t *);
-int	sys_getfsstat(struct lwp *, void *, register_t *);
+int	darwin_sys_getfsstat(struct lwp *, void *, register_t *);
 int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
 int	darwin_sys_getpid(struct lwp *, void *, register_t *);
 int	bsd_sys_mount(struct lwp *, void *, register_t *);
@@ -398,8 +409,8 @@ int	sys_nfssvc(struct lwp *, void *, register_t *);
 #else
 #endif
 int	compat_43_sys_getdirentries(struct lwp *, void *, register_t *);
-int	bsd_sys_statfs(struct lwp *, void *, register_t *);
-int	sys_fstatfs(struct lwp *, void *, register_t *);
+int	darwin_sys_statfs(struct lwp *, void *, register_t *);
+int	darwin_sys_fstatfs(struct lwp *, void *, register_t *);
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 int	bsd_sys_getfh(struct lwp *, void *, register_t *);
 #else

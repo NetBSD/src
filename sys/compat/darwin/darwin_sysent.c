@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.26 2003/06/05 12:28:01 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.27 2003/09/02 21:31:04 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.26 2003/06/05 12:28:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.27 2003/09/02 21:31:04 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -69,8 +69,8 @@ struct sysent darwin_sysent[] = {
 	    bsd_sys_chown },			/* 16 = chown */
 	{ 1, s(struct sys_obreak_args), 0,
 	    sys_obreak },			/* 17 = break */
-	{ 3, s(struct sys_getfsstat_args), 0,
-	    sys_getfsstat },			/* 18 = getfsstat */
+	{ 3, s(struct darwin_sys_getfsstat_args), 0,
+	    darwin_sys_getfsstat },		/* 18 = getfsstat */
 	{ 3, s(struct compat_43_sys_lseek_args), 0,
 	    compat_43_sys_lseek },		/* 19 = olseek */
 	{ 0, 0, 0,
@@ -367,10 +367,10 @@ struct sysent darwin_sysent[] = {
 #endif
 	{ 4, s(struct compat_43_sys_getdirentries_args), 0,
 	    compat_43_sys_getdirentries },	/* 156 = ogetdirentries */
-	{ 2, s(struct bsd_sys_statfs_args), 0,
-	    bsd_sys_statfs },			/* 157 = statfs */
-	{ 2, s(struct sys_fstatfs_args), 0,
-	    sys_fstatfs },			/* 158 = fstatfs */
+	{ 2, s(struct darwin_sys_statfs_args), 0,
+	    darwin_sys_statfs },		/* 157 = statfs */
+	{ 2, s(struct darwin_sys_fstatfs_args), 0,
+	    darwin_sys_fstatfs },		/* 158 = fstatfs */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 159 = unimplemented unmount */
 	{ 0, 0, 0,
