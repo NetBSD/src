@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.6 1997/10/19 14:20:47 lukem Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.7 1998/02/08 13:39:09 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -6,7 +6,7 @@
 static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";
 static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpcinfo.c,v 1.6 1997/10/19 14:20:47 lukem Exp $");
+__RCSID("$NetBSD: rpcinfo.c,v 1.7 1998/02/08 13:39:09 lukem Exp $");
 #endif
 #endif
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: rpcinfo.c,v 1.6 1997/10/19 14:20:47 lukem Exp $");
 #define	MAX_VERS	((u_long) 4294967295UL)
 
 static	void	brdcst __P((int, char **));
-static	void	deletereg __P((int, char **)) ;
+static	void	deletereg __P((int, char **));
 static	void	get_inet_address __P((struct sockaddr_in *, char *));
 static	u_long	getprognum __P((char *));
 static	u_long	getvers __P((char *));
@@ -595,11 +595,11 @@ static void
 deletereg(argc, argv)
 	int argc;
 	char **argv;
-{	u_long prog_num, version_num ;
+{	u_long prog_num, version_num;
 
 	if (argc != 2) {
-		usage() ;
-		exit(1) ;
+		usage();
+		exit(1);
 	}
 	if (getuid()) /* This command allowed only to root */
 		errx(1, "Sorry. You are not root");
@@ -617,7 +617,7 @@ usage()
 	fprintf(stderr, "       rpcinfo [ -n portnum ] -t host prognum [ versnum ]\n");
 	fprintf(stderr, "       rpcinfo -p [ host ]\n");
 	fprintf(stderr, "       rpcinfo -b prognum versnum\n");
-	fprintf(stderr, "       rpcinfo -d prognum versnum\n") ;
+	fprintf(stderr, "       rpcinfo -d prognum versnum\n");
 }
 
 static u_long
