@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.11 2003/07/15 03:36:04 lukem Exp $	*/
+/*	$NetBSD: scr.c,v 1.12 2003/11/07 18:49:29 martin Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.11 2003/07/15 03:36:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.12 2003/11/07 18:49:29 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -2179,7 +2179,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                     /* decide if we have all data */
                     if (sc->dataCount >= sc->dataMax)
                     {
-                        KERN_DEBUG (scrdebug, T0_RECV_SM_DEBUG_INFO,("\t\tt0RecvSM: changing state to t0rsRecvSW1\n",sc->dataByte));
+                        KERN_DEBUG (scrdebug, T0_RECV_SM_DEBUG_INFO,("\t\tt0RecvSM: changing state to t0rsRecvSW1\n"));
                         ASSERT(sc->dataCount == sc->dataMax);
                         sc->t0RecvS = t0rsRecvSW1;
                     }
