@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.62 2002/09/06 03:05:35 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.63 2002/09/06 12:00:40 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -148,7 +148,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 
 caddr_t
 _rtld_bind(obj, reloff)
-	Obj_Entry *obj;
+	const Obj_Entry *obj;
 	Elf_Word reloff;
 {
 	const Elf_Rela *rela;

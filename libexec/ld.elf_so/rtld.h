@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.42 2002/09/06 03:12:04 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.43 2002/09/06 12:00:40 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -266,7 +266,7 @@ void _rtld_process_hints __P((Search_Path **, Library_Xform **, const char *,
 
 /* reloc.c */
 int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));
-caddr_t _rtld_bind __P((Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 int _rtld_relocate_objects __P((Obj_Entry *, bool, bool));
 int _rtld_relocate_nonplt_objects __P((const Obj_Entry *, bool));
 int _rtld_relocate_plt_lazy __P((const Obj_Entry *, bool));
