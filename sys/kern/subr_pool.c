@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.1 1997/12/15 11:14:57 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.2 1998/02/19 23:52:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,36 +55,45 @@ struct pool_item {
 
 
 struct pool *
-pool_create(size, nitems, wchan, mtype)
+pool_create(size, nitems, wchan, mtype, storage)
 	size_t	size;
 	int	nitems;
 	char	*wchan;
 	int	mtype;
+	caddr_t storage;
 {
 	struct pool *pp;
+	caddr_t cp;
 
 	if (size < sizeof(struct pool_item)) {
 		printf("pool_create: size %lu too small\n", (u_long)size);
 		return (NULL);
 	}
 
-	pp = (struct pool *)malloc(sizeof(*pp), mtype, M_NOWAIT);
-	if (pp == NULL)
-		return (NULL);
+	if (storage) {
+		pp = (struct pool *)storage;
+		cp = (caddr_t)ALIGN(pp + 1);
+	} else {
+		pp = (struct pool *)malloc(sizeof(*pp), mtype, M_NOWAIT);
+		if (pp == NULL)
+			return (NULL);
+		cp = NULL;
+	}
 
 	pp->pr_freelist = NULL;
 	pp->pr_freecount = 0;
 	pp->pr_hiwat = 0;
-	pp->pr_flags = 0;
+	pp->pr_flags = (storage ? PR_STATIC : 0);
 	pp->pr_size = size;
 	pp->pr_wchan = wchan;
 	pp->pr_mtype = mtype;
 	simple_lock_init(&pp->pr_lock);
 
 	if (nitems != 0) {
-		if (pool_prime(pp, nitems) != 0)
+		if (pool_prime(pp, nitems, cp) != 0) {
 			pool_destroy(pp);
-		return (NULL);
+			return (NULL);
+		}
 	}
 
 	return (pp);
@@ -98,6 +107,9 @@ pool_destroy(pp)
 	struct pool *pp;
 {
 	struct pool_item *pi;
+
+	if (pp->pr_flags & PR_STATIC)
+		return;
 
 	while ((pi = pp->pr_freelist) != NULL) {
 		pp->pr_freelist = pi->pi_next;
@@ -117,6 +129,11 @@ pool_get(pp, flags)
 {
 	void *v;
 	struct pool_item *pi;
+
+#ifdef DIAGNOSTIC
+	if ((pp->pr_flags & PR_STATIC) && (flags & PR_MALLOCOK))
+		panic("pool_get: static");
+#endif
 
 again:
 	simple_lock(&pp->pr_lock);
@@ -162,6 +179,12 @@ pool_put(pp, v)
 			wakeup((caddr_t)pp);
 		}
 	} else {
+#ifdef DIAGNOSTIC
+		if (pp->pr_flags & PR_STATIC) {
+			/* can't happen because hiwat > freecount */
+			panic("pool_put: static");
+		}
+#endif
 		/* Return to system */
 		free(v, M_DEVBUF);
 
@@ -183,16 +206,29 @@ pool_put(pp, v)
  * Add N items to the pool
  */
 int
-pool_prime(pp, n)
+pool_prime(pp, n, storage)
 	struct pool *pp;
 	int n;
+	caddr_t storage;
 {
 	struct pool_item *pi;
+	caddr_t cp = storage;
+
+#ifdef DIAGNOSTIC
+	if (storage && !(pp->pr_flags & PR_STATIC))
+		panic("pool_prime: static");
+	/* !storage && static caught below */
+#endif
 
 	simple_lock(&pp->pr_lock);
 	pp->pr_hiwat += n;
 	while (n--) {
-		pi = malloc(pp->pr_size, pp->pr_mtype, M_NOWAIT);
+		if (pp->pr_flags & PR_STATIC) {
+			pi = (struct pool_item *)cp;
+			cp = (caddr_t)ALIGN(cp + pp->pr_size);
+		} else
+			pi = malloc(pp->pr_size, pp->pr_mtype, M_NOWAIT);
+
 		if (pi == NULL) {
 			simple_unlock(&pp->pr_lock);
 			return (ENOMEM);
