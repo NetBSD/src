@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.36 1998/03/02 22:26:14 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.37 1998/03/10 11:56:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -477,10 +477,10 @@ ufs_chown(vp, uid, gid, cred, p)
 	struct proc *p;
 {
 	register struct inode *ip = VTOI(vp);
+	int error = 0;
 #ifdef QUOTA
 	uid_t ouid;
 	gid_t ogid;
-	int error = 0;
 	register int i;
 	long change;
 #endif
@@ -489,6 +489,17 @@ ufs_chown(vp, uid, gid, cred, p)
 		uid = ip->i_ffs_uid;
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_ffs_gid;
+	/*
+	 * If we don't own the file, are trying to change the owner
+	 * of the file, or are not a member of the target group,
+	 * the caller's credentials must imply super-user privilege
+	 * or the call fails.
+	 */
+	if ((cred->cr_uid != ip->i_ffs_uid || uid != ip->i_ffs_uid ||
+	    (gid != ip->i_ffs_gid && !groupmember((gid_t)gid, cred))) &&
+	    ((error = suser(cred, &p->p_acflag)) != 0))
+		return (error);
+
 #ifdef QUOTA
 	ogid = ip->i_ffs_gid;
 	ouid = ip->i_ffs_uid;
