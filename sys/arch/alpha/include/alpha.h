@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.14 2000/12/13 03:16:38 mycroft Exp $ */
+/* $NetBSD: alpha.h,v 1.15 2001/04/26 03:10:46 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,21 @@
 
 #ifndef _ALPHA_H_
 #define _ALPHA_H_
+
+typedef union alpha_s_float {
+	u_int32_t i;
+	u_int32_t frac: 23,
+		  exp:   8,
+		  sign:  1;
+} s_float;
+
+typedef union alpha_t_float {
+	u_int64_t i;
+	u_int64_t frac: 52,
+		  exp:  11,
+		  sign:  1;
+} t_float;
+
 #ifdef _KERNEL
 
 #include <machine/bus.h>
@@ -54,7 +69,11 @@ struct reg;
 struct rpb;
 struct trapframe;
 
+extern u_long cpu_implver;		/* from IMPLVER instruction */
+extern u_long cpu_amask;		/* from AMASK instruction */
 extern int bootdev_debug;
+extern int alpha_fp_sync_complete;
+extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
 
 void	XentArith(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
 void	XentIF(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
@@ -109,6 +128,22 @@ void	cpu_resume(unsigned long);
 #if defined(DDB)
 void	cpu_debug_dump(void);
 #endif
+
+/* IEEE and VAX FP completion */
+
+void alpha_sts(int, s_float *);					/* MAGIC */
+void alpha_stt(int, t_float *);					/* MAGIC */
+void alpha_lds(int, s_float *);					/* MAGIC */
+void alpha_ldt(int, t_float *);					/* MAGIC */
+
+uint64_t alpha_read_fpcr(void);					/* MAGIC */
+void alpha_write_fpcr(u_int64_t);				/* MAGIC */
+
+u_int64_t alpha_read_fp_c(struct proc *);
+void alpha_write_fp_c(struct proc *, u_int64_t);
+
+void alpha_enable_fp(struct proc *, int);
+int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
 
 #endif /* _KERNEL */
 #endif /* _ALPHA_H_ */

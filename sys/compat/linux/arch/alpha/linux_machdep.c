@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15 2001/01/26 19:45:58 manu Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.16 2001/04/26 03:10:47 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,14 +154,10 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	frametoreg(tf, (struct reg *)sigframe.uc.uc_mcontext.sc_regs);
 	sigframe.uc.uc_mcontext.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	if (p == fpcurproc) {
-	    alpha_pal_wrfen(1);
-	    savefpstate(&p->p_addr->u_pcb.pcb_fp);
-	    alpha_pal_wrfen(0);
-	    sigframe.uc.uc_mcontext.sc_fpcr = p->p_addr->u_pcb.pcb_fp.fpr_cr;
-	    fpcurproc = NULL;
-	}
-	/* XXX ownedfp ? etc...? */
+	alpha_enable_fp(p, 1);
+	sigframe.uc.uc_mcontext.sc_fpcr = alpha_read_fpcr();
+	sigframe.uc.uc_mcontext.sc_fp_control = alpha_read_fp_c(p);
+	alpha_pal_wrfen(0);
 
 	sigframe.uc.uc_mcontext.sc_traparg_a0 = tf->tf_regs[FRAME_A0];
 	sigframe.uc.uc_mcontext.sc_traparg_a1 = tf->tf_regs[FRAME_A1];
