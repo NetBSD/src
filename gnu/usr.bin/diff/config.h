@@ -84,6 +84,9 @@
 /* Define if you have the tmpnam function.  */
 #define HAVE_TMPNAM 1
 
+/* Define if you have the mkstemp function.  */
+#define HAVE_MKSTEMP 1
+
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
 

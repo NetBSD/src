@@ -43,8 +43,12 @@ static char const *diffbin = DIFF_PROGRAM;
 static char const *edbin = DEFAULT_EDITOR_PROGRAM;
 static char const **diffargv;
 
+#if HAVE_MKSTEMP
+static char tmpname[] = P_tmpdir "sdiff.XXXXXX";
+#else
 static char *tmpname;
-static int volatile tmpmade;
+#endif
+static int tmpmade;
 
 #if HAVE_FORK
 static pid_t volatile diffpid;
@@ -52,6 +56,9 @@ static pid_t volatile diffpid;
 
 struct line_filter;
 
+#if HAVE_MKSTEMP
+static FILE *ck_fdopen PARAMS((int, char const *));
+#endif
 static FILE *ck_fopen PARAMS((char const *, char const *));
 static RETSIGTYPE catchsig PARAMS((int));
 static VOID *xmalloc PARAMS((size_t));
@@ -83,6 +90,7 @@ static void untrapsig PARAMS((int));
 static void usage PARAMS((void));
 
 /* this lossage until the gnu libc conquers the universe */
+#if !HAVE_MKSTEMP
 #if HAVE_TMPNAM
 #define private_tempnam() tmpnam ((char *) 0)
 #else
@@ -94,6 +102,7 @@ static void usage PARAMS((void));
 #endif
 static char *private_tempnam PARAMS((void));
 static int exists PARAMS((char const *));
+#endif
 #endif
 static int diraccess PARAMS((char const *));
 
@@ -172,7 +181,10 @@ cleanup ()
     kill (diffpid, SIGPIPE);
 #endif
   if (tmpmade)
-    unlink (tmpname);
+    {
+      unlink (tmpname);
+      tmpmade = 0;
+    }
 }
 
 static void
@@ -215,6 +227,19 @@ xmalloc (size)
     fatal ("memory exhausted");
   return r;
 }
+
+#if HAVE_MKSTEMP
+static FILE *
+ck_fdopen (fd, type)
+     int fd;
+     char const *type;
+{
+  FILE *r = fdopen (fd, type);
+  if (!r)
+    perror_fatal ("fdopen temporary file");
+  return r;
+}
+#endif
 
 static FILE *
 ck_fopen (fname, type)
@@ -851,6 +876,10 @@ edit (left, lenl, right, lenr, outfile)
      int lenr;
      FILE *outfile;
 {
+#if HAVE_MKSTEMP
+  int fd;
+#endif
+
   for (;;)
     {
       int cmd0, cmd1;
@@ -935,13 +964,23 @@ edit (left, lenl, right, lenr, outfile)
 	case 'q':
 	  return 0;
 	case 'e':
+#if HAVE_MKSTEMP
+	  memset (tmpname + sizeof (tmpname) - 7, 'X', 6);
+	  fd = mkstemp (tmpname);
+	  if (fd == -1)
+	    perror_fatal ("temporary file name");
+	  tmpmade = 1;
+#else
 	  if (! tmpname && ! (tmpname = private_tempnam ()))
 	    perror_fatal ("temporary file name");
-
-	  tmpmade = 1;
+#endif
 
 	  {
+#if HAVE_MKSTEMP
+	    FILE *tmp = ck_fdopen (fd, "w+");
+#else
 	    FILE *tmp = ck_fopen (tmpname, "w+");
+#endif
 
 	    if (cmd1 == 'l' || cmd1 == 'b')
 	      lf_copy (left, lenl, tmp);
@@ -1017,6 +1056,11 @@ edit (left, lenl, right, lenr, outfile)
 
 	      free (buf);
 	    }
+
+#if HAVE_MKSTEMP
+	    unlink (tmpname);
+	    tmpmade = 0;
+#endif
 	    return 1;
 	  }
 	default:
@@ -1102,7 +1146,7 @@ diraccess (dir)
   return stat (dir, &buf) == 0 && S_ISDIR (buf.st_mode);
 }
 
-#if ! HAVE_TMPNAM
+#if ! HAVE_TMPNAM && ! HAVE_MKSTEMP
 
 /* Return zero if we know that FILE does not exist.  */
 static int

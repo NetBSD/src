@@ -15,7 +15,7 @@ AC_HEADER_STAT
 AC_HEADER_SYS_WAIT
 AC_TYPE_PID_T
 AC_TYPE_SIGNAL
-AC_CHECK_FUNCS(dup2 memchr sigaction strchr strerror tmpnam)
+AC_CHECK_FUNCS(dup2 memchr sigaction strchr strerror tmpnam mkstemp)
 AC_REPLACE_FUNCS(memchr waitpid)
 AC_FUNC_ALLOCA
 AC_FUNC_CLOSEDIR_VOID
