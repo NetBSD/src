@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.132 2001/12/26 09:40:15 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.133 2002/02/01 10:07:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.132 2001/12/26 09:40:15 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.133 2002/02/01 10:07:54 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -730,10 +730,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				    (p = strchr(h, '%')) != NULL) {
 					*p = '\0';
 				}
-				fprintf(fin, "Host: [%s]:%d\r\n", h, portnum);
+				fprintf(fin, "Host: [%s]:%u\r\n", h, portnum);
 				free(h);
 			} else
-				fprintf(fin, "Host: %s:%d\r\n", host, portnum);
+				fprintf(fin, "Host: %s:%u\r\n", host, portnum);
 			fprintf(fin, "Accept: */*\r\n");
 			fprintf(fin, "Connection: close\r\n");
 			if (restart_point) {
