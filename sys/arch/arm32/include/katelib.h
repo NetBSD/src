@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.5 1996/03/28 21:35:51 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.6 1996/05/06 00:41:55 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -125,7 +125,8 @@ u_int simpletraceback __P(());
 u_int irqtraceback __P((u_int, u_int));
 int shell __P(());
 void kstack_stuff __P((struct proc */*p*/));
-void boot0 __P(());
+void boot0 __P((void))
+    __attribute__((__noreturn__));
 void bootsync __P((void));
 #endif
 
