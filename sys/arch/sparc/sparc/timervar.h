@@ -1,4 +1,4 @@
-/*	$NetBSD: timervar.h,v 1.1 2002/08/25 16:10:36 thorpej Exp $	*/
+/*	$NetBSD: timervar.h,v 1.2 2002/11/28 14:18:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@ int	statintr_4(void *);
 void	timer_init_4(void);
 
 void	timerattach_obio_4(struct device *, struct device *, void *);
+void	timerattach_mainbus_4c(struct device *, struct device *, void *);
 #endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M)
@@ -65,6 +66,7 @@ extern int statvar, statmin, statint;
 extern int timerblurb;
 extern void (*timer_init)(void);
 
+/* Common timer attach routine in timer.c: */
 void	timerattach(volatile int *, volatile int *);
 
 static __inline u_long __attribute__((__unused__))

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.11 2002/11/26 14:43:39 pk Exp $ */
+/*	$NetBSD: timer.c,v 1.12 2002/11/28 14:18:31 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,3 +194,29 @@ timerattach_obio(struct device *parent, struct device *self, void *aux)
 
 CFATTACH_DECL(timer_obio, sizeof(struct device),
     timermatch_obio, timerattach_obio, NULL, NULL);
+
+/*
+ * Only sun4c attaches a timer at mainbus
+ */
+static int
+timermatch_mainbus(struct device *parent, struct cfdata *cf, void *aux)
+{
+#if defined(SUN4C)
+	struct mainbus_attach_args *ma = aux;
+
+	return (strcmp("counter-timer", ma->ma_name) == 0);
+#else
+	return (0);
+#endif
+}
+
+static void
+timerattach_mainbus(struct device *parent, struct device *self, void *aux)
+{
+#if defined(SUN4C)
+	timerattach_mainbus_4c(parent, self, aux);
+#endif /* SUN4C */
+}
+
+CFATTACH_DECL(timer_mainbus, sizeof(struct device),
+    timermatch_mainbus, timerattach_mainbus, NULL, NULL);
