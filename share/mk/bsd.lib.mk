@@ -1,13 +1,16 @@
-#	$NetBSD: bsd.lib.mk,v 1.114 1997/05/30 01:54:42 cjs Exp $
+#	$NetBSD: bsd.lib.mk,v 1.114.2.1 1997/10/12 22:11:24 cjs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
+.if !target(__initialized__)
+__initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
 .include <bsd.own.mk>
-
+.include <bsd.obj.mk>
 .MAIN:		all
+.endif
+
 .PHONY:		cleanlib libinstall
 realinstall:	libinstall
 clean cleandir:	cleanlib
@@ -77,7 +80,7 @@ SHLIB_TYPE=a.out
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
 SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
-CPICFLAGS?= -fpic
+CPICFLAGS?= -fpic -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
@@ -345,18 +348,13 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
 .endif
 
-.if !defined(NOMAN)
 .include <bsd.man.mk>
-.endif
-
-.if !defined(NONLS)
 .include <bsd.nls.mk>
-.endif
-
-.include <bsd.obj.mk>
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
-.include <bsd.subdir.mk>
 .include <bsd.sys.mk>
+
+# Make sure all of the standard targets are defined, even if they do nothing.
+lint regress:
