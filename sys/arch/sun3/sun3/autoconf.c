@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: autoconf.c,v 1.11 1994/06/28 22:05:41 gwr Exp $
+ * $Id: autoconf.c,v 1.12 1994/07/27 04:51:58 gwr Exp $
  */
 
 /*
@@ -108,4 +108,30 @@ int always_match(parent, cf, args)
      void *args;
 {
     return 1;
+}
+
+/*
+ * Configure swap space and related parameters.
+ */
+void
+swapconf()
+{
+	struct swdevt *swp;
+	u_int maj;
+	int nblks;
+
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		maj = major(swp->sw_dev);
+
+		if (maj > nblkdev) /* paranoid? */
+			break;
+
+		if (bdevsw[maj].d_psize) {
+			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
+			if (nblks > 0 &&
+			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
+				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
+		}
+	}
 }
