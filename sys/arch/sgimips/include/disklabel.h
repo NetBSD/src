@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2001/11/10 07:35:17 wdk Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2001/11/19 17:39:54 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -46,10 +46,6 @@
  * Partition 10 - whole disk
  */
 
-/*
- * XXX It might be convenient to have MAXPARTITIONS 2 like on other ports.
- * How to sanely map partition numbers in that case?
- */
 #define MAXPARTITIONS	16
 #define RAW_PART	2
 
