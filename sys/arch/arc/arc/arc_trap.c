@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.13 2000/06/09 05:41:56 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.13.2.1 2000/08/10 21:59:43 soda Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -61,7 +61,6 @@
 #include <arc/arc/arctype.h>
 
 int arc_hardware_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-void cpu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 #define	MIPS_INT_LEVELS	8
 
