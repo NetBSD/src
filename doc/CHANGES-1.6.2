@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.163 2003/09/27 15:54:33 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.164 2003/10/01 06:10:08 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2097,4 +2097,10 @@ sys/kern/exec_macho.c				1.7
 
 	Remove trailing \n in panic().
 	[junyoung, ticket #1466]
+
+sys/netinet/if_arp.c				1.94 (via patch)
+
+	On arplookup() failure, nuke cloned route - otherwise outsider could
+	use massive number of bogus ARPs for DoS attack.  FreeBSD-SA-03:14.arp
+	[itojun, ticket #1482]
 
