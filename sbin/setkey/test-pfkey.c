@@ -1,4 +1,4 @@
-/*	$NetBSD: test-pfkey.c,v 1.2 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: test-pfkey.c,v 1.3 2005/02/17 15:17:44 xtraeme Exp $	*/
 /*	$KAME: test-pfkey.c,v 1.4 2000/06/07 00:29:14 itojun Exp $	*/
 
 /*
@@ -53,30 +53,28 @@ u_char m_buf[BUFSIZ];
 u_int m_len;
 char *pname;
 
-void Usage __P((void));
-int sendkeymsg __P((void));
-void key_setsadbmsg __P((u_int));
-void key_setsadbsens __P((void));
-void key_setsadbprop __P((void));
-void key_setsadbid __P((u_int, caddr_t));
-void key_setsadblft __P((u_int, u_int));
-void key_setspirange __P((void));
-void key_setsadbkey __P((u_int, caddr_t));
-void key_setsadbsa __P((void));
-void key_setsadbaddr __P((u_int, u_int, caddr_t));
-void key_setsadbextbuf __P((caddr_t, int, caddr_t, int, caddr_t, int));
+void Usage(void);
+int sendkeymsg(void);
+void key_setsadbmsg(u_int);
+void key_setsadbsens(void);
+void key_setsadbprop(void);
+void key_setsadbid(u_int, caddr_t);
+void key_setsadblft(u_int, u_int);
+void key_setspirange(void);
+void key_setsadbkey(u_int, caddr_t);
+void key_setsadbsa(void);
+void key_setsadbaddr(u_int, u_int, caddr_t);
+void key_setsadbextbuf(caddr_t, int, caddr_t, int, caddr_t, int);
 
 void
-Usage()
+Usage(void)
 {
 	printf("usage:\t%s number\n", pname);
 	exit(0);
 }
 
 int
-main(ac, av)
-	int ac;
-	char **av;
+main(int ac, char **av)
 {
 	pname = *av;
 
@@ -90,7 +88,7 @@ main(ac, av)
 
 /* %%% */
 int
-sendkeymsg()
+sendkeymsg(void)
 {
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
 	int so, len;
@@ -132,8 +130,7 @@ end:
 }
 
 void
-key_setsadbmsg(type)
-	u_int type;
+key_setsadbmsg(u_int type)
 {
 	struct sadb_msg m_msg;
 
@@ -269,7 +266,7 @@ key_setsadbmsg(type)
 }
 
 void
-key_setsadbsens()
+key_setsadbsens(void)
 {
 	struct sadb_sens m_sens;
 	u_char buf[64];
@@ -302,7 +299,7 @@ key_setsadbsens()
 }
 
 void
-key_setsadbprop()
+key_setsadbprop(void)
 {
 	struct sadb_prop m_prop;
 	struct sadb_comb *m_comb;
@@ -364,9 +361,7 @@ key_setsadbprop()
 }
 
 void
-key_setsadbid(ext, str)
-	u_int ext;
-	caddr_t str;
+key_setsadbid(u_int ext, caddr_t str)
 {
 	struct sadb_ident m_id;
 	u_int idlen = strlen(str), len;
@@ -387,8 +382,7 @@ key_setsadbid(ext, str)
 }
 
 void
-key_setsadblft(ext, time)
-	u_int ext, time;
+key_setsadblft(u_int ext, u_int time)
 {
 	struct sadb_lifetime m_lft;
 
@@ -406,7 +400,7 @@ key_setsadblft(ext, time)
 }
 
 void
-key_setspirange()
+key_setspirange(void)
 {
 	struct sadb_spirange m_spi;
 
@@ -423,9 +417,7 @@ key_setspirange()
 }
 
 void
-key_setsadbkey(ext, str)
-	u_int ext;
-	caddr_t str;
+key_setsadbkey(u_int ext, caddr_t str)
 {
 	struct sadb_key m_key;
 	u_int keylen = strlen(str);
@@ -446,7 +438,7 @@ key_setsadbkey(ext, str)
 }
 
 void
-key_setsadbsa()
+key_setsadbsa(void)
 {
 	struct sadb_sa m_sa;
 
@@ -466,9 +458,7 @@ key_setsadbsa()
 }
 
 void
-key_setsadbaddr(ext, af, str)
-	u_int ext, af;
-	caddr_t str;
+key_setsadbaddr(u_int ext, u_int af, caddr_t str)
 {
 	struct sadb_address m_addr;
 	u_int len;
@@ -518,9 +508,8 @@ key_setsadbaddr(ext, af, str)
 }
 
 void
-key_setsadbextbuf(dst, off, ebuf, elen, vbuf, vlen)
-	caddr_t dst, ebuf, vbuf;
-	int off, elen, vlen;
+key_setsadbextbuf(caddr_t dst, int off, caddr_t ebuf, int elen, caddr_t vbuf,
+		int vlen)
 {
 	memset(dst + off, 0, elen + vlen);
 	memcpy(dst + off, (caddr_t)ebuf, elen);
