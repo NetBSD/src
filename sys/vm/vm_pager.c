@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pager.c,v 1.15 1994/06/29 06:48:38 cgd Exp $	*/
+/*	$NetBSD: vm_pager.c,v 1.16 1995/04/15 05:11:35 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -138,7 +138,7 @@ vm_pager_init()
 	 * Initialize known pagers
 	 */
 	for (pgops = pagertab; pgops < &pagertab[npagers]; pgops++)
-		if (pgops)
+		if (*pgops)
 			(*(*pgops)->pgo_init)();
 	if (dfltpagerops == NULL)
 		panic("no default pager");
@@ -249,7 +249,7 @@ vm_pager_sync()
 	struct pagerops **pgops;
 
 	for (pgops = pagertab; pgops < &pagertab[npagers]; pgops++)
-		if (pgops)
+		if (*pgops)
 			(*(*pgops)->pgo_putpages)(NULL, NULL, 0, FALSE);
 }
 
