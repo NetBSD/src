@@ -1,4 +1,4 @@
-.\"	$NetBSD: gzip.1,v 1.1.1.1 2003/12/23 05:16:32 mrg Exp $
+.\"	$NetBSD: gzip.1,v 1.2 2003/12/23 08:19:49 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997, 2003 Matthew R. Green
 .\" All rights reserved.
@@ -118,7 +118,7 @@ This option is used to
 the files in a directory tree individually, using the
 .Xr fts 3
 library.
-.It Fl S Ar suffix , -suffix Ar suffix
+.It Fl S Ar suffix , Fl -suffix Ar suffix
 This option changes the default suffix from .gz to
 .Ar suffix .
 .It Fl t , -test
@@ -146,7 +146,8 @@ option being the fastest, with less compression, and the
 option being the slowest, with optimal compression.
 .El
 .Sh SEE ALSO
-.Xr fts 3
+.Xr fts 3 ,
+.Xr zlib 3
 .Sh HISTORY
 The
 .Nm
