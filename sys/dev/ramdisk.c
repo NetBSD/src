@@ -1,4 +1,4 @@
-/*	$NetBSD: ramdisk.c,v 1.1 1995/10/08 23:30:57 gwr Exp $	*/
+/*	$NetBSD: ramdisk.c,v 1.2 1995/10/26 15:38:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -391,7 +391,7 @@ rd_ioctl_kalloc(sc, urd, proc)
 #if RAMDISK_SERVER
 
 /*
- * Handle ioctl RD_SETCONF for (sc_type == RD_KMEM_ALLOCATED)
+ * Handle ioctl RD_SETCONF for (sc_type == RD_UMEM_SERVER)
  * Set config, then become the I/O server for this unit.
  */
 int
