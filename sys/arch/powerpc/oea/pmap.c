@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2003/03/14 06:25:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2003/03/16 06:54:46 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -489,7 +489,7 @@ pmap_pte_to_va(volatile const struct pte *pt)
 		ptaddr ^= (pmap_pteg_mask * sizeof(struct pteg));
 
 	/* PPC Bits 10-19 */
-	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr * sizeof(struct pteg))) & 0x3ff;
+	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr / sizeof(struct pteg))) & 0x3ff;
 	va <<= ADDR_PIDX_SHFT;
 
 	/* PPC Bits 4-9 */
@@ -1750,10 +1750,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 * asssume it's in memory coherent memory.
 	 */
 	pte_lo = PTE_IG;
-	for (mp = mem; mp->size; mp++) {
-		if (pa >= mp->start && pa < mp->start + mp->size) {
-			pte_lo = PTE_M;
-			break;
+	if ((prot & PMAP_NC) == 0) {
+		for (mp = mem; mp->size; mp++) {
+			if (pa >= mp->start && pa < mp->start + mp->size) {
+				pte_lo = PTE_M;
+				break;
+			}
 		}
 	}
 
