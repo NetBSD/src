@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.35 1999/03/16 13:24:27 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.36 1999/03/16 13:32:25 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -122,18 +122,18 @@ int	ess_set_params __P((void *, int, int, struct audio_params *,
 
 int	ess_round_blocksize __P((void *, int));
 
-int	ess_1788_trigger_output __P((void *, void *, void *, int,
+int	ess_audio1_trigger_output __P((void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *));
-int	ess_1888_trigger_output __P((void *, void *, void *, int,
+int	ess_audio2_trigger_output __P((void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *));
-int	ess_trigger_input __P((void *, void *, void *, int,
+int	ess_audio1_trigger_input __P((void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *));
-int	ess_1788_halt_output __P((void *));
-int	ess_1888_halt_output __P((void *));
-int	ess_halt_input __P((void *));
+int	ess_audio1_halt_output __P((void *));
+int	ess_audio2_halt_output __P((void *));
+int	ess_audio1_halt_input __P((void *));
 
-int	ess_intr_audio2 __P((void *));
-int	ess_intr_audio1 __P((void *));
+int	ess_audio1_intr __P((void *));
+int	ess_audio2_intr __P((void *));
 
 int	ess_speaker_ctl __P((void *, int));
 
@@ -149,7 +149,8 @@ int	ess_mappage __P((void *, void *, int, int));
 
 
 int	ess_query_devinfo __P((void *, mixer_devinfo_t *));
-int	ess_get_props __P((void *));
+int	ess_1788_get_props __P((void *));
+int	ess_1888_get_props __P((void *));
 
 void	ess_speaker_on __P((struct ess_softc *));
 void	ess_speaker_off __P((struct ess_softc *));
@@ -210,8 +211,8 @@ struct audio_hw_if ess_1788_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	ess_1788_halt_output,
-	ess_halt_input,
+	ess_audio1_halt_output,
+	ess_audio1_halt_input,
 	ess_speaker_ctl,
 	ess_getdev,
 	NULL,
@@ -222,9 +223,9 @@ struct audio_hw_if ess_1788_hw_if = {
 	ess_free,
 	ess_round_buffersize,
 	ess_mappage,
-	ess_get_props,
-	ess_1788_trigger_output,
-	ess_trigger_input,
+	ess_1788_get_props,
+	ess_audio1_trigger_output,
+	ess_audio1_trigger_input,
 };
 
 struct audio_hw_if ess_1888_hw_if = {
@@ -239,8 +240,8 @@ struct audio_hw_if ess_1888_hw_if = {
 	NULL,
 	NULL,
 	NULL,
-	ess_1888_halt_output,
-	ess_halt_input,
+	ess_audio2_halt_output,
+	ess_audio1_halt_input,
 	ess_speaker_ctl,
 	ess_getdev,
 	NULL,
@@ -251,9 +252,9 @@ struct audio_hw_if ess_1888_hw_if = {
 	ess_free,
 	ess_round_buffersize,
 	ess_mappage,
-	ess_get_props,
-	ess_1888_trigger_output,
-	ess_trigger_input,
+	ess_1888_get_props,
+	ess_audio2_trigger_output,
+	ess_audio1_trigger_input,
 };
 
 #ifdef AUDIO_DEBUG
@@ -836,7 +837,7 @@ essattach(sc)
 
 	sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
 	    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_AUDIO,
-	    ess_intr_audio1, sc);
+	    ess_audio1_intr, sc);
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_audio1.drq,
 	    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
@@ -847,7 +848,7 @@ essattach(sc)
 	if (sc->sc_model != ESS_1788) {
 		sc->sc_audio2.ih = isa_intr_establish(sc->sc_ic,
 		    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_AUDIO,
-		    ess_intr_audio2, sc);
+		    ess_audio2_intr, sc);
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_audio2.drq,
 		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
@@ -983,8 +984,8 @@ ess_1788_close(addr)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	ess_1788_halt_output(sc);
-	ess_halt_input(sc);
+	ess_audio1_halt_output(sc);
+	ess_audio1_halt_input(sc);
 
 	sc->sc_audio1.intr = 0;
 	sc->sc_open = 0;
@@ -1003,8 +1004,8 @@ ess_1888_close(addr)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	ess_1888_halt_output(sc);
-	ess_halt_input(sc);
+	ess_audio2_halt_output(sc);
+	ess_audio1_halt_input(sc);
 
 	sc->sc_audio1.intr = 0;
 	sc->sc_audio2.intr = 0;
@@ -1209,7 +1210,7 @@ ess_set_params(addr, setmode, usemode, play, rec)
 }
 
 int
-ess_1788_trigger_output(addr, start, end, blksize, intr, arg, param)
+ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
@@ -1219,7 +1220,7 @@ ess_1788_trigger_output(addr, start, end, blksize, intr, arg, param)
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTFN(1, ("ess_1788_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
+	DPRINTFN(1, ("ess_audio1_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 
 #ifdef DIAGNOSTIC
@@ -1228,7 +1229,7 @@ ess_1788_trigger_output(addr, start, end, blksize, intr, arg, param)
 		return EIO;
 	}
 	if (sc->sc_audio1.active)
-		panic("ess_1788_trigger_output: already running");
+		panic("ess_audio1_trigger_output: already running");
 #endif
 	sc->sc_audio1.active = 1;
 
@@ -1297,7 +1298,7 @@ ess_1788_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ess_1888_trigger_output(addr, start, end, blksize, intr, arg, param)
+ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
@@ -1307,7 +1308,7 @@ ess_1888_trigger_output(addr, start, end, blksize, intr, arg, param)
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTFN(1, ("ess_1888_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
+	DPRINTFN(1, ("ess_audio2_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 
 #ifdef DIAGNOSTIC
@@ -1316,7 +1317,7 @@ ess_1888_trigger_output(addr, start, end, blksize, intr, arg, param)
 		return EIO;
 	}
 	if (sc->sc_audio2.active)
-		panic("ess_1888_trigger_output: already running");
+		panic("ess_audio2_trigger_output: already running");
 #endif
 	sc->sc_audio2.active = 1;
 
@@ -1378,7 +1379,7 @@ ess_1888_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ess_trigger_input(addr, start, end, blksize, intr, arg, param)
+ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	void *addr;
 	void *start, *end;
 	int blksize;
@@ -1388,7 +1389,7 @@ ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTFN(1, ("ess_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
+	DPRINTFN(1, ("ess_audio1_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
 	    addr, start, end, blksize, intr, arg));
 
 #ifdef DIAGNOSTIC
@@ -1397,7 +1398,7 @@ ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 		return EIO;
 	}
 	if (sc->sc_audio1.active)
-		panic("ess_trigger_input: already running");
+		panic("ess_audio1_trigger_input: already running");
 #endif
 	sc->sc_audio1.active = 1;
 
@@ -1464,12 +1465,12 @@ ess_trigger_input(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ess_1788_halt_output(addr)
+ess_audio1_halt_output(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTF(("ess_1788_halt_output: sc=%p\n", sc));
+	DPRINTF(("ess_audio1_halt_output: sc=%p\n", sc));
 
 	if (sc->sc_audio1.active) {
 		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
@@ -1483,12 +1484,12 @@ ess_1788_halt_output(addr)
 }
 
 int
-ess_1888_halt_output(addr)
+ess_audio2_halt_output(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTF(("ess_1888_halt_output: sc=%p\n", sc));
+	DPRINTF(("ess_audio2_halt_output: sc=%p\n", sc));
 
 	if (sc->sc_audio2.active) {
 		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
@@ -1502,12 +1503,12 @@ ess_1888_halt_output(addr)
 }
 
 int
-ess_halt_input(addr)
+ess_audio1_halt_input(addr)
 	void *addr;
 {
 	struct ess_softc *sc = addr;
 
-	DPRINTF(("ess_halt_input: sc=%p\n", sc));
+	DPRINTF(("ess_audio1_halt_input: sc=%p\n", sc));
 
 	if (sc->sc_audio1.active) {
 		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
@@ -1520,12 +1521,34 @@ ess_halt_input(addr)
 }
 
 int
-ess_intr_audio2(arg)
+ess_audio1_intr(arg)
+	void *arg;
+{
+	struct ess_softc *sc = arg;
+	u_char x;
+
+	DPRINTFN(1,("ess_audio1_intr: intr=%p\n", sc->sc_audio1.intr));
+
+	/* clear interrupt on Audio channel 1*/
+	x = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
+
+	sc->sc_audio1.nintr++;
+
+	if (sc->sc_audio1.intr != 0)
+		(*sc->sc_audio1.intr)(sc->sc_audio1.arg);
+	else
+		return (0);
+
+	return (1);
+}
+
+int
+ess_audio2_intr(arg)
 	void *arg;
 {
 	struct ess_softc *sc = arg;
 
-	DPRINTFN(1,("ess_intr_audio2: intr=%p\n", sc->sc_audio2.intr));
+	DPRINTFN(1,("ess_audio2_intr: intr=%p\n", sc->sc_audio2.intr));
 
 	/* clear interrupt on Audio channel 2 */
 	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
@@ -1535,28 +1558,6 @@ ess_intr_audio2(arg)
 
 	if (sc->sc_audio2.intr != 0)
 		(*sc->sc_audio2.intr)(sc->sc_audio2.arg);
-	else
-		return (0);
-
-	return (1);
-}
-
-int
-ess_intr_audio1(arg)
-	void *arg;
-{
-	struct ess_softc *sc = arg;
-	u_char x;
-
-	DPRINTFN(1,("ess_intr_audio1: intr=%p\n", sc->sc_audio1.intr));
-
-	/* clear interrupt on Audio channel 1*/
-	x = EREAD1(sc->sc_iot, sc->sc_ioh, ESS_CLEAR_INTR);
-
-	sc->sc_audio1.nintr++;
-
-	if (sc->sc_audio1.intr != 0)
-		(*sc->sc_audio1.intr)(sc->sc_audio1.arg);
 	else
 		return (0);
 
@@ -2113,13 +2114,19 @@ ess_mappage(addr, mem, off, prot)
 }
 
 int
-ess_get_props(addr)
+ess_1788_get_props(addr)
 	void *addr;
 {
-	struct ess_softc *sc = addr;
 
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	       (sc->sc_model != ESS_1788 ? AUDIO_PROP_FULLDUPLEX : 0));
+	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT);
+}
+
+int
+ess_1888_get_props(addr)
+	void *addr;
+{
+
+	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
 }
 
 /* ============================================
