@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.8 2001/11/12 15:25:31 lukem Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.9 2002/04/28 00:53:34 thorpej Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -66,17 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.8 2001/11/12 15:25:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.9 2002/04/28 00:53:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-
-#define M_SHAREDCLUSTER(m) \
-	(((m)->m_flags & M_EXT) != 0 && \
-	 ((m)->m_ext.ext_free || MCLISREFERENCED((m))))
 
 /*
  * ensure that [off, off + len) is contiguous on the mbuf chain "m".
@@ -121,7 +117,7 @@ m_pulldown(m, off, len, offp)
 		return NULL;	/* mbuf chain too short */
 	}
 
-	sharedcluster = M_SHAREDCLUSTER(n);
+	sharedcluster = M_READONLY(n);
 
 	/*
 	 * the target data is on <n, off>.
