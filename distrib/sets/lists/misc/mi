@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2001/05/29 04:18:32 itojun Exp $
+# $NetBSD: mi,v 1.68 2001/10/11 20:25:12 atatat Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -372,6 +372,9 @@
 ./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples
 ./usr/share/examples/mount_portal/advanced.1	misc-sys-examples
 ./usr/share/examples/mount_portal/advanced.1.conf	misc-sys-examples
+./usr/share/examples/mount_portal/cvs.1		misc-sys-examples
+./usr/share/examples/mount_portal/cvs.conf	misc-sys-examples
+./usr/share/examples/mount_portal/cvs.pl	misc-sys-examples
 ./usr/share/examples/mount_portal/fing.c		misc-sys-examples
 ./usr/share/examples/mount_portal/fs.1			misc-sys-examples
 ./usr/share/examples/mount_portal/fs.1.conf		misc-sys-examples
