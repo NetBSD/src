@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.7 1996/03/17 13:18:18 cgd Exp $	*/
+/*	$NetBSD: gram.y,v 1.8 1996/08/31 20:58:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,11 +46,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <ctype.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "config.h"
 #include "sem.h"
 
@@ -84,6 +87,7 @@ static	int	adepth;
 #define	fx_and(e1, e2)	new0(NULL, NULL, e1, FX_AND, e2)
 #define	fx_or(e1, e2)	new0(NULL, NULL, e1, FX_OR, e2)
 
+static	void	setupdirs __P((void));
 static	void	cleanup __P((void));
 static	void	setmachine __P((const char *, const char *));
 static	void	setmaxpartitions __P((int));
@@ -99,9 +103,9 @@ static	void	setmaxpartitions __P((int));
 	int	val;
 }
 
-%token	AND AT ATTACH COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
+%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEVICE DUMPS ENDFILE
 %token	XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS
-%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SWAP VECTOR WITH
+%token	MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP VECTOR WITH
 %token	<val> FFLAG NUMBER
 %token	<str> PATHNAME WORD
 
@@ -134,11 +138,23 @@ static	void	setmaxpartitions __P((int));
  * separate grammars, with some shared terminals and nonterminals.
  */
 Configuration:
-	hdrs machine_spec		/* "machine foo" from machine descr. */
+	dirs hdrs machine_spec		/* "machine foo" from machine descr. */
 	dev_defs dev_eof		/* ../../conf/devices */
 	dev_defs dev_eof		/* devices.foo */
 	maxpart_spec dev_defs dev_eof	/* ../../conf/devices */
 	specs;				/* rest of machine description */
+
+dirs:
+	dirspecs			= { setupdirs(); };
+
+dirspecs:
+	dirspecs dir |
+	/* empty */;
+
+dir:
+	SOURCE PATHNAME			= { if (!srcdir) srcdir = $2; } |
+	BUILD PATHNAME			= { if (!builddir) builddir = $2; } |
+	'\n';
 
 hdrs:
 	hdrs hdr |
@@ -194,7 +210,7 @@ rule:
 	/* empty */			= { $$ = NULL; };
 
 include:
-	INCLUDE WORD			= { (void)include($2, '\n'); };
+	INCLUDE WORD			= { include($2, '\n'); };
 
 /*
  * The machine definitions grammar.
@@ -401,6 +417,48 @@ yyerror(s)
 }
 
 /*
+ * Verify/create builddir if necessary, change to it, and verify srcdir.
+ */
+static void
+setupdirs()
+{
+	struct stat st;
+	char *prof;
+
+	/* srcdir must be specified if builddir is not specified or if
+	 * no configuration filename was specified. */
+	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir)
+		stop("source directory must be specified");
+
+	if (srcdir == NULL)
+		srcdir = "../../../..";
+	if (builddir == NULL)
+		builddir = defbuilddir;
+
+	if (stat(builddir, &st) != 0) {
+		if (mkdir(builddir, 0777)) {
+			(void)fprintf(stderr, "config: cannot create %s: %s\n",
+			    builddir, strerror(errno));
+			exit(2);
+		}
+	} else if (!S_ISDIR(st.st_mode)) {
+		(void)fprintf(stderr, "config: %s is not a directory\n",
+			      builddir);
+		exit(2);
+	}
+	if (chdir(builddir) != 0) {
+		(void)fprintf(stderr, "config: cannot change to %s\n",
+			      builddir);
+		exit(2);
+	}
+	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
+		(void)fprintf(stderr, "config: %s is not a directory\n",
+			      srcdir);
+		exit(2);
+	}
+}
+
+/*
  * Cleanup procedure after syntax error: release any nvlists
  * allocated during parsing the current line.
  */
@@ -420,20 +478,24 @@ setmachine(mch, mcharch)
 	const char *mch;
 	const char *mcharch;
 {
-	char buf[MAXPATHLEN], archbuf[MAXPATHLEN];
+	char buf[MAXPATHLEN];
 
 	machine = mch;
 	machinearch = mcharch;
+
+	(void)sprintf(buf, "arch/%s/conf/files.%s", machine, machine);
+	if (include(buf, ENDFILE) != 0)
+		exit(1);
+
 	if (machinearch != NULL)
-		(void)sprintf(archbuf, "../../%s/conf/files.%s",
+		(void)sprintf(buf, "arch/%s/conf/files.%s",
 		    machinearch, machinearch);
 	else
-		strncpy(archbuf, _PATH_DEVNULL, MAXPATHLEN);
-	(void)sprintf(buf, "files.%s", machine);
+		strcpy(buf, _PATH_DEVNULL);
+	if (include(buf, ENDFILE) != 0)
+		exit(1);
 
-	if (include(buf, ENDFILE) ||
-	    include(archbuf, ENDFILE) ||
-	    include("../../../conf/files", ENDFILE))
+	if (include("conf/files", ENDFILE) != 0)
 		exit(1);
 }
 
