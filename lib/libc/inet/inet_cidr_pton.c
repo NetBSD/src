@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.1.1.1 2004/05/20 22:29:02 christos Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.2 2004/05/20 23:12:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,18 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.2.2.1.8.2 2004/03/17 00:29:46 marka Exp";
+#else
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
+#endif
 #endif
 
 #include "port_before.h"
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -42,6 +48,10 @@ static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.2.2.1.8.2 2004/03/17 00:29
 # define SPRINTF(x) strlen(sprintf/**/x)
 #else
 # define SPRINTF(x) ((size_t)sprintf x)
+#endif
+
+#ifdef __weak_alias
+__weak_alias(inet_cidr_pton,_inet_cidr_pton)
 #endif
 
 static int	inet_cidr_pton_ipv4 __P((const char *src, u_char *dst,
