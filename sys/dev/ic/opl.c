@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.1 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.2 1998/08/22 22:54:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (opldebug) printf x
 #define DPRINTFN(n,x)	if (opldebug >= (n)) printf x
-int	opldebug = 3;
+int	opldebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -203,6 +203,7 @@ opl_find(sc)
 {
 	u_int8_t status1, status2;
 
+	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)sc->ioh));
 	sc->model = OPL_2;	/* worst case assumtion */
 
 	/* Reset timers 1 and 2 */
@@ -226,7 +227,7 @@ opl_find(sc)
 		    OPL_TIMER1_MASK | OPL_TIMER2_MASK);
 	opl_command(sc, OPL_LO, OPL_TIMER_CONTROL, OPL_IRQ_RESET);
 
-	DPRINTFN(4,("opl_find: %02x %02x\n", status1, status2));
+	DPRINTFN(2,("opl_find: %02x %02x\n", status1, status2));
 
 	if ((status1 & OPL_STATUS_MASK) != 0 ||
 	    (status2 & OPL_STATUS_MASK) != (OPL_STATUS_IRQ | OPL_STATUS_FT1))
@@ -244,7 +245,7 @@ opl_find(sc)
 		return 0;
 	}
 
-	DPRINTFN(4,("opl_find: OPL%d at 0x%x detected\n", 
+	DPRINTFN(2,("opl_find: OPL%d at 0x%x detected\n", 
 		    sc->model, (int)sc->ioh));
 	return (1);
 }
