@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.7 2001/10/02 20:19:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -57,7 +57,6 @@ cdev_decl(com); /* XXX this belongs elsewhere */
 
 int	com_ebus_match __P((struct device *, struct cfdata *, void *));
 void	com_ebus_attach __P((struct device *, struct device *, void *));
-int	com_ebus_isconsole __P((int node));
 
 struct cfattach com_ebus_ca = {
 	sizeof(struct com_softc), com_ebus_match, com_ebus_attach
@@ -98,20 +97,6 @@ com_ebus_match(parent, match, aux)
 	return (0);
 }
 
-int
-com_ebus_isconsole(node)
-	int node;
-{
-	if (node == OF_instance_to_package(OF_stdin())) {
-		return (1);
-	}
-
-	if (node == OF_instance_to_package(OF_stdout())) { 
-		return (1);
-	}
-	return (0);
-}
-
 #define BAUD_BASE       (1846200)
 
 void
@@ -126,6 +111,8 @@ com_ebus_attach(parent, self, aux)
 	int maj;
 #endif
 	int i;
+	int com_is_input;
+	int com_is_output;
 
 	sc->sc_iot = ea->ea_bustag;
 	sc->sc_iobase = EBUS_PADDR_FROM_REG(&ea->ea_regs[0]);
@@ -158,19 +145,37 @@ com_ebus_attach(parent, self, aux)
 		    IPL_SERIAL, 0, comintr, sc);
 
 	kma.kmta_consdev = NULL;
-	if (com_ebus_isconsole(ea->ea_node)) {
+
+	/* Figure out if we're the console. */
+	com_is_input = (ea->ea_node == OF_instance_to_package(OF_stdin()));
+	com_is_output = (ea->ea_node == OF_instance_to_package(OF_stdout()));
+
+	if (com_is_input || com_is_output) {
 		extern struct consdev comcons;
+		struct consdev *cn_orig;
 
 		/* Record some info to attach console. */
 		kma.kmta_baud = 9600;
 		kma.kmta_cflag = (CREAD | CS8 | HUPCL);
-		kma.kmta_consdev = &comcons;
 
 		/* Attach com as the console. */
+		cn_orig = cn_tab;
 		if (comcnattach(sc->sc_iot, sc->sc_iobase, kma.kmta_baud,
 			sc->sc_frequency, kma.kmta_cflag)) {
 			printf("Error: comcnattach failed\n");
 		}
+		cn_tab = cn_orig;
+		if (com_is_input) {
+			cn_tab->cn_dev = comcons.cn_dev;
+			cn_tab->cn_probe = comcons.cn_probe;
+			cn_tab->cn_init = comcons.cn_init;
+			cn_tab->cn_getc = comcons.cn_getc;
+			cn_tab->cn_pollc = comcons.cn_pollc;
+		}
+		if (com_is_output) {
+			cn_tab->cn_putc = comcons.cn_putc;
+		}
+		kma.kmta_consdev = cn_tab;
 	}
 	/* Now attach the driver */
 	com_attach_subr(sc);
