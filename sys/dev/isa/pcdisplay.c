@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.10 2000/06/26 04:56:21 simonb Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.11 2000/11/04 18:47:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -50,6 +50,12 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
+#include "pcweasel.h"
+#if NPCWEASEL > 0
+#include <dev/isa/weaselreg.h>
+#include <dev/isa/weaselvar.h>
+#endif
+
 struct pcdisplay_config {
 	struct pcdisplayscreen pcs;
 	struct pcdisplay_handle dc_ph;
@@ -60,6 +66,9 @@ struct pcdisplay_softc {
 	struct device sc_dev;
 	struct pcdisplay_config *sc_dc;
 	int nscreens;
+#if NPCWEASEL > 0
+	struct weasel_handle sc_weasel;
+#endif
 };
 
 static int pcdisplayconsole, pcdisplay_console_attached;
@@ -285,6 +294,19 @@ pcdisplay_attach(parent, self, aux)
 			panic("pcdisplay_attach: display disappeared");
 	}
 	sc->sc_dc = dc;
+
+#if NPCWEASEL > 0
+	/*
+	 * If the display is monochrome, check to see if we have
+	 * a PC-Weasel, and initialize its special features.
+	 */
+	if (dc->mono) {
+		sc->sc_weasel.wh_st = dc->dc_ph.ph_memt;
+		sc->sc_weasel.wh_sh = dc->dc_ph.ph_memh;
+		sc->sc_weasel.wh_parent = &sc->sc_dev;
+		weasel_init(&sc->sc_weasel);
+	}
+#endif /* NPCWEASEL > 0 */
 
 	aa.console = console;
 	aa.scrdata = &pcdisplay_screenlist;
