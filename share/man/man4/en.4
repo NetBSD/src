@@ -1,4 +1,4 @@
-.\"	$NetBSD: en.4,v 1.1 1997/11/11 02:05:59 thorpej Exp $
+.\"	$NetBSD: en.4,v 1.2 1998/04/30 08:50:05 fair Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,11 +47,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports Midway-based ATM interfaces including the
+device driver supports Midway-based
+.Tn ATM
+interfaces including the
 Efficient Networks, Inc. ENI-155 and Adaptec 5900 and 5905.
 .Sh OPTIONS
 The Efficient Networks, Inc. and Adaptec interfaces use significantly
-different DMA engines.  In order to reduce the size of the
+different DMA engines.
+In order to reduce the size of the
 .Nm
 driver object, exactly one of the following options may be placed
 in thge kernel configuration file:
@@ -64,9 +67,11 @@ Include support for Efficient Networks, Inc. interfaces only.
 .\" .Sh MEDIA SELECTION
 .\" .Sh DIAGNOSTICS
 .Sh BUGS
-The Sbus attachment of the
+The
+.Tn Sbus
+attachment of the
 .Nm
-driver only currently functions on Sun4c-class systems.
+driver only currently functions on sun4c class systems.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,

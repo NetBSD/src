@@ -1,4 +1,4 @@
-.\"	$NetBSD: iy.4,v 1.6 1997/12/02 09:34:03 bouyer Exp $
+.\"	$NetBSD: iy.4,v 1.7 1998/04/30 08:50:07 fair Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -39,13 +39,18 @@
 .Cd "iy0 at isa? port {port} irq ?"
 .Sh DESCRIPTION
 The
-.Nm iy
-device driver supports the Etherepress PRO/10 card, and might support
-other ISA cards using the same chip.
-
+.Nm
+device driver supports the EtherEpress PRO/10 card, and might support
+other
+.Tn ISA
+cards using the same chip.
 .Sh MEDIA SELECTION
 The different models of the supported boards come with some subset of RJ-45,
-BNC and AUI connectors.   Supported media include:
+.Tn BNC
+and
+.Tn AUI
+connectors.
+Supported media include:
 .Pp
 .Bl -tag -width xxxxxxxxxx -offset indent
 .It AUI/DIX
@@ -56,25 +61,30 @@ BNC, also known as thin-net
 UTP, also known as twisted pair
 .El
 .Pp
-The default port to use is the port the card autodetects at 
-.Xr ifconfig up
-time. To choose an alternative port, an explicit medium can be specified to
+The default port to use is the port the card autodetects at
+.Ic ifconfig up
+time.
+To choose an alternative port, an explicit medium can be specified to
 .Xr ifconfig 8
-or in your ifconfig.iy? file.
+or in your
+.Pa ifconfig.iy?
+file.
 .Pp
 .Sh NOTES
-The Etherexpress PRO card has no jumpers to set the address.
-Intel supplies software to set the address of the card in software.
+The EtherExpress PRO card has no jumpers to set the address.
+.Tn Intel
+supplies software to set the address of the card in software.
 You have to hardwire this address in your kernel configuration file.
 .Pp
 .Sh SEE ALSO
-.Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr ed 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
 .Xr ie 4 ,
-.Xr le 4
+.Xr le 4 ,
+.Xr ifconfig 8
 .Sh STANDARDS
-are great. There's so many to choose from.
+are great.
+There's so many to choose from.

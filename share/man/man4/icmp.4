@@ -1,4 +1,4 @@
-.\"	$NetBSD: icmp.4,v 1.3 1994/11/30 16:22:14 jtc Exp $
+.\"	$NetBSD: icmp.4,v 1.4 1998/04/30 08:50:06 fair Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,32 +49,29 @@
 is the error and control message protocol used
 by
 .Tn IP
-and the Internet protocol family.  It may be accessed
-through a
+and the Internet protocol family.
+It may be accessed through a
 .Dq raw socket
-for network monitoring
-and diagnostic functions.
+for network monitoring and diagnostic functions.
 The
 .Fa proto
 parameter to the socket call to create an
 .Tn ICMP
-socket
-is obtained from
+socket is obtained from
 .Xr getprotobyname 3 .
 .Tn ICMP
-sockets are connectionless,
-and are normally used with the
-.Xr sendto
+sockets are connectionless, and are normally used with the
+.Xr sendto 2
 and
-.Xr recvfrom
+.Xr recvfrom 2
 calls, though the
 .Xr connect 2
-call may also be used to fix the destination for future
-packets (in which case the 
+call may also be used to fix the destination for future packets
+(in which case the
 .Xr read 2
 or
 .Xr recv 2
-and 
+and
 .Xr write 2
 or
 .Xr send 2
@@ -82,8 +79,7 @@ system calls may be used).
 .Pp
 Outgoing packets automatically have an
 .Tn IP
-header prepended to
-them (based on the destination address).
+header prepended to them (based on the destination address).
 Incoming packets are received with the
 .Tn IP
 header and options intact.
@@ -102,9 +98,8 @@ connected;
 when the system runs out of memory for
 an internal data structure;
 .It Bq Er EADDRNOTAVAIL
-when an attempt is made to create a 
-socket with a network address for which no network interface
-exists.
+when an attempt is made to create a
+socket with a network address for which no network interface exists.
 .El
 .Sh SEE ALSO
 .Xr send 2 ,
@@ -112,6 +107,18 @@ exists.
 .Xr intro 4 ,
 .Xr inet 4 ,
 .Xr ip 4
+.Rs
+.%R RFC
+.%N 792
+.%D September 1981
+.%T "Internet Control Message Protocol"
+.Re
+.Rs
+.%R RFC
+.%N 1122
+.%D October 1989
+.%T "Requirements for Internet Hosts -- Communication Layers"
+.Re
 .Sh HISTORY
 The
 .Nm

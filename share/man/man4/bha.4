@@ -1,5 +1,4 @@
-.\"	$NetBSD: bha.4,v 1.6 1997/11/12 00:49:35 mrg Exp $
-.\"
+.\"	$NetBSD: bha.4,v 1.7 1998/04/30 08:50:04 fair Exp $ .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
 .\"
@@ -37,23 +36,30 @@
 .Sh DESCRIPTION
 The
 .Nm bha
-driver supports the following Buslogic SCSI adapters:
+driver supports the following
+.Tn Buslogic
+.Tn SCSI
+adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Buslogic BT-445
-.It Buslogic BT-74x 
-.It Buslogic BT-9[45][68]
+.It Tn Buslogic BT-445
+.It Tn Buslogic BT-74x 
+.It Tn Buslogic BT-9[45][68]
 .El
 .Sh BUGS
-The Buslogic BT-930 is not supported in this driver.
+The
+.Tn Buslogic
+BT-930 is not supported in this driver.
 .Pp
-The Buslogic BT-445S has a problem in early hardware and firmware
-revisions which prevents proper operation on a system with more than
-16MB of RAM.  Hardware revision D and firmware revision 3.37 should
-be considered minimum requirements for using this board on systems
-configured in this manner.
+The
+.Tn Buslogic
+BT-445S has a problem in early hardware and firmware revisions
+which prevents proper operation on a system with more than 16MB of RAM.
+Hardware revision D and firmware revision 3.37 should be considered minimum
+requirements for using this board on systems configured in this manner.
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,

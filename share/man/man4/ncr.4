@@ -1,4 +1,4 @@
-.\"	$NetBSD: ncr.4,v 1.5 1998/03/23 10:23:30 fair Exp $
+.\"	$NetBSD: ncr.4,v 1.6 1998/04/30 08:50:08 fair Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -10,7 +10,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -25,7 +25,7 @@
 .\"
 .Dd January 15, 1997
 .Dt NCR 4
-.Os NetBSD 
+.Os NetBSD
 .Sh NAME
 .Nm ncr
 .Nd NCR 53C8xx SCSI driver
@@ -46,42 +46,60 @@
 The
 .Nm
 driver provides support for the NCR (Symbios) 53C810, 53C815, 53C820,
-53C825, 53C860, 53C875, 53C885, 53C895, and 53C896 SCSI controller chips.
+53C825, 53C860, 53C875, 53C885, 53C895, and 53C896
+.Tn SCSI
+controller chips.
 .Pp
 The following kernel configuration options are available:
 .Bl -ohang
 .It Cd options FAILSAFE
 Disables tagged command queuing and forces asynchronous transfers for
-CDROM devices.
+.Tn CD-ROM
+devices.
 .It Cd options NCR_CDROM_ASYNC
-Always use asynchronous transfers with CDROM devices.  By default,
-synchronous transfers are used if the CDROM supports it.
+Always use asynchronous transfers with
+.Tn CD-ROM
+devices.
+By default, synchronous transfers are used if the
+.Tn CD-ROM
+supports it.
 .It Cd options NCR_IOMAPPED
 Attempt to access the controller chip via I/O port-mapped I/O, falling back
-to memory-mapped I/O if the I/O ports couldn't be mapped.  By default,
-memory-mapped I/O is tried first.
+to memory-mapped I/O if the I/O ports couldn't be mapped.
+By default, memory-mapped I/O is tried first.
 .It Cd options NCR_TEKRAM_EEPROM
-Enables support for reading the configuration EEPROM of the Tekram DC-390
-series of SCSI cards.  Enable this only if using a Tekram DC-390 card.
+Enables support for reading the configuration
+.Tn EEPROM
+of the Tekram DC-390 series of
+.Tn SCSI
+cards.
+Enable this only if using a Tekram DC-390 card.
 .It Cd options SCSI_NCR_DFLT_TAGS=integer
-Specifies the maximum number of tags per logical unit.  Unless
+Specifies the maximum number of tags per logical unit.
+Unless
 .Dv FAILSAFE
-is defined, the default value is 4.  A value of 0 will disable tagged
-command queuing.
+is defined, the default value is 4.
+A value of 0 will disable tagged command queuing.
 .It Cd options SCSI_NCR_MAX_SYNC=integer
-Specifies the maximum synchronous transfer frequency to use, in kHz.  A
-value of 0 means asynchronous transfers only.  The default is 20000 (20MHz),
-unless the controller chip only supports fast transfers, in which case it's
-10000 (10MHz).
+Specifies the maximum synchronous transfer frequency to use, in kHz.
+A value of 0 means asynchronous transfers only.
+The default is 20000 (20MHz), unless the controller chip only
+supports fast transfers, in which case it's 10000 (10MHz).
 .It Cd options SCSI_NCR_MAX_WIDE=integer
-Specifies the maximum SCSI bus width, in bytes.  Defaults to 1 on chips
-that support wide SCSI, 0 otherwise.  Set this to 0 to disable wide transfers
-even if both controller and device support them (e.g. when using a wide
-controller and wide drive through a narrow cable).
+Specifies the maximum
+.Tn SCSI
+bus width, in bytes.
+Defaults to 1 on chips that support wide
+.Tn SCSI ,
+0 otherwise.
+Set this to 0 to disable wide transfers even if both controller
+and device support them (e.g. when using a wide controller and wide
+drive through a narrow cable).
 .It Cd options SCSI_NCR_SYMBIOS_COMPAT
-Enables the use of the GPIO register as a disk activity indicator.  Enable
-this if the activity LED isn't working, but make sure the card doesn't
-use GPIO for something else.  Cards known to support this:
+Enables the use of the GPIO register as a disk activity indicator.
+Enable this if the activity LED isn't working, but make sure the
+card doesn't use GPIO for something else.
+Cards known to support this:
 ASUS SC875, Diamond FirePort 40, and Symbios SYM8751S.
 .It Cd options SCSI_NCR_TRUST_BIOS
 Specifies that the driver should use the register configuration set by the
@@ -89,6 +107,7 @@ firmware instead of configuring the chip itself.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,

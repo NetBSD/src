@@ -1,4 +1,4 @@
-.\"	$NetBSD: sea.4,v 1.2 1997/02/23 22:20:42 jonathan Exp $
+.\"	$NetBSD: sea.4,v 1.3 1998/04/30 08:50:09 fair Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -10,7 +10,7 @@
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -25,27 +25,32 @@
 .\"
 .Dd November 29, 1994
 .Dt SEA 4
-.Os NetBSD 
+.Os NetBSD
 .Sh NAME
 .Nm sea
 .Nd
-Seagate/Future Domain ISA SCSI adapter card.
+Seagate/Future Domain ISA SCSI adapter card driver
 .Sh SYNOPSIS
 .Cd "sea0 at isa? iomem 0xc8000 irq 5"
 .Cd "scsibus* at sea?"
 .Sh DESCRIPTION
 The
-.Nm sea
-driver provides support for the following boards:
+.Nm
+driver provides support for the following
+.Tn SCSI
+controllers on
+.Tn ISA
+bus boards:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It ST01/02 
+.It ST01/02
 .It Future Domain TMC-885
 .It Future Domain TMC-950
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr cd 4 ,
-.Xr ch 4  
+.Xr ch 4
