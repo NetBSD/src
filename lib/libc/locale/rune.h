@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.6 2003/03/10 20:41:29 tshiozak Exp $	*/
+/*	$NetBSD: rune.h,v 1.7 2003/03/10 21:18:49 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,5 +44,33 @@
 #include <stdio.h>
 #include <wchar.h>
 #include "runetype.h"
+
+/*
+ * map _RTYPE_x to _CTYPE_x
+ *
+ * XXX: these should be defined in ctype.h and used in isxxx macros.
+ *      (note: current isxxx macros use "old" NetBSD masks and
+ *       _CTYPE_x are not public.)
+ */
+#define	_CTYPE_A	_RUNETYPE_A
+#define	_CTYPE_C	_RUNETYPE_C
+#define	_CTYPE_D	_RUNETYPE_D
+#define	_CTYPE_G	_RUNETYPE_G
+#define	_CTYPE_L	_RUNETYPE_L
+#define	_CTYPE_P	_RUNETYPE_P
+#define	_CTYPE_S	_RUNETYPE_S
+#define	_CTYPE_U	_RUNETYPE_U
+#define	_CTYPE_X	_RUNETYPE_X
+#define	_CTYPE_B	_RUNETYPE_B
+#define	_CTYPE_R	_RUNETYPE_R
+#define	_CTYPE_I	_RUNETYPE_I
+#define	_CTYPE_T	_RUNETYPE_T
+#define	_CTYPE_Q	_RUNETYPE_Q
+#define	_CTYPE_SWM	_RUNETYPE_SWM
+#define	_CTYPE_SWS	_RUNETYPE_SWS
+#define	_CTYPE_SW0	_RUNETYPE_SW0
+#define	_CTYPE_SW1	_RUNETYPE_SW1
+#define	_CTYPE_SW2	_RUNETYPE_SW2
+#define	_CTYPE_SW3	_RUNETYPE_SW3
 
 #endif	/*! _RUNE_H_ */
