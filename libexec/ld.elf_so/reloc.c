@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.39 2001/07/15 17:31:02 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.40 2001/07/16 05:40:53 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -424,9 +424,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		if (def == NULL)
 			return -1;
 		*where = (Elf_Addr)(defobj->relocbase + def->st_value);
-		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
+		rdbg(dodebug, ("GLOB_DAT %s in %s --> %p @ %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
+		    (void *)*where, where, defobj->path));
 		break;
 
 	case R_TYPE(COPY):
@@ -442,16 +442,16 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    &defobj, false);
 		if (def == NULL)
 			return -1;
-		*where += (Elf_Addr)obj->relocbase + def->st_value;
-		rdbg(dodebug, ("ABS32 %s in %s --> %p in %s",
+		*where += (Elf_Addr)defobj->relocbase + def->st_value;
+		rdbg(dodebug, ("ABS32 %s in %s --> %p @ %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
+		    (void *)*where, where, defobj->path));
 		break;
 
 	case R_TYPE(RELATIVE):	/* word32 B + A */
 		*where += (Elf_Addr)obj->relocbase;
-		rdbg(dodebug, ("RELATIVE in %s --> %p", obj->path,
-		    (void *)*where));
+		rdbg(dodebug, ("RELATIVE in %s --> %p @ %p", obj->path,
+		    (void *)*where, where));
 		break;
 
 	case R_TYPE(PC24): {	/* word32 S - P + A */
@@ -480,9 +480,9 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		}
 		tmp >>= 2;
 		*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
-		rdbg(dodebug, ("PC24 %s in %s --> %p in %s",
+		rdbg(dodebug, ("PC24 %s in %s --> %p @ %p in %s",
 		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
+		    (void *)*where, where, defobj->path));
 		break;
 	}
 #endif
