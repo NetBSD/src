@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.30 1997/11/01 22:15:54 drochner Exp $	*/
+/*	$NetBSD: init.c,v 1.31 1998/02/06 19:30:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.30 1997/11/01 22:15:54 drochner Exp $");
+__RCSID("$NetBSD: init.c,v 1.31 1998/02/06 19:30:14 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -580,7 +580,9 @@ single_user()
 	pid_t pid, wpid;
 	int status;
 	sigset_t mask;
+#ifdef ALTSHELL
 	char *shell = _PATH_BSHELL;
+#endif
 	char *argv[2];
 #ifdef SECURE
 	struct ttyent *typ;
