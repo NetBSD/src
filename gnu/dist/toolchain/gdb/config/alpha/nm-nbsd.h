@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_ELF64 1
 
 /* Get generic NetBSD native definitions. */
-#include "nm-nbsd.h"
+#include <nm-nbsd.h>
 #include <machine/alpha_cpu.h>
 
 /* Figure out where the longjmp will land.  We expect that we have just entered
