@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.56 2001/04/15 17:14:27 kleink Exp $
+# $NetBSD: md.i386,v 1.57 2001/09/10 11:05:02 fvdl Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -39,6 +39,7 @@
 ./usr/include/i386/lock.h		comp-c-include
 ./usr/include/i386/math.h		comp-c-include
 ./usr/include/i386/mouse.h		comp-c-include
+./usr/include/i386/mtrr.h		comp-c-include
 ./usr/include/i386/npx.h		comp-c-include
 ./usr/include/i386/param.h		comp-c-include
 ./usr/include/i386/pcb.h		comp-c-include
