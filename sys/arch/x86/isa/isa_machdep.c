@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.1 2003/02/27 00:28:08 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2 2003/03/02 18:11:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.1 2003/02/27 00:28:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.2 2003/03/02 18:11:03 fvdl Exp $");
 
 #define ISA_DMA_STATS
 
@@ -107,12 +107,13 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.1 2003/02/27 00:28:08 fvdl Exp $")
 #include <machine/mpbiosvar.h>
 #endif
 
+#ifndef __x86_64__
 #include "mca.h"
 #if NMCA > 0
 #include <machine/mca_machdep.h>		/* for MCA_system */
 #endif
-
 #include "eisa.h"		/* XXX */
+#endif
 
 /*
  * ISA can only DMA to 0-16M.
