@@ -1,4 +1,4 @@
-.\"	$NetBSD: timezone.3,v 1.10 1998/08/02 03:20:41 jeremy Exp $
+.\"	$NetBSD: timezone.3,v 1.11 2001/03/31 18:29:21 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,11 +47,15 @@
 .Sh DESCRIPTION
 .Bf -symbolic
 .\" This interface is available from the compatibility library, libcompat;
-This interface is available for compatibility;
+This interface is available for compatibility only and will disappear in a
+future software release;
 it is impossible to reliably map timezone's arguments to a time zone
 abbreviation.
 See
-.Xr ctime 3 .
+.Xr ctime 3 ;
+see
+.Xr tzset 3
+for the new definition of this interface.
 .Ef
 .Pp
 The
@@ -66,7 +70,8 @@ is the number of minutes west of GMT and
 .Ar dst
 is non-zero if daylight savings time is in effect.
 .Sh SEE ALSO
-.Xr ctime 3
+.Xr ctime 3 ,
+.Xr tzset 3
 .Sh HISTORY
 A
 .Fn timezone
