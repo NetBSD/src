@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:21:55 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/02 02:33:05 perry Exp $
 
 BINDIR=	${PFIX_EXAMPLEDIR}
 
@@ -7,20 +7,22 @@ DIST=	${.CURDIR}/../../../dist/postfix/conf
 
 # Not built yet: main.cf.default
 
-FILES=	LICENSE access aliases canonical main.cf master.cf \
-	relocated sample-aliases.cf sample-canonical.cf \
-	sample-debug.cf sample-ldap.cf sample-local.cf \
-	sample-misc.cf sample-pcre.cf sample-rate.cf \
-	sample-regexp.cf sample-relocated.cf \
-	sample-resource.cf sample-rewrite.cf \
-	sample-smtp.cf sample-smtpd.cf sample-transport.cf \
-	sample-virtual.cf transport virtual
+FILES=		LICENSE access aliases canonical main.cf master.cf \
+		relocated sample-aliases.cf sample-canonical.cf \
+		sample-debug.cf sample-ldap.cf sample-local.cf \
+		sample-misc.cf sample-pcre.cf sample-rate.cf \
+		sample-regexp.cf sample-relocated.cf \
+		sample-resource.cf sample-rewrite.cf \
+		sample-smtp.cf sample-smtpd.cf sample-transport.cf \
+		sample-virtual.cf transport virtual
+
+SCRIPTS=	postfix-script-sgid
+SCRIPTSNAME=	postfix-script
 
 # We don't install a few things that are found in this directory:
-# postfix-script: installed (from postfix-script-sgid) in
-# ../postfix-script -- the version here is just a placeholder anyway.
+# postfix-script: the source version here is just a placeholder.
 # postfix-script-diff: uninteresting to the user.
-# postfix-script-nosgid postfix-script-sgid: see above.
+# postfix-script-nosgid: we don't use that version.
 
 .include <bsd.prog.mk>
 
