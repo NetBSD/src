@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.656 2004/10/11 13:05:39 jmmv Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.657 2004/10/13 14:14:41 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.654 2004/10/11 13:01:25 jmmv Exp 
+ *	NetBSD: pcidevs,v 1.655 2004/10/13 14:14:19 drochner Exp 
  */
 
 /*
@@ -1053,6 +1053,7 @@
 #define	PCI_PRODUCT_AMCIRCUITS_CAMAC	0x812d		/* FZJ/ZEL CAMAC controller */
 #define	PCI_PRODUCT_AMCIRCUITS_VICBUS	0x812e		/* FZJ/ZEL VICBUS interface */
 #define	PCI_PRODUCT_AMCIRCUITS_PCISYNC	0x812f		/* FZJ/ZEL Synchronisation module */
+#define	PCI_PRODUCT_AMCIRCUITS_ADDI7800	0x818e		/* ADDI-DATA APCI-7800 8-port serial */
 #define	PCI_PRODUCT_AMCIRCUITS_S5920	0x5920		/* S5920 PCI Target */
 
 /* Atheros Communications, Inc. products */

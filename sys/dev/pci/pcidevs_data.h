@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.654 2004/10/11 13:05:39 jmmv Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.655 2004/10/13 14:14:42 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.654 2004/10/11 13:01:25 jmmv Exp 
+ *	NetBSD: pcidevs,v 1.655 2004/10/13 14:14:19 drochner Exp 
  */
 
 /*
@@ -3754,6 +3754,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_PCISYNC,
 	    "FZJ/ZEL Synchronisation module",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_ADDI7800,
+	    "ADDI-DATA APCI-7800 8-port serial",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920,
@@ -9720,4 +9724,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1854;
+const int pci_nproducts = 1855;
