@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.6 2003/03/04 17:28:00 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.7 2003/07/03 14:37:34 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.6 2003/03/04 17:28:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.7 2003/07/03 14:37:34 kochi Exp $");
 
 #include "opt_ddb.h"
 
@@ -148,13 +148,11 @@ AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES *InitVal,
 void
 acpi_osd_debugger(void)
 {
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 	static int beenhere;
 	ACPI_PARSE_OBJECT obj;
-#ifdef DDB
 	label_t	acpi_jmpbuf;
 	label_t	*savejmp;
-#endif
 
 	if (beenhere == 0) {
 		printf("Initializing ACPICA debugger...\n");
@@ -163,17 +161,15 @@ acpi_osd_debugger(void)
 	}
 
 	printf("Entering ACPICA debugger...\n");
-#ifdef DDB
 	savejmp = db_recover;
 	setjmp(&acpi_jmpbuf);
 	db_recover = &acpi_jmpbuf;
-#endif
+
 	acpi_indebugger = 1;
 	AcpiDbUserCommands('A', &obj);
 	acpi_indebugger = 0;
-#ifdef DDB
+
 	db_recover = savejmp;
-#endif
 #else
 	printf("ACPI: WARNING: ACPCICA debugger not present.\n");
 #endif
