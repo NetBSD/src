@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.32 1996/05/19 20:58:51 pk Exp $
+# 	$NetBSD: Makefile.sparc,v 1.33 1996/08/10 05:29:50 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,21 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-SPARC=	../..
+S!=	cd ../../../..; pwd
+SPARC=	$S/arch/sparc
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
-GCCWFLAGS=-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} -O2 ${GCCWFLAGS}
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext F8004000 -e start
 
@@ -95,7 +94,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -149,10 +148,10 @@ SRCS=	${SPARC}/sparc/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SPARC}/sparc/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SPARC}/sparc/genassym.c
 
 
 # depend on root or device configuration

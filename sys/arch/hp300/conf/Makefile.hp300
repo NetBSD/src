@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.39 1996/05/11 16:12:02 mycroft Exp $
+#	$NetBSD: Makefile.hp300,v 1.40 1996/08/10 05:29:34 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,20 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-HP300=	../..
+S!=	cd ../../../..; pwd
+HP300=	$S/arch/hp300
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dhp300 -DFPCOPROC
-CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
+CWARNFLAGS=	-Werror
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
@@ -97,7 +97,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -151,12 +151,12 @@ SRCS=	${HP300}/hp300/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${HP300}/hp300/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${HP300}/hp300/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	-if test -n "${SFILES}"; then \
-		mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
+		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${HP300}/hp300/genassym.c
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${HP300}/hp300/genassym.c
 
 
 # depend on root or device configuration
