@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2002/10/28 00:55:18 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2002/11/03 19:56:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -943,7 +943,7 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	while (sva < eva) {
-		nssva = x68k_trunc_seg(sva) + X68K_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 
@@ -1058,7 +1058,7 @@ pmap_protect(pmap, sva, eva, prot)
 	needtflush = active_pmap(pmap);
 	firstpage = TRUE;
 	while (sva < eva) {
-		nssva = x68k_trunc_seg(sva) + X68K_SEG_SIZE;
+		nssva = m68k_trunc_seg(sva) + M68K_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -1776,47 +1776,6 @@ pmap_zero_page(phys)
 #endif
 
 	splx(s);
-}
-
-/*
- * pmap_zero_page_uncached:
- *
- *	Same as above, except uncached.  Used in uvm_pageidlezero,
- *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
- *	was zero'd, FALSE if we aborted.
- */
-boolean_t
-pmap_zero_page_uncached(phys)
-	paddr_t phys;
-{
-	int s, npte;
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
-
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040)
-#endif
-		DCPP_40(phys);
-#endif
-
-	npte = phys | PG_V | PG_CI;
-
-	s = splvm();
-
-	*caddr1_pte = npte;
-	TBIS((vaddr_t)CADDR1);
-
-	zeropage(CADDR1);
-
-#ifdef DEBUG
-	*caddr1_pte = PG_NV;
-	TBIS((vaddr_t)CADDR1);
-#endif
-
-	splx(s);
-
-	return (TRUE);
 }
 
 /*
