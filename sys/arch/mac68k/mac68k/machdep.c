@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.10 1994/03/01 15:22:08 briggs Exp $
+ *	$Id: machdep.c,v 1.11 1994/03/20 00:16:07 briggs Exp $
  */
 
 #include <param.h>
@@ -169,6 +169,9 @@ void
 consinit(void)
 {
 	cninit();	/* this is the dumb console; no NuBus intelligence. */
+#if DDB
+	ddb_init();
+#endif
 }
 
 /*
@@ -2277,6 +2280,7 @@ void getenvvars (void)
   /* LAK: Grab a few useful variables */
 
   extern unsigned long bootdev, root_scsi_id, videobitdepth, videosize;
+  extern unsigned long end, esym;
 
   bootdev = root_scsi_id = getenv ("ROOT_SCSI_ID");
   boothowto = getenv ("SINGLE_USER");
@@ -2297,6 +2301,8 @@ void getenvvars (void)
   serial_boot_echo = getenv("SERIALECHO");
 		/* Should probably check this and fail if old */
   booter_version = getenv("BOOTERVER");
+  esym = getenv("END_SYM");
+  if (esym == 0) esym = (long) &end;
 }
 
 void printenvvars (void)
