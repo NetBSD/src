@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.15 1999/11/19 11:06:25 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.16 2000/02/03 09:46:49 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.15 1999/11/19 11:06:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.16 2000/02/03 09:46:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,8 @@ static int  pmmmap __P((void *, off_t, int));
 static int  pm_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void pm_free_screen __P((void *, void *));
-static void pm_show_screen __P((void *, void *));
+static int  pm_show_screen __P((void *, void *, int,
+				void (*) (void *, int, int), void *));
 
 static const struct wsdisplay_accessops pm_accessops = {
 	pmioctl,
@@ -483,11 +484,16 @@ pm_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-static void
-pm_show_screen(v, cookie)
+static int
+pm_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 static void
