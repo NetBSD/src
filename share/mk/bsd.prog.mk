@@ -213,9 +213,9 @@ obj: _PROGSUBDIR
 	else \
 		true ; \
 		dest=$$here/obj ; \
-		echo "making $$here/obj" ; \
 		if test ! -d obj ; then \
-			mkdir $$here/obj; \
+			echo "making $$dest" ; \
+			mkdir $$dest; \
 		fi ; \
 	fi;
 .endif
