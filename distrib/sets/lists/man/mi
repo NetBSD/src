@@ -164,6 +164,10 @@
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pax.0
+./usr/share/man/cat1/pkg_add.0
+./usr/share/man/cat1/pkg_create.0
+./usr/share/man/cat1/pkg_delete.0
+./usr/share/man/cat1/pkg_info.0
 ./usr/share/man/cat1/popd.0
 ./usr/share/man/cat1/pr.0
 ./usr/share/man/cat1/printenv.0
@@ -281,7 +285,6 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
-./usr/share/man/cat2/nanosleep.0
 ./usr/share/man/cat4/aha.0
 ./usr/share/man/cat4/ahb.0
 ./usr/share/man/cat4/ahc.0
@@ -489,6 +492,7 @@
 ./usr/share/man/cat8/fasthalt.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
+./usr/share/man/cat8/fsck_ext2fs.0
 ./usr/share/man/cat8/fsck_ffs.0
 ./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
@@ -536,6 +540,7 @@
 ./usr/share/man/cat8/mount.0
 ./usr/share/man/cat8/mount_ados.0
 ./usr/share/man/cat8/mount_cd9660.0
+./usr/share/man/cat8/mount_ext2fs.0
 ./usr/share/man/cat8/mount_fdesc.0
 ./usr/share/man/cat8/mount_ffs.0
 ./usr/share/man/cat8/mount_kernfs.0
@@ -636,6 +641,7 @@
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
 ./usr/share/man/cat8/strfile.0
+./usr/share/man/cat8/swapctl.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
 ./usr/share/man/cat8/sysctl.0
