@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.303 2002/02/09 21:16:34 thorpej Exp $
+# $NetBSD: mi,v 1.304 2002/02/12 01:43:34 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -517,6 +517,7 @@
 ./usr/libexec/postfix/lmtp	base-postfix-bin
 ./usr/libexec/postfix/local			base-postfix-bin
 ./usr/libexec/postfix/master			base-postfix-bin
+./usr/libexec/postfix/nqmgr			base-postfix-bin
 ./usr/libexec/postfix/pickup			base-postfix-bin
 ./usr/libexec/postfix/pipe			base-postfix-bin
 ./usr/libexec/postfix/qmgr			base-postfix-bin
@@ -526,6 +527,7 @@
 ./usr/libexec/postfix/smtpd			base-postfix-bin
 ./usr/libexec/postfix/spawn	base-postfix-bin
 ./usr/libexec/postfix/trivial-rewrite		base-postfix-bin
+./usr/libexec/postfix/virtual			base-postfix-bin
 ./usr/libexec/rexecd		base-netutil-bin
 ./usr/libexec/rlogind		base-netutil-bin
 ./usr/libexec/rmail		base-uucp-bin
@@ -722,6 +724,7 @@
 ./usr/sbin/postlock		base-postfix-bin
 ./usr/sbin/postlog		base-postfix-bin
 ./usr/sbin/postmap		base-postfix-bin
+./usr/sbin/postqueue		base-postfix-bin
 ./usr/sbin/postsuper		base-postfix-bin
 ./usr/sbin/pppd			base-ppp-bin
 ./usr/sbin/pppstats		base-ppp-bin
