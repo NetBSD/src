@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2000/04/01 20:44:43 mjl Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2000/04/04 17:07:29 thorpej Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2000/04/01 20:44:43 mjl Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2000/04/04 17:07:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,10 +104,6 @@ char *prompt;			/* command-line prompt */
 char *dps = "*";		/* default command-line prompt */
 
 char *usage = "usage: %s [-] [-sx] [-p string] [name]\n";
-
-extern char errmsg[];
-extern int optind;
-extern char *optarg;
 
 int main __P((int, char *[]));
 
@@ -447,16 +443,13 @@ next_addr()
 
 int patlock = 0;	/* if set, pattern not freed by get_compiled_pattern() */
 
-int rows = 22;		/* scroll length: ws_row - 2 */
+long rows = 22;		/* scroll length: ws_row - 2 */
 
 /* exec_command: execute the next command in command buffer; return print
    request, if any */
 int
 exec_command()
 {
-	extern long u_current_addr;
-	extern long u_addr_last;
-
 	static pattern_t *pat = NULL;
 	static int sgflag = 0;
 	static long sgnum = 0;

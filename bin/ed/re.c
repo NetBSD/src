@@ -1,4 +1,4 @@
-/*	$NetBSD: re.c,v 1.15 1997/07/20 06:35:40 thorpej Exp $	*/
+/*	$NetBSD: re.c,v 1.16 2000/04/04 17:07:29 thorpej Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
    the ed line editor. */
@@ -33,14 +33,12 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-__RCSID("$NetBSD: re.c,v 1.15 1997/07/20 06:35:40 thorpej Exp $");
+__RCSID("$NetBSD: re.c,v 1.16 2000/04/04 17:07:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #include "ed.h"
 
-
-extern int patlock;
 
 char errmsg[MAXPATHLEN + 40] = "";
 
