@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.12 1994/07/05 21:25:07 glass Exp $
+ *      $Id: machdep.c,v 1.13 1994/08/18 22:11:22 cgd Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -2139,14 +2139,14 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 #ifdef COMPAT_ULTRIX
-
 void cpu_exec_ecoff_setup(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
 	struct ecoff_aouthdr *eap;
 
-	eap = epp->ep_hdr + sizeof(struct ecoff_filehdr);
+	eap = (struct ecoff_aouthdr *)
+	    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
 	p->p_md.md_regs[GP] = eap->ea_gp_value;
 }
 
@@ -2168,5 +2168,4 @@ cpu_exec_ecoff_hook(p, epp, eap)
 	epp->ep_setup = cpu_exec_ecoff_setup;
 	return 0;
 }
-
 #endif

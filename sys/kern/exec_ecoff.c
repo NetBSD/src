@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.4 1994/08/01 14:04:47 glass Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.5 1994/08/18 22:09:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -82,7 +82,8 @@ exec_ecoff_makecmds(p, epp)
 	if (ECOFF_BADMAG(efp))
 		return ENOEXEC;
 	
-	eap = epp->ep_hdr + sizeof(struct ecoff_filehdr);
+	eap = (struct ecoff_aouthdr *)
+	    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
 	switch (eap->ea_magic) {
 	case ECOFF_OMAGIC:
 		error = exec_ecoff_prep_omagic(p, epp, efp, eap);
