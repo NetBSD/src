@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.8.2.2 2004/03/29 01:15:15 simonb Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.8 2004/03/29 01:15:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
