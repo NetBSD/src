@@ -1,0 +1,13 @@
+#	$NetBSD: Makefile.Xserver,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+
+.PATH:		${NETBSDSRCDIR}/x11/Xserver/Xserver
+SRCS+=		_dummy_.c
+
+.for _SL in	GL/glx GL/mesa Xext/ext Xext/exts cfb cfb32 \
+		dbe dix dix/xpstubs fb hw/vfb hw/xnest lbx mfb mi os \
+		printer printer/raster printer/pcl printer/ps \
+		randr record render xinput xkb xtrap
+LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
+LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+.endfor

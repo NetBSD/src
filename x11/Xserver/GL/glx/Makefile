@@ -1,0 +1,31 @@
+#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:05 lukem Exp $
+
+.include <bsd.own.mk>
+
+LIB=		glx
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/GL/glx
+
+SRCS=		g_disptab.c g_disptab_EXT.c g_render.c g_renderswap.c \
+		g_single.c g_singleswap.c global.c glxbuf.c glxcmds.c \
+		glxcmdsswap.c glxext.c glxfb.c glximports.c glxmem.c \
+		glxpix.c glxscreens.c glxutil.c render2.c render2swap.c \
+		renderpix.c renderpixswap.c rensize.c rensizetab.c \
+		single2.c single2swap.c singlepix.c singlepixswap.c \
+		singlesize.c xfont.c
+
+XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/GL/glx \
+		-I${X11SRCDIR.xc}/programs/Xserver/GL/include \
+		-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${XSERVERINCDIR} \
+		-I${DESTDIR}/${X11INCDIR}/X11 \
+		-I${X11SRCDIR.xc}/programs/Xserver/mi \
+		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
+		-I${X11SRCDIR.xc}/include/fonts \
+		-I${X11SRCDIR.xc}/lib/GL/include
+
+CPPFLAGS+=	-DIN_MODULE -DXFree86Module -DGLXEXT -DGLX_USE_MESA
+
+.include <bsd.lib.mk>
+.include <bsd.x11.mk>
