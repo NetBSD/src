@@ -1,4 +1,4 @@
-/*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
+/*	$NetBSD: rsrr.c,v 1.4 1998/07/18 05:04:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 by the University of Southern California
@@ -85,12 +85,12 @@ rsrr_init()
     int servlen;
     struct sockaddr_un serv_addr;
 
-    if ((rsrr_socket = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
+    if ((rsrr_socket = socket(AF_LOCAL, SOCK_DGRAM, 0)) < 0)
 	log(LOG_ERR, errno, "Can't create RSRR socket");
 
     unlink(RSRR_SERV_PATH);
     bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sun_family = AF_UNIX;
+    serv_addr.sun_family = AF_LOCAL;
     strcpy(serv_addr.sun_path, RSRR_SERV_PATH);
 #if (defined(BSD) && (BSD >= 199103))
     servlen = offsetof(struct sockaddr_un, sun_path) +

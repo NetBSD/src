@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.19 1998/07/06 06:58:44 mrg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.20 1998/07/18 05:04:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,9 +281,9 @@ main(argc, argv)
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
 	memset(&sunx, 0, sizeof(sunx));
-	sunx.sun_family = AF_UNIX;
+	sunx.sun_family = AF_LOCAL;
 	(void)strncpy(sunx.sun_path, LogName, sizeof(sunx.sun_path));
-	funix = socket(AF_UNIX, SOCK_DGRAM, 0);
+	funix = socket(AF_LOCAL, SOCK_DGRAM, 0);
 	if (funix < 0 ||
 	    bind(funix, (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
 	    chmod(LogName, 0666) < 0) {

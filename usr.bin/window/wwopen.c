@@ -1,4 +1,4 @@
-/*	$NetBSD: wwopen.c,v 1.7 1997/11/21 08:37:37 lukem Exp $	*/
+/*	$NetBSD: wwopen.c,v 1.8 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwopen.c,v 1.7 1997/11/21 08:37:37 lukem Exp $");
+__RCSID("$NetBSD: wwopen.c,v 1.8 1998/07/18 05:04:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ wwopen(type, oflags, nrow, ncol, row, col, nline)
 	case WWT_SOCKET:
 	    {
 		int d[2];
-		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, d) < 0) {
+		if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, d) < 0) {
 			wwerrno = WWE_SYS;
 			goto bad;
 		}

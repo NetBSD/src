@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.12 1998/02/17 11:38:26 kleink Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.13 1998/07/18 05:04:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.12 1998/02/17 11:38:26 kleink Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.13 1998/07/18 05:04:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,14 +162,14 @@ main(argc, argv)
 	/*
 	 * Construct the listening socket
 	 */
-	un.sun_family = AF_UNIX;
+	un.sun_family = AF_LOCAL;
 	if (sizeof(_PATH_TMPPORTAL) >= sizeof(un.sun_path))
 		errx(1, "portal socket name too long");
 	strcpy(un.sun_path, _PATH_TMPPORTAL);
 	mktemp(un.sun_path);
 	un.sun_len = strlen(un.sun_path);
 
-	so = socket(AF_UNIX, SOCK_STREAM, 0);
+	so = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (so < 0)
 		err(1, "socket");
 	(void) unlink(un.sun_path);

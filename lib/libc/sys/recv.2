@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
+.\"	$NetBSD: recv.2,v 1.7 1998/07/18 05:04:36 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -192,7 +192,7 @@ a recvmsg with no data buffer provided immediately after an
 call.
 .Pp
 Open file descriptors are now passed as ancillary data for
-.Dv AF_UNIX
+.Dv AF_LOCAL
 domain sockets, with
 .Fa cmsg_level
 set to

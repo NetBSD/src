@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.16 1998/07/06 07:03:28 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.17 1998/07/18 05:04:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.16 1998/07/06 07:03:28 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.17 1998/07/18 05:04:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,7 @@ main(argc, argv)
 	 */
 	startup();
 	(void)unlink(_PATH_SOCKETNAME);
-	funix = socket(AF_UNIX, SOCK_STREAM, 0);
+	funix = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
@@ -207,7 +207,7 @@ main(argc, argv)
 	signal(SIGQUIT, mcleanup);
 	signal(SIGTERM, mcleanup);
 	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_UNIX;
+	un.sun_family = AF_LOCAL;
 	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -264,7 +264,7 @@ main(argc, argv)
 			continue;
 		}
 		if (FD_ISSET(funix, &readfds)) {
-			domain = AF_UNIX, fromlen = sizeof(fromunix);
+			domain = AF_LOCAL, fromlen = sizeof(fromunix);
 			s = accept(funix,
 			    (struct sockaddr *)&fromunix, &fromlen);
 		} else /* if (FD_ISSET(finet, &readfds)) */  {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.30 1998/07/16 22:23:30 ross Exp $	*/
+/*	$NetBSD: fstat.c,v 1.31 1998/07/18 05:04:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.30 1998/07/16 22:23:30 ross Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.31 1998/07/18 05:04:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -703,7 +703,7 @@ socktrans(sock, i)
 		else if (so.so_pcb)
 			printf(" %lx", (long)so.so_pcb);
 		break;
-	case AF_UNIX:
+	case AF_LOCAL:
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
 			printf(" %lx", (long)so.so_pcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.43 1998/07/16 08:55:43 tron Exp $	*/
+/*	$NetBSD: inetd.c,v 1.44 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.43 1998/07/16 08:55:43 tron Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.44 1998/07/18 05:04:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -814,7 +814,7 @@ config(signo)
 		sep->se_checked = 1;
 
 		switch (sep->se_family) {
-		case AF_UNIX:
+		case AF_LOCAL:
 			if (sep->se_fd != -1)
 				break;
 			n = strlen(sep->se_service);
@@ -827,7 +827,7 @@ config(signo)
 			(void)unlink(sep->se_service);
 			strncpy(sep->se_ctrladdr_un.sun_path,
 			    sep->se_service, n);
-			sep->se_ctrladdr_un.sun_family = AF_UNIX;
+			sep->se_ctrladdr_un.sun_family = AF_LOCAL;
 			sep->se_ctrladdr_size = n +
 			    sizeof(sep->se_ctrladdr_un) -
 			    sizeof(sep->se_ctrladdr_un.sun_path);
@@ -934,7 +934,7 @@ config(signo)
 			close_sep(sep);
 		if (isrpcservice(sep))
 			unregister_rpc(sep);
-		if (sep->se_family == AF_UNIX)
+		if (sep->se_family == AF_LOCAL)
 			(void)unlink(sep->se_service);
 		if (debug)
 			print_service("FREE", sep);
@@ -954,7 +954,7 @@ retry(signo)
 	for (sep = servtab; sep; sep = sep->se_next) {
 		if (sep->se_fd == -1 && !ISMUX(sep)) {
 			switch (sep->se_family) {
-			case AF_UNIX:
+			case AF_LOCAL:
 			case AF_INET:
 				setup(sep);
 				if (sep->se_fd != -1 && isrpcservice(sep))
@@ -976,7 +976,7 @@ goaway(signo)
 			continue;
 
 		switch (sep->se_family) {
-		case AF_UNIX:
+		case AF_LOCAL:
 			(void)unlink(sep->se_service);
 			break;
 		case AF_INET:
@@ -1384,7 +1384,7 @@ do { \
 #undef MALFORMED
 
 	if (strcmp(sep->se_proto, "unix") == 0) {
-		sep->se_family = AF_UNIX;
+		sep->se_family = AF_LOCAL;
 	} else {
 		sep->se_family = AF_INET;
 		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {

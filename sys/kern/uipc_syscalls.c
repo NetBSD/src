@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.31 1998/06/25 21:17:17 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.32 1998/07/18 05:04:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -865,9 +865,9 @@ sys_pipe(p, v, retval)
 	struct socket *rso, *wso;
 	int fd, error;
 
-	if ((error = socreate(AF_UNIX, &rso, SOCK_STREAM, 0)) != 0)
+	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0)
 		return (error);
-	if ((error = socreate(AF_UNIX, &wso, SOCK_STREAM, 0)) != 0)
+	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0)
 		goto free1;
 	if ((error = falloc(p, &rf, &fd)) != 0)
 		goto free2;

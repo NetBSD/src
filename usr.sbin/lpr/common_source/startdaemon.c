@@ -1,4 +1,4 @@
-/*	$NetBSD: startdaemon.c,v 1.9 1997/10/05 15:12:04 mrg Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-__RCSID("$NetBSD: startdaemon.c,v 1.9 1997/10/05 15:12:04 mrg Exp $");
+__RCSID("$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,13 +70,13 @@ startdaemon(printer)
 	int s, n;
 	char buf[BUFSIZ];
 
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
+	s = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (s < 0) {
 		warn("socket");
 		return(0);
 	}
 	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_UNIX;
+	un.sun_family = AF_LOCAL;
 	strncpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path) - 1);
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)

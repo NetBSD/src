@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.28 1998/03/01 02:21:39 fvdl Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.29 1998/07/18 05:04:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -336,7 +336,7 @@ portal_open(v)
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_UNIX, &so, SOCK_STREAM, 0);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0);
 	if (error)
 		goto bad;
 

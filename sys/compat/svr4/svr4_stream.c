@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.24 1997/10/20 22:05:19 thorpej Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.25 1998/07/18 05:04:37 lukem Exp $	 */
 /*
  * Copyright (c) 1994, 1996 Christos Zoulas.  All rights reserved.
  *
@@ -438,7 +438,7 @@ si_ogetudata(fp, fd, ioc, p)
 		    ud.etsdusize = 0;
 	    break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 	    ud.tidusize = 65536;
 	    ud.addrsize = 128;
 	    ud.etsdusize = 128;
@@ -521,7 +521,7 @@ si_listen(fp, fd, ioc, p)
 		/* XXX: Fill the length here */
 		break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 		lst.len = 140;
 		lst.pad[28] = 0x00000000;	/* magic again */
 		lst.pad[29] = 0x00000800;	/* magic again */
@@ -575,7 +575,7 @@ si_getudata(fp, fd, ioc, p)
 	    ud.optsize = 0;
 	    break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 	    ud.tidusize = 65536;
 	    ud.tsdusize = 128;
 	    ud.addrsize = 128;
@@ -765,7 +765,7 @@ ti_bind(fp, fd, ioc, p)
 			 sain.sin_addr.s_addr));
 		break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 		skp = &saun;
 		sasize = sizeof(saun);
 		if (bnd.offs == 0)
@@ -890,7 +890,7 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 		sasize = sizeof(sain);
 		break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 		skp = &saun;
 		sasize = sizeof(saun);
 		break;
@@ -967,7 +967,7 @@ svr4_stream_ti_ioctl(fp, p, retval, fd, cmd, dat)
 		skb.len = sasize;
 		break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 		sockaddr_to_netaddr_un(&sc, &saun);
 		skb.len = sasize + 4;
 		break;
@@ -1464,7 +1464,7 @@ svr4_sys_putmsg(p, v, retval)
 		error = sain.sin_family != st->s_family;
 		break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 		if (ctl.len == 8) {
 			/* We are doing an accept; succeed */
 			DPRINTF(("putmsg: Do nothing\n"));
@@ -1612,7 +1612,7 @@ svr4_sys_getmsg(p, v, retval)
 		sasize = sizeof(sain);
 		break;
 
-	case AF_UNIX:
+	case AF_LOCAL:
 		skp = &saun;
 		sasize = sizeof(saun);
 		break;
@@ -1678,7 +1678,7 @@ svr4_sys_getmsg(p, v, retval)
 			sockaddr_to_netaddr_in(&sc, &sain);
 			break;
 
-		case AF_UNIX:
+		case AF_LOCAL:
 			sc.len = sasize + 4;
 			sockaddr_to_netaddr_un(&sc, &saun);
 			break;
@@ -1741,7 +1741,7 @@ svr4_sys_getmsg(p, v, retval)
 			sc.len = sasize;
 			break;
 
-		case AF_UNIX:
+		case AF_LOCAL:
 			sc.pad[1] = 0x00010000;
 			sc.pad[2] = 0xf6bcdaa0;	/* I don't know what that is */
 			sc.pad[3] = 0x00010000;
@@ -1771,7 +1771,7 @@ svr4_sys_getmsg(p, v, retval)
 			sockaddr_to_netaddr_in(&sc, &sain);
 			break;
 
-		case AF_UNIX:
+		case AF_LOCAL:
 			sockaddr_to_netaddr_un(&sc, &saun);
 			break;
 
@@ -1806,7 +1806,7 @@ svr4_sys_getmsg(p, v, retval)
 			sockaddr_to_netaddr_in(&sc, &sain);
 			break;
 
-		case AF_UNIX:
+		case AF_LOCAL:
 			sc.len = sasize + 4;
 			sockaddr_to_netaddr_un(&sc, &saun);
 			break;

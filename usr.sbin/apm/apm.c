@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.5 1998/03/31 02:36:13 mycroft Exp $ */
+/*	$NetBSD: apm.c,v 1.6 1998/07/18 05:04:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -135,11 +135,11 @@ open_socket(const char *sockname)
     int sock, errr;
     struct sockaddr_un s_un;
 
-    sock = socket(AF_UNIX, SOCK_STREAM, 0);
+    sock = socket(AF_LOCAL, SOCK_STREAM, 0);
     if (sock == -1)
 	err(1, "cannot create local socket");
 
-    s_un.sun_family = AF_UNIX;
+    s_un.sun_family = AF_LOCAL;
     strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
     s_un.sun_len = SUN_LEN(&s_un);
     if (connect(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1) {
