@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/02/27 17:03:49 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/08/19 09:46:41 lukem Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -13,8 +13,7 @@ LIB=		iberty
 
 .include "${.CURDIR}/defs.mk"
 
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}

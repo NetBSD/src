@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:48:59 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2002/08/19 09:46:43 lukem Exp $
+
+NOOBJ=	# defined
+
+.include <bsd.own.mk>
 
 INCS=	algorithm deque functional hash_map hash_set iterator list map \
 	memory numeric pthread_alloc queue rope set slist stack utility \
@@ -16,9 +20,7 @@ INCS=	algorithm deque functional hash_map hash_set iterator list map \
 	tempbuf.h tree.h type_traits.h vector.h
 INCSDIR=/usr/include/g++
 
-NOOBJ=	# defined
-
-.PATH: ${.CURDIR}/../../../dist/libstdc++/stl
+.PATH: ${NETBSDSRCDIR}/gnu/dist/libstdc++/stl
 
 .SUFFIXES:
 

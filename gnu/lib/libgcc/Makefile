@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2002/03/28 09:58:09 jmc Exp $
+#	$NetBSD: Makefile,v 1.42 2002/08/19 09:46:40 lukem Exp $
 
 REQUIRETOOLS=	yes
 
@@ -14,9 +14,8 @@ NOLINT=		# defined
 .if exists(${.CURDIR}/${MACHINE_ARCH}.mk)
 .include "${.CURDIR}/${MACHINE_ARCH}.mk"
 
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
-GCCARCH=	${TOP}/usr.bin/gcc/arch/${MACHINE_ARCH}
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
+GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc/arch/${MACHINE_ARCH}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
@@ -81,8 +80,8 @@ HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 MKPIC:=		no
 MKPROFILE:=	no
 
-DIST=		${.CURDIR}/../../dist/gcc
-ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
+DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
+ARCH=		${NETBSDSRCDIR}/gnu/usr.bin/egcs/arch
 
 .if exists(${ARCH}/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}

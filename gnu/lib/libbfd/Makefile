@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/06/19 16:10:48 itojun Exp $
+#	$NetBSD: Makefile,v 1.29 2002/08/19 09:46:39 lukem Exp $
 
 LIB=		bfd
 
@@ -17,8 +17,7 @@ NOPROFILE=	# defined
 SHLIB_MAJOR=	4
 SHLIB_MINOR=	0
 
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I. \
@@ -70,7 +69,7 @@ BFD64=
 CPPFLAGS += -DBFD_TARG_64
 .endif
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 
 # generic bfd
 SRCS=		archive.c archures.c bfd.c cache.c coffgen.c corefile.c \

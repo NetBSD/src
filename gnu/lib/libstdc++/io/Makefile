@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/12/19 20:52:11 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2002/08/19 09:46:42 lukem Exp $
 
 NOOBJ=	# defined
 
@@ -12,8 +12,7 @@ NOOBJ=	# defined
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"
 
-TOP=		${.CURDIR}/../../..
-DIST=		${TOP}/dist/toolchain
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 INCS=		${LIBIO_HEADERS:Niostdio.h}
 INCSDIR=	/usr/include/g++
@@ -31,7 +30,7 @@ INCS=	PlotFile.h SFile.h builtinbuf.h editbuf.h floatio.h fstream.h \
 	procbuf.h stdiostream.h stream.h streambuf.h strfile.h strstream.h
 INCSDIR=/usr/include/g++
 
-.PATH: ${.CURDIR}/../../../dist/libio
+.PATH: ${NETBSDSRCDIR}/gnu/dist/libio
 
 .include <bsd.prog.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/02/27 17:58:52 tv Exp $
+#	$NetBSD: Makefile,v 1.20 2002/08/19 09:46:41 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,9 +15,8 @@ SHLIB_MINOR=	0
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
 
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
-GCCARCH=	${TOP}/usr.bin/gcc/arch/${MACHINE_ARCH}
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
+GCCARCH=	${NETBSDSRCDIR}/gnu/usr.bin/gcc/arch/${MACHINE_ARCH}
 
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.o:.o=.c} ${G_OBJS:M[A-Z]*:.o=.m} linking.m
 
@@ -59,8 +58,8 @@ DPSRCS+=	runtime-info.h
 INCS=		hash.h objc-list.h sarray.h objc.h objc-api.h NXConstStr.h \
 		Object.h Protocol.h encoding.h typedstream.h thr.h
 INCSDIR=	/usr/include/objc
-DIST=		${.CURDIR}/../../dist/gcc
-ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
+DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
+ARCH=		${NETBSDSRCDIR}/gnu/usr.bin/egcs/arch
 
 .if exists(${ARCH}/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}
