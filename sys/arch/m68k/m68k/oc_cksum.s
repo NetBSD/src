@@ -30,7 +30,7 @@
 | SUCH DAMAGE.
 |
 |	from: @(#)oc_cksum.s	7.2 (Berkeley) 11/3/90
-|	$Id: oc_cksum.s,v 1.2 1993/05/22 07:57:37 cgd Exp $
+|	$Id: oc_cksum.s,v 1.3 1994/03/01 07:47:59 glass Exp $
 |
 |
 | oc_cksum: ones complement 16 bit checksum for MC68020.
@@ -89,11 +89,11 @@
 | packet -- a 1% effect for a 1ms ethernet packet.  This is not
 | enough gain to be worth the effort.
 
-	.even
+#include <m68k/asm.h>
+
 	.text
 
-	.globl	_oc_cksum
-_oc_cksum:
+ENTRY(oc_cksum)
 	movl	sp@(4),a0	| get buffer ptr
 	movl	sp@(8),d1	| get byte count
 	movl	sp@(12),d0	| get starting value
