@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.4 1994/11/03 22:15:25 mycroft Exp $	*/
+/*	$NetBSD: pci.c,v 1.5 1994/11/03 22:27:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -40,25 +40,12 @@
 #include <i386/pci/pcivar.h>
 #include <i386/pci/pcireg.h>
 
-int pciprobe __P((struct device *, void *, void *));
+int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
 struct cfdriver pcicd = {
-	NULL, "pci", pciprobe, pciattach, DV_DULL, sizeof(struct device)
+	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct device)
 };
-
-int
-pciprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-
-#ifdef i386
-	if (pci_mode_detect() == 0)
-		return 0;
-#endif
-	return 1;
-}
 
 int
 pciprint(aux, pci)
