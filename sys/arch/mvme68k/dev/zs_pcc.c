@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.3 1996/12/17 22:30:17 gwr Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.4 1997/03/19 16:24:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ zs_pcc_get_chan_addr(zsc_unit, channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_pcc_match __P((struct device *, void *, void *));
+static int	zsc_pcc_match  __P((struct device *, struct cfdata *, void *));
 static void	zsc_pcc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach zsc_pcc_ca = {
@@ -109,11 +109,11 @@ struct cfattach zsc_pcc_ca = {
  * Is the zs chip present?
  */
 static int
-zsc_pcc_match(parent, vcf, aux)
+zsc_pcc_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct pcc_attach_args *pa = aux;
 	int unit;
 
