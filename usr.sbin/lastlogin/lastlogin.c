@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.1.1.1 1997/02/11 18:36:51 phil Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.2 1997/03/27 17:25:49 christos Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -90,12 +90,11 @@ main(argc, argv)
 	}
 	/* Read all lastlog entries, looking for active ones */
 	else {
-		i = 0;
-		while (fread(&last, sizeof(last), 1, fp) == 1) {
-			passwd = getpwuid(i);
-			if (passwd != NULL && (last.ll_time != 0))
+		for (i = 0; fread(&last, sizeof(last), 1, fp) == 1; i++) {
+			if (last.ll_time == 0)
+				continue;
+			if ((passwd = getpwuid(i)) != NULL)
 				output(passwd, &last);
-			i++;
 		}
 		if (ferror(fp))
 			warnx("fread error");
