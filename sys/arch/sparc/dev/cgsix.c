@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.29 1996/12/10 22:54:51 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.30 1997/05/19 19:59:36 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -184,7 +184,8 @@ cgsixmatch(parent, cf, aux)
 		 * differently on the cgsix than other pfour framebuffers.
 		 */
 		bus_untmp();
-		tmp = bus_tmp(ra->ra_paddr + CGSIX_FHC_OFFSET, ca->ca_bustype);
+		tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA, CGSIX_FHC_OFFSET,
+				      NBPG, ca->ca_bustype);
 		if (probeget(tmp, 4) == -1)
 			return (0);
 
