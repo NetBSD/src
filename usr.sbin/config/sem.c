@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.18 1997/10/18 07:59:35 lukem Exp $	*/
+/*	$NetBSD: sem.c,v 1.19 1998/01/12 07:37:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,13 +271,16 @@ addtoattr(l, dev)
  * attribute and/or refer to existing attributes.
  */
 void
-defdev(dev, ispseudo, loclist, attrs)
+defdev(dev, class, loclist, attrs, ispseudo)
 	struct devbase *dev;
-	int ispseudo;
+	const char *class;
 	struct nvlist *loclist, *attrs;
+	int ispseudo;
 {
+	char classenum[128];
 	struct nvlist *nv;
 	struct attr *a;
+	int i, j;
 
 	if (dev == &errdev)
 		goto bad;
@@ -285,6 +288,22 @@ defdev(dev, ispseudo, loclist, attrs)
 		error("redefinition of `%s'", dev->d_name);
 		goto bad;
 	}
+
+	if (class != NULL) {
+		j = 0;
+		classenum[j++] = 'D';
+		classenum[j++] = 'V';
+		classenum[j++] = '_';
+		for (i = 0; class[i] != '\0'; i++) {
+			if (!isalpha(class[i]) || !islower(class[i])) {
+				error("invalid device class `%s'", class);
+				return;
+			}
+			classenum[j++] = toupper(class[i]);
+		}
+		classenum[j] = '\0';
+	}
+
 	dev->d_isdef = 1;
 	if (has_errobj(attrs, &errattr))
 		goto bad;
@@ -305,6 +324,7 @@ defdev(dev, ispseudo, loclist, attrs)
 	}
 
 	/* Committed!  Set up fields. */
+	dev->d_class = class != NULL ? intern(classenum) : NULL;
 	dev->d_ispseudo = ispseudo;
 	dev->d_attrs = attrs;
 

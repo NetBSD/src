@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.19 1997/10/18 07:59:10 lukem Exp $	*/
+/*	$NetBSD: gram.y,v 1.20 1998/01/12 07:37:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,8 +97,8 @@ static	void	check_maxpart __P((void));
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DUMPS
-%token	ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE XMACHINE
+%token	AND AT ATTACH BUILD CLASS COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE
+%token	DUMPS ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE XMACHINE
 %token	MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
@@ -113,6 +113,7 @@ static	void	check_maxpart __P((void));
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
 %type	<attr>	attr
+%type	<str>	devclass
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
 %type	<list>	atlist interface_opt
@@ -127,6 +128,9 @@ static	void	check_maxpart __P((void));
 %type	<str>	value
 %type	<val>	major_minor signed_number npseudo
 %type	<val>	flags_opt
+%type	<str>	defopt
+%type	<list>	defopts
+%type	<str>	optfile_opt
 
 %%
 
@@ -230,14 +234,14 @@ one_def:
 	object |
 	include |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3); } |
-	DEFOPT WORD			{ defoption($2); } |
-	DEVICE devbase interface_opt attrs_opt
-					{ defdev($2, 0, $3, $4); } |
+	DEFOPT optfile_opt defopts	{ defoption($2, $3); } |
+	DEVICE devbase CLASS devclass interface_opt attrs_opt
+					{ defdev($2, $4, $5, $6, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
 					{ defdevattach($5, $2, $4, $6); } |
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
-	PSEUDO_DEVICE devbase attrs_opt { defdev($2,1,NULL,$3); } |
+	PSEUDO_DEVICE devbase attrs_opt { defdev($2, NULL, NULL, $3, 1); } |
 	MAJOR '{' majorlist '}';
 
 atlist:
@@ -248,8 +252,18 @@ atname:
 	WORD				{ $$ = $1; } |
 	ROOT				{ $$ = NULL; };
 
+defopts:
+	defopts defopt			{ $$ = new_nx($2, $1); } |
+	defopt				{ $$ = new_n($1); }
+
+defopt:
+	WORD				{ $$ = $1; }
+
 devbase:
 	WORD				{ $$ = getdevbase($1); };
+
+devclass:
+	WORD				{ $$ = $1; };
 
 devattach_opt:
 	WITH WORD			{ $$ = getdevattach($2); } |
@@ -276,6 +290,10 @@ locdef:
 
 locdefault:
 	'=' value			{ $$ = $2; };
+
+optfile_opt:
+	PATHNAME			{ $$ = $1; } |
+	/* empty */			{ $$ = NULL; };
 
 value:
 	WORD				{ $$ = $1; } |
@@ -372,7 +390,7 @@ fs_spec_opt:
 
 fs_spec:
 	'?'				{ $$ = intern("?"); } |
-	WORD				{ $$ = intern($1); };
+	WORD				{ $$ = $1; };
 
 sysparam_list:
 	sysparam_list sysparam |

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 1997/10/18 07:59:18 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.28 1998/01/12 07:37:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,7 +73,6 @@ extern int yydebug;
 
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
-static struct nvlist **nextdefopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextfsopt;
 
@@ -175,10 +174,10 @@ usage:
 	mkopttab = ht_new();
 	fsopttab = ht_new();
 	defopttab = ht_new();
+	optfiletab = ht_new();
 	nextopt = &options;
 	nextmkopt = &mkoptions;
 	nextfsopt = &fsoptions;
-	nextdefopt = &defoptions;
 
 	/*
 	 * Handle profiling (must do this before we try to create any
@@ -300,35 +299,82 @@ stop()
 }
 
 /*
- * Define a standard option, for which a header file will be generated.
+ * Define one or more standard options.  If an option file name is specified,
+ * place all options in one file with the specified name.  Otherwise, create
+ * an option file for each option.
  */
 void
-defoption(name)
-	const char *name;
+defoption(fname, opts)
+	const char *fname;
+	struct nvlist *opts;
 {
+	struct nvlist *nv, *nextnv;
 	const char *n;
 	char *p, c;
 	char low[500];
 
 	/*
-	 * Convert to lower case.  The header file name will be
-	 * in lower case, so we store the lower case version in
-	 * the hash table to detect option name collisions.  The
-	 * original string will be stored in the nvlist for use
-	 * in the header file.
+	 * Mark these options as ones to skip when creating the Makefile.
 	 */
-	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
-	*p = 0;
+	for (nv = opts; nv != NULL; nv = nextnv) {
+		nextnv = nv->nv_next;
+		if (ht_insert(defopttab, nv->nv_name, nv)) {
+			error("option `%s' already defined", nv->nv_name);
+			return;
+		}
 
-	n = intern(low);
-	(void)do_option(defopttab, &nextdefopt, n, name, "defopt");
+		if (fname == NULL) {
+			/*
+			 * Each option will be going into its own file.
+			 * Convert the option name to lower case.  This
+			 * lower case name will be used as the option
+			 * file name.
+			 */
+			(void) strcpy(low, "opt_");
+			p = low + strlen(low);
+			for (n = nv->nv_name; (c = *n) != '\0'; n++)
+				*p++ = isupper(c) ? tolower(c) : c;
+			*p = '\0';
+			strcat(low, ".h");
+
+			n = intern(low);
+
+			/*
+			 * This is the only option in the file, so remove
+			 * it from the list.
+			 */
+			nv->nv_next = NULL;
+
+			if (ht_insert(optfiletab, n, nv)) {
+				error("option file `%s' already exists", n);
+				return;
+			}
+		}
+	}
 
 	/*
-	 * Insert a verbatum copy of the option name, as well,
-	 * to speed lookups when creating the Makefile.
+	 * No more to do if no option file name was specified.
 	 */
-	(void)ht_insert(defopttab, name, (void *)name);
+	if (fname == NULL)
+		return;
+
+	/*
+	 * We're putting multiple options into one file.  Sanity
+	 * check the file name.
+	 */
+	if (strchr(fname, '/') != NULL) {
+		error("option file name contains a `/'");
+		return;
+	}
+	if ((n = strrchr(fname, '.')) == NULL || strcmp(n, ".h") != 0) {
+		error("option file name does not end in `.h'");
+		return;
+	}
+
+	if (ht_insert(optfiletab, fname, opts)) {
+		error("option file `%s' already exists", fname);
+		return;
+	}
 }
 
 /*
