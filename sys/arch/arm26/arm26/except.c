@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13.2.2 2000/11/20 20:02:26 bouyer Exp $ */
+/* $NetBSD: except.c,v 1.13.2.3 2000/12/13 14:49:23 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.2 2000/11/20 20:02:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.3 2000/12/13 14:49:23 bouyer Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.2 2000/11/20 20:02:26 bouyer Exp $
 #include <sys/ktrace.h>
 #endif
 
+void syscall(struct trapframe *);
 static void data_abort_fixup(struct trapframe *);
 static vaddr_t data_abort_address(struct trapframe *);
 static vm_prot_t data_abort_atype(struct trapframe *);
@@ -81,6 +82,7 @@ static void
 userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 {
 	int sig;
+	u_int32_t *ptr;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -107,6 +109,10 @@ userret(struct proc *p, vaddr_t pc, u_quad_t oticks)
 #ifdef DIAGNOSTIC
 	/* Mark trapframe as invalid. */
 	p->p_addr->u_pcb.pcb_tf = (void *)-1;
+	/* Check that the vectors are valid */
+	for (ptr = (u_int32_t *)0; ptr < (u_int32_t *)0x1c; ptr++)
+		if (*ptr != 0xe59ff114)
+			panic("CPU vectors mangled");
 #endif
 }
 
@@ -164,11 +170,19 @@ undefined_handler(struct trapframe *tf)
 void
 swi_handler(struct trapframe *tf)
 {
+
+	/* XXX The type of e_syscall is all wrong. */
+	(*(void (*)(struct trapframe *))(curproc->p_emul->e_syscall))(tf);
+}
+
+void
+syscall(struct trapframe *tf)
+{
 	u_quad_t sticks;
 	struct proc *p;
 	vaddr_t pc;
 	int code, regparams, nextreg;
-	struct sysent *sy;
+	const struct sysent *sy;
 	size_t argsize, regargsize, stkargsize;
 	char args[32]; /* XXX just enough for mmap... */
 	register_t rval[2], or15;
@@ -255,7 +269,7 @@ swi_handler(struct trapframe *tf)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
+		ktrsyscall(p, code, argsize, (register_t *)args);
 #endif
 
 	rval[0] = 0;
@@ -315,7 +329,7 @@ child_return(void *arg)
 	userret(p, tf->tf_r15 & R15_PC, 0);
 #ifdef KTRACE
         if (KTRPOINT(p, KTR_SYSRET))
-                ktrsysret(p, SYS_fork /* XXX */, 0, &tf->tf_r0);
+                ktrsysret(p, SYS_fork /* XXX */, 0, tf->tf_r0);
 #endif
 }
 

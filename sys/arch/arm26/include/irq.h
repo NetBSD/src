@@ -1,4 +1,4 @@
-/* $NetBSD: irq.h,v 1.2.2.2 2000/11/20 20:02:42 bouyer Exp $ */
+/* $NetBSD: irq.h,v 1.2.2.3 2000/12/13 14:49:41 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -27,11 +27,41 @@
  */
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
+#ifndef _ARM26_IRQ_H
+#define _ARM26_IRQ_H
+#include <arch/arm26/iobus/iocreg.h>
+
 /* return values from interrupt handlers */
 /* These are the same as arm32 uses */
 #define IRQ_HANDLED		1
 #define IRQ_NOT_HANDLED		0
 #define IRQ_MAYBE_HANDLED	-1
+
+/*
+ * These definitions specify how the devices are wired to the IOC
+ * interrupt lines.
+ */
+/* All systems */
+#define IRQ_PFIQ	IOC_IRQ_IL0	/* Podule FIQ request */
+#define	IRQ_SIRQ	IOC_IRQ_IL1	/* Sound buffer pointer used */
+#define IRQ_PIRQ	IOC_IRQ_IL5	/* Podule IRQ request */
+#define IRQ_VFLYBK	IOC_IRQ_IR	/* Start of display vertical flyback */
+/* Archimedes systems */
+#define IRQ_SLCI	IOC_IRQ_IL2	/* Serial line controller interrupt */
+#define IRQ_WIRQ	IOC_IRQ_IL3	/* Winchester interrupt request */
+#define IRQ_DCIRQ	IOC_IRQ_IL4	/* Disc change interrupt request */
+#define IRQ_PBSY	IOC_IRQ_IL6	/* Printer Busy Input */
+#define IRQ_RII		IOC_IRQ_IL7	/* Serial line ring indicator input */
+#define IRQ_PACK	IOC_IRQ_IF	/* Printer acknowledge input */
+/* IOEB systems */
+#define IRQ_SINTR	IOC_IRQ_IL2	/* Serial line interrupt */
+#define IRQ_IDEINTR	IOC_IRQ_IL3	/* IDE interrupt */
+#define IRQ_FINTR	IOC_IRQ_IL4	/* Floppy disc interrupt */
+#define IRQ_LPINTR	IOC_IRQ_IL6	/* Parallel port latched interrupt */
+#define IRQ_INDEX	IOC_IRQ_IF	/* Start of floppy disc index pulse */
+
+/* IRQ numbers above 15 are non-IOC IRQs */
+#define IRQ_UNIXBP_BASE	16
 
 struct irq_handler;
 
@@ -44,3 +74,4 @@ extern char const *irq_string __P((struct irq_handler *h));
 extern void irq_enable __P((struct irq_handler *h));
 extern void irq_disable __P((struct irq_handler *h));
 extern void irq_genmasks __P((void));
+#endif

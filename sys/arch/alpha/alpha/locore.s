@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.65.2.3 2000/12/08 09:23:23 bouyer Exp $ */
+/* $NetBSD: locore.s,v 1.65.2.4 2000/12/13 14:48:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.2.3 2000/12/08 09:23:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.2.4 2000/12/13 14:48:55 bouyer Exp $");
 
 #include "assym.h"
 
@@ -364,7 +364,9 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	2b
 
 	/* We've got an AST */
-6:	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
+6:	stq	zero, CPU_INFO_ASTPENDING(v0)	/* no AST pending */
+
+	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
 	call_pal PAL_OSF1_swpipl
 	mov	v0, s2				/* remember old IPL */
 
@@ -525,9 +527,12 @@ LEAF(exception_restore_regs, 0)
 	stq	ra,(FRAME_RA*8)(sp)
 
 	/* syscall number, passed in v0, is first arg, frame pointer second */
-	mov	v0,a0
-	mov	sp,a1			; .loc 1 __LINE__
-	CALL(syscall)
+	mov	v0,a1
+	GET_CURPROC
+	ldq	a0,0(v0)
+	mov	sp,a2			; .loc 1 __LINE__
+	ldq	t12,P_MD_SYSCALL(a0)
+	CALL((t12))
 
 	jmp	zero, exception_return
 	END(XentSys)

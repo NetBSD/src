@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.4.2.2 2000/11/20 20:02:34 bouyer Exp $ */
+/* $NetBSD: start.c,v 1.4.2.3 2000/12/13 14:49:34 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.2 2000/11/20 20:02:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4.2.3 2000/12/13 14:49:34 bouyer Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -98,9 +98,11 @@ start(initbootconfig)
 	 * 0x02090000 -- 0x02098000 == Kernel message buffer
 	 * 0x02098000 -- freebase == Kernel image
 	 * bss is cleared for us
+	 * We re-map zero page to point at the start of the kernel image
+	 * which is in locore.S.
 	 */
 
-#define ZP_PHYSADDR	((paddr_t)0x00080000)
+#define ZP_PHYSADDR	((paddr_t)0x00098000)
 #define MSGBUF_PHYSADDR	((paddr_t)0x00090000)
 
 	/* We can't trust the BSS (at least not with my linker) */
@@ -205,8 +207,6 @@ start(initbootconfig)
 			  VM_FREELIST_DEFAULT);
 
 	/* printf("Memory registered with UVM.\n"); */
-       	/* Set up CPU vectors in zero page */
-	memcpy(MEMC_PHYS_BASE + ZP_PHYSADDR, page0, page0_end - page0);
 
 	/* Get the MEMC set up and map zero page */
 	pmap_bootstrap(bootconfig.npages, ZP_PHYSADDR);

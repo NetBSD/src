@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.16.8.1 2000/11/20 20:03:50 bouyer Exp $	*/
+/*	$NetBSD: ast.c,v 1.16.8.2 2000/12/13 14:49:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -61,69 +61,25 @@
 int want_resched = 0;
 
 void
-userret(p, pc, oticks)
+userret(p)
 	struct proc *p;
-	int pc;
-	u_quad_t oticks;
 {
 	int sig;
 
-#ifdef DIAGNOSTIC
-	if (p == NULL)
-		panic("userret: p=0 curproc=%p", curproc);
-    
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("userret called in non SVC mode !");
-
-	if (current_spl_level != _SPL_0) {
-		printf("userret: spl level=%d on entry\n", current_spl_level);
-#ifdef DDB
-		Debugger();
-#endif	/* DDB */
-	}
-#endif	/* DIAGNOSTIC */
-
-	/* take pending signals */
-
-	while ((sig = (CURSIG(p))) != 0) {
+	/* Take pending signals. */
+	while ((sig = (CURSIG(p))) != 0)
 		postsig(sig);
-	}
 
-	p->p_priority = p->p_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 
-	/*
-	 * Check for reschedule request
-	 */
-
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = (CURSIG(p))) != 0) {
-			postsig(sig);
-		}
-	}
-
-	/*
-	 * Not sure if this profiling bit is working yet ... Not been tested
-	 */
-
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
-
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (current_spl_level != _SPL_0) {
 		printf("userret: spl level=%d on exit\n", current_spl_level);
 #ifdef DDB
 		Debugger();
 #endif	/* DDB */
 	}
-#endif	/* DIAGNOSTIC */
+#endif	/* DEBUG */
 }
 
 
@@ -145,13 +101,13 @@ ast(frame)
 	uvmexp.traps++;
 	uvmexp.softs++;
 
-#ifdef DIAGNOSTIC
-	if (p == NULL) {
-		p = &proc0;
-		printf("ast: curproc=NULL\n");
-	}
+#ifdef DEBUG
+	if (p == NULL)
+		panic("ast: no curproc!");
 	if (&p->p_addr->u_pcb == 0)
-		panic("ast: nopcb!");
+		panic("ast: no pcb!");
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("ast: not in SVC32 mode");
 #endif	
 
 	if (p->p_flag & P_OWEUPC) {
@@ -159,7 +115,11 @@ ast(frame)
 		ADDUPROF(p);
 	}
 
-	userret(p, frame->tf_pc, p->p_sticks);
+	/* Allow a forced task switch. */
+	if (want_resched)
+		preempt(NULL);
+
+	userret(p);
 }
 
 /* End of ast.c */

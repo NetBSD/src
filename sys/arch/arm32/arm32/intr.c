@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15.2.1 2000/11/20 20:03:52 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.15.2.2 2000/12/13 14:49:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -110,15 +110,6 @@ void
 setsoftast()
 {
 	astpending = 1;
-}
-
-extern int want_resched;
-
-void
-need_resched(struct cpu_info *ci)
-{
-	want_resched = 1;
-	setsoftast();
 }
 
 /* Handle software interrupts */
