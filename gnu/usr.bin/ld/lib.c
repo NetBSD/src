@@ -1,10 +1,11 @@
 /*
- * $Id: lib.c,v 1.9 1994/01/28 20:56:28 pk Exp $	- library routines
+ * $Id: lib.c,v 1.10 1994/03/31 14:17:36 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
