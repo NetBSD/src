@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 1999/02/14 16:27:42 he Exp $
+#	$NetBSD: list,v 1.5 2000/05/02 16:06:48 sjg Exp $
 
 # hp300 extra's
 LINK	instbin			sbin/disklabel
@@ -38,7 +38,7 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/hp300/compile/GENERIC/netbsd	netbsd
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/hp300/compile}/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
