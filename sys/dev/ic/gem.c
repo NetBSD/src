@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.1.2.3 2001/10/08 20:11:00 nathanw Exp $ */
+/*	$NetBSD: gem.c,v 1.1.2.4 2001/10/22 20:41:17 nathanw Exp $ */
 
 /*
  * 
@@ -108,14 +108,6 @@ int		gem_rint __P((struct gem_softc *));
 int		gem_tint __P((struct gem_softc *));
 void		gem_power __P((int, void *));
 
-static int	ether_cmp __P((u_char *, u_char *));
-
-/* Default buffer copy routines */
-void	gem_copytobuf_contig __P((struct gem_softc *, void *, int, int));
-void	gem_copyfrombuf_contig __P((struct gem_softc *, void *, int, int));
-void	gem_zerobuf_contig __P((struct gem_softc *, int, int));
-
-
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
 				printf x
@@ -125,13 +117,14 @@ void	gem_zerobuf_contig __P((struct gem_softc *, int, int));
 
 
 /*
- * gem_config:
+ * gem_attach:
  *
  *	Attach a Gem interface to the system.
  */
 void
-gem_config(sc)
+gem_attach(sc, enaddr)
 	struct gem_softc *sc;
+	const uint8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -224,7 +217,7 @@ gem_config(sc)
 
 	/* Announce ourselves. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
+	    ether_sprintf(enaddr));
 
 	/* Initialize ifnet structure. */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
@@ -314,7 +307,7 @@ gem_config(sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp, sc->sc_enaddr);
+	ether_ifattach(ifp, enaddr);
 
 	sc->sc_sh = shutdownhook_establish(gem_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -746,13 +739,12 @@ gem_init(struct ifnet *ifp)
 	gem_setladrf(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
-	bus_space_write_8(t, h, GEM_TX_RING_PTR,
-		GEM_CDTXADDR(sc, 0));
-	/* Yeeech.  The following has endianness issues. */
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI,
-		(((uint64_t)GEM_CDRXADDR(sc, 0))>>32));
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO,
-		GEM_CDRXADDR(sc, 0));
+	/* NOTE: we use only 32-bit DMA addresses here. */
+	bus_space_write_4(t, h, GEM_TX_RING_PTR_HI, 0);
+	bus_space_write_4(t, h, GEM_TX_RING_PTR_LO, GEM_CDTXADDR(sc, 0));
+
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI, 0);
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO, GEM_CDRXADDR(sc, 0));
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, h, GEM_INTMASK,
@@ -765,27 +757,7 @@ gem_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, GEM_MAC_RX_MASK, 0); /* XXXX */
 	bus_space_write_4(t, h, GEM_MAC_TX_MASK, 0xffff); /* XXXX */
 	bus_space_write_4(t, h, GEM_MAC_CONTROL_MASK, 0); /* XXXX */
-#if 0
-	if (!sc->sc_pci) {
-		/* Config SBus */
-		switch (sc->sc_burst) {
-		default:
-			v = 0;
-			break;
-		case 16:
-			v = GEM_SEB_CFG_BURST16;
-			break;
-		case 32:
-			v = GEM_SEB_CFG_BURST32;
-			break;
-		case 64:
-			v = GEM_SEB_CFG_BURST64;
-			break;
-		}
-		bus_space_write_4(t, seb, GEM_SEBI_CFG, 
-			v|GE_SIOCFG_PARITY|GE_SIOCFG_BMODE64);
-	}
-#endif
+
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
@@ -813,10 +785,7 @@ gem_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, GEM_RX_BLANKING, (2<<12)|6);
 
 	/* step 11. Configure Media */
-	gem_mii_statchg(&sc->sc_dev);
-
-/* XXXX Serial link needs a whole different setup. */
-
+	(void) gem_mediachange(ifp);
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
@@ -844,22 +813,6 @@ gem_init(struct ifnet *ifp)
 	return (0);
 }
 
-/*
- * Compare two Ether/802 addresses for equality, inlined and unrolled for
- * speed.
- */
-static __inline__ int
-ether_cmp(a, b)
-	u_char *a, *b;
-{       
-        
-	if (a[5] != b[5] || a[4] != b[4] || a[3] != b[3] ||
-	    a[2] != b[2] || a[1] != b[1] || a[0] != b[0])
-		return (0);
-	return (1);
-}
-
-
 void
 gem_init_regs(struct gem_softc *sc)
 {
@@ -886,7 +839,8 @@ gem_init_regs(struct gem_softc *sc)
 		/* Dunno.... */
 		bus_space_write_4(t, h, GEM_MAC_CONTROL_TYPE, 0x8088);
 		bus_space_write_4(t, h, GEM_MAC_RANDOM_SEED,
-			((sc->sc_enaddr[5]<<8)|sc->sc_enaddr[4])&0x3ff);
+			((LLADDR(ifp->if_sadl)[5]<<8)|
+			 LLADDR(ifp->if_sadl)[4])&0x3ff);
 		/* Secondary MAC addr set to 0:0:0:0:0:0 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR3, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR4, 0);
@@ -931,11 +885,11 @@ gem_init_regs(struct gem_softc *sc)
 	 * Set the station address.
 	 */
 	bus_space_write_4(t, h, GEM_MAC_ADDR0, 
-		(sc->sc_enaddr[4]<<8) | sc->sc_enaddr[5]);
+		(LLADDR(ifp->if_sadl)[4]<<8) | LLADDR(ifp->if_sadl)[5]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR1, 
-		(sc->sc_enaddr[2]<<8) | sc->sc_enaddr[3]);
+		(LLADDR(ifp->if_sadl)[2]<<8) | LLADDR(ifp->if_sadl)[3]);
 	bus_space_write_4(t, h, GEM_MAC_ADDR2, 
-		(sc->sc_enaddr[0]<<8) | sc->sc_enaddr[1]);
+		(LLADDR(ifp->if_sadl)[0]<<8) | LLADDR(ifp->if_sadl)[1]);
 
 }
 
@@ -969,8 +923,7 @@ gem_start(ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
-	       sc->sc_txfree != 0) {
+	for (;;) {
 		/*
 		 * Grab a packet off the queue.
 		 */
@@ -978,6 +931,12 @@ gem_start(ifp)
 		if (m0 == NULL)
 			break;
 		m = NULL;
+
+		/* Get a work queue entry. */
+		if ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) == NULL) {
+			/* We've run out. */
+			break;
+		}
 
 		dmamap = txs->txs_dmamap;
 
@@ -1017,9 +976,11 @@ gem_start(ifp)
 
 		/*
 		 * Ensure we have enough descriptors free to describe
-		 * the packet.
+		 * the packet.  Note, we always reserve one descriptor
+		 * at the end of the ring as a termination point, to
+		 * prevent wrap-around.
 		 */
-		if (dmamap->dm_nsegs > sc->sc_txfree) {
+		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed to anything yet,
@@ -1257,8 +1218,10 @@ gem_tint(sc)
 		"GEM_TX_DATA_PTR %llx "
 		"GEM_TX_COMPLETION %x\n",
 		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_STATE_MACHINE),
-		(long long)bus_space_read_8(sc->sc_bustag, sc->sc_h,
-			GEM_TX_DATA_PTR),
+		((long long) bus_space_read_4(sc->sc_bustag, sc->sc_h,
+			GEM_TX_DATA_PTR_HI) << 32) |
+			     bus_space_read_4(sc->sc_bustag, sc->sc_h,
+			GEM_TX_DATA_PTR_LO),
 		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_COMPLETION)));
 
 	gem_start(ifp);
@@ -1365,23 +1328,6 @@ gem_rint(sc)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif /* NPBFILTER > 0 */
-
-#if 0
-		/*
-		 * We sometimes have to run the 21140 in Hash-Only
-		 * mode.  If we're in that mode, and not in promiscuous
-		 * mode, and we have a unicast packet that isn't for
-		 * us, then drop it.
-		 */
-		if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY &&
-		    (ifp->if_flags & IFF_PROMISC) == 0 &&
-		    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			   ETHER_ADDR_LEN) != 0) {
-			m_freem(m);
-			continue;
-		}
-#endif
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -1702,8 +1648,7 @@ gem_mediachange(ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
 
-	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
-		return (EINVAL);
+	/* XXX Add support for serial media. */
 
 	return (mii_mediachg(&sc->sc_mii));
 }
@@ -1826,7 +1771,7 @@ gem_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than

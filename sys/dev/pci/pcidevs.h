@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.6 2001/10/08 20:11:16 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.7 2001/10/22 20:41:26 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp 
+ *	NetBSD: pcidevs,v 1.364 2001/10/16 08:14:15 tron Exp 
  */
 
 /*
@@ -508,6 +508,7 @@
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX Electronics */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
+#define	PCI_VENDOR_INTERSIL	0x1260		/* Intersil */
 #define	PCI_VENDOR_SILMOTION	0x126f		/* Silicon Motion */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
@@ -1312,6 +1313,9 @@
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
 
+/* Intersil products */
+#define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* Intersil PRISM2.5 Mini-PCI WLAN */
+
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
 
@@ -1667,6 +1671,10 @@
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
+#define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
+#define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
+#define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
+#define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* SiS 900 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */

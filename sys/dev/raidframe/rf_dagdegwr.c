@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.6.2.1 2001/09/21 22:36:07 nathanw Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.6.2.2 2001/10/22 20:41:33 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,8 @@
  *
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

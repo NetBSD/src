@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.19.6.2 2001/03/13 20:29:51 nathanw Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.19.6.3 2001/10/22 20:42:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -428,7 +428,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			return ENOBUFS;
 		}
 		m->m_len = 0;
-		m->m_act = 0;
+		m->m_nextpkt = 0;
 		*mp = m;
 	}
 	/*
@@ -696,7 +696,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 				goto done;
 			}
 			(*mp)->m_next = MNULL;
-			(*mp)->m_act = 0;
+			(*mp)->m_nextpkt = 0;
 			if (tpcb->tp_ucddata)
 				m_cat(tpcb->tp_ucddata, *mp);
 			else

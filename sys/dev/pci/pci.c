@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.51.2.3 2001/09/21 22:35:58 nathanw Exp $	*/
+/*	$NetBSD: pci.c,v 1.51.2.4 2001/10/22 20:41:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -127,7 +127,6 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 	struct pci_softc *sc = (struct pci_softc *)self;
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
-	const struct pci_quirkdata *qd;
 	int bus, device, function, nfunctions, ret;
 #ifdef __PCI_BUS_DEVORDER
 	char devs[32];
@@ -136,6 +135,8 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 #ifdef __PCI_DEV_FUNCORDER
 	char funcs[8];
 	int j;
+#else
+	const struct pci_quirkdata *qd;
 #endif
 
 	iot = sc->sc_iot;
@@ -154,6 +155,10 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 		struct pci_attach_args pa;
 		int pin;
 
+#ifdef __PCI_DEV_FUNCORDER
+		pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device, funcs);
+		nfunctions = 8;
+#else
 		tag = pci_make_tag(pc, bus, device, 0);
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
@@ -173,9 +178,9 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 			nfunctions = 8;
 		else
 			nfunctions = 1;
+#endif /* __PCI_DEV_FUNCORDER */
 
 #ifdef __PCI_DEV_FUNCORDER
-		pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device, funcs);
 		for (j = 0; (function = funcs[j]) < nfunctions &&
 		    function >= 0; j++)
 #else

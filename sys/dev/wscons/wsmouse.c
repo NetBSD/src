@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.2.1 2001/10/22 20:41:49 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13 2001/02/13 01:14:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.2.1 2001/10/22 20:41:49 nathanw Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,17 +137,16 @@ struct wsmouse_softc {
 #endif
 };
 
-int	wsmouse_match __P((struct device *, struct cfdata *, void *));
-void	wsmouse_attach __P((struct device *, struct device *, void *));
-int	wsmouse_detach __P((struct device *, int));
-int	wsmouse_activate __P((struct device *, enum devact));
+int	wsmouse_match(struct device *, struct cfdata *, void *);
+void	wsmouse_attach(struct device *, struct device *, void *);
+int	wsmouse_detach(struct device *, int);
+int	wsmouse_activate(struct device *, enum devact);
 
-int	wsmouse_do_ioctl __P((struct wsmouse_softc *, u_long, caddr_t, 
-			      int, struct proc *));
+int	wsmouse_do_ioctl(struct wsmouse_softc *, u_long, caddr_t, 
+			      int, struct proc *);
 
-int	wsmousedoclose __P((struct device *, int, int, struct proc *));
-int	wsmousedoioctl __P((struct device *, u_long, caddr_t, int, 
-			    struct proc *));
+int	wsmousedoclose(struct device *, int, int, struct proc *);
+int	wsmousedoioctl(struct device *, u_long, caddr_t, int, struct proc *);
 
 struct cfattach wsmouse_ca = {
 	sizeof (struct wsmouse_softc), wsmouse_match, wsmouse_attach,
@@ -170,9 +169,7 @@ struct wsmuxops wsmouse_muxops = {
  * Print function (for parent devices).
  */
 int
-wsmousedevprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+wsmousedevprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
@@ -181,18 +178,13 @@ wsmousedevprint(aux, pnp)
 }
 
 int
-wsmouse_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wsmouse_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-wsmouse_attach(parent, self, aux)
-        struct device *parent, *self;
-	void *aux;
+wsmouse_attach(struct device *parent, struct device *self, void *aux)
 {
         struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wsmousedev_attach_args *ap = aux;
@@ -217,9 +209,7 @@ wsmouse_attach(parent, self, aux)
 }
 
 int
-wsmouse_activate(self, act)
-	struct device *self;
-	enum devact act;
+wsmouse_activate(struct device *self, enum devact act)
 {
 	/* XXX should we do something more? */
 	return (0);
@@ -234,9 +224,7 @@ wsmouse_activate(self, act)
  * vnode and return (which will deallocate the softc).
  */
 int
-wsmouse_detach(self, flags)
-	struct device  *self;
-	int flags;
+wsmouse_detach(struct device  *self, int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)self;
 	struct wseventvar *evar;
@@ -283,11 +271,8 @@ wsmouse_detach(self, flags)
 }
 
 void
-wsmouse_input(wsmousedev, btns, x, y, z, flags)
-	struct device *wsmousedev;
-	u_int btns;			/* 0 is up */
-	int x, y, z;
-	u_int flags;
+wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
+	int x, int y, int z, u_int flags)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wscons_event *ev;
@@ -436,10 +421,7 @@ out:
 }
 
 int
-wsmouseopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 #if NWSMOUSE > 0
 	struct wsmouse_softc *sc;
@@ -458,8 +440,12 @@ wsmouseopen(dev, flags, mode, p)
 						   so ioctl() is possible. */
 
 #if NWSMUX > 0
-	if (sc->sc_mux)
-		return (EBUSY);
+	if (sc->sc_mux != NULL) {
+		/* Grab the mouse out of the greedy hands of the mux. */
+		error = wsmouse_rem_mux(unit, sc->sc_mux);
+		if (error)
+			return (error);
+	}
 #endif
 
 	if (sc->sc_events.io)			/* and that it's not in use */
@@ -489,10 +475,7 @@ wsmouseopen(dev, flags, mode, p)
 }
 
 int
-wsmouseclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 #if NWSMOUSE > 0
 	return (wsmousedoclose(wsmouse_cd.cd_devs[minor(dev)], 
@@ -504,10 +487,7 @@ wsmouseclose(dev, flags, mode, p)
 
 #if NWSMOUSE > 0
 int
-wsmousedoclose(dv, flags, mode, p)
-	struct device *dv;
-	int flags, mode;
-	struct proc *p;
+wsmousedoclose(struct device *dv, int flags, int mode, struct proc *p)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)dv;
 
@@ -524,10 +504,7 @@ wsmousedoclose(dv, flags, mode, p)
 #endif /* NWSMOUSE > 0 */
 
 int
-wsmouseread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+wsmouseread(dev_t dev, struct uio *uio, int flags)
 {
 #if NWSMOUSE > 0
 	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
@@ -549,12 +526,7 @@ wsmouseread(dev, uio, flags)
 }
 
 int
-wsmouseioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsmouseioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 #if NWSMOUSE > 0
 	return (wsmousedoioctl(wsmouse_cd.cd_devs[minor(dev)],
@@ -567,12 +539,8 @@ wsmouseioctl(dev, cmd, data, flag, p)
 #if NWSMOUSE > 0
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
 int
-wsmousedoioctl(dv, cmd, data, flag, p)
-	struct device *dv;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsmousedoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+	       struct proc *p)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)dv;
 	int error;
@@ -585,12 +553,8 @@ wsmousedoioctl(dv, cmd, data, flag, p)
 }
 
 int
-wsmouse_do_ioctl(sc, cmd, data, flag, p)
-	struct wsmouse_softc *sc;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
+		 int flag, struct proc *p)
 {
 	int error;
 
@@ -625,10 +589,7 @@ wsmouse_do_ioctl(sc, cmd, data, flag, p)
 #endif /* NWSMOUSE > 0 */
 
 int
-wsmousepoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+wsmousepoll(dev_t dev, int events, struct proc *p)
 {
 #if NWSMOUSE > 0
 	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
@@ -641,9 +602,7 @@ wsmousepoll(dev, events, p)
 
 #if NWSMUX > 0
 int
-wsmouse_add_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
+wsmouse_add_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmouse_softc *sc;
 
@@ -654,14 +613,12 @@ wsmouse_add_mux(unit, muxsc)
 	if (sc->sc_mux || sc->sc_events.io)
 		return (EBUSY);
 
-	return (wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
+	return (wsmux_attach_sc(muxsc, WSMUX_MOUSE, &sc->sc_dv, &sc->sc_events, 
 				&sc->sc_mux, &wsmouse_muxops));
 }
 
 int
-wsmouse_rem_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
+wsmouse_rem_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmouse_softc *sc;
 

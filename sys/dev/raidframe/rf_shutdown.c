@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.6.6.1 2001/09/26 19:54:59 nathanw Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.6.6.2 2001/10/22 20:41:40 nathanw Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -33,7 +33,8 @@
  * thread startup and shutdown.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
 #include "rf_threadstuff.h"
 #include "rf_shutdown.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.10.2.1 2001/06/21 20:03:18 nathanw Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.10.2.2 2001/10/22 20:41:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -40,7 +40,7 @@
 typedef struct scr_table {
 	u_int32_t count;
 	u_int32_t addr;
-} scr_table_t ;
+} scr_table_t __attribute__((__packed__));
 
 /* Number of scatter/gather entries */
 #define SIOP_NSG	(MAXPHYS/NBPG + 1)	/* XXX NBPG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.18.2.1 2001/08/24 00:12:40 nathanw Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.18.2.2 2001/10/22 20:42:01 nathanw Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ struct	in6_multi {
 
 /*
  * Structure used by macros below to remember position when stepping through
- * all of eht in6_multi records.
+ * all of the in6_multi records.
  */
 struct	in6_multistep {
 	struct	in6_ifaddr *i_ia;
@@ -576,7 +576,7 @@ void	in6_purgemkludge __P((struct ifnet *));
 struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));
-char	*ip6_sprintf __P((struct in6_addr *));
+char	*ip6_sprintf __P((const struct in6_addr *));
 int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *p1, struct in6_addr *p2,

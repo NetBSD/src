@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40.2.2 2001/09/26 19:54:39 nathanw Exp $
+#	$NetBSD: Makefile,v 1.40.2.3 2001/10/22 20:41:09 nathanw Exp $
 
 SUBDIR=	adosfs altq arch compat dev filecorefs isofs miscfs msdosfs net \
 	netatalk netccitt netinet netinet6 netisdn netiso netkey netnatm \
@@ -12,6 +12,6 @@ SUBDIR+= lkm
 
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-lkm:
-	@${TRUE}
+	@true
 
 .include <bsd.kinc.mk>

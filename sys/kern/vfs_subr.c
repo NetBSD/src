@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.6 2001/09/26 19:55:06 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.7 2001/10/22 20:41:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -484,7 +484,7 @@ getnewvnode(tag, mp, vops, vpp)
 					break;
 				}
 				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT |
-					    LK_INTERLOCK)) {
+					    LK_RECURSEFAIL | LK_INTERLOCK)) {
 					continue;
 				}
 				VOP_UNLOCK(vp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.41.2.1 2001/06/21 20:06:22 nathanw Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.41.2.2 2001/10/22 20:41:44 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -180,7 +180,8 @@ USB_MATCH(ulpt)
 	    id->bInterfaceClass == UICLASS_PRINTER &&
 	    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
 	    (id->bInterfaceProtocol == UIPROTO_PRINTER_UNI ||
-	     id->bInterfaceProtocol == UIPROTO_PRINTER_BI))
+	     id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
+	     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
@@ -229,7 +230,8 @@ USB_ATTACH(ulpt)
 		    id->bInterfaceNumber == ifcd->bInterfaceNumber) {
 			if (id->bInterfaceClass == UICLASS_PRINTER &&
 			    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
-			    id->bInterfaceProtocol == UIPROTO_PRINTER_BI)
+			    (id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
+			     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
 				goto found;
 			altno++;
 		}

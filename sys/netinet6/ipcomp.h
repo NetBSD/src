@@ -1,5 +1,5 @@
-/*	$NetBSD: ipcomp.h,v 1.8.2.1 2001/06/21 20:09:00 nathanw Exp $	*/
-/*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.8.2.2 2001/10/22 20:42:03 nathanw Exp $	*/
+/*	$KAME: ipcomp.h,v 1.11 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -71,6 +71,6 @@ extern int ipcomp6_input __P((struct mbuf **, int *, int));
 extern int ipcomp6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
 #endif
-#endif /*KERNEL*/
+#endif /* KERNEL */
 
-#endif /*_NETINET6_IPCOMP_H_*/
+#endif /* _NETINET6_IPCOMP_H_ */

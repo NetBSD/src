@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.4.6.1 2001/09/21 22:36:08 nathanw Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.4.6.2 2001/10/22 20:41:38 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,8 @@
   DAGs specific to parity logging are created here
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

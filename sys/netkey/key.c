@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.4 2001/09/26 19:55:10 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.5 2001/10/22 20:42:08 nathanw Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -106,6 +106,8 @@
 #ifndef satosin
 #define satosin(s) ((struct sockaddr_in *)s)
 #endif
+
+#define FULLMASK	0xff
 
 /*
  * Note on SA reference counting:
@@ -3164,7 +3166,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		case SADB_EXT_ADDRESS_SRC:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 			    (struct sockaddr *)&sav->sah->saidx.src,
-			    sav->sah->saidx.src.ss_len << 3, IPSEC_ULPROTO_ANY);
+			    FULLMASK, IPSEC_ULPROTO_ANY);
 			if (!m)
 				goto fail;
 			break;
@@ -3172,7 +3174,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		case SADB_EXT_ADDRESS_DST:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 			    (struct sockaddr *)&sav->sah->saidx.dst,
-			    sav->sah->saidx.dst.ss_len << 3, IPSEC_ULPROTO_ANY);
+			    FULLMASK, IPSEC_ULPROTO_ANY);
 			if (!m)
 				goto fail;
 			break;
@@ -3374,6 +3376,18 @@ key_setsadbaddr(exttype, saddr, prefixlen, ul_proto)
 	p->sadb_address_len = PFKEY_UNIT64(len);
 	p->sadb_address_exttype = exttype;
 	p->sadb_address_proto = ul_proto;
+	if (prefixlen == FULLMASK) {
+		switch (saddr->sa_family) {
+		case AF_INET:
+			prefixlen = sizeof(struct in_addr) << 3;
+			break;
+		case AF_INET6:
+			prefixlen = sizeof(struct in6_addr) << 3;
+			break;
+		default:
+			; /*XXX*/
+		}
+	}
 	p->sadb_address_prefixlen = prefixlen;
 	p->sadb_address_reserved = 0;
 
@@ -5694,8 +5708,7 @@ key_acquire(saidx, sp)
 
 	/* set sadb_address for saidx's. */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
-	    (struct sockaddr *)&saidx->src, saidx->src.ss_len << 3,
-	    IPSEC_ULPROTO_ANY);
+	    (struct sockaddr *)&saidx->src, FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -5703,8 +5716,7 @@ key_acquire(saidx, sp)
 	m_cat(result, m);
 
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
-	    (struct sockaddr *)&saidx->dst, saidx->dst.ss_len << 3,
-	    IPSEC_ULPROTO_ANY);
+	    (struct sockaddr *)&saidx->dst, FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -6336,7 +6348,7 @@ key_expire(sav)
 	/* set sadb_address for source */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 	    (struct sockaddr *)&sav->sah->saidx.src,
-	    sav->sah->saidx.src.ss_len << 3, IPSEC_ULPROTO_ANY);
+	    FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -6346,7 +6358,7 @@ key_expire(sav)
 	/* set sadb_address for destination */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 	    (struct sockaddr *)&sav->sah->saidx.dst,
-	    sav->sah->saidx.dst.ss_len << 3, IPSEC_ULPROTO_ANY);
+	    FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;

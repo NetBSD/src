@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.13.2.1 2001/06/21 20:08:49 nathanw Exp $	*/
+/*	$NetBSD: frag6.c,v 1.13.2.2 2001/10/22 20:41:59 nathanw Exp $	*/
 /*	$KAME: frag6.c,v 1.31 2001/05/17 13:45:34 jinmei Exp $	*/
 
 /*
@@ -634,9 +634,6 @@ frag6_slowtimo()
 {
 	struct ip6q *q6;
 	int s = splsoftnet();
-#if 0
-	extern struct	route_in6 ip6_forward_rt;
-#endif
 
 	frag6_doing_reass = 1;
 	q6 = ip6q.ip6q_next;

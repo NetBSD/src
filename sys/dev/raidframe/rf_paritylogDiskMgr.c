@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10.6.1 2001/08/24 00:10:37 nathanw Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.10.6.2 2001/10/22 20:41:38 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,8 @@
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_mcpair.h"
 #include "rf_raid.h"

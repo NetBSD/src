@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.3 2001/08/24 00:13:11 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.4 2001/10/22 20:42:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

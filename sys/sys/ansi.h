@@ -1,7 +1,7 @@
-/*	$NetBSD: ansi.h,v 1.6 2000/09/19 08:35:36 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6.4.1 2001/10/22 20:42:11 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,10 +41,13 @@
 
 #include <machine/int_types.h>
 
+typedef char *		__caddr_t;	/* core address */
+typedef __uint32_t	__gid_t;	/* group id */
 typedef __uint32_t	__mode_t;	/* file permissions */
 typedef __int64_t	__off_t;	/* file offset */
 typedef __int32_t	__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef unsigned int	__socklen_t;	/* socket-related datum length */
+typedef __uint32_t	__uid_t;	/* user id */
 
-#endif	/* _SYS_ANSI_H_ */
+#endif	/* !_SYS_ANSI_H_ */

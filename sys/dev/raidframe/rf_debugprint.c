@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugprint.c,v 1.3 1999/02/05 00:06:08 oster Exp $	*/
+/*	$NetBSD: rf_debugprint.c,v 1.3.20.1 2001/10/22 20:41:34 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,8 @@
  * printfs, and to capture only the printf's immediately preceding a failure.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_debugprint.h"
 #include "rf_general.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.4.2 2001/10/08 20:10:52 nathanw Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.4.3 2001/10/22 20:41:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ linux_sys_fstat64(l, v, retval)
 {
 	struct linux_sys_fstat64_args /* {
 		syscallarg(int) fd;
-		syscallarg(linux_stat64 *) sp;
+		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys___fstat13_args fsa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.4 2001/09/21 22:35:45 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.5 2001/10/22 20:41:21 nathanw Exp $	*/
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -938,7 +938,9 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	struct fwohci_ctx *fc;
 	struct fwohci_buf *fb;
 	struct fwohci_desc *fd;
+#if DOUBLEBUF
 	int buf2cnt;
+#endif
 
 	fc = malloc(sizeof(*fc) + sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK);
 	memset(fc, 0, sizeof(*fc) + sizeof(*fb) * bufcnt);
@@ -1021,7 +1023,8 @@ fwohci_ctx_free(struct fwohci_softc *sc, struct fwohci_ctx *fc)
 	struct fwohci_handler *fh;
 
 #if DOUBLEBUF
-	if (TAILQ_FIRST(&fc->fc_buf) > TAILQ_FIRST(&fc->fc_buf2)) {
+	if ((fc->fc_type == FWOHCI_CTX_ISO_MULTI) &&
+	    (TAILQ_FIRST(&fc->fc_buf) > TAILQ_FIRST(&fc->fc_buf2))) {
 		struct fwohci_buf_s fctmp;
 
 		fctmp = fc->fc_buf;

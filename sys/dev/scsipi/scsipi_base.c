@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.4 2001/10/08 20:11:28 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.5 2001/10/22 20:41:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ scsipi_channel_shutdown(chan)
 	/*
 	 * Shut down the completion thread.
 	 */
-	chan->chan_flags |= SCSIPI_CHAN_SHUTDOWN;
+	chan->chan_tflags |= SCSIPI_CHANT_SHUTDOWN;
 	wakeup(&chan->chan_complete);
 
 	/*
@@ -269,8 +269,19 @@ scsipi_grow_resources(chan)
 {
 
 	if (chan->chan_flags & SCSIPI_CHAN_CANGROW) {
-		scsipi_adapter_request(chan, ADAPTER_REQ_GROW_RESOURCES, NULL);
-		return (scsipi_get_resource(chan));
+		if ((chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
+			scsipi_adapter_request(chan,
+			    ADAPTER_REQ_GROW_RESOURCES, NULL);
+			return (scsipi_get_resource(chan));
+		}
+		/*
+		 * ask the channel thread to do it. It'll have to thaw the
+		 * queue
+		 */
+		scsipi_channel_freeze(chan, 1);
+		chan->chan_tflags |= SCSIPI_CHANT_GROWRES;
+		wakeup(&chan->chan_complete);
+		return (0);
 	}
 
 	return (0);
@@ -662,7 +673,7 @@ scsipi_periph_timed_thaw(arg)
 		/*
 		 * Tell the completion thread to kick the channel's queue here.
 		 */
-		periph->periph_channel->chan_flags |= SCSIPI_CHAN_KICK;
+		periph->periph_channel->chan_tflags |= SCSIPI_CHANT_KICK;
 		wakeup(&periph->periph_channel->chan_complete);
 	}
 	splx(s);
@@ -1967,30 +1978,37 @@ scsipi_completion_thread(arg)
 	for (;;) {
 		s = splbio();
 		xs = TAILQ_FIRST(&chan->chan_complete);
-		if (xs == NULL &&
-		    (chan->chan_flags &
-		     (SCSIPI_CHAN_SHUTDOWN | SCSIPI_CHAN_CALLBACK |
-		     SCSIPI_CHAN_KICK)) == 0) {
+		if (xs == NULL && chan->chan_tflags  == 0) {
+			/* nothing to do; wait */
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
 			splx(s);
 			continue;
 		}
-		if (chan->chan_flags & SCSIPI_CHAN_CALLBACK) {
+		if (chan->chan_tflags & SCSIPI_CHANT_CALLBACK) {
 			/* call chan_callback from thread context */
-			chan->chan_flags &= ~SCSIPI_CHAN_CALLBACK;
+			chan->chan_tflags &= ~SCSIPI_CHANT_CALLBACK;
 			chan->chan_callback(chan, chan->chan_callback_arg);
 			splx(s);
 			continue;
 		}
-		if (chan->chan_flags & SCSIPI_CHAN_KICK) {
+		if (chan->chan_tflags & SCSIPI_CHANT_GROWRES) {
+			/* attempt to get more openings for this channel */
+			chan->chan_tflags &= ~SCSIPI_CHANT_GROWRES;
+			scsipi_adapter_request(chan,
+			    ADAPTER_REQ_GROW_RESOURCES, NULL);
+			scsipi_channel_thaw(chan, 1);
+			splx(s);
+			continue;
+		}
+		if (chan->chan_tflags & SCSIPI_CHANT_KICK) {
 			/* explicitly run the queues for this channel */
-			chan->chan_flags &= ~SCSIPI_CHAN_KICK;
+			chan->chan_tflags &= ~SCSIPI_CHANT_KICK;
 			scsipi_run_queue(chan);
 			splx(s);
 			continue;
 		}
-		if (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) {
+		if (chan->chan_tflags & SCSIPI_CHANT_SHUTDOWN) {
 			splx(s);
 			break;
 		}
@@ -2057,14 +2075,19 @@ scsipi_thread_call_callback(chan, callback, arg)
 	int s;
 
 	s = splbio();
-	if (chan->chan_flags & SCSIPI_CHAN_CALLBACK) {
+	if ((chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
+		/* kernel thread doesn't exist yet */
+		splx(s);
+		return ESRCH;
+	}
+	if (chan->chan_tflags & SCSIPI_CHANT_CALLBACK) {
 		splx(s);
 		return EBUSY;
 	}
 	scsipi_channel_freeze(chan, 1);
 	chan->chan_callback = callback;
 	chan->chan_callback_arg = arg;
-	chan->chan_flags |= SCSIPI_CHAN_CALLBACK;
+	chan->chan_tflags |= SCSIPI_CHANT_CALLBACK;
 	wakeup(&chan->chan_complete);
 	splx(s);
 	return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.66.2.2 2001/06/21 20:09:34 nathanw Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.66.2.3 2001/10/22 20:42:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -294,9 +294,9 @@ nfs_connect(nmp, rep)
 
 	/* Initialize other non-zero congestion variables */
 	nmp->nm_srtt[0] = nmp->nm_srtt[1] = nmp->nm_srtt[2] = nmp->nm_srtt[3] =
-		nmp->nm_srtt[4] = (NFS_TIMEO << 3);
+		NFS_TIMEO << 3;
 	nmp->nm_sdrtt[0] = nmp->nm_sdrtt[1] = nmp->nm_sdrtt[2] =
-		nmp->nm_sdrtt[3] = nmp->nm_sdrtt[4] = 0;
+		nmp->nm_sdrtt[3] = 0;
 	nmp->nm_cwnd = NFS_MAXCWND / 2;	    /* Initial send window */
 	nmp->nm_sent = 0;
 	nmp->nm_timeouts = 0;

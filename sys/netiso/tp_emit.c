@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.13 2000/03/30 13:10:12 augustss Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.13.6.1 2001/10/22 20:42:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -211,7 +211,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 		goto done;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_act = MNULL;
+	m->m_nextpkt = MNULL;
 
 	hdr = mtod(m, struct tpdu *);
 	bzero((caddr_t) hdr, sizeof(struct tpdu));
@@ -884,7 +884,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		return ENOBUFS;
 	}
 	m->m_len = sizeof(struct tpdu);
-	m->m_act = MNULL;
+	m->m_nextpkt = MNULL;
 
 	hdr = mtod(m, struct tpdu *);
 

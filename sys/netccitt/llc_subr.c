@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.12.6.1 2001/08/24 00:12:21 nathanw Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.12.6.2 2001/10/22 20:41:56 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -2343,7 +2343,7 @@ llc_dellink(linkp)
 
 	/* drop queued packets */
 	for (m = linkp->llcl_writeqh; m;) {
-		n = m->m_act;
+		n = m->m_nextpkt;
 		m_freem(m);
 		m = n;
 	}

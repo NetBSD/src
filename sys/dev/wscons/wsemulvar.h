@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.6.20.1 2001/06/21 20:06:36 nathanw Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.6.20.2 2001/10/22 20:41:48 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,15 +42,14 @@ enum wsemul_resetops {
 struct wsemul_ops {
 	const char *name;
 
-	void	*(*cnattach) __P((const struct wsscreen_descr *, void *,
-				  int, int, long));
-	void	*(*attach) __P((int console, const struct wsscreen_descr *, void *,
-				int, int, void *, long));
-	void	(*output) __P((void *cookie, const u_char *data, u_int count,
-			       int));
-	int	(*translate) __P((void *, keysym_t, char **));
-	void	(*detach) __P((void *cookie, u_int *crow, u_int *ccol));
-	void    (*reset) __P((void *, enum wsemul_resetops));
+	void	*(*cnattach)(const struct wsscreen_descr *, void *,
+				  int, int, long);
+	void	*(*attach)(int console, const struct wsscreen_descr *, void *,
+				int, int, void *, long);
+	void	(*output)(void *cookie, const u_char *data, u_int count, int);
+	int	(*translate)(void *, keysym_t, char **);
+	void	(*detach)(void *cookie, u_int *crow, u_int *ccol);
+	void    (*reset)(void *, enum wsemul_resetops);
 };
 
 #if defined(_KERNEL_OPT)
@@ -67,10 +66,10 @@ extern const struct wsemul_ops wsemul_sun_ops;
 extern const struct wsemul_ops wsemul_vt100_ops;
 #endif
 
-const struct wsemul_ops *wsemul_pick __P((const char *));
+const struct wsemul_ops *wsemul_pick(const char *);
 
 /* 
  * Callbacks from the emulation code to the display interface driver.
  */     
-void	wsdisplay_emulbell __P((void *v));
-void	wsdisplay_emulinput __P((void *v, const u_char *, u_int));
+void	wsdisplay_emulbell(void *v);
+void	wsdisplay_emulinput(void *v, const u_char *, u_int);

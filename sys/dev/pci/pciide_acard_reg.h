@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_acard_reg.h,v 1.1.4.2 2001/06/21 20:05:10 nathanw Exp $	*/
+/*	$NetBSD: pciide_acard_reg.h,v 1.1.4.3 2001/10/22 20:41:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -54,7 +54,8 @@ static const u_int8_t acard_rec_pio[]  = {0x0, 0xa, 0x8, 0x3, 0x1};
 #define	ATP850_UDMA_MASK(channel)	(0xf << ((channel) * 4))
 #define	ATP860_UDMA_MASK(channel)	(0xff << ((channel) * 8))
 
-static const u_int8_t acard_udma_conf[] = {0x1, 0x2, 0x3, 0x4, 0x5};
+static const u_int8_t acard_udma_conf[] __attribute__((__unused__)) =
+    {0x1, 0x2, 0x3, 0x4, 0x5};
 
 #define ATP8x0_CTRL		0x48
 #define  ATP8x0_CTRL_EN(chan)	(0x00020000 << (chan))

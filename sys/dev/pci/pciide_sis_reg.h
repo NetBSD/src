@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.6 2000/05/15 08:46:01 bouyer Exp $	*/
+/*	$NetBSD: pciide_sis_reg.h,v 1.6.6.1 2001/10/22 20:41:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -41,7 +41,7 @@
 #define SIS_TIM(channel) (0x40 + (channel * 4))
 #define SIS_TIM_REC_OFF(drive) (16 * (drive))
 #define SIS_TIM_ACT_OFF(drive) (8 + 16 * (drive))
-#define SIS_TIM_UDMA_TIME_OFF(drive) (13 + 16 * (drive))
+#define SIS_TIM_UDMA_TIME_OFF(drive) (12 + 16 * (drive))
 #define SIS_TIM_UDMA_EN(drive) (1 << (15 + 16 * (drive)))
 
 /* IDE general control register 0 (8 bits) */
@@ -63,10 +63,15 @@
 #define SIS_MISC_GTC		0x04
 #define SIS_MISC_FIFO_SIZE	0x01
 
-static int8_t sis_pio_act[] = {7, 5, 4, 3, 3};
-static int8_t sis_pio_rec[] = {7, 0, 5, 3, 1};
+static const int8_t sis_pio_act[] __attribute__((__unused__)) =
+    {7, 5, 4, 3, 3};
+static const int8_t sis_pio_rec[] __attribute__((__unused__)) =
+    {7, 0, 5, 3, 1};
 #ifdef unused
-static int8_t sis_dma_act[] = {0, 3, 3};
-static int8_t sis_dma_rec[] = {0, 2, 1};
+static const int8_t sis_dma_act[] __attribute__((__unused__)) =
+    {0, 3, 3};
+static const int8_t sis_dma_rec[] __attribute__((__unused__)) =
+    {0, 2, 1};
 #endif
-static int8_t sis_udma_tim[] = {3, 2, 1};
+static const int8_t sis_udma_tim[] __attribute__((__unused__)) =
+    {14, 12, 10, 10, 9, 8};

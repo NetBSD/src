@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.39.2.1 2001/08/24 00:10:34 nathanw Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.39.2.2 2001/10/22 20:41:35 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,7 +95,6 @@
 #include "rf_utils.h"
 #include "rf_etimer.h"
 #include "rf_acctrace.h"
-#include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_desc.h"
 #include "rf_states.h"
@@ -721,9 +720,6 @@ rf_SetReconfiguredMode(raidPtr, row, col)
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	return (0);
 }
-
-extern int fail_row, fail_col, fail_time;
-extern int delayed_recon;
 
 int 
 rf_FailDisk(

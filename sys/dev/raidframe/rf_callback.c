@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.3.20.1 2001/09/26 19:54:58 nathanw Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.3.20.2 2001/10/22 20:41:32 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,8 @@
  ****************************************************************************************/
 
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
 #include "rf_threadstuff.h"
 #include "rf_callback.h"

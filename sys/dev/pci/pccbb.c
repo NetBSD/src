@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.4 2001/10/08 20:11:14 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.5 2001/10/22 20:41:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -579,9 +579,6 @@ pccbb_pci_callback(self)
 {
 	struct pccbb_softc *sc = (void *)self;
 	pci_chipset_tag_t pc = sc->sc_pc;
-	bus_space_tag_t base_memt;
-	bus_space_handle_t base_memh;
-	u_int32_t maskreg;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_addr_t sockbase;
@@ -618,22 +615,12 @@ pccbb_pci_callback(self)
 		DPRINTF(("%s: CardBus resister address 0x%x -> 0x%x\n",
 		    sc->sc_dev.dv_xname, sock_base, pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
+		sc->sc_sockbase = sockbase;
 #endif
 	}
 
 	/* bus bridge initialization */
 	pccbb_chipinit(sc);
-
-	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
-	base_memh = sc->sc_base_memh;  /* socket regs memory handle */
-
-	/* CSC Interrupt: Card detect interrupt on */
-	maskreg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
-	maskreg |= CB_SOCKET_MASK_CD;  /* Card detect intr is turned on. */
-	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, maskreg);
-	/* reset interrupt */
-	bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT,
-	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT));
 
 	/* clear data structure for child device interrupt handlers */
 	sc->sc_pil = NULL;
@@ -665,8 +652,10 @@ pccbb_pci_callback(self)
 	powerhook_establish(pccbb_powerhook, sc);
 
 	{
-		u_int32_t sockstat =
-		    bus_space_read_4(base_memt, base_memh, CB_SOCKET_STAT);
+		u_int32_t sockstat;
+
+		sockstat = bus_space_read_4(sc->sc_base_memt,
+		    sc->sc_base_memh, CB_SOCKET_STAT);
 		if (0 == (sockstat & CB_SOCKET_STAT_CD)) {
 			sc->sc_flags |= CBB_CARDEXIST;
 		}
@@ -738,6 +727,9 @@ pccbb_pci_callback(self)
  *     2) PCI and CardBus latency timer,
  *     3) route PCI interrupt,
  *     4) close all memory and io windows.
+ *     5) turn off bus power.
+ *     6) card detect interrupt on.
+ *     7) clear interrupt
  */
 static void
 pccbb_chipinit(sc)
@@ -745,6 +737,8 @@ pccbb_chipinit(sc)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag = sc->sc_tag;
+	bus_space_tag_t bmt = sc->sc_base_memt;
+	bus_space_handle_t bmh = sc->sc_base_memh;
 	pcireg_t reg;
 
 	/* 
@@ -836,6 +830,11 @@ pccbb_chipinit(sc)
 		reg &= ~(TOPIC97_SLOT_CTRL_STSIRQP | TOPIC97_SLOT_CTRL_IRQP);
 		DPRINTF(("0x%x\n", reg));
 		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
+		/* make sure to assert LV card support bits */
+		bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
+		    0x800 + 0x3e,
+		    bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
+			0x800 + 0x3e) | 0x03);
 		break;
 	}
 
@@ -850,13 +849,19 @@ pccbb_chipinit(sc)
 	pci_conf_write(pc, tag, PCI_CB_IOLIMIT1, 0);
 
 	/* reset 16-bit pcmcia bus */
-	bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
-	    0x800 + PCIC_INTR,
-	    bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
-		0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
+	bus_space_write_1(bmt, bmh, 0x800 + PCIC_INTR,
+	    bus_space_read_1(bmt, bmh, 0x800 + PCIC_INTR) & ~PCIC_INTR_RESET);
 
-	/* turn of power */
+	/* turn off power */
 	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+
+	/* CSC Interrupt: Card detect interrupt on */
+	reg = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
+	reg |= CB_SOCKET_MASK_CD;  /* Card detect intr is turned on. */
+	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, reg);
+	/* reset interrupt */
+	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
+	    bus_space_read_4(bmt, bmh, CB_SOCKET_EVENT));
 }
 
 
@@ -1192,6 +1197,7 @@ pccbb_ctrl(ct, command)
 	case CARDBUS_MEM_DISABLE:     /* fallthrough */
 	case CARDBUS_BM_ENABLE:       /* fallthrough */
 	case CARDBUS_BM_DISABLE:      /* fallthrough */
+		/* XXX: I think we don't need to call this function below. */
 		return pccbb_cardenable(sc, command);
 		break;
 	}
