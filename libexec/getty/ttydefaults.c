@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ttydefaults.c	5.1 (Berkeley) 1/19/91";
+static char sccsid[] = "@(#)ttydefaults.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 #include <sys/termios.h>
 
+#include "extern.h"
+
+void
 set_ttydefaults(fd)
 	int fd;
 {
