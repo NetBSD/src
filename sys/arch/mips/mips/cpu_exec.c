@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.14 1997/09/11 23:02:09 mycroft Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.15 1998/06/25 23:28:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
+
+#include "opt_compat_ultrix.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
