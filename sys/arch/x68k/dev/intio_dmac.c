@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.3 1999/03/18 12:27:59 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.4 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -377,7 +377,7 @@ dmac_program_arraychain(self, xf)
 		dmac_map[ch][i].da_addr = map->dm_segs[j].ds_addr;
 #ifdef DIAGNOSTIC
 		if (map->dm_segs[j].ds_len > 0xff00)
-			panic ("dmac_program_arraychain: wrong map: %d", map->dm_segs[j].ds_len);
+			panic ("dmac_program_arraychain: wrong map: %ld", map->dm_segs[j].ds_len);
 #endif
 		dmac_map[ch][i].da_count = map->dm_segs[j].ds_len;
 	}

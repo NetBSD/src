@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.7 1999/03/16 16:30:19 minoura Exp $ */
+/*	$NetBSD: ms.c,v 1.8 1999/03/24 14:07:38 minoura Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/device.h>
+#include <sys/signalvar.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -176,7 +177,6 @@ ms_attach(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) parent;
 	struct ms_softc *ms = (void *) self;
-	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct cfdata *cf;
 	int reset, s;

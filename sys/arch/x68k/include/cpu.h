@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1999/03/16 16:30:21 minoura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,6 +154,7 @@ void	dumpsys __P((void));
 /* locore.s functions */
 struct pcb;
 struct fpframe;
+int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	proc_trampoline __P((void));
@@ -178,6 +179,10 @@ void	DCPP __P((vaddr_t));
 void	ICPL __P((vaddr_t));
 void	ICPP __P((vaddr_t));
 #endif
+
+/* machdep.c functions */
+int	badaddr __P((caddr_t));
+int	badbaddr __P((caddr_t));
 
 /* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));

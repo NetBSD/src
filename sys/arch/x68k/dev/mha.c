@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.14 1999/03/22 08:54:14 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.15 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+*/
 
 /*-
  * Copyright (c) 1994 Jarle Greipsland
@@ -306,7 +307,7 @@ mhamatch(parent, cf, aux)
 	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
 			  &ioh) < 0)
 		return 0;
-	if (!badaddr (INTIO_ADDR(ia->ia_addr + 0)))
+	if (!badaddr ((caddr_t)INTIO_ADDR(ia->ia_addr + 0)))
 		return 0;
 	bus_space_unmap(iot, ioh, 0x20);
 
@@ -383,7 +384,7 @@ mhaattach(parent, self, aux)
 	ATR = 0x01;
 	PER = 0xc9;
 #endif
-	IER = IE_ALL;	/* ¤¹¤Ù¤Æ¤Î³ä¤ê¹þ¤ß¤òµö²Ä */
+	IER = IE_ALL;	/* $B$9$Y$F$N3d$j9~$_$r5v2D(B */
 #if 1
 	GLR = 0x00;
 	DMR = 0x30;
@@ -591,7 +592,7 @@ mhaselect(sc, target, lun, cmd, clen)
 
 	SPC_TRACE(("[mhaselect(t%d,l%d,cmd:%x)] ", target, lun, *(u_char *)cmd));
 
-	/* CDB ¤ò SPC ¤Î MCS REG ¤Ë¥»¥Ã¥È¤¹¤ë */
+	/* CDB $B$r(B SPC $B$N(B MCS REG $B$K%;%C%H$9$k(B */
 	/* Now the command into the FIFO */
 	WAIT;
 #if 1
@@ -750,7 +751,7 @@ mha_scsi_cmd(xs)
 #endif
 
 	/*
-	 * ¥­¥å¡¼¤Î½èÍýÃæ¤Ç¤Ê¤±¤ì¤Ð¡¢¥¹¥±¥¸¥å¡¼¥ê¥ó¥°³«»Ï¤¹¤ë
+	 * $B%-%e!<$N=hM}Cf$G$J$1$l$P!"%9%1%8%e!<%j%s%03+;O$9$k(B
 	 */
 	if (sc->sc_state == SPC_IDLE)
 		mha_sched(sc);
@@ -1611,7 +1612,7 @@ mha_datain_pio(sc, p, n)
 	sc->sc_ps[3] = 1;
 	sc->sc_ps[4] = n >> 8;
 	sc->sc_pc[10] = n;
-	/* Èá¤·¤­¥½¥Õ¥ÈÅ¾Á÷ */
+	/* $BHa$7$-%=%U%HE>Aw(B */
 	CMR = CMD_RECEIVE_TO_MPU;
 	for (;;) {
 		a = SSR;
@@ -1649,7 +1650,7 @@ mha_dataout_pio(sc, p, n)
 	sc->sc_ps[3] = 1;
 	sc->sc_ps[4] = n >> 8;
 	sc->sc_pc[10] = n;
-	/* Èá¤·¤­¥½¥Õ¥ÈÅ¾Á÷ */
+	/* $BHa$7$-%=%U%HE>Aw(B */
 	CMR = CMD_SEND_FROM_MPU;
 	for (;;) {
 		a = SSR;
@@ -1710,7 +1711,7 @@ mha_dataio_dma(dw, cw, sc, p, n)
   sc->sc_ps[3] = 1;
   sc->sc_ps[4] = n >> 8;
   sc->sc_pc[10] = n;
-  /* DMA Å¾Á÷À©¸æ¤Ï°Ê²¼¤ÎÄÌ¤ê¡£
+  /* DMA $BE>Aw@)8f$O0J2<$NDL$j!#(B
      3 ... short bus cycle
      2 ... MAXIMUM XFER.
      1 ... BURST XFER.
@@ -1790,7 +1791,7 @@ mhaintr(arg)
 
 #if 0
 	/*
-	 * ³ä¤ê¹þ¤ß¶Ø»ß¤Ë¤¹¤ë
+	 * $B3d$j9~$_6X;_$K$9$k(B
 	 */
 	SCTL &= ~SCTL_INTR_ENAB;
 #endif
@@ -1799,7 +1800,7 @@ mhaintr(arg)
 
  loop:
 	/*
-	 * Á´Å¾Á÷¤¬´°Á´¤Ë½ªÎ»¤¹¤ë¤Þ¤Ç¥ë¡¼¥×¤¹¤ë
+	 * $BA4E>Aw$,40A4$K=*N;$9$k$^$G%k!<%W$9$k(B
 	 */
 	/*
 	 * First check for abnormal conditions, such as reset.
@@ -1844,7 +1845,7 @@ mhaintr(arg)
 			ph = SCR;
 			if (ph & PSNS_ACK) {
 				int s;
-				/* ¤Õ¤Ä¡¼¤Î¥³¥Þ¥ó¥É¤¬½ªÎ»¤·¤¿¤é¤·¤¤ */
+				/* $B$U$D!<$N%3%^%s%I$,=*N;$7$?$i$7$$(B */
 				SPC_MISC(("0x60)phase = %x(ought to be %x)\n",
 					  ph & PHASE_MASK, sc->sc_phase));
 #if 0
@@ -1898,18 +1899,18 @@ mhaintr(arg)
 #if 1
 				if (sc->sc_state == SPC_SELECTING)	/* XXX msaitoh */
 					sc->sc_state = SPC_HASNEXUS;
-				/* ¥Õ¥§¡¼¥º¤Î·è¤áÂÇ¤Á¤ò¤¹¤ë
-				   ³°¤ì¤¿¤é¡¢initial-phase error(0x54) ¤¬
-				   ÊÖ¤Ã¤Æ¤¯¤ë¤ó¤ÇÃí°Õ¤·¤¿¤Þ¤¨¡£
-				   ¤Ç¤â¤Ê¤¼¤« 0x65 ¤¬ÊÖ¤Ã¤Æ¤­¤¿¤ê¤·¤Æ¤Í¡¼¤«? */
+				/* $B%U%'!<%:$N7h$aBG$A$r$9$k(B
+				   $B30$l$?$i!"(Binitial-phase error(0x54) $B$,(B
+				   $BJV$C$F$/$k$s$GCm0U$7$?$^$(!#(B
+				   $B$G$b$J$<$+(B 0x65 $B$,JV$C$F$-$?$j$7$F$M!<$+(B? */
 				WAIT;
 				if (SSR & SS_IREQUEST)
 					continue;
 				switch (sc->sc_phase) {
 				default:
-					panic("¸«ÃÎ¤é¤Ì phase ¤¬Íè¤Á¤Þ¤Ã¤¿¤À¤è");
+					panic("$B8+CN$i$L(B phase $B$,Mh$A$^$C$?$@$h(B");
 				case MESSAGE_IN_PHASE:
-					/* ²¿¤â¤·¤Ê¤¤ */
+					/* $B2?$b$7$J$$(B */
 					continue;
 				case STATUS_PHASE:
 					sc->sc_phase = MESSAGE_IN_PHASE;
@@ -1918,8 +1919,8 @@ mhaintr(arg)
 				case DATA_IN_PHASE:
 					sc->sc_prevphase = DATA_IN_PHASE;
 					if (sc->sc_dleft == 0) {
-						/* Å¾Á÷¥Ç¡¼¥¿¤Ï¤â¤¦¤Ê¤¤¤Î¤Ç
-						   ¥¹¥Æ¡¼¥¿¥¹¥Õ¥§¡¼¥º¤ò´üÂÔ¤·¤è¤¦ */
+						/* $BE>Aw%G!<%?$O$b$&$J$$$N$G(B
+						   $B%9%F!<%?%9%U%'!<%:$r4|BT$7$h$&(B */
 						sc->sc_phase = STATUS_PHASE;
 						CMR = CMD_RECEIVE_STS;	/* receive sts */
 						continue;
@@ -1932,21 +1933,21 @@ mhaintr(arg)
 				case DATA_OUT_PHASE:
 					sc->sc_prevphase = DATA_OUT_PHASE;
 					if (sc->sc_dleft == 0) {
-						/* Å¾Á÷¥Ç¡¼¥¿¤Ï¤â¤¦¤Ê¤¤¤Î¤Ç
-						   ¥¹¥Æ¡¼¥¿¥¹¥Õ¥§¡¼¥º¤ò´üÂÔ¤·¤è¤¦ */
+						/* $BE>Aw%G!<%?$O$b$&$J$$$N$G(B
+						   $B%9%F!<%?%9%U%'!<%:$r4|BT$7$h$&(B */
 						sc->sc_phase = STATUS_PHASE;
 						CMR = CMD_RECEIVE_STS;	/* receive sts */
 						continue;
 					}
-					/* data phase ¤ÎÂ³¤­¤ò¤ä¤í¤¦ */
+					/* data phase $B$NB3$-$r$d$m$&(B */
 					n = mha_dataout(sc, sc->sc_dp, sc->sc_dleft);
 					sc->sc_dp += n;
 					sc->sc_dleft -= n;
 					continue;
 				case COMMAND_PHASE:
-					/* ºÇ½é¤Ï CMD PHASE ¤È¤¤¤¦¤³¤È¤é¤·¤¤ */
+					/* $B:G=i$O(B CMD PHASE $B$H$$$&$3$H$i$7$$(B */
 					if (acb->dleft) {
-						/* ¥Ç¡¼¥¿Å¾Á÷¤¬¤¢¤ê¤¦¤ë¾ì¹ç */
+						/* $B%G!<%?E>Aw$,$"$j$&$k>l9g(B */
 						if (acb->xs->flags & SCSI_DATA_IN) {
 							sc->sc_phase = DATA_IN_PHASE;
 							n = mha_datain(sc, sc->sc_dp, sc->sc_dleft);
@@ -1962,7 +1963,7 @@ mhaintr(arg)
 						continue;
 					}
 					else {
-						/* ¥Ç¡¼¥¿Å¾Á÷¤Ï¤Ê¤¤¤é¤·¤¤?! */
+						/* $B%G!<%?E>Aw$O$J$$$i$7$$(B?! */
 						WAIT;
 						sc->sc_phase = STATUS_PHASE;
 						CMR = CMD_RECEIVE_STS;	/* receive sts */
@@ -1992,8 +1993,8 @@ mhaintr(arg)
 			SPC_MISC(("[0x32]"));
 #if 0
 		case 0x65:	/* invalid command.
-				   ¤Ê¤¼¤³¤ó¤Ê¤â¤Î¤¬½Ð¤ë¤Î¤«
-				   ²¶¤Ë¤ÏÁ´¤¯Íý²ò¤Ç¤­¤Ê¤¤ */
+				   $B$J$<$3$s$J$b$N$,=P$k$N$+(B
+				   $B26$K$OA4$/M}2r$G$-$J$$(B */
 #if 1
 			SPC_MISC(("[0x%04x]", r));
 #endif

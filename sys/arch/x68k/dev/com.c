@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.14 1998/08/15 17:47:16 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.15 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ extern struct cfdriver xcom_cd;
 
 #define	outb(addr, val)		*(u_char *)(addr) = (val)
 #define	inb(addr)		*(u_char *)(addr)
-#define pio(addr,regno)        (addr+1+regno*2)
+#define pio(addr,regno)        ((addr)+1+(regno)*2)
 
 #ifdef COMCONSOLE
 int	comdefaultrate = CONSPEED;
@@ -231,7 +231,7 @@ comprobe1(iobase)
 	int iobase;
 {
 
-	if (badbaddr(pio(iobase, com_lcr)))
+	if (badbaddr((caddr_t)pio(iobase, com_lcr)))
 		return 0;
 	/* force access to id reg */
 	outb(pio(iobase , com_lcr), 0);
@@ -342,7 +342,6 @@ comattach(parent, dev, aux)
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 #endif
 	int iobase = (int)&IODEVbase->psx16550 + (COM_NPORTS * 2 * sc->sc_dev.dv_unit);
-	struct tty *tp;
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
@@ -351,7 +350,7 @@ comattach(parent, dev, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	printf(": iobase %lx", sc->sc_iobase);
+	printf(": iobase %x", sc->sc_iobase);
 
 #if 0
 	if (sc->sc_dev.dv_unit == comconsole)
@@ -1064,9 +1063,8 @@ comintr(arg)
 	int	iir;
 
 #if 1
-	if (iir = ISSET(inb(pio(iobase , com_iir)), IIR_NOPEND)) {
+	if ((iir = ISSET(inb(pio(iobase , com_iir)), IIR_NOPEND)))
 		return (0);
-	}
 #endif
 
 	tp = sc->sc_tty;
@@ -1139,7 +1137,7 @@ comintr(arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 
-		if (iir = ISSET(inb(pio(iobase , com_iir)), IIR_NOPEND))
+		if ((iir = ISSET(inb(pio(iobase , com_iir)), IIR_NOPEND)))
 			return (1);
 	}
 }

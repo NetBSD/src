@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_conf.c,v 1.3 1998/08/06 14:08:53 minoura Exp $	*/
+/*	$NetBSD: grf_conf.c,v 1.4 1999/03/24 14:07:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -68,17 +68,17 @@ extern	int hy_init(), hy_mode();
 #endif
 
 struct grfsw grfsw[] = {
-	GID_BUILTIN,	GRFBUILTIN,	"builtin",	  cc_init, cc_mode,
-	GID_GVRAM,	GRFBUILTIN,	"graphic",	  gv_init, gv_mode,
+	{GID_BUILTIN,	GRFBUILTIN,	"builtin",	  cc_init, cc_mode},
+	{GID_GVRAM,	GRFBUILTIN,	"graphic",	  gv_init, gv_mode},
 #if 0
-	GID_TOPCAT,	GRFBOBCAT,	"topcat",	  tc_init, tc_mode,
-	GID_GATORBOX,	GRFGATOR,	"gatorbox",	  gb_init, gb_mode,
-	GID_RENAISSANCE,GRFRBOX,	"renaissance",	  rb_init, rb_mode,
-	GID_LRCATSEYE,	GRFCATSEYE,	"lo-res catseye", tc_init, tc_mode,
-	GID_HRCCATSEYE,	GRFCATSEYE,	"hi-res catseye", tc_init, tc_mode,
-	GID_HRMCATSEYE,	GRFCATSEYE,	"hi-res catseye", tc_init, tc_mode,
-	GID_DAVINCI,	GRFDAVINCI,	"davinci",	  dv_init, dv_mode,
-	GID_HYPERION,	GRFHYPERION,	"hyperion",	  hy_init, hy_mode,
+	{GID_TOPCAT,	GRFBOBCAT,	"topcat",	  tc_init, tc_mode},
+	{GID_GATORBOX,	GRFGATOR,	"gatorbox",	  gb_init, gb_mode},
+	{GID_RENAISSANCE,GRFRBOX,	"renaissance",	  rb_init, rb_mode},
+	{GID_LRCATSEYE,	GRFCATSEYE,	"lo-res catseye", tc_init, tc_mode,
+	{GID_HRCCATSEYE,GRFCATSEYE,	"hi-res catseye", tc_init, tc_mode},
+	{GID_HRMCATSEYE,GRFCATSEYE,	"hi-res catseye", tc_init, tc_mode},
+	{GID_DAVINCI,	GRFDAVINCI,	"davinci",	  dv_init, dv_mode},
+	{GID_HYPERION,	GRFHYPERION,	"hyperion",	  hy_init, hy_mode},
 #endif
 };
 int	ngrfsw = sizeof(grfsw) / sizeof(grfsw[0]);

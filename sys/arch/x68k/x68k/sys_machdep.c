@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -154,7 +154,7 @@ cachectl1(req, addr, len, p)
 #endif
 
 		if (addr == 0 ||
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 
 		if (!doall) {
@@ -299,10 +299,12 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0 /* unused */
 	struct sys_sysarch_args /* {
 		syscallarg(int) op; 
 		syscallarg(void *) parms;
 	} */ *uap = v;
+#endif
 
 	return (ENOSYS);
 }

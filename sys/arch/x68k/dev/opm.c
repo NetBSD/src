@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.4 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.5 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -163,7 +163,7 @@ void
 fdc_force_ready(rdy)
 	u_char	rdy;
 {
-	writeopm(0x1b, readopm(0x1b) & ~OPM1B_CT2MSK | rdy);
+	writeopm(0x1b, (readopm(0x1b) & ~OPM1B_CT2MSK) | rdy);
 }
 #endif
 

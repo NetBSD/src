@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1999/03/24 05:51:18 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,8 +72,9 @@
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
-
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #ifdef FPU_EMULATE
 #include <m68k/fpe/fpu_emulate.h>
@@ -536,6 +537,7 @@ trap(type, code, v, frame)
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
 		if (ssir & SIR_NET) {
+			void netintr __P((void));
 			siroff(SIR_NET);
 			uvmexp.softs++;
 			netintr();
@@ -546,17 +548,23 @@ trap(type, code, v, frame)
 			softclock();
 		}
 		if (ssir & SIR_SERIAL) {
+#include "zsc.h"
+#if NZSC > 0
+			void zssoft __P((int));
+#endif
 			siroff(SIR_SERIAL);
 			uvmexp.softs++;
-#include "zsc.h"
 #if NZSC > 0
 			zssoft(0);
 #endif
 		}
 		if (ssir & SIR_KBD) {
+#include "kbd.h"
+#if NKBD > 0
+			void	kbdsoftint __P((void));
+#endif
 			siroff(SIR_KBD);
 			uvmexp.softs++;
-#include "kbd.h"
 #if NKBD > 0
 			kbdsoftint();
 #endif

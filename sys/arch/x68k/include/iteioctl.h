@@ -38,7 +38,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.2 1998/09/03 14:22:06 minoura Exp $
+ *	$NetBSD: iteioctl.h,v 1.3 1999/03/24 14:07:39 minoura Exp $
  */
 
 struct itewinsize {
@@ -48,16 +48,6 @@ struct itewinsize {
 	u_int height;		/* height of ite display */
 	u_int depth;		/* depth of ite display */
 };
-
-struct itebell {
-	u_int volume;		/* volume of bell (0-64) */
-	u_int pitch;		/* pitch of bell (10-2000) */
-	u_int msec;		/* duration of bell */
-};
-#define MAXBVOLUME (63)
-#define MAXBPITCH (2000)
-#define MINBPITCH (10)
-#define MAXBTIME (5000)		/* 5 seconds */
 
 struct iterepeat {
 	int start;		/* number of 100/s before repeat start */

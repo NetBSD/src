@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.20 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: spc.c,v 1.21 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ spc_intio_match(parent, cf, aux)
 	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
 			  &ioh) < 0)
 		return 0;
-	if (badaddr (INTIO_ADDR(ia->ia_addr + BDID)))
+	if (badaddr ((caddr_t)INTIO_ADDR(ia->ia_addr + BDID)))
 		return 0;
 	bus_space_unmap(iot, ioh, 0x20);
 

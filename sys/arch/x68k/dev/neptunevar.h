@@ -1,4 +1,4 @@
-/*	$NetBSD: neptunevar.h,v 1.2 1999/03/16 16:30:20 minoura Exp $	*/
+/*	$NetBSD: neptunevar.h,v 1.3 1999/03/24 14:07:39 minoura Exp $	*/
 
 /*
  *
@@ -42,9 +42,10 @@
 #ifndef _NEPTUNEVAR_H_
 #define _NEPTUNEVAR_H_
 
-#include <machine/frame.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
+#include <machine/frame.h>
+#include <arch/x68k/dev/intiovar.h>
 #include "locators.h"
 
 #define neptune_cf_addr	cf_loc[NEPTUNECF_ADDR]
