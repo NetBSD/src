@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.134 2003/02/15 18:10:16 dsl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.135 2003/02/15 20:54:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.134 2003/02/15 18:10:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.135 2003/02/15 20:54:39 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -356,6 +356,7 @@ siginit(struct proc *p)
 		SIGACTION_PS(ps, signum).sa_flags = SA_RESTART;
 	}
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
+	p->p_sigctx.ps_sigwaited = 0;
 	p->p_flag &= ~P_NOCLDSTOP;
 
 	/*
@@ -402,6 +403,7 @@ execsigs(struct proc *p)
 		SIGACTION_PS(ps, signum).sa_flags = SA_RESTART;
 	}
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
+	p->p_sigctx.ps_sigwaited = 0;
 	p->p_flag &= ~P_NOCLDSTOP;
 
 	/*
@@ -854,6 +856,27 @@ psignal1(struct proc *p, int signum,
 
 	/* CHECKSIGS() is "inlined" here. */
 	p->p_sigctx.ps_sigcheck = 1;
+
+	/*
+	 * If the signal doesn't have SA_CANTMASK (no override for SIGKILL,
+	 * please!), check if anything waits on it. If yes, clear the
+	 * pending signal from siglist set, save it to ps_sigwaited,
+	 * clear sigwait list, and wakeup any sigwaiters.
+	 * The signal won't be processed further here.
+	 */
+	if ((prop & SA_CANTMASK) == 0
+	    && p->p_sigctx.ps_sigwaited < 0
+	    && sigismember(&p->p_sigctx.ps_sigwait, signum)) {
+		sigdelset(&p->p_sigctx.ps_siglist, signum);
+		p->p_sigctx.ps_sigwaited = signum;
+		sigemptyset(&p->p_sigctx.ps_sigwait);
+
+		if (dolock)
+			wakeup_one(&p->p_sigctx.ps_sigwait);
+		else
+			sched_wakeup(&p->p_sigctx.ps_sigwait);
+		return;
+	}
 
 	/*
 	 * Defer further processing for signals which are held,
@@ -1817,6 +1840,160 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
 	return (EJUSTRETURN);
 }
 
+/*
+ * sigtimedwait(2) system call, used also for implementation
+ * of sigwaitinfo() and sigwait().
+ *
+ * This only handles single LWP in signal wait. libpthread provides
+ * it's own sigtimedwait() wrapper to DTRT WRT individual threads.
+ *
+ * XXX no support for queued signals, si_code is always SI_USER.
+ */
+int
+sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys___sigtimedwait_args /* {
+		syscallarg(const sigset_t *) set;
+		syscallarg(siginfo_t *) info;
+		syscallarg(struct timespec *) timeout;
+	} */ *uap = v;
+	sigset_t waitset, twaitset;
+	struct proc *p = l->l_proc;
+	int error, signum, s;
+	int timo = 0;
+	struct timeval tvstart;
+	struct timespec ts;
+
+	if ((error = copyin(SCARG(uap, set), &waitset, sizeof(waitset))))
+		return (error);
+
+	/*
+	 * Silently ignore SA_CANTMASK signals. psignal1() would
+	 * ignore SA_CANTMASK signals in waitset, we do this
+	 * only for the below siglist check.
+	 */
+	sigminusset(&sigcantmask, &waitset);
+
+	/*
+	 * First scan siglist and check if there is signal from
+	 * our waitset already pending.
+	 */
+	twaitset = waitset;
+	__sigandset(&p->p_sigctx.ps_siglist, &twaitset);
+	if ((signum = firstsig(&twaitset))) {
+		/* found pending signal */
+		sigdelset(&p->p_sigctx.ps_siglist, signum);
+		goto sig;
+	}
+
+	/*
+	 * Calculate timeout, if it was specified.
+	 */
+	if (SCARG(uap, timeout)) {
+		uint64_t ms;
+
+		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))))
+			return (error);
+
+		ms = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+		timo = mstohz(ms);
+		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec > 0)
+			timo = 1;
+		if (timo <= 0)
+			return (EAGAIN);
+
+		/*
+		 * Remember current mono_time, it would be used in
+		 * ECANCELED/ERESTART case.
+		 */
+		s = splclock();
+		tvstart = mono_time;
+		splx(s);
+	}
+
+	/*
+	 * Setup ps_sigwait list.
+	 */
+	p->p_sigctx.ps_sigwaited = -1;
+	p->p_sigctx.ps_sigwait = waitset;
+
+	/*
+	 * Wait for signal to arrive. We can either be woken up or
+	 * time out.
+	 */
+	error = tsleep(&p->p_sigctx.ps_sigwait, PPAUSE|PCATCH, "sigwait", timo);
+
+	/*
+	 * Check if a signal from our wait set has arrived, or if it
+	 * was mere wakeup.
+	 */
+	if (!error) {
+		if ((signum = p->p_sigctx.ps_sigwaited) <= 0) {
+			/* wakeup via _lwp_wakeup() */
+			error = ECANCELED;
+		}
+	}
+
+	/*
+	 * On error, clear sigwait indication. psignal1() sets it
+	 * in !error case.
+	 */
+	if (error) {
+		p->p_sigctx.ps_sigwaited = 0;
+
+		/*
+		 * If the sleep was interrupted (either by signal or wakeup),
+		 * update the timeout and copyout new value back.
+		 * It would be used when the syscall would be restarted
+		 * or called again.
+		 */
+		if (timo && (error == ERESTART || error == ECANCELED)) {
+			struct timeval tvnow, tvtimo;
+			int err;
+
+			s = splclock();
+			tvnow = mono_time;
+			splx(s);
+
+			TIMESPEC_TO_TIMEVAL(&tvtimo, &ts);
+
+			/* compute how much time has passed since start */
+			timersub(&tvnow, &tvstart, &tvnow);
+			/* substract passed time from timeout */
+			timersub(&tvtimo, &tvnow, &tvtimo);
+
+			if (tvtimo.tv_sec < 0)
+				return (EAGAIN);
+			
+			TIMEVAL_TO_TIMESPEC(&tvtimo, &ts);
+
+			/* copy updated timeout to userland */
+			if ((err = copyout(&ts, SCARG(uap, timeout), sizeof(ts))))
+				return (err);
+		}
+
+		return (error);
+	}
+
+	/*
+	 * If a signal from the wait set arrived, copy it to userland.
+	 * XXX no queued signals for now
+	 */
+	if (signum > 0) {
+		siginfo_t si;
+
+ sig:
+		memset(&si, 0, sizeof(si));
+		si.si_signo = signum;
+		si.si_code = SI_USER;
+
+		error = copyout(&si, SCARG(uap, info), sizeof(si));
+		if (error)
+			return (error);
+	}
+
+	return (0);
+}
 
 /*
  * Returns true if signal is ignored or masked for passed process.
