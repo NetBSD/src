@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.479 2001/12/05 04:05:37 augustss Exp $
+#	$NetBSD: files,v 1.480 2001/12/05 14:50:13 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -213,6 +213,7 @@ device	midi
 attach	midi at midibus
 
 # IrDA physical frame level driver
+define	irdasir
 define	irframedrv
 device	irframe { } : irframedrv
 attach	irframe at irbus
@@ -848,7 +849,7 @@ defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
-defpseudo irframetty:	irframedrv
+defpseudo irframetty:	irframedrv, irdasir
 
 defpseudo sequencer
 defpseudo clockctl
@@ -927,6 +928,7 @@ file	dev/ir/cir.c			cir			needs-flag
 file	dev/ir/ir.c			cir | irframedrv
 file	dev/ir/irframe.c		irframe | irframedrv	needs-flag
 file	dev/ir/irframe_tty.c		irframetty		needs-flag
+file	dev/ir/sir.c			irdasir
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
