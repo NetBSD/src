@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.3 2005/03/11 15:48:40 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.3 2005/03/11 15:48:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,6 +184,8 @@ do_event(int irq, struct intrframe *regs)
 		hypervisor_enable_irq(irq);
 		return 0;
 	}
+	uvmexp.intrs++;
+	ci->ci_isources[irq]->is_evcnt.ev_count++;
 	ilevel = ci->ci_ilevel;
 	if (ci->ci_isources[irq]->is_maxlevel <= ilevel) {
 #ifdef IRQ_DEBUG
@@ -195,8 +197,6 @@ do_event(int irq, struct intrframe *regs)
 		/* leave masked */
 		return 0;
 	}
-	uvmexp.intrs++;
-	ci->ci_isources[irq]->is_evcnt.ev_count++;
 	ci->ci_ilevel = ci->ci_isources[irq]->is_maxlevel;
 	/* sti */
 	ci->ci_idepth++;
