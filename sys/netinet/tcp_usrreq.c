@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.27.2.1 1997/11/08 06:31:35 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.27.2.2 1998/05/09 03:33:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -595,6 +595,10 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_SYN_CACHE_INTER:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_syn_cache_interval));
+	case TCPCTL_MSS_IFMTU:
+	  return (sysctl_int(oldp, oldlenp, newp, newlen,
+		      &tcp_mss_ifmtu));
+
 	default:
 		return (ENOPROTOOPT);
 	}

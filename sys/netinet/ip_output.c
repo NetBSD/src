@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.40 1997/10/14 00:52:59 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.40.2.1 1998/05/09 03:33:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -60,6 +60,9 @@
 #endif
 
 #include <machine/stdarg.h>
+
+/* XXX should really put this in libkern.h */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
@@ -429,6 +432,23 @@ bad:
 	m_freem(m);
 	goto done;
 }
+
+/*
+ * Determine the maximum length of the options to be inserted;
+ * we would far rather allocate too much space rather than too little.
+ */
+u_int
+ip_optlen(inp)
+	struct inpcb *inp;
+{
+	struct mbuf *m = inp->inp_options;
+
+	if (m && m->m_len > offsetof(struct ipoption, ipopt_dst))
+		return(m->m_len - offsetof(struct ipoption, ipopt_dst));
+	else
+		return 0;
+}
+
 
 /*
  * Insert IP options into preformed packet.

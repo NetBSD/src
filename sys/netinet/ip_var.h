@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.22 1997/10/18 21:18:32 kml Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.22.2.1 1998/05/09 03:33:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -155,6 +155,8 @@ LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
 u_int16_t  ip_id;			/* ip packet ctr, for ids */
 int        ip_defttl;			/* default IP ttl */
 extern int ip_mtudisc;			/* mtu discovery */
+extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
+extern struct rttimer_queue *ip_mtudisc_timeout_q;
 
 struct	 inpcb;
 
@@ -168,6 +170,7 @@ int	 ip_getmoptions __P((int, struct ip_moptions *, struct mbuf **));
 void	 ip_init __P((void));
 int	 ip_mforward __P((struct mbuf *, struct ifnet *));
 int	 ip_optcopy __P((struct ip *, struct ip *));
+u_int	 ip_optlen __P((struct inpcb *));
 int	 ip_output __P((struct mbuf *, ...));
 int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
 struct mbuf *
