@@ -1,4 +1,4 @@
-.\"     $NetBSD: log.9,v 1.2 1997/10/08 22:00:29 jtc Exp $
+.\"     $NetBSD: log.9,v 1.3 1998/09/03 01:39:17 jeremy Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,9 +52,13 @@
 The
 .Fn log
 function allows the kernel to send messages to user processes listening
-on /dev/klog.  Usually
+on
+.Pa /dev/klog .
+Usually
 .Xr syslogd 8
-is used to receive these messages and write them to a log file.
+monitors
+.Pa /dev/klog
+for these messages and writes them to a log file.
 .Pp
 All messages are logged using facility
 .Dv LOG_KERN .
@@ -63,4 +67,4 @@ See
 for a listing of log levels.
 .Sh SEE ALSO
 .Xr syslog 3 ,
-.Xr syslogd 8
+.Xr syslogd 8 .
