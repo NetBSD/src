@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.29 1998/01/12 20:12:35 thorpej Exp $	*/
+/*	$NetBSD: sii.c,v 1.30 1998/03/30 09:47:51 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,16 +74,6 @@
 /* Machine-indepedent back-end attach entry point */
 void	siiattach __P((struct siisoftc *sc));
 
-/*
- * Autoconfig definition of driver front-end
- */
-int	old_siimatch  __P((struct device * parent, struct cfdata *cfdata,
-	    void *aux));
-void	old_siiattach __P((struct device *parent, struct device *self, void *aux));
-
-struct cfattach sii_ca = {
-	sizeof(struct siisoftc), old_siimatch, old_siiattach
-};
 
 extern struct cfdriver sii_cd;
 
@@ -206,48 +196,6 @@ struct	pmax_driver siidriver = {
 /*
  * Match driver based on name
  */
-int
-old_siimatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct confargs *ca = aux;
-
-	if (strcmp(ca->ca_name, "sii") != 0 &&
-	    strncmp(ca->ca_name, "PMAZ-AA ", 8) != 0) /*XXX*/
-		return (0);
-
-	/* XXX check for bad address */
-	/*
-	 * XXX KN01s (3100/2100) have exactly one SII.
-	 * the Decsystem 5100 apparently uses them also, but as yet we
-	 * don't know at what address.
-	 *
-	 * XXX  PVAXES apparently use the SII also.
-	 */
-	return (1);
-}
-
-void
-old_siiattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	register struct confargs *ca = aux;
-	register struct siisoftc *sc = (struct siisoftc *) self;
-
-	sc->sc_regs = (SIIRegs *)MIPS_PHYS_TO_KSEG1(ca->ca_addr);
-	sc->sc_flags = sc->sc_dev.dv_cfdata->cf_flags;
-
-	siiattach(sc);
-
-	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, siiintr, sc);
-	printf("\n");
-}
-
 void
 siiattach(sc)
 	register struct siisoftc *sc;
