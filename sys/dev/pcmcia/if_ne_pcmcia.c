@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.13 1998/06/27 20:28:24 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.14 1998/06/28 14:28:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -117,14 +117,14 @@ struct ne2000dev {
       PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
       "RPTI","EP401 Ethernet NE2000 Compatible", 0,
       -1, { 0x00, 0x40, 0x95 } },
+    { "Accton EN2212", 
+      PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
+      "ACCTON", "EN2212", 0,
+      0x0ff0, { 0x00, 0x00, 0xe8 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
        any of them, they're not compiled in until I do. */
-
-    { "Accton EN2212", 
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x00, 0xe8 } },
     { "Allied Telesis LA-PCM",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0x00, 0x00, 0xf4 } },
