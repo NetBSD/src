@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 2000/06/10 02:33:59 scottr Exp $
+#	$NetBSD: INSTALL,v 1.6 2000/07/31 02:06:48 briggs Exp $
 #
 # INSTALL
 
@@ -155,7 +155,10 @@ mc*	at obio?			# MACE-based
 # NuBus Ethernet controllers
 ae*	at nubus?			# DP8390-based
 sn*	at nubus?			# SONIC-based (DP83932, DP83916)
+sm*	at nubus?			# SMC-based
 
+nsphy*	at mii? phy ?
+ukphy*	at mii? phy ?
 
 # Audio Devices
 
