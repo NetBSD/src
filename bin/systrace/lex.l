@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.6 2002/10/29 15:44:38 provos Exp $	*/
+/*	$NetBSD: lex.l,v 1.7 2002/11/02 20:04:20 provos Exp $	*/
 /*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lex.l,v 1.6 2002/10/29 15:44:38 provos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.7 2002/11/02 20:04:20 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -89,6 +89,7 @@ neq		{ return NEQ; }
 sub		{ return SUB; }
 nsub		{ return NSUB; }
 inpath		{ return INPATH; }
+re		{ return RE; }
 log		{ return LOG; }
 true		{ return TRUE; }
 "->"		{ return THEN; }

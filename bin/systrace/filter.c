@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.12 2002/11/02 16:27:46 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.13 2002/11/02 20:04:20 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.12 2002/11/02 16:27:46 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.13 2002/11/02 20:04:20 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: filter.c,v 1.12 2002/11/02 16:27:46 provos Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <regex.h>
 #include <fnmatch.h>
 #include <err.h>
 
@@ -763,6 +764,34 @@ filter_inpath(struct intercept_translate *tl, struct logic *logic)
 		return (0);
 
 	return (1);
+}
+
+int
+filter_regex(struct intercept_translate *tl, struct logic *logic)
+{
+	regex_t tmpre, *re;
+	char *line;
+	int res;
+
+	if ((line = intercept_translate_print(tl)) == NULL)
+		return (0);
+
+	re = logic->filterarg;
+	if (re == NULL) {
+		/* If regex does not compute, we just do not match */
+		if (regcomp(&tmpre, logic->filterdata,
+			REG_EXTENDED | REG_NOSUB) != 0)
+			return (0);
+		re = &tmpre;
+	}
+
+	res = regexec(re, line, 0, NULL, 0);
+
+	/* Clean up temporary memory associated with regex */
+	if (re == &tmpre)
+		regfree(re);
+
+	return (res == 0);
 }
 
 int
