@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.92 1999/11/21 14:00:40 itojun Exp $
+#	$NetBSD: GENERIC,v 1.93 1999/11/24 22:01:19 scottr Exp $
 #
 # GENERIC
 
@@ -130,7 +130,7 @@ options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
 
-options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
