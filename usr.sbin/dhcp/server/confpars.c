@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.2.2.3 2001/04/04 20:55:40 he Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.2.2.4 2001/04/21 19:46:19 he Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2635,6 +2635,9 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 					token = BILLING;
 					break;
 				}
+				if (lease -> billing_class)
+					unbill_class (lease,
+						      lease -> billing_class);
 				find_class (&lease -> billing_class, val, MDL);
 				if (!lease -> billing_class)
 					parse_warn (cfile,
@@ -2642,8 +2645,8 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 				parse_semi (cfile);
 			} else if (token == SUBCLASS) {
 				if (lease -> billing_class)
-					class_dereference
-						(&lease -> billing_class, MDL);
+					unbill_class (lease,
+						      lease -> billing_class);
 				parse_class_declaration
 					(&lease -> billing_class,
 					 cfile, (struct group *)0, 3);
