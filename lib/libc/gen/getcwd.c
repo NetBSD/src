@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.20 1999/07/11 18:01:46 sommerfeld Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.21 1999/08/10 13:03:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.20 1999/07/11 18:01:46 sommerfeld Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.21 1999/08/10 13:03:11 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,7 @@ realpath(path, resolved)
 	char *resolved;
 {
 	struct stat sb;
-	int fd, n, rootd, serrno;
+	int fd, n, rootd, serrno, nlnk = 0;
 	char *p, *q, wbuf[MAXPATHLEN];
 
 	/* Save the starting point. */
@@ -126,6 +126,10 @@ loop:
 	/* Deal with the last component. */
 	if (lstat(p, &sb) == 0) {
 		if (S_ISLNK(sb.st_mode)) {
+			if (nlnk++ >= MAXSYMLINKS) {
+				errno = ELOOP;
+				goto err1;
+			}
 			n = readlink(p, resolved, MAXPATHLEN);
 			if (n < 0)
 				goto err1;
