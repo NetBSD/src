@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.20 2003/10/08 11:00:38 bouyer Exp $
+#	$NetBSD: RPC_WSCONS,v 1.21 2003/10/18 08:30:12 lukem Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.20 $"
+#ident		"GENERIC-$Revision: 1.21 $"
 
 # estimated number of users
 maxusers	32
@@ -222,9 +222,12 @@ pioc0	at mainbus? base 0x00210000
 # IDE disk controller
 wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
-atabus* at wdc? channel ?
+
+# ATA (IDE) bus support
+atabus* at ata?
+
 wd*	at atabus? drive ?
-atapibus* at atabus?
+atapibus* at atapi?
 cd*	at atapibus? drive ?
 sd*	at atapibus? drive ?
 
@@ -286,19 +289,14 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown device
 ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 dtide*	at podulebus?			# D.T. Software IDE card
-atabus* at dtide? channel ?
 
 hcide*	at podulebus?			# HCCS IDE card
-atabus* at hcide? channel ?
 
 icside*	at podulebus?			# ICS IDE card
-atabus* at icside? channel ?
 
 rapide*	at podulebus?			# Yellowstone RapIDE card
-atabus* at rapide? channel ?
 
 simide*	at podulebus?			# Simtec IDE card
-atabus* at simide? channel ?
 
 amps*	at podulebus?			# Atomwide Multi-Port Serial card
 com*	at amps?

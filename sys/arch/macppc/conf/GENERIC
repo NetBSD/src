@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.164 2003/10/13 05:20:52 dyoung Exp $
+# $NetBSD: GENERIC,v 1.165 2003/10/18 08:30:14 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.164 $"
+#ident 		"GENERIC-$Revision: 1.165 $"
 
 maxusers	32
 
@@ -341,22 +341,10 @@ ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 wdc*	at obio? flags 0x1
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ? 
-atabus* at cmdide? channel ? 
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-atabus* at wdc? channel ? 
+atabus* at ata?
 wd*	at atabus? drive ? flags 0x0000
 
-atapibus* at atabus?
+atapibus* at atapi?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives

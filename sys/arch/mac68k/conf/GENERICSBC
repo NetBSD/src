@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.26 2003/10/08 11:10:55 bouyer Exp $
+#	$NetBSD: GENERICSBC,v 1.27 2003/10/18 08:30:14 lukem Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.26 $"
+#ident 		"GENERICSBC-$Revision: 1.27 $"
 
 maxusers	16		# estimated number of users
 
@@ -219,7 +219,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # IDE controller and devices
 wdc*	at obio? flags 0x1000
-atabus* at wdc? channel ?
+atabus* at ata?
 wd*	at atabus? drive ?
 
 
