@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.20 2002/05/21 01:39:56 yamt Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.21 2002/09/28 00:56:26 dbj Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.20 2002/05/21 01:39:56 yamt Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.21 2002/09/28 00:56:26 dbj Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -106,6 +106,7 @@ static struct typetab {
 	{ MBR_PTYPE_LNXSWAP,	FS_SWAP },
 	{ MBR_PTYPE_NETBSD,	FS_BSDFFS },
 	{ MBR_PTYPE_NTFS,	FS_NTFS },
+	{ MBR_PTYPE_APPLEUFS,	FS_APPLEUFS },
 	{ 0, 0 }
 };
 
@@ -223,6 +224,7 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 			    fstypenames[npe.p_fstype], unused + 'a');
 		switch (npe.p_fstype) {
 		case FS_BSDFFS:
+		case FS_APPLEUFS:
 			npe.p_size = 16384;	/* XXX */
 			npe.p_fsize = 1024;
 			npe.p_frag = 8;
