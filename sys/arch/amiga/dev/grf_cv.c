@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.18 1996/10/13 03:07:03 christos Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.19 1996/10/22 16:59:56 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -113,6 +113,7 @@ static struct grfvideo_mode monitor_def[24] = {
 static struct grfvideo_mode *monitor_current = &monitor_def[0];
 #define MAXPIXELCLOCK 135000000 /* safety */
 
+unsigned char cv_pass_toggle;	/* passthru status tracker */
 
 /* Console display definition.
  *   Default hardcoded text mode.  This grf_cv is set up to
@@ -810,7 +811,7 @@ cv_mode(gp, cmd, arg, a2, a3)
 
 	    case GM_GRFOFF:
 #ifndef CV64CONSOLE
-		(void)cv_toggle(gp);
+		cvscreen(1, gp->g_regkva - 0x02000000)
 #else
 		cv_load_mon(gp, &cvconsole_mode);
 		ite_reinit(gp->g_itedev);
@@ -1038,7 +1039,17 @@ cv_toggle(gp)
 	volatile caddr_t ba;
 
 	ba = gp->g_regkva;
-	cvscreen(1, ba - 0x02000000);
+#ifndef CV64CONSOLE
+	cv_pass_toggle = 1;
+#endif /* !CV64CONSOLE */
+
+	if (cv_pass_toggle) {
+		cvscreen(0, ba - 0x02000000);
+		cv_pass_toggle = 0;
+	} else {
+		cvscreen(1, ba - 0x02000000);
+		cv_pass_toggle = 1;
+	}
 
 	return (0);
 }
