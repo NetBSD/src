@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.7 1998/02/11 11:52:52 lukem Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.8 1998/02/12 01:57:27 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.7 1998/02/11 11:52:52 lukem Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.8 1998/02/12 01:57:27 lukem Exp $");
 #endif
 #endif
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: auth_none.c,v 1.7 1998/02/11 11:52:52 lukem Exp $");
  */
 
 #include "namespace.h"
-
 #include <stdlib.h>
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
@@ -80,30 +78,30 @@ static struct auth_ops ops = {
 };
 
 static struct authnone_private {
-	AUTH		no_client;
-	char		marshalled_client[MAX_MARSHEL_SIZE];
-	u_int32_t	mcnt;
+	AUTH	no_client;
+	char	marshalled_client[MAX_MARSHEL_SIZE];
+	u_int	mcnt;
 } *authnone_private;
 
 AUTH *
 authnone_create()
 {
-	struct authnone_private *ap = authnone_private;
+	register struct authnone_private *ap = authnone_private;
 	XDR xdr_stream;
-	XDR *xdrs;
+	register XDR *xdrs;
 
-	if (ap == NULL) {
+	if (ap == 0) {
 		ap = (struct authnone_private *)calloc(1, sizeof (*ap));
-		if (ap == NULL)
-			return (NULL);
+		if (ap == 0)
+			return (0);
 		authnone_private = ap;
 	}
 	if (!ap->mcnt) {
 		ap->no_client.ah_cred = ap->no_client.ah_verf = _null_auth;
 		ap->no_client.ah_ops = &ops;
 		xdrs = &xdr_stream;
-		xdrmem_create(xdrs, ap->marshalled_client,
-		    MAX_MARSHEL_SIZE, XDR_ENCODE);
+		xdrmem_create(xdrs, ap->marshalled_client, (u_int)MAX_MARSHEL_SIZE,
+		    XDR_ENCODE);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_cred);
 		(void)xdr_opaque_auth(xdrs, &ap->no_client.ah_verf);
 		ap->mcnt = XDR_GETPOS(xdrs);
@@ -118,10 +116,10 @@ authnone_marshal(client, xdrs)
 	AUTH *client;
 	XDR *xdrs;
 {
-	struct authnone_private *ap = authnone_private;
+	register struct authnone_private *ap = authnone_private;
 
-	if (ap == NULL)
-		return (NULL);
+	if (ap == 0)
+		return (0);
 	return ((*xdrs->x_ops->x_putbytes)(xdrs,
 	    ap->marshalled_client, ap->mcnt));
 }
