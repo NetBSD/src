@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.21 2002/03/31 03:36:15 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.22 2002/03/31 04:06:29 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -607,7 +607,7 @@ struct wi_scan_data {
 };
 
 /*
- * transmit/receive frame structure (Max2304byte)
+ * transmit/receive frame structure
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
