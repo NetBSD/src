@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.17 2002/06/17 05:14:03 lukem Exp $
+# 	$NetBSD: GENERIC,v 1.18 2002/08/05 23:30:44 bjh21 Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.17 $"
+#ident		"GENERIC-$Revision: 1.18 $"
 
 # estimated number of users
 maxusers	32
@@ -267,8 +267,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-#csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
