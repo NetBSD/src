@@ -1,3 +1,5 @@
+/*	$NetBSD: pciide_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
  *
@@ -87,7 +89,10 @@ pciide_pnpbios_attach(parent, self, aux)
 	bus_space_tag_t compat_iot;
 	bus_space_handle_t cmd_ioh, ctl_ioh;
 
-	printf("\n%s: Toshiba Extended IDE Controller\n", self->dv_xname);
+	printf("\n");
+	pnpbios_print_devres(self, aa);
+
+	printf("%s: Toshiba Extended IDE Controller\n", self->dv_xname);
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 2, &sc->sc_dma_iot,
 	    &sc->sc_dma_ioh) != 0) {
