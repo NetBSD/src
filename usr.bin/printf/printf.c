@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.20 1998/10/14 00:56:00 wsanchez Exp $	*/
+/*	$NetBSD: printf.c,v 1.21 1998/12/19 20:21:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.20 1998/10/14 00:56:00 wsanchez Exp $");
+__RCSID("$NetBSD: printf.c,v 1.21 1998/12/19 20:21:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,12 +126,12 @@ warnx(fmt, va_alist)
 #endif /* SHELL */
 
 #define PF(f, func) { \
-	if (fieldwidth) \
+	if (fieldwidth) { \
 		if (precision) \
 			(void)printf(f, fieldwidth, precision, func); \
 		else \
 			(void)printf(f, fieldwidth, func); \
-	else if (precision) \
+	} else if (precision) \
 		(void)printf(f, precision, func); \
 	else \
 		(void)printf(f, func); \
@@ -349,7 +349,7 @@ print_escape(str)
 
 	case 'x':
 		str++;
-		for (value = 0; isxdigit(*str); str++) {
+		for (value = 0; isxdigit((unsigned char)*str); str++) {
 			value <<= 4;
 			value += hextobin(*str);
 		}
