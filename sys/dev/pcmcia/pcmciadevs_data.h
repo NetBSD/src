@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.197 2004/07/07 04:19:16 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.198 2004/07/07 05:34:33 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.195 2004/07/07 04:19:01 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.196 2004/07/07 05:34:18 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -202,6 +202,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Archos",
 	    "MiniCD",	}
+	,
+	{
+	    PCMCIA_VENDOR_ARTEM, PCMCIA_PRODUCT_ARTEM_ONAIR,
+	    PCMCIA_CIS_ARTEM_ONAIR,
+	    0,
+	    "ARtem",
+	    "ARtem Onair Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
@@ -1149,6 +1156,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "AmbiCom AMB8002T",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICON_AMB8110,
+	    PCMCIA_CIS_AMBICON_AMB8110,
+	    0,
+	    "",
+	    "AmbiCom AMB8110",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMD_AM79C930,
 	    PCMCIA_CIS_AMD_AM79C930,
 	    0,
@@ -1378,6 +1392,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Gem Tek",
 	    "GEMTEK Prism2_5 WaveLAN Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_GENIUS_ME3000II,
+	    PCMCIA_CIS_GENIUS_ME3000II,
+	    0,
+	    "Genius",
+	    "",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_ICOM_SL200,
@@ -1992,6 +2013,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_ARTEM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "ARtem",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_SYMBOL,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -2285,6 +2314,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Gem Tek",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_GENIUS,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Genius",
 	    NULL,
 	},
 	{
