@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.1 2001/07/26 22:16:26 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.2 2001/07/27 23:13:49 bjh21 Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -16,7 +16,7 @@ CLEANFILES+=	vers.c
 vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
-CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x10000
+CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x20000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CFLAGS=		-O2
@@ -27,17 +27,15 @@ KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
-.ifdef INCLUDE_LIBZ
 ### find out what to use for libz
 Z_AS=		library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=		${ZLIB}
-.endif
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS+="SA_INCLUDE_NET=no"
-SAMISCCPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=riscos
+SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no SA_USE_LOADFILE=yes SA_USE_CREAD=yes
+CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=riscos -DHEAP_VARIABLE
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
@@ -48,6 +46,8 @@ LIBRISCOS=		${RISCOSLIB}
 
 RELOC=8000
 OBJCOPY?=objcopy
+# -N (OMAGIC) since we don't need a gap between text and data.
+LINKFLAGS=-N
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
 	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
@@ -60,5 +60,12 @@ ${PROG},ff8: ${PROG}
 all: ${PROG},ff8
 
 CLEANFILES+=	${PROG},ff8
+
+.if !make(obj)
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+.NOPATH: machine
+CLEANFILES+= machine
+.endif
 
 .include <bsd.prog.mk>
