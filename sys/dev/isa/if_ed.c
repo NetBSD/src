@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.102 1996/10/04 01:28:54 explorer Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.103 1996/10/10 22:04:57 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -424,11 +424,11 @@ ed_find_WD80x3(sc, cf, ia)
 	}
 
 #ifdef ED_DEBUG
-	printf("type=%x type_str=%s isa16bit=%d memsize=%d id_msize=%d\n",
+	kprintf("type=%x type_str=%s isa16bit=%d memsize=%d id_msize=%d\n",
 	    sc->type, sc->type_str ?: "unknown", isa16bit, memsize,
 	    ia->ia_msize);
 	for (i = 0; i < 8; i++)
-		printf("%x -> %x\n", i, inb(asicbase + i));
+		kprintf("%x -> %x\n", i, inb(asicbase + i));
 #endif
 	/* Allow the user to override the autoconfiguration. */
 	if (ia->ia_msize)
@@ -462,7 +462,7 @@ ed_find_WD80x3(sc, cf, ia)
 		 */
 		if (ia->ia_irq != IRQUNK) {
 			if (ia->ia_irq != ed_wd790_irq[iptr]) {
-				printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+				kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 				    sc->sc_dev.dv_xname, ia->ia_irq,
 				    ed_wd790_irq[iptr]);
 				goto out;
@@ -483,7 +483,7 @@ ed_find_WD80x3(sc, cf, ia)
 		 */
 		if (ia->ia_irq != IRQUNK) {
 			if (ia->ia_irq != ed_wd584_irq[iptr]) {
-				printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+				kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 				    sc->sc_dev.dv_xname, ia->ia_irq,
 				    ed_wd584_irq[iptr]);
 				goto out;
@@ -495,7 +495,7 @@ ed_find_WD80x3(sc, cf, ia)
 		    bus_io_read_1(bc, ioh, ED_WD_IRR) | ED_WD_IRR_IEN);
 	} else {
 		if (ia->ia_irq == IRQUNK) {
-			printf("%s: %s does not have soft configuration\n",
+			kprintf("%s: %s does not have soft configuration\n",
 			    sc->sc_dev.dv_xname, sc->type_str);
 			goto out;
 		}
@@ -620,7 +620,7 @@ ed_find_WD80x3(sc, cf, ia)
 	}
 
 	if (memfail) {
-		printf("%s: failed to clear shared memory at %x - "
+		kprintf("%s: failed to clear shared memory at %x - "
 		    "check configuration\n",
 		    sc->sc_dev.dv_xname,
 		    (ia->ia_maddr + sc->mem_start + i));
@@ -690,7 +690,7 @@ ed_find_3Com(sc, cf, ia)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	bus_mem_handle_t memh;
-	int i, rv, mapped_mem = 0;
+	int i;
 	u_int memsize, memfail;
 	u_char isa16bit, x;
 	int ptr, asicbase, nicbase;
@@ -723,7 +723,7 @@ ed_find_3Com(sc, cf, ia)
 	ptr = ffs(x) - 1;
 	if (ia->ia_iobase != IOBASEUNK) {
 		if (ia->ia_iobase != ed_3com_iobase[ptr]) {
-			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
+			kprintf("%s: %s mismatch; kernel configured %x != board configured %x\n",
 			    "iobase", sc->sc_dev.dv_xname, ia->ia_iobase,
 			    ed_3com_iobase[ptr]);
 			goto err;
@@ -733,7 +733,7 @@ ed_find_3Com(sc, cf, ia)
 
 	x = bus_io_read_1(bc, ioh, asicbase + ED_3COM_PCFR);
 	if (x == 0 || (x & (x - 1)) != 0) {
-		printf("%s: The 3c503 is not currently supported with memory "
+		kprintf("%s: The 3c503 is not currently supported with memory "
 		       "mapping disabled.\n%s: Reconfigure the card to "
 		       "enable memory mapping.\n",
 		       sc->sc_dev.dv_xname, sc->sc_dev.dv_xname);
@@ -742,7 +742,7 @@ ed_find_3Com(sc, cf, ia)
 	ptr = ffs(x) - 1;
 	if (ia->ia_maddr != MADDRUNK) {
 		if (ia->ia_maddr != ed_3com_maddr[ptr]) {
-			printf("%s: %s mismatch; kernel configured %x != board configured %x\n",
+			kprintf("%s: %s mismatch; kernel configured %x != board configured %x\n",
 			    "maddr", sc->sc_dev.dv_xname, ia->ia_maddr,
 			    ed_3com_maddr[ptr]);
 			goto err;
@@ -758,7 +758,7 @@ ed_find_3Com(sc, cf, ia)
 	ptr = ffs(x) - 1;
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != ed_3com_irq[ptr]) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq,
 			    ed_3com_irq[ptr]);
 			goto err;
@@ -903,7 +903,7 @@ ed_find_3Com(sc, cf, ia)
 		    ED_3COM_IDCFR_IRQ5);
 		break;
 	default:
-		printf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
+		kprintf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
 		    sc->sc_dev.dv_xname, ia->ia_irq);
 		goto out;
 	}
@@ -952,7 +952,7 @@ ed_find_3Com(sc, cf, ia)
 	}
 
 	if (memfail) {
-		printf("%s: failed to clear shared memory at %x - "
+		kprintf("%s: failed to clear shared memory at %x - "
 		    "check configuration\n",
 		    sc->sc_dev.dv_xname,
 		    (ia->ia_maddr + sc->mem_start + i));
@@ -1104,7 +1104,7 @@ ed_find_Novell(sc, cf, ia)
 	}
 
 	if (ia->ia_irq == IRQUNK) {
-		printf("%s: %s does not have soft configuration\n",
+		kprintf("%s: %s does not have soft configuration\n",
 		    sc->sc_dev.dv_xname, sc->type_str);
 		goto out;
 	}
@@ -1149,7 +1149,7 @@ ed_find_Novell(sc, cf, ia)
 		}
 
 		if (mstart == 0) {
-			printf("%s: cannot find start of RAM\n",
+			kprintf("%s: cannot find start of RAM\n",
 			    sc->sc_dev.dv_xname);
 			goto err;
 		}
@@ -1171,7 +1171,7 @@ ed_find_Novell(sc, cf, ia)
 				break;
 		}
 
-		printf("%s: RAM start %x, size %d\n",
+		kprintf("%s: RAM start %x, size %d\n",
 		    sc->sc_dev.dv_xname, mstart, memsize);
 
 		sc->mem_start = (caddr_t)mstart;
@@ -1286,15 +1286,15 @@ edattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf("\n%s: address %s, ", sc->sc_dev.dv_xname,
+	kprintf("\n%s: address %s, ", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->type_str)
-		printf("type %s ", sc->type_str);
+		kprintf("type %s ", sc->type_str);
 	else
-		printf("type unknown (0x%x) ", sc->type);
+		kprintf("type unknown (0x%x) ", sc->type);
 
-	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
+	kprintf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");
 
 	switch (sc->vendor) {
 	case ED_VENDOR_WD_SMC:
@@ -1302,13 +1302,13 @@ edattach(parent, self, aux)
 			break;
 	case ED_VENDOR_3COM:
 		if (ifp->if_flags & IFF_LINK0)
-			printf(" aui");
+			kprintf(" aui");
 		else
-			printf(" bnc");
+			kprintf(" bnc");
 		break;
 	}
 
-	printf("\n");
+	kprintf("\n");
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -1763,9 +1763,9 @@ loop:
 		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
 #ifdef DIAGNOSTIC
 		if (len != packet_hdr.count) {
-			printf("%s: length does not match next packet pointer\n",
+			kprintf("%s: length does not match next packet pointer\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
+			kprintf("%s: len %04x nlen %04x start %02x first %02x curr %02x next %02x stop %02x\n",
 			    sc->sc_dev.dv_xname, packet_hdr.count, len,
 			    sc->rec_page_start, sc->next_packet, current,
 			    packet_hdr.next_packet, sc->rec_page_stop);
@@ -1936,7 +1936,7 @@ edintr(arg)
 				if (isr & ED_ISR_RXE) {
 					++ifp->if_ierrors;
 #ifdef ED_DEBUG
-					printf("%s: receive error %x\n",
+					kprintf("%s: receive error %x\n",
 					    sc->sc_dev.dv_xname,
 					    NIC_GET(nicbase, ED_P0_RSR));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.28 1996/08/03 02:23:57 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.29 1996/10/10 22:04:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -84,9 +84,9 @@
 
 /* for debugging convenience */
 #ifdef EGDEBUG
-#define dprintf(x) printf x
+#define DPRINTF(x) kprintf x
 #else
-#define dprintf(x)
+#define DPRINTF(x)
 #endif
 
 #define ETHER_MIN_LEN	64
@@ -147,7 +147,7 @@ egprintpcb(sc)
 	int i;
 	
 	for (i = 0; i < sc->eg_pcb[1] + 2; i++)
-		dprintf(("pcb[%2d] = %x\n", i, sc->eg_pcb[i]));
+		DPRINTF(("pcb[%2d] = %x\n", i, sc->eg_pcb[i]));
 }
 
 
@@ -155,7 +155,7 @@ static inline void
 egprintstat(b)
 	u_char b;
 {
-	dprintf(("%s %s %s %s %s %s %s\n", 
+	DPRINTF(("%s %s %s %s %s %s %s\n", 
 		 (b & EG_STAT_HCRE)?"HCRE":"",
 		 (b & EG_STAT_ACRF)?"ACRF":"",
 		 (b & EG_STAT_DIR )?"DIR ":"",
@@ -181,7 +181,7 @@ egoutPCB(sc, b)
 		}
 		delay(10);
 	}
-	dprintf(("egoutPCB failed\n"));
+	DPRINTF(("egoutPCB failed\n"));
 	return 1;
 }
 	
@@ -218,7 +218,7 @@ egreadPCBready(sc)
 			return 0;
 		delay(5);
 	}
-	dprintf(("PCB read not ready\n"));
+	DPRINTF(("PCB read not ready\n"));
 	return 1;
 }
 	
@@ -279,7 +279,7 @@ egreadPCB(sc)
 	sc->eg_pcb[1] = bus_io_read_1(bc, ioh, EG_COMMAND);
 
 	if (sc->eg_pcb[1] > 62) {
-		dprintf(("len %d too large\n", sc->eg_pcb[1]));
+		DPRINTF(("len %d too large\n", sc->eg_pcb[1]));
 		return 1;
 	}
 
@@ -293,7 +293,7 @@ egreadPCB(sc)
 	if (egreadPCBstat(sc, EG_PCB_DONE))
 		return 1;
 	if ((b = bus_io_read_1(bc, ioh, EG_COMMAND)) != sc->eg_pcb[1] + 2) {
-		dprintf(("%d != %d\n", b, sc->eg_pcb[1] + 2));
+		DPRINTF(("%d != %d\n", b, sc->eg_pcb[1] + 2));
 		return 1;
 	}
 
@@ -322,13 +322,13 @@ egprobe(parent, match, aux)
 	rval = 0;
 
 	if (ia->ia_iobase & ~0x07f0 != 0) {
-		dprintf(("Weird iobase %x\n", ia->ia_iobase));
+		DPRINTF(("Weird iobase %x\n", ia->ia_iobase));
 		return 0;
 	}
 
 	/* Map i/o space. */
 	if (bus_io_map(bc, ia->ia_iobase, 0x08, &ioh)) {
-		dprintf(("egprobe: can't map i/o space in probe\n"));
+		DPRINTF(("egprobe: can't map i/o space in probe\n"));
 		return 0;
 	}
 
@@ -348,7 +348,7 @@ egprobe(parent, match, aux)
 			break;
 	}
 	if ((bus_io_read_1(bc, ioh, EG_STATUS) & EG_PCB_STAT) != EG_PCB_NULL) {
-		dprintf(("egprobe: Reset failed\n"));
+		DPRINTF(("egprobe: Reset failed\n"));
 		goto out;
 	}
 	sc->eg_pcb[0] = EG_CMD_GETINFO; /* Get Adapter Info */
@@ -391,11 +391,11 @@ egattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
 
-	printf("\n");
+	kprintf("\n");
 
 	/* Map i/o space. */
 	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		kprintf("%s: can't map i/o space\n", self->dv_xname);
 		return;
 	}
 
@@ -407,42 +407,42 @@ egattach(parent, self, aux)
 	sc->eg_pcb[0] = EG_CMD_GETEADDR; /* Get Station address */
 	sc->eg_pcb[1] = 0;
 	if (egwritePCB(sc) != 0) {
-		printf("%s: can't send Get Station Address\n", self->dv_xname);
+		kprintf("%s: can't send Get Station Address\n", self->dv_xname);
 		return;
 	}	
 	if (egreadPCB(sc) != 0) {
-		printf("%s: can't read station address\n", self->dv_xname);
+		kprintf("%s: can't read station address\n", self->dv_xname);
 		egprintpcb(sc);
 		return;
 	}
 
 	/* check Get station address response */
 	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) { 
-		printf("%s: card responded with garbage (1)\n",
+		kprintf("%s: card responded with garbage (1)\n",
 		    self->dv_xname);
 		egprintpcb(sc);
 		return;
 	}
 	bcopy(&sc->eg_pcb[2], sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	printf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
+	kprintf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
 	    sc->eg_rom_major, sc->eg_rom_minor, sc->eg_ram,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(sc) != 0) {
-		printf("%s: can't send Set Station Address\n", self->dv_xname);
+		kprintf("%s: can't send Set Station Address\n", self->dv_xname);
 		return;
 	}
 	if (egreadPCB(sc) != 0) {
-		printf("%s: can't read Set Station Address status\n",
+		kprintf("%s: can't read Set Station Address status\n",
 		    self->dv_xname);
 		egprintpcb(sc);
 		return;
 	}
 	if (sc->eg_pcb[0] != EG_RSP_SETEADDR || sc->eg_pcb[1] != 0x02 ||
 	    sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
-		printf("%s: card responded with garbage (2)\n",
+		kprintf("%s: card responded with garbage (2)\n",
 		    self->dv_xname);
 		egprintpcb(sc);
 		return;
@@ -489,21 +489,21 @@ eginit(sc)
 	sc->eg_pcb[2] = 3; /* receive broadcast & multicast */
 	sc->eg_pcb[3] = 0;
 	if (egwritePCB(sc) != 0)
-		printf("%s: can't send Configure 82586\n",
+		kprintf("%s: can't send Configure 82586\n",
 		    sc->sc_dev.dv_xname);
 
 	if (egreadPCB(sc) != 0) {
-		printf("%s: can't read Configure 82586 status\n",
+		kprintf("%s: can't read Configure 82586 status\n",
 		    sc->sc_dev.dv_xname);
 		egprintpcb(sc);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
-		printf("%s: configure card command failed\n",
+		kprintf("%s: configure card command failed\n",
 		    sc->sc_dev.dv_xname);
 
 	if (sc->eg_inbuf == NULL) {
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_inbuf == NULL) {
-			printf("%s: can't allocate inbuf\n",
+			kprintf("%s: can't allocate inbuf\n",
 			    sc->sc_dev.dv_xname);
 			panic("eginit");
 		}
@@ -513,7 +513,7 @@ eginit(sc)
 	if (sc->eg_outbuf == NULL) {
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_outbuf == NULL) {
-			printf("%s: can't allocate outbuf\n",
+			kprintf("%s: can't allocate outbuf\n",
 			    sc->sc_dev.dv_xname);
 			panic("eginit");
 		}
@@ -580,7 +580,7 @@ loop:
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0) {
-		printf("%s: no header mbuf\n", sc->sc_dev.dv_xname);
+		kprintf("%s: no header mbuf\n", sc->sc_dev.dv_xname);
 		panic("egstart");
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
@@ -599,7 +599,7 @@ loop:
 	sc->eg_pcb[6] = len; /* length of packet */
 	sc->eg_pcb[7] = len >> 8;
 	if (egwritePCB(sc) != 0) {
-		printf("%s: can't send Send Packet command\n",
+		kprintf("%s: can't send Send Packet command\n",
 		    sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -666,7 +666,7 @@ egintr(arg)
 
 		case EG_RSP_SENDPACKET:
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
-				dprintf(("%s: packet dropped\n",
+				DPRINTF(("%s: packet dropped\n",
 				    sc->sc_dev.dv_xname));
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			} else
@@ -680,25 +680,25 @@ egintr(arg)
 
 		/* XXX byte-order and type-size bugs here... */
 		case EG_RSP_GETSTATS:
-			dprintf(("%s: Card Statistics\n",
+			DPRINTF(("%s: Card Statistics\n",
 			    sc->sc_dev.dv_xname));
 			bcopy(&sc->eg_pcb[2], &i, sizeof(i));
-			dprintf(("Receive Packets %d\n", i));
+			DPRINTF(("Receive Packets %d\n", i));
 			bcopy(&sc->eg_pcb[6], &i, sizeof(i));
-			dprintf(("Transmit Packets %d\n", i));
-			dprintf(("CRC errors %d\n",
+			DPRINTF(("Transmit Packets %d\n", i));
+			DPRINTF(("CRC errors %d\n",
 			    *(short *) &sc->eg_pcb[10]));
-			dprintf(("alignment errors %d\n",
+			DPRINTF(("alignment errors %d\n",
 			    *(short *) &sc->eg_pcb[12]));
-			dprintf(("no resources errors %d\n",
+			DPRINTF(("no resources errors %d\n",
 			    *(short *) &sc->eg_pcb[14]));
-			dprintf(("overrun errors %d\n",
+			DPRINTF(("overrun errors %d\n",
 			    *(short *) &sc->eg_pcb[16]));
 			serviced = 1;
 			break;
 			
 		default:
-			printf("%s: egintr: Unknown response %x??\n",
+			kprintf("%s: egintr: Unknown response %x??\n",
 			    sc->sc_dev.dv_xname, sc->eg_pcb[0]);
 			egprintpcb(sc);
 			break;
@@ -723,7 +723,7 @@ egread(sc, buf, len)
 	
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		printf("%s: invalid packet size %d; dropping\n",
+		kprintf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;
@@ -884,7 +884,7 @@ egioctl(ifp, cmd, data)
 			sc->eg_pcb[0] = EG_CMD_GETSTATS;
 			sc->eg_pcb[1] = 0;
 			if (egwritePCB(sc) != 0)
-				dprintf(("write error\n"));
+				DPRINTF(("write error\n"));
 			/*
 			 * XXX deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,
@@ -908,7 +908,7 @@ egreset(sc)
 {
 	int s;
 
-	dprintf(("%s: egreset()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: egreset()\n", sc->sc_dev.dv_xname));
 	s = splnet();
 	egstop(sc);
 	eginit(sc);

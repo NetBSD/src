@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.21 1995/12/24 02:31:31 mycroft Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.22 1996/10/10 22:05:02 christos Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -239,13 +239,13 @@ hpfetch(ns, up, ad, len)
 	outb(hpc + ds0_rsar1, ad >> 8);
 
 #ifdef HP_DEBUG
-	printf("hpfetch: len=%d ioaddr=0x%03x addr=0x%04x option=0x%02x %d-bit\n",
+	kprintf("hpfetch: len=%d ioaddr=0x%03x addr=0x%04x option=0x%02x %d-bit\n",
 	    len, hpc + hp_data, ad, inb(hpc + hp_option),
 	    ns->ns_mode & DSDC_WTS ? 32 : 16);
-	printf("hpfetch: cmd=0x%02x isr=0x%02x ",
+	kprintf("hpfetch: cmd=0x%02x isr=0x%02x ",
 	    inb(hpc + ds_cmd), inb(hpc + ds0_isr));
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG2 | DSCM_START);
-	printf("imr=0x%02x rcr=0x%02x tcr=0x%02x dcr=0x%02x\n",
+	kprintf("imr=0x%02x rcr=0x%02x tcr=0x%02x dcr=0x%02x\n",
 	    inb(hpc + ds0_imr), inb(hpc + ds0_rcr), inb(hpc + ds0_tcr),
 	    inb(hpc + ds0_dcr));
 #endif
@@ -261,7 +261,7 @@ hpfetch(ns, up, ad, len)
 		len = (caddr_t) insw(hpc + hp_data, up, len >> 1) - up;
 
 #ifdef HP_DEBUG
-	printf("hpfetch: done len=%d\n", len);
+	kprintf("hpfetch: done len=%d\n", len);
 #endif
 
 	/* Wait till done, then shutdown feature */
@@ -296,22 +296,22 @@ hpput(ns, up, ad, len)
 		len = (len + 1) & ~1;
 
 #ifdef HP_DEBUG
-	printf("hpput: len=%d ioaddr=0x%03x addr=0x%04x option=0x%02x %d-bit\n",
+	kprintf("hpput: len=%d ioaddr=0x%03x addr=0x%04x option=0x%02x %d-bit\n",
 	    len, hpc + hp_data, ad, inb(hpc + hp_option),
 	    ns->ns_mode & DSDC_WTS ? 32 : 16);
-	printf("hpput: cmd=0x%02x isr=0x%02x ",
+	kprintf("hpput: cmd=0x%02x isr=0x%02x ",
 	    inb(hpc + ds_cmd), inb(hpc + ds0_isr));
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG2 | DSCM_START);
-	printf("imr=0x%02x rcr=0x%02x tcr=0x%02x dcr=0x%02x\n",
+	kprintf("imr=0x%02x rcr=0x%02x tcr=0x%02x dcr=0x%02x\n",
 	    inb(hpc + ds0_imr), inb(hpc + ds0_rcr), inb(hpc + ds0_tcr),
 	    inb(hpc + ds0_dcr));
 	{
 		unsigned char *p = (unsigned char *) up;
 		int     n = len;
-		printf("hpput:");
+		kprintf("hpput:");
 		while (n--)
-			printf(" %02x", *(p++));
-		printf("\n");
+			kprintf(" %02x", *(p++));
+		kprintf("\n");
 	}
 #endif
 
@@ -335,7 +335,7 @@ hpput(ns, up, ad, len)
 		len = (caddr_t) outsw(hpc + hp_data, up, len >> 1) - up;
 
 #ifdef HP_DEBUG
-	printf("hpput: done len=%d\n", len);
+	kprintf("hpput: done len=%d\n", len);
 #endif
 
 	/* Wait till done, then shutdown feature */
@@ -355,7 +355,7 @@ hpreset(unit, uban)
 	register hpc = ns->ns_port;
 	if (unit >= NHP)
 		return;
-	printf("hp%d: reset\n", unit);
+	kprintf("hp%d: reset\n", unit);
 	outb(hpc + hp_option, 0);
 	ns->ns_flags &= ~DSF_LOCK;
 	hpinit(unit);
@@ -406,7 +406,7 @@ hpattach(dvp)
 	ifp->if_unit = unit;
 	ifp->if_name = hpdriver.name;
 	ifp->if_mtu = ETHERMTU;
-	printf("hp%d: %s %d-bit ethernet address %s\n", unit,
+	kprintf("hp%d: %s %d-bit ethernet address %s\n", unit,
 	    hp_id(ns->hp_type), ns->ns_mode & DSDC_WTS ? 32 : 16,
 	    ether_sprintf(ns->ns_addrp));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
@@ -444,8 +444,8 @@ hpinit(unit)
 	s = splnet();
 
 #ifdef HP_DEBUG
-	printf("hpinit: hp%d at 0x%x irq %d\n", unit, hpc, (int) ns->hp_irq);
-	printf("hpinit: promiscuous mode %s\n",
+	kprintf("hpinit: hp%d at 0x%x irq %d\n", unit, hpc, (int) ns->hp_irq);
+	kprintf("hpinit: promiscuous mode %s\n",
 	    ns->ns_if.if_flags & IFF_PROMISC ? "on" : "off");
 #endif
 
@@ -496,7 +496,7 @@ hpinit(unit)
 	hpstart(ifp);
 
 #ifdef HP_DEBUG
-	printf("hpinit: done\n", unit, hpc);
+	kprintf("hpinit: done\n", unit, hpc);
 #endif
 
 	splx(s);
@@ -544,7 +544,7 @@ hpstart(ifp)
 	total = len = m->m_pkthdr.len;
 
 #ifdef HP_DEBUG
-	printf("hpstart: len=%d\n", len);
+	kprintf("hpstart: len=%d\n", len);
 #endif
 
 #if NBPFILTER > 0
@@ -583,7 +583,7 @@ hpstart(ifp)
 	outb(hpc + ds_cmd, DSCM_TRANS | DSCM_NODMA | DSCM_PG0 | DSCM_START);
 
 #ifdef HP_DEBUG
-	printf("hpstart: done\n", hpc);
+	kprintf("hpstart: done\n", hpc);
 #endif
 }
 /*
@@ -631,7 +631,7 @@ loop:
 			curr = inb(hpc + ds1_curr);
 
 #ifdef HP_DEBUG
-			printf("hpintr: receive isr=0x%02x bnry=0x%02x curr=0x%02x\n",
+			kprintf("hpintr: receive isr=0x%02x bnry=0x%02x curr=0x%02x\n",
 			    isr, bnry, curr);
 #endif
 
@@ -659,7 +659,7 @@ loop:
 			addr += sizeof ns->ns_ph;
 
 #ifdef HP_DEBUG
-			printf("hpintr: sendp packet hdr: %x %x %x %x\n",
+			kprintf("hpintr: sendp packet hdr: %x %x %x %x\n",
 			    ns->ns_ph.pr_status,
 			    ns->ns_ph.pr_nxtpg,
 			    ns->ns_ph.pr_sz0,
@@ -680,15 +680,15 @@ loop:
 				outb(hpc + ds_cmd, DSCM_START | DSCM_NODMA | DSCM_PG0);
 				outb(hpc + ds0_bnry, bnry);
 
-				printf("hp%d: receive error status=0x%02x\n", unit,
+				kprintf("hp%d: receive error status=0x%02x\n", unit,
 				    ns->ns_ph.pr_status);
-				printf("hp%d: packet header:", unit);
+				kprintf("hp%d: packet header:", unit);
 				{
 					int     n;
 					for (n = 0; n < len; n++)
-						printf(" %02x", ns->ns_pb[n]);
+						kprintf(" %02x", ns->ns_pb[n]);
 				}
-				printf("\n");
+				kprintf("\n");
 
 				continue;
 			}
@@ -697,20 +697,20 @@ loop:
 			ns->ns_if.if_ipackets++;
 			len = ns->ns_ph.pr_sz0 + (ns->ns_ph.pr_sz1 << 8);
 			if (len < ETHER_MIN_LEN || len > ETHER_MAX_LEN) {
-				printf("hpintr: bnry %x curr %x\n", bnry, curr);
-				printf("hpintr: packet hdr: %x %x %x %x\n",
+				kprintf("hpintr: bnry %x curr %x\n", bnry, curr);
+				kprintf("hpintr: packet hdr: %x %x %x %x\n",
 				    ns->ns_ph.pr_status,
 				    ns->ns_ph.pr_nxtpg,
 				    ns->ns_ph.pr_sz0,
 				    ns->ns_ph.pr_sz1);
-				printf("isr = 0x%x reg_isr=0x%x\n",
+				kprintf("isr = 0x%x reg_isr=0x%x\n",
 				    isr, inb(hpc + ds0_isr));
 				outb(hpc + ds_cmd, DSCM_START | DSCM_NODMA | DSCM_PG0);
 				bnry = inb(hpc + ds0_bnry);
 				outb(hpc + ds_cmd, DSCM_START | DSCM_NODMA | DSCM_PG1);
 				curr = inb(hpc + ds1_curr);
-				printf("hpintr: new bnry %x curr %x\n", bnry, curr);
-				printf("hpintr: bad len %d\n-hanging-\n",
+				kprintf("hpintr: new bnry %x curr %x\n", bnry, curr);
+				kprintf("hpintr: bad len %d\n-hanging-\n",
 				    len);
 				while (1);
 			}
@@ -725,7 +725,7 @@ loop:
 			outb(hpc + ds0_bnry, bnry);
 
 #ifdef HP_DEBUG
-			printf("hpintr: receive done bnry=0x%02x\n", bnry);
+			kprintf("hpintr: receive done bnry=0x%02x\n", bnry);
 #endif
 
 			outb(hpc + hp_option, inb(hpc + hp_option) & ~HP_DATA);
@@ -972,7 +972,7 @@ hpioctl(ifp, cmd, data)
 
 	case SIOCSIFFLAGS:
 #ifdef HP_DEBUG
-		printf("hp: setting flags, up: %s, running: %s\n",
+		kprintf("hp: setting flags, up: %s, running: %s\n",
 		    ifp->if_flags & IFF_UP ? "yes" : "no",
 		    ifp->if_flags & IFF_RUNNING ? "yes" : "no");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.16 1996/05/12 23:52:08 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.17 1996/10/10 22:04:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -695,18 +695,18 @@ gusprobe(parent, match, aux)
 	 */
 
 	if (gus_irq_map[ia->ia_irq] == IRQUNK) {
-		printf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
+		kprintf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
 		return(0);
 	}
 
 	if (gus_drq_map[ia->ia_drq] == DRQUNK) {
-		printf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
+		kprintf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
 		return(0);
 	}
 
 	if (recdrq != 0x00) {
 		if (recdrq > 7 || gus_drq_map[recdrq] == DRQUNK) {
-		   printf("gus: invalid flag given for second DMA channel (0x%x), card not probed\n", recdrq);
+		   kprintf("gus: invalid flag given for second DMA channel (0x%x), card not probed\n", recdrq);
 		   return(0);
 	        }
 	} else
@@ -910,23 +910,23 @@ gusattach(parent, self, aux)
 	}
 
 	sc->sc_dsize = i;
-	sprintf(gus_device.version, "3.%d", sc->sc_revision);
+	ksprintf(gus_device.version, "3.%d", sc->sc_revision);
 
-	printf("\n <Gravis UltraSound version 3.%d, %dKB DRAM, ",
+	kprintf("\n <Gravis UltraSound version 3.%d, %dKB DRAM, ",
 	       sc->sc_revision, sc->sc_dsize);
 	if (HAS_MIXER(sc))
-		printf("ICS2101 mixer, ");
+		kprintf("ICS2101 mixer, ");
 	if (HAS_CODEC(sc))
-		printf("%s codec/mixer, ", sc->sc_codec.chip_name);
+		kprintf("%s codec/mixer, ", sc->sc_codec.chip_name);
 	if (sc->sc_recdrq == sc->sc_drq) {
-		printf("half-duplex");
+		kprintf("half-duplex");
 		gus_hw_if.full_duplex = 0;
 	} else {
-		printf("full-duplex, record drq %d", sc->sc_recdrq);
+		kprintf("full-duplex, record drq %d", sc->sc_recdrq);
 		gus_hw_if.full_duplex = 1;
 	}
 
-	printf(">\n");
+	kprintf(">\n");
 
 	/*
 	 * Setup a default interrupt handler
@@ -969,7 +969,7 @@ gusattach(parent, self, aux)
 	 */
 
 	if (audio_hardware_attach(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec : (void *)sc) != 0)
-		printf("gus: could not attach to audio pseudo-device driver\n");
+		kprintf("gus: could not attach to audio pseudo-device driver\n");
 }
 
 int
@@ -1363,7 +1363,7 @@ gus_dmaout_timeout(arg)
     register int port = sc->sc_iobase;
     int s;
 
-    printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
+    kprintf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
     /*
      * Stop any DMA.
      */
@@ -1467,7 +1467,7 @@ gus_dmaout_dointr(sc)
 	if (sc->sc_voc[GUS_VOICE_LEFT].voccntl &
 	    GUSMASK_VOICE_STOPPED) {
 	    if (sc->sc_flags & GUS_PLAYING) {
-		printf("%s: playing yet stopped?\n", sc->sc_dev.dv_xname);
+		kprintf("%s: playing yet stopped?\n", sc->sc_dev.dv_xname);
 	    }
 	    sc->sc_bufcnt++; /* another yet to be played */
 	    gus_start_playing(sc, sc->sc_dmabuf);
@@ -1617,7 +1617,7 @@ gus_voice_intr(sc)
 			     * get the next buffer in place. 
 			     * Start the voice again.
 			     */
-			    printf("%s: stopped voice not drained? (%x)\n",
+			    kprintf("%s: stopped voice not drained? (%x)\n",
 				   sc->sc_dev.dv_xname, sc->sc_bufcnt);
 			    gus_falsestops++;
 
@@ -1625,7 +1625,7 @@ gus_voice_intr(sc)
 			    gus_start_playing(sc, sc->sc_playbuf);
 			} else if (sc->sc_bufcnt < 0) {
 #ifdef DDB
-			    printf("%s: negative bufcnt in stopped voice\n",
+			    kprintf("%s: negative bufcnt in stopped voice\n",
 				   sc->sc_dev.dv_xname);
 			    Debugger();
 #else
@@ -1680,7 +1680,7 @@ gus_voice_intr(sc)
 		     */
 		    if (sc->sc_dmaoutintr && !(sc->sc_flags & GUS_LOCKED)) {
 			if (sc->sc_dmaoutintr == stereo_dmaintr)
-			    printf("gusdmaout botch?\n");
+			    kprintf("gusdmaout botch?\n");
 			else {
 			    /* clean out to avoid double calls */
 			    void (*pfunc) __P((void *)) = sc->sc_dmaoutintr;
@@ -1806,7 +1806,7 @@ int voice;
 	DPRINTF(("gus: bufcnt 0 on continuing voice?\n"));
     }
     if (sc->sc_playbuf == sc->sc_dmabuf && (sc->sc_flags & GUS_LOCKED)) {
-	printf("%s: continue into active dmabuf?\n", sc->sc_dev.dv_xname);
+	kprintf("%s: continue into active dmabuf?\n", sc->sc_dev.dv_xname);
 	return 1;
     }
 

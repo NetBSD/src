@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.15 1996/05/12 23:53:23 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.16 1996/10/10 22:05:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -319,7 +319,7 @@ pss_dspwrite(sc, data)
 	    return;
 	}
     }
-    printf ("pss: DSP Command (%04x) Timeout.\n", data);
+    kprintf ("pss: DSP Command (%04x) Timeout.\n", data);
 }
 
 void
@@ -395,7 +395,7 @@ pss_setint(intNum, configAddress)
 	outw(configAddress,val);
 	break;
     default:
-	printf("pss_setint unkown int\n");
+	kprintf("pss_setint unkown int\n");
 	return 1;
     }
     return 0;
@@ -446,7 +446,7 @@ pss_setdma(dmaNum, configAddress)
 	outw(configAddress,val);
 	break;
     default:
-	printf("PSS ERROR! pss_setdma: unknown_dma\n");
+	kprintf("PSS ERROR! pss_setdma: unknown_dma\n");
 	return 1;
     }
     return 0;
@@ -684,7 +684,7 @@ pss_download_dsp(sc, block, size)
 	    if (count >= size)
 		break;
 	    else {
-		printf("\npss: DownLoad timeout problems, byte %d=%d\n",
+		kprintf("\npss: DownLoad timeout problems, byte %d=%d\n",
 		       count, size);
 		return 0;
  	    }
@@ -724,7 +724,7 @@ void
 wss_dump_regs(sc)
 	struct ad1848_softc *sc;
 {
-    printf("WSS regs: config=%x version=%x\n",
+    kprintf("WSS regs: config=%x version=%x\n",
 	   (u_char)inb(sc->sc_iobase+WSS_CONFIG),
 	   (u_char)inb(sc->sc_iobase+WSS_STATUS));
 }
@@ -733,11 +733,11 @@ void
 pss_dump_regs(sc)
 	struct pss_softc *sc;
 {
-    printf("PSS regs: status=%x vers=%x ",
+    kprintf("PSS regs: status=%x vers=%x ",
 	   (u_short)inw(sc->sc_iobase+PSS_STATUS),
 	   (u_short)inw(sc->sc_iobase+PSS_ID_VERS));
 	
-    printf("config=%x wss_config=%x\n",
+    kprintf("config=%x wss_config=%x\n",
 	   (u_short)inw(sc->sc_iobase+PSS_CONFIG),
 	   (u_short)inw(sc->sc_iobase+PSS_WSS_CONFIG));
 }
@@ -756,7 +756,7 @@ pssprobe(parent, self, aux)
     int iobase = ia->ia_iobase;
     
     if (!PSS_BASE_VALID(iobase)) {
-	printf("pss: configured iobase %x invalid\n", iobase);
+	kprintf("pss: configured iobase %x invalid\n", iobase);
 	return 0;
     }
 
@@ -800,24 +800,24 @@ pss_found:
 		break;
 	}
 	if (i == 16) {
-	    printf("pss: unable to locate free IRQ channel\n");
+	    kprintf("pss: unable to locate free IRQ channel\n");
 	    return 0;
 	}
 	else {
 	    ia->ia_irq = i;
-	    printf("pss: found IRQ %d free\n", i);
+	    kprintf("pss: found IRQ %d free\n", i);
 	}
     }
     else {
 	if (pss_testirq(sc, ia->ia_irq) == 0) {
-	    printf("pss: configured IRQ unavailable (%d)\n", ia->ia_irq);
+	    kprintf("pss: configured IRQ unavailable (%d)\n", ia->ia_irq);
 	    return 0;
 	}
     }
 
     /* XXX Need to deal with DRQUNK */
     if (pss_testdma(sc, ia->ia_drq) == 0) {
-	printf("pss: configured DMA channel unavailable (%d)\n", ia->ia_drq);
+	kprintf("pss: configured DMA channel unavailable (%d)\n", ia->ia_drq);
 	return 0;
     }
       
@@ -878,7 +878,7 @@ spprobe(parent, match, aux)
 	    }
 	}
 	if (i == 12) {
-	    printf("sp: unable to locate free IRQ for WSS\n");
+	    kprintf("sp: unable to locate free IRQ for WSS\n");
 	    return 0;
 	}
 	else {
@@ -890,7 +890,7 @@ spprobe(parent, match, aux)
     else {
 	sc->sc_irq = cf->cf_irq;
 	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("sp: configured IRQ unavailable (%d)\n", sc->sc_irq);
+	    kprintf("sp: configured IRQ unavailable (%d)\n", sc->sc_irq);
 	    return 0;
 	}
     }
@@ -904,7 +904,7 @@ spprobe(parent, match, aux)
 	    }
 	}
 	if (i == 4) {
-	    printf("sp: unable to locate free DMA channel for WSS\n");
+	    kprintf("sp: unable to locate free DMA channel for WSS\n");
 	    return 0;
 	}
 	else {
@@ -914,7 +914,7 @@ spprobe(parent, match, aux)
     }
     else {
 	if (pss_testdma(pc, sc->sc_drq) == 0) {
-	    printf("sp: configured DMA channel unavailable (%d)\n", sc->sc_drq);
+	    kprintf("sp: configured DMA channel unavailable (%d)\n", sc->sc_drq);
 	    return 0;
 	}
 	sc->sc_drq = cf->cf_drq;
@@ -923,7 +923,7 @@ spprobe(parent, match, aux)
 
     /* Set WSS config registers */
     if ((bits = wss_interrupt_bits[sc->sc_irq]) == 0xff) {
-	printf("sp: invalid interrupt configuration (irq=%d)\n", sc->sc_irq);
+	kprintf("sp: invalid interrupt configuration (irq=%d)\n", sc->sc_irq);
 	return 0;
     }
 
@@ -958,7 +958,7 @@ mpuprobe(parent, match, aux)
 		break;
 	}
 	if (i == 16) {
-	    printf("mpu: unable to locate free IRQ channel for MIDI\n");
+	    kprintf("mpu: unable to locate free IRQ channel for MIDI\n");
 	    return 0;
 	}
 	else {
@@ -971,7 +971,7 @@ mpuprobe(parent, match, aux)
 	sc->sc_irq = cf->cf_irq;
     
 	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("pss: configured MIDI IRQ unavailable (%d)\n", sc->sc_irq);
+	    kprintf("pss: configured MIDI IRQ unavailable (%d)\n", sc->sc_irq);
 	    return 0;
 	}
     }
@@ -1012,7 +1012,7 @@ pcdprobe(parent, match, aux)
 		break;
 	}
 	if (i == 16) {
-	    printf("pcd: unable to locate free IRQ channel for CD\n");
+	    kprintf("pcd: unable to locate free IRQ channel for CD\n");
 	    return 0;
 	}
 	else {
@@ -1025,7 +1025,7 @@ pcdprobe(parent, match, aux)
 	sc->sc_irq = cf->cf_irq;
 
 	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("pcd: configured CD IRQ unavailable (%d)\n", sc->sc_irq);
+	    kprintf("pcd: configured CD IRQ unavailable (%d)\n", sc->sc_irq);
 	    return 0;
 	}
 	return 1;
@@ -1063,7 +1063,7 @@ pssattach(parent, self, aux)
 	pssintr, sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
-    printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
+    kprintf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
     
     (void)config_found(self, ia->ia_ic, NULL);		/* XXX */
 
@@ -1075,7 +1075,7 @@ pssattach(parent, self, aux)
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
     if ((err = audio_hardware_attach(&pss_audio_if, sc->ad1848_sc)) != 0)
-	printf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
+	kprintf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
 }
 
 void
@@ -1099,13 +1099,13 @@ spattach(parent, self, aux)
 	ad1848_intr, sc);
 
     /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d drq %d",
+    kprintf(" port 0x%x-0x%x irq %d drq %d",
 	   sc->sc_iobase, sc->sc_iobase+AD1848_NPORT,
 	   cf->cf_irq, cf->cf_drq);
 
     ad1848_attach(sc);
 
-    printf("\n");
+    kprintf("\n");
 }
 
 void
@@ -1128,7 +1128,7 @@ mpuattach(parent, self, aux)
         mpuintr, sc);
 
     /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d\n",
+    kprintf(" port 0x%x-0x%x irq %d\n",
 	   sc->sc_iobase, sc->sc_iobase+MIDI_NPORT,
 	   cf->cf_irq);
 }
@@ -1154,7 +1154,7 @@ pcdattach(parent, self, aux)
 #endif
 
     /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d\n",
+    kprintf(" port 0x%x-0x%x irq %d\n",
 	   sc->sc_iobase, sc->sc_iobase+2,
 	   cf->cf_irq);
 }
@@ -1386,7 +1386,7 @@ mpuintr(arg)
     
     sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
 
-    printf("mpuintr: sc=%p sr=%x\n", sc, sr);
+    kprintf("mpuintr: sc=%p sr=%x\n", sc, sr);
 
     /* XXX Need to clear intr */
     return 1;

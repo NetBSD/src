@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.24 1996/08/27 21:59:30 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.25 1996/10/10 22:05:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -134,8 +134,8 @@ rtfpsprint(aux, pnp)
 	struct commulti_attach_args *ca = aux;
 
 	if (pnp)
-		printf("com at %s", pnp);
-	printf(" slave %d", ca->ca_slave);
+		kprintf("com at %s", pnp);
+	kprintf(" slave %d", ca->ca_slave);
 	return (UNCONF);
 }
 
@@ -173,7 +173,7 @@ rtfpsattach(parent, self, aux)
 
 	bus_io_write_1(bc, sc->sc_irqioh, 0, 0);
 
-	printf("\n");
+	kprintf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.2 1996/09/26 19:24:04 thorpej Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.3 1996/10/10 22:04:54 christos Exp $	*/
 
 /*
  * cy.c
@@ -46,7 +46,7 @@ cy_probe_isa(parent, match, aux)
 	sc.sc_bustype = CY_BUSTYPE_ISA;
 
 	if (ia->ia_irq == IRQUNK) {
-		printf("%s: interrupt not defined\n", sc.sc_dev.dv_xname);
+		kprintf("%s: interrupt not defined\n", sc.sc_dev.dv_xname);
 		return 0;
 	}
 
@@ -90,5 +90,5 @@ cy_attach_isa(parent, self, aux)
 	    IST_EDGE, IPL_TTY, cy_intr, sc);
 
 	if (sc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		kprintf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 }

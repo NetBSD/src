@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
+/*	$NetBSD: isadma.c,v 1.20 1996/10/10 22:05:06 christos Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ isa_dmadone(flags, addr, nbytes, chan)
 #endif
 
 	if (!isa_dmafinished(chan))
-		printf("isa_dmadone: channel %d not finished\n", chan);
+		kprintf("isa_dmadone: channel %d not finished\n", chan);
 
 	/* mask channel */
 	if ((chan & 4) == 0)

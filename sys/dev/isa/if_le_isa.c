@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.3 1996/08/30 01:40:35 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.4 1996/10/10 22:05:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -138,8 +138,10 @@ depca_isa_probe(lesc, ia)
 {
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase, port;
+#if 0
 	u_long sum, rom_sum;
 	u_char x;
+#endif
 	int i;
 
 	lesc->sc_rap = iobase + DEPCA_RAP;
@@ -178,7 +180,7 @@ depca_isa_probe(lesc, ia)
 		    inb(port) == 0xff && inb(port) == 0x00 &&
 		    inb(port) == 0x55 && inb(port) == 0xaa)
 			goto found;
-	printf("%s: address not found\n", sc->sc_dev.dv_xname);
+	kprintf("%s: address not found\n", sc->sc_dev.dv_xname);
 	return 0;
 
 found:
@@ -200,7 +202,7 @@ found:
 	rom_sum |= inb(port) << 8;
 
 	if (sum != rom_sum) {
-		printf("%s: checksum mismatch; calculated %04x != read %04x",
+		kprintf("%s: checksum mismatch; calculated %04x != read %04x",
 		    sc->sc_dev.dv_xname, sum, rom_sum);
 		return 0;
 	}
@@ -293,8 +295,7 @@ le_isa_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct isa_attach_args *ia = aux;
 
-	printf(": %s Ethernet\n", sc->sc_dev.dv_xname,
-	    card_type[lesc->sc_card]);
+	kprintf(": %s Ethernet\n", card_type[lesc->sc_card]);
 
 	if (lesc->sc_card == DEPCA) {
 		u_char *mem, val;
@@ -308,7 +309,7 @@ le_isa_attach(parent, self, aux)
 				mem[i] = val;
 			for (i = 0; i < ia->ia_msize; i++)
 				if (mem[i] != val) {
-					printf("%s: failed to clear memory\n",
+					kprintf("%s: failed to clear memory\n",
 					    sc->sc_dev.dv_xname);
 					return;
 				}
@@ -323,7 +324,7 @@ le_isa_attach(parent, self, aux)
 	} else {
 		sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 		if (sc->sc_mem == 0) {
-			printf("%s: couldn't allocate memory for card\n",
+			kprintf("%s: couldn't allocate memory for card\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
@@ -343,7 +344,7 @@ le_isa_attach(parent, self, aux)
 	sc->sc_wrcsr = le_isa_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	printf("%s", sc->sc_dev.dv_xname);
+	kprintf("%s", sc->sc_dev.dv_xname);
 	am7990_config(sc);
 
 	if (ia->ia_drq != DRQUNK)
