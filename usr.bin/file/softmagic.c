@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.8 2001/09/09 10:38:52 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.9 2002/05/18 06:45:48 pooka Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -33,11 +33,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
+#include <regex.h>
 
 #include "file.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: softmagic.c,v 1.46 2001/07/23 00:02:32 christos Exp ")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.48 2002/05/16 18:45:56 christos Exp ")
 #endif	/* lint */
 
 static int match	__P((struct magic *, uint32, unsigned char *, int));
@@ -52,7 +53,7 @@ extern int kflag;
 
 /*
  * softmagic - lookup one file in database 
- * (already read from /etc/magic by apprentice.c).
+ * (already read from MAGIC by apprentice.c).
  * Passed the name and FILE * of one file to be typed.
  */
 /*ARGSUSED1*/		/* nbytes passed for regularity, maybe need later */
@@ -272,6 +273,10 @@ mprint(p, m)
 	case LELDATE:
 		(void) printf(m->desc, fmttime(p->l, 0));
 		t = m->offset + sizeof(time_t);
+		break;
+	case REGEX:
+	  	(void) printf(m->desc, p->s);
+		t = m->offset + strlen(p->s);
 		break;
 
 	default:
@@ -546,6 +551,8 @@ mconvert(p, m)
 		if (m->mask_op & OPINVERSE)
 			p->l = ~p->l;
 		return 1;
+	case REGEX:
+		return 1;
 	default:
 		error("invalid type %d in mconvert().\n", m->type);
 		return 0;
@@ -574,7 +581,18 @@ mget(p, s, m, nbytes)
 {
 	int32 offset = m->offset;
 
-	if (offset + sizeof(union VALUETYPE) <= nbytes)
+	if (m->type == REGEX) {
+	      /*
+	       * offset is interpreted as last line to search,
+	       * (starting at 1), not as bytes-from start-of-file
+	       */
+	      char *last = NULL;
+	      p->buf = s;
+	      for (; offset && (s = strchr(s, '\n')) != NULL; offset--, s++)
+		    last = s;
+	      if (last != NULL)
+		*last = '\0';
+	} else if (offset + sizeof(union VALUETYPE) <= nbytes)
 		memcpy(p, s + offset, sizeof(union VALUETYPE));
 	else {
 		/*
@@ -587,14 +605,12 @@ mget(p, s, m, nbytes)
 			memcpy(p, s + offset, have);
 	}
 
-
 	if (debug) {
 		mdebug(offset, (char *) p, sizeof(union VALUETYPE));
 		mdump(m);
 	}
 
 	if (m->flag & INDIR) {
-
 		switch (m->in_type) {
 		case BYTE:
 			if (m->in_offset)
@@ -973,7 +989,7 @@ mcheck(p, m)
 
 	case STRING:
 	case PSTRING:
-		{
+	{
 		/*
 		 * What we want here is:
 		 * v = strncmp(m->value.s, p->s, m->vallen);
@@ -1017,6 +1033,21 @@ mcheck(p, m)
 			}
 		}
 		break;
+	}
+	case REGEX:
+	{
+		int rc;
+		regex_t rx;
+		char errmsg[512];
+
+		rc = regcomp(&rx, m->value.s, REG_EXTENDED|REG_NOSUB);
+		if (rc) {
+			regerror(rc, &rx, errmsg, sizeof(errmsg));
+			error("regex error %d, (%s)\n", rc, errmsg);
+		} else {
+			rc = regexec(&rx, p->buf, 0, 0, 0);
+			return !rc;
+		}
 	}
 	default:
 		error("invalid type %d in mcheck().\n", m->type);
