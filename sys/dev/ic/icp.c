@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.4 2002/09/27 15:37:17 provos Exp $	*/
+/*	$NetBSD: icp.c,v 1.5 2002/10/22 01:25:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.4 2002/09/27 15:37:17 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.5 2002/10/22 01:25:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	u_int16_t cdev_cnt;
 	int i, j, state, feat, nsegs, rv, noscsi, nocache;
 
+	state = 0;
 	noscsi = 0;
 	nocache = 0;
 
