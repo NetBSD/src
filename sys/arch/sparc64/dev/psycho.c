@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.8 2000/05/06 04:15:35 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.9 2000/05/17 02:31:12 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -101,6 +101,8 @@ static void *psycho_intr_establish __P((bus_space_tag_t, int, int,
 static int psycho_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 				   bus_size_t, struct proc *, int));
 static void psycho_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+static int psycho_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int));
 static void psycho_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 				    bus_size_t, int));
 int psycho_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
@@ -682,7 +684,7 @@ psycho_alloc_dma_tag(pp)
 	dt->_dmamap_load = psycho_dmamap_load;
 	PCOPY(_dmamap_load_mbuf);
 	PCOPY(_dmamap_load_uio);
-	PCOPY(_dmamap_load_raw);
+	dt->_dmamap_load_raw = psycho_dmamap_load_raw;
 	dt->_dmamap_unload = psycho_dmamap_unload;
 	dt->_dmamap_sync = psycho_dmamap_sync;
 	dt->_dmamem_alloc = psycho_dmamem_alloc;
@@ -972,6 +974,21 @@ psycho_dmamap_unload(t, map)
 	struct psycho_softc *sc = pp->pp_sc;
 
 	iommu_dvmamap_unload(t, &sc->sc_is, map);
+}
+
+int
+psycho_dmamap_load_raw(tag, map, segs, nsegs, size, flags)
+	bus_dma_tag_t tag;
+	bus_dmamap_t map;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	bus_size_t size;
+	int flags;
+{
+	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_softc *sc = pp->pp_sc;
+
+	return (iommu_dvmamap_load_raw(tag, &sc->sc_is, segs, nsegs, size, flags));
 }
 
 void
