@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2001/08/22 00:40:38 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2001/10/20 13:47:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #elif defined(ALGOR_P6032)
 	/*
-	 * Reserve the bottom 64K of the I/O spcae for ISA devices.
+	 * Reserve the bottom 64K of the I/O space for ISA devices.
 	 */
 	ioext  = extent_create("pciio",  0x00010000, 0x000effff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
