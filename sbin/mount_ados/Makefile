@@ -1,9 +1,9 @@
 #
-#	$Id: Makefile,v 1.1 1994/06/03 00:33:10 chopps Exp $
+#	$Id: Makefile,v 1.2 1994/12/22 10:45:52 cgd Exp $
 #
 
-PROG = mount_ados
-MAN8 = mount_ados.0
+PROG =	mount_ados
+MAN =	mount_ados.8
 
 BINOWN=	root
 BINMODE= 4555

@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.7 1994/06/08 19:32:06 mycroft Exp $
+#	$Id: Makefile,v 1.8 1994/12/22 10:47:32 cgd Exp $
 
 PROG=	nfsiod
-MAN8=	nfsiod.0
+MAN=	nfsiod.8
 
 .include <bsd.prog.mk>

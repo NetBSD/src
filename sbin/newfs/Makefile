@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$Id: Makefile,v 1.7 1994/06/08 19:30:24 mycroft Exp $
+#	$Id: Makefile,v 1.8 1994/12/22 10:47:10 cgd Exp $
 
 PROG=	newfs
 SRCS=	dkcksum.c getmntopts.c newfs.c mkfs.c
-MAN8=	newfs.0
+MAN=	newfs.8
 
 MOUNT=	${.CURDIR}/../mount
 CFLAGS+=-DMFS -I${MOUNT}
