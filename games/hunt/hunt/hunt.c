@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.16 2002/12/06 01:50:56 thorpej Exp $	*/
+/*	$NetBSD: hunt.c,v 1.17 2003/04/01 12:01:34 drochner Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.16 2002/12/06 01:50:56 thorpej Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.17 2003/04/01 12:01:34 drochner Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -26,6 +26,7 @@ __RCSID("$NetBSD: hunt.c,v 1.16 2002/12/06 01:50:56 thorpej Exp $");
 static struct termios saved_tty;
 # endif
 # include	<unistd.h>
+# include	<ifaddrs.h>
 
 # include	"hunt.h"
 
@@ -350,24 +351,30 @@ broadcast_vec(s, vector)
 	int			s;		/* socket */
 	struct	sockaddr	**vector;
 {
-	char			if_buf[BUFSIZ];
-	struct	ifconf		ifc;
-	struct	ifreq		*ifr;
-	unsigned int		n;
 	int			vec_cnt;
+	struct ifaddrs		*ifp, *ip;
 
 	*vector = NULL;
-	ifc.ifc_len = sizeof if_buf;
-	ifc.ifc_buf = if_buf;
-	if (ioctl(s, SIOCGIFCONF, (char *) &ifc) < 0)
+	if (getifaddrs(&ifp) < 0)
 		return 0;
+
 	vec_cnt = 0;
-	n = ifc.ifc_len / sizeof (struct ifreq);
-	*vector = (struct sockaddr *) malloc(n * sizeof (struct sockaddr));
-	for (ifr = ifc.ifc_req; n != 0; n--, ifr++)
-		if (ioctl(s, SIOCGIFBRDADDR, ifr) >= 0)
-			memcpy(&(*vector)[vec_cnt++], &ifr->ifr_addr,
-				sizeof (struct sockaddr));
+	for (ip = ifp; ip; ip = ip->ifa_next)
+		if ((ip->ifa_addr->sa_family == AF_INET) &&
+		    (ip->ifa_flags & IFF_BROADCAST))
+			vec_cnt++;
+
+	*vector = (struct sockaddr *)
+		malloc(vec_cnt * sizeof(struct sockaddr_in));
+
+	vec_cnt = 0;
+	for (ip = ifp; ip; ip = ip->ifa_next)
+		if ((ip->ifa_addr->sa_family == AF_INET) &&
+		    (ip->ifa_flags & IFF_BROADCAST))
+			memcpy(&(*vector)[vec_cnt++], ip->ifa_broadaddr,
+			       sizeof(struct sockaddr_in));
+
+	freeifaddrs(ifp);
 	return vec_cnt;
 }
 # endif
