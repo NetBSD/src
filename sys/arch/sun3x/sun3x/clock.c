@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 1997/04/25 18:31:37 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 1997/04/28 23:30:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -74,7 +74,6 @@
 #include <machine/leds.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
-#include <machine/mon.h>
 
 #include <sun3/sun3/interreg.h>
 
@@ -144,6 +143,10 @@ oclock_match(parent, cf, args)
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
+		return (0);
+
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
 		return (0);
 
 	/*
@@ -226,6 +229,10 @@ clock_match(parent, cf, args)
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
+		return (0);
+
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
 		return (0);
 
 	/* If intersil was found, use that. */
