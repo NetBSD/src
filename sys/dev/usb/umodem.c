@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.37 2001/01/23 14:04:14 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.38 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -288,6 +288,7 @@ USB_ATTACH(umodem)
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
 	uca.arg = sc;
+	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
