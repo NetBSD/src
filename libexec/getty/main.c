@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2001/11/02 18:27:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2001/11/10 17:20:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.39 2001/11/02 18:27:00 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2001/11/10 17:20:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ char	tabent[TABBUFSIZ];
 
 char	*env[128];
 
-char partab[] = {
+const char partab[] = {
 	0001,0201,0201,0001,0201,0001,0001,0201,
 	0202,0004,0003,0205,0005,0206,0201,0001,
 	0201,0001,0001,0201,0001,0201,0201,0001,
