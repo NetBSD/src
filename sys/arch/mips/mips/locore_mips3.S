@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.65 2001/01/16 06:01:26 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.66 2001/01/20 07:23:21 ur Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1001,7 +1001,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	lw	v0, _C_LABEL(curproc)
 	addu	a1, sp, CALLFRAME_SIZ
  #	REG_L	a0, FRAME_SR(a1)
-	lw	v0, P_MD_ASTPENDING(t0)		# any pending ast?
+	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 /*
  * Check pending asynchronous traps.
