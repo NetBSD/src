@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.12 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.13 2001/06/15 10:35:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,9 +168,17 @@ wdc_obio_attach(parent, self, aux)
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
 					 ca->ca_reg[3]);
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.DMA_cap = 2;
+#ifdef notyet
+		/* Minimum cycle time is 150ns (DMA MODE 1) on ohare. */
+		if (ohare) {
+			sc->sc_wdcdev.PIO_cap = 3;
+			sc->sc_wdcdev.DMA_cap = 1;
+		}
+#endif
 	}
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->wdc_chanptr = chp;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
@@ -178,6 +186,7 @@ wdc_obio_attach(parent, self, aux)
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
 	sc->sc_wdcdev.dma_start = wdc_obio_dma_start;
 	sc->sc_wdcdev.dma_finish = wdc_obio_dma_finish;
+	sc->sc_wdcdev.set_modes = adjust_timing;
 	chp->channel = 0;
 	chp->wdc = &sc->sc_wdcdev;
 	chp->ch_queue = malloc(sizeof(struct channel_queue),
@@ -207,14 +216,21 @@ wdc_obio_attach(parent, self, aux)
 	if (use_dma)
 		adjust_timing(chp);
 
-	wdc_print_modes(chp);
 }
 
 /* Multiword DMA transfer timings */
-static struct {
+struct ide_timings {
 	int cycle;	/* minimum cycle time [ns] */
 	int active;	/* minimum command active time [ns] */
-} dma_timing[3] = {
+};
+static struct ide_timings pio_timing[5] = {
+	{ 600, 165 },    /* Mode 0 */
+	{ 383, 125 },    /*      1 */
+	{ 240, 100 },    /*      2 */
+	{ 180,  80 },    /*      3 */
+	{ 120,  70 }     /*      4 */
+};
+static struct ide_timings dma_timing[3] = {
 	{ 480, 215 },	/* Mode 0 */
 	{ 150,  80 },	/* Mode 1 */
 	{ 120,  70 },	/* Mode 2 */
@@ -228,47 +244,63 @@ void
 adjust_timing(chp)
 	struct channel_softc *chp;
 {
-        struct ataparams params;
-	struct ata_drive_datas *drvp = &chp->ch_drive[0];	/* XXX */
+	struct ata_drive_datas *drvp;
 	u_int conf;
-	int mode;
-	int cycle, active, min_cycle, min_active;
+	int drive;
+	int piomode = -1, dmamode = -1;
+	int min_cycle, min_active;
 	int cycle_tick, act_tick, inact_tick, half_tick;
 
-	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK)
-		return;
 
-	for (mode = 2; mode >= 0; mode--)
-		if (params.atap_dmamode_act & (1 << mode))
-			goto found;
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+		if (piomode == -1 || piomode > drvp->PIO_mode)
+			piomode = drvp->PIO_mode;
+		if (drvp->drive_flags & DRIVE_DMA) {
+			if (dmamode == -1 || dmamode > drvp->DMA_mode)
+				dmamode = drvp->DMA_mode;
+		}
+	}
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+		if (drvp->drive_flags & DRIVE) {
+			drvp->PIO_mode = piomode;
+			if (drvp->drive_flags & DRIVE_DMA)
+				drvp->DMA_mode = dmamode;
+		}
+	}
+	min_cycle = pio_timing[piomode].cycle;
+	min_active = pio_timing[piomode].active;
 
-	/* No active DMA mode is found...  Do nothing. */
-	return;
-
-found:
-	min_cycle = dma_timing[mode].cycle;
-	min_active = dma_timing[mode].active;
-
-#ifdef notyet
-	/* Minimum cycle time is 150ns on ohare. */
-	if (ohare && params.atap_dmatiming_recom < 150)
-		params.atap_dmatiming_recom = 150;
-#endif
-	cycle = max(min_cycle, params.atap_dmatiming_recom);
-	active = min_active + (cycle - min_cycle);		/* XXX */
-
-	cycle_tick = TIME_TO_TICK(cycle);
-	act_tick = TIME_TO_TICK(active);
+	cycle_tick = TIME_TO_TICK(min_cycle);
+	act_tick = TIME_TO_TICK(min_active);
 	inact_tick = cycle_tick - act_tick - 1;
 	if (inact_tick < 1)
 		inact_tick = 1;
-	half_tick = 0;	/* XXX */
-	conf = (half_tick << 21) | (inact_tick << 16) | (act_tick << 11);
+	conf = (inact_tick << 5) | act_tick;
+	if (dmamode != -1) {
+		/* there are active  DMA mode */
+
+		min_cycle = dma_timing[dmamode].cycle;
+		min_active = dma_timing[dmamode].active;
+
+		cycle_tick = TIME_TO_TICK(min_cycle);
+		act_tick = TIME_TO_TICK(min_active);
+		inact_tick = cycle_tick - act_tick - 1;
+		if (inact_tick < 1)
+			inact_tick = 1;
+		half_tick = 0;	/* XXX */
+		conf |=
+		    (half_tick << 21) | (inact_tick << 16) | (act_tick << 11);
+	}
 	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG, conf);
 #if 0
 	printf("conf = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
-	    conf, cycle_tick, cycle, act_tick, active, inact_tick);
+	    conf, cycle_tick, min_cycle, act_tick, min_active, inact_tick);
 #endif
+	wdc_print_modes(chp);
 }
 
 int
