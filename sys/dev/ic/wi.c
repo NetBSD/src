@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.12 2001/05/16 14:33:21 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.13 2001/05/20 12:57:57 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1680,35 +1680,35 @@ wi_get_id(sc)
 	printf("%s: using ", sc->sc_dev.dv_xname);
 	switch (le16toh(ver.wi_ver[0])) {
 		case WI_NIC_EVB2:
-			printf("PRISM I HFA3841(EVB2)");
+			printf("RF:PRISM2 MAC:HFA3841");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3763:
-			printf("PRISM II HWB3763 rev.B");
+			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3763 rev.B");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163:
-			printf("PRISM II HWB3163 rev.A");
+			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.A");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163B:
-			printf("PRISM II HWB3163 rev.B");
+			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.B");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_EVB3:
-			printf("PRISM II  HFA3842(EVB3)");
+			printf("RF:PRISM2 MAC:HFA3842");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB1153:
-			printf("PRISM I HFA1153");
+			printf("RF:PRISM1 MAC:HFA3841 CARD:HWB1153");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_P2_SST:
-			printf("PRISM II HWB3163 SST-flash");
+			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_PRISM2_5:
-			printf("PRISM 2.5 ISL3873");
+			printf("PRISM2.5 MAC:ISL3873");
 			sc->sc_prism2 = 1;
 			break;
 		default:
