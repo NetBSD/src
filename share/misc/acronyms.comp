@@ -1,9 +1,14 @@
-$NetBSD: acronyms.comp,v 1.17 2003/10/02 13:33:29 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.18 2003/10/03 13:48:09 jmmv Exp $
 
 ABI	application binary interface
+ACPI	advanced configuration and power interface
 AGP	accelerated graphics port
 API	application programming interface
+APIC	advanced programmable interrupt controller
+AT	advanced technology
 ATA	advanced technology attachment
+ATAPI	advanced technology attachment packet interface
+ATX	advanced technology extended
 BEDO	burst extended data output
 BIOS	basic input/output system
 BLOB	binary large object
@@ -13,6 +18,7 @@ CDRAM	cache dynamic random access memory
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CLI	command line interface
+CPU	central process unit
 CRLF	carriage return line feed
 CSS	cascading style sheets
 CVS	concurrent versions system
@@ -23,9 +29,11 @@ DRAM	dynamic random access memory
 DSL	digital subscriber line
 DTD	document type definition
 DVD	digital versatile disc
+ECP	enhanced capability port
 EDO	extended data out
 EEPROM	electrically erasable programmable read only memory
 EISA	extended industry standard architecture
+EPP	enhanced parallel port
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
 FBRAM	frame buffer random access memory
@@ -83,7 +91,9 @@ PCI	peripheral component interconnect
 PDP	page descriptor page
 PERL	practical extraction [and] report language
 PGP	pretty good privacy
+PIC	programmable interrupt controller
 PID	process id
+PIO	programmed input/output
 PNG	portable network graphics
 POP	post office protocol
 POSIX	portable operating system interface [for] unix
@@ -100,14 +110,17 @@ RISC	reduced instruction set computing
 ROM	read only memory
 RPM	revolutions per minute
 RTF	rich text format
+S/PDIF	sony/phillips digital interface
 SAM	serial access memory
 SATA	serial advanced technology attachment
 SCSI	small computer standard interface
 SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
 SLDRAM	synchronous-link dynamic random access memory
+SMART	self-monitoring analysis ans reporting technology
 SMP	symmetric multiprocessing
 SMTP	simple mail transfer protocol
+SPD	serial presence detect
 SRAM	static random access memory
 SSH	secure shell
 SSL	secure sockets layer
@@ -116,11 +129,13 @@ TCP	transmission control protocol
 TLD	top level domain
 TTY	teletype
 TZ	time zone
+UC	uncacheable
 UDP	user datagram protocol
 UPS	uninterruptible power supply
 URI	uniform resource identifier
 URL	uniform resource locator
 USB	universal serial bus
+USWC	uncacheable speculative write combining
 UUCP	unix-to-unix copy protocol
 VCM	virtual channel memory
 VPN	virtual private network
@@ -129,3 +144,4 @@ WRAM	window random access memory
 WWW	world wide web
 XML	extensible markup language
 XSL	extensible stylesheet language
+XT	extended technology
