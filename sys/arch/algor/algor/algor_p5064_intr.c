@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.5 2001/06/21 05:20:54 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.6 2001/06/21 06:24:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ const struct p5064_irqmap p5064_irqmap[NIRQMAPS] = {
 	/* ISA bridge */
 	{ P5064_IRQ_ISABRIDGE,	0,
 	  IRQREG_ISAINT,	ISAINT_ISABR,
-	  0,			4 },
+	  3,			0 },
 
 	/* IDE 0 */
 	{ P5064_IRQ_IDE0,	0,
