@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.14 2001/01/03 10:09:00 takemura Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15 2002/11/03 17:43:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,10 +50,17 @@
  *	#endif
  */
 #define	_BSD_CLOCK_T_		unsigned long	/* clock() */
+#ifdef _LP64
+#define	_BSD_PTRDIFF_T_		long		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
+#define	_BSD_SSIZE_T_		long		/* byte count or error */
+#define	_BSD_TIME_T_		int		/* time() */
+#else
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		long		/* time() */
+#endif /* _LP64 */
 #define	_BSD_VA_LIST_		char *		/* va_list */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
