@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.29 1997/10/16 04:23:39 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.30 1998/01/15 22:26:00 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -26,6 +26,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
