@@ -1,15 +1,17 @@
-/* $NetBSD: stubs.c,v 1.9 2001/07/28 19:12:50 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.10 2001/11/16 13:48:33 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.9 2001/07/28 19:12:50 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.10 2001/11/16 13:48:33 bjh21 Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+
+#include <uvm/uvm_extern.h>
 
 void
 resettodr()
