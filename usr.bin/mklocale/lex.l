@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.8 2003/03/10 21:18:50 tshiozak Exp $	*/
+/*	$NetBSD: lex.l,v 1.9 2003/04/06 18:33:24 tshiozak Exp $	*/
 
 %{
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.8 2003/03/10 21:18:50 tshiozak Exp $");
+__RCSID("$NetBSD: lex.l,v 1.9 2003/04/06 18:33:24 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,11 +84,11 @@ W	[\t\n\r ]
 '\\v'				{ yylval.rune = '\v';
 				  return(RUNE); }
 
-0x{XDIGIT}+			{ yylval.rune = strtol(yytext, 0, 16);
+0x{XDIGIT}+			{ yylval.rune = strtoul(yytext, 0, 16);
 				  return(RUNE); }
-0{ODIGIT}+			{ yylval.rune = strtol(yytext, 0, 8);
+0{ODIGIT}+			{ yylval.rune = strtoul(yytext, 0, 8);
 				  return(RUNE); }
-{DIGIT}+			{ yylval.rune = strtol(yytext, 0, 10);
+{DIGIT}+			{ yylval.rune = strtoul(yytext, 0, 10);
 				  return(RUNE); }
 
 

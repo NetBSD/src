@@ -1,4 +1,4 @@
-/*	$NetBSD: _wctrans_local.h,v 1.1 2003/03/02 22:18:14 tshiozak Exp $	*/
+/*	$NetBSD: _wctrans_local.h,v 1.2 2003/04/06 18:33:23 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -35,7 +35,8 @@ void	_wctrans_init(_RuneLocale *);
 static __inline wint_t
 _towctrans(wint_t c, _WCTransEntry *te)
 {
-	return (_RUNE_ISCACHED(c) ? te->te_cached[c]:_towctrans_ext(c, te));
+	return (_RUNE_ISCACHED(c) ?
+		te->te_cached[(__nbrune_t)c]:_towctrans_ext(c, te));
 }
 
 static __inline struct _WCTransEntry *
