@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.20 2003/12/29 16:36:48 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.21 2003/12/29 16:41:22 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.20 2003/12/29 16:36:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.21 2003/12/29 16:41:22 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -249,7 +249,7 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	vidcaudio_dma_program(ag.silence, ag.silence+PAGE_SIZE-16,
+	vidcaudio_dma_program(ag.silence, ag.silence + PAGE_SIZE - 16,
 	    vidcaudio_dummy_routine, NULL);
 
 	audio_attach_mi(&vidcaudio_hw_if, sc, &sc->device);
