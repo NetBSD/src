@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.5 2001/11/13 06:58:17 lukem Exp $ */
+/*	$NetBSD: p9100.c,v 1.6 2001/12/08 05:36:31 soren Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.5 2001/11/13 06:58:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.6 2001/12/08 05:36:31 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,15 +84,15 @@ struct p9100_softc {
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	bus_type_t	sc_ctl_btype;	/* phys address description */
+	bus_type_t	sc_ctl_slot;	/* phys address description */
 	bus_addr_t	sc_ctl_paddr;	/*   for device mmap() */
 	bus_size_t	sc_ctl_psize;	/*   for device mmap() */
 	bus_space_handle_t sc_ctl_memh;	/*   bus space handle */
-	bus_type_t	sc_cmd_btype;	/* phys address description */
+	bus_type_t	sc_cmd_slot;	/* phys address description */
 	bus_addr_t	sc_cmd_paddr;	/*   for device mmap() */
 	bus_size_t	sc_cmd_psize;	/*   for device mmap() */
 	bus_space_handle_t sc_cmd_memh;	/*   bus space handle */
-	bus_type_t	sc_fb_btype;	/* phys address description */
+	bus_type_t	sc_fb_slot;	/* phys address description */
 	bus_addr_t	sc_fb_paddr;	/*   for device mmap() */
 	bus_size_t	sc_fb_psize;	/*   for device mmap() */
 	bus_space_handle_t sc_fb_memh;	/*   bus space handle */
@@ -175,17 +175,17 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	/* Remember cookies for p9100_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_ctl_btype = (bus_type_t)sa->sa_reg[0].sbr_slot;
+	sc->sc_ctl_slot = (bus_type_t)sa->sa_reg[0].sbr_slot;
 	sc->sc_ctl_paddr = sbus_bus_addr(sa->sa_bustag, 
 		sa->sa_reg[0].sbr_slot, sa->sa_reg[0].sbr_offset);
 	sc->sc_ctl_psize = (bus_size_t)sa->sa_reg[0].sbr_size;
 
-	sc->sc_cmd_btype = (bus_type_t)sa->sa_reg[1].sbr_slot;
+	sc->sc_cmd_slot = (bus_type_t)sa->sa_reg[1].sbr_slot;
 	sc->sc_cmd_paddr = sbus_bus_addr(sa->sa_bustag, 
 		sa->sa_reg[1].sbr_slot, sa->sa_reg[1].sbr_offset);
 	sc->sc_cmd_psize = (bus_size_t)sa->sa_reg[1].sbr_size;
 
-	sc->sc_fb_btype = (bus_type_t)sa->sa_reg[2].sbr_slot;
+	sc->sc_fb_slot = (bus_type_t)sa->sa_reg[2].sbr_slot;
 	sc->sc_fb_paddr = sbus_bus_addr(sa->sa_bustag, 
 		sa->sa_reg[2].sbr_slot, sa->sa_reg[2].sbr_offset);
 	sc->sc_fb_psize = (bus_size_t)sa->sa_reg[2].sbr_size;
@@ -203,17 +203,17 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	if (sbus_bus_map(sc->sc_bustag, sc->sc_ctl_btype,
-			 sc->sc_ctl_paddr, sc->sc_ctl_psize,
-			 BUS_SPACE_MAP_LINEAR, 0,
+	if (sbus_bus_map(sc->sc_bustag, sc->sc_ctl_slot,
+			 sa->sa_reg[0].sbr_slot + sa->sa_reg[0].sbr_offset,
+			 sc->sc_ctl_psize, BUS_SPACE_MAP_LINEAR, 0,
 			 &sc->sc_ctl_memh) != 0) {
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}
 
-	if (sbus_bus_map(sc->sc_bustag, sc->sc_cmd_btype,
-			 sc->sc_cmd_paddr, sc->sc_cmd_psize,
-			 BUS_SPACE_MAP_LINEAR, 0,
+	if (sbus_bus_map(sc->sc_bustag, sc->sc_cmd_slot,
+			 sa->sa_reg[1].sbr_slot + sa->sa_reg[1].sbr_offset,
+			 sc->sc_cmd_psize, BUS_SPACE_MAP_LINEAR, 0,
 			 &sc->sc_cmd_memh) != 0) {
 		printf("%s: cannot map command registers\n", self->dv_xname);
 		return;
@@ -224,8 +224,10 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (caddr_t)sa->sa_promvaddrs[0];
 	if (isconsole && fb->fb_pixels == NULL) {
-		if (sbus_bus_map(sc->sc_bustag, sc->sc_fb_btype,
-				 sc->sc_fb_paddr, sc->sc_fb_psize,
+		if (sbus_bus_map(sc->sc_bustag, sc->sc_fb_slot,
+				 sa->sa_reg[2].sbr_slot +
+				     sa->sa_reg[2].sbr_offset,
+				 sc->sc_fb_psize,
 				 BUS_SPACE_MAP_LINEAR, 0,
 				 &sc->sc_fb_memh) != 0) {
 			printf("%s: cannot map framebuffer\n", self->dv_xname);
