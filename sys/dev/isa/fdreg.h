@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.1 2000/04/07 16:32:03 thorpej Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.2 2000/05/02 03:33:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,25 +43,32 @@
 #include <dev/ic/nec765reg.h>
 
 /* registers */
-#define	fdout	2	/* Digital Output Register (W) */
+#define	fdout	0	/* Digital Output Register (W) */
 #define	FDO_FDSEL	0x03	/*  floppy device select */
 #define	FDO_FRST	0x04	/*  floppy controller reset */
 #define	FDO_FDMAEN	0x08	/*  enable floppy DMA and Interrupt */
 #define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
 
-#define	fdsts	4	/* NEC 765 Main Status Register (R) */
-#define	fddata	5	/* NEC 765 Data Register (R/W) */
+#define	fdsts	2	/* NEC 765 Main Status Register (R) */
+#define	fddata	3	/* NEC 765 Data Register (R/W) */
 
-#define	fdctl	7	/* Control Register (W) */
+#define	fdctl	5	/* Control Register (W) */
 #define	FDC_500KBPS	0x00	/* 500KBPS MFM drive transfer rate */
 #define	FDC_300KBPS	0x01	/* 300KBPS MFM drive transfer rate */
 #define	FDC_250KBPS	0x02	/* 250KBPS MFM drive transfer rate */
 #define	FDC_125KBPS	0x03	/* 125KBPS FM drive transfer rate */
 
-#define	fdin	7	/* Digital Input Register (R) */
+#define	fdin	5	/* Digital Input Register (R) */
 #define	FDI_DCHG	0x80	/* diskette has been changed */
 
 #define	FDC_BSIZE	512
+
+/*
+ * This constant is a little misleading.  Historically, the floppy
+ * controller is located at 0x3f0-0x3f7, but the actual registers
+ * are 0x3f2, 0x3f3, 0x3f4, and 0x3f7.  This constant assumes the
+ * historic range, but the offsets above reflect the `real' offsets.
+ */
 #define	FDC_NPORT	8
 
 /*
