@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.8 2004/01/25 13:51:29 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.9 2004/01/25 13:52:00 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -47,7 +47,7 @@ attach rpckbd at iomd with rpckbd_iomd
 file	arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
 
 # VIDC device
-# parent to vidcconsole, vidcaudio, beep
+# parent to vidcconsole, vidcaudio
 device	vidc { }
 attach	vidc at mainbus
 file	arch/arm/iomd/vidc20.c			vidc		needs-count
