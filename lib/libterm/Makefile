@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/04/18 15:26:20 tv Exp $
+#	$NetBSD: Makefile,v 1.15 1998/04/18 15:46:22 tv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
@@ -14,14 +14,14 @@ INCSDIR=/usr/include
 .include <bsd.own.mk>
 
 .if !defined(NOSTATICLIB)
-LINKS=	${LIBDIR}/libtermcap.a ${LIBDIR}/libtermlib.a
+LINKS+=	${LIBDIR}/libtermcap.a ${LIBDIR}/libtermlib.a
 .endif
 
 .if !defined(NOPROFILE)
 LINKS+=	${LIBDIR}/libtermcap_p.a ${LIBDIR}/libtermlib_p.a
 .endif
 
-.if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
+.if !defined(NOPIC) && exists(${.CURDIR}/shlib_version)
 LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
 	${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 
