@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.1 2002/03/30 19:48:55 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.2 2002/04/05 03:29:05 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,30 +31,26 @@
  * Integraphics Systems IGA 1682 and (untested) CyberPro 2k.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.1 2002/03/30 19:48:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2 2002/04/05 03:29:05 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <uvm/uvm_extern.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
 
-#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
+#include <dev/wscons/wsconsio.h>
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
-
-#include <uvm/uvm_extern.h>
 
 
 /*
