@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.4 2002/12/30 07:29:26 matt Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.5 2003/01/13 13:01:15 mrg Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.4 2002/12/30 07:29:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.5 2003/01/13 13:01:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,10 +62,36 @@ CFATTACH_DECL(wss_acpi, sizeof(struct wss_softc), wss_acpi_match,
  * Supported device IDs
  */
 
-static const char * const wss_acpi_ids[] = {
-	"CSC0100",	/* NeoMagic 256AV with CS4232 codec */
-	NULL
+struct wss_acpi_hint {
+	char idstr[8];
+	int io_region_idx_ad1848;	/* which region index is the DAC?  */
+	int io_region_idx_opl;		/* which region index is the OPL?  */
+	int offset_ad1848;		/* offset from start of DAC region */
 };
+
+struct wss_acpi_hint wss_acpi_hints[] = {
+	{ "NMX2210", 1, 2, WSS_CODEC },
+	{ "CSC0000", 0, 1, 0 },		/* Dell Latitude CPi */
+	{ "CSC0100", 0, 1, 0 },		/* CS4610 with CS4236 codec */
+	{ { 0 }, 0, 0, 0 }
+};
+
+int wss_acpi_hints_index (const char *);
+
+int
+wss_acpi_hints_index(idstr)
+	const char *idstr;
+{
+	int idx = 0;
+
+	while (wss_acpi_hints[idx].idstr[0] != 0) {
+		if (!strcmp(wss_acpi_hints[idx].idstr, idstr))
+			return idx;
+		++idx;
+	}
+
+	return -1;
+}
 
 /*
  * wss_acpi_match: autoconf(9) match routine
@@ -74,19 +100,12 @@ int
 wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	const char *id;
-	int i;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
+	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE ||
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo.HardwareId) == -1)
+		return (0);
 
-	for (i = 0; (id = wss_acpi_ids[i]) != NULL; ++i) {
-		if (strcmp(aa->aa_node->ad_devinfo.HardwareId, id) == 0)
-			return 1;
-	}
-
-	/* No matches found */
-	return 0;
+	return (1);
 }
 
 /*
@@ -103,8 +122,12 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_drq *playdrq, *recdrq;
 	struct audio_attach_args arg;
 	ACPI_STATUS rv;
+	struct wss_acpi_hint *wah;
 
 	printf(": NeoMagic 256AV audio\n");
+
+	wah = &wss_acpi_hints[
+	    wss_acpi_hints_index(aa->aa_node->ad_devinfo.HardwareId)];
 
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,
@@ -117,8 +140,8 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Find and map our i/o registers */
 	sc->sc_iot = aa->aa_iot;
-	dspio = acpi_res_io(&res, 0);
-	oplio = acpi_res_io(&res, 1);
+	dspio = acpi_res_io(&res, wah->io_region_idx_ad1848);
+	oplio = acpi_res_io(&res, wah->io_region_idx_opl);
 	if (dspio == NULL || oplio == NULL) {
 		printf("%s: unable to find i/o registers resource\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
@@ -162,7 +185,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->wss_recdrq = recdrq->ar_drq;
 
 	sc->sc_ad1848.sc_ad1848.sc_iot = sc->sc_iot;
-	bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0, 4,
+	bus_space_subregion(sc->sc_iot, sc->sc_ioh, wah->offset_ad1848, 4,
 	    &sc->sc_ad1848.sc_ad1848.sc_ioh);
 
 	/* Look for the ad1848 */
