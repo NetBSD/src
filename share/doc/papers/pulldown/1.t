@@ -1,4 +1,4 @@
-.\"	$Id: 1.t,v 1.1 2001/07/04 05:29:25 itojun Exp $
+.\"	$Id: 1.t,v 1.2 2004/04/23 02:58:27 simonb Exp $
 .\"
 .\".ds RH 4.4BSD incompatibility with IPv6/IPsec packet processing
 .NH 1
@@ -52,7 +52,7 @@ bytes in the packet
 are placed in the continuous memory region.
 After a call to
 .I m_pullup,
-the caller can safely access the the first
+the caller can safely access the first
 .I len
 bytes of the packet, assuming that they are continuous.
 The caller can, for example, safely use pointer variables into

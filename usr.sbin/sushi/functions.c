@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.8 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: functions.c,v 1.9 2004/04/23 02:58:30 simonb Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -330,8 +330,8 @@ ftp_pkgcats(char *subdir)
 /*
  *	Return patch where binary packages for this OS version/arch
  *	are expected. If mirror is NULL, ftp.NetBSD.org is used.
- *	If it's set, it's assumed to be the URL where the the
- *	OS version dirs are, e.g. ftp://ftp.NetBSD.org/pub/NetBSD/packages.
+ *	If it's set, it's assumed to be the URL where the OS version
+ *	dirs are, e.g. ftp://ftp.NetBSD.org/pub/NetBSD/packages.
  *	If $PKG_PATH is set, is returned unchanged, overriding everything.
  *	In any case, a trailing '/' is *not* passed.
  *	See also Appendix B of /usr/pkgsrc/Packages.txt.

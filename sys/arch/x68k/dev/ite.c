@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.36 2003/11/01 12:56:32 jdolecek Exp $	*/
+/*	$NetBSD: ite.c,v 1.37 2004/04/23 02:58:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.36 2003/11/01 12:56:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.37 2004/04/23 02:58:28 simonb Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -391,7 +391,7 @@ iteoff(dev, flag)
 	/*
 	 * XXX When the system is rebooted with "reboot", init(8)
 	 * kills the last process to have the console open.
-	 * If we don't revent the the ITE_ACTIVE bit from being
+	 * If we don't revent the ITE_ACTIVE bit from being
 	 * cleared, we will never see messages printed during
 	 * the process of rebooting.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_integer.c,v 1.5 2003/03/09 00:57:19 lukem Exp $	*/
+/*	$NetBSD: type_integer.c,v 1.6 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_integer.c,v 1.5 2003/03/09 00:57:19 lukem Exp $");
+__RCSID("$NetBSD: type_integer.c,v 1.6 2004/04/23 02:58:27 simonb Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -70,7 +70,7 @@ create_integer_args(va_list *args)
 }
 
 /*
- * Copy the the integer argument structure.
+ * Copy the integer argument structure.
  */
 static char *
 copy_integer_args(char *args)

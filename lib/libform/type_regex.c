@@ -1,4 +1,4 @@
-/*	$NetBSD: type_regex.c,v 1.5 2003/03/09 00:57:20 lukem Exp $	*/
+/*	$NetBSD: type_regex.c,v 1.6 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_regex.c,v 1.5 2003/03/09 00:57:20 lukem Exp $");
+__RCSID("$NetBSD: type_regex.c,v 1.6 2004/04/23 02:58:27 simonb Exp $");
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -74,7 +74,7 @@ create_regex_args(va_list *args)
 }
 
 /*
- * Copy the the regex argument structure.
+ * Copy the regex argument structure.
  */
 static char *
 copy_regex_args(char *args)

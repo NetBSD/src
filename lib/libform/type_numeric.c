@@ -1,4 +1,4 @@
-/*	$NetBSD: type_numeric.c,v 1.5 2003/03/09 00:57:20 lukem Exp $	*/
+/*	$NetBSD: type_numeric.c,v 1.6 2004/04/23 02:58:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_numeric.c,v 1.5 2003/03/09 00:57:20 lukem Exp $");
+__RCSID("$NetBSD: type_numeric.c,v 1.6 2004/04/23 02:58:27 simonb Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +70,7 @@ create_numeric_args(va_list *args)
 }
 
 /*
- * Copy the the numeric argument structure.
+ * Copy the numeric argument structure.
  */
 static char *
 copy_numeric_args(char *args)
