@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.44 1999/07/12 21:36:11 aidan Exp $       */
+/*     $NetBSD: login.c,v 1.45 1999/08/25 19:58:15 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.44 1999/07/12 21:36:11 aidan Exp $");
+__RCSID("$NetBSD: login.c,v 1.45 1999/08/25 19:58:15 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -80,7 +80,8 @@ __RCSID("$NetBSD: login.c,v 1.44 1999/07/12 21:36:11 aidan Exp $");
 #include <skey.h>
 #endif
 #ifdef KERBEROS5
-#include <krb5.h>
+#include <krb5/krb5.h>
+#include <kerberosIV/com_err.h>
 #endif
 
 #include "pathnames.h"
