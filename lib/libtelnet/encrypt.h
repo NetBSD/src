@@ -1,3 +1,5 @@
+/*	$NetBSD: encrypt.h,v 1.5 1998/02/27 10:33:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)encrypt.h	8.1 (Berkeley) 6/4/93
- *	$NetBSD: encrypt.h,v 1.4 1996/02/24 01:15:20 jtk Exp $
  */
 
 /*

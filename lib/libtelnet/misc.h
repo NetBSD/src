@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.h,v 1.5 1998/02/27 10:33:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,13 +33,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)misc.h	8.1 (Berkeley) 6/4/93
- *	$NetBSD: misc.h,v 1.4 1996/02/24 01:15:27 jtk Exp $
  */
 
+__BEGIN_DECLS
 extern char *UserNameRequested;
 extern char *LocalHostName;
 extern char *RemoteHostName;
 extern int ConnectedCount;
 extern int ReservedPort;
+
+int isprefix __P((char *, char *));
+char **genget __P((char *, char **, int));
+int Ambiguous __P((void *));
+__END_DECLS
 
 #include "misc-proto.h"
