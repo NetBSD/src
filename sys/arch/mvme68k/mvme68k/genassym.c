@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1.1.1 1995/07/25 23:11:57 chuck Exp $	*/
+/*	$NetBSD: genassym.c,v 1.2 1996/02/02 19:42:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -39,8 +39,6 @@
 #define _VA_LIST_ _BSD_VA_LIST_
 #define _PTRDIFF_T_ _BSD_PTRDIFF_T_
 
-#define _KERNEL
-
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/map.h>
@@ -50,13 +48,14 @@
 #include <sys/syscall.h>
 #include <sys/user.h>
 
+#include <vm/vm.h>
+
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <mvme68k/mvme68k/clockreg.h>
-#include <vm/vm.h>
 
 #include <errno.h>
 #include <stdio.h>
