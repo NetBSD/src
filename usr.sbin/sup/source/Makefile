@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/11/13 17:09:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 1998/09/05 15:02:35 lukem Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -111,7 +111,7 @@ libextra.a: ${EXTRA}
 	ar r libextra.a $?
 	ranlib libextra.a
 
-clean cleandir:
+clean cleandir distclean:
 	rm -f ${PROGRAMS} libextra.a netcrypt.c *.o core a.out
 
 install: ${PROGRAMS}

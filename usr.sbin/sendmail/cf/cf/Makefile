@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1998/02/08 06:57:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24 1998/09/05 15:02:35 lukem Exp $
 #
 #	@(#)Makefile	8.19 (Berkeley) 1/14/97
 
@@ -40,7 +40,7 @@ all: $(ALL)
 
 others: $(OTHERS)
 
-clean cleandir:
+clean cleandir distclean:
 	$(RM) $(ALL) core
 
 depend:

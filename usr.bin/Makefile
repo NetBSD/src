@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 1998/08/12 21:39:11 augustss Exp $
+#	$NetBSD: Makefile,v 1.86 1998/09/05 14:58:50 lukem Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -27,7 +27,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes \
 	write xargs xinstall xlint xstr yacc yes ypcat \
 	ypmatch ypwhich
 
-.if	make(clean) || make(cleandir)
+.if	make(clean) || make(cleandir) || make(distclean)
 SUBDIR+=elf2aout elf2ecoff elfstrip fdformat ldd strip telnet
 .else
 
@@ -49,6 +49,6 @@ SUBDIR+= fdformat
 SUBDIR+= elf2aout elf2ecoff elfstrip
 .endif
 
-.endif	# make(clean) || make(cleandir)
+.endif	# make(clean) || make(cleandir) || make(distclean)
 
 .include <bsd.subdir.mk>
