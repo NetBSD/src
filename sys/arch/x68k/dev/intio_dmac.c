@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.13 2002/08/03 06:38:41 isaki Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.14 2002/08/04 13:08:29 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -419,7 +419,7 @@ dmac_start_xfer_offset(self, xf, offset, size)
 	if ((offset >= dmamap->dm_mapsize) ||
 	    (offset + size > dmamap->dm_mapsize))
 		panic ("dmac_start_xfer_offset: invalid offset: "
-			"offset=%d, size=%d, mapsize=%d",
+			"offset=%d, size=%d, mapsize=%ld",
 		       offset, size, dmamap->dm_mapsize);
 #endif
 	/* program DMAC in single block mode or array chainning mode */
