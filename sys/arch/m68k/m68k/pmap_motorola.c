@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.12.4.2 2005/01/27 14:30:33 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.12.4.3 2005/02/18 14:38:29 chs Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12.4.2 2005/01/27 14:30:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12.4.3 2005/02/18 14:38:29 chs Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -2421,11 +2421,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				PMAP_DPRINTF(PDB_REMOVE|PDB_SEGTAB,
 				    ("remove: free stab %p\n",
 				    ptpmap->pm_stab));
-				pmap_remove(pmap_kernel(),
-				    (vaddr_t)ptpmap->pm_stab,
-				    (vaddr_t)ptpmap->pm_stab + M68K_STSIZE);
-				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
-							     ptpmap->pm_stpa));
 				uvm_km_free(st_map, (vaddr_t)ptpmap->pm_stab,
 				    M68K_STSIZE, UVM_KMF_WIRED);
 				ptpmap->pm_stab = Segtabzero;
