@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.4 2001/07/20 21:23:53 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.5 2001/07/26 19:57:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ pthread_spinlock(pthread_t thread, pt_spin_t *lock)
 		 */
 		if (thread->pt_next != NULL) {
 			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-			pthread__switch(thread, thread->pt_next, 0);
+			pthread__switch(thread, thread->pt_next);
 		}
 		/* try again */
 		count = nspins;
@@ -106,7 +106,7 @@ pthread_spintrylock(pthread_t thread, pt_spin_t *lock)
 		/* See above. */
 		if (thread->pt_next != NULL) {
 			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-			pthread__switch(thread, thread->pt_next, 0);
+			pthread__switch(thread, thread->pt_next);
 		}
 	}
 
@@ -131,7 +131,7 @@ pthread_spinunlock(pthread_t thread, pt_spin_t *lock)
 	
 	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL)) {
 		PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-		pthread__switch(thread, thread->pt_next, 0);
+		pthread__switch(thread, thread->pt_next);
 	}
 }
 

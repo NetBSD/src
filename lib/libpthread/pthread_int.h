@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.9 2001/07/25 23:48:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.10 2001/07/26 19:57:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 #define pthread__self() (pthread__id(pthread__sp()))
 
 void	pthread__upcall_switch(pthread_t self, pthread_t next);
-void	pthread__switch(pthread_t self, pthread_t next, int locks);
+void	pthread__switch(pthread_t self, pthread_t next);
 void	pthread__locked_switch(pthread_t self, pthread_t next, 
     pt_spin_t *lock);
 
