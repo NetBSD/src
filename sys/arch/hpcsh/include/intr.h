@@ -1,6 +1,6 @@
-/*	$NetBSD: intr.h,v 1.1 2001/01/17 05:21:52 itojun Exp $	*/
-#ifndef _EVBSH3_INTR_H_
-#define _EVBSH3_INTR_H_
+/*	$NetBSD: intr.h,v 1.2 2001/01/28 03:31:31 uch Exp $	*/
+#ifndef _HPCSH_INTR_H_
+#define _HPCSH_INTR_H_
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	9	/* nothing */
@@ -36,4 +36,4 @@
 #define IRQ_LOW  1
 #define IRQ_HIGH 15
 
-#endif /* _EVBSH3_INTR_H_ */
+#endif /* _HPCSH_INTR_H_ */
