@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2002/05/30 08:51:38 augustss Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2002/08/06 06:14:35 chs Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -47,7 +47,6 @@ static long ticks_per_intr;
 static volatile u_long lasttb;
 
 void decr_intr(struct clockframe *); /* Called from trap_subr.S */
-static inline u_quad_t mftb(void);
 
 void
 decr_intr(struct clockframe *frame)
@@ -126,17 +125,6 @@ cpu_initclocks(void)
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-}
-
-static __inline u_quad_t
-mftb(void)
-{
-	u_long scratch;
-	u_quad_t tb;
-	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return tb;
 }
 
 /*
