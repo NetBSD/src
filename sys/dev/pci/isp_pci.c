@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.54 2000/08/02 17:39:50 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.55 2000/08/03 03:00:04 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -240,8 +240,10 @@ struct cfattach isp_pci_ca = {
 	sizeof (struct isp_pcisoftc), isp_pci_probe, isp_pci_attach
 };
 
+#ifdef	DEBUG
 static char *vstring = 
     "Qlogic ISP Driver, NetBSD (pci) Platform Version %d.%d Core Version %d.%d";
+#endif
 
 static int
 isp_pci_probe(parent, match, aux)
