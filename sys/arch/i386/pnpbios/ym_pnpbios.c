@@ -1,4 +1,4 @@
-/* $NetBSD: ym_pnpbios.c,v 1.3.6.1 2000/09/26 00:35:02 itohy Exp $ */
+/* $NetBSD: ym_pnpbios.c,v 1.3.6.2 2002/03/27 10:12:52 he Exp $ */
 /*
  * Copyright (c) 1999
  *	Matthias Drochner.  All rights reserved.
@@ -25,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ym_pnpbios.c,v 1.3.6.2 2002/03/27 10:12:52 he Exp $");
 
 #include "mpu_ym.h"
 
@@ -143,7 +146,6 @@ ym_pnpbios_attach(parent, self, aux)
 	}
 	ac->mode = 2;
 	ac->MCE_bit = MODE_CHANGE_ENABLE;
-	ac->chip_name = "OPL3-SA3";
 
 	sc->sc_ad1848.sc_ic  = sc->sc_ic;
 
