@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.1 1997/06/11 11:21:47 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.2 1997/10/09 13:19:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -65,7 +65,7 @@ struct bufarea {
 	union {
 		char	*b_buf;			/* buffer space */
 		daddr_t	*b_indir;		/* indirect block */
-		struct	m_ext2fs *b_fs;		/* super block */
+		struct	ext2fs *b_fs;		/* super block */
 		struct	ext2_gd *b_cgd;		/* cylinder group descriptor */
 		struct	ext2fs_dinode *b_dinode;	/* inode block */
 	} b_un;
@@ -77,9 +77,11 @@ struct bufarea {
 #define	MINBUFS		5	/* minimum number of buffers required */
 struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* first alternate superblock */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
 struct bufarea *getdatablk __P((daddr_t, long));
+struct m_ext2fs sblock;
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -87,10 +89,7 @@ struct bufarea *getdatablk __P((daddr_t, long));
 	(bp)->b_bno = (daddr_t)-1; \
 	(bp)->b_flags = 0;
 
-#define	sbdirty()	sblk.b_dirty = 1
-#define	cgdirty()	cgblk.b_dirty = 1
-#define	sblock		(*sblk.b_un.b_fs)
-#define	cgrp		(*cgblk.b_un.b_cg)
+#define	sbdirty()	copyback_sb(&sblk); sblk.b_dirty = 1
 
 enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
@@ -211,3 +210,4 @@ struct ext2fs_dinode *ginode __P((ino_t));
 struct inoinfo *getinoinfo __P((ino_t));
 void getblk __P((struct bufarea *, daddr_t, long));
 ino_t allocino __P((ino_t, int));
+void copyback_sb __P((struct bufarea*));
