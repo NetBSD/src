@@ -1,4 +1,4 @@
-/*	$NetBSD: ulimit.c,v 1.2 1995/03/21 09:10:32 cgd Exp $	*/
+/*	$NetBSD: ulimit.c,v 1.3 1995/04/11 03:17:45 christos Exp $	*/
 
 /*
  * ulimit builtin
@@ -26,20 +26,40 @@ struct limits {
 };
 
 static const struct limits limits[] = {
-	{ "time(seconds)",	  RLIMIT_CPU,	   1, 't' },
-	{ "file(blocks)",	  RLIMIT_FSIZE,	 512, 'f' },
-	{ "data(kbytes)",	  RLIMIT_DATA,	1024, 'd' },
-	{ "stack(kbytes)",	  RLIMIT_STACK,	1024, 's' },
-	{ "memory(kbytes)",	  RLIMIT_RSS,	1024, 'm' },
-	{ "coredump(blocks)",	  RLIMIT_CORE,	 512, 'c' },
-	{ "nofiles(descriptors)", RLIMIT_NOFILE,   1, 'n' },
+#ifdef RLIMIT_CPU
+	{ "time(seconds)",		RLIMIT_CPU,	   1, 't' },
+#endif
+#ifdef RLIMIT_FSIZE
+	{ "file(blocks)",		RLIMIT_FSIZE,	 512, 'f' },
+#endif
+#ifdef RLIMIT_DATA
+	{ "data(kbytes)",		RLIMIT_DATA,	1024, 'd' },
+#endif
+#ifdef RLIMIT_STACK
+	{ "stack(kbytes)",		RLIMIT_STACK,	1024, 's' },
+#endif
+#ifdef  RLIMIT_CORE
+	{ "coredump(blocks)",		RLIMIT_CORE,	 512, 'c' },
+#endif
+#ifdef RLIMIT_RSS
+	{ "memory(kbytes)",		RLIMIT_RSS,	1024, 'm' },
+#endif
+#ifdef RLIMIT_MEMLOCK
+	{ "locked memory(kbytes)",	RLIMIT_MEMLOCK, 1024, 'l' },
+#endif
+#ifdef RLIMIT_NPROC
+	{ "process(processes)",		RLIMIT_NPROC,      1, 'p' },
+#endif
+#ifdef RLIMIT_NOFILE
+	{ "nofiles(descriptors)",	RLIMIT_NOFILE,     1, 'n' },
+#endif
 #ifdef RLIMIT_VMEM
-	{ "vmemory(kbytes)",	  RLIMIT_VMEM,	1024, 'v' },
+	{ "vmemory(kbytes)",		RLIMIT_VMEM,	1024, 'v' },
 #endif
 #ifdef RLIMIT_SWAP
-	{ "swap(kbytes)",	  RLIMIT_SWAP,	1024, 'w' },
+	{ "swap(kbytes)",		RLIMIT_SWAP,	1024, 'w' },
 #endif
-	{ (char *) 0 }
+	{ (char *) 0,			0,		   0,  '\0' }
 };
 
 int
@@ -57,7 +77,7 @@ ulimitcmd(argc, argv)
 	struct rlimit	limit;
 
 	what = 'f';
-	while ((optc = nextopt("HSatfdsmcn")) != '\0')
+	while ((optc = nextopt("HSatfdsmcnpl")) != '\0')
 		switch (optc) {
 		case 'H':
 			how = HARD;
@@ -83,16 +103,21 @@ ulimitcmd(argc, argv)
 
 		if (all || argptr[1])
 			error("ulimit: too many arguments\n");
-		val = (quad_t) 0;
-		while ((c = *p++) >= '0' && c <= '9')
-		{
-			val = (val * 10) + (long)(c - '0');
-			if (val < (quad_t) 0)
-				break;
+		if (strcmp(p, "unlimited") == 0)
+			val = RLIM_INFINITY;
+		else {
+			val = (quad_t) 0;
+
+			while ((c = *p++) >= '0' && c <= '9')
+			{
+				val = (val * 10) + (long)(c - '0');
+				if (val < (quad_t) 0)
+					break;
+			}
+			if (c)
+				error("ulimit: bad number\n");
+			val *= l->factor;
 		}
-		if (c)
-			error("ulimit: bad number\n");
-		val *= l->factor;
 	}
 	if (all) {
 		for (l = limits; l->name; l++) {
