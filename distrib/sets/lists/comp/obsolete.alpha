@@ -1,16 +1,5 @@
-# $NetBSD: obsolete.alpha,v 1.6 2002/09/07 12:48:54 gehenna Exp $
-/usr/include/alpha/atomic.h
-/usr/include/alpha/bwx.h
+# $NetBSD: obsolete.alpha,v 1.7 2002/10/29 06:19:37 lukem Exp $
 /usr/include/alpha/conf.h
-/usr/include/alpha/endian_machdep.h
 /usr/include/alpha/fbio.h
-/usr/include/alpha/int_const.h
-/usr/include/alpha/int_fmtio.h
-/usr/include/alpha/int_limits.h
-/usr/include/alpha/int_mwgwtypes.h
-/usr/include/alpha/int_types.h 
 /usr/include/alpha/intrcnt.h
-/usr/include/alpha/lock.h
-/usr/include/alpha/math.h
-/usr/include/alpha/pio.h
 /usr/include/alpha/wsconsio.h 
