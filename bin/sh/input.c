@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.24 1997/03/13 21:57:33 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.25 1997/03/14 01:42:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.24 1997/03/13 21:57:33 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.25 1997/03/14 01:42:22 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ pread()
 	parsenextc = parsefile->buf;
 
 retry:
-#ifndef NO_HISTORY
+#ifndef SMALL
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
 
@@ -294,7 +294,7 @@ check:
 	savec = *q;
 	*q = '\0';
 
-#ifndef NO_HISTORY
+#ifndef SMALL
 	if (parsefile->fd == 0 && hist && something) {
 		INTOFF;
 		history(hist, whichprompt == 1 ? H_ENTER : H_ADD, parsenextc);

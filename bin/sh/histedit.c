@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.11 1997/03/13 21:57:32 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.12 1997/03/14 01:42:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: histedit.c,v 1.11 1997/03/13 21:57:32 christos Exp $";
+static char rcsid[] = "$NetBSD: histedit.c,v 1.12 1997/03/14 01:42:20 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$NetBSD: histedit.c,v 1.11 1997/03/13 21:57:32 christos E
 #include "main.h"
 #include "output.h"
 #include "mystring.h"
-#ifndef NO_HISTORY
+#ifndef SMALL
 #include "myhistedit.h"
 #include "error.h"
 #include "eval.h"
