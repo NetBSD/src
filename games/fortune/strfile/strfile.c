@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.19 2000/01/13 16:22:10 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.20 2000/07/31 11:32:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.19 2000/01/13 16:22:10 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.20 2000/07/31 11:32:33 simonb Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -69,6 +69,21 @@ __RCSID("$NetBSD: strfile.c,v 1.19 2000/01/13 16:22:10 jsm Exp $");
 # ifndef MAXPATHLEN
 # define	MAXPATHLEN	1024
 # endif	/* MAXPATHLEN */
+
+u_int32_t
+h2nl(u_int32_t h)
+{
+        unsigned char c[4];
+        u_int32_t rv;
+
+        c[0] = (h >> 24) & 0xff;
+        c[1] = (h >> 16) & 0xff;
+        c[2] = (h >>  8) & 0xff;
+        c[3] = (h >>  0) & 0xff;
+        memcpy(&rv, c, sizeof rv);
+
+        return (rv);
+}
 
 /*
  *	This program takes a file composed of strings seperated by
@@ -253,11 +268,11 @@ main(ac, av)
 	}
 
 	(void) fseek(outf, (off_t) 0, SEEK_SET);
-	Tbl.str_version = htonl(Tbl.str_version);
-	Tbl.str_numstr = htonl(Num_pts - 1);
-	Tbl.str_longlen = htonl(Tbl.str_longlen);
-	Tbl.str_shortlen = htonl(Tbl.str_shortlen);
-	Tbl.str_flags = htonl(Tbl.str_flags);
+	Tbl.str_version = h2nl(Tbl.str_version);
+	Tbl.str_numstr = h2nl(Num_pts - 1);
+	Tbl.str_longlen = h2nl(Tbl.str_longlen);
+	Tbl.str_shortlen = h2nl(Tbl.str_shortlen);
+	Tbl.str_flags = h2nl(Tbl.str_flags);
 	(void) fwrite((char *) &Tbl, sizeof Tbl, 1, outf);
 	if (STORING_PTRS) {
 		for (p = Seekpts, cnt = Num_pts; cnt--; ++p)
