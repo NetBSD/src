@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.1.1.1 2004/03/28 08:56:35 martti Exp $	*/
+/*	$NetBSD: lexer.c,v 1.2 2004/05/09 03:53:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.
@@ -44,6 +44,7 @@ int		yyexpectaddr = 0;
 int		yybreakondot = 0;
 int		yyvarnext = 0;
 int		yytokentype = 0;
+int            *yycont;
 wordtab_t	*yywordtab = NULL;
 
 static	wordtab_t	*yyfindkey __P((char *));
