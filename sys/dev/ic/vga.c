@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.78 2004/07/30 10:47:20 jmmv Exp $ */
+/* $NetBSD: vga.c,v 1.79 2004/08/08 19:21:27 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.78 2004/07/30 10:47:20 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.79 2004/08/08 19:21:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,8 +701,10 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 #else
 	vga_console_vc.vc_nfontslots = 8;
 #endif
+#ifdef notdef
 	/* until we know better, assume "fast scrolling" does not work */
 	vga_console_vc.vc_quirks |= VGA_QUIRK_NOFASTSCROLL;
+#endif
 
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
