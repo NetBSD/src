@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.12 1997/04/10 02:48:45 cgd Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.13 1997/04/13 19:48:16 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -87,8 +87,6 @@
 
 #define PCI_BASEADR_IO	0x10
 #define PCI_BASEADR_MEM	0x14
-
-int	ahc_pci_prefer_io = 0;      /* 1 -> map via I/O (patchable data) */
 
 #endif /* defined(__NetBSD__) */
 
@@ -318,10 +316,9 @@ ahc_pci_attach(parent, self, aux)
 #elif defined(__NetBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
-	bus_addr_t busbase;
-	bus_size_t bussize;
-	bus_space_tag_t st;
-	bus_space_handle_t sh;
+	bus_space_tag_t st, iot, memt;
+	bus_space_handle_t sh, ioh, memh;
+	int ioh_valid, memh_valid;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 #endif
@@ -344,24 +341,21 @@ ahc_pci_attach(parent, self, aux)
 	 */
 	io_port &= 0xfffffffe;
 #elif defined(__NetBSD__)
-	if (ahc_pci_prefer_io) {
-		if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR_IO,
-		    &busbase, &bussize)) {
-			printf(": unable to find PCI I/O base\n");
-			return;
-		}
-		st = pa->pa_iot;
+	ioh_valid = (pci_map_register(pa, PCI_BASEADR_IO,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_map_register(pa, PCI_BASEADR_MEM,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, NULL, NULL) == 0);
+
+	if (memh_valid) {
+		st = memt;
+		sh = memh;
+	} else if (ioh_valid) {
+		st = iot;
+		sh = ioh;
 	} else {
-		if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR_MEM,
-		    &busbase, &bussize, NULL)) {
-			printf(": unable to find PCI memory base\n");
-			return;
-		}
-		st = pa->pa_memt;
-	}
-	if (bus_space_map(st, busbase, bussize, 0, &sh)) {
-		printf(": unable to map %s registers\n",
-		    ahc_pci_prefer_io ? "I/O" : "memory");
+		printf(": unable to map registers\n");
 		return;
 	}
 	printf("\n");

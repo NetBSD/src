@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.10 1997/04/05 02:55:28 mjacob Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.11 1997/04/13 19:48:18 cgd Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -92,8 +92,6 @@ static struct ispmdvec mdvec = {
 #define IO_MAP_REG	0x10
 #define MEM_MAP_REG	0x14
 
-int isp_pci_prefer_io = 0;	/* 1 -> map via I/O (patchable data) */
-
 
 #ifdef	__BROKEN_INDIRECT_CONFIG
 static int isp_pci_probe __P((struct device *, void *, void *));
@@ -140,31 +138,27 @@ isp_pci_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
-	bus_addr_t busbase;
-	bus_size_t bussize;
-	bus_space_tag_t st;
-	bus_space_handle_t sh;
+	bus_space_tag_t st, iot, memt;
+	bus_space_handle_t sh, ioh, memh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
+	int ioh_valid, memh_valid;
 
-	if (isp_pci_prefer_io) {
-		if (pci_io_find(pa->pa_pc, pa->pa_tag, IO_MAP_REG, &busbase,
-		    &bussize)) {
-			printf(": unable to find PCI I/O base\n");
-			return;
-		}
-		st = pa->pa_iot;
+	ioh_valid = (pci_map_register(pa, IO_MAP_REG,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_map_register(pa, MEM_MAP_REG,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, NULL, NULL) == 0);
+
+	if (memh_valid) {
+		st = memt;
+		sh = memh;
+	} else if (ioh_valid) {
+		st = iot;
+		sh = ioh;
 	} else {
-		if (pci_mem_find(pa->pa_pc, pa->pa_tag, MEM_MAP_REG, &busbase,
-		    &bussize, NULL)) {
-			printf(": unable to find PCI memory base\n");
-			return;
-		}
-		st = pa->pa_memt;
-	}
-	if (bus_space_map(st, busbase, bussize, 0, &sh)) {
-		printf(": unable to map %s registers\n",
-		    isp_pci_prefer_io ? "I/O" : "memory");
+		printf(": unable to map device registers\n");
 		return;
 	}
 	printf("\n");
