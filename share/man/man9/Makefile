@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.42 1998/05/09 00:48:20 mrg Exp $
+#       $NetBSD: Makefile,v 1.43 1998/09/02 04:40:02 jeremy Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -78,6 +78,7 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
+MLINKS+=kprintf.9 printf.9 sprintf.9 vprintf.9 uprintf.9 ttyprintf.9
 MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \

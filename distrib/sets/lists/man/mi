@@ -890,6 +890,7 @@
 ./usr/share/man/cat9/inittodr.0
 ./usr/share/man/cat9/intro.0
 ./usr/share/man/cat9/kernacc.0
+./usr/share/man/cat9/kprintf.0
 ./usr/share/man/cat9/log.0
 ./usr/share/man/cat9/m_adj.0
 ./usr/share/man/cat9/m_cat.0
@@ -920,6 +921,7 @@
 ./usr/share/man/cat9/pgsignal.0
 ./usr/share/man/cat9/physio.0
 ./usr/share/man/cat9/pool.0
+./usr/share/man/cat9/printf.0
 ./usr/share/man/cat9/psignal.0
 ./usr/share/man/cat9/readdisklabel.0
 ./usr/share/man/cat9/resettodr.0
@@ -954,6 +956,7 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
+./usr/share/man/cat9/sprintf.0
 ./usr/share/man/cat9/store.0
 ./usr/share/man/cat9/subyte.0
 ./usr/share/man/cat9/suibyte.0
@@ -964,10 +967,12 @@
 ./usr/share/man/cat9/time.0
 ./usr/share/man/cat9/timeout.0
 ./usr/share/man/cat9/tsleep.0
+./usr/share/man/cat9/ttyprintf.0
 ./usr/share/man/cat9/uao_create.0
 ./usr/share/man/cat9/uao_detach.0
 ./usr/share/man/cat9/uao_reference.0
 ./usr/share/man/cat9/untimeout.0
+./usr/share/man/cat9/uprintf.0
 ./usr/share/man/cat9/useracc.0
 ./usr/share/man/cat9/uvm.0
 ./usr/share/man/cat9/uvm_chgkprot.0
@@ -1019,6 +1024,7 @@
 ./usr/share/man/cat9/uvmspace_share.0
 ./usr/share/man/cat9/uvmspace_unshare.0
 ./usr/share/man/cat9/uvn_attach.0
+./usr/share/man/cat9/vprintf.0
 ./usr/share/man/cat9/vslock.0
 ./usr/share/man/cat9/vsunlock.0
 ./usr/share/man/cat9/wakeup.0
@@ -1915,6 +1921,7 @@
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intro.9
 ./usr/share/man/man9/kernacc.9
+./usr/share/man/man9/kprintf.9
 ./usr/share/man/man9/log.9
 ./usr/share/man/man9/m_adj.9
 ./usr/share/man/man9/m_cat.9
@@ -1945,6 +1952,7 @@
 ./usr/share/man/man9/pgsignal.9
 ./usr/share/man/man9/physio.9
 ./usr/share/man/man9/pool.9
+./usr/share/man/man9/printf.9
 ./usr/share/man/man9/psignal.9
 ./usr/share/man/man9/readdisklabel.9
 ./usr/share/man/man9/resettodr.9
@@ -1979,6 +1987,7 @@
 ./usr/share/man/man9/splstatclock.9
 ./usr/share/man/man9/spltty.9
 ./usr/share/man/man9/splx.9
+./usr/share/man/man9/sprintf.9
 ./usr/share/man/man9/store.9
 ./usr/share/man/man9/subyte.9
 ./usr/share/man/man9/suibyte.9
@@ -1989,10 +1998,12 @@
 ./usr/share/man/man9/time.9
 ./usr/share/man/man9/timeout.9
 ./usr/share/man/man9/tsleep.9
+./usr/share/man/man9/ttyprintf.9
 ./usr/share/man/man9/uao_create.9
 ./usr/share/man/man9/uao_detach.9
 ./usr/share/man/man9/uao_reference.9
 ./usr/share/man/man9/untimeout.9
+./usr/share/man/man9/uprintf.9
 ./usr/share/man/man9/useracc.9
 ./usr/share/man/man9/uvm.9
 ./usr/share/man/man9/uvm_chgkprot.9
@@ -2044,6 +2055,7 @@
 ./usr/share/man/man9/uvmspace_share.9
 ./usr/share/man/man9/uvmspace_unshare.9
 ./usr/share/man/man9/uvn_attach.9
+./usr/share/man/man9/vprintf.9
 ./usr/share/man/man9/vslock.9
 ./usr/share/man/man9/vsunlock.9
 ./usr/share/man/man9/wakeup.9
