@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.12 2000/12/17 14:28:45 jdc Exp $	*/
+/*	$NetBSD: termout.c,v 1.13 2002/06/13 23:41:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,21 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termout.c,v 1.12 2000/12/17 14:28:45 jdc Exp $");
+__RCSID("$NetBSD: termout.c,v 1.13 2002/06/13 23:41:20 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #if defined(unix)
 #include <signal.h>
 #include <termios.h>
-#ifdef __STDC__
 #include <unistd.h>
 #include <stdlib.h>
 #ifdef __NetBSD__
 #include <termcap.h>
 #else
-extern char *tgetstr __P((char *, char **));
-#endif
+extern char *tgetstr(char *, char **);
 #endif
 #endif
 #include <stdio.h>
@@ -115,17 +113,17 @@ static int tcflag = -1;			/* transparent mode command flag */
 static int savefd[2];			/* for storing fds during transcom */
 extern int	tin, tout;		/* file descriptors */
 
-static void aborttc __P((int));
+static void aborttc(int);
 #endif	/* defined(unix) */
 
-static void OurExitString __P((char *, int));
-static void DoARefresh __P((void));
-static void GoAway __P((char *, int));
-static int WhereTermAttrByte __P((int));
-static void SlowScreen __P((void));
-static void FastScreen __P((void));
+static void OurExitString(char *, int);
+static void DoARefresh(void);
+static void GoAway(char *, int);
+static int WhereTermAttrByte(int);
+static void SlowScreen(void);
+static void FastScreen(void);
 #if 0
-static void ScreenOIA __P((OIA *));
+static void ScreenOIA(OIA *);
 #endif
 
 
@@ -641,7 +639,7 @@ int
 #else	/* defined(NOT43) */
 void
 #endif	/* defined(NOT43) */
-	(*TryToSend) __P((void)) = FastScreen;
+	(*TryToSend)(void) = FastScreen;
 
 #if 0
 /*ARGSUSED*/
@@ -676,7 +674,7 @@ InitTerminal()
 	ClearArray(Terminal);
 	terminalCursorAddress = SetBufferAddress(0,0);
 #if defined(unix)
-	signal(SIGHUP, (void (*)__P((int)))abort);
+	signal(SIGHUP, (void (*)(int))abort);
 #endif
 
 	TryToSend = FastScreen;

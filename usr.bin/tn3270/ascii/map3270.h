@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: map3270.h,v 1.5 2002/06/13 23:41:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,8 +40,8 @@
  */
 
 /* map3270.c */
-char *uncontrol __P((int));
-int ustrcmp __P((char *, char *));
-int Position __P((char *, char *));
-char *strsave __P((char *));
-state *InitControl __P((char *, int, int (*)(char *)));
+char *uncontrol(int);
+int ustrcmp(char *, char *);
+int Position(char *, char *);
+char *strsave(char *);
+state *InitControl(char *, int, int (*)(char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: oia.h,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
+/*	$NetBSD: oia.h,v 1.5 2002/06/13 23:41:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -192,4 +192,4 @@ typedef struct {
 #define	SetPsModified()		ps_modified = 1
 
 /* oia.c */
-void init_oia __P((void));
+void init_oia(void);
