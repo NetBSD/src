@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tanh.c,v 1.4 1999/07/02 15:37:37 simonb Exp $	*/
+/*	$NetBSD: n_tanh.c,v 1.4.10.1 2002/06/18 13:41:42 lukem Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,10 +77,10 @@ static char sccsid[] = "@(#)tanh.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-double tanh(x)
-double x;
+double
+tanh(double x)
 {
-	static double one=1.0, two=2.0, small = 1.0e-10, big = 1.0e10;
+	static const double one=1.0, two=2.0, small = 1.0e-10, big = 1.0e10;
 	double t, sign;
 
 #if !defined(__vax__)&&!defined(tahoe)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trig.h,v 1.4 1999/07/02 15:37:37 simonb Exp $	*/
+/*	$NetBSD: trig.h,v 1.4.10.1 2002/06/18 13:41:51 lukem Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,17 +62,30 @@ static long fmaxx[]	= { 0xffffffff, 0x7fefffff};
 #define   fmax    (*(double*)fmaxx)
 #endif	/* national */
 
-static const double
-	zero = 0,
-	one = 1,
-	negone = -1,
-	half = 1.0/2.0,
-	small = 1E-10,	/* 1+small**2 == 1; better values for small:
-			 *		small	= 1.5E-9 for VAX D
-			 *			= 1.2E-8 for IEEE Double
-			 *			= 2.8E-10 for IEEE Extended
-			 */
-	big = 1E20;	/* big := 1/(small**2) */
+#ifdef _LIBM_DECLARE
+const double
+	__zero = 0,
+	__one = 1,
+	__negone = -1,
+	__half = 1.0/2.0,
+#ifdef __vax__
+	__small = 1E-9, /* 1+small**2 == 1; better values for small:
+			  *		small	= 1.5E-9 for VAX D
+			  *			= 1.2E-8 for IEEE Double
+			  *			= 2.8E-10 for IEEE Extended
+			  */
+	__big = 1E18;	/* big := 1/(small**2) */
+#else
+	__small = 1E-10, /* 1+small**2 == 1; better values for small:
+			  *		small	= 1.5E-9 for VAX D
+			  *			= 1.2E-8 for IEEE Double
+			  *			= 2.8E-10 for IEEE Extended
+			  */
+	__big = 1E20;	/* big := 1/(small**2) */
+#endif
+#else
+extern const double __zero, __one, __negone, __half, __small, __big;
+#endif
 
 /* sin__S(x*x) ... re-implemented as a macro
  * DOUBLE PRECISION (VAX D format 56 bits, IEEE DOUBLE 53 BITS)
