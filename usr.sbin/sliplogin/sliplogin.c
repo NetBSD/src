@@ -1,6 +1,8 @@
+/*	$NetBSD: sliplogin.c,v 1.13 1997/10/17 08:49:55 mrg Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.12 1997/04/13 13:42:16 mrg Exp $";
+#if 0
+static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
+#else
+static char rcsid[] = "$Id: sliplogin.c,v 1.13 1997/10/17 08:49:55 mrg Exp $";
+#endif
 #endif /* not lint */
 
 /*

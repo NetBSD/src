@@ -1,3 +1,5 @@
+/*	$NetBSD: globals.h,v 1.4 1997/10/17 08:56:00 mrg Exp $	*/
+
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
  * All rights reserved.
@@ -30,11 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)globals.h	5.1 (Berkeley) 5/11/93
+ *	@(#)globals.h	8.1 (Berkeley) 6/6/93
  */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include <sys/param.h>

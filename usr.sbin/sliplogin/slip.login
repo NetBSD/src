@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-#	$NetBSD: slip.login,v 1.3 1994/06/30 07:50:26 cgd Exp $
-#	@(#)slip.login	5.1 (Berkeley) 7/1/90
+#	$NetBSD: slip.login,v 1.4 1997/10/17 08:49:44 mrg Exp $
+#	from: @(#)slip.login	8.1 (Berkeley) 6/6/93
 
 #
 # generic login file for a slip line.  sliplogin invokes this with
