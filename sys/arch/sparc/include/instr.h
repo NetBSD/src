@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.2 1994/11/20 20:53:11 deraadt Exp $ */
+/*	$NetBSD: instr.h,v 1.3 1997/03/14 23:54:07 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -244,6 +244,7 @@ union instr {
 		u_int	i_rd:5;		/* destination register */
 		u_int	i_op3:6;	/* second-level decode */
 		u_int	i_rs1:5;	/* source register 1 */
+		u_int	i_i:1;		/* immediate vs asi */
 		u_int	i_asi:8;	/* asi */
 		u_int	i_rs2:5;	/* source register 2 */
 	} i_asi;
