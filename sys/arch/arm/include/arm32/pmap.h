@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58 2002/08/24 02:16:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.59 2002/08/24 02:48:50 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -222,6 +222,19 @@ extern vaddr_t	pmap_curmaxkvaddr;
 /*
  * Useful macros and constants 
  */
+
+/*
+ * While the ARM MMU's L1 descriptors describe a 1M "section", each
+ * one pointing to a 1K L2 table, NetBSD's VM system allocates the
+ * page tables in 4K chunks, and thus we describe 4M "super sections".
+ *
+ * We'll lift terminology from another architecture and refer to this as
+ * the "page directory" size.
+ */
+#define	PD_SIZE		(L1_S_SIZE * 4)		/* 4M */
+#define	PD_OFFSET	(PD_SIZE - 1)
+#define	PD_FRAME	(~PD_OFFSET)
+#define	PD_SHIFT	22
 
 /* Virtual address to page table entry */
 #define vtopte(va) \
