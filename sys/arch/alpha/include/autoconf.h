@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.7 1997/04/06 08:47:17 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.8 1997/07/25 00:03:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -80,6 +80,32 @@ struct bootdev_data {
 	char	*ctrl_dev_type;
 };
 
+/*
+ * The boot program passes a pointer to a bootinfo to the kernel
+ * using the following convention:
+ *
+ *	a0 contains first free page frame number
+ *	a1 contains page number of current level 1 page table
+ *	if a2 contains BOOTINFO_MAGIC
+ *		a3 contains address of bootinfo
+ */
+
+#define	BOOTINFO_MAGIC		0xdeadbeeffeedface
+
+struct bootinfo_v1 {
+	u_long	ssym;		/* start of kernel symbol table */
+	u_long	esym;		/* end of kernel symbol table */
+	char	boot_flags[64];	/* boot flags */
+	char	booted_kernel[64]; /* name of booted kernel */
+};
+
+struct bootinfo {
+	u_int	version;		/* version number */
+	union {
+		struct bootinfo_v1 v1;	/* version 1 boot info */
+		char pad[256];		/* reserve space for future use */
+	} un;
+};
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt clock_intr_evcnt;
