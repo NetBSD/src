@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.14 1994/09/15 03:42:37 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.15 1994/12/13 09:58:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,8 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: fdesc_vfsops.c,v 1.9 1993/04/06 15:28:33 jsp Exp
  *	@(#)fdesc_vfsops.c	8.4 (Berkeley) 1/21/94
+ *
+ * #Id: fdesc_vfsops.c,v 1.9 1993/04/06 15:28:33 jsp Exp #
  */
 
 /*
