@@ -37,7 +37,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: os-bsd44.h,v 1.3 1993/12/10 09:01:24 mycroft Exp $
+ * $Id: os-bsd44.h,v 1.4 1994/01/05 05:51:01 deraadt Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -68,9 +68,11 @@
 #define OS_HAS_NDBM
 
 /*
- * 4.4 doesn't provide NIS.
+ * 4.4 doesn't provide NIS, but NetBSD does.
  */
+#ifndef __NetBSD__
 #undef HAS_NIS_MAPS
+#endif
 
 /*
  * The mount table is obtained from the kernel
