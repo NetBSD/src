@@ -14,6 +14,8 @@
 ./usr/include/arm32/cpus.h
 ./usr/include/arm32/db_machdep.h
 ./usr/include/arm32/disklabel.h
+./usr/include/arm32/disklabel_acorn.h
+./usr/include/arm32/disklabel_mbr.h
 ./usr/include/arm32/endian.h
 ./usr/include/arm32/float.h
 ./usr/include/arm32/fp.h
@@ -25,6 +27,7 @@
 ./usr/include/arm32/io.h
 ./usr/include/arm32/ipkdb.h
 ./usr/include/arm32/irqhandler.h
+./usr/include/arm32/joystick.h
 ./usr/include/arm32/katelib.h
 ./usr/include/arm32/kbd.h
 ./usr/include/arm32/limits.h
@@ -32,7 +35,6 @@
 ./usr/include/arm32/param.h
 ./usr/include/arm32/pcb.h
 ./usr/include/arm32/pmap.h
-./usr/include/arm32/podule.h
 ./usr/include/arm32/proc.h
 ./usr/include/arm32/profile.h
 ./usr/include/arm32/psl.h
