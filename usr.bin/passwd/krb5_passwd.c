@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_passwd.c,v 1.2 1996/08/09 09:19:35 thorpej Exp $	*/
+/*	$NetBSD: krb5_passwd.c,v 1.3 1997/01/07 04:08:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: krb5_passwd.c,v 1.2 1996/08/09 09:19:35 thorpej Exp $";
+static char rcsid[] = "$NetBSD: krb5_passwd.c,v 1.3 1997/01/07 04:08:15 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ int preauth_search_list[] = {
     -1
 };
 
+int
 krb_passwd()
 {
     static void finish();
@@ -1011,5 +1012,11 @@ int networked()
   return(network_connected());
 }
 #endif
+
+int
+krb_check()
+{
+return(1):	/* XXX! */
+}
 
 #endif /* KERBEROS5 */

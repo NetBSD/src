@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.10 1996/12/28 04:30:07 tls Exp $	*/
+/*	$NetBSD: passwd.c,v 1.11 1997/01/07 04:08:18 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: passwd.c,v 1.10 1996/12/28 04:30:07 tls Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.11 1997/01/07 04:08:18 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,9 +81,13 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 	char *username;
+	char *iflag = 0, *rflag = 0, *uflag = 0;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
-	use_kerberos = 1;
+	if (strcmp(__progname, "kpasswd") == 0)
+		use_kerberos = 1;
+	else
+		use_kerberos = krb_check();
 #endif
 #ifdef	YP
 	use_yp = _yp_check(NULL);
@@ -101,7 +105,7 @@ main(argc, argv)
 	}
 
 	
-	while ((ch = getopt(argc, argv, "lky")) != -1)
+	while ((ch = getopt(argc, argv, "lkyi:r:u:")) != -1)
 		switch (ch) {
 		case 'l':		/* change local password file */
 			if (yppwd)
@@ -109,6 +113,17 @@ main(argc, argv)
 			use_kerberos = 0;
 			use_yp = 0;
 			break;
+#ifdef KERBEROS
+		case 'i':
+			iflag = optarg;
+			break;
+		case 'r':
+			rflag = optarg;
+			break;
+		case 'u':
+			uflag = optarg;
+			break;	
+#endif
 		case 'k':		/* change Kerberos password */
 #if defined(KERBEROS) || defined(KERBEROS5)
 			if (yppwd)
@@ -146,7 +161,7 @@ main(argc, argv)
 	case 0:
 		break;
 	case 1:
-#if defined(KERBEROS) || defined(KERBEROS5)
+#ifdef KERBEROS5
 		if (use_kerberos && strcmp(argv[0], username)) {
 			errx(1, "%s\n\t%s\n%s\n",
 			     "to change another user's Kerberos password, do",
@@ -164,7 +179,12 @@ main(argc, argv)
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 	if (use_kerberos)
+		exit(kadm_passwd(username, iflag, rflag, uflag));
+#else
+#ifdef KERBEROS5
+	if (use_kerberos)
 		exit(krb_passwd());
+#endif
 #endif
 #ifdef	YP
 	if (use_yp)
@@ -180,6 +200,6 @@ usage()
 	if (yppwd)
 		fprintf(stderr, "usage: %s user\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-l] [-k] [-y] user\n", __progname);
+		fprintf(stderr, "usage: %s [-l] [-k] [-y] [-i instance] [-r realm] [-u fullname] user\n", __progname);
 	exit(1);
 }

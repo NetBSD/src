@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1996/12/28 04:30:02 tls Exp $
+#	$NetBSD: Makefile,v 1.15 1997/01/07 04:02:11 tls Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 
@@ -14,11 +14,6 @@ SRCS+= krb5_passwd.c
 CFLAGS+= -DKERBEROS5
 DPADD+=	${LIBKRB5} ${LIBCRYPTO} 
 LDADD+=	-lkrb5 -lcrypto
-.elif defined(KERBEROS)
-SRCS+= krb_passwd.c des_rw.c
-CFLAGS+= -DKERBEROS -DCRYPT
-DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+=	-lkrb -ldes
 .endif
 
 LINKS=	${BINDIR}/passwd ${BINDIR}/yppasswd
