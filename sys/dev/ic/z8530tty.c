@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.62 1999/11/04 05:33:59 jonathan Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.63 2000/03/14 21:20:52 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -325,7 +325,10 @@ zstty_attach(parent, self, aux)
 	zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
 	zst->zst_rbavail = zstty_rbuf_size;
 
-	/* XXX - Do we need an MD hook here? */
+	/* if there are no enable/disable functions, assume the device
+	   is always enabled */
+	if (!cs->enable)
+		cs->enabled = 1;
 
 	/*
 	 * Hardware init
@@ -435,6 +438,15 @@ zs_shutdown(zst)
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
 
+	/* Call the power management hook. */
+	if (cs->disable) {
+#ifdef DIAGNOSTIC
+		if (!cs->enabled)
+			panic("zs_shutdown: not enabled?");
+#endif
+		(*cs->disable)(zst->zst_cs);
+	}
+
 	splx(s);
 }
 
@@ -481,6 +493,17 @@ zsopen(dev, flags, mode, p)
 		struct termios t;
 
 		tp->t_dev = dev;
+
+		/* Call the power management hook. */
+		if (cs->enable) {
+			if ((*cs->enable)(cs)) {
+				splx(s2);
+				splx(s);
+				printf("%s: device enable failed\n",
+			       	zst->zst_dev.dv_xname);
+				return (EIO);
+			}
+		}
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
