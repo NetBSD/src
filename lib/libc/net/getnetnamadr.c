@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.3 1997/07/31 23:43:26 thorpej Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.4 1997/08/19 05:02:49 mikel Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.3 1997/07/31 23:43:26 thorpej Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.4 1997/08/19 05:02:49 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,7 +78,7 @@ extern int errno;
 #endif
 
 /* XXX private header! */
-struct netent *__getnetbyaddr __P((long net, int type));
+struct netent *__getnetbyaddr __P((unsigned long net, int type));
 struct netent *__getnetbyname __P((const char *name));
 
 #define BYADDR 0
