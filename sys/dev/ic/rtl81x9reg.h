@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.1 2000/04/10 07:42:56 haya Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.2 2000/04/24 15:25:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -396,7 +396,6 @@ struct rl_softc {
 
 #define RL_PCI_LOIO		0x10
 #define RL_PCI_LOMEM		0x14
-#define RL_PCI_PWRMGMTCTRL	0xE0 /* 16 bits */
 
 #define RL_PSTATE_MASK		0x0003
 #define RL_PSTATE_D0		0x0000
