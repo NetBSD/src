@@ -1,5 +1,7 @@
+/*	$NetBSD: option.c,v 1.1.1.2 1997/04/22 13:45:33 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,7 +98,8 @@ scan_option(s)
 			 * (They may have been set otherwise by previous 
 			 * options.)
 			 */
-			if (set_default = (*s == '+'))
+			set_default = (*s == '+');
+			if (set_default)
 				s++;
 			continue;
 		case '+':
@@ -134,11 +137,11 @@ scan_option(s)
 		if (o == NULL)
 		{
 			parg.p_string = propt(c);
-#if MSOFTC || OS2
-			error("There is no %s flag (\"less -?\" for help)",
+#if SHELL_META_QUEST
+			error("There is no %s option (\"less -\\?\" for help)",
 				&parg);
 #else
-			error("There is no %s flag (\"less -\\?\" for help)",
+			error("There is no %s option (\"less -?\" for help)",
 				&parg);
 #endif
 			quit(QUIT_ERROR);
@@ -217,21 +220,21 @@ toggle_option(c, s, how_toggle)
 	if (o == NULL)
 	{
 		parg.p_string = propt(c);
-		error("There is no %s flag", &parg);
+		error("There is no %s option", &parg);
 		return;
 	}
 
 	if (how_toggle == OPT_TOGGLE && (o->otype & NO_TOGGLE))
 	{
 		parg.p_string = propt(c);
-		error("Cannot change the %s flag", &parg);
+		error("Cannot change the %s option", &parg);
 		return;
 	} 
 
 	if (how_toggle == OPT_NO_TOGGLE && (o->otype & NO_QUERY))
 	{
 		parg.p_string = propt(c);
-		error("Cannot query the %s flag", &parg);
+		error("Cannot query the %s option", &parg);
 		return;
 	} 
 
@@ -311,7 +314,7 @@ toggle_option(c, s, how_toggle)
 			{
 			case OPT_SET:
 			case OPT_UNSET:
-				error("Can't use \"-+\" or \"--\" for a string flag",
+				error("Can't use \"-+\" or \"--\" for a string option",
 					NULL_PARG);
 				return;
 			}
@@ -331,7 +334,7 @@ toggle_option(c, s, how_toggle)
 				*(o->ovar) = o->odefault;
 				break;
 			case OPT_SET:
-				error("Can't use \"--\" for a numeric flag",
+				error("Can't use \"--\" for a numeric option",
 					NULL_PARG);
 				return;
 			}

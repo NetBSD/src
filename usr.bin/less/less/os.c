@@ -1,5 +1,7 @@
+/*	$NetBSD: os.c,v 1.1.1.2 1997/04/22 13:45:34 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +51,9 @@
 #if HAVE_VALUES_H
 #include <values.h>
 #endif
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #if HAVE_TIME_T
 #define time_type	time_t
@@ -88,7 +93,7 @@ iread(fd, buf, len)
 {
 	register int n;
 
-#if MSOFTC
+#if MSDOS_COMPILER
 	if (kbhit())
 	{
 		int c;
@@ -107,6 +112,10 @@ iread(fd, buf, len)
 		reading = 0;
 #if HAVE_SIGSETMASK
 		sigsetmask(0);
+#else
+#ifdef _OSK
+		sigmask(~0);
+#endif
 #endif
 		return (READ_INTR);
 	}
@@ -177,7 +186,9 @@ errno_message(filename)
 	register char *p;
 	register char *m;
 #if HAVE_ERRNO
+#if MUST_DEFINE_ERRNO
 	extern int errno;
+#endif
 	p = strerror(errno);
 #else
 	p = "cannot open";
@@ -190,16 +201,15 @@ errno_message(filename)
 /*
  * Return the largest possible number that can fit in a long.
  */
-#ifdef MAXLONG
 	static long
 get_maxlong()
 {
-	return (MAXLONG);
-}
+#ifdef LONG_MAX
+	return (LONG_MAX);
 #else
-	static long
-get_maxlong()
-{
+#ifdef MAXLONG
+	return (MAXLONG);
+#else
 	long n, n2;
 
 	/*
@@ -214,22 +224,63 @@ get_maxlong()
 		n2 *= 2;
 	} while (n2 / 2 == n);
 	return (n);
-}
 #endif
+#endif
+}
 
 /*
- * Return the ratio of two longs, as a percentage.
+ * Return the ratio of two POSITIONS, as a percentage.
+ * {{ Assumes a POSITION is a long int. }}
  */
 	public int
 percentage(num, den)
-	long num, den;
+	POSITION num, den;
 {
-	static long maxlong100 = 0;
-	
-	if (maxlong100 == 0)
-		maxlong100 = get_maxlong() / 100;
-	if (num > maxlong100)
-		return (num / (den/100));
+	if (num <= get_maxlong() / 100)
+		return ((100 * num) / den);
 	else
-		return (100*num / den);
+		return (num / (den / 100));
 }
+
+/*
+ * Return the specified percentage of a POSITION.
+ * {{ Assumes a POSITION is a long int. }}
+ */
+	public POSITION
+percent_pos(pos, percent)
+	POSITION pos;
+	int percent;
+{
+	if (pos <= get_maxlong() / 100)
+		return ((percent * pos) / 100);
+	else
+		return (percent * (pos / 100));
+}
+
+#ifdef _OSK_MWC32
+
+/*
+ * This implements an ANSI-style intercept setup for Microware C 3.2
+ */
+	public int 
+os9_signal(type, handler)
+	int type;
+	RETSIGTYPE (*handler)();
+{
+	intercept(handler);
+}
+
+#include <sgstat.h>
+
+	public int 
+isatty(f)
+	int f;
+{
+	struct sgbuf sgbuf;
+
+	if (_gs_opt(f, &sgbuf) < 0)
+		return -1;
+	return (sgbuf.sg_class == 0);
+}
+	
+#endif

@@ -1,5 +1,7 @@
+/*	$NetBSD: charset.c,v 1.1.1.2 1997/04/22 13:45:28 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -211,19 +213,19 @@ init_charset()
 {
 	register char *s;
 
-	s = getenv("LESSBINFMT");
+	s = lgetenv("LESSBINFMT");
 	setbinfmt(s);
 	
 	/*
 	 * See if environment variable LESSCHARSET is defined.
 	 */
-	s = getenv("LESSCHARSET");
+	s = lgetenv("LESSCHARSET");
 	if (icharset(s))
 		return;
 	/*
 	 * LESSCHARSET is not defined: try LESSCHARDEF.
 	 */
-	s = getenv("LESSCHARDEF");
+	s = lgetenv("LESSCHARDEF");
 	if (s != NULL && *s != '\0')
 	{
 		ichardef(s);

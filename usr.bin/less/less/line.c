@@ -1,5 +1,7 @@
+/*	$NetBSD: line.c,v 1.1.1.2 1997/04/22 13:45:19 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,14 +35,17 @@
 
 #include "less.h"
 
-public char linebuf[1024];	/* Buffer which holds the current output line */
+/* Buffer which holds the current output line */
+public char linebuf[LINEBUF_SIZE];
 public int size_linebuf = sizeof(linebuf);
 
-static char attr[1024];		/* Extension of linebuf to hold attributes */
+public int cshift;		/* Current left-shift of output line buffer */
+public int hshift;		/* Desired left-shift of output line buffer */
+
+static char attr[LINEBUF_SIZE];	/* Extension of linebuf to hold attributes */
 static int curr;		/* Index into linebuf */
 static int column;		/* Printable length, accounting for
 				   backspaces, etc. */
-static int lno_indent;		/* Number of chars used for line number */
 static int overstrike;		/* Next char should overstrike previous char */
 static int is_null_line;	/* There is no current line */
 static char pendc;
@@ -69,9 +74,9 @@ prewind()
 {
 	curr = 0;
 	column = 0;
+	cshift = 0;
 	overstrike = 0;
 	is_null_line = 0;
-	lno_indent = 0;
 	pendc = '\0';
 }
 
@@ -119,15 +124,39 @@ plinenum(pos)
 		linebuf[curr] = ' ';
 		attr[curr++] = AT_NORMAL;
 		column++;
-	} while ((column % tabstop) != 0);
-	lno_indent = column;
+	} while (((column + cshift) % tabstop) != 0);
+}
+
+/*
+ * Shift the input line left.
+ * This means discarding N printable chars at the start of the buffer.
+ */
+	static void
+pshift(shift)
+	int shift;
+{
+	int i;
+
+	if (shift > column)
+		shift = column;
+	if (shift > curr)
+		shift = curr;
+
+	for (i = 0;  i < curr - shift;  i++)
+	{
+		linebuf[i] = linebuf[i + shift];
+		attr[i] = attr[i + shift];
+	}
+	column -= shift;
+	curr -= shift;
+	cshift += shift;
 }
 
 /*
  * Return the printing width of the start (enter) sequence
  * for a given character attribute.
  */
-	int
+	static int
 attr_swidth(a)
 	int a;
 {
@@ -145,7 +174,7 @@ attr_swidth(a)
  * Return the printing width of the end (exit) sequence
  * for a given character attribute.
  */
-	int
+	static int
 attr_ewidth(a)
 	int a;
 {
@@ -289,6 +318,8 @@ pappend(c, pos)
 	register int c;
 	POSITION pos;
 {
+	int r;
+
 	if (pendc)
 	{
 		if (do_append(pendc, pendpos))
@@ -312,7 +343,16 @@ pappend(c, pos)
 		return (0);
 	}
 
-	return (do_append(c, pos));
+	r = do_append(c, pos);
+	/*
+	 * If we need to shift the line, do it.
+	 * But wait until we get to at least the middle of the screen,
+	 * so shifting it doesn't affect the chars we're currently
+	 * pappending.  (Bold & underline can get messed up otherwise.)
+	 */
+	if (cshift < hshift && column > sc_width / 2)
+		pshift(hshift - cshift);
+	return (r);
 }
 
 	static int
@@ -369,10 +409,18 @@ do_append(c, pos)
 		 */
 		if (tabstop == 0)
 			tabstop = 1;
-		do
+		switch (bs_mode)
 		{
-			STOREC(' ', AT_NORMAL);
-		} while ((column % tabstop) != 0);
+		case BS_CONTROL:
+			goto do_control_char;
+		case BS_NORMAL:
+		case BS_SPECIAL:
+			do
+			{
+				STOREC(' ', AT_NORMAL);
+			} while (((column + cshift) % tabstop) != 0);
+			break;
+		}
 	} else if (control_char(c))
 	{
 	do_control_char:
@@ -425,6 +473,12 @@ pdone(endline)
 		(void) do_append(pendc, pendpos);
 
 	/*
+	 * Make sure we've shifted the line, if we need to.
+	 */
+	if (cshift < hshift)
+		pshift(hshift - cshift);
+
+	/*
 	 * Add a newline if necessary,
 	 * and append a '\0' to the end of the line.
 	 */
@@ -474,7 +528,6 @@ null_line()
 	is_null_line = 1;
 }
 
-#if 1
 /*
  * Analogous to forw_line(), but deals with "raw lines":
  * lines which are not split for screen width.
@@ -579,4 +632,3 @@ back_raw_line(curr_pos, linep)
 		*linep = p;
 	return (new_pos);
 }
-#endif

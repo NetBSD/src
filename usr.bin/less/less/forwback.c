@@ -1,5 +1,7 @@
+/*	$NetBSD: forwback.c,v 1.1.1.2 1997/04/22 13:45:29 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,17 +38,16 @@
 public int hit_eof;	/* Keeps track of how many times we hit end of file */
 public int screen_trashed;
 public int squished;
+public int no_back_scroll = 0;
 
 extern int sigs;
 extern int top_scroll;
 extern int quiet;
 extern int sc_width, sc_height;
 extern int quit_at_eof;
-extern int less_mode;
 extern int plusoption;
 extern int forw_scroll;
 extern int back_scroll;
-extern int need_clr;
 extern int ignore_eoi;
 #if TAGS
 extern char *tagoption;
@@ -204,9 +205,13 @@ forw(n, pos, force, only_last, nblank)
 				/*
 				 * End of file: stop here unless the top line 
 				 * is still empty, or "force" is true.
+				 * Even if force is true, stop when the last
+				 * line in the file reaches the top of screen.
 				 */
 				eof = 1;
 				if (!force && position(TOP) != NULL_POSITION)
+					break;
+				if (empty_lines(2, sc_height-1))
 					break;
 			}
 		}
@@ -320,7 +325,7 @@ forward(n, force, only_last)
 {
 	POSITION pos;
 
-	if (quit_at_eof && hit_eof)
+	if (quit_at_eof && hit_eof && !(ch_getflags() & CH_HELPFILE))
 	{
 		/*
 		 * If the -e flag is set and we're trying to go
@@ -351,7 +356,8 @@ forward(n, force, only_last)
 					pos = position(BOTTOM_PLUS_ONE);
 				} while (pos == NULL_POSITION);
 			}
-		} else {
+		} else
+		{
 			eof_bell();
 			hit_eof++;
 			return;
@@ -390,6 +396,8 @@ backward(n, force, only_last)
 	public int
 get_back_scroll()
 {
+	if (no_back_scroll)
+		return (0);
 	if (back_scroll >= 0)
 		return (back_scroll);
 	if (top_scroll)

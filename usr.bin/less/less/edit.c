@@ -1,5 +1,7 @@
+/*	$NetBSD: edit.c,v 1.1.1.2 1997/04/22 13:45:45 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +33,6 @@ public int fd0 = 0;
 
 extern int new_file;
 extern int errmsgs;
-extern int quit_at_eof;
 extern int cbufs;
 extern char *every_first_cmd;
 extern int any_display;
@@ -134,6 +135,7 @@ close_file()
 	
 	if (curr_ifile == NULL_IFILE)
 		return;
+
 	/*
 	 * Save the current position so that we can return to
 	 * the same position if we edit this file again.
@@ -216,7 +218,16 @@ edit_ifile(ifile)
 	was_curr_ifile = curr_ifile;
 	if (curr_ifile != NULL_IFILE)
 	{
+		chflags = ch_getflags();
 		close_file();
+		if (chflags & CH_HELPFILE)
+		{
+			/*
+			 * Don't keep the help file in the ifile list.
+			 */
+			del_ifile(was_curr_ifile);
+			was_curr_ifile = old_ifile;
+		}
 	}
 
 	if (ifile == NULL_IFILE)
@@ -257,6 +268,19 @@ edit_ifile(ifile)
 		 */
 		f = fd0;
 		chflags |= CH_KEEPOPEN;
+#if MSDOS_COMPILER==BORLANDC || MSDOS_COMPILER==WIN32C
+		/*
+		 * Must switch stdin to BINARY mode.
+		 */
+		setmode(f, O_BINARY);
+#endif
+#if MSDOS_COMPILER==MSOFTC
+		_setmode(f, _O_BINARY);
+#endif
+	} else if (strcmp(open_filename, FAKE_HELPFILE) == 0)
+	{
+		f = -1;
+		chflags |= CH_HELPFILE;
 	} else if ((parg.p_string = bad_file(open_filename)) != NULL)
 	{
 		/*
@@ -313,13 +337,16 @@ edit_ifile(ifile)
 	get_pos(curr_ifile, &initial_scrpos);
 	new_file = TRUE;
 	ch_init(f, chflags);
-#if LOGFILE
-	if (namelogfile != NULL && is_tty)
-		use_logfile(namelogfile);
-#endif
 
-	if (every_first_cmd != NULL)
-		ungetsc(every_first_cmd);
+	if (!(chflags & CH_HELPFILE))
+	{
+#if LOGFILE
+		if (namelogfile != NULL && is_tty)
+			use_logfile(namelogfile);
+#endif
+		if (every_first_cmd != NULL)
+			ungetsc(every_first_cmd);
+	}
 
 	no_display = !any_display;
 	flush();
@@ -384,7 +411,7 @@ edit_list(filelist)
 	filename = NULL;
 	while ((filename = forw_textlist(&tl_files, filename)) != NULL)
 	{
-		gfilelist = glob(filename);
+		gfilelist = lglob(filename);
 		init_textlist(&tl_gfiles, gfilelist);
 		gfilename = NULL;
 		while ((gfilename = forw_textlist(&tl_gfiles, gfilename)) != NULL)
@@ -404,8 +431,7 @@ edit_list(filelist)
 		 * Trying to edit the current file; don't reopen it.
 		 */
 		return (0);
-	if (edit_ifile(save_curr_ifile))
-		quit(QUIT_ERROR);
+	reedit_ifile(save_curr_ifile);
 	return (edit(good_filename));
 }
 
@@ -433,14 +459,13 @@ edit_last()
 /*
  * Edit the next file in the command line (ifile) list.
  */
-	public int
-edit_next(n)
+	static int
+edit_inext(h, n)
+	IFILE h;
 	int n;
 {
-	IFILE h;
 	IFILE next;
 
-	h = curr_ifile;
 	/*
 	 * Skip n filenames, then try to edit each filename.
 	 */
@@ -467,17 +492,23 @@ edit_next(n)
 	return (0);
 }
 
+	public int
+edit_next(n)
+	int n;
+{
+	return edit_inext(curr_ifile, n);
+}
+
 /*
  * Edit the previous file in the command line list.
  */
-	public int
-edit_prev(n)
+	static int
+edit_iprev(h, n)
+	IFILE h;
 	int n;
 {
-	IFILE h;
 	IFILE next;
 
-	h = curr_ifile;
 	/*
 	 * Skip n filenames, then try to edit each filename.
 	 */
@@ -502,6 +533,13 @@ edit_prev(n)
 	 * Found a file that we can edit.
 	 */
 	return (0);
+}
+
+	public int
+edit_prev(n)
+	int n;
+{
+	return edit_iprev(curr_ifile, n);
 }
 
 /*
@@ -529,6 +567,42 @@ edit_index(n)
 }
 
 /*
+ * Reedit the ifile which was previously open.
+ */
+	public void
+reedit_ifile(save_ifile)
+	IFILE save_ifile;
+{
+	IFILE next;
+	IFILE prev;
+
+	/*
+	 * Try to reopen the ifile.
+	 * Note that opening it may fail (maybe the file was removed),
+	 * in which case the ifile will be deleted from the list.
+	 * So save the next and prev ifiles first.
+	 */
+	next = next_ifile(save_ifile);
+	prev = prev_ifile(save_ifile);
+	if (edit_ifile(save_ifile) == 0)
+		return;
+	/*
+	 * If can't reopen it, open the next input file in the list.
+	 */
+	if (next != NULL_IFILE && edit_inext(next, 0) == 0)
+		return;
+	/*
+	 * If can't open THAT one, open the previous input file in the list.
+	 */
+	if (prev != NULL_IFILE && edit_iprev(prev, 0) == 0)
+		return;
+	/*
+	 * If can't even open that, we're stuck.  Just quit.
+	 */
+	quit(QUIT_ERROR);
+}
+
+/*
  * Edit standard input.
  */
 	public int
@@ -536,10 +610,10 @@ edit_stdin()
 {
 	if (isatty(fd0))
 	{
-#if MSOFTC || OS2
-		error("Missing filename (\"less -?\" for help)", NULL_PARG);
-#else
+#if SHELL_META_QUEST
 		error("Missing filename (\"less -\\?\" for help)", NULL_PARG);
+#else
+		error("Missing filename (\"less -?\" for help)", NULL_PARG);
 #endif
 		quit(QUIT_OK);
 	}
