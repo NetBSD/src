@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.34 2000/12/23 01:38:02 wiz Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.35 2001/02/23 17:28:58 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -30,7 +30,7 @@
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob
+ * Copyright (c) 1997, 2001 by Matthew Jacob
  * NASA AMES Research Center
  * All rights reserved.
  *
@@ -43,8 +43,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -74,6 +72,7 @@
 #include <dev/ic/isp_netbsd.h>
 #include <dev/microcode/isp/asm_sbus.h>
 #include <dev/sbus/sbusvar.h>
+#include <sys/reboot.h>
 
 static int isp_sbus_intr __P((void *));
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
@@ -111,7 +110,7 @@ struct isp_sbussoftc {
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
 	bus_dmamap_t	*sbus_dmamap;
-	bus_dmamap_t	sbus_request_dmamap;
+	bus_dmamap_t	sbus_rquest_dmamap;
 	bus_dmamap_t	sbus_result_dmamap;
 	int16_t		sbus_poff[_NREG_BLKS];
 };
@@ -246,21 +245,31 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_poff[RISC_BLOCK >> _BLK_REG_SHFT] = SBUS_RISC_REGS_OFF;
 	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
+	/* Establish interrupt channel */
+	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
+	    isp_sbus_intr, sbc);
+	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo._dev);
+
 	/*
 	 * Set up logging levels.
 	 */
 #ifdef	ISP_LOGDEFAULT
 	isp->isp_dblev = ISP_LOGDEFAULT;
 #else
-	isp->isp_dblev = ISP_LOGCONFIG|ISP_LOGWARN|ISP_LOGERR;
+	isp->isp_dblev = ISP_LOGWARN|ISP_LOGERR;
+	if (bootverbose)
+		isp->isp_dblev |= ISP_LOGCONFIG|ISP_LOGINFO;
 #ifdef	SCSIDEBUG
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0;
 #endif
 #endif
+
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_role = ISP_DEFAULT_ROLES;
+
 	/*
 	 * There's no tool on sparc to set NVRAM for ISPs, so ignore it.
 	 */
@@ -272,26 +281,23 @@ isp_sbus_attach(parent, self, aux)
 		ISP_UNLOCK(isp);
 		return;
 	}
+	ENABLE_INTS(isp);
 	isp_init(isp);
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
 		return;
 	}
-	/* Establish interrupt channel */
-	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
-	    isp_sbus_intr, sbc);
-	ENABLE_INTS(isp);
-	ISP_UNLOCK(isp);
-
-	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo._dev);
 
 	/*
 	 * do generic attach.
 	 */
+	ISP_UNLOCK(isp);
 	isp_attach(isp);
 	if (isp->isp_state != ISP_RUNSTATE) {
+		ISP_LOCK(isp);
 		isp_uninit(isp);
+		ISP_UNLOCK(isp);
 	}
 }
 
@@ -386,7 +392,7 @@ isp_sbus_mbxdma(isp)
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
 	/* Allocate DMA map */
 	if (bus_dmamap_create(dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
-	    &sbc->sbus_request_dmamap) != 0) {
+	    &sbc->sbus_rquest_dmamap) != 0) {
 		goto dmafail;
 	}
 
@@ -396,17 +402,17 @@ isp_sbus_mbxdma(isp)
 	}
 
 	/* Load the buffer */
-	if (bus_dmamap_load_raw(dmatag, sbc->sbus_request_dmamap,
+	if (bus_dmamap_load_raw(dmatag, sbc->sbus_rquest_dmamap,
 	    &seg, rs, len, BUS_DMA_NOWAIT) != 0) {
 		bus_dmamem_free(dmatag, &seg, rs);
 		goto dmafail;
 	}
-	isp->isp_rquest_dma = sbc->sbus_request_dmamap->dm_segs[0].ds_addr;
+	isp->isp_rquest_dma = sbc->sbus_rquest_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA buffer in CPU addressable space */
 	if (bus_dmamem_map(dmatag, &seg, rs, len, (caddr_t *)&isp->isp_rquest,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		bus_dmamap_unload(dmatag, sbc->sbus_request_dmamap);
+		bus_dmamap_unload(dmatag, sbc->sbus_rquest_dmamap);
 		bus_dmamem_free(dmatag, &seg, rs);
 		goto dmafail;
 	}
@@ -524,14 +530,9 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 
 mbxsync:
-        ISP_SWIZZLE_REQUEST(isp, rq);
-#if	0
-	/*
-	 * If we ever map cacheable memory, we need to do something like this.
-	 */
-        bus_dmamap_sync(sbc->sbus_dmat, sbc->sbus_rquest_dmap, 0,
-            sbc->sbus_rquest_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-#endif
+	ISP_SWIZZLE_REQUEST(isp, rq);
+	bus_dmamap_sync(sbc->sbus_dmatag, sbc->sbus_rquest_dmamap, 0,
+	     sbc->sbus_rquest_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	return (CMD_QUEUED);
 }
 
