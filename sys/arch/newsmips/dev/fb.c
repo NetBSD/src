@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6 2000/11/14 15:32:03 tsubai Exp $	*/
+/*	$NetBSD: fb.c,v 1.7 2000/11/15 14:43:44 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -282,7 +282,6 @@ fb_mmap(v, offset, prot)
 {
 	struct fb_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;
-	struct rasops_info *ri = &dc->dc_ri;
 
 	if (offset >= 2048 * 2048 / 8 || offset < 0)
 		return -1;
