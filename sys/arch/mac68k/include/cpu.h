@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 1999/02/26 22:55:33 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 1999/04/06 03:40:23 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -332,6 +332,7 @@ int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 /* vm_machdep.c */
 void	physaccess __P((caddr_t, caddr_t, register int, register int));
 void	physunaccess __P((caddr_t, register int));
+int	kvtop __P((caddr_t));
 
 /* trap.c */
 void	child_return __P((void *));
