@@ -1,3 +1,5 @@
+#	$NetBSD: dot.profile,v 1.7 1997/10/28 03:33:23 mrg Exp $
+
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 export PATH
 
