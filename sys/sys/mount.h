@@ -264,6 +264,17 @@ struct nfs_args {
 #define	NFSMNT_LOCKBITS	(NFSMNT_SCKLOCK | NFSMNT_WANTSCK)
 #endif NFS
 
+#ifdef PCFS
+/*
+ *  Arguments to mount MSDOS filesystems.
+ */
+struct pcfs_args {
+	char *fspec;		/* blocks special holding the fs to mount */
+	int exflags;		/* mount flags				*/
+	uid_t exroot;		/* mapping for root uid			*/
+};
+#endif /* PCFS */
+
 #ifdef KERNEL
 /*
  * exported vnode operations

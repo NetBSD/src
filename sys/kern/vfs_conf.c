@@ -63,6 +63,10 @@ extern	struct vfsops nfs_vfsops;
 extern	struct vfsops mfs_vfsops;
 #endif
 
+#ifdef PCFS
+extern	struct vfsops pcfs_vfsops;
+#endif
+
 #ifdef ISOFS
 extern	struct vfsops isofs_vfsops;
 #endif
@@ -88,7 +92,11 @@ struct vfsops *vfssw[] = {
 #else
 	(struct vfsops *)0,
 #endif
-	(struct vfsops *)0,	/* 4 = MOUNT_MSDOS */
+#ifdef PCFS
+	&pcfs_vfsops,		/* 4 = MOUNT_MSDOS */
+#else
+	(struct vfsops *)0,
+#endif
 #ifdef ISOFS
 	&isofs_vfsops,		/* 5 = MOUNT_ISOFS */
 #else
