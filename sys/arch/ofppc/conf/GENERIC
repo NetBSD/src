@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.27 2000/06/14 22:02:34 veego Exp $
+#	$NetBSD: GENERIC,v 1.28 2000/06/22 20:27:55 fvdl Exp $
 #
 # First try for PPC config file
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	32
 
@@ -52,7 +52,7 @@ file-system 	UNION
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 options 	INET
 options 	INET6		# IPV6

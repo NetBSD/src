@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.71 2000/06/19 04:22:16 matt Exp $
+#	$NetBSD: GENERIC,v 1.72 2000/06/22 20:27:57 fvdl Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -63,7 +63,7 @@ file-system 	CD9660
 
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
