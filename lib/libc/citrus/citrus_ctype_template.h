@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.25 2004/01/02 21:49:35 itojun Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.25.2.1 2004/10/01 03:08:02 jmc Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -573,6 +573,9 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	char buf[MB_LEN_MAX];
 	int err = 0;
 	size_t sz;
+#if _ENCODING_IS_STATE_DEPENDENT
+	size_t rsz = 0;
+#endif
 
 	_DIAGASSERT(cl != NULL);
 
@@ -588,12 +591,13 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	sz = _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl)));
 #if _ENCODING_IS_STATE_DEPENDENT
 	if (wc == L'\0') {
-		size_t rsz;
 		/* reset state */
 		err = _FUNCNAME(put_state_reset)(_CEI_TO_EI(_TO_CEI(cl)), s,
 						 sz, psenc, &rsz);
-		if (err)
+		if (err) {
+			*nresult = -1;
 			goto quit;
+		}
 		s += rsz;
 		sz -= rsz;
 	}
@@ -601,6 +605,8 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s, sz,
 				      wc, psenc, nresult);
 #if _ENCODING_IS_STATE_DEPENDENT
+	if (err == 0)
+		*nresult += rsz;
 quit:
 #endif
 	if (err == E2BIG)
@@ -658,6 +664,9 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	_ENCODING_STATE *psenc;
 	_ENCODING_INFO *ei;
 	size_t nr, sz;
+#if _ENCODING_IS_STATE_DEPENDENT
+	size_t rsz = 0;
+#endif
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
@@ -674,19 +683,23 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	sz = _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl)));
 #if _ENCODING_IS_STATE_DEPENDENT
 	if (wc == L'\0') {
-		size_t rsz;
 		/* reset state */
 		err = _FUNCNAME(put_state_reset)(_CEI_TO_EI(_TO_CEI(cl)), s,
 						 sz, psenc, &rsz);
 		if (err) {
-			*nresult = -1;
-			return err;
+			*nresult = -1; /* XXX */
+			return 0;
 		}
 		s += rsz;
 		sz -= rsz;
 	}
 #endif
 	err = _FUNCNAME(wcrtomb_priv)(ei, s, sz, wc, psenc, &nr);
+#if _ENCODING_IS_STATE_DEPENDENT
+	if (err == 0)
+		*nresult = (int)(nr + rsz);
+	else
+#endif
 	*nresult = (int)nr;
 
 	return 0;
