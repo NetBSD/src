@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.60 2002/09/27 15:38:05 provos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.61 2002/12/28 14:39:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.60 2002/09/27 15:38:05 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.61 2002/12/28 14:39:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -292,11 +292,13 @@ lfs_truncate(void *v)
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = lfs_reserve(fs, ovp, btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
+		error = lfs_reserve(fs, ovp, NULL,
+		    btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
 		if (error)
 			return (error);
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
-		lfs_reserve(fs, ovp, -btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
+		lfs_reserve(fs, ovp, NULL,
+		    -btofsb(fs, (NIADDR + 2) << fs->lfs_bshift));
 		if (error)
 			return (error);
 		oip->i_ffs_size = length;
@@ -306,7 +308,8 @@ lfs_truncate(void *v)
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 
-	if ((error = lfs_reserve(fs, ovp, btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift))) != 0)
+	if ((error = lfs_reserve(fs, ovp, NULL,
+	    btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift))) != 0)
 		return (error);
 	/*
 	 * Make sure no writes to this inode can happen while we're
@@ -340,7 +343,8 @@ lfs_truncate(void *v)
 			aflags |= B_SYNC;
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error) {
-			lfs_reserve(fs, ovp, -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
+			lfs_reserve(fs, ovp, NULL,
+			    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 #ifdef LFS_FRAGSIZE_SEGLOCK
 			lfs_segunlock(fs);
 #else
@@ -508,7 +512,8 @@ done:
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
-	lfs_reserve(fs, ovp, -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
+	lfs_reserve(fs, ovp, NULL,
+	    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 #ifdef LFS_FRAGSIZE_SEGLOCK
 	lfs_segunlock(fs);
 #else

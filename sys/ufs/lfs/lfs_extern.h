@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.33 2002/12/17 14:37:49 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.34 2002/12/28 14:39:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ void lfs_freebuf(struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, ufs_daddr_t, size_t);
 #endif
 void lfs_countlocked(int *, long *, char *);
-int lfs_reserve(struct lfs *, struct vnode *, int);
+int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
 
 /* lfs_cksum.c */
 u_int32_t cksum(void *, size_t);

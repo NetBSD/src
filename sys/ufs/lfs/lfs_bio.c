@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.51 2002/12/26 13:37:18 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.52 2002/12/28 14:39:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.51 2002/12/26 13:37:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.52 2002/12/28 14:39:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,9 @@ int locked_queue_rcount = 0;
 long locked_queue_rbytes = 0L;
 
 int lfs_fits_buf(struct lfs *, int, int);
-int lfs_reservebuf(struct lfs *, int, int);
-int lfs_reserveavail(struct lfs *, struct vnode *, int);
+int lfs_reservebuf(struct lfs *, struct vnode *vp, struct vnode *vp2,
+    int, int);
+int lfs_reserveavail(struct lfs *, struct vnode *vp, struct vnode *vp2, int);
 
 int
 lfs_fits_buf(struct lfs *fs, int n, int bytes)
@@ -142,8 +143,10 @@ lfs_fits_buf(struct lfs *fs, int n, int bytes)
 	return (count_fit && bytes_fit);
 }
 
+/* ARGSUSED */
 int
-lfs_reservebuf(struct lfs *fs, int n, int bytes)
+lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
+    int n, int bytes)
 {
 	KASSERT(locked_queue_rcount >= 0);
 	KASSERT(locked_queue_rbytes >= 0);
@@ -183,13 +186,9 @@ lfs_reservebuf(struct lfs *fs, int n, int bytes)
  * (eg. cached states like i_offset might be stale,
  *  the vnode might be truncated, etc..)
  * maybe we should have a way to restart the vnode op. (EVOPRESTART?)
- *
- * XXX YAMT - we unlock the vnode so that cleaner can lock it.
- * but it isn't enough. eg. for VOP_REMOVE, we should unlock the vnode that
- * is going to be removed as well.
  */
 int
-lfs_reserveavail(struct lfs *fs, struct vnode *vp, int fsb)
+lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 {
 	CLEANERINFO *cip;
 	struct buf *bp;
@@ -204,6 +203,9 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, int fsb)
 		 * because we might sleep very long time.
 		 */
 		VOP_UNLOCK(vp, 0);
+		if (vp2 != NULL) {
+			VOP_UNLOCK(vp2, 0);
+		}
 #else
 		/*
 		 * XXX since we'll sleep for cleaner with vnode lock holding,
@@ -233,6 +235,7 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, int fsb)
 			       0);
 #if 0
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
+		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 #endif
 		if (error)
 			return error;
@@ -252,10 +255,22 @@ int lfs_rescountdirop;
 #endif
 
 int
-lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
+lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 {
 	int error;
 	int cantwait;
+
+	KASSERT(fsb < 0 || VOP_ISLOCKED(vp));
+	KASSERT(vp2 == NULL || fsb < 0 || VOP_ISLOCKED(vp2));
+
+	/*
+	 * XXX
+	 * vref vnodes here so that cleaner doesn't try to reuse them.
+	 */
+	lfs_vref(vp);
+	if (vp2 != NULL) {
+		lfs_vref(vp2);
+	}
 
 	cantwait = (VTOI(vp)->i_flag & IN_ADIROP);
 #ifdef DIAGNOSTIC
@@ -279,16 +294,23 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 	if (cantwait)
 		return 0;
 
-	error = lfs_reserveavail(fs, vp, fsb);
+	error = lfs_reserveavail(fs, vp, vp2, fsb);
 	if (error)
-		return error;
+		goto done;
 
 	/*
 	 * XXX just a guess. should be more precise.
 	 */
-	error = lfs_reservebuf(fs, fragstoblks(fs, fsb), fsbtob(fs, fsb));
+	error = lfs_reservebuf(fs, vp, vp2,
+	    fragstoblks(fs, fsb), fsbtob(fs, fsb));
 	if (error)
-		lfs_reserveavail(fs, vp, -fsb);
+		lfs_reserveavail(fs, vp, vp2, -fsb);
+
+done:
+	lfs_vunref(vp);
+	if (vp2 != NULL) {
+		lfs_vunref(vp2);
+	}
 
 	return error;
 }
