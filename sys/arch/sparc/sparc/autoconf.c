@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.152 2001/09/26 20:53:07 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.153 2001/09/27 02:05:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -782,6 +782,9 @@ void
 cpu_configure()
 {
 	extern struct user *proc0paddr;	/* XXX see below */
+
+	/* initialise the softintr system */
+	softintr_init();
 
 	/* build the bootpath */
 	bootpath_build();

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24 2001/05/12 22:42:07 kleink Exp $ */
+/*	$NetBSD: types.h,v 1.25 2001/09/27 02:05:42 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,5 +87,6 @@ typedef paddr_t			psize_t;
 #endif
 
 #define __HAVE_DEVICE_REGISTER
+#define __HAVE_GENERIC_SOFT_INTERRUPTS
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.54 2001/07/10 15:09:04 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.55 2001/09/27 02:05:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -59,8 +60,10 @@
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
+#include <machine/intr.h>
 #include <machine/trap.h>
 #include <machine/promlib.h>
+
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 
@@ -73,10 +76,10 @@
 extern void comsoft __P((void));
 #endif
 
-union sir	sir;
+void *softnet_cookie;
 
 void	strayintr __P((struct clockframe *));
-int	soft01intr __P((void *));
+void	softnet __P((void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -106,59 +109,27 @@ strayintr(fp)
 }
 
 /*
- * Level 1 software interrupt (could also be Sbus level 1 interrupt).
- * Three possible reasons:
- *	ROM console input needed
- *	Network software interrupt
- *	Soft clock interrupt
+ * Process software network interrupts.
  */
-int
-soft01intr(fp)
+void
+softnet(fp)
 	void *fp;
 {
+	int n, s;
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-	if (sir.sir_any) {
-		/*
-		 * XXX	this is bogus: should just have a list of
-		 *	routines to call, a la timeouts.  Mods to
-		 *	netisr are not atomic and must be protected (gah).
-		 */
-		if (sir.sir_which[SIR_NET]) {
-			int n, s;
-
-			s = splhigh();
-			n = netisr;
-			netisr = 0;
-			splx(s);
-			sir.sir_which[SIR_NET] = 0;
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
 
 #define DONETISR(bit, fn) do {		\
 	if (n & (1 << bit))		\
 		fn();			\
-} while (0)
+	} while (0)
 
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
-
-		}
-		if (sir.sir_which[SIR_CLOCK]) {
-			sir.sir_which[SIR_CLOCK] = 0;
-			softclock(NULL);
-		}
-#if NCOM > 0
-		/*
-		 * XXX - consider using __GENERIC_SOFT_INTERRUPTS instead
-		 */
-		if (sir.sir_which[SIR_SERIAL]) {
-			sir.sir_which[SIR_SERIAL] = 0;
-			comsoft();
-		}
-#endif
-	}
-	KERNEL_UNLOCK();
-	return (1);
 }
 
 #if defined(SUN4M)
@@ -394,8 +365,6 @@ nmi_soft(tf)
 }
 #endif
 
-static struct intrhand level01 = { soft01intr };
-
 /*
  * Level 15 interrupts are special, and not vectored here.
  * Only `prewired' interrupts appear here; boot-time configured devices
@@ -403,7 +372,7 @@ static struct intrhand level01 = { soft01intr };
  */
 struct intrhand *intrhand[15] = {
 	NULL,			/*  0 = error */
-	&level01,		/*  1 = software level 1 + Sbus */
+	NULL,			/*  1 = software level 1 + Sbus */
 	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
 	NULL,			/*  3 = SCSI + DMA + Sbus level 3 (4m: L2,lpt)*/
 	NULL,			/*  4 = software level 4 (tty softint) (scsi) */
@@ -447,7 +416,7 @@ intr_establish(level, ih)
 		    level);
 #ifdef DIAGNOSTIC
 	/* double check for legal hardware interrupt */
-	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M ) {
+	if ((level != 1 && level != 4 && level != 6) || CPU_ISSUN4M) {
 		tv = &trapbase[T_L1INT - 1 + level];
 		displ = (CPU_ISSUN4M)
 			? &sparc_interrupt4m[0] - &tv->tv_instr[1]
@@ -472,6 +441,23 @@ intr_establish(level, ih)
 	*p = ih;
 	ih->ih_next = NULL;
 	splx(s);
+}
+
+void
+intr_disestablish(level, ih)
+	int level;
+	struct intrhand *ih;
+{
+	struct intrhand **p, *q;
+
+	for (p = &intrhand[level]; (q = *p) != ih; p = &q->ih_next)
+		continue;
+	if (q == NULL)
+		panic("intr_disestablish: level %d intrhand %p fun %p arg %p\n",
+		    level, ih, ih->ih_fun, ih->ih_arg);
+
+	*p = q->ih_next;
+	q->ih_next = NULL;
 }
 
 /*
@@ -522,6 +508,50 @@ intr_fasttrap(level, vec)
 	cpuinfo.cache_flush_all();
 	fastvec |= 1 << level;
 	splx(s);
+}
+
+/*
+ * softintr_init(): initialise the MI softintr system.
+ */
+void
+softintr_init()
+{
+
+	softnet_cookie = softintr_establish(IPL_SOFTNET, softnet, NULL);
+}
+
+/*
+ * softintr_establish(): MI interface.  establish a func(arg) as a
+ * software interrupt.
+ */
+void *
+softintr_establish(level, fun, arg)
+	int level; 
+	void (*fun) __P((void *));
+	void *arg;
+{
+	struct intrhand *ih;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
+	bzero(ih, sizeof(*ih));
+	ih->ih_fun = (int (*) __P((void *)))fun;
+	ih->ih_arg = arg;
+	ih->ih_next = 0;
+	intr_establish(1, ih);
+	return (void *)ih;
+}
+
+/*
+ * softintr_disestablish(): MI interface.  disestablish the specified
+ * software interrupt.
+ */
+void
+softintr_disestablish(cookie)
+	void *cookie;
+{
+
+	intr_disestablish(1, cookie);
+	free(cookie, M_DEVBUF);
 }
 
 #ifdef MULTIPROCESSOR
