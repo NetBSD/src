@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.88 2002/11/18 12:39:48 lukem Exp $
+.\"	$NetBSD: contents,v 1.89 2002/12/09 14:03:53 scw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ conventions for indicating italic and bold display.
 .	(tag kernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.gz -compact
-.if !\n[atari]:\n[mac68k]:\n[sgimips]:\n[walnut] \{\
+.if !\n[atari]:\n[mac68k]:\n[sgimips]:\n[evbppc] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
@@ -183,7 +183,7 @@ GENERIC_INDY targeted for being bootable on older Indigo 2 and possibly
 Indy machines with PROMs that do not understand the ELF binary format.
 .\}
 .
-.if \n[walnut] \{\
+.if \n[evbppc] \{\
 .			It Pa netbsd-WALNUT.gz
 A gzipped
 .Nx
@@ -191,14 +191,14 @@ kernel (in ELF format) containing code for everything supported
 in this release.
 .			It Pa netbsd.img-WALNUT.gz
 Same as the above, but in the format expected by the firmware.
-.			It Pa netbsd-INSTALL.gz
+.			It Pa netbsd-INSTALL_WALNUT.gz
 A gzipped
 .Nx
 kernel (ELF format) containing code for everything supported in this
 release.
 It also includes a RAM-disk installer with
 .Ic sysinst .
-.			It Pa netbsd-INSTALL.img.gz
+.			It Pa netbsd-INSTALL_WALNUT.img.gz
 Same as the above, but in the format expected by the firmware.
 .\}
 .
@@ -259,7 +259,7 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[cats]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[walnut] \{\
+.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips] \{\
 .		It Pa misc/
 .
 .if \n[alpha] \{\
@@ -446,6 +446,7 @@ everything described below.
 .if \n[dreamcast] .setsize 66 135
 .if \n[evbarm] .setsize 21 50
 .if \n[evbmips] .setsize 22 71
+.if \n[evbppc] .setsize 20 53
 .if \n[hp300] .setsize 17 41
 .if \n[hpcarm] .setsize 21 50
 .if \n[hpcmips] .setsize 22 71
@@ -471,7 +472,6 @@ everything described below.
 .if \n[sun2] .setsize 53 118
 .if \n[sun3] .setsize 17 41
 .if \n[vax] .setsize 17 40
-.if \n[walnut] .setsize 20 53
 .if \n[x68k] .setsize 17 41
 .showsize
 .
@@ -498,6 +498,7 @@ system call and library manual pages.
 .if \n[dreamcast] .setsize 17 55
 .if \n[evbarm] .setsize 16 57
 .if \n[evbmips] .setsize 16 73
+.if \n[evbppc] .setsize 17 64
 .if \n[hp300] .setsize 14 52
 .if \n[hpcarm] .setsize 16 57
 .if \n[hpcmips] .setsize 17 73
@@ -523,7 +524,6 @@ system call and library manual pages.
 .if \n[sun2] .setsize 13 46
 .if \n[sun3] .setsize 14 52
 .if \n[vax] .setsize 12 45
-.if \n[walnut] .setsize 17 64
 .if \n[x68k] .setsize 14 52
 .showsize
 .
@@ -646,7 +646,7 @@ install this distribution set.
 .showsize 3 7
 .\}
 .el \{\
-.ie \n[walnut] \{\
+.ie \n[evbppc] \{\
 .It Sy kern-WALNUT
 This set contains a
 .Nx*M
@@ -655,6 +655,7 @@ kernel in ELF format named
 .Pa /netbsd
 and the same kernel in the format needed by the bootloader as
 .Pa /netbsd.img .
+These kernels are specific to the IBM 405GP based Walnut evaluation board.
 You
 .Em must
 install this distribution set.
@@ -705,7 +706,7 @@ that your system may need to boot.
 .if \n[vax] .setsize 1 2
 .if \n[x68k] .setsize 1 2
 .showsize
-.\} \" !\n[walnut]
+.\} \" !\n[evbppc]
 .\} \" !\n[sgimips]
 .\} \" !\n[mac68k]
 .\} \" !\n[evbarm]
