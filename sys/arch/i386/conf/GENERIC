@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.141 1998/03/18 16:34:43 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.142 1998/03/22 18:18:45 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -396,7 +396,8 @@ audio*	at sp?
 audio*	at wss?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pckbd? port 0x61		# PC speaker
+#spkr0	at pc? port 0x61		# PC speaker
+#spkr0	at vt? port 0x61		# PC speaker
 
 
 # Mice
@@ -406,7 +407,8 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 lms1	at isa? port 0x238 irq 5
 mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#pms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks

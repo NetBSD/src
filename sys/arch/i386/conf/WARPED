@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.32 1998/02/06 11:20:45 mrg Exp $
+#	$NetBSD: WARPED,v 1.33 1998/03/22 18:18:46 drochner Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -136,7 +136,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+pms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -213,7 +213,7 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 #audio*	at pas0
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis Ultra Sound (flags is record drq for full-duplex)
 #audio*	at gus0
-#spkr0	at pckbd? port 0x61
+#spkr0	at pc? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
