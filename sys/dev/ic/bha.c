@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.39 2000/11/14 18:21:01 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.40 2000/11/21 05:23:37 soren Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -228,9 +228,11 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
+#ifdef BHADEBUG
 			if (opcode != BHA_INQUIRE_REVISION)
 				printf("%s: bha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
+#endif /* BHADEBUG */
 			goto bad;
 		}
 		*obuf++ = bus_space_read_1(iot, ioh, BHA_DATA_PORT);
