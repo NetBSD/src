@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.18 1999/06/07 05:28:03 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.19 1999/06/20 00:51:30 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,6 @@ int sbusdebug = 0;
 #endif
 
 void sbusreset __P((int));
-int sbus_flush __P((struct sbus_softc *));
 
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static bus_dma_tag_t sbus_alloc_dmatag __P((struct sbus_softc *));
@@ -173,8 +172,6 @@ extern struct cfdriver sbus_cd;
 /*
  * DVMA routines
  */
-void sbus_enter __P((struct sbus_softc *, vaddr_t, int64_t, int));
-void sbus_remove __P((struct sbus_softc *, vaddr_t, size_t));
 int sbus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 			  bus_size_t, struct proc *, int));
 void sbus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
@@ -550,165 +547,6 @@ sbusreset(sbus)
 }
 
 /*
- * Here are the iommu control routines. 
- */
-void
-sbus_enter(sc, va, pa, flags)
-	struct sbus_softc *sc;
-	vaddr_t va;
-	int64_t pa;
-	int flags;
-{
-	int64_t tte;
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_is.is_dvmabase)
-		panic("sbus_enter: va 0x%lx not in DVMA space",va);
-#endif
-
-	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			!(flags&BUS_DMA_COHERENT));
-	
-	/* Is the streamcache flush really needed? */
-	bus_space_write_8(sc->sc_bustag, &sc->sc_is.is_sb->strbuf_pgflush,
-			  0, va);
-	sbus_flush(sc);
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("Clearing TSB slot %d for va %p\n", (int)IOTSBSLOT(va,sc->sc_is.is_tsbsize), va);
-#endif
-	sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)] = tte;
-	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 
-			  0, va);
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
-		       va, (long)pa, IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		       &sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		       (long)tte);
-#endif
-}
-
-/*
- * sbus_clear: clears mappings created by sbus_enter
- *
- * Only demap from IOMMU if flag is set.
- */
-void
-sbus_remove(sc, va, len)
-	struct sbus_softc *sc;
-	vaddr_t va;
-	size_t len;
-{
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_is.is_dvmabase)
-		panic("sbus_remove: va 0x%lx not in DVMA space", (long)va);
-	if ((long)(va + len) < (long)va)
-		panic("sbus_remove: va 0x%lx + len 0x%lx wraps", 
-		      (long) va, (long) len);
-	if (len & ~0xfffffff) 
-		panic("sbus_remove: rediculous len 0x%lx", (long)len);
-#endif
-
-	va = trunc_page(va);
-	while (len > 0) {
-
-		/*
-		 * Streaming buffer flushes:
-		 * 
-		 *   1 Tell strbuf to flush by storing va to strbuf_pgflush
-		 * If we're not on a cache line boundary (64-bits):
-		 *   2 Store 0 in flag
-		 *   3 Store pointer to flag in flushsync
-		 *   4 wait till flushsync becomes 0x1
-		 *
-		 * If it takes more than .5 sec, something went wrong.
-		 */
-#ifdef DEBUG
-		if (sbusdebug & SDB_DVMA)
-			printf("sbus_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (long)va, (long)IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-			       (long)&sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-			       (long)(sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)]), 
-			       (u_long)len);
-#endif
-		bus_space_write_8(sc->sc_bustag, &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
-		if (len <= NBPG) {
-			sbus_flush(sc);
-			len = 0;
-		} else len -= NBPG;
-#ifdef DEBUG
-		if (sbusdebug & SDB_DVMA)
-			printf("sbus_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (long)va, (long)IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-			       (long)&sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-			       (long)(sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)]), 
-			       (u_long)len);
-#endif
-		sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)] = 0;
-		bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 0, va);
-		va += NBPG;
-	}
-}
-
-int 
-sbus_flush(sc)
-	struct sbus_softc *sc;
-{
-	struct timeval cur, flushtimeout;
-	struct iommu_state *is = &sc->sc_is;
-
-#define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
- \
-	tp->tv_usec = us = tp->tv_usec + (usec); \
-	if (us >= 1000000) { \
-		tp->tv_usec = us - 1000000; \
-		tp->tv_sec++; \
-	} \
-}
-
-	is->is_flush = 0;
-	membar_sync();
-	bus_space_write_8(sc->sc_bustag, &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
-	membar_sync();
-
-	microtime(&flushtimeout); 
-	cur = flushtimeout;
-	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
-	
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_flush: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
-		       (long)is->is_flush, (long)&is->is_flush, 
-		       (long)is->is_flushpa, cur.tv_sec, cur.tv_usec, 
-		       flushtimeout.tv_sec, flushtimeout.tv_usec);
-#endif
-	/* Bypass non-coherent D$ */
-	while (!ldxa(is->is_flushpa, ASI_PHYS_CACHED) && 
-	       ((cur.tv_sec <= flushtimeout.tv_sec) && 
-		(cur.tv_usec <= flushtimeout.tv_usec)))
-		microtime(&cur);
-
-#ifdef DIAGNOSTIC
-	if (!is->is_flush) {
-		printf("sbus_flush: flush timeout %p at %p\n", (long)is->is_flush, 
-		       (long)is->is_flushpa); /* panic? */
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
-#ifdef DEBUG
-	if (sbusdebug & SDB_DVMA)
-		printf("sbus_flush: flushed\n");
-#endif
-	return (is->is_flush);
-}
-
-/*
  * Get interrupt attributes for an Sbus device.
  */
 int
@@ -969,7 +807,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 		bus_dmamap_unload(t, map);
 	}
-#if 1
+
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
@@ -1017,10 +855,6 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
 	map->dm_segs[0].ds_len = sgsize;
 
-#else
-	if ((err = bus_dmamap_load(t->_parent, map, buf, buflen, p, flags)))
-		return (err);
-#endif
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
 	else
@@ -1049,7 +883,7 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 			printf("sbus_dmamap_load: map %p loading va %lx at pa %lx\n",
 			       map, (long)dvmaddr, (long)(curaddr & ~(NBPG-1)));
 #endif
-		sbus_enter(sc, trunc_page(dvmaddr), trunc_page(curaddr), flags);
+		iommu_enter(&sc->sc_is, trunc_page(dvmaddr), trunc_page(curaddr), flags);
 			
 		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
@@ -1080,8 +914,7 @@ sbus_dmamap_unload(t, map)
 		printf("sbus_dmamap_unload: map %p removing va %lx size %lx\n",
 		       map, (long)addr, (long)len);
 #endif
-	sbus_remove(sc, addr, len);
-#if 1
+	iommu_remove(&sc->sc_is, addr, len);
 	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
 	sgsize = map->dm_segs[0].ds_len;
 
@@ -1097,9 +930,6 @@ sbus_dmamap_unload(t, map)
 		printf("warning: %ld of DVMA space lost\n", (long)sgsize);
 
 	cache_flush((caddr_t)dvmaddr, (u_int) sgsize);	
-#else
-	bus_dmamap_unload(t->_parent, map);
-#endif
 }
 
 
@@ -1157,7 +987,7 @@ sbus_dmamap_sync(t, map, offset, len, ops)
 #endif
 			bus_space_write_8(sc->sc_bustag, &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
 			if (len <= NBPG) {
-				sbus_flush(sc);
+				iommu_flush(&sc->sc_is);
 				len = 0;
 			} else
 				len -= NBPG;
@@ -1242,7 +1072,7 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 				printf("sbus_dmamem_alloc: map %p loading va %lx at pa %lx\n",
 				       (long)m, (long)dvmaddr, (long)(curaddr & ~(NBPG-1)));
 #endif
-			sbus_enter(sc, dvmaddr, curaddr, flags);
+			iommu_enter(&sc->sc_is, dvmaddr, curaddr, flags);
 			dvmaddr += PAGE_SIZE;
 		}
 	}
@@ -1264,7 +1094,7 @@ sbus_dmamem_free(t, segs, nsegs)
 	for (n=0; n<nsegs; n++) {
 		addr = segs[n].ds_addr;
 		len = segs[n].ds_len;
-		sbus_remove(sc, addr, len);
+		iommu_remove(&sc->sc_is, addr, len);
 #if 1
 		s = splhigh();
 		error = extent_free(sc->sc_is.is_dvmamap, addr, len, EX_NOWAIT);
