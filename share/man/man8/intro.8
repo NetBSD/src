@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.8,v 1.6 2002/09/22 16:07:31 perry Exp $
+.\"	$NetBSD: intro.8,v 1.7 2002/09/22 16:15:41 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)intro.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd September 22, 2002
 .Dt INTRO 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Sh DESCRIPTION
 This section contains information related to system operation
 and maintenance.
+.Pp
 It describes commands used to create new file systems,
 .Ql Xr newfs ,
 verify the integrity of the file systems,
@@ -62,6 +63,15 @@ Network related services like
 and
 .Ql Xr ftpd
 are also described.
+.Pp
+A number of pages in this section describe general system management
+topics. For example, the
+.Ql Xr diskless
+page describes how to boot a system over a network, and the
+.Ql Xr compat_linux
+page describes how to run Linux binaries on
+.Nx
+architectures that support it.
 .Sh HISTORY
 The
 .Nm intro
