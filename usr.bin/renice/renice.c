@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.9 2001/02/19 23:03:50 cgd Exp $	*/
+/*	$NetBSD: renice.c,v 1.10 2001/09/01 01:57:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,25 +41,25 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.9 2001/02/19 23:03:50 cgd Exp $");
+__RCSID("$NetBSD: renice.c,v 1.10 2001/09/01 01:57:28 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
-static int	getnum __P((const char *, const char *, int *));
-static int	donice __P((int, int, int, int));
-static void	usage __P((void)) __attribute__((__noreturn__));
+static int	getnum(const char *, const char *, int *);
+static int	donice(int, int, int, int);
+static void	usage(void) __attribute__((__noreturn__));
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 /*
  * Change the priority (nice) of processes
@@ -67,9 +67,7 @@ int	main __P((int, char **));
  * running.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int which = PRIO_PROCESS;
 	int who = 0, prio, errs = 0, incr = 0;
@@ -121,9 +119,7 @@ main(argc, argv)
 }
 
 static int
-getnum(com, str, val)
-	const char *com, *str;
-	int *val;
+getnum(const char *com, const char *str, int *val)
 {
 	long v;
 	char *ep;
@@ -144,8 +140,7 @@ getnum(com, str, val)
 }
 
 static int
-donice(which, who, prio, incr)
-	int which, who, prio, incr;
+donice(int which, int who, int prio, int incr)
 {
 	int oldprio;
 
@@ -172,12 +167,11 @@ donice(which, who, prio, incr)
 }
 
 static void
-usage()
+usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [<priority> | -n <incr>] ",
-	    getprogname());
-	(void)fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
-	(void)fprintf(stderr, "[-u <user>...]\n");
+	fprintf(stderr, "Usage: %s [<priority> | -n <incr>] ", getprogname());
+	fprintf(stderr, "[[-p] <pids>...] [-g <pgrp>...] ");
+	fprintf(stderr, "[-u <user>...]\n");
 	exit(1);
 }
