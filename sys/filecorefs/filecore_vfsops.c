@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.5 1998/12/18 14:24:43 drochner Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.6 1999/02/26 23:44:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -81,6 +81,7 @@ struct vfsops filecore_vfsops = {
 	filecore_init,
 	filecore_sysctl,
 	NULL,				/* filecore_mountroot */
+	filecore_checkexp,
 	filecore_vnodeopv_descs,
 };
 
@@ -492,28 +493,16 @@ struct ifid {
 
 /* ARGSUSED */
 int
-filecore_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+filecore_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
-	struct netcred *np;
-	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
 	
-	/*
-	 * Get the export permission structure for this <mp, client> tuple.
-	 */
-	np = vfs_export_lookup(mp, &fcmp->fc_export, nam);
-	if (np == NULL)
-		return (EACCES);
-
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -523,7 +512,29 @@ filecore_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
                 vput(nvp);
                 *vpp = NULLVP;
                 return (ESTALE);
-        }	*vpp = nvp;
+        }
+	*vpp = nvp;
+	return (0);
+}
+
+/* ARGSUSED */
+int
+filecore_checkexp(mp, nam, exflagsp, credanonp)
+	struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
+	struct netcred *np;
+	
+	/*
+	 * Get the export permission structure for this <mp, client> tuple.
+	 */
+	np = vfs_export_lookup(mp, &fcmp->fc_export, nam);
+	if (np == NULL)
+		return (EACCES);
+
 	*exflagsp = np->netc_exflags;
 	*credanonp = &np->netc_anon;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.6 1998/12/10 02:22:52 rvb Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.7 1999/02/26 23:44:44 wrstuden Exp $	*/
 
 /*
  * 
@@ -47,6 +47,11 @@
 /*
  * HISTORY
  * $Log: coda_vfsops.c,v $
+ * Revision 1.7  1999/02/26 23:44:44  wrstuden
+ * Modify vfsops to seperate vfs_fhtovp() into two routines. vfs_fhtovp() now
+ * only handles the file handle to vnode conversion, and a new call,
+ * vfs_checkexp(), performs the export verification.
+ *
  * Revision 1.6  1998/12/10 02:22:52  rvb
  * Commit a couple of old fixes
  *
@@ -254,13 +259,14 @@ struct vfsops coda_vfsops = {
     coda_nb_statfs,
     coda_sync,
     coda_vget,
-    (int (*) (struct mount *, struct fid *, struct mbuf *, struct vnode **,
-	      int *, struct ucred **))
+    (int (*) (struct mount *, struct fid *, struct vnode ** ))
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
     coda_init,
     coda_sysctl,
     (int (*)(void)) eopnotsupp,
+    (int (*)(struct mount *, struct mbuf *, int *, struct ucred **))
+	eopnotsupp,
     coda_vnodeopv_descs,
     0
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.80 1999/02/21 15:11:09 drochner Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.81 1999/02/26 23:44:47 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -109,6 +109,7 @@ struct vfsops nfs_vfsops = {
 	nfs_vfs_init,
 	nfs_sysctl,
 	nfs_mountroot,
+	nfs_checkexp,
 	nfs_vnodeopv_descs,
 };
 
@@ -928,11 +929,20 @@ nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  */
 /* ARGSUSED */
 int
-nfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+nfs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
+{
+
+	return (EINVAL);
+}
+
+/* ARGSUSED */
+int
+nfs_checkexp(mp, nam, exflagsp, credanonp)
+	register struct mount *mp;
+	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;
 {
