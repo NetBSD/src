@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.31 2001/02/24 18:49:06 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.32 2001/03/09 20:05:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -303,7 +303,7 @@ iommu_enter(is, va, pa, flags)
 #endif
 
 	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			!(flags&BUS_DMA_COHERENT));
+			(flags&BUS_DMA_STREAMING));
 	
 	/* Is the streamcache flush really needed? */
 	if (is->is_sb) {
