@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 2001/05/30 15:24:39 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.48 2001/07/22 14:11:05 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1042,6 +1042,7 @@ ENTRY(getcrp)
 ENTRY(ptest_addr)
 	movl	%sp@(4),%a1		| VA
 	ptestr	#5,%a1@,#7,%a0		| %a0 = addr of PTE
+	movl	%a0,%d0			| Result in %d0 (not a pointer return)
 	rts
 
 /*
