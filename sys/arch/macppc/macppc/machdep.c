@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74.2.1 2000/11/01 16:13:48 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74.2.2 2002/03/07 17:49:04 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -177,19 +177,19 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Map PCI memory space.
 	 */
-	battable[0x8].batl = BATL(0x80000000, BAT_I, BAT_PP_RW);
+	battable[0x8].batl = BATL(0x80000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0x8].batu = BATU(0x80000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0x9].batl = BATL(0x90000000, BAT_I, BAT_PP_RW);
+	battable[0x9].batl = BATL(0x90000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0x9].batu = BATU(0x90000000, BAT_BL_256M, BAT_Vs);
 
-	battable[0xa].batl = BATL(0xa0000000, BAT_I, BAT_PP_RW);
+	battable[0xa].batl = BATL(0xa0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xa].batu = BATU(0xa0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Map obio devices.
 	 */
-	battable[0xf].batl = BATL(0xf0000000, BAT_I, BAT_PP_RW);
+	battable[0xf].batl = BATL(0xf0000000, BAT_I|BAT_G, BAT_PP_RW);
 	battable[0xf].batu = BATU(0xf0000000, BAT_BL_256M, BAT_Vs);
 
 	/*
