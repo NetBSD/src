@@ -1,6 +1,7 @@
-/* $NetBSD: device.h,v 1.49 2002/02/15 11:18:26 simonb Exp $ */
+/* $NetBSD: device.h,v 1.49.6.1 2002/03/22 18:24:34 eeh Exp $ */
 
 /*
+ * Copyright (c) 2001, 2002 Eduardo E. Horvath
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
  * All rights reserved.
  * 
@@ -88,6 +89,7 @@
  * Note that all ``system'' device types are listed here.
  */
 enum devclass {
+	DV_EMPTY,
 	DV_DULL,		/* generic, no special info */
 	DV_CPU,			/* CPU (carries resource utilization) */
 	DV_DISK,		/* disk drive (label, etc) */
@@ -109,13 +111,15 @@ struct device {
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
 	struct	cfdata *dv_cfdata;	/* config data that found us */
 	int	dv_unit;		/* device unit number */
+	int	dv_flags;		/* misc. flags; see below */
 	char	dv_xname[16];		/* external name (name + unit) */
 	struct	device *dv_parent;	/* pointer to parent device */
-	int	dv_flags;		/* misc. flags; see below */
+	void	*dv_private;
 };
 
 /* dv_flags */
 #define	DVF_ACTIVE	0x0001		/* device is activated */
+#define	DVF_SOFTC	0x0002		/* separate softc has been allocated. */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -235,6 +239,16 @@ struct pdevinit {
 	int	pdev_count;
 };
 
+/*
+ * Macros to support new driver functionality.
+ */
+#define	DEV_PRIVATE(d)			(d)->dv_private
+#define	DEV_CFA_DECL(n, s, m, a) \
+struct cfattach n = { -(s), m, a }
+
+#define	DEV_PROTECT(dev)
+#define	DEV_UNPROTECT(dev)
+
 #ifdef _KERNEL
 
 extern struct devicelist alldevs;	/* list of all devices */
@@ -244,12 +258,37 @@ extern struct device *booted_device;	/* the device we booted from */
 extern __volatile int config_pending; 	/* semaphore for mountroot */
 
 void configure(void);
-struct cfdata *config_search(cfmatch_t, struct device *, void *);
-struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
-struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
+
+/* Old functions */
 struct device *config_rootfound(const char *, void *);
+struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
+struct cfdata *config_search(cfmatch_t, struct device *, void *);
 struct device *config_attach(struct device *, struct cfdata *, void *,
-    cfprint_t);
+			     cfprint_t, struct device *);
+
+/* Transitional functions */
+struct device *config_found_sad(struct device *, void *, cfprint_t, cfmatch_t, 
+				struct device *);
+struct cfdata *config_search_ad(cfmatch_t, struct device *, void *, struct device *);
+struct cfdata *config_rootsearch_ad(cfmatch_t, const char *, void *, 
+				    struct device *);
+struct device *config_attach_ad(struct device *, struct cfdata *, void *, 
+				cfprint_t, struct device *);
+
+/* New functions */
+struct device *dev_config_create(struct device *, int);
+#if 0
+struct device *dev_config_found(struct device *, struct device *, 
+				cfmatch_t, cfprint_t);
+struct cfdata *dev_config_search(struct device *, struct device *, cfmatch_t);
+struct device *dev_config_attach(struct device *, struct device *, 
+				 struct cfdata *, cfprint_t);
+#else
+#define dev_config_found(d, c, m, p)	config_found_sad((d), NULL, (p), (m), (c))
+#define	dev_config_search(d, c, f)	config_search_ad((f), (d), NULL, (c))
+#define	dev_config_attach(d, n, c, p)	config_attach_ad((d), (c), NULL, (p), (n))
+#endif
+
 void config_makeroom(int n, struct cfdriver *cd);
 int config_detach(struct device *, int);
 int config_activate(struct device *);
@@ -269,11 +308,24 @@ void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 void	evcnt_detach(struct evcnt *);
 
 /* compatibility definitions */
-#define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+#define	config_search(f, d, a)		config_search_ad((f), (d), (a), NULL)
+#define	config_rootsearch(f, d, a)	config_search_ad((f), (d), (a), NULL)
+#define config_found(d, a, p)		config_found_sm((d), (a), (p), NULL)
+#define config_found_sm(d, a, p, s)	config_found_sad((d), (a), (p), (s), NULL)
+#define	config_attach(d, c, a, p)	config_attach_ad((d), (c), (a), (p), NULL)
 
 /* convenience definitions */
 #define	device_lookup(cfd, unit)					\
 	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
+
+/* Device properties */
+int dev_setprop(struct device *, const char *, void *, size_t, int, int);
+int dev_copyprops(struct device *, struct device *, int);
+size_t dev_getprop(struct device *, const char *, void *, size_t, int *, int);
+int dev_delprop(struct device *, const char *);
+/* Declare the interface here */
+extern size_t dev_mdgetprop(struct device *dev, const char *name, void *val, 
+	size_t len, int *type);
 
 #ifdef DDB
 void event_print(int, void (*)(const char *, ...));

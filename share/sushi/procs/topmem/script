@@ -1,4 +1,0 @@
-#!/bin/sh
-# $NetBSD: script,v 1.1 2001/04/26 02:26:23 garbled Exp $
-
-ps -aux | sort -rnk 4 | head -15
