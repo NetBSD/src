@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.4 2003/07/14 15:47:06 lukem Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.5 2003/08/29 00:10:04 thorpej Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -33,7 +33,7 @@
  *
  * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.c#26 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.8 2003/02/27 23:23:16 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.c,v 1.11 2003/05/04 00:20:07 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.4 2003/07/14 15:47:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.5 2003/08/29 00:10:04 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
