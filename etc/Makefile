@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.194 2001/11/24 21:41:12 perry Exp $
+#	$NetBSD: Makefile,v 1.195 2001/11/25 18:19:14 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -159,6 +159,7 @@ distribution: distrib-dirs
 	(cd ..; ${MAKE} _DISTRIB= install)
 .endif
 	${MAKE} install-etc-files
+.endif
 
 install-etc-files:
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} \
@@ -283,7 +284,6 @@ install-etc-files:
 .endif
 .ifndef NO_SENDMAIL
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
-.endif
 .endif
 
 distrib-dirs:
