@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.7.2.2 1999/02/25 04:25:05 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.7.2.3 1999/05/30 15:34:45 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -59,8 +59,11 @@ struct uvm_aiodesc {
 	vaddr_t kva;				/* KVA of mapped page(s) */
 	int npages;				/* # of pages in I/O req */
 	void *pd_ptr;				/* pager-dependent pointer */
+	int flags;				/* misc flags */
 	TAILQ_ENTRY(uvm_aiodesc) aioq;		/* linked list of aio's */
 };
+
+#define UVM_AIO_PAGEDAEMON 0x0001		/* i/o is from pagedaemon */
 
 struct uvm_aiobuf {
 	struct buf buf;
