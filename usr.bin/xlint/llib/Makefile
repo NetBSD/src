@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 1997/05/15 10:08:47 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2000/01/23 20:59:11 mycroft Exp $
 
 LIBS=	llib-lposix.ln llib-lstdc.ln
 FILES=	${LIBS}
 FILESDIR= ${LINTLIBDIR}
 
-all:	${LIBS}
+realall:	${LIBS}
 
 CLEANFILES+= ${LIBS}
 
