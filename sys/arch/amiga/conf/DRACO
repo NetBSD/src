@@ -1,9 +1,7 @@
-#	$NetBSD: DRACO,v 1.1 1996/05/09 20:30:58 is Exp $
+#	$NetBSD: DRACO,v 1.2 1996/05/16 17:52:22 is Exp $
 
 #
 # Macro System GmbH "DraCo"
-#
-# Minimal system. Only 
 #
 
 # look into this later.
