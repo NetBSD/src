@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iokit.h,v 1.1 2003/02/16 15:02:06 manu Exp $ */
+/*	$NetBSD: darwin_iokit.h,v 1.2 2003/02/20 22:39:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,12 +39,11 @@
 #ifndef	_DARWIN_IOKIT_H_
 #define	_DARWIN_IOKIT_H_
 
-struct darwin_iokit_class {
-	char *dic_string;
-	int (*dic_handler)(struct mach_trap_args *);
-	char *dic_name;
-};
+#include <compat/darwin/darwin_iohidsystem.h> 
+#include <compat/darwin/darwin_ioframebuffer.h>
 
-extern struct darwin_iokit_class darwin_iokit_classes[];
-
+#define DARWIN_IOKIT_DEVCLASSES			\
+	&darwin_iohidsystem_devclass,		\
+	&darwin_ioframebuffer_devclass,
+							
 #endif /* _DARWIN_IOKIT_H_ */

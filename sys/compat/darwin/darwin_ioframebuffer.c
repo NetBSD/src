@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.1 2003/02/16 15:02:06 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.2 2003/02/20 22:39:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.1 2003/02/16 15:02:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.2 2003/02/20 22:39:43 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,25 +57,62 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.1 2003/02/16 15:02:06 man
 #include <compat/darwin/darwin_ioframebuffer.h>
 #include <compat/darwin/darwin_iokit.h>
 
+struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
+	"<dict ID=\"0\"><key>IOProviderClass</key>"
+	    "<string ID=\"1\">IOFramebuffer</string></dict>",
+	darwin_ioframebuffer_registry_entry_get_property,
+	NULL,
+	"IOFramebuffer",
+};
+
+struct mach_iokit_property darwin_ioframebuffer_properties[] = {
+	{ "IOFBDependentID", 0 },
+	{ "IOFBDependentIndex", 0},
+	{ "graphic-options", 0x28},
+	{ "IOFBConfig", 0x219f},
+	{ "IOFBMemorySize", 0x2e}, 
+	{ NULL, 0}
+};
+
 int
-darwin_iokit_ioframebuffer(args)
+darwin_ioframebuffer_registry_entry_get_property(args)
 	struct mach_trap_args *args;
 {
-	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
-	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
+	mach_io_registry_entry_get_property_request_t *req = args->smsg;
+	mach_io_registry_entry_get_property_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+	struct mach_iokit_property *mip;
+	size_t len;
 
 #ifdef DEBUG_DARWIN
-	printf("darwin_iokit_ioframebuffer()\n");
+	printf("darwin_ioframebuffer_registry_entry_get_property()\n");
 #endif
+	len = strlen(mip->mip_name);
+	for (mip = darwin_ioframebuffer_properties; mip->mip_name; mip++) {
+		if (memcmp(mip->mip_name, req->req_propery_name, len) == 0)
+			break;
+	}
+	if (mip->mip_value == 0) 
+		return mach_iokit_error(args, MACH_IOKIT_ENOENT);
+		
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+	
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_outcount = 0;
-	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_properties.name = (mach_port_t)mr->mr_name;
+	rep->rep_properties.disposition = 0x11; /* XXX */
+	rep->rep_properties_count = mip->mip_value;
+	rep->rep_trailer.msgh_trailer_size = 8;
 
-	*msglen = sizeof(*rep) - 4096 + rep->rep_outcount;
+	*msglen = sizeof(*rep);
 	return 0;
 }
