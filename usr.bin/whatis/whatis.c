@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.4 1997/10/17 06:58:52 mikel Exp $	*/
+/*	$NetBSD: whatis.c,v 1.5 1997/10/17 07:08:06 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: whatis.c,v 1.4 1997/10/17 06:58:52 mikel Exp $";
+__RCSID("$NetBSD: whatis.c,v 1.5 1997/10/17 07:08:06 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,13 +58,14 @@ static char rcsid[] = "$NetBSD: whatis.c,v 1.4 1997/10/17 06:58:52 mikel Exp $";
 #include <stdlib.h>
 #include <string.h>
 
-#include "../man/config.h"
-#include "../man/pathnames.h"
+#include "config.h"
+#include "pathnames.h"
 
 #define	MAXLINELEN	256			/* max line handled */
 
 static int *found, foundman;
 
+int main __P((int, char **));
 void dashtrunc __P((char *, char *));
 int match __P((char *, char *));
 void usage __P((void));
@@ -105,11 +107,11 @@ main(argc, argv)
 		usage();
 
 	if ((found = malloc((u_int)argc * sizeof(int))) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	memset(found, 0, argc * sizeof(int));
 
 	for (p = argv; *p; ++p)			/* trim full paths */
-		if (beg = strrchr(*p, '/'))
+		if ((beg = strrchr(*p, '/')))
 			*p = beg + 1;
 
 	if (p_augment)
@@ -150,14 +152,13 @@ whatis(argv, path, buildpath)
 {
 	register char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
+	char hold[MAXPATHLEN + 1];
 
 	for (name = path; name; name = end) {	/* through name list */
-		if (end = strchr(name, ':'))
+		if ((end = strchr(name, ':')))
 			*end++ = '\0';
 
 		if (buildpath) {
-			char hold[MAXPATHLEN + 1];
-
 			(void)sprintf(hold, "%s/%s", name, _PATH_WHATIS);
 			name = hold;
 		}
