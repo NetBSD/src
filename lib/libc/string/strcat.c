@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.c,v 1.6 1997/07/13 20:24:20 christos Exp $	*/
+/*	$NetBSD: strcat.c,v 1.7 1997/07/21 04:45:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strcat.c	5.6 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strcat.c,v 1.6 1997/07/13 20:24:20 christos Exp $");
+__RCSID("$NetBSD: strcat.c,v 1.7 1997/07/21 04:45:44 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,9 +53,11 @@ strcat(s, append)
 	register char *s;
 	register const char *append;
 {
-	char *save = s;
+	char	*t = s;
 
-	for (; *s; ++s);
-	while ((*s++ = *append++) != '\0');
-	return(save);
+	for (; *t; ++t)
+		;
+	while ((*t++ = *append++) != '\0')
+		;
+	return (s);
 }
