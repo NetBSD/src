@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2001/11/11 22:05:19 chris Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2001/11/13 13:07:52 bjh21 Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,18 +30,21 @@
 
 #include <machine/asm.h>
 
-/* ffs - find first set bit, this algorithm multiplies the number by
- * 0x0450fbaf which leaves the top 6 bits as an index into the table.
- * This algorithm should be a win over the checking each bit in turn as per
- * the C compiled version.
+RCSID("$NetBSD: ffs.S,v 1.2 2001/11/13 13:07:52 bjh21 Exp $")
+
+/*
+ * ffs - find first set bit, this algorithm isolates the first set
+ * bit, then multiplies the number by 0x0450fbaf which leaves the top
+ * 6 bits as an index into the table.  This algorithm should be a win
+ * over the checking each bit in turn as per the C compiled version.
  *
- * under Arm v5 there's an instruction called CLZ (count leading Zero's) that
+ * under ARMv5 there's an instruction called CLZ (count leading Zero's) that
  * could be used
  *
  * This is the ffs algorithm devised by d.seal and posted to comp.sys.arm on
  * 16 Feb 1994.
  */
- 
+
 ENTRY(ffs)
 	/* Standard trick to isolate bottom bit in a0 or 0 if r0 = 0 on entry */
  	rsb     r1, r0, #0
@@ -64,7 +67,7 @@ ENTRY(ffs)
         mov   pc, lr
 #endif
 .text;
-.type Lffs_table, _ASM_TYPE_OBJECT;
+.type L_ffs_table, _ASM_TYPE_OBJECT;
 L_ffs_table:
 /*               0   1   2   3   4   5   6   7           */
 	.byte	 0,  1,  2, 13,  3,  7,  0, 14  /*  0- 7 */
