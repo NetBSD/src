@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.54 2002/08/30 19:21:14 hannken Exp $	*/
+/*	$NetBSD: buf.h,v 1.55 2002/10/06 17:05:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -83,14 +83,16 @@
 #include <sys/pool.h>
 #include <sys/queue.h>
 
+struct buf;
+struct mount;
+struct vnode;
+
 #define NOLIST ((struct buf *)0x87654321)
 
 /*
  * To avoid including <ufs/ffs/softdep.h> 
  */   
 LIST_HEAD(workhead, worklist);
-
-#ifdef _KERNEL
 
 /*
  * Device driver buffer queue.
@@ -115,6 +117,8 @@ struct bufq_state {
 #define BUFQ_SORT_MASK		0x000f
 #define BUFQ_METHOD_MASK	0x00f0
 
+#ifdef _KERNEL
+
 void	bufq_alloc(struct bufq_state *, int);
 void	bufq_free(struct bufq_state *);
 
@@ -133,9 +137,6 @@ void	bufq_free(struct bufq_state *);
  * to use these hooks, a pointer to a set of bio_ops could be added
  * to each buffer.
  */
-struct buf;
-struct mount;
-struct vnode;
 struct bio_ops {
  	void	(*io_start) __P((struct buf *));
  	void	(*io_complete) __P((struct buf *));
