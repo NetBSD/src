@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.8 2002/01/21 11:28:18 ichiro Exp $	*/
+/*	$NetBSD: wivar.h,v 1.9 2002/03/25 09:10:55 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -49,7 +49,7 @@ struct wi_softc	{
 	int sc_attached;
 	int sc_enabled;
 	int sc_prism2;
-	int sc_prism2_ver;
+	int sc_firmware_ver;
 	int sc_pci;			/* attach to PCI-Bus */
 
 	bus_space_tag_t		sc_iot;	/* bus cookie */
