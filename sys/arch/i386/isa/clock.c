@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 1999/01/18 10:50:23 drochner Exp $	*/
+/*	$NetBSD: clock.c,v 1.57 1999/02/07 16:18:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -489,12 +489,84 @@ bintobcd(n)
 static int timeset;
 
 /*
+ * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
+ * to be called at splclock()
+ */
+static int cmoscheck __P((void));
+static int
+cmoscheck()
+{
+	int i;
+	unsigned short cksum = 0;
+
+	for (i = 0x10; i <= 0x2d; i++)
+		cksum += mc146818_read(NULL, i); /* XXX softc */
+
+	return (cksum == (mc146818_read(NULL, 0x2e) << 8)
+			  + mc146818_read(NULL, 0x2f));
+}
+
+/*
  * patchable to control century byte handling:
- * 1: always update in resettodr()
+ * 1: always update
  * -1: never touch
  * 0: try to figure out itself
  */
 int rtc_update_century = 0;
+
+/*
+ * Expand a two-digit year as read from the clock chip
+ * into an offset relative to 1900.
+ * Being here, deal with the CMOS century byte.
+ */
+static int clock_expandyear __P((int));
+static int
+clock_expandyear(clockyear)
+	int clockyear;
+{
+	int s, clockcentury, cmoscentury;
+
+	clockcentury = (clockyear < 70) ? 20 : 19;
+	clockyear = ((clockcentury == 20) ? clockyear + 100 : clockyear);
+
+	if (rtc_update_century < 0)
+		return (clockyear);
+
+	s = splclock();
+	if (cmoscheck())
+		cmoscentury = mc146818_read(NULL, NVRAM_CENTURY);
+	else
+		cmoscentury = 0;
+	splx(s);
+	if (!cmoscentury) {
+#ifdef DEBUG
+		printf("clock: unknown CMOS layout\n");
+#endif
+		return (clockyear);
+	}
+	cmoscentury = bcdtobin(cmoscentury);
+
+	if (cmoscentury != clockcentury) {
+		/* XXX note: saying "century is 20" might confuse the naive. */
+		printf("WARNING: NVRAM century is %d but RTC year is %d\n",
+		       cmoscentury, clockyear);
+
+		/* Kludge to roll over century. */
+		if ((rtc_update_century > 0) ||
+		    ((cmoscentury == 19) && (clockcentury == 20) &&
+		     (clockyear == 00))) {
+			printf("WARNING: Setting NVRAM century to %d\n",
+			       clockcentury);
+			s = splclock();
+			mc146818_write(NULL, NVRAM_CENTURY,
+				       bintobcd(clockcentury));
+			splx(s);
+		}
+	} else if (cmoscentury == 19 && rtc_update_century == 0)
+		rtc_update_century = 1; /* will update later in resettodr() */
+
+	return (clockyear);
+}
 
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
@@ -506,7 +578,7 @@ inittodr(base)
 {
 	mc_todregs rtclk;
 	time_t n;
-	int sec, min, hr, dom, mon, yr, century, tcentury;
+	int sec, min, hr, dom, mon, yr;
 	int i, days = 0;
 	int s;
 
@@ -530,7 +602,6 @@ inittodr(base)
 		printf("WARNING: invalid time in clock chip\n");
 		goto fstime;
 	}
-	century = mc146818_read(NULL, NVRAM_CENTURY); /* XXX softc */
 	splx(s);
 
 	sec = bcdtobin(rtclk[MC_SEC]);
@@ -539,27 +610,9 @@ inittodr(base)
 	dom = bcdtobin(rtclk[MC_DOM]);
 	mon = bcdtobin(rtclk[MC_MONTH]);
 	yr = bcdtobin(rtclk[MC_YEAR]);
-	century = bcdtobin(century);
-	tcentury = (yr < 70) ? 20 : 19;
-	if (century != tcentury) {
-		/* XXX note: saying "century is 20" might confuse the naive. */
-		printf("WARNING: NVRAM century is %d but RTC year is %d\n",
-		    century, yr);
 
-		/* Kludge to roll over century. */
-		if ((century == 19) && (tcentury == 20) && (yr == 00) &&
-			rtc_update_century >= 0) {
-			printf("WARNING: Setting NVRAM century to 20\n");
-			s = splclock();
-			/* note: 0x20 = 20 in BCD. */
-			mc146818_write(NULL, NVRAM_CENTURY, 0x20); /*XXXsoftc*/
-			splx(s);
-		}
-	} else if (century == 19 && rtc_update_century == 0)
-		rtc_update_century = 1; /* will update later in resettodr() */
+	yr = clock_expandyear(yr);
 
-	yr = (tcentury == 20) ? yr+100 : yr;
- 
 	/*
 	 * If time_t is 32 bits, then the "End of Time" is 
 	 * Mon Jan 18 22:14:07 2038 (US/Eastern)
