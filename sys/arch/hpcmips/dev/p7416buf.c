@@ -1,4 +1,4 @@
-/*	$NetBSD: p7416buf.c,v 1.1 1999/12/08 15:49:18 uch Exp $ */
+/*	$NetBSD: p7416buf.c,v 1.2 1999/12/08 16:22:10 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -196,7 +196,6 @@ int
 p7416buf_poll(arg)
 	void *arg;
 {
-	struct skbd_tag_t controller;
 	struct p7416buf_chip *scc = arg;	
 	bus_space_tag_t t = scc->scc_cst;
 	bus_space_handle_t h = scc->scc_csh;
@@ -204,6 +203,7 @@ p7416buf_poll(arg)
 	u_int16_t mask, rpat, edge;
 	int type, val;
 	int i, j, k;
+	skbd_tag_t controller;
 
 	if (!scc->scc_enabled) {
 		return 0;
