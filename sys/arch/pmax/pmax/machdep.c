@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1994/11/22 18:59:59 dean Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 1994/11/28 18:42:23 dean Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2141,15 +2141,23 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 #ifdef COMPAT_ULTRIX
-void cpu_exec_ecoff_setup(p, epp)
+exec_setup_fcn cpu_exec_setup;	/* make sure  function has correct type */
+
+void cpu_exec_ecoff_setup(code, p, epp)
+	int code;
 	struct proc *p;
 	struct exec_package *epp;
 {
 	struct ecoff_aouthdr *eap;
 
-	eap = (struct ecoff_aouthdr *)
-	    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
-	p->p_md.md_regs[GP] = eap->ea_gp_value;
+	switch(code) {
+	case EXEC_SETUP_FINISH:
+		eap = (struct ecoff_aouthdr *)
+		    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
+		p->p_md.md_regs[GP] = eap->ea_gp_value;
+		break;
+	default:
+	}
 }
 
 /*
