@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.12 1997/08/27 11:27:10 bouyer Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.13 1997/10/01 01:19:22 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -280,7 +280,8 @@ scanjet_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd, sizeof(cmd),
+	if ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
@@ -309,7 +310,8 @@ scanjet_ctl_write(ss, buf, size, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
-	return (ss->sc_link->scsipi_cmd(ss->sc_link, (struct scsipi_generic *) &cmd,
+	return ((*ss->sc_link->scsipi_cmd)(ss->sc_link,
+	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_OUT));
 }
@@ -330,7 +332,8 @@ scanjet_ctl_read(ss, buf, size, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
-	return (ss->sc_link->scsipi_cmd(ss->sc_link, (struct scsipi_generic *) &cmd,
+	return ((*ss->sc_link->scsipi_cmd)(ss->sc_link,
+	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_IN));
 }
@@ -339,15 +342,15 @@ scanjet_ctl_read(ss, buf, size, flags)
 #ifdef SCANJETDEBUG
 static void show_es(char *es)
 {
-  char *p = es;
-  while (*p) {
-    if (*p == '\033')
-      printf("[Esc]");
-    else
-      printf("%c", *p);
-    ++p;
-  }
-  printf("\n");
+	char *p = es;
+	while (*p) {
+		if (*p == '\033')
+			printf("[Esc]");
+		else
+			printf("%c", *p);
+		++p;
+	}
+	printf("\n");
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.28 1997/09/29 17:32:31 mjacob Exp $	*/
+/*	$NetBSD: ch.c,v 1.29 1997/10/01 01:18:50 enami Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -126,7 +126,8 @@ int	ch_ielem __P((struct ch_softc *));
 int	ch_usergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, caddr_t, size_t));
 int	ch_get_params __P((struct ch_softc *, int));
-void	ch_get_quirks __P((struct ch_softc *, struct scsipi_inquiry_pattern *));
+void	ch_get_quirks __P((struct ch_softc *,
+	    struct scsipi_inquiry_pattern *));
 
 /*
  * SCSI changer quirks.
@@ -156,7 +157,7 @@ chmatch(parent, match, aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
+	    (caddr_t)ch_patterns, sizeof(ch_patterns) / sizeof(ch_patterns[0]),
 	    sizeof(ch_patterns[0]), &priority);
 
 	return (priority);
@@ -407,8 +408,9 @@ ch_move(sc, cm)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
+	    100000, NULL, 0));
 }
 
 int
@@ -463,8 +465,9 @@ ch_exchange(sc, ce)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
+	    100000, NULL, 0));
 }
 
 int
@@ -501,8 +504,9 @@ ch_position(sc, cp)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), NULL, 0, CHRETRIES,
+	    100000, NULL, 0));
 }
 
 /*
@@ -614,8 +618,9 @@ ch_getelemstatus(sc, first, count, data, datalen)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)data, datalen, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, 0));
 }
 
 
@@ -634,9 +639,9 @@ ch_ielem(sc)
 	/*
 	 * Send command to changer.
 	 */
-	return (sc->sc_link->scsipi_cmd(sc->sc_link,
-		(struct scsipi_generic *)&cmd, sizeof(cmd),
-		NULL, 0, CHRETRIES, 100000, NULL, 0));
+	return ((*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    NULL, 0, CHRETRIES, 100000, NULL, 0));
 }
 
 /*
@@ -669,9 +674,10 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 |= 0x08;	/* disable block descriptors */
 	cmd.page = 0x1d;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
-	    6000, NULL, scsiflags | SCSI_DATA_IN);
+	error = (*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
+	    sizeof(sense_data), CHRETRIES, 6000, NULL,
+	    scsiflags | SCSI_DATA_IN);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -701,9 +707,10 @@ ch_get_params(sc, scsiflags)
 	cmd.byte2 = 0x08;	/* disable block descriptors */
 	cmd.page = 0x1f;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
-	    6000, NULL, scsiflags | SCSI_DATA_IN);
+	error = (*sc->sc_link->scsipi_cmd)(sc->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
+	    sizeof(sense_data), CHRETRIES, 6000, NULL,
+	    scsiflags | SCSI_DATA_IN);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
@@ -737,7 +744,6 @@ ch_get_quirks(sc, inqbuf)
 	    (caddr_t)chquirks,
 	    sizeof(chquirks) / sizeof(chquirks[0]),
 	    sizeof(chquirks[0]), &priority);
-	if (priority != 0) {
+	if (priority != 0)
 		sc->sc_settledelay = match->cq_settledelay;
-	}
 }
