@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 1999/05/21 06:19:55 nisimura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 1999/05/27 01:56:34 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 1999/05/21 06:19:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 1999/05/27 01:56:34 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1181,10 +1181,10 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			npte = (prot & VM_PROT_WRITE) ?
 			    (MIPS3_PG_IOPAGE & ~MIPS3_PG_G) :
 			    ((MIPS3_PG_IOPAGE | MIPS3_PG_RO) &
-			    ~(MIPS3_PG_G | MIPS3_PG_M));
+			    ~(MIPS3_PG_G | MIPS3_PG_D));
 		} else  {
 			npte = (prot & VM_PROT_WRITE) ?
-			    (MIPS1_PG_M | MIPS1_PG_N) :
+			    (MIPS1_PG_D | MIPS1_PG_N) :
 			    (MIPS1_PG_RO | MIPS1_PG_N);
 		}
 	}
