@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile.frontend,v 1.1 2001/06/18 16:18:31 tv Exp $
+#	$NetBSD: Makefile.frontend,v 1.2 2001/07/18 14:02:43 tv Exp $
 
-MKMAN=		no
-BINDIR=		/usr/libexec
+BINDIR=		/usr/bin
 
 CPPFLAGS+=	-I${GCCARCH} -I${FRONTENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
