@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.2.2.2 2002/10/18 02:38:43 nathanw Exp $ */
+/* $NetBSD: if_aumac.c,v 1.2.2.3 2003/01/17 16:06:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.2.2.2 2002/10/18 02:38:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.2.2.3 2003/01/17 16:06:23 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -157,6 +157,8 @@ struct aumac_softc {
 
 #ifdef AUMAC_EVENT_COUNTERS
 #define	AUMAC_EVCNT_INCR(ev)	(ev)->ev_count++
+#else
+#define	AUMAC_EVCNT_INCR(ev)	/* nothing */
 #endif
 
 #define	AUMAC_INIT_RXDESC(sc, x)					\
@@ -202,15 +204,6 @@ int	aumac_copy_small = 0;
 
 CFATTACH_DECL(aumac, sizeof(struct aumac_softc),
     aumac_match, aumac_attach, NULL, NULL);
-
-static const struct {
-	bus_addr_t	mac_base;
-	bus_addr_t	macen_base;
-	bus_addr_t	macdma_base;
-} regmap[] = {
-	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE },
-	{ MAC1_BASE, MAC1_ENABLE, MAC1_DMA_BASE },
-};
 
 static int
 aumac_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -416,9 +409,7 @@ aumac_start(struct ifnet *ifp)
 		if (sc->sc_txfree == 0) {
 			/* No more slots left; notify upper layer. */
 			ifp->if_flags |= IFF_OACTIVE;
-#ifdef AUMAC_EVENT_COUNTERS
 			AUMAC_EVCNT_INCR(&sc->sc_ev_txstall);
-#endif
 			return;
 		}
 		nexttx = sc->sc_txnext;
@@ -431,6 +422,12 @@ aumac_start(struct ifnet *ifp)
 
 		m_copydata(m, 0, m->m_pkthdr.len,
 		    sc->sc_txbufs[nexttx].buf_vaddr);
+
+		/* Zero out the remainder of any short packets. */
+		if (m->m_pkthdr.len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
+			memset(sc->sc_txbufs[nexttx].buf_vaddr +
+			    m->m_pkthdr.len, 0,
+			    ETHER_MIN_LEN - ETHER_CRC_LEN - m->m_pkthdr.len);
 
 		bus_space_write_4(sc->sc_st, sc->sc_dma_sh,
 		    MACDMA_TX_STAT(nexttx), 0);
@@ -594,10 +591,8 @@ aumac_txintr(struct aumac_softc *sc)
 		aumac_start(ifp);
 	}
 
-#ifdef AUMAC_EVENT_COUNTERS
 	if (gotone)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_txintr);
-#endif
 
 	/* Update the dirty descriptor pointer. */
 	sc->sc_txdirty = i;
@@ -730,12 +725,10 @@ aumac_rxintr(struct aumac_softc *sc)
 		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 	}
-#ifdef AUMAC_EVENT_COUNTERS
 	if (pkts)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_rxintr);
 	if (pkts == AUMAC_NRXDESC)
 		AUMAC_EVCNT_INCR(&sc->sc_ev_rxstall);
-#endif
 
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;

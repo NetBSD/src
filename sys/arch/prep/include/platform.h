@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1.8.3 2002/06/20 03:40:39 nathanw Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.8.4 2003/01/17 16:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ void reset_prep_generic(void);
 
 /* IBM */
 extern struct plattab plattab_ibm;
+extern struct platform platform_ibm_6040;
 extern struct platform platform_ibm_6050;
 extern struct platform platform_ibm_7248;
 extern struct platform platform_ibm_7043_140;

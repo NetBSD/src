@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.2.6.3 2003/01/17 16:09:03 thorpej Exp $        */
+/*	$NetBSD: ibm_6040.c,v 1.1.2.2 2003/01/17 16:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,44 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_platform.h"
-
 #include <sys/param.h>
-#include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/platform.h>
 
-static struct platform *platform_ibm[] = {
-#if defined(PLATFORM_IBM_6040)
-	&platform_ibm_6040,
-#endif
-#if defined(PLATFORM_IBM_6050)
-	&platform_ibm_6050,
-#endif
-#if defined(PLATFORM_IBM_7248)
-	&platform_ibm_7248,
-#endif
-#if defined(PLATFORM_IBM_7043_140)
-	&platform_ibm_7043_140,
-#endif
+static void pci_intr_fixup_ibm_6040(int, int, int *);
+
+static const char *obiodevs_ibm_6040[] = {
 	NULL
 };
 
-struct plattab plattab_ibm = {
-	platform_ibm,	sizeof(platform_ibm)/sizeof(platform_ibm[0]) - 1
+struct platform platform_ibm_6040 = {
+	"IBM PPS Model 6040 (E)",		/* model */
+	platform_generic_match,			/* match */
+	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
+	pci_intr_nofixup,		/* pci_intr_fixup */
+	init_intr_ivr,				/* init_intr */
+	cpu_setup_ibm_generic,			/* cpu_setup */
+	reset_prep_generic,			/* reset */
+	obiodevs_ibm_6040,			/* obiodevs */
 };
-
-void
-cpu_setup_ibm_generic(struct device *dev)
-{
-	u_char l2ctrl, cpuinf;
-
-	/* system control register */
-	l2ctrl = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c);
-	/* device status register */
-	cpuinf = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x80c);
-
-	/* Enable L2 cache */
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
-}
