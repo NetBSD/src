@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.67 1998/02/13 04:33:30 enami Exp $
+# $NetBSD: ALPHA,v 1.68 1998/03/12 06:04:31 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-maxusers 8
+maxusers 32
 
 # set kernel load address a bit higher to allow kernel to be netbooted.
 # if not netbooting, the "makeoptions LOADADDRESS" line can be commented
