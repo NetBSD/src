@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.33 2000/12/11 19:47:32 ad Exp $
+# $NetBSD: obsolete.mi,v 1.34 2000/12/14 05:59:39 jmc Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -339,6 +339,12 @@
 /usr/lib/libntp_pic.a
 /usr/libdata/lint/llib-lntp.ln
 /usr/sbin/config.new
+/usr/share/ldscripts/m68kelf.x
+/usr/share/ldscripts/m68kelf.xbn
+/usr/share/ldscripts/m68kelf.xn
+/usr/share/ldscripts/m68kelf.xr
+/usr/share/ldscripts/m68kelf.xs
+/usr/share/ldscripts/m68kelf.xu
 /usr/share/man/cat1/flexdoc.0
 /usr/share/man/cat1/lexdoc.0
 /usr/share/man/cat2/getdirentries.0
