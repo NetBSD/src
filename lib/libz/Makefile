@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 1997/03/24 22:11:59 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/13 23:01:08 gwr Exp $
 
 LIB=	z
+NOMAN=	zlib.3
+
+HDRS=	zconf.h zlib.h
 SRCS=	adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
 	zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
 
-CFLAGS+= -D_ZLIB_PRIVATE -I${.CURDIR}
-
-NOMAN=
+CFLAGS+= -I${.CURDIR}
 
 CLEANFILES+= minigzip
 
