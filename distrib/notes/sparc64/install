@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1.2.5 2000/11/30 03:45:44 tv Exp $
+.\"	$NetBSD: install,v 1.1.2.6 2002/01/05 18:32:03 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -420,7 +420,8 @@ installation of boot programs
 .
 .Ss2 Installing NetBSD using Solaris
 .
-These instructions were kindly contributed by Murray Stokely <murray@osd.bsdi.com>
+These instructions were kindly contributed by
+Murray Stokely \*<murray@osd.bsdi.com\*>
 .Pp
 .Ss2 Preparing the disk
 The first step is to format and label the disk that you would like to
@@ -432,7 +433,7 @@ write a disklabel. You will probably at least want to create a root
 partition and a swap partition, plus potentially a /usr or /var partitions,
 but of course you can layout the disk however you see fit.
 .Pp
-.Dl "partition> pr"
+.Dl "partition\*> pr"
 .Dl " Current partition table (original):"
 .Dl " Total disk cylinders available: 8186 + 2 (reserved cylinders)"
 .Dl " "
