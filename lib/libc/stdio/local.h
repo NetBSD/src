@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.13 2003/01/21 23:26:03 nathanw Exp $	*/
+/*	$NetBSD: local.h,v 1.14 2003/02/01 03:25:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -73,7 +73,6 @@ extern int	__sdidinit;
 
 extern int	__gettemp __P((char *, int *, int));
 
-extern void	__smutex_init __P((mutex_t *));
 /*
  * Return true iff the given FILE cannot be written now.
  */
