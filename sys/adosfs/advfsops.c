@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46.4.2 2001/09/26 15:28:04 fvdl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.46.4.3 2001/09/30 19:25:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,6 +53,7 @@
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
+void adosfs_reinit __P((void));
 void adosfs_done __P((void));
 int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		      struct proc *));
@@ -589,8 +590,9 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	*vpp = vp;		/* return vp */
-	brelse(bp);		/* release buffer */
+	*vpp = vp;
+	brelse(bp);
+	vp->v_size = ap->fsize;
 	return (0);
 }
 
@@ -851,6 +853,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_fhtovp,                  
 	adosfs_vptofh,                  
 	adosfs_init,                    
+	NULL,
 	adosfs_done,
 	adosfs_sysctl,
 	NULL,				/* vfs_mountroot */
