@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.14 2002/12/24 15:02:46 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.15 2002/12/25 21:19:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -166,7 +166,6 @@ int	 makekey(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
 int	 makeline(int, int, struct filelist *,
 	    int, RECHEADER *, u_char *, struct field *);
-void	 merge(int, int, get_func_t, FILE *, put_func_t, struct field *);
 void	 num_init(void);
 void	 onepass(const u_char **, int, long, long *, u_char *, FILE *);
 int	 optval(int, int);
