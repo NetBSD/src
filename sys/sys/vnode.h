@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.53 1998/07/28 18:37:47 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.54 1998/08/02 18:26:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -184,9 +184,10 @@ struct vattr {
  */
 #define	IO_UNIT		0x01		/* do I/O as atomic unit */
 #define	IO_APPEND	0x02		/* append write to end */
-#define	IO_SYNC		0x04		/* do I/O synchronously */
+#define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
 #define	IO_NODELOCKED	0x08		/* underlying node already locked */
 #define	IO_NDELAY	0x10		/* FNDELAY flag set in file table */
+#define	IO_DSYNC	0x20		/* sync I/O data integrity completion */
 
 /*
  *  Modes.
