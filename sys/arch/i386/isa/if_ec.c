@@ -190,7 +190,7 @@ struct isa_device *is;
 /*
  *  All done. 
  */
-	return(1);
+	return(8);
 }
 
 ecattach(is)
