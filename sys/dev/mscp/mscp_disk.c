@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.38 2002/11/01 11:31:58 mrg Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.39 2003/04/02 20:32:01 he Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.38 2002/11/01 11:31:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.39 2003/04/02 20:32:01 he Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -920,7 +920,7 @@ rrmakelabel(dl, type)
 	int n, p = 0;
 
 	dl->d_bbsize = BBSIZE;
-	dl->d_sbsize = SBSIZE;
+	dl->d_sbsize = SBLOCKSIZE;
 
 	/* Create the disk name for disklabel. Phew... */
 	dl->d_typename[p++] = MSCP_MID_CHAR(2, type);
