@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.7 1994/12/24 17:31:23 cgd Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.8 1995/06/03 03:12:05 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -90,7 +90,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int ngroups; 
-	gid_t gidset[NGROUPS];
+	gid_t mygid, gidset[NGROUPS];
 	int i, gflag = 0, uflag = 0;
 	char ch;
 	extern char *optarg;
@@ -122,13 +122,16 @@ main(argc, argv)
 		if (uflag)
 			showuid(getuid());
 		if (gflag) {
+			mygid = getgid();
 			ngroups = getgroups(NGROUPS, gidset);
 			if (ngroups < 0) {
 				perror("quota: getgroups");
 				exit(1);
 			}
-			for (i = 1; i < ngroups; i++)
-				showgid(gidset[i]);
+			showgid(mygid);
+			for (i = 0; i < ngroups; i++)
+				if (gidset[i] != mygid)
+					showgid(gidset[i]);
 		}
 		exit(0);
 	}
@@ -216,7 +219,7 @@ showgid(gid)
 {
 	struct group *grp = getgrgid(gid);
 	int ngroups;
-	gid_t gidset[NGROUPS];
+	gid_t mygid, gidset[NGROUPS];
 	register int i;
 	char *name;
 
@@ -224,18 +227,22 @@ showgid(gid)
 		name = "(no entry)";
 	else
 		name = grp->gr_name;
+	mygid = getgid();
 	ngroups = getgroups(NGROUPS, gidset);
 	if (ngroups < 0) {
 		perror("quota: getgroups");
 		return;
 	}
-	for (i = 1; i < ngroups; i++)
-		if (gid == gidset[i])
-			break;
-	if (i >= ngroups && getuid() != 0) {
-		fprintf(stderr, "quota: %s (gid %d): permission denied\n",
-		    name, gid);
-		return;
+	if (gid != mygid) {
+		for (i = 0; i < ngroups; i++)
+			if (gid == gidset[i])
+				break;
+		if (i >= ngroups && getuid() != 0) {
+			fprintf(stderr,
+			    "quota: %s (gid %d): permission denied\n",
+			    name, gid);
+			return;
+		}
 	}
 	showquotas(GRPQUOTA, gid, name);
 }
@@ -248,25 +255,29 @@ showgrpname(name)
 {
 	struct group *grp = getgrnam(name);
 	int ngroups;
-	gid_t gidset[NGROUPS];
+	gid_t mygid, gidset[NGROUPS];
 	register int i;
 
 	if (grp == NULL) {
 		fprintf(stderr, "quota: %s: unknown group\n", name);
 		return;
 	}
+	mygid = getgid();
 	ngroups = getgroups(NGROUPS, gidset);
 	if (ngroups < 0) {
 		perror("quota: getgroups");
 		return;
 	}
-	for (i = 1; i < ngroups; i++)
-		if (grp->gr_gid == gidset[i])
-			break;
-	if (i >= ngroups && getuid() != 0) {
-		fprintf(stderr, "quota: %s (gid %d): permission denied\n",
-		    name, grp->gr_gid);
-		return;
+	if (grp->gr_gid != mygid) {
+		for (i = 0; i < ngroups; i++)
+			if (grp->gr_gid == gidset[i])
+				break;
+		if (i >= ngroups && getuid() != 0) {
+			fprintf(stderr,
+			    "quota: %s (gid %d): permission denied\n",
+			    name, grp->gr_gid);
+			return;
+		}
 	}
 	showquotas(GRPQUOTA, grp->gr_gid, name);
 }
