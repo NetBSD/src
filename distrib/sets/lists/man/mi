@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.479 2002/05/26 14:13:56 wiz Exp $
+# $NetBSD: mi,v 1.480 2002/05/27 21:15:00 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1355,6 +1355,7 @@
 ./usr/share/man/cat8/groupdel.0			man-sysutil-catman
 ./usr/share/man/cat8/groupinfo.0		man-sysutil-catman
 ./usr/share/man/cat8/groupmod.0			man-sysutil-catman
+./usr/share/man/cat8/gspa.0			man-sysutil-catman
 ./usr/share/man/cat8/halt.0			man-sysutil-catman
 ./usr/share/man/cat8/hlfsd.0			man-amd-catman
 ./usr/share/man/cat8/hp300/MAKEDEV.0		man-sysutil-catman
@@ -3064,6 +3065,7 @@
 ./usr/share/man/man8/groupdel.8			man-sysutil-man
 ./usr/share/man/man8/groupinfo.8		man-sysutil-man
 ./usr/share/man/man8/groupmod.8			man-sysutil-man
+./usr/share/man/man8/gspa.8			man-sysutil-man
 ./usr/share/man/man8/halt.8			man-sysutil-man
 ./usr/share/man/man8/hlfsd.8			man-amd-man
 ./usr/share/man/man8/hp300/MAKEDEV.8		man-sysutil-man
