@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.567 2003/08/26 17:25:33 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.568 2003/08/26 21:02:23 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.569 2003/08/26 17:25:00 tron Exp 
+ *	NetBSD: pcidevs,v 1.570 2003/08/26 21:01:35 jdolecek Exp 
  */
 
 /*
@@ -8006,6 +8006,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Schneider & Koch",
 	    "SK-NET GE",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2,
+	    0,
+	    "Schneider & Koch",
+	    "SK-9821 v2.0",
 	},
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
