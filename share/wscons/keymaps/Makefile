@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.1.2.2 2000/08/09 07:30:37 drochner Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2001/05/02 22:42:39 he Exp $
 
-FILES=
+FILES= pckbd.sv.svascii
+FILESDIR= /usr/share/wscons/keymaps
 NOOBJ=	yes
 
 .include <bsd.prog.mk>
