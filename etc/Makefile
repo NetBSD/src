@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.33 1994/02/05 07:26:19 cgd Exp $
+#	$Id: Makefile,v 1.34 1994/02/06 06:48:46 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -7,7 +7,7 @@ LOCALTIME=	US/Pacific
 NOOBJ=	oobj
 
 .if exists(etc.${MACHINE}/Makefile.inc)
-.include ${MACHINE}/Makefile.inc
+.include "etc.${MACHINE}/Makefile.inc"
 .endif
 
 # disktab may be wrong -- hcx9 is a tahoe, but gets its own.
@@ -34,6 +34,11 @@ WCS2=	fpevent fppwcs fppwcs_dual hdcwcs load_diags start_fpp wcs wcs_dual
 
 all clean cleandir depend etc install lint:
 
+.ifndef DESTDIR
+distribution:
+	@echo setenv DESTDIR before running a 'make distribution'.
+	@false
+.else
 distribution: distrib-dirs
 	(cd ..; ${MAKE} install)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
@@ -98,5 +103,6 @@ distrib-dirs:
 	mtree -u -d -p ${DESTDIR}/usr -f ${.CURDIR}/mtree/BSD.usr.dist
 	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
+.endif	# DESTDIR check
 
 .include <bsd.prog.mk>
