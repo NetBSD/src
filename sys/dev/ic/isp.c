@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.21 1998/03/24 23:37:53 mjacob Exp $ */
+/*	$NetBSD: isp.c,v 1.22 1998/05/05 22:10:36 mjacob Exp $ */
 
 /*
  * Machine Independent (well, as best as possible)
@@ -131,9 +131,12 @@ isp_reset(isp)
 			isp->isp_type = ISP_HA_SCSI_1020;
 			break;
 		case 1:
-		case 2:
 			revname = "1020";
 			isp->isp_type = ISP_HA_SCSI_1020;
+			break;
+		case 2:
+			revname = "1020A";
+			isp->isp_type = ISP_HA_SCSI_1020A;
 			break;
 		case 3:
 			revname = "1040A";
