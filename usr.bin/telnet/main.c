@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2002/06/14 00:30:56 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2002/08/23 08:14:20 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 2002/06/14 00:30:56 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2002/08/23 08:14:20 kanaoka Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 
 #include <unistd.h>
 
@@ -74,6 +75,8 @@ __RCSID("$NetBSD: main.c,v 1.16 2002/06/14 00:30:56 wiz Exp $");
 char *ipsec_policy_in = NULL;
 char *ipsec_policy_out = NULL;
 #endif
+
+int family = AF_UNSPEC;
 
 int main(int, char *[]);
 
@@ -102,10 +105,10 @@ usage()
 	fprintf(stderr, "Usage: %s %s%s%s%s\n",
 	    prompt,
 #ifdef	AUTHENTICATION
-	    "[-8] [-E] [-K] [-L] [-N] [-S tos] [-X atype] [-a] [-c] [-d]",
+	    "[-4] [-6] [-8] [-E] [-K] [-L] [-N] [-S tos] [-X atype] [-a] [-c] [-d]",
 	    "\n\t[-e char] [-k realm] [-l user] [-f/-F] [-n tracefile] ",
 #else
-	    "[-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
+	    "[-4] [-6] [-8] [-E] [-L] [-N] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
 	    "\n\t[-n tracefile]",
 #endif
 #if defined(TN3270) && defined(unix)
@@ -166,10 +169,16 @@ main(argc, argv)
 #else
 #define IPSECOPT
 #endif
-	while ((ch = getopt(argc, argv, "8EKLNS:X:acde:fFk:l:n:rt:x"
+	while ((ch = getopt(argc, argv, "468EKLNS:X:acde:fFk:l:n:rt:x"
 			IPSECOPT)) != -1) {
 #undef IPSECOPT
 		switch(ch) {
+		case '4':
+			family = AF_INET;
+			break;
+		case '6':
+			family = AF_INET6;
+			break;
 		case '8':
 			eight = 3;	/* binary output and input */
 			break;
