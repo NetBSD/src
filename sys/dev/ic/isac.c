@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.6 2002/03/25 16:39:54 martin Exp $ 
+ *	$Id: isac.c,v 1.7 2002/03/27 07:39:36 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.6 2002/03/25 16:39:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.7 2002/03/27 07:39:36 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -557,6 +557,8 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 int
 isic_isac_init(struct isic_softc *sc)
 {
+	sc->sc_dying = 0;
+
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 
 	ISAC_WRITE(I_MASK, ISAC_IMASK);

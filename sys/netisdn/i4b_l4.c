@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.15 2002/03/25 20:28:41 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.16 2002/03/27 07:39:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.15 2002/03/25 20:28:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.16 2002/03/27 07:39:35 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -141,6 +141,8 @@ isdn_detach_bri(struct isdn_l3_driver *l3drv)
 		if (sc->bri > max)
 			max = sc->bri;
 	next_bri = max+1;
+
+	free_all_cd_of_bri(bri);
 
 	splx(s);
 

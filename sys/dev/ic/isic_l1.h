@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.6 2002/03/25 16:39:55 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.7 2002/03/27 07:39:37 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -159,6 +159,7 @@ struct isic_softc
 	struct l2_softc	sc_l2;		/* D-channel variables */
 
 	int		sc_irq;		/* interrupt vector	*/
+	int		sc_dying;	/* set when card is detached */
 
 	int sc_num_mappings;		/* number of io mappings provided */
 	struct isic_io_map *sc_maps;
