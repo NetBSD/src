@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.18 2004/06/11 12:34:13 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.19 2004/06/16 12:37:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.18 2004/06/11 12:34:13 yamt Exp $
+ *	$Id: layer_vnops.c,v 1.19 2004/06/16 12:37:01 yamt Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.18 2004/06/11 12:34:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.19 2004/06/16 12:37:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,6 +398,10 @@ layer_bypass(v)
 		 * So all the calls which get us here have a locked vpp. :-)
 		 */
 		error = layer_node_create(old_vps[0]->v_mount, **vppp, *vppp);
+		if (error) {
+			vput(**vppp);
+			**vppp = NULL;
+		}
 	}
 
  out:
@@ -464,6 +468,13 @@ layer_lookup(v)
 		vrele(vp);
 	} else if (vp != NULL) {
 		error = layer_node_create(dvp->v_mount, vp, ap->a_vpp);
+		if (error) {
+			vput(vp);
+			if (cnp->cn_flags & PDIRUNLOCK) {
+				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			}
+		}
 	}
 	return (error);
 }

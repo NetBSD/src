@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.28 2004/06/11 12:34:13 yamt Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.29 2004/06/16 12:37:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.28 2004/06/11 12:34:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.29 2004/06/16 12:37:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,11 @@ umap_bypass(v)
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset, ap);
 		error = layer_node_create(old_vps[0]->v_mount, **vppp, *vppp);
-	};
+		if (error) {
+			vput(**vppp);
+			**vppp = NULL;
+		}
+	}
 
  out:
 	/* 
@@ -380,6 +384,13 @@ umap_lookup(v)
 		vrele(vp);
 	} else if (vp != NULL) {
 		error = layer_node_create(mp, vp, ap->a_vpp);
+		if (error) {
+			vput(vp);
+			if (cnp->cn_flags & PDIRUNLOCK) {
+				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			}
+		}
 	}
 
 	/* 
