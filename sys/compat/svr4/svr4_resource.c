@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.1 1998/11/28 21:53:02 christos Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.2 1998/11/30 15:46:33 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,12 +74,16 @@ svr4_to_native_rl(rl)
 	}
 }
 
-#define OKLIMIT(l) ((l) > 0 && (l) < SVR4_RLIM_INFINITY && \
+/*
+ * Check if the resource limit fits within the BSD range and it is not
+ * one of the magic SVR4 limit values
+ */
+#define OKLIMIT(l) (((int32_t)(l)) >= 0 && ((int32_t)(l)) < 0x7fffffff && \
 	((svr4_rlim_t)(l)) != SVR4_RLIM_INFINITY && \
 	((svr4_rlim_t)(l)) != SVR4_RLIM_SAVED_CUR && \
 	((svr4_rlim_t)(l)) != SVR4_RLIM_SAVED_MAX)
 
-#define OKLIMIT64(l) ((l) > 0 && (l) < RLIM_INFINITY && \
+#define OKLIMIT64(l) (((rlim_t)(l)) >= 0 && ((rlim_t)(l)) < RLIM_INFINITY && \
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_INFINITY && \
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_CUR && \
 	((svr4_rlim64_t)(l)) != SVR4_RLIM64_SAVED_MAX)
@@ -154,7 +158,7 @@ svr4_sys_setrlimit(p, v, retval)
 	 * corresponding saved soft limit.
 	 *
 	 */
-	if (lim.rlim_max == SVR4_RLIM64_INFINITY)
+	if (lim.rlim_max == SVR4_RLIM_INFINITY)
 		alim.rlim_max = RLIM_INFINITY;
 	else if (OKLIMIT(lim.rlim_max))
 		alim.rlim_max = (rlim_t) lim.rlim_max;
@@ -247,7 +251,7 @@ svr4_sys_setrlimit64(p, v, retval)
 	 * corresponding saved soft limit.
 	 *
 	 */
-	if (lim.rlim_max == SVR4_RLIM_INFINITY)
+	if (lim.rlim_max == SVR4_RLIM64_INFINITY)
 		alim.rlim_max = RLIM_INFINITY;
 	else if (OKLIMIT64(lim.rlim_max))
 		alim.rlim_max = (rlim_t) lim.rlim_max;
