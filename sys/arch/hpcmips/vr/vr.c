@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.26 2001/06/11 06:11:01 enami Exp $	*/
+/*	$NetBSD: vr.c,v 1.27 2001/09/15 19:51:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -268,16 +268,6 @@ vr_fb_init(kernend)
 void
 vr_os_init()
 {
-	/*
-	 * Set up interrupt handling and I/O addresses.
-	 */
-
-	splvec.splbio = MIPS_SPL0;
-	splvec.splnet = MIPS_SPL0;
-	splvec.spltty = MIPS_SPL0;
-	splvec.splvm = MIPS_SPL0;
-	splvec.splclock = MIPS_SPL_0_1;
-	splvec.splstatclock = MIPS_SPL_0_1;
 
 	/* no high resolution timer circuit; possibly never called */
 	clkread = nullclkread;

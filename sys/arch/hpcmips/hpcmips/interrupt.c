@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2001/09/15 14:08:15 uch Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 2001/09/15 19:51:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,17 +47,28 @@
 #include <machine/locore.h>	/* mips3_cp0_*() */
 #include <machine/sysconf.h>
 
-struct hpcmips_soft_intrhand *softnet_intrhand;
+#ifdef DEBUG
+#define STATIC
+#else
+#define STATIC	static
+#endif
 
-#if 0
-/*
- * NetBSD/hpcmips currently using splvec structure for this.  XXX.
- */
+#if defined(VR41XX) && defined(TX39XX)
+STATIC void (*__cpu_intr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+#define VR_INTR	vr_intr
+#define TX_INTR	tx_intr
+#elif defined(VR41XX)
+#define VR_INTR	cpu_intr
+#elif defined(TX39XX)
+#define TX_INTR	cpu_intr
+#endif
+
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-const u_int32_t ipl_sr_bits[_IPL_N] = {
+#ifdef VR41XX
+const u_int32_t __ipl_sr_bits_vr[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -87,7 +98,43 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_0|
 		MIPS_INT_MASK_1,		/* IPL_{CLOCK,HIGH} */
 };
-#endif
+#endif /* VR41XX */
+
+#ifdef TX39XX
+const u_int32_t __ipl_sr_bits_tx[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_{CLOCK,HIGH} */
+};
+#endif /* TX39XX */
 
 const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -96,51 +143,81 @@ const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
+const u_int32_t *ipl_sr_bits;
+struct hpcmips_soft_intrhand *softnet_intrhand;
 struct hpcmips_soft_intr hpcmips_soft_intrs[_IPL_NSOFT];
+STATIC void softintr(u_int32_t);
 
 void
+intr_init()
+{
+#if defined(VR41XX) && defined(TX39XX)
+	__cpu_intr = CPUISMIPS3 ? vr_intr : tx_intr;
+	ipl_sr_bits = CPUISMIPS3 ? __ipl_sr_bits_vr : __ipl_sr_bits_tx;
+#elif defined(VR41XX)
+	ipl_sr_bits = __ipl_sr_bits_vr;
+#elif defined(TX39XX)
+	ipl_sr_bits = __ipl_sr_bits_tx;
+#endif
+}
+
+#if defined(VR41XX) && defined(TX39XX)
+void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+
+	(*__cpu_intr)(status, caust, pc, ipending);
+}
+#endif /* VR41XX && TX39XX */
+
+#ifdef VR41XX
+void
+VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+	uvmexp.intrs++;
+	
+	if (ipending & MIPS_INT_MASK_5) {
+		/*
+		 *  Writing a value to the Compare register,
+		 *  as a side effect, clears the timer
+		 *  interrupt request.
+		 */
+		mips3_cp0_compare_write(mips3_cp0_count_read());
+	}
+
+	if (ipending & MIPS3_HARD_INT_MASK)
+		_splset((*platform.iointr)(status, cause, pc, ipending));
+
+	softintr(ipending);
+}
+#endif /* VR41XX */
+
+#ifdef TX39XX
+void
+TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+	uvmexp.intrs++;
+
+	if (ipending & MIPS_HARD_INT_MASK)
+		_splset((*platform.iointr)(status, cause, pc, ipending));
+
+	softintr(ipending);
+}
+#endif /* TX39XX */
+
+/*
+ * softintr:
+ *
+ *	dispatch pending software interrupt handler.
+ */
+void
+softintr(u_int32_t ipending)
 {
 	struct hpcmips_soft_intr *asi;
 	struct hpcmips_soft_intrhand *sih;
 	int i, s;
 
-	uvmexp.intrs++;
-
-#ifdef VR41XX
-#ifdef TX39XX
-	if (CPUISMIPS3)
-#endif /* TX39XX */
-		if (ipending & MIPS_INT_MASK_5) {
-			/*
-			 *  Writing a value to the Compare register,
-			 *  as a side effect, clears the timer
-			 *  interrupt request.
-			 */
-			mips3_cp0_compare_write(mips3_cp0_count_read());
-		}
-#endif
-
-	/* Process clock and I/O interrupts. */
-#if defined(VR41XX)
-#if defined(TX39XX)
-	if (CPUISMIPS3)
-#endif /* TX39XX */
-		if (ipending & MIPS3_HARD_INT_MASK)
-			_splset((*platform.iointr)(status, cause, pc,
-			    ipending));
-#endif /* VR41XX */
-
-#if defined(TX39XX)
-#if defined(VR41XX)
-	if (!CPUISMIPS3)
-#endif /* VR41XX */
-		if (ipending & MIPS_HARD_INT_MASK)
-			_splset((*platform.iointr)(status, cause, pc,
-			    ipending));
-#endif /* TX39XX */
-
-	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	ipending &= (MIPS_SOFT_INT_MASK_1 | MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
 
