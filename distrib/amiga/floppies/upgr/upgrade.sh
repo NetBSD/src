@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.2 1995/10/09 02:41:35 chopps Exp $
+#	$Id: upgrade.sh,v 1.3 1996/09/28 18:06:01 chopps Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -36,7 +36,7 @@
 
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 
 getresp() {
 	read resp
@@ -161,6 +161,10 @@ done
 echo	""
 echo	"Root partition is on ${drivename}a."
 
+echo	""
+echo	"If you've still installed 0.9 or earlier on your machine or you"
+echo	"haven't upgraded your pre-1.0 filesystems, then you might want to"
+echo	"upgrade the filesystem to the version introduced with 1.0."
 echo	""
 echo	"Would you like to upgrade your file systems to the new file system"
 echo -n	"format? [y] "
