@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmon.8,v 1.8 2002/03/14 12:32:42 martti Exp $
+.\"	$NetBSD: ipmon.8,v 1.9 2002/05/02 17:11:39 martti Exp $
 .\"
 .TH ipmon 8
 .SH NAME
@@ -48,7 +48,8 @@ long).
 4. The group and rule number of the rule, e.g., \fB@0:17\fP. These can be
 viewed with \fBipfstat -n\fP.
 .LP
-5. The action: \fBp\fP for passed or \fBb\fP for blocked.
+5. The action: \fBp\fP for passed, \fBb\fP for blocked, \fB\fP for a short
+packet, \fBn\fP did not match any rules or \fBL\fP for a log rule.
 .LP
 6. The addresses.
 This is actually three fields: the source address and port

@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.6 2002/04/09 02:32:53 thorpej Exp $	*/
+/*	$NetBSD: kmem.c,v 1.7 2002/05/02 17:11:38 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -47,21 +47,14 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] __attribute__((__unused__)) =
-    "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: kmem.c,v 2.2.2.12 2002/03/06 09:44:16 darrenr Exp";
+static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
+static const char rcsid[] = "@(#)Id: kmem.c,v 2.2.2.14 2002/04/17 17:44:44 darrenr Exp";
 #endif
 
-#ifndef	__sgi
+#ifdef	__sgi
+typedef	int 	kvm_t;
 
-static	kvm_t	*kvm_f = NULL;
-
-#else
-
-typedef	int	kvm_t;
-
-static	kvm_t	kvm_f = -1;
+static	int	kvm_fd = -1;
 static	char	*kvm_errstr;
 
 kvm_t kvm_open(kernel, core, swap, mode, errstr)
@@ -69,12 +62,12 @@ char *kernel, *core, *swap;
 int mode;
 char *errstr;
 {
-	kvm_t fd;
-
 	kvm_errstr = errstr;
 
-	fd = open(core, mode);
-	return fd;
+	if (core == NULL)
+		core = "/dev/kmem";
+	kvm_fd = open(core, mode);
+	return (kvm_fd >= 0) ? (kvm_t)&kvm_fd : NULL;
 }
 
 int kvm_read(kvm, pos, buffer, size)
@@ -86,21 +79,22 @@ size_t size;
 	int r, left;
 	char *bufp;
 
-	if (lseek(kvm, pos, 0) == -1) {
+	if (lseek(*kvm, pos, 0) == -1) {
 		fprintf(stderr, "%s", kvm_errstr);
 		perror("lseek");
 		return -1;
 	}
 
 	for (bufp = buffer, left = size; left > 0; bufp += r, left -= r) {
-		r = read(kvm, bufp, 1);
+		r = read(*kvm, bufp, 1);
 		if (r <= 0)
 			return -1;
 	}
-	return 0;
+	return size;
 }
 #endif
 
+static	kvm_t	*kvm_f = NULL;
 
 int	openkmem(kern, core)
 char	*kern, *core;

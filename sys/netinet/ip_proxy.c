@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.31 2002/04/01 18:07:10 jdolecek Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.32 2002/05/02 17:12:06 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
@@ -79,9 +79,9 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.31 2002/04/01 18:07:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.32 2002/05/02 17:12:06 martti Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.21 2002/03/06 09:44:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.22 2002/04/26 10:23:17 darrenr Exp";
 #endif
 #endif
 
@@ -98,8 +98,8 @@ static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 
 #define	AP_SESS_SIZE	53
 
-#if defined(_KERNEL)
 #include "netinet/ip_ftp_pxy.c"
+#if defined(_KERNEL)
 #include "netinet/ip_rcmd_pxy.c"
 #include "netinet/ip_raudio_pxy.c"
 #include "netinet/ip_netbios_pxy.c"
