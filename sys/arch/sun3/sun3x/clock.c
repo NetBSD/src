@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 2003/09/22 17:21:51 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.27 2003/09/22 17:53:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,13 +95,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2003/09/22 17:21:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2003/09/22 17:53:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/asm_single.h>
 
@@ -117,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2003/09/22 17:21:51 tsutsui Exp $");
 #include <sun3/sun3/interreg.h>
 
 #include <sun3/sun3x/mk48t02.h>
+
+extern int intrcnt[];
 
 #define SUN3_470	Yes
 
@@ -439,6 +443,9 @@ clock_intr(cf)
 		intersil_clear();
 	}
 #endif	/* SUN3_470 */
+
+	intrcnt[CLOCK_PRI]++;
+	uvmexp.intrs++;
 
 	/* Entertainment! */
 	if (cf.cf_pc == (long)_Idle)
