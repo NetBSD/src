@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.6 1997/05/11 08:10:44 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.7 1997/05/11 08:31:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -83,9 +83,9 @@ main(argc, argv)
 	int	am_swapon = 0;
 #ifdef SWAP_OFF_WORKS
 	int	swapoff = 0;
-	static	char getoptstr[] = "Aadlkp:";
+	static	char getoptstr[] = "Aadlkp:s";
 #else
-	static	char getoptstr[] = "Aalkp:";
+	static	char getoptstr[] = "Aalkp:s";
 #endif /* SWAP_OFF_WORKS */
 	extern	char *__progname;		/* XXX */
 
@@ -130,17 +130,20 @@ main(argc, argv)
 		case 'p':
 			pri = atoi(optarg);
 			break;
+		case 's':
+			sflag = 1;
+			break;
 		}
 	}
 	/* SWAP_OFF_WORKS */
-	if (!aflag && /* !dflag && */ !lflag && !Aflag)
+	if (!aflag && !lflag && !Aflag && !sflag/* && !dflag */)
 		usage();
 
 	argv += optind;
-	if (!*argv && !lflag)
+	if (!*argv && !lflag && !sflag)
 		usage();
 	/* SWAP_OFF_WORKS */
-	if (pri && !aflag /* && !dflag */ && !Aflag)
+	if (pri && !aflag && !Aflag /* && !dflag */)
 		usage();
 
 	if (lflag)
@@ -213,16 +216,17 @@ list_swap(dolong)
 			    sep->se_priority);
 		}
 	}
-	if (dolong) {
-		if (nswap > 1)
+	if (dolong == 0)
+(void)printf("total: %dk bytes allocated = %dk used, %dk available\n",
+		    dbtob(totalsize) / 1024,
+		    dbtob(totalinuse) / 1024,
+		    dbtob(totalsize - totalinuse) / 1024);
+	else if (nswap > 1)
 		(void)printf("%-11s %*d %8d %8d %5.0f%%\n", "Total", hlen,
 		    dbtob(totalsize) / blocksize,
 		    dbtob(totalinuse) / blocksize,
 		    dbtob(totalsize - totalinuse) / blocksize,
 		    (double)(totalinuse) / (double)totalsize * 100.0);
-	} else {
-		puts("swap -s not done (yet)");
-	}
 }
 
 /*
