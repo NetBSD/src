@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/06/19 08:34:50 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2001/11/18 15:30:43 kleink Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ inittodr(base)
 	dt.dt_sec = ct.sec;
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 #ifdef DEBUG
-	printf("=>%ld (%d)\n", time.tv_sec, base);
+	printf("=>%ld (%d)\n", (long int)time.tv_sec, (int)base);
 #endif
 
 	if (!badbase) {
