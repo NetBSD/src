@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46 1997/03/25 20:35:04 cgd Exp $
+# $NetBSD: GENERIC,v 1.47 1997/04/06 23:03:05 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
