@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.19 2002/03/28 15:21:50 christos Exp $ */
+/* $NetBSD: psm.c,v 1.20 2002/03/28 21:54:27 christos Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.19 2002/03/28 15:21:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.20 2002/03/28 21:54:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,8 +462,13 @@ pmsinput(vsc, data)
 		 * in regular use.  When using a confused mouse, I generally
 		 * see delays at least as large as 30,000us.  This serves as
 		 * a rough geometric compromise. -seebs
+		 *
+		 * The thinkpad trackball returns at 22-23ms. So we use
+		 * 25ms. In the future, I'll implement adaptable timeout
+		 * by increasing the timeout if the mouse reset happens
+		 * too frequently -christos
 		 */
-		if (diff.tv_sec > 0 || diff.tv_usec > 10000) {
+		if (diff.tv_sec > 0 || diff.tv_usec > 25000) {
 			DPRINTF(("psm_input: unusual delay, "
 			    "spawning reset thread\n"));
 			sc->inputstate = 0;
