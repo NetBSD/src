@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$NetBSD: SYS.h,v 1.4 1997/10/13 11:57:31 lukem Exp $
+ *	$NetBSD: SYS.h,v 1.5 1999/03/05 09:18:32 pk Exp $
  */
 
 #include <machine/asm.h>
@@ -104,6 +104,13 @@
  */
 #define RSYSCALL_NOERROR(x) \
 	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	t ST_SYSCALL
+
+/*
+ * PSEUDO_NOERROR(x,y) is like RSYSCALL_NOERROR(y) except that the name is x.
+ */
+#define PSEUDO_NOERROR(x,y) \
+	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL
 
 	.globl	cerror
