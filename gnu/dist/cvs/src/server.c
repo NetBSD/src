@@ -349,17 +349,17 @@ create_adm_p (base_dir, dir)
 	return 0;			/* nothing to do */
 
     /* Allocate some space for our directory-munging string. */
-    p = malloc (strlen (dir) + 1);
+    p = xmalloc (strlen (dir) + 1);
     if (p == NULL)
 	return ENOMEM;
 
-    dir_where_cvsadm_lives = malloc (strlen (base_dir) + strlen (dir) + 100);
+    dir_where_cvsadm_lives = xmalloc (strlen (base_dir) + strlen (dir) + 100);
     if (dir_where_cvsadm_lives == NULL)
 	return ENOMEM;
 
     /* Allocate some space for the temporary string in which we will
        construct filenames. */
-    tmp = malloc (strlen (base_dir) + strlen (dir) + 100);
+    tmp = xmalloc (strlen (base_dir) + strlen (dir) + 100);
     if (tmp == NULL)
 	return ENOMEM;
 
@@ -399,7 +399,7 @@ create_adm_p (base_dir, dir)
 	       differently.  */
 
 	    char *empty;
-	    empty = malloc (strlen (current_parsed_root->directory)
+	    empty = xmalloc (strlen (current_parsed_root->directory)
 			    + sizeof (CVSROOTADM)
 			    + sizeof (CVSNULLREPOS)
 			    + 3);
@@ -517,7 +517,7 @@ mkdir_p (dir)
      char *dir;
 {
     char *p;
-    char *q = malloc (strlen (dir) + 1);
+    char *q = xmalloc (strlen (dir) + 1);
     int retval;
 
     if (q == NULL)
@@ -644,7 +644,7 @@ alloc_pending (size)
 	   this case.  But we might as well handle it if they don't, I
 	   guess.  */
 	return 0;
-    pending_error_text = malloc (size);
+    pending_error_text = xmalloc (size);
     if (pending_error_text == NULL)
     {
 	pending_error = ENOMEM;
@@ -710,17 +710,7 @@ serve_valid_responses (arg)
 	       cause deadlock, as noted in server_cleanup.  */
 	    buf_flush (buf_to_net, 1);
 
-	    /* I'm doing this manually rather than via error_exit ()
-	       because I'm not sure whether we want to call server_cleanup.
-	       Needs more investigation....  */
-
-#ifdef SYSTEM_CLEANUP
-	    /* Hook for OS-specific behavior, for example socket subsystems on
-	       NT and OS2 or dealing with windows and arguments on Mac.  */
-	    SYSTEM_CLEANUP ();
-#endif
-
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 	}
 	else if (rs->status == rs_optional)
 	    rs->status = rs_not_supported;
@@ -784,7 +774,7 @@ E Protocol error: Root says \"%s\" but pserver says \"%s\"",
 
     if (!nolock)
     {
-    path = malloc (strlen (current_parsed_root->directory)
+    path = xmalloc (strlen (current_parsed_root->directory)
 		   + sizeof (CVSROOTADM)
 		   + 2);
     if (path == NULL)
@@ -804,7 +794,7 @@ E Protocol error: Root says \"%s\" but pserver says \"%s\"",
     }
 
 #ifdef HAVE_PUTENV
-    env = malloc (strlen (CVSROOT_ENV) + strlen (current_parsed_root->directory) + 2);
+    env = xmalloc (strlen (CVSROOT_ENV) + strlen (current_parsed_root->directory) + 2);
     if (env == NULL)
     {
 	pending_error = ENOMEM;
@@ -865,7 +855,10 @@ outside_root (repos)
     /* I think isabsolute (repos) should always be true, and that
        any RELATIVE_REPOS stuff should only be in CVS/Repository
        files, not the protocol (for compatibility), but I'm putting
-       in the isabsolute check just in case.  */
+       in the isabsolute check just in case.
+     
+       This is a good security precaution regardless. -DRP
+     */
     if (!isabsolute (repos))
     {
 	if (alloc_pending (repos_len + 80))
@@ -932,7 +925,7 @@ serve_max_dotdot (arg)
 
     if (lim < 0)
 	return;
-    p = malloc (strlen (server_temp_dir) + 2 * lim + 10);
+    p = xmalloc (strlen (server_temp_dir) + 2 * lim + 10);
     if (p == NULL)
     {
 	pending_error = ENOMEM;
@@ -999,7 +992,7 @@ dirswitch (dir, repos)
     if (dir_name != NULL)
 	free (dir_name);
 
-    dir_name = malloc (strlen (server_temp_dir) + dir_len + 40);
+    dir_name = xmalloc (strlen (server_temp_dir) + dir_len + 40);
     if (dir_name == NULL)
     {
 	pending_error = ENOMEM;
@@ -1171,7 +1164,7 @@ serve_directory (arg)
     }
     else
     {
-	pending_error_text = malloc (80 + strlen (arg));
+	pending_error_text = xmalloc (80 + strlen (arg));
 	if (pending_error_text == NULL)
 	{
 	    pending_error = ENOMEM;
@@ -1278,7 +1271,7 @@ receive_partial_file (size, file)
 		pending_error = ENOMEM;
 	    else
 	    {
-		pending_error_text = malloc (80);
+		pending_error_text = xmalloc (80);
 		if (pending_error_text == NULL)
 		    pending_error = ENOMEM;
 		else if (status == -1)
@@ -1365,7 +1358,7 @@ receive_file (size, file, gzipped)
 	char *filebuf;
 	char *p;
 
-	filebuf = malloc (size);
+	filebuf = xmalloc (size);
 	p = filebuf;
 	/* If NULL, we still want to read the data and discard it.  */
 
@@ -1381,7 +1374,7 @@ receive_file (size, file, gzipped)
 		    pending_error = ENOMEM;
 		else
 		{
-		    pending_error_text = malloc (80);
+		    pending_error_text = xmalloc (80);
 		    if (pending_error_text == NULL)
 			pending_error = ENOMEM;
 		    else if (status == -1)
@@ -1427,7 +1420,7 @@ receive_file (size, file, gzipped)
 
     if (pending_error_text)
     {
-	char *p = realloc (pending_error_text,
+	char *p = xrealloc (pending_error_text,
 			   strlen (pending_error_text) + strlen (arg) + 30);
 	if (p)
 	{
@@ -1484,7 +1477,7 @@ serve_modified (arg)
 	    pending_error = ENOMEM;
 	else
 	{
-	    pending_error_text = malloc (80 + strlen (arg));
+	    pending_error_text = xmalloc (80 + strlen (arg));
 	    if (pending_error_text == NULL)
 		pending_error = ENOMEM;
 	    else
@@ -1510,7 +1503,7 @@ serve_modified (arg)
 	    pending_error = ENOMEM;
 	else
 	{
-	    pending_error_text = malloc (80 + strlen (arg));
+	    pending_error_text = xmalloc (80 + strlen (arg));
 	    if (pending_error_text == NULL)
 		pending_error = ENOMEM;
 	    else
@@ -1724,13 +1717,13 @@ serve_is_modified (arg)
     {
 	/* We got Is-modified but no Entry.  Add a dummy entry.
 	   The "D" timestamp is what makes it a dummy.  */
-	p = (struct an_entry *) malloc (sizeof (struct an_entry));
+	p = (struct an_entry *) xmalloc (sizeof (struct an_entry));
 	if (p == NULL)
 	{
 	    pending_error = ENOMEM;
 	    return;
 	}
-	p->entry = malloc (strlen (arg) + 80);
+	p->entry = xmalloc (strlen (arg) + 80);
 	if (p->entry == NULL)
 	{
 	    pending_error = ENOMEM;
@@ -1761,14 +1754,14 @@ serve_entry (arg)
     struct an_entry *p;
     char *cp;
     if (error_pending()) return;
-    p = (struct an_entry *) malloc (sizeof (struct an_entry));
+    p = (struct an_entry *) xmalloc (sizeof (struct an_entry));
     if (p == NULL)
     {
 	pending_error = ENOMEM;
 	return;
     }
     /* Leave space for serve_unchanged to write '=' if it wants.  */
-    cp = malloc (strlen (arg) + 2);
+    cp = xmalloc (strlen (arg) + 2);
     if (cp == NULL)
     {
 	pending_error = ENOMEM;
@@ -1810,7 +1803,7 @@ serve_kopt (arg)
 	return;
     }
 
-    kopt = malloc (strlen (arg) + 1);
+    kopt = xmalloc (strlen (arg) + 1);
     if (kopt == NULL)
     {
 	pending_error = ENOMEM;
@@ -1904,13 +1897,13 @@ server_write_entries ()
 }
 
 struct notify_note {
-    /* Directory in which this notification happens.  malloc'd*/
+    /* Directory in which this notification happens.  xmalloc'd*/
     char *dir;
 
-    /* malloc'd.  */
+    /* xmalloc'd.  */
     char *filename;
 
-    /* The following three all in one malloc'd block, pointed to by TYPE.
+    /* The following three all in one xmalloc'd block, pointed to by TYPE.
        Each '\0' terminated.  */
     /* "E" or "U".  */
     char *type;
@@ -1943,14 +1936,14 @@ serve_notify (arg)
     if (dir_name == NULL)
 	goto error;
 
-    new = (struct notify_note *) malloc (sizeof (struct notify_note));
+    new = (struct notify_note *) xmalloc (sizeof (struct notify_note));
     if (new == NULL)
     {
 	pending_error = ENOMEM;
 	return;
     }
-    new->dir = malloc (strlen (dir_name) + 1);
-    new->filename = malloc (strlen (arg) + 1);
+    new->dir = xmalloc (strlen (dir_name) + 1);
+    new->filename = xmalloc (strlen (arg) + 1);
     if (new->dir == NULL || new->filename == NULL)
     {
 	pending_error = ENOMEM;
@@ -1969,7 +1962,7 @@ serve_notify (arg)
 	    pending_error = ENOMEM;
 	else
 	{
-	    pending_error_text = malloc (80 + strlen (arg));
+	    pending_error_text = xmalloc (80 + strlen (arg));
 	    if (pending_error_text == NULL)
 		pending_error = ENOMEM;
 	    else
@@ -2129,7 +2122,7 @@ serve_argument (arg)
     {
 	argument_vector_size *= 2;
 	argument_vector =
-	    (char **) realloc ((char *)argument_vector,
+	    (char **) xrealloc ((char *)argument_vector,
 			       argument_vector_size * sizeof (char *));
 	if (argument_vector == NULL)
 	{
@@ -2137,7 +2130,7 @@ serve_argument (arg)
 	    return;
 	}
     }
-    p = malloc (strlen (arg) + 1);
+    p = xmalloc (strlen (arg) + 1);
     if (p == NULL)
     {
 	pending_error = ENOMEM;
@@ -2156,7 +2149,7 @@ serve_argumentx (arg)
     if (error_pending()) return;
 
     p = argument_vector[argument_count - 1];
-    p = realloc (p, strlen (p) + 1 + strlen (arg) + 1);
+    p = xrealloc (p, strlen (p) + 1 + strlen (arg) + 1);
     if (p == NULL)
     {
 	pending_error = ENOMEM;
@@ -2920,10 +2913,10 @@ error  \n");
 	    fd_set readfds;
 	    fd_set writefds;
 	    int numfds;
-#ifdef SERVER_FLOWCONTROL
-	    int bufmemsize;
 	    struct timeval *timeout_ptr;
 	    struct timeval timeout;
+#ifdef SERVER_FLOWCONTROL
+	    int bufmemsize;
 
 	    /*
 	     * See if we are swamping the remote client and filling our VM.
@@ -3215,10 +3208,13 @@ E CVS locks may need cleaning up.\n");
 	buf_flush (buf_to_net, 1);
 	buf_shutdown (protocol_inbuf);
 	buf_free (protocol_inbuf);
+	protocol_inbuf = NULL;
 	buf_shutdown (stderrbuf);
 	buf_free (stderrbuf);
+	stderrbuf = NULL;
 	buf_shutdown (stdoutbuf);
 	buf_free (stdoutbuf);
+	stdoutbuf = NULL;
     }
 
     if (errs)
@@ -3717,7 +3713,7 @@ static void
 serve_watch_on (arg)
     char *arg;
 {
-    do_cvs_command ("watch_on", watch_on);
+    do_cvs_command ("watch", watch_on);
 }
 
 static void serve_watch_off PROTO ((char *));
@@ -3726,7 +3722,7 @@ static void
 serve_watch_off (arg)
     char *arg;
 {
-    do_cvs_command ("watch_off", watch_off);
+    do_cvs_command ("watch", watch_off);
 }
 
 static void serve_watch_add PROTO ((char *));
@@ -3735,7 +3731,7 @@ static void
 serve_watch_add (arg)
     char *arg;
 {
-    do_cvs_command ("watch_add", watch_add);
+    do_cvs_command ("watch", watch_add);
 }
 
 static void serve_watch_remove PROTO ((char *));
@@ -3744,7 +3740,7 @@ static void
 serve_watch_remove (arg)
     char *arg;
 {
-    do_cvs_command ("watch_remove", watch_remove);
+    do_cvs_command ("watch", watch_remove);
 }
 
 static void serve_watchers PROTO ((char *));
@@ -3866,7 +3862,7 @@ serve_co (arg)
 	 * The client has not sent a "Repository" line.  Check out
 	 * into a pristine directory.
 	 */
-	tempdir = malloc (strlen (server_temp_dir) + 80);
+	tempdir = xmalloc (strlen (server_temp_dir) + 80);
 	if (tempdir == NULL)
 	{
 	    buf_output0 (buf_to_net, "E Out of memory\n");
@@ -4898,9 +4894,9 @@ server_cleanup (sig)
 
 	status = buf_shutdown (buf_from_net);
 	if (status != 0)
-	{
 	    error (0, status, "shutting down buffer from client");
-	}
+	buf_free (buf_from_net);
+	buf_from_net = NULL;
     }
 
     if (dont_delete_temp)
@@ -4909,6 +4905,9 @@ server_cleanup (sig)
 	{
 	    (void) buf_flush (buf_to_net, 1);
 	    (void) buf_shutdown (buf_to_net);
+	    buf_free (buf_to_net);
+	    buf_to_net = NULL;
+	    error_use_protocol = 0;
 	}
 	return;
     }
@@ -5010,6 +5009,9 @@ server_cleanup (sig)
     {
 	(void) buf_flush (buf_to_net, 1);
 	(void) buf_shutdown (buf_to_net);
+	buf_free (buf_to_net);
+	buf_to_net = NULL;
+	error_use_protocol = 0;
     }
 }
 
@@ -5020,6 +5022,8 @@ server (argc, argv)
      int argc;
      char **argv;
 {
+    char *error_prog_name;		/* Used in error messages */
+
     if (argc == -1)
     {
 	static const char *const msg[] =
@@ -5066,7 +5070,7 @@ server (argc, argv)
 	    int status;
 	    int i = 0;
 
-	    server_temp_dir = malloc (strlen (Tmpdir) + 80);
+	    server_temp_dir = xmalloc (strlen (Tmpdir) + 80);
 	    if (server_temp_dir == NULL)
 	    {
 		/*
@@ -5076,18 +5080,7 @@ server (argc, argv)
 		printf ("E Fatal server error, aborting.\n\
 error ENOMEM Virtual memory exhausted.\n");
 
-		/* I'm doing this manually rather than via error_exit ()
-		   because I'm not sure whether we want to call server_cleanup.
-		   Needs more investigation....  */
-
-#ifdef SYSTEM_CLEANUP
-		/* Hook for OS-specific behavior, for example socket
-		   subsystems on NT and OS2 or dealing with windows
-		   and arguments on Mac.  */
-		SYSTEM_CLEANUP ();
-#endif
-
-		exit (EXIT_FAILURE);
+		error_exit ();
 	    }
 	    strcpy (server_temp_dir, Tmpdir);
 
@@ -5151,63 +5144,23 @@ error ENOMEM Virtual memory exhausted.\n");
 	}
     }
 
-#ifdef SIGABRT
-    (void) SIG_register (SIGABRT, server_cleanup);
-#endif
-#ifdef SIGHUP
-    (void) SIG_register (SIGHUP, server_cleanup);
-#endif
-#ifdef SIGINT
-    (void) SIG_register (SIGINT, server_cleanup);
-#endif
-#ifdef SIGQUIT
-    (void) SIG_register (SIGQUIT, server_cleanup);
-#endif
-#ifdef SIGPIPE
-    (void) SIG_register (SIGPIPE, server_cleanup);
-#endif
-#ifdef SIGTERM
-    (void) SIG_register (SIGTERM, server_cleanup);
-#endif
-
     /* Now initialize our argument vector (for arguments from the client).  */
 
     /* Small for testing.  */
     argument_vector_size = 1;
     argument_vector =
-	(char **) malloc (argument_vector_size * sizeof (char *));
-    if (argument_vector == NULL)
-    {
-	/*
-	 * Strictly speaking, we're not supposed to output anything
-	 * now.  But we're about to exit(), give it a try.
-	 */
-	printf ("E Fatal server error, aborting.\n\
-error ENOMEM Virtual memory exhausted.\n");
-
-	/* I'm doing this manually rather than via error_exit ()
-	   because I'm not sure whether we want to call server_cleanup.
-	   Needs more investigation....  */
-
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-
-	exit (EXIT_FAILURE);
-    }
-
+	(char **) xmalloc (argument_vector_size * sizeof (char *));
     argument_count = 1;
     /* This gets printed if the client supports an option which the
        server doesn't, causing the server to print a usage message.
-       FIXME: probably should be using program_name here.
        FIXME: just a nit, I suppose, but the usage message the server
        prints isn't literally true--it suggests "cvs server" followed
        by options which are for a particular command.  Might be nice to
        say something like "client apparently supports an option not supported
        by this server" or something like that instead of usage message.  */
-    argument_vector[0] = "cvs server";
+    error_prog_name = xmalloc( strlen(program_name) + 8 );
+    sprintf(error_prog_name, "%s server", program_name);
+    argument_vector[0] = error_prog_name;
 
     while (1)
     {
@@ -5280,6 +5233,7 @@ error ENOMEM Virtual memory exhausted.\n");
 	}
 	free (orig_cmd);
     }
+    free(error_prog_name);
     server_cleanup (0);
     return 0;
 }
@@ -5429,8 +5383,8 @@ check_repository_password (username, password, repository, host_user_ptr)
     int found_it = 0;
     int namelen;
 
-    /* We don't use current_parsed_root->directory because it hasn't been set yet
-     * -- our `repository' argument came from the authentication
+    /* We don't use current_parsed_root->directory because it hasn't been
+     * set yet -- our `repository' argument came from the authentication
      * protocol, not the regular CVS protocol.
      */
 
@@ -5588,7 +5542,7 @@ check_password (username, password, repository)
     {
 	/* No cvs password found, so try /etc/passwd. */
 
-	const char *found_passwd = NULL;
+	char *found_passwd = NULL;
 	struct passwd *pw;
 #ifdef HAVE_GETSPNAM
 	struct spwd *spw;
@@ -5610,18 +5564,23 @@ check_password (username, password, repository)
 	    printf ("E Fatal error, aborting.\n\
 error 0 %s: no such user\n", username);
 
-	    /* I'm doing this manually rather than via error_exit ()
-	       because I'm not sure whether we want to call server_cleanup.
-	       Needs more investigation....  */
-
-#ifdef SYSTEM_CLEANUP
-	    /* Hook for OS-specific behavior, for example socket subsystems on
-	       NT and OS2 or dealing with windows and arguments on Mac.  */
-	    SYSTEM_CLEANUP ();
-#endif
-
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 	}
+
+	/* Allow for dain bramaged HPUX passwd aging
+	 *  - Basically, HPUX adds a comma and some data
+	 *    about whether the passwd has expired or not
+	 *    on the end of the passwd field.
+	 *  - This code replaces the ',' with '\0'.
+	 *
+	 * FIXME - our workaround is brain damaged too.  I'm
+	 * guessing that HPUX WANTED other systems to think the
+	 * password was wrong so logins would fail if the
+	 * system didn't handle expired passwds and the passwd
+	 * might be expired.  I think the way to go here
+	 * is with PAM.
+	 */
+	strtok (found_passwd, ",");
 
 	if (*found_passwd)
         {
@@ -5659,12 +5618,7 @@ error 0 %s: no such user\n", username);
 	   because I'm not sure whether we want to call server_cleanup.
 	   Needs more investigation....  */
 
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-	exit (EXIT_FAILURE);
+	error_exit ();
     }
     else
     {
@@ -5922,12 +5876,8 @@ kserver_authenticate_connection ()
     {
 	printf ("E Fatal error, aborting.\n\
 error %s getpeername or getsockname failed\n", strerror (errno));
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-	exit (EXIT_FAILURE);
+
+	error_exit ();
     }
 
 #ifdef SO_KEEPALIVE
@@ -5954,12 +5904,8 @@ error %s getpeername or getsockname failed\n", strerror (errno));
     {
 	printf ("E Fatal error, aborting.\n\
 error 0 kerberos: %s\n", krb_get_err_text(status));
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-	exit (EXIT_FAILURE);
+
+	error_exit ();
     }
 
     memcpy (kblock, auth.session, sizeof (C_Block));
@@ -5970,12 +5916,8 @@ error 0 kerberos: %s\n", krb_get_err_text(status));
     {
 	printf ("E Fatal error, aborting.\n\
 error 0 kerberos: can't get local name: %s\n", krb_get_err_text(status));
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-	exit (EXIT_FAILURE);
+
+	error_exit ();
     }
 
     /* Switch to run as this user. */
@@ -6364,12 +6306,12 @@ cvs_output (str, len)
     if (len == 0)
 	len = strlen (str);
 #ifdef SERVER_SUPPORT
-    if (error_use_protocol)
+    if (error_use_protocol && buf_to_net != NULL)
     {
 	buf_output (saved_output, str, len);
 	buf_copy_lines (buf_to_net, saved_output, 'M');
     }
-    else if (server_active)
+    else if (server_active && protocol != NULL)
     {
 	buf_output (saved_output, str, len);
 	buf_copy_lines (protocol, saved_output, 'M');
