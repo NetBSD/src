@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.75 1997/04/07 23:39:55 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.76 1997/04/11 00:07:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 1997/04/07 23:39:55 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 1997/04/11 00:07:08 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,10 +234,11 @@ alpha_init(pfn, ptb)
 	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
 
 	/*
-	 * Disable System and Processor Correctable Error reporting.
-	 * Clear pending machine checks and error reports, etc.
+	 * Clear pending machine checks and error reports, and enable
+	 * system- and processor-correctable error reporting.
 	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() | ALPHA_MCES_DSC | ALPHA_MCES_DPC);
+	alpha_pal_wrmces(alpha_pal_rdmces() &
+	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 
 	/*
 	 * Find out how much memory is available, by looking at
