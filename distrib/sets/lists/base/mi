@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.511 2004/11/23 07:37:43 lukem Exp $
+# $NetBSD: mi,v 1.512 2004/12/28 22:00:36 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -765,6 +765,7 @@
 ./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr
+./usr/include/security				base-c-usr
 ./usr/include/ss				base-obsolete		obsolete
 ./usr/include/sys				base-c-usr
 ./usr/include/ufs				base-c-usr
