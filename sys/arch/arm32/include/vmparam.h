@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 1999/03/22 10:24:04 mark Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 1999/03/23 19:16:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -173,15 +173,6 @@ struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv_entry array */
 	char *attrs;			/* attrs array */
 };
-
-/*
- * XXX
- *
- * PR port-arm32/7122 and port-arm32/7123 describe a bug relating
- * to swapping.
- * Until these PR's are resolved and closed disable swapping.
- */
-#define __SWAP_BROKEN
 
 #endif	/* _ARM32_VMPARAM_H_ */
 
