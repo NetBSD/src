@@ -1,4 +1,4 @@
-# $NetBSD: language,v 1.2 2003/09/13 21:50:58 kleink Exp $
+# $NetBSD: language,v 1.3 2003/09/13 21:53:19 kleink Exp $
 #
 # ISO 639-1 and 639-2 Language Codes
 #
@@ -40,7 +40,6 @@ Asturian; Bable	ast
 Athapascan languages	ath	
 Australian languages	aus	
 Austronesian (Other)	map	
-Auxiliary Language Association)		
 Avaric	ava	av
 Avestan	ave	ae
 Awadhi	awa	
@@ -201,7 +200,7 @@ Indic (Other)	inc
 Indo-European (Other)	ine	
 Indonesian	ind	id
 Ingush	inh	
-Interlingua (International	ina	ia
+Interlingua (International Auxiliary Language Association)	ina	ia
 Interlingue	ile	ie
 Inuktitut	iku	iu
 Inupiaq	ipk	ik
