@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.14 2001/04/13 23:30:09 thorpej Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.15 2001/06/14 05:44:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1082,5 +1082,4 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 	splx(s);
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_len;
-	ifp->if_lastchange = time;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.39 2001/04/13 23:30:13 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.40 2001/06/14 05:44:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,6 @@ fddi_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
@@ -633,7 +632,6 @@ fddi_input(ifp, m)
 
 	fh = mtod(m, struct fddi_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (fh->fddi_dhost[0] & 1) {
 		if (bcmp((caddr_t)fddibroadcastaddr, (caddr_t)fh->fddi_dhost,

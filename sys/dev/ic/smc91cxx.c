@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.32 2000/12/14 06:27:26 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.33 2001/06/14 05:44:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -996,9 +996,8 @@ smc91cxx_read(sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		goto out;
-
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len = packetlen;
+	m->m_pkthdr.len = packetlen;
 
 	/*
 	 * Always put the packet in a cluster.
