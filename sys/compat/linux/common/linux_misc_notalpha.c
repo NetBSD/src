@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.15 1995/08/21 03:42:09 mycroft Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.16 1995/08/21 23:15:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -112,8 +112,11 @@ linux_waitpid(p, uap, retval)
 	int error, *status, tstat;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
-	status = (int *) stackgap_alloc(&sg, sizeof status);
+	if (SCARG(uap, status) != NULL) {
+		sg = stackgap_init(p->p_emul);
+		status = (int *) stackgap_alloc(&sg, sizeof status);
+	} else
+		status = NULL;
 
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
@@ -123,12 +126,16 @@ linux_waitpid(p, uap, retval)
 	if ((error = wait4(p, &w4a, retval)))
 		return error;
 
-	if ((error = copyin(status, &tstat, sizeof tstat)))
-		return error;
+	if (status != NULL) {
+		if ((error = copyin(status, &tstat, sizeof tstat)))
+			return error;
 
-	bsd_to_linux_wstat(&tstat);
+		bsd_to_linux_wstat(&tstat);
 
-	return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+	}
+
+	return 0;
 }
 
 /*
@@ -149,8 +156,11 @@ linux_wait4(p, uap, retval)
 	int error, *status, tstat;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
-	status = (int *) stackgap_alloc(&sg, sizeof status);
+	if (SCARG(uap, status) != NULL) {
+		sg = stackgap_init(p->p_emul);
+		status = (int *) stackgap_alloc(&sg, sizeof status);
+	} else
+		status = NULL;
 
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
@@ -160,12 +170,16 @@ linux_wait4(p, uap, retval)
 	if ((error = wait4(p, &w4a, retval)))
 		return error;
 
-	if ((error = copyin(status, &tstat, sizeof tstat)))
-		return error;
+	if (status != NULL) {
+		if ((error = copyin(status, &tstat, sizeof tstat)))
+			return error;
 
-	bsd_to_linux_wstat(&tstat);
+		bsd_to_linux_wstat(&tstat);
 
-	return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+		return copyout(&tstat, SCARG(uap, status), sizeof tstat);
+	}
+
+	return 0;
 }
 
 /*
