@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.73 2004/04/15 16:39:09 jwise Exp $
+#	$NetBSD: services,v 1.74 2004/04/15 16:42:15 jwise Exp $
 #
 # Network services, Internet style
 #
@@ -51,8 +51,8 @@ gopher		70/tcp		# Internet Gopher
 gopher		70/udp
 rje		77/tcp		netrjs
 finger		79/tcp
-www		80/tcp		http	# WorldWideWeb HTTP
-www		80/udp			# HyperText Transfer Protocol
+http		80/tcp		www www-http	# WorldWideWeb HTTP
+http		80/udp		www www-http	# HyperText Transfer Protocol
 link		87/tcp		ttylink
 kerberos	88/tcp		krb5	# Kerberos v5
 kerberos	88/udp
