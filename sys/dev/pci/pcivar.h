@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.67 2004/09/13 12:22:53 drochner Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.68 2005/01/26 21:49:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -171,6 +171,10 @@ struct pci_softc {
 #define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
 };
 
+struct pci_conf_state {
+	pcireg_t reg[16];
+};
+
 extern struct cfdriver pci_cd;
 
 int pcibusprint(void *, const char *);
@@ -232,7 +236,8 @@ const char *pci_findproduct __P((pcireg_t));
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
 int	pci_dma64_available(struct pci_attach_args *);
-
+void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
+void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 
 #endif /* _KERNEL */
 
