@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.51 2002/06/26 16:59:08 bouyer Exp $
+# $NetBSD: obsolete.mi,v 1.52 2002/09/10 22:28:26 joda Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -17,6 +17,7 @@
 /sbin/nfsd
 /sbin/nfsiod
 /sbin/quotacheck
+/usr/bin/kf
 /usr/include/compat
 /usr/include/gssapi/rpc
 /usr/include/ss
@@ -57,6 +58,7 @@
 /usr/lib/libusb.so.0.1
 /usr/libexec/hprop
 /usr/libexec/kdc
+/usr/libexec/kfd
 /usr/libexec/uucp/uuchk
 /usr/sbin/dig
 /usr/sbin/dnsquery
@@ -136,6 +138,7 @@
 /usr/share/locale/ru_SU.ISO8859-5/LC_CTYPE
 /usr/share/locale/ru_SU.KOI8-R
 /usr/share/locale/ru_SU.KOI8-R/LC_CTYPE
+/usr/share/man/cat1/kf.0
 /usr/share/man/cat3/atari
 /usr/share/man/cat3/atari/ahdi_buildlabel.0
 /usr/share/man/cat3/atari/ahdi_checklabel.0
@@ -155,6 +158,7 @@
 /usr/share/man/cat4/arm26/podulebus.0
 /usr/share/man/cat4/arm26/unixbp.0
 /usr/share/man/cat4/tahoe
+/usr/share/man/cat8/kfd.0
 /usr/share/man/cat8/arm26
 /usr/share/man/cat8/arm26/BBBB.0
 /usr/share/man/cat8/arm26/MAKEDEV.0
@@ -168,6 +172,7 @@
 /usr/share/man/cat8/tahoe
 /usr/share/man/cat9/arm26
 /usr/share/man/cat9/arm32
+/usr/share/man/man1/kf.1
 /usr/share/man/man3/atari
 /usr/share/man/man3/atari/ahdi_buildlabel.3
 /usr/share/man/man3/atari/ahdi_checklabel.3
@@ -187,6 +192,7 @@
 /usr/share/man/man4/arm26/podulebus.4
 /usr/share/man/man4/arm26/unixbp.4
 /usr/share/man/man4/tahoe
+/usr/share/man/man8/kfd.8
 /usr/share/man/man8/arm26
 /usr/share/man/man8/arm26/BBBB.8
 /usr/share/man/man8/arm26/MAKEDEV.8
