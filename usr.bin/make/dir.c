@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.37 2003/08/07 11:14:49 agc Exp $	*/
+/*	$NetBSD: dir.c,v 1.38 2003/09/09 14:44:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.37 2003/08/07 11:14:49 agc Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.38 2003/09/09 14:44:35 drochner Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.37 2003/08/07 11:14:49 agc Exp $");
+__RCSID("$NetBSD: dir.c,v 1.38 2003/09/09 14:44:35 drochner Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1458,12 +1458,6 @@ Dir_AddDir(Lst path, const char *name)
 	    p->hits = 0;
 	    p->refCount = 1;
 	    Hash_InitTable (&p->files, -1);
-
-	    /*
-	     * Skip the first two entries -- these will *always* be . and ..
-	     */
-	    (void)readdir(d);
-	    (void)readdir(d);
 
 	    while ((dp = readdir (d)) != (struct dirent *) NULL) {
 #if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
