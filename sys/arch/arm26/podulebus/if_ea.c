@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.19 2000/09/18 20:51:15 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.20 2000/09/21 22:20:39 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.19 2000/09/18 20:51:15 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.20 2000/09/21 22:20:39 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -142,6 +142,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	printf(":");
 	seeq8005_attach(&sc->sc_8005, myaddr);
 
 	/* Claim a podule interrupt */
