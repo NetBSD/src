@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.61 2002/03/17 19:41:07 atatat Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.62 2002/03/22 18:58:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.61 2002/03/17 19:41:07 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.62 2002/03/22 18:58:59 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 
@@ -412,8 +412,10 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
 	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX)
-			return (EINVAL);
+		if ((u_int)iovcnt > IOV_MAX) {
+			error = EINVAL;
+			goto out;
+		}
 		iov = malloc(iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
