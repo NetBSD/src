@@ -395,7 +395,7 @@ do {									\
       s->type = type;							\
       s->next = sections;						\
       sections = s;							\
-      fprintf (FILE, ".section\t%s,\"%s\",@progbits\n", NAME, mode);	\
+      fprintf (FILE, ".section\t%s,\"%s\",%%progbits\n", NAME, mode);	\
     }									\
   else									\
     {									\
