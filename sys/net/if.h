@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.55 2000/12/13 22:05:12 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.56 2000/12/14 00:07:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ struct ifnet {				/* and the entries */
 	struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
 	u_int8_t *if_broadcastaddr;	/* linklevel broadcast bytestring */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
-#if 0
+#if 1
 	void	*if_bridge;		/* bridge glue */
 #endif
 };
@@ -623,6 +623,16 @@ do {									\
 		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_DEQUEUE((ifq), (m));				\
+	else								\
+		IF_POLL((ifq), (m));					\
+} while (0)
+
+#define	IFQ_POLL(ifq, m)						\
+do {									\
+	if (TBR_IS_ENABLED((ifq)))					\
+		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
+	else if (ALTQ_IS_ENABLED((ifq)))				\
+		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
 } while (0)
