@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.24 1998/07/23 19:25:52 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.25 1998/07/24 23:25:13 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -250,7 +250,9 @@ void	cs_isa_attach __P((struct device *, struct device *, void *));
 int	cs_get_params __P((struct cs_softc *));
 int	cs_validate_params __P((struct cs_softc *));
 int	cs_get_enaddr __P((struct cs_softc *));
-int	cs_read_eeprom __P((struct cs_softc *, u_int16_t, u_int16_t *));
+int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
+int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
+	    u_int16_t, u_int16_t *));
 int	cs_reset_chip __P((struct cs_softc *));
 int	cs_init __P((struct cs_softc *));
 void	cs_reset __P((void *));
@@ -634,7 +636,6 @@ int
 cs_get_params(sc)
 	struct cs_softc *sc;
 {
-	u_int16_t selfStatus;
 	u_int16_t isaConfig;
 	u_int16_t memBase;
 	u_int16_t adapterConfig;
@@ -643,28 +644,29 @@ cs_get_params(sc)
 	/* If all of these parameters were specified */
 	if (sc->sc_cfgflags != 0 && sc->sc_pktpgaddr != (bus_addr_t)MADDRUNK
 	    && sc->sc_irq != 0) {
-		return CS_OK;
+		return (CS_OK);
 	}
 
-	/* Verify that the EEPROM is present and OK */
-	selfStatus = CS_READ_PACKET_PAGE(sc, PKTPG_SELF_ST);
-	if (!((selfStatus & SELF_ST_EEP_PRES) &&
-	    (selfStatus & SELF_ST_EEP_OK))) {
-		printf("%s: EEPROM is missing or bad\n", sc->sc_dev.dv_xname);
-		return CS_ERROR;
+	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+		printf("%s: cs_get_params: EEPROM missing or bad\n",
+		    sc->sc_dev.dv_xname);
+		return (CS_ERROR);
 	}
 
 	/* Get ISA configuration from the EEPROM */
-	if (cs_read_eeprom(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
-		return CS_ERROR;
+	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ISA_CFG,
+	    &isaConfig) == CS_ERROR)
+		goto eeprom_bad;
 
 	/* Get adapter configuration from the EEPROM */
-	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
-		return CS_ERROR;
+	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_ADPTR_CFG,
+	    &adapterConfig) == CS_ERROR)
+		goto eeprom_bad;
 
 	/* Get transmission control from the EEPROM */
-	if (cs_read_eeprom(sc, EEPROM_XMIT_CTL, &xmitCtl) == CS_ERROR)
-		return CS_ERROR;
+	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_XMIT_CTL,
+	    &xmitCtl) == CS_ERROR)
+		goto eeprom_bad;
 
 	/* If the configuration flags were not specified */
 	if (sc->sc_cfgflags == 0) {
@@ -690,9 +692,9 @@ cs_get_params(sc)
 		/* If memory mode is enabled */
 		if (sc->sc_cfgflags & CFGFLG_MEM_MODE) {
 			/* Get the memory base address from EEPROM */
-			if (cs_read_eeprom(sc, EEPROM_MEM_BASE,
-			    &memBase) == CS_ERROR)
-				return CS_ERROR;
+			if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh,
+			    EEPROM_MEM_BASE, &memBase) == CS_ERROR)
+				goto eeprom_bad;
 
 			memBase &= MEM_BASE_MASK;	/* Clear unused bits */
 
@@ -726,7 +728,12 @@ cs_get_params(sc)
 			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
 		break;
 	}
-	return CS_OK;
+	return (CS_OK);
+
+ eeprom_bad:
+	printf("%s: cs_get_params: unable to read from EEPROM\n",
+	    sc->sc_dev.dv_xname);
+	return (CS_ERROR);
 }
 
 int 
@@ -756,28 +763,34 @@ int
 cs_get_enaddr(sc)
 	struct cs_softc *sc;
 {
-	u_int16_t selfStatus, *myea;
+	u_int16_t *myea;
+
+	if (cs_verify_eeprom(sc->sc_iot, sc->sc_ioh) == CS_ERROR) {
+		printf("%s: cs_get_enaddr: EEPROM missing or bad\n",
+		    sc->sc_dev.dv_xname);
+		return (CS_ERROR);
+	}
 
 	myea = (u_int16_t *)sc->sc_enaddr;
 
-	/* Verify that the EEPROM is present and OK */
-	selfStatus = CS_READ_PACKET_PAGE(sc, PKTPG_SELF_ST);
-	if (!((selfStatus & SELF_ST_EEP_PRES) &&
-	    (selfStatus & SELF_ST_EEP_OK))) {
-		printf("%s: EEPROM is missing or bad\n", sc->sc_dev.dv_xname);
-		return CS_ERROR;
-	}
-
 	/* Get Ethernet address from the EEPROM */
 	/* XXX this will likely lose on a big-endian machine. -- cgd */
-	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
-		return CS_ERROR;
-	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
-		return CS_ERROR;
-	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
-		return CS_ERROR;
+	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_H,
+	    &myea[0]) == CS_ERROR)
+		goto eeprom_bad;
+	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_M,
+	    &myea[1]) == CS_ERROR)
+		goto eeprom_bad;
+	if (cs_read_eeprom(sc->sc_iot, sc->sc_ioh, EEPROM_IND_ADDR_L,
+	    &myea[2]) == CS_ERROR)
+		goto eeprom_bad;
 
-	return CS_OK;
+	return (CS_OK);
+
+ eeprom_bad:
+	printf("%s: cs_get_enaddr: unable to read from EEPROM\n",
+	    sc->sc_dev.dv_xname);
+	return (CS_ERROR);
 }
 
 int 
@@ -847,42 +860,58 @@ cs_reset_chip(sc)
 	return CS_OK;
 }
 
+int
+cs_verify_eeprom(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	u_int16_t self_status;
+
+	/* Verify that the EEPROM is present and OK */
+	self_status = CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST);
+	if (((self_status & SELF_ST_EEP_PRES) &&
+	     (self_status & SELF_ST_EEP_OK)) == 0)
+		return (CS_ERROR);
+
+	return (CS_OK);
+}
+
 int 
-cs_read_eeprom(sc, offset, pValue)
-	struct cs_softc *sc;
+cs_read_eeprom(iot, ioh, offset, pValue)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	u_int16_t offset, *pValue;
 {
 	int x;
 
 	/* Ensure that the EEPROM is not busy */
 	for (x = 0; x < MAXLOOP; x++) {
-		if (!(CS_READ_PACKET_PAGE(sc, PKTPG_SELF_ST) & SELF_ST_SI_BUSY))
+		if (!(CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST) &
+		      SELF_ST_SI_BUSY))
 			break;
 	}
 
-	if (x == MAXLOOP) {
-		printf("%s: unable to read from EEPROM\n", sc->sc_dev.dv_xname);
-		return CS_ERROR;
-	}
+	if (x == MAXLOOP)
+		return (CS_ERROR);
 
 	/* Issue the command to read the offset within the EEPROM */
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_EEPROM_CMD, offset | EEPROM_CMD_READ);
+	CS_WRITE_PACKET_PAGE_IO(iot, ioh, PKTPG_EEPROM_CMD,
+	    offset | EEPROM_CMD_READ);
 
 	/* Wait until the command is completed */
 	for (x = 0; x < MAXLOOP; x++) {
-		if (!(CS_READ_PACKET_PAGE(sc, PKTPG_SELF_ST) & SELF_ST_SI_BUSY))
+		if (!(CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_SELF_ST) &
+		      SELF_ST_SI_BUSY))
 			break;
 	}
 
-	if (x == MAXLOOP) {
-		printf("%s: unable to read from EEPROM\n", sc->sc_dev.dv_xname);
-		return CS_ERROR;
-	}
+	if (x == MAXLOOP)
+		return (CS_ERROR);
 
 	/* Get the EEPROM data from the EEPROM Data register */
-	*pValue = CS_READ_PACKET_PAGE(sc, PKTPG_EEPROM_DATA);
+	*pValue = CS_READ_PACKET_PAGE_IO(iot, ioh, PKTPG_EEPROM_DATA);
 
-	return CS_OK;
+	return (CS_OK);
 }
 
 void 
