@@ -1,0 +1,4 @@
+./usr/lib/libkadm_pic.a		comp-c-piclib
+./usr/lib/libkdb_pic.a		comp-c-piclib
+./usr/lib/libkrb_pic.a		comp-c-piclib
+./usr/lib/libkstream_pic.a	comp-c-piclib

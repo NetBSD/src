@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.632 2003/12/10 11:40:11 hannken Exp $
+# $NetBSD: mi,v 1.633 2003/12/11 09:46:27 dyoung Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -19,10 +19,8 @@
 ./usr/share/info/gprof.info			man-debug-info
 ./usr/share/info/grep.info			man-util-info
 ./usr/share/info/gzip.info			man-util-info
-./usr/share/info/heimdal.info			man-krb5-info
 ./usr/share/info/info-stnd.info			man-texinfo-info
 ./usr/share/info/info.info			man-texinfo-info
-./usr/share/info/kth-krb.info			man-krb4-info
 ./usr/share/info/ld.info			man-computil-info
 ./usr/share/info/send-pr.info			man-gnats-info
 ./usr/share/info/stabs.info			man-debug-info
@@ -77,7 +75,6 @@
 ./usr/share/man/cat1/colrm.0			man-util-catman
 ./usr/share/man/cat1/column.0			man-util-catman
 ./usr/share/man/cat1/comm.0			man-util-catman
-./usr/share/man/cat1/compile_et.0		man-krb5-catman
 ./usr/share/man/cat1/compress.0			man-util-catman
 ./usr/share/man/cat1/cp.0			man-util-catman
 ./usr/share/man/cat1/cpio.0			man-util-catman
@@ -161,12 +158,8 @@
 ./usr/share/man/cat1/jobs.0			man-util-catman
 ./usr/share/man/cat1/join.0			man-util-catman
 ./usr/share/man/cat1/jot.0			man-util-catman
-./usr/share/man/cat1/kdestroy.0			man-krb5-catman
-./usr/share/man/cat1/kdump.0			man-krb5-catman
+./usr/share/man/cat1/kdump.0			man-debug-catman
 ./usr/share/man/cat1/kill.0			man-util-catman
-./usr/share/man/cat1/kinit.0			man-krb5-catman
-./usr/share/man/cat1/klist.0			man-krb5-catman
-./usr/share/man/cat1/kpasswd.0			man-krb5-catman
 ./usr/share/man/cat1/ksh.0			man-util-catman
 ./usr/share/man/cat1/ktrace.0			man-debug-catman
 ./usr/share/man/cat1/ktruss.0			man-debug-catman
@@ -1244,11 +1237,6 @@
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman
 ./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman
 ./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman
-./usr/share/man/cat5/krb.conf.0			man-krb5-catman
-./usr/share/man/cat5/krb.equiv.0		man-krb5-catman
-./usr/share/man/cat5/krb.extra.0		man-krb5-catman
-./usr/share/man/cat5/krb.realms.0		man-krb5-catman
-./usr/share/man/cat5/krb5.conf.0		man-krb5-catman
 ./usr/share/man/cat5/lastlog.0			man-sys-catman
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman
@@ -1450,8 +1438,6 @@
 ./usr/share/man/cat8/hp300/format.0		man-sys-catman
 ./usr/share/man/cat8/hpcmips/boot.0		man-sys-catman
 ./usr/share/man/cat8/hpcmips/pbsdboot.0		man-sys-catman
-./usr/share/man/cat8/hprop.0			man-krb5-catman
-./usr/share/man/cat8/hpropd.0			man-krb5-catman
 ./usr/share/man/cat8/i386/boot.0		man-sys-catman
 ./usr/share/man/cat8/i386/boot_console.0	man-sys-catman
 ./usr/share/man/cat8/i386/bootselect.0		man-sys-catman
@@ -1483,13 +1469,6 @@
 ./usr/share/man/cat8/isdntelctl.0		man-isdn-catman
 ./usr/share/man/cat8/isdntrace.0		man-isdn-catman
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman
-./usr/share/man/cat8/kadmin.0			man-krb5-catman
-./usr/share/man/cat8/kadmind.0			man-krb5-catman
-./usr/share/man/cat8/kdc.0			man-krb5-catman
-./usr/share/man/cat8/kerberos.0			man-krb5-catman
-./usr/share/man/cat8/kpasswdd.0			man-krb5-catman
-./usr/share/man/cat8/kstash.0			man-krb5-catman
-./usr/share/man/cat8/ktutil.0			man-krb5-catman
 ./usr/share/man/cat8/lastlogin.0		man-sysutil-catman
 ./usr/share/man/cat8/ldconfig.0			man-sysutil-catman
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman
@@ -1701,7 +1680,6 @@
 ./usr/share/man/cat8/stdhosts.0			man-nis-catman
 ./usr/share/man/cat8/sticky.0			man-sys-catman
 ./usr/share/man/cat8/strfile.0			man-sysutil-catman
-./usr/share/man/cat8/string2key.0		man-krb5-catman
 ./usr/share/man/cat8/sun2/boot.0		man-sys-catman
 ./usr/share/man/cat8/sun3/boot.0		man-sys-catman
 ./usr/share/man/cat8/sunlabel.0			man-sysutil-catman
@@ -1749,7 +1727,6 @@
 ./usr/share/man/cat8/vax/drtest.0		man-sys-catman
 ./usr/share/man/cat8/vax/format.0		man-sys-catman
 ./usr/share/man/cat8/veriexecctl.0		man-sysutil-catman
-./usr/share/man/cat8/verify_krb5_conf.0		man-krb5-catman
 ./usr/share/man/cat8/vinum.0			man-sysutil-catman
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman
 ./usr/share/man/cat8/virtual.0			man-sysutil-catman
@@ -1832,7 +1809,6 @@
 ./usr/share/man/man1/colrm.1			man-util-man
 ./usr/share/man/man1/column.1			man-util-man
 ./usr/share/man/man1/comm.1			man-util-man
-./usr/share/man/man1/compile_et.1		man-krb5-man
 ./usr/share/man/man1/compress.1			man-util-man
 ./usr/share/man/man1/cp.1			man-util-man
 ./usr/share/man/man1/cpio.1			man-util-man
@@ -1916,12 +1892,8 @@
 ./usr/share/man/man1/jobs.1			man-util-man
 ./usr/share/man/man1/join.1			man-util-man
 ./usr/share/man/man1/jot.1			man-util-man
-./usr/share/man/man1/kdestroy.1			man-krb5-man
-./usr/share/man/man1/kdump.1			man-krb5-man
+./usr/share/man/man1/kdump.1			man-debug-man
 ./usr/share/man/man1/kill.1			man-util-man
-./usr/share/man/man1/kinit.1			man-krb5-man
-./usr/share/man/man1/klist.1			man-krb5-man
-./usr/share/man/man1/kpasswd.1			man-krb5-man
 ./usr/share/man/man1/ksh.1			man-util-man
 ./usr/share/man/man1/ktrace.1			man-debug-man
 ./usr/share/man/man1/ktruss.1			man-debug-man
@@ -3000,11 +2972,6 @@
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man
 ./usr/share/man/man5/isdnd.rates.5		man-isdn-man
 ./usr/share/man/man5/isdnd.rc.5			man-isdn-man
-./usr/share/man/man5/krb.conf.5			man-krb5-man
-./usr/share/man/man5/krb.equiv.5		man-krb5-man
-./usr/share/man/man5/krb.extra.5		man-krb5-man
-./usr/share/man/man5/krb.realms.5		man-krb5-man
-./usr/share/man/man5/krb5.conf.5		man-krb5-man
 ./usr/share/man/man5/lastlog.5			man-sys-man
 ./usr/share/man/man5/lastlogx.5			man-sys-man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man
@@ -3206,8 +3173,6 @@
 ./usr/share/man/man8/hp300/format.8		man-sys-man
 ./usr/share/man/man8/hpcmips/boot.8		man-sys-man
 ./usr/share/man/man8/hpcmips/pbsdboot.8		man-sys-man
-./usr/share/man/man8/hprop.8			man-krb5-man
-./usr/share/man/man8/hpropd.8			man-krb5-man
 ./usr/share/man/man8/i386/boot.8		man-sys-man
 ./usr/share/man/man8/i386/boot_console.8	man-sys-man
 ./usr/share/man/man8/i386/bootselect.8		man-sys-man
@@ -3239,13 +3204,6 @@
 ./usr/share/man/man8/isdntelctl.8		man-isdn-man
 ./usr/share/man/man8/isdntrace.8		man-isdn-man
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man
-./usr/share/man/man8/kadmin.8			man-krb5-man
-./usr/share/man/man8/kadmind.8			man-krb5-man
-./usr/share/man/man8/kdc.8			man-krb5-man
-./usr/share/man/man8/kerberos.8			man-krb5-man
-./usr/share/man/man8/kpasswdd.8			man-krb5-man
-./usr/share/man/man8/kstash.8			man-krb5-man
-./usr/share/man/man8/ktutil.8			man-krb5-man
 ./usr/share/man/man8/lastlogin.8		man-sysutil-man
 ./usr/share/man/man8/ldconfig.8			man-sysutil-man
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man
@@ -3457,7 +3415,6 @@
 ./usr/share/man/man8/stdhosts.8			man-nis-man
 ./usr/share/man/man8/sticky.8			man-sys-man
 ./usr/share/man/man8/strfile.8			man-sysutil-man
-./usr/share/man/man8/string2key.8		man-krb5-man
 ./usr/share/man/man8/sun2/boot.8		man-sys-man
 ./usr/share/man/man8/sun3/boot.8		man-sys-man
 ./usr/share/man/man8/sunlabel.8			man-sysutil-man
@@ -3505,7 +3462,6 @@
 ./usr/share/man/man8/vax/drtest.8		man-sys-man
 ./usr/share/man/man8/vax/format.8		man-sys-man
 ./usr/share/man/man8/veriexecctl.8		man-sysutil-man
-./usr/share/man/man8/verify_krb5_conf.8		man-krb5-man
 ./usr/share/man/man8/vinum.8			man-sysutil-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
 ./usr/share/man/man8/virtual.8			man-sysutil-man
