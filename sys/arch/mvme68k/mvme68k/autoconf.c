@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.1.1 1995/07/25 23:11:55 chuck Exp $ */
+/*	$NetBSD: autoconf.c,v 1.2 1995/12/28 19:16:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,7 +71,6 @@
  * the machine.
  */
 int	cold;			/* if 1, still working on cold-start */
-int	dkn;			/* number of iostat dk numbers assigned so far */
 int	cpuspeed = MHZ_16;	/* relative cpu speed */
 struct	isr isrqueue[NISR];
 
