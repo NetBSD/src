@@ -1,4 +1,4 @@
-/*	$NetBSD: logout.c,v 1.7 1997/08/25 19:31:46 kleink Exp $	*/
+/*	$NetBSD: logout.c,v 1.8 1998/03/30 15:22:29 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logout.c,v 1.7 1997/08/25 19:31:46 kleink Exp $");
+__RCSID("$NetBSD: logout.c,v 1.8 1998/03/30 15:22:29 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: logout.c,v 1.7 1997/08/25 19:31:46 kleink Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <util.h>
 
 typedef struct utmp UTMP;
