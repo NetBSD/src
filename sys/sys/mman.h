@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.18 1998/05/30 22:18:56 kleink Exp $	*/
+/*	$NetBSD: mman.h,v 1.19 1998/06/03 21:52:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -78,6 +78,11 @@ typedef	_BSD_SIZE_T_	size_t;
  */
 #define	MAP_FILE	0x0000	/* map from file (default) */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
+
+/*
+ * Error indicator returned by mmap(2)
+ */
+#define	MAP_FAILED	((void *) -1)	/* mmap() failed */
 
 /*
  * Flags to msync
