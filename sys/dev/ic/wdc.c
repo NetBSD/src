@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.11 1998/01/12 09:43:50 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.12 1998/01/14 23:42:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -7,6 +7,8 @@
  * Onno van der Linden.
  *
  * Atapi support added by Manuel Bouyer.
+ *
+ * Bus_space-ified by Christopher G. Demetriou.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,6 +36,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * CODE UNTESTED IN THE CURRENT REVISION:
+ *	* DMA
+ *	* 32-bit data port access.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -52,20 +60,20 @@
 
 #include <vm/vm.h>
 
-#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-#include <dev/isa/wdreg.h>
-#include <dev/isa/wdlink.h>
+#include <dev/ic/wdcreg.h>
+#include <dev/ic/wdcvar.h>
+#include <dev/ata/wdlink.h>
 #include "atapibus.h"
-#include "wd.h"
+#include "wdc.h"
 
 #if NATAPIBUS > 0
 #include <dev/scsipi/scsipi_all.h>
+#ifdef notyet
+#include <dev/scsipi/atapi_all.h>
+#endif
 #include <dev/scsipi/atapiconf.h>
 #endif
 
@@ -85,38 +93,40 @@
 
 LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
 
-int	wdcprobe	__P((struct device *, void *, void *));
-void	wdcattach	__P((struct device *, struct device *, void *));
-int	wdcintr		__P((void *));
-
-struct cfattach wdc_ca = {
-	sizeof(struct wdc_softc), wdcprobe, wdcattach
+#if (NetBSD > 199801 || NetBSD1_3 >= 3)
+/* XXX nothing needed here */
+#else
+struct cfdriver wdc_cd = {
+	NULL, "wdc", DV_DULL
 };
+#endif
 
+int	wdc_init_controller __P((struct wdc_softc *,
+	    const struct wdc_attachment_data *));
 void	wdcstart	__P((struct wdc_softc *));
-int		wdcreset	__P((struct wdc_softc *, int));
+int	wdcreset	__P((struct wdc_softc *, int));
 #define VERBOSE 1
 #define SILENT 0
 void	wdcrestart	__P((void *arg));
 void	wdcunwedge	__P((struct wdc_softc *));
 void	wdctimeout	__P((void *arg));
-int		wdccontrol	__P((struct wdc_softc*, struct wd_link *));
+int	wdccontrol	__P((struct wdc_softc*, struct wd_link *));
 void	wdc_free_xfer	__P((struct wdc_xfer *));
 void	wdcerror	__P((struct wdc_softc*, char *));
 void	wdcbit_bucket	__P(( struct wdc_softc *, int));
 #if NWD > 0
-int		wdprint			__P((void *, const char *));
-int		wdsetctlr		__P((struct wd_link *));
-int		wdc_ata_intr	__P((struct wdc_softc *,struct wdc_xfer *));
+int	wdprint			__P((void *, const char *));
+int	wdsetctlr		__P((struct wd_link *));
+int	wdc_ata_intr	__P((struct wdc_softc *,struct wdc_xfer *));
 void	wdc_ata_start	__P((struct wdc_softc *,struct wdc_xfer *));
 void	wdc_ata_done	__P((struct wdc_softc *, struct wdc_xfer *));
 #endif /* NWD > 0 */
 #if NATAPIBUS > 0
 void	wdc_atapi_minphys __P((struct buf *bp));
 void	wdc_atapi_start	__P((struct wdc_softc *,struct wdc_xfer *));
-int		wdc_atapi_intr	__P((struct wdc_softc *, struct wdc_xfer *));
+int	wdc_atapi_intr	__P((struct wdc_softc *, struct wdc_xfer *));
 void	wdc_atapi_done	__P((struct wdc_softc *, struct wdc_xfer *));
-int		wdc_atapi_send_command_packet __P((struct scsipi_xfer *sc_xfer));
+int	wdc_atapi_send_command_packet __P((struct scsipi_xfer *sc_xfer));
 #define MAX_SIZE MAXPHYS /* XXX */
 #endif
 
@@ -139,100 +149,134 @@ static struct scsipi_adapter wdc_switch  = {
 };
 #endif
 
+/*
+ * wdc_init_controller: Does a quick probe/init of the controller.
+ *
+ * Return values:
+ *	0	No controller present (as far as it can tell).
+ *	>0	Controller present and seemingly functional.
+ *	<0	Controller present, but not working correctly.
+ */
 int
-wdcprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wdc_init_controller(wdc, adp)
+	struct wdc_softc *wdc;
+	const struct wdc_attachment_data *adp;
 {
-	struct wdc_softc *wdc = match;
-	struct isa_attach_args *ia = aux;
-	int iobase;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
-	wdc->sc_iobase = iobase = ia->ia_iobase;
+	iot = wdc->sc_iot;
+	ioh = wdc->sc_ioh;
 
 	if (wdcreset(wdc, SILENT) != 0) {
 		/*
-		 * if the reset failed, there is no master. test for ATAPI signature
-		 * on the slave device. If no ATAPI slave, wait 5s and retry a reset.   
+		 * If the reset failed, there is no master. test for
+		 * ATAPI signature on the slave device. If no ATAPI
+		 * slave, wait 5s and retry a reset.   
 		 */
-		outb(iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
-		if (inb(iobase + wd_cyl_lo) == 0x14 &&
-			inb(iobase + wd_cyl_hi) == 0xeb) {
+		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10); /*slave*/
+		if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0x14 &&
+		    bus_space_read_1(iot, ioh, wd_cyl_hi) == 0xeb) {
 			wdc->sc_flags |= WDCF_ONESLAVE;
 			goto drivefound;
 		} else {
 			delay(500000);
 			if (wdcreset(wdc, SILENT) != 0)
-				return 0;
+				return (0);
 		}
 	}
 	delay(1000);
-	/* reset succeeded. Test registers */
-	if (inb(iobase + wd_cyl_lo) == 0x14 &&
-		inb(iobase + wd_cyl_hi) == 0xeb)
+
+	/*
+	 * Reset succeeded.  Test for ATAPI signature on both master
+	 * and slave.
+	 */
+	if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0x14 &&
+		bus_space_read_1(iot, ioh, wd_cyl_hi) == 0xeb)
 		goto drivefound;
-	/* not ATAPI. Test registers */
-	outb(iobase+wd_error, 0x58);    /* Error register not writable, */
-	outb(iobase+wd_cyl_lo, 0xa5);   /* but all of cyllo are. */
-	if (inb(iobase+wd_error) != 0x58 && inb(iobase+wd_cyl_lo) == 0xa5)
-		goto drivefound;
-	/* No master. Test atapi signature on slave */
-	outb(iobase+wd_sdh, WDSD_IBM | 0x10);
-	if (inb(iobase + wd_cyl_lo) == 0x14 &&
-		inb(iobase + wd_cyl_hi) == 0xeb) {
+	bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);
+	if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0x14 &&
+		bus_space_read_1(iot, ioh, wd_cyl_hi) == 0xeb) {
 		wdc->sc_flags |= WDCF_ONESLAVE;
 		goto drivefound;
 	}
-	return 0;
+
+	/*
+	 * Test non-ATAPI registers.  Error register not writable,
+	 * but all of cyllo is.
+	 */
+	bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM);
+	bus_space_write_1(iot, ioh, wd_error, 0x58);
+	bus_space_write_1(iot, ioh, wd_cyl_lo, 0xa5);
+	if (bus_space_read_1(iot, ioh, wd_error) != 0x58 &&
+	    bus_space_read_1(iot, ioh, wd_cyl_lo) == 0xa5)
+		goto drivefound;
+
+	/*
+	 * If no drives found, but the resets succeeded, we claim to
+	 * have the controller, at least.
+	 */
+	return (1);
+
 drivefound:
 	/* Select drive 0 or ATAPI slave device */
 	if (wdc->sc_flags & WDCF_ONESLAVE)
-		outb(iobase+wd_sdh, WDSD_IBM | 0x10);
+		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);
 	else
-		outb(iobase+wd_sdh, WDSD_IBM);
+		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM);
 
 	/* Wait for controller to become ready. */
 	if (wait_for_unbusy(wdc) < 0)
-		return 0;
+		return (-1);
     
 	/* Start drive diagnostics. */
-	outb(iobase+wd_command, WDCC_DIAGNOSE);
+	bus_space_write_1(iot, ioh, wd_command, WDCC_DIAGNOSE);
 
 	/* Wait for command to complete. */
 	if (wait_for_unbusy(wdc) < 0)
-		return 0;
+		return (-1);
 
-	ia->ia_iosize = 8;
-	ia->ia_msize = 0;
 	return 1;
 }
 
-void
-wdcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+int
+wdcprobe(adp)
+	const struct wdc_attachment_data *adp;
 {
-	struct wdc_softc *wdc = (void *)self;
-	struct isa_attach_args *ia = aux;
+	struct wdc_softc _wdc, *wdc = &_wdc;		/* XXX EWWWWW! */
+	int rv;
+
+	bzero(wdc, sizeof *wdc);
+	strcpy(wdc->sc_dev.dv_xname, "wdcprobe");
+	wdc->sc_adp = adp;
+
+	rv = wdc_init_controller(wdc, adp);
+
+	if (rv < 0)
+		rv = 1;
+	return (rv);
+}
+
+void
+wdcattach(wdc, adp)
+	struct wdc_softc *wdc;
+	const struct wdc_attachment_data *adp;
+{
 #if NWD > 0
 	int drive;
 #endif
 
-	TAILQ_INIT(&wdc->sc_xfer);
-	wdc->sc_drq = ia->ia_drq;
-
-	printf("\n");
-	if (wdc->sc_drq != -1) {
-		if (isa_dmamap_create(parent, wdc->sc_drq, MAXPHYS,
-			BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-				printf("%s: can't create map for drq %d\n",
-					wdc->sc_dev.dv_xname, wdc->sc_drq);
-				wdc->sc_drq = -1;
-		}
+	wdc->sc_adp = adp;
+	if (wdc_init_controller(wdc, adp) <= 0) {
+		printf(": controller wouldn't initialize properly\n");
+		return;
 	}
 
-	wdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, wdcintr, wdc);
+	TAILQ_INIT(&wdc->sc_xfer);
+
+	printf("\n");
+	if (wdc->sc_cap & WDC_CAPABILITY_DMA)
+		(*wdc->sc_dma_setup)(wdc->sc_dma_arg);
 
 #ifdef ATAPI_DEBUG2
 	wdc_nxfer = 0;
@@ -244,7 +288,8 @@ wdcattach(parent, self, aux)
 	 */
 	wdc->ab_link = malloc(sizeof(struct scsipi_link), M_DEVBUF, M_NOWAIT);
 	if (wdc->ab_link == NULL) {
-		printf("%s: can't allocate ATAPI link\n", self->dv_xname);
+		printf("%s: can't allocate ATAPI link\n",
+		    wdc->sc_dev.dv_xname);
 		return;
 	}
 	bzero(wdc->ab_link,sizeof(struct scsipi_link));
@@ -254,7 +299,7 @@ wdcattach(parent, self, aux)
 	wdc->ab_link->scsipi_atapi.channel = 0;
 	wdc->ab_link->adapter_softc = (caddr_t)wdc;
 	wdc->ab_link->adapter = &wdc_switch;
-	(void)config_found(self, (void *)wdc->ab_link, NULL);
+	(void)config_found(&wdc->sc_dev, (void *)wdc->ab_link, NULL);
 #endif /* NATAPIBUS > 0 */
 #if NWD > 0
 	/*
@@ -278,29 +323,29 @@ wdcattach(parent, self, aux)
 			    M_DEVBUF, M_NOWAIT);
 			if (wdc->d_link[drive] == NULL) {
 				printf("%s: can't allocate link for drive %d\n",
-				    self->dv_xname, drive);
+				    wdc->sc_dev.dv_xname, drive);
 				continue;
 			}
 			bzero(wdc->d_link[drive],sizeof(struct wd_link));
 			wdc->d_link[drive]->type = ATA;
 			wdc->d_link[drive]->wdc_softc =(caddr_t) wdc;
 			wdc->d_link[drive]->drive = drive;
-			if (wdc->sc_drq != DRQUNK) 
+			if (wdc->sc_cap & WDC_CAPABILITY_DMA)
 				wdc->d_link[drive]->sc_mode = WDM_DMA;
 			else
 				wdc->d_link[drive]->sc_mode = 0;
 
 			wdc->sc_drives_mask |= (1 << drive);
-			(void)config_found(self, (void *)wdc->d_link[drive],
-			    wdprint);
+			(void)config_found(&wdc->sc_dev,
+			    (void *)wdc->d_link[drive], wdprint);
 		}
 	}
 #endif /* NWD > 0 */
 	/* explicitly select an existing drive, to avoid spurious interrupts */
 	if (wdc->sc_flags & WDCF_ONESLAVE)
-		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
+		bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sdh, WDSD_IBM | 0x10); /* slave */
 	else
-		outb(wdc->sc_iobase+wd_sdh, WDSD_IBM); /* master */
+		bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sdh, WDSD_IBM); /* master */
 	/*
 	 * Reset controller. The probe, with some combinations of ATA/ATAPI
 	 * devices keep it in a mostly working, but strange state (with busy
@@ -352,7 +397,7 @@ wdcstart(wdc)
 #ifdef ATAPI_DEBUG2
 		printf("wdcstart: drive %d\n", (int)xfer->d_link->drive);
 #endif
-    outb(wdc->sc_iobase+wd_sdh, WDSD_IBM | xfer->d_link->drive << 4);
+    bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sdh, WDSD_IBM | xfer->d_link->drive << 4);
 #if NATAPIBUS > 0 && NWD > 0
 	if (xfer->c_flags & C_ATAPI) {
 #ifdef ATAPI_DEBUG_WDC
@@ -445,7 +490,7 @@ wdc_ata_start(wdc, xfer)
 		xfer->c_blkno = blkno / (d_link->sc_lp->d_secsize / DEV_BSIZE);
 	} else {
 		WDDEBUG_PRINT((" %d)%x", xfer->c_skip,
-		    inb(wdc->sc_iobase + wd_altsts)));
+		    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_altsts)));
 	}
 
 	/*
@@ -532,11 +577,9 @@ wdc_ata_start(wdc, xfer)
 			command = (xfer->c_flags & B_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
 			/* Start the DMA channel. */
-			isa_dmastart(wdc->sc_dev.dv_parent, wdc->sc_drq,
-				xfer->databuf + xfer->c_skip, xfer->c_nbytes,
-				NULL,
-				xfer->c_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE,
-				BUS_DMA_NOWAIT);
+			(*wdc->sc_dma_start)(wdc->sc_dma_arg,
+			    xfer->databuf + xfer->c_skip, xfer->c_nbytes,
+			    xfer->c_flags & B_READ);
 			break;
 
 		case WDM_PIOMULTI:
@@ -565,9 +608,9 @@ wdc_ata_start(wdc, xfer)
 			return;
 		}
 
-		WDDEBUG_PRINT(("sector %d cylin %d head %d addr %x sts %x\n",
+		WDDEBUG_PRINT(("sector %lu cylin %lu head %lu addr %p sts %x\n",
 		    sector, cylin, head, xfer->databuf,
-		    inb(wdc->sc_iobase + wd_altsts)));
+		    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_altsts)));
 
 	} else if (xfer->c_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -588,14 +631,13 @@ wdc_ata_start(wdc, xfer)
 			return;
 		}
 
-		/* Push out data. */
-		if ((d_link->sc_flags & WDF_32BIT) == 0)
-			outsw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
+		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 1);
 		else
-			outsl(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
+			bus_space_write_multi_4(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip,
 			    xfer->c_nbytes >> 2);
 	}
 
@@ -629,14 +671,14 @@ wdc_ata_intr(wdc,xfer)
 			return 1;
 		}
 		WDDEBUG_PRINT(("wdc_ata_start from wdc_ata_intr(open) flags 0x%x\n",
-		    dc->sc_flags));
+		    wdc->sc_flags));
 		wdc_ata_start(wdc,xfer);
 		return 1;
 	}
 
 	/* Turn off the DMA channel. */
 	if (d_link->sc_mode == WDM_DMA)
-		isa_dmadone(wdc->sc_dev.dv_parent, wdc->sc_drq);
+		(*wdc->sc_dma_finish)(wdc->sc_dma_arg);
 
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
@@ -683,12 +725,14 @@ wdc_ata_intr(wdc,xfer)
 		}
 
 		/* Pull in data. */
-		if ((d_link->sc_flags & WDF_32BIT) == 0)
-			insw(wdc->sc_iobase+wd_data,
-			    xfer->databuf + xfer->c_skip, xfer->c_nbytes >> 1);
+		if ((wdc->sc_cap & WDC_CAPABILITY_DATA32) == 0)
+			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip,
+			    xfer->c_nbytes >> 1);
 		else
-			insl(wdc->sc_iobase+wd_data,
-			    xfer->databuf + xfer->c_skip, xfer->c_nbytes >> 2);
+			bus_space_read_multi_4(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip,
+			    xfer->c_nbytes >> 2);
 	}
     
 	/* If we encountered any abnormalities, flag it as a soft error. */
@@ -816,7 +860,8 @@ wdc_get_parms(wdc, d_link)
 		d_link->sc_lp->d_type = DTYPE_ESDI;
 
 		/* Read in parameter block. */
-		insw(wdc->sc_iobase + wd_data, tb, sizeof(tb) / sizeof(short));
+		bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)tb, sizeof(tb) >> 1);
 		bcopy(tb, &d_link->sc_params, sizeof(struct wdparams));
 
 		/* Shuffle string byte order. */
@@ -828,7 +873,7 @@ wdc_get_parms(wdc, d_link)
 	}
 
 	/* Clear any leftover interrupt. */
-	(void) inb(wdc->sc_iobase + wd_status);
+	(void) bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status);
 
 	/* Restart the queue. */
 	WDDEBUG_PRINT(("wdcstart from wdc_get_parms flags 0x%x\n",
@@ -888,7 +933,7 @@ wdccontrol(wdc, d_link)
 	multimode:
 		if (d_link->sc_mode != WDM_PIOMULTI)
 			goto ready;
-		outb(wdc->sc_iobase + wd_seccnt, d_link->sc_multiple);
+		bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_seccnt, d_link->sc_multiple);
 		if (wdccommandshort(wdc, d_link->drive,
 		    WDCC_SETMULTI) != 0) {
 			wderror(d_link, NULL,
@@ -943,21 +988,21 @@ wdcintr(arg)
 
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) == 0) {
 		/* Clear the pending interrupt and abort. */
-		u_char s = inb(wdc->sc_iobase+wd_status);
+		u_char s = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status);
 
 #ifdef ATAPI_DEBUG_WDC
-		u_char e = inb(wdc->sc_iobase+wd_error);
-		u_char i = inb(wdc->sc_iobase+wd_seccnt);
+		u_char e = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
+		u_char i = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_seccnt);
 		printf("wdcintr: inactive controller, "
 		    "punting st=%02x er=%02x irr=%02x\n", s, e, i);
 #else
-		inb(wdc->sc_iobase+wd_error);
-		inb(wdc->sc_iobase+wd_seccnt);
+		bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
+		bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_seccnt);
 #endif
 
 		if (s & WDCS_DRQ) {
-			int len = inb (wdc->sc_iobase + wd_cyl_lo) +
-			    256 * inb (wdc->sc_iobase + wd_cyl_hi);
+			int len = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_lo) +
+			    256 * bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_hi);
 #ifdef ATAPI_DEBUG_WDC
 			printf ("wdcintr: clearing up %d bytes\n", len);
 #endif
@@ -989,15 +1034,17 @@ wdcreset(wdc, verb)
 	struct wdc_softc *wdc;
 	int verb;
 {
-	int iobase = wdc->sc_iobase;
 
 	/* Reset the device. */
-	outb(iobase+wd_ctlr, WDCTL_RST | WDCTL_IDS);
+	bus_space_write_1(wdc->sc_auxiot, wdc->sc_auxioh, wd_aux_ctlr,
+	    WDCTL_RST | WDCTL_IDS);
 	delay(1000);
-	outb(iobase+wd_ctlr, WDCTL_IDS);
+	bus_space_write_1(wdc->sc_auxiot, wdc->sc_auxioh, wd_aux_ctlr,
+	    WDCTL_IDS);
 	delay(1000);
-	(void) inb(iobase+wd_error);
-	outb(iobase+wd_ctlr, WDCTL_4BIT);
+	(void) bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
+	bus_space_write_1(wdc->sc_auxiot, wdc->sc_auxioh, wd_aux_ctlr,
+	    WDCTL_4BIT);
 
 	if (wait_for_unbusy(wdc) < 0) {
 		if (verb)
@@ -1063,38 +1110,37 @@ wdcwait(wdc, mask)
 	struct wdc_softc *wdc;
 	int mask;
 {
-	int iobase = wdc->sc_iobase;
 	int timeout = 0;
 	u_char status;
 #ifdef WDCNDELAY_DEBUG
 	extern int cold;
 #endif
 
-	WDDEBUG_PRINT(("wdcwait iobase %x\n", iobase));
+	WDDEBUG_PRINT(("wdcwait\n"));
 
 	for (;;) {
-		wdc->sc_status = status = inb(iobase+wd_status);
+		wdc->sc_status = status = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status);
 		/*
 		 * XXX
 		 * If a single slave ATAPI device is attached, it may
 		 * have released the bus. Select it and try again.
 		 */
 		if (status == 0xff && wdc->sc_flags & WDCF_ONESLAVE) {
-			outb(iobase+wd_sdh, WDSD_IBM | 0x10);
-			wdc->sc_status = status = inb(iobase+wd_status);
+			bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sdh, WDSD_IBM | 0x10);
+			wdc->sc_status = status = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status);
 		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == mask)
 			break;
 		if (++timeout > WDCNDELAY) {
 #ifdef ATAPI_DEBUG
-			printf("wdcwait: timeout, status %x error %x\n", status, inb(iobase+wd_error));
+			printf("wdcwait: timeout, status %x error %x\n", status, bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error));
 #endif
 			return -1;
 		}
 		delay(WDCDELAY);
 	}
 	if (status & WDCS_ERR) {
-		wdc->sc_error = inb(iobase+wd_error);
+		wdc->sc_error = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
 		return WDCS_ERR;
 	}
 #ifdef WDCNDELAY_DEBUG
@@ -1150,7 +1196,6 @@ wdccommand(wdc, d_link, command, drive, cylin, head, sector, count)
         int command;
         int drive, cylin, head, sector, count;
 {
-        int iobase = wdc->sc_iobase;
         int stat;
 
 	WDDEBUG_PRINT(("wdccommand drive %d\n", drive));
@@ -1161,7 +1206,7 @@ wdccommand(wdc, d_link, command, drive, cylin, head, sector, count)
 #endif
 
         /* Select drive, head, and addressing mode. */
-        outb(iobase+wd_sdh, WDSD_IBM | (drive << 4) | head);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sdh, WDSD_IBM | (drive << 4) | head);
 
         /* Wait for it to become ready to accept a command. */
         if (command == WDCC_IDP || d_link->type == ATAPI)
@@ -1179,16 +1224,16 @@ wdccommand(wdc, d_link, command, drive, cylin, head, sector, count)
 
         /* Load parameters. */
         if (d_link->type == ATA && d_link->sc_lp->d_type == DTYPE_ST506)
-                outb(iobase + wd_precomp, d_link->sc_lp->d_precompcyl / 4);
+                bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_precomp, d_link->sc_lp->d_precompcyl / 4);
         else
-                outb(iobase + wd_features, 0);
-        outb(iobase + wd_cyl_lo, cylin);
-        outb(iobase + wd_cyl_hi, cylin >> 8);
-        outb(iobase + wd_sector, sector);
-        outb(iobase + wd_seccnt, count);
+                bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_features, 0);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_lo, cylin);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_hi, cylin >> 8);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sector, sector);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_seccnt, count);
 
         /* Send command. */
-        outb(iobase + wd_command, command);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_command, command);
 
         return 0;
 }
@@ -1202,7 +1247,6 @@ wdccommandshort(wdc, drive, command)
         int drive;
         int command;
 {
-	int iobase = wdc->sc_iobase;
 
 	WDDEBUG_PRINT(("wdccommandshort\n"));
 
@@ -1213,12 +1257,12 @@ wdccommandshort(wdc, drive, command)
 #endif
 
         /* Select drive. */
-        outb(iobase + wd_sdh, WDSD_IBM | (drive << 4));
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_sdh, WDSD_IBM | (drive << 4));
 
         if (wdcwait(wdc, WDCS_DRDY) < 0)
                 return -1;
 
-        outb(iobase + wd_command, command);
+        bus_space_write_1(wdc->sc_iot, wdc->sc_ioh, wd_command, command);
 
 	return 0;
 }
@@ -1236,7 +1280,7 @@ wdc_exec_xfer(wdc, d_link, xfer)
 	s = splbio();
 
 	/* insert at the end of command list */
-	TAILQ_INSERT_TAIL(&wdc->sc_xfer,xfer , c_xferchain)
+	TAILQ_INSERT_TAIL(&wdc->sc_xfer,xfer , c_xferchain);
 	WDDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    wdc->sc_flags));
 	wdcstart(wdc);
@@ -1318,16 +1362,11 @@ wdcbit_bucket(wdc, size)
 	struct wdc_softc *wdc; 
 	int size;
 {
-	int iobase = wdc->sc_iobase; 
-	int i;
 
-	for (i = 0 ; i < size / 2 ; i++) {
-		short null; 
-		(void)insw(iobase + wd_data, &null, 1);
-	} 
-
-	if (size % 2)
-		(void)inb(iobase + wd_data);
+	for (; size >= 2; size -= 2)
+		(void)bus_space_read_2(wdc->sc_iot, wdc->sc_ioh, wd_data);
+	if (size)
+		(void)bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_data);
 }
 
 
@@ -1357,7 +1396,7 @@ wdc_atapi_start(wdc, xfer)
 			sc_xfer->error = XS_DRIVER_STUFFUP; /* XXX do we know more ? */
 		} else {
 			sc_xfer->error = XS_SENSE;
-			sc_xfer->sense.atapi_sense = inb (wdc->sc_iobase + wd_error);
+			sc_xfer->sense.atapi_sense = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
 		}
 		wdc_atapi_done(wdc, xfer);
 		return;
@@ -1381,8 +1420,16 @@ wdc_atapi_start(wdc, xfer)
 #endif
 	}
 
+	/*
+	 * Limit length to what can be stuffed into the cylinder register
+	 * (16 bits).  Some CD-ROMs seem to interpret '0' as 65536,
+	 * but not all devices do that and it's not obvious from the
+	 * ATAPI spec that that behaviour should be expected.  If more
+	 * data is necessary, multiple data transfer phases will be done.
+	 */
 	if (wdccommand(wdc, (struct wd_link*)xfer->d_link, ATAPI_PACKET_COMMAND,
-	    sc_xfer->sc_link->scsipi_atapi.drive, sc_xfer->datalen,
+	    sc_xfer->sc_link->scsipi_atapi.drive,
+	    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
 		0, 0, 0) != 0) {
 		printf("wdc_atapi_start: can't send atapi packet command\n");
 		sc_xfer->error = XS_DRIVER_STUFFUP;
@@ -1392,9 +1439,9 @@ wdc_atapi_start(wdc, xfer)
 	if ((sc_xfer->sc_link->scsipi_atapi.cap  & 0x0300) != ACAP_DRQ_INTR) {
 		int i, phase;
 		for (i=20000; i>0; --i) {
-			phase = (inb(wdc->sc_iobase + wd_ireason) &
+			phase = (bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_ireason) &
 			    (WDCI_CMD | WDCI_IN)) |
-			    (inb(wdc->sc_iobase + wd_status) & WDCS_DRQ);
+			    (bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status) & WDCS_DRQ);
 			if (phase == PHASE_CMDOUT)
 				break;
 			delay(10);
@@ -1405,8 +1452,8 @@ wdc_atapi_start(wdc, xfer)
 			wdc_atapi_done(wdc, xfer);
 			return;
 		}
-		outsw(wdc->sc_iobase + wd_data, sc_xfer->cmd,
-		    sc_xfer->cmdlen / sizeof(short));
+		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)sc_xfer->cmd, sc_xfer->cmdlen >> 1);
 	}
 	wdc->sc_flags |= WDCF_IRQ_WAIT;
 
@@ -1499,8 +1546,8 @@ wdc_atapi_get_params(ab_link, drive, id)
 		error = 0;
 		goto end;
 	}
-	len = inb(wdc->sc_iobase + wd_cyl_lo) + 256 *
-	    inb(wdc->sc_iobase + wd_cyl_hi);
+	len = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_lo) + 256 *
+	    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_hi);
 	if (len != sizeof(struct atapi_identify)) {
 		printf("Warning drive %d returned %d/%d of "
 		    "indentify device data\n", drive, len,
@@ -1509,8 +1556,8 @@ wdc_atapi_get_params(ab_link, drive, id)
 		if (excess < 0)
 			excess = 0;
 	}
-	insw(wdc->sc_iobase + wd_data, id,
-	    sizeof(struct atapi_identify)/sizeof(short));
+	bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+	    (u_int16_t *)id, sizeof(struct atapi_identify) >> 1);
 	wdcbit_bucket(wdc, excess);
 	wdc->sc_drives_mask |= (1 << drive);
 
@@ -1552,6 +1599,7 @@ wdc_atapi_send_command_packet(sc_xfer)
 		xfer->c_blkno = 0;
 		xfer->databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
+
 		if (wait_for_unbusy (wdc) != 0)  {
 			if ((wdc->sc_status & WDCS_ERR) == 0) {
 				printf("wdc_atapi_send_command: not ready, "
@@ -1565,8 +1613,17 @@ wdc_atapi_send_command_packet(sc_xfer)
 			return COMPLETE;
 		}
 
+		/*
+		 * Limit length to what can be stuffed into the cylinder
+		 * register (16 bits).  Some CD-ROMs seem to interpret '0'
+		 * as 65536, but not all devices do that and it's not
+		 * obvious from the ATAPI spec that that behaviour should
+		 * be expected.  If more data is necessary, multiple data
+		 * transfer phases will be done.
+		 */
 		if (wdccommand(wdc, (struct wd_link*)(&sc_link->scsipi_atapi),
-		    ATAPI_PACKET_COMMAND, sc_link->scsipi_atapi.drive, sc_xfer->datalen,
+		    ATAPI_PACKET_COMMAND, sc_link->scsipi_atapi.drive,
+		    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
 		    0, 0, 0) != 0) {
 			printf("can't send atapi packet command\n");
 			sc_xfer->error = XS_DRIVER_STUFFUP;
@@ -1577,9 +1634,9 @@ wdc_atapi_send_command_packet(sc_xfer)
 		/* Wait for cmd i/o phase. */
 		for (i = 20000; i > 0; --i) {
 			int phase;
-			phase = (inb(wdc->sc_iobase + wd_ireason) &
+			phase = (bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_ireason) &
 			    (WDCI_CMD | WDCI_IN)) |
-			    (inb(wdc->sc_iobase + wd_status) & WDCS_DRQ);
+			    (bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status) & WDCS_DRQ);
 			if (phase == PHASE_CMDOUT)
 				break;
 			delay(10);
@@ -1588,15 +1645,15 @@ wdc_atapi_send_command_packet(sc_xfer)
 		printf("Wait for cmd i/o phase: i = %d\n", i);
 #endif
 
-		outsw(wdc->sc_iobase + wd_data, sc_xfer->cmd,
-		    sc_xfer->cmdlen/ sizeof (short));
+		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)sc_xfer->cmd, sc_xfer->cmdlen >> 1);
 
 		/* Wait for data i/o phase. */
 		for ( i= 20000; i > 0; --i) {
 			int phase;
-			phase = (inb(wdc->sc_iobase + wd_ireason) &
+			phase = (bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_ireason) &
 			    (WDCI_CMD | WDCI_IN)) |
-			    (inb(wdc->sc_iobase + wd_status) & WDCS_DRQ);
+			    (bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status) & WDCS_DRQ);
 			if (phase != PHASE_CMDOUT)
 				break;
 			delay(10);
@@ -1609,7 +1666,7 @@ wdc_atapi_send_command_packet(sc_xfer)
 		while ((sc_xfer->flags & ITSDONE) == 0) {
 			wdc_atapi_intr(wdc, xfer);
 			for (i = 2000; i > 0; --i)
-				if ((inb(wdc->sc_iobase + wd_status)
+				if ((bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status)
 				    & WDCS_DRQ) == 0)
 					break;
 #ifdef ATAPI_DEBUG_WDC
@@ -1673,12 +1730,12 @@ wdc_atapi_intr(wdc, xfer)
 
 
 again:
-	len = inb(wdc->sc_iobase + wd_cyl_lo) +
-	    256 * inb(wdc->sc_iobase + wd_cyl_hi);
+	len = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_lo) +
+	    256 * bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_cyl_hi);
 
-	st = inb(wdc->sc_iobase + wd_status);
-	err = inb(wdc->sc_iobase + wd_error);
-	ire = inb(wdc->sc_iobase + wd_ireason);
+	st = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_status);
+	err = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
+	ire = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_ireason);
 	
 	phase = (ire & (WDCI_CMD | WDCI_IN)) | (st & WDCS_DRQ);
 #ifdef ATAPI_DEBUG_WDC
@@ -1703,8 +1760,8 @@ again:
 		}
 #endif
 
-		outsw(wdc->sc_iobase + wd_data, sc_xfer->cmd,
-		    sc_xfer->cmdlen/ sizeof (short));
+		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh, wd_data,
+		    (u_int16_t *)sc_xfer->cmd, sc_xfer->cmdlen >> 1);
 		return 1;
 
 	case PHASE_DATAOUT:
@@ -1720,16 +1777,17 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: write only "
 			    "%d of %d requested bytes\n", xfer->c_bcount, len);
-			outsw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount / sizeof(short));
-			for (i = xfer->c_bcount; i < len; i += sizeof(short))
-				outw(wdc->sc_iobase + wd_data, 0);
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip,
+			    xfer->c_bcount >> 1);
+			for (i = xfer->c_bcount; i < len; i += 2)
+				bus_space_write_2(wdc->sc_iot, wdc->sc_ioh,
+				    wd_data, 0);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
-			outsw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip, len / sizeof(short));
+			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip, len >> 1);
 			xfer->c_skip += len;
 			xfer->c_bcount -= len;
 		}
@@ -1748,15 +1806,15 @@ again:
 		if (xfer->c_bcount < len) {
 			printf("wdc_atapi_intr: warning: reading only "
 			    "%d of %d bytes\n", xfer->c_bcount, len);
-			insw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip,
-			    xfer->c_bcount / sizeof(short));
+			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip,
+			    xfer->c_bcount >> 1);
 			wdcbit_bucket(wdc, len - xfer->c_bcount);
 			xfer->c_skip += xfer->c_bcount;
 			xfer->c_bcount = 0;
 		} else {
-			insw(wdc->sc_iobase + wd_data,
-			    xfer->databuf + xfer->c_skip, len / sizeof(short));
+			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_ioh,
+			    wd_data, xfer->databuf + xfer->c_skip, len >> 1);
 			xfer->c_skip += len;
 			xfer->c_bcount -=len;
 		}
@@ -1769,7 +1827,7 @@ again:
 #endif
 		if (st & WDCS_ERR) {
 			sc_xfer->error = XS_SENSE;
-			sc_xfer->sense.atapi_sense = inb (wdc->sc_iobase + wd_error);
+			sc_xfer->sense.atapi_sense = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
 		}
 #ifdef ATAPI_DEBUG_WDC
 		if (xfer->c_bcount != 0) {
@@ -1787,7 +1845,7 @@ again:
 		printf("wdc_atapi_intr: unknown phase %d\n", phase);
 		if (st & WDCS_ERR) {
 			sc_xfer->error = XS_SENSE;
-			sc_xfer->sense.atapi_sense = inb (wdc->sc_iobase + wd_error);
+			sc_xfer->sense.atapi_sense = bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_error);
 		} else {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 		}
