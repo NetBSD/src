@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.35 1998/05/14 00:01:31 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.36 1998/06/03 23:16:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.35 1998/05/14 00:01:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.36 1998/06/03 23:16:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,17 @@ cia_init(ccp, mallocsafe)
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
-	ccp->cc_rev = REGVAL(CIA_CSR_REV);
+	ccp->cc_rev = REGVAL(CIA_CSR_REV) & REV_MASK;
+
+	/*
+	 * Determine if we have a Pyxis.  Only two systypes can
+	 * have this: the EB164 systype (AlphaPC164LX and AlphaPC164SX)
+	 * and the DEC_550 systype (Miata).
+	 */
+	if ((hwrpb->rpb_type == ST_EB164 &&
+	     (hwrpb->rpb_variation & SV_ST_MASK) >= SV_ST_ALPHAPC164LX_400) ||
+	    hwrpb->rpb_type == ST_DEC_550)
+		ccp->cc_flags |= CCF_ISPYXIS;
 
 	/*
 	 * Revisions >= 2 have the CNFG register.
@@ -111,14 +121,6 @@ cia_init(ccp, mallocsafe)
 		ccp->cc_cnfg = REGVAL(CIA_CSR_CNFG);
 	else
 		ccp->cc_cnfg = 0;
-
-	/*
-	 * If revision is > 2 non-masked, assume Pyxis.  (XXX iffy?)
-	 */
-	if (ccp->cc_rev > 2)
-		ccp->cc_flags |= CCF_ISPYXIS;
-
-	ccp->cc_rev &= REV_MASK;
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
@@ -155,15 +157,9 @@ ciaattach(parent, self, aux)
 	ccp = sc->sc_ccp = &cia_configuration;
 	cia_init(ccp, 1);
 
-	/*
-	 * If we're a Pyxis, print the revision number, otherwise
-	 * the revision number indicates ALCOR or ALCOR2.
-	 */
-	if (ccp->cc_flags & CCF_ISPYXIS)
-		printf(": DECchip 21174 Core Logic chipset, revision %d\n",
-		    ccp->cc_rev);
-	else
-		printf(": DECchip 2117%d Core Logic chipset\n", ccp->cc_rev);
+	printf(": DECchip 2117x Core Logic Chipset (%s), pass %d\n",
+	    (ccp->cc_flags & CCF_ISPYXIS) ? "Pyxis" : "ALCOR/ALCOR2",
+	    ccp->cc_rev + 1);
 	if (ccp->cc_cnfg)
 		printf("%s: extended capabilities: %s\n", self->dv_xname,
 		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
