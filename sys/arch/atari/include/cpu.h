@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2000/08/25 01:04:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2000/12/19 21:09:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -286,11 +286,6 @@ int	dma_cachectl __P((caddr_t, int));
  * Prototypes from pci_machdep.c
  */
 void init_pci_bus __P((void));
-
-/*
- * Prototypes from trap.c:
- */
-void  child_return __P((void *));
 
 #endif /* _KERNEL */
 #endif /* !_MACHINE_CPU_H_ */
