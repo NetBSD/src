@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.10 2000/05/19 13:42:29 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.11 2000/05/21 13:00:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1643,6 +1643,7 @@ STATIC void rtk_stop(sc)
 	 */
 	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
 		if (sc->rtk_cdata.rtk_tx_chain[i] != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, sc->snd_dmamap[i]);
 			m_freem(sc->rtk_cdata.rtk_tx_chain[i]);
 			sc->rtk_cdata.rtk_tx_chain[i] = NULL;
 			CSR_WRITE_4(sc, RTK_TXADDR0 + i, 0x0000000);
