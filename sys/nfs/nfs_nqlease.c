@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.54 2004/04/21 01:05:42 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.55 2004/04/21 02:22:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.54 2004/04/21 01:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.55 2004/04/21 02:22:49 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -797,7 +797,7 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 		if (fhp->fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
 		    fhp->fh_fsid.__fsid_val[1] == lp->lc_fsid.__fsid_val[1] &&
 		    !memcmp(fhp->fh_fid.fid_data, lp->lc_fiddata,
-			  MAXFIDSZ)) {
+			  VFS_MAXFIDSZ)) {
 			/* Found it */
 			tlp = lp;
 			break;
