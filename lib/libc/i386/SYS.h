@@ -36,7 +36,7 @@
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
 
-#include <sys/asm.h>
+#include <machine/asm.h>
 #include <sys/syscall.h>
 
 #define	SYSCALL(x)	2: jmp cerror; ENTRY(x); lea SYS_/**/x,%eax; LCALL(7,0); jb 2b

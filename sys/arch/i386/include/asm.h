@@ -3,6 +3,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,56 +32,40 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
+ *	$Id: asm.h,v 1.1 1993/06/16 21:42:47 mycroft Exp $
  */
 
-#if defined(LIBC_RCS) && !defined(lint)
-	.asciz "$Id $"
-#endif /* LIBC_RCS and not lint */
+#ifndef _SYS_ASM_H_
+#define _SYS_ASM_H_
 
-#include "DEFS.h"
+/*
+ * XXX assumes that arguments are not passed in %eax
+ */
 
-	/*
-	 * (ov)bcopy (src,dst,cnt)
-	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
-	 */
+#ifdef PROF
+# define _BEGIN_ENTRY	.data; 1:; .long 0; .text; .align 2
+# define _END_ENTRY	movl $1b,%eax; call mcount
+#else
+# define _BEGIN_ENTRY	.text; .align 2
+# define _END_ENTRY
+#endif
 
-ENTRY(bcopy)
-	pushl	%esi
-	pushl	%edi
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%ecx
-	cmpl	%esi,%edi	/* potentially overlapping? */
-	jnb	1f
-	cld			/* nope, copy forwards. */
-	shrl	$2,%ecx		/* copy by words */
-	rep
-	movsl
-	movl	20(%esp),%ecx
-	andl	$3,%ecx		/* any bytes left? */
-	rep
-	movsb
-	popl	%edi
-	popl	%esi
-	xorl	%eax,%eax
-	ret
-1:
-	addl	%ecx,%edi	/* copy backwards. */
-	addl	%ecx,%esi
-	std
-	andl	$3,%ecx		/* any fractional bytes? */
-	decl	%edi
-	decl	%esi
-	rep
-	movsb
-	movl	20(%esp),%ecx	/* copy remainder by words */
-	shrl	$2,%ecx
-	subl	$3,%esi
-	subl	$3,%edi
-	rep
-	movsl
-	popl	%edi
-	popl	%esi
-	xorl	%eax,%eax
-	cld
-	ret
+#ifdef STDC
+# define _C_FUNC(x)	_ ## x
+#else
+# define _C_FUNC(x)	_/**/x
+#endif
+#define	_ASM_FUNC(x)	x
+
+#define _ENTRY(x)	.globl x; x:
+
+#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
+#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
+			_END_ENTRY
+#define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
+
+#define	ASMSTR		.asciz
+
+#endif /* !_SYS_ASM_H_ */

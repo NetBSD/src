@@ -38,7 +38,7 @@
 	.asciz "@(#)modf.s	5.5 (Berkeley) 3/18/91"
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/asm.h>
+#include "DEFS.h"
 
 /*
  * modf(value, iptr): return fractional part of value, and stores the
