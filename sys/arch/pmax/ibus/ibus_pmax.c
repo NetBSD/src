@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.10 1999/12/07 23:23:19 simonb Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.11 1999/12/08 00:04:11 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.10 1999/12/07 23:23:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.11 1999/12/08 00:04:11 simonb Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.10 1999/12/07 23:23:19 simonb Exp $"
 #include <pmax/ibus/ibusvar.h>
 #include <machine/autoconf.h>
 #include <pmax/pmax/kn01.h>
+#include <pmax/pmax/kn230.h>
 #include <pmax/pmax/pmaxtype.h>
 
 
@@ -71,7 +72,7 @@ const int ibus_pmax_ndevs = sizeof(ibus_pmax_devs) / sizeof(ibus_pmax_devs[0]);
 
 #ifdef DEC_5100
 struct ibus_attach_args ibus_mipsmate_devs[] = {
-	{ "dc",		1,	KV(KN230_SYS_DZ),		0	},
+	{ "dc",		1,	KV(KN230_SYS_DZ0),		0	},
 	{ "lance",	2,	KV(KN230_SYS_LANCE),		0	},
 	{ "sii",	3,	KV(KN230_SYS_SII),		0	},
 	{ "mc146818",	4,	KV(KN230_SYS_CLOCK),		0	},
