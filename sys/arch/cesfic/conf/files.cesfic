@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.10 2002/11/03 02:29:39 chs Exp $
+#	$NetBSD: files.cesfic,v 1.11 2002/11/05 07:41:18 chs Exp $
 #
 # cesfic-specific configuration info
 
@@ -52,12 +52,12 @@ file	arch/cesfic/cesfic/clock.c
 file	arch/cesfic/cesfic/machdep.c
 file	arch/cesfic/cesfic/isr.c
 file	arch/cesfic/cesfic/mem.c
-file	arch/cesfic/cesfic/pmap.c
 file	arch/cesfic/cesfic/pmap_bootstrap.c
 file	arch/cesfic/cesfic/trap.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
