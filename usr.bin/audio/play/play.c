@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.29 2002/01/15 08:19:38 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.30 2002/01/15 15:18:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -36,6 +36,7 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,7 @@ void usage (void);
 void play (char *);
 void play_fd (const char *, int);
 ssize_t audioctl_write_fromhdr (void *, size_t, int, size_t *);
+void cleanup (int) __attribute__((__noreturn__));
 
 audio_info_t	info;
 int	volume;
@@ -185,6 +187,10 @@ main(argc, argv)
 	if (bufsize < 32 * 1024)
 		bufsize = 32 * 1024;
 
+	signal(SIGINT, cleanup);
+	signal(SIGTERM, cleanup);
+	signal(SIGHUP, cleanup);
+
 	if (*argv)
 		do
 			play(*argv++);
@@ -192,6 +198,17 @@ main(argc, argv)
 	else
 		play_fd("standard input", STDIN_FILENO);
 
+	cleanup(0);
+}
+
+void
+cleanup(signo)
+	int signo;
+{
+
+	close(audiofd);
+	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
+	(void)ioctl(ctlfd, AUDIO_SETINFO, &info);
 	exit(exitstatus);
 }
 
