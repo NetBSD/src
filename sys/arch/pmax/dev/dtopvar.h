@@ -1,4 +1,4 @@
-/* $NetBSD: dtopvar.h,v 1.3 2000/01/09 03:55:35 simonb Exp $ */
+/* $NetBSD: dtopvar.h,v 1.4 2000/02/03 04:20:00 nisimura Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone.  All rights reserved.
@@ -42,6 +42,8 @@ void	dtopKBDPutc __P((dev_t dev, int c));
 extern void	(*dtopDivertXInput) __P((int));
 extern void	(*dtopMouseEvent) __P((void *));
 extern void	(*dtopMouseButtons) __P((void *));
+
+void dtikbd_cnattach __P((void));
 
 /*
  * Device numbers.

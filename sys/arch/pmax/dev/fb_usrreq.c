@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.19 1999/12/30 00:29:53 simonb Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.20 2000/02/03 04:20:01 nisimura Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -12,7 +12,7 @@ fbopen(dev, flag, mode, p)
 	if (minor(dev) >= fbndevs)
 	    return(ENXIO);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	if (fi->fi_open)
 		return (EBUSY);
@@ -53,7 +53,7 @@ fbclose(dev, flag, mode, p)
 	if (minor(dev) >= fbndevs)
 	    return(EBADF);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	if (!fi->fi_open)
 		return (EBADF);
@@ -97,7 +97,7 @@ fbioctl(dev, cmd, data, flag, p)
 	if (minor(dev) >= fbndevs)
 	    return(EBADF);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 	fbtty = fi->fi_glasstty;
 
 	switch (cmd) {
@@ -235,7 +235,7 @@ fbpoll(dev, events, p)
 	if (minor(dev) >= fbndevs)
 	    return(EBADF);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (fi->fi_fbu->scrInfo.qe.eHead !=
@@ -273,7 +273,7 @@ fbmmap(dev, off, prot)
 	if (minor(dev) >= fbndevs)
 	    return(-1);
 	    
-	fi = &fbdevs[minor(dev)].fd_info;
+	fi = fbdevs[minor(dev)];
 
 	len = mips_round_page(((vaddr_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.34 2000/01/10 03:24:32 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.35 2000/02/03 04:20:00 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,8 +81,6 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include "rasterconsole.h"
-
 #include "dc.h"
 #include "scc.h"
 #include "dtop.h"
@@ -119,27 +117,19 @@
 */
 #include <pmax/dev/lk201var.h>
 
+#include "fb.h"
+
+static int fbndevs;
+struct fbinfo fi_console;
+struct fbinfo *fbdevs[NFB];
+static u_int8_t cmap_bits[768];         /* colormap for console */
+
 /*
  * The "blessed" framebuffer; the fb that gets
  * the qvss-style ring buffer of mouse/kbd events, and is used
  * for glass-tty fb console output.
  */
 struct fbinfo *firstfi = NULL;
-
-/*
- * Pro-tem framebuffer pseudo-device driver
- */
-
-#include <sys/device.h>
-#include "fb.h"
-
-struct fbdev {
-	struct	fbinfo fd_info;
-	caddr_t	fd_base;
-} static fbdevs[NFB];
-
-static u_int	fbndevs;		/* number of devices */
-static u_char	cmap_bits[768];		/* colormap for console */
 
 /*
  * attach routine: required for pseudo-device
@@ -151,92 +141,52 @@ fbattach(n)
 
 }
 
-/*
- * Connect a framebuffer, described by a struct fbinfo, to the
- * raster-console pseudo-device subsystem. (This would be done
- * with BStreams, if only we had them.)
- */
 void
-fbconnect (name, info, console)
-	char *name;
-	struct fbinfo *info;
-	int console;
-{
-	char *cstr;
-	
-	/*
-	 * If this is the first frame buffer we've seen, pass it to rcons.
-	 */
-	if (console) {
-		/* Only the first fb gets 4.4bsd/pmax style event ringbuffer */
-		firstfi = info;
-#if NRASTERCONSOLE > 0
-		/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
-		rcons_connect (info);
-	} else {
-		cstr = (info == &fbdevs[0].fd_info ? " (console)" : "");
-#else
-	} else {
-		cstr = "";
-#endif  /* NRASTERCONSOLE */
-		printf(": %dx%dx%d%s", info->fi_type.fb_width, 
-		    info->fi_type.fb_height, info->fi_type.fb_depth, cstr);
-	}
-}
-
-
-/*
- * Allocate a 'struct fbinfo' for a new fb device. Return zero on success 
- * (i.e. if the device has not been configured before). Always return ptr 
- * to struct fbinfo in 'fip' for that device, unless there are more fb's
- * probed than configured.
- */
-int
-fballoc(base, fip)
-	caddr_t base;
+fbcnalloc(fip)
 	struct fbinfo **fip;
 {
-	int i;
+	struct fbinfo *fi = &fi_console;
 
-	if (base == NULL)
-		printf("fballoc: base == NULL");
-
-	for (i = 0; i < NFB; i++) {
-		/* Free entry? */
-		if (fbdevs[i].fd_base == NULL)
-			break;
-			
-		/* Already configured? */
-		if (fbdevs[i].fd_base == base) {
-			*fip = &fbdevs[i].fd_info;
-			return (-1);
-		}
-	}
-			
-	if (i == NFB) {
-		printf("fballoc: more framebuffers probed than configured!\n");
-		*fip = NULL;
-		return (-1);
-	}
-	
-	fbndevs = i + 1;
-	fbdevs[i].fd_base = base;
-	*fip = &fbdevs[i].fd_info;
-	
-	/* Console? */
-	if (i == 0)
-		(*fip)->fi_cmap_bits = cmap_bits;
-	else {
-		(*fip)->fi_cmap_bits = malloc(768, M_DEVBUF, M_NOWAIT);
-		if ((*fip)->fi_cmap_bits == NULL) {
-			printf("fballoc: no memory for cmap\n");
-			return (-1);
-		}
-	}
-		
-	return (0);
+	firstfi = fi; /* XXX */
+	fi->fi_cmap_bits = cmap_bits;
+	fbdevs[fbndevs++] = fi;
+	*fip = fi;
 }
 
+int
+fballoc(fip)
+	struct fbinfo **fip;
+{
+	struct fbinfo *fi;
+
+	if (fbndevs >= NFB)
+	return (-1);
+	fi = malloc(sizeof(struct fbinfo), M_DEVBUF, M_NOWAIT);
+	if (fi == NULL)
+	goto nomemory;
+	fi->fi_cmap_bits = malloc(768, M_DEVBUF, M_NOWAIT);
+	if (fi->fi_cmap_bits == NULL) {
+		free(fi, M_DEVBUF);
+		goto nomemory;
+	}
+	if (fbndevs == 0)               /* XXX */
+		firstfi = fi;           /* XXX */
+	*fip = fbdevs[fbndevs++] = fi;
+	return (0);
+
+	nomemory:
+	return (-1);
+}
+
+void
+fbconnect(fi)
+	struct fbinfo *fi;
+{
+	if (&fi_console == fi)
+		rcons_connect(fi);
+}
+
+cdev_decl(fb);                /* generic framebuffer pseudo-device */
 
 #include "fb_usrreq.c"	/* old pm-compatible driver that supports X11R5/R6 */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.78 2000/01/09 15:08:42 ad Exp $
+#	$NetBSD: files.pmax,v 1.79 2000/02/03 04:20:05 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -163,10 +163,9 @@ include "dev/rasops/files.rasops"
 
 # 3100 (pmax) onboard framebuffer
 device pm: rasops1, rasops8
+attach pm at ibus with pm_ds
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
-attach pm at ibus with pm_ds
-file	arch/pmax/dev/pm_ds.c		pm_ds
 
 
 #########################################################################
@@ -220,7 +219,6 @@ file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
 file	arch/pmax/stand/common/callvec.c
 file	dev/cons.c
-file	arch/pmax/dev/findcons.c	# find and set up console.
 #file	arch/pmax/pmax/kadb.c		# obsolute kadb
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
