@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.4 2000/02/13 06:17:58 itojun Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.5 2000/02/27 23:10:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wivar.h,v 1.4 2000/02/13 06:17:58 itojun Exp $
+ *	$Id: if_wivar.h,v 1.5 2000/02/27 23:10:51 enami Exp $
  */
 
 
@@ -47,6 +47,7 @@ struct wi_softc	{
 	struct pcmcia_function *sc_pf;
 	struct pcmcia_io_handle sc_pcioh;
 	int sc_iowin;
+	int sc_enabled;
 
 	bus_space_tag_t		wi_btag;
 	bus_space_handle_t	wi_bhandle;
@@ -58,7 +59,6 @@ struct wi_softc	{
 	struct ifmedia		ifmedia;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
-	int			wi_gone;
 	int			wi_if_flags;
 	u_int16_t		wi_ptype;
 	u_int16_t		wi_portnum;
