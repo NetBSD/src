@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.163 2000/02/19 05:36:23 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.164 2000/04/24 14:22:05 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -44,21 +44,21 @@ checkver:
 # Set PICFLAGS to cc flags for producing position-independent code,
 # if not already set.  Includes -DPIC, if required.
 
-# Data-driven table using make variables to control  how shared libraries
+# Data-driven table using make variables to control how shared libraries
 # are built for different platforms and object formats.
 # OBJECT_FMT:		currently either "ELF" or "a.out", from <bsd.own.mk>
-# SHLIB_SOVERSION:  	version number to be compiled into a shared library
-#                    	via -soname. Usualy ${SHLIB_MAJOR} on ELF.
-#   			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
-# SHLIB_SHFLAGS:	Flags to tell ${LD} to emit  shared library.
+# SHLIB_SOVERSION:	version number to be compiled into a shared library
+#			via -soname. Usualy ${SHLIB_MAJOR} on ELF.
+#			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
+# SHLIB_SHFLAGS:	Flags to tell ${LD} to emit shared library.
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
-# CPPICFLAGS:	flags for ${CPP} to preprocess  .[sS]  files for ${AS}
-# CPICFLAGS:	flags for ${CC} to compile  .[cC] files to .so objects.
-# CAPICFLAGS	flags for {$CC} to compiling .[Ss] files
+# CPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
+# CPICFLAGS:		flags for ${CC} to compile .[cC] files to .so objects.
+# CAPICFLAGS		flags for {$CC} to compiling .[Ss] files
 #		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
-# APICFLAGS:	flags for ${AS} to assemble .[sS]  to .so objects.
+# APICFLAGS:		flags for ${AS} to assemble .[sS] to .so objects.
 
 .if ${MACHINE_ARCH} == "alpha"
 		# Alpha-specific shared library flags
