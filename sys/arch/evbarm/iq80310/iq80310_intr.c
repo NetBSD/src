@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.12 2002/04/14 21:32:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.12.4.1 2002/11/18 02:02:12 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -305,13 +305,10 @@ iq80310_do_soft(void)
 int
 _splraise(int ipl)
 {
-	int old, oldirqstate;
+	int old;
 
-	oldirqstate = disable_interrupts(I32_bit);
 	old = current_spl_level;
 	current_spl_level |= imask[ipl];
-
-	restore_interrupts(oldirqstate);
 
 	return (old);
 }
