@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 1995/01/16 04:31:30 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 1995/01/18 17:16:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -231,7 +231,8 @@ trap(type, code, v, frame)
 		type &= ~T_USER;
 		printf("trap type=%d, code=0x%x, v=0x%x\n", type, code, v);
 #ifdef	DDB
-		kdb_trap(type, &frame);
+		if (kdb_trap(type, &frame))
+			return;
 #endif
 		regdump(&frame, 128);
 		if ((u_int)type < trap_types)
@@ -304,9 +305,9 @@ trap(type, code, v, frame)
 		 * The user has most likely trashed the RTE or FP state info
 		 * in the stack frame of a signal handler.
 		 */
-		type |= T_USER;
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
+		type |= T_USER;
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
 		/* temporary use of sig as mask */
 		sig = sigmask(SIGILL);
