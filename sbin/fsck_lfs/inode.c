@@ -1,4 +1,4 @@
-/*	$Id: inode.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
+/*	$NetBSD: inode.c,v 1.3 1999/07/03 19:55:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998

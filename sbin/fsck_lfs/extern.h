@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
