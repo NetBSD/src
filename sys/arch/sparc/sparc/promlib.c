@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.32 2004/03/22 12:37:43 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.33 2004/03/23 11:40:29 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.32 2004/03/22 12:37:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.33 2004/03/23 11:40:29 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -1093,6 +1093,7 @@ read_idprom:
 	memcpy(cp, idp->id_ether, 6);
 }
 
+#ifndef _LP64
 /*
  * The integer property "get-unum" on the root device is the address
  * of a callable function in the PROM that takes a physical address
@@ -1129,6 +1130,7 @@ static	char *(*unum)(u_int,u_int);
 
 	return (str);
 }
+#endif
 
 static void prom_init_oldmon(void);
 static void prom_init_obp(void);
