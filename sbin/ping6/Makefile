@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2000/10/07 06:36:50 itojun Exp $
+# $NetBSD: Makefile,v 1.7 2002/05/26 13:01:21 itojun Exp $
 
 PROG=	ping6
 MAN=	ping6.8
@@ -11,8 +11,5 @@ CPPFLAGS+=-DIPSEC
 
 LDADD+=	-lipsec -lm
 DPADD+=	${LIBIPSEC} ${LIBM}
-
-# KAME scope id hack
-CPPFLAGS+=-DKAME_SCOPEID
 
 .include <bsd.prog.mk>
