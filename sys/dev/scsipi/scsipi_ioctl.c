@@ -17,8 +17,8 @@
 #include <scsi/scsiconf.h>
 #include <sys/scsiio.h>
 
-#define	b_screq av_forw		/* XXX */
-#define	b_sc_link av_back	/* XXX */
+#define	b_screq b_driver1	/* XXX */
+#define	b_sc_link b_driver2	/* XXX */
 
 /*
  * We let the user interpret his own sense in the generic scsi world.
