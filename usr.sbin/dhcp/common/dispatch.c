@@ -42,11 +42,14 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.11 1999/03/29 23:00:51 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.2 1999/08/24 03:25:32 enami Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <sys/ioctl.h>
+#ifdef USE_POLL
+#include <poll.h>
+#endif
 
 struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
 struct protocol *protocols;
@@ -530,7 +533,8 @@ void reinitialize_interfaces ()
    addressing information from it, and then call through the
    bootp_packet_handler hook to try to do something with it. */
 
-void dispatch ()
+void dispatch (error_handler)
+	int (*error_handler) PROTO((void));
 {
 	struct protocol *l;
 	int nfds = 0;
@@ -538,6 +542,7 @@ void dispatch ()
 	int count;
 	int i;
 	int to_msec;
+	int saved_errno;
 
 	nfds = 0;
 	for (l = protocols; l; l = l -> next) {
@@ -593,10 +598,12 @@ void dispatch ()
 
 		/* Not likely to be transitory... */
 		if (count < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
-			else
+			saved_errno = errno;
+			if (error_handler == NULL || (*error_handler) ()) {
+				errno = saved_errno;
 				error ("poll: %m");
+			} else
+				continue;
 		}
 
 		i = 0;
@@ -619,12 +626,14 @@ void dispatch ()
    addressing information from it, and then call through the
    bootp_packet_handler hook to try to do something with it. */
 
-void dispatch ()
+void dispatch (error_handler)
+	int (*error_handler) PROTO((void));
 {
 	fd_set r, w, x;
 	struct protocol *l;
 	int max = 0;
 	int count;
+	int saved_errno;
 	struct timeval tv, *tvp;
 
 	FD_ZERO (&w);
@@ -667,8 +676,14 @@ void dispatch ()
 		GET_TIME (&cur_time);
 
 		/* Not likely to be transitory... */
-		if (count < 0)
-			error ("select: %m");
+		if (count < 0) {
+			saved_errno = errno;
+			if (error_handler == NULL || (*error_handler) ()) {
+				errno = saved_errno;
+				error ("select: %m");
+			} else
+				continue;
+		}
 
 		for (l = protocols; l; l = l -> next) {
 			if (!FD_ISSET (l -> fd, &r))

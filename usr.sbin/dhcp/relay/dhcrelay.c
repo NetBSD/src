@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright [] =
-"$Id: dhcrelay.c,v 1.1.1.14 1999/04/26 15:43:10 mellon Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.2 1999/08/24 03:25:32 enami Exp $ Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -248,7 +248,7 @@ int main (argc, argv, envp)
 	}
 
 	/* Start dispatching packets and timeouts... */
-	dispatch ();
+	dispatch (NULL);
 
 	/*NOTREACHED*/
 	return 0;
