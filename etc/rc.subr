@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.47 2002/03/27 08:53:42 lukem Exp $
+# $NetBSD: rc.subr,v 1.48 2002/04/18 07:18:05 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -248,8 +248,8 @@ wait_for_pids()
 #	If argument has a given prefix, then change the operation as follows:
 #		Prefix	Operation
 #		------	---------
-#		fast	Skip the pid check, and set rc_fast=YES
-#		force	Set ${rcvar} to YES, and set rc_force=YES.
+#		fast	Skip the pid check, and set rc_fast=yes
+#		force	Set ${rcvar} to YES, and set rc_force=yes
 #
 #	The following globals are used:
 #
@@ -384,11 +384,11 @@ run_rc_command()
 	case "$rc_arg" in
 	fast*)				# "fast" prefix; don't check pid
 		rc_arg=${rc_arg#fast}
-		rc_fast=YES
+		rc_fast=yes
 		;;
 	force*)				# "force prefix; always start
 		rc_arg=${rc_arg#force}
-		rc_force=YES
+		rc_force=yes
 		if [ -n "${rcvar}" ]; then
 			eval ${rcvar}=YES
 		fi
