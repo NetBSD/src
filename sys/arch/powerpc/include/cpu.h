@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2002/03/03 07:09:09 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2002/03/06 06:37:17 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -45,10 +45,9 @@
 #include <machine/psl.h>
 #include <machine/intr.h>
 
-#include <dev/sysmon/sysmonvar.h>
-
 #ifdef _KERNEL
 #include <sys/sched.h>
+#include <dev/sysmon/sysmonvar.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
