@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.2 1993/08/02 17:51:04 mycroft Exp $";
+static char rcsid[] = "$Id: fdisk.c,v 1.3 1993/12/06 09:32:37 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -159,7 +159,7 @@ struct part_type
 	,{0x82, "Linux"}   
 	,{0x93, "Amoeba filesystem"} 
 	,{0x94, "Amoeba bad block table"} 
-	,{0xA5, "386BSD"} 
+	,{0xA5, "NetBSD"} 
 	,{0xB7, "BSDI BSD/386 filesystem"} 
 	,{0xB8, "BSDI BSD/386 swap"} 
 	,{0xDB, "Concurrent CPM or C.DOS or CTOS"}  
