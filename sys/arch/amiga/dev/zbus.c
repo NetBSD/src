@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.32 1997/03/05 22:41:03 veego Exp $	*/
+/*	$NetBSD: zbus.c,v 1.33 1997/03/27 23:50:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -105,7 +105,7 @@ static struct aconfdata aconftab[] = {
 	/* ASDG */
 	{ "ed",		1023,	254 },
 	/* Village Tronic Ariadne */
-	{ "ae",		2167,	201},
+	{ "le",		2167,	201},
 	/* bsc/Alf Data */
 	{ "Tandem", 2092,    6 },	/* Tandem AT disk controler */
 	{ "mfc",	2092,	16 },
