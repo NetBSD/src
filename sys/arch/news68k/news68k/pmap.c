@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2000/06/26 14:20:51 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2000/06/29 08:02:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -138,8 +138,6 @@
 #include <sys/pool.h>
 
 #include <machine/pte.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

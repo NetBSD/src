@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 1999/12/09 14:53:18 tsutsui Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 2000/06/29 08:02:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -44,7 +44,7 @@
 #include <sys/trace.h>
 #include <sys/mount.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 

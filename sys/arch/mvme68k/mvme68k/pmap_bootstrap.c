@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.13 2000/03/18 22:33:07 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.14 2000/06/29 08:04:04 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -49,7 +49,7 @@
 
 #include <mvme68k/mvme68k/seglist.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 

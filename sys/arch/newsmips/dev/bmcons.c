@@ -1,4 +1,4 @@
-/*	$NetBSD: bmcons.c,v 1.6 2000/03/23 06:42:12 thorpej Exp $	*/
+/*	$NetBSD: bmcons.c,v 1.7 2000/06/29 07:59:30 mrg Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,8 @@
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
