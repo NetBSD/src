@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.8 2002/03/24 14:56:01 bjh21 Exp $	*/
+/*	$NetBSD: oak.c,v 1.9 2002/05/22 22:43:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.8 2002/03/24 14:56:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.9 2002/05/22 22:43:14 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -124,7 +124,7 @@ oak_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
-	if (matchpodule(pa, MANUFACTURER_OAK, PODULE_OAK_SCSI, -1))
+	if (pa->pa_product == PODULE_OAK_SCSI)
 		return 1;
 
 	/* PowerROM */
