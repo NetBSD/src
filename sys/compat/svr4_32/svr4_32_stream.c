@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.3 2001/06/08 12:50:12 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1568,7 +1568,7 @@ svr4_32_sys_putmsg(p, v, retval)
 				 * Hmm, expedited data seems to be sc.cmd = 4.
 				 * I think 3 is normal data. (christos)
 				 */
-				DPRINTF(("sending expedited data (???)\n"));
+				DPRINTF(("sending expedited data (?)\n"));
 				SCARG(&wa, fd) = SCARG(uap, fd);
 				SCARG(&wa, buf) = dat.buf;
 				SCARG(&wa, nbyte) = dat.len;
