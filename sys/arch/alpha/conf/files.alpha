@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.55 1997/09/02 14:06:02 thorpej Exp $
+# $NetBSD: files.alpha,v 1.56 1997/09/02 19:16:32 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -248,7 +248,6 @@ file	arch/alpha/pci/cia_dma.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
 file	arch/alpha/pci/cia_swiz_bus_io.c cia
 file	arch/alpha/pci/cia_swiz_bus_mem.c cia
-file	arch/alpha/pci/cia_swiz_pci.c	cia
 
 device	dwlpx:	pcibus, alpha_sgmap, alpha_pci_sgmap_pte32
 attach	dwlpx at kft
