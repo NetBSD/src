@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.23 2003/06/16 13:42:18 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.24 2003/06/16 13:45:06 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -365,3 +365,9 @@ lib/libkvm/kvm.c				1.65.4.2
 	Set the close-on-exec bit on all file descriptors we open. Inspired
 	by a FreeBSD security advisory.
 	[david, ticket #1255]
+
+sys/dev/pci/if_wm.c				1.36
+
+	Pullup short mbuf in wm_tx_cksum() instead of dropping it which fixes
+	PR kern/21190 by myself. Jason R. Thorpe code reviewed the changes.
+	[tron, ticket #1256]
