@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.69 2003/01/17 08:11:57 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.69 2003/01/17 08:11:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2048,14 +2048,12 @@ ipsec4_encapsulate(m, sav)
 		n->m_len = hlen;
 		n->m_next = m->m_next;
 		m->m_next = n;
-		m->m_pkthdr.len += hlen;
-		oip = mtod(n, struct ip *);
 	} else {
 		m->m_next->m_len += hlen;
 		m->m_next->m_data -= hlen;
-		m->m_pkthdr.len += hlen;
-		oip = mtod(m->m_next, struct ip *);
 	}
+	oip = mtod(m->m_next, struct ip *);
+	m->m_pkthdr.len += hlen;
 	ip = mtod(m, struct ip *);
 	ovbcopy((caddr_t)ip, (caddr_t)oip, hlen);
 	m->m_len = sizeof(struct ip);
