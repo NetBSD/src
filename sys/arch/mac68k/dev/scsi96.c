@@ -24,8 +24,14 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi96.c,v 1.3 1994/07/10 16:55:55 briggs Exp $
+ * $Id: scsi96.c,v 1.4 1994/07/21 01:33:29 briggs Exp $
  *
+ */
+
+/*
+ * WARNING!  This is a non-working driver at the moment!
+ *		That means it does not work!  Contact Allen Briggs
+ *		(briggs@mail.vt.edu) for current status of this driver.
  */
 
 #include <sys/types.h>
@@ -42,6 +48,7 @@
 #include "../scsi/scsiconf.h"
 
 #include <machine/scsi96reg.h>
+#include "../mac68k/via.h"
 
 /* Support for the NCR 53C96 SCSI processor--primarily for '040 Macs. */
 
@@ -190,6 +197,11 @@ ncr96attach(parent, dev, aux)
 	printf("\n");
 
 	config_found(dev, &(ncr53c96->sc_link), ncr96_print);
+
+	/*
+	 * Enable IRQ and DRQ interrupts.
+	via_reg(VIA2, vIER) = (V2IF_IRQ | V2IF_SCSIDRQ | V2IF_SCSIIRQ);
+	 */
 }
 
 static unsigned int
@@ -390,22 +402,21 @@ do_send_cmd(struct scsi_xfer *xs)
 				stat, is, intr);
 	ncr->tcreg_lsb = (xs->datalen & 0xff);
 	ncr->tcreg_msb = (xs->datalen >> 8) & 0xff;
-	ncr->cmdreg = NCR96_CMD_INFOXFER;
+	ncr->cmdreg = 0x80 | NCR96_CMD_INFOXFER;
 	printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
 	i=0;
 	while (i < xs->datalen) {
-		int cnt, stat;
+		int d, stat;
 
 		WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
 
 		stat = ncr->statreg;
 
-		if ((stat&NCR96_STAT_PHASE) == phase)
-			cnt = 18;
-		else
-			cnt = ncr->fifostatereg & NCR96_CF_MASK;
+for (d=1000000 ; d && !(via_reg(VIA2, vIFR) & 0x01);d--);
+if (d<=0) printf("read timeout.\n");
+		d = ncr->fifostatereg & NCR96_CF_MASK;
 
-		while (cnt--) {
+		while (d--) {
 			xs->data[i++] = ncr->fifo;
 			printf("0x%x,",xs->data[i-1]);
 		}
