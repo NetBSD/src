@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.20 2000/09/28 10:56:57 tsutsui Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.21 2001/02/10 17:18:02 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -18,6 +18,12 @@
 #include <sys/rnd.h>
 #endif
 
+/*
+ * We include MII glue here -- some DP8390 compatible chips have
+ * MII interfaces on them (scary, isn't it...).
+ */
+#include <dev/mii/miivar.h>
+
 #define INTERFACE_NAME_LEN	32
 
 /*
@@ -29,7 +35,8 @@ struct dp8390_softc {
 	int	sc_flags;		/* interface flags, from config */
 
 	struct ethercom sc_ec;		/* ethernet common */
-	struct ifmedia sc_media;	/* supported media information */
+	struct mii_data sc_mii;		/* MII glue */
+#define	sc_media sc_mii.mii_media	/* compatibilty definition */
 
 	bus_space_tag_t	sc_regt;	/* NIC register space tag */
 	bus_space_handle_t sc_regh;	/* NIC register space handle */
