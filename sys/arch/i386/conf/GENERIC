@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.349 2000/06/05 23:18:51 gmcgarry Exp $
+#	$NetBSD: GENERIC,v 1.350 2000/06/08 21:42:14 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.349 $"
+#ident 		"GENERIC-$Revision: 1.350 $"
 
 maxusers	32		# estimated number of users
 
@@ -396,8 +396,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-#siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI (experimental)
+#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old driver)
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
@@ -448,10 +448,10 @@ scsibus* at dpt?
 scsibus* at esp?
 scsibus* at isp?
 #scsibus* at nca?
-scsibus* at ncr?
+#scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?
-#scsibus* at siop?
+scsibus* at siop?
 scsibus* at uha?
 scsibus* at wds?
 
