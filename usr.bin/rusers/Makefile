@@ -1,11 +1,11 @@
 #
 # a makefile for /usr/bin/rusers
 #
-# $Header: /cvsroot/src/usr.bin/rusers/Makefile,v 1.2 1993/06/04 14:53:56 brezak Exp $
+# $Header: /cvsroot/src/usr.bin/rusers/Makefile,v 1.3 1993/06/08 19:22:59 brezak Exp $
 #
 
 PROG = rusers
-NOMAN=	noman
+MAN1 = rusers.0
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
