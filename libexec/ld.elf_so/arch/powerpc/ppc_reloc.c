@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.28 2002/09/25 21:11:18 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.29 2002/09/26 02:52:05 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -245,6 +245,8 @@ _rtld_bind(obj, reloff)
 
 	value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	distance = value - (Elf_Addr)where;
+	rdbg(("bind now/fixup in %s --> new=%p", 
+	    defobj->strtab + def->st_name, (void *)value));
 
 	if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
 		/* b	value	# branch directly */
