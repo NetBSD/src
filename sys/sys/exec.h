@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.60 1996/10/08 13:10:29 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.61 1996/12/22 10:19:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -112,7 +112,7 @@ struct exec_vmcmd_set {
 #define	EXEC_DEFAULT_VMCMD_SETSIZE	5	/* # of cmds in set to start */
 
 struct exec_package {
-	char	*ep_name;		/* file's name */
+	const char *ep_name;		/* file's name */
 	void	*ep_hdr;		/* file's exec header */
 	u_int	ep_hdrlen;		/* length of ep_hdr */
 	u_int	ep_hdrvalid;		/* bytes of ep_hdr that are valid */
