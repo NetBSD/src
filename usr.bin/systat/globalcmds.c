@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.7 2000/01/08 23:34:17 itojun Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.8 2000/07/05 11:03:21 ad Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -32,6 +32,11 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: globalcmds.c,v 1.8 2000/07/05 11:03:21 ad Exp $");
+#endif /* not lint */
+
 #include <curses.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,13 +44,10 @@
 #include "systat.h"
 #include "extern.h"
 
-
-static char *shortname __P((const char *, const char *));
+static char *shortname(const char *, const char *);
 
 static char *
-shortname(key, s)
-	const char *key;
-	const char *s;
+shortname(const char *key, const char *s)
 {
 	char *p, *q;
 	size_t l;
@@ -67,8 +69,7 @@ shortname(key, s)
 }
 
 void
-global_help(args)
-	char *args;
+global_help(char *args)
 {
 	int col, len;
 	struct mode *p;
@@ -111,8 +112,7 @@ global_help(args)
 }
 
 void
-global_interval(args)
-	char *args;
+global_interval(char *args)
 {
 	int interval;
 
@@ -135,8 +135,7 @@ global_interval(args)
 
 
 void
-global_load(args)
-	char *args;
+global_load(char *args)
 {
 	(void)getloadavg(avenrun, sizeof(avenrun)/sizeof(avenrun[0]));
 	mvprintw(CMDLINE, 0, "%4.1f %4.1f %4.1f",
@@ -145,15 +144,13 @@ global_load(args)
 }
 
 void
-global_quit(args)
-	char *args;
+global_quit(char *args)
 {
 	die(0);
 }
 
 void
-global_stop(args)
-	char *args;
+global_stop(char *args)
 {
 	alarm(0);
 	mvaddstr(CMDLINE, 0, "Refresh disabled.");

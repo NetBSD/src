@@ -1,4 +1,4 @@
-/*	$NetBSD: systat.h,v 1.6 1999/12/20 03:45:03 jwise Exp $	*/
+
 
 /*-
  * Copyright (c) 1980, 1989, 1992, 1993
@@ -39,19 +39,19 @@
 
 struct  mode {
         char    *c_name;			/* command name */
-        void    (*c_refresh) __P((void));	/* display refresh */
-        void    (*c_fetch) __P((void));		/* sets up data structures */
-        void    (*c_label) __P((void));		/* label display */
-	int	(*c_init) __P((void));		/* initialize namelist, etc. */
-	WINDOW	*(*c_open) __P((void));		/* open display */
-	void	(*c_close) __P((WINDOW *));	/* close display */
+        void    (*c_refresh)(void);		/* display refresh */
+        void    (*c_fetch)(void);		/* sets up data structures */
+        void    (*c_label)(void);		/* label display */
+	int	(*c_init)(void);		/* initialize namelist, etc. */
+	WINDOW	*(*c_open)(void);		/* open display */
+	void	(*c_close)(WINDOW *);		/* close display */
 	struct	command *c_commands;		/* commands for mode */
 	char	c_flags;			/* see below */
 };
 
 struct	command {
 	char	*c_name;
-	void	(*c_cmd) __P((char *args));
+	void	(*c_cmd)(char *args);
 	char	*helptext;
 };
 
@@ -67,5 +67,5 @@ struct	command {
 #define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
 #define LONG	(sizeof (long))
 
-void dkreadstats __P((void));	/* XXX: from ../vmstat/dkstats.c */
-void dkswap __P((void));	/* XXX: from ../vmstat/dkstats.c */
+void dkreadstats(void);	/* XXX: from ../vmstat/dkstats.c */
+void dkswap(void);	/* XXX: from ../vmstat/dkstats.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.15 2000/04/11 01:18:35 jwise Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.16 2000/07/05 11:03:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.15 2000/04/11 01:18:35 jwise Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.16 2000/07/05 11:03:21 ad Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -59,6 +59,14 @@ struct	command global_commands[] = {
 	{ 0 }
 };
 
+struct command	icmp_commands[] = {
+	{ "boot",	icmp_boot,	"show total stats since boot"},
+	{ "run",	icmp_run,	"show running total stats"},
+	{ "time",	icmp_time,	"show stats for each sample time"},
+	{ "zero",	icmp_zero,	"re-zero running totals"},
+	{ 0 }
+};
+
 struct command	iostat_commands[] = {
 	{ "bars",	iostat_bars,	"show io stats as a bar graph"},
 	{ "numbers",	iostat_numbers,	"show io stats numerically"},
@@ -71,6 +79,34 @@ struct command	iostat_commands[] = {
 	{ "drives",	disks_drives,	"list all disks"},
 	{ 0 }
 };
+
+struct command	ip_commands[] = {
+	{ "boot",	ip_boot,	"show total stats since boot"},
+	{ "run",	ip_run,		"show running total stats"},
+	{ "time",	ip_time,	"show stats for each sample time"},
+	{ "zero",	ip_zero,	"re-zero running totals"},
+	{ 0 }
+};
+
+#ifdef INET6
+struct command	ip6_commands[] = {
+	{ "boot",	ip6_boot,	"show total stats since boot"},
+	{ "run",	ip6_run,	"show running total stats"},
+	{ "time",	ip6_time,	"show stats for each sample time"},
+	{ "zero",	ip6_zero,	"re-zero running totals"},
+	{ 0 }
+};
+#endif
+
+#ifdef IPSEC
+struct command	ipsec_commands[] = {
+	{ "boot",	ipsec_boot,	"show total stats since boot"},
+	{ "run",	ipsec_run,	"show running total stats"},
+	{ "time",	ipsec_time,	"show stats for each sample time"},
+	{ "zero",	ipsec_zero,	"re-zero running totals"},
+	{ NULL,		NULL,		NULL },
+};
+#endif
 
 struct command netstat_commands[] = {
 	{ "all",	netstat_all,	 "include server sockets"},
@@ -88,6 +124,14 @@ struct command netstat_commands[] = {
 struct command ps_commands[] = {
 	{ "user",	ps_user,	"limit displayed processes to a user"},
 	{ 0 }
+};
+
+struct command	tcp_commands[] = {
+	{ "boot",	tcp_boot,	"show total stats since boot"},
+	{ "run",	tcp_run,	"show running total stats"},
+	{ "time",	tcp_time,	"show stats for each sample time"},
+	{ "zero",	tcp_zero,	"re-zero running totals"},
+	{ NULL,		NULL,		NULL },
 };
 
 struct command	vmstat_commands[] = {
@@ -113,25 +157,25 @@ struct mode modes[] = {
 	  initbufcache,	openbufcache,	closebufcache,	0,
 	  CF_LOADAV },
 	{ "inet.icmp",	showicmp,	fetchicmp,	labelicmp,
-	  initicmp,	openicmp,	closeicmp,	0,
+	  initicmp,	openicmp,	closeicmp,	icmp_commands,
 	  CF_LOADAV },
 	{ "inet.ip",	showip,		fetchip,	labelip,
-	  initip,	openip,		closeip,	0,
+	  initip,	openip,		closeip,	ip_commands,
 	  CF_LOADAV },
 	{ "inet.tcp",	showtcp,	fetchtcp,	labeltcp,
-	  inittcp,	opentcp,	closetcp,	0,
+	  inittcp,	opentcp,	closetcp,	tcp_commands,
 	  CF_LOADAV },
 	{ "inet.tcpsyn",showtcpsyn,	fetchtcp,	labeltcpsyn,
-	  inittcp,	opentcp,	closetcp,	0,
+	  inittcp,	opentcp,	closetcp,	tcp_commands,
 	  CF_LOADAV },
 #ifdef INET6
 	{ "inet6.ip6",	showip6,	fetchip6,	labelip6,
-	  initip6,	openip6,	closeip6,	0,
+	  initip6,	openip6,	closeip6,	ip6_commands,
 	  CF_LOADAV },
 #endif
 #ifdef IPSEC
 	{ "ipsec",	showipsec,	fetchipsec,	labelipsec,
-	  initipsec,	openipsec,	closeipsec,	0,
+	  initipsec,	openipsec,	closeipsec,	ipsec_commands,
 	  CF_LOADAV },
 #endif
 	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
@@ -149,8 +193,8 @@ struct mode modes[] = {
 	{ "swap",	showswap,	fetchswap,	labelswap,
 	  initswap,	openswap,	closeswap,	0,
 	  CF_LOADAV },
-	{ "vmstat",	showkre,	fetchkre,	labelkre,
-	  initkre,	openkre,	closekre,	vmstat_commands,
+	{ "vmstat",	showvmstat,	fetchvmstat,	labelvmstat,
+	  initvmstat,	openvmstat,	closevmstat,	vmstat_commands,
 	  0 },
 	{ 0 }
 };

@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.15 2000/06/04 01:53:51 perry Exp $  */
+/*      $NetBSD: ps.c,v 1.16 2000/07/05 11:03:23 ad Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.15 2000/06/04 01:53:51 perry Exp $");
+__RCSID("$NetBSD: ps.c,v 1.16 2000/07/05 11:03:23 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,15 +69,15 @@ __RCSID("$NetBSD: ps.c,v 1.15 2000/06/04 01:53:51 perry Exp $");
 #include "systat.h"
 #include "ps.h"
 
-int compare_pctcpu_noidle __P((const void *, const void *));
-char *state2str __P((struct kinfo_proc *));
-char *tty2str __P((struct kinfo_proc *));
-int rss2int __P((struct kinfo_proc *));
-int vsz2int __P((struct kinfo_proc *));
-char *comm2str __P((struct kinfo_proc *));
-double pmem2float __P((struct kinfo_proc *));
-char *start2str __P((struct kinfo_proc *));
-char *time2str __P((struct kinfo_proc *));
+int compare_pctcpu_noidle(const void *, const void *);
+char *state2str(struct kinfo_proc *);
+char *tty2str(struct kinfo_proc *);
+int rss2int(struct kinfo_proc *);
+int vsz2int(struct kinfo_proc *);
+char *comm2str(struct kinfo_proc *);
+double pmem2float(struct kinfo_proc *);
+char *start2str(struct kinfo_proc *);
+char *time2str(struct kinfo_proc *);
 
 static time_t now;
 
@@ -89,13 +89,13 @@ static uid_t showuser = SHOWUSER_ANY;
 #endif
 
 void
-labelps ()
+labelps(void)
 {
 	mvwaddstr(wnd, 0, 0, "USER      PID %CPU %MEM    VSZ   RSS TT  STAT STARTED       TIME COMMAND");
 }
 
 void
-showps ()
+showps(void)
 {
 	int i, k, y, vsz, rss;
 	const char *user, *comm, *state, *tty, *start, *time;
@@ -143,8 +143,7 @@ showps ()
 }
 
 int
-compare_pctcpu_noidle (a, b)
-	const void *a, *b;
+compare_pctcpu_noidle(const void *a, const void *b)
 {
 	if (((struct p_times *) a)->pt_kp == NULL)
 		return 1;
@@ -158,8 +157,7 @@ compare_pctcpu_noidle (a, b)
 
 /* from here down adapted from .../src/usr.bin/ps/print.c .  Any mistakes are my own, however. */
 char *
-state2str(kp)
-	struct kinfo_proc *kp;
+state2str(struct kinfo_proc *kp)
 {       
 	struct proc *p;
 	struct eproc *e;
@@ -229,8 +227,7 @@ state2str(kp)
 }
 
 char *
-tty2str(kp)
-	struct kinfo_proc *kp;
+tty2str(struct kinfo_proc *kp)
 {
 	static char ttystr[4];
 	char *ttyname;
@@ -253,8 +250,7 @@ tty2str(kp)
 #define pgtok(a)	(((a)*getpagesize())/1024)
 
 int
-vsz2int(kp)
-	struct kinfo_proc *kp;
+vsz2int(struct kinfo_proc *kp)
 {
 	struct eproc *e;
 	int     i;
@@ -266,8 +262,7 @@ vsz2int(kp)
 } 
 
 int
-rss2int(kp)
-	struct kinfo_proc *kp;
+rss2int(struct kinfo_proc *kp)
 {
 	struct eproc *e;
 	int	i;
@@ -280,8 +275,7 @@ rss2int(kp)
 }
 
 char *
-comm2str(kp)
-	struct kinfo_proc *kp;
+comm2str(struct kinfo_proc *kp)
 {
 	char **argv, **pt;
 	static char commstr[41];
@@ -308,8 +302,7 @@ comm2str(kp)
 }
 
 double
-pmem2float(kp)
-	struct kinfo_proc *kp;
+pmem2float(struct kinfo_proc *kp)
 {	                       
 	struct proc *p;
 	struct eproc *e; 
@@ -329,8 +322,7 @@ pmem2float(kp)
 }
 
 char *
-start2str(kp)
-	struct kinfo_proc *kp; 
+start2str(struct kinfo_proc *kp)
 {
 	struct proc *p;
 	struct pstats pstats;
@@ -363,8 +355,7 @@ start2str(kp)
 }
 
 char *    
-time2str(kp)
-	struct kinfo_proc *kp;
+time2str(struct kinfo_proc *kp)
 {	       
 	long secs;
 	long psecs;     /* "parts" of a second. first micro, then centi */
@@ -403,8 +394,7 @@ time2str(kp)
 }
 
 void
-ps_user(args)
-	char *args;
+ps_user(char *args)
 {
 	uid_t uid;
 

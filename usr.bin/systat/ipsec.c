@@ -1,7 +1,7 @@
-/*	$NetBSD: ipsec.c,v 1.4 2000/06/13 13:37:13 ad Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.5 2000/07/05 11:03:22 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
+ * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ipsec.c,v 1.4 2000/06/13 13:37:13 ad Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.5 2000/07/05 11:03:22 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,16 @@ struct mystat {
 #endif
 };
 
+enum update {
+	UPDATE_TIME,
+	UPDATE_BOOT,
+	UPDATE_RUN,
+};
+
+static enum update update = UPDATE_TIME;
 static struct mystat curstat;
+static struct mystat newstat;
+static struct mystat oldstat;
 
 static struct nlist namelist[] = {
 	{ "_ipsecstat" },
@@ -80,8 +89,7 @@ openipsec(void)
 }
 
 void
-closeipsec(w)
-	WINDOW *w;
+closeipsec(WINDOW *w)
 {
 
 	if (w != NULL) {
@@ -206,13 +214,83 @@ fetchipsec(void)
 {
 
 	if (namelist[0].n_type) {
-		KREAD((void *)namelist[0].n_value, &curstat.i4,
-		    sizeof(curstat.i4));
+		KREAD((void *)namelist[0].n_value, &newstat.i4,
+		    sizeof(newstat.i4));
+
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_success);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_polvio);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_nosa);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_inval);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_badspi);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_ahreplay);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_espreplay);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_ahauthsucc);
+		ADJINETCTR(curstat, oldstat, newstat, i4.in_ahauthfail);
+		ADJINETCTR(curstat, oldstat, newstat, i4.out_success);
+		ADJINETCTR(curstat, oldstat, newstat, i4.out_polvio);
+		ADJINETCTR(curstat, oldstat, newstat, i4.out_nosa);
+		ADJINETCTR(curstat, oldstat, newstat, i4.out_inval);
+		ADJINETCTR(curstat, oldstat, newstat, i4.out_noroute);
 	}
+
 #ifdef INET6
 	if (namelist[1].n_type) {
-		KREAD((void *)namelist[1].n_value, &curstat.i6,
-		    sizeof(curstat.i6));
+		KREAD((void *)namelist[1].n_value, &newstat.i6,
+		    sizeof(newstat.i6));
+
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_success);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_polvio);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_nosa);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_inval);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_badspi);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_ahreplay);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_espreplay);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_ahauthsucc);
+		ADJINETCTR(curstat, oldstat, newstat, i6.in_ahauthfail);
+		ADJINETCTR(curstat, oldstat, newstat, i6.out_success);
+		ADJINETCTR(curstat, oldstat, newstat, i6.out_polvio);
+		ADJINETCTR(curstat, oldstat, newstat, i6.out_nosa);
+		ADJINETCTR(curstat, oldstat, newstat, i6.out_inval);
+		ADJINETCTR(curstat, oldstat, newstat, i6.out_noroute);
 	}
 #endif
+
+	if (update == UPDATE_TIME)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+}
+
+void
+ipsec_boot(char *args)
+{
+
+	memset(&oldstat, 0, sizeof(oldstat));
+	update = UPDATE_BOOT;
+}
+
+void
+ipsec_run(char *args)
+{
+
+	if (update != UPDATE_RUN) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_RUN;
+	}
+}
+
+void
+ipsec_time(char *args)
+{
+
+	if (update != UPDATE_TIME) {
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		update = UPDATE_TIME;
+	}
+}
+
+void
+ipsec_zero(char *args)
+{
+
+	if (update == UPDATE_RUN)
+		memcpy(&oldstat, &newstat, sizeof(oldstat));
 }

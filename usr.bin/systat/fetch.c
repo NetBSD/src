@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.6 2000/06/04 16:06:25 thorpej Exp $	*/
+/*	$NetBSD: fetch.c,v 1.7 2000/07/05 11:03:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fetch.c,v 1.6 2000/06/04 16:06:25 thorpej Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.7 2000/07/05 11:03:21 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,9 +49,7 @@ __RCSID("$NetBSD: fetch.c,v 1.6 2000/06/04 16:06:25 thorpej Exp $");
 #include "extern.h"
 
 ssize_t
-kvm_ckread(a, b, l)
-	void *a, *b;
-	size_t l;
+kvm_ckread(void *a, void *b, size_t l)
 {
 	if (kvm_read(kd, (u_long)a, b, l) != l) {
 		if (verbose)
@@ -62,8 +60,7 @@ kvm_ckread(a, b, l)
 }
 
 int
-fetch_cptime(cptime)
-	u_int64_t *cptime;
+fetch_cptime(u_int64_t *cptime)
 {
 	size_t ssize;
 	int mib[2];

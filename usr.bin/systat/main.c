@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2000/06/04 18:29:13 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2000/07/05 11:03:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.25 2000/06/04 18:29:13 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2000/07/05 11:03:22 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: main.c,v 1.25 2000/06/04 18:29:13 mycroft Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -85,15 +86,13 @@ int     CMDLINE;
 
 static	WINDOW *wload;			/* one line window for load average */
 
-static void usage __P((void));
-int main __P((int, char **));
+static void usage(void);
+int main(int, char **);
 
 gid_t egid; /* XXX needed by initiostat() and initkre() */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
@@ -221,7 +220,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: systat [-n] [-M core] [-N system] [-w wait] "
 		"[display] [refresh-interval]\n");
@@ -230,7 +229,7 @@ usage()
 
 
 void
-labels()
+labels(void)
 {
 	if (curmode->c_flags & CF_LOADAV) {
 		mvaddstr(2, 20,
@@ -245,8 +244,7 @@ labels()
 }
 
 void
-display(signo)
-	int signo;
+display(int signo)
 {
 	int j;
 	sigset_t set;
@@ -287,8 +285,7 @@ display(signo)
 }
 
 void
-redraw(signo)
-	int signo;
+redraw(int signo)
 {
 	sigset_t set;
 
@@ -301,8 +298,7 @@ redraw(signo)
 }
 
 void
-die(signo)
-	int signo;
+die(int signo)
 {
 	move(CMDLINE, 0);
 	clrtoeol();
@@ -311,30 +307,14 @@ die(signo)
 	exit(0);
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-#if __STDC__
 void
 error(const char *fmt, ...)
-#else
-void
-error(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char buf[255];
 	int oy, ox;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
 	if (wnd) {
 		getyx(stdscr, oy, ox);
@@ -353,8 +333,7 @@ error(fmt, va_alist)
 }
 
 void
-nlisterr(namelist)
-	struct nlist namelist[];
+nlisterr(struct nlist namelist[])
 {
 	int i, n;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.7 2000/04/27 00:30:51 jdc Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.8 2000/07/05 11:03:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.7 2000/04/27 00:30:51 jdc Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.8 2000/07/05 11:03:20 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -106,22 +106,21 @@ static void *bufaddr;
 static struct buf *buf = NULL;
 static TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
-static void	vc_init __P((void));
-static void	ml_init __P((void));
-static struct 	vnode *vc_lookup __P((struct vnode *));
-static struct 	mount *ml_lookup __P((struct mount *, int, int));
+static void	vc_init(void);
+static void	ml_init(void);
+static struct 	vnode *vc_lookup(struct vnode *);
+static struct 	mount *ml_lookup(struct mount *, int, int);
 
 
 WINDOW *
-openbufcache()
+openbufcache(void)
 {
 
 	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
 }
 
 void
-closebufcache(w)
-	WINDOW *w;
+closebufcache(WINDOW *w)
 {
 
 	if (w == NULL)
@@ -133,7 +132,7 @@ closebufcache(w)
 }
 
 void
-labelbufcache()
+labelbufcache(void)
 {
 	mvwprintw(wnd, 0, 0, "There are %d buffers using %d kBytes of memory.",
 	    nbuf, bufkb);
@@ -146,7 +145,7 @@ labelbufcache()
 }
 
 void
-showbufcache()
+showbufcache(void)
 {
 	int tbuf, i, lastrow;
 	long tvalid, tsize;
@@ -186,7 +185,7 @@ showbufcache()
 }
 
 int
-initbufcache()
+initbufcache(void)
 {
 	if (namelist[X_NBUF].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
@@ -213,7 +212,7 @@ initbufcache()
 }
 
 void
-fetchbufcache()
+fetchbufcache(void)
 {
 	int i, count;
 	struct buf *bp;
@@ -271,7 +270,7 @@ fetchbufcache()
 }
 
 static void
-vc_init()
+vc_init(void)
 {
 	int i;
 
@@ -281,7 +280,7 @@ vc_init()
 }
 
 static void
-ml_init()
+ml_init(void)
 {
 	struct ml_entry *ml;
 
@@ -294,8 +293,7 @@ ml_init()
 
 
 static struct vnode *
-vc_lookup(vaddr)
-	struct vnode *vaddr;
+vc_lookup(struct vnode *vaddr)
 {
 	struct vnode *ret;
 	int i, oldest, match;
@@ -332,9 +330,7 @@ vc_lookup(vaddr)
 }
 
 static struct mount *
-ml_lookup(maddr, size, valid)
-	struct mount *maddr;
-	int size, valid;
+ml_lookup(struct mount *maddr, int size, int valid)
 {
 	struct ml_entry *ml;
 

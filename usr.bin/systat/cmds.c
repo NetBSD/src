@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.21 2000/06/05 21:48:25 mycroft Exp $	*/
+/*	$NetBSD: cmds.c,v 1.22 2000/07/05 11:03:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.21 2000/06/05 21:48:25 mycroft Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.22 2000/07/05 11:03:20 ad Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,11 +49,10 @@ __RCSID("$NetBSD: cmds.c,v 1.21 2000/06/05 21:48:25 mycroft Exp $");
 #include "systat.h"
 #include "extern.h"
 
-void	switch_mode __P((struct mode *p));
+void	switch_mode(struct mode *p);
 
 void
-command(cmd)
-	char *cmd;
+command(char *cmd)
 {
 	struct command *c;
 	struct mode *p;
@@ -101,8 +100,7 @@ done:
 }
 
 void
-switch_mode(p)
-	struct mode *p;
+switch_mode(struct mode *p)
 {
 	int switchfail;
 
@@ -146,7 +144,7 @@ switch_mode(p)
 }
 
 void
-status()
+status(void)
 {
 	error("Showing %s, refresh every %d seconds.", curmode->c_name, naptime);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.10 2000/06/05 21:48:26 mycroft Exp $	*/
+/*	$NetBSD: disks.c,v 1.11 2000/07/05 11:03:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.10 2000/06/05 21:48:26 mycroft Exp $");
+__RCSID("$NetBSD: disks.c,v 1.11 2000/07/05 11:03:21 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,27 +51,26 @@ __RCSID("$NetBSD: disks.c,v 1.10 2000/06/05 21:48:26 mycroft Exp $");
 #include "systat.h"
 #include "extern.h"
 
-static void dkselect __P((char *args, int truefalse, int selections[]));
+static void dkselect(char *args, int truefalse, int selections[]);
 
 void
-disks_add (args)
-	char *args;
+disks_add(char *args)
 {
+
 	if (args)
 		dkselect(args, 1, dk_select);
 }
 
 void
-disks_delete (args)
-	char *args;
+disks_delete(char *args)
 {
+
 	if (args)
 		dkselect(args, 0, dk_select);
 }
 
 void
-disks_drives (args)
-	char *args;
+disks_drives(char *args)
 {
 	int i;
 
@@ -82,9 +81,7 @@ disks_drives (args)
 }
 
 static void
-dkselect(args, truefalse, selections)
-	char *args;
-	int truefalse, selections[];
+dkselect(char *args, int truefalse, int selections[])
 {
 	char *cp;
 	int i;
