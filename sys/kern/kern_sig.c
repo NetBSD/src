@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.3 2001/07/09 22:29:47 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.4 2001/07/19 16:53:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -904,10 +904,16 @@ psignal1(struct proc *p, int signum,
 				goto out;
 
 			/*
-			 * Kill signal always sets processes running.
+			 * Kill signal always sets processes running,
+			 * if possible.
 			 */
-			if (signum == SIGKILL)
-				goto runfast;
+			if (signum == SIGKILL) {
+				l = proc_unstop(p);
+				if (l)
+					goto runfast;
+				/* XXX should this be possible? */
+				goto out;
+			}
 			
 			if (prop & SA_CONT) {
 				/*
@@ -1212,7 +1218,7 @@ proc_stop(struct proc *p)
 			 * left to discover the STOP signal on their
 			 * way back to userspace, but that's harder 
 			 * with multiple LWPs. 
-			 * XXX This shou;d be okay, but.....
+			 * XXX This should be okay, but.....
 			 */
 			l->l_stat = LSSTOP;
 		} else if ((l->l_stat == LSSUSPENDED) || 
