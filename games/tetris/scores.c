@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.3 1997/01/13 06:51:57 tls Exp $	*/
+/*	$NetBSD: scores.c,v 1.4 1997/10/14 01:14:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,12 +52,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <termcap.h>
 #include <unistd.h>
-
-/*
- * XXX - need a <termcap.h>
- */
-int	tputs __P((const char *, int, int (*)(int)));
 
 #include "pathnames.h"
 #include "screen.h"
