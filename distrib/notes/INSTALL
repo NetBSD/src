@@ -20,8 +20,9 @@ about.
 NetBSD 1.2 improves upon the successful 1.1 release, and adds ...
 Significant changes include:
 
-	The integration of the DEC Alpha port has been completed.
-	Addition new ARM and x68k ports.
+	Continuing the multi-platform tradition, the integration of
+	the DEC Alpha port has been completed, and new ports to ARM
+	and x68k were added.
 
 	Sparc port supports 4m machines, Amiga port supports DraCo.
 
@@ -36,10 +37,9 @@ Significant changes include:
 	GCC, Libg++, and many other third party programs have been 
 	upgraded to more recent versions.
 
-Continuing the multi-platform tradition, NetBSD has added ports to
-atari and mvme68k based machines.  Kernel interfaces have continued to
-be refined, and now several subsystems and device drivers are shared
-among the different ports.  You can look for this trend to continue.
+Kernel interfaces have continued to be refined, and moreq subsystems
+and device drivers are shared among the different ports. You can look
+for this trend to continue.
 
 NetBSD 1.2 has significantly enhanced the binary emulation subsystem 
 (which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
