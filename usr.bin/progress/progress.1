@@ -1,0 +1,127 @@
+.\"	$NetBSD: progress.1,v 1.3.2.2 2003/01/22 03:40:34 enami Exp $
+.\"
+.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by John Hawkinson.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 21, 2003
+.Dt PROGRESS 1
+.Os
+.Sh NAME
+.Nm progress
+.Nd feed input to a command, displaying a progress bar
+.Sh SYNOPSIS
+.Nm
+.Op Fl z
+.Op Fl f Ar file
+.Op Fl l Ar length
+.Ar cmd
+.Op Ar args ...
+.Sh DESCRIPTION
+The
+.Nm
+utility opens a pipe to
+.Ar cmd
+and feeds an input stream into it, while displaying a progress bar to
+standard output.
+If no filename is specified,
+.Nm
+reads from standard input.
+Where feasible,
+.Nm
+.Xr fstat 2 Ns s
+the input to determine the length, so a time estimate can be calculated.
+.Pp
+If no length is specified or determined,
+.Nm
+simply displays a count of the data and the data rate.
+.Pp
+The options are as follows:
+.Bl -tag -width XlXlengthXX
+.It Fl f Ar file
+Read from the specified
+.Ar file
+instead of standard input.
+.It Fl l Ar length
+Use the specified length for the time estimate, rather than attempting to
+.Xr fstat 2
+the input.
+.It Fl z
+Filter the input through
+.Xr gzip 1 .
+If
+.Fl f
+is specified, calculate the length using
+.Ic gzip -l .
+.El
+.Sh EXIT STATUS
+.Nm
+exits 0 on success.
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
+.Sh EXAMPLES
+The command
+.Ic progress -zf file.tar.gz tar xf -
+will extract the
+.Pa file.tar.gz
+displaying the progress bar as time passes:
+.Bd -literal
+  0% |                                 |     0       0.00 KB/s    --:-- ETA
+ 40% |**********                       |   273 KB  271.95 KB/s    00:01 ETA
+ 81% |*************************        |   553 KB  274.61 KB/s    00:00 ETA
+100% |*********************************|   680 KB  264.59 KB/s    00:00 ETA
+.Ed
+.Pp
+If it is preferred to monitor the progress of the decompression
+process (unlikely), then
+.Ic progress -f file.tar.gz tar zxf -
+could be used.
+.\".Sh DIAGNOSTICS
+.Sh SEE ALSO
+.Xr ftp 1
+.\" .Sh STANDARDS
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 1.6.1 .
+The dynamic progress bar display code is part of
+.Xr ftp 1 .
+.Sh AUTHORS
+.Nm
+was written by
+.An John Hawkinson Aq jhawk@NetBSD.ORG .
+.Xr ftp 1 Ns 's
+dynamic progress bar was written by Luke Mewburn.
+.Sh BUGS
+Since the progress bar is displayed asynchronously, it may be
+difficult to read some error messages, both those produced by the
+pipeline, as well as those produced by
+.Nm
+itself.
+.\" .Sh SECURITY CONSIDERATIONS
