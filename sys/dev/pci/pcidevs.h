@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.56 1998/02/27 11:46:25 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.57 1998/03/04 00:10:38 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.50 1998/02/27 11:45:51 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.51 1998/03/04 00:09:11 cgd Exp 
  */
 
 /*
@@ -630,11 +630,16 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */
 
-/* CMD Technology products */
-#define	PCI_PRODUCT_CMDTECH_640A	0x0640		/* 640A */
-#define	PCI_PRODUCT_CMDTECH_642	0x0642		/* 642 */
-#define	PCI_PRODUCT_CMDTECH_646	0x0646		/* 646 */
-#define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* 650A */
+/* CMD Technology products -- info gleaned from their web site */
+#define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
+#define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 /* not on web, Mar. 3 '98 */ */
+#define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
+#define	PCI_PRODUCT_CMDTECH_646	0x0646		/* PCI0646 */
+#define	PCI_PRODUCT_CMDTECH_647	0x0647		/* PCI0647 */
+/* inclusion of 'A' in the following entry is probably wrong. */
+#define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A /* not on web, Mar. 3 '98 */ */
+#define	PCI_PRODUCT_CMDTECH_670	0x0670		/* USB0670 */
+#define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 	
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
