@@ -1,4 +1,4 @@
-# $NetBSD: SMALL,v 1.1 2003/11/18 04:03:32 chs Exp $
+# $NetBSD: SMALL,v 1.2 2004/03/12 11:44:13 jkunz Exp $
 #
 # stripped-down GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp700/conf/std.hp700"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -208,7 +208,8 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # GSC network interfaces
 #medusa* at gsc?			# FDDI
-ie*	at gsc?				# 82C5[89]6 ether
+#ie*	at gsc?				# old 82C5[89]6 Ethernet, use iee(4)
+iee*	at gsc?				# 82C596 Ethernet
 
 
 # Audio Devices
