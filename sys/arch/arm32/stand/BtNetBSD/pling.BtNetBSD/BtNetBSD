@@ -1,8 +1,8 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.2 2001/02/19 15:54:16 bjh21 Exp $
+REM $NetBSD: BtNetBSD,v 1.3 2001/03/30 23:44:58 reinoud Exp $
 REM
-REM Copyright (c) 1998, 1999, 2000 Ben Harris
-REM Copyright (c) 2000, 2001 Reinoud Zandijk
+REM Copyright (c) 2000,2001 Reinoud Zandijk
+REM ELF file reading based on work by Ben Harris
 REM All rights reserved.
 REM
 REM Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,6 @@ REM This source contains pieces of code by Ben Harris (file structure)
 REM and Mark Brinicombe (DRAM/VRAM search)
 REM
 REM Purpose : Trying to boot NetBSD/arm32 !!
-REM
 
 
 ON ERROR REPORT:PRINT " at line ";ERL: PRINT'"Press key":QQ=GET:END
@@ -99,7 +98,7 @@ lastpage%   = (top_memory% DIV nbpp%)-1
 totalpages% = lastpage% - firstpage%
 PRINT "I got a ";totalpages%;" memory pages to mess with"
 
-relocsize% = MAX_RELOCPAGES*8
+relocsize% = (MAX_RELOCPAGES+1)*12
 DIM relocinstr% relocsize%
 relocpos% = relocinstr%+4 : REM first word in number of relocations
 relocnr% = 0: relocoff% = 0
@@ -125,6 +124,9 @@ D% = L1pages_phys%
 E% = entry%
 
 IF debug% THEN
+  IF ((relocpos%-(relocinstr%+4)) MOD 12)<>0 THEN PRINT "Sanity check for relocation entries failed!"
+  PRINT"Entering kernel at 0x";~entry%
+  OSCLI("Memoryi "+STR$~(FNblock_vaddr(start_kernelpage%)+(entry% MOD nbpp%)))
   PRINT"Go for it (key)":qq=GET
 ELSE
   PRINT ''"Press ESC to abort loader"
@@ -166,14 +168,181 @@ DEF PROCload_kernel(file$)
     DIM magic% 3
   SYS "OS_GBPB", 3, file%, magic%, 4, 0
   IF magic%?0 = 127 AND magic%?1 = ASC("E") AND magic%?2 = ASC("L") AND magic%?3 = ASC("F") THEN
-    ERROR EXT 0, "I'm sorry ... I cant load ELF kernels as yet ... try later :)"
-    REM PROCload_kernel_elf(file%)
+    PROCload_kernel_elf(file%)
   ELSE
     PROCload_kernel_aout(file%)
   ENDIF
   CLOSE#file%
 ENDPROC
 
+
+
+REM *****************************************************************************
+REM * ELF LOADER                                                                *
+REM *****************************************************************************
+
+
+DEF PROCload_kernel_elf(file%)
+  REM read header
+  DIM hdr% 52
+  SYS "OS_GBPB", 3, file%, hdr%, 52, 0
+  
+  REM check if its a correct kernel to load
+  IF hdr%?4 <> 1 THEN ERROR 1, "Not a 32-bit ELF file"
+  IF hdr%?5 <> 1 THEN ERROR 1, "Not an LSB ELF file"
+  IF hdr%?6 <> 1 THEN ERROR 1, "Not a version-1 ELF file"
+  REM hdr%?7 is EI_OSABI.  Should it be 255 (ELFOSABI_STANDALONE)?
+  IF (hdr%!16 AND &FFFF) <> 2 THEN ERROR 1, "Not an executable ELF file"
+  IF (hdr%!18 AND &FFFF) <> 40 THEN ERROR 1, "Not an ARM ELF file"
+
+  PRINT "(ELF) ";
+  REM read kernel characteristics and headers
+  entry% = hdr%!24
+  phoff% = hdr%!28
+  shoff% = hdr%!32
+  phentsize% = hdr%!42 AND &FFFF
+  phnum% = hdr%!44 AND &FFFF
+  shentsize% = hdr%!46 AND &FFFF
+  shnum% = hdr%!48 AND &FFFF
+  DIM phdrs% phnum% * phentsize% - 1  : REM array with headers ?
+  SYS "OS_GBPB", 3, file%, phdrs%, phnum% * phentsize%, phoff%
+  IF phnum% = 0 THEN ERROR 1, "No program headers"
+
+  REM start loading !
+  freepagesbase% = first_mapped_DRAM_index% : REM == first virt address in DRAM0a
+  start_kernelpage% = freepagesbase%
+  pv_offset% = KERNEL_BASE - DRAM_addr%(0) : REM XXX hardcoded
+  
+  REM load the code blocks ?
+  first% = TRUE
+  FOR ph% = phdrs% TO phdrs% + (phnum% - 1) * phentsize% STEP phentsize%
+    IF ph%!0 <> 1 THEN NEXT : REM We only do PT_LOAD
+    IF NOT first% THEN PRINT "+";
+    first%  = FALSE
+    offset% = ph%!4
+    vaddr%  = ph%!8
+    filesz% = ph%!16
+    memsz%  = ph%!20
+    flags%  = ph%!24
+    PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+    REM freepagesbase% is updated
+
+    vfreebase% = vaddr% + memsz% : REM XXX
+  NEXT
+
+  txtbase% = 0
+  txtsize% = 0
+  database% = 0
+  datasize% = 0
+  bssbase% = 0
+  bsssize% = 0
+  ssym% = 0
+  esym% = 0
+
+  DIM shdrs% shnum% * shentsize% - 1
+  SYS "OS_GBPB", 3, file%, shdrs%, shnum% * shentsize%, shoff%
+  IF shnum% <> 0 THEN
+    havesyms% = FALSE
+    FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
+      IF sh%!4 = 2 THEN havesyms% = TRUE
+    NEXT
+    IF INSTR(args$, "symtab")=0 THEN havesyms% = FALSE
+    REM freepagesbase% points to first free relocation page
+    IF havesyms% THEN
+      REM vfreebase points to first free address in relocated area
+      PRINT "+[";
+
+      REM First, we have the munged ELF header
+      ssym% = vfreebase%
+      ssympage% = freepagesbase%
+      PROCload_chunk(file%, 0, ssym%, 52, 52)
+      !(FNblock_vaddr(ssympage%) + 32) = 52: REM  PROCwrite_word(ssym%+32, 52)
+      vfreebase% += 52
+
+      REM then, the munged section headers
+      mshdrs% = vfreebase%
+      mshdrspage% = freepagesbase%
+      PRINT "+";
+      PROCload_chunk(file%, shoff%, mshdrs%, shnum% * shentsize%, shnum% * shentsize%)
+      vfreebase% += shnum% * shentsize%
+      FOR sh% = shdrs% TO shdrs% + (shnum% - 1) * shentsize% STEP shentsize%
+        IF sh%!4 = 2 OR sh%!4 = 3 THEN
+          PRINT "+";
+          PROCload_chunk(file%, sh%!16, vfreebase%, sh%!20, sh%!20)
+          !(FNblock_vaddr(mshdrspage%) + sh% - shdrs% + 16) = vfreebase% - ssym%
+                REM PROCwrite_word(mshdrs% + sh% - shdrs% + 16, freebase% - ssym%)
+          vfreebase% += FNroundup(sh%!20, 4)
+        ENDIF
+      NEXT
+      esym% = vfreebase%
+      PRINT "]";
+    ENDIF
+  ENDIF
+  PRINT " ";
+  REM XXX
+
+  kernelpages% = freepagesbase% - start_kernelpage%
+  
+  PROCfinish_relocationtable
+ENDPROC
+
+
+DEF PROCload_chunk(file%, offset%, vaddr%, filesz%, memsz%)
+  LOCAL paddr%, ppn%, fragaddr%, fragsz%
+  REM offset%  offset in file
+  REM vaddr%   indicates virtual address where stuff needs to be relocated to
+  REM filesz%  number of bytes to read of `file' for this chunk
+  REM memsz%   number of bytes to clear for this chunk
+  PRINT ;filesz%;
+  IF extradebug% PRINT ;" (";~vaddr%;"-";~(vaddr%+filesz%+memsz%);" [till base+";INT((vaddr%+filesz%+memsz%-&F0000000)/1024);"k]) ";
+  WHILE filesz% > 0
+    REM freepagesbase% is first page index in freepages list
+    fragsz% = nbpp% - (vaddr% MOD nbpp%)
+    IF fragsz% > filesz% THEN fragsz% = filesz%
+    fragaddr% = FNblock_vaddr(freepagesbase%)
+    SYS "OS_GBPB", 3, file%, fragaddr%, fragsz%, offset%
+    
+    REM create a relocation block
+    relocpos%!0 = FNblock_paddr(freepagesbase%)
+    relocpos%!4 = vaddr% - pv_offset%
+    relocpos%!8 = fragsz%
+    relocpos% += 12: relocnr%+=1: relocoff%+=1
+    freepagesbase% += 1 
+
+    offset% += fragsz%
+    vaddr% += fragsz%
+    filesz% -= fragsz%
+    memsz% -= fragsz%
+    PROCtwirl
+  ENDWHILE
+  IF memsz% > 0 PRINT "+";memsz%;
+  WHILE memsz% > 0
+    REM freepagesbase% is first page index in freepages list
+    fragsz = nbpp% - (vaddr% MOD nbpp%)
+    IF fragsz% > memsz% THEN fragsz% = memsz%
+    PROCbzero(FNblock_vaddr(freepagesbase%), fragsz%)
+
+    REM create a relocation block
+    relocpos%!0 = FNblock_paddr(freepagesbase%)
+    relocpos%!4 = vaddr% - pv_offset%
+    relocpos%!8 = fragsz%
+    relocpos% += 12: relocnr%+=1: relocoff%+=1
+    freepagesbase% += 1 
+    
+    offset% += fragsz%
+    vaddr% += fragsz%
+    filesz% -= fragsz%
+    memsz% -= fragsz%
+    PROCtwirl
+  ENDWHILE
+ENDPROC
+
+
+
+
+REM *****************************************************************************
+REM * A.OUT LOADER                                                              *
+REM *****************************************************************************
 
 DEF PROCload_kernel_aout(file%)
   LOCAL hdr%
@@ -198,7 +367,8 @@ DEF PROCload_kernel_aout(file%)
   REM foooff% is byte offset in file.  foobasepage% is base page in RAM.
   txtoff% = 0 : REM in arm26 its 4096
   txtbasepage% = first_mapped_DRAM_index% : REM == first virt address in DRAM0a
- 
+  start_kernelpage% = txtbasepage%
+
   txtsize% = hdr%!4
   IF txtsize% MOD nbpp% <> 0 THEN
     ERROR EXT 1, "Text size not a multiple of page size"
@@ -224,7 +394,7 @@ DEF PROCload_kernel_aout(file%)
   IF debug% THEN PRINT "Entry point at ";~entry%
 
   REM kernelpages without syms table is :
-  kernelpages% = txtpages% + datapages% + bsspages%  : REM overshoot is OK
+  kernelpages% = txtpages% + datapages% + bsspages% : REM 
 
   REM  symbasepage% = bssbasepage% + bsspages%-1 : REM REAL size... not in pages
   symoff% = dataoff% + datasize%
@@ -236,12 +406,16 @@ DEF PROCload_kernel_aout(file%)
     symsize% = 0
     stringtablesize% = 0
   ENDIF
-  REM reserve 1 extra words for the lengths
+  REM reserve 1 extra word for the length
   symbolsize% = symsize% + stringtablesize% + 4
   symbolpages% = FNroundup(symbolsize%, nbpp%) DIV nbpp%
   IF debug% PRINT '"Stringtablesize = 0x";~stringtablesize%;"  symsize = 0x";~symsize%
  
   PRINT '"A total of about ";kernelpages%;" pages need to be relocated"
+  IF (kernelpages%+40)*nbpp% > memory_image_size% THEN
+    REM 40 is an estimation ...
+    ERROR EXT 1, "Not enough memory free... please increase WimpSlot in the configuration file"
+  ENDIF
 
   PRINT ;txtsize%;
   new_hdr% = FNblock_vaddr(txtbasepage%)
@@ -249,7 +423,8 @@ DEF PROCload_kernel_aout(file%)
     SYS "OS_GBPB", 3, file%, FNblock_vaddr(txtbasepage%+pg%), nbpp%, txtoff% + pg%*nbpp%
     relocpos%!0 = FNblock_paddr(txtbasepage%+pg%)
     relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
-    relocpos% += 8
+    relocpos%!8 = nbpp%
+    relocpos% += 12
     PROCtwirl
   NEXT
 
@@ -258,7 +433,8 @@ DEF PROCload_kernel_aout(file%)
     SYS "OS_GBPB", 3, file%, FNblock_vaddr(databasepage%+pg%), nbpp%, dataoff% + pg%*nbpp%
     relocpos%!0 = FNblock_paddr(databasepage%+pg%)
     relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
-    relocpos% += 8
+    relocpos%!8 = nbpp%
+    relocpos% += 12
     PROCtwirl
   NEXT
   REM PRINT;"(";off%;" gaps)";
@@ -268,7 +444,8 @@ DEF PROCload_kernel_aout(file%)
     PROCbzero(FNblock_vaddr(bssbasepage%+pg%), nbpp%)
     relocpos%!0 = FNblock_paddr(bssbasepage%+pg%)
     relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
-    relocpos% += 8
+    relocpos%!8 = nbpp%
+    relocpos% += 12
     PROCtwirl
   NEXT
   REM PRINT;"(";off%;" gaps)";
@@ -279,7 +456,7 @@ DEF PROCload_kernel_aout(file%)
     symbasepage% = freepagesbase%
 
     REM put a page for the value of symsize just after bss%
-    symDaddr% = !(relocpos%-4) + ((hdr%!12) AND (nbpp%-1))
+    symDaddr% = !(relocpos%-8) + ((hdr%!12) AND (nbpp%-1))
  
     symstartpagaddrV% = FNblock_vaddr(symbasepage%)
     PROCbzero(symstartpagaddrV%, nbpp%)
@@ -287,7 +464,8 @@ DEF PROCload_kernel_aout(file%)
 
     relocpos%!0 = FNblock_paddr(symbasepage%)
     relocpos%!4 = symDaddr%  : relocnr%+=1: relocoff%+=1
-    relocpos% += 8
+    relocpos%!8 = nbpp% : REM XXX 
+    relocpos% += 12
     symDaddr% += 4
  
     REM update the symbasepage !! ... we used one!
@@ -299,7 +477,8 @@ DEF PROCload_kernel_aout(file%)
       SYS "OS_GBPB", 3, file%, FNblock_vaddr(symbasepage%+pg%), nbpp%, symoff% + pg%*nbpp%
       relocpos%!0 = FNblock_paddr(symbasepage%+pg%)
       relocpos%!4 = symDaddr% + nbpp%*pg%: relocnr%+=1: relocoff%+=1
-      relocpos% += 8
+      relocpos%!8 = nbpp%
+      relocpos% += 12
       PROCtwirl
     NEXT
  
@@ -309,13 +488,19 @@ DEF PROCload_kernel_aout(file%)
   REM update new header structure
   new_hdr%!16 = symsize%
 
+  PROCfinish_relocationtable
+ENDPROC
+
+
+DEF PROCfinish_relocationtable
   REM place the arguments
   argsbasepage% = freepagesbase%
   argspages% = 1
   argvirtualbase% = nbpp%*relocoff% + KERNEL_BASE
   relocpos%!0 = FNblock_paddr(argsbasepage%)
   relocpos%!4 = kernel_phys_start% + nbpp%*relocoff%: relocnr%+=1: relocoff%+=1
-  relocpos% += 8
+  relocpos%!8 = nbpp%
+  relocpos% += 12
   $(FNblock_vaddr(argsbasepage%)) = args$+CHR$0
   freepagesbase% += argspages%
   kernelpages% += argspages%
@@ -339,16 +524,20 @@ DEF PROCload_kernel_aout(file%)
   initvectorpages%    = 1
   relocpos%!0 = FNblock_paddr(initvectorbasepage%)
   relocpos%!4 = top_physdram% - 1*1024*1024 : relocnr%+=1: relocoff%+=1
-  relocpos% += 8
+  relocpos%!8 = nbpp%
+  relocpos% += 12
   freepagesbase% += initvectorpages%
 
   P%=FNblock_vaddr(initvectorbasepage%)
   FOR vec=0 TO &20 STEP 4
-    [OPT 2: MOV PC, r14:]
+    [OPT 2: MOVS PC, r14:]
   NEXT
- 
 ENDPROC
 
+
+REM *****************************************************************************
+REM * Common loader and relocate stuff                                          *
+REM *****************************************************************************
 
 DEF PROCadd_pagetables
   REM DESTINATION MUST BE ON A 16kb boundary!!! (!!!!)
@@ -359,7 +548,8 @@ DEF PROCadd_pagetables
     PROCcopy(FNblock_vaddr(freepagesbase% + pg%), bootpagetables% + pg%*nbpp%, nbpp%)
     relocpos%!0 = FNblock_paddr(freepagesbase%+pg%)
     relocpos%!4 = addr%+pg%*nbpp%: relocnr%+=1: relocoff%+=1
-    relocpos% += 8
+    relocpos%!8 = nbpp%
+    relocpos% += 12
   NEXT
   L1pages_phys% = addr%
   freepagesbase% = freepagesbase%+pg%
@@ -589,23 +779,19 @@ DEF PROCassemble_relocate_code(virtaddress%, physaddress%, entry%, L1pages_phys%
         ; this relocate code can be heavyly optimised ... but it is used only once ... and is fast enough
         ; relocate kernel (physical to physical) + debug in screenmemory
         MOV  r5, r10                           ; load PC relative r5 = startreloc table
-        LDR  r4, [r5], #4                      ; r4 = number of relocated pages
-;MOV r6, #videomem_start%; VRAM_addr%(0)
-;MOV r7, #1024*1024
+        LDR  r6, [r5], #4                      ; r4 = number of relocated pages
       .loop_relocate_pages%
         LDR  r2, [r5], #4                      ; r2 = from address
         LDR  r3, [r5], #4                      ; r3 = to address
+        LDR  r7, [r5], #4                      ; r6 = number of bytes to travel
         MOV  r1, #0                            ; r1 = offset in page
       .loop_one_page%
-        LDR  r0, [r2, r1]
-        STR  r0, [r3, r1]
-;STR r0, [r6], #4
-;SUBS r7, r7,#4
-;MOVEQ r6, #videomem_start%; VRAM_addr%(0)
-        ADD  r1, r1, #4
-        CMP  r1, #nbpp%
+        LDRB r0, [r2, r1]
+        STRB r0, [r3, r1]
+        ADD  r1, r1, #1
+        CMP  r1, r7                            ; all bytes copied ?
         BNE loop_one_page%
-        SUBS r4, r4, #1
+        SUBS r6, r6, #1
         BNE loop_relocate_pages%
 
         ; switch over to the new L1 pages
