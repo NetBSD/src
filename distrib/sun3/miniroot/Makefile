@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2002/05/18 13:26:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.29.2.1 2002/05/28 23:09:39 tv Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -64,9 +64,8 @@ IMAGEDEPENDS=	${KERNEL3} ${KERNEL3X} \
 		${DISTRIBDIR}/miniroot/upgrade.sh \
 		install.sub
 
-# XXXDISTRIB:  need to cut sun3 over to sun68k/bootxx first...
-#IMAGEPOSTBUILD=		${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
-#		    	    ${DESTDIR}/usr/mdec/bootxx /ufsboot
+IMAGEPOSTBUILD=		${INSTALLBOOT} -v -m ${MACHINE} ${IMAGE} \
+		    	    ${DESTDIR}/usr/mdec/bootxx /ufsboot
 IMAGE_RELEASEDIR=	installation/miniroot
 
 install.sub: ${DISTRIBDIR}/miniroot/install.sub
