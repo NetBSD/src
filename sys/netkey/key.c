@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.9 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.10 1999/08/24 00:46:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -528,10 +528,10 @@ key_checkrequest(isr)
 		break;
 	case IPSEC_MODE_TUNNEL:
 		if (isr->proxy == NULL)
-			panic("key_checkpolicy: No proxy specified.\n");
+			panic("key_checkrequest: No proxy specified.\n");
 		break;
 	default:
-		panic("key_checkpolicy: Invalid policy defined.\n");
+		panic("key_checkrequest: Invalid policy defined.\n");
 	}
 
 	/* get current level */
@@ -580,7 +580,7 @@ key_checkrequest(isr)
 
 	if ((error = key_acquire(&isr->sp->idx, proto, isr->proxy)) != 0) {
 		/* XXX What I do ? */
-		printf("key_checkpolicy: error %d returned "
+		printf("key_checkrequest: error %d returned "
 			"from key_acquire.\n", error);
 		return error;
 	}
@@ -1892,6 +1892,13 @@ key_setsecidx(src0, dst0, idx, flag)
 	/* check sa_family */
 	if (src->sa_family != dst->sa_family) {
 		printf("key_setsecidx: family mismatch.\n");
+		return 1;
+	}
+
+	/* check max prefixlen */
+	if ((_INALENBYAF(src->sa_family) << 3) < src0->sadb_address_prefixlen
+	 || (_INALENBYAF(dst->sa_family) << 3) < dst0->sadb_address_prefixlen) {
+		printf("key_setsecidx: illegal prefixlen.\n");
 		return 1;
 	}
 
@@ -4861,7 +4868,10 @@ key_delete(mhp)
 	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
 
 	/* get a SA index */
-	key_setsecidx(src0, dst0, &idx, 0);
+	if (key_setsecidx(src0, dst0, &idx, 0)) {
+		msg0->sadb_msg_errno = EINVAL;
+		return NULL;
+	}
 	if ((saidx = key_getsaidxfromany(&idx)) == NULL) {
 		printf("key_delete: no SA index found.\n");
 		msg0->sadb_msg_errno = ENOENT;
@@ -4957,7 +4967,10 @@ key_get(mhp)
 	dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
 
 	/* get a SA index */
-	key_setsecidx(src0, dst0, &idx, 0);
+	if (key_setsecidx(src0, dst0, &idx, 0)) {
+		msg0->sadb_msg_errno = EINVAL;
+		return NULL;
+	}
 	if ((saidx = key_getsaidxfromany(&idx)) == NULL) {
 		printf("key_get: no SA index found.\n");
 		msg0->sadb_msg_errno = ENOENT;
@@ -4999,7 +5012,7 @@ key_get(mhp)
 }
 
 /*
- * SADB_ACQUIRE processing called by key_checkpolicy() and key_acquire2().
+ * SADB_ACQUIRE processing called by key_checkrequest() and key_acquire2().
  * send
  *   <base, SA, address(SD), (address(P)),
  *       (identity(SD),) (sensitivity,) proposal>
