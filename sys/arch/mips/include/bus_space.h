@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.1 2002/03/18 00:32:21 simonb Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.2 2002/03/18 01:01:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -483,5 +483,6 @@ do {									\
 #define	bus_space_write_region_stream_2	bus_space_write_region_2
 #define	bus_space_write_region_stream_4	bus_space_write_region_4
 #define	bus_space_write_region_stream_8	bus_space_write_region_8
+#endif /* _KERNEL */
 
 #endif /* _MIPS_BUS_SPACE_H_ */
