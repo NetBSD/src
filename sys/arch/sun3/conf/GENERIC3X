@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC3X,v 1.2 1997/03/15 18:10:59 is Exp $
+#	$NetBSD: GENERIC3X,v 1.3 1997/03/21 07:28:36 jeremy Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -88,7 +88,7 @@ esp0 at obio0 addr 0x66000000 ipl 2
 #
 
 # bwtwo - Monochrome frame buffer.
-bwtwo0 at obmem0 addr 0x50300000 ipl 4
+bwtwo0 at obmem0 addr 0x50400000 ipl 4
 
 #
 # SCSI infrastructure
