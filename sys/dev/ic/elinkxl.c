@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.21 1999/12/12 03:00:47 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.22 2000/01/18 03:35:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1100,22 +1100,33 @@ ex_intr(arg)
 	  return ret;
 	}
 	for (;;) {
+		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
+
 		stat = bus_space_read_2(iot, ioh, ELINK_STATUS);
-		if (!(stat & S_MASK))
-			break;
+
+		if ((stat & S_MASK) == 0) {
+			if ((stat & S_INTR_LATCH) == 0) {
+#if 0
+				printf("%s: intr latch cleared\n",
+				       sc->sc_dev.dv_xname);
+#endif
+				break;
+			}
+		}
+
+		ret = 1;
+
 		/*
 		 * Acknowledge interrupts.
 		 */
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ACK_INTR |
-				      (stat & S_MASK));
+				  (stat & S_MASK));
 		if (sc->intr_ack)
-		    (*sc->intr_ack)(sc);
-		ret = 1;
+			(*sc->intr_ack)(sc);
+
 		if (stat & S_HOST_ERROR) {
 			printf("%s: adapter failure (%x)\n",
 			    sc->sc_dev.dv_xname, stat);
-			bus_space_write_2(iot, ioh, ELINK_COMMAND,
-			    C_INTR_LATCH);
 			ex_reset(sc);
 			ex_init(sc);
 			return 1;
@@ -1262,11 +1273,10 @@ ex_intr(arg)
 			}
 		}
 	}
-	if (ret) {
-		bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
-		if (ifp->if_snd.ifq_head != NULL)
-			ex_start(ifp);
-	}
+
+	/* no more interrupts */
+	if (ret && ifp->if_snd.ifq_head)
+		ex_start(ifp);
 	return ret;
 }
 
