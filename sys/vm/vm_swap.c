@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.18 1997/05/18 20:14:24 leo Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.19 1997/05/19 16:38:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -817,10 +817,26 @@ sw_reg_strategy(sdp, bp, bn)
 		sbp->sb_buf.b_vp       = vp;
 		sbp->sb_buf.b_rcred    = sdp->swd_cred;
 		sbp->sb_buf.b_wcred    = sdp->swd_cred;
-		sbp->sb_buf.b_dirtyoff = bp->b_dirtyoff;
-		sbp->sb_buf.b_dirtyend = bp->b_dirtyend;
-		sbp->sb_buf.b_validoff = bp->b_validoff;
-		sbp->sb_buf.b_validend = bp->b_validend;
+		if (bp->b_dirtyend == 0) {
+			nbp->vb_buf.b_dirtyoff = 0;
+			nbp->vb_buf.b_dirtyend = sz;
+		} else {
+			nbp->vb_buf.b_dirtyoff =
+			    max(0, bp->b_dirtyoff - (bp->b_bcount-resid));
+			nbp->vb_buf.b_dirtyend =
+			    min(sz,
+				max(0, bp->b_dirtyend - (bp->b_bcount-resid)));
+		}
+		if (bp->b_validend == 0) {
+			nbp->vb_buf.b_validoff = 0;
+			nbp->vb_buf.b_validend = sz;
+		} else {
+			nbp->vb_buf.b_validoff =
+			    max(0, bp->b_validoff - (bp->b_bcount-resid));
+			nbp->vb_buf.b_validend =
+			    min(sz,
+				max(0, bp->b_validend - (bp->b_bcount-resid)));
+		}
 
 		/* save a reference to the old buffer and swapdev */
 		sbp->sb_obp = bp;
