@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.32 2001/12/10 00:22:21 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.33 2001/12/15 20:40:37 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.32 2001/12/10 00:22:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.33 2001/12/15 20:40:37 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4491,11 +4491,20 @@ sppp_keepalive(void *dummy)
 			if_down (ifp);
 			IF_PURGE (&sp->pp_cpq);
 			if (! (sp->pp_flags & PP_CISCO)) {
-				/* XXX */
-				/* Shut down the PPP link. */
-				lcp.Down(sp);
-				/* Initiate negotiation. XXX */
-				lcp.Up(sp);
+				printf("%s: LCP keepalive timed out, going to restart the connection\n",
+					ifp->if_xname);
+				sp->pp_alivecnt = 0;
+
+				/* we are down, close all open protocols */
+				lcp.Close(sp);
+
+				/* And now prepare LCP to reestablish the link, if configured to do so. */
+				sppp_cp_change_state(&lcp, sp, STATE_STOPPED);
+
+				/* Close connection imediatly, completition of this
+				 * will summon the magic needed to reestablish it. */
+				sp->pp_tlf(sp);
+				continue;
 			}
 		}
 		if (sp->pp_alivecnt <= MAXALIVECNT)
