@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.23 2003/01/18 08:02:53 thorpej Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.23.4.1 2004/10/04 05:19:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.23 2003/01/18 08:02:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.23.4.1 2004/10/04 05:19:18 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -334,7 +334,7 @@ linux_shmget(l, uap, retval)
 	SCARG(&bsa, size) = SCARG(uap, a2);
 	SCARG(&bsa, shmflg) = SCARG(uap, a3);
 
-	return sys_shmget(l, &bsa, retval);
+	return linux_sys_shmget(l, &bsa, retval);
 }
 
 #endif /* SYSVSHM */
