@@ -30,14 +30,16 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.15 1999/07/02 15:37:35 simonb Exp $
+.\"	$NetBSD: lgamma.3,v 1.16 1999/08/15 22:23:54 kleink Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
 .Os
 .Sh NAME
 .Nm lgamma ,
-.Nm gamma
+.Nm lgammaf ,
+.Nm gamma ,
+.Nm gammaf
 .Nd log gamma function
 .Sh LIBRARY
 .Lb libm
@@ -50,6 +52,10 @@
 .Fn lgamma "double x"
 .Ft float
 .Fn lgammaf "float x"
+.Ft double
+.Fn gamma "double x"
+.Ft float
+.Fn gammaf "float x"
 .Sh DESCRIPTION
 .Fn lgamma x
 .if t \{\
