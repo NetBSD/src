@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.52 2000/08/02 12:13:22 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.53 2000/08/26 03:38:46 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,7 @@
 #include "assym.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ibcs2.h"
 #ifdef COMPAT_IBCS2
@@ -306,14 +307,29 @@ remrq:	.asciz	"remrunqueue"
 # pi or something.
 #
 idle:	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
-1:	tstl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO
-	beql	2f
+1:
 #if 0
+	tstl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO
+	beql	2f
 	calls	$0,_C_LABEL(uvm_pageidlezero)
 #endif
 2:	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
-	beql	1b			# no, continue to loop
-	brb	Swtch			# Yes, goto switch again.
+	beql	1b			# no, run the idle loop again.
+/* Now try the test the long way */
+	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
+#if defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(sched_lock_idle)
+#elif defined(MULTIPROCESSOR)
+3:	bbssi	$0,_C_LABEL(sched_lock),3b	# acquire sched lock
+#endif
+	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
+	bneq	Swtch			# Yes, goto switch again.
+#if defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(sched_unlock_idle)
+#elif defined(MULTIPROCESSOR)
+	clrl	_C_LABEL(sched_lock)	# release sched lock
+#endif
+	brb	idle			# nope, continue to idlely loop
 
 #
 # cpu_switch, cpu_exit and the idle loop implemented in assembler 
@@ -349,6 +365,11 @@ noque:	.asciz	"swtch"
 	clrl	CI_WANT_RESCHED(r1)	# we are now changing process
 	cmpl	r0,r2			# Same process?
 	bneq	1f			# No, continue
+#if defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(sched_unlock_idle)
+#elif defined(MULTIPROCESSOR)
+	clrl	_C_LABEL(sched_lock)	# clear sched lock
+#endif
 	rsb
 1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
 	addl3	r0,$IFTRAP,r1		# Save for copy* functions.
@@ -372,6 +393,11 @@ noque:	.asciz	"swtch"
 	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
 _C_LABEL(tramp):
 	ldpctx
+#if defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(sched_unlock_idle)
+#elif defined(MULTIPROCESSOR)
+	clrl	_C_LABEL(sched_lock)	# clear sched lock
+#endif
 	rei
 
 #
