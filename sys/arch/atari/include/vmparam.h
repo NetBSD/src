@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 1997/10/10 11:05:53 leo Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 1998/05/07 07:26:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,6 +154,22 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+/*
+ * Our bootloader currently passes up to 2 segments (ST and TT ram).
+ */
+#define VM_PHYSSEG_MAX		(2)
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
+#define VM_PHYSSEG_NOADD
+
+/* 
+ * pmap-specific data stored in the vm_physmem[] array.
+ */   
+struct pmap_physseg { 
+	struct pv_entry *pvent;         /* pv table for this seg */
+	char *attrs;                    /* page attributes for this seg */
+}; 
+
 
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
