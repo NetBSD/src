@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.5 2003/10/28 17:54:35 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.6 2003/11/14 11:39:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -256,15 +256,15 @@ char hil_uk_ctrlmap[] = {
  */
 struct kbdmap hilkbd_map[] = {
 	KBD_US,		'\0',
-	hil_us_keymap,	hil_us_shiftmap, hil_us_ctrlmap, '\0',	'\0',
+	hil_us_keymap,	hil_us_shiftmap, hil_us_ctrlmap, NULL,	NULL,
 
 #ifdef UK_KEYBOARD
 	KBD_UK,		'\0',
-	hil_uk_keymap,	hil_uk_shiftmap, hil_uk_ctrlmap, '\0',	'\0',
+	hil_uk_keymap,	hil_uk_shiftmap, hil_uk_ctrlmap, NULL,	NULL,
 #endif
 
 	0,		'\0',
-	'\0',		'\0',		'\0',		'\0',	'\0',
+	NULL,		NULL,		NULL,		NULL,	NULL,
 };
 
 char	*hilkbd_keymap = hil_us_keymap;
