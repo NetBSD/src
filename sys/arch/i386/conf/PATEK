@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.24 1995/01/16 12:23:52 mycroft Exp $
+#	$NetBSD: PATEK,v 1.25 1995/01/25 04:58:20 cgd Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -157,4 +157,4 @@ pseudo-device	bpfilter 8		# packet filter
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-#pseudo-device	vn	4		# paging to files
+#pseudo-device	vnd	4		# paging to files

@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.48 1995/01/16 12:23:51 mycroft Exp $
+#	$NetBSD: PAIN,v 1.49 1995/01/25 04:58:19 cgd Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -159,4 +159,4 @@ pseudo-device	bpfilter 8		# packet filter
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vn	4		# paging to files
+pseudo-device	vnd	4		# paging to files

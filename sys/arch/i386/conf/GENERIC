@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.10 1995/01/16 12:23:50 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.11 1995/01/25 04:58:18 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -159,4 +159,4 @@ pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vn	4		# paging to files
+pseudo-device	vnd	4		# paging to files
