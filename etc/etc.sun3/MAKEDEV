@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.43 2002/05/17 16:32:18 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.43.2.1 2002/06/18 14:41:28 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -76,8 +76,9 @@ umask 77
 eo=
 
 # when we're making devices for the ramdisk, we conserve
-# inodes by not making block devices or devices for 
-# partitions greater than d:
+# inodes by not making block devices for disks, character
+# devices for CD-ROMs, or any device for a partition greater  
+# than d:
 __ramdisk=false
 
 # mk name b/c major minor [mode] [group]
@@ -247,10 +248,12 @@ ccd*|cd*|fd*|sd*|xd*|xy*|vnd*|raid*)
 		set -- $part
 		IFS="$tmp" ; unset tmp
 		minor=$(($offset + $2))
-		if ! $__ramdisk; then 
+		if ! $__ramdisk || test $name = cd; then 
 			mk  $name$unit$1 b $blk $minor 640 operator
 		fi
-		mk r$name$unit$1 c $chr $minor 640 operator
+		if ! $__ramdisk || test $name != cd; then 
+			mk r$name$unit$1 c $chr $minor 640 operator
+		fi
 	)
 	done
 	;;
