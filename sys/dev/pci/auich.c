@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.78 2004/11/10 17:22:25 cube Exp $	*/
+/*	$NetBSD: auich.c,v 1.79 2004/11/11 03:06:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.78 2004/11/10 17:22:25 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.79 2004/11/11 03:06:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,44 +311,44 @@ int	auich_read_codec(void *, u_int8_t, u_int16_t *);
 int	auich_write_codec(void *, u_int8_t, u_int16_t);
 int	auich_reset_codec(void *);
 
+#define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
+#define PCIID_ICH		PCI_ID_CODE0(INTEL, 82801AA_ACA)
+#define PCIID_ICH0		PCI_ID_CODE0(INTEL, 82801AB_ACA)
+#define PCIID_ICH2		PCI_ID_CODE0(INTEL, 82801BA_ACA)
+#define PCIID_440MX		PCI_ID_CODE0(INTEL, 82440MX_ACA)
+#define PCIID_ICH3		PCI_ID_CODE0(INTEL, 82801CA_AC)
+#define PCIID_ICH4		PCI_ID_CODE0(INTEL, 82801DB_AC)
+#define PCIID_ICH5		PCI_ID_CODE0(INTEL, 82801EB_AC)
+#define PCIID_ICH6		PCI_ID_CODE0(INTEL, 82801FB_AC)
+#define PCIID_SIS7012		PCI_ID_CODE0(SIS, 7012_AC)
+#define PCIID_NFORCE		PCI_ID_CODE0(NVIDIA, NFORCE_MCP_AC)
+#define PCIID_NFORCE2		PCI_ID_CODE0(NVIDIA, NFORCE2_MCPT_AC)
+#define PCIID_NFORCE3		PCI_ID_CODE0(NVIDIA, NFORCE3_MCPT_AC)
+#define PCIID_NFORCE3_250	PCI_ID_CODE0(NVIDIA, NFORCE3_250_MCPT_AC)
+#define PCIID_AMD768		PCI_ID_CODE0(AMD, PBC768_AC)
+#define PCIID_AMD8111		PCI_ID_CODE0(AMD, PBC8111_AC)
+
 static const struct auich_devtype {
-	int	vendor;
-	int	product;
-	const char *name;
-	const char *shortname;	/* must be less than 11 characters */
+	pcireg_t	id;
+	const char	*name;
+	const char	*shortname;	/* must be less than 11 characters */
 } auich_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
-	    "i82801AA (ICH) AC-97 Audio",	"ICH" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
-	    "i82801AB (ICH0) AC-97 Audio",	"ICH0" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
-	    "i82801BA (ICH2) AC-97 Audio",	"ICH2" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
-	    "i82440MX AC-97 Audio",		"440MX" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
-	    "i82801CA (ICH3) AC-97 Audio",	"ICH3" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
-	    "i82801EB (ICH5) AC-97 Audio",   "ICH5" },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_AC,
-	    "i82801FB (ICH6) AC-97 Audio",   "ICH6" },
-	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
-	    "SiS 7012 AC-97 Audio",		"SiS7012" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
-	    "nForce MCP AC-97 Audio",		"nForce" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
-	    "nForce2 MCP-T AC-97 Audio",	"nForce2" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
-	    "nForce3 MCP-T AC-97 Audio",	"nForce3" },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC,
-	    "nForce3 250 MCP-T AC-97 Audio",	"nForce3" },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
-	    "AMD768 AC-97 Audio",		"AMD768" },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
-	    "AMD8111 AC-97 Audio",		"AMD8111" },
-	{ 0, 0,
-	    NULL,				NULL },
+	{ PCIID_ICH,	"i82801AA (ICH) AC-97 Audio",	"ICH" },
+	{ PCIID_ICH0, 	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
+	{ PCIID_ICH2, 	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
+	{ PCIID_440MX, 	"i82440MX AC-97 Audio",		"440MX" },
+	{ PCIID_ICH3, 	"i82801CA (ICH3) AC-97 Audio",	"ICH3" },
+	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
+	{ PCIID_ICH5, 	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
+	{ PCIID_ICH6, 	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
+	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",		"SiS7012" },
+	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
+	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
+	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCIID_NFORCE3_250,	"nForce3 250 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
+	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
+	{ 0,		NULL,				NULL },
 };
 
 static const struct auich_devtype *
@@ -357,8 +357,7 @@ auich_lookup(struct pci_attach_args *pa)
 	const struct auich_devtype *d;
 
 	for (d = auich_devices; d->name != NULL; d++) {
-		if (PCI_VENDOR(pa->pa_id) == d->vendor
-			&& PCI_PRODUCT(pa->pa_id) == d->product)
+		if (pa->pa_id == d->id)
 			return (d);
 	}
 
@@ -402,10 +401,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": %s\n", d->name);
 
-	if (d->vendor == PCI_VENDOR_INTEL &&
-	    (d->product == PCI_PRODUCT_INTEL_82801DB_AC ||
-	    d->product == PCI_PRODUCT_INTEL_82801EB_AC ||
-	    d->product == PCI_PRODUCT_INTEL_82801FB_AC)) {
+	if (d->id == PCIID_ICH4 || d->id == PCIID_ICH5 || d->id == PCIID_ICH6) {
 		/*
 		 * Use native mode for ICH4/ICH5/ICH6
 		 */
@@ -480,8 +476,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname, MAX_AUDIO_DEV_LEN);
 
 	/* SiS 7012 needs special handling */
-	if (d->vendor == PCI_VENDOR_SIS
-	    && d->product == PCI_PRODUCT_SIS_7012_AC) {
+	if (d->id == PCIID_SIS7012) {
 		sc->sc_sts_reg = ICH_PICB;
 		sc->sc_sample_shift = 0;
 	} else {
@@ -491,8 +486,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Workaround for a 440MX B-stepping erratum */
 	sc->sc_dmamap_flags = BUS_DMA_COHERENT;
-	if (d->vendor == PCI_VENDOR_INTEL
-	    && d->product == PCI_PRODUCT_INTEL_82440MX_ACA) {
+	if (d->id == PCIID_440MX) {
 		sc->sc_dmamap_flags |= BUS_DMA_NOCACHE;
 		printf("%s: DMA bug workaround enabled\n", sc->sc_dev.dv_xname);
 	}
