@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.sh,v 1.1.1.1 1995/04/17 19:08:52 leo Exp $
+#	$NetBSD: install.sh,v 1.2 1995/08/25 19:17:28 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -179,11 +179,11 @@ while [ "$answer" = "" ]; do
 done
 echo	"Initializing / (root) filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${rdev}a $name
-$DONTDOIT mount -v /dev/${rdev}a /mnt
+$DONTDOIT mount_ffs /dev/${rdev}a /mnt
 echo	""
 echo -n	"Creating a fstab..."
 mkdir -p $FSTABDIR
-echo "/dev/${rdev}a	/	ufs	rw	1	1" > $FSTAB
+echo "/dev/${rdev}a	/	ffs	rw	1	1" > $FSTAB
 
 # get rid of this partition
 shiftvar $rdev
@@ -252,10 +252,10 @@ echo	""
 echo	"Initializing /usr filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${usrpart} $name
 $DONTDOIT mkdir -p /mnt/usr
-$DONTDOIT mount -v /dev/${usrpart} /mnt/usr
+$DONTDOIT mount_ffs /dev/${usrpart} /mnt/usr
 echo	""
 echo -n	"Adding to fstab..."
-echo "/dev/${usrpart}	/usr	ufs	rw	1	2" >> $FSTAB
+echo "/dev/${usrpart}	/usr	ffs	rw	1	2" >> $FSTAB
 sync
 echo	" done."
 
