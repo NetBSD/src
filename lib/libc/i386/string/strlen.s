@@ -31,33 +31,23 @@
 #include "DEFS.h"
 
 /*
- * strrchr(s, c)
- *	return a pointer to the last occurance of the character c in
- *	string s, or NULL if c does not occur in the string.
- *
- * %edx - pointer iterating through string
- * %eax - pointer to last occurance of 'c'
- * %cl  - character we're comparing against
- * %bl  - character at %edx
+ * strlen (s)
+ *	compute the length of the string s.
  *
  * Written by:
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
-ENTRY(strrchr)
-	pushl	%ebx
-	movl	8(%esp),%edx
-	movb	12(%esp),%cl
-	xorl	%eax,%eax		/* init pointer to null */
-	.align 2,0x90
-L1:
-	movb	(%edx),%bl
-	cmpb	%bl,%cl
-	jne	L2
-	movl	%edx,%eax
-L2:	
-	incl	%edx
-	testb	%bl,%bl			/* null terminator??? */
-	jne	L1
-	popl	%ebx
+ENTRY(strlen)
+	pushl	%edi
+	movl	8(%esp),%edi		/* string address */
+	cld				/* set search forward */
+	xorl	%eax,%eax		/* set search for null terminator */
+	movl	$-1,%ecx		/* set search for lots of characters */
+	repne				/* search! */
+	scasb
+	movl	%ecx,%eax		/* get length by taking	twos-	*/
+	notl	%eax			/* complement and subtracting	*/
+	decl	%eax			/* one */
+	popl	%edi
 	ret

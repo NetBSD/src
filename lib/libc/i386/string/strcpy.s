@@ -31,33 +31,62 @@
 #include "DEFS.h"
 
 /*
- * strrchr(s, c)
- *	return a pointer to the last occurance of the character c in
- *	string s, or NULL if c does not occur in the string.
- *
- * %edx - pointer iterating through string
- * %eax - pointer to last occurance of 'c'
- * %cl  - character we're comparing against
- * %bl  - character at %edx
+ * strcpy (dst, src)
+ *	copy the string src to dst.
  *
  * Written by:
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
-ENTRY(strrchr)
-	pushl	%ebx
-	movl	8(%esp),%edx
-	movb	12(%esp),%cl
-	xorl	%eax,%eax		/* init pointer to null */
+/*
+ * I've unrolled the loop eight times: large enough to make a
+ * significant difference, and small enough not to totally trash the
+ * cashe.
+ */
+
+ENTRY(strcpy)
+	movl	4(%esp),%ecx		/* dst address */
+	movl	8(%esp),%edx		/* src address */
+	pushl	%ecx			/* push dst address */
+
 	.align 2,0x90
-L1:
-	movb	(%edx),%bl
-	cmpb	%bl,%cl
-	jne	L2
-	movl	%edx,%eax
-L2:	
-	incl	%edx
-	testb	%bl,%bl			/* null terminator??? */
+L1:	movb	(%edx),%al		/* unroll loop, but not too much */
+	movb	%al,(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	1(%edx),%al
+	movb	%al,1(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	2(%edx),%al
+	movb	%al,2(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	3(%edx),%al
+	movb	%al,3(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	4(%edx),%al
+	movb	%al,4(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	5(%edx),%al
+	movb	%al,5(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	6(%edx),%al
+	movb	%al,6(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	7(%edx),%al
+	movb	%al,7(%ecx)
+	testb	%al,%al
+	je	L2
+	movb	8(%edx),%al
+	movb	%al,8(%ecx)
+	addl	$8,%edx
+	addl	$8,%ecx
+	testb	%al,%al
 	jne	L1
-	popl	%ebx
+L2:	popl	%eax			/* pop dst address */
 	ret
