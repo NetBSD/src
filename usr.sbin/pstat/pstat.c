@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: pstat.c,v 1.2 1994/05/13 21:48:02 cgd Exp $";
+static char *rcsid = "$Id: pstat.c,v 1.3 1994/05/16 06:44:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,6 +67,7 @@ static char *rcsid = "$Id: pstat.c,v 1.2 1994/05/13 21:48:02 cgd Exp $";
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <sys/sysctl.h>
 
@@ -106,11 +107,18 @@ struct nlist nl[] = {
 #define VM_NISWDEV	NLMANDATORY + 2
 	{ "_niswdev" },
 #define	SCONS		NLMANDATORY + 3
-	{ "_cons" },
+	{ "_constty" },
 #define	SPTY		NLMANDATORY + 4
 	{ "_pt_tty" },
 #define	SNPTY		NLMANDATORY + 5
 	{ "_npty" },
+
+#ifdef sparc
+#define SZS	(SNPTY+1)
+	{ "_zs_tty" },
+#define SCZS	(SNPTY+2)
+	{ "_zscd" },
+#endif
 
 #ifdef hp300
 #define	SDCA	(SNPTY+1)
@@ -136,6 +144,17 @@ struct nlist nl[] = {
 	{ "_dc_tty" },
 #define SNDC	(SNPTY+2)
 	{ "_dc_cnt" },
+#endif
+
+#ifdef i386
+#define SPC	(SNPTY+1)
+	{ "_pc_tty" },
+#define SCPC	(SNPTY+2)
+	{ "_pccd" },
+#define SCOM	(SNPTY+3)
+	{ "_com_tty" },
+#define SCCOM	(SNPTY+4)
+	{ "_comcd" },
 #endif
 
 	{ "" }
@@ -177,7 +196,9 @@ int	nfs_print __P((struct vnode *));
 void	swapmode __P((void));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *, int));
-void	ttytype __P((struct tty *, char *, int, int));
+void	ttytype __P((char *, int, int));
+void	ttytype_newcf __P((char *, int, int));
+void	ttytype_oldcf __P((char *, int, int));
 void	ufs_header __P((void));
 int	ufs_print __P((struct vnode *));
 void	usage __P((void));
@@ -695,82 +716,117 @@ kinfo_vnodes(avnodes)
 	return ((struct e_vnode *)vbuf);
 }
 	
-char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS  PGID DISC\n";
-int ttyspace = 128;
+char hdr[]="  LINE  RAW  CAN  OUT  HWT LWT    COL STATE    SESS  PGID DISC\n";
 
 void
 ttymode()
 {
-	struct tty *tty;
 
-	if ((tty = malloc(ttyspace * sizeof(*tty))) == NULL)
-		err(1, NULL);
-#ifndef hp300
-	(void)printf("1 console\n");
-	KGET(SCONS, *tty);
-	(void)printf(hdr);
-	ttyprt(&tty[0], 0);
+#ifdef sparc
+	ttytype("console", SCONS, 1);
+	ttytype_newcf("zs", SZS, SCZS);
 #endif
+
 #ifdef vax
 	if (nl[SNQD].n_type != 0) 
 		qdss();
 	if (nl[SNDZ].n_type != 0)
-		ttytype(tty, "dz", SDZ, SNDZ);
+		ttytype_oldcf("dz", SDZ, SNDZ);
 	if (nl[SNDH].n_type != 0)
-		ttytype(tty, "dh", SDH, SNDH);
+		ttytype_oldcf("dh", SDH, SNDH);
 	if (nl[SNDMF].n_type != 0)
-		ttytype(tty, "dmf", SDMF, SNDMF);
+		ttytype_oldcf("dmf", SDMF, SNDMF);
 	if (nl[SNDHU].n_type != 0)
-		ttytype(tty, "dhu", SDHU, SNDHU);
+		ttytype_oldcf("dhu", SDHU, SNDHU);
 	if (nl[SNDMZ].n_type != 0)
-		ttytype(tty, "dmz", SDMZ, SNDMZ);
+		ttytype_oldcf("dmz", SDMZ, SNDMZ);
 #endif
 #ifdef tahoe
 	if (nl[SNVX].n_type != 0)
-		ttytype(tty, "vx", SVX, SNVX);
+		ttytype_oldcf("vx", SVX, SNVX);
 	if (nl[SNMP].n_type != 0)
-		ttytype(tty, "mp", SMP, SNMP);
+		ttytype_oldcf("mp", SMP, SNMP);
 #endif
 #ifdef hp300
 	if (nl[SNITE].n_type != 0)
-		ttytype(tty, "ite", SITE, SNITE);
+		ttytype_oldcf("ite", SITE, SNITE);
 	if (nl[SNDCA].n_type != 0)
-		ttytype(tty, "dca", SDCA, SNDCA);
+		ttytype_oldcf("dca", SDCA, SNDCA);
 	if (nl[SNDCM].n_type != 0)
-		ttytype(tty, "dcm", SDCM, SNDCM);
+		ttytype_oldcf("dcm", SDCM, SNDCM);
 	if (nl[SNDCL].n_type != 0)
-		ttytype(tty, "dcl", SDCL, SNDCL);
+		ttytype_oldcf("dcl", SDCL, SNDCL);
 #endif
 #ifdef mips
 	if (nl[SNDC].n_type != 0)
-		ttytype(tty, "dc", SDC, SNDC);
+		ttytype_oldcf("dc", SDC, SNDC);
+#endif
+#ifdef i386
+	if (nl[SCPC].n_type != 0)
+		ttytype_newcf("pc", SPC, SCPC);
+	if (nl[SCCOM].n_type != 0)
+		ttytype_newcf("com", SCOM, SCCOM);
 #endif
 	if (nl[SNPTY].n_type != 0)
-		ttytype(tty, "pty", SPTY, SNPTY);
+		ttytype_oldcf("pty", SPTY, SNPTY);
 }
 
 void
-ttytype(tty, name, type, number)
-	register struct tty *tty;
+ttytype_oldcf(name, type, number)
 	char *name;
 	int type, number;
 {
-	register struct tty *tp;
 	int ntty;
 
-	if (tty == NULL)
-		return;
 	KGET(number, ntty);
+	ttytype(name, type, ntty);
+}
+
+void
+ttytype_newcf(name, type, config)
+	char *name;
+	int type, config;
+{
+	struct cfdriver cf;
+	void **cd;
+	int i;
+
+	KGET(config, cf);
+	cd = malloc(cf.cd_ndevs * sizeof(void *));
+	if (!cd)
+		return;
+	KGET2(cf.cd_devs, cd, cf.cd_ndevs * sizeof(void *), "cfdevicep");
+	for (i = cf.cd_ndevs - 1; i >= 0; --i)
+		if (cd[i])
+			break;
+	free(cd);
+	ttytype(name, type, i + 1);
+}
+
+void
+ttytype(name, type, number)
+	char *name;
+	int type, number;
+{
+	static struct tty **ttyp;
+	static int nttyp;
+	static struct tty tty;
+	int ntty = number, i;
+
 	(void)printf("%d %s %s\n", ntty, name, (ntty == 1) ? "line" : "lines");
-	if (ntty > ttyspace) {
-		ttyspace = ntty;
-		if ((tty = realloc(tty, ttyspace * sizeof(*tty))) == 0)
+	if (ntty > nttyp) {
+		nttyp = ntty;
+		if ((ttyp = realloc(ttyp, nttyp * sizeof(*ttyp))) == 0)
 			err(1, NULL);
 	}
-	KGET1(type, tty, ntty * sizeof(struct tty), "tty structs");
+	KGET1(type, ttyp, nttyp * sizeof(*ttyp), "tty pointers");
 	(void)printf(hdr);
-	for (tp = tty; tp < &tty[ntty]; tp++)
-		ttyprt(tp, tp - tty);
+	for (i = 0; i < ntty; i++) {
+		if (ttyp[i] == NULL)
+			continue;
+		KGET2(ttyp[i], &tty, sizeof(struct tty), "tty struct");
+		ttyprt(&tty, i);
+	}
 }
 
 struct {
@@ -809,9 +865,9 @@ ttyprt(tp, line)
 	   (name = devname(tp->t_dev, S_IFCHR)) == NULL)
 		(void)printf("%7d ", line); 
 	else
-		(void)printf("%7s ", name);
-	(void)printf("%2d %3d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
-	(void)printf("%3d %4d %3d %3d ", tp->t_outq.c_cc, 
+		(void)printf("%-7s ", name);
+	(void)printf("%3d %4d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
+	(void)printf("%4d %4d %3d %6d ", tp->t_outq.c_cc, 
 		tp->t_hiwat, tp->t_lowat, tp->t_column);
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
@@ -819,7 +875,7 @@ ttyprt(tp, line)
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
-	(void)printf("%-4s %6x", state, (u_long)tp->t_session & ~KERNBASE);
+	(void)printf("%-6s %6x", state, (u_long)tp->t_session & ~KERNBASE);
 	pgid = 0;
 	if (tp->t_pgrp != NULL)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
@@ -833,6 +889,9 @@ ttyprt(tp, line)
 		break;
 	case SLIPDISC:
 		(void)printf("slip\n");
+		break;
+	case PPPDISC:
+		(void)printf("ppp\n");
 		break;
 	default:
 		(void)printf("%d\n", tp->t_line);
