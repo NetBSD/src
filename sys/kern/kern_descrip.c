@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.116 2003/11/01 18:47:16 provos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.117 2003/11/09 07:52:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.116 2003/11/01 18:47:16 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.117 2003/11/09 07:52:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,6 +302,11 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 		}
 		if (new != i)
 			panic("dup2: fdalloc");
+	} else if (fdp->fd_ofiles[new] == NULL) {
+		/*
+		 * Mark `new' slot "used" only if it was empty.
+		 */
+		fd_used(fdp, new);
 	}
 
 	/*
@@ -520,6 +525,7 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 	 * the file may block.
 	 *
 	 * Note: `old' is already used for us.
+	 * Note: Caller already marked `new' slot "used".
 	 */
 	delfp = fdp->fd_ofiles[new];
 
@@ -527,12 +533,6 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
 	fp->f_count++;
-	/*
-	 * Note, don't have to mark it "used" in the table if there
-	 * was already a file in the `new' slot.
-	 */
-	if (delfp == NULL)
-		fd_used(fdp, new);
 	*retval = new;
 	FILE_UNUSE(fp, p);
 
