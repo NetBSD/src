@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.17 2003/08/29 04:00:35 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.18 2003/08/29 04:03:09 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,9 +39,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#198 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#199 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.20 2003/06/06 23:53:39 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.21 2003/06/23 22:06:34 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.17 2003/08/29 04:00:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.18 2003/08/29 04:03:09 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -402,7 +402,7 @@ ahd_flush_qoutfifo(struct ahd_softc *ahd)
 	 * Wait for any inprogress DMA to complete and clear DMA state
 	 * if this if for an SCB in the qinfifo.
 	 */
-	while ((ccscbctl = ahd_inb(ahd, CCSCBCTL) & (CCARREN|CCSCBEN)) != 0) {
+	while (((ccscbctl = ahd_inb(ahd, CCSCBCTL)) & (CCARREN|CCSCBEN)) != 0) {
 
 		if ((ccscbctl & (CCSCBDIR|CCARREN)) == (CCSCBDIR|CCARREN)) {
 			if ((ccscbctl & ARRDONE) != 0)
