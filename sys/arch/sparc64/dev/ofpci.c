@@ -1,4 +1,4 @@
-/*	$NetBSD: ofpci.c,v 1.1 2002/05/06 19:39:51 eeh Exp $	*/
+/*	$NetBSD: ofpci.c,v 1.2 2002/05/06 22:20:07 eeh Exp $	*/
 
 /*
  * Copyright (c) 2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofpci.c,v 1.1 2002/05/06 19:39:51 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofpci.c,v 1.2 2002/05/06 22:20:07 eeh Exp $");
 
 #include "opt_pci.h"
 
@@ -70,11 +70,6 @@ extern int	pcisubmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfattach ofpci_ca = {
 	sizeof(struct ofpci_softc), ofpcimatch, ofpciattach
-};
-
-/* Provide pci_cd to make the pci driver happy since it's not in ioconf.c. */
-struct cfdriver pci_cd = {
-	NULL, "pci", DV_DULL
 };
 
 static char *getname(int );
@@ -211,7 +206,7 @@ ofpciattach(parent, self, aux)
 	int bus;
 	pci_chipset_tag_t pc;
 	int node;
-	static const char *sep = "";
+	const char *sep = "";
 
 DPRINTF(1, ("ofpciattach: entry\n"));
 	printf("\n");
