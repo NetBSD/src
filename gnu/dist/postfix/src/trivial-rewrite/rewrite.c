@@ -1,3 +1,5 @@
+/*	$NetBSD: rewrite.c,v 1.1.1.6 2004/05/31 00:24:54 heas Exp $	*/
+
 /*++
 /* NAME
 /*	rewrite 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: debug_process.h,v 1.1.1.2 2004/05/31 00:24:29 heas Exp $	*/
+
 #ifndef _DEBUG_PROCESS_H_INCLUDED_
 #define _DEBUG_PROCESS_H_INCLUDED_
 

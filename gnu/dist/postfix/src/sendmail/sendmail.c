@@ -1,3 +1,5 @@
+/*	$NetBSD: sendmail.c,v 1.1.1.9 2004/05/31 00:24:45 heas Exp $	*/
+
 /*++
 /* NAME
 /*	sendmail 1

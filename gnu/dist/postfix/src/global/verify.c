@@ -1,3 +1,5 @@
+/*	$NetBSD: verify.c,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+
 /*++
 /* NAME
 /*	verify 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: cleanup_message.c,v 1.1.1.8 2004/05/31 00:24:27 heas Exp $	*/
+
 /*++
 /* NAME
 /*	cleanup_message 3

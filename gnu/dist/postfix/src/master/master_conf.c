@@ -1,3 +1,5 @@
+/*	$NetBSD: master_conf.c,v 1.1.1.3 2004/05/31 00:24:38 heas Exp $	*/
+
 /*++
 /* NAME
 /*	master_conf 3

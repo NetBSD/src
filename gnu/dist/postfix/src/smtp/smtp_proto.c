@@ -1,3 +1,5 @@
+/*	$NetBSD: smtp_proto.c,v 1.1.1.8 2004/05/31 00:24:47 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtp_proto 3

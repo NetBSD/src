@@ -9351,3 +9351,8 @@ Apologies for any names omitted.
 	overshoot limit (default: smtpd_recipient_overshoot_limit
 	= 1000).  Solution in cooperation with Victor Duchovni.
 	Files:  smtpd/smtpd.c, smtpd/smtpd_state.c, smtpd/smtpd.h.
+
+20040503
+
+	Bugfix: missing "sasl enabled" guard in the SMTPD policy
+	client.  File: smtpd/smtpd_check.c.

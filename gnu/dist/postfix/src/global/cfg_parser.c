@@ -1,3 +1,5 @@
+/*	$NetBSD: cfg_parser.c,v 1.1.1.2 2004/05/31 00:24:29 heas Exp $	*/
+
 /*++
 /* NAME
 /*	cfg_parser 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: master_flow.c,v 1.1.1.2 2004/05/31 00:24:38 heas Exp $	*/
+
 /* System library. */
 
 #include <sys_defs.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: local_expand.c,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	local_expand 3
