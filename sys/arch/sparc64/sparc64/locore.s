@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 2001/07/01 09:25:33 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 2001/07/04 05:57:39 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -336,7 +336,7 @@
 1:												     \
 	sethi	%hi(CURPROC), %l4;			/* Use curproc */			     \
 	LDPTR	[%l4 + %lo(CURPROC)], %l5;							     \
-	brz,pn	%l5, 0b;				/* If curproc is NULL need to use proc0 */   \
+	brz,pn	%l5, 0b; nop;				/* If curproc is NULL need to use proc0 */   \
 2:												     \
 	LDPTR	[%l5 + P_FPSTATE], %l6;			/* Save old fpstate */			     \
 	STPTR	%l0, [%l5 + P_FPSTATE];			/* Insert new fpstate */		     \
@@ -9413,9 +9413,10 @@ ENTRY(bcopy) /* src, dest, size */
 #endif
 	 cmp	%o2, BCOPY_SMALL
 Lbcopy_start:
-	bge	Lbcopy_fancy	! if >= this many, go be fancy.
-	 btst	7, %o0		! (part of being fancy)
+	bge,pt	%icc, 2f	! if >= this many, go be fancy.
+	 cmp	%o2, 256
 
+	mov	%o1, %o5	! Save memcpy return value
 	/*
 	 * Not much to copy, just do it a byte at a time.
 	 */
@@ -9431,158 +9432,419 @@ Lbcopy_start:
 	 inc	%o1
 1:
 	retl
-	 nop
+	 mov	%o5, %o0
 	NOTREACHED
 
 	/*
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
-Lbcopy_fancy:
-	! check for common case first: everything lines up.
-!	btst	7, %o0		! done already
-	bne	1f
-	 EMPTY
-	btst	7, %o1
-	be,a	Lbcopy_doubles
-	 dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
-1:
+2:
 #if 0
 	! If it is big enough, use VIS instructions
-	cmp	%o2, 256
 	bge	Lbcopy_block
+	 nop
 #endif
-	! If the low bits match, we can make these line up.
-	 xor	%o0, %o1, %o3	! t = src ^ dst;
-	btst	1, %o3		! if (t & 1) {
-	be	1f
-	 btst	1, %o0		! [delay slot: if (src & 1)]
+Lbcopy_fancy:
 
-	! low bits do not match, must copy by bytes.
-0:
-	ldsb	[%o0], %o4	!	do {
-	inc	%o0		!		(++dst)[-1] = *src++;
-	inc	%o1
-	deccc	%o2
-	bnz	0b		!	} while (--len != 0);
-	 stb	%o4, [%o1 - 1]
-	retl
-	 nop
-	NOTREACHED
+	!!
+	!! First align the output to a 8-byte entity
+	!! 
 
-	! lowest bit matches, so we can copy by words, if nothing else
-1:
-	be	1f		! if (src & 1) {
-	 btst	2, %o3		! [delay slot: if (t & 2)]
+	save	%sp, -CC64FSZ, %sp
+	
+	mov	%i0, %o0
+	mov	%i1, %o1
+	
+	mov	%i2, %o2
+	btst	1, %o1
+	
+	bz,pt	%icc, 4f
+	 btst	2, %o1
+	ldub	[%o0], %o4				! Load 1st byte
+	
+	deccc	1, %o2
+	ble,pn	%xcc, Lbcopy_finish			! XXXX
+	 inc	1, %o0
+	
+	stb	%o4, [%o1]				! Store 1st byte
+	inc	1, %o1					! Update address
+	btst	2, %o1
+4:	
+	bz,pt	%icc, 4f
+	
+	 btst	1, %o0
+	bz,a	1f
+	 lduh	[%o0], %o4				! Load short
 
-	! although low bits match, both are 1: must copy 1 byte to align
-	ldsb	[%o0], %o4	!	*dst++ = *src++;
-	stb	%o4, [%o1]
-	inc	%o0
-	inc	%o1
-	dec	%o2		!	len--;
-	btst	2, %o3		! } [if (t & 2)]
-1:
-	be	1f		! if (t & 2) {
-	 btst	2, %o0		! [delay slot: if (src & 2)]
-	dec	2, %o2		!	len -= 2;
-0:
-	ldsh	[%o0], %o4	!	do {
-	sth	%o4, [%o1]	!		*(short *)dst = *(short *)src;
-	inc	2, %o0		!		dst += 2, src += 2;
-	deccc	2, %o2		!	} while ((len -= 2) >= 0);
-	bge	0b
-	 inc	2, %o1
-	b	Lbcopy_mopb	!	goto mop_up_byte;
-	 btst	1, %o2		! } [delay slot: if (len & 1)]
-	NOTREACHED
+	ldub	[%o0], %o4				! Load bytes
+	
+	ldub	[%o0+1], %o3
+	sllx	%o4, 8, %o4
+	or	%o3, %o4, %o4
+	
+1:	
+	deccc	2, %o2
+	ble,pn	%xcc, Lbcopy_finish			! XXXX
+	 inc	2, %o0
+	sth	%o4, [%o1]				! Store 1st short
+	
+	inc	2, %o1
+4:
+	btst	4, %o1
+	bz,pt	%xcc, 4f
+	
+	 btst	3, %o0
+	bz,a,pt	%xcc, 1f
+	 lduw	[%o0], %o4				! Load word -1
 
-	! low two bits match, so we can copy by longwords
-1:
-	be	1f		! if (src & 2) {
-	 btst	4, %o3		! [delay slot: if (t & 4)]
-
-	! although low 2 bits match, they are 10: must copy one short to align
-	ldsh	[%o0], %o4	!	(*short *)dst = *(short *)src;
-	sth	%o4, [%o1]
-	inc	2, %o0		!	dst += 2;
-	inc	2, %o1		!	src += 2;
-	dec	2, %o2		!	len -= 2;
-	btst	4, %o3		! } [if (t & 4)]
-1:
-	be	1f		! if (t & 4) {
-	 btst	4, %o0		! [delay slot: if (src & 4)]
-	dec	4, %o2		!	len -= 4;
-0:
-	ld	[%o0], %o4	!	do {
-	st	%o4, [%o1]	!		*(int *)dst = *(int *)src;
-	inc	4, %o0		!		dst += 4, src += 4;
-	deccc	4, %o2		!	} while ((len -= 4) >= 0);
-	bge	0b
-	 inc	4, %o1
-	b	Lbcopy_mopw	!	goto mop_up_word_and_byte;
-	 btst	2, %o2		! } [delay slot: if (len & 2)]
-	NOTREACHED
-
-	! low three bits match, so we can copy by doublewords
-1:
-	be	1f		! if (src & 4) {
-	 dec	8, %o2		! [delay slot: len -= 8]
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	st	%o4, [%o1]
-	inc	4, %o0		!	dst += 4, src += 4, len -= 4;
+	btst	1, %o0
+	bz,a,pt	%icc, 2f
+	 lduh	[%o0], %o4
+	
+	ldub	[%o0], %o4
+	
+	lduh	[%o0+1], %o3
+	sllx	%o4, 16, %o4
+	or	%o4, %o3, %o4
+	
+	ldub	[%o0+3], %o3
+	sllx	%o4, 8, %o4
+	ba,pt	%icc, 1f
+	 or	%o4, %o3, %o4
+	
+2:
+	lduh	[%o0+2], %o3
+	sllx	%o4, 16, %o4
+	or	%o4, %o3, %o4
+	
+1:	
+	deccc	4, %o2
+	ble,pn	%xcc, Lbcopy_finish		! XXXX
+	 inc	4, %o0
+	
+	st	%o4, [%o1]				! Store word
 	inc	4, %o1
-	dec	4, %o2		! }
+4:
+	!!
+	!! We are now 32-bit aligned in the dest.
+	!!
+Lbcopy__common:	
+
+	and	%o0, 7, %o4				! Shift amount
+	andn	%o0, 7, %o0				! Source addr
+	
+	brz,pt	%o4, Lbcopy_noshift8			! No shift version...
+
+	 sllx	%o4, 3, %o4				! In bits
+	mov	8<<3, %o3
+	
+	ldx	[%o0], %l0				! Load word -1
+	sub	%o3, %o4, %o3				! Reverse shift
+	deccc	16*8, %o2				! Have enough room?
+	
+	sllx	%l0, %o4, %l0
+	bl,pn	%xcc, 2f
+	 and	%o3, 0x38, %o3
+Lbcopy_unrolled8:
+
+	/*
+	 * This is about as close to optimal as you can get, since
+	 * the shifts require EU0 and cannot be paired, and you have
+	 * 3 dependent operations on the data.
+	 */ 
+
+!	ldx	[%o0+0*8], %l0				! Already done
+!	sllx	%l0, %o4, %l0				! Already done
+	ldx	[%o0+1*8], %l1
+	ldx	[%o0+2*8], %l2
+	ldx	[%o0+3*8], %l3
+	ldx	[%o0+4*8], %l4
+	ldx	[%o0+5*8], %l5
+	ldx	[%o0+6*8], %l6
+	ba,pt	%icc, 1f
+	 ldx	[%o0+7*8], %l7
+	.align	8
 1:
-Lbcopy_doubles:
-	ldx	[%o0], %g5	! do {
-	stx	%g5, [%o1]	!	*(double *)dst = *(double *)src;
-	inc	8, %o0		!	dst += 8, src += 8;
-	deccc	8, %o2		! } while ((len -= 8) >= 0);
-	bge	Lbcopy_doubles
+	srlx	%l1, %o3, %g1
+	inc	8*8, %o0
+	
+	sllx	%l1, %o4, %l1
+	or	%g1, %l0, %o5
+	ldx	[%o0+0*8], %l0
+	
+	stx	%o5, [%o1+0*8]
+	srlx	%l2, %o3, %g1
+
+	sllx	%l2, %o4, %l2
+	or	%g1, %l1, %o5
+	ldx	[%o0+1*8], %l1
+	
+	stx	%o5, [%o1+1*8]
+	srlx	%l3, %o3, %g1
+	
+	sllx	%l3, %o4, %l3
+	or	%g1, %l2, %o5
+	ldx	[%o0+2*8], %l2
+	
+	stx	%o5, [%o1+2*8]
+	srlx	%l4, %o3, %g1
+	
+	sllx	%l4, %o4, %l4	
+	or	%g1, %l3, %o5
+	ldx	[%o0+3*8], %l3
+	
+	stx	%o5, [%o1+3*8]
+	srlx	%l5, %o3, %g1
+	
+	sllx	%l5, %o4, %l5
+	or	%g1, %l4, %o5
+	ldx	[%o0+4*8], %l4
+	
+	stx	%o5, [%o1+4*8]
+	srlx	%l6, %o3, %g1
+	
+	sllx	%l6, %o4, %l6
+	or	%g1, %l5, %o5
+	ldx	[%o0+5*8], %l5
+	
+	stx	%o5, [%o1+5*8]
+	srlx	%l7, %o3, %g1
+	
+	sllx	%l7, %o4, %l7
+	or	%g1, %l6, %o5
+	ldx	[%o0+6*8], %l6
+	
+	stx	%o5, [%o1+6*8]
+	srlx	%l0, %o3, %g1
+	deccc	8*8, %o2				! Have enough room?
+	
+	sllx	%l0, %o4, %l0				! Next loop
+	or	%g1, %l7, %o5
+	ldx	[%o0+7*8], %l7
+	
+	stx	%o5, [%o1+7*8]
+	bge,pt	%xcc, 1b
+	 inc	8*8, %o1
+
+Lbcopy_unrolled8_cleanup:	
+	!!
+	!! Finished 8 byte block, unload the regs.
+	!! 
+	srlx	%l1, %o3, %g1
+	inc	7*8, %o0
+	
+	sllx	%l1, %o4, %l1
+	or	%g1, %l0, %o5
+		
+	stx	%o5, [%o1+0*8]
+	srlx	%l2, %o3, %g1
+	
+	sllx	%l2, %o4, %l2
+	or	%g1, %l1, %o5
+		
+	stx	%o5, [%o1+1*8]
+	srlx	%l3, %o3, %g1
+	
+	sllx	%l3, %o4, %l3
+	or	%g1, %l2, %o5
+		
+	stx	%o5, [%o1+2*8]
+	srlx	%l4, %o3, %g1
+	
+	sllx	%l4, %o4, %l4	
+	or	%g1, %l3, %o5
+		
+	stx	%o5, [%o1+3*8]
+	srlx	%l5, %o3, %g1
+	
+	sllx	%l5, %o4, %l5
+	or	%g1, %l4, %o5
+		
+	stx	%o5, [%o1+4*8]
+	srlx	%l6, %o3, %g1
+	
+	sllx	%l6, %o4, %l6
+	or	%g1, %l5, %o5
+		
+	stx	%o5, [%o1+5*8]
+	srlx	%l7, %o3, %g1
+	
+	sllx	%l7, %o4, %l7
+	or	%g1, %l6, %o5
+		
+	stx	%o5, [%o1+6*8]
+	inc	7*8, %o1
+	
+	mov	%l7, %l0				! Save our unused data
+	dec	7*8, %o2
+2:
+	inccc	16*8, %o2
+	bz,pn	%icc, Lbcopy_complete
+	
+	!! Unrolled 8 times
+Lbcopy_aligned8:	
+!	ldx	[%o0], %l0				! Already done
+!	sllx	%l0, %o4, %l0				! Shift high word
+	
+	 deccc	8, %o2					! Pre-decrement
+	bl,pn	%xcc, Lbcopy_finish
+1:
+	ldx	[%o0+8], %l1				! Load word 0
+	inc	8, %o0
+	
+	srlx	%l1, %o3, %o5
+	or	%o5, %l0, %o5				! Combine
+	
+	stx	%o5, [%o1]				! Store result
 	 inc	8, %o1
+	
+	deccc	8, %o2
+	bge,pn	%xcc, 1b
+	 sllx	%l1, %o4, %l0	
 
-	! check for a usual case again (save work)
-	btst	7, %o2		! if ((len & 7) == 0)
-	be	Lbcopy_done	!	goto bcopy_done;
+	btst	7, %o2					! Done?
+	bz,pt	%xcc, Lbcopy_complete
 
-	 btst	4, %o2		! if ((len & 4)) == 0)
-	be	Lbcopy_mopw	!	goto mop_up_word_and_byte;
-	 btst	2, %o2		! [delay slot: if (len & 2)]
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	st	%o4, [%o1]
-	inc	4, %o0		!	dst += 4;
-	inc	4, %o1		!	src += 4;
-	btst	2, %o2		! } [if (len & 2)]
-
-1:
-	! mop up trailing word (if present) and byte (if present).
-Lbcopy_mopw:
-	be	Lbcopy_mopb	! no word, go mop up byte
-	 btst	1, %o2		! [delay slot: if (len & 1)]
-	ldsh	[%o0], %o4	! *(short *)dst = *(short *)src;
-	be	Lbcopy_done	! if ((len & 1) == 0) goto done;
-	 sth	%o4, [%o1]
-	ldsb	[%o0 + 2], %o4	! dst[2] = src[2];
-	retl
-	 stb	%o4, [%o1 + 2]
-	NOTREACHED
-
-	! mop up trailing byte (if present).
-Lbcopy_mopb:
-	bne,a	1f
-	 ldsb	[%o0], %o4
-
-Lbcopy_done:
-	retl
+	!!
+	!! Loadup the last dregs into %l0 and shift it into place
+	!! 
+	 srlx	%o3, 3, %o5				! # bytes in %l0
+	dec	8, %o5					!  - 8
+	!! n-8 - (by - 8) -> n - by
+	subcc	%o2, %o5, %g0				! # bytes we need
+	ble,pt	%icc, Lbcopy_finish
 	 nop
-1:
-	retl
-	 stb	%o4,[%o1]
+	ldx	[%o0+8], %l1				! Need another word
+	srlx	%l1, %o3, %l1
+	ba,pt	%icc, Lbcopy_finish
+	 or	%l0, %l1, %l0				! All loaded up.
+	
+Lbcopy_noshift8:
+	deccc	8*8, %o2				! Have enough room?
+	bl,pn	%xcc, 2f
+	 nop
+	ba,pt	%icc, 1f
+	 nop
+	.align	32
+1:	
+	ldx	[%o0+0*8], %l0
+	ldx	[%o0+1*8], %l1
+	ldx	[%o0+2*8], %l2
+	ldx	[%o0+3*8], %l3
+	stx	%l0, [%o1+0*8]
+	stx	%l1, [%o1+1*8]
+	stx	%l2, [%o1+2*8]
+	stx	%l3, [%o1+3*8]
 
-#if 1
+	
+	ldx	[%o0+4*8], %l4
+	ldx	[%o0+5*8], %l5
+	ldx	[%o0+6*8], %l6
+	ldx	[%o0+7*8], %l7
+	inc	8*8, %o0
+	stx	%l4, [%o1+4*8]
+	stx	%l5, [%o1+5*8]
+	deccc	8*8, %o2
+	stx	%l6, [%o1+6*8]
+	stx	%l7, [%o1+7*8]
+	stx	%l2, [%o1+2*8]
+	bge,pt	%xcc, 1b
+	 inc	8*8, %o1
+2:
+	inc	8*8, %o2
+1:	
+	deccc	8, %o2
+	bl,pn	%icc, 1f				! < 0 --> sub word
+	 nop
+	ldx	[%o0], %o5
+	inc	8, %o0
+	stx	%o5, [%o1]
+	bg,pt	%icc, 1b				! Exactly 0 --> done
+	 inc	8, %o1
+1:
+	btst	7, %o2					! Done?
+	bz,pt	%xcc, Lbcopy_complete
+	 clr	%o4
+	ldx	[%o0], %l0
+Lbcopy_finish:
+	
+	brz,pn	%o2, 2f					! 100% complete?
+	 cmp	%o2, 8					! Exactly 8 bytes?
+	bz,a,pn	%xcc, 2f
+	 stx	%l0, [%o1]
+
+	btst	4, %o2					! Word store?
+	bz	%xcc, 1f
+	 srlx	%l0, 32, %o5				! Shift high word down
+	stw	%o5, [%o1]
+	inc	4, %o1
+	mov	%l0, %o5				! Operate on the low bits
+1:
+	btst	2, %o2
+	mov	%o5, %l0
+	bz	1f
+	 srlx	%l0, 16, %o5
+	
+	sth	%o5, [%o1]				! Store short
+	inc	2, %o1
+	mov	%l0, %o5				! Operate on low bytes
+1:
+	mov	%o5, %l0
+	btst	1, %o2					! Byte aligned?
+	bz	2f
+	 srlx	%l0, 8, %o5
+
+	stb	%o5, [%o1]				! Store last byte
+	inc	1, %o1					! Update address
+2:	
+Lbcopy_complete:
+#ifdef DEBUG
+	!!
+	!! verify copy success.
+	!! 
+
+	mov	%i0, %o2
+	mov	%i1, %o4
+	mov	%i2, %l4
+0:	
+	ldub	[%o2], %o1
+	inc	%o2
+	ldub	[%o4], %o3
+	inc	%o4
+	cmp	%o3, %o1
+	bnz	1f
+	 dec	%l4
+	brnz	%l4, 0b
+	 nop
+	ba	2f
+	 nop
+
+1:
+	set	0f, %o0
+	call	printf
+	 sub	%i2, %l4, %o5
+	set	1f, %o0
+	mov	%i0, %o1
+	mov	%i1, %o2
+	call	printf
+	 mov	%i2, %o3
+	ta	1
+	.data
+0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\n"
+1:	.asciz	"bcopy(%p, %p, %lx)\n"
+	.align 8
+	.text
+2:	
+#endif
+	ret
+	 restore %i1, %g0, %o0
+
+#if 0
 
 /*
  * Block copy.  Useful for >256 byte copies.
+ *
+ * It seems the integer version is always faster.  Go figure.
  */
 	
 Lbcopy_block:
@@ -9590,7 +9852,7 @@ Lbcopy_block:
 	rdpr	%tba, %o3
 	set	_C_LABEL(trapbase), %o5
 	sub	%o3, %o5, %o3
-	brnz,pn	%o3, Lbcopy_start	! No, then don't use block load/store
+	brnz,pn	%o3, Lbcopy_fancy	! No, then don't use block load/store
 	 nop
 #ifdef _KERNEL
 /*
@@ -9677,6 +9939,7 @@ Lbcopy_block:
 	sethi	%hi(CURPROC), %l4			! Use curproc
 	LDPTR	[%l4 + %lo(CURPROC)], %l5
 	brz,pn	%l5, 0b					! If curproc is NULL need to use proc0
+	 nop
 2:
 	LDPTR	[%l5 + P_FPSTATE], %l6			! Save old fpstate
 	STPTR	%l0, [%l5 + P_FPSTATE]			! Insert new fpstate
@@ -10679,6 +10942,44 @@ Lbcopy_blockfinish:
 	inc	1, %o1					! Update address
 2:
 	membar	#Sync
+#ifdef DEBUG
+	!!
+	!! verify copy success.
+	!! 
+
+	mov	%i0, %o2
+	mov	%i1, %o4
+	mov	%i2, %l4
+0:	
+	ldub	[%o2], %o1
+	inc	%o2
+	ldub	[%o4], %o3
+	inc	%o4
+	cmp	%o3, %o1
+	bnz	1f
+	 dec	%l4
+	brnz	%l4, 0b
+	 nop
+	ba	2f
+	 nop
+
+1:
+	set	0f, %o0
+	call	prom_printf
+	 sub	%i2, %l4, %o5
+	set	1f, %o0
+	mov	%i0, %o1
+	mov	%i1, %o2
+	call	prom_printf
+	 mov	%i2, %o3
+	ta	1
+	.data
+0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\n"
+1:	.asciz	"bcopy(%p, %p, %lx)\n"
+	_ALIGN
+	.text
+2:	
+#endif
 #ifdef _KERNEL		
 /*
  * Weve saved our possible fpstate, now disable the fpu
@@ -10868,6 +11169,7 @@ Lbzero_small:
 	ba,a,pt	%icc, Lbzero_done
 	 nop				! XXX spitfire bug?
 
+#if 0
 Lbzero_block:
 	!! Make sure our trap table is installed
 	rdpr	%tba, %o3
@@ -11002,6 +11304,7 @@ Lbzero_block:
 	addcc	%i1, 56, %i1	! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore
+#endif
 #endif
 
 /*
