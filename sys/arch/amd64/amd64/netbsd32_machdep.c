@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.4 2003/09/26 18:04:11 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5 2003/09/26 21:28:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2003/09/26 18:04:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.5 2003/09/26 21:28:45 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_user_ldt.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.4 2003/09/26 18:04:11 christo
 #include <machine/sysarch.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 /* Provide a the name of the architecture we're emulating */
