@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ttold.c,v 1.1 2001/02/06 16:38:00 eeh Exp $	 */
+/*	$NetBSD: svr4_32_ttold.c,v 1.2 2001/02/18 00:27:20 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,15 +52,15 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/svr4/svr4_types.h>
-#include <compat/svr4/svr4_util.h>
-#include <compat/svr4/svr4_signal.h>
-#include <compat/svr4/svr4_lwp.h>
-#include <compat/svr4/svr4_ucontext.h>
-#include <compat/svr4/svr4_syscallargs.h>
-#include <compat/svr4/svr4_stropts.h>
-#include <compat/svr4/svr4_ttold.h>
-#include <compat/svr4/svr4_ioctl.h>
+#include <compat/svr4_32/svr4_32_types.h>
+#include <compat/svr4_32/svr4_32_util.h>
+#include <compat/svr4_32/svr4_32_signal.h>
+#include <compat/svr4_32/svr4_32_lwp.h>
+#include <compat/svr4_32/svr4_32_ucontext.h>
+#include <compat/svr4_32/svr4_32_syscallargs.h>
+#include <compat/svr4_32/svr4_32_stropts.h>
+#include <compat/svr4_32/svr4_32_ttold.h>
+#include <compat/svr4_32/svr4_32_ioctl.h>
 
 static void svr4_tchars_to_bsd_tchars __P((const struct svr4_tchars *st,
 					   struct tchars *bt));
@@ -195,7 +195,7 @@ bsd_ltchars_to_svr4_ltchars(bl, sl)
 
 
 int
-svr4_ttold_ioctl(fp, p, retval, fd, cmd, data)
+svr4_32_ttold_ioctl(fp, p, retval, fd, cmd, data)
 	struct file *fp;
 	struct proc *p;
 	register_t *retval;
