@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.137 2001/09/17 09:07:53 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.138 2001/09/18 11:07:33 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -286,7 +286,7 @@ product RATOC REX_R280		0x1	RATOC REX-R280
 /* Samsung */
 product	SAMSUNG SWL_2000N	0x02	Samsung MagicLAN SWL-2000N
 
-/* Samsung */
+/* Symbol */
 product	SYMBOL LA4100		0x0001	Symbol Spectrum24 LA4100 Series WLAN
 
 /* Telecom Device */
