@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.91 2004/07/23 06:12:16 lukem Exp $
+#	$NetBSD: security,v 1.92 2004/09/28 15:03:58 erh Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -599,9 +599,12 @@ fi
 #
 if checkyesno check_devices; then
 	> $ERR
-	(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
-			-o -fstype null \
-			-o -fstype procfs \) -a -prune -o \
+	(
+	# Turn "foo !bar bax" into "-fstype foo -o ! -fstype bar -o -fstype bax"
+	ignfstypes=`echo $check_devices_ignore_fstypes | \
+		sed -e's/\(!*\)\([^[:space:]]\{1,\}\)/-o \1 -fstype \2/g' \
+		    -e's/^-o //'`
+	find / \( $ignfstypes \) -a -prune -o \
 	    \( \( -perm -u+s -a ! -type d \) -o \
 	       \( -perm -g+s -a ! -type d \) -o \
 	       -type b -o -type c \) -print0 | \
