@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.423 2004/08/30 11:53:03 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.424 2004/08/30 14:08:50 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6946,7 +6946,7 @@ sys/dev/cardbus/cardbusdevs			patch
 sys/dev/cardbus/cardbusdevs.h			regen
 sys/dev/cardbus/cardbusdevs_data.h		regen
 sys/dev/cardbus/files.cardbus			1.23
-sys/dev/cardbus/njs_cardbus.c			1.1-1.2
+sys/dev/cardbus/njs_cardbus.c			1.1-1.2 via patch
 sys/dev/ic/ninjascsi32.c			1.1-1.2
 sys/dev/ic/ninjascsi32reg.h			1.1
 sys/dev/ic/ninjascsi32var.h			1.1-1.2
