@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1999/10/11 01:57:46 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.52 1999/11/06 20:23:02 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -341,8 +341,8 @@ setregs(p, pack, stack)
 	struct exec_package *pack;
 	vaddr_t stack;
 {
-	register struct trapframe *tf = p->p_md.md_tf;
-	register struct fpstate *fs;
+	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct fpstate64 *fs;
 	register int64_t tstate;
 
 	/* Don't allow misaligned code by default */
@@ -458,7 +458,7 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigframe *fp;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 	vaddr_t addr; 
 	struct rwindow *oldsp, *newsp;
 #ifdef NOT_DEBUG
@@ -616,7 +616,7 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 #ifndef TRAPWIN
 	int i;
 #endif
@@ -932,13 +932,13 @@ dumpsys()
 	}
 }
 
-void trapdump __P((struct trapframe*));
+void trapdump __P((struct trapframe64*));
 /*
  * dump out a trapframe.
  */
 void
 trapdump(tf)
-	struct trapframe* tf;
+	struct trapframe64* tf;
 {
 	printf("TRAPFRAME: tstate=%x:%x pc=%x:%x npc=%x:%x y=%x\n",
 	       tf->tf_tstate, tf->tf_pc, tf->tf_npc, tf->tf_y);

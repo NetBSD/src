@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.7 1999/10/11 01:57:47 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.8 1999/11/06 20:23:02 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -89,7 +89,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sunos_sigframe *fp;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sunos_sigframe sf;
@@ -210,7 +210,7 @@ sunos_sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct sunos_sigcontext sc, *scp;
 	sigset_t mask;
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8 1999/10/05 03:46:30 eeh Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.9 1999/11/06 20:23:02 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ svr4_getmcontext(p, mc, flags)
 	struct svr4_mcontext *mc;
 	u_long *flags;
 {
-	struct trapframe *tf = (struct trapframe *)p->p_md.md_tf;
+	struct trapframe64 *tf = (struct trapframe64 *)p->p_md.md_tf;
 	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &mc->freg;
@@ -218,11 +218,11 @@ svr4_setmcontext(p, mc, flags)
 	struct svr4_mcontext *mc;
 	u_long flags;
 {
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	svr4_greg_t *r = mc->greg;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &mc->freg;
-	struct fpstate *fps = p->p_md.md_fpstate;
+	struct fpstate64 *fps = p->p_md.md_fpstate;
 #endif
 
 #ifdef DEBUG_SVR4
@@ -246,7 +246,7 @@ svr4_setmcontext(p, mc, flags)
 
 	if (flags & SVR4_UC_CPU) {
 		/* Restore register context. */
-		tf = (struct trapframe *)p->p_md.md_tf;
+		tf = (struct trapframe64 *)p->p_md.md_tf;
 
 		/*
 		 * Only the icc bits in the psr are used, so it need not be
@@ -456,13 +456,13 @@ svr4_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register struct trapframe *tf;
+	register struct trapframe64 *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	vaddr_t oldsp, newsp, addr;
 
-	tf = (struct trapframe *)p->p_md.md_tf;
+	tf = (struct trapframe64 *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
 
 	/* Do we need to jump onto the signal stack? */
@@ -567,7 +567,7 @@ svr4_trap(type, p)
 	struct proc *p;
 {
 	int n;
-	struct trapframe *tf = p->p_md.md_tf;
+	struct trapframe64 *tf = p->p_md.md_tf;
 	extern struct emul emul_svr4;
 
 	if (p->p_emul != &emul_svr4)
