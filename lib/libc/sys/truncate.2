@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,14 +31,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)truncate.2	6.9 (Berkeley) 3/10/91
-.\"	$Id: truncate.2,v 1.6 1994/04/22 00:13:53 jtc Exp $
+.\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 1991
+.Dd June 4, 1993
 .Dt TRUNCATE 2
 .Os BSD 4.2
 .Sh NAME
-.Nm truncate
+.Nm truncate ,
+.Nm ftruncate
 .Nd truncate a file to a specified length
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
