@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.151 2002/04/16 23:09:37 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.152 2002/05/04 17:19:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -517,7 +517,7 @@ _C_LABEL(pgofset):
  *
  *	We have a problem with v9 traps; we have no registers to put the
  *	trap type into.  But we do have a %tt register which already has
- *	that information.  Tryap types in these macros are all dummys.
+ *	that information.  Trap types in these macros are all dummys.
  */
 	/* regular vectored traps */
 #ifdef DEBUG
@@ -527,21 +527,21 @@ _C_LABEL(pgofset):
 #if 0
 #define TRACEWIN	sethi %hi(9f), %l6; ba,pt %icc,traceitwin;\
  or %l6, %lo(9f), %l6; 9:
-#endif
+#endif /* 0 */
 #ifdef TRAPS_USE_IG
 #define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_AG, %pstate;\
  sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
 #else
 #define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate;\
  sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
-#endif
+#endif /* TRAPS_USE_IG */
 #define TRACERELOAD32	ba reload32; nop;
 #define TRACERELOAD64	ba reload64; nop;
 #define TRACEFLT	TRACEME
 #define	VTRAP(type, label) \
 	sethi %hi(label), %g1; ba,pt %icc,traceit;\
  or %g1, %lo(label), %g1; NOTREACHED; TA8
-#else
+#else /* TRAPTRACE */
 #define TRACEME
 #define TRACEWIN	TRACEME
 #define TRACERELOAD32
@@ -551,12 +551,12 @@ _C_LABEL(pgofset):
  or %g1, %lo(1f), %g1; 1:
 #else
 #define TRACEFLT	TRACEME
-#endif
+#endif /* FLTRACE */
 #define	VTRAP(type, label) \
 	sethi %hi(DATA_START),%g1; rdpr %tt,%g2; or %g1,0x28,%g1; b label;\
  stx %g2,[%g1]; NOTREACHED; TA8
-#endif
-#else
+#endif /* TRAPTRACE */
+#else /* DEBUG */
 #ifdef TRAPTRACE
 #define TRACEME		sethi %hi(1f), %g1; ba,pt %icc,traceit;\
  or %g1, %lo(1f), %g1; 1:
@@ -564,21 +564,21 @@ _C_LABEL(pgofset):
 /* Can't use this 'cause we have no clean registers during a spill */
 #define TRACEWIN	sethi %hi(9f), %l6; ba,pt %icc,traceitwin;\
  or %l6, %lo(9f), %l6; 9:
-#endif
+#endif /* 0 */
 #ifdef TRAPS_USE_IG
 #define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_AG, %pstate;\
  sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
 #else
 #define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate;\
  sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
-#endif
+#endif /* TRAPS_USE_IG */
 #define TRACERELOAD32	ba reload32; nop;
 #define TRACERELOAD64	ba reload64; nop;
 #define TRACEFLT	TRACEME
 #define	VTRAP(type, label) \
 	sethi %hi(label), %g1; ba,pt %icc,traceit;\
  or %g1, %lo(label), %g1; NOTREACHED; TA8
-#else
+#else /* TRAPTRACE */
 #define TRACEME
 #define TRACEWIN	TRACEME
 #define TRACERELOAD32
@@ -588,11 +588,11 @@ _C_LABEL(pgofset):
  or %g1, %lo(1f), %g1; 1:
 #else
 #define TRACEFLT	TRACEME
-#endif
+#endif /* FLTRACE */
 #define	VTRAP(type, label) \
 	ba,a,pt	%icc,label; nop; NOTREACHED; TA8
-#endif
-#endif
+#endif /* TRAPTRACE */
+#endif /* DEBUG */
 	/* hardware interrupts (can be linked or made `fast') */
 #define	HARDINT4U(lev) \
 	VTRAP(lev, _C_LABEL(sparc_interrupt))
