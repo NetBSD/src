@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 2000/05/31 05:06:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.61.2.1 2000/07/22 15:50:13 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -876,10 +876,10 @@ ENTRY_NOPROFILE(trap0)
 	tstl	_C_LABEL(astpending)
 	jne	Lrei2
 	tstb	_C_LABEL(ssir)
-	jeq	Ltrap1
+	jne	Ltrap1
 	movw	#SPL1,sr
 	tstb	_C_LABEL(ssir)
-	jne	Lsir1
+	jeq	Lsir1
 Ltrap1:
 	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
@@ -1084,6 +1084,10 @@ ENTRY_NOPROFILE(intrhand_vectored)
  *
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
+ *
+ * Note that 'ssir' is zero when a soft interrupt is pending, otherwise it
+ * is non-zero. This is because it is tested elsewhere using the m68k `tas'
+ * instruction.
  */
 
 BSS(ssir,1)
@@ -1125,7 +1129,7 @@ Laststkadj:
 	rte				| and do real RTE
 Lchksir:
 	tstb	_C_LABEL(ssir)		| SIR pending?
-	jeq	Ldorte			| no, all done
+	jne	Ldorte			| no, all done
 	movl	d0,sp@-			| need a scratch register
 	movw	sp@(4),d0		| get SR
 	andw	#PSL_IPL7,d0		| mask all but IPL
@@ -1134,7 +1138,7 @@ Lchksir:
 Lgotsir:
 	movw	#SPL1,sr		| prevent others from servicing int
 	tstb	_C_LABEL(ssir)		| too late?
-	jeq	Ldorte			| yes, oh well...
+	jne	Ldorte			| yes, oh well...
 	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
@@ -1516,7 +1520,7 @@ ENTRY(spl0)
 	movw	sr,d0			| get old SR for return
 	movw	#PSL_LOWIPL,sr		| restore new SR
 	tstb	_C_LABEL(ssir)		| software interrupt pending?
-	jeq	Lspldone		| no, all done
+	jne	Lspldone		| no, all done
 	subql	#4,sp			| make room for RTE frame
 	movl	sp@(4),sp@(2)		| position return address
 	clrw	sp@(6)			| set frame type 0
