@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.158 2001/12/16 20:44:11 jdolecek Exp $
+.\"	$NetBSD: options.4,v 1.159 2001/12/17 20:09:55 atatat Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1007,6 +1007,16 @@ raster-console output system.
 only available on architectures that use
 .Nm rasops
 for console output.
+.It Cd options INCLUDE_CONFIG_FILE
+Embeds the kernel config file used to define the kernel in the kernel
+binary itself.  The embedded data also includes any files directly
+included by the config file itself, eg,
+.Pa GENERIC.local
+or
+.Pa std.$MACHINE .
+.It Cd options INCLUDE_JUST_CONFIG
+Similar to the above option, but includes just the actual config file,
+not any included files.
 .El
 .Ss Networking Options
 .Bl -ohang
