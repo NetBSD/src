@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.40 1998/08/03 14:38:21 kleink Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.41 1998/09/08 23:50:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -713,16 +713,17 @@ sysctl_doproc(name, namelen, where, sizep)
 	register struct kinfo_proc *dp = (struct kinfo_proc *)where;
 	register int needed = 0;
 	int buflen = where != NULL ? *sizep : 0;
-	int doingzomb;
+	const struct proclist_desc *pd;
 	struct eproc eproc;
 	int error = 0;
 
 	if (namelen != 2 && !(namelen == 1 && name[0] == KERN_PROC_ALL))
 		return (EINVAL);
-	p = allproc.lh_first;
-	doingzomb = 0;
+
+	pd = proclists;
 again:
-	for (; p != 0; p = p->p_list.le_next) {
+	for (p = LIST_FIRST(pd->pd_list); p != NULL;
+	     p = LIST_NEXT(p, p_list)) {
 		/*
 		 * Skip embryonic processes.
 		 */
@@ -778,11 +779,10 @@ again:
 		}
 		needed += sizeof(struct kinfo_proc);
 	}
-	if (doingzomb == 0) {
-		p = zombproc.lh_first;
-		doingzomb++;
+	pd++;
+	if (pd->pd_list != NULL)
 		goto again;
-	}
+
 	if (where != NULL) {
 		*sizep = (caddr_t)dp - where;
 		if (needed > *sizep)

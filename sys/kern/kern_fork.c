@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.47 1998/08/31 23:20:16 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.48 1998/09/08 23:50:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -173,6 +173,10 @@ fork1(p1, flags, retval, rnewprocp)
 	newproc = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
+	 * BEGIN PID ALLOCATION.  (Lock PID allocation variables eventually).
+	 */
+
+	/*
 	 * Find an unused process ID.  We remember a range of unused IDs
 	 * ready to use (from nextpid+1 through pidchecked-1).
 	 */
@@ -188,17 +192,18 @@ retry:
 		pidchecked = 0;
 	}
 	if (nextpid >= pidchecked) {
-		int doingzomb = 0;
+		const struct proclist_desc *pd;
 
 		pidchecked = PID_MAX;
 		/*
-		 * Scan the active and zombie procs to check whether this pid
+		 * Scan the process lists to check whether this pid
 		 * is in use.  Remember the lowest pid that's greater
 		 * than nextpid, so we can avoid checking for a while.
 		 */
-		p2 = allproc.lh_first;
+		pd = proclists;
 again:
-		for (; p2 != 0; p2 = p2->p_list.le_next) {
+		for (p2 = LIST_FIRST(pd->pd_list); p2 != 0;
+		     p2 = LIST_NEXT(p2, p_list)) {
 			while (p2->p_pid == nextpid ||
 			    p2->p_pgrp->pg_id == nextpid ||
 			    p2->p_session->s_sid == nextpid) {
@@ -217,18 +222,33 @@ again:
 			    pidchecked > p2->p_session->s_sid)
 				pidchecked = p2->p_session->s_sid;
 		}
-		if (!doingzomb) {
-			doingzomb = 1;
-			p2 = zombproc.lh_first;
+
+		/*
+		 * If there's another list, scan it.  If we have checked
+		 * them all, we've found one!
+		 */
+		pd++;
+		if (pd->pd_list != NULL)
 			goto again;
-		}
 	}
 
 	nprocs++;
 	p2 = newproc;
-	p2->p_stat = SIDL;			/* protect against others */
+
+	/* Record the pid we've allocated. */
 	p2->p_pid = nextpid;
+
+	/*
+	 * Put the proc on allproc before unlocking PID allocation
+	 * so that waiters won't grab it as soon as we unlock.
+	 */
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
+
+	/*
+	 * END PID ALLOCATION.  (Unlock PID allocation variables).
+	 */
+
+	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 
