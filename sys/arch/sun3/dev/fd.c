@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 2002/09/27 20:36:27 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 2002/10/01 05:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -150,9 +150,8 @@ struct fdc_softc {
 int	fdcmatch __P((struct device *, struct cfdata *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
-const struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcmatch, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+    fdcmatch, fdcattach, NULL, NULL)
 
 extern struct cfdriver fdc_cd;
 
@@ -228,9 +227,8 @@ struct fd_softc {
 int	fdmatch __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
-const struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdmatch, fdattach, NULL, NULL)
 
 extern struct cfdriver fd_cd;
 
