@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.3 1998/07/28 23:20:54 thorpej Exp $	*/
+/*	$NetBSD: limits.h,v 1.4 1998/08/06 11:25:05 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,14 +57,14 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 
-#endif	/* !_POSIX_SOURCE && !_XOPEN_SOURCE */
+#endif	/* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_ANSI_SOURCE */
 
 #endif /* _MACHINE_LIMITS_H_ */
