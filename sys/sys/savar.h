@@ -1,4 +1,4 @@
-/*	$Id: savar.h,v 1.1.2.6 2001/11/17 01:04:59 nathanw Exp $	*/
+/*	$Id: savar.h,v 1.1.2.7 2001/11/17 21:20:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@ extern struct pool sadata_pool;		/* memory pool for sadata structures */
 extern struct pool saupcall_pool;	/* memory pool for pending upcalls */
 
 #define SA_NUMSTACKS	16	/* Number of stacks allocated. XXX */
+
+struct sadata_upcall *sadata_upcall_alloc(void);
+void	sadata_upcall_free(struct sadata_upcall *);
 
 void	sa_switch(struct lwp *, int);
 void	sa_switchcall(void *);
