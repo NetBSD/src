@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.8 2003/07/17 21:14:49 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.9 2003/09/11 21:57:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.8 2003/07/17 21:14:49 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.9 2003/09/11 21:57:32 christos Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -300,7 +300,7 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 	if (nameaddr == 0)
 		name[0] = '\0';
 	else if ((val = READ(thread->proc, nameaddr,
-	    name, MIN(PTHREAD_MAX_NAMELEN_NP, len))) != 0)
+	    name, (size_t)MIN(PTHREAD_MAX_NAMELEN_NP, len))) != 0)
 		return val;
 
 	return 0;
