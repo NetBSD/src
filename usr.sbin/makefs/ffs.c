@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.20 2003/08/07 11:25:32 agc Exp $	*/
+/*	$NetBSD: ffs.c,v 1.21 2003/09/06 12:42:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.20 2003/08/07 11:25:32 agc Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.21 2003/09/06 12:42:00 itojun Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -1029,9 +1029,8 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	    initediblk < ufs_rw32(cgp->cg_niblk, fsopts->needswap)) {
 		memset(buf, 0, fs->fs_bsize);
 		dip = (struct ufs2_dinode *)buf;
-		srandom(time(NULL));
 		for (i = 0; i < INOPB(fs); i++) {
-			dip->di_gen = random() / 2 + 1;
+			dip->di_gen = (arc4random() & INT32_MAX) / 2 + 1;
 			dip++;
 		}
 		ffs_wtfs(fsbtodb(fs, ino_to_fsba(fs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.21 2003/04/17 04:01:56 lukem Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.22 2003/09/06 12:47:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.21 2003/04/17 04:01:56 lukem Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.22 2003/09/06 12:47:45 itojun Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -178,7 +178,7 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 					    ufs_rw32(dp2[i].di_gen, needswap));
 				else
 					dp2[i].di_gen =
-					    ufs_rw32(random() ^ xorval,
+					    ufs_rw32((arc4random() & INT32_MAX)^ xorval,
 						needswap);
 			} else {
 				if (pflag)
@@ -187,7 +187,7 @@ fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 					    ufs_rw32(dp1[i].di_gen, needswap));
 				else
 					dp1[i].di_gen =
-					    ufs_rw32(random() ^ xorval,
+					    ufs_rw32((arc4random() & INT32_MAX) ^ xorval,
 						needswap);
 			}
 			if (++ino > imax)
@@ -241,7 +241,6 @@ main(int argc, char *argv[])
 	struct disklabel lab;
 	long xorval;
 	char *ep;
-	struct timeval tv;
 	int fd, c, Fflag, pflag, openflags;
 
 	xorval = 0;
@@ -273,9 +272,6 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
-
-	(void) gettimeofday(&tv, NULL);
-	srandom((unsigned) tv.tv_usec);
 
 	special = argv[0];
 	openflags = pflag ? O_RDONLY : O_RDWR;

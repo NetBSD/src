@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.30 2003/08/12 08:41:37 dsl Exp $	*/
+/*	$NetBSD: lfs.c,v 1.31 2003/09/06 12:50:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.30 2003/08/12 08:41:37 dsl Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.31 2003/09/06 12:50:00 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -346,11 +346,8 @@ make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
 	if (version > 1) {
 		lfsp->lfs_inopf = secsize/DINODE1_SIZE;
 		lfsp->lfs_interleave = interleave;
-		if (roll_id == 0) {
-			/* Pick one; even time(NULL) would almost do */
-			srandom(time(NULL));
-			roll_id = random();
-		}
+		if (roll_id == 0)
+			roll_id = arc4random();
 		lfsp->lfs_ident = roll_id;
 	}
 

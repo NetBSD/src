@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2003/08/13 08:51:05 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2003/09/06 12:46:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.33 2003/08/13 08:51:05 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2003/09/06 12:46:50 itojun Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -303,7 +303,6 @@ usage:
 	pidfile(NULL);
 #endif
 	mypid = getpid();
-	srandom((int)(clk.tv_sec ^ clk.tv_usec ^ mypid));
 
 	/* prepare socket connected to the kernel.
 	 */
@@ -837,8 +836,8 @@ intvl_random(struct timeval *tp,	/* put value here */
 {
 	tp->tv_sec = (time_t)(hi == lo
 			      ? lo
-			      : (lo + random() % ((hi - lo))));
-	tp->tv_usec = random() % 1000000;
+			      : (lo + arc4random() % ((hi - lo))));
+	tp->tv_usec = arc4random() % 1000000;
 }
 
 
