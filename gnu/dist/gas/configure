@@ -1630,7 +1630,7 @@ EOF
 
       v850-*-*)		    fmt=elf bfd_gas=yes ;;
 
-      vax-*-bsd* | vax-*-ultrix*)
+      vax-*-netbsd* | vax-*-bsd* | vax-*-ultrix*)
 			    fmt=aout ;;
       vax-*-vms)            fmt=vms ;;
 
