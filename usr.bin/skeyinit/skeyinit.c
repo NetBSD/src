@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.5 1994/12/24 17:42:05 cgd Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -18,9 +18,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "skey.h"
 
@@ -28,6 +30,7 @@
 
 int skeylookup __ARGS((struct skey * mp, char *name));
 
+int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
@@ -41,8 +44,6 @@ main(argc, argv)
 	struct skey skey;
 	struct passwd *pp;
 	struct tm *tm;
-	extern int optind;
-	extern char *optarg;
 
 	time(&now);
 	tm = localtime(&now);
