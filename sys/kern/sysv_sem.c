@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.15 1994/12/05 07:32:24 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.16 1994/12/05 07:54:48 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -828,17 +828,6 @@ semexit(p)
 	register struct sem_undo **supptr;
 
 	/*
-	 * Go through the chain of undo vectors looking for one
-	 * associated with this process.
-	 */
-
-	for (supptr = &semu_list; (suptr = *supptr) != NULL;
-	    supptr = &suptr->un_next) {
-		if (suptr->un_proc == p)
-			break;
-	}
-
-	/*
 	 * There are a few possibilities to consider here ...
 	 *
 	 * 1) The semaphore facility isn't currently locked.  In this case,
@@ -878,6 +867,17 @@ semexit(p)
 		/*
 		 * Yes (i.e. we are in case 3 or 4).
 		 *
+		 * Go through the chain of undo vectors looking for one
+		 * associated with this process.
+		 */
+
+		for (supptr = &semu_list; (suptr = *supptr) != NULL;
+		    supptr = &suptr->un_next) {
+			if (suptr->un_proc == p)
+				break;
+		}
+
+		/*
 		 * If we didn't find an undo vector associated with this
 		 * process than we can just return (i.e. we are in case 3).
 		 *
@@ -903,23 +903,32 @@ semexit(p)
 		 * Nobody is holding the facility (i.e. we are now in case 1).
 		 * We can proceed safely according to the argument outlined
 		 * above.
-		 */
-	} else {
-		/*
-		 * No (i.e. we are in case 1 or 2).
 		 *
-		 * If there is no undo vector, skip to the end and unlock the
-		 * semaphore facility if necessary.
+		 * We look up the undo vector again, in case the list changed
+		 * while we were asleep.
 		 */
-
-		if (suptr == NULL)
-			goto unlock;
 	}
 
 	/*
-	 * We are now in case 1 or 2, and we have an undo vector for this
-	 * process.
+	 * We are now in case 1 or 2.
+	 *
+	 * Go through the chain of undo vectors looking for one associated with
+	 * this process.
 	 */
+
+	for (supptr = &semu_list; (suptr = *supptr) != NULL;
+	    supptr = &suptr->un_next) {
+		if (suptr->un_proc == p)
+			break;
+	}
+
+	/*
+	 * If there is no undo vector, skip to the end and unlock the semaphore
+	 * facility if necessary.
+	 */
+
+	if (suptr == NULL)
+		goto unlock;
 
 #ifdef SEM_DEBUG
 	printf("proc @%08x has undo structure with %d entries\n", p,
