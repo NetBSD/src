@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.29 1996/06/19 13:23:30 pk Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.30 1996/06/20 19:50:43 pk Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -138,23 +138,27 @@ zs2	at obio0 addr 0xe0000000 level 12 flags 0x103	# sun4/300
 # deficiencies in the current driver:
 #	bits 0-7:  disable disconnect/reselect for the corresponding target
 #	bits 8-15: disable synch negotiation for target [bit-8]
+#	Note: targets 4-7 have disconnect/reselect enabled on the premise
+#	      that tape devices normally have one of these targets. Tape
+#	      devices should be allowed to disconnect for the SCSI bus
+#	      to operate acceptably.
 #
 
 # sun4/300 SCSI - an NCR53c94 or equivalent behind
 # an LSI Logic DMA controller
 dma0	at obio0 addr 0xfa001000 level 4		# sun4/300
-esp0	at obio0 addr 0xfa000000 level 4 flags 0xffff	#
+esp0	at obio0 addr 0xfa000000 level 4 flags 0xff0f	#
 
 # sun4c or sun4m SCSI - an NCR53c94 or equivalent behind
 # specialized DMA glue
 dma0	at sbus0 slot ? offset ?			# on-board SCSI
-esp0	at sbus0 slot ? offset ? flags 0xffff		# sun4c
-esp0	at dma0 flags 0xffff				# sun4m
+esp0	at sbus0 slot ? offset ? flags 0xff0f		# sun4c
+esp0	at dma0 flags 0xff0f				# sun4m
 
 # FSBE/S SCSI - an NCR53c94 or equivalent behind
 dma*	at sbus? slot ? offset ?			# SBus SCSI
-esp*	at sbus? slot ? offset ? flags 0xffff		# two flavours
-esp*	at dma? flags 0xffff				# depending on model
+esp*	at sbus? slot ? offset ? flags 0xff0f		# two flavours
+esp*	at dma? flags 0xff0f				# depending on model
 
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue
