@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.9 1999/04/02 03:23:49 cgd Exp $ */
+/* $NetBSD: panic_putstr.c,v 1.1 1999/04/02 03:23:49 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -30,38 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	alpha_pal_imb()	__asm__("imb")
+#include <lib/libsa/stand.h>
+#include "common.h"
 
-void		OSFpal __P((void));
-void		init_prom_calls __P((void));
-void		halt __P((void));
-u_int64_t	prom_dispatch __P((int, ...));
-void		putstr __P((const char *));
-void		switch_palcode __P((void));
-
-
-/*
- * booted_dev.c
- */
-
-#define	BOOTED_DEV_MAXNAMELEN	64
-
-#if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)
-int		booted_dev_open(void);
-#endif
-#define		booted_dev_close()	((void)prom_close(booted_dev_fd))
-#if defined(SECONDARY_BOOTBLOCK)
-#define		booted_dev_setfd(fd)	((void)(booted_dev_fd = fd))
-#endif
-
-extern long	booted_dev_fd;
-#if defined(PRIMARY_BOOTBLOCK) || defined(UNIFIED_BOOTBLOCK)
-extern char	booted_dev_name[BOOTED_DEV_MAXNAMELEN];
-#endif
-
-
-/*
- * putstr.c
- */
-
-void		putstr(const char *s);
+void
+panic(const char *fmt, ...)
+{
+	putstr("panic: ");
+	putstr(fmt);		/* not a great attempt, but something */
+	_rtt();
+}
