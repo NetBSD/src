@@ -1,4 +1,4 @@
-.\"     $NetBSD: dig.1,v 1.8 2003/03/15 23:48:27 wiz Exp $
+.\"     $NetBSD: dig.1,v 1.9 2003/04/13 16:35:02 wiz Exp $
 .\"
 .\" Id: dig.1,v 8.9 2002/06/18 01:53:43 marka Exp
 .\"
@@ -130,11 +130,10 @@ environment variable
 to name a file which is to
 be used instead of 
 .Pa /etc/resolv.conf 
-.Po Ns Ev LOCALRES 
+.Ev ( LOCALRES 
 is specific to the 
 .Ic dig
-resolver and is not referenced by the standard resolver
-.Pc .
+resolver and is not referenced by the standard resolver).
 If the 
 .Ev LOCALRES 
 variable is not set or the specified file
