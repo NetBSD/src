@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.66 2003/07/31 13:47:32 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.67 2003/08/01 17:04:01 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -16,8 +16,9 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-D_KERNEL -D_LKM
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}} \
-		machine ${MACHINE_CPU} tmp.o
+CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
+CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+CLEANFILES+=	machine ${MACHINE_CPU} tmp.o
 
 # see below why this is necessary
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
@@ -40,7 +41,7 @@ MAN?=		${KMOD}.4
 ##### Build rules
 realall:	${PROG}
 
-${OBJS}:	${DPSRCS}
+${OBJS} ${LOBJS}: ${DPSRCS}
 
 .if ${MACHINE_ARCH} == "powerpc"
 ${KMOD}_tmp.o: ${OBJS} ${DPADD}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.181 2003/08/01 13:08:35 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.182 2003/08/01 17:04:01 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -90,7 +90,9 @@ SRCS?=		${PROG}.c
 .endif
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+DPSRCS+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
+CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh:N*.fth)
 OBJS+=		${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
@@ -140,7 +142,9 @@ _CCLINK=	${CC}
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 
-${PROG}: .gdbinit ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${OBJS} ${LOBJS}: ${DPSRCS}
+
+${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${PROG})
 .if defined(DESTDIR)
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/03/14 22:56:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/08/01 17:04:05 lukem Exp $
 
 PROG=	top
 
@@ -15,6 +15,7 @@ DPADD+=	${LIBTERMCAP} ${LIBM} ${LIBKVM}
 sigdesc.h: ${.CURDIR}/sigconv.awk ${DESTDIR}/usr/include/sys/signal.h
 	awk -f ${.CURDIR}/sigconv.awk ${DESTDIR}/usr/include/sys/signal.h > \
 	    ${.TARGET}
+CLEANFILES+= sigdesc.h
 
 commands.c: sigdesc.h
 
