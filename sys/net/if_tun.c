@@ -13,7 +13,7 @@
  * 90/02/06 15:03 - Fixed a bug in where TIOCGPGRP and TIOCSPGRP were
  * mixed up. Anders Klemets - klemets@sics.se
  *
- * $Id: if_tun.c,v 1.4 1993/08/07 08:11:46 cgd Exp $
+ * $Id: if_tun.c,v 1.5 1993/08/09 01:19:38 deraadt Exp $
  * 
  */
 
@@ -81,12 +81,15 @@ int             tunoutput (), tunioctl (), tuninit ();
 tunopen (dev, flag)
 dev_t           dev;
 {
+	struct proc *p = curproc;		/* XXX */
         register int    unit;
         struct tunctl  *tp;
         register struct ifnet *ifp;
+	int error;
 
-        if (!suser ())
-                return EACCES;
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+
         if ((unit = minor (dev)) >= NTUN)
                 return (ENXIO);
         tp = &tunctl[unit];
