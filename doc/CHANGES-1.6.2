@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.85 2003/06/30 02:52:54 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.86 2003/06/30 02:54:34 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -964,3 +964,9 @@ sys/arch/alpha/conf/files.alpha			1.160
 	As pceb pulls in sio.c and sio_pci.c, is also needs the
 	alpha_shared_intr attribute.
 	[bouyer, ticket #1352]
+
+sys/dev/ata/ata.c				1.18
+
+	Bump WDCC_IDENTIFY timeout to 3 seconds, as required by some drives.
+	Reported by Karl Janmar <karlj@mdstud.chalmers.se> on tech-kern.
+	[bouyer, ticket #1353]
