@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.13 2003/04/06 18:20:13 wiz Exp $
+ *	$Id: i4b_tel.c,v 1.14 2003/09/23 14:15:59 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.13 2003/04/06 18:20:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.14 2003/09/23 14:15:59 pooka Exp $");
 
 #include "isdntel.h"
 
@@ -785,10 +785,12 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 	}
 	else if(func == FUNCDIAL)
 	{
+		tel_sc_t *telsc = &tel_sc[unit][FUNCTEL];
+
 #define CMDBUFSIZ 80 
 		char cmdbuf[CMDBUFSIZ];
 		int len = min(CMDBUFSIZ-1, uio->uio_resid);
-	
+
 		error = uiomove(cmdbuf, len, uio);
 
 		if(cmdbuf[0] == CMD_DIAL)
@@ -797,7 +799,10 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 		}
 		else if(cmdbuf[0] == CMD_HUP)
 		{
-			i4b_l4_drvrdisc(sc->cdp->cdid);
+			if (!(telsc->devstate & ST_CONNECTED))
+				error = EIO;
+			else
+				i4b_l4_drvrdisc(telsc->cdp->cdid);
 		}
 	}
 	else
@@ -1143,7 +1148,7 @@ tel_connect(void *softc, void *cdp)
 	tel_sc_t *sc = softc;
 
 	/* audio device */
-	
+
 	sc->cdp = (call_desc_t *)cdp;
 
 	sc->devstate |= ST_CONNECTED;
