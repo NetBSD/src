@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2001/01/27 07:50:11 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.14 2001/05/15 21:37:48 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -72,7 +72,7 @@
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-8	STD		{ int aout_sys_creat(const char *path, mode_t mode); } \
+8	NOARGS		{ int compat_43_sys_creat(const char *path, mode_t mode); } \
 			    ocreat
 9	STD		{ int aout_sys_link(const char *path, \
 			    const char *link); }
@@ -80,7 +80,7 @@
 11	OBSOL		execv
 12	STD		{ int aout_sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
-14	STD		{ int aout_sys_mknod(const char *path, mode_t mode, \
+14	NOARGS		{ int sys_mknod(const char *path, mode_t mode, \
 			    dev_t dev); }
 15	STD		{ int aout_sys_chmod(const char *path, mode_t mode); }
 16	STD		{ int aout_sys_chown(const char *path, uid_t uid, \
@@ -91,7 +91,7 @@
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
-21	STD		{ int aout_sys_mount(const char *type, \
+21	NOARGS		{ int sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
 22	STD		{ int aout_sys_unmount(const char *path, int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
@@ -129,7 +129,7 @@
 44	NOARGS		{ int sys_profil(caddr_t samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
-45	STD		{ int aout_sys_ktrace(const char *fname, int ops, \
+45	NOARGS		{ int sys_ktrace(const char *fname, int ops, \
 			    int facs, int pid); }
 #else
 45	EXCL		ktrace
@@ -142,7 +142,7 @@
 			    int mask); } sigprocmask13
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
 50	NOARGS		{ int sys_setlogin(const char *namebuf); }
-51	STD		{ int aout_sys_acct(const char *path); }
+51	NOARGS		{ int sys_acct(const char *path); }
 52	NOARGS		{ int compat_13_sys_sigpending(void); } sigpending13
 53	NOARGS		{ int compat_13_sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
@@ -266,14 +266,14 @@
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
 			    oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
-132	STD		{ int aout_sys_mkfifo(const char *path, mode_t mode); }
+132	NOARGS		{ int sys_mkfifo(const char *path, mode_t mode); }
 133	NOARGS		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
-136	STD		{ int aout_sys_mkdir(const char *path, mode_t mode); }
+136	NOARGS		{ int sys_mkdir(const char *path, mode_t mode); }
 137	STD		{ int aout_sys_rmdir(const char *path); }
 138	STD		{ int aout_sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
@@ -292,7 +292,7 @@
 146	NOARGS		{ int compat_43_sys_killpg(int pgid, int signum); } \
 			    okillpg
 147	NOARGS		{ int sys_setsid(void); }
-148	STD		{ int aout_sys_quotactl(const char *path, \
+148	NOARGS		{ int sys_quotactl(const char *path, \
 			    int cmd, int uid, caddr_t arg); }
 149	NOARGS		{ int compat_43_sys_quota(void); } oquota
 150	NOARGS		{ int compat_43_sys_getsockname(int fdec, caddr_t asa, \
