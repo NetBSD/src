@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.152 2004/01/02 18:53:45 cl Exp $ */
+/* $NetBSD: init_sysent.c,v 1.153 2004/01/29 02:00:03 tsarna Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.152 2004/01/02 18:53:45 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.153 2004/01/29 02:00:03 tsarna Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -953,8 +953,8 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 353 = unimplemented sys_sched_rr_get_interval */
 	{ 4, s(struct sys_fsync_range_args), 0,
 	    sys_fsync_range },			/* 354 = fsync_range */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 355 = filler */
+	{ 2, s(struct sys_uuidgen_args), 0,
+	    sys_uuidgen },			/* 355 = uuidgen */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 356 = filler */
 	{ 0, 0, 0,
