@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.17 1998/10/25 19:15:04 phil Exp $ */
+/*	$NetBSD: disks.c,v 1.18 1998/10/31 03:54:44 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,7 +80,7 @@ static void get_disks(void)
 	int i;
 
 	while (*xd != NULL) {
-		for (i=0; i<5; i++) {
+		for (i=0; i< MAX_DISKS; i++) {
 			sprintf (d_name, "%s%d", *xd, i);
 			if (get_geom (d_name, &l) && numdisks < MAX_DISKS) {
 				strncpy (disks[numdisks].name,
