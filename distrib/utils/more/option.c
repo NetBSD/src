@@ -47,7 +47,6 @@ int linenums = 1;		/* Use line numbers */
 int quit_at_eof;
 int squeeze;			/* Squeeze multiple blank lines into one */
 int tabstop = 8;		/* Tab settings */
-int tagoption;
 
 char *firstsearch;
 extern int sc_height;
@@ -104,10 +103,6 @@ option(argc, argv)
 		case 's':
 			squeeze = 1;
 			break;
-		case 't':
-			tagoption = 1;
-			findtag(optarg);
-			break;
 		case 'u':
 			bs_mode = 1;
 			break;
@@ -121,7 +116,7 @@ option(argc, argv)
 		case '?':
 		default:
 			fprintf(stderr,
-			    "usage: more [-ceinus] [-t tag] [-x tabs] [-/ pattern] [-#] [file ...]\n");
+			    "usage: more [-ceinus] [-x tabs] [-/ pattern] [-#] [file ...]\n");
 			exit(1);
 		}
 	return(optind);

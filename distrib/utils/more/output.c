@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 4/27/95";
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 
 int errmsgs;	/* Count of messages displayed by error() */
