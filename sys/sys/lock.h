@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.27 2000/05/02 04:41:04 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.28 2000/06/04 15:18:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -269,6 +269,8 @@ struct lock {
 #define	LK_NOPROC	((pid_t) -1)
 #define	LK_NOCPU	((cpuid_t) -1)
 
+#ifdef _KERNEL
+
 struct proc;
 
 void	lockinit __P((struct lock *, int prio, const char *wmesg, int timo,
@@ -308,5 +310,7 @@ void	simple_lock_freecheck __P((void *, void *));
 #define	simple_lock_try(alp)	(1)	/* always succeeds */
 #define	simple_unlock(alp)		/* nothing */
 #endif
+
+#endif /* _KERNEL */
 
 #endif /* _SYS_LOCK_H_ */
