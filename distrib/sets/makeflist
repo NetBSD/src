@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.44 2002/04/08 17:18:22 tron Exp $
+# $NetBSD: makeflist,v 1.45 2002/05/02 15:59:10 wiz Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -76,8 +76,7 @@ fi
 
 # Turn off lintlibs for some ports.
 lintlibs=
-if [ "$machine" = "sparc64" -o "$machine_cpu" = "sh3" -o \
-     "$machine_arch" = "m68000" ]; then
+if [ "$machine" = "x86_64" ]; then
 	lintlibs=no
 fi
 
