@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.7 1996/04/19 20:35:46 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.8 1996/06/18 11:10:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -72,7 +72,6 @@ typedef struct dma_entry {
  * Preallocated entries. An allocator seem an overkill here.
  */
 static	DMA_ENTRY dmatable[NDMA_DEV];	/* preallocated entries		*/
-static	int	  sched_soft = 0;	/* callback scheduled		*/
 
 /*
  * Heads of free and active lists:
@@ -85,7 +84,6 @@ static	int	must_init = 1;		/* Must initialize		*/
 void	cdmaint __P((int));
 
 long	sr;	/* sr at time of interrupt */
-static	void	cdmasoft __P((void *, void *));
 static	void	init_queues __P((void));
 
 static void
@@ -202,42 +200,21 @@ void
 cdmaint(sr)
 int	sr;	/* sr at time of interrupt */
 {
-	if(dma_active.tqh_first != NULL) {
-		if(!BASEPRI(sr)) {
-			if(!sched_soft++)
-				add_sicallback(cdmasoft, 0, 0);
-		}
-		else {
-			spl1();
-			cdmasoft(NULL, NULL);
-		}
-	}
-	else printf("DMA interrupt discarded\n");
-}
-
-static void
-cdmasoft(arg1, arg2)
-void	*arg1, *arg2;
-{
-	int		s;
 	dma_farg	int_func;
 	void		*softc;
 
-	/*
-	 * Prevent a race condition here. DMA might be freed while
-	 * the callback was pending!
-	 */
-	s = splhigh();
-	sched_soft = 0;
 	if(dma_active.tqh_first != NULL) {
 		int_func = dma_active.tqh_first->int_func;
 		softc    = dma_active.tqh_first->softc;
-	}
-	else int_func = softc = NULL;
-	splx(s);
 
-	if(int_func != NULL)
-		(*int_func)(softc);
+		if(!BASEPRI(sr))
+			add_sicallback((si_farg)int_func, softc, 0);
+		else {
+			spl1();
+			(*int_func)(softc);
+		}
+	}
+	else printf("DMA interrupt discarded\n");
 }
 
 /*
