@@ -1,4 +1,4 @@
-.\"     $NetBSD: compile_et.1,v 1.1 2001/11/10 07:50:16 gmcgarry Exp $
+.\"     $NetBSD: compile_et.1,v 1.2 2001/11/10 08:16:45 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,14 +55,18 @@ and generates a C source file suitable for use with the
 .Xr com_err 3
 library.  The source file
 .Ar file
-must end with a suffix of ".et" and
+must end with a suffix of
+.Dq .et
+and
 .Nm
 writes the tables to the files
 .Pa file.c
 and
 .Pa file.h .
 .Pp
-The source file is a plain ASCII text file.  A "#" in the source file
+The source file is a plain ASCII text file.  A
+.Dq \&#
+in the source file
 is treated as a comment character, and all remaining text to the end
 of the source line will be ignored.  The source file consists of the
 following declarations:
@@ -92,7 +96,7 @@ Defines a prefix to be applied to all error code names.  If no string
 is specified, the prefix is not defined.  It is an optional
 declaration and can appear more than once.
 .It index Em val
-Specifes the index
+Specifies the index
 .Em val
 in the error table for the following error code declaration.
 Subsequent error codes are allocated sequentially from the same value.
