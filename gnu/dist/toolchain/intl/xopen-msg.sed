@@ -44,7 +44,7 @@ $set 1 # Automatically created by po2msg.sed
   p
 }
 #
-# The .msg file contains, other then the .po file, only the translations
+# The .msg file contains, other than the .po file, only the translations
 # but each given a unique ID.  Starting from 1 and incrementing by 1 for
 # each message we assign them to the messages.
 # It is important that the .po file used to generate the cat-id-tbl.c file

@@ -21,7 +21,7 @@
    02111-1307, USA.  */
 
 /* Instructions are stored as a sequence of nibbles.
-   If the nibble has value 15 or less then the representation is complete.
+   If the nibble has value 15 or less than the representation is complete.
    Otherwise, we record what it contains with several flags.  */
 
 typedef int op_type;
