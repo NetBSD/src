@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.76 1996/12/06 20:03:25 thorpej Exp $
+#	$NetBSD: files.oldconf,v 1.77 1997/01/05 13:39:43 mrg Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -190,6 +190,11 @@ netinet/tcp_subr.c	optional inet
 netinet/tcp_timer.c	optional inet
 netinet/tcp_usrreq.c	optional inet
 netinet/udp_usrreq.c	optional inet
+netinet/ip_fil.c	optional ipl
+netinet/fil.c		optional ipl
+netinet/ip_nat.c	optional ipl
+netinet/ip_frag.c	optional ipl
+netinet/ip_state.c	optional ipl
 netiso/clnp_debug.c	optional iso
 netiso/clnp_er.c	optional iso
 netiso/clnp_frag.c	optional iso
