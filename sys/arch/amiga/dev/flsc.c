@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.26 2000/06/05 15:08:02 tsutsui Exp $	*/
+/*	$NetBSD: flsc.c,v 1.27 2001/04/25 17:53:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -216,7 +216,9 @@ flscattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
+	ncr53c9x_attach(sc);
 }
 
 /*
@@ -256,7 +258,7 @@ flsc_write_reg(sc, reg, val)
 	 */
 	if (reg == NCR_SELID) {
 		ti = &sc->sc_tinfo[
-		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		    sc->sc_nexus->xs->xs_periph->periph_target];
 		if (sc->sc_nexus->xs->xs_control & XS_CTL_POLL) {
 			if (ti->flags & T_SYNCMODE) {
 				ti->flags ^= T_SYNCMODE | T_NEGOTIATE;
@@ -279,7 +281,7 @@ flsc_write_reg(sc, reg, val)
 	    sc->sc_flags & NCR_SYNCHNEGO &&
 	     sc->sc_nexus->xs->xs_control & XS_CTL_POLL) {
 		ti = &sc->sc_tinfo[
-		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+		    sc->sc_nexus->xs->xs_periph->periph_target];
 		ti->offset = 0;
 	}
 	fsc->sc_reg[reg * 4] = v;
@@ -333,7 +335,7 @@ flsc_dma_reset(sc)
 struct ncr53c9x_tinfo *ti;
 
 if (sc->sc_nexus)
-  ti = &sc->sc_tinfo[sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
+  ti = &sc->sc_tinfo[sc->sc_nexus->xs->xs_periph->periph_target];
 else
   ti = &sc->sc_tinfo[1];	/* XXX */
 if (fsc->sc_active) {

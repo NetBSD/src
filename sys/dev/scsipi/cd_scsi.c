@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.18 2000/06/09 08:54:21 enami Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.19 2001/04/25 17:53:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ cd_scsibus_match(parent, match, aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (sa->sa_sc_link->type != BUS_SCSI)
+	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_SCSI)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
@@ -145,19 +145,18 @@ cd_scsibus_attach(parent, self, aux)
 {
 	struct cd_softc *cd = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("cd_scsibus_attach: "));
 
 	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 
-	cdattach(parent, cd, sc_link, &cd_scsibus_ops);
+	cdattach(parent, cd, periph, &cd_scsibus_ops);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
-	 * XXX should be in scsipi_link.
 	 */
-	if ((sa->scsipi_info.scsi_version & SID_ANSII) == 0)
+	if (periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
 
 	/* should I get the SCSI_CAP_PAGE here ? */
@@ -179,7 +178,7 @@ cd_scsibus_get_mode(cd, data, page, len, flags)
 	scsipi_cmd.opcode = SCSI_MODE_SENSE;
 	scsipi_cmd.page = page;
 	scsipi_cmd.length = len & 0xff;
-	return (scsipi_command(cd->sc_link,
+	return (scsipi_command(cd->sc_periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
 	    XS_CTL_DATA_IN));
@@ -201,7 +200,7 @@ cd_scsibus_set_mode(cd, data, len, flags)
 	scsipi_cmd.byte2 |= SMS_PF;
 	scsipi_cmd.length = len & 0xff;
 	data->header.data_length = 0;
-	return (scsipi_command(cd->sc_link,
+	return (scsipi_command(cd->sc_periph,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
 	    XS_CTL_DATA_OUT));

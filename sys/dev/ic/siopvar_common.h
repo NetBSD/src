@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.11 2001/04/25 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -95,7 +95,6 @@ struct siop_cmd {
 	bus_addr_t	dsa; /* DSA value to load */
 	bus_dmamap_t	dmamap_cmd;
 	bus_dmamap_t	dmamap_data;
-	struct scsipi_sense rs_cmd; /* request sense command buffer */
 	int status;
 	int flags;
 	int reselslot; /* the reselect slot used */
@@ -115,10 +114,7 @@ struct siop_cbd {
 #define CMDST_FREE		0 /* cmd slot is free */
 #define CMDST_READY		1 /* cmd slot is waiting for processing */
 #define CMDST_ACTIVE		2 /* cmd slot is being processed */
-#define CMDST_SENSE		3 /* cmd slot is being requesting sense */
-#define CMDST_SENSE_ACTIVE	4 /* request sense active */
-#define CMDST_SENSE_DONE 	5 /* request sense done */
-#define CMDST_DONE		6 /* cmd slot has been processed */
+#define CMDST_DONE		3 /* cmd slot has been processed */
 /* flags defs */
 #define CMDFL_TIMEOUT	0x0001 /* cmd timed out */
 #define CMDFL_TAG	0x0002 /* tagged cmd */
@@ -132,17 +128,17 @@ struct siop_tag {
 /* per lun struct */
 struct siop_lun {
 	struct siop_tag siop_tag[SIOP_NTAG]; /* tag array */
-	int lun_flags; /* per-lun flags, see below */
+	int lun_flags; /* per-lun flags, none currently */
 	u_int reseloff; /* XXX */
 };
-
-#define SIOP_LUNF_FULL 0x01 /* queue full message */
 
 /* per-target struct */
 struct siop_target {
 	int status;	/* target status, see below */
 	int flags;	/* target flags, see below */
 	u_int32_t id;	/* for SELECT FROM */
+	int period;
+	int offset;
 	struct siop_lun *siop_lun[8]; /* per-lun state */
 	u_int reseloff; /* XXX */
 	struct siop_lunsw *lunsw; /* XXX */
@@ -190,13 +186,14 @@ int	siop_wdtr_neg __P((struct siop_cmd *));
 int	siop_sdtr_neg __P((struct siop_cmd *));
 void	siop_sdtr_msg __P((struct siop_cmd *, int, int, int));
 void	siop_wdtr_msg __P((struct siop_cmd *, int, int));
+void	siop_update_xfer_mode __P((struct siop_softc *, int));
 /* actions to take at return of siop_wdtr_neg() and siop_sdtr_neg() */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
 
 void	siop_minphys __P((struct buf *));
-int	siop_ioctl __P((struct scsipi_link *, u_long,
+int	siop_ioctl __P((struct scsipi_channel *, u_long,
 		caddr_t, int, struct proc *));
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));

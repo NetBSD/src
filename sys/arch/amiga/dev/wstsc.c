@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.23 1998/12/05 19:43:39 mjacob Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.24 2001/04/25 17:53:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -61,13 +61,6 @@ int wstsc_dma_xfer_out2 __P((struct sci_softc *dev, int len,
     register u_short *buf, int phase));
 int wstsc_intr __P((void *));
 
-struct scsipi_device wstsc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
 #ifdef DEBUG
 extern int sci_debug;
 #define QPRINTF(a) if (sci_debug > 1) printf a
@@ -113,14 +106,15 @@ wstscattach(pdp, dp, auxp)
 	void *auxp;
 {
 	volatile u_char *rp;
-	struct sci_softc *sc;
+	struct sci_softc *sc = (struct sci_softc *)dp;
 	struct zbus_args *zap;
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	printf("\n");
 
 	zap = auxp;
 	
-	sc = (struct sci_softc *)dp;
 	rp = zap->va;
 	/*
 	 * set up 5380 register pointers
@@ -157,24 +151,32 @@ wstscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
-	sc->sc_adapter.scsipi_cmd = sci_scsicmd;
-	sc->sc_adapter.scsipi_minphys = sci_minphys;
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 7;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = sci_scsipi_request;
+	adapt->adapt_minphys = sci_minphys;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &wstsc_scsidev;
-	sc->sc_link.openings = 1;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
-	TAILQ_INIT(&sc->sc_xslist);
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = 7;
 
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, chan, scsiprint);
 }
 
 int

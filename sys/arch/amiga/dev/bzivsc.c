@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.9 2000/06/05 15:08:02 tsutsui Exp $	*/
+/*	$NetBSD: bzivsc.c,v 1.10 2001/04/25 17:53:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -234,7 +234,9 @@ bzivscattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
+	ncr53c9x_attach(sc);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.73 2000/04/03 03:37:33 enami Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.74 2001/04/25 17:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@
  * Do a scsi operation, asking a device to run as SCSI-II if it can.
  */
 int
-scsi_change_def(sc_link, flags)
-	struct scsipi_link *sc_link;
+scsi_change_def(periph, flags)
+	struct scsipi_periph *periph;
 	int flags;
 {
 	struct scsi_changedef scsipi_cmd;
@@ -67,7 +67,7 @@ scsi_change_def(sc_link, flags)
 	scsipi_cmd.opcode = SCSI_CHANGE_DEFINITION;
 	scsipi_cmd.how = SC_SCSI_2;
 
-	return (scsipi_command(sc_link,
+	return (scsipi_command(periph,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, SCSIPIRETRIES, 100000, NULL, flags));
 }
@@ -79,13 +79,13 @@ scsi_change_def(sc_link, flags)
  * to associate with the transfer, we need that too.
  */
 int
-scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
+scsi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
 	retries, timeout, bp, flags)
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct scsipi_generic *scsipi_cmd;
 	int cmdlen;
-	u_char *data_addr;
-	int datalen;
+	void *data;
+	size_t datalen;
 	int retries;
 	int timeout;
 	struct buf *bp;
@@ -94,14 +94,14 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	struct scsipi_xfer *xs;
 	int error, s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_scsipi_cmd\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("scsi_scsipi_cmd\n"));
 
 #ifdef DIAGNOSTIC
 	if (bp != NULL && (flags & XS_CTL_ASYNC) == 0)
 		panic("scsi_scsipi_cmd: buffer without async");
 #endif
 
-	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
+	if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
 	    datalen, retries, timeout, bp, flags)) == NULL) {
 		if (bp != NULL) {
 			s = splbio();
@@ -115,23 +115,15 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 
 	/*
 	 * Set the LUN in the CDB if we have an older device.  We also
-	 * set it for more modern SCSI-II devices "just in case".
+	 * set it for more modern SCSI-2 devices "just in case".
 	 */
-	if ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) <= 2)
+	if (periph->periph_version <= 2)
 		xs->cmd->bytes[0] |=
-		    ((sc_link->scsipi_scsi.lun << SCSI_CMD_LUN_SHIFT) &
+		    ((periph->periph_lun << SCSI_CMD_LUN_SHIFT) &
 			SCSI_CMD_LUN_MASK);
 
 	if ((error = scsipi_execute_xs(xs)) == EJUSTRETURN)
 		return (0);
-
-	/*
-	 * we have finished with the xfer stuct, free it and
-	 * check if anyone else needs to be started up.
-	 */
-	s = splbio();
-	scsipi_free_xs(xs, flags);
-	splx(s);
 	return (error);
 }
 
@@ -139,60 +131,36 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
  * Utility routines often used in SCSI stuff
  */
 
-
 /*
- * Print out the scsi_link structure's address info.
+ * Print out the periph's address info.
  */
 void
-scsi_print_addr(sc_link)
-	struct scsipi_link *sc_link;
+scsi_print_addr(periph)
+	struct scsipi_periph *periph;
 {
+	struct scsipi_channel *chan = periph->periph_channel;
+	struct scsipi_adapter *adapt = chan->chan_adapter;
 
-	printf("%s(%s:%d:%d): ",
-	    sc_link->device_softc ?
-	    ((struct device *)sc_link->device_softc)->dv_xname : "probe",
-	    ((struct device *)sc_link->adapter_softc)->dv_xname,
-	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
+	printf("%s(%s:%d:%d:%d): ", periph->periph_dev != NULL ?
+	    periph->periph_dev->dv_xname : "probe",
+	    adapt->adapt_dev->dv_xname,
+	    chan->chan_channel, periph->periph_target,
+	    periph->periph_lun);
 }
 
 /*
- * Kill off all pending xfers for a scsipi_link.
+ * Kill off all pending xfers for a periph.
  *
  * Must be called at splbio().
  */
 void
-scsi_kill_pending(sc_link)
-	struct scsipi_link *sc_link;
+scsi_kill_pending(periph)
+	struct scsipi_periph *periph;
 {
-	struct scsipi_xfer *xs, *xs_next;
+	struct scsipi_xfer *xs;
 
-	/*
-	 * Note that the scsipi_done frees a xfer only if it is
-	 * an asynchronous transaction.
-	 */
-	for (xs = TAILQ_FIRST(&sc_link->pending_xfers); xs != NULL;
-	    xs = xs_next) {
-		xs_next = TAILQ_NEXT(xs, device_q);
-		xs->xs_status |= XS_STS_DONE;
+	while ((xs = TAILQ_FIRST(&periph->periph_xferq)) != NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
 	}
-}
-
-int
-scsiprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct scsipi_link *l = aux;
-
-	/* only "scsibus"es can attach to "scsi"s; easy. */
-	if (pnp)
-		printf("scsibus at %s", pnp);
-
-	/* don't print channel if the controller says there can be only one. */
-	if (l->scsipi_scsi.channel != SCSI_CHANNEL_ONLY_ONE)
-		printf(" channel %d", l->scsipi_scsi.channel);
-
-	return (UNCONF);
 }
