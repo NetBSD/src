@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.10 1999/08/15 10:59:02 blymn Exp $	*/
+/*	$NetBSD: tputs.c,v 1.11 1999/08/16 08:34:33 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.10 1999/08/15 10:59:02 blymn Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.11 1999/08/16 08:34:33 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,8 @@ t_puts(info, cp, affcnt, outc, args)
         void (*outc) __P((char, void *));
         void *args;
 {
-	int i = 0, limit = 2;
+	int i = 0;
+	size_t limit = 2;
 	int mspc10;
         char pad[2], *pptr;
 
