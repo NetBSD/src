@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.32 2002/01/12 02:25:32 wiz Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.33 2002/02/10 02:46:28 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -156,7 +156,7 @@ outlined as follows:
 .It
 .Tn "GENERAL TEXT DOMAIN"
 .Bl -tag -width flag -compact -offset indent
-.It "AT&T Macro" .
+.It "AT\*[Am]T Macro" .
 .It "BSD Macro" .
 .It "BSD/OS Macro" .
 .It "FreeBSD Macro" .
@@ -233,10 +233,10 @@ at the beginning of a line in some context other than
 a macro invocation, precede the
 .Ql \&\.
 (dot) with the
-.Ql \e&
+.Ql \e\*[Am]
 escape sequence.
 The
-.Ql \e&
+.Ql \e\*[Am]
 translates literally to a zero width space, and is never displayed in the
 output.
 .Pp
@@ -291,11 +291,11 @@ To prevent a two character
 string from being interpreted as a macro name, precede
 the string with the
 escape sequence
-.Ql \e& :
+.Ql \e\*[Am] :
 .Bl -tag -width "\&.Op \&Fl s \&Ar bytes" -offset indent
 .It Op \&Fl s \&Ar bytes
 is produced by
-.Li \&.Op \e&Fl s \e&Ar bytes
+.Li \&.Op \e\*[Am]Fl s \e\*[Am]Ar bytes
 .El
 .Pp
 Here the strings
@@ -343,7 +343,7 @@ Unfortunately, the most convenient way
 of passing spaces in between quotes by reassigning individual
 arguments before parsing was fairly expensive speed wise
 and space wise to implement in all the macros for
-.Tn AT&T
+.Tn AT\*[Am]T
 .Xr troff 1 .
 It is not expensive for
 .Xr groff 1
@@ -422,14 +422,14 @@ section.
 can be confused by blank space characters at the end of a line.
 It
 is a wise preventive measure to globally remove all blank spaces
-from <blank-space><end-of-line> character sequences.
+from \*[Lt]blank-space\*[Gt]\*[Lt]end-of-line\*[Gt] character sequences.
 Should the need
 arise to force a blank character at the end of a line,
 it may be forced with an unpaddable space and the
-.Ql \e&
+.Ql \e\*[Am]
 escape character.
 For example,
-.Ql string\e\ \e& .
+.Ql string\e\ \e\*[Am] .
 .Ss Escaping Special Characters
 Special characters
 like the newline character
@@ -463,11 +463,11 @@ template found in the file:
 \&.\e" This next request is for sections 2 and 3 function return
 \&.\e"     values only.
 \&.\e" .Sh RETURN VALUES
-\&.\e" This next request is for sections 1, 6, 7 & 8 only
+\&.\e" This next request is for sections 1, 6, 7 \*[Am] 8 only
 \&.\e" .Sh ENVIRONMENT
 \&.\e" .Sh FILES
 \&.\e" .Sh EXAMPLES
-\&.\e" This next request is for sections 1, 6, 7 & 8 only
+\&.\e" This next request is for sections 1, 6, 7 \*[Am] 8 only
 \&.\e"     (command return values (to shell) and
 \&.\e"	   fprintf/stderr type diagnostics)
 \&.\e" .Sh DIAGNOSTICS
@@ -760,14 +760,14 @@ default font distinguishing it from the strings in literal font.
 .Pp
 To remove the special meaning from a punctuation character
 escape it with
-.Ql \e& .
+.Ql \e\*[Am] .
 .Xr troff 1
 is limited as a macro language, and has difficulty
 when presented with a string containing
 a member of the mathematical, logical or
 quotation set:
 .Bd -literal -offset indent-two
-\&{+,\-,/,*,\&%,<,>,<=,>=,=,==,&,`,',"}
+\&{+,\-,/,*,\&%,\*[Lt],\*[Gt],\*[Le],\*[Ge],=,==,\*[Am],`,',"}
 .Ed
 .Pp
 The problem is that
@@ -776,7 +776,7 @@ may assume it is supposed to actually perform the operation
 or evaluation suggested by the characters.  To prevent
 the accidental evaluation of these characters,
 escape them with
-.Ql \e& .
+.Ql \e\*[Am] .
 Typical syntax is shown in the first content macro displayed
 below,
 .Ql \&.Ad .
@@ -1363,7 +1363,7 @@ It is an error to call
 without
 any arguments.
 .Sh GENERAL TEXT DOMAIN
-.Ss AT&T Macro
+.Ss AT\*[Am]T Macro
 .Bd -literal -offset indent -compact
 Usage: .At [v1 .. v7 | 32v | V.1 | V.4] ... \*(Pu
 .Ed
@@ -1516,7 +1516,7 @@ of them.
 .Bd -filled -offset indent
 .Bl -column "quote " "close " "open " "Enclose Stringx(in XX) " XXstringXX
 .Em " Quote	 Close	 Open	Function	Result"
-.It Li ".Aq	.Ac	.Ao" Ta No Angle Bracket Enclosure	<string>
+.It Li ".Aq	.Ac	.Ao" Ta No Angle Bracket Enclosure	\*[Lt]string\*[Gt]
 .It Li ".Bq	.Bc	.Bo" Ta No Bracket Enclosure	[string]
 .It Li ".Dq	.Dc	.Do" Ta No Double Quote	``string''
 .It Li ".Ec	.Eo	" Ta No Enclose String (in XX)	XXstringXX
@@ -1804,7 +1804,7 @@ Test the value of an variable.
 .Bd -literal -offset indent
 \&.It Xo
 \&.Ic .ifndef
-\&.Oo \e&! Oc Ns Ar variable
+\&.Oo \e\*[Am]! Oc Ns Ar variable
 \&.Op Ar operator variable ...
 \&.Xc
 .Ed
@@ -2621,16 +2621,16 @@ macro.
 The table:
 .Bl -column "String" "Nroff" "Troff" -offset indent
 .It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
-.It Li "<=" Ta \&<\&= Ta \*(<=
-.It Li ">=" Ta \&>\&= Ta \*(>=
+.It Li "\*[Le]" Ta \&\*[Lt]\&= Ta \*[Le]
+.It Li "\*[Ge]" Ta \&\*[Gt]\&= Ta \*[Ge]
 .El
 .Pp
 was produced by:
 .Bd -literal -offset indent
 \&.Bl -column "String" "Nroff" "Troff" -offset indent
 \&.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
-\&.It Li "<=" Ta \e&<\e&= Ta \e*(<=
-\&.It Li ">=" Ta \e&>\e&= Ta \e*(>=
+\&.It Li "\*[Le]" Ta \e\*[Am]\*[Lt]\e\*[Am]= Ta \e*(\*[Le]
+\&.It Li "\*[Ge]" Ta \e\*[Am]\*[Gt]\e\*[Am]= Ta \e*(\*[Ge]
 \&.El
 .Ed
 .Sh PREDEFINED STRINGS
@@ -2648,8 +2648,8 @@ The interpreting sequence may be used any where in the text.
 .Pp
 .Bl -column "String " "Nroff " "Troff " -offset indent
 .It Sy "String	Nroff	Troff"
-.It Li "<=" Ta \&<\&= Ta \*(<=
-.It Li ">=" Ta \&>\&= Ta \*(>=
+.It Li "\*[Le]" Ta \&\*[Lt]\&= Ta \*[Le]
+.It Li "\*[Ge]" Ta \&\*[Gt]\&= Ta \*[Ge]
 .It Li "Rq" Ta "''" Ta \*(Rq
 .It Li "Lq" Ta "``" Ta \*(Lq
 .It Li "ua" Ta ^ Ta \*(ua
@@ -2660,10 +2660,10 @@ The interpreting sequence may be used any where in the text.
 .It Li "q" Ta \&" Ta \*q
 .It Li "Pi" Ta pi Ta \*(Pi
 .It Li "Ne" Ta != Ta \*(Ne
-.It Li "Le" Ta <= Ta \*(Le
-.It Li "Ge" Ta >= Ta \*(Ge
-.It Li "Lt" Ta < Ta \*(Gt
-.It Li "Gt" Ta > Ta \*(Lt
+.It Li "Le" Ta \*[Le] Ta \*(Le
+.It Li "Ge" Ta \*[Ge] Ta \*(Ge
+.It Li "Lt" Ta \*[Lt] Ta \*(Gt
+.It Li "Gt" Ta \*[Gt] Ta \*(Lt
 .It Li "Pm" Ta +- Ta \*(Pm
 .It Li "If" Ta infinity Ta \*(If
 .It Li "Na" Ta \fINaN\fP Ta \*(Na
@@ -2693,12 +2693,12 @@ for
 and
 .Ic ditroff
 are two characters and
-of the form <upper_case><lower_case> such as
+of the form \*[Lt]upper_case\*[Gt]\*[Lt]lower_case\*[Gt] such as
 .Ql \&Ar ,
-<lower_case><upper_case> as
+\*[Lt]lower_case\*[Gt]\*[Lt]upper_case\*[Gt] as
 .Ql \&aR
 or
-<upper or lower letter><digit> as
+\*[Lt]upper or lower letter\*[Gt]\*[Lt]digit\*[Gt] as
 .Ql \&C\&1 .
 And adding to the muddle,
 .Xr troff 1
@@ -2707,7 +2707,7 @@ two lower case characters or a dot plus a letter or meta-character
 character.
 In one of the introduction examples, it was shown how to
 prevent the interpretation of a macro name with the escape sequence
-.Ql \e& .
+.Ql \e\*[Am] .
 This is sufficient for the internal register names also.
 .Pp
 .\" Every callable macro name has a corresponding register
@@ -2756,7 +2756,7 @@ the debug macro placed above and below an
 artificially created problem (a flag argument
 .Ql \&aC
 which should be
-.Ql \e&aC
+.Ql \e\*[Am]aC
 in order to work):
 .Bd -literal -offset indent
 \&.Db on
@@ -2810,7 +2810,7 @@ In this next example, the offending
 is escaped:
 .Bd -literal -offset indent
 \&.Db on
-\&.Em An escaped \e&aC
+\&.Em An escaped \e\*[Am]aC
 \&.Db off
 .Ed
 .Bd -literal -offset indent
@@ -2822,17 +2822,17 @@ DEBUG(fargv) MACRO: `.Em'  Line #: 2
 	Space: ` '  Class: String
 	Argc: 3  Argv: `aC'  Length: 2
 	Space: ` '  Class: String
-	MACRO REQUEST: .Em An escaped &aC
+	MACRO REQUEST: .Em An escaped \*[Am]aC
 DEBUGGING OFF
 .Ed
 .Pp
 The argument
-.Ql \e&aC
+.Ql \e\*[Am]aC
 shows up with the same length of 2 as the
-.Ql \e&
+.Ql \e\*[Am]
 sequence produces a zero width, but a register
 named
-.Ql \e&aC
+.Ql \e\*[Am]aC
 was not found and the type classified as string.
 .Pp
 Other diagnostics consist of usage statements and are self explanatory.
