@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.2 2003/03/16 07:07:19 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.3 2003/03/18 14:56:21 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -132,12 +132,60 @@ __start:
 	sync ; isync
 
 #if 1
-	/* Enable data and instruction caches */
+	/* flush and disable L2 */
+	mfspr	8,SPR_L2CR
+	lis	0,(L2CR_L2E|L2CR_L2WT)@h	/* disable the L2 mode */
+	andc	8,8,0
+	ori	8,8,L2CR_L2HWF		/* enable hardware flush */
+	sync
+	mtspr	SPR_L2CR,8		/* do it */
+	sync				/* wait for it to finish */
+
+	/* Disable data lock mode */
 	mfspr	8,SPR_HID0
 	li	0,HID0_DLOCK
-	ori	8,8,(HID0_ICE | HID0_DCE)@l
 	andc	8,8,0
 	mtspr	SPR_HID0,8
+	sync
+#if 1
+	/*
+	 * Flush the L1 cache
+	 */
+	mfspr	8,SPR_MSSCR0
+	oris	8,8,MSSCR0_DL1HWF@h
+	sync
+	mtspr	SPR_MSSCR0,8
+	sync
+#endif
+#if 1
+	/* disable data and instruction caches */
+	mfspr	8,SPR_HID0
+	li	0,(HID0_ICE|HID0_DCE)@l
+	andc	8,8,0
+	sync
+	mtspr	SPR_HID0,8
+	sync
+	isync
+#endif
+#if 1
+	/* Enable and flush data and instruction caches */
+#	ori	8,8,(HID0_ICFI|HID0_ICE|HID0_DCFI|HID0_DCE)
+	ori	8,8,(HID0_ICFI|HID0_ICE)
+	mtspr	SPR_HID0,8
+	isync
+7:	sync
+	mfspr	8,SPR_HID0
+	andi.	0,8,(HID0_ICFI|HID0_DCFI)
+	bne	7b
+#endif
+	
+#if 1
+	mfspr	8,SPR_L2CR
+	oris	8,8,L2CR_L2E@h
+	sync
+	mtspr	SPR_L2CR,8
+	sync
+#endif
 #endif
 
 /* compute end of kernel memory */
