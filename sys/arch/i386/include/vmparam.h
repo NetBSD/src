@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 1998/05/04 06:09:35 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28 1998/07/08 04:38:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -153,9 +153,13 @@
 
 #define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
-#define VM_PHYSSEG_MAX		2	/* we only have one "hole" */
+#define VM_PHYSSEG_MAX		3	/* 1 "hole" + 2 free lists */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+
+#define	VM_NFREELIST		2
+#define	VM_FREELIST_DEFAULT	0
+#define	VM_FREELIST_FIRST16	1
 
 /*
  * pmap specific data stored in the vm_physmem[] array
