@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.10 2001/07/26 19:57:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.11 2001/07/31 00:17:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ struct	pthread_msgbuf {
 };
 
 void pthread__debug_init(void);
-struct pthread_msgbuf* pthread__debuglog_init(void);
+struct pthread_msgbuf* pthread__debuglog_init(int force);
 void pthread__debuglog_printf(const char *fmt, ...);
 
 #else /* PTHREAD_DEBUG */
