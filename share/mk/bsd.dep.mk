@@ -1,4 +1,4 @@
-#	$Id: bsd.dep.mk,v 1.3 1993/08/15 21:09:21 mycroft Exp $
+#	$Id: bsd.dep.mk,v 1.4 1993/08/15 21:14:45 mycroft Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
@@ -14,6 +14,8 @@ depend: beforedepend .depend afterdepend
 	if [ "$$files" != "  " ]; then \
 	  mkdep -a ${MKDEP} -+ ${CXXFLAGS:M-[ID]*} $$files; \
 	fi
+.else
+.depend:
 .endif
 .if !target(beforedepend)
 beforedepend:
@@ -24,11 +26,17 @@ afterdepend:
 .endif
 
 .if !target(tags)
+.if defined(SRCS)
 tags: ${SRCS}
 	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    sed "s;\${.CURDIR}/;;" > tags
+.else
+tags:
+.endif
 .endif
 
+.if defined(SRCS)
 clean: cleandepend
 cleandepend:
 	rm -f .depend ${.CURDIR}/tags
+.endif
