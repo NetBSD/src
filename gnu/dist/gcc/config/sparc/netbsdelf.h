@@ -14,6 +14,8 @@
 #undef UDIVDI3_LIBCALL
 #undef MODDI3_LIBCALL
 #undef UMODDI3_LIBCALL
+#undef INIT_SUBTARGET_OPTABS  
+#define INIT_SUBTARGET_OPTABS  
 
 #define NETBSD_ELF
 #include <netbsd.h>
