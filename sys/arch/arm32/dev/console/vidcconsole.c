@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.9 1996/05/06 00:45:09 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.10 1996/06/03 22:14:56 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -154,6 +154,8 @@ void 		vidcconsole_putchar	__P(( dev_t dev, char c, struct vconsole *vc));
 extern int	vidcconsolemc_cls	__P(( unsigned char *, unsigned char *, int ));
 
 void		(*line_cpfunc) 		__P(( char *, char * ));
+
+struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
 
 /*
  * This will be called while still in the mode that we were left
@@ -344,6 +346,7 @@ vidcconsole_mode(vc, mode)
 	int bpp_mask;
         int log_bpp;
         int tmp_bpp;
+        int ereg;
 
 #ifndef RC7500
 	int best_r, best_v, best_match;
@@ -496,7 +499,12 @@ vidcconsole_mode(vc, mode)
 		else
 			vidc_write(VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
 
-		vidc_write(VIDC_EREG, 1<<12);
+		ereg = 1<<12;
+		if (vidc_currentmode->sync_pol & 0x01)
+			ereg |= 1<<16;
+		if (vidc_currentmode->sync_pol & 0x02)
+			ereg |= 1<<18;
+		vidc_write(VIDC_EREG, ereg);
 		if (dispsize > 1024*1024) {
 			if (vidc_currentmode->hder >= 800)
  				vidc_write(VIDC_CONREG, 7<<8 | bpp_mask<<5);
@@ -1446,11 +1454,11 @@ R_DATA->fast_render = R_DATA->forecolour | (R_DATA->backcolour<<8) | (R_DATA->fo
 }
 
 int
-vidcconsole_sgr (vc, type)
+vidcconsole_sgr(vc, type)
 	struct vconsole *vc;
 	int type;
 {
-    switch ( type )
+    switch(type)
     {
         case 0: /* Normal */
 	    if (R_DATA->BITSPERPIXEL == 8)
@@ -1520,20 +1528,29 @@ vidcconsole_blank(vc, type)
 	struct vconsole *vc;
 	int type;
 {
+        int ereg;
+
 	vc->blanked=type;
+
+	ereg = 1<<12;
+	if (vidc_currentmode->sync_pol & 0x01)
+		ereg |= 1<<16;
+	if (vidc_currentmode->sync_pol & 0x02)
+		ereg |= 1<<18;
+
 	switch (type) {
 	case 0:
 #ifdef RC7500
-		vidc_write ( VIDC_EREG, 0x51<<12 );
+		vidc_write(VIDC_EREG, 0x51<<12);
 #else
-    		vidc_write ( VIDC_EREG, 1<<12 );
+    		vidc_write(VIDC_EREG, ereg);
 #endif
 		break;
 		
 	case 1: /* not implemented yet */
 	case 2:
 	case 3:
-		vidc_write ( VIDC_EREG, 0 );
+		vidc_write(VIDC_EREG, 0);
 		break;
 	}
 	return 0;
