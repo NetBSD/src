@@ -21,7 +21,7 @@ This paragraph is here to try to keep Sun CC from dying.
 The number of chars here seems crucial!!!!  */
 
 #ifndef lint
-static char rcsid[] = "$Id: gcc.c,v 1.5 1993/12/04 03:09:40 cgd Exp $";
+static char rcsid[] = "$Id: gcc.c,v 1.6 1994/03/03 01:12:06 cgd Exp $";
 #endif /* not lint */
 
 /* This program is the user interface to the C compiler and possibly to
@@ -79,6 +79,12 @@ compilation is specified by a string called a "spec".  */
 #ifndef P_tmpdir
 #define P_tmpdir "./"
 #endif
+#endif
+
+/* NetBSD defines P_tmpdir for standards compatibility.
+   However, it shouldn't be used. */
+#ifdef __NetBSD__
+#undef P_tmpdir
 #endif
 
 /* Test if something is a normal file.  */
