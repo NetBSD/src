@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.7 1998/04/07 20:43:59 pk Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.8 1998/07/29 18:45:57 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,17 +80,9 @@
  *	@(#)sbusvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SBUS_VAR_H
-#define _SBUS_VAR_H
+#ifndef _SBUS_VAR_SPARC_H
+#define _SBUS_VAR_SPARC_H
 
-/*
- * S-bus variables.
- */
-struct sbusdev {
-	struct	device *sd_dev;		/* backpointer to generic */
-	struct	sbusdev *sd_bchain;	/* forward link in bus chain */
-	void	(*sd_reset) __P((struct device *));
-};
 
 /* variables per Sbus */
 struct sbus_softc {
@@ -99,47 +91,11 @@ struct sbus_softc {
 	bus_dma_tag_t	sc_dmatag;
 	int	sc_clockfreq;		/* clock frequency (in Hz) */
 	struct	sbusdev *sc_sbdev;	/* list of all children */
-	struct	rom_range *sc_range;
+	struct	sbus_range *sc_range;
 	int	sc_nrange;
 	int	sc_burst;		/* burst transfer sizes supported */
 	int	*sc_intr2ipl;		/* Interrupt level translation */
 	int	*sc_intr_compat;	/* `intr' property to sbus compat */
 };
 
-/*
- * Sbus driver attach arguments.
- */
-struct sbus_attach_args {
-	int		sa_placeholder;	/* for obio attach args sharing */
-	bus_space_tag_t	sa_bustag;
-	bus_dma_tag_t	sa_dmatag;
-	char		*sa_name;	/* PROM node name */
-	int		sa_node;	/* PROM handle */
-	int		sa_slot;	/* Sbus slot number */
-	int		sa_offset;	/* Sbus slot offset */
-	int		sa_size;	/* Sbus space size */
-	int		sa_pri;		/* priority (IPL) */
-	void		*sa_promvaddr;	/* PROM virtual address, if any */
-	struct bootpath *sa_bp;		/* used for locating boot device */
-};
-
-/* sbus_attach() is also used from obio.c */
-void	sbus_attach __P((struct sbus_softc *, char *, int, struct bootpath *,
-			 const char * const *));
-int	sbus_print __P((void *, const char *));
-
-int	sbusdev_match __P((struct cfdata *, void *));
-void	sbus_establish __P((struct sbusdev *, struct device *));
-
-int	sbus_setup_attach_args __P((
-		struct sbus_softc *,
-		bus_space_tag_t,
-		bus_dma_tag_t,
-		int,			/*node*/
-		struct bootpath *,
-		struct sbus_attach_args *));
-
-#define sbus_bus_map(t, bt, a, s, f, v, hp) \
-	bus_space_map2(t, bt, a, s, f, v, hp)
-
-#endif /* _SBUS_VAR_H */
+#endif /* _SBUS_VAR_SPARC_H */
