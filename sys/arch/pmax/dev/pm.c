@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.35 2001/09/19 19:04:16 thorpej Exp $	*/
+/*	$NetBSD: pm.c,v 1.36 2001/11/21 19:01:32 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.35 2001/09/19 19:04:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.36 2001/11/21 19:01:32 wiz Exp $");
 
 
 #include <sys/param.h>
@@ -122,10 +122,10 @@ pm_cnattach()
 
 #if 0
 	ULTRIX does in this way;
-	check the presense of monochrome bit in CSR.
+	check the presence of monochrome bit in CSR.
 	if set, there is a monochrome framebuffer
 	if not set, try two write and read cycles of framebuffer to make
-	sure the presense of video memory.
+	sure the presence of video memory.
 #else
 	base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
 	if (badaddr(base, 4))
