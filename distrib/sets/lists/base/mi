@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.228 2001/02/09 14:27:06 wiz Exp $
+# $NetBSD: mi,v 1.229 2001/02/15 15:01:15 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1980,7 +1980,6 @@
 ./var/spool/ftp/etc		base-netutil-root
 ./var/spool/ftp/hidden		base-netutil-root
 ./var/spool/lock		base-sys-root
-./var/spool/lpd			base-lpr-root
 ./var/spool/mqueue		base-sendmail-root
 ./var/spool/output		base-lpr-root
 ./var/spool/postfix		base-postfix-root
