@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.1 1998/02/22 08:55:41 mycroft Exp $	*/
+/*	$NetBSD: random.S,v 1.2 2000/07/19 03:48:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
@@ -46,13 +46,13 @@
  * The result is in (0,2^31), e.g., it's always positive.
  */
 
+#include <machine/asm.h>
+
 	.data
 randseed:
 	.long	1
-	.text
-	.globl _random
-_random:
-	.word 0x0
+
+ENTRY(random, 0)
 	movl	$16807,r0
 
 	movl	randseed,r1		# r2=16807*loword(randseed)
