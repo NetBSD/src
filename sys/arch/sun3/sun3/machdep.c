@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 1997/10/02 01:15:04 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 1997/10/04 19:39:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -108,6 +108,10 @@ int	physmem;
 int	fputype;
 caddr_t	msgbufaddr;
 
+/* Our private scratch page for dumping the MMU. */
+static vm_offset_t dumppage;
+
+/* Virtual page frame for /dev/mem (see map.c) */
 vm_offset_t vmmap;
 
 /*
@@ -262,6 +266,12 @@ cpu_startup()
 	initfpu();	/* also prints FPU type */
 
 	printf("real mem = %d\n", ctob(physmem));
+
+	/*
+	 * Get scratch page for dumpsys().
+	 */
+	if ((dumppage = kmem_alloc(kernel_map, NBPG)) == 0)
+		panic("startup: alloc dumppage");
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -587,10 +597,6 @@ u_long	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
-/* Our private scratch page for dumping the MMU. */
-vm_offset_t dumppage_va;
-vm_offset_t dumppage_pa;
-
 #define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
 
 /*
@@ -661,7 +667,7 @@ dumpsys()
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
-	if (dumppage_va == 0)
+	if (dumppage == 0)
 		return;
 
 	/*
@@ -689,7 +695,7 @@ dumpsys()
 	 */
 	blkno = dumplo;
 	todo = dumpsize - DUMP_EXTRA;	/* pages */
-	vaddr = (char*)dumppage_va;
+	vaddr = (char*)dumppage;
 	bzero(vaddr, NBPG);
 
 	/* kcore header */
