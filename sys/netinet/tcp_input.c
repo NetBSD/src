@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.60 1998/05/11 19:57:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.61 1998/06/02 18:33:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2174,7 +2174,12 @@ syn_cache_unreach(ip, th)
  *	<SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
  * to the source.
  *
- * XXX We don't properly handle SYN-with-data!
+ * IMPORTANT NOTE: We do _NOT_ ACK data that might accompany the SYN.
+ * Doing so would require that we hold onto the data and deliver it
+ * to the application.  However, if we are the target of a SYN-flood
+ * DoS attack, an attacker could send data which would eventually
+ * consume all available buffer space if it were ACKed.  By not ACKing
+ * the data, we avoid this DoS scenario.
  */
 
 int
