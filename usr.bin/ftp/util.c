@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 1998/01/18 14:23:38 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.20 1998/01/18 22:09:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.19 1998/01/18 14:23:38 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 1998/01/18 22:09:43 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -95,7 +95,7 @@ setpeer(argc, argv)
 		long nport;
 
 		nport = strtol(argv[2], &ep, 10);
-		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
+		if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
 			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
 			printf("usage: %s host-name [port]\n", argv[0]);
 			code = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.18 1998/01/18 14:23:35 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.19 1998/01/18 22:09:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.18 1998/01/18 14:23:35 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.19 1998/01/18 22:09:40 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -207,7 +207,7 @@ url_get(origline, proxyenv)
 		long nport;
 
 		nport = strtol(portnum, &ep, 10);
-		if (nport < 1 || nport > USHRT_MAX || *ep != '\0') {
+		if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
 			warnx("Invalid port: %s", portnum);
 			goto cleanup_url_get;
 		}
