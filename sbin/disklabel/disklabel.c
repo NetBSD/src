@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.87 2000/08/14 22:37:08 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.88 2000/10/08 23:32:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.87 2000/08/14 22:37:08 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.88 2000/10/08 23:32:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,7 @@ main(argc, argv)
 	if (argc < 1)
 		usage();
 
-	if (Iflag && op != EDIT)
+	if (Iflag && op != EDIT && op != INTERACT)
 		usage();
 
 	dkname = argv[0];
@@ -1900,7 +1900,7 @@ usage()
 	},
 	{ "%s -e [-r] [-I] [-C] disk",
 	    "(to edit label)" },
-	{ "%s -i [-r] disk",
+	{ "%s -i [-I] [-r] disk",
 	    "(to create a label interactively)" },
 	{ "%s -R [-r] disk protofile",
 #if NUMBOOT > 0

@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.32 2000/08/12 18:52:42 jhawk Exp $
+.\"	$NetBSD: disklabel.8,v 1.33 2000/10/08 23:32:50 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,6 +66,7 @@
 .Ar disk
 .Nm ""
 .Fl i
+.Op Fl I
 .Op Fl r
 .Ar disk
 .Nm ""
@@ -329,6 +330,10 @@ Existing bootstrap code is unaffected.
 .Pp
 As previous, but don't fail if there was no label on the disk yet;
 provide some default values instead.
+.Pp
+.Dl disklabel -i -I sd0
+.Pp
+As previous, only use the built-in interactive editor.
 .Pp
 .Dl disklabel -R sd0 mylabel
 .Pp
