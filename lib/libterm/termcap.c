@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.35 2000/06/02 22:09:01 thorpej Exp $	*/
+/*	$NetBSD: termcap.c,v 1.36 2000/06/03 07:14:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.35 2000/06/02 22:09:01 thorpej Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.36 2000/06/03 07:14:55 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,9 @@ static  struct tinfo *fbuf;     /* untruncated termcap buffer */
 int
 t_setinfo(struct tinfo **bp, const char *entry)
 {
+	char capability[256], *cap_ptr;
+	size_t limit;
+	
 	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
 		return -1;
 
@@ -88,6 +91,14 @@ t_setinfo(struct tinfo **bp, const char *entry)
 		return -1;
 
 	strcpy((*bp)->info, entry);
+
+	cap_ptr = capability;
+	limit = 255;
+	(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+	cap_ptr = capability;
+	limit = 255;
+	(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+	
 	return 0;
 }
 
@@ -107,9 +118,12 @@ t_getent(bp, name)
 	char **fname;
 	char  *home;
 	int    i, did_getset;
+	size_t limit;
 	char   pathbuf[PBUFSIZ];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
+	char  capability[256], *cap_ptr;
+	
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(name != NULL);
@@ -205,6 +219,20 @@ t_getent(bp, name)
 	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
 		return (-1);
+
+	  /* fill in t_goto capabilities - this prevents memory leaks
+	   * and is more efficient than fetching these capabilities
+	   * every time t_goto is called.
+	   */
+	if (i >= 0) {
+		cap_ptr = capability;
+		limit = 255;
+		(*bp)->up = t_getstr(*bp, "up", &cap_ptr, &limit);
+		cap_ptr = capability;
+		limit = 255;
+		(*bp)->bc = t_getstr(*bp, "bc", &cap_ptr, &limit);
+	}
+		
 	return (i + 1);
 }
 
@@ -454,6 +482,10 @@ t_freent(info)
 {
 	_DIAGASSERT(info != NULL);
 	free(info->info);
+	if (info->up != NULL)
+		free(info->up);
+	if (info->bc != NULL)
+		free(info->bc);
 	free(info);
 }
 

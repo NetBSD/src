@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.16 2000/06/02 13:13:12 itojun Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.17 2000/06/03 07:14:55 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,21 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.16 2000/06/02 13:13:12 itojun Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.17 2000/06/03 07:14:55 blymn Exp $");
 #endif
 #endif /* not lint */
 
 #include <errno.h>
 #include <string.h>
 #include <termcap.h>
+#include <termcap_private.h>
 #include <stdlib.h>
 
 #define	CTRL(c)	((c) & 037)
 
 #define MAXRETURNSIZE 64
 
-char	*UP;
-char	*BC;
+char	*UP = NULL;
+char	*BC = NULL;
 
 /*
  * Routine to perform cursor addressing.
@@ -109,10 +110,7 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 	static char added[10];
 	const char *cp = CM;
 	char *dp = buffer;
-	char *old_up = UP, *old_bc = BC;
-	char new_up[MAXRETURNSIZE], new_bc[MAXRETURNSIZE], *up_ptr, *bc_ptr;
 	int c;
-	size_t count = MAXRETURNSIZE;
 	int oncol = 0;
 	int which = destline;
 
@@ -120,24 +118,15 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 
 	if (info != NULL)
 	{
-		up_ptr = new_up;
-		bc_ptr = new_bc;
-		UP = t_getstr(info, "up", &up_ptr, &count);
-		count = MAXRETURNSIZE;
-		BC = t_getstr(info, "bc", &bc_ptr, &count);
+		if (!UP)
+			UP = info->up;
+		if (!BC)
+			BC = info->bc;
 	}
 
 	if (cp == 0) {
 		errno = EINVAL;
 toohard:
-		if (UP != old_up) {
-			free(UP);
-			UP = old_up;
-		}
-		if (BC != old_bc) {
-			free(BC);
-			BC = old_bc;
-		}
 		return -1;
 	}
 	added[0] = '\0';
@@ -299,13 +288,5 @@ setwhich:
 	}
 
 	(void)strcpy(dp, added);
-	if (UP != old_up) {
-		free(UP);
-		UP = old_up;
-	}
-	if (BC != old_bc) {
-		free(BC);
-		BC = old_bc;
-	}
 	return 0;
 }
