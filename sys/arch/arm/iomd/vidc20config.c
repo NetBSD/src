@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.9.6.1 2002/06/21 14:50:47 lukem Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.9.6.2 2002/06/21 14:52:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.9.6.1 2002/06/21 14:50:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.9.6.2 2002/06/21 14:52:14 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -697,18 +697,22 @@ vidcvideo_stdpalette()
 		 * green = LUT[pixel[11:4]].green
 		 * blue  = LUT[pixel[15:8]].blue
 		 *
-		 * We just want 5:5:5 R:G:B.
+		 * We use 6:5:5 R:G:B cos that's what Xarm32VIDC wants.
 		 */
+#define RBITS 6
+#define GBITS 5
+#define BBITS 5
 		vidcvideo_write(VIDC_PALREG, 0x00000000);
 		for (i = 0; i < 256; i++) {
-			int r5, g5, b5;
+			int r, g, b;
 
-			r5 = i & 0x1f;
-			g5 = (i >> 1) & 0x1f;
-			b5 = (i >> 2) & 0x1f;
+			r = i & ((1 << RBITS) - 1);
+			g = (i >> (RBITS - 4)) & ((1 << GBITS) - 1);
+			b = (i >> (RBITS + GBITS - 8)) & ((1 << BBITS) - 1);
 			vidcvideo_write(VIDC_PALETTE,
-			    VIDC_COL(r5 << 3 | r5 >> 2, g5 << 3 | g5 >> 2,
-				b5 << 3 | b5 >> 2));  
+			    VIDC_COL(r << (8 - RBITS) | r >> (2 * RBITS - 8),
+				g << (8 - GBITS) | g >> (2 * GBITS - 8),
+				b << (8 - BBITS) | b >> (2 * BBITS - 8)));
 		}
 		break;			
 	case 5: /* 32 bpp */
