@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.4 1997/10/15 06:08:38 explorer Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.5 1997/10/15 16:54:48 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -24,10 +24,6 @@ struct dp8390_softc {
 	int	sc_flags;	/* interface flags, from config */
 
 	struct ethercom sc_ec;	/* ethernet common */
-
-	char	*type_str;	/* type string */
-	u_int	type;		/* interface type code */
-	u_int	vendor;		/* interface vendor */
 
 	bus_space_tag_t	sc_regt;	/* NIC register space tag */
 	bus_space_handle_t sc_regh;	/* NIC register space handle */
@@ -59,6 +55,8 @@ struct dp8390_softc {
 
 	u_int8_t sc_enaddr[6];	/* storage for MAC address */
 
+	int	sc_enabled;	/* boolean; power enabled on interface */
+
 	int	(*test_mem) __P((struct dp8390_softc *));
 	void	(*init_card) __P((struct dp8390_softc *));
 	void	(*read_hdr) __P((struct dp8390_softc *,
@@ -67,6 +65,9 @@ struct dp8390_softc {
 	int	(*ring_copy) __P((struct dp8390_softc *,
 		    int, caddr_t, u_short));
 	int	(*write_mbuf) __P((struct dp8390_softc *, struct mbuf *, int));
+
+	int	(*sc_enable) __P((struct dp8390_softc *));
+	void	(*sc_disable) __P((struct dp8390_softc *));
 };
 
 /*
@@ -113,13 +114,13 @@ struct dp8390_softc {
 /*
  * NIC register access macros
  */
-#define NIC_GET(t, h, reg)	(bus_space_read_1(t, h,			\
-				    ((sc)->sc_reg_map[reg])))
-#define NIC_PUT(t, h, reg, val)	(bus_space_write_1(t, h,		\
-				    ((sc)->sc_reg_map[reg]), (val)))
+#define NIC_GET(t, h, reg)	bus_space_read_1(t, h,			\
+				    ((sc)->sc_reg_map[reg]))
+#define NIC_PUT(t, h, reg, val)	bus_space_write_1(t, h,			\
+				    ((sc)->sc_reg_map[reg]), (val))
 
 int	dp8390_config __P((struct dp8390_softc *));
-void	dp8390_intr __P((void *, int));
+int	dp8390_intr __P((void *));
 int	dp8390_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	dp8390_start __P((struct ifnet *));
 void	dp8390_watchdog __P((struct ifnet *));
