@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.61 2000/07/24 10:52:28 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.62 2000/09/20 21:28:51 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1003,7 +1003,6 @@ char *search;
 		while ((t = strtok(NULL, " \t\n")) != NULL) {
 			if (strcmp(t, search) == 0) {
 				t = strtok(NULL, " \t\n");
-fprintf(stderr, "<%s>", t);
 				if (inet_pton(af, t, &in) == 1 &&
 				    strcmp(t, "0.0.0.0") != 0) {
 					strcpy(targ, t);
