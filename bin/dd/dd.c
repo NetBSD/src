@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.8 1998/04/01 13:55:23 kleink Exp $	*/
+/*	$NetBSD: dd.c,v 1.9 1998/06/29 19:49:04 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.8 1998/04/01 13:55:23 kleink Exp $");
+__RCSID("$NetBSD: dd.c,v 1.9 1998/06/29 19:49:04 gwr Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,11 +236,13 @@ dd_in()
 			return;
 
 		/*
-		 * Zero the buffer first if trying to recover from errors so
-		 * lose the minimum amount of data.  If doing block operations
-		 * use spaces.
+		 * Clear the buffer first if doing "sync" on input.
+		 * If doing block operations use spaces.  This will
+		 * affect not only the C_NOERROR case, but also the
+		 * last partial input block which should be padded
+		 * with zero and not garbage.
 		 */
-		if ((flags & (C_NOERROR|C_SYNC)) == (C_NOERROR|C_SYNC))
+		if (flags & C_SYNC)
 			if (flags & (C_BLOCK|C_UNBLOCK))
 				memset(in.dbp, ' ', in.dbsz);
 			else
