@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.29 1997/01/27 16:11:11 gwr Exp $
+#	$NetBSD: files.sun3,v 1.30 1997/02/13 18:14:31 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -21,7 +21,7 @@ file arch/sun3/sun3/disksubr.c
 file arch/sun3/sun3/dvma.c
 file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
-file arch/sun3/sun3/kgdb_stub.c 		kgdb
+file arch/sun3/sun3/kgdb_machdep.c 		kgdb
 file arch/sun3/sun3/machdep.c
 file arch/sun3/sun3/mem.c
 file arch/sun3/sun3/pmap.c
