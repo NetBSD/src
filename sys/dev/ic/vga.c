@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.71 2003/06/29 22:30:14 fvdl Exp $ */
+/* $NetBSD: vga.c,v 1.71.4.1 2004/06/07 09:37:51 tron Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.71 2003/06/29 22:30:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.71.4.1 2004/06/07 09:37:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ struct vgascreen {
 	/* palette */
 
 	int mindispoffset, maxdispoffset;
+	int vga_rollover;
+	int visibleoffset;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -117,13 +119,15 @@ void vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
 static void vga_setfont(struct vga_config *, struct vgascreen *);
 
 static int vga_mapchar(void *, int, unsigned int *);
+void vga_putchar(void *, int, int, u_int, long);
 static int vga_allocattr(void *, int, int, int, long *);
 static void vga_copyrows(void *, int, int, int);
+void vga_scroll (void *, void *, int);
 
 const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_cursor,
 	vga_mapchar,
-	pcdisplay_putchar,
+	vga_putchar,
 	pcdisplay_copycols,
 	pcdisplay_erasecols,
 	vga_copyrows,
@@ -269,7 +273,11 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_free_screen,
 	vga_show_screen,
 	vga_load_font,
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	vga_scroll,
+#else
 	NULL,
+#endif
 #ifdef WSDISPLAY_CHARFUNCS
 	vga_getwschar,
 	vga_putwschar
@@ -453,6 +461,9 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
 	}
+
+	scr->pcs.visibleoffset = scr->pcs.dispoffset;
+	scr->vga_rollover = 0;
 
 	scr->pcs.cursorrow = cpos / type->ncols;
 	scr->pcs.cursorcol = cpos % type->ncols;
@@ -1305,6 +1316,61 @@ vga_mapchar(void *id, int uni, u_int *index)
 	*index = idx1;
 	return (res1);
 }
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+void
+vga_scroll(void *v, void *cookie, int lines)
+{
+	struct vga_config *vc = v;
+	struct vgascreen *scr = cookie;
+	struct vga_handle *vh = &vc->hdl;
+
+	if (lines == 0) {
+		if (scr->pcs.visibleoffset == scr->pcs.dispoffset)
+			return;
+
+		scr->pcs.visibleoffset = scr->pcs.dispoffset;
+	}
+	else {
+		int vga_scr_end;
+		int margin = scr->pcs.type->ncols * 2;
+		int ul, we, p, st;
+
+		vga_scr_end = (scr->pcs.dispoffset + scr->pcs.type->ncols *
+		    scr->pcs.type->nrows * 2);
+		if (scr->vga_rollover > vga_scr_end + margin) {
+			ul = vga_scr_end;
+			we = scr->vga_rollover + scr->pcs.type->ncols * 2;
+		} else {
+			ul = 0;
+			we = 0x8000;
+		}
+		p = (scr->pcs.visibleoffset - ul + we) % we + lines *
+		    (scr->pcs.type->ncols * 2);
+		st = (scr->pcs.dispoffset - ul + we) % we;
+		if (p < margin)
+			p = 0;
+		if (p > st - margin)
+			p = st;
+		scr->pcs.visibleoffset = (p + ul) % we;
+	}
+	
+	vga_6845_write(vh, startadrh, scr->pcs.visibleoffset >> 9);
+	vga_6845_write(vh, startadrl, scr->pcs.visibleoffset >> 1);
+}
+#endif
+
+void
+vga_putchar(void *c, int row, int col, u_int uc, long attr)
+{
+	struct vgascreen *scr = c;
+
+	if (scr->pcs.visibleoffset != scr->pcs.dispoffset)
+		vga_scroll(scr->cfg, scr, WSDISPLAY_SCROLL_BACKWARD);
+
+	pcdisplay_putchar(c, row, col, uc, attr);
+}
+
 
 #ifdef WSDISPLAY_CHARFUNCS
 int
