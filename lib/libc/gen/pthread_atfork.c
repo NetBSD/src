@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.1 2003/02/13 02:50:51 nathanw Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.2 2003/04/07 21:09:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.1 2003/02/13 02:50:51 nathanw Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.2 2003/04/07 21:09:57 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -72,9 +72,9 @@ struct atfork_callback {
 static mutex_t atfork_lock = MUTEX_INITIALIZER;
 SIMPLEQ_HEAD(atfork_callback_q, atfork_callback);
 
-struct atfork_callback_q prepareq = SIMPLEQ_HEAD_INITIALIZER(prepareq);
-struct atfork_callback_q parentq = SIMPLEQ_HEAD_INITIALIZER(parentq);
-struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
+static struct atfork_callback_q prepareq = SIMPLEQ_HEAD_INITIALIZER(prepareq);
+static struct atfork_callback_q parentq = SIMPLEQ_HEAD_INITIALIZER(parentq);
+static struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
 
 int
 pthread_atfork(void (*prepare)(void), void (*parent)(void),
