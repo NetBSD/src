@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1 1993/06/08 03:53:26 cgd Exp $
+#	$Id: Makefile,v 1.2 1994/07/24 02:52:39 mycroft Exp $
 #
 
 SRCS=miscmod.c
@@ -45,7 +45,7 @@ KOBJS=misccall.o
 MODOBJ=combined.o
 
 KMOD=miscmod
-CFLAGS= -DKERNEL
+CFLAGS= -DKERNEL -I/sys
 
 all:	$(MODOBJ)
 
