@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.14 1996/12/20 19:38:16 cgd Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.15 1997/01/22 01:21:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.14 1996/12/20 19:38:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.15 1997/01/22 01:21:06 thorpej Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,15 +165,15 @@ grscan(search, gid, name)
 	register char *cp, **m;
 	char *bp;
 #ifdef YP
+	char *key, *data;
+	int keylen, datalen;
+	int r;
 	char *grname = (char *)NULL;
 #endif
 
 	for (;;) {
 #ifdef YP
 		if(__ypmode != YPMODE_NONE) {
-			char *key, *data;
-			int keylen, datalen;
-			int r;
 
 			if(!__ypdomain) {
 				if(yp_get_default_domain(&__ypdomain)) {
@@ -258,16 +258,50 @@ grscan(search, gid, name)
 			case '\0':
 			case '\n':
 				if(_yp_check(NULL)) {
-					__ypmode = YPMODE_FULL;
-					continue;
+					if (!search) {
+						__ypmode = YPMODE_FULL;
+						continue;
+					}
+					if(!__ypdomain &&
+					   yp_get_default_domain(&__ypdomain))
+						continue;
+					if (name) {
+						r = yp_match(__ypdomain,
+							     "group.byname",
+							     name, strlen(name),
+							     &data, &datalen);
+					} else {
+						char buf[20];
+						sprintf(buf, "%d", gid);
+						r = yp_match(__ypdomain,
+							     "group.bygid",
+							     buf, strlen(buf),
+							     &data, &datalen);
+					}
+					if (r != 0)
+						continue;
+					bcopy(data, line, datalen);
+					free(data);
+					line[datalen] = '\0';
+					bp = line;
+					_gr_group.gr_name = strsep(&bp, ":\n");
+					_gr_group.gr_passwd =
+						strsep(&bp, ":\n");
+					if (!(cp = strsep(&bp, ":\n")))
+						continue;
+					_gr_group.gr_gid =
+						name ? atoi(cp) : gid;
+					goto found_it;
 				}
 				break;
 			default:
 				if(_yp_check(NULL)) {
 					register char *tptr;
 
-					__ypmode = YPMODE_NAME;
 					tptr = strsep(&bp, ":\n");
+					if (search && name && strcmp(tptr, name))
+						continue;
+					__ypmode = YPMODE_NAME;
 					grname = strdup(tptr + 1);
 					continue;
 				}
@@ -285,6 +319,7 @@ parse:
 		_gr_group.gr_gid = atoi(cp);
 		if (search && name == NULL && _gr_group.gr_gid != gid)
 			continue;
+	found_it:
 		cp = NULL;
 		if (bp == NULL)
 			continue;
