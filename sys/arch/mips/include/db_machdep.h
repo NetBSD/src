@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.3 1997/07/19 09:54:25 jonathan Exp $ */
+/* $NetBSD: db_machdep.h,v 1.4 1997/11/18 21:13:17 mhitch Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -50,6 +50,12 @@ db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->f_regs[PC])
+
+#define PC_ADVANCE(regs) do {						\
+	if ((db_get_value((regs)->f_regs[PC], sizeof(int), FALSE) &	\
+	     0xfc00003f) == 0xd)					\
+		(regs)->f_regs[PC] += BKPT_SIZE;			\
+} while(0)				/* XXX endianness? */
 
 #define BKPT_INST	0x0001000D	/* XXX endianness? */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
