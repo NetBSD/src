@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.11 2003/02/23 19:30:13 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.12 2003/02/23 21:27:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -222,6 +222,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 #ifdef QUOTA
 #endif
 	/* Drop the extra reference to root vnode. */
+	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
 	vrele(SMBTOV(smp->sm_root));
 
 	/* Flush all vnodes. */
@@ -254,7 +255,6 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct vnode *vp;
-	struct smbnode *np;
 	struct smbfattr fattr;
 	struct proc *p = curproc;
 	struct ucred *cred = p->p_ucred;
@@ -273,8 +273,7 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 	if (error)
 		return error;
 	vp->v_flag |= VROOT;
-	np = VTOSMB(vp);
-	smp->sm_root = np;
+	smp->sm_root = VTOSMB(vp);
 	*vpp = vp;
 	return 0;
 }
