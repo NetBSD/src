@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 1995/08/18 08:14:30 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.7 1995/08/29 19:53:59 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Theo de Raadt
@@ -113,7 +113,8 @@ dk_establish(dk, dev)
 				: bp->val[0];
 		}
 
-		if (sbsc->sc_link[targ][lun]->device_softc == (void *)dev) {
+		if (sbsc->sc_link[targ][lun] != NULL &&
+		    sbsc->sc_link[targ][lun]->device_softc == (void *)dev) {
 			bootdv = dev; /* got it! */
 			return 1;
 		}
