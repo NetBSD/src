@@ -30,24 +30,26 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)number.6	6.4 (Berkeley) 6/23/90
-.\"	$Id: number.6,v 1.2 1993/08/01 07:46:35 mycroft Exp $
+.\"	$Id: number.6,v 1.3 1993/08/05 01:46:49 jtc Exp $
 .\"
-.TH NUMBER 6 "June 23, 1990"
-.UC 4
-.SH NAME
-number \- convert Arabic numerals to English
-.SH SYNOPSIS
-.B number
-[ # ]
-.SH DESCRIPTION
+.Dd June 23, 1990
+.Dt NUMBER 6
+.Os
+.Sh NAME
+.Nm number
+.Nd convert Arabic numerals to English
+.Sh SYNOPSIS
+.Nm number
+.Op #
+.Sh DESCRIPTION
 The
-.I number
+.Nm number
 utility
 prints the English equivalent of the specified number to the
 standard output.
 If no argument is specified,
-.I number
+.Nm number
 reads a number from the standard input.
-.SH BUGS
-.I Number
+.Sh BUGS
+.Nm Number
 doesn't understand exponents.
