@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.29 1995/10/14 20:24:35 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.30 1996/01/30 20:05:33 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -210,13 +210,11 @@ svr4_sys_getdents(p, v, retval)
 	u_long *cookiebuf, *cookie;
 	int ncookies;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
-
-	vp = (struct vnode *)fp->f_data;
 
 	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
 		return (EINVAL);
@@ -343,11 +341,10 @@ svr4_sys_fchroot(p, v, retval)
 	struct file	*fp;
 	int		 error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if (error = suser(p->p_ucred, &p->p_acflag))
 		return error;
-	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
+	if (error = getvnode(fdp, SCARG(uap, fd), &vp, &fp))
 		return error;
-	vp = (struct vnode *) fp->f_data;
 	VOP_LOCK(vp);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
