@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.48 2003/02/17 23:48:23 perseant Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.49 2003/03/08 21:52:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.48 2003/02/17 23:48:23 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.49 2003/03/08 21:52:57 perseant Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -111,9 +111,7 @@ READ(void *v)
 	}
 
 #ifdef LFS_READWRITE
-# ifdef LFS_UBC
 	usepc = (vp->v_type == VREG && ip->i_number != LFS_IFILE_INUM);
-# endif
 #else /* !LFS_READWRITE */
 	usepc = vp->v_type == VREG;
 #endif /* !LFS_READWRITE */
@@ -283,13 +281,9 @@ WRITE(void *v)
 	error = 0;
 
 #ifdef LFS_READWRITE
-# ifdef LFS_UBC
 	async = TRUE;
-	usepc = vp->v_type == VREG;
-# endif
-#else /* !LFS_READWRITE */
-	usepc = vp->v_type == VREG;
 #endif /* !LFS_READWRITE */
+	usepc = vp->v_type == VREG;
 	if (!usepc) {
 		goto bcache;
 	}
