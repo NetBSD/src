@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.c,v 1.4 1997/07/13 20:24:37 christos Exp $	*/
+/*	$NetBSD: swab.c,v 1.5 1998/01/12 16:05:42 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,11 +41,11 @@
 #if 0
 static char *sccsid = "@(#)swab.c	5.10 (Berkeley) 3/6/91";
 #else
-__RCSID("$NetBSD: swab.c,v 1.4 1997/07/13 20:24:37 christos Exp $");
+__RCSID("$NetBSD: swab.c,v 1.5 1998/01/12 16:05:42 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <string.h>
+#include <unistd.h>
 
 void
 swab(from, to, len)
