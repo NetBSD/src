@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.26 2003/08/07 16:44:22 agc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.27 2004/03/16 07:48:18 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,11 +34,10 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.26 2003/08/07 16:44:22 agc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.27 2004/03/16 07:48:18 jdc Exp $");
 #endif
 #endif	/* not lint */
 
-#include <signal.h>
 #include <stdlib.h>
 
 #include "curses.h"
