@@ -1,4 +1,4 @@
-.\" $NetBSD: isdntel.4,v 1.2 2002/07/29 00:42:57 wiz Exp $
+.\" $NetBSD: isdntel.4,v 1.3 2003/04/06 18:20:09 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdntel.4,v 1.2 2002/07/29 00:42:57 wiz Exp $
+.\"	$Id: isdntel.4,v 1.3 2003/04/06 18:20:09 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -63,7 +63,7 @@ so the
 .Nm
 driver does the bit-reversion process in any case.
 .Pp
-Additionally, the user can specify to do A-law to u-law, u-law to A-law
+Additionally, the user can specify to do A-law to mu-law, mu-law to A-law
 or no conversion at all in the
 .Nm
 driver by using the
@@ -86,40 +86,40 @@ parameters are available:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
 .It Ar CVT_NONE
-do no A-law/u-law audio format conversion. The conversion path looks like
+do no A-law/mu-law audio format conversion. The conversion path looks like
 this:
 .Pp
 USER \*[Lt]--\*[Gt] bitreversing \*[Lt]--\*[Gt] ISDN-line
 .Pp
 .It Ar CVT_ALAW2ULAW
 set set audio format conversion to do an audio conversion from A-law
-(on the ISDN line) to u-law (in the userland).
+(on the ISDN line) to mu-law (in the userland).
 The
 .Xr read 2
 conversion path looks like this:
 .Pp
-USER \*[Lt]-- u-law/A-law \*[Lt]-- bitreversing \*[Lt]-- ISDN-line
+USER \*[Lt]-- mu-law/A-law \*[Lt]-- bitreversing \*[Lt]-- ISDN-line
 .Pp
 and the
 .Xr write 2
 conversion path looks like this:
 .Pp
-USER --\*[Gt] u-law/A-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
+USER --\*[Gt] mu-law/A-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
 .Pp
 .It Ar CVT_ULAW2ALAW
-set set audio format conversion to do an audio conversion from u-law
+set set audio format conversion to do an audio conversion from mu-law
 (on the ISDN line) to A-law (in the userland).
 The
 .Xr read 2
 conversion path looks like this:
 .Pp
-USER \*[Lt]-- A-law/u-law \*[Lt]-- bitreversing \*[Lt]-- ISDN-line
+USER \*[Lt]-- A-law/mu-law \*[Lt]-- bitreversing \*[Lt]-- ISDN-line
 .Pp
 and the
 .Xr write 2
 conversion path looks like this:
 .Pp
-USER --\*[Gt] A-law/u-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
+USER --\*[Gt] A-law/mu-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
 .Pp
 .El
 .Sh SEE ALSO
@@ -128,7 +128,7 @@ USER --\*[Gt] A-law/u-law --\*[Gt] bitreversing --\*[Gt] ISDN-line
 .Xr isdntel 8 ,
 .Xr isdntelctl 8
 .Sh STANDARDS
-A-Law and u-Law are specified in ITU Recommendation G.711.
+A-law and mu-law are specified in ITU Recommendation G.711.
 .Sh AUTHORS
 The
 .Nm

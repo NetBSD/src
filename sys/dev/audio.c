@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.174 2003/03/31 18:47:58 jdolecek Exp $	*/
+/*	$NetBSD: audio.c,v 1.175 2003/04/06 18:20:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.174 2003/03/31 18:47:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.175 2003/04/06 18:20:11 wiz Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -196,7 +196,7 @@ const struct cdevsw audio_cdevsw = {
 	nostop, notty, audiopoll, audiommap, audiokqfilter,
 };
 
-/* The default audio mode: 8 kHz mono ulaw */
+/* The default audio mode: 8 kHz mono mu-law */
 const struct audio_params audio_default =
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
