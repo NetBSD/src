@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: motd,v 1.5 2000/09/19 13:04:38 lukem Exp $
+# $NetBSD: motd,v 1.6 2000/10/09 06:01:18 nisimura Exp $
 #
 
 # PROVIDE: motd
@@ -24,8 +24,7 @@ motd_start()
 		install -c -o root -g wheel -m 664 /dev/null /etc/motd
 	fi
 	T=/etc/_motd
-	rm -f $T
-	sysctl -n kern.version | sed 1q > $T
+	sysctl -n kern.version | while read i; do echo $i; break; done > $T
 	sed '1{/^NetBSD.*/{d;};};' < /etc/motd >> $T
 	cmp -s $T /etc/motd || cp $T /etc/motd
 	rm -f $T
