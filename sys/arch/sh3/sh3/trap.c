@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 2000/11/08 01:03:03 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 2000/11/22 21:12:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -417,7 +417,7 @@ syscall(frame)
 	struct trapframe *frame;
 {
 	register caddr_t params;
-	register struct sysent *callp;
+	register const struct sysent *callp;
 	register struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
