@@ -228,6 +228,7 @@ static const char *       get_data_encoding           PARAMS ((unsigned char));
 static const char *       get_osabi_name              PARAMS ((unsigned char));
 static int		  guess_is_rela               PARAMS ((unsigned long));
 static char *		  get_note_type		         PARAMS ((unsigned int));
+static char *		  get_netbsd_elfcore_note_type   PARAMS ((unsigned int));
 static int		  process_note		         PARAMS ((Elf32_Internal_Note *));
 static int		  process_corefile_note_segment  PARAMS ((FILE *, bfd_vma, bfd_vma));
 static int		  process_corefile_note_segments PARAMS ((FILE *));
@@ -8187,6 +8188,33 @@ get_note_type (e_type)
     }
 }
 
+static char *
+get_netbsd_elfcore_note_type (e_type)
+     unsigned e_type;
+{
+  static char buff[64];
+
+  if (e_type == 1)
+    {
+      /* NetBSD core "procinfo" structure.  */
+      return _("NetBSD procinfo structure");
+    }
+
+  /* Thre are not currently any other machine-independent notes defined
+     for NetBSD ELF core files.  If the note type is less than the start
+     of the machine-dependent note types, we don't understand it.  */
+
+  if (e_type < 32)
+    {
+      sprintf (buff, _("Unknown note type: (0x%08x)"), e_type);
+      return buff;
+    }
+
+  /* XXX Need a way to know the arch. */
+  sprintf (buff, _("PT_FIRSTMACH+%d"), e_type - 32);
+  return buff;
+}
+
 /* Note that by the ELF standard, the name field is already null byte
    terminated, and namesz includes the terminating null byte.
    I.E. the value of namesz for the name "FSF" is 4.
@@ -8196,9 +8224,29 @@ static int
 process_note (pnote)
   Elf32_Internal_Note * pnote;
 {
+  char *nt;
+
+  if (pnote->namesz == 0)
+    {
+      /* If there is no note name, then use the default set of
+	 note type strings.  */
+      nt = get_note_type (pnote->type);
+    }
+  else if (strncmp (pnote->namedata, "NetBSD-CORE", 11) == 0)
+    {
+      /* NetBSD-specific core file notes.  */
+      nt = get_netbsd_elfcore_note_type (pnote->type);
+    }
+  else
+    {
+      /* Don't recognize this note name; just use the default set of
+	 note type strings.  */
+      nt = get_note_type (pnote->type);
+    }
+
   printf ("  %s\t\t0x%08lx\t%s\n",
 	  pnote->namesz ? pnote->namedata : "(NONE)",
-	  pnote->descsz, get_note_type (pnote->type));
+	  pnote->descsz, nt);
   return 1;
 }
 
