@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2001/01/04 10:43:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.44 2001/01/05 21:17:11 jdolecek Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -16,6 +16,7 @@ CLEANFILES=	init.c
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
 		-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/include \
+		-I${DESTDIR}/usr/include/readline \
 		-DHOST_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
 		-DTARGET_NAME=\"${MACHINE_GNU_ARCH}--netbsd\"
 .if defined(ELF_PLEASE)
