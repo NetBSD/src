@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.3 1997/04/13 13:36:46 mrg Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.4 1997/07/23 20:58:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ ee_hwupdate(ktent, arg)
 	if ((cp2 = strrchr(cp, '\n')) != NULL)
 		*cp2 = '\0';
 
-	printf("%s=%d (%s)\n", ktent->kt_keyword, t, cp);
+	printf("%s=%ld (%s)\n", ktent->kt_keyword, (long)t, cp);
 }
 
 void
@@ -508,7 +508,7 @@ doio(ktent, buf, len, wr)
 	}
 
 	if (lseek(fd, (off_t)ktent->kt_offset, SEEK_SET) < (off_t)0) {
-		(void)snprintf(err_str, sizeof err_str, "lseek: %s:",
+		(void)snprintf(err_str, sizeof err_str, "lseek: %s: %s",
 		    path_eeprom, strerror(errno));
 		rval = 1;
 		goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 1996/02/28 01:13:20 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.3 1997/07/23 20:58:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ struct	strvaltabent {
 };
 
 #ifdef __sparc__
+struct	opiocdesc;
 /*
  * This is an entry in a table which describes a set of `exceptions'.
  * In other words, these are Openprom fields that we either can't
@@ -87,6 +88,10 @@ struct	extabent {
 					/* handler function for this entry */
 };
 #endif /* __sparc__ */
+
+/* date parser */
+struct	timeb;
+time_t	get_date __P((char *, struct timeb *));
 
 /* Sun 3/4 EEPROM handlers. */
 void	ee_hwupdate __P((struct keytabent *, char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.3 1997/04/13 13:36:49 mrg Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.4 1997/07/23 20:58:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <machine/eeprom.h>
 #include <machine/openpromio.h>
@@ -111,7 +112,7 @@ op_handler(keyword, arg)
 				BARF("OPIOCGET", strerror(errno));
 
 			if (opio.op_buflen <= 0) {
-				printf("nothing available for %s\n");
+				printf("nothing available for %s\n", keyword);
 				goto out;
 			}
 
