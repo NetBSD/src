@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138 2000/01/17 17:47:03 augustss Exp $
+# $NetBSD: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -385,6 +385,7 @@ pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
