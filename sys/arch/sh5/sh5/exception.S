@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.2 2002/07/12 15:42:28 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.3 2002/07/12 19:33:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -583,10 +583,11 @@ Lsh5_vector_tlbmiss:
 
 	/* The miss happened in kernel-mode */
 #ifndef _LP64
-	LDSC32(SH5_KSEG1_BASE >> PGSHIFT, r1)	/* #4c: */
+	LDSC32(SH5_KSEG1_BASE, r1)	/* #4c: */
 #else
-	LDSC64(SH5_KSEG1_BASE >> PGSHIFT, r1)	/* #4c: */
+	LDSC64(SH5_KSEG1_BASE, r1)	/* #4c: */
 #endif
+	shari	r1, PGSHIFT, r1
 	bgtu/u	r1, r0, tr0		/* #54: Jump if not in KSEG1 */
 
 	/* Ok, we're dealing with a kernel-mode KSEG1 access */
@@ -797,7 +798,12 @@ Ltrapepilogue:
 	getcon	kcr0, r1		/* Get cpu_info for this cpu */
 	LDPTR	r1, CI_CURPROC, r1	/* Get curproc */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
+#ifndef _LP64
 	addi	r1, P_MD_ASTPENDING, r1	/* Point to md_astpending */
+#else
+	movi	P_MD_ASTPENDING, r2	/* Exceeds 10-bit field in _LP64 mode */
+	add	r1, r2, r1		/* Point to md_astpending */
+#endif
 	swap.q	r1, r63, r0		/* AST pending for this process? */
 	beq/l	r0, r63, tr0		/* Nope. Moving right along ... */
 	pta/l	Ltrapagain, tr0
@@ -852,7 +858,12 @@ Lsh5_event_interrupt:
 	getcon	kcr0, r1		/* Get cpu_info for this cpu */
 	LDPTR	r1, CI_CURPROC, r1	/* Get curproc */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
+#ifndef _LP64
 	addi	r1, P_MD_ASTPENDING, r1	/* Point to md_astpending */
+#else
+	movi	P_MD_ASTPENDING, r2	/* Exceeds 10-bit field in _LP64 mode */
+	add	r1, r2, r1		/* Point to md_astpending */
+#endif
 	swap.q	r1, r63, r0		/* ASTs pending for this process? */
 	beq/l	r0, r63, tr0		/* Nope. Moving right along ... */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.3 2002/07/11 14:42:55 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.4 2002/07/12 19:33:27 scw Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -34,18 +34,48 @@ GENASSYM=	${SH5}/sh5/genassym.cf
 ##
 ## The kernel must be compiled to *not* use FPU registers.
 ##
-CC=		sh5gcc -D__NetBSD__ -ml -m5-32media-nofpu
-AS=		sh5gcc -D__NetBSD__ -ml -m5-32media-nofpu
-LD=		sh5ld -m shlelf32
+SH5_ABI?=32
+.if (${SH5_ABI} == 32 || ${SH5_ABI} == 0x20)
+SH5_ABI=32
+SH5_ABI_DEF=-D_ILP32
+.elif (${SH5_ABI} == 64 || ${SH5_ABI} == 0x40)
+SH5_ABI=64
+SH5_ABI_DEF=-D_LP64
+.else
+.BEGIN:
+	@echo "SH5_ABI must be either 32 or 64"
+	@false
+.endif
+
+.if (${MACHINE_ARCH} == sh5el)
+SH5_ENDIAN_CC=	-ml
+SH5_ENDIAN_LD=	shlelf${SH5_ABI}
+.elif (${MACHINE_ARCH} == sh5eb)
+SH5_ENDIAN_CC=	-mb
+SH5_ENDIAN_LD=	shelf${SH5_ABI}
+.else
+.BEGIN:
+	@echo "MACHINE_ARCH must be either sh5el or sh5eb"
+	@false
+.endif
+
+CC=		sh5gcc
+AS=		sh5gcc
+LD=		sh5ld -m ${SH5_ENDIAN_LD}
 AR=		sh5ar
+NM=		sh5nm
 RANLIB=		sh5ranlib
 SIZE=		sh5size
-CPPFLAGS+=	-D${MACHINE}
-DEFWARNINGS=	no
-CWARNFLAGS+=	-Wall -Wno-main -Wpointer-arith -Wno-uninitialized
-CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+
+CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
+CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
+AFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-COPTS?=		-O2
+COPTS?=		-O0
+DEFWARNINGS=	no
+CWARNFLAGS+=	-Werror -Wall -Wno-main -Wpointer-arith
+CWARNFLAGS+=	-Wno-uninitialized -Wno-format
+CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 
 ##
 ## (3) libkern and compat
