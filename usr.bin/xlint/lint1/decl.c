@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.5 1995/10/02 17:18:57 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.6 1995/10/02 17:21:24 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.5 1995/10/02 17:18:57 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.6 1995/10/02 17:21:24 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ static	void	align __P((int, int));
 static	sym_t	*newtag __P((sym_t *, scl_t, int, int));
 static	int	eqargs __P((type_t *, type_t *, int *));
 static	int	mnoarg __P((type_t *, int *));
-static	void	chkosdef __P((sym_t *, sym_t *));
+static	int	chkosdef __P((sym_t *, sym_t *));
 static	int	chkptdecl __P((sym_t *, sym_t *));
 static	sym_t	*nsfunc __P((sym_t *, sym_t *));
 static	void	osfunc __P((sym_t *, sym_t *));
@@ -295,7 +295,7 @@ addscl(sc)
 {
 	if (sc == INLINE) {
 		/* syntax error */
-		gnuism(249);
+		(void)gnuism(249);
 		if (dcs->d_inline)
 			/* duplicate '%s' */
 			warning(10, "inline");
@@ -380,6 +380,8 @@ addtype(tp)
 		/* "long long" or "long ... long" */
 		t = QUAD;
 		dcs->d_lmod = NOTSPEC;
+		/* %s C does not support 'long long' */
+		(void)gnuism(265, tflag ? "traditional" : "ANSI");
 	}
 
 	if (dcs->d_type != NULL && dcs->d_type->t_typedef) {
@@ -1273,8 +1275,8 @@ addfunc(decl, args)
 	 * The symbols are removed from the symbol table by popdecl() after
 	 * addfunc(). To be able to restore them if this is a function
 	 * definition, a pointer to the list of all symbols is stored in
-	 * dcs->d_nxt->fpsyms. Also a list of the arguments (concatenated
-	 * by s_nxt) is stored in dcs->d_nxt->f_args.
+	 * dcs->d_nxt->d_fpsyms. Also a list of the arguments (concatenated
+	 * by s_nxt) is stored in dcs->d_nxt->d_fargs.
 	 * (dcs->d_nxt must be used because *dcs is the declaration stack
 	 * element created for the list of params and is removed after
 	 * addfunc())
@@ -1632,13 +1634,13 @@ newtag(tag, scl, decl, semi)
 		if (tag->s_scl != scl) {
 			/* (%s) tag redeclared */
 			error(46, scltoa(tag->s_scl));
-			prevdecl(tag);
+			prevdecl(-1, tag);
 			tag = pushdown(tag);
 			dcs->d_nxt->d_nedecl = 1;
 		} else if (decl && !incompl(tag->s_type)) {
 			/* (%s) tag redeclared */
 			error(46, scltoa(tag->s_scl));
-			prevdecl(tag);
+			prevdecl(-1, tag);
 			tag = pushdown(tag);
 			dcs->d_nxt->d_nedecl = 1;
 		} else if (semi || decl) {
@@ -1693,7 +1695,7 @@ compltag(tp, fmem)
 		sp->memb = fmem;
 		if (sp->size == 0) {
 			/* zero sized %s */
-			gnuism(47, ttab[t].tt_name);
+			(void)gnuism(47, ttab[t].tt_name);
 		} else {
 			n = 0;
 			for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
@@ -1739,7 +1741,7 @@ ename(sym, val, impl)
 				 * declaration
 				 */
 				if (blklev == 0)
-					prevdecl(sym);
+					prevdecl(-1, sym);
 			}
 		} else {
 			if (hflag)
@@ -1768,7 +1770,7 @@ decl1ext(dsym, initflg)
 	sym_t	*dsym;
 	int	initflg;
 {
-	int	warn, rval;
+	int	warn, rval, redec;
 	sym_t	*rdsym;
 
 	chkfdef(dsym, 1);
@@ -1803,7 +1805,7 @@ decl1ext(dsym, initflg)
 		 * written as a function definition to the output file.
 		 */
 		rval = dsym->s_type->t_subt->t_tspec != VOID;
-		outfdef(dsym, dsym->s_type, &dsym->s_dpos, rval, 0, NULL);
+		outfdef(dsym, &dsym->s_dpos, rval, 0, NULL);
 	} else {
 		outsym(dsym, dsym->s_scl, dsym->s_def);
 	}
@@ -1815,15 +1817,18 @@ decl1ext(dsym, initflg)
 		 * we have remembered the params in rdsmy->s_args and compare
 		 * them with the params of the prototype.
 		 */
-		if (rdsym->s_osdef && dsym->s_type->t_proto)
-			chkosdef(rdsym, dsym);
+		if (rdsym->s_osdef && dsym->s_type->t_proto) {
+			redec = chkosdef(rdsym, dsym);
+		} else {
+			redec = 0;
+		}
 
-		if (!isredec(dsym, (warn = 0, &warn))) {
+		if (!redec && !isredec(dsym, (warn = 0, &warn))) {
 		
 			if (warn) {
 				/* redeclaration of %s */
-				warning(27, dsym->s_name);
-				prevdecl(rdsym);
+				(*(sflag ? error : warning))(27, dsym->s_name);
+				prevdecl(-1, rdsym);
 			}
 
 			/*
@@ -1906,31 +1911,31 @@ isredec(dsym, warn)
 	if ((rsym = dcs->d_rdcsym)->s_scl == ENUMCON) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return (1);
 	}
 	if (rsym->s_scl == TYPEDEF) {
 		/* typedef redeclared: %s */
 		error(89, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return (1);
 	}
 	if (dsym->s_scl == TYPEDEF) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return (1);
 	}
 	if (rsym->s_def == DEF && dsym->s_def == DEF) {
 		/* redefinition of %s */
 		error(28, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return(1);
 	}
 	if (!eqtype(rsym->s_type, dsym->s_type, 0, 0, warn)) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return(1);
 	}
 	if (rsym->s_scl == EXTERN && dsym->s_scl == EXTERN)
@@ -1946,13 +1951,13 @@ isredec(dsym, warn)
 		 */
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return(1);
 	}
 	if (rsym->s_scl == EXTERN) {
 		/* previously declared extern, becomes static: %s */
 		warning(29, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 		return(0);
 	}
 	/*
@@ -1962,7 +1967,7 @@ isredec(dsym, warn)
 	/* redeclaration of %s; ANSI C requires "static" */
 	if (sflag) {
 		warning(30, dsym->s_name);
-		prevdecl(rsym);
+		prevdecl(-1, rsym);
 	}
 	dsym->s_scl = STATIC;
 	return (0);
@@ -2043,9 +2048,7 @@ eqtype(tp1, tp2, ignqual, promot, warn)
 }
 
 /*
- * Compares the parameters types of two prototypes.
- *
- * It seams to be usual to ignore type qualifiers of the parameters.
+ * Compares the parameter types of two prototypes.
  */
 static int
 eqargs(tp1, tp2, warn)
@@ -2092,21 +2095,15 @@ mnoarg(tp, warn)
 	tspec_t	t;
 
 	if (tp->t_vararg) {
-		if (sflag) {
-			return (0);
-		} else if (warn != NULL) {
+		if (warn != NULL)
 			*warn = 1;
-		}
 	}
 	for (arg = tp->t_args; arg != NULL; arg = arg->s_nxt) {
 		if ((t = arg->s_type->t_tspec) == FLOAT ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
 		    t == SHORT || t == USHORT) {
-			if (sflag) {
-				return (0);
-			} else if (warn != NULL) {
+			if (warn != NULL)
 				*warn = 1;
-			}
 		}
 	}
 	return (1);
@@ -2116,19 +2113,19 @@ mnoarg(tp, warn)
  * Compares a prototype declaration with the remembered arguments of
  * a previous old style function definition.
  */
-static void
+static int
 chkosdef(rdsym, dsym)
 	sym_t	*rdsym, *dsym;
 {
 	sym_t	*args, *pargs, *arg, *parg;
 	int	narg, nparg, n;
-	int	warn, ptpos;
+	int	warn, msg;
 	pos_t	cpos;
 
 	args = rdsym->s_args;
 	pargs = dsym->s_type->t_args;
 
-	ptpos = 0;
+	msg = 0;
 
 	narg = nparg = 0;
 	for (arg = args; arg != NULL; arg = arg->s_nxt)
@@ -2138,7 +2135,7 @@ chkosdef(rdsym, dsym)
 	if (narg != nparg) {
 		/* prototype does not match old-style definition */
 		error(63);
-		ptpos = 1;
+		msg = 1;
 		goto end;
 	}
 
@@ -2151,14 +2148,10 @@ chkosdef(rdsym, dsym)
 		 * If it does not match due to promotion and sflag is
 		 * not set we print only a warning.
 		 */
-		if (!eqtype(arg->s_type, parg->s_type, 1, 1, &warn)) {
+		if (!eqtype(arg->s_type, parg->s_type, 1, 1, &warn) || warn) {
 			/* prototype does not match old-style def., arg #%d */
 			error(299, n);
-			ptpos = 1;
-		} else if (warn) {
-			/* prototype does not match old-style def., arg #%d */
-			warning(299, n);
-			ptpos = 1;
+			msg = 1;
 		}
 		arg = arg->s_nxt;
 		parg = parg->s_nxt;
@@ -2166,21 +2159,10 @@ chkosdef(rdsym, dsym)
 	}
 
  end:
-	if (ptpos && rflag) {
-		/*
-		 * print position only if it will not be printed by a
-		 * complaint about redeclaration
-		 */
-		warn = 0;
-		if (eqtype(rdsym->s_type, dsym->s_type, 0, 0, &warn) &&
-		    warn == 0) {
-			STRUCT_ASSIGN(cpos, curr_pos);
-			STRUCT_ASSIGN(curr_pos, rdsym->s_dpos);
-			/* old style definition */
-			message(300);
-			STRUCT_ASSIGN(curr_pos, cpos);
-		}
-	}
+	if (msg)
+		prevdecl(-1, rdsym);
+
+	return (msg);
 }
 
 /*
@@ -2298,8 +2280,7 @@ void
 cluparg()
 {
 	sym_t	*args, *arg, *pargs, *parg;
-	int	narg, nparg, n;
-	int	ptpos;
+	int	narg, nparg, n, msg;
 	pos_t	cpos;
 	tspec_t	t;
 
@@ -2351,7 +2332,9 @@ cluparg()
 	}
 	if (prflstrg != -1 || scflstrg != -1) {
 		narg = prflstrg != -1 ? prflstrg : scflstrg;
-		for (arg = dcs->d_fargs, n = 1; n < narg; arg = arg->s_nxt, n++);
+		arg = dcs->d_fargs;
+		for (n = 1; n < narg; n++)
+			arg = arg->s_nxt;
 		if (arg->s_type->t_tspec != PTR ||
 		    ((t = arg->s_type->t_subt->t_tspec) != CHAR &&
 		     t != UCHAR && t != SCHAR)) {
@@ -2384,7 +2367,7 @@ cluparg()
 		 * continue.
 		 */
 		narg = nparg = 0;
-		ptpos = 0;
+		msg = 0;
 		for (parg = pargs; parg != NULL; parg = parg->s_nxt)
 			nparg++;
 		for (arg = args; arg != NULL; arg = arg->s_nxt)
@@ -2392,23 +2375,24 @@ cluparg()
 		if (narg != nparg) {
 			/* parameter mismatch: %d declared, %d defined */
 			error(51, nparg, narg);
-			ptpos = 1;
+			msg = 1;
 		} else {
 			parg = pargs;
 			arg = args;
 			while (narg--) {
-				ptpos |= chkptdecl(arg, parg);
+				msg |= chkptdecl(arg, parg);
 				parg = parg->s_nxt;
 				arg = arg->s_nxt;
 			}
 		}
-		if (ptpos && rflag) {
-			STRUCT_ASSIGN(cpos, curr_pos);
-			STRUCT_ASSIGN(curr_pos, dcs->d_rdcsym->s_dpos);
+		if (msg)
 			/* prototype declaration */
-			message(285);
-			STRUCT_ASSIGN(curr_pos, cpos);
-		}
+			prevdecl(285, dcs->d_rdcsym);
+
+		/* from now the prototype is valid */
+		funcsym->s_osdef = 0;
+		funcsym->s_args = NULL;
+		
 	}
 
 }
@@ -2423,21 +2407,30 @@ chkptdecl(arg, parg)
 	sym_t	*arg, *parg;
 {
 	type_t	*tp, *ptp;
-	int	warn;
+	int	warn, msg;
 
 	tp = arg->s_type;
 	ptp = parg->s_type;
 
-	if (!eqtype(tp, ptp, 1, 1, (warn = 0, &warn))) {
-		/* type does not match prototype: %s */
-		error(58, arg->s_name);
-		return (1);
+	msg = 0;
+	warn = 0;
+
+	if (!eqtype(tp, ptp, 1, 1, &warn)) {
+		if (eqtype(tp, ptp, 1, 0, &warn)) {
+			/* type does not match prototype: %s */
+			msg = gnuism(58, arg->s_name);
+		} else {
+			/* type does not match prototype: %s */
+			error(58, arg->s_name);
+			msg = 1;
+		}
 	} else if (warn) {
 		/* type does not match prototype: %s */
-		warning(58, arg->s_name);
-		return (1);
+		(*(sflag ? error : warning))(58, arg->s_name);
+		msg = 1;
 	}
-	return (0);
+
+	return (msg);
 }
 
 /*
@@ -2601,7 +2594,7 @@ ledecl(dsym)
 		/* gcc accepts this without a warning, pcc prints an error. */
 		/* redeclaration of %s */
 		warning(27, dsym->s_name);
-		prevdecl(esym);
+		prevdecl(-1, esym);
 		return;
 	}
 
@@ -2612,11 +2605,11 @@ ledecl(dsym)
 		if (esym->s_scl == EXTERN) {
 			/* inconsistent redeclaration of extern: %s */
 			warning(90, dsym->s_name);
-			prevdecl(esym);
+			prevdecl(-1, esym);
 		} else {
 			/* inconsistent redeclaration of static: %s */
 			warning(92, dsym->s_name);
-			prevdecl(esym);
+			prevdecl(-1, esym);
 		}
 	}
 
@@ -3076,7 +3069,8 @@ glchksz(sym)
  * Prints information about location of previous definition/declaration.
  */
 void
-prevdecl(psym)
+prevdecl(msg, psym)
+	int	msg;
 	sym_t	*psym;
 {
 	pos_t	cpos;
@@ -3086,7 +3080,9 @@ prevdecl(psym)
 
 	STRUCT_ASSIGN(cpos, curr_pos);
 	STRUCT_ASSIGN(curr_pos, psym->s_dpos);
-	if (psym->s_def == DEF || psym->s_def == TDEF) {
+	if (msg != -1) {
+		message(msg, psym->s_name);
+	} else if (psym->s_def == DEF || psym->s_def == TDEF) {
 		/* previous definition of %s */
 		message(261, psym->s_name);
 	} else {

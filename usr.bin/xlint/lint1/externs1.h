@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.3 1995/10/02 17:14:22 jpo Exp $	*/
+/*	$NetBSD: externs1.h,v 1.4 1995/10/02 17:21:33 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -115,7 +115,7 @@ extern	const	char *msgs[];
 extern	void	error __P((int, ...));
 extern	void	warning __P((int, ...));
 extern	void	message __P((int, ...));
-extern	void	gnuism __P((int, ...));
+extern	int	gnuism __P((int, ...));
 extern	void	lerror __P((const char *, ...));
 
 /*
@@ -172,7 +172,7 @@ extern	void	setuflg __P((sym_t *, int, int));
 extern	void	chkusage __P((sym_t *));
 extern	void	chkusg1 __P((sym_t *));
 extern	void	chkglsyms __P((void));
-extern	void	prevdecl __P((sym_t *));
+extern	void	prevdecl __P((int, sym_t *));
 
 /*
  * tree.c
@@ -272,6 +272,6 @@ extern	void	mkinit __P((tnode_t *));
 extern	void	outtype __P((type_t *));
 extern	const	char *ttos __P((type_t *));
 extern	void	outsym __P((sym_t *, scl_t, def_t));
-extern	void	outfdef __P((sym_t *, type_t *, pos_t *, int, int, sym_t *));
+extern	void	outfdef __P((sym_t *, pos_t *, int, int, sym_t *));
 extern	void	outcall __P((tnode_t *, int, int));
 extern	void	outusg __P((sym_t *));

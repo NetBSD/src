@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.4 1995/10/02 17:14:26 jpo Exp $	*/
+/*	$NetBSD: func.c,v 1.5 1995/10/02 17:21:35 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.4 1995/10/02 17:14:26 jpo Exp $";
+static char rcsid[] = "$NetBSD: func.c,v 1.5 1995/10/02 17:21:35 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -265,14 +265,6 @@ funcdef(fsym)
 	}
 
 	/*
-	 * Remember the type before it is completet with previous
-	 * declarations. We need it at the end of the function when
-	 * the record for the function definition is written to the
-	 * output file.
-	 */
-	dcs->d_ftype = fsym->s_type;
-
-	/*
 	 * We must also remember the position. s_dpos is overwritten
 	 * if this is an old style definition and we had already a
 	 * prototype.
@@ -284,14 +276,14 @@ funcdef(fsym)
 		if (!isredec(fsym, (warn = 0, &warn))) {
 
 			/*
-			 * Print no warning if the newly defined function
+			 * Print nothing if the newly defined function
 			 * is defined in old style. A better warning will
 			 * be printed in cluparg().
 			 */
 			if (warn && !fsym->s_osdef) {
 				/* redeclaration of %s */
-				warning(27, fsym->s_name);
-				prevdecl(rdsym);
+				(*(sflag ? error : warning))(27, fsym->s_name);
+				prevdecl(-1, rdsym);
 			}
 
 			/* copy usage information */
@@ -378,14 +370,8 @@ funcend()
 	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
 		outsym(funcsym, funcsym->s_scl, DECL);
 	} else {
-		outfdef(funcsym, dcs->d_ftype, &dcs->d_fdpos, cstk->c_retval,
+		outfdef(funcsym, &dcs->d_fdpos, cstk->c_retval,
 			funcsym->s_osdef, dcs->d_fargs);
-	}
-
-	if (funcsym->s_type->t_proto) {
-		/* from now the prototype is valid */
-		funcsym->s_osdef = 0;
-		funcsym->s_args = NULL;
 	}
 
 	/*
