@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.214 2004/01/10 17:16:38 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.215 2004/01/14 11:28:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.214 2004/01/10 17:16:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.215 2004/01/14 11:28:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1364,7 +1364,7 @@ vrele(vp)
  * Page or buffer structure gets a reference.
  */
 void
-vhold(vp)
+vholdl(vp)
 	struct vnode *vp;
 {
 
@@ -1381,7 +1381,6 @@ vhold(vp)
 	 * getnewvnode after removing it from a freelist to ensure
 	 * that we do not try to move it here.
 	 */
-  	simple_lock(&vp->v_interlock);
 	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
@@ -1390,20 +1389,18 @@ vhold(vp)
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_holdcnt++;
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
  * Page or buffer structure frees a reference.
  */
 void
-holdrele(vp)
+holdrelel(vp)
 	struct vnode *vp;
 {
 
-	simple_lock(&vp->v_interlock);
 	if (vp->v_holdcnt <= 0)
-		panic("holdrele: holdcnt vp %p", vp);
+		panic("holdrelel: holdcnt vp %p", vp);
 	vp->v_holdcnt--;
 
 	/*
@@ -1427,7 +1424,6 @@ holdrele(vp)
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 		simple_unlock(&vnode_free_list_slock);
 	}
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
