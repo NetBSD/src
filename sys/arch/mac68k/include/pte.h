@@ -72,7 +72,7 @@
  * from: Utah $Hdr: pte.h 1.11 89/09/03$
  *
  *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.5 1994/06/26 13:23:01 briggs Exp $
+ *	$Id: pte.h,v 1.6 1994/06/29 04:55:57 briggs Exp $
  */
 
 #ifndef _MACHINE_PTE_H_
@@ -143,7 +143,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
 #define MAC_040RTSIZE	512		/* root (level 1) table size */
 #define MAC_040STSIZE	512		/* segment (level 2) table size */
-#define MAC_040PTSIZE	128		/* page (level 3) table size */
+#define MAC_040PTSIZE	256		/* page (level 3) table size */
 #define MAC_STSIZE	MAC_PAGE_SIZE	/* segment table size */
 #define MAC_MAX_PTSIZE	MAC_SEG_SIZE	/* max size of UPT */
 #define MAC_MAX_KPTSIZE	0x100000	/* max memory to allocate to KPT */
