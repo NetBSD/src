@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sysctl.c,v 1.2 1994/05/09 04:02:31 cgd Exp $";
+static char *rcsid = "$Id: sysctl.c,v 1.3 1994/05/13 11:02:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,9 +67,7 @@ static char *rcsid = "$Id: sysctl.c,v 1.2 1994/05/09 04:02:31 cgd Exp $";
 struct ctlname topname[] = CTL_NAMES;
 struct ctlname kernname[] = CTL_KERN_NAMES;
 struct ctlname vmname[] = CTL_VM_NAMES;
-#ifdef notdef
 struct ctlname netname[] = CTL_NET_NAMES;
-#endif
 struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
@@ -88,11 +86,7 @@ struct list secondlevel[] = {
 	{ kernname, KERN_MAXID },	/* CTL_KERN */
 	{ vmname, VM_MAXID },		/* CTL_VM */
 	{ 0, 0 },			/* CTL_FS */
-#ifdef notdef
 	{ netname, NET_MAXID },		/* CTL_NET */
-#else
-	{ 0, 0 },			/* CTL_MACHDEP */
-#endif
 	{ 0, CTL_DEBUG_MAXID },		/* CTL_DEBUG */
 	{ hwname, HW_MAXID },		/* CTL_HW */
 #ifdef CTL_MACHDEP_NAMES
@@ -298,7 +292,6 @@ parse(string, flags)
 		return;
 
 	case CTL_NET:
-#ifdef notdef
 		if (mib[1] == PF_INET) {
 			len = sysctl_inet(string, &bufp, mib, flags, &type);
 			if (len >= 0)
@@ -307,7 +300,6 @@ parse(string, flags)
 		}
 		if (flags == 0)
 			return;
-#endif
 		fprintf(stderr, "Use netstat to view %s information\n", string);
 		return;
 
@@ -477,7 +469,6 @@ debuginit()
 	}
 }
 
-#ifdef notdef
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
 struct ctlname ipname[] = IPCTL_NAMES;
 struct ctlname icmpname[] = ICMPCTL_NAMES;
@@ -543,7 +534,6 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 	*typep = lp->list[indx].ctl_type;
 	return (4);
 }
-#endif
 
 /*
  * Scan a list of names searching for a particular name.
