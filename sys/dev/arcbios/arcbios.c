@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.3 2001/07/08 23:57:09 thorpej Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.4 2001/09/08 01:39:11 rafal Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 
 #include <sys/param.h>
 
+#include <sys/systm.h>
 #include <dev/cons.h>
+#include <sys/conf.h>
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
@@ -62,6 +64,8 @@ struct consdev arcbios_cn = {
 	    NODEV, CN_NORMAL,
 };
 
+cdev_decl(arcbios_tty);
+
 /*
  * arcbios_init:
  *
@@ -70,6 +74,7 @@ struct consdev arcbios_cn = {
 int
 arcbios_init(vaddr_t pblkva)
 {
+	int maj;
 	struct arcbios_sysid *sid;
 
 	ARCBIOS_SPB = (struct arcbios_spb *) pblkva;
@@ -87,6 +92,13 @@ arcbios_init(vaddr_t pblkva)
 
 	/* Initialize our pointer to the firmware vector. */
 	ARCBIOS = ARCBIOS_SPB->FirmwareVector;
+
+	/* Find the ARC BIOS console device major (needed by cnopen) */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == arcbios_ttyopen)
+			break;
+
+	arcbios_cn.cn_dev = makedev(maj, 0);
 
 	/* Initialize the bootstrap console. */
 	cn_tab = &arcbios_cn;
