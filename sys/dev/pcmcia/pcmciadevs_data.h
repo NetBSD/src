@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.28 1998/12/19 23:48:39 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.29 1998/12/20 03:53:03 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.25 1998/12/18 22:07:39 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.26 1998/12/19 23:47:51 nathanw Exp 
  */
 
 /*-
@@ -136,6 +136,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IBM Home and Away Modem"	},
 	},
 	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_WIRELESS_LAN_ENTRY,
+	    PCMCIA_CIS_IBM_WIRELESS_LAN_ENTRY,
+	    0,
+	    "IBM Corporation",
+	    "Wireless LAN Entry"	},
+	},
+	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
 	    PCMCIA_CIS_IODATA_PCLAT,
 	    0,
@@ -234,11 +241,18 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK DFL9610 Ethernet & Digital Cellular"	},
 	},
 	{
-	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE,
-	    PCMCIA_CIS_TDK_XIR_CE,
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE_10,
+	    PCMCIA_CIS_TDK_XIR_CE_10,
 	    0,
 	    "TDK Corporation",
 	    "Xircom CreditCard Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CEM_10,
+	    PCMCIA_CIS_TDK_XIR_CEM_10,
+	    0,
+	    "TDK Corporation",
+	    "Xircom CreditCard Ethernet + Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10,
