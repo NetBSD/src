@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.3 1998/09/01 04:09:30 thorpej Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.4 1999/07/08 01:06:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -118,6 +118,7 @@ filecore_ihashins(ip)
 	struct filecore_node *ip;
 {
 	struct filecore_node **ipp, *iq;
+	struct vnode *vp;
 
 	simple_lock(&filecore_ihash_slock);
 	ipp = &filecorehashtbl[INOHASH(ip->i_dev, ip->i_number)];
@@ -128,7 +129,8 @@ filecore_ihashins(ip)
 	*ipp = ip;
 	simple_unlock(&filecore_ihash_slock);
 
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	vp = ip->i_vnode;
+	lockmgr(&vp->v_lock, LK_EXCLUSIVE, &vp->v_interlock);
 }
 
 /*

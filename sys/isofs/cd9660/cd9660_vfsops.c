@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.36 1999/02/26 23:44:45 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.37 1999/07/08 01:06:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -668,7 +668,6 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	}
 	ip = pool_get(&cd9660_node_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct iso_node));
-	lockinit(&ip->i_lock, PINOD, "isonode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_dev = dev;
@@ -814,8 +813,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
+			vput(vp);
 			vgone(vp);
+			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
 			 * Reinitialize aliased inode.
 			 */

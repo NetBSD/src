@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.19 1999/06/02 22:04:30 is Exp $	*/
+/*	$NetBSD: adutil.c,v 1.20 1999/07/08 01:05:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -78,13 +78,15 @@ start_over:
 
 /*
  * insert in hash table and lock
+ *
+ * ap->vp must have been initialized before this call.
  */
 void
 adosfs_ainshash(amp, ap)
 	struct adosfsmount *amp;
 	struct anode *ap;
 {
-	lockmgr(&ap->lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	lockmgr(&ap->vp->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
 	simple_lock(&adosfs_hashlock);
 	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);

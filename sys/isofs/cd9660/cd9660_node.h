@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.17 1998/08/10 08:11:11 matthias Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.18 1999/07/08 01:06:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -86,7 +86,6 @@ struct iso_node {
 	doff_t	i_diroff;	/* offset in dir, where we found last entry */
 	doff_t	i_offset;	/* offset of free space in directory */
 	ino_t	i_ino;		/* inode number of found directory */
-	struct lock i_lock;	/* node lock */
 
 	long iso_extent;	/* extent of file */
 	long i_size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.49 1999/06/02 22:04:30 is Exp $	*/
+/*	$NetBSD: advnops.c,v 1.50 1999/07/08 01:05:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -66,15 +66,12 @@ int	adosfs_strategy	__P((void *));
 int	adosfs_link	__P((void *));
 int	adosfs_symlink	__P((void *));
 #define	adosfs_abortop	genfs_abortop
-int	adosfs_lock	__P((void *));
-int	adosfs_unlock	__P((void *));
 int	adosfs_bmap	__P((void *));
 int	adosfs_print	__P((void *));
 int	adosfs_readdir	__P((void *));
 int	adosfs_access	__P((void *));
 int	adosfs_readlink	__P((void *));
 int	adosfs_inactive	__P((void *));
-int	adosfs_islocked	__P((void *));
 int	adosfs_reclaim	__P((void *));
 int	adosfs_pathconf	__P((void *));
 
@@ -130,12 +127,12 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, adosfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, adosfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, adosfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, adosfs_lock },		/* lock */
-	{ &vop_unlock_desc, adosfs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, adosfs_bmap },		/* bmap */
 	{ &vop_strategy_desc, adosfs_strategy },	/* strategy */
 	{ &vop_print_desc, adosfs_print },		/* print */
-	{ &vop_islocked_desc, adosfs_islocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, adosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, adosfs_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, adosfs_blkatoff },	/* blkatoff */
@@ -433,43 +430,6 @@ adosfs_symlink(v)
 	vput(ap->a_dvp);
 	return (EROFS);
 }
-
-/*
- * lock the anode
- */
-int
-adosfs_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *sp = v;
-	struct vnode *vp = sp->a_vp;
-
-	return (lockmgr(&VTOA(vp)->lock, sp->a_flags, &vp->v_interlock));
-
-}
-
-/*
- * unlock an anode
- */
-int
-adosfs_unlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *sp = v;
-	struct vnode *vp = sp->a_vp;
-
-	return (lockmgr(&VTOA(vp)->lock, sp->a_flags | LK_RELEASE,
-		&vp->v_interlock));
-}
-
 
 /*
  * Wait until the vnode has finished changing state.
@@ -895,17 +855,6 @@ adosfs_inactive(v)
 	printf(" 0)");
 #endif
 	return(0);
-}
-
-int
-adosfs_islocked(v)
-	void *v;
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *sp = v;
-
-	return (lockstatus(&VTOA(sp->a_vp)->lock));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.2 1999/05/06 15:43:20 christos Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.3 1999/07/08 01:06:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,9 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_extern.h>
 #include <miscfs/specfs/specdev.h>
+#if __NetBSD_Version__ > 104040000
+#include <miscfs/genfs/genfs.h>
+#endif 
 
 static int	ntfs_bypass __P((struct vop_generic_args *ap));
 static int	ntfs_read __P((struct vop_read_args *));
@@ -82,7 +85,7 @@ static int	ntfs_inactive __P((struct vop_inactive_args *ap));
 static int	ntfs_print __P((struct vop_print_args *ap));
 static int	ntfs_reclaim __P((struct vop_reclaim_args *ap));
 static int	ntfs_strategy __P((struct vop_strategy_args *ap));
-#if __FreeBSD_version < 300000
+#if (__FreeBSD_version < 300000) && (__NetBSD_Version__ < 104050000)
 static int	ntfs_islocked __P((struct vop_islocked_args *ap));
 static int	ntfs_unlock __P((struct vop_unlock_args *ap));
 static int	ntfs_lock __P((struct vop_lock_args *ap));
@@ -478,7 +481,7 @@ ntfs_write(ap)
 	return (0);
 }
 
-#if __FreeBSD_version < 300000
+#if (__FreeBSD_version < 300000) && (__NetBSD_Version__ < 104040000)
 /*
  * Check for a locked ntnode.
  */
@@ -1032,10 +1035,17 @@ struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_cachedlookup_desc, (vop_t *)ntfs_lookup },
 	{ &vop_lookup_desc, (vop_t *)vfs_cache_lookup },
 #else
+#if __NetBSD_Version__ >= 104050000
+	{ &vop_islocked_desc, (vop_t *)genfs_islocked },
+	{ &vop_unlock_desc, (vop_t *)genfs_unlock },
+	{ &vop_lock_desc, (vop_t *)genfs_lock },
+	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
+#else
 	{ &vop_islocked_desc, (vop_t *)ntfs_islocked },
 	{ &vop_unlock_desc, (vop_t *)ntfs_unlock },
 	{ &vop_lock_desc, (vop_t *)ntfs_lock },
 	{ &vop_lookup_desc, (vop_t *)ntfs_lookup },
+#endif
 #endif
 
 	{ &vop_access_desc, (vop_t *)ntfs_access },

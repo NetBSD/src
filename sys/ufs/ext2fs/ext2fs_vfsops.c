@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.25 1999/06/01 13:18:49 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.26 1999/07/08 01:06:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -843,7 +843,6 @@ ext2fs_vget(mp, ino, vpp)
 	}
 	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
-	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_e2fs = fs = ump->um_e2fs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.20 1998/09/01 03:40:19 thorpej Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.21 1999/07/08 01:06:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -183,6 +183,8 @@ loop:
 
 /*
  * Insert the inode into the hash table, and return it locked.
+ *
+ * ip->i_vnode must be initialized first.
  */
 void
 cd9660_ihashins(ip)
@@ -199,7 +201,7 @@ cd9660_ihashins(ip)
 	*ipp = ip;
 	simple_unlock(&cd9660_ihash_slock);
 
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, (struct simplelock *)0);
+	lockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE, &ip->i_vnode->v_interlock);
 }
 
 /*

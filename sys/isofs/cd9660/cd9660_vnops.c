@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.52 1999/03/22 19:21:08 kleink Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.53 1999/07/08 01:06:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -740,41 +740,6 @@ cd9660_symlink(v)
 }
 
 /*
- * Lock an inode.
- */
-int
-cd9660_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, &vp->v_interlock));
-}
-
-/*
- * Unlock an inode.
- */
-int
-cd9660_unlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE,
-		&vp->v_interlock));
-}
-
-/*
  * Calculate the logical to physical mapping if not done already,
  * then call the device strategy routine.
  */
@@ -825,20 +790,6 @@ cd9660_print(v)
 
 	printf("tag VT_ISOFS, isofs vnode\n");
 	return (0);
-}
-
-/*
- * Check for a locked inode.
- */
-int
-cd9660_islocked(v)
-	void *v;
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-
-	return (lockstatus(&VTOI(ap->a_vp)->i_lock));
 }
 
 /*
@@ -987,12 +938,12 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_abortop_desc, cd9660_abortop },		/* abortop */
 	{ &vop_inactive_desc, cd9660_inactive },	/* inactive */
 	{ &vop_reclaim_desc, cd9660_reclaim },		/* reclaim */
-	{ &vop_lock_desc, cd9660_lock },		/* lock */
-	{ &vop_unlock_desc, cd9660_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, cd9660_bmap },		/* bmap */
 	{ &vop_strategy_desc, cd9660_strategy },	/* strategy */
 	{ &vop_print_desc, cd9660_print },		/* print */
-	{ &vop_islocked_desc, cd9660_islocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, cd9660_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, cd9660_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, cd9660_blkatoff },	/* blkatoff */
@@ -1040,12 +991,12 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, cd9660_inactive },	/* inactive */
 	{ &vop_reclaim_desc, cd9660_reclaim },		/* reclaim */
-	{ &vop_lock_desc, cd9660_lock },		/* lock */
-	{ &vop_unlock_desc, cd9660_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
 	{ &vop_print_desc, cd9660_print },		/* print */
-	{ &vop_islocked_desc, cd9660_islocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
@@ -1090,12 +1041,12 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
 	{ &vop_inactive_desc, cd9660_inactive },	/* inactive */
 	{ &vop_reclaim_desc, cd9660_reclaim },		/* reclaim */
-	{ &vop_lock_desc, cd9660_lock },		/* lock */
-	{ &vop_unlock_desc, cd9660_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
 	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
 	{ &vop_print_desc, cd9660_print },		/* print */
-	{ &vop_islocked_desc, cd9660_islocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */

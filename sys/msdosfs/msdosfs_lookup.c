@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.39 1998/08/09 20:52:20 perry Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.40 1999/07/08 01:06:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -108,11 +108,14 @@ msdosfs_lookup(v)
 	struct buf *bp = 0;
 	struct direntry *dep;
 	u_char dosfilename[12];
-	int flags = cnp->cn_flags;
+	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int wincnt = 1;
 	int chksum = -1;
 	int olddos = 1;
+
+	cnp->cn_flags &= ~PDIRUNLOCK;
+	flags = cnp->cn_flags;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): looking for %s\n", cnp->cn_nameptr);
@@ -163,13 +166,19 @@ msdosfs_lookup(v)
 			error = 0;
 		} else if (flags & ISDOTDOT) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!error && lockparent && (flags & ISLASTCN))
+			if (!error && lockparent && (flags & ISLASTCN)){
 				error = vn_lock(pdp, LK_EXCLUSIVE);
+				if (error == 0)
+					cnp->cn_flags &= ~PDIRUNLOCK;
+			}
 		} else {
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!lockparent || error || !(flags & ISLASTCN))
+			if (!lockparent || error || !(flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		/*
 		 * Check that the capability number did not change
@@ -184,11 +193,14 @@ msdosfs_lookup(v)
 				return (0);
 			}
 			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
+			if (lockparent && pdp != vdp && (flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
 			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		vdp = pdp;
 		dp = VTODE(vdp);
 		*vpp = NULL;
@@ -504,8 +516,10 @@ foundroot:;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -539,8 +553,10 @@ foundroot:;
 			return (error);
 		*vpp = DETOV(tdp);
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -566,8 +582,10 @@ foundroot:;
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
@@ -575,6 +593,7 @@ foundroot:;
 			vput(DETOV(tdp));
 			return (error);
 		}
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
 		VREF(vdp);	/* we want ourself, ie "." */
@@ -582,8 +601,10 @@ foundroot:;
 	} else {
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = DETOV(tdp);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.49 1999/03/05 12:02:18 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.50 1999/07/08 01:06:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -892,7 +892,6 @@ ffs_vget(mp, ino, vpp)
 	 */
 	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct inode));
-	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;

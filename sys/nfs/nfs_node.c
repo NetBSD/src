@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.28 1998/09/01 03:11:36 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.29 1999/07/08 01:06:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -144,6 +144,7 @@ loop:
 		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
+	nvp->v_vnlock = 0;	/* XXX At least untill we do locking */
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset((caddr_t)np, 0, sizeof *np);
