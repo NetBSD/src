@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.13 1999/01/16 07:05:05 nisimura Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.14 1999/01/29 05:31:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,8 +90,6 @@
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>		/* XXX should be renamed fbvar.h */
-
-/*#include <pmax/stand/dec_prom.h>*/
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
