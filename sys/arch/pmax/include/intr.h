@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2001/08/27 02:00:16 nisimura Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2003/05/25 14:04:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,8 +70,6 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-extern const u_int32_t ipl_si_to_sr[_IPL_NSOFT];
-
 #include <mips/cpuregs.h>
 
 int	_splraise __P((int));
@@ -92,11 +90,14 @@ void	_clrsoftintr __P((int));
 #define splclock()	(_splraise(splvec.splclock))
 #define splstatclock()	(_splraise(splvec.splstatclock))
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
-#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
+
+#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_0)
+#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
+#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 
 struct splvec {
 	int	splbio;
@@ -161,53 +162,7 @@ struct pmax_intrhand {
 	void *ih_arg;
 };
 
-#define	setsoft(x)							\
-do {									\
-	_setsoftintr(ipl_si_to_sr[(x) - IPL_SOFT]);			\
-} while (0)
-
-struct pmax_soft_intrhand {
-	TAILQ_ENTRY(pmax_soft_intrhand)
-		sih_q;
-	struct pmax_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct pmax_soft_intr {
-	TAILQ_HEAD(, pmax_soft_intrhand)
-		softintr_q;
-	struct evcnt softintr_evcnt;
-	struct simplelock softintr_slock;
-	unsigned long softintr_ipl;
-};
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(void);
-
-#define	softintr_schedule(arg)						\
-do {									\
-	struct pmax_soft_intrhand *__sih = (arg);			\
-	struct pmax_soft_intr *__si = __sih->sih_intrhead;		\
-	int __s;							\
-									\
-	__s = splhigh();						\
-	simple_lock(&__si->softintr_slock);				\
-	if (__sih->sih_pending == 0) {					\
-		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
-		__sih->sih_pending = 1;					\
-		setsoft(__si->softintr_ipl);				\
-	}								\
-	simple_unlock(&__si->softintr_slock);				\
-	splx(__s);							\
-} while (0)
-
-extern struct pmax_soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
+#include <mips/softintr.h>
 
 extern struct evcnt pmax_clock_evcnt;
 extern struct evcnt pmax_fpu_evcnt;
