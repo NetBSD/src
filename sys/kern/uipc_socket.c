@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.91 2003/10/21 22:55:47 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.92 2004/03/17 09:58:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.91 2003/10/21 22:55:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.92 2004/03/17 09:58:15 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -249,21 +249,6 @@ sodopendfree(struct socket *so)
 		pool_cache_put(&mbpool_cache, m);
 	}
 
-	for (;;) {
-		m = so->so_pendfree;
-		if (m == NULL)
-			break;
-		so->so_pendfree = m->m_next;
-		splx(s);
-
-		rv += m->m_ext.ext_size;
-		sodoloanfree((m->m_flags & M_EXT_PAGES) ?
-		    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
-		    m->m_ext.ext_size);
-		s = splvm();
-		pool_cache_put(&mbpool_cache, m);
-	}
-
 	splx(s);
 	return (rv);
 }
@@ -271,7 +256,6 @@ sodopendfree(struct socket *so)
 void
 soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
-	struct socket *so = arg;
 	int s;
 
 	if (m == NULL) {
@@ -280,8 +264,8 @@ soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 	}
 
 	s = splvm();
-	m->m_next = so->so_pendfree;
-	so->so_pendfree = m;
+	m->m_next = so_pendfree;
+	so_pendfree = m;
 	splx(s);
 	if (sokvawaiters)
 		wakeup(&socurkva);
@@ -435,7 +419,6 @@ solisten(struct socket *so, int backlog)
 void
 sofree(struct socket *so)
 {
-	struct mbuf *m;
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
@@ -450,11 +433,6 @@ sofree(struct socket *so)
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
-	while ((m = so->so_pendfree) != NULL) {
-		so->so_pendfree = m->m_next;
-		m->m_next = so_pendfree;
-		so_pendfree = m;
-	}
 	pool_put(&socket_pool, so);
 }
 
