@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.41 2000/02/21 20:38:51 erh Exp $   */
+/*	$NetBSD: intvec.s,v 1.42 2000/03/01 00:17:17 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -32,6 +32,7 @@
 
 
 #include "assym.h"
+#include <sys/cdefs.h>
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
