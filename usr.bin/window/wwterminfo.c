@@ -1,3 +1,5 @@
+/*	$NetBSD: wwterminfo.c,v 1.3 1997/12/31 06:56:04 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,14 +41,20 @@
 #if 0
 static char sccsid[] = "@(#)wwterminfo.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwterminfo.c,v 1.2 1997/11/21 08:37:54 lukem Exp $");
+__RCSID("$NetBSD: wwterminfo.c,v 1.3 1997/12/31 06:56:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef TERMINFO
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <paths.h>
+#include <unistd.h>
 #include "local.h"
 #include "ww.h"
 
@@ -61,6 +69,7 @@ __RCSID("$NetBSD: wwterminfo.c,v 1.2 1997/11/21 08:37:54 lukem Exp $");
 /*
  * Initialize the working terminfo directory
  */
+int
 wwterminfoinit()
 {
 	FILE *fp;
@@ -94,19 +103,25 @@ wwterminfoinit()
 /*
  * Delete the working terminfo directory at shutdown
  */
+int
 wwterminfoend()
 {
+	int pstat;
+	pid_t pid;
 
-	switch (vfork()) {
+	pid = vfork();
+	switch (pid) {
 	case -1:
 		/* can't really do (or say) anything about errors */
 		return -1;
 	case 0:
 		execl(_PATH_RM, _PATH_RM, "-rf", wwterminfopath, 0);
-		return -1;
-	default:
-		return 0;
+		_exit(1);
 	}
+	pid = waitpid(pid, &pstat, 0);
+	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
+		return -1;
+	return 0;
 }
 
 #endif /* TERMINFO */
