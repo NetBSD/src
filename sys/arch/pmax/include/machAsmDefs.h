@@ -1,4 +1,4 @@
-/*	$NetBSD: machAsmDefs.h,v 1.6 1994/12/15 15:26:26 mycroft Exp $	*/
+/*	$NetBSD: machAsmDefs.h,v 1.7 1995/01/18 06:38:57 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@
 #define	MCOUNT
 #endif
 
-#ifdef NO_UNDERSCORES
+#ifdef __NO_LEADING_UNDERSCORES__
 # define _C_LABEL(x)	x
 #else
 # ifdef __STDC__
@@ -111,9 +111,15 @@ _C_LABEL(x): ; \
 /*
  * ALEAF -- declare alternate entry to a leaf routine.
  */
+#ifdef USE_AENT
+#define AENT(x) \
+	.aent	x, 0
+#else
+#define AENT(x)
+#endif
 #define	ALEAF(x)					\
 	.globl	_C_LABEL(x);				\
-	.aent	_C_LABEL(x),0;				\
+	AENT (_C_LABEL(x))				\
 _C_LABEL(x):
 
 /*
