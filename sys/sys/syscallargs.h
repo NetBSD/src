@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.100 2001/04/10 11:06:21 kleink Exp $ */
+/* $NetBSD: syscallargs.h,v 1.101 2001/05/24 06:45:57 lukem Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _SYS__SYSCALLARGS_H_
-#define _SYS__SYSCALLARGS_H_
+#define	_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
