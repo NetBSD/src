@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.17 2003/06/16 13:05:39 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.18 2003/06/16 13:16:07 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -302,3 +302,13 @@ sys/dev/pci/if_bge.c				1.38
 	Gigabit link is detected. No other ethernet driver does this and this
 	driver doesn't do it for other modes.
 	[tron, ticket #1230]
+
+lib/libcurses/curses_private.h			1.30 (via patch)
+lib/libcurses/getch.c				1.40 (via patch)
+lib/libcurses/screen.c				1.13 (via patch)
+lib/libcurses/tty.c				1.32 (via patch)
+
+	Keep the cr->nl translation state in a separate variable, so that we
+	can do the translation ourselves (if the tty didn't do it for us).
+	Add debugging to track functions that change tty state.
+	[jdc, ticket #1244]
