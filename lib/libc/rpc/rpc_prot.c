@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.9 1998/07/26 12:37:18 mycroft Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.10 1998/11/15 17:32:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.9 1998/07/26 12:37:18 mycroft Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.10 1998/11/15 17:32:43 christos Exp $");
 #endif
 #endif
 
@@ -98,7 +98,7 @@ xdr_des_block(xdrs, blkp)
 	XDR *xdrs;
 	des_block *blkp;
 {
-	return (xdr_opaque(xdrs, (caddr_t)blkp, sizeof(des_block)));
+	return (xdr_opaque(xdrs, (caddr_t)(void *)blkp, sizeof(des_block)));
 }
 
 /* * * * * * * * * * * * * * XDR RPC MESSAGE * * * * * * * * * * * * * * * */
@@ -158,6 +158,7 @@ xdr_rejected_reply(xdrs, rr)
 	case AUTH_ERROR:
 		return (xdr_enum(xdrs, (enum_t *)&(rr->rj_why)));
 	}
+	/* NOTREACHED */
 	return (FALSE);
 }
 
@@ -179,7 +180,8 @@ xdr_replymsg(xdrs, rmsg)
 	    xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) &&
 	    (rmsg->rm_direction == REPLY) )
 		return (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),
-		   (caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL_xdrproc_t));
+		   (caddr_t)(void *)&(rmsg->rm_reply.ru), reply_dscrm,
+		   NULL_xdrproc_t));
 	return (FALSE);
 }
 
@@ -241,10 +243,11 @@ accepted(acpt_stat, error)
 		error->re_status = RPC_SUCCESS;
 		return;
 	}
+	/* NOTREACHED */
 	/* something's wrong, but we don't know what ... */
 	error->re_status = RPC_FAILED;
-	error->re_lb.s1 = (long)MSG_ACCEPTED;
-	error->re_lb.s2 = (long)acpt_stat;
+	error->re_lb.s1 = (int32_t)MSG_ACCEPTED;
+	error->re_lb.s2 = (int32_t)acpt_stat;
 }
 
 static void 
@@ -263,9 +266,10 @@ rejected(rjct_stat, error)
 		return;
 	}
 	/* something's wrong, but we don't know what ... */
+	/* NOTREACHED */
 	error->re_status = RPC_FAILED;
-	error->re_lb.s1 = (long)MSG_DENIED;
-	error->re_lb.s2 = (long)rjct_stat;
+	error->re_lb.s1 = (int32_t)MSG_DENIED;
+	error->re_lb.s2 = (int32_t)rjct_stat;
 }
 
 /*
@@ -294,7 +298,7 @@ _seterr_reply(msg, error)
 
 	default:
 		error->re_status = RPC_FAILED;
-		error->re_lb.s1 = (long)(msg->rm_reply.rp_stat);
+		error->re_lb.s1 = (int32_t)(msg->rm_reply.rp_stat);
 		break;
 	}
 	switch (error->re_status) {

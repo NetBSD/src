@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.14 1998/07/26 11:47:38 mycroft Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.15 1998/11/15 17:32:46 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.14 1998/07/26 11:47:38 mycroft Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.15 1998/11/15 17:32:46 christos Exp $");
 #endif
 #endif
 
@@ -92,11 +92,11 @@ static const struct xp_ops svcudp_op = {
  * kept in xprt->xp_p2
  */
 struct svcudp_data {
-	u_int   su_iosz;	/* byte size of send.recv buffer */
-	u_long	su_xid;		/* transaction id */
-	XDR	su_xdrs;	/* XDR handle */
-	char	su_verfbody[MAX_AUTH_BYTES];	/* verifier body */
-	char * 	su_cache;	/* cached data, NULL if no cache */
+	size_t   	su_iosz;	/* byte size of send.recv buffer */
+	u_int32_t	su_xid;		/* transaction id */
+	XDR		su_xdrs;	/* XDR handle */
+	char		su_verfbody[MAX_AUTH_BYTES];	/* verifier body */
+	void 		*su_cache;	/* cached data, NULL if no cache */
 };
 #define	su_data(xprt)	((struct svcudp_data *)(xprt->xp_p2))
 
@@ -136,9 +136,9 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	addr.sin_family = AF_INET;
 	if (bindresvport(sock, &addr)) {
 		addr.sin_port = 0;
-		(void)bind(sock, (struct sockaddr *)&addr, len);
+		(void)bind(sock, (struct sockaddr *)(void *)&addr, len);
 	}
-	if (getsockname(sock, (struct sockaddr *)&addr, &len) != 0) {
+	if (getsockname(sock, (struct sockaddr *)(void *)&addr, &len) != 0) {
 		warnx("svcudp_create - cannot getsockname");
 		if (madesock)
 			(void)close(sock);
@@ -162,7 +162,7 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	xdrmem_create(
 	    &(su->su_xdrs), rpc_buffer(xprt), su->su_iosz, XDR_DECODE);
 	su->su_cache = NULL;
-	xprt->xp_p2 = (caddr_t)su;
+	xprt->xp_p2 = su;
 	xprt->xp_verf.oa_base = su->su_verfbody;
 	xprt->xp_ops = &svcudp_op;
 	xprt->xp_port = ntohs(addr.sin_port);
@@ -179,6 +179,7 @@ svcudp_create(sock)
 	return(svcudp_bufcreate(sock, UDPMSGSIZE, UDPMSGSIZE));
 }
 
+/* ARGSUSED */
 static enum xprt_stat
 svcudp_stat(xprt)
 	SVCXPRT *xprt;
@@ -200,8 +201,9 @@ svcudp_recv(xprt, msg)
 
     again:
 	xprt->xp_addrlen = sizeof(struct sockaddr_in);
-	rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), (int) su->su_iosz,
-	    0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
+	rlen = recvfrom(xprt->xp_sock, rpc_buffer(xprt), su->su_iosz,
+	    0, (struct sockaddr *)(void *)&(xprt->xp_raddr),
+	    &(xprt->xp_addrlen));
 	if (rlen == -1 && errno == EINTR)
 		goto again;
 	if (rlen == -1 || rlen < 4*sizeof(u_int32_t))
@@ -213,8 +215,10 @@ svcudp_recv(xprt, msg)
 	su->su_xid = msg->rm_xid;
 	if (su->su_cache != NULL) {
 		if (cache_get(xprt, msg, &reply, &replylen)) {
-			(void) sendto(xprt->xp_sock, reply, (int) replylen, 0,
-			  (struct sockaddr *) &xprt->xp_raddr, xprt->xp_addrlen);
+			(void) sendto(xprt->xp_sock, reply,
+			    (u_int32_t)replylen, 0,
+			    (struct sockaddr *)(void *)&xprt->xp_raddr,
+			    xprt->xp_addrlen);
 			return (TRUE);
 		}
 	}
@@ -228,19 +232,19 @@ svcudp_reply(xprt, msg)
 {
 	struct svcudp_data *su = su_data(xprt);
 	XDR *xdrs = &(su->su_xdrs);
-	int slen;
+	size_t slen;
 	bool_t stat = FALSE;
 
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, 0);
 	msg->rm_xid = su->su_xid;
 	if (xdr_replymsg(xdrs, msg)) {
-		slen = (int)XDR_GETPOS(xdrs);
+		slen = XDR_GETPOS(xdrs);
 		if (sendto(xprt->xp_sock, rpc_buffer(xprt), slen, 0,
-		    (struct sockaddr *)&(xprt->xp_raddr), xprt->xp_addrlen)
-		    == slen) {
+		    (struct sockaddr *)(void *)&(xprt->xp_raddr),
+		    xprt->xp_addrlen) == slen) {
 			stat = TRUE;
-			if (su->su_cache && slen >= 0) {
+			if (su->su_cache) {
 				cache_set(xprt, (u_long) slen);
 			}
 		}
@@ -280,8 +284,8 @@ svcudp_destroy(xprt)
 	(void)close(xprt->xp_sock);
 	XDR_DESTROY(&(su->su_xdrs));
 	mem_free(rpc_buffer(xprt), su->su_iosz);
-	mem_free((caddr_t)su, sizeof(struct svcudp_data));
-	mem_free((caddr_t)xprt, sizeof(SVCXPRT));
+	mem_free(su, sizeof(struct svcudp_data));
+	mem_free(xprt, sizeof(SVCXPRT));
 }
 
 
@@ -302,7 +306,7 @@ svcudp_destroy(xprt)
 	(type *) mem_alloc((unsigned) (sizeof(type) * (size)))
 
 #define BZERO(addr, type, size)	 \
-	memset((char *) addr, 0, sizeof(type) * (int) (size)) 
+	memset(addr, 0, sizeof(type) * (int) (size)) 
 
 /*
  * An entry in the cache
@@ -349,7 +353,7 @@ struct udp_cache {
  * the hashing function
  */
 #define CACHE_LOC(transp, xid)	\
- (xid % (SPARSENESS*((struct udp_cache *) su_data(transp)->su_cache)->uc_size))	
+ (xid % (u_int32_t)(SPARSENESS*((struct udp_cache *) su_data(transp)->su_cache)->uc_size))	
 
 
 /*
@@ -387,7 +391,7 @@ svcudp_enablecache(transp, size)
 		return(0);
 	}
 	BZERO(uc->uc_fifo, cache_ptr, size);
-	su->su_cache = (char *) uc;
+	su->su_cache = (char *)(void *)uc;
 	return(1);
 }
 
@@ -411,9 +415,9 @@ cache_set(xprt, replylen)
  	 * Find space for the new entry, either by
 	 * reusing an old entry, or by mallocing a new one
 	 */
-	victim = uc->uc_fifo[uc->uc_nextvictim];
+	victim = uc->uc_fifo[(size_t)uc->uc_nextvictim];
 	if (victim != NULL) {
-		loc = CACHE_LOC(xprt, victim->cache_xid);
+		loc = (u_int)CACHE_LOC(xprt, victim->cache_xid);
 		for (vicp = &uc->uc_entries[loc]; 
 		  *vicp != NULL && *vicp != victim; 
 		  vicp = &(*vicp)->cache_next) 
@@ -449,10 +453,10 @@ cache_set(xprt, replylen)
 	victim->cache_vers = uc->uc_vers;
 	victim->cache_prog = uc->uc_prog;
 	victim->cache_addr = uc->uc_addr;
-	loc = CACHE_LOC(xprt, victim->cache_xid);
+	loc = (u_int)CACHE_LOC(xprt, victim->cache_xid);
 	victim->cache_next = uc->uc_entries[loc];	
 	uc->uc_entries[loc] = victim;
-	uc->uc_fifo[uc->uc_nextvictim++] = victim;
+	uc->uc_fifo[(size_t)uc->uc_nextvictim++] = victim;
 	uc->uc_nextvictim %= uc->uc_size;
 }
 
@@ -474,7 +478,7 @@ cache_get(xprt, msg, replyp, replylenp)
 
 #	define EQADDR(a1, a2)	(memcmp(&a1, &a2, sizeof(a1)) == 0)
 
-	loc = CACHE_LOC(xprt, su->su_xid);
+	loc = (u_int)CACHE_LOC(xprt, su->su_xid);
 	for (ent = uc->uc_entries[loc]; ent != NULL; ent = ent->cache_next) {
 		if (ent->cache_xid == su->su_xid &&
 		  ent->cache_proc == uc->uc_proc &&
