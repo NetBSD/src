@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.28 2000/02/14 22:00:23 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.29 2000/02/20 06:34:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,9 +51,7 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
