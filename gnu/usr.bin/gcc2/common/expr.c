@@ -18,7 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.2 1993/08/02 17:34:18 mycroft Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.3 1994/07/13 08:13:52 mycroft Exp $";
 #endif /* not lint */
 
 #include "config.h"
@@ -802,6 +802,8 @@ convert_move (to, from, unsignedp)
 	       && ((code = can_extend_p (to_mode, word_mode, unsignedp))
 		   != CODE_FOR_nothing))
 	{
+	  if (GET_CODE (to) == REG)
+	    emit_insn (gen_rtx (CLOBBER, VOIDmode, to));
 	  convert_move (gen_lowpart (word_mode, to), from, unsignedp);
 	  emit_unop_insn (code, to,
 			  gen_lowpart (word_mode, to), equiv_code);

@@ -18,7 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: local-alloc.c,v 1.2 1993/08/02 17:34:59 mycroft Exp $";
+static char rcsid[] = "$Id: local-alloc.c,v 1.3 1994/07/13 08:14:03 mycroft Exp $";
 #endif /* not lint */
 
 /* Allocation of hard register numbers to pseudo registers is done in
@@ -781,6 +781,11 @@ optimize_reg_copy_1 (insn, dest, src)
 	      if (sregno >= FIRST_PSEUDO_REGISTER)
 		{
 		  reg_live_length[sregno] -= length;
+		  /* reg_live_length is only an approximation after combine
+		     if sched is not run, so make sure that we still have
+		     a reasonable value.  */
+		  if (reg_live_length[sregno] < 2)
+		    reg_live_length[sregno] = 2;
 		  reg_n_calls_crossed[sregno] -= n_calls;
 		}
 
