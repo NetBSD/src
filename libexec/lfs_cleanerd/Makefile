@@ -1,6 +1,7 @@
+#	$NetBSD: Makefile,v 1.4 1997/10/07 13:44:02 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.3 1994/12/22 10:27:18 cgd Exp $
 
+WARNS?=	1
 PROG=	lfs_cleanerd
 CFLAGS+=-I${.CURDIR} -DDIAGNOSTIC
 MAN=	lfs_cleanerd.8
