@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.17 2002/03/02 18:41:41 mhitch Exp $
+#	$NetBSD: install.md,v 1.18 2002/04/15 02:48:17 mhitch Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ md_installboot() {
 			y*|Y*)
 				echo "Installing boot block..."
 				chroot /mnt /usr/mdec/installboot /usr/mdec/bootxx_ffs /dev/r${1}a
+				cp -p /mnt/usr/mdec/boot.amiga /mnt/
 				;;
 			*)
 				echo "No bootblock installed."
