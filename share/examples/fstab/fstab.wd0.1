@@ -1,5 +1,8 @@
-#	$NetBSD: fstab.wd0.1,v 1.1 2002/05/04 19:44:36 jdolecek Exp $
+#	$NetBSD: fstab.wd0.1,v 1.1.8.1 2005/04/04 17:30:53 tron Exp $
 /dev/wd0a	/	ffs	rw		1 1
 #/dev/wd0b	none	swap	sw		0 0
-kernfs		/kern	kernfs	rw		0 0
-procfs		/proc	procfs	rw		0 0
+#
+# Possibly include data from the following files here:
+# fstab.cdrom
+# fstab.pseudo
+# fstab.ramdisk
