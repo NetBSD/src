@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $ */
+/* $NetBSD: mcpcia.c,v 1.2 1998/05/14 00:01:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.1 1998/04/15 00:50:14 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.2 1998/05/14 00:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,6 @@ struct cfattach mcpcia_ca = {
 };
 
 static int	mcpciaprint __P((void *, const char *));
-void	mcpcia_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	mcpcia_intr_disestablish __P((struct confargs *));
-caddr_t	mcpcia_cvtaddr __P((struct confargs *));
-int	mcpcia_matchname __P((struct confargs *, char *));
 
 static int
 mcpciaprint(aux, pnp)

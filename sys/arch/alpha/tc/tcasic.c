@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.22 1998/01/19 02:54:24 thorpej Exp $ */
+/* $NetBSD: tcasic.c,v 1.23 1998/05/14 00:01:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.22 1998/01/19 02:54:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.23 1998/05/14 00:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,10 +67,10 @@ tcasicmatch(parent, cfdata, aux)
 	struct cfdata *cfdata;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
         /* Make sure that we're looking for a TurboChannel ASIC. */
-        if (strcmp(ca->ca_name, tcasic_cd.cd_name))
+        if (strcmp(ma->ma_name, tcasic_cd.cd_name))
                 return (0);
 
         /* Make sure that the system supports a TurboChannel ASIC. */
