@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.28 2000/03/06 21:36:12 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.29 2000/03/19 13:29:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,9 @@
 #include <machine/psl.h>
 
 #include <dev/cons.h>
+#include <dev/sun/event_var.h> 
 #include <dev/sun/kbd_xlate.h>
+#include <dev/sun/kbdvar.h>
 #include <sun3/dev/zs_cons.h>
 
 #include "fb.h"
@@ -74,6 +76,9 @@ cdev_decl(kd);	/* open, close, read, write, ioctl, stop, ... */
 struct kd_softc {
 	struct	device kd_dev;		/* required first: base device */
 	struct  tty *kd_tty;
+
+	/* Console input hook */
+	struct cons_channel *kd_in;
 };
 
 /*
@@ -85,29 +90,25 @@ static int kd_is_console;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
+static void kd_init __P((struct kd_softc *));
+static void kd_cons_input __P((int));
 
 
 /*
- * This is called by kbd_attach() 
- * XXX - Make this a proper child of kbd?
+ * Prepare the console tty; called on first open of /dev/console
  */
 void
-kd_init(unit)
-	int unit;
-{
+kd_init(kd)
 	struct kd_softc *kd;
+{
 	struct tty *tp;
-
-	if (unit != 0)
-		return;
-	kd = &kd_softc; 	/* XXX */
 
 	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
-	tp->t_dev = makedev(KDMAJOR, unit);
-	tty_attach(tp);
+	tp->t_dev = makedev(KDMAJOR, 0);
 
+	tty_attach(tp);
 	kd->kd_tty = tp;
 
 	return;
@@ -132,19 +133,17 @@ kdopen(dev, flag, mode, p)
 	struct kd_softc *kd;
 	int error, s, unit;
 	struct tty *tp;
+static	int firstopen = 1;
 	
 	unit = minor(dev);
 	if (unit != 0)
 		return ENXIO;
 	kd = &kd_softc; 	/* XXX */
-	tp = kd->kd_tty;
-
-	if ((error = kbd_iopen(unit)) != 0) {
-#ifdef	DIAGNOSTIC
-		printf("kd: kbd_iopen, error=%d\n", error);
-#endif
-		return (error);
+	if (firstopen) {
+		kd_init(kd);
+		firstopen = 0;
 	}
+	tp = kd->kd_tty;
 
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
@@ -158,6 +157,14 @@ kdopen(dev, flag, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		/* First open. */
+
+		/* Notify the input device that serves us */
+		struct cons_channel *cc = kd->kd_in;
+		if (cc != NULL &&
+		    (error = (*cc->cc_iopen)(cc)) != 0) {
+			return (error);
+		}
+
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -184,6 +191,7 @@ kdclose(dev, flag, mode, p)
 {
 	struct kd_softc *kd;
 	struct tty *tp;
+	struct cons_channel *cc;
 
 	kd = &kd_softc; 	/* XXX */
 	tp = kd->kd_tty;
@@ -194,6 +202,8 @@ kdclose(dev, flag, mode, p)
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
+	if ((cc = kd->kd_in) != NULL)
+		(void)(*cc->cc_iclose)(cc->cc_dev);
 	return (0);
 }
 
@@ -370,12 +380,47 @@ kd_putfb(tp)
 	}
 }
 
+void
+cons_attach_input(cc)
+	struct cons_channel *cc;
+{
+	struct kd_softc *kd = &kd_softc;
+
+	kd->kd_in = cc;
+	cc->cc_upstream = kd_cons_input;
+}
+
+/*
+ * Default PROM-based console input stream
+ */
+static int kd_rom_iopen __P((struct cons_channel *));
+static int kd_rom_iclose __P((struct cons_channel *));
+static void kd_rom_intr __P((void *));
+
+static struct cons_channel prom_cons_channel;
+
+int
+kd_rom_iopen(cc)
+	struct cons_channel *cc;
+{
+	/* No-op */
+	return (0);
+}
+
+int
+kd_rom_iclose(cc)
+	struct cons_channel *cc;
+{
+	/* No-op */
+	return (0);
+}
+
 /*
  * Our "interrupt" routine for input. This is called by
  * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
 void
-kd_input(c)
+kd_cons_input(c)
 	int c;
 {
 	struct kd_softc *kd = &kd_softc;
@@ -433,6 +478,12 @@ kdcninit(cn)
 	/* This prepares kbd_translate() */
 	ks->kbd_id = KBD_MIN_TYPE;
 	kbd_xlate_init(ks);
+
+	/* Set up initial PROM input channel for /dev/console */
+	prom_cons_channel.cc_dev = NULL;
+	prom_cons_channel.cc_iopen = kd_rom_iopen;
+	prom_cons_channel.cc_iclose = kd_rom_iclose;
+	cons_attach_input(&prom_cons_channel);
 
 	/* Indicate that it is OK to use the PROM fbwrite */
 	kd_is_console = 1;
