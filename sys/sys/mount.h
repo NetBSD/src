@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.75 1999/05/06 15:29:23 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.76 1999/06/29 22:18:48 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -40,6 +40,9 @@
 
 #ifndef _KERNEL
 #include <sys/ucred.h>
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#include <sys/stat.h>
+#endif /* !_POSIX_C_SOURCE */
 #endif
 #include <sys/queue.h>
 #include <sys/lock.h>
@@ -449,6 +452,11 @@ int	getmntinfo __P((struct statfs **, int));
 int	mount __P((const char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+int	fhopen __P((const fhandle_t *, int));
+int	fhstat __P((const fhandle_t *, struct stat *));
+int	fhstatfs __P((const fhandle_t *, struct statfs *));
+#endif /* !_POSIX_C_SOURCE */
 __END_DECLS
 
 #endif /* _KERNEL */
