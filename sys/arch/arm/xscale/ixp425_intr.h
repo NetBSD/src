@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.1 2003/05/23 00:57:25 ichiro Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.2 2003/09/21 19:32:40 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -128,4 +128,4 @@ void	_setsoftintr(int);
 
 #endif /* _LOCORE */
 
-#endif _IXP425_INTR_H_
+#endif /* _IXP425_INTR_H_ */
