@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.9 2001/09/15 07:10:05 eeh Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.10 2003/04/17 12:58:18 nakayama Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -95,8 +95,8 @@ struct psychoreg {
 	u_int64_t	pcia_slot3_int;		/* PCI bus a slot 3 irq map reg (IIi)*/	/* 1fe.0000.0c18 */
 	u_int64_t	pcib_slot0_int;		/* PCI bus b slot 0 irq map reg */	/* 1fe.0000.0c20 */
 	u_int64_t	pcib_slot1_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c28 */
-	u_int64_t	pcib_slot2_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c30 */
-	u_int64_t	pcib_slot3_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c38 */
+	u_int64_t	pcib_slot2_int;		/* PCI bus b slot 2 irq map reg */	/* 1fe.0000.0c30 */
+	u_int64_t	pcib_slot3_int;		/* PCI bus b slot 3 irq map reg */	/* 1fe.0000.0c38 */
 
 	u_int64_t	pad4[120];
 
@@ -207,7 +207,7 @@ struct psychoreg {
 
 	u_int64_t	pad16[48];
 
-	u_int64_t	pci_int_diag;		/* SBUS int state diag reg */		/* 1fe.0000.a800 */
+	u_int64_t	pci_int_diag;		/* PCI int state diag reg */		/* 1fe.0000.a800 */
 	u_int64_t	obio_int_diag;		/* OBIO and misc int state diag reg */	/* 1fe.0000.a808 */
 
 	u_int64_t	pad17[254];
