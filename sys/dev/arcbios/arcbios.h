@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.3 2001/12/06 14:59:02 rafal Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.4 2003/12/29 06:26:41 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -286,7 +286,7 @@ struct arcbios_mem {
 };
 
 #if defined(sgimips)
-#define	ARCBIOS_MEM_ExecptionBlock		0
+#define	ARCBIOS_MEM_ExceptionBlock		0
 #define	ARCBIOS_MEM_SystemParameterBlock	1
 #define	ARCBIOS_MEM_FreeContiguous		2
 #define	ARCBIOS_MEM_FreeMemory			3
