@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.64 1998/08/25 06:21:16 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.65 1998/08/25 08:00:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 1998/08/25 06:21:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 1998/08/25 08:00:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1371,9 +1371,6 @@ pmap_page_protect(pa, prot)
  *
  *	Set the physical protection on the specified range of this map
  *	as requested.
- *
- *	XXX This routine could be optimized with regard to its
- *	handling of level 3 PTEs.
  */
 void
 pmap_protect(pmap, sva, eva, prot)
@@ -1384,6 +1381,7 @@ pmap_protect(pmap, sva, eva, prot)
 	pt_entry_t *l1pte, *l2pte, *l3pte, bits;
 	boolean_t isactive;
 	boolean_t hadasm;
+	vaddr_t l1eva, l2eva;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
@@ -1407,36 +1405,37 @@ pmap_protect(pmap, sva, eva, prot)
 	bits = pte_prot(pmap, prot);
 	isactive = PMAP_ISACTIVE(pmap);
 
-	while (sva < eva) {
-		/*
-		 * If level 1 mapping is invalid, just skip it.
-		 */
+	for (; sva < eva; sva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE) {
 		l1pte = pmap_l1pte(pmap, sva);
-		if (pmap_pte_v(l1pte) == 0) {
-			sva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
-			continue;
+		if (pmap_pte_v(l1pte)) {
+			for (l1eva = alpha_trunc_l1seg(sva) + ALPHA_L1SEG_SIZE;
+			     sva < l1eva;
+			     sva = alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE) {
+				l2pte = pmap_l2pte(pmap, sva, l1pte);
+				if (pmap_pte_v(l2pte)) {
+					for (l2eva = alpha_trunc_l2seg(sva) +
+						 ALPHA_L2SEG_SIZE;
+					     sva < l2eva;
+					     sva += PAGE_SIZE) {
+						l3pte =
+						    pmap_l3pte(pmap, sva,
+						    l2pte);
+						if (pmap_pte_v(l3pte) &&
+						    pmap_pte_prot_chg(l3pte,
+						    bits)) {
+							hadasm =
+							   (pmap_pte_asm(l3pte)
+							    != 0);
+							pmap_pte_set_prot(l3pte,
+							   bits);
+							PMAP_INVALIDATE_TLB(
+							   pmap, sva, hadasm,
+							   isactive);
+						}
+					}
+				}
+			}
 		}
-
-		/*
-		 * If level 2 mapping is invalid, just skip it.
-		 */
-		l2pte = pmap_l2pte(pmap, sva, l1pte);
-		if (pmap_pte_v(l2pte) == 0) {
-			sva = alpha_trunc_l2seg(sva) + ALPHA_L2SEG_SIZE;
-			continue;
-		}
-
-		/*
-		 * Change protection on mapping if it is valid and doesn't
-		 * already have the correct protection.
-		 */
-		l3pte = pmap_l3pte(pmap, sva, l2pte);
-		if (pmap_pte_v(l3pte) && pmap_pte_prot_chg(l3pte, bits)) {
-			hadasm = (pmap_pte_asm(l3pte) != 0);
-			pmap_pte_set_prot(l3pte, bits);
-			PMAP_INVALIDATE_TLB(pmap, sva, hadasm, isactive);
-		}
-		sva += PAGE_SIZE;
 	}
 
 	if (isactive && (prot & VM_PROT_EXECUTE) != 0)
