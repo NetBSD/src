@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.59 1998/07/31 02:24:26 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.60 1998/11/12 22:39:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -151,10 +151,10 @@ struct vndbuf {
 	struct vndxfer	*vb_xfer;
 };
 
-#define	VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
+#define	VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_NOWAIT)
 #define	VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
 
-#define	VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_WAITOK)
+#define	VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_NOWAIT)
 #define	VND_PUTBUF(vnd, vb)	pool_put(&(vnd)->sc_vbpool, (vb))
 
 struct vnd_softc *vnd_softc;
