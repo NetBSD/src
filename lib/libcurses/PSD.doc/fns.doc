@@ -81,10 +81,44 @@ Set the curses default foreground and background colors to
 and
 .Vn back .
 .Ds
+.Fn attr_get "attr_t *attr" "short *pair" "void *opt" \(dg
+.De
+Get the attributes and colour pair for the window.
+Either
+.Vn attr
+or
+.Vn pair
+may be NULL.
+The
+.Vn opt
+argument is not used.
+.Ds
+.Fn attr_off "attr_t attr" "void *opt" \(dg
+.De
+Remove character attributes set by
+.Fn attr_on
+or
+.Fn attr_set .
+.Ds
+.Fn attr_on "attr_t attr" "void *opt" \(dg
+.De
+Add character attributes for any characters
+added to the window (if it has that capability).
+The attributes that can be set are \fBA_UNDERLINE\fR,
+\fBA_REVERSE\fR, \fBA_BLINK\fR, \fBA_DIM\fR,
+\fBA_BOLD\fR, \fBA_BLANK\fR, \fBA_PROTECT\fB,
+\fBA_ALTCHARSET\fR and \fBCOLOR_PAIR(n)\fR.
+.Ds
+.Fn attr_set "attr_t attr" "short pair" "void *opt" \(dg
+.De
+Set character attributes and color pair for any characters
+added to the window (if it has that capability).
+.Ds
 .Fn attroff "int attribute" \(dg
 .De
 Remove character attributes set by
-.Fn attron or
+.Fn attron
+or
 .Fn attrset .
 To clear all character attributes, use
 .Fn attroff "A_ATTRIBUTES" .
@@ -99,9 +133,6 @@ is equivalent to
 .De
 Add character attributes for any characters
 added to the window (if it has that capability).
-The attributes that can be set are \fBA_UNDERLINE\fR,
-\fBA_REVERSE\fR, \fBA_BLINK\fR, \fBA_DIM\fR,
-\fBA_BOLD\fR, \fBA_BLANK\fR and \fBA_PROTECT\fB.
 .Fn attron "A_STANDOUT"
 is equivalent to
 .Fn standout .
@@ -242,6 +273,11 @@ Wipes the window clear from the current \*y to the end of the line.
 .De
 Get the red, green and blue values of color
 .Vn color .
+.Ds
+.Fn color_set "short pair" "void *opt" \(dg
+.De
+Set color pair for any characters added to the window (if it has
+that capability).
 .Ds
 .Fn copywin "const WINDOW *src" "WINDOW *dst" "int sminrow" "int smincol" "int dminrow" "int dmincol" "int dmaxrow" "int dmaxcol" "int overlay"
 .De
