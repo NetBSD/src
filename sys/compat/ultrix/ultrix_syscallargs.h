@@ -297,7 +297,7 @@ int	ultrix_sys_nfssvc	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getdirentries	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_statfs	__P((struct proc *, void *, register_t *));
 int	ultrix_sys_fstatfs	__P((struct proc *, void *, register_t *));
-#ifdef NFSCLIENT
+#ifdef NFS
 int	async_daemon	__P((struct proc *, void *, register_t *));
 int	sys_getfh	__P((struct proc *, void *, register_t *));
 #else

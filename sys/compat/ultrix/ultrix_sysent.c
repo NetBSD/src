@@ -364,7 +364,7 @@ struct sysent ultrix_sysent[] = {
 	    ultrix_sys_fstatfs },		/* 161 = fstatfs */
 	{ 0, 0,
 	    sys_nosys },			/* 162 = unimplemented umount */
-#ifdef NFSCLIENT
+#ifdef NFS
 	{ 0, 0,
 	    async_daemon },			/* 163 = async_daemon */
 	{ 2, s(struct sys_getfh_args),
