@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 2002/02/11 17:32:35 uch Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 2002/02/17 21:01:19 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -53,22 +53,6 @@
 #include <machine/param.h>
 #include <machine/pte.h>
 #include <machine/trap.h>
-
-#ifdef SH4
-#define SHREG_BBRA	0xff200008
-#define SHREG_CCR	0xff00001c
-#define SHREG_EXPEVT	0xff000024
-#define SHREG_INTEVT	0xff000028
-#define SHREG_MMUCR	0xff000010
-#define SHREG_TTB	0xff000008
-#else
-#define SHREG_BBRA	0xffffffb8
-#define SHREG_CCR	0xffffffec
-#define SHREG_EXPEVT	0xffffffd4
-#define SHREG_INTEVT	0xffffffd8
-#define SHREG_MMUCR	0xffffffe0
-#define SHREG_TTB	0xfffffff8
-#endif
 
 /*
  * These are used on interrupt or trap entry or exit.
@@ -458,13 +442,13 @@ ENTRY(cpu_switch)
 	mov	r12, r4
 	mov.l	XLP_ADDR, r1
 	add	r1, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.l	@r0, r4		/* r4 = oldCurproc->p_addr */
 	mov	#PCB_R15, r1
 	add	r1, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.l	r15, @r0
@@ -600,9 +584,12 @@ sw1:	mov	#1, r1
 
 	ldc	r0, r0_bank	/* save r0 = &qs[i] */
 	mov	r2, r4
-	mov.l	XL_ConvVtoP, r0
+	
+	mov.l	r1, @-r15
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
+	mov.l	@r15+, r1
 	mov	r0, r2
 
 	mov.l	@r2, r8		/* r8 = qs[i].p_forw */
@@ -621,9 +608,11 @@ sw1:	mov	#1, r1
 	add	r1, r3
 
 	mov	r3, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	r2, @-r15
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
+	mov.l	@r15+, r2
 	mov	r0, r3
 
 	mov.l	@r3, r9		/* r9 = qs[i].p_forw->p_forw */
@@ -634,7 +623,7 @@ sw1:	mov	#1, r1
 	mov	#P_BACK, r2
 	add	r2, r4
 
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov	r0, r10
@@ -679,7 +668,7 @@ sw1:	mov	#1, r1
 #ifdef DIAGNOSTIC
 	mov	r8, r4
 	add	#P_WCHAN, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.l	@r0, r0
@@ -688,7 +677,7 @@ sw1:	mov	#1, r1
 
 	mov	r8, r4
 	add	#P_STAT, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.b	@r0, r0
@@ -712,7 +701,7 @@ XL_switch_error:
 	mov	#P_BACK, r2
 	add	r2, r4
 
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov	r0, r1
@@ -786,7 +775,7 @@ switch_exited:
 	mov	r8, r4		/* r8 = qs[i]->p_forw */
 	mov.l	XLP_ADDR, r1
 	add	r1, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.l	@r0, r12
@@ -794,7 +783,7 @@ switch_exited:
 	/* Restore stack pointers. */
 	mov	r12, r4
 	add	#PCB_R15, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.l	@r0, r15
@@ -802,7 +791,7 @@ switch_exited:
 	/* Store new kernel mode stack pointer */
 	mov	r12, r4
 	add	#PCB_KR15, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 	mov.l	@r0, r0
@@ -812,24 +801,18 @@ switch_exited:
 	/* Switch address space. */
 	mov	r12, r4
 	add	#PCB_PAGEDIRREG, r4
-	mov.l	XL_ConvVtoP, r0
+	mov.l	XL_sh_mmu_pt_kaddr, r0; mov.l	@r0, r0
 	jsr	@r0
 	nop
 
 	mov.l	@r0, r0
-	mov.l	XL_SHREG_TTB, r2
+	mov.l	XL_SH_TTB, r2; mov.l @r2, r2
 	mov.l	r0, @r2
 
 	/* flush TLB */
-	mov.l	XXL_SHREG_MMUCR, r0
-	mov	#4, r1
-	mov.l	@r0, r2
-	or	r1, r2
-#ifdef SH4
-	mov.l	XL_MMUCR_VBITS, r1
-	and	r1, r2
-#endif
-	mov.l	r2, @r0
+	mov.l	XXL_TLBFLUSH, r0; mov.l	@r0, r0
+	jsr	@r0
+	nop
 
 switch_restored:
 	/* Record new pcb. */
@@ -867,9 +850,9 @@ XLP_ADDR:	.long	P_ADDR
 XLwhichqs:	.long	_C_LABEL(sched_whichqs)
 XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
-XL_ConvVtoP:	.long	_C_LABEL(ConvVtoP)
+XL_sh_mmu_pt_kaddr:	.long	_C_LABEL(__sh_mmu_pt_kaddr)
 XL_KernelSp:	.long	KernelSp
-XL_SHREG_TTB:	.long	SHREG_TTB
+XL_SH_TTB:	.long	_C_LABEL(__sh_TTB)
 #if defined(LOCKDEBUG)
 Xsched_lock:	.long	_C_LABEL(sched_lock_idle)
 Xsched_unlock:	.long	_C_LABEL(sched_unlock_idle)
@@ -906,20 +889,14 @@ ENTRY(switch_exit)
 	mov	r10, r0
 	add	#PCB_PAGEDIRREG, r0
 	mov.l	@r0, r2
-	mov.l	XXL_SHREG_TTB, r1
+	mov.l	XXL_SH_TTB, r1	; mov.l @r1, r1
 	mov.l	r2, @r1
 
 	/* flush TLB */
-	mov.l	XXL_SHREG_MMUCR, r0
-	mov	#4, r1
-	mov.l	@r0, r2
-	or	r1, r2
-#ifdef SH4
-	mov.l	XL_MMUCR_VBITS, r1
-	and	r1, r2
-#endif
-	mov.l	r2, @r0
-
+	mov.l	XXL_TLBFLUSH, r0; mov.l	@r0, r0
+	jsr	@r0
+	nop
+	
 	/* Record new pcb. */
 	mov.l	XL_curpcb, r0
 	mov.l	r10, @r0
@@ -946,13 +923,8 @@ ENTRY(switch_exit)
 XLexit2:
 	.long	_C_LABEL(exit2)
 
-#ifdef SH4
-XL_MMUCR_VBITS:
-	.long	MMUCR_VALIDBITS
-#endif
-
-XXL_SHREG_MMUCR:
-	.long	SHREG_MMUCR
+XXL_TLBFLUSH:
+	.long	__sh_tlb_invalidate_all
 XXLP_ADDR:
 	.long	P_ADDR
 
@@ -1005,7 +977,7 @@ NENTRY(exphandler)
 100:
 #endif
 
-	mov.l	XL_SHREG_EXPEVT, r0
+	mov.l	XL_SH_EXPEVT, r0; mov.l @r0, r0
 	mov.l	@r0, r0
 	cmp/eq	#0x40, r0	/* T_TLBINVALIDR */
 	bf	1f
@@ -1023,11 +995,11 @@ NENTRY(exphandler)
 	INTRENTRY
 #ifdef DDB
 	mov	#0, r0
-	mov.l	XL_SHREG_BBRA, r1
+	mov.l	XL_SH_BBRA, r1; mov.l @r1, r1
 	mov.w	r0, @r1		/* disable UBC */
 	mov.l	r0, @r15	/* clear frame->dummy */
 #endif
-	mov.l	XL_SHREG_EXPEVT, r0
+	mov.l	XL_SH_EXPEVT, r0; mov.l @r0, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 	INTR_ENABLE
@@ -1073,7 +1045,7 @@ NENTRY(exphandler)
 
 #ifdef DDB
 	mov.l	@r15, r0
-	mov.l	XL_SHREG_BBRA, r1
+	mov.l	XL_SH_BBRA, r1; mov.l @r1, r1
 	mov.w	r0, @r1
 #endif
 	INTRFASTEXIT
@@ -1081,10 +1053,10 @@ NENTRY(exphandler)
 	.align	2
 XL_TLBPROTWR:
 	.long	0x000000c0
-XL_SHREG_EXPEVT:
-	.long	SHREG_EXPEVT
-XL_SHREG_BBRA:
-	.long	SHREG_BBRA
+XL_SH_EXPEVT:
+	.long	_C_LABEL(__sh_EXPEVT)
+XL_SH_BBRA:
+	.long	_C_LABEL(__sh_BBRA)
 
 	.globl	_C_LABEL(tlbmisshandler_stub)
 	.globl	_C_LABEL(tlbmisshandler_stub_end)
@@ -1166,125 +1138,7 @@ XL_astpending:	.long	_C_LABEL(astpending)
 XLT_ASTFLT:	.long	T_ASTFLT
 XL_tlb_handler:	.long	_C_LABEL(tlb_handler)
 XLexphandler:	.long	_C_LABEL(exphandler)
-
-	/*
-	 * Convert Virtual address to Physical Address
-	 * r4 = Virtual Address
-	 * r0 = returned Physical address
-	 */
-#ifdef SH4
-ENTRY(ConvVtoP)
-	mov.l	r1, @-r15
-	mov.l	r2, @-r15
-	mov.l	r3, @-r15
-	mov.l	r5, @-r15
-#ifdef SH4 /*  cache flush */
-	sts.l	pr, @-r15
-	mov.l	r4, @-r15
-	mov.l	XL_cacheflush, r0
-	jsr	@r0
-	nop
-	mov.l	@r15+, r4
-	lds.l	@r15+, pr
-#endif
-	mov	r4, r0
-	mov.l	XL_CSMASK, r1
-	mov.l	XL_KCSAREA, r2
-	and	r4, r1
-	cmp/eq	r1, r2
-	bt	1f
-	mov.l	XL_P2AREA, r5
-	mov	#PDSHIFT, r1
-	neg	r1, r1
-	shld	r1, r0
-	shll2	r0
-	mov.l	XXL_SHREG_TTB, r1
-	or	r5, r1	
-	mov.l	@r1, r1
-	add	r0, r1
-	or	r5, r1
-	mov.l	@r1, r2		/* r2 = pde  */
-	mov.l	XL_PG_FRAME, r1
-	and	r1, r2		/* r2 = page table address */
-	mov	r4, r0
-	mov.l	XL_PT_MASK, r3
-	and	r3, r0
-	mov	#PGSHIFT, r1
-	neg	r1, r1
-	shld	r1, r0
-	shll2	r0
-	add	r0, r2		/* r2 = pte */
-	or	r5, r2
-	mov.l	@r2, r2
-	mov.l	XL_PG_FRAME, r1
-	and	r1, r2
-	not	r1, r1
-	and	r1, r4
-	or	r4, r2
-	or	r5, r2
-	mov	r2, r0		/* r0 = Physical address */
-1:
-	mov.l	@r15+, r5
-	mov.l	@r15+, r3
-	mov.l	@r15+, r2
-	mov.l	@r15+, r1
-	rts
-	nop
-#else
-ENTRY(ConvVtoP)
-	mov.l	r1, @-r15
-	mov.l	r2, @-r15
-	mov.l	r3, @-r15
-	mov	r4, r0
-	mov.l	XL_CSMASK, r1
-	mov.l	XL_KCSAREA, r2
-	and	r4, r1
-	cmp/eq	r1, r2
-	bt	1f
-	mov	#PDSHIFT, r1
-	neg	r1, r1
-	shld	r1, r0
-	shll2	r0
-	mov.l	XXL_SHREG_TTB, r1
-	mov.l	@r1, r1
-	add	r0, r1
-	mov.l	@r1, r2		/* r2 = pde */
-	mov.l	XL_PG_FRAME, r1
-	and	r1, r2		/* r2 = page table address */
-	mov	r4, r0
-	mov.l	XL_PT_MASK, r3
-	and	r3, r0
-	mov	#PGSHIFT, r1
-	neg	r1, r1
-	shld	r1, r0
-	shll2	r0
-	add	r0, r2		/* r2 = pte */
-	mov.l	@r2, r2
-	mov.l	XL_PG_FRAME, r1
-	and	r1, r2
-	not	r1, r1
-	and	r1, r4
-	or	r4, r2
-	mov	r2, r0		/* r0 = Physical address */
-1:
-	mov.l	@r15+, r3
-	mov.l	@r15+, r2
-	mov.l	@r15+, r1
-
-	rts
-	nop
-#endif
-
-	.align	2
-XL_PT_MASK:	.long	PT_MASK
-XL_PG_FRAME:	.long	PG_FRAME
-XL_CSMASK:	.long	0xc0000000
-XL_KCSAREA:	.long	0x80000000
-XXL_SHREG_TTB:	.long	SHREG_TTB
-XL_P2AREA:	.long	0xa0000000
-#ifdef SH4
-XL_cacheflush:	.long	_C_LABEL(sh4_icache_sync_all)
-#endif
+XXL_SH_TTB:	.long	_C_LABEL(__sh_TTB)
 
 Xrecurse:
 	stc	sr, r0
@@ -1312,7 +1166,7 @@ XL_splimit_low2:	.long	0x80000000
 100:
 #endif
 7:
-	mov.l	XL_SHREG_INTEVT, r0
+	mov.l	XL_SH_INTEVT, r0; mov.l @r0, r0
 	mov.l	@r0, r0
 	mov.l	r0, @-r15
 6:
@@ -1367,7 +1221,7 @@ XL_splimit_low2:	.long	0x80000000
 	INTRFASTEXIT
 
 	.align	2
-XL_SHREG_INTEVT:	.long	SHREG_INTEVT
+XL_SH_INTEVT:		.long	_C_LABEL(__sh_INTEVT)
 XL_intrhandler:		.long	_C_LABEL(intrhandler)
 XXL_astpending:		.long	_C_LABEL(astpending)
 XXLT_ASTFLT:		.long	T_ASTFLT
@@ -1426,44 +1280,11 @@ XXL_check_ipending:
 XL_Xrecurse:	.long	Xrecurse
 XL_restart:	.long	Xrestart
 
-ENTRY(cpu_printR15)
-	sts.l	pr, @-r15
-	mova	1f, r0
-	mov	r0, r4
-	mov	r15, r5
-	mov.l	2f, r0
-	jsr	@r0
-	nop
-	lds.l	@r15+, pr
-	rts
-	nop
-
-	.align	2
-1:	.asciz	"sp=0x%x\n"
-	.align	2
-2:	.long	_C_LABEL(printf)
-
-
-ENTRY(Sh3Reset)
-	mov.l	XL_reset_vector, r8
-	jmp	@r8
-	nop
-
-	.align	2
-XL_reset_vector:
-	.long	0xa0000000
-
 	.data
 	.align	2
 	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
 	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
 _C_LABEL(intrcnt):
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 _C_LABEL(eintrcnt):
-
 _C_LABEL(intrnames):
-	.asciz	"irq0", "irq1", "irq2", "irq3"
-	.asciz	"irq4", "irq5", "irq6", "irq7"
-	.asciz	"irq8", "irq9", "irq10", "irq11"
-	.asciz	"irq12", "irq13", "irq14", "irq15"
 _C_LABEL(eintrnames):
