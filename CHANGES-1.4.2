@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.122 2000/02/13 23:20:42 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.123 2000/02/15 10:09:08 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3443,3 +3443,13 @@ distrib/notes/common/main			patch
 sys/arch/alpha/alpha/dec_550.c			patch
 
   Make this compile when NPCKBD > 0.
+
+lib/libc/gen/errno.c				1.3
+
+  Arrange for a linker warning to be displayed when the errno datum
+  is accessed directly (not using <errno.h>).
+
+sys/arch/amiga/include/vmparam.h		1.26
+
+  Enlarge initial kernel page table.  Needed to boot some 128 MB
+  machines.
