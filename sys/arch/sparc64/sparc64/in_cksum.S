@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.4 2002/01/16 18:49:22 eeh Exp $ */
+/*	$NetBSD: in_cksum.S,v 1.5 2002/01/21 18:50:37 eeh Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath
@@ -54,11 +54,13 @@
  */
 
 #define	IALIGN	.align	32
-	
+
+	IALIGN
 ENTRY(in_cksum)
 	clr	%o3		! sum = 0;
 	clr	%o2
 _ENTRY(_C_LABEL(in_cksum_internal))
+	srl	%o3, 0, %o3	! Make sure this is a 32-bit value going in
 	brz	%o0, Lfinish	! for (; m && len > 0; m->m_next) {
 	 clr	%g1		! swapped = 0;
 	brlez	%o1, Lfinish
