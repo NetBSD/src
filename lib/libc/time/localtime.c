@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.25 2001/03/31 18:29:21 kleink Exp $	*/
+/*	$NetBSD: localtime.c,v 1.26 2001/03/31 18:45:38 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.70";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.25 2001/03/31 18:29:21 kleink Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.26 2001/03/31 18:45:38 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -229,7 +229,7 @@ static rwlock_t lcl_lock = RWLOCK_INITIALIZER;
 static struct tm	tm;
 
 #ifdef USG_COMPAT
-time_t			timezone = 0;
+long int		timezone = 0;
 int			daylight = 0;
 #endif /* defined USG_COMPAT */
 
