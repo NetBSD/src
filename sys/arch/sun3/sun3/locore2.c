@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.68 1997/10/04 19:39:23 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.69 1997/10/04 19:46:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -638,6 +638,9 @@ _bootstrap(keh)
 	 * and call some init functions.
 	 */
 	obio_init();
+
+	/* We now may enable the console.  (yea!) */
+	cninit();
 
 	/*
 	 * Point interrupts/exceptions to our vector table.
