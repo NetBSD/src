@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15 1999/04/18 15:43:22 minoura Exp $
+#	$NetBSD: INSTALL,v 1.16 1999/05/21 15:15:34 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -137,22 +137,23 @@ makeoptions	COPTS="-Os -fno-inline"
 #options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
+#options 	COMPAT_SVR4	# SVR4 binary compatibility; broken
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
 ## File systems.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
-#file-system	NULLFS		# NULL layered filesystem
+#file-system	NULLFS		# NULL layered filesystem (buggy)
 #file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
-#file-system	LFS		# Log-based filesystem (still experimental)
-#file-system	PORTAL		# portal filesystem (still experimental)
+#file-system	LFS		# Log-structured filesystem (experimental)
+#file-system	PORTAL		# portal filesystem (experimental)
 #file-system	PROCFS		# /proc
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system	UNION		# union file system
+#file-system	UNION		# union file system (a little buggy)
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
 
@@ -197,7 +198,7 @@ grf0	at grfbus0			# multiplane graphics
 
 kbd0	at mfp0				# standard keyboard
 ite0	at grf0				# internal terminal emulator
-#options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
+options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
 #pseudo-device	pow		2	# software power switch
 
@@ -303,8 +304,10 @@ pseudo-device	sl		1
 ## like, though 256 is more or less the upper limit.  Increasing this
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
+
 #pseudo-device	pty		8	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
+
 #pseudo-device	rnd
