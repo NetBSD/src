@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.28 2003/06/25 23:12:42 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2003/09/02 07:34:55 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2003/06/25 23:12:42 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2003/09/02 07:34:55 jlam Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: main.c,v 1.28 2003/06/25 23:12:42 hubertf Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "DFORVdfhnp:rv";
+static char Options[] = "DFK:ORVdfhnp:rv";
 
 char   *Prefix = NULL;
 char   *ProgramPath = NULL;
@@ -67,22 +67,6 @@ main(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
-		case 'v':
-			Verbose = TRUE;
-			break;
-
-		case 'f':
-			Force += 1;
-			break;
-
-		case 'F':
-			File2Pkg = TRUE;
-			break;
-
-		case 'p':
-			Prefix = optarg;
-			break;
-
 		case 'D':
 			NoDeInstall = TRUE;
 			break;
@@ -91,26 +75,46 @@ main(int argc, char **argv)
 			CleanDirs = TRUE;
 			break;
 
+		case 'F':
+			File2Pkg = TRUE;
+			break;
+
+		case 'f':
+			Force += 1;
+			break;
+
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
+			break;
+
 		case 'n':
 			Fake = TRUE;
 			Verbose = TRUE;
-			break;
-
-		case 'r':
-			Recurse_up = TRUE;
-			break;
-
-		case 'R':
-			Recurse_down = TRUE;
 			break;
 
 		case 'O':
 			OnlyDeleteFromPkgDB = TRUE;
 			break;
 
+		case 'p':
+			Prefix = optarg;
+			break;
+
+		case 'R':
+			Recurse_down = TRUE;
+			break;
+
+		case 'r':
+			Recurse_up = TRUE;
+			break;
+
 		case 'V':
 			show_version();
 			/* NOTREACHED */
+
+		case 'v':
+			Verbose = TRUE;
+			break;
 
 		case 'h':
 		case '?':
@@ -151,9 +155,8 @@ main(int argc, char **argv)
 			}
 		} else {
 			char   *dbdir;
-			char   *tmp;
 
-			dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+			dbdir = _pkgdb_getPKGDB_DIR();
 			if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
 				*argv += strlen(dbdir) + 1;
 				if ((*argv)[strlen(*argv) - 1] == '/') {
