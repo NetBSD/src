@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.373 2000/06/14 19:47:12 thorpej Exp $
+#	$NetBSD: files,v 1.373.2.1 2000/06/23 14:28:55 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -976,6 +976,7 @@ file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
 file ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
 file ufs/ffs/ffs_inode.c		ffs | mfs
+file ufs/ffs/ffs_softdep.c		ffs & softdep
 file ufs/ffs/ffs_softdep.stub.c		(ffs & !softdep) | (!ffs & (lfs | mfs | ext2fs))
 file ufs/ffs/ffs_subr.c			ffs | mfs
 file ufs/ffs/ffs_tables.c		ffs | mfs
