@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2000/03/31 14:51:55 soren Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2000/04/09 00:13:27 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -142,9 +142,21 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	int pin, line;
 	pci_intr_handle_t *ihp;
 {
-	/* XXX checks XXX */
+	int bus, dev, func;
 
-	*ihp = line;
+	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
+
+	/*
+	 * The interrupt lines of the two Tulips are connected
+	 * directly to the CPU.
+	 */
+
+	if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A)
+		*ihp = 16 + 1;
+	else if (bus == 0 && dev == 12 && pin == PCI_INTERRUPT_PIN_A)
+		*ihp = 16 + 2;
+	else
+		*ihp = line;
 
 	return 0;
 }
@@ -156,14 +168,8 @@ pci_intr_string(pc, ih)
 {
 	static char irqstr[8];
 
-	/*
-	 * XXX
-	 */
-
-	if (ih == 4)
-		sprintf(irqstr, "level 1");
-	else if (ih == 13)
-		sprintf(irqstr, "level 2");
+	if (ih >= 16)
+		sprintf(irqstr, "level %d", ih - 16);
 	else
 		sprintf(irqstr, "irq %d", ih);
 
@@ -177,15 +183,8 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func)(void *);
 	void *arg;
 {
-	/*
-	 * The two Tulips are wired directly to CPU interrupts.
-	 * XXX
-	 */
-
-	if (ih == 4)
-		return cpu_intr_establish(1, level, func, arg);
-	else if (ih == 13)
-		return cpu_intr_establish(2, level, func, arg);
+	if (ih >= 16)
+		return cpu_intr_establish(ih - 16, level, func, arg);
 	else
 		return icu_intr_establish(ih, IST_LEVEL, level, func, arg);
 }
