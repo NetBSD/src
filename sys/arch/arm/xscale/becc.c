@@ -1,4 +1,4 @@
-/*	$NetBSD: becc.c,v 1.4 2003/05/23 05:21:26 briggs Exp $	*/
+/*	$NetBSD: becc.c,v 1.5 2003/05/30 18:38:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -140,20 +140,16 @@ becc_attach(struct becc_softc *sc)
 	}
 
 	/*
-	 * Program the two outbound PCI memory windows.  On a
-	 * big-endian system, we byte-swap the first window.
-	 * The second window is used for STREAM transfers.
+	 * Program the two outbound PCI memory windows.
+	 * NOTE: WE DO NOT BYTE-SWAP OUTBOUND WINDOWS IN BIG-ENDIAN
+	 * MODE.  I know this seems counter-intuitive, but that's
+	 * how it is.
 	 *
 	 * There's a third window on v9 and later, but we don't
 	 * use it for anything; program it anyway, just to be
 	 * safe.
 	 */
-#ifdef __ARMEB__
-	BECC_CSR_WRITE(BECC_POMR1, sc->sc_owin_xlate[0] /* | POMRx_F32 */ |
-	    POMRx_BEE);
-#else
 	BECC_CSR_WRITE(BECC_POMR1, sc->sc_owin_xlate[0] /* | POMRx_F32 */);
-#endif
 	BECC_CSR_WRITE(BECC_POMR2, sc->sc_owin_xlate[1] /* | POMRx_F32 */);
 
 	if (becc_rev >= BECC_REV_V9)
@@ -161,16 +157,11 @@ becc_attach(struct becc_softc *sc)
 		    sc->sc_owin_xlate[2] /* | POMRx_F32 */);
 
 	/*
-	 * Program the PCI I/O window.  On a big-endian system,
-	 * we do byte-swapping.
+	 * Program the PCI I/O window.  See note above about byte-swapping.
 	 *
 	 * XXX What about STREAM transfers?
 	 */
-#ifdef __ARMEB__
-	BECC_CSR_WRITE(BECC_POIR, sc->sc_ioout_xlate | POIR_BEE);
-#else
 	BECC_CSR_WRITE(BECC_POIR, sc->sc_ioout_xlate);
-#endif
 
 	/*
 	 * Configure PCI configuration cycle access.

@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_space.c,v 1.1 2003/01/25 01:57:19 thorpej Exp $	*/
+/*	$NetBSD: becc_space.c,v 1.2 2003/05/30 18:38:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -53,8 +53,7 @@
 bs_protos(becc);
 bs_protos(becc_io);
 bs_protos(becc_mem);
-bs_protos(generic);
-bs_protos(generic_armv4);
+bs_protos(becc_pci);
 bs_protos(bs_notimpl);
 
 /*
@@ -84,39 +83,39 @@ const struct bus_space becc_bs_tag_template = {
 	becc_bs_barrier,
 
 	/* read (single) */
-	generic_bs_r_1,
-	generic_armv4_bs_r_2,
-	generic_bs_r_4,
+	becc_pci_bs_r_1,
+	becc_pci_bs_r_2,
+	becc_pci_bs_r_4,
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	generic_bs_rm_1,
-	generic_armv4_bs_rm_2,
-	generic_bs_rm_4,
+	bs_notimpl_bs_rm_1,
+	bs_notimpl_bs_rm_2,
+	bs_notimpl_bs_rm_4,
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
 	bs_notimpl_bs_rr_1,
-	generic_armv4_bs_rr_2,
-	generic_bs_rr_4,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	generic_bs_w_1,
-	generic_armv4_bs_w_2,
-	generic_bs_w_4,
+	becc_pci_bs_w_1,
+	becc_pci_bs_w_2,
+	becc_pci_bs_w_4,
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	generic_bs_wm_1,
-	generic_armv4_bs_wm_2,
-	generic_bs_wm_4,
+	bs_notimpl_bs_wm_1,
+	bs_notimpl_bs_wm_2,
+	bs_notimpl_bs_wm_4,
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
 	bs_notimpl_bs_wr_1,
-	generic_armv4_bs_wr_2,
-	generic_bs_wr_4,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
@@ -127,13 +126,13 @@ const struct bus_space becc_bs_tag_template = {
 
 	/* set region */
 	bs_notimpl_bs_sr_1,
-	generic_armv4_bs_sr_2,
+	bs_notimpl_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
 	bs_notimpl_bs_c_1,
-	generic_armv4_bs_c_2,
+	bs_notimpl_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
 };
