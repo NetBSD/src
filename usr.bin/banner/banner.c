@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.6 2000/10/04 19:50:52 mjl Exp $	*/
+/*	$NetBSD: banner.c,v 1.7 2001/02/20 23:51:59 cgd Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.6 2000/10/04 19:50:52 mjl Exp $");
+__RCSID("$NetBSD: banner.c,v 1.7 2001/02/20 23:51:59 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,6 @@ __RCSID("$NetBSD: banner.c,v 1.6 2000/10/04 19:50:52 mjl Exp $");
 #include <unistd.h>
 
 #include "banner.h"
-
-extern char * __progname;
 
 static long PW = LINELEN;
 /*
@@ -210,6 +208,6 @@ void
 usage(void)
 {
     fprintf(stderr, "usage: %s [-f fgchar] [-b bgchar] [-l] message...\n",
-	__progname);
+	getprogname());
     exit(1);
 }

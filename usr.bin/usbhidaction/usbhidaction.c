@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.2 2000/12/30 13:10:12 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.3 2001/02/20 23:55:42 cgd Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -161,10 +161,9 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	extern char *__progname;
 
 	fprintf(stderr, "Usage: %s -c config_file [-d] -f hid_dev "
-	    " [-v]\n", __progname);
+	    " [-v]\n", getprogname());
 	exit(1);
 }
 
