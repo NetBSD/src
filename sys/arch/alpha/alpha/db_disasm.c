@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.2 1997/09/16 06:52:16 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.3 1997/09/16 19:02:13 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2 1997/09/16 06:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.3 1997/09/16 19:02:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -826,7 +826,11 @@ alpha_print_instruction(iadr, i, showregs)
 		break;
 	case op_lda:
 	case op_ldah:
+	case op_ldbu:
 	case op_ldq_u:
+	case op_ldwu:
+	case op_stw:
+	case op_stb:
 	case op_stq_u:
 		/*
 		 * These loadstores are here to make compiling the
