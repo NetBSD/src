@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.5 1995/03/06 19:11:33 mycroft Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.6 1996/05/20 00:41:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -45,6 +45,8 @@ static char rcsid[] =
 
 #include "interface.h"
 #include "addrtoname.h"
+
+#include "nfs.h"
 
 #ifndef TCPOPT_WSCALE
 #define	TCPOPT_WSCALE		3	/* window scale factor (rfc1072) */
@@ -111,13 +113,34 @@ tcp_print(register const u_char *bp, register int length,
 	ack = ntohl(tp->th_ack);
 	win = ntohs(tp->th_win);
 	urp = ntohs(tp->th_urp);
+	hlen = tp->th_off * 4;
+	length -= hlen;
+
+	/*
+	 * If data present and NFS port used, assume NFS.
+	 * Pass offset of data plus 4 bytes for RPC TCP msg length
+	 * to NFS print routines.
+	 */
+	if (!qflag) {
+		if (length > 0 && dport == NFS_PORT) {
+			nfsreq_print((u_char *)tp + hlen + 4, length,
+				     (u_char *)ip);
+			return;
+		}
+		else if (length > 0 && sport == NFS_PORT) {
+			nfsreply_print((u_char *)tp + hlen + 4, length,
+				       (u_char *)ip);
+			return;
+		}
+	}
+
 
 	(void)printf("%s.%s > %s.%s: ",
 		ipaddr_string(&ip->ip_src), tcpport_string(sport),
 		ipaddr_string(&ip->ip_dst), tcpport_string(dport));
 
 	if (qflag) {
-		(void)printf("tcp %d", length - tp->th_off * 4);
+		(void)printf("tcp %d", length);
 		return;
 	}
 	if ((flags = tp->th_flags) & (TH_SYN|TH_FIN|TH_RST|TH_PUSH)) {
@@ -177,8 +200,6 @@ tcp_print(register const u_char *bp, register int length,
 				seq -= th->seq, ack -= th->ack;
 		}
 	}
-	hlen = tp->th_off * 4;
-	length -= hlen;
 	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
 		(void)printf(" %lu:%lu(%d)", seq, seq + length, length);
 	if (flags & TH_ACK)

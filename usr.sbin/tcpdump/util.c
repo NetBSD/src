@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1996/05/11 13:18:00 mycroft Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1996/05/20 00:41:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: util.c,v 1.28 94/06/12 14:30:31 leres Exp (LBL)";
+    "@(#) Header: util.c,v 1.28+ 94/06/12 14:30:31 leres Exp (LBL)";
 #endif
 
 #include <stdlib.h>
@@ -33,7 +33,7 @@ static char rcsid[] =
 #include <sys/stat.h>
 
 #include <ctype.h>
-#ifdef SOLARIS
+#ifdef SVR4
 #include <fcntl.h>
 #endif
 #ifdef __STDC__
@@ -173,7 +173,7 @@ savestr(register const char *str)
 		strsize = 1024;
 		if (strsize < size)
 			strsize = size;
-		strptr = malloc(strsize);
+		strptr = (char *)malloc(strsize);
 		if (strptr == NULL)
 			error("savestr: malloc");
 	}
@@ -281,7 +281,7 @@ copy_argv(register char **argv)
 	while (*p)
 		len += strlen(*p++) + 1;
 
-	buf = malloc(len);
+	buf = (char *)malloc(len);
 
 	p = argv;
 	dst = buf;
@@ -309,7 +309,7 @@ read_infile(char *fname)
 	if (fstat(fd, &buf) < 0)
 		error("can't state '%s'", fname);
 
-	p = malloc((u_int)buf.st_size);
+	p = (char *)malloc((u_int)buf.st_size);
 	if (read(fd, p, (int)buf.st_size) != buf.st_size)
 		error("problem reading '%s'", fname);
 
@@ -319,12 +319,23 @@ read_infile(char *fname)
 int
 gmt2local()
 {
-#ifndef SOLARIS
-	time_t now;
+#ifndef SVR4
+	struct timeval tv;
+	struct timezone tz;
+	register struct tm *tm;
+	register int t;
 
-	if (time(&now) == -1)
-		error("time");
-	return (localtime(&now)->tm_gmtoff);
+	if (gettimeofday(&tv, &tz) < 0)
+		error("gettimeofday");
+	tm = localtime((time_t *)&tv.tv_sec);
+#ifndef SUNOS3
+	t = tm->tm_gmtoff;
+#else
+	t = tz.tz_minuteswest * -60;
+	if (tm->tm_isdst)
+		t += 3600;
+#endif
+	return (t);
 #else
 	tzset();
 	return (-altzone);
