@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.9 1999/02/05 00:06:13 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.10 1999/02/11 01:23:32 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -181,15 +181,15 @@ static int rf_pending_testaccs;
 
 RF_DECLARE_STATIC_MUTEX(rf_sparet_wait_mutex)
 RF_DECLARE_STATIC_MUTEX(rf_async_done_q_mutex)
-	static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
-							 * spare table */
-	static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
-							 * installation process */
-	static struct rf_test_acc *rf_async_done_qh, *rf_async_done_qt;
+static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
+						 * spare table */
+static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
+						 * installation process */
+static struct rf_test_acc *rf_async_done_qh, *rf_async_done_qt;
 
-	static struct rf_recon_req *recon_queue = NULL;	/* used to communicate
-							 * reconstruction
-							 * requests */
+static struct rf_recon_req *recon_queue = NULL;	/* used to communicate
+						 * reconstruction
+						 * requests */
 
 
 decl_simple_lock_data(, recon_queue_mutex)
@@ -197,11 +197,12 @@ decl_simple_lock_data(, recon_queue_mutex)
 #define UNLOCK_RECON_Q_MUTEX() simple_unlock(&recon_queue_mutex)
 
 /* prototypes */
-	static void KernelWakeupFunc(struct buf * bp);
-	static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag, dev_t dev,
-            RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t buf,
-            void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
-            struct proc * b_proc);
+static void KernelWakeupFunc(struct buf * bp);
+static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag, 
+		   dev_t dev, RF_SectorNum_t startSect, 
+		   RF_SectorCount_t numSect, caddr_t buf,
+		   void (*cbFunc) (struct buf *), void *cbArg, 
+		   int logBytesPerSector, struct proc * b_proc);
 
 #define Dprintf0(s)       if (rf_queueDebug) rf_debug_printf(s,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf1(s,a)     if (rf_queueDebug) rf_debug_printf(s,a,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
@@ -214,50 +215,50 @@ decl_simple_lock_data(, recon_queue_mutex)
 #define proc_to_task(x) ((x)->task)
 #endif				/* !proc_to_task */
 
-	void raidattach __P((int));
-	int raidsize __P((dev_t));
+void raidattach __P((int));
+int raidsize __P((dev_t));
 
-	void    rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
-	void    rf_CopybackReconstructedData(RF_Raid_t * raidPtr);
-	static int raidinit __P((dev_t, RF_Raid_t *, int));
+void    rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
+void    rf_CopybackReconstructedData(RF_Raid_t * raidPtr);
+static int raidinit __P((dev_t, RF_Raid_t *, int));
 
-	int raidopen __P((dev_t, int, int, struct proc *));
-	int raidclose __P((dev_t, int, int, struct proc *));
-	int raidioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int raidwrite __P((dev_t, struct uio *, int));
-	int raidread __P((dev_t, struct uio *, int));
-	void raidstrategy __P((struct buf *));
-	int raiddump __P((dev_t, daddr_t, caddr_t, size_t));
+int raidopen __P((dev_t, int, int, struct proc *));
+int raidclose __P((dev_t, int, int, struct proc *));
+int raidioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int raidwrite __P((dev_t, struct uio *, int));
+int raidread __P((dev_t, struct uio *, int));
+void raidstrategy __P((struct buf *));
+int raiddump __P((dev_t, daddr_t, caddr_t, size_t));
 
 /*
  * Pilfered from ccd.c
  */
 
-	struct raidbuf {
-		struct buf rf_buf;	/* new I/O buf.  MUST BE FIRST!!! */
-		struct buf *rf_obp;	/* ptr. to original I/O buf */
-		int     rf_flags;	/* misc. flags */
-		RF_DiskQueueData_t *req;	/* the request that this was
-						 * part of.. */
-	};
+struct raidbuf {
+	struct buf rf_buf;	/* new I/O buf.  MUST BE FIRST!!! */
+	struct buf *rf_obp;	/* ptr. to original I/O buf */
+	int     rf_flags;	/* misc. flags */
+	RF_DiskQueueData_t *req;	/* the request that this was
+					 * part of.. */
+};
 
 
 #define RAIDGETBUF(rs) pool_get(&(rs)->sc_cbufpool, PR_NOWAIT)
 #define	RAIDPUTBUF(rs, cbp) pool_put(&(rs)->sc_cbufpool, cbp)
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
-or if it should be used in conjunction with that... */
+   or if it should be used in conjunction with that... */
 
-	struct raid_softc {
-		int     sc_unit;/* logical unit number */
-		int     sc_flags;	/* flags */
-		int     sc_cflags;	/* configuration flags */
-		size_t  sc_size;/* size of the raid device */
-		dev_t   sc_dev;	/* our device.. */
-		char    sc_xname[20];	/* XXX external name */
-		struct disk sc_dkdev;	/* generic disk device info */
-		struct pool sc_cbufpool;	/* component buffer pool */
-	};
+struct raid_softc {
+	int     sc_unit;/* logical unit number */
+	int     sc_flags;	/* flags */
+	int     sc_cflags;	/* configuration flags */
+	size_t  sc_size;/* size of the raid device */
+	dev_t   sc_dev;	/* our device.. */
+	char    sc_xname[20];	/* XXX external name */
+	struct disk sc_dkdev;	/* generic disk device info */
+	struct pool sc_cbufpool;	/* component buffer pool */
+};
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
 #define RAIDF_WLABEL	0x02	/* label area is writable */
@@ -266,25 +267,26 @@ or if it should be used in conjunction with that... */
 #define RAIDF_LOCKED	0x80	/* unit is locked */
 
 #define	raidunit(x)	DISKUNIT(x)
-	static int numraid = 0;
+static int numraid = 0;
 
 #define RAIDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), raidunit((dev)), RAW_PART))
 
 /* declared here, and made public, for the benefit of KVM stuff.. */
-	struct raid_softc *raid_softc;
+struct raid_softc *raid_softc;
 
-	static void raidgetdefaultlabel __P((RF_Raid_t *, struct raid_softc *, struct disklabel *));
-	static void raidgetdisklabel __P((dev_t));
-	static void raidmakedisklabel __P((struct raid_softc *));
+static void raidgetdefaultlabel __P((RF_Raid_t *, struct raid_softc *, 
+				     struct disklabel *));
+static void raidgetdisklabel __P((dev_t));
+static void raidmakedisklabel __P((struct raid_softc *));
 
-	static int raidlock __P((struct raid_softc *));
-	static void raidunlock __P((struct raid_softc *));
-	int raidlookup __P((char *, struct proc * p, struct vnode **));
+static int raidlock __P((struct raid_softc *));
+static void raidunlock __P((struct raid_softc *));
+int raidlookup __P((char *, struct proc * p, struct vnode **));
 
 
-	void
-	        raidattach(num)
+void
+raidattach(num)
 	int     num;
 {
 	int     raidID;
