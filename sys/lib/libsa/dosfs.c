@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.4 2000/11/09 01:55:31 matt Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.4.4.1 2002/12/30 17:32:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -40,8 +40,8 @@
 
 #include <sys/param.h>
 
-#include <msdosfs/bpb.h>
-#include <msdosfs/direntry.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/direntry.h>
 
 #ifdef _STANDALONE
 #include <lib/libkern/libkern.h>
