@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.15 2002/09/13 14:59:24 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.16 2002/10/21 21:14:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -50,6 +50,7 @@ extern	int	vflag;
 extern	int	yflag;
 extern	int	wflag;
 extern	int	zflag;
+extern	int	Sflag;
 
 extern	void	norecover(void);
 
@@ -273,6 +274,7 @@ extern	void	prepinit(void);
 extern	void	initrbr(void);
 extern	void	initlbr(void);
 extern	void	mkinit(tnode_t *);
+extern	void	memberpush(sbuf_t *);
 
 /*
  * emit.c

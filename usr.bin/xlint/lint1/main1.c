@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.12 2002/01/31 19:33:50 tv Exp $	*/
+/*	$NetBSD: main1.c,v 1.13 2002/10/21 21:14:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.12 2002/01/31 19:33:50 tv Exp $");
+__RCSID("$NetBSD: main1.c,v 1.13 2002/10/21 21:14:53 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -99,6 +99,8 @@ int	sflag;
 /* Traditional C mode. */
 int	tflag;
 
+/* Enable C9X extensions */
+int	Sflag;
 /*
  * Complain about functions and external variables used and not defined,
  * or defined and not used.
@@ -126,7 +128,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	ERR_ZERO(&msgset);
-	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFSX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = 1;	break;
@@ -139,6 +141,7 @@ main(int argc, char *argv[])
 		case 'p':	pflag = 1;	break;
 		case 'r':	rflag = 1;	break;
 		case 's':	sflag = 1;	break;
+		case 'S':	Sflag = 1;	break;
 		case 't':	tflag = 1;	break;
 		case 'u':	uflag = 0;	break;
 		case 'w':	wflag = 1;	break;
@@ -209,7 +212,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-abcdeghmprstuvwyzF] [-X <id>[,<id>]... src dest\n",
+	    "Usage: %s [-abcdeghmprstuvwyzFS] [-X <id>[,<id>]... src dest\n",
 	    getprogname());
 	exit(1);
 }
