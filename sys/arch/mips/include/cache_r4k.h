@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.2 2001/11/14 18:26:21 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.3 2001/11/18 18:46:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -138,6 +138,38 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /*
+ * cache_r4k_op_32lines_128:
+ *
+ *	Perform the specified cache operation on 32 128-byte
+ *	cache lines.
+ */
+#define	cache_r4k_op_32lines_128(va, op)				\
+do {									\
+	__asm __volatile(						\
+		".set noreorder					\n\t"	\
+		"cache %1, 0x0000(%0); cache %1, 0x0080(%0);	\n\t"	\
+		"cache %1, 0x0100(%0); cache %1, 0x0180(%0);	\n\t"	\
+		"cache %1, 0x0200(%0); cache %1, 0x0280(%0);	\n\t"	\
+		"cache %1, 0x0300(%0); cache %1, 0x0380(%0);	\n\t"	\
+		"cache %1, 0x0400(%0); cache %1, 0x0480(%0);	\n\t"	\
+		"cache %1, 0x0500(%0); cache %1, 0x0580(%0);	\n\t"	\
+		"cache %1, 0x0600(%0); cache %1, 0x0680(%0);	\n\t"	\
+		"cache %1, 0x0700(%0); cache %1, 0x0780(%0);	\n\t"	\
+		"cache %1, 0x0800(%0); cache %1, 0x0880(%0);	\n\t"	\
+		"cache %1, 0x0900(%0); cache %1, 0x0980(%0);	\n\t"	\
+		"cache %1, 0x0a00(%0); cache %1, 0x0a80(%0);	\n\t"	\
+		"cache %1, 0x0b00(%0); cache %1, 0x0b80(%0);	\n\t"	\
+		"cache %1, 0x0c00(%0); cache %1, 0x0c80(%0);	\n\t"	\
+		"cache %1, 0x0d00(%0); cache %1, 0x0d80(%0);	\n\t"	\
+		"cache %1, 0x0e00(%0); cache %1, 0x0e80(%0);	\n\t"	\
+		"cache %1, 0x0f00(%0); cache %1, 0x0f80(%0);	\n\t"	\
+		".set reorder"						\
+	    :								\
+	    : "r" (va), "i" (op)					\
+	    : "memory");						\
+} while (/*CONSTCOND*/0)
+
+/*
  * cache_r4k_op_16lines_32_2way:
  *
  *	Perform the specified cache operation on 16 32-byte
@@ -203,6 +235,13 @@ void	r4k_sdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 
 void	r4k_sdcache_inv_range_32(vaddr_t, vsize_t);
 void	r4k_sdcache_wb_range_32(vaddr_t, vsize_t);
+
+void	r4k_sdcache_wbinv_all_128(void);
+void	r4k_sdcache_wbinv_range_128(vaddr_t, vsize_t);
+void	r4k_sdcache_wbinv_range_index_128(vaddr_t, vsize_t);
+
+void	r4k_sdcache_inv_range_128(vaddr_t, vsize_t);
+void	r4k_sdcache_wb_range_128(vaddr_t, vsize_t);
 
 void	r4k_sdcache_wbinv_all_generic(void);
 void	r4k_sdcache_wbinv_range_generic(vaddr_t, vsize_t);
