@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.142 2001/10/17 18:39:41 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.143 2001/11/03 17:01:16 tsutsui Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -144,6 +144,11 @@ file	dev/pci/siop_pci.c		siop_pci
 # Initio INIC-940/950 SCSI controllers
 attach	iha at pci with iha_pci
 file	dev/pci/iha_pci.c		iha_pci
+
+# Tekram DC-395U/UW/F and DC-315/U SCSI controllers
+device	trm: scsi
+attach	trm at pci
+file	dev/pci/trm.c			trm
 
 # PCI IDE controllers
 device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
