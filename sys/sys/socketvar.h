@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.69 2004/03/17 09:58:15 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.70 2004/04/17 15:22:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -294,8 +294,8 @@ void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
 void	sbinsertoob(struct sockbuf *, struct mbuf *);
-void	sbrelease(struct sockbuf *);
-int	sbreserve(struct sockbuf *, u_long);
+void	sbrelease(struct sockbuf *, struct socket *);
+int	sbreserve(struct sockbuf *, u_long, struct socket *);
 int	sbwait(struct sockbuf *);
 int	sb_lock(struct sockbuf *);
 int	sb_max_set(u_long);
