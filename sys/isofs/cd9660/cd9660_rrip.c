@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.6 1994/07/19 14:14:14 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.7 1994/09/19 09:09:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -65,10 +65,10 @@ cd9660_rrip_attr(p,ana)
 	ISO_RRIP_ATTR *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	ana->inop->inode.iso_mode = isonum_731(p->mode_l);
-	ana->inop->inode.iso_uid = (uid_t)isonum_731(p->uid_l);
-	ana->inop->inode.iso_gid = (gid_t)isonum_731(p->gid_l);
-	ana->inop->inode.iso_links = isonum_731(p->links_l);
+	ana->inop->inode.iso_mode = isonum_733(p->mode);
+	ana->inop->inode.iso_uid = isonum_733(p->uid);
+	ana->inop->inode.iso_gid = isonum_733(p->gid);
+	ana->inop->inode.iso_links = isonum_733(p->links);
 	ana->fields &= ~ISO_SUSP_ATTR;
 	return ISO_SUSP_ATTR;
 }
@@ -383,8 +383,8 @@ cd9660_rrip_device(p,ana)
 {
 	u_int high, low;
 	
-	high = isonum_733(p->dev_t_high_l);
-	low  = isonum_733(p->dev_t_low_l);
+	high = isonum_733(p->dev_t_high);
+	low  = isonum_733(p->dev_t_low);
 	
 	if (high == 0)
 		ana->inop->inode.iso_rdev = makedev(major(low), minor(low));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.6 1994/08/19 11:31:50 mycroft Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.7 1994/09/19 09:09:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -58,98 +58,6 @@
 #include <sys/dir.h>
 
 #include <isofs/cd9660/iso.h>
-
-#ifdef	__notanymore__
-int
-isonum_711 (p)
-u_char *p;
-{
-	return (*p);
-}
-
-int
-isonum_712 (p)
-signed char *p;
-{
-	return (*p);
-}
-
-int
-isonum_721 (p)
-u_char *p;
-{
-	/* little endian short */
-#if BYTE_ORDER != LITTLE_ENDIAN
-	printf ("isonum_721 called on non little-endian machine!\n");
-#endif
-
-	return *(short *)p;
-}
-
-int
-isonum_722 (p)
-u_char *p;
-{
-        /* big endian short */
-#if BYTE_ORDER != BIG_ENDIAN
-        printf ("isonum_722 called on non big-endian machine!\n");
-#endif
-
-	return *(short *)p;
-}
-
-int
-isonum_723 (p)
-u_char *p;
-{
-#if BYTE_ORDER == BIG_ENDIAN
-        return isonum_722 (p + 2);
-#elif BYTE_ORDER == LITTLE_ENDIAN
-	return isonum_721 (p);
-#else
-	printf ("isonum_723 unsupported byte order!\n");
-	return 0;
-#endif
-}
-
-int
-isonum_731 (p)
-u_char *p;
-{
-        /* little endian long */
-#if BYTE_ORDER != LITTLE_ENDIAN
-        printf ("isonum_731 called on non little-endian machine!\n");
-#endif
-
-	return *(long *)p;
-}
-
-int
-isonum_732 (p)
-u_char *p;
-{
-        /* big endian long */
-#if BYTE_ORDER != BIG_ENDIAN
-        printf ("isonum_732 called on non big-endian machine!\n");
-#endif
-
-	return *(long *)p;
-}
-
-int
-isonum_733 (p)
-u_char *p;
-{
-#if BYTE_ORDER == BIG_ENDIAN
-        return isonum_732 (p + 4);
-#elif BYTE_ORDER == LITTLE_ENDIAN
-	return isonum_731 (p);
-#else
-	printf ("isonum_733 unsupported byte order!\n");
-	return 0;
-#endif
-}
-#endif	/* __notanymore__ */
 
 /*
  * translate and compare a filename
