@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.13 2003/07/31 06:23:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -220,5 +220,47 @@
 #define fr31    31
 #endif
 #endif /* !_NOREGNAMES */
+
+/*
+ * Add some psuedo instructions to made sharing of assembly versions of
+ * ILP32 and LP64 code possible.
+ */
+#define ldint	lwz		/* not needed but for completeness */
+#define ldintu	lwzu		/* not needed but for completeness */
+#define stint	stw		/* not needed but for completeness */
+#define stintu	stwu		/* not needed but for completeness */
+#ifndef _LP64
+#define ldlong	lwz		/* load "C" long */
+#define ldlongu	lwzu		/* load "C" long with udpate */
+#define stlong	stw		/* load "C" long */
+#define stlongu	stwu		/* load "C" long with udpate */
+#define ldptr	lwz		/* load "C" pointer */
+#define ldptru	lwzu		/* load "C" pointer with udpate */
+#define stptr	stw		/* load "C" pointer */
+#define stptru	stwu		/* load "C" pointer with udpate */
+#define	ldreg	lwz		/* load PPC general register */
+#define	ldregu	lwzu		/* load PPC general register with udpate */
+#define	streg	stw		/* load PPC general register */
+#define	stregu	stwu		/* load PPC general register with udpate */
+#define	ldmreg	lmw		/* load multiple PPC general registers */
+#define	stmreg	stmw		/* store multiple PPC general registers */
+#define	SZREG	4		/* 4 byte registers */
+#else
+#define ldlong	ld		/* load "C" long */
+#define ldlongu	ldu		/* load "C" long with update */
+#define stlong	std		/* store "C" long */
+#define stlongu	stdu		/* store "C" long with update */
+#define ldptr	ld		/* load "C" pointer */
+#define ldptru	ldu		/* load "C" pointer with update */
+#define stptr	std		/* store "C" pointer */
+#define stptru	stdu		/* store "C" pointer with update */
+#define	ldreg	ld		/* load PPC general register */
+#define	ldregu	ldu		/* load PPC general register with update */
+#define	streg	std		/* store PPC general register */
+#define	stregu	stdu		/* store PPC general register with update */
+#define	ldmreg	lmd		/* load multiple PPC general registers */
+#define	stmreg	stmd		/* store multiple PPC general registers */
+#define	SZREG	8		/* 8 byte registers */
+#endif
 
 #endif /* !_PPC_ASM_H_ */
