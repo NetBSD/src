@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdc.8,v 1.6 2002/01/19 11:44:58 wiz Exp $
+.\"	$NetBSD: ntpdc.8,v 1.7 2002/02/02 01:26:18 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -215,7 +215,7 @@ The contents of the host field may be one of four forms. It may be a
 host name, an IP address, a reference clock implementation name with its
 parameter or REFCLK(
 .Ar implementation number ,
-.Ar parameter ).
+.Ar parameter ) .
 On
 .Pa "hostnames no"
 only IP-addresses will be displayed.
@@ -544,6 +544,8 @@ information.
 Clear the statistics counters in various modules of the server. See the
 source listing for further information.
 .El
+.Sh AUTHORS
+David L. Mills (mills@udel.edu)
 .Sh BUGS
 .Nm
 is a crude hack. Much of the information it shows is deadly
@@ -551,5 +553,3 @@ boring and could only be loved by its implementer. The program was designed
 so that new (and temporary) features were easy to hack in, at great expense
 to the program's ease of use. Despite this, the program is occasionally
 useful.
-.Sh AUTHOR
-David L. Mills (mills@udel.edu)
