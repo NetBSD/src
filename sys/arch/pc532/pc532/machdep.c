@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 1998/07/06 09:42:56 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 1998/08/24 22:52:23 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -195,6 +195,7 @@ vm_map_t phys_map = NULL;
 vm_map_t buffer_map;
 #endif
 
+extern	char etext[], end[];
 extern	vm_offset_t avail_start, avail_end;
 extern	int nkpde;
 extern	int ieee_handler_disable;
@@ -214,7 +215,7 @@ static void	map __P((pd_entry_t *, vm_offset_t, vm_offset_t, int, int));
 void
 cpu_startup()
 {
-	extern char etext[], kernel_text[];
+	extern char kernel_text[];
 	unsigned i;
 	caddr_t v;
 	int sz;
@@ -453,12 +454,13 @@ allocsys(v)
 	 * buffers.  We allocate 1/2 as many swap buffer headers as file
 	 * i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
 			    (20 * CLSIZE);
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -1088,7 +1090,6 @@ init532()
 {
 	extern void main __P((void *));
 	extern int inttab[];
-	extern char etext[], end[];
 #ifdef DDB
 	extern char *esym;
 #endif
@@ -1310,10 +1311,9 @@ consinit()
 #endif
 #if defined (DDB)
 	{
-		extern int end;
 		extern int *esym;
 
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ddb_init(*(int *)end, ((int *)end) + 1, esym);
 	}
         if(boothowto & RB_KDB)
                 Debugger();
