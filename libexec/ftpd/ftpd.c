@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.61.2.2 2000/05/11 10:14:37 he Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.61.2.3 2000/07/08 18:58:10 he Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.61.2.2 2000/05/11 10:14:37 he Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.61.2.3 2000/07/08 18:58:10 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -712,7 +712,7 @@ skip:
 		    "%s: anonymous/%.*s", remotehost,
 		    (int) (sizeof(proctitle) - sizeof(remotehost) -
 		    sizeof(": anonymous/")), passwd);
-		setproctitle(proctitle);
+		setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO, "ANONYMOUS FTP LOGIN FROM %s, %s",
@@ -722,7 +722,7 @@ skip:
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: %s", remotehost, pw->pw_name);
-		setproctitle(proctitle);
+		setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO, "FTP LOGIN FROM %s as %s",
@@ -1507,7 +1507,7 @@ dolog(sin)
 	remotehost[sizeof(remotehost) - 1] = '\0';
 #ifdef HASSETPROCTITLE
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
-	setproctitle(proctitle);
+	setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 
 	if (logging)
