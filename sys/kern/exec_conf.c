@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.56 2001/05/15 02:00:12 lukem Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.57 2001/06/19 17:58:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -246,10 +246,12 @@ const struct execsw execsw_builtin[] = {
 	  IBCS2_ELF_AUX_ARGSIZ, elf32_copyargs, setregs },
 				/* SCO 32bit ELF bins (not 64bit safe) */
 #endif
+#ifdef EXEC_ELF_CATCHALL
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds, { NULL },
-	  &emul_netbsd, EXECSW_PRIO_LAST,	/* catch all entry */
+	  &emul_netbsd, EXECSW_PRIO_LAST,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
-	  elf32_copyargs, setregs },	/* NetBSD 32bit ELF bins */
+	  elf32_copyargs, setregs },  /* catch all - run as NetBSD 32bit ELF */
+#endif
 #endif /* EXEC_ELF32 */
 #ifdef EXEC_ELF64
 	/* 64bit ELF bins */
@@ -272,10 +274,12 @@ const struct execsw execsw_builtin[] = {
 	  SVR4_AUX_ARGSIZ64,
 	  svr4_copyargs64, svr4_setregs },	/* SVR4 64bit ELF bins (not 64bit safe) */
 #endif
+#ifdef EXEC_ELF_CATCHALL
 	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds, { NULL },
 	  &emul_netbsd, EXECSW_PRIO_ANY,
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
-	  elf64_copyargs, setregs }, /* NetBSD 64bit ELF bins */
+	  elf64_copyargs, setregs }, /* catch all - run as NetBSD 64bit ELF */
+#endif
 #endif /* EXEC_ELF64 */
 #ifdef COMPAT_SUNOS
 #ifdef COMPAT_NETBSD32

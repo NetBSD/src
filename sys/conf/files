@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.447 2001/06/16 12:00:03 jdolecek Exp $
+#	$NetBSD: files,v 1.448 2001/06/19 17:58:41 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -34,7 +34,7 @@ defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT EXEC_ELF_CATCHALL
 
 # compatibility options
 defopt	COMPAT_FREEBSD
