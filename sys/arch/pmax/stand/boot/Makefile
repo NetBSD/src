@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/31 04:23:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/06/18 20:23:08 jdolecek Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 SECONDARY_PROG=	boot.pmax
@@ -9,7 +9,7 @@ SRCS+=		bootinit.S bootread.S getchar.S startprog.S
 
 CPPFLAGS+=	-DBOOT_TYPE_NAME='"Secondary"'
 
-# Copy bootpmax to / as well.
+# Copy boot.pmax to / as well.
 afterinstall:
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${STRIPFLAG} ${DESTDIR}${BINDIR}/${PROG} ${DESTDIR}/${PROG}
