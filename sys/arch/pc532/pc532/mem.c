@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 1997/03/20 12:00:56 matthias Exp $	*/
+/*	$NetBSD: mem.c,v 1.15 1997/04/01 16:32:52 matthias Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,7 +104,7 @@ mmrw(dev, uio, flags)
 		}
 		physlock = 1;
 	}
-	while (uio->uio_resid > 0 && error == 0) {
+	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
 			uio->uio_iov++;
@@ -126,7 +126,7 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
-			continue;
+			break;
 
 /* minor device 1 is kernel memory */
 		case 1:
@@ -136,9 +136,9 @@ mmrw(dev, uio, flags)
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
-/* minor device 2 is EOF/RATHOLE */
+/* minor device 2 is EOF/rathole */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
@@ -147,8 +147,8 @@ mmrw(dev, uio, flags)
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return (0);
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
@@ -157,17 +157,11 @@ mmrw(dev, uio, flags)
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);
-			continue;
+			break;
 
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base += c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
 		if (physlock > 1)
