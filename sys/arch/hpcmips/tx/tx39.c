@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.2 1999/11/28 04:29:38 takemura Exp $ */
+/*	$NetBSD: tx39.c,v 1.3 1999/11/29 17:21:21 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -57,12 +57,6 @@
 #include <hpcmips/tx/tx39uartvar.h>
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
-#endif
-
-#if NFB > 0
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <arch/hpcmips/dev/fbvar.h>
 #endif
 
 #if NCCKBD > 0
@@ -272,11 +266,6 @@ tx_cons_init()
 			panic("tx_cons_init: can't attach serial console.");
 		}
 	}
-#if NFB > 0
-	if(fb_cnattach(0, 0, 0, 0)) {
-		panic("tx_cons_init: can't init fb console");
-	}
-#endif
 #if NCCKBD > 0
 	if(cckbd_cnattach(0, 0)) {
 		panic("tx_cons_init: can't init cckbd as console");
