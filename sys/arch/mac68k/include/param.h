@@ -72,8 +72,11 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.8 1994/01/30 00:53:07 briggs Exp $
+ *	$Id: param.h,v 1.9 1994/04/21 23:17:15 briggs Exp $
  */
+
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_	1
 
 #ifndef PSL_IPL
 #include "machine/psl.h"
@@ -81,13 +84,6 @@
 
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
-   ALICE
-      BG 05/24/92,17:46:53
-         Well, I've tried to make this as mac68k-specific as possible.
-         It's difficult without knowing exactly what these things do.
-	06/03/92,14:12:35 BG 
-         I've done a little more messing around; I think we're basically
-	 done for now except for tweeking.
  */
 #define	MACHINE		"mac68k"
 #define	MACHINE_ARCH	"m68k"
@@ -106,9 +102,9 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/(sizeof (struct pte)))
 
-#define NBSEG		(1024*NBPG)	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define NBSEG		(cpu040 ? 64*NBPG : 1024*NBPG)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */
+#define	SEGSHIFT	(cpu040 ? 18 : 22)		/* LOG2(NBSEG) */
 
 /* ALICE 05/24/92,19:31:42 BG -- Well, I wish we didn't have to worry */
 /*  about re-locating the kernel, but I think we will probably have to. */
@@ -241,3 +237,5 @@
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+
+#endif /* _MACHINE_PARAM_H_ */
