@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.19 1996/12/17 23:21:53 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.20 1997/01/15 22:13:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -107,8 +107,12 @@ dec_2100_a50_cons_init()
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
-			/* Delay to allow PROM putchars to complete */
-			DELAY(10000);
+			/*
+			 * Delay to allow PROM putchars to complete.
+			 * FIFO depth * character time,
+			 * character time = (1000000 / (defaultrate / 10))
+			 */
+			DELAY(160000000 / comdefaultrate);
 
 			comconsaddr = 0x3f8;
 			comconstag = acp->ac_iot;
