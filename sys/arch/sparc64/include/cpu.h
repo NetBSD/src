@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2000/05/26 21:20:19 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.18 2000/06/12 05:29:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,13 +174,14 @@ int	foundfpu;		/* true => we have an FPU */
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
 struct intrhand {
-	int		(*ih_fun) __P((void *));
-	void		*ih_arg;
-	short		ih_number;	/* interrupt number the H/W provides */
-	short		ih_pil;		/* interrupt priority */
-	struct intrhand	*ih_next;
-	u_int64_t	*ih_map;	/* Interrupt map register */
-	u_int64_t	*ih_clr;	/* clear interrupt register */
+	int			(*ih_fun) __P((void *));
+	void			*ih_arg;
+	short			ih_number;	/* interrupt number */
+						/* the H/W provides */
+	short			ih_pil;		/* interrupt priority */
+	struct intrhand		*ih_next;
+	volatile u_int64_t	*ih_map;	/* Interrupt map reg */
+	volatile u_int64_t	*ih_clr;	/* clear interrupt reg */
 };
 extern struct intrhand *intrhand[15];
 extern struct intrhand *intrlev[MAXINTNUM];
