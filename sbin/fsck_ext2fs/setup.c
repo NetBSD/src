@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.8 1998/11/12 16:19:48 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.9 1999/02/01 15:20:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.8 1998/11/12 16:19:48 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.9 1999/02/01 15:20:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,6 +194,8 @@ setup(dev)
 	 */
 
 	sblock.e2fs_gd = malloc(sblock.e2fs_ngdb * sblock.e2fs_bsize);
+	if (sblock.e2fs_gd == NULL)
+		errexit("out of memory\n");
 	asked = 0;
 	for (i=0; i < sblock.e2fs_ngdb; i++) {
 		if (bread(fsreadfd,(char *)
