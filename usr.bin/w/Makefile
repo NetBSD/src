@@ -1,13 +1,14 @@
-#	@(#)Makefile	5.6 (Berkeley) 4/23/91
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	w
-SRCS=	attime.c w.c proc_compare.c
-CFLAGS+=-I/sys
+SRCS=	fmt.c pr_time.c proc_compare.c w.c
 MAN1=	w.0 uptime.0
-DPADD=	${LIBUTIL}
-LDADD=	-lutil
+DPADD=	${LIBKVM}
+LDADD=	-lkvm
 BINGRP=	kmem
 BINMODE=2555
 LINKS=	${BINDIR}/w ${BINDIR}/uptime
+
+.PATH: ${.CURDIR}/../../bin/ps
 
 .include <bsd.prog.mk>
