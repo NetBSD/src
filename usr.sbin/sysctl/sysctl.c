@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.14 1998/03/05 14:02:00 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.15 1998/03/05 23:23:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.14 1998/03/05 14:02:00 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.15 1998/03/05 23:23:29 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.14 1998/03/05 14:02:00 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 struct ctlname topname[] = CTL_NAMES;
 struct ctlname kernname[] = CTL_KERN_NAMES;
