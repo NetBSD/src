@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.390 2001/10/22 19:27:06 gmcgarry Exp $
+#	$NetBSD: mi,v 1.391 2001/10/24 09:01:47 enami Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2725,7 +2725,7 @@
 ./usr/share/man/cat9/VOP_BWRITE.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_CLOSE.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_CREATE.0		comp-sys-catman
-./usr/share/man/cat9/VOP_FNCTL.0		comp-sys-catman
+./usr/share/man/cat9/VOP_FCNTL.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_FSYNC.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_GETATTR.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_INACTIVE.0		comp-sys-catman
@@ -5061,7 +5061,7 @@
 ./usr/share/man/man9/VOP_BWRITE.9		comp-sys-man
 ./usr/share/man/man9/VOP_CLOSE.9		comp-sys-man
 ./usr/share/man/man9/VOP_CREATE.9		comp-sys-man
-./usr/share/man/man9/VOP_FNCTL.9		comp-sys-man
+./usr/share/man/man9/VOP_FCNTL.9		comp-sys-man
 ./usr/share/man/man9/VOP_FSYNC.9		comp-sys-man
 ./usr/share/man/man9/VOP_GETATTR.9		comp-sys-man
 ./usr/share/man/man9/VOP_INACTIVE.9		comp-sys-man
