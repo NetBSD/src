@@ -1,4 +1,4 @@
-/*	$NetBSD: promcall.c,v 1.7 2000/03/30 14:45:13 simonb Exp $	*/
+/*	$NetBSD: promcall.c,v 1.8 2001/08/24 15:33:17 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.7 2000/03/30 14:45:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcall.c,v 1.8 2001/08/24 15:33:17 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,4 +233,31 @@ prom_scsiid(cnum)
 	snprintf(scsiid_var, 8, "scsiid%d", cnum);
 	cp = prom_getenv(scsiid_var);
 	return (cp != NULL) ? strtoul(cp, NULL, 0) : DEFAULT_SCSIID;
+}
+
+/*
+ * Get the memory bitmap from the PROM if we can
+ */
+int
+prom_getbitmap(map)
+	struct memmap *map;
+{
+	char *cp;
+	int len;
+
+	if (callv->_getbitmap != NULL)
+		return (callv->_getbitmap(map));
+	/*
+	 * See if we can get the bitmap from the environment variables
+	 */
+	cp = prom_getenv("bitmaplen");
+	if (cp == NULL)
+		return (0);
+	len = (int)strtoul(cp, NULL, 0) * 4;
+	cp = prom_getenv("bitmap");
+	if (cp == NULL)
+		return (0);
+	bcopy((char *)strtoul(cp, NULL, 0), &map->bitmap, len);
+	map->pagesize = 4096;
+	return (len);
 }
