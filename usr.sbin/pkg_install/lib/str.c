@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.18 1999/12/01 14:51:53 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.19 2000/01/19 23:28:34 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.18 1999/12/01 14:51:53 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.19 2000/01/19 23:28:34 hubertf Exp $");
 #endif
 #endif
 
@@ -306,8 +306,9 @@ ispkgpattern(const char *pkg)
 
 /*
  * Auxiliary function called by findbestmatchingname() if pkg > data
+ * Also called for FTP matching
  */
-static int
+int
 findbestmatchingname_fn(const char *pkg, char *data)
 {
 	char   *s1, *s2;

@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.35 1999/12/01 14:51:53 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.36 2000/01/19 23:28:32 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.35 1999/12/01 14:51:53 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.36 2000/01/19 23:28:32 hubertf Exp $");
 #endif
 #endif
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: file.c,v 1.35 1999/12/01 14:51:53 hubertf Exp $");
 #include <time.h>
 #include <fcntl.h>
 
+#if 0
 /*
  * This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
  * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
@@ -83,7 +84,10 @@ ftpGetURL(char *url, int *retcode)
 		}
 	}
 	return ftp;
+
 }
+#endif
+
 
 /*
  * Quick check to see if a file (or dir ...) exists
@@ -208,7 +212,7 @@ URLlength(char *fname)
 		}
 		for (up = urls; up->u_s; up++) {
 			if (strncmp(fname, up->u_s, up->u_len) == 0) {
-				return i + up->u_len;
+				return i + up->u_len;    /* ... + sizeof(up->u_s);  - HF */
 			}
 		}
 	}
@@ -253,7 +257,7 @@ fileURLFilename(char *fname, char *where, int max)
 	int     i;
 
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
-		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
+		errx(1, "fileURLFilename called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
@@ -284,9 +288,7 @@ fileGetURL(char *base, char *spec)
 	char   *cp, *rp;
 	char    fname[FILENAME_MAX];
 	char    pen[FILENAME_MAX];
-	FILE   *ftp;
-	pid_t   tpid;
-	int     i, status;
+	int     rc;
 	char   *hint;
 
 	rp = NULL;
@@ -321,12 +323,13 @@ fileGetURL(char *base, char *spec)
 		}
 	} else
 		strcpy(fname, spec);
+
+ 	/* Some sanity checks on the URL */
 	cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
 	if (!*cp) {
 		warnx("URL `%s' has bad host part!", fname);
 		return NULL;
 	}
-
 	cp = fileURLFilename(fname, file, FILENAME_MAX);
 	if (!*cp) {
 		warnx("URL `%s' has bad filename part!", fname);
@@ -335,6 +338,8 @@ fileGetURL(char *base, char *spec)
 
 	if (Verbose)
 		printf("Trying to fetch %s.\n", fname);
+	
+#if 0
 	ftp = ftpGetURL(fname, &status);
 	if (ftp) {
 		pen[0] = '\0';
@@ -363,6 +368,24 @@ fileGetURL(char *base, char *spec)
 		    fname,
 		    status ? "Error while performing FTP" :
 		    hstrerror(h_errno));
+#else
+	pen[0] = '\0';
+	rp = make_playpen(pen, sizeof(pen), 0);
+	if (rp == NULL) {
+		printf("Error: Unable to construct a new playpen for FTP!\n");
+		return NULL;
+	}
+
+	rp = strdup(pen);
+/*	printf("fileGetURL: fname='%s', pen='%s'\n", fname, pen); *//*HF*/
+	rc = unpackURL(fname, pen);
+	if (rc < 0) {
+		leave_playpen(rp); /* Don't leave dir hang around! */
+		
+		printf("Error on unpackURL('%s', '%s')\n", fname, pen);
+		return NULL;
+	}
+#endif
 	return rp;
 }
 
@@ -378,6 +401,10 @@ fileFindByPath(char *base, char *fname)
 	static char tmp[FILENAME_MAX];
 	char   *cp;
 
+/* printf("HF: fileFindByPath(\"%s\", \"%s\")\n", base, fname); *//*HF*/
+
+	/* The following code won't return a match if base is an URL 
+	 * Could save some cycles here - HF */
 	if (ispkgpattern(fname)) {
 		if ((cp = findbestmatchingname(".", fname)) != NULL) {
 			strcpy(tmp, cp);
@@ -403,7 +430,28 @@ fileFindByPath(char *base, char *fname)
 			strcat(cp, "All/");
 			strcat(cp, fname);
 			strcat(cp, ".tgz");
+
 			if (ispkgpattern(tmp)) {
+				if (IS_URL(tmp)) {
+					/* some package depends on a wildcard pkg */
+					int rc;
+					char url[FILENAME_MAX];
+
+					/* save url to expand, as tmp is the static var in which
+					 * we return the result of the expansion. 
+					 */
+					strcpy(url, tmp);
+
+/*					printf("HF: expandURL('%s')'ing #1\n", url);*//*HF*/
+					rc = expandURL(tmp, url);
+					if (rc < 0) {
+						warnx("fileFindByPath: expandURL('%s') failed\n", url);
+						return NULL;
+					}
+					if (Verbose)
+						printf("'%s' expanded to '%s'\n", url, tmp);
+					return tmp;    /* return expanded URL w/ corrent pkg */
+				} else {
 				cp = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
 				if (cp) {
 					char   *s;
@@ -412,19 +460,80 @@ fileFindByPath(char *base, char *fname)
 					strcpy(s + 1, cp);
 					return tmp;
 				}
+				}
 			} else {
 				if (fexists(tmp)) {
 					return tmp;
 				}
 			}
 		}
+	} else {
+		if (IS_URL(fname)) {
+			/* Wildcard-URL directly specified on command line */
+			int rc;
+
+/*			printf("HF: expandURL('%s')'ing #2\n", fname);*//*HF*/
+			rc = expandURL(tmp, fname);
+			if (rc < 0) {
+				warnx("fileFindByPath: expandURL('%s') failed\n", fname);
+				return NULL;
+			}
+			if (Verbose)
+				printf("'%s' expanded to '%s'\n", fname, tmp);
+			return tmp;    /* return expanded URL w/ corrent pkg */
+		}
 	}
 
 	cp = getenv("PKG_PATH");
 	while (cp) {
-		char   *cp2 = strsep(&cp, ":");
+		char   *cp2 = strsep(&cp, ";");
 
+		printf("trying PKG_PATH %s\n", cp2?cp2:cp);
+
+		if (strstr(fname, ".tgz")) {
+			/* There's already a ".tgz" present, probably typed on the command line */
+			(void) snprintf(tmp, sizeof(tmp), "%s/%s", cp2 ? cp2 : cp, fname);
+		} else {
+			/* Try this component, and tack on a ".tgz" */
 		(void) snprintf(tmp, sizeof(tmp), "%s/%s.tgz", cp2 ? cp2 : cp, fname);
+		}
+		if (IS_URL(tmp)) {
+			char url[FILENAME_MAX];
+			int rc;
+			
+			/* save url to expand, as tmp is the static var in which
+			 * we return the result of the expansion. 
+			 */
+			strcpy(url, tmp);
+			
+/*			printf("HF: expandURL('%s')'ing #3\n", url);*//*HF*/
+			rc = expandURL(tmp, url);
+			if (rc >= 0) {
+				printf("fileFindByPath: success, expandURL('%s') returns '%s'\n", url, tmp);
+				return tmp;
+			}
+
+			/* Second chance - maybe just a package name was given, without
+			 * a version number. Remove the ".tgz" we tacked on above, and
+			 * re-add it with a "-[0-9]*" before. Then see if this matches
+			 * something. See also perform.c.
+			 */
+			{
+				char *s;
+				s=strstr(tmp, ".tgz");
+				*s = '\0';
+				snprintf(url, FILENAME_MAX, "%s-[0-9]*.tgz", tmp);
+				rc = expandURL(tmp, url);
+				if (rc >= 0) {
+					printf("fileFindByPath: late success, expandURL('%s') returns '%s'\n",
+					       url, tmp);
+					return tmp;
+				}
+			}
+
+			/* No luck with this parth of PKG_PATH - try next one */
+			
+		} else {
 		if (ispkgpattern(tmp)) {
 			char   *s;
 			s = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
@@ -437,6 +546,28 @@ fileFindByPath(char *base, char *fname)
 		} else {
 			if (fexists(tmp) && isfile(tmp)) {
 				return tmp;
+				}
+
+				/* Second chance: seems just a pkg name was given,
+				 * no wildcard, no .tgz. Tack something on and retry.
+				 * (see above, and perform.c)
+				 */
+				{
+					char *s;
+					char buf2[FILENAME_MAX];
+					
+					s = strstr(tmp, ".tgz");
+					*s = '\0';
+					snprintf(buf2, FILENAME_MAX, "%s-[0-9]*.tgz", tmp);
+					s = findbestmatchingname(dirname_of(buf2), basename_of(buf2));
+					if (s) {
+						char *t;
+						strcpy(tmp, buf2); /* now we can overwrite it */
+						t = strrchr(tmp, '/');
+						strcpy(t+1, s);
+						return tmp;
+					}
+				}
 			}
 		}
 	}

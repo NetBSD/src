@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.18 2000/01/04 22:39:28 hubertf Exp $
+.\" $NetBSD: pkg_add.1,v 1.19 2000/01/19 23:28:28 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -363,10 +363,10 @@ The value of the
 is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
-should be a series of entries seperated by colons.  Each entry
-consists of a directory name. The current directory may be indicated
+should be a series of entries seperated by semicolons.  Each entry
+consists of a directory name or URL. The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
-period.
+period. FTP URLs may not end with a slash.
 .Ss PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29 1999/12/01 14:51:52 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.30 2000/01/19 23:28:30 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29 1999/12/01 14:51:52 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.30 2000/01/19 23:28:30 hubertf Exp $");
 #endif
 #endif
 
@@ -539,7 +539,7 @@ pkg_do(char *pkg)
 		}
 
 		/* No match */
-		warnx("no such package '%s' installed", pkg);
+		warnx("package '%s' not installed", pkg);
 		return 1;
 	}
 	if (!getcwd(home, FILENAME_MAX)) {
