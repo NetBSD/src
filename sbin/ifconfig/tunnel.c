@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.2 2005/03/19 18:16:06 yamt Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.3 2005/03/19 22:57:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.2 2005/03/19 18:16:06 yamt Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.3 2005/03/19 22:57:06 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -139,9 +139,9 @@ tunnel_status(void)
 {
 	char psrcaddr[NI_MAXHOST];
 	char pdstaddr[NI_MAXHOST];
-	const char *ver = "";
 	const int niflag = NI_NUMERICHOST;
 	struct if_laddrreq req;
+	struct afswtch *lafp;
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
@@ -149,11 +149,10 @@ tunnel_status(void)
 	strncpy(req.iflr_name, name, IFNAMSIZ);
 	if (ioctl(s, SIOCGLIFPHYADDR, &req) == -1)
 		return;
+	lafp = lookup_af_bynum(req.addr.ss_family);
 #ifdef INET6
-	if (req.addr.ss_family == AF_INET6) {
+	if (req.addr.ss_family == AF_INET6)
 		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
-		ver = "6";
-	}
 #endif /* INET6 */
 	getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
 	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag);
@@ -165,5 +164,6 @@ tunnel_status(void)
 	getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag);
 
-	printf("\ttunnel inet%s %s --> %s\n", ver, psrcaddr, pdstaddr);
+	printf("\ttunnel %s %s --> %s\n", lafp ? lafp->af_name : "???",
+	    psrcaddr, pdstaddr);
 }
