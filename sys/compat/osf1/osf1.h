@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.9 1999/04/28 02:00:36 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.10 1999/04/29 02:06:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -73,6 +73,14 @@ struct osf1_timeval {				/* time.h */
 	osf1_time_t	tv_sec;
 	osf1_int	tv_usec;
 };
+
+
+/* access.h */
+
+#define OSF1_F_OK			0		/* pseudo-flag */
+#define OSF1_X_OK			0x01
+#define OSF1_W_OK			0x02
+#define OSF1_R_OK			0x04
 
 
 /* auxv.h */
