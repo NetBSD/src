@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.26 1994/01/11 19:12:07 mycroft Exp $
+ *	$Id: trap.c,v 1.27 1994/02/15 06:49:03 cgd Exp $
  */
 
 /*
@@ -490,12 +490,18 @@ syscall(frame)
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
+#ifdef SYSCALL_DEBUG
+		scdebug_call(code, callp->sy_narg, &args);
+#endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
 		goto done;
 	}
+#ifdef SYSCALL_DEBUG
+	scdebug_call(code, callp->sy_narg, &args);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
@@ -522,6 +528,9 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(code, error, rval[0]);
+#endif
 	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
