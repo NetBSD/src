@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 2003/01/25 15:43:11 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 2003/01/26 06:16:31 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -468,7 +468,8 @@ fdstrategy(bp)
 	    bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld sz %d\n",
+	printf("fdstrategy: b_blkno %" PRId64 " b_bcount %ld blkno %" PRId64
+	    " cylin %ld sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
@@ -979,7 +980,7 @@ loop:
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			printf("blkno %" PRId64 " nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
