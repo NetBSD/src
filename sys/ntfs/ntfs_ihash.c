@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.4 1999/09/12 16:41:05 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.5 1999/09/30 16:56:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -60,6 +60,7 @@ static u_long	ntfs_nthash;		/* size of hash table - 1 */
 #ifndef NULL_SIMPLELOCKS
 static struct simplelock ntfs_nthash_slock;
 #endif
+struct lock ntfs_hashlock;
 
 /*
  * Initialize inode hash table.
@@ -67,7 +68,7 @@ static struct simplelock ntfs_nthash_slock;
 void
 ntfs_nthashinit()
 {
-
+	lockinit(&ntfs_hashlock, PINOD, "ntfs_nthashlock", 0, 0);
 	ntfs_nthashtbl = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK,
 	    &ntfs_nthash);
 	simple_lock_init(&ntfs_nthash_slock);

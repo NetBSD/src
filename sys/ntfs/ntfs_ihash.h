@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.h,v 1.3 1999/07/26 14:02:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.h,v 1.4 1999/09/30 16:56:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,6 +28,7 @@
  *	Id: ntfs_ihash.h,v 1.3 1999/05/12 09:42:59 semenu Exp
  */
 
+extern struct lock ntfs_hashlock;
 void ntfs_nthashinit __P((void));
 struct ntnode   *ntfs_nthashlookup __P((dev_t, ino_t));
 struct ntnode   *ntfs_nthashget __P((dev_t, ino_t));
