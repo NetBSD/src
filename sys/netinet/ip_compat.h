@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.6 1997/05/28 00:17:13 thorpej Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.7 1997/07/05 05:38:15 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.11 1997/05/04 05:29:02 darrenr Exp 
+ * $Id: ip_compat.h,v 1.7 1997/07/05 05:38:15 darrenr Exp $
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -80,6 +80,22 @@
 #else
 # define	U_QUAD_T	u_long
 # define	QUAD_T		long
+#endif
+
+/*
+ * These operating systems already take care of the problem for us.
+ */
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+typedef u_int32_t       u_32_t;
+#else
+/*
+ * Really, any arch where sizeof(long) != sizeof(int).
+ */
+# if defined(__alpha__) || defined(__alpha)
+typedef unsigned int    u_32_t;
+# else
+typedef unsigned long   u_32_t;
+# endif
 #endif
 
 #ifndef	MAX
@@ -161,34 +177,19 @@
 #  define	MTOD(m,t)	(t)((m)->b_rptr)
 #  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
 #  define	IWCOPY(a,b,c)	copyout((a), (b), (c))
-# else
-#  define	MUTEX_ENTER(x)	;
-#  define	MUTEX_EXIT(x)	;
-#  ifndef linux
-#   define	MTOD(m,t)	mtod(m,t)
-#   define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-#   define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
+#  define	FREE_MB_T(m)	freemsg(m)
+#  define	SPLNET(x)	;
+#  define	SPLIMP(x)	;
+#  undef	SPLX
+#  define	SPLX(x)		;
+#  ifdef	sparc
+#   define	ntohs(x)	(x)
+#   define	ntohl(x)	(x)
+#   define	htons(x)	(x)
+#   define	htonl(x)	(x)
 #  endif
-# endif /* SOLARIS */
-
-# ifdef sun
-#  if defined(__svr4__) || defined(__SVR4)
-extern	ill_t	*get_unit __P((char *));
-#   define	GETUNIT(n)	get_unit((n))
-#  else
-#   include	<sys/kmem_alloc.h>
-#   define	GETUNIT(n)	ifunit((n), IFNAMSIZ)
-#  endif
-# else
-#  define	GETUNIT(n)	ifunit((n))
-# endif /* sun */
-
-# if defined(sun) && !defined(linux)
-#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
-#  define	SLEEP(id, n)	sleep((id), PZERO+1)
-#  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
-#  define	KFREES(x,s)	kmem_free((char *)(x), (s))
-#  if SOLARIS
+#  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
+#  define	GET_MINOR(x)	getminor(x)
 typedef	struct	qif	{
 	struct	qif	*qf_next;
 	ill_t	*qf_ill;
@@ -201,27 +202,48 @@ typedef	struct	qif	{
 	void	*qf_rqinfo;
 	int	(*qf_inp) __P((queue_t *, mblk_t *));
 	int	(*qf_outp) __P((queue_t *, mblk_t *));
-	mblk_t	*qf_m;
-	int	qf_len;
+	mblk_t	*qf_m;	/* These three fields are for passing data up from */
+	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
+	int	qf_off;
+	int	qf_len;	/* this field is used for in ipfr_fastroute */
 	char	qf_name[8];
 	/*
 	 * in case the ILL has disappeared...
 	 */
 	int	qf_hl;	/* header length */
 } qif_t;
-#   define	SPLNET(x)	;
-#   undef	SPLX
-#   define	SPLX(x)		;
-#   ifdef	sparc
-#    define	ntohs(x)	(x)
-#    define	ntohl(x)	(x)
-#    define	htons(x)	(x)
-#    define	htonl(x)	(x)
-#   endif
-#   define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
-#   define	GET_MINOR(x)	getminor(x)
-#  else
+extern	ill_t	*get_unit __P((char *));
+#  define	GETUNIT(n)	get_unit((n))
+# else /* SOLARIS */
+#  define	MUTEX_ENTER(x)	;
+#  define	MUTEX_EXIT(x)	;
+#  ifndef linux
+#   define	FREE_MB_T(m)	m_freem(m)
+#   define	MTOD(m,t)	mtod(m,t)
+#   define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
+#   define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
+#  endif
+# endif /* SOLARIS */
+
+# ifdef sun
+#  if !SOLARIS
+#   include	<sys/kmem_alloc.h>
+#   define	GETUNIT(n)	ifunit((n), IFNAMSIZ)
+#  endif
+# else
+#  define	GETUNIT(n)	ifunit((n))
+# endif /* sun */
+
+# if defined(sun) && !defined(linux)
+#  define	UIOMOVE(a,b,c,d)	uiomove(a,b,c,d)
+#  define	SLEEP(id, n)	sleep((id), PZERO+1)
+#  define	WAKEUP(id)	wakeup(id)
+#  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
+#  define	KFREES(x,s)	kmem_free((char *)(x), (s))
+#  if !SOLARIS
 #   define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
+extern	void	m_copydata __P((struct mbuf *, int, int, caddr_t));
+extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 #  endif /* __svr4__ */
 # endif /* sun && !linux */
 # ifndef	GET_MINOR
@@ -236,12 +258,6 @@ extern	vm_map_t	kmem_map;
 #  else
 #   include <vm/vm_kern.h>
 #  endif /* __FreeBSD__ */
-/*
-#  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc(kmem_map, (c))
-#  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
-					  sizeof(*(x)))
-#  define	KFREES(x,s)	kmem_free(kmem_map, (vm_offset_t)(x), (s))
-*/
 #  ifdef	M_PFIL
 #   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_PFIL)
@@ -253,22 +269,27 @@ extern	vm_map_t	kmem_map;
 #  endif
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
+#  define	WAKEUP(id)	wakeup(id)
 # endif /* BSD */
 # if defined(NetBSD) && NetBSD <= 1991011 && NetBSD >= 199407
 #  define	SPLNET(x)	x = splsoftnet()
 #  define	SPLX(x)		(void) splx(x)
 # else
 #  if !SOLARIS
+#   define	SPLIMP(x)	x = splimp()
 #   define	SPLNET(x)	x = splnet()
 #   define	SPLX(x)		(void) splx(x)
 #  endif
 # endif
 # define	PANIC(x,y)	if (x) panic y
-#else
+#else /* KERNEL */
+# define	SLEEP(x,y)	;
+# define	WAKEUP(x)	;
 # define	PANIC(x,y)	;
 # define	MUTEX_ENTER(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPLNET(x)	;
+# define	SPLIMP(x)	;
 # undef		SPLX
 # define	SPLX(x)		;
 # define	KMALLOC(a,b,c)	(a) = (b)malloc(c)
@@ -278,6 +299,12 @@ extern	vm_map_t	kmem_map;
 # define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
 # define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
 #endif /* KERNEL */
+
+#if SOLARIS
+typedef mblk_t mb_t;
+#else
+typedef struct mbuf mb_t;
+#endif
 
 #ifdef linux
 # define	ICMP_UNREACH	ICMP_DEST_UNREACH
@@ -384,6 +411,7 @@ struct ipovly {
 
 # define	SPLX(x)		(void)
 # define	SPLNET(x)	(void)
+# define	SPLIMP(x)	(void)
 
 # define	bcopy(a,b,c)	memmove(b,a,c)
 # define	bcmp(a,b,c)	memcmp(a,b,c)
