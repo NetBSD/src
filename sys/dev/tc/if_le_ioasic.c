@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.8 1997/08/26 01:27:12 jonathan Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.9 1997/08/26 02:38:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,6 +30,9 @@
 /*
  * LANCE on DEC IOCTL ASIC.
  */
+
+#include <sys/cdefs.h>			/* RCS ID &  macro defns */
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.9 1997/08/26 02:38:47 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
