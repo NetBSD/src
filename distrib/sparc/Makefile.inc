@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/08/28 02:47:58 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/05/02 06:47:23 sjg Exp $
+
+# pick up BSDSRCDIR if not already set
+.include "../../Makefile.inc"
 
 # REV is revision without dots, as in "12C"
 # VER is revision with dots, as in "1.2C"
-REV!=sh ${TOP}/../../sys/conf/osrelease.sh -s
-VER!=sh ${TOP}/../../sys/conf/osrelease.sh 
+REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+VER!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh 
