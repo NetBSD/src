@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.2 2003/09/20 01:03:30 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.3 2003/10/13 08:22:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.2 2003/09/20 01:03:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.3 2003/10/13 08:22:19 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -65,7 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.2 2003/09/20 01:03:30 dyoung Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
+
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
 #if NBPFILTER > 0 
 #include <net/bpf.h>
@@ -142,6 +144,7 @@ int atw_rfio_enable_delay = 20 * 1000;
 int atw_rfio_disable_delay = 2 * 1000;
 int atw_writewep_delay = 5;
 int atw_beacon_len_adjust = 4;
+int atw_dwelltime = 200;
 
 #ifdef ATW_DEBUG
 int atw_xhdrctl = 0;
@@ -197,7 +200,7 @@ void	atw_rxintr __P((struct atw_softc *));
 void	atw_txintr __P((struct atw_softc *));
 void	atw_linkintr __P((struct atw_softc *, u_int32_t));
 
-static int atw_newstate(void *, enum ieee80211_state);
+static int atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void atw_tsf(struct atw_softc *);
 static void atw_start_beacon(struct atw_softc *, int);
 static void atw_write_wep(struct atw_softc *);
@@ -207,12 +210,17 @@ static void atw_write_ssid(struct atw_softc *);
 static void atw_write_sup_rates(struct atw_softc *);
 static void atw_clear_sram(struct atw_softc *);
 static void atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
+static int atw_media_change(struct ifnet *);
 static void atw_media_status(struct ifnet *, struct ifmediareq *);
 static void atw_filter_setup(struct atw_softc *);
 static void atw_frame_setdurs(struct atw_softc *, struct atw_frame *, int, int);
 static __inline u_int64_t atw_predict_beacon(u_int64_t, u_int32_t);
-static void atw_recv_beacon(struct ieee80211com *, struct mbuf *, int,
-    u_int32_t);
+static void atw_recv_beacon(struct ieee80211com *, struct mbuf *,
+    struct ieee80211_node *, int, int, u_int32_t);
+static void atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
+    struct ieee80211_node *, int, int, u_int32_t);
+static void atw_node_free(struct ieee80211com *, struct ieee80211_node *);
+static struct ieee80211_node *atw_node_alloc(struct ieee80211com *);
 
 static int atw_tune(struct atw_softc *);
 
@@ -643,31 +651,37 @@ atw_attach(struct atw_softc *sc)
 	country_code = MASK_AND_RSHIFT(sc->sc_srom[ATW_SR_CTRY_CR29],
 	    ATW_SR_CTRY_MASK);
 
+#define ADD_CHANNEL(_ic, _chan) do {					\
+	_ic->ic_channels[_chan].ic_flags = IEEE80211_CHAN_B;		\
+	_ic->ic_channels[_chan].ic_freq =				\
+	    ieee80211_ieee2mhz(_chan, _ic->ic_channels[_chan].ic_flags);\
+} while (0)
+
 	/* Find available channels */
 	switch (country_code) {
 	case COUNTRY_MMK2:	/* 1-14 */
-		setbit(ic->ic_chan_avail, 14);
+		ADD_CHANNEL(ic, 14);
 		/*FALLTHROUGH*/
 	case COUNTRY_ETSI:	/* 1-13 */
 		for (i = 1; i <= 13; i++)
-			setbit(ic->ic_chan_avail, i);
+			ADD_CHANNEL(ic, i);
 		break;
 	case COUNTRY_FCC:	/* 1-11 */
 	case COUNTRY_IC:	/* 1-11 */
 		for (i = 1; i <= 11; i++)
-			setbit(ic->ic_chan_avail, i);
+			ADD_CHANNEL(ic, i);
 		break;
 	case COUNTRY_MMK:	/* 14 */
-		setbit(ic->ic_chan_avail, 14);
+		ADD_CHANNEL(ic, 14);
 		break;
 	case COUNTRY_FRANCE:	/* 10-13 */
 		for (i = 10; i <= 13; i++)
-			setbit(ic->ic_chan_avail, i);
+			ADD_CHANNEL(ic, i);
 		break;
 	default:	/* assume channels 10-11 */
 	case COUNTRY_SPAIN:	/* 10-11 */
 		for (i = 10; i <= 11; i++)
-			setbit(ic->ic_chan_avail, i);
+			ADD_CHANNEL(ic, i);
 		break;
 	}
 
@@ -701,21 +715,15 @@ atw_attach(struct atw_softc *sc)
 
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
-	ic->ic_flags = IEEE80211_F_HASPMGT | IEEE80211_F_HASIBSS |
-	    IEEE80211_F_HASHOSTAP | IEEE80211_F_HASWEP;
-	ic->ic_state = IEEE80211_S_INIT;
-	ic->ic_newstate = atw_newstate;
-
-#if 0
-	ic->ic_pfxlen = offsetof(struct atw_frame, atw_ihdr);
-#endif
-	ic->ic_hdrlen = sizeof(struct ieee80211_frame_addr4);
+	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_IBSS |
+	    IEEE80211_C_HOSTAP | IEEE80211_C_MONITOR | IEEE80211_C_WEP;
 
 	nrate = 0;
-	ic->ic_sup_rates[nrate++] = 2;
-	ic->ic_sup_rates[nrate++] = 4;
-	ic->ic_sup_rates[nrate++] = 11;
-	ic->ic_sup_rates[nrate++] = 22;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 2;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 4;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 11;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[nrate++] = 22;
+	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
 
 	/*
 	 * Call MI attach routines.
@@ -724,31 +732,27 @@ atw_attach(struct atw_softc *sc)
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
 
-	callout_init(&sc->sc_scan_timer);
+	sc->sc_newstate = ic->ic_newstate;
+	ic->ic_newstate = atw_newstate;
 
-	/* hardware answers probe request */
-	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_REQ
-	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = NULL;
+	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
+	ic->ic_recv_mgmt = atw_recv_mgmt;
 
-        /* NB: override default setting */
-	ic->ic_media.ifm_status = atw_media_status;
+	sc->sc_node_free = ic->ic_node_free;
+	ic->ic_node_free = atw_node_free;
+
+	sc->sc_node_alloc = ic->ic_node_alloc;
+	ic->ic_node_alloc = atw_node_alloc;
 
 	/* possibly we should fill in our own sc_send_prresp, since
 	 * the ADM8211 is probably sending probe responses in ad hoc
 	 * mode.
 	 */
 
-	sc->sc_recv_beacon =
-	    ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_BEACON >>
-	        IEEE80211_FC0_SUBTYPE_SHIFT];
-	sc->sc_recv_prresp =
-	    ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_RESP >>
-	        IEEE80211_FC0_SUBTYPE_SHIFT];
+	/* complete initialization */
+	ieee80211_media_init(ifp, atw_media_change, atw_media_status);
+	callout_init(&sc->sc_scan_ch);
 
-	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_BEACON
-	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = atw_recv_beacon;
-	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_RESP
-	    >> IEEE80211_FC0_SUBTYPE_SHIFT] = atw_recv_beacon;
 #if 0
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO, /* ??? */,
@@ -801,6 +805,26 @@ atw_attach(struct atw_softc *sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
  fail_0:
 	return;
+}
+
+static struct ieee80211_node *
+atw_node_alloc(struct ieee80211com *ic)
+{
+	struct atw_softc *sc = (struct atw_softc *)ic->ic_if.if_softc;
+	struct ieee80211_node *ni = (*sc->sc_node_alloc)(ic);
+
+	DPRINTF(sc, ("%s: alloc node %p\n", sc->sc_dev.dv_xname, ni));
+	return ni;
+}
+
+static void
+atw_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct atw_softc *sc = (struct atw_softc *)ic->ic_if.if_softc;
+
+	DPRINTF(sc, ("%s: freeing node %p %s\n", sc->sc_dev.dv_xname, ni,
+	    ether_sprintf(ni->ni_bssid)));
+	(*sc->sc_node_free)(ic, ni);
 }
 
 /*
@@ -869,7 +893,7 @@ atw_clear_sram(sc)
 
 /* TBD atw_init
  *
- * set MAC based on ic->ic_bss.myaddr
+ * set MAC based on ic->ic_bss->myaddr
  * write WEP keys
  * set TX rate
  */
@@ -897,6 +921,11 @@ atw_init(ifp)
 	 * Cancel any pending I/O. This also resets.
 	 */
 	atw_stop(ifp, 0);
+
+	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
+	DPRINTF(sc, ("%s: channel %d freq %d flags 0x%04x\n",
+	    __func__, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
+	    ic->ic_bss->ni_chan->ic_freq, ic->ic_bss->ni_chan->ic_flags));
 
 	/* Turn off APM??? (A binary-only driver does this.)
 	 *
@@ -1185,19 +1214,18 @@ atw_init(ifp)
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_STA:
-		error = ieee80211_new_state(ifp, IEEE80211_S_SCAN, -1);
+		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		if (error)
 			goto out;
 		break;
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_HOSTAP:
-		ic->ic_bss.ni_chan = ic->ic_ibss_chan;
-		ic->ic_bss.ni_intval = ic->ic_lintval;
-		ic->ic_bss.ni_rssi = 0;
-		ic->ic_bss.ni_rstamp = 0;
+		ic->ic_bss->ni_intval = ic->ic_lintval;
+		ic->ic_bss->ni_rssi = 0;
+		ic->ic_bss->ni_rstamp = 0;
 		ic->ic_state = IEEE80211_S_SCAN;	/*XXX*/
 
-		error = ieee80211_new_state(&ic->ic_if, IEEE80211_S_RUN, -1);
+		error = ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 		if (error)
 			goto out;
 		break;
@@ -1207,7 +1235,7 @@ atw_init(ifp)
 
 	atw_write_ssid(sc);
 	atw_write_sup_rates(sc);
-	if (ic->ic_flags & IEEE80211_F_HASWEP)
+	if (ic->ic_caps & IEEE80211_C_WEP)
 		atw_write_wep(sc);
 
 	/*
@@ -1226,6 +1254,7 @@ atw_init(ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+	ic->ic_state = IEEE80211_S_INIT;
 
  out:
 	if (error) {
@@ -1266,16 +1295,18 @@ atw_tune(sc)
 {
 	int rc;
 	u_int32_t reg;
-	u_int8_t chan;
+	int chan;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	chan = ic->ic_bss.ni_chan;
-
-	DPRINTF(sc, ("%s: chan %d -> %d\n", sc->sc_dev.dv_xname,
-	    sc->sc_cur_chan, chan));
+	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	if (chan == IEEE80211_CHAN_ANY)
+		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
 
 	if (chan == sc->sc_cur_chan)
 		return 0;
+
+	DPRINTF(sc, ("%s: chan %d -> %d\n", sc->sc_dev.dv_xname,
+	    sc->sc_cur_chan, chan));
 
 	atw_idle(sc, ATW_NAR_SR|ATW_NAR_ST);
 
@@ -1888,7 +1919,7 @@ atw_write_bssid(sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	u_int8_t *bssid;
 
-	bssid = ic->ic_bss.ni_bssid;
+	bssid = ic->ic_bss->ni_bssid;
 
 	ATW_WRITE(sc, ATW_ABDA1,
 	    (ATW_READ(sc, ATW_ABDA1) &
@@ -1930,7 +1961,7 @@ atw_write_bcn_thresh(sc)
 		lost_bcn_thresh = 0;
 	else
 		lost_bcn_thresh = MAX(2,
-		    MIN(1000000/(IEEE80211_DUR_TU * ic->ic_bss.ni_intval), 7));
+		    MIN(1000000/(IEEE80211_DUR_TU * ic->ic_bss->ni_intval), 7));
 
 	/* XXX resets wake-up status bits */
 	ATW_WRITE(sc, ATW_WCSR,
@@ -2051,6 +2082,27 @@ atw_write_wep(sc)
 
 const struct timeval atw_beacon_mininterval = {1, 0}; /* 1s */
 
+static void
+atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct atw_softc *sc = (struct atw_softc*)ic->ic_softc;
+
+	switch (subtype) {
+	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
+		/* do nothing: hardware answers probe request */
+		break;
+	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+	case IEEE80211_FC0_SUBTYPE_BEACON:
+		atw_recv_beacon(ic, m, ni, subtype, rssi, rstamp);
+		break;
+	default:
+		(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+		break;
+	}
+	return;
+}
+
 /* In ad hoc mode, atw_recv_beacon is responsible for the coalescence
  * of IBSSs with like SSID/channel but different BSSID. It joins the
  * oldest IBSS (i.e., with greatest TSF time), since that is the WECA
@@ -2062,16 +2114,14 @@ const struct timeval atw_beacon_mininterval = {1, 0}; /* 1s */
  * TSF.
  */
 static void
-atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
-    u_int32_t rstamp)
+atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
 	struct atw_softc *sc;
 	struct ieee80211_frame *wh;
-	struct ieee80211_node *ni, tmp_ni;
 	u_int64_t tsft, bcn_tsft;
 	u_int32_t tsftl, tsfth;
 	int do_print = 0;
-	void *p;
 
 	sc = (struct atw_softc*)ic->ic_if.if_softc;
 
@@ -2081,11 +2131,7 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-		(*sc->sc_recv_prresp)(ic, m0, rssi, rstamp);
-	else
-		(*sc->sc_recv_beacon)(ic, m0, rssi, rstamp);
+	(*sc->sc_recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
 
 	if (ic->ic_state != IEEE80211_S_RUN) {
 		if (do_print)
@@ -2094,7 +2140,8 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 
-	if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
+	if ((ni = ieee80211_lookup_node(ic, wh->i_addr2,
+	    ic->ic_bss->ni_chan)) == NULL) {
 		if (do_print)
 			printf("%s: atw_recv_beacon: no node %s\n",
 			    sc->sc_dev.dv_xname, ether_sprintf(wh->i_addr2));
@@ -2108,7 +2155,7 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		return;
 	}
 
-	if (memcmp(ni->ni_bssid, ic->ic_bss.ni_bssid, IEEE80211_ADDR_LEN) == 0)
+	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid, IEEE80211_ADDR_LEN) == 0)
 		return;
 
 	if (do_print)
@@ -2147,11 +2194,10 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	atw_tsf(sc);
 #endif
 
-	tmp_ni = *ni;
 	/* negotiate rates with new IBSS */
-	ieee80211_fix_rate(ic, &tmp_ni, IEEE80211_F_DOFRATE |
+	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
 	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-	if (tmp_ni.ni_nrate == 0) {
+	if (ni->ni_rates.rs_nrates == 0) {
 		printf("%s: rates mismatch, BSSID %s\n", sc->sc_dev.dv_xname,
 			ether_sprintf(ni->ni_bssid));
 		return;
@@ -2159,20 +2205,14 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 
 	if (do_print) {
 		printf("%s: sync BSSID %s -> ", sc->sc_dev.dv_xname,
-		    ether_sprintf(ic->ic_bss.ni_bssid));
+		    ether_sprintf(ic->ic_bss->ni_bssid));
 		printf("%s ", ether_sprintf(ni->ni_bssid));
 		printf("(from %s)\n", ether_sprintf(wh->i_addr2));
 	}
 
-	p = ic->ic_bss.ni_private;
-	ic->ic_bss = *ni;
-	ic->ic_bss.ni_private = p;
-	if (p != NULL && ic->ic_node_privlen)
-		memcpy(p, ni->ni_private, ic->ic_node_privlen);
+	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
 
 	atw_write_bssid(sc);
-	if (atw_tune(sc) != 0)
-		printf("%s: could not sync channel\n", sc->sc_dev.dv_xname);
 	atw_write_bcn_thresh(sc);
 	atw_start_beacon(sc, 1);
 }
@@ -2193,8 +2233,8 @@ atw_write_ssid(sc)
 	             1 /* for a round number */];
 
 	memset(buf, 0, sizeof(buf));
-	buf[0] = ic->ic_bss.ni_esslen;
-	memcpy(&buf[1], ic->ic_bss.ni_essid, ic->ic_bss.ni_esslen);
+	buf[0] = ic->ic_bss->ni_esslen;
+	memcpy(&buf[1], ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen);
 
 	atw_write_sram(sc, ATW_SRAM_ADDR_SSID, buf, sizeof(buf));
 }
@@ -2216,9 +2256,10 @@ atw_write_sup_rates(sc)
 
 	memset(buf, 0, sizeof(buf));
 
-	buf[0] = ic->ic_bss.ni_nrate;
+	buf[0] = ic->ic_bss->ni_rates.rs_nrates;
 
-	memcpy(&buf[1], ic->ic_bss.ni_rates, ic->ic_bss.ni_nrate);
+	memcpy(&buf[1], ic->ic_bss->ni_rates.rs_rates,
+	    ic->ic_bss->ni_rates.rs_nrates);
 
 	atw_write_sram(sc, ATW_SRAM_ADDR_SUPRATES, buf, sizeof(buf));
 }
@@ -2239,8 +2280,8 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	len = sizeof(struct ieee80211_frame) +
 	    8 /* timestamp */ + 2 /* beacon interval */ +
 	    2 /* capability info */ +
-	    2 + ic->ic_bss.ni_esslen /* SSID element */ +
-	    2 + ic->ic_bss.ni_nrate /* rates element */ +
+	    2 + ic->ic_bss->ni_esslen /* SSID element */ +
+	    2 + ic->ic_bss->ni_rates.rs_nrates /* rates element */ +
 	    3 /* DS parameters */ +
 	    IEEE80211_CRC_LEN;
 
@@ -2319,18 +2360,18 @@ atw_tsf(struct atw_softc *sc)
 		tsft = ATW_READ(sc, ATW_TSFTH);
 		tsft <<= 32;
 		tsft |= ATW_READ(sc, ATW_TSFTL);
-		*(u_int64_t*)&ic->ic_bss.ni_tstamp[0] = htole64(tsft);
+		*(u_int64_t*)&ic->ic_bss->ni_tstamp[0] = htole64(tsft);
 	} else
-		tsft = le64toh(*(u_int64_t*)&ic->ic_bss.ni_tstamp[0]);
+		tsft = le64toh(*(u_int64_t*)&ic->ic_bss->ni_tstamp[0]);
 
 	tbtt = atw_predict_beacon(tsft,
-	    ic->ic_bss.ni_intval * IEEE80211_DUR_TU);
+	    ic->ic_bss->ni_intval * IEEE80211_DUR_TU);
 
 	/* skip one more beacon so that the TBTT cannot pass before
 	 * we've programmed it, and also so that we can subtract a
 	 * few TU so that we wake a little before TBTT. 
 	 */
-	tbtt += ic->ic_bss.ni_intval * IEEE80211_DUR_TU;
+	tbtt += ic->ic_bss->ni_intval * IEEE80211_DUR_TU;
 
 	/* wake up a little early */
 	tbtt -= TBTTOFS * IEEE80211_DUR_TU;
@@ -2347,35 +2388,54 @@ atw_tsf(struct atw_softc *sc)
 #undef TBTTOFS
 }
 
-/* Synchronize the hardware state with the software state. */
-static int
-atw_newstate(void *arg, enum ieee80211_state nstate)
+static void
+atw_next_scan(void *arg)
 {
-	enum ieee80211_state ostate;
-	int error, scan_timo, start_beacon = 0;
 	struct atw_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	int s;
+
+	/* don't call atw_start w/o network interrupts blocked */
+	s = splnet();
+	if (ic->ic_state == IEEE80211_S_SCAN)
+		ieee80211_next_scan(ifp);
+	splx(s);
+}
+
+/* Synchronize the hardware state with the software state. */
+static int
+atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct atw_softc *sc = ifp->if_softc;
+	enum ieee80211_state ostate;
+	int error;
 
 	ostate = ic->ic_state;
 
+	if (nstate == IEEE80211_S_INIT) {
+		callout_stop(&sc->sc_scan_ch);
+		sc->sc_cur_chan = IEEE80211_CHAN_ANY;
+		atw_start_beacon(sc, 0);
+		return (*sc->sc_newstate)(ic, nstate, arg);
+	}
+
+	if ((error = atw_tune(sc)) != 0)
+		return error;
+
 	switch (nstate) {
+	case IEEE80211_S_ASSOC:
+		break;
 	case IEEE80211_S_INIT:
+		panic("%s: unexpected state IEEE80211_S_INIT\n", __func__);
 		break;
 	case IEEE80211_S_SCAN:
-		if (ic->ic_flags & IEEE80211_F_ASCAN)
-			scan_timo = 100 + 54 /* overhead */;
-		else
-			scan_timo = 200 + 54 /* overhead */;
-
 		memset(sc->sc_bssid, 0, IEEE80211_ADDR_LEN);
 		atw_write_bssid(sc);
 
-		callout_reset(&sc->sc_scan_timer, scan_timo * hz / 1000,
-		    (void(*)(void*))ieee80211_next_scan, (void*)&ic->ic_if);
-
-		error = atw_tune(sc);
-		if (error != 0)
-			return error;
+		callout_reset(&sc->sc_scan_ch, atw_dwelltime * hz / 1000,
+		    atw_next_scan, sc);
 
 		break;
 	case IEEE80211_S_RUN:
@@ -2388,57 +2448,36 @@ atw_newstate(void *arg, enum ieee80211_state nstate)
 		atw_write_ssid(sc);
 		atw_write_sup_rates(sc);
 
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_HOSTAP:
-		case IEEE80211_M_IBSS:
-			start_beacon = 1;
-			/* FALL THROUGH */
-		case IEEE80211_M_STA:
-			/* set listen interval
-			 * XXX do software units agree w/ hardware?
-			 */
-			ATW_WRITE(sc, ATW_BPLI,
-			    LSHIFT(ic->ic_bss.ni_intval, ATW_BPLI_BP_MASK) |
-			    LSHIFT(ic->ic_lintval / ic->ic_bss.ni_intval,
-				   ATW_BPLI_LI_MASK));
-
-			DPRINTF(sc, ("%s: reg[ATW_BPLI] = %08x\n",
-			    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_BPLI)));
-
-			atw_tsf(sc);
+		if (ic->ic_opmode == IEEE80211_M_AHDEMO ||
+		    ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
 
-		case IEEE80211_M_AHDEMO:
-		case IEEE80211_M_MONITOR:
-			/* TBD */
-			break;
-		}
-		error = atw_tune(sc);
-		if (error != 0)
-			return error;
+		/* set listen interval
+		 * XXX do software units agree w/ hardware?
+		 */
+		ATW_WRITE(sc, ATW_BPLI,
+		    LSHIFT(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
+		    LSHIFT(ic->ic_lintval / ic->ic_bss->ni_intval,
+			   ATW_BPLI_LI_MASK));
 
-		break;
-	default:
+		DPRINTF(sc, ("%s: reg[ATW_BPLI] = %08x\n",
+		    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_BPLI)));
+
+		atw_tsf(sc);
 		break;
 	}
 
-	switch (ostate) {
-	case IEEE80211_S_SCAN:
-		if (nstate != IEEE80211_S_SCAN)
-			callout_stop(&sc->sc_scan_timer);
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) 
-			sc->sc_cur_chan = IEEE80211_CHAN_ANY;
-		break;
-	case IEEE80211_S_INIT:
-		sc->sc_cur_chan = IEEE80211_CHAN_ANY;
-		break;
-	default:
-		break;
-	}
+	if (ostate == IEEE80211_S_SCAN && nstate != IEEE80211_S_SCAN)
+		callout_stop(&sc->sc_scan_ch);
 
-	atw_start_beacon(sc, start_beacon);
+	if (nstate == IEEE80211_S_RUN &&
+	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
+	     ic->ic_opmode == IEEE80211_M_IBSS))
+		atw_start_beacon(sc, 1);
+	else
+		atw_start_beacon(sc, 0);
 
-	return 0;
+	return (*sc->sc_newstate)(ic, nstate, arg);
 }
 
 /*
@@ -2498,9 +2537,10 @@ atw_stop(ifp, disable)
 	int disable;
 {
 	struct atw_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct atw_txsoft *txs;
 
-	ieee80211_new_state(ifp, IEEE80211_S_INIT, -1);
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	/* Disable interrupts. */
 	ATW_WRITE(sc, ATW_IER, 0);
@@ -2914,7 +2954,10 @@ atw_rxintr(sc)
 	struct atw_softc *sc;
 {
 	static int rate_tbl[] = {2, 4, 11, 22, 44};
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
+	struct ieee80211_frame *wh;
+	struct ifnet *ifp = &ic->ic_if;
 	struct atw_rxsoft *rxs;
 	struct mbuf *m;
 	u_int32_t rxstat;
@@ -3025,8 +3068,23 @@ atw_rxintr(sc)
 		}
 #endif /* NPBFILTER > 0 */
 
-		/* Pass it on. */
-		ieee80211_input(ifp, m, rssi, 0);
+		wh = mtod(m, struct ieee80211_frame *);
+		if (ic->ic_opmode != IEEE80211_M_STA) {
+			ni = ieee80211_find_node(ic, wh->i_addr2);
+			if (ni == NULL)
+				ni = ieee80211_ref_node(ic->ic_bss);
+		} else
+			ni = ieee80211_ref_node(ic->ic_bss);
+		ieee80211_input(ifp, m, ni, rssi, 0);
+		/*
+		 * The frame may have caused the node to be marked for
+		 * reclamation (e.g. in response to a DEAUTH message)
+		 * so use free_node here instead of unref_node.
+		 */
+		if (ni == ic->ic_bss)
+			ieee80211_unref_node(&ni);
+		else
+			ieee80211_free_node(ic, ni);
 	}
 
 	/* Update the receive pointer. */
@@ -3156,6 +3214,7 @@ atw_watchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct atw_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	ifp->if_timer = 0;
 	if (ATW_IS_ENABLED(sc) == 0)
@@ -3163,7 +3222,7 @@ atw_watchdog(ifp)
 
 	if (sc->sc_rescan_timer) {
 		if (--sc->sc_rescan_timer == 0)
-			(void)ieee80211_new_state(ifp, IEEE80211_S_SCAN, -1);
+			(void)ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	}
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0 &&
@@ -3299,14 +3358,15 @@ atw_start(ifp)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_frame_addr4 *wh;
+	struct ieee80211_node *ni;
+	struct ieee80211_frame *wh;
 	struct atw_frame *hh;
-	struct mbuf *m0, *m, *mh;
+	struct mbuf *m0, *m;
 	struct atw_txsoft *txs, *last_txs;
 	struct atw_txdesc *txd;
-	int do_encrypt, is_mgt, rate;
+	int do_encrypt, rate;
 	bus_dmamap_t dmamap;
-	int ctl, error, firsttx, nexttx, lasttx, ofree, seg;
+	int ctl, error, firsttx, nexttx, lasttx, first, ofree, seg;
 
 	DPRINTF2(sc, ("%s: atw_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
@@ -3338,28 +3398,27 @@ atw_start(ifp)
 	       sc->sc_txfree != 0) {
 
 		do_encrypt = 0;
-		is_mgt = 1;
-
 		/*
 		 * Grab a packet off the management queue, if it
 		 * is not empty. Otherwise, from the data queue.
 		 */
-		IF_POLL(&ic->ic_mgtq, m0);
-		if (m0 == NULL) {
-			is_mgt = 0;
-			IFQ_POLL(&ifp->if_snd, m0);
+		IF_DEQUEUE(&ic->ic_mgtq, m0);
+		if (m0 != NULL) {
+			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			m0->m_pkthdr.rcvif = NULL;
+		} else {
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
 				bpf_mtap(ifp->if_bpf, m0);
 #endif /* NBPFILTER > 0 */
-			if ((m0 = ieee80211_encap(ifp, m0)) == NULL) {
+			if ((m0 = ieee80211_encap(ifp, m0, &ni)) == NULL) {
 				ifp->if_oerrors++;
-				continue;
+				break;
 			}
 		}
-		m = NULL;
 
 #if NBPFILTER > 0
 		/*
@@ -3373,9 +3432,12 @@ atw_start(ifp)
 
 		M_PREPEND(m0, offsetof(struct atw_frame, atw_ihdr), M_DONTWAIT);
 
+		if (ni != NULL && ni != ic->ic_bss)
+			ieee80211_free_node(ic, ni);
+
 		if (m0 == NULL) {
 			ifp->if_oerrors++;
-			continue;
+			break;
 		}
 
 		/* just to make sure. */
@@ -3383,7 +3445,7 @@ atw_start(ifp)
 
 		if (m0 == NULL) {
 			ifp->if_oerrors++;
-			continue;
+			break;
 		}
 
 		hh = mtod(m0, struct atw_frame *);
@@ -3396,17 +3458,17 @@ atw_start(ifp)
 		 * 3 and 4. NIC fills in BSSID, SA.
 		 */
 		if (wh->i_fc[1] & IEEE80211_FC1_DIR_TODS) {
-			memcpy(hh->atw_dst, wh->i_addr3, IEEE80211_ADDR_LEN);
 			if (wh->i_fc[1] & IEEE80211_FC1_DIR_FROMDS)
-				memcpy(hh->atw_addr4, wh->i_addr4,
-				    IEEE80211_ADDR_LEN);
+				panic("%s: illegal WDS frame",
+				    sc->sc_dev.dv_xname);
+			memcpy(hh->atw_dst, wh->i_addr3, IEEE80211_ADDR_LEN);
 		} else
 			memcpy(hh->atw_dst, wh->i_addr1, IEEE80211_ADDR_LEN);
 
 		*(u_int16_t*)hh->atw_fc = *(u_int16_t*)wh->i_fc;
 
-		/* zero 802.11 header before we fill it w/ Tx parameters */
-		memset(&hh->atw_ihdr, 0, sizeof(hh->atw_ihdr));
+		/* initialize remaining Tx parameters */
+		memset(&hh->u, 0, sizeof(hh->u));
 
 		rate = MAX(ieee80211_get_rate(ic), 2);
 
@@ -3459,7 +3521,6 @@ atw_start(ifp)
 			hh->atw_service = atw_xservice;
 		if (atw_xpaylen != 0)
 			hh->atw_paylen = htole16(atw_xpaylen);
-		memset(hh->atw_addr4, 0, IEEE80211_ADDR_LEN);
 		hh->atw_fragnum = 0;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 && atw_debug > 2) {
@@ -3490,13 +3551,13 @@ atw_start(ifp)
 		dmamap = txs->txs_dmamap;
 
 		/*
-		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we were
-		 * short on resources.  In this case, we'll copy and try
-		 * again.
+		 * Load the DMA map.  Copy and try (once) again if the packet
+		 * didn't fit in the alloted number of segments.
 		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		for (first = 1;
+		     (error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		                  BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 && first;
+		     first = 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -3514,15 +3575,15 @@ atw_start(ifp)
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
-				if (m != NULL)
-					m_freem(m);
-				break;
-			}
+			m_freem(m0);
+			m0 = m;
+			m = NULL;
+		}
+		if (error != 0) {
+			printf("%s: unable to load Tx buffer, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			m_freem(m0);
+			break;
 		}
 
 		/*
@@ -3531,31 +3592,18 @@ atw_start(ifp)
 		 */
 		if (dmamap->dm_nsegs > sc->sc_txfree) {
 			/*
-			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed to anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are no more slots left.
+			 * Not enough free descriptors to transmit
+			 * this packet.  Unload the DMA map and
+			 * drop the packet.  Notify the upper layer
+			 * that there are no more slots left.
 			 *
 			 * XXX We could allocate an mbuf and copy, but
 			 * XXX it is worth it?
 			 */
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			if (m != NULL)
-				m_freem(m);
-			break;
-		}
-
-		if (is_mgt) {
-			IF_DEQUEUE(&ic->ic_mgtq, mh);
-		} else {
-			IFQ_DEQUEUE(&ifp->if_snd, mh);
-		}
-
-		if (m != NULL) {
 			m_freem(m0);
-			m0 = m;
+			break;
 		}
 
 		/*
@@ -3787,6 +3835,21 @@ atw_ioctl(ifp, cmd, data)
 
 	splx(s);
 	return (error);
+}
+
+static int
+atw_media_change(struct ifnet *ifp)
+{
+	int error;
+
+	error = ieee80211_media_change(ifp);
+	if (error == ENETRESET) {
+		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
+		    (IFF_RUNNING|IFF_UP))
+			atw_init(ifp);		/* XXX lose error */
+		error = 0;
+	}
+	return error;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.1 2003/07/06 22:58:09 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.2 2003/10/13 08:22:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -157,6 +157,14 @@ struct atw_softc {
 	int			(*sc_enable)(struct atw_softc *);
 	void			(*sc_disable)(struct atw_softc *);
 	void			(*sc_power)(struct atw_softc *, int);
+	int			(*sc_newstate)(struct ieee80211com *,
+					enum ieee80211_state, int);
+	void			(*sc_recv_mgmt)(struct ieee80211com *,
+				    struct mbuf *, struct ieee80211_node *,
+				    int, int, u_int32_t);
+	struct ieee80211_node	*(*sc_node_alloc)(struct ieee80211com *);
+	void			(*sc_node_free)(struct ieee80211com *,
+					struct ieee80211_node *);
 
 	int			sc_pci;			/* attach to PCI-Bus */
 
@@ -243,7 +251,7 @@ struct atw_softc {
 	u_int8_t	sc_lost_bcn_thresh;
 
 	struct timeval	sc_last_beacon;
-	struct callout	sc_scan_timer;
+	struct callout	sc_scan_ch;
 };
 
 #define	sc_if			sc_ic.ic_if
@@ -280,17 +288,20 @@ struct atw_frame {
 /*2c*/			u_int8_t	wepkey3[4];/* ??? */
 /*30*/			u_int8_t	keyid;
 /*31*/			u_int8_t	reserved0[7];
-		} s;
-		struct ieee80211_frame_addr4	ihdr;
+		} s1;
+		struct {
+			u_int8_t		pad[6];
+			struct ieee80211_frame	ihdr;
+		} s2;
 	} u;
 } __attribute__((__packed__));
 
-#define atw_hdrctl	u.s.hdrctl
-#define atw_fragthr	u.s.fragthr
-#define atw_fragnum	u.s.fragnum
-#define atw_rtylmt	u.s.rtylmt
-#define atw_keyid	u.s.keyid
-#define atw_ihdr	u.ihdr
+#define atw_hdrctl	u.s1.hdrctl
+#define atw_fragthr	u.s1.fragthr
+#define atw_fragnum	u.s1.fragnum
+#define atw_rtylmt	u.s1.rtylmt
+#define atw_keyid	u.s1.keyid
+#define atw_ihdr	u.s2.ihdr
 
 #define ATW_HDRCTL_SHORT_PREAMBLE	BIT(0)	/* use short preamble */
 #define ATW_HDRCTL_RTSCTS		BIT(4)	/* send RTS */
@@ -379,6 +390,29 @@ do {									\
 #define	ATW_COUNTRY_FRANCE 4		/* 10-13 */
 #define	ATW_COUNTRY_MKK 5		/* Japan: 14 */
 #define	ATW_COUNTRY_MKK2 6		/* Japan: 1-14 */
+
+/* One Time Unit (TU) is 1Kus = 1024 microseconds. */
+#define IEEE80211_DUR_TU		1024
+
+/* IEEE 802.11b durations for DSSS PHY in microseconds */
+#define IEEE80211_DUR_DS_LONG_PREAMBLE	144
+#define IEEE80211_DUR_DS_SHORT_PREAMBLE	72
+#define IEEE80211_DUR_DS_FAST_PLCPHDR	24
+#define IEEE80211_DUR_DS_SLOW_PLCPHDR	48
+#define IEEE80211_DUR_DS_SLOW_ACK	112
+#define IEEE80211_DUR_DS_FAST_ACK	56
+#define IEEE80211_DUR_DS_SLOW_CTS	112
+#define IEEE80211_DUR_DS_FAST_CTS	56
+#define IEEE80211_DUR_DS_SLOT		20
+#define IEEE80211_DUR_DS_SIFS		10
+#define IEEE80211_DUR_DS_PIFS	(IEEE80211_DUR_DS_SIFS + IEEE80211_DUR_DS_SLOT)
+#define IEEE80211_DUR_DS_DIFS	(IEEE80211_DUR_DS_SIFS + \
+				 2 * IEEE80211_DUR_DS_SLOT)
+#define IEEE80211_DUR_DS_EIFS	(IEEE80211_DUR_DS_SIFS + \
+				 IEEE80211_DUR_DS_SLOW_ACK + \
+				 IEEE80211_DUR_DS_LONG_PREAMBLE + \
+				 IEEE80211_DUR_DS_SLOW_PLCPHDR + \
+				 IEEE80211_DUR_DIFS)
 
 /*
  * register space access macros
