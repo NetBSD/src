@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.12 1997/01/09 16:07:09 tls Exp $	*/
+/*	$NetBSD: cat.c,v 1.13 1997/04/27 18:34:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: cat.c,v 1.12 1997/01/09 16:07:09 tls Exp $";
+static char rcsid[] = "$NetBSD: cat.c,v 1.13 1997/04/27 18:34:33 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,7 @@ cook_args(argv)
 				fp = stdin;
 			else if ((fp = fopen(*argv, "r")) == NULL) {
 				warn("%s", *argv);
+				rval = 1;
 				++argv;
 				continue;
 			}
@@ -204,6 +205,7 @@ cook_buf(fp)
 	}
 	if (ferror(fp)) {
 		warn("%s", filename);
+		rval = 1;
 		clearerr(fp);
 	}
 	if (ferror(stdout))
@@ -224,6 +226,7 @@ raw_args(argv)
 				fd = fileno(stdin);
 			else if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
 				warn("%s", *argv);
+				rval = 1;
 				++argv;
 				continue;
 			}
@@ -256,6 +259,8 @@ raw_cat(rfd)
 		for (off = 0; nr; nr -= nw, off += nw)
 			if ((nw = write(wfd, buf + off, nr)) < 0)
 				err(1, "stdout");
-	if (nr < 0)
+	if (nr < 0) {
 		warn("%s", filename);
+		rval = 1;
+	}
 }
