@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1998/08/15 10:51:17 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 1998/08/27 11:43:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -670,7 +670,6 @@ leattach(lesc, pri)
 	extern void myetheraddr __P((u_char *));
 
 	if (sc->sc_mem == 0) {
-#ifdef BUS_DMA
 		bus_dma_segment_t seg;
 		int rseg, error;
 
@@ -690,11 +689,6 @@ leattach(lesc, pri)
 
 		sc->sc_addr = seg.ds_addr & 0xffffff;
 
-#else
-		u_long laddr;
-		laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
-		sc->sc_addr = laddr & 0xffffff;
-#endif/*0*/
 #if defined (SUN4M)
 		if ((sc->sc_addr & 0xffffff) >=
 		    (sc->sc_addr & 0xffffff) + MEMSIZE)
