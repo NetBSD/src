@@ -1,4 +1,4 @@
-/*      $NetBSD: rf_configure.c,v 1.6 1999/03/26 00:45:01 oster Exp $   */
+/*      $NetBSD: rf_configure.c,v 1.7 1999/08/07 23:48:11 oster Exp $   */
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,6 @@
 #include <sys/stat.h>
 #include "rf_raid.h"
 #include "rf_raidframe.h"
-#include "rf_utils.h"
 #include "rf_general.h"
 #include "rf_decluster.h"
 #include "rf_configure.h"
@@ -78,6 +77,9 @@ that file here in userland..  GO
      _p_ = _cast_ malloc((u_long)_size_); \
      bzero((char *)_p_, _size_); \
   }
+
+char   *rf_find_non_white(char *p);
+char   *rf_find_white(char *p);
 
 
 
@@ -345,6 +347,22 @@ int rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
  * utilities
  *
  ***************************************************************************/
+
+/* finds a non-white character in the line */
+char   *
+rf_find_non_white(char *p)
+{
+	for (; *p != '\0' && (*p == ' ' || *p == '\t'); p++);
+	return (p);
+}
+
+/* finds a white character in the line */
+char   *
+rf_find_white(char *p)
+{
+	for (; *p != '\0' && (*p != ' ' && *p != '\t'); p++);
+	return (p);
+}
 
 /* searches a file for a line that says "START string", where string is
  * specified as a parameter
