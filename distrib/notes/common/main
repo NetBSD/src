@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.174 2002/04/23 19:48:42 bouyer Exp $
+.\"	$NetBSD: main,v 1.175 2002/04/27 03:49:06 gson Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1569,6 +1569,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Brad Grantham Ta Mt grantham@tenon.com
 .It Ta Brian C. Grayson Ta Mt bgrayson@netbsd.org
 .It Ta Matthew Green Ta Mt mrg@netbsd.org
+.It Ta Andreas Gustafsson Ta Mt gson@netbsd.org
 .It Ta Juergen Hannken-Illjes Ta Mt hannken@netbsd.org
 .It Ta Charles M. Hannum Ta Mt mycroft@netbsd.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@netbsd.org
