@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.27 2001/07/26 02:30:29 assar Exp $
+$NetBSD: UPDATING,v 1.28 2001/07/26 08:51:17 assar Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -10,8 +10,10 @@ Recent changes:
 
 20010726:
 	Texinfo was updated to 4.0.  To avoid failures when trying to
-	build the included texinfo files, use MKINFO=no before the new
-	makeinfo has been installed.
+	build the included texinfo files, do:
+
+	cd src/gnu/usr.bin/texinfo
+	make MKINFO=no dependall install
 
 20010718:
 
