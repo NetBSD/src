@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.2 1998/05/14 20:49:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -50,14 +50,32 @@ struct device;
  */
 struct wsdisplay_emulops {
 	void	(*cursor) __P((void *c, int on, int row, int col));
-	void	(*putstr) __P((void *c, int row, int col, char *cp, int n));
+	void	(*putstr) __P((void *c, int row, int col,
+			       char *cp, int n, long));
 	void	(*copycols) __P((void *c, int row, int srccol, int dstcol,
 		    int ncols));
 	void	(*erasecols) __P((void *c, int row, int startcol,
-		    int ncols));
+		    int ncols, long));
 	void	(*copyrows) __P((void *c, int srcrow, int dstrow,
 		    int nrows));
-	void	(*eraserows) __P((void *c, int row, int nrows));
+	void	(*eraserows) __P((void *c, int row, int nrows, long));
+	int	(*alloc_attr) __P((void *c, int fg, int bg, int flags, long *));
+/* fg / bg values. Made identical to ANSI terminal color codes. */
+#define WSCOL_BLACK	0
+#define WSCOL_RED	1
+#define WSCOL_GREEN	2
+#define WSCOL_BROWN	3
+#define WSCOL_BLUE	4
+#define WSCOL_MAGENTA	5
+#define WSCOL_CYAN	6
+#define WSCOL_WHITE	7
+/* flag values: */
+#define WSATTR_REVERSE	1
+#define WSATTR_HILIT	2
+#define WSATTR_BLINK	4
+#define WSATTR_UNDERLINE 8
+#define WSATTR_WSCOLORS 16
+	/* XXX need a free_attr() ??? */
 };
 
 struct wsscreen_descr {
@@ -65,6 +83,12 @@ struct wsscreen_descr {
 	int ncols, nrows;
 	const struct wsdisplay_emulops *textops;
 	int fontwidth, fontheight;
+	int capabilities;
+#define WSSCREEN_WSCOLORS	1	/* minimal color capability */
+#define WSSCREEN_REVERSE	2	/* can display reversed */
+#define WSSCREEN_HILIT		4	/* can highlight (however) */
+#define WSSCREEN_BLINK		8	/* can blink */
+#define WSSCREEN_UNDERLINE	16	/* can underline */
 };
 
 /*
@@ -79,7 +103,7 @@ struct wsdisplay_accessops {
 		    struct proc *p));
 	int	(*mmap) __P((void *v, off_t off, int prot));
 	int	(*alloc_screen) __P((void *, const struct wsscreen_descr *,
-				     void **, int *, int *));
+				     void **, int *, int *, long *));
 	void	(*free_screen) __P((void *, void *));
 	void	(*show_screen) __P((void *, void *));
 	int	(*load_font) __P((void *, void *, int, int, int, void *));
@@ -106,7 +130,7 @@ struct wsscreen_list {
  */
 struct wsemuldisplaydev_attach_args {
 	int	console;				/* is it console? */
-	struct wsscreen_list *scrdata;			/* screen cfg info */
+	const struct wsscreen_list *scrdata;		/* screen cfg info */
 	const struct wsdisplay_accessops *accessops;	/* access ops */
 	void	*accesscookie;				/* access cookie */
 };
@@ -118,7 +142,7 @@ struct wsemuldisplaydev_attach_args {
  * Autoconfiguration helper functions.
  */
 void	wsdisplay_cnattach __P((const struct wsscreen_descr *, void *,
-				int, int));
+				int, int, long));
 int	wsdisplaydevprint __P((void *, const char *));
 int	wsemuldisplaydevprint __P((void *, const char *));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.1 1998/03/22 14:24:02 drochner Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.2 1998/05/14 20:49:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -49,6 +49,7 @@
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 /*
  * Paint (or unpaint) the cursor.
@@ -97,10 +98,11 @@ rcons_cursor(id, on, row, col)
  * Actually write a string to the frame buffer.
  */
 void
-rcons_putstr(id, row, col, str, n)
+rcons_putstr(id, row, col, str, n, attr)
 	void *id;
 	int row, col, n;
 	char *str;
+	long attr;
 {
 	struct rcons *rc = id;
 	register int x, y, op;
@@ -109,8 +111,7 @@ rcons_putstr(id, row, col, str, n)
 	y = row * rc->rc_font->height + rc->rc_font_ascent + rc->rc_yorigin;
 
 	op = RAS_SRC;
-	if (((rc->rc_bits & RC_STANDOUT) != 0) ^
-	    ((rc->rc_bits & RC_INVERT) != 0))
+	if ((attr != 0) ^ ((rc->rc_bits & RC_INVERT) != 0))
 		op = RAS_NOT(op);
 	raster_textn(rc->rc_sp, x, y, op, rc->rc_font, str, n);
 }
@@ -131,7 +132,6 @@ rcons_invert(id, inverted)
 		    RAS_INVERT, (struct raster *) 0, 0, 0);
 
 		/* Swap things around */
-		rc->rc_ras_blank = RAS_NOT(rc->rc_ras_blank);
 		rc->rc_bits ^= RC_INVERT;
 	}
 }
@@ -161,19 +161,23 @@ rcons_copycols(id, row, srccol, dstcol, ncols)
  * Clear columns (characters) in a row (line).
  */
 void
-rcons_erasecols(id, row, startcol, ncols)
+rcons_erasecols(id, row, startcol, ncols, fillattr)
 	void *id;
 	int row, startcol, ncols;
+	long fillattr;
 {
 	struct rcons *rc = id;
-	int y, startx, nx;
+	int y, startx, nx, op;
 
 	y = rc->rc_yorigin + rc->rc_font->height * row;
 	startx = rc->rc_xorigin + rc->rc_font->width * startcol;
 	nx = rc->rc_font->width * ncols;
 
+	op = RAS_CLEAR;
+	if ((fillattr != 0) ^ ((rc->rc_bits & RC_INVERT) != 0))
+		op = RAS_NOT(op);
 	raster_op(rc->rc_sp, startx, y,
-	    nx, rc->rc_font->height, rc->rc_ras_blank,
+	    nx, rc->rc_font->height, op,
 	    (struct raster *) 0, 0, 0);
 }
 
@@ -201,17 +205,37 @@ rcons_copyrows(id, srcrow, dstrow, nrows)
  * Erase rows (lines).
  */
 void
-rcons_eraserows(id, startrow, nrows)
+rcons_eraserows(id, startrow, nrows, fillattr)
 	void *id;
 	int startrow, nrows;
+	long fillattr;
 {
 	struct rcons *rc = id;
-	int starty, ny;
+	int starty, ny, op;
 
 	starty = rc->rc_yorigin + rc->rc_font->height * startrow;
 	ny = rc->rc_font->height * nrows;
 
+	op = RAS_CLEAR;
+	if ((fillattr != 0) ^ ((rc->rc_bits & RC_INVERT) != 0))
+		op = RAS_NOT(op);
 	raster_op(rc->rc_sp, rc->rc_xorigin, starty,
-	    rc->rc_raswidth, ny, rc->rc_ras_blank,
+	    rc->rc_raswidth, ny, op,
 	    (struct raster *) 0, 0, 0);
+}
+
+int
+rcons_alloc_attr(id, fg, bg, flags, attrp)
+	void *id;
+	int fg, bg, flags;
+	long *attrp;
+{
+	if (flags & (WSATTR_HILIT | WSATTR_BLINK |
+		     WSATTR_UNDERLINE | WSATTR_WSCOLORS))
+		return (EINVAL);
+	if (flags & WSATTR_REVERSE)
+		*attrp = 1;
+	else
+		*attrp = 0;
+	return (0);
 }

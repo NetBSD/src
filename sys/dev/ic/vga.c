@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.2 1998/04/07 16:35:42 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.3 1998/05/14 20:49:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -43,6 +43,7 @@
 
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
+#include <dev/ic/pcdisplay.h>
 
 struct vgascreen {
 	LIST_ENTRY(vgascreen) next;
@@ -59,10 +60,6 @@ struct vgascreen {
 
 	int	cursoron;		/* cursor displayed? */
 	int	vc_ccol, vc_crow;	/* current cursor position */
-
-	char	vc_so;			/* in standout mode? */
-	char	vc_at;			/* normal attributes */
-	char	vc_so_at;		/* standout attributes */
 };
 
 struct vga_config {
@@ -78,16 +75,17 @@ static struct vgascreen vga_console_screen;
 static struct vga_config vga_console_vc;
 
 void vga_init_screen __P((struct vgascreen *, const struct wsscreen_descr *,
-			  int));
+			  int, long *));
 void vga_init __P((struct vga_config *, bus_space_tag_t,
 		   bus_space_tag_t));
 
 static void	vga_cursor __P((void *, int, int, int));
-static void	vga_putstr __P((void *, int, int, char *, int));
+static void	vga_putstr __P((void *, int, int, char *, int, long));
 static void	vga_copycols __P((void *, int, int, int,int));
-static void	vga_erasecols __P((void *, int, int, int));
+static void	vga_erasecols __P((void *, int, int, int, long));
 static void	vga_copyrows __P((void *, int, int, int));
-static void	vga_eraserows __P((void *, int, int));
+static void	vga_eraserows __P((void *, int, int, long));
+static int	vga_alloc_attr __P((void *, int, int, int, long *));
 
 const struct wsdisplay_emulops vga_emulops = {
 	vga_cursor,
@@ -96,34 +94,81 @@ const struct wsdisplay_emulops vga_emulops = {
 	vga_erasecols,
 	vga_copyrows,
 	vga_eraserows,
+	vga_alloc_attr
+};
+
+/*
+ * translate WS(=ANSI) color codes to standard pc ones
+ */
+static char fgansitopc[] = {
+#ifdef __alpha__
+	/*
+	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
+	 * XXX We should probably not bother with this
+	 * XXX (reinitialize the palette registers).
+	 */
+	FG_BLACK, FG_BLUE, FG_GREEN, FG_CYAN, FG_RED,
+	FG_MAGENTA, FG_BROWN, FG_LIGHTGREY
+#else
+	FG_BLACK, FG_RED, FG_GREEN, FG_BROWN, FG_BLUE,
+	FG_MAGENTA, FG_CYAN, FG_LIGHTGREY
+#endif
+}, bgansitopc[] = {
+#ifdef __alpha__
+	BG_BLACK, BG_BLUE, BG_GREEN, BG_CYAN, BG_RED,
+	BG_MAGENTA, BG_BROWN, BG_LIGHTGREY
+#else
+	BG_BLACK, BG_RED, BG_GREEN, BG_BROWN, BG_BLUE,
+	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
+#endif
 };
 
 const struct wsscreen_descr vga_stdscreen = {
 	"80x25", 80, 25,
 	&vga_emulops,
-	8, 16
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+}, vga_stdscreen_mono = {
+	"80x25", 80, 25,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr vga_50lscreen = {
 	"80x50", 80, 50,
 	&vga_emulops,
-	8, 8
+	8, 8,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+}, vga_50lscreen_mono = {
+	"80x50", 80, 50,
+	&vga_emulops,
+	8, 8,
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_stdscreen,
 	&vga_50lscreen,
 	/* XXX other formats, graphics screen? */
+}, *_vga_scrlist_mono[] = {
+	&vga_stdscreen_mono,
+	&vga_50lscreen_mono,
+	/* XXX other formats, graphics screen? */
 };
 
-struct wsscreen_list vga_screenlist = {
-	sizeof(_vga_scrlist) / sizeof(struct wsscreen_descr *), _vga_scrlist
+const struct wsscreen_list vga_screenlist = {
+	sizeof(_vga_scrlist) / sizeof(struct wsscreen_descr *),
+	_vga_scrlist
+}, vga_screenlist_mono = {
+	sizeof(_vga_scrlist_mono) / sizeof(struct wsscreen_descr *),
+	_vga_scrlist_mono
 };
 
 static int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static int	vga_mmap __P((void *, off_t, int));
 static int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *));
+				      void **, int *, int *, long *));
 static void	vga_free_screen __P((void *, void *));
 static void	vga_show_screen __P((void *, void *));
 static int	vga_load_font __P((void *, void *, int, int, int, void *));
@@ -188,13 +233,15 @@ bad:
 }
 
 void
-vga_init_screen(scr, type, existing)
+vga_init_screen(scr, type, existing, attrp)
 	struct vgascreen *scr;
 	const struct wsscreen_descr *type;
 	int existing;
+	long *attrp;
 {
 	struct vga_config *vc = scr->cfg;
 	int cpos = 0;
+	int res;
 
 	scr->type = type;
 
@@ -210,18 +257,19 @@ vga_init_screen(scr, type, existing)
 	scr->vc_crow = cpos / type->ncols;
 	scr->vc_ccol = cpos % type->ncols;
 
-	scr->vc_so = 0;
 #ifdef __alpha__
-	/*
-	 * XXX DEC HAS SWITCHED THE CODES FOR BLUE AND RED!!!
-	 * XXX Therefore, though the comments say "blue bg", the code uses
-	 * XXX the value for a red background!
-	 */
-	scr->vc_at = 0x40 | 0x0f;		/* blue bg|white fg */
-	scr->vc_so_at = 0x40 | 0x0f | 0x80;	/* blue bg|white fg|blink */
-#else
-	scr->vc_at = 0x00 | 0xf;		/* black bg|white fg */
-	scr->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
+	if (!vc->hdl.mono)
+		/*
+		 * DEC firmware uses a blue background.
+		 */
+		res = vga_alloc_attr(scr, WSCOL_WHITE, WSCOL_BLUE,
+				     WSATTR_WSCOLORS, attrp);
+	else
+#endif
+	res = vga_alloc_attr(scr, 0, 0, 0, attrp);
+#ifdef DIAGNOSTIC
+	if (res)
+		panic("vga_init_screen: attribute botch");
 #endif
 
 	scr->mem = NULL;
@@ -290,7 +338,7 @@ vga_common_attach(self, iot, memt, type)
 	}
 
 	aa.console = console;
-	aa.scrdata = &vga_screenlist;
+	aa.scrdata = (vc->hdl.mono ? &vga_screenlist_mono : &vga_screenlist);
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
 
@@ -302,19 +350,24 @@ vga_cnattach(iot, memt, type, check)
 	bus_space_tag_t iot, memt;
 	int type, check;
 {
+	long defattr;
+	const struct wsscreen_descr *scr;
+
 	if (check && !vga_common_probe(iot, memt))
 		return (ENXIO);
 
 	/* set up bus-independent VGA configuration */
 	vga_init(&vga_console_vc, iot, memt);
 	vga_console_screen.cfg = &vga_console_vc;
-	vga_init_screen(&vga_console_screen, &vga_stdscreen, 1);
+	scr = vga_console_vc.hdl.mono ? &vga_stdscreen_mono : &vga_stdscreen;
+	vga_init_screen(&vga_console_screen, scr, 1, &defattr);
 
 	vga_console_vc.active = &vga_console_screen;
 
-	wsdisplay_cnattach(&vga_stdscreen, &vga_console_screen,
+	wsdisplay_cnattach(scr, &vga_console_screen,
 			   vga_console_screen.vc_ccol,
-			   vga_console_screen.vc_crow);
+			   vga_console_screen.vc_crow,
+			   defattr);
 
 	vgaconsole = 1;
 	vga_console_type = type;
@@ -381,11 +434,12 @@ vga_mmap(v, offset, prot)
 }
 
 int
-vga_alloc_screen(v, type, cookiep, curxp, curyp)
+vga_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	void *v;
 	const struct wsscreen_descr *type;
 	void **cookiep;
 	int *curxp, *curyp;
+	long *defattrp;
 {
 	struct vga_config *vc = v;
 	struct vgascreen *scr;
@@ -402,14 +456,14 @@ vga_alloc_screen(v, type, cookiep, curxp, curyp)
 
 	scr = malloc(sizeof(struct vgascreen), M_DEVBUF, M_WAITOK);
 	scr->cfg = vc;
-	vga_init_screen(scr, type, vc->nscreens == 0);
+	vga_init_screen(scr, type, vc->nscreens == 0, defattrp);
 
 	if (vc->nscreens == 1)
 		vc->active = scr;
 	else {
 		scr->mem = malloc(type->ncols * type->nrows * 2,
 				  M_DEVBUF, M_WAITOK);
-		vga_eraserows(scr, 0, type->nrows);
+		vga_eraserows(scr, 0, type->nrows, *defattrp);
 	}
 
 	*cookiep = scr;
@@ -528,21 +582,20 @@ vga_cursor(id, on, row, col)
 }
 
 static void
-vga_putstr(id, row, col, cp, len)
+vga_putstr(id, row, col, cp, len, attr)
 	void *id;
 	int row, col;
 	char *cp;
 	int len;
+	long attr;
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;
 	bus_space_tag_t memt = vc->hdl.vh_memt;
 	bus_space_handle_t memh = vc->hdl.vh_memh;
 	int i, off;
-	char attr;
 
 	off = row * scr->type->ncols + col;
-	attr = (scr->vc_so ? scr->vc_so_at : scr->vc_at);
 
 	if (scr == vc->active) {
 		off *= 2;
@@ -582,9 +635,10 @@ vga_copycols(id, row, srccol, dstcol, ncols)
 }
 
 static void
-vga_erasecols(id, row, startcol, ncols)
+vga_erasecols(id, row, startcol, ncols, fillattr)
 	void *id;
 	int row, startcol, ncols;
+	long fillattr;
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;
@@ -596,7 +650,7 @@ vga_erasecols(id, row, startcol, ncols)
 
 	off = row * scr->type->ncols + startcol;
 
-	val = (scr->vc_at << 8) | ' ';
+	val = (fillattr << 8) | ' ';
 
 	if (scr == vc->active)
 		bus_space_set_region_2(memt, memh, off * 2, val, ncols);
@@ -629,9 +683,10 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 }
 
 static void
-vga_eraserows(id, startrow, nrows)
+vga_eraserows(id, startrow, nrows, fillattr)
 	void *id;
 	int startrow, nrows;
+	long fillattr;
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;
@@ -644,11 +699,47 @@ vga_eraserows(id, startrow, nrows)
 	off = startrow * scr->type->ncols;
 	count = nrows * scr->type->ncols;
 
-	val = (scr->vc_at << 8) | ' ';
+	val = (fillattr << 8) | ' ';
 
 	if (scr == vc->active)
 		bus_space_set_region_2(memt, memh, off * 2, val, count);
 	else
 		for (i = 0; i < count; i++)
 			scr->mem[off + i] = val;
+}
+
+static int
+vga_alloc_attr(id, fg, bg, flags, attrp)
+	void *id;
+	int fg, bg;
+	int flags;
+	long *attrp;
+{
+	struct vgascreen *scr = id;
+	struct vga_config *vc = scr->cfg;
+
+	if (vc->hdl.mono) {
+		if (flags & WSATTR_WSCOLORS)
+			return (EINVAL);
+		if (flags & WSATTR_REVERSE)
+			*attrp = 0x70;
+		else
+			*attrp = 0x07;
+		if (flags & WSATTR_UNDERLINE)
+			*attrp |= FG_UNDERLINE;
+		if (flags & WSATTR_HILIT)
+			*attrp |= FG_INTENSE;
+	} else {
+		if (flags & (WSATTR_UNDERLINE | WSATTR_REVERSE))
+			return (EINVAL);
+		if (flags & WSATTR_WSCOLORS)
+			*attrp = fgansitopc[fg] | bgansitopc[bg];
+		else
+			*attrp = 7;
+		if (flags & WSATTR_HILIT)
+			*attrp += 8;
+	}
+	if (flags & WSATTR_BLINK)
+		*attrp |= FG_BLINK;
+	return (0);
 }

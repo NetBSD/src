@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rinit.c,v 1.1 1998/03/22 14:24:02 drochner Exp $ */
+/* $NetBSD: wscons_rinit.c,v 1.2 1998/05/14 20:49:56 drochner Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -127,7 +127,6 @@ rcons_init(rc, mrow, mcol)
 			rc->rc_raswidth = i;
 	}
 
-	rc->rc_ras_blank = RAS_CLEAR;
 	rc->rc_bits = 0;
 
 	/* If cursor position given, assume it's there and drawn. */
