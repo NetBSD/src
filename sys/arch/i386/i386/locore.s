@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.9 1993/10/09 23:26:30 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.10 1993/10/09 23:36:17 mycroft Exp $
  */
 
 
@@ -1399,11 +1399,8 @@ ENTRY(longjmp)
 ENTRY(setrq)
 	movl	4(%esp),%eax
 	cmpl	$0,P_RLINK(%eax)	# should not be on q already
-	je	1f
-	pushl	$2f
-	call	_panic
-	/*NOTREACHED*/
-1:	movzbl	P_PRI(%eax),%edx
+	jne	1f
+	movzbl	P_PRI(%eax),%edx
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
 	shll	$3,%edx
@@ -1414,6 +1411,9 @@ ENTRY(setrq)
 	movl	%eax,P_RLINK(%edx)
 	movl	%eax,P_LINK(%ecx)
 	ret
+1:	pushl	$2f
+	call	_panic
+	/*NOTREACHED*/
 2:	.asciz	"setrq"
 
 /*
@@ -1426,11 +1426,8 @@ ENTRY(remrq)
 	movzbl	P_PRI(%eax),%edx
 	shrl	$2,%edx
 	btrl	%edx,_whichqs		# clear full bit, panic if clear already
-	jb	1f
-	pushl	$3f
-	call	_panic
-	/*NOTREACHED*/
-1:	pushl	%edx
+	jnb	1f
+	pushl	%edx
 	movl	P_LINK(%eax),%ecx	# unlink process
 	movl	P_RLINK(%eax),%edx
 	movl	%edx,P_RLINK(%ecx)
@@ -1447,6 +1444,9 @@ ENTRY(remrq)
 	btsl	%edx,_whichqs
 2:	movl	$0,P_RLINK(%eax)	# zap reverse link to indicate off list
 	ret
+1:	pushl	$3f
+	call	_panic
+	/*NOTREACHED*/
 3:	.asciz	"remrq"
 
 /*
