@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.rm.h - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.rm.h,v 1.2 1993/08/02 17:16:53 mycroft Exp $
+ */
 
 /* Level location types */
 #define	HWALL 1

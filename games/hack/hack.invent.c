@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.invent.c - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.invent.c,v 1.3 1993/08/02 17:17:15 mycroft Exp $";
+#endif /* not lint */
 
 #include	"hack.h"
 #include	<stdio.h>

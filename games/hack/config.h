@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* config.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: config.h,v 1.2 1993/08/02 17:16:36 mycroft Exp $
+ */
 
 #include "pathnames.h"
 

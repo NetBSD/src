@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.func_tab.h - version 1.0.2 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.func_tab.h,v 1.2 1993/08/02 17:16:43 mycroft Exp $
+ */
 
 struct func_tab {
 	char f_char;

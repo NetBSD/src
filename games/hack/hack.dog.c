@@ -1,5 +1,10 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* hack.dog.c - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ */
+
+#ifndef lint
+static char rcsid[] = "$Id: hack.dog.c,v 1.2 1993/08/02 17:17:07 mycroft Exp $";
+#endif /* not lint */
 
 #include	"hack.h"
 #include	"hack.mfndpos.h"

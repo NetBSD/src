@@ -1,3 +1,5 @@
+/*	$Id: hack.onames.h,v 1.2 1993/08/02 17:17:33 mycroft Exp $ */
+
 #define	STRANGE_OBJECT	0
 #define	AMULET_OF_YENDOR	1
 #define	FOOD_RATION	2

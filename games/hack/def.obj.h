@@ -1,5 +1,8 @@
-/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
-/* def.obj.h - version 1.0.3 */
+/*
+ * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ *
+ *	$Id: def.obj.h,v 1.2 1993/08/02 17:16:49 mycroft Exp $
+ */
 
 struct obj {
 	struct obj *nobj;
