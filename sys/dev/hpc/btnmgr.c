@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.5 2002/03/17 19:40:56 atatat Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.5.4.1 2002/05/16 12:21:39 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.5 2002/03/17 19:40:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.5.4.1 2002/05/16 12:21:39 gehenna Exp $");
 
 #define BTNMGRDEBUG
 
@@ -71,8 +71,6 @@ int	btnmgr_debug = BTNMGRDEBUG_CONF;
 #define DPRINTFN(n, arg)
 #endif
 
-cdev_decl(btnmgr);
-
 struct btnmgr_softc {
 	struct device sc_dev;
 	config_hook_tag	sc_hook_tag;
@@ -94,6 +92,19 @@ static int btnmgr_hook(void *, int, long, void *);
 struct cfattach btnmgr_ca = {
 	sizeof(struct btnmgr_softc), btnmgrmatch, btnmgrattach
 };
+
+#ifdef notyet
+dev_type_open(btnmgropen);
+dev_type_close(btnmgrclose);
+dev_type_read(btnmgrread);
+dev_type_write(btnmgrwrite);
+dev_type_ioctl(btnmgrioctl);
+
+const struct cdevsw btnmgr_cdevsw = {
+	btnmgropen, btnmgrclose, btnmgrread, btnmgrwrite, btnmgrioctl,
+	nostop, notty, nopoll, nommap,
+};
+#endif /* notyet */
 
 /* wskbd accessopts */
 int	btnmgr_wskbd_enable(void *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.24 2002/04/05 18:27:48 bouyer Exp $	*/
+/*	$NetBSD: iop.c,v 1.24.2.1 2002/05/16 12:20:42 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.24 2002/04/05 18:27:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.24.2.1 2002/05/16 12:20:42 gehenna Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -106,6 +106,15 @@ static struct	i2o_systab *iop_systab;
 static int	iop_systab_size;
 
 extern struct cfdriver iop_cd;
+
+dev_type_open(iopopen);
+dev_type_close(iopclose);
+dev_type_ioctl(iopioctl);
+
+const struct cdevsw iop_cdevsw = {
+	iopopen, iopclose, noread, nowrite, iopioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 #define	IC_CONFIGURE	0x01
 #define	IC_PRIORITY	0x02
@@ -239,8 +248,6 @@ static void	iop_tfn_print(struct iop_softc *, struct i2o_fault_notify *);
 #ifdef I2ODEBUG
 static void	iop_reply_print(struct iop_softc *, struct i2o_reply *);
 #endif
-
-cdev_decl(iop);
 
 static inline u_int32_t
 iop_inl(struct iop_softc *sc, int off)
