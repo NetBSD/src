@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.119 1999/05/07 21:19:06 hwr Exp $
+$NetBSD: pcidevs,v 1.120 1999/05/17 17:07:00 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -959,6 +959,8 @@ product NEC POWERVR2	0x0046	PowerVR PCX2
 
 /* Neomagic products */
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
+product NEOMAGIC NMMM256AV_VGA	0x0005	MagicMedia 256AV VGA
+product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
