@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.70 2002/01/21 23:01:55 jdolecek Exp $	*/
+/*	$NetBSD: print.c,v 1.71 2002/02/21 19:31:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.70 2002/01/21 23:01:55 jdolecek Exp $");
+__RCSID("$NetBSD: print.c,v 1.71 2002/02/21 19:31:03 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -728,8 +728,8 @@ cputime(k, ve, mode)
 	int mode;
 {
 	VAR *v;
-	long secs;
-	long psecs;	/* "parts" of a second. first micro, then centi */
+	int32_t secs;
+	int32_t psecs;	/* "parts" of a second. first micro, then centi */
 	int fmtlen;
 
 	v = ve->var;
@@ -772,8 +772,8 @@ cputime(k, ve, mode)
 				v->width = fmtlen;
 		}
 	} else {
-		printf("%*ld:%02ld.%02ld", v->width - 6, secs / SECSPERMIN,
-		    secs % SECSPERMIN, psecs);
+		printf("%*ld:%02ld.%02ld", v->width - 6, (long)(secs / SECSPERMIN),
+		    (long)(secs % SECSPERMIN), (long)psecs);
 	}
 }
 
