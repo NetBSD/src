@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.21 1997/05/15 07:24:37 mellon Exp $	*/
+/*	$NetBSD: scc.c,v 1.22 1997/05/25 10:28:22 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -317,6 +317,7 @@ static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
 void scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
+void scc_oconsinit __P((struct scc_softc *sc, dev_t dev));
 
 
 /*
