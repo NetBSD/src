@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.16 1997/07/20 18:53:10 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.17 1997/07/30 05:01:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.16 1997/07/20 18:53:10 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.17 1997/07/30 05:01:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,8 @@ printlong(dp)
 			(void)printf("%*u ", dp->s_inode, sp->st_ino);
 		if (f_size)
 			(void)printf("%*qd ",
-			    dp->s_block, howmany(sp->st_blocks, blocksize));
+			    dp->s_block,
+			    (long long)howmany(sp->st_blocks, blocksize));
 		(void)strmode(sp->st_mode, buf);
 		np = p->fts_pointer;
 		(void)printf("%s %*u %-*s  %-*s  ", buf, dp->s_nlink,
@@ -118,9 +119,11 @@ printlong(dp)
 			    major(sp->st_rdev), minor(sp->st_rdev));
 		else if (dp->bcfile)
 			(void)printf("%*s%*qd ",
-			    8 - dp->s_size, "", dp->s_size, sp->st_size);
+			    8 - dp->s_size, "", dp->s_size,
+			    (long long)sp->st_size);
 		else
-			(void)printf("%*qd ", dp->s_size, sp->st_size);
+			(void)printf("%*qd ", dp->s_size,
+			    (long long)sp->st_size);
 		if (f_accesstime)
 			printtime(sp->st_atime);
 		else if (f_statustime)
@@ -216,7 +219,8 @@ printaname(p, inodefield, sizefield)
 		chcnt += printf("%*u ", (int)inodefield, sp->st_ino);
 	if (f_size)
 		chcnt += printf("%*qd ",
-		    (int)sizefield, howmany(sp->st_blocks, blocksize));
+		    (int)sizefield,
+		    (long long)howmany(sp->st_blocks, blocksize));
 	chcnt += printf("%s", p->fts_name);
 	if (f_type)
 		chcnt += printtype(sp->st_mode);
