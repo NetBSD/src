@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.6.4.1 1997/11/11 01:35:01 mellon Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.6.4.2 1998/01/29 12:19:15 mellon Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2212,9 +2212,7 @@ adb_setup_hw_type(void)
 	case 44:	/* IIvi */
 	case 45:	/* Performa 600 */
 	case 48:	/* IIvx */
-	case 49:	/* Color Classic - not sure if IIsi or not */
 	case 62:	/* Performa 460/465/467 */
-	case 83:	/* Color Classic II - not sure if IIsi or not */
 		adbHardware = ADB_HW_IISI;
 		printf_intr("adb: using IIsi series hardware support\n");
 		break;
@@ -2242,10 +2240,12 @@ adb_setup_hw_type(void)
 		pm_setup_adb();
 		printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
 		break;
+	case 49:	/* Color Classic */
 	case 56:	/* LC 520 */
 	case 60:	/* Centris 660AV */
 	case 78:	/* Quadra 840AV */
 	case 80:	/* LC 550, Performa 550 */
+	case 83:	/* Color Classic II */
 	case 89:	/* LC 475, Performa 475/476 */
 	case 92:	/* LC 575, Performa 575/577/578 */
 	case 94:	/* Quadra 605 */
@@ -2270,8 +2270,8 @@ adb_setup_hw_type(void)
 	case 44:	/* IIvi */
 	case 45:	/* Performa 600 */
 	case 48:	/* IIvx */
-	case 49:	/* Color Classic - not sure if IIsi or not */
-	case 83:	/* Color Classic II - not sure if IIsi or not */
+	case 49:	/* Color Classic */
+	case 83:	/* Color Classic II */
 	case 56:	/* LC 520 */
 	case 78:	/* Quadra 840AV */
 	case 80:	/* LC 550, Performa 550 */
