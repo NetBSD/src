@@ -1,10 +1,12 @@
 #	@(#)Makefile	6.2 (Berkeley) 6/30/90
 
 DIR=	usd/21.msdiffs
-SRCS=	ms.diffs
-MACROS=	-msU
+DOC=	21.msdiffs
 
-paper.${PRINTER}: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+SRCS=	ms.diffs
+MACROS=	-ms
 
 .include <bsd.doc.mk>
+
+${DOC}.${PRINTER}: ${SRCS}
+	${ROFF} ${SRCS} > ${.TARGET}
