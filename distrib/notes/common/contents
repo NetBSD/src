@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.10 1999/04/06 14:49:01 minoura Exp $
+.\"	$NetBSD: contents,v 1.11 1999/04/22 18:56:55 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,6 +92,14 @@ directory exists to hold a copy of the
 .Nx
 .Xr release 7
 standard.
+.		It Pa instkernel/
+.No contains a Pa netbsd.gz
+installation kernel; this is the same installer kernel as in all the
+other install
+images, but without the various boot program and filesystem wrappers.
+It can be netbooted or diskbooted from a previous installation. Note: there is
+no need to ungzip this image.
+
 .		It Pa misc/
 contains
 .Pa GENERIC.fs ,
