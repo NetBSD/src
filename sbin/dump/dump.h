@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.32 2001/12/25 12:06:26 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.33 2001/12/30 04:03:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -109,6 +109,7 @@ long	tsize;		/* tape size in 0.1" units */
 long	asize;		/* number of 0.1" units written on current tape */
 int	etapes;		/* estimated number of tapes */
 int	nonodump;	/* if set, do not honor UF_NODUMP user flags */
+int	unlimited;	/* if set, write to end of medium */
 
 extern int	density;	/* density in 0.1" units */
 extern int	notify;		/* notify operator flag */
