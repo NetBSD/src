@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.3 2000/04/15 06:29:25 veego Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -53,6 +53,8 @@
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
 
+#include <dev/pcmcia/pcmciareg.h>
+
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
@@ -91,7 +93,6 @@ static struct csdev {
 	cardbusreg_t	reg;
 	int		type;
 } csdevs[] = {
-	/* example entry */
 	{ CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
 	{ CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
@@ -117,12 +118,18 @@ com_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if(CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_COMMUNICATIONS &&
-	   CARDBUS_SUBCLASS(ca->ca_class) == CARDBUS_SUBCLASS_COMMUNICATIONS_SERIAL) {
-		if(find_csdev(ca) != NULL)
-			return 10;
-		return 1;
-	}
+	/* known devices are ok */
+	if(find_csdev(ca) != NULL)
+	    return 10;
+
+	/* as are serial devices with a known UART */
+	if(ca->ca_cis.funcid == PCMCIA_FUNCTION_SERIAL &&
+	   ca->ca_cis.funce.serial.uart_present != 0 &&
+	   (ca->ca_cis.funce.serial.uart_type == 0 ||	/* 8250 */
+	    ca->ca_cis.funce.serial.uart_type == 1 ||	/* 16450 */
+	    ca->ca_cis.funce.serial.uart_type == 2))	/* 16550 */
+	    return 1;
+
 	return 0;
 }
 
