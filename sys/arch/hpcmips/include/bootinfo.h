@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 1999/09/23 08:30:58 takemura Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 2001/01/21 09:11:28 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -80,3 +80,15 @@ extern struct bootinfo *bootinfo;
 
 #define BIFB_D2_M2L_0x2		7
 #define BIFBN_D2_M2L_0x2	"D2_M2L_0x2"
+
+#define BIFB_D4_M2L_F		8
+#define BIFBN_D4_M2L_F		"D4_M2L_F"
+
+#define BIFB_D4_M2L_Fx2		9
+#define BIFBN_D4_M2L_Fx2	"D4_M2L_Fx2"
+
+#define BIFB_D4_M2L_0		10
+#define BIFBN_D4_M2L_0		"D4_M2L_0"
+
+#define BIFB_D4_M2L_0x2		11
+#define BIFBN_D4_M2L_0x2	"D4_M2L_0x2"
