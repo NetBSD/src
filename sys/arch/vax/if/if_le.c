@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 1998/01/12 20:52:34 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 1998/01/24 14:17:02 ragge Exp $	*/
 
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
 
@@ -97,7 +97,7 @@ extern u_long le_ioaddr;	/* le_iomem is virt, le_ioaddr is phys */
 #define LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define LE_DELAY(x)	DELAY(x)
 
-int lematch __P((struct device *, void *, void *));
+int lematch __P((struct device *, struct cfdata *, void *));
 void leattach __P((struct device *, struct device *, void *));
 
 int leintr __P((void *sc));
@@ -152,11 +152,11 @@ lehwinit(sc)
 }
 
 int
-lematch(parent, match, aux)
+lematch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/*

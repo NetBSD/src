@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.15 1998/01/12 20:52:41 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.16 1998/01/24 14:16:47 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -84,7 +84,7 @@ struct ra_softc {
 	int	ra_isafloppy;	/* unit is a floppy disk */
 };
 
-int	ramatch __P((struct device *, void *, void *));
+int	ramatch __P((struct device *, struct cfdata *, void *));
 void	raattach __P((struct device *, struct device *, void *));
 void	radgram __P((struct device *, struct mscp *, struct mscp_softc *));
 void	raiodone __P((struct device *, struct buf *));
@@ -145,11 +145,11 @@ extern struct cfdriver ra_cd;
 extern int cold;
 
 int
-ramatch(parent, match, aux)
+ramatch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct	cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata *cf = match;
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 

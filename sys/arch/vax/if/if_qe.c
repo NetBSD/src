@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.23 1998/01/12 20:52:36 thorpej Exp $ */
+/*	$NetBSD: if_qe.c,v 1.24 1998/01/24 14:17:00 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -244,7 +244,7 @@ struct	qe_softc {
 	int	qe_restarts;		/* timeouts			*/
 };
 
-int	qematch __P((struct device *, void *, void *));
+int	qematch __P((struct device *, struct cfdata *, void *));
 void	qeattach __P((struct device *, struct device *, void *));
 void	qereset __P((int));
 void	qeinit __P((struct qe_softc *));
@@ -279,11 +279,12 @@ extern struct cfdriver qe_cd;
  * Probe the QNA to see if it's there
  */
 int
-qematch(parent, match, aux)
+qematch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct	cfdata *cf;
+	void	*aux;
 {
-	struct	qe_softc *sc = match;
+	struct	qe_softc sc;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
 	struct	qe_ring *rp;
@@ -300,14 +301,15 @@ qematch(parent, match, aux)
 	addr->qe_csr &= ~QE_RESET;
 	addr->qe_vector = (ubasc->uh_lastiv -= 4);
 
+	bzero(&sc, sizeof(struct qe_softc));
 	/*
 	 * Map the communications area and the setup packet.
 	 */
-	sc->setupaddr =
-	    uballoc(ubasc, (caddr_t)sc->setup_pkt, sizeof(sc->setup_pkt), 0);
-	sc->rringaddr = (struct qe_ring *) uballoc(ubasc, (caddr_t)sc->rring,
+	sc.setupaddr =
+	    uballoc(ubasc, (caddr_t)sc.setup_pkt, sizeof(sc.setup_pkt), 0);
+	sc.rringaddr = (struct qe_ring *) uballoc(ubasc, (caddr_t)sc.rring,
 	    sizeof(struct qe_ring) * (NTOT+2), 0);
-	prp = (struct qe_ring *)UBAI_ADDR((int)sc->rringaddr);
+	prp = (struct qe_ring *)UBAI_ADDR((int)sc.rringaddr);
 
 	/*
 	 * The QNA will loop the setup packet back to the receive ring
@@ -315,18 +317,18 @@ qematch(parent, match, aux)
 	 * receive & transmit ring descriptors and link the setup packet
 	 * to them.
 	 */
-	qeinitdesc(sc->tring, (caddr_t)UBAI_ADDR(sc->setupaddr),
-	    sizeof(sc->setup_pkt));
-	qeinitdesc(sc->rring, (caddr_t)UBAI_ADDR(sc->setupaddr),
-	    sizeof(sc->setup_pkt));
+	qeinitdesc(sc.tring, (caddr_t)UBAI_ADDR(sc.setupaddr),
+	    sizeof(sc.setup_pkt));
+	qeinitdesc(sc.rring, (caddr_t)UBAI_ADDR(sc.setupaddr),
+	    sizeof(sc.setup_pkt));
 
-	rp = (struct qe_ring *)sc->tring;
+	rp = (struct qe_ring *)sc.tring;
 	rp->qe_setup = 1;
 	rp->qe_eomsg = 1;
 	rp->qe_flag = rp->qe_status1 = QE_NOTYET;
 	rp->qe_valid = 1;
 
-	rp = (struct qe_ring *)sc->rring;
+	rp = (struct qe_ring *)sc.rring;
 	rp->qe_flag = rp->qe_status1 = QE_NOTYET;
 	rp->qe_valid = 1;
 
@@ -336,9 +338,9 @@ qematch(parent, match, aux)
 	 * is placed in the setup packet in col. major order.
 	 */
 	for (i = 0; i < 6; i++)
-		sc->setup_pkt[i][1] = addr->qe_sta_addr[i];
+		sc.setup_pkt[i][1] = addr->qe_sta_addr[i];
 
-	qesetup(sc);
+	qesetup(&sc);
 	/*
 	 * Start the interface and wait for the packet.
 	 */
@@ -352,9 +354,8 @@ qematch(parent, match, aux)
 	/*
 	 * All done with the bus resources.
 	 */
-	ubarelse(ubasc, &sc->setupaddr);
-	ubarelse(ubasc, (int *)&sc->rringaddr);
-	sc->ipl = 0x15;
+	ubarelse(ubasc, &sc.setupaddr);
+	ubarelse(ubasc, (int *)&sc.rringaddr);
 	ua->ua_ivec = qeintr;
 	return 1;
 }
@@ -377,6 +378,7 @@ qeattach(parent, self, aux)
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
+	sc->ipl = 0x15;
 	sc->qe_vaddr = addr;
 	bcopy(sc->qe_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
