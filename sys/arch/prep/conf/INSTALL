@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.15 2002/04/17 02:22:54 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.16 2002/04/24 09:46:16 kleink Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -187,6 +187,7 @@ fd*	at fdc? drive ?
 
 # PCI network interfaces
 ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
@@ -207,6 +208,7 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
