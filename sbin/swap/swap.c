@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.13 1997/06/01 09:03:28 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.14 1997/06/05 23:08:14 pk Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -227,7 +227,7 @@ do_fstab()
 
 #define PRIORITYEQ	"priority="
 #define NFSMNTPT	"nfsmntpt="
-#define PATH_MOUNT	"/usr/sbin/mount_nfs"
+#define PATH_MOUNT	"/sbin/mount_nfs"
 	while (fp = getfsent()) {
 		char *spec;
 
