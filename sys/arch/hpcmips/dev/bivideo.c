@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.13 2000/12/03 13:43:40 takemura Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.14 2001/01/05 09:09:48 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.13 2000/12/03 13:43:40 takemura Exp $";
+    "$Id: bivideo.c,v 1.14 2001/01/05 09:09:48 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -66,6 +67,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <arch/hpcmips/dev/hpcfbio.h>
 #include <arch/hpcmips/dev/bivideovar.h>
 #include <arch/hpcmips/dev/hpccmapvar.h>
+
+#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
 
 /*
  *  global variables
@@ -376,9 +379,15 @@ bivideo_ioctl(v, cmd, data, flag, p)
 			dispparam->max = 1;
 			dispparam->curval =
 			    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ? 1 : 0;
+			VPRINTF(("bivideo_ioctl: GETPARAM:BACKLIGHT:%d\n",
+				dispparam->curval));
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
+			VPRINTF(("bivideo_ioctl: GETPARAM:CONTRAST\n"));
+			return (EINVAL);
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			VPRINTF(("bivideo_ioctl: GETPARAM:BRIGHTNESS\n"));
+			return (EINVAL);
 		default:
 			return (EINVAL);
 		}
@@ -396,9 +405,15 @@ bivideo_ioctl(v, cmd, data, flag, p)
 			else
 				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
 			bivideo_update_powerstate(sc, PWRSTAT_BACKLIGHT);
+			VPRINTF(("bivideo_ioctl: SETPARAM:BACKLIGHT:%d\n",
+				(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
 			break;
 		case WSDISPLAYIO_PARAM_CONTRAST:
+			VPRINTF(("bivideo_ioctl: SETPARAM:CONTRAST\n"));
+			return (EINVAL);
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			VPRINTF(("mq200_ioctl: SETPARAM:BRIGHTNESS\n"));
+			return (EINVAL);
 		default:
 			return (EINVAL);
 		}
