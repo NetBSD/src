@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
+/*	$NetBSD: mtrmt.c,v 1.3 1996/08/08 09:16:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -228,14 +228,14 @@ rmtstatus()
 }
 
 int
-rmtioctl(cmd, count)
-	int cmd, count;
+rmtioctl(arg)
+	struct mtop *arg;
 {
 	char buf[256];
 
-	if (count < 0)
+	if (arg->mt_count < 0)
 		return (-1);
-	(void)sprintf(buf, "I%d\n%d\n", cmd, count);
+	(void)sprintf(buf, "I%d\n%d\n", arg->mt_op, arg->mt_count);
 	return (rmtcall("ioctl", buf));
 }
 
