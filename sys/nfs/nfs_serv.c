@@ -33,16 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         3       00090
- * --------------------         -----   ----------------------
- *
- * 08 Sep 92	Rick "gopher I"		Fix "truncate" (conflicting?)
- * 28 Aug 92	Arne Henrik Juul	Fixed NFS "create" bug
- * 02 Mar 92	Greg Hackney		Make NFS POSIX compliant (anon fix)
+ *	from: @(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
+ *	$Id: nfs_serv.c,v 1.4 1993/07/16 00:50:30 cgd Exp $
  */
 
 /*
