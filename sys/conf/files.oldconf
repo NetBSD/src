@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.37 1994/02/10 17:27:45 mycroft Exp $
+#	$Id: files.oldconf,v 1.38 1994/02/11 18:02:06 hpeyerl Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -140,13 +140,13 @@ netimp/if_imp.c		optional imp requires broken
 netimp/if_imphost.c	optional imp requires broken
 netimp/raw_imp.c	optional imp requires broken
 netinet/if_ether.c	optional ether inet
-netinet/igmp.c		standard
+netinet/igmp.c		optional inet
 netinet/in.c		optional inet
 netinet/in_pcb.c	optional inet
 netinet/in_proto.c	optional inet
 netinet/ip_icmp.c	optional inet
 netinet/ip_input.c	optional inet
-netinet/ip_mroute.c	standard
+netinet/ip_mroute.c	optional inet
 netinet/ip_output.c	optional inet
 netinet/raw_ip.c	optional inet
 netinet/tcp_debug.c	optional inet
