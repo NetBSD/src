@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2001/04/24 04:31:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2001/05/17 02:31:26 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -310,8 +310,6 @@ struct mem_region *mem, *avail, *orig;
 int memsize;
 
 static int memh = 0, vmemh = 0;	/* Handles to OBP devices */
-
-static int pmap_initialized;
 
 int avail_start, avail_end;	/* These are used by ps & family */
 
@@ -1430,8 +1428,6 @@ pmap_init()
 		pvh += s;
 	}
 
-	pmap_initialized = 1;
-
 	/* Setup a pool for additional pvlist structures */
 	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", 0,
 		  NULL, NULL, 0);
@@ -1490,8 +1486,7 @@ pmap_growkernel(maxkvaddr)
 			DPRINTF(PDB_GROW, 
 				("pmap_growkernel: extending %lx\n", kbreak));
 			pg = 0;
-			if (pmap_initialized ||
-			    !uvm_page_physget(&pg)) {
+			if (uvm.page_init_done || !uvm_page_physget(&pg)) {
 				vm_page_t page;
 				DPRINTF(PDB_GROW,
 ("pmap_growkernel: need to alloc page\n"));
@@ -1891,7 +1886,7 @@ pmap_kenter_pa(va, pa, prot)
 	pg = NULL;
 	while ((i = pseg_set(pm, va, tte.data.data, pg)) == 1) {
 		pg = NULL;
-		if (pmap_initialized || !uvm_page_physget(&pg)) {
+		if (uvm.page_init_done || !uvm_page_physget(&pg)) {
 			vm_page_t page;
 #ifdef NOTDEF_DEBUG
 			printf("pmap_kenter_pa: need to alloc page\n");
@@ -2166,7 +2161,7 @@ pmap_enter(pm, va, pa, prot, flags)
 #endif
 	while (pseg_set(pm, va, tte.data.data, pg) == 1) {
 		pg = NULL;
-		if (pmap_initialized || !uvm_page_physget(&pg)) {
+		if (uvm.page_init_done || !uvm_page_physget(&pg)) {
 			vm_page_t page;
 #ifdef NOTDEF_DEBUG
 			printf("pmap_enter: need to alloc page\n");
