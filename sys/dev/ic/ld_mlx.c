@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.1 2001/02/04 17:05:12 ad Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.2 2001/06/10 10:48:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,21 +113,7 @@ ld_mlx_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_maxqueuecnt = 1;
 	ld->sc_start = ld_mlx_start;
 	ld->sc_dump = ld_mlx_dump;
-
-	/*
-	 * Build synthetic geometry.
-	 */
 	ld->sc_secperunit = ms->ms_size;
-
-	if (ld->sc_secperunit > 0x200000) {
-		ld->sc_nheads = 255;
-		ld->sc_nsectors = 63;
-		ld->sc_ncylinders = ms->ms_size / (255 * 63);
-	} else {
-		ld->sc_nheads = 128;
-		ld->sc_nsectors = 32;
-		ld->sc_ncylinders = ms->ms_size / (128 * 32);
-	}
 
 	/*
 	 * Report on current status, and attach to the ld driver proper.
