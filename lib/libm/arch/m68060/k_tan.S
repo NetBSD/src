@@ -1,4 +1,4 @@
-/* $NetBSD: k_tan.S,v 1.2 1999/08/21 21:04:18 is Exp $ */
+/* $NetBSD: k_tan.S,v 1.3 1999/08/22 08:25:43 is Exp $ */
 
 /*
  * Dummy file. Real code is in fplsp_wrap.S.
