@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_opstats.h,v 1.3 1998/09/12 15:05:50 rvb Exp $	*/
+/*	$NetBSD: coda_opstats.h,v 1.4 1998/09/15 02:02:59 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/coda_opstats.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
+ * 	@(#) coda/coda_opstats.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.4 1998/09/15 02:03:00 rvb Exp $	*/
 
 /*
  * 
@@ -28,7 +28,7 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) cfs/cfs_vnodeops.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
+ * 	@(#) coda/coda_vnops.h,v 1.1.1.1 1998/08/29 21:26:46 rvb Exp $ 
  */
 
 /* 
@@ -48,6 +48,9 @@
 /*
  * HISTORY
  * $Log: coda_vnops.h,v $
+ * Revision 1.4  1998/09/15 02:03:00  rvb
+ * Final piece of rename cfs->coda
+ *
  * Revision 1.3  1998/09/12 15:05:49  rvb
  * Change cfs/CFS in symbols, strings and constants to coda/CODA
  * to avoid fs conflicts.

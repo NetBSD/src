@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.3 1998/09/12 15:05:49 rvb Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.4 1998/09/15 02:03:00 rvb Exp $	*/
 
 /*
  * 
@@ -47,6 +47,9 @@
 /*
  * HISTORY
  * $Log: coda_vfsops.c,v $
+ * Revision 1.4  1998/09/15 02:03:00  rvb
+ * Final piece of rename cfs->coda
+ *
  * Revision 1.3  1998/09/12 15:05:49  rvb
  * Change cfs/CFS in symbols, strings and constants to coda/CODA
  * to avoid fs conflicts.
@@ -193,12 +196,12 @@
 #include <sys/proc.h>
 #include <sys/select.h>
 
-#include <cfs/coda.h>
-#include <cfs/cnode.h>
-#include <cfs/cfs_vfsops.h>
-#include <cfs/cfs_venus.h>
-#include <cfs/cfs_subr.h>
-#include <cfs/coda_opstats.h>
+#include <coda/coda.h>
+#include <coda/cnode.h>
+#include <coda/coda_vfsops.h>
+#include <coda/coda_venus.h>
+#include <coda/coda_subr.h>
+#include <coda/coda_opstats.h>
 /* for VN_RDEV */
 #include <miscfs/specfs/specdev.h>
 
