@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.46 2005/01/31 16:55:00 hannken Exp $
+#	$NetBSD: VME147,v 1.47 2005/02/18 21:05:52 dsl Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -29,6 +29,7 @@ file-system 	CD9660
 
 #options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
 options 	INET

@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.25 2005/01/31 16:55:00 hannken Exp $
+#	$NetBSD: MMEYE,v 1.26 2005/02/18 21:05:52 dsl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -53,6 +53,7 @@ file-system 	FFS		# UFS
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	PROCFS		# /proc
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

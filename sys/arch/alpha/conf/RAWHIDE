@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.22 2005/02/11 08:25:53 dsl Exp $
+# $NetBSD: RAWHIDE,v 1.23 2005/02/18 21:05:50 dsl Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -29,7 +29,7 @@ file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
 
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 options 	INET
 options 	GATEWAY

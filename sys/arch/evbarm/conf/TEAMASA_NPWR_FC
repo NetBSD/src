@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.7 2005/02/12 10:23:21 rearnsha Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.8 2005/02/18 21:05:51 dsl Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -50,7 +50,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

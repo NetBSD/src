@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.44 2005/02/11 08:25:53 dsl Exp $
+#	$NetBSD: INSTALL,v 1.45 2005/02/18 21:05:51 dsl Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -54,7 +54,7 @@ file-system	KERNFS		# /kern
 #options 	NFSSERVER
 #options 	SOFTDEP		# FFS soft updates support
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.40 2005/02/11 08:25:56 dsl Exp $
+#	$NetBSD: FOUR_TTYS,v 1.41 2005/02/18 21:05:54 dsl Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -72,7 +72,7 @@ file-system	MFS		# memory-based filesystem
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.8 2005/02/11 08:25:54 dsl Exp $
+#	$NetBSD: IXDP425,v 1.9 2005/02/18 21:05:51 dsl Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -53,7 +53,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.42 2005/02/11 08:25:54 dsl Exp $
+#	$NetBSD: IQ80310,v 1.43 2005/02/18 21:05:51 dsl Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -49,7 +49,7 @@ file-system	PROCFS		# /proc
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20 2005/02/11 08:25:56 dsl Exp $
+# $NetBSD: INSTALL,v 1.21 2005/02/18 21:05:54 dsl Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.20 $"
+#ident 		"INSTALL-$Revision: 1.21 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -69,7 +69,7 @@ file-system	KERNFS		# /kern
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

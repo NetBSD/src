@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.28 2005/01/31 16:55:01 hannken Exp $
+#	$NetBSD: KLONDIKE,v 1.29 2005/02/18 21:05:53 dsl Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -53,6 +53,7 @@ file-system	NFS			# Network File System client
 
 options 	NFSSERVER		# Network File System server
 #options 	QUOTA			# file system quotas
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # networking options
 #options 	GATEWAY			# packet forwarding

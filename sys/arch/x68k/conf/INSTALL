@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.64 2005/02/11 08:25:56 dsl Exp $
+#	$NetBSD: INSTALL,v 1.65 2005/02/18 21:05:54 dsl Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.64 $"
+#ident 		"INSTALL-$Revision: 1.65 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -179,7 +179,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

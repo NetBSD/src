@@ -1,4 +1,4 @@
-#	$NetBSD: SALMON,v 1.22 2005/01/31 16:55:01 hannken Exp $
+#	$NetBSD: SALMON,v 1.23 2005/02/18 21:05:53 dsl Exp $
 #
 # SALMON: Phil Nelson's 2nd (test) pc532
 #
@@ -42,6 +42,7 @@ file-system 	KERNFS			# kernel file system; recommended
 #options 	QUOTA			# file system quotas
 options 	NFSSERVER		# Network File System server
 #options 	FASTLINKS		# fast symbolic links in FFS
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # networking options
 #eptions 	GATEWAY			# packet forwarding

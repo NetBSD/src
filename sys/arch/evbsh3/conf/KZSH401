@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.22 2004/11/10 17:54:04 christos Exp $
+#	$NetBSD: KZSH401,v 1.23 2005/02/18 21:05:51 dsl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -54,6 +54,7 @@ options 	EXEC_COFF	# COFF executables
 
 # File systems
 file-system 	FFS		# UFS
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 config		netbsd	root on ? type ?
 
