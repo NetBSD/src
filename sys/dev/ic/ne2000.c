@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.20 1999/09/27 04:14:06 enami Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.21 1999/09/27 04:52:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,8 +137,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	 *
 	 * NE1000 gets byte-wide DMA, NE2000 gets word-wide DMA.
 	 */
-	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS |
-	    (NE2000_USE_WORD(nsc->sc_type) ? ED_DCR_WTS : 0);
+	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS | (useword ? ED_DCR_WTS : 0);
 
 	dsc->test_mem = ne2000_test_mem;
 	dsc->ring_copy = ne2000_ring_copy;
