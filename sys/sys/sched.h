@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.3 2000/05/26 21:20:33 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.4 2000/05/27 13:51:38 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
     !defined(_ANSI_SOURCE)
+
+#include <sys/time.h>
+
 /*
  * Sleep queues.
  *
