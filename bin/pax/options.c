@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.28 2000/04/14 05:52:58 simonb Exp $	*/
+/*	$NetBSD: options.c,v 1.29 2000/07/04 17:17:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.28 2000/04/14 05:52:58 simonb Exp $");
+__RCSID("$NetBSD: options.c,v 1.29 2000/07/04 17:17:49 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: options.c,v 1.28 2000/04/14 05:52:58 simonb Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <getopt.h>
 #include "pax.h"
 #include "options.h"
 #include "cpio.h"
@@ -617,6 +618,107 @@ pax_options(argc, argv)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
+#define	OPT_USE_COMPRESS_PROGRAM	0
+#define	OPT_CHECKPOINT			1
+#define	OPT_UNLINK			2
+#define	OPT_HELP			3
+#define	OPT_ATIME_PRESERVE		4
+#define	OPT_FAST_READ			5
+#define	OPT_IGNORE_FAILED_READ		6
+#define	OPT_REMOVE_FILES		7
+#define	OPT_NULL			8
+#define	OPT_TOTALS			9
+#define	OPT_VERSION			10
+#define	OPT_EXCLUDE			11
+#define	OPT_BLOCK_COMPRESS		12
+#define	OPT_NORECURSE			13
+
+struct option tar_longopts[] = {
+	{ "block-size",		required_argument,	0,	'b' },
+	{ "create",		no_argument,		0,	'c' },	/* F */
+	/* -e -- no corresponding long option */
+	{ "file",		required_argument,	0,	'f' },
+	{ "dereference",	no_argument,		0,	'h' },
+	{ "one-file-system",	no_argument,		0,	'l' },
+	{ "modification-time",	no_argument,		0,	'm' },
+	{ "old-archive",	no_argument,		0,	'o' },
+	{ "portability",	no_argument,		0,	'o' },
+	{ "same-permissions",	no_argument,		0,	'p' },
+	{ "preserve-permissions", no_argument,		0,	'p' },
+	{ "preserve",		no_argument,		0,	'p' },
+	{ "append",		no_argument,		0,	'r' },	/* F */
+	{ "update",		no_argument,		0,	'u' },	/* F */
+	{ "list",		no_argument,		0,	't' },	/* F */
+	{ "verbose",		no_argument,		0,	'v' },
+	{ "interactive",	no_argument,		0,	'w' },
+	{ "confirmation",	no_argument,		0,	'w' },
+	{ "extract",		no_argument,		0,	'x' },	/* F */
+	{ "get",		no_argument,		0,	'x' },	/* F */
+	{ "gzip",		no_argument,		0,	'z' },
+	{ "gunzip",		no_argument,		0,	'z' },
+	{ "read-full-blocks",	no_argument,		0,	'B' },
+	{ "directory",		required_argument,	0,	'C' },
+	{ "tape-length",	required_argument,	0,	'L' },
+	{ "absolute-paths",	no_argument,		0,	'P' },
+	{ "exclude-from",	required_argument,	0,	'X' },
+	{ "compress",		no_argument,		0,	'Z' },
+	{ "uncompress",		no_argument,		0,	'Z' },
+	{ "unlink",		no_argument,		0,
+						OPT_UNLINK },
+#if 0 /* Not implemented */
+	{ "catenate",		no_argument,		0,	'A' },	/* F */
+	{ "concatenate",	no_argument,		0,	'A' },	/* F */
+	{ "diff",		no_argument,		0,	'd' },	/* F */
+	{ "compare",		no_argument,		0,	'd' },	/* F */
+	{ "use-compress-program", required_argument,	0,
+						OPT_USE_COMPRESS_PROGRAM },
+	{ "checkpoint",		no_argument,		0,
+						OPT_CHECKPOINT },
+	{ "help",		no_argument,
+						OPT_HELP },
+	{ "atime-preserve",	no_argument,
+						OPT_ATIME_PRESERVE },
+	{ "info-script",	required_argument,	0,	'F' },
+	{ "new-volume-script",	required_argument,	0,	'F' },
+	{ "fast-read",		no_argument,		0,
+						OPT_FAST_READ },
+	{ "incremental",	no_argument,		0,	'G' },
+	{ "listed-incremental",	required_argument,	0,	'g' },
+	{ "ignore-zeros",	no_argument,		0,	'i' },
+	{ "ignore-failed-read",	no_argument,		0,
+						OPT_IGNORE_FAILED_READ },
+	{ "keep-old-files",	no_argument,		0,	'k' },
+	{ "starting-file",	no_argument,		0,	'K' },
+	{ "multi-volume",	no_argument,		0,	'M' },
+	{ "after-date",		required_argument,	0,	'N' },
+	{ "newer",		required_argument,	0,	'N' },
+	{ "to-stdout",		no_argument,		0,	'O' },
+	{ "record-number",	no_argument,		0,	'R' },
+	{ "remove-files",	no_argument,		0,
+						OPT_REMOVE_FILES },
+	{ "same-order",		no_argument,		0,	's' },
+	{ "preserve-order",	no_argument,		0,	's' },
+	{ "sparse",		no_argument,		0,	'S' },
+	{ "files-from",		no_argument,		0,	'T' },
+	{ "null",		no_argument,		0,
+						OPT_NULL },
+	{ "totals",		no_argument,		0,
+						OPT_TOTALS },
+	{ "volume-name",	required_argument,	0,	'V' },
+	{ "label",		required_argument,	0,	'V' },
+	{ "version",		no_argument,		0,
+						OPT_VERSION },
+	{ "verify",		no_argument,		0,	'W' },
+	{ "exclude",		required_argument,	0,
+						OPT_EXCLUDE },
+	{ "block-compress",	no_argument,		0,
+						OPT_BLOCK_COMPRESS },
+	{ "norecurse",		no_argument,		0,
+						OPT_NORECURSE },
+#endif
+	{ 0,			0,			0,	0 },
+};
+
 #if __STDC__
 static void
 tar_options(int argc, char **argv)
@@ -633,7 +735,8 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:hlmoprutvwxzBC:LPX:Z014578"))
+	while ((c = getoldopt(argc, argv, "b:cef:hlmoprutvwxzBC:LPX:Z014578",
+	    tar_longopts, NULL))
 	    != -1)  {
 		switch(c) {
 		case 'b':
@@ -810,6 +913,9 @@ tar_options(argc, argv)
 		case '8':
 			arcname = DEV_8;
 			break;
+		case OPT_UNLINK:
+			/* Just ignore -- we always unlink first. */
+			break;
 		default:
 			tar_usage();
 			break;
@@ -881,8 +987,8 @@ cpio_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "ABC:E:H:I:LM:O:R:SVabcdfiklmoprstuv"))
-	    != -1)  {
+	while ((c = getoldopt(argc, argv,
+	    "ABC:E:H:I:LM:O:R:SVabcdfiklmoprstuv", NULL, NULL)) != -1)  {
 		switch(c) {
 		case 'A':
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.9 2000/04/14 05:52:58 simonb Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.10 2000/07/04 17:17:49 thorpej Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -11,21 +11,24 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getoldopt.c,v 1.9 2000/04/14 05:52:58 simonb Exp $");
+__RCSID("$NetBSD: getoldopt.c,v 1.10 2000/07/04 17:17:49 thorpej Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <sys/stat.h>
 #include "pax.h"
 #include "extern.h"
 
 int
-getoldopt(argc, argv, optstring)
+getoldopt(argc, argv, optstring, longopts, index)
 	int	argc;
 	char	**argv;
-	char	*optstring;
+	const char *optstring;
+	struct option *longopts;
+	int	*index;
 {
 	static char	*key;		/* Points to next keyletter */
 	static char	use_getopt;	/* !=0 if argv[1][0] was '-' */
@@ -44,7 +47,9 @@ getoldopt(argc, argv, optstring)
 	}
 
 	if (use_getopt)
-		return getopt(argc, argv, optstring);
+		return ((longopts != NULL) ?
+			getopt_long(argc, argv, optstring, longopts, index) :
+			getopt(argc, argv, optstring));
 
 	c = *key++;
 	if (c == '\0') {
