@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.1 2002/10/04 18:22:35 elric Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.2 2003/03/31 08:45:08 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.1 2002/10/04 18:22:35 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.2 2003/03/31 08:45:08 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,24 +287,18 @@ cgd_cipher_3des_init(int keylen, caddr_t key, int *blocksize)
 	struct	c3des_privdata *cp;
 	int	error = 0;
 
-printf("cgd_cipher_3des_init: enter (keylen=%d, blocksize=%d)\n",
-keylen, *blocksize);
 	if (!blocksize)
 		return NULL;
 	if (*blocksize == -1)
 		*blocksize = 64;
 	if (keylen != (DES_KEY_SZ * 3 * 8) || *blocksize != 64)
 		return NULL;
-printf("cgd_cipher_3des_init: about to malloc (keylen=%d, blocksize=%d)\n",
-keylen, *blocksize);
 	cp = malloc(sizeof(*cp), M_DEVBUF, 0);
 	if (!cp)
 		return NULL;
-printf("cgd_cipher_3des_init: successfully malloc'ed\n");
 	error  = des_key_sched((des_cblock *)key, cp->cp_key1);
 	error |= des_key_sched((des_cblock *)key + 1, cp->cp_key2);
 	error |= des_key_sched((des_cblock *)key + 2, cp->cp_key3);
-printf("cgd_cipher_3des_init: did the des_key_sched, error=%d\n", error);
 	if (error) {
 		free(cp, M_DEVBUF);
 		return NULL;
