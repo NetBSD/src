@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 1998/09/22 16:01:51 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 1998/10/30 05:27:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -450,7 +450,7 @@ read_mac_label(dev, strat, lp, osdep)
 			break;
 		}
 	}
-	lp->d_npartitions = maxslot+1;
+	lp->d_npartitions = ((maxslot >= RAW_PART) ? maxslot : RAW_PART) + 1;
 
 done:
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
