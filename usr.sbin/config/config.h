@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.47 2000/01/23 23:37:42 hubertf Exp $	*/
+/*	$NetBSD: config.h,v 1.48 2000/10/02 18:59:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,17 +55,11 @@
 #include <sys/cdefs.h>
 #include <paths.h>
 #else /* ...BSD */
-#if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
-#else /* ...STDC */
-#define	__P(protos)	()		/* traditional C preprocessor */    
-#endif /* ...STDC */
 #endif /* ...BSD */
 
-#if __STDC__
 #include <stdlib.h>
 #include <unistd.h>
-#endif
 
 /* These are really for MAKE_BOOTSTRAP but harmless. */
 #ifndef __dead
