@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.13 1997/07/04 21:24:00 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.13 1997/07/04 21:24:00 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,8 +148,8 @@ back_to_col_1()
     sigset_t sigset, osigset;
 
     sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    (void) sigaddset(&sigset, SIGINT);
+    (void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
     (void) tcgetattr(SHOUT, &tty);
     tty_normal = tty;
     tty.c_iflag &= ~INLCR;
@@ -157,7 +157,7 @@ back_to_col_1()
     (void) tcsetattr(SHOUT, TCSADRAIN, &tty);
     (void) write(SHOUT, "\r", 1);
     (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
-    sigprocmask(SIG_SETMASK, &osigset, NULL);
+    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 }
 
 /*
@@ -173,8 +173,8 @@ pushback(string)
     char    c;
 
     sigemptyset(&sigset);
-    sigaddset(&sigset, SIGINT);
-    sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    (void) sigaddset(&sigset, SIGINT);
+    (void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
     (void) tcgetattr(SHOUT, &tty);
     tty_normal = tty;
     tty.c_lflag &= ~(ECHOKE | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOCTL);
@@ -183,7 +183,7 @@ pushback(string)
     for (p = string; (c = *p) != '\0'; p++)
 	(void) ioctl(SHOUT, TIOCSTI, (ioctl_t) & c);
     (void) tcsetattr(SHOUT, TCSADRAIN, &tty_normal);
-    sigprocmask(SIG_SETMASK, &osigset, NULL);
+    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 }
 
 /*
@@ -430,11 +430,11 @@ free_items(items)
 	sigset_t sigset, osigset;\
 \
 	sigemptyset(&sigset);\
-	sigaddset(&sigset, SIGINT);\
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);\
+	(void) sigaddset(&sigset, SIGINT);\
+	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);\
 	free_items(items);\
 	items = NULL;\
-	sigprocmask(SIG_SETMASK, &osigset, NULL);\
+	(void) sigprocmask(SIG_SETMASK, &osigset, NULL);\
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.13 1998/07/28 02:23:39 mycroft Exp $	*/
+/*	$NetBSD: lex.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.13 1998/07/28 02:23:39 mycroft Exp $");
+__RCSID("$NetBSD: lex.c,v 1.14 1998/07/28 02:47:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1513,7 +1513,7 @@ again:
 		    goto again;
 		}
 		if (c > 0)
-		    memcpy(fbuf[buf] + off, ttyline, c * sizeof(Char));
+		    (void) memcpy(fbuf[buf] + off, ttyline, c * sizeof(Char));
 		numleft = 0;
 	    }
 	    else {

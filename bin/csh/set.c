@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.11 1998/07/28 02:23:40 mycroft Exp $	*/
+/*	$NetBSD: set.c,v 1.12 1998/07/28 02:47:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.11 1998/07/28 02:23:40 mycroft Exp $");
+__RCSID("$NetBSD: set.c,v 1.12 1998/07/28 02:47:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -854,8 +854,8 @@ plist(p)
 
     if (setintr) {
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	(void) sigaddset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
     }
 
     for (;;) {

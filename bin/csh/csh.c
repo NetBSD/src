@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.21 1998/07/28 02:23:37 mycroft Exp $	*/
+/*	$NetBSD: csh.c,v 1.22 1998/07/28 02:47:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.21 1998/07/28 02:23:37 mycroft Exp $");
+__RCSID("$NetBSD: csh.c,v 1.22 1998/07/28 02:47:19 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,6 @@ __RCSID("$NetBSD: csh.c,v 1.21 1998/07/28 02:23:37 mycroft Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-extern bool MapsAreInited;
-extern bool NLSMapsAreInited;
-
 /*
  * C Shell
  *
@@ -100,7 +97,6 @@ bool    batch = 0;
 bool    mflag = 0;
 bool    prompt = 1;
 bool    enterhist = 0;
-bool    tellwhat = 0;
 
 extern char **environ;
 
@@ -473,8 +469,8 @@ main(argc, argv)
 	    (void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGINT, pintr);
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void) sigaddset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_BLOCK, &sigset, NULL);
 	(void) signal(SIGTERM, SIG_IGN);
 	if (quitit == 0 && arginp == 0) {
 	    (void) signal(SIGTSTP, SIG_IGN);
@@ -545,8 +541,8 @@ notty:
 	    sigset_t osigset;
 
 	    sigemptyset(&sigset);
-	    sigaddset(&sigset, SIGINT);
-	    sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	    (void) sigaddset(&sigset, SIGINT);
+	    (void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
 
 	    setintr = 0;
 	    parintr = SIG_IGN;	/* Disable onintr */
@@ -559,7 +555,7 @@ notty:
 	    if (loginsh)
 		(void) srcfile(_PATH_DOTLOGIN, 0, 0);
 #endif
-	    sigprocmask(SIG_SETMASK, &osigset, NULL);
+	    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 	    setintr = osetintr;
 	    parintr = oparintr;
 	}
@@ -747,11 +743,11 @@ srcunit(unit, onlyown, hflg)
 
     if (setintr) {
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	(void) sigaddset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
     }
     /* Setup the new values of the state stuff saved above */
-    memcpy(&saveB, &B, sizeof(B));
+    (void) memcpy(&saveB, &B, sizeof(B));
     fbuf = NULL;
     fseekp = feobp = fblocks = 0;
     oSHIN = SHIN, SHIN = unit, arginp = 0, onelflg = 0;
@@ -767,14 +763,14 @@ srcunit(unit, onlyown, hflg)
      * interrupted.
      */
     if (setintr)
-	sigprocmask(SIG_SETMASK, &osigset, NULL);
+	(void) sigprocmask(SIG_SETMASK, &osigset, NULL);
     settell();
 
     if ((my_reenter = setexit()) == 0)
 	process(0);		/* 0 -> blow away on errors */
 
     if (setintr)
-	sigprocmask(SIG_SETMASK, &osigset, NULL);
+	(void) sigprocmask(SIG_SETMASK, &osigset, NULL);
     if (oSHIN >= 0) {
 	int i;
 
@@ -785,7 +781,7 @@ srcunit(unit, onlyown, hflg)
 	xfree((ptr_t) fbuf);
 
 	/* Reset input arena */
-	memcpy(&B, &saveB, sizeof(B));
+	(void) memcpy(&B, &saveB, sizeof(B));
 
 	(void) close(SHIN), SHIN = oSHIN;
 	arginp = oarginp, onelflg = oonelflg;
@@ -960,11 +956,11 @@ pintr1(wantnl)
     sigset_t sigset, osigset;
 
     sigemptyset(&sigset);
-    sigprocmask(SIG_BLOCK, &sigset, &osigset);
+    (void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
     if (setintr) {
 	sigset = osigset;
-	sigdelset(&sigset, SIGINT);
-	sigprocmask(SIG_SETMASK, &sigset, NULL);
+	(void) sigdelset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_SETMASK, &sigset, NULL);
 	if (pjobs) {
 	    pjobs = 0;
 	    (void) fprintf(cshout, "\n");
@@ -973,8 +969,8 @@ pintr1(wantnl)
 	    /* NOTREACHED */
 	}
     }
-    sigdelset(&osigset, SIGCHLD);
-    sigprocmask(SIG_SETMASK, &osigset, NULL);
+    (void) sigdelset(&osigset, SIGCHLD);
+    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
     (void) fpurge(cshout);
     (void) endpwent();
 
@@ -1037,8 +1033,8 @@ process(catch)
 	 */
 	if (setintr) {
 	    sigemptyset(&sigset);
-	    sigaddset(&sigset, SIGINT);
-	    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	    (void) sigaddset(&sigset, SIGINT);
+	    (void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 	}
 
 	/*
@@ -1103,7 +1099,7 @@ process(catch)
 	 * The parser may lose space if interrupted.
 	 */
 	if (setintr)
-	    sigprocmask(SIG_BLOCK, &sigset, NULL);
+	    (void) sigprocmask(SIG_BLOCK, &sigset, NULL);
 
 	/*
 	 * Save input text on the history list if reading in old history, or it

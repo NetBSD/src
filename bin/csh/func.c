@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.14 1998/07/28 02:23:38 mycroft Exp $	*/
+/*	$NetBSD: func.c,v 1.15 1998/07/28 02:47:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.14 1998/07/28 02:23:38 mycroft Exp $");
+__RCSID("$NetBSD: func.c,v 1.15 1998/07/28 02:47:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,8 +157,8 @@ doonintr(v, t)
     if (vv == 0) {
 	if (setintr) {
 	    sigemptyset(&sigset);
-	    sigaddset(&sigset, SIGINT);
-	    sigprocmask(SIG_BLOCK, &sigset, NULL);
+	    (void) sigaddset(&sigset, SIGINT);
+	    (void) sigprocmask(SIG_BLOCK, &sigset, NULL);
 	} else
 	    (void) signal(SIGINT, SIG_DFL);
 	gointr = 0;
@@ -220,7 +220,7 @@ doalias(v, t)
 	vp = adrof1(strip(p), &aliases);
 	if (vp) {
 	    blkpr(cshout, vp->vec);
-	    fputc('\n', cshout);
+	    (void) fputc('\n', cshout);
 	}
     }
     else {
@@ -549,13 +549,13 @@ preread()
     whyles->w_end.type = I_SEEK;
     if (setintr) {
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	(void) sigaddset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
     }
 
     search(T_BREAK, 0, NULL);		/* read the expression in */
     if (setintr)
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void) sigprocmask(SIG_BLOCK, &sigset, NULL);
     btell(&whyles->w_end);
 }
 
@@ -618,19 +618,19 @@ dorepeat(v, kp)
     i = getn(v[1]);
     if (setintr) {
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void) sigaddset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_BLOCK, &sigset, NULL);
     }
     lshift(v, 2);
     while (i > 0) {
 	if (setintr)
-	    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	    (void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 	reexecute(kp);
 	--i;
     }
     donefds();
     if (setintr)
-	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	(void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 }
 
 void
@@ -964,8 +964,8 @@ xecho(sep, v)
 
     if (setintr) {
 	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	(void) sigaddset(&sigset, SIGINT);
+	(void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
     }
     v++;
     if (*v == 0)
@@ -998,7 +998,7 @@ xecho(sep, v)
     else
 	(void) fflush(cshout);
     if (setintr)
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+	(void) sigprocmask(SIG_BLOCK, &sigset, NULL);
     if (gargv)
 	blkfree(gargv), gargv = 0;
 }
@@ -1018,8 +1018,8 @@ dosetenv(v, t)
 
 	if (setintr) {
 	    sigemptyset(&sigset);
-	    sigaddset(&sigset, SIGINT);
-	    sigprocmask(SIG_UNBLOCK, &sigset, NULL);
+	    (void) sigaddset(&sigset, SIGINT);
+	    (void) sigprocmask(SIG_UNBLOCK, &sigset, NULL);
 	}
 	for (ep = STR_environ; *ep; ep++)
 	    (void) fprintf(cshout, "%s\n", vis_str(*ep));

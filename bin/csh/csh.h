@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.h,v 1.10 1997/07/04 21:23:54 christos Exp $	*/
+/*	$NetBSD: csh.h,v 1.11 1998/07/28 02:47:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -188,8 +188,8 @@ jmp_buf reslab;
 #define	setexit()	(setjmp(reslab))
 #define	reset()		longjmp(reslab, 1)
  /* Should use structure assignment here */
-#define	getexit(a)	memcpy((a), reslab, sizeof reslab)
-#define	resexit(a)	memcpy(reslab, (a), sizeof reslab)
+#define	getexit(a)	(void) memcpy((a), reslab, sizeof reslab)
+#define	resexit(a)	(void) memcpy(reslab, (a), sizeof reslab)
 
 Char   *gointr;			/* Label for an onintr transfer */
 

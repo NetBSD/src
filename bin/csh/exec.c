@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.13 1998/07/28 02:23:38 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.14 1998/07/28 02:47:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.13 1998/07/28 02:23:38 mycroft Exp $");
+__RCSID("$NetBSD: exec.c,v 1.14 1998/07/28 02:47:19 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ doexec(v, t)
      * this shell can still do subprocesses.
      */
     sigemptyset(&sigset);
-    sigprocmask(SIG_SETMASK, &sigset, NULL);
+    (void) sigprocmask(SIG_SETMASK, &sigset, NULL);
     /*
      * If no path, no words in path, or a / in the filename then restrict the
      * command search.
