@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9 1995/06/22 21:35:42 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.10 1995/06/24 20:36:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -49,7 +49,6 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
@@ -263,7 +262,7 @@ linux_read_ldt(p, uap, retval)
 	caddr_t sg;
 	char *parms;
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 
 	gl.start = 0;
 	gl.desc = SCARG(uap, ptr);
@@ -316,7 +315,7 @@ linux_write_ldt(p, uap, retval)
 	if (ldt_info.contents == 3)
 		return (EINVAL);
 
-	sg = stackgap_init();
+	sg = stackgap_init(p->p_emul);
 
 	sd.sd_lobase = ldt_info.base_addr & 0xffffff;
 	sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
