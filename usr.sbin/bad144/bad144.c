@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980,1986,1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993, 198019861988
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980,1986,1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1993, 198019861988\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif not lint
 
 #ifndef lint
-static char sccsid[] = "@(#)bad144.c	5.19 (Berkeley) 4/11/91";
+static char sccsid[] = "@(#)bad144.c	8.1 (Berkeley) 6/6/93";
 #endif not lint
 
 /*
@@ -58,19 +58,15 @@ static char sccsid[] = "@(#)bad144.c	5.19 (Berkeley) 4/11/91";
 #include <sys/param.h>
 #include <sys/dkbad.h>
 #include <sys/ioctl.h>
-#include <ufs/fs.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
+#include <ufs/ffs/fs.h>
 
 #include <stdio.h>
 #include <paths.h>
 
 #define RETRIES	10		/* number of retries on reading old sectors */
-#ifdef __386BSD__
-#define	RAWPART	"d"		/* disk partition containing badsector tables */
-#else
 #define	RAWPART	"c"		/* disk partition containing badsector tables */
-#endif
 
 int	fflag, add, copy, verbose, nflag;
 int	compare();
@@ -78,7 +74,7 @@ int	dups;
 int	badfile = -1;		/* copy of badsector table to use, -1 if any */
 #define MAXSECSIZE	1024
 struct	dkbad curbad, oldbad;
-#define	DKBAD_MAGIC	0x4321
+#define	DKBAD_MAGIC	0
 
 char	label[BBSIZE];
 daddr_t	size, getold(), badsn();
@@ -150,7 +146,6 @@ usage:
 	f = open(name, argc == 1? O_RDONLY : O_RDWR);
 	if (f < 0)
 		Perror(name);
-#ifdef was
 	if (read(f, label, sizeof(label)) < 0) 
 		Perror("read");
 	for (dp = (struct disklabel *)(label + LABELOFFSET);
@@ -159,14 +154,7 @@ usage:
 	    dp = (struct disklabel *)((char *)dp + 64))
 		if (dp->d_magic == DISKMAGIC && dp->d_magic2 == DISKMAGIC)
 			break;
-#else
-	/* obtain label and adjust to fit */
-	dp = &label;
-	if (ioctl(f, DIOCGDINFO, dp) < 0)
-		Perror("ioctl DIOCGDINFO");
-#endif
-	if (dp->d_magic != DISKMAGIC || dp->d_magic2 != DISKMAGIC
-		/* dkcksum(lp) != 0 */ ) {
+	if (dp->d_magic != DISKMAGIC || dp->d_magic2 != DISKMAGIC) {
 		fprintf(stderr, "Bad pack magic number (pack is unlabeled)\n");
 		exit(1);
 	}
@@ -175,18 +163,6 @@ usage:
 			dp->d_secsize);
 		exit(7);
 	}
-#ifdef __386BSD__
-	if (dp->d_type == DTYPE_SCSI) {
-		fprintf(stderr, "SCSI disks don't use bad144!\n");
-		exit(1);
-	}
-	/* are we inside a DOS partition? */
-	if (dp->d_partitions[0].p_offset) {
-		/* yes, rules change. assume bad tables at end of partition C,
-		   which maps all of DOS partition we are within -wfj */
-		size = dp->d_partitions[2].p_offset + dp->d_partitions[2].p_size;
-	} else
-#endif
 	size = dp->d_nsectors * dp->d_ntracks * dp->d_ncylinders; 
 	argc--;
 	argv++;
@@ -321,14 +297,6 @@ usage:
 		fprintf(stderr,
 	"Can't sync bad-sector file; reboot for changes to take effect\n");
 #endif
-	if ((dp->d_flags & D_BADSECT) == 0 && nflag == 0) {
-		dp->d_flags |= D_BADSECT;
-		if (ioctl(f, DIOCWDINFO, dp) < 0) {
-			perror("label");
-			fprintf(stderr, "Can't write disklabel to enable bad secctor handling by the drive\n");
-			exit(1);
-		}
-	}
 	exit(0);
 }
 
