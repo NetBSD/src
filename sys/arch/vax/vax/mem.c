@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.28 2003/08/07 16:30:20 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.28 2003/08/07 16:30:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29 2003/10/19 14:56:28 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -100,10 +100,11 @@ static	caddr_t zeropage;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
 
 /*ARGSUSED*/
@@ -181,3 +182,25 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	}
 	return (error);
 }
+
+paddr_t
+mmmmap(dev_t dev, off_t off, int prot)
+{
+	struct proc *p = curproc;	/* XXX */
+
+	/*
+	 * /dev/mem is the only one that makes sense through this
+	 * interface.  For /dev/kmem any physaddr we return here
+	 * could be transient and hence incorrect or invalid at
+	 * a later time.  /dev/null just doesn't make any sense
+	 * and /dev/zero is a hack that is handled via the default
+	 * pager in mmap().
+	 */
+	if (minor(dev) != DEV_MEM)
+		return (-1);
+
+	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+		return (-1);
+	return (btop((u_int)off));
+}
+
