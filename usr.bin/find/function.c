@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.42 2003/01/26 07:07:31 matt Exp $	*/
+/*	$NetBSD: function.c,v 1.43 2003/01/30 10:49:05 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.42 2003/01/26 07:07:31 matt Exp $");
+__RCSID("$NetBSD: function.c,v 1.43 2003/01/30 10:49:05 jhawk Exp $");
 #endif
 #endif /* not lint */
 
@@ -1552,7 +1552,7 @@ f_user(plan, entry)
 	FTSENT *entry;
 {
 
-	return (entry->fts_statp->st_uid == plan->u_data);
+	COMPARE(entry->fts_statp->st_uid, plan->u_data);
 }
  
 PLAN *
@@ -1568,15 +1568,19 @@ c_user(argvp, isok)
 	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
+	new = palloc(N_USER, f_user);
 	p = getpwnam(username);
 	if (p == NULL) {
-		uid = atoi(username);
-		if (uid == 0 && username[0] != '0')
+		if (atoi(username) == 0 && username[0] != '0' &&
+		    strcmp(username, "+0") && strcmp(username, "-0"))
 			errx(1, "-user: %s: no such user", username);
-	} else
-		uid = p->pw_uid;
+		uid = find_parsenum(new, "-user", username, NULL);
 
-	new = palloc(N_USER, f_user);
+	} else {
+	        new->flags = F_EQUAL;
+		uid = p->pw_uid;
+	}
+
 	new->u_data = uid;
 	return (new);
 }
