@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_rt.c,v 1.7 1994/02/17 09:10:49 chopps Exp $
+ *	$Id: ite_rt.c,v 1.8 1994/04/05 18:19:27 chopps Exp $
  */
 
 #include "ite.h"
@@ -22,6 +22,7 @@
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
 
+int retina_console = 1;
 
 /*
  * retina_cnprobe is called when the console is being initialized
@@ -34,7 +35,13 @@ retina_cnprobe(min)
 	int min;
 {
 	extern int retina_inited;		/* in grf_rt.c */
-	return (retina_inited ? CN_INTERNAL : CN_DEAD);
+	if (retina_inited) {
+		if (retina_console)
+			return(CN_INTERNAL);
+		else
+			return(CN_NORMAL);
+	}
+	return(CN_DEAD);
 }
 
 void retina_init(struct ite_softc *ip)
