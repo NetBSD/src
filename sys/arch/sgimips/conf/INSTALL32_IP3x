@@ -3,7 +3,7 @@
 #
 
 # Pull in standard `install' config
-include 	"arch/sgimips/conf/GENERIC_IP32"
+include 	"arch/sgimips/conf/GENERIC32_IP32"
 
 # Set load address for generic 32-bit systems (only O2 currently)
 makeoptions	TEXTADDR=0x80069000	# O2
