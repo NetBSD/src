@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.18 2002/07/06 00:46:12 wiz Exp $	*/
+/*	$NetBSD: yppush.c,v 1.19 2004/10/30 16:01:48 dsl Exp $	*/
 
 /*
  *
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 	ypi.order = 0;
 	cp = datum.dptr;
 	while (cp < datum.dptr + datum.dsize) {
-		if (!isdigit(*cp))
+		if (!isdigit((unsigned char)*cp))
 			errx(1,
 		    "invalid order number: check database with 'makedbm -u'");
 		ypi.order = (ypi.order * 10) + *cp - '0';

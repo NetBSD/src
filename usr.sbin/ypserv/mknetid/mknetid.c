@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.14 2003/11/12 13:31:08 grant Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.15 2004/10/30 16:01:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.14 2003/11/12 13:31:08 grant Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.15 2004/10/30 16:01:48 dsl Exp $");
 #endif
 
 /*
@@ -403,13 +403,13 @@ print_hosts(const char *fname, const char *domain)
 
 		p = line;
 		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = p; *p && isspace(*p) == 0; p++)
+		for (k = p; *p && isspace((unsigned char)*p) == 0; p++)
 			;
-		while (*p && isspace(*p))
+		while (*p && isspace((unsigned char)*p))
 			*p++ = '\0';
 
 		/* Get first hostname. */
-		for (u = p; *p && !isspace(*p); p++)
+		for (u = p; *p && !isspace((unsigned char)*p); p++)
 			;
 		*p = '\0';
 
@@ -437,13 +437,13 @@ print_netid(const char *fname)
 
 		p = line;
 		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = p; *p && !isspace(*p); p++)
+		for (k = p; *p && !isspace((unsigned char)*p); p++)
 			;
-		while (*p && isspace(*p))
+		while (*p && isspace((unsigned char)*p))
 			*p++ = '\0';
 
 		/* Get netid entry. */
-		for (u = p; *p && !isspace(*p); p++)
+		for (u = p; *p && !isspace((unsigned char)*p); p++)
 			;
 		*p = '\0';
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.c,v 1.6 2003/12/10 12:06:26 agc Exp $	*/
+/*	$NetBSD: yplib_host.c,v 1.7 2004/10/30 16:01:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yplib_host.c,v 1.6 2003/12/10 12:06:26 agc Exp $");
+__RCSID("$NetBSD: yplib_host.c,v 1.7 2004/10/30 16:01:48 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ yp_bind_host(char *server, u_int program, u_int version, u_short port,
 		rsrv_sin.sin_port = htons(port);
 	}
 
-	if (isdigit(*server)) {
+	if (isdigit((unsigned char)*server)) {
 		if (inet_aton(server,&rsrv_sin.sin_addr) == 0) {
 			errx(1, "invalid IP address `%s'", server);
 		}

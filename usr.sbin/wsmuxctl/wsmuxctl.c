@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.8 2004/01/05 23:23:39 jmmv Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.9 2004/10/30 15:55:28 dsl Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ main(int argc, char **argv)
 
 	wsfd = open(wsdev, O_WRONLY, 0);
 	if (wsfd < 0) {
-		if (isdigit(wsdev[0])) {
+		if (isdigit((unsigned char)wsdev[0])) {
 			snprintf(buf, sizeof(buf), "%s%s", ctlpath, wsdev);
 			wsdev = buf;
 			wsfd = open(wsdev, O_WRONLY, 0);
