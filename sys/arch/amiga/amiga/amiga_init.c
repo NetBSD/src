@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.46 1996/07/29 20:53:35 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.47 1996/08/02 15:07:23 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -100,7 +100,7 @@ u_int namigahwpg;
 vm_offset_t amigashdwaddr;
 u_int namigashdwpg;
 
-static vm_offset_t z2mem_start;		/* XXX */
+vm_offset_t z2mem_start;		/* XXX */
 static vm_offset_t z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
 
@@ -285,9 +285,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 				RELOC(z2mem_start, vm_offset_t) =
 				    RELOC(z2mem_end, vm_offset_t) - sp->ms_size;
 			}
-			/* XXX is: mark reserved area _here_. */
-			sp->ms_size = RELOC(z2mem_start, vm_offset_t) -
-			    sp->ms_start;
 			break;
 		}
 	}
@@ -906,6 +903,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	chipmem_start = CHIPMEMADDR + chipmem_start;
 	chipmem_end   = CHIPMEMADDR + chipmem_end;
 
+	/* XXX is: this MUST NOT BE DONE before the pmap_bootstrap() call */
 	if (z2mem_end) {
 		z2mem_end = ZTWOMEMADDR + NZTWOMEMPG * NBPG;
 		z2mem_start = ZTWOMEMADDR;

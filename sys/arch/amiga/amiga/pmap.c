@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1996/07/29 20:53:41 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1996/08/02 15:07:26 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -254,6 +254,8 @@ static	vm_size_t avail_remaining;
 u_long	noncontig_enable;
 #endif
 
+extern vm_offset_t z2mem_start;
+
 boolean_t	pmap_testbit __P((register vm_offset_t, int));
 void		pmap_enter_ptpage __P((register pmap_t, register vm_offset_t)); 
 
@@ -344,17 +346,22 @@ pmap_bootstrap(firstaddr, loadaddr)
 		if (phys_segs[i].end == 0x08000000)
 			continue;	/* skip A4000 motherboard mem */
 #endif
-#if 0
 		/*
 		 * Deal with Zorro II memory stolen for DMA bounce buffers.
 		 * This needs to be handled better.
 		 *
 		 * XXX is: disabled. This is handled now in amiga_init.c
 		 * by removing the stolen memory from the memlist.
+		 *
+		 * XXX is: enabled again, but check real size and position.
+		 * We check z2mem_start is in this segment, and set its end
+		 * to the z2mem_start.
+		 * 
 		 */
-		if (phys_segs[i].start == 0x00200000)
-			phys_segs[i].end -= MAXPHYS;
-#endif
+		if ((phys_segs[i].start <= z2mem_start) &&
+		    (phys_segs[i].end > z2mem_start))
+			phys_segs[i].end = z2mem_start;
+
 		phys_segs[i].first_page = phys_segs[i - 1].first_page +
 		    (phys_segs[i - 1].end - phys_segs[i - 1].start) / NBPG;
 		avail_remaining += (phys_segs[i].end - phys_segs[i].start) / NBPG;
