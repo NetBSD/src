@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.23 2004/04/02 14:41:59 pooka Exp $
+#	$NetBSD: airport,v 1.24 2005/01/06 18:15:47 tron Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -219,6 +219,7 @@ ORD:Chicago-O'Hare International, Illinois, USA
 ORF:Norfolk International, Virginia, USA
 OSA:All Airports around Osaka, Japan
 OSL:All Airports around Oslo, Norway
+PAD:Paderborn/Lippstadt, Paderborn, Germany
 PAO:Palo Alto Municipal, California, USA
 PAP:Port-au-Prince, Haiti
 PAR:All Airports around Paris, France
