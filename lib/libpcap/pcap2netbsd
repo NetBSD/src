@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: pcap2netbsd,v 1.2 1997/10/03 16:40:57 christos Exp $
+#	$NetBSD: pcap2netbsd,v 1.3 1997/10/09 12:44:00 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -253,7 +253,6 @@ __END__
 %% file lib/libpcap/Makefile
 %% NetBSD #
 
-WARNS?=	1
 LIB=	pcap
 %% man
 
@@ -275,6 +274,10 @@ SRCS+=	bpf_filter.c version.c
 INCSDIR=/usr/include
 
 CLEANFILES+= y.tab.h
+
+scanner.c:    y.tab.h
+
+y.tab.c y.tab.h: grammar.c
 
 .include <bsd.lib.mk>
 %% file lib/libpcap/shlib_version
