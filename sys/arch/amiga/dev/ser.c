@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.46 1998/06/29 19:31:19 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.47 1998/07/07 16:46:38 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -468,17 +468,19 @@ ser_fastint()
 	 * to periodically transmit contents of this buffer up one layer,
 	 * so no spl-raising is necessary. 
 	 */
-	register u_short ints, code;
-
-	/* XXX should this ever happen? */
-	ints = custom.intreqr & INTF_RBF;
-	if (ints == 0)
-		return;
+	u_short code;
 
 	/*
-	 * this register contains both data and status bits!
+	 * This register contains both data and status bits!
 	 */
 	code = custom.serdatr;
+
+	/*
+	 * Use SERDATF_RBF instead of INTF_RBF; they're equivalent, but
+	 * we save one (slow) custom chip access.
+	 */
+	if ((code & SERDATRF_RBF) == 0)
+		return;
 
 	/* 
 	 * clear interrupt 
