@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.251 1999/08/05 15:52:11 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.252 1999/08/09 18:13:26 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -457,6 +457,7 @@ ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
+wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
 # ISA network interfaces
 ate0	at isa? port 0x2a0 irq ?		# AT1700
