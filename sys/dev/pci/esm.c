@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.25 2004/04/30 14:14:55 simonb Exp $      */
+/*      $NetBSD: esm.c,v 1.26 2004/07/08 18:08:58 kleink Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.25 2004/04/30 14:14:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.26 2004/07/08 18:08:58 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,8 +761,8 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	wpwa = APU_USE_SYSMEM | ((offset >> 8) & APU_64KPAGE_MASK);
 
 	DPRINTF(ESM_DEBUG_DMA,
-	    ("choffs=0x%x, wpwa=0x%x, size=0x%x words\n",
-	    choffset, wpwa, size));
+	    ("choffs=0x%x, wpwa=0x%x, size=0x%lx words\n",
+	    choffset, wpwa, (unsigned long int)size));
 
 	switch (ch->aputype) {
 	case APUTYPE_16BITSTEREO:
@@ -931,8 +931,8 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 		wp_wrapu(ess, apuch + i, APUREG_ROUTE, apuch + 2 + i);
 
 		DPRINTF(ESM_DEBUG_DMA,
-		    ("choffs=0x%x, wpwa=0x%x, offset=0x%x words, size=0x%x words\n",
-		    choffset, wpwa, offset, size));
+		    ("choffs=0x%x, wpwa=0x%x, offset=0x%x words, size=0x%lx words\n",
+		    choffset, wpwa, offset, (unsigned long int)size));
 
 		/* Clear all mixer WP channel registers first. */
 		for (reg = 0; reg < 15; reg++)
@@ -963,8 +963,8 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 		    ROUTE_PARALLEL + i);
 
 		DPRINTF(ESM_DEBUG_DMA,
-		    ("mixoffs=0x%x, wpwa=0x%x, offset=0x%x words, size=0x%x words\n",
-		    mixoffset, wpwa, offset, mixsize));
+		    ("mixoffs=0x%x, wpwa=0x%x, offset=0x%x words, size=0x%lx words\n",
+		    mixoffset, wpwa, offset, (unsigned long int)mixsize));
 
 		/* Assume we're going to loop to do the right channel. */
 		choffset += MAESTRO_RECBUF_L_SZ;
@@ -1336,8 +1336,8 @@ esm_malloc(void *sc, int direction, size_t size, struct malloc_type *pool,
 	int off;
 
 	DPRINTF(ESM_DEBUG_DMA,
-	    ("esm_malloc(%p, %d, 0x%x, %p, 0x%x)",
-	    sc, direction, size, pool, flags));
+	    ("esm_malloc(%p, %d, 0x%lx, %p, 0x%x)",
+	    sc, direction, (unsigned long int)size, pool, flags));
 
 	/*
 	 * Each buffer can only be allocated once.
