@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 1995/05/12 12:47:45 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15 1995/08/13 09:05:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -72,9 +72,6 @@ process_frame(p)
 {
 	void *ptr;
 
-	if ((p->p_flag & P_INMEM) == 0)
-		return (NULL);
-
 #ifdef cpu_set_init_frame
 	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 #else
@@ -88,9 +85,6 @@ process_fpframe(p)
 	struct proc *p;
 {
 
-	if ((p->p_flag & P_INMEM) == 0)
-		return (NULL);
-
 	return (&p->p_addr->u_pcb.pcb_fpregs);
 }
 
@@ -99,11 +93,7 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	struct frame *frame;
-
-	frame = process_frame(p);
-	if (frame == NULL)
-		return (EIO);
+	struct frame *frame = process_frame(p);
 
 	bcopy(frame->f_regs, regs->r_regs, sizeof(frame->f_regs));
 	regs->r_sr = frame->f_sr;
@@ -117,11 +107,7 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	struct fpframe *frame;
-
-	frame = process_fpframe(p);
-	if (frame == NULL)
-		return (EIO);
+	struct fpframe *frame = process_fpframe(p);
 
 	bcopy(frame->fpf_regs, regs->r_regs, sizeof(frame->fpf_regs));
 	regs->r_fpcr = frame->fpf_fpcr;
@@ -136,11 +122,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	struct frame *frame;
-
-	frame = process_frame(p);
-	if (frame == NULL)
-		return (EIO);
+	struct frame *frame = process_frame(p);
 
 	/*
 	 * in the hp300 machdep.c _write_regs, PC alignment wasn't
@@ -173,11 +155,7 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	struct fpframe *frame;
-
-	frame = process_fpframe(p);
-	if (frame == NULL)
-		return (EIO);
+	struct fpframe *frame = process_fpframe(p);
 
 	bcopy(regs->r_regs, frame->fpf_regs, sizeof(frame->fpf_regs));
 	frame->fpf_fpcr = regs->r_fpcr;
@@ -192,11 +170,7 @@ process_sstep(p, sstep)
 	struct proc *p;
 	int sstep;
 {
-	struct frame *frame;
-
-	frame = process_frame(p);
-	if (frame == NULL)
-		return (EIO);
+	struct frame *frame = process_frame(p);
 
 	if (sstep)
 		frame->f_sr |= PSL_T;
@@ -211,11 +185,7 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	struct frame *frame;
-
-	frame = process_frame(p);
-	if (frame == NULL)
-		return (EIO);
+	struct frame *frame = process_frame(p);
 
 	/*
 	 * in the hp300 machdep.c _set_pc, PC alignment is guaranteed
