@@ -1,4 +1,4 @@
-/*	$NetBSD: protos.h,v 1.2 1997/07/30 22:55:08 jtc Exp $	*/
+/*	$NetBSD: protos.h,v 1.3 1997/11/01 14:24:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,5 +36,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	read_line __P((FILE *, char *, int));
 void	localhostname __P((char *, size_t));
+char   *read_line __P((FILE *, size_t *, int *));
