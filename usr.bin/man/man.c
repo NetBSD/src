@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.19 1999/07/22 15:09:45 kleink Exp $	*/
+/*	$NetBSD: man.c,v 1.20 1999/11/02 10:53:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.19 1999/07/22 15:09:45 kleink Exp $");
+__RCSID("$NetBSD: man.c,v 1.20 1999/11/02 10:53:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(argc, argv)
 
 	f_cat = f_how = 0;
 	conffile = p_add = p_path = NULL;
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:w")) != -1)
+	while ((ch = getopt(argc, argv, "aC:cfhkM:m:P:w")) != -1)
 		switch (ch) {
 		case 'a':
 			f_all = 1;
