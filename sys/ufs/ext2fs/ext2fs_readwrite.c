@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.18 2001/09/22 22:44:08 chs Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.19 2001/10/26 05:56:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -51,7 +51,6 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
