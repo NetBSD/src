@@ -1,11 +1,11 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/01/19 23:05:04 scw Exp $	*/
+/*	$NetBSD: resumecontext.c,v 1.1 2003/01/19 23:05:02 scw Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,25 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: resumecontext.c,v 1.1 2003/01/19 23:05:02 scw Exp $");
+#endif
 
-#include <sys/types.h>
-#include <signal.h>
-
+#include "namespace.h"
+#include <ucontext.h>
 #include "extern.h"
 
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
+void
+_resumecontext(void)
 {
-	extern void __sigtramp_sigcontext_1(void);
+	ucontext_t uct;
 
-	/*
-	 * Right here we should select the SA_SIGINFO trampoline
-	 * if SA_SIGINFO is set in the sigaction.
-	 */
-
-	return (__sigaction_sigtramp(sig, act, oact,
-				     (void *)__sigtramp_sigcontext_1, 1));
+	(void)getcontext(&uct);
+	(void)setcontext(uct.uc_link);
+	/* NOTREACHED */
 }
