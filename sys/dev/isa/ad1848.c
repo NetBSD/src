@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.41 1997/08/26 19:27:19 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.42 1997/10/11 12:36:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -959,7 +959,7 @@ ad1848_query_encoding(addr, fp)
 	fp->flags = 0;
 	break;
     case 2:
-	strcpy(fp->name, AudioElinear_le);
+	strcpy(fp->name, AudioEslinear_le);
 	fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 	fp->precision = 16;
 	fp->flags = 0;
@@ -972,7 +972,7 @@ ad1848_query_encoding(addr, fp)
 	break;
 
     case 4: /* only on CS4231 */
-	strcpy(fp->name, AudioElinear_be);
+	strcpy(fp->name, AudioEslinear_be);
 	fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 	fp->precision = 16;
 	fp->flags = sc->mode == 1 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
@@ -980,7 +980,7 @@ ad1848_query_encoding(addr, fp)
 
     /* emulate some modes */
     case 5:
-	strcpy(fp->name, AudioElinear);
+	strcpy(fp->name, AudioEslinear);
 	fp->encoding = AUDIO_ENCODING_SLINEAR;
 	fp->precision = 8;
 	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
