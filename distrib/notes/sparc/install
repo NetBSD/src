@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.41 2001/08/29 03:26:07 mrg Exp $
+.\"	$NetBSD: install,v 1.42 2001/09/22 21:46:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -207,7 +207,9 @@ Insert the second floppy and run the following commands:
 .Dl # Ic "dd if=disk2 of=/dev/rfd0a bs=36k conv=sync"
 .Dl # Ic "eject floppy"
 .Pp
-Be sure to label your floppies so you can later identify them.
+Don't get confused if disk2 is a symlink to a .tgz file, just do as if it
+was a regular file. After writing the two floppies, 
+be sure to label them so you can later identify them.
 .Pp
 Insert the floppy made from
 .Pa disk1
