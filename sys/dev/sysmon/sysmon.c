@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.7 2002/10/23 09:13:57 jdolecek Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.8 2003/04/18 01:31:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -35,11 +35,11 @@
 
 /*
  * Clearing house for system monitoring hardware.  We currently
- * handle environmental sensors and watchdog timers.
+ * handle environmental sensors, watchdog timers, and power management.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.7 2002/10/23 09:13:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.8 2003/04/18 01:31:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,10 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.7 2002/10/23 09:13:57 jdolecek Exp $");
 dev_type_open(sysmonopen);
 dev_type_close(sysmonclose);
 dev_type_ioctl(sysmonioctl);
+dev_type_read(sysmonread);
+dev_type_poll(sysmonpoll);
+dev_type_kqfilter(sysmonkqfilter);
 
 const struct cdevsw sysmon_cdevsw = {
-	sysmonopen, sysmonclose, noread, nowrite, sysmonioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	sysmonopen, sysmonclose, sysmonread, nowrite, sysmonioctl,
+	nostop, notty, sysmonpoll, nommap, sysmonkqfilter,
 };
 
 /*
@@ -82,6 +85,11 @@ sysmonopen(dev_t dev, int flag, int mode, struct proc *p)
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
 		error = sysmonopen_wdog(dev, flag, mode, p);
+		break;
+#endif
+#if NSYSMON_POWER > 0
+	case SYSMON_MINOR_POWER:
+		error = sysmonopen_power(dev, flag, mode, p);
 		break;
 #endif
 	default:
@@ -112,6 +120,11 @@ sysmonclose(dev_t dev, int flag, int mode, struct proc *p)
 		error = sysmonclose_wdog(dev, flag, mode, p);
 		break;
 #endif
+#if NSYSMON_POWER > 0
+	case SYSMON_MINOR_POWER:
+		error = sysmonclose_power(dev, flag, mode, p);
+		break;
+#endif
 	default:
 		error = ENODEV;
 	}
@@ -140,8 +153,82 @@ sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = sysmonioctl_wdog(dev, cmd, data, flag, p);
 		break;
 #endif
+#if NSYSMON_POWER > 0
+	case SYSMON_MINOR_POWER:
+		error = sysmonioctl_power(dev, cmd, data, flag, p);
+		break;
+#endif
 	default:
 		error = ENODEV;
+	}
+
+	return (error);
+}
+
+/*
+ * sysmonread:
+ *
+ *	Perform a read request.
+ */
+int
+sysmonread(dev_t dev, struct uio *uio, int flags)
+{
+	int error;
+
+	switch (minor(dev)) {
+#if NSYSMON_POWER > 0
+	case SYSMON_MINOR_POWER:
+		error = sysmonread_power(dev, uio, flags);
+		break;
+#endif
+	default:
+		error = ENODEV;
+	}
+
+	return (error);
+}
+
+/*
+ * sysmonpoll:
+ *
+ *	Poll the system monitor device.
+ */
+int
+sysmonpoll(dev_t dev, int events, struct proc *p)
+{
+	int rv;
+
+	switch (minor(dev)) {
+#if NSYSMON_POWER > 0
+	case SYSMON_MINOR_POWER:
+		rv = sysmonpoll_power(dev, events, p);
+		break;
+#endif
+	default:
+		rv = events;
+	}
+
+	return (rv);
+}
+
+/*
+ * sysmonkqfilter:
+ *
+ *	Kqueue filter for the system monitor device.
+ */
+int
+sysmonkqfilter(dev_t dev, struct knote *kn)
+{
+	int error;
+
+	switch (minor(dev)) {
+#if NSYSMON_POWER > 0
+	case SYSMON_MINOR_POWER:
+		error = sysmonkqfilter_power(dev, kn);
+		break;
+#endif
+	default:
+		error = 1;
 	}
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonconf.h,v 1.2 2002/12/31 22:47:48 thorpej Exp $	*/
+/*	$NetBSD: sysmonconf.h,v 1.3 2003/04/18 01:31:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,5 +38,6 @@
 
 #include "sysmon_envsys.h"
 #include "sysmon_wdog.h"
+#include "sysmon_power.h"
 
 #endif /* _DEV_SYSMON_SYSMONCONF_H_ */
