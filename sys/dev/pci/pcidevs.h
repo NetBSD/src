@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.179 1999/12/01 15:08:17 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.180 1999/12/04 04:41:40 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.172 1999/12/01 15:07:44 drochner Exp 
+ *	NetBSD: pcidevs,v 1.173 1999/12/04 04:40:57 thorpej Exp 
  */
 
 /*
@@ -811,11 +811,12 @@
 #define	PCI_PRODUCT_COMPAQ_QVISION_V2	0x3034		/* QVision */
 #define	PCI_PRODUCT_COMPAQ_TRIFLEX4	0x4000		/* Triflex Host-PCI Bridge */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
+#define	PCI_PRODUCT_COMPAQ_SMART2P	0xae10		/* SMART2P RAID */
 #define	PCI_PRODUCT_COMPAQ_N100TX	0xae32		/* Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_N10T	0xae34		/* Netelligent 10 T */
 #define	PCI_PRODUCT_COMPAQ_IntNF3P	0xae35		/* Integrated NetFlex 3/P */
-#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
+#define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
@@ -867,6 +868,7 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
@@ -1088,6 +1090,7 @@
 #define	PCI_PRODUCT_SYMBIOS_810AP	0x0005		/* 53c810AP */
 #define	PCI_PRODUCT_SYMBIOS_860	0x0006		/* 53c860 */
 #define	PCI_PRODUCT_SYMBIOS_875	0x000f		/* 53c875 */
+#define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
 
 /* Packet Engines products */
