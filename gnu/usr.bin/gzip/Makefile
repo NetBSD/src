@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.11 1994/06/13 15:18:46 cgd Exp $
+#	$Id: Makefile,v 1.12 1994/06/19 00:03:43 cgd Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
@@ -11,6 +11,7 @@ SRCS+=	match.S
 CFLAGS+=-DASMV
 .endif
 
+LDSTATIC= -static
 LDADD+=	-lgnumalloc
 DPADD+=	/usr/lib/libgnumalloc.a
 
