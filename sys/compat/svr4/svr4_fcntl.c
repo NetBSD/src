@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.31 1999/02/09 20:46:40 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.32 1999/09/07 18:20:18 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_lwp.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
