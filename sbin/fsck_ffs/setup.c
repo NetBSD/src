@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.54 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.55 2002/11/05 05:18:50 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.54 2002/09/28 20:11:06 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.55 2002/11/05 05:18:50 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -443,7 +443,7 @@ setup(dev)
 
 	{
 		struct partition *pp = 0;
-		if (!forceimage) 
+		if (!forceimage && lp) 
 			pp = getdisklabelpart(dev,lp);
 		if (pp && (pp->p_fstype == FS_APPLEUFS)) {
 			isappleufs = 1;
