@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.22 2002/10/18 02:44:53 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.23 2002/10/18 04:14:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.22 2002/10/18 02:44:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.23 2002/10/18 04:14:59 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1113,7 +1113,7 @@ suspendsched()
 	 */
 	proclist_lock_read();
 	SCHED_LOCK(s);
-	LIST_FOREACH(l, &alllwp, p_list) {
+	LIST_FOREACH(l, &alllwp, l_list) {
 		if ((l->l_proc->p_flag & P_SYSTEM) != 0)
 			continue;
 
@@ -1150,7 +1150,7 @@ suspendsched()
 void
 setrunqueue(struct lwp *l)
 {
-	struct lwphd *rq;
+	struct prochd *rq;
 	struct lwp *prev;
 	int whichq;
 
@@ -1171,10 +1171,10 @@ setrunqueue(struct lwp *l)
 void
 remrunqueue(struct lwp *l)
 {
-	struct lwp *prev, *next;;
+	struct lwp *prev, *next;
 	int whichq;
 
-	whichq = p->p_priority / 4;
+	whichq = l->l_priority / 4;
 #ifdef DIAGNOSTIC
 	if (((sched_whichqs & (1<<whichq)) == 0))
 		panic("remrunqueue");
