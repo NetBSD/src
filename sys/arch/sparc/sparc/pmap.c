@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.159 2000/05/01 14:06:41 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.160 2000/05/01 15:19:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -324,16 +324,6 @@ union ctxinfo {
 void	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
 
-#if 0
-union ctxinfo *ctxinfo;		/* allocated at in pmap_bootstrap */
-
-union	ctxinfo *ctx_freelist;	/* context free list */
-int	ctx_kick;		/* allocation rover when none free */
-int	ctx_kickdir;		/* ctx_kick roves both directions */
-
-char	*ctxbusyvector;		/* [4m] tells what contexts are busy (XXX)*/
-#endif
-
 caddr_t	vpage[2];		/* two reserved MD virtual pages */
 #if defined(SUN4M)
 int	*vpage_pte[2];		/* pte location of vpage[] */
@@ -547,7 +537,7 @@ static u_long	srmmu_bypass_read __P((u_long));
  * This routine should work with any level of mapping, as it is used
  * during bootup to interact with the ROM's initial L1 mapping of the kernel.
  */
-static __inline u_int
+static u_int
 VA2PA(addr)
 	caddr_t addr;
 {
@@ -579,7 +569,11 @@ VA2PA(addr)
 	    return (((pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
 		    ((u_int)addr & 0xffffffff));
 
+#ifdef DIAGNOSTIC
 	panic("VA2PA: Asked to translate unmapped VA %p", addr);
+#else
+	return (0);
+#endif
 }
 
 /*
@@ -621,7 +615,7 @@ setpgt4m(ptep, pte)
 	int pte;
 {
 	swap(ptep, pte);
-#if 1
+#if 0
 	/* XXX - uncaching in pgt_page_alloc() below is not yet quite Okay */
 	if (cpuinfo.cpu_type == CPUTYP_SS1_MBUS_NOMXCC)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
@@ -2004,18 +1998,6 @@ ctx_free(pm)
 
 	c->c_nextfree = ctx_freelist;
 	ctx_freelist = c;
-
-#if 0
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		/* Map kernel back into unused context */
-		newc = pm->pm_ctxnum;
-		cpuinfo.ctx_tbl[newc] = cpuinfo.ctx_tbl[0];
-		if (newc)
-			ctxbusyvector[newc] = 0; /* mark as free */
-	}
-#endif
-#endif
 }
 
 
@@ -3281,12 +3263,6 @@ pmap_bootstrap4m(void)
 	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
 	bzero((caddr_t)ci, (u_int)p - (u_int)ci);
-#if 0
-	ctxbusyvector = p;
-	p += ncontext;
-	bzero(ctxbusyvector, ncontext);
-	ctxbusyvector[0] = 1;	/* context 0 is always in use */
-#endif
 
 
 	/*
@@ -3527,24 +3503,17 @@ pmap_bootstrap4m(void)
 		setpgt4m(&sp->sg_pte[VA_VPG(q)], pte);
 	}
 
-#if 0
-	/*
-	 * We also install the kernel mapping into all other contexts by
-	 * copying the context 0 L1 PTP from cpuinfo.ctx_tbl[0] into the
-	 * remainder of the context table (i.e. we share the kernel page-
-	 * tables). Each user pmap automatically gets the kernel mapped
-	 * into it when it is created, but we do this extra step early on
-	 * in case some twit decides to switch to a context with no user
-	 * pmap associated with it.
-	 */
-	for (i = 1; i < ncontext; i++)
-		cpuinfo.ctx_tbl[i] = cpuinfo.ctx_tbl[0];
-#endif
-
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		/* Flush page tables from cache */
+	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
+		/*
+		 * The page tables have been setup. Since we're still
+		 * running on the PROM's memory map, the memory we
+		 * allocated for our page tables might still be cached.
+		 * Flush it now, and don't touch it again until we
+		 * switch to our own tables (will be done immediately below).
+		 */
 		pcache_flush(pagetables_start, (caddr_t)VA2PA(pagetables_start),
 			     pagetables_end - pagetables_start);
+	}
 
 	/*
 	 * Now switch to kernel pagetables (finally!)
