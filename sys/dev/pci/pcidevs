@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.104 1999/02/14 22:38:18 tron Exp $
+$NetBSD: pcidevs,v 1.105 1999/02/19 05:53:00 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -489,6 +489,7 @@ vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
+vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology Inc
 vendor ENSONIQ		0x1274	Ensoniq
@@ -621,6 +622,9 @@ product ARC 1000PV	0xa091	1000PV
 product ARC 2000PV	0xa099	2000PV
 product ARC 2000MT	0xa0a1	2000MT
 
+/* ASIX Electronics products */
+product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
+
 /* ATI products */
 product ATI MACH32	0x4158	Mach32
 product ATI MACH64_CT	0x4354	Mach64 CT
@@ -720,6 +724,7 @@ product COMPAQ NF3P		0xf130	NetFlex 3/P
 
 /* Compex products - XXX better descriptions */
 product COMPEX NE2KETHER	0x1401	Ethernet
+product COMPEX RL100ATX		0x2011	RL100-ATX 10/100 Ethernet
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -868,8 +873,12 @@ product KTI NE2KETHER	0x3000	Ethernet
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
 
+/* Lite-On products */
+product LITEON PNIC	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
+
 /* Macronix */
-product MACRONIX MX98713	0x0512	PMAC 100/10base PCI MAC controller
+product MACRONIX MX98713	0x0512	MX98713 (PMAC) 10/100 Ethernet
+product MACRONIX MX987x5	0x0531	MX987x5 (PMAC) 10/100 Ethernet
 
 /* Madge Networks products */
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
@@ -1152,7 +1161,8 @@ product WD 90C		0xC24A	90C
 
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
-product WINBOND W89C940F 0x0940	W89C940F
+product WINBOND W89C840F 0x0840	W89C840F 10/100 Ethernet
+product WINBOND W89C940F 0x0940	W89C940F Ethernet
 
 /* Yamaha products */
 product YAMAHA YMF724E_V 0x0004	724 Audio
