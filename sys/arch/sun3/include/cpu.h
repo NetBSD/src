@@ -38,7 +38,7 @@
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
- *	$Id: cpu.h,v 1.11 1994/05/27 14:55:20 gwr Exp $
+ *	$Id: cpu.h,v 1.12 1994/06/28 21:47:56 gwr Exp $
  */
 
 #ifdef KERNEL
@@ -105,9 +105,25 @@ extern int want_resched; /* resched() was called */
 #define	signotify(p)	aston()
 
 /*
- * simulated software interrupt register
+ * Software Interrupt Register (SIR)
+ * The sun3 has a real software interrupt register set by
+ * isr_soft_request() so this scheme just multiplexes four
+ * software interrupt `sources' on the level one handler.
  */
-#include <machine/mtpr.h>
+union sun3sir {
+	int 	sir_any;
+	char	sir_which[4];
+} sun3sir;
+
+#define SIR_NET  	0
+#define SIR_CLOCK	1
+#define SIR_SPARE2	2
+#define SIR_SPARE3	3
+
+#define	setsoftint()	isr_soft_request(1)
+#define setsoftnet()	(sun3sir.sir_which[SIR_NET] = 1, setsoftint())
+#define setsoftclock()	(sun3sir.sir_which[SIR_CLOCK] = 1, setsoftint())
+
 
 /*
  * CTL_MACHDEP definitions.
