@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.7 2000/08/10 11:48:46 ad Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.8 2001/03/25 19:39:20 martin Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -186,11 +186,7 @@ struct spppreq {
 void sppp_attach (struct ifnet *ifp);
 void sppp_detach (struct ifnet *ifp);
 void sppp_input (struct ifnet *ifp, struct mbuf *m);
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 300003
 int sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-#else
-int sppp_ioctl(struct ifnet *ifp, int cmd, void *data);
-#endif
 struct mbuf *sppp_dequeue (struct ifnet *ifp);
 struct mbuf *sppp_pick(struct ifnet *ifp);
 int sppp_isempty (struct ifnet *ifp);
