@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2002/08/02 03:46:46 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2002/08/13 05:52:11 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -329,7 +329,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 		ipkdb_connect(0);
 #endif
 	fake_mapiodev = 0;
-	printf("Done with initppc()\n");
 }
 
 static void
