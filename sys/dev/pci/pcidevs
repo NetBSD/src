@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.588 2003/10/23 00:46:56 briggs Exp $
+$NetBSD: pcidevs,v 1.589 2003/10/23 15:54:13 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1053,6 +1053,10 @@ product BROADCOM BCM5704C	0x1648	BCM5704C Gigabit Ethernet (1000BASE-T)
 product BROADCOM BCM5704S	0x16a8	BCM5704S Gigabit Ethernet (1000BASE-X)
 product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
 product BROADCOM BCM5705M	0x165d	BCM5705M 10/100/1000 Ethernet
+product BROADCOM BCM5705_ALT	0x165e	BCM5705 10/100/1000 Ethernet
+product BROADCOM BCM5782	0x1696	BCM5782 10/100/1000 Ethernet
+product BROADCOM BCM5901	0x170d	BCM5901 10/100 Ethernet
+product BROADCOM BCM5901A2	0x170e	BCM5901A 10/100 Ethernet
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 product BROADCOM 5801		0x5801	5801 Security processor
 product BROADCOM 5802		0x5802	5802 Security processor
