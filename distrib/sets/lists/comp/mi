@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.439 2002/05/06 05:29:08 lukem Exp $
+#	$NetBSD: mi,v 1.440 2002/05/06 15:15:52 lukem Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -682,7 +682,7 @@
 ./usr/include/sys/ansi.h		comp-c-include
 ./usr/include/sys/ataio.h		comp-c-include
 ./usr/include/sys/audioio.h		comp-c-include
-./usr/include/sys/bootinfo.h		comp-c-include
+./usr/include/sys/bootblock.h		comp-c-include
 ./usr/include/sys/bswap.h		comp-c-include
 ./usr/include/sys/buf.h			comp-c-include
 ./usr/include/sys/callout.h		comp-c-include
