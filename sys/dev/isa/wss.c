@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.39 1997/10/19 07:42:47 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.40 1997/11/30 15:24:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -184,7 +184,11 @@ struct audio_hw_if wss_hw_if = {
 	ad1848_get_props,
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	wssprobe __P((struct device *, void *, void *));
+#else
+int	wssprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void	wssattach __P((struct device *, struct device *, void *));
 
 struct cfattach wss_ca = {
