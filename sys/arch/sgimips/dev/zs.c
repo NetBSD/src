@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 2002/04/17 13:49:55 rafal Exp $	*/
+/*	$NetBSD: zs.c,v 1.10 2002/05/02 20:26:49 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -382,9 +382,9 @@ zshard(arg)
 		if (zsc == NULL)
 			continue;
 
+		zsc->zsc_intrcnt.ev_count++;
 		while ((rr3 = zsc_intr_hard(zsc))) {
 			rval |= rr3;
-			zsc->zsc_intrcnt.ev_count++;
 		}
 
 		softreq = zsc->zsc_cs[0]->cs_softreq;
