@@ -59,3 +59,6 @@ on a sun4 system.
 
 [kernel/sparc]: Fix oversight that caused rconsole to not attach to
 cgsix-based consoles.
+
+[kernel/hp300]: Fix integer overflow in page table map allocation that
+could cause systems to hang during fork().
