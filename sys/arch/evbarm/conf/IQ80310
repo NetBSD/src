@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.21 2003/04/08 20:48:03 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.22 2003/04/16 23:34:31 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -178,6 +178,7 @@ ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 isp*		at pci? dev ? function ?	# Qlogic ISP SCSI
 siop*		at pci? dev ? function ?	# Symbios/LSI 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios/LSI 53c8xx SCSI
+mpt*		at pci? dev ? function ?	# LSI Fusion SCSI/FC
 
 scsibus*	at scsi?
 
