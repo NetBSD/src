@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.18 1996/09/28 03:16:56 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.19 1996/09/28 03:37:36 mycroft Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -1198,7 +1198,6 @@ gotit:
 	 */
 	switch (sc->sc_state) {
 		struct esp_ecb *ecb;
-		struct scsi_link *sc_link;
 		struct esp_tinfo *ti;
 
 	case ESP_CONNECTED:
