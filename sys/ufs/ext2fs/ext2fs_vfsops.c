@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.15 1998/07/05 08:49:48 jonathan Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.16 1998/08/09 20:15:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -206,7 +206,7 @@ ext2fs_mountroot()
 	simple_unlock(&mountlist_slock);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	bzero(fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt));
+	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
 	    MNAMELEN - 1, 0);
 	(void)ext2fs_statfs(mp, &mp->mnt_stat, p);
@@ -342,11 +342,11 @@ ext2fs_mount(mp, path, data, ndp, p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	(void) copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1, &size);
-	bzero(fs->e2fs_fsmnt + size, sizeof(fs->e2fs_fsmnt) - size);
-	bcopy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
+	memset(fs->e2fs_fsmnt + size, 0, sizeof(fs->e2fs_fsmnt) - size);
+	memcpy(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
 		&size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
@@ -579,7 +579,7 @@ ext2fs_mountfs(devvp, mp, p)
 	}
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
-	bzero((caddr_t)ump, sizeof *ump);
+	memset((caddr_t)ump, 0, sizeof *ump);
 	ump->um_e2fs = malloc(sizeof(struct m_ext2fs), M_UFSMNT, M_WAITOK);
 	e2fs_sbload((struct ext2fs*)bp->b_data, &ump->um_e2fs->e2fs);
 	brelse(bp);
@@ -753,8 +753,8 @@ ext2fs_statfs(mp, sbp, p)
 	sbp->f_files =  fs->e2fs.e2fs_icount;
 	sbp->f_ffree = fs->e2fs.e2fs_ficount;
 	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);
@@ -874,7 +874,7 @@ ext2fs_vget(mp, ino, vpp)
 		return (error);
 	}
 	MALLOC(ip, struct inode *, sizeof(struct inode), M_EXT2FSNODE, M_WAITOK);
-	bzero((caddr_t)ip, sizeof(struct inode));
+	memset((caddr_t)ip, 0, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
@@ -915,7 +915,7 @@ ext2fs_vget(mp, ino, vpp)
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
 		ip->i_e2fs_mode = ip->i_e2fs_size = ip->i_e2fs_nblock = 0;
-		bzero(ip->i_e2fs_blocks, sizeof(ip->i_e2fs_blocks));
+		memset(ip->i_e2fs_blocks, 0, sizeof(ip->i_e2fs_blocks));
 	}
 
 	/*

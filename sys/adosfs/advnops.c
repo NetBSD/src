@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.41 1998/08/03 14:19:57 kleink Exp $	*/
+/*	$NetBSD: advnops.c,v 1.42 1998/08/09 20:20:12 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -762,7 +762,7 @@ adosfs_readdir(v)
 		/*
 		 * Fill in dirent record
 		 */
-		bzero(adp, sizeof(struct adirent));
+		memset(adp, 0, sizeof(struct adirent));
 		adp->fileno = ap->block;
 		/*
 		 * this deserves an function in kern/vfs_subr.c
@@ -783,7 +783,7 @@ adosfs_readdir(v)
 		}
 		adp->reclen = sizeof(struct adirent);
 		adp->namlen = strlen(ap->name);
-		bcopy(ap->name, adp->name, adp->namlen);
+		memcpy(adp->name, ap->name, adp->namlen);
 		vput(vp);
 
 		error = uiomove((caddr_t) adp, sizeof(struct adirent), uio);
