@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.17 2004/06/30 13:59:22 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.18 2004/07/01 19:04:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -64,7 +64,7 @@ strerror(int err)
 
 	for (mi = errlist; mi->msg; mi++)
 		if (mi->errno == err)
-			return __DECONST(mi->msg);
+			return __UNCONST(mi->msg);
 
 	snprintf(ebuf, sizeof ebuf, "Unknown error: code %d", err);
 	return ebuf;
