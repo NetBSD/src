@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.30 1999/02/02 16:13:59 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.31 1999/02/02 17:06:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -2100,20 +2100,6 @@ acer_setup_chip(sc)
 	struct pciide_softc *sc;
 {
 	int channel;
-	u_int32_t cr;
-
-	/* Enable "microsoft register bits" R/W */
-	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR3,
-	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR3) | ACER_CCAR3_PI);
-	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR1,
-	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR1) &
-	    ~(ACER_CHANSTATUS_RO|PCIIDE_CHAN_RO(0)|PCIIDE_CHAN_RO(1)));
-	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR2,
-	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR2) &
-	    ~ACER_CHANSTATUSREGS_RO);
-	cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
-	cr |= (PCIIDE_CHANSTATUS_EN << PCI_INTERFACE_SHIFT);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG, cr);
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CDRC,
 	    (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CDRC) |
@@ -2207,8 +2193,28 @@ acer_channel_map(pa, cp)
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	bus_size_t cmdsize, ctlsize;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
-	u_int32_t cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
-	int interface = PCI_INTERFACE(cr);
+	u_int32_t cr;
+	int interface;
+
+	/*
+	 * Enable "microsoft register bits" R/W. Will be done 2 times
+	 * (one for each channel) but should'nt be a problem. There's no
+	 * better place where to put this.
+	 */
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR3,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR3) | ACER_CCAR3_PI);
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR1,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR1) &
+	    ~(ACER_CHANSTATUS_RO|PCIIDE_CHAN_RO(0)|PCIIDE_CHAN_RO(1)));
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CCAR2,
+	    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CCAR2) &
+	    ~ACER_CHANSTATUSREGS_RO);
+	cr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG);
+	cr |= (PCIIDE_CHANSTATUS_EN << PCI_INTERFACE_SHIFT);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG, cr);
+	/* Don't use cr, re-read the real register content instead */
+	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_CLASS_REG));
 
 	if ((interface & PCIIDE_CHAN_EN(wdc_cp->channel)) == 0) {
 		printf("%s: %s channel ignored (disabled)\n",
