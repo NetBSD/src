@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.42 2000/02/03 23:04:46 cgd Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.43 2000/02/16 12:36:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -639,7 +639,7 @@ ratecheck(lasttime, mininterval)
 	int s, rv = 0;
 
 	s = splclock(); 
-	timersub(lasttime, &mono_time, &delta);
+	timersub(&mono_time, lasttime, &delta);
 
 	/*
 	 * check for 0,0 is so that the message will be seen at least once,
