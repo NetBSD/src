@@ -1,61 +1,76 @@
 /*
- *	$Id: ite_rt.c,v 1.8 1994/04/05 18:19:27 chopps Exp $
+ *	$Id: ite_rt.c,v 1.9 1994/05/08 05:53:20 chopps Exp $
  */
-
-#include "ite.h"
-#if NITE > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <dev/cons.h>
-
-#include <amiga/dev/itevar.h>
-
 #include <machine/cpu.h>
-
-/* XXX */
+#include <amiga/amiga/device.h>
+#include <amiga/dev/itevar.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
 
 int retina_console = 1;
 
+void retina_cursor __P((struct ite_softc *,int));
+void retina_scroll __P((struct ite_softc *,int,int,int,int));
+void retina_deinit __P((struct ite_softc *));
+void retina_clear __P((struct ite_softc *,int,int,int,int));
+void retina_putc __P((struct ite_softc *,int,int,int,int));
+void retina_init __P((struct ite_softc *));
+
 /*
- * retina_cnprobe is called when the console is being initialized
- * i.e. very early.  grfconfig() has been called, so this implies
- * that rt_init() was called.  If we are functioning retina_inited
- * will be true.
+ * this function is called from grf_rt to init the grf_softc->g_conpri
+ * field each time a retina is attached.
  */
 int
-retina_cnprobe(min)
-	int min;
+grfrt_cnprobe()
 {
-	extern int retina_inited;		/* in grf_rt.c */
-	if (retina_inited) {
-		if (retina_console)
-			return(CN_INTERNAL);
-		else
-			return(CN_NORMAL);
-	}
-	return(CN_DEAD);
+	static int done;
+	int rv;
+
+	if (retina_console && done == 0)
+		rv = CN_INTERNAL;
+	else
+		rv = CN_NORMAL;
+	done = 1;
+	return(rv);
 }
 
-void retina_init(struct ite_softc *ip)
+/* 
+ * init the required fields in the grf_softc struct for a
+ * grf to function as an ite.
+ */
+void
+grfrt_iteinit(gp)
+	struct grf_softc *gp;
 {
-  struct MonDef *md;
+	gp->g_iteinit = retina_init;
+	gp->g_itedeinit = retina_deinit;
+	gp->g_iteclear = retina_clear;
+	gp->g_iteputc = retina_putc;
+	gp->g_itescroll = retina_scroll;
+	gp->g_itecursor = retina_cursor;
+}
 
-  if (ip->grf == 0)
-    ip->grf = &grf_softc[ip - ite_softc];
+void
+retina_init(ip)
+	struct ite_softc *ip;
+{
+	struct MonDef *md;
 
-  ip->priv = ip->grf->g_data;
-  md = (struct MonDef *) ip->priv;
+	ip->priv = ip->grf->g_data;
+	md = (struct MonDef *) ip->priv;
   
-  ip->cols = md->TX;
-  ip->rows = md->TY;
+	ip->cols = md->TX;
+	ip->rows = md->TY;
 }
 
 
@@ -427,8 +442,3 @@ void retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
       retina_clear (ip, sy, ip->cols - count, 1, count);
     }		
 }
-
-#endif
-
-
-

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grfabs.c,v 1.2 1994/03/27 06:23:26 chopps Exp $
+ *	$Id: grfabs.c,v 1.3 1994/05/08 05:53:09 chopps Exp $
  *
  *  amiga abstract graphics driver.
  *
@@ -101,12 +101,6 @@ grfcc_probe()
 		return(0);
 	}
 	return(1);
-}
-
-void
-grfcc_config ()
-{
-	grfprobe ();
 }
 
 dmode_t *
