@@ -4,7 +4,7 @@ be squeezed onto a 40MB hard disk by leaving off an unnecessary set or two.
 To actually do much compiling or anything more interesting than booting, at
 least 8MB of RAM and more disk space is recommended.  About 75MB will be
 necessary to install all of the NetBSD _VER binary system distribution
-sets (note that this does not count swap space!).  An addition 25MB or so
+sets (note that this does not count swap space!).  An additional 25MB or so
 is needed for the binary X11 distribution sets.  Much more disk space is
 required to install the source and objects as well (at least another 300MB).
 
