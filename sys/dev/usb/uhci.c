@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.178 2004/03/02 16:32:05 martin Exp $	*/
+/*	$NetBSD: uhci.c,v 1.178.2.1 2004/07/02 17:16:14 he Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.178 2004/03/02 16:32:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.178.2.1 2004/07/02 17:16:14 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1176,13 +1176,13 @@ uhci_intr(void *arg)
 	if (sc->sc_dying)
 		return (0);
 
-	DPRINTFN(15,("uhci_intr: real interrupt\n"));
 	if (sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("uhci_intr: ignored interrupt while polling\n");
+		DPRINTFN(16, ("uhci_intr: ignored interrupt while polling\n"));
 #endif
 		return (0);
 	}
+
 	return (uhci_intr1(sc));
 }
 
