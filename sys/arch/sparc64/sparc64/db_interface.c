@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 1998/10/08 02:31:40 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.11 1998/11/24 12:50:27 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -50,6 +50,8 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
+#include <ddb/db_interface.h>
+
 #include <machine/openfirm.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
@@ -675,7 +677,7 @@ db_traptrace(addr, have_addr, count, modif)
 		u_int tsp;
 		u_int tpc;
 	} trap_trace[], trap_trace_end[];
-	int i, j;
+	int i;
 
 	if (have_addr) {
 		i=addr;
@@ -790,6 +792,8 @@ db_dump_buf(addr, have_addr, count, modif)
 
 #include "opt_uvm.h"
 #include <uvm/uvm.h>
+
+void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
 
 void
 db_uvmhistdump(addr, have_addr, count, modif)
