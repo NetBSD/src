@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.12 1993/12/18 04:32:04 mycroft Exp $
+ *	$Id: isofs_vnops.c,v 1.13 1993/12/23 07:37:44 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -704,11 +704,12 @@ isofs_strategy(bp)
 /*
  * Print out the contents of an inode.
  */
-void
+int
 isofs_print(vp)
 	struct vnode *vp;
 {
 	printf("tag VT_ISOFS, isofs vnode\n");
+	return (0);
 }
 
 extern int enodev ();
