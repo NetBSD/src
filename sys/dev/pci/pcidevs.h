@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.402 2002/01/30 01:53:00 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.403 2002/02/02 11:30:04 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.397 2002/01/30 01:52:32 tron Exp 
+ *	NetBSD: pcidevs,v 1.398 2002/02/02 11:28:46 tsutsui Exp 
  */
 
 /*
@@ -562,6 +562,7 @@
 #define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
+#define	PCI_VENDOR_HINT	0x3388		/* HiNT */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
@@ -1200,6 +1201,9 @@
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
 #define	PCI_PRODUCT_HIFN_7811	0x0007		/* 7811 */
 #define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */
+
+/* HiNT products */
+#define	PCI_PRODUCT_HINT_HB1	0x0021		/* HB1 PCI-PCI Bridge */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
