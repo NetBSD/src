@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.37 1999/12/15 22:28:15 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.38 2000/06/04 19:14:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.37 1999/12/15 22:28:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.38 2000/06/04 19:14:24 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.37 1999/12/15 22:28:15 thorpej Exp 
 int	dec_kn20aa_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_kn20aa_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_kn20aa_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_kn20aa_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_kn20aa_intr_disestablish __P((void *, void *));
@@ -94,6 +95,7 @@ pci_kn20aa_pickintr(ccp)
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_kn20aa_intr_map;
         pc->pc_intr_string = dec_kn20aa_intr_string;
+	pc->pc_intr_evcnt = dec_kn20aa_intr_evcnt;
         pc->pc_intr_establish = dec_kn20aa_intr_establish;
         pc->pc_intr_disestablish = dec_kn20aa_intr_disestablish;
 
@@ -195,6 +197,19 @@ dec_kn20aa_intr_string(ccv, ih)
 
         sprintf(irqstr, "kn20aa irq %ld", ih);
         return (irqstr);
+}
+
+const struct evcnt *
+dec_kn20aa_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+#if 0
+	struct cia_config *ccp = ccv;
+#endif
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *

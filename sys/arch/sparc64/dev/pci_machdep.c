@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 2000/05/24 20:27:52 eeh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.8 2000/06/04 19:15:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -408,6 +408,16 @@ pci_intr_string(pc, ih)
 	DPRINTF(SPDB_INTR, ("; returning %s\n", str));
 
 	return (str);
+}
+
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

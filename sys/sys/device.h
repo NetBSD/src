@@ -1,4 +1,35 @@
-/* $NetBSD: device.h,v 1.40 2000/06/02 01:48:52 cgd Exp $ */
+/* $NetBSD: device.h,v 1.41 2000/06/04 19:15:20 cgd Exp $ */
+
+/*
+ * Copyright (c) 1996, 2000 Christopher G. Demetriou
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *      for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,14 +116,46 @@ struct device {
 
 TAILQ_HEAD(devicelist, device);
 
-/* `event' counters (use zero or more per device instance, as needed) */
+/*
+ * `event' counters (use zero or more per device instance, as needed)
+ */
+
 struct evcnt {
+	u_int64_t	ev_count;	/* how many have occurred */
 	TAILQ_ENTRY(evcnt) ev_list;	/* entry on list of all counters */
-	struct	device *ev_dev;		/* associated device */
-	int	ev_count;		/* how many have occurred */
-	char	ev_name[8];		/* what to call them (systat display) */
+	unsigned char	ev_type;	/* counter type; see below */
+	unsigned char	ev_grouplen;	/* 'group' len, excluding NUL */
+	unsigned char	ev_namelen;	/* 'name' len, excluding NUL */
+	char		ev_pad1;	/* reserved (for now); 0 */
+	const struct evcnt *ev_parent;	/* parent, for hierarchical ctrs */
+	const char	*ev_group;	/* name of group */
+	const char	*ev_name;	/* name of specific event */
 };
 TAILQ_HEAD(evcntlist, evcnt);
+
+/* maximum group/name lengths, including trailing NUL */
+#define	EVCNT_STRING_MAX	256
+
+/* ev_type values */
+#define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
+#define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
+
+/*
+ * initializer for an event count structure.  the lengths are initted and
+ * it is added to the evcnt list at attach time.
+ */
+#define	EVCNT_INITIALIZER(type, parent, group, name)			\
+    {									\
+	0,			/* ev_count */				\
+	{ },			/* ev_list */				\
+	type,			/* ev_type */				\
+	0,			/* ev_grouplen */			\
+	0,			/* ev_namelen */			\
+	0,			/* ev_pad1 */				\
+	parent,			/* ev_parent */				\
+	group,			/* ev_group */				\
+	name,			/* ev_name */				\
+    }
 
 /*
  * Configuration data (i.e., data placed in ioconf.c).
@@ -191,11 +254,15 @@ void config_pending_decr(void);
 #ifdef __HAVE_DEVICE_REGISTER
 void device_register(struct device *, void *);
 #endif
-void evcnt_attach(struct device *, const char *, struct evcnt *);
-void evcnt_detach(struct evcnt *);
+
+void	evcnt_attach_static(struct evcnt *);
+void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
+	    const char *, const char *);
+void	evcnt_detach(struct evcnt *);
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.9 2000/04/04 17:20:54 thorpej Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.10 2000/06/04 19:15:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,8 @@ tctrl_attach(parent, self, aux)
 	if (sa->sa_nintr != 0) {
 		(void)bus_intr_establish(sc->sc_memt, sa->sa_pri,
 		    0, tctrl_intr, sc);
-		evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    sc->sc_dev.dv_xname, "intr");
 	}
 
 	/* See what the external status is

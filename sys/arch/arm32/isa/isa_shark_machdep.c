@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.5 1999/09/17 19:59:39 thorpej Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.6 2000/06/04 19:14:33 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -135,6 +135,15 @@ isa_init8259s()
 }
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+
+const struct evcnt *
+isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
+}
+
 /*
  * Set up an interrupt handler to start being called.
  */

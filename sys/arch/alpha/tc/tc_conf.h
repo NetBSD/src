@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.9 1998/10/22 01:03:09 briggs Exp $ */
+/* $NetBSD: tc_conf.h,v 1.10 2000/06/04 19:14:29 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -40,6 +40,8 @@
 extern void	tc_3000_500_intr_setup __P((void));
 extern void	tc_3000_500_iointr __P((void *, unsigned long));
 
+extern const struct evcnt *
+		tc_3000_500_intr_evcnt __P((struct device *, void *));
 extern void	tc_3000_500_intr_establish __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
 extern void	tc_3000_500_intr_disestablish __P((struct device *, void *));
@@ -58,6 +60,8 @@ extern struct tc_builtin tc_3000_500_nographics_builtins[];
 extern void	tc_3000_300_intr_setup __P((void));
 extern void	tc_3000_300_iointr __P((void *, unsigned long));
 
+extern const struct evcnt *
+		tc_3000_300_intr_evcnt __P((struct device *, void *));
 extern void	tc_3000_300_intr_establish __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
 extern void	tc_3000_300_intr_disestablish __P((struct device *, void *));

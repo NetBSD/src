@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2000/02/03 19:27:46 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 2000/06/04 19:14:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -243,6 +243,16 @@ pci_intr_string(pc, ih)
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
+}
+
+const struct evcnt *
+pci_intr_evcnt(pc, ih)
+	pci_chipset_tag_t pc;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 extern void * intr_establish();

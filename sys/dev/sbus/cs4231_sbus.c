@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.13 2000/04/14 08:22:49 mrg Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.14 2000/06/04 19:15:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -137,7 +137,8 @@ cs4231_attach_sbus(parent, self, aux)
 				   sa->sa_pri, 0,
 				   cs4231_intr, sc);
 
-	evcnt_attach(&sc->sc_ad1848.sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_ad1848.sc_dev.dv_xname, "intr");
 	audio_attach_mi(&audiocs_hw_if, sc, &sc->sc_ad1848.sc_dev);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.12 2000/03/15 03:07:47 nisimura Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.13 2000/06/04 19:14:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.12 2000/03/15 03:07:47 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.13 2000/06/04 19:14:55 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,16 @@ ioasicattach(parent, self, aux)
 	 * Try to configure each device.
 	 */
 	ioasic_attach_devs(sc, ioasic_devs, builtin_ndevs);
+}
+
+const struct evcnt *
+ioasic_intr_evcnt(dev, cookie)
+	struct device *dev;
+	void *cookie;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 #if 1 /* XXX for now XXX */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.14 1999/02/12 06:25:14 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.15 2000/06/04 19:14:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.14 1999/02/12 06:25:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.15 2000/06/04 19:14:25 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.14 1999/02/12 06:25:14 thorpej Exp $
 int	dec_kn8ae_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_kn8ae_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_kn8ae_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_kn8ae_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_kn8ae_intr_disestablish __P((void *, void *));
@@ -92,6 +93,7 @@ pci_kn8ae_pickintr(ccp, first)
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = dec_kn8ae_intr_map;
         pc->pc_intr_string = dec_kn8ae_intr_string;
+	pc->pc_intr_evcnt = dec_kn8ae_intr_evcnt;
         pc->pc_intr_establish = dec_kn8ae_intr_establish;
         pc->pc_intr_disestablish = dec_kn8ae_intr_disestablish;
 
@@ -163,6 +165,16 @@ dec_kn8ae_intr_string(ccv, ih)
         sprintf(irqstr, "kn8ae irq %ld vector 0x%lx PCI Interrupt Pin %c",
 	    (ih >> 24), ih & 0xffff, (int)(((ih >> 16) & 0x7) - 1) + 'A');
         return (irqstr);
+}
+
+const struct evcnt *
+dec_kn8ae_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *

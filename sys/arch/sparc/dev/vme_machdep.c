@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.23 2000/05/09 22:39:36 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.24 2000/06/04 19:15:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ static int	sparc_vme_map __P((void *, vme_addr_t, vme_size_t, vme_am_t,
 				   vme_mapresc_t *));
 static void	sparc_vme_unmap __P((void *, vme_mapresc_t));
 static int	sparc_vme_intr_map __P((void *, int, int, vme_intr_handle_t *));
+static const struct evcnt *sparc_vme_intr_evcnt __P((void *,
+						     vme_intr_handle_t));
 static void *	sparc_vme_intr_establish __P((void *, vme_intr_handle_t, int,
 					      int (*) __P((void *)), void *));
 static void	sparc_vme_intr_disestablish __P((void *, void *));
@@ -193,6 +195,7 @@ struct vme_chipset_tag sparc_vme_chipset_tag = {
 	sparc_vme_unmap,
 	sparc_vme_probe,
 	sparc_vme_intr_map,
+	sparc_vme_intr_evcnt,
 	sparc_vme_intr_establish,
 	sparc_vme_intr_disestablish,
 	0, 0, 0 /* bus specific DMA stuff */
@@ -735,6 +738,16 @@ sparc_vme_intr_map(cookie, level, vec, ihp)
 	ih->sc = cookie;/*XXX*/
 	*ihp = ih;
 	return (0);
+}
+
+const struct evcnt *
+sparc_vme_intr_evcnt(cookie, vih)
+	void *cookie;
+	vme_intr_handle_t vih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

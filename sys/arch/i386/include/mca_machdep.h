@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.2 2000/06/01 00:04:51 cgd Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.3 2000/06/04 19:14:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ struct mcabus_attach_args;
 
 void	mca_attach_hook(struct device *, struct device *,
 		struct mcabus_attach_args *);
+const struct evcnt *mca_intr_evcnt(mca_chipset_tag_t, mca_intr_handle_t);
 void	*mca_intr_establish(mca_chipset_tag_t, mca_intr_handle_t,
 		int, int (*)(void *), void *);
 void	mca_intr_disestablish(mca_chipset_tag_t, void *);

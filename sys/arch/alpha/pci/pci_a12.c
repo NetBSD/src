@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.4 1998/04/24 01:25:18 mjacob Exp $ */
+/* $NetBSD: pci_a12.c,v 1.5 2000/06/04 19:14:22 cgd Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.4 1998/04/24 01:25:18 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.5 2000/06/04 19:14:22 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,6 +110,7 @@ struct evcnt a12_intr_evcnt;
 int	avalon_a12_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *avalon_a12_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *avalon_a12_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*avalon_a12_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	avalon_a12_intr_disestablish __P((void *, void *));
@@ -128,6 +129,7 @@ pci_a12_pickintr(ccp)
         pc->pc_intr_v = ccp;
         pc->pc_intr_map = avalon_a12_intr_map;
         pc->pc_intr_string = avalon_a12_intr_string;
+	pc->pc_intr_evcnt = avalon_a12_intr_evcnt;
         pc->pc_intr_establish = avalon_a12_intr_establish;
         pc->pc_intr_disestablish = avalon_a12_intr_disestablish;
 
@@ -155,6 +157,16 @@ avalon_a12_intr_string(ccv, ih)
 	pci_intr_handle_t ih;
 {
 	return "a12 pci irq";	/* see "only one" note above */
+}
+
+const struct evcnt *
+avalon_a12_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.81 2000/05/16 05:45:49 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.82 2000/06/04 19:15:02 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -655,7 +655,8 @@ fdcattach(fdc, pri)
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 fdcswintr, fdc);
 
-	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
+	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    fdc->sc_dev.dv_xname, "intr");
 
 	/* physical limit: four drives per controller. */
 	drive_attached = 0;

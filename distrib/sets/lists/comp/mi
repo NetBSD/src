@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.224 2000/06/04 11:52:06 itojun Exp $
+#	$NetBSD: mi,v 1.225 2000/06/04 19:14:14 cgd Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2596,6 +2596,10 @@
 ./usr/share/man/cat9/ether_delmulti.0		comp-kern-catman
 ./usr/share/man/cat9/ether_ifattach.0		comp-kern-catman
 ./usr/share/man/cat9/ethersubr.0		comp-kern-catman
+./usr/share/man/cat9/evcnt.0		comp-kern-catman
+./usr/share/man/cat9/evcnt_attach_dynamic.0		comp-kern-catman
+./usr/share/man/cat9/evcnt_attach_static.0		comp-kern-catman
+./usr/share/man/cat9/evcnt_detach.0		comp-kern-catman
 ./usr/share/man/cat9/extent.0		comp-kern-catman
 ./usr/share/man/cat9/extent_alloc.0		comp-kern-catman
 ./usr/share/man/cat9/extent_alloc_region.0		comp-kern-catman
@@ -4124,6 +4128,10 @@
 ./usr/share/man/man9/ether_delmulti.9		comp-kern-man
 ./usr/share/man/man9/ether_ifattach.9		comp-kern-man
 ./usr/share/man/man9/ethersubr.9		comp-kern-man
+./usr/share/man/man9/evcnt.9		comp-kern-man
+./usr/share/man/man9/evcnt_attach_dynamic.9		comp-kern-man
+./usr/share/man/man9/evcnt_attach_static.9		comp-kern-man
+./usr/share/man/man9/evcnt_detach.9		comp-kern-man
 ./usr/share/man/man9/extent.9		comp-kern-man
 ./usr/share/man/man9/extent_alloc.9		comp-kern-man
 ./usr/share/man/man9/extent_alloc_region.9		comp-kern-man

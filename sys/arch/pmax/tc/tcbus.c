@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.10 2000/02/29 09:03:30 nisimura Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.11 2000/06/04 19:14:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.10 2000/02/29 09:03:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.11 2000/06/04 19:14:57 cgd Exp $");
 
 /*
  * Which system models were configured?
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.10 2000/02/29 09:03:30 nisimura Exp $");
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
+static const struct evcnt *tc_ds_intr_evcnt __P((struct device *, void *);
 static void	tc_ds_intr_establish __P((struct device *, void *,
 				int, int (*)(void *), void *));
 static void	tc_ds_intr_disestablish __P((struct device *, void *));
@@ -119,11 +120,25 @@ tcbus_attach(parent, self, aux)
 
 	tba->tba_busname = "tc";
 	tba->tba_memt = 0;
+	tba->tba_intr_evcnt = tc_ds_intr_evcnt;
 	tba->tba_intr_establish = tc_ds_intr_establish;
 	tba->tba_intr_disestablish = tc_ds_intr_disestablish;
 	tba->tba_get_dma_tag = tc_ds_get_dma_tag;
 
 	tcattach(parent, self, tba);
+}
+
+/*
+ * Dispatch to model specific interrupt line evcnt fetch rontine
+ */
+static void
+tc_ds_intr_evcnt(dev, cookie)
+	struct device *dev;
+	void *cookie;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*

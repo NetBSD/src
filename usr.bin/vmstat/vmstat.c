@@ -1,7 +1,7 @@
-/*	$NetBSD: vmstat.c,v 1.65 2000/06/04 08:07:36 itojun Exp $	*/
+/* $NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.65 2000/06/04 08:07:36 itojun Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.66 2000/06/04 19:15:21 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,13 +169,15 @@ kvm_t *kd;
 #define	INTRSTAT	0x02
 #define	MEMSTAT		0x04
 #define	SUMSTAT		0x08
+#define	EVCNTSTAT	0x10
 #define	VMSTAT		0x20
 #define	HISTLIST	0x40
 #define	HISTDUMP	0x80
 
 void	cpustats __P((void));
 void	dkstats __P((void));
-void	dointr __P((void));
+void	doevcnt __P((int verbose));
+void	dointr __P((int verbose));
 void	domem __P((void));
 void	dopool __P((void));
 void	dosum __P((void));
@@ -209,7 +211,7 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int c, todo;
+	int c, todo, verbose;
 	u_int interval;
 	int reps;
         char errbuf[_POSIX2_LINE_MAX];
@@ -218,11 +220,14 @@ main(argc, argv)
 
 	(void)setegid(getgid());
 	memf = nlistf = NULL;
-	interval = reps = todo = 0;
-	while ((c = getopt(argc, argv, "c:fh:HilM:mN:sw:")) != -1) {
+	interval = reps = todo = verbose = 0;
+	while ((c = getopt(argc, argv, "c:efh:HilM:mN:svw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
+			break;
+		case 'e':
+			todo |= EVCNTSTAT;
 			break;
 		case 'f':
 			todo |= FORKSTAT;
@@ -250,6 +255,9 @@ main(argc, argv)
 			break;
 		case 's':
 			todo |= SUMSTAT;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'w':
 			interval = atoi(optarg);
@@ -346,7 +354,9 @@ main(argc, argv)
 	if (todo & SUMSTAT)
 		dosum();
 	if (todo & INTRSTAT)
-		dointr();
+		dointr(verbose);
+	if (todo & EVCNTSTAT)
+		doevcnt(verbose);
 	if (todo & VMSTAT)
 		dovmstat(interval, reps);
 	exit(0);
@@ -691,7 +701,7 @@ cpustats()
 #include <machine/psl.h>
 #undef _KERNEL
 void
-dointr()
+dointr(int verbose)
 {
 	long i, j, inttotal, uptime;
 	static char iname[64];
@@ -706,7 +716,8 @@ dointr()
 		(void)printf("interrupt       total     rate\n");
 		inttotal = 0;
 		for (j = 0; j < 16; j++, ivp++) {
-			if (ivp->iv_vec && ivp->iv_use && ivp->iv_cnt) {
+			if (ivp->iv_vec && ivp->iv_use &&
+			    (ivp->iv_cnt || verbose)) {
 				if (kvm_read(kd, (u_long)ivp->iv_use, iname, 63) != 63) {
 					(void)fprintf(stderr, "vmstat: iv_use: %s\n",
 					    kvm_geterr(kd));
@@ -723,14 +734,15 @@ dointr()
 }
 #else
 void
-dointr()
+dointr(int verbose)
 {
-	long *intrcnt, inttotal, uptime;
+	long *intrcnt;
+	long long inttotal, uptime;
 	int nintr, inamlen;
 	char *intrname;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
-	struct device dev;
+	char evgroup[EVCNT_STRING_MAX], evname[EVCNT_STRING_MAX];
 
 	uptime = getuptime();
 	nintr = namelist[X_EINTRCNT].n_value - namelist[X_INTRCNT].n_value;
@@ -744,41 +756,95 @@ dointr()
 	}
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("interrupt         total     rate\n");
+	(void)printf("%-24s %16s %8s\n", "interrupt", "total", "rate");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
-		if (*intrcnt)
-			(void)printf("%-14s %8ld %8ld\n", intrname,
-			    *intrcnt, *intrcnt / uptime);
+		if (*intrcnt || verbose)
+			(void)printf("%-24s %16lld %8lld\n", intrname,
+			    (long long)*intrcnt,
+			    (long long)(*intrcnt / uptime));
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
 	}
 	kread(X_ALLEVENTS, &allevents, sizeof allevents);
 	evptr = allevents.tqh_first;
 	while (evptr) {
-		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
-		    sizeof evcnt) != sizeof evcnt) {
+		if (kvm_read(kd, (long)evptr, &evcnt, sizeof evcnt) != sizeof evcnt) {
+event_chain_trashed:
 			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
 			    kvm_geterr(kd));
 			exit(1);
 		}
-		if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
-		    sizeof dev) != sizeof dev) {
-			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
-			    kvm_geterr(kd));
-			exit(1);
-		}
-		if (evcnt.ev_count)
-			(void)printf("%-14s %8ld %8ld\n", dev.dv_xname,
-			    (long)evcnt.ev_count, evcnt.ev_count / uptime);
-		inttotal += evcnt.ev_count++;
 
 		evptr = evcnt.ev_list.tqe_next;
+		if (evcnt.ev_type != EVCNT_TYPE_INTR)
+			continue;
+
+		if (evcnt.ev_count == 0 && !verbose)
+			continue;
+
+		if (kvm_read(kd, (long)evcnt.ev_group, evgroup,
+		    evcnt.ev_grouplen + 1) != evcnt.ev_grouplen + 1)
+			goto event_chain_trashed;
+		if (kvm_read(kd, (long)evcnt.ev_name, evname,
+		    evcnt.ev_namelen + 1) != evcnt.ev_namelen + 1)
+			goto event_chain_trashed;
+
+		(void)printf("%s %s%*s %16lld %8lld\n", evgroup, evname,
+		    24 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
+		    (long long)evcnt.ev_count,
+		    (long long)(evcnt.ev_count / uptime));
+
+		inttotal += evcnt.ev_count++;
 	}
-	(void)printf("Total          %8ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("%-24s %16lld %8lld\n", "Total", inttotal,
+	    (long long)(inttotal / uptime));
 }
 #endif
+
+void
+doevcnt(int verbose)
+{
+	long long uptime;
+	struct evcntlist allevents;
+	struct evcnt evcnt, *evptr;
+	char evgroup[EVCNT_STRING_MAX], evname[EVCNT_STRING_MAX];
+
+	/* XXX should print type! */
+
+	uptime = getuptime();
+	(void)printf("%-24s %16s %8s %s\n", "event", "total", "rate", "type");
+	kread(X_ALLEVENTS, &allevents, sizeof allevents);
+	evptr = allevents.tqh_first;
+	while (evptr) {
+		if (kvm_read(kd, (long)evptr, &evcnt, sizeof evcnt) != sizeof evcnt) {
+event_chain_trashed:
+			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
+			    kvm_geterr(kd));
+			exit(1);
+		}
+
+		evptr = evcnt.ev_list.tqe_next;
+		if (evcnt.ev_count == 0 && !verbose)
+			continue;
+
+		if (kvm_read(kd, (long)evcnt.ev_group, evgroup,
+		    evcnt.ev_grouplen + 1) != evcnt.ev_grouplen + 1)
+			goto event_chain_trashed;
+		if (kvm_read(kd, (long)evcnt.ev_name, evname,
+		    evcnt.ev_namelen + 1) != evcnt.ev_namelen + 1)
+			goto event_chain_trashed;
+
+		(void)printf("%s %s%*s %16lld %8lld %s\n", evgroup, evname,
+		    24 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
+		    (long long)evcnt.ev_count,
+		    (long long)(evcnt.ev_count / uptime),
+		    /* XXX do the following with an array lookup XXX */
+		    (evcnt.ev_type == EVCNT_TYPE_MISC) ? "misc" :
+		     ((evcnt.ev_type == EVCNT_TYPE_INTR) ? "intr" : "?"));
+	}
+}
 
 /*
  * These names are defined in <sys/malloc.h>.
@@ -1166,7 +1232,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: vmstat [-fHilms] [-h histname] [-c count] [-M core] \
+	    "usage: vmstat [-efHilmsv] [-h histname] [-c count] [-M core] \
 [-N system] [-w wait] [disks]\n");
 	exit(1);
 }

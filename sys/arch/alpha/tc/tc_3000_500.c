@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.21 2000/03/26 10:32:52 nisimura Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.22 2000/06/04 19:14:29 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.21 2000/03/26 10:32:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.22 2000/06/04 19:14:29 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,16 @@ tc_3000_500_intr_setup()
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
         }
+}
+
+const struct evcnt *
+tc_3000_500_intr_evcnt(tcadev, cookie)
+	struct device *tcadev;
+	void *cookie;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void

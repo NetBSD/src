@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3max.c,v 1.6 2000/02/29 07:20:21 nisimura Exp $	*/
+/*	$NetBSD: tc_3max.c,v 1.7 2000/06/04 19:14:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.6 2000/02/29 07:20:21 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.7 2000/06/04 19:14:55 cgd Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,6 @@ struct tcbus_attach_args kn02_tc_desc = {
   	TC_SPEED_25_MHZ,
 	KN02_TC_NSLOTS, tc_kn02_slots,
 	3, tc_kn02_builtins,
-	NULL, NULL,
+	NULL, NULL, NULL,
 	NULL,
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4 2000/06/01 00:04:50 cgd Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.5 2000/06/04 19:14:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -60,6 +60,7 @@ struct alpha_pci_chipset {
 	int		(*pc_intr_map)(void *, pcitag_t, int, int,
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	const struct evcnt *(*pc_intr_evcnt)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *);
 	void		(*pc_intr_disestablish)(void *, void *);
@@ -89,6 +90,8 @@ struct alpha_pci_chipset {
     (*(c)->pc_intr_map)((c)->pc_intr_v, (it), (ip), (il), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
+#define	pci_intr_evcnt(c, ih)						\
+    (*(c)->pc_intr_evcnt)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 2000/05/19 05:26:17 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 2000/06/04 19:15:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -371,7 +371,8 @@ zs_attach(zsc, zsd, pri)
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
 
-	evcnt_attach(&zsc->zsc_dev, "intr", &zsc->zsc_intrcnt);
+	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    zsc->zsc_dev.dv_xname, "intr");
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.2 2000/03/19 02:25:29 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.3 2000/06/04 19:14:21 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.2 2000/03/19 02:25:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.3 2000/06/04 19:14:21 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ void dec_6600_intr_disestablish __P((void *, void *));
 void *dec_6600_intr_establish __P((
     void *, pci_intr_handle_t, int, int (*func)(void *), void *));
 const char *dec_6600_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_6600_intr_evcnt __P((void *, pci_intr_handle_t));
 int dec_6600_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
 void *dec_6600_pciide_compat_intr_establish __P((void *, struct device *,
     struct pci_attach_args *, int, int (*)(void *), void *));
@@ -105,6 +106,7 @@ pci_6600_pickintr(pcp)
         pc->pc_intr_v = pcp;
         pc->pc_intr_map = dec_6600_intr_map;
         pc->pc_intr_string = dec_6600_intr_string;
+	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
         pc->pc_intr_establish = dec_6600_intr_establish;
         pc->pc_intr_disestablish = dec_6600_intr_disestablish;
 	pc->pc_pciide_compat_intr_establish = NULL;
@@ -196,6 +198,22 @@ dec_6600_intr_string(acv, ih)
 
 	snprintf(irqstr, sizeof irqstr, irqfmt, ih);
 	return (irqstr);
+}
+
+const struct evcnt *
+dec_6600_intr_evcnt(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+
+#if NSIO
+	if (DEC_6600_LINE_IS_ISA(ih))
+		return (sio_intr_evcnt(NULL /*XXX*/,
+		    DEC_6600_LINE_ISA_IRQ(ih)));
+#endif
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *

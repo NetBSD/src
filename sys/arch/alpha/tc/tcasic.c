@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.28 2000/03/26 10:32:52 nisimura Exp $ */
+/* $NetBSD: tcasic.c,v 1.29 2000/06/04 19:14:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.28 2000/03/26 10:32:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.29 2000/06/04 19:14:30 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ tcasicattach(parent, self, aux)
 			tba.tba_nbuiltins = tc_3000_500_nographics_nbuiltins;
 			tba.tba_builtins = tc_3000_500_nographics_builtins;
 		}
+		tba.tba_intr_evcnt = tc_3000_500_intr_evcnt;
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_500;
@@ -133,6 +134,7 @@ tcasicattach(parent, self, aux)
 		tba.tba_slots = tc_3000_300_slots;
 		tba.tba_nbuiltins = tc_3000_300_nbuiltins;
 		tba.tba_builtins = tc_3000_300_builtins;
+		tba.tba_intr_evcnt = tc_3000_300_intr_evcnt;
 		tba.tba_intr_establish = tc_3000_300_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_300_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_300;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_maxine.c,v 1.5 2000/02/29 07:20:21 nisimura Exp $	*/
+/*	$NetBSD: tc_maxine.c,v 1.6 2000/06/04 19:14:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.5 2000/02/29 07:20:21 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.6 2000/06/04 19:14:57 cgd Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,6 @@ struct tcbus_attach_args xine_tc_desc = {
   	TC_SPEED_12_5_MHZ,
 	XINE_TC_NSLOTS, tc_xine_slots,
 	2, tc_xine_builtins,
-	NULL, NULL,
+	NULL, NULL, NULL,
 	NULL,
 };

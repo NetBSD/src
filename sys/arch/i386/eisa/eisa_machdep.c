@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.10 1998/06/03 06:35:49 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.11 2000/06/04 19:14:43 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,14 @@ eisa_intr_string(ec, ih)
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
 	
+}
+
+const struct evcnt *
+eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.8 2000/03/23 06:34:25 thorpej Exp $	*/
+/*	$NetBSD: isabus.c,v 1.9 2000/06/04 19:14:31 cgd Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -136,6 +136,7 @@ struct cfattach isabr_ca = {
 };
 extern struct cfdriver isabr_cd;
 
+const struct evcnt *isabr_intr_evcnt __P((isa_chipset_tag_t, int));
 void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *));
 void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
@@ -194,6 +195,7 @@ isabrattach(parent, self, aux)
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_ISABR;
 
+	sc->arc_isa_cs.ic_intr_evcnt = isabr_intr_evcnt;
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
@@ -303,6 +305,16 @@ intr_calculatemasks()
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU2 + 1, imen >> 8);
 	}
+}
+
+const struct evcnt *   
+isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
+        isa_chipset_tag_t ic;
+        int irq;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 /*

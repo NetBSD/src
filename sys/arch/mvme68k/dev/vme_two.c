@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.2 2000/03/18 22:33:04 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.3 2000/06/04 19:14:50 cgd Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ static struct vmetwo_softc *vmetwo_sc;
 void vmetwo_master_range __P((struct vmetwo_softc *, int,
 			      struct vmetwo_range *));
 int vmetwo_local_isr_trampoline __P((void *));
+const struct evcnt *vmetwo_intr_evcnt __P((struct vmetwo_softc *, int));
 void vmetwo_intr_establish __P((struct vmetwo_softc *, int, int,
 	                      int (*) (void *), void *));
 void vmetwo_intr_disestablish __P((struct vmetwo_softc *, int, int));
@@ -297,6 +298,7 @@ vmetwo_attach(parent, self, aux)
 	sc->sc_vct.vct_map = _vmetwo_map;
 	sc->sc_vct.vct_unmap = _vmetwo_unmap;
 	sc->sc_vct.vct_int_map = _vmetwo_intmap;
+	sc->sc_vct.vct_int_evcnt = _vmetwo_intr_evcnt;
 	sc->sc_vct.vct_int_establish = _vmetwo_intr_establish;
 	sc->sc_vct.vct_int_disestablish = _vmetwo_intr_disestablish;
 	sc->sc_vct.vct_dmamap_create = _vmetwo_dmamap_create;
@@ -560,6 +562,16 @@ _vmetwo_intmap(vsc, level, vector, handlep)
 	/* This is rather gross */
 	*handlep = (void *) (int) ((level << 8) | vector);
 	return (0);
+}
+
+const struct evcnt *
+_vmetwo_intr_establish(vsc, handle, prior, func, arg)
+	void *vsc;
+	vme_intr_handle_t handle;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return NULL;
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.3 2000/06/01 00:04:52 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4 2000/06/04 19:14:30 cgd Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -49,6 +49,7 @@ struct arc_isa_bus {
 
         void    (*ic_attach_hook)(struct device *, struct device *,
                     struct isabus_attach_args *);
+	const struct evcnt *(*ic_intr_evcnt)(void *, int);
         void    *(*ic_intr_establish)(isa_chipset_tag_t, int, int, int,
                     int (*)(void *), void *);
         void    (*ic_intr_disestablish)(isa_chipset_tag_t, void *);
@@ -60,6 +61,8 @@ struct arc_isa_bus {
  */
 #define isa_attach_hook(p, s, a)                             /*           \
     (*(a)->iba_ic->ic_attach_hook)((p), (s), (a)) */
+#define	isa_intr_evcnt(c, i)					\
+    (*(c)->ic_intr_evcnt)((c)->ic_v, (i))
 #define isa_intr_establish(c, i, t, l, f, a)                         \
     (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a))
 #define isa_intr_disestablish(c, h)                                     \

@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.37 1999/03/19 05:13:18 cgd Exp $	*/
+/*	$NetBSD: isavar.h,v 1.38 2000/06/04 19:15:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,6 +165,10 @@ struct isa_softc {
  *
  * To remove an interrupt handler, the driver calls isa_intr_disestablish() 
  * with the handle returned by isa_intr_establish() for that handler.
+ *
+ * The event counter (struct evcnt) associated with an interrupt line
+ * (to be used as 'parent' for an ISA device's interrupt handler's evcnt)
+ * can be obtained with isa_intr_evcnt().
  */
 
 /* ISA interrupt sharing types */
