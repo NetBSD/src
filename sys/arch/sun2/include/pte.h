@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2001/06/27 18:48:30 fredette Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2001/11/30 17:52:34 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,8 +188,8 @@
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define kernel_context() get_context(); set_context(0)
 #define restore_context set_context
-u_int get_pte __P((vm_offset_t va));
-void  set_pte __P((vm_offset_t va, u_int pte));
+u_int get_pte __P((vaddr_t va));
+void  set_pte __P((vaddr_t va, u_int pte));
 #endif	/* _KERNEL */
 
 #endif	/* _MACHINE_PTE_H */

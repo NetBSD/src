@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2001/09/10 21:19:40 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2001/11/30 17:52:33 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,10 +68,10 @@ extern	struct pmap	kernel_pmap_store;
  * This function does that, and calls vm_fault if it
  * could not resolve the fault by reloading the MMU.
  */
-int _pmap_fault __P((struct vm_map *, vm_offset_t, vm_prot_t));
+int _pmap_fault __P((struct vm_map *, vaddr_t, vm_prot_t));
 
 /* This lets us have some say in choosing VA locations. */
-extern void pmap_prefer(vm_offset_t, vm_offset_t *);
+extern void pmap_prefer __P((vaddr_t, vaddr_t *));
 #define PMAP_PREFER(fo, ap) pmap_prefer((fo), (ap))
 
 /* This needs to be a macro for kern_sysctl.c */
@@ -88,10 +88,10 @@ extern segsz_t pmap_wired_pages(pmap_t);
 #define	pmap_update(pmap)		/* nothing (yet) */
 
 /* Map a given physical region to a virtual region */
-extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+extern vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 
 /* Extract the PMEG for a given physical address. */
-extern int _pmap_extract_pmeg __P((pmap_t, vm_offset_t));
+extern int _pmap_extract_pmeg __P((pmap_t, vaddr_t));
 
 /*
  * Since PTEs also contain type bits, we have to have some way
