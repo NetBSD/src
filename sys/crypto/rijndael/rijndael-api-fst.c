@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.15 2003/07/16 05:27:49 itojun Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.16 2003/07/24 14:51:34 itojun Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.15 2003/07/16 05:27:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.16 2003/07/24 14:51:34 itojun Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -93,24 +93,7 @@ int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 		return BAD_CIPHER_MODE;
 	}
 	if (IV != NULL) {
-		int i;
- 		for (i = 0; i < RIJNDAEL_MAX_IV_SIZE; i++) {
-			int t, j;
-
-			t = IV[2*i];
-			if ((t >= '0') && (t <= '9')) j = (t - '0') << 4;
-			else if ((t >= 'a') && (t <= 'f')) j = (t - 'a' + 10) << 4;
-			else if ((t >= 'A') && (t <= 'F')) j = (t - 'A' + 10) << 4;
-			else return BAD_CIPHER_INSTANCE;
-		
-			t = IV[2*i+1];
-			if ((t >= '0') && (t <= '9')) j ^= (t - '0');
-			else if ((t >= 'a') && (t <= 'f')) j ^= (t - 'a' + 10);
-			else if ((t >= 'A') && (t <= 'F')) j ^= (t - 'A' + 10);
-			else return BAD_CIPHER_INSTANCE;
-			
-			cipher->IV[i] = (u_int8_t)j;
-		}
+		memcpy(cipher->IV, IV, RIJNDAEL_MAX_IV_SIZE);
 	} else {
 		memset(cipher->IV, 0, RIJNDAEL_MAX_IV_SIZE);
 	}
