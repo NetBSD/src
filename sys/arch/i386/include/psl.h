@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.20 1995/07/04 07:10:10 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.21 1995/08/13 00:23:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -134,6 +134,7 @@ splx(ncpl)
  * Hardware interrupt masks
  */
 #define	splbio()	splraise(imask[IPL_BIO])
+#define	splnet()	splraise(imask[IPL_NET])
 #define	spltty()	splraise(imask[IPL_TTY])
 #define	splclock()	splraise(imask[IPL_CLOCK])
 #define	splimp()	splraise(imask[IPL_IMP])
@@ -147,7 +148,6 @@ splx(ncpl)
  */
 #define	splsoftclock()	splx(SIR_CLOCKMASK)
 #define	splsoftnet()	splraise(SIR_NETMASK)
-#define	splnet()	splsoftnet()
 #define	splsofttty()	splraise(SIR_TTYMASK)
 
 /*
