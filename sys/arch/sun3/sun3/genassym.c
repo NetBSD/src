@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -55,6 +56,8 @@
 #include "machine/cpu.h"
 #include "machine/trap.h"
 
+#include "intersil7170.h"
+#include "interreg.h"
 
 main()
 {
@@ -62,9 +65,14 @@ main()
     struct vmmeter *vm = (struct vmmeter *)0;
     struct proc *p = (struct proc *) 0;
     struct vmspace *vms = (struct vmspace *) 0;
+    struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
     
-    
+
+    printf("#define\tINTERSIL_INTR_OFFSET %d\n",
+	   &intersil_addr->interrupt_reg);
+    printf("#define\tINTERSIL_INTER_CSECONDS %d\n", INTERSIL_INTER_CSECONDS);
 				/* 68k isms */
+    printf("#define\tIREG_CLOCK_ENAB_5 %d\n", IREG_CLOCK_ENAB_5);
     printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
     printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
