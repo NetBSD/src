@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.14 1994/11/23 07:02:12 deraadt Exp $ */
+/*	$NetBSD: esp.c,v 1.15 1995/01/02 20:21:01 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -64,26 +64,27 @@
 
 int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/ 
 
-void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, void *, void *));
-void	esp_minphys	__P((struct buf *));
-u_int	esp_adapter_info __P((struct esp_softc *));
-int	espprint	__P((void *, char *));
-void	espreadregs	__P((struct esp_softc *));
-u_char	espgetbyte	__P((struct esp_softc *));
-void	espselect	__P((struct esp_softc *, u_char, u_char, caddr_t, u_char));
-void	esp_scsi_reset	__P((struct esp_softc *));
-void	esp_reset	__P((struct esp_softc *));
-void	esp_init	__P((struct esp_softc *, int));
-int	esp_scsi_cmd	__P((struct scsi_xfer *));
-int	esp_poll	__P((struct esp_softc *, struct ecb *));
-int	espphase	__P((struct esp_softc *));
-void	esp_sched	__P((struct esp_softc *));
-void	esp_done	__P((struct ecb *));
-void	esp_msgin	__P((struct esp_softc *));
-void	esp_msgout	__P((struct esp_softc *));
-int	espintr		__P((struct esp_softc *));
-void	esp_timeout	__P((void *arg));
+static void	espattach	__P((struct device *, struct device *, void *));
+static int	espmatch	__P((struct device *, void *, void *));
+static void	esp_minphys	__P((struct buf *));
+static u_int	esp_adapter_info __P((struct esp_softc *));
+static int	espprint	__P((void *, char *));
+static void	espreadregs	__P((struct esp_softc *));
+static u_char	espgetbyte	__P((struct esp_softc *));
+static void	espselect	__P((struct esp_softc *,
+				     u_char, u_char, caddr_t, u_char));
+static void	esp_scsi_reset	__P((struct esp_softc *));
+static void	esp_reset	__P((struct esp_softc *));
+static void	esp_init	__P((struct esp_softc *, int));
+static int	esp_scsi_cmd	__P((struct scsi_xfer *));
+static int	esp_poll	__P((struct esp_softc *, struct ecb *));
+static int	espphase	__P((struct esp_softc *));
+static void	esp_sched	__P((struct esp_softc *));
+static void	esp_done	__P((struct ecb *));
+static void	esp_msgin	__P((struct esp_softc *));
+static void	esp_msgout	__P((struct esp_softc *));
+static int	espintr		__P((struct esp_softc *));
+static void	esp_timeout	__P((void *arg));
 
 /* Linkup to the rest of the kernel */
 struct cfdriver espcd = {
@@ -94,10 +95,8 @@ struct cfdriver espcd = {
 struct scsi_adapter esp_switch = {
 	esp_scsi_cmd,
 	esp_minphys,
-	0,
-	0,
-	esp_adapter_info,
-	"esp"
+	NULL,
+	NULL,
 };
 
 struct scsi_device esp_dev = {
@@ -105,8 +104,6 @@ struct scsi_device esp_dev = {
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
-	"esp",
-	0
 };
 
 /*
@@ -387,9 +384,10 @@ espattach(parent, self, aux)
 	 * fill in the prototype scsi_link.
 	 */
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = sc->sc_id;
+	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = &esp_switch;
 	sc->sc_link.device = &esp_dev;
+	sc->sc_link.openings = 2;
 
 	/*
 	 * If the boot path is "esp" at the moment and it's me, then
@@ -557,20 +555,12 @@ esp_scsi_cmd(xs)
 	flags = xs->flags;
 
 	/* Get a esp command block */
-	if (!(flags & SCSI_NOMASK)) {
-		/* Critical region */
-		s = splbio();
-		ecb = sc->free_list.tqh_first;
-		if (ecb) {
-			TAILQ_REMOVE(&sc->free_list, ecb, chain);
-		}
-		splx(s);
-	} else {
-		ecb = sc->free_list.tqh_first;
-		if (ecb) {
-			TAILQ_REMOVE(&sc->free_list, ecb, chain);
-		}
+	s = splbio();
+	ecb = sc->free_list.tqh_first;
+	if (ecb) {
+		TAILQ_REMOVE(&sc->free_list, ecb, chain);
 	}
+	splx(s);
 		
 	if (ecb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -587,23 +577,23 @@ esp_scsi_cmd(xs)
 	ecb->dleft = xs->datalen;
 	ecb->stat = 0;
 	
-	if (!(flags & SCSI_NOMASK))
-		s = splbio();
-
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->ready_list, ecb, chain);
 	timeout(esp_timeout, ecb, (xs->timeout*hz)/1000);
 
 	if (sc->sc_state == ESP_IDLE)
 		esp_sched(sc);
 
-	if (!(flags & SCSI_NOMASK)) { /* Almost done. Wait outside */
-		splx(s);
-		ESP_MISC(("SUCCESSFULLY_QUEUED"));
-		return SUCCESSFULLY_QUEUED;
+	splx(s);
+
+	if (flags & SCSI_POLL) {
+		/* Not allowed to use interrupts, use polling instead */
+		return esp_poll(sc, ecb);
 	}
 
-	/* Not allowed to use interrupts, use polling instead */
-	return esp_poll(sc, ecb);
+	ESP_MISC(("SUCCESSFULLY_QUEUED"));
+	return SUCCESSFULLY_QUEUED;
+
 }
 
 /*
@@ -616,17 +606,6 @@ void
 esp_minphys(bp)
 	struct buf *bp;
 {
-}
-
-u_int 
-esp_adapter_info(sc)
-	struct esp_softc *sc;
-{
-
-	ESP_TRACE(("esp_adapter_info\n"));
-
-	/* One outstanding command per target */
-	return 2;
 }
 
 /*
@@ -656,8 +635,6 @@ esp_poll(sc, ecb)
 		esp_timeout((caddr_t)ecb);
 	}
 
-	if (xs->error)
-		return HAD_ERROR;
 	return COMPLETE;
 }
 
@@ -762,7 +739,7 @@ esp_done(ecb)
 			xs->status = ecb->stat;
 			/* Next, setup a request sense command block */
 			bzero(ss, sizeof(*ss));
-			ss->op_code = REQUEST_SENSE;
+			ss->opcode = REQUEST_SENSE;
 			ss->byte2 = sc_link->lun << 5;
 			ss->length = sizeof(struct scsi_sense_data);
 			ecb->clen = sizeof(*ss);
@@ -783,10 +760,7 @@ esp_done(ecb)
 		}
 	}
 	
-	if (xs->flags & SCSI_ERR_OK) {
-		xs->resid = 0;
-		xs->error = XS_NOERROR;
-	} else if (xs->error == XS_NOERROR && (ecb->flags & ECB_CHKSENSE)) {
+	if (xs->error == XS_NOERROR && (ecb->flags & ECB_CHKSENSE)) {
 		xs->error = XS_SENSE;
 	} else {
 		xs->resid = ecb->dleft;
