@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.18 2000/01/31 14:20:14 itojun Exp $	*/
+/*	$NetBSD: rshd.c,v 1.19 2000/04/14 12:28:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.18 2000/01/31 14:20:14 itojun Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.19 2000/04/14 12:28:51 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,12 +159,42 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-
 	fromlen = sizeof (from); /* xxx */
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0) {
 		syslog(LOG_ERR, "getpeername: %m");
 		_exit(1);
 	}
+#if 0
+	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
+	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&from)->sin6_addr) &&
+	    sizeof(struct sockaddr_in) <= sizeof(from)) {
+		struct sockaddr_in sin;
+		struct sockaddr_in6 *sin6;
+		const int off = sizeof(struct sockaddr_in6) -
+		    sizeof(struct sockaddr_in);
+
+		sin6 = (struct sockaddr_in6 *)&from;
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_family = AF_INET;
+		sin.sin_len = sizeof(struct sockaddr_in);
+		memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr[off],
+		    sizeof(sin.sin_addr));
+		memcpy(&from, &sin, sizeof(sin));
+		fromlen = sin.sin_len;
+	}
+#else
+	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
+	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&from)->sin6_addr)) {
+		char hbuf[NI_MAXHOST];
+		if (getnameinfo((struct sockaddr *)&from, fromlen, hbuf,
+				sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0) {
+			strncpy(hbuf, "invalid", sizeof(hbuf));
+		}
+		syslog(LOG_ERR, "malformed \"from\" address (v4 mapped, %s)\n",
+		    hbuf);
+		exit(1);
+	}
+#endif
 	if (keepalive &&
 	    setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&on,
 	    sizeof(on)) < 0)
