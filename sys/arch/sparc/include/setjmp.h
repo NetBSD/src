@@ -1,7 +1,7 @@
-/*	$NetBSD: setjmp.h,v 1.1 1994/12/20 10:37:10 cgd Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.2 1998/10/01 03:28:11 thorpej Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
  */
 
-#define	_JBLEN	10		/* size, in longs, of a jmp_buf */
+#define	_JBLEN	14		/* size, in longs, of a jmp_buf */
