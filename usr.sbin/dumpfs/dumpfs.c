@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.31 2001/11/09 12:01:13 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.32 2002/01/08 05:32:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,13 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.31 2001/11/09 12:01:13 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.32 2002/01/08 05:32:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 
+#include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
