@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.3 2001/11/18 09:01:31 wdk Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.4 2001/11/28 10:26:00 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -192,6 +192,26 @@ LEAF_NOPROFILE(sigcode)
 	syscall
 	break	0			# just in case sigreturn fails
 END(sigcode)
+
+/* Upcall "trampoline" code. Invoked from RTE setup by cpu_upcall().
+ *
+ * On entry, stack & registers look like:
+ *	
+ *      a0	upcall type	
+ *      a1	pointer to sa_t array
+ *      a2	count of "event" SAs	
+ *	a3	count of "interrupted" SAs
+ *	t0	arg
+ *      t1	address of upcallhandler
+ */
+LEAF_NOPROFILE(upcallcode)
+	jal	t9
+	nop				# BD slot
+	li	v0, SYS_exit
+	li	a0, -1
+	syscall
+	break	0			# just in case exit fails
+END(upcallcode)
 XLEAF(esigcode)
 
 #ifdef COMPAT_ULTRIX
@@ -213,25 +233,6 @@ LEAF_NOPROFILE(linux_sigcode)
 END(linux_sigcode)
 XLEAF(linux_esigcode)
 #endif
-
-/* Upcall "trampoline" code. Invoked from RTE setup by cpu_upcall().
- *
- * On entry, stack & registers look like:
- *	
- *      a0	upcall type	
- *      a1	pointer to sa_t array
- *      a2	count of "event" SAs	
- *	a3	count of "interrupted" SAs
- *	t0	arg
- *      t1	address of upcallhandler
- */
-LEAF_NOPROFILE(upcallcode)
-	jal	t1
-	nop				# BD slot
-	li	v0, SYS_exit
-	syscall
-	break	0			# just in case exit fails
-END(upcallcode)
 
 	
 /*
@@ -497,7 +498,7 @@ cpu_switch_queuescan:
 	 */
 	beq	s0, s7, 4f			# oldproc == newproc ??
 	li	s5, 0				# BDslot: didn't switch 
-	
+		
 /*
  * Switch to new context.
  */
@@ -594,28 +595,11 @@ NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, -4
 
 	move	s0, a0				# s0 = old proc
-	move	a0, a1				# a0 = newproc
-cpu_preempt_queuescan:
-	lw	t3, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	bne	t3, zero, 2f
-	PANIC("cpu_preempt")			# nothing in queue
+	move	s7, a1				# s7 = newproc
 
-2:
-	lw	t5, L_BACK(a0)			# t5 = l->l_back
-	lw	t6, L_FORW(a0)			# t6 = l->l_forw
-	sw	zero, L_BACK(a0)		# firewalll: l->l_back=NULL
-	sw	t5, L_BACK(t6)			# t6->l_back = t5
-	sw	t6, L_FORW(t5)			# f5->l_forw = t6
+	jal	_C_LABEL(remrunqueue)
+	move	a0, a1				# Remove newproc from queue
 
-	bne	t5, t6, 3f			# Is queue empty??	
-	
-	lw	t2, L_PRIORITY(a1)		# Clear bit for this priority
-	sll	v1, t2, 2			# t2 = t2 << 2
-	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, _C_LABEL(sched_whichqs)
-3:
-	/* Squirrel away proc pointer. */
-	move	s7, a0
 #if defined(LOCKDEBUG)
 	/*
 	 * Done mucking with the run queues, release the
@@ -719,7 +703,7 @@ END(cpu_preempt)
  * released by the reaper thread.  MUST BE CALLED AT SPLHIGH.
  */
 LEAF(switch_exit)
-	lw	v0, _C_LABEL(proc0paddr)	# get proc0 l_addr
+	lw	v0, _C_LABEL(proc0paddr)		# get proc0 l_addr
 	nop
 	sw	v0, _C_LABEL(curpcb)		# set current pcb
 	REG_PROLOGUE
@@ -748,7 +732,7 @@ END(switch_exit)
  *  Similar to switch_exit above, except exits via lwp_exit2() 
  */
 LEAF(switch_lwp_exit)
-	lw	v0, _C_LABEL(proc0paddr)	# get proc0 l_addr
+	lw	v0, _C_LABEL(proc0paddr)		# get lwp0 l_addr
 	nop
 	sw	v0, _C_LABEL(curpcb)		# set current pcb
 	REG_PROLOGUE
@@ -767,7 +751,7 @@ LEAF(switch_lwp_exit)
 	li	s0, 0
 
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
-	j	_C_LABEL(exit2)			# proc already in a0
+	j	_C_LABEL(lwp_exit2)			# proc already in a0
 	sub	sp, sp, CALLFRAME_SIZ		#BDSlot: set stack call frame
 END(switch_lwp_exit)
 	
