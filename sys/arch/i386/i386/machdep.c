@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 1995/05/01 13:02:29 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 1995/05/01 14:15:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -530,8 +530,20 @@ sendsig(catcher, sig, mask, code)
 	 */
 	frame.sf_sc.sc_onstack = oonstack;
 	frame.sf_sc.sc_mask = mask;
-	frame.sf_sc.sc_es     = tf->tf_es;
-	frame.sf_sc.sc_ds     = tf->tf_ds;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
+		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
+		frame.sf_sc.sc_es = tf->tf_vm86_es;
+		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
+	} else
+#endif
+	{
+		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
+		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_es = tf->tf_es;
+		frame.sf_sc.sc_ds = tf->tf_ds;
+	}
 	frame.sf_sc.sc_edi    = tf->tf_edi;
 	frame.sf_sc.sc_esi    = tf->tf_esi;
 	frame.sf_sc.sc_ebp    = tf->tf_ebp;
@@ -618,8 +630,19 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore signal context.
 	 */
-	tf->tf_es     = context.sc_es;
-	tf->tf_ds     = context.sc_ds;
+#ifdef VM86
+	if (context.sc_eflags & PSL_VM) {
+		tf->tf_vm86_gs = context.sc_gs;
+		tf->tf_vm86_fs = context.sc_fs;
+		tf->tf_vm86_es = context.sc_es;
+		tf->tf_vm86_ds = context.sc_ds;
+	} else
+#endif
+	{
+		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_es = context.sc_es;
+		tf->tf_ds = context.sc_ds;
+	}
 	tf->tf_edi    = context.sc_edi;
 	tf->tf_esi    = context.sc_esi;
 	tf->tf_ebp    = context.sc_ebp;

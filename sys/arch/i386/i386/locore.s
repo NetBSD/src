@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.129 1995/05/01 13:02:24 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.130 1995/05/01 14:15:13 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -520,7 +520,15 @@ ENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-	pushl	%eax
+#ifdef VM86
+	testl	$PSL_VM,SC_EFLAGS(%eax)
+	jnz	1f
+#endif
+	movl	SC_FS(%eax),%ecx
+	movl	SC_GS(%eax),%edx
+	movl	%cx,%fs
+	movl	%dx,%gs
+1:	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
@@ -536,7 +544,15 @@ ENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
-	pushl	%eax
+#ifdef VM86
+	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
+	jnz	1f
+#endif
+	movl	SVR4_UC_FS(%eax),%ecx
+	movl	SVR4_UC_GS(%eax),%edx
+	movl	%cx,%fs
+	movl	%dx,%gs
+1:	pushl	%eax
 	pushl	$1			# setcontext(p) == syscontext(1, p) 
 	pushl	%eax			# junk to fake return address
 	movl	$SVR4_SYS_svr4_context,%eax
@@ -557,7 +573,15 @@ ENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-	pushl	%eax			# junk to fake return address
+#ifdef VM86
+	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
+	jnz	1f
+#endif
+	movl	LINUX_SC_FS(%eax),%ecx
+	movl	LINUX_SC_GS(%eax),%edx
+	movl	%cx,%fs
+	movl	%dx,%gs
+1:	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_linux_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax

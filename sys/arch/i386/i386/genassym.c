@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.40 1995/05/01 13:16:16 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.41 1995/05/01 14:15:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -72,15 +72,18 @@ main()
 	struct pcb *pcb = 0;
 	struct trapframe *tf = 0;
 	struct sigframe *sigf = 0;
+	struct sigcontext *sc = 0;
 	struct uprof *uprof = 0;
 #if NISA > 0
 	struct intrhand *ih = 0;
 #endif
 #ifdef COMPAT_SVR4
 	struct svr4_sigframe *svr4_sigf = 0;
+	struct svr4_ucontext *svr4_uc = 0;
 #endif
 #ifdef COMPAT_LINUX
-	struct linux_sigframe *lsigf = 0;
+	struct linux_sigframe *linux_sigf = 0;
+	struct linux_sigcontext *linux_sc = 0;
 #endif
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
@@ -122,21 +125,31 @@ main()
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);
+	def("SC_FS", &sc->sc_fs);
+	def("SC_GS", &sc->sc_gs);
+	def("SC_EFLAGS", &sc->sc_eflags);
+
+#ifdef COMPAT_SVR4
+	def("SVR4_SIGF_HANDLER", &svr4_sigf->sf_handler);
+	def("SVR4_SIGF_UC", &svr4_sigf->sf_uc);
+	def("SVR4_UC_FS", &svr4_uc->uc_mcontext.greg[SVR4_X86_FS]);
+	def("SVR4_UC_GS", &svr4_uc->uc_mcontext.greg[SVR4_X86_GS]);
+	def("SVR4_UC_EFLAGS", &svr4_uc->uc_mcontext.greg[SVR4_X86_EFLAGS]);
+#endif
+
+#ifdef COMPAT_LINUX
+	def("LINUX_SIGF_HANDLER", &linux_sigf->ls_handler);
+	def("LINUX_SIGF_SC", &linux_sigf->ls_sc);
+	def("LINUX_SC_FS", &linux_sc->lsc_fs);
+	def("LINUX_SC_GS", &linux_sc->lsc_gs);
+	def("LINUX_SC_EFLAGS", &linux_sc->lsc_eflags);
+#endif
 
 #if NISA > 0
 	def("IH_FUN", &ih->ih_fun);
 	def("IH_ARG", &ih->ih_arg);
 	def("IH_COUNT", &ih->ih_count);
 	def("IH_NEXT", &ih->ih_next);
-#endif
-
-#ifdef COMPAT_SVR4
-	def("SVR4_SIGF_HANDLER", &svr4_sigf->sf_handler);
-	def("SVR4_SIGF_UC", &svr4_sigf->sf_uc);
-#endif
-#ifdef COMPAT_LINUX
-	def("LINUX_SIGF_HANDLER", &lsigf->ls_handler);
-	def("LINUX_SIGF_SC", &lsigf->ls_sc);
 #endif
 
 	exit(0);
