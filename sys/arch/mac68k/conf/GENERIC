@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.84 1999/02/18 07:35:07 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85 1999/03/05 06:33:18 scottr Exp $
 #
 # GENERIC
 
@@ -108,8 +108,6 @@ options 	DISABLE_EXT_CACHE # Don't use IIci external cache
 options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
-
-options 	ADB_DEBUG
 
 options 	NFS_BOOT_BOOTP
 
