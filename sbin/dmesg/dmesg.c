@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.19 2000/06/16 04:00:44 simonb Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.20 2000/06/20 01:49:20 simonb Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.19 2000/06/16 04:00:44 simonb Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.20 2000/06/20 01:49:20 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,21 +53,20 @@ __RCSID("$NetBSD: dmesg.c,v 1.19 2000/06/16 04:00:44 simonb Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <kvm.h>
-#include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <vis.h>
 
+#ifndef SMALL
 struct nlist nl[] = {
 #define	X_MSGBUF	0
 	{ "_msgbufp" },
 	{ NULL },
 };
+#endif
 
 int	main(int, char *[]);
 void	usage(void);
@@ -80,9 +79,13 @@ main(int argc, char *argv[])
 {
 	struct kern_msgbuf cur;
 	int ch, newl, skip, i;
-	char *p, *memf, *nlistf, *bufdata;
+	char *p, *bufdata;
+#ifndef SMALL
+	char *memf, *nlistf;
+#endif
 	char buf[5];
 
+#ifndef SMALL
 	memf = nlistf = NULL;
 	while ((ch = getopt(argc, argv, "M:N:")) != -1)
 		switch(ch) {
@@ -100,6 +103,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (memf == NULL) {
+#endif
 		size_t size;
 		int mib[2];
 
@@ -117,6 +121,7 @@ main(int argc, char *argv[])
 
 		/* make a dummy struct msgbuf for the display logic */
 		cur.msg_bufx =  cur.msg_bufs = size;
+#ifndef SMALL
 	} else {
 		kvm_t *kd;
 		struct kern_msgbuf *bufp;
@@ -153,6 +158,7 @@ main(int argc, char *argv[])
 		if (cur.msg_bufx >= cur.msg_bufs)
 			cur.msg_bufx = 0;
 	}
+#endif
 
 	/*
 	 * The message buffer is circular; start at the write pointer
@@ -194,6 +200,10 @@ void
 usage(void)
 {
 
+#ifdef SMALL
+	(void)fprintf(stderr, "usage: dmesg\n");
+#else
 	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
+#endif
 	exit(1);
 }
