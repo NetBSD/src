@@ -1,0 +1,208 @@
+.\"
+.\"	$NetBSD: ssh-agent.1,v 1.1.1.1 2000/09/28 22:10:27 thorpej Exp $
+.\"
+.\" Author: Tatu Ylonen <ylo@cs.hut.fi>
+.\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+.\"                    All rights reserved
+.\"
+.\" As far as I am concerned, the code I have written for this software
+.\" can be used freely for any purpose.  Any derived versions of this
+.\" software must be clearly marked as such, and if the derived work is
+.\" incompatible with the protocol description in the RFC file, it must be
+.\" called by a name other than "ssh" or "Secure Shell".
+.\"
+.\" Copyright (c) 1999,2000 Markus Friedl. All rights reserved.
+.\" Copyright (c) 1999 Aaron Campbell. All rights reserved.
+.\" Copyright (c) 1999 Theo de Raadt. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" from OpenBSD: ssh-agent.1,v 1.16 2000/09/07 20:27:54 deraadt Exp
+.\"
+.Dd August 6, 2000
+.Dt SSH-AGENT 1
+.Os
+.Sh NAME
+.Nm ssh-agent
+.Nd authentication agent for the Secure Shell
+.Sh SYNOPSIS
+.Nm ssh-agent
+.Op Fl c Li | Fl s
+.Op Fl k
+.Oo
+.Ar command
+.Op Ar args ...
+.Oc
+.Sh DESCRIPTION
+.Nm
+is a program to hold private keys used for public key (RSA or DSA)
+authentication.  It is intended to be started at the beginning of
+an X Window System or login session.
+.Nm
+works by setting certain variables in the user's environment.  Through
+the use of these environment variables, the agent can be located
+and automatically used for RSA authentication when logging in to
+other hosts using
+.Xr ssh 1 .
+.Pp
+A user generally one identity per
+.Dq workstation ,
+e.g. laptop or desktop computer, handheld device, etc.  Use of
+.Nm
+on these workstations prevents having to store authentication
+information on remote hosts, and prevents having to transmit
+Passphrases over the network.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Generate C-shell commands on
+.Dv stdout .
+This is the default if
+.Ev SHELL
+looks like it's a csh style of shell.
+.It Fl s
+Generate Bourne shell commands on
+.Dv stdout .
+This is the default if
+.Ev SHELL
+does not look like it's a csh style of shell.
+.It Fl k
+Kill the current agent (given by the
+.Ev SSH_AGENT_PID
+environment variable).
+.El
+.Pp
+If a command line is given, it is executed as a sub-process of the agent.
+When the command dies, so does the agent.  If a command line is not given,
+the agent will not automatically exit, and must be explicitly killed with
+the
+.Fl k
+option when the session ends.
+.Pp
+The agent initially does not have any private keys.
+Keys must added using
+.Xr ssh-add 1 .
+.Pp
+There are two main ways to set up the agent:
+.Bl -bullet
+.It
+Invoke
+.Nm
+with a command line.  The command will be started with the
+appropriate environment variables set to use the agent.
+.It
+Invoke
+.Nm
+without a command line, which causes
+.Nm
+to print shell commands which will set up the enviroment if
+evaluated by the shell.
+.Nm
+will attempt to detect if you are running a
+.Xr csh 1
+or
+.Xr sh 1
+style shell, and generate the appropriate syntax.  The
+syntax can be forced with the
+.Fl c
+and
+.Fl s
+flags.
+.El
+.Pp
+When the agent is started, a Unix-domain socket is created
+and the name of this socket stored in the
+.Ev SSH_AUTH_SOCK
+environment variable.
+The socket is made accessible only to the current user.
+This method is easily abused by root or another instance of the same
+user.
+.Sh EXAMPLES
+The following shows using the command line facility of
+.Nm
+to associate an agent with an X session started by
+.Xr xinit 1 :
+.Bd -literal -offset indent
+#!/bin/sh -
+#
+# $HOME/.xinitrc
+#
+
+if [ -r $HOME/.ssh/identity ]; then
+	EXEC="exec ssh-agent"
+else
+	EXEC="exec"
+fi
+
+# .xsession will perform the ssh-add to add the keys.
+$EXEC $HOME/.xsession
+.Ed
+.Pp
+The following shows using
+.Nm
+and
+.Xr ssh-add 1
+in an X session startup script:
+.Bd -literal -offset indent
+#!/bin/sh -
+#
+# $HOME/.xsession
+#
+
+if [ -f $HOME/.Xdefaults ]; then
+	xrdb -merge $HOME/.Xdefaults
+fi
+
+xsetroot -solid black
+
+if [ -r $HOME/.ssh/identity ]; then
+	eval `ssh-agent`
+	ssh-add < /dev/null	# ensure stdin is not a tty
+	if [ $? != 0 ]; then
+		# Failed to provide a Passphrase, bail out!
+		exit 1
+	fi
+fi
+
+# Start the window manager.
+twm
+
+# Kill the agent we started above.
+if [ -n "$SSH_AGENT_PID" ]; then
+	ssh-agent -k
+fi
+.Ed
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa /tmp/ssh-XXXXXXXX/agent.<pid>
+Unix-domain sockets used to communicate with the
+authentication agent.  These sockets should only be readable by the
+owner.  The sockets should get automatically removed when the agent
+exits.
+.El
+.Sh AUTHOR
+Tatu Ylonen <ylo@cs.hut.fi>, Markus Friedl
+.Sh SEE ALSO
+.Xr ssh 1 ,
+.Xr ssh-add 1 ,
+.Xr ssh-keygen 1 ,
+.Xr sshd 8
