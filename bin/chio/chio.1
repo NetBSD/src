@@ -1,4 +1,4 @@
-.\"	$NetBSD: chio.1,v 1.10 2001/12/20 19:31:49 wiz Exp $
+.\"	$NetBSD: chio.1,v 1.11 2001/12/20 20:02:47 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,6 @@ the first robotic arm in the changer, the ET would be
 .Dq picker
 and the EU would be
 .Dq 0 .
-.Pp
 .Sh SUPPORTED COMMANDS
 .Nm
 .Ic move
@@ -227,7 +226,8 @@ Unloads the media from the CD-ROM drive and returns it to the specified slot.
 .It Nm abort
 Aborts any pending load or unload operation.
 .El
-.Pp
+.Sh FILES
+/dev/ch0 - default changer device
 .Sh EXAMPLES
 .Dl chio -f /dev/ch0 move slot 3 drive 0
 .Pp
@@ -244,13 +244,10 @@ Loads the media from slot (second slot) into the CD-ROM drive.
 .Dl chio -f /dev/ch1 status
 .Pp
 Returns status of all elements in the second changer.
-.Pp
-.Sh FILES
-/dev/ch0 - default changer device
 .Sh SEE ALSO
 .Xr mt 1 ,
 .Xr mount 8
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 program and SCSI changer driver were originally written by Jason R. Thorpe
