@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.14 2003/10/21 23:22:52 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.15 2003/10/30 21:19:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.14 2003/10/21 23:22:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.15 2003/10/30 21:19:54 fvdl Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -834,8 +834,10 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 		return ENOENT;
 #endif
 
-	if (pba->pba_bus >= mp_nbus)
-		return EINVAL;
+	if (pba->pba_bus >= mp_nbus) {
+		intr_add_pcibus(pba);
+		return 0;
+	}
 
 	mpb = &mp_busses[pba->pba_bus];
 	if (mpb->mb_name != NULL) {
