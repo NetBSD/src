@@ -1,4 +1,4 @@
-/*	$NetBSD: prtable.c,v 1.5 1999/09/08 21:17:45 jsm Exp $	*/
+/*	$NetBSD: prtable.c,v 1.6 2000/03/13 22:49:31 soren Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: prtable.c,v 1.5 1999/09/08 21:17:45 jsm Exp $");
+__RCSID("$NetBSD: prtable.c,v 1.6 2000/03/13 22:49:31 soren Exp $");
 #endif /* not lint */
 
 #include <curses.h>
@@ -63,7 +63,7 @@ static int	get_maxlen __P((const char *const [], int, int (*)(const char *const 
  *	length  - address of the routine to call to determine the length
  *		  of string to be printed 
  *
- * prtable and length are called with the the address of the base and
+ * prtable and length are called with the address of the base and
  * an index
  */
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.18 2000/03/13 22:46:59 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.17 2000/02/17 03:12:24 itohy Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.18 2000/03/13 22:46:59 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -693,8 +693,8 @@ chk_path(name, st_uid, st_gid)
 
 /*
  * set_ftime()
- *	Set the access time and modification time for a named file. If frc is
- *	non-zero we force these times to be set even if the the user did not
+ *	Set the access time and modification time for a named file. If frc
+ *	is non-zero we force these times to be set even if the user did not
  *	request access and/or modification time preservation (this is also
  *	used by -t to reset access times).
  *	When ign is zero, only those times the user has asked for are set, the
