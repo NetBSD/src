@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.83 1997/09/02 13:18:20 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.84 1997/09/02 18:54:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 1997/09/02 13:18:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 1997/09/02 18:54:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,7 +585,10 @@ unknown_cputype:
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
 #ifdef NEW_PMAP
-	pmap_activate(kernel_pmap, &proc0paddr->u_pcb.pcb_hw, 0);
+	/*
+	 * Set up the kernel address space in proc0's hwpcb.
+	 */
+	PMAP_ACTIVATE(kernel_pmap, &proc0paddr->u_pcb.pcb_hw, 0);
 #endif
 
 	/*
