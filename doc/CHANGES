@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.209 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.210 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -500,3 +500,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		cpuswitch() amongst other things. Contributed by Wasabi
 		Systems.
 		[scw 20031014]
+	syslogd(8): add -r, to prevent the compression of multiple similar
+		messages into "last message repeated N times".
+		[lukem 20031017]
