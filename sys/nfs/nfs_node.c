@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.64 2003/05/21 13:50:54 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.65 2003/05/22 14:14:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.64 2003/05/21 13:50:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.65 2003/05/22 14:14:02 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -294,6 +294,7 @@ nfs_reclaim(v)
 	 */
 	if (vp->v_type == VDIR && np->n_dircache)
 		hashdone(np->n_dircache, M_NFSDIROFF);
+	KASSERT(np->n_dirgens == NULL);
 
 	if (np->n_fhsize > NFS_SMALLFH)
 		free(np->n_fhp, M_NFSBIGFH);
