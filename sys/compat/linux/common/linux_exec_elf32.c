@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.40 1998/11/05 22:19:25 erh Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.41 1999/02/09 20:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	char *itp;
 	Elf_Addr *pos;
 {
-	char *bp;
+	const char *bp;
 	int error;
 	size_t len;
 
@@ -297,7 +297,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
-		free(bp, M_TEMP);
+		free((void *)bp, M_TEMP);
 	}
 	epp->ep_emul = &ELFNAMEEND(emul_linux);
 	*pos = ELF_NO_ADDR;
