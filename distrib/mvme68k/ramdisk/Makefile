@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/03/28 04:33:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2002/04/06 18:16:10 tsutsui Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -7,6 +7,7 @@ IMAGE=		ramdisk.fs
 IMAGESIZE=	1600b
 
 WARNS=		1
+DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list

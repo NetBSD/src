@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.15 2002/04/03 03:12:28 groo Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.16 2002/04/06 18:16:10 tsutsui Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -8,6 +8,7 @@ TOP=	${.CURDIR}/..
 .PATH:		${TOP}/common
 
 WARNS=		1
+DBG=		-Os
 
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${TOP}/common/list.ramdisk
