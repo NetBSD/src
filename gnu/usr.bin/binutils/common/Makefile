@@ -1,5 +1,24 @@
-#	$NetBSD: Makefile,v 1.8 1999/10/10 13:02:32 pk Exp $
+#	$NetBSD: Makefile,v 1.9 2001/08/06 19:12:01 tv Exp $
+.include <bsd.own.mk>
 
+.if defined(USE_NEW_TOOLCHAIN)
+
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+
+TOP=		${.CURDIR}/../../..
+DIST=		${TOP}/dist/toolchain
+
+TEXINFO=	${G_TEXINFOS}
+INFOFLAGS=	-I${DIST}/binutils
+
+.PATH: ${DIST}/binutils
+
+.include <bsd.info.mk>
+
+.else
+#
+# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
+#
 LIB=		common
 
 SRCS=		arparse.y arlex.l arsup.c bucomm.c version.c filemode.c \
@@ -18,3 +37,7 @@ libinstall::
 arlex.c: arparse.h
 
 .include <bsd.lib.mk>
+#
+# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
+#
+.endif
