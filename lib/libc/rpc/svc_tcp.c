@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.16 1998/02/13 05:52:38 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.17 1998/04/24 11:21:19 pk Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.16 1998/02/13 05:52:38 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.17 1998/04/24 11:21:19 pk Exp $");
 #endif
 #endif
 
@@ -327,10 +327,9 @@ readtcp(xprtp, buf, len)
 			if (errno == EINTR) {
 				continue;
 			}
-			goto fatal_err;
-
+			/*FALLTHROUGH*/
 		case 0:
-			continue;
+			goto fatal_err;
 
 		default:
 			break;
