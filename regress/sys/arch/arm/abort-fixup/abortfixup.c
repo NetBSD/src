@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.5 2002/03/17 13:46:45 bjh21 Exp $ */
+/* $NetBSD: abortfixup.c,v 1.6 2002/04/09 03:13:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.5 2002/03/17 13:46:45 bjh21 Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.6 2002/04/09 03:13:18 thorpej Exp $");
 
 #include <setjmp.h>
 #include <signal.h>
@@ -73,11 +73,10 @@ main(void)
 	 */
 
 	if (setjmp(buf) == 0) {
-		__asm __volatile ("
-			mov r0, #0
-			mov r1, r0
-			str r1, [r0], r1, ror #10
-		");
+		__asm __volatile (
+		"	mov r0, #0			\n"
+		"	mov r1, r0			\n"
+		"	str r1, [r0], r1, ror #10");
 		
 		/* Should not be reached if OK */
 		printf("!!! Regression test FAILED - no SEGV recieved\n");
@@ -89,11 +88,10 @@ main(void)
 	/* Similar but pre-indexed, to check ARM2/3 abort address function. */
 
 	if (setjmp(buf) == 0) {
-		__asm __volatile ("
-			mov r0, #0
-			mov r1, r0
-			str r1, [r0, r1, ror #10]
-		");
+		__asm __volatile (
+		"	mov r0, #0			\n"
+		"	mov r1, r0			\n"
+		"	str r1, [r0, r1, ror #10]");
 		
 		/* Should not be reached if OK */
 		printf("!!! Regression test FAILED - no SEGV recieved\n");
@@ -104,4 +102,3 @@ main(void)
 
 	exit(0);
 };
-
