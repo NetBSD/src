@@ -1,4 +1,4 @@
-.\"   $NetBSD: wss.4,v 1.5 1997/08/26 19:39:22 augustss Exp $
+.\"   $NetBSD: wss.4,v 1.6 1997/10/05 21:42:24 augustss Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Sh SYNOPSIS
 .Cd "device wss0 at isa? port 0x530 irq 10 drq 0 drq2 1"
 .Cd "device wss0 at isa? port 0x530 irq 10 drq 0 flags 1"
+.Cd "audio* at wss?"
 .Sh DESCRIPTION
 The
 .Nm
