@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.67 2000/06/26 14:21:14 mrg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.68 2000/06/27 17:41:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -62,8 +62,6 @@
 #include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.17 2000/06/13 06:21:51 chs Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.18 2000/06/27 17:41:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -37,7 +37,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.11 2000/04/11 04:37:50 chs Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.12 2000/06/27 17:41:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -39,7 +39,6 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
 
 #include <sys/exec_ecoff.h>
 

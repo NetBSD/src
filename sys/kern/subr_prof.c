@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.20 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.21 2000/06/27 17:41:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -42,7 +42,7 @@
 #include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>

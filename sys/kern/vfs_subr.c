@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.128 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.129 2000/06/27 17:41:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,16 +104,14 @@
 #include <sys/device.h>
 #include <sys/dirent.h>
 
-#include <vm/vm.h>
-#include <sys/sysctl.h>
-
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
+
+#include <sys/sysctl.h>
 
 enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,

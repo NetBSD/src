@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.100 2000/05/27 00:40:46 sommerfeld Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.101 2000/06/27 17:41:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -73,7 +73,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
 
 #include <uvm/uvm_extern.h>

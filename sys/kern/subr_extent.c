@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.34 2000/06/26 14:21:14 mrg Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.35 2000/06/27 17:41:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/lock.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

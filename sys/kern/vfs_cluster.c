@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.23 1999/12/03 21:43:20 ragge Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.24 2000/06/27 17:41:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -44,8 +44,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
-
-#include <vm/vm.h>
 
 int doreallocblks = 0;
 

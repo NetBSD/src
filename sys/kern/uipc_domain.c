@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.31 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.32 2000/06/27 17:41:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,7 +54,7 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 void	pffasttimo __P((void *));

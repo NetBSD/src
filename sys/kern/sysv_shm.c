@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.56 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.57 2000/06/27 17:41:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
