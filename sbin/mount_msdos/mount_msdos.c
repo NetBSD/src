@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.33 2004/01/05 23:23:33 jmmv Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.34 2004/01/05 23:27:16 jmmv Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.33 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.34 2004/01/05 23:27:16 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -210,7 +210,7 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage:\nmount_msdos [-9Gls] [-g gid] [-M mask] [-m mask] [-o options]\n"
+	fprintf(stderr, "usage: mount_msdos [-9Gls] [-g gid] [-M mask] [-m mask] [-o options]\n"
 			"\t[-t gmtoff] [-u uid] special node\n");
 	exit(1);
 }
