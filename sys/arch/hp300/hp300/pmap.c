@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1998/08/20 08:33:45 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1998/09/03 12:38:31 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -410,7 +410,7 @@ pmap_init()
 		panic("pmap_init: bogons in the VM system!\n");
 	}
 #else
-	addr = (vaddr) intiobase;
+	addr = (vaddr_t) intiobase;
 	(void) vm_map_find(kernel_map, NULL, (vaddr_t) 0,
 			   &addr, m68k_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
 	if (addr != (vaddr_t)intiobase)
