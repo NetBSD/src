@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.21 1998/02/03 19:12:44 perry Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.22 1998/02/11 12:00:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.21 1998/02/03 19:12:44 perry Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.22 1998/02/11 12:00:37 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -223,8 +223,13 @@ _kvm_readfromcore(kd, object, offset)
 		if (KREAD(kd, addr, &mem))
 			return (-1);
 
+#if defined(UVM)
+		if ((u_long)mem.uobject == object &&
+		    (u_long)mem.offset == offset)
+#else
 		if ((u_long)mem.object == object &&
 		    (u_long)mem.offset == offset)
+#endif
 			break;
 
 		addr = (u_long)mem.hashq.tqe_next;
