@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.193 2003/09/25 15:58:14 pooka Exp $
+#	$NetBSD: files.pci,v 1.194 2003/09/27 13:13:28 mrg Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -608,3 +608,8 @@ attach	skc at pci
 device	sk: ether, ifnet, arp, mii
 attach	sk at skc
 file	dev/pci/if_sk.c			skc | sk
+
+# Broadcom 4401 10/100 Ethernet
+device bce: ether, ifnet, arp, mii
+attach bce at pci
+file	dev/pci/if_bce.c		bce
