@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.186 2002/10/29 14:11:17 blymn Exp $
+#	$NetBSD: MAKEDEV,v 1.187 2002/12/07 19:50:58 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -134,7 +134,8 @@
 #	wsmux*	wscons event multiplexor
 #	agp*	AGP GART devices
 #	pci*	PCI bus access devices
-#	dpti*	DPT/Adaptec RAID management interface
+#	dpt*	DPT/Adaptec EATA RAID management interface
+#	dpti*	DPT/Adaptec I2O RAID management interface
 #	radio*	radio devices
 #	nsmb*	SMB requester
 #	systrace syscall tracer
@@ -180,7 +181,7 @@ all)
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev speaker lkm mms0 lms0 joy0 joy1 apm local satlink0
-	makedev iop0 mlx0 mly0
+	makedev iop0 mlx0 mly0 dpt0 dpti0
 	makedev audio
 	makedev radio
 	makedev usbs
@@ -857,6 +858,13 @@ pci*)
 	rm -f pci$unit
 	mknod pci$unit c 83 $unit
 	chmod 644 pci$unit
+	;;
+
+dpt*)
+	unit=${i#dpt}
+	rm -f dpt$unit
+	mknod dpt$unit c 96 $unit
+	chmod 600 dpt$unit
 	;;
 
 dpti*)
