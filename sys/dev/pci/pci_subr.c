@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_subr.c,v 1.12 1995/08/16 04:54:50 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.13 1996/01/22 21:08:10 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,10 +107,9 @@ pci_attach_subdev(pcidev, bus, device)
 	if ((cf = config_search(pcisubmatch, pcidev, &pa)) != NULL)
 		config_attach(pcidev, cf, &pa, pciprint);
 	else {
-		pci_devinfo(id, class, devinfo, &supported);
-		printf("%s bus %d device %d: %s not %s\n", pcidev->dv_xname,
-		    bus, device, devinfo,
-		    supported ? "configured" : "supported");
+		pci_devinfo(id, class, 1, devinfo);
+		printf("%s bus %d device %d: %s not configured\n",
+		    pcidev->dv_xname, bus, device, devinfo);
 		return (0);
 	}
 
@@ -214,17 +213,16 @@ struct pci_knowndev {
 	int			flags;
 	char			*vendorname, *productname;
 };
-#define	PCI_KNOWNDEV_UNSUPP	0x01		/* unsupported device */
-#define	PCI_KNOWNDEV_NOPROD	0x02		/* match on vendor only */
+#define	PCI_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/pci/pcidevs_data.h>
 #endif /* PCIVERBOSE */
 
 void
-pci_devinfo(id_reg, class_reg, cp, supp)
+pci_devinfo(id_reg, class_reg, showclass, cp)
 	pcireg_t id_reg, class_reg;
+	int showclass;
 	char *cp;
-	int *supp;
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
@@ -254,21 +252,15 @@ pci_devinfo(id_reg, class_reg, cp, supp)
                         break;
 		kdp++;
 	}
-        if (kdp->vendorname == NULL) {
+        if (kdp->vendorname == NULL)
 		vendor_namep = product_namep = NULL;
-		if (supp != NULL)
-			*supp = 0;
-        } else {
+	else {
 		vendor_namep = kdp->vendorname;
 		product_namep = (kdp->flags & PCI_KNOWNDEV_NOPROD) == 0 ?
 		    kdp->productname : NULL;
-		if (supp != NULL)
-			*supp = (kdp->flags & PCI_KNOWNDEV_UNSUPP) == 0;
         }
 #else /* PCIVERBOSE */
 	vendor_namep = product_namep = NULL;
-	if (supp != NULL)
-		*supp = 1;		/* always say 'not configured' */
 #endif /* PCIVERBOSE */
 
 	classp = pci_class;
@@ -293,20 +285,24 @@ pci_devinfo(id_reg, class_reg, cp, supp)
 	else
 		cp += sprintf(cp, "vendor: %s, unknown product: 0x%x",
 		    vendor_namep, product);
-	cp += sprintf(cp, " (");
-	if (classp->name == NULL)
-		cp += sprintf(cp, "unknown class/subclass: 0x%02x/0x%02x",
-		    class, subclass);
-	else {
-		cp += sprintf(cp, "class: %s, ", classp->name);
-		if (subclassp == NULL || subclassp->name == NULL)
-			cp += sprintf(cp, "unknown subclass: 0x%02x",
-			    subclass);
-		else
-			cp += sprintf(cp, "subclass: %s", subclassp->name);
-	}
+	if (showclass) {
+		cp += sprintf(cp, " (");
+		if (classp->name == NULL)
+			cp += sprintf(cp,
+			    "unknown class/subclass: 0x%02x/0x%02x",
+			    class, subclass);
+		else {
+			cp += sprintf(cp, "class: %s, ", classp->name);
+			if (subclassp == NULL || subclassp->name == NULL)
+				cp += sprintf(cp, "unknown subclass: 0x%02x",
+				    subclass);
+			else
+				cp += sprintf(cp, "subclass: %s",
+				    subclassp->name);
+		}
 #if 0 /* not very useful */
-	cp += sprintf(cp, ", interface: 0x%02x", interface);
+		cp += sprintf(cp, ", interface: 0x%02x", interface);
 #endif
-	cp += sprintf(cp, ", revision: 0x%02x)", revision);
+		cp += sprintf(cp, ", revision: 0x%02x)", revision);
+	}
 }
