@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbe.4,v 1.2 1999/12/15 22:07:32 abs Exp $
+.\"	$NetBSD: mbe.4,v 1.3 2000/02/12 08:38:13 fair Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,15 +40,47 @@
 .Os
 .Sh NAME
 .Nm mbe
-.Nd MB8696x-based Ethernet interfaces device driver
+.Nd
+.Tn Fujitsu
+MB8696x-based
+.Tn PCMCIA
+.Tn Ethernet
+driver
 .Sh SYNOPSIS
 .Cd "mbe* at pcmcia? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports MB8696x-based Ethernet interfaces.
+driver supports
+.Tn PCMCIA
+.Tn Ethernet
+adapters based on the
+.Tn Fujitsu
+MB86960A/MB86965A
+.Tn Ethernet
+controller.
+Supported PCMCIA cards include:
+.Pp
+.Bl -item -offset indent -compact
+.It
+Fujitsu MBH10302
+.It
+Fujitsu MBH10304
+.It
+TDK Corp. LAK-CD021BX
+.It
+TDK Corp. DFL9610
+.It
+Fujitsu Towa LA501
+.El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr pcmcia 4
+.Sh HISTORY
+The
+.Nm
+driver
+appeared in
+.Nx 1.4 .
