@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1996/05/10 14:31:03 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1996/05/12 04:10:15 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,8 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -90,6 +92,7 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/kcore.h>
 #include <dev/cons.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
@@ -422,7 +425,7 @@ again:
 #if defined(MACHINE_NONCONTIG) && defined(DEBUG)
 	printf ("Physical memory segments:\n");
 	for (i = 0; i < memlist->m_nseg && phys_segs[i].start; ++i)
-		printf ("Physical segment %d at %08lx size %d offset %d\n", i,
+		printf ("Physical segment %d at %08lx size %ld offset %d\n", i,
 		    phys_segs[i].start,
 		    (phys_segs[i].end - phys_segs[i].start) / NBPG,
 		    phys_segs[i].first_page);
@@ -973,20 +976,38 @@ boot(howto)
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
 void
 dumpconf()
 {
 	int nblks;
+	int i;
+	extern u_int Sysseg_pa;
 
+	/* XXX new corefile format, single segment + chipmem */
 	dumpsize = physmem;
+	cpu_kcore_hdr.ram_segs[0].start = lowram;
+	cpu_kcore_hdr.ram_segs[0].size = ctob(physmem);
+	for (i = 0; i < memlist->m_nseg; i++) {
+		if ((memlist->m_seg[i].ms_attrib & MEMF_CHIP) == 0)
+			continue;
+		dumpsize += btoc(memlist->m_seg[i].ms_size);
+		cpu_kcore_hdr.ram_segs[1].start = 0;
+		cpu_kcore_hdr.ram_segs[1].size = memlist->m_seg[i].ms_size;
+		break;
+	}
+	cpu_kcore_hdr.mmutype = mmutype;
+	cpu_kcore_hdr.kernel_pa = lowram;
+	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)Sysseg_pa;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
+			dumplo = nblks - btodb(ctob(dumpsize));
 	}
+	--dumplo;	/* XXX assume header fits in one block */
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
 	 * in case the dump device includes a disk label.
@@ -1014,11 +1035,14 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
-	unsigned bytes, i, n;
+	unsigned bytes, i, n, seg;
 	int     maddr, psize;
 	daddr_t blkno;
 	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int     error = 0;
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -1039,11 +1063,29 @@ dumpsys()
 		printf("area unavailable.\n");
 		return;
 	}
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
+
+	/*
+	 * Generate a segment header
+	 */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+
+	/*
+	 * Add the md header
+	 */
+
+	*chdr_p = cpu_kcore_hdr;
+
 	bytes = ctob(dumpsize);
-	maddr = lowram;
+	maddr = cpu_kcore_hdr.ram_segs[0].start;
+	seg = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
-	for (i = 0; i < bytes; i += n) {
+	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
 		if (n && (n % (1024 * 1024)) == 0)
@@ -1053,12 +1095,25 @@ dumpsys()
 		if (n > BYTES_PER_DUMP)
 			n = BYTES_PER_DUMP;
 
+		if (maddr == 0) {	/* XXX kvtop chokes on this */
+			maddr += NBPG;
+			n -= NBPG;
+			i += NBPG;
+			++blkno;	/* XXX skip physical page 0 */
+		}
 		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
 		error = (*dump) (dumpdev, blkno, (caddr_t) dumpspace, n);
 		if (error)
 			break;
 		maddr += n;
 		blkno += btodb(n);	/* XXX? */
+		if (maddr >= (cpu_kcore_hdr.ram_segs[seg].start +
+		    cpu_kcore_hdr.ram_segs[seg].size)) {
+			++seg;
+			maddr = cpu_kcore_hdr.ram_segs[seg].start;
+			if (cpu_kcore_hdr.ram_segs[seg].size == 0)
+				break;
+		}
 	}
 
 	switch (error) {
