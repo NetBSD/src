@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1994/11/14 23:33:46 dean Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 1994/12/15 15:26:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,15 +75,25 @@
 #define	MCOUNT
 #endif
 
+#ifdef NO_UNDERSCORES
+# define _C_LABEL(x)	x
+#else
+# ifdef __STDC__
+#  define _C_LABEL(x)	_ ## x
+# else
+#  define _C_LABEL(x)	_/**/x
+# endif
+#endif
+
 /*
  * LEAF(x)
  *
  *	Declare a leaf routine.
  */
 #define LEAF(x) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
+	.globl _C_LABEL(x); \
+	.ent _C_LABEL(x), 0; \
+_C_LABEL(x): ; \
 	.frame sp, 0, ra; \
 	MCOUNT
 
@@ -93,18 +103,18 @@ x: ; \
  *	Declare a non-profiled leaf routine.
  */
 #define NLEAF(x) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
+	.globl _C_LABEL(x); \
+	.ent _C_LABEL(x), 0; \
+_C_LABEL(x): ; \
 	.frame sp, 0, ra
 
 /*
  * ALEAF -- declare alternate entry to a leaf routine.
  */
 #define	ALEAF(x)					\
-	.globl	x;					\
-	.aent	x,0;					\
-x:
+	.globl	_C_LABEL(x);				\
+	.aent	_C_LABEL(x),0;				\
+_C_LABEL(x):
 
 /*
  * NON_LEAF(x)
@@ -112,9 +122,9 @@ x:
  *	Declare a non-leaf routine (a routine that makes other C calls).
  */
 #define NON_LEAF(x, fsize, retpc) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
+	.globl _C_LABEL(x); \
+	.ent _C_LABEL(x), 0; \
+_C_LABEL(x): ; \
 	.frame sp, fsize, retpc; \
 	MCOUNT
 
@@ -125,9 +135,9 @@ x: ; \
  *	(a routine that makes other C calls).
  */
 #define NNON_LEAF(x, fsize, retpc) \
-	.globl x; \
-	.ent x, 0; \
-x: ; \
+	.globl _C_LABEL(x); \
+	.ent _C_LABEL(x), 0; \
+_C_LABEL(x): ; \
 	.frame sp, fsize, retpc
 
 /*
@@ -136,7 +146,7 @@ x: ; \
  *	Mark end of a procedure.
  */
 #define END(x) \
-	.end x
+	.end _C_LABEL(x)
 
 #define STAND_FRAME_SIZE	24
 #define STAND_RA_OFFSET		20
@@ -146,12 +156,12 @@ x: ; \
  */
 #define PANIC(msg) \
 	la	a0, 9f; \
-	jal	_panic; \
+	jal	_C_LABEL(panic); \
 	MSG(msg)
 
 #define	PRINTF(msg) \
 	la	a0, 9f; \
-	jal	_printf; \
+	jal	_C_LABEL(printf); \
 	MSG(msg)
 
 #define	MSG(msg) \
