@@ -1,6 +1,6 @@
 /* corefile.c
 
-   Copyright (C) 2000  Free Software Foundation, Inc.
+   Copyright 2000, 2001 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -180,7 +180,7 @@ DEFUN (core_init, (a_out_name), const char *a_out_name)
 
   core_syms = (asymbol **) xmalloc (core_num_syms);
   core_num_syms = bfd_canonicalize_symtab (core_bfd, core_syms);
-  
+
   if (core_num_syms < 0)
     {
       fprintf (stderr, "%s: %s: %s\n", whoami, a_out_name,
@@ -223,7 +223,7 @@ DEFUN (core_get_text_space, (core_bfd), bfd * core_bfd)
 	       whoami, (unsigned long) core_text_sect->_raw_size);
       done (1);
     }
-  
+
   if (!bfd_get_section_contents (core_bfd, core_text_sect, core_text_space,
 				 0, core_text_sect->_raw_size))
     {
@@ -231,7 +231,7 @@ DEFUN (core_get_text_space, (core_bfd), bfd * core_bfd)
       free (core_text_space);
       core_text_space = 0;
     }
-  
+
   if (!core_text_space)
     fprintf (stderr, _("%s: can't do -c\n"), whoami);
 }
@@ -279,9 +279,9 @@ DEFUN (find_call, (parent, p_lowpc, p_highpc),
 }
 
 /* Return class of symbol SYM.  The returned class can be any of:
-        0   -> symbol is not interesting to us
-        'T' -> symbol is a global name
-        't' -> symbol is a local (static) name.  */
+	0   -> symbol is not interesting to us
+	'T' -> symbol is a global name
+	't' -> symbol is a local (static) name.  */
 
 static int
 DEFUN (core_sym_class, (sym), asymbol * sym)
@@ -336,7 +336,7 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
       if (*name == '.' || *name == '$')
 	return 0;
     }
-  
+
   /* On systems where the C compiler adds an underscore to all
      names, static names without underscores seem usually to be
      labels in hand written assembler in the library.  We don't want
@@ -345,10 +345,10 @@ DEFUN (core_sym_class, (sym), asymbol * sym)
      division). I don't know whether it has harmful side effects on
      other systems.  Perhaps it should be made configurable.  */
   sym_prefix = bfd_get_symbol_leading_char (core_bfd);
-  
+
   if ((sym_prefix && sym_prefix != sym->name[0])
       /* GCC may add special symbols to help gdb figure out the file
-        language.  We want to ignore these, since sometimes they mask
+	language.  We want to ignore these, since sometimes they mask
 	the real function.  (dj@ctron)  */
       || !strncmp (sym->name, "__gnu_compiled", 14)
       || !strncmp (sym->name, "___gnu_compiled", 15))
@@ -409,14 +409,14 @@ core_create_function_syms (core_bfd)
 
   /* Pass 1 - determine upper bound on number of function names.  */
   symtab.len = 0;
-  
+
   for (i = 0; i < core_num_syms; ++i)
     {
       if (!core_sym_class (core_syms[i]))
 	continue;
 
       /* This should be replaced with a binary search or hashed
-	 search.  Gross. 
+	 search.  Gross.
 
 	 Don't create a symtab entry for a function that has
 	 a mapping to a file, unless it's the first function
@@ -426,13 +426,13 @@ core_create_function_syms (core_bfd)
 	if (!strcmp (core_syms[i]->name, symbol_map[j].function_name))
 	  {
 	    if (j > 0 && ! strcmp (symbol_map [j].file_name,
-			 	   symbol_map [j - 1].file_name))
+				   symbol_map [j - 1].file_name))
 	      skip = 1;
 	    break;
 	  }
-      
+
       if (!skip)
-        ++symtab.len;
+	++symtab.len;
     }
 
   if (symtab.len == 0)
@@ -446,11 +446,11 @@ core_create_function_syms (core_bfd)
 
   /* Pass 2 - create symbols.  */
   symtab.limit = symtab.base;
-  
+
   for (i = 0; i < core_num_syms; ++i)
     {
       class = core_sym_class (core_syms[i]);
-      
+
       if (!class)
 	{
 	  DBG (AOUTDEBUG,
@@ -459,17 +459,17 @@ core_create_function_syms (core_bfd)
 		       core_syms[i]->name));
 	  continue;
 	}
-      
+
       /* This should be replaced with a binary search or hashed
 	 search.  Gross.   */
       skip = 0;
       found = 0;
-      
+
       for (j = 0; j < symbol_map_count; j++)
 	if (!strcmp (core_syms[i]->name, symbol_map[j].function_name))
 	  {
 	    if (j > 0 && ! strcmp (symbol_map [j].file_name,
-			 	   symbol_map [j - 1].file_name))
+				   symbol_map [j - 1].file_name))
 	      skip = 1;
 	    else
 	      found = j;
@@ -483,7 +483,7 @@ core_create_function_syms (core_bfd)
 
       /* Symbol offsets are always section-relative.  */
       symtab.limit->addr = core_syms[i]->value + core_syms[i]->section->vma;
-      
+
       if (symbol_map_count
 	  && !strcmp (core_syms[i]->name, symbol_map[found].function_name))
 	{
@@ -499,18 +499,18 @@ core_create_function_syms (core_bfd)
       /* Lookup filename and line number, if we can.  */
       {
 	const char *filename, *func_name;
-	
+
 	if (get_src_info (symtab.limit->addr, &filename, &func_name,
 			  &symtab.limit->line_num))
 	  {
 	    symtab.limit->file = source_file_lookup_path (filename);
 
 	    /* FIXME: Checking __osf__ here does not work with a cross
-               gprof.  */
+	       gprof.  */
 #ifdef __osf__
 	    /* Suppress symbols that are not function names.  This is
 	       useful to suppress code-labels and aliases.
-	      
+
 	       This is known to be useful under DEC's OSF/1.  Under SunOS 4.x,
 	       labels do not appear in the symbol table info, so this isn't
 	       necessary.  */
@@ -531,7 +531,7 @@ core_create_function_syms (core_bfd)
 
       symtab.limit->is_func = TRUE;
       symtab.limit->is_bb_head = TRUE;
-      
+
       if (class == 't')
 	symtab.limit->is_static = TRUE;
 
@@ -539,7 +539,7 @@ core_create_function_syms (core_bfd)
       max_vma = MAX (symtab.limit->addr, max_vma);
 
       /* If we see "main" without an initial '_', we assume names
-         are *not* prefixed by '_'.  */
+	 are *not* prefixed by '_'.  */
       if (symtab.limit->name[0] == 'm' && discard_underscores
 	  && strcmp (symtab.limit->name, "main") == 0)
 	discard_underscores = 0;
@@ -582,7 +582,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
   const char *filename;
   int prev_line_num;
   Sym_Table ltab;
-  
+
   /* Create symbols for functions as usual.  This is necessary in
      cases where parts of a program were not compiled with -g.  For
      those parts we still want to get info at the function level.  */
@@ -594,7 +594,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
      text-space addresses (one by one!) and get the debugging
      info for each address.  When the debugging info changes,
      it is time to create a new symbol.
-    
+
      Of course, this is rather slow and it would be better if
      bfd would provide an iterator for enumerating all line infos.  */
   prev_name_len = PATH_MAX;
@@ -603,13 +603,13 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
   prev_filename = xmalloc (prev_filename_len);
   ltab.len = 0;
   prev_line_num = 0;
-  
+
   for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
     {
       int len;
 
       vma = core_text_sect->vma + offset;
-      
+
       if (!get_src_info (vma, &filename, &dummy.name, &dummy.line_num)
 	  || (prev_line_num == dummy.line_num
 	      && prev_name != NULL
@@ -627,17 +627,17 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 	  free (prev_name);
 	  prev_name = xmalloc (prev_name_len);
 	}
-      
+
       strcpy (prev_name, dummy.name);
       len = strlen (filename);
-      
+
       if (len >= prev_filename_len)
 	{
 	  prev_filename_len = len + 1024;
 	  free (prev_filename);
 	  prev_filename = xmalloc (prev_filename_len);
 	}
-      
+
       strcpy (prev_filename, filename);
 
       min_vma = MIN (vma, min_vma);
@@ -671,11 +671,11 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
      distinction as well, but the current fix works and the code is a
      lot cleaner now.  */
   prev = 0;
-  
+
   for (offset = 0; offset < core_text_sect->_raw_size; offset += min_insn_size)
     {
       sym_init (ltab.limit);
-      
+
       if (!get_src_info (core_text_sect->vma + offset, &filename,
 			 &ltab.limit->name, &ltab.limit->line_num)
 	  || (prev && prev->line_num == ltab.limit->line_num
@@ -690,8 +690,8 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
       ltab.limit->addr = core_text_sect->vma + offset;
 
       /* Set is_static based on the enclosing function, using either:
-         1) the previous symbol, if it's from the same function, or
-         2) a symtab lookup.  */
+	 1) the previous symbol, if it's from the same function, or
+	 2) a symtab lookup.  */
       if (prev && ltab.limit->file == prev->file &&
 	  strcmp (ltab.limit->name, prev->name) == 0)
 	{
@@ -706,7 +706,7 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
       prev = ltab.limit;
 
       /* If we see "main" without an initial '_', we assume names
-         are *not* prefixed by '_'.  */
+	 are *not* prefixed by '_'.  */
       if (ltab.limit->name[0] == 'm' && discard_underscores
 	  && strcmp (ltab.limit->name, "main") == 0)
 	discard_underscores = 0;
@@ -720,13 +720,13 @@ DEFUN (core_create_line_syms, (core_bfd), bfd * core_bfd)
 
   /* Update sentinels.  */
   sentinel = sym_lookup (&symtab, 0);
-  
+
   if (strcmp (sentinel->name, "<locore>") == 0
       && min_vma <= sentinel->end_addr)
     sentinel->end_addr = min_vma - 1;
 
   sentinel = sym_lookup (&symtab, ~0);
-  
+
   if (strcmp (sentinel->name, "<hicore>") == 0 && max_vma >= sentinel->addr)
     sentinel->addr = max_vma + 1;
 
