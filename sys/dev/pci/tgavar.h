@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.3 1998/08/18 08:07:45 thorpej Exp $ */
+/* $NetBSD: tgavar.h,v 1.4 1998/08/18 08:23:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,7 +57,9 @@ struct tga_ramdac_conf {
 		    struct wsdisplay_curpos *));
 
 	/* Only called from the TGA built-in cursor handling code. */
-	int	(*tgar_set_curcmap) __P((struct tga_devconfig *,
+	int	(*tgar_check_curcmap) __P((struct tga_devconfig *,
+		    struct wsdisplay_cursor *));
+	void	(*tgar_set_curcmap) __P((struct tga_devconfig *,
 		    struct wsdisplay_cursor *));
 	int	(*tgar_get_curcmap) __P((struct tga_devconfig *,
 		    struct wsdisplay_cursor *));
