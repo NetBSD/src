@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.19 1997/03/13 02:19:57 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.20 1997/03/19 19:54:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2126,8 +2126,10 @@ gusmax_set_encoding(addr, encoding)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_encoding(ac, encoding);
-	return gus_set_encoding(sc, encoding);
+	int error;
+
+	error = ad1848_set_encoding(ac, encoding);
+	return (error ? error : gus_set_encoding(sc, encoding));
 }
 
 int
@@ -2167,8 +2169,10 @@ gusmax_set_channels(addr, channels)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_channels(ac, channels);
-	return gus_set_channels(sc, channels);
+	int error;
+
+	error = ad1848_set_channels(ac, channels);
+	return (error ? error : gus_set_channels(sc, channels));
 }
 
 int
@@ -2199,9 +2203,10 @@ gusmax_set_precision(addr, bits)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
+	int error;
 
-	(void) ad1848_set_precision(ac, bits);
-	return gus_set_precision(sc, bits);
+	error = ad1848_set_precision(ac, bits);
+	return (error ? error : gus_set_precision(sc, bits));
 }
 
 
@@ -2409,8 +2414,10 @@ gusmax_set_out_sr(addr, rate)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_out_sr(ac, rate);
-	return gus_set_out_sr(sc, rate);
+	int error;
+
+	error = ad1848_set_out_sr(ac, rate);
+	return (error ? error : gus_set_out_sr(sc, rate));
 }
 
 int
@@ -2568,8 +2575,10 @@ gusmax_set_in_sr(addr, rate)
 {
 	register struct ad1848_softc *ac = addr;
 	register struct gus_softc *sc = ac->parent;
-	(void) ad1848_set_in_sr(ac, rate);
-	return gus_set_in_sr(sc, rate);
+	int error;
+
+	error = ad1848_set_in_sr(ac, rate);
+	return (error ? error : gus_set_in_sr(sc, rate));
 }
 
 
