@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 1999/03/25 19:27:09 perry Exp $
+#	$NetBSD: Makefile,v 1.105 1999/03/27 03:03:17 perry Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
@@ -25,6 +25,10 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp \
 
 .if !defined(NO_SENDMAIL)
 SUBDIR+=	sendmail
+.endif
+
+.if !defined(NO_POSTFIX)
+SUBDIR+=	postfix
 .endif
 
 .include <bsd.subdir.mk>
