@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.88 2000/05/30 03:29:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.89 2000/06/01 00:50:01 matt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -295,7 +295,6 @@ static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 			          Note that this is overridden by having
 			          RAID_AUTOCONFIG as an option in the 
 			          kernel config file.  */
-extern struct device *booted_device;
 
 void
 raidattach(num)
