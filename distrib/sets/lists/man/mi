@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.267 2000/09/13 03:39:12 hubertf Exp $
+# $NetBSD: mi,v 1.268 2000/09/23 04:37:18 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -590,6 +590,7 @@
 ./usr/share/man/cat4/upl.0
 ./usr/share/man/cat4/urio.0
 ./usr/share/man/cat4/usb.0
+./usr/share/man/cat4/uscanner.0
 ./usr/share/man/cat4/uvisor.0
 ./usr/share/man/cat4/vga.0
 ./usr/share/man/cat4/viaenv.0
@@ -1632,6 +1633,7 @@
 ./usr/share/man/man4/upl.4
 ./usr/share/man/man4/urio.4
 ./usr/share/man/man4/usb.4
+./usr/share/man/man4/uscanner.4
 ./usr/share/man/man4/uvisor.4
 ./usr/share/man/man4/vga.4
 ./usr/share/man/man4/viaenv.4
