@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.25 1998/11/19 20:08:52 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.26 1998/12/05 19:41:31 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -217,8 +217,10 @@ struct scsipi_link {
 			u_int8_t lun;		/* lun of this dev */
 			u_int8_t adapter_target;/* what are we on the scsi
 						   bus */
-			int max_target;		/* XXX max target supported
-						   by adapter */
+			int16_t max_target;	/* XXX max target supported
+						   by adapter (inclusive) */
+			int16_t max_lun;	/* XXX number of luns supported
+						   by adapter (inclusive) */
 		} scsipi_scsi;
 		struct atapi_link {
 			u_int8_t drive; 	/* drive number on the bus */
