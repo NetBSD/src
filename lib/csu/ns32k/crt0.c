@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.17 2002/05/16 19:38:20 wiz Exp $	*/
+/*	$NetBSD: crt0.c,v 1.18 2002/06/05 02:51:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,33 +103,31 @@ __asm("__callmain:");		/* Defined for the benefit of debuggers */
  *  is the entrypoint. (Not really necessary, just to avoid confusion).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.17 2002/05/16 19:38:20 wiz Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.18 2002/06/05 02:51:03 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef DYNAMIC
-__asm("
-	.text
-	.align	2
-___syscall:
-	movd tos,r1		/* return address */
-	movd tos,r0		/* syscall number */
-	movd r1,tos
-	svc			/* do system call */
-	bcc 1f			/* check error */
-	movqd -1,r0
-1:	jump 0(0(sp))		/* return */
-");
+__asm(
+"	.text		\n"
+"	.align	2	\n"
+"___syscall:		\n"
+"	movd tos,r1		/* return address */	\n"
+"	movd tos,r0		/* syscall number */	\n"
+"	movd r1,tos	\n"
+"	svc			/* do system call */	\n"
+"	bcc 1f			/* check error */	\n"
+"	movqd -1,r0	\n"
+"1:	jump 0(0(sp))		/* return */");
 
 #ifndef ntohl
-__asm("
-	.text
-	.align	2
-_ntohl:	movd 4(sp),r0
-	rotw 8,r0
-	rotd 16,r0
-	rotw 8,r0
-	ret 0
-");
+__asm(
+"	.text		\n"
+"	.align	2	\n"
+"_ntohl: movd 4(sp),r0	\n"
+"	rotw 8,r0	\n"
+"	rotd 16,r0	\n"
+"	rotw 8,r0	\n"
+"	ret 0");
 #endif
 
 #endif /* DYNAMIC */
@@ -137,9 +135,8 @@ _ntohl:	movd 4(sp),r0
 #include "common.c"
 
 #ifdef MCRT0
-__asm("
-	.text
-	.align	2
-eprol:
-");
+__asm(
+"	.text	\n"
+"	.align	2	\n"
+"eprol:");
 #endif
