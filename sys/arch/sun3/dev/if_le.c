@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.38 1997/04/28 21:59:21 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.38.10.1 1998/01/27 19:21:08 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,11 +57,12 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/dvma.h>
-#include <machine/obio.h>
 #include <machine/idprom.h>
 
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
+
+#define LE_MEMSIZE	0x4000	/* 16K */
 
 /*
  * LANCE registers.
@@ -124,12 +125,8 @@ le_match(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
-	/* We use obio_mapin(), so require OBIO. */
-	if (ca->ca_bustype != BUS_OBIO)
-		return (0);
-
 	/* Make sure there is something there... */
-	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 2) == -1)
 		return (0);
 
 	/* Default interrupt priority. */
@@ -148,13 +145,17 @@ le_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
 
-	lesc->sc_r1 = (struct lereg1 *)
-	    obio_mapin(ca->ca_paddr, sizeof(struct lereg1));
+	lesc->sc_r1 = bus_mapin(ca->ca_bustype,
+	    ca->ca_paddr, sizeof(struct lereg1));
 
-	sc->sc_memsize = 0x4000;	/* 16K */
+	sc->sc_memsize = LE_MEMSIZE;
 	sc->sc_mem = dvma_malloc(sc->sc_memsize);
-	sc->sc_addr = (u_long)sc->sc_mem & 0xffffff;
+	sc->sc_addr = dvma_kvtopa(sc->sc_mem, ca->ca_bustype);
+#ifdef	_SUN3X_
+	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
+#else
 	sc->sc_conf3 = LE_C3_BSWP;
+#endif
 
 	idprom_etheraddr(sc->sc_enaddr);
 
