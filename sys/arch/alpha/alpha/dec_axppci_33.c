@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.14 1996/11/12 05:14:33 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.15 1996/11/19 05:08:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -110,9 +110,12 @@ dec_axppci_33_cons_init()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(lcp->lc_iot, lcp->lc_memt, &lcp->lc_pc,
-		    (ctb->ctb_turboslot >> 8) & 0xff,
-		    ctb->ctb_turboslot & 0xff, 0);
+		if (ctb->ctb_turboslot == 0)
+			isa_display_console(lcp->lc_iot, lcp->lc_memt);
+		else
+			pci_display_console(lcp->lc_iot, lcp->lc_memt,
+			    &lcp->lc_pc, (ctb->ctb_turboslot >> 8) & 0xff,
+			    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
