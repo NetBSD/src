@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.1 1999/09/13 10:30:49 itojun Exp $
+#	$NetBSD: MMEYE,v 1.2 1999/09/13 16:26:18 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -64,10 +64,6 @@ config		netbsd	root on ? type nfs
 mainbus0 at root
 
 shb*	at mainbus?
-
-# mainbus pseudo floppy
-#fdc0	at mainbus0			# pseudo PC floppy controllers
-#fd0	at fdc0 drive 0
 
 com0	at shb? port 0xa4000000 irq 11
 com1	at shb? port 0xa4000008 irq 12

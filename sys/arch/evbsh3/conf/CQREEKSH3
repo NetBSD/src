@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.1 1999/09/13 10:30:22 itojun Exp $
+#	$NetBSD: CQREEKSH3,v 1.2 1999/09/13 16:26:17 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -140,12 +140,6 @@ sci0 at shb? port 0xa4000008 irq 12
 
 # Miscellaneous mass storage devices
 
-# ISA floppy
-#fdc0	at mainbus0 # standard PC floppy controllers
-#fdc1	at isa? port 0x370 irq ? drq ?
-#fd*	at fdc? drive ?			# the drives themselves
-# some machines need you to do this instead of fd*
-#fd0	at fdc0 drive 0
 
 # Network Interfaces
 
