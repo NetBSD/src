@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2003/09/12 15:29:48 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2003/09/12 17:55:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2003/09/12 15:29:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2003/09/12 17:55:45 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2003/09/12 15:29:48 tsutsui Exp $")
 #include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 #include <mips/locore.h>
 
 #include <machine/nvram.h>
@@ -422,7 +421,14 @@ delay(n)
 
 #define NINTR	6
 
-static struct cobalt_intr intrtab[NINTR];
+static struct cobalt_intrhand intrtab[NINTR];
+
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
 
 void *
 cpu_intr_establish(level, ipl, func, arg)
@@ -434,12 +440,12 @@ cpu_intr_establish(level, ipl, func, arg)
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
 
-	if (intrtab[level].func != NULL)
+	if (intrtab[level].ih_func != NULL)
 		panic("cannot share CPU interrupts");
 
 	intrtab[level].cookie_type = COBALT_COOKIE_TYPE_CPU;
-	intrtab[level].func = func;
-	intrtab[level].arg = arg;
+	intrtab[level].ih_func = func;
+	intrtab[level].ih_arg = arg;
 
 	return &intrtab[level];
 }
@@ -448,11 +454,11 @@ void
 cpu_intr_disestablish(cookie)
 	void *cookie;
 {
-	struct cobalt_intr *p = cookie;
+	struct cobalt_intrhand *ih = cookie;
 
-	if (p->cookie_type == COBALT_COOKIE_TYPE_CPU) {
-		p->func = NULL;
-		p->arg = NULL;
+	if (ih->cookie_type == COBALT_COOKIE_TYPE_CPU) {
+		ih->ih_func = NULL;
+		ih->ih_arg = NULL;
 	}
 }
 
@@ -486,8 +492,8 @@ cpu_intr(status, cause, pc, ipending)
 
 	for (i = 0; i < 5; i++) {
 		if (ipending & (MIPS_INT_MASK_0 << i))
-			if (intrtab[i].func != NULL)
-				if ((*intrtab[i].func)(intrtab[i].arg))
+			if (intrtab[i].ih_func != NULL)
+				if ((*intrtab[i].ih_func)(intrtab[i].ih_arg))
 					cause &= ~(MIPS_INT_MASK_0 << i);
 	}
 
@@ -506,20 +512,14 @@ cpu_intr(status, cause, pc, ipending)
 
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
-	/* 'softnet' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_1) {
-		clearsoftnet();
-		uvmexp.softs++;
-		netintr();
-	}
+	/* software interrupt */
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
 
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		clearsoftclock();
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
-	}
+	_clrsoftintr(ipending);
+
+	softintr_dispatch(ipending);
 }
 
 

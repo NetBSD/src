@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.8 2003/09/12 14:59:15 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.9 2003/09/12 17:55:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8 2003/09/12 14:59:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9 2003/09/12 17:55:53 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8 2003/09/12 14:59:15 tsutsui Exp $");
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/intr_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -53,7 +52,7 @@ static int	icu_intr(void *);
 CFATTACH_DECL(pcib, sizeof(struct device),
     pcib_match, pcib_attach, NULL, NULL);
 
-static struct cobalt_intr icu[IO_ICUSIZE];
+static struct cobalt_intrhand icu[IO_ICUSIZE];
 
 static int
 pcib_match(parent, match, aux)
@@ -107,10 +106,10 @@ icu_intr_establish(irq, type, level, func, arg)
 	int i;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].func == NULL) {
+		if (icu[i].ih_func == NULL) {
 			icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
-			icu[i].func = func;
-			icu[i].arg = arg;
+			icu[i].ih_func = func;
+			icu[i].ih_arg = arg;
 			return &icu[i];
 		}
 	}
@@ -122,11 +121,11 @@ void
 icu_intr_disestablish(cookie)
 	void *cookie;
 {
-	struct cobalt_intr *p = cookie;
+	struct cobalt_intrhand *ih = cookie;
 
-	if (p->cookie_type == COBALT_COOKIE_TYPE_ICU) {
-		p->func = NULL;
-		p->arg = NULL;
+	if (ih->cookie_type == COBALT_COOKIE_TYPE_ICU) {
+		ih->ih_func = NULL;
+		ih->ih_arg = NULL;
 	}
 }
 
@@ -137,10 +136,10 @@ icu_intr(arg)
 	int i;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].func == NULL)
+		if (icu[i].ih_func == NULL)
 			return 0;
 
-		(*icu[i].func)(icu[i].arg);
+		(*icu[i].ih_func)(icu[i].ih_arg);
 	}
 
 	return 0;
