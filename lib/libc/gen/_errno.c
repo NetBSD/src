@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.9.2.1 2001/08/08 18:29:50 nathanw Exp $	*/
+/*	$NetBSD: _errno.c,v 1.9.2.2 2001/12/30 02:37:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,35 +43,16 @@
 #undef errno
 extern int errno;
 
-#ifdef _REENTRANT
-static thread_key_t __errno_key;
-static once_t __errno_key_once = ONCE_INITIALIZER;
-
-static void
-__errno_key_setup(void)
-{
-	thr_keycreate(&__errno_key, free);
-}
-#endif
-
 int *
 __errno(void)
 {
 #ifdef _REENTRANT
-	int *eaddr;
 	extern int __isthreaded;
 
 	if (__isthreaded == 0)
 		return &errno;
-	thr_once(&__errno_key_once, __errno_key_setup);
-	eaddr = thr_getspecific(__errno_key);
-	if (eaddr == NULL) {
-		eaddr = malloc(sizeof(int));
-		if (eaddr == NULL)
-			return &errno;
-		thr_setspecific(__errno_key, eaddr);
-	}
-	return eaddr;
+
+	return thr_errno();
 #else
 	return &errno;
 #endif
