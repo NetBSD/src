@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.2 2002/04/09 02:06:29 thorpej Exp $	*/
+/*	$NetBSD: pmax.c,v 1.3 2002/04/12 06:50:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.2 2002/04/09 02:06:29 thorpej Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.3 2002/04/12 06:50:41 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -211,8 +211,8 @@ pmax_setboot(ib_params *params)
 	assert(params != NULL);
 	assert(params->fsfd != -1);
 	assert(params->filesystem != NULL);
-	assert(params->bbfd != -1);
-	assert(params->bootblock != NULL);
+	assert(params->s1fd != -1);
+	assert(params->stage1 != NULL);
 	assert(sizeof(struct pmax_boot_block) == PMAX_BOOT_BLOCK_BLOCKSIZE);
 
 	retval = 0;
@@ -224,12 +224,12 @@ pmax_setboot(ib_params *params)
 		goto done;
 	}
 
-	if (fstat(params->bbfd, &bootstrapsb) == -1) {
-		warn("Examining `%s'", params->bootblock);
+	if (fstat(params->s1fd, &bootstrapsb) == -1) {
+		warn("Examining `%s'", params->stage1);
 		goto done;
 	}
 	if (!S_ISREG(bootstrapsb.st_mode)) {
-		warnx("`%s' must be a regular file", params->bootblock);
+		warnx("`%s' must be a regular file", params->stage1);
 		goto done;
 	}
 	if (! load_bootstrap(params, &bootstrapbuf, &bootstrapload,
@@ -255,7 +255,7 @@ pmax_setboot(ib_params *params)
 		}
 		if (!S_ISREG(filesyssb.st_mode)) {
 			warnx(
-		    "`%s' must be a regular file to append a boot block",
+		    "`%s' must be a regular file to append a bootstrap",
 			    params->filesystem);
 			goto done;
 		}
@@ -348,13 +348,13 @@ load_bootstrap(ib_params *params, char **data,
 	Elf32_Phdr	phdr;
 	struct seglist	seglist[MAX_SEGMENTS];
 
-	if ((pread(params->bbfd, &ehdr, sizeof(ehdr), 0)) != sizeof(ehdr)) {
-		warn("Reading `%s'", params->bootblock);
+	if ((pread(params->s1fd, &ehdr, sizeof(ehdr), 0)) != sizeof(ehdr)) {
+		warn("Reading `%s'", params->stage1);
 		return (0);
 	}
 	if ((memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) ||
 	    (ehdr.e_ident[EI_CLASS] != ELFCLASS32)) {
-		warnx("No ELF header in `%s'", params->bootblock);
+		warnx("No ELF header in `%s'", params->stage1);
 		return (0);
 	}
 
@@ -362,10 +362,10 @@ load_bootstrap(ib_params *params, char **data,
 	lowaddr = (u_int32_t) ULONG_MAX;
 
 	for (i = 0; i < le16toh(ehdr.e_phnum); i++) {
-		if (pread(params->bbfd, &phdr, sizeof(phdr),
+		if (pread(params->s1fd, &phdr, sizeof(phdr),
 		    (off_t) le32toh(ehdr.e_phoff) + i * sizeof(phdr))
 		    != sizeof(phdr)) {
-			warn("Reading `%s'", params->bootblock);
+			warn("Reading `%s'", params->stage1);
 			return (0);
 		}
 		if (le32toh(phdr.p_type) != PT_LOAD)
@@ -393,10 +393,10 @@ load_bootstrap(ib_params *params, char **data,
 
 	/* Now load the bootstrap into memory */
 	for (i = 0; i < nsegs; i++) {
-		if (pread(params->bbfd, *data + seglist[i].addr - lowaddr,
+		if (pread(params->s1fd, *data + seglist[i].addr - lowaddr,
 		    seglist[i].f_size, (off_t)seglist[i].f_offset)
 		    != seglist[i].f_size) {
-			warn("Reading `%s'", params->bootblock);
+			warn("Reading `%s'", params->stage1);
 			return (0);
 		}
 	}
