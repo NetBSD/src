@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.172 2002/01/02 09:06:53 jinmei Exp $	*/
+/*	$KAME: isakmp.c,v 1.176 2002/08/28 04:08:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -87,6 +87,9 @@
 #include "isakmp_inf.h"
 #include "isakmp_newg.h"
 #include "strnames.h"
+#ifndef HAVE_ARC4RANDOM
+#include "arc4random.h"
+#endif
 
 static int nostate1 __P((struct ph1handle *, vchar_t *));
 static int nostate2 __P((struct ph2handle *, vchar_t *));
@@ -1208,8 +1211,6 @@ isakmp_init()
 	initctdtree();
 	init_recvdpkt();
 
-	srandom(time(0));
-
 	if (isakmp_open() < 0)
 		goto err;
 
@@ -2037,7 +2038,7 @@ isakmp_newmsgid2(iph1)
 	u_int32_t msgid2;
 
 	do {
-		msgid2 = random();
+		msgid2 = arc4random();
 	} while (getph2bymsgid(iph1, msgid2));
 
 	return msgid2;
@@ -2181,7 +2182,7 @@ getname(ap)
 	if (getnameinfo((struct sockaddr *)&addr, addr.sin_len,
 			ntop_buf, sizeof(ntop_buf), NULL, 0,
 			NI_NUMERICHOST | niflags))
-		strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		strlcpy(ntop_buf, "?", sizeof(ntop_buf));
 
 	return ntop_buf;
 }
@@ -2205,7 +2206,7 @@ getname6(ap)
 	if (getnameinfo((struct sockaddr *)&addr, addr.sin6_len,
 			ntop_buf, sizeof(ntop_buf), NULL, 0,
 			NI_NUMERICHOST | niflags))
-		strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		strlcpy(ntop_buf, "?", sizeof(ntop_buf));
 
 	return ntop_buf;
 }
@@ -2254,8 +2255,8 @@ isakmp_printpacket(msg, from, my, decoded)
 		if (getnameinfo(from, from->sa_len, hostbuf, sizeof(hostbuf),
 				portbuf, sizeof(portbuf),
 				NI_NUMERICHOST | NI_NUMERICSERV | niflags)) {
-			strncpy(hostbuf, "?", sizeof(hostbuf));
-			strncpy(portbuf, "?", sizeof(portbuf));
+			strlcpy(hostbuf, "?", sizeof(hostbuf));
+			strlcpy(portbuf, "?", sizeof(portbuf));
 		}
 		printf("%s:%s", hostbuf, portbuf);
 	} else
@@ -2265,8 +2266,8 @@ isakmp_printpacket(msg, from, my, decoded)
 		if (getnameinfo(my, my->sa_len, hostbuf, sizeof(hostbuf),
 				portbuf, sizeof(portbuf),
 				NI_NUMERICHOST | NI_NUMERICSERV | niflags)) {
-			strncpy(hostbuf, "?", sizeof(hostbuf));
-			strncpy(portbuf, "?", sizeof(portbuf));
+			strlcpy(hostbuf, "?", sizeof(hostbuf));
+			strlcpy(portbuf, "?", sizeof(portbuf));
 		}
 		printf("%s:%s", hostbuf, portbuf);
 	} else

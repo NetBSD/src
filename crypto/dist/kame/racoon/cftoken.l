@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.67 2001/12/12 18:23:41 sakane Exp $	*/
+/*	$KAME: cftoken.l,v 1.69 2002/09/27 06:03:51 itojun Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -27,8 +27,8 @@
 #include "debug.h"
 
 #include "algorithm.h"
-#include "cfparse.h"
-#include "cftoken.h"
+#include "cfparse_proto.h"
+#include "cftoken_proto.h"
 #include "localconf.h"
 #include "oakley.h"
 #include "isakmp_var.h"
@@ -39,7 +39,11 @@
 #include "gcmalloc.h"
 #endif
 
+#ifdef HAVE_CFPARSE_H
+#include "cfparse.h"
+#else
 #include "y.tab.h"
+#endif
 
 int yyerrorcount = 0;
 
