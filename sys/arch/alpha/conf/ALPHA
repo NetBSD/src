@@ -1,10 +1,12 @@
-# $NetBSD: ALPHA,v 1.115 2000/02/22 21:13:15 tls Exp $
+# $NetBSD: ALPHA,v 1.116 2000/03/09 22:26:41 cjs Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
+
+ident		"ALPHA-$Revision: 1.116 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -416,6 +418,7 @@ wsmouse*	at	pms?
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
 #pseudo-device	raid		4		# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
