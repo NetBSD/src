@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.1 1998/03/04 06:35:11 cgd Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.2 1998/03/04 19:17:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -35,8 +35,9 @@
  *
  * Author: Christopher G. Demetriou, March 2, 1998.
  *
- * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" from the
- * PCI SIG.
+ * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" and
+ * "Programming Interface for Bus Master IDE Controller, Revision 1.0
+ * 5/16/94" from the PCI SIG.
  */
 
 /*
@@ -46,19 +47,21 @@
 #define	PCIIDE_NUM_CHANNELS		2
 
 /*
- * PCI base address register locations (all are per channel).
+ * PCI base address register locations (some are per-channel).
  */
 #define	PCIIDE_REG_CMD_BASE(chan)	(0x10 + (8 * (chan)))
 #define	PCIIDE_REG_CTL_BASE(chan)	(0x14 + (8 * (chan)))
+#define	PCIIDE_REG_BUS_MASTER_DMA	0x20
 
 /*
- * Bits in the PCI Programming Interface register (some are per channel).
+ * Bits in the PCI Programming Interface register (some are per-channel).
  */
 #define	PCIIDE_INTERFACE_PCI(chan)	(0x01 << (2 * (chan)))
 #define	PCIIDE_INTERFACE_SETTABLE(chan)	(0x02 << (2 * (chan)))
+#define	PCIIDE_INTERFACE_BUS_MASTER_DMA	0x80
 
 /*
- * Compatibility address/IRQ definitions (some are per channel).
+ * Compatibility address/IRQ definitions (some are per-channel).
  */
 #define	PCIIDE_COMPAT_CMD_BASE(chan)	((chan) == 0 ? 0x1f0 : 0x170)
 #define	PCIIDE_COMPAT_CMD_SIZE		8
