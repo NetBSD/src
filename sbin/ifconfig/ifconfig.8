@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.55 2002/06/09 17:47:33 itojun Exp $
+.\"	$NetBSD: ifconfig.8,v 1.56 2002/06/14 09:01:59 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -390,6 +390,11 @@ Set the IPv6 tentative address bit.
 .It Fl tentative
 (inet6 only)
 Clear the IPv6 tentative address bit.
+.It eui64
+(inet6 only)
+Fill interface index
+.Pq lowermost 64bit of an IPv6 address
+automatically.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect, however,
