@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.51 2003/10/26 22:24:58 fvdl Exp $
+$NetBSD: miidevs,v 1.52 2004/02/07 00:51:05 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -150,7 +150,10 @@ model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
-model LEVEL1 LXT971		0x000e LXT971 10/100 media interface
+model LEVEL1 LXT971		0x000e LXT971/2 10/100 media interface
+model LEVEL1 LXT973		0x0021 LXT973 10/100 Dual PHY
+model LEVEL1 LXT974		0x0004 LXT974 10/100 Quad PHY
+model LEVEL1 LXT975		0x0005 LXT975 10/100 Quad PHY
 model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 
