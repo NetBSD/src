@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.589 2003/07/07 14:39:25 yamt Exp $
+#	$NetBSD: mi,v 1.590 2003/07/08 11:34:17 seb Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1494,6 +1494,7 @@
 ./usr/share/man/cat3/RB_MAX.0	comp-c-catman
 ./usr/share/man/cat3/RB_MIN.0	comp-c-catman
 ./usr/share/man/cat3/RB_NEXT.0	comp-c-catman
+./usr/share/man/cat3/RB_PARENT.0	comp-c-catman
 ./usr/share/man/cat3/RB_PROTOTYPE.0	comp-c-catman
 ./usr/share/man/cat3/RB_REMOVE.0	comp-c-catman
 ./usr/share/man/cat3/RB_RIGHT.0	comp-c-catman
@@ -4874,6 +4875,7 @@
 ./usr/share/man/man3/RB_MAX.3	comp-c-man
 ./usr/share/man/man3/RB_MIN.3	comp-c-man
 ./usr/share/man/man3/RB_NEXT.3	comp-c-man
+./usr/share/man/man3/RB_PARENT.3	comp-c-man
 ./usr/share/man/man3/RB_PROTOTYPE.3	comp-c-man
 ./usr/share/man/man3/RB_REMOVE.3	comp-c-man
 ./usr/share/man/man3/RB_RIGHT.3	comp-c-man
