@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.10 1998/11/29 15:04:56 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.11 1999/01/11 21:54:23 drochner Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,7 +114,6 @@ static int	smg_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	smg_free_screen __P((void *, void *));
 static void	smg_show_screen __P((void *, void *));
-static int	smg_load_font __P((void *, void *, int, int, int, void *));
 static void	smg_crsr_blink __P((void *));
 
 const struct wsdisplay_accessops smg_accessops = {
@@ -123,7 +122,7 @@ const struct wsdisplay_accessops smg_accessops = {
 	smg_alloc_screen,
 	smg_free_screen,
 	smg_show_screen,
-	smg_load_font
+	0 /* load_font */
 };
 
 struct	smg_screen {
@@ -432,16 +431,6 @@ smg_show_screen(v, cookie)
 	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
 	    ((SM_CHEIGHT - 1) * SM_COLS)];
 	curscr = ss;
-}
-
-static int
-smg_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return 0;
 }
 
 cons_decl(smg);
