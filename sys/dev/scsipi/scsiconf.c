@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.154 2001/01/18 20:28:21 jdolecek Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.155 2001/02/16 22:54:27 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -779,7 +779,16 @@ scsi_probedev(scsi, target, lun)
 			sc_link->quirks |= SDEV_NOSYNC;
 		if ((inqbuf.flags3 & SID_WBus16) == 0)
 			sc_link->quirks |= SDEV_NOWIDE;
+	} else {
+		/*
+		 * Turn off command tagging for SCSI 1 devices.
+		 * If the need arises, we could define a `SDEV_FORCETAG'
+		 * quirk and set it for pre-SCSI2 devices that actually
+		 * do support tagged commands.
+		 */
+		sc_link->quirks |= SDEV_NOTAG;
 	}
+
 	/*
 	 * Now apply any quirks from the table.
 	 */
