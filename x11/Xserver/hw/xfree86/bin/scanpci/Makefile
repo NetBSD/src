@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/03/27 15:27:01 soren Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/19 21:41:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ DUMMYOBJDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/dummy && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bus \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/scanpci \

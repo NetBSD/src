@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2005/01/21 05:15:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.10 2005/03/19 21:41:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,8 @@ LIB=		GL
 
 # glx
 .PATH:		${X11SRCDIR.xc}/lib/GL/glx
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common
 SRCS.glx=	clientattrib.c compsize.c dispatch.c eval.c g_render.c \
 		g_single.c g_vendpriv.c glthread.c glxcmds.c glxext.c \
 		glxextensions.c glcontextmodes.c indirect_init.c \
@@ -16,7 +18,7 @@ SRCS.glx=	clientattrib.c compsize.c dispatch.c eval.c g_render.c \
 SRCS.glx+=	glapi.c
 
 .if ${MACHINE} == "i386"
-.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/X86
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/x86
 SRCS.glx+=	glapi_x86.S
 CPPFLAGS+=	-DUSE_X86_ASM -I${X11SRCDIR.xc}/extras/Mesa/src/X86
 # -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(SSE_DEFS)
@@ -100,11 +102,8 @@ CPPFLAGS.${fn}+=-I${X11SRCDIR.xc}/lib/GL/dri \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared/drm/kernel \
 		-I${X11SRCDIR.xc}/programs/Xserver/GL/dri \
-		-I${X11SRCDIR.xc}/extras/Mesa/src/array_cache \
-		-I${X11SRCDIR.xc}/extras/Mesa/src/math \
-		-I${X11SRCDIR.xc}/extras/Mesa/src/swrast_setup \
-		-I${X11SRCDIR.xc}/extras/Mesa/src/tnl \
-		-I${X11SRCDIR.xc}/extras/Mesa/src/include
+		-I${X11SRCDIR.xc}/extras/Mesa/include \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi
 CPPFLAGS.${fn}+=${X11FLAGS.DRI}
 
 .endfor
@@ -118,7 +117,10 @@ SRCS+=	${SRCS.glx}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/lib/GL/include \
-		-I${X11SRCDIR.xc}/extras/Mesa/src \
+		-I${X11SRCDIR.xc}/extras/Mesa/include \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/glapi \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/main \
+		-I${X11SRCDIR.xc}/extras/Mesa/src/mesa/drivers/dri/common \
 		${X11FLAGS.THREADS} -DGLXEXT -DGLX_USE_MESA
 
 LIBDPLIBS=	Xext	${.CURDIR}/../Xext \
