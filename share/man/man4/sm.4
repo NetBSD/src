@@ -1,4 +1,4 @@
-.\"	$NetBSD: sm.4,v 1.7 1999/12/15 22:07:33 abs Exp $
+.\"	$NetBSD: sm.4,v 1.8 2000/08/01 23:19:21 briggs Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,15 +40,16 @@
 .Os
 .Sh NAME
 .Nm sm
-.Nd SMC91C9x-based Ethernet interfaces device driver
+.Nd SMC91Cxx-based Ethernet interfaces device driver
 .Sh SYNOPSIS
 .Cd "sm0 at isa? port 0x300 irq 10"
 .Cd "sm* at mhzc?"
 .Cd "sm* at pcmcia? function ?"
+.Cd "sm* at nubus?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports SMC91C9x-based Ethernet interfaces.
+device driver supports SMC91C9x-based and SMC91C1xx-based Ethernet interfaces.
 .Pp
 The ISA attachment of the
 .Nm
@@ -64,8 +65,14 @@ driver supports the Megahertz combo Ethernet and modem card.
 The PCMCIA attachment of the
 .Nm
 driver supports Megahertz X-JACK Ethernet cards.
+.Pp
+The nubus attachment of the
+.Nm
+driver supports SMC-based ethernet cards for the macintosh.
 .Sh MEDIA SELECTION
-The SMC91C9x supports AUI and UTP media types.
+The SMC91C1xx supports the MII interface and so the list of supported
+media depends on several factors, including which PHY is attached.  The
+SMC91C9x supports AUI and UTP media types.
 .Pp
 To enable the AUI media, select the
 .Em 10base5
@@ -79,6 +86,12 @@ directive.  To select UTP, select the
 or
 .Em utp
 media type.
+.Pp
+.Xr ifconfig 8 's
+.Sq -m
+option will display the full list of supported
+.Sq media
+directives for a particular configuration.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "sm0: unable to read MAC address from CIS"
@@ -92,4 +105,5 @@ corrupted.
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr mhzc 4 ,
+.Xr mii 4 ,
 .Xr pcmcia 4
