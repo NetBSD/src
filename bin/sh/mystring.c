@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mystring.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)mystring.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -44,8 +44,6 @@ static char sccsid[] = "@(#)mystring.c	5.1 (Berkeley) 3/7/91";
  *	equal(s1, s2)		Return true if strings are equal.
  *	scopy(from, to)		Copy a string.
  *	scopyn(from, to, n)	Like scopy, but checks for overflow.
- *	strchr(s, c)		Find first occurance of c in s.
- *	bcopy(from, to, n)	Copy a block of memory.
  *	number(s)		Convert a string of digits to an integer.
  *	is_number(s)		Return true if s is a string of digits.
  */
@@ -57,6 +55,14 @@ static char sccsid[] = "@(#)mystring.c	5.1 (Berkeley) 3/7/91";
 
 
 char nullstr[1];		/* zero length string */
+
+/*
+ * equal - #defined in mystring.h
+ */
+
+/*
+ * scopy - #defined in mystring.h
+ */
 
 
 /*
@@ -77,50 +83,6 @@ scopyn(from, to, size)
 			return;
 	}
 	*to = '\0';
-}
-
-
-/*
- * strchr - find first occurrence of a character in a string.
- */
-
-#ifndef SYS5
-char *
-mystrchr(s, charwanted)
-	char const *s;
-	register char charwanted;
-	{
-	register char const *scan;
-
-	/*
-	 * The odd placement of the two tests is so NUL is findable.
-	 */
-	for (scan = s ; *scan != charwanted ; )	/* ++ moved down for opt. */
-		if (*scan++ == '\0')
-			return NULL;
-	return (char *)scan;
-}
-#endif
-
-
-
-/*
- * bcopy - copy bytes
- *
- * This routine was derived from code by Henry Spencer.
- */
-
-void
-mybcopy(src, dst, length)
-	pointer dst;
-	const pointer src;
-	register int length;
-	{
-	register char *d = dst;
-	register char *s = src;
-
-	while (--length >= 0)
-		*d++ = *s++;
 }
 
 
