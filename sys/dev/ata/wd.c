@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.89 1994/09/12 20:29:08 mycroft Exp $
+ *	$Id: wd.c,v 1.90 1994/10/07 11:34:52 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -1000,13 +1000,11 @@ wdcommand(wd, cylin, head, sector, count, cmd)
 	int stat;
 	u_short iobase;
     
-	/* Controller ready for command? */
-	if (wait_for_unbusy(wdc) < 0)
-		return -1;
-
 	/* Select drive. */
 	iobase = wdc->sc_iobase;
 	outb(iobase+wd_sdh, WDSD_IBM | (wd->sc_drive << 4) | head);
+
+	/* Wait for it to become ready to accept a command. */
 	if (cmd == WDCC_DIAGNOSE || cmd == WDCC_IDC)
 		stat = wait_for_unbusy(wdc);
 	else
