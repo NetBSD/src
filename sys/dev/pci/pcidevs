@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.528 2003/04/24 23:36:09 nathanw Exp $
+$NetBSD: pcidevs,v 1.529 2003/04/28 08:17:30 haya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1259,8 +1259,10 @@ product EUMITCOM WL11000P	0x1100	WL11000P PCI WaveLAN/IEEE 802.11
 product O2MICRO OZ6729		0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO OZ6730		0x673A	OZ6730 PCI-PCMCIA Bridge
 product O2MICRO OZ6832		0x6832	OZ6832/OZ6833 PCI-CardBus Bridge
-product O2MICRO OZ6860		0x6836	OZ6860 PCI-Cardbus Bridge
+product O2MICRO OZ6836		0x6836	OZ6836/OZ6860 PCI-Cardbus Bridge
 product O2MICRO OZ6872		0x6872	OZ6812/OZ6872 PCI-Cardbus Bridge
+product O2MICRO OZ6922		0x6925	OZ6922 PCI-Cardbus Bridge
+product O2MICRO OZ6933		0x6933	OZ6933 PCI-Cardbus Bridge
 product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-Cardbus Bridge
 
 /* Evans & Sutherland products */
