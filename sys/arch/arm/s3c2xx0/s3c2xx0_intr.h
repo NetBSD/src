@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.6 2003/12/17 13:20:04 bsh Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.7 2004/02/12 03:47:29 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -183,7 +183,7 @@ void	_setsoftintr(int);
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
-#define splx(new)		s3c2xx0_splx(new)
+#define	splx(new)		s3c2xx0_splx(new)
 #define	_spllower(ipl)		s3c2xx0_spllower(ipl)
 #define	_splraise(ipl)		s3c2xx0_splraise(ipl)
 #define	_setsoftintr(si)	s3c2xx0_setsoftintr(si)
