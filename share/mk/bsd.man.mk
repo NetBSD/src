@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.75 2002/02/04 17:25:44 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.76 2002/02/07 00:52:23 ross Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -22,6 +22,7 @@ CATDEPS?=	${TMACDEPDIR}/tmac.andoc \
 		${TMACDEPDIR}/tmac.doc-common \
 		${TMACDEPDIR}/tmac.doc-nroff \
 		${TMACDEPDIR}/tmac.doc-syms
+HTMLDEPS?=	${TMACDEPDIR}/tmac.doc2html
 MANTARGET?=	cat
 
 GROFF_HTML?=	${GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
@@ -105,6 +106,7 @@ realall:	${CATPAGES}
 .NOPATH:	${CATPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.cat$N${MANSUFFIX}@}
 .MADE:	${CATDEPS}
+.MADE:	${HTMLDEPS}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .if defined(USETBL)
@@ -153,7 +155,7 @@ html:		${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
-${_MNUMBERS:@N@.$N.html$N@}: ${CATDEPS}			# build rule
+${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 	${GROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 
 .for F in ${HTMLPAGES:O:u}
