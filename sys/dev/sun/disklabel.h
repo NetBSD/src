@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1998/06/20 03:42:10 mrg Exp $ */
+/*	$NetBSD: disklabel.h,v 1.2 1998/08/22 14:55:28 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,8 +82,8 @@ struct sun_dkctlr {
 
 /* partition info */
 struct sun_dkpart {
-	long	sdkp_cyloffset;		/* starting cylinder */
-	long	sdkp_nsectors;		/* number of sectors */
+	int	sdkp_cyloffset;		/* starting cylinder */
+	int	sdkp_nsectors;		/* number of sectors */
 };
 
 struct sun_disklabel {			/* total size = 512 bytes */
