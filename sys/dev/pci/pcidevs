@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.326 2001/06/11 06:36:23 tron Exp $
+$NetBSD: pcidevs,v 1.327 2001/06/11 21:12:29 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -520,6 +520,7 @@ vendor FORTEMEDIA	0x1319	Forte Media
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
+vendor LEVELONE		0x1394	Level One
 vendor HIFN		0x13a3	Hi/Fn
 vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -1277,6 +1278,9 @@ product	LMC DS1		0x0006	DS1
 
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
+
+/* Level One products */
+product LEVELONE LXT1001	0x0001	LXT-1001 10/100/1000 Ethernet
 
 /* Linear Systems / CompuModules */
 product	LINEARSYS DVB_TX	0x7629	DVB Transmitter
