@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.3 1997/10/19 14:00:38 enami Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.4 1998/03/09 21:54:13 christos Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -86,7 +86,7 @@ pcmcia_read_cis(sc)
 	state.pf = NULL;
 
 	if (pcmcia_scan_cis((struct device *)sc, pcmcia_parse_cis_tuple,
-	    &state))
+	    &state) == -1)
 		state.card->error++;
 }
 
@@ -125,7 +125,7 @@ pcmcia_scan_cis(dev, fct, arg)
 		printf("%s: can't alloc memory to read attributes\n",
 		    sc->dev.dv_xname);
 #endif
-		return (1);
+		return -1;
 	}
 	tuple.memt = pcmh.memt;
 	tuple.memh = pcmh.memh;
@@ -138,7 +138,7 @@ pcmcia_scan_cis(dev, fct, arg)
 		printf("%s: can't map memory to read attributes\n",
 		    sc->dev.dv_xname);
 #endif
-		return (1);
+		return -1;
 	}
 	DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
 
@@ -246,7 +246,7 @@ pcmcia_scan_cis(dev, fct, arg)
 						 * XXX Some working cards have
 						 * XXX bad checksums!!
 						 */
-						ret = 1;
+						ret = -1;
 #endif
 					} else {
 						DPRINTF((" ok\n"));
@@ -295,6 +295,7 @@ pcmcia_scan_cis(dev, fct, arg)
 					if ((*fct) (&tuple, arg)) {
 						pcmcia_chip_mem_unmap(pct,
 						    pch, window);
+						ret = 1;
 						goto done;
 					}
 				}
