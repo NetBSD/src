@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.11 1993/09/07 15:41:46 ws Exp $
+ *	$Id: nfs_vnops.c,v 1.11.2.1 1993/09/24 08:56:44 mycroft Exp $
  */
 
 /*
@@ -1852,16 +1852,14 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
 	vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 	vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
-	vap->va_size = fxdr_unsigned(u_long, fp->fa_size);
+	vap->va_size = fxdr_unsigned(u_quad_t, fp->fa_size);
 	if ((np->n_flag & NMODIFIED) == 0 || vap->va_size > np->n_size) {
 		np->n_size = vap->va_size;
 		vnode_pager_setsize(vp, np->n_size);
 	}
-	vap->va_size_rsv = 0;
 	vap->va_blocksize = fxdr_unsigned(long, fp->fa_blocksize);
 	vap->va_rdev = (dev_t)rdev;
-	vap->va_bytes = fxdr_unsigned(long, fp->fa_blocks) * NFS_FABLKSIZE;
-	vap->va_bytes_rsv = 0;
+	vap->va_bytes = fxdr_unsigned(quad_t, fp->fa_blocks) * NFS_FABLKSIZE;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_fileid = fxdr_unsigned(long, fp->fa_fileid);
 	/* jfw@ksr.com 6/2/93 */

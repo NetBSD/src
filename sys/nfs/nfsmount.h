@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsmount.h	7.7 (Berkeley) 4/16/91
- *	$Id: nfsmount.h,v 1.2 1993/05/20 03:19:09 cgd Exp $
+ *	$Id: nfsmount.h,v 1.2.4.1 1993/09/24 08:56:47 mycroft Exp $
  */
 
 #ifndef _NFS_NFSMOUNT_H_
@@ -101,7 +101,7 @@ int	nfs_root __P((
 int	nfs_quotactl __P((
 		struct mount *mp,
 		int cmds,
-		int uid,	/* should be uid_t */
+		int uid,
 		caddr_t arg,
 		struct proc *p));
 int	nfs_statfs __P((
