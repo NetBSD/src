@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.14 2001/05/12 23:55:07 gmcgarry Exp $
+#	$NetBSD: Makefile.buildboot,v 1.15 2001/05/27 05:35:11 gmcgarry Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -28,7 +28,9 @@ vers.c: ${.CURDIR}/version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
 
 ${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
-	${MKBOOT_PROG} ${PROGAOUT} ${PROG}
+	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin
+	${MKBOOT_PROG} -l 0x${RELOC} ${PROGAOUT}.bin ${PROG}
+	rm -f ${PROGAOUT}.bin
 
 CPPFLAGS+=		-DDCACONSOLE -DAPCICONSOLE -DITECONSOLE -DDCMCONSOLE
 CPPFLAGS+=		-DHIL_KEYBOARD -DUK_KEYBOARD

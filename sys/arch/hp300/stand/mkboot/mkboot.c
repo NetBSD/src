@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.2 2001/01/02 04:14:34 simonb Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.3 2001/05/27 05:35:14 gmcgarry Exp $
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,12 +47,13 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.2 2001/01/02 04:14:34 simonb Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.3 2001/05/27 05:35:14 gmcgarry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/endian.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -61,7 +62,6 @@ __RCSID("$NetBSD: mkboot.c,v 1.2 2001/01/02 04:14:34 simonb Exp $");
 #include <unistd.h>
 
 #include "volhdr.h"
-#include "loadfile.h"
 
 #define LIF_NUMDIR	8
 
@@ -76,16 +76,14 @@ __RCSID("$NetBSD: mkboot.c,v 1.2 2001/01/02 04:14:34 simonb Exp $");
 
 int	lpflag;
 int	loadpoint;
-int	entrypoint;
-struct	load ld;
+struct  load ld;
 struct	lifvol lifv;
 struct	lifdir lifd[LIF_NUMDIR];
-char	buf[10240];
 
 int	 main(int, char **);
 void	 bcddate(char *, char *);
 char	*lifname(char *);
-void	 putfile(char *, int);
+int	 putfile(char *, int);
 void	 usage(void);
 
 /*
@@ -109,6 +107,7 @@ main(int argc, char **argv)
 {
 	char *n1, *n2, *n3;
 	int n, to;
+	int count;
 
 	--argc;
 	++argv;
@@ -124,7 +123,7 @@ main(int argc, char **argv)
 		argv++;
 		argc--;
 	}
-	if (argc == 0)
+	if (!lpflag || argc == 0)
 		usage();
 	n1 = argv[0];
 	argv++;
@@ -143,65 +142,70 @@ main(int argc, char **argv)
 			n3 = NULL;
 	} else
 		n2 = n3 = NULL;
+
 	to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 	if (to < 0) {
 		perror("open");
 		exit(1);
 	}
 	/* clear possibly unused directory entries */
-	strncpy(lifd[1].dir_name, "	     ", 10);
-	lifd[1].dir_type = -1;
-	lifd[1].dir_addr = 0;
-	lifd[1].dir_length = 0;
-	lifd[1].dir_flag = 0xFF;
-	lifd[1].dir_exec = 0;
+	strncpy(lifd[1].dir_name, "          ", 10);
+	lifd[1].dir_type = htobe16(-1);
+	lifd[1].dir_addr = htobe32(0);
+	lifd[1].dir_length = htobe32(0);
+	lifd[1].dir_flag = htobe16(0xFF);
+	lifd[1].dir_exec = htobe32(0);
 	lifd[7] = lifd[6] = lifd[5] = lifd[4] = lifd[3] = lifd[2] = lifd[1];
 	/* record volume info */
-	lifv.vol_id = VOL_ID;
+	lifv.vol_id = htobe16(VOL_ID);
 	strncpy(lifv.vol_label, "BOOT43", 6);
-	lifv.vol_addr = btolifs(LIF_DIRSTART);
-	lifv.vol_oct = VOL_OCT;
-	lifv.vol_dirsize = btolifs(LIF_DIRSIZE);
-	lifv.vol_version = 1;
+	lifv.vol_addr = htobe32(btolifs(LIF_DIRSTART));
+	lifv.vol_oct = htobe16(VOL_OCT);
+	lifv.vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
+	lifv.vol_version = htobe16(1);
 	/* output bootfile one */
 	lseek(to, LIF_FILESTART, SEEK_SET);
-	putfile(n1, to);
-	n = btolifs(ld.count + sizeof(ld));
+	count = putfile(n1, to);
+	n = btolifs(count);
 	strcpy(lifd[0].dir_name, lifname(n1));
-	lifd[0].dir_type = DIR_TYPE;
-	lifd[0].dir_addr = btolifs(LIF_FILESTART);
-	lifd[0].dir_length = n;
+	lifd[0].dir_type = htobe16(DIR_TYPE);
+	lifd[0].dir_addr = htobe32(btolifs(LIF_FILESTART));
+	lifd[0].dir_length = htobe32(n);
 	bcddate(n1, lifd[0].dir_toc);
-	lifd[0].dir_flag = DIR_FLAG;
-	lifd[0].dir_exec = lpflag? loadpoint + entrypoint : entrypoint;
-	lifv.vol_length = lifd[0].dir_addr + lifd[0].dir_length;
+	lifd[0].dir_flag = htobe16(DIR_FLAG);
+	lifd[0].dir_exec = htobe32(loadpoint);
+	lifv.vol_length = htobe32(be32toh(lifd[0].dir_addr) +
+				  be32toh(lifd[0].dir_length));
 	/* if there is an optional second boot program, output it */
 	if (n2) {
 		lseek(to, LIF_FILESTART+lifstob(n), SEEK_SET);
-		putfile(n2, to);
-		n = btolifs(ld.count + sizeof(ld));
+		count = putfile(n2, to);
+		n = btolifs(count);
 		strcpy(lifd[1].dir_name, lifname(n2));
-		lifd[1].dir_type = DIR_TYPE;
-		lifd[1].dir_addr = lifv.vol_length;
-		lifd[1].dir_length = n;
+		lifd[1].dir_type = htobe16(DIR_TYPE);
+		lifd[1].dir_addr = htobe32(lifv.vol_length);
+		lifd[1].dir_length = htobe32(n);
 		bcddate(n2, lifd[1].dir_toc);
-		lifd[1].dir_flag = DIR_FLAG;
-		lifd[1].dir_exec = lpflag? loadpoint + entrypoint : entrypoint;
-		lifv.vol_length = lifd[1].dir_addr + lifd[1].dir_length;
+		lifd[1].dir_flag = htobe32(DIR_FLAG);
+		lifd[1].dir_exec = htobe32(loadpoint);
+		lifv.vol_length = htobe32(be32toh(lifd[1].dir_addr) +
+					  be32toh(lifd[1].dir_length));
 	}
 	/* ditto for three */
 	if (n3) {
-		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n), SEEK_SET);
-		putfile(n3, to);
-		n = btolifs(ld.count + sizeof(ld));
+		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n),
+		      SEEK_SET);
+		count = putfile(n3, to);
+		n = btolifs(count);
 		strcpy(lifd[2].dir_name, lifname(n3));
-		lifd[2].dir_type = DIR_TYPE;
-		lifd[2].dir_addr = lifv.vol_length;
-		lifd[2].dir_length = n;
+		lifd[2].dir_type = htobe16(DIR_TYPE);
+		lifd[2].dir_addr = htobe32(lifv.vol_length);
+		lifd[2].dir_length = htobe32(n);
 		bcddate(n3, lifd[2].dir_toc);
-		lifd[2].dir_flag = DIR_FLAG;
-		lifd[2].dir_exec = lpflag? loadpoint + entrypoint : entrypoint;
-		lifv.vol_length = lifd[2].dir_addr + lifd[2].dir_length;
+		lifd[2].dir_flag = htobe32(DIR_FLAG);
+		lifd[2].dir_exec = htobe32(loadpoint);
+		lifv.vol_length = htobe32(be32toh(lifd[2].dir_addr) +
+					  be32toh(lifd[2].dir_length));
 	}
 	/* output volume/directory header info */
 	lseek(to, LIF_VOLSTART, SEEK_SET);
@@ -211,32 +215,33 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+int
 putfile(from, to)
 	char *from;
 	int to;
 {
 	int fd;
-	u_long bp;
-	u_long marks[MARK_MAX];
+	struct stat statb;
+	int nr;
+	void *bp;
 
-	marks[MARK_START] = 0;
-	if ((fd = loadfile(from, marks, COUNT_TEXT|COUNT_DATA)) == -1)
-		exit(1);
+	if ((fd = open(from, 0)) < 0) {
+	  printf("error: unable to open file %s\n", from);
+	  exit(1);
+	}
+	fstat(fd, &statb);
+	ld.address = htobe32(loadpoint);
+	ld.count = htobe32(statb.st_size);
+	bp = malloc(statb.st_size);
+	if ((nr = read(fd, bp, statb.st_size)) < 0) {
+	  printf("error: reading from file %s\n", from);
+	  exit(1);
+	}
 	(void)close(fd);
-
-	entrypoint = marks[MARK_ENTRY];
-	ld.address = lpflag ? loadpoint : entrypoint;
-	ld.count = marks[MARK_END] - marks[MARK_START];
-	bp = (u_long)malloc(ld.count);
-	marks[MARK_START] = bp - marks[MARK_START];
-
-	if ((fd = loadfile(from, marks, LOAD_TEXT|LOAD_DATA)) == -1)
-		exit(1);
-	(void)close(fd);
-
 	write(to, &ld, sizeof(ld));
-	write(to, (void *)bp, ld.count);
+	write(to, bp, statb.st_size);
+	free(bp);
+	return (statb.st_size + sizeof(ld));
 }
 
 void
@@ -244,7 +249,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-		"usage:	 mkboot [-l loadpoint] prog1 [ prog2 ] outfile\n");
+		"usage:	 mkboot -l loadpoint prog1 [ prog2 ] outfile\n");
 	exit(1);
 }
 
