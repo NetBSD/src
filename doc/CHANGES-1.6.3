@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.41 2004/03/28 08:14:27 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.42 2004/03/28 08:18:50 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -256,3 +256,10 @@ sys/dev/ata/wd.c			1.260 via patch
 	value reported by the drive (which is 16383 if the drive is larger 
 	than 8G). Fixes PR#9864
 	[bouyer, ticket #1629]
+
+sys/dev/pci/pciide.c			1.195
+
+	Correct offset for the promise "magic registers" (it depends on channel
+	number). This makes cable detect work properly for newer promise 
+	(pdc268 and newer).
+	[bouyer, ticket #1630]
