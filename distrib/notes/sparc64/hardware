@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1.2.5 2000/11/04 05:53:25 lukem Exp $
+.\"	$NetBSD: hardware,v 1.1.2.6 2000/11/30 03:45:33 tv Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -20,7 +20,7 @@ X or compile the system, more RAM is recommended, as
 with 16 MB of RAM feels like
 .Tn Solaris
 with 16 MB of RAM - slow.
-Note that until you have around 16 MB of RAM, getting more RAM is more
+Note that until you have at least 32 MB of RAM, getting more RAM is more
 important than getting a faster CPU.
 .
 .Ss2 Supported devices
@@ -68,7 +68,8 @@ PCI IDE host controllers
 CMD Tech PCI064[3689] IDE Controllers
 .Pq Em pciide
 .(Note
-Access to devices on the secondary PCIIDE channel currently do not work.
+Access to hard disks on the secondary PCIIDE channel currently do not work, but
+CD-ROM does.
 .Note)
 .bullet)
 .It
