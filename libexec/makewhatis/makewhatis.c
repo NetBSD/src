@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.6 1999/12/31 14:50:16 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.7 2000/01/24 23:03:54 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.6 1999/12/31 14:50:16 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.7 2000/01/24 23:03:54 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -237,6 +237,18 @@ addwhatis(whatis **tree, char *data)
 	whatis *wi;
 	int result;
 
+	while (isspace(*data))
+		data++;
+
+	if (*data == '/') {
+		char *ptr;
+
+		ptr = ++data;
+		while ((*ptr != '\0') && !isspace(*ptr))
+			if (*ptr++ == '/')
+				data = ptr;
+	}
+
 	while ((wi = *tree) != NULL) {
 		result=strcmp(data, wi->wi_data);
 		if (result == 0) return 1;
@@ -394,6 +406,12 @@ manpreprocess(char *line)
 			case '\0':
 			case '-':
 				break;
+			case 's':
+				if ((*from=='+') || (*from=='-'))
+					from++;
+				while (isdigit(*from))
+					from++;
+				break;
 			default:
 				from++;
 			}
@@ -475,7 +493,7 @@ parsemanpage(gzFile *in, int defaultsection)
 		int	length, offset;
 
 		ptr = &buffer[3];
-		if (isspace(*ptr))
+		while (isspace(*ptr))
 			ptr++;
 
 		length = strlen(ptr);
