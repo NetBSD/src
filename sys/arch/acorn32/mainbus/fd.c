@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 2003/01/01 00:25:02 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.14 2003/01/31 02:05:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1052,10 +1052,11 @@ loop:
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
-		{int block;
+		{daddr_t  block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n",	
+			 printf("fdcintr: block %" PRId64
+			     " != blkno %" PRId64 "\n",	
 				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
