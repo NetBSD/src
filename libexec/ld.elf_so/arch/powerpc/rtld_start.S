@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/05/21 08:00:11 tsubai Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2001/09/26 04:06:43 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -95,9 +95,12 @@ _rtld_start:
 
 _rtld_bind_start:
 	stwu	1,-160(1)
+
 	stw	0,20(1)
 	mflr	0
 	stw	0,16(1)			# save lr
+	mfcr	0
+	stw	0,12(1)			# save cr
 	stmw	3,24(1)			# save r3-r31
 
 	mr	3,12			# obj
@@ -105,10 +108,13 @@ _rtld_bind_start:
 	bl	_rtld_bind_powerpc@plt	# _rtld_bind(obj, reloff)
 	mtctr	3
 
+	lmw	3,24(1)			# load r3-r31
+	lwz	0,12(1)			# restore cr
+	mtcr	0
 	lwz	0,16(1)			# restore lr
 	mtlr	0
 	lwz	0,20(1)
-	lmw	3,24(1)			# load r3-r31
+
 	addi	1,1,160
 	bctr
 
