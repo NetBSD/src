@@ -1,6 +1,7 @@
-/*	$NetBSD: if_le_dec.c,v 1.7 1997/06/16 03:46:35 jonathan Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.8 1997/07/22 04:32:21 jonathan Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Jonathan Stone. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -154,7 +155,7 @@ le_dec_writereg(regptr, val)
  * 3 ways:
  * - contiguous (for the 3max and turbochannel option card)
  * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
- *   spaces (for the pmax)
+ *   spaces (for the pmax, vax 3400, and ioasic LANCE descriptors)
  * - gap16, which means 16bytes interspersed with 16byte spaces
  *   for buffers which must begin on a 32byte boundary (for 3min, maxine,
  *   and alpha)
