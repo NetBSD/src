@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.28 1995/04/04 05:44:32 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.29 1995/06/02 21:44:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -292,6 +292,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MAXTOR  ", "XT-4170S        ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-8760S        ", "",     SDEV_NOLUNS},
+	{T_DIRECT, T_FIXED,
+	 "MAXTOR  ", "LXT-213S        ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-213S SUN0207", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
