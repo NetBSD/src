@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.10 1997/03/13 00:38:52 cgd Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.11 1997/03/13 01:04:02 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -270,10 +270,11 @@ int
 ahc_pci_probe(parent, match, aux)
         struct device *parent;
 #ifdef	__BROKEN_INDIRECT_CONFIG
-        void *match, *aux; 
+        void *match;
 #else
-        struct cfdata *match; void *aux; 
+        struct cfdata *match;
 #endif
+        void *aux; 
 {       
         struct pci_attach_args *pa = aux;
 
