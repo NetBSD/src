@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -85,6 +85,20 @@ va_dcl
 	va_start(args);
 	mesg = va_arg(args, char *);
 	err("warning: ", mesg, args);
+	va_end(args);
+}
+
+/*VARARGS0*/
+void
+error(va_alist)
+va_dcl
+{
+	va_list args;
+	char *mesg;
+
+	va_start(args);
+	mesg = va_arg(args, char *);
+	err("error: ", mesg, args);
 	va_end(args);
 }
 

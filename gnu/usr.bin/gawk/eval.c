@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -288,17 +288,31 @@ register NODE *volatile tree;
 		}
 
 	case Node_K_break:
-		if (loop_tag_valid == 0)
-			fatal("unexpected break");
-		longjmp(loop_tag, TAG_BREAK);
+		if (loop_tag_valid == 0) {
+			/*
+			 * Old AT&T nawk treats break outside of loops like
+			 * next. New ones catch it at parse time. Allow it if
+			 * do_unix is on, and complain if lint.
+			 */
+			static int warned = 0;
+
+			if (do_lint && ! warned) {
+				warning("use of `break' outside of loop is not portable");
+				warned = 1;
+			}
+			if (! do_unix)
+				fatal("use of `break' outside of loop is not allowed");
+			longjmp(rule_tag, TAG_CONTINUE);
+		} else
+			longjmp(loop_tag, TAG_BREAK);
 		break;
 
 	case Node_K_continue:
 		if (loop_tag_valid == 0) {
 			/*
-			 * AT&T nawk treats continue outside of loops like
-			 * next.  Allow it if not posix, and complain if
-			 * lint.
+			 * Old AT&T nawk treats continue outside of loops like
+			 * next. New ones catch it at parse time. Allow it if
+			 * do_unix is on, and complain if lint.
 			 */
 			static int warned = 0;
 
@@ -306,7 +320,7 @@ register NODE *volatile tree;
 				warning("use of `continue' outside of loop is not portable");
 				warned = 1;
 			}
-			if (do_posix)
+			if (! do_unix)
 				fatal("use of `continue' outside of loop is not allowed");
 			longjmp(rule_tag, TAG_CONTINUE);
 		} else
@@ -345,11 +359,11 @@ register NODE *volatile tree;
 		 * are not done. So we immediately break out of the main loop.
 		 */
 		exiting = 1;
-		if (tree) {
+		if (tree->lnode) {
 			t = tree_eval(tree->lnode);
 			exit_val = (int) force_number(t);
+			free_temp(t);
 		}
-		free_temp(t);
 		longjmp(rule_tag, TAG_BREAK);
 		break;
 
@@ -499,14 +513,15 @@ register NODE *tree;
 
 	case Node_concat:
 		{
-#define	STACKSIZE	10
-		NODE *treelist[STACKSIZE+1];
-		NODE *strlist[STACKSIZE+1];
+		NODE **treelist;
+		NODE **strlist;
+		NODE *save_tree;
 		register NODE **treep;
 		register NODE **strp;
 		register size_t len;
 		char *str;
 		register char *dest;
+		int count;
 
 		/*
 		 * This is an efficiency hack for multiple adjacent string
@@ -516,12 +531,26 @@ register NODE *tree;
 		 * descend to lowest (first) node, accumulating nodes
 		 * to evaluate to strings as we go.
 		 */
+
+		/*
+		 * But first, no arbitrary limits. Count the number of
+		 * nodes and malloc the treelist and strlist arrays.
+		 * There will be count + 1 items to concatenate. We
+		 * also leave room for an extra pointer at the end to
+		 * use as a sentinel.  Thus, start count at 2.
+		 */
+		save_tree = tree;
+		for (count = 2; tree && tree->type == Node_concat; tree = tree->lnode)
+			count++;
+		tree = save_tree;
+		emalloc(treelist, NODE **, sizeof(NODE *) * count, "tree_eval");
+		emalloc(strlist, NODE **, sizeof(NODE *) * count, "tree_eval");
+
+		/* Now, here we go. */
 		treep = treelist;
-		while (tree->type == Node_concat) {
+		while (tree && tree->type == Node_concat) {
 			*treep++ = tree->rnode;
 			tree = tree->lnode;
-			if (treep == &treelist[STACKSIZE])
-				break;
 		}
 		*treep = tree;
 		/*
@@ -549,6 +578,9 @@ register NODE *tree;
 		}
 		r = make_str_node(str, len, ALREADY_MALLOCED);
 		r->flags |= TEMP;
+
+		free(strlist);
+		free(treelist);
 		}
 		return r;
 
@@ -793,6 +825,14 @@ register NODE *tree;
 	tmp = tree_eval(tree->rnode);
 	rval = force_number(tmp);
 	free_temp(tmp);
+
+	/*
+	 * Do this again; the lhs and the rhs could both be fields.
+	 * Accessing the rhs could cause the lhs to have moved around.
+	 * (Yet another special case. Gack.)
+	 */
+	lhs = get_lhs(tree->lnode, &after_assign);
+
 	unref(*lhs);
 	switch(tree->type) {
 	case Node_assign_exp:
@@ -1027,6 +1067,9 @@ Func_ptr *assign;
 	register NODE **aptr = NULL;
 	register NODE *n;
 
+	if (ptr->type == Node_param_list)
+		ptr = stack_ptr[ptr->param_cnt];
+
 	switch (ptr->type) {
 	case Node_var_array:
 		fatal("attempt to use array `%s' in a scalar context", ptr->vname);
@@ -1186,7 +1229,7 @@ set_IGNORECASE()
 		warning("IGNORECASE not supported in compatibility mode");
 	}
 	IGNORECASE = (force_number(IGNORECASE_node->var_value) != 0.0);
-	set_FS();
+	set_FS_if_not_FIELDWIDTHS();
 }
 
 void

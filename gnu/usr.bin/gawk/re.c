@@ -3,7 +3,7 @@
  */
 
 /* 
- * Copyright (C) 1991, 1992, 1993 the Free Software Foundation, Inc.
+ * Copyright (C) 1991-1995 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Progamming Language.
@@ -101,6 +101,9 @@ int dfa;
 	len = dest - temp;
 	if ((rerr = re_compile_pattern(temp, len, &(rp->pat))) != NULL)
 		fatal("%s: /%s/", rerr, temp);
+
+	/* gack. this must be done *after* re_compile_pattern */
+	rp->pat.newline_anchor = 0; /* don't get \n in middle of string */
 	if (dfa && !ignorecase) {
 		dfacomp(temp, len, &(rp->dfareg), 1);
 		rp->dfa = 1;
@@ -136,10 +139,13 @@ int need_start;
 		str[start+len] = save;
 	}
 	if (ret) {
-		if (need_start || rp->dfa == 0)
-			return re_search(&(rp->pat), str, start+len, start,
-					len, &(rp->regs));
-		else
+		if (need_start || rp->dfa == 0) {
+			int result = re_search(&(rp->pat), str, start+len,
+					start, len, &(rp->regs));
+			/* recover any space from C based alloca */
+			(void) alloca(0);
+			return result;
+		} else
 			return 1;
 	 } else
 		return -1;
@@ -151,6 +157,10 @@ Regexp *rp;
 {
 	free(rp->pat.buffer);
 	free(rp->pat.fastmap);
+	if (rp->regs.start)
+		free(rp->regs.start);
+	if (rp->regs.end)
+		free(rp->regs.end);
 	if (rp->dfa)
 		dfafree(&(rp->dfareg));
 	free(rp);
