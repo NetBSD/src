@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.13 2005/01/24 22:24:08 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.14 2005/01/30 14:19:59 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -310,5 +310,87 @@ sys/dev/usb/if_url.c				1.12
 
 	When adding or deleting multicast addresses, only change
 	the address filter if the interface is marked RUNNING.
-	Fixes PR#37678.
+	Fixes PR#27678.
 	[thorpej, ticket #939]
+
+sys/dev/ic/tulip.c				1.129
+
+	When adding or deleting multicast addresses, only change
+	the address filter if the interface is marked RUNNING.
+	Fixes PR#27678.
+	[thorpej, ticket #940]
+
+sys/dve/isa/if_iy.c				1.65
+
+	When adding or deleting multicast addresses, only change
+	the address filter if the interface is marked RUNNING.
+	Fixes PR#27678.
+	[thorpej, ticket #941]
+
+sys/dev/qbus/if_qt.c				1.5
+
+	In qtinit(), don't skip initialization if the interface is
+	already RUNNING.  ether_ioctl() will call (*if_init)() when
+	flags change.  Instead, do what other drivers do, and stop
+	the interface in this case before re-initializing.
+	In qtioctl(), now that qtinit() does the right thing, remove
+	the check for the IFF_PROMISC change.
+	When adding or deleting multicast addresses, only change
+	the address filter if the interface is marked RUNNING.
+	Fixes PR#27678.
+	[thorpej, ticket #942]
+
+sys/dev/ic/i82596.c				1.4
+
+	Make iee_ioctl() look more like other drivers, and fix a
+	missing splx(s) as a side-effect.  Don't bother handling
+	IFF_PROMISC here, because ether_ioctl() already calls
+	(*if_init)() to handle flag changes.
+	When adding or deleting multicast addresses, only change
+	the address filter if the interface is marked RUNNING.
+	Fixes PR#27678.
+	[thorpej, ticket #943]
+
+sys/dev/pci/auvia.c				1.43
+sys/dev/pci/auviavar.h				1.6
+
+	Add support for suspending/resuming.  Fixes PR#26432.
+	[kent, ticket #949]
+
+bin/pax/options.c				1.82
+
+	Fix broken cpio(1) option handling:
+	 o "cpio -i -t" should list the contents of a file, not
+	   extract it.
+	 o Don't extract a file when only option "-d" is given.
+	Fixes PR#26513.
+	[tron, ticket #952]
+
+sys/netinet6/ipsec.c				1.98-1.99
+
+	Add a missing break.
+	[itojun, ticket #954]
+
+usr.sbin/syslogd/syslogd.c			1.68
+
+	Postpone initial setting of the alarm timer until after
+	the call to daemon(), as the timer would be cleared by
+	deamon's fork().  Fixes PR#19558.
+	[heas, ticket #958]
+
+sys/dev/pci/cs4281.c				1.21
+
+	Make recording of clct(4) work, namely:
+	 o cs_4281_intr: advance a pointer after copying data
+	 o cs_4281_trigger_input: fix an inverted condition about
+	   dma mode
+	[yamt, ticket #967]
+
+sys/nfs/nfs_bio.c				1.122
+sys/nfs/nfs_subs.c				1.138
+sys/nfs/nfsnode.h				1.50
+
+	Since daddr_t is 64-bit these days, simply use nfs directory
+	cookies as buffer cache indexes.  This should make the
+	regress/sys/fs/getdents test work.  Fixes PR#27112.
+	[yamt, ticket #968]
