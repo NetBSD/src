@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 1999/04/17 11:09:58 simonb Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=        ${.CURDIR}/../../${MACHINE}/miniroot
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk.fs
+DISKIMAGE=	diskimage.tgz
 
 CBIN=		ramdiskbin
 #CSIZE?=	6144
@@ -35,6 +36,9 @@ all: ${CBIN}
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
+	@echo ""
+	@echo Building diskimage tar file...
+	tar cf - -C ${MOUNT_POINT} . | gzip -9 > ${DISKIMAGE}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
