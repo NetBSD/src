@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntwoc.4,v 1.7 2004/05/11 22:42:47 wiz Exp $
+.\"	$NetBSD: ntwoc.4,v 1.8 2004/05/11 22:58:22 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
 .\" All rights reserved.
@@ -38,16 +38,17 @@
 The
 .Nm
 device driver supports bit-synchronous serial communication using
-Cisco HDLC framing.  The cards are capable of being driven by
+Cisco HDLC framing.
+The cards are capable of being driven by
 the line clock or from an internal baud rate generator.
 The devices all use the Hitachi hd64570 serial chip.
 The hd64570 supports 2 asynchronous/byte-synchronous/bit-synchronous
 serial ports, and has a 4-channel DMA controller for loading
 the serial port FIFOs.
 .Pp
-The isa Riscom/N2 card has a jumper block to set the irq and a DIP switch
-to set the port address the card will use.  The values programmed
-into the card must be specified with the
+The isa Riscom/N2 card has a jumper block to set the IRQ and a DIP switch
+to set the port address the card will use.
+The values programmed into the card must be specified with the
 .Cm port
 and
 .Cm irq
@@ -55,7 +56,8 @@ locators in the kernel configuration line.
 The
 .Cm iomem
 locator must be specified and must occur on a 16k boundary.
-The driver uses a 16k region of io memory.  Bit 0 of the
+The driver uses a 16k region of io memory.
+Bit 0 of the
 .Cm flags
 locator indicates if there is a second serial port available on the
 card.
@@ -63,8 +65,8 @@ card.
 Currently
 clock source and speed information is specified with the
 .Cm flags
-locator in the kernel configuration file.  The flags field has the
-following format.
+locator in the kernel configuration file.
+The flags field has the following format.
 .Bd -literal
   3                   2                   1
 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
@@ -73,15 +75,16 @@ following format.
 .Ed
 .Bl -tag -width "rxs0 rxs1"
 .It Va tmc
-Defines the timer constant.  The base clock frequency is divided
-by
+Defines the timer constant.
+The base clock frequency is divided by
 .Va tmc
-to generate the main clock for receiving and sending.  Further
-division is possible with the
+to generate the main clock for receiving and sending.
+Further division is possible with the
 .Va tdiv
 and
 .Va rdiv
-divisor options.  A value of 0 is treated as 256.
+divisor options.
+A value of 0 is treated as 256.
 .It Va tdiv
 Defines the transmit divisor as
 .Pf "2^(" Va tdiv ) .
@@ -103,7 +106,8 @@ If true the internal clock source is used to drive the line clock for port 0
 or port 1 respectively.
 .It Va rxs0 Va rxs1
 Specifies which clock source to use for receiving data on port 0 and
-port 1 respectively.  The following values are accepted:
+port 1 respectively.
+The following values are accepted:
 .Pp
 .Bl -tag -width "000" -compact
 .It 0
@@ -115,7 +119,8 @@ Internal clock.
 .El
 .It Va txs0 Va txs1
 Specifies which clock source to use for transmitting data on port 0
-and port 1 respectively.  The following values are accepted:
+and port 1 respectively.
+The following values are accepted:
 .Pp
 .Bl -tag -width "000" -compact
 .It 0
@@ -126,9 +131,10 @@ Internal clock.
 Receive clock.
 .El
 .It Va np
-(For the isa card only) A value of 1 indicates there is a second serial
-port present on the card.  This is auto-detected on the pci card and need
-not be specified.
+(For the ISA card only)
+A value of 1 indicates there is a second serial
+port present on the card.
+This is auto-detected on the PCI card and need not be specified.
 .El
 .Sh HARDWARE
 Cards supported by the
@@ -147,9 +153,10 @@ SDL Communications WAN/ic 400 (untested)
 .Bl -diag
 .It "ntwoc0: TXDMA underrun - fifo depth maxed"
 Indicates that the serial port's FIFO is being drained faster
-than DMA can fill it.  The driver automatically increases the
-low-water mark at which to begin DMA transfers when underruns
-occur.  This diagnostic is issued when the low-water mark is
+than DMA can fill it.
+The driver automatically increases the low-water mark at which to
+begin DMA transfers when underruns occur.
+This diagnostic is issued when the low-water mark is
 maximized (i.e., 1 less than the depth of the FIFO).
 .It "ntwoc0: RXDMA buffer overflow"
 Indicates that a frame is being received by the card, but
