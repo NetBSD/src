@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.15 2003/04/01 08:46:10 drochner Exp $	*/
+/*	$NetBSD: scm.c,v 1.16 2003/04/03 17:14:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -173,7 +173,9 @@
 #include <net/if.h>
 #include <netdb.h>
 #include <stdarg.h>
+#ifndef __linux__
 #include <ifaddrs.h>
+#endif
 #include "supcdefs.h"
 #include "supextern.h"
 
@@ -476,7 +478,12 @@ remotehost(void)
 
 	if (remotename == NULL) {
 		if (getnameinfo((struct sockaddr *) & remoteaddr,
-			remoteaddr.ss_len, h1, sizeof(h1), NULL, 0, 0))
+#ifdef BSD4_4
+			remoteaddr.ss_len,
+#else
+			sizeof(struct sockaddr),
+#endif
+			h1, sizeof(h1), NULL, 0, 0))
 			return ("UNKNOWN");
 		remotename = salloc(h1);
 		if (remotename == NULL)
@@ -499,6 +506,64 @@ thishost(char *host)
 	return (strcasecmp(name, h->h_name) == 0);
 }
 
+#ifdef __linux__
+/* Nice and sleazy does it... */
+struct ifaddrs {
+	struct ifaddrs *ifa_next;	
+	struct sockaddr *ifa_addr;
+	struct sockaddr ifa_addrspace;
+};
+
+static int
+getifaddrs(struct ifaddrs **ifap)
+{
+	struct ifaddrs *ifa;
+	int nint;
+	int n;
+	char buf[10 * 1024];
+	struct ifconf ifc;
+	struct ifreq *ifr;
+	int s;
+
+	if ((s = socket (AF_INET, SOCK_DGRAM, 0)) == -1)
+		return -1;
+
+	ifc.ifc_len = sizeof(buf);
+	ifc.ifc_buf = buf;
+
+	if (ioctl(s, SIOCGIFCONF, &ifc) == -1) {
+		(void)close(s);
+		return -1;
+	}
+
+	(void)close(s);
+
+	if ((nint = ifc.ifc_len / sizeof(struct ifreq)) <= 0)
+		return 0;
+
+	if ((ifa = malloc((unsigned)nint * sizeof(struct ifaddrs))) == NULL)
+		return -1;
+
+	for (ifr = ifc.ifc_req, n = 0; n < nint; n++, ifr++) {
+		ifa[n].ifa_next = &ifa[n + 1];
+		ifa[n].ifa_addr = &ifa[n].ifa_addrspace;
+		(void)memcpy(ifa[n].ifa_addr, &ifr->ifr_addr,
+		    sizeof(*ifa[n].ifa_addr));
+	}
+
+	ifa[nint - 1].ifa_next = NULL;
+	*ifap = ifa;
+	return nint;
+}
+
+static void
+freeifaddrs(struct ifaddrs *ifa)
+{
+	free(ifa);
+}
+	
+#endif
+
 int 
 samehost(void)
 {				/* is remote host same as local host? */
@@ -510,15 +575,25 @@ samehost(void)
 	const int niflags = NI_NUMERICHOST;
 #endif
 
-	if (getnameinfo((struct sockaddr *) & remoteaddr, remoteaddr.ss_len,
-		h1, sizeof(h1), NULL, 0, niflags))
+	if (getnameinfo((struct sockaddr *) &remoteaddr,
+#ifdef BSD4_4
+	    remoteaddr.ss_len,
+#else
+	    sizeof(struct sockaddr),
+#endif
+	    h1, sizeof(h1), NULL, 0, niflags))
 		return (0);
 	if (getifaddrs(&ifap) < 0)
 		return (0);
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (remoteaddr.ss_family != ifa->ifa_addr->sa_family)
 			continue;
-		if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
+		if (getnameinfo(ifa->ifa_addr,
+#ifdef BSD4_4
+		ifa->ifa_addr->sa_len,
+#else
+		sizeof(struct sockaddr),
+#endif
 			h2, sizeof(h2), NULL, 0, niflags))
 			continue;
 		if (strcmp(h1, h2) == 0) {
@@ -541,8 +616,13 @@ matchhost(char *name)
 #endif
 	struct addrinfo hints, *res0, *res;
 
-	if (getnameinfo((struct sockaddr *) & remoteaddr, remoteaddr.ss_len,
-		h1, sizeof(h1), NULL, 0, niflags))
+	if (getnameinfo((struct sockaddr *) & remoteaddr,
+#ifdef BSD4_4
+	    remoteaddr.ss_len,
+#else
+	    sizeof(struct sockaddr),
+#endif
+	    h1, sizeof(h1), NULL, 0, niflags))
 		return (0);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
@@ -554,7 +634,7 @@ matchhost(char *name)
 		if (remoteaddr.ss_family != res->ai_family)
 			continue;
 		if (getnameinfo(res->ai_addr, res->ai_addrlen,
-			h2, sizeof(h2), NULL, 0, niflags))
+		    h2, sizeof(h2), NULL, 0, niflags))
 			continue;
 		if (strcmp(h1, h2) == 0) {
 			freeaddrinfo(res0);

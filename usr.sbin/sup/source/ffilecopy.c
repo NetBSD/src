@@ -1,4 +1,4 @@
-/*	$NetBSD: ffilecopy.c,v 1.5 2002/07/10 20:19:39 wiz Exp $	*/
+/*	$NetBSD: ffilecopy.c,v 1.6 2003/04/03 17:14:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -70,6 +70,7 @@ ffilecopy(FILE * here, FILE * there)
 		here->_r = 0;
 	}
 #else
+#ifndef __linux__
 	if ((here->_cnt) > 0) {	/* flush buffered input */
 		i = write(therefile, here->_ptr, here->_cnt);
 		if (i != here->_cnt)
@@ -78,6 +79,7 @@ ffilecopy(FILE * here, FILE * there)
 		here->_cnt = 0;
 	}
 #endif
+#endif
 	i = filecopy(herefile, therefile);	/* fast file copy */
 	if (i < 0)
 		return (EOF);
@@ -85,7 +87,11 @@ ffilecopy(FILE * here, FILE * there)
 #if	defined(__386BSD__) || defined(__NetBSD__)
 	(here->_flags) |= __SEOF;	/* indicate EOF */
 #else
+#ifndef __linux__
 	(here->_flag) |= _IOEOF;	/* indicate EOF */
+#else
+	(void)fseeko(here, (off_t)0, SEEK_END);	/* seek to end */
+#endif
 #endif
 	return (0);
 }
