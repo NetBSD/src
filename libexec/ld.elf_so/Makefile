@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/01/10 18:18:56 christos Exp $
+#	$NetBSD: Makefile,v 1.19 1999/02/07 17:23:03 christos Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -22,7 +22,7 @@ SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
 CPPFLAGS+= -Wall -DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+= -DDEBUG -DRTLD_LOADER
-#CPPFLAGS+= -DRTLD_DEBUG
+#CPPFLAGS+= -DRTLD_DEBUG -DRTLD_DEBUG_RELOC
 
 LDADD+=	-L${DESTDIR}/${LIBDIR} -L${CLIBOBJ} -non_shared -lc_pic
 DPADD+=	${LIBC_PIC}
