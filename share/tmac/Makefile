@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$Id: Makefile,v 1.7 1993/07/31 15:27:12 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/09/30 22:16:52 jtc Exp $
 
 BINDIR= /usr/share
-FILES=	tmac.andoc tmac.an.old 
+FILES=	tmac.andoc
 MSRCS=  doc doc-ditroff doc-common doc-nroff doc-syms
 LINKS=	${BINDIR}/tmac/tmac.andoc ${BINDIR}/tmac/tmac.an
 NOOBJ=	noobj
