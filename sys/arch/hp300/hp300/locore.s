@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.4 1993/08/07 20:47:35 mycroft Exp $
+ *	$Id: locore.s,v 1.5 1993/08/14 14:46:08 mycroft Exp $
  */
 
 #include "assym.s"
@@ -1181,7 +1181,7 @@ _esigcode:
 	.text
 _icode:
 	clrl	sp@-
-#ifdef notdef
+#ifndef notdef
 	pea	pc@((argv-.)+2)
 	pea	pc@((init-.)+2)
 #else
