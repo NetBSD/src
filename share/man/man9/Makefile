@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.106 2002/01/07 00:59:43 deberg Exp $
+#       $NetBSD: Makefile,v 1.107 2002/02/11 18:48:03 kleink Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -218,7 +218,8 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 PCI_VENDOR.9 \
 	pci.9 PCI_PRODUCT.9 \
 	pci.9 PCI_REVISION.9
-MLINKS+=pci_configure_bus.9 pci_conf_interrupt.9
+MLINKS+=pci_configure_bus.9 pci_conf_hook.9 \
+	pci_configure_bus.9 pci_conf_interrupt.9
 MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_function_enable.9 \
 	pcmcia.9 pcmcia_function_disable.9 \
