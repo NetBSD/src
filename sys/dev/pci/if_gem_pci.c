@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.6 2001/10/18 06:28:18 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.7 2001/10/18 15:09:15 thorpej Exp $ */
 
 /*
  * 
@@ -122,6 +122,7 @@ gem_attach_pci(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	char devinfo[256];
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -149,7 +150,7 @@ gem_attach_pci(parent, self, aux)
 #ifdef __sparc__
 	{
 		extern void myetheraddr __P((u_char *));
-		myetheraddr(sc->sc_enaddr);
+		myetheraddr(enaddr);
 	}
 #endif /* __sparc__ */
 #ifdef macppc
@@ -163,8 +164,7 @@ gem_attach_pci(parent, self, aux)
 			return;
 		}
 
-		OF_getprop(node, "local-mac-address", sc->sc_enaddr,
-		    sizeof(sc->sc_enaddr));
+		OF_getprop(node, "local-mac-address", enaddr, sizeof(enaddr));
 	}
 #endif /* macppc */
 
@@ -184,8 +184,6 @@ gem_attach_pci(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/*
-	 * call the main configure
-	 */
-	gem_config(sc);
+	/* Finish off the attach. */
+	gem_attach(sc, enaddr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.3 2001/10/18 06:28:17 thorpej Exp $ */
+/*	$NetBSD: gemvar.h,v 1.4 2001/10/18 15:09:15 thorpej Exp $ */
 
 /*
  * 
@@ -202,7 +202,6 @@ struct gem_softc {
 	int			sc_inited;
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
-	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset) __P((struct gem_softc *));
@@ -283,22 +282,13 @@ do {									\
 } while (0)
 
 #ifdef _KERNEL
-void	gem_attach __P((struct gem_softc *, const u_int8_t *));
-int	gem_activate __P((struct device *, enum devact));
-int	gem_detach __P((struct gem_softc *));
+void	gem_attach __P((struct gem_softc *, const uint8_t *));
 int	gem_intr __P((void *));
-int	gem_read_srom __P((struct gem_softc *));
-int	gem_srom_crcok __P((const u_int8_t *));
-int	gem_isv_srom __P((const u_int8_t *));
-int	gem_isv_srom_enaddr __P((struct gem_softc *, u_int8_t *));
-int	gem_parse_old_srom __P((struct gem_softc *, u_int8_t *));
 
 int	gem_mediachange __P((struct ifnet *));
 void	gem_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
-void	gem_config __P((struct gem_softc *));
 void	gem_reset __P((struct gem_softc *));
-int	gem_intr __P((void *));
 #endif /* _KERNEL */
 
 
