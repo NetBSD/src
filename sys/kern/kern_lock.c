@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.24 1999/08/10 21:10:20 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.25 1999/08/27 01:14:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -88,6 +88,20 @@
 #include <sys/lock.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
+
+#if defined(LOCKDEBUG)
+#include <sys/syslog.h>
+/*
+ * note that stdarg.h and the ansi style va_start macro is used for both
+ * ansi and traditional c compiles.
+ * XXX: this requires that stdarg.h define: va_alist and va_dcl
+ */
+#include <machine/stdarg.h>
+
+void	lock_printf __P((const char *fmt, ...));
+
+int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
+#endif
 
 /*
  * Locking primitives implementation.
@@ -229,6 +243,31 @@ do {									\
 
 #define	DONTHAVEIT(lkp)		/* nothing */
 #endif /* LOCKDEBUG */ /* } */
+
+#if defined(LOCKDEBUG)
+/*
+ * Lock debug printing routine; can be configured to print to console
+ * or log to syslog.
+ */
+void
+#ifdef __STDC__
+lock_printf(const char *fmt, ...)
+#else
+lock_printf(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (lock_debug_syslog)
+		vlog(LOG_DEBUG, fmt, ap);
+	else
+		vprintf(fmt, ap);
+	va_end(ap);
+}
+#endif /* LOCKDEBUG */
 
 /*
  * Initialize a lock; required before use.
@@ -652,13 +691,13 @@ int simple_lock_debugger = 0;
 
 #define	SLOCK_WHERE(str, alp, id, l)					\
 do {									\
-	printf(str);							\
-	printf("currently at: %s:%d\n", (id), (l));			\
+	lock_printf(str);						\
+	lock_printf("currently at: %s:%d\n", (id), (l));		\
 	if ((alp)->lock_file != NULL)					\
-		printf("last locked: %s:%d\n", (alp)->lock_file,	\
+		lock_printf("last locked: %s:%d\n", (alp)->lock_file,	\
 		    (alp)->lock_line);					\
 	if ((alp)->unlock_file != NULL)					\
-		printf("last unlocked: %s:%d\n", (alp)->unlock_file,	\
+		lock_printf("last unlocked: %s:%d\n", (alp)->unlock_file, \
 		    (alp)->unlock_line);				\
 	SLOCK_DEBUGGER();						\
 } while (0)
@@ -837,10 +876,10 @@ simple_lock_dump()
 
 	s = splhigh();
 	SLOCK_LIST_LOCK();
-	printf("all simple locks:\n");
+	lock_printf("all simple locks:\n");
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
 	     alp = TAILQ_NEXT(alp, list)) {
-		printf("%p CPU %lu %s:%d\n", alp, alp->lock_holder,
+		lock_printf("%p CPU %lu %s:%d\n", alp, alp->lock_holder,
 		    alp->lock_file, alp->lock_line);
 	}
 	SLOCK_LIST_UNLOCK();
@@ -859,7 +898,7 @@ simple_lock_freecheck(start, end)
 	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
 	     alp = TAILQ_NEXT(alp, list)) {
 		if ((void *)alp >= start && (void *)alp < end) {
-			printf("freeing simple_lock %p CPU %lu %s:%d\n",
+			lock_printf("freeing simple_lock %p CPU %lu %s:%d\n",
 			    alp, alp->lock_holder, alp->lock_file,
 			    alp->lock_line);
 			SLOCK_DEBUGGER();
