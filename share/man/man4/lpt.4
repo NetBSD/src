@@ -1,0 +1,106 @@
+.\"
+.\" Copyright (c) 1993 Christopher G. Demetriou
+.\" Copyright (c) 1994 Geoffrey M. Rehmet
+.\" Copyright (c) 1999 Nicolas Souchu
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD: src/share/man/man4/lpt.4,v 1.9.2.2 2001/08/17 13:08:38 ru Exp $
+.\"
+.Dd December 24, 2003
+.Dt LPT 4
+.Os
+.Sh NAME
+.Nm lpt
+.Nd generic printer device driver
+.Sh SYNOPSIS
+.Cd "lpt* at ppbus?"
+.Cd options LPT_DEBUG
+.Cd options LPT_VERBOSE
+.Sh DESCRIPTION
+The 
+.Nm
+driver is the port of the lpt driver to the
+.Xr ppbus 4
+system.
+.Pp
+One purpose of this port was to allow parallel port sharing with other
+parallel devices.
+Secondly, inb()/outb() calls have been replaced by ppbus
+function calls.
+lpt is now arch-independent thanks to the ppbus interface.
+See
+.Xr ppbus 4
+for more information about the parallel port bus system.
+.Pp
+The parallel port bus is reserved by lpt when the printer device is opened
+and released when the device is closed.
+.Pp
+Ports can be configured to use DMA, IEEE negotiations, and IEEE compliant 
+transfer modes by using the
+.Xr lptctl 8
+command, with modes depending on the hardware available. 
+.Pp
+.Ss Minor bit
+The minor bit selects some device features:
+.Bl -column "Minor Bit" "Function" -offset indent
+.It Em "Minor Bit"	Function
+.It 128	Do no use interrupts (polled accesses).
+.It 64	Do not initialize printer when opened.
+.It 32	Automatic LF on CR.
+.El
+.Pp
+.Xr mknod 8 
+can be used to create such devices if necessary (see BUGS).
+.Sh FILES
+.Bl -tag -width "/dev/lpt0xx" -compact
+.It Pa /dev/lpt?
+interrupt-driven ports (minor number 0)
+.It Pa /dev/lpa?
+polled ports (minor number 128) 
+.El
+.Sh SEE ALSO
+.Xr atppc 4 , 
+.Xr ppbus 4 , 
+.Xr lptctl 8 ,
+.Xr mknod 8 
+.Sh HISTORY
+This driver is derived from drivers which appear in FreeBSD and NetBSD. The 
+FreeBSD driver is used for ppbus usage while the NetBSD driver's behavior is 
+emulated as much as possible for compatibility.
+.Sh AUTHORS
+This manual page was based on the FreeBSD 
+.Xr lpt 4
+manual page. The information has been updated for NetBSD's port by Gary Thorpe.
+.Sh BUGS
+If a printer is not connected and on-line, 
+.Pa /dev/lpt? 
+and 
+.Pa /dev/lpa? 
+cannot be used with 
+.Xr lptctl 8 .
+A lpt device with minor number 
+.Em 64
+must be used in this case because it skips the initialization sequence. 
+.Pp
+Testing has been limited by hardware availability.

@@ -1,0 +1,94 @@
+.\"	$NetBSD: atppc.4,v 1.1.1.1 2004/01/19 23:22:23 jdolecek Exp $
+.\"
+.\" Copyright (C) Gary Thorpe 2003 
+.\" All rights reserved.
+.\"
+.Dd December 24, 2003 
+.Dt ATPPC 4
+.Os
+.Sh NAME
+.Nm atppc
+.Nd driver for AT-style parallel port chip sets.
+.Sh SYNOPSIS
+.Cd "atppc0 at isa? port 0x378 irq 7 drq 3 flags 0x00"
+.Cd options ATPPC_VERBOSE
+.Cd options ATPPC_DEBUG
+.Sh DESCRIPTION
+.Nm 
+supports parallel ports and provides the low level support needed 
+by higher level drivers such as 
+.Xr ppbus 4 .
+This driver attaches where the traditional NetBSD 
+.Xr lpt 4
+driver would ordinarily. It provides the data transport and chip set 
+manipulation needed by higher driver layers. This driver is designed to be 
+one of many possible implementations supporting machine independent parallel 
+device support via 
+.Xr ppbus 4 .
+.Ss IEEE 1284 support 
+.Nm
+is intended to provide to data-link like services to higher level IEEE 1284 
+device drivers (such as 
+.Xr ppbus 4 ).
+.Nm
+does not directly support IEEE 1284 features such as mode negotiation but 
+rather provides the necessary infrastructure to allow a higher level driver to 
+provide these services.
+.Pp
+.Nm
+does provide chip set manipulation, device handshakes (where appropriate),  
+low-level error detection, and data transfer.
+.Ss Supported data transfer modes
+.Nm
+supports the following data transfer modes: Centronics Compatible (Standard),
+Nibble, Byte (PS2), Fast Centronics, ECP, and EPP. Standard and Fast Centronics modes are write only, Nibble and Byte modes are read only, and ECP and EPP 
+modes are bidirectional.
+.Ss Software Interfaces 
+The driver provides some generic methods that can apply to many AT-like 
+parallel port devices (such as non-generic chip sets): see
+.Xr atppc 9 . 
+.Nm
+implements the parport interface defined in 
+.Xr ppbus 9 . 
+.Ss Supported Devices
+.Nm 
+supports only generic chip sets on the ISA bus. The original FreeBSD 
+.Xr ppc 4
+driver included support for other chip sets, but this driver is still under 
+development. Generic chip sets configured by other means besides ISA are also 
+not supported, but are being planned.
+.\" .Sh FILES
+.\" .Sh EXAMPLES
+.Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr lp 4 ,
+.Xr lpbb 4 ,
+.Xr lpt 4 ,
+.Xr ppbus 4 ,
+.Xr ppi 4 ,
+.Xr vpo 4 ,
+.Xr atppc 9 ,
+.Xr microseq 9
+.Sh HISTORY
+The 
+.Nm
+driver is based on the 
+.Xr ppc 4
+driver, which originally appeared in FreeBSD. 
+.Sh AUTHORS
+This manual page is based on the FreeBSD 
+.Xr ppc 4 
+manual page. The information has been updated for NetBSD's port by Gary 
+Thorpe.
+.Sh BUGS
+.Bl -item
+.It
+ISA PnP, PnP BIOS, ACPI attachments are missing. Support is being planned. 
+.It
+Only standard and FAST mode writes are tested. Nibble reads also tested.
+.It
+Only generic chip sets are currently supported.
+.El
