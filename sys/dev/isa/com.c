@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.91 1996/10/21 22:40:30 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.92 1996/10/22 00:45:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -438,7 +438,7 @@ comattach(parent, self, aux)
 		bus_space_handle_t hayespioh;
 
 #define	HAYESP_NPORTS	8			/* XXX XXX XXX ??? ??? ??? */
-		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, &hayespioh))
+		if (bus_space_map(iot, *hayespp, HAYESP_NPORTS, 0, &hayespioh))
 			continue;
 		if (comprobeHAYESP(hayespioh, sc)) {
 			sc->sc_hayespbase = *hayespp;
