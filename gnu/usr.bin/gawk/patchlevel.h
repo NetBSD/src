@@ -1,3 +1,3 @@
-/*	$Id: patchlevel.h,v 1.2 1993/08/02 17:30:00 mycroft Exp $ */
+/*	$Id: patchlevel.h,v 1.3 1993/11/13 02:27:02 jtc Exp $ */
 
-#define PATCHLEVEL	2
+#define PATCHLEVEL	3

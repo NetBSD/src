@@ -116,6 +116,7 @@ extern NODE *end_block;
 %left LEX_GETLINE
 %nonassoc LEX_IN
 %left FUNC_CALL LEX_BUILTIN LEX_LENGTH
+%nonassoc ','
 %nonassoc MATCHOP
 %nonassoc RELOP '<' '>' '|' APPEND_OP
 %left CONCAT_OP
@@ -276,7 +277,7 @@ function_body
 pattern
 	: exp
 		{ $$ = $1; }
-	| exp comma exp
+	| exp ',' exp
 		{ $$ = mkrangenode ( node($1, Node_cond_pair, $3) ); }
 	;
 
@@ -1036,6 +1037,16 @@ yylex()
 	if (!nextc())
 		return 0;
 	pushback();
+#ifdef OS2
+	/*
+	 * added for OS/2's extproc feature of cmd.exe
+	 * (like #! in BSD sh)
+	 */
+	if (strncasecmp(lexptr, "extproc ", 8) == 0) {
+		while (*lexptr && *lexptr != '\n')
+			lexptr++;
+	}
+#endif
 	lexeme = lexptr;
 	thisline = NULL;
 	if (want_regexp) {
@@ -1115,7 +1126,7 @@ retry:
 			sourceline++;
 			goto retry;
 		} else
-			yyerror("inappropriate use of backslash");
+			yyerror("backslash not last character on line");
 		break;
 
 	case '$':
@@ -1638,7 +1649,8 @@ char *name;
 NODE *value;
 {
 	register NODE *hp;
-	register int len, bucket;
+	register size_t len;
+	register int bucket;
 
 	len = strlen(name);
 	bucket = hash(name, len);
@@ -1659,7 +1671,7 @@ lookup(name)
 char *name;
 {
 	register NODE *bucket;
-	register int len;
+	register size_t len;
 
 	len = strlen(name);
 	bucket = variables[hash(name, len)];
@@ -1721,7 +1733,7 @@ NODE *np;
 int freeit;
 {
 	register NODE *bucket, **save;
-	register int len;
+	register size_t len;
 	char *name;
 
 	name = np->param;

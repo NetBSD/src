@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: eval.c,v 1.2 1993/08/02 17:29:38 mycroft Exp $";
+static char rcsid[] = "$Id: eval.c,v 1.3 1993/11/13 02:26:39 jtc Exp $";
 #endif /* not lint */
 
 #include "awk.h"
@@ -390,11 +390,11 @@ register NODE *tree;
 	if (tree == NULL)
 		return Nnull_string;
 	if (tree->type == Node_val) {
-		if (tree->stref <= 0) cant_happen();
+		if ((char)tree->stref <= 0) cant_happen();
 		return tree;
 	}
 	if (tree->type == Node_var) {
-		if (tree->var_value->stref <= 0) cant_happen();
+		if ((char)tree->var_value->stref <= 0) cant_happen();
 		return tree->var_value;
 	}
 	if (tree->type == Node_param_list) {
@@ -493,32 +493,51 @@ register NODE *tree;
 	case Node_concat:
 		{
 #define	STACKSIZE	10
-		NODE *stack[STACKSIZE];
-		register NODE **sp;
-		register int len;
+		NODE *treelist[STACKSIZE+1];
+		NODE *strlist[STACKSIZE+1];
+		register NODE **treep;
+		register NODE **strp;
+		register size_t len;
 		char *str;
 		register char *dest;
 
-		sp = stack;
-		len = 0;
+		/*
+		 * This is an efficiency hack for multiple adjacent string
+		 * concatenations, to avoid recursion and string copies.
+		 *
+		 * Node_concat trees grow downward to the left, so
+		 * descend to lowest (first) node, accumulating nodes
+		 * to evaluate to strings as we go.
+		 */
+		treep = treelist;
 		while (tree->type == Node_concat) {
-			*sp = force_string(tree_eval(tree->lnode));
-			tree = tree->rnode;
-			len += (*sp)->stlen;
-			if (++sp == &stack[STACKSIZE-2]) /* one more and NULL */
+			*treep++ = tree->rnode;
+			tree = tree->lnode;
+			if (treep == &treelist[STACKSIZE])
 				break;
 		}
-		*sp = force_string(tree_eval(tree));
-		len += (*sp)->stlen;
-		*++sp = NULL;
+		*treep = tree;
+		/*
+		 * Now, evaluate to strings in LIFO order, accumulating
+		 * the string length, so we can do a single malloc at the
+		 * end.
+		 */
+		strp = strlist;
+		len = 0;
+		while (treep >= treelist) {
+			*strp = force_string(tree_eval(*treep--));
+			len += (*strp)->stlen;
+			strp++;
+		}
+		*strp = NULL;
 		emalloc(str, char *, len+2, "tree_eval");
 		dest = str;
-		sp = stack;
-		while (*sp) {
-			memcpy(dest, (*sp)->stptr, (*sp)->stlen);
-			dest += (*sp)->stlen;
-			free_temp(*sp);
-			sp++;
+		strp = strlist;
+		while (*strp) {
+			memcpy(dest, (*strp)->stptr, (*strp)->stlen);
+			dest += (*strp)->stlen;
+			free_temp(*strp);
+			strp++;
 		}
 		r = make_str_node(str, len, ALREADY_MALLOCED);
 		r->flags |= TEMP;
@@ -700,7 +719,7 @@ cmp_nodes(t1, t2)
 register NODE *t1, *t2;
 {
 	register int ret;
-	register int len1, len2;
+	register size_t len1, len2;
 
 	if (t1 == t2)
 		return 0;
@@ -989,7 +1008,7 @@ NODE *arg_list;		/* Node_expression_list of calling args. */
  */
 
 NODE **
-get_lhs(ptr, assign)
+r_get_lhs(ptr, assign)
 register NODE *ptr;
 Func_ptr *assign;
 {
@@ -1002,7 +1021,7 @@ Func_ptr *assign;
 	case Node_var:
 		aptr = &(ptr->var_value);
 #ifdef DEBUG
-		if (ptr->var_value->stref <= 0)
+		if ((char)ptr->var_value->stref <= 0)
 			cant_happen();
 #endif
 		break;

@@ -1,5 +1,53 @@
+Changes from 2.15.2 to 2.15.3
+-----------------------------
+
+Increased HASHSIZE to a decent number, 127 was way too small.
+
+FILENAME is now the null string in a BEGIN rule.
+
+Argument processing fixed for invalid options and missing arguments.
+
+This version will build on VMS.  This included a fix to close all files
+   and pipes opened with redirections before closing stdout and stderr.
+
+More getpgrp() defines.
+
+Changes for BSD44:  <sys/param.h> in io.c and Makefile.bsd44.
+
+All directories in the distribution are now writeable.
+
+Separated LDFLAGS and CFLAGS in Makefile.  CFLAGS can now be overridden by
+  user.
+
+Make dist now builds compressed archives ending in .gz and runs doschk.
+
+Amiga port.
+
+New getopt.c fixes Alpha OSF/1 problem.
+
+Make clean now removes possible test output.
+
+Improved algorithm for multiple adjacent string concatenations leads to
+  performance improvements.
+
+Fix nasty bug whereby command-line assignments, both with -v and at run time,
+   could create variables with syntactically illegal names.
+
+Fix obscure bug in printf with %0 flag and filling.
+
+Add a lint check for substr if provided length exceeds remaining characters
+   in string.
+
+Update atari support.
+
+PC support enhanced to include support for both DOS and OS/2. (Lots more
+   #ifdefs. Sigh.)
+
+Config files for Hitachi Unix and OSF/1, courtesy of Yoko Morishita
+   (morisita@sra.co.jp)
+
 Changes from 2.15.1 to 2.15.2
----------------------------
+-----------------------------
 
 Additions to the FUTURES file.
 
@@ -10,7 +58,6 @@ Document undefined order of output when using both standard output
 Clean up the distribution generation in Makefile.in:  the info files are
   now included, the distributed files are marked read-only and patched
   distributions are now unpacked in a directory named with the patch level.
-
 
 Changes from 2.15 to 2.15.1
 ---------------------------

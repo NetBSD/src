@@ -103,7 +103,7 @@ In other words, you are welcome to use, share and improve this program.
 You are forbidden to forbid anyone else to use, share and improve
 what you give them.   Help stamp out software-hoarding!
 
-	$Id: dfa.h,v 1.2 1993/08/02 17:29:36 mycroft Exp $
+	$Id: dfa.h,v 1.3 1993/11/13 02:26:36 jtc Exp $
 */
 
 #ifdef __STDC__
@@ -132,23 +132,33 @@ what you give them.   Help stamp out software-hoarding!
      parentheses are needed for literal searching.
    0 means backslash-parentheses are grouping, and plain parentheses
      are for literal searching.  */
+#ifndef RE_NO_BK_PARENS
 #define RE_NO_BK_PARENS 1L
+#endif
 
 /* 1 means plain | serves as the "or"-operator, and \| is a literal.
    0 means \| serves as the "or"-operator, and | is a literal.  */
-#define RE_NO_BK_VBAR (1L << 1)
+#ifndef RE_NO_BK_VBAR
+#define	RE_NO_BK_VBAR	 (1L << 1)
+#endif
 
 /* 0 means plain + or ? serves as an operator, and \+, \? are literals.
    1 means \+, \? are operators and plain +, ? are literals.  */
-#define RE_BK_PLUS_QM (1L << 2)
+#ifndef RE_BK_PLUS_QM
+#define	RE_BK_PLUS_QM	 (1L << 2)
+#endif
 
 /* 1 means | binds tighter than ^ or $.
    0 means the contrary.  */
-#define RE_TIGHT_VBAR (1L << 3)
+#ifndef RE_TIGHT_VBAR
+#define	RE_TIGHT_VBAR	 (1L << 3)
+#endif
 
 /* 1 means treat \n as an _OR operator
    0 means treat it as a normal character */
-#define RE_NEWLINE_OR (1L << 4)
+#ifndef RE_NEWLINE_OR
+#define	RE_NEWLINE_OR	 (1L << 4)
+#endif
 
 /* 0 means that a special characters (such as *, ^, and $) always have
      their special meaning regardless of the surrounding context.
@@ -157,7 +167,9 @@ what you give them.   Help stamp out software-hoarding!
 	^ - only special at the beginning, or after ( or |
 	$ - only special at the end, or before ) or |
 	*, +, ? - only special when not after the beginning, (, or | */
-#define RE_CONTEXT_INDEP_OPS (1L << 5)
+#ifndef RE_CONTEXT_INDEP_OPS
+#define	RE_CONTEXT_INDEP_OPS	 (1L << 5)
+#endif
 
 /* 1 means that \ in a character class escapes the next character (typically
    a hyphen.  It also is overloaded to mean that hyphen at the end of the range
