@@ -1,5 +1,5 @@
 /*
- * $Id: md.h,v 1.1 1993/10/16 21:53:15 pk Exp $		- I386 dependent definitions
+ * $Id: md.h,v 1.2 1993/10/24 00:47:05 pk Exp $		- I386 dependent definitions
  */
 
 
@@ -11,9 +11,14 @@
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
+#ifdef __NetBSD__
+#define PAGSIZ			__LDPGSZ
+#else
 #define PAGSIZ			4096
+#endif
 
-#define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), MID_I386, N_GETFLAG(ex)|(f))
+#define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), MID_MACHINE, \
+						N_GETFLAG(ex)|(f))
 
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
 
