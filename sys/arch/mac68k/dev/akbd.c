@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.3.2.6 1999/11/18 08:25:49 scottr Exp $	*/
+/*	$NetBSD: akbd.c,v 1.3.2.7 1999/11/20 08:36:28 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -323,7 +323,7 @@ kbd_processevent(event, ksc)
 #if NWSKBD > 0
 		kbd_intr(&new_event);
 #else
-		; /* do nothing */
+		/* do nothing */ ;
 #endif
 	if (event->bytes[1] != 0xff) {
 		new_event.u.k.key = event->bytes[1];
@@ -335,7 +335,7 @@ kbd_processevent(event, ksc)
 #if NWSKBD > 0
 			kbd_intr(&new_event);
 #else
-			; /* do nothing */
+			/* do nothing */ ;
 #endif
 	}
 
