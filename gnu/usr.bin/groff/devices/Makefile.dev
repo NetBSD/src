@@ -51,6 +51,14 @@ clean cleandir:
 
 .if !target(install)
 install:
+	@if [ ! -d "${DESTDIR}${DEVICEDIR}" ]; then \
+                /bin/rm -f ${DESTDIR}${DEVICEDIR} ; \
+                mkdir -p ${DESTDIR}${DEVICEDIR} ; \
+                chown root.wheel ${DESTDIR}${DEVICEDIR} ; \
+                chmod 755 ${DESTDIR}${DEVICEDIR} ; \
+        else \
+                true ; \
+        fi
 	-for f in $(FONTFILES); do \
 		install -c -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
 			$(DESTDIR)$(DEVICEDIR); \
