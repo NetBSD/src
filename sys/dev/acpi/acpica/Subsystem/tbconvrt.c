@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.6 2003/03/04 17:25:27 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.7 2003/05/12 00:19:17 fvdl Exp $");
 
 #define __TBCONVRT_C__
 
@@ -152,14 +152,12 @@ AcpiTbGetTableCount (
     ACPI_FUNCTION_ENTRY ();
 
 
-#if ACPI_MACHINE_WIDTH != 64
 
     if (RSDP->Revision < 2)
     {
         PointerSize = sizeof (UINT32);
     }
     else
-#endif
     {
         PointerSize = sizeof (UINT64);
     }
