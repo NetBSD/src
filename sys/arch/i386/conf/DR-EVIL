@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.12 2000/04/03 00:03:30 augustss Exp $
+#	$NetBSD: DR-EVIL,v 1.13 2000/04/19 08:44:33 haya Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -530,6 +530,7 @@ sm*	at mhzc?
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21x4x and clones
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
+#rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 # CardBus SCSI cards
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
