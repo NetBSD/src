@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.14 1997/12/05 14:01:09 jonathan Exp $	*/
+/*	$NetBSD: target.c,v 1.15 1998/02/20 02:33:51 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.14 1997/12/05 14:01:09 jonathan Exp $");
+__RCSID("$NetBSD: target.c,v 1.15 1998/02/20 02:33:51 jonathan Exp $");
 #endif
 
 
@@ -486,15 +486,25 @@ int target_chdir(const char *dir)
 }
 
 /*
+ * Copy a file from the current root into the target system,
+ * where the  destination pathname is relative to the target root.
+ * Does not check for copy-to-self when target is  current root.
+ */
+void cp_to_target(const char *srcpath, const char *tgt_path)
+{
+	const char *realpath = target_expand(tgt_path);
+	run_prog ("/bin/cp %s %s", srcpath, realpath);
+}
+
+/*
  * Duplicate a file from the current root to the same pathname
- *  in the target system.  Pathname must be an absolute pathname.
+ * in the target system.  Pathname must be an absolute pathname.
  * If we're running in the target, do nothing. 
  */
 void dup_file_into_target(const char *filename)
 {
 	if (!target_already_root()) {
-		const char *realpath = target_expand(filename);
-		run_prog ("/bin/cp %s %s", filename, realpath);
+		cp_to_target(filename, filename);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.27 1997/12/26 01:58:44 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.28 1998/02/20 02:33:51 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -167,11 +167,14 @@ EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
-EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-");
+EXTERN char cdrom_dir[STRSIZE] INIT("/NetBSD-");
 
 EXTERN char localfs_dev[SSTRSIZE] INIT("sd0");
 EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
 EXTERN char localfs_dir[STRSIZE] INIT("");
+
+EXTERN char targetroot_mnt[STRSIZE] INIT ("/mnt");
+EXTERN char distfs_mnt[STRSIZE] INIT ("/mnt2");
 
 EXTERN int  mnt2_mounted INIT(0);
 
@@ -290,6 +293,7 @@ int	target_already_root __P((void));
 FILE*	target_fopen __P((const char *filename, const char *type));
 int	target_collect_file __P((int kind, char **buffer, char *name));
 int	is_active_rootpart __P((const char *partname));
+void	cp_to_target __P((const char *src, const char *tgt_dst));
 void	dup_file_into_target __P((const char *filename));
 void	mv_within_target_or_die __P((const char *from, const char *to));
 int	cp_within_target __P((const char *frompath, const char *topath));

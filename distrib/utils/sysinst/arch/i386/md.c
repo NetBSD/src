@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1997/12/19 00:57:18 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.13 1998/02/20 02:33:52 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -247,12 +247,18 @@ void md_post_newfs (void)
 
 void md_copy_filesystem (void)
 {
+	if (target_already_root()) {
+		return;
+	}
+
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
 	run_prog ("tar --one-file-system -cf - -C / . |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
-	run_prog ("/bin/cp /tmp/.hdprofile /mnt/.profile");
-	run_prog ("/bin/cp /usr/share/misc/termcap /mnt/.termcap");
+
+	/* Copy next-stage install profile into target /.profile. */
+	cp_to_target ("/tmp/.hdprofile", "/.profile");
+	cp_to_target ("/usr/share/misc/termcap", "/.termcap");
 }
 
 
