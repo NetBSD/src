@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-#	$Id: Makefile,v 1.8 1994/05/13 21:24:15 cgd Exp $
+#	$Id: Makefile,v 1.9 1994/05/20 08:58:22 cgd Exp $
 
 PROG=	route
 MAN8=	route.0
@@ -8,8 +8,6 @@ CFLAGS+=-I.
 CLEANFILES+=keywords.h
 BINOWN=	root
 BINMODE=4555
-
-all: route ${MAN8}
 
 keywords.h: keywords
 	sed -e '/^#/d' -e '/^$$/d' ${.CURDIR}/keywords > _keywords.tmp
