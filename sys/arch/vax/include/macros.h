@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.11 1997/03/15 15:08:23 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.12 1997/11/03 20:00:27 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -212,4 +212,13 @@ static __inline__ void blkclr(void *blk, int len) {
 			: "r0","r1","r2","r3","r4","r5", "r6" );
 }
 
+#define	setrunqueue(p)	\
+	asm __volatile("movl %0,r0;jsb Setrq":: "g"(p):"r0","r1","r2");
+
+#define	remrunqueue(p)	\
+	asm __volatile("movl %0,r0;jsb Remrq":: "g"(p):"r0","r1","r2");
+
+#define	cpu_switch(p) \
+	asm __volatile("movl %0,r0;movpsl -(sp);jsb Swtch" \
+	    ::"g"(p):"r0","r1","r2","r3");
 #endif	/* _VAX_MACROS_H_ */
