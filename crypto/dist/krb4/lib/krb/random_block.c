@@ -34,7 +34,10 @@
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: random_block.c,v 1.1 2001/08/26 01:46:51 assar Exp $"
-      "$NetBSD: random_block.c,v 1.1.1.2 2002/09/12 12:22:10 joda Exp $");
+      "$NetBSD: random_block.c,v 1.2 2003/10/09 04:31:17 thorpej Exp $");
+
+/* XXX Avoid libkrb depending on both libcrypro and libdes. */
+#undef HAVE_OPENSSL
 
 #ifdef HAVE_OPENSSL
 #include <openssl/rand.h>
