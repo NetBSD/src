@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.9 1999/08/25 17:47:47 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.10 1999/08/26 11:11:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1244,7 +1244,7 @@ again:
 						 goto bad;
 					 }
 					 /*
-					  * ICV calc. for the immutable
+					  * ICV calc. for the mutable
 					  * option using an all-0 buffer.
 					  */
 					 (algo->update)(&algos, zerobuf,
