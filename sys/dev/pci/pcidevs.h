@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.582 2003/10/15 20:31:52 itojun Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.583 2003/10/18 01:33:16 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.584 2003/10/15 20:31:38 itojun Exp 
+ *	NetBSD: pcidevs,v 1.585 2003/10/18 01:32:30 lukem Exp 
  */
 
 /*
@@ -40,10 +40,6 @@
 
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
- *
- *	http://members.hyperlink.net.au/~chart/pci.htm
- *
- * which replaces the database found at
  *
  *	http://www.yourvote.com/pci/
  *
@@ -2161,22 +2157,26 @@
 #define	PCI_PRODUCT_SEGA_BROADBAND	0x1234		/* Broadband Adapter */
 
 /* ServerWorks products */
-#define	PCI_PRODUCT_SERVERWORKS_OSB4	0x0200		/* OSB4 SouthBridge */
-#define	PCI_PRODUCT_SERVERWORKS_CSB5	0x0201		/* CSB5 SouthBridge */
 #define	PCI_PRODUCT_SERVERWORKS_XX5	0x0005		/* PCIHB5 */
 #define	PCI_PRODUCT_SERVERWORKS_CIOB20	0x0006		/* I/O Bridge */
 #define	PCI_PRODUCT_SERVERWORKS_XX7	0x0007		/* PCIHB7 */
 #define	PCI_PRODUCT_SERVERWORKS_CNB20HE	0x0008		/* CNB20HE Host */
 #define	PCI_PRODUCT_SERVERWORKS_CNB20LE	0x0009		/* CNB20LE Host */
 #define	PCI_PRODUCT_SERVERWORKS_CIOB30	0x0010		/* CIOB30 */
-#define	PCI_PRODUCT_SERVERWORKS_CIOBX2	0x0101		/* CIOB-X2 */
 #define	PCI_PRODUCT_SERVERWORKS_CMIC_HE	0x0011		/* CMIC_HE Host */
 #define	PCI_PRODUCT_SERVERWORKS_CMIC_LE	0x0012		/* CMIC_LE Host */
 #define	PCI_PRODUCT_SERVERWORKS_CMIC_SL	0x0017		/* CMIC_SL Host */
+#define	PCI_PRODUCT_SERVERWORKS_CIOBX2	0x0101		/* CIOB-X2 */
+#define	PCI_PRODUCT_SERVERWORKS_OSB4	0x0200		/* OSB4 SouthBridge */
+#define	PCI_PRODUCT_SERVERWORKS_CSB5	0x0201		/* CSB5 SouthBridge */
+#define	PCI_PRODUCT_SERVERWORKS_CSB6	0x0203		/* CSB6 SouthBridge */
 #define	PCI_PRODUCT_SERVERWORKS_OSB4_IDE	0x0211		/* OSB4 IDE */
 #define	PCI_PRODUCT_SERVERWORKS_CSB5_IDE	0x0212		/* CSB5 IDE */
-#define	PCI_PRODUCT_SERVERWORKS_CSB6_IDE	0x0213		/* CSB6 RAID/IDE */
-#define	PCI_PRODUCT_SERVERWORKS_USB	0x0220		/* OSB4/CSB5 USB */
+#define	PCI_PRODUCT_SERVERWORKS_CSB6_RAID	0x0213		/* CSB6 RAID/IDE */
+#define	PCI_PRODUCT_SERVERWORKS_CSB6_IDE	0x0217		/* CSB6 IDE */
+#define	PCI_PRODUCT_SERVERWORKS_OSB4_USB	0x0220		/* OSB4/CSB5 USB Host Controller */
+#define	PCI_PRODUCT_SERVERWORKS_CSB6_USB	0x0221		/* CSB6 USB Host Controller */
+#define	PCI_PRODUCT_SERVERWORKS_CSB6_IB	0x0227		/* CSB6 ISA bridge */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */
