@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 1998/02/14 20:01:05 kleink Exp $
+	$NetBSD: syscalls.master,v 1.70 1998/02/19 00:52:14 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -31,7 +31,10 @@
 ;	[comment]
 ;
 ; #ifdef's, etc. may be included, and are copied to the output files.
-; #include's are copied to the syscall switch definition file only.
+; #include's are copied to the syscall names and switch definition files only.
+
+#include "fs_lfs.h"
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
