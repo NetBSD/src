@@ -1,9 +1,10 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Systems Programming Group of the University of Utah Computer
 .\" Science Department.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -32,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)dca.4	5.2 (Berkeley) 3/27/91
+.\"     @(#)dca.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 27, 1991
+.Dd June 9, 1993
 .Dt DCA 4 hp300
 .Os
 .Sh NAME
@@ -76,11 +77,6 @@ has overflowed and incoming data has been lost.
 .El
 .Sh SEE ALSO
 .Xr tty 4
-.Sh HISTORY
-The
-.Nm
-driver
-.Ud
 .Sh BUGS
 Data loss is possible on busy systems with baud rates greater than 300.
 The
