@@ -1,3 +1,5 @@
+/* $NetBSD: svr4_32_schedctl.c,v 1.2 2003/12/07 02:01:25 dmcmahill Exp $ */
+
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_schedctl.c,v 1.1 2003/12/07 01:36:58 dmcmahill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_schedctl.c,v 1.2 2003/12/07 02:01:25 dmcmahill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,11 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_schedctl.c,v 1.1 2003/12/07 01:36:58 dmcmahi
 
 #include <compat/svr4_32/svr4_32_schedctl.h>
 
-int svr4_32_sys_schedctl(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
+int
+svr4_32_sys_schedctl(struct lwp *l, void *v, register_t *retval)
 {
+
 	return 0; /* XXX */
 }
 
