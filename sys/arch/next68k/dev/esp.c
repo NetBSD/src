@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.31 2001/04/02 05:29:43 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.32 2001/04/07 11:29:50 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1048,6 +1048,27 @@ esp_dmacb_completed(map, arg)
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
 		panic("%s: invalid dma direction in completed callback, datain = %d",
 				sc->sc_dev.dv_xname,esc->sc_datain);
+	}
+#endif
+
+#ifdef DIAGNOSTIC
+	{
+		int i;
+		for(i=0;i<map->dm_nsegs;i++) {
+			if (map->dm_segs[i].ds_xfer_len != map->dm_segs[i].ds_len) {
+				printf("%s: map->dm_mapsize = %d\n", sc->sc_dev.dv_xname,map->dm_mapsize);
+				printf("%s: map->dm_nsegs = %d\n", sc->sc_dev.dv_xname,map->dm_nsegs);
+				for(i=0;i<map->dm_nsegs;i++) {
+					printf("%s: map->dm_segs[%d].ds_addr = 0x%08lx\n",
+							sc->sc_dev.dv_xname,i,map->dm_segs[i].ds_addr);
+					printf("%s: map->dm_segs[%d].ds_len = %d\n",
+							sc->sc_dev.dv_xname,i,map->dm_segs[i].ds_len);
+					printf("%s: map->dm_segs[%d].ds_xfer_len = %d\n",
+							sc->sc_dev.dv_xname,i,map->dm_segs[i].ds_xfer_len);
+				}
+				panic("%s: incomplete dma transfer\n",sc->sc_dev.dv_xname);
+			}
+		}
 	}
 #endif
 
