@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.60 1998/05/28 16:51:50 drochner Exp $
+#	$NetBSD: files.isa,v 1.61 1998/06/06 10:12:35 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -288,6 +288,12 @@ file	dev/isa/ym.c			ym needs-flag
 device	gus: audio, isadma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
+
+# Sierra's Aria chipset.
+# (e.g. Prometheus Aria 16)
+device	aria: audio, mulaw, auconv
+attach	aria at isa
+file	dev/isa/aria.c			aria needs-flag
 
 #
 # PlanetConnect satellite receiver driver.
