@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.176 1999/12/23 14:38:11 abs Exp $
+# $NetBSD: mi,v 1.177 2000/01/02 09:48:34 msaitoh Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1140,6 +1140,18 @@
 ./usr/share/ldscripts/elf32lmip.xr
 ./usr/share/ldscripts/elf32lmip.xs
 ./usr/share/ldscripts/elf32lmip.xu
+./usr/share/ldscripts/elf32shlunx.x
+./usr/share/ldscripts/elf32shlunx.xbn
+./usr/share/ldscripts/elf32shlunx.xn
+./usr/share/ldscripts/elf32shlunx.xr
+./usr/share/ldscripts/elf32shlunx.xs
+./usr/share/ldscripts/elf32shlunx.xu
+./usr/share/ldscripts/elf32shunx.x
+./usr/share/ldscripts/elf32shunx.xbn
+./usr/share/ldscripts/elf32shunx.xn
+./usr/share/ldscripts/elf32shunx.xr
+./usr/share/ldscripts/elf32shunx.xs
+./usr/share/ldscripts/elf32shunx.xu
 ./usr/share/ldscripts/elf32ppc.x
 ./usr/share/ldscripts/elf32ppc.xbn
 ./usr/share/ldscripts/elf32ppc.xn
@@ -1180,6 +1192,16 @@
 ./usr/share/ldscripts/m68knbsd.xn
 ./usr/share/ldscripts/m68knbsd.xr
 ./usr/share/ldscripts/m68knbsd.xu
+./usr/share/ldscripts/shlunx.x
+./usr/share/ldscripts/shlunx.xbn
+./usr/share/ldscripts/shlunx.xn
+./usr/share/ldscripts/shlunx.xr
+./usr/share/ldscripts/shlunx.xu
+./usr/share/ldscripts/shunx.x
+./usr/share/ldscripts/shunx.xbn
+./usr/share/ldscripts/shunx.xn
+./usr/share/ldscripts/shunx.xr
+./usr/share/ldscripts/shunx.xu
 ./usr/share/ldscripts/sparcnbsd.x
 ./usr/share/ldscripts/sparcnbsd.xbn
 ./usr/share/ldscripts/sparcnbsd.xn
