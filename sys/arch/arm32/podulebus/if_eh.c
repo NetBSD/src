@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.3 1996/03/06 23:53:13 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.4 1996/03/13 20:52:35 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -195,6 +195,9 @@ struct cfdriver ehcd = {
 #define	REMOTE_DMA(n)	SetReg ( EH_COMMAND, 	\
 		((GetReg(EH_COMMAND)&(COM_MASK_DMA))|n) )
 
+extern char *boot_args;
+char *strstr		__P((char */*s1*/, char */*s2*/));
+
 /****************************************************************************/
 /* Bus attachment code ******************************************************/
 /****************************************************************************/
@@ -290,31 +293,54 @@ ehprobe(parent, match, aux)
 
 	/* Test the board ram.  This code will change */
 
+	/*
+	 * Due to problems with some ether H cards the boot option ehbug
+	 * can be used to skip this test.
+	 * If you system hangs during the eh probe try this option.
+	 */
+
 	#define NLEN (0x2000)
 	#define NBASE (0x4000)
 
-	{
-		char *test_data;
-		char *read_buffer;
-		MALLOC(test_data, char *, NLEN, M_DEVBUF, M_NOWAIT);
-		MALLOC(read_buffer, char *, NLEN, M_DEVBUF, M_NOWAIT);
+        if (boot_args) {
+        	char *ptr;
+       
+		ptr = strstr(boot_args, "ehbug");
+		if (!ptr) {
+			char *test_data;
+			char *read_buffer;
+			MALLOC(test_data, char *, NLEN, M_TEMP, M_NOWAIT);
+			if (test_data == NULL)
+				panic("Cannot allocate temporary memory for buffer test (1)\n");
+			MALLOC(read_buffer, char *, NLEN, M_TEMP, M_NOWAIT);
+			if (read_buffer == NULL)
+				panic("Cannot allocate temporary memory for buffer test (1)\n");
 
-	/* Fill the test_data block */
+			printf("1.");
 
-		for (counter=0; counter<NLEN; counter++) {
-			test_data[counter] = (char)(counter&0xff);
-			if (test_data[counter] == 0)
-				test_data[counter]=0x23;
+		/* Fill the test_data block */
+
+			for (counter=0; counter<NLEN; counter++) {
+				test_data[counter] = (char)(counter&0xff);
+				if (test_data[counter] == 0)
+					test_data[counter]=0x23;
+			}
+
+			printf("2.");
+	
+			eh_copyout(sc, test_data, NBASE, NLEN);
+			printf("3.");
+			delay(10000);
+			eh_copyin(sc, NBASE, read_buffer, NLEN);
+			printf("4.");
+	
+		        if (bcmp(test_data, read_buffer, NLEN))
+				PRINTF("Block test failed\n");
+			printf("5.");
+			FREE(test_data, M_TEMP);
+			FREE(read_buffer, M_TEMP);
 		}
-
-		eh_copyout(sc, test_data, NBASE, NLEN);
-		delay(10000);
-		eh_copyin(sc, NBASE, read_buffer, NLEN);
-
-	        if (bcmp(test_data, read_buffer, NLEN))
-			PRINTF("Block test failed\n");
 	}
-
 	/* This is always true for our ether h */
 
 	sc->sc_physstart = 0x4000;
