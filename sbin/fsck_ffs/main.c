@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2001/02/23 07:51:41 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2001/08/15 03:54:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.39 2001/02/23 07:51:41 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2001/08/15 03:54:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,9 @@ main(argc, argv)
 	sync();
 	skipclean = 1;
 	markclean = 1;
+	forceimage = 0;
 	endian = 0;
-	while ((ch = getopt(argc, argv, "B:b:c:dfm:npy")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:c:dFfm:npy")) != -1) {
 		switch (ch) {
 		case 'B':
 			if (strcmp(optarg, "be") == 0)
@@ -119,6 +120,10 @@ main(argc, argv)
 		
 		case 'd':
 			debug++;
+			break;
+
+		case 'F':
+			forceimage = 1;
 			break;
 
 		case 'f':
@@ -380,8 +385,8 @@ usage()
 {
 
 	(void) fprintf(stderr,
-	    "Usage: %s [-dfnpy] [-B be|le] [-b block] [-c level] [-m mode]"
-			"filesystem ...\n",
+	    "Usage: %s [-dFfnpy] [-B be|le] [-b block] [-c level] [-m mode]"
+	    " filesystem ...\n",
 	    getprogname());
 	exit(1);
 }
