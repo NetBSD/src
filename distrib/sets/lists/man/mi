@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.262 2000/07/26 22:57:38 pk Exp $
+# $NetBSD: mi,v 1.263 2000/07/28 00:17:06 wiz Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -407,6 +407,7 @@
 ./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/depca.0
 ./usr/share/man/cat4/dpt.0
+./usr/share/man/cat4/dty.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
@@ -679,6 +680,7 @@
 ./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/nsswitch.conf.0
 ./usr/share/man/cat5/passwd.0
+./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/pim6dd.conf.0
 ./usr/share/man/cat5/pim6sd.conf.0
@@ -715,6 +717,7 @@
 ./usr/share/man/cat7/hier.0
 ./usr/share/man/cat7/hostname.0
 ./usr/share/man/cat7/intro.0
+./usr/share/man/cat7/lint.0
 ./usr/share/man/cat7/mailaddr.0
 ./usr/share/man/cat7/mandoc.0
 ./usr/share/man/cat7/mdoc.0
@@ -1441,6 +1444,7 @@
 ./usr/share/man/man4/de.4
 ./usr/share/man/man4/depca.4
 ./usr/share/man/man4/dpt.4
+./usr/share/man/man4/dty.4
 ./usr/share/man/man4/drum.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
@@ -1750,6 +1754,7 @@
 ./usr/share/man/man7/hier.7
 ./usr/share/man/man7/hostname.7
 ./usr/share/man/man7/intro.7
+./usr/share/man/man7/lint.7
 ./usr/share/man/man7/mailaddr.7
 ./usr/share/man/man7/mandoc.7
 ./usr/share/man/man7/mdoc.7
