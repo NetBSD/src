@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 1995/11/17 09:50:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.58 1995/11/28 19:43:04 jtc Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
@@ -21,8 +21,10 @@ SUBDIR+=amd
 
 .if   make(clean) || make(cleandir)
 SUBDIR+=bad144 config.old dbsym eeprom grfinfo hilinfo iteconfig screenblank
-.elif ${MACHINE} == "amiga" || ${MACHINE} == "atari"
+.elif ${MACHINE} == "amiga"
 SUBDIR+=grfconfig iteconfig videomode
+.elif ${MACHINE} == "atari"
+SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
 SUBDIR+=config.old grfinfo hilinfo
 .elif ${MACHINE} == "i386"

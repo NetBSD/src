@@ -1,4 +1,5 @@
-/*	$NetBSD: common.c,v 1.7 1995/11/15 22:23:06 pk Exp $	*/
+/*	$NetBSD: common.c,v 1.8 1995/11/28 19:43:19 jtc Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
