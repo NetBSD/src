@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 1998/04/01 14:39:56 kleink Exp $	*/
+/*	$NetBSD: print.c,v 1.4 1998/09/11 21:21:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.3 1998/04/01 14:39:56 kleink Exp $");
+__RCSID("$NetBSD: print.c,v 1.4 1998/09/11 21:21:29 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,17 +171,17 @@ dump_super(lfsp)
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	(void)printf("%s0x%X\t%s%d\t%s0x%X\t%s%d\n",
+	(void)printf("%s0x%X\t%s%d\t%s0x%qX\t%s%lu\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
-		"bmask    ", lfsp->lfs_bmask,
-		"bshift   ", lfsp->lfs_bshift);
+		"bmask    ", (u_quad_t)lfsp->lfs_bmask,
+		"bshift   ", (u_long)lfsp->lfs_bshift);
 
-	(void)printf("%s0x%X\t\t%s%d\t%s0x%X\t%s%d\n",
-		"ffmask   ", lfsp->lfs_ffmask,
-		"ffshift  ", lfsp->lfs_ffshift,
-		"fbmask   ", lfsp->lfs_fbmask,
-		"fbshift  ", lfsp->lfs_fbshift);
+	(void)printf("%s0x%qX\t\t%s%lu\t%s0x%qX\t%s%lu\n",
+		"ffmask   ", (u_quad_t)lfsp->lfs_ffmask,
+		"ffshift  ", (u_long)lfsp->lfs_ffshift,
+		"fbmask   ", (u_quad_t)lfsp->lfs_fbmask,
+		"fbshift  ", (u_long)lfsp->lfs_fbshift);
 
 	(void)printf("%s%d\t\t%s0x%X\t%s0x%qx\n",
 		"fsbtodb  ", lfsp->lfs_fsbtodb,

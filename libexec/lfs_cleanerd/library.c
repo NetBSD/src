@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.7 1998/08/10 02:57:23 perry Exp $	*/
+/*	$NetBSD: library.c,v 1.8 1998/09/11 21:21:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.7 1998/08/10 02:57:23 perry Exp $");
+__RCSID("$NetBSD: library.c,v 1.8 1998/09/11 21:21:29 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ get_superblock (fsp, sbp)
 	}
 
 	get(fid, LFS_LABELPAD, buf, LFS_SBPAD);
-	memcpy(sbp, buf, sizeof(struct lfs));
+	memcpy(&(sbp->lfs_dlfs), buf, sizeof(struct dlfs));
 	close (fid);
 
 	return (0);
@@ -292,7 +292,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	seg_addr = sntoda(lfsp, seg);
 	pseg_addr = seg_addr + (sup->su_flags & SEGUSE_SUPERBLOCK ? btodb(LFS_SBPAD) : 0);
 #ifdef VERBOSE
-		printf("\tsegment buffer at: 0x%x\tseg_addr 0x%x\n", s, seg_addr);
+		printf("\tsegment buffer at: %p\tseg_addr 0x%x\n", s, seg_addr);
 #endif /* VERBOSE */
 
 	*bcount = 0;
@@ -423,8 +423,8 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 				    fip->fi_lastlength));
 #ifdef VERBOSE
 				printf("lastlength, frags: %d, %d, %d\n",
-				    fip->fi_lastlength, temp,
-				    bytetoda(fsp, temp));
+				    fip->fi_lastlength, db_frag,
+				    bytetoda(fsp, db_frag));
 				fflush(stdout);
 #endif
 				bip->bi_size = fip->fi_lastlength;
@@ -579,7 +579,7 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 	} else {
 #ifdef VERBOSE
 		printf("mmap_segment\tseg_daddr: %lu\tseg_size: %lu\tseg_offset: %qu\n",
-		    seg_daddr, ssize, seg_byte);
+		    (u_long)seg_daddr, (u_long)ssize, seg_byte);
 #endif
 		/* malloc the space for the buffer */
 		*segbuf = malloc(ssize);

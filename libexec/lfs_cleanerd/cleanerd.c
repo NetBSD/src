@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.7 1998/05/22 02:21:00 hubertf Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.8 1998/09/11 21:21:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.7 1998/05/22 02:21:00 hubertf Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.8 1998/09/11 21:21:29 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -437,7 +437,7 @@ clean_segment(fsp, id)
 
 #ifdef VERBOSE
 	(void)printf("cleaning segment %d: contains %lu bytes\n", id,
-	    sp->su_nbytes);
+	    (unsigned long)sp->su_nbytes);
 	fflush(stdout);
 #endif
 	/* XXX could add debugging to verify that segment is really empty */
