@@ -2,7 +2,7 @@
 Controller (PCIC) data sheet, marked "preliminary".  Order number
 290423-002, January 1993. */
 
-#define	PCIC_IOSIZE 2
+#define	PCIC_IOSIZE		2
 
 #define PCIC_REG_INDEX		0
 #define PCIC_REG_DATA		1
@@ -150,6 +150,8 @@ chips as the same device. */
 
 /* I/O registers */
 
+#define PCIC_IO_WINS		2
+
 #define PCIC_IOCTL		0x07		/* RW */
 #define PCIC_IOCTL_IO1_WAITSTATE	0x80
 #define PCIC_IOCTL_IO1_ZEROWAIT		0x40
@@ -182,6 +184,8 @@ chips as the same device. */
 /* memory window addresses refer to bits A23-A12 of the ISA system
    memory address.  This is a shift of 12 bits.  The LSB contains
    A19-A12, and the MSB contains A23-A20, plus some other bits. */
+
+#define PCIC_MEM_WINS		5
 
 #define PCIC_MEM_SHIFT					12
 #define PCIC_MEM_PAGESIZE				(1<<PCIC_MEM_SHIFT)
