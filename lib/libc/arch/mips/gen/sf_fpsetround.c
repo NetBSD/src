@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpsetround.c,v 1.3 2000/02/22 03:14:22 mycroft Exp $	*/
+/*	$NetBSD: sf_fpsetround.c,v 1.4 2000/02/22 03:28:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -52,6 +52,7 @@
  * soft float FP libraries.
  */
 
+int _mips_sfp_getround __P((void));
 void _mips_sfp_setround __P((int rnd_dir));
 
 fp_rnd
@@ -60,12 +61,7 @@ fpsetround(rnd_dir)
 {
 	fp_rnd old_rnd;
 
-	old_rnd = fpgetround();
-
-#ifdef SOFTFLOAT
+	old_rnd = _mips_sfp_getround();
 	_mips_sfp_setround(rnd_dir);
-#else
-	abort();
-#endif
 	return(old_rnd);
 }
