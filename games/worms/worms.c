@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.14 2004/02/08 22:21:57 jsm Exp $	*/
+/*	$NetBSD: worms.c,v 1.15 2004/03/29 20:30:03 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.14 2004/02/08 22:21:57 jsm Exp $");
+__RCSID("$NetBSD: worms.c,v 1.15 2004/03/29 20:30:03 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,12 @@ main(argc, argv)
 			endwin();
 			exit(0);
 		}
-		if (delay) usleep(delay);
+		if (delay) {
+			if (delay % 1000000 != 0)
+				usleep(delay % 1000000);
+			if (delay >= 1000000)
+				sleep(delay / 1000000);
+		}
 		for (n = 0, w = &worm[0]; n < number; n++, w++) {
 			if ((x = w->xpos[h = w->head]) < 0) {
 				mvaddch(y = w->ypos[h] = bottom,
