@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.53 2004/12/01 23:04:58 christos Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.54 2004/12/01 23:12:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.53 2004/12/01 23:04:58 christos Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.54 2004/12/01 23:12:11 christos Exp $");
 #endif
 
 
@@ -283,19 +283,8 @@ static int
 bpf_open(void)
 {
 	int     fd;
-#ifdef _PATH_BPF
 	const char *device = _PATH_BPF;
 	fd = open(device, O_RDWR);
-#else
-	int     n = 0;
-	char    device[sizeof "/dev/bpf000"];
-
-	/* Go through all the minors and find one that isn't in use. */
-	do {
-		(void)snprintf(device, sizeof(device), "/dev/bpf%d", n++);
-		fd = open(device, O_RDWR);
-	} while (fd < 0 && errno == EBUSY);
-#endif
 
 	if (fd < 0) {
 		rarperr(FATAL, "%s: %s", device, strerror(errno));
