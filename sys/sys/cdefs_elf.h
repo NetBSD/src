@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.15 2003/07/30 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.16 2003/10/06 04:55:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -53,16 +53,16 @@
 
 #if __STDC__
 #define	__strong_alias(alias,sym)	       				\
-    __asm__(".global " _C_LABEL_STRING(#alias) " ; "			\
+    __asm__(".global " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak " _C_LABEL_STRING(#alias) " ; "			\
+    __asm__(".weak " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
 #define	__weak_extern(sym)						\
     __asm__(".weak " _C_LABEL_STRING(#sym));
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text");
+    __asm__(".section .gnu.warning." #sym "\n\t.ascii \"" msg "\"\n\t.text");
 
 #else /* !__STDC__ */
 
