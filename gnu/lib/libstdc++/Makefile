@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:40:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/04/08 23:39:05 tv Exp $
 
-INCS=	cassert cerrno cfloat ciso646 climits clocale cmath complex csetjmp \
-	csignal cstdarg cstddef cstdio cstdlib cstring ctime cwchar cwctype \
-	fstream iomanip iosfwd stdexcept string strstream
-INCS+=	stl.h complex.h _G_config.h
+HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
+
+.if (${HAVE_GCC28} != "")
+INCS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
+	csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime cwchar \
+	cwctype fstream iomanip iosfwd iostream stdexcept string strstream
+INCS+=	complex.h stl.h _G_config.h
 INCSDIR=/usr/include/g++
 
 SUBDIR=std stl io
@@ -11,17 +14,23 @@ SUBDIR=std stl io
 LIB=	stdc++
 
 SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
-indstream.cc ioassign.cc ioextend.cc iomanip.cc iostream.cc isgetline.cc \
-isgetsb.cc isscan.cc osform.cc parsestream.cc pfstream.cc procbuf.cc \
-sbform.cc sbgetline.cc sbscan.cc stdiostream.cc stdstrbufs.cc stdstreams.cc \
-stream.cc streambuf.cc strstream.cc cleanup.c filedoalloc.c fileops.c \
-floatconv.c genops.c iofclose.c iofgetpos.c iofread.c iofscanf.c \
-iofsetpos.c iogetdelim.c iogetline.c ioignore.c iopadn.c iopopen.c \
-ioprims.c ioprintf.c ioseekoff.c ioseekpos.c iostrerror.c ioungetc.c \
-iovfprintf.c iovfscanf.c outfloat.c strops.c cmathi.cc cstdlibi.cc \
-cstringi.cc stdexcepti.cc \
-cstrmain.cc cstrio.cc fcomplex.cc fcomio.cc dcomplex.cc dcomio.cc \
-ldcomplex.cc ldcomio.cc 
+	indstream.cc ioassign.cc ioextend.cc iomanip.cc iostream.cc \
+	isgetline.cc isgetsb.cc isscan.cc osform.cc parsestream.cc \
+	pfstream.cc procbuf.cc sbform.cc sbgetline.cc sbscan.cc \
+	stdiostream.cc stdstrbufs.cc stdstreams.cc stream.cc streambuf.cc \
+	strstream.cc \
+	cleanup.c filedoalloc.c fileops.c floatconv.c genops.c iofclose.c \
+	iofdopen.c iofeof.c ioferror.c iofflush.c iofflush_u.c iofgetpos.c \
+	iofgets.c iofopen.c iofprintf.c iofputs.c iofread.c iofscanf.c \
+	iofsetpos.c ioftell.c iofwrite.c iogetc.c iogetdelim.c iogetline.c \
+	iogets.c ioignore.c iopadn.c ioperror.c iopopen.c ioprims.c \
+	ioprintf.c ioputc.c ioputs.c ioscanf.c ioseekoff.c ioseekpos.c \
+	iosetbuffer.c iosetvbuf.c iosprintf.c iosscanf.c iostrerror.c \
+	ioungetc.c iovfprintf.c iovfscanf.c iovsprintf.c iovsscanf.c \
+	outfloat.c peekc.c strops.c \
+	cmathi.cc cstdlibi.cc cstringi.cc stdexcepti.cc stlinst.cc \
+	cstrmain.cc cstrio.cc fcomplex.cc fcomio.cc dcomplex.cc dcomio.cc \
+	ldcomplex.cc ldcomio.cc 
 
 DIST=		$(.CURDIR)/../../dist
 CXXFLAGS+=	-nostdinc++ 
@@ -115,20 +124,4 @@ ldcomio.cc: Makefile
 	cat $(CINSTCC)) > $(.TARGET)
 CLEANFILES+=ldcomio.cc
 
-stdexcepti.o: stdexcepti.cc
-	@echo "$(COMPILE.cc) -frtti $(.IMPSRC)"
-	@$(COMPILE.cc) -frtti $(.IMPSRC) -o $(.TARGET).o
-	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
-	@rm -f $(.TARGET).o
-
-stdexcepti.po: stdexcepti.cc
-	@echo "$(COMPILE.cc) -p -frtti $(.IMPSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) -p -frtti $(.IMPSRC) -o $(.TARGET).o
-	@$(LD) -X -r $(.TARGET).o -o $(.TARGET)
-	@rm -f $(.TARGET).o
-
-stdexcepti.so: stdexcepti.cc
-	@echo "$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET).o
-	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
-	@rm -f $(.TARGET).o
+.endif
