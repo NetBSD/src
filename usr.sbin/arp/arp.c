@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: arp.c,v 1.6 1995/02/25 08:49:51 chopps Exp $";
+static char *rcsid = "$Id: arp.c,v 1.7 1995/02/26 20:16:49 chopps Exp $";
 #endif /* not lint */
 
 /*
@@ -104,7 +104,7 @@ main(argc, argv)
 		case 'f':
 			if (argc != 3)
 				usage();
-			exit(file(agrv[2]));
+			exit(file(argv[2]));
 		case '?':
 		default:
 			usage();
