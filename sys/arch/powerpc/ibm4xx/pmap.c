@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2002/03/13 00:47:58 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2002/03/28 18:07:31 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1076,9 +1076,10 @@ check_attr(struct vm_page *pg, u_int mask, int clear)
 		return FALSE;
 
 	rv = ((*attr & mask) != 0);
-	if (clear)
+	if (clear) {
 		*attr &= ~mask;
-
+		pmap_page_protect(pg, (mask == PTE_HI_CHG) ? VM_PROT_READ : 0);
+	}
 	splx(s);
 	return rv;
 }
