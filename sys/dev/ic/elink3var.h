@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.14 1997/10/15 05:55:35 explorer Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.15 1998/08/12 18:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -44,10 +44,9 @@ struct ep_softc {
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
-	struct ifmedia sc_media;	/* media control		*/
+	struct mii_data sc_mii;		/* MII/media control		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
-	u_int	ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -71,13 +70,12 @@ struct ep_softc {
 #define EP_FLAGS_SNOOPING		0x0800
 #define EP_FLAGS_100MBIT		0x1000
 #define EP_FLAGS_POWERMGMT		0x2000
+#define	EP_FLAGS_MII			0x4000
 
 	u_short ep_chipset;		/* Chipset family on this board */
-#define EP_CHIPSET_UNKNOWN		0x00	/* unknown (assume 3c509) */
-#define EP_CHIPSET_3C509		0x01	/* PIO: 3c509, 3c589 */
-#define EP_CHIPSET_VORTEX		0x02	/* 100mbit, single-pkt dma */
-#define EP_CHIPSET_BOOMERANG		0x03	/* Saner dma plus PIO */
-#define EP_CHIPSET_BOOMERANG2		0x04	/* Saner dma, no PIO */
+#define EP_CHIPSET_3C509		0x00	/* PIO: 3c509, 3c589 */
+#define EP_CHIPSET_VORTEX		0x01	/* 100mbit, single-pkt dma */
+#define EP_CHIPSET_BOOMERANG		0x02	/* Saner dma plus PIO */
 
 	u_char	bustype;		/* parent bus type */
 #define EP_BUS_ISA	  	0x0

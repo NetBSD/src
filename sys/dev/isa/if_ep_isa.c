@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.22 1998/07/05 06:49:13 jonathan Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.23 1998/08/12 18:51:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,6 +109,8 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -345,8 +347,8 @@ ep_isa_attach(parent, self, aux)
 		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
 		 * at the moment only for a 3c509.
 		 */
-		printf(": unknown 3Com Ethernet card: %04x\n", chipset);
-		epconfig(sc, EP_CHIPSET_UNKNOWN, NULL);
+		printf(": unknown 3Com Ethernet card: 0x%04x\n", chipset);
+		return;
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

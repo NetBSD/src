@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.14 1998/08/12 18:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -118,6 +118,15 @@
 #define EP_W4_FIFO_DIAG		0x04
 #define EP_W4_HOST_DIAG		0x02
 #define EP_W4_TX_DIAG		0x00
+
+/*
+ * Window 4 offset 8 is the PHY Management register on the
+ * 3c90x.
+ */
+#define	EP_W4_BOOM_PHYSMGMT	0x08
+#define	PHYSMGMT_CLK		0x0001
+#define	PHYSMGMT_DATA		0x0002
+#define	PHYSMGMT_DIR		0x0004
 
 /*
  * Window 5 Registers.  Results and Internal status.
@@ -386,11 +395,14 @@
 #define EP_PCI_100BASE_TX		(1<<1)
 #define EP_PCI_100BASE_FX		(1<<2)
 #define EP_PCI_10BASE_T			(1<<3)
-# define EP_PCI_UTP			EP_PCI_10BASE_T
 #define EP_PCI_BNC			(1<<4)
 #define EP_PCI_AUI 			(1<<5)
 #define EP_PCI_100BASE_MII		(1<<6)
 #define EP_PCI_INTERNAL_VCO		(1<<8)
+
+#define	EP_PCI_MEDIAMASK	(EP_PCI_100BASE_T4|EP_PCI_100BASE_TX| \
+				 EP_PCI_100BASE_FX|EP_PCI_10BASE_T| \
+				 EP_PCI_BNC|EP_PCI_AUI|EP_PCI_100BASE_MII)
 
 /*
  * FIFO Status (Window 4)
@@ -437,6 +449,7 @@
 #define EP_W0_CC_AUI 			(1<<13)
 #define EP_W0_CC_BNC 			(1<<12)
 #define EP_W0_CC_UTP 			(1<<9)
+#define	EP_W0_CC_MEDIAMASK	(EP_W0_CC_AUI|EP_W0_CC_BNC|EP_W0_CC_UTP)
 
 
 /* EEPROM state flags/commands */
@@ -448,22 +461,8 @@
 #define SQE_ENABLE			0x08	/* Enables SQE on AUI ports */
 #define JABBER_GUARD_ENABLE		0x40
 #define LINKBEAT_ENABLE			0x80
-#define ENABLE_UTP			(JABBER_GUARD_ENABLE|LINKBEAT_ENABLE)
 #define DISABLE_UTP			0x0
 #define LINKBEAT_DETECT			0x800
-
-/*
- * ep_connectors softc media-preset bitflags
- */
-#define EPC_AUI				0x01
-#define EPC_BNC				0x02
-#define EPC_RESERVED			0x04
-#define EPC_UTP				0x08
-#define	EPC_100TX			0x10
-#define	EPC_100FX			0x20
-#define	EPC_MII				0x40
-#define	EPC_100T4			0x80
-
 
 /*
  * Misc defines for various things.

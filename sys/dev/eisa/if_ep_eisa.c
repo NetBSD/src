@@ -1,4 +1,41 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.17 1998/07/05 06:49:11 jonathan Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.18 1998/08/12 18:51:52 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -72,6 +109,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
@@ -92,6 +131,53 @@ struct cfattach ep_eisa_ca = {
 #define EISA_ERROR	0x02
 #define EISA_ENABLE	0x01
 
+struct ep_eisa_product {
+	const char	*eep_eisaid;	/* EISA ID */
+	u_short		eep_chipset;	/* 3Com chipset used */
+	int		eep_flags;	/* initial softc flags */
+	const char	*eep_name;	/* device name */
+} ep_eisa_products[] = {
+	{ "TCM5091",			EP_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5091 },
+
+	{ "TCM5092",			EP_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5092 },
+	{ "TCM5093",			EP_CHIPSET_3C509,
+	  0,				EISA_PRODUCT_TCM5093 },
+
+	/*
+	 * Note: The 3c597 Fast Etherlink MII (TCM5972) is an
+	 * MII connector for an external PHY.  We treat it as
+	 * `manual' in the core driver.
+	 */
+	{ "TCM5920",			EP_CHIPSET_VORTEX,
+	  0,				EISA_PRODUCT_TCM5920 },
+	{ "TCM5970",			EP_CHIPSET_VORTEX,
+	  0,				EISA_PRODUCT_TCM5970 },
+	{ "TCM5971",			EP_CHIPSET_VORTEX,
+	  0,				EISA_PRODUCT_TCM5971 },
+	{ "TCM5972",			EP_CHIPSET_VORTEX,
+	  0,				EISA_PRODUCT_TCM5972 },
+
+	{ NULL,				0,
+	  0,				NULL },
+};
+
+struct ep_eisa_product *ep_eisa_lookup __P((struct eisa_attach_args *));
+
+struct ep_eisa_product *
+ep_eisa_lookup(ea)
+	struct eisa_attach_args *ea;
+{
+	struct ep_eisa_product *eep;
+
+	for (eep = ep_eisa_products; eep->eep_name != NULL; eep++)
+		if (strcmp(ea->ea_idstring, eep->eep_eisaid) == 0)
+			return (eep);
+
+	return (NULL);
+}
+
 int
 ep_eisa_match(parent, match, aux)
 	struct device *parent;
@@ -101,16 +187,10 @@ ep_eisa_match(parent, match, aux)
 	struct eisa_attach_args *ea = aux;
 
 	/* must match one of our known ID strings */
-	if (strcmp(ea->ea_idstring, "TCM5091") &&
-	    strcmp(ea->ea_idstring, "TCM5092") &&
-	    strcmp(ea->ea_idstring, "TCM5093") &&
-	    strcmp(ea->ea_idstring, "TCM5920") &&
-	    strcmp(ea->ea_idstring, "TCM5970") &&
-	    strcmp(ea->ea_idstring, "TCM5971") &&
-	    strcmp(ea->ea_idstring, "TCM5972"))
-		return (0);
+	if (ep_eisa_lookup(ea) != NULL)
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 void
@@ -122,19 +202,19 @@ ep_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh;
-	u_int16_t k;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
-	const char *model, *intrstr;
-	int chipset;
+	const char *intrstr;
+	struct ep_eisa_product *eep;
 	u_int irq;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
-	    EISA_SLOT_SIZE, 0, &ioh))
+	    EISA_SLOT_SIZE, 0, &ioh)) {
+		printf("\n");
 		panic("ep_eisa_attach: can't map i/o space");
+	}
 
-	sc->bustype = EP_BUS_EISA;
 	sc->sc_ioh = ioh;
 	sc->sc_iot = iot;
 
@@ -145,39 +225,23 @@ ep_eisa_attach(parent, self, aux)
 	/* Wait for reset? */
 	delay(1000);
 
-	/* XXX What is this doing?!  Reading the i/o address? */
-	k = bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG);
-	k = (k & 0x1f) * 0x10 + 0x200;
-
 	/* Read the IRQ from the card. */
 	irq = bus_space_read_2(iot, ioh, EP_W0_RESOURCE_CFG) >> 12;
 
-	chipset = EP_CHIPSET_3C509;	/* assume dumb chipset */
-	if (strcmp(ea->ea_idstring, "TCM5091") == 0)
-		model = EISA_PRODUCT_TCM5091;
-	else if (strcmp(ea->ea_idstring, "TCM5092") == 0)
-		model = EISA_PRODUCT_TCM5092;
-	else if (strcmp(ea->ea_idstring, "TCM5093") == 0)
-		model = EISA_PRODUCT_TCM5093;
-	else if (strcmp(ea->ea_idstring, "TCM5920") == 0) {
-		model = EISA_PRODUCT_TCM5920;
-		chipset = EP_CHIPSET_VORTEX;
+	eep = ep_eisa_lookup(ea);
+	if (eep == NULL) {
+		printf("\n");
+		panic("ep_eisa_attach: impossible");
 	}
-	else if (strcmp(ea->ea_idstring, "TCM5970") == 0) {
-		model = EISA_PRODUCT_TCM5970;
-		chipset = EP_CHIPSET_VORTEX;
-	}
-	else if (strcmp(ea->ea_idstring, "TCM5971") == 0) {
-		model = EISA_PRODUCT_TCM5971;
-		chipset = EP_CHIPSET_VORTEX;
-	}
-	else if (strcmp(ea->ea_idstring, "TCM5972") == 0) {
-		model = EISA_PRODUCT_TCM5972;
-		chipset = EP_CHIPSET_VORTEX;
-	}
-	else
-		model = "unknown model!";
-	printf(": %s\n", model);
+
+	printf(": 3Com %s\n", eep->eep_name);
+
+	sc->enable = NULL;
+	sc->disable = NULL;
+	sc->enabled = 1;
+
+	sc->bustype = EP_BUS_EISA;
+	sc->ep_flags = eep->eep_flags;
 
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%u)\n",
@@ -199,9 +263,5 @@ ep_eisa_attach(parent, self, aux)
 		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 		    intrstr);
 
-	sc->enable = NULL;
-	sc->disable = NULL;
-	sc->enabled = 1;
-
-	epconfig(sc, chipset, NULL);
+	epconfig(sc, eep->eep_chipset, NULL);
 }
