@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.2 2001/04/13 12:51:43 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.3 2001/04/17 00:50:13 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -77,15 +77,15 @@ extern int umassdebug;
 /* Command Block Wrapper */
 typedef struct {
 	uDWord		dCBWSignature;
-#	define CBWSIGNATURE	0x43425355
+#define CBWSIGNATURE	0x43425355
 	uDWord		dCBWTag;
 	uDWord		dCBWDataTransferLength;
 	uByte		bCBWFlags;
-#	define CBWFLAGS_OUT	0x00
-#	define CBWFLAGS_IN	0x80
+#define CBWFLAGS_OUT	0x00
+#define CBWFLAGS_IN	0x80
 	uByte		bCBWLUN;
 	uByte		bCDBLength;
-#	define CBWCDBLENGTH	16
+#define CBWCDBLENGTH	16
 	uByte		CBWCDB[CBWCDBLENGTH];
 } umass_bbb_cbw_t;
 #define UMASS_BBB_CBW_SIZE	31
@@ -93,13 +93,13 @@ typedef struct {
 /* Command Status Wrapper */
 typedef struct {
 	uDWord		dCSWSignature;
-#	define CSWSIGNATURE	0x53425355
+#define CSWSIGNATURE	0x53425355
 	uDWord		dCSWTag;
 	uDWord		dCSWDataResidue;
 	uByte		bCSWStatus;
-#	define CSWSTATUS_GOOD	0x0
-#	define CSWSTATUS_FAILED 0x1
-#	define CSWSTATUS_PHASE	0x2
+#define CSWSTATUS_GOOD	0x0
+#define CSWSTATUS_FAILED 0x1
+#define CSWSTATUS_PHASE	0x2
 } umass_bbb_csw_t;
 #define UMASS_BBB_CSW_SIZE	13
 
@@ -111,19 +111,19 @@ typedef unsigned char umass_cbi_cbl_t[16];	/* Command block */
 
 typedef union {
 	struct {
-		unsigned char	type;
-		#define IDB_TYPE_CCI		0x00
-		unsigned char	value;
-		#define IDB_VALUE_PASS		0x00
-		#define IDB_VALUE_FAIL		0x01
-		#define IDB_VALUE_PHASE		0x02
-		#define IDB_VALUE_PERSISTENT	0x03
-		#define IDB_VALUE_STATUS_MASK	0x03
+		uByte	type;
+#define IDB_TYPE_CCI		0x00
+		uByte	value;
+#define IDB_VALUE_PASS		0x00
+#define IDB_VALUE_FAIL		0x01
+#define IDB_VALUE_PHASE		0x02
+#define IDB_VALUE_PERSISTENT	0x03
+#define IDB_VALUE_STATUS_MASK	0x03
 	} common;
 
 	struct {
-		unsigned char	asc;
-		unsigned char	ascq;
+		uByte	asc;
+		uByte	ascq;
 	} ufi;
 } umass_cbi_sbl_t;
 
@@ -150,45 +150,43 @@ struct umass_softc {
 	usbd_device_handle	sc_udev;	/* device */
 
 	unsigned char		drive;
-#	define DRIVE_GENERIC		0	/* use defaults for this one */
-#	define ZIP_100			1	/* to be used for quirks */
-#	define ZIP_250			2
-#	define SHUTTLE_EUSB		3
-#	define INSYSTEM_USBCABLE	4
+#define DRIVE_GENERIC		0	/* use defaults for this one */
+#define ZIP_100			1	/* to be used for quirks */
+#define ZIP_250			2
+#define SHUTTLE_EUSB		3
+#define INSYSTEM_USBCABLE	4
 	unsigned char		quirks;
 	/* The drive does not support Test Unit Ready. Convert to
 	 * Start Unit.
 	 * Y-E Data
 	 * ZIP 100
 	 */
-#	define NO_TEST_UNIT_READY	0x01
+#define NO_TEST_UNIT_READY	0x01
 	/* The drive does not reset the Unit Attention state after
 	 * REQUEST SENSE has been sent. The INQUIRY command does not reset
 	 * the UA either, and so CAM runs in circles trying to retrieve the
 	 * initial INQUIRY data.
 	 * Y-E Data
 	 */
-#	define RS_NO_CLEAR_UA		0x02	/* no REQUEST SENSE on INQUIRY*/
+#define RS_NO_CLEAR_UA		0x02	/* no REQUEST SENSE on INQUIRY*/
 	/* The drive does not support START_STOP.
 	 * Shuttle E-USB
 	 */
-#	define NO_START_STOP		0x04
+#define NO_START_STOP		0x04
 	/* Don't ask for full inquiry data (255 bytes).
 	 * Yano ATAPI-USB
 	 */
-#       define FORCE_SHORT_INQUIRY      0x08
+#define FORCE_SHORT_INQUIRY      0x08
 
-	unsigned int		proto;
-#	define PROTO_UNKNOWN	0x0000		/* unknown protocol */
-#	define PROTO_BBB	0x0001		/* USB wire protocol */
-#	define PROTO_CBI	0x0002
-#	define PROTO_CBI_I	0x0004
-#	define PROTO_WIRE	0x00ff		/* USB wire protocol mask */
-#	define PROTO_SCSI	0x0100		/* command protocol */
-#	define PROTO_ATAPI	0x0200
-#	define PROTO_UFI	0x0400
-#	define PROTO_RBC	0x0800
-#	define PROTO_COMMAND	0xff00		/* command protocol mask */
+	u_int8_t	wire_proto;		/* USB wire protocol */
+#define WPROTO_BBB	1
+#define WPROTO_CBI	2
+#define WPROTO_CBI_I	3
+	u_int8_t	cmd_proto;		/* command protocol */
+#define CPROTO_SCSI	1
+#define CPROTO_ATAPI	2
+#define CPROTO_UFI	3
+#define CPROTO_RBC	4
 
 	u_char			subclass;	/* interface subclass */
 	u_char			protocol;	/* interface protocol */
@@ -232,26 +230,26 @@ struct umass_softc {
 	 * allocating them in the interrupt context as well.
 	 */
 	/* indices into array below */
-#	define XFER_BBB_CBW		0	/* Bulk-Only */
-#	define XFER_BBB_DATA		1
-#	define XFER_BBB_DCLEAR		2
-#	define XFER_BBB_CSW1		3
-#	define XFER_BBB_CSW2		4
-#	define XFER_BBB_SCLEAR		5
-#	define XFER_BBB_RESET1		6
-#	define XFER_BBB_RESET2		7
-#	define XFER_BBB_RESET3		8
+#define XFER_BBB_CBW		0	/* Bulk-Only */
+#define XFER_BBB_DATA		1
+#define XFER_BBB_DCLEAR		2
+#define XFER_BBB_CSW1		3
+#define XFER_BBB_CSW2		4
+#define XFER_BBB_SCLEAR		5
+#define XFER_BBB_RESET1		6
+#define XFER_BBB_RESET2		7
+#define XFER_BBB_RESET3		8
 	
-#	define XFER_CBI_CB		0	/* CBI */
-#	define XFER_CBI_DATA		1
-#	define XFER_CBI_STATUS		2
-#	define XFER_CBI_DCLEAR		3
-#	define XFER_CBI_SCLEAR		4
-#	define XFER_CBI_RESET1		5
-#	define XFER_CBI_RESET2		6
-#	define XFER_CBI_RESET3		7
+#define XFER_CBI_CB		0	/* CBI */
+#define XFER_CBI_DATA		1
+#define XFER_CBI_STATUS		2
+#define XFER_CBI_DCLEAR		3
+#define XFER_CBI_SCLEAR		4
+#define XFER_CBI_RESET1		5
+#define XFER_CBI_RESET2		6
+#define XFER_CBI_RESET3		7
 
-#	define XFER_NR			9	/* maximum number */
+#define XFER_NR			9	/* maximum number */
 
 	usbd_xfer_handle	transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
@@ -266,25 +264,25 @@ struct umass_softc {
 	int			transfer_status;
 
 	int			transfer_state;
-#	define TSTATE_IDLE			0
-#	define TSTATE_BBB_COMMAND		1	/* CBW transfer */
-#	define TSTATE_BBB_DATA			2	/* Data transfer */
-#	define TSTATE_BBB_DCLEAR		3	/* clear endpt stall */
-#	define TSTATE_BBB_STATUS1		4	/* clear endpt stall */
-#	define TSTATE_BBB_SCLEAR		5	/* clear endpt stall */
-#	define TSTATE_BBB_STATUS2		6	/* CSW transfer */
-#	define TSTATE_BBB_RESET1		7	/* reset command */
-#	define TSTATE_BBB_RESET2		8	/* in clear stall */
-#	define TSTATE_BBB_RESET3		9	/* out clear stall */
-#	define TSTATE_CBI_COMMAND		10	/* command transfer */
-#	define TSTATE_CBI_DATA			11	/* data transfer */
-#	define TSTATE_CBI_STATUS		12	/* status transfer */
-#	define TSTATE_CBI_DCLEAR		13	/* clear ep stall */
-#	define TSTATE_CBI_SCLEAR		14	/* clear ep stall */
-#	define TSTATE_CBI_RESET1		15	/* reset command */
-#	define TSTATE_CBI_RESET2		16	/* in clear stall */
-#	define TSTATE_CBI_RESET3		17	/* out clear stall */
-#	define TSTATE_STATES			18	/* # of states above */
+#define TSTATE_IDLE			0
+#define TSTATE_BBB_COMMAND		1	/* CBW transfer */
+#define TSTATE_BBB_DATA			2	/* Data transfer */
+#define TSTATE_BBB_DCLEAR		3	/* clear endpt stall */
+#define TSTATE_BBB_STATUS1		4	/* clear endpt stall */
+#define TSTATE_BBB_SCLEAR		5	/* clear endpt stall */
+#define TSTATE_BBB_STATUS2		6	/* CSW transfer */
+#define TSTATE_BBB_RESET1		7	/* reset command */
+#define TSTATE_BBB_RESET2		8	/* in clear stall */
+#define TSTATE_BBB_RESET3		9	/* out clear stall */
+#define TSTATE_CBI_COMMAND		10	/* command transfer */
+#define TSTATE_CBI_DATA			11	/* data transfer */
+#define TSTATE_CBI_STATUS		12	/* status transfer */
+#define TSTATE_CBI_DCLEAR		13	/* clear ep stall */
+#define TSTATE_CBI_SCLEAR		14	/* clear ep stall */
+#define TSTATE_CBI_RESET1		15	/* reset command */
+#define TSTATE_CBI_RESET2		16	/* in clear stall */
+#define TSTATE_CBI_RESET3		17	/* out clear stall */
+#define TSTATE_STATES			18	/* # of states above */
 
 
 	int			transfer_speed;		/* in kb/s */
