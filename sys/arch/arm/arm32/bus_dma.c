@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.23 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.24 2003/02/02 10:24:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -707,7 +707,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 * If the memory must remain coherent with the
 			 * cache then we must make the memory uncacheable
 			 * in order to maintain virtual cache coherency.
-			 * We must also guarentee the cache does not already
+			 * We must also guarantee the cache does not already
 			 * contain the virtal addresses we are making
 			 * uncacheable.
 			 */
