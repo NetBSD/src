@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.144 2001/09/13 22:09:15 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.145 2001/09/15 04:42:45 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -128,7 +128,7 @@
 #	vmegen*	generic VME access
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
-#	agp*	AGP GARt devices
+#	agp*	AGP GART devices
 #	pci*	PCI bus access devices
 #
 
