@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.12 1996/09/14 05:43:24 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.13 1996/09/14 05:54:53 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,7 +135,7 @@ struct image_data {
 int	grfopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int	grfclose __P((dev_t dev, int flag, int mode, struct proc *p));
 int	grfioctl __P((dev_t, int, caddr_t, int, struct proc *p));
-int	grfselect __P((dev_t dev, int rw, struct proc *p));
+int	grfpoll __P((dev_t dev, int events, struct proc *p));
 int	grfmmap __P((dev_t dev, int off, int prot));
 int	grfon __P((dev_t dev));
 int	grfoff __P((dev_t dev));
