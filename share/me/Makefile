@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.11 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.5 1994/02/10 01:54:56 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 10:42:57 cgd Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -7,7 +7,7 @@ MESRCS=	acm.me chars.me deltext.me eqn.me float.me footnote.me \
 	index.me letterhead.me local.me null.me refer.me sh.me \
 	tbl.me thesis.me
 TMSRCS=	tmac.e
-MAN7=	me.0
+MAN=	me.7
 
 realinstall:
 	cd ${.CURDIR}; for i in ${MESRCS}; do \

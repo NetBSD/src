@@ -1,11 +1,11 @@
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$Id: Makefile,v 1.13 1994/02/10 01:55:19 cgd Exp $
+#	$Id: Makefile,v 1.14 1994/12/22 10:43:36 cgd Exp $
 
 # reorder gives an editor command for most common terminals
 # (in reverse order from n'th to 1'st most commonly used)
 # to move them to the front of termcap
 #
-MAN5=	termcap.0
+MAN=	termcap.5
 
 CLEANFILES= termcap termcap.db
 all: termcap termcap.db
