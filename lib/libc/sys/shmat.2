@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmat.2,v 1.2.2.1 1997/11/28 08:42:25 mellon Exp $	
+.\"	$NetBSD: shmat.2,v 1.2.2.2 1998/07/27 15:42:10 mellon Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -41,9 +41,9 @@
 .Fd #include <sys/ipc.h>
 .Fd #include <sys/shm.h>
 .Ft void *
-.Fn shmat "int shmid" "void *shmaddr" "int shmflg"
+.Fn shmat "int shmid" "const void *shmaddr" "int shmflg"
 .Ft int
-.Fn shmdt "void *shmaddr"
+.Fn shmdt "const void *shmaddr"
 .Sh DESCRIPTION
 .Fn shmat
 maps the shared memory segment associated with the shared memory identifier
@@ -87,8 +87,7 @@ command.
 .Sh RETURN VALUES
 .Fn shmat
 returns the address at which the shared memory segment has been mapped into
-the calling process' address space when successful, otherwise it returns
-.Dv NULL .
+the calling process' address space when successful, 
 .Fn shmdt
 returns 0 on successful completion. Otherwise, a value of -1 is returned,
 and the global variable
