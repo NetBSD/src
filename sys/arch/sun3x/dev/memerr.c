@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.1.1.1 1997/01/14 20:57:03 gwr Exp $ */
+/*	$NetBSD: memerr.c,v 1.2 1997/01/23 22:20:16 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,8 +53,7 @@
 #include <machine/idprom.h>
 #include <machine/obio.h>
 #include <machine/pte.h>
-
-#include <sun3x/sun3x/machdep.h>
+#include <machine/machdep.h>
 
 #include "memerr.h"
 /* #include "eccreg.h" - not yet */
