@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.46 2004/08/09 02:10:25 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.47 2004/08/09 16:59:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.46 2004/08/09 02:10:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.47 2004/08/09 16:59:10 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -661,15 +661,17 @@ printf("win %d = addr %lx size %lx iomask %lx\n", win, (long)pcihp->addr, (long)
 		pf->pf_mfc_iobase[win] = pcihp->addr;
 		pf->pf_mfc_iomask = iomask;
 
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0 + 2 * win,
-				 (pcihp->addr >> 0) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1 + 2 * win,
-				 (pcihp->addr >> 8) & 0xff);
-		pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iomask);
+		if (pf->pf_flags & PFF_ENABLED) {
+			pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0 + 2 * win,
+					 (pcihp->addr >> 0) & 0xff);
+			pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1 + 2 * win,
+					 (pcihp->addr >> 8) & 0xff);
+			pcmcia_ccr_write(pf, PCMCIA_CCR_IOSIZE, iomask);
 
-		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
-		reg |= PCMCIA_CCR_OPTION_ADDR_DECODE;
-		pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
+			reg |= PCMCIA_CCR_OPTION_ADDR_DECODE;
+			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+		}
 	}
 
 	return (0);
@@ -792,7 +794,8 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 
 		ret = pf->sc->ih;
 
-		if (ret != NULL) {
+		if (ret != NULL &&
+		    (pf->pf_flags & PFF_ENABLED) != 0) {
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 			reg |= PCMCIA_CCR_OPTION_IREQ_ENABLE;
 			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
