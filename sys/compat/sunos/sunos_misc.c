@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.44 1995/04/22 23:45:29 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.45 1995/04/23 01:00:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1053,7 +1053,7 @@ int sunos_reboot(p, uap, retval)
 	/*
 	 * Convert howto bits to BSD format.
 	 */
-	sunos_howto = uap->howto;
+	sunos_howto = SCARG(uap, howto);
 	bsd_howto = 0;
 	convp = sunos_howto_conv;
 	while (convp->sunos_howto) {
