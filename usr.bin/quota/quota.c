@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.15 1997/10/19 04:59:20 mrg Exp $	*/
+/*	$NetBSD: quota.c,v 1.16 1997/10/19 13:16:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: quota.c,v 1.15 1997/10/19 04:59:20 mrg Exp $";
+__RCSID("$NetBSD: quota.c,v 1.16 1997/10/19 13:16:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,16 +62,17 @@ static char rcsid[] = "$NetBSD: quota.c,v 1.15 1997/10/19 04:59:20 mrg Exp $";
 #include <sys/queue.h>
 
 #include <ufs/ufs/quota.h>
-
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fstab.h>
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
@@ -88,21 +89,37 @@ struct quotause {
 };
 #define	FOUND	0x01
 
-char *timeprt	__P((time_t seconds));
-struct quotause *getprivs __P((long id, int quotatype));
+int	alldigits __P((char *));
+int	callaurpc __P((char *, int, int, int, xdrproc_t, void *,
+	    xdrproc_t, void *));
+int	main __P((int, char **));
+int	getnfsquota __P((struct statfs *, struct fstab *, struct quotause *,
+	    long, int));
+struct quotause	*getprivs __P((long id, int quotatype));
+int	getufsquota __P((struct statfs *, struct fstab *, struct quotause *,
+	    long, int));
+void	heading __P((int, u_long, char *, char *));
+void	showgid __P((gid_t));
+void	showgrpname __P((char *));
+void	showquotas __P((int, u_long, char *));
+void	showuid __P((uid_t));
+void	showusrname __P((char *));
+char   *timeprt __P((time_t seconds));
+int	ufshasquota __P((struct fstab *, int, char **));
+void	usage __P((void));
 
 int	qflag;
 int	vflag;
 
+int
 main(argc, argv)
+	int argc;
 	char *argv[];
 {
 	int ngroups; 
 	gid_t mygid, gidset[NGROUPS];
 	int i, gflag = 0, uflag = 0;
 	int ch;
-	extern char *optarg;
-	extern int optind, errno;
 
 	while ((ch = getopt(argc, argv, "ugvq")) != -1) {
 		switch(ch) {
@@ -132,10 +149,8 @@ main(argc, argv)
 		if (gflag) {
 			mygid = getgid();
 			ngroups = getgroups(NGROUPS, gidset);
-			if (ngroups < 0) {
-				perror("quota: getgroups");
-				exit(1);
-			}
+			if (ngroups < 0)
+				err(1, "getgroups");
 			showgid(mygid);
 			for (i = 0; i < ngroups; i++)
 				if (gidset[i] != mygid)
@@ -163,8 +178,11 @@ main(argc, argv)
 		}
 		exit(0);
 	}
+	/* NOTREACHED */
+	return (0);
 }
 
+void
 usage()
 {
 
@@ -178,11 +196,12 @@ usage()
 /*
  * Print out quotas for a specified user identifier.
  */
+void
 showuid(uid)
-	u_long uid;
+	uid_t uid;
 {
 	struct passwd *pwd = getpwuid(uid);
-	u_long myuid;
+	uid_t myuid;
 	char *name;
 
 	if (pwd == NULL)
@@ -200,6 +219,7 @@ showuid(uid)
 /*
  * Print out quotas for a specifed user name.
  */
+void
 showusrname(name)
 	char *name;
 {
@@ -207,13 +227,12 @@ showusrname(name)
 	u_long myuid;
 
 	if (pwd == NULL) {
-		fprintf(stderr, "quota: %s: unknown user\n", name);
+		warnx("%s: unknown user", name);
 		return;
 	}
 	myuid = getuid();
 	if (pwd->pw_uid != myuid && myuid != 0) {
-		fprintf(stderr, "quota: %s (uid %d): permission denied\n",
-		    name, pwd->pw_uid);
+		warnx("%s (uid %d): permission denied", name, pwd->pw_uid);
 		return;
 	}
 	showquotas(USRQUOTA, pwd->pw_uid, name);
@@ -222,13 +241,14 @@ showusrname(name)
 /*
  * Print out quotas for a specified group identifier.
  */
+void
 showgid(gid)
-	u_long gid;
+	gid_t gid;
 {
 	struct group *grp = getgrgid(gid);
 	int ngroups;
 	gid_t mygid, gidset[NGROUPS];
-	register int i;
+	int i;
 	char *name;
 
 	if (grp == NULL)
@@ -238,7 +258,7 @@ showgid(gid)
 	mygid = getgid();
 	ngroups = getgroups(NGROUPS, gidset);
 	if (ngroups < 0) {
-		perror("quota: getgroups");
+		warn("getgroups");
 		return;
 	}
 	if (gid != mygid) {
@@ -246,9 +266,7 @@ showgid(gid)
 			if (gid == gidset[i])
 				break;
 		if (i >= ngroups && getuid() != 0) {
-			fprintf(stderr,
-			    "quota: %s (gid %d): permission denied\n",
-			    name, gid);
+			warnx("%s (gid %d): permission denied", name, gid);
 			return;
 		}
 	}
@@ -258,22 +276,23 @@ showgid(gid)
 /*
  * Print out quotas for a specifed group name.
  */
+void
 showgrpname(name)
 	char *name;
 {
 	struct group *grp = getgrnam(name);
 	int ngroups;
 	gid_t mygid, gidset[NGROUPS];
-	register int i;
+	int i;
 
 	if (grp == NULL) {
-		fprintf(stderr, "quota: %s: unknown group\n", name);
+		warnx("%s: unknown group", name);
 		return;
 	}
 	mygid = getgid();
 	ngroups = getgroups(NGROUPS, gidset);
 	if (ngroups < 0) {
-		perror("quota: getgroups");
+		warn("getgroups");
 		return;
 	}
 	if (grp->gr_gid != mygid) {
@@ -281,8 +300,7 @@ showgrpname(name)
 			if (grp->gr_gid == gidset[i])
 				break;
 		if (i >= ngroups && getuid() != 0) {
-			fprintf(stderr,
-			    "quota: %s (gid %d): permission denied\n",
+			warnx("%s (gid %d): permission denied",
 			    name, grp->gr_gid);
 			return;
 		}
@@ -290,16 +308,16 @@ showgrpname(name)
 	showquotas(GRPQUOTA, grp->gr_gid, name);
 }
 
+void
 showquotas(type, id, name)
 	int type;
 	u_long id;
 	char *name;
 {
-	register struct quotause *qup;
+	struct quotause *qup;
 	struct quotause *quplist;
 	char *msgi, *msgb, *nam;
-	int myuid, fd, lines = 0;
-	static int first;
+	int lines = 0;
 	static time_t now;
 
 	if (now == 0)
@@ -375,14 +393,15 @@ showquotas(type, id, name)
 		heading(type, id, name, "none");
 }
 
+void
 heading(type, id, name, tag)
 	int type;
 	u_long id;
 	char *name, *tag;
 {
 
-	printf("Disk quotas for %s %s (%cid %d): %s\n", qfextension[type],
-	    name, *qfextension[type], id, tag);
+	printf("Disk quotas for %s %s (%cid %ld): %s\n", qfextension[type],
+	    name, *qfextension[type], (u_long)id, tag);
 	if (!qflag && tag[0] == '\0') {
 		printf("%15s%8s %7s%8s%8s%8s %7s%8s%8s\n"
 			, "Filesystem"
@@ -417,14 +436,16 @@ timeprt(seconds)
 	minutes = (seconds + 30) / 60;
 	hours = (minutes + 30) / 60;
 	if (hours >= 36) {
-		(void)snprintf(buf, sizeof buf, "%ddays", (hours + 12) / 24);
+		(void)snprintf(buf, sizeof buf, "%ddays",
+		    (int)((hours + 12) / 24));
 		return (buf);
 	}
 	if (minutes >= 60) {
-		(void)snprintf(buf, sizeof buf, "%2d:%d", minutes / 60, minutes % 60);
+		(void)snprintf(buf, sizeof buf, "%2d:%d",
+		    (int)(minutes / 60), (int)(minutes % 60));
 		return (buf);
 	}
-	(void)snprintf(buf, sizeof buf, "%2d", minutes);
+	(void)snprintf(buf, sizeof buf, "%2d", (int)minutes);
 	return (buf);
 }
 
@@ -433,29 +454,26 @@ timeprt(seconds)
  */
 struct quotause *
 getprivs(id, quotatype)
-	register long id;
+	long id;
 	int quotatype;
 {
-	register struct quotause *qup, *quptail;
-	register struct fstab *fs;
+	struct quotause *qup, *quptail;
+	struct fstab *fs;
 	struct quotause *quphead;
 	struct statfs *fst;
 	int nfst, i;
 
-	qup = quphead = (struct quotause *)0;
+	qup = quphead = quptail = NULL;
 
 	nfst = getmntinfo(&fst, MNT_WAIT);
-	if (nfst == 0) {
-		fprintf(stderr, "quota: no filesystems mounted!\n");
-		exit(2);
-	}
+	if (nfst == 0)
+		errx(2, "no filesystems mounted!");
 	setfsent();
 	for (i=0; i<nfst; i++) {
 		if (qup == NULL) {
-			if ((qup = (struct quotause *)malloc(sizeof *qup)) == NULL) {
-				fprintf(stderr, "quota: out of memory\n");
-				exit(2);
-			}
+			if ((qup =
+			    (struct quotause *)malloc(sizeof *qup)) == NULL)
+				errx(2, "out of memory");
 		}
 		if (strncmp(fst[i].f_fstypename, "nfs", MFSNAMELEN) == 0) {
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
@@ -495,8 +513,9 @@ getprivs(id, quotatype)
 /*
  * Check to see if a particular quota is to be enabled.
  */
+int
 ufshasquota(fs, type, qfnamep)
-	register struct fstab *fs;
+	struct fstab *fs;
 	int type;
 	char **qfnamep;
 {
@@ -513,7 +532,7 @@ ufshasquota(fs, type, qfnamep)
 	}
 	(void)strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = index(opt, '='))
+		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
 		if (type == USRQUOTA && strcmp(opt, usrname) == 0)
 			break;
@@ -549,7 +568,7 @@ getufsquota(fst, fs, qup, id, quotatype)
 
 	if (quotactl(fs->fs_file, qcmd, id, &qup->dqblk) != 0) {
 		if ((fd = open(qfpathname, O_RDONLY)) < 0) {
-			perror(qfpathname);
+			warn("%s", qfpathname);
 			return (0);
 		}
 		(void)lseek(fd, (off_t)(id * sizeof(struct dqblk)), SEEK_SET);
@@ -559,13 +578,12 @@ getufsquota(fst, fs, qup, id, quotatype)
 			 * Convert implicit 0 quota (EOF)
 			 * into an explicit one (zero'ed dqblk)
 			 */
-			bzero((caddr_t)&qup->dqblk, sizeof(struct dqblk));
+			memset((caddr_t)&qup->dqblk, 0, sizeof(struct dqblk));
 			break;
 		case sizeof(struct dqblk):	/* OK */
 			break;
 		default:		/* ERROR */
-			fprintf(stderr, "quota: read error");
-			perror(qfpathname);
+			warn("read error `%s'", qfpathname);
 			close(fd);
 			return (0);
 		}
@@ -602,8 +620,7 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	 */
 	cp = strchr(fst->f_mntfromname, ':');
 	if (cp == NULL) {
-		fprintf(stderr, "cannot find hostname for %s\n",
-		    fst->f_mntfromname);
+		warnx("cannot find hostname for %s", fst->f_mntfromname);
 		return (0);
 	}
  
@@ -626,8 +643,7 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	case Q_NOQUOTA:
 		break;
 	case Q_EPERM:
-		fprintf(stderr, "quota permission error, host: %s\n",
-			fst->f_mntfromname);
+		warnx("quota permission error, host: %s", fst->f_mntfromname);
 		break;
 	case Q_OK:
 		gettimeofday(&tv, NULL);
@@ -656,8 +672,7 @@ getnfsquota(fst, fs, qup, id, quotatype)
 		*cp = ':';
 		return (1);
 	default:
-		fprintf(stderr, "bad rpc result, host: %s\n",
-		    fst->f_mntfromname);
+		warnx("bad rpc result, host: %s", fst->f_mntfromname);
 		break;
 	}
 	*cp = ':';
@@ -667,8 +682,11 @@ getnfsquota(fst, fs, qup, id, quotatype)
 int
 callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	char *host;
-	xdrproc_t inproc, outproc;
-	char *in, *out;
+	int prognum, versnum, procnum;
+	xdrproc_t inproc;
+	void *in;
+	xdrproc_t outproc;
+	void *out;
 {
 	struct sockaddr_in server_addr;
 	enum clnt_stat clnt_stat;
@@ -682,7 +700,7 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		return ((int) RPC_UNKNOWNHOST);
 	timeout.tv_usec = 0;
 	timeout.tv_sec = 6;
-	bcopy(hp->h_addr, &server_addr.sin_addr, hp->h_length);
+	memmove(&server_addr.sin_addr, hp->h_addr, hp->h_length);
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port =  0;
 
@@ -699,15 +717,16 @@ callaurpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	return ((int) clnt_stat);
 }
 
+int
 alldigits(s)
-	register char *s;
+	char *s;
 {
-	register c;
+	int c;
 
 	c = *s++;
 	do {
 		if (!isdigit(c))
 			return (0);
-	} while (c = *s++);
+	} while ((c = *s++) != 0);
 	return (1);
 }
