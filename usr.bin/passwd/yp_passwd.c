@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.22 2000/02/14 04:36:21 aidan Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.23 2000/07/06 11:19:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.22 2000/02/14 04:36:21 aidan Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.23 2000/07/06 11:19:40 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,8 +242,8 @@ getnewpasswd(pw, old_pass)
 	int tries;
 	char *p, *t;
 	static char buf[_PASSWORD_LEN+1];
-	char salt[9];
-	
+	char salt[_PASSWORD_LEN+1];
+
 	(void)printf("Changing YP password for %s.\n", pw->pw_name);
 
 	if (old_pass) {
@@ -284,15 +284,11 @@ getnewpasswd(pw, old_pass)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
-	/* grab a random printable character that isn't a colon */
-	(void)srandom((int)time((time_t *)NULL));
-#ifdef NEWSALT
-	salt[0] = _PASSWORD_EFMT1;
-	to64(&salt[1], (long)(29 * 25), 4);
-	to64(&salt[5], random(), 4);
-#else
-	to64(&salt[0], random(), 2);
-#endif
+
+        if(!pwd_gensalt(salt, _PASSWORD_LEN, pw, 'y' )) {
+                (void)printf("Couldn't generate salt.\n");
+                pw_error(NULL, 0, 0);
+        }
 	return(strdup(crypt(buf, salt)));
 }
 
