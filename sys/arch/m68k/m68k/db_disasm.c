@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 1996/10/24 18:30:17 is Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.17 1996/10/28 08:43:18 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -152,7 +152,7 @@ const char *const mmcc_table[16] = {
 const char *const aregs[8] = {"a0","a1","a2","a3","a4","a5","a6","sp"};
 const char *const dregs[8] = {"d0","d1","d2","d3","d4","d5","d6","d7"};
 const char *const fpregs[8] = {
-	"fp0","fp1","fp2","fp3","fp4","fp5","fp6","fp7" };
+	"fp7","fp6","fp5","fp4","fp3","fp2","fp1","fp0" };
 const char *const fpcregs[3] = { "fpiar", "fpsr", "fpcr" };
 
 /*
@@ -1383,6 +1383,7 @@ opcode_fpu(dbuf, opc)
 		}
 		if (ISBITSET(ext,15) || ISBITSET(ext,13)) {
 			opcode_fmove_ext(dbuf, opc, ext);
+			return;
 		}
 
 		switch(opmode) {
@@ -1637,12 +1638,12 @@ opcode_fmove_ext(dbuf, opc, ext)
 		addchar('l');
 		addchar('\t');
 
-		if (!ISBITSET(ext,13)) {
+		if (ISBITSET(ext,13)) {
 			print_freglist(dbuf, AR_DEC, BITFIELD(ext,12,10), 1);
 			addchar(',');
 		}
 		get_modregstr(dbuf, 5, GETMOD_BEFORE, SIZE_LONG, 1);
-		if (ISBITSET(ext,13)) {
+		if (!ISBITSET(ext,13)) {
 			addchar(',');
 			print_freglist(dbuf, AR_DEC, BITFIELD(ext,12,10), 1);
 		}
@@ -1736,6 +1737,7 @@ opcode_mmu(dbuf, opc)
 				 -1);
 			dbuf->used += 2;
 		}
+		return;
 	case 1:
 		ext = *(dbuf->val + 1);
 		dbuf->used++;
@@ -2105,19 +2107,22 @@ print_freglist(dbuf, mod, rl, cntl)
 	regs = cntl ? fpcregs : fpregs;
 	upper = cntl ? 3 : 8;
 
-	if (mod == AR_DEC) {
+	if (!cntl && mod == AR_DEC) {
 		list = rl;
 		rl = 0;
 		/* I am sure there is some trick... */
 		for (bit = 0; bit < upper; bit++)
 			if (list & (1 << bit)) 
-				rl |= (0x8000 >> bit);
+				rl |= 1 << (upper-bit-1);
 	} 
-	for (bit = 0, list = 0; bit < upper; bit++) {
+	for (bit = upper-1, list = 0; bit >= 0; bit--) {
 		if (ISBITSET(rl,bit)) {
 			if (list == 0) {
-				list = 1;
 				addstr(dbuf, regs[bit]);
+				if (cntl)
+					addchar('/');
+				else
+					list = 1;
 			} else if (list == 1) {
 				list++;
 				addchar('-');
@@ -2125,12 +2130,15 @@ print_freglist(dbuf, mod, rl, cntl)
 		} else {
 			if (list) {
 				if (list > 1)
-					addstr(dbuf, regs[bit-1]);
+					addstr(dbuf, regs[bit+1]);
 				addchar('/');
 				list = 0;
 			}
 		}
 	}
+	if (list > 1)
+		addstr(dbuf, regs[0]);
+
 	if (dbuf->casm[-1] == '/' || dbuf->casm[-1] == '-')
 		dbuf->casm--;
 	*dbuf->casm = 0;
@@ -2189,7 +2197,7 @@ opcode_movec(dbuf, opc)
 		addchar(',');
 	}
 	switch (BITFIELD(ext,11,0)) {
-		/* 010/020/030/040/CPU32 */
+		/* 010/020/030/040/CPU32/060 */
 	case 0x000:
 		tmp = "sfc";
 		break;
@@ -2206,17 +2214,18 @@ opcode_movec(dbuf, opc)
 	case 0x802:
 		tmp = "caar";
 		break;
-		/* 020/030/040 */
+		/* 020/030/040/060 */
 	case 0x002:
 		tmp = "cacr";
 		break;
+		/* 020/030/040 */
 	case 0x803:
 		tmp = "msp";
 		break;
 	case 0x804:
 		tmp = "isp";
 		break;
-		/* 040 */
+		/* 040/060 */
 	case 0x003:
 		tmp = "tc";
 		break;
@@ -2232,16 +2241,18 @@ opcode_movec(dbuf, opc)
 	case 0x007:
 		tmp = "dtt1";
 		break;
+		/* 040 */
 	case 0x805:
 		tmp = "mmusr";
 		break;
+		/* 040/060 */
 	case 0x806:
 		tmp = "urp";
 		break;
 	case 0x807:
 		tmp = "srp";
 		break;
-		/* 060: */
+		/* 060 */
 	case 0x808:
 		tmp = "pcr";
 		break;
