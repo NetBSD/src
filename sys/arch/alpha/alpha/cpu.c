@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.46 2000/05/31 05:14:26 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.47 2000/06/01 13:50:48 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2000/05/31 05:14:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2000/06/01 13:50:48 sommerfeld Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -246,7 +246,7 @@ cpuattach(parent, dev, aux)
 			goto recognized;
 		}
 	}
-	printf("UNKNOWN CPU TYPE (%d:%d)", major, minor);
+	printf("UNKNOWN CPU TYPE (%d:%d)\n", major, minor);
 
 recognized:
 
