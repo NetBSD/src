@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.71 2004/07/29 22:29:35 jmmv Exp $
+#	$NetBSD: GENERIC_TINY,v 1.72 2004/07/31 17:35:19 mrg Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -217,7 +217,8 @@ cpu0 at mainbus0
 #pchb*	at pci? dev ? function ?	# PCI-Host bridges
 #pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 #pcib*	at pci? dev ? function ?	# PCI-ISA bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
+					# SpeedStep support
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 #puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
