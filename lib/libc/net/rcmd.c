@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.13 1995/11/16 08:35:33 pk Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.13.4.1 1996/05/28 02:29:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.13 1995/11/16 08:35:33 pk Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.13.4.1 1996/05/28 02:29:31 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,8 +58,8 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.13 1995/11/16 08:35:33 pk Exp $";
 #include <ctype.h>
 #include <string.h>
 
-int	__ivaliduser __P((FILE *, u_long, const char *, const char *));
-static int __icheckhost __P((u_long, const char *));
+int	__ivaliduser __P((FILE *, u_int32_t, const char *, const char *));
+static int __icheckhost __P((u_int32_t, const char *));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
@@ -71,7 +71,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	struct hostent *hp;
 	struct sockaddr_in sin, from;
 	fd_set reads;
-	long oldmask;
+	int oldmask;
 	pid_t pid;
 	int s, lport, timo;
 	char c;
@@ -253,7 +253,7 @@ ruserok(rhost, superuser, ruser, luser)
 	char **ap;
 	int i;
 #define MAXADDRS	35
-	u_long addrs[MAXADDRS + 1];
+	u_int32_t addrs[MAXADDRS + 1];
 
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
@@ -278,7 +278,7 @@ ruserok(rhost, superuser, ruser, luser)
  */
 int
 iruserok(raddr, superuser, ruser, luser)
-	u_long raddr;
+	u_int32_t raddr;
 	int superuser;
 	const char *ruser, *luser;
 {
@@ -354,7 +354,7 @@ again:
 int
 __ivaliduser(hostf, raddr, luser, ruser)
 	FILE *hostf;
-	u_long raddr;
+	u_int32_t raddr;
 	const char *luser, *ruser;
 {
 	register char *user, *p;
@@ -491,15 +491,15 @@ __ivaliduser(hostf, raddr, luser, ruser)
  */
 static int
 __icheckhost(raddr, lhost)
-	u_long raddr;
+	u_int32_t raddr;
 	const char *lhost;
 {
 	register struct hostent *hp;
-	register u_long laddr;
+	register u_int32_t laddr;
 	register char **pp;
 
 	/* Try for raw ip address first. */
-	if (isdigit(*lhost) && (long)(laddr = inet_addr(lhost)) != -1)
+	if (isdigit(*lhost) && (int32_t)(laddr = inet_addr(lhost)) != -1)
 		return (raddr == laddr);
 
 	/* Better be a hostname. */
@@ -508,7 +508,7 @@ __icheckhost(raddr, lhost)
 
 	/* Spin through ip addresses. */
 	for (pp = hp->h_addr_list; *pp; ++pp)
-		if (!bcmp(&raddr, *pp, sizeof(u_long)))
+		if (!bcmp(&raddr, *pp, sizeof(u_int32_t)))
 			return (1);
 
 	/* No match. */
