@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.9 2000/02/13 04:53:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,7 +59,8 @@
 #define RF_MAX_DISKS 128	/* max disks per array */
 #define RF_DEV2RAIDID(_dev)  (DISKUNIT(_dev))
 
-#define RF_COMPONENT_LABEL_VERSION 1
+#define RF_COMPONENT_LABEL_VERSION_1 1
+#define RF_COMPONENT_LABEL_VERSION 2
 #define RF_RAID_DIRTY 0
 #define RF_RAID_CLEAN 1
 

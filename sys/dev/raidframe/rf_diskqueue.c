@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.8 2000/01/07 03:43:39 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.9 2000/02/13 04:53:57 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -164,7 +164,8 @@ init_dqd(dqd)
 {
 	/* XXX not sure if the following malloc is appropriate... probably not
 	 * quite... */
-	dqd->bp = (struct buf *) malloc(sizeof(struct buf), M_RAIDFRAME, M_NOWAIT);
+	dqd->bp = (struct buf *) malloc(sizeof(struct buf), 
+					M_RAIDFRAME, M_NOWAIT);
 	if (dqd->bp == NULL) {
 		return (ENOMEM);
 	}
@@ -180,24 +181,20 @@ clean_dqd(dqd)
 	free(dqd->bp, M_RAIDFRAME);
 }
 /* configures a single disk queue */
-int config_disk_queue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
-		      RF_RowCol_t, RF_DiskQueueSW_t *,
-		      RF_SectorCount_t, dev_t, int, 
-		      RF_ShutdownList_t **,
-		      RF_AllocListElem_t *);
+
 int 
-config_disk_queue(
-    RF_Raid_t * raidPtr,
-    RF_DiskQueue_t * diskqueue,
-    RF_RowCol_t r,		/* row & col -- debug only.  BZZT not any
+rf_ConfigureDiskQueue(
+      RF_Raid_t * raidPtr,
+      RF_DiskQueue_t * diskqueue,
+      RF_RowCol_t r,		/* row & col -- debug only.  BZZT not any
 				 * more... */
-    RF_RowCol_t c,
-    RF_DiskQueueSW_t * p,
-    RF_SectorCount_t sectPerDisk,
-    dev_t dev,
-    int maxOutstanding,
-    RF_ShutdownList_t ** listp,
-    RF_AllocListElem_t * clList)
+      RF_RowCol_t c,
+      RF_DiskQueueSW_t * p,
+      RF_SectorCount_t sectPerDisk,
+      dev_t dev,
+      int maxOutstanding,
+      RF_ShutdownList_t ** listp,
+      RF_AllocListElem_t * clList)
 {
 	int     rc;
 
@@ -296,9 +293,12 @@ rf_ConfigureDiskQueues(
 		if (diskQueues[r] == NULL)
 			return (ENOMEM);
 		for (c = 0; c < raidPtr->numCol; c++) {
-			rc = config_disk_queue(raidPtr, &diskQueues[r][c], r, c, p,
-			    raidPtr->sectorsPerDisk, raidPtr->Disks[r][c].dev,
-			    cfgPtr->maxOutstandingDiskReqs, listp, raidPtr->cleanupList);
+			rc = rf_ConfigureDiskQueue(raidPtr, &diskQueues[r][c],
+						   r, c, p,
+						   raidPtr->sectorsPerDisk, 
+						   raidPtr->Disks[r][c].dev,
+						   cfgPtr->maxOutstandingDiskReqs, 
+						   listp, raidPtr->cleanupList);
 			if (rc)
 				return (rc);
 		}
@@ -306,7 +306,7 @@ rf_ConfigureDiskQueues(
 
 	spareQueues = &raidPtr->Queues[0][raidPtr->numCol];
 	for (r = 0; r < raidPtr->numSpare; r++) {
-		rc = config_disk_queue(raidPtr, &spareQueues[r],
+		rc = rf_ConfigureDiskQueue(raidPtr, &spareQueues[r],
 		    0, raidPtr->numCol + r, p,
 		    raidPtr->sectorsPerDisk,
 		    raidPtr->Disks[0][raidPtr->numCol + r].dev,
