@@ -37,20 +37,21 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  *
- *	$Id: vm_machdep.c,v 1.3 1994/05/20 06:44:35 phil Exp $
+ *	$Id: vm_machdep.c,v 1.4 1994/05/25 00:03:22 phil Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.3 1994/05/20 06:44:35 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.4 1994/05/25 00:03:22 phil Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 #include <sys/buf.h>
-#include <user.h>
+#include <sys/user.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -166,6 +167,21 @@ cpu_wait(p)
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 }
 #endif
+
+
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ */     
+cpu_coredump(p, vp, cred)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+{
+
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
+	    p));
+}
 
 /*
  * Set a red zone in the kernel stack after the u. area.
