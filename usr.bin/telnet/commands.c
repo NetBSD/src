@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.15 1998/02/27 10:44:12 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.16 1998/02/28 12:36:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.15 1998/02/27 10:44:12 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.16 1998/02/28 12:36:20 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -2098,7 +2098,7 @@ status(argc, argv)
 				sigiocount, (sigiocount == 1)? "":"s");
 	if (In3270) {
 	    printf("Process ID %d, process group %d.\n",
-					    getpid(), getpgrp(getpid()));
+					    getpid(), getpgrp());
 	    printf("Terminal input:\n");
 	    filestuff(tin);
 	    printf("Terminal output:\n");
