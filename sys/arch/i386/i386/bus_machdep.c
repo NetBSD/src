@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.4 2000/06/29 08:44:50 mrg Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.5 2000/09/07 17:20:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_largepages.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +306,12 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-			pmap_update_pg(va);
+#ifdef LARGEPAGES
+			if (*pte & PG_PS)
+				pmap_update_pg(va & PG_LGFRAME);
+			else
+#endif
+				pmap_update_pg(va);
 		}
 	}
  
