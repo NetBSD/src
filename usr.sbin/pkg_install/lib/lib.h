@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.15 1998/10/12 12:03:26 agc Exp $ */
+/* $NetBSD: lib.h,v 1.16 1998/10/13 10:05:39 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -25,7 +25,6 @@
 #ifndef _INST_LIB_LIB_H_
 #define _INST_LIB_LIB_H_
 
-/* Includes */
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -49,9 +48,6 @@
 #ifndef FALSE
 #define FALSE	(0)
 #endif
-
-#define YES		2
-#define NO		1
 
 /* Usually "rm", but often "echo" during debugging! */
 #define REMOVE_CMD	"rm"
