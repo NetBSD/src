@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.2 2002/09/08 07:58:14 isaki Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.3 2003/03/13 06:50:23 bsh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.2 2002/09/08 07:58:14 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.3 2003/03/13 06:50:23 bsh Exp $");
 
 #include "opt_slhci.h"
 
@@ -744,7 +744,7 @@ slhci_root_ctrl_start(usbd_xfer_handle xfer)
 		buf = KERNADDR(&xfer->dmabuf, 0);
 
 #ifdef SLHCI_DEBUG
-	if ((slhci_debud & D_TRACE))
+	if ((slhci_debug & D_TRACE))
 		print_req_hub(req);
 #endif
 
@@ -1155,7 +1155,7 @@ slhci_device_ctrl_start(usbd_xfer_handle xfer)
 	DPRINTF(D_TRACE, ("st "));
 #ifdef SLHCI_DEBUG
 	if ((slhci_debug & D_TRACE))
-		print_req_hub(req));
+		print_req_hub(req);
 #endif
 
 	/* SETUP transaction */
