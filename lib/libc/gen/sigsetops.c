@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetops.c,v 1.8 1995/02/27 05:51:37 cgd Exp $	*/
+/*	$NetBSD: sigsetops.c,v 1.9 1995/02/27 06:21:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,6 +43,7 @@ static char rcsid[] = "$NetBSD";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <errno.h>
 #include <signal.h>
 
 #undef sigemptyset
