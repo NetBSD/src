@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.1 1999/12/09 14:53:16 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.2 2000/01/09 15:56:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -205,12 +205,13 @@ chiptotime(sec, min, hour, day, mon, year)
 	day = FROMBCD(day);
 	mon = FROMBCD(mon);
 	year = FROMBCD(year);
+	year = year + (year >= 70 ? 1900 : 2000);
 
 	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31)
+	if (mon < 1 || mon > 12 || day < 1 || day > 31)
 		return (0);
 	days = 0;
-	for (yr = 70; yr < year; yr++)
+	for (yr = 1970; yr < year; yr++)
 		days += LEAPYEAR(yr) ? 366 : 365;
 	days += dayyr[mon - 1] + day - 1;
 	if (LEAPYEAR(yr) && mon > 2)
@@ -237,6 +238,8 @@ timetochip(c)
                 t2 -= LEAPYEAR(t) ? 366 : 365;
         }
         c->year = t;
+	if (c->year >= 100)
+		c->year -= 100;
 
         /* t3 = month + day; separate */
         t = LEAPYEAR(t);
