@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.26 2000/03/27 17:03:25 kleink Exp $	*/
+/*	$NetBSD: kdump.c,v 1.27 2000/04/10 07:58:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.26 2000/03/27 17:03:25 kleink Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.27 2000/04/10 07:58:30 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: kdump.c,v 1.26 2000/03/27 17:03:25 kleink Exp $");
 #include "ktrace.h"
 
 int timestamp, decimal, fancy = 1, tail, maxdata;
-char *tracefile = DEF_TRACEFILE;
+const char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
@@ -105,16 +105,23 @@ struct ktr_header ktr_header;
 #undef KTRACE
 
 struct emulation {
-	char *name;		/* Emulation name */
+	const char *name;	/* Emulation name */
 	char **sysnames;	/* Array of system call names */
 	int  nsysnames;		/* Number of */
 	int  *errno;		/* Array of error number mapping */
 	int  nerrno;		/* number of elements in array */
 };
 
+struct emulation_ctx {
+	pid_t	pid;
+	struct emulation *emulation;
+	struct emulation_ctx *next;
+};
+
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
 
 static struct emulation emulations[] = {
+#define EMUL_NETBSD_IDX 0
 	{   "netbsd",	       syscallnames,         SYS_MAXSYSCALL,
 	        NULL,		        0 },
 	{   "netbsd32", netbsd32_syscallnames,	     SYS_MAXSYSCALL,
@@ -139,7 +146,10 @@ static struct emulation emulations[] = {
 	        NULL,			0 }
 };
 
-struct emulation *current;
+struct emulation *current, *default_emul;
+
+struct emulation_ctx *current_ctx;
+struct emulation_ctx *emul_ctx = NULL;
 
 static const char *ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
@@ -154,14 +164,17 @@ void	ioctldecode __P((u_long));
 void	ktrsyscall __P((struct ktr_syscall *));
 void	ktrsysret __P((struct ktr_sysret *));
 void	ktrnamei __P((char *, int));
-void	ktremul __P((char *, int));
+void	ktremul __P((char *, int, int));
 void	ktrgenio __P((struct ktr_genio *, int));
 void	ktrpsig __P((struct ktr_psig *));
 void	ktrcsw __P((struct ktr_csw *));
 void	usage __P((void));
-void	setemul __P((char *));
 void	eprint __P((int));
 char	*ioctlname __P((long));
+
+static struct emulation_ctx *ectx_find __P((pid_t));
+static void	ectx_update __P((pid_t, struct emulation *));
+static void	ectx_sanify __P((pid_t));
 
 int
 main(argc, argv)
@@ -171,13 +184,12 @@ main(argc, argv)
 	int ch, ktrlen, size;
 	void *m;
 	int trpoints = ALL_POINTS;
-
-	current = &emulations[0];	/* NetBSD */
+	const char *emul_name = "netbsd";
 
 	while ((ch = getopt(argc, argv, "e:f:dlm:nRTt:")) != -1)
 		switch (ch) {
 		case 'e':
-			setemul(optarg);
+			emul_name = strdup(optarg); /* it's safer to copy it */
 			break;
 		case 'f':
 			tracefile = optarg;
@@ -214,9 +226,12 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	m = malloc(size = 1025);
+	setemul(emul_name, 0, 0);
+	default_emul = current;
+
+	m = malloc(size = 1024);
 	if (m == NULL)
-		errx(1, "%s", strerror(ENOMEM));
+		errx(1, "malloc: %s", strerror(ENOMEM));
 	if (!freopen(tracefile, "r", stdin))
 		err(1, "%s", tracefile);
 	while (fread_tail((char *)&ktr_header, sizeof(struct ktr_header), 1)) {
@@ -225,15 +240,19 @@ main(argc, argv)
 		if ((ktrlen = ktr_header.ktr_len) < 0)
 			errx(1, "bogus length 0x%x", ktrlen);
 		if (ktrlen > size) {
-			m = (void *)realloc(m, ktrlen+1);
+			while(ktrlen > size) size *= 2;
+			m = (void *)realloc(m, size);
 			if (m == NULL)
-				errx(1, "%s", strerror(ENOMEM));
-			size = ktrlen;
+				errx(1, "realloc: %s", strerror(ENOMEM));
 		}
 		if (ktrlen && fread_tail(m, ktrlen, 1) == 0)
 			errx(1, "data too short");
 		if ((trpoints & (1<<ktr_header.ktr_type)) == 0)
 			continue;
+
+		/* update context to match currently processed record */
+		ectx_sanify(ktr_header.ktr_pid);
+
 		switch (ktr_header.ktr_type) {
 		case KTR_SYSCALL:
 			ktrsyscall((struct ktr_syscall *)m);
@@ -254,7 +273,7 @@ main(argc, argv)
 			ktrcsw((struct ktr_csw *)m);
 			break;
 		case KTR_EMUL:
-			ktremul(m, ktrlen);
+			ktremul(m, ktrlen, size);
 			break;
 		}
 		if (tail)
@@ -489,20 +508,17 @@ ktrnamei(cp, len)
 }
 
 void
-ktremul(cp, len)
-	char *cp;
-	int len;
+ktremul(name, len, bufsize)
+	char *name;
+	int len, bufsize;
 {
-	char name[1024];
+	if (len >= bufsize)
+		len = bufsize - 1;
 
-	if (len >= sizeof(name))
-		errx(1, "Emulation name too long");
-
-	strncpy(name, cp, len);
 	name[len] = '\0';
-	(void)printf("\"%s\"\n", name);
+	setemul(name, ktr_header.ktr_pid, 1);
 
-	setemul(name);
+	(void)printf("\"%s\"\n", name);
 }
 
 void
@@ -614,15 +630,94 @@ usage()
 }
 
 void
-setemul(name)
-	char *name;
+setemul(name, pid, update_ectx)
+	const char *name;
+	pid_t pid;
+	int update_ectx;
 {
 	int i;
+	struct emulation *match = NULL;
 
-	for (i = 0; emulations[i].name != NULL; i++)
+	for (i = 0; emulations[i].name != NULL; i++) {
 		if (strcmp(emulations[i].name, name) == 0) {
-			current = &emulations[i];
-			return;
+			match = &emulations[i];
+			break;
 		}
-	warnx("Emulation `%s' unknown", name);
+	}
+
+	if (!match) {
+		warnx("Emulation `%s' unknown", name);
+		return;
+	}
+
+	if (update_ectx)
+		ectx_update(pid, match);
+
+	current = match;
 }
+
+/*
+ * Emulation context list is very simple chained list, not even hashed.
+ * We expect the number of separate traced contexts/processes to be
+ * fairly low, so it's not worth it to optimize this.
+ */
+
+/*
+ * Find an emulation context appropriate for the given pid.
+ */
+static struct emulation_ctx *
+ectx_find(pid)
+	pid_t pid;
+{
+	struct emulation_ctx *ctx;
+
+	for(ctx = emul_ctx; ctx != NULL; ctx = ctx->next) {
+		if (ctx->pid == pid)
+			return ctx;
+	}
+
+	return NULL;
+}
+
+/*
+ * Update emulation context for given pid, or create new if no context
+ * for this pid exists.
+ */
+static void
+ectx_update(pid, emul)
+	pid_t pid;
+	struct emulation *emul;
+{
+	struct emulation_ctx *ctx;
+
+
+	if ((ctx = ectx_find(pid)) != NULL) {
+		/* found and entry, ensure the emulation is right (exec!) */
+		ctx->emulation = emul;
+		return;
+	}
+	
+	ctx = (struct emulation_ctx *)malloc(sizeof(struct emulation_ctx));
+	ctx->pid = pid;
+	ctx->emulation = emul;
+	
+	/* put the entry on start of emul_ctx chain */
+	ctx->next = emul_ctx;
+	emul_ctx = ctx;
+}
+
+/*
+ * Ensure current emulation context is correct for given pid.
+ */
+static void
+ectx_sanify(pid)
+	pid_t pid;
+{
+	struct emulation_ctx *ctx;
+
+	if ((ctx = ectx_find(pid)) != NULL && ctx->emulation != current)
+		current = ctx->emulation;
+	else
+		current = default_emul;
+}
+
