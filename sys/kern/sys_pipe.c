@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.4 2001/06/21 18:59:51 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5 2001/07/02 20:43:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -630,11 +630,6 @@ pipe_read(fp, offset, uio, cred, flags)
 			if (rpipe->pipe_map.cnt == 0) {
 				rpipe->pipe_state &= ~PIPE_DIRECTW;
 				wakeup(rpipe);
-#ifdef __NetBSD__
-				if (uio->uio_resid > 0 &&
-				    (rpipe->pipe_state & PIPE_MOREW))
-					goto waitformore;
-#endif /* NetBSD */
 			}
 #endif
 		} else {
@@ -667,9 +662,6 @@ pipe_read(fp, offset, uio, cred, flags)
 				break;
 			}
 
-#if defined(__NetBSD__) && !defined(PIPE_NODIRECT)
-		waitformore:
-#endif
 			/*
 			 * Unlock the pipe buffer for our remaining processing.
 			 * We will either break out with an error or we will
@@ -957,7 +949,7 @@ pipe_loan_alloc(wpipe, npages, blen)
 	int npages;
 	vsize_t blen;
 {
-	wpipe->pipe_map.kva = uvm_km_valloc(kernel_map, blen);
+	wpipe->pipe_map.kva = uvm_km_valloc_wait(kernel_map, blen);
 	if (wpipe->pipe_map.kva == NULL)
 		return (ENOMEM);
 
@@ -997,12 +989,12 @@ pipe_direct_write(wpipe, uio)
 	struct pipe *wpipe;
 	struct uio *uio;
 {
-	int error, i, npages, j;
-	struct vm_page **res;
+	int error, npages, j;
+	struct vm_page **res = NULL;
 	vaddr_t bbase, kva, base, bend;
 	vsize_t blen, bcnt;
-	voff_t boff, bpos;
-	struct vm_map *wmap = &uio->uio_procp->p_vmspace->vm_map;
+	voff_t bpos;
+
 retry:
 	while (wpipe->pipe_state & PIPE_DIRECTW) {
 		if (wpipe->pipe_state & PIPE_WANTR) {
@@ -1012,15 +1004,15 @@ retry:
 		wpipe->pipe_state |= PIPE_WANTW;
 		error = tsleep(wpipe, PRIBIO | PCATCH, "pipdww", 0);
 		if (error)
-			goto error1;
+			goto error;
 		if (wpipe->pipe_state & PIPE_EOF) {
 			error = EPIPE;
-			goto error1;
+			goto error;
 		}
 	}
 	wpipe->pipe_map.cnt = 0;	/* transfer not ready yet */
 	if (wpipe->pipe_buffer.cnt > 0) {
-		if ( wpipe->pipe_state & PIPE_WANTR) {
+		if (wpipe->pipe_state & PIPE_WANTR) {
 			wpipe->pipe_state &= ~PIPE_WANTR;
 			wakeup(wpipe);
 		}
@@ -1028,126 +1020,112 @@ retry:
 		wpipe->pipe_state |= PIPE_WANTW;
 		error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwc", 0);
 		if (error)
-			goto error1;
+			goto error;
 		if (wpipe->pipe_state & PIPE_EOF) {
 			error = EPIPE;
-			goto error1;
+			goto error;
 		}
 		goto retry;
 	}
 
 	/*
-	 * For each iovec:
-	 * 1. Loan the pages to kernel.
-	 * 2. Set up pipe structures.
-	 * 3. Wait until consumer reads it all or exits.
+	 * Handle first iovec, first PIPE_CHUNK_SIZE bytes. Expect caller
+	 * to deal with short write.
+	 *
+	 * Note: need to deal with buffers not aligned to PAGE_SIZE.
 	 */
-	boff = 0;
-	for(i=0; i < uio->uio_iovcnt; ) {
-		/*
-		 * Note: need to handle buffers not aligned to PAGE_SIZE.
-		 */
-		bbase = (vaddr_t)uio->uio_iov[i].iov_base;
-		base = trunc_page(bbase + boff);
-		bend = round_page(bbase + uio->uio_iov[i].iov_len);
-		blen = bend - base;
+	bbase = (vaddr_t)uio->uio_iov[0].iov_base;
+	base = trunc_page(bbase);
+	bend = round_page(bbase + uio->uio_iov[0].iov_len);
+	blen = bend - base;
+	bpos = bbase - base;
 
-		if (boff == 0)
-			bpos = bbase % PAGE_SIZE;
-		else
-			bpos = 0;
+	if (blen > PIPE_DIRECT_CHUNK) {
+		blen = PIPE_DIRECT_CHUNK;
+		bend = base + blen;
+		bcnt = PIPE_DIRECT_CHUNK - bpos;
+	} else
+		bcnt = uio->uio_iov[0].iov_len;
 
-		if (blen > PIPE_DIRECT_CHUNK) {
-			blen = PIPE_DIRECT_CHUNK;
-			boff += PIPE_DIRECT_CHUNK;
-			bend = base + blen;
-			bcnt = PIPE_DIRECT_CHUNK - bpos;
-			wpipe->pipe_state |= PIPE_MOREW;
-		} else {
-			if (boff == 0)
-				bcnt = uio->uio_iov[i].iov_len;
-			else
-				bcnt = ((bbase % PAGE_SIZE) +
-				    uio->uio_iov[i].iov_len) %PIPE_DIRECT_CHUNK;
-			boff = 0;
-			i++;
-			wpipe->pipe_state &= ~PIPE_MOREW;
+	npages = blen / PAGE_SIZE;
+
+	wpipe->pipe_map.pos = bpos;
+	wpipe->pipe_map.cnt = bcnt;
+
+	/*
+	 * Free the old kva if we need more pages than we have
+	 * allocated.
+	 */
+	if (wpipe->pipe_map.kva && npages > wpipe->pipe_map.npages)
+		pipe_loan_free(wpipe);
+
+	/* Allocate new kva. */
+	if (!wpipe->pipe_map.kva
+	    && (error = pipe_loan_alloc(wpipe, npages, blen)))
+		goto error;
+	
+	/* Loan the write buffer memory from writer process */
+	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, base, blen,
+	    (void **) wpipe->pipe_map.ms, UVM_LOAN_TOPAGE);
+	if (error)
+		goto cleanup;
+	res = wpipe->pipe_map.ms;
+	
+	/* Enter the loaned pages to kva */
+	kva = wpipe->pipe_map.kva;
+	for(j=0; j < npages; j++, kva += PAGE_SIZE)
+		pmap_enter(pmap_kernel(), kva, res[j]->phys_addr,
+			VM_PROT_READ, 0);
+
+	wpipe->pipe_state |= PIPE_DIRECTW;
+	error = 0;
+	while (!error && (wpipe->pipe_state & PIPE_DIRECTW)) {
+		if (wpipe->pipe_state & PIPE_EOF) {
+			error = EPIPE;
+			break;
 		}
-
-		npages = blen / PAGE_SIZE;
-
-		/*
-		 * Free the old kva if we need more pages than we have
-		 * allocated.
-		 */
-		if (wpipe->pipe_map.kva
-		    && npages > wpipe->pipe_map.npages)
-			pipe_loan_free(wpipe);
-
-		/* Allocate new kva. */
-		if (!wpipe->pipe_map.kva) {
-			if ((error = pipe_loan_alloc(wpipe,
-					npages, blen)))
-				goto error;
+		if (wpipe->pipe_state & PIPE_WANTR) {
+			wpipe->pipe_state &= ~PIPE_WANTR;
+			wakeup(wpipe);
 		}
-		
-		/* Loan the write buffer memory from writer process */
-		res = wpipe->pipe_map.ms;
-		error = uvm_loan(wmap, base, blen,
-				(void **) res, UVM_LOAN_TOPAGE);
-		if (error)
-			goto cleanup;
-		
-		/* Enter the loaned pages to kva */
-		kva = wpipe->pipe_map.kva;
-		for(j=0; j < npages; j++, kva += PAGE_SIZE)
-			pmap_enter(pmap_kernel(), kva, res[j]->phys_addr,
-				VM_PROT_READ, 0);
+		pipeselwakeup(wpipe, wpipe);
+		error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0);
+	}
 
-		wpipe->pipe_map.pos = bpos;
-		wpipe->pipe_map.cnt = bcnt;
-		wpipe->pipe_state |= PIPE_DIRECTW;
+	if (error)
+		wpipe->pipe_state &= ~PIPE_DIRECTW;
 
-		error = 0;
-		while (!error && (wpipe->pipe_state & PIPE_DIRECTW)) {
-			if (wpipe->pipe_state & PIPE_EOF) {
-				error = EPIPE;
-				break;
-			}
-			if (wpipe->pipe_state & PIPE_WANTR) {
-				wpipe->pipe_state &= ~PIPE_WANTR;
-				wakeup(wpipe);
-			}
-			pipeselwakeup(wpipe, wpipe);
-			error = tsleep(wpipe, PRIBIO | PCATCH, "pipdwt", 0);
-		}
-
-	cleanup:
-		pipelock(wpipe,0);
-		if (amountpipekva > maxpipekva)
-			pipe_loan_free(wpipe);
+    cleanup:
+	pipelock(wpipe, 0);
+	if (error || amountpipekva > maxpipekva)
+		pipe_loan_free(wpipe);
+	else if (res)
 		uvm_unloanpage(res, npages);
-		pipeunlock(wpipe);
-		if (error) {
-	error:
-			/* XXX update uio ? */
-			if (error == EPIPE)
-				pipeselwakeup(wpipe, wpipe);
+	pipeunlock(wpipe);
 
-			wpipe->pipe_state &= ~PIPE_MOREW;
-			goto error1;
+	if (error == EPIPE) {
+		pipeselwakeup(wpipe, wpipe);
+
+		/*
+		 * If anything was read from what we offered, return success
+		 * and short write. We return EOF on next write(2).
+		 */
+		if (wpipe->pipe_map.cnt < bcnt) {
+			bcnt -= wpipe->pipe_map.cnt;
+			error = 0;
 		}
-				
-		uio->uio_offset += bcnt;
-		uio->uio_resid  -= bcnt;
+	}
 
-	} /* for */
+	if (error) {
+   error:
+		wakeup(wpipe);
+		return (error);
+	}
 
-	return (error);
+	uio->uio_offset += bcnt;
+	uio->uio_resid  -= bcnt;
 
-error1:
-	wakeup(wpipe);
-	return (error);
+	return (0);
 }
 #endif /* !PIPE_NODIRECT */
 #endif /* NetBSD */
@@ -1204,7 +1182,7 @@ pipe_write(fp, offset, uio, cred, flags)
 			pipeunlock(wpipe);
 		} else {
 			/*
-			 * If an error occured unbusy and return, waking up any
+			 * If an error occured, unbusy and return, waking up any
 			 * pending readers.
 			 */ 
 			--wpipe->pipe_busy;
@@ -1237,13 +1215,21 @@ pipe_write(fp, offset, uio, cred, flags)
 		 * The direct write mechanism will detect the reader going
 		 * away on us.
 		 */
-		if ((uio->uio_iov->iov_len >= PIPE_MINDIRECT) &&
+		if ((uio->uio_iov[0].iov_len >= PIPE_MINDIRECT) &&
+		    (uio->uio_offset == 0) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
 		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
 			error = pipe_direct_write(wpipe, uio);
-			if (error)
+
+			/*
+			 * We either errorred, wrote whole buffer, or
+			 * wrote part of buffer. If the error is ENOMEM,
+			 * we failed to allocate some resources for direct
+			 * write and fall back to ordinary write. Otherwise,
+			 * break out now.
+			 */
+			if (error != ENOMEM)
 				break;
-			continue;
 		}
 #endif /* PIPE_NODIRECT */
 
