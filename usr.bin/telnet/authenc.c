@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.9 2000/06/22 06:47:48 thorpej Exp $	*/
+/*	$NetBSD: authenc.c,v 1.10 2003/06/18 20:51:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: authenc.c,v 1.9 2000/06/22 06:47:48 thorpej Exp $");
+__RCSID("$NetBSD: authenc.c,v 1.10 2003/06/18 20:51:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,8 @@ __RCSID("$NetBSD: authenc.c,v 1.9 2000/06/22 06:47:48 thorpej Exp $");
 #include "defines.h"
 #include "types.h"
 
-	int
-telnet_net_write(str, len)
-	unsigned char *str;
-	int len;
+int
+telnet_net_write(unsigned char *str, int len)
 {
 	if (NETROOM() > len) {
 		ring_supply_data(&netoring, str, len);
@@ -69,8 +67,8 @@ telnet_net_write(str, len)
 	return(0);
 }
 
-	void
-net_encrypt()
+void
+net_encrypt(void)
 {
 #ifdef	ENCRYPTION
 	if (encrypt_output)
@@ -80,25 +78,20 @@ net_encrypt()
 #endif	/* ENCRYPTION */
 }
 
-	int
-telnet_spin()
+int
+telnet_spin(void)
 {
 	return(-1);
 }
 
-	char *
-telnet_getenv(val)
-	char *val;
+char *
+telnet_getenv(char *val)
 {
 	return((char *)env_getvalue((unsigned char *)val));
 }
 
-	char *
-telnet_gets(prompt, result, length, echo)
-	char *prompt;
-	char *result;
-	int length;
-	int echo;
+char *
+telnet_gets(char *prompt, char *result, int length, int echo)
 {
 	extern int globalmode;
 	int om = globalmode;

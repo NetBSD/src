@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.9 2003/03/15 04:48:22 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.10 2003/06/18 20:51:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.9 2003/03/15 04:48:22 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.10 2003/06/18 20:51:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,8 @@ cc_t termAytChar;
  * initialize the terminal data structures.
  */
 
-    void
-init_terminal()
+void
+init_terminal(void)
 {
     if (ring_init(&ttyoring, ttyobuf, sizeof ttyobuf) != 1) {
 	exit(1);
@@ -124,9 +124,8 @@ init_terminal()
  */
 
 
-    int
-ttyflush(drop)
-    int drop;
+int
+ttyflush(int drop)
 {
     int n, n0, n1;
 
@@ -178,8 +177,8 @@ ttyflush(drop)
  */
 
 
-    int
-getconnmode()
+int
+getconnmode(void)
 {
     extern int linemode;
     int mode = 0;
@@ -218,9 +217,8 @@ getconnmode()
     return(mode);
 }
 
-    void
-setconnmode(force)
-    int force;
+void
+setconnmode(int force)
 {
 #ifdef	ENCRYPTION
     static int enc_passwd = 0;
@@ -248,8 +246,8 @@ setconnmode(force)
 }
 
 
-    void
-setcommandmode()
+void
+setcommandmode(void)
 {
     TerminalNewMode(-1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.14 2002/09/23 12:48:04 mycroft Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.15 2003/06/18 20:51:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.14 2002/09/23 12:48:04 mycroft Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.15 2003/06/18 20:51:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,8 @@ static int
 
 
 #if	defined(TN3270)
-    void
-init_3270()
+void
+init_3270(void)
 {
 #if	defined(unix)
     HaveInput = 0;
@@ -119,11 +119,10 @@ init_3270()
  * only client needs for us to do that.
  */
 
-    int
-DataToNetwork(buffer, count, done)
-    char *buffer;	/* where the data is */
-    int  count;	/* how much to send */
-    int		  done;		/* is this the last of a logical block */
+int
+DataToNetwork(char *buffer,	/* where the data is */
+    int  count,	/* how much to send */
+    int		  done)		/* is this the last of a logical block */
 {
     int loop, c;
     int origCount;
@@ -175,17 +174,16 @@ DataToNetwork(buffer, count, done)
 
 
 #if	defined(unix)
-    void
-inputAvailable(signo)
-	int signo;
+void
+inputAvailable(int signo)
 {
     HaveInput = 1;
     sigiocount++;
 }
 #endif	/* defined(unix) */
 
-    void
-outputPurge()
+void
+outputPurge(void)
 {
     (void) ttyflush(1);
 }
@@ -203,10 +201,10 @@ outputPurge()
  * *all* the data at one time (thus the select).
  */
 
-    int
-DataToTerminal(buffer, count)
-    char	*buffer;		/* where the data is */
-    int	count;			/* how much to send */
+int
+DataToTerminal(
+    char	*buffer,		/* where the data is */
+    int	count)			/* how much to send */
 {
     int c;
     int origCount;
@@ -245,8 +243,8 @@ DataToTerminal(buffer, count)
  * Push3270 - Try to send data along the 3270 output (to screen) direction.
  */
 
-    int
-Push3270()
+int
+Push3270(void)
 {
     int save = ring_full_count(&netiring);
 
@@ -271,8 +269,8 @@ Push3270()
  *		before quitting.
  */
 
-    void
-Finish3270()
+void
+Finish3270(void)
 {
     while (Push3270() || !DoTerminalOutput()) {
 #if	defined(unix)
@@ -285,9 +283,8 @@ Finish3270()
 
 /* StringToTerminal - output a null terminated string to the terminal */
 
-    void
-StringToTerminal(s)
-    char *s;
+void
+StringToTerminal(char *s)
 {
     int count;
 
@@ -303,9 +300,8 @@ StringToTerminal(s)
  *	curses(3x) can call us to send out data.
  */
 
-    int
-_putchar(c)
-    char c;
+int
+_putchar(char c)
 {
 #if	defined(sun)		/* SunOS 4.0 bug */
     c &= 0x7f;
@@ -323,8 +319,8 @@ _putchar(c)
 }
 #endif	/* ((!defined(NOT43)) || defined(PUTCHAR)) */
 
-    void
-SetIn3270()
+void
+SetIn3270(void)
 {
     if (Sent3270TerminalType && my_want_state_is_will(TELOPT_BINARY)
 		&& my_want_state_is_do(TELOPT_BINARY) && !donebinarytoggle) {
@@ -353,8 +349,8 @@ SetIn3270()
  *	Return '0' if no more responses to send; '1' if a response sent.
  */
 
-    int
-tn3270_ttype()
+int
+tn3270_ttype(void)
 {
     /*
      * Try to send a 3270 type terminal name.  Decide which one based
@@ -398,10 +394,8 @@ tn3270_ttype()
 }
 
 #if	defined(unix)
-	int
-settranscom(argc, argv)
-	int argc;
-	char *argv[];
+int
+settranscom(int argc, char *argv[])
 {
 	int i;
 
