@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.5 1999/10/04 22:58:10 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,13 +68,16 @@ struct wdc_obio_softc {
 	struct channel_softc wdc_channel;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
+	void *sc_ih;
 };
 
-int	wdc_obio_probe	__P((struct device *, struct cfdata *, void *));
-void	wdc_obio_attach	__P((struct device *, struct device *, void *));
+int	wdc_obio_probe __P((struct device *, struct cfdata *, void *));
+void	wdc_obio_attach __P((struct device *, struct device *, void *));
+int	wdc_obio_detach __P((struct device *, int));
 
 struct cfattach wdc_obio_ca = {
-	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach
+	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach,
+	wdc_obio_detach, wdcactivate
 };
 
 static int	wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
@@ -152,7 +155,7 @@ wdc_obio_attach(parent, self, aux)
 	chp->data32ioh = chp->cmd_ioh;
 #endif
 
-	intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
@@ -180,6 +183,32 @@ wdc_obio_attach(parent, self, aux)
 	}
 
 	wdcattach(chp);
+}
+
+int
+wdc_obio_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct wdc_obio_softc *sc = (void *)self;
+	struct channel_softc *chp = &sc->wdc_channel;
+	int error;
+
+	if ((error = wdcdetach(self, flags)) != 0)
+		return error;
+
+	intr_disestablish(sc->sc_ih);
+
+	free(sc->wdc_channel.ch_queue, M_DEVBUF);
+
+	/* Unmap our i/o space. */
+	bus_space_unmap(chp->cmd_iot, chp->cmd_ioh, WDC_REG_NPORTS);
+
+	/* Unmap DMA registers. */
+	/* XXX unmapiodev(sc->sc_dmareg); */
+	/* XXX free(sc->sc_dmacmd); */
+
+	return 0;
 }
 
 static int
