@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.8 2001/07/19 08:57:30 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.9 2001/12/11 23:54:59 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -523,10 +523,6 @@ pci_intr_map(pa, ihp)
 	}
 #if NIOAPIC > 0
 	pci_decompose_tag (pc, pa->pa_tag, &bus, &dev, &func);
-#if 0
-	printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
-	    bus, dev, func, pin, line);
-#endif
 	if (mp_busses != NULL) {
 		/*
 		 * Assumes 1:1 mapping between PCI bus numbers and
@@ -542,8 +538,12 @@ pci_intr_map(pa, ihp)
 				return 0;
 			}
 		}
-		if (mip == NULL)
+		if (mip == NULL) {
+			printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+			    bus, dev, func, pin, line);
+			
 			printf("pci_intr_map: no MP mapping found\n");
+		}
 	}
 #endif
 	
