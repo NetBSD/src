@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.62 2003/08/27 15:59:55 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.63 2003/08/30 04:07:56 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2003/08/27 15:59:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63 2003/08/30 04:07:56 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1042,11 +1042,13 @@ rtc_gettime(handle, tv)
 	dt.dt_mon = rtc_read_reg(bt, bh, MC_MONTH);
 	year = rtc_read_reg(bt, bh, MC_YEAR);
 	cent = rtc_read_reg(bt, bh, MC_CENT);
-printf("rtc_gettime: read c %x/%d y %x/%d m %x/%d wd %d d %x/%d "
-	"h %x/%d m %x/%d s %x/%d\n",
-	cent, cent, year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
-	dt.dt_day, dt.dt_day, dt.dt_hour, dt.dt_hour,
-	dt.dt_min, dt.dt_min, dt.dt_sec, dt.dt_sec);
+#ifdef DIAGNOSTIC
+	printf("rtc_gettime: read c %x/%d y %x/%d m %x/%d wd %d d %x/%d "
+	       "h %x/%d m %x/%d s %x/%d\n",
+	       cent, cent, year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
+	       dt.dt_day, dt.dt_day, dt.dt_hour, dt.dt_hour,
+	       dt.dt_min, dt.dt_min, dt.dt_sec, dt.dt_sec);
+#endif
 
 	year += cent * 100;
 	dt.dt_year = year;
