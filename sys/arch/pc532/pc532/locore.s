@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2003/06/24 02:48:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2003/06/24 04:57:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -42,6 +42,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_cpu30mhz.h"
 #include "opt_ns381.h"
 
 #include "assym.h"

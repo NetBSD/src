@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.49 2003/06/24 02:48:56 thorpej Exp $
+#	$NetBSD: files.pc532,v 1.50 2003/06/24 04:57:58 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -7,6 +7,9 @@
 maxpartitions 8
 
 maxusers 2 16 64
+
+defflag	CPU30MHZ
+defflag	NS381
 
 device	mainbus {[addr = -1], [irq = -1]}
 attach	mainbus at root
@@ -39,7 +42,6 @@ file	arch/pc532/dev/ncr.c		ncr needs-flag
 #attach	aic at mainbus
 #file	arch/pc532/dev/aic.c		aic needs-flag
 
-defflag	NS381
 file	arch/pc532/fpu/ieee_dze.c
 file	arch/pc532/fpu/ieee_handler.c
 file	arch/pc532/fpu/ieee_invop.c
