@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1999/11/28 03:07:04 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/04 23:03:24 lukem Exp $
 #
 
-MAN=	boot.8 installboot.8 MAKEDEV.8
+MAN=	boot.8 MAKEDEV.8
 MLINKS=	MAKEDEV.8 makedev.8
 MANSUBDIR=/pmax
 
