@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.6 1995/07/28 07:13:52 phil Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.7 1996/05/15 23:19:16 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,8 +57,7 @@ static char *rcsid = "$Id: pwd_mkdb.c,v 1.6 1995/07/28 07:13:52 phil Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "pw_scan.h"
+#include <util.h>
 
 #define	INSECURE	1
 #define	SECURE		2
