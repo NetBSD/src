@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.4 1996/09/26 19:06:37 christos Exp $	*/
+/*	$NetBSD: ac.c,v 1.5 1997/10/07 01:24:05 hubertf Exp $	*/
 
 /*
  *      Copyright (c) 1994 Christopher G. Demetriou.
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ac.c,v 1.4 1996/09/26 19:06:37 christos Exp $";
+static char rcsid[] = "$NetBSD: ac.c,v 1.5 1997/10/07 01:24:05 hubertf Exp $";
 #endif
 
 #include <sys/types.h>
@@ -238,7 +238,7 @@ update_user(head, name, secs)
 	struct user_list *up;
 
 	for (up = head; up != NULL; up = up->next) {
-		if (strncmp(up->name, name, sizeof (up->name)) == 0) {
+		if (strncmp(up->name, name, sizeof (up->name) - 1) == 0) {
 			up->secs += secs;
 			Total += secs;
 			return head;
