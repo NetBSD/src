@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.27 1995/02/22 19:32:33 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.28 1995/04/04 05:44:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -266,13 +266,15 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "IMS     ", "CDD521/10       ", "2.06", SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
-	 "NEC     ", "CD-ROM DRIVE:83 ", "1.2 ", SDEV_NOLUNS},
+	 "NEC     ", "CD-ROM DRIVE:55 ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
-	 "NEC     ", "CD-ROM DRIVE:841", "1.0 ", SDEV_NOLUNS},
+	 "NEC     ", "CD-ROM DRIVE:83 ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
-	 "SONY    ", "CD-ROM CDU-541  ", "4.3d", SDEV_NOLUNS},
+	 "NEC     ", "CD-ROM DRIVE:841", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
-	 "SONY    ", "CD-ROM CDU-55S  ", "1.0i", SDEV_NOLUNS},
+	 "SONY    ", "CD-ROM CDU-541  ", "",     SDEV_NOLUNS},
+	{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-55S  ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "TEAC    ", "CD-ROM          ", "1.06", SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
