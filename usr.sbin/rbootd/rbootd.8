@@ -1,4 +1,4 @@
-.\"	$NetBSD: rbootd.8,v 1.6 1999/02/01 17:00:44 bouyer Exp $
+.\"	$NetBSD: rbootd.8,v 1.7 2002/02/02 01:40:52 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
 .\"	for Software Science (CSS).
@@ -135,17 +135,17 @@ Turn on debugging, do nothing if already on.
 .It SIGUSR2
 Turn off debugging, do nothing if already off.
 .El
-.Sh "FILES"
+.Sh FILES
 .Bl -tag -width /usr/libexec/rbootd -compact
-.It /dev/bpf#
+.It Pa /dev/bpf#
 packet-filter device
-.It /etc/rbootd.conf
+.It Pa /etc/rbootd.conf
 configuration file
-.It /tmp/rbootd.dbg
+.It Pa /tmp/rbootd.dbg
 debug output
-.It /usr/mdec/rbootd
+.It Pa /usr/mdec/rbootd
 directory containing boot files
-.It /var/run/rbootd.pid
+.It Pa /var/run/rbootd.pid
 process id
 .El
 .Sh SEE ALSO
