@@ -21,6 +21,7 @@
 #ifndef __A_OUT_GNU_H__
 #define __A_OUT_GNU_H__
 
+#ifndef	TC_POWERPC		/* PowerPC defines this in <machine/reloc.h> */
 enum reloc_type {
 
 #ifdef TC_M88K
@@ -73,6 +74,7 @@ enum reloc_type {
 #endif /* not TC_I860 */
 #endif /* not TC_M88K */
 };
+#endif	/* not TC_POWERPC */
 
 
 #ifdef TC_I860
