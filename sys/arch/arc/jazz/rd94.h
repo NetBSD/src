@@ -1,4 +1,4 @@
-/*	$NetBSD: rd94.h,v 1.3 2001/04/30 04:52:54 tsutsui Exp $	*/
+/*	$NetBSD: rd94.h,v 1.4 2001/06/13 15:11:38 soda Exp $	*/
 /*	$OpenBSD: pica.h,v 1.4 1996/09/14 15:58:28 pefo Exp $ */
 
 /*
@@ -93,16 +93,6 @@
 #define	RD94_SYS_LB_LED		(RD94LB+0xE000)	/* LED/self-test register */
 #define	RD94_SYS_LB_IE1		(RD94LB+0xF000)	/* Local bus int enable */
 #define	RD94_SYS_LB_IE2		(RD94LB+0xF002)	/* Local bus int enable */
-#define RD94_SYS_LB_IE_PAR1	0x0001		/* Parallel port enable */
-#define	RD94_SYS_LB_IE_FLOPPY	0x0002		/* Floppy ctrl enable */
-#define	RD94_SYS_LB_IE_SOUND	0x0004		/* Sound port enable */
-#define	RD94_SYS_LB_IE_SONIC	0x0008		/* Ethernet ctrl enable */
-#define	RD94_SYS_LB_IE_SCSI0	0x0010		/* Scsi0 crtl enable */
-#define	RD94_SYS_LB_IE_SCSI1	0x0020		/* Scsi1 crtl enable */
-#define RD94_SYS_LB_IE_KBD	0x0040		/* Keyboard ctrl enable */
-#define RD94_SYS_LB_IE_MOUSE	0x0080		/* Mouse ctrl enable */
-#define	RD94_SYS_LB_IE_COM1	0x0100		/* Serial port 1 enable */
-#define	RD94_SYS_LB_IE_COM2	0x0200		/* Serial port 2 enable */
 
 #define	RD94_P_PCI_IO		0x90000000	/* PCI I/O control */
 #define	RD94_V_PCI_IO		0xe2000000
