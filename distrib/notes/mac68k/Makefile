@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/14 21:37:57 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 2002/07/21 08:14:49 lukem Exp $
 
-EXTRA= ${.CURDIR}/contrib
+MERGED_SRCS+=	${COMMON}/sysinst ${COMMON}/upgrade
+EXTRA=		${.CURDIR}/contrib
 
 .include <bsd.man.mk>
