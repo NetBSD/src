@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_addrs.c,v 1.2 2000/12/03 20:21:03 thorpej Exp $");
+RCSID("$Id: get_addrs.c,v 1.3 2000/12/21 03:58:52 itojun Exp $");
 
 #ifdef __osf__
 /* hate */
@@ -108,6 +108,10 @@ find_all_addresses (krb5_context context,
      struct ifaddrs *ifa0, *ifa;
      krb5_error_code ret; 
      int num, idx;
+     struct sockaddr *sa;
+#ifdef __KAME__
+     struct sockaddr_in6 sin6;
+#endif
 
      res->val = NULL;
 
@@ -136,9 +140,25 @@ find_all_addresses (krb5_context context,
      for (ifa = ifa0, idx = 0; ifa != NULL; ifa = ifa->ifa_next) {
 	 if ((ifa->ifa_flags & IFF_UP) == 0)
 	     continue;
-	 if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
+#ifdef __KAME__
+	 if (ifa->ifa_addr->sa_family == AF_INET6 &&
+	     ifa->ifa_addr->sa_len == sizeof(sin6)) {
+	     memcpy(&sin6, ifa->ifa_addr, sizeof(sin6));
+	     if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) &&
+	         sin6.sin6_scope_id == 0) {
+		 sin6.sin6_scope_id = (u_int32_t)
+		     sin6.sin6_addr.s6_addr[2] << 8 | sin6.sin6_addr.s6_addr[3];
+		 sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
+	     }
+	     sa = (struct sockaddr *)&sin6;
+	 } else
+	     sa = ifa->ifa_addr;
+#else
+	 sa = ifa->ifa_addr;
+#endif
+	 if (memcmp(sa, &sa_zero, sizeof(sa_zero)) == 0)
 	     continue;
-	 if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
+	 if (krb5_sockaddr_uninteresting(sa))
 	     continue;
 
 	 if ((ifa->ifa_flags & IFF_LOOPBACK) != 0) {
@@ -147,7 +167,7 @@ find_all_addresses (krb5_context context,
 		 continue;
 	 }
 
-	 ret = krb5_sockaddr2address(ifa->ifa_addr, &res->val[idx]);
+	 ret = krb5_sockaddr2address(sa, &res->val[idx]);
 	 if (ret) {
 	     /*
 	      * The most likely error here is going to be "Program
@@ -168,13 +188,30 @@ find_all_addresses (krb5_context context,
 	 for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 	     if ((ifa->ifa_flags & IFF_UP) == 0)
 		 continue;
-	     if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
+#ifdef __KAME__
+	     if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		 ifa->ifa_addr->sa_len == sizeof(sin6)) {
+		 memcpy(&sin6, ifa->ifa_addr, sizeof(sin6));
+		 if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) &&
+		     sin6.sin6_scope_id == 0) {
+		     sin6.sin6_scope_id = (u_int32_t)
+			 sin6.sin6_addr.s6_addr[2] << 8 |
+			 sin6.sin6_addr.s6_addr[3];
+		     sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
+		 }
+		 sa = (struct sockaddr *)&sin6;
+	     } else
+		 sa = ifa->ifa_addr;
+#else
+	     sa = ifa->ifa_addr;
+#endif
+	     if (memcmp(sa, &sa_zero, sizeof(sa_zero)) == 0)
 		 continue;
-	     if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
+	     if (krb5_sockaddr_uninteresting(sa))
 		 continue;
 
 	     if ((ifa->ifa_flags & IFF_LOOPBACK) != 0) {
-		 ret = krb5_sockaddr2address(ifa->ifa_addr, &res->val[idx]);
+		 ret = krb5_sockaddr2address(sa, &res->val[idx]);
 		 if (ret) {
 		     /*
 		      * See comment above.
