@@ -1,4 +1,4 @@
-#	$NetBSD: Make.tags.inc,v 1.5 1998/09/09 03:02:23 dbj Exp $
+#	$NetBSD: Make.tags.inc,v 1.6 1998/11/15 20:36:31 perry Exp $
 #
 #	from: @(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
 
@@ -9,13 +9,9 @@
 # there is a struct tag with the same name (eg., vmmeter).  The real
 # solution would probably be for ctags to generate "struct vmmeter" tags.
 
-COMM=	/sys/conf/*.[ch] \
-	/sys/dev/*.[ch] /sys/dev/scsipi/*.[ch] \
-	/sys/kern/*.[ch] /sys/lib/libkern/*.[ch] \
-	/sys/miscfs/*/*.[ch] \
-	/sys/net/*.[ch] /sys/netccitt/*.[ch] /sys/netinet/*.[ch] \
-	/sys/netiso/*.[ch] /sys/netns/*.[ch] \
-	/sys/nfs/*.[ch] /sys/sys/*.[ch] \
-	/sys/ufs/*/*.[ch] \
-	/sys/vm/*.[ch] \
-        /sys/uvm/*.[ch] /sys/ddb/*.[ch]
+# The invocation below returns every directory that contains sources, excluding
+# the arch directories. Traditionally, COMM would have been an explicit list.
+# This promises to be easier to maintain, considering how often the directory
+# structure of the kernel sources has been changing recently.
+COMM!=	find -H /sys ! -path "/sys/arch*" -name "*.[ch]" | \
+		sed "s@[^/]*\..*@*.\[ch\]@" | sort -t / -u

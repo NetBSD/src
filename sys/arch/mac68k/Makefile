@@ -1,18 +1,19 @@
-#	$NetBSD: Makefile,v 1.5 1998/06/12 23:22:38 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1998/11/15 20:36:30 perry Exp $
 
 # Makefile for mac68k tags file and boot blocks
 
 # Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
-TMAC68K=../mac68k/tags
-SMAC68K=../m68k/m68k/*.c ../m68k/include/*.h \
-	../mac68k/mac68k/*.[ch] ../mac68k/include/*.h \
-	../mac68k/dev/*.[ch]
-AMAC68K=../mac68k/mac68k/*.s
+SYSDIR?=	/sys
+TMAC68K=${SYSDIR}/arch/mac68k/tags
+SMAC68K=${SYSDIR}/arch/mac68k/mac68k/*.[ch] ${SYSDIR}/arch/mac68k/include/*.h \
+	${SYSDIR}/arch/mac68k/nubus/*.[ch] ${SYSDIR}/arch/mac68k/obio/*.[ch] \
+	${SYSDIR}/arch/mac68k/dev/*.[ch]
+AMAC68K=${SYSDIR}/arch/mac68k/mac68k/*.s ${SYSDIR}/arch/mac68k/dev/*.s
 
 # Directories in which to place tags links
-DMAC68K=mac68k dev include
+DMAC68K=mac68k dev include nubus obio
 
 .include "../../kern/Make.tags.inc"
 
@@ -25,7 +26,7 @@ tags:
 
 links:
 	-for i in ${DMAC68K}; do \
-	    cd $$i && rm -f tags; ln -s ../tags tags; done
+	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
 SUBDIR=	include
