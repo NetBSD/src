@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.27 1997/06/08 05:36:57 mikel Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.28 1997/06/08 17:59:56 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -201,7 +201,7 @@ union mcluster {
 #define	MGET(m, how, type) do { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
 	if (m) { \
-		MBUFLOCK(mbstat.m_mtypes[type]++;) \
+		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
 		(m)->m_next = (struct mbuf *)NULL; \
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
@@ -214,7 +214,7 @@ union mcluster {
 #define	MGETHDR(m, how, type) do { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
 	if (m) { \
-		MBUFLOCK(mbstat.m_mtypes[type]++;) \
+		MBUFLOCK(mbstat.m_mtypes[type]++;); \
 		(m)->m_type = (type); \
 		(m)->m_next = (struct mbuf *)NULL; \
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
@@ -346,7 +346,7 @@ union mcluster {
 } while (0)
 
 #define	MEXTREMOVE(m) \
-	MBUFLOCK(_MEXTREMOVE((m)))
+	MBUFLOCK(_MEXTREMOVE((m));)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
@@ -422,7 +422,7 @@ union mcluster {
 
 /* change mbuf to new type */
 #define MCHTYPE(m, t) do { \
-	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;) \
+	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
 	(m)->m_type = t; \
 } while (0)
 
