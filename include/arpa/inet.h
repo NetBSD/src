@@ -1,3 +1,5 @@
+/*	$NetBSD: inet.h,v 1.4 1994/10/26 00:56:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)inet.h	5.7 (Berkeley) 4/3/91
- *	$Id: inet.h,v 1.3 1994/04/07 06:59:02 deraadt Exp $
+ *	@(#)inet.h	5.7 (Berkeley) 4/3/91
  */
 
 #ifndef _INET_H_

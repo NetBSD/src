@@ -1,3 +1,5 @@
+/*	$NetBSD: rpc_msg.h,v 1.4 1994/10/26 00:57:03 cgd Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -27,8 +29,7 @@
  * Mountain View, California  94043
  *
  *	from: @(#)rpc_msg.h 1.7 86/07/16 SMI
- *	from: @(#)rpc_msg.h	2.1 88/07/29 4.0 RPCSRC
- *	$Id: rpc_msg.h,v 1.3 1993/08/01 18:45:53 mycroft Exp $
+ *	@(#)rpc_msg.h	2.1 88/07/29 4.0 RPCSRC
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: ranlib.h,v 1.4 1994/10/26 00:56:14 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ranlib.h	5.2 (Berkeley) 4/3/91
- *	$Id: ranlib.h,v 1.3 1994/04/03 00:09:23 cgd Exp $
+ *	@(#)ranlib.h	5.2 (Berkeley) 4/3/91
  */
 
 #ifndef _RANLIB_H_

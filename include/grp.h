@@ -1,3 +1,5 @@
+/*	$NetBSD: grp.h,v 1.6 1994/10/26 00:55:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)grp.h	8.2 (Berkeley) 1/21/94
- *	$Id: grp.h,v 1.5 1994/05/16 23:43:17 cgd Exp $
+ *	@(#)grp.h	8.2 (Berkeley) 1/21/94
  */
 
 #ifndef _GRP_H_

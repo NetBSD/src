@@ -1,3 +1,5 @@
+/*	$NetBSD: ar.h,v 1.4 1994/10/26 00:55:43 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ar.h	8.2 (Berkeley) 1/21/94
- *	$Id: ar.h,v 1.3 1994/05/16 10:58:54 cgd Exp $
+ *	@(#)ar.h	8.2 (Berkeley) 1/21/94
  */
 
 #ifndef _AR_H_

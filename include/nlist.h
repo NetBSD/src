@@ -1,3 +1,5 @@
+/*	$NetBSD: nlist.h,v 1.5 1994/10/26 00:56:11 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nlist.h	8.2 (Berkeley) 1/21/94
- *	$Id: nlist.h,v 1.4 1994/10/19 20:29:41 pk Exp $
+ *	@(#)nlist.h	8.2 (Berkeley) 1/21/94
  */
 
 #ifndef _NLIST_H_

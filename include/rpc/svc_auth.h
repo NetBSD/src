@@ -1,3 +1,5 @@
+/*	$NetBSD: svc_auth.h,v 1.4 1994/10/26 00:57:07 cgd Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -27,8 +29,7 @@
  * Mountain View, California  94043
  *
  *	from: @(#)svc_auth.h 1.6 86/07/16 SMI
- *	from: @(#)svc_auth.h	2.1 88/07/29 4.0 RPCSRC
- *	$Id: svc_auth.h,v 1.3 1993/08/01 18:45:50 mycroft Exp $
+ *	@(#)svc_auth.h	2.1 88/07/29 4.0 RPCSRC
  */
 
 /*

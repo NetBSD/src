@@ -1,3 +1,5 @@
+/*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stddef.h	5.5 (Berkeley) 4/3/91
- *	$Id: stddef.h,v 1.3 1994/05/21 09:42:10 cgd Exp $
+ *	@(#)stddef.h	5.5 (Berkeley) 4/3/91
  */
 
 #ifndef _STDDEF_H_

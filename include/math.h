@@ -1,3 +1,5 @@
+/*	$NetBSD: math.h,v 1.10 1994/10/26 00:56:05 cgd Exp $	*/
+
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -10,8 +12,7 @@
  */
 
 /*
- * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.9 1994/08/10 20:48:16 jtc Exp $
+ * @(#)fdlibm.h 5.1 93/09/24
  */
 
 #ifndef _MATH_H_

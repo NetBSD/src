@@ -1,3 +1,5 @@
+/*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ctype.h	5.3 (Berkeley) 4/3/91
- *	$Id: ctype.h,v 1.13 1994/05/16 10:58:56 cgd Exp $
+ *	@(#)ctype.h	5.3 (Berkeley) 4/3/91
  */
 
 #ifndef _CTYPE_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: xdr.h,v 1.5 1994/10/26 00:57:08 cgd Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -27,8 +29,7 @@
  * Mountain View, California  94043
  *
  *	from: @(#)xdr.h 1.19 87/04/22 SMI
- *	from: @(#)xdr.h	2.2 88/07/29 4.0 RPCSRC
- *	$Id: xdr.h,v 1.4 1994/08/09 00:49:47 jtc Exp $
+ *	@(#)xdr.h	2.2 88/07/29 4.0 RPCSRC
  */
 
 /*

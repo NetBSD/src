@@ -1,3 +1,5 @@
+/*	$NetBSD: talkd.h,v 1.3 1994/10/26 00:56:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)talkd.h	5.7 (Berkeley) 4/3/91
- *	$Id: talkd.h,v 1.2 1993/08/01 18:46:06 mycroft Exp $
+ *	@(#)talkd.h	5.7 (Berkeley) 4/3/91
  */
 
 #ifndef _TALKD_H_

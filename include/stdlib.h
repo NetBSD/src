@@ -1,3 +1,5 @@
+/*	$NetBSD: stdlib.h,v 1.20 1994/10/26 00:56:29 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.19 1994/08/07 23:17:56 jtc Exp $
+ *	@(#)stdlib.h	5.13 (Berkeley) 6/4/91
  */
 
 #ifndef _STDLIB_H_

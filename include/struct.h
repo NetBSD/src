@@ -1,3 +1,5 @@
+/*	$NetBSD: struct.h,v 1.3 1994/10/26 00:56:32 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1983 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)struct.h	5.2 (Berkeley) 4/3/91
- *	$Id: struct.h,v 1.2 1993/08/01 18:45:13 mycroft Exp $
+ *	@(#)struct.h	5.2 (Berkeley) 4/3/91
  */
 
 #ifndef _STRUCT_H_

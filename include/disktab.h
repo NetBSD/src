@@ -1,3 +1,5 @@
+/*	$NetBSD: disktab.h,v 1.3 1994/10/26 00:55:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)disktab.h	5.6 (Berkeley) 4/20/91
- *	$Id: disktab.h,v 1.2 1993/08/01 18:44:56 mycroft Exp $
+ *	@(#)disktab.h	5.6 (Berkeley) 4/20/91
  */
 
 #ifndef	_DISKTAB_H_

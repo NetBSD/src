@@ -1,3 +1,5 @@
+/*	$NetBSD: types.h,v 1.7 1994/10/26 00:57:07 cgd Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -27,8 +29,7 @@
  * Mountain View, California  94043
  *
  *	from: @(#)types.h 1.18 87/07/24 SMI
- *	from: @(#)types.h	2.3 88/08/15 4.0 RPCSRC
- *	$Id: types.h,v 1.6 1993/12/06 08:40:00 cgd Exp $
+ *	@(#)types.h	2.3 88/08/15 4.0 RPCSRC
  */
 
 /*

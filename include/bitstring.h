@@ -1,3 +1,5 @@
+/*	$NetBSD: bitstring.h,v 1.4 1994/10/26 00:55:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -17,8 +19,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *	from: @(#)bitstring.h	5.2 (Berkeley) 4/4/90
- *	$Id: bitstring.h,v 1.3 1993/08/01 18:44:58 mycroft Exp $
+ *	@(#)bitstring.h	5.2 (Berkeley) 4/4/90
  */
 
 #ifndef _BITSTRING_H_

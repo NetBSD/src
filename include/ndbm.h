@@ -1,3 +1,5 @@
+/*	$NetBSD: ndbm.h,v 1.5 1994/10/26 00:56:08 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ndbm.h	8.1 (Berkeley) 6/2/93
- *	$Id: ndbm.h,v 1.4 1993/08/01 18:44:46 mycroft Exp $
+ *	@(#)ndbm.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _NDBM_H_

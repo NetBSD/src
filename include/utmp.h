@@ -1,3 +1,5 @@
+/*	$NetBSD: utmp.h,v 1.6 1994/10/26 00:56:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)utmp.h	8.2 (Berkeley) 1/21/94
- *	$Id: utmp.h,v 1.5 1994/10/19 03:43:38 cgd Exp $
+ *	@(#)utmp.h	8.2 (Berkeley) 1/21/94
  */
 
 #ifndef	_UTMP_H_

@@ -1,5 +1,6 @@
-#	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.47 1994/10/15 04:57:10 cgd Exp $
+#	$NetBSD: Makefile,v 1.48 1994/10/26 00:55:40 cgd Exp $
+
+#	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
 # Doing a make install builds /usr/include
 #

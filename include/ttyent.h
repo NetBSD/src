@@ -1,3 +1,5 @@
+/*	$NetBSD: ttyent.h,v 1.5 1994/10/26 00:56:36 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ttyent.h	5.7 (Berkeley) 4/3/91
- *	$Id: ttyent.h,v 1.4 1994/03/18 04:08:46 cgd Exp $
+ *	@(#)ttyent.h	5.7 (Berkeley) 4/3/91
  */
 
 #ifndef	_TTYENT_H_

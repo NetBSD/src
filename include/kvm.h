@@ -1,3 +1,5 @@
+/*	$NetBSD: kvm.h,v 1.6 1994/10/26 00:55:58 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
