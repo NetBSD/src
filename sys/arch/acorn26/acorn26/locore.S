@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.1 2002/03/24 15:46:46 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -30,7 +30,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * locore.S - the (physical) start of the kernel and low-level handlers
  */
@@ -457,4 +456,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.1 2002/03/24 15:46:46 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $")

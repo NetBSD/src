@@ -1,4 +1,4 @@
-/*	$NetBSD: fpuvar.h,v 1.1 2002/03/24 15:46:45 bjh21 Exp $	*/
+/*	$NetBSD: fpuvar.h,v 1.2 2002/03/24 23:37:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -26,7 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #ifndef _FPUVAR_H
 #define _FPUVAR_H

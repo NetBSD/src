@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.1 2002/03/24 15:47:05 bjh21 Exp $ */
+/* $NetBSD: machdep.h,v 1.2 2002/03/24 23:37:43 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * machdep.h - random exported functions that have to be declared somewhere.
  */

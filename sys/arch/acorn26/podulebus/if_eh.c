@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.1 2002/03/24 15:47:22 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -46,14 +46,13 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 /*
  * if_eh.c -- driver for i-cubed EtherLan 100-, 200- and 500-series cards.
  */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.1 2002/03/24 15:47:22 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
