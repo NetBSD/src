@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.4 2001/01/08 14:37:48 bjh21 Exp $
+.\"	$NetBSD: hardware,v 1.5 2001/01/08 16:15:39 bjh21 Exp $
 .
 .Nx*M
 \*V should support all common Acorn machines fitted with
@@ -29,6 +29,9 @@ Acorn AKA25 Ethernet (Ether1,
 .It
 Atomwide Ethernet III (Ether3,
 .Em ea )
+.It
+i-cubed EtherLan 100-, 200- and 500-series (EtherH,
+.Em eh )
 .bullet)
 .Pp
 .Em "New machines (A5000, A4, A3010, A3020 and A4000)"
