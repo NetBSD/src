@@ -1649,7 +1649,7 @@ alpha_get_longjmp_target (CORE_ADDR *pc)
    single_step is also called just after the inferior stops.  If we had
    set up a simulated single-step, we undo our damage.  */
 
-static CORE_ADDR
+CORE_ADDR
 alpha_next_pc (CORE_ADDR pc)
 {
   unsigned int insn;
