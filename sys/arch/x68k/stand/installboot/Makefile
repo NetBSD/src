@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:59 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/01/27 01:07:44 minoura Exp $
 
-PROG=		installboot.new
+PROG=		installboot
 SRCS=		installboot.c
 BINDIR=		/usr/mdec
 WARNS=		2
