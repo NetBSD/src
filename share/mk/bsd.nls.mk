@@ -1,6 +1,7 @@
-#	$NetBSD: bsd.nls.mk,v 1.10 1997/10/11 08:16:28 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.11 1998/04/03 04:40:42 enami Exp $
 
-.if !target(.MAIN)
+.if !target(__initialized__)
+__initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
