@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.22 1999/01/22 06:59:26 mark Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.23 1999/03/16 10:53:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -309,7 +309,9 @@ irq_release(irq, handler)
 	int loop;
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
+#ifdef IRQSTATS
 	extern char *_intrnames;
+#endif
 
 	/*
 	 * IRQ_INSTRUCT indicates that we should get the irq number
