@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.7 1999/01/03 17:13:51 hubertf Exp $	*/
+/*	$NetBSD: tetris.c,v 1.8 1999/02/11 02:34:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,11 +80,7 @@ setup_board()
 
 	p = board;
 	for (i = B_SIZE; i; i--)
-#ifndef mips
 		*p++ = i <= (2 * B_COLS) || (i % B_COLS) < 2;
-#else /* work around compiler bug */
-		*p++ = i <= (2 * B_COLS) || (i % B_COLS) < 2 ? 1 : 0;
-#endif
 }
 
 /*
