@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.11 1998/02/08 05:02:53 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.12 1998/06/09 17:19:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ bus_tmapin(bustype, pa)
 	int bustype, pa;
 {
 	vm_offset_t pgva;
-	int off, pte, s;
+	int off, s;
 
 	if ((bustype < 0) || (bustype >= BUS__NTYPES))
 		panic("bus_tmapin: bustype");
