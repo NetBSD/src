@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.83 2000/11/20 02:44:45 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.84 2000/11/20 03:15:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.83 2000/11/20 02:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.84 2000/11/20 03:15:15 thorpej Exp $");
 
 #include "assym.h"
 
@@ -345,20 +345,6 @@ BSS(ssir, 8)
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f
 1:	LDGP(pv)
-
-#if defined(MULTIPROCESSOR)
-	/* XXX XXX XXX */
-	/*
-	 * Check the current processor ID.  If we're not the primary
-	 * CPU, then just restore registers and bail out.
-	 */
-	call_pal PAL_OSF1_whami
-	lda	t0, hwrpb
-	ldq	t0, 0(t0)
-	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
-	cmpeq	t1, v0, t0
-	beq	t0, 4f				/* == 0: bail out now */
-#endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
