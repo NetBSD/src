@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.19 1993/10/11 19:45:52 jtc Exp $
+#	$Id: Makefile.inc,v 1.20 1993/10/19 21:00:46 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
@@ -32,7 +32,7 @@ SRCS+=	adddf3.s addsf3.s ashlsi3.s ashrsi3.s cmpdf2.s cmpsf2.s divdf3.s \
 	negdf2.s negsf2.s saveregs.c subdf3.s subsf3.s truncdfsf2.s udivsi3.s \
 	umodsi3.s umulsi3.s
 .elif (${MACHINE} == "i386")
-SRCS+=	_setjmp.s alloca.s fabs.s ldexp.c modf.s setjmp.s
+SRCS+=	_setjmp.s alloca.s fabs.s ldexp.c modf.s setjmp.s sigsetjmp.s
 SRCS+=	divsi3.s fixdfsi.s fixunsdfsi.s udivsi3.s
 .elif (${MACHINE} == "pc532")
 SRCS+=	__main.c _setjmp.s alloca.s fabs.s frexp.s infinity.c isinf.c
@@ -91,7 +91,7 @@ MLINKS+=regexp.3 regcomp.3 regexp.3 regexec.3 regexp.3 regsub.3 \
 	regexp.3 regerror.3
 MLINKS+=scandir.3 alphasort.3
 MLINKS+=setjmp.3 _longjmp.3 setjmp.3 _setjmp.3 setjmp.3 longjmp.3 \
-	setjmp.3 longjmperr.3 setjmp.3 longjmperror.3
+	setjmp.3 sigsetjmp.3 setjmp.3 siglongjmp.3 setjmp.3 longjmperror.3
 MLINKS+=setmode.3 getmode.3
 MLINKS+=setuid.3 setegid.3 setuid.3 seteuid.3 setuid.3 setgid.3 \
 	setuid.3 setrgid.3 setuid.3 setruid.3

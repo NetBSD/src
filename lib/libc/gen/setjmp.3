@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)setjmp.3	6.8 (Berkeley) 7/30/91
-.\"	$Id: setjmp.3,v 1.3 1993/10/18 20:04:02 jtc Exp $
+.\"	$Id: setjmp.3,v 1.4 1993/10/19 21:00:48 jtc Exp $
 .\"
 .Dd July 30, 1991
 .Dt SETJMP 3
@@ -166,3 +166,9 @@ and
 .Fn longjmp
 functions conform to
 .St -ansiC .
+The 
+.Fn sigsetjmp
+and
+.Fn siglongjmp
+functions conform to
+.St -p1003.1-90 .
