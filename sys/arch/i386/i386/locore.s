@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.6 1993/10/09 10:08:47 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.7 1993/10/09 22:23:19 mycroft Exp $
  */
 
 
@@ -44,21 +44,20 @@
  *		Written by William F. Jolitz, 386BSD Project
  */
 
-#include "npx.h"
+#include "errno.h"
+#include "sys/syscall.h"
 
+#include "npx.h"
 #include "assym.s"
+
+#include "machine/cputypes.h"
 #include "machine/psl.h"
 #include "machine/pte.h"
-
-#include "errno.h"
-
 #include "machine/trap.h"
-
 #include "machine/specialreg.h"
-#include "i386/isa/debug.h"
-#include "machine/cputypes.h"
 
-#include "sys/syscall.h"
+#include "i386/isa/debug.h"
+#include "i386/isa/isa.h"
 
 #define	KDSEL		0x10
 #define	SEL_RPL_MASK	0x0003
@@ -142,8 +141,6 @@ tmpstk:
 	.text
 	.globl	start
 start:	movw	$0x1234,0x472	# warm boot
-	jmp	1f
-	.space	0x500		# skip over warm boot shit
 
 	/*
 	 * pass parameters on stack (howto, bootdev, unit, cyloffset, esym)
@@ -151,7 +148,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	 * ( if we want to hold onto /boot, it's physical %esp up to _end)
 	 */
 
- 1:	movl	4(%esp),%eax
+	movl	4(%esp),%eax
 	movl	%eax,_boothowto-KERNBASE
 	movl	8(%esp),%eax
 	movl	%eax,_bootdev-KERNBASE
@@ -159,7 +156,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,_cyloffset-KERNBASE
  	movl	16(%esp),%eax
  	addl	$(KERNBASE),%eax
- 	movl	%eax, _esym-KERNBASE
+ 	movl	%eax,_esym-KERNBASE
 
 	/* find out our CPU type. */
         pushfl
@@ -208,17 +205,6 @@ start:	movw	$0x1234,0x472	# warm boot
 
 /* find end of kernel image */
 	movl	$(_end-KERNBASE),%ecx
-	movl	%ecx,%esi
-	movl	$(_edata-KERNBASE),%edi
-	subl	%edi,%ecx
-
-/* clear bss */
-	xorl	%eax,%eax	# pattern
-	cld
-	rep
-	stosb
-
-	movl	%esi,%ecx	# if syms are not loaded
 #if	defined(DDB) && !defined(SYMTAB_SPACE)
 /* save the symbols (if loaded) */
 	cmpl	$0,_esym-KERNBASE
@@ -258,10 +244,6 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%esi,%ecx		# this much memory,
 	shrl	$(PGSHIFT),%ecx		# for this many pte s
 	addl	$(UPAGES+4),%ecx	# including our early context
-	cmpl	$0xa0,%ecx		# XXX - cover debugger pages
-	jae	1f
-	movl	$0xa0,%ecx
-1:
 	movl	$(PG_V|PG_KW),%eax	#  having these bits set,
 	lea	(4*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
 	movl	%ebx,_KPTphys-KERNBASE	#    in the kernel page table,
@@ -269,8 +251,8 @@ start:	movw	$0x1234,0x472	# warm boot
 
 /* map I/O memory map */
 
-	movl	$0x100-0xa0,%ecx	# for this many pte s,
-	movl	$(0xa0000|PG_V|PG_UW),%eax # having these bits set,(perhaps URW?) XXX 06 Aug 92
+	movl	$(IOM_SIZE>>PGSHIFT),%ecx # for this many pte s,
+	movl	$(IOM_BEGIN|PG_V|PG_UW),%eax # having these bits set,(perhaps URW?) XXX
 	movl	%ebx,_atdevphys-KERNBASE#   remember phys addr of ptes
 	fillkpt
 
@@ -367,16 +349,11 @@ start:	movw	$0x1234,0x472	# warm boot
 begin: /* now running relocated at KERNBASE where the system is linked to run */
 
 	/* XXX this is nasty */
-	.globl _Crtat
-	movl	_Crtat,%eax
-	subl	$0xfe0a0000,%eax
 	movl	_atdevphys,%edx		# get pte PA
 	subl	_KPTphys,%edx		# remove base of ptes; have phys offset
 	shll	$(PGSHIFT-2),%edx	# corresponding to virt offset
 	addl	$(KERNBASE),%edx	# add virtual base
 	movl	%edx,_atdevbase
-	addl	%eax,%edx
-	movl	%edx,_Crtat
 
 	/* set up bootstrap stack */
 	movl	$(_kstack+UPAGES*NBPG-4*12),%esp # bootstrap stack end location
@@ -1413,70 +1390,6 @@ ENTRY(longjmp)
  */
 
 	.globl	_whichqs,_qs,_cnt,_panic
-	.comm	_noproc,4
-	.comm	_runrun,4
-
-/*
- * Setrq(p)
- *
- * Call should be made at spl6(), and p->p_stat should be SRUN
- */
-ENTRY(setrq)
-	movl	4(%esp),%eax
-	cmpl	$0,P_RLINK(%eax)	# should not be on q already
-	je	set1
-	pushl	$set2
-	call	_panic
-set1:
-	movzbl	P_PRI(%eax),%edx
-	shrl	$2,%edx
-	btsl	%edx,_whichqs		# set q full bit
-	shll	$3,%edx
-	addl	$_qs,%edx		# locate q hdr
-	movl	%edx,P_LINK(%eax)	# link process on tail of q
-	movl	P_RLINK(%edx),%ecx
-	movl	%ecx,P_RLINK(%eax)
-	movl	%eax,P_RLINK(%edx)
-	movl	%eax,P_LINK(%ecx)
-	ret
-
-set2:	.asciz	"setrq"
-
-/*
- * Remrq(p)
- *
- * Call should be made at spl6().
- */
-ENTRY(remrq)
-	movl	4(%esp),%eax
-	movzbl	P_PRI(%eax),%edx
-	shrl	$2,%edx
-	btrl	%edx,_whichqs		# clear full bit, panic if clear already
-	jb	rem1
-	pushl	$rem3
-	call	_panic
-rem1:
-	pushl	%edx
-	movl	P_LINK(%eax),%ecx	# unlink process
-	movl	P_RLINK(%eax),%edx
-	movl	%edx,P_RLINK(%ecx)
-	movl	P_RLINK(%eax),%ecx
-	movl	P_LINK(%eax),%edx
-	movl	%edx,P_LINK(%ecx)
-	popl	%edx
-	movl	$_qs,%ecx
-	shll	$3,%edx
-	addl	%edx,%ecx
-	cmpl	P_LINK(%ecx),%ecx	# q still has something?
-	je	rem2
-	shrl	$3,%edx			# yes, set bit as still full
-	btsl	%edx,_whichqs
-rem2:
-	movl	$0,P_RLINK(%eax)	# zap reverse link to indicate off list
-	ret
-
-rem3:	.asciz	"remrq"
-sw0:	.asciz	"swtch"
 
 /*
  * When no processes are on the runq, Swtch branches to idle
@@ -1500,6 +1413,7 @@ idle:
 badsw:
 	pushl	$sw0
 	call	_panic
+sw0:	.asciz	"swtch"
 	/*NOTREACHED*/
 
 /*
