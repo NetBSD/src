@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.10 2002/03/18 16:01:02 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.11 2002/03/23 23:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.10 2002/03/18 16:01:02 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.11 2002/03/23 23:39:18 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -128,7 +128,10 @@ main(int argc, char *argv[])
 	int num;
 	const char *buf;
 	Tokenizer *tok;
-	int lastevent = 0, ncontinuation;
+#if 0
+	int lastevent = 0;
+#endif
+	int ncontinuation;
 	History *hist;
 	HistEvent ev;
 
@@ -173,16 +176,14 @@ main(int argc, char *argv[])
 
 	while ((buf = el_gets(el, &num)) != NULL && num != 0)  {
 		int ac;
-		char **av;
+		const char **av;
 #ifdef DEBUG
 		(void) fprintf(stderr, "got %d %s", num, buf);
 #endif
 		if (!continuation && num == 1)
 			continue;
 
-		if (tok_line(tok, buf, &ac, &av) > 0)
-			ncontinuation = 1;
-
+		ncontinuation = tok_line(tok, buf, &ac, &av) > 0;
 #if 0
 		if (continuation) {
 			/*
@@ -238,7 +239,7 @@ main(int argc, char *argv[])
 		} else if (el_parse(el, ac, av) == -1) {
 			switch (fork()) {
 			case 0:
-				execvp(av[0], av);
+				execvp(av[0], (char *const *)av);
 				perror(av[0]);
 				_exit(1);
 				/*NOTREACHED*/
