@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.19 1998/02/03 18:23:49 perry Exp $	*/
+/*	$NetBSD: popen.c,v 1.20 1998/02/04 00:03:54 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.19 1998/02/03 18:23:49 perry Exp $");
+__RCSID("$NetBSD: popen.c,v 1.20 1998/02/04 00:03:54 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,14 +96,17 @@ popen(command, type)
 		}
 	}
 
-	if ((cur = malloc(sizeof(struct pid))) == NULL)
+	if ((cur = malloc(sizeof(struct pid))) == NULL) {
+		(void)close(pdes[0]);
+		(void)close(pdes[1]);
 		return (NULL);
+	}
 
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
+		free(cur);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
-		free(cur);
 		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* Child. */
@@ -111,11 +114,10 @@ popen(command, type)
 			if (pdes[1] != STDOUT_FILENO) {
 				(void)dup2(pdes[1], STDOUT_FILENO);
 				(void)close(pdes[1]);
-				pdes[1] = STDOUT_FILENO;
 			}
 			(void) close(pdes[0]);
-			if (twoway && (pdes[1] != STDIN_FILENO))
-				(void)dup2(pdes[1], STDIN_FILENO);
+			if (twoway)
+				(void)dup2(STDOUT_FILENO, STDIN_FILENO);
 		} else {
 			if (pdes[0] != STDIN_FILENO) {
 				(void)dup2(pdes[0], STDIN_FILENO);
