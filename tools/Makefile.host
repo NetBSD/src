@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile.host,v 1.13 2001/12/12 01:50:20 tv Exp $
+#	$NetBSD: Makefile.host,v 1.14 2001/12/12 02:48:46 tv Exp $
+
+NOLINT=		# defined
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
