@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.38 2000/02/21 02:04:48 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.39 2000/03/07 06:35:22 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2148,11 +2148,13 @@ adb_reinit(void)
 
 	/* initial scan through the devices */
 	for (i = 1; i < 16; i++) {
-		command = (int)(0x0f | ((int)(i & 0x000f) << 4));	/* talk R3 */
+		command = ((int)(i & 0xf) << 4) | 0xf;	/* talk R3 */
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
 		if (0x00 != send_string[0]) {	/* anything come back ?? */
-			ADBDevTable[++ADBNumDevices].devType =
+			++ADBNumDevices;
+			KASSERT(ADBNumDevices < 16);
+			ADBDevTable[ADBNumDevices].devType =
 				(int)(send_string[2]);
 			ADBDevTable[ADBNumDevices].origAddr = i;
 			ADBDevTable[ADBNumDevices].currentAddr = i;
@@ -2169,9 +2171,6 @@ adb_reinit(void)
 		if (-1 == get_adb_info(&data, saveptr))
 			break;
 
-	if (saveptr == 0)	/* no free addresses??? */
-		saveptr = 15;
-
 #ifdef ADB_DEBUG
 	if (adb_debug & 0x80) {
 		printf_intr("first free is: 0x%02x\n", saveptr);
@@ -2180,7 +2179,7 @@ adb_reinit(void)
 #endif
 
 	nonewtimes = 0;		/* no loops w/o new devices */
-	while (nonewtimes++ < 11) {
+	while (saveptr > 0 && nonewtimes++ < 11) {
 		for (i = 1; i <= ADBNumDevices; i++) {
 			device = ADBDevTable[i].currentAddr;
 #ifdef ADB_DEBUG
@@ -2190,12 +2189,12 @@ adb_reinit(void)
 #endif
 
 			/* send TALK R3 to address */
-			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
+			command = ((int)(device & 0xf) << 4) | 0xf;
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 
 			/* move device to higher address */
-			command = (int)(0x0b | ((int)(device & 0x000f) << 4));
+			command = ((int)(device & 0xf) << 4) | 0xb;
 			send_string[0] = 2;
 			send_string[1] = (u_char)(saveptr | 0x60);
 			send_string[2] = 0xfe;
@@ -2203,8 +2202,22 @@ adb_reinit(void)
 			    (Ptr)0, (short)command);
 			delay(500);
 
+			/* send TALK R3 - anthing at new address? */
+			command = ((int)(saveptr & 0xf) << 4) | 0xf;
+			adb_op_sync((Ptr)send_string, (Ptr)0,
+			    (Ptr)0, (short)command);
+			delay(500);
+
+			if (send_string[0] == 0) {
+#ifdef ADB_DEBUG
+				if (adb_debug & 0x80)
+					printf_intr("failed, continuing\n");
+#endif
+				continue;
+			}
+
 			/* send TALK R3 - anything at old address? */
-			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
+			command = ((int)(device & 0xf) << 4) | 0xf;
 			result = adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
 			if (send_string[0] != 0) {
@@ -2220,7 +2233,11 @@ adb_reinit(void)
 				if (adb_debug & 0x80)
 					printf_intr("new device found\n");
 #endif
-				ADBDevTable[++ADBNumDevices].devType =
+				if (saveptr > ADBNumDevices) {
+					++ADBNumDevices;
+					KASSERT(ADBNumDevices < 16);
+				}
+				ADBDevTable[ADBNumDevices].devType =
 					(int)(send_string[2]);
 				ADBDevTable[ADBNumDevices].origAddr = device;
 				ADBDevTable[ADBNumDevices].currentAddr = device;
@@ -2231,11 +2248,14 @@ adb_reinit(void)
 				ADBDevTable[ADBNumDevices].ServiceRtPtr =
 				    (void *)0;
 				/* find next unused address */
-				for (x = saveptr; x > 0; x--)
+				for (x = saveptr; x > 0; x--) {
 					if (-1 == get_adb_info(&data, x)) {
 						saveptr = x;
 						break;
 					}
+				}
+				if (x == 0)
+					saveptr = 0;
 #ifdef ADB_DEBUG
 				if (adb_debug & 0x80)
 					printf_intr("new free is 0x%02x\n",
@@ -2250,7 +2270,7 @@ adb_reinit(void)
 					printf_intr("moving back...\n");
 #endif
 				/* move old device back */
-				command = (int)(0x0b | ((int)(saveptr & 0x000f) << 4));
+				command = ((int)(saveptr & 0xf) << 4) | 0xb;
 				send_string[0] = 2;
 				send_string[1] = (u_char)(device | 0x60);
 				send_string[2] = 0xfe;
