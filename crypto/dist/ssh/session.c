@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.15 2001/06/14 02:45:31 itojun Exp $	*/
+/*	$NetBSD: session.c,v 1.16 2001/06/18 10:26:33 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -296,6 +296,10 @@ do_authenticated1(Authctxt *authctxt)
 			}
 			if (!options.xauth_location) {
 				packet_send_debug("No xauth program; cannot forward with spoofing.");
+				break;
+			}
+			if (options.use_login) {
+				packet_send_debug("X11 forwarding disabled; not compatible with UseLogin=yes.");
 				break;
 			}
 			if (no_x11_forwarding_flag) {
@@ -1410,6 +1414,10 @@ session_x11_req(Session *s)
 	}
 	if (!options.x11_forwarding) {
 		debug("X11 forwarding disabled in server configuration file.");
+		return 0;
+	}
+	if (options.use_login) {
+		debug("X11 forwarding disabled; not compatible with UseLogin=yes.");
 		return 0;
 	}
 	debug("Received request for X11 forwarding with auth spoofing.");
