@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.10 2000/01/16 05:56:14 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.11 2000/01/16 09:15:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -216,7 +216,13 @@ lfs_segunlock(fs)
 				--lfs_dirvcount;
 				vp->v_flag &= ~VDIROP;
 				wakeup(&lfs_dirvcount);
-				vrele(vp);
+				if(vp->v_usecount == 1) {
+					/* vput will VOP_INACTIVE */
+					VOP_LOCK(vp,LK_EXCLUSIVE);
+					vput(vp);
+				} else
+					lfs_vunref(vp);
+
 			}
 		}
 
