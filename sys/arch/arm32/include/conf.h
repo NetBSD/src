@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.9 1998/11/13 04:47:04 oster Exp $	*/
+/*	$NetBSD: conf.h,v 1.10 1998/11/29 06:56:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -119,33 +119,12 @@ cdev_decl(raid);
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
-/* open, close, ioctl */
-#define cdev_usb_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
-
 /* open, close, read, ioctl */
 #define cdev_prof_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
-
-/* open, close, read, write, ioctl, poll */
-#define cdev_usbdev_init(c,n) { \
-      dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-      dev_init(c,n,write), dev_init(c,n,ioctl), \
-      (dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-      (dev_type_mmap((*))) enodev }
-
-/* open, close, ioctl */
-#define cdev_usb_init(c,n) { \
-      dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-      (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-      (dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-      (dev_type_mmap((*))) enodev }
 
 #define mmread  mmrw
 #define mmwrite mmrw
