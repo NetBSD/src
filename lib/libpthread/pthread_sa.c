@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.16 2002/01/28 18:47:37 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.17 2002/02/08 07:24:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,12 +70,14 @@ extern struct pthread_queue_t runqueue;
 
 #define pthread__sa_id(sap) (pthread__id((sap)->sa_context))
 
+void pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, 
+    void *arg);
 int pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
     pthread_t self);
 void pthread__resolve_locks(pthread_t self, pthread_t *interrupted);
 void pthread__recycle_bulk(pthread_t self, pthread_t qhead);
 
-static void
+void
 pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
 	pthread_t t, self, next, intqueue;
@@ -93,7 +95,9 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread_spinlock(self, &t->pt_statelock);
 		t->pt_state = PT_STATE_BLOCKED_SYS;
 		pthread_spinunlock(self, &t->pt_statelock);
+#ifdef PTHREAD__DEBUG
 		t->blocks++;
+#endif
 		t->pt_blockedlwp = sas[1]->sa_id;
 		if (t->pt_cancel)
 			_lwp_wakeup(t->pt_blockedlwp);
@@ -190,7 +194,9 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 
 	for (i = 0; i < nsas; i++) {
 		victim = pthread__sa_id(sas[i]);
+#ifdef PTHREAD__DEBUG
 		victim->preempts++;
+#endif
 		victim->pt_uc = sas[i]->sa_context;
 		SDPRINTF(("(fi %p) victim %d %p", self, i, victim));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
@@ -288,8 +294,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 		prev = NULL;
 		for (victim = intqueue; victim != self; victim = next) {
 			next = victim->pt_next;
-		SDPRINTF(("(rl %p) victim %p (uc %p)", self, victim, 
-		    victim->pt_uc));
+			SDPRINTF(("(rl %p) victim %p (uc %p)", self, victim, 
+			    victim->pt_uc));
 
 			if (victim->pt_switchto) {
 				PTHREADD_ADD(PTHREADD_SWITCHTO);
@@ -383,8 +389,9 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			 * chain, and we will continue here, having
 			 * returned from the switch.
 			 */
-			SDPRINTF(("(rl %p) chain switching to %p\n",
-			    self, intqueue));
+			SDPRINTF(("(rl %p) chain switching to %p (pc: %lx sp: %lx)\n",
+			    self, intqueue, pthread__uc_pc(intqueue->pt_uc), 
+			    pthread__uc_sp(intqueue->pt_uc)));
 			pthread__switch(self, intqueue);
 			SDPRINTF(("(rl %p) returned from chain switch\n",
 			    self));
@@ -475,6 +482,7 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 
 	if (do_recycle) {
 		ret = sa_stacks(recycle_threshold, recyclable[my_side]);
+		SDPRINTF(("recycled %d stacks\n", recycle_threshold));
 		if (ret != recycle_threshold)
 			assert(0);
 	}
