@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 2002/04/28 17:10:36 uch Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 2002/05/09 12:31:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,6 @@
 #define	PSL_USERSTATIC	(PSL_BL|PSL_RB|PSL_MD|PSL_IMASK|PSL_MBO|PSL_MBZ)
 
 #define	KERNELMODE(sr)		((sr) & PSL_MD)
-#define	USERMODE(sr)		(!KERNELMODE(sr))
 
 #ifdef _KERNEL
 #ifndef _LOCORE
