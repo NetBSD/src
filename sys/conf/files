@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.177 1998/03/22 04:37:04 enami Exp $
+#	$NetBSD: files,v 1.178 1998/04/03 19:50:50 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -237,7 +237,7 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
-file ddb/db_access.c			ddb
+file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
 file ddb/db_command.c			ddb
@@ -248,7 +248,7 @@ file ddb/db_input.c			ddb
 file ddb/db_lex.c			ddb
 file ddb/db_output.c			ddb
 file ddb/db_print.c			ddb
-file ddb/db_run.c			ddb
+file ddb/db_run.c			ddb | kgdb
 file ddb/db_sym.c			ddb
 file ddb/db_trap.c			ddb
 file ddb/db_variables.c			ddb
