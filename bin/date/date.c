@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.13 1997/01/24 18:17:17 perry Exp $	*/
+/*	$NetBSD: date.c,v 1.14 1997/03/26 20:28:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: date.c,v 1.13 1997/01/24 18:17:17 perry Exp $";
+static char rcsid[] = "$NetBSD: date.c,v 1.14 1997/03/26 20:28:11 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$NetBSD: date.c,v 1.13 1997/01/24 18:17:17 perry Exp $";
 #include <locale.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "extern.h"
 
@@ -68,8 +69,6 @@ int retval, nflag;
 static void setthetime __P((char *));
 static void badformat __P((void));
 static void usage __P((void));
-
-int logwtmp __P((char *, char *, char *));
 
 int
 main(argc, argv)
