@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.9 2002/05/09 16:28:11 thorpej Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.9.4.1 2003/09/07 13:09:53 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9 2002/05/09 16:28:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9.4.1 2003/09/07 13:09:53 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9 2002/05/09 16:28:11 thorpej E
 
 extern int i386_fpu_present, i386_fpu_exception, i386_fpu_fdivbug;
 extern u_int64_t cpu_tsc_freq;
-extern int cpu_feature;
 extern char cpu_model[];
 extern char cpu_vendor[];
 extern int cpu_id, cpu_class;

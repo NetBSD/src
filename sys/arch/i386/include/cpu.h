@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2002/05/12 23:16:52 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80.4.1 2003/09/07 13:09:54 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -179,7 +179,7 @@ extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;
 extern int cpu_class;
-extern int cpu_feature;
+extern unsigned int cpu_feature;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
