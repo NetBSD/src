@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.5 1997/11/16 17:03:12 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.6 1997/12/01 17:03:24 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.5 1997/11/16 17:03:12 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.6 1997/12/01 17:03:24 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,6 +224,9 @@ pr_family(af)
 		break;
 	case AF_CCITT:
 		afname = "X.25";
+		break;
+	case AF_APPLETALK:
+		afname = "AppleTalk";
 		break;
 #endif /* SMALL */
 	default:
