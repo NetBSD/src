@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.18 1993/10/27 21:25:07 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.19 1993/10/28 14:29:33 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -163,6 +163,8 @@ struct fd_softc {
 	int	sc_skip;		/* bytes transferred so far */
 	int	sc_hddrv;
 	int	sc_track;		/* where we think the head is */
+	int	sc_nblks;		/* number of blocks tranferring */
+	daddr_t	sc_blkno;		/* starting block number */
 };
 
 /* floppy driver configuration */
@@ -435,7 +437,7 @@ fdstrategy(bp)
  	bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
 #ifdef DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d nblks %d\n",
-	       bp->b_blkno, bp->b_bcount, blkno, bp->b_cylin, nblks);
+	       bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, nblks);
 #endif
 	dp = &(fdc->sc_head);
 	s = splbio();
@@ -670,11 +672,12 @@ fdcstate(fdc)
 {
 #define	st0	fdc->sc_status[0]
 #define	cyl	fdc->sc_status[1]
-	int	read, head, trac, sec, i, s, sectrac, blkno;
-	struct	fd_softc *fd;
-	int	fdu;
-	u_short	iobase = fdc->sc_iobase;
-	struct	buf *dp, *bp;
+	struct fd_softc *fd;
+	int fdu;
+	u_short iobase = fdc->sc_iobase;
+	int read, head, trac, sec, i, s, sectrac, blkno, nblks;
+	struct fd_type *type;
+	struct buf *dp, *bp;
 
 	dp = &(fdc->sc_head);
 	bp = dp->b_actf;
@@ -703,8 +706,9 @@ fdcstate(fdc)
 	    case DEVIDLE:
 	    case FINDWORK:			/* we have found new work */
 		fdc->sc_retry = 0;
-		fd->sc_skip = 0;
 		fdc->sc_afd = fd;
+		fd->sc_skip = 0;
+		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
 		if (fd->sc_flags & FD_MOTOR_WAIT) {
 			fdc->sc_state = MOTORWAIT;
 			return 0;
@@ -734,13 +738,26 @@ fdcstate(fdc)
 
 		/* fall through */
 	    case DOIO:
-		at_dma(read, bp->b_un.b_addr + fd->sc_skip, FDC_BSIZE, fdc->sc_drq);
-		blkno = bp->b_blkno*DEV_BSIZE/FDC_BSIZE + fd->sc_skip/FDC_BSIZE;
-		sectrac = fd->sc_type->sectrac;
-		sec = blkno % (sectrac * fd->sc_type->heads);
+		type = fd->sc_type;
+		sectrac = type->sectrac;
+		sec = fd->sc_blkno % (sectrac * type->heads);
+		nblks = (sectrac * type->heads) - sec;
+		nblks = min(nblks, (bp->b_bcount - fd->sc_skip) / FDC_BSIZE);
+		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		fd->sc_nblks = nblks;
 		head = sec / sectrac;
-		sec = sec % sectrac + 1;
+		sec %= sectrac;
 		fd->sc_hddrv = (head << 2) | fd->sc_drive;
+#ifdef DIAGNOSTIC
+		{int block;
+		 block = (fd->sc_track * type->heads / type->step + head) * sectrac + sec;
+		 if (block != fd->sc_blkno) {
+			 printf("fdcstate: block %d != blkno %d\n", block, fd->sc_blkno);
+			 Debugger();
+		 }}
+#endif
+		at_dma(read, bp->b_un.b_addr + fd->sc_skip, nblks * FDC_BSIZE,
+		       fdc->sc_drq);
 		if (read)
 			out_fdc(iobase, NE7CMD_READ);	/* READ */
 		else
@@ -748,11 +765,11 @@ fdcstate(fdc)
 		out_fdc(iobase, fd->sc_hddrv);		/* head & unit */
 		out_fdc(iobase, fd->sc_track);		/* track */
 		out_fdc(iobase, head);
-		out_fdc(iobase, sec);			/* sector +1 */
-		out_fdc(iobase, fd->sc_type->secsize);	/* sector size */
+		out_fdc(iobase, sec + 1);		/* sector +1 */
+		out_fdc(iobase, type->secsize);		/* sector size */
 		out_fdc(iobase, sectrac);		/* sectors/track */
-		out_fdc(iobase, fd->sc_type->gap1);	/* gap1 size */
-		out_fdc(iobase, fd->sc_type->datalen);	/* data length */
+		out_fdc(iobase, type->gap1);		/* gap1 size */
+		out_fdc(iobase, type->datalen);		/* data length */
 		fdc->sc_state = IOCOMPLETE;
 		/* allow 2 seconds for operation */
 		timeout((timeout_t)fd_timeout, (caddr_t)fdc, 2 * hz);
@@ -792,11 +809,11 @@ fdcstate(fdc)
 			return fdcretry(fdc);
 		}
 		at_dma_terminate(fdc->sc_drq);
-		fd->sc_skip += FDC_BSIZE;
+		fd->sc_skip += (nblks = fd->sc_nblks) * FDC_BSIZE;
 		if (fd->sc_skip < bp->b_bcount) {
 			/* set up next transfer */
-			struct fd_type *type = fd->sc_type;
-			blkno = bp->b_blkno*DEV_BSIZE/FDC_BSIZE + fd->sc_skip/FDC_BSIZE;
+			blkno = fd->sc_blkno += nblks;
+			type = fd->sc_type;
 			bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
 			fdc->sc_state = DOSEEK;
 		} else {
