@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.37 2001/12/30 16:47:55 lukem Exp $
+.\"	$NetBSD: newfs.8,v 1.38 2001/12/31 02:27:14 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,7 +174,19 @@ for more details on how to set this option.
 .It Fl b Ar block-size
 The block size of the file system, in bytes.
 It must be a power of two.
-The default size is 8192 bytes, and the smallest allowable size is 4096 bytes.
+The smallest allowable size is 4096 bytes.
+The default size depends upon the size of the file system:
+.Pp
+.Bl -tag -width "file system size" -compact -offset indent
+.It Sy "file system size"
+.Ar block-size
+.It \&< 20 MB
+4 KB
+.It \&< 1024 MB
+8 KB
+.It \&>\&= 1024 MB
+16 KB
+.El
 .It Fl c Ar cpg
 The number of cylinders per cylinder group in a file system.
 The default is to compute the maximum allowed by the other parameters.
@@ -202,23 +214,45 @@ It must be a power of two ranging in value between
 .Ar block-size Ns /8
 and
 .Ar block-size .
-The default is 1024 bytes.
 The optimal
 .Ar block-size Ns : Ns Ar frag-size
 ratio is 8:1.
 Other ratios are possible, but are not recommended,
 and may produce unpredictable results.
+The default size depends upon the size of the file system:
+.Pp
+.Bl -tag -width "file system size" -compact -offset indent
+.It Sy "file system size"
+.Ar frag-size
+.It \&< 20 MB
+0.5 KB
+.It \&< 1024 MB
+1 KB
+.It \&>\&= 1024 MB
+2 KB
+.El
 .It Fl g Ar avgfilesize
 The expected average file size for the file system.
 .It Fl h Ar avgfpdir
 The expected average number of files per directory on the file system.
 .It Fl i Ar bytes-per-inode
 This specifies the density of inodes in the file system.
-The default is to create an inode for every
-.Pq 4 * Ar frag-size
-bytes of data space.
 If fewer inodes are desired, a larger number should be used;
 to create more inodes a smaller number should be given.
+The default is to create an inode for every
+.Pq 4 * Ar frag-size
+bytes of data space:
+.Pp
+.Bl -tag -width "file system size" -compact -offset indent
+.It Sy "file system size"
+.Ar bytes-per-inode
+.It \&< 20 MB
+2 KB
+.It \&< 1024 MB
+4 KB
+.It \&>\&= 1024 MB
+8 KB
+.El
 .It Fl m Ar free-space
 The percentage of space reserved from normal users; the minimum free
 space threshold.
