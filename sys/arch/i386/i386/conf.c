@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.144 2001/09/03 17:18:22 drochner Exp $	*/
+/*	$NetBSD: conf.c,v 1.145 2001/09/10 10:08:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -234,6 +234,8 @@ cdev_decl(mlx);
 #include "mly.h"
 cdev_decl(mly);
 cdev_decl(edmca);
+#include "agp.h"
+cdev_decl(agp);
 
 #include <altq/altqconf.h>
 
@@ -331,6 +333,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NED_MCA,edmca),	/* 79: PS/2 ESDI disk */
 	cdev__oci_init(NMLY,mly),	/* 80: Newer Mylex control interface */
 	cdev__oci_init(NWSFONT,wsfont),	/* 81: wsfont pseudo-device */
+	cdev__ocim_init(NAGP,agp),	/* 82: AGP graphics aperture device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -453,6 +456,8 @@ static int chrtoblktbl[] = {
 	/* 78 */	NODEV,
 	/* 79 */	20,
 	/* 80 */	NODEV,
+	/* 81 */	NODEV,
+	/* 82 */	NODEV,
 };
 
 /*
