@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.53 1999/10/27 19:10:58 is Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.54 1999/10/28 08:12:14 jun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.50 1999/10/27 19:10:02 is Exp 
+ *	NetBSD: pcmciadevs,v 1.52 1999/10/28 07:21:28 jun Exp 
  */
 
 /*-
@@ -488,6 +488,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
 	    PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
+	    0,
+	    "Corega K.K.",
+	    "Corega"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
+	    PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
 	    0,
 	    "Corega K.K.",
 	    "Corega"	},
