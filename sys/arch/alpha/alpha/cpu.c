@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.42 2000/02/09 23:25:15 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.43 2000/04/03 01:47:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2000/02/09 23:25:15 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2000/04/03 01:47:28 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -103,6 +103,16 @@ void	cpu_boot_secondary __P((struct cpu_info *));
 paddr_t curpcb;				/* PA of our current context */
 struct	proc *fpcurproc;		/* current owner of FPU */
 #endif /* MULTIPROCESSOR */
+
+/*
+ * The Implementation Version and the Architecture Mask must be
+ * consistent across all CPUs in the system, so we set it for the
+ * primary and announce the AMASK extensions if they exist.
+ *
+ * Note, we invert the AMASK so that if a bit is set, it means "has
+ * extension".
+ */
+u_long	cpu_implver, cpu_amask;
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, struct cfdata *, void *);
@@ -203,7 +213,7 @@ cpuattach(parent, dev, aux)
 	struct mainbus_attach_args *ma = aux;
 	int i;
 	char **s;
-        struct pcs *p;
+	struct pcs *p;
 #ifdef DEBUG
 	int needcomma;
 #endif
@@ -241,8 +251,21 @@ cpuattach(parent, dev, aux)
 
 recognized:
 
+	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
+		cpu_implver = alpha_implver();
+		if (cpu_implver >= ALPHA_IMPLVER_EV5)
+			cpu_amask =
+			    (~alpha_amask(ALPHA_AMASK_ALL)) & ALPHA_AMASK_ALL;
+		if (cpu_amask) {
+			char bits[64];
+
+			printf("%s: Architecture extensions: %s\n",
+			    dev->dv_xname, bitmask_snprintf(cpu_amask,
+				ALPHA_AMASK_BITS, bits, sizeof(bits)));
+		}
+	}
+
 #ifdef DEBUG
-	/* XXX SHOULD CHECK ARCHITECTURE MASK, TOO */
 	if (p->pcs_proc_var != 0) {
 		printf("%s: ", dev->dv_xname);
 
