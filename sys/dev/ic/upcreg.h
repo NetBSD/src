@@ -1,4 +1,4 @@
-/* $NetBSD: upcreg.h,v 1.1 2000/08/08 22:14:53 bjh21 Exp $ */
+/* $NetBSD: upcreg.h,v 1.2 2000/08/16 23:56:12 bjh21 Exp $ */
 
 /*
  * Ben Harris, 2000
@@ -16,6 +16,8 @@
  * CHIPS 82C711 Universal Peripheral Controller II
  * CHIPS 82C721 Universal Peripheral Controller III
  */
+
+#define UPC_BUS_SIZE		0x400 /* Approximate */
 
 /* Fixed port addresses */
 
@@ -74,13 +76,13 @@
 #define UPC_CR2_UART2_2F8	0x10 /* 2ndary serial at 0x2F8 */
 #define UPC_CR2_UART2_COM3	0x20 /* 2ndary serial at COM3 (see CR1) */
 #define UPC_CR2_UART2_COM4	0x30 /* 2ndary serial at COM4 (see CR1) */
-#define UPC_CR2_UART1_ON	0x80 /* primary serial powered */
-#define UPC_CR2_UART1_ENABLE	0x40 /* primary serial enabled */
-#define UPC_CR2_UART1_MASK	0x30 /* primary serial address */
+#define UPC_CR2_UART1_ON	0x08 /* primary serial powered */
+#define UPC_CR2_UART1_ENABLE	0x04 /* primary serial enabled */
+#define UPC_CR2_UART1_MASK	0x03 /* primary serial address */
 #define UPC_CR2_UART1_3F8	0x00 /* primary serial at 0x3F8 */
-#define UPC_CR2_UART1_2F8	0x10 /* primary serial at 0x2F8 */
-#define UPC_CR2_UART1_COM3	0x20 /* primary serial at COM3 (see CR1) */
-#define UPC_CR2_UART1_COM4	0x30 /* primary serial at COM4 (see CR1) */
+#define UPC_CR2_UART1_2F8	0x01 /* primary serial at 0x2F8 */
+#define UPC_CR2_UART1_COM3	0x02 /* primary serial at COM3 (see CR1) */
+#define UPC_CR2_UART1_COM4	0x03 /* primary serial at COM4 (see CR1) */
 
 /* Configuration register 3 */
 #define UPC_CR3_UART2_TEST	0x80 /* 2ndary serial test mode */
