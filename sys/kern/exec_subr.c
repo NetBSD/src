@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.30 2002/08/25 19:13:08 thorpej Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.31 2002/10/05 22:34:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.30 2002/08/25 19:13:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.31 2002/10/05 22:34:05 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +139,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	struct uvm_object *uobj;
 	int error;
 
-#if 0
-	/* XXX not true for eg. ld.elf_so */
 	KASSERT(cmd->ev_vp->v_flag & VTEXT);
-#endif
 
 	/*
 	 * map the vnode in using uvm_map.

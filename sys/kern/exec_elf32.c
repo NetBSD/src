@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.75 2002/10/04 03:17:37 junyoung Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.76 2002/10/05 22:34:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.75 2002/10/04 03:17:37 junyoung Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.76 2002/10/05 22:34:05 chs Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -171,7 +171,7 @@ ELFNAME(copyargs)(struct proc *p, struct exec_package *pack,
 		a->a_v = p->p_cred->p_rgid;
 		a++;
 
-		free((char *)ap, M_TEMP);
+		free(ap, M_TEMP);
 		pack->ep_emul_arg = NULL;
 	}
 
@@ -361,6 +361,11 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 #ifdef notyet /* XXX cgd 960926 */
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
 #endif
+
+	error = vn_marktext(vp);
+	if (error)
+		goto badunlock;
+
 	VOP_UNLOCK(vp, 0);
 
 	if ((error = exec_read_from(p, vp, 0, &eh, sizeof(eh))) != 0)
@@ -415,7 +420,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 		}
 	}
 
-	free((char *)ph, M_TEMP);
+	free(ph, M_TEMP);
 	*last = addr;
 	vrele(vp);
 	return 0;
@@ -425,7 +430,7 @@ badunlock:
 
 bad:
 	if (ph != NULL)
-		free((char *)ph, M_TEMP);
+		free(ph, M_TEMP);
 #ifdef notyet /* XXX cgd 960926 */
 	(maybe) VOP_CLOSE it
 #endif
@@ -463,18 +468,10 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	    ELFNAME(check_header)(eh, ET_DYN) != 0)
 		return ENOEXEC;
 
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if (epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		return ETXTBSY;
-	}
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
+
 	/*
 	 * Allocate space to hold all the program headers, and read them
 	 * from the file
@@ -608,7 +605,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		    M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(load_file)(p, epp, interp,
 		    &epp->ep_vmcmds, &epp->ep_entry, ap, &pos)) != 0) {
-			FREE((char *)ap, M_TEMP);
+			FREE(ap, M_TEMP);
 			goto bad;
 		}
 		ap->arg_phaddr = phdr;
@@ -627,14 +624,13 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
 	FREE(interp, M_TEMP);
-	free((char *)ph, M_TEMP);
-	epp->ep_vp->v_flag |= VTEXT;
+	free(ph, M_TEMP);
 	return exec_elf_setup_stack(p, epp);
 
 bad:
 	if (interp)
 		FREE(interp, M_TEMP);
-	free((char *)ph, M_TEMP);
+	free(ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
 }
