@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.19 2001/12/14 08:34:28 gmcgarry Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.20 2001/12/16 02:02:05 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -718,8 +718,10 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
         va = bus_space_vaddr(bst, bsh);
         grf = (struct grfreg *)va;
 
-        if (grf->gr_id != GRFHWID)
+        if (grf->gr_id != GRFHWID) {
+		bus_space_unmap(bst, bsh, NBPG);
                 return (1);
+	}
 
         switch (grf->gr_id2) {
         case GID_TOPCAT:
@@ -739,6 +741,7 @@ topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
                 break;
 
         default:
+		bus_space_unmap(bst, bsh, NBPG);
                 return (1);
         }
 
