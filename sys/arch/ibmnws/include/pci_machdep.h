@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1 2003/10/19 03:33:50 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.2 2004/07/29 16:55:25 drochner Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -101,9 +101,6 @@ struct ibmnws_pci_chipset {
     (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	pci_conf_hook(c, b, d, f, i)					\
     (*(c)->pc_conf_hook)((c)->pc_conf_v, (b), (d), (f), (i))
-
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
 
 #ifdef _KERNEL
 /*

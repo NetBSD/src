@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2002/05/15 19:23:55 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 2004/07/29 16:55:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -104,9 +104,6 @@ struct ppc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_conf_interrupt(c, b, d, f, s, lp)				\
     (*(c)->pc_conf_interrupt)((c)->pc_intr_v, (b), (d), (f), (s), (lp))
-
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))
 
 /*
  * PowerPC-specific PCI functions.
