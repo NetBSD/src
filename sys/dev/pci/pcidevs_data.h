@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.269 2000/10/14 06:23:21 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.270 2000/10/19 05:52:16 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.265 2000/10/14 06:12:46 simonb Exp 
+ *	NetBSD: pcidevs,v 1.266 2000/10/19 05:51:34 thorpej Exp 
  */
 
 /*
@@ -2192,6 +2192,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IDT",
 	    "77201/77211 ATM (\"NICStAR\")",
+	},
+	{
+	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
+	    0,
+	    "Industrial Computer Source",
+	    "PCI-WDT50x Watchdog Timer",
 	},
 	{
 	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I920,
@@ -8227,6 +8233,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADDTRON, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Addtron Technology",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_INDCOMPSRC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Industrial Computer Source",
 	    NULL,
 	},
 	{

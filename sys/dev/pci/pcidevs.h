@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.271 2000/10/14 06:23:21 simonb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.272 2000/10/19 05:52:15 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.265 2000/10/14 06:12:46 simonb Exp 
+ *	NetBSD: pcidevs,v 1.266 2000/10/19 05:51:34 thorpej Exp 
  */
 
 /*
@@ -546,6 +546,7 @@
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
+#define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
@@ -1070,6 +1071,9 @@
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (\"NICStAR\") */
+
+/* Industrial Computer Source */
+#define	PCI_PRODUCT_INDCOMPSRC_WDT50x	0x22c0		/* PCI-WDT50x Watchdog Timer */
 
 /* Initio products */
 #define	PCI_PRODUCT_INITIO_I920	0x0002		/* INIC-920 SCSI */
