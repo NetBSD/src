@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.1 1996/12/16 20:38:00 cgd Exp $	*/
+/*	$NetBSD: malloc.c,v 1.2 1997/10/08 08:55:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -56,15 +56,12 @@
 #include <sys/param.h>
 #include <sys/mman.h>
 
-static void morecore();
-static int findbucket();
-
 /*
  * Pre-allocate mmap'ed pages
  */
 #define	NPOOLPAGES	(32*1024/pagesz)
 static caddr_t		pagepool_start, pagepool_end;
-static int		morepages();
+static int		morepages __P((int));
 
 /*
  * The overhead on a block is at least 4 bytes.  When free, this space
@@ -91,6 +88,9 @@ union	overhead {
 #define	ov_rmagic	ovu.ovu_rmagic
 #define	ov_size		ovu.ovu_size
 };
+
+static void morecore __P((int));
+static int findbucket __P((union overhead *, int));
 
 #define	MAGIC		0xef		/* magic # on accounting info */
 #define RMAGIC		0x5555		/* magic # on range info */

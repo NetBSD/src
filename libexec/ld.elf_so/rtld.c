@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.4 1997/04/15 07:15:46 cgd Exp $	*/
+/*	$NetBSD: rtld.c,v 1.5 1997/10/08 08:55:37 mrg Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -195,6 +195,8 @@ _rtld_exit(void)
  * Such values are returned with their most-significant 32 bits in %edx,
  * and their least-significant 32 bits in %eax.
  */
+Elf_Addr _rtld(Elf_Word *);
+
 Elf_Addr
 _rtld(
     Elf_Word *sp)
