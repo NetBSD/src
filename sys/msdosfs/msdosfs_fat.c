@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.34 2000/11/27 08:39:46 chs Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.35 2000/12/04 11:54:39 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -975,7 +975,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	int flags;
 {
 	int error;
-	u_long frcn, cn, got, origcount;
+	u_long frcn = 0, cn, got, origcount;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 
