@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.2 2000/05/13 14:20:40 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.3 2001/03/17 00:16:38 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.1 2000/05/11 15:42:05 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp 
  */
 
 /*-
@@ -49,5 +49,5 @@
  */
 
 #define	MCA_PRODUCT_AHA1640	0x0F1F	/* Adaptec AHA-1640 SCSI Adapter */
-#define	MCA_PRODUCT_3C523	0x6042	/* 3Com 3C523 Ethernet Adapter */
+#define	MCA_PRODUCT_3C523	0x6042	/* 3Com EtherLink/MC Ethernet Adapter (3C523) */
 #define	MCA_PRODUCT_ITR	0xE001	/* IBM Token Ring 16/4 Adapter/A */

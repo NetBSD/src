@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.2 2000/05/13 14:20:40 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.3 2001/03/17 00:16:38 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.1 2000/05/11 15:42:05 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.2 2001/03/17 00:15:33 jdolecek Exp 
  */
 
 /*-
@@ -110,7 +110,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x6018,	"Gateway Comms. G/Ethernet Adapter" },
     { 0x601F,	"HP Scanner Interface Adapter" },
     { 0x602F,	"Arcmaster ARCnet Adapter" },
-    { 0x6042,	"3Com 3C523 Ethernet Adapter" },
+    { 0x6042,	"3Com EtherLink/MC Ethernet Adapter (3C523)" },
     { 0x6060,	"IDEAcomm 5251 7 LU Adapter" },
     { 0x6091,	"Stallion ONboard2 Terminal Adapter" },
     { 0x609E,	"Microtek MS-PS/2 Interface Adapter" },
