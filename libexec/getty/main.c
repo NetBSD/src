@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2004/11/05 21:52:07 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.46.2.1 2005/03/19 18:00:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.46 2004/11/05 21:52:07 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.46.2.1 2005/03/19 18:00:47 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -658,7 +658,8 @@ putf(const char *cp)
 		switch (*++cp) {
 
 		case 't':
-			slash = strrchr(ttyn, '/');
+			if ((slash = strstr(ttyn, "/pts/")) == NULL)
+				slash = strrchr(ttyn, '/');
 			if (slash == NULL)
 				xputs(ttyn);
 			else
