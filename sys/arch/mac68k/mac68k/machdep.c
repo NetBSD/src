@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 1996/05/05 06:18:31 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 1996/05/05 06:54:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -442,10 +442,7 @@ again:
 }
 
 void doboot __P((void));
-void savectx __P((struct pcb *));
 void via_shutdown __P((void));
-void m68881_save __P((struct fpframe *));
-void m68881_restore __P((struct fpframe *));
 
 /*
  * Set registers on exec.
@@ -1276,8 +1273,6 @@ nmihand(frame)
 }
 
 void	dumpmem __P((u_int *, int));
-u_int	getsfc __P((void));
-u_int	getdfc __P((void));
 
 void
 regdump(frame, sbytes)
@@ -2424,7 +2419,6 @@ check_video(id, limit, maxm)
  * Returns the address of logical 0 so that locore can map the kernel
  * properly.
  */
-u_int	get_mapping __P((void));
 u_int
 get_mapping(void)
 {

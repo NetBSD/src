@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1996/05/05 06:18:47 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1996/05/05 06:54:19 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -829,11 +829,6 @@ pmap_deactivate(pmap, pcb)
 	struct pcb *pcb;
 {
 }
-
-void TBIA __P((void));
-void TBIS __P((vm_offset_t));
-void DCFP __P((vm_offset_t));
-void ICPP __P((vm_offset_t));
 
 /*
  *	Remove the given range of addresses from the specified map.
