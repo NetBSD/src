@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.55 2001/11/15 09:48:28 lukem Exp $	*/
+/*	$NetBSD: key.c,v 1.56 2002/01/31 06:17:03 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.55 2001/11/15 09:48:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.56 2002/01/31 06:17:03 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1580,20 +1580,16 @@ key_spdadd(so, m, mhp)
 
 	/*
 	 * checking there is SP already or not.
-	 * If type is SPDUPDATE and no SP found, then error.
-	 * If type is either SPDADD or SPDSETIDX and SP found, then error.
+	 * SPDUPDATE doesn't depend on whether there is a SP or not.
+	 * If the type is either SPDADD or SPDSETIDX AND a SP is found,
+	 * then error.
 	 */
 	newsp = key_getsp(&spidx);
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
-		if (newsp == NULL) {
-#ifdef IPSEC_DEBUG
-			printf("key_spdadd: no SP found.\n");
-#endif
-			return key_senderror(so, m, ENOENT);
+		if (newsp) {
+			newsp->state = IPSEC_SPSTATE_DEAD;
+			key_freesp(newsp);
 		}
-
-		newsp->state = IPSEC_SPSTATE_DEAD;
-		key_freesp(newsp);
 	} else {
 		if (newsp != NULL) {
 			key_freesp(newsp);
