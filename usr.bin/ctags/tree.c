@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
+/*	$NetBSD: tree.c,v 1.5 1997/10/18 13:18:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $";
+__RCSID("$NetBSD: tree.c,v 1.5 1997/10/18 13:18:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,12 +87,12 @@ pfnote(name, ln)
 		name = nbuf;
 	}
 	if (!(np->entry = strdup(name)))
-		err(1, NULL);
+		err(1, "strdup");
 	np->file = curfile;
 	np->lno = ln;
 	np->left = np->right = 0;
 	if (!(np->pat = strdup(lbuf)))
-		err(1, NULL);
+		err(1, "strdup");
 	if (!head)
 		head = np;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.c,v 1.3 1995/03/26 20:14:12 glass Exp $	*/
+/*	$NetBSD: yacc.c,v 1.4 1997/10/18 13:19:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: yacc.c,v 1.3 1995/03/26 20:14:12 glass Exp $";
+__RCSID("$NetBSD: yacc.c,v 1.4 1997/10/18 13:19:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +98,7 @@ y_entries()
 			in_rule = NO;
 			break;
 		default:
-			if (in_rule || !isalpha(c) && c != '.' && c != '_')
+			if (in_rule || (!isalpha(c) && c != '.' && c != '_'))
 				break;
 			sp = tok;
 			*sp++ = c;
