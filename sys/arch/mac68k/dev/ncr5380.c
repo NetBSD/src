@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.54 2003/10/30 22:25:42 matt Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.55 2003/10/30 22:35:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.54 2003/10/30 22:25:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.55 2003/10/30 22:35:38 matt Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -292,13 +292,13 @@ ncr5380_scsi_request(chan, req, arg)
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph; 
 	struct ncr_softc *sc = (void *)chan->chan_adapter->adapt_dev;
-	int	sps;
+	int	sps, flags;
 	SC_REQ	*reqp, *link, *tmp;
-	int	flags = xs->xs_control;
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
+		flags = xs->xs_control;
 		periph = xs->xs_periph;
 
 		/*
