@@ -25,9 +25,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Header: /cvsroot/src/include/rpcsvc/Attic/rwall.x,v 1.1 1993/04/04 19:02:36 cgd Exp $
  */
+#ifndef lint
+%static char rcsid[] = "$Id: rwall.x,v 1.2 1993/08/03 13:18:11 mycroft Exp $";
+#endif /* not lint */
 
 /*
  * rpc protocol definition for (remote) wall protocol
