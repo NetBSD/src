@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/08/25 23:00:23 petrov Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.7 2003/08/26 17:50:06 petrov Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 #define STACK_SWITCH(pt,tmp)		  \
 	ldx	[pt + PT_TRAPUC], tmp	; \
-	brnz,a	tmp, 8f			; \
+	brnz	tmp, 8f			; \
 	 stx	%g0, [pt + PT_TRAPUC]	; \
 	ldx	[pt + PT_UC], tmp	; \
 8:	add	tmp, - STACK_ALIGN(STACKSPACE + CONTEXTSIZE) - BIAS, %sp ; \
