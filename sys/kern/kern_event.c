@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.16.2.2 2004/08/03 10:52:44 skrll Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.16.2.3 2004/08/10 09:00:11 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.2 2004/08/03 10:52:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.16.2.3 2004/08/10 09:00:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1166,8 +1166,8 @@ kqueue_close(struct file *fp, struct lwp *l)
 {
 	struct proc	*p = l->l_proc;
 	struct kqueue	*kq;
-	struct knote	**knp, *kn, *kn0;
 	struct filedesc	*fdp;
+	struct knote	**knp, *kn, *kn0;
 	int		i;
 
 	kq = (struct kqueue *)fp->f_data;
