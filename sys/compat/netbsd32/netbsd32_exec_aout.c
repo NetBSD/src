@@ -1,8 +1,8 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.5 2001/02/14 18:21:43 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.6 2001/08/25 15:06:02 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
- * Copyright (c) 1998 Matthew R. Green.
+ * Copyright (c) 1998, 2001 Matthew R. Green.
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
  *

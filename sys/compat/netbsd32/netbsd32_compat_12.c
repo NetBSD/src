@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.11 2001/05/30 11:37:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.12 2001/08/25 15:06:02 mrg Exp $	*/
 
 /*
- * Copyright (c) 1998 Matthew R. Green
+ * Copyright (c) 1998, 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
