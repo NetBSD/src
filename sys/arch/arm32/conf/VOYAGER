@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.54 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: VOYAGER,v 1.55 2001/07/10 00:52:33 bjh21 Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -28,7 +28,6 @@ options 	CPU_ARM8	# Support the ARM8 core
 #options 	CPU_ARM7500	# We are actually an ARM7500
 
 # Architecture options
-options 	IOMD		# We have an IOMD
 options 	RISCPC		# We are a RiscPC
 #options 	RC7500		# We are a RC7500
 
