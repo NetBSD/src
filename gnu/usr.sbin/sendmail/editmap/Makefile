@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2003/03/24 15:04:07 atatat Exp $
+#	$NetBSD: Makefile,v 1.1 2003/03/24 15:04:06 atatat Exp $
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/gnu/dist
-.PATH: ${DIST}/sendmail/praliases
+.PATH: ${DIST}/sendmail/editmap
 
-PROG=		praliases
+PROG=		editmap
 
 LIBSMUTILDIR!=	cd ${.CURDIR}/../libsmutil && ${PRINTOBJDIR}
 LIBSMDBDIR!=	cd ${.CURDIR}/../libsmdb && ${PRINTOBJDIR}
@@ -17,6 +17,6 @@ LDADD+=		-L${LIBSMDBDIR} -lsmdb -L${LIBSMUTILDIR} -lsmutil \
 DPADD+=		${LIBSMDBDIR}/libsmdb.a ${LIBSMUTILDIR}/libsmutil.a \
 		${LIBSMDIR}/libsm.a
 
-MAN=		praliases.8
+MAN=		editmap.8
 
 .include <bsd.prog.mk>

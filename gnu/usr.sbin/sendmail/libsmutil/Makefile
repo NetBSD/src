@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/03/24 15:04:07 atatat Exp $
 
 NOSHARE=	# defined
 NOPIC=		# defined
@@ -13,7 +13,7 @@ LIB=		smutil
 
 CPPFLAGS+=	-DNOT_SENDMAIL
 
-SRCS=		debug.c errstring.c lockfile.c safefile.c snprintf.c
+SRCS=		cf.c debug.c err.c lockfile.c safefile.c snprintf.c
 
 libinstall::
 
