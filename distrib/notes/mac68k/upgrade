@@ -39,10 +39,12 @@ carefully and completely before proceeding:
      cd /
      tar -zxvpf /path/to/kern.tgz
 
-   There is no need to explicitly backup your old kernel since it will be
+   There is no need to backup your old kernel explicitly since it will be
    incapable of running many of the newer binaries you are about to
    install (unless, of course, you have a backup copy of your older
-   binaries and want to revert to them for some reason).
+   binaries and want to revert to them for some reason).  However, you
+   might want to keep a backup if you are upgrading from within NetBSD just
+   in case the newer kernel has trouble booting your machine. 
 
 4) If you are installing using the Installer, skip to step 5.  Otherwise,
    reboot into NetBSD in single-user mode.  Run 'fsck -f' and then mount all
@@ -51,13 +53,14 @@ carefully and completely before proceeding:
    the fact that a change in partition numbering may have moved a few of
    your partitions around.  You can do a 'disklabel sdX' (where X is a
    drive on which you have NetBSD partitions) to see how the partitions are
-   currently layed out.  It is likely that a partition has shifted into
-   'sdXe', a slot that was often not available under previous releases of
-   NetBSD.  If this is the case, you will need to manually mount your root
-   partition  (via 'mount -w /') and edit your /etc/fstab file to reflect
-   the new partition layout.  Unless you are familiar with 'ex' or 'ed',
-   the easiest way to fix your /etc/fstab file is probably to simply do a
-   'cat > /etc/fstab' and type in the corrected file in its entirety. 
+   currently layed out.  It is likely that a partition has shifted into the
+   'sdXd' or 'sdXe' slots, slots that often were not available under
+   previous releases of NetBSD.  If this is the case, you will need to
+   manually mount your root partition  (via 'mount -w /') and edit your
+   /etc/fstab file to reflect the new partition layout.  Unless you are
+   familiar with 'ex' or 'ed', the easiest way to fix your /etc/fstab file
+   is probably to simply do a 'cat > /etc/fstab' and type in the corrected
+   file in its entirety.
 
 5) Install the distribution sets.  Keep in mind that the NetBSD _VER
    distribution takes up a considerably larger amount of disk space than
@@ -80,8 +83,9 @@ carefully and completely before proceeding:
      cd /tmp
      exit
 
-   Now, use the Installer to install the etc set (it will install into
-   /tmp instead of the /etc/ directory).
+   Ignore the warning message this will cause.  Now, use the Installer to
+   install the etc set (it will install into /tmp instead of the /etc
+   directory). 
 
    If you are in NetBSD, do the following instead:
 
@@ -126,11 +130,11 @@ carefully and completely before proceeding:
    in /etc/rc.conf to ensure that your network interfaces will be brought
    up automatically on boot.
 
-   * Many of the options given to many of the file systems have changed,
+   * Several of the options given to many of the file systems have changed,
    and some of the file systems have changed names.  IT IS IMPERATIVE THAT
    YOU CHANGE ANY INSTANCES OF "ufs" IN /etc/fstab TO "ffs".  To find out
    more about different filesystem options, read the man page for the
-   associated mount command (e.g. mount_mfs(8) for MFS filesystems, note:
+   associated mount command (e.g. mount_mfs(8) for MFS filesystems; note:
    FFS type filesystems are documented in the mount(8) man page).  If you
    have not already done so, you may also need to correct /etc/fstab for
    a shift in the partition numbering scheme.  See step (4) above for more
