@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.12.2.9 2002/11/14 15:45:49 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.12.2.10 2003/02/11 15:58:04 msaitoh Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -428,8 +428,25 @@ ip6_forward(m, srcrt)
 	 * modified by a redirect.
 	 */
 	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt &&
-	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0)
+	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
+		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) != 0) {
+			/*
+			 * If the incoming interface is equal to the outgoing
+			 * one, and the link attached to the interface is
+			 * point-to-point, then it will be highly probable
+			 * that a routing loop occurs. Thus, we immediately
+			 * drop the packet and send an ICMPv6 error message.
+			 *
+			 * type/code is based on suggestion by Rich Draves.
+			 * not sure if it is the best pick.
+			 */
+			icmp6_error(mcopy, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_ADDR, 0);
+			m_freem(m);
+			return;
+		}
 		type = ND_REDIRECT;
+	}
 
 #ifdef IPV6FIREWALL
 	/*
