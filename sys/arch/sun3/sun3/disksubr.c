@@ -1,3 +1,5 @@
+/*	$NetBSD: disksubr.c,v 1.7 1994/10/26 09:12:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Gordon W. Ross (Sun3 changes)
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,9 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: i386/disksubr.c,v 1.4 1994/01/11 16:38:48 mycroft
- *	$Id: disksubr.c,v 1.6 1994/07/23 03:27:28 gwr Exp $
  */
 
 #include <sys/param.h>

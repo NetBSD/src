@@ -1,3 +1,5 @@
+/*	$NetBSD: vuid_event.h,v 1.2 1994/10/26 09:09:30 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,6 @@
  *	@(#)vuid_event.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vuid_event.h,v 1.4 92/11/26 01:20:27 torek Exp  (LBL)
- * $Id: vuid_event.h,v 1.1 1994/02/23 08:28:58 glass Exp $
  */
 
 /*

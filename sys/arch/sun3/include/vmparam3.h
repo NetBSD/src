@@ -1,3 +1,5 @@
+/*	$NetBSD: vmparam3.h,v 1.9 1994/10/26 09:11:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -38,8 +40,7 @@
  *
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
- *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	vmparam.h,v 1.2 1993/05/22 07:58:38 cgd Exp
+ *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
  */
 
 #define USRTEXT         NBPG

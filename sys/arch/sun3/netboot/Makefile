@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1994/10/26 09:11:38 cgd Exp $
+
 .include <../../common/netboot/Makefile>
 
 CFLAGS += -I../../common -I. -DDEBUG -Dsun3

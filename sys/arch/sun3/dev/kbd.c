@@ -1,3 +1,5 @@
+/*	$NetBSD: kbd.c,v 1.4 1994/10/26 09:08:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +42,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
- *	from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- *	$Id: kbd.c,v 1.3 1994/06/03 02:05:18 gwr Exp $
+ *
+ * Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
  */
 
 /*
