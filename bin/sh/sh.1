@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.24 1998/10/29 23:23:36 garbled Exp $
+.\"	$NetBSD: sh.1,v 1.25 1998/11/17 14:16:32 msaitoh Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1274,13 +1274,15 @@ to a
 .I getopts
 will then unset
 .B OPTARG
-and and write output to standard error.  By specifying a colon as the
+and write output to standard error.  By specifying a colon as the
 first character of
 .B optstring
 all errors will be ignored.
 .sp
 A nonzero value is returned when the last option is reached.
-If there are no remaining arguments, getopt will set
+If there are no remaining arguments,
+.I getopts
+will set
 .B var
 to the special option,
 .BR -- ,
