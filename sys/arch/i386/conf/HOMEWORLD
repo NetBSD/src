@@ -1,6 +1,6 @@
-#	$NetBSD: HOMEWORLD,v 1.1 1996/08/28 23:00:48 thorpej Exp $
+#	$NetBSD: HOMEWORLD,v 1.2 1996/08/28 23:02:22 thorpej Exp $
 #
-#	NetBSD-1 - Mail, CVS, and GNATS server
+#	HOMEWORLD - Mail, CVS, and GNATS server
 #
 
 machine		i386		# architecture, used by config; REQUIRED
