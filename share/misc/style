@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.14 2000/03/10 12:46:30 lukem Exp $ */
+/* $NetBSD: style,v 1.15 2000/09/04 08:01:16 lukem Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.14 2000/03/10 12:46:30 lukem Exp $");
+__RCSID("$NetBSD: style,v 1.15 2000/09/04 08:01:16 lukem Exp $");
 #endif /* !__lint */
 
 /*
@@ -102,7 +102,7 @@ __RCSID("$NetBSD: style,v 1.14 2000/03/10 12:46:30 lukem Exp $");
  *	void function(int);
  * Use your discretion on indenting between the return type and the name, and
  * how to wrap a prototype too long for a single line.  In the latter case,
- * lining up under the initial left parathesis may be more readable.
+ * lining up under the initial left parenthesis may be more readable.
  * In any case, consistency is important!
  */
 static char *function(int, int, float, int);
@@ -126,7 +126,7 @@ do {									\
 	w = (y) + 2;							\
 } while (/* CONSTCOND */ 0)
 
-#define DOUBLE(x) ((x) * 2)
+#define	DOUBLE(x) ((x) * 2)
 
 /* Enum types are capitalized.  No comma on the last element. */
 enum enumtype {
