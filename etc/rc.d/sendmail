@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.16.2.3 2004/08/12 18:33:05 jmc Exp $
+# $NetBSD: sendmail,v 1.16.2.4 2004/08/22 13:40:07 tron Exp $
 #
 
 # PROVIDE: mail
@@ -113,7 +113,7 @@ check_need_sendmail()
 	elif [ "${_mta_path}" != "${_sendmail_path}" -o \
 	    ! -x "${_sendmail_path}" -o \
 	    $(checkyesno sendmail_suidroot; echo $?) = 0 -o \
-	    "$(stat -f "%Mp %Sg" "$_sendmail_path")" != "2 smmsp" ]; then
+	    "$(stat -qf "%Mp %Sg" "$_sendmail_path")" != "2 smmsp" ]; then
 		echo NO
 	else
 		case "$_mta_host" in
