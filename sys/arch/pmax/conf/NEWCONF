@@ -2,17 +2,11 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.11 1997/01/15 01:29:09 perry Exp $
+# 	$NetBSD: NEWCONF,v 1.12 1997/01/31 01:59:16 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
 maxusers	8
-
-# does not really do anything anymore, but this replaces "ident GENERIC"
-# (actually, it enables fudging of swap blocks to swap after a miniroot
-#  in the b partition, and make the kernel call setconf() to ask
-#  what the root device is.)
-#options		GENERIC
 
 options		CPU_R3000		# R2000/R3000 support
 
@@ -40,17 +34,19 @@ options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 #options	"KGDBDEV=15*256+0"	# device for kernel gdb
 
 # Filesystem options
+file-system 	FFS		# fast filesystem
+file-system 	MFS		# memory-based filesystem
+file-system 	NFS		# Sun NFS-compatible filesystem (client)
+file-system 	KERNFS		# kernel data-structure filesystem
+#file-system	FDESC		# user file descriptor filesystem
+#file-system	UMAPFS		# uid/gid remapping filesystem
+file-system 	NULLFS		# null layer filesystem
+#file-system	LFS		# Log-based filesystem (still experimental)
+#file-system	PORTAL		# portal filesystem (still experimental)
+
 options		FIFO		# POSIX fifo support (in all filesystems)
-options		FFS,QUOTA	# fast filesystem with user and group quotas
-options		MFS		# memory-based filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem (client)
+options		QUOTA		# FFS quotas
 options		NFSSERVER	# Sun NFS-compatible filesystem (server)
-options		KERNFS		# kernel data-structure filesystem
-#options	FDESC		# user file descriptor filesystem
-#options	UMAPFS		# uid/gid remapping filesystem
-options		NULLFS		# null layer filesystem
-#options	LFS		# Log-based filesystem (still experimental)
-#options	PORTAL		# portal filesystem (still experimental)
 
 # Networking options
 options		INET		# Internet protocols
@@ -69,7 +65,7 @@ options		"HZ=256"	# RTC rate required
 # Note that this configuration is unlikely to work, yet...
 config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b
 config		rz1netbsd root on rz1a swap on rz0b and rz1b dumps on rz0b
-#config		gennetbsd	swap generic
+#config		gennetbsd	root on ? type ?
 
 
 ########################################################################
