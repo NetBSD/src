@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.29 2003/05/01 15:25:06 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.30 2003/05/03 11:19:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.29 2003/05/01 15:25:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.30 2003/05/03 11:19:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	struct flock *fl = ap->a_fl;
 	struct lockf *lock = NULL;
 	struct lockf *sparelock;
-	struct vnode *vp = ap->a_vp;
+	struct simplelock *interlock = &ap->a_vp->v_interlock;
 	off_t start, end;
 	int error;
 
@@ -171,7 +171,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		goto quit;
 	}
 
-	simple_lock(&vp->v_interlock);
+	simple_lock(interlock);
 
 	/*
 	 * Avoid the common case of unlocking when inode has no locks.
@@ -216,7 +216,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	switch (ap->a_op) {
 
 	case F_SETLK:
-		error = lf_setlock(lock, &sparelock, &vp->v_interlock);
+		error = lf_setlock(lock, &sparelock, interlock);
 		lock = NULL; /* lf_setlock freed it */
 		break;
 
@@ -233,7 +233,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	}
 
 quit_unlock:
-	simple_unlock(&vp->v_interlock);
+	simple_unlock(interlock);
 quit:
 	if (lock)
 		FREE(lock, M_LOCKF);
