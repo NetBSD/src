@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.1.2.2 2002/09/18 16:53:13 ad Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.1.2.3 2002/09/18 18:17:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ dz_ibus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
 
-	printf(": DC-7805");
+	printf(": DC-7805, 4 lines");
 	ibus_intr_establish(parent, (void *)iba->ia_cookie, IPL_TTY,
 	    dz_ibus_intr, sc);
 	dzattach(sc, NULL);
@@ -400,7 +400,7 @@ dzputc(struct dz_linestate *ls, int ch)
 		line = ls->dz_line;
 		dzr = (volatile struct dzregs *)ls->dz_sc->sc_ioh;
 		s = spltty();
-		putc(ch, &ls->dz_sc->sc_dz[line].dz_tty->t_outq);
+		putc(ch, &ls->dz_tty->t_outq);
 		tcr = dzr->tcr;
 		if ((tcr & (1 << line)) == 0)
 			dzr->tcr = tcr | (1 << line);
