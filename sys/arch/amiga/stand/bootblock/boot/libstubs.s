@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.s,v 1.4 2001/02/26 14:58:37 is Exp $ */
+/* $NetBSD: libstubs.s,v 1.5 2001/03/01 21:32:53 is Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,161 +43,161 @@
 	.comm _C_LABEL(SysBase),4
 
 ENTRY_NOPROFILE(OpenLibrary)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	movl	sp@(12),d0
-	jsr	a6@(-0x228)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	movl	%sp@(12),%d0
+	jsr	%a6@(-0x228)
+	movl	%sp@+,%a6
 	rts
 #ifdef notyet
 ENTRY_NOPROFILE(CloseLibrary)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x19e)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x19e)
+	movl	%sp@+,%a6
 	rts
 #endif
 ENTRY_NOPROFILE(CreateIORequest)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a0
-	movl	sp@(12),d0
-	jsr	a6@(-0x28e)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a0
+	movl	%sp@(12),%d0
+	jsr	%a6@(-0x28e)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(CreateMsgPort)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	jsr	a6@(-0x29a)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	jsr	%a6@(-0x29a)
+	movl	%sp@+,%a6
 	rts
 	
 #ifdef notyet
 ENTRY_NOPROFILE(DeleteMsgPort)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a0
-	jsr	a6@(-0x2a0)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a0
+	jsr	%a6@(-0x2%a0)
+	movl	%sp@+,%a6
 	rts
 	
 ENTRY_NOPROFILE(DeleteIORequest)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a0
-	jsr	a6@(-0x294)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a0
+	jsr	%a6@(-0x294)
+	movl	%sp@+,%a6
 	rts
 #endif
 	
 ENTRY_NOPROFILE(OpenDevice)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a0
-	movl	sp@(12),d0
-	movl	sp@(16),a1
-	movl	sp@(20),d1
-	jsr	a6@(-0x1bc)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a0
+	movl	%sp@(12),%d0
+	movl	%sp@(16),%a1
+	movl	%sp@(20),%d1
+	jsr	%a6@(-0x1bc)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(DoIO)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x1c8)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1c8)
+	movl	%sp@+,%a6
 	rts
 #ifdef nomore
 ENTRY_NOPROFILE(CheckIO)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x1d4)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1%d4)
+	movl	%sp@+,%a6
 	rts
 #endif
 ENTRY_NOPROFILE(WaitIO)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x1da)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1da)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(SendIO)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x1ce)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1ce)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(AbortIO)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x1e0)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1e0)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(WaitPort)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a0
-	jsr	a6@(-0x180)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a0
+	jsr	%a6@(-0x180)
+	movl	%sp@+,%a6
 	rts
 
 #ifndef DOINLINES
 ENTRY_NOPROFILE(CacheClearU)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	jsr	a6@(-0x27c)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	jsr	%a6@(-0x27c)
+	movl	%sp@+,%a6
 	rts
 #endif
 ENTRY_NOPROFILE(CachePreDMA)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a0
-	movl	sp@(12),a1
-	movl	sp@(16),d0
-	jsr	a6@(-0x2fa)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a0
+	movl	%sp@(12),%a1
+	movl	%sp@(16),%d0
+	jsr	%a6@(-0x2fa)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(FindResident)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x60)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x60)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(OpenResource)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:w),a6
-	movl	sp@(8),a1
-	jsr	a6@(-0x1f2)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:w),%a6
+	movl	%sp@(8),%a1
+	jsr	%a6@(-0x1f2)
+	movl	%sp@+,%a6
 	rts
 #ifdef notyet
 ENTRY_NOPROFILE(Forbid)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:W),a6
-	jsr	a6@(-0x84)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:W),%a6
+	jsr	%a6@(-0x84)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(Permit)
-	movl	a6,sp@-
-	movl	pc@(_SysBase:W),a6
-	jsr	a6@(-0x8a)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_SysBase:W),%a6
+	jsr	%a6@(-0x8a)
+	movl	%sp@+,%a6
 	rts
 #endif
 
@@ -208,42 +208,42 @@ ENTRY_NOPROFILE(Permit)
 	.comm _IntuitionBase,4
 
 ENTRY_NOPROFILE(OpenScreenTagList)
-	movl	a6,sp@-
-	movl	pc@(_IntuitionBase:w),a6
-	movl	sp@(8),a0
-	movl	sp@(12),a1
-	jsr	a6@(-0x264)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_IntuitionBase:w),%a6
+	movl	%sp@(8),%a0
+	movl	%sp@(12),%a1
+	jsr	%a6@(-0x264)
+	movl	%sp@+,%a6
 	rts
 
 ENTRY_NOPROFILE(OpenWindowTagList)
-	movl	a6,sp@-
-	movl	pc@(_IntuitionBase:w),a6
-	movl	sp@(8),a0
-	movl	sp@(12),a1
-	jsr	a6@(-0x25e)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_IntuitionBase:w),%a6
+	movl	%sp@(8),%a0
+	movl	%sp@(12),%a1
+	jsr	%a6@(-0x25e)
+	movl	%sp@+,%a6
 	rts
 #ifdef nomore
 ENTRY_NOPROFILE(mytime)
-	movl	a6,sp@-
-	movl	pc@(_IntuitionBase:w),a6
-	subql	#8,sp
-	movl	sp,a0
-	lea	sp@(4),a1
-	jsr	a6@(-0x54)
-	movl	sp@+,d0
-	addql	#4,sp
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	%pc@(_IntuitionBase:w),%a6
+	subql	#8,%sp
+	movl	%sp,a0
+	lea	%sp@(4),%a1
+	jsr	%a6@(-0x54)
+	movl	%sp@+,%d0
+	addql	#4,%sp
+	movl	%sp@+,%a6
 	rts
 #endif
 	.comm _ExpansionBase,4
 ENTRY_NOPROFILE(FindConfigDev)
-	movl	a6,sp@-
-	movl	_ExpansionBase,a6
-	movl	sp@(8),a0
-	movl	sp@(12),d0
-	movl	sp@(16),d1
-	jsr	a6@(-0x48)
-	movl	sp@+,a6
+	movl	%a6,sp@-
+	movl	_ExpansionBase,%a6
+	movl	%sp@(8),%a0
+	movl	%sp@(12),%d0
+	movl	%sp@(16),%d1
+	jsr	%a6@(-0x48)
+	movl	%sp@+,%a6
 	rts
