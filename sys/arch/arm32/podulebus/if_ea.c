@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.4 1996/03/27 21:49:26 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.5 1996/04/26 22:41:24 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -249,31 +249,21 @@ eaprobe(parent, match, aux)
 	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
-	int podule;
 	u_int iobase;
 	
 /*	dprintf(("Probing for SEEQ 8005... \n"));*/
 
 /* Look for a network slot interface */
 
-	podule = findpodule(MY_MANUFACTURER, MY_PODULE, pa->pa_podule_number);
-
-/* Fail if we did not find it */
-
-	if (podule == -1)
+	if (matchpodule(pa, MY_MANUFACTURER, MY_PODULE, -1) == 0)
 		return(0);
 
-	iobase = podules[podule].mod_base + EA_8005_BASE;
+	iobase = pa->pa_podule->mod_base + EA_8005_BASE;
 
 /* Reset it  - Why here ? */
 
 	WriteShort(iobase + EA_8005_CONFIG2, EA_CFG2_RESET);
 	delay(100);
-
-/* We found it */
-
-	pa->pa_podule_number = podule;
-	pa->pa_podule = &podules[podule];
 
 	return(1);
 }
@@ -301,11 +291,11 @@ eaattach(parent, self, aux)
 
 /* Note the podule number and validate */
 
-	sc->sc_podule_number = pa->pa_podule_number;
-	if (sc->sc_podule_number == -1)
+	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
 
-	sc->sc_podule = &podules[sc->sc_podule_number];
+	sc->sc_podule_number = pa->pa_podule_number;
+	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
 
 /* Set the address of the controller for easy access */
