@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 1997/07/15 12:45:26 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5 1997/09/17 18:32:50 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -38,9 +38,14 @@
 #endif
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <libi386.h>
 #include <biosdisk.h>
+#include <bootinfo.h>
+
+extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
+			      unsigned int*, const char**));
 
 static struct {
 	char           *name;
@@ -110,6 +115,8 @@ bios2dev(biosdev, devname, unit)
 	return (0);
 }
 
+struct btinfo_bootpath bibp;
+
 /*
  * Open the BIOS disk device
  */
@@ -132,5 +139,9 @@ devopen(f, fname, file)
 
 	dp = &devsw[0];		/* must be biosdisk */
 	f->f_dev = dp;
+
+	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+
 	return (biosdiskopen(f, biosdev, partition));
 }
