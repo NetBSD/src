@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.31 1998/08/11 17:52:58 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.32 1998/08/31 18:43:30 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -92,67 +92,84 @@ _rpb:
  * and move the SCB later to somewhere else.
  */
 
-	INTVEC(stray00, ISTACK) # Unused., 0
+#if VAX8200
+	INTVEC(stray00, ISTACK) 	# Passive Release, 0
+#else
+	INTVEC(stray00, ISTACK) 	# Unused., 0
+#endif
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
-	INTVEC(invkstk, ISTACK) # Kernel Stack Invalid., 8
-	INTVEC(stray0C, ISTACK) # Power Failed., C
+	INTVEC(invkstk, ISTACK) 	# Kernel Stack Invalid., 8
+	INTVEC(stray0C, ISTACK) 	# Power Failed., C
 	INTVEC(privinflt, KSTACK)	# Privileged/Reserved Instruction.
 	INTVEC(xfcflt, KSTACK)		# Customer Reserved Instruction, 14
 	INTVEC(resopflt, KSTACK)	# Reserved Operand/Boot Vector(?), 18
-	INTVEC(resadflt, KSTACK)	# # Reserved Address Mode., 1C
+	INTVEC(resadflt, KSTACK)	# Reserved Address Mode., 1C
 	INTVEC(access_v, KSTACK)	# Access Control Violation, 20
 	INTVEC(transl_v, KSTACK)	# Translation Invalid, 24
-	INTVEC(tracep, KSTACK)	# Trace Pending, 28
-	INTVEC(breakp, KSTACK)	# Breakpoint Instruction, 2C
-	INTVEC(stray30, ISTACK) # Compatibility Exception, 30
+	INTVEC(tracep, KSTACK)		# Trace Pending, 28
+	INTVEC(breakp, KSTACK)		# Breakpoint Instruction, 2C
+	INTVEC(stray30, ISTACK) 	# Compatibility Exception, 30
 	INTVEC(arithflt, KSTACK)	# Arithmetic Fault, 34
-	INTVEC(stray38, ISTACK) # Unused, 38
-	INTVEC(stray3C, ISTACK) # Unused, 3C
+	INTVEC(stray38, ISTACK) 	# Unused, 38
+	INTVEC(stray3C, ISTACK) 	# Unused, 3C
 	INTVEC(syscall, KSTACK)		# main syscall trap, chmk, 40
 	INTVEC(resopflt, KSTACK)	# chme, 44
 	INTVEC(resopflt, KSTACK)	# chms, 48
 	INTVEC(resopflt, KSTACK)	# chmu, 4C
-	INTVEC(sbiexc, ISTACK)	# System Backplane Exception/BIerror, 50
-	INTVEC(cmrerr, ISTACK)	# Corrected Memory Read, 54
-	INTVEC(rxcs, ISTACK)	# System Backplane Alert/RXCD, 58
-	INTVEC(sbiflt, ISTACK)	# System Backplane Fault, 5C
-	INTVEC(stray60, ISTACK) # Memory Write Timeout, 60
-	INTVEC(stray64, ISTACK) # Unused, 64
-	INTVEC(stray68, ISTACK) # Unused, 68
-	INTVEC(stray6C, ISTACK) # Unused, 6C
-	INTVEC(stray70, ISTACK) # Unused, 70
-	INTVEC(stray74, ISTACK) # Unused, 74
-	INTVEC(stray78, ISTACK) # Unused, 78
-	INTVEC(stray7C, ISTACK) # Unused, 7C
-	INTVEC(stray80, ISTACK) # Unused, 80
-	INTVEC(stray84, ISTACK) # Unused, 84
-	INTVEC(astintr,	 KSTACK)	# Asynchronous Sustem Trap, AST
-	INTVEC(stray8C, ISTACK) # Unused, 8C
-	INTVEC(stray90, ISTACK) # Unused, 90
-	INTVEC(stray94, ISTACK) # Unused, 94
-	INTVEC(stray98, ISTACK) # Unused, 98
-	INTVEC(stray9C, ISTACK) # Unused, 9C
+	INTVEC(sbiexc, ISTACK)		# System Backplane Exception/BIerror, 50
+	INTVEC(cmrerr, ISTACK)		# Corrected Memory Read, 54
+	INTVEC(rxcs, ISTACK)		# System Backplane Alert/RXCD, 58
+	INTVEC(sbiflt, ISTACK)		# System Backplane Fault, 5C
+	INTVEC(stray60, ISTACK)		# Memory Write Timeout, 60
+	INTVEC(stray64, ISTACK)		# Unused, 64
+	INTVEC(stray68, ISTACK)		# Unused, 68
+	INTVEC(stray6C, ISTACK)		# Unused, 6C
+	INTVEC(stray70, ISTACK)		# Unused, 70
+	INTVEC(stray74, ISTACK)		# Unused, 74
+	INTVEC(stray78, ISTACK)		# Unused, 78
+	INTVEC(stray7C, ISTACK)		# Unused, 7C
+	INTVEC(stray80, ISTACK)		# Unused, 80
+	INTVEC(stray84, ISTACK)		# Unused, 84
+	INTVEC(astintr,	KSTACK)		# Asynchronous Sustem Trap, AST
+	INTVEC(stray8C, ISTACK)		# Unused, 8C
+	INTVEC(stray90, ISTACK)		# Unused, 90
+	INTVEC(stray94, ISTACK)		# Unused, 94
+	INTVEC(stray98, ISTACK)		# Unused, 98
+	INTVEC(stray9C, ISTACK)		# Unused, 9C
 	INTVEC(softclock,ISTACK)	# Software clock interrupt
-	INTVEC(strayA4, ISTACK) # Unused, A4
-	INTVEC(strayA8, ISTACK) # Unused, A8
-	INTVEC(strayAC, ISTACK) # Unused, AC
-	INTVEC(netint,	 ISTACK)	# Network interrupt
-	INTVEC(strayB4, ISTACK) # Unused, B4
-	INTVEC(strayB8, ISTACK) # Unused, B8
-	INTVEC(ddbtrap, ISTACK) # Kernel debugger trap, BC
+	INTVEC(strayA4, ISTACK)		# Unused, A4
+	INTVEC(strayA8, ISTACK)		# Unused, A8
+	INTVEC(strayAC, ISTACK)		# Unused, AC
+	INTVEC(netint,	ISTACK)		# Network interrupt
+	INTVEC(strayB4, ISTACK)		# Unused, B4
+	INTVEC(strayB8, ISTACK)		# Unused, B8
+	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC
 	INTVEC(hardclock,ISTACK)	# Interval Timer
-	INTVEC(strayC4, ISTACK) # Unused, C4
-	INTVEC(emulate, KSTACK) # Subset instruction emulation
-	INTVEC(strayCC, ISTACK) # Unused, CC
-	INTVEC(strayD0, ISTACK) # Unused, D0
-	INTVEC(strayD4, ISTACK) # Unused, D4
-	INTVEC(strayD8, ISTACK) # Unused, D8
-	INTVEC(strayDC, ISTACK) # Unused, DC
-	INTVEC(strayE0, ISTACK) # Unused, E0
-	INTVEC(strayE4, ISTACK) # Unused, E4
-	INTVEC(strayE8, ISTACK) # Unused, E8
-	INTVEC(strayEC, ISTACK) # Unused, EC
+	INTVEC(strayC4, ISTACK)		# Unused, C4
+#if VAX8200
+	INTVEC(slu1rintr, ISTACK)	# Serial Unit 1 Receive Interrupt
+	INTVEC(slu1tintr, ISTACK)	# Serial Unit 1 Transmit Interrupt
+	INTVEC(slu2rintr, ISTACK)	# Serial Unit 2 Receive Interrupt
+	INTVEC(slu2tintr, ISTACK)	# Serial Unit 2 Transmit Interrupt
+	INTVEC(slu3rintr, ISTACK)	# Serial Unit 3 Receive Interrupt
+	INTVEC(slu3tintr, ISTACK)	# Serial Unit 3 Transmit Interrupt
+#else
+	INTVEC(emulate, KSTACK)		# Subset instruction emulation
+	INTVEC(strayCC, ISTACK)		# Unused, CC
+	INTVEC(strayD0, ISTACK)		# Unused, D0
+	INTVEC(strayD4, ISTACK)		# Unused, D4
+	INTVEC(strayD8, ISTACK)		# Unused, D8
+	INTVEC(strayDC, ISTACK)		# Unused, DC
+#endif
+	INTVEC(strayE0, ISTACK)		# Unused, E0
+	INTVEC(strayE4, ISTACK)		# Unused, E4
+	INTVEC(strayE8, ISTACK)		# Unused, E8
+	INTVEC(strayEC, ISTACK)		# Unused, EC
+#if VAX8200 & 0
+	INTVEC(crx50int, ISTACK)	# Console storage on VAX 8200 (RX50)
+#else
 	INTVEC(strayF0, ISTACK)
+#endif
 	INTVEC(strayF4, ISTACK)
 #if VAX8600 || VAX8200 || VAX750 || VAX780 || VAX630 || VAX650
 	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
@@ -419,20 +436,66 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		rei
 
 	STRAY(0,C4)
+#if VAX8200
+ENTRY(slu1rintr)	# May be emulate on some machines.
+	cmpl	_vax_cputype,$VAX_TYP_8SS
+	beql	1f
+	jmp	emulate
+1:	pushr	$0x3f
+	pushl	$1
+	jbr	rint
+
+ENTRY(slu2tintr)
+	pushr	$0x3f
+	pushl	$2
+	jbr	tint
+ENTRY(slu3tintr)
+	pushr	$0x3f
+	pushl	$3
+	jbr	tint
+ENTRY(slu1tintr)
+	pushr	$0x3f
+	pushl	$1
+	jbr	tint
+ENTRY(slu2rintr)
+	pushr	$0x3f
+	pushl	$2
+	jbr	rint
+ENTRY(slu3rintr)
+	pushr	$0x3f
+	pushl	$3
+	jbr	rint
+#else
 	STRAY(0,CC)
 	STRAY(0,D0)
 	STRAY(0,D4)
 	STRAY(0,D8)
 	STRAY(0,DC)
+#endif
 	STRAY(0,E0)
 	STRAY(0,E4)
 	STRAY(0,E8)
 	STRAY(0,EC)
+#if VAX8200 & 0
+	FASTINTR(crx50int, crxintr)
+#else
 	STRAY(0,F0)
+#endif
 	STRAY(0,F4)
 #if VAX8600 || VAX8200 || VAX750 || VAX780 || VAX630 || VAX650
-	FASTINTR(consrint,gencnrint)
-	FASTINTR(constint,gencntint)
+ENTRY(consrint)
+	pushr	$0x3f
+	pushl	$0
+rint:	calls	$1,_gencnrint
+	popr	$0x3f
+	rei
+
+ENTRY(constint)
+	pushr	$0x3f
+	pushl	$0
+tint:	calls	$1,_gencntint
+	popr	$0x3f
+	rei
 #else
 	STRAY(0,F8)
 	STRAY(0,FC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.7 1998/04/13 12:18:20 ragge Exp $ */
+/*	$NetBSD: bi.c,v 1.8 1998/08/31 18:43:28 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -99,6 +99,11 @@ bi_print(aux, name)
 		printf(" at %s", name);
 	}
 	printf(" node %d", ba->ba_nodenr);
+#ifdef DEBUG
+	if (ba->ba_node->biic.bi_sadr && ba->ba_node->biic.bi_eadr)
+		printf(" [sadr %x eadr %x]", ba->ba_node->biic.bi_sadr,
+		    ba->ba_node->biic.bi_eadr);
+#endif
 	return bl->bl_havedriver ? UNCONF : UNSUPP;
 }
 
