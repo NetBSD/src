@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.4 2000/10/07 21:12:19 bjh21 Exp $	*/
+/*	$NetBSD: sort.c,v 1.5 2000/10/07 21:13:56 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.4 2000/10/07 21:12:19 bjh21 Exp $");
+__RCSID("$NetBSD: sort.c,v 1.5 2000/10/07 21:13:56 bjh21 Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -210,9 +210,15 @@ main(argc, argv)
 	settables(fldtab[0].flags);
 	num_init();
 	fldtab->weights = gweights;
-	if (optind == argc)
-		argv[--optind] = devstdin;
-	filelist.names = argv+optind;
+	if (optind == argc) {
+		static char *names[2];
+
+		names[0] = devstdin;
+		names[1] = NULL;
+		filelist.names = names;
+		optind--;
+	} else
+		filelist.names = argv+optind;
 	if (SINGL_FLD)
 		get = makeline;
 	else
