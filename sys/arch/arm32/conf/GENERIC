@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.67.2.5 2001/05/01 15:46:09 he Exp $
+#	$NetBSD: GENERIC,v 1.67.2.6 2001/12/27 12:22:54 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.67.2.5 $"
+#ident 		"GENERIC-$Revision: 1.67.2.6 $"
 
 # estimated number of users
 maxusers	32
@@ -222,8 +222,8 @@ scsibus* at cosc?
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
 
-csc*	at podulebus?			# Cumana SCSI II card
-scsibus* at csc?
+#csc*	at podulebus?			# Cumana SCSI II card
+#scsibus* at csc?			# Not currently working
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
