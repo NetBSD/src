@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.17 2001/02/18 19:13:58 erh Exp $
+$NetBSD: UPDATING,v 1.18 2001/02/20 06:00:54 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,12 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20010219:
+	get/setprogname() added. Any hostprog's that may use this will need
+        to be bootstraped manually until the host system is current.
+
+        Known problems: sys/arch/macppc/stand/fixcoff
 
 20010204:
 	prepare the code to compile with stricter gcc flags. in
