@@ -1,3 +1,5 @@
+.\"	$NetBSD: le.4,v 1.11 2000/08/11 20:47:14 thorpej Exp $
+.\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -35,7 +37,6 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: le.4,v 1.10 2000/02/14 00:13:50 augustss Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4
@@ -45,13 +46,16 @@
 .Nd AMD 7990, 79C90, 79C960, 79C970 LANCE Ethernet interface driver
 .Sh SYNOPSIS
 .Ss ISA boards
-.Cd "nele0 at isa? port 0x320 irq 9 drq 7    #NE2100"
+.Cd "nele0 at isa? port 0x320 irq 9 drq 7    # NE2100"
 .Cd "le* at nele?"
-.Cd "bicc0 at isa? port 0x320 irq 10 drq 7   #BICC Isolan"
+.Cd "bicc0 at isa? port 0x320 irq 10 drq 7   # BICC Isolan"
 .Cd "le* at bicc?"
-.Cd "depca0 at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5 #DEC DEPCA"
+.Cd "depca0 at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5 # DEC DEPCA"
 .Cd "le* at depca?"
-.Cd "le* at isapnp?   #ISA-Plug-and-Play adapters"
+.Cd "le* at isapnp?                          # ISA-Plug-and-Play adapters"
+.Ss EISA boards
+.Cd "depca* at eisa? slot ?                  # DEC DE422"
+.Cd "le* at depca?"
 .Ss PCI boards and mainboard adapters
 .Cd "le* at pci? dev? function ?"
 .Ss Turbochannel PMAD-A or onboard (alpha, pmax)
@@ -170,6 +174,14 @@ interface are:
 .It BICC Isolan 
 .It Novell NE2100
 .It Digital DEPCA
+.El
+.Ss EISA
+The EISA-bus Ethernet cards supported by the
+.Nm
+interface are:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It DEC DE422
 .El
 .Ss pmax
 All

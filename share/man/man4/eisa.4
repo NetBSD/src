@@ -1,4 +1,4 @@
-.\"	$NetBSD: eisa.4,v 1.6 2000/07/24 12:15:10 ad Exp $
+.\"	$NetBSD: eisa.4,v 1.7 2000/08/11 20:47:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -107,8 +107,12 @@ and 3c597 10/100Mbit
 interfaces.
 .It fea
 Digital DEFEA FDDI interfaces.
+.It le
+Digital DE422
+.Tn Ethernet
+interfaces.
 .It tlp
-DECchip 21x4x and clone
+Digital DE425
 .Tn Ethernet
 interfaces.
 .El
@@ -135,6 +139,7 @@ supported bus variants.
 .Xr dpt 4 ,
 .Xr ep 4 ,
 .Xr fea 4 ,
+.Xr le 4 ,
 .Xr tlp 4 ,
 .Xr uha 4
 .Sh HISTORY
