@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.32 1999/07/01 18:40:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $");
+__RCSID("$NetBSD: if.c,v 1.32 1999/07/01 18:40:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,11 @@ __RCSID("$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $");
 static void sidewaysintpr __P((u_int, u_long));
 static void catchalarm __P((int));
 
+#ifdef INET6
+char *netname6 __P((struct in6_addr *, struct in6_addr *));
+static char ntop_buf[INET6_ADDRSTRLEN];		/* for inet_ntop() */
+#endif
+
 /*
  * Print a description of the network interfaces.
  * NOTE: ifnetaddr is the location of the kernel global "ifnet",
@@ -84,6 +89,9 @@ intpr(interval, ifnetaddr)
 	union {
 		struct ifaddr ifa;
 		struct in_ifaddr in;
+#ifdef INET6
+		struct in6_ifaddr in6;
+#endif /* INET6 */
 		struct ns_ifaddr ns;
 		struct iso_ifaddr iso;
 	} ifaddr;
@@ -129,6 +137,9 @@ intpr(interval, ifnetaddr)
 	ifaddraddr = 0;
 	while (ifnetaddr || ifaddraddr) {
 		struct sockaddr_in *sin;
+#ifdef INET6
+		struct sockaddr_in6 *sin6;
+#endif /* INET6 */
 		char *cp;
 		int n, m;
 
@@ -201,6 +212,18 @@ intpr(interval, ifnetaddr)
 					}
 				}
 				break;
+#ifdef INET6
+			case AF_INET6:
+				sin6 = (struct sockaddr_in6 *)sa;
+				printf("%-13.13s ",
+				    netname6(&ifaddr.in6.ia_addr.sin6_addr,
+					&ifaddr.in6.ia_prefixmask.sin6_addr));
+				printf("%-17.17s ",
+				    (char *)inet_ntop(AF_INET6,
+					&sin6->sin6_addr,
+					ntop_buf, sizeof(ntop_buf)));
+				break;
+#endif /*INET6*/
 #ifndef SMALL
 			case AF_APPLETALK:
 				printf("atalk:%-7.7s ",
