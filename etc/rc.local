@@ -2,16 +2,12 @@
 # site-specific startup actions, daemons
 #
 #	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
-#	$Id: rc.local,v 1.4 1993/12/15 07:24:33 mycroft Exp $
+#	$Id: rc.local,v 1.5 1993/12/22 14:03:32 cgd Exp $
 #
 
 T=/tmp/_motd
 rm -f $T
-if [ -f /kern/version ]; then
-	head -1 /kern/version > $T
-else
-	echo "NetBSD ?.? (UNKNOWN)" > $T
-fi
+strings /netbsd | grep NetBSD > $T
 echo "" >> $T
 sed '1,/^$/d' < /etc/motd >> $T
 cp $T /etc/motd
