@@ -1,3 +1,5 @@
+/*	$NetBSD: esp_isa.c,v 1.2 1997/05/18 06:08:02 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
  * All rights reserved.
