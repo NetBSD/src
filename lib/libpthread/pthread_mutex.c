@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.7 2002/01/28 19:05:49 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.8 2002/03/25 03:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,10 +38,17 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <sys/cdefs.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
+/* Aliases for use by libc */
+__weak_alias(_libc_pthread_mutex_init, pthread_mutex_init)
+__weak_alias(_libc_pthread_mutex_lock, pthread_mutex_lock)
+__weak_alias(_libc_pthread_mutex_trylock, pthread_mutex_trylock)
+__weak_alias(_libc_pthread_mutex_unlock, pthread_mutex_unlock)
+__weak_alias(_libc_pthread_once, pthread_mutex_once)
 
 int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)

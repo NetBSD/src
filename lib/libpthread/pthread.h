@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.9 2002/03/01 01:23:14 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.10 2002/03/25 03:46:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <time.h>	/* For timespec */
 #include <sched.h>
-#include <signal.h>	/* For sigset_t. XXX perhaps pthread_sigmask should
+#include <signal.h>	/* For sigset_t. XXX pthread_sigmask should
 			 * be in signal.h instead of here.
 			 */
 #include "pthread_types.h"
@@ -149,6 +149,29 @@ int 	*pthread__errno(void);
 #define PTHREAD_KEYS_MAX	256
 #define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
 #define PTHREAD_THREADS_MAX	64		/* Min. required */
+
+/* Prototypes for libc, which needs to use non-public names to avoid
+ * accidentally pulling in routines from non-integrated pthread
+ * libraries.
+ */
+int	_libc_pthread_mutex_init(pthread_mutex_t *mutex,
+	    const pthread_mutexattr_t *attr);
+int	_libc_pthread_mutex_lock(pthread_mutex_t *mutex);
+int	_libc_pthread_mutex_trylock(pthread_mutex_t *mutex);
+int	_libc_pthread_mutex_unlock(pthread_mutex_t *mutex);
+int	_libc_pthread_cond_init(pthread_cond_t *cond,
+	    const pthread_condattr_t *attr);
+int	_libc_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int	_libc_pthread_cond_signal(pthread_cond_t *cond);
+int	_libc_pthread_key_create(pthread_key_t *key, void (*destructor)(void *));
+int	_libc_pthread_key_delete(pthread_key_t key);
+int	_libc_pthread_setspecific(pthread_key_t key, const void *value);
+void*	_libc_pthread_getspecific(pthread_key_t key);
+int	_libc_pthread_sigmask(int how, const sigset_t *set, sigset_t *oset);
+pthread_t	_libc_pthread_self(void);
+void	_libc_pthread_exit(void *retval) __attribute__((__noreturn__));
+int	_libc_pthread_once(pthread_once_t *once_control, void (*routine)(void));
+int 	*_libc_pthread__errno(void);
 
 
 #endif /* _LIB_PTHREAD_H */

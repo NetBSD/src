@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.1.2.3 2002/03/01 01:29:15 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.1.2.4 2002/03/25 03:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,10 +39,10 @@
 /* Functions and structures dealing with thread-specific data */
 #include <assert.h>
 #include <errno.h>
+#include <sys/cdefs.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
-
 
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int tsd_alloc[PTHREAD_KEYS_MAX];
@@ -50,6 +50,10 @@ static int nextkey;
 
 static void (*tsd_destructors[PTHREAD_KEYS_MAX])(void *);
 
+/* Aliases for use by libc */
+__weak_alias(_libc_pthread_key_create, pthread_key_create)
+__weak_alias(_libc_pthread_setspecific, pthread_setspecific)
+__weak_alias(_libc_pthread_getspecific, pthread_getspecific)
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
