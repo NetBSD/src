@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.13 1997/10/19 15:29:20 fvdl Exp $
+.\"	$NetBSD: exports.5,v 1.14 1998/10/07 14:52:30 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -223,11 +223,14 @@ the same filesystem was exported read/write, and use the handle to
 gain access to that filesystem.
 .Pp
 The third component of a line specifies the host set to which the line applies.
+If no host set is specified, the filesystem is exported to everyone.
 The set may be specified in three ways.
 The first way is to list the host name(s) separated by white space.
 (Standard internet ``dot'' addresses may be used in place of names.)
 The second way is to specify a ``netgroup'' as defined in the netgroup file (see
 .Xr netgroup 5 ).
+A netgroup that contains an item that does have a host entry
+is treated like an error.
 The third way is to specify an internet subnetwork using a network and
 network mask that is defined as the set of all hosts with addresses within
 the subnetwork.
