@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.36 2000/05/08 16:30:57 itojun Exp $	*/
+/*	$NetBSD: cons.c,v 1.37 2000/06/12 05:02:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,7 @@ cnopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t cndev;
 
 	if (cn_tab == NULL)
 		return (0);
@@ -74,8 +75,8 @@ cnopen(dev, flag, mode, p)
 	 * later.  This follows normal device semantics; they always get
 	 * open() calls.
 	 */
-	dev = cn_tab->cn_dev;
-	if (dev == NODEV) {
+	cndev = cn_tab->cn_dev;
+	if (cndev == NODEV) {
 		/*
 		 * This is most likely an error in the console attach
 		 * code. Panicing looks better than jumping into nowhere
@@ -83,12 +84,21 @@ cnopen(dev, flag, mode, p)
 		 */
 		panic("cnopen: cn_tab->cn_dev == NODEV\n");
 	}
+	if (dev == cndev) {
+		/*
+		 * This causes cnopen() to be called recursively, which
+		 * is generally a bad thing.  It is often caused when
+		 * dev == 0 and cn_dev has not been set, but was probably
+		 * initialised to 0.
+		 */
+		panic("cnopen: cn_tab->cn_dev == dev\n");
+	}
 
 	if (cn_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(dev, &cn_devvp);
+		cdevvp(cndev, &cn_devvp);
 	}
-	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
+	return ((*cdevsw[major(cndev)].d_open)(cndev, flag, mode, p));
 }
  
 int
