@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.9 1998/08/15 06:56:12 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.10 1998/08/15 20:11:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,33 +104,28 @@ struct cfattach sm_pcmcia_ca = {
 int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
 void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
 
-int	sm_pcmcia_megahertz_enaddr __P((struct device *,
-	    struct pcmcia_attach_args *, u_int8_t *));
-int	sm_pcmcia_newmedia_enaddr __P((struct device *,
-	    struct pcmcia_attach_args *, u_int8_t *));
+int	sm_pcmcia_ascii_enaddr __P((const char *, u_int8_t *));
+int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
 
-int	sm_pcmcia_newmedia_ciscallback __P((struct pcmcia_tuple *, void *));
+int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
 
 struct sm_pcmcia_product {
 	u_int32_t	spp_vendor;	/* vendor ID */
 	u_int32_t	spp_product;	/* product ID */
 	int		spp_expfunc;	/* expected function */
 	const char	*spp_name;	/* product name */
-	int		(*spp_enaddr)	/* get ethernet address */
-			    __P((struct device *, struct pcmcia_attach_args *,
-			        u_int8_t *));
 } sm_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
-	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK,
-	  sm_pcmcia_megahertz_enaddr },
+	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK },
 
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
-	  0,				PCMCIA_STR_NEWMEDIA_BASICS,
-	  sm_pcmcia_newmedia_enaddr },
+	  0,				PCMCIA_STR_NEWMEDIA_BASICS },
+
+	{ PCMCIA_VENDOR_SMC,		PCMCIA_PRODUCT_SMC_8020BT,
+	  0,				PCMCIA_STR_SMC_8020BT },
 
 	{ 0,				0,
-	  0,				NULL,
-	  NULL },
+	  0,				NULL },
 };
 
 struct sm_pcmcia_product *sm_pcmcia_lookup __P((struct pcmcia_attach_args *));
@@ -212,11 +207,35 @@ sm_pcmcia_attach(parent, self, aux)
 
 	printf(": %s\n", spp->spp_name);
 
-	if ((*spp->spp_enaddr)(parent, pa, myla) == 0)
+	/*
+	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
+	 */
+	if (sm_pcmcia_funce_enaddr(parent, myla))
+		enaddr = myla;
+
+	/*
+	 * If that failed, try one of the CIS info strings.
+	 */
+	if (enaddr == NULL) {
+		char *cisstr = NULL;
+
+		switch (pa->manufacturer) {
+		case PCMCIA_VENDOR_MEGAHERTZ2:
+			cisstr = pa->pf->sc->card.cis1_info[3];
+			break;
+
+		case PCMCIA_VENDOR_SMC:
+			cisstr = pa->pf->sc->card.cis1_info[2];
+			break;
+		}
+
+		if (cisstr != NULL && sm_pcmcia_ascii_enaddr(cisstr, myla))
+			enaddr = myla;
+	}
+
+	if (enaddr == NULL)
 		printf("%s: unable to get Ethernet address\n",
 		    sc->sc_dev.dv_xname);
-	else
-		enaddr = myla;
 
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
@@ -225,24 +244,18 @@ sm_pcmcia_attach(parent, self, aux)
 }
 
 int
-sm_pcmcia_megahertz_enaddr(parent, pa, myla)
-	struct device *parent;
-	struct pcmcia_attach_args *pa;
+sm_pcmcia_ascii_enaddr(cisstr, myla)
+	const char *cisstr;
 	u_int8_t *myla;
 {
 	char enaddr_str[12];
 	int i, j;
 
-	/*
-	 * The X-JACK's Ethernet address is stored in the fourth
-	 * CIS info string.  We need to parse it and pass it to
-	 * the generic layer.
-	 */
-	if (strlen(pa->pf->sc->card.cis1_info[3]) != 12) {
+	if (strlen(cisstr) != 12) {
 		/* Bogus address! */
 		return (0);
 	}
-	bcopy(pa->pf->sc->card.cis1_info[3], enaddr_str, 12);
+	bcopy(cisstr, enaddr_str, 12);
 	bzero(myla, sizeof(myla));
 	for (i = 0; i < 6; i++) {
 		for (j = 0; j < 2; j++) {
@@ -275,17 +288,16 @@ sm_pcmcia_megahertz_enaddr(parent, pa, myla)
 }
 
 int
-sm_pcmcia_newmedia_enaddr(parent, pa, myla)
+sm_pcmcia_funce_enaddr(parent, myla)
 	struct device *parent;
-	struct pcmcia_attach_args *pa;
 	u_int8_t *myla;
 {
 
-	return (pcmcia_scan_cis(parent, sm_pcmcia_newmedia_ciscallback, myla));
+	return (pcmcia_scan_cis(parent, sm_pcmcia_lannid_ciscallback, myla));
 }
 
 int
-sm_pcmcia_newmedia_ciscallback(tuple, arg)
+sm_pcmcia_lannid_ciscallback(tuple, arg)
 	struct pcmcia_tuple *tuple;
 	void *arg;
 {
