@@ -1,5 +1,5 @@
 /* system.h: system-dependent declarations; include this first.
-   $Id: system.h,v 1.3 2001/07/25 16:46:19 assar Exp $
+   $Id: system.h,v 1.4 2002/01/16 17:22:38 tv Exp $
 
    Copyright (C) 1997, 98, 99 Free Software Foundation, Inc.
 
@@ -162,9 +162,14 @@ extern int strcoll ();
 # define IS_ABSOLUTE(n)	(IS_SLASH((n)[0]) || ((n)[0] && (n)[1] == ':'))
 # define FILENAME_CMP	strcasecmp
 # define FILENAME_CMPN	strncasecmp
-# define PATH_SEP	";"
+# ifdef __unix__
+#  define PATH_SEP	":"
+#  define DEFAULT_TMPDIR "/tmp/"
+# else
+#  define PATH_SEP	";"
+#  define DEFAULT_TMPDIR "c:/"
+# endif
 # define STRIP_DOT_EXE	1
-# define DEFAULT_TMPDIR	"c:/"
 # define PIPE_USE_FORK	0
 #else  /* not O_BINARY */
 # define SET_BINARY(f)	(void)0
