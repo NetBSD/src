@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14.8.2 2002/06/20 03:40:16 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.8.3 2002/10/18 02:39:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>

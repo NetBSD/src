@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.5.12.1 2002/09/17 21:15:35 nathanw Exp $	*/
+/*	$NetBSD: aed.c,v 1.5.12.2 2002/10/18 02:38:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -73,9 +73,8 @@ static struct aed_softc *aed_sc = NULL;
 static int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
-struct cfattach aed_ca = {
-	sizeof(struct aed_softc), aedmatch, aedattach
-};
+CFATTACH_DECL(aed, sizeof(struct aed_softc),
+    aedmatch, aedattach, NULL, NULL);
 
 extern struct cfdriver aed_cd;
 
@@ -169,7 +168,7 @@ aed_input(event)
 		break;
 	default:                /* God only knows. */
 #ifdef DIAGNOSTIC
-		panic("aed: received event from unsupported device!\n");
+		panic("aed: received event from unsupported device!");
 #endif
 		break;
 	}

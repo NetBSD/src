@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.5.8.4 2002/09/17 21:18:06 nathanw Exp $
+#	$NetBSD: files.sun2,v 1.5.8.5 2002/10/18 02:40:13 nathanw Exp $
 
 #
 # sun2-specific configuration info
@@ -142,17 +142,14 @@ device pcons
 attach pcons at mainbus
 file	arch/sun2/dev/pcons.c		pcons needs-flag
 
-device kbd
-attach kbd at zstty
-file dev/sun/kbd.c			kbd needs-flag
-file dev/sun/kbd_tables.c		kbd
 file arch/sun2/dev/kd.c			kbd
-file dev/sun/sunkbd.c			kbd needs-flag
 
-device ms
-attach ms at zstty
-file dev/sun/ms.c			ms needs-flag
-file dev/sun/sunms.c			ms needs-flag
+attach kbd at zstty with kbd_tty
+file dev/sun/kbdsun.c			kbd_tty
+file dev/sun/sunkbd.c			kbd_tty
+
+attach ms at zstty with ms_tty
+file dev/sun/sunms.c			ms_tty
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks

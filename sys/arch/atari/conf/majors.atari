@@ -1,4 +1,4 @@
-#	$NetBSD: majors.atari,v 1.2.2.2 2002/09/17 21:13:41 nathanw Exp $
+#	$NetBSD: majors.atari,v 1.2.2.3 2002/10/18 02:35:50 nathanw Exp $
 #
 # Device majors for atari
 #
@@ -52,3 +52,4 @@ device-major	raid		char 50  block 15	raid
 device-major	svr4_net	char 51			compat_svr4
 device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
+device-major	cgd		char 54  block 16	cgd

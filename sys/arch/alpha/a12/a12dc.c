@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.5.4.3 2002/09/17 21:12:33 nathanw Exp $ */
+/* $NetBSD: a12dc.c,v 1.5.4.4 2002/10/18 02:33:53 nathanw Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.4.3 2002/09/17 21:12:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.4.4 2002/10/18 02:33:53 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,9 +101,8 @@ struct a12dc_softc {
 	struct  device sc_dev;
 } a12dc_softc;
 
-struct cfattach a12dc_ca = {
-	sizeof(struct a12dc_softc), a12dcmatch, a12dcattach,
-};
+CFATTACH_DECL(a12dc, sizeof(struct a12dc_softc),
+    a12dcmatch, a12dcattach, NULL, NULL);
 
 extern	struct cfdriver a12dc_cd;
 
@@ -165,7 +164,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.5.4.3 $");
+	printf(": driver %s\n", "$Revision: 1.5.4.4 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;

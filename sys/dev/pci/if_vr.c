@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.46.2.4 2002/08/01 02:45:19 nathanw Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.46.2.5 2002/10/18 02:43:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.46.2.4 2002/08/01 02:45:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.46.2.5 2002/10/18 02:43:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1343,9 +1343,8 @@ static int vr_probe __P((struct device *, struct cfdata *, void *));
 static void vr_attach __P((struct device *, struct device *, void *));
 static void vr_shutdown __P((void *));
 
-struct cfattach vr_ca = {
-	sizeof (struct vr_softc), vr_probe, vr_attach
-};
+CFATTACH_DECL(vr, sizeof (struct vr_softc),
+    vr_probe, vr_attach, NULL, NULL);
 
 static struct vr_type *
 vr_lookup(pa)

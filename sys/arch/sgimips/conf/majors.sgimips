@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.2.2.2 2002/09/17 21:17:19 nathanw Exp $
+#	$NetBSD: majors.sgimips,v 1.2.2.3 2002/10/18 02:39:38 nathanw Exp $
 #
 # Device majors for sgimips
 #
@@ -9,6 +9,7 @@ device-major	md		char 2   block 2	md
 device-major	ccd		char 3   block 3	ccd
 device-major	vnd		char 4   block 4	vnd
 device-major	raid		char 5   block 5	raid
+device-major	cgd		char 6   block 6	cgd
 
 device-major	sd		char 10  block 10	sd
 device-major	st		char 11  block 11	st

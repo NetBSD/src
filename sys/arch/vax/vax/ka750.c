@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.31 2000/06/04 18:02:35 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.31.10.1 2002/10/18 02:40:34 nathanw Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -97,9 +97,8 @@ ka750_conf()
 static int ka750_memmatch(struct device  *, struct cfdata *, void *);
 static void ka750_memenable(struct device *, struct device *, void *);
 
-struct	cfattach mem_cmi_ca = {
-	sizeof(struct device), ka750_memmatch, ka750_memenable
-};
+CFATTACH_DECL(mem_cmi, sizeof(struct device),
+    ka750_memmatch, ka750_memenable, NULL, NULL);
 
 int
 ka750_memmatch(struct device *parent, struct cfdata *cf, void *aux)

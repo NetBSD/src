@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8.6.6 2002/06/20 03:40:07 nathanw Exp $
+# $NetBSD: GENERIC,v 1.8.6.7 2002/10/18 02:39:03 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -123,6 +123,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -131,7 +132,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -203,17 +204,30 @@ options 	TLP_MATCH_21142
 icsphy*		at mii? phy ?			# ISC-189x PHYs
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
+
 # WSCONS Support
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+options 	FONT_GALLANT12x22		# Sun PROM font look-alike
+
 pckbc0		at isa?
 pckbd*		at pckbc?
 wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
 
-vga*		at pci? dev ? function ?
-wsdisplay*	at vga? console ?
+#igsfb*		at pci? dev ? function ?
+#wsdisplay*	at igsfb? console ?
+
 
 # ISA Devices
 com0		at isa? port 0x3f8 irq 4
@@ -236,6 +250,7 @@ audio*		at sb?
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	cgd		4	# cryptographic disk devices
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
@@ -247,3 +262,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont

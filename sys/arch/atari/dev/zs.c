@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34.8.3 2002/09/17 21:13:49 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.8.4 2002/10/18 02:35:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -191,9 +191,8 @@ static u_long *zs_frequencies;
 static int	zsmatch __P((struct device *, struct cfdata *, void *));
 static void	zsattach __P((struct device *, struct device *, void *));
 
-struct cfattach zs_ca = {
-	sizeof(struct zs_softc), zsmatch, zsattach
-};
+CFATTACH_DECL(zs, sizeof(struct zs_softc),
+    zsmatch, zsattach, NULL, NULL);
 
 extern struct cfdriver zs_cd;
 

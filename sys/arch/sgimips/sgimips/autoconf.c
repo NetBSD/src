@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4.4.4 2002/08/01 02:43:17 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4.4.5 2002/10/18 02:39:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -162,7 +162,7 @@ device_register(dev, aux)
 	static int found, initted, scsiboot, netboot;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -176,7 +176,7 @@ device_register(dev, aux)
 	/*
 	 * Check for WDC controller
 	 */
-	if (scsiboot && strcmp(cd->cd_name, "wdsc") == 0) {
+	if (scsiboot && strcmp(name, "wdsc") == 0) {
 		/* 
 		 * XXX: this fails if the controllers were attached 
 		 * in an order other than the ARCS-imposed order.
@@ -194,9 +194,9 @@ device_register(dev, aux)
 	 * If we found the boot controller, if check disk/tape/cdrom device
 	 * on that controller matches.
 	 */
-	if (booted_controller && (strcmp(cd->cd_name, "sd") == 0 ||
-	    strcmp(cd->cd_name, "st") == 0 ||
-	    strcmp(cd->cd_name, "cd") == 0)) {
+	if (booted_controller && (strcmp(name, "sd") == 0 ||
+	    strcmp(name, "st") == 0 ||
+	    strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != booted_controller)
@@ -211,7 +211,7 @@ device_register(dev, aux)
 	/*
 	 * Check if netboot device.
 	 */
-	if (netboot && strcmp(cd->cd_name, "sq") == 0) {
+	if (netboot && strcmp(name, "sq") == 0) {
 		/* XXX Check unit number? (Which we don't parse yet) */
 		booted_device = dev;
 		found = 1;

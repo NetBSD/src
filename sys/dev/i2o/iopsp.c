@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.4.2.8 2002/07/12 01:40:07 nathanw Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.4.2.9 2002/10/18 02:41:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.8 2002/07/12 01:40:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.4.2.9 2002/10/18 02:41:44 nathanw Exp $");
 
 #include "opt_i2o.h"
 
@@ -83,9 +83,8 @@ static int	iopsp_reconfig(struct device *);
 static void	iopsp_scsipi_request(struct scsipi_channel *,
 				     scsipi_adapter_req_t, void *);
 
-struct cfattach iopsp_ca = {
-	sizeof(struct iopsp_softc), iopsp_match, iopsp_attach
-};
+CFATTACH_DECL(iopsp, sizeof(struct iopsp_softc),
+    iopsp_match, iopsp_attach, NULL, NULL);
 
 /*
  * Match a supported device.
@@ -452,7 +451,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
 		if (xs->cmdlen > sizeof(mf->cdb))
-			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
+			panic("%s: CDB too large", sc->sc_dv.dv_xname);
 #endif
 
 		im = iop_msg_alloc(iop, IM_POLL_INTR |

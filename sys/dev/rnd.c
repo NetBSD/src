@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.21.2.6 2002/09/17 21:19:23 nathanw Exp $	*/
+/*	$NetBSD: rnd.c,v 1.21.2.7 2002/10/18 02:41:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.6 2002/09/17 21:19:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.21.2.7 2002/10/18 02:41:28 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -190,9 +190,12 @@ rnd_counter(void)
 	if (cpu_hascounter())
 		return (cpu_counter() & 0xffffffff);
 #endif
-	microtime(&tv);
-
-	return (tv.tv_sec * 1000000 + tv.tv_usec);
+	if (rnd_ready) {
+		microtime(&tv);
+		return (tv.tv_sec * 1000000 + tv.tv_usec);
+	} 
+	/* when called from rnd_init, its too early to call microtime safely */
+	return 0;  
 }
 
 /*
@@ -217,6 +220,11 @@ rnd_wakeup_readers(void)
 		}
 		selwakeup(&rnd_selq);
 
+#ifdef RND_VERBOSE
+		if (!rnd_have_entropy)
+			printf("rnd: have initial entropy (%u)\n",
+			       rndpool_get_entropy_count(&rnd_pool));
+#endif
 		/*
 		 * Allow open of /dev/random now, too.
 		 */
@@ -272,22 +280,42 @@ rnd_estimate_entropy(rndsource_t *rs, u_int32_t t)
 }
 
 /*
- * Attach the random device, and initialize the global random pool
- * for our use.
+ * "Attach" the random device. This is an (almost) empty stub, since
+ * pseudo-devices don't get attached until after config, after the
+ * entropy sources will attach. We just use the timing of this event
+ * as another potential source of initial entropy.
  */
 void
 rndattach(int num)
 {
+	u_int32_t c;
 
-	rnd_init();
+	/* Trap unwary players who don't call rnd_init() early */
+	KASSERT(rnd_ready);
+
+	/* mix in another counter */
+	c = rnd_counter();
+	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
 }
 
+/*
+ * initialize the global random pool for our use.
+ * rnd_init() must be called very early on in the boot process, so
+ * the pool is ready for other devices to attach as sources.
+ */
 void
 rnd_init(void)
 {
+	u_int32_t c;
 
 	if (rnd_ready)
 		return;
+
+	/* 
+	 * take a counter early, hoping that there's some variance in
+	 * the following operations 
+	 */
+	c = rnd_counter();
 
 	LIST_INIT(&rnd_sources);
 	SIMPLEQ_INIT(&rnd_samples);
@@ -297,10 +325,22 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 
+	/* Mix *something*, *anything* into the pool to help it get started. 
+	 * However, it's not safe for rnd_counter() to call microtime() yet,
+	 * so on some platforms we might just end up with zeros anyway.
+	 * XXX more things to add would be nice.
+	 */ 
+	if (c) {
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
+		c = rnd_counter();
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
+	}
+
 	rnd_ready = 1;
 
 #ifdef RND_VERBOSE
-	printf("Random device ready\n");
+	printf("rnd: initialised (%u)%s", RND_POOLBITS,
+	       c ? " with counter\n" : "\n");
 #endif
 }
 
@@ -750,8 +790,22 @@ rnd_attach_source(rndsource_element_t *rs, char *name, u_int32_t type,
 	LIST_INSERT_HEAD(&rnd_sources, rs, list);
 
 #ifdef RND_VERBOSE
-	printf("%s: attached as an entropy source\n", rs->data.name);
+	printf("rnd: %s attached as an entropy source (", rs->data.name);
+	if (!(flags & RND_FLAG_NO_COLLECT)) {
+		printf("collecting");
+		if (flags & RND_FLAG_NO_ESTIMATE)
+			printf(" without estimation");
+	}
+	else
+		printf("off");
+	printf(")\n");
 #endif
+
+	/* 
+	 * Again, put some more initial junk in the pool.
+	 * XXX Bogus, but harder to guess than zeros.
+	 */
+	rndpool_add_data(&rnd_pool, &ts, sizeof(u_int32_t), 1);
 }
 
 /*
@@ -788,6 +842,9 @@ rnd_detach_source(rndsource_element_t *rs)
 	}
 
 	splx(s);
+#ifdef RND_VERBOSE
+	printf("rnd: %s detached as an entropy source\n", rs->data.name);
+#endif
 }
 
 /*
@@ -960,8 +1017,18 @@ int
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	int retval, s;
+	u_int32_t c;
 
 	s = splsoftclock();
+	if (!rnd_have_entropy) {
+#ifdef RND_VERBOSE
+		printf("rnd: WARNING! initial entropy low (%u).\n",
+		       rndpool_get_entropy_count(&rnd_pool));
+#endif
+		/* Try once again to put something in the pool */
+		c = rnd_counter();
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 1);
+	}
 	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
 	splx(s);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscall.h,v 1.18.2.7 2002/08/13 02:19:14 nathanw Exp $ */
+/* $NetBSD: irix_syscall.h,v 1.18.2.8 2002/10/18 02:41:04 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -342,6 +342,9 @@
 
 /* syscall: "systeminfo" ret: "long" args: "int" "char *" "long" */
 #define	IRIX_SYS_systeminfo	156
+
+/* syscall: "uname" ret: "int" args: "struct irix_utsname *" */
+#define	IRIX_SYS_uname	157
 
 /* syscall: "xstat" ret: "int" args: "const int" "const char *" "struct stat *" */
 #define	IRIX_SYS_xstat	158

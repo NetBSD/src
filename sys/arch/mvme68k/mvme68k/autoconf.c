@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31.8.2 2002/02/28 04:10:52 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31.8.3 2002/10/18 02:38:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
@@ -118,17 +117,14 @@ device_register(dev, aux)
 {
 	static struct device *controller;
 	static int foundboot;
-	struct device *parent;
-	struct cfdriver *cd;
+	struct device *parent = dev->dv_parent;
+	const char *name = dev->dv_cfdata->cf_name;
 
 	if (foundboot)
 		return;
 
-	parent = dev->dv_parent;
-	cd = dev->dv_cfdata->cf_driver;
-
 	if (controller == NULL && parent) {
-		struct cfdriver *pcd = parent->dv_cfdata->cf_driver;
+		const char *pname = parent->dv_cfdata->cf_name;
 
 		switch (machineid) {
 #ifdef MVME147
@@ -138,17 +134,17 @@ device_register(dev, aux)
 			 * onboard scsi and ethernet. So ensure this
 			 * device's parent is the PCC driver.
 			 */
-			if (strcmp(pcd->cd_name, "pcc"))
+			if (strcmp(pname, "pcc"))
 				return;
 
 			if (bootaddr == PCC_PADDR(PCC_WDSC_OFF) &&
-			    strcmp(cd->cd_name, "wdsc") == 0) {
+			    strcmp(name, "wdsc") == 0) {
 				controller = dev;
 				return;
 			}
 
 			if (bootaddr == PCC_PADDR(PCC_LE_OFF) &&
-			    strcmp(cd->cd_name, "le") == 0) {
+			    strcmp(name, "le") == 0) {
 				booted_device = dev;
 				foundboot = 1;
 				return;
@@ -163,21 +159,21 @@ device_register(dev, aux)
 		case MVME_172:
 		case MVME_177:
 			/*
-			 * We currently only support booting from the 16x and 17x
-			 * onboard scsi and ethernet. So ensure this
+			 * We currently only support booting from the 16x and
+			 * 17x onboard scsi and ethernet. So ensure this
 			 * device's parent is the PCCTWO driver.
 			 */
-			if (strcmp(pcd->cd_name, "pcctwo"))
+			if (strcmp(pname, "pcctwo"))
 				return;
 
 			if (bootaddr == PCCTWO_PADDR(PCCTWO_NCRSC_OFF) &&
-			    strcmp(cd->cd_name, "osiop") == 0) {
+			    strcmp(name, "osiop") == 0) {
 				controller = dev;
 				return;
 			}
 
 			if (bootaddr == PCCTWO_PADDR(PCCTWO_IE_OFF) &&
-			    strcmp(cd->cd_name, "ie") == 0) {
+			    strcmp(name, "ie") == 0) {
 				booted_device = dev;
 				foundboot = 1;
 				return;
@@ -196,9 +192,9 @@ device_register(dev, aux)
 	/*
 	 * Find out which device on the scsibus we booted from
 	 */
-	if (strcmp(cd->cd_name, "sd") == 0 ||
-	    strcmp(cd->cd_name, "cd") == 0 ||
-	    strcmp(cd->cd_name, "st") == 0) {
+	if (strcmp(name, "sd") == 0 ||
+	    strcmp(name, "cd") == 0 ||
+	    strcmp(name, "st") == 0) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != controller ||

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.2.2.2 2002/09/17 21:18:26 nathanw Exp $
+#	$NetBSD: majors.vax,v 1.2.2.3 2002/10/18 02:40:29 nathanw Exp $
 #
 # Device majors for vax
 #
@@ -78,3 +78,4 @@ device-major	raid		char 73  block 25	raid
 device-major	wsmux		char 74			wsmux
 device-major	clockctl	char 75			clockctl
 device-major	systrace	char 76			systrace
+device-major	cgd		char 77  block 26	cgd

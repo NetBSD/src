@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.12.2.3 2002/02/28 04:13:39 nathanw Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.12.2.4 2002/10/18 02:42:09 nathanw Exp $	*/
 
 /*
  * cy.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.3 2002/02/28 04:13:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.4 2002/10/18 02:42:09 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -29,9 +29,8 @@ __KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.12.2.3 2002/02/28 04:13:39 nathanw Exp 
 int	cy_isa_probe(struct device *, struct cfdata *, void *);
 void	cy_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach cy_isa_ca = {
-	sizeof(struct cy_softc), cy_isa_probe, cy_isa_attach
-};
+CFATTACH_DECL(cy_isa, sizeof(struct cy_softc),
+    cy_isa_probe, cy_isa_attach, NULL, NULL);
 
 int
 cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)

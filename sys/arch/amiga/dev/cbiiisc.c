@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.6.8.2 2002/02/28 04:06:34 nathanw Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.6.8.3 2002/10/18 02:34:48 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.6.8.2 2002/02/28 04:06:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.6.8.3 2002/10/18 02:34:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,8 @@ void cbiiisc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach cbiiisc_ca = {
-	sizeof(struct siop_softc), cbiiiscmatch, cbiiiscattach
-};
+CFATTACH_DECL(cbiiisc, sizeof(struct siop_softc),
+    cbiiiscmatch, cbiiiscattach, NULL, NULL);
 
 /*
  * if we are a CyberStorm MK III SCSI

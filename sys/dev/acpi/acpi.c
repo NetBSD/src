@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.4.4.7 2002/08/01 02:44:35 nathanw Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4.4.8 2002/10/18 02:41:29 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.7 2002/08/01 02:44:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.4.4.8 2002/10/18 02:41:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,8 @@ int	acpi_print(void *aux, const char *);
 
 extern struct cfdriver acpi_cd;
 
-struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach,
-};
+CFATTACH_DECL(acpi, sizeof(struct acpi_softc),
+    acpi_match, acpi_attach, NULL, NULL);
 
 /*
  * This is a flag we set when the ACPI subsystem is active.  Machine

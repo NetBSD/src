@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.8.8.2 2002/09/17 21:17:41 nathanw Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.8.8.3 2002/10/18 02:39:52 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,9 +72,8 @@ static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
 static void	cgsixattach __P((struct device *, struct device *, void *));
 static int	cg6_pfour_probe __P((void *, void *));
 
-struct cfattach cgsix_obio_ca = {
-	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach
-};
+CFATTACH_DECL(cgsix_obio, sizeof(struct cgsix_softc),
+    cgsixmatch, cgsixattach, NULL, NULL);
 
 /*
  * Match a cgsix.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.7.6.2 2001/11/14 19:14:02 nathanw Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.7.6.3 2002/10/18 02:41:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.7.6.2 2001/11/14 19:14:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.7.6.3 2002/10/18 02:41:34 nathanw Exp $");
 
 #include "ehci.h"
 
@@ -89,10 +89,8 @@ struct ohci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach ohci_cardbus_ca = {
-	sizeof(struct ohci_cardbus_softc), ohci_cardbus_match,
-	ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate
-};
+CFATTACH_DECL(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
+    ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate);
 
 #define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
 #define CARDBUS_CBMEM PCI_CBMEM

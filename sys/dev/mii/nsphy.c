@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.28.2.6 2002/08/01 02:45:07 nathanw Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.28.2.7 2002/10/18 02:42:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.28.2.6 2002/08/01 02:45:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.28.2.7 2002/10/18 02:42:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: nsphy.c,v 1.28.2.6 2002/08/01 02:45:07 nathanw Exp $
 int	nsphymatch(struct device *, struct cfdata *, void *);
 void	nsphyattach(struct device *, struct device *, void *);
 
-struct cfattach nsphy_ca = {
-	sizeof(struct mii_softc), nsphymatch, nsphyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(nsphy, sizeof(struct mii_softc),
+    nsphymatch, nsphyattach, mii_phy_detach, mii_phy_activate);
 
 int	nsphy_service(struct mii_softc *, struct mii_data *, int);
 void	nsphy_status(struct mii_softc *);

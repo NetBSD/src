@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.23.8.2 2002/09/17 21:18:37 nathanw Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.23.8.3 2002/10/18 02:40:37 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,9 +67,8 @@ static	void	dz_ibus_attach(struct device *, struct device *, void *);
 
 static	vaddr_t idz_regs; /* Used for console */
 
-struct	cfattach dz_ibus_ca = {
-	sizeof(struct dz_softc), dz_ibus_match, dz_ibus_attach
-};
+CFATTACH_DECL(dz_ibus, sizeof(struct dz_softc),
+    dz_ibus_match, dz_ibus_attach, NULL, NULL);
 
 #define REG(name)     short name; short X##name##X;
 static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
@@ -145,7 +144,7 @@ dz_ibus_attach(parent, self, aux)
 
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc, NULL);
+	dzattach(sc, NULL, minor(cn_tab->cn_dev);
 }
 
 int

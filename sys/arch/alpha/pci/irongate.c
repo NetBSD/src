@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.3.2.3 2002/06/20 03:37:41 nathanw Exp $ */
+/* $NetBSD: irongate.c,v 1.3.2.4 2002/10/18 02:34:20 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.2.3 2002/06/20 03:37:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.2.4 2002/10/18 02:34:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.2.3 2002/06/20 03:37:41 nathanw Exp
 int	irongate_match(struct device *, struct cfdata *, void *);
 void	irongate_attach(struct device *, struct device *, void *);
 
-struct cfattach irongate_ca = {
-	sizeof(struct irongate_softc), irongate_match, irongate_attach,
-};
+CFATTACH_DECL(irongate, sizeof(struct irongate_softc),
+    irongate_match, irongate_attach, NULL, NULL);
 
 int	irongate_print(void *, const char *pnp);
 

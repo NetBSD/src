@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.1.2.2 2002/02/28 04:13:54 nathanw Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.1.2.3 2002/10/18 02:42:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -74,9 +74,8 @@ struct ie_pcctwo_softc {
 	struct evcnt ps_evcnt;
 };
 
-struct cfattach ie_pcctwo_ca = {
-	sizeof(struct ie_pcctwo_softc), ie_pcctwo_match, ie_pcctwo_attach
-};
+CFATTACH_DECL(ie_pcctwo, sizeof(struct ie_pcctwo_softc),
+    ie_pcctwo_match, ie_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver ie_cd;
 

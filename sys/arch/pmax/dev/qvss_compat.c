@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.28.4.2 2002/09/17 21:16:59 nathanw Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.28.4.3 2002/10/18 02:39:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -121,7 +121,7 @@ init_pmaxfbu(fi)
 	struct fbuaccess *fbu = NULL;
 
 	if (fi == NULL || fi->fi_fbu == NULL)
-		panic("init_pmaxfb: given null pointer to framebuffer\n");
+		panic("init_pmaxfb: given null pointer to framebuffer");
 
 	/* XXX don't rely on there being a pmax_fb struct */
 	fbu = fi->fi_fbu;

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.18.4.6 2002/08/27 23:44:44 nathanw Exp $	*/
+/*	$NetBSD: akbd.c,v 1.18.4.7 2002/10/18 02:38:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -72,9 +72,8 @@ static void	blinkleds __P((struct akbd_softc *));
 #endif
 
 /* Driver definition. */
-struct cfattach akbd_ca = {
-	sizeof(struct akbd_softc), akbdmatch, akbdattach
-};
+CFATTACH_DECL(akbd, sizeof(struct akbd_softc),
+    akbdmatch, akbdattach, NULL, NULL);
 
 extern struct cfdriver akbd_cd;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18.4.6 2002/10/05 06:27:32 gmcgarry Exp $
+#	$NetBSD: genassym.cf,v 1.18.4.7 2002/10/18 02:40:51 nathanw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -41,7 +41,6 @@ endif
 
 include <sys/param.h>
 include <sys/buf.h>
-include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33.6.3 2002/06/24 22:07:23 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33.6.4 2002/10/18 02:39:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -283,7 +283,7 @@ cpu_exit(struct lwp *l, int proc)
 	else
 		lwp_exit2(l);
 
-	cpu_switch(l);
+	cpu_switch(l, NULL);
 	/* NOTREACHED */
 }
 

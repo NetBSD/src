@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3.4.3 2002/06/20 03:42:04 nathanw Exp $	*/
+/*	$NetBSD: bus.c,v 1.3.4.4 2002/10/18 02:40:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -128,7 +128,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -677,7 +676,7 @@ sun68k_bus_unmap(t, bh, size)
 #ifdef	DIAGNOSTIC
 	if ((va >= SUN_MONSTART && va < SUN_MONEND) !=
 	    ((va + size) >= SUN_MONSTART && (va + size) < SUN_MONEND))
-		panic("sun_bus_unmap: bad PROM mapping\n");
+		panic("sun_bus_unmap: bad PROM mapping");
 #endif
 	if (va >= SUN_MONSTART && va < SUN_MONEND)
 		return (0);
@@ -748,7 +747,7 @@ sun68k_bus_peek(tag, handle, offset, size, vp)
 			*((u_int32_t *) vp) = bus_space_read_4(tag, handle, offset);
 			break;
 		default:
-			panic("_bus_space_peek: bad size\n");
+			panic("_bus_space_peek: bad size");
 		}
 		result = 0;
 	}
@@ -783,7 +782,7 @@ sun68k_bus_poke(tag, handle, offset, size, v)
 			bus_space_write_4(tag, handle, offset, (u_int32_t) v);
 			break;
 		default:
-			panic("_bus_space_poke: bad size\n");
+			panic("_bus_space_poke: bad size");
 		}
 		result = 0;
 	}

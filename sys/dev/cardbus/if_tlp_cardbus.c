@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.25.2.6 2002/04/17 00:05:25 nathanw Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.25.2.7 2002/10/18 02:41:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.25.2.6 2002/04/17 00:05:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.25.2.7 2002/10/18 02:41:34 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -128,11 +128,8 @@ int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	tlp_cardbus_attach __P((struct device *, struct device *, void *));
 int	tlp_cardbus_detach __P((struct device *, int));
 
-struct cfattach tlp_cardbus_ca = {
-	sizeof(struct tulip_cardbus_softc),
-	    tlp_cardbus_match, tlp_cardbus_attach,
-		tlp_cardbus_detach, tlp_activate,
-};
+CFATTACH_DECL(tlp_cardbus, sizeof(struct tulip_cardbus_softc),
+    tlp_cardbus_match, tlp_cardbus_attach, tlp_cardbus_detach, tlp_activate);
 
 const struct tulip_cardbus_product {
 	u_int32_t	tcp_vendor;	/* PCI vendor ID */
@@ -489,7 +486,7 @@ tlp_cardbus_detach(self, flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 
 	rv = tlp_detach(sc);

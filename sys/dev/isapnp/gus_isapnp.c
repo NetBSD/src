@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.15.6.2 2001/11/14 19:14:56 nathanw Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.15.6.3 2002/10/18 02:42:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.15.6.2 2001/11/14 19:14:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.15.6.3 2002/10/18 02:42:41 nathanw Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.15.6.2 2001/11/14 19:14:56 nathanw 
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
@@ -116,9 +115,8 @@ static struct audio_hw_if guspnp_hw_if = {
 
 
 
-struct cfattach guspnp_ca = {
-	sizeof(struct iw_softc), gus_isapnp_match, gus_isapnp_attach
-};
+CFATTACH_DECL(guspnp, sizeof(struct iw_softc),
+    gus_isapnp_match, gus_isapnp_attach, NULL, NULL);
 
 extern struct cfdriver guspnp_cd;
 

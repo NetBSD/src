@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscalls.c,v 1.18.2.7 2002/08/13 02:19:15 nathanw Exp $ */
+/* $NetBSD: irix_syscalls.c,v 1.18.2.8 2002/10/18 02:41:05 nathanw Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.18.2.7 2002/08/13 02:19:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.18.2.8 2002/10/18 02:41:05 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -205,7 +205,7 @@ const char *const irix_syscallnames[] = {
 	"#154 (unimplemented wait3)",		/* 154 = unimplemented wait3 */
 	"#155 (unimplemented socketpair)",		/* 155 = unimplemented socketpair */
 	"systeminfo",			/* 156 = systeminfo */
-	"#157 (unimplemented uname)",		/* 157 = unimplemented uname */
+	"uname",			/* 157 = uname */
 	"xstat",			/* 158 = xstat */
 	"lxstat",			/* 159 = lxstat */
 	"fxstat",			/* 160 = fxstat */

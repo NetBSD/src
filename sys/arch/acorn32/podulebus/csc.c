@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.1.4.4 2002/08/13 01:02:37 nathanw Exp $	*/
+/*	$NetBSD: csc.c,v 1.1.4.5 2002/10/18 02:33:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <uvm/uvm_extern.h>
-#include <machine/pmap.h>
 #include <machine/io.h>
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
@@ -60,20 +58,21 @@
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>
 
-void cscattach   __P((struct device *, struct device *, void *));
-int  cscmatch    __P((struct device *, struct cfdata *, void *));
+int  cscmatch(struct device *, struct cfdata *, void *);
+void cscattach(struct device *, struct device *, void *);
 
-struct cfattach csc_ca = {
-	sizeof(struct csc_softc), cscmatch, cscattach
-};
+CFATTACH_DECL(csc, sizeof(struct csc_softc),
+    cscmatch, cscattach, NULL, NULL);
 
-int csc_intr		__P((void *arg));
-int csc_setup_dma	__P((struct sfas_softc *sc, void *ptr, int len,
-			      int mode));
-int csc_build_dma_chain	__P((struct sfas_softc *sc,
-			      struct sfas_dma_chain *chain, void *p, int l));
-int csc_need_bump	__P((struct sfas_softc *sc, void *ptr, int len));
-void csc_led		__P((struct sfas_softc *sc, int mode));
+int csc_intr(void *);
+int csc_setup_dma(void *, void *, int, int);
+int csc_build_dma_chain(void *, void *, void *, int);
+int csc_need_bump(void *, void *, int);
+void csc_led(void *, int);
+
+void csc_set_dma_adr(struct sfas_softc *, void *);
+void csc_set_dma_tc(struct sfas_softc *, unsigned int);
+void csc_set_dma_mode(struct sfas_softc *, int);
 
 /*
  * if we are a Cumana SCSI-2 card
@@ -196,7 +195,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
-	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
+	    panic("%s: Cannot install IRQ handler", dp->dv_xname);
 #else
 	printf(" polling");
 	sc->sc_softc.sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
@@ -268,20 +267,21 @@ csc_set_dma_mode(sc, mode)
 /* Initialize DMA for transfer */
 int
 csc_setup_dma(sc, ptr, len, mode)
-	struct sfas_softc *sc;
-	void		 *ptr;
-	int		  len;
-	int		  mode;
+	void	 *sc;
+	void	 *ptr;
+	int	  len;
+	int	  mode;
 {
-	return(0);
+
+	return (0);
 }
 
 /* Check if address and len is ok for DMA transfer */
 int
 csc_need_bump(sc, ptr, len)
-	struct sfas_softc *sc;
-	void		 *ptr;
-	int		  len;
+	void	 *sc;
+	void	 *ptr;
+	int	  len;
 {
 	int	p;
 
@@ -300,20 +300,21 @@ csc_need_bump(sc, ptr, len)
 /* Interrupt driven routines */
 int
 csc_build_dma_chain(sc, chain, p, l)
-	struct sfas_softc	*sc;
-	struct sfas_dma_chain	*chain;
-	void			*p;
-	int			 l;
+	void	*sc;
+	void	*chain;
+	void	*p;
+	int	 l;
 {
 	return(0);
 }
 
 /* Turn on/off led */
 void
-csc_led(sc, mode)
-	struct sfas_softc *sc;
-	int		  mode;
+csc_led(v, mode)
+	void	 *v;
+	int	  mode;
 {
+	struct sfas_softc *sc = v;
 	csc_regmap_p		rp;
 
 	rp = (csc_regmap_p)sc->sc_fas;

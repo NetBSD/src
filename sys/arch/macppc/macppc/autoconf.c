@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.6.3 2002/08/01 02:42:26 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.6.4 2002/10/18 02:38:37 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,6 +91,43 @@ canonicalize_bootpath()
 	int node;
 	char *p;
 	char last[32];
+
+	/*
+	 * If the bootpath doesn't start with a / then it isn't
+	 * an OFW path and probably is an alias, so look up the alias
+	 * and regenerate the full bootpath so device_register will work.
+	 */
+	if (bootpath[0] != '/' && bootpath[0] != '\0') {
+		int aliases = OF_finddevice("/aliases");
+		char tmpbuf[100];
+		char aliasbuf[256];
+		if (aliases != 0) {
+			char *cp1, *cp2, *cp;
+			char saved_ch = 0;
+			int len;
+			cp1 = strchr(bootpath, ':');
+			cp2 = strchr(bootpath, ',');
+			cp = cp1;
+			if (cp1 == NULL || (cp2 != NULL && cp2 < cp1))
+				cp = cp2;
+			tmpbuf[0] = '\0';
+			if (cp != NULL) {
+				strcpy(tmpbuf, cp);
+				saved_ch = *cp;
+				*cp = '\0';
+			}
+			len = OF_getprop(aliases, bootpath, aliasbuf,
+			    sizeof(aliasbuf));
+			if (len > 0) {
+				if (aliasbuf[len-1] == '\0')
+					len--;
+				memcpy(bootpath, aliasbuf, len);
+				strcpy(&bootpath[len], tmpbuf);
+			} else {
+				*cp = saved_ch;
+			}
+		}
+	}
 
 	/*
 	 * Strip kernel name.  bootpath contains "OF-path"/"kernel".
@@ -282,6 +319,7 @@ device_register(dev, aux)
 		return;
 	} else {
 		booted_device = dev;
+		booted_partition = 0; /* XXX -- should be extracted from bootpath */
 		return;
 	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.2.2.2 2002/09/17 21:12:30 nathanw Exp $
+#	$NetBSD: majors.algor,v 1.2.2.3 2002/10/18 02:33:49 nathanw Exp $
 #
 # Device majors for algor
 #
@@ -65,3 +65,4 @@ device-major	altq		char 64			altq
 device-major	mlx		char 65			mlx
 device-major	clockctl	char 66			clockctl
 device-major	systrace	char 67			systrace
+device-major	cgd		char 68  block 18	cgd

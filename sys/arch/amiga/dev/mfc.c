@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.24.8.4 2002/09/17 21:13:07 nathanw Exp $ */
+/*	$NetBSD: mfc.c,v 1.24.8.5 2002/10/18 02:35:01 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.24.8.4 2002/09/17 21:13:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.24.8.5 2002/10/18 02:35:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,22 +204,19 @@ int mfcpmatch(struct device *, struct cfdata *, void *);
 #endif
 int mfcintr(void *);
 
-struct cfattach mfc_ca = {
-	sizeof(struct mfc_softc), mfcmatch, mfcattach
-};
+CFATTACH_DECL(mfc, sizeof(struct mfc_softc),
+    mfcmatch, mfcattach, NULL, NULL);
 
 #if NMFCS > 0
-struct cfattach mfcs_ca = {
-	sizeof(struct mfcs_softc), mfcsmatch, mfcsattach
-};
+CFATTACH_DECL(mfcs, sizeof(struct mfcs_softc),
+    mfcsmatch, mfcsattach, NULL, NULL);
 
 extern struct cfdriver mfcs_cd;
 #endif
 
 #if NMFCP > 0
-struct cfattach mfcp_ca = {
-	sizeof(struct mfcp_softc), mfcpmatch, mfcpattach
-};
+CFATTACH_DECL(mfcp, sizeof(struct mfcp_softc),
+    mfcpmatch, mfcpattach, NULL, NULL);
 #endif
 
 dev_type_open(mfcsopen);

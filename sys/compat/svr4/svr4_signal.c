@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.41.2.8 2002/08/14 17:53:15 nathanw Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.41.2.9 2002/10/18 02:41:19 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.8 2002/08/14 17:53:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.41.2.9 2002/10/18 02:41:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,5 +570,4 @@ svr4_sys_context(l, v, retval)
 		    SCARG(uap, uc)));
 		return ENOSYS;
 	}
-	return 0;
 }

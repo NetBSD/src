@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20.6.6 2002/06/20 03:38:27 nathanw Exp $
+# $NetBSD: GENERIC,v 1.20.6.7 2002/10/18 02:36:17 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,12 +22,13 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20.6.6 $"
+#ident 		"GENERIC-$Revision: 1.20.6.7 $"
 
 maxusers	32
 
 # Standard system options
 options 	KTRACE		# system call tracing support
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
@@ -39,7 +40,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	LKM		# loadable kernel modules
 #options 	NTP		# network time protocol
 #options 	UCONSOLE	# users can redirect console (unsafe)
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Debugging options
@@ -107,6 +108,7 @@ options 	INET		# Internet protocols
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -235,6 +237,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd		4		# concatenated disk devices
+#pseudo-device	cgd		4		# cryptographic disk devices
 pseudo-device	raid		8		# RAIDframe disk driver
 options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70.8.2 2002/04/01 07:43:30 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70.8.3 2002/10/18 02:40:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -168,9 +168,8 @@ mainbus_attach(parent, self, hej)
 
 }
 
-struct	cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 #include "sd.h"
 #include "cd.h"
@@ -254,7 +253,7 @@ jmfr(char *n, struct device *dev, int nr)
 {
 	if (rpb.devtyp != nr)
 		return 1;
-	return strcmp(n, dev->dv_cfdata->cf_driver->cd_name);
+	return strcmp(n, dev->dv_cfdata->cf_name);
 }
 
 #include <dev/qbus/ubavar.h>
@@ -339,7 +338,8 @@ booted_sd(struct device *dev, void *aux)
 	    SCSIPI_BUSTYPE_SCSI)
 		return 0; /* ``Cannot happen'' */
 
-	if (sa->sa_periph->periph_target != rpb.unit)
+	if (sa->sa_periph->periph_target != (rpb.unit/100) ||
+	    sa->sa_periph->periph_lun != (rpb.unit % 100))
 		return 0; /* Wrong unit */
 
 	ppdev = dev->dv_parent->dv_parent;

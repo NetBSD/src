@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.42.4.4 2002/08/27 23:45:29 nathanw Exp $ */
+/*	$NetBSD: sbus.c,v 1.42.4.5 2002/10/18 02:39:55 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,15 +125,14 @@ void	sbus_attach_xbox __P((struct device *, struct device *, void *));
 static	int sbus_error __P((void));
 int	(*sbuserr_handler) __P((void));
 
-struct cfattach sbus_mainbus_ca = {
-	sizeof(struct sbus_softc), sbus_match_mainbus, sbus_attach_mainbus
-};
-struct cfattach sbus_iommu_ca = {
-	sizeof(struct sbus_softc), sbus_match_iommu, sbus_attach_iommu
-};
-struct cfattach sbus_xbox_ca = {
-	sizeof(struct sbus_softc), sbus_match_xbox, sbus_attach_xbox
-};
+CFATTACH_DECL(sbus_mainbus, sizeof(struct sbus_softc),
+    sbus_match_mainbus, sbus_attach_mainbus, NULL, NULL);
+
+CFATTACH_DECL(sbus_iommu, sizeof(struct sbus_softc),
+    sbus_match_iommu, sbus_attach_iommu, NULL, NULL);
+
+CFATTACH_DECL(sbus_xbox, sizeof(struct sbus_softc),
+    sbus_match_xbox, sbus_attach_xbox, NULL, NULL);
 
 extern struct cfdriver sbus_cd;
 
@@ -219,7 +218,7 @@ sbus_match_mainbus(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 int
@@ -233,7 +232,7 @@ sbus_match_iommu(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ia->iom_name) == 0);
+	return (strcmp(cf->cf_name, ia->iom_name) == 0);
 }
 
 int
@@ -247,7 +246,7 @@ sbus_match_xbox(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, xa->xa_name) == 0);
+	return (strcmp(cf->cf_name, xa->xa_name) == 0);
 }
 
 /*

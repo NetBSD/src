@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.2 1999/06/06 19:00:53 ragge Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.2.22.1 2002/10/18 02:40:33 nathanw Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -67,9 +67,8 @@ static	void	qba_attach __P((struct device *, struct device *, void *));
 static	void	qba_beforescan __P((struct uba_softc*));
 static	void	qba_init __P((struct uba_softc*));
 
-struct	cfattach uba_mainbus_ca = {
-	sizeof(struct uba_vsoftc), qba_match, qba_attach
-};
+CFATTACH_DECL(uba_mainbus, sizeof(struct uba_vsoftc),
+    qba_match, qba_attach, NULL, NULL);
 
 extern	struct vax_bus_space vax_mem_bus_space;
 

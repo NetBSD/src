@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1.10.6 2002/06/20 03:38:57 nathanw Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.1.10.7 2002/10/18 02:37:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -98,9 +98,8 @@ static void	*vrpciu_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 static void	vrpciu_intr_disestablish(pci_chipset_tag_t, void *);
 
-struct cfattach vrpciu_ca = {
-	sizeof(struct vrpciu_softc), vrpciu_match, vrpciu_attach
-};
+CFATTACH_DECL(vrpciu, sizeof(struct vrpciu_softc),
+    vrpciu_match, vrpciu_attach, NULL, NULL);
 
 static void
 vrpciu_write(struct vrpciu_softc *sc, int offset, u_int32_t val)

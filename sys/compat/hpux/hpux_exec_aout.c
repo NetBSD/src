@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.1.4.4 2002/07/12 01:39:59 nathanw Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.1.4.5 2002/10/18 02:41:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.1.4.4 2002/07/12 01:39:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.1.4.5 2002/10/18 02:41:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,16 +189,11 @@ exec_hpux_prep_zmagic(p, epp)
 	struct hpux_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 	long nontext;
+	int error;
 
-	/*
-	 * Check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  If it is, don't do it, for various
-	 * reasons.
-	 */
-	if ((execp->ha_text != 0 || execp->ha_data != 0) &&
-	    epp->ep_vp->v_writecount != 0)
-		return (ETXTBSY);
-	epp->ep_vp->v_flag |= VTEXT;
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
 
 	/*
 	 * HP-UX ZMAGIC executables need to have their segment

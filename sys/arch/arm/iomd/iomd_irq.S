@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.1.4.2 2002/01/08 00:23:15 nathanw Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.1.4.3 2002/10/18 02:35:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -210,7 +210,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #Lirqhandlers - . - 8]
+	ldr	r7, Lirqhandlers
 
 	/* 
 	 * take a copy of the IRQ request so that we can strip bits out of it
@@ -270,7 +270,7 @@ irqloop:
 	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
-	addeq	lr, pc, #nextirq - . - 8   /* return Address */
+	adreq	lr, nextirq		/* return Address */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 	
 #ifdef IRQSTATS
@@ -293,12 +293,11 @@ irqloop:
 
 irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame [XXX needs care] */
+	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
-nextinchain:
 	ldr	r6, [r6, #(IH_NEXT)]	/* fetch next handler */
 	
 	teq	r0, #0x00000001		/* Was the irq serviced ? */

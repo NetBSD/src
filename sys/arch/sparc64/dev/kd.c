@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.18.4.3 2002/09/17 21:17:58 nathanw Exp $	*/
+/*	$NetBSD: kd.c,v 1.18.4.4 2002/10/18 02:40:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ dev_type_poll(kdpoll);
 
 const struct cdevsw kd_cdevsw = {
 	kdopen, kdclose, kdread, kdwrite, kdioctl,
-	nostop, kdtty, kdpoll, nommap,
+	nostop, kdtty, kdpoll, nommap, D_TTY
 };
 
 struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
@@ -259,7 +259,7 @@ kdclose(dev, flag, mode, p)
 	ttyclose(tp);
 
 	if ((cc = kd->kd_in) != NULL)
-		(void)(*cc->cc_iclose)(cc->cc_dev);
+		(void)(*cc->cc_iclose)(cc);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.2.4.6 2002/08/01 02:41:17 nathanw Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.2.4.7 2002/10/18 02:35:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.2.4.6 2002/08/01 02:41:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.2.4.7 2002/10/18 02:35:33 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -235,7 +235,7 @@ vidcvideo_setpalette(vidc)
 	int counter = 0;
 
 	vidcvideo_write(VIDC_PALREG, 0x00000000);
-	for (counter = 0; counter < 255; counter++)
+	for (counter = 0; counter <= 255; counter++)
 		vidcvideo_write(VIDC_PALETTE, vidc->palette[counter]);
 }
 
@@ -275,6 +275,7 @@ vidcvideo_setstate(vidc)
 /*	vidcvideo_write ( VIDC_CONREG,	vidc->conreg	);	*/
 /*	vidcvideo_write ( VIDC_DCTL,		vidc->dctl	);	*/
 
+	vidcvideo_setpalette(vidc);
 }
 
 
@@ -582,7 +583,7 @@ vidcvideo_cursor_init(int width, int height)
 		/* Allocate cursor memory first time round */
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
-			panic("Cannot allocate memory for hardware cursor\n");
+			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}

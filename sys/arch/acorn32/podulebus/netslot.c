@@ -1,4 +1,4 @@
-/*	$NetBSD: netslot.c,v 1.1.4.3 2002/08/01 02:40:56 nathanw Exp $	*/
+/*	$NetBSD: netslot.c,v 1.1.4.4 2002/10/18 02:33:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.1.4.3 2002/08/01 02:40:56 nathanw Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.1.4.4 2002/10/18 02:33:44 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(1, "$NetBSD: netslot.c,v 1.1.4.3 2002/08/01 02:40:56 nathanw Exp 
 #include <arm/arm32/katelib.h>
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
-#include <machine/pmap.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
 #include <dev/podulebus/podulebus.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.3.6.3 2001/11/14 19:15:00 nathanw Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.3.6.4 2002/10/18 02:42:46 nathanw Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.3.6.3 2001/11/14 19:15:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.3.6.4 2002/10/18 02:42:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.3.6.3 2001/11/14 19:15:00 nathanw Ex
 int	tr_mca_probe __P((struct device *, struct cfdata *, void *));
 void	tr_mca_attach __P((struct device *, struct device *, void *));
 
-struct cfattach tr_mca_ca = {
-	sizeof(struct tr_softc), tr_mca_probe, tr_mca_attach
-};
+CFATTACH_DECL(tr_mca, sizeof(struct tr_softc),
+    tr_mca_probe, tr_mca_attach, NULL, NULL);
 
 /* supported products */
 static const struct tr_mca_product {

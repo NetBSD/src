@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.1.4.5 2002/06/20 03:43:26 nathanw Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.1.4.6 2002/10/18 02:41:29 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.1.4.5 2002/06/20 03:43:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.1.4.6 2002/10/18 02:41:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,9 +278,8 @@ static ACPI_STATUS	EcWrite(struct acpi_ec_softc *sc, UINT8 Address,
 int	acpiec_match(struct device *, struct cfdata *, void *);
 void	acpiec_attach(struct device *, struct device *, void *);
 
-struct cfattach acpiec_ca = {
-	sizeof(struct acpi_ec_softc), acpiec_match, acpiec_attach,
-};
+CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
+    acpiec_match, acpiec_attach, NULL, NULL);
 
 /*
  * acpiec_match:
@@ -546,7 +545,6 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
 	/*
 	 * Perform the transaction.
 	 */
-	(*Value) = 0;
 	for (i = 0; i < width; i += 8) {
 		if (Function == ACPI_READ)
 			EcRequest.Data = 0;

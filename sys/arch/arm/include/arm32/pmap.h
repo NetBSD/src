@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.2.7 2002/08/27 06:03:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.8 2002/10/18 02:35:28 nathanw Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -181,6 +181,12 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 #define pmap_phys_address(ppn)		(arm_ptob((ppn)))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1.8.2 2002/01/08 00:28:28 nathanw Exp $	*/
+/*	$NetBSD: isr.c,v 1.1.8.3 2002/10/18 02:40:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -348,7 +348,7 @@ set_vector_entry(entry, handler)
 	void *handler;
 {
 	if ((entry <0) || (entry >= NVECTORS))
-	panic("set_vector_entry: setting vector too high or low\n");
+	panic("set_vector_entry: setting vector too high or low");
 	vector_table[entry] = handler;
 }
 
@@ -357,6 +357,6 @@ get_vector_entry(entry)
 	int entry;
 {
 	if ((entry <0) || (entry >= NVECTORS))
-	panic("get_vector_entry: setting vector too high or low\n");
+	panic("get_vector_entry: setting vector too high or low");
 	return ((void *) vector_table[entry]);
 }

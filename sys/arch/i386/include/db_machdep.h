@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15.4.2 2002/06/20 03:39:14 nathanw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15.4.3 2002/10/18 02:37:54 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,8 +41,14 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
+#ifndef MULTIPROCESSOR
 extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
+#else
+extern db_regs_t *ddb_regp;
+#define DDB_REGS	(ddb_regp)
+#define ddb_regs	(*ddb_regp)
+#endif
 
 #if defined(lint)
 #define	PC_REGS(regs)	((regs)->tf_eip)
@@ -119,10 +125,19 @@ void		db_task_name(/* task_t */);
 int kdb_trap __P((int, int, db_regs_t *));
 
 /*
+ * We define some of our own commands
+ */
+#define DB_MACHINE_COMMANDS
+
+/*
  * We use either a.out or Elf32 symbols in DDB.
  */
 #define	DB_AOUT_SYMBOLS
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
+
+extern void db_machine_init __P((void));
+
+extern void cpu_debug_dump __P((void));
 
 #endif	/* _I386_DB_MACHDEP_H_ */

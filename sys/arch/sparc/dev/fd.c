@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.88.4.4 2002/09/17 21:17:42 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.88.4.5 2002/10/18 02:39:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -186,12 +186,11 @@ void	fdcattach_obio __P((struct device *, struct device *, void *));
 
 int	fdcattach __P((struct fdc_softc *, int));
 
-struct cfattach fdc_mainbus_ca = {
-	sizeof(struct fdc_softc), fdcmatch_mainbus, fdcattach_mainbus
-};
-struct cfattach fdc_obio_ca = {
-	sizeof(struct fdc_softc), fdcmatch_obio, fdcattach_obio
-};
+CFATTACH_DECL(fdc_mainbus, sizeof(struct fdc_softc),
+    fdcmatch_mainbus, fdcattach_mainbus, NULL, NULL);
+
+CFATTACH_DECL(fdc_obio, sizeof(struct fdc_softc),
+    fdcmatch_obio, fdcattach_obio, NULL, NULL);
 
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
@@ -262,9 +261,8 @@ struct fd_softc {
 int	fdmatch __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 

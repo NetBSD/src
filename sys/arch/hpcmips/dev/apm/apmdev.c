@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.6.4.2 2002/09/17 21:14:47 nathanw Exp $ */
+/*	$NetBSD: apmdev.c,v 1.6.4.3 2002/10/18 02:37:09 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
@@ -146,9 +145,8 @@ static const char *apm_strerror(int);
 static void	apm_suspend(struct apm_softc *);
 static void	apm_resume(struct apm_softc *, u_int, u_int);
 
-struct cfattach apmdev_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach
-};
+CFATTACH_DECL(apmdev, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL);
 
 extern struct cfdriver apmdev_cd;
 
@@ -845,6 +843,7 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct apm_ctl *actl;
 #endif
 	int i, error = 0;
+	int batt_flags;
 
 	APM_LOCK(sc);
 	switch (cmd) {
@@ -886,6 +885,26 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((error = sc->ops->get_powstat(sc->cookie, powerp)) != 0) {
 			apm_perror("ioctl get power status", error);
 			error = EIO;
+			break;
+		}
+		switch (apm_minver) {
+		case 0:
+			break;
+		case 1:
+		default:
+			batt_flags = powerp->battery_state;
+			powerp->battery_state = APM_BATT_UNKNOWN;
+			if (batt_flags & APM_BATT_FLAG_HIGH)
+				powerp->battery_state = APM_BATT_HIGH;
+			else if (batt_flags & APM_BATT_FLAG_LOW)
+				powerp->battery_state = APM_BATT_LOW;
+			else if (batt_flags & APM_BATT_FLAG_CRITICAL)
+				powerp->battery_state = APM_BATT_CRITICAL;
+			else if (batt_flags & APM_BATT_FLAG_CHARGING)
+				powerp->battery_state = APM_BATT_CHARGING;
+			else if (batt_flags & APM_BATT_FLAG_NO_SYSTEM_BATTERY)
+				powerp->battery_state = APM_BATT_ABSENT;
+			break;
 		}
 		break;
 		

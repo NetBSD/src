@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.19.2.3 2001/11/14 19:14:01 nathanw Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.19.2.4 2002/10/18 02:41:34 nathanw Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.19.2.3 2001/11/14 19:14:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.19.2.4 2002/10/18 02:41:34 nathanw Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -121,10 +121,8 @@ struct ex_cardbus_softc {
 	
 };
 
-struct cfattach ex_cardbus_ca = {
-	sizeof(struct ex_cardbus_softc), ex_cardbus_match,
-	    ex_cardbus_attach, ex_cardbus_detach, ex_activate
-};
+CFATTACH_DECL(ex_cardbus, sizeof(struct ex_cardbus_softc),
+    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate);
 
 const struct ex_cardbus_product {
 	u_int32_t	ecp_prodid;	/* CardBus product ID */
@@ -311,7 +309,7 @@ ex_cardbus_detach(self, arg)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL) {
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5.8.2 2002/04/01 07:42:29 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5.8.3 2002/10/18 02:39:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -51,9 +51,8 @@ static void	mainbus_attach(struct device *, struct device *, void *);
 static int	mainbus_search(struct device *, struct cfdata *, void *);
 int		mainbus_print(void *, const char *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 static int
 mainbus_match(parent, match, aux)
@@ -94,7 +93,7 @@ mainbus_search(parent, cf, aux)
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
 		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
-		if ((*cf->cf_attach->ca_match)(parent, cf, ma) > 0)
+		if (config_match(parent, cf, ma) > 0)
 			config_attach(parent, cf, ma, mainbus_print);
 	} while (cf->cf_fstate == FSTATE_STAR);
 

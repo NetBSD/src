@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.1.10.2 2002/08/01 02:42:44 nathanw Exp $	*/
+/*	$NetBSD: xafb.c,v 1.1.10.3 2002/10/18 02:39:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -92,9 +92,8 @@ int xafb_putcmap __P((struct xafb_softc *, struct wsdisplay_cmap *));
 
 static __inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
 
-struct cfattach xafb_ca = {
-	sizeof(struct xafb_softc), xafb_match, xafb_attach,
-};
+CFATTACH_DECL(xafb, sizeof(struct xafb_softc),
+    xafb_match, xafb_attach, NULL, NULL);
 
 struct xafb_devconfig xafb_console_dc;
 

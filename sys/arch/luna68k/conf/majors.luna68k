@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.2.2.2 2002/09/17 21:15:16 nathanw Exp $
+#	$NetBSD: majors.luna68k,v 1.2.2.3 2002/10/18 02:38:10 nathanw Exp $
 #
 # Device majors for luna68k
 #
@@ -35,3 +35,4 @@ device-major	wsmux		char 33			wsmux
 device-major	rnd		char 34			rnd
 device-major	clockctl	char 35			clockctl
 device-major	systrace	char 36			systrace
+device-major	cgd		char 37  block 15	cgd

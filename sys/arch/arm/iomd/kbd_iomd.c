@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.1.4.2 2002/01/08 00:23:15 nathanw Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.1.4.3 2002/10/18 02:35:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -67,9 +67,8 @@ extern struct kbd_softc *console_kbd;
 
 /* Device structures */
 
-struct cfattach kbd_iomd_ca = {
-	sizeof(struct kbd_softc), kbd_iomd_probe, kbd_iomd_attach
-};
+CFATTACH_DECL(kbd_iomd, sizeof(struct kbd_softc),
+    kbd_iomd_probe, kbd_iomd_attach, NULL, NULL);
 
 static int
 kbd_iomd_probe(parent, cf, aux)
@@ -109,7 +108,7 @@ kbd_iomd_attach(parent, self, aux)
 
 	sc->sc_ih = intr_claim(ka->ka_rxirq, IPL_TTY, "kbd rx", kbdintr, sc);
 	if (!sc->sc_ih)
-		panic("%s: Cannot claim RX interrupt\n", sc->sc_device.dv_xname);
+		panic("%s: Cannot claim RX interrupt", sc->sc_device.dv_xname);
 
 	if (sc->sc_device.dv_unit == 0)
 		console_kbd = sc;

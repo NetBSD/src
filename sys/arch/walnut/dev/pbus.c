@@ -1,4 +1,4 @@
-/* $NetBSD: pbus.c,v 1.1.2.3 2002/08/27 23:46:06 nathanw Exp $ */
+/* $NetBSD: pbus.c,v 1.1.2.4 2002/10/18 02:40:39 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -98,10 +98,8 @@ static void	pbus_attach(struct device *, struct device *, void *);
 static int	pbus_submatch(struct device *, struct cfdata *, void *);
 static int	pbus_print(void *, const char *);
 
-struct cfattach pbus_ca = {
-	sizeof(struct device), pbus_match, pbus_attach
-};
-
+CFATTACH_DECL(pbus, sizeof(struct device),
+    pbus_match, pbus_attach, NULL, NULL);
 
 /*
  * Probe for the peripheral bus.
@@ -112,7 +110,7 @@ pbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct pbus_attach_args *pba = aux;
 
 	/* match only pbus devices */
-	if (strcmp(pba->pb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(pba->pb_name, cf->cf_name) != 0)
 		return (0);
 
 	return (1);
@@ -127,7 +125,7 @@ pbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[PBUSCF_ADDR] != pba->pb_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

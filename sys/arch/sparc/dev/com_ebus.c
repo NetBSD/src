@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.1.2.5 2002/04/17 00:04:24 nathanw Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.1.2.6 2002/10/18 02:39:53 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,12 +45,9 @@
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
-#include <dev/pci/pcireg.h>	/* XXX: for PCI_INTERRUPT_PIN */
-
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
-#include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
@@ -63,9 +60,8 @@ struct com_ebus_softc {
 static int com_ebus_match(struct device *, struct cfdata *, void *);
 static void com_ebus_attach(struct device *, struct device *, void *);
 
-struct cfattach com_ebus_ca = {
-	sizeof(struct com_ebus_softc), com_ebus_match, com_ebus_attach
-};
+CFATTACH_DECL(com_ebus, sizeof(struct com_ebus_softc),
+    com_ebus_match, com_ebus_attach, NULL, NULL);
 
 static int
 com_ebus_match(parent, cf, aux)

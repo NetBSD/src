@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmax,v 1.2.2.2 2002/09/17 21:16:56 nathanw Exp $
+#	$NetBSD: majors.pmax,v 1.2.2.3 2002/10/18 02:39:24 nathanw Exp $
 #
 # Device majors for pmax
 #
@@ -50,3 +50,4 @@ device-major	audio		char 99			audio
 device-major	clockctl	char 100		clockctl
 
 device-major	systrace	char 103		systrace
+device-major	cgd		char 104  block 33	cgd

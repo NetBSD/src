@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.51.6.2 2002/04/17 00:03:39 nathanw Exp $	*/
+/*	$NetBSD: nubus.c,v 1.51.6.3 2002/10/18 02:38:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -74,9 +74,8 @@ static u_int16_t nubus_read_2 __P((bus_space_tag_t, bus_space_handle_t,
 static u_int32_t nubus_read_4 __P((bus_space_tag_t, bus_space_handle_t,
 		    u_int8_t, u_long));
 
-struct cfattach nubus_ca = {
-	sizeof(struct nubus_softc), nubus_match, nubus_attach
-};
+CFATTACH_DECL(nubus, sizeof(struct nubus_softc),
+    nubus_match, nubus_attach, NULL, NULL);
 
 static int
 nubus_match(parent, cf, aux)

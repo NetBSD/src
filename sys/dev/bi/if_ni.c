@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.8.2.4 2002/06/20 03:44:21 nathanw Exp $ */
+/*	$NetBSD: if_ni.c,v 1.8.2.5 2002/10/18 02:41:32 nathanw Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.8.2.4 2002/06/20 03:44:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.8.2.5 2002/10/18 02:41:32 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -153,9 +153,8 @@ static	int failtest(struct ni_softc *, int, int, int, char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
 
-struct	cfattach ni_ca = {
-	sizeof(struct ni_softc), nimatch, niattach
-};
+CFATTACH_DECL(ni, sizeof(struct ni_softc),
+    nimatch, niattach, NULL, NULL);
 
 #define NI_WREG(csr, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, csr, val)

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.2.2.4 2002/08/19 21:39:21 thorpej Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.2.2.5 2002/10/18 02:35:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -34,6 +34,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef EVBARM_SPL_NOINLINE
+#define	EVBARM_SPL_NOINLINE
+#endif
 
 /*
  * Interrupt support for the Intel i80321 I/O Processor.
@@ -82,10 +86,6 @@ static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 	ICU_INT_bit5,		/* SI_SOFTNET */
 	ICU_INT_bit4,		/* SI_SOFTSERIAL */
 };
-
-#define	INT_SWMASK							\
-	((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |		\
-	 (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
 #define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
 
@@ -154,18 +154,6 @@ i80321_iintsrc_read(void)
 	 */
 	return (iintsrc & intr_enabled);
 }
-
-#if defined(EVBARM_SPL_NOINLINE)
-static __inline void
-i80321_set_intrmask(void)
-{
-	extern __volatile uint32_t intr_enabled;
-
-	__asm __volatile("mcr p6, 0, %0, c0, c0, 0"
-		:
-		: "r" (intr_enabled & ICU_INT_HWMASK));
-}
-#endif
 
 static __inline void
 i80321_set_intrsteer(void)
@@ -321,9 +309,9 @@ i80321_do_pending(void)
 	oldirqstate = disable_interrupts(I32_bit);
 
 #define	DO_SOFTINT(si)							\
-	if ((i80321_ipending & ~new) & SI_TO_IRQBIT(si)) {			\
-		i80321_ipending &= ~SI_TO_IRQBIT(si);				\
-		current_spl_level |= i80321_imask[si_to_ipl[(si)]];		\
+	if ((i80321_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
+		i80321_ipending &= ~SI_TO_IRQBIT(si);			\
+		current_spl_level |= i80321_imask[si_to_ipl[(si)]];	\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
@@ -340,71 +328,26 @@ i80321_do_pending(void)
 	restore_interrupts(oldirqstate);
 }
 
-#if defined(EVBARM_SPL_NOINLINE)
-
-__inline void
+void
 splx(int new)
 {
-	int oldirqstate, hwpend;
 
-	current_spl_level = new;
-
-	hwpend = (i80321_ipending & ICU_INT_HWMASK) & ~new;
-	if (hwpend != 0) {
-		oldirqstate = disable_interrupts(I32_bit);
-		intr_enabled |= hwpend;
-		i80321_set_intrmask();
-		restore_interrupts(oldirqstate);
-	}
-
-	if ((i80321_ipending & INT_SWMASK) & ~new)
-		i80321_do_pending();
-}
-
-int
-_splraise(int ipl)
-{
-	int	old;
-
-	old = current_spl_level;
-	current_spl_level |= i80321_imask[ipl];
-
-	return (old);
-}
-
-int
-_spllower(int ipl)
-{
-	int old = current_spl_level;
-
-	splx(i80321_imask[ipl]);
-	return(old);
-}
-
-#else	/* EVBARM_SPL_NOINLINE */
-
-#undef splx
-__inline void
-splx(int new)
-{
 	i80321_splx(new);
 }
 
-#undef _spllower
 int
 _spllower(int ipl)
 {
-	return i80321_spllower(ipl);
+
+	return (i80321_spllower(ipl));
 }
 
-#undef _splraise
 int
 _splraise(int ipl)
 {
-	return i80321_splraise(ipl);
-}
 
-#endif	/* else EVBARM_SPL_NOINLINE */
+	return (i80321_splraise(ipl));
+}
 
 void
 _setsoftintr(int si)

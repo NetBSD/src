@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.6.4.2 2002/02/28 04:09:55 nathanw Exp $ */
+/*	$NetBSD: plumpower.c,v 1.6.4.3 2002/10/18 02:37:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,9 +70,8 @@ struct plumpower_softc {
 	bus_space_handle_t	sc_regh;
 };
 
-struct cfattach plumpower_ca = {
-	sizeof(struct plumpower_softc), plumpower_match, plumpower_attach
-};
+CFATTACH_DECL(plumpower, sizeof(struct plumpower_softc),
+    plumpower_match, plumpower_attach, NULL, NULL);
 
 #ifdef PLUMPOWERDEBUG
 static void	plumpower_dump(struct plumpower_softc *);

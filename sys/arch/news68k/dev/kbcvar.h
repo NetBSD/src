@@ -1,4 +1,4 @@
-/*	$NetBSD: kbcvar.h,v 1.1 2001/01/25 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: kbcvar.h,v 1.1.10.1 2002/10/18 02:39:07 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
 #define KBC_PRI 5
 
 struct kbc_attach_args {
-	char *ka_name;
+	const char *ka_name;
 	bus_space_tag_t ka_bt;
 	bus_space_handle_t ka_bh;
 	int ka_ipl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kn230.h,v 1.2 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: kn230.h,v 1.2.26.1 2002/10/18 02:39:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Jonathan Stone.
@@ -155,7 +155,7 @@
 #define KN230_SYS_PASSWD    	0x1f000244      /* password location */
 
 /*
- * NVRAM state defintions.
+ * NVRAM state definitions.
  * Used under Ultrix for  PrestoServe.
  */
 #define KN230_SYS_NVRAM_DIAG	0x1f000300	/* NVRAM diagnostic register */

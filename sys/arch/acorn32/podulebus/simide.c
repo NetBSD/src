@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.1.4.3 2002/06/20 03:37:21 nathanw Exp $	*/
+/*	$NetBSD: simide.c,v 1.1.4.4 2002/10/18 02:33:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -95,9 +95,8 @@ void	simide_attach	__P((struct device *, struct device *, void *));
 void	simide_shutdown	__P((void *arg));
 int	simide_intr	__P((void *arg));
 
-struct cfattach simide_ca = {
-	sizeof(struct simide_softc), simide_probe, simide_attach
-};
+CFATTACH_DECL(simide, sizeof(struct simide_softc),
+    simide_probe, simide_attach, NULL, NULL);
 
 
 /*
@@ -195,7 +194,7 @@ simide_attach(parent, self, aux)
 	if (bus_space_map(sc->sc_ctliot, pa->pa_podule->mod_base +
 	    CONTROL_REGISTERS_POFFSET, CONTROL_REGISTER_SPACE, 0,
 	    &sc->sc_ctlioh))
-		panic("%s: Cannot map control registers\n", self->dv_xname);
+		panic("%s: Cannot map control registers", self->dv_xname);
 
 	/* Install a clean up handler to make sure IRQ's are disabled */
 	if (shutdownhook_establish(simide_shutdown, (void *)sc) == NULL)
@@ -285,7 +284,7 @@ simide_attach(parent, self, aux)
 		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
 		ihp->ih_maskbits = scp->sc_irqmask;
 		if (irq_claim(sc->sc_podule->interrupt, ihp))
-			panic("%s: Cannot claim interrupt %d\n",
+			panic("%s: Cannot claim interrupt %d",
 			    self->dv_xname, sc->sc_podule->interrupt);
 		/* clear any pending interrupts and enable interrupts */
 		sc->sc_ctl_reg |= scp->sc_irqmask;

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.27.26.1 2002/09/17 21:12:41 nathanw Exp $ */
+/* $NetBSD: mainbus.c,v 1.27.26.2 2002/10/18 02:34:03 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.26.1 2002/09/17 21:12:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27.26.2 2002/10/18 02:34:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,8 @@ static int	mbmatch __P((struct device *, struct cfdata *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbmatch, mbattach, NULL, NULL);
 
 /* There can be only one. */
 int	mainbus_found;

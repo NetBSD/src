@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35.8.3 2002/09/17 21:13:06 nathanw Exp $ */
+/*	$NetBSD: kbd.c,v 1.35.8.4 2002/10/18 02:35:01 nathanw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35.8.3 2002/09/17 21:13:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.35.8.4 2002/10/18 02:35:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,9 +162,8 @@ int drkbdputc(u_int8_t);
 int drkbdputc2(u_int8_t, u_int8_t);
 int drkbdwaitfor(int);
 
-struct cfattach kbd_ca = {
-	sizeof(struct device), kbdmatch, kbdattach
-};
+CFATTACH_DECL(kbd, sizeof(struct device),
+    kbdmatch, kbdattach, NULL, NULL);
 
 dev_type_open(kbdopen);
 dev_type_close(kbdclose);

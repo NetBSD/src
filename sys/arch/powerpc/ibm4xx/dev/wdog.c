@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.1.2.3 2002/08/13 02:18:44 nathanw Exp $ */
+/* $NetBSD: wdog.c,v 1.1.2.4 2002/10/18 02:39:30 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -62,9 +62,8 @@ struct wdog_softc {
 	int sc_wdog_period;
 };
 
-struct cfattach wdog_ca = {
-	sizeof(struct wdog_softc), wdog_match, wdog_attach,
-};
+CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
+    wdog_match, wdog_attach, NULL, NULL);
 
 static int
 wdog_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -72,7 +71,7 @@ wdog_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct opb_attach_args *oaa = aux;
 
 	/* match only watchdog devices */
-	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
 		return (0);
 
 	return (1);

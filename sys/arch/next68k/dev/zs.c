@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15.8.2 2002/09/17 21:16:31 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.15.8.3 2002/10/18 02:39:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -171,9 +171,8 @@ static int  zs_print __P((void *, const char *name));
 extern int  zs_getc __P((void *arg));
 extern void zs_putc __P((void *arg, int c));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -230,7 +229,7 @@ zs_attach(parent, self, aux)
 	}
 
 	if (zsaddr[zs_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zs_unit);
+		panic("zs_attach: zs%d not mapped", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.

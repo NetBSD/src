@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.2.2.2 2002/09/17 21:18:43 nathanw Exp $
+#	$NetBSD: majors.x68k,v 1.2.2.3 2002/10/18 02:40:43 nathanw Exp $
 #
 # Device majors for x68k
 #
@@ -50,3 +50,4 @@ device-major	clockctl	char 48			clockctl
 device-major	systrace	char 49			systrace
 device-major	usb		char 50			usb
 device-major	ugen		char 51			ugen
+device-major	cgd		char 52  block 17	cgd

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92.4.8 2002/07/12 01:39:23 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92.4.9 2002/10/18 02:34:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.8 2002/07/12 01:39:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92.4.9 2002/10/18 02:34:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,7 +542,7 @@ pmap_init()
 		 * and we overran the page table map.
 		 */
  bogons:
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT) {

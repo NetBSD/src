@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.18.20.1 2002/09/17 21:13:46 nathanw Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18.20.2 2002/10/18 02:35:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -87,9 +87,8 @@ static int  kbd_do_modifier __P((u_char));
 static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
-struct cfattach kbd_ca = {
-	sizeof(struct device), kbdmatch, kbdattach
-};
+CFATTACH_DECL(kbd, sizeof(struct device),
+    kbdmatch, kbdattach, NULL, NULL);
 
 const struct cdevsw kbd_cdevsw = {
 	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,

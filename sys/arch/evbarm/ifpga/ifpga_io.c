@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.1.2.2 2002/04/17 00:02:55 nathanw Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.1.2.3 2002/10/18 02:36:27 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <machine/bus.h>
 #include <uvm/uvm_extern.h>
+
+#include <evbarm/ifpga/ifpgavar.h>
 
 /* Proto types for all the bus_space structure functions */
 
@@ -214,7 +216,7 @@ ifpga_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("ifpga_alloc(): Help!\n");
+	panic("ifpga_alloc(): Help!");
 }
 
 
@@ -248,7 +250,7 @@ ifpga_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("ifpga_free(): Help!\n");
+	panic("ifpga_free(): Help!");
 	/* ifpga_bs_unmap() does all that we need to do. */
 /*	ifpga_bs_unmap(t, bsh, size);*/
 }

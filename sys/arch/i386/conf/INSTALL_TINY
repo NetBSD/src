@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.32.2.11 2002/08/01 02:41:57 nathanw Exp $
+#	$NetBSD: INSTALL_TINY,v 1.32.2.12 2002/10/18 02:37:32 nathanw Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -20,7 +20,7 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=2880	# size of memory disk, in blocks
 
 maxusers	2		# estimated number of users
 
@@ -43,6 +43,9 @@ options 	MATH_EMULATE	# floating point emulation
 # This option allows you to force a serial console at the specified
 # I/O address.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
+
+# Save a physical page per process by not setting a kernel stack red zone.
+options 	NOREDZONE
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -162,7 +165,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 

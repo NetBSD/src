@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.17 2002/09/17 21:20:26 nathanw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.18 2002/10/18 02:43:17 nathanw Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.17 2002/09/17 21:20:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.18 2002/10/18 02:43:17 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -629,9 +629,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 int	pciide_match __P((struct device *, struct cfdata *, void *));
 void	pciide_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pciide_ca = {
-	sizeof(struct pciide_softc), pciide_match, pciide_attach
-};
+CFATTACH_DECL(pciide, sizeof(struct pciide_softc),
+    pciide_match, pciide_attach, NULL, NULL);
+
 int	pciide_chipen __P((struct pciide_softc *, struct pci_attach_args *));
 int	pciide_mapregs_compat __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, bus_size_t *, bus_size_t*));
@@ -951,7 +951,7 @@ pciide_compat_intr(arg)
 #ifdef DIAGNOSTIC
 	/* should only be called for a compat channel */
 	if (cp->compat == 0)
-		panic("pciide compat intr called for non-compat chan %p\n", cp);
+		panic("pciide compat intr called for non-compat chan %p", cp);
 #endif
 	return (wdcintr(&cp->wdc_channel));
 }
@@ -2216,6 +2216,10 @@ apollo_chip_map(sc, pa)
 		break;
 	case PCI_PRODUCT_VIATECH_VT8233A:
 		printf("VT8233A ATA133 controller\n");
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
+	case PCI_PRODUCT_VIATECH_VT8235:
+		printf("VT8235 ATA133 controller\n");
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
 	default:

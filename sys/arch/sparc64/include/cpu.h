@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29.6.6 2002/06/24 22:07:50 nathanw Exp $ */
+/*	$NetBSD: cpu.h,v 1.29.6.7 2002/10/18 02:40:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,23 +92,23 @@
 
 struct cpu_info {
 	/* Most important fields first */
-	struct proc		*ci_curlwp;
-	struct pcb		*ci_cpcb;	/* also initial stack */
+	struct lwp		*ci_curlwp;
+	struct pcb		*ci_cpcb;
 	struct cpu_info		*ci_next;
 
 	struct lwp		*ci_fplwp;
 	int			ci_number;
 	int			ci_upaid;
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	struct schedstate_percpu ci_schedstate;
 
 	/* DEBUG/DIAGNOSTIC stuff */
-	u_long			ci_spin_locks;	/* # of spin locks held */
-	u_long			ci_simple_locks;/* # of simple locks held */
+	u_long			ci_spin_locks;
+	u_long			ci_simple_locks;
 
 	/* Spinning up the CPU */
-	void			(*ci_spinup) __P((void)); /* spinup routine */
+	void			(*ci_spinup) __P((void));
 	void			*ci_initstack;
-	paddr_t			ci_paddr;	/* Phys addr of this structure. */
+	paddr_t			ci_paddr;
 };
 
 extern struct cpu_info *cpus;
@@ -230,7 +230,6 @@ int	want_resched;		/* resched() was called */
  * XXX this must be per-cpu (eventually)
  */
 struct	lwp *fplwp;		/* FPU owner */
-int	foundfpu;		/* true => we have an FPU */
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for

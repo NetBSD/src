@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.8.5 2002/09/17 21:18:44 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.8.6 2002/10/18 02:40:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,9 +175,8 @@ int fdcprobe __P((struct device *, struct cfdata *, void *));
 void fdcattach __P((struct device *, struct device *, void *));
 int fdprint __P((void *, const char *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+    fdcprobe, fdcattach, NULL, NULL);
 
 extern struct cfdriver fdc_cd;
 
@@ -260,9 +259,8 @@ struct fd_softc {
 int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
@@ -675,8 +673,10 @@ fdstrategy(bp)
 
 	sz = howmany(bp->b_bcount, FDC_BSIZE);
 
-	if (bp->b_blkno + sz > (fd->sc_type->size << (fd->sc_type->secsize - 2))) {
-		sz = (fd->sc_type->size << (fd->sc_type->secsize - 2)) - bp->b_blkno;
+	if (bp->b_blkno + sz >
+	    (fd->sc_type->size << (fd->sc_type->secsize - 2))) {
+		sz = (fd->sc_type->size << (fd->sc_type->secsize - 2))
+		     - bp->b_blkno;
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
@@ -1130,7 +1130,8 @@ loop:
 				struct fd_softc *ofd = fdc->sc_fd[i];
 				if (ofd && ofd->sc_flags & FD_MOTOR) {
 					callout_stop(&ofd->sc_motoroff_ch);
-					ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
+					ofd->sc_flags &=
+						~(FD_MOTOR | FD_MOTOR_WAIT);
 					break;
 				}
 			}
@@ -1220,15 +1221,19 @@ loop:
 			  + sec) * (1 << (type->secsize - 2));
 		 block += (fd->sc_part == SEC_P01) ? 1 : 0;
 		 if (block != fd->sc_blkno) {
-			 printf("C H R N: %d %d %d %d\n", fd->sc_cylin, head, sec, type->secsize);
-			 printf("fdcintr: doio: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("C H R N: %d %d %d %d\n",
+				fd->sc_cylin, head, sec, type->secsize);
+			 printf("fdcintr: doio: block %d != blkno %d\n",
+				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
-		 }}
+		 }
+		}
 #endif
 		read = bp->b_flags & B_READ;
-		DPRINTF(("fdcintr: %s drive %d track %d head %d sec %d nblks %d, skip %d\n",
+		DPRINTF(("fdcintr: %s drive %d track %d "
+		         "head %d sec %d nblks %d, skip %d\n",
 			 read ? "read" : "write", fd->sc_drive, fd->sc_cylin,
 			 head, sec, nblks, fd->sc_skip));
 		DPRINTF(("C H R N: %d %d %d %d\n", fd->sc_cylin, head, sec,
@@ -1290,15 +1295,18 @@ loop:
 			% (type->seccyl * (1 << (type->secsize - 2))))
 			 / (type->sectrac * (1 << (type->secsize - 2)));
 		{int block;
-		 block = ((fd->sc_cylin * type->heads + head) * type->sectrac + sec)
+		 block = ((fd->sc_cylin * type->heads + head) *
+			 type->sectrac + sec)
 			 * (1 << (type->secsize - 2));
 		 block += (fd->sc_part == SEC_P01) ? 1 : 0;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %d\n",
+				block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
-		 }}
+		 }
+		}
 #endif
 		if ((read = bp->b_flags & B_READ)) {
 			memcpy(bp->b_data + fd->sc_skip, fd->sc_copybuf
@@ -1445,7 +1453,7 @@ loop:
 		/* fall through */
 	case DORECAL:
 		DPRINTF(("fdcintr: in DORECAL\n"));
-		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recalibrate function */
+		out_fdc(iot, ioh, NE7CMD_RECAL); /* recalibrate function */
 		out_fdc(iot, ioh, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
 		callout_reset(&fdc->sc_timo_ch, 5 * hz, fdctimeout, fdc);
@@ -1598,7 +1606,8 @@ fdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
+		error = setdisklabel(&buffer, (struct disklabel *)addr,
+		                     0, NULL);
 		if (error)
 			return error;
 

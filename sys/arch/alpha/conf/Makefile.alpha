@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.65.4.3 2002/01/08 00:22:53 nathanw Exp $
+#	$NetBSD: Makefile.alpha,v 1.65.4.4 2002/10/18 02:34:09 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -69,7 +69,7 @@ STRIPFLAGS=	-g -X
 ##
 
 # depend on CPU configuration
-clock.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
+clock.o apecs.o cia.o lca.o ioasic.o icasic.o: Makefile
 
 ##
 ## (7) misc settings

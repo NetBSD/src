@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.1.8.2 2002/09/17 21:12:22 nathanw Exp $ */
+/* $NetBSD: arcpp.c,v 1.1.8.3 2002/10/18 02:33:28 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1.8.2 2002/09/17 21:12:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1.8.3 2002/10/18 02:33:28 nathanw Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -122,9 +122,8 @@ static void arcpp_attach(struct device *, struct device *, void *);
 static int arcppintr(void *);
 static int arcpppushbytes(struct arcpp_softc *);
 
-struct cfattach arcpp_ca = {
-	sizeof(struct arcpp_softc), arcpp_match, arcpp_attach
-};
+CFATTACH_DECL(arcpp, sizeof(struct arcpp_softc),
+    arcpp_match, arcpp_attach, NULL, NULL);
 
 static int
 arcpp_match(struct device *parent, struct cfdata *cf, void *aux)

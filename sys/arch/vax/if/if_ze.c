@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.5.10.1 2002/06/20 03:42:11 nathanw Exp $ */
+/*      $NetBSD: if_ze.c,v 1.5.10.2 2002/10/18 02:40:30 nathanw Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -70,9 +70,8 @@
 static	int	zematch __P((struct device *, struct cfdata *, void *));
 static	void	zeattach __P((struct device *, struct device *, void *));
 
-struct	cfattach ze_ibus_ca = {
-	sizeof(struct ze_softc), zematch, zeattach
-};
+CFATTACH_DECL(ze_ibus, sizeof(struct ze_softc),
+    zematch, zeattach, NULL, NULL);
 
 /*
  * Check for present SGEC.

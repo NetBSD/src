@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.1.2.6 2002/09/17 21:17:34 nathanw Exp $       */
+/*      $NetBSD: pccons.c,v 1.1.2.7 2002/10/18 02:39:48 nathanw Exp $       */
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ extern int msgbufmapped;
 #endif
 
 /*
-** Macro defintions
+** Macro definitions
 */
 
 /*
@@ -297,8 +297,13 @@ void                   pccnputc            __P((dev_t, char));
 int                    pccngetc            __P((dev_t));
 void                   pccnpollc           __P((dev_t, int));
 
+char *xinterpret(struct pc_softc *, u_char);
+
 #ifdef SHARK
 static void            force_vga_mode      __P((void));
+int get_shark_screen_ihandle(void);
+void shark_screen_cleanup(int);
+
 /*
 ** Definitions needed by getDisplayInfo
 */
@@ -354,10 +359,8 @@ static void            cga_save_restore    __P((int));
 /*
 ** Data structures required by config
 */
-struct cfattach pc_ca = 
-{
-    sizeof(struct pc_softc), pcprobe, pcattach
-};
+CFATTACH_DECL(pc, sizeof(struct pc_softc),
+    pcprobe, pcattach, NULL, NULL);
 
 extern struct cfdriver pc_cd;
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.400.2.17 2002/09/17 21:14:57 nathanw Exp $
+# $NetBSD: GENERIC,v 1.400.2.18 2002/10/18 02:37:27 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.400.2.17 $"
+#ident 		"GENERIC-$Revision: 1.400.2.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -40,7 +40,8 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
-options 	PERFCTRS	# performance-monitoring counters support
+# doesn't work with MP just yet..
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -82,7 +83,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -162,6 +163,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -208,6 +210,8 @@ options 	PCDISPLAY_SOFTCURSOR
 # if you want a really secure system, it may be better not to enable them,
 # see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
 #options 	WSDISPLAY_CHARFUNCS		# mouse console support
+# enable VGA raster mode capable of displaying multilingual text on console
+#options 	VGA_RASTERCONSOLE
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -219,6 +223,9 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+
+cpu* at mainbus?
+#ioapic* at mainbus?
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -276,7 +283,7 @@ pci*	at ppb? bus ?
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # System Controllers
-elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
+elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -288,6 +295,11 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
+
+#
+
+p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
+
 
 # EISA bus support
 eisa0	at mainbus?
@@ -628,6 +640,7 @@ tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 # ISA Plug-and-Play network interfaces
 an*	at isapnp?			# Aironet 802.11
 ep*	at isapnp?			# 3Com 3c509 Ethernet
+le*	at isapnp?			# AMD PCnet-ISA Ethernet
 ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
@@ -793,6 +806,9 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 upl*	at uhub? port ?
 
 # Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
+
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
 
@@ -989,8 +1005,10 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	raid		8	# RAIDframe disk driver
-options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	cgd		4	# cryptographic disk devices
+# RAIDframe is broken with MULTIPROCESSOR / LOCKDEBUG
+#pseudo-device	raid		8	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
 #options 	RF_INCLUDE_EVENODD=1
 #options 	RF_INCLUDE_RAID5_RS=1
@@ -999,6 +1017,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 

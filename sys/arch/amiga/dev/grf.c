@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.38.4.4 2002/09/17 21:12:58 nathanw Exp $ */
+/*	$NetBSD: grf.c,v 1.38.4.5 2002/10/18 02:34:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38.4.4 2002/09/17 21:12:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38.4.5 2002/10/18 02:34:52 nathanw Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.38.4.4 2002/09/17 21:12:58 nathanw Exp $")
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <dev/sun/fbio.h>
@@ -96,19 +95,17 @@ int grfprint(void *, const char *);
  */
 struct grf_softc *grfsp[NGRF];
 
-struct cfattach grf_ca = {
-	sizeof(struct device), grfmatch, grfattach
-};
+CFATTACH_DECL(grf, sizeof(struct device),
+    grfmatch, grfattach, NULL, NULL);
 
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
-dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap,
+	nostop, notty, nopoll, grfmmap,
 };
 
 /*
@@ -289,13 +286,6 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	}
 	return(error);
-}
-
-/*ARGSUSED*/
-int
-grfpoll(dev_t dev, int events, struct proc *p)
-{
-	return(events & (POLLOUT | POLLWRNORM));
 }
 
 /*

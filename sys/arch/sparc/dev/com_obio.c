@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.8.8.2 2002/04/01 07:42:40 nathanw Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.8.8.3 2002/10/18 02:39:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,9 +108,8 @@ static int com_obio_match __P((struct device *, struct cfdata *, void *));
 static void com_obio_attach __P((struct device *, struct device *, void *));
 static void com_obio_cleanup __P((void *));
 
-struct cfattach com_obio_ca = {
-	sizeof(struct com_obio_softc), com_obio_match, com_obio_attach
-};
+CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
+    com_obio_match, com_obio_attach, NULL, NULL);
 
 static int
 com_obio_match(parent, cf, aux)

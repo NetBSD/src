@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.23.8.2 2002/09/17 21:13:08 nathanw Exp $ */
+/*	$NetBSD: par.c,v 1.23.8.3 2002/10/18 02:35:03 nathanw Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.23.8.2 2002/09/17 21:13:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.23.8.3 2002/10/18 02:35:03 nathanw Exp $");
 
 /*
  * parallel port interface
@@ -108,9 +108,8 @@ void parintr(void *);
 void parattach(struct device *, struct device *, void *);
 int parmatch(struct device *, struct cfdata *, void *);
 
-struct cfattach par_ca = {
-	sizeof(struct par_softc), parmatch, parattach
-};
+CFATTACH_DECL(par, sizeof(struct par_softc),
+    parmatch, parattach, NULL, NULL);
 
 dev_type_open(paropen);
 dev_type_close(parclose);

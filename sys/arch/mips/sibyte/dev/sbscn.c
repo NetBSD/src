@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.1.12.2 2002/09/17 21:15:53 nathanw Exp $ */
+/* $NetBSD: sbscn.c,v 1.1.12.3 2002/10/18 02:38:49 nathanw Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -239,9 +239,8 @@ void	sbscn_kgdb_putc(void *, int);
 static int	sbscn_match(struct device *, struct cfdata *, void *);
 static void	sbscn_attach(struct device *, struct device *, void *);
 
-const struct cfattach sbscn_ca = {
-	sizeof(struct sbscn_softc), sbscn_match, sbscn_attach,
-};
+CFATTACH_DECL(sbscn, sizeof(struct sbscn_softc),
+    sbscn_match, sbscn_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))

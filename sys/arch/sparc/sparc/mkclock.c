@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.1.2.2 2002/04/01 07:42:53 nathanw Exp $ */
+/*	$NetBSD: mkclock.c,v 1.1.2.3 2002/10/18 02:39:59 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,14 +71,11 @@ static void	clockattach_obio(struct device *, struct device *, void *);
 
 static void	clockattach(int, bus_space_tag_t, bus_space_handle_t);
 
-struct cfattach clock_mainbus_ca = {
-	sizeof(struct device), clockmatch_mainbus, clockattach_mainbus
-};
+CFATTACH_DECL(clock_mainbus, sizeof(struct device),
+    clockmatch_mainbus, clockattach_mainbus, NULL, NULL);
 
-struct cfattach clock_obio_ca = {
-	sizeof(struct device), clockmatch_obio, clockattach_obio
-};
-
+CFATTACH_DECL(clock_obio, sizeof(struct device),
+    clockmatch_obio, clockattach_obio, NULL, NULL);
 
 /* Imported from clock.c: */
 extern todr_chip_handle_t todr_handle;

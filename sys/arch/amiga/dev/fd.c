@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48.4.4 2002/09/17 21:12:57 nathanw Exp $ */
+/*	$NetBSD: fd.c,v 1.48.4.5 2002/10/18 02:34:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48.4.4 2002/09/17 21:12:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48.4.5 2002/10/18 02:34:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,9 +239,8 @@ struct fdtype fdtype[] = {
 };
 int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
@@ -263,9 +262,8 @@ const struct cdevsw fd_cdevsw = {
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct cfattach fdc_ca = {
-	sizeof(struct device), fdcmatch, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct device),
+    fdcmatch, fdcattach, NULL, NULL);
 
 /*
  * all hw access through macros, this helps to hide the active low

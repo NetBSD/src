@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40.2.6 2002/08/13 02:18:24 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40.2.7 2002/10/18 02:38:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.6 2002/08/13 02:18:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.7 2002/10/18 02:38:05 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,11 +103,18 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.6 2002/08/13 02:18:24 nathanw
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
+
 #include "opt_pci_conf_mode.h"
 
 int pci_mode = -1;
 
-struct simplelock pci_conf_slock;
+struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
 
 #define	PCI_CONF_LOCK(s)						\
 do {									\
@@ -156,7 +163,7 @@ struct {
  */
 struct i386_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
-	_bus_dmamap_create, 
+	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
 	_bus_dmamap_load_mbuf,
@@ -393,8 +400,6 @@ pci_mode_detect()
 	int i;
 	pcireg_t idreg;
 
-	simple_lock_init(&pci_conf_slock);
-
 	if (pci_mode != -1)
 		return pci_mode;
 
@@ -475,6 +480,12 @@ pci_intr_map(pa, ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
+#if NIOAPIC > 0
+	int rawpin = pa->pa_rawintrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	struct mp_intr_map *mip;
+	int bus, dev, func;
+#endif
 
 	if (pin == 0) {
 		/* No IRQ used. */
@@ -514,6 +525,29 @@ pci_intr_map(pa, ihp)
 			line = 9;
 		}
 	}
+#if NIOAPIC > 0
+	pci_decompose_tag (pc, pa->pa_tag, &bus, &dev, &func);
+	if ((mp_busses != NULL) && (mp_busses[bus].mb_intrs != NULL)) {
+		/*
+		 * Note: assumes 1:1 mapping between PCI bus numbers and
+		 * the numbers given by the MP bios.
+		 */
+		int mpspec_pin = (dev<<2)|(rawpin-1);
+
+		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
+			if (mip->bus_pin == mpspec_pin) {
+				*ihp = mip->ioapic_ih | line;
+				return 0;
+			}
+		}
+		if (mip == NULL) {
+			printf("pci_intr_map: bus %d dev %d func %d pin %d; line %d\n",
+			    bus, dev, func, pin, line);
+
+			printf("pci_intr_map: no MP mapping found\n");
+		}
+	}
+#endif
 
 	*ihp = line;
 	return 0;
@@ -528,14 +562,26 @@ pci_intr_string(pc, ih)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[64];
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
-	sprintf(irqstr, "irq %d", ih);
+
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC)
+		sprintf(irqstr, "apic %d int %d (irq %d)",
+		    APIC_IRQ_APIC(ih),
+		    APIC_IRQ_PIN(ih),
+		    ih&0xff);
+	else
+		sprintf(irqstr, "irq %d", ih&0xff);
+#else
+
+	sprintf(irqstr, "irq %d", ih&0xff);
+#endif
 	return (irqstr);
-	
+
 }
 
 const struct evcnt *
@@ -555,9 +601,17 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int level, (*func) __P((void *));
 	void *arg;
 {
+	if (ih != -1) {
+#if NIOAPIC > 0
+		if (ih & APIC_INT_VIA_APIC) {
+			return apic_intr_establish(ih, IST_LEVEL, level,
+			    func, arg);
+		}
+#endif
+	}
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
 }
@@ -603,7 +657,6 @@ pci_bus_flags()
 			switch (PCI_PRODUCT(id)) {
 			case PCI_PRODUCT_SIS_85C496:
 				goto disable_mem;
-				break;
 			}
 			break;
 		}

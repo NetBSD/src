@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.5.8.3 2002/02/28 04:10:03 nathanw Exp $ */
+/*	$NetBSD: txsim.c,v 1.5.8.4 2002/10/18 02:37:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@ struct txsim_softc {
 	int sc_pri; /* attaching device priority */
 };
 
-struct cfattach txsim_ca = {
-	sizeof(struct txsim_softc), txsim_match, txsim_attach
-};
+CFATTACH_DECL(txsim, sizeof(struct txsim_softc),
+    txsim_match, txsim_attach, NULL, NULL);
 
 int
 txsim_match(struct device *parent, struct cfdata *match, void *aux)
@@ -77,7 +76,7 @@ txsim_match(struct device *parent, struct cfdata *match, void *aux)
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
 	  return (0);
 #endif /* VR41XX */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+	if (strcmp(ma->ma_name, match->cf_name))
 		return (0);
 
 	return (1);
@@ -124,7 +123,7 @@ txsim_search(struct device *parent, struct cfdata *cf, void *aux)
 	
 	ta.ta_tc = tx_conf_get_tag();
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ta) == sc->sc_pri)
+	if (config_match(parent, cf, &ta) == sc->sc_pri)
 		config_attach(parent, cf, &ta, txsim_print);
 
 	return (0);

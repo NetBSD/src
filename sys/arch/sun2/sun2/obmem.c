@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.4.8.2 2002/01/08 00:28:13 nathanw Exp $	*/
+/*	$NetBSD: obmem.c,v 1.4.8.3 2002/10/18 02:40:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,9 +57,8 @@ struct obmem_softc {
 	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
 };
 
-struct cfattach obmem_ca = {
-	sizeof(struct obmem_softc), obmem_match, obmem_attach
-};
+CFATTACH_DECL(obmem, sizeof(struct obmem_softc),
+    obmem_match, obmem_attach, NULL, NULL);
 
 static	paddr_t obmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				off_t, int, int));
@@ -88,7 +87,7 @@ obmem_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (ma->ma_name == NULL || strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 static void

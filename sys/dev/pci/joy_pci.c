@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.1.4.3 2002/04/17 00:06:02 nathanw Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.1.4.4 2002/10/18 02:43:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.1.4.3 2002/04/17 00:06:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.1.4.4 2002/10/18 02:43:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,8 @@ int	joy_pci_match __P((struct device *, struct cfdata *, void *));
 void	joy_pci_attach __P((struct device *, struct device *, void *));
 static int bar_is_io __P((pci_chipset_tag_t pc, pcitag_t tag, int reg));
 
-struct cfattach joy_pci_ca = {
-	sizeof(struct joy_softc), joy_pci_match, joy_pci_attach
-};
+CFATTACH_DECL(joy_pci, sizeof(struct joy_softc),
+    joy_pci_match, joy_pci_attach, NULL, NULL);
 
 int
 joy_pci_match(parent, match, aux)

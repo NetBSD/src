@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.10.8.1 2002/04/01 07:40:48 nathanw Exp $	*/
+/*	$NetBSD: ams.c,v 1.10.8.2 2002/10/18 02:38:18 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -71,9 +71,8 @@ extern int	kbd_polling; /* Are we polling (Debugger mode)? from kbd.c */
  */
 
 /* Driver definition. */
-struct cfattach ams_ca = {
-	sizeof(struct ams_softc), amsmatch, amsattach
-};
+CFATTACH_DECL(ams, sizeof(struct ams_softc),
+    amsmatch, amsattach, NULL, NULL);
 
 extern struct cfdriver ams_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.1.8.3 2002/06/20 03:42:02 nathanw Exp $	*/
+/*	$NetBSD: sun3.c,v 1.1.8.4 2002/10/18 02:40:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ dev3_mapin(maptype, physaddr, length)
 	u_int i, pa, pte, pgva, va;
 
 	if ((sun3_devmap + length) > SUN3_MONSHORTPAGE)
-		panic("dev3_mapin: length=%d\n", length);
+		panic("dev3_mapin: length=%d", length);
 
 	for (i = 0; i < MAP__NTYPES; i++)
 		if (sun3_mapinfo[i].maptype == maptype)

@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.30.8.3 2002/02/28 04:10:20 nathanw Exp $	*/
+/*	$NetBSD: segments.h,v 1.30.8.4 2002/10/18 02:37:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -134,10 +134,18 @@ struct region_descriptor {
 #ifdef _KERNEL
 extern union descriptor *idt, *gdt, *ldt;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int));
+void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
 void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
+void setgdt __P((int, void *, size_t, int, int, int, int));
+void unsetgate __P((struct gate_descriptor *));
+void cpu_init_idt __P((void));
+
+int idt_vec_alloc __P((int, int));
+void idt_vec_set __P((int, void (*)(void)));
+void idt_vec_free __P((int));
+
 #endif /* _KERNEL */
 
 #endif /* !_LOCORE */
@@ -233,7 +241,7 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GLDT_SEL	3	/* Default LDT descriptor */
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
-/* reserved for GCPU_SEL	6	per-CPU segment */
+#define GCPU_SEL	6	/* per-CPU segment */
 #define	GMACHCALLS_SEL	7	/* Darwin (mach trap) system call gate */
 #define	GEXTBIOSDATA_SEL 8	/* magic to catch BIOS refs to EBDA */
 #define	GAPM32CODE_SEL	9	/* 3 APM segments must be consecutive */
@@ -241,11 +249,13 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GAPMDATA_SEL	11	/* code16 and then data per APM spec */
 #define	GBIOSCODE_SEL	12
 #define	GBIOSDATA_SEL	13
-#define GPNPBIOSCODE_SEL 14
-#define GPNPBIOSDATA_SEL 15
-#define GPNPBIOSSCRATCH_SEL 16
-#define GPNPBIOSTRAMP_SEL 17
-#define	NGDT		18
+#define	GPNPBIOSCODE_SEL 14
+#define	GPNPBIOSDATA_SEL 15
+#define	GPNPBIOSSCRATCH_SEL 16
+#define	GPNPBIOSTRAMP_SEL 17
+#define GTRAPTSS_SEL	18
+#define GIPITSS_SEL	19
+#define	NGDT		20
 
 /*
  * Entries in the Local Descriptor Table (LDT)

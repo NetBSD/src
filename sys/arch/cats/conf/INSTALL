@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.2.7 2002/08/01 02:41:26 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.7.2.8 2002/10/18 02:36:07 nathanw Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -118,7 +118,7 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 

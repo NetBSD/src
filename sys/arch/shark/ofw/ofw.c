@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7.2.8 2002/08/27 06:03:20 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7.2.9 2002/10/18 02:39:47 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -208,7 +208,7 @@ static struct dma_range *OFdmaranges;
 static ofw_handle_t ofw_client_services_handle;
 
 
-static void ofw_callbackhandler __P((struct ofw_cbargs *));
+static void ofw_callbackhandler __P((void *));
 static void ofw_construct_proc0_addrspace __P((pv_addr_t *, pv_addr_t *));
 static void ofw_getphysmeminfo __P((void));
 static void ofw_getvirttranslations __P((void));
@@ -777,7 +777,7 @@ ofw_configmem(void)
 	/* First initialize our callback memory allocator. */
 	ofw_initallocator();
 
-	OF_set_callback((void(*)())ofw_callbackhandler);
+	OF_set_callback(ofw_callbackhandler);
 
 	/* Switch to the proc0 pagetables. */
 	setttb(proc0_ttbbase.pv_pa);
@@ -958,9 +958,10 @@ ofw_configmem(void)
 
 /* N.B.  Not supposed to call printf in callback-handler!  Could deadlock! */
 static void
-ofw_callbackhandler(args)
-	struct ofw_cbargs *args;
+ofw_callbackhandler(v)
+	void *v;
 {
+	struct ofw_cbargs *args = v;
 	char *name = args->name;
 	int nargs = args->nargs;
 	int nreturns = args->nreturns;

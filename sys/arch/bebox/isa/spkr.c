@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.7.12.1 2002/09/17 21:13:57 nathanw Exp $	*/
+/*	$NetBSD: spkr.c,v 1.7.12.2 2002/10/18 02:36:05 nathanw Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -42,9 +42,8 @@ struct spkr_softc {
 	struct device sc_dev;
 };
 
-struct cfattach spkr_ca = {
-	sizeof(struct spkr_softc), spkrprobe, spkrattach
-};
+CFATTACH_DECL(spkr, sizeof(struct spkr_softc),
+    spkrprobe, spkrattach, NULL, NULL);
 
 dev_type_open(spkropen);
 dev_type_close(spkrclose);
@@ -427,7 +426,7 @@ spkrprobe (parent, match, aux)
 	 * child of a real keyboard controller driver.)
 	 */
 	if ((parent == NULL) ||
-	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0))
+	    (strcmp(parent->dv_cfdata->cf_name, "pc") != 0))
 		return (0);
 	if (match->cf_loc[PCKBDCF_PORT] != PITAUX_PORT)
 		return (0);

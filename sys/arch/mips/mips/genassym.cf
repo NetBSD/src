@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.2.7 2002/09/17 21:15:44 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.25.2.8 2002/10/18 02:38:45 nathanw Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -41,7 +41,6 @@
 
 include <sys/param.h>
 include <sys/buf.h>
-include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8.8.2 2002/06/20 03:40:03 nathanw Exp $ */
+/*	$NetBSD: boot.c,v 1.8.8.3 2002/10/18 02:39:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -101,7 +101,7 @@ machdep_common_ether(ether)
 		ea = (u_char *) ETHER_ADDR_147;
 
 		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
-			panic("ERROR: ethernet address not set!\r\n");
+			panic("ERROR: ethernet address not set!");
 		ether[0] = 0x08;
 		ether[1] = 0x00;
 		ether[2] = 0x3e;
@@ -112,7 +112,7 @@ machdep_common_ether(ether)
 		ea = (u_char *) ETHER_ADDR_16X;
 
 		if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
-			panic("ERROR: ethernet address not set!\r\n");
+			panic("ERROR: ethernet address not set!");
 		ether[0] = ea[0];
 		ether[1] = ea[1];
 		ether[2] = ea[2];

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.38.6.5 2002/06/20 03:40:12 nathanw Exp $
+# $NetBSD: GENERIC,v 1.38.6.6 2002/10/18 02:39:11 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.38.6.5 $"
+#ident 		"GENERIC-$Revision: 1.38.6.6 $"
 
 maxusers	16
 
@@ -34,6 +34,7 @@ options 	CPU_SINGLE		# no I/O processor
 
 # Standard system options
 options 	KTRACE			# system call tracing support
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 #options 	SEMMNI=10		# number of semaphore identifiers
@@ -45,7 +46,7 @@ options 	SYSVSHM			# System V shared memory
 options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
@@ -106,6 +107,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTPARAM

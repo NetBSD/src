@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.212.2.6 2002/09/17 21:19:28 nathanw Exp $ */
+/*	$NetBSD: wd.c,v 1.212.2.7 2002/10/18 02:41:30 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.6 2002/09/17 21:19:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.212.2.7 2002/10/18 02:41:30 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -183,9 +183,8 @@ int	wdactivate __P((struct device *, enum devact));
 int	wdprint	__P((void *, char *));
 void	wdperror __P((const struct wd_softc *));
 
-struct cfattach wd_ca = {
-	sizeof(struct wd_softc), wdprobe, wdattach, wddetach, wdactivate
-};
+CFATTACH_DECL(wd, sizeof(struct wd_softc),
+    wdprobe, wdattach, wddetach, wdactivate);
 
 extern struct cfdriver wd_cd;
 
@@ -1266,10 +1265,6 @@ wddump(dev, blkno, va, size)
 		return (ENXIO);
 
 	part = WDPART(dev);
-
-	/* Make sure it was initialized. */
-	if (wd->drvp->state < READY)
-		return ENXIO;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = wd->sc_dk.dk_label;

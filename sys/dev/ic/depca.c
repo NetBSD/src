@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.1.6.3 2001/11/14 19:14:20 nathanw Exp $	*/
+/*	$NetBSD: depca.c,v 1.1.6.4 2002/10/18 02:41:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.1.6.3 2001/11/14 19:14:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.1.6.4 2002/10/18 02:41:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,8 @@ struct le_depca_softc {
 int	le_depca_match(struct device *, struct cfdata *, void *);
 void	le_depca_attach(struct device *, struct device *, void *);
 
-struct cfattach le_depca_ca = {
-	sizeof(struct le_depca_softc), le_depca_match, le_depca_attach
-};
+CFATTACH_DECL(le_depca, sizeof(struct le_depca_softc),
+    le_depca_match, le_depca_attach, NULL, NULL);
 
 void	depca_copytobuf(struct lance_softc *, void *, int, int);
 void	depca_copyfrombuf(struct lance_softc *, void *, int, int);
@@ -244,7 +243,7 @@ le_depca_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct depca_attach_args *da = aux;
 
-	return (strcmp(da->da_name, match->cf_driver->cd_name) == 0);
+	return (strcmp(da->da_name, match->cf_name) == 0);
 }
 
 void

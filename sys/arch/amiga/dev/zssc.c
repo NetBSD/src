@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.29.8.2 2002/02/28 04:07:04 nathanw Exp $ */
+/*	$NetBSD: zssc.c,v 1.29.8.3 2002/10/18 02:35:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.29.8.2 2002/02/28 04:07:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.29.8.3 2002/10/18 02:35:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,8 @@ int  zssc_dmaintr(void *);
 void zssc_dump(void);
 #endif
 
-struct cfattach zssc_ca = {
-	sizeof(struct siop_softc), zsscmatch, zsscattach
-};
+CFATTACH_DECL(zssc, sizeof(struct siop_softc),
+    zsscmatch, zsscattach, NULL, NULL);
 
 /*
  * if we are an PPI Zeus

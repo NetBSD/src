@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.11.14.2 2002/04/01 07:46:02 nathanw Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.11.14.3 2002/10/18 02:42:44 nathanw Exp $ */
 
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.11.14.2 2002/04/01 07:46:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.11.14.3 2002/10/18 02:42:44 nathanw Exp $");
 
 #include "mpu_ym.h"
 
@@ -75,10 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.11.14.2 2002/04/01 07:46:02 nathanw 
 int	ym_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	ym_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ym_isapnp_ca = {
-	sizeof(struct ym_softc), ym_isapnp_match, ym_isapnp_attach
-};
-
+CFATTACH_DECL(ym_isapnp, sizeof(struct ym_softc),
+    ym_isapnp_match, ym_isapnp_attach, NULL, NULL);
 
 /*
  * Probe / attach routines.

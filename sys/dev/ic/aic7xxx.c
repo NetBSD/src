@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66.2.12 2002/09/17 21:19:36 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.13 2002/10/18 02:41:46 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.12 2002/09/17 21:19:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.13 2002/10/18 02:41:46 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -1555,7 +1555,7 @@ ahc_intr(void *arg)
 		error = ahc_inb(ahc, ERROR);
 		for (i = 0; error != 1 && i < num_errors; i++)
 			error >>= 1;
-		panic("%s: brkadrint, %s at seqaddr = 0x%x\n",
+		panic("%s: brkadrint, %s at seqaddr = 0x%x",
 		      ahc_name(ahc), hard_error[i].errmesg,
 		      ahc_inb(ahc, SEQADDR0) |
 		      (ahc_inb(ahc, SEQADDR1) << 8));
@@ -2420,7 +2420,7 @@ ahc_build_transfer_msg(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 		ahc_construct_sdtr(ahc, period, offset);
 	} else {
 		panic("ahc_intr: AWAITING_MSG for negotiation, "
-		      "but no negotiation needed\n");
+		      "but no negotiation needed");
 	}
 }
 

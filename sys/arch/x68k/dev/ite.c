@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.26.4.4 2002/09/17 21:18:45 nathanw Exp $	*/
+/*	$NetBSD: ite.c,v 1.26.4.5 2002/10/18 02:40:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,9 +154,8 @@ void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach ite_ca = {
-	sizeof(struct ite_softc), itematch, iteattach
-};
+CFATTACH_DECL(ite, sizeof(struct ite_softc),
+    itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
 

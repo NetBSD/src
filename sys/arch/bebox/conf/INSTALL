@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.13.6.7 2002/08/01 02:41:24 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.13.6.8 2002/10/18 02:36:03 nathanw Exp $
 #
 # First try for BEBOX config file
 #
@@ -30,7 +30,7 @@ options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KTRACE
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 

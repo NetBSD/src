@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.7.6.3 2002/08/01 02:41:25 nathanw Exp $	*/
+/*	$NetBSD: pfb.c,v 1.7.6.4 2002/10/18 02:36:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,9 +56,8 @@ int	pfbmatch __P((struct device *, struct cfdata *, void *));
 void	pfbattach __P((struct device *, struct device *, void *));
 int	pfbprint __P((void *, const char *));
 
-struct cfattach pfb_ca = {
-	sizeof(struct pfb_softc), pfbmatch, pfbattach,
-};
+CFATTACH_DECL(pfb, sizeof(struct pfb_softc),
+    pfbmatch, pfbattach, NULL, NULL);
 
 struct pfb_devconfig pfb_console_dc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5.8.5 2002/09/17 21:17:20 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.5.8.6 2002/10/18 02:39:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -168,9 +168,8 @@ static int	zs_hpc_match __P((struct device *, struct cfdata *, void *));
 static void	zs_hpc_attach __P((struct device *, struct device *, void *));
 static int	zs_print __P((void *, const char *name));
 
-struct cfattach zsc_hpc_ca = {
-	sizeof(struct zsc_softc), zs_hpc_match, zs_hpc_attach
-};
+CFATTACH_DECL(zsc_hpc, sizeof(struct zsc_softc),
+    zs_hpc_match, zs_hpc_attach, NULL, NULL);
 
 extern struct	cfdriver zsc_cd;
 
@@ -192,7 +191,7 @@ zs_hpc_match(parent, cf, aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ha->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);
@@ -709,11 +708,11 @@ zscninit(cn)
 	char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
-		panic("zscninit without valid ARCS ConsoleOut setting!\n");
+		panic("zscninit without valid ARCS ConsoleOut setting!");
 
 	if (strlen(consdev) != 9 ||
 	    strncmp(consdev, "serial", 6) != 0)
-		panic("zscninit with ARCS console not set to serial!\n");
+		panic("zscninit with ARCS console not set to serial!");
 
 	cons_port = consdev[7] - '0';
 

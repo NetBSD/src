@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.2.7 2002/09/17 21:13:59 nathanw Exp $
+# $NetBSD: GENERIC,v 1.11.2.8 2002/10/18 02:36:07 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -90,6 +90,7 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTP
@@ -126,6 +127,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -136,7 +138,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options 	PMAP_STATIC_L1S=128
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # wscons options
@@ -150,6 +152,10 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/wscons/wskbdmap_mfii.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 # Development and Debugging options
 
@@ -161,6 +167,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
+options		SYMTAB_SPACE=380000
 
 config		netbsd	root on ? type ?
 
@@ -479,6 +486,7 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices
+#pseudo-device	cgd		2	# cryptographic disk devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 

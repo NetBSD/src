@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.1.4.2 2002/06/20 03:38:13 nathanw Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.1.4.3 2002/10/18 02:35:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -81,9 +81,8 @@ int *vidc_base = (int *)VIDC_BASE;
 int  vidc_fref = 24000000;
 
 
-struct cfattach vidc_ca = {
-	sizeof (struct vidc20_softc), vidcmatch, vidcattach
-};
+CFATTACH_DECL(vidc, sizeof (struct vidc20_softc),
+    vidcmatch, vidcattach, NULL, NULL);
 
 /*
  * vidcmatch()
@@ -108,7 +107,7 @@ static int
 vidcsearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 
 	return (0);

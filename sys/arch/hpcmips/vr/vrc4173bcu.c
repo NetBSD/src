@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.3.4.4 2002/04/01 07:40:29 nathanw Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.3.4.5 2002/10/18 02:37:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -208,9 +208,8 @@ static struct vrc4173bcu_unit vrc4173bcu_units[] = {
 	},
 };
 
-struct cfattach vrc4173bcu_ca = {
-	sizeof(struct vrc4173bcu_softc), vrc4173bcu_match, vrc4173bcu_attach,
-};
+CFATTACH_DECL(vrc4173bcu, sizeof(struct vrc4173bcu_softc),
+    vrc4173bcu_match, vrc4173bcu_attach, NULL, NULL);
 
 static const struct vrip_chipset_tag vrc4173bcu_chipset_methods = {
 	.vc_power		= __vrc4173bcu_power,
@@ -461,7 +460,7 @@ vrc4173bcu_search(struct device *parent, struct cfdata *cf, void *aux)
 	va.va_cc = sc->sc_chipset.vc_cc;
 	va.va_ac = sc->sc_chipset.vc_ac;
 	va.va_dc = sc->sc_chipset.vc_dc;
-	if (((*cf->cf_attach->ca_match)(parent, cf, &va) == sc->sc_pri))
+	if ((config_match(parent, cf, &va) == sc->sc_pri))
 		config_attach(parent, cf, &va, vrc4173bcu_print);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.8.6.3 2002/09/17 21:14:11 nathanw Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.8.6.4 2002/10/18 02:36:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -84,9 +84,8 @@ struct gdrom_softc {
 	int cmd_cond;		/* resulting condition of command */
 };
 
-struct cfattach gdrom_ca = {
-	sizeof(struct gdrom_softc), gdrommatch, gdromattach
-};
+CFATTACH_DECL(gdrom, sizeof(struct gdrom_softc),
+    gdrommatch, gdromattach, NULL, NULL);
 
 struct dkdriver gdromdkdriver = { gdromstrategy };
 
@@ -367,7 +366,7 @@ gdrommatch(struct device *parent, struct cfdata *cf, void *aux)
 	static int gdrom_matched = 0;
 
 	/* Allow only once instance. */
-	if (strcmp("gdrom", cf->cf_driver->cd_name) || gdrom_matched)
+	if (gdrom_matched)
 		return (0);
 	gdrom_matched = 1;
 

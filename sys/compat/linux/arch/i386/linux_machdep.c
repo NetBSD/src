@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.14 2002/09/17 21:18:58 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.15 2002/10/18 02:41:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.14 2002/09/17 21:18:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.15 2002/10/18 02:41:09 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.14 2002/09/17 21:18:58 nath
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
@@ -146,7 +145,6 @@ linux_setregs(l, epp, stack)
 #endif
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
 
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __Linux_NPXCW__;

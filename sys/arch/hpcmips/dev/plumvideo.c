@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.22.2.5 2002/06/20 03:38:49 nathanw Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.22.2.6 2002/10/18 02:37:07 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -116,9 +116,8 @@ void	plumvideo_attach(struct device*, struct device*, void*);
 int	plumvideo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	plumvideo_mmap(void *, off_t, int);
 
-struct cfattach plumvideo_ca = {
-	sizeof(struct plumvideo_softc), plumvideo_match, plumvideo_attach
-};
+CFATTACH_DECL(plumvideo, sizeof(struct plumvideo_softc),
+    plumvideo_match, plumvideo_attach, NULL, NULL);
 
 struct hpcfb_accessops plumvideo_ha = {
 	plumvideo_ioctl, plumvideo_mmap
@@ -263,7 +262,7 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 
 	switch (depth) {
 	default:
-		panic("plumvideo_hpcfbinit: not supported color depth\n");
+		panic("plumvideo_hpcfbinit: not supported color depth");
 		/* NOTREACHED */
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;

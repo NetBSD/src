@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.3.2.5 2002/04/17 00:04:18 nathanw Exp $	*/
+/*	$NetBSD: sbic.c,v 1.3.2.6 2002/10/18 02:39:41 nathanw Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -692,7 +692,7 @@ wd33c93_scsidone(dev, acb, status)
 	KASSERT(dev->target == xs->xs_periph->periph_target);
 	KASSERT(dev->lun    == xs->xs_periph->periph_lun);
 	if (acb == NULL || xs == NULL) {
-		panic("wd33c93_scsidone -- (%d,%d) no scsipi_xfer\n",
+		panic("wd33c93_scsidone -- (%d,%d) no scsipi_xfer",
 		    dev->target, dev->lun);
 	}
 	KASSERT(acb->flags != ACB_FREE);
@@ -762,7 +762,7 @@ wd33c93_dequeue(dev, acb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
-		panic("wd33c93_dequeue: lun %x for ecb %p does not exist\n",
+		panic("wd33c93_dequeue: lun %x for ecb %p does not exist",
 		      lun, acb);
 #endif
 	if (li->untagged == acb) {

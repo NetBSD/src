@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.10.2.4 2002/02/28 04:13:43 nathanw Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.10.2.5 2002/10/18 02:42:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.10.2.4 2002/02/28 04:13:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.10.2.5 2002/10/18 02:42:20 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,8 @@ struct ne_isa_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ne_isa_ca = {
-	sizeof(struct ne_isa_softc), ne_isa_match, ne_isa_attach
-};
+CFATTACH_DECL(ne_isa, sizeof(struct ne_isa_softc),
+    ne_isa_match, ne_isa_attach, NULL, NULL);
 
 int
 ne_isa_match(parent, match, aux)

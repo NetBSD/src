@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.31.8.5 2002/06/20 03:38:17 nathanw Exp $
+# $NetBSD: HADES,v 1.31.8.6 2002/10/18 02:35:49 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
+#		NetBSD: GENERIC.in,v 1.27 2002/10/14 18:24:33 elric Exp $
 
 #This configuration file is for a generic Medusa-Hades
 
@@ -53,6 +53,7 @@ options 	NS		# XNS
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
+
 options 	NETATALK	# AppleTalk networking protocols
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -61,7 +62,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -129,8 +130,9 @@ options 	SYSVSEM			# System V semaphores
 #Support for various kernel options
 
 options 	KTRACE			# Add kernel tracing system call
+options 	SYSTRACE		# system call vetting via systrace(1)
 options 	DIAGNOSTIC		# Add additional error checking code
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
@@ -156,7 +158,7 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
 #options 	STATCLOCK	        # Separate {stat,prof}clock
 
 #Try linked commands on all targets
@@ -182,9 +184,12 @@ pseudo-device	tun		2	# network tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+
 pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	cgd		4	# cryptographic disk driver
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.

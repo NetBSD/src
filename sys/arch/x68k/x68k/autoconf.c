@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.8.4 2002/09/17 21:18:50 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.8.5 2002/10/18 02:40:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -56,7 +56,6 @@ int mbmatch __P((struct device *, struct cfdata*, void*));
 int x68k_config_found __P((struct cfdata *, struct device *,
 			   void *, cfprint_t));
 
-static int simple_devprint __P((void *, const char *));
 static struct device *scsi_find __P((dev_t));
 static struct device *find_dev_byname __P((const char *));
 
@@ -93,15 +92,6 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-/*ARGSUSED*/
-static int
-simple_devprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	return(QUIET);
-}
-
 /*
  * use config_search to find appropriate device, then call that device
  * directly with NULL device variable storage.  A device can then 
@@ -117,6 +107,7 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
+	const struct cfattach *ca;
 
 	if (x68k_realconfig)
 		return(config_found(pdp, auxp, pfn) != NULL);
@@ -126,9 +117,12 @@ x68k_config_found(pcfp, pdp, auxp, pfn)
 
 	pdp->dv_cfdata = pcfp;
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
-		cf->cf_attach->ca_attach(pdp, NULL, auxp);
-		pdp->dv_cfdata = NULL;
-		return(1);
+		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+		if (ca != NULL) {
+			(*ca->ca_attach)(pdp, NULL, auxp);
+			pdp->dv_cfdata = NULL;
+			return(1);
+		}
 	}
 	pdp->dv_cfdata = NULL;
 	return(0);
@@ -143,6 +137,8 @@ void
 config_console()
 {	
 	struct cfdata *cf;
+
+	config_init();
 
 	/*
 	 * we need mainbus' cfdata.
@@ -253,7 +249,8 @@ scsi_find(bdev)
 		 * old boot didn't pass interface type
 		 * try "scsibus0"
 		 */
-		printf("warning: scsi_find: can't get boot interface -- update boot loader\n");
+		printf("warning: scsi_find: can't get boot interface -- "
+		       "update boot loader\n");
 		scsibus = find_dev_byname("scsibus0");
 #else
 		/* can't determine interface type */
@@ -305,9 +302,8 @@ find_dev_byname(name)
 /* 
  * mainbus driver 
  */
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbmatch, mbattach, NULL, NULL);
 
 int
 mbmatch(pdp, cfp, auxp)
@@ -332,11 +328,11 @@ mbattach(pdp, dp, auxp)
 	void *auxp;
 {
 	printf ("\n");
-	config_found(dp, "intio"  , simple_devprint);
-	config_found(dp, "grfbus" , simple_devprint);
-	config_found(dp, "par"    , simple_devprint);
-	config_found(dp, "com"    , simple_devprint);
-	config_found(dp, "com"    , simple_devprint);
-/*	config_found(dp, "adpcm"  , simple_devprint);	*/
-	config_found(dp, "*"      , simple_devprint);
+
+	config_found(dp, "intio"  , NULL);
+	config_found(dp, "grfbus" , NULL);
+	config_found(dp, "par"    , NULL);
+	config_found(dp, "com"    , NULL);
+	config_found(dp, "com"    , NULL);
+	config_found(dp, "*"      , NULL);
 }

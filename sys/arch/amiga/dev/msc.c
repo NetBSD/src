@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.19.8.4 2002/09/17 21:13:08 nathanw Exp $ */
+/*	$NetBSD: msc.c,v 1.19.8.5 2002/10/18 02:35:02 nathanw Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.19.8.4 2002/09/17 21:13:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.19.8.5 2002/10/18 02:35:02 nathanw Exp $");
 
 #include "msc.h"
 
@@ -172,9 +172,8 @@ void mscattach(struct device *, struct device *, void *);
 #define	SWFLAGS(dev)	(msc->openflags | (MSCDIALIN(dev) ? 0 : TIOCFLAG_SOFTCAR))
 #define	DEBUG_CD	0
 
-struct cfattach msc_ca = {
-	sizeof(struct device), mscmatch, mscattach
-};
+CFATTACH_DECL(msc, sizeof(struct device),
+    mscmatch, mscattach, NULL, NULL);
 
 dev_type_open(mscopen);
 dev_type_close(mscclose);

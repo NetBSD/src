@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11.8.2 2002/08/01 02:43:22 nathanw Exp $ */
+/*	$NetBSD: asm.h,v 1.11.8.3 2002/10/18 02:39:56 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -156,7 +156,17 @@
 
 #define ASMSTR			.asciz
 
+#ifdef __ELF__
+#define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection
+#else
 #define RCSID(name)		.asciz name
+#endif
+
+#ifdef NO_KERNEL_RCSIDS
+#define	__KERNEL_RCSID(_n, _s)	/* nothing */
+#else
+#define	__KERNEL_RCSID(_n, _s)	RCSID(_s)
+#endif
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\

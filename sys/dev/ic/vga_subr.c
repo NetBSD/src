@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.6.6.3 2002/08/01 02:44:49 nathanw Exp $ */
+/* $NetBSD: vga_subr.c,v 1.6.6.4 2002/10/18 02:42:02 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.6.6.3 2002/08/01 02:44:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.6.6.4 2002/10/18 02:42:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ textram(struct vga_handle *vh)
 	vga_gdc_write(vh, misc, (vh->vh_mono ? 0x0a : 0x0e));
 }
 
+#ifndef VGA_RASTERCONSOLE
 void
 vga_loadchars(struct vga_handle *vh, int fontset, int first, int num, int lpc,
 	      char *data)
@@ -193,3 +194,22 @@ vga_setscreentype(struct vga_handle *vh, const struct wsscreen_descr *type)
 	} else
 		vga_attr_write(vh, colplen, 0x07);
 }
+
+#else /* !VGA_RASTERCONSOLE */
+void
+vga_load_builtinfont(struct vga_handle *vh, u_int8_t *font, int firstchar,
+	int numchars)
+{
+	int i, s;
+	
+	s = splhigh();
+	fontram(vh);
+
+	for (i = firstchar; i < firstchar + numchars; i++)
+		bus_space_read_region_1(vh->vh_memt, vh->vh_allmemh, i * 32,
+					font + i * 16, 16);
+					
+	textram(vh);
+	splx(s);
+}
+#endif /* !VGA_RASTERCONSOLE */

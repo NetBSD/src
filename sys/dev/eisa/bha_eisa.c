@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.16.24.3 2002/01/08 00:29:27 nathanw Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.16.24.4 2002/10/18 02:41:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.16.24.3 2002/01/08 00:29:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.16.24.4 2002/10/18 02:41:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,8 @@ int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
 int	bha_eisa_match __P((struct device *, struct cfdata *, void *));
 void	bha_eisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach bha_eisa_ca = {
-	sizeof(struct bha_softc), bha_eisa_match, bha_eisa_attach
-};
+CFATTACH_DECL(bha_eisa, sizeof(struct bha_softc),
+    bha_eisa_match, bha_eisa_attach, NULL, NULL);
 
 int
 bha_eisa_address(iot, ioh, portp)

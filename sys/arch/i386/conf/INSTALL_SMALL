@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.64.2.11 2002/08/01 02:41:56 nathanw Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.64.2.12 2002/10/18 02:37:31 nathanw Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -20,7 +20,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=3200	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
@@ -69,7 +69,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -159,6 +159,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+cpu0 at mainbus0
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -402,7 +403,7 @@ cs0	at isa? port 0x300 iomem ? irq ? drq ?	# CS8900 Ethernet
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series

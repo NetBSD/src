@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.2.2.7 2002/08/01 02:45:02 nathanw Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.2.2.8 2002/10/18 02:42:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.2.2.7 2002/08/01 02:45:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.2.2.8 2002/10/18 02:42:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.2.2.7 2002/08/01 02:45:02 nathanw Exp $
 int	brgphymatch(struct device *, struct cfdata *, void *);
 void	brgphyattach(struct device *, struct device *, void *);
 
-struct cfattach brgphy_ca = {
-	sizeof(struct mii_softc), brgphymatch, brgphyattach,
-	    mii_phy_detach, mii_phy_activate
-};
+CFATTACH_DECL(brgphy, sizeof(struct mii_softc),
+    brgphymatch, brgphyattach, mii_phy_detach, mii_phy_activate);
 
 int	brgphy_service(struct mii_softc *, struct mii_data *, int);
 void	brgphy_status(struct mii_softc *);

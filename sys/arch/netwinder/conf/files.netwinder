@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.15.6.6 2002/09/17 21:16:09 nathanw Exp $
+#	$NetBSD: files.netwinder,v 1.15.6.7 2002/10/18 02:39:03 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -71,7 +71,7 @@ file	arch/arm/arm32/spl.S
 file	arch/arm/arm32/conf.c
 
 # ISA support.
-file	arch/netwinder/isa/isa_machdep.c	isa
+file	arch/arm/footbridge/isa/isa_machdep.c	isa
 file	arch/arm/footbridge/isa/isa_io.c	isa
 file	arch/arm/footbridge/isa/isa_io_asm.S	isa
 

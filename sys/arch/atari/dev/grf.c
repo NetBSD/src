@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25.8.2 2002/09/17 21:13:43 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.25.8.3 2002/10/18 02:35:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -59,7 +59,6 @@
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
 
 #include <machine/cpu.h>
 
@@ -99,21 +98,19 @@ void grfbusattach __P((struct device *, struct device *, void *));
  */
 struct grf_softc *grfsp[NGRF]; /* XXX */
 
-struct cfattach grfbus_ca = {
-	sizeof(struct device), grfbusmatch, grfbusattach
-};
+CFATTACH_DECL(grfbus, sizeof(struct device),
+    grfbusmatch, grfbusattach, NULL, NULL);
 
 extern struct cfdriver grfbus_cd;
 
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
-dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, noread, nowrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap,
+	nostop, notty, nopoll, grfmmap,
 };
 
 /*
@@ -270,20 +267,6 @@ struct proc	*p;
 
 	}
 	return(error);
-}
-
-/*ARGSUSED*/
-int
-grfpoll(dev, events, p)
-	dev_t		dev;
-	int		events;
-	struct proc	*p;
-{
-	int revents = 0;
-
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-	return (revents);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3.8.3 2002/08/13 02:17:54 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.3.8.4 2002/10/18 02:35:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,5 +65,6 @@ typedef unsigned long	pmc_ctr_t;
 typedef int		register_t;
 
 #define	__HAVE_MINIMAL_EMUL
+#define	__HAVE_RAS
 
 #endif	/* _ARM_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.4.2.11 2002/09/17 21:12:23 nathanw Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.4.2.12 2002/10/18 02:33:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.11 2002/09/17 21:12:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.4.2.12 2002/10/18 02:33:33 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -141,10 +141,10 @@ int physmem = 0;
 paddr_t memoryblock_end;
 
 #ifndef PMAP_STATIC_L1S
-int max_processes = 64;			/* Default number */
+int max_processes = 64;		/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-u_int videodram_size = 0;		/* Amount of DRAM to reserve for video */
+u_int videodram_size = 0;	/* Amount of DRAM to reserve for video */
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t systempage;
@@ -163,11 +163,11 @@ extern u_int undefined_handler_address;
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
 
-#define	KERNEL_PT_VMEM		0	/* Page table for mapping video memory */
-#define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
-#define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
-#define	KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */	
+#define	KERNEL_PT_VMEM		0 /* Page table for mapping video memory */
+#define	KERNEL_PT_SYS		1 /* Page table for mapping proc0 zero page */
+#define	KERNEL_PT_KERNEL	2 /* Page table for mapping kernel */
+#define	KERNEL_PT_VMDATA	3 /* Page tables for mapping kernel VM */
+#define	KERNEL_PT_VMDATA_NUM	4 /* start with 16MB of KVM */	
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -180,40 +180,40 @@ static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
 
 /* Prototypes */
-void physcon_display_base	__P((u_int addr));
-extern void consinit		__P((void));
+void physcon_display_base(u_int);
+extern void consinit(void);
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-void undefinedinstruction_bounce	__P((trapframe_t *frame));
+void data_abort_handler(trapframe_t *);
+void prefetch_abort_handler(trapframe_t *);
+void undefinedinstruction_bounce(trapframe_t *frame);
 
-static void canonicalise_bootconfig __P((BootConfig *, BootConfig *));
-static void process_kernel_args	__P((void));
+static void canonicalise_bootconfig(BootConfig *, BootConfig *);
+static void process_kernel_args(void);
 
-extern void dump_spl_masks	__P((void));
-extern void vidcrender_reinit	__P((void));
-extern int vidcrender_blank	__P((struct vconsole *vc, int type));
+extern void dump_spl_masks(void);
+extern void vidcrender_reinit(void);
+extern int vidcrender_blank(struct vconsole *, int);
 
-void rpc_sa110_cc_setup		__P((void));
+void rpc_sa110_cc_setup(void);
 
-extern void parse_mi_bootargs	__P((char *args));
-void parse_rpc_bootargs		__P((char *args));
+extern void parse_mi_bootargs(char *args);
+void parse_rpc_bootargs(char *args);
 
-extern void dumpsys		__P((void));
+extern void dumpsys(void);
 
 
 #if NVIDCVIDEO > 0
-#	define console_flush()		/* empty */;
+#	define console_flush()		/* empty */
 #else
-	extern void console_flush	__P((void));
+	extern void console_flush(void);
 #endif
 
 
-#define panic2(a) { \
-	memset((void *) (videomemory.vidm_vbase), 0x55, 50*1024); \
-	consinit(); \
-	panic a; \
-	}
+#define panic2(a) do {							\
+	memset((void *) (videomemory.vidm_vbase), 0x55, 50*1024);	\
+	consinit();							\
+	panic a;							\
+} while (/* CONSTCOND */ 0)
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -230,9 +230,7 @@ extern u_int spl_mask;
 extern u_int current_mask;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 #ifdef DIAGNOSTIC
@@ -267,9 +265,10 @@ cpu_reboot(howto, bootstr)
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
-	 * Note: Unless cold is set to 1 here, syslogd will die during the unmount.
-	 * It looks like syslogd is getting woken up only to find that it cannot
-	 * page part of the binary in as the filesystem has been unmounted.
+	 * Note: Unless cold is set to 1 here, syslogd will die during
+	 * the unmount.  It looks like syslogd is getting woken up
+	 * only to find that it cannot page part of the binary in as
+	 * the filesystem has been unmounted.
 	 */
 	if (!(howto & RB_NOSYNC))
 		bootsync();
@@ -394,9 +393,7 @@ struct l1_sec_map {
 
 
 static void
-canonicalise_bootconfig(bootconf, raw_bootconf)
-	BootConfig *bootconf;
-	BootConfig *raw_bootconf;
+canonicalise_bootconfig(BootConfig *bootconf, BootConfig *raw_bootconf)
 {
 	BootConfig_v1 *old_v1_style;
 	int block;
@@ -414,13 +411,18 @@ canonicalise_bootconfig(bootconf, raw_bootconf)
 		bootconf->version		= 1;
 		memcpy(bootconf->machine_id, old_v1_style->machine_id, 4);
 		memcpy(bootconf->kernelname, old_v1_style->kernelname, 80);
-		memcpy(bootconf->args, (char *) old_v1_style->argvirtualbase, 512);
+		memcpy(bootconf->args, (char *) old_v1_style->argvirtualbase,
+		    512);
 
-		bootconf->kernvirtualbase	= old_v1_style->kernvirtualbase;
-		bootconf->kernphysicalbase	= old_v1_style->kernphysicalbase;
+		bootconf->kernvirtualbase	=
+		    old_v1_style->kernvirtualbase;
+		bootconf->kernphysicalbase	=
+		    old_v1_style->kernphysicalbase;
 		bootconf->kernsize		= old_v1_style->kernsize;
-		bootconf->scratchvirtualbase	= old_v1_style->scratchvirtualbase;
-		bootconf->scratchphysicalbase	= old_v1_style->scratchphysicalbase;
+		bootconf->scratchvirtualbase	=
+		    old_v1_style->scratchvirtualbase;
+		bootconf->scratchphysicalbase	=
+		    old_v1_style->scratchphysicalbase;
 		bootconf->scratchsize		= old_v1_style->scratchsize;
 
 		/* this shouldn't be happening */
@@ -448,15 +450,17 @@ canonicalise_bootconfig(bootconf, raw_bootconf)
 		bootconf->dramblocks		= old_v1_style->dramblocks;
 		bootconf->vramblocks		= old_v1_style->vramblocks;
 
-		for(block=0; block<4; block++) {
-			bootconf->dram[block].address = old_v1_style->dram[block].address;
-			bootconf->dram[block].pages   = old_v1_style->dram[block].pages;
+		for (block = 0; block < 4; block++) {
+			bootconf->dram[block].address =
+			    old_v1_style->dram[block].address;
+			bootconf->dram[block].pages   =
+			    old_v1_style->dram[block].pages;
 			bootconf->dram[block].flags   = 0;	/* XXX */
-		};
+		}
 
 		bootconf->vram[0].address = old_v1_style->vram[0].address;
 		bootconf->vram[0].pages   = old_v1_style->vram[0].pages;
-	};
+	}
 }
 
 
@@ -502,8 +506,7 @@ initarm(void *cookie)
 	if (bootconfig.vram[0].pages) 
 		videomemory.vidm_type = VIDEOMEM_TYPE_VRAM;
 	else 
-		videomemory.vidm_type = VIDEOMEM_TYPE_DRAM
-	;
+		videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	vidc_base = (int *) VIDC_HW_BASE;
 	iomd_base =         IOMD_HW_BASE;
 
@@ -523,7 +526,7 @@ initarm(void *cookie)
 	 * Once all the memory map changes are complete we can call consinit()
 	 * and not have to worry about things moving.
 	 */
-/*      fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);*/
+	/* fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode); */
 	/* XXX snif .... i am still not able to this */
 
 	/*
@@ -545,17 +548,19 @@ initarm(void *cookie)
 	 * by pmap etc. 
 	 */
 
-/** START OF REAL NEW STUFF */
+	/* START OF REAL NEW STUFF */
 
 	/* Check to make sure the page size is correct */
 	if (NBPG != bootconfig.pagesize)
-		panic2(("Page size is %d bytes instead of %d !! (huh?)\n", bootconfig.pagesize, NBPG));
+		panic2(("Page size is %d bytes instead of %d !! (huh?)\n",
+			   bootconfig.pagesize, NBPG));
 
 	/* process arguments */
 	process_kernel_args();
 
 
-	/* Now set up the page tables for the kernel ... this part is copied
+	/*
+	 * Now set up the page tables for the kernel ... this part is copied
 	 * in a (modified?) way from the EBSA machine port.... 
 	 */
 
@@ -569,61 +574,69 @@ initarm(void *cookie)
 	physical_start = 0xffffffff;
 	physical_end = 0; 
 	for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; ++loop) {
-	    	if (bootconfig.dram[loop].address < physical_start) physical_start = bootconfig.dram[loop].address;
-		memoryblock_end = bootconfig.dram[loop].address + bootconfig.dram[loop].pages * NBPG;
-		if (memoryblock_end > physical_end) physical_end = memoryblock_end;
+	    	if (bootconfig.dram[loop].address < physical_start)
+			physical_start = bootconfig.dram[loop].address;
+		memoryblock_end = bootconfig.dram[loop].address +
+		    bootconfig.dram[loop].pages * NBPG;
+		if (memoryblock_end > physical_end)
+			physical_end = memoryblock_end;
 		physmem += bootconfig.dram[loop].pages;
 	};
 	/* constants for now, but might be changed/configured */
 	dma_range_begin = (paddr_t) physical_start;
 	dma_range_end   = (paddr_t) MIN(physical_end, 512*1024*1024);
-/* XXX HACK HACK XXX */
-/* dma_range_end   = 0x18000000; */
+	/* XXX HACK HACK XXX */
+	/* dma_range_end   = 0x18000000; */
 
-	if (physical_start !=  bootconfig.dram[0].address)
-	{
-	    int oldblocks = 0;
-	    /* 
-	     * must be a kinetic, as it's the only thing to shuffle memory
-	     * around
-	     */
-	    /* hack hack - throw away the slow dram */
-	    for (loop = 0; loop < bootconfig.dramblocks; ++loop) {
-	    	if (bootconfig.dram[loop].address < bootconfig.dram[0].address)
-		{
-		    /* non kinetic ram */
-		    bootconfig.dram[loop].address = 0;
-		    physmem -= bootconfig.dram[loop].pages;
-		    bootconfig.drampages -= bootconfig.dram[loop].pages;
-		    bootconfig.dram[loop].pages = 0;
-		    oldblocks++;
-		} 
-	    }			
-	    physical_start = bootconfig.dram[0].address;
-	    bootconfig.dramblocks -= oldblocks; 
-	};
+	if (physical_start !=  bootconfig.dram[0].address) {
+		int oldblocks = 0;
+
+		/* 
+		 * must be a kinetic, as it's the only thing to shuffle memory
+		 * around
+		 */
+		/* hack hack - throw away the slow dram */
+		for (loop = 0; loop < bootconfig.dramblocks; ++loop) {
+			if (bootconfig.dram[loop].address <
+			    bootconfig.dram[0].address)	{
+				/* non kinetic ram */
+				bootconfig.dram[loop].address = 0;
+				physmem -= bootconfig.dram[loop].pages;
+				bootconfig.drampages -=
+				    bootconfig.dram[loop].pages;
+				bootconfig.dram[loop].pages = 0;
+				oldblocks++;
+			}
+		}
+		physical_start = bootconfig.dram[0].address;
+		bootconfig.dramblocks -= oldblocks; 
+	}
       
 	physical_freestart = physical_start;
 	free_pages = bootconfig.drampages;
 	physical_freeend = physical_end;
  
-	    
-	/* AHUM !! set this variable ... it was set up in the old 1st stage bootloader */
+
+	/*
+	 * AHUM !! set this variable ... it was set up in the old 1st
+	 * stage bootloader
+	 */
 	kerneldatasize = bootconfig.kernsize + bootconfig.MDFsize;
 
 	/* Update the address of the first free page of physical memory */
-	physical_freestart += bootconfig.kernsize + bootconfig.MDFsize + bootconfig.scratchsize;
+	physical_freestart +=
+	    bootconfig.kernsize + bootconfig.MDFsize + bootconfig.scratchsize;
 	free_pages -= (physical_freestart - physical_start) / NBPG;
   
 	/* Define a macro to simplify memory allocation */
-#define	valloc_pages(var, np)			\
-	alloc_pages((var).pv_pa, (np));		\
+#define	valloc_pages(var, np)						\
+	alloc_pages((var).pv_pa, (np));					\
 	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
 
-#define alloc_pages(var, np)			\
-	(var) = physical_freestart;		\
-	physical_freestart += ((np) * NBPG);	\
-	free_pages -= (np);			\
+#define alloc_pages(var, np)						\
+	(var) = physical_freestart;					\
+	physical_freestart += ((np) * NBPG);				\
+	free_pages -= (np);						\
 	memset((char *)(var), 0, ((np) * NBPG));
 
 	loop1 = 0;
@@ -646,7 +659,8 @@ initarm(void *cookie)
 #ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic2(("initarm: Failed to align the kernel page directory\n"));
+		panic2(("initarm: Failed to align the kernel page "
+		    "directory\n"));
 #endif
 
 	/*
@@ -656,7 +670,7 @@ initarm(void *cookie)
 	 */
 	alloc_pages(systempage.pv_pa, 1);
 
-	/* Allocate a page for the page table to map kernel page tables*/
+	/* Allocate a page for the page table to map kernel page tables */
 	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
 
 	/* Allocate stacks for all modes */
@@ -667,10 +681,14 @@ initarm(void *cookie)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Setting up stacks :\n");
-	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa, irqstack.pv_va); 
-	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa, abtstack.pv_va); 
-	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa, undstack.pv_va); 
-	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa, kernelstack.pv_va); 
+	printf("IRQ stack: p0x%08lx v0x%08lx\n",
+	    irqstack.pv_pa, irqstack.pv_va); 
+	printf("ABT stack: p0x%08lx v0x%08lx\n",
+	    abtstack.pv_pa, abtstack.pv_va); 
+	printf("UND stack: p0x%08lx v0x%08lx\n",
+	    undstack.pv_pa, undstack.pv_va); 
+	printf("SVC stack: p0x%08lx v0x%08lx\n",
+	    kernelstack.pv_pa, kernelstack.pv_va); 
 	printf("\n");
 #endif
 
@@ -747,7 +765,8 @@ initarm(void *cookie)
 	} else {	/* !ZMAGIC */
 		/*
 		 * Most likely an ELF kernel ...
-		 * XXX no distinction yet between read only and read/write area's ...
+		 * XXX no distinction yet between read only and
+		 * read/write area's ...
 		 */
 		pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kerneldatasize,
@@ -779,12 +798,13 @@ initarm(void *cookie)
 
 	/* Now we fill in the L2 pagetable for the VRAM */
 	/*
-	 * Current architectures mean that the VRAM is always in 1 continuous
-	 * bank.
-	 * This means that we can just map the 2 meg that the VRAM would occupy.
-	 * In theory we don't need a page table for VRAM, we could section map
-	 * it but we would need the page tables if DRAM was in use.
-	 * XXX please map two adjacent virtual areas to ONE physical area
+	 * Current architectures mean that the VRAM is always in 1
+	 * continuous bank.  This means that we can just map the 2 meg
+	 * that the VRAM would occupy.  In theory we don't need a page
+	 * table for VRAM, we could section map it but we would need
+	 * the page tables if DRAM was in use.
+	 * XXX please map two adjacent virtual areas to ONE physical
+	 * area
 	 */
 	pmap_map_chunk(l1pagetable, VMEM_VBASE, videomemory.vidm_pbase,
 	    videomemory.vidm_size, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
@@ -800,8 +820,8 @@ initarm(void *cookie)
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_CACHE);
+	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
@@ -845,8 +865,9 @@ initarm(void *cookie)
 	}
 
 	/*
-	 * Now we have the real page tables in place so we can switch to them.
-	 * Once this is done we will be running with the REAL kernel page tables.
+	 * Now we have the real page tables in place so we can switch
+	 * to them.  Once this is done we will be running with the
+	 * REAL kernel page tables.
 	 */
 
 	/* Switch tables */
@@ -868,7 +889,10 @@ initarm(void *cookie)
 	 */
 	cpu_idcache_wbinv_all();
 
-	/* if there is support for a serial console ...we should now reattach it */
+	/* 
+	 * if there is support for a serial console ...we should now
+	 * reattach it
+	 */
 	/*      fcomcndetach();*/
 
 	/*
@@ -939,18 +963,21 @@ initarm(void *cookie)
 	console_flush();
 
 
-	/* At last !
+	/*
+	 * At last !
 	 * We now have the kernel in physical memory from the bottom upwards.
 	 * Kernel page tables are physically above this.
 	 * The kernel is mapped to 0xf0000000
-	 * The kernel data PTs will handle the mapping of 0xf1000000-0xf5ffffff (80 Mb)
+	 * The kernel data PTs will handle the mapping of 
+	 *   0xf1000000-0xf5ffffff (80 Mb)
 	 * 2Meg of VRAM is mapped to 0xf7000000
 	 * The page tables are mapped to 0xefc00000
 	 * The IOMD is mapped to 0xf6000000
 	 * The VIDC is mapped to 0xf6100000
-	 * The IOMD/VIDC could be pushed up higher but i havent got sufficient
-	 * documentation to do so; the addresses are not parametized yet and hard
-	 * to read... better fix this before; its pretty unforgiving.
+	 * The IOMD/VIDC could be pushed up higher but i havent got
+	 * sufficient documentation to do so; the addresses are not
+	 * parametized yet and hard to read... better fix this before;
+	 * its pretty unforgiving.
 	 */
 
 	/* Initialise the undefined instruction handlers */
@@ -1005,21 +1032,26 @@ initarm(void *cookie)
 	printf("NetBSD/acorn32 booting ... \n");
 
 	/* Tell the user if his boot loader is too old */
-	if ((bootconfig.magic < BOOTCONFIG_MAGIC) || (bootconfig.version != BOOTCONFIG_VERSION)) {
+	if ((bootconfig.magic < BOOTCONFIG_MAGIC) ||
+	    (bootconfig.version != BOOTCONFIG_VERSION)) {
 		printf("\nDETECTED AN OLD BOOTLOADER. PLEASE UPGRADE IT\n\n");
 		delay(5000000);
 	}
 
 	printf("Kernel loaded from file %s\n", bootconfig.kernelname);
-	printf("Kernel arg string (@%p) %s\n", bootconfig.args, bootconfig.args);
-	printf("\nBoot configuration structure reports the following memory\n");
+	printf("Kernel arg string (@%p) %s\n",
+	    bootconfig.args, bootconfig.args);
+	printf("\nBoot configuration structure reports the following "
+	    "memory\n");
 
-	printf(" DRAM block 0a at %08x size %08x DRAM block 0b at %08x size %08x\n\r",
+	printf(" DRAM block 0a at %08x size %08x "
+	    "DRAM block 0b at %08x size %08x\n\r",
 	    bootconfig.dram[0].address,
 	    bootconfig.dram[0].pages * bootconfig.pagesize,
 	    bootconfig.dram[1].address,
 	    bootconfig.dram[1].pages * bootconfig.pagesize);
-	printf(" DRAM block 1a at %08x size %08x DRAM block 1b at %08x size %08x\n\r",
+	printf(" DRAM block 1a at %08x size %08x "
+	    "DRAM block 1b at %08x size %08x\n\r",
 	    bootconfig.dram[2].address,
 	    bootconfig.dram[2].pages * bootconfig.pagesize,
 	    bootconfig.dram[3].address,
@@ -1088,25 +1120,26 @@ process_kernel_args(void)
 
 
 void
-parse_rpc_bootargs(args)
-	char *args;
+parse_rpc_bootargs(char *args)
 {
 	int integer;
 
-	if (get_bootconf_option(args, "videodram", BOOTOPT_TYPE_INT, &integer)) {
+	if (get_bootconf_option(args, "videodram", BOOTOPT_TYPE_INT,
+	    &integer)) {
 		videodram_size = integer;
 		/* Round to 4K page */
 		videodram_size *= 1024;
 		videodram_size = round_page(videodram_size);
 		if (videodram_size > 1024*1024)
 			videodram_size = 1024*1024;
-	};
+	}
 
 #if 0
 	/* XXX this I would rather have in the new bootconfig structure */
-	if (get_bootconf_option(args, "kinetic", BOOTOPT_TYPE_BOOLEAN, &integer)) {
+	if (get_bootconf_option(args, "kinetic", BOOTOPT_TYPE_BOOLEAN,
+	    &integer)) {
 		bootconfig.RPC_kinetic_card_support = 1;
-	};
+	}
 #endif
 }
 

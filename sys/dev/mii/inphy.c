@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.20.2.7 2002/08/01 02:45:04 nathanw Exp $	*/
+/*	$NetBSD: inphy.c,v 1.20.2.8 2002/10/18 02:42:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.20.2.7 2002/08/01 02:45:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.20.2.8 2002/10/18 02:42:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.20.2.7 2002/08/01 02:45:04 nathanw Exp $
 int	inphymatch(struct device *, struct cfdata *, void *);
 void	inphyattach(struct device *, struct device *, void *);
 
-struct cfattach inphy_ca = {
-	sizeof(struct mii_softc), inphymatch, inphyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(inphy, sizeof(struct mii_softc),
+    inphymatch, inphyattach, mii_phy_detach, mii_phy_activate);
 
 int	inphy_service(struct mii_softc *, struct mii_data *, int);
 void	inphy_status(struct mii_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.5.4.2 2002/02/28 04:09:54 nathanw Exp $ */
+/*	$NetBSD: m38813c.c,v 1.5.4.3 2002/10/18 02:37:06 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -83,9 +83,8 @@ int	m38813c_input_establish(void *, struct hpckbd_if *);
 
 struct m38813c_chip m38813c_chip;
 
-struct cfattach m38813c_ca = {
-	sizeof(struct m38813c_softc), m38813c_match, m38813c_attach
-};
+CFATTACH_DECL(m38813c, sizeof(struct m38813c_softc),
+    m38813c_match, m38813c_attach, NULL, NULL);
 
 int
 m38813c_match(struct device *parent, struct cfdata *cf, void *aux)

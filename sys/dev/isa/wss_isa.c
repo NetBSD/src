@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.9.8.4 2002/02/28 04:13:48 nathanw Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.9.8.5 2002/10/18 02:42:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.9.8.4 2002/02/28 04:13:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.9.8.5 2002/10/18 02:42:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,8 @@ static int	detect_mad16 __P((struct wss_softc *, int));
 int		wss_isa_probe __P((struct device *, struct cfdata *, void *));
 void		wss_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach wss_isa_ca = {
-	sizeof(struct wss_softc), wss_isa_probe, wss_isa_attach
-};
+CFATTACH_DECL(wss_isa, sizeof(struct wss_softc),
+    wss_isa_probe, wss_isa_attach, NULL, NULL);
 
 /*
  * Probe for the Microsoft Sound System hardware.

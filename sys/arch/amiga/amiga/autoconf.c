@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78.8.6 2002/09/17 21:12:50 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78.8.7 2002/10/18 02:34:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78.8.6 2002/09/17 21:12:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78.8.7 2002/10/18 02:34:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +167,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 {
 	struct device temp;
 	struct cfdata *cf;
+	const struct cfattach *ca;
 
 	if (amiga_realconfig)
 		return(config_found(pdp, auxp, pfn) != NULL);
@@ -176,9 +177,12 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 
 	pdp->dv_cfdata = pcfp;
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
-		cf->cf_attach->ca_attach(pdp, NULL, auxp);
-		pdp->dv_cfdata = NULL;
-		return(1);
+		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
+		if (ca != NULL) {
+			(*ca->ca_attach)(pdp, NULL, auxp);
+			pdp->dv_cfdata = NULL;
+			return(1);
+		}
 	}
 	pdp->dv_cfdata = NULL;
 	return(0);
@@ -193,6 +197,8 @@ void
 config_console()
 {
 	struct cfdata *cf;
+
+	config_init();
 
 	/*
 	 * we need mainbus' cfdata.
@@ -224,9 +230,8 @@ config_console()
 /*
  * mainbus driver
  */
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbmatch, mbattach, NULL, NULL);
 
 int
 mbmatch(pdp, cfp, auxp)

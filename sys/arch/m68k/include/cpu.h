@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.8.2 2001/11/17 18:18:23 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.8.3 2002/10/18 02:38:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,7 @@
  *	M68K_MMU_HP		Machine has an HP MMU.
  *
  * Note also that while m68k-generic code conditionalizes on the
- * M68K_MMU_HP CPP symbol, none of the HP MMU defintions are in this
+ * M68K_MMU_HP CPP symbol, none of the HP MMU definitions are in this
  * file (since none are used in otherwise sharable code).
  */
 

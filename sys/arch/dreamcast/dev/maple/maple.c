@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.13.2.2 2002/09/17 21:14:12 nathanw Exp $	*/
+/*	$NetBSD: maple.c,v 1.13.2.3 2002/10/18 02:36:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -92,12 +92,8 @@ int	maple_internal_ioctl(struct maple_softc *,  int, int, u_long, caddr_t,
  */
 int	maple_polling = 0;	/* Are we polling?  (Debugger mode) */
 
-/*
- * Driver definition.
- */
-struct cfattach maple_ca = {
-	sizeof(struct maple_softc), maplematch, mapleattach
-};
+CFATTACH_DECL(maple, sizeof(struct maple_softc),
+    maplematch, mapleattach, NULL, NULL);
 
 extern struct cfdriver maple_cd;
 
@@ -113,9 +109,6 @@ const struct cdevsw maple_cdevsw = {
 static int
 maplematch(struct device *parent, struct cfdata *cf, void *aux)
 {
-
-	if (strcmp("maple", cf->cf_driver->cd_name))
-		return (0);
 
 	return (1);
 }
@@ -534,7 +527,7 @@ maplesubmatch(struct device *parent, struct cfdata *match, void *aux)
 	    match->cf_loc[MAPLECF_SUBUNIT] != ma->ma_subunit)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 u_int32_t

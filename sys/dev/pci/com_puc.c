@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.1.26.3 2002/01/08 00:31:00 nathanw Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.1.26.4 2002/10/18 02:42:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.1.26.3 2002/01/08 00:31:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.1.26.4 2002/10/18 02:42:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ struct com_puc_softc {
 int	com_puc_probe __P((struct device *, struct cfdata *, void *));
 void	com_puc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach com_puc_ca = {
-	sizeof(struct com_puc_softc), com_puc_probe, com_puc_attach
-};
+CFATTACH_DECL(com_puc, sizeof(struct com_puc_softc),
+    com_puc_probe, com_puc_attach, NULL, NULL);
 
 int
 com_puc_probe(parent, match, aux)

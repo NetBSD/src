@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.1.4.4 2002/06/20 03:37:20 nathanw Exp $ */
+/* $NetBSD: if_ie.c,v 1.1.4.5 2002/10/18 02:33:43 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.1.4.4 2002/06/20 03:37:20 nathanw Exp $");
+__RCSID("$NetBSD: if_ie.c,v 1.1.4.5 2002/10/18 02:33:43 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -200,9 +200,8 @@ static void start_receiver(struct ie_softc *);
  * Our cfattach structure for the autoconfig system to chew on
  */
 
-struct cfattach ie_ca = {
-	sizeof(struct ie_softc), ieprobe, ieattach
-};
+CFATTACH_DECL(ie, sizeof(struct ie_softc),
+    ieprobe, ieattach, NULL, NULL);
 
 /* Let's go! */
 
@@ -486,7 +485,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_ih)) {
 		sc->sc_irqmode = 0;
 		printf(" POLLED");
-		panic("%s: Cannot install IRQ handler\n", sc->sc_dev.dv_xname);
+		panic("%s: Cannot install IRQ handler", sc->sc_dev.dv_xname);
 	} else {
 		sc->sc_irqmode = 1;
 		printf(" IRQ");

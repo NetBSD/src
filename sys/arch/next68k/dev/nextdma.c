@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.29.8.3 2002/09/17 21:16:29 nathanw Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.29.8.4 2002/10/18 02:39:14 nathanw Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -114,9 +114,8 @@ static int nextdma_enet_intr	__P((void *));
 #define nd_bsr4(reg) bus_space_read_4(nsc->sc_bst, nsc->sc_bsh, (reg))
 #define nd_bsw4(reg,val) bus_space_write_4(nsc->sc_bst, nsc->sc_bsh, (reg), (val))
 
-struct cfattach nextdma_ca = {
-	sizeof(struct nextdma_softc), nextdma_match, nextdma_attach
-};
+CFATTACH_DECL(nextdma, sizeof(struct nextdma_softc),
+    nextdma_match, nextdma_attach, NULL, NULL);
 
 static struct nextdma_channel nextdma_channel[] = {
 #if NESP > 0
@@ -182,7 +181,7 @@ nextdma_attach(parent, self, aux)
 
 	if (bus_space_map(nsc->sc_bst, nsc->sc_chan->nd_base,
 			  nsc->sc_chan->nd_size, 0, &nsc->sc_bsh)) {
-		panic("%s: can't map DMA registers for channel %s\n",
+		panic("%s: can't map DMA registers for channel %s",
 		      nsc->sc_dev.dv_xname, nsc->sc_chan->nd_name);
 	}
 
@@ -323,12 +322,12 @@ nextdma_rotate(nsc)
 	if (stat->nd_map_cont) {
 		if (!DMA_BEGINALIGNED(stat->nd_map_cont->dm_segs[stat->nd_idx_cont].ds_addr)) {
 			nextdma_print(nsc);
-			panic("DMA request unaligned at start\n");
+			panic("DMA request unaligned at start");
 		}
 		if (!DMA_ENDALIGNED(stat->nd_map_cont->dm_segs[stat->nd_idx_cont].ds_addr + 
 				stat->nd_map_cont->dm_segs[stat->nd_idx_cont].ds_len)) {
 			nextdma_print(nsc);
-			panic("DMA request unaligned at end\n");
+			panic("DMA request unaligned at end");
 		}
 	}
 #endif
@@ -507,7 +506,7 @@ nextdma_enet_intr(arg)
 #ifdef DIAGNOSTIC
 	if (!stat->nd_map) {
 		nextdma_print(nsc);
-		panic("DMA missing current map in interrupt!\n");
+		panic("DMA missing current map in interrupt!");
 	}
 #endif
 
@@ -523,7 +522,7 @@ nextdma_enet_intr(arg)
 		nextdma_print(nsc);
 		bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 		printf("DMA: state 0x%s\n",sbuf);
-		panic("DMA complete not set in interrupt\n");
+		panic("DMA complete not set in interrupt");
 	}
 #endif
 
@@ -585,7 +584,7 @@ nextdma_enet_intr(arg)
 		bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 		printf("DMA: state 0x%s\n",sbuf);
 		nextdma_print(nsc);
-		panic("DMA: condition 0x%02x not yet documented to occur\n",result);
+		panic("DMA: condition 0x%02x not yet documented to occur",result);
 	}
 #endif
 	slimit = olimit;
@@ -606,7 +605,7 @@ nextdma_enet_intr(arg)
 		bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 		printf("DMA: state 0x%s\n",sbuf);
 		nextdma_print(nsc);
-		panic("DMA: Unexpected limit register (0x%08lx) in finish_xfer\n",slimit);
+		panic("DMA: Unexpected limit register (0x%08lx) in finish_xfer",slimit);
 	}
 #endif
 
@@ -617,7 +616,7 @@ nextdma_enet_intr(arg)
 			bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 			printf("DMA: state 0x%s\n",sbuf);
 			nextdma_print(nsc);
-			panic("DMA: short limit register (0x%08lx) w/o finishing map.\n",slimit);
+			panic("DMA: short limit register (0x%08lx) w/o finishing map.",slimit);
 		}
 	}
 #endif
@@ -734,7 +733,7 @@ nextdma_start(nsc, dmadir)
 
 		bitmask_snprintf(NEXT_I_BIT(nsc->sc_chan->nd_intr), NEXT_INTR_BITS,
 				 sbuf, sizeof(sbuf));
-		panic("DMA trying to start before previous finished on intr(0x%s)\n", sbuf);
+		panic("DMA trying to start before previous finished on intr(0x%s)", sbuf);
 	}
 #endif
 
@@ -752,17 +751,17 @@ nextdma_start(nsc, dmadir)
 #ifdef DIAGNOSTIC
 	if (stat->nd_map) {
 		nextdma_print(nsc);
-		panic("DMA: nextdma_start() with non null map\n");
+		panic("DMA: nextdma_start() with non null map");
 	}
 	if (stat->nd_map_cont) {
 		nextdma_print(nsc);
-		panic("DMA: nextdma_start() with non null continue map\n");
+		panic("DMA: nextdma_start() with non null continue map");
 	}
 #endif
 
 #ifdef DIAGNOSTIC
 	if ((dmadir != DMACSR_SETREAD) && (dmadir != DMACSR_SETWRITE)) {
-		panic("DMA: nextdma_start(), dmadir arg must be DMACSR_SETREAD or DMACSR_SETWRITE\n");
+		panic("DMA: nextdma_start(), dmadir arg must be DMACSR_SETREAD or DMACSR_SETWRITE");
 	}
 #endif
 

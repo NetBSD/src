@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.5.2.4 2002/07/12 01:40:04 nathanw Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.5.2.5 2002/10/18 02:41:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.2.4 2002/07/12 01:40:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.2.5 2002/10/18 02:41:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -222,5 +222,4 @@ svr4_sys__lwp_setprivate(l, v, retval)
 	 * implement that. */
 
 	return copyin(SCARG(uap, buffer), &l->l_private, sizeof(void *));
-	return 0;
 }

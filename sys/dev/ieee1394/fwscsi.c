@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.2.2.5 2002/02/28 04:13:35 nathanw Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.2.2.6 2002/10/18 02:42:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.2.2.5 2002/02/28 04:13:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.2.2.6 2002/10/18 02:42:06 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,9 +90,8 @@ struct fwscsi_softc {
 	TAILQ_HEAD(, sbp2_orb) sc_orbs;
 };
 
-struct cfattach fwscsi_ca = {
-	sizeof(struct fwscsi_softc), fwscsi_match, fwscsi_attach, fwscsi_detach
-};
+CFATTACH_DECL(fwscsi, sizeof(struct fwscsi_softc),
+    fwscsi_match, fwscsi_attach, fwscsi_detach, NULL);
 
 static int
 fwscsi_match(struct device *parent, struct cfdata *match, void *aux)
@@ -182,7 +181,7 @@ fwscsi_scsipi_request(struct scsipi_channel *channel,
 		printf("Got set xfer mode\n");
 		break;
 	default:
-		panic("Unknown request: %d\n", (int)req);
+		panic("Unknown request: %d", (int)req);
 	}
 }
 

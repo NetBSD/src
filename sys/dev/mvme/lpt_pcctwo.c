@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.1.2.2 2002/02/28 04:13:54 nathanw Exp $	*/
+/*	$NetBSD: lpt_pcctwo.c,v 1.1.2.3 2002/10/18 02:42:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -59,9 +59,8 @@
 int lpt_pcctwo_match __P((struct device *, struct cfdata *, void *));
 void lpt_pcctwo_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_pcctwo_ca = {
-	sizeof(struct lpt_softc), lpt_pcctwo_match, lpt_pcctwo_attach
-};
+CFATTACH_DECL(lpt_pcctwo, sizeof(struct lpt_softc),
+    lpt_pcctwo_match, lpt_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver lpt_cd;
 

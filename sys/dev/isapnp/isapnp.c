@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.34.14.3 2002/02/28 04:13:49 nathanw Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.34.14.4 2002/10/18 02:42:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.3 2002/02/28 04:13:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.34.14.4 2002/10/18 02:42:43 nathanw Exp $");
 
 #include "isadma.h"
 
@@ -89,9 +89,8 @@ static int isapnp_match __P((struct device *, struct cfdata *, void *));
 static void isapnp_attach __P((struct device *, struct device *, void *));
 static void isapnp_callback __P((struct device *));
 
-struct cfattach isapnp_ca = {
-	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
-};
+CFATTACH_DECL(isapnp, sizeof(struct isapnp_softc),
+    isapnp_match, isapnp_attach, NULL, NULL);
 
 /*
  * This keeps track if which ISA's we have been probed on.
@@ -608,8 +607,7 @@ isapnp_submatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = (struct cfdata *) match;
-	return ((*cf->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 

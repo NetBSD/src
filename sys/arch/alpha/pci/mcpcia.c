@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.12.4.2 2002/06/20 03:37:43 nathanw Exp $ */
+/* $NetBSD: mcpcia.c,v 1.12.4.3 2002/10/18 02:34:21 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.12.4.2 2002/06/20 03:37:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.12.4.3 2002/10/18 02:34:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.12.4.2 2002/06/20 03:37:43 nathanw Exp 
 
 static int	mcpciamatch __P((struct device *, struct cfdata *, void *));
 static void	mcpciaattach __P((struct device *, struct device *, void *));
-struct cfattach mcpcia_ca = {
-	sizeof(struct mcpcia_softc), mcpciamatch, mcpciaattach
-};
+CFATTACH_DECL(mcpcia, sizeof(struct mcpcia_softc),
+    mcpciamatch, mcpciaattach, NULL, NULL);
 
 static int	mcpciaprint __P((void *, const char *));
 

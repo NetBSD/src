@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.1.4.6 2002/08/27 06:03:14 thorpej Exp $	*/
+/*	$NetBSD: esc.c,v 1.1.4.7 2002/10/18 02:33:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.1.4.6 2002/08/27 06:03:14 thorpej Exp $");
+__RCSID("$NetBSD: esc.c,v 1.1.4.7 2002/10/18 02:33:42 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -876,7 +876,7 @@ esc_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
  * reselection. Much nicer this way.
  */
 	if ((mode & ESC_SELECT_I) || (dev->sc_config_flags & ESC_NO_DMA)) {
-		nexus->dma[0].ptr = (vm_offset_t)buf;
+		nexus->dma[0].ptr = buf;
 		nexus->dma[0].len = len;
 		nexus->dma[0].flg = ESC_CHAIN_PRG;
 		nexus->max_link   = 1;
@@ -1229,10 +1229,11 @@ esc_midaction(dev, rp, nexus)
 			  dev->sc_len -= len-left;
 			  dev->sc_buf += len-left;
 
-			  dev->sc_dma_buf += len-left;
-			  dev->sc_dma_len  = left;
+			  dev->sc_dma_buf = (char *)dev->sc_dma_buf + len-left;
+			  dev->sc_dma_len = left;
 
-			  dev->sc_dma_blk_ptr += len-left;
+			  dev->sc_dma_blk_ptr = (char *)dev->sc_dma_blk_ptr +
+				  len-left;
 			  dev->sc_dma_blk_len -= len-left;
 
 			  /*

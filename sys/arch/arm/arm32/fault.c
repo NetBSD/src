@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4.2.14 2002/09/26 19:12:22 nathanw Exp $	*/
+/*	$NetBSD: fault.c,v 1.4.2.15 2002/10/18 02:35:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.14 2002/09/26 19:12:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.4.2.15 2002/10/18 02:35:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 	default:
 		data_abort_expected = 0;
-		panic("badaddr: invalid size (%lu)\n", (u_long) size);
+		panic("badaddr: invalid size (%lu)", (u_long) size);
 	}
 
 	/* Disallow further Data Aborts. */
@@ -272,7 +272,7 @@ copyfault:
 #endif
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-			panic("Yikes pcb_onfault=%p during USR mode fault\n",
+			panic("Yikes pcb_onfault=%p during USR mode fault",
 			    pcb->pcb_onfault);
 		return;
 	}
@@ -331,7 +331,7 @@ copyfault:
 			userret(l);
 			return;
 		};
-		panic("Data abort fixup failed in kernel - we're dead\n");
+		panic("Data abort fixup failed in kernel - we're dead");
 	};
 
 	/* Now act on the fault type */
@@ -594,7 +594,7 @@ prefetch_abort_handler(frame)
 	if (error == ABORT_FIXUP_RETURN)
 		return;
 	if (error == ABORT_FIXUP_FAILED)
-		panic("prefetch abort fixup failed\n");
+		panic("prefetch abort fixup failed");
 
 	/* Get the current proc structure or proc0 if there is none */
 	if ((l = curlwp) == NULL) {
@@ -622,7 +622,7 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
-	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08lx)\n",
+	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08lx)",
 	            frame, fault_pc);
 	}
 
@@ -648,7 +648,8 @@ prefetch_abort_handler(frame)
 	 * There are bugs in the rev K SA110.  This is a check for one
 	 * of them.
 	 */
-	if (curcpu()->ci_cputype == CPU_ID_SA110 && curcpu()->ci_cpurev < 3) {
+	if (curcpu()->ci_arm_cputype == CPU_ID_SA110 &&
+	    curcpu()->ci_arm_cpurev < 3) {
 		/* Always current pmap */
 		pt_entry_t *pte = vtopte((vaddr_t) fault_pc);
 		struct pmap *pmap = p->p_vmspace->vm_map.pmap;

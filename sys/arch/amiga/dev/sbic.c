@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.44.6.3 2002/06/20 03:37:54 nathanw Exp $ */
+/*	$NetBSD: sbic.c,v 1.44.6.4 2002/10/18 02:35:04 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.44.6.3 2002/06/20 03:37:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.44.6.4 2002/10/18 02:35:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1958,7 +1958,7 @@ sbicmsgin(struct sbic_softc *dev)
 					      !(asr & SBIC_ASR_DBR|SBIC_ASR_INT) )
 						GET_SBIC_asr(regs, asr);
 					if( asr & SBIC_ASR_DBR )
-						panic("msgin: jammed again!\n");
+						panic("msgin: jammed again!");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e',csr,asr,dev->target);
 					if( csr & 0x07 != MESG_OUT_PHASE ) {

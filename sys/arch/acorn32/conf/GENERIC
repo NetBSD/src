@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.1.4.7 2002/08/13 01:02:36 nathanw Exp $
+# 	$NetBSD: GENERIC,v 1.1.4.8 2002/10/18 02:33:34 nathanw Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.4.7 $"
+#ident		"GENERIC-$Revision: 1.1.4.8 $"
 
 # estimated number of users
 maxusers	32
@@ -123,11 +123,12 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -332,6 +333,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	cgd	4		# cryptographic disk devices
 pseudo-device	raid	8		# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabeep.c,v 1.2 2000/06/29 07:47:52 mrg Exp $	*/
+/*	$NetBSD: isabeep.c,v 1.2.10.1 2002/10/18 02:39:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -46,9 +46,8 @@
 int isabeepmatch __P((struct device *, struct cfdata *, void *));
 void isabeepattach __P((struct device *, struct device *, void *));
 
-struct cfattach isabeep_ca = {
-	sizeof(struct device), isabeepmatch, isabeepattach
-};
+CFATTACH_DECL(isabeep, sizeof(struct device),
+    isabeepmatch, isabeepattach, NULL, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;

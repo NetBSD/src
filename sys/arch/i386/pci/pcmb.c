@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.1.4.4 2002/01/08 00:25:43 nathanw Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.1.4.5 2002/10/18 02:38:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.1.4.4 2002/01/08 00:25:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.1.4.5 2002/10/18 02:38:06 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.1.4.4 2002/01/08 00:25:43 nathanw Exp $")
 int	pcmbmatch __P((struct device *, struct cfdata *, void *));
 void	pcmbattach __P((struct device *, struct device *, void *));
 
-struct cfattach pcmb_ca = {
-	sizeof(struct device), pcmbmatch, pcmbattach
-};
+CFATTACH_DECL(pcmb, sizeof(struct device),
+    pcmbmatch, pcmbattach, NULL, NULL);
 
 void	pcmb_callback __P((struct device *));
 int	pcmb_print __P((void *, const char *));

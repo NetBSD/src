@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.15.2.4 2002/09/17 21:19:58 nathanw Exp $	*/
+/*	$NetBSD: irframe.c,v 1.15.2.5 2002/10/18 02:42:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,17 +84,12 @@ Static int irf_reset_params(struct irframe_softc *sc);
 
 #if NIRFRAME == 0
 /* In case we just have tty attachment. */
-struct cfdriver irframe_cd = {
-	NULL, "irframe", DV_DULL
-};
+CFDRIVER_DECL(irframe, DV_DULL, NULL);
 #endif
 
-struct cfattach irframe_ca = {
-	sizeof(struct irframe_softc), irframe_match, irframe_attach,
-	irframe_detach, irframe_activate
-};
+CFATTACH_DECL(irframe, sizeof(struct irframe_softc),
+    irframe_match, irframe_attach, irframe_detach, irframe_activate);
 
-extern struct cfattach irframe_ca;
 extern struct cfdriver irframe_cd;
 
 #define IRFRAMEUNIT(dev) (minor(dev))
@@ -125,7 +120,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_methods->im_set_params == NULL ||
 	    sc->sc_methods->im_get_speeds == NULL ||
 	    sc->sc_methods->im_get_turnarounds == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
 	(void)sc->sc_methods->im_get_speeds(sc->sc_handle, &speeds);
@@ -437,5 +432,5 @@ irframe_dealloc(struct device *dev)
 			return;
 		}
 	}
-	panic("irframe_dealloc: device not found\n");
+	panic("irframe_dealloc: device not found");
 }

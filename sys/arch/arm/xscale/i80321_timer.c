@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.1.2.3 2002/08/13 02:17:58 nathanw Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.1.2.4 2002/10/18 02:35:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -51,6 +51,8 @@
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
+
+#include <arm/xscale/xscalevar.h>
 
 void	(*i80321_hardclock_hook)(void);
 
@@ -153,7 +155,6 @@ cpu_initclocks(void)
 	u_int oldirqstate;
 #if defined(PERFCTRS)
 	void *pmu_ih;
-	extern int xscale_pmc_dispatch(void *);
 #endif
 
 	if (hz < 50 || COUNTS_PER_SEC % hz) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.2 2002/02/28 04:11:07 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.3 2002/10/18 02:39:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -48,9 +48,8 @@
 int cpumatch(struct device *, struct cfdata *, void *);
 void cpuattach(struct device *, struct device *, void *);
 
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 

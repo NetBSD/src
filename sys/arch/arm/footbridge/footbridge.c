@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.2.6.6 2002/06/20 03:38:07 nathanw Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.2.6.7 2002/10/18 02:35:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -71,9 +71,8 @@ static int footbridge_print	__P((void *aux, const char *pnp));
 static int footbridge_intr	__P((void *arg));
 
 /* Driver and attach structures */
-struct cfattach footbridge_ca = {
-	sizeof(struct footbridge_softc), footbridge_match, footbridge_attach
-};
+CFATTACH_DECL(footbridge, sizeof(struct footbridge_softc),
+    footbridge_match, footbridge_attach, NULL, NULL);
 
 /* Various bus space tags */
 extern struct bus_space footbridge_bs_tag;
@@ -166,14 +165,14 @@ footbridge_attach(parent, self, aux)
 	/* Map the Footbridge */
 	if (bus_space_map(sc->sc_iot, DC21285_ARMCSR_VBASE,
 	     DC21285_ARMCSR_VSIZE, 0, &sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
+		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* Read the ID to make sure it is what we think it is */
 	vendor = bus_space_read_2(sc->sc_iot, sc->sc_ioh, VENDOR_ID);
 	device = bus_space_read_2(sc->sc_iot, sc->sc_ioh, DEVICE_ID);
 	rev = bus_space_read_1(sc->sc_iot, sc->sc_ioh, REVISION);
 	if (vendor != DC21285_VENDOR_ID && device != DC21285_DEVICE_ID)
-		panic("%s: Unrecognised ID\n", self->dv_xname);
+		panic("%s: Unrecognised ID", self->dv_xname);
 
 	printf(": DC21285 rev %d\n", rev);
 

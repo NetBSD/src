@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.1.2.3 2002/08/27 23:45:07 nathanw Exp $ */
+/* $NetBSD: com_opb.c,v 1.1.2.4 2002/10/18 02:39:29 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -58,9 +58,8 @@ struct com_opb_softc {
 static int	com_opb_probe(struct device *, struct cfdata *, void *);
 static void	com_opb_attach(struct device *, struct device *, void *);
 
-struct cfattach com_opb_ca = {
-	sizeof(struct com_opb_softc), com_opb_probe, com_opb_attach
-};
+CFATTACH_DECL(com_opb, sizeof(struct com_opb_softc),
+    com_opb_probe, com_opb_attach, NULL, NULL);
 
 int
 com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
@@ -68,7 +67,7 @@ com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 	struct opb_attach_args *oaa = aux;
 
 	/* match only com devices */
-	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
 		return 0;
 
 	return (1);

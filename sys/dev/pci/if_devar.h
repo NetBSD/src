@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.35.6.1 2001/06/21 20:04:40 nathanw Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.35.6.2 2002/10/18 02:43:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -981,7 +981,6 @@ arp_ifinit(
 #if defined(__NetBSD__)
 #define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
-extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))

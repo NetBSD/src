@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.1.10.3 2002/02/28 04:07:15 nathanw Exp $ */
+/* $NetBSD: opms_isa.c,v 1.1.10.4 2002/10/18 02:35:13 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -43,9 +43,8 @@
 int	opms_isa_match __P((struct device *, struct cfdata *, void *));
 void	opms_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opms_isa_ca = {
-	sizeof(struct opms_softc), opms_isa_match, opms_isa_attach,
-};
+CFATTACH_DECL(opms_isa, sizeof(struct opms_softc),
+    opms_isa_match, opms_isa_attach, NULL, NULL);
 
 struct pccons_config *pccons_isa_conf;	/* share stroage with pccons_isa.c */
 

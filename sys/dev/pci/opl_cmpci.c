@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.1.6.3 2001/11/14 19:15:22 nathanw Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.1.6.4 2002/10/18 02:43:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.1.6.3 2001/11/14 19:15:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.1.6.4 2002/10/18 02:43:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.1.6.3 2001/11/14 19:15:22 nathanw Ex
 int	opl_cmpci_match __P((struct device *, struct cfdata *, void *));
 void	opl_cmpci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opl_cmpci_ca = {
-	sizeof (struct opl_softc), opl_cmpci_match, opl_cmpci_attach
-};
+CFATTACH_DECL(opl_cmpci, sizeof (struct opl_softc),
+    opl_cmpci_match, opl_cmpci_attach, NULL, NULL);
 
 int
 opl_cmpci_match(parent, match, aux)

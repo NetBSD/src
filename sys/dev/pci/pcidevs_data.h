@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.20 2002/09/17 21:20:23 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.21 2002/10/18 02:43:15 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -976,6 +976,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AMD762 AGP Bridge",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD761 System Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD761 PCI-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
 	    0,
 	    "Advanced Micro Devices",
@@ -1274,6 +1286,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ASIX Electronics",
 	    "AX88140A 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
+	    0,
+	    "Asustek Computer",
+	    "Asustek ISDN",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -1774,6 +1792,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Fritz! Card ISDN Interface",
 	},
 	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN,
+	    0,
+	    "AVM",
+	    "Fritz!PCI v2.0 ISDN Interface",
+	},
+	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
 	    0,
 	    "AVM",
@@ -1832,6 +1856,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5701 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM4401 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -2720,6 +2750,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Domex",
 	    "DMX-3191D",
+	},
+	{
+	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
+	    0,
+	    "Dynalink",
+	    "Dynalink IS64PH ISDN Adapter",
 	},
 	{
 	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
@@ -7225,7 +7261,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97,
 	    0,
 	    "VIA Technologies",
-	    "VT8233 AC-97 Audio Controller",
+	    "VT8233/VT8235 AC-97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
@@ -7262,6 +7298,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8233A PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
+	    0,
+	    "VIA Technologies",
+	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
@@ -7894,6 +7936,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "W89C940F Ethernet",
 	},
 	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692,
+	    0,
+	    "Winbond Electronics",
+	    "W6692 ISDN",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    0,
 	    "Xircom",
@@ -7981,6 +8029,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_HAUPPAUGE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Hauppauge Computer Works",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DYNALINK, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Dynalink",
 	    NULL,
 	},
 	{

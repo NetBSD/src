@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.59.4.6 2002/08/27 23:45:41 nathanw Exp $ */
+/*	$NetBSD: iommu.c,v 1.59.4.7 2002/10/18 02:39:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -84,9 +84,8 @@ int	iommu_match __P((struct device *, struct cfdata *, void *));
 static void iommu_copy_prom_entries __P((struct iommu_softc *));
 #endif
 
-struct cfattach iommu_ca = {
-	sizeof(struct iommu_softc), iommu_match, iommu_attach
-};
+CFATTACH_DECL(iommu, sizeof(struct iommu_softc),
+    iommu_match, iommu_attach, NULL, NULL);
 
 /* IOMMU DMA map functions */
 int	iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
@@ -138,7 +137,7 @@ iommu_match(parent, cf, aux)
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		return (0);
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 /*
@@ -261,7 +260,7 @@ iommu_attach(parent, self, aux)
 	/* calculate log2(sc->sc_range/16MB) */
 	i = ffs(sc->sc_range/(1 << 24)) - 1;
 	if ((1 << i) != (sc->sc_range/(1 << 24)))
-		panic("iommu: bad range: %d\n", i);
+		panic("iommu: bad range: %d", i);
 
 	s = splhigh();
 	IOMMU_FLUSHALL(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.51.2.8 2002/06/20 03:45:31 nathanw Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.51.2.9 2002/10/18 02:43:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.51.2.8 2002/06/20 03:45:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.51.2.9 2002/10/18 02:43:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -112,9 +112,8 @@ struct tulip_pci_softc {
 int	tlp_pci_match __P((struct device *, struct cfdata *, void *));
 void	tlp_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach tlp_pci_ca = {
-	sizeof(struct tulip_pci_softc), tlp_pci_match, tlp_pci_attach,
-};
+CFATTACH_DECL(tlp_pci, sizeof(struct tulip_pci_softc),
+    tlp_pci_match, tlp_pci_attach, NULL, NULL);
 
 const struct tulip_pci_product {
 	u_int32_t	tpp_vendor;	/* PCI vendor ID */
@@ -219,6 +218,8 @@ void	tlp_pci_asante_21140_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 void	tlp_pci_smc_21140_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
+void	tlp_pci_vpc_21140_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
 
 const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
@@ -227,6 +228,7 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ tlp_pci_smc_21140_quirks,	{ 0x00, 0x00, 0xc0 } },
+	{ tlp_pci_vpc_21140_quirks,	{ 0x00, 0x03, 0xff } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -1291,6 +1293,23 @@ tlp_smc9332dst_tmsw_init(sc)
 	} else {
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
 	}
+}
+
+void
+tlp_pci_vpc_21140_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+	char *p1 = (char *) &sc->sc_srom[32];
+	char *p2 = &sc->sc_name[0];
+
+	do {
+		if ((unsigned char) *p1 & 0x80)
+			*p2++ = ' ';
+		else
+			*p2++ = *p1;
+	} while (*p1++);
 }
 
 void	tlp_pci_cobalt_21142_reset __P((struct tulip_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.c,v 1.2.2.5 2002/04/17 00:03:09 nathanw Exp $	*/
+/*	$NetBSD: bus_space_notimpl.c,v 1.2.2.6 2002/10/18 02:37:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin. All rights reserved.
@@ -38,7 +38,7 @@ bus_space_protos(bs_notimpl);
 
 #define C(a,b)	__CONCAT(a,b)
 #define __NOTIMPL(f) C(C(bs_,f),_proto)(bs_notimpl)	\
-	{ panic("%s isn't implemented\n", __FUNCTION__); }
+	{ panic("%s isn't implemented", __FUNCTION__); }
 
 __NOTIMPL(map)
 __NOTIMPL(unmap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_fms.c,v 1.2.8.1 2001/11/14 19:15:22 nathanw Exp $	*/
+/*	$NetBSD: opl_fms.c,v 1.2.8.2 2002/10/18 02:43:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.2.8.1 2001/11/14 19:15:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.2.8.2 2002/10/18 02:43:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.2.8.1 2001/11/14 19:15:22 nathanw Exp 
 int	opl_fms_match __P((struct device *, struct cfdata *, void *));
 void	opl_fms_attach __P((struct device *, struct device *, void *));
 
-struct cfattach opl_fms_ca = {
-	sizeof (struct opl_softc), opl_fms_match, opl_fms_attach
-};
+CFATTACH_DECL(opl_fms, sizeof (struct opl_softc),
+    opl_fms_match, opl_fms_attach, NULL, NULL);
 
 int
 opl_fms_match(parent, match, aux)

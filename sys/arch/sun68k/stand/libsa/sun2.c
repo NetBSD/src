@@ -1,4 +1,4 @@
-/*	$NetBSD: sun2.c,v 1.1.8.3 2002/06/20 03:42:02 nathanw Exp $	*/
+/*	$NetBSD: sun2.c,v 1.1.8.4 2002/10/18 02:40:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ dev2_mapin(maptype, physaddr, length)
 	u_int i, pa, pte, pgva, va;
 
 	if ((sun2_devmap + length) > SUN3_MONSHORTPAGE)
-		panic("dev2_mapin: length=%d\n", length);
+		panic("dev2_mapin: length=%d", length);
 
 	for (i = 0; i < MAP__NTYPES; i++)
 		if (sun2_mapinfo[i].maptype == maptype)
@@ -208,7 +208,7 @@ dvma2_mapin(char *addr, int len)
 
 	/* Make sure the address is in the DVMA map. */
 	if ((va < SA_MIN_VA) || (va >= SA_MAX_VA))
-		panic("dvma2_mapin: 0x%x outside 0x%x..0x%x\n", 
+		panic("dvma2_mapin: 0x%x outside 0x%x..0x%x", 
 		    va, SA_MIN_VA, SA_MAX_VA);
 
 	va -= SA_MIN_VA;

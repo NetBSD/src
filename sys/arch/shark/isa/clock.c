@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.2.2 2002/02/28 04:11:51 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.2.3 2002/10/18 02:39:46 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -138,24 +138,23 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/i8253reg.h>
 #include <shark/isa/nvram.h>
 #include <shark/isa/spkrreg.h>
-
-#ifdef SHARK
 #include <shark/shark/hat.h>
-#endif
 
-void	sysbeepstop __P((void *));
-void	sysbeep __P((int, int));
-void	rtcinit __P((void));
+void	sysbeepstop(void *);
+void	sysbeep(int, int);
+void	rtcinit(void);
 int     timer_hz_to_count(int);
 
-static void findcpuspeed __P((void));
-static void init_isa_timer_tables();
+static void findcpuspeed(void);
+static void init_isa_timer_tables(void);
 static void delayloop(int);
-static int  clockintr __P((void *));
-static int  gettick __P((void));
+static int  clockintr(void *);
+static int  gettick(void);
 
-__inline u_int mc146818_read __P((void *, u_int));
-__inline void mc146818_write __P((void *, u_int, u_int));
+void startrtclock(void);
+
+__inline u_int mc146818_read(void *, u_int);
+__inline void mc146818_write(void *, u_int, u_int);
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
@@ -311,6 +310,8 @@ timer_hz_to_count(timer_hz)
 
 }
 
+void gettimer0count(struct count64 *);
+
 /* must be called at SPL_CLOCK or higher */
 void gettimer0count(pcount)
 	struct count64 *pcount;
@@ -348,21 +349,17 @@ clockintr(arg)
 #ifdef TESTHAT
 	static int ticks = 0;
 #endif
-#ifdef SHARK
 	static int hatUnwedgeCtr = 0;
-#endif
 
 	gettimer0count(&timer0_at_last_clockintr);
 
 	mc146818_read(NULL, MC_REGC); /* clear the clock interrupt */
 
-#ifdef SHARK
 	/* check to see if the high-availability timer needs to be unwedged */
 	if (++hatUnwedgeCtr >= (hz / HAT_MIN_FREQ)) {
 	  hatUnwedgeCtr = 0;
 	  hatUnwedge(); 
 	}
-#endif
 
 #ifdef TESTHAT
 	++ticks;
@@ -559,7 +556,7 @@ cpu_initclocks()
 		hzval = MC_RATE_1024_Hz;
 		break;
 	default:
-		panic("cannot configure hz = %d\n", hz);
+		panic("cannot configure hz = %d", hz);
         }
 	
 	rtcinit(); /* make sure basics are done by now */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.4.4.5 2002/08/27 06:03:17 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.4.4.6 2002/10/18 02:35:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -187,7 +187,7 @@ sa11x0_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("sa11x0_alloc(): Help!\n");
+	panic("sa11x0_alloc(): Help!");
 }
 
 
@@ -209,7 +209,7 @@ sa11x0_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("sa11x0_free(): Help!\n");
+	panic("sa11x0_free(): Help!");
 	/* sa11x0_unmap() does all that we need to do. */
 /*	sa11x0_unmap(t, bsh, size);*/
 }

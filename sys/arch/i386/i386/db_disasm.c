@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.26.4.1 2002/01/08 00:25:19 nathanw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.26.4.2 2002/10/18 02:37:38 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26.4.1 2002/01/08 00:25:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.26.4.2 2002/10/18 02:37:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -275,8 +275,8 @@ const struct inst	db_inst_0fax[] = {
 /*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
 /*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*ad*/	{ "shrd",  TRUE,  LONG,  op3(CL,E,R), 0 },
-/*a6*/	{ "",      FALSE, NONE,  0,	      0 },
-/*a7*/	{ "imul",  TRUE,  LONG,  op2(E,R),    0 },
+/*ae*/	{ "fxsave",TRUE,  LONG,  0,	      0 },
+/*af*/	{ "imul",  TRUE,  LONG,  op2(E,R),    0 },
 };
 
 const struct inst	db_inst_0fbx[] = {

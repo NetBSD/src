@@ -35,14 +35,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.5.2.4 2002/06/20 03:45:32 nathanw Exp $
+ *	$Id: ifpci.c,v 1.5.2.5 2002/10/18 02:43:08 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.4 2002/06/20 03:45:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.5.2.5 2002/10/18 02:43:08 nathanw Exp $");
 
 
 #include <sys/param.h>
@@ -138,10 +138,8 @@ static void ifpci_attach(struct device *parent, struct device *self, void *aux);
 static int ifpci_detach(struct device *self, int flags);
 static int ifpci_activate(struct device *self, enum devact act);
 
-struct cfattach ifpci_ca = {
-	sizeof(struct ifpci_softc), ifpci_match, ifpci_attach,
-	ifpci_detach, ifpci_activate
-};
+CFATTACH_DECL(ifpci, sizeof(struct ifpci_softc),
+    ifpci_match, ifpci_attach, ifpci_detach, ifpci_activate);
 
 /*---------------------------------------------------------------------------*
  *	AVM PCI Fritz!Card special registers
@@ -702,7 +700,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 			if(chan->in_mbuf == NULL)
 			{
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-					panic("L1 avma1pp_hscx_intr: RME, cannot allocate mbuf!\n");
+					panic("L1 avma1pp_hscx_intr: RME, cannot allocate mbuf!");
 				chan->in_cbptr = chan->in_mbuf->m_data;
 				chan->in_len = 0;
 			}
@@ -793,7 +791,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 					  /* alloc new buffer */
 				
 					  if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-						 panic("L1 avma1pp_hscx_intr: RPF, cannot allocate new mbuf!\n");
+						 panic("L1 avma1pp_hscx_intr: RPF, cannot allocate new mbuf!");
 	
 					  /* setup new data ptr */
 				

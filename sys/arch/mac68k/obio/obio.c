@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10.34.1 2002/04/17 00:03:40 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.10.34.2 2002/10/18 02:38:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,9 +49,8 @@ static void	obio_attach __P((struct device *, struct device *, void *));
 static int	obio_print __P((void *, const char *));
 static int	obio_search __P((struct device *, struct cfdata *, void *));
 
-struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 static int
 obio_match(parent, cf, aux)
@@ -109,7 +108,7 @@ obio_search(parent, cf, aux)
 	oa.oa_tag = mba->mba_bst;
 	oa.oa_dmat = mba->mba_dmat;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
+	if (config_match(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_print);
 
 	return (0);

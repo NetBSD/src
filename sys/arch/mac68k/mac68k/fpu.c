@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.24.34.2 2002/06/20 03:39:28 nathanw Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24.34.3 2002/10/18 02:38:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,9 +61,8 @@ static int  fpu_match __P((struct device *, struct cfdata *, void *));
 static void fpu_attach __P((struct device *, struct device *, void *));
 static int  fpu_probe __P((void));
 
-struct cfattach fpu_ca = {
-	sizeof(struct device), fpu_match, fpu_attach
-};
+CFATTACH_DECL(fpu, sizeof(struct device),
+    fpu_match, fpu_attach, NULL, NULL);
 
 static int
 fpu_match(parent, cf, aux)

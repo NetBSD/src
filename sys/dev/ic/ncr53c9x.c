@@ -1,7 +1,7 @@
-/*	$NetBSD: ncr53c9x.c,v 1.70.2.10 2002/08/27 23:46:42 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70.2.11 2002/10/18 02:41:57 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.10 2002/08/27 23:46:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.11 2002/10/18 02:41:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,20 @@ ncr53c9x_attach(sc)
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
 
-	callout_init(&sc->sc_watchdog);
+	/*
+	 * Note, the front-end has set us up to print the chip variation.
+	 */
+	if (sc->sc_rev >= NCR_VARIANT_MAX) {
+		printf("\n%s: unknown variant %d, devices not attached\n",
+		    sc->sc_dev.dv_xname, sc->sc_rev);
+		return;
+	}
+
+	printf(": %s, %dMHz, SCSI ID %d\n",
+	    ncr53c9x_variant_names[sc->sc_rev], sc->sc_freq, sc->sc_id);
+
+	sc->sc_ntarg = (sc->sc_rev == NCR_VARIANT_FAS366) ? 16 : 8;
+
 	/*
 	 * Allocate SCSI message buffers.
 	 * Front-ends can override allocation to avoid alignment
@@ -213,22 +226,15 @@ ncr53c9x_attach(sc)
 	if (sc->sc_imess == NULL)
 		sc->sc_imess = malloc(NCR_MAX_MSG_LEN + 1, M_DEVBUF, M_NOWAIT);
 
-	if (sc->sc_omess == NULL || sc->sc_imess == NULL) {
+	sc->sc_tinfo = malloc(sc->sc_ntarg * sizeof(sc->sc_tinfo[0]),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+
+	if (!sc->sc_omess || !sc->sc_imess || !sc->sc_tinfo) {
 		printf("out of memory\n");
 		return;
 	}
 
-	/*
-	 * Note, the front-end has set us up to print the chip variation.
-	 */
-	if (sc->sc_rev >= NCR_VARIANT_MAX) {
-		printf("\n%s: unknown variant %d, devices not attached\n",
-		    sc->sc_dev.dv_xname, sc->sc_rev);
-		return;
-	}
-
-	printf(": %s, %dMHz, SCSI ID %d\n",
-	    ncr53c9x_variant_names[sc->sc_rev], sc->sc_freq, sc->sc_id);
+	callout_init(&sc->sc_watchdog);
 
 	/*
 	 * Treat NCR53C90 with the 86C01 DMA chip exactly as ESP100
@@ -277,7 +283,7 @@ ncr53c9x_attach(sc)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = 8; /* XXX fas has 16(not supported) */
+	chan->chan_ntargets = sc->sc_ntarg;
 	chan->chan_nluns = 8;
 	chan->chan_id = sc->sc_id;
 
@@ -445,7 +451,7 @@ ncr53c9x_init(sc, doreset)
 		TAILQ_INIT(&sc->ready_list);
 		sc->sc_nexus = NULL;
 		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
-		for (r = 0; r < NCR_NTARG; r++) {
+		for (r = 0; r < sc->sc_ntarg; r++) {
 			LIST_INIT(&sc->sc_tinfo[r].luns);
 		}
 	} else {
@@ -457,7 +463,7 @@ ncr53c9x_init(sc, doreset)
 			ncr53c9x_done(sc, ecb);
 		}
 		/* Cancel outstanding disconnected commands on each LUN */
-		for (r = 0; r < 8; r++) {
+		for (r = 0; r < sc->sc_ntarg; r++) {
 			LIST_FOREACH(li, &sc->sc_tinfo[r].luns, link) {
 				if ((ecb = li->untagged) != NULL) {
 					li->untagged = NULL;
@@ -488,13 +494,13 @@ ncr53c9x_init(sc, doreset)
 	ncr53c9x_reset(sc);
 
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
-	for (r = 0; r < 8; r++) {
+	for (r = 0; r < sc->sc_ntarg; r++) {
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
 
-		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
+		ti->flags = ((sc->sc_minsync && !(sc->sc_cfflags & (1<<((r&7)+8))))
 		    ? 0 : T_SYNCHOFF) |
-		    ((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0);
+		    ((sc->sc_cfflags & (1<<(r&7))) ? T_RSELECTOFF : 0);
 #ifdef DEBUG
 		if (ncr53c9x_notag)
 			ti->flags &= ~T_TAG;
@@ -901,7 +907,7 @@ ncr53c9x_scsipi_request(chan, req, arg)
 		ti->period = 0;
 		ti->offset = 0;
 
-		if ((sc->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
+		if ((sc->sc_cfflags & (1<<((xm->xm_target&7)+16))) == 0 &&
 		    (xm->xm_mode & PERIPH_CAP_TQING)) {
 			NCR_MISC(("%s: target %d: tagged queuing\n",
 			    sc->sc_dev.dv_xname, xm->xm_target));
@@ -1008,7 +1014,7 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 	switch (cmd) {
 	case SCBUSIORESET:
 		s = splbio();
-		ncr53c9x_scsi_reset(sc);
+		ncr53c9x_init(sc, 1);
 		splx(s);
 		break;
 	default:
@@ -1266,7 +1272,7 @@ ncr53c9x_dequeue(sc, ecb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
-		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist\n",
+		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist",
 		      (long long) lun, ecb);
 #endif
 	if (li->untagged == ecb) {
@@ -1336,7 +1342,7 @@ ncr53c9x_rdfifo(struct ncr53c9x_softc *sc, int how)
 		buf = sc->sc_imess + sc->sc_imlen;
 		break;
 	default:
-		panic("ncr53c9x_rdfifo: bad flag\n");
+		panic("ncr53c9x_rdfifo: bad flag");
 		break;
 	}
 
@@ -2017,7 +2023,7 @@ ncr53c9x_msgout(sc)
 	}
 
 #ifdef DEBUG
-	{
+	if (ncr53c9x_debug & NCR_SHOWMSGS) {
 		int i;
 		
 		NCR_MSGS(("<msgout:"));
@@ -2645,11 +2651,9 @@ printf("<<RESELECT CONT'd>>");
 		break;
 
 	default:
-		/* Don't panic: reset. */
 		printf("%s: invalid state: %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_state);
-		ncr53c9x_scsi_reset(sc);
-		goto out;
+		goto reset;
 	}
 
 	/*
@@ -2716,7 +2720,6 @@ msgin:
 /*			DELAY(1);*/
 		}
 		if (sc->sc_features & NCR_F_DMASELECT) {
-			size_t size;
 			/* setup DMA transfer for command */
 			size = ecb->clen;
 			sc->sc_cmdlen = size;
@@ -2919,7 +2922,8 @@ ncr53c9x_timeout(arg)
 			/* XXX ASYNC CALLBACK! */
 			scsipi_printaddr(periph);
 			printf("sync negotiation disabled\n");
-			sc->sc_cfflags |= (1 << (periph->periph_target + 8));
+			sc->sc_cfflags |=
+			    (1 << ((periph->periph_target & 7) + 8));
 			ncr53c9x_update_xfer_mode(sc, periph->periph_target);
 		}
 	}
@@ -2939,7 +2943,7 @@ ncr53c9x_watch(arg)
 	time_t old = time.tv_sec - (10 * 60);
 
 	s = splbio();
-	for (t = 0; t < NCR_NTARG; t++) {
+	for (t = 0; t < sc->sc_ntarg; t++) {
 		ti = &sc->sc_tinfo[t];
 		li = LIST_FIRST(&ti->luns);
 		while (li) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.8.2.5 2002/02/28 04:13:42 nathanw Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.8.2.6 2002/10/18 02:42:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.8.2.5 2002/02/28 04:13:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.8.2.6 2002/10/18 02:42:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,7 +708,6 @@ ef_port_check(iot, ioh)
 	return 1;
 }
 
-struct cfattach ef_ca = {
-	sizeof(struct ef_softc), ef_match, ef_attach
-};
+CFATTACH_DECL(ef, sizeof(struct ef_softc),
+    ef_match, ef_attach, NULL, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.1.4.6 2002/08/27 06:03:14 thorpej Exp $	*/
+/*	$NetBSD: sfas.c,v 1.1.4.7 2002/10/18 02:33:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -70,22 +70,31 @@
 #include <acorn32/podulebus/sfasreg.h>
 #include <acorn32/podulebus/sfasvar.h>
 
-void sfasinitialize __P((struct sfas_softc *));
-void sfas_minphys   __P((struct buf *bp));
-void sfas_scsi_request __P((struct scsipi_channel *,
-					scsipi_adapter_req_t, void *));
-void sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
-void sfas_scsidone  __P((struct sfas_softc *dev, struct scsipi_xfer *xs,
-			 int stat));
-void sfasintr	    __P((struct sfas_softc *dev));
-void sfasiwait	    __P((struct sfas_softc *dev));
-void sfas_ixfer	    __P((struct sfas_softc *dev, int polling));
-void sfasreset	    __P((struct sfas_softc *dev, int how));
-int  sfasselect	    __P((struct sfas_softc *dev, struct sfas_pending *pendp,
-			 unsigned char *cbuf, int clen,
-			 unsigned char *buf, int len, int mode));
-void sfasicmd	    __P((struct sfas_softc *dev, struct sfas_pending *pendp));
-void sfasgo         __P((struct sfas_softc *dev, struct sfas_pending *pendp));
+void sfas_minphys(struct buf *);
+void sfas_init_nexus(struct sfas_softc *, struct nexus *);
+void sfasinitialize(struct sfas_softc *);
+void sfas_scsi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void sfas_donextcmd(struct sfas_softc *, struct sfas_pending *);
+void sfas_scsidone(struct sfas_softc *, struct scsipi_xfer *, int);
+void sfasintr(struct sfas_softc *);
+void sfasiwait(struct sfas_softc *);
+void sfas_ixfer(void *, int);
+void sfasreset(struct sfas_softc *, int);
+int  sfasselect(struct sfas_softc *, struct sfas_pending *, unsigned char *,
+		int, unsigned char *, int, int);
+void sfasicmd(struct sfas_softc *, struct sfas_pending *);
+void sfasgo(struct sfas_softc *, struct sfas_pending *);
+void sfas_save_pointers(struct sfas_softc *);
+void sfas_restore_pointers(struct sfas_softc *);
+void sfas_build_sdtrm(struct sfas_softc *, int, int);
+int sfas_select_unit(struct sfas_softc *, short);
+struct nexus *sfas_arbitate_target(struct sfas_softc *, int);
+void sfas_setup_nexus(struct sfas_softc *, struct nexus *,
+		      struct sfas_pending *, unsigned char *, int,
+		      unsigned char *, int, int);
+int sfas_pretests(struct sfas_softc *, sfas_regmap_p);
+int sfas_midaction(struct sfas_softc *, sfas_regmap_p, struct nexus *);
+int sfas_postaction(struct sfas_softc *, sfas_regmap_p, struct nexus *);
 
 /*
  * Initialize these to make 'em patchable. Defaults to enable sync and discon.
@@ -528,10 +537,11 @@ sfasiwait(dev)
  * rules that apply to sfasiwait also applies here.
  */
 void
-sfas_ixfer(dev, polling)
-	struct sfas_softc *dev;
+sfas_ixfer(v, polling)
+	void *v;
 	int polling;
 {
+	struct sfas_softc *dev = v;
 	sfas_regmap_p	 rp;
 	u_char		*buf;
 	int		 len, mode, phase;
@@ -784,7 +794,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
  * reselection. Much nicer this way.
  */
 	if ((mode & SFAS_SELECT_I) || (dev->sc_config_flags & SFAS_NO_DMA)) {
-		nexus->dma[0].ptr = (vm_offset_t)buf;
+		nexus->dma[0].ptr = buf;
 		nexus->dma[0].len = len;
 		nexus->dma[0].flg = SFAS_CHAIN_PRG;
 		nexus->max_link   = 1;
@@ -1137,10 +1147,11 @@ sfas_midaction(dev, rp, nexus)
 			  dev->sc_len -= len-left;
 			  dev->sc_buf += len-left;
 
-			  dev->sc_dma_buf += len-left;
-			  dev->sc_dma_len  = left;
+			  dev->sc_dma_buf = (char *)dev->sc_dma_buf + len-left;
+			  dev->sc_dma_len = left;
 
-			  dev->sc_dma_blk_ptr += len-left;
+			  dev->sc_dma_blk_ptr = (char *)dev->sc_dma_blk_ptr +
+				  len-left;
 			  dev->sc_dma_blk_len -= len-left;
 
 			  /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.5.10.1 2002/09/17 21:16:15 nathanw Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.5.10.2 2002/10/18 02:39:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -180,9 +180,8 @@ int zs_ap_match __P((struct device *, struct cfdata *, void *));
 void zs_ap_attach __P((struct device *, struct device *, void *));
 int zs_print __P((void *, const char *name));
 
-struct cfattach zsc_ap_ca = {
-	sizeof(struct zsc_softc), zs_ap_match, zs_ap_attach
-};
+CFATTACH_DECL(zsc_ap, sizeof(struct zsc_softc),
+    zs_ap_match, zs_ap_attach, NULL, NULL);
 
 /*
  * Is the zs chip present?

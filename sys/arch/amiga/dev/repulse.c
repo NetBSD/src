@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.2.4.2 2002/02/28 04:06:56 nathanw Exp $ */
+/*	$NetBSD: repulse.c,v 1.2.4.3 2002/10/18 02:35:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.2.4.2 2002/02/28 04:06:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.2.4.3 2002/10/18 02:35:03 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,9 +233,8 @@ struct repulse_softc {
 int repulse_match (struct device *, struct cfdata *, void *);
 void repulse_attach (struct device *, struct device *, void *);
 
-struct cfattach repulse_ca = {
-	sizeof(struct repulse_softc), repulse_match, repulse_attach
-};
+CFATTACH_DECL(repulse, sizeof(struct repulse_softc),
+    repulse_match, repulse_attach, NULL, NULL);
 
 int
 repulse_match(struct device *parent, struct cfdata *cfp, void *aux) {
@@ -336,16 +335,13 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 	 * XXX this should be a panic(). OTOH, audio codec speed is not
 	 * important enough to do this.
 	 */
-	if (repac_read(sc, AC97_REG_EXTENDED_ID, &a)
-		|| !(a & AC97_CODEC_DOES_VRA)) {
+	a = sc->sc_codec_if->vtbl->get_extcaps(sc->sc_codec_if);
+	if (!(a & AC97_EXT_AUDIO_VRA)) {
 		printf("%s: warning: codec doesn't support "
 		    "hardware AC'97 2.0 Variable Rate Audio\n",
 			sc->sc_dev.dv_xname);
 	}
 #endif
-	/* enable VRA */
-	repac_write(sc, AC97_REG_EXTENDED_STATUS,
-		AC97_ENAB_VRA | AC97_ENAB_MICVRA);
 
 	/*
 	 * from auvia.c: disable mutes ...

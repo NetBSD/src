@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.3.8.5 2002/02/28 04:13:14 nathanw Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.3.8.6 2002/10/18 02:41:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.3.8.5 2002/02/28 04:13:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.3.8.6 2002/10/18 02:41:34 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -136,11 +136,8 @@ struct rtk_cardbus_softc {
 	int sc_intrline;
 };
 
-struct cfattach rtk_cardbus_ca = {
-	sizeof(struct rtk_cardbus_softc), 
-	rtk_cardbus_match, rtk_cardbus_attach,
-	rtk_cardbus_detach, rtk_activate,
-};
+CFATTACH_DECL(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
+    rtk_cardbus_match, rtk_cardbus_attach, rtk_cardbus_detach, rtk_activate);
 
 const struct rtk_type *rtk_cardbus_lookup
 	__P((const struct cardbus_attach_args *));
@@ -272,7 +269,7 @@ rtk_cardbus_detach(self, flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
 #endif
 	rv = rtk_detach(sc);
 	if (rv)

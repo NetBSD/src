@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.1.4.4 2002/04/01 07:38:45 nathanw Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.1.4.5 2002/10/18 02:33:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.1.4.4 2002/04/01 07:38:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.1.4.5 2002/10/18 02:33:38 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -109,9 +109,8 @@ static void com_pioc_cleanup __P((void *));
 
 /* device attach structure */
 
-struct cfattach com_pioc_ca = {
-	sizeof(struct com_pioc_softc), com_pioc_probe, com_pioc_attach
-};
+CFATTACH_DECL(com_pioc, sizeof(struct com_pioc_softc),
+    com_pioc_probe, com_pioc_attach, NULL, NULL);
 
 extern bus_space_tag_t comconstag;	/* From pioc.c */
 

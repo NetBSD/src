@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.3 1998/01/12 18:04:22 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.3.32.1 2002/10/18 02:36:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,9 +48,8 @@ int vmematch __P((struct device *, struct cfdata *, void *));
 void vmeattach __P((struct device *, struct device *, void *));
 int vmeprint __P((void *, const char *));
 
-struct cfattach vme_ca = {
-	sizeof(struct vme_softc), vmematch, vmeattach
-};
+CFATTACH_DECL(vme, sizeof(struct vme_softc),
+    vmematch, vmeattach, NULL, NULL);
 
 int	vmesearch __P((struct device *, struct cfdata *, void *));
 
@@ -62,7 +61,7 @@ vmematch(parent, cf, aux)
 {
 	struct vmebus_attach_args *vba = aux;
 
-	if (strcmp(vba->vba_busname, cf->cf_driver->cd_name))
+	if (strcmp(vba->vba_busname, cf->cf_name))
 		return (0);
 
         return (1);
@@ -123,7 +122,7 @@ vmesearch(parent, cf, aux)
 	va.va_msize  = cf->cf_msize;
 	va.va_irq    = cf->cf_irq;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &va) > 0)
+	if (config_match(parent, cf, &va) > 0)
 		config_attach(parent, cf, &va, vmeprint);
 	return (0);
 }

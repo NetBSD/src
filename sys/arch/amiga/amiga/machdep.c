@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.13 2002/10/05 01:11:40 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.14 2002/10/18 02:34:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,20 +46,18 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.13 2002/10/05 01:11:40 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.14 2002/10/18 02:34:36 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_68k.c,v 1.1.2.2 2002/02/28 04:10:50 nathanw Exp $	*/
+/*	$NetBSD: memc_68k.c,v 1.1.2.3 2002/10/18 02:38:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -60,9 +60,8 @@
 int memc_match(struct device *, struct cfdata *, void *);
 void memc_attach(struct device *, struct device *, void *);
 
-struct cfattach memc_ca = {
-	sizeof(struct memc_softc), memc_match, memc_attach
-};
+CFATTACH_DECL(memc, sizeof(struct memc_softc),
+    memc_match, memc_attach, NULL, NULL);
 
 extern struct cfdriver memc_cd;
 

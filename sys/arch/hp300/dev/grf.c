@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.8.9 2002/09/17 21:14:31 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.8.10 2002/10/18 02:36:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.9 2002/09/17 21:14:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.10 2002/10/18 02:36:46 nathanw Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.9 2002/09/17 21:14:31 nathanw Exp $")
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
@@ -93,21 +92,19 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.9 2002/09/17 21:14:31 nathanw Exp $")
 int	grfmatch __P((struct device *, struct cfdata *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
-struct cfattach grf_ca = {
-	sizeof(struct grf_softc), grfmatch, grfattach
-};
+CFATTACH_DECL(grf, sizeof(struct grf_softc),
+    grfmatch, grfattach, NULL, NULL);
 
 extern struct cfdriver grf_cd;
 
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
-dev_type_poll(grfpoll);
 dev_type_mmap(grfmmap);
 
 const struct cdevsw grf_cdevsw = {
 	grfopen, grfclose, nullread, nullwrite, grfioctl,
-	nostop, notty, grfpoll, grfmmap,
+	nostop, notty, nopoll, grfmmap,
 };
 
 int	grfprint __P((void *, const char *));
@@ -295,17 +292,6 @@ grfioctl(dev, cmd, data, flag, p)
 
 	}
 	return(error);
-}
-
-/*ARGSUSED*/
-int
-grfpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (events & (POLLOUT | POLLWRNORM));
 }
 
 /*ARGSUSED*/

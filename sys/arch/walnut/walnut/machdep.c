@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.6.7 2002/08/27 23:46:13 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.8 2002/10/18 02:40:40 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,6 @@
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

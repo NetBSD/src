@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.35.2.8 2002/08/01 02:44:49 nathanw Exp $ */
+/* $NetBSD: vga.c,v 1.35.2.9 2002/10/18 02:42:01 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.8 2002/08/01 02:44:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.9 2002/10/18 02:42:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,77 +271,6 @@ const struct wsdisplay_accessops vga_accessops = {
 	NULL
 #endif /* WSDISPLAY_CHARFUNCS */
 };
-
-/*
- * The following functions implement back-end configuration grabbing
- * and attachment.
- */
-int
-vga_common_probe(bus_space_tag_t iot, bus_space_tag_t memt)
-{
-	bus_space_handle_t ioh_vga, ioh_6845, memh;
-	u_int8_t regval;
-	u_int16_t vgadata;
-	int gotio_vga, gotio_6845, gotmem, mono, rv;
-	int dispoffset;
-
-	gotio_vga = gotio_6845 = gotmem = rv = 0;
-
-	if (bus_space_map(iot, 0x3c0, 0x10, 0, &ioh_vga))
-		goto bad;
-	gotio_vga = 1;
-
-	/* read "misc output register" */
-	regval = bus_space_read_1(iot, ioh_vga, 0xc);
-	mono = !(regval & 1);
-
-	if (bus_space_map(iot, (mono ? 0x3b0 : 0x3d0), 0x10, 0, &ioh_6845))
-		goto bad;
-	gotio_6845 = 1;
-
-	if (bus_space_map(memt, 0xa0000, 0x20000, 0, &memh))
-		goto bad;
-	gotmem = 1;
-
-	dispoffset = (mono ? 0x10000 : 0x18000);
-
-	vgadata = bus_space_read_2(memt, memh, dispoffset);
-	bus_space_write_2(memt, memh, dispoffset, 0xa55a);
-	if (bus_space_read_2(memt, memh, dispoffset) != 0xa55a)
-		goto bad;
-	bus_space_write_2(memt, memh, dispoffset, vgadata);
-
-	/*
-	 * check if this is really a VGA
-	 * (try to write "Color Select" register as XFree86 does)
-	 * XXX check before if at least EGA?
-	 */
-	/* reset state */
-	(void) bus_space_read_1(iot, ioh_6845, 10);
-	bus_space_write_1(iot, ioh_vga, VGA_ATC_INDEX,
-			  20 | 0x20); /* colselect | enable */
-	regval = bus_space_read_1(iot, ioh_vga, VGA_ATC_DATAR);
-	/* toggle the implemented bits */
-	bus_space_write_1(iot, ioh_vga, VGA_ATC_DATAW, regval ^ 0x0f);
-	bus_space_write_1(iot, ioh_vga, VGA_ATC_INDEX,
-			  20 | 0x20);
-	/* read back */
-	if (bus_space_read_1(iot, ioh_vga, VGA_ATC_DATAR) != (regval ^ 0x0f))
-		goto bad;
-	/* restore contents */
-	bus_space_write_1(iot, ioh_vga, VGA_ATC_DATAW, regval);
-
-	rv = 1;
-bad:
-	if (gotio_vga)
-		bus_space_unmap(iot, ioh_vga, 0x10);
-	if (gotio_6845)
-		bus_space_unmap(iot, ioh_6845, 0x10);
-	if (gotmem)
-		bus_space_unmap(memt, memh, 0x20000);
-
-	return (rv);
-}
 
 /*
  * We want at least ASCII 32..127 be present in the

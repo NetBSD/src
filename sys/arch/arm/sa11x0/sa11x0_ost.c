@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.2.6.4 2002/02/28 04:07:43 nathanw Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.2.6.5 2002/10/18 02:35:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -83,9 +83,8 @@ static struct saost_softc *saost_sc = NULL;
 #define STATHZ	64
 #endif
 
-struct cfattach saost_ca = {
-	sizeof(struct saost_softc), saost_match, saost_attach
-};
+CFATTACH_DECL(saost, sizeof(struct saost_softc),
+    saost_match, saost_attach, NULL, NULL);
 
 static int
 saost_match(parent, match, aux)
@@ -114,7 +113,7 @@ saost_attach(parent, self, aux)
 
 	if(bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, 
 			&sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
+		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* disable all channel and clear interrupt status */
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_IR, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.5 2002/08/27 23:46:43 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.6 2002/10/18 02:41:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@
 /* #define NCR53C9X_DEBUG		1 */
 
 /* Wide or differential can have 16 targets */
-#define NCR_NTARG		8
 #define NCR_NLUN		8
 
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
@@ -299,7 +298,8 @@ struct ncr53c9x_softc {
 		ready_list;
 
 	struct ncr53c9x_ecb *sc_nexus;		/* Current command */
-	struct ncr53c9x_tinfo sc_tinfo[NCR_NTARG];
+	int	sc_ntarg;
+	struct ncr53c9x_tinfo *sc_tinfo;
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	caddr_t	sc_dp;		/* Current data pointer */

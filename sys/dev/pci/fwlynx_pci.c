@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.1.4.4 2002/01/08 00:31:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.1.4.5 2002/10/18 02:43:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,12 +61,8 @@ struct fwlynx_pci_softc {
 static int fwlynx_pci_match __P((struct device *, struct cfdata *, void *));
 static void fwlynx_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach fwlynx_pci_ca = {
-	sizeof(struct fwlynx_pci_softc), fwlynx_pci_match, fwlynx_pci_attach,
-#if 0
-	fwlynx_pci_detach, fwlynx_activate
-#endif
-};
+CFATTACH_DECL(fwlynx_pci, sizeof(struct fwlynx_pci_softc),
+    fwlynx_pci_match, fwlynx_pci_attach, NULL, NULL);
 
 static int
 fwlynx_pci_match(struct device *parent, struct cfdata *match, void *aux)

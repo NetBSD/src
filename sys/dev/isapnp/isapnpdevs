@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.40.2.7 2002/09/17 21:20:04 nathanw Exp $
+$NetBSD: isapnpdevs,v 1.40.2.8 2002/10/18 02:42:43 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ driver	com	National Semiconductor Serial
 driver	cs	Cirrus Logic Crystal CS89x0 Ethernet
 driver	ep	3Com 3CXXX Ethernet
 driver	ess	ESS Audio Drive
+driver	fmv	Fujitsu FMV-18x Ethernet
 driver	joy	Generic Joystick
 driver	gus	Gravis Ultrasound
 driver	le	Lance Ethernet
@@ -127,6 +128,12 @@ devlogic	ess	ESS1868		0	ESS1868
 devlogic	ess	ESS1869		0	ESS1869
 
 /*
+ * fmv
+ */
+devlogic	fmv	FUJ01C1		0	Fujitsu FMV-183
+devlogic	fmv	FUJ01D1		0	Fujitsu FMV-184
+
+/*
  * joy
  */
 devlogic	joy	AZT0003		0	Aztech AZT2320 GAME PORT
@@ -152,6 +159,7 @@ devlogic	gus	GRV0000		0	Gravis Ultrasound
 devlogic	le	TKN0010		0	Lance Ethernet on TEKNOR board
 devlogic	le	ATK1500		0	Lance Ethernet on Allied Telesyn board
 devlogic	le	CSI2203		0	Cabletron E22xx
+devlogic	le	BUF0001		0	Melco Inc. LGY-IV
 
 /*
  * mpu

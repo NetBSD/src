@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.8.4.2 2002/06/20 03:41:23 nathanw Exp $ */
+/*	$NetBSD: upa.c,v 1.8.4.3 2002/10/18 02:40:05 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,9 +125,8 @@ static void *upa_intr_establish __P((
 int	upa_match_mainbus __P((struct device *, struct cfdata *, void *));
 void	upa_attach_mainbus __P((struct device *, struct device *, void *));
 
-struct cfattach upa_ca = {
-	sizeof(struct upa_softc), upa_match, upa_attach
-};
+CFATTACH_DECL(upa, sizeof(struct upa_softc),
+    upa_match, upa_attach, NULL, NULL);
 
 extern struct cfdriver upa_cd;
 
@@ -165,7 +164,7 @@ upa_match(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 int
@@ -179,7 +178,7 @@ upa_match_iommu(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, ia->iom_name) == 0);
+	return (strcmp(cf->cf_name, ia->iom_name) == 0);
 }
 
 int
@@ -193,7 +192,7 @@ upa_match_xbox(parent, cf, aux)
 	if (CPU_ISSUN4)
 		return (0);
 
-	return (strcmp(cf->cf_driver->cd_name, xa->xa_name) == 0);
+	return (strcmp(cf->cf_name, xa->xa_name) == 0);
 }
 
 /*

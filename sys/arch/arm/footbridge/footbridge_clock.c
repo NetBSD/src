@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.2.6.6 2002/06/20 03:38:07 nathanw Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.2.6.7 2002/10/18 02:35:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -58,14 +58,25 @@ int clockhandler __P((void *));
 int statclockhandler __P((void *));
 static int load_timer __P((int, int));
 
+/*
+ * Statistics clock variance, in usec.  Variance must be a
+ * power of two.  Since this gives us an even number, not an odd number,
+ * we discard one case and compensate.  That is, a variance of 1024 would
+ * give us offsets in [0..1023].  Instead, we take offsets in [1..1023].
+ * This is symmetric about the point 512, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+const int statvar = 1024;
+int statmin;			/* minimum stat clock count in ticks */
+int statcountperusec;		/* number of ticks per usec at current stathz */
+int statprev;			/* last value of we set statclock to */
 
 #if 0
 static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
 static void clockattach	__P((struct device *parent, struct device *self, void *aux));
 
-struct cfattach footbridge_clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
+CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
+    clockmatch, clockattach, NULL, NULL);
 
 /*
  * int clockmatch(struct device *parent, void *match, void *aux)
@@ -130,7 +141,6 @@ clockhandler(aframe)
 	return(0);	/* Pass the interrupt on down the chain */
 }
 
-
 /*
  * int statclockhandler(struct clockframe *frame)
  *
@@ -143,9 +153,51 @@ statclockhandler(aframe)
 	void *aframe;
 {
 	struct clockframe *frame = aframe;
+	int newint, r;
+	int currentclock ;
+
+	/* start the clock off again */
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-	    TIMER_2_CLEAR, 0);
+			TIMER_2_CLEAR, 0);
+
+	do {
+		r = random() & (statvar-1);
+	} while (r == 0);
+	newint = statmin + (r * statcountperusec);
+	
+	/* fetch the current count */
+	currentclock = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+		    TIMER_2_VALUE);
+
+	/* 
+	 * work out how much time has run, add another usec for time spent
+	 * here
+	 */
+	r = ((statprev - currentclock) + statcountperusec);
+
+	if (r < newint) {
+		newint -= r;
+		r = 0;
+	}
+	else 
+		printf("statclockhandler: Statclock overrun\n");
+
+
+	/* 
+	 * update the clock to the new counter, this reloads the existing
+	 * timer
+	 */
+	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+	    		TIMER_2_LOAD, newint);
+	statprev = newint;
 	statclock(frame);
+	if (r)
+		/*
+		 * We've completely overrun the previous interval,
+		 * make sure we report the correct number of ticks. 
+		 */
+		statclock(frame);
+
 	return(0);	/* Pass the interrupt on down the chain */
 }
 
@@ -187,8 +239,24 @@ void
 setstatclockrate(hz)
 	int hz;
 {
+	int statint;
+	int countpersecond;
+	int statvarticks;
 
-	clock_sc->sc_statclock_count = load_timer(TIMER_2_BASE, hz);
+	/* statint == num in counter to drop by desired hz */
+	statint = clock_sc->sc_statclock_count = load_timer(TIMER_2_BASE, hz);
+	
+	/* Get the total ticks a second */
+	countpersecond = statint * hz;
+	
+	/* now work out how many ticks per usec */
+	statcountperusec = countpersecond / 1000000;
+
+	/* calculate a variance range of statvar */
+	statvarticks = statcountperusec * statvar;
+	
+	/* minimum is statint - 50% of variant */
+	statmin = statint - (statvarticks / 2);
 }
 
 /*
@@ -203,6 +271,12 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
+	/* stathz and profhz should be set to something, we have the timer */
+	if (stathz == 0)
+		stathz = hz;
+
+	if (profhz == 0)
+		profhz = stathz * 5;
 
 	/* Report the clock frequencies */
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
@@ -220,17 +294,17 @@ cpu_initclocks()
 	    "tmr1 hard clk", clockhandler, 0);
 
 	if (clock_sc->sc_clockintr == NULL)
-		panic("%s: Cannot install timer 1 interrupt handler\n",
+		panic("%s: Cannot install timer 1 interrupt handler",
 		    clock_sc->sc_dev.dv_xname);
 
 	/* If stathz is non-zero then setup the stat clock */
 	if (stathz) {
 		/* Setup timer 2 and claim interrupt */
 		setstatclockrate(stathz);
-       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_CLOCK,
+       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
-			panic("%s: Cannot install timer 2 interrupt handler\n",
+			panic("%s: Cannot install timer 2 interrupt handler",
 			    clock_sc->sc_dev.dv_xname);
 	}
 }
@@ -264,7 +338,7 @@ microtime(tvp)
 
 #ifdef DIAGNOSTIC
 	if (deltatm < 0)
-		panic("opps deltatm < 0 tm=%d deltatm=%d\n", tm, deltatm);
+		panic("opps deltatm < 0 tm=%d deltatm=%d", tm, deltatm);
 #endif
 
 	/* Fill in the timeval struct */
@@ -304,6 +378,32 @@ calibrate_delay(void)
 {
      delay_clock_count = load_timer(TIMER_3_BASE, 100);
      delay_count_per_usec = delay_clock_count/10000;
+#ifdef VERBOSE_DELAY_CALIBRATION
+     printf("delay calibration: delay_cc = %d, delay_c/us=%d\n",
+		     delay_clock_count, delay_count_per_usec);
+     
+     printf("0..");
+     delay(1000000);
+     printf("1..");
+     delay(1000000);
+     printf("2..");
+     delay(1000000);
+     printf("3..");
+     delay(1000000);
+     printf("4..");
+      delay(1000000);
+     printf("5..");
+      delay(1000000);
+     printf("6..");
+      delay(1000000);
+     printf("7..");
+      delay(1000000);
+     printf("8..");
+      delay(1000000);
+     printf("9..");
+      delay(1000000);
+     printf("10\n");
+#endif
 }
 
 int delaycount = 500;
@@ -327,9 +427,13 @@ delay(n)
 	    }
 	    return;	
 	}
-	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-		TIMER_3_VALUE);
 
+	/* 
+	 * read the current value (do not reset it as delay is reentrant)
+	 */
+	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+		    TIMER_3_VALUE);
+	 
 	delta = usecs = 0;
 
 	while (n > usecs)
@@ -342,9 +446,13 @@ delay(n)
 	    else
 		delta += (last - cur);
 	    
-	    if (last == 0 && cur == 0)
+	    if (cur == 0)
 	    {
-		/* reset the timer, not sure this is really needed */
+		/*
+		 * reset the timer, note that if something blocks us for more
+		 * than 1/100s we may delay for too long, but I believe that
+		 * is fairly unlikely.
+		 */
 		bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 			TIMER_3_CLEAR, 0);
 	    }

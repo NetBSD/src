@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.5.6.3 2002/02/28 04:10:23 nathanw Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.5.6.4 2002/10/18 02:38:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.5.6.3 2002/02/28 04:10:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.5.6.4 2002/10/18 02:38:06 nathanw Exp $");
 
 #include "opt_pcibios.h"
 
@@ -347,7 +347,7 @@ pcibios_get_status(rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 	u_int32_t edx;
 	int rv;
 
-	__asm __volatile("lcall (%%edi)					; \
+	__asm __volatile("lcall *(%%edi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:"
@@ -395,7 +395,7 @@ pcibios_get_intr_routing(table, nentries, exclirq)
 
 	memset(table, 0, args.size);
 
-	__asm __volatile("lcall (%%esi)					; \
+	__asm __volatile("lcall *(%%esi)				; \
 			jc 1f						; \
 			xor %%ah, %%ah					; \
 		1:	movw %w2, %%ds					; \

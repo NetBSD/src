@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.15.2.1 2001/06/21 20:04:29 nathanw Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.15.2.2 2002/10/18 02:42:52 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -48,8 +48,10 @@
  * in order to support generic OpenFirmware device drivers.
  */
 struct ofbus_attach_args {
-	char *oba_busname;
-	int oba_phandle;
+	const char	*oba_busname;
+	char		oba_ofname[64];
+	int		oba_phandle;
+
 	/*
 	 * Special unit field for disk devices.
 	 * This is a KLUDGE to work around the fact that OpenFirmware
@@ -57,7 +59,7 @@ struct ofbus_attach_args {
 	 * YES, I THINK THIS IS A BUG IN THE OPENFIRMWARE DEFINITION!!!	XXX
 	 * See also ofdisk.c.
 	 */
-	int oba_unit;
+	int		oba_unit;
 };
 
 /*
@@ -94,6 +96,9 @@ void	OF_close(int);
 int	OF_read(int, void *, int);
 int	OF_write(int, void *, int);
 int	OF_seek(int, u_quad_t);
+void	*OF_claim(void *, u_int, u_int);
+void	OF_release(void *, u_int);
+int	OF_milliseconds(void);
 void	OF_boot(char *) __attribute__((__noreturn__));
 void	OF_enter(void);
 void	OF_exit(void) __attribute__((__noreturn__));

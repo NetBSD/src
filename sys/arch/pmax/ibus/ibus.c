@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.7 2000/02/29 04:41:48 nisimura Exp $	*/
+/*	$NetBSD: ibus.c,v 1.7.12.1 2002/10/18 02:39:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.7 2000/02/29 04:41:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.7.12.1 2002/10/18 02:39:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ ibussubmatch(parent, cf, aux)
 	    cf->cf_loc[IBUSCF_ADDR] != pa)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.10.2.6 2002/08/01 02:45:04 nathanw Exp $	*/
+/*	$NetBSD: iophy.c,v 1.10.2.7 2002/10/18 02:42:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.10.2.6 2002/08/01 02:45:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.10.2.7 2002/10/18 02:42:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: iophy.c,v 1.10.2.6 2002/08/01 02:45:04 nathanw Exp $
 int	iophymatch(struct device *, struct cfdata *, void *);
 void	iophyattach(struct device *, struct device *, void *);
 
-struct cfattach iophy_ca = {
-	sizeof(struct mii_softc), iophymatch, iophyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(iophy, sizeof(struct mii_softc),
+    iophymatch, iophyattach, mii_phy_detach, mii_phy_activate);
 
 int	iophy_service(struct mii_softc *, struct mii_data *, int);
 void	iophy_status(struct mii_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.5.8.3 2002/02/28 04:10:03 nathanw Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.5.8.4 2002/10/18 02:37:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,9 +100,8 @@ struct txcsbus_softc {
 	struct bus_space_tag_hpcmips *sc_cst[TX39_MAXCS];
 };
 
-struct cfattach txcsbus_ca = {
-	sizeof(struct txcsbus_softc), txcsbus_match, txcsbus_attach
-};
+CFATTACH_DECL(txcsbus, sizeof(struct txcsbus_softc),
+    txcsbus_match, txcsbus_attach, NULL, NULL);
 
 static bus_space_tag_t __txcsbus_alloc_cstag(struct txcsbus_softc *, 
     struct cs_handle *);
@@ -113,7 +112,7 @@ txcsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct csbus_attach_args *cba = aux;
 	platid_mask_t mask;
 
-	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name))
+	if (strcmp(cba->cba_busname, cf->cf_name))
 		return (0);
 
 	if (cf->cf_loc[TXCSBUSIFCF_PLATFORM] == TXCSBUSIFCF_PLATFORM_DEFAULT)
@@ -225,7 +224,7 @@ txcsbus_search(struct device *parent, struct cfdata *cf, void *aux)
 	ca.ca_irq2		= cf->cf_loc[TXCSBUSCF_IRQ2];
 	ca.ca_irq3		= cf->cf_loc[TXCSBUSCF_IRQ3];
 	
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ca)) {
+	if (config_match(parent, cf, &ca)) {
 		config_attach(parent, cf, &ca, txcsbus_print);
 	}
 
@@ -243,7 +242,7 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 	txreg_t reg;
 
  	if (!TX39_ISCS(cs) && !TX39_ISMCS(cs) && !TX39_ISCARD(cs)) {
-		panic("txcsbus_alloc_tag: bogus chip select %d\n", cs);
+		panic("txcsbus_alloc_tag: bogus chip select %d", cs);
 	}
 
 	/* Already setuped chip select */
@@ -259,7 +258,7 @@ __txcsbus_alloc_cstag(struct txcsbus_softc *sc, struct cs_handle *csh)
 	/* CS bus-width (configurationable) */
 	switch (width) {
 	default:
-		panic("txcsbus_alloc_tag: bogus bus width %d\n", width);
+		panic("txcsbus_alloc_tag: bogus bus width %d", width);
 
 	case 32:
 		if (TX39_ISCS(cs)) {

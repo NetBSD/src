@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_irq.S,v 1.1.2.4 2002/08/19 21:39:23 thorpej Exp $	*/
+/*	$NetBSD: i80321_irq.S,v 1.1.2.5 2002/10/18 02:35:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -81,10 +81,9 @@ ASENTRY_NP(irq_entry)
 	/*
 	 * Call the C interrupt dispatch routine.
 	 */
-	add	lr, pc, #(.Lirq_return - . - 8)
 	mov	r0, sp
+	mov	lr, pc
 	ldr	pc, .Lintr_dispatch
-.Lirq_return:
 
 	/* Decremement the nest count. */
 	ldr	r0, .Lcurrent_intr_depth 

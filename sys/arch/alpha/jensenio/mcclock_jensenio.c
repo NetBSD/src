@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_jensenio.c,v 1.1 2000/07/12 20:36:10 thorpej Exp $ */
+/* $NetBSD: mcclock_jensenio.c,v 1.1.6.1 2002/10/18 02:34:16 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.1 2000/07/12 20:36:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.1.6.1 2002/10/18 02:34:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,10 +93,8 @@ struct mcclock_jensenio_softc {
 int	mcclock_jensenio_match(struct device *, struct cfdata *, void *);
 void	mcclock_jensenio_attach(struct device *, struct device *, void *);
 
-struct cfattach mcclock_jensenio_ca = {
-	sizeof (struct mcclock_jensenio_softc), mcclock_jensenio_match,
-	    mcclock_jensenio_attach, 
-};
+CFATTACH_DECL(mcclock_jensenio, sizeof (struct mcclock_jensenio_softc),
+    mcclock_jensenio_match, mcclock_jensenio_attach, NULL, NULL);
 
 void	mcclock_jensenio_write(struct mcclock_softc *, u_int, u_int);
 u_int	mcclock_jensenio_read(struct mcclock_softc *, u_int);
@@ -111,7 +109,7 @@ mcclock_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct jensenio_attach_args *ja = aux;
 
 	/* Always present. */
-	if (strcmp(ja->ja_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ja->ja_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

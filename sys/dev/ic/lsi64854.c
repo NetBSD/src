@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.14.2.4 2002/01/08 00:29:56 nathanw Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.14.2.5 2002/10/18 02:41:55 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.14.2.4 2002/01/08 00:29:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.14.2.5 2002/10/18 02:41:55 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,12 @@ lsi64854_attach(sc)
 		return;
 	}
 
-	printf(": dma rev ");
 	csr = L64854_GCSR(sc);
 	sc->sc_rev = csr & L64854_DEVID;
+	if (sc->sc_rev == DMAREV_HME) {
+		return;
+	}
+	printf(": dma rev ");
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
@@ -139,9 +142,6 @@ lsi64854_attach(sc)
 		break;
 	case DMAREV_2:
 		printf("2");
-		break;
-	case DMAREV_HME:
-		printf("fas");
 		break;
 	default:
 		printf("unknown (0x%x)", sc->sc_rev);
@@ -438,6 +438,9 @@ lsi64854_scsi_intr(arg)
 	if (!(csr & D_WRITE) &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		DPRINTF(LDB_SCSI, ("dmaintr: empty esp FIFO of %d ", resid));
+		if (nsc->sc_rev == NCR_VARIANT_FAS366 &&
+		    (NCR_READ_REG(nsc, NCR_CFG3) & NCRFASCFG3_EWIDE))
+			resid <<= 1;
 	}
 
 	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11.12.1 2002/09/17 21:15:33 nathanw Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.12.2 2002/10/18 02:38:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -213,22 +213,7 @@ enum {
  * {device}_cd
  * references all found devices of a type.
  */
-#ifdef _LKM
-
-struct cfdriver iwm_cd = {
-	NULL,			/* Ptr to array of devices found	 */
-	"iwm",			/* Device name string			 */
-	DV_DULL,		/* Device classification		 */
-	0			/* Number of devices found		 */
-};
-struct cfdriver fd_cd = {
-	NULL,
-	"fd",
-	DV_DISK,
-	0
-};
-
-#else /* defined _LKM */
+#ifndef _LKM
 
 extern struct cfdriver iwm_cd;
 extern struct cfdriver fd_cd;
@@ -236,18 +221,12 @@ extern struct cfdriver fd_cd;
 #endif /* defined _LKM */
 
 /* IWM floppy disk controller */
-struct cfattach iwm_ca = {
-	sizeof(iwm_softc_t),	/* Size of device data for malloc()	 */
-	iwm_match,		/* Probe device and return match level	 */
-	iwm_attach		/* Initialize and attach device		 */
-};
+CFATTACH_DECL(iwm, sizeof(iwm_softc_t),
+    iwm_match, iwm_attach, NULL, NULL);
 
 /* Attached floppy disk drives */
-struct cfattach fd_ca = {
-	sizeof(fd_softc_t),
-	fd_match,
-	fd_attach
-};
+CFATTACH_DECL(fd, sizeof(fd_softc_t),
+    fd_match, fd_attach, NULL, NULL);
 
 dev_type_open(fdopen);
 dev_type_close(fdclose);

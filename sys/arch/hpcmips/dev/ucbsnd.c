@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.7.2.3 2002/09/17 21:14:47 nathanw Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.7.2.4 2002/10/18 02:37:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,21 +172,17 @@ void	ringbuf_producer_return(struct ring_buf*, size_t);
 void	*ringbuf_consumer_get(struct ring_buf*, size_t*);
 void	ringbuf_consumer_return(struct ring_buf*);
 
-struct cfattach ucbsnd_ca = {
-	sizeof(struct ucbsnd_softc), ucbsnd_match, ucbsnd_attach
-};
+CFATTACH_DECL(ucbsnd, sizeof(struct ucbsnd_softc),
+    ucbsnd_match, ucbsnd_attach, NULL, NULL);
 
 dev_type_open(ucbsndopen);
 dev_type_close(ucbsndclose);
 dev_type_read(ucbsndread);
 dev_type_write(ucbsndwrite);
-dev_type_ioctl(ucbsndioctl);
-dev_type_poll(ucbsndpoll);
-dev_type_mmap(ucbsndmmap);
 
 const struct cdevsw ucbsnd_cdevsw = {
-	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, ucbsndioctl,
-	nostop, notty, ucbsndpoll, ucbsndmmap,
+	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, nullioctl,
+	nostop, notty, nopoll, nullmmap,
 };
 
 int
@@ -642,36 +638,6 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 	s = splaudio();
 	ringbuf_reset(&sc->sc_rb);
 	splx(s);
-
-	return (error);
-}
-
-int
-ucbsndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
-{
-	int error = 0;
-
-	/* not coded yet */
-
-	return (error);
-}
-
-int
-ucbsndpoll(dev_t dev, int events, struct proc *p)
-{
-	int error = 0;
-
-	/* not coded yet */
-
-	return (error);
-}
-
-paddr_t
-ucbsndmmap(dev_t dev, off_t off, int prot)
-{
-	int error = 0;
-
-	/* not coded yet */
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.2.4.2 2002/04/17 00:02:28 nathanw Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.2.4.3 2002/10/18 02:35:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -159,7 +159,7 @@ fcomcons_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("fcomcons_alloc(): Help!\n");
+	panic("fcomcons_alloc(): Help!");
 }
 
 
@@ -181,7 +181,7 @@ fcomcons_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("fcomcons_free(): Help!\n");
+	panic("fcomcons_free(): Help!");
 	/* fcomcons_unmap() does all that we need to do. */
 /*	fcomcons_unmap(t, bsh, size);*/
 }

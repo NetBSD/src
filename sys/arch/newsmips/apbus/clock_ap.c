@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_ap.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: clock_ap.c,v 1.2.14.1 2002/10/18 02:39:09 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -45,9 +45,8 @@ struct clock_ap_softc {
 int clock_ap_match __P((struct device *, struct cfdata *, void *));
 void clock_ap_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mkclock_ap_ca = {
-	sizeof(struct clock_ap_softc), clock_ap_match, clock_ap_attach,
-};
+CFATTACH_DECL(mkclock_ap, sizeof(struct clock_ap_softc),
+    clock_ap_match, clock_ap_attach, NULL, NULL);
 
 static void clockinit __P((struct device *));
 static void clockget __P((struct device *, struct clock_ymdhms *));

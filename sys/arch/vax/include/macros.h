@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.23.8.5 2002/06/24 21:13:23 nathanw Exp $	*/
+/*	$NetBSD: macros.h,v 1.23.8.6 2002/10/18 02:40:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -344,7 +344,7 @@ bbcci(int bitnr, long *addr)
 #define remrunqueue(p)	\
 	__asm__ __volatile("movl %0,%%r0;jsb Remrq" :: "g"(p):"r0","r1","r2");
 
-#define cpu_switch(p) ({ 						\
+#define cpu_switch(p,newp) ({ 						\
 	register int ret;							\
 	__asm__ __volatile("movpsl -(%%sp);jsb Swtch; movl %%r0,%0"	\
 	    : "=g"(ret) ::"r0","r1","r2","r3","r4","r5");		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.14 2002/09/17 21:14:38 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.15 2002/10/18 02:36:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.14 2002/09/17 21:14:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.15 2002/10/18 02:36:53 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.14 2002/09/17 21:14:38 nathanw E
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/buf.h>
-#include <sys/clist.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/file.h>
@@ -62,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.14 2002/09/17 21:14:38 nathanw E
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -243,12 +241,11 @@ hp300_init()
 void
 consinit()
 {
-	extern struct map extiomap[];
 
 	/*
-	 * Initialize the DIO resource map.
+	 * Initialize the external I/O extent map.
 	 */
-	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
+	iomap_init();
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -422,6 +419,9 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/* Safe to use malloc for extio_ex now. */
+	extio_ex_malloc_safe = 1;
 }
 
 /*

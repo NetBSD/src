@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.4.2.5 2002/06/20 03:37:18 nathanw Exp $
+#	$NetBSD: Makefile.acorn32,v 1.4.2.6 2002/10/18 02:33:35 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,6 @@ GENASSYM_EXTRAS+=	${ACORN32}/acorn32/genassym.cf
 ##
 CPPFLAGS+=	-Darm32
 CWARNFLAGS+=	-Wcomment
-LOOSE_PROTOTYPES= yes
 AFLAGS+=	-x assembler-with-cpp
 
 ##

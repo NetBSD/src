@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn26,v 1.1.4.1 2002/09/17 21:12:22 nathanw Exp $
+#	$NetBSD: majors.acorn26,v 1.1.4.2 2002/10/18 02:33:26 nathanw Exp $
 #
 # Device majors for acorn26
 #
@@ -32,3 +32,4 @@ device-major	vcoda		char 25			vcoda
 device-major	raid		char 26  block 7	raid
 device-major	clockctl	char 27			clockctl
 device-major	systrace	char 28			systrace
+device-major	cgd		char 29  block 8	cgd

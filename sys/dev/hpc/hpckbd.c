@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.2.2.3 2002/04/01 07:45:14 nathanw Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.2.2.4 2002/10/18 02:41:41 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.2.2.3 2002/04/01 07:45:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.2.2.4 2002/10/18 02:41:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,9 +112,8 @@ void	hpckbd_keymap_setup(struct hpckbd_core *, const keysym_t *, int);
 int	__hpckbd_input(void *, int, int);
 void	__hpckbd_input_hook(void*);
 
-struct cfattach hpckbd_ca = {
-	sizeof(struct hpckbd_softc), hpckbd_match, hpckbd_attach
-};
+CFATTACH_DECL(hpckbd, sizeof(struct hpckbd_softc),
+    hpckbd_match, hpckbd_attach, NULL, NULL);
 
 /* wskbd accessopts */
 int	hpckbd_enable(void *, int);

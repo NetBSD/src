@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.17.4.3 2002/09/17 21:18:14 nathanw Exp $	*/
+/*	$NetBSD: bw2.c,v 1.17.4.4 2002/10/18 02:40:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,9 +86,8 @@ struct bw2_softc {
 static void	bw2attach __P((struct device *, struct device *, void *));
 static int	bw2match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach bwtwo_ca = {
-	sizeof(struct bw2_softc), bw2match, bw2attach
-};
+CFATTACH_DECL(bwtwo, sizeof(struct bw2_softc),
+    bw2match, bw2attach, NULL, NULL);
 
 extern struct cfdriver bwtwo_cd;
 

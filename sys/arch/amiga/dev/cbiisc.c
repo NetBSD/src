@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.11.8.2 2002/02/28 04:06:34 nathanw Exp $ */
+/*	$NetBSD: cbiisc.c,v 1.11.8.3 2002/10/18 02:34:48 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.11.8.2 2002/02/28 04:06:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.11.8.3 2002/10/18 02:34:48 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,9 +69,8 @@ void	cbiiscattach(struct device *, struct device *, void *);
 int	cbiiscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
-struct cfattach cbiisc_ca = {
-	sizeof(struct cbiisc_softc), cbiiscmatch, cbiiscattach
-};
+CFATTACH_DECL(cbiisc, sizeof(struct cbiisc_softc),
+    cbiiscmatch, cbiiscattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.2.2.6 2002/01/08 00:30:44 nathanw Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.2.2.7 2002/10/18 02:42:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.2.2.6 2002/01/08 00:30:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.2.2.7 2002/10/18 02:42:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.2.2.6 2002/01/08 00:30:44 nathanw Ex
 int ep_mca_match __P((struct device *, struct cfdata *, void *));
 void ep_mca_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ep_mca_ca = {
-	sizeof(struct ep_softc), ep_mca_match, ep_mca_attach
-};
+CFATTACH_DECL(ep_mca, sizeof(struct ep_softc),
+    ep_mca_match, ep_mca_attach, NULL, NULL);
 
 const struct ep_mca_product {
 	u_int32_t	epp_prodid;	/* MCA product ID */

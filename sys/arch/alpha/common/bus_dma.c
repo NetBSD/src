@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.47.2.3 2002/06/20 03:37:32 nathanw Exp $ */
+/* $NetBSD: bus_dma.c,v 1.47.2.4 2002/10/18 02:34:05 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47.2.3 2002/06/20 03:37:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47.2.4 2002/10/18 02:34:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,8 +443,6 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	/* Always round the size. */
 	size = round_page(size);
-
-	high = avail_end - PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.

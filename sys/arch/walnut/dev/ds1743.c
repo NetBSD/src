@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.1.8.3 2002/08/13 02:19:03 nathanw Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.1.8.4 2002/10/18 02:40:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -69,9 +69,8 @@ static u_char ds1743_lock(struct dsrtc_softc *, u_char);
 static void ds1743_unlock(struct dsrtc_softc *, u_char);
 
 /* device and attach structures */
-struct cfattach dsrtc_ca = {
-	sizeof(struct dsrtc_softc), dsrtcmatch, dsrtcattach
-};
+CFATTACH_DECL(dsrtc, sizeof(struct dsrtc_softc),
+    dsrtcmatch, dsrtcattach, NULL, NULL);
 
 /*
  * dsrtcmatch()
@@ -91,7 +90,7 @@ dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 	u_int8_t x;
 
 	/* match only RTC devices */
-	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->pb_name, cf->cf_name) != 0)
 		return 0;
 
 	if (bus_space_map(0, paa->pb_addr, DS_SIZE, 0, &h)) {

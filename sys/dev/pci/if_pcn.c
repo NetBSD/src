@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.4.6.8 2002/09/17 21:20:16 nathanw Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.4.6.9 2002/10/18 02:43:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.8 2002/09/17 21:20:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.9 2002/10/18 02:43:05 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -459,9 +459,8 @@ int	pcn_copy_small = 0;
 int	pcn_match(struct device *, struct cfdata *, void *);
 void	pcn_attach(struct device *, struct device *, void *);
 
-struct cfattach pcn_ca = {
-	sizeof(struct pcn_softc), pcn_match, pcn_attach,
-};
+CFATTACH_DECL(pcn, sizeof(struct pcn_softc),
+    pcn_match, pcn_attach, NULL, NULL);
 
 /*
  * Routines to read and write the PCnet-PCI CSR/BCR space.

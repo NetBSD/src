@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.7.4.11 2002/08/13 02:18:20 nathanw Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.7.4.12 2002/10/18 02:37:31 nathanw Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -18,7 +18,6 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
-#options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
@@ -72,7 +71,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -186,6 +185,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+cpu* at mainbus?
 
 #apm0	at mainbus0			# Advanced power management
 

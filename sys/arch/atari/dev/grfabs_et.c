@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.18.8.1 2002/04/01 07:39:32 nathanw Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.18.8.2 2002/10/18 02:35:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -230,7 +230,7 @@ view_t *v;
 	if (mode->current_view == v) {
 #if 0
 		if (v->flags & VF_DISPLAY)
-			panic("Cannot shutdown display\n"); /* XXX */
+			panic("Cannot shutdown display"); /* XXX */
 #endif
 		mode->current_view = NULL;
 	}

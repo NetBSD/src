@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.12.2.5 2002/07/12 01:39:57 nathanw Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.12.2.6 2002/10/18 02:40:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.12.2.5 2002/07/12 01:39:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.12.2.6 2002/10/18 02:40:56 nathanw Exp $");
 
 #include "opt_sysv.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.12.2.5 2002/07/12 01:39:57 nathanw
 
 #include <compat/common/compat_util.h>
 
-#ifdef SYSVSEM
+#if defined(SYSVSEM) && !defined(_LP64)
 int
 compat_10_sys_semsys(l, v, retval)
 	struct lwp *l;
@@ -118,7 +118,7 @@ compat_10_sys_semsys(l, v, retval)
 }
 #endif
 
-#ifdef SYSVSHM
+#if defined(SYSVSHM) && !defined(_LP64)
 int
 compat_10_sys_shmsys(l, v, retval)
 	struct lwp *l;
@@ -182,7 +182,7 @@ compat_10_sys_shmsys(l, v, retval)
 }
 #endif
 
-#ifdef SYSVMSG
+#if defined(SYSVMSG) && !defined(_LP64)
 int
 compat_10_sys_msgsys(l, v, retval)
 	struct lwp *l;

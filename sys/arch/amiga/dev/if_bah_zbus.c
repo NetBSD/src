@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.6.12.1 2002/02/28 04:06:46 nathanw Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.6.12.2 2002/10/18 02:34:57 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.6.12.1 2002/02/28 04:06:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.6.12.2 2002/10/18 02:34:57 nathanw Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the
@@ -81,9 +81,8 @@ int	bah_zbus_match(struct device *, struct cfdata *, void *);
 void	bah_zbus_attach(struct device *, struct device *, void *);
 void	bah_zbus_reset(struct bah_softc *, int);
 
-struct cfattach bah_zbus_ca = {
-	sizeof(struct bah_zbus_softc), bah_zbus_match, bah_zbus_attach
-};
+CFATTACH_DECL(bah_zbus, sizeof(struct bah_zbus_softc),
+    bah_zbus_match, bah_zbus_attach, NULL, NULL);
 
 int
 bah_zbus_match(struct device *parent, struct cfdata *cfp, void *aux)

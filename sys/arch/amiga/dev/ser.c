@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.58.2.4 2002/09/17 21:13:09 nathanw Exp $ */
+/*	$NetBSD: ser.c,v 1.58.2.5 2002/10/18 02:35:04 nathanw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,10 +40,11 @@
  */
 
 #include "opt_amigacons.h"
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.58.2.4 2002/09/17 21:13:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.58.2.5 2002/10/18 02:35:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +79,8 @@ struct ser_softc {
 	struct tty *ser_tty;
 };
 
-struct cfattach ser_ca = {
-	sizeof(struct ser_softc), sermatch, serattach
-};
+CFATTACH_DECL(ser, sizeof(struct ser_softc),
+    sermatch, serattach, NULL, NULL);
 
 extern struct cfdriver ser_cd;
 
@@ -573,6 +573,7 @@ serintr(void)
 void
 sereint(int stat)
 {
+	static int break_in_progress = 0;
 	struct tty *tp;
 	u_char ch;
 	int c;
@@ -596,12 +597,29 @@ sereint(int stat)
 	/*
 	 * Check for break and (if enabled) parity error.
 	 */
-	if ((stat & 0x1ff) == 0)
-		c |= TTY_FE;
-	else if ((tp->t_cflag & PARENB) &&
-		    (((ch >> 7) + even_parity[ch & 0x7f]
-		    + !!(tp->t_cflag & PARODD)) & 1))
+	if ((stat & 0x1ff) == 0) {
+		if (break_in_progress)
+			return;
+
+		c = TTY_FE;
+		break_in_progress = 1;
+#ifdef DDB
+		if (serconsole == 0) {
+			extern int db_active;
+
+			if (!db_active) {
+				console_debugger();
+				return;
+			}
+		}
+#endif
+	} else {
+		break_in_progress = 0;
+		if ((tp->t_cflag & PARENB) &&
+			(((ch >> 7) + even_parity[ch & 0x7f]
+				+ !!(tp->t_cflag & PARODD)) & 1))
 			c |= TTY_PE;
+	}
 
 	if (stat & SERDATRF_OVRUN)
 		log(LOG_WARNING, "ser0: silo overflow\n");
@@ -901,7 +919,7 @@ serstart(struct tty *tp)
 #ifdef DIAGNOSTIC
 	unit = SERUNIT(tp->t_dev);
 	if (unit)
-		panic("serstart: unit is %d\n", unit);
+		panic("serstart: unit is %d", unit);
 #endif
 
 	s = spltty();
@@ -1103,12 +1121,14 @@ sercngetc(dev_t dev)
 	 */
 	while (((stat = custom.serdatr & 0xffff) & SERDATRF_RBF) == 0)
 		;
+
 	c = stat & 0xff;
 	/*
 	 * clear interrupt
 	 */
 	custom.intreq = INTF_RBF;
 	splx(s);
+
 	return(c);
 }
 

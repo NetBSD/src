@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.4.2.6 2002/09/17 21:17:07 nathanw Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.4.2.7 2002/10/18 02:39:31 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -43,7 +43,6 @@
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -108,7 +107,6 @@ mpc6xx_init(void (*handler)(void))
 	extern int sctrap, scsize;
 	extern int alitrap, alisize;
 	extern int dsitrap, dsisize;
-	extern int isitrap, isisize;
 	extern int decrint, decrsize;
 	extern int tlbimiss, tlbimsize;
 	extern int tlbdlmiss, tlbdlmsize;
@@ -175,10 +173,6 @@ mpc6xx_init(void (*handler)(void))
 		case EXC_DSI:
 			size = (size_t)&dsisize;
 			memcpy((void *)EXC_DSI, &dsitrap, size);
-			break;
-		case EXC_ISI:
-			size = (size_t)&isisize;
-			memcpy((void *)EXC_ISI, &isitrap, size);
 			break;
 		case EXC_DECR:
 			size = (size_t)&decrsize;

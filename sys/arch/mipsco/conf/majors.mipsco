@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.2.2.2 2002/09/17 21:15:54 nathanw Exp $
+#	$NetBSD: majors.mipsco,v 1.2.2.3 2002/10/18 02:38:52 nathanw Exp $
 #
 # Device majors for mipsco
 #
@@ -29,6 +29,7 @@ device-major	rnd		char 47			rnd
 device-major	filedesc	char 48
 device-major	ccd		char 49  block 7	ccd
 device-major	vnd		char 50  block 6	vnd
+device-major	cgd		char 51  block 8	cgd
 
 device-major	uk		char 54			uk
 device-major	cd		char 55  block 16	cd

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40.2.2 2002/08/01 02:42:37 nathanw Exp $
+# $NetBSD: GENERIC,v 1.40.2.3 2002/10/18 02:38:55 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.40.2.2 $"
+#ident 		"GENERIC-$Revision: 1.40.2.3 $"
 
 maxusers	16		# estimated number of users
 
@@ -42,6 +42,7 @@ options 	INITTODR_ALWAYS_USE_RTC
 options 	HZ=50		# clock interrupt generates every 1/HZ sec
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -54,7 +55,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -121,6 +122,7 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
@@ -166,6 +168,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 # Pseudo-Devices
 
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

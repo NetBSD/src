@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15.4.6 2002/07/12 01:39:51 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15.4.7 2002/10/18 02:40:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1133,7 +1133,7 @@ pv_changepte(pa, set_bits, clear_bits)
 #ifdef	DIAGNOSTIC
 	/* This function should only clear these bits: */
 	if (clear_bits & ~(PG_WRITE | PG_NC | PG_REF | PG_MOD))
-		panic("pv_changepte: clear=0x%x\n", clear_bits);
+		panic("pv_changepte: clear=0x%x", clear_bits);
 #endif
 
 	flags = 0;
@@ -1189,7 +1189,7 @@ pv_changepte(pa, set_bits, clear_bits)
 #ifdef	DIAGNOSTIC
 		/* PV entries point only to valid mappings. */
 		if ((pte & PG_VALID) == 0)
-			panic("pv_changepte: not PG_VALID at va=0x%lx\n", va);
+			panic("pv_changepte: not PG_VALID at va=0x%lx", va);
 #endif
 		/* Get these while it's easy. */
 		if (pte & PG_MODREF) {
@@ -1291,7 +1291,7 @@ pv_syncflags(pv)
 #ifdef	DIAGNOSTIC
 		/* PV entries point only to valid mappings. */
 		if ((pte & PG_VALID) == 0)
-			panic("pv_syncflags: not PG_VALID at va=0x%lx\n", va);
+			panic("pv_syncflags: not PG_VALID at va=0x%lx", va);
 #endif
 		/* OK, do what we came here for... */
 		if (pte & PG_MODREF) {
@@ -2995,7 +2995,7 @@ pmap_extract(pmap, va, pap)
 	pa = PG_PA(pte);
 #ifdef	DIAGNOSTIC
 	if (pte & PG_TYPE) {
-		panic("pmap_extract: not main mem, va=0x%lx\n", va);
+		panic("pmap_extract: not main mem, va=0x%lx", va);
 	}
 #endif
 	if (pap != NULL)

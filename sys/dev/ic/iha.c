@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.3.2.9 2002/04/17 00:05:39 nathanw Exp $ */
+/*	$NetBSD: iha.c,v 1.3.2.10 2002/10/18 02:41:53 nathanw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.3.2.9 2002/04/17 00:05:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.3.2.10 2002/10/18 02:41:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2705,7 +2705,7 @@ iha_read_eeprom(sc, eeprom)
 
 	/* Read EEProm */
 	if (iha_se2_rd_all(sc, buf) == 0)
-		panic("%s: cannot read EEPROM\n", sc->sc_dev.dv_xname);
+		panic("%s: cannot read EEPROM", sc->sc_dev.dv_xname);
 
 	/* Disable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) & ~EEPRG;

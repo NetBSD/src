@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.1.4.3 2002/06/20 03:37:20 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.1.4.4 2002/10/18 02:33:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,9 +103,8 @@ struct ne_pbus_softc {
 static int  ne_pbus_probe	__P((struct device *, struct cfdata *, void *));
 static void ne_pbus_attach	__P((struct device *, struct device *, void *));
 
-struct cfattach ne_pbus_ca = {
-	sizeof(struct ne_pbus_softc), ne_pbus_probe, ne_pbus_attach
-};
+CFATTACH_DECL(ne_pbus, sizeof(struct ne_pbus_softc),
+    ne_pbus_probe, ne_pbus_attach, NULL, NULL);
 
 /*
  * Prototypes for interface specific routines
@@ -273,7 +272,7 @@ ne_pbus_attach(parent, self, aux)
 #ifdef	DIAGNOSTIC
 	/* This should never fail as we must have matched at probe time */
 	if (ne == NULL)
-		panic("Podule has vanished\n");
+		panic("Podule has vanished");
 #endif
 
 	/* Update the nic and asic base addresses appropriately */

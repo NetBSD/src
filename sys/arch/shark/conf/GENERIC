@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1.2.5 2002/06/20 03:40:55 nathanw Exp $
+#	$NetBSD: GENERIC,v 1.1.2.6 2002/10/18 02:39:45 nathanw Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.2.5 $"
+#ident		"GENERIC-$Revision: 1.1.2.6 $"
 
 # estimated number of users
 maxusers	32
@@ -124,10 +124,11 @@ options 	INSECURE		# disable kernel securelevel
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
@@ -138,6 +139,8 @@ options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
+options		SYMTAB_SPACE=200000	# reserve symbol space for DDB
+				# (needed because we boot netbsd.aout)
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KERNEL_DEBUG	# compile in kernel debuging capability
@@ -218,6 +221,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	cgd	4		# cryptographic disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #pseudo-device	md	1		# Ramdisk driver

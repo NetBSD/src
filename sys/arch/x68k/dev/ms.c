@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10.12.2 2002/09/17 21:18:47 nathanw Exp $ */
+/*	$NetBSD: ms.c,v 1.10.12.3 2002/10/18 02:40:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,9 +139,8 @@ static void ms_attach __P((struct device*, struct device*, void*));
 static void ms_trigger __P((struct zs_chanstate*, int));
 void ms_modem __P((void *));
 
-struct cfattach ms_ca = {
-	sizeof(struct ms_softc), ms_match, ms_attach
-};
+CFATTACH_DECL(ms, sizeof(struct ms_softc),
+    ms_match, ms_attach, NULL, NULL);
 
 extern struct zsops zsops_ms;
 extern struct cfdriver ms_cd;

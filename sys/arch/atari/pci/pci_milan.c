@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.2.10.3 2002/02/28 04:08:28 nathanw Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.2.10.4 2002/10/18 02:35:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
 	void			*ih_arg;
 {
 	if (ih == 0 || ih >= 16 || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, ih_fun, ih_arg);
 }
 

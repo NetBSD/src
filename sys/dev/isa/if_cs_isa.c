@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.3.2.5 2002/06/20 03:45:10 nathanw Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.3.2.6 2002/10/18 02:42:14 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.5 2002/06/20 03:45:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.6 2002/10/18 02:42:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.3.2.5 2002/06/20 03:45:10 nathanw Ex
 int	cs_isa_probe __P((struct device *, struct cfdata *, void *));
 void	cs_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach cs_isa_ca = {
-	sizeof(struct cs_softc_isa), cs_isa_probe, cs_isa_attach
-};
+CFATTACH_DECL(cs_isa, sizeof(struct cs_softc),
+    cs_isa_probe, cs_isa_attach, NULL, NULL);
 
 int 
 cs_isa_probe(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.51.2.5 2002/09/17 21:20:03 nathanw Exp $	*/
+/*	$NetBSD: wt.c,v 1.51.2.6 2002/10/18 02:42:38 nathanw Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.5 2002/09/17 21:20:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.2.6 2002/10/18 02:42:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,9 +183,8 @@ int wtprobe __P((struct device *, struct cfdata *, void *));
 void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((void *sc));
 
-struct cfattach wt_ca = {
-	sizeof(struct wt_softc), wtprobe, wtattach
-};
+CFATTACH_DECL(wt, sizeof(struct wt_softc),
+    wtprobe, wtattach, NULL, NULL);
 
 extern struct cfdriver wt_cd;
 

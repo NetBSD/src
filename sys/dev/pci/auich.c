@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3.2.8 2002/09/17 21:20:13 nathanw Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.2.9 2002/10/18 02:42:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,16 +105,12 @@
  * ICH4:http://www.intel.com/design/chipsets/datashts/290744.htm
  *
  * TODO:
- *	- Add support for the microphone input.
+ *	- Add support for the dedicated microphone input.
  *	- 4ch/6ch support.
- *	- auich_calibrate() is called in auich_open().  It causes about 0.1sec
- *	  delay in the first open().  auich_calibrate() should be called in
- *	  auich_attach().  However microtime() doesn't work in the attach
- *	  stage.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.8 2002/09/17 21:20:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.2.9 2002/10/18 02:42:54 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,11 +198,7 @@ struct auich_softc {
 
 	struct auich_dma *sc_dmas;
 
-	int sc_fixed_rate;
-	int sc_calibrated;	/* sc_ac97rate has correct value */
-	int sc_ac97rate;
 	int sc_ignore_codecready;
-
 	/* SiS 7012 hack */
 	int  sc_sample_size;
 	int  sc_sts_reg;
@@ -223,7 +215,8 @@ struct auich_softc {
 	u_int16_t ext_status;
 };
 
-#define FIXED_RATE 48000
+#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
+				  & AC97_EXT_AUDIO_VRA)
 
 /* Debug */
 #ifdef AUDIO_DEBUG
@@ -240,9 +233,8 @@ int	auich_match(struct device *, struct cfdata *, void *);
 void	auich_attach(struct device *, struct device *, void *);
 int	auich_intr(void *);
 
-struct cfattach auich_ca = {
-	sizeof(struct auich_softc), auich_match, auich_attach
-};
+CFATTACH_DECL(auich, sizeof(struct auich_softc),
+    auich_match, auich_attach, NULL, NULL);
 
 int	auich_open(void *, int);
 void	auich_close(void *);
@@ -273,8 +265,8 @@ int	auich_allocmem(struct auich_softc *, size_t, size_t,
 int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void	auich_powerhook(int, void *);
-int	auich_set_rate(struct auich_softc *sc, int mode, uint srate);
-unsigned int auich_calibrate(struct auich_softc *sc);
+int	auich_set_rate(struct auich_softc *, int, u_long*);
+void	auich_calibrate(struct device *);
 
 
 struct audio_hw_if auich_hw_if = {
@@ -377,7 +369,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t csr;
 	const char *intrstr;
 	const struct auich_devtype *d;
-	u_int16_t ext_id, ext_status;
 	u_int32_t status;
 
 	d = auich_lookup(pa);
@@ -435,6 +426,12 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sts_reg = ICH_STS;
 		sc->sc_sample_size = 2;
 	}
+	/* nForce MCP quirk */
+	if (d->vendor == PCI_VENDOR_NVIDIA
+	    && d->product == PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC) {
+		sc->sc_ignore_codecready = TRUE;
+	}
+
 
 	/* Set up DMA lists. */
 	sc->ptr_pcmo = sc->ptr_pcmi = sc->ptr_mici = 0;
@@ -443,7 +440,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(ICH_DEBUG_DMA, ("auich_attach: lists %p %p %p\n",
 	    sc->dmalist_pcmo, sc->dmalist_pcmi, sc->dmalist_mici));
 
-	sc->sc_ac97rate = FIXED_RATE;
 	/* Reset codec and AC'97 */
 	auich_reset_codec(sc);
 	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
@@ -473,31 +469,15 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
-	auich_read_codec(sc, AC97_REG_EXTENDED_ID, &ext_id);
-	if ((ext_id & (AC97_CODEC_DOES_VRA | AC97_CODEC_DOES_MICVRA)) != 0) {
-		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &ext_status);
-		if ((ext_id & AC97_CODEC_DOES_VRA) !=0)
-			ext_status |= AC97_ENAB_VRA;
-		if ((ext_id & AC97_CODEC_DOES_MICVRA) !=0)
-			ext_status |= AC97_ENAB_MICVRA;
-		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, ext_status);
-
-		/* so it claims to do variable rate, let's make sure */
-		if (auich_set_rate(sc, AUMODE_PLAY, 44100) == 44100)
-			sc->sc_fixed_rate = 0;
-		else
-			sc->sc_fixed_rate = FIXED_RATE;
-	} else {
-		sc->sc_fixed_rate = FIXED_RATE;
-	}
-	if (sc->sc_fixed_rate)
-		printf("%s: warning, fixed rate codec\n", sc->sc_dev.dv_xname);
-
 	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
+
+	if (!IS_FIXED_RATE(sc->codec_if)) {
+		config_interrupts(self, auich_calibrate);
+	}
 }
 
 #define ICH_CODECIO_INTERVAL	10
@@ -595,12 +575,6 @@ auich_reset_codec(void *v)
 int
 auich_open(void *v, int flags)
 {
-	struct auich_softc *sc = v;
-
-	if (!sc->sc_fixed_rate && !sc->sc_calibrated) {
-		sc->sc_ac97rate = auich_calibrate(sc);
-		sc->sc_calibrated = TRUE;
-	}
 	return 0;
 }
 
@@ -675,30 +649,13 @@ auich_query_encoding(void *v, struct audio_encoding *aep)
 }
 
 int
-auich_set_rate(struct auich_softc *sc, int mode, uint srate)
+auich_set_rate(struct auich_softc *sc, int mode, u_long* srate)
 {
-	u_int16_t val, rate, inout;
-	u_int32_t rvalue;
+	int reg;
 
-	inout = mode == AUMODE_PLAY ? ICH_PM_PCMO : ICH_PM_PCMI;
-
-	auich_read_codec(sc, AC97_REG_POWER, &val);
-	auich_write_codec(sc, AC97_REG_POWER, val | inout);
-
-	rvalue = srate * FIXED_RATE / sc->sc_ac97rate;
-	if (mode == AUMODE_PLAY) {
-		auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, rvalue);
-		auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
-	} else {
-		auich_write_codec(sc, AC97_REG_PCM_LR_ADC_RATE, rvalue);
-		auich_read_codec(sc, AC97_REG_PCM_LR_ADC_RATE, &rate);
-	}
-
-	auich_write_codec(sc, AC97_REG_POWER, val);
-
-	/* Cast to avoid integer overflow */
-	rvalue = (u_int32_t)rate * sc->sc_ac97rate / FIXED_RATE;
-	return rvalue;
+	reg = mode == AUMODE_PLAY
+		? AC97_REG_PCM_FRONT_DAC_RATE : AC97_REG_PCM_LR_ADC_RATE;
+	return sc->codec_if->vtbl->set_rate(sc->codec_if, reg, srate);
 }
 
 int
@@ -736,7 +693,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 		p->hw_precision = 16;
 
-		/* If manaural is requested, aurateconv expands a monaural
+		/* If monaural is requested, aurateconv expands a monaural
 		 * stream to stereo. */
 		if (p->channels < 2)
 			p->hw_channels = 2;
@@ -813,14 +770,13 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 		}
 
-		if (sc->sc_fixed_rate) {
-			p->hw_sample_rate = sc->sc_fixed_rate;
+		if (IS_FIXED_RATE(sc->codec_if)) {
+			p->hw_sample_rate = AC97_SINGLE_RATE;
+			/* If hw_sample_rate is changed, aurateconv works. */
 		} else {
-			p->hw_sample_rate = auich_set_rate(sc, mode,
-							   p->sample_rate);
+			if (auich_set_rate(sc, mode, &p->sample_rate))
+				return EINVAL;
 		}
-		/* If hw_sample_rate is different from sample_rate, aurateconv
-		 * works. */
 	}
 
 	return (0);
@@ -966,9 +922,18 @@ auich_mappage(void *v, void *mem, off_t off, int prot)
 int
 auich_get_props(void *v)
 {
+	struct auich_softc *sc = v;
+	int props;
 
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-		AUDIO_PROP_FULLDUPLEX);
+	props = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	/*
+	 * Even if the codec is fixed-rate, set_param() succeeds for any sample
+	 * rate because of aurateconv.  Applications can't know what rate the
+	 * device can process in the case of mmap().
+	 */
+	if (!IS_FIXED_RATE(sc->codec_if))
+		props |= AUDIO_PROP_MMAP;
+	return props;
 }
 
 int
@@ -1320,7 +1285,7 @@ auich_powerhook(int why, void *addr)
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
 		sc->sc_suspend = why;
-		auich_read_codec(sc, AC97_REG_EXTENDED_STATUS, &sc->ext_status);
+		auich_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->ext_status);
 		break;
 
 	case PWR_RESUME:
@@ -1336,7 +1301,7 @@ auich_powerhook(int why, void *addr)
 		auich_reset_codec(sc);
 		DELAY(1000);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		auich_write_codec(sc, AC97_REG_EXTENDED_STATUS, sc->ext_status);
+		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_status);
 		break;
 
 	case PWR_SOFTSUSPEND:
@@ -1350,16 +1315,17 @@ auich_powerhook(int why, void *addr)
 /* -------------------------------------------------------------------- */
 /* Calibrate card (some boards are overclocked and need scaling) */
 
-unsigned int
-auich_calibrate(struct auich_softc *sc)
+void
+auich_calibrate(struct device *self)
 {
+	struct auich_softc *sc;
 	struct timeval t1, t2;
 	u_int8_t ociv, nciv;
 	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
 
-	ac97rate = 48000;
+	sc = (struct auich_softc*)self;
 	/*
 	 * Grab audio from input for fixed interval and compare how
 	 * much we actually get with what we expect.  Interval needs
@@ -1374,7 +1340,7 @@ auich_calibrate(struct auich_softc *sc)
 		;
 	if (p == NULL) {
 		printf("auich_calibrate: bad address %p\n", temp_buffer);
-		return ac97rate;
+		return;
 	}
 	sc->dmalist_pcmi[0].base = DMAADDR(p);
 	sc->dmalist_pcmi[0].len = (bytes / sc->sc_sample_size) | ICH_DMAF_IOC;
@@ -1428,22 +1394,21 @@ auich_calibrate(struct auich_softc *sc)
 	if (nciv == ociv) {
 		printf("%s: ac97 link rate calibration timed out after %d us\n",
 		       sc->sc_dev.dv_xname, wait_us);
-		return ac97rate;
+		return;
 	}
 
-	actual_48k_rate = (bytes * 250000) / wait_us;
+	actual_48k_rate = (bytes * 250000U) / wait_us;
 
-	if (actual_48k_rate < 47500 || actual_48k_rate > 48500) {
+	if (actual_48k_rate <= 48500)
+		ac97rate = 48000;
+	else
 		ac97rate = actual_48k_rate;
-	}
 
-	if (ac97rate != 48000) {
-		printf("%s: measured ac97 link rate at %d Hz",
-		       sc->sc_dev.dv_xname, actual_48k_rate);
-		if (ac97rate != actual_48k_rate)
-			printf(", will use %d Hz", ac97rate);
-		printf("\n");
-	}
+	printf("%s: measured ac97 link rate at %d Hz",
+	       sc->sc_dev.dv_xname, actual_48k_rate);
+	if (ac97rate != actual_48k_rate)
+		printf(", will use %d Hz", ac97rate);
+	printf("\n");
 
-	return ac97rate;
+	sc->codec_if->vtbl->set_clock(sc->codec_if, ac97rate);
 }

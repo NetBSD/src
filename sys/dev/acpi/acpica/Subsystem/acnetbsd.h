@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.1.4.3 $
+ *       $Revision: 1.1.4.4 $
  *
  *****************************************************************************/
 
@@ -239,27 +239,5 @@ strupr(char *str)
     }
     return(str);
 }
-
-#ifdef _KERNEL
-/* Or strstr (used in debugging mode, also move to libkern) */
-static __inline char *
-strstr(char *s, char *find)
-{
-    char c, sc;
-    size_t len;
-
-    if ((c = *find++) != 0) {
-	len = strlen(find);
-	do {
-	    do {
-		if ((sc = *s++) == 0)
-		    return (NULL);
-	    } while (sc != c);
-	} while (strncmp(s, find, len) != 0);
-	s--;
-    }
-    return ((char *)s);
-}
-#endif /* _KERNEL */
 
 #endif /* __ACNETBSD_H__ */

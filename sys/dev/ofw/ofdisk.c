@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.15.2.5 2002/09/17 21:20:11 nathanw Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.15.2.6 2002/10/18 02:42:52 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.2.5 2002/09/17 21:20:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.15.2.6 2002/10/18 02:42:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,9 +66,8 @@ struct ofdisk_softc {
 static int ofdisk_match (struct device *, struct cfdata *, void *);
 static void ofdisk_attach (struct device *, struct device *, void *);
 
-struct cfattach ofdisk_ca = {
-	sizeof(struct ofdisk_softc), ofdisk_match, ofdisk_attach
-};
+CFATTACH_DECL(ofdisk, sizeof(struct ofdisk_softc),
+    ofdisk_match, ofdisk_attach, NULL, NULL);
 
 extern struct cfdriver ofdisk_cd;
 
@@ -137,9 +136,6 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_dk.dk_name = of->sc_name;
 	strcpy(of->sc_name, of->sc_dev.dv_xname);
 	disk_attach(&of->sc_dk);
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(&of->sc_dk, self);				/* XXX */
-#endif
 	printf("\n");
 
 	if (strcmp(child, "floppy") == 0)
@@ -181,7 +177,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 		strcat(path, ":0");
 
-		if (!(of->sc_ihandle = OF_open(path)))
+		if ((of->sc_ihandle = OF_open(path)) == -1)
 			return ENXIO;
 
 		/*
@@ -433,7 +429,7 @@ ofdisk_getdefaultlabel(struct ofdisk_softc *of, struct disklabel *lp)
 
 	/*
 	 * XXX Firmware bug?  Asking for block size gives a
-	 * XXX rediculous number!  So we use what the boot program
+	 * XXX ridiculous number!  So we use what the boot program
 	 * XXX uses.
 	 */
 	lp->d_secsize = DEV_BSIZE;

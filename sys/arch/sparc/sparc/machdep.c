@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.16 2002/09/17 21:17:47 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.17 2002/10/18 02:39:59 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/extent.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -99,7 +98,6 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>

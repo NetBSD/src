@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.36.8.5 2002/06/24 22:03:35 nathanw Exp $ */
+/*	$NetBSD: clock.c,v 1.36.8.6 2002/10/18 02:34:49 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36.8.5 2002/06/24 22:03:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36.8.6 2002/10/18 02:34:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,9 +97,8 @@ void clockattach(struct device *, struct device *, void *);
 void cpu_initclocks(void);
 void calibrate_delay(struct device *);
 
-struct cfattach clock_ca = {
-	sizeof(struct device), clockmatch, clockattach
-};
+CFATTACH_DECL(clock, sizeof(struct device),
+    clockmatch, clockattach, NULL, NULL);
 
 int
 clockmatch(struct device *pdp, struct cfdata *cfp, void *auxp)

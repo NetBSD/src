@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.1.2.3 2002/09/17 21:15:37 nathanw Exp $	*/
+/*	$NetBSD: apm.c,v 1.1.2.4 2002/10/18 02:38:34 nathanw Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -114,9 +114,8 @@ static int	apm_record_event __P((struct apm_softc *, u_int));
 #endif
 #endif
 
-struct cfattach apm_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach
-};
+CFATTACH_DECL(apm, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL);
 
 #ifdef __OpenBSD__
 struct cfdriver apm_cd = {

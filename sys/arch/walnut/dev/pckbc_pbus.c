@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_pbus.c,v 1.1.2.3 2002/08/27 23:46:07 nathanw Exp $ */
+/* $NetBSD: pckbc_pbus.c,v 1.1.2.4 2002/10/18 02:40:39 nathanw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,9 +63,8 @@ static int	pckbc_pbus_probe(struct device *, struct cfdata *, void *);
 static void	pckbc_pbus_attach(struct device *, struct device *, void *);
 static void	pckbc_pbus_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-struct cfattach pckbc_pbus_ca = {
-	sizeof(struct pckbc_pbus_softc), pckbc_pbus_probe, pckbc_pbus_attach
-};
+CFATTACH_DECL(pckbc_pbus, sizeof(struct pckbc_pbus_softc),
+    pckbc_pbus_probe, pckbc_pbus_attach, NULL, NULL);
 
 int pckbcfound = 0;
 
@@ -75,7 +74,7 @@ pckbc_pbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 	struct pbus_attach_args *paa = aux;
 
 	/* match only pckbc devices */
-	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->pb_name, cf->cf_name) != 0)
 		return 0;
 
 	return (pckbcfound < 1);

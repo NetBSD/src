@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.8 2002/08/01 02:43:01 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.9 2002/10/18 02:39:29 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -828,7 +828,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef	DIAGNOSTIC
 	if ((flags & (PME_NOCACHE | PME_WRITETHROUG)) ==
 		(PME_NOCACHE | PME_WRITETHROUG))
-		panic("pmap_enter: uncached & writethrough\n");
+		panic("pmap_enter: uncached & writethrough");
 #endif
 	if (flags & PME_NOCACHE)
 		/* Must be I/O mapping */
@@ -863,7 +863,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		attr = pa_to_attr(pa);
 #ifdef DIAGNOSTIC
 		if (!attr)
-			panic("managed but no attr\n");
+			panic("managed but no attr");
 #endif
 		if (flags & VM_PROT_ALL)
 			*attr |= PTE_HI_REF;
@@ -953,7 +953,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #ifdef DIAGNOSTIC
 		if ((prot & (PME_NOCACHE | PME_WRITETHROUG)) ==
 			(PME_NOCACHE | PME_WRITETHROUG))
-			panic("pmap_kenter_pa: uncached & writethrough\n");
+			panic("pmap_kenter_pa: uncached & writethrough");
 #endif
 		if (prot & PME_NOCACHE)
 			/* Must be I/O mapping */
@@ -1310,7 +1310,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 
 #ifdef DIAGNOSTIC
 	if ((idx < TLB_NRESERVED) || (idx >= NTLB)) {
-		panic("ppc4xx_tlb_enter: repacing entry %ld\n", idx);
+		panic("ppc4xx_tlb_enter: repacing entry %ld", idx);
 	}
 #endif
 
@@ -1437,7 +1437,7 @@ ctx_flush(int cnum)
 			}
 #ifdef DIAGNOSTIC
 			if (i < TLB_NRESERVED)
-				panic("TLB entry %d not locked\n", i);
+				panic("TLB entry %d not locked", i);
 #endif
 			/* Invalidate particular TLB entry regardless of locked status */
 			asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));

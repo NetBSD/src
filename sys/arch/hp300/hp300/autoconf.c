@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.c,v 1.49.20.4 2002/06/20 03:38:38 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.20.5 2002/10/18 02:36:52 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.20.4 2002/06/20 03:38:38 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.20.5 2002/10/18 02:36:52 nathanw Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -121,11 +121,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.20.4 2002/06/20 03:38:38 nathanw E
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
+#include <sys/extent.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/tty.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -165,9 +167,6 @@ extern int dnkbdcnattach(bus_space_tag_t, bus_addr_t);
 int dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int));
 int dio_scode_probe(int, int (*func)(bus_space_tag_t, bus_addr_t, int));
 
-/* XXX must be allocated statically because of early console init */
-struct	map extiomap[EIOMAPSIZE/16];
-
 extern	caddr_t internalhpib;
 extern	char *extiobase;
 
@@ -177,6 +176,16 @@ int	booted_partition;
 
 /* How we were booted. */
 u_int	bootdev;
+
+/*
+ * Extent map to manage the external I/O (DIO/DIO-II) space.  We
+ * allocate storate for 8 regions in the map.  extio_ex_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors in case we run out.
+ */
+static long extio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct extent *extio_ex;
+int extio_ex_malloc_safe;
 
 /*
  * This information is built during the autoconfig process.
@@ -234,9 +243,8 @@ int	mainbusmatch __P((struct device *, struct cfdata *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
 int	mainbussearch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbusmatch, mainbusattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbusmatch, mainbusattach, NULL, NULL);
 
 int
 mainbusmatch(parent, match, aux)
@@ -273,7 +281,7 @@ mainbussearch(parent, cf, aux)
 	void *aux;
 {
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 	return (0);
 }
@@ -916,6 +924,20 @@ dio_scode_probe(scode, func)
  **********************************************************************/
 
 /*
+ * Initialize the external I/O extent map.
+ */
+void
+iomap_init(void)
+{
+
+	/* extiobase is initialized by pmap_bootstrap(). */
+	extio_ex = extent_create("extio", (u_long) extiobase,
+	    (u_long) extiobase + (ptoa(EIOMAPSIZE) - 1), M_DEVBUF,
+	    (caddr_t) extio_ex_storage, sizeof(extio_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+}
+
+/*
  * Allocate/deallocate a cache-inhibited range of kernel virtual address
  * space mapping the indicated physical address range [pa - pa+size)
  */
@@ -924,20 +946,22 @@ iomap(pa, size)
 	caddr_t pa;
 	int size;
 {
-	int ix, npf;
-	caddr_t kva;
+	u_long kva;
+	int error;
 
 #ifdef DEBUG
 	if (((int)pa & PGOFSET) || (size & PGOFSET))
 		panic("iomap: unaligned");
 #endif
-	npf = btoc(size);
-	ix = rmalloc(extiomap, npf);
-	if (ix == 0)
-		return(0);
-	kva = extiobase + ctob(ix-1);
-	physaccess(kva, pa, size, PG_RW|PG_CI);
-	return(kva);
+
+	error = extent_alloc(extio_ex, size, PAGE_SIZE, 0,
+	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
+	    &kva);
+	if (error)
+		return (0);
+
+	physaccess((caddr_t) kva, pa, size, PG_RW|PG_CI);
+	return ((caddr_t) kva);
 }
 
 /*
@@ -948,15 +972,16 @@ iounmap(kva, size)
 	caddr_t kva;
 	int size;
 {
-	int ix;
 
 #ifdef DEBUG
 	if (((int)kva & PGOFSET) || (size & PGOFSET))
 		panic("iounmap: unaligned");
-	if (kva < extiobase || kva >= extiobase + ctob(EIOMAPSIZE))
+	if (kva < extiobase || kva >= extiobase + ptoa(EIOMAPSIZE))
 		panic("iounmap: bad address");
 #endif
 	physunaccess(kva, size);
-	ix = btoc(kva - extiobase) + 1;
-	rmfree(extiomap, btoc(size), ix);
+	if (extent_free(extio_ex, (u_long) kva, size,
+	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
+		printf("iounmap: kva %p size 0x%x: can't free region\n",
+		    kva, size);
 }

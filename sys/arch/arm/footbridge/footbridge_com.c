@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.2.6.5 2002/09/17 21:13:26 nathanw Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.2.6.6 2002/10/18 02:35:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -114,9 +114,8 @@ int	fcomcngetc	__P((dev_t));
 void	fcomcnputc	__P((dev_t, int));
 void	fcomcnpollc	__P((dev_t, int));
 
-struct cfattach fcom_ca = {
-	sizeof(struct fcom_softc), fcom_probe, fcom_attach
-};
+CFATTACH_DECL(fcom, sizeof(struct fcom_softc),
+    fcom_probe, fcom_attach, NULL, NULL);
 
 extern struct cfdriver fcom_cd;
 
@@ -215,7 +214,7 @@ fcom_attach(parent, self, aux)
 	sc->sc_ih = intr_claim(sc->sc_rx_irq, IPL_SERIAL, "serial rx",
 	    fcom_rxintr, sc);
 	if (sc->sc_ih == NULL)
-		panic("%s: Cannot install rx interrupt handler\n",
+		panic("%s: Cannot install rx interrupt handler",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -294,7 +293,7 @@ fcomclose(dev, flag, mode, p)
 	ttyclose(tp);
 #ifdef DIAGNOSTIC
 	if (sc->sc_rxbuffer[0] == NULL)
-		panic("fcomclose: rx buffers not allocated\n");
+		panic("fcomclose: rx buffers not allocated");
 #endif	/* DIAGNOSTIC */
 	free(sc->sc_rxbuffer[0], M_DEVBUF);
 	free(sc->sc_rxbuffer[1], M_DEVBUF);

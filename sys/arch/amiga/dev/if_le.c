@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.34.8.2 2002/02/28 04:06:47 nathanw Exp $ */
+/*	$NetBSD: if_le.c,v 1.34.8.3 2002/10/18 02:34:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.34.8.2 2002/02/28 04:06:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.34.8.3 2002/10/18 02:34:58 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -118,9 +118,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.34.8.2 2002/02/28 04:06:47 nathanw Exp $
 int le_zbus_match(struct device *, struct cfdata *, void *);
 void le_zbus_attach(struct device *, struct device *, void *);
 
-struct cfattach le_zbus_ca = {
-	sizeof(struct le_softc), le_zbus_match, le_zbus_attach
-};
+CFATTACH_DECL(le_zbus, sizeof(struct le_softc),
+    le_zbus_match, le_zbus_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"

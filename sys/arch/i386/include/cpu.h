@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.9 2002/08/01 02:42:09 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.10 2002/10/18 02:37:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,24 +43,26 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #endif
 
 /*
  * Definitions unique to i386 cpu support.
  */
-#include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
+#include <machine/tss.h>
 
+#include <sys/device.h>
+#include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
 
 struct i386_cache_info {
-	int		cai_index;
-	u_int32_t	cai_desc;
-	u_int		cai_totalsize;
-	u_int		cai_associativity;
-	u_int		cai_linesize;
+	uint8_t		cai_index;
+	uint8_t		cai_desc;
+	uint8_t		cai_associativity;
+	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
+	u_int		cai_linesize;	/* or page size for TLB */
+	const char	*cai_string;
 };
 
 #define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
@@ -73,22 +75,158 @@ struct i386_cache_info {
 
 #define	CAI_COUNT	7
 
+struct mp_intr_map;
+
+/*
+ * a bunch of this belongs in cpuvar.h; move it later..
+ */
+
 struct cpu_info {
+	struct device *ci_dev;		/* pointer to our device */
+	struct cpu_info *ci_self;	/* self-pointer */
+	void	*ci_tlog_base;		/* Trap log base */
+	int32_t ci_tlog_offset;		/* Trap log current offset */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
+	struct cpu_info *ci_next;	/* next cpu */
+
+	/*
+	 * Public members.
+	 */
+	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct simplelock ci_slock;	/* lock on this data structure */
+	cpuid_t ci_cpuid;		/* our CPU ID */
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 
+	/*
+	 * Private members.
+	 */
+	struct proc *ci_fpcurlwp;	/* current owner of the FPU */
+	int	ci_fpsaving;		/* save in progress */
+
+	struct pcb *ci_curpcb;		/* VA of current HW PCB */
+	struct pcb *ci_idle_pcb;	/* VA of current PCB */
+	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
+
+	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
+	u_int32_t ci_flags;		/* flags; see below */
+	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
+	int sc_apic_version;		/* local APIC version */
+
+	int32_t		ci_cpuid_level;
+	u_int32_t	ci_signature;	 /* X86 cpuid type */
+	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
+	u_int32_t	ci_cpu_class;	 /* CPU class */
+	u_int32_t	ci_brand_id;	 /* Intel brand id */
+	u_int32_t	ci_vendor[4];	 /* vendor string */
+	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
+	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
+
+	struct cpu_functions *ci_func;  /* start/stop functions */
+	void (*cpu_setup) __P((struct cpu_info *));
+ 					/* proc-dependant init */
+	void (*ci_info)	__P((struct cpu_info *));
+
+	int		ci_want_resched;
+	int		ci_astpending;
+	struct trapframe *ci_ddb_regs;
+
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
 	struct i386_cache_info ci_cinfo[CAI_COUNT];
-	void (*ci_info) __P((int));
+
+	/*
+	 * Variables used by tsc_microtime().
+	 */
+	struct timeval ci_tsc_time;
+	int64_t ci_tsc_tsc;
+	int64_t ci_tsc_ms_delta;
+	int64_t ci_tsc_denom;
+
+	union descriptor *ci_gdt;
+
+	volatile u_int32_t	ci_tlb_ipi_mask;
+
+	struct i386tss	ci_doubleflt_tss;
+	struct i386tss	ci_ddbipi_tss;
+
+	char *ci_doubleflt_stack;
+	char *ci_ddbipi_stack;
 };
 
+/*
+ * Processor flag notes: The "primary" CPU has certain MI-defined
+ * roles (mostly relating to hardclock handling); we distinguish
+ * betwen the processor which booted us, and the processor currently
+ * holding the "primary" role just to give us the flexibility later to
+ * change primaries should we be sufficiently twisted.
+ */
+
+#define	CPUF_BSP	0x0001		/* CPU is the original BSP */
+#define	CPUF_AP		0x0002		/* CPU is an AP */
+#define	CPUF_SP		0x0004		/* CPU is only processor */
+#define	CPUF_PRIMARY	0x0008		/* CPU is active primary processor */
+
+#define CPUF_APIC_CD    0x0010		/* CPU has apic configured */
+
+#define	CPUF_PRESENT	0x1000		/* CPU is present */
+#define	CPUF_RUNNING	0x2000		/* CPU is running */
+#define	CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
+#define	CPUF_GO		0x8000		/* CPU should start running */
+
+/*
+ * We statically allocate the CPU info for the primary CPU (or,
+ * the only CPU on uniprocessors), and the primary CPU is the
+ * first CPU on the CPU info list.
+ */
+extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
+
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+					ci != NULL; ci = ci->ci_next
+
+#if defined(MULTIPROCESSOR)
+
+#define I386_MAXPROCS		32	/* because we use a bitmask */
+
+#define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
+#define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
+
+#define curcpu()		({struct cpu_info *ci; 			\
+				  asm volatile("movl %%fs:4,%0" : "=r" (ci)); \
+				  ci;})
+#define cpu_number() 		(curcpu()->ci_cpuid)
+
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+
+#if 0
+#define i386_ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
+#else
+#define i386_ipisend(ci)	0
+#endif
+
+#define aston(ci)		((ci)->ci_astpending = 1, i386_ipisend(ci))
+
+extern	struct cpu_info *cpu_info[I386_MAXPROCS];
+
+void cpu_boot_secondary_processors __P((void));
+void cpu_init_idle_pcbs __P((void));
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+extern void need_resched __P((struct cpu_info *));
+
+#else /* !MULTIPROCESSOR */
+
+#define	I386_MAXPROCS		1
+
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
+extern struct cpu_info cpu_info_primary;
 
-#define	curcpu()			(&cpu_info_store)
-
-void	cpu_proc_fork(struct proc *, struct proc *);
+#define	curcpu()		(&cpu_info_primary)
 
 #endif
 
@@ -96,8 +234,25 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_number()			0
+#define	cpu_number()		0
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+#define	need_resched(ci)						\
+do {									\
+	struct cpu_info *__ci = (ci);					\
+	__ci->ci_want_resched = 1;					\
+	aston(__ci);							\
+} while (0)
+
+#define aston(ci)		(curcpu()->ci_astpending = 1)
+
+#endif
+
+#define	curpcb			curcpu()->ci_curpcb
+#define	curproc			curcpu()->ci_curproc
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -122,29 +277,28 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 #define	LWP_PC(l)		((l)->l_md.md_regs->tf_eip)
 
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern	int	want_resched;		/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
-
-/*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p->p_cpu))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		setsoftast()
+#define	signotify(p)		aston(p->p_cpu)
 
 /*
  * We need a machine-independent name for this.
  */
-#define	DELAY(x)		delay(x)
+extern void (*delay_func) __P((int));
+struct timeval;
+extern void (*microtime_func) __P((struct timeval *));
+
+#define	DELAY(x)		(*delay_func)(x)
+#define delay(x)		(*delay_func)(x)
+#define microtime(tv)		(*microtime_func)(tv)
 
 /*
  * pull in #defines for kinds of processors
@@ -156,9 +310,9 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_vendorname;
 	const char *cpu_name;
 	int cpu_class;
-	void (*cpu_setup) __P((void));
+	void (*cpu_setup) __P((struct cpu_info *));
 	void (*cpu_cacheinfo) __P((struct cpu_info *));
-	void (*cpu_info) __P((int));
+	void (*cpu_info) __P((struct cpu_info *));
 };
 
 
@@ -169,21 +323,18 @@ struct cpu_cpuid_nameclass {
 	struct cpu_cpuid_family {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
-		void (*cpu_setup) __P((void));
-		void (*cpu_cacheinfo) __P((struct cpu_info *));
-		void (*cpu_info) __P((int));
+		void (*cpu_setup) __P((struct cpu_info *));
+		void (*cpu_probe) __P((struct cpu_info *));
+		void (*cpu_info) __P((struct cpu_info *));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
 #ifdef _KERNEL
 extern int biosbasemem;
 extern int biosextmem;
+extern int cpu_feature;
 extern int cpu;
 extern int cpu_class;
-extern int cpu_feature;
-extern int cpu_id;
-extern char cpu_vendor[];
-extern int cpuid_level;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
@@ -192,11 +343,14 @@ extern int i386_has_sse;
 extern int i386_has_sse2;
 
 /* machdep.c */
-void	delay __P((int));
 void	dumpconf __P((void));
 void	cpu_reset __P((void));
+void	i386_init_pcb_tss_ldt __P((struct cpu_info *));
 void	i386_proc0_tss_ldt_init __P((void));
 void	i386_bufinit __P((void));
+
+/* vm_machdep.c */
+void	cpu_proc_fork __P((struct proc *, struct proc *));
 
 /* locore.s */
 struct region_descriptor;
@@ -212,10 +366,22 @@ void	proc_trampoline __P((void));
 /* clock.c */
 void	initrtclock __P((void));
 void	startrtclock __P((void));
+void	i8254_delay __P((int));
+void	i8254_microtime __P((struct timeval *));
+void	i8254_initclocks __P((void));
+
+/* tsc_microtime.c */
+
+void	tsc_microtime __P((struct timeval *));
+void	tsc_microset __P((struct cpu_info *));
+
+/* cpu.c */
+
+void	cpu_probe_features __P((struct cpu_info *));
 
 /* npx.c */
-void	npxdrop __P((void));
-void	npxsave __P((void));
+void	npxsave_proc __P((struct proc *, int));
+void	npxsave_cpu __P((struct cpu_info *, int));
 
 /* vm_machdep.c */
 int kvtop __P((caddr_t));
@@ -258,7 +424,9 @@ void i386_bus_space_mallocok __P((void));
 
 #endif /* _KERNEL */
 
-/* 
+#include <machine/psl.h>
+
+/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */

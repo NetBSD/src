@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.4.4.4 2002/04/01 07:38:42 nathanw Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.4.4.5 2002/10/18 02:33:22 nathanw Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.4.4.4 2002/04/01 07:38:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.4.4.5 2002/10/18 02:33:22 nathanw Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1503,9 +1503,6 @@ extern u_int32_t cycles_per_sec;	/* alpha cpu clock frequency */
 extern u_int64_t cycles_per_usec;	/* alpha cpu clock frequency */
 #endif
 #endif /* __alpha__ */
-#if defined(__i386__) && defined(__NetBSD__)
-extern u_int64_t cpu_tsc_freq;
-#endif
 
 void
 init_machclk(void) 
@@ -1531,7 +1528,7 @@ init_machclk(void)
 	machclk_freq = i586_ctr_freq;
 #endif
 #elif defined(__NetBSD__)
-	machclk_freq = (u_int32_t)cpu_tsc_freq;
+	machclk_freq = (u_int32_t)curcpu()->ci_tsc_freq;
 #elif defined(__OpenBSD__)
 	machclk_freq = pentium_mhz * 1000000;
 #endif

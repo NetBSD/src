@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.2 2000/12/10 15:43:02 jdolecek Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.2.2.1 2002/10/18 02:42:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct auvia_softc_chan {
 	struct auvia_dma_op *sc_dma_ops;
 	struct auvia_dma *sc_dma_ops_dma;
 	u_int16_t sc_dma_op_count;
+	int sc_base;
 	u_int16_t sc_reg;
 };
 
@@ -54,9 +55,8 @@ struct auvia_softc {
 	struct device sc_dev;
 
 	char sc_revision[8];
-	u_long sc_fixed_rate;		/* if codec doesn't support variable
-					 * rate audio, set to the fixed rate
-					 * it uses */
+	u_int	sc_flags;
+#define	AUVIA_FLAGS_VT8233		0x0001
 
 	void *sc_ih;			/* interrupt handle */
 
@@ -65,8 +65,6 @@ struct auvia_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	bus_addr_t sc_ioaddr;
-	bus_size_t sc_iosize;
 	bus_dma_tag_t sc_dmat;
 
 	struct ac97_host_if host_if;
@@ -77,4 +75,7 @@ struct auvia_softc {
 	struct auvia_softc_chan sc_play, sc_record;
 };
 
-#endif
+#define IS_FIXED_RATE(codec)	!((codec)->vtbl->get_extcaps(codec) \
+				  & AC97_EXT_AUDIO_VRA)
+
+#endif /* !_DEV_PCI_AUVIAVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14.8.1 2002/03/29 23:31:42 ragge Exp $ */
+/*	$NetBSD: asm.h,v 1.14.8.2 2002/10/18 02:40:30 nathanw Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,7 +90,7 @@
 #ifdef GPROF
 # ifdef __ELF__
 #  define _PROF_PROLOGUE	\
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb _ASM_LABEL(__mcount)
+	.data; 1:; .long 0; .text; moval 1b,%r0; jsb _ASM_LABEL(__mcount)
 # else 
 #  define _PROF_PROLOGUE	\
 	.data; 1:; .long 0; .text; moval 1b,r0; jsb _ASM_LABEL(mcount)

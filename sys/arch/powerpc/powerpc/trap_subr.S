@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.11.6.7 2002/08/06 22:47:12 nathanw Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.11.6.8 2002/10/18 02:39:33 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -183,7 +183,8 @@ _C_LABEL(dsitrap):
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
-	bla	s_dsitrap
+	mtsprg	1,1			/* save SP */
+	bla	disitrap
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 
 /*
@@ -230,75 +231,9 @@ _C_LABEL(dsitrap601):
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
-	bla	s_dsitrap
+	mtsprg	1,1
+	bla	disitrap
 _C_LABEL(dsi601size) = .-_C_LABEL(dsitrap601)
-
-/*
- * Similar to the above for ISI
- */
-	.globl	_C_LABEL(isitrap),_C_LABEL(isisize)
-_C_LABEL(isitrap):
-	stmw	28,disisave(0)		/* free r28-r31 */
-	mflr	28			/* save LR */
-	mfcr	29			/* save CR */
-	mfsrr1	31			/* test kernel mode */
-	mtcr	31
-	bc	12,17,1f		/* branch if PSL_PR is set */
-	mfsrr0	31			/* get fault address */
-	rlwinm	31,31,7,25,28		/* get segment * 8 */
-
-	/* get batu */
-	addis	31,31,_C_LABEL(battable)@ha
-	lwz	30,_C_LABEL(battable)@l(31)
-	mtcr	30
-	bc	4,30,1f			/* branch if supervisor valid is
-					   false */
-	mtibatu	3,30
-
-	/* get batl */
-	lwz	30,_C_LABEL(battable)+4@l(31)
-	mtibatl	3,30
-
-	mtcr	29			/* restore CR */
-	lmw	28,disisave(0)		/* restore r28-r31 */
-	rfi				/* return to trapped code */
-1:
-	bla	s_isitrap
-_C_LABEL(isisize)= .-_C_LABEL(isitrap)
-
-/*
- * Dedicated MPC601 version of the above.
- * Considers different BAT format.
- */
-	.globl	_C_LABEL(isitrap601),_C_LABEL(isi601size)
-_C_LABEL(isitrap601):
-	stmw	28,disisave(0)		/* free r28-r31 */
-	mflr	28			/* save LR */
-	mfcr	29			/* save CR */
-	mfsrr1	31			/* test kernel mode */
-	mtcr	31
-	bc	12,17,1f		/* branch if PSL_PR is set */
-	mfsrr0	31			/* get fault address */
-	rlwinm	31,31,12,20,28		/* get "segment" battable offset */
-
-	/* get batl */
-	addis	31,31,_C_LABEL(battable)@ha
-	lwz	30,_C_LABEL(battable)+4@l(31)
-	mtcr	30
-	bc	4,25,1f			/* branch if Valid is is false,
-					   presently assumes supervisor only */
-	/* get batu */
-	lwz	31,_C_LABEL(battable)@l(31)
-
-	mtibatu	3,31
-	mtibatl	3,30
-
-	mtcr	29			/* restore CR */
-	lmw	28,disisave(0)		/* restore r28-r31 */
-	rfi				/* return to trapped code */
-1:
-	bla	s_isitrap
-_C_LABEL(isi601size)= .-_C_LABEL(isitrap601)
 
 /*
  * This one for the external interrupt handler.
@@ -811,87 +746,6 @@ s_sctrap:
 1:
 	FRAME_LEAVE(tempsave)
 	rfi
-
-/*
- * DSI second stage fault handler
- */
-s_dsitrap:
-	mfdsisr	31			/* test whether this may be a
-					   spill fault */
-	mtcr	31
-	mtsprg	1,1			/* save SP */
-	bc	4,1,disitrap		/* branch if table miss is false */
-	lis	1,spillstk+SPILLSTK@ha
-	addi	1,1,spillstk+SPILLSTK@l	/* get spill stack */
-	stwu	1,-SPFRAMELEN(1)
-	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
-	stw	3,SPFRAME_R3(1)
-	stw	4,SPFRAME_R4(1)
-	stw	5,SPFRAME_R5(1)
-	stw	6,SPFRAME_R6(1)
-	stw	7,SPFRAME_R7(1)
-	stw	8,SPFRAME_R8(1)
-	stw	9,SPFRAME_R9(1)
-	stw	10,SPFRAME_R10(1)
-	stw	11,SPFRAME_R11(1)
-	stw	12,SPFRAME_R12(1)
-	mflr	30			/* save trap type */
-	mfctr	31			/* & CTR */
-	mfdar	3
-s_pte_spill:
-	bl	_C_LABEL(pmap_pte_spill) /* try a spill */
-	or.	3,3,3
-	mtctr	31			/* restore CTR */
-	mtlr	30			/* and trap type */
-	mfsprg	31,2			/* get saved XER */
-	mtxer	31			/* restore XER */
-	lwz	12,SPFRAME_R12(1)	/* restore non-volatile registers */
-	lwz	11,SPFRAME_R11(1)
-	lwz	10,SPFRAME_R10(1)
-	lwz	9,SPFRAME_R9(1)
-	lwz	8,SPFRAME_R8(1)
-	lwz	7,SPFRAME_R7(1)
-	lwz	6,SPFRAME_R6(1)
-	lwz	5,SPFRAME_R5(1)
-	lwz	4,SPFRAME_R4(1)
-	lwz	3,SPFRAME_R3(1)
-	lwz	0,SPFRAME_R0(1)
-	beq	disitrap
-	mfsprg	1,1			/* restore SP */
-	mtcr	29			/* restore CR */
-	mtlr	28			/* restore LR */
-	lmw	28,disisave(0)		/* restore r28-r31 */
-	rfi				/* return to trapped code */
-
-/*
- * ISI second stage fault handler
- */
-s_isitrap:
-	mfsrr1	31			/* test whether this may be a
-					   spill fault */
-	mtcr	31
-	mtsprg	1,1			/* save SP */
-	bc	4,1,disitrap		/* branch if table miss is false */
-	lis	1,spillstk+SPILLSTK@ha
-	addi	1,1,spillstk+SPILLSTK@l	/* get spill stack */
-	stwu	1,-SPFRAMELEN(1)
-	stw	0,SPFRAME_R0(1)		/* save non-volatile registers */
-	stw	3,SPFRAME_R3(1)
-	stw	4,SPFRAME_R4(1)
-	stw	5,SPFRAME_R5(1)
-	stw	6,SPFRAME_R6(1)
-	stw	7,SPFRAME_R7(1)
-	stw	8,SPFRAME_R8(1)
-	stw	9,SPFRAME_R9(1)
-	stw	10,SPFRAME_R10(1)
-	stw	11,SPFRAME_R11(1)
-	stw	12,SPFRAME_R12(1)
-	mfxer	30			/* save XER */
-	mtsprg	2,30
-	mflr	30			/* save trap type */
-	mfctr	31			/* & ctr */
-	mfsrr0	3
-	b	s_pte_spill		/* above */
 
 /*
  * External interrupt second level handler

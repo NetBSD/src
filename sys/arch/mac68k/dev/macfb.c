@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.5.8.2 2002/08/01 02:42:20 nathanw Exp $ */
+/* $NetBSD: macfb.c,v 1.5.8.3 2002/10/18 02:38:19 nathanw Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -56,11 +56,8 @@
 int macfb_match __P((struct device *, struct cfdata *, void *));
 void macfb_attach __P((struct device *, struct device *, void *));
 
-struct cfattach macfb_ca = {
-	sizeof(struct macfb_softc), 
-	macfb_match,
-	macfb_attach,
-};
+CFATTACH_DECL(macfb, sizeof(struct macfb_softc),
+    macfb_match, macfb_attach, NULL, NULL);
 
 const struct wsdisplay_emulops macfb_emulops = {
 	rcons_cursor,

@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.18.24.3 2002/08/27 23:44:37 nathanw Exp $	*/
+/*	$NetBSD: microtime.s,v 1.18.24.4 2002/10/18 02:37:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -42,8 +42,8 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) >> 3)
 
-/* LINTSTUB: Func: void microtime(struct timeval *tv) */
-ENTRY(microtime)
+/* LINTSTUB: Func: void i8254_microtime(struct timeval *tv) */
+ENTRY(i8254_microtime)
 	# clear registers and do whatever we can up front
 	pushl	%edi
 	pushl	%ebx

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.2.2.2 2002/09/17 21:14:20 nathanw Exp $
+#	$NetBSD: majors.evbmips,v 1.2.2.3 2002/10/18 02:36:37 nathanw Exp $
 #
 # Device majors for evbmips
 #
@@ -73,3 +73,4 @@ device-major	kttcp		char 71			kttcp
 device-major	wsfont		char 72			wsfont
 device-major	aucom		char 73			aucom
 device-major	sysmon		char 74			sysmon
+device-major	cgd		char 75  block 18	cgd

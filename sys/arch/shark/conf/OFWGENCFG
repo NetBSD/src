@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.1.2.4 2002/06/20 03:40:56 nathanw Exp $
+#	$NetBSD: OFWGENCFG,v 1.1.2.5 2002/10/18 02:39:45 nathanw Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -6,7 +6,7 @@
 #	close enough to generic).
 #
 
-include	"arch/shark/conf/std.arm32"
+include	"arch/shark/conf/std.shark"
 include "arch/shark/conf/std.ofwgencfg"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
@@ -98,7 +98,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

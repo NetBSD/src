@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24.6.5 2002/08/06 22:47:07 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24.6.6 2002/10/18 02:38:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -67,9 +67,8 @@ void cpu_hatch(void);
 void cpu_spinup_trampoline(void);
 int cpuintr(void *);
 
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 

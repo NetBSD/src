@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.3.4.6 2002/06/20 03:45:21 nathanw Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.3.4.7 2002/10/18 02:42:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.6 2002/06/20 03:45:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.7 2002/10/18 02:42:58 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,8 @@ struct midi_hw_if cs4281_midi_hw_if = {
 };
 #endif
 
-struct cfattach clct_ca = {
-	sizeof(struct cs428x_softc), cs4281_match, cs4281_attach
-};
+CFATTACH_DECL(clct, sizeof(struct cs428x_softc),
+    cs4281_match, cs4281_attach, NULL, NULL);
 
 struct audio_device cs4281_device = {
 	"CS4281",

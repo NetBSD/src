@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.1.2.3 2002/04/17 00:04:20 nathanw Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.1.2.4 2002/10/18 02:39:47 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,9 +102,9 @@ extern char *_intrnames;
 
 /* Prototypes */
 
-extern void set_spl_masks	__P((void));
-
-void irq_calculatemasks __P((void));
+extern void set_spl_masks(void);
+void irq_calculatemasks(void);
+void stray_irqhandler(u_int);
 
 #define WriteWord(a, b) *((volatile unsigned int *)(a)) = (b)
 
@@ -162,9 +162,9 @@ irq_claim(irq, handler)
 #ifdef DIAGNOSTIC
 	/* Sanity check */
 	if (handler == NULL)
-		panic("NULL interrupt handler\n");
+		panic("NULL interrupt handler");
 	if (handler->ih_func == NULL)
-		panic("Interrupt handler does not have a function\n");
+		panic("Interrupt handler does not have a function");
 #endif	/* DIAGNOSTIC */
 
 	/*
@@ -391,7 +391,7 @@ intr_claim(irq, level, name, ih_func, ih_arg)
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (!ih)
-		panic("intr_claim(): Cannot malloc handler memory\n");
+		panic("intr_claim(): Cannot malloc handler memory");
 
 	ih->ih_level = level;
 	ih->ih_name = name;

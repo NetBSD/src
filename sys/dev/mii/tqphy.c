@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.11.2.7 2002/08/01 02:45:09 nathanw Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.11.2.8 2002/10/18 02:42:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.7 2002/08/01 02:45:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.8 2002/10/18 02:42:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.7 2002/08/01 02:45:09 nathanw Exp $
 int	tqphymatch(struct device *, struct cfdata *, void *);
 void	tqphyattach(struct device *, struct device *, void *);
 
-struct cfattach tqphy_ca = {
-	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(tqphy, sizeof(struct mii_softc),
+    tqphymatch, tqphyattach, mii_phy_detach, mii_phy_activate);
 
 int	tqphy_service(struct mii_softc *, struct mii_data *, int);
 void	tqphy_status(struct mii_softc *);

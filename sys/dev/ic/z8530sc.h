@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.14.6.2 2002/09/17 21:19:56 nathanw Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.14.6.3 2002/10/18 02:42:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -113,6 +113,13 @@ struct zs_chanstate {
 
 	char	cs_softreq;		/* need soft interrupt call */
 	char	cs_spare1;  	/* (for skippy :) */
+
+	/*
+	 * For strange systems that have oddly wired serial ports, we
+	 * provide a pointer to the channel state of the port that has
+	 * our status lines on it.
+	 */
+	struct  zs_chanstate *cs_ctl_chan;
 
 	/* power management hooks */
 	int	(*enable) __P((struct zs_chanstate *));

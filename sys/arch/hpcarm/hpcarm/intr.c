@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4.8.2 2002/01/08 00:24:53 nathanw Exp $	*/
+/*	$NetBSD: intr.c,v 1.4.8.3 2002/10/18 02:37:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -77,6 +77,10 @@ extern void sacomsoft	__P((void));
 #endif	/* NSACOM > 0 */
 
 /* Eventually these will become macros */
+
+void setsoftintr(u_int);
+void clearsoftintr(u_int);
+void dosoftints(void);
 
 void
 setsoftintr(intrmask)

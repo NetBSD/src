@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.47.2.2 2001/11/14 19:14:50 nathanw Exp $	*/
+/*	$NetBSD: isadma.c,v 1.47.2.3 2002/10/18 02:42:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.47.2.2 2001/11/14 19:14:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.47.2.3 2002/10/18 02:42:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ _isa_dmastart(ids, chan, addr, nbytes, p, flags, busdmaflags)
 
 	dmam = ids->ids_dmamaps[chan];
 	if (dmam == NULL)
-		panic("_isa_dmastart: no DMA map for chan %d\n", chan);
+		panic("_isa_dmastart: no DMA map for chan %d", chan);
 
 	error = bus_dmamap_load(ids->ids_dmat, dmam, addr, nbytes,
 	    p, busdmaflags |

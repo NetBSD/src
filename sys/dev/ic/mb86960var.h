@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.26.4.1 2001/06/21 20:02:51 nathanw Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.26.4.2 2002/10/18 02:41:57 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,8 +30,6 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
-
-#define FE_VERSION "if_fe.c ver. 0.8"
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -108,14 +106,18 @@ enum fe_type {
 
 	/* Fujitsu FMV-180 series. */
 	FE_TYPE_FMV181,
+	FE_TYPE_FMV181A,
 	FE_TYPE_FMV182,
+	FE_TYPE_FMV182A,
+	FE_TYPE_FMV183,
+	FE_TYPE_FMV184,
 
 	/* Allied-Telesis AT1700 series and RE2000 series. */
 	FE_TYPE_AT1700T,
 	FE_TYPE_AT1700BT,
 	FE_TYPE_AT1700FT,
 	FE_TYPE_AT1700AT,
-	FE_TYPE_RE2000,
+	FE_TYPE_AT_UNKNOWN,
 
 	/* PCMCIA by Fujitsu. */
 	FE_TYPE_MBH10302,
@@ -206,3 +208,5 @@ int	mb86960_enable	__P((struct mb86960_softc *));
 void	mb86960_disable	__P((struct mb86960_softc *));
 int	mb86960_activate __P((struct device *, enum devact));
 int	mb86960_detach	__P((struct mb86960_softc *));
+void	mb86965_read_eeprom __P((bus_space_tag_t, bus_space_handle_t,
+	    u_int8_t *));

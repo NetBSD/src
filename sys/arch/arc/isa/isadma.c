@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.4 2000/06/29 08:34:11 mrg Exp $	*/
+/*	$NetBSD: isadma.c,v 1.4.10.1 2002/10/18 02:35:12 nathanw Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
@@ -56,9 +56,8 @@ struct isadma_softc {
 	bus_space_handle_t sc_ioh2;
 }
 
-struct cfattach isadma_ca = {
-	sizeof(struct isadma_softc), isadmamatch, isadmaattach
-};
+CFATTACH_DECL(isadma, sizeof(struct isadma_softc),
+    isadmamatch, isadmaattach, NULL, NULL);
 
 struct cfdriver isadma_cd = {
 	NULL, "isadma", DV_DULL, 1

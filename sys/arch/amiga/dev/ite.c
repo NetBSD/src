@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.56.8.5 2002/09/17 21:13:03 nathanw Exp $ */
+/*	$NetBSD: ite.c,v 1.56.8.6 2002/10/18 02:35:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.8.5 2002/09/17 21:13:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.8.6 2002/10/18 02:35:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -154,9 +154,8 @@ inline static int atoi(const char *);
 inline static int ite_argnum(struct ite_softc *);
 inline static int ite_zargnum(struct ite_softc *);
 
-struct cfattach ite_ca = {
-	sizeof(struct ite_softc), itematch, iteattach
-};
+CFATTACH_DECL(ite, sizeof(struct ite_softc),
+    itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
 

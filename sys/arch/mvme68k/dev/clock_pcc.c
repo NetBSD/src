@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.10.6.2 2002/02/28 04:10:49 nathanw Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.10.6.3 2002/10/18 02:38:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,9 +63,8 @@ struct clock_pcc_softc {
 	u_char sc_clock_lvl;
 };
 
-struct cfattach clock_pcc_ca = {
-	sizeof(struct clock_pcc_softc), clock_pcc_match, clock_pcc_attach
-};
+CFATTACH_DECL(clock_pcc, sizeof(struct clock_pcc_softc),
+    clock_pcc_match, clock_pcc_attach, NULL, NULL);
 
 extern struct cfdriver clock_cd;
 

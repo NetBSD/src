@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3.2.2 2002/08/27 07:14:35 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3.2.3 2002/10/18 02:33:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,15 +41,17 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.3.2.2 2002/08/27 07:14:35 thorpej Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.3.2.3 2002/10/18 02:33:23 nathanw Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/frame.h>
 #include <machine/machdep.h>
 
 void idle(void);
@@ -126,13 +128,13 @@ extern int want_resched; /* XXX should be in <machine/cpu.h> */
 /*
  * Find the highest-priority runnable process and switch to it.
  */
-int
-cpu_switch(struct lwp *l1)
+void
+cpu_switch(struct lwp *l1, struct lwp *newl)
 {
 	int which;
 	struct prochd *q;
 	struct lwp *l2;
-
+	struct proc *p2;
 	/*
 	 * We enter here with interrupts blocked and sched_lock held.
 	 */
@@ -163,6 +165,18 @@ cpu_switch(struct lwp *l1)
 		return (0);
 	pmap_deactivate(l1);
 	pmap_activate(l2);
+
+	/* Check for Restartable Atomic Sequences. */
+	p2 = l2->l_proc;
+	if (p2->p_nras != 0) {
+		struct trapframe *tf = p2->p_addr->u_pcb.pcb_tf;
+		caddr_t pc;
+
+		pc = ras_lookup(p2, (caddr_t) tf->tf_pc);
+		if (pc != (caddr_t) -1)
+			tf->tf_pc = (register_t) pc;
+	}
+
 	cpu_loswitch(&l1->l_addr->u_pcb.pcb_sf, l2->l_addr->u_pcb.pcb_sf);
 	/* We only get back here after the other process has run. */
 	return (1);

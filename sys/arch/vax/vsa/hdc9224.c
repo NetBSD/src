@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.17.2.3 2002/09/17 21:18:38 nathanw Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.17.2.4 2002/10/18 02:40:38 nathanw Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -60,7 +60,6 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/dkstat.h> 
 #include <sys/disklabel.h>
@@ -182,13 +181,11 @@ static	void hdc_writeregs(struct hdcsoftc *);
 static	void hdc_readregs(struct hdcsoftc *);
 static	void hdc_qstart(void *);
  
-struct	cfattach hdc_ca = {
-	sizeof(struct hdcsoftc), hdcmatch, hdcattach
-};
+CFATTACH_DECL(hdc, sizeof(struct hdcsoftc),
+    hdcmatch, hdcattach, NULL, NULL);
 
-struct	cfattach rd_ca = {
-	sizeof(struct rdsoftc), rdmatch, rdattach
-};
+CFATTACH_DECL(rd, sizeof(struct rdsoftc),
+    rdmatch, rdattach, NULL, NULL);
 
 dev_type_open(rdopen);
 dev_type_close(rdclose);

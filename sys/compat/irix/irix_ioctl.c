@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.1.8.5 2002/09/17 21:18:55 nathanw Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.1.8.6 2002/10/18 02:41:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1.8.5 2002/09/17 21:18:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.1.8.6 2002/10/18 02:41:02 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,10 +87,11 @@ irix_sys_ioctl(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp;
 	struct vnode *vp;
+	struct vattr vattr;
 	struct irix_ioctl_usrdata iiu;
 	struct irix_ioctl_usrdata *iiup;
 	caddr_t sg = stackgap_init(p, 0);
-	int error;
+	int error, val;
 
 	/* 
 	 * This duplicates 6 lines from svr4_sys_ioctl() 
@@ -120,6 +121,8 @@ irix_sys_ioctl(p, v, retval)
 	 * are defined _IO but really are _IOR. XXX need security review.
 	 */
 	if ((cmd & IRIX_UIOC_MASK) == IRIX_UIOC) {
+		if (fp->f_type != DTYPE_VNODE)
+			return ENOTTY;
 		FILE_USE(fp);
 		vp = (struct vnode*)fp->f_data;
 		if (vp->v_type != VCHR ||
@@ -147,6 +150,39 @@ out:
 		return (*(fp->f_ops->fo_ioctl))(fp, FIONREAD, 
 		    SCARG(uap, data), p);
 		break;	
+
+	case IRIX_MTIOCGETBLKSIZE: /* get tape block size in 512B units */
+		if (fp->f_type != DTYPE_VNODE)
+			return ENOSYS;
+
+		FILE_USE(fp);
+		vp = (struct vnode*)fp->f_data;
+
+		switch (vp->v_type) {
+		case VREG:
+		case VLNK:
+		case VDIR:
+			error = ENOTTY;
+			break;
+		case VCHR:
+		case VFIFO:
+			error = EINVAL;
+			break;
+		case VBLK:
+			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+			if (error == 0) {
+				val = vattr.va_blocksize / 512;
+				error = copyout(&val, data, sizeof(int));
+			}
+
+		default:
+			error = ENOSYS;
+			break;
+		}
+
+		FILE_UNUSE(fp, p);
+		return error;
+		break;
 
 	default: /* Fallback to the standard SVR4 ioctl's */
 		error = svr4_sys_ioctl(p, v, retval);
