@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.2 2000/06/17 01:05:11 matt Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.3 2002/05/14 06:34:20 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/types.h>
+#include <sys/bootblock.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_aout.h>
 #include <err.h>
@@ -44,8 +45,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-
-#include <dev/dec/dec_boot.h>
 
 #include "installboot.h"
 
