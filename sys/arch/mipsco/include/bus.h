@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2001/09/15 00:49:53 wdk Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.2.1 2001/11/13 22:10:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -932,9 +932,7 @@ int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_mips1_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
-void	_mips3_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 
 int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
