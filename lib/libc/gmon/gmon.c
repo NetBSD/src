@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.19 2002/11/11 17:18:47 thorpej Exp $	*/
+/*	$NetBSD: gmon.c,v 1.20 2003/04/06 18:05:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.19 2002/11/11 17:18:47 thorpej Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.20 2003/04/06 18:05:52 dsl Exp $");
 #endif
 #endif
 
@@ -152,7 +152,6 @@ _mcleanup()
 	char *profdir;
 	char *proffile;
 	char  buf[PATH_MAX];
-	int len = sizeof(buf) - 1;
 #ifdef DEBUG
 	int log, len;
 	char buf2[200];
@@ -190,47 +189,17 @@ _mcleanup()
 	moncontrol(0);
 
 	if ((profdir = getenv("PROFDIR")) != NULL) {
-		const char *s;
-		char *t;
-		pid_t pid;
-		long divisor;
-
 		/* If PROFDIR contains a null value, no profiling 
 		   output is produced */
-		if (*profdir == '\0') {
+		if (*profdir == '\0')
+			return;
+
+		if (snprintf(buf, sizeof buf, "%s/%d.%s",
+			    profdir, getpid(), getprogname()) >= sizeof buf) {
+			warnx("_mcleanup: internal buffer overflow, PROFDIR too long");
 			return;
 		}
 		
-		t = buf;
-		s = profdir;
-		while ((*t = *s) != '\0') {
-			if (len-- == 0) {
-				warnx("_mcleanup: internal buffer overflow, PROFDIR too long");
-				return;
-			}
-			t++;
-			s++;
-		}
-		*t++ = '/';
-
-		/* 
-		 * Copy and convert pid from a pid_t to a string.  For 
-		 * best performance, divisor should be initialized to
-		 * the largest power of 10 less than PID_MAX.
-		 */
-		pid = getpid();
-		divisor=10000;
-		while (divisor > pid) divisor /= 10;	/* skip leading zeros */
-		do {
-			*t++ = (char)((pid/divisor) + '0');
-			pid %= (pid_t)divisor;
-		} while (divisor /= 10);
-		*t++ = '.';
-
-		s = getprogname();
-		while ((*t++ = *s++) != '\0')
-			;
-
 		proffile = buf;
 	} else {
 		proffile = "gmon.out";
