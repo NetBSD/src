@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/10/07 09:19:42 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1997/10/20 00:46:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1997/10/07 09:19:42 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1997/10/20 00:46:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: main.c,v 1.8 1997/10/07 09:19:42 mrg Exp $");
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <netdb.h>
 #include <setjmp.h>
@@ -158,21 +159,15 @@ main(argc, argv)
 	struct sockaddr_in s_in;
 
 	sp = getservbyname("tftp", "udp");
-	if (sp == 0) {
-		fprintf(stderr, "tftp: udp/tftp: unknown service\n");
-		exit(1);
-	}
+	if (sp == 0)
+		errx(1, "udp/tftp: unknown service");
 	f = socket(AF_INET, SOCK_DGRAM, 0);
-	if (f < 0) {
-		perror("tftp: socket");
-		exit(3);
-	}
-	bzero((char *)&s_in, sizeof (s_in));
+	if (f < 0)
+		err(3, "socket");
+	memset((char *)&s_in, 0, sizeof (s_in));
 	s_in.sin_family = AF_INET;
-	if (bind(f, (struct sockaddr *)&s_in, sizeof (s_in)) < 0) {
-		perror("tftp: bind");
-		exit(1);
-	}
+	if (bind(f, (struct sockaddr *)&s_in, sizeof (s_in)) < 0)
+		err(1, "bind");
 	strcpy(mode, "netascii");
 	signal(SIGINT, intr);
 	if (argc > 1) {
@@ -218,7 +213,7 @@ setpeer(argc, argv)
 			return;
 		}
 		peeraddr.sin_family = host->h_addrtype;
-		bcopy(host->h_addr, &peeraddr.sin_addr, host->h_length);
+		memmove(&peeraddr.sin_addr, host->h_addr, host->h_length);
  		(void) strncpy(hostname, host->h_name, sizeof(hostname));
  		hostname[sizeof(hostname)-1] = 0;
 	}
@@ -253,7 +248,7 @@ modecmd(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct modes *p;
+	struct modes *p;
 	char *sep;
 
 	if (argc < 2) {
@@ -320,8 +315,8 @@ put(argc, argv)
 	char *argv[];
 {
 	int fd;
-	register int n;
-	register char *cp, *targ;
+	int n;
+	char *cp, *targ;
 
 	if (argc < 2) {
 		strcpy(line, "send ");
@@ -336,25 +331,24 @@ put(argc, argv)
 		return;
 	}
 	targ = argv[argc - 1];
-	if (index(argv[argc - 1], ':')) {
+	if (strchr(argv[argc - 1], ':')) {
 		char *cp;
 		struct hostent *hp;
 
 		for (n = 1; n < argc - 1; n++)
-			if (index(argv[n], ':')) {
+			if (strchr(argv[n], ':')) {
 				putusage(argv[0]);
 				return;
 			}
 		cp = argv[argc - 1];
-		targ = index(cp, ':');
+		targ = strchr(cp, ':');
 		*targ++ = 0;
 		hp = gethostbyname(cp);
 		if (hp == NULL) {
-			fprintf(stderr, "tftp: %s: ", cp);
-			herror((char *)NULL);
+			warnx("%s: %s", cp, hstrerror(h_errno));
 			return;
 		}
-		bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr, hp->h_length);
+		memmove((caddr_t)&peeraddr.sin_addr, hp->h_addr, hp->h_length);
 		peeraddr.sin_family = hp->h_addrtype;
 		connected = 1;
 		strncpy(hostname, hp->h_name, sizeof(hostname));
@@ -368,7 +362,7 @@ put(argc, argv)
 		cp = argc == 2 ? tail(targ) : argv[1];
 		fd = open(cp, O_RDONLY);
 		if (fd < 0) {
-			fprintf(stderr, "tftp: "); perror(cp);
+			warn("%s", cp);
 			return;
 		}
 		if (verbose)
@@ -380,13 +374,13 @@ put(argc, argv)
 	}
 				/* this assumes the target is a directory */
 				/* on a remote unix system.  hmmmm.  */
-	cp = index(targ, '\0'); 
+	cp = strchr(targ, '\0'); 
 	*cp++ = '/';
 	for (n = 1; n < argc - 1; n++) {
 		strcpy(cp, tail(argv[n]));
 		fd = open(argv[n], O_RDONLY);
 		if (fd < 0) {
-			fprintf(stderr, "tftp: "); perror(argv[n]);
+			warn("%s", argv[n]);
 			continue;
 		}
 		if (verbose)
@@ -414,8 +408,8 @@ get(argc, argv)
 	char *argv[];
 {
 	int fd;
-	register int n;
-	register char *cp;
+	int n;
+	char *cp;
 	char *src;
 
 	if (argc < 2) {
@@ -432,13 +426,13 @@ get(argc, argv)
 	}
 	if (!connected) {
 		for (n = 1; n < argc ; n++)
-			if (index(argv[n], ':') == 0) {
+			if (strchr(argv[n], ':') == 0) {
 				getusage(argv[0]);
 				return;
 			}
 	}
 	for (n = 1; n < argc ; n++) {
-		src = index(argv[n], ':');
+		src = strchr(argv[n], ':');
 		if (src == NULL)
 			src = argv[n];
 		else {
@@ -447,11 +441,10 @@ get(argc, argv)
 			*src++ = 0;
 			hp = gethostbyname(argv[n]);
 			if (hp == NULL) {
-				fprintf(stderr, "tftp: %s: ", argv[n]);
-				herror((char *)NULL);
+				warnx("%s: %s", argv[n], hstrerror(h_errno));
 				continue;
 			}
-			bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr,
+			memmove((caddr_t)&peeraddr.sin_addr, hp->h_addr,
 			    hp->h_length);
 			peeraddr.sin_family = hp->h_addrtype;
 			connected = 1;
@@ -462,7 +455,7 @@ get(argc, argv)
 			cp = argc == 3 ? argv[2] : tail(src);
 			fd = creat(cp, 0644);
 			if (fd < 0) {
-				fprintf(stderr, "tftp: "); perror(cp);
+				warn("%s", cp);
 				return;
 			}
 			if (verbose)
@@ -475,7 +468,7 @@ get(argc, argv)
 		cp = tail(src);         /* new .. jdg */
 		fd = creat(cp, 0644);
 		if (fd < 0) {
-			fprintf(stderr, "tftp: "); perror(cp);
+			warn("%s", cp);
 			continue;
 		}
 		if (verbose)
@@ -579,10 +572,10 @@ char *
 tail(filename)
 	char *filename;
 {
-	register char *s;
+	char *s;
 	
 	while (*filename) {
-		s = rindex(filename, '/');
+		s = strrchr(filename, '/');
 		if (s == NULL)
 			break;
 		if (s[1])
@@ -598,7 +591,7 @@ tail(filename)
 static __dead void
 command()
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	for (;;) {
 		printf("%s> ", prompt);
@@ -629,11 +622,11 @@ command()
 
 struct cmd *
 getcmd(name)
-	register char *name;
+	char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 
 	longest = 0;
 	nmatches = 0;
@@ -662,8 +655,8 @@ getcmd(name)
 static void
 makeargv()
 {
-	register char *cp;
-	register char **argp = margv;
+	char *cp;
+	char **argp = margv;
 
 	margc = 0;
 	for (cp = line; *cp;) {
@@ -699,7 +692,7 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	if (argc == 1) {
 		printf("Commands may be abbreviated.  Commands are:\n\n");
@@ -708,7 +701,7 @@ help(argc, argv)
 		return;
 	}
 	while (--argc > 0) {
-		register char *arg;
+		char *arg;
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
