@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.72 2000/09/28 06:19:06 leo Exp $
+#	$NetBSD: GENERIC,v 1.73 2000/10/04 03:35:55 itojun Exp $
 #
 # Generic atari
 #
@@ -8,7 +8,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 #
 # Add support for about 16 users. This variable is used to size
@@ -174,7 +174,7 @@ pseudo-device	ccd		4	# concatenating disk driver
 pseudo-device	md		2	# Boot memory disk
 pseudo-device	ipfilter		# IP filtering device
 # rnd is EXPERIMENTAL
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator
 
 #
 # The following sections describe various hardware options.
