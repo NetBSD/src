@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.7.2.2 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: siside.c,v 1.7.2.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -40,8 +40,8 @@
 
 static void sis_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void sis_sata_chip_map(struct pciide_softc *, struct pci_attach_args *);
-static void sis_setup_channel(struct wdc_channel *);
-static void sis96x_setup_channel(struct wdc_channel *);
+static void sis_setup_channel(struct ata_channel *);
+static void sis96x_setup_channel(struct ata_channel *);
 
 static int  sis_hostbr_match(struct pci_attach_args *);
 static int  sis_south_match(struct pci_attach_args *);
@@ -196,7 +196,7 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: Silicon Integrated Systems ",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pci_find_device(NULL, sis_hostbr_match);
 	if (sis_hostbr_type_match) {
 		if (sis_hostbr_type_match->type == SIS_TYPE_SOUTH) {
@@ -208,90 +208,91 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				aprint_normal("96X UDMA%d",
 				    sis_hostbr_type_match->udma_mode);
 				sc->sis_type = SIS_TYPE_133NEW;
-				sc->sc_wdcdev.UDMA_cap =
+				sc->sc_wdcdev.sc_atac.atac_udma_cap =
 			    	    sis_hostbr_type_match->udma_mode;
 			} else {
 				if (pci_find_device(NULL, sis_south_match)) {
 					sc->sis_type = SIS_TYPE_133OLD;
-					sc->sc_wdcdev.UDMA_cap =
+					sc->sc_wdcdev.sc_atac.atac_udma_cap =
 				    	    sis_hostbr_type_match->udma_mode;
 				} else {
 					sc->sis_type = SIS_TYPE_100NEW;
-					sc->sc_wdcdev.UDMA_cap =
+					sc->sc_wdcdev.sc_atac.atac_udma_cap =
 					    sis_hostbr_type_match->udma_mode;
 				}
 			}
 		} else {
 			sc->sis_type = sis_hostbr_type_match->type;
-			sc->sc_wdcdev.UDMA_cap =
+			sc->sc_wdcdev.sc_atac.atac_udma_cap =
 		    	    sis_hostbr_type_match->udma_mode;
 		}
 		aprint_normal(sis_hostbr_type_match->name);
 	} else {
 		aprint_normal("5597/5598");
 		if (rev >= 0xd0) {
-			sc->sc_wdcdev.UDMA_cap = 2;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 			sc->sis_type = SIS_TYPE_66;
 		} else {
-			sc->sc_wdcdev.UDMA_cap = 0;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
 			sc->sis_type = SIS_TYPE_NOUDMA;
 		}
 	}
 	aprint_normal(" IDE controller (rev. 0x%02x)\n",
 	    PCI_REVISION(pa->pa_class));
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		if (sc->sis_type >= SIS_TYPE_66)
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 	}
 
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 	switch(sc->sis_type) {
 	case SIS_TYPE_NOUDMA:
 	case SIS_TYPE_66:
 	case SIS_TYPE_100OLD:
-		sc->sc_wdcdev.set_modes = sis_setup_channel;
+		sc->sc_wdcdev.sc_atac.atac_set_modes = sis_setup_channel;
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_MISC,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_MISC) |
 		    SIS_MISC_TIM_SEL | SIS_MISC_FIFO_SIZE | SIS_MISC_GTC);
 		break;
 	case SIS_TYPE_100NEW:
 	case SIS_TYPE_133OLD:
-		sc->sc_wdcdev.set_modes = sis_setup_channel;
+		sc->sc_wdcdev.sc_atac.atac_set_modes = sis_setup_channel;
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_REG_49,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_REG_49) | 0x01);
 		break;
 	case SIS_TYPE_133NEW:
-		sc->sc_wdcdev.set_modes = sis96x_setup_channel;
+		sc->sc_wdcdev.sc_atac.atac_set_modes = sis96x_setup_channel;
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_REG_50,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_REG_50) & 0xf7);
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, SIS_REG_52,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, SIS_REG_52) & 0xf7);
 		break;
 	}
-		
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if ((channel == 0 && (sis_ctr0 & SIS_CTRL0_CHAN0_EN) == 0) ||
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-			cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
@@ -300,15 +301,15 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-sis96x_setup_channel(struct wdc_channel *chp)
+sis96x_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
 	int regtim;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	sis_tim = 0;
 	idedma_ctl = 0;
@@ -326,7 +327,9 @@ sis96x_setup_channel(struct wdc_channel *chp)
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS96x_REG_CBL(chp->ch_channel)) & SIS96x_REG_CBL_33) {
 				if (drvp->UDMA_mode > 2)
@@ -351,7 +354,7 @@ sis96x_setup_channel(struct wdc_channel *chp)
 		} else {
 			sis_tim |= sis_pio133new_tim[drvp->PIO_mode];
 		}
-		WDCDEBUG_PRINT(("sis96x_setup_channel: new timings reg for "
+		ATADEBUG_PRINT(("sis96x_setup_channel: new timings reg for "
 		    "channel %d drive %d: 0x%x (reg 0x%x)\n",
 		    chp->ch_channel, drive, sis_tim, regtim), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag, regtim, sis_tim);
@@ -364,16 +367,16 @@ sis96x_setup_channel(struct wdc_channel *chp)
 }
 
 static void
-sis_setup_channel(struct wdc_channel *chp)
+sis_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
-	WDCDEBUG_PRINT(("sis_setup_channel: old timings reg for "
+	ATADEBUG_PRINT(("sis_setup_channel: old timings reg for "
 	    "channel %d 0x%x\n", chp->ch_channel, 
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel))),
 	    DEBUG_PROBE);
@@ -394,7 +397,9 @@ sis_setup_channel(struct wdc_channel *chp)
 
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			if (pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS_REG_CBL) & SIS_REG_CBL_33(chp->ch_channel)) {
 				if (drvp->UDMA_mode > 2)
@@ -455,7 +460,7 @@ pio:		switch (sc->sis_type) {
 			    sc->sis_type);
 		}
 	}
-	WDCDEBUG_PRINT(("sis_setup_channel: new timings reg for "
+	ATADEBUG_PRINT(("sis_setup_channel: new timings reg for "
 	    "channel %d 0x%x\n", chp->ch_channel, sis_tim), DEBUG_PROBE);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel),
 		       sis_tim);
@@ -478,37 +483,38 @@ sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	if (interface == 0) {
-		WDCDEBUG_PRINT(("sis_sata_chip_map interface == 0\n"),
+		ATADEBUG_PRINT(("sis_sata_chip_map interface == 0\n"),
 		    DEBUG_PROBE);
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
 	aprint_normal("%s: Silicon Integrated Systems 180/96X SATA controller (rev. 0x%02x)\n",
-		      sc->sc_wdcdev.sc_dev.dv_xname,
+		      sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 		      PCI_REVISION(pa->pa_class));
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA | WDC_CAPABILITY_DMA |
-		    WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA | ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 6;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.set_modes = sata_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = sata_setup_channel;
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;

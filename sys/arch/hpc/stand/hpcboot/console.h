@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.8.14.1 2004/08/12 11:41:05 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.8.14.2 2004/08/25 06:57:18 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,6 +63,7 @@ public:
 	virtual BOOL init(void) { return TRUE; }
 	BOOL &on(void) { return _on; }
 
+	static void changeConsole(Console &console) { _instance = &console; }
 	void setBootConsole(u_int16_t cnuse) { _boot_console = cnuse; }
 	int16_t getBootConsole(void) const { return _boot_console; }
 };

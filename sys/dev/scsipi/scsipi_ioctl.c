@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.46.2.1 2003/07/02 15:26:18 darrenr Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.46.2.2 2004/08/25 06:58:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.46.2.1 2003/07/02 15:26:18 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.46.2.2 2004/08/25 06:58:43 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -76,15 +76,10 @@ struct scsi_ioctl {
 	struct scsipi_periph *si_periph;
 };
 
-LIST_HEAD(, scsi_ioctl) si_head;
+static LIST_HEAD(, scsi_ioctl) si_head;
 
-struct	scsi_ioctl *si_find __P((struct buf *));
-void	si_free __P((struct scsi_ioctl *));
-struct	scsi_ioctl *si_get __P((void));
-void	scsistrategy __P((struct buf *));
-
-struct scsi_ioctl *
-si_get()
+static struct scsi_ioctl *
+si_get(void)
 {
 	struct scsi_ioctl *si;
 	int s;
@@ -97,9 +92,8 @@ si_get()
 	return (si);
 }
 
-void
-si_free(si)
-	struct scsi_ioctl *si;
+static void
+si_free(struct scsi_ioctl *si)
 {
 	int s;
 
@@ -109,9 +103,8 @@ si_free(si)
 	free(si, M_TEMP);
 }
 
-struct scsi_ioctl *
-si_find(bp)
-	struct buf *bp;
+static struct scsi_ioctl *
+si_find(struct buf *bp)
 {
 	struct scsi_ioctl *si;
 	int s;
@@ -133,8 +126,7 @@ si_find(bp)
  * the device's queue if such exists.
  */
 void
-scsipi_user_done(xs)
-	struct scsipi_xfer *xs;
+scsipi_user_done(struct scsipi_xfer *xs)
 {
 	struct buf *bp;
 	struct scsi_ioctl *si;
@@ -235,9 +227,8 @@ scsipi_user_done(xs)
  * from the cdevsw/bdevsw tables because they couldn't have added
  * the screq structure. [JRE]
  */
-void
-scsistrategy(bp)
-	struct buf *bp;
+static void
+scsistrategy(struct buf *bp)
 {
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
@@ -319,13 +310,8 @@ bad:
  * still be running in the context of the calling process
  */
 int
-scsipi_do_ioctl(periph, dev, cmd, addr, flag, l)
-	struct scsipi_periph *periph;
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct lwp *l;
+scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
+    caddr_t addr, int flag, struct lwp *l)
 {
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900var.h,v 1.2 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: am79900var.h,v 1.2.46.1 2004/08/25 06:57:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_IC_AM79900VAR_H_
+#define	_DEV_IC_AM79900VAR_H_
+
 /*
  * Ethernet software status per device.
  *
@@ -50,5 +53,7 @@ struct am79900_softc {
 	struct lance_softc lsc;
 };
 
-void am79900_config __P((struct am79900_softc *));
-int am79900_intr __P((void *));
+void	am79900_config(struct am79900_softc *);
+int	am79900_intr(void *);
+
+#endif /* _DEV_IC_AM79900VAR_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.16.1 2004/08/03 10:34:55 skrll Exp $
+#	$NetBSD: Makefile,v 1.10.16.2 2004/08/25 06:57:17 skrll Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -70,9 +70,11 @@ install:
 		cp $$file binary/$$a/hpcboot.exe;			\
 	done
 # WCE200 or earlier binary
-install1:
-	cp compile/MIPSRelease/hpcboot.exe binary/MIPS/hpcboot1.exe
-	cp compile/SHRelease/hpcboot.exe binary/SH3/hpcboot1.exe
+install200:
+	cp compile/SHRelease/hpcboot.exe binary/SH3/hpcboot200.exe
+
+install101:
+	cp compile/MIPSRelease/hpcboot.exe binary/MIPS/hpcboot101.exe
 
 uuencode:
 	find binary -name "hpcboot*.exe" -print | \

@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.1.4.1 2004/08/03 10:37:21 skrll Exp $	*/
+/*	$NetBSD: kauai.c,v 1.1.4.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.1 2004/08/03 10:37:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.2 2004/08/25 06:57:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.1 2004/08/03 10:37:21 skrll Exp $");
 
 struct kauai_softc {
 	struct wdc_softc sc_wdcdev;
-	struct wdc_channel *wdc_chanptr;
-	struct wdc_channel wdc_channel;
-	struct ata_queue wdc_queue;
+	struct ata_channel *sc_chanptr;
+	struct ata_channel sc_channel;
+	struct wdc_regs sc_wdc_regs;
+	struct ata_queue sc_queue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_piotiming_r[2];
@@ -75,7 +76,7 @@ void kauai_attach __P((struct device *, struct device *, void *));
 int kauai_dma_init __P((void *, int, int, void *, size_t, int));
 void kauai_dma_start __P((void *, int, int));
 int kauai_dma_finish __P((void *, int, int, int));
-void kauai_set_modes __P((struct wdc_channel *));
+void kauai_set_modes __P((struct ata_channel *));
 static void calc_timing_kauai __P((struct kauai_softc *, int));
 static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
@@ -105,7 +106,8 @@ kauai_attach(parent, self, aux)
 {
 	struct kauai_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
-	struct wdc_channel *chp = &sc->wdc_channel;
+	struct ata_channel *chp = &sc->sc_channel;
+	struct wdc_regs *wdr;
 	pci_intr_handle_t ih;
 	paddr_t regbase, dmabase;
 	int node, reg[5], i;
@@ -145,22 +147,24 @@ kauai_attach(parent, self, aux)
 	}
 	printf(": interrupting at %s\n", pci_intr_string(pa->pa_pc, ih));
 
-	chp->cmd_iot = chp->ctl_iot = macppc_make_bus_space_tag(regbase, 4);
+	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0,
-	    &chp->cmd_baseioh) ||
-	    bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh,
-			WDC_AUXREG_OFFSET, 1, &chp->ctl_ioh)) {
+	wdr->cmd_iot = wdr->ctl_iot = macppc_make_bus_space_tag(regbase, 4);
+
+	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	    &wdr->cmd_baseioh) ||
+	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n", self->dv_xname);
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh, i,
-		    i == 0 ? 4 : 1, &chp->cmd_iohs[i]) != 0) {
-			bus_space_unmap(chp->cmd_iot, chp->cmd_baseioh,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
+			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    WDC_REG_NPORTS);
 			printf("%s: couldn't subregion registers\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}
@@ -172,34 +176,35 @@ kauai_attach(parent, self, aux)
 	}
 
 
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 5;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-	sc->wdc_chanptr = chp;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
+	sc->sc_chanptr = chp;
+	sc->sc_wdcdev.sc_atac.atac_channels = &sc->sc_chanptr;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = kauai_dma_init;
 	sc->sc_wdcdev.dma_start = kauai_dma_start;
 	sc->sc_wdcdev.dma_finish = kauai_dma_finish;
-	sc->sc_wdcdev.set_modes = kauai_set_modes;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = kauai_set_modes;
 	sc->sc_calc_timing = calc_timing_kauai;
 	sc->sc_dmareg = (void *)dmabase;
 
 	chp->ch_channel = 0;
-	chp->ch_wdc = &sc->sc_wdcdev;
-	chp->ch_queue = &sc->wdc_queue;
+	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
+	chp->ch_queue = &sc->sc_queue;
 
 	wdcattach(chp);
 }
 
 void
 kauai_set_modes(chp)
-	struct wdc_channel *chp;
+	struct ata_channel *chp;
 {
-	struct kauai_softc *sc = (void *)chp->ch_wdc;
+	struct kauai_softc *sc = (void *)chp->ch_atac;
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	struct ata_drive_datas *drvp0 = &chp->ch_drive[0];
 	struct ata_drive_datas *drvp1 = &chp->ch_drive[1];
 	struct ata_drive_datas *drvp;
@@ -214,9 +219,9 @@ kauai_set_modes(chp)
 		drvp = &chp->ch_drive[drive];
 		if (drvp->drive_flags & DRIVE) {
 			(*sc->sc_calc_timing)(sc, drive);
-			bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
+			bus_space_write_4(wdr->cmd_iot, wdr->cmd_baseioh,
 			    PIO_CONFIG_REG, sc->sc_piotiming_r[drive]);
-			bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
+			bus_space_write_4(wdr->cmd_iot, wdr->cmd_baseioh,
 			    DMA_CONFIG_REG, sc->sc_dmatiming_r[drive]);
 		}
 	}
@@ -254,7 +259,7 @@ calc_timing_kauai(sc, drive)
 	struct kauai_softc *sc;
 	int drive;
 {
-	struct wdc_channel *chp = &sc->wdc_channel;
+	struct ata_channel *chp = &sc->sc_channel;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	int piomode = drvp->PIO_mode;
 	int dmamode = drvp->DMA_mode;
@@ -285,15 +290,16 @@ kauai_dma_init(v, channel, drive, databuf, datalen, flags)
 {
 	struct kauai_softc *sc = v;
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
-	struct wdc_channel *chp = &sc->wdc_channel;
+	struct ata_channel *chp = &sc->sc_channel;
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	vaddr_t va = (vaddr_t)databuf;
 	int read = flags & WDC_DMA_READ;
 	int cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
 	u_int offset;
 
-	bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh, DMA_CONFIG_REG,
+	bus_space_write_4(wdr->cmd_iot, wdr->cmd_baseioh, DMA_CONFIG_REG,
 	    read ? sc->sc_dmatiming_r[drive] : sc->sc_dmatiming_w[drive]);
-	bus_space_read_4(chp->cmd_iot, chp->cmd_baseioh, DMA_CONFIG_REG);
+	bus_space_read_4(wdr->cmd_iot, wdr->cmd_baseioh, DMA_CONFIG_REG);
 
 	offset = va & PGOFSET;
 

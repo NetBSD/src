@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.182.2.1 2004/08/03 10:35:52 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.182.2.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182.2.1 2004/08/03 10:35:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182.2.2 2004/08/25 06:57:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -266,6 +266,10 @@ trap(frame)
 			}
 		}
 #endif
+#ifdef DDB
+		if (kdb_trap(type, 0, frame))
+			return;
+#endif
 #ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
@@ -279,10 +283,6 @@ trap(frame)
 				return;
 			}
 		}
-#endif
-#ifdef DDB
-		if (kdb_trap(type, 0, frame))
-			return;
 #endif
 		if (frame->tf_trapno < trap_types)
 			printf("fatal %s", trap_type[frame->tf_trapno]);

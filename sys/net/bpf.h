@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.31.6.1 2004/08/03 10:54:11 skrll Exp $	*/
+/*	$NetBSD: bpf.h,v 1.31.6.2 2004/08/25 06:58:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -247,18 +247,22 @@ struct bpf_dltlist {
 };
 
 #ifdef _KERNEL
-int	 bpf_validate __P((struct bpf_insn *, int));
-void	 bpf_tap __P((caddr_t, u_char *, u_int));
-void	 bpf_mtap __P((caddr_t, struct mbuf *));
-void	 bpf_mtap2 __P((caddr_t, void *, u_int, struct mbuf *));
-void	 bpfattach __P((struct ifnet *, u_int, u_int));
-void	 bpfattach2 __P((struct ifnet *, u_int, u_int, caddr_t *));
-void	 bpfdetach __P((struct ifnet *));
-void	 bpf_change_type __P((struct ifnet *, u_int, u_int));
-void	 bpfilterattach __P((int));
+int	 bpf_validate(struct bpf_insn *, int);
+void	 bpf_tap(void *, u_char *, u_int);
+void	 bpf_mtap(void *, struct mbuf *);
+void	 bpf_mtap2(void *, void *, u_int, struct mbuf *);
+void	 bpf_mtap_af(void *, u_int32_t, struct mbuf *);
+void	 bpf_mtap_et(void *, u_int16_t, struct mbuf *);
+void	 bpf_mtap_sl_in(void *, u_char *, struct mbuf **);
+void	 bpf_mtap_sl_out(void *, u_char *, struct mbuf *);
+void	 bpfattach(struct ifnet *, u_int, u_int);
+void	 bpfattach2(struct ifnet *, u_int, u_int, void *);
+void	 bpfdetach(struct ifnet *);
+void	 bpf_change_type(struct ifnet *, u_int, u_int);
+void	 bpfilterattach(int);
 #endif
 
-u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
+u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).

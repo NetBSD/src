@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.5 2001/11/13 07:41:37 lukem Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.5.16.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,17 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.5 2001/11/13 07:41:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.5.16.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/mii_bitbang.h>
-
-void	mii_bitbang_sync(struct device *, mii_bitbang_ops_t);
-void	mii_bitbang_sendbits(struct device *, mii_bitbang_ops_t,
-	    u_int32_t, int);
 
 #define	WRITE(x)							\
 do {									\
@@ -73,7 +69,7 @@ do {									\
  *
  *	Synchronize the MII.
  */
-void
+static void
 mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
 {
 	int i;
@@ -93,7 +89,7 @@ mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
  *
  *	Send a series of bits to the MII.
  */
-void
+static void
 mii_bitbang_sendbits(struct device *sc, mii_bitbang_ops_t ops, uint32_t data,
     int nbits)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.2.2.1 2004/08/03 10:36:25 skrll Exp $	*/
+/*	$NetBSD: mbr.S,v 1.2.2.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -171,7 +171,7 @@ next_ptn:
 	/* output menu item */
 	movw	$prefix, %si
 	incb	(%si)
-	call	message			/* menu number */
+	/*call	message*/			/* menu number */
 	mov	(%si), %si		/* ':' << 8 | '1' + count */
 	shl	$2, %si			/* const + count * 4 */
 #define	CONST	(4 * ((':' << 8) + '1' - ((SCAN_1 - SCAN_F1) & 0xff)))
@@ -182,9 +182,9 @@ next_ptn:
 #endif
 #undef CONST
 	mov	%bx, %si
-	call	message			/* prompt */
+	/*call	message	*/		/* prompt */
 	movw	$crlf, %si
-	call	message
+	/*call	message*/
 #endif
 4:
 	add	$0x10, %bp
@@ -249,8 +249,7 @@ wait_key:
 	xorb	%ah, %ah
 	int	$0x1a			/* current time to cx:dx */
 	sub	%di, %dx
-	movw	timeout, %ax
-	cmp	%ax, %dx		/* always wait for 1 tick... */
+	cmpw	timeout, %dx		/* always wait for 1 tick... */
 	jbe	3b			/* 0xffff means never timeout */
 def_key:
 	movb	defkey, %al		/* timedout - pick default key */

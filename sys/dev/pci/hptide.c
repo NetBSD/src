@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.10.2.2 2004/08/03 10:49:07 skrll Exp $	*/
+/*	$NetBSD: hptide.c,v 1.10.2.3 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #include <dev/pci/pciide_hpt_reg.h>
 
 static void hpt_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void hpt_setup_channel(struct wdc_channel*);
+static void hpt_setup_channel(struct ata_channel*);
 static int  hpt_pci_intr(void *);
 
 static int  hptide_match(struct device *, struct cfdata *, void *);
@@ -117,7 +117,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal("%s: Triones/Highpoint ",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_TRIONES_HPT302:
 		aprint_normal("HPT302 IDE Controller\n");
@@ -169,47 +169,48 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 
-	sc->sc_wdcdev.set_modes = hpt_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = hpt_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    revision == HPT366_REV) {
-		sc->sc_wdcdev.nchannels = 1;
-		sc->sc_wdcdev.UDMA_cap = 4;
+		sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
+		sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 	} else {
-		sc->sc_wdcdev.nchannels = 2;
+		sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374 ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372A ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT371 ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT302 ||
 		    (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 		    revision == HPT372_REV))
-			sc->sc_wdcdev.UDMA_cap = 6;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 		else
-			sc->sc_wdcdev.UDMA_cap = 5;
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 	}
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+
+	wdc_allocate_regs(&sc->sc_wdcdev);
+
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
-		if (sc->sc_wdcdev.nchannels > 1) {
+		if (sc->sc_wdcdev.sc_atac.atac_nchannels > 1) {
 			compatchan = i;
 			if((pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			   HPT370_CTRL1(i)) & HPT370_CTRL1_EN) == 0) {
 				aprint_normal(
 				    "%s: %s channel ignored (disabled)\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-				cp->wdc_channel.ch_flags |= WDCF_DISABLED;
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+				cp->ata_channel.ch_flags |= ATACH_DISABLED;
 				continue;
 			}
 		} else {
@@ -224,7 +225,7 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				compatchan = 1;
 			else {
 				aprint_error("%s: unexpected PCI function %d\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, pa->pa_function);
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, pa->pa_function);
 				return;
 			}
 		}
@@ -236,11 +237,11 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		} else {
 			pciide_mapregs_compat(pa, cp, compatchan,
 			    &cmdsize, &ctlsize);
-			if ((cp->wdc_channel.ch_flags & WDCF_DISABLED) == 0)
+			if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 				pciide_map_compat_intr(pa, cp,
 				    sc->sc_cy_compatchan);
 		}
-		wdcattach(&cp->wdc_channel);
+		wdcattach(&cp->ata_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
@@ -271,15 +272,15 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-hpt_setup_channel(struct wdc_channel *chp)
+hpt_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	int drive;
+	int drive, s;
 	int cable;
 	u_int32_t before, after;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int revision =
 	     PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 	const u_int32_t *tim_pio, *tim_dma, *tim_udma;
@@ -340,7 +341,9 @@ hpt_setup_channel(struct wdc_channel *chp)
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			/* use Ultra/DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_DMA;
+			splx(s);
 			if ((cable & HPT_CSEL_CBLID(chp->ch_channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
@@ -364,7 +367,7 @@ hpt_setup_channel(struct wdc_channel *chp)
 		}
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    HPT_IDETIM(chp->ch_channel, drive), after);
-		WDCDEBUG_PRINT(("%s: bus speed register set to 0x%08x "
+		ATADEBUG_PRINT(("%s: bus speed register set to 0x%08x "
 		    "(BIOS 0x%08x)\n", drvp->drv_softc->dv_xname,
 		    after, before), DEBUG_PROBE);
 	}
@@ -380,22 +383,22 @@ hpt_pci_intr(void *arg)
 {
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
-	struct wdc_channel *wdc_cp;
+	struct ata_channel *wdc_cp;
 	int rv = 0;
 	int dmastat, i, crv;
 
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		dmastat = bus_space_read_1(sc->sc_dma_iot,
 		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 			continue;
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->ata_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.7.14.2 2004/08/12 11:41:05 skrll Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.7.14.3 2004/08/25 06:57:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <load.h>
 
 #include <boot.h>
+
+#include "../binary/build_number.h"
 
 #if _WIN32_WCE <= 200
 OSVERSIONINFO WinCEVersion;
@@ -119,6 +121,16 @@ hpcboot(void *arg)
 	if (!f.create()) {
 		error_message = TEXT("Architecture ops. not found.\n");
 		goto failed_exit;
+	}
+
+	// Now we can write console which user specified.
+	{
+		DPRINTF_SETUP();
+		DPRINTF((TEXT("hpcboot build number: %d\n"),
+		    HPCBOOT_BUILD_NUMBER));
+		DPRINTF((TEXT("%s (cpu=0x%08x machine=0x%08x)\n"),
+		    HPC_MENU.platform_get(HPC_MENU.platform_default()),
+		    HPC_PREFERENCE.platid_hi, HPC_PREFERENCE.platid_lo));
 	}
 
 	menu.progress("2");

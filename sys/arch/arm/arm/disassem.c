@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $	*/
+/*	$NetBSD: disassem.c,v 1.14.2.1 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.14 2003/03/27 16:58:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.14.2.1 2004/08/25 06:57:17 skrll Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -281,6 +281,12 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 	int branch;
 	char* f_ptr;
 	int fmt;
+
+	if (loc & 3) {
+		/* Don't crash for now.  */
+		di->di_printf("thumb insn\n");
+		return (loc + THUMB_INSN_SIZE);
+	}
 
 	fmt = 0;
 	matchp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.13.22.1 2004/08/03 10:34:55 skrll Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.13.22.2 2004/08/25 06:57:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -122,6 +122,10 @@ extern platid_t platid_mask_CPU_SH_3_7709;
 extern platid_t platid_mask_CPU_SH_3_7709A;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_SH_3_7709A ((int)&platid_mask_CPU_SH_3_7709A)
+#endif
+extern platid_t platid_mask_CPU_SH_3_7707;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_SH_3_7707 ((int)&platid_mask_CPU_SH_3_7707)
 #endif
 extern platid_t platid_mask_CPU_SH_4;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -403,13 +407,25 @@ extern platid_t platid_mask_MACH_SHARP_TELIOS;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_TELIOS ((int)&platid_mask_MACH_SHARP_TELIOS)
 #endif
-extern platid_t platid_mask_MACH_SHARP_TELIOS_HC;
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define SHARP_TELIOS_HC ((int)&platid_mask_MACH_SHARP_TELIOS_HC)
+#  define SHARP_TELIOS_HCAJ ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ)
 #endif
-extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ1;
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ1_JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
-#  define SHARP_TELIOS_HCAJ1 ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ1)
+#  define SHARP_TELIOS_HCAJ1_JP ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ1_JP)
+#endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ2_JP;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS_HCAJ2_JP ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ2_JP)
+#endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCAJ3_JP;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS_HCAJ3_JP ((int)&platid_mask_MACH_SHARP_TELIOS_HCAJ3_JP)
+#endif
+extern platid_t platid_mask_MACH_SHARP_TELIOS_HCVJ;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_TELIOS_HCVJ ((int)&platid_mask_MACH_SHARP_TELIOS_HCVJ)
 #endif
 extern platid_t platid_mask_MACH_SHARP_TELIOS_HCVJ1C_JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -682,6 +698,10 @@ extern platid_t platid_mask_MACH_HP_LX_620;
 extern platid_t platid_mask_MACH_HP_LX_620JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_LX_620JP ((int)&platid_mask_MACH_HP_LX_620JP)
+#endif
+extern platid_t platid_mask_MACH_HP_LX_360;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_LX_360 ((int)&platid_mask_MACH_HP_LX_360)
 #endif
 #endif /* hpcsh */
 extern platid_t platid_mask_MACH_HP_JORNADA;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.19.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.1 2004/08/03 10:49:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.19.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -188,14 +188,14 @@ struct pcn_rxsoft {
 /*
  * Description of Rx FIFO watermarks for various revisions.
  */
-const char * const pcn_79c970_rcvfw[] = {
+static const char * const pcn_79c970_rcvfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"128 bytes",
 	NULL,
 };
 
-const char * const pcn_79c971_rcvfw[] = {
+static const char * const pcn_79c971_rcvfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"112 bytes",
@@ -205,21 +205,21 @@ const char * const pcn_79c971_rcvfw[] = {
 /*
  * Description of Tx start points for various revisions.
  */
-const char * const pcn_79c970_xmtsp[] = {
+static const char * const pcn_79c970_xmtsp[] = {
 	"8 bytes",
 	"64 bytes",
 	"128 bytes",
 	"248 bytes",
 };
 
-const char * const pcn_79c971_xmtsp[] = {
+static const char * const pcn_79c971_xmtsp[] = {
 	"20 bytes",
 	"64 bytes",
 	"128 bytes",
 	"248 bytes",
 };
 
-const char * const pcn_79c971_xmtsp_sram[] = {
+static const char * const pcn_79c971_xmtsp_sram[] = {
 	"44 bytes",
 	"64 bytes",
 	"128 bytes",
@@ -229,14 +229,14 @@ const char * const pcn_79c971_xmtsp_sram[] = {
 /*
  * Description of Tx FIFO watermarks for various revisions.
  */
-const char * const pcn_79c970_xmtfw[] = {
+static const char * const pcn_79c970_xmtfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"128 bytes",
 	NULL,
 };
 
-const char * const pcn_79c971_xmtfw[] = {
+static const char * const pcn_79c971_xmtfw[] = {
 	"16 bytes",
 	"64 bytes",
 	"108 bytes",
@@ -394,44 +394,44 @@ do {									\
 	PCN_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);\
 } while(/*CONSTCOND*/0)
 
-void	pcn_start(struct ifnet *);
-void	pcn_watchdog(struct ifnet *);
-int	pcn_ioctl(struct ifnet *, u_long, caddr_t);
-int	pcn_init(struct ifnet *);
-void	pcn_stop(struct ifnet *, int);
+static void	pcn_start(struct ifnet *);
+static void	pcn_watchdog(struct ifnet *);
+static int	pcn_ioctl(struct ifnet *, u_long, caddr_t);
+static int	pcn_init(struct ifnet *);
+static void	pcn_stop(struct ifnet *, int);
 
-void	pcn_shutdown(void *);
+static void	pcn_shutdown(void *);
 
-void	pcn_reset(struct pcn_softc *);
-void	pcn_rxdrain(struct pcn_softc *);
-int	pcn_add_rxbuf(struct pcn_softc *, int);
-void	pcn_tick(void *);
+static void	pcn_reset(struct pcn_softc *);
+static void	pcn_rxdrain(struct pcn_softc *);
+static int	pcn_add_rxbuf(struct pcn_softc *, int);
+static void	pcn_tick(void *);
 
-void	pcn_spnd(struct pcn_softc *);
+static void	pcn_spnd(struct pcn_softc *);
 
-void	pcn_set_filter(struct pcn_softc *);
+static void	pcn_set_filter(struct pcn_softc *);
 
-int	pcn_intr(void *);
-void	pcn_txintr(struct pcn_softc *);
-int	pcn_rxintr(struct pcn_softc *);
+static int	pcn_intr(void *);
+static void	pcn_txintr(struct pcn_softc *);
+static int	pcn_rxintr(struct pcn_softc *);
 
-int	pcn_mii_readreg(struct device *, int, int);
-void	pcn_mii_writereg(struct device *, int, int, int);
-void	pcn_mii_statchg(struct device *);
+static int	pcn_mii_readreg(struct device *, int, int);
+static void	pcn_mii_writereg(struct device *, int, int, int);
+static void	pcn_mii_statchg(struct device *);
 
-void	pcn_79c970_mediainit(struct pcn_softc *);
-int	pcn_79c970_mediachange(struct ifnet *);
-void	pcn_79c970_mediastatus(struct ifnet *, struct ifmediareq *);
+static void	pcn_79c970_mediainit(struct pcn_softc *);
+static int	pcn_79c970_mediachange(struct ifnet *);
+static void	pcn_79c970_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	pcn_79c971_mediainit(struct pcn_softc *);
-int	pcn_79c971_mediachange(struct ifnet *);
-void	pcn_79c971_mediastatus(struct ifnet *, struct ifmediareq *);
+static void	pcn_79c971_mediainit(struct pcn_softc *);
+static int	pcn_79c971_mediachange(struct ifnet *);
+static void	pcn_79c971_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*
  * Description of a PCnet-PCI variant.  Used to select media access
  * method, mostly, and to print a nice description of the chip.
  */
-const struct pcn_variant {
+static const struct pcn_variant {
 	const char *pcv_desc;
 	void (*pcv_mediainit)(struct pcn_softc *);
 	uint16_t pcv_chipid;
@@ -467,8 +467,8 @@ const struct pcn_variant {
 
 int	pcn_copy_small = 0;
 
-int	pcn_match(struct device *, struct cfdata *, void *);
-void	pcn_attach(struct device *, struct device *, void *);
+static int	pcn_match(struct device *, struct cfdata *, void *);
+static void	pcn_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcn, sizeof(struct pcn_softc),
     pcn_match, pcn_attach, NULL, NULL);
@@ -526,7 +526,7 @@ pcn_lookup_variant(uint16_t chipid)
 	return (pcv);
 }
 
-int
+static int
 pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -543,7 +543,7 @@ pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (0);
 }
 
-void
+static void
 pcn_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcn_softc *sc = (struct pcn_softc *) self;
@@ -870,7 +870,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-void
+static void
 pcn_shutdown(void *arg)
 {
 	struct pcn_softc *sc = arg;
@@ -883,7 +883,7 @@ pcn_shutdown(void *arg)
  *
  *	Start packet transmission on the interface.
  */
-void
+static void
 pcn_start(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -1120,7 +1120,7 @@ pcn_start(struct ifnet *ifp)
  *
  *	Watchdog timer handler.
  */
-void
+static void
 pcn_watchdog(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -1149,7 +1149,7 @@ pcn_watchdog(struct ifnet *ifp)
  *
  *	Handle control requests from the operator.
  */
-int
+static int
 pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -1188,7 +1188,7 @@ pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  *
  *	Interrupt service routine.
  */
-int
+static int
 pcn_intr(void *arg)
 {
 	struct pcn_softc *sc = arg;
@@ -1272,7 +1272,7 @@ pcn_intr(void *arg)
  *
  *	Suspend the chip.
  */
-void
+static void
 pcn_spnd(struct pcn_softc *sc)
 {
 	int i;
@@ -1294,7 +1294,7 @@ pcn_spnd(struct pcn_softc *sc)
  *
  *	Helper; handle transmit interrupts.
  */
-void
+static void
 pcn_txintr(struct pcn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1398,7 +1398,7 @@ pcn_txintr(struct pcn_softc *sc)
  *
  *	Helper; handle receive interrupts.
  */
-int
+static int
 pcn_rxintr(struct pcn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1540,7 +1540,7 @@ pcn_rxintr(struct pcn_softc *sc)
  *
  *	One second timer, used to tick the MII.
  */
-void
+static void
 pcn_tick(void *arg)
 {
 	struct pcn_softc *sc = arg;
@@ -1558,7 +1558,7 @@ pcn_tick(void *arg)
  *
  *	Perform a soft reset on the PCnet-PCI.
  */
-void
+static void
 pcn_reset(struct pcn_softc *sc)
 {
 
@@ -1591,7 +1591,7 @@ pcn_reset(struct pcn_softc *sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-int
+static int
 pcn_init(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -1810,7 +1810,7 @@ pcn_init(struct ifnet *ifp)
  *
  *	Drain the receive queue.
  */
-void
+static void
 pcn_rxdrain(struct pcn_softc *sc)
 {
 	struct pcn_rxsoft *rxs;
@@ -1831,7 +1831,7 @@ pcn_rxdrain(struct pcn_softc *sc)
  *
  *	Stop transmission on the interface.
  */
-void
+static void
 pcn_stop(struct ifnet *ifp, int disable)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -1872,7 +1872,7 @@ pcn_stop(struct ifnet *ifp, int disable)
  *
  *	Add a receive buffer to the indicated descriptor.
  */
-int
+static int
 pcn_add_rxbuf(struct pcn_softc *sc, int idx)
 {
 	struct pcn_rxsoft *rxs = &sc->sc_rxsoft[idx];
@@ -1916,7 +1916,7 @@ pcn_add_rxbuf(struct pcn_softc *sc, int idx)
  *
  *	Set up the receive filter.
  */
-void
+static void
 pcn_set_filter(struct pcn_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1983,7 +1983,7 @@ pcn_set_filter(struct pcn_softc *sc)
  *
  *	Initialize media for the Am79c970.
  */
-void
+static void
 pcn_79c970_mediainit(struct pcn_softc *sc)
 {
 	const char *sep = "";
@@ -2018,7 +2018,7 @@ do {									\
  *
  *	Get the current interface media status (Am79c970 version).
  */
-void
+static void
 pcn_79c970_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -2036,7 +2036,7 @@ pcn_79c970_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Set hardware to newly-selected media (Am79c970 version).
  */
-int
+static int
 pcn_79c970_mediachange(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -2079,7 +2079,7 @@ pcn_79c970_mediachange(struct ifnet *ifp)
  *
  *	Initialize media for the Am79c971.
  */
-void
+static void
 pcn_79c971_mediainit(struct pcn_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2119,7 +2119,7 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
  *
  *	Get the current interface media status (Am79c971 version).
  */
-void
+static void
 pcn_79c971_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -2134,7 +2134,7 @@ pcn_79c971_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Set hardware to newly-selected media (Am79c971 version).
  */
-int
+static int
 pcn_79c971_mediachange(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
@@ -2149,7 +2149,7 @@ pcn_79c971_mediachange(struct ifnet *ifp)
  *
  *	Read a PHY register on the MII.
  */
-int
+static int
 pcn_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct pcn_softc *sc = (void *) self;
@@ -2174,7 +2174,7 @@ pcn_mii_readreg(struct device *self, int phy, int reg)
  *
  *	Write a PHY register on the MII.
  */
-void
+static void
 pcn_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct pcn_softc *sc = (void *) self;
@@ -2188,7 +2188,7 @@ pcn_mii_writereg(struct device *self, int phy, int reg, int val)
  *
  *	Callback from MII layer when media changes.
  */
-void
+static void
 pcn_mii_statchg(struct device *self)
 {
 	struct pcn_softc *sc = (void *) self;

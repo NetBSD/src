@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.92.2.3 2004/08/18 10:19:08 skrll Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.92.2.4 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.3 2004/08/18 10:19:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92.2.4 2004/08/25 06:59:14 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -437,24 +437,12 @@ nfs_send(so, nam, top, rep, l)
 	struct nfsreq *rep;
 	struct lwp *l;
 {
-	struct proc *p;
 	struct mbuf *sendnam;
 	int error, soflags, flags;
 
 	/* XXX nfs_doio()/nfs_request() calls with  rep->r_lwp == NULL */
-	if (l == NULL && rep->r_lwp == NULL) {
-#ifdef DIAGNOSTIC
-		static int warned = 0;
-		if (!warned) {
-			printf("nfs_send: lwp botch: "
-			       "rep %p arg %p lwp %p\n",
-			       rep->r_lwp, l, curlwp);
-			warned = 1;
-		}
-#endif	/* DIAGNOSTIC */
+	if (l == NULL && rep->r_lwp == NULL)
 		l = curlwp;
-	}
-	p = l->l_proc;
 
 	if (rep) {
 		if (rep->r_flags & R_SOFTTERM) {

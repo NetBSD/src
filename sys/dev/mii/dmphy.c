@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.18 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.18.2.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18.2.1 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,20 +90,20 @@ __KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.18 2003/04/29 01:49:33 thorpej Exp $");
 
 #include <dev/mii/dmphyreg.h>
 
-int	dmphymatch(struct device *, struct cfdata *, void *);
-void	dmphyattach(struct device *, struct device *, void *);
+static int	dmphymatch(struct device *, struct cfdata *, void *);
+static void	dmphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dmphy, sizeof(struct mii_softc),
     dmphymatch, dmphyattach, mii_phy_detach, mii_phy_activate);
 
-int	dmphy_service(struct mii_softc *, struct mii_data *, int);
-void	dmphy_status(struct mii_softc *);
+static int	dmphy_service(struct mii_softc *, struct mii_data *, int);
+static void	dmphy_status(struct mii_softc *);
 
-const struct mii_phy_funcs dmphy_funcs = {
+static const struct mii_phy_funcs dmphy_funcs = {
 	dmphy_service, dmphy_status, mii_phy_reset,
 };
 
-const struct mii_phydesc dmphys[] = {
+static const struct mii_phydesc dmphys[] = {
 	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
 	  MII_STR_xxDAVICOM_DM9101 },
 
@@ -114,7 +114,7 @@ const struct mii_phydesc dmphys[] = {
 	  NULL },
 };
 
-int
+static int
 dmphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -125,7 +125,7 @@ dmphymatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 dmphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -156,7 +156,7 @@ dmphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 dmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -218,7 +218,7 @@ dmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 dmphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80.2.1 2004/08/03 10:39:38 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.80.2.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.1 2004/08/03 10:39:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.2 2004/08/25 06:57:20 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -432,6 +432,7 @@ trap(struct trapframe *frame)
 		KERNEL_PROC_LOCK(l);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
+		break;
 
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;

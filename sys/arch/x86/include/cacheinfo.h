@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.1.2.1 2004/08/12 11:41:14 skrll Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.1.2.2 2004/08/25 06:57:20 skrll Exp $	*/
 
 #ifndef _X86_CACHEINFO_H
 #define _X86_CACHEINFO_H
@@ -144,10 +144,16 @@ void x86_print_cacheinfo(struct cpu_info *);
 #define	VIA_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
 #define	VIA_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
 
-/* L2 Cache */
-#define	VIA_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
-#define	VIA_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
-#define	VIA_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+/* L2 Cache (pre-Nehemiah) */
+#define	VIA_L2_ECX_C_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	VIA_L2_ECX_C_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	VIA_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xff)
 #define	VIA_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+/* L2 Cache (Nehemiah and newer) */
+#define	VIA_L2N_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
+#define	VIA_L2N_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
+#define	VIA_L2N_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+#define	VIA_L2N_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 #endif /* _X86_CACHEINFO_H */

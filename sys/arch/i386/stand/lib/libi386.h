@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.15.2.1 2004/08/03 10:36:20 skrll Exp $	*/
+/*	$NetBSD: libi386.h,v 1.15.2.2 2004/08/25 06:57:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -29,31 +29,31 @@
 typedef unsigned long physaddr_t;
 
 /* this is in startup code */
-void vpbcopy __P((const void *, void *, size_t));
-void pvbcopy __P((const void *, void *, size_t));
-void pbzero __P((void *, size_t));
-physaddr_t vtophys __P((void*));
+void vpbcopy(const void *, void *, size_t);
+void pvbcopy(const void *, void *, size_t);
+void pbzero(void *, size_t);
+physaddr_t vtophys(void*);
 
-ssize_t pread __P((int, void *, size_t));
-void startprog __P((physaddr_t, int, unsigned long*, physaddr_t));
+ssize_t pread(int, void *, size_t);
+void startprog(physaddr_t, int, unsigned long*, physaddr_t);
 
-int exec_netbsd __P((const char*, physaddr_t, int));
+int exec_netbsd(const char*, physaddr_t, int);
 
-void delay __P((int));
-int getbasemem __P((void));
-int getextmemx __P((void));
-int getextmem1 __P((void));
-int biosvideomode __P((void));
+void delay(int);
+int getbasemem(void);
+int getextmemx(void);
+int getextmem1(void);
+int biosvideomode(void);
 #ifdef CONSERVATIVE_MEMDETECT
 #define getextmem() getextmem1()
 #else
 #define getextmem() getextmemx()
 #endif
-void printmemlist __P((void));
-void reboot __P((void));
-void gateA20 __P((void));
+void printmemlist(void);
+void reboot(void);
+void gateA20(void);
 
-void initio __P((int));
+void initio(int);
 #define CONSDEV_PC 0
 #define CONSDEV_COM0 1
 #define CONSDEV_COM1 2
@@ -64,67 +64,67 @@ void initio __P((int));
 #define CONSDEV_COM2KBD 7
 #define CONSDEV_COM3KBD 8
 #define CONSDEV_AUTO (-1)
-int iskey __P((void));
-char awaitkey __P((int, int));
+int iskey(void);
+char awaitkey(int, int);
 
 /* this is in "user code"! */
-int parsebootfile __P((const char *, char**, char**, unsigned int*,
-		       unsigned int*, const char**));
+int parsebootfile(const char *, char **, char **, unsigned int *,
+		  unsigned int *, const char **);
 
 #ifdef XMS
-physaddr_t ppbcopy __P((physaddr_t, physaddr_t, int));
-int checkxms __P((void));
-physaddr_t xmsalloc __P((int));
+physaddr_t ppbcopy(physaddr_t, physaddr_t, int);
+int checkxms(void);
+physaddr_t xmsalloc(int);
 #endif
 
 /* parseutils.c */
-char *gettrailer __P((char*));
-int parseopts __P((const char*, int*));
-int parseboot __P((char*, char**, int*));
+char *gettrailer(char*);
+int parseopts(const char*, int*);
+int parseboot(char*, char**, int*);
 
 /* menuutils.c */
 struct bootblk_command {
 	const char *c_name;
-	void (*c_fn) __P((char *));
+	void (*c_fn)(char *);
 };
-void bootmenu __P((void));
-void docommand __P((char*));
+void bootmenu(void);
+void docommand(char*);
 
 /* getsecs.c */
-time_t getsecs __P((void));
+time_t getsecs(void);
 
 /* in "user code": */
-void command_help __P((char *));
+void command_help(char *);
 extern const struct bootblk_command commands[];
 
 /* asm bios/dos calls */
-extern int biosdiskreset(int);
-extern int biosextread(int, void *);
-extern int biosgetrtc(u_long *);
-extern int biosgetsystime(void);
-extern int biosread(int, int, int, int, int, void *);
-extern int comgetc(int);
-extern void cominit(int);
-extern int computc(int, int);
-extern int comstatus(int);
-extern int congetc(void);
-extern int coniskey(void);
-extern void conputc(int);
+int biosdiskreset(int);
+int biosextread(int, void *);
+int biosgetrtc(u_long *);
+int biosgetsystime(void);
+int biosread(int, int, int, int, int, void *);
+int comgetc(int);
+void cominit(int);
+int computc(int, int);
+int comstatus(int);
+int congetc(void);
+int coniskey(void);
+void conputc(int);
 
-extern int get_diskinfo(int);
-extern int getextmem2(int *);
-extern int getextmemps2(void *);
-extern int getmementry(int *, int *);
-extern int int13_extension(int);
+int get_diskinfo(int);
+int getextmem2(int *);
+int getextmemps2(void *);
+int getmementry(int *, int *);
+int int13_extension(int);
 struct biosdisk_ext13info;
-extern void int13_getextinfo(int, struct biosdisk_ext13info *);
-extern int pcibios_cfgread(unsigned int, int, int *);
-extern int pcibios_cfgwrite(unsigned int, int, int);
-extern int pcibios_finddev(int, int, int, unsigned int *);
-extern int pcibios_present(int *);
+void int13_getextinfo(int, struct biosdisk_ext13info *);
+int pcibios_cfgread(unsigned int, int, int *);
+int pcibios_cfgwrite(unsigned int, int, int);
+int pcibios_finddev(int, int, int, unsigned int *);
+int pcibios_present(int *);
 
-extern void dosclose(int);
+void dosclose(int);
+int dosopen(char *);
+int dosread(int, char *, int);
+int dosseek(int, int, int);
 extern int doserrno;	/* in dos_file.S */
-extern int dosopen(char *);
-extern int dosread(int, char *, int);
-extern int dosseek(int, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.67.2.2 2004/08/03 10:52:46 skrll Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.67.2.3 2004/08/25 06:58:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.2 2004/08/03 10:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.3 2004/08/25 06:58:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.2 2004/08/03 10:52:46 skrll Exp 
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <sys/lkm.h>
 #include <sys/syscall.h>
@@ -115,6 +116,7 @@ static int _lkm_strmod(struct lkm_table *, int);
 #endif
 static int _lkm_exec(struct lkm_table *, int);
 static int _lkm_compat(struct lkm_table *, int);
+static int _lkm_drv(struct lkm_table *, int);
 
 static int _lkm_checkver(struct lkm_table *);
 
@@ -902,6 +904,131 @@ _lkm_compat(lkmtp, cmd)
 	return (error);
 }
 
+static int
+drvlkm_load(struct cfdriver **cd, const struct cfattachlkminit *cai,
+	    struct cfdata *cf)
+{
+	const struct cfattachlkminit *cfai;
+	int i, error, j;
+
+	for (i = 0; cd[i]; i++) {
+		error = config_cfdriver_attach(cd[i]);
+		if (!error)
+			continue;
+		if (error != EEXIST) {
+			printf("%s: unable to register driver\n",
+			       cd[i]->cd_name);
+			/* XXX roll back previous attachments */
+			goto out;
+		}
+		printf("driver %s already present\n", cd[i]->cd_name);
+		/*
+		 * get existing drivers out of the list so we won't try
+		 * to detach them
+		 */
+		for (j = i; cd[j]; j++)
+			cd[j] = cd[j + 1];
+		i--; /* continue at same index */
+	}
+
+	for (cfai = cai; cfai->cfai_name; cfai++) {
+		for (i = 0; cfai->cfai_list[i]; i++) {
+			error = config_cfattach_attach(cfai->cfai_name,
+						       cfai->cfai_list[i]);
+			if (!error)
+				continue;
+			if (error != EEXIST) {
+				printf("%s: unable to register cfattach\n",
+				       cfai->cfai_list[i]->ca_name);
+				/* XXX roll back previous attachments */
+				goto out;
+			}
+			printf("driver attachment %s for %s already present\n",
+			       cfai->cfai_list[i]->ca_name, cfai->cfai_name);
+			/*
+			 * get existing attachments out of the list so we
+			 * won't try to detach them
+			 */
+			for (j = i; cfai->cfai_list[j]; j++)
+				cfai->cfai_list[j] = cfai->cfai_list[j + 1];
+			i--; /* continue at same index */
+		}
+	}
+
+	error = config_cfdata_attach(cf, 1);
+	/* XXX roll back cfdriver / cfattach attachments in error case */
+
+out:
+	return (error);
+}
+
+static int
+drvlkm_unload(struct cfdriver **cd, const struct cfattachlkminit *cai,
+	      struct cfdata *cf)
+{
+	const struct cfattachlkminit *cfai;
+	int i, error;
+
+	error = config_cfdata_detach(cf);
+	if (error)
+		return (error);
+
+	for (cfai = cai; cfai->cfai_name; cfai++) {
+		for (i = 0; cfai->cfai_list[i]; i++) {
+			error = config_cfattach_detach(cfai->cfai_name,
+						       cfai->cfai_list[i]);
+			if (error) {
+				printf("%s: unable to deregister cfattach\n",
+				       cfai->cfai_list[i]->ca_name);
+				return (error);	
+			}
+		}
+	}
+
+	for (i = 0; cd[i]; i++) {
+		error = config_cfdriver_detach(cd[i]);
+		if (error) {
+			printf("%s: unable to deregister cfdriver\n",
+	    			cd[i]->cd_name);
+			return (error);
+		}
+	}
+
+	return (0);
+}
+
+static int
+_lkm_drv(lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
+{
+	struct lkm_drv *args = lkmtp->private.lkm_drv;
+	int error = 0;
+
+	switch(cmd) {
+	case LKM_E_LOAD:
+		/* don't load twice! */
+		if (lkmexists(lkmtp))
+			return (EEXIST);
+
+		error = drvlkm_load(args->lkm_cd,
+				    args->lkm_cai,
+				    args->lkm_cf);
+		break;
+
+	case LKM_E_UNLOAD:
+		error = drvlkm_unload(args->lkm_cd,
+				      args->lkm_cai,
+				      args->lkm_cf);
+		break;
+
+	case LKM_E_STAT:	/* no special handling... */
+		break;
+	}
+
+	return (error);
+}
+
 /*
  * This code handles the per-module type "wiring-in" of loadable modules
  * into existing kernel tables.  For "LM_MISC" modules, wiring and unwiring
@@ -956,6 +1083,10 @@ lkmdispatch(lkmtp, cmd)
 		break;
 
 	case LM_MISC:	/* ignore content -- no "misc-specific" procedure */
+		break;
+
+	case LM_DRV:
+		error = _lkm_drv(lkmtp, cmd);
 		break;
 
 	default:

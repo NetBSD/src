@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.14.2.1 2004/08/12 11:42:01 skrll Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.14.2.2 2004/08/25 06:58:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14.2.1 2004/08/12 11:42:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14.2.2 2004/08/25 06:58:43 skrll Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.14.2.1 2004/08/12 11:42:01 skrll Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <net/if.h>     
 #include <net/if_dl.h>  
@@ -580,7 +582,7 @@ mhzc_em3336_enable(sc)
 	delay(5);
 	reg = bus_space_read_1(memh.memt, memh.memh, 0x380);
 
-	delay(200000);
+	tsleep(&mhzc_em3336_enable, PWAIT, "mhz3en", hz * 200 / 1000);
 
 	reg = pcmcia_ccr_read(sc->sc_pf, PCMCIA_CCR_OPTION);
 	delay(5);

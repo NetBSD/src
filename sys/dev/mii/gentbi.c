@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.10.2.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.10.2.2 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.10.2.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.10.2.2 2004/08/25 06:58:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,20 +90,20 @@ __KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.10.2.1 2004/08/03 10:48:49 skrll Exp $"
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-int	gentbimatch(struct device *, struct cfdata *, void *);
-void	gentbiattach(struct device *, struct device *, void *);
+static int	gentbimatch(struct device *, struct cfdata *, void *);
+static void	gentbiattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(gentbi, sizeof(struct mii_softc),
     gentbimatch, gentbiattach, mii_phy_detach, mii_phy_activate);
 
-int	gentbi_service(struct mii_softc *, struct mii_data *, int);
-void	gentbi_status(struct mii_softc *);
+static int	gentbi_service(struct mii_softc *, struct mii_data *, int);
+static void	gentbi_status(struct mii_softc *);
 
-const struct mii_phy_funcs gentbi_funcs = {
+static const struct mii_phy_funcs gentbi_funcs = {
 	gentbi_service, gentbi_status, mii_phy_reset,
 };
 
-int
+static int
 gentbimatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
@@ -136,7 +136,7 @@ gentbimatch(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 gentbiattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
@@ -174,7 +174,7 @@ gentbiattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 }
 
-int
+static int
 gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -233,7 +233,7 @@ gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return (0);
 }
 
-void
+static void
 gentbi_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;

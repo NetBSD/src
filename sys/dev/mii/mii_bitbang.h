@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.h,v 1.1 1999/11/17 17:47:59 thorpej Exp $	*/
+/*	$NetBSD: mii_bitbang.h,v 1.1.32.1 2004/08/25 06:58:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,14 +45,14 @@
 #define	MII_NBITS		5
 
 struct mii_bitbang_ops {
-	u_int32_t	(*mbo_read) __P((struct device *));
-	void		(*mbo_write) __P((struct device *, u_int32_t));
+	u_int32_t	(*mbo_read)(struct device *);
+	void		(*mbo_write)(struct device *, u_int32_t);
 	u_int32_t	mbo_bits[MII_NBITS];
 };
 
 typedef	const struct mii_bitbang_ops *mii_bitbang_ops_t;
 
-int	mii_bitbang_readreg __P((struct device *, mii_bitbang_ops_t,
-	    int, int));
-void	mii_bitbang_writereg __P((struct device *, mii_bitbang_ops_t,
-	    int, int, int));
+int	mii_bitbang_readreg(struct device *, mii_bitbang_ops_t,
+	    int, int);
+void	mii_bitbang_writereg(struct device *, mii_bitbang_ops_t,
+	    int, int, int);

@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.14 2002/10/02 04:55:49 thorpej Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.14.6.1 2004/08/25 06:57:17 skrll Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.14 2002/10/02 04:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.14.6.1 2004/08/25 06:57:17 skrll Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -71,6 +71,7 @@ static void *pcf_intr_establish(pcmcia_chipset_handle_t,
 static void pcf_intr_disestablish(pcmcia_chipset_handle_t, void *);
 static void pcf_socket_enable(pcmcia_chipset_handle_t);
 static void pcf_socket_disable(pcmcia_chipset_handle_t);
+static void pcf_socket_settype(pcmcia_chipset_handle_t, int);
 
 static bsr(pcmio_bsr1, u_int8_t);
 static bsw(pcmio_bsw1, u_int8_t);
@@ -90,7 +91,8 @@ struct pcmcia_chip_functions chip_functions = {
 	pcf_io_alloc,		pcf_io_free,
 	pcf_io_map,		pcf_io_unmap,
 	pcf_intr_establish,	pcf_intr_disestablish,
-	pcf_socket_enable,	pcf_socket_disable
+	pcf_socket_enable,	pcf_socket_disable,
+	pcf_socket_settype
 };
 
 struct amiga_bus_space_methods pcmio_bs_methods;
@@ -376,7 +378,7 @@ pcf_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 
 	pcihp->iot = &slot->sc->io_space;
-	pcihp->ioh = offset;
+	bus_space_map(pcihp->iot, offset, size, 0, &pcihp->ioh);
 
 	*windowp = 0;		/* unused */
 	return 0;
@@ -429,6 +431,9 @@ pcf_socket_disable(pcmcia_chipset_handle_t pch)
 {
 }
 
+static void
+pcf_socket_settype(pcmcia_chipset_handle_t pch, int type) {
+}
 
 static u_int8_t
 pcmio_bsr1(bus_space_handle_t h, bus_size_t o)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.58.2.2 2004/08/03 10:49:11 skrll Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.58.2.3 2004/08/25 06:58:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -166,6 +166,9 @@ struct pci_softc {
 	u_int sc_intrswiz;
 	pcitag_t sc_intrtag;
 	int sc_flags;
+	/* accounting of child devices */
+	struct device *sc_devices[32*8];
+#define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
 };
 
 extern struct cfdriver pci_cd;

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.9.2.2 2004/08/03 10:44:54 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.9.2.3 2004/08/25 06:57:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.9.2.2 2004/08/03 10:44:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.9.2.3 2004/08/25 06:57:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ int	dkdebug = 0;
 #define DKLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), DISKUNIT((dev)), RAW_PART))
 
-void	dk_makedisklabel(struct dk_intf *, struct dk_softc *);
+static void	dk_makedisklabel(struct dk_intf *, struct dk_softc *);
 
 void
 dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
@@ -504,7 +504,7 @@ dk_getdisklabel(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 }
 
 /* ARGSUSED */
-void
+static void
 dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
 {
 	struct	disklabel *lp = dksc->sc_dkdev.dk_label;

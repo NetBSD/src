@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.3 2004/08/24 17:57:43 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.4 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.3 2004/08/24 17:57:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.4 2004/08/25 06:59:14 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -454,8 +454,8 @@ ffs_mount(mp, path, data, ndp, l)
  *	6) re-read inode data for all active vnodes.
  */
 int
-ffs_reload(mountp, cred, l)
-	struct mount *mountp;
+ffs_reload(mp, cred, l)
+	struct mount *mp;
 	struct ucred *cred;
 	struct lwp *l;
 {
@@ -470,10 +470,10 @@ ffs_reload(mountp, cred, l)
 	struct ufsmount *ump;
 	daddr_t sblockloc;
 
-	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
 
-	ump = VFSTOUFS(mountp);
+	ump = VFSTOUFS(mp);
 	/*
 	 * Step 1: invalidate all cached meta-data.
 	 */
@@ -532,13 +532,13 @@ ffs_reload(mountp, cred, l)
 	free(newfs, M_UFSMNT);
 
 	/* Recheck for apple UFS filesystem */
-	VFSTOUFS(mountp)->um_flags &= ~UFS_ISAPPLEUFS;
+	ump->um_flags &= ~UFS_ISAPPLEUFS;
 	/* First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
 	if ((VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) == 0) &&
 		(dpart.part->p_fstype == FS_APPLEUFS)) {
-		VFSTOUFS(mountp)->um_flags |= UFS_ISAPPLEUFS;
+		ump->um_flags |= UFS_ISAPPLEUFS;
 	}
 #ifdef APPLE_UFS
 	else {
@@ -553,29 +553,37 @@ ffs_reload(mountp, cred, l)
 		}
 		error = ffs_appleufs_validate(fs->fs_fsmnt,
 			(struct appleufslabel *)bp->b_data,NULL);
-		if (error == 0) {
-			VFSTOUFS(mountp)->um_flags |= UFS_ISAPPLEUFS;
-		}
+		if (error == 0)
+			ump->um_flags |= UFS_ISAPPLEUFS;
 		brelse(bp);
 		bp = NULL;
 	}
 #else
-	if (VFSTOUFS(mountp)->um_flags & UFS_ISAPPLEUFS)
+	if (ump->um_flags & UFS_ISAPPLEUFS)
 		return (EIO);
 #endif
 
-	mountp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
-	if (UFS_MPISAPPLEUFS(mountp)) {
+	if (UFS_MPISAPPLEUFS(ump)) {
 		/* see comment about NeXT below */
-		mountp->mnt_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
+		ump->um_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
+		ump->um_dirblksiz = APPLEUFS_DIRBLKSIZ;
+		mp->mnt_iflag |= IMNT_DTYPE;
+	} else {
+		ump->um_maxsymlinklen = fs->fs_maxsymlinklen;
+		ump->um_dirblksiz = DIRBLKSIZ;
+		if (ump->um_maxsymlinklen > 0)
+			mp->mnt_iflag |= IMNT_DTYPE;
+		else
+			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
-	ffs_oldfscompat_read(fs, VFSTOUFS(mountp), sblockloc);
+	ump->um_maxfilesize = fs->fs_maxfilesize;
+	ffs_oldfscompat_read(fs, ump, sblockloc);
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
 	}
 
-	ffs_statvfs(mountp, &mountp->mnt_stat, l);
+	ffs_statvfs(mp, &mp->mnt_stat, l);
 	/*
 	 * Step 3: re-read summary information from disk.
 	 */
@@ -602,9 +610,9 @@ ffs_reload(mountp, cred, l)
 		brelse(bp);
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
-		softdep_mount(devvp, mountp, fs, cred);
+		softdep_mount(devvp, mp, fs, cred);
 	if (fs->fs_snapinum[0] != 0)
-		ffs_snapshot_mount(mountp);
+		ffs_snapshot_mount(mp);
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -616,8 +624,8 @@ ffs_reload(mountp, cred, l)
 
 loop:
 	simple_lock(&mntvnode_slock);
-	for (vp = mountp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
-		if (vp->v_mount != mountp) {
+	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+		if (vp->v_mount != mp) {
 			simple_unlock(&mntvnode_slock);
 			goto loop;
 		}
@@ -811,6 +819,7 @@ ffs_mountfs(devvp, mp, l)
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
 
+	ump->um_maxfilesize = fs->fs_maxfilesize;
 	ffs_oldfscompat_read(fs, ump, sblockloc);
 
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
@@ -927,14 +936,22 @@ ffs_mountfs(devvp, mp, l)
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
-	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
-	if (UFS_MPISAPPLEUFS(mp)) {
+	if (UFS_MPISAPPLEUFS(ump)) {
 		/* NeXT used to keep short symlinks in the inode even
 		 * when using FS_42INODEFMT.  In that case fs->fs_maxsymlinklen
 		 * is probably -1, but we still need to be able to identify
 		 * short symlinks.
 		 */
-		mp->mnt_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
+		ump->um_maxsymlinklen = APPLEUFS_MAXSYMLINKLEN;
+		ump->um_dirblksiz = APPLEUFS_DIRBLKSIZ;
+		mp->mnt_iflag |= IMNT_DTYPE;
+	} else {
+		ump->um_maxsymlinklen = fs->fs_maxsymlinklen;
+		ump->um_dirblksiz = DIRBLKSIZ;
+		if (ump->um_maxsymlinklen > 0)
+			mp->mnt_iflag |= IMNT_DTYPE;
+		else
+			mp->mnt_iflag &= ~IMNT_DTYPE;
 	}
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
@@ -1038,14 +1055,14 @@ ffs_oldfscompat_read(fs, ump, sblockloc)
 	}
 
 	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
-		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
+		ump->um_maxfilesize = (u_quad_t) 1LL << 39;
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
 	}
 
 	maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
-	if (fs->fs_maxfilesize > maxfilesize)
-		fs->fs_maxfilesize = maxfilesize;
+	if (ump->um_maxfilesize > maxfilesize)
+		ump->um_maxfilesize = maxfilesize;
 
 	/* Compatibility for old filesystems */
 	if (fs->fs_avgfilesize <= 0)
@@ -1292,7 +1309,7 @@ loop:
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
-		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
+		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 		{
@@ -1307,8 +1324,12 @@ loop:
 				goto loop;
 			continue;
 		}
-		if ((error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l)) != 0)
+		if (vp->v_type == VREG && waitfor == MNT_LAZY)
+			error = VOP_UPDATE(vp, NULL, NULL, 0);
+		else
+			error = VOP_FSYNC(vp, cred,
+			    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		if (error)
 			allerror = error;
 		vput(vp);
 		simple_lock(&mntvnode_slock);

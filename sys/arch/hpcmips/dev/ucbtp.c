@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.11.2.1 2004/08/03 10:35:07 skrll Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.11.2.2 2004/08/25 06:57:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.11.2.1 2004/08/03 10:35:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.11.2.2 2004/08/25 06:57:19 skrll Exp $");
 
 #include "opt_use_poll.h"
 
@@ -219,7 +219,7 @@ struct calibration_sample_table {
 	    { 241, 115, 600, 200 },
 	    { 747, 101, 600,  40 }}}},
 	
-	{{{PLATID_WILD, PLATID_MACH_SHARP_TELIOS_HCAJ1}}, /* uch machine */
+	{{{PLATID_WILD, PLATID_MACH_SHARP_TELIOS_HCVJ}}, /* uch machine */
 	 { 0, 0, 799, 479, 5,
 	   {{ 850, 150,   1,   1 },
 	    { 850, 880,   1, 479 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.13.2.1 2004/08/03 10:56:25 skrll Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.13.2.2 2004/08/25 06:59:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -689,7 +689,8 @@ struct x86_boot_params {
 	uint32_t	bp_consdev;
 	uint32_t	bp_conspeed;
 	uint8_t		bp_password[16];	/* md5 hash of password */
-	char		bp_keymap[16];	/* keyboard traslation map */
+	char		bp_keymap[64];	/* keyboard traslation map */
+	uint32_t	bp_consaddr;	/* ioaddr for console */
 };
 
 #endif	/* !defined(__ASSEMBLER__) */				/* } */
