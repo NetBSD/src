@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.7 2001/12/08 15:01:41 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.8 2001/12/09 16:04:03 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -170,7 +170,7 @@ LINKFLAGS+=	${LINKFLAGS_NORMAL}
 SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 
 ##
-## (6) port independent targets and dependencies: assym.h, newvers
+## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 .if !target(assym.h)
 assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
@@ -180,8 +180,9 @@ assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
 	mv -f assym.h.tmp assym.h
 .endif
 
-.if !target(newvers)
-newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+.if !target(vers.o)
+newvers: vers.o
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
