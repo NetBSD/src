@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.66 2003/06/28 14:22:17 darrenr Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.67 2003/06/29 18:43:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.66 2003/06/28 14:22:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.67 2003/06/29 18:43:35 thorpej Exp $");
 
 #include "opt_nfs.h"
 
@@ -174,7 +174,7 @@ loop:
 		    memcmp(fhp, np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
-		if (vget(vp, LK_EXCLUSIVE, l))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		*npp = np;
 		return(0);

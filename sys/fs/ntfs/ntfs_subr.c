@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.5 2003/06/28 14:21:50 darrenr Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.6 2003/06/29 18:43:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.5 2003/06/28 14:21:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.6 2003/06/29 18:43:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2039,7 +2039,7 @@ ntfs_toupper_use(mp, ntmp)
 	MALLOC(ntfs_toupper_tab, wchar *, 256 * 256 * sizeof(wchar),
 		M_NTFSRDATA, M_WAITOK);
 
-	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp, mp->mnt_unmounter)))
+	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
 		goto out;
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
 			0, 256*256*sizeof(wchar), (char *) ntfs_toupper_tab,

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.6 2003/06/29 15:11:48 thorpej Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.7 2003/06/29 18:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.6 2003/06/29 15:11:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.7 2003/06/29 18:43:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,12 @@ int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		     struct lwp *));
 int union_start __P((struct mount *, int, struct lwp *));
 int union_unmount __P((struct mount *, int, struct lwp *));
-int union_root __P((struct mount *, struct vnode **, struct lwp *));
+int union_root __P((struct mount *, struct vnode **));
 int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
 int union_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int union_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int union_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int union_fhtovp __P((struct mount *, struct fid *, struct vnode **, \
-		      struct lwp *));
+int union_vget __P((struct mount *, ino_t, struct vnode **));
+int union_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int union_checkexp __P((struct mount *, struct mbuf *, int *,
 		      struct ucred **));
 int union_vptofh __P((struct vnode *, struct fid *));
@@ -316,7 +315,7 @@ union_unmount(mp, mntflags, l)
 	printf("union_unmount(mp = %p)\n", mp);
 #endif
 
-	if ((error = union_root(mp, &um_rootvp, l)) != 0)
+	if ((error = union_root(mp, &um_rootvp)) != 0)
 		return (error);
 
 	/*
@@ -387,10 +386,9 @@ union_unmount(mp, mntflags, l)
 }
 
 int
-union_root(mp, vpp, l)
+union_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
@@ -415,7 +413,7 @@ union_root(mp, vpp, l)
 			      (struct componentname *) 0,
 			      um->um_uppervp,
 			      um->um_lowervp,
-			      1, l);
+			      1);
 
 	if (error) {
 		if (!loselock)
@@ -518,11 +516,10 @@ union_sync(mp, waitfor, cred, l)
 
 /*ARGSUSED*/
 int
-union_vget(mp, ino, vpp, l)
+union_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	
 	return (EOPNOTSUPP);
@@ -530,11 +527,10 @@ union_vget(mp, ino, vpp, l)
 
 /*ARGSUSED*/
 int
-union_fhtovp(mp, fidp, vpp, l)
+union_fhtovp(mp, fidp, vpp)
 	struct mount *mp;
 	struct fid *fidp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.25 2003/06/28 14:22:19 darrenr Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.26 2003/06/29 18:43:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -187,14 +187,14 @@ int	nfs_mountroot __P((void));
 void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
 int	nfs_start __P((struct mount *mp, int flags, struct lwp *p));
 int	nfs_unmount __P((struct mount *mp, int mntflags, struct lwp *p));
-int	nfs_root __P((struct mount *mp, struct vnode **vpp, struct lwp *));
+int	nfs_root __P((struct mount *mp, struct vnode **vpp));
 int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, caddr_t arg,
 		struct lwp *l));
 int	nfs_statfs __P((struct mount *mp, struct statfs *sbp, struct lwp *p));
 int	nfs_sync __P((struct mount *mp, int waitfor, struct ucred *cred,
 		struct lwp *p));
-int	nfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp, struct lwp *));
+int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
 int	nfs_checkexp __P((struct mount *mp, struct mbuf *nam, int *exflagsp,
 		struct ucred **credanonp));
 int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.100 2003/06/28 14:22:29 darrenr Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.101 2003/06/29 18:43:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.100 2003/06/28 14:22:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.101 2003/06/29 18:43:48 thorpej Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -184,7 +184,7 @@ ufs_mknod(void *v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp, ap->a_cnp->cn_lwp);
+	error = VFS_VGET(mp, ino, vpp);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
