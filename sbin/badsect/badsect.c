@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.12 1997/08/01 00:35:51 christos Exp $	*/
+/*	$NetBSD: badsect.c,v 1.13 1997/09/14 08:14:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.12 1997/08/01 00:35:51 christos Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.13 1997/09/14 08:14:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 {
 	daddr_t number;
 	struct stat stbuf, devstat;
-	register struct direct *dp;
+	struct direct *dp;
 	DIR *dirp;
 	char name[MAXPATHLEN];
 	extern char *__progname;
@@ -184,7 +184,7 @@ chkuse(blkno, cnt)
 		}
 	} else {
 		if ((fsbn+cnt) > cgbase(fs, cg+1)) {
-			warnx("block %d in non-data area: cannot attach\n",
+			warnx("block %d in non-data area: cannot attach",
 			    blkno);
 			return (1);
 		}
