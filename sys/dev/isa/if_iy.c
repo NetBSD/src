@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9.4.6 1997/02/27 19:17:37 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.7 1997/03/10 13:46:15 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -62,7 +62,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS

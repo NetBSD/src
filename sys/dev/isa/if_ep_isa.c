@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.8.4.2 1997/02/27 19:17:32 is Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.8.4.3 1997/03/10 13:46:10 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
@@ -55,7 +55,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS

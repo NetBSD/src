@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.23.4.1 1997/02/27 19:17:34 is Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.23.4.2 1997/03/10 13:46:12 is Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -73,7 +73,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
