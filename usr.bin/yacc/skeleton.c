@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.12 1997/07/25 16:46:38 perry Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.13 1997/09/26 15:14:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.12 1997/07/25 16:46:38 perry Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.13 1997/09/26 15:14:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ char *banner[] =
     "#if 0",
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.12 1997/07/25 16:46:38 perry Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.13 1997/09/26 15:14:08 christos Exp $\");",
     "#endif",
     "#endif",
     "#include <stdlib.h>",
@@ -173,7 +173,7 @@ char *body[] =
     "#if YYDEBUG",
     "    register char *yys;",
     "",
-    "    if (yys = getenv(\"YYDEBUG\"))",
+    "    if ((yys = getenv(\"YYDEBUG\")) != NULL)",
     "    {",
     "        yyn = *yys;",
     "        if (yyn >= '0' && yyn <= '9')",
