@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.63 2005/04/01 12:04:00 yamt Exp $
+.\"	$NetBSD: uvm.9,v 1.64 2005/04/04 08:25:44 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -538,7 +538,7 @@ argument
 The alignment must be a multiple of page size.
 The
 .Fa flags
-is a bitwise inclusive OR of the allocation type and operation flags. 
+is a bitwise inclusive OR of the allocation type and operation flags.
 .Pp
 The allocation type should be one of:
 .Bl -tag -width UVM_KMF_PAGEABLE
@@ -547,10 +547,10 @@ Wired memory.
 .It UVM_KMF_PAGEABLE
 Demand-paged zero-filled memory.
 .It UVM_KMF_VAONLY
-Virtuall address only.
+Virtual address only.
 No physical pages are mapped in the allocated region.
-If necessary, it's caller's responsibility to enter page mappings.
-It's also caller's responsibility to clean up the mappings before freeing
+If necessary, it's the caller's responsibility to enter page mappings.
+It's also the caller's responsibility to clean up the mappings before freeing
 the address range.
 .El
 .Pp
