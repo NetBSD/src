@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.7.4.3 2001/04/22 18:07:14 he Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.7.4.4 2002/01/23 19:01:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.7.4.3 2001/04/22 18:07:14 he Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.7.4.4 2002/01/23 19:01:34 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ typedef struct manpagestruct manpage;
 struct manpagestruct {
 	manpage *mp_left,*mp_right;
 	ino_t	 mp_inode;
-	char     mp_name[1];
+	char	 mp_name[1];
 };
 
 typedef struct whatisstruct whatis;
@@ -78,23 +78,25 @@ struct whatisstruct {
 	char	*wi_data;
 };
 
-int              main (int, char **);
-char		*findwhitespace (char *);
-char		*strmove (char *,char *);
-char		*GetS (gzFile, char *, int);
-int		 manpagesection (char *);
-char		*createsectionstring(char *);
-int		 addmanpage (manpage **, ino_t, char *);
-int		 addwhatis (whatis **, char *);
-char		*replacestring (char *, char *, char *);
-void		 catpreprocess (char *);
-char		*parsecatpage (gzFile *);
-int		 manpreprocess (char *);
-char		*nroff (gzFile *);
-char		*parsemanpage (gzFile *, int);
-char		*getwhatisdata (char *);
-void		 processmanpages (manpage **,whatis **);
-int		 dumpwhatis (FILE *, whatis *);
+int	 main(int, char **);
+char	*findwhitespace(char *);
+char	*strmove(char *,char *);
+char	*GetS(gzFile, char *, size_t);
+int	 manpagesection(char *);
+char	*createsectionstring(char *);
+void	 addmanpage(manpage **, ino_t, char *);
+void	 addwhatis(whatis **, char *);
+char	*replacestring(char *, char *, char *);
+void	 catpreprocess(char *);
+char	*parsecatpage(gzFile *);
+int	 manpreprocess(char *);
+char	*nroff(gzFile *);
+char	*parsemanpage(gzFile *, int);
+char	*getwhatisdata(char *);
+void	 processmanpages(manpage **,whatis **);
+void	 dumpwhatis(FILE *, whatis *);
+void	*emalloc(size_t);
+char	*estrdup(const char *);
 
 char *default_manpath[] = {
 	"/usr/share/man",
@@ -102,17 +104,15 @@ char *default_manpath[] = {
 };
 
 char sectionext[] = "0123456789ln";
-char whatisdb[]   = "whatis.db";
-
-extern char *__progname;
+char whatisdb[]	  = "whatis.db";
 
 int
-main(int argc,char **argv)
+main(int argc, char **argv)
 {
 	char	**manpath;
 	FTS	*fts;
 	FTSENT	*fe;
-	manpage	*source;
+	manpage *source;
 	whatis	*dest;
 	FILE	*out;
 
@@ -120,20 +120,17 @@ main(int argc,char **argv)
 
 	manpath = (argc < 2) ? default_manpath : &argv[1];
 
-	if ((fts = fts_open(manpath, FTS_LOGICAL, NULL)) == NULL) {
-		perror(__progname);
-		return EXIT_FAILURE;
-	}
+	if ((fts = fts_open(manpath, FTS_LOGICAL, NULL)) == NULL)
+		err(EXIT_FAILURE, "Cannot open `%s'", *manpath);
 
 	source = NULL;
 	while ((fe = fts_read(fts)) != NULL) {
 		switch (fe->fts_info) {
 		case FTS_F:
 			if (manpagesection(fe->fts_path) >= 0)
-				if (!addmanpage(&source,
-					fe->fts_statp->st_ino,
-					fe->fts_path))
-					err(EXIT_FAILURE, NULL);
+				addmanpage(&source, fe->fts_statp->st_ino,
+				    fe->fts_path);
+			/*FALLTHROUGH*/
 		case FTS_D:
 		case FTS_DC:
 		case FTS_DEFAULT:
@@ -141,9 +138,8 @@ main(int argc,char **argv)
 		case FTS_SLNONE:
 			break;
 		default:
-			errx(EXIT_FAILURE, "%s: %s", fe->fts_path,
-			    strerror(fe->fts_errno));
-
+			errno = fe->fts_errno;
+			err(EXIT_FAILURE, "Error reading `%s'", fe->fts_path);
 		}
 	}
 
@@ -152,25 +148,26 @@ main(int argc,char **argv)
 	dest = NULL;
 	processmanpages(&source, &dest);
 
-	if (chdir(manpath[0]) < 0)
-		errx(EXIT_FAILURE, "%s: %s", manpath[0], strerror(errno));
+	if (chdir(manpath[0]) == -1)
+		err(EXIT_FAILURE, "Cannot change dir to `%s'", manpath[0]);
 
+	(void)unlink(whatisdb);
 	if ((out = fopen(whatisdb, "w")) == NULL)
-		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
+		err(EXIT_FAILURE, "Cannot open `%s'", whatisdb);
 
-	if (!(dumpwhatis(out, dest) ||
-	    (fclose(out) < 0)) ||
-	    (chmod(whatisdb, S_IRUSR|S_IRGRP|S_IROTH) < 0))
-		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
+	dumpwhatis(out, dest);
+	if (fchmod(fileno(out), S_IRUSR|S_IRGRP|S_IROTH) == -1)
+		err(EXIT_FAILURE, "Cannot chmod `%s'", whatisdb);
+	if (fclose(out) != 0)
+		err(EXIT_FAILURE, "Cannot close `%s'", whatisdb);
 
 	return EXIT_SUCCESS;
 }
 
-char
-*findwhitespace(char *str)
-
+char *
+findwhitespace(char *str)
 {
-	while (!isspace(*str))
+	while (!isspace((unsigned char)*str))
 		if (*str++ == '\0') {
 			str = NULL;
 			break;
@@ -181,18 +178,16 @@ char
 
 char
 *strmove(char *dest,char *src)
-
 {
 	return memmove(dest, src, strlen(src) + 1);
 }
 
-char
-*GetS(gzFile in, char *buffer, int length)
-
+char *
+GetS(gzFile in, char *buffer, size_t length)
 {
 	char	*ptr;
 
-	if (((ptr = gzgets(in, buffer, length)) != NULL) && (*ptr == '\0'))
+	if (((ptr = gzgets(in, buffer, (int)length)) != NULL) && (*ptr == '\0'))
 		ptr = NULL;
 
 	return ptr;
@@ -223,75 +218,65 @@ manpagesection(char *name)
 	return -1;
 }
 
-char
-*createsectionstring(char *section_id)
+char *
+createsectionstring(char *section_id)
 {
-	char *section;
-
-	if ((section = malloc(strlen(section_id) + 7)) != NULL) {
-		section[0] = ' ';
-		section[1] = '(';
-		(void) strcat(strcpy(&section[2], section_id), ") - ");
-	}
+	char *section = emalloc(strlen(section_id) + 7);
+	section[0] = ' ';
+	section[1] = '(';
+	(void)strcat(strcpy(&section[2], section_id), ") - ");
 	return section;
 }
 
-int
+void
 addmanpage(manpage **tree,ino_t inode,char *name)
 {
-	manpage	*mp;
+	manpage *mp;
 
 	while ((mp = *tree) != NULL) {
 		if (mp->mp_inode == inode)
-			return 1;
-		tree = &((inode < mp->mp_inode) ? mp->mp_left : mp->mp_right);
+			return;
+		tree = inode < mp->mp_inode ? &mp->mp_left : &mp->mp_right;
 	}
 
-	if ((mp = malloc(sizeof(manpage) + strlen(name))) == NULL)
-		return 0;
-
+	mp = emalloc(sizeof(manpage) + strlen(name));
 	mp->mp_left = NULL;
 	mp->mp_right = NULL;
 	mp->mp_inode = inode;
-	(void) strcpy(mp->mp_name, name);
+	(void)strcpy(mp->mp_name, name);
 	*tree = mp;
-
-	return 1;
 }
 
-int
+void
 addwhatis(whatis **tree, char *data)
 {
 	whatis *wi;
 	int result;
 
-	while (isspace(*data))
+	while (isspace((unsigned char)*data))
 		data++;
 
 	if (*data == '/') {
 		char *ptr;
 
 		ptr = ++data;
-		while ((*ptr != '\0') && !isspace(*ptr))
+		while ((*ptr != '\0') && !isspace((unsigned char)*ptr))
 			if (*ptr++ == '/')
 				data = ptr;
 	}
 
 	while ((wi = *tree) != NULL) {
-		result=strcmp(data, wi->wi_data);
-		if (result == 0) return 1;
-		tree = &((result < 0) ? wi->wi_left : wi->wi_right);
+		result = strcmp(data, wi->wi_data);
+		if (result == 0) return;
+		tree = result < 0 ? &wi->wi_left : &wi->wi_right;
 	}
 
-	if ((wi = malloc(sizeof(whatis) + strlen(data))) == NULL)
-		return 0;
+	wi = emalloc(sizeof(whatis) + strlen(data));
 
 	wi->wi_left = NULL;
 	wi->wi_right = NULL;
 	wi->wi_data = data;
 	*tree = wi;
-
-	return 1;
 }
 
 void
@@ -300,11 +285,11 @@ catpreprocess(char *from)
 	char	*to;
 
 	to = from;
-	while (isspace(*from)) from++;
+	while (isspace((unsigned char)*from)) from++;
 
 	while (*from != '\0')
-		if (isspace(*from)) {
-			while (isspace(*++from));
+		if (isspace((unsigned char)*from)) {
+			while (isspace((unsigned char)*++from));
 			if (*from != '\0')
 				*to++ = ' ';
 		}
@@ -321,25 +306,24 @@ replacestring(char *string, char *old, char *new)
 
 {
 	char	*ptr, *result;
-	int	 slength, olength, nlength, pos;
+	size_t	 slength, olength, nlength, pos;
 
 	if (new == NULL)
-		return strdup(string);
+		return estrdup(string);
 
 	ptr = strstr(string, old);
 	if (ptr == NULL)
-		return strdup(string);
+		return estrdup(string);
 
 	slength = strlen(string);
 	olength = strlen(old);
 	nlength = strlen(new);
-	if ((result = malloc(slength - olength + nlength + 1)) == NULL)
-		return NULL;
+	result = emalloc(slength - olength + nlength + 1);
 
 	pos = ptr - string;
-	(void) memcpy(result, string, pos);
-	(void) memcpy(&result[pos], new, nlength);
-	(void) strcpy(&result[pos + nlength], &string[pos + olength]);
+	(void)memcpy(result, string, pos);
+	(void)memcpy(&result[pos], new, nlength);
+	(void)strcpy(&result[pos + nlength], &string[pos + olength]);
 
 	return result;
 }
@@ -347,9 +331,9 @@ replacestring(char *string, char *old, char *new)
 char *
 parsecatpage(gzFile *in)
 {
-	char 	 buffer[8192];
+	char	 buffer[8192];
 	char	*section, *ptr, *last;
-	int	 size;
+	size_t	 size;
 
 	do {
 		if (GetS(in, buffer, sizeof(buffer)) == NULL)
@@ -360,12 +344,10 @@ parsecatpage(gzFile *in)
 	section = NULL;
 	if ((ptr = strchr(buffer, '(')) != NULL) {
 		if ((last = strchr(ptr + 1, ')')) !=NULL) {
-			int 	length;
+			size_t	length;
 
 			length = last - ptr + 1;
-			if ((section = malloc(length + 5)) == NULL)
-				return NULL;
-
+			section = emalloc(length + 5);
 			*section = ' ';
 			(void) memcpy(section + 1, ptr, length);
 			(void) strcpy(section + 1 + length, " - ");
@@ -420,13 +402,13 @@ manpreprocess(char *line)
 	char	*from, *to;
 
 	to = from = line;
-	while (isspace(*from)) from++;
+	while (isspace((unsigned char)*from)) from++;
 	if (strncmp(from, ".\\\"", 3) == 0)
 		return 1;
 
 	while (*from != '\0')
-		if (isspace(*from)) {
-			while (isspace(*++from));
+		if (isspace((unsigned char)*from)) {
+			while (isspace((unsigned char)*++from));
 			if ((*from != '\0') && (*from != ','))
 				*to++ = ' ';
 		}
@@ -458,20 +440,30 @@ manpreprocess(char *line)
 		char	*sect;
 
 		from = line + 3;
-		if (isspace(*from))
+		if (isspace((unsigned char)*from))
 			from++;
 
 		if ((sect = findwhitespace(from)) != NULL) {
-			int	 length;
+			size_t	length;
+			char	*trail;
 
 			*sect++ = '\0';
+			if ((trail = findwhitespace(sect)) != NULL)
+				*trail++ = '\0';
 			length = strlen(from);
 			(void) memmove(line, from, length);
 			line[length++] = '(';
 			to = &line[length];
 			length = strlen(sect);
 			(void) memmove(to, sect, length);
-			(void) strcpy(&to[length], ")");
+			if (trail == NULL) {
+				(void) strcpy(&to[length], ")");
+			} else {
+				to += length;
+				*to++ = ')';
+				length = strlen(trail);
+				(void) memmove(to, trail, length + 1);
+			}
 		}
 	}
 
@@ -486,46 +478,46 @@ nroff(gzFile *in)
 	static int devnull = -1;
 	pid_t child;
 
-	if (gzrewind(in) < 0) {
-		perror(__progname);
-		return NULL;
-	}
+	if (gzrewind(in) < 0)
+		err(EXIT_FAILURE, "Cannot rewind pipe");
 
 	if ((devnull < 0) &&
-	    ((devnull = open(_PATH_DEVNULL, O_WRONLY, 0)) < 0)) {
-		perror(__progname);
-		return NULL;
-	}
+	    ((devnull = open(_PATH_DEVNULL, O_WRONLY, 0)) < 0))
+		err(EXIT_FAILURE, "Cannot open `/dev/null'");
 
 	(void)strcpy(tempname, _PATH_TMP "makewhatis.XXXXXX");
-	if ((tempfd = mkstemp(tempname)) < 0) {
-		perror(__progname);
-		return NULL;
-	}
+	if ((tempfd = mkstemp(tempname)) == -1)
+		err(EXIT_FAILURE, "Cannot create temp file");
 
 	while ((bytes = gzread(in, buffer, sizeof(buffer))) > 0)
-		if (write(tempfd, buffer, bytes) != bytes) {
+		if (write(tempfd, buffer, (size_t)bytes) != bytes) {
 			bytes = -1;
 			break;
 		}
 
-	if ((bytes < 0) ||
-            (lseek(tempfd, 0, SEEK_SET) < 0) ||
-            (pipe(pipefd) < 0)) {
-		perror(__progname);
+	if (bytes < 0) {
 		(void)close(tempfd);
 		(void)unlink(tempname);
-		return NULL;
+		err(EXIT_FAILURE, "Read from pipe failed");
+	}
+	if (lseek(tempfd, (off_t)0, SEEK_SET) == (off_t)-1) {
+		(void)close(tempfd);
+		(void)unlink(tempname);
+		err(EXIT_FAILURE, "Cannot rewind temp file");
+	}
+	if (pipe(pipefd) == -1) {
+		(void)close(tempfd);
+		(void)unlink(tempname);
+		err(EXIT_FAILURE, "Cannot create pipe");
 	}
 
 	switch (child = vfork()) {
 	case -1:
-		perror(__progname);
 		(void)close(pipefd[1]);
 		(void)close(pipefd[0]);
 		(void)close(tempfd);
 		(void)unlink(tempname);
-		return NULL;
+		err(EXIT_FAILURE, "Fork failed");
 		/* NOTREACHED */
 	case 0:
 		(void)close(pipefd[0]);
@@ -543,21 +535,21 @@ nroff(gzFile *in)
 		}
 		(void)execlp("nroff", "nroff", "-S", "-man", NULL);
 		_exit(EXIT_FAILURE);
+		/*NOTREACHED*/
 	default:
 		(void)close(pipefd[1]);
 		(void)close(tempfd);
-		/* NOTREACHED */
+		break;
 	}
 
 	if ((in = gzdopen(pipefd[0], "r")) == NULL) {
 		if (errno == 0)
 			errno = ENOMEM;
-		perror(__progname);
 		(void)close(pipefd[0]);
 		(void)kill(child, SIGTERM);
 		while (waitpid(child, NULL, 0) != child);
 		(void)unlink(tempname);
-		return NULL;
+		err(EXIT_FAILURE, "Cannot read from pipe");
 	}
 
 	data = parsecatpage(in);
@@ -568,11 +560,11 @@ nroff(gzFile *in)
 	if ((data != NULL) &&
 	    !(WIFEXITED(status) && (WEXITSTATUS(status) == 0))) {
 		free(data);
-		data = NULL;
+		errx(EXIT_FAILURE, "nroff exited with %d status",
+		    WEXITSTATUS(status));
 	}
 
 	(void)unlink(tempname);
-
 	return data;
 }
 
@@ -593,7 +585,7 @@ parsemanpage(gzFile *in, int defaultsection)
 			char	*end;
 
 			ptr = &buffer[3];
-			if (isspace(*ptr))
+			if (isspace((unsigned char)*ptr))
 				ptr++;
 			if ((ptr = findwhitespace(ptr)) == NULL)
 				continue;
@@ -606,12 +598,12 @@ parsemanpage(gzFile *in, int defaultsection)
 		}
 		else if (strncasecmp(buffer, ".TH", 3) == 0) {
 			ptr = &buffer[3];
-			while (isspace(*ptr))
+			while (isspace((unsigned char)*ptr))
 				ptr++;
 			if ((ptr = findwhitespace(ptr)) != NULL) {
 				char *next;
 
-				while (isspace(*ptr))
+				while (isspace((unsigned char)*ptr))
 					ptr++;
 				if ((next = findwhitespace(ptr)) != NULL)
 					*next = '\0';
@@ -633,15 +625,15 @@ parsemanpage(gzFile *in, int defaultsection)
 	} while (manpreprocess(buffer));
 
 	if (strncasecmp(buffer, ".Nm", 3) == 0) {
-		int	length, offset;
+		size_t	length, offset;
 
 		ptr = &buffer[3];
-		while (isspace(*ptr))
+		while (isspace((unsigned char)*ptr))
 			ptr++;
 
 		length = strlen(ptr);
 		if ((length > 1) && (ptr[length - 1] == ',') &&
-		    isspace(ptr[length - 2])) {
+		    isspace((unsigned char)ptr[length - 2])) {
 			ptr[--length] = '\0';
 			ptr[length - 1] = ',';
 		}
@@ -650,10 +642,10 @@ parsemanpage(gzFile *in, int defaultsection)
 		offset = length + 3;
 		ptr = &buffer[offset];
 		for (;;) {
-			int	 more;
+			size_t	 more;
 
 			if ((sizeof(buffer) == offset) ||
-		            (GetS(in, ptr, sizeof(buffer) - offset)
+			    (GetS(in, ptr, sizeof(buffer) - offset)
 			       == NULL)) {
 				free(section);
 				return NULL;
@@ -664,13 +656,13 @@ parsemanpage(gzFile *in, int defaultsection)
 			if (strncasecmp(ptr, ".Nm", 3) != 0) break;
 
 			ptr += 3;
-			if (isspace(*ptr))
+			if (isspace((unsigned char)*ptr))
 				ptr++;
 
 			buffer[length++] = ' ';
 			more = strlen(ptr);
 			if ((more > 1) && (ptr[more - 1] == ',') &&
-			    isspace(ptr[more - 2])) {
+			    isspace((unsigned char)ptr[more - 2])) {
 				ptr[--more] = '\0';
 				ptr[more - 1] = ',';
 			}
@@ -711,7 +703,7 @@ parsemanpage(gzFile *in, int defaultsection)
 				}
 				ptr = &buffer[offset];
 				if ((sizeof(buffer) == offset) ||
-			            (GetS(in, ptr, sizeof(buffer) - offset)
+				    (GetS(in, ptr, sizeof(buffer) - offset)
 					== NULL)) {
 					free(section);
 					return NULL;
@@ -741,7 +733,7 @@ parsemanpage(gzFile *in, int defaultsection)
 
 			ptr = &buffer[offset];
 			if ((sizeof(buffer) == offset) ||
-		            (GetS(in, ptr, sizeof(buffer) - offset)
+			    (GetS(in, ptr, sizeof(buffer) - offset)
 				== NULL)) {
 				free(section);
 				return NULL;
@@ -767,7 +759,7 @@ parsemanpage(gzFile *in, int defaultsection)
 			buffer[offset - 1] = ' ';
 			more = strlen(ptr);
 			if ((more > 1) && (ptr[more - 1] == ',') &&
-			    isspace(ptr[more - 2])) {
+			    isspace((unsigned char)ptr[more - 2])) {
 				ptr[more - 1] = '\0';
 				ptr[more - 2] = ',';
 			}
@@ -798,9 +790,9 @@ getwhatisdata(char *name)
 	int	 section;
 
 	if ((in = gzopen(name, "r")) == NULL) {
-		errx(EXIT_FAILURE, "%s: %s",
-		    name,
-		    strerror((errno == 0) ? ENOMEM : errno));
+		if (errno == 0)
+			errno = ENOMEM;
+		err(EXIT_FAILURE, "Cannot open `%s'", name);
 		/* NOTREACHED */
 	}
 
@@ -820,7 +812,7 @@ getwhatisdata(char *name)
 void
 processmanpages(manpage **source, whatis **dest)
 {
-	manpage	*mp;
+	manpage *mp;
 
 	mp = *source;
 	*source = NULL;
@@ -832,10 +824,8 @@ processmanpages(manpage **source, whatis **dest)
 		if (mp->mp_left != NULL)
 			processmanpages(&mp->mp_left,dest);
 
-		if ((data = getwhatisdata(mp->mp_name)) != NULL) {
-			if (!addwhatis(dest,data))
-				err(EXIT_FAILURE, NULL);
-		}
+		if ((data = getwhatisdata(mp->mp_name)) != NULL)
+			addwhatis(dest,data);
 
 		obsolete = mp;
 		mp = mp->mp_right;
@@ -843,19 +833,35 @@ processmanpages(manpage **source, whatis **dest)
 	}
 }
 
-int
-dumpwhatis (FILE *out, whatis *tree)
+void
+dumpwhatis(FILE *out, whatis *tree)
 {
 	while (tree != NULL) {
 		if (tree->wi_left)
-			if (!dumpwhatis(out, tree->wi_left)) return 0;
+			dumpwhatis(out, tree->wi_left);
 
 		if ((fputs(tree->wi_data, out) == EOF) ||
 		    (fputc('\n', out) == EOF))
-			return 0;
+			err(EXIT_FAILURE, "Write failed");
 
 		tree = tree->wi_right;
 	}
+}
 
-	return 1;
+void *
+emalloc(size_t len)
+{
+	void *ptr;
+	if ((ptr = malloc(len)) == NULL)
+		err(EXIT_FAILURE, "malloc %lu failed", (unsigned long)len);
+	return ptr;
+}
+
+char *
+estrdup(const char *str)
+{
+	char *ptr;
+	if ((ptr = strdup(str)) == NULL)
+		err(EXIT_FAILURE, "strdup failed");
+	return ptr;
 }
