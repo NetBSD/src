@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.10 2001/01/28 21:43:38 is Exp $ */
+/*	$NetBSD: aster.c,v 1.11 2001/02/08 18:08:22 is Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,8 @@ astermatch(parent, cfp, auxp)
 	if (zap->manid == 5001 && zap->prodid == 1)	/* VMC ISDN Blaster */
 		return (1);
 
-	if (zap->manid == 2092 && zap->prodid == 64)	/* BSC ISDN Master */
+	if (zap->manid == 2092 && (zap->prodid == 64 ||	/* BSC ISDN Master */
+	    zap->prodid == 65))				/* BSC ISDN Master II */
 		return (1);
 
 	if (zap->manid == 5000 && zap->prodid == 1)	/* ITH ISDN Master II */
@@ -121,7 +122,7 @@ asterattach(parent, self, auxp)
 	if (zap->manid == 5001 && zap->prodid == 1) {
 		cardname = "Blaster";
 		supa.supio_name = "isic31";
-	} else if (zap->manid == 2092 && zap->prodid == 64) {
+	} else if (zap->manid == 2092) {
 		cardname = "Master";
 		supa.supio_name = "isic31";
 	} else if (zap->manid == 5000 && zap->prodid == 1) {
