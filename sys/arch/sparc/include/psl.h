@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.29 2001/06/08 01:33:32 uwe Exp $ */
+/*	$NetBSD: psl.h,v 1.29.12.1 2002/03/18 07:51:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -335,6 +335,25 @@ static __inline int name() \
 	    "r" (psr), "n" ((newipl) << 8)); \
 	__asm __volatile("nop; nop; nop"); \
 	return (oldipl); \
+}
+
+/* Raise IPL to the specified IPL_* value. */
+static __inline int __attribute__((__unused__))
+splraiseipl(int ipl)
+{
+	extern const int ipl_to_psr[];
+	int psr, newipl, oldipl;
+
+	newipl = ipl_to_psr[ipl] << 8;
+
+	__asm __volatile("rd %%psr,%0" : "=r" (psr));
+	oldipl = psr & PSR_PIL;
+	if (newipl <= oldipl)
+		return (oldipl);
+	psr &= ~oldipl;
+	__asm __volatile("wr %0,0,%%psr" : : "r" (psr | newipl));
+	__asm __volatile("nop; nop; nop");
+	return (oldipl);
 }
 
 _SPLSET(spllowersoftclock, 1)
