@@ -1,4 +1,4 @@
-/*	$NetBSD: rget.c,v 1.10 2001/12/07 11:47:43 yamt Exp $	*/
+/*	$NetBSD: rget.c,v 1.11 2003/01/18 11:29:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)rget.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rget.c,v 1.10 2001/12/07 11:47:43 yamt Exp $");
+__RCSID("$NetBSD: rget.c,v 1.11 2003/01/18 11:29:57 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include "reentrant.h"
 #include "local.h"
 
 /*

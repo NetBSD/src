@@ -1,4 +1,4 @@
-/*	$NetBSD: fputs.c,v 1.11 2001/12/07 11:47:42 yamt Exp $	*/
+/*	$NetBSD: fputs.c,v 1.12 2003/01/18 11:29:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputs.c,v 1.11 2001/12/07 11:47:42 yamt Exp $");
+__RCSID("$NetBSD: fputs.c,v 1.12 2003/01/18 11:29:53 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,9 +49,9 @@ __RCSID("$NetBSD: fputs.c,v 1.11 2001/12/07 11:47:42 yamt Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
-#include "reentrant.h"
 
 /*
  * Write the given string to the given file.

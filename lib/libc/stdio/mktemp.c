@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.17 1999/09/20 04:39:31 lukem Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.18 2003/01/18 11:29:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mktemp.c,v 1.17 1999/09/20 04:39:31 lukem Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.18 2003/01/18 11:29:56 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: mktemp.c,v 1.17 1999/09/20 04:39:31 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "reentrant.h"
 #include "local.h"
 
 char *

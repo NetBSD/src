@@ -1,4 +1,4 @@
-/*	$NetBSD: scanf.c,v 1.10 2002/05/26 14:44:00 wiz Exp $	*/
+/*	$NetBSD: scanf.c,v 1.11 2003/01/18 11:29:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)scanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: scanf.c,v 1.10 2002/05/26 14:44:00 wiz Exp $");
+__RCSID("$NetBSD: scanf.c,v 1.11 2003/01/18 11:29:57 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: scanf.c,v 1.10 2002/05/26 14:44:00 wiz Exp $");
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "reentrant.h"
 #include "local.h"
 
 int

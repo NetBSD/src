@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.20 2002/11/08 00:13:07 fvdl Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.21 2003/01/18 11:29:04 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
