@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.526 2005/02/19 16:55:02 thorpej Exp $
+# $NetBSD: mi,v 1.527 2005/02/19 21:43:19 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1296,6 +1296,9 @@
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/postfix			base-postfix-examples
 ./usr/share/examples/racoon			base-netutil-examples
+./usr/share/examples/racoon/roadwarrior		base-netutil-examples
+./usr/share/examples/racoon/roadwarrior/client	base-netutil-examples
+./usr/share/examples/racoon/roadwarrior/server	base-netutil-examples
 ./usr/share/examples/rtadvd			base-router-examples
 ./usr/share/examples/smbfs			base-sysutil-examples
 ./usr/share/examples/supfiles			base-sup-examples
