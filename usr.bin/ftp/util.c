@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.98 2000/07/30 04:42:38 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.99 2000/08/01 22:47:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.98 2000/07/30 04:42:38 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.99 2000/08/01 22:47:29 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -934,8 +934,8 @@ progressmeter(int flag)
 	abbrevsize = cursize;
 	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
 		abbrevsize >>= 10;
-	len += snprintf(buf + len, BUFLEFT, " " QUADFP("5") " %c%c ",
-	    (QUADT)abbrevsize,
+	len += snprintf(buf + len, BUFLEFT, " " LLFP("5") " %c%c ",
+	    (LLT)abbrevsize,
 	    prefixes[i],
 	    i == 0 ? ' ' : 'B');
 
@@ -951,8 +951,8 @@ progressmeter(int flag)
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
 	len += snprintf(buf + len, BUFLEFT,
-	    " " QUADFP("3") ".%02d %cB/s ",
-	    (QUADT)(bytespersec / 1024),
+	    " " LLFP("3") ".%02d %cB/s ",
+	    (LLT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
 	    prefixes[i]);
 
@@ -1021,8 +1021,8 @@ ptransfer(int siginfo)
 			bytespersec /= elapsed;
 	}
 	len = 0;
-	len += snprintf(buf + len, BUFLEFT, QUADF " byte%s %s in ",
-	    (QUADT)bytes, bytes == 1 ? "" : "s", direction);
+	len += snprintf(buf + len, BUFLEFT, LLF " byte%s %s in ",
+	    (LLT)bytes, bytes == 1 ? "" : "s", direction);
 	remaining = (int)elapsed;
 	if (remaining > SECSPERDAY) {
 		int days;
@@ -1041,8 +1041,8 @@ ptransfer(int siginfo)
 
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
-	len += snprintf(buf + len, BUFLEFT, "(" QUADF ".%02d %cB/s)",
-	    (QUADT)(bytespersec / 1024),
+	len += snprintf(buf + len, BUFLEFT, "(" LLF ".%02d %cB/s)",
+	    (LLT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
 	    prefixes[i]);
 

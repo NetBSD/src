@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.57 2000/07/30 04:42:38 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.58 2000/08/01 22:47:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -338,15 +338,24 @@ extern	char	*__progname;		/* from crt0.o */
 #define	EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 #define	FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }
 
+#ifdef BSD4_4
+# define HAVE_SOCKADDR_SA_LEN	1
+#endif
 
-#ifdef NO_QUAD
-# define QUADF		"%ld"
-# define QUADFP(x)	"%" x "ld"
-# define QUADT		long
+#ifdef NO_LONG_LONG
+# define LLF		"%ld"
+# define LLFP(x)	"%" x "ld"
+# define LLT		long
+# define ULLF		"%lu"
+# define ULLFP(x)	"%" x "lu"
+# define ULLT		unsigned long
 # define STRTOLL(x,y,z)	strtol(x,y,z)
 #else
-# define QUADF		"%lld"
-# define QUADFP(x)	"%" x "lld"
-# define QUADT		long long
+# define LLF		"%lld"
+# define LLFP(x)	"%" x "lld"
+# define LLT		long long
+# define ULLF		"%llu"
+# define ULLFP(x)	"%" x "llu"
+# define ULLT		unsigned long long
 # define STRTOLL(x,y,z)	strtoll(x,y,z)
 #endif
