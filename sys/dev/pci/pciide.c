@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.146 2002/04/03 17:02:21 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.147 2002/04/04 23:47:39 thorpej Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.146 2002/04/03 17:02:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.147 2002/04/04 23:47:39 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -575,8 +575,10 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 #ifdef PCIIDE_SERVERWORKS_ENABLE
 	{ PCI_VENDOR_SERVERWORKS, pciide_serverworks_products },
 #endif
+#ifdef PCIIDE_WINBOND_ENABLE
 	{ PCI_VENDOR_SYMPHONY, pciide_symphony_products },
 	{ PCI_VENDOR_WINBOND, pciide_winbond_products },
+#endif
 	{ 0, NULL }
 };
 
