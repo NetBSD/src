@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.47 1999/10/31 11:51:57 ad Exp $
+$NetBSD: acronyms,v 1.48 1999/11/05 08:59:17 lukem Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -50,6 +50,7 @@ JK	just kidding
 JMO	just my opinion
 JTLYK	just to let you know
 KISS	keep it simple, stupid
+KNF	kernel normal form
 L8R	later
 LMSO	laughing my socks off
 LOL	laughing out loud
