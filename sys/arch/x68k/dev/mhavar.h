@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.3 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.4 1999/03/22 08:54:14 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -132,6 +132,15 @@ struct mha_softc {
 	int	sc_id;			/* our scsi id */
 	int	sc_minsync;		/* Minimum sync period / 4 */
 	int	sc_maxsync;		/* Maximum sync period / 4 */
+
+	/* DMA buffer */
+	bus_dma_tag_t		sc_dmat;
+	bus_dma_segment_t	sc_dmaseg[1];
+	int			sc_ndmasegs;
+	bus_dmamap_t		sc_dmamap;
+	caddr_t			sc_dmabuf;
+	u_char			*sc_p;
+	u_int32_t		sc_dmasize;
 };
 
 /* values for sc_state */
