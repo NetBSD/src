@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.2 2000/05/09 20:53:52 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,7 @@
 extern int nmba, nuba, nbi, nsbi, nuda;
 extern int *ubaaddr, *mbaaddr, *udaaddr, *uioaddr, *biaddr;
 extern int cpunumber, howto, bootdev;
+extern struct rpb *rpb;
 
 /* devsw type definitions, used in bootxx and conf */
 #define SADEV(name,strategy,open,close,ioctl) \
