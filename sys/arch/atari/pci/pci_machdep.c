@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.38 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.39 2002/12/08 21:31:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -125,7 +125,7 @@ static void insert_into_list __P((PCI_MEMREG *head, struct pci_memreg *elem));
 static int overlap_pci_areas __P((struct pci_memreg *p,
 	struct pci_memreg *self, u_int addr, u_int size, u_int what));
 
-CFATTACH_DECL(pcibus, sizeof(struct device),
+CFATTACH_DECL(pcib, sizeof(struct device),
     pcibusmatch, pcibusattach, NULL, NULL);
 
 /*
@@ -142,7 +142,7 @@ void		*auxp;
 {
 	static int	nmatched = 0;
 
-	if (strcmp((char *)auxp, "pcibus"))
+	if (strcmp((char *)auxp, "pcib"))
 		return (0);	/* Wrong number... */
 
 	if(atari_realconfig == 0)

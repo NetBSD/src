@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 2002/10/04 01:50:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 2002/12/08 21:31:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -104,6 +104,7 @@ atari_config_found(pcfp, pdp, auxp, pfn)
 	if (atari_realconfig)
 		return(config_found(pdp, auxp, pfn) != NULL);
 
+	memset(&temp, 0, sizeof(temp));
 	if (pdp == NULL)
 		pdp = &temp;
 
@@ -145,8 +146,8 @@ config_console()
 	 * some setup for the 'grf-side'. This make it possible to use
 	 * a PCI card for both wscons and grfabs.
 	 */
-	atari_config_found(cf, NULL, "pcibus", NULL);
-	atari_config_found(cf, NULL, "isabus", NULL);
+	atari_config_found(cf, NULL, "pcib"  , NULL);
+	atari_config_found(cf, NULL, "isab"  , NULL);
 	atari_config_found(cf, NULL, "grfbus", NULL);
 }
 
@@ -278,18 +279,18 @@ mbattach(pdp, dp, auxp)
 	void *auxp;
 {
 	printf ("\n");
-	config_found(dp, "clock"  , simple_devprint);
-	config_found(dp, "grfbus" , simple_devprint);
-	config_found(dp, "kbd"    , simple_devprint);
-	config_found(dp, "fdc"    , simple_devprint);
-	config_found(dp, "ser"    , simple_devprint);
-	config_found(dp, "zs"     , simple_devprint);
-	config_found(dp, "ncrscsi", simple_devprint);
-	config_found(dp, "nvr"    , simple_devprint);
-	config_found(dp, "lpt"    , simple_devprint);
-	config_found(dp, "wdc"    , simple_devprint);
-	config_found(dp, "isabus" , simple_devprint);
-	config_found(dp, "pcibus" , simple_devprint);
+	config_found(dp, "clock"   , simple_devprint);
+	config_found(dp, "grfbus"  , simple_devprint);
+	config_found(dp, "kbd"     , simple_devprint);
+	config_found(dp, "fdc"     , simple_devprint);
+	config_found(dp, "ser"     , simple_devprint);
+	config_found(dp, "zs"      , simple_devprint);
+	config_found(dp, "ncrscsi" , simple_devprint);
+	config_found(dp, "nvr"     , simple_devprint);
+	config_found(dp, "lpt"     , simple_devprint);
+	config_found(dp, "wdc"     , simple_devprint);
+	config_found(dp, "isab"    , simple_devprint);
+	config_found(dp, "pcib"    , simple_devprint);
 	config_found(dp, "avmebus" , simple_devprint);
 }
 
