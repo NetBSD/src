@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.28 2003/12/13 23:31:21 thorpej Exp $
+#	$NetBSD: IQ80321,v 1.29 2003/12/14 01:32:01 thorpej Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -169,6 +169,7 @@ pci*		at ppb? bus ?
 
 # PCI IDE/S-ATA controllers and devices
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers

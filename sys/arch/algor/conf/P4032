@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.20 2003/12/13 23:13:40 thorpej Exp $
+#	$NetBSD: P4032,v 1.21 2003/12/14 01:32:01 thorpej Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.20 $"
+#ident 		"P4032-$Revision: 1.21 $"
 
 maxusers 32
 
@@ -150,6 +150,7 @@ pci*	at	vtpbc?
 #pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 #acardide* at pci? dev ? function ?		# Acard IDE controllers
 #aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+#artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
 #cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
 #cypide* at pci? dev ? function ?		# Cypress IDE controllers
 #hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers

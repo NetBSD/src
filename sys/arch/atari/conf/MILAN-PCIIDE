@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.29 2003/12/13 23:24:47 thorpej Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.30 2003/12/14 01:32:01 thorpej Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -280,6 +280,7 @@ fdisa0 		at fdcisa0 drive 0
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers

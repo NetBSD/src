@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.15 2003/12/13 23:31:21 thorpej Exp $
+#	$NetBSD: ADI_BRH,v 1.16 2003/12/14 01:32:01 thorpej Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -168,6 +168,7 @@ pci*		at ppb? bus ?
 
 # PCI IDE/S-ATA controllers and devices
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.11 2003/12/13 23:24:47 thorpej Exp $
+#	$NetBSD: EV64260,v 1.12 2003/12/14 01:32:02 thorpej Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -228,6 +228,7 @@ cd*		at scsibus? target ? lun ?
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
