@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.5 2000/12/13 11:30:15 enami Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.6 2001/03/03 02:04:55 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -207,6 +207,15 @@
 #define	OHCI_Version_GUID_ROM		0x01000000
 #define	OHCI_Version_GET_Version(x)	((((x) >> 16) & 0xf) + (((x) >> 20) & 0xf) * 10)
 #define	OHCI_Version_GET_Revision(x)	((((x) >> 4) & 0xf) + ((x) & 0xf) * 10)
+
+/* OHCI_REG_Guid_Rom
+ */
+#define	OHCI_Guid_AddrReset		0x80000000
+#define	OHCI_Guid_RdStart		0x02000000
+#define	OHCI_Guid_RdData_MASK		0x00ff0000
+#define	OHCI_Guid_RdData_BITPOS		16
+#define	OHCI_Guid_MiniROM_MASK		0x000000ff
+#define	OHCI_Guid_MiniROM_BITPOS	0
 
 /* OHCI_REG_GUIDxx
  */
