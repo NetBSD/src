@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_yds.c,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: opl_yds.c,v 1.7 2004/11/08 12:10:22 kent Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.7 2004/11/08 12:10:22 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,17 +65,14 @@ __KERNEL_RCSID(0, "$NetBSD: opl_yds.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
 #include <dev/pci/ydsreg.h>
 #include <dev/pci/ydsvar.h>
 
-int	opl_yds_match __P((struct device *, struct cfdata *, void *));
-void	opl_yds_attach __P((struct device *, struct device *, void *));
+int	opl_yds_match(struct device *, struct cfdata *, void *);
+void	opl_yds_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(opl_yds, sizeof (struct opl_softc),
     opl_yds_match, opl_yds_attach, NULL, NULL);
 
 int
-opl_yds_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+opl_yds_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 	struct yds_softc *ssc = (struct yds_softc *)parent;
@@ -90,10 +87,7 @@ opl_yds_match(parent, match, aux)
 }
 
 void
-opl_yds_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+opl_yds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct yds_softc *ssc = (struct yds_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;
