@@ -93,7 +93,6 @@ beforeinstall:
 		${DESTDIR}${BINDIR}
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} install-sid \
 		${DESTDIR}${BINDIR}
-	install -d -o root -g wheel -m 755 ${DESTDIR}${LIBDIR}/gnats
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/categories \
 		${DESTDIR}${LIBDIR}/gnats/${GNATS_SITE}
 
