@@ -44,6 +44,7 @@ editline.c: ${OSRCS}
 	sh ${.CURDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
 
 .depend: vi.h emacs.h common.h fcns.h help.h help.c
+all: vi.h emacs.h common.h fcns.h help.h help.c
 
 
 test:	libedit.a test.o 
