@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_irq.S,v 1.1 2001/10/27 16:19:09 rearnsha Exp $
+/*	$NetBSD: ifpga_irq.S,v 1.2 2001/10/29 14:23:35 rearnsha Exp $
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -132,12 +132,6 @@ ASENTRY_NP(irq_entry)
 	ldr	r10, Lirq_vbase
 	ldr	r10, [r10]
 	ldr	r8, [r10, #(IFPGA_INTR_STATUS)]
-
-#ifdef IRQ_HISTORY
-	mov	r0, r8
-	mov	r1, sp
-	bl	_C_LABEL(irq_save_history)
-#endif
 
 	/* This condition needs further examination */
 	teq	r8, #0
