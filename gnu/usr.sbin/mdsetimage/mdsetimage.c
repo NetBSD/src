@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.8 2002/09/26 10:40:59 dbj Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.9 2002/09/27 07:25:17 wiz Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.8 2002/09/26 10:40:59 dbj Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.9 2002/09/27 07:25:17 wiz Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -259,7 +259,7 @@ usage()
 	const char **list;
 
 	fprintf(stderr,
-	    "usage: %s [-b bfdname] [-v] kernel_file fsimage_file\n",
+	    "usage: %s [-svx] [-b bfdname] kernel_file fsimage_file\n",
 	    getprogname());
 	fprintf(stderr, "supported targets:");
 	for (list = bfd_target_list(); *list != NULL; list++)
