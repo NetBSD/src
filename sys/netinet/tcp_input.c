@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.14 1997/06/28 02:44:26 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.15 1997/06/28 04:24:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -554,9 +554,9 @@ after_listen:
 				++tcpstat.tcps_predack;
 				if (opti.ts_present)
 					tcp_xmit_timer(tp,
-						       tcp_now-opti.ts_ecr+1);
+					    tcp_now-opti.ts_ecr+1);
 				else if (tp->t_rtt &&
-					    SEQ_GT(ti->ti_ack, tp->t_rtseq))
+				    SEQ_GT(ti->ti_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp, tp->t_rtt);
 				acked = ti->ti_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
@@ -1411,7 +1411,7 @@ dropwithreset:
 		if (tiflags & TH_SYN)
 			ti->ti_len++;
 		(void)tcp_respond(tp, ti, m, ti->ti_seq+ti->ti_len, (tcp_seq)0,
-				  TH_RST|TH_ACK);
+		    TH_RST|TH_ACK);
 	}
 	return;
 
@@ -1459,7 +1459,7 @@ tcp_dooptions(tp, cp, cnt, ti, oi)
 			if (!(ti->ti_flags & TH_SYN))
 				continue;
 			bcopy(cp + 2, &mss, sizeof(mss));
-			oi -> maxseg = ntohs(mss);
+			oi->maxseg = ntohs(mss);
 			break;
 
 		case TCPOPT_WINDOW:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.19.8.3 1997/06/28 00:49:37 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.19.8.4 1997/06/28 04:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -250,7 +250,8 @@ struct	tcpstat {
 
 	u_long	tcps_pcbhashmiss;	/* input packets missing pcb hash */
 	u_long	tcps_noport;		/* no socket on port */
-u_long	tcps_badsyn;
+	u_long	tcps_badsyn;		/* received ack for which we have
+					   no SYN in compressed state */
 
 	/* These statistics deal with the SYN cache. */
 	u_long	tcps_sc_added;		/* # of entries added */

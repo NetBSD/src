@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.25.8.3 1997/06/26 22:22:49 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.25.8.4 1997/06/28 04:24:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -431,8 +431,7 @@ tcp_ctlinput(cmd, sa, v)
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		nmatch = in_pcbnotify(&tcbtable, satosin(sa)->sin_addr,
-				      th->th_dport, ip->ip_src, th->th_sport,
-				      errno, notify);
+		    th->th_dport, ip->ip_src, th->th_sport, errno, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inetctlerrmap[cmd] == EHOSTUNREACH ||
 		    inetctlerrmap[cmd] == ENETUNREACH ||
@@ -440,7 +439,7 @@ tcp_ctlinput(cmd, sa, v)
 			syn_cache_unreach(ip, th);
 	} else
 		(void)in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
-				      notify);
+		    notify);
 	return NULL;
 }
 
