@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.86 2001/11/13 13:14:42 lukem Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.87 2001/11/15 09:48:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.86 2001/11/13 13:14:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.87 2001/11/15 09:48:07 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.4 2001/11/13 01:39:23 lukem Exp $	*/
+/*	$NetBSD: keydb.c,v 1.5 2001/11/15 09:48:29 lukem Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.4 2001/11/13 01:39:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.5 2001/11/15 09:48:29 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

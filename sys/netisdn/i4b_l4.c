@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.5 2001/11/13 01:06:22 lukem Exp $ 
+ *	$Id: i4b_l4.c,v 1.6 2001/11/15 09:48:28 lukem Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.5 2001/11/13 01:06:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.6 2001/11/15 09:48:28 lukem Exp $");
 
 #include "i4b.h"
 #include "i4bipr.h"
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.5 2001/11/13 01:06:22 lukem Exp $");
 #include <sys/fcntl.h>
 #include <sys/socket.h>
 #include <net/if.h>
-
-#ifdef __NetBSD__
-#include <sys/types.h>
-#endif
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>

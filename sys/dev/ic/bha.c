@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.47 2001/11/13 13:14:35 lukem Exp $	*/
+/*	$NetBSD: bha.c,v 1.48 2001/11/15 09:48:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,11 +53,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.47 2001/11/13 13:14:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.48 2001/11/15 09:48:05 lukem Exp $");
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.30 2001/11/13 13:14:45 lukem Exp $	*/
+/*	$NetBSD: uha.c,v 1.31 2001/11/15 09:48:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.30 2001/11/13 13:14:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.31 2001/11/15 09:48:08 lukem Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.30 2001/11/13 13:14:45 lukem Exp $");
 #define	integrate	static inline
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.112 2001/11/13 07:11:14 lukem Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.113 2001/11/15 09:48:14 lukem Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,10 +114,10 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.112 2001/11/13 07:11:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.113 2001/11/15 09:48:14 lukem Exp $");
 
-#include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/disk.h>
@@ -128,9 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.112 2001/11/13 07:11:14 lukem E
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <machine/types.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/lock.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.20 2001/11/13 07:48:41 lukem Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.21 2001/11/15 09:48:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.20 2001/11/13 07:48:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_pci.c,v 1.21 2001/11/15 09:48:11 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.12 2001/11/12 23:49:39 lukem Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.13 2001/11/15 09:48:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.12 2001/11/12 23:49:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.13 2001/11/15 09:48:25 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>

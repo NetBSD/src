@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.37 2001/09/18 18:15:53 wiz Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.38 2001/11/15 09:48:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.37 2001/09/18 18:15:53 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.38 2001/11/15 09:48:14 lukem Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

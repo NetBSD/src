@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.65 2001/11/10 13:33:41 lukem Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.66 2001/11/15 09:48:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,11 +45,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.65 2001/11/10 13:33:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.66 2001/11/15 09:48:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>	/* boottime */

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.17 2001/11/13 06:56:38 lukem Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.18 2001/11/15 09:48:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.17 2001/11/13 06:56:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.18 2001/11/15 09:48:16 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

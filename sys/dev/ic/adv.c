@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.29 2001/11/13 13:14:32 lukem Exp $	*/
+/*	$NetBSD: adv.c,v 1.30 2001/11/15 09:48:03 lukem Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.29 2001/11/13 13:14:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.30 2001/11/15 09:48:03 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_time.c,v 1.4 2001/11/13 02:09:01 lukem Exp $ */
+/* $NetBSD: linux_time.c,v 1.5 2001/11/15 09:48:01 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.4 2001/11/13 02:09:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.5 2001/11/15 09:48:01 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>

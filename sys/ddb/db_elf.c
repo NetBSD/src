@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.18 2001/11/12 22:54:04 lukem Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.19 2001/11/15 09:48:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.18 2001/11/12 22:54:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.19 2001/11/15 09:48:02 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>  
 #include <sys/proc.h>

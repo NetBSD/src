@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.35 2001/11/13 01:10:48 lukem Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.36 2001/11/15 09:48:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.35 2001/11/13 01:10:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.36 2001/11/15 09:48:28 lukem Exp $");
 
 #include "opt_eon.h"
 
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.35 2001/11/13 01:10:48 lukem Exp $");
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/types.h>
 
 #include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
 

@@ -33,7 +33,7 @@
  *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp.c,v 1.4 2001/11/13 07:56:41 lukem Exp $ 
+ *	$Id: isic_isapnp.c,v 1.5 2001/11/15 09:48:10 lukem Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -43,9 +43,8 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.4 2001/11/13 07:56:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.5 2001/11/15 09:48:10 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

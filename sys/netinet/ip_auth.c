@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.21 2001/11/13 00:32:36 lukem Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.22 2001/11/15 09:48:26 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998-2000 by Darren Reed & Guido van Rooij.
@@ -10,15 +10,14 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.21 2001/11/13 00:32:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.22 2001/11/15 09:48:26 lukem Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.5 2001/01/10 06:18:35 darrenr Exp";
 #endif
 #endif
 
-#include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #include <sys/proc.h>

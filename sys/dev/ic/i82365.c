@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.63 2001/11/13 13:14:38 lukem Exp $	*/
+/*	$NetBSD: i82365.c,v 1.64 2001/11/15 09:48:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.63 2001/11/13 13:14:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.64 2001/11/15 09:48:06 lukem Exp $");
 
 #define	PCICDEBUG
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

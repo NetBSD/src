@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.71 2001/11/13 07:48:46 lukem Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.72 2001/11/15 09:48:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.71 2001/11/13 07:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.72 2001/11/15 09:48:12 lukem Exp $");
 
 /*
 #define CBB_DEBUG
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.71 2001/11/13 07:48:46 lukem Exp $");
 #define LEVEL2
 */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

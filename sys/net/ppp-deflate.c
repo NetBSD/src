@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.9 2001/11/12 23:49:46 lukem Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.10 2001/11/15 09:48:26 lukem Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -31,10 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.9 2001/11/12 23:49:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.10 2001/11/15 09:48:26 lukem Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <net/ppp_defs.h>

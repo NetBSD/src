@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.22 2001/11/13 07:26:32 lukem Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.23 2001/11/15 09:48:12 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.22 2001/11/13 07:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.23 2001/11/15 09:48:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.22 2001/11/13 07:26:32 lukem Exp $"
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>

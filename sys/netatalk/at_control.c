@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.6 2001/11/13 00:00:58 lukem Exp $	 */
+/*	$NetBSD: at_control.c,v 1.7 2001/11/15 09:48:26 lukem Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.6 2001/11/13 00:00:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.7 2001/11/15 09:48:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>

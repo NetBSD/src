@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.4 2001/11/13 07:46:25 lukem Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.5 2001/11/15 09:48:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,10 +52,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.4 2001/11/13 07:46:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.5 2001/11/15 09:48:11 lukem Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 

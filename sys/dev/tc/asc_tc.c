@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.18 2001/11/13 06:26:09 lukem Exp $ */
+/* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.18 2001/11/13 06:26:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.13 2001/11/13 12:51:12 lukem Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.14 2001/11/15 09:48:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,9 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.13 2001/11/13 12:51:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.14 2001/11/15 09:48:02 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

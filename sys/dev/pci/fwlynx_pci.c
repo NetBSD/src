@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.2 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.3 2001/11/15 09:48:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 
