@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 2002/01/05 22:41:47 chris Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 2002/01/17 03:52:06 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -172,34 +172,15 @@ static int
 db_validate_address(addr)
 	vm_offset_t addr;
 {
-	pt_entry_t *ptep;
-	pd_entry_t *pdep;
 	struct proc *p = curproc;
+	struct pmap *pmap;
 
-	/*
-	 * If we have a valid pmap for curproc, use it's page directory
-	 * otherwise use the kernel pmap's page directory.
-	 */
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap)
-		pdep = pmap_kernel()->pm_pdir;
+		pmap = pmap_kernel();
 	else
-		pdep = p->p_vmspace->vm_map.pmap->pm_pdir;
+		pmap = p->p_vmspace->vm_map.pmap;
 
-	/* Make sure the address we are reading is valid */
-	switch ((pdep[(addr >> 20) + 0] & L1_MASK)) {
-	case L1_SECTION:
-		break;
-	case L1_PAGE:
-		/* Check the L2 page table for validity */
-		ptep = vtopte(addr);
-		if ((*ptep & L2_MASK) != L2_INVAL)
-			break;
-		/* FALLTHROUGH */
-	default:
-		return 1;
-	}
-
-	return 0;
+	return (pmap_extract(pmap, addr, NULL) == FALSE);
 }
 
 /*
@@ -214,7 +195,8 @@ db_read_bytes(addr, size, data)
 	char	*src;
 
 	src = (char *)addr;
-	while (--size >= 0) {
+
+	while (size-- > 0) {
 		if (db_validate_address((u_int)src)) {
 			db_printf("address %p is invalid\n", src);
 			return;
@@ -263,11 +245,11 @@ db_write_bytes(addr, size, data)
 {
 	extern char	etext[];
 	char	*dst;
-	int	loop;
+	size_t	loop;
 
 	dst = (char *)addr;
 	loop = size;
-	while (--loop >= 0) {
+	while (loop-- > 0) {
 		if ((dst >= (char *)KERNEL_TEXT_BASE) && (dst < etext))
 			db_write_text(dst, *data);
 		else {
