@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2003/06/23 11:39:01 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.8 2003/06/23 11:39:01 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -89,7 +89,15 @@ str_save(s, ap)
 	register const char *s;
 	Area *ap;
 {
-	return s ? strcpy((char*) alloc((size_t)strlen(s)+1, ap), s) : NULL;
+	size_t len;
+	char *p;
+
+	if (!s)
+		return NULL;
+	len = strlen(s)+1;
+	p = alloc(len, ap);
+	strlcpy(p, s, len+1);
+	return (p);
 }
 
 /* Allocate a string of size n+1 and copy upto n characters from the possibly
@@ -139,6 +147,7 @@ const struct option options[] = {
 	{ (char *) 0, 	'c',	    OF_CMDLINE },
 #ifdef EMACS
 	{ "emacs",	  0,		OF_ANY },
+	{ "emacs-usemeta",  0,		OF_ANY }, /* non-standard */
 #endif
 	{ "errexit",	'e',		OF_ANY },
 #ifdef EMACS
@@ -179,7 +188,7 @@ const struct option options[] = {
 #endif
 	{ "xtrace",	'x',		OF_ANY },
 	/* Anonymous flags: used internally by shell only
-	 * (not visable to user)
+	 * (not visible to user)
 	 */
 	{ (char *) 0,	0,		OF_INTERNAL }, /* FTALKING_I */
 };
@@ -317,7 +326,9 @@ change_flag(f, what, newval)
 #ifdef OS2
 		;
 #else /* OS2 */
-		setuid(ksheuid = getuid());
+		seteuid(ksheuid = getuid());
+		setuid(ksheuid);
+		setegid(getgid());
 		setgid(getgid());
 #endif /* OS2 */
 	} else if (f == FPOSIX && newval) {
@@ -353,9 +364,11 @@ parse_args(argv, what, setargsp)
 	if (cmd_opts[0] == '\0') {
 		char *p, *q;
 
-		strcpy(cmd_opts, "o:"); /* see cmd_opts[] declaration */
+		/* see cmd_opts[] declaration */
+		strlcpy(cmd_opts, "o:", sizeof cmd_opts);
 		p = cmd_opts + strlen(cmd_opts);
-		strcpy(set_opts, "A:o;s"); /* see set_opts[] declaration */
+		/* see set_opts[] declaration */
+		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
 		for (i = 0; i < NELEM(options); i++) {
 			if (options[i].c) {
@@ -479,18 +492,15 @@ getn(as, ai)
 	const char *as;
 	int *ai;
 {
-	const char *s;
-	register int n;
-	int sawdigit = 0;
+	char *p;
+	long n;
 
-	s = as;
-	if (*s == '-' || *s == '+')
-		s++;
-	for (n = 0; digit(*s); s++, sawdigit = 1)
-		n = n * 10 + (*s - '0');
-	*ai = (*as == '-') ? -n : n;
-	if (*s || !sawdigit)
+	n = strtol(as, &p, 10);
+
+	if (!*as || *p || INT_MIN >= n || n >= INT_MAX)
 		return 0;
+
+	*ai = (int)n;
 	return 1;
 }
 
@@ -536,7 +546,7 @@ gmatch(s, p, isfile)
 		char tbuf[64];
 		char *t = len <= sizeof(tbuf) ? tbuf
 				: (char *) alloc(len, ATEMP);
-		debunk(t, p);
+		debunk(t, p, len);
 		return !strcmp(t, s);
 	}
 	return do_gmatch((const unsigned char *) s, (const unsigned char *) se,
@@ -548,7 +558,7 @@ gmatch(s, p, isfile)
  * if it contains no pattern characters or if there is a syntax error.
  * Syntax errors are:
  *	- [ with no closing ]
- *	- imballenced $(...) expression
+ *	- imbalanced $(...) expression
  *	- [...] and *(...) not nested (eg, [a$(b|]c), *(a[b|c]d))
  */
 /*XXX
@@ -1032,11 +1042,11 @@ ksh_getopt(argv, go, options)
 		}
 		go->p = 0;
 	} else if (*o == ',') {
-		/* argument is attatched to option character, even if null */
+		/* argument is attached to option character, even if null */
 		go->optarg = argv[go->optind - 1] + go->p;
 		go->p = 0;
 	} else if (*o == '#') {
-		/* argument is optional and may be attatched or unattatched
+		/* argument is optional and may be attached or unattached
 		 * but must start with a digit.  optarg is set to 0 if the
 		 * argument is missing.
 		 */
@@ -1319,6 +1329,7 @@ ksh_get_wd(buf, bsize)
 
 	return ret;
 #else /* HAVE_GETCWD */
+	extern char *getwd ARGS((char *));
 	char *b;
 	int len;
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: tree.h,v 1.3 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: tree.h,v 1.4 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * command trees for compile/execute
  */
 
-/* $Id: tree.h,v 1.3 1999/10/20 15:10:00 hubertf Exp $ */
+/* $Id: tree.h,v 1.4 2004/07/07 19:20:09 mycroft Exp $ */
 
 #define	NOBLOCK	((struct op *)NULL)
 #define	NOWORD	((char *)NULL)
@@ -109,7 +109,7 @@ struct ioword {
 #define	XCCLOSE	BIT(7)		/* exchild: close close_fd in child */
 #define XERROK	BIT(8)		/* non-zero exit ok (for set -e) */
 #define XCOPROC BIT(9)		/* starting a co-process */
-#define XTIME	BIT(10)		/* timeing TCOM command */
+#define XTIME	BIT(10)		/* timing TCOM command */
 #define XINTACT BIT(11)		/* OS2: proc started from interactive session */
 
 /*

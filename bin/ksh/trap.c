@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2003/06/23 11:39:05 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * signal handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: trap.c,v 1.5 2003/06/23 11:39:05 agc Exp $");
+__RCSID("$NetBSD: trap.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -54,7 +54,7 @@ inittraps()
 	sigtraps[SIGHUP].flags |= TF_FATAL;
 	sigtraps[SIGCHLD].flags |= TF_SHELL_USES;
 
-	/* these are always caught so we can clean up any temproary files. */
+	/* these are always caught so we can clean up any temporary files. */
 	setsig(&sigtraps[SIGINT], trapsig, SS_RESTORE_ORIG);
 	setsig(&sigtraps[SIGQUIT], trapsig, SS_RESTORE_ORIG);
 	setsig(&sigtraps[SIGTERM], trapsig, SS_RESTORE_ORIG);
@@ -76,6 +76,8 @@ static RETSIGTYPE
 alarm_catcher(sig)
 	int sig;
 {
+	int errno_ = errno;
+
 	if (ksh_tmout_state == TMOUT_READING) {
 		int left = alarm(0);
 
@@ -85,6 +87,7 @@ alarm_catcher(sig)
 		} else
 			alarm(left);
 	}
+	errno = errno_;
 	return RETSIGVAL;
 }
 #endif /* KSH */
@@ -105,9 +108,20 @@ gettrap(name, igncase)
 		return NULL;
 	}
 	for (p = sigtraps, i = SIGNALS+1; --i >= 0; p++)
-		if (p->name && (igncase ? strcasecmp(p->name, name) == 0
-					: strcmp(p->name, name) == 0))
-			return p;
+		if (p->name) {
+			if (igncase) {
+				if (p->name && (!strcasecmp(p->name, name) ||
+				    (strlen(name) > 3 && !strncasecmp("SIG",
+				    p->name, 3) &&
+				    !strcasecmp(p->name, name + 3))))
+					return p;
+			} else {
+				if (p->name && (!strcmp(p->name, name) ||
+				    (strlen(name) > 3 && !strncmp("SIG",
+				    p->name, 3) && !strcmp(p->name, name + 3))))
+					return p;
+			}
+		}
 	return NULL;
 }
 
@@ -119,6 +133,7 @@ trapsig(i)
 	int i;
 {
 	Trap *p = &sigtraps[i];
+	int errno_ = errno;
 
 	trap = p->set = 1;
 	if (p->flags & TF_DFL_INTR)
@@ -133,6 +148,7 @@ trapsig(i)
 	if (sigtraps[i].cursig == trapsig) /* this for SIGCHLD,SIGALRM */
 		sigaction(i, &Sigact_trap, (struct sigaction *) 0);
 #endif /* V7_SIGNALS */
+	errno = errno_;
 	return RETSIGVAL;
 }
 
@@ -260,7 +276,7 @@ runtrap(p)
 		p->flags |= old_changed;
 	}
 }
- 
+
 /* clear pending traps and reset user's trap handlers; used after fork(2) */
 void
 cleartraps()
