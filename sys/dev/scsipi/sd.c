@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.129 1998/07/30 23:57:07 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.130 1998/07/31 00:42:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -620,7 +620,7 @@ sdstart(v)
 		    SDRETRIES, 60000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
 		if (error) {
-			disk_unbusy(&sc->sc_dk, 0);
+			disk_unbusy(&sd->sc_dk, 0);
 			printf("%s: not queued, error %d\n",
 			    sd->sc_dev.dv_xname, error);
 		}
