@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.29 2004/09/28 17:26:25 jdolecek Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.30 2004/09/28 19:05:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.29 2004/09/28 17:26:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.30 2004/09/28 19:05:19 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -353,6 +353,27 @@ linux_sys_msgctl(l, v, retval)
 #endif /* SYSVMSG */
 
 #ifdef SYSVSHM
+/*
+ * shmget(2). Just make sure the Linux-compatible shmat() semantics
+ * is enabled for the segment, so that shmat() succeeds even when
+ * the segment would be removed.
+ */
+int
+linux_sys_shmget(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct sys_shmget_args /* {
+		syscallarg(key_t) key;
+		syscallarg(size_t) size;
+		syscallarg(int) shmflg;
+	} */ *uap = v;
+
+	SCARG(uap, shmflg) |= _SHM_RMLINGER;
+	return sys_shmget(l, uap, retval);
+}
+
 /*
  * shmat(2). Very straightforward, except that Linux passes a pointer
  * in which the return value is to be passed. This is subsequently
