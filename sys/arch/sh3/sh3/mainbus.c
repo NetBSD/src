@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1999/09/13 10:31:29 itojun Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1999/09/13 16:26:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,8 +35,6 @@
 #include <sys/device.h>
 
 #include <machine/shbvar.h>
-
-#include "fdc.h"
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -93,13 +91,6 @@ mainbus_attach(parent, self, aux)
 	mba.mba_sba.iba_memt = 0;
 
 	config_found(self, &mba.mba_sba, mainbus_print);
-
-#if NFDC > 0
-	mba.mba_sba.iba_busname = "fdc";
-	mba.mba_sba.iba_iot = 0;
-	mba.mba_sba.iba_memt = 0;
-	config_found(self, &mba.mba_sba, mainbus_print);
-#endif
 }
 
 int
