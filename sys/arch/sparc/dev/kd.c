@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.1 1997/10/18 00:00:30 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.2 1997/12/03 22:32:29 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
 
 extern void fb_unblank __P((void)); /* XXX */
 struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
+int cnrom __P((void));
+void cnrint __P((void));
 
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
