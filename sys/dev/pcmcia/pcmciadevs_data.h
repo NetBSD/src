@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.167.4.4 2002/06/18 14:36:57 lukem Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.167.4.5 2002/09/18 19:37:44 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcmciadevs,v 1.167.4.5 2002/09/18 19:37:19 thorpej Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1056,6 +1056,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "ACCTON",
 	    "Accton EN2212",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_ACCTON_EN2216,
+	    PCMCIA_CIS_ACCTON_EN2216,
+	    0,
+	    "ACCTON",
+	    "Accton EN2216",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_AMBICOM_AMB8002T,

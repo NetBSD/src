@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.167.4.4 2002/06/18 14:36:56 lukem Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.167.4.5 2002/09/18 19:37:42 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcmciadevs,v 1.167.4.5 2002/09/18 19:37:19 thorpej Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -688,6 +688,9 @@
 #define	PCMCIA_CIS_ACCTON_EN2212	{ "ACCTON", "EN2212", NULL, NULL }
 #define	PCMCIA_PRODUCT_ACCTON_EN2212	-1
 #define	PCMCIA_STR_ACCTON_EN2212	"Accton EN2212"
+#define	PCMCIA_CIS_ACCTON_EN2216	{ "ACCTON", "EN2216-PCMCIA-ETHERNET", "EN2216R01", NULL }
+#define	PCMCIA_PRODUCT_ACCTON_EN2216	-1
+#define	PCMCIA_STR_ACCTON_EN2216	"Accton EN2216"
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
