@@ -1,4 +1,4 @@
-/*	$Id: boot.c,v 1.1 1998/01/16 04:17:36 sakamoto Exp $	*/
+/*	$Id: boot.c,v 1.2 1998/01/19 03:00:57 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,9 @@
 #include <sys/reboot.h>
 #include <machine/param.h>
 #include <bebox/include/bootinfo.h>
+#ifdef CONS_SERIAL
+#include "ns16550.h"
+#endif /* CONS_SERIAL */
 
 #define NAMELEN	128
 
@@ -54,12 +57,14 @@ int args;
 void *startsym, *endsym, *bootinfo;
 struct btinfo_memory btinfo_memory;
 struct btinfo_console btinfo_console;
+struct btinfo_clock btinfo_clock;
 extern int errno;
 
 void
 main()
 {
 	int fd, n = 0;
+	void *p;
 	void start_CPU1();
 	extern int CPU1_alive;
 	extern char bootprog_name[], bootprog_rev[],
@@ -72,24 +77,23 @@ main()
 	/*
 	 * make bootinfo
 	 */
-	bootinfo = (void *)0x3020;
+	bootinfo = (void *)0x3030;
 
-	btinfo_memory.common.next =
-		(void *)((size_t)bootinfo + sizeof (btinfo_memory));
+	btinfo_memory.common.next = sizeof (btinfo_memory);
 	btinfo_memory.common.type = BTINFO_MEMORY;
 	btinfo_memory.memsize = *(int *)0x3010;
 
-	btinfo_memory.common.next = NULL;
-	btinfo_memory.common.type = BTINFO_CONSOLE;
+	btinfo_console.common.next = sizeof (btinfo_console);
+	btinfo_console.common.type = BTINFO_CONSOLE;
 #ifdef CONS_VGA
 	strcpy(btinfo_console.devname, "vga");
 #endif /* CONS_VGA */
 #ifdef CONS_SERIAL
 	strcpy(btinfo_console.devname, "com");
 # ifdef COMPORT
-	btinfo_console.port = COMPORT;
+	btinfo_console.addr = COMPORT;
 # else /* COMPORT */
-	btinfo_console.port = 0;
+	btinfo_console.addr = COM1;
 # endif /* COMPORT */
 # ifdef COMSPEED
 	btinfo_console.speed = COMSPEED;
@@ -98,9 +102,16 @@ main()
 # endif /* COMSPEED */
 #endif /* CONS_SERIAL */
 
-	bcopy((void *)&btinfo_memory, bootinfo, sizeof (btinfo_memory));
-	bcopy((void *)&btinfo_console, btinfo_memory.common.next,
-		sizeof (btinfo_console));
+	btinfo_clock.common.next = 0;
+	btinfo_clock.common.type = BTINFO_CLOCK;
+	btinfo_clock.ticks_per_sec = findcpuspeed();
+
+	p = bootinfo;
+	bcopy((void *)&btinfo_memory, p, sizeof (btinfo_memory));
+	p += sizeof (btinfo_memory);
+	bcopy((void *)&btinfo_console, p, sizeof (btinfo_console));
+	p += sizeof (btinfo_console);
+	bcopy((void *)&btinfo_clock, p, sizeof (btinfo_clock));
 
 	/*
 	 * console init

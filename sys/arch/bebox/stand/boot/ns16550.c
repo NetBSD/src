@@ -1,4 +1,4 @@
-/*	$Id: ns16550.c,v 1.1 1998/01/16 04:17:57 sakamoto Exp $	*/
+/*	$Id: ns16550.c,v 1.2 1998/01/19 03:01:01 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -37,10 +37,6 @@
 
 #include <bebox/include/bootinfo.h>
 #include "ns16550.h"
-typedef struct NS16550 *NS16550_t;
-
-const NS16550_t COM_PORTS[] = { (NS16550_t)COM1, (NS16550_t)COM2,
-				(NS16550_t)COM3, (NS16550_t)COM4 };
 
 volatile struct NS16550 *
 NS16550_init()
@@ -49,7 +45,7 @@ NS16550_init()
 	int speed;
 	extern struct btinfo_console btinfo_console;
 
-	com_port = (struct NS16550 *) COM_PORTS[btinfo_console.port];
+	com_port = (struct NS16550 *)(COMBASE + btinfo_console.addr);
 
 	com_port->lcr = 0x80;  /* Access baud rate */
 	speed = comspeed(btinfo_console.speed);
