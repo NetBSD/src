@@ -1897,7 +1897,8 @@ EOF
       v850e-*-*)	    fmt=elf bfd_gas=yes ;;
       v850ea-*-*)	    fmt=elf bfd_gas=yes ;;
 
-      vax-*-netbsd | vax-*-bsd* | vax-*-ultrix*)
+      vax-*-netbsd*)	    fmt=aout em=nbsd ;;
+      vax-*-bsd* | vax-*-ultrix*)
 			    fmt=aout ;;
       vax-*-vms)            fmt=vms ;;
 
