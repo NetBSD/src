@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.2.6 2002/08/01 02:42:00 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.7 2002/08/01 03:30:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.6 2002/08/01 02:42:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.2.7 2002/08/01 03:30:54 nathanw Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -132,7 +132,7 @@ cpu_configure()
 	    (u_short)imask[IPL_TTY]);
 
 	/* resync after FPU configuration */
-	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
+	lwp0.l_addr->u_pcb.pcb_cr0 = rcr0();
 
 	spl0();
 
