@@ -1725,19 +1725,14 @@ load_pic_register (do_rtl)
 	{
 	  emit_insn (gen_prologue_get_pc (xops[0], xops[1]));
 	  emit_insn (gen_prologue_set_got (xops[0],
-#ifdef YES_UNDERSCORES
-					   gen_rtx_SYMBOL_REF (Pmode,
-  					            "$__GLOBAL_OFFSET_TABLE_"),
-#else
 					   gen_rtx_SYMBOL_REF (Pmode,
 					            "$_GLOBAL_OFFSET_TABLE_"),
-#endif
 					   xops[1]));
 	}
       else
 	{
 	  output_asm_insn (AS1 (call,%X1), xops);
-	  output_asm_insn ("addl $%__GLOBAL_OFFSET_TABLE_,%0", xops);
+	  output_asm_insn ("addl $_GLOBAL_OFFSET_TABLE_,%0", xops);
 	  pic_label_rtx = 0;
 	}
     }
@@ -1760,7 +1755,7 @@ load_pic_register (do_rtl)
 	  ASM_OUTPUT_INTERNAL_LABEL (asm_out_file, "L",
 				     CODE_LABEL_NUMBER (xops[1]));
 	  output_asm_insn (AS1 (pop%L0,%0), xops);
-	  output_asm_insn ("addl $%__GLOBAL_OFFSET_TABLE_+[.-%P1],%0", xops);
+	  output_asm_insn ("addl $_GLOBAL_OFFSET_TABLE_+[.-%P1],%0", xops);
 	}
     }
 
