@@ -1,4 +1,4 @@
-.\"	$NetBSD: chio.1,v 1.2 1997/09/15 13:23:01 lukem Exp $
+.\"	$NetBSD: chio.1,v 1.3 1997/09/29 17:32:23 mjacob Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
 .\" All rights reserved.
@@ -188,6 +188,12 @@ Element supports passing media (exporting) to an outsite human operator.
 .It Nm INENAB
 Element supports receiving media (importing) from an outside human operator.
 .El
+.Pp
+.NM
+.Ic ielem
+.Pp
+Perform an \fBINITIALIZE ELEMENT STATUS\fR
+operation on the changer.
 .Pp
 .Sh EXAMPLES
 .Dl chio move slot 3 drive 0
