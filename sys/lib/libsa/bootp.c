@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.7 1995/09/18 21:19:20 pk Exp $	*/
+/*	$NetBSD: bootp.c,v 1.8 1996/09/26 23:22:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -304,7 +304,7 @@ vend_rfc1048(cp, len)
 	ep = cp + len;
 
 	/* Step over magic cookie */
-	cp += sizeof(long);
+	cp += sizeof(int);
 
 	while (cp < ep) {
 		tag = *cp++;
