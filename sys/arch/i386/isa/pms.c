@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.27 1996/04/11 22:15:27 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.28 1996/05/05 19:46:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -52,6 +52,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -114,12 +115,17 @@ struct cfdriver pms_cd = {
 
 #define	PMSUNIT(dev)	(minor(dev))
 
-static inline void
+static __inline void pms_flush __P((void));
+static __inline void pms_dev_cmd __P((u_char));
+static __inline void pms_pit_cmd __P((u_char));
+static __inline void pms_aux_cmd __P((u_char));
+
+static __inline void
 pms_flush()
 {
 	u_char c;
 
-	while (c = inb(PMS_STATUS) & 0x03)
+	while ((c = inb(PMS_STATUS) & 0x03) != 0)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
@@ -128,7 +134,7 @@ pms_flush()
 		}
 }
 
-static inline void
+static __inline void
 pms_dev_cmd(value)
 	u_char value;
 {
@@ -139,7 +145,7 @@ pms_dev_cmd(value)
 	outb(PMS_DATA, value);
 }
 
-static inline void
+static __inline void
 pms_aux_cmd(value)
 	u_char value;
 {
@@ -148,7 +154,7 @@ pms_aux_cmd(value)
 	outb(PMS_CNTRL, value);
 }
 
-static inline void
+static __inline void
 pms_pit_cmd(value)
 	u_char value;
 {
@@ -215,9 +221,11 @@ pmsattach(parent, self, aux)
 }
 
 int
-pmsopen(dev, flag)
+pmsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = PMSUNIT(dev);
 	struct pms_softc *sc;
@@ -255,9 +263,11 @@ pmsopen(dev, flag)
 }
 
 int
-pmsclose(dev, flag)
+pmsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -281,7 +291,7 @@ pmsread(dev, uio, flag)
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
-	int error;
+	int error = 0;
 	size_t length;
 	u_char buffer[PMS_CHUNK];
 
@@ -294,7 +304,8 @@ pmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= PMS_ASLP;
-		if (error = tsleep((caddr_t)sc, PZERO | PCATCH, "pmsrea", 0)) {
+		error = tsleep((caddr_t)sc, PZERO | PCATCH, "pmsrea", 0);
+		if (error) {
 			sc->sc_state &= ~PMS_ASLP;
 			splx(s);
 			return error;
@@ -313,7 +324,7 @@ pmsread(dev, uio, flag)
 		(void) q_to_b(&sc->sc_q, buffer, length);
 
 		/* Copy the data to the user process. */
-		if (error = uiomove(buffer, length, uio))
+		if ((error = uiomove(buffer, length, uio)) != 0)
 			break;
 	}
 
@@ -321,11 +332,12 @@ pmsread(dev, uio, flag)
 }
 
 int
-pmsioctl(dev, cmd, addr, flag)
+pmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
