@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.83 2002/08/23 20:50:25 matt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.84 2002/08/25 20:01:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.83 2002/08/23 20:50:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.84 2002/08/25 20:01:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -320,18 +320,18 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
  */
 void *
 hashinit(elements, htype, mtype, mflags, hashmask)
-	int elements;
+	u_int elements;
 	enum hashtype htype;
 	int mtype, mflags;
 	u_long *hashmask;
 {
-	long hashsize;
+	u_long hashsize, i;
 	LIST_HEAD(, generic) *hashtbl_list;
 	TAILQ_HEAD(, generic) *hashtbl_tailq;
-	int i, esize;
+	size_t esize;
 	void *p;
 
-	if (elements <= 0)
+	if (elements == 0)
 		panic("hashinit: bad cnt");
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
@@ -349,7 +349,7 @@ hashinit(elements, htype, mtype, mflags, hashmask)
 #endif
 	}
 
-	if ((p = malloc((u_long)hashsize * esize, mtype, mflags)) == NULL)
+	if ((p = malloc(hashsize * esize, mtype, mflags)) == NULL)
 		return (NULL);
 
 	switch (htype) {
