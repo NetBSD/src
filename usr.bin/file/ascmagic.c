@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.2 1998/09/19 18:07:32 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.3 1999/11/01 17:29:59 christos Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -28,17 +28,19 @@
  * 4. This notice may not be removed or altered.
  */
 
+#include "file.h"
 #include <stdio.h>
 #include <string.h>
 #include <memory.h>
 #include <ctype.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include "file.h"
+#endif
 #include "names.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.23 1998/06/27 13:23:39 christos Exp ");
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.24 1999/02/14 17:16:00 christos Exp ")
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
