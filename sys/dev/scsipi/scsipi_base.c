@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.92 2003/09/08 18:51:36 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.93 2003/09/09 02:37:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.92 2003/09/08 18:51:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.93 2003/09/09 02:37:55 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1147,9 +1147,6 @@ scsipi_prevent(periph, type, flags)
 	int type, flags;
 {
 	struct scsipi_prevent scsipi_cmd;
-
-	if (periph->periph_quirks & PQUIRK_NODOORLOCK)
-		return (0);
 
 	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PREVENT_ALLOW;
