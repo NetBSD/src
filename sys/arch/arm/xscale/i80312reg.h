@@ -1,9 +1,11 @@
+/*	$NetBSD: i80312reg.h,v 1.3 2001/11/04 01:16:01 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Matt Thomas <matt@3am-software.com>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +38,7 @@
 
 #ifndef _ARM_XSCALE_I80312REG_H_ 
 #define _ARM_XSCALE_I80312REG_H_ 
+
 /*
  * Physical addresses 0x1000..0x1fff are used by the Periphial Memory
  * Mapped Registers.
