@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.33 2000/04/12 10:38:46 itojun Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.34 2000/04/20 03:28:15 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.46 1999/08/13 06:46:18 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.33 2000/04/12 10:38:46 itojun Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.34 2000/04/20 03:28:15 itojun Exp $");
 #endif
 #endif
 
@@ -132,8 +132,10 @@ sys_init()
 	fatal("Couldn't create IP socket: %m");
 
 #ifdef INET6
-    if ((sock6_fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-	fatal("Couldn't create IPv6 socket: %m");
+    if ((sock6_fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+	/* check it at runtime */
+	sock6_fd = -1;
+    }
 #endif
 
     FD_ZERO(&in_fds);
@@ -499,6 +501,11 @@ sif6addr(unit, our_eui64, his_eui64)
     int ifindex;
     struct in6_aliasreq addreq6;
 
+    if (sock6_fd < 0) {
+	fatal("No IPv6 socket available");
+	/*NOTREACHED*/
+    }
+
     /* actually, this part is not kame local - RFC2553 conformant */
     ifindex = if_nametoindex(ifname);
     if (ifindex == 0) {
@@ -550,6 +557,11 @@ sif6addr(unit, our_eui64, his_eui64)
     struct ifreq ifr;
     struct in6_rtmsg rt6;
 
+    if (sock6_fd < 0) {
+	fatal("No IPv6 socket available");
+	/*NOTREACHED*/
+    }
+
     memset(&ifr, 0, sizeof (ifr));
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
     if (ioctl(sock6_fd, SIOCGIFINDEX, (caddr_t) &ifr) < 0) {
@@ -598,6 +610,11 @@ cif6addr(unit, our_eui64, his_eui64)
     int ifindex;
     struct in6_ifreq delreq6;
 
+    if (sock6_fd < 0) {
+	fatal("No IPv6 socket available");
+	/*NOTREACHED*/
+    }
+
     /* actually, this part is not kame local - RFC2553 conformant */
     ifindex = if_nametoindex(ifname);
     if (ifindex == 0) {
@@ -628,6 +645,11 @@ cif6addr(unit, our_eui64, his_eui64)
 #else
     struct ifreq ifr;
     struct in6_ifreq ifr6;
+
+    if (sock6_fd < 0) {
+	fatal("No IPv6 socket available");
+	/*NOTREACHED*/
+    }
 
     memset(&ifr, 0, sizeof(ifr));
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
