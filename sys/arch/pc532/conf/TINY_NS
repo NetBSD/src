@@ -1,0 +1,42 @@
+#
+# TINY 532 Distribution, used only for early testing and initial distribution.
+#
+#	$Id: TINY_NS,v 1.1.1.1 1993/09/09 23:53:45 phil Exp $
+#
+machine		"pc532"
+cpu		"ns532"
+ident		TINY_NS
+timezone	8 dst
+maxusers	8
+options		"COMPAT_43"
+options		"RD_SIZE=1536000"
+options		"COMDEF_SPEED=B19200"
+
+options		SCSI
+
+config		"netbsd"	root on rd0
+
+controller	rd0
+
+controller	dp0
+disk		sd0	at dp0 flags 0 drive 000 bio
+disk		sd1	at dp0 flags 0 drive 010 bio
+tape		st0	at dp0 flags 1 drive ?   bio
+
+controller	scn0
+device		com0 	at scn0 port 0 tty
+device		com1 	at scn0 port 1 tty
+device		com2 	at scn0 port 2 tty
+device		com3 	at scn0 port 3 tty
+device		com4 	at scn0 port 4 tty
+device		com5 	at scn0 port 5 tty
+device		com6 	at scn0 port 6 tty
+device		com7 	at scn0 port 7 tty
+
+pseudo-device	rtc
+
+pseudo-device	pty	4
+
+pseudo-device	swappager
+pseudo-device	vnodepager
+pseudo-device	devpager
