@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.9 2002/05/22 15:40:49 wiz Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.10 2002/09/21 01:07:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.9 2002/05/22 15:40:49 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.10 2002/09/21 01:07:37 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -679,6 +679,7 @@ rf_InstallSpareTable(
 				 * XXX */
 	return (retcode);
 }
+#if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 /*
  * Invoked via ioctl to install a spare table in the kernel.
  */
@@ -728,6 +729,7 @@ rf_GetNumSpareRUsDeclustered(raidPtr)
 
 	return (((RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo)->TotSparePUsPerDisk);
 }
+#endif /* (RF_INCLUDE_PARITY_DECLUSTERING > 0)  || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0) */
 
 void 
 rf_FreeSpareTable(raidPtr)
