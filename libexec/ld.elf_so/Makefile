@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2003/10/19 01:19:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.63 2003/10/19 04:45:01 lukem Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -61,7 +61,7 @@ STRIPFLAG=
 .PATH: $M
 
 ${PROG}: ${OBJS} ${DPADD}
-	${_MKMSG} "   link  ${PROG}"
+	${_MKMSGLINK.m} ${PROG}
 	${_MKCMD}\
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 

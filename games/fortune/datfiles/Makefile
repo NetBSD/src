@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/10/19 01:01:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2003/10/19 04:45:01 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>			# for INSTALL_OFFENSIVE_FORTUNES
@@ -37,7 +37,7 @@ realall: ${DATFILES}
 # Normal fortunes: build directly from data files.
 
 fortunes.dat fortunes2.dat startrek.dat zippy.dat limerick.dat netbsd.dat farber.dat:
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${STRFILE} -rs ${.CURDIR}/${.TARGET:R} ${.TARGET}
 fortunes.dat:	fortunes
@@ -51,47 +51,47 @@ farber.dat:	farber
 # Obscene fortunes: we have to build source and data files
 
 fortunes-o: fortunes-o.${TYPE}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	tr 'a-zA-Z' 'n-za-mN-ZA-M' < ${.ALLSRC} > ${.TARGET}
 fortunes-o.dat: fortunes-o
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
 fortunes2-o: fortunes2-o.${TYPE}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	tr 'a-zA-Z' 'n-za-mN-ZA-M' < ${.ALLSRC} > ${.TARGET}
 fortunes2-o.dat: fortunes2-o
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
 limerick-o: limerick-o.${TYPE}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	tr 'a-zA-Z' 'n-za-mN-ZA-M' < ${.ALLSRC} > ${.TARGET}
 limerick-o.dat: limerick-o
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
 unamerican-o: unamerican-o.${TYPE}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	tr 'a-zA-Z' 'n-za-mN-ZA-M' < ${.ALLSRC} > ${.TARGET}
 unamerican-o.dat: unamerican-o
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 
 netbsd-o: netbsd-o.${TYPE}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	tr 'a-zA-Z' 'n-za-mN-ZA-M' < ${.ALLSRC} > ${.TARGET}
 netbsd-o.dat: netbsd-o
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${STRFILE} -rsx ${.ALLSRC} ${.TARGET}
 

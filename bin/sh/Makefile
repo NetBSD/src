@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2003/10/19 00:43:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.71 2003/10/19 04:45:01 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -45,30 +45,30 @@ CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 CLEANFILES+= trace
 
 token.h: mktokens
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${HOST_SH} ${.ALLSRC}
 
 builtins.h: builtins.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 
 
 builtins.c: mkbuiltins shell.h builtins.def
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	${_MKCMD}\
 	[ -f builtins.h ]
 
 init.c: mkinit ${SHSRCS}
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	./${.ALLSRC}
 
 nodes.h: nodes.c
 
 nodes.c: mknodes nodetypes nodes.c.pat
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	./${.ALLSRC}
 	${_MKCMD}\
@@ -77,7 +77,7 @@ nodes.c: mknodes nodetypes nodes.c.pat
 syntax.h: syntax.c
 
 syntax.c: mksyntax
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	./${.ALLSRC}
 	${_MKCMD}\
@@ -89,12 +89,12 @@ NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
 mkinit: mkinit.c
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGLINK}
 	${_MKCMD}\
 	${HOST_LINK.c} -o mkinit ${.IMPSRC} ${NBCOMPATLIB}
 
 mknodes: mknodes.c
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGLINK}
 	${_MKCMD}\
 	${HOST_LINK.c} -o mknodes ${.IMPSRC} ${NBCOMPATLIB}
 
@@ -106,7 +106,7 @@ TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
 mksyntax: mksyntax.c
-	${_MKMSG} "compile  ${.TARGET}"
+	${_MKMSGLINK}
 	${_MKCMD}\
 	${HOST_LINK.c} ${TARGET_CHARFLAG} -o mksyntax ${.IMPSRC} ${NBCOMPATLIB}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2003/10/19 00:14:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2003/10/19 04:45:01 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -25,7 +25,7 @@ DPSRCS+=	errnum.h const.h
 CLEANFILES+=	errnum.h const.h
 
 errnum.h: err.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	rm -f ${.TARGET}
 	${_MKCMD}\
@@ -39,7 +39,7 @@ errnum.h: err.c
 
 const.c: errnum.h
 const.h: const.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	rm -f ${.TARGET}
 	${_MKCMD}\
