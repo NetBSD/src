@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.9 2001/10/16 16:08:55 wiz Exp $
+.\" $NetBSD: clock_settime.2,v 1.10 2002/01/26 15:04:16 simonb Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ and obtained by
 represent the amount of time (in seconds and nanoseconds)
 since 00:00 Universal Coordinated Time, January 1, 1970.
 .Pp
-If the calling user is not the syper-user, then the
+If the calling user is not the super-user, then the
 .Fn clock_settime
 function in the standard C library will try to use the
 .Xr clockctl 4
