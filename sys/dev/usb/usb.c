@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.21 1999/09/13 21:33:25 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.22 1999/09/15 10:25:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <sys/uio.h>
 #include <sys/conf.h>
 #endif
+#include <sys/conf.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/select.h>
@@ -90,25 +91,22 @@ int	usb_noexplore = 0;
 #define DPRINTFN(n,x)
 #endif
 
+int usb_nbus = 0;
+
 #define USBUNIT(dev) (minor(dev))
 
 struct usb_softc {
-	USBBASEDEVICE sc_dev;		/* base device */
+	USBBASEDEVICE	sc_dev;		/* base device */
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
-	char sc_running;
-	char sc_exploring;
-	struct selinfo sc_consel;	/* waiting for connect change */
-	int shutdown;
-	struct proc *event_thread;
+	char		sc_exploring;
+	char		sc_dying;
+	struct selinfo	sc_consel;	/* waiting for connect change */
+	struct proc    *sc_event_thread;
 };
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-int usbopen __P((dev_t, int, int, struct proc *));
-int usbclose __P((dev_t, int, int, struct proc *));
-int usbioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int usbpoll __P((dev_t, int, struct proc *));
-
+cdev_decl(usb);
 #elif defined(__FreeBSD__)
 d_open_t  usbopen; 
 d_close_t usbclose;
@@ -156,15 +154,15 @@ USB_ATTACH(usb)
 	usbd_init();
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
-	sc->sc_running = 1;
 	sc->sc_bus->use_polling = 1;
 	sc->sc_port.power = USB_MAX_POWER;
-	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0,0,0, &sc->sc_port);
+	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0,0,0,
+			    &sc->sc_port);
 
 	if (r == USBD_NORMAL_COMPLETION) {
 		dev = sc->sc_port.device;
 		if (!dev->hub) {
-			sc->sc_running = 0;
+			sc->sc_dying = 1;
 			printf("%s: root device is not a hub\n", 
 			       USBDEVNAME(sc->sc_dev));
 			USB_ATTACH_ERROR_RETURN;
@@ -174,12 +172,13 @@ USB_ATTACH(usb)
 	} else {
 		printf("%s: root hub problem, error=%d\n", 
 		       USBDEVNAME(sc->sc_dev), r); 
-		sc->sc_running = 0;
+		sc->sc_dying = 1;
 	}
 	sc->sc_bus->use_polling = 0;
 
 	kthread_create(usb_create_event_thread, sc);
 
+	usb_nbus++;
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -189,7 +188,7 @@ usb_create_event_thread(arg)
 {
 	struct usb_softc *sc = arg;
 
-	if (kthread_create1(usb_event_thread, sc, &sc->event_thread,
+	if (kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
 			   "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for\n",
 		       sc->sc_dev.dv_xname);
@@ -203,17 +202,16 @@ usb_event_thread(arg)
 {
 	struct usb_softc *sc = arg;
 
-	while (!sc->shutdown) {
-		(void)tsleep(&sc->sc_bus->needs_explore, 
-			     PWAIT, "usbevt", hz*30);
+	while (!sc->sc_dying) {
 #ifdef USB_DEBUG
-		if (usb_noexplore)
-			continue;
+		if (!usb_noexplore)
 #endif
-		DPRINTFN(2,("usb_event_thread: woke up\n"));
 		usb_discover(sc);
+		(void)tsleep(&sc->sc_bus->needs_explore, 
+			     PWAIT, "usbevt", hz*60);
+		DPRINTFN(2,("usb_event_thread: woke up\n"));
 	}
-	sc->event_thread = 0;
+	sc->sc_event_thread = 0;
 
 	/* In case parent is waiting for us to exit. */
 	wakeup(sc);
@@ -243,8 +241,10 @@ usbopen(dev, flag, mode, p)
 {
 	USB_GET_SC_OPEN(usb, USBUNIT(dev), sc);
 
-	if (sc == 0 || !sc->sc_running)
+	if (sc == 0)
 		return (ENXIO);
+	if (sc->sc_dying)
+		return (EIO);
 
 	return (0);
 }
@@ -268,8 +268,9 @@ usbioctl(dev, cmd, data, flag, p)
 {
 	USB_GET_SC(usb, USBUNIT(dev), sc);
 
-	if (sc == 0 || !sc->sc_running)
-		return (ENXIO);
+	if (sc->sc_dying)
+		return (EIO);
+
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
@@ -371,6 +372,9 @@ usbpoll(dev, events, p)
 	int revents, s;
 	USB_GET_SC(usb, USBUNIT(dev), sc);
 
+	if (sc->sc_dying)
+		return (EIO);
+
 	DPRINTFN(2, ("usbpoll: sc=%p events=0x%x\n", sc, events));
 	s = splusb();
 	revents = 0;
@@ -387,36 +391,6 @@ usbpoll(dev, events, p)
 	splx(s);
 	return (revents);
 }
-
-#if 0
-int
-usb_bus_count()
-{
-	int i, n;
-
-	for (i = n = 0; i < usb_cd.cd_ndevs; i++)
-		if (usb_cd.cd_devs[i])
-			n++;
-	return (n);
-}
-#endif
-
-#if 0
-usbd_status
-usb_get_bus_handle(n, h)
-	int n;
-	usbd_bus_handle *h;
-{
-	int i;
-
-	for (i = 0; i < usb_cd.cd_ndevs; i++)
-		if (usb_cd.cd_devs[i] && n-- == 0) {
-			*h = usb_cd.cd_devs[i];
-			return (USBD_NORMAL_COMPLETION);
-		}
-	return (USBD_INVAL);
-}
-#endif
 
 usbd_status
 usb_discover(sc)
@@ -440,7 +414,7 @@ usb_discover(sc)
 		sc->sc_exploring = 0;
 		wakeup(&sc->sc_exploring);
 		splx(s);
-	} while (sc->sc_bus->needs_explore);
+	} while (sc->sc_bus->needs_explore && !sc->sc_dying);
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -458,8 +432,19 @@ usb_activate(self, act)
 	device_ptr_t self;
 	enum devact act;
 {
-	panic("usb_activate\n");
-	return (0);
+	struct usb_softc *sc = (struct usb_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
+	return (rv);
 }
 
 int
@@ -467,7 +452,32 @@ usb_detach(self, flags)
 	device_ptr_t self;
 	int flags;
 {
-	panic("usb_detach\n");
+	struct usb_softc *sc = (struct usb_softc *)self;
+
+	sc->sc_dying = 1;
+
+	/* Make all devices disconnect. */
+	usb_disconnect_port(&sc->sc_port);
+
+	/* Kill off event thread. */
+	if (sc->sc_event_thread) {
+		wakeup(&sc->sc_bus->needs_explore);
+		if (tsleep(sc, PWAIT, "usbdet", hz * 60))
+			printf("%s: event thread didn't die\n",
+			       USBDEVNAME(sc->sc_dev));
+	}
+
+	usb_nbus--;
+	return (0);
+}
+
+int
+usbread(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	/* XXX */
 	return (0);
 }
 
