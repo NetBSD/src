@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.4 2002/03/09 10:52:21 manu Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.5 2002/03/25 18:43:59 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.4 2002/03/09 10:52:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.5 2002/03/25 18:43:59 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.4 2002/03/09 10:52:21 manu Exp $");
 /* IRIX /dev/kmem diggers emulation */
 static int irix_sysmp_kernaddr __P((int, register_t *));
 extern struct loadavg averunnable;
+extern long irix_kernel_var[32];
 
 int
 irix_sys_sysmp(p, v, retval)
@@ -117,6 +118,10 @@ irix_sysmp_kernaddr(kernaddr, retval)
 	switch (kernaddr) {
 	case IRIX_MPKA_AVENRUN:
 		*retval = (register_t)&averunnable;
+		break;
+
+	case IRIX_MPKA_VAR:
+		*retval = (register_t)&irix_kernel_var;
 		break;
 
 	default:
