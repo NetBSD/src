@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.11 1998/07/05 02:25:17 jonathan Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.12 1998/07/05 03:14:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -44,6 +44,7 @@
  */
 
 #include "opt_hdlc.h"
+#include "opt_llc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

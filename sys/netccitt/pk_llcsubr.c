@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.6 1998/03/01 02:24:57 fvdl Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.7 1998/07/05 03:14:44 jonathan Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -40,6 +40,8 @@
  *
  *	@(#)pk_llcsubr.c	8.2 (Berkeley) 2/9/95
  */
+
+#include "opt_llc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
