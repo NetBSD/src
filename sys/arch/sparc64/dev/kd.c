@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.9 2000/03/20 11:27:16 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.10 2000/03/21 10:56:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -426,16 +426,13 @@ kd_putfb(tp)
 }
 
 void
-kd_attach_input(dev, iopen, iclose)
-	struct device *dev;
-	int (*iopen)__P((struct device *));
-	int (*iclose)__P((struct device *));
+cons_attach_input(cc)
+	struct cons_channel *cc;
 {
 	struct kd_softc *kd = &kd_softc;
 
-	kd->kd_idev = dev;
-	kd->kd_iopen = iopen;
-	kd->kd_iclose = iclose;
+	kd->kd_in = cc;
+	cc->cc_upstream = kd_cons_input;
 }
 
 /*
