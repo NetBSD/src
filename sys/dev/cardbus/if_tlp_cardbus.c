@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.20 2000/03/15 18:39:52 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.21 2000/03/19 21:45:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ void	tlp_cardbus_setup __P((struct tulip_cardbus_softc *));
 
 int	tlp_cardbus_enable __P((struct tulip_softc *));
 void	tlp_cardbus_disable __P((struct tulip_softc *));
+void	tlp_cardbus_power __P((struct tulip_softc *, int));
 
 void	tlp_cardbus_x3201_reset __P((struct tulip_softc *));
 
@@ -225,6 +226,7 @@ tlp_cardbus_attach(parent, self, aux)
 	 */
 	sc->sc_enable = tlp_cardbus_enable;
 	sc->sc_disable = tlp_cardbus_disable;
+	sc->sc_power = tlp_cardbus_power;
 
 	/*
 	 * Get revision info, and set some chip-specific variables.
@@ -447,6 +449,26 @@ tlp_cardbus_disable(sc)
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
+}
+
+void
+tlp_cardbus_power(sc, why)
+	struct tulip_softc *sc;
+	int why;
+{
+	struct tulip_cardbus_softc *csc = (void *) sc;
+
+	if (why == PWR_RESUME) {
+		/*
+		 * Give the PCI configuration registers a kick
+		 * in the head.
+		 */
+#ifdef DIAGNOSTIC
+		if (TULIP_IS_ENABLED(sc) == 0)
+			panic("tlp_cardbus_power");
+#endif
+		tlp_cardbus_setup(csc);
+	}
 }
 
 void

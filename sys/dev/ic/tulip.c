@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.53 2000/03/15 18:39:50 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.54 2000/03/19 21:45:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,6 +156,7 @@ int	tlp_srom_size __P((struct tulip_softc *));
 
 int	tlp_enable __P((struct tulip_softc *));
 void	tlp_disable __P((struct tulip_softc *));
+void	tlp_power __P((int, void *));
 
 void	tlp_filter_setup __P((struct tulip_softc *));
 void	tlp_winb_filter_setup __P((struct tulip_softc *));
@@ -489,6 +490,15 @@ tlp_attach(sc, enaddr)
 	sc->sc_sdhook = shutdownhook_establish(tlp_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
+
+	/*
+	 * Add a suspend hook to make sure we come back up after a
+	 * resume.
+	 */
+	sc->sc_powerhook = powerhook_establish(tlp_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 	return;
 
@@ -1882,6 +1892,33 @@ tlp_disable(sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_flags &= ~TULIPF_ENABLED;
 	}
+}
+
+/*
+ * tlp_power:
+ *
+ *	Power management (suspend/resume) hook.
+ */
+void
+tlp_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct tulip_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+
+	s = splnet();
+	if (why != PWR_RESUME) {
+		tlp_stop(sc, 0);
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+	} else if (ifp->if_flags & IFF_UP) {
+		if (sc->sc_power != NULL)
+			(*sc->sc_power)(sc, why);
+		tlp_init(sc);
+	}
+	splx(s);
 }
 
 /*
