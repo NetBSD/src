@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.23 2002/01/22 17:02:08 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.24 2002/04/06 12:15:28 wiz Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/powerpc/mpc6xx/hid_601.h	comp-c-include
 ./usr/include/powerpc/mpc6xx/pmap.h	comp-c-include
 ./usr/include/powerpc/mpc6xx/pte.h	comp-c-include
+./usr/include/powerpc/mpc6xx/sr_601.h	comp-c-include
 ./usr/include/powerpc/mpc6xx/vmparam.h	comp-c-include
 ./usr/include/powerpc/param.h	comp-c-include
 ./usr/include/powerpc/pcb.h	comp-c-include
