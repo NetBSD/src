@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.9 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.10 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -143,10 +143,11 @@ uvm_init()
 	uvm_pager_init();
 
 	/*
-	 * step 8: allocate anons (can add more as we add swap... later)
+	 * step 8: init anonymous memory systems (both amap and anons)
 	 */
 
-	uvm_anon_init();
+	amap_init();		/* init amap module */
+	uvm_anon_init();	/* allocate initial anons */
 
 	/*
 	 * the VM system is now up!  now that malloc is up we can resize the

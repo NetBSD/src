@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.33 1998/11/15 04:38:19 chuck Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.34 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -584,12 +584,12 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 
 		/*
 		 * can't extend a shared amap.  note: no need to lock amap to 
-		 * look at am_ref since we don't care about its exact value.
+		 * look at refs since we don't care about its exact value.
 		 * if it is one (i.e. we have only reference) it will stay there
 		 */
 		   
 		if (prev_entry->aref.ar_amap &&
-		    prev_entry->aref.ar_amap->am_ref != 1) {
+		    amap_refs(prev_entry->aref.ar_amap) != 1) {
 			goto step3;
 		}
 		
@@ -664,7 +664,7 @@ step3:
 		vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ? 
 			UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
 		struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
-		new_entry->aref.ar_slotoff = 0;
+		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = amap;
 	} else {
 		new_entry->aref.ar_amap = NULL;
@@ -1478,12 +1478,12 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		newentry->wired_count = 0;
 		newentry->aref.ar_amap = entry->aref.ar_amap;
 		if (newentry->aref.ar_amap) {
-			newentry->aref.ar_slotoff =
-			    entry->aref.ar_slotoff + (fudge >> PAGE_SHIFT);
+			newentry->aref.ar_pageoff =
+			    entry->aref.ar_pageoff + (fudge >> PAGE_SHIFT);
 			amap_ref(newentry, AMAP_SHARED |
 			    ((flags & UVM_EXTRACT_QREF) ? AMAP_REFALL : 0));
 		} else {
-			newentry->aref.ar_slotoff = 0;
+			newentry->aref.ar_pageoff = 0;
 		}
 		newentry->advice = entry->advice;
 
@@ -2630,7 +2630,7 @@ uvmspace_fork(vm1)
 
 			if (old_entry->aref.ar_amap != NULL) {
 
-			  if ((old_entry->aref.ar_amap->am_flags & 
+			  if ((amap_flags(old_entry->aref.ar_amap) & 
 			       AMAP_SHARED) != 0 ||
 			      old_entry->wired_count != 0) {
 
@@ -2817,7 +2817,7 @@ uvm_map_printit(map, full, pr)
 	    entry = entry->next) {
 		(*pr)(" - %p: 0x%lx->0x%lx: obj=%p/0x%x, amap=%p/%d\n",
 		    entry, entry->start, entry->end, entry->object.uvm_obj,
-		    entry->offset, entry->aref.ar_amap, entry->aref.ar_slotoff);
+		    entry->offset, entry->aref.ar_amap, entry->aref.ar_pageoff);
 		(*pr)(
 "\tsubmap=%c, cow=%c, nc=%c, prot(max)=%d/%d, inh=%d, wc=%d, adv=%d\n",
 		    (entry->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
