@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/19 04:47:43 perry Exp $
+#	$NetBSD: Makefile,v 1.6 2001/11/28 05:01:59 jmc Exp $
 
 MODULE=		groff
 
 ALL_TARGET=	src/include all
 MAKE_ARGS=	bindir=${TOOLDIR}/lib/groff
+
+TMACDIR=	${TOOLDIR}/share/groff/tmac
 
 # Add gnuwrap hack directly to the Makefile.
 _NOWRAPPER=1
