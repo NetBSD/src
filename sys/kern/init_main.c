@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.136 1998/11/11 22:45:32 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.137 1998/11/14 00:08:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -430,6 +430,9 @@ main()
 	/* Create process 3, the process reaper kernel thread. */
 	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
+
+	/* Create any other deferred kernel threads. */
+	kthread_run_deferred_queue();
 
 	/* The scheduler is an infinite loop. */
 #if defined(UVM)
