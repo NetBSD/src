@@ -16,6 +16,9 @@ AFLAGS=
 CC=		cc
 CFLAGS=		-O
 
+CXX=		g++
+CXXFLAGS=	${CFLAGS}
+
 CPP=		cpp
 
 FC=		f77
