@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.12 2000/06/03 21:06:02 fvdl Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.13 2001/01/10 01:57:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sprayd.c,v 1.12 2000/06/03 21:06:02 fvdl Exp $");
+__RCSID("$NetBSD: sprayd.c,v 1.13 2001/01/10 01:57:51 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 		transp = svc_dg_create(0, 0, 0);
 		if (transp == NULL) {
 			syslog(LOG_ERR, "cannot create udp service.");
-			return 1;
+			exit(1);
 		}
 		if (!svc_reg(transp, SPRAYPROG, SPRAYVERS, spray_service,
 		    NULL)) {
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 
 	svc_run();
 	syslog(LOG_ERR, "svc_run returned");
-	return 1;
+	exit(1);
 }
 
 
@@ -159,6 +159,6 @@ spray_service(struct svc_req *rqstp, SVCXPRT *transp)
 
 	if (!svc_sendreply(transp, xdr_spraycumul, (caddr_t)&scum)) {
 		svcerr_systemerr(transp);
-		syslog(LOG_ERR, "bad svc_sendreply");
+		syslog(LOG_WARNING, "bad svc_sendreply");
 	}
 }
