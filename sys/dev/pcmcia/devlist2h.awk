@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.3 1998/09/05 14:42:06 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.4 2001/11/08 09:02:17 haya Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -190,6 +190,22 @@ END {
 
 	printf("\n") > dfile
 
+	printf("struct pcmcia_knowndev {\n") > dfile
+	printf("\tint vendorid;\n") > dfile
+	printf("\tint productid;\n") > dfile
+	printf("\tstruct pcmcia_knowndev_cis {\n") > dfile
+	printf("\t\tchar *vendor;\n") > dfile
+	printf("\t\tchar *product;\n") > dfile
+	printf("\t\tchar *version;\n") > dfile
+	printf("\t\tchar *revision;\n") > dfile
+	printf("\t}cis;\n") > dfile
+	printf("\tint flags;\n") > dfile
+	printf("\tchar *vendorname;\n") > dfile
+	printf("\tchar *devicename;\n") > dfile
+	printf("\tint reserve;\n") > dfile
+	printf("};\n\n") > dfile
+	printf("#define	PCMCIA_CIS_INVALID\t\t{ NULL, NULL, NULL, NULL }\n") > dfile
+	printf("#define	PCMCIA_KNOWNDEV_NOPROD\t\t0\n\n") > dfile
 	printf("struct pcmcia_knowndev pcmcia_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
@@ -208,14 +224,15 @@ END {
 
 		vendi = vendorindex[products[i, 1]];
 		printf("\t    \"%s\",\n", vendors[vendi, 3]) > dfile
-		printf("\t    \"%s\"\t},\n", products[i, 5]) > dfile
-		printf("\t},\n") > dfile
+		printf("\t    \"%s\",\t}\n", products[i, 5]) > dfile
+		printf("\t,\n") > dfile
 	}
 	for (i = 1; i <= nvendors; i++) {
 		printf("\t{\n") > dfile
-		printf("\t    PCMCIA_VENDOR_%s, 0,\n", vendors[i, 1]) > dfile
+		printf("\t    PCMCIA_VENDOR_%s,\n", vendors[i, 1]) > dfile
 		printf("\t    PCMCIA_KNOWNDEV_NOPROD,\n") > dfile
 		printf("\t    PCMCIA_CIS_INVALID,\n") > dfile
+		printf("\t    0,\n") > dfile
 		printf("\t    \"%s\",\n", vendors[i, 3]) > dfile
 		printf("\t    NULL,\n") > dfile
 		printf("\t},\n") > dfile
