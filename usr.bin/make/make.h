@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)make.h	5.13 (Berkeley) 3/1/91
- *	$Id: make.h,v 1.4 1994/04/17 03:09:51 glass Exp $
+ *	$Id: make.h,v 1.5 1994/05/09 06:36:21 glass Exp $
  */
 
 /*-
@@ -53,6 +53,12 @@
 #include <ctype.h>
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
+#else
+#if defined(__STDC__) || defined(__cplusplus)
+#define	__P(protos)	protos		/* full-blown ANSI C */
+#else
+#define	__P(protos)	()		/* traditional C preprocessor */    
+#endif
 #endif
 #if __STDC__
 #include <stdlib.h>
