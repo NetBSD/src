@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.4.1 2001/09/08 20:24:58 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.4.2 2001/09/08 20:51:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -371,7 +371,7 @@ deliver:
 		mb->used++;
 	}
 	midi_wakeup(&sc->rchan);
-	selwakeup(&sc->rsel);
+	selnotify(&sc->rsel, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 }
@@ -582,7 +582,7 @@ midi_start_output(sc, intr)
 			break;
 	}
 	midi_wakeup(&sc->wchan);
-	selwakeup(&sc->wsel);
+	selnotify(&sc->wsel, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 	if (!(sc->props & MIDI_PROP_OUT_INTR) || error==EINPROGRESS) {
