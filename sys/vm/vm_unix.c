@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.15 1994/10/29 07:35:24 cgd Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.16 1995/01/09 02:48:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,7 @@ obreak(p, uap, retval)
 int
 grow(p, sp)
 	struct proc *p;
-	unsigned sp;
+	vm_offset_t sp;
 {
 	register struct vmspace *vm = p->p_vmspace;
 	register int si;
@@ -111,7 +111,7 @@ grow(p, sp)
 	/*
 	 * For user defined stacks (from sendsig).
 	 */
-	if (sp < (unsigned long)vm->vm_maxsaddr)
+	if (sp < (vm_offset_t)vm->vm_maxsaddr)
 		return (0);
 	/*
 	 * For common case of already allocated (from trap).
