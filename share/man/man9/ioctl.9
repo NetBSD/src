@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.19 2003/04/16 13:35:29 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.20 2003/05/01 08:42:08 uebayasi Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -267,7 +267,7 @@ driver_ioctl(..., u_long cmd, caddr_t data)
 }
 .Ed
 .Sh NOTES
-Note that if you for example try to read information from a ethernet
+Note that if you for example try to read information from an ethernet
 driver where the name of the card is included in the third argument
 (e.g., ioctl(s, READFROMETH, struct ifreq *)), then you have to use
 the _IOWR() form not the _IOR(), as passing the name of the card to the
