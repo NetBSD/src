@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.59 2004/08/21 00:48:32 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.60 2004/09/11 18:01:58 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.59 2004/08/21 00:48:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.60 2004/09/11 18:01:58 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -864,6 +864,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* No need to schedule a reset more than one time. */
+			chp->ch_queue->queue_freeze--;
 			return;
 		}
 		chp->ch_flags |= ATACH_TH_RESET;
