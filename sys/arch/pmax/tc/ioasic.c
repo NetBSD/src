@@ -1,8 +1,8 @@
-/* $NetBSD: ioasic.c,v 1.1.2.2 1999/03/05 02:59:25 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.3 1999/03/18 07:27:29 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.2 1999/03/05 02:59:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.3 1999/03/18 07:27:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ struct cfattach ioasic_ca = {
 #define	KN03_INTR_TC_0		0x00000800
 #define	KN03_INTR_TC_1		0x00001000
 #define	KN03_INTR_TC_2		0x00002000
-#define	KN03_INTR_CLOCK		0x00000020
+#define	KMIN_INTR_CLOCK		0x00000020
 
 extern u_int32_t iplmask[], oldiplmask[];
 /* XXX XXX XXX */
@@ -69,7 +69,7 @@ struct ioasic_dev kn03_ioasic_devs[] = {
 	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
 	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),  IOASIC_INTR_SCC_0,	},
 	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),  IOASIC_INTR_SCC_1,	},
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), KN03_INTR_CLOCK,	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS), KMIN_INTR_CLOCK,	},
 	{ "asc",	0x300000, C(SYS_DEV_SCSI),  IOASIC_INTR_SCSI	},
 	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),  KN03_INTR_TC_0	},
 	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),  KN03_INTR_TC_1	},
@@ -140,9 +140,6 @@ ioasicattach(parent, self, aux)
 
 	/* XXX XXX XXX */
 	sc->sc_base = ta->ta_addr;
-	sc->sc_ioasic_imsk = sc->sc_base + IOASIC_IMSK;
-	sc->sc_ioasic_intr = sc->sc_base + IOASIC_INTR;
-	sc->sc_ioasic_rtc = sc->sc_base + IOASIC_SLOT_8_START;
 
 	printf("\n");
 
@@ -242,38 +239,11 @@ ioasic_intr_disestablish(ioa, cookie)
 	panic("ioasic_intr_disestablish called");
 }
 
-/* XXX */
 char *
 ioasic_lance_ether_address()
 {
 
-	return (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
-}
-
-void
-ioasic_init(bogus)
-        int bogus;  /* XXX */
-{
-	/* common across 3min, 3maxplus and maxine */
-	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
-	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
-#if 0
-	switch (systype) {
-	case DS_3MIN:
-	case DS_3MAXPLUS:
-	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
-	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
-		break;
-	case DS_MAXINE:
-	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
-	*(volatile u_int *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
-	*(volatile u_int *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
-	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
-		break;
-	}
-#endif
-	
+	return (char *)(ioasic_base + IOASIC_SLOT_2_START);
 }
 
 #if 0 /* Jason's new LANCE DMA region */
@@ -293,11 +263,7 @@ ioasic_lance_dma_setup(sc)
 {
 	bus_dma_tag_t dmat = sc->sc_dmat;
 	bus_dma_segment_t seg;
-#if 1
-	volatile u_int32_t *ldp;
-#else
 	u_int32_t csr;
-#endif
 	tc_addr_t tca;
 	int rseg;
 
@@ -338,22 +304,12 @@ ioasic_lance_dma_setup(sc)
 		bus_dmamap_unload(dmat, sc->sc_lance_dmam);
 		goto bad;
 	}
-#if 1
-	ldp = (volatile u_int *)IOASIC_REG_LANCE_DMAPTR(sc->sc_base);
-	*ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
-	tc_wmb();
-
-	*(volatile u_int32_t *)IOASIC_REG_CSR(sc->sc_base) |=
-	    IOASIC_CSR_DMAEN_LANCE;
-	tc_mb();
-#else
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		IOASIC_LANCE_DMAPTR,
 		((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f));
 	csr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
 	csr |= IOASIC_CSR_DMAEN_LANCE;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, csr);
-#endif
 	return;
 
  bad:

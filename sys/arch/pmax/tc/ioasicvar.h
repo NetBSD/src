@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.3.4.3 1999/03/05 02:59:25 nisimura Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.3.4.4 1999/03/18 07:27:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -37,9 +37,6 @@ struct ioasic_softc {
 
 	/* XXX XXX XXX */
 	tc_addr_t sc_base;
-	unsigned sc_ioasic_imsk;
-	unsigned sc_ioasic_intr;
-	unsigned sc_ioasic_rtc;
 };
 extern struct cfdriver ioasic_cd;
 
@@ -75,4 +72,3 @@ void    ioasic_intr_disestablish __P((struct device *, void *));
  * Miscellaneous helper functions.
  */
 char	*ioasic_lance_ether_address __P((void));
-void	ioasic_init __P((int));

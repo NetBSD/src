@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.4 1999/03/15 08:40:30 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.5 1999/03/18 07:27:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.4 1999/03/15 08:40:30 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.5 1999/03/18 07:27:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.4 1999/03/15 08:40:30 nisimura Ex
 
 /* XXX XXX XXX */
 #define IOASIC_INTR_SCSI 0x00000200
-#define	KMIN_INTR_TC_0	 0x00000800
-#define	KMIN_INTR_TC_1	 0x00001000
-#define	KMIN_INTR_TC_2	 0x00002000
 /* XXX XXX XXX */
 
 void dec_3min_init __P((void));
@@ -327,9 +324,10 @@ dec_3min_intr(cpumask, pc, status, cause)
 	unsigned cause;
 {
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	u_int32_t *imsk = (u_int32_t *)sc->sc_ioasic_imsk;
-	u_int32_t *intr = (u_int32_t *)sc->sc_ioasic_intr;
-	volatile struct chiptime *clk = (void *)sc->sc_ioasic_rtc;
+	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
+	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
+	volatile struct chiptime *clk
+		= (void *)(sc->sc_base + IOASIC_SLOT_8_START);
 	volatile int temp;
 	struct clockframe cf;
 	static int warned = 0;
@@ -369,10 +367,14 @@ dec_3min_intr(cpumask, pc, status, cause)
 		intrcnt[slot] += 1;				\
 		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
 	}
+#define	CALLINTR(slot) do {					\
+		intrcnt[slot] += 1;				\
+		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
+	} while (0)
 			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
 			CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
-			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
 			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
 
 			if (warned > 0 && !(can_serve & KMIN_INTR_PSWARN)) {
 				printf("%s\n", "Power supply ok now.");
@@ -411,16 +413,13 @@ dec_3min_intr(cpumask, pc, status, cause)
 		} while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_0) {
-		u_int32_t can_serve = *intr & *imsk, ifound;
-		CHECKINTR(SYS_DEV_OPT0, KMIN_INTR_TC_0);
+		CALLINTR(SYS_DEV_OPT0);
 	}
 	if (cpumask & MIPS_INT_MASK_1) {
-		u_int32_t can_serve = *intr & *imsk, ifound;
-		CHECKINTR(SYS_DEV_OPT1, KMIN_INTR_TC_1);
+		CALLINTR(SYS_DEV_OPT1);
 	}
 	if (cpumask & MIPS_INT_MASK_2) {
-		u_int32_t can_serve = *intr & *imsk, ifound;
-		CHECKINTR(SYS_DEV_OPT2, KMIN_INTR_TC_2);
+		CALLINTR(SYS_DEV_OPT2);
 	}
 
 	return ((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_ENA_CUR);
