@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.186 2003/11/24 20:54:59 scw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.187 2003/11/26 21:15:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.186 2003/11/24 20:54:59 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.187 2003/11/26 21:15:47 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -199,9 +199,7 @@ int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ipprintfs = 0;
 #endif
 
-#ifdef RANDOM_IP_ID
 int	ip_do_randomid = 0;
-#endif
 
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of
@@ -2075,12 +2073,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		    newp, newlen, &ipintrq));
 
 	case IPCTL_RANDOMID:
-#ifdef	RANDOM_IP_ID
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_do_randomid));
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
 
 	default:
 		return (EOPNOTSUPP);
