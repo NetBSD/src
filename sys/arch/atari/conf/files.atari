@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.59 1998/12/15 19:36:58 itohy Exp $
+#	$NetBSD: files.atari,v 1.60 1999/03/15 15:47:11 leo Exp $
 
 maxpartitions 16
 
@@ -129,6 +129,8 @@ file	arch/atari/dev/ms.c		mouse needs-count
 # PCI-devices
 #
 file	arch/atari/pci/pci_machdep.c	pci | grfet
+file	arch/atari/pci/pci_vga.c	pci
+file	arch/atari/pci/pci_tseng.c	pci
 
 device	pcibus
 attach	pcibus at mainbus

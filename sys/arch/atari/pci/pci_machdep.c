@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 1999/02/19 20:57:15 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17 1999/03/15 15:47:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <machine/bus.h>
 
 #include <atari/atari/device.h>
+#include <atari/pci/pci_vga.h>
 
 /*
  * Sizes of pci memory and I/O area.
@@ -187,6 +188,12 @@ init_pci_bus()
 		csr &= ~PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	}
+
+	/*
+	 * Scan the bus for a VGA-card that we support. If we find
+	 * one, try to initialize it to a 'standard' text mode (80x25).
+	 */
+	check_for_vga();
 }
 
 /*
