@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.149 2004/01/31 10:40:19 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.150 2004/02/10 00:32:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.149 2004/01/31 10:40:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.150 2004/02/10 00:32:40 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1047,9 +1047,12 @@ wi_start(struct ifnet *ifp)
 			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->wt_rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-			tap->wt_chan_freq = ic->ic_bss->ni_chan->ic_freq;
+			tap->wt_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wt_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
 
-			/* TBD tap->wt_flags, tap->wt_chan_flags */
+			/* TBD tap->wt_flags */
 
 			M_COPY_PKTHDR(&mb, m0);
 			mb.m_data = (caddr_t)tap;
@@ -1544,7 +1547,8 @@ wi_rx_intr(struct wi_softc *sc)
 		tap->wr_antsignal = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_signal);
 		tap->wr_antnoise = WI_RSSI_TO_DBM(sc, frmhdr.wi_rx_silence);
 
-		tap->wr_chan_freq = ic->ic_bss->ni_chan->ic_freq;
+		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 		if (frmhdr.wi_status & WI_STAT_PCF)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_CFP;
 
