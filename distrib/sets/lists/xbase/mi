@@ -6,7 +6,6 @@
 ./usr/X11R6/bin/appres
 ./usr/X11R6/bin/atobm
 ./usr/X11R6/bin/bdftopcf
-./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/bitmap
 ./usr/X11R6/bin/bmtoa
 ./usr/X11R6/bin/editres
@@ -14,7 +13,6 @@
 ./usr/X11R6/bin/fslsfonts
 ./usr/X11R6/bin/fstobdf
 ./usr/X11R6/bin/iceauth
-./usr/X11R6/bin/kbd_mode
 ./usr/X11R6/bin/lbxproxy
 ./usr/X11R6/bin/mkfontdir
 ./usr/X11R6/bin/oclock
@@ -174,7 +172,6 @@
 ./usr/X11R6/lib/X11/XErrorDB
 ./usr/X11R6/lib/X11/XKeysymDB
 ./usr/X11R6/lib/X11/app-defaults
-./usr/X11R6/lib/X11/app-defaults/Beforelight
 ./usr/X11R6/lib/X11/app-defaults/Bitmap
 ./usr/X11R6/lib/X11/app-defaults/Bitmap-color
 ./usr/X11R6/lib/X11/app-defaults/Chooser
@@ -193,13 +190,9 @@
 ./usr/X11R6/lib/X11/app-defaults/Xmag
 ./usr/X11R6/lib/X11/app-defaults/Xmh
 ./usr/X11R6/lib/X11/config
-./usr/X11R6/lib/X11/etc
-./usr/X11R6/lib/X11/etc/xterm.termcap
-./usr/X11R6/lib/X11/etc/xterm.terminfo
 ./usr/X11R6/lib/X11/fonts
 ./usr/X11R6/lib/X11/fonts/100dpi
 ./usr/X11R6/lib/X11/fonts/75dpi
-./usr/X11R6/lib/X11/fonts/PEX
 ./usr/X11R6/lib/X11/fonts/Speedo
 ./usr/X11R6/lib/X11/fonts/Type1
 ./usr/X11R6/lib/X11/fonts/misc
@@ -484,7 +477,6 @@
 ./usr/X11R6/man/cat1/appres.0
 ./usr/X11R6/man/cat1/atobm.0
 ./usr/X11R6/man/cat1/bdftopcf.0
-./usr/X11R6/man/cat1/beforelight.0
 ./usr/X11R6/man/cat1/bitmap.0
 ./usr/X11R6/man/cat1/bmtoa.0
 ./usr/X11R6/man/cat1/editres.0
@@ -492,7 +484,6 @@
 ./usr/X11R6/man/cat1/fslsfonts.0
 ./usr/X11R6/man/cat1/fstobdf.0
 ./usr/X11R6/man/cat1/iceauth.0
-./usr/X11R6/man/cat1/kbd_mode.0
 ./usr/X11R6/man/cat1/lbxproxy.0
 ./usr/X11R6/man/cat1/mkfontdir.0
 ./usr/X11R6/man/cat1/oclock.0
@@ -550,4 +541,3 @@
 ./usr/X11R6/man/cat1/xwininfo.0
 ./usr/X11R6/man/cat1/xwud.0
 ./usr/X11R6/man/cat3
-./usr/X11R6/man/cat5
