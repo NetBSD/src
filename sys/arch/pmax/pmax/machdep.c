@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1996/09/30 08:31:54 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 1996/10/07 02:17:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,9 +95,6 @@
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
-
-
-#include <mips/mips/mips_machdep.c>	/* XXX */
 
 
 #include "pm.h"
@@ -277,32 +274,12 @@ mach_init(argc, argv, code, cv)
 		argv++;
 	}
 
-#if 0
 	/*
-	 * Copy down exception vector code.
-	 */
-	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
-		panic("startup: UTLB code too large");
-	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
-		MachUTLBMissEnd - MachUTLBMiss);
-	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
-		mips_R2000_exceptionEnd - mips_R2000_exception);
-
-	/*
-	 * Copy locore-function vector.
-	 */
-	bcopy(&R2000_locore_vec, &mips_locore_jumpvec,
-	      sizeof(mips_locore_jumpvec_t));
-
-	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_r2000_ConfigCache();
-	mips_r2000_FlushCache();
-#else
-	/*XXX*/
-	r2000_vector_init();
-#endif
+	mips1_vector_init();	/* XXX mips3 */
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
