@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp $
+$NetBSD: pcidevs,v 1.284 2001/01/08 09:52:22 rh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1335,6 +1335,8 @@ product NEC POWERVR2	0x0046	PowerVR PCX2
 product NEC PD72872	0x0063	uPD72872 IEEE 1394 OHCI Host Controller
 product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
 product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
+product NEC VA26D	0x803c	NEC Versa Pro LX VA26D
+product NEC VERSALX	0x8058	NEC Versa LX
 
 /* Neomagic products */
 product NEOMAGIC NMMG2070	0x0001	MagicGraph NM2070
