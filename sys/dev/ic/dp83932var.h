@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.2 2001/07/05 15:02:27 thorpej Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.3 2001/07/06 16:20:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -362,7 +362,7 @@ htosonic32(struct sonic_softc *sc, uint32_t val)
 
 	if (sc->sc_bigendian)
 		return (htobe32(val));
-	return (htole16(val));
+	return (htole32(val));
 }
 
 static __inline uint32_t __attribute__((__unused__))
