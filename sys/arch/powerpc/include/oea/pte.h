@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2003/02/05 07:05:19 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,15 +41,23 @@
  */
 #ifndef	_LOCORE
 struct pte {
-	u_int pte_hi;
-	u_int pte_lo;
+	register_t pte_hi;
+	register_t pte_lo;
+};
+
+struct pteg {
+	struct pte pt[8];
 };
 #endif	/* _LOCORE */
+
 /* High word: */
 #define	PTE_VALID	0x80000000
+#define	PTE_VSID	0x7fffff80
 #define	PTE_VSID_SHFT	7
+#define	PTE_VSID_LEN	24
 #define	PTE_HID		0x00000040
 #define	PTE_API		0x0000003f
+#define	PTE_API_SHFT	0
 /* Low word: */
 #define	PTE_RPGN	0xfffff000
 #define	PTE_RPGN_SHFT	12
@@ -71,10 +79,6 @@ struct pte {
 
 #define	PTE_EXEC	0x00000200	/* pseudo bit in attrs; page is exec */
 
-#ifndef	_LOCORE
-typedef	struct pte pte_t;
-#endif	/* _LOCORE */
-
 /*
  * Extract bits from address
  */
@@ -83,5 +87,16 @@ typedef	struct pte pte_t;
 #define	ADDR_PIDX_SHFT	12
 #define	ADDR_API_SHFT	22
 #define	ADDR_POFF	0x00000fff
+#define	ADDR_SEG_WIDTH	4
+
+/*
+ * Segment registers
+ */
+#define SR_KEY_LEN	4		/* key bit width */
+#define	SR_TYPE		0x80000000	/* T=0 selects memory format */
+#define	SR_SUKEY	0x40000000	/* Supervisor protection key */
+#define	SR_PRKEY	0x20000000	/* User protection key */
+#define	SR_NOEXEC	0x10000000	/* No-execute protection bit */
+#define	SR_VSID		0x00ffffff	/* Virtual segment ID */
 
 #endif	/* _POWERPC_OEA_PTE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2003/02/05 07:05:19 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,31 +36,21 @@
 
 #include <powerpc/oea/pte.h>
 
-/*
- * Segment registers
- */
-#ifndef	_LOCORE
-typedef u_int sr_t;
-#endif	/* _LOCORE */
-#define	SR_TYPE		0x80000000
-#define	SR_SUKEY	0x40000000
-#define	SR_PRKEY	0x20000000
-#define	SR_VSID		0x00ffffff
-
 #ifndef _LOCORE
 /*
  * Pmap stuff
  */
 struct pmap {
-	sr_t pm_sr[16];		/* segments used in this pmap */
-	int pm_refs;		/* ref count */
+	register_t pm_sr[16];			/* segments used in this pmap */
+	int pm_refs;				/* ref count */
 	struct pmap_statistics pm_stats;	/* pmap statistics */
-	unsigned int pm_evictions;	/* pvo's not in page table */
+	unsigned int pm_evictions;		/* pvo's not in page table */
 };
 
 typedef	struct pmap *pmap_t;
 
 #ifdef	_KERNEL
+extern register_t iosrtable[];
 extern int pmap_use_altivec;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
