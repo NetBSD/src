@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.41 1995/02/28 23:10:28 cgd Exp $
+#	$NetBSD: files.i386.newconf,v 1.42 1995/03/14 14:42:09 scottb Exp $
 #
 # new style config file for i386 architecture
 #
@@ -213,10 +213,18 @@ file	compat/svr4/svr4_filio.c	compat_svr4
 file	compat/svr4/svr4_error.c	compat_svr4
 file	arch/i386/i386/svr4_machdep.c	compat_svr4
 
+file	compat/ibcs2/ibcs2_errno.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_exec.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_fcntl.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_ioctl.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_ipc.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_misc.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_signal.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_socksys.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_stat.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_sysent.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_syscalls.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_util.c	compat_ibcs2
 
 file	compat/linux/linux_exec.c		compat_linux
 file	compat/linux/linux_file.c		compat_linux
