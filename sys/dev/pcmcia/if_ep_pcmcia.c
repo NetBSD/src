@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.5 1998/02/01 23:52:25 marc Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.6 1998/03/09 21:52:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -204,19 +204,16 @@ ep_pcmcia_attach(parent, self, aux)
 		printf(": unexpected number of I/O spaces %d should be 1\n",
 		    cfe->num_iospace);
 
-	/*
-	 * XXX there's a comment in the linux driver about the io address
-	 * having to be between 0x00 and 0x70 mod 0x100.  weird.
-	 */
-
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
 		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
 
-		for (i = ((pa->pf->sc->iobase % 0x100) <= 0x70)?
-			     pa->pf->sc->iobase:
-			     roundup(pa->pf->sc->iobase, 0x100);
-		     i < maxaddr;
-		     i += ((i % 0x100) == 0x70) ? 0x90 : 0x10) {
+		for (i = pa->pf->sc->iobase; i < maxaddr; i += 0x10) {
+			/*
+			 * the 3c562 can only use 0x??00-0x??7f
+			 * according to the Linux driver
+			 */
+			if (i & 0x80)
+				continue;
 			if (pcmcia_io_alloc(pa->pf, i, cfe->iospace[0].length,
 			    0, &psc->sc_pcioh) == 0)
 				break;
@@ -241,11 +238,15 @@ ep_pcmcia_attach(parent, self, aux)
 		return;
 	}
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		if (pcmcia_scan_cis(parent, ep_pcmcia_get_enaddr, myla)) {
-			printf(": can't read ethernet address from CIS\n");
-			return;
-		}
-		enaddr = myla;
+		/*
+		 * 3c562a-c use this; 3c562d does it in the regular way.
+		 * we might want to check the revision and produce a warning
+		 * in the future.
+		 */
+		if (pcmcia_scan_cis(parent, ep_pcmcia_get_enaddr, myla) != 1)
+			enaddr = NULL;
+		else
+			enaddr = myla;
 	} else {
 		enaddr = NULL;
 	}
@@ -284,8 +285,7 @@ ep_pcmcia_get_enaddr(tuple, arg)
 	u_int8_t *myla = arg;
 	int i;
 
-	/* this is 3c562 magic */
-
+	/* this is 3c562a-c magic */
 	if (tuple->code == 0x88) {
 		if (tuple->length < ETHER_ADDR_LEN)
 			return (0);
