@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.252 2004/01/19 23:34:11 snj Exp $
+.\"	$NetBSD: main,v 1.253 2004/02/06 07:47:10 minskim Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1801,6 +1801,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Mattias Karlsson Ta Mt keihan@NetBSD.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@NetBSD.org
 .It Ta Mario Kemper Ta Mt magick@NetBSD.org
+.It Ta Min Sik Kim Ta Mt minskim@NetBSD.org
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.org
 .It Ta Klaus Klein Ta Mt kleink@NetBSD.org
 .It Ta Wayne Knowles Ta Mt wdk@NetBSD.org
