@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.52 2002/10/02 16:51:09 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.53 2002/10/10 15:39:01 pooka Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.52 2002/10/02 16:51:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.53 2002/10/10 15:39:01 pooka Exp $");
 
 #include "midi.h"
 
@@ -1138,7 +1138,8 @@ eap_trigger_output(
 		EWRITE4(sc, E1371_SRC, 0);
 
 	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc | EAP_DAC2_EN);
+	icsc |= EAP_DAC2_EN;
+	EWRITE4(sc, EAP_ICSC, icsc);
 
 	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", icsc));
 
@@ -1206,7 +1207,8 @@ eap_trigger_input(
 		EWRITE4(sc, E1371_SRC, 0);
 
 	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc | EAP_ADC_EN);
+	icsc |= EAP_ADC_EN;
+	EWRITE4(sc, EAP_ICSC, icsc);
 
 	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", icsc));
 
