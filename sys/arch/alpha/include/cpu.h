@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.53 2001/04/20 00:10:18 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.54 2001/04/21 16:27:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ struct cpu_info {
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
 	struct proc *ci_curproc;	/* current owner of the processor */
+	struct cpu_info *ci_next;	/* next cpu_info structure */
 
 	/*
 	 * Private members.
@@ -141,10 +142,17 @@ struct cpu_info {
 #define	CPUF_PAUSED	0x08		/* CPU is paused */
 #define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
 
+extern	struct cpu_info cpu_info_primary;
+extern	struct cpu_info *cpu_info_list;
+
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+					ci != NULL; ci = ci->ci_next
+
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;
 extern	__volatile u_long cpus_paused;
-extern	struct cpu_info cpu_info[];
+extern	struct cpu_info *cpu_info[];
 
 #define	curcpu()		((struct cpu_info *)alpha_pal_rdval())
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
@@ -154,9 +162,7 @@ void	cpu_boot_secondary_processors(void);
 void	cpu_pause_resume(unsigned long, int);
 void	cpu_pause_resume_all(int);
 #else /* ! MULTIPROCESSOR */
-extern	struct cpu_info cpu_info_store;
-
-#define	curcpu()	(&cpu_info_store)
+#define	curcpu()	(&cpu_info_primary)
 #endif /* MULTIPROCESSOR */
 
 #define	curproc		curcpu()->ci_curproc

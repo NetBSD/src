@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.159 2001/04/20 16:22:33 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.160 2001/04/21 16:27:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2001/04/20 16:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2001/04/21 16:27:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4211,16 +4211,18 @@ pmap_asn_alloc(pmap_t pmap, long cpu_id)
 void
 pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 {
-	u_long i, ipinum, cpu_id = cpu_number();
 	struct pmap_tlb_shootdown_q *pq;
 	struct pmap_tlb_shootdown_job *pj;
+	struct cpu_info *ci, *self = curcpu();
+	u_long ipinum;
+	CPU_INFO_ITERATOR cii;
 	int s;
 
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (i == cpu_id || (cpus_running & (1UL << i)) == 0)
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == self)
 			continue;
 
-		pq = &pmap_tlb_shootdown_q[i];
+		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
 		PSJQ_LOCK(pq, s);
 
@@ -4235,7 +4237,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 				ipinum = ALPHA_IPI_TBIA;
 			else
 				ipinum = ALPHA_IPI_TBIAP;
-			alpha_send_ipi(i, ipinum);
+			alpha_send_ipi(ci->ci_cpuid, ipinum);
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
@@ -4244,7 +4246,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 			ipinum = ALPHA_IPI_SHOOTDOWN;
 		}
 
-		alpha_send_ipi(i, ipinum);
+		alpha_send_ipi(ci->ci_cpuid, ipinum);
 
 		PSJQ_UNLOCK(pq, s);
 	}

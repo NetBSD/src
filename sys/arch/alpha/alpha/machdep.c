@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.236 2001/04/20 22:59:38 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.237 2001/04/21 16:27:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2001/04/20 22:59:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2001/04/21 16:27:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,8 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	 * Set our SysValue to the address of our cpu_info structure.
 	 * Secondary processors do this in their spinup trampoline.
 	 */
-	alpha_pal_wrval((u_long)&cpu_info[cpu_id]);
+	alpha_pal_wrval((u_long)&cpu_info_primary);
+	cpu_info[cpu_id] = &cpu_info_primary;
 #endif
 
 	ci = curcpu();
