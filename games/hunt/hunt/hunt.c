@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.14 2002/09/20 17:27:57 mycroft Exp $	*/
+/*	$NetBSD: hunt.c,v 1.15 2002/09/20 20:58:12 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.14 2002/09/20 17:27:57 mycroft Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.15 2002/09/20 20:58:12 mycroft Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -48,10 +48,6 @@ static struct termios saved_tty;
 # define	put_ch		addch
 # define	put_str		addstr
 # endif
-
-#if !defined(BSD_RELEASE) || BSD_RELEASE < 44
-extern int	_putchar();
-#endif
 
 FLAG	Last_player = FALSE;
 # ifdef MONITOR
