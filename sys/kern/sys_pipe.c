@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.35 2003/02/12 21:54:16 pk Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.36 2003/02/14 13:16:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.35 2003/02/12 21:54:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.36 2003/02/14 13:16:44 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,14 +490,6 @@ again:
 			if (nread > 0)
 				break;
 
-			/*
-			 * don't block on non-blocking I/O
-			 */
-			if (fp->f_flag & FNONBLOCK) {
-				error = EAGAIN;
-				break;
-			}
-
 			PIPE_LOCK(rpipe);
 
 			/*
@@ -506,6 +498,15 @@ again:
 			 */
 			if (rpipe->pipe_state & PIPE_EOF) {
 				PIPE_UNLOCK(rpipe);
+				break;
+			}
+
+			/*
+			 * don't block on non-blocking I/O
+			 */
+			if (fp->f_flag & FNONBLOCK) {
+				PIPE_UNLOCK(rpipe);
+				error = EAGAIN;
 				break;
 			}
 
