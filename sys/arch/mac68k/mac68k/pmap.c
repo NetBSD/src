@@ -65,10 +65,8 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.5 1994/02/22 01:25:27 briggs Exp $
+ *	$Id: pmap.c,v 1.6 1994/04/06 03:10:13 briggs Exp $
  */
-
-#define DEBUG
 
 /*
  *	HP9000/300 series physical map management code.
