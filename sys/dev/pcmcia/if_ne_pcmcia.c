@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.127 2004/08/09 00:00:36 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.128 2004/08/09 22:02:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.127 2004/08/09 00:00:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.128 2004/08/09 22:02:11 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,6 @@ ne_pcmcia_attach(parent, self, aux)
 	const char *typestr = "";
 
 	aprint_normal("\n");
-
 	psc->sc_pf = pa->pf;
 
 	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
@@ -582,17 +581,9 @@ ne_pcmcia_attach(parent, self, aux)
 		/* Ok, found. */
 		break;
 	}
-
-	if (cfe == NULL) {
+	if (!cfe) {
 		aprint_error("%s: no suitable config entry\n", self->dv_xname);
 		goto fail_1;
-	}
-
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto fail_2;
 	}
 
 	dsc->sc_regt = psc->sc_pcioh.iot;
@@ -605,29 +596,37 @@ ne_pcmcia_attach(parent, self, aux)
 		    &nsc->sc_asich)) {
 			aprint_error("%s: can't get subregion for asic\n",
 			    self->dv_xname);
-			goto fail_3;
+			goto fail_2;
 		}
 	} else {
 		nsc->sc_asict = psc->sc_pcioh2.iot;
 		nsc->sc_asich = psc->sc_pcioh2.ioh;
 	}
 
-	/* Set up power management hooks. */
-	dsc->sc_enable = ne_pcmcia_enable;
-	dsc->sc_disable = ne_pcmcia_disable;
+	/* Enable the card. */
+	pcmcia_function_init(pa->pf, cfe);
 
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
 	    &psc->sc_io_window)) {
 		aprint_error("%s: can't map NIC i/o space\n", self->dv_xname);
-		goto fail_3;
+		goto fail_2;
 	}
 
 	if (cfe->num_iospace >= 2 &&
 	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh2,
 	    &psc->sc_io_window2)) {
 		aprint_error("%s: can't map ASIC i/o space\n", self->dv_xname);
+		goto fail_3;
+	}
+
+	if (pcmcia_function_enable(pa->pf)) {
+		aprint_error("%s: function enable failed\n", self->dv_xname);
 		goto fail_4;
 	}
+
+	/* Set up power management hooks. */
+	dsc->sc_enable = ne_pcmcia_enable;
+	dsc->sc_disable = ne_pcmcia_disable;
 
 	/*
 	 * Read the station address from the board.
@@ -739,18 +738,18 @@ found:
 	}
 
 	if (ne2000_attach(nsc, enaddr))
-		goto fail_4;
+		goto fail_5;
 
 	pcmcia_function_disable(pa->pf);
 	return;
 
 fail_5:
+	pcmcia_function_disable(pa->pf);
+fail_4:
 	if (cfe->num_iospace >= 2)
 		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window2);
-fail_4:
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 fail_3:
-	pcmcia_function_disable(pa->pf);
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 fail_2:
 	if (cfe->num_iospace >= 2)
 		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh2);
