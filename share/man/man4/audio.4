@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.22 1998/12/08 14:15:27 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.23 1999/03/06 22:40:08 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,7 +145,7 @@ The device appears as a block of memory
 of size
 .Va buffersize
 (as available via
-.Dv AUDIO_GETINFO ).
+.Dv AUDIO_GETINFO ) .
 The device driver will continuously move data from this buffer
 from/to the audio hardware, wrapping around at the end of the buffer.
 To find out where the hardware is currently accessing data in the buffer the
