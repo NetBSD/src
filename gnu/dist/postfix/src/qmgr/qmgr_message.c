@@ -22,6 +22,10 @@
 /*
 /*	void	qmgr_message_update_warn(message)
 /*	QMGR_MESSAGE *message;
+/*
+/*	void	qmgr_message_kill_record(message, offset)
+/*	QMGR_MESSAGE *message;
+/*	long	offset;
 /* DESCRIPTION
 /*	This module performs en-gross operations on queue messages.
 /*
@@ -49,7 +53,10 @@
 /*	qmgr_message_realloc() resumes reading recipients from the queue
 /*	file, and updates the recipient list and \fIrcpt_offset\fR message
 /*	structure members. A null result means that the file could not be
-/*	read or that the file contained incorrect information.
+/*	read or that the file contained incorrect information. Recipient
+/*	limit imposed this time is based on the position of the message
+/*	job(s) on corresponding transport job list(s). It's considered
+/*	an error to call this when the recipient slots can't be allocated.
 /*
 /*	qmgr_message_free() destroys an in-core message structure and makes
 /*	the resources available for reuse. It is an error to destroy
@@ -57,6 +64,11 @@
 /*
 /*	qmgr_message_update_warn() takes a closed message, opens it, updates
 /*	the warning field, and closes it again.
+/*
+/*	qmgr_message_kill_record() takes a closed message, opens it, updates
+/*	the record type at the given offset to "killed", and closes the file.
+/*	A killed envelope record is ignored. Killed records are not allowed
+/*	inside the message content.
 /* DIAGNOSTICS
 /*	Warnings: malformed message file. Fatal errors: out of memory.
 /* SEE ALSO
@@ -70,6 +82,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Scheduler enhancements:
+/*	Patrik Rak
+/*	Modra 6
+/*	155 00, Prague, Czech Republic
 /*--*/
 
 /* System library. */
@@ -98,6 +115,7 @@
 #include <argv.h>
 #include <stringops.h>
 #include <myflock.h>
+#include <sane_time.h>
 
 /* Global library. */
 
@@ -112,9 +130,11 @@
 #include <opened.h>
 #include <verp_sender.h>
 #include <mail_proto.h>
+#include <qmgr_user.h>
 
 /* Client stubs. */
 
+#include <rewrite_clnt.h>
 #include <resolve_clnt.h>
 
 /* Application-specific. */
@@ -135,10 +155,14 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     qmgr_message_count++;
     message->flags = 0;
     message->qflags = qflags;
+    message->tflags = 0;
+    message->tflags_offset = 0;
+    message->rflags = QMGR_READ_FLAG_DEFAULT;
     message->fp = 0;
     message->refcount = 0;
     message->single_rcpt = 0;
     message->arrival_time = 0;
+    message->queued_time = sane_time();
     message->data_offset = 0;
     message->queue_id = mystrdup(queue_id);
     message->queue_name = mystrdup(queue_name);
@@ -148,12 +172,21 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->return_receipt = 0;
     message->filter_xport = 0;
     message->inspect_xport = 0;
+    message->redirect_addr = 0;
     message->data_size = 0;
     message->warn_offset = 0;
     message->warn_time = 0;
     message->rcpt_offset = 0;
     message->verp_delims = 0;
+    message->client_name = 0;
+    message->client_addr = 0;
+    message->client_proto = 0;
+    message->client_helo = 0;
     qmgr_rcpt_list_init(&message->rcpt_list);
+    message->rcpt_count = 0;
+    message->rcpt_limit = var_qmgr_msg_rcpt_limit;
+    message->rcpt_unread = 0;
+    QMGR_LIST_INIT(message->job_list);
     return (message);
 }
 
@@ -191,22 +224,97 @@ static int qmgr_message_open(QMGR_MESSAGE *message)
     return (0);
 }
 
+/* qmgr_message_oldstyle_scan - support for Postfix < 1.0 queue files */
+
+static void qmgr_message_oldstyle_scan(QMGR_MESSAGE *message)
+{
+    VSTRING *buf;
+    long    orig_offset,
+            extra_offset;
+    int     rec_type;
+    char   *start;
+
+    /*
+     * Initialize. No early returns or we have a memory leak.
+     */
+    buf = vstring_alloc(100);
+    if ((orig_offset = vstream_ftell(message->fp)) < 0)
+	msg_fatal("vstream_ftell %s: %m", VSTREAM_PATH(message->fp));
+
+    /*
+     * Rewind to the very beginning to make sure we see all records.
+     */
+    if (vstream_fseek(message->fp, 0, SEEK_SET) < 0)
+	msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
+
+    /*
+     * Scan through the old style queue file. Count the total number of
+     * recipients and find the data/extra sections offsets. Note that the new
+     * queue files require that data_size equals extra_offset - data_offset,
+     * so we set data_size to this as well and ignore the size record itself
+     * completely.
+     */
+    message->rcpt_unread = 0;
+    for (;;) {
+	rec_type = rec_get(message->fp, buf, 0);
+	if (rec_type <= 0)
+	    /* Report missing end record later. */
+	    break;
+	start = vstring_str(buf);
+	if (msg_verbose > 1)
+	    msg_info("old-style scan record %c %s", rec_type, start);
+	if (rec_type == REC_TYPE_END)
+	    break;
+	if (rec_type == REC_TYPE_DONE || rec_type == REC_TYPE_RCPT) {
+	    message->rcpt_unread++;
+	    continue;
+	}
+	if (rec_type == REC_TYPE_MESG) {
+	    if (message->data_offset == 0) {
+		if ((message->data_offset = vstream_ftell(message->fp)) < 0)
+		    msg_fatal("vstream_ftell %s: %m", VSTREAM_PATH(message->fp));
+		if ((extra_offset = atol(start)) <= message->data_offset)
+		    msg_fatal("bad extra offset %s file %s",
+			      start, VSTREAM_PATH(message->fp));
+		if (vstream_fseek(message->fp, extra_offset, SEEK_SET) < 0)
+		    msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
+		message->data_size = extra_offset - message->data_offset;
+	    }
+	    continue;
+	}
+    }
+
+    /*
+     * Clean up.
+     */
+    if (vstream_fseek(message->fp, orig_offset, SEEK_SET) < 0)
+	msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
+    vstring_free(buf);
+
+    /*
+     * Sanity checks. Verify that all required information was found,
+     * including the queue file end marker.
+     */
+    if (message->data_offset == 0 || rec_type != REC_TYPE_END)
+	msg_fatal("%s: envelope records out of order", message->queue_id);
+}
+
 /* qmgr_message_read - read envelope records */
 
 static int qmgr_message_read(QMGR_MESSAGE *message)
 {
     VSTRING *buf;
-    long    extra_offset;
     int     rec_type;
     long    curr_offset;
     long    save_offset = message->rcpt_offset;	/* save a flag */
+    int     save_unread = message->rcpt_unread;	/* save a count */
     char   *start;
-    struct stat st;
-    int     nrcpt = 0;
+    int     recipient_limit;
     const char *error_text;
     char   *name;
     char   *value;
     char   *orig_rcpt = 0;
+    int     count;
 
     /*
      * Initialize. No early returns or we have a memory leak.
@@ -215,7 +323,16 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 
     /*
      * If we re-open this file, skip over on-file recipient records that we
-     * already looked at, and reset the in-core recipient address list.
+     * already looked at, and refill the in-core recipient address list.
+     * 
+     * For the first time, the message recipient limit is calculated from the
+     * global recipient limit. This is to avoid reading little recipients
+     * when the active queue is near empty. When the queue becomes full, only
+     * the necessary amount is read in core. Such priming is necessary
+     * because there are no message jobs yet.
+     * 
+     * For the next time, the recipient limit is based solely on the message
+     * jobs' positions in the job lists and/or job stacks.
      */
     if (message->rcpt_offset) {
 	if (message->rcpt_list.len)
@@ -224,92 +341,196 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	if (vstream_fseek(message->fp, message->rcpt_offset, SEEK_SET) < 0)
 	    msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
 	message->rcpt_offset = 0;
+	recipient_limit = message->rcpt_limit - message->rcpt_count;
+    } else {
+	recipient_limit = var_qmgr_rcpt_limit - qmgr_recipient_count;
+	if (recipient_limit < message->rcpt_limit)
+	    recipient_limit = message->rcpt_limit;
     }
+    if (recipient_limit <= 0)
+	msg_panic("%s: no recipient slots available", message->queue_id);
 
     /*
      * Read envelope records. XXX Rely on the front-end programs to enforce
-     * record size limits. Read up to var_qmgr_rcpt_limit recipients from the
+     * record size limits. Read up to recipient_limit recipients from the
      * queue file, to protect against memory exhaustion. Recipient records
      * may appear before or after the message content, so we keep reading
      * from the queue file until we have enough recipients (rcpt_offset != 0)
-     * and until we know where the message content starts (data_offset != 0).
+     * and until we know all the non-recipient information.
      * 
-     * When reading recipients from queue file, stop reading when we reach a
-     * per-message in-core recipient limit rather than a global in-core
-     * recipient limit. Use the global recipient limit only in order to stop
-     * opening queue files. The purpose is to achieve equal delay for
-     * messages with recipient counts up to var_qmgr_rcpt_limit recipients.
+     * Note that the total recipient count record is accurate only for fresh
+     * queue files. After some of the recipients are marked as done and the
+     * queue file is deferred, it can be used as upper bound estimate only.
+     * Fortunately, this poses no major problem on the scheduling algorithm,
+     * as the only impact is that the already deferred messages are not
+     * chosen by qmgr_job_candidate() as often as they could.
      * 
-     * If we would read recipients up to a global recipient limit, the average
-     * number of in-core recipients per message would asymptotically approach
-     * (global recipient limit)/(active queue size limit), which gives equal
-     * delay per recipient rather than equal delay per message.
+     * On the first open, we must examine all non-recipient records.
+     * 
+     * Optimization: when we know that recipient records are not mixed with
+     * non-recipient records, as is typical with mailing list mail, then we
+     * can avoid having to examine all the queue file records before we can
+     * start deliveries. This avoids some file system thrashing with huge
+     * mailing lists.
      */
-    do {
+    for (;;) {
 	if ((curr_offset = vstream_ftell(message->fp)) < 0)
 	    msg_fatal("vstream_ftell %s: %m", VSTREAM_PATH(message->fp));
+	if (curr_offset == message->data_offset && curr_offset > 0) {
+	    if (vstream_fseek(message->fp, message->data_size, SEEK_CUR) < 0)
+		msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
+	    curr_offset += message->data_size;
+	}
 	rec_type = rec_get(message->fp, buf, 0);
 	start = vstring_str(buf);
-	if (rec_type == REC_TYPE_SIZE) {
-	    if (message->data_size == 0)
-		sscanf(start, "%ld %ld %d",
-		       &message->data_size, &message->data_offset, &nrcpt);
-	} else if (rec_type == REC_TYPE_TIME) {
-	    if (message->arrival_time == 0)
-		message->arrival_time = atol(start);
-	} else if (rec_type == REC_TYPE_FILT) {
-	    if (message->filter_xport != 0)
-		myfree(message->filter_xport);
-	    message->filter_xport = mystrdup(start);
-	} else if (rec_type == REC_TYPE_INSP) {
-	    if (message->inspect_xport != 0)
-		myfree(message->inspect_xport);
-	    message->inspect_xport = mystrdup(start);
-	} else if (rec_type == REC_TYPE_FROM) {
-	    if (message->sender == 0) {
-		message->sender = mystrdup(start);
-		opened(message->queue_id, message->sender,
-		       message->data_size, nrcpt,
-		       "queue %s", message->queue_name);
-	    }
-	} else if (rec_type == REC_TYPE_RCPT) {
+	if (msg_verbose > 1)
+	    msg_info("record %c %s", rec_type, start);
+	if (rec_type <= 0) {
+	    msg_warn("%s: message rejected: missing end record",
+		     message->queue_id);
+	    break;
+	}
+	if (rec_type == REC_TYPE_END) {
+	    message->rflags |= QMGR_READ_FLAG_SEEN_ALL_NON_RCPT;
+	    break;
+	}
+
+	/*
+	 * Process recipient records.
+	 */
+	if (rec_type == REC_TYPE_RCPT) {
 	    /* See also below for code setting orig_rcpt. */
-#define FUDGE(x)	((x) * (var_qmgr_fudge / 100.0))
-	    if (message->rcpt_list.len < FUDGE(var_qmgr_rcpt_limit)) {
+	    if (message->rcpt_offset == 0) {
+		message->rcpt_unread--;
 		qmgr_rcpt_list_add(&message->rcpt_list, curr_offset,
-				   orig_rcpt ? orig_rcpt : "unknown", start);
+				   orig_rcpt ? orig_rcpt : "", start);
 		if (orig_rcpt) {
 		    myfree(orig_rcpt);
 		    orig_rcpt = 0;
 		}
-		if (message->rcpt_list.len >= FUDGE(var_qmgr_rcpt_limit)) {
+		if (message->rcpt_list.len >= recipient_limit) {
 		    if ((message->rcpt_offset = vstream_ftell(message->fp)) < 0)
 			msg_fatal("vstream_ftell %s: %m",
 				  VSTREAM_PATH(message->fp));
-		    if (message->data_offset != 0
-			&& message->errors_to != 0
-			&& message->return_receipt != 0)
+		    if (message->rflags & QMGR_READ_FLAG_SEEN_ALL_NON_RCPT)
+			/* We already examined all non-recipient records. */
 			break;
+		    if (message->rflags & QMGR_READ_FLAG_MIXED_RCPT_OTHER)
+			/* Examine all remaining non-recipient records. */
+			continue;
+		    /* Optimizations for "pure recipient" record sections. */
+		    if (curr_offset > message->data_offset) {
+			/* We already examined all non-recipient records. */
+			message->rflags |= QMGR_READ_FLAG_SEEN_ALL_NON_RCPT;
+			break;
+		    }
+		    /* Examine non-recipient records in extracted segment. */
+		    if (vstream_fseek(message->fp, message->data_offset
+				      + message->data_size, SEEK_SET) < 0)
+			msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
+		    continue;
 		}
 	    }
-	} else if (rec_type == REC_TYPE_MESG) {
-	    if ((message->data_offset = vstream_ftell(message->fp)) < 0)
-		msg_fatal("vstream_ftell %s: %m", VSTREAM_PATH(message->fp));
-	    if (message->rcpt_offset != 0
-		&& message->errors_to != 0
-		&& message->return_receipt != 0)
-		break;
-	    if ((extra_offset = atol(start)) < curr_offset) {
-		msg_warn("bad extra offset %s file %s",
-			 start, VSTREAM_PATH(message->fp));
-		break;
+	    continue;
+	}
+	if (rec_type == REC_TYPE_DONE) {
+	    if (message->rcpt_offset == 0) {
+		message->rcpt_unread--;
+		if (orig_rcpt) {
+		    myfree(orig_rcpt);
+		    orig_rcpt = 0;
+		}
 	    }
-	    if (vstream_fseek(message->fp, extra_offset, SEEK_SET) < 0)
-		msg_fatal("seek file %s: %m", VSTREAM_PATH(message->fp));
-	} else if (rec_type == REC_TYPE_ATTR) {
+	    continue;
+	}
+	if (orig_rcpt != 0) {
+	    /* REC_TYPE_ORCP must go before REC_TYPE_RCPT or REC_TYPE DONE. */
+	    msg_warn("%s: ignoring out-of-order original recipient <%.200s>",
+		     message->queue_id, orig_rcpt);
+	    myfree(orig_rcpt);
+	    orig_rcpt = 0;
+	}
+	if (rec_type == REC_TYPE_ORCP) {
+	    /* See also above for code clearing orig_rcpt. */
+	    if (message->rcpt_offset == 0)
+		orig_rcpt = mystrdup(start);
+	    continue;
+	}
+
+	/*
+	 * Process non-recipient records.
+	 */
+	if (message->rflags & QMGR_READ_FLAG_SEEN_ALL_NON_RCPT)
+	    /* We already examined all non-recipient records. */
+	    continue;
+	if (rec_type == REC_TYPE_SIZE) {
+	    if (message->data_offset == 0) {
+		if ((count = sscanf(start, "%ld %ld %d %d",
+				 &message->data_size, &message->data_offset,
+			   &message->rcpt_unread, &message->rflags)) >= 3) {
+		    /* Postfix >= 1.0 (a.k.a. 20010228). */
+		    if (message->data_offset <= 0 || message->data_size <= 0) {
+			msg_warn("%s: invalid size record: %.100s",
+				 message->queue_id, start);
+			rec_type = REC_TYPE_ERROR;
+			break;
+		    }
+		    if (message->rflags & ~QMGR_READ_FLAG_USER) {
+			msg_warn("%s: invalid flags in size record: %.100s",
+				 message->queue_id, start);
+			rec_type = REC_TYPE_ERROR;
+			break;
+		    }
+		} else if (count == 1) {
+		    /* Postfix < 1.0 (a.k.a. 20010228). */
+		    qmgr_message_oldstyle_scan(message);
+		} else {
+		    /* Can't happen. */
+		    msg_warn("%s: message rejected: weird size record",
+			     message->queue_id);
+		    rec_type = REC_TYPE_ERROR;
+		    break;
+		}
+	    }
+	    continue;
+	}
+	if (rec_type == REC_TYPE_TIME) {
+	    if (message->arrival_time == 0)
+		message->arrival_time = atol(start);
+	    continue;
+	}
+	if (rec_type == REC_TYPE_FILT) {
+	    if (message->filter_xport != 0)
+		myfree(message->filter_xport);
+	    message->filter_xport = mystrdup(start);
+	    continue;
+	}
+	if (rec_type == REC_TYPE_INSP) {
+	    if (message->inspect_xport != 0)
+		myfree(message->inspect_xport);
+	    message->inspect_xport = mystrdup(start);
+	    continue;
+	}
+	if (rec_type == REC_TYPE_RDR) {
+	    if (message->redirect_addr != 0)
+		myfree(message->redirect_addr);
+	    message->redirect_addr = mystrdup(start);
+	    continue;
+	}
+	if (rec_type == REC_TYPE_FROM) {
+	    if (message->sender == 0) {
+		message->sender = mystrdup(start);
+		opened(message->queue_id, message->sender,
+		       message->data_size, message->rcpt_unread,
+		       "queue %s", message->queue_name);
+	    }
+	    continue;
+	}
+	if (rec_type == REC_TYPE_ATTR) {
 	    if ((error_text = split_nameval(start, &name, &value)) != 0) {
 		msg_warn("%s: bad attribute: %s: %.200s",
 			 message->queue_id, error_text, start);
+		rec_type = REC_TYPE_ERROR;
 		break;
 	    }
 	    /* Allow extra segment to override envelope segment info. */
@@ -318,57 +539,79 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		    myfree(message->encoding);
 		message->encoding = mystrdup(value);
 	    }
-	} else if (rec_type == REC_TYPE_ERTO) {
+	    /* Original client attributes. */
+	    if (strcmp(name, MAIL_ATTR_CLIENT_NAME) == 0) {
+		if (message->client_name != 0)
+		    myfree(message->client_name);
+		message->client_name = mystrdup(value);
+	    }
+	    if (strcmp(name, MAIL_ATTR_CLIENT_ADDR) == 0) {
+		if (message->client_addr != 0)
+		    myfree(message->client_addr);
+		message->client_addr = mystrdup(value);
+	    }
+	    if (strcmp(name, MAIL_ATTR_PROTO_NAME) == 0) {
+		if (message->client_proto != 0)
+		    myfree(message->client_proto);
+		message->client_proto = mystrdup(value);
+	    }
+	    if (strcmp(name, MAIL_ATTR_HELO_NAME) == 0) {
+		if (message->client_helo != 0)
+		    myfree(message->client_helo);
+		message->client_helo = mystrdup(value);
+	    }
+	    /* Optional tracing flags. */
+	    else if (strcmp(name, MAIL_ATTR_TRACE_FLAGS) == 0) {
+		message->tflags = DEL_REQ_TRACE_FLAGS(atoi(value));
+		if (message->tflags == DEL_REQ_FLAG_RECORD)
+		    message->tflags_offset = curr_offset;
+		else
+		    message->tflags_offset = 0;
+	    }
+	    continue;
+	}
+	if (rec_type == REC_TYPE_ERTO) {
 	    if (message->errors_to == 0)
 		message->errors_to = mystrdup(start);
-	} else if (rec_type == REC_TYPE_RRTO) {
+	    continue;
+	}
+	if (rec_type == REC_TYPE_RRTO) {
 	    if (message->return_receipt == 0)
 		message->return_receipt = mystrdup(start);
-	} else if (rec_type == REC_TYPE_WARN) {
+	    continue;
+	}
+	if (rec_type == REC_TYPE_WARN) {
 	    if (message->warn_offset == 0) {
 		message->warn_offset = curr_offset;
 		message->warn_time = atol(start);
 	    }
-	} else if (rec_type == REC_TYPE_VERP) {
+	    continue;
+	}
+	if (rec_type == REC_TYPE_VERP) {
 	    if (message->verp_delims == 0) {
-		if (verp_delims_verify(start) != 0) {
-		    msg_warn("%s: bad VERP record content: \"%s\"",
+		if (message->sender == 0 || message->sender[0] == 0) {
+		    msg_warn("%s: ignoring VERP request for null sender",
+			     message->queue_id);
+		} else if (verp_delims_verify(start) != 0) {
+		    msg_warn("%s: ignoring bad VERP request: \"%.100s\"",
 			     message->queue_id, start);
 		} else {
 		    message->single_rcpt = 1;
 		    message->verp_delims = mystrdup(start);
 		}
 	    }
+	    continue;
 	}
-	if (orig_rcpt != 0) {
-	    if (rec_type != REC_TYPE_DONE)
-		msg_warn("%s: out-of-order original recipient record <%.200s>",
-			 message->queue_id, start);
-	    myfree(orig_rcpt);
-	    orig_rcpt = 0;
-	}
-	if (rec_type == REC_TYPE_ORCP)
-	    /* See also above for code clearing orig_rcpt. */
-	    if (message->rcpt_offset == 0)
-		orig_rcpt = mystrdup(start);
-    } while (rec_type > 0 && rec_type != REC_TYPE_END);
+    }
 
     /*
      * Grr.
      */
     if (orig_rcpt != 0) {
-	msg_warn("%s: out-of-order original recipient <%.200s>",
-		 message->queue_id, start);
+	if (rec_type > 0)
+	    msg_warn("%s: ignoring out-of-order original recipient <%.200s>",
+		     message->queue_id, orig_rcpt);
 	myfree(orig_rcpt);
-    }
-
-    /*
-     * If there is no size record, use the queue file size instead.
-     */
-    if (message->data_size == 0) {
-	if (fstat(vstream_fileno(message->fp), &st) < 0)
-	    msg_fatal("fstat %s: %m", VSTREAM_PATH(message->fp));
-	message->data_size = st.st_size;
     }
 
     /*
@@ -376,12 +619,20 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
      * IPC channel, sending an empty string is more convenient than sending a
      * null pointer.
      */
-    if (message->errors_to == 0)
-	message->errors_to = mystrdup("");
+    if (message->errors_to == 0 && message->sender)
+	message->errors_to = mystrdup(message->sender);
     if (message->return_receipt == 0)
 	message->return_receipt = mystrdup("");
     if (message->encoding == 0)
 	message->encoding = mystrdup(MAIL_ATTR_ENC_NONE);
+    if (message->client_name == 0)
+	message->client_name = mystrdup("");
+    if (message->client_addr == 0)
+	message->client_addr = mystrdup("");
+    if (message->client_proto == 0)
+	message->client_proto = mystrdup("");
+    if (message->client_helo == 0)
+	message->client_helo = mystrdup("");
 
     /*
      * Clean up.
@@ -392,16 +643,31 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
      * Sanity checks. Verify that all required information was found,
      * including the queue file end marker.
      */
-    if (message->arrival_time == 0
-	|| message->sender == 0
-	|| message->data_offset == 0
-	|| (message->rcpt_offset == 0 && rec_type != REC_TYPE_END)) {
-	msg_warn("%s: envelope records out of order", message->queue_id);
-	message->rcpt_offset = save_offset;	/* restore flag */
-	return (-1);
+    if (message->rcpt_unread < 0
+	|| (message->rcpt_offset == 0 && message->rcpt_unread != 0)) {
+	msg_warn("%s: rcpt count mismatch (%d)",
+		 message->queue_id, message->rcpt_unread);
+	message->rcpt_unread = 0;
+    }
+    if (rec_type <= 0) {
+	/* Already logged warning. */
+    } else if (message->arrival_time == 0) {
+	msg_warn("%s: message rejected: missing arrival time record",
+		 message->queue_id);
+    } else if (message->sender == 0) {
+	msg_warn("%s: message rejected: missing sender record",
+		 message->queue_id);
+    } else if (message->data_offset == 0) {
+	msg_warn("%s: message rejected: missing size record",
+		 message->queue_id);
     } else {
 	return (0);
     }
+    message->rcpt_offset = save_offset;		/* restore flag */
+    message->rcpt_unread = save_unread;		/* restore count */
+    qmgr_rcpt_list_free(&message->rcpt_list);
+    qmgr_rcpt_list_init(&message->rcpt_list);
+    return (-1);
 }
 
 /* qmgr_message_update_warn - update the time of next delay warning */
@@ -416,6 +682,19 @@ void    qmgr_message_update_warn(QMGR_MESSAGE *message)
     if (qmgr_message_open(message)
 	|| vstream_fseek(message->fp, message->warn_offset, SEEK_SET) < 0
     || rec_fprintf(message->fp, REC_TYPE_WARN, REC_TYPE_WARN_FORMAT, 0L) < 0
+	|| vstream_fflush(message->fp))
+	msg_fatal("update queue file %s: %m", VSTREAM_PATH(message->fp));
+    qmgr_message_close(message);
+}
+
+/* qmgr_message_kill_record - mark one message record as killed */
+
+void    qmgr_message_kill_record(QMGR_MESSAGE *message, long offset)
+{
+    if (offset <= 0)
+	msg_panic("qmgr_message_kill_record: bad offset 0x%lx", offset);
+    if (qmgr_message_open(message)
+	|| rec_put_type(message->fp, REC_TYPE_KILL, offset) < 0
 	|| vstream_fflush(message->fp))
 	msg_fatal("update queue file %s: %m", VSTREAM_PATH(message->fp));
     qmgr_message_close(message);
@@ -450,14 +729,14 @@ static int qmgr_message_sort_compare(const void *p1, const void *p2)
 	/*
 	 * Compare message transport.
 	 */
-	if ((result = strcasecmp(queue1->transport->name,
-				 queue2->transport->name)) != 0)
+	if ((result = strcmp(queue1->transport->name,
+			     queue2->transport->name)) != 0)
 	    return (result);
 
 	/*
-	 * Compare next-hop hostname.
+	 * Compare queue name (nexthop or recipient@nexthop).
 	 */
-	if ((result = strcasecmp(queue1->name, queue2->name)) != 0)
+	if ((result = strcmp(queue1->name, queue2->name)) != 0)
 	    return (result);
     }
 
@@ -477,7 +756,7 @@ static int qmgr_message_sort_compare(const void *p1, const void *p2)
     /*
      * Compare recipient address.
      */
-    return (strcasecmp(rcpt1->address, rcpt2->address));
+    return (strcmp(rcpt1->address, rcpt2->address));
 }
 
 /* qmgr_message_sort - sort message recipient addresses by domain */
@@ -497,6 +776,27 @@ static void qmgr_message_sort(QMGR_MESSAGE *message)
     }
 }
 
+/* qmgr_resolve_one - resolve or skip one recipient */
+
+static int qmgr_resolve_one(QMGR_MESSAGE *message, QMGR_RCPT *recipient,
+			            const char *addr, RESOLVE_REPLY *reply)
+{
+    if ((message->tflags & DEL_REQ_FLAG_VERIFY) == 0)
+	resolve_clnt_query(addr, reply);
+    else
+	resolve_clnt_verify(addr, reply);
+    if (reply->flags & RESOLVE_FLAG_FAIL) {
+	qmgr_defer_recipient(message, recipient, "address resolver failure");
+	return (-1);
+    } else if (reply->flags & RESOLVE_FLAG_ERROR) {
+	qmgr_bounce_recipient(message, recipient,
+			      "bad address syntax: \"%s\"", addr);
+	return (-1);
+    } else {
+	return (0);
+    }
+}
+
 /* qmgr_message_resolve - resolve recipients */
 
 static void qmgr_message_resolve(QMGR_MESSAGE *message)
@@ -507,73 +807,87 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
     QMGR_TRANSPORT *transport = 0;
     QMGR_QUEUE *queue = 0;
     RESOLVE_REPLY reply;
+    VSTRING *queue_name;
     char   *at;
     char  **cpp;
     char   *nexthop;
     int     len;
+    int     status;
 
-#define STREQ(x,y)	(strcasecmp(x,y) == 0)
+#define STREQ(x,y)	(strcmp(x,y) == 0)
 #define STR		vstring_str
 #define LEN		VSTRING_LEN
 #define UPDATE(ptr,new)	{ myfree(ptr); ptr = mystrdup(new); }
 
     resolve_clnt_init(&reply);
+    queue_name = vstring_alloc(1);
     for (recipient = list.info; recipient < list.info + list.len; recipient++) {
 
 	/*
-	 * Resolve the destination to (transport, nexthop, address). The
-	 * result address may differ from the one specified by the sender.
+	 * Redirect overrides all else. But only once (per batch of
+	 * recipients). For consistency with the remainder of Postfix,
+	 * rewrite the address to canonical form before resolving it.
 	 */
-	if (var_sender_routing == 0) {
-	    resolve_clnt_query(recipient->address, &reply);
-	    if (reply.flags & RESOLVE_FLAG_FAIL) {
-		qmgr_defer_recipient(message, recipient,
-				     "address resolver failure");
+	if (message->redirect_addr) {
+	    if (recipient > list.info) {
+		recipient->queue = 0;
 		continue;
 	    }
-	    if (reply.flags & RESOLVE_FLAG_ERROR) {
-		qmgr_bounce_recipient(message, recipient,
-				      "bad address syntax: \"%s\"",
-				      recipient->address);
+	    rewrite_clnt_internal(REWRITE_CANON, message->redirect_addr,
+				  reply.recipient);
+	    UPDATE(recipient->address, STR(reply.recipient));
+	    if (qmgr_resolve_one(message, recipient,
+				 recipient->address, &reply) < 0)
 		continue;
-	    }
-	} else {
-	    resolve_clnt_query(message->sender, &reply);
-	    if (reply.flags & RESOLVE_FLAG_FAIL) {
-		qmgr_defer_recipient(message, recipient,
-				     "address resolver failure");
-		continue;
-	    }
-	    if (reply.flags & RESOLVE_FLAG_ERROR) {
-		qmgr_bounce_recipient(message, recipient,
-				      "bad address syntax: \"%s\"",
-				      message->sender);
-		continue;
-	    }
-	    vstring_strcpy(reply.recipient, recipient->address);
+	    if (!STREQ(recipient->address, STR(reply.recipient)))
+		UPDATE(recipient->address, STR(reply.recipient));
 	}
-	if (message->filter_xport) {
+
+	/*
+	 * Content filtering overrides the address resolver.
+	 */
+	else if (message->filter_xport) {
 	    vstring_strcpy(reply.transport, message->filter_xport);
 	    if ((nexthop = split_at(STR(reply.transport), ':')) == 0
 		|| *nexthop == 0)
 		nexthop = var_myhostname;
 	    vstring_strcpy(reply.nexthop, nexthop);
-	} else {
+	    vstring_strcpy(reply.recipient, recipient->address);
+	}
+
+	/*
+	 * Resolve the destination to (transport, nexthop, address). The
+	 * result address may differ from the one specified by the sender.
+	 */
+	else if (var_sender_routing == 0) {
+	    if (qmgr_resolve_one(message, recipient,
+				 recipient->address, &reply) < 0)
+		continue;
 	    if (!STREQ(recipient->address, STR(reply.recipient)))
 		UPDATE(recipient->address, STR(reply.recipient));
 	}
+
+	/*
+	 * XXX Sender-based routing does not work very well, because it has
+	 * problems with sending bounces.
+	 */
+	else {
+	    if (qmgr_resolve_one(message, recipient,
+				 message->sender, &reply) < 0)
+		continue;
+	    vstring_strcpy(reply.recipient, recipient->address);
+	}
+
+	/*
+	 * Bounce null recipients. This should never happen, but is most
+	 * likely the result of a fault in a different program, so aborting
+	 * the queue manager process does not help.
+	 */
 	if (recipient->address[0] == 0) {
 	    qmgr_bounce_recipient(message, recipient,
 				  "null recipient address");
 	    continue;
 	}
-
-	/*
-	 * XXX The nexthop destination is also used as lookup key for the
-	 * per-destination queue. Fold the nexthop to lower case so that we
-	 * don't have multiple queues for the same site.
-	 */
-	lowercase(STR(reply.nexthop));
 
 	/*
 	 * Bounce recipient addresses that start with `-'. External commands
@@ -594,46 +908,6 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
-	 * Queues are identified by the transport name and by the next-hop
-	 * hostname. When the delivery agent accepts only one recipient per
-	 * delivery, give each recipient its own queue, so that deliveries to
-	 * different recipients of the same message can happen in parallel.
-	 * This also has the benefit that one bad recipient cannot interfere
-	 * with deliveries to other recipients. XXX Should split the address
-	 * on the recipient delimiter if one is defined, but doing a proper
-	 * job requires knowledge of local aliases. Yuck! I don't want to
-	 * duplicate delivery-agent specific knowledge in the queue manager.
-	 * 
-	 * XXX The nexthop field is overloaded to serve as destination and as
-	 * queue name. Should have separate fields for queue name and for
-	 * destination, so that we don't have to make a special case for the
-	 * error delivery agent (where nexthop is arbitrary text). See also:
-	 * qmgr_deliver.c.
-	 */
-	at = strrchr(STR(reply.recipient), '@');
-	len = (at ? (at - STR(reply.recipient)) : strlen(STR(reply.recipient)));
-
-	/*
-	 * Look up or instantiate the proper transport. We're working a
-	 * little ahead, doing queue management stuff that used to be done
-	 * way down.
-	 */
-	if (transport == 0 || !STREQ(transport->name, STR(reply.transport))) {
-	    if ((transport = qmgr_transport_find(STR(reply.transport))) == 0)
-		transport = qmgr_transport_create(STR(reply.transport));
-	    queue = 0;
-	}
-	if (strcmp(transport->name, MAIL_SERVICE_ERROR) != 0
-	    && transport->recipient_limit == 1) {
-	    VSTRING_SPACE(reply.nexthop, len + 2);
-	    memmove(STR(reply.nexthop) + len + 1, STR(reply.nexthop),
-		    LEN(reply.nexthop) + 1);
-	    memcpy(STR(reply.nexthop), STR(reply.recipient), len);
-	    STR(reply.nexthop)[len] = '@';
-	    lowercase(STR(reply.nexthop));
-	}
-
-	/*
 	 * Discard mail to the local double bounce address here, so this
 	 * system can run without a local delivery agent. They'd still have
 	 * to configure something for mail directed to the local postmaster,
@@ -643,15 +917,22 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * be directed to a general-purpose null delivery agent.
 	 */
 	if (reply.flags & RESOLVE_CLASS_LOCAL) {
+	    at = strrchr(STR(reply.recipient), '@');
+	    len = (at ? (at - STR(reply.recipient))
+		   : strlen(STR(reply.recipient)));
 	    if (strncasecmp(STR(reply.recipient), var_double_bounce_sender,
 			    len) == 0
 		&& !var_double_bounce_sender[len]) {
-		sent(message->queue_id, recipient->orig_rcpt,
-		     recipient->address, "none", message->arrival_time,
-		     "discarded");
-		deliver_completed(message->fp, recipient->offset);
-		msg_warn("%s: undeliverable postmaster notification discarded",
-			 message->queue_id);
+		status = sent(message->tflags, message->queue_id,
+			      recipient->orig_rcpt, recipient->address,
+			   recipient->offset, "none", message->arrival_time,
+			 "undeliverable postmaster notification discarded");
+		if (status == 0) {
+		    deliver_completed(message->fp, recipient->offset);
+		    msg_warn("%s: undeliverable postmaster notification discarded",
+			     message->queue_id);
+		} else
+		    message->flags |= status;
 		continue;
 	    }
 	}
@@ -673,16 +954,6 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
-	 * XXX Gross hack alert. We want to group recipients by transport and
-	 * by next-hop hostname, in order to minimize the number of network
-	 * transactions. However, it would be wasteful to have an in-memory
-	 * resolver reply structure for each in-core recipient. Instead, we
-	 * bind each recipient to an in-core queue instance which is needed
-	 * anyway. That gives all information needed for recipient grouping.
-	 */
-#if 0
-
-	/*
 	 * Look up or instantiate the proper transport.
 	 */
 	if (transport == 0 || !STREQ(transport->name, STR(reply.transport))) {
@@ -690,7 +961,6 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 		transport = qmgr_transport_create(STR(reply.transport));
 	    queue = 0;
 	}
-#endif
 
 	/*
 	 * This transport is dead. Defer delivery to this recipient.
@@ -701,12 +971,49 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
+	 * The nexthop destination provides the default name for the
+	 * per-destination queue. When the delivery agent accepts only one
+	 * recipient per delivery, give each recipient its own queue, so that
+	 * deliveries to different recipients of the same message can happen
+	 * in parallel, and so that we can enforce per-recipient concurrency
+	 * limits and prevent one recipient from tying up all the delivery
+	 * agent resources. We use recipient@nexthop as queue name rather
+	 * than the actual recipient domain name, so that one recipient in
+	 * multiple equivalent domains cannot evade the per-recipient
+	 * concurrency limit. XXX Should split the address on the recipient
+	 * delimiter if one is defined, but doing a proper job requires
+	 * knowledge of local aliases. Yuck! I don't want to duplicate
+	 * delivery-agent specific knowledge in the queue manager.
+	 * 
+	 * Fold the result to lower case so that we don't have multiple queues
+	 * for the same name.
+	 * 
+	 * Important! All recipients in a queue must have the same nexthop
+	 * value. It is OK to have multiple queues with the same nexthop
+	 * value, but only when those queues are named after recipients.
+	 */
+	vstring_strcpy(queue_name, STR(reply.nexthop));
+	if (strcmp(transport->name, MAIL_SERVICE_ERROR) != 0
+	    && transport->recipient_limit == 1) {
+	    at = strrchr(STR(reply.recipient), '@');
+	    len = (at ? (at - STR(reply.recipient))
+		   : strlen(STR(reply.recipient)));
+	    VSTRING_SPACE(queue_name, len + 2);
+	    memmove(STR(queue_name) + len + 1, STR(queue_name),
+		    LEN(queue_name) + 1);
+	    memcpy(STR(queue_name), STR(reply.recipient), len);
+	    STR(queue_name)[len] = '@';
+	}
+	lowercase(STR(queue_name));
+
+	/*
 	 * This transport is alive. Find or instantiate a queue for this
 	 * recipient.
 	 */
-	if (queue == 0 || !STREQ(queue->name, STR(reply.nexthop))) {
-	    if ((queue = qmgr_queue_find(transport, STR(reply.nexthop))) == 0)
-		queue = qmgr_queue_create(transport, STR(reply.nexthop));
+	if (queue == 0 || !STREQ(queue->name, STR(queue_name))) {
+	    if ((queue = qmgr_queue_find(transport, STR(queue_name))) == 0)
+		queue = qmgr_queue_create(transport, STR(queue_name),
+					  STR(reply.nexthop));
 	}
 
 	/*
@@ -723,6 +1030,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	recipient->queue = queue;
     }
     resolve_clnt_free(&reply);
+    vstring_free(queue_name);
 }
 
 /* qmgr_message_assign - assign recipients to specific delivery requests */
@@ -733,6 +1041,8 @@ static void qmgr_message_assign(QMGR_MESSAGE *message)
     QMGR_RCPT *recipient;
     QMGR_ENTRY *entry = 0;
     QMGR_QUEUE *queue;
+    QMGR_JOB *job = 0;
+    QMGR_PEER *peer = 0;
 
     /*
      * Try to bundle as many recipients in a delivery request as we can. When
@@ -748,27 +1058,87 @@ static void qmgr_message_assign(QMGR_MESSAGE *message)
     for (recipient = list.info; recipient < list.info + list.len; recipient++) {
 	if ((queue = recipient->queue) != 0) {
 	    if (message->single_rcpt || entry == 0 || entry->queue != queue
-		|| !LIMIT_OK(entry->queue->transport->recipient_limit,
+		|| !LIMIT_OK(queue->transport->recipient_limit,
 			     entry->rcpt_list.len)) {
-		entry = qmgr_entry_create(queue, message);
+
+		/*
+		 * Lookup or instantiate the message job if necessary.
+		 */
+		if (job == 0 || queue->transport != job->transport) {
+		    job = qmgr_job_obtain(message, queue->transport);
+		    peer = 0;
+		}
+
+		/*
+		 * Lookup or instantiate job peer if necessary.
+		 */
+		if (peer == 0 || queue != peer->queue) {
+		    if ((peer = qmgr_peer_find(job, queue)) == 0)
+			peer = qmgr_peer_create(job, queue);
+		}
+
+		/*
+		 * Create new peer entry.
+		 */
+		entry = qmgr_entry_create(peer, message);
+		job->read_entries++;
 	    }
+
+	    /*
+	     * Add the recipient to the current entry and increase all those
+	     * recipient counters accordingly.
+	     */
 	    qmgr_rcpt_list_add(&entry->rcpt_list, recipient->offset,
 			       recipient->orig_rcpt, recipient->address);
+	    job->rcpt_count++;
+	    message->rcpt_count++;
 	    qmgr_recipient_count++;
 	}
     }
+
+    /*
+     * Release the message recipient list and reinitialize it for the next
+     * time.
+     */
     qmgr_rcpt_list_free(&message->rcpt_list);
     qmgr_rcpt_list_init(&message->rcpt_list);
+
+    /*
+     * Note that even if qmgr_job_obtain() reset the job candidate cache of
+     * all transports to which we assigned new recipients, this message may
+     * have other jobs which we didn't touch at all this time. But the number
+     * of unread recipients affecting the candidate selection might have
+     * changed considerably, so we must invalidate the caches if it might be
+     * of some use.
+     */
+    for (job = message->job_list.next; job; job = job->message_peers.next)
+	if (job->selected_entries < job->read_entries
+	    && job->blocker_tag != job->transport->blocker_tag)
+	    job->transport->candidate_cache_current = 0;
+}
+
+/* qmgr_message_move_limits - recycle unused recipient slots */
+
+static void qmgr_message_move_limits(QMGR_MESSAGE *message)
+{
+    QMGR_JOB *job;
+
+    for (job = message->job_list.next; job; job = job->message_peers.next)
+	qmgr_job_move_limits(job);
 }
 
 /* qmgr_message_free - release memory for in-core message structure */
 
 void    qmgr_message_free(QMGR_MESSAGE *message)
 {
+    QMGR_JOB *job;
+
     if (message->refcount != 0)
 	msg_panic("qmgr_message_free: reference len: %d", message->refcount);
     if (message->fp)
 	msg_panic("qmgr_message_free: queue file is open");
+    while ((job = message->job_list.next) != 0)
+	qmgr_job_free(job);
     myfree(message->queue_id);
     myfree(message->queue_name);
     if (message->encoding)
@@ -785,6 +1155,16 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
 	myfree(message->filter_xport);
     if (message->inspect_xport)
 	myfree(message->inspect_xport);
+    if (message->redirect_addr)
+	myfree(message->redirect_addr);
+    if (message->client_name)
+	myfree(message->client_name);
+    if (message->client_addr)
+	myfree(message->client_addr);
+    if (message->client_proto)
+	myfree(message->client_proto);
+    if (message->client_helo)
+	myfree(message->client_helo);
     qmgr_rcpt_list_free(&message->rcpt_list);
     qmgr_message_count--;
     myfree((char *) message);
@@ -843,6 +1223,8 @@ QMGR_MESSAGE *qmgr_message_alloc(const char *queue_name, const char *queue_id,
 	qmgr_message_sort(message);
 	qmgr_message_assign(message);
 	qmgr_message_close(message);
+	if (message->rcpt_offset == 0)
+	    qmgr_message_move_limits(message);
 	return (message);
     }
 }
@@ -877,6 +1259,8 @@ QMGR_MESSAGE *qmgr_message_realloc(QMGR_MESSAGE *message)
 	qmgr_message_sort(message);
 	qmgr_message_assign(message);
 	qmgr_message_close(message);
+	if (message->rcpt_offset == 0)
+	    qmgr_message_move_limits(message);
 	return (message);
     }
 }

@@ -26,7 +26,9 @@
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
     || defined(FREEBSD5) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
-    || defined(OPENBSD2) || defined(OPENBSD3) || defined(NETBSD1)
+    || defined(OPENBSD2) || defined(OPENBSD3) \
+    || defined(NETBSD1) || defined(NETBSD2) \
+    || defined(EKKOBSD1)
 #define SUPPORTED
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,18 +66,46 @@
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
 #endif
 
-#if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4)
+/* __FreeBSD_version version is major+minor */
+
+#if __FreeBSD_version >= 200000
 #define HAS_DUPLEX_PIPE
 #endif
 
-#if defined(OPENBSD2) || defined(OPENBSD3) \
-    || defined(FREEBSD3) || defined(FREEBSD4)
+#if __FreeBSD_version >= 300000
 #define HAS_ISSETUGID
 #endif
 
-#if defined(NETBSD1)
+#if __FreeBSD_version >= 400000
+#define SOCKADDR_SIZE	socklen_t
+#define SOCKOPT_SIZE	socklen_t
+#endif
+
+/* OpenBSD version is year+month */
+
+#if OpenBSD >= 200000			/* XXX */
+#define HAS_ISSETUGID
+#endif
+
+#if OpenBSD >= 200200			/* XXX */
+#define SOCKADDR_SIZE	socklen_t
+#define SOCKOPT_SIZE	socklen_t
+#endif
+
+/* __NetBSD_Version__ is major+minor */
+
+#if __NetBSD_Version__ >= 103000000	/* XXX */
 #undef DEF_MAILBOX_LOCK
 #define DEF_MAILBOX_LOCK "flock, dotlock"
+#endif
+
+#if __NetBSD_Version__ >= 105000000	/* XXX */
+#define HAS_ISSETUGID
+#endif
+
+#if __NetBSD_Version__ >= 106000000	/* XXX */
+#define SOCKADDR_SIZE	socklen_t
+#define SOCKOPT_SIZE	socklen_t
 #endif
 
  /*
@@ -234,6 +264,7 @@ extern int opterr;
 #define NATIVE_NEWALIAS_PATH "/usr/ucb/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/etc"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
+#define STRCASECMP_IN_STRINGS_H
 #endif
 
  /*
@@ -269,6 +300,7 @@ extern int opterr;
 #define LOCAL_TRIGGER	stream_trigger
 #define HAS_VOLATILE_LOCKS
 #define BROKEN_READ_SELECT_ON_TCP_SOCKET
+
 /*
  * Allow build environment to override paths.
  */
@@ -343,10 +375,19 @@ extern int opterr;
 #define SUPPORTED
 #include <sys/types.h>
 #define MISSING_SETENV
+#define USE_PATHS_H
+#ifndef _PATH_BSHELL
 #define _PATH_BSHELL	"/bin/sh"
+#endif
+#ifndef _PATH_MAILDIR
 #define _PATH_MAILDIR   "/var/spool/mail"	/* paths.h lies */
+#endif
+#ifndef _PATH_DEFPATH
 #define _PATH_DEFPATH	"/usr/bin:/usr/ucb"
+#endif
+#ifndef _PATH_STDPATH
 #define _PATH_STDPATH	"/usr/bin:/usr/sbin:/usr/ucb"
+#endif
 #define HAS_FCNTL_LOCK
 #define INTERNAL_LOCK	MYFLOCK_STYLE_FCNTL
 #define DEF_MAILBOX_LOCK "fcntl, dotlock"
@@ -358,14 +399,12 @@ extern int opterr;
 #define HAS_NIS
 #define HAS_SA_LEN
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
-#define RESOLVE_H_NEEDS_STDIO_H
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin:/usr/ucb"
-#define SOCKADDR_SIZE	size_t
-#define SOCKOPT_SIZE	size_t
+#define SOCKADDR_SIZE	socklen_t
+#define SOCKOPT_SIZE	socklen_t
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
-#define STRCASECMP_IN_STRINGS_H
-#define NATIVE_SENDMAIL_PATH "/usr/lib/sendmail"
+#define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/sbin/mailq"
 #define NATIVE_NEWALIAS_PATH "/usr/sbin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
@@ -490,6 +529,7 @@ extern int initgroups(const char *, int);
 #ifdef LINUX2
 #define SUPPORTED
 #include <sys/types.h>
+#include <features.h>
 #define USE_PATHS_H
 #define HAS_FLOCK_LOCK
 #define HAS_FCNTL_LOCK
@@ -513,6 +553,10 @@ extern int initgroups(const char *, int);
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
+#if __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1
+#define SOCKADDR_SIZE	socklen_t
+#define SOCKOPT_SIZE	socklen_t
+#endif
 #endif
 
 #ifdef LINUX1
@@ -839,6 +883,7 @@ extern int h_errno;
 #define STATVFS_IN_SYS_STATVFS_H
 #define UNIX_DOMAIN_CONNECT_BLOCKS_FOR_ACCEPT
 #define MISSING_SETENV
+#define STRCASECMP_IN_STRINGS_H
 /* SCO5 misses just S_ISSOCK, the others are there
  * Use C_ISSOCK definition from cpio.h.
  */
@@ -905,6 +950,9 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #endif
 #define OPTIND  (optind > 0 ? optind : 1)
 
+ /*
+  * Check for required but missing definitions.
+  */
 #if !defined(HAS_FCNTL_LOCK) && !defined(HAS_FLOCK_LOCK)
 #error "define HAS_FCNTL_LOCK and/or HAS_FLOCK_LOCK"
 #endif
@@ -926,7 +974,7 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #endif
 
  /*
-  * Defaults for normal systems.
+  * Defaults for systems that pre-date POSIX socklen_t.
   */
 #ifndef SOCKADDR_SIZE
 #define SOCKADDR_SIZE	int
@@ -936,6 +984,9 @@ extern int dup2_pass_on_exec(int oldd, int newd);
 #define SOCKOPT_SIZE	int
 #endif
 
+ /*
+  * Defaults for normal systems.
+  */
 #ifndef LOCAL_LISTEN
 #define LOCAL_LISTEN	unix_listen
 #define LOCAL_ACCEPT	unix_accept
@@ -1086,6 +1137,25 @@ typedef int pid_t;
 #else
 #define SCANFLIKE(x,y)
 #endif
+#endif
+
+ /*
+  * ISO C says that the "volatile" qualifier protects against optimizations
+  * that cause longjmp() to clobber local variables.
+  */
+#ifndef NOCLOBBER
+#define NOCLOBBER volatile
+#endif
+
+ /*
+  * Bit banging!! There is no official constant that defines the INT_MAX
+  * equivalent of the off_t type. Wietse came up with the following macro
+  * that works as long as off_t is some two's complement number.
+  */
+#include <limits.h>
+#define __MAXINT__(T) ((T) (((((T) 1) << ((sizeof(T) * CHAR_BIT) - 1)) ^ ((T) -1))))
+#ifndef OFF_T_MAX
+#define OFF_T_MAX __MAXINT__(off_t)
 #endif
 
  /*

@@ -6,13 +6,14 @@
 /* SYNOPSIS
 /*	#include "smtp_addr.h"
 /*
-/*	DNS_RR *smtp_domain_addr(name, why, found_myself)
+/*	DNS_RR *smtp_domain_addr(name, misc_flags, why)
 /*	char	*name;
+/*	int	misc_flags;
 /*	VSTRING	*why;
-/*	int	*found_myself;
 /*
-/*	DNS_RR *smtp_host_addr(name, why)
+/*	DNS_RR *smtp_host_addr(name, misc_flags, why)
 /*	char	*name;
+/*	int	misc_flags;
 /*	VSTRING	*why;
 /* DESCRIPTION
 /*	This module implements Internet address lookups. By default,
@@ -25,10 +26,7 @@
 /*	exchanger hosts listed for the named domain. Addresses are
 /*	returned in most-preferred first order. The result is truncated
 /*	so that it contains only hosts that are more preferred than the
-/*	local mail server itself. When the "best MX is local" feature
-/*	is enabled, the local system is allowed to be the best mail
-/*	exchanger, and the result is a null list pointer. Otherwise,
-/*	mailer loops are treated as an error.
+/*	local mail server itself.
 /*
 /*	When no mail exchanger is listed in the DNS for \fIname\fR, the
 /*	request is passed to smtp_host_addr().
@@ -52,7 +50,7 @@
 /*	The request failed due to a soft error, and should be retried later.
 /* .IP SMTP_FAIL
 /*	The request attempt failed due to a hard error.
-/* .IP SMTP_OK
+/* .IP SMTP_LOOP
 /*	The local machine is the best mail exchanger.
 /* .PP
 /*	In addition, a textual description of the problem is made available
@@ -175,18 +173,46 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
     }
 
     /*
-     * Use gethostbyname() when DNS is disabled.
+     * Use DNS lookup, but keep the option open to use native name service.
      */
-    if (var_disable_dns) {
+    if (smtp_host_lookup_mask & SMTP_HOST_FLAG_DNS) {
+	switch (dns_lookup(host, T_A, RES_DEFNAMES, &addr, (VSTRING *) 0, why)) {
+	case DNS_OK:
+	    for (rr = addr; rr; rr = rr->next)
+		rr->pref = pref;
+	    addr_list = dns_rr_append(addr_list, addr);
+	    return (addr_list);
+	default:
+	    smtp_errno = SMTP_ERR_RETRY;
+	    return (addr_list);
+	case DNS_FAIL:
+	    if (smtp_errno != SMTP_ERR_RETRY)
+		smtp_errno = SMTP_ERR_FAIL;
+	    return (addr_list);
+	case DNS_NOTFOUND:
+	    if (smtp_errno != SMTP_ERR_RETRY)
+		smtp_errno = SMTP_ERR_FAIL;
+	    /* maybe gethostbyname() will succeed */
+	    break;
+	}
+    }
+
+    /*
+     * Use the native name service which also looks in /etc/hosts.
+     */
+    if (smtp_host_lookup_mask & SMTP_HOST_FLAG_NATIVE) {
 	memset((char *) &fixed, 0, sizeof(fixed));
 	if ((hp = gethostbyname(host)) == 0) {
 	    vstring_sprintf(why, "%s: %s", host, HSTRERROR(h_errno));
-	    smtp_errno = (h_errno == TRY_AGAIN ? SMTP_RETRY : SMTP_FAIL);
+	    if (smtp_errno != SMTP_ERR_RETRY)
+		smtp_errno =
+		    (h_errno == TRY_AGAIN ? SMTP_ERR_RETRY : SMTP_ERR_FAIL);
 	} else if (hp->h_addrtype != AF_INET) {
 	    vstring_sprintf(why, "%s: host not found", host);
 	    msg_warn("%s: unknown address family %d for %s",
 		     myname, hp->h_addrtype, host);
-	    smtp_errno = SMTP_FAIL;
+	    if (smtp_errno != SMTP_ERR_RETRY)
+		smtp_errno = SMTP_ERR_FAIL;
 	} else {
 	    while (hp->h_addr_list[0]) {
 		addr_list = dns_rr_append(addr_list,
@@ -200,22 +226,8 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
     }
 
     /*
-     * Append the addresses for this host to the address list.
+     * No further alternatives for host lookup.
      */
-    switch (dns_lookup(host, T_A, RES_DEFNAMES, &addr, (VSTRING *) 0, why)) {
-    case DNS_OK:
-	for (rr = addr; rr; rr = rr->next)
-	    rr->pref = pref;
-	addr_list = dns_rr_append(addr_list, addr);
-	break;
-    default:
-	smtp_errno = SMTP_RETRY;
-	break;
-    case DNS_NOTFOUND:
-    case DNS_FAIL:
-	smtp_errno = SMTP_FAIL;
-	break;
-    }
     return (addr_list);
 }
 
@@ -228,7 +240,8 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, VSTRING *why)
 
     /*
      * As long as we are able to look up any host address, we ignore problems
-     * with DNS lookups.
+     * with DNS lookups (except if we're backup MX, and all the better MX
+     * hosts can't be found).
      * 
      * XXX 2821: update smtp_errno (0->FAIL upon unrecoverable lookup error,
      * any->RETRY upon temporary lookup error) so that we can correctly
@@ -321,13 +334,15 @@ static int smtp_compare_pref(DNS_RR *a, DNS_RR *b)
 
 /* smtp_domain_addr - mail exchanger address lookup */
 
-DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
+DNS_RR *smtp_domain_addr(char *name, int misc_flags, VSTRING *why)
 {
     DNS_RR *mx_names;
     DNS_RR *addr_list = 0;
     DNS_RR *self = 0;
     unsigned best_pref;
     unsigned best_found;
+
+    smtp_errno = SMTP_ERR_NONE;			/* Paranoia */
 
     /*
      * Preferences from DNS use 0..32767, fall-backs use 32768+.
@@ -346,6 +361,14 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
      * truncate the list so that it contains only hosts that are more
      * preferred than myself. When no MX resource records exist, look up the
      * addresses listed for this name.
+     * 
+     * According to RFC 974: "It is possible that the list of MXs in the
+     * response to the query will be empty.  This is a special case.  If the
+     * list is empty, mailers should treat it as if it contained one RR, an
+     * MX RR with a preference value of 0, and a host name of REMOTE.  (I.e.,
+     * REMOTE is its only MX).  In addition, the mailer should do no further
+     * processing on the list, but should attempt to deliver the message to
+     * REMOTE."
      * 
      * Normally it is OK if an MX host cannot be found in the DNS; we'll just
      * use a backup one, and silently ignore the better MX host. However, if
@@ -376,14 +399,14 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
      */
     switch (dns_lookup(name, T_MX, 0, &mx_names, (VSTRING *) 0, why)) {
     default:
-	smtp_errno = SMTP_RETRY;
+	smtp_errno = SMTP_ERR_RETRY;
 	if (var_ign_mx_lookup_err)
-	    addr_list = smtp_host_addr(name, why);
+	    addr_list = smtp_host_addr(name, misc_flags, why);
 	break;
     case DNS_FAIL:
-	smtp_errno = SMTP_FAIL;
+	smtp_errno = SMTP_ERR_FAIL;
 	if (var_ign_mx_lookup_err)
-	    addr_list = smtp_host_addr(name, why);
+	    addr_list = smtp_host_addr(name, misc_flags, why);
 	break;
     case DNS_OK:
 	mx_names = dns_rr_sort(mx_names, smtp_compare_pref);
@@ -391,28 +414,26 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
 	addr_list = smtp_addr_list(mx_names, why);
 	dns_rr_free(mx_names);
 	if (addr_list == 0) {
-	    smtp_errno = SMTP_RETRY;
+	    if (var_smtp_defer_mxaddr)
+		smtp_errno = SMTP_ERR_RETRY;
 	    msg_warn("no MX host for %s has a valid A record", name);
 	    break;
 	}
 	best_found = (addr_list ? addr_list->pref : IMPOSSIBLE_PREFERENCE);
 	if (msg_verbose)
 	    smtp_print_addr(name, addr_list);
-	if ((self = smtp_find_self(addr_list)) != 0) {
+	if ((misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
+	    && (self = smtp_find_self(addr_list)) != 0) {
 	    addr_list = smtp_truncate_self(addr_list, self->pref);
 	    if (addr_list == 0) {
 		if (best_pref != best_found) {
 		    vstring_sprintf(why, "unable to find primary relay for %s",
 				    name);
-		    smtp_errno = SMTP_RETRY;
-		} else if (*var_bestmx_transp != 0) {	/* we're best MX */
-		    smtp_errno = SMTP_OK;
+		    smtp_errno = SMTP_ERR_RETRY;
 		} else {
-		    msg_warn("mailer loop: best MX host for %s is local",
-			     name);
 		    vstring_sprintf(why, "mail for %s loops back to myself",
 				    name);
-		    smtp_errno = SMTP_FAIL;
+		    smtp_errno = SMTP_ERR_LOOP;
 		}
 	    }
 	}
@@ -422,22 +443,23 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
 	}
 	break;
     case DNS_NOTFOUND:
-	addr_list = smtp_host_addr(name, why);
+	addr_list = smtp_host_addr(name, misc_flags, why);
 	break;
     }
 
     /*
      * Clean up.
      */
-    *found_myself = (self != 0);
     return (addr_list);
 }
 
 /* smtp_host_addr - direct host lookup */
 
-DNS_RR *smtp_host_addr(char *host, VSTRING *why)
+DNS_RR *smtp_host_addr(char *host, int misc_flags, VSTRING *why)
 {
     DNS_RR *addr_list;
+
+    smtp_errno = SMTP_ERR_NONE;			/* Paranoia */
 
     /*
      * If the host is specified by numerical address, just convert the
@@ -445,6 +467,14 @@ DNS_RR *smtp_host_addr(char *host, VSTRING *why)
      */
 #define PREF0	0
     addr_list = smtp_addr_one((DNS_RR *) 0, host, PREF0, why);
+    if (addr_list
+	&& (misc_flags & SMTP_MISC_FLAG_LOOP_DETECT)
+	&& smtp_find_self(addr_list) != 0) {
+	dns_rr_free(addr_list);
+	vstring_sprintf(why, "mail for %s loops back to myself", host);
+	smtp_errno = SMTP_ERR_LOOP;
+	return (0);
+    }
     if (addr_list && addr_list->next && var_smtp_rand_addr)
 	addr_list = dns_rr_shuffle(addr_list);
     if (msg_verbose)

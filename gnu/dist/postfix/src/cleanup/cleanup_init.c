@@ -10,6 +10,8 @@
 /*
 /*	CONFIG_INT_TABLE cleanup_int_table[];
 /*
+/*	CONFIG_BOOL_TABLE cleanup_bool_table[];
+/*
 /*	CONFIG_STR_TABLE cleanup_str_table[];
 /*
 /*	CONFIG_TIME_TABLE cleanup_time_table[];
@@ -78,6 +80,7 @@
 #include <mail_addr.h>
 #include <mail_params.h>
 #include <ext_prop.h>
+#include <flush_clnt.h>
 
 /* Application-specific. */
 
@@ -104,23 +107,35 @@ char   *var_mimehdr_checks;		/* mime header checks */
 char   *var_nesthdr_checks;		/* nested header checks */
 char   *var_body_checks;		/* any body checks */
 int     var_dup_filter_limit;		/* recipient dup filter */
+bool    var_enable_orcpt;		/* Include orcpt in dup filter? */
 char   *var_empty_addr;			/* destination of bounced bounces */
 int     var_delay_warn_time;		/* delay that triggers warning */
 char   *var_prop_extension;		/* propagate unmatched extension */
 char   *var_always_bcc;			/* big brother */
-int     var_extra_rcpt_limit;		/* recipient extract limit */
 char   *var_rcpt_witheld;		/* recipients not disclosed */
 bool    var_canon_env_rcpt;		/* canonicalize envelope recipient */
 char   *var_masq_classes;		/* what to masquerade */
 int     var_qattr_count_limit;		/* named attribute limit */
+int     var_virt_recur_limit;		/* maximum virtual alias recursion */
+int     var_virt_expan_limit;		/* maximum virtual alias expansion */
 int     var_body_check_len;		/* when to stop body scan */
+char   *var_send_bcc_maps;		/* sender auto-bcc maps */
+char   *var_rcpt_bcc_maps;		/* recipient auto-bcc maps */
+bool    var_enable_errors_to;		/* extract Errors-To: address. */
 
 CONFIG_INT_TABLE cleanup_int_table[] = {
     VAR_HOPCOUNT_LIMIT, DEF_HOPCOUNT_LIMIT, &var_hopcount_limit, 1, 0,
     VAR_DUP_FILTER_LIMIT, DEF_DUP_FILTER_LIMIT, &var_dup_filter_limit, 0, 0,
-    VAR_EXTRA_RCPT_LIMIT, DEF_EXTRA_RCPT_LIMIT, &var_extra_rcpt_limit, 0, 0,
     VAR_QATTR_COUNT_LIMIT, DEF_QATTR_COUNT_LIMIT, &var_qattr_count_limit, 1, 0,
+    VAR_VIRT_RECUR_LIMIT, DEF_VIRT_RECUR_LIMIT, &var_virt_recur_limit, 1, 0,
+    VAR_VIRT_EXPAN_LIMIT, DEF_VIRT_EXPAN_LIMIT, &var_virt_expan_limit, 1, 0,
     VAR_BODY_CHECK_LEN, DEF_BODY_CHECK_LEN, &var_body_check_len, 0, 0,
+    0,
+};
+
+CONFIG_BOOL_TABLE cleanup_bool_table[] = {
+    VAR_ENABLE_ORCPT, DEF_ENABLE_ORCPT, &var_enable_orcpt,
+    VAR_ENABLE_ERRORS_TO, DEF_ENABLE_ERRORS_TO, &var_enable_errors_to,
     0,
 };
 
@@ -145,6 +160,8 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
     VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 1, 0,
     VAR_MASQ_CLASSES, DEF_MASQ_CLASSES, &var_masq_classes, 0, 0,
+    VAR_SEND_BCC_MAPS, DEF_SEND_BCC_MAPS, &var_send_bcc_maps, 0, 0,
+    VAR_RCPT_BCC_MAPS, DEF_RCPT_BCC_MAPS, &var_rcpt_bcc_maps, 0, 0,
     0,
 };
 
@@ -165,7 +182,10 @@ MAPS   *cleanup_nesthdr_checks;
 MAPS   *cleanup_body_checks;
 MAPS   *cleanup_virt_alias_maps;
 ARGV   *cleanup_masq_domains;
+STRING_LIST *cleanup_masq_exceptions;
 int     cleanup_masq_flags;
+MAPS   *cleanup_send_bcc_maps;
+MAPS   *cleanup_rcpt_bcc_maps;
 
  /*
   * Address extension propagation restrictions.
@@ -221,9 +241,22 @@ void    cleanup_pre_jail(char *unused_name, char **unused_argv)
     if (*var_body_checks)
 	cleanup_body_checks =
 	    maps_create(VAR_BODY_CHECKS, var_body_checks, DICT_FLAG_LOCK);
+    if (*var_masq_exceptions)
+	cleanup_masq_exceptions =
+	    string_list_init(MATCH_FLAG_NONE, var_masq_exceptions);
     if (*var_masq_classes)
 	cleanup_masq_flags = name_mask(VAR_MASQ_CLASSES, masq_class_table,
 				       var_masq_classes);
+    if (*var_send_bcc_maps)
+	cleanup_send_bcc_maps =
+	    maps_create(VAR_SEND_BCC_MAPS, var_send_bcc_maps,
+			DICT_FLAG_LOCK);
+    if (*var_rcpt_bcc_maps)
+	cleanup_rcpt_bcc_maps =
+	    maps_create(VAR_RCPT_BCC_MAPS, var_rcpt_bcc_maps,
+			DICT_FLAG_LOCK);
+
+    flush_init();
 }
 
 /* cleanup_post_jail - initialize after entering the chroot jail */
@@ -244,5 +277,6 @@ void    cleanup_post_jail(char *unused_name, char **unused_argv)
     /*
      * Control how unmatched extensions are propagated.
      */
-    cleanup_ext_prop_mask = ext_prop_mask(var_prop_extension);
+    cleanup_ext_prop_mask =
+	ext_prop_mask(VAR_PROP_EXTENSION, var_prop_extension);
 }

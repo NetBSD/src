@@ -158,6 +158,8 @@
 #	The group for mail submission and for queue management commands.
 #	Its numerical group ID must not be used by any other accounts on the
 #	system, not even by the mail_owner account.
+# .IP html_directory
+#	The directory for the Postfix HTML files.
 # .IP manpage_directory
 #	The directory for the Postfix on-line manual pages.
 # .IP sample_directory
@@ -201,6 +203,7 @@ USAGE="Usage: $0 [name=value] command
 # IFS=value setting permanent. But some broken standard allows it.
 
 create=; set_perms=; upgrade_perms=; upgrade_conf=; first_install_reminder=
+obsolete=; keep_list=;
 
 for arg
 do
@@ -253,8 +256,24 @@ test -f $config_directory/postfix-files || {
     exit 1
 }
 
+# SunOS5 fmt(1) truncates lines > 1000 characters.
+
+fake_fmt() {
+    sed '
+    :top
+	/^\(  *\)\([^ ][^ ]*\)  */{
+	    s//\1\2\
+\1/
+	    P
+	    D
+	    b top
+	}
+    ' | fmt
+}
+
 case `uname -s` in
 HP-UX*) FMT=cat;;
+SunOS*) FMT=fake_fmt;;
      *) FMT=fmt;;
 esac
 
@@ -285,7 +304,7 @@ grep setgid_group $config_directory/main.cf >/dev/null 2>&1 || {
 test -f $config_directory/main.cf && {
     for name in daemon_directory command_directory queue_directory mail_owner \
         setgid_group sendmail_path newaliases_path mailq_path \
-	manpage_directory sample_directory readme_directory
+	html_directory manpage_directory sample_directory readme_directory
     do
 	eval junk=\$$name
         case "$junk" in
@@ -308,8 +327,7 @@ case $setgid_group in
 esac
 
 for path in "$daemon_directory" "$command_directory" "$queue_directory" \
-    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory" \
-    "$sample_directory"
+    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
 do
    case "$path" in
    /*) ;;
@@ -317,7 +335,7 @@ do
    esac
 done
 
-for path in "$readme_directory"
+for path in "$html_directory" "$readme_directory"
 do
    case "$path" in
    /*) ;;
@@ -332,7 +350,7 @@ done
 missing=
 for name in daemon_directory command_directory queue_directory mail_owner \
     setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-    sample_directory readme_directory
+    readme_directory html_directory
 do
     eval test -n \"\$$name\" || missing="$missing $name"
 done
@@ -367,7 +385,7 @@ POSTCONF="$command_directory/postconf"
 override=
 for name in daemon_directory command_directory queue_directory mail_owner \
     setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-    sample_directory readme_directory
+    sample_directory readme_directory html_directory
 do
     eval test \"\$$name\" = \"`$POSTCONF -c $config_directory -h $name`\" || {
 	override=1
@@ -385,6 +403,7 @@ test -n "$override" && {
 	"sendmail_path = $sendmail_path" \
 	"mailq_path = $mailq_path" \
 	"newaliases_path = $newaliases_path" \
+	"html_directory = $html_directory" \
 	"manpage_directory = $manpage_directory" \
 	"sample_directory = $sample_directory" \
 	"readme_directory = $readme_directory" \
@@ -404,6 +423,12 @@ test -n "$create" && {
 	[$]*) ;;
 	   *) continue;;
 	esac
+	# Skip hard links and symbolic links.
+	case $type in
+	[hl]) continue;;
+	[df]) ;;
+	   *) echo unknown type $type for $path in $config_directory/postfix-files1>&2; exit 1;;
+	esac
 	# Expand $name, and canonicalize null fields.
 	for name in path owner group flags
 	do
@@ -422,6 +447,15 @@ test -n "$create" && {
 	case $flags in *u*) upgrade_flag=1;; *) upgrade_flag=;; esac
 	case $flags in *c*) create_flag=1;; *) create_flag=;; esac
 	case $flags in *r*) recursive="-R";; *) recursive=;; esac
+	case $flags in *o*) obsolete_flag=1;; *) obsolete_flag=;; esac
+	# Flag obsolete objects. XXX Solaris 2..9 does not have "test -e".
+	if [ -n "$obsolete_flag" ]
+	then
+	    test -r $path -a "$type" != "d" && obsolete="$obsolete $path"
+	    continue;
+	else
+	    keep_list="$keep_list $path"
+	fi
 	# Create missing directories with proper owner/group/mode settings.
 	if [ -n "$create" -a "$type" = "d" -a -n "$create_flag" -a ! -d "$path" ]
 	then
@@ -439,9 +473,10 @@ test -n "$create" && {
 	test -n "$set_permission" && {
 	    chown $recursive $owner $path || exit 1
 	    test -z "$group" || chgrp $recursive $group $path || exit 1
-	    chmod $mode $path || exit 1
+	    chmod $recursive $mode $path || exit 1
 	}
     done
+    IFS="$BACKUP_IFS"
 }
 
 # Upgrade existing Postfix configuration files if necessary.
@@ -463,6 +498,38 @@ EOF
 	echo Editing $config_directory/master.cf, adding missing entry for flush service
 	cat >>$config_directory/master.cf <<EOF || exit 1
 flush     unix  -       -       n       1000?   0       flush
+EOF
+    }
+
+    # Add missing trace service to master.cf.
+
+    grep 'trace.*bounce' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for trace service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+trace	  unix	-	-	n	-	0	bounce
+EOF
+    }
+
+    # Add missing verify service to master.cf.
+
+    grep '^verify.*verify' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for verify service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+verify	  unix	-	-	n	-	1	verify
+EOF
+    }
+
+    # Fix verify service process limit.
+
+    grep '^verify.*[ 	]0[ 	]*verify' \
+	$config_directory/master.cf >/dev/null && {
+	    echo Editing $config_directory/master.cf, setting verify process limit to 1
+	    ed $config_directory/master.cf <<EOF || exit 1
+/^verify.*[ 	]0[ 	]*verify/
+s/\([ 	]\)0\([ 	]\)/\11\2/
+p
+w
+q
 EOF
     }
 
@@ -522,6 +589,7 @@ EOF
 
     # Turn on safety nets for new features that could bounce mail that
     # would be accepted by a previous Postfix version.
+    # This safety net is also documented in LOCAL_RECIPIENT_README.
 
     unknown_local=unknown_local_recipient_reject_code
     has_lrm=`$POSTCONF -n local_recipient_maps`
@@ -539,7 +607,29 @@ EOF
     grep '^proxymap.*proxymap' $config_directory/master.cf >/dev/null || {
 	echo Editing $config_directory/master.cf, adding missing entry for proxymap service
 	cat >>$config_directory/master.cf <<EOF || exit 1
-proxymap  unix        -       -       n       -       -       proxymap
+proxymap  unix	-	-	n	-	-	proxymap
+EOF
+    }
+
+    # Add missing anvil service to master.cf.
+
+#    grep '^anvil.*anvil' $config_directory/master.cf >/dev/null || {
+#	echo Editing $config_directory/master.cf, adding missing entry for anvil service
+#	cat >>$config_directory/master.cf <<EOF || exit 1
+#anvil	  unix	-	-	n	-	1	anvil
+#EOF
+#    }
+
+    # Report (but do not remove) obsolete files.
+
+    test -n "$obsolete" && {
+	cat <<EOF | ${FMT}
+
+    Note: the following files or directories still exist but are
+    no longer part of Postfix:
+
+    $obsolete
+
 EOF
     }
 

@@ -61,10 +61,13 @@
 
 void    inet_addr_list_init(INET_ADDR_LIST *list)
 {
+    int     init_size;
+
     list->used = 0;
-    list->size = 2;
-    list->addrs = (struct in_addr *)
-	mymalloc(sizeof(*list->addrs) * list->size);
+    list->size = 0;
+    init_size = 2;
+    list->addrs = (struct in_addr *) mymalloc(sizeof(*list->addrs) * init_size);
+    list->size = init_size;
 }
 
 /* inet_addr_list_append - append address to internet address list */
@@ -72,15 +75,17 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
 void    inet_addr_list_append(INET_ADDR_LIST *list, struct in_addr * addr)
 {
     char   *myname = "inet_addr_list_append";
+    int     new_size;
 
     if (msg_verbose > 1)
 	msg_info("%s: %s", myname, inet_ntoa(*addr));
 
-    if (list->used >= list->size)
-	list->size *= 2;
-    list->addrs = (struct in_addr *)
-	myrealloc((char *) list->addrs,
-		  sizeof(*list->addrs) * list->size);
+    if (list->used >= list->size) {
+	new_size = list->size * 2;
+	list->addrs = (struct in_addr *)
+	    myrealloc((char *) list->addrs, sizeof(*list->addrs) * new_size);
+	list->size = new_size;
+    }
     list->addrs[list->used++] = *addr;
 }
 
