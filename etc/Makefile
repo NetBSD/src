@@ -8,7 +8,7 @@ BIN1=	aliases csh.cshrc csh.login csh.logout daily dm.conf \
 	ftpusers gettytab group hosts hosts.equiv hosts.lpd inetd.conf \
 	man.conf monthly motd myname netstart phones printcap protocols rc \
 	rc.local remote security services shells syslog.conf ttys weekly \
-	etc.${MACHINE}/disktab
+	etc.${MACHINE}/disktab rpc
 
 # -rw-rw-rw-
 BIN2=	motd
