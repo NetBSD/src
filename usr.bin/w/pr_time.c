@@ -1,3 +1,5 @@
+/*	$NetBSD: pr_time.c,v 1.2.2.1 1996/06/07 01:45:11 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
+#else
+static char rcsid[] = "$NetBSD: pr_time.c,v 1.2.2.1 1996/06/07 01:45:11 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
