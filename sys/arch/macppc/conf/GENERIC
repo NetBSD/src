@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.128 2002/04/25 15:21:59 wiz Exp $
+# $NetBSD: GENERIC,v 1.129 2002/05/11 18:05:12 bjh21 Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.128 $"
+#ident 		"GENERIC-$Revision: 1.129 $"
 
 maxusers	32
 
@@ -151,6 +151,8 @@ pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 fpa*	at pci? dev ? function ?	# DEC PCI FDDI (DEFPA) Controller
 ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -195,6 +197,7 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI serial interfaces
+com*	at puc? port ?			# 16x50s on "universal" comm boards
 cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 #cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
