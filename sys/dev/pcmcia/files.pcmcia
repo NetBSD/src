@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.12 1998/11/26 15:32:44 pk Exp $
+#	$NetBSD: files.pcmcia,v 1.13 1998/12/24 04:51:59 marc Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -8,11 +8,13 @@ defopt	PCMCIAVERBOSE
 device	pcmcia {[function = -1], [irq = -1]}
 file	dev/pcmcia/pcmcia.c			pcmcia
 file	dev/pcmcia/pcmcia_cis.c			pcmcia
+file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
 
 # device declaration in sys/conf/files
 attach	pcmcia at pcmciabus
 
-# 3Com 3c589 Ethernet and 3c562 multifunction Ethernet controllers
+# 3Com 3c589 Ethernet, 3c562 multifunction Ethernet, and 3CXEM556
+#   multifunction Ethernet controllers
 # device declaration in sys/conf/files
 attach	ep at pcmcia with ep_pcmcia
 file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
@@ -33,6 +35,7 @@ file	dev/pcmcia/com_pcmcia.c			com_pcmcia
 device	wl: arp, ether, ifnet
 attach	wl at pcmcia with wl_pcmcia
 file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
+defopt	opt_wl_pcmcia.h		WL_TIMER WLP_CC_DEBUG WL_DEBUG MMC_STATUS WL_IFCNTRS WL_TIMING
 
 # PCMCIA IDE controller
 attach	wdc at pcmcia with wdc_pcmcia
