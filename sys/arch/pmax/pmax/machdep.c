@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 1997/10/18 19:48:02 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 1997/10/29 20:12:11 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 1997/10/18 19:48:02 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 1997/10/29 20:12:11 jonathan Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -125,20 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 1997/10/18 19:48:02 mhitch Exp $");
 
 extern struct consdev *cn_tab;	/* Console I/O table... */
 extern struct consdev cd;
-
-
-#if defined(DS5000_25) || defined(DS5000_100) || defined(DS5000_240)
-/* Will scan from max to min, inclusive */
-static int tc_max_slot = KN02_TC_MAX;
-static int tc_min_slot = KN02_TC_MIN;
-static u_int tc_slot_phys_base [TC_MAX_SLOTS] = {
-	/* use 3max for default values */
-	KN02_PHYS_TC_0_START, KN02_PHYS_TC_1_START,
-	KN02_PHYS_TC_2_START, KN02_PHYS_TC_3_START,
-	KN02_PHYS_TC_4_START, KN02_PHYS_TC_5_START,
-	KN02_PHYS_TC_6_START, KN02_PHYS_TC_7_START
-};
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -597,11 +583,6 @@ mach_init(argc, argv, code, cv)
 
 #ifdef DS5000_100
 	case DS_3MIN:	/* DS5000/1xx 3min */
-		tc_max_slot = KMIN_TC_MAX;
-		tc_min_slot = KMIN_TC_MIN;
-		tc_slot_phys_base[0] = KMIN_PHYS_TC_0_START;
-		tc_slot_phys_base[1] = KMIN_PHYS_TC_1_START;
-		tc_slot_phys_base[2] = KMIN_PHYS_TC_2_START;
 		ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
 		mips_hardware_intr = kmin_intr;
 		tc_enable_interrupt = kmin_enable_intr;
@@ -655,10 +636,6 @@ mach_init(argc, argv, code, cv)
 
 #ifdef DS5000_25
 	case DS_MAXINE:	/* DS5000/xx maxine */
-		tc_max_slot = XINE_TC_MAX;
-		tc_min_slot = XINE_TC_MIN;
-		tc_slot_phys_base[0] = XINE_PHYS_TC_0_START;
-		tc_slot_phys_base[1] = XINE_PHYS_TC_1_START;
 		ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
 		mips_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
@@ -701,11 +678,6 @@ mach_init(argc, argv, code, cv)
 
 #ifdef DS5000_240
 	case DS_3MAXPLUS:	/* DS5000/240 3max+ */
-		tc_max_slot = KN03_TC_MAX;
-		tc_min_slot = KN03_TC_MIN;
-		tc_slot_phys_base[0] = KN03_PHYS_TC_0_START;
-		tc_slot_phys_base[1] = KN03_PHYS_TC_1_START;
-		tc_slot_phys_base[2] = KN03_PHYS_TC_2_START;
 		ioasic_base = MIPS_PHYS_TO_KSEG1(KN03_SYS_ASIC);
 		mips_hardware_intr = kn03_intr;
 		tc_enable_interrupt = kn03_enable_intr;
