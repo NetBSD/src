@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 1998/12/10 17:03:19 christos Exp $
+	$NetBSD: syscalls.master,v 1.20 1999/02/09 20:21:18 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -52,20 +52,23 @@
 2	STD		{ int hpux_sys_fork(void); }
 3	STD		{ int hpux_sys_read(int fd, char *buf, u_int nbyte); }
 4	STD		{ int hpux_sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int hpux_sys_open(char *path, int flags, int mode); }
+5	STD		{ int hpux_sys_open(const char *path, int flags, \
+			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	STD		{ int hpux_sys_wait(int *status); }
-8	STD		{ int hpux_sys_creat(char *path, int mode); }
+8	STD		{ int hpux_sys_creat(const char *path, int mode); }
 9	NOARGS	 	{ int sys_link(char *path, char *link); }
-10	STD		{ int hpux_sys_unlink(char *path); }
-11	STD		{ int hpux_sys_execv(char * path, char **argp); }
-12	STD		{ int hpux_sys_chdir(char *path); }
+10	STD		{ int hpux_sys_unlink(const char *path); }
+11	STD		{ int hpux_sys_execv(const char * path, char **argp); }
+12	STD		{ int hpux_sys_chdir(const char *path); }
 13	STD		{ int hpux_sys_time_6x(time_t *t); }
-14	STD		{ int hpux_sys_mknod(char *path, int mode, int dev); }
-15	STD		{ int hpux_sys_chmod(char *path, int mode); }
-16	STD		{ int hpux_sys_chown(char *path, int uid, int gid); }
+14	STD		{ int hpux_sys_mknod(const char *path, int mode, \
+			    int dev); }
+15	STD		{ int hpux_sys_chmod(const char *path, int mode); }
+16	STD		{ int hpux_sys_chown(const char *path, int uid, \
+			    int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); }
-18	STD		{ int hpux_sys_stat_6x(char *path, \
+18	STD		{ int hpux_sys_stat_6x(const char *path, \
 			    struct hpux_ostat *sb); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
@@ -88,14 +91,16 @@
 30	STD		{ int hpux_sys_utime_6x(char *fname, time_t *tptr); }
 31	STD		{ int hpux_sys_stty_6x(int fd, caddr_t arg); }
 32	STD		{ int hpux_sys_gtty_6x(int fd, caddr_t arg); }
-33	STD		{ int hpux_sys_access(char *path, int flags); }
+33	STD		{ int hpux_sys_access(const char *path, int flags); }
 34	STD		{ int hpux_sys_nice_6x(int nval); }
 35	STD		{ int hpux_sys_ftime_6x(struct hpux_timeb *tp); }
 36	NOARGS		{ int sys_sync(void); }
 37	STD		{ int hpux_sys_kill(pid_t pid, int signo); }
-38	STD		{ int hpux_sys_stat(char *path, struct hpux_stat *sb); }
+38	STD		{ int hpux_sys_stat(const char *path, \
+			    struct hpux_stat *sb); }
 39	STD		{ int hpux_sys_setpgrp_6x(void); }
-40	STD		{ int hpux_sys_lstat(char *path, struct hpux_stat *sb); }
+40	STD		{ int hpux_sys_lstat(const char *path, \
+			    struct hpux_stat *sb); }
 41	STD		{ int hpux_sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	STD		{ int hpux_sys_times_6x(struct tms *tms); }
@@ -113,12 +118,13 @@
 53	UNIMPL
 54	STD		{ int hpux_sys_ioctl(int fd, int com, caddr_t data); }
 55	UNIMPL		reboot
-56	STD		{ int hpux_sys_symlink(char *path, char *link); }
+56	STD		{ int hpux_sys_symlink(const char *path, \
+			    const char *link); }
 57	STD		{ int hpux_sys_utssys(struct hpux_utsname *uts, \
 					  int dev, int request); }
-58	STD		{ int hpux_sys_readlink(char *path, char *buf, \
+58	STD		{ int hpux_sys_readlink(const char *path, char *buf, \
 					  int count); }
-59	STD		{ int hpux_sys_execve(char *path, char **argp, \
+59	STD		{ int hpux_sys_execve(const char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
@@ -200,16 +206,18 @@
 125	UNIMPL
 126	STD		{ int hpux_sys_setresuid(uid_t r, uid_t e, uid_t s); }
 127	STD		{ int hpux_sys_setresgid(gid_t r, gid_t e, gid_t s); }
-128	STD		{ int hpux_sys_rename(char *from, char *to); }
-129	STD		{ int hpux_sys_truncate(char *path, long length); }
+128	STD		{ int hpux_sys_rename(const char *from, \
+			    const char *to); }
+129	STD		{ int hpux_sys_truncate(const char *path, \
+			    long length); }
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
 131	UNIMPL
 132	STD		{ int hpux_sys_sysconf(int name); }
 133	UNIMPL
 134	UNIMPL
 135	UNIMPL
-136	STD		{ int hpux_sys_mkdir(char *path, int mode); }
-137	STD		{ int hpux_sys_rmdir(char *path); }
+136	STD		{ int hpux_sys_mkdir(const char *path, int mode); }
+137	STD		{ int hpux_sys_rmdir(const char *path); }
 138	UNIMPL
 139	UNIMPL
 140	UNIMPL
