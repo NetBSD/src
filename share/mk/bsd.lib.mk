@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.234 2003/09/13 19:08:27 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.235 2003/09/30 07:24:23 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -385,19 +385,31 @@ lib${LIB}_p.a:: ${POBJS} __archivebuild
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
 
+
+_LIBLDOPTS=
+.if ${SHLIBDIR} != "/usr/lib"
+_LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
+		-R${SHLIBDIR} \
+		-L${DESTDIR}${SHLIBDIR}
+.elif ${SHLIBINSTALLDIR} != "/usr/lib"
+_LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
+		-L${DESTDIR}${SHLIBINSTALLDIR}
+.endif
+
 lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_FULLVERSION}\)
 	@rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
 	${CC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
+	    ${_LIBLDOPTS} \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
-	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}${_LIBSODIR} -L${DESTDIR}${LIBDIR} \
-	    -R${_LIBSODIR} -R${LIBDIR}
+	    -L${_GCC_LIBGCCDIR}
 .else
 	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
+	    ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
 .if ${OBJECT_FMT} == "ELF"
