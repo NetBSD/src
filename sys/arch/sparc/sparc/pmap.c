@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.234 2003/01/20 22:03:54 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.235 2003/01/23 12:48:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2075,8 +2075,9 @@ ctx_free(pm)
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		int octx = getcontext4();
+		setcontext4(ctx);
 		cache_flush_context(ctx);
-		setcontext(octx);
+		setcontext4(octx);
 	}
 #endif /* SUN4 || SUN4C */
 
@@ -6228,7 +6229,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
 
 	sp->sg_npte++;
-	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto, 1, 0, CPUSET_ALL);
+	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 }
 
 void
