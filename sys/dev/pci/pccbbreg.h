@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.6 2000/12/08 21:51:02 mycroft Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -39,6 +39,7 @@
 #define PCI_BUSNUM   0x18	/* latency timer, Subordinate bus number */
 #define PCI_BCR_INTR 0x3C	/* intr line, intr pin, bridge control regs */
 #define PCI_LEGACY 0x44		/* legacy IO register address (32 bits) */
+#define	PCI_SYSCTRL 0x80	/* System control */
 #define PCI_CBCTRL 0x90		/* Retry status, Card ctrl, Device ctrl */
 
 #define PCI_CLASS_INTERFACE_MASK  0xffffff00
@@ -95,6 +96,7 @@
 #define PCI113X_CBCTRL_INTR_DET 0x0100 /* functional interrupt detect */
 
 /*  PCI_CBCTRL bits for TI PCI12XX */
+#define	PCI12XX_SYSCTRL_VCCPROT	  0x200000
 #define PCI12XX_CBCTRL_INT_SERIAL 0x040000
 #define PCI12XX_CBCTRL_INT_ISA    0x020000
 #define PCI12XX_CBCTRL_INT_PCI    0x000000

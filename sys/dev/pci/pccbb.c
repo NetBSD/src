@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.49 2000/12/08 10:24:14 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.50 2000/12/08 21:51:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -771,6 +771,12 @@ pccbb_chipinit(sc)
 		/* functional intr prohibit | prohibit ISA routing */
 		reg &= ~(PCI113X_CBCTRL_PCI_INTR | PCI113X_CBCTRL_INT_MASK);
 		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
+		break;
+
+	case CB_TI12XX:
+		reg = pci_conf_read(pc, tag, PCI_SYSCTRL);
+		reg |= PCI12XX_SYSCTRL_VCCPROT;
+		pci_conf_write(pc, tag, PCI_SYSCTRL, reg);
 		break;
 
 	case CB_TOPIC95B:
