@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.71 2002/04/03 09:45:22 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.71.4.1 2003/06/02 14:30:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.71 2002/04/03 09:45:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.71.4.1 2003/06/02 14:30:26 tron Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -257,7 +257,8 @@ malloc(unsigned long size, int type, int flags)
 		npg = btoc(allocsize);
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, NULL,
 		    (vsize_t)ctob(npg),
-		    (flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
+		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
+		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0));
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
@@ -270,7 +271,7 @@ malloc(unsigned long size, int type, int flags)
 			if ((flags & (M_NOWAIT|M_CANFAIL)) == 0)
 				panic("malloc: out of space in kmem_map");
 			splx(s);
-			return ((void *) NULL);
+			return (NULL);
 		}
 #ifdef KMEMSTATS
 		kbp->kb_total += kbp->kb_elmpercl;
