@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2000/12/14 20:38:03 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.30 2000/12/21 20:42:15 thorpej Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -102,7 +102,7 @@
 13	NOARGS		{ int sys_fchdir(int fd); }
 14	STD		{ int linux_sys_mknod(const char *path, int mode, int dev); }
 15	STD		{ int linux_sys_chmod(const char *path, int mode); }
-16	STD		{ int linux_sys_chown(const char *path, int uid, int gid); }
+16	NOARGS		{ int sys___posix_chown(const char *path, int uid, int gid); }
 ;17	ALIAS		osf1_sys_brk
 17	STD		{ int linux_sys_brk(char *nsize); }
 18	UNIMPL
@@ -253,13 +253,13 @@
 				int iovcnt); }
 122	NODEF		{ int osf1_sys_settimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
-123	STD		{ int linux_sys_fchown(int fd, int uid, int gid); }
+123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
 125	STD		{ int linux_sys_recvfrom(int s, void *buf, int len, \
 				int flags, struct sockaddr *from, \
 				int *fromlen); }
-126	STD		{ int linux_sys_setreuid(int ruid, int euid); }
-127	STD		{ int linux_sys_setregid(int rgid, int egid); }
+126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
+127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int linux_sys_rename(const char *from, const char *to); }
 129	STD		{ int linux_sys_truncate(const char *path, long length); }
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }
@@ -376,7 +376,7 @@
 #endif
 ;207	ALIAS		osf1_sys_utsname
 207	STD		{ int linux_sys_olduname(struct linux_old_utsname *up); }
-208	STD		{ int linux_sys_lchown(char *path, int uid, int gid); }
+208	NOARGS		{ int sys___posix_lchown(const char *path, int uid, int gid); }
 #ifdef SYSVSHM
 209	NOARGS		{ int linux_sys_shmat(int shmid, void *shmaddr, \
 			    int shmflg, u_long *raddr); }
