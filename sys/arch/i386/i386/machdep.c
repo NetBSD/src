@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.309 1998/07/04 22:18:25 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.310 1998/07/05 08:49:34 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@
 #include "opt_user_ldt.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

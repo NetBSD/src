@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1998/04/15 09:02:06 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 1998/07/05 08:49:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -33,6 +33,8 @@
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
 #endif
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
