@@ -1,4 +1,4 @@
-#	$NetBSD: xps,v 1.3 1997/04/16 00:58:26 cgd Exp $
+#	$NetBSD: xps,v 1.4 2003/02/26 21:36:14 lha Exp $
 
 # xps
 # kernel ps
@@ -18,15 +18,25 @@ define xps
 			set $p = zombproc.lh_first
 		end
 
-		printf "              proc   pid     flag st              wchan comm\n"
+		printf "              proc   pid     flag nlwps comm\n"
+		printf "\t  flag             wchan\n"
 		while ($p)
-			printf "%#18lx %5d %8x %2x %#18lx %s", $p, $p->p_pid, \
-				$p->p_flag, $p->p_stat, $p->p_wchan, \
+			printf "%#18lx %5d %8x %2x %d         %s", \
+				$p, $p->p_pid, \
+				$p->p_flag, $p->p_stat, $p->p_nlwps, \
 				(char *) $p->p_comm
-			if ($p->p_wmesg)
-				printf " (%s)", $p->p_wmesg
-			end
 			printf "\n"
+			set $l = $p->p_lwps.lh_first
+			set $j = 0
+			while ($j < $p->p_nlwps)
+				printf "\t%3x %#18xl", $l->l_flag, $l->l_wchan
+				if ($l->l_wmesg)
+					printf " (%s)", (char *)$l->l_wmesg
+				end
+				set $l = $l->l_list.le_next
+				printf "\n"
+				set $j++
+			end
 			set $p = $p->p_list.le_next
 		end
 		set $i++
