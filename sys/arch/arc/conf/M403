@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.8 2000/06/17 07:29:07 soda Exp $
+#	$NetBSD: M403,v 1.8.2.1 2000/08/10 21:55:32 soda Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -102,6 +102,9 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# wscons terminal emulation
+options 	WSEMUL_VT100	# VT100 emulation
+
 # Kernel root file system and dump configuration.
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 config		netbsd	root on ? type ?
@@ -121,7 +124,7 @@ aclock0 	at pica?
 #opms0		at pica?
 vga0		at pica?	# Jazz localbus VGA
 pckbc0		at pica?	# PC keyboard controller
-options		COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
+options 	COM_FREQ_MAGNUM=8192000	# 8.192 MHz - NEC M403
 com0		at pica?
 com1		at pica?
 lpt0		at pica?

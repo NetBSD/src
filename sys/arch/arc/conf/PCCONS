@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.1.2.1 2000/07/06 14:10:34 sommerfeld Exp $
+#	$NetBSD: PCCONS,v 1.1.2.2 2000/08/10 21:55:32 soda Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -102,6 +102,9 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
+
+# wscons terminal emulation
+options 	WSEMUL_VT100	# VT100 emulation
 
 # Kernel root file system and dump configuration.
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
