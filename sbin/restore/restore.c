@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.8 1997/03/19 08:42:53 lukem Exp $	*/
+/*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: restore.c,v 1.8 1997/03/19 08:42:53 lukem Exp $";
+static char rcsid[] = "$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,8 +434,13 @@ nodeupdates(name, ino, type)
 		}
 		if (ip->e_type == LEAF) {
 			/* changing from leaf to node */
-			removeleaf(ip);
-			freeentry(ip);
+			for ( ; ip != NULL; ip = ip->e_links) {
+				if (ip->e_type != LEAF)
+					badentry(ip,
+					    "NODE and LEAF links to same inode");
+				removeleaf(ip);
+				freeentry(ip);
+			}
 			ip = addentry(name, ino, type);
 			newnode(ip);
 		} else {
