@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.17 2001/03/21 21:11:13 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.18 2001/04/24 20:16:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -167,6 +167,7 @@
 #define	VAX_STYP_53	0x0b		/* VAX 4000 model 105A */
 #define	VAX_STYP_55	0x08		/* MicroVAX 3100 model 85 */
 #define VAX_BTYP_49	0x13000004	/* MicroVAX 3100 model 90 */
+#define	VAX_BTYP_681	0x13000005	/* VAX 4000 model 500A */
 
 /*
  * SOC chip series (1991)
