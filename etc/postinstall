@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.14 2002/05/14 23:35:35 itojun Exp $
+# $NetBSD: postinstall,v 1.15 2002/05/16 20:59:35 itojun Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -379,8 +379,8 @@ do_ssh()
 		fi
 	fi
 
-	if [ ! -d /var/empty ]; then
-		msg "/var/empty has to be present."
+	if [ ! -d /var/chroot/sshd ]; then
+		msg "/var/chroot/sshd has to be present."
 		failed=1
 	fi
 
