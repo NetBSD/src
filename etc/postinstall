@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.34 2002/11/07 06:12:50 enami Exp $
+# $NetBSD: postinstall,v 1.35 2002/11/17 00:49:54 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@
 #	- support quiet/verbose mode ?
 #	- check obsolete file lists -- need to remove non obsolete files from
 #	  the sets first.
+#	- etc/moduli
 #
 
 #
