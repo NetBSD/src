@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.27 1996/10/13 03:07:12 christos Exp $	*/
+/*	$NetBSD: idesc.c,v 1.28 1996/12/10 21:27:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -410,6 +410,7 @@ idescattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &idesc_scsiswitch;
 	sc->sc_link.device = &idesc_scsidev;
 	sc->sc_link.openings = 1;
+	sc->sc_link.max_target = 7;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	sc->sc_isr.isr_intr = idesc_intr;

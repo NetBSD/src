@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.20 1996/10/13 03:06:48 christos Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.21 1996/12/10 21:27:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -167,6 +167,7 @@ atzscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &atzsc_scsiswitch;
 	sc->sc_link.device = &atzsc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	sbicinit(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.16 1996/10/13 03:06:46 christos Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.17 1996/12/10 21:27:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -143,6 +143,7 @@ ahscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &ahsc_scsiswitch;
 	sc->sc_link.device = &ahsc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	sbicinit(sc);
 

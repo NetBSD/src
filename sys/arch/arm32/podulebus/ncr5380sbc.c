@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.6 1996/10/13 03:06:44 christos Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.7 1996/12/10 21:27:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Melvin Tang-Richardson (Modified for weird regs)
@@ -364,6 +364,7 @@ ncr5380_init(sc)
 			sc->sc_matrix[i][j] = NULL;
 
 	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
+	sc->sc_link.max_target = 7;
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;
 

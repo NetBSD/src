@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.14 1996/12/10 21:28:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -346,6 +346,7 @@ ncr5380_init(sc)
 			sc->sc_matrix[i][j] = NULL;
 
 	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
+	sc->sc_link.max_target = 7;
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;
 

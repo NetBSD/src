@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.4 1996/11/04 21:20:01 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.5 1996/12/10 21:27:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -568,6 +568,7 @@ espattach(parent, self, aux)
 	sc->sc_link.adapter = &esp_switch;
 	sc->sc_link.device = &esp_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	/*
 	 * If the boot path is "esp" at the moment and it's me, then

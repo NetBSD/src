@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
+/*	$NetBSD: wds.c,v 1.14 1996/12/10 21:27:52 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -286,6 +286,7 @@ wdsattach(parent, self, aux)
 	/* I don't think the -ASE can handle openings > 1. */
 	/* It gives Vendor Error 26 whenever I try it.     */
 	sc->sc_link.openings = 1;
+	sc->sc_link.max_target = 7;
 
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.16 1996/10/13 03:07:37 christos Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.17 1996/12/10 21:27:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -172,6 +172,7 @@ wstscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &wstsc_scsiswitch;
 	sc->sc_link.device = &wstsc_scsidev;
 	sc->sc_link.openings = 1;
+	sc->sc_link.max_target = 7;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

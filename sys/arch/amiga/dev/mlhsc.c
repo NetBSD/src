@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.14 1996/10/13 03:07:25 christos Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.15 1996/12/10 21:27:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -147,6 +147,7 @@ mlhscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &mlhsc_scsiswitch;
 	sc->sc_link.device = &mlhsc_scsidev;
 	sc->sc_link.openings = 1;
+	sc->sc_link.max_target = 7;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

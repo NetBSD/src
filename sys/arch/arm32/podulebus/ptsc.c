@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.12 1996/10/29 23:53:02 mark Exp $ */
+/* $NetBSD: ptsc.c,v 1.13 1996/12/10 21:27:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -185,6 +185,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.adapter	    = &ptsc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &ptsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
+	sc->sc_softc.sc_link.max_target     = 7;
 
 	printf(" host=%d", sc->sc_softc.sc_link.adapter_target);
 

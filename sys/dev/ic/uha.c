@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.5 1996/11/15 22:53:36 jonathan Exp $	*/
+/*	$NetBSD: uha.c,v 1.6 1996/12/10 21:28:02 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -133,6 +133,7 @@ uha_attach(sc)
 	sc->sc_link.adapter = &uha_switch;
 	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	/*
 	 * ask the adapter what subunits are present

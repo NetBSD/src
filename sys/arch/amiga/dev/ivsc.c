@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.19 1996/10/13 03:07:21 christos Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.20 1996/12/10 21:27:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -161,6 +161,7 @@ ivscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &ivsc_scsiswitch;
 	sc->sc_link.device = &ivsc_scsidev;
 	sc->sc_link.openings = 1;
+	sc->sc_link.max_target = 7;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

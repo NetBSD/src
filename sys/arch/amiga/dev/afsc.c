@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.18 1996/10/13 03:06:45 christos Exp $	*/
+/*	$NetBSD: afsc.c,v 1.19 1996/12/10 21:27:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -158,6 +158,7 @@ afscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &afsc_scsiswitch;
 	sc->sc_link.device = &afsc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	siopinitialize(sc);
 

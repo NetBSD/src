@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.35 1996/10/13 03:21:24 christos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.36 1996/12/10 21:27:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -243,6 +243,7 @@ void		*auxp;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
+	sc->sc_link.max_target      = 7;
 
 	/*
 	 * bitmasks

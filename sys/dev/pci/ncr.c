@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.53 1996/12/05 01:25:28 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.54 1996/12/10 21:27:55 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1338,7 +1338,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.53 1996/12/05 01:25:28 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.54 1996/12/10 21:27:55 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3636,6 +3636,7 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.adapter_target = np->myaddr;
 	np->sc_link.openings = 1;
 	np->sc_link.channel      = SCSI_CHANNEL_ONLY_ONE;
+	np->sc_link.max_target   = wide ? 15 : 7;
 #else /* !__NetBSD__ */
 	np->sc_link.adapter_unit = unit;
 	np->sc_link.adapter_softc = np;

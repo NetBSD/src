@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.11 1996/10/13 03:06:54 christos Exp $	*/
+/*	$NetBSD: empsc.c,v 1.12 1996/12/10 21:27:22 thorpej Exp $	*/
 
 /*
 
@@ -144,6 +144,7 @@ empscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &empsc_scsiswitch;
 	sc->sc_link.device = &empsc_scsidev;
 	sc->sc_link.openings = 1;
+	sc->sc_link.max_target = 7;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

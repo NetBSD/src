@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.17 1996/10/13 03:07:36 christos Exp $	*/
+/*	$NetBSD: wesc.c,v 1.18 1996/12/10 21:27:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -128,6 +128,7 @@ wescattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &wesc_scsiswitch;
 	sc->sc_link.device = &wesc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	siopinitialize(sc);
 
