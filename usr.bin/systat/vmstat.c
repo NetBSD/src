@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.57 2005/02/03 16:16:00 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.58 2005/02/22 15:13:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.57 2005/02/03 16:16:00 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.58 2005/02/22 15:13:57 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -142,7 +142,7 @@ static struct nlist namelist[] = {
 #define PROCSROW	 2	/* uses 2 rows and 20 cols */
 #define PROCSCOL	 0
 #define GENSTATROW	 2	/* uses 2 rows and 30 cols */
-#define GENSTATCOL	18
+#define GENSTATCOL	17
 #define VMSTATROW	 7	/* uses 17 rows and 15 cols */
 #define VMSTATCOL	64
 #define GRAPHROW	 5	/* uses 3 rows and 51 cols */
@@ -355,7 +355,7 @@ labelvmstat(void)
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 
-	mvprintw(GENSTATROW, GENSTATCOL, " Csw   Trp   Sys  Int  Sof   Flt");
+	mvprintw(GENSTATROW, GENSTATCOL, "  Csw   Trp   Sys  Int  Sof   Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
 		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
@@ -540,12 +540,12 @@ showvmstat(void)
 	PUTRATE(uvmexp.pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
 	PUTRATE(uvmexp.pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
 
-	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 4);
-	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 4, 6);
-	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 10, 6);
-	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 16, 5);
-	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 21, 5);
-	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 26, 6);
+	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 5);
+	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 5, 6);
+	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 11, 6);
+	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 17, 5);
+	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 22, 5);
+	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 27, 6);
 	for (l = 0, i = 0, r = DISKROW, c = DISKCOL; i < dk_ndrive; i++) {
 		if (!dk_select[i])
 			continue;
