@@ -1,4 +1,4 @@
-/*	$NetBSD: ir.h,v 1.1 2001/12/02 10:44:43 augustss Exp $	*/
+/*	$NetBSD: ir.h,v 1.2 2001/12/05 20:00:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,16 +40,13 @@ struct ir_attach_args {
 	int ia_type;
 #define IR_TYPE_IRFRAME 0
 #define IR_TYPE_CIR 1
-	void *ia_methods;
+	const void *ia_methods;
 	void *ia_handle;
 };
 
 struct irframe_methods;
 
 int ir_print(void *aux, const char *pnp);
-
-struct device *irframe_alloc(size_t, struct irframe_methods *, void *);
-void irframe_dealloc(struct device *);
 
 #define splir spltty
 #define IPL_IR IPL_TTY

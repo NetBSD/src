@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaio.h,v 1.2 2001/12/04 23:33:33 augustss Exp $	*/
+/*	$NetBSD: irdaio.h,v 1.3 2001/12/05 20:00:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ struct irda_params {
 #define   DONGLE_ACTISYS_PLUS	4
 #define   DONGLE_LITELINK	5
 #define   DONGLE_GIRBIL		6
+#define   DONGLE_MAX		7
 
 #endif /* _SYS_DEV_IRDA_H_ */
 
