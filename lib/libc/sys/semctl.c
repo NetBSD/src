@@ -1,4 +1,4 @@
-/*	$NetBSD: semctl.c,v 1.5 1999/08/25 05:09:32 thorpej Exp $	*/
+/*	$NetBSD: semctl.c,v 1.6 2000/01/22 21:19:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: semctl.c,v 1.5 1999/08/25 05:09:32 thorpej Exp $");
+__RCSID("$NetBSD: semctl.c,v 1.6 2000/01/22 21:19:29 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define	__LIBC12_SOURCE__
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: semctl.c,v 1.5 1999/08/25 05:09:32 thorpej Exp $");
 #if __STDC__
 int semctl(int semid, int semnum, int cmd, union __semun semun)
 #else
-int semctl(semid, int semnum, cmd, semun)
+int semctl(semid, semnum, cmd, semun)
 	int semid, semnum;
 	int cmd;
 	union __semun semun;
