@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.1 2000/11/26 17:44:04 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.2 2000/12/03 13:03:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <sys/lock.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
+#include <sys/vnode.h>
 #include <sys/syslog.h>
 #if NRND > 0
 #include <sys/rnd.h>
@@ -110,6 +111,55 @@ ldattach(struct ld_softc *sc)
 	if (ld_sdh == NULL)
 		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
 	BUFQ_INIT(&sc->sc_bufq);
+}
+
+void
+lddetach(struct ld_softc *sc)
+{
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* Wait for commands queued with the hardware to complete. */
+	if (sc->sc_queuecnt != 0)
+		tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 0);
+
+	/* Locate the major numbers. */
+	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == sdopen)
+			break;
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == sdopen)
+			break;
+
+	/* Kill off any queued buffers. */
+	s = splbio();
+	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
+		BUFQ_REMOVE(&sc->sc_bufq, bp);
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+	splx(s);
+
+	/* Nuke the vnodes for any open instances. */
+	mn = DISKUNIT(sc->sc_dv.dv_unit);
+	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
+	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
+	
+	/* Detach from the disk list. */
+	disk_detach(&sc->sc_dk);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->sc_rnd_source);
+#endif
+
+	/* Flush the device's cache. */
+	if (sc->sc_flush != NULL)
+		if ((*sc->sc_flush)(sc) != 0)
+			printf("%s: unable to flush cache\n",
+			    sc->sc_dv.dv_xname);
 }
 
 static void
@@ -301,6 +351,14 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 	struct disklabel *lp;
 	int part, s, rv;
 
+	if ((sc->sc_flags & LDF_DRAIN) != 0) {
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return (-1);
+	}
+
 	part = DISKPART(bp->b_dev);
 	lp = sc->sc_dk.dk_label;
 
@@ -378,7 +436,8 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
 	biodone(bp);
-	sc->sc_queuecnt--;
+	if (--sc->sc_queuecnt == 0 && (sc->sc_flags & LDF_DRAIN) != 0)
+		wakeup(&sc->sc_queuecnt);
 
 	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
 		BUFQ_REMOVE(&sc->sc_bufq, bp);
