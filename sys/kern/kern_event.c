@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.11 2002/03/17 19:53:07 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.12 2002/04/09 06:19:52 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -951,28 +951,6 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 			error = ENOENT;
 		FREE(name, M_KEVENT);
 		break;
-
-#if 1		/* XXXLUKEM - debug only; remove from production code */
-	case KFILTER_REGISTER:
-	case KFILTER_UNREGISTER:
-		MALLOC(name, char *, KFILTER_MAXNAME, M_KEVENT, M_WAITOK);
-		error = copyinstr(km->name, name, KFILTER_MAXNAME, NULL);
-		if (error) {
-			FREE(name, M_KEVENT);
-			break;
-		}
-		if (com == KFILTER_REGISTER) {
-			kfilter = kfilter_byfilter(km->filter);
-			if (kfilter != NULL) {
-				error = kfilter_register(name,
-				    kfilter->filtops, &km->filter);
-			} else
-				error = ENOENT;
-		} else
-			error = kfilter_unregister(name);
-		FREE(name, M_KEVENT);
-		break;
-#endif
 
 	default:
 		error = ENOTTY;

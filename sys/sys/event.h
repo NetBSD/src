@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.4 2001/09/08 16:48:17 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.5 2002/04/09 06:19:51 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -127,22 +127,10 @@ struct kfilter_mapping {
 	uint32_t	filter;		/* filter to lookup or return */
 };
 
-					/* map filter to name (max size len) */ 
+/* map filter to name (max size len) */ 
 #define KFILTER_BYFILTER	_IOWR('k', 0, struct kfilter_mapping)
-					/* map name to filter (len ignored) */
+/* map name to filter (len ignored) */
 #define KFILTER_BYNAME		_IOWR('k', 1, struct kfilter_mapping)
-
-#if 1	/* XXXLUKEM - debug only; remove from production code */
-					/*
-					 * register name, mapping filtops
-					 * to those of filter, returning new
-					 * number in filter
-					 */
-#define KFILTER_REGISTER	_IOWR('k', 2, struct kfilter_mapping)
-					/* unregister name */
-#define KFILTER_UNREGISTER	_IOWR('k', 3, struct kfilter_mapping)
-#endif
-
 
 #ifdef _KERNEL
 
