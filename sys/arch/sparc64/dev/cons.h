@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.3 2000/05/19 05:26:17 eeh Exp $	*/
+/*	$NetBSD: cons.h,v 1.4 2004/03/19 15:21:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -66,3 +66,13 @@ zs_get_chan_addr __P((int zsc_unit, int channel));
 void zs_kgdb_init __P((void));
 void zskgdb __P((struct zs_chanstate *));
 #endif
+
+/*
+ * PROM I/O nodes and arguments are prepared by consinit().
+ * Drivers can examine these when looking for a console device match.
+ */
+extern int prom_stdin_node;
+extern int prom_stdout_node;
+extern char prom_stdin_args[];	/* not used on sun4u */
+extern char prom_stdout_args[];	/* not used on sun4u */
+
