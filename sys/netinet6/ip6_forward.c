@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.33 2003/06/24 07:39:25 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.34 2003/06/30 03:30:50 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.33 2003/06/24 07:39:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.34 2003/06/30 03:30:50 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -513,7 +513,7 @@ ip6_forward(m, srcrt)
 	 * Run through list of hooks for output packets.
 	 */
 	if ((error = pfil_run_hooks(&inet6_pfil_hook, &m, rt->rt_ifp,
-				    PFIL_OUT)) != 0)
+	    PFIL_OUT)) != 0)
 		goto senderr;
 	if (m == NULL)
 		goto freecopy;
