@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.6 1998/10/10 07:38:23 mrg Exp $	*/
+/*	$NetBSD: chflags.c,v 1.7 2000/07/08 03:14:50 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.6 1998/10/10 07:38:23 mrg Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.7 2000/07/08 03:14:50 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,22 +72,21 @@ main(argc, argv)
 	FTSENT *p;
 	u_long clear, set;
 	long val;
-	int Hflag, Lflag, Pflag, Rflag, ch, fts_options, oct, rval;
+	int Hflag, Lflag, Rflag, ch, fts_options, oct, rval;
 	char *flags, *ep;
 
-	Hflag = Lflag = Pflag = Rflag = 0;
+	Hflag = Lflag = Rflag = 0;
 	while ((ch = getopt(argc, argv, "HLPR")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
-			Lflag = Pflag = 0;
+			Lflag = 0;
 			break;
 		case 'L':
 			Lflag = 1;
-			Hflag = Pflag = 0;
+			Hflag = 0;
 			break;
 		case 'P':
-			Pflag = 1;
 			Hflag = Lflag = 0;
 			break;
 		case 'R':
@@ -120,20 +119,20 @@ main(argc, argv)
 		if (val < 0)
 			errno = ERANGE;
 		if (errno)
-                        err(1, "invalid flags: %s", flags);
-                if (*ep)
-                        errx(1, "invalid flags: %s", flags);
+			err(1, "invalid flags: %s", flags);
+		if (*ep)
+			errx(1, "invalid flags: %s", flags);
 		set = val;
-                oct = 1;
+		oct = 1;
 	} else {
 		if (string_to_flags(&flags, &set, &clear))
-                        errx(1, "invalid flag: %s", flags);
+			errx(1, "invalid flag: %s", flags);
 		clear = ~clear;
 		oct = 0;
 	}
 
-	if ((ftsp = fts_open(++argv, fts_options , 0)) == NULL)
-		err(1, "fts_open `%s'", argv[0]); 
+	if ((ftsp = fts_open(++argv, fts_options, NULL)) == NULL)
+		err(1, "fts_open: %s", argv[0]); 
 
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
