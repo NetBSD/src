@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.15 2002/02/25 00:39:04 enami Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.15.2.1 2002/06/30 05:47:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -114,8 +114,9 @@ static void deref_kptr(void *, void *, size_t);
 void
 dkswap(void)
 {
+	double etime;
 	u_int64_t tmp;
-	int	i;
+	int	i, state;
 
 #define	SWAP(fld) do {							\
 	tmp = cur.fld;							\
@@ -145,6 +146,17 @@ dkswap(void)
 		SWAP(cp_time[i]);
 	SWAP(tk_nin);
 	SWAP(tk_nout);
+
+	etime = 0;
+	for (state = 0; state < CPUSTATES; ++state) {
+		etime += cur.cp_time[state];
+	}
+	if (etime == 0)
+		etime = 1;
+	etime /= hz;
+	etime /= cur.cp_ncpu;
+
+	cur.cp_etime = etime;
 
 #undef SWAP
 }
@@ -237,6 +249,12 @@ dkinit(int select)
 		return (1);
 
 	if (memf == NULL) {
+		mib[0] = CTL_HW;
+		mib[1] = HW_NCPU;
+		size = sizeof(cur.cp_ncpu);
+		if (sysctl(mib, 2, &cur.cp_ncpu, &size, NULL, 0) == -1)
+			err(1, "sysctl hw.ncpu failed");
+
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CLOCKRATE;
 		size = sizeof(clockinfo);
