@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.21 1997/09/20 06:16:34 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.22 1997/09/24 09:24:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.21 1997/09/20 06:16:34 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.22 1997/09/24 09:24:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,9 @@ ckfini(markclean)
 			sbdirty();
 			ofsmodified = fsmodified;
 			flush(fswritefd, &sblk);
+#if LITE2BORKEN
 			fsmodified = ofsmodified;
+#endif
 			if (!preen)
 				printf(
 				    "\n***** FILE SYSTEM MARKED CLEAN *****\n");
