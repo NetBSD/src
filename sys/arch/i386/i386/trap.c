@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.49 1994/08/15 14:46:51 mycroft Exp $
+ *	$Id: trap.c,v 1.50 1994/08/15 22:24:22 mycroft Exp $
  */
 
 /*
@@ -64,6 +64,10 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+
+#ifdef COMPAT_IBCS2
+#include <compat/ibcs2/ibcs2_exec.h>
+#endif
 
 #include "npx.h"
 
@@ -464,6 +468,10 @@ syscall(frame)
 	extern int nsvr4_sysent;
 	extern struct sysent svr4_sysent[];
 #endif
+#ifdef COMPAT_IBCS2
+	extern int nibcs2_sysent;
+	extern struct sysent ibcs2_sysent[];
+#endif
 
 	cnt.v_syscall++;
 	if (ISPL(frame.tf_cs) != SEL_UPL)
@@ -481,12 +489,20 @@ syscall(frame)
 		callp = sysent;
 		break;
 #ifdef COMPAT_SVR4
-	case EMUL_IBCS2:
+	case EMUL_IBCS2_ELF:
 		nsys = nsvr4_sysent;
 		callp = svr4_sysent;
 #ifdef DEBUG_SVR4
 		printf("svr4_syscall(%d)\n", code);
 #endif
+		break;
+#endif
+#ifdef COMPAT_IBCS2
+	case EMUL_IBCS2_COFF:
+		nsys = nibcs2_sysent;
+		callp = ibcs2_sysent;
+		if (IBCS2_HIGH_SYSCALL(code))
+			code = IBCS2_CVT_HIGH_SYSCALL(code);
 		break;
 #endif
 	}
