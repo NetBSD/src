@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 1998/01/06 08:27:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 1998/01/08 23:47:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1845,11 +1845,7 @@ pmap_kernel_init(pmap)
  */
 
 /*
- * For our convenience, vm_page.c implements:
- *	 pmap_startup(), pmap_steal_memory()
- * using the functions:
- *	 pmap_virtual_space(), pmap_free_pages(), pmap_next_page(),
- * which are much simpler to implement.
+ * Support functions for vm_page_bootstrap().
  */
 
 /*
@@ -1865,6 +1861,7 @@ pmap_virtual_space(v_start, v_end)
 	*v_end   = virtual_end;
 }
 
+#if !defined(MACHINE_NEW_NONCONTIG)
 /*
  * Return the number of page indices in the range of
  * possible return values for pmap_page_index() for
@@ -1910,6 +1907,7 @@ pmap_next_page(paddr)
 	avail_next += NBPG;
 	return TRUE;
 }
+#endif /* ! MACHINE_NEW_NONCONTIG */
 
 /*
  * pmap_page_index()
