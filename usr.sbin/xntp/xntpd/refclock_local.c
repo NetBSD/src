@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_local.c,v 1.2 1998/01/09 06:07:01 perry Exp $	*/
+/*	$NetBSD: refclock_local.c,v 1.3 1998/08/12 14:11:55 christos Exp $	*/
 
 /* wjm 17-aug-1995: add a hook for special treatment of VMS_LOCALUNIT */
 
@@ -9,6 +9,7 @@
 #include <config.h>
 #endif
 
+#if defined(REFCLOCK) && defined(LOCAL_CLOCK)
 
 #include <stdio.h>
 #include <ctype.h>
@@ -17,8 +18,6 @@
 #include "ntpd.h"
 #include "ntp_refclock.h"
 #include "ntp_stdlib.h"
-
-#if defined(REFCLOCK) && defined(LOCAL_CLOCK)
 
 /*
  * This is a hack to allow a machine to use its own system clock as a
@@ -189,4 +188,6 @@ local_poll(unit, peer)
 	L_CLR(&pp->fudgetime2);
 }
 
-#endif	/* REFCLOCK */
+#else /* not (REFCLOCK && LOCAL_CLOCK) */
+int refclock_local_bs;
+#endif /* not (REFCLOCK && LOCAL_CLOCK) */

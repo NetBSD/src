@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_leitch.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
+/*	$NetBSD: refclock_leitch.c,v 1.4 1998/08/12 14:11:55 christos Exp $	*/
 
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock
@@ -669,7 +669,10 @@ leitch_get_date(rbufp,leitch)
 
 	if (rbufp->recv_length < 6)
 		return(0);
-#define BAD(A) (rbufp->recv_buffer[A] < '0') || (rbufp->recv_buffer[A] > '9')
+#ifdef BAD
+#undef BAD
+#endif
+#define BAD(A) ((rbufp->recv_buffer[A] < '0') || (rbufp->recv_buffer[A] > '9'))
 	if (BAD(0)||BAD(1)||BAD(2)||BAD(3)||BAD(4)||BAD(5))
 		return(0);
 #define ATOB(A) ((rbufp->recv_buffer[A])-'0')
@@ -718,4 +721,6 @@ leitch_get_time(rbufp,leitch,which)
 	return(1);
 }
 
-#endif
+#else /* not (REFCLOCK && LEITCH) */
+int refclock_leitch_bs;
+#endif /* not (REFCLOCK && LEITCH) */

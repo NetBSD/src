@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.7 1998/04/01 15:01:21 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.8 1998/08/12 14:11:52 christos Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -486,7 +486,7 @@ getstartup(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, (char *) xntp_options)) != -1)
+	while ((c = ntp_getopt(argc, argv, xntp_options)) != -1)
 		switch (c) {
 #ifdef DEBUG
 		case 'd':
@@ -648,7 +648,7 @@ getconfig(argc, argv)
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, (char *) xntp_options)) != -1) {
+	while ((c = ntp_getopt(argc, argv, xntp_options)) != -1) {
 		switch (c) {
 		case 'a':
 			proto_config(PROTO_AUTHENTICATE, 1);
@@ -1132,8 +1132,8 @@ getconfig(argc, argv)
 			if (SRCADR(&peeraddr) == htonl(INADDR_ANY))
 				maskaddr.sin_addr.s_addr = 0;
 			if (!errflg)
-				restrict_addr(RESTRICT_FLAGS, &peeraddr,
-				    &maskaddr, (int)peerkey, peerversion);
+				hack_restrict(RESTRICT_FLAGS, &peeraddr, &maskaddr,
+				    (int)peerkey, peerversion);
 			break;
 			
 		case CONFIG_BDELAY:

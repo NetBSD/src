@@ -1,7 +1,7 @@
-/*	$NetBSD: ntp_timer.c,v 1.3 1998/03/06 18:17:22 christos Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.4 1998/08/12 14:11:54 christos Exp $	*/
 
 /*
- * ntp_event.c - event timer support routines
+ * ntp_timer.c - event timer support routines
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -228,6 +228,36 @@ static timer_t xntpd_timerid;   /* should be global if we ever want to kill
 }
 
 
+#ifdef TIMERQUEUE_DEBUG
+/* Timer queue sanity checking routines */
+
+static void EV_ASSERT(struct event *ev, char *m)
+{
+    if ( ! ev )
+	{ msyslog(LOG_ERR, "%s is NULL, aborting!",m); abort(); }
+}
+
+static void EV_LINKCHK(struct event *ev, char *m)
+{
+    if ( ! ev )
+	{ msyslog(LOG_ERR, "%s is NULL, aborting!",m); abort(); }
+    if ( ! ev->next )
+	{ msyslog(LOG_ERR, "%s->next is NULL, aborting!",m); abort(); }
+    if ( ! ev->prev )
+	{ msyslog(LOG_ERR, "%s->prev is NULL, aborting!",m); abort(); }
+    if ( ev->next->prev != ev )
+	{ msyslog(LOG_ERR, "%s->next->prev != self, aborting!",m); abort(); }
+    if ( ev->prev->next != ev )
+	{ msyslog(LOG_ERR, "%s->prev->next != self, aborting!",m); abort(); }
+}
+
+#else /* TIMERQUEUE_DEBUG */
+
+# define EV_ASSERT()	{}
+# define EV_LINKCHK()	{}
+
+#endif /* TIMERQUEUE_DEBUG */
+
 /*
  * timer - dispatch anyone who needs to be
  */
@@ -282,18 +312,24 @@ timer()
 	struct event *qh;
 
 	qh = ev = &timerqueue[i];
-	if (qh->event_time != 0)
+	if (qh->event_time != 0) {
 	  msyslog(LOG_ERR, "timerqueue[%d].event_time is %d instead of 0!",
 		  i, timerqueue[i].event_time);
+	  abort();
+	}
 	j = 0;
 	do
 	  {
-	    if (ev->prev->next != ev)
+	    if (ev->prev->next != ev) {
 	      msyslog(LOG_ERR, "timerqueue[%d]: #%d: ev->prev->next != ev",
 		      i, j);
-	    if (ev->next->prev != ev)
+	      abort();
+	    }
+	    if (ev->next->prev != ev) {
 	      msyslog(LOG_ERR, "timerqueue[%d]: #%d: ev->next->prev != ev",
 		      i, j);
+	      abort();
+	    }
 	    ++j;
 	    ev = ev->next;
 	  }
@@ -315,10 +351,13 @@ timer()
       ev->event_handler(ev->peer);
       ev = tq->next;
     }
-    if (!ev)
+    if (!ev) {
       msyslog(LOG_ERR, "timer: ev was NIL!");
+      abort();
+    }
   } else {
     msyslog(LOG_ERR, "timer: tq was NIL!");
+    abort();
   }
 
   /* Added mutex to prevent race condition among threads under Windows NT */
@@ -434,3 +473,86 @@ timer_clr_stats()
   timer_xmtcalls = 0;
   timer_timereset = current_time;
 }
+
+
+#ifdef TIMERQUEUE_DEBUG
+/* macro versions of these routines are available in include/ntp.h */
+
+# ifdef SYS_WINNT  /* WindowsNT apparently needs mutex locking around here */
+#  define WINNT_WAIT() 	WaitForSingleObject(m_hListMutex,INFINITE)
+#  define WINNT_RELS()	ReleaseMutex(m_hListMutex)
+# else
+#  define WINNT_WAIT()	{}
+#  define WINNT_RELS()	{}
+# endif
+
+/*
+ * TIMER_ENQUEUE() puts stuff on the timer queue.  It takes as
+ * arguments (ea), an array of event slots, and (iev), the event
+ * to be inserted.  This one searches the hash bucket from the
+ * end, and is about optimum for the timing requirements of
+ * NTP peers.
+ */
+void TIMER_ENQUEUE(struct event *ea, struct event *iev)
+{
+	register struct event *ev;
+
+	EV_LINKCHK( ea, "TIMER_ENQUEUE(): ea" );
+	EV_ASSERT( iev, "TIMER_ENQUEUE(): iev" );
+	WINNT_WAIT();
+	ev = (ea)[TIMER_SLOT((iev)->event_time)].prev;
+	EV_LINKCHK( ev, "TIMER_ENQUEUE(): ev" );
+	while (ev->event_time > (iev)->event_time) {
+		ev = ev->prev;
+		EV_LINKCHK( ev, "TIMER_ENQUEUE(): ev" );
+	}
+	(iev)->prev = ev;
+	(iev)->next = ev->next;
+	(ev)->next->prev = (iev);
+	(ev)->next = (iev);
+	WINNT_RELS();
+}
+
+/*
+ * TIMER_INSERT() also puts stuff on the timer queue, but searches the
+ * bucket from the top.  This is better for things that do very short
+ * time outs, like clock support.
+ */
+void TIMER_INSERT(struct event *ea, struct event *iev)
+{
+	register struct event *ev;
+
+	EV_LINKCHK( ea, "TIMER_INSERT(): ea" );
+	EV_ASSERT( iev, "TIMER_INSERT(): iev" );
+	WINNT_WAIT();
+	ev = (ea)[TIMER_SLOT((iev)->event_time)].next;
+	EV_LINKCHK( ev, "TIMER_INSERT(): ev" );
+	while (ev->event_time != 0 &&
+	    ev->event_time < (iev)->event_time) {
+		ev = ev->next;
+		EV_LINKCHK( ev, "TIMER_INSERT(): ev" );
+	}
+	(iev)->next = ev;
+	(iev)->prev = ev->prev;
+	(ev)->prev->next = (iev);
+	(ev)->prev = (iev);
+	WINNT_RELS();
+}
+
+/*
+ * Remove an event from the queue.
+ */
+void TIMER_DEQUEUE(struct event *ev)
+{
+	EV_ASSERT( ev, "TIMER_DEQUEUE(): ev" );
+	WINNT_WAIT();
+	if ((ev)->next != 0) {
+		EV_LINKCHK( ev, "TIMER_DEQUEUE(): ev" );
+		(ev)->next->prev = (ev)->prev;
+		(ev)->prev->next = (ev)->next;
+		(ev)->next = (ev)->prev = 0;
+	}
+	WINNT_RELS();
+}
+
+#endif /* TIMERQUEUE_DEBUG */

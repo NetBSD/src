@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.4 1998/04/01 15:01:22 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.5 1998/08/12 14:11:53 christos Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 3 protocol machinery
@@ -54,7 +54,7 @@ s_fp	sys_bdelay;		/* broadcast client default delay */
 int	sys_authenticate;	/* authenticate time used for syncing */
 u_char	consensus_leap;		/* mitigated leap bits */
 l_fp	sys_authdelay;		/* authentication delay */
-u_long	sys_authdly[1];		/* authentication delay shift reg */
+u_long	sys_authdly[2];		/* authentication delay shift reg */
 u_char	leap_consensus;		/* consensus of survivor leap bits */
 
 /*
@@ -106,6 +106,7 @@ extern int debug;
 
 static	void	clear_all	P((void));
 static	int	default_get_precision P((void));
+
 
 /*
  * transmit - Transmit Procedure. See Section 3.4.2 of the
@@ -260,8 +261,10 @@ transmit(peer)
 					peer_clear(peer);
 					peer->timereachable = current_time;
 				}
-			} else if (peer->flags & FLAG_MCAST2)
+			} else if (peer->flags & FLAG_MCAST2) {
 				unpeer(peer);
+				return;
+			}
 
 			/*
 			 * While we have a chance, if our system peer is
@@ -359,7 +362,7 @@ receive(rbufp)
 	register struct peer *peer;
 	register struct pkt *pkt;
 	register u_char hismode;
-	int restrict_addr;
+	int restrict_mask;
 	int has_mac;
 	int trustable;
 	int is_authentic;
@@ -380,8 +383,8 @@ receive(rbufp)
 	 * Get the restrictions on this guy.  If we're to ignore him,
 	 * go no further.
 	 */
-	restrict_addr = restrictions(&rbufp->recv_srcadr);
-	if (restrict_addr & RES_IGNORE)
+	restrict_mask = restrictions(&rbufp->recv_srcadr);
+	if (restrict_mask & RES_IGNORE)
 		return;
 
 	/*
@@ -405,9 +408,9 @@ receive(rbufp)
 	 * Catch private mode packets. Dump it if queries not allowed.
 	 */
 	if (PKT_MODE(pkt->li_vn_mode) == MODE_PRIVATE) {
-		if (restrict & RES_NOQUERY)
+		if (restrict_mask & RES_NOQUERY)
 			return;
-		process_private(rbufp, ((restrict & RES_NOMODIFY) == 0));
+		process_private(rbufp, ((restrict_mask & RES_NOMODIFY) == 0));
 		return;
 	}
 
@@ -415,9 +418,9 @@ receive(rbufp)
 	 * Same with control mode packets.
 	 */
 	if (PKT_MODE(pkt->li_vn_mode) == MODE_CONTROL) {
-		if (restrict & RES_NOQUERY)
+		if (restrict_mask & RES_NOQUERY)
 			return;
-		process_control(rbufp, restrict);
+		process_control(rbufp, restrict_mask);
 		return;
 	}
 
@@ -425,7 +428,7 @@ receive(rbufp)
 	 * See if we're allowed to serve this guy time.  If not, ignore
 	 * him.
 	 */
-	if (restrict & RES_DONTSERVE)
+	if (restrict_mask & RES_DONTSERVE)
 		return;
 
 	/*
@@ -433,7 +436,7 @@ receive(rbufp)
 	 * this guy is from. Note: the flag is determined dynamically
 	 * within restrictions()
 	 */
-	if (restrict & RES_LIMITED) {
+	if (restrict_mask & RES_LIMITED) {
 		extern u_long client_limit;
 
 		sys_limitrejected++;
@@ -590,7 +593,7 @@ receive(rbufp)
 			 * bit memorable.  If so we keep him around for
 			 * later.  If not, send his time quick.
 			 */
-			if (restrict & RES_NOPEER) {
+			if (restrict_mask & RES_NOPEER) {
 				fast_xmit(rbufp, (int)hismode,
 				    is_authentic);
 				return;
@@ -615,7 +618,7 @@ receive(rbufp)
 			/*
 			 * Sort of a repeat of the above...
 			 */
-			if ((restrict & RES_NOPEER) || !sys_bclient)
+			if ((restrict_mask & RES_NOPEER) || !sys_bclient)
 				return;
 			mymode = MODE_MCLIENT;
 			break;
@@ -686,7 +689,7 @@ receive(rbufp)
 	/*
 	 * Determine if this guy is basically trustable.
 	 */
-	if (restrict & RES_DONTTRUST)
+	if (restrict_mask & RES_DONTTRUST)
 		trustable = 0;
 	else
 		trustable = 1;
@@ -937,14 +940,23 @@ process_packet(peer, pkt, recv_ts, has_mac, trustable)
 	 * If the packet header is invalid (tests 5 through 8), exit
 	 */
 	if (peer->flash & (TEST5 | TEST6 | TEST7 | TEST8)) {
-
 #ifdef DEBUG
-	    if (debug > 1)
-		printf("invalid packet header %s 0x%02x %s %s\n",
-		    ntoa(&peer->srcadr), peer->flash, fptoa(p_dist,6),
-		    ufptoa(p_disp, 6));
-#endif
+		if (debug)
+		{
+			printf("invalid packet header %s 0x%02x %s %s\n",
+				ntoa(&peer->srcadr), peer->flash,
+				fptoa(p_dist,6), ufptoa(p_disp, 6));
 
+			if (peer->flash & TEST5)
+			    printf("- peer authentication failure\n");
+			if (peer->flash & TEST6)
+			    printf("- peer clock unsynchronized\n");
+			if (peer->flash & TEST7)
+			    printf("- peer stratum out of bounds\n");
+			if (peer->flash & TEST8)
+			    printf("- root delay/dispersion bounds check\n");
+		}
+#endif
 		return(0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.4 1998/04/01 15:01:25 christos Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.5 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -29,6 +29,7 @@ static	void	peerlist	P((struct parse *, FILE *));
 static	void	peers		P((struct parse *, FILE *));
 static	void	dmpeers		P((struct parse *, FILE *));
 static	void	dopeers		P((struct parse *, FILE *, int));
+static	char   *refid_string	P((u_int32, int));
 static	void	printpeer	P((struct info_peer *, FILE *));
 static	char*	refid_string	P((u_int32, int));
 static	void	showpeer	P((struct parse *, FILE *));
@@ -49,8 +50,8 @@ static	void	set		P((struct parse *, FILE *));
 static	void	sys_clear	P((struct parse *, FILE *));
 static	void	doset		P((struct parse *, FILE *, int));
 static	void	reslist		P((struct parse *, FILE *));
-static	void	restrict_addr	P((struct parse *, FILE *));
-static	void	unrestrict_addr	P((struct parse *, FILE *));
+static	void	new_restrict	P((struct parse *, FILE *));
+static	void	unrestrict	P((struct parse *, FILE *));
 static	void	delrestrict	P((struct parse *, FILE *));
 static	void	do_restrict	P((struct parse *, FILE *, int));
 static	void	monlist		P((struct parse *, FILE *));
@@ -74,6 +75,7 @@ static	void	clockstat	P((struct parse *, FILE *));
 static	void	fudge		P((struct parse *, FILE *));
 static	void	clkbug		P((struct parse *, FILE *));
 static	void	kerninfo	P((struct parse *, FILE *));
+
 
 /*
  * Commands we understand.  Ntpdc imports this.
@@ -136,7 +138,7 @@ struct xcmd opcmds[] = {
 	{ "reslist",	reslist,	{ NO, NO, NO, NO },
 					{ "", "", "", "" },
 			"display the server's restrict list" },
-	{ "restrict",	restrict_addr,	{ ADD, ADD, NTP_STR, OPT|NTP_STR },
+	{ "restrict",	new_restrict,	{ ADD, ADD, NTP_STR, OPT|NTP_STR },
 		{ "address", "mask",
 		"ntpport|ignore|noserve|notrust|noquery|nomodify|nopeer",
 		"..." },
@@ -1369,10 +1371,10 @@ reslist(pcmd, fp)
 
 
 /*
- * restrict - create/add a set of restrictions
+ * new_restrict - create/add a set of restrictions
  */
 static void
-restrict_addr(pcmd, fp)
+new_restrict(pcmd, fp)
 	struct parse *pcmd;
 	FILE *fp;
 {
@@ -2207,6 +2209,7 @@ fudge(pcmd, fp)
 	l_fp ts;
 	int res;
 	long val;
+	u_long uval;
 	int err;
 
 
@@ -2240,10 +2243,10 @@ fudge(pcmd, fp)
 			fudgedata.fudgeval_flags = htonl((u_int32)val);
 	} else if (STREQ(pcmd->argval[1].string, "flags")) {
 		fudgedata.which = htonl(FUDGE_FLAGS);
-		if (!hextoint(pcmd->argval[2].string, &val))
+		if (!hextoint(pcmd->argval[2].string, &uval))
 			err = 1;
 		else
-			fudgedata.fudgeval_flags = htonl((u_int32)(val & 0xf));
+			fudgedata.fudgeval_flags = htonl((u_int32)(uval & 0xf));
 	} else {
 		(void) fprintf(stderr, "What fudge is %s?\n",
 		    pcmd->argval[1].string);

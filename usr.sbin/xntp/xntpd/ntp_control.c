@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.4 1998/04/01 15:01:21 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.5 1998/08/12 14:11:53 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -31,7 +31,7 @@ struct ctl_proc {
 	short control_code;	/* defined request code */
 	u_short flags;		/* flags word */
 	void (*handler)		/* routine to handle request */
-	    P((struct recvbuf *, int));
+		P((struct recvbuf *, int));
 };
 
 /*
@@ -336,6 +336,9 @@ static u_char clocktypes[] = {
 	CTL_SST_TS_UHF,		/* REFCLK_GPS_HP (26) */
 	CTL_SST_TS_TELEPHONE,	/* REFCLK_ARCRON_MSF (27) */
 	CTL_SST_TS_TELEPHONE,	/* REFCLK_SHM (28) */
+        CTL_SST_TS_UHF,         /* REFCLK_PALISADE (29) */
+        CTL_SST_TS_UHF,         /* REFCLK_ONCORE (30) */
+	CTL_SST_TS_UHF,		/* REFCLK_JUPITER (31) */
 };
 
 
@@ -516,9 +519,9 @@ ctl_error(errcode)
  * process_control - process an incoming control message
  */
 void
-process_control(rbufp, restrict_flag)
+process_control(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	register struct ntp_control *pkt;
 	register int req_count;
@@ -669,7 +672,7 @@ process_control(rbufp, restrict_flag)
 				ctl_error(CERR_PERMISSION);
 				return;
 			}
-			(cc->handler)(rbufp, restrict_flag);
+			(cc->handler)(rbufp, restrict_mask);
 			return;
 		}
 	}
@@ -942,8 +945,8 @@ ctl_putlfp(tag, ts)
 	const char *tag;
 	l_fp *ts;
 {
-	register char *cp;
 	register const char *cq;
+	register char *cp;
 	char buffer[200];
 
 	cp = buffer;
@@ -1778,9 +1781,9 @@ ctl_getitem(var_list, data)
  */
 /*ARGSUSED*/
 static void
-control_unspec(rbufp, restrict_flag)
+control_unspec(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	struct peer *peer;
 
@@ -1808,9 +1811,9 @@ control_unspec(rbufp, restrict_flag)
  */
 /*ARGSUSED*/
 static void
-read_status(rbufp, restrict_flag)
+read_status(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	register int i;
 	register struct peer *peer;
@@ -1873,9 +1876,9 @@ read_status(rbufp, restrict_flag)
  */
 /*ARGSUSED*/
 static void
-read_variables(rbufp, restrict_flag)
+read_variables(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	register struct ctl_var *v;
 	register int i;
@@ -1982,9 +1985,9 @@ read_variables(rbufp, restrict_flag)
  */
 /*ARGSUSED*/
 static void
-write_variables(rbufp, restrict_flag)
+write_variables(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	register struct ctl_var *v;
 	register int ext_var;
@@ -2091,9 +2094,9 @@ write_variables(rbufp, restrict_flag)
  */
 /*ARGSUSED*/
 static void
-read_clock_status(rbufp, restrict_flag)
+read_clock_status(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 #ifndef REFCLOCK
 	/*
@@ -2206,9 +2209,9 @@ read_clock_status(rbufp, restrict_flag)
  */
 /*ARGSUSED*/
 static void
-write_clock_status(rbufp, restrict_flag)
+write_clock_status(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	ctl_error(CERR_PERMISSION);
 }
@@ -2223,16 +2226,16 @@ write_clock_status(rbufp, restrict_flag)
  * set_trap - set a trap in response to a control message
  */
 static void
-set_trap(rbufp, restrict_flag)
+set_trap(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	int traptype;
 
 	/*
 	 * See if this guy is allowed
 	 */
-	if (restrict_flag & RES_NOTRAP) {
+	if (restrict_mask & RES_NOTRAP) {
 		ctl_error(CERR_PERMISSION);
 		return;
 	}
@@ -2241,7 +2244,7 @@ set_trap(rbufp, restrict_flag)
 	 * Determine his allowed trap type.
 	 */
 	traptype = TRAP_TYPE_PRIO;
-	if (restrict_flag & RES_LPTRAP)
+	if (restrict_mask & RES_LPTRAP)
 		traptype = TRAP_TYPE_NONPRIO;
 
 	/*
@@ -2259,9 +2262,9 @@ set_trap(rbufp, restrict_flag)
  * unset_trap - unset a trap in response to a control message
  */
 static void
-unset_trap(rbufp, restrict_flag)
+unset_trap(rbufp, restrict_mask)
 	struct recvbuf *rbufp;
-	int restrict_flag;
+	int restrict_mask;
 {
 	int traptype;
 
@@ -2273,7 +2276,7 @@ unset_trap(rbufp, restrict_flag)
 	 * Set the trap type based on this.
 	 */
 	traptype = TRAP_TYPE_PRIO;
-	if (restrict_flag & RES_LPTRAP)
+	if (restrict_mask & RES_LPTRAP)
 		traptype = TRAP_TYPE_NONPRIO;
 
 	/*
