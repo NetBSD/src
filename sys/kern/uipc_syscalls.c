@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.41.2.2 2001/07/19 13:52:19 perry Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.41.2.3 2001/07/29 20:53:41 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -68,6 +68,10 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#include <vm/vm_param.h>
 
 /*
  * System call interface to the socket abstraction.
