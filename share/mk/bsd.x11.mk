@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.13 2003/12/23 15:36:45 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.14 2003/12/26 08:24:33 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -33,13 +33,6 @@ X11FLAGS.SERVER=	-DSHAPE -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
 			-DAVOID_GLYPHBLT -DSINGLEDEPTH -DXvExtension \
 			-DXFree86Server -DXvMCExtension -DSMART_SCHEDULE \
 			-DBUILDDEBUG -DXResExtension -DNDEBUG
-
-# XXX as more LE machines supported add || machine
-.if ${MACHINE} == "i386"
-X11FLAGS.SERVER+=	-DX_BYTE_ORDER=X_LITTLE_ENDIAN
-.else
-X11FLAGS.SERVER+=	-DX_BYTE_ORDER=X_BIG_ENDIAN
-.endif
 
 #	 OS_DEFINES
 X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
