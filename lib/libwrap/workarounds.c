@@ -1,11 +1,11 @@
-/*	$NetBSD: workarounds.c,v 1.3 1999/07/02 16:15:34 simonb Exp $	*/
+/*	$NetBSD: workarounds.c,v 1.4 1999/07/03 12:30:42 simonb Exp $	*/
 
  /*
   * Workarounds for known system software bugs. This module provides wrappers
   * around library functions and system calls that are known to have problems
   * on some systems. Most of these workarounds won't do any harm on regular
   * systems.
-  *
+  * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -14,7 +14,7 @@
 #if 0
 char    sccsid[] = "@(#) workarounds.c 1.6 96/03/19 16:22:25";
 #else
-__RCSID("$NetBSD: workarounds.c,v 1.3 1999/07/02 16:15:34 simonb Exp $");
+__RCSID("$NetBSD: workarounds.c,v 1.4 1999/07/03 12:30:42 simonb Exp $");
 #endif
 #endif
 
@@ -55,7 +55,7 @@ extern int errno;
   * You have this problem when the compiler complains about illegal lvalues
   * or something like that. The following code fixes this mutant behaviour.
   * It should not be enabled on "normal" systems.
-  *
+  * 
   * Bug reported by ben@piglet.cr.usgs.gov (Rev. Ben A. Mesander).
   */
 
