@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.126 2003/08/27 08:03:40 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.127 2003/08/27 10:57:14 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1392,4 +1392,10 @@ sys/kern/kern_sysctl.c				1.141
 
 	Avoid oldlenp mixup (in-kernel pointer and userland pointer).
 	[itojun, ticket #1441]
+
+etc/rc.d/ipnat					1.10
+
+	ipnat needs to be before SERVERS - one may need NAT for servers to work
+	(eg, ntpdate).
+	[martti, ticket #1442]
 
