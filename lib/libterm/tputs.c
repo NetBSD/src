@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.18 2001/01/09 07:18:50 lukem Exp $	*/
+/*	$NetBSD: tputs.c,v 1.19 2001/01/23 15:56:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.18 2001/01/09 07:18:50 lukem Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.19 2001/01/23 15:56:46 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ int _tputs_convert __P((const char **, int));
  * character for each speed as returned by gtty.  Thus since 300
  * baud returns a 7, there are 33.3 milliseconds per char at 300 baud.
  */
-static
+static const
 short	tmspc10[] = {
 	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
 };
