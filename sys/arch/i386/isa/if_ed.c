@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.9 1993/12/03 03:56:16 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.10 1993/12/10 11:49:50 cgd Exp $
  */
 
 /*
@@ -129,7 +129,7 @@
 
 /* For backwards compatibility */
 #ifndef IFF_ALTPHYS
-#define IFF_ALTPHYS IFF_LLC0
+#define IFF_ALTPHYS IFF_LINK0
 #endif
  
 struct	ed_device {
