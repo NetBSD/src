@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.14 2001/12/02 09:14:22 blymn Exp $	*/
+/*	$NetBSD: putchar.c,v 1.15 2001/12/31 14:23:11 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.14 2001/12/02 09:14:22 blymn Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.15 2001/12/31 14:23:11 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,4 +53,20 @@ __cputchar(int ch)
 	__CTRACE("__cputchar: %s\n", unctrl(ch));
 #endif
 	return (putc(ch, _cursesi_screen->outfd));
+}
+
+/*
+ * This is the same as __cputchar but the extra argument holds the file
+ * descriptor to write the output to.  This function can only be used with
+ * the "new" libterm interface.
+ */
+void
+__cputchar_args(char ch, void *args)
+{
+	FILE *outfd = (FILE *) args;
+	
+#ifdef DEBUG
+	__CTRACE("__cputchar_args: %s on fd %d\n", unctrl(ch), outfd);
+#endif
+	putc(ch, outfd);
 }
