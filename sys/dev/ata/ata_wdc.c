@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.28 2000/06/12 21:10:40 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.29 2001/04/18 05:40:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -128,7 +128,7 @@ int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
 
 /*
  * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or
- * WDC_TRY_AGAIN. Must be called at splio().
+ * WDC_TRY_AGAIN. Must be called at splbio().
  */
 int
 wdc_ata_bio(drvp, ata_bio)
