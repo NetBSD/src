@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.5 2003/05/11 13:49:02 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ int ioapic_cold = 1;
 
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
+static int ioapic_vecbase;
 
 static __inline u_long
 ioapic_lock(struct ioapic_softc *sc)
@@ -218,10 +219,6 @@ ioapic_find_bybase(int vec)
 	struct ioapic_softc *sc;
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-#ifdef DIAGNOSTIC
-		if (sc->sc_apic_vecbase == -1)
-			panic("finding ioapic by vector in non-ACPI case");
-#endif
 		if (vec >= sc->sc_apic_vecbase &&
 		    vec < (sc->sc_apic_vecbase + sc->sc_apic_sz))
 			return sc;
@@ -311,6 +308,17 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_apic_vers = (ver_sz & IOAPIC_VER_MASK) >> IOAPIC_VER_SHIFT;
 	sc->sc_apic_sz = (ver_sz & IOAPIC_MAX_MASK) >> IOAPIC_MAX_SHIFT;
 	sc->sc_apic_sz++;
+
+	if (aaa->apic_vecbase != -1)
+		sc->sc_apic_vecbase = aaa->apic_vecbase;
+	else {
+		/*
+		 * XXX this assumes ordering of ioapics in the table.
+		 * Only needed for broken BIOS workaround (see mpbios.c)
+		 */
+		sc->sc_apic_vecbase = ioapic_vecbase;
+		ioapic_vecbase += sc->sc_apic_sz;
+	}
 
 	if (mp_verbose) {
 		printf(", %s mode",
