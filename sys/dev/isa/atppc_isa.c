@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.3 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.4 2004/01/25 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.3 2004/01/25 00:28:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.4 2004/01/25 11:35:46 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -46,10 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.3 2004/01/25 00:28:01 bjh21 Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <dev/isa/atppc_isa_subr.h>
 
 #include <dev/ic/atppcreg.h>
 #include <dev/ic/atppcvar.h>
+#include <dev/isa/atppc_isadma.h>
 
 /*
  * ISA bus attach code for atppc driver.
@@ -61,13 +61,35 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.3 2004/01/25 00:28:01 bjh21 Exp $");
  * sc_dma_finish() function pointers are not NULL.
  */
 
-/* Probe, attach, and detach functions for a atppc device on the ISA bus. */
+/* Configuration data for atppc on isa bus. */
+struct atppc_isa_softc {
+	/* Machine independent device data */
+	struct atppc_softc sc_atppc;
+
+	/* IRQ/DRQ/IO Port assignments on ISA bus */
+	int sc_irq;
+	int sc_drq;
+	int sc_iobase;
+
+	/* ISA chipset tag */
+	isa_chipset_tag_t sc_ic;
+};
+
+/* Probe and attach functions for a atppc device on the ISA bus. */
 static int atppc_isa_probe __P((struct device *, struct cfdata *, void *));
 static void atppc_isa_attach __P((struct device *, struct device *, void *));
-static int atppc_isa_detach __P((struct device *, int));
+
+static int atppc_isa_dma_start(struct atppc_softc *, void *, u_int, 
+	u_int8_t);
+static int atppc_isa_dma_finish(struct atppc_softc *);
+static int atppc_isa_dma_abort(struct atppc_softc *);
+static int atppc_isa_dma_malloc(struct device *, caddr_t *, bus_addr_t *, 
+	bus_size_t);
+static void atppc_isa_dma_free(struct device *, caddr_t *, bus_addr_t *, 
+	bus_size_t);
 
 CFATTACH_DECL(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
-	atppc_isa_attach, atppc_isa_detach, NULL);
+	atppc_isa_attach, NULL, NULL);
 
 /* 
  * Probe function: find parallel port controller on isa bus. Combined from 
@@ -79,44 +101,38 @@ atppc_isa_probe(struct device * parent, struct cfdata * cf, void * aux)
 	bus_space_handle_t ioh;
 	struct isa_attach_args * ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
-	int addr = ia->ia_io->ir_addr;
-	int rval = 0;
 
-	if(ia->ia_nio < 1 || addr == ISACF_PORT_DEFAULT) {
-		printf("%s(%s): io port unknown.\n", __func__, 
-			parent->dv_xname);
-	}
-	else if(bus_space_map(iot, addr, IO_LPTSIZE, 0, &ioh) == 0) {
-		if (atppc_detect_port(iot, ioh) == 0) 
-			rval = 1;
-		else 
-			printf("%s(%s): unable to write/read I/O port.\n", 
-				__func__, parent->dv_xname);
-		bus_space_unmap(iot, ioh, IO_LPTSIZE);
-	}
-	else {
-		printf("%s(%s): attempt to map bus space failed.\n", __func__, 
-			parent->dv_xname);
-	}
+	if (ia->ia_nio < 1)
+		return (0);
 
-	if(rval) {
-		ia->ia_nio = 1;
-		ia->ia_io[0].ir_size = IO_LPTSIZE;
-		ia->ia_nirq = 1;
-		ia->ia_ndrq = 1;
-		ia->ia_niomem = 0;
-	}
+	/* Disallow wildcarded i/o address */
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
 
-	return rval;
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, IO_LPTSIZE, 0, &ioh))
+		return (0);
+
+	if (atppc_detect_port(iot, ioh) != 0) 
+		return (0);
+
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = IO_LPTSIZE;
+	ia->ia_nirq = 1;
+	ia->ia_ndrq = 1;
+	ia->ia_niomem = 0;
+
+	return (1);
 }
 
 /* Attach function: attach and configure parallel port controller on isa bus. */
 static void 
-atppc_isa_attach(struct device * parent, struct device * self, void * aux)
+atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct atppc_isa_softc * sc = (struct atppc_isa_softc *)self;
 	struct atppc_softc * lsc = (struct atppc_softc *)self; 
 	struct isa_attach_args * ia = aux;
+
+	printf(": AT Parallel Port\n");
 
 	lsc->sc_iot = ia->ia_iot;
 	lsc->sc_dmat = ia->ia_dmat; 
@@ -124,56 +140,50 @@ atppc_isa_attach(struct device * parent, struct device * self, void * aux)
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_iobase = ia->ia_io->ir_addr;
 
-	if(bus_space_map(lsc->sc_iot, sc->sc_iobase, IO_LPTSIZE, 0, 
+	if (bus_space_map(lsc->sc_iot, sc->sc_iobase, IO_LPTSIZE, 0, 
 		&lsc->sc_ioh) != 0) {
 		printf("%s: attempt to map bus space failed, device not "
 			"properly attached.\n", self->dv_xname);
 		lsc->sc_dev_ok = ATPPC_NOATTACH;
 		return;
 	}
-	else {
-		lsc->sc_dev_ok = ATPPC_ATTACHED;
-	}
+
+	lsc->sc_dev_ok = ATPPC_ATTACHED;
 
 	/* Assign interrupt handler */
-	if(!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_INTR)) {
-		if((ia->ia_irq->ir_irq != ISACF_IRQ_DEFAULT) && 
-			(ia->ia_nirq > 0)) {
-		
-			sc->sc_irq = ia->ia_irq->ir_irq;
-			/* Establish interrupt handler. */
-			if(!(atppc_isa_intr_establish(lsc))) {
-				lsc->sc_has |= ATPPC_HAS_INTR;
-			}
-		}
-		else {
-			ATPPC_DPRINTF(("%s: IRQ not assigned or bad number of "
-				"IRQs.\n", self->dv_xname));
-		}
-	}
-	else {
-		ATPPC_VPRINTF(("%s: interrupts not configured due to flags.\n", 
-			self->dv_xname));
+	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_INTR)
+	   && ia->ia_irq->ir_irq != ISACF_IRQ_DEFAULT
+	   && ia->ia_nirq >= 1) {
+		sc->sc_irq = ia->ia_irq[0].ir_irq;
+	} else
+		sc->sc_irq = -1;
+
+	if (sc->sc_irq > 0) {
+		/* Establish interrupt handler. */
+		lsc->sc_ieh = isa_intr_establish(sc->sc_ic, sc->sc_irq,
+			IST_EDGE, IPL_ATPPC, atppcintr, &lsc->sc_dev);
+
+		lsc->sc_has |= ATPPC_HAS_INTR;
 	}
 
 	/* Configure DMA */
-	if(!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_DMA)) {
-		if((ia->ia_drq->ir_drq != ISACF_DRQ_DEFAULT) && 
-			(ia->ia_ndrq > 0)) {
+	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_DMA)
+	    && ia->ia_drq->ir_drq != ISACF_DRQ_DEFAULT
+	    && ia->ia_ndrq >= 1)
+		sc->sc_drq = ia->ia_drq[0].ir_drq;
+	else
+		sc->sc_drq = -1;
 
-			sc->sc_drq = ia->ia_drq->ir_drq;
-			if(!(atppc_isa_dma_setup(lsc))) {
-				lsc->sc_has |= ATPPC_HAS_DMA;
-			}
-		}
-		else {
-			ATPPC_DPRINTF(("%s: DRQ not assigned or bad number of "
-				"DRQs.\n", self->dv_xname));
-		}
-	}
-	else {
-		ATPPC_VPRINTF(("%s: dma not configured due to flags.\n", 
-			self->dv_xname));
+	if (sc->sc_drq != -1
+	    && atppc_isadma_setup(lsc, sc->sc_ic, sc->sc_drq) == 0) {
+		lsc->sc_has |= ATPPC_HAS_DMA;
+
+		/* setup DMA hooks */
+		lsc->sc_dma_start = atppc_isa_dma_start;
+		lsc->sc_dma_finish = atppc_isa_dma_finish;
+		lsc->sc_dma_abort = atppc_isa_dma_abort;
+		lsc->sc_dma_malloc = atppc_isa_dma_malloc;
+		lsc->sc_dma_free = atppc_isa_dma_free;
 	}
 
 	/* Run soft configuration attach */
@@ -182,40 +192,50 @@ atppc_isa_attach(struct device * parent, struct device * self, void * aux)
 	return;
 }
 
-/* Detach function: used to detach atppc driver at run time. */
+/* Start DMA operation over ISA bus */
 static int 
-atppc_isa_detach(struct device * dev, int flag)
+atppc_isa_dma_start(struct atppc_softc *lsc, void *buf, u_int nbytes,
+	u_int8_t mode)
 {
-	struct atppc_softc * lsc = (struct atppc_softc *) dev;
-	int rval;
-
-	if(lsc->sc_dev_ok == ATPPC_ATTACHED) {
-		/* Run soft configuration detach first */
-		rval = atppc_sc_detach(lsc, flag);
-
-		/* Disable DMA */
-		atppc_isa_dma_remove(lsc);
-
-		/* Disestablish interrupt handler */
-		atppc_isa_intr_disestablish(lsc);
+	struct atppc_isa_softc * sc = (struct atppc_isa_softc *) lsc;
 	
-		/* Unmap bus space */
-		bus_space_unmap(lsc->sc_iot, lsc->sc_ioh, IO_LPTSIZE);
+	return atppc_isadma_start(sc->sc_ic, sc->sc_drq, buf, nbytes, mode);
+}
+
+/* Stop DMA operation over ISA bus */
+static int 
+atppc_isa_dma_finish(struct atppc_softc * lsc)
+{
+	struct atppc_isa_softc * sc = (struct atppc_isa_softc *) lsc;
 	
-		/* Mark config data */
-		lsc->sc_dev_ok = ATPPC_NOATTACH;
-	}
-	else {
-		rval = 0;
-		if(!(flag & DETACH_QUIET)) {
-			printf("%s not properly attached! Detach routines "
-				"skipped.\n", dev->dv_xname);
-		}
-	}
+	return atppc_isadma_finish(sc->sc_ic, sc->sc_drq);
+}
 
-	if(!(flag & DETACH_QUIET)) {
-		printf("%s: detached.", dev->dv_xname);
-	}
+/* Abort DMA operation over ISA bus */
+static int 
+atppc_isa_dma_abort(struct atppc_softc * lsc)
+{
+	struct atppc_isa_softc * sc = (struct atppc_isa_softc *) lsc;
+	
+	return atppc_isadma_abort(sc->sc_ic, sc->sc_drq);
+}
 
-	return rval;
+/* Allocate memory for DMA over ISA bus */ 
+static int
+atppc_isa_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
+	bus_size_t size)
+{
+	struct atppc_isa_softc * sc = (struct atppc_isa_softc *) dev;
+
+	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
+}
+
+/* Free memory allocated by atppc_isa_dma_malloc() */ 
+static void 
+atppc_isa_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr, 
+	bus_size_t size)
+{
+	struct atppc_isa_softc * sc = (struct atppc_isa_softc *) dev;
+
+	return atppc_isadma_free(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
