@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 05:36:45 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/09 07:50:10 mycroft Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
@@ -30,7 +30,5 @@ scrt0.o: crt0.c
 install:
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
-
-depend lint tags:
 
 .include <bsd.prog.mk>
