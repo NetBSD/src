@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigblock.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigblock.3,v 1.13 2002/08/10 02:41:21 yamt Exp $
+.\"	$NetBSD: sigblock.3,v 1.14 2002/08/10 09:07:15 wiz Exp $
 .\"
-.Dd June 2, 1993
+.Dd August 10, 2002
 .Dt SIGBLOCK 3
 .Os
 .Sh NAME
@@ -71,6 +71,8 @@ or
 .Dv SIGSTOP ;
 this restriction is silently
 imposed by the system.
+.Sh RETURN VALUES
+The previous set of masked signals is returned.
 .Sh EXAMPLES
 The following example utilizing
 .Fn sigblock :
@@ -107,8 +109,6 @@ sigset_t set;
 
 sigprocmask(SIG_BLOCK, NULL, &set);
 .Ed
-.Sh RETURN VALUES
-The previous set of masked signals is returned.
 .Sh SEE ALSO
 .Xr kill 2 ,
 .Xr sigaction 2 ,
