@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.11 1997/10/17 13:13:49 lukem Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.12 1997/10/18 11:37:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: rwhod.c,v 1.11 1997/10/17 13:13:49 lukem Exp $");
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -124,23 +125,16 @@ main(argc, argv)
 	char *cp;
 	struct sockaddr_in sin;
 
-	if (getuid()) {
-		fprintf(stderr, "rwhod: not super user\n");
-		exit(1);
-	}
+	if (getuid())
+		errx(1, "not super user");
 	sp = getservbyname("who", "udp");
-	if (sp == NULL) {
-		fprintf(stderr, "rwhod: udp/who: unknown service\n");
-		exit(1);
-	}
+	if (sp == NULL)
+		errx(1, "udp/who: unknown service");
 #ifndef DEBUG
 	daemon(1, 0);
 #endif
-	if (chdir(_PATH_RWHODIR) < 0) {
-		(void)fprintf(stderr, "rwhod: %s: %s\n",
-		    _PATH_RWHODIR, strerror(errno));
-		exit(1);
-	}
+	if (chdir(_PATH_RWHODIR) < 0)
+		err(1, "%s", _PATH_RWHODIR);
 	(void) signal(SIGHUP, getboottime);
 	openlog("rwhod", LOG_PID, LOG_DAEMON);
 	/*
@@ -150,7 +144,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "gethostname: %m");
 		exit(1);
 	}
-	if ((cp = index(myname, '.')) != NULL)
+	if ((cp = strchr(myname, '.')) != NULL)
 		*cp = '\0';
 	strncpy(mywd.wd_hostname, myname, sizeof(myname) - 1);
 	utmpf = open(_PATH_UTMP, O_RDONLY|O_CREAT, 0644);
@@ -252,9 +246,9 @@ main(argc, argv)
  */
 int
 verify(name)
-	register char *name;
+	char *name;
 {
-	register int size = 0;
+	int size = 0;
 
 	while (*name) {
 		if (!isascii(*name) || !(isalnum(*name) || ispunct(*name)))
@@ -274,9 +268,9 @@ void
 onalrm(signo)
 	int signo;
 {
-	register struct neighbor *np;
-	register struct whoent *we = mywd.wd_we, *wlast;
-	register int i;
+	struct neighbor *np;
+	struct whoent *we = mywd.wd_we, *wlast;
+	int i;
 	struct stat stb;
 	double avenrun[3];
 	time_t now;
@@ -296,7 +290,7 @@ onalrm(signo)
 			else
 				utmp = (struct utmp *)malloc(utmpsize);
 			if (! utmp) {
-				fprintf(stderr, "rwhod: malloc failed\n");
+				warn("malloc failed");
 				utmpsize = 0;
 				goto done;
 			}
@@ -304,8 +298,7 @@ onalrm(signo)
 		(void)lseek(utmpf, (off_t)0, SEEK_SET);
 		cc = read(utmpf, (char *)utmp, stb.st_size);
 		if (cc < 0) {
-			fprintf(stderr, "rwhod: %s: %s\n",
-			    _PATH_UTMP, strerror(errno));
+			warn("%s", _PATH_UTMP);
 			goto done;
 		}
 		wlast = &mywd.wd_we[1024 / sizeof(struct whoent) - 1];
@@ -389,11 +382,11 @@ quit(msg)
 
 void
 rt_xaddrs(cp, cplim, rtinfo)
-	register caddr_t cp, cplim;
-	register struct rt_addrinfo *rtinfo;
+	caddr_t cp, cplim;
+	struct rt_addrinfo *rtinfo;
 {
-	register struct sockaddr *sa;
-	register int i;
+	struct sockaddr *sa;
+	int i;
 
 	memset(rtinfo->rti_info, 0, sizeof(rtinfo->rti_info));
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
@@ -412,9 +405,9 @@ int
 configure(s)
 	int s;
 {
-	register struct neighbor *np;
-	register struct if_msghdr *ifm;
-	register struct ifa_msghdr *ifam;
+	struct neighbor *np;
+	struct if_msghdr *ifm;
+	struct ifa_msghdr *ifam;
 	struct sockaddr_dl *sdl;
 	size_t needed;
 	int mib[6], flags = 0, len;
@@ -493,8 +486,8 @@ Sendto(s, buf, cc, flags, to, tolen)
 	char *to;
 	int tolen;
 {
-	register struct whod *w = (struct whod *)buf;
-	register struct whoent *we;
+	struct whod *w = (struct whod *)buf;
+	struct whoent *we;
 	struct sockaddr_in *sin = (struct sockaddr_in *)to;
 
 	printf("sendto %x.%d\n", ntohl(sin->sin_addr), ntohs(sin->sin_port));
