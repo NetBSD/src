@@ -77,23 +77,24 @@ PROCESSEDEXAMPLEFILES=\
 
 CLEANADD=\
   penguin.ps \
-  $(PROCESSEDEXAMPLEFILES)
+  $(PROCESSEDEXAMPLEFILES) \
+  examples/stamp
 
 .SUFFIXES: .mom .ps
 .mom.ps:
 	$(GROFF) -Tps -mom $< >$@
 
 
-all: make_examples
+all: $(PROCESSEDEXAMPLEFILES)
 
-.PHONY: make_examples prepare_make_examples
-make_examples: prepare_make_examples $(PROCESSEDEXAMPLEFILES)
+$(PROCESSEDEXAMPLEFILES): penguin.ps examples/stamp
 
-prepare_make_examples: examples/penguin.ps
+penguin.ps:
+	cp $(srcdir)/examples/penguin.ps .
+
+examples/stamp:
 	test -d examples || $(mkinstalldirs) examples
-	test -f penguin.ps || cp $(srcdir)/examples/penguin.ps .
-
-$(PROCESSEDEXAMPLEFILES): prepare_make_examples
+	touch $@
 
 install_data: $(NORMALFILES) $(HTMLDOCFILES) \
               $(EXAMPLEFILES) $(PROCESSEDEXAMPLEFILES)
