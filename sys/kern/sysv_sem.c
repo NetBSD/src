@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.10 1994/10/20 04:23:17 cgd Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.11 1994/12/04 14:06:36 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -181,8 +181,7 @@ semundo_adjust(p, supptr, semid, semnum, adjval)
 
 	suptr = *supptr;
 	if (suptr == NULL) {
-		for (suptr = semu_list; suptr != NULL;
-		    suptr = suptr->un_next) {
+		for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
 			if (suptr->un_proc == p) {
 				*supptr = suptr;
 				break;
@@ -222,13 +221,14 @@ semundo_adjust(p, supptr, semid, semnum, adjval)
 	/* Didn't find the right entry - create it */
 	if (adjval == 0)
 		return(0);
-	if (suptr->un_cnt != SEMUME) {
-		sunptr = &suptr->un_ent[suptr->un_cnt];
-		suptr->un_cnt++;
-		sunptr->un_adjval = adjval;
-		sunptr->un_id = semid; sunptr->un_num = semnum;
-	} else
+	if (suptr->un_cnt == SEMUME)
 		return(EINVAL);
+
+	sunptr = &suptr->un_ent[suptr->un_cnt];
+	suptr->un_cnt++;
+	sunptr->un_adjval = adjval;
+	sunptr->un_id = semid;
+	sunptr->un_num = semnum;
 	return(0);
 }
 
@@ -564,9 +564,8 @@ semop(p, uap, retval)
 		return(EINVAL);
 
 	semaptr = &sema[semid];
-	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0)
-		return(EINVAL);
-	if (semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
+	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
+	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
 		return(EINVAL);
 
 	if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
