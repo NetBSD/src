@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.7 1995/06/09 19:42:22 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.8 1995/08/17 20:31:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -56,6 +56,7 @@
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <machine/scu.h>
+#include <machine/video.h>
 #include <atari/atari/misc.h>
 
 extern u_int 	lowram;
@@ -448,6 +449,13 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/* Is this to fool the optimizer?? */
 	i = *(int *)proc0paddr;
 	*(volatile int *)proc0paddr = i;
+
+	/*
+	 * Initialize the sound-chip YM2149:
+	 *   All sounds off, both ports output.
+	 */
+	SOUND->sd_selr = YM_MFR;
+	SOUND->sd_wdat = 0xff;
 
 	/*
 	 * Initialize both MFP chips (if both present!) to generate
