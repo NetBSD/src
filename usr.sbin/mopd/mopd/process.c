@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.6 2000/01/10 19:33:18 abs Exp $	*/
+/*	$NetBSD: process.c,v 1.7 2000/06/27 18:57:41 ragge Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.6 2000/01/10 19:33:18 abs Exp $");
+__RCSID("$NetBSD: process.c,v 1.7 2000/06/27 18:57:41 ragge Exp $");
 #endif
 
 #include "os.h"
@@ -282,6 +282,8 @@ mopStartLoad(dst, src, dl_rpr, trans)
 		dllist[slot].dl_bsz = 1492;
 	if (dllist[slot].dl_bsz == 1030)	/* VS/uVAX 2000 needs this */
 		dllist[slot].dl_bsz = 1000;
+	if (dllist[slot].dl_bsz == 0)		/* Needed by "big" VAXen */
+		dllist[slot].dl_bsz = 1492;
 	if (trans == TRANS_8023)
 		dllist[slot].dl_bsz = dllist[slot].dl_bsz - 8;
 
