@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/12/13 20:30:48 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/12/13 22:34:52 thorpej Exp $
 
-SRCS+=	rtld_start.S
+SRCS+=	rtld_start.S alpha_reloc.c
 
 CPPFLAGS+= -fpic -mno-fp-regs -DELFSIZE=64
 LDFLAGS+= -Bshareable -Bsymbolic -e _rtld_start
