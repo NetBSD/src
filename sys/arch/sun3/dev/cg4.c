@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.17 1998/03/21 21:38:24 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.18 1998/06/09 14:38:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,9 +78,14 @@
 
 #include <sun3/dev/fbvar.h>
 #include <sun3/dev/btreg.h>
-#include <sun3/dev/btvar.h>
 #include <sun3/dev/cg4reg.h>
 #include <sun3/dev/p4reg.h>
+
+union bt_cmap_u {
+	u_char  btcm_char[256 * 3];		/* raw data */
+	u_char  btcm_rgb[256][3];		/* 256 R/G/B entries */
+	u_int   btcm_int[256 * 3 / 4];	/* the way the chip gets loaded */
+};
 
 #define CG4_TYPE_A 0	/* AMD DACs */
 #define CG4_TYPE_B 1	/* Brooktree DACs */
@@ -107,8 +112,8 @@ struct cg4_softc {
 	int 	sc_video_on;		/* zero if blanked */
 	void	*sc_va_cmap;		/* Colormap h/w (mapped KVA) */
 	void	*sc_btcm;		/* Soft cmap, Brooktree format */
-	struct soft_cmap sc_cmap;	/* Soft cmap, user format */
 	void	(*sc_ldcmap) __P((struct cg4_softc *));
+	struct soft_cmap sc_cmap;	/* Soft cmap, user format */
 };
 
 /* autoconfiguration driver */
@@ -127,8 +132,10 @@ static int	cg4svideo  __P((struct fbdevice *, void *));
 static int	cg4getcmap __P((struct fbdevice *, void *));
 static int	cg4putcmap __P((struct fbdevice *, void *));
 
+#ifdef	_SUN3_
 static void	cg4a_init   __P((struct cg4_softc *));
 static void	cg4a_ldcmap __P((struct cg4_softc *));
+#endif	/* SUN3 */
 
 static void	cg4b_init   __P((struct cg4_softc *));
 static void	cg4b_ldcmap __P((struct cg4_softc *));
@@ -576,7 +583,7 @@ cg4b_init(sc)
 {
 	volatile struct bt_regs *bt = sc->sc_va_cmap;
 	struct soft_cmap *cm = &sc->sc_cmap;
-	union bt_cmap *btcm;
+	union bt_cmap_u *btcm;
 	int i;
 
 	/* Need a buffer for colormap format translation. */
@@ -586,27 +593,37 @@ cg4b_init(sc)
 	/*
 	 * BT458 chip initialization as described in Brooktree's
 	 * 1993 Graphics and Imaging Product Databook (DB004-1/93).
+	 *
+	 * It appears that the 3/60 uses the low byte, and the 3/80
+	 * uses the high byte, while both ignore the other bytes.
+	 * Writing same value to all bytes works on both.
 	 */
-	bt->bt_addr = 0x04;	/* select read mask register */
-	bt->bt_ctrl = 0xff;	/* all planes on */
-	bt->bt_addr = 0x05;	/* select blink mask register */
-	bt->bt_ctrl = 0x00;	/* all planes non-blinking */
-	bt->bt_addr = 0x06;	/* select command register */
-	bt->bt_ctrl = 0x43;	/* palette enabled, overlay planes enabled */
-	bt->bt_addr = 0x07;	/* select test register */
-	bt->bt_ctrl = 0x00;	/* set test mode */
+	bt->bt_addr = 0x04040404;	/* select read mask register */
+	bt->bt_ctrl = ~0;       	/* all planes on */
+	bt->bt_addr = 0x05050505;	/* select blink mask register */
+	bt->bt_ctrl = 0;        	/* all planes non-blinking */
+	bt->bt_addr = 0x06060606;	/* select command register */
+	bt->bt_ctrl = 0x43434343;	/* palette enabled, overlay planes enabled */
+	bt->bt_addr = 0x07070707;	/* select test register */
+	bt->bt_ctrl = 0;        	/* not test mode */
 
 	/* grab initial (current) color map */
 	bt->bt_addr = 0;
-	for (i = 0; i < (256 * 3 / 4); i++) {
-		btcm->cm_chip[i] = bt->bt_cmap;
-	}
+#ifdef	_SUN3_
+	/* Sun3/60 wants 32-bit access, packed. */
+	for (i = 0; i < (256 * 3 / 4); i++)
+		btcm->btcm_int[i] = bt->bt_cmap;
+#else	/* SUN3 */
+	/* Sun3/80 wants 8-bits in the high byte. */
+	for (i = 0; i < (256 * 3); i++)
+		btcm->btcm_char[i] = bt->bt_cmap >> 24;
+#endif	/* SUN3 */
 
 	/* Transpose into H/W cmap into S/W form. */
 	for (i = 0; i < 256; i++) {
-		cm->r[i] = btcm->cm_map[i][0];
-		cm->g[i] = btcm->cm_map[i][1];
-		cm->b[i] = btcm->cm_map[i][2];
+		cm->r[i] = btcm->btcm_rgb[i][0];
+		cm->g[i] = btcm->btcm_rgb[i][1];
+		cm->b[i] = btcm->btcm_rgb[i][2];
 	}
 }
 
@@ -616,14 +633,14 @@ cg4b_ldcmap(sc)
 {
 	volatile struct bt_regs *bt = sc->sc_va_cmap;
 	struct soft_cmap *cm = &sc->sc_cmap;
-	union bt_cmap *btcm = sc->sc_btcm;
+	union bt_cmap_u *btcm = sc->sc_btcm;
 	int i;
 
 	/* Transpose S/W cmap into H/W form. */
 	for (i = 0; i < 256; i++) {
-		btcm->cm_map[i][0] = cm->r[i];
-		btcm->cm_map[i][1] = cm->g[i];
-		btcm->cm_map[i][2] = cm->b[i];
+		btcm->btcm_rgb[i][0] = cm->r[i];
+		btcm->btcm_rgb[i][1] = cm->g[i];
+		btcm->btcm_rgb[i][2] = cm->b[i];
 	}
 
 	/*
@@ -635,12 +652,26 @@ cg4b_ldcmap(sc)
 	bt->bt_addr = 0;
 	if (sc->sc_video_on) {
 		/* Update H/W colormap. */
+#ifdef	_SUN3_
+		/* Sun3/60 wants 32-bit access, packed. */
 		for (i = 0; i < (256 * 3 / 4); i++)
-			bt->bt_cmap = btcm->cm_chip[i];
+			bt->bt_cmap = btcm->btcm_int[i];
+#else	/* SUN3 */
+		/* Sun3/80 wants 8-bits in the high byte. */
+		for (i = 0; i < (256 * 3); i++)
+			bt->bt_cmap = btcm->btcm_char[i] << 24;
+#endif	/* SUN3 */
 	} else {
 		/* Clear H/W colormap. */
+#ifdef	_SUN3_
+		/* Sun3/60 wants 32-bit access, packed. */
 		for (i = 0; i < (256 * 3 / 4); i++)
 			bt->bt_cmap = 0;
+#else	/* SUN3 */
+		/* Sun3/80 wants 8-bit access, high byte. */
+		for (i = 0; i < (256 * 3); i++)
+			bt->bt_cmap = 0;
+#endif	/* SUN3 */
 	}
 }
 
