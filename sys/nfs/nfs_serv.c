@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.20 1996/02/01 00:40:13 jtc Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.21 1996/02/09 15:47:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -858,31 +858,25 @@ nfsrv_remove(nfsd, mrep, md, dpos, cred, nam, mrq)
 	    nfsd->nd_procp))
 		nfsm_reply(0);
 	vp = nd.ni_vp;
-	if (vp->v_type == VDIR &&
-		(error = suser(cred, (u_short *)0)))
-		goto out;
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
 	if (vp->v_flag & VROOT) {
-		error = EBUSY;
-		goto out;
-	}
-	if (vp->v_flag & VTEXT)
-		(void) vnode_pager_uncache(vp);
-out:
-	if (!error) {
-		nqsrv_getl(nd.ni_dvp, NQL_WRITE);
-		nqsrv_getl(vp, NQL_WRITE);
-		error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
 		vput(vp);
+		error = EBUSY;
+		goto out;
 	}
+	if (vp->v_flag & VTEXT)
+		(void) vnode_pager_uncache(vp);
+	nqsrv_getl(nd.ni_dvp, NQL_WRITE);
+	nqsrv_getl(vp, NQL_WRITE);
+	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+out:
 	nfsm_reply(0);
 	nfsm_srvdone;
 }
@@ -1036,7 +1030,7 @@ nfsrv_link(nfsd, mrep, md, dpos, cred, nam, mrq)
 	int error = 0, rdonly, cache, len;
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *xp;
+	struct vnode *vp;
 	nfsv2fh_t nfh, dnfh;
 	fhandle_t *fhp, *dfhp;
 	u_quad_t frev;
@@ -1048,37 +1042,26 @@ nfsrv_link(nfsd, mrep, md, dpos, cred, nam, mrq)
 	nfsm_srvstrsiz(len, NFS_MAXNAMLEN);
 	if (error = nfsrv_fhtovp(fhp, FALSE, &vp, cred, nfsd->nd_slp, nam, &rdonly))
 		nfsm_reply(0);
-	if (vp->v_type == VDIR && (error = suser(cred, (u_short *)0)))
-		goto out1;
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT;
 	if (error = nfs_namei(&nd, dfhp, len, nfsd->nd_slp, nam, &md, &dpos,
 	    nfsd->nd_procp))
-		goto out1;
-	xp = nd.ni_vp;
-	if (xp != NULL) {
-		error = EEXIST;
 		goto out;
-	}
-	xp = nd.ni_dvp;
-	if (vp->v_mount != xp->v_mount)
-		error = EXDEV;
-out:
-	if (!error) {
-		nqsrv_getl(vp, NQL_WRITE);
-		nqsrv_getl(xp, NQL_WRITE);
-		error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
-	} else {
+	if (nd.ni_vp) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		if (nd.ni_vp)
-			vrele(nd.ni_vp);
+		vrele(nd.ni_vp);
+		error = EEXIST;
+		goto out;
 	}
-out1:
+	nqsrv_getl(nd.ni_dvp, NQL_WRITE);
+	nqsrv_getl(vp, NQL_WRITE);
+	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+out:
 	vrele(vp);
 	nfsm_reply(0);
 	nfsm_srvdone;
