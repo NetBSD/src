@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.9 1998/11/14 16:43:49 christos Exp $	*/
+/*	$NetBSD: engine.c,v 1.10 1998/12/08 14:00:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -159,8 +159,8 @@ int eflags;
 	if (g->cflags&REG_NOSUB)
 		nmatch = 0;
 	if (eflags&REG_STARTEND) {
-		start = string + (size_t)pmatch[0].rm_so;
-		stop = string + (size_t)pmatch[0].rm_eo;
+		start = string + pmatch[0].rm_so;
+		stop = string + pmatch[0].rm_eo;
 	} else {
 		start = string;
 		stop = start + strlen(start);
@@ -225,7 +225,7 @@ int eflags;
 			return(REG_ESPACE);
 		}
 		for (i = 1; i <= m->g->nsub; i++)
-			m->pmatch[i].rm_so = m->pmatch[i].rm_eo = -1;
+			m->pmatch[i].rm_so = m->pmatch[i].rm_eo = (regoff_t)-1;
 		if (!g->backrefs && !(m->eflags&REG_BACKR)) {
 			NOTE("dissecting");
 			dp = dissect(m, m->coldp, endp, gf, gl);
@@ -257,8 +257,8 @@ int eflags;
 			/* try it on a shorter possibility */
 #ifndef NDEBUG
 			for (i = 1; i <= m->g->nsub; i++) {
-				assert(m->pmatch[i].rm_so == -1);
-				assert(m->pmatch[i].rm_eo == -1);
+				assert(m->pmatch[i].rm_so == (regoff_t)-1);
+				assert(m->pmatch[i].rm_eo == (regoff_t)-1);
 			}
 #endif
 			NOTE("backoff dissect");
@@ -285,8 +285,8 @@ int eflags;
 			if (i <= m->g->nsub)
 				pmatch[i] = m->pmatch[i];
 			else {
-				pmatch[i].rm_so = -1;
-				pmatch[i].rm_eo = -1;
+				pmatch[i].rm_so = (regoff_t)-1;
+				pmatch[i].rm_eo = (regoff_t)-1;
 			}
 	}
 
@@ -617,14 +617,14 @@ sopno lev;			/* PLUS nesting level */
 	case OBACK_:		/* the vilest depths */
 		i = OPND(s);
 		assert(0 < i && i <= m->g->nsub);
-		if (m->pmatch[i].rm_eo == -1)
+		if (m->pmatch[i].rm_eo == (regoff_t)-1)
 			return(NULL);
-		assert(m->pmatch[i].rm_so != -1);
-		len = (size_t)(m->pmatch[i].rm_eo - m->pmatch[i].rm_so);
+		assert(m->pmatch[i].rm_so != (regoff_t)-1);
+		len = m->pmatch[i].rm_eo - m->pmatch[i].rm_so;
 		assert(stop - m->beginp >= len);
 		if (sp > stop - len)
 			return(NULL);	/* not enough left to match */
-		ssp = m->offp + (size_t)m->pmatch[i].rm_so;
+		ssp = m->offp + m->pmatch[i].rm_so;
 		if (memcmp(sp, ssp, len) != 0)
 			return(NULL);
 		while (m->g->strip[ss] != SOP(O_BACK, i))
