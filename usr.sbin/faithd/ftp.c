@@ -1,5 +1,5 @@
-/*	$NetBSD: ftp.c,v 1.10 2002/06/24 06:03:13 itojun Exp $	*/
-/*	$KAME: ftp.c,v 1.18 2002/06/23 14:41:47 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.11 2002/08/20 23:02:44 itojun Exp $	*/
+/*	$KAME: ftp.c,v 1.19 2002/08/20 23:01:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -83,24 +83,36 @@ ftp_relay(int ctl6, int ctl4)
 		int maxfd = 0;
 
 		FD_ZERO(&readfds);
+		if (ctl4 >= FD_SETSIZE)
+			exit_failure("descriptor too big");
 		FD_SET(ctl4, &readfds);
 		maxfd = ctl4;
+		if (ctl6 >= FD_SETSIZE)
+			exit_failure("descriptor too big");
 		FD_SET(ctl6, &readfds);
 		maxfd = (ctl6 > maxfd) ? ctl6 : maxfd;
 		if (0 <= port4) {
+			if (port4 >= FD_SETSIZE)
+				exit_failure("descriptor too big");
 			FD_SET(port4, &readfds);
 			maxfd = (port4 > maxfd) ? port4 : maxfd;
 		}
 		if (0 <= port6) {
+			if (port6 >= FD_SETSIZE)
+				exit_failure("descriptor too big");
 			FD_SET(port6, &readfds);
 			maxfd = (port6 > maxfd) ? port6 : maxfd;
 		}
 #if 0
 		if (0 <= wport4) {
+			if (wport4 >= FD_SETSIZE)
+				exit_failure("descriptor too big");
 			FD_SET(wport4, &readfds);
 			maxfd = (wport4 > maxfd) ? wport4 : maxfd;
 		}
 		if (0 <= wport6) {
+			if (wport6 >= FD_SETSIZE)
+				exit_failure("descriptor too big");
 			FD_SET(wport6, &readfds);
 			maxfd = (wport6 > maxfd) ? wport6 : maxfd;
 		}
@@ -223,6 +235,8 @@ ftp_activeconn()
 
 	/* get active connection from server */
 	FD_ZERO(&set);
+	if (wport4 >= FD_SETSIZE)
+		exit_failure("descriptor too big");
 	FD_SET(wport4, &set);
 	timeout.tv_sec = 120;
 	timeout.tv_usec = -1;
@@ -270,6 +284,8 @@ ftp_passiveconn()
 
 	/* get passive connection from client */
 	FD_ZERO(&set);
+	if (wport6 >= FD_SETSIZE)
+		exit_failure("descriptor too big");
 	FD_SET(wport6, &set);
 	timeout.tv_sec = 120;
 	timeout.tv_usec = 0;
