@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.9 1994/12/07 01:06:25 jtc Exp $	*/
+/*	$NetBSD: tsort.c,v 1.10 1995/08/31 22:06:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tsort.c	8.2 (Berkeley) 3/30/94";
+static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: tsort.c,v 1.9 1994/12/07 01:06:25 jtc Exp $";
+static char rcsid[] = "$NetBSD: tsort.c,v 1.10 1995/08/31 22:06:22 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$NetBSD: tsort.c,v 1.9 1994/12/07 01:06:25 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /*
  *  Topological sort.  Input is a list of pairs of strings separated by
