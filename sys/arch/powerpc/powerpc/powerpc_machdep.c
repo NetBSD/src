@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.12 2002/07/05 18:45:22 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.13 2002/07/16 23:04:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,6 +42,9 @@
 
 int cpu_timebase;
 int cpu_printfataltraps;
+#ifdef PPC_MPC6XX
+extern int powersave;
+#endif
 
 /*
  * Set set up registers on exec.
@@ -127,6 +130,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			&curcpu()->ci_ci, 
 			sizeof(curcpu()->ci_ci));
 #ifdef PPC_MPC6XX
+	case CPU_POWERSAVE:
+		if (powersave < 0)
+			return sysctl_rdint(oldp, oldlenp, newp, powersave);
+		return sysctl_int(oldp, oldlenp, newp, newlen, &powersave);
 	case CPU_ALTIVEC:
 		return sysctl_rdint(oldp, oldlenp, newp, cpu_altivec);
 #else
