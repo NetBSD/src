@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.5 2000/01/14 13:52:13 pk Exp $	*/
+/*	$NetBSD: gethost.c,v 1.6 2001/04/28 14:56:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -155,7 +155,8 @@ gethostbyname(name)
 struct hostent *
 gethostbyaddr(addr, len, type)
 	const char *addr;
-	int len, type;
+	socklen_t len;
+	int type;
 {
 	char qbuf[MAXDNAME];
 
