@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.3 1993/08/07 20:48:38 mycroft Exp $
+ *	$Id: sd.c,v 1.4 1994/01/25 03:19:15 brezak Exp $
  */
 
 /*
@@ -50,6 +50,7 @@
 #include "sys/disklabel.h"
 #include "sys/malloc.h"
 #include "sys/proc.h"
+#include "sys/fcntl.h"
 
 #include "device.h"
 #include "scsireg.h"
@@ -795,12 +796,54 @@ sdioctl(dev, cmd, data, flag, p)
 {
 	register int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-
+	register struct disklabel *lp = &sc->sc_label;
+	struct cpu_disklabel cd;
+	int error, flags;
+        
 	switch (cmd) {
 	default:
 		return (EINVAL);
 
-	/* XXX need DIOCGPART and label stuff */
+	case DIOCGDINFO:
+		*(struct disklabel *)data = *lp;
+		return (0);
+
+	case DIOCGPART:
+		((struct partinfo *)data)->disklab = lp;
+		((struct partinfo *)data)->part =
+			&lp->d_partitions[sdpart(dev)];
+		return (0);
+
+        case DIOCWLABEL:
+                if ((flag & FWRITE) == 0)
+                        return (EBADF);
+		if (*(int *)data)
+			sc->sc_flags |= SDF_LABEL;
+		else
+			sc->sc_flags &= ~SDF_LABEL;
+		return (0);
+
+        case DIOCSDINFO:
+                if ((flag & FWRITE) == 0)
+                        return (EBADF);
+		error = setdisklabel(lp, (struct disklabel *)data,
+				     /*(sc->sc_flags & SDF_WLABEL) ? 0
+				     : sc->sc_info.si_open*/0, &cd);
+		return (error);
+
+        case DIOCWDINFO:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		error = setdisklabel(lp, (struct disklabel *)data,
+				     /*(sc->sc_flags & SDF_WLABEL) ? 0
+				     : sc->sc_info.si_open*/0, &cd);
+		if (error)
+			return (error);
+		flags = sc->sc_flags;
+		sc->sc_flags = SDF_ALIVE | SDF_LABEL;
+		error = writedisklabel(dev & ~7, sdstrategy, lp, &cd);
+		sc->sc_flags = flags;
+		return (error);
 
 	case SDIOCSFORMAT:
 		/* take this device into or out of "format" mode */
