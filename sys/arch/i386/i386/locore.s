@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.82 1994/09/08 21:56:14 mycroft Exp $
+ *	$Id: locore.s,v 1.83 1994/09/09 03:16:03 mycroft Exp $
  */
 
 /*
@@ -1488,9 +1488,9 @@ ENTRY(setrunqueue)
 ENTRY(remrq)
 	pushl	%esi
 	movl	8(%esp),%esi
+#ifdef DIAGNOSTIC
 	movzbl	P_PRIORITY(%esi),%eax
 	shrl	$2,%eax
-#ifdef DIAGNOSTIC
 	btl	%eax,_whichqs
 	jnc	1f
 #endif /* DIAGNOSTIC */
@@ -1501,6 +1501,10 @@ ENTRY(remrq)
 	movl	$0,P_BACK(%esi)		# zap reverse link to indicate off list
 	cmpl	%edx,%ecx		# q still has something?
 	jne	2f
+#ifndef DIAGNOSTIC
+	movzbl	P_PRIORITY(%esi),%eax
+	shrl	$2,%eax
+#endif
 	btrl	%eax,_whichqs		# no; clear bit
 2:	popl	%esi
 	ret
@@ -1583,8 +1587,9 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	movl	%edx,P_FORW(%eax)
 	movl	%eax,P_BACK(%edx)
 
-	cmpl	%edx,%eax		# q empty
+	cmpl	%edx,%eax		# q empty?
 	jne	3f
+
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
 	movl	%ecx,_whichqs		# update q status
 
