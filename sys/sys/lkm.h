@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.31 2003/11/01 06:50:13 christos Exp $	*/
+/*	$NetBSD: lkm.h,v 1.32 2004/02/06 22:40:37 cube Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -292,7 +292,9 @@ int lkmdispatch __P((struct lkm_table *, int));
 		lkmtp->private.lkm_any = (void *)&_module;		\
 		if ((error = lkmdispatch(lkmtp, cmd)) != 0)		\
 			return error;					\
-		return load(lkmtp, cmd);				\
+		if ((error = load(lkmtp, cmd)) != 0)			\
+			(void)lkmdispatch(lkmtp, LKM_E_UNLOAD);		\
+		return error;						\
 		break;							\
 	case LKM_E_UNLOAD:						\
 		if ((error = unload(lkmtp, cmd)) != 0)			\
