@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.28 1999/09/16 18:16:51 jdolecek Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.29 1999/10/01 22:29:12 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.28 1999/09/16 18:16:51 jdolecek Exp $";
+    "$NetBSD: wsdisplay.c,v 1.29 1999/10/01 22:29:12 ad Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -106,6 +106,7 @@ void wsscreen_detach __P((struct wsscreen *));
 static const struct wsscreen_descr *
 wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));
 int wsdisplay_addscreen __P((struct wsdisplay_softc *, int, const char *, const char *));
+static void wsdisplay_shutdownhook __P((void *));
 static void wsdisplay_addscreen_print __P((struct wsdisplay_softc *, int, int));
 static void wsdisplay_closescreen __P((struct wsdisplay_softc *,
 				       struct wsscreen *));
@@ -591,6 +592,7 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	const struct wsdisplay_accessops *accessops;
 	void *accesscookie;
 {
+	static int hookset;
 	int i, start=0;
 #if NWSKBD > 0
 	struct device *dv;
@@ -641,6 +643,10 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 
 	if (i > start) 
 		wsdisplay_addscreen_print(sc, start, i-start);
+	
+	if (hookset == 0)
+		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
+	hookset = 1;
 }
 
 void
@@ -669,7 +675,6 @@ wsdisplay_cnattach(type, cookie, ccol, crow, defattr)
 								  defattr);
 
 	cn_tab = &wsdisplay_cons;
-
 	wsdisplay_console_initted = 1;
 }
 
@@ -1699,4 +1704,17 @@ wsdisplay_set_cons_kbd(get, poll)
 {
 	wsdisplay_cons.cn_getc = get;
 	wsdisplay_cons.cn_pollc = poll;
+}
+
+/*
+ * Switch the console display to it's first screen at shutdown.
+ */
+static void
+wsdisplay_shutdownhook(arg)
+	void *arg;
+{
+
+	if (wsdisplay_console_device != NULL)
+		wsdisplay_switch((struct device *)wsdisplay_console_device, 
+		    0, 0);
 }
