@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.331 2002/06/09 19:31:43 itojun Exp $
+# $NetBSD: mi,v 1.332 2002/06/18 13:02:21 christos Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -35,6 +35,7 @@
 ./bin/sleep		base-util-root
 ./bin/stty		base-util-root
 ./bin/sync		base-util-root
+./bin/systrace		base-util-root
 ./bin/test		base-util-root
 ./dev			base-sys-root
 ./dev/MAKEDEV		base-sysutil-root
