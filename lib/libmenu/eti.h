@@ -1,4 +1,4 @@
-/*      $Id: eti.h,v 1.2 1999/11/24 12:17:11 kleink Exp $ */
+/*      $NetBSD: eti.h,v 1.3 1999/11/24 12:43:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)

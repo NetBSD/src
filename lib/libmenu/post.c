@@ -1,4 +1,4 @@
-/*      $Id: post.c,v 1.1.1.1 1999/11/23 11:12:34 blymn Exp $ */
+/*      $NetBSD: post.c,v 1.2 1999/11/24 12:43:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
