@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.36 2001/07/24 17:46:07 nra Exp $
+.\"	$NetBSD: contents,v 1.37 2001/08/14 20:46:17 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,6 +110,10 @@ A version of
 .Li INSTALL
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
+.			It Pa netbsd.INSTALL_PS2.gz
+A version of 
+.Li INSTALL
+that has MCA stuff enabled to allow installing on IBM PS/2 machines.
 .\}
 .
 .if r_mvme68k \{\
