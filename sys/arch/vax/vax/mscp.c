@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mscp.c	7.5 (Berkeley) 12/16/90
- *	$Id: mscp.c,v 1.1 1994/08/02 20:22:04 ragge Exp $
+ *	$Id: mscp.c,v 1.2 1994/10/08 15:48:11 ragge Exp $
  */
 
 /*
@@ -157,10 +157,10 @@ mscp_go(mi, mp, info)
 	bp = dp->b_actf;
 	dp->b_actf = bp->b_actf;	/* transfer off drive queue */
 	mi->mi_tab->b_actf = dp->b_hash.le_next;/* drive off ctlr queue */
-	APPEND(dp, mi->mi_tab, b_hash.le_next);	/* then back again */
+	MSCP_APPEND(dp, mi->mi_tab, b_hash.le_next);	/* then back again */
 /* Was:	dp->b_actf = bp->av_forw;	/* transfer off drive queue */
 /* Was:	mi->mi_tab->b_actf = dp->b_forw;/* drive off ctlr queue */
-/* Was:	APPEND(dp, mi->mi_tab, b_forw);	/* then back again */
+/* Was:	MSCP_APPEND(dp, mi->mi_tab, b_forw);	/* then back again */
 
 	/*
 	 * Move the buffer to the I/O wait queue.
@@ -580,8 +580,8 @@ unknown:
 	if (ui->ui_flags & UNIT_REQUEUE) {
 		bp = &md->md_utab[ui->ui_unit];
 		if (bp->b_active) panic("mscp_dorsp requeue");
-		APPEND(bp, mi->mi_tab, b_hash.le_next);
-/* Was:		APPEND(bp, mi->mi_tab, b_forw); */
+		MSCP_APPEND(bp, mi->mi_tab, b_hash.le_next);
+/* Was:		MSCP_APPEND(bp, mi->mi_tab, b_forw); */
 		bp->b_active = 1;
 		ui->ui_flags &= ~UNIT_REQUEUE;
 	}
@@ -674,7 +674,7 @@ mscp_requeue(mi)
 			continue;
 		ui->ui_flags &= ~UNIT_REQUEUE;
 		asm("halt");
-/* XXX		APPEND(dp, mi->mi_tab, b_forw); */
+/* XXX		MSCP_APPEND(dp, mi->mi_tab, b_forw); */
 
 		dp->b_active = 1;
 		mi->mi_tab->b_active = 1;
