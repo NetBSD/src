@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.3 2003/11/20 03:31:02 uwe Exp $ */
+/*	$NetBSD: pthread_switch.S,v 1.4 2003/11/20 17:55:11 uwe Exp $ */
 	
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -139,11 +139,8 @@ ASSERT_IMMEDIATE_7BIT_OK(PT_TRAPUC)
  * already dealing with spin-preemption or other gunk.  
  */
 NENTRY(pthread__switch)
-	mov.l	r8, @-sp
-	mov.l	r9, @-sp
 	sts.l	pr, @-sp
-	mov	r4, r8	/* self */
-	mov	r5, r9	/* next */
+	mov	r4, r7	/* free r4 for function calls */
 
 	mov.l	.L_rnd_ctxsize, r0
 	sub	r0, sp			/* auto ucontext_t cntx; */
@@ -160,13 +157,13 @@ NENTRY(pthread__switch)
 	mov.l	r0, @(UC_PC, sp)
 
 	mov	#PT_UC, r0
-	mov.l	sp, @(r0, r8)		/* self->pt_uc = &cntx; */
+	mov.l	sp, @(r0, r7)		/* self->pt_uc = &cntx; */
 
-	STACK_SWITCH(r9, r4)		/* r4 = next->pt_uc; */
+	STACK_SWITCH(r5, r4)		/* r4 = next->pt_uc; */
 
 	mov.l	CALL_TARGET(12b,_setcontext_u), r0
 12:	CALL	(r0)			/* _setcontext_u(next->pt_uc); */
-	 nop
+	 nop				/* r4 already set by STACK_SWITCH */
 	NOTREACHED
 
 
@@ -176,9 +173,8 @@ ALTENTRY(pthread__switch_return_point)
 	mov.l	.L_rnd_ctxsize, r0
 	add	r0, sp			/* ditch the ucontext_t */
 	lds.l	@sp+, pr
-	mov.l	@sp+, r9
 	rts
-	 mov.l	@sp+, r8
+	 nop
 
 
 	.align	2
@@ -242,20 +238,15 @@ CALL_DATUM(31b,_setcontext_u)
  * prevent being removed from the queue before being switched away).
  */
 NENTRY(pthread__locked_switch)
-	mov.l	r8, @-sp
-	mov.l	r9, @-sp
-	mov.l	r10, @-sp
 	sts.l	pr, @-sp
-	mov	r4, r8	/* self */
-	mov	r5, r9	/* next */
-	mov	r6, r10	/* lock */
+	mov	r4, r7	/* free r4 for function calls */
 
 	mov.l	.L_rnd_ctxsize, r0
 	sub	r0, sp			/* auto ucontext_t cntx; */ 
 
-	mov.l	@(PT_SPINLOCKS, r9), r0	/* make sure we get continued */
+	mov.l	@(PT_SPINLOCKS, r5), r0	/* make sure we get continued */
 	add	#1, r0
-	mov.l	r0, @(PT_SPINLOCKS, r9)	/* ++next->pt_spinlocks */
+	mov.l	r0, @(PT_SPINLOCKS, r5)	/* ++next->pt_spinlocks */
 
 	mov.l	CALL_TARGET(41b,_getcontext_u), r0
 41:	CALL	(r0)			/* _getcontext_u(self->pt_uc); */
@@ -269,16 +260,16 @@ NENTRY(pthread__locked_switch)
 	mov.l	r0, @(UC_PC, sp)
 
 	mov	#PT_UC, r0
-	mov.l	sp, @(r0, r8)		/* self->pt_uc = &cntx; */
+	mov.l	sp, @(r0, r7)		/* self->pt_uc = &cntx; */
 
-	STACK_SWITCH(r9, r4)		/* r4 = next->pt_uc; */
+	STACK_SWITCH(r5, r4)		/* r4 = next->pt_uc; */
 
 	/*
 	 * Check if the original thread was preempted while holding
 	 * its queue lock.
 	 */
 	mov.l	.L_pt_next, r0
-	mov.l	@(r0, r8), r3
+	mov.l	@(r0, r7), r3
 	tst	r3, r3			/* self->pt_next == NULL? */
 	bt	Llocked_no_old_preempt
 
@@ -293,24 +284,24 @@ NENTRY(pthread__locked_switch)
          */
 
 	mov.l	.L_pt_heldlock, r0
-	mov.l	r10, @(r0, r8)		/* self->pt_heldlock = lock; */
+	mov.l	r6, @(r0, r7)		/* self->pt_heldlock = lock; */
 
 	mov.l	.L_pt_switchtouc, r0
-	mov.l	r4, @(r0, r8)		/* self->pt_switchtouc= next->pt_uc; */
+	mov.l	r4, @(r0, r7)		/* self->pt_switchtouc= next->pt_uc; */
 
 	mov.l	.L_pt_switchto, r0
-	mov.l	r9, @(r0, r8)		/* self->pt_switchto = next; */
+	mov.l	r5, @(r0, r7)		/* self->pt_switchto = next; */
 
-	mov.l	@(PT_SPINLOCKS, r8), r0
+	mov.l	@(PT_SPINLOCKS, r7), r0
 	add	#-1, r0
-	mov.l	r0, @(PT_SPINLOCKS, r8)	/* --self->pt_spinlocks */
+	mov.l	r0, @(PT_SPINLOCKS, r7)	/* --self->pt_spinlocks */
 
 	/*
 	 * r2: from = next
 	 * r3: to = self->pt_next (already)
 	 */
 	bra	Lpthread__switch_away_decrement
-	 mov	r9, r2
+	 mov	r5, r2
 	NOTREACHED
 
 
@@ -319,31 +310,31 @@ Llocked_no_old_preempt:
 	 * We've moved to the new stack, and the old context has been 
 	 * saved.  The queue lock can be released.
 	 */
-	mov.l	@(PT_SPINLOCKS, r8), r0
+	mov.l	@(PT_SPINLOCKS, r7), r0
 	add	#-1, r0
-	mov.l	r0, @(PT_SPINLOCKS, r8)	/* --self->pt_spinlocks */
+	mov.l	r0, @(PT_SPINLOCKS, r7)	/* --self->pt_spinlocks */
 
 	/* We happen to know that this is the right way to release a lock. */
 	mov	#0, r0
-	mov.b	r0, @r10		/* *lock = 0; */
+	mov.b	r0, @r6		/* *lock = 0; */
 
 	/* Remove the fake lock. */
-	mov.l	@(PT_SPINLOCKS, r9), r0
+	mov.l	@(PT_SPINLOCKS, r5), r0
 	add	#-1, r0
-	mov.l	r0, @(PT_SPINLOCKS, r9)	/* --next->pt_spinlocks */
+	mov.l	r0, @(PT_SPINLOCKS, r5)	/* --next->pt_spinlocks */
 
 	/* Check if we were preempted while holding the fake lock. */
 	mov.l	.L_pt_next, r0
-	mov.l	@(r0, r9), r3
+	mov.l	@(r0, r5), r3
 	tst	r3, r3			/* next->pt_next == NULL? */
 	bt	Llocked_no_new_preempt
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
 	mov.l	.L_pt_switchtouc, r0
-	mov.l	r4, @(r0, r9)		/* next->pt_switchtouc= next->pt_uc; */
+	mov.l	r4, @(r0, r5)		/* next->pt_switchtouc= next->pt_uc; */
 
 	mov.l	.L_pt_switchto, r0
-	mov.l	r9, @(r0, r9)		/* next->pt_switchto = next; */
+	mov.l	r5, @(r0, r5)		/* next->pt_switchto = next; */
 
 	/* r3: to = next->pt_next (already) */
 	bra	Lpthread__switch_away_no_decrement
@@ -364,10 +355,8 @@ Lpthread__locked_switch_return_point:
 	mov.l	.L_rnd_ctxsize, r0
 	add	r0, sp			/* ditch the ucontext_t */
 	lds.l	@sp+, pr
-	mov.l	@sp+, r10
-	mov.l	@sp+, r9
 	rts
-	 mov.l	@sp+, r8
+	 nop
 
 
 	.align	2
