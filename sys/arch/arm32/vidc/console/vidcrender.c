@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.5 2001/04/09 19:33:22 reinoud Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.6 2001/07/10 22:09:05 chris Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -406,7 +406,7 @@ vidcrender_mode(vc, mode)
 			int r, v, f;
 			for (v = 63; v > 0; v--)
 				for (r = 63; r > 0; r--) {
-					f = (v * VIDC_FREF/1000) / r;
+					f = ((v * vidc_fref)/1000) / r;
 					if (least_error >= mod(f - vidc_currentmode->pixel_rate)) {
 						best_match = f;
 						least_error = mod(f - vidc_currentmode->pixel_rate);
