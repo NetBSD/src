@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2001/06/02 18:09:10 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2001/06/11 11:56:58 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,6 @@
  * Updated	: 18/04/01 updated for new wscons
  */
 
-#include "opt_footbridge.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
 
@@ -52,43 +51,18 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/map.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
+#include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-#include <sys/syscallargs.h>
 
 #include <dev/cons.h>
 
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <machine/signal.h>
-#include <machine/frame.h>
-#include <machine/cpu.h>
 #include <machine/katelib.h>
 #include <machine/pte.h>
 #include <machine/bootconfig.h>
-
-#if !defined(SHARK)
-#include <arm/mainbus/mainbus.h>
-#endif
-
-#if !defined(SHARK) && !defined(FOOTBRIDGE)
-#include <arm32/iomd/iomdreg.h>
-#include <arm32/dev/rpckbdvar.h>
-#include <machine/vidc.h>
-#include <arm32/vidc/vidcvideo.h>
-
-#include "vidcvideo.h"
-#include "rpckbd.h"
-#endif
 
 #include "opt_ipkdb.h"
 #include "opt_mdsize.h"
@@ -129,10 +103,6 @@ char *booted_kernel;
 
 
 /* Prototypes */
-
-void consinit		__P((void));
-extern void comcninit	__P((struct consdev *cp));
-
 
 void map_section	__P((vaddr_t pt, vaddr_t va, paddr_t pa,
 			     int cacheable));
@@ -483,62 +453,6 @@ cpu_startup()
 
         curpcb->pcb_tf = (struct trapframe *)curpcb->pcb_sp - 1;
 }
-
-#ifndef FOOTBRIDGE
-/*
- * Initialise the console
- */
-
-#if ((NVIDCVIDEO>0) && (NRPCKBD>0))
-
-extern videomemory_t videomemory;
-extern struct bus_space iomd_bs_tag;
-extern struct rpckbd_softc console_kbd;
-
-void
-consinit(void)
-{
-	static struct rpckbd_softc *ksc = &console_kbd;
-	static int consinit_called = 0;
-
-	if (consinit_called != 0) return;
-	consinit_called = 1;
-
-#ifdef COMCONSOLE
-	ksc = ksc;	/* Not used */
-	comcninit(NULL);
-#else
-	/* set up bus variables for attachment */
-	ksc->sc_iot	 = &iomd_bs_tag;
-	ksc->t_isconsole = 1;
-	ksc->data_port	 = IOMD_KBDDAT;
-	ksc->cmd_port	 = IOMD_KBDCR;
-	ksc->sc_enabled	 = 1;
-	bus_space_map(ksc->sc_iot, IOMD_KBDDAT, 8, 0, &(ksc->sc_ioh));
-
-	rpckbd_cnattach((struct device *) ksc);
-	vidcvideo_cnattach(videomemory.vidm_vbase);
-#endif
-}
-
-#else
-
-void
-consinit(void)
-{
-	static int consinit_called = 0;
-
-	if (consinit_called != 0)
-		return;
-	consinit_called = 1;
-
-	/* No serial console for now ? hmm... should be in constab */
-	cninit();
-}
-#endif
-
-#endif
-
 
 /*
  * Modify the current mapping for zero page to make it read only

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.114 2001/06/09 10:29:11 chris Exp $
+#	$NetBSD: files.arm32,v 1.115 2001/06/11 11:56:59 rearnsha Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -61,6 +61,10 @@ attach	ofbus at root with ofbus_root
 file	arch/arm32/ofw/ofw.c			ofw
 file	arch/arm32/ofw/openfirm.c		ofw
 file	arch/arm32/ofw/oftodclock.c		ofw & (shark | ofwgencfg)
+
+# OFW console initialization
+file	arch/arm32/ofw/consinit.c		ofw
+file	dev/cninit.c				ofw
 
 # ISA DMA glue
 file	arch/arm32/isa/isadma_machdep.c		isadma
@@ -326,7 +330,8 @@ file	arch/arm32/podulebus/amps.c		amps
 
 device  vidcconsole   
 attach  vidcconsole at vidc   
-file    arch/arm32/vidc/console/vidcconsole.c     vidcconsole needs-count
+file	arch/arm32/vidc/console/vidcconsole.c	vidcconsole needs-count
+file	arch/arm32/vidc/console/consinit.c	vidc needs-count
 device  vt: tty
 attach  vt at vidc
 
@@ -360,8 +365,6 @@ file	arch/arm32/dev/bus_space_notimpl.S
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
-
-file	dev/cninit.c				!footbridge
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
