@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.3 2003/01/07 23:05:08 fvdl Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.4 2003/01/08 12:33:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -49,8 +49,6 @@
 #include <dev/acpi/acpica/Subsystem/actables.h>
 #include <dev/acpi/acpica/Subsystem/acnamesp.h>
 #include <dev/acpi/acpi_madt.h>
-
-#undef ACPI_MADT_DEBUG
 
 #ifdef ACPI_MADT_DEBUG
 static void acpi_madt_print(void);
