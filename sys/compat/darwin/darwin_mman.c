@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.10 2003/10/25 18:38:07 christos Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.11 2003/12/04 21:48:15 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.10 2003/10/25 18:38:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.11 2003/12/04 21:48:15 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,6 +90,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	size_t maplen;
 	struct sys_open_args open_cup;
 	struct sys_close_args close_cup;
+	register_t fdc;
 	int fd;
 	int i;
 	int error;
@@ -122,9 +123,10 @@ darwin_sys_load_shared_file(l, v, retval)
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
 	SCARG(&open_cup, mode) = 0;
-	if ((error = bsd_sys_open(l, &open_cup, (register_t *)&fd)) != 0)
+	if ((error = bsd_sys_open(l, &open_cup, &fdc)) != 0)
 		return error;
 	
+	fd = (int)fdc;
 	fdp = p->p_fd;
 	fp = fd_getfile(fdp, fd);
 	if (fp == NULL) {
