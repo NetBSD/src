@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 1994/10/26 08:47:04 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 1994/10/28 19:55:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,6 +119,8 @@
 	moveml	sp@+,\#0xFFFF
 
 	.text
+	.space (4096-1024)
+	.space  4096
 /*
  * This is where we wind up if the kernel jumps to location 0.
  * (i.e. a bogus PC)  This is known to immediately follow the vector
