@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.1 1998/05/20 16:19:43 augustss Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.2 1998/08/25 22:34:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -71,19 +71,16 @@
 
 
 struct ym_softc {
-	struct	device sc_dev;		/* base device */
-	struct	isadev sc_id;		/* ISA device */
-	void	*sc_ih;			/* interrupt vectoring */
+	struct  ad1848_isa_softc sc_ad1848;
+#define ym_irq    sc_ad1848.sc_irq
+#define ym_drq    sc_ad1848.sc_drq
+#define ym_recdrq sc_ad1848.sc_recdrq
+
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 	isa_chipset_tag_t sc_ic;
 
         bus_space_handle_t sc_controlioh;
-
-	struct  ad1848_softc sc_ad1848;
-#define ym_irq    sc_ad1848.sc_irq
-#define ym_drq    sc_ad1848.sc_drq
-#define ym_recdrq sc_ad1848.sc_recdrq
 
         int  master_mute, mic_mute;
         struct ad1848_volume mic_gain, master_gain;
