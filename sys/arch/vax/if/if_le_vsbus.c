@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.11 2001/02/04 20:36:27 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ le_vsbus_match(parent, cf, aux)
 	int rv = 0;
 	int error;
 
-	if (vax_boardtype == VAX_BTYP_49)
+	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_53)
 		return 0;
 
 	error = bus_dmamap_create(va->va_dmat, sizeof(initblock), 1,
