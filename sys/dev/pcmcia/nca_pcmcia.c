@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.16 2004/08/10 20:25:03 mycroft Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.17 2004/08/10 20:47:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.16 2004/08/10 20:25:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.17 2004/08/10 20:47:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ nca_pcmcia_attach(parent, self, aux)
 	esc->sc_state = NCA_PCMCIA_ATTACH1;
 	ncr5380_attach(sc);
 	if (esc->sc_state == NCA_PCMCIA_ATTACH1)
-		nca_pcmcia_disable(self, 0);
+		nca_pcmcia_enable(self, 0);
 	esc->sc_state = NCA_PCMCIA_ATTACHED;
 	return;
 
