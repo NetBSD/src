@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.6 2003/12/26 14:49:37 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.7 2003/12/26 15:06:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.6 2003/12/26 14:49:37 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.7 2003/12/26 15:06:16 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -110,7 +110,7 @@ static	void	handle_stdout(void);
 static	void	print_ratio(off_t, off_t, FILE *);
 static	void	print_verbage(char *, char *, ssize_t, ssize_t);
 static	void	print_test(char *, int);
-static	void	print_list(int fd, off_t, const char *);
+static	void	print_list(int fd, off_t, const char *, time_t);
 
 int main(int, char *p[]);
 
@@ -223,9 +223,6 @@ main(int argc, char **argv)
 	if (dflag)
 		gzipflags[0] = 'r';
 
-	if (lflag && vflag)
-		errx(1, "does not support --list and --verbose together yet");
-
 	suffix_len = strlen(Sflag) + 1;
 
 	if (argc == 0) {
@@ -239,7 +236,7 @@ main(int argc, char **argv)
 		} while (*++argv);
 	}
 	if (qflag == 0 && lflag && argc > 1)
-		print_list(-1, 0, "(totals)");
+		print_list(-1, 0, "(totals)", 0);
 	exit(0);
 }
 
@@ -556,7 +553,7 @@ file_uncompress(char *file)
 
 		if ((fd = open(file, O_RDONLY)) == -1)
 			maybe_err(1, "open");
-		print_list(fd, isb.st_size, outfile);
+		print_list(fd, isb.st_size, outfile, isb.st_mtime);
 		return 0;	/* XXX */
 	}
 
@@ -635,7 +632,7 @@ handle_stdin(void)
 
 		if (fstat(STDIN_FILENO, &isb) < 0)
 			maybe_err(1, "fstat");
-		print_list(STDIN_FILENO, isb.st_size, "stdout");
+		print_list(STDIN_FILENO, isb.st_size, "stdout", isb.st_mtime);
 		return;
 	}
 
@@ -812,15 +809,21 @@ print_test(char *file, int ok)
       354841      1679360  78.8% /usr/pkgsrc/distfiles/libglade-2.0.1.tar
 */
 static void
-print_list(int fd, off_t in, const char *outfile)
+print_list(int fd, off_t in, const char *outfile, time_t ts)
 {
 	static int first = 1;
 	static off_t in_tot, out_tot;
 	off_t out;
+	u_int32_t crc;
 	int rv;
 
-	if (qflag == 0 && first)
-		printf("  compressed uncompressed  ratio uncompressed_name\n");
+	if (first) {
+		if (vflag)
+			printf("method  crc     date  time  ");
+		if (qflag == 0)
+			printf("  compressed uncompressed  "
+			       "ratio uncompressed_name\n");
+	}
 	first = 0;
 
 	/* print totals? */
@@ -829,18 +832,29 @@ print_list(int fd, off_t in, const char *outfile)
 		out = out_tot;
 	} else {
 		/* read the last 4 bytes - this is the uncompressed size */
-		rv = lseek(fd, (off_t)(-4), SEEK_END);
+		rv = lseek(fd, (off_t)(-8), SEEK_END);
 		if (rv != -1) {
-			unsigned char buf[4];
+			unsigned char buf[8];
 			u_int32_t usize;
 
 			if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
 				maybe_err(1, "read of uncompressed size");
-			usize = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+			crc = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+			usize = buf[4] | buf[5] << 8 | buf[6] << 16 | buf[7] << 24;
 			out = (off_t)usize;
 		}
 	}
 
+	if (vflag && fd == -1)
+		printf("                            ");
+	else if (vflag) {
+		char *date = ctime(&ts);
+
+		/* skip the day, 1/100th second, and year */
+		date += 4;
+		date[12] = 0;
+		printf("%5s %08x %11s ", "defla"/*XXX*/, crc, date);
+	}
 	printf("%12llu %12llu ", (unsigned long long)in, (unsigned long long)out);
 	print_ratio(in, out, stdout);
 	printf(" %s\n", outfile);
