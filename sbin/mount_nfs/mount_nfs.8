@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.17 2002/02/08 01:30:44 ross Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.18 2002/05/15 01:58:16 simonb Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -237,14 +237,14 @@ on all your systems.
 Set the read data size to the specified value.
 It should normally be a power of 2 greater than or equal to 1024.
 This should be used for UDP mounts when the
-.Dq "fragments dropped due to timeout"
+.Dq "fragments dropped after timeout"
 value is getting large while actively using a mount point.
 (Use
 .Xr netstat 1
 with the
 .Fl s
 option to see what the
-.Dq "fragments dropped due to timeout"
+.Dq "fragments dropped after timeout"
 value is.)
 See the
 .Fl w
@@ -270,7 +270,7 @@ Set the write data size to the specified value.
 Ditto the comments w.r.t. the
 .Fl r
 option, but using the
-.Dq "fragments dropped due to timeout"
+.Dq "fragments dropped after timeout"
 value on the server instead of the client.
 Note that both the
 .Fl r
