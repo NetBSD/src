@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.140 1999/07/04 06:16:29 sommerfeld Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.141 1999/07/04 06:17:52 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -465,7 +465,7 @@ dounmount(mp, flags, p)
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
 		vfs_setpublicfs(NULL, NULL, NULL);
-	async = mp->mnt_flag & ASYNC;
+	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &=~ MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
 	if (((mp->mnt_flag & MNT_RDONLY) ||
