@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.3 2003/02/06 23:02:34 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.4 2003/02/08 20:42:07 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -136,9 +136,9 @@ oea_init(void (*handler)(void))
 	KASSERT(ci != NULL);
 	KASSERT(curcpu() == ci);
 	lwp0.l_cpu = ci;
-	KASSERT(lwp0.l_cpu != NULL);
 	lwp0.l_addr = proc0paddr;
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
+	KASSERT(lwp0.l_cpu != NULL);
 
 	curpcb = &proc0paddr->u_pcb;
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
@@ -591,13 +591,15 @@ oea_startup(const char *model)
 	uintptr_t sz;
 	u_int i;
 	u_long base, residual;
-	int error;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
+	KASSERT(curcpu()->ci_intstk != 0);
+	KASSERT(curcpu()->ci_spillstk != 0);
+	KASSERT(curcpu()->ci_intrdepth == -1);
 
 	/*
 	 * If the msgbuf is not in segment 0, allocate KVA for it and access
@@ -685,16 +687,18 @@ oea_startup(const char *model)
 	 * the bufpages are allocated in case they overlap since it's not
 	 * fatal if we can't allocate these.
 	 */
-	minaddr = 0xDEAC0000;
-	error = uvm_map(kernel_map, &minaddr, 0x30000,
-	    NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
-			UVM_ADV_NORMAL, UVM_FLAG_FIXED));
-	if (error != 0 || minaddr != 0xDEAC0000) {
-		printf("oea_startup: failed to allocate DEAD "
-		    "ZONE: error=%d\n", error);
-		minaddr = 0;
+	if (KERNEL_SR == 13 || KERNEL2_SR == 14) {
+		int error;
+		minaddr = 0xDEAC0000;
+		error = uvm_map(kernel_map, &minaddr, 0x30000,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
+				UVM_ADV_NORMAL, UVM_FLAG_FIXED));
+		if (error != 0 || minaddr != 0xDEAC0000)
+			printf("oea_startup: failed to allocate DEAD "
+			    "ZONE: error=%d\n", error);
 	}
+	minaddr = 0;
  
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
