@@ -1,3 +1,5 @@
+/*	$NetBSD: osf1_signal.c,v 1.3 1998/01/05 17:51:33 perry Exp $	*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>

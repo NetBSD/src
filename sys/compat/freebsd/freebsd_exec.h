@@ -1,3 +1,5 @@
+/*	$NetBSD: freebsd_exec.h,v 1.2 1998/01/05 17:51:27 perry Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
