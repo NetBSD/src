@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.13 1997/07/21 14:06:58 jtc Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.14 1999/03/16 18:13:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.13 1997/07/21 14:06:58 jtc Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.14 1999/03/16 18:13:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,13 +97,13 @@ fnmatch(pattern, string, flags)
 				return (FNM_NOMATCH);
 
 			/* Optimize for pattern with * at end or before /. */
-			if (c == EOS)
+			if (c == EOS) {
 				if (flags & FNM_PATHNAME)
 					return (strchr(string, '/') == NULL ?
 					    0 : FNM_NOMATCH);
 				else
 					return (0);
-			else if (c == '/' && flags & FNM_PATHNAME) {
+			} else if (c == '/' && flags & FNM_PATHNAME) {
 				if ((string = strchr(string, '/')) == NULL)
 					return (FNM_NOMATCH);
 				break;

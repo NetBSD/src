@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.14 1998/12/01 20:13:47 thorpej Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.15 1999/03/16 18:13:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.14 1998/12/01 20:13:47 thorpej Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.15 1999/03/16 18:13:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -602,7 +602,10 @@ fts_build(sp, type)
 	FTSENT *cur, *tail;
 	DIR *dirp;
 	void *adjaddr;
-	int cderrno, descend, len, level, maxlen, nlinks, oflag, saved_errno;
+	int cderrno, descend, len, level, maxlen, nlinks, saved_errno;
+#ifdef FTS_WHITEOUT
+	int oflag;
+#endif
 	char *cp = NULL;	/* pacify gcc */
 
 	/* Set current node pointer. */
@@ -661,7 +664,7 @@ fts_build(sp, type)
 	 * checking FTS_NS on the returned nodes.
 	 */
 	cderrno = 0;
-	if (nlinks || type == BREAD)
+	if (nlinks || type == BREAD) {
 		if (FCHDIR(sp, dirfd(dirp))) {
 			if (nlinks && type == BREAD)
 				cur->fts_errno = errno;
@@ -670,7 +673,7 @@ fts_build(sp, type)
 			cderrno = errno;
 		} else
 			descend = 1;
-	else
+	} else
 		descend = 0;
 
 	/*
