@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.26 1998/07/29 18:48:54 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.27 1998/08/21 14:12:18 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ union obio_attach_args {
 };
 
 #define obio_bus_map(t, a, o, s, f, v, hp)		\
-	bus_space_map2(t, 0, (long)(a) + o, s, f, (vm_offset_t)v, hp)
+	bus_space_map2(t, 0, (long)(a) + o, s, f, (vaddr_t)v, hp)
 
 /* obio specific bus flag */
 #define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
@@ -210,8 +210,8 @@ char	*clockfreq __P((int freq));
  * handle discontiguous physical memory).
  */
 struct memarr {
-	u_int	addr;
-	u_int	len;
+	paddr_t	addr;
+	psize_t	len;
 };
 int	makememarr(struct memarr *, int max, int which);
 #define	MEMARR_AVAILPHYS	0
