@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.1 2000/06/02 23:11:15 fvdl Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.2 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -77,13 +77,13 @@ xdr_rpcb(xdrs, objp)
 	if (!xdr_u_int32_t(xdrs, &objp->r_vers)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_netid, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_netid, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_addr, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_addr, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_owner, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_owner, (u_int)~0)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -114,8 +114,8 @@ xdr_rpcb(xdrs, objp)
 
 bool_t
 xdr_rpcblist_ptr(xdrs, rp)
-	register XDR *xdrs;
-	register rpcblist_ptr *rp;
+	XDR *xdrs;
+	rpcblist_ptr *rp;
 {
 	/*
 	 * more_elements is pre-computed in case the direction is
@@ -123,11 +123,11 @@ xdr_rpcblist_ptr(xdrs, rp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	bool_t more_elements;
-	register int freeing = (xdrs->x_op == XDR_FREE);
+	int freeing = (xdrs->x_op == XDR_FREE);
 	rpcblist_ptr next;
 	rpcblist_ptr next_copy;
 
-	while (TRUE) {
+	for (;;) {
 		more_elements = (bool_t)(*rp != NULL);
 		if (! xdr_bool(xdrs, &more_elements)) {
 			return (FALSE);
@@ -167,8 +167,8 @@ xdr_rpcblist_ptr(xdrs, rp)
  */
 bool_t
 xdr_rpcblist(xdrs, rp)
-	register XDR *xdrs;
-	register RPCBLIST **rp;
+	XDR *xdrs;
+	RPCBLIST **rp;
 {
 	bool_t	dummy;
 
@@ -182,19 +182,19 @@ xdr_rpcb_entry(xdrs, objp)
 	XDR *xdrs;
 	rpcb_entry *objp;
 {
-	if (!xdr_string(xdrs, &objp->r_maddr, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_maddr, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_nc_netid, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_nc_netid, (u_int)~0)) {
 		return (FALSE);
 	}
 	if (!xdr_u_int32_t(xdrs, &objp->r_nc_semantics)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_nc_protofmly, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_nc_protofmly, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->r_nc_proto, ~0)) {
+	if (!xdr_string(xdrs, &objp->r_nc_proto, (u_int)~0)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -202,8 +202,8 @@ xdr_rpcb_entry(xdrs, objp)
 
 bool_t
 xdr_rpcb_entry_list_ptr(xdrs, rp)
-	register XDR *xdrs;
-	register rpcb_entry_list_ptr *rp;
+	XDR *xdrs;
+	rpcb_entry_list_ptr *rp;
 {
 	/*
 	 * more_elements is pre-computed in case the direction is
@@ -211,11 +211,11 @@ xdr_rpcb_entry_list_ptr(xdrs, rp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	bool_t more_elements;
-	register int freeing = (xdrs->x_op == XDR_FREE);
+	int freeing = (xdrs->x_op == XDR_FREE);
 	rpcb_entry_list_ptr next;
 	rpcb_entry_list_ptr next_copy;
 
-	while (TRUE) {
+	for (;;) {
 		more_elements = (bool_t)(*rp != NULL);
 		if (! xdr_bool(xdrs, &more_elements)) {
 			return (FALSE);
@@ -259,7 +259,8 @@ xdr_rpcb_rmtcallargs(xdrs, p)
 	XDR *xdrs;
 	struct rpcb_rmtcallargs *p;
 {
-	struct r_rpcb_rmtcallargs *objp = (struct r_rpcb_rmtcallargs *)p;
+	struct r_rpcb_rmtcallargs *objp =
+	    (struct r_rpcb_rmtcallargs *)(void *)p;
 	u_int lenposition, argposition, position;
 	int32_t *buf;
 
@@ -292,7 +293,7 @@ xdr_rpcb_rmtcallargs(xdrs, p)
 		return (FALSE);
 	}
 	position = XDR_GETPOS(xdrs);
-	objp->args.args_len = (u_long)position - (u_long)argposition;
+	objp->args.args_len = (u_int)((u_long)position - (u_long)argposition);
 	XDR_SETPOS(xdrs, lenposition);
 	if (! xdr_u_int(xdrs, &(objp->args.args_len))) {
 		return (FALSE);
@@ -311,9 +312,9 @@ xdr_rpcb_rmtcallres(xdrs, p)
 	struct rpcb_rmtcallres *p;
 {
 	bool_t dummy;
-	struct r_rpcb_rmtcallres *objp = (struct r_rpcb_rmtcallres *)p;
+	struct r_rpcb_rmtcallres *objp = (struct r_rpcb_rmtcallres *)(void *)p;
 
-	if (!xdr_string(xdrs, &objp->addr, ~0)) {
+	if (!xdr_string(xdrs, &objp->addr, (u_int)~0)) {
 		return (FALSE);
 	}
 	if (!xdr_u_int(xdrs, &objp->results.results_len)) {

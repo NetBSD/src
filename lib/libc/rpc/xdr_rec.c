@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.17 2000/01/22 22:19:18 mycroft Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.18 2000/07/06 03:10:35 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.17 2000/01/22 22:19:18 mycroft Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.18 2000/07/06 03:10:35 christos Exp $");
 #endif
 #endif
 
@@ -167,8 +167,7 @@ xdrrec_create(xdrs, sendsize, recvsize, tcp_handle, readit, writeit)
 	/* like write, but pass it a tcp_handle, not sock */
 	int (*writeit) __P((char *, char *, int));
 {
-	RECSTREAM *rstrm =
-		(RECSTREAM *)mem_alloc(sizeof(RECSTREAM));
+	RECSTREAM *rstrm = mem_alloc(sizeof(RECSTREAM));
 
 	if (rstrm == NULL) {
 		warnx("xdrrec_create: out of memory");
