@@ -1,4 +1,4 @@
-.\"	$NetBSD: knote.9,v 1.6 2003/01/19 20:12:35 jdolecek Exp $
+.\"	$NetBSD: knote.9,v 1.7 2003/02/23 21:40:44 pk Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,6 +84,11 @@ corresponding kqueue for the application to retrieve.
 If the knote is already on the active list, no action is taken, but the
 call to the filter occurs in order to provide an opportunity for the
 filter to record the activity.
+.Pp
+.Fn knote
+must not be called from interrupt contexts running at an interrupt
+priority level higher than
+.Fn splsched .
 .Pp
 .Fn KNOTE
 is a macro that calls
