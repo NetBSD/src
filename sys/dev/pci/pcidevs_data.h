@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.417 2002/04/05 20:38:31 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.418 2002/04/15 11:12:47 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.414 2002/04/05 20:37:45 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.415 2002/04/15 11:12:25 ad Exp 
  */
 
 /*
@@ -625,37 +625,115 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-2940 Ultra2",
+	    "AHA-2940U2 U2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930U2,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-2930 Ultra2",
+	    "AHA-2930U2 U2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7890/1",
+	    "AIC-7890/1 U2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7892 U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_29160,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-29160 U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_19160B,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-19160B U160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-3950 Ultra2",
+	    "AHA-3950U2B U2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2D,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-3950 Ultra2",
+	    "AHA-3950U2D U2",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7896,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7896/7",
+	    "AIC-7896/7 U2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3960D,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-3960D U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899B,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7899B",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899D,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7899D",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899F,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7899F",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7899 U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AAC-2622",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AAC-364",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC3642,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AAC-3642",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_2QC,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "Dell PERC 2/QC",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_3QC,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "Dell PERC 3/QC",
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
@@ -2374,6 +2452,66 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SWXCR RAID",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
+	    0,
+	    "Dell Computer",
+	    "PERC 2/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2_SUB,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB2,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 	    0,
 	    "Delta Electronics",
@@ -2710,10 +2848,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MAXIRADIO",
 	},
 	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A,
+	    0,
+	    "Hewlett-Packard",
+	    "A4977A Visualize EG",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
 	    0,
 	    "Hewlett-Packard",
 	    "J2585A",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585B,
+	    0,
+	    "Hewlett-Packard",
+	    "J2585B",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
+	    0,
+	    "Hewlett-Packard",
+	    "82557B 10/100 NIC",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
+	    0,
+	    "Hewlett-Packard",
+	    "NetRaid-4M",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
