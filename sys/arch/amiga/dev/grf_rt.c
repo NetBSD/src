@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.16 1994/06/23 05:39:09 chopps Exp $
+ *	$Id: grf_rt.c,v 1.17 1994/07/31 18:42:06 chopps Exp $
  */
 
 #include "grfrt.h"
@@ -209,8 +209,8 @@ static const char *monitor_descr[] = {
 int retina_mon_max = sizeof (monitor_defs)/sizeof (monitor_defs[0]);
 
 /* patchable */
-int retina_default_mon = 2;
-int retina_default_gfx = 5;
+int retina_default_mon = 0;
+int retina_default_gfx = 4;
     
 #endif
 
