@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.9.4.3 2003/08/25 20:17:11 jlam Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.9.4.4 2003/08/30 12:09:16 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.9.4.3 2003/08/25 20:17:11 jlam Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.9.4.4 2003/08/30 12:09:16 jlam Exp $");
 #endif
 
 /*
@@ -241,9 +241,7 @@ _pkgdb_getPKGDB_DIR(void)
 	char *tmp;
 
 	if (pkgdb_dir == NULL) {
-		if ((tmp = getenv(PKG_REGISTRY)))
-			_pkgdb_setPKGDB_DIR(tmp);
-		else if ((tmp = getenv(PKG_DBDIR)))
+		if ((tmp = getenv(PKG_DBDIR)))
 			_pkgdb_setPKGDB_DIR(tmp);
 		else
 			_pkgdb_setPKGDB_DIR(DEF_LOG_DIR);
