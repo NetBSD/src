@@ -1,4 +1,4 @@
-/*	$NetBSD: gfmt.c,v 1.12 1998/07/28 11:40:58 mycroft Exp $	*/
+/*	$NetBSD: gfmt.c,v 1.13 1999/03/02 17:27:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: gfmt.c,v 1.12 1998/07/28 11:40:58 mycroft Exp $");
+__RCSID("$NetBSD: gfmt.c,v 1.13 1999/03/02 17:27:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,11 +105,13 @@ gread(tp, s)
 			tp->c_iflag = tmp;
 			continue;
 		}
+#ifdef BSD4_4
 		if (CHK("ispeed")) {
 			(void)sscanf(ep, "%ld", &tmp);
 			tp->c_ispeed = tmp;
 			continue;
 		}
+#endif
 		if (CHK("lflag")) {
 			tp->c_lflag = tmp;
 			continue;
@@ -118,11 +120,13 @@ gread(tp, s)
 			tp->c_oflag = tmp;
 			continue;
 		}
+#ifdef BSD4_4
 		if (CHK("ospeed")) {
 			(void)sscanf(ep, "%ld", &tmp);
 			tp->c_ospeed = tmp;
 			continue;
 		}
+#endif
 		for (cp = cchars1; cp->name != NULL; ++cp)
 			if (CHK(cp->name)) {
 				if (cp->sub == VMIN || cp->sub == VTIME)
