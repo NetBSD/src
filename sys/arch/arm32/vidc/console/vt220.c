@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.6 1996/05/12 21:42:44 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.7 1996/06/03 22:08:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -1173,7 +1173,7 @@ do_render_noscroll(c, vc)
     {
 	if (((vc->flags)&(LOSSY))==0)
 	{
-          if ( vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c | cdata->attribs)
+          if ( (vc->charmap[vc->xcur+vc->ycur*vc->xchars] != c) | cdata->attribs)
           {
 	    if ( vc==vconsole_current )
 	        vc->RENDER ( vc, c );
@@ -1286,7 +1286,7 @@ do_render(c, vc)
 	{
 	    if ( cdata->irm == 0 )
 	    {
-                if(vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= c | cdata->attribs )
+                if((vc->charmap[vc->xcur+vc->ycur*vc->xchars]!= c) | cdata->attribs )
                 {
 	            if ( vc==vconsole_current )
 	                vc->RENDER ( vc, c );
