@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.7 2002/11/23 17:42:45 provos Exp $	*/
+/*	$NetBSD: parse.y,v 1.8 2003/03/25 23:17:30 provos Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.7 2002/11/23 17:42:45 provos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.8 2003/03/25 23:17:30 provos Exp $");
 
 #include <sys/types.h>
 
@@ -70,7 +70,7 @@ extern int iamroot;
 
 %}
 
-%token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
+%token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY ASK
 %token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL AS
 %token	COLON RE
 %token	<string> STRING
@@ -124,6 +124,10 @@ fullexpression	: expression THEN action errorcode logcode elevate predicate
 
 		if ($5)
 			flags |= SYSCALL_LOG;
+
+		/* Special policy that allows only yes or no */
+		if ($3 == ICPOLICY_ASK)
+			flags |= PROCESS_PROMPT;
 
 		if ($4 != NULL)
 			free($4);
@@ -416,6 +420,10 @@ typeoff		: /* empty */
 action		: PERMIT
 {
 	$$ = ICPOLICY_PERMIT;
+}
+		| ASK
+{
+	$$ = ICPOLICY_ASK;
 }
 		| DENY
 {
