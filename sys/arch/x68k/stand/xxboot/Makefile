@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/16 16:30:22 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 1999/03/27 15:01:34 minoura Exp $
 
 BOOT=	xxboot
 VERSION=0.3
@@ -26,7 +26,7 @@ CFLAGS=	-O -fomit-frame-pointer
 CFLAGS+= -W -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CFLAGS+= -DGZIP -DSCSI_ADHOC_BOOTPART
-CFLAGS+= -DTITLE_IMAGE -DIMAGE_EXTRA=100
+#CFLAGS+= -DTITLE_IMAGE -DIMAGE_EXTRA=100	# XXX: minoura, Mar. 99
 #CFLAGS+= -DBOOT_DEBUG
 AFLAGS=	${CFLAGS:M-[ID]*}
 LDFLAGS=-n -Bstatic -T $(TEXT)
