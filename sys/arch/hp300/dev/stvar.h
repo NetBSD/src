@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.6 1997/04/02 22:37:40 scottr Exp $	*/
+/*	$NetBSD: stvar.h,v 1.7 2000/01/21 23:29:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -197,7 +197,9 @@ struct st_softc {
 	u_char	sc_cmd;
 	struct st_xsense sc_sense;
 	struct scsi_fmt_cdb sc_cmdstore;
-	struct buf sc_tab;	/* buffer queue */
+	struct buf_queue sc_tab;/* buffer queue */
+	int	sc_active;	/* transfer is active */
+	int	sc_errcnt;	/* error count for this transfer */
 	struct buf sc_bufstore;	/* XXX buffer storage */
 };
 

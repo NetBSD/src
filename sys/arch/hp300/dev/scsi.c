@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.26 1999/10/31 12:36:30 he Exp $	*/
+/*	$NetBSD: scsi.c,v 1.27 2000/01/21 23:29:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -187,8 +187,6 @@ u_int	sgo_wait[MAXWAIT+2];
 #else
 #define HIST(h,w)
 #endif
-
-#define	b_cylin		b_resid
 
 static void
 scsiabort(target, hs, hd, where)
@@ -1332,7 +1330,7 @@ out:
 		hs->sc_flags |= SCSI_PAD;
 		if (i & 1)
 			printf("%s: odd byte count: %d bytes @ %ld\n",
-				hs->sc_dev.dv_xname, i, bp->b_cylin);
+				hs->sc_dev.dv_xname, i, bp->b_cylinder);
 #endif
 	} else
 		i += 4;
