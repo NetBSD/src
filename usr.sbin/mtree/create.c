@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)create.c	5.19 (Berkeley) 3/2/92"; */
-static char *rcsid = "$Id: create.c,v 1.7 1994/03/27 09:09:49 cgd Exp $";
+static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -152,7 +151,9 @@ statf(p)
 	if (keys & F_SIZE)
 		output(&indent, "size=%qd", p->fts_statp->st_size);
 	if (keys & F_TIME)
-		output(&indent, "time=%ld", p->fts_statp->st_mtime);
+		output(&indent, "time=%ld.%ld",
+		    p->fts_statp->st_mtimespec.ts_sec,
+		    p->fts_statp->st_mtimespec.ts_nsec);
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0 ||
 		    crc(fd, &val, &len))
@@ -272,17 +273,16 @@ output(offset, fmt, va_alist)
 #endif
 {
 	va_list ap;
-	int len;
 	char buf[1024];
 #if __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	len = vsnprintf(buf, sizeof(buf), fmt, ap);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	if (*offset + len > MAXLINELEN - 3) {
+	if (*offset + strlen(buf) > MAXLINELEN - 3) {
 		(void)printf(" \\\n%*s", INDENTNAMELEN, "");
 		*offset = INDENTNAMELEN;
 	}
