@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.5 2002/02/06 15:39:01 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.6 2002/02/26 22:29:38 tv Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -37,6 +37,9 @@
 
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
+#if HAVE_SYS_SYSLIMITS_H
+#include <sys/syslimits.h>
 #endif
 #if HAVE_SYS_SYSMACROS_H
 /* major(), minor() on SVR4 */
@@ -201,11 +204,11 @@ ssize_t pwrite(int, const void *, size_t, off_t);
 int setenv(const char *, const char *, int);
 #endif
 
-#if !HAVE_SETGROUPENT
+#if !HAVE_DECL_SETGROUPENT
 int setgroupent(int);
 #endif
 
-#if !HAVE_SETPASSENT
+#if !HAVE_DECL_SETPASSENT
 int setpassent(int);
 #endif
 
@@ -374,6 +377,19 @@ void *setmode(const char *);
 #define MAXPHYS (64 * 1024)
 #endif
 
+/* XXX needed by makefs; this should be done in a better way */
+#undef btodb
+#define btodb(x) ((x) << 9)
+
+#undef setbit
+#undef clrbit
+#undef isset
+#undef isclr
+#define	setbit(a,i)	((a)[(i)/NBBY] |= 1<<((i)%NBBY))
+#define	clrbit(a,i)	((a)[(i)/NBBY] &= ~(1<<((i)%NBBY)))
+#define	isset(a,i)	((a)[(i)/NBBY] & (1<<((i)%NBBY)))
+#define	isclr(a,i)	(((a)[(i)/NBBY] & (1<<((i)%NBBY))) == 0)
+
 #ifndef powerof2
 #define powerof2(x) ((((x)-1)&(x))==0)
 #endif
@@ -392,6 +408,12 @@ void *setmode(const char *);
 #else
 #define S_ISTXT 0
 #endif
+#endif
+
+/* <sys/syslimits.h> */
+
+#ifndef LINE_MAX
+#define LINE_MAX 2048
 #endif
 
 /* <sys/time.h> */

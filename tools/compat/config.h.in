@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.9 2002/01/31 22:43:47 tv Exp $	*/
+/*	$NetBSD: config.h.in,v 1.10 2002/02/26 22:29:38 tv Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -19,6 +19,7 @@
 #undef HAVE_STRING_H
 #undef HAVE_SYS_DIR_H
 #undef HAVE_SYS_NDIR_H
+#undef HAVE_SYS_SYSLIMITS_H
 #undef HAVE_SYS_SYSMACROS_H
 #undef HAVE_SYS_TYPES_H
 #undef HAVE_UNISTD_H
@@ -30,6 +31,7 @@
 #undef HAVE_U_QUAD_T
 
 #undef HAVE_DIR_DD_FD
+#undef HAVE_STRUCT_DIRENT_D_NAMLEN
 #undef HAVE_STRUCT_STAT_ST_FLAGS
 #undef HAVE_STRUCT_STAT_ST_GEN
 #undef HAVE_STRUCT_STAT_ST_MTIMENSEC
@@ -69,6 +71,9 @@
 #undef HAVE_VASPRINTF
 #undef HAVE_VASNPRINTF
 #undef HAVE_VSNPRINTF
+
+#undef HAVE_DECL_SETGROUPENT
+#undef HAVE_DECL_SETPASSENT
 
 #undef WORDS_BIGENDIAN
 

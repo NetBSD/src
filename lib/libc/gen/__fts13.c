@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.38 2002/01/31 22:43:36 tv Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.39 2002/02/26 22:29:40 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,16 +33,12 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.38 2002/01/31 22:43:36 tv Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.39 2002/02/26 22:29:40 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,6 +54,10 @@ __RCSID("$NetBSD: __fts13.c,v 1.38 2002/01/31 22:43:36 tv Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if !HAVE_CONFIG_H
+#define HAVE_STRUCT_DIRENT_D_NAMLEN 1
+#endif
 
 #ifdef __weak_alias
 #ifdef __LIBC12_SOURCE__
@@ -741,10 +741,10 @@ fts_build(sp, type)
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-#if defined(__svr4__) || defined(__SVR4) || defined(__linux__)
-		dlen = strlen(dp->d_name);
-#else
+#if HAVE_STRUCT_DIRENT_D_NAMLEN
 		dlen = dp->d_namlen;
+#else
+		dlen = strlen(dp->d_name);
 #endif
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
