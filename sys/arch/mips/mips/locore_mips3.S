@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.68 2001/05/30 15:24:34 lukem Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.69 2001/06/11 23:52:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1667,7 +1667,8 @@ END(mips3_FlushDCache)
  * mips3_HitFlushDCache --
  *
  *	void mips3_HitFlushDCache(addr, len)
- *		vaddr_t addr, len;
+ *		vaddr_t addr;
+ *		vsize_t len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
  *	The address can be any valid virtual address as long
@@ -1928,7 +1929,8 @@ END(mips3_FlushDCache_2way)
  * mips3_HitFlushDCache_2way --
  *
  *	void mips3_HitFlushDCache_2way(addr, len)
- *		vaddr_t addr, len;
+ *		vaddr_t addr;
+ *		vsize_t len;
  *
  *	Flush data cache for range of addr to addr + len - 1.
  *	The address can be any valid virtual address as long
