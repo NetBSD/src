@@ -1,4 +1,4 @@
-/* $NetBSD: pci_pte64_sgmap.h,v 1.2.2.2 1997/06/03 23:10:03 thorpej Exp $ */
+/* $NetBSD: pci_pte64_sgmap.h,v 1.2.2.3 1997/06/04 05:48:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 
 #define	SGMAP_TYPE		pci_pte64
 #define	SGMAP_PTE_TYPE		u_int64_t
-#define	SGMAP_PTE_OFFSET_SHIFT	3
 #define	SGMAP_PTE_SPACING	1
 
 /*
