@@ -1,7 +1,7 @@
-.\"	$NetBSD: atppc.4,v 1.12 2004/01/28 20:02:22 jdolecek Exp $
+.\"	$NetBSD: atppc.4,v 1.13 2004/01/30 15:48:38 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
-.\" Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net> 
+.\" Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -56,8 +56,8 @@ supporting machine independent parallel device support via
 .Xr ppbus 4 .
 .Ss IEEE 1284 support
 .Nm
-is intended to provide to data-link like services to higher level IEEE 1284
-device drivers (such as
+is intended to provide to data-link like services to higher level
+IEEE 1284 device drivers (such as
 .Xr ppbus 4 ) .
 .Nm
 does not directly support IEEE 1284 features such as mode negotiation
@@ -96,7 +96,6 @@ not supported, but are being planned.
 .Xr ofisa 4 ,
 .Xr ppbus 4 ,
 .Xr puc 4
-.Xr 
 .Sh HISTORY
 The
 .Nm
@@ -117,7 +116,7 @@ port by Gary Thorpe.
 .Sh BUGS
 .Bl -item
 .It
-Only standard, FAST and ECP mode writes are tested.
+Only standard, FAST, and ECP mode writes are tested.
 Nibble reads also tested.
 .It
 Only generic chip sets are currently supported.
