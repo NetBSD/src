@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.50 1994/11/04 00:41:20 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.51 1994/11/14 05:53:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -48,7 +48,8 @@ int	ttselect	__P((dev_t, int, struct proc *));
 int	lkmenodev();
 #endif
 
-#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
+#define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *, \
+					   struct file *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
@@ -357,6 +358,16 @@ cdev_decl(mms);
 cdev_decl(lms);
 cdev_decl(pms);
 
+#ifdef COMPAT_SVR4
+cdev_decl(svr4_net);
+#define	cdev_svr4_net_init(c,n) { \
+	dev_init(c,n,open), (dev_type_close((*))) enodev, \
+	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
+	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) nullop, \
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -404,6 +415,11 @@ struct cdevsw	cdevsw[] =
 	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVN,vn),		/* 41: vnode disk driver */
 	cdev_audio_init(NSB,audio),	/* 42: generic audio I/O */
+#ifdef COMPAT_SVR4
+	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */
+#else
+	cdev_notdef(),			/* 43: unused */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
