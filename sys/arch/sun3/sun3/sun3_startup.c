@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.25 1994/10/26 09:13:09 cgd Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.26 1994/10/26 19:04:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,6 +51,9 @@
 
 #include "vector.h"
 #include "interreg.h"
+
+/* XXX - This is weird... */
+#define sun3_round_up_seg(x)	(sun3_trunc_seg(x) + NBSG)
 
 unsigned int *old_vector_table;
 
