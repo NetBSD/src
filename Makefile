@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.177 2002/06/20 08:21:23 enami Exp $
+#	$NetBSD: Makefile,v 1.178 2002/06/20 08:21:59 enami Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -19,15 +19,15 @@
 #	software. It defaults to /. Note that programs are built against
 #	libraries installed in DESTDIR.
 #   MKMAN, if set to `no', will prevent building of manual pages.
-#   MKOBJDIRS, if not set to `no', will build object directories at 
+#   MKOBJDIRS, if not set to `no', will build object directories at
 #	an appropriate point in a build.
 #   MKSHARE, if set to `no', will prevent building and installing
 #	anything in /usr/share.
 #   UPDATE, if defined, will avoid a `make cleandir' at the start of
-#     `make build', as well as having the effects listed in
-#     /usr/share/mk/bsd.README.
+#	`make build', as well as having the effects listed in
+#	/usr/share/mk/bsd.README.
 #   NOCLEANDIR, if defined, will avoid a `make cleandir' at the start
-#     of the `make build'.
+#	of the `make build'.
 #   NOINCLUDES will avoid the `make includes' usually done by `make build'.
 #
 # Targets:
