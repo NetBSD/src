@@ -1,7 +1,7 @@
-/*	$NetBSD: iop.c,v 1.24.4.1 2002/10/23 12:22:35 lukem Exp $	*/
+/*	$NetBSD: iop.c,v 1.24.4.2 2002/12/12 23:37:29 he Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.24.4.1 2002/10/23 12:22:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.24.4.2 2002/12/12 23:37:29 he Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -120,7 +120,7 @@ struct iop_class {
 	{	
 		I2O_CLASS_EXECUTIVE,
 		0,
-		COMMENT("executive")
+		IFVERBOSE("executive")
 	},
 	{
 		I2O_CLASS_DDM,
@@ -209,13 +209,15 @@ static const char * const iop_status[] = {
 static inline u_int32_t	iop_inl(struct iop_softc *, int);
 static inline void	iop_outl(struct iop_softc *, int, u_int32_t);
 
+static inline u_int32_t	iop_inl_msg(struct iop_softc *, int);
+static inline void	iop_outl_msg(struct iop_softc *, int, u_int32_t);
+
 static void	iop_config_interrupts(struct device *);
 static void	iop_configure_devices(struct iop_softc *, int, int);
 static void	iop_devinfo(int, char *);
 static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
 static int	iop_submatch(struct device *, struct cfdata *, void *);
-static int	iop_vendor_print(void *, const char *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
 static void	iop_create_reconf_thread(void *);
@@ -257,6 +259,24 @@ iop_outl(struct iop_softc *sc, int off, u_int32_t val)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, off, val);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static inline u_int32_t
+iop_inl_msg(struct iop_softc *sc, int off)
+{
+
+	bus_space_barrier(sc->sc_msg_iot, sc->sc_msg_ioh, off, 4,
+	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
+	return (bus_space_read_4(sc->sc_msg_iot, sc->sc_msg_ioh, off));
+}
+
+static inline void
+iop_outl_msg(struct iop_softc *sc, int off, u_int32_t val)
+{
+
+	bus_space_write_4(sc->sc_msg_iot, sc->sc_msg_ioh, off, val);
+	bus_space_barrier(sc->sc_msg_iot, sc->sc_msg_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -558,7 +578,7 @@ iop_config_interrupts(struct device *self)
 	 */
 	ia.ia_class = I2O_CLASS_ANY;
 	ia.ia_tid = I2O_TID_IOP;
-	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
+	config_found_sm(self, &ia, iop_print, iop_submatch);
 
 	/*
 	 * Start device configuration.
@@ -857,13 +877,6 @@ iop_print(void *aux, const char *pnp)
 	}
 	printf(" tid %d", ia->ia_tid);
 	return (UNCONF);
-}
-
-static int
-iop_vendor_print(void *aux, const char *pnp)
-{
-
-	return (QUIET);
 }
 
 static int
@@ -1666,7 +1679,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		status = I2O_STATUS_SUCCESS;
 
 		fn = (struct i2o_fault_notify *)rb;
-		tctx = iop_inl(sc, fn->lowmfa + 12);
+		tctx = iop_inl_msg(sc, fn->lowmfa + 12);
 		iop_release_mfa(sc, fn->lowmfa);
 		iop_tfn_print(sc, fn);
 	} else {
@@ -2102,9 +2115,10 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 		    sc->sc_rep_size, BUS_DMASYNC_PREREAD);
 
 	/* Copy out the message frame. */
-	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb, mb[0] >> 16);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, (mb[0] >> 14) & ~3,
-	    BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_region_4(sc->sc_msg_iot, sc->sc_msg_ioh, mfa, mb,
+	    mb[0] >> 16);
+	bus_space_barrier(sc->sc_msg_iot, sc->sc_msg_ioh, mfa,
+	    (mb[0] >> 14) & ~3, BUS_SPACE_BARRIER_WRITE);
 
 	/* Post the MFA back to the IOP. */
 	iop_outl(sc, IOP_REG_IFIFO, mfa);
@@ -2239,10 +2253,10 @@ iop_release_mfa(struct iop_softc *sc, u_int32_t mfa)
 {
 
 	/* Use the frame to issue a no-op. */
-	iop_outl(sc, mfa, I2O_VERSION_11 | (4 << 16));
-	iop_outl(sc, mfa + 4, I2O_MSGFUNC(I2O_TID_IOP, I2O_UTIL_NOP));
-	iop_outl(sc, mfa + 8, 0);
-	iop_outl(sc, mfa + 12, 0);
+	iop_outl_msg(sc, mfa, I2O_VERSION_11 | (4 << 16));
+	iop_outl_msg(sc, mfa + 4, I2O_MSGFUNC(I2O_TID_IOP, I2O_UTIL_NOP));
+	iop_outl_msg(sc, mfa + 8, 0);
+	iop_outl_msg(sc, mfa + 12, 0);
 
 	iop_outl(sc, IOP_REG_IFIFO, mfa);
 }
