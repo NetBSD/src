@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.27 2004/07/03 12:49:21 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.28 2004/12/12 21:03:06 abs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.27 2004/07/03 12:49:21 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.28 2004/12/12 21:03:06 abs Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -550,7 +550,7 @@ out:
 			return (EINVAL);
 		}
 		/*
-		 * nothing to do because we have only one configration
+		 * nothing to do because we have only one configuration
 		 */
 		return (0);
 
@@ -575,7 +575,7 @@ out:
 		}
 		/*
 		 * nothing to do
-		 * because we have only one unit and one configration
+		 * because we have only one unit and one configuration
 		 */
 		return (0);
 
