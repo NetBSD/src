@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/05 12:14:04 rtr Exp $
-
-XTODO=	SUBDIR=*/module
+#	$NetBSD: Makefile,v 1.6 2004/01/10 23:35:55 lukem Exp $
 
 .include <bsd.own.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/01/06 12:30:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2004/01/10 23:35:55 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ SUBDIR+=	.WAIT dix os mi printer Xext xkb xinput GL lbx dbe record
 SUBDIR+=	mfb randr render xtrap
 SUBDIR+=	${SUBDIR.cfb} ${SUBDIR.fb} hw ${SUBDIR.xfont} .WAIT Xserver
 
-XTODO=	afb miext/shadow miext/layer hw/xfree86
+XTODO=	afb miext/shadow miext/layer
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver
 MAN=	Xserver.1
