@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 1998/09/01 18:05:27 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.124 1998/09/07 22:56:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1440,7 +1440,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 #if notyet
 	bus_size_t sgsize;
 	caddr_t vaddr = buf;
-	bus_addr_t dvmaddr, curaddr;
+	bus_addr_t dva;
 	pmap_t pmap;
 #endif
 
@@ -1473,7 +1473,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 
 	if (extent_alloc(dvmamap24, sgsize, NBPG, map->_dm_boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dvmaddr) != 0) {
+			 (u_long *)&dva) != 0) {
 		return (ENOMEM);
 	}
 
@@ -1482,7 +1482,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
-	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_addr = dva + (vaddr & PGOFSET);
 	map->dm_segs[0].ds_len = buflen;
 	map->_dm_flags |= BUS_DMA_HASMAP;
 
@@ -1495,7 +1495,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		curaddr = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr);
+		paddr_t pa = (bus_addr_t)pmap_extract(pmap, (vaddr_t)vaddr);
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -1507,14 +1507,14 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 #ifdef notyet
 #if defined(SUN4)
 		if (have_iocache)
-			curaddr |= PG_IOC;
+			pa |= PG_IOC;
 #endif
 #endif
-		pmap_enter(pmap_kernel(), dvmaddr,
-			   (curaddr & ~(NBPG-1))| PMAP_NC,
+		pmap_enter(pmap_kernel(), dva,
+			   (pa & ~(NBPG-1))| PMAP_NC,
 			   VM_PROT_READ|VM_PROT_WRITE, 1);
 
-		dvmaddr += PAGE_SIZE;
+		dva += PAGE_SIZE;
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
@@ -1579,14 +1579,14 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vaddr_t va;
-	bus_addr_t dvmaddr;
-	vm_page_t m;
-	struct pglist *mlist;
-	int error;
+	bus_addr_t	dva;
+	vm_page_t	m;
+	struct pglist	*mlist;
+	int		error;
 
 	if ((flags & BUS_DMA_24BIT) == 0) {
 		/* Any memory will do */
+		vaddr_t va;
 #ifdef UVM
 		va = uvm_km_kmemalloc(kernel_map, uvm.kernel_object, size,
 				      (flags & BUS_DMA_NOWAIT) != 0
@@ -1613,7 +1613,7 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 
 	if (extent_alloc(dvmamap24, round_page(size), alignment, boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dvmaddr) != 0) {
+			 (u_long *)&dva) != 0) {
 		_bus_dmamem_free_common(t, segs, nsegs);
 		return (ENOMEM);
 	}
@@ -1622,7 +1622,7 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr = dvmaddr;
+	segs[0].ds_addr = dva;
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
@@ -1630,18 +1630,18 @@ sun4_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 
 	/* Map memory into DVMA space */
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
-		va = VM_PAGE_TO_PHYS(m);
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 #ifdef notyet
 #if defined(SUN4)
 		if (have_iocache)
-			va |= PG_IOC;
+			pa |= PG_IOC;
 #endif
 #endif
-		pmap_enter(pmap_kernel(), dvmaddr,
-			   va | PMAP_NC,
+		pmap_enter(pmap_kernel(), (vaddr_t)dva,
+			   pa | PMAP_NC,
 			   VM_PROT_READ|VM_PROT_WRITE, 1);
-		dvmaddr += PAGE_SIZE;
+		dva += PAGE_SIZE;
 	}
 
 	return (0);
@@ -1696,7 +1696,6 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vm_page_t m;
 	vaddr_t va;
-	bus_addr_t addr;
 	struct pglist *mlist;
 
 	if (nsegs != 1)
@@ -1717,12 +1716,13 @@ sun4_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	mlist = segs[0]._ds_mlist;
 
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t pa;
 
 		if (size == 0)
 			panic("sun4_dmamem_map: size botch");
 
-		addr = VM_PAGE_TO_PHYS(m);
-		pmap_enter(pmap_kernel(), va, addr | PMAP_NC,
+		pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa | PMAP_NC,
 			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
 		va += PAGE_SIZE;
