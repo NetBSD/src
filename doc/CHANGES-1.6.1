@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.8 2002/10/14 00:18:26 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.9 2002/10/15 23:02:51 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -291,4 +291,9 @@ sys/miscfs/kernfs/kernfs_vnops.c		1.84
 
 	Correctly calculate file length for (e.g.) msgbuf.
 	[jdolecek, ticket #911]
+
+distrib/common/parselist.awk			1.13
+
+	Escape { and } in the regexp that matches e.g. ${FOO}.
+	[thorpej, ticket #824]
 
