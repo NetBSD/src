@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.8 2002/11/03 21:43:31 chris Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.9 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -33,6 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.9 2003/03/23 14:12:25 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

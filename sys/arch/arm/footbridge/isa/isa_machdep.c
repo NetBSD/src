@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 2002/11/03 21:43:31 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.3 2003/03/23 14:12:26 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3 2003/03/23 14:12:26 chris Exp $");
 
 #include "opt_irqstats.h"
 

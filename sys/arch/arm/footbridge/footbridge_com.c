@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.12 2003/03/06 13:09:28 skrll Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.13 2003/03/23 14:12:25 chris Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -34,6 +34,9 @@
 /*
  * COM driver, using the footbridge UART
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.13 2003/03/23 14:12:25 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"

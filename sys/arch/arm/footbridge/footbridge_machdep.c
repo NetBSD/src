@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.8 2002/05/03 16:45:22 rjs Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.9 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,6 +33,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: footbridge_machdep.c,v 1.9 2003/03/23 14:12:25 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

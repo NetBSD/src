@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.2 2002/09/27 15:35:44 provos Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.3 2003/03/23 14:12:26 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,9 @@
 /*
  * bus_space I/O functions for isa
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.3 2003/03/23 14:12:26 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

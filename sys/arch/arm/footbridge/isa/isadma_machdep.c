@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.3 2002/08/17 20:46:26 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.4 2003/03/23 14:12:26 chris Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -38,6 +38,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.4 2003/03/23 14:12:26 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.7 2002/09/27 15:35:44 provos Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.8 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -37,6 +37,9 @@
 /*
  * bus_space I/O functions for footbridge
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.8 2003/03/23 14:12:25 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
