@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.5 1997/12/21 17:04:16 christos Exp $	*/
+/*	$NetBSD: soelim.c,v 1.6 1998/02/03 04:12:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.5 1997/12/21 17:04:16 christos Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.6 1998/02/03 04:12:24 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -63,10 +63,11 @@ __RCSID("$NetBSD: soelim.c,v 1.5 1997/12/21 17:04:16 christos Exp $");
  * the program tbl doesn't understand ".so" directives.
  */
 #include <sys/param.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define	STDIN_NAME	"-"
 

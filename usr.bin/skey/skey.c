@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.6 1997/10/19 23:20:17 lukem Exp $	*/
+/*	$NetBSD: skey.c,v 1.7 1998/02/03 04:10:42 perry Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,16 +23,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.6 1997/10/19 23:20:17 lukem Exp $");
+__RCSID("$NetBSD: skey.c,v 1.7 1998/02/03 04:10:42 perry Exp $");
 #endif
 
 #include <sys/cdefs.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <fcntl.h>
 #include <sgtty.h>
+#include <stdio.h>
 #include <skey.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 int	main __P((int, char **));
 void    usage __P((char *));

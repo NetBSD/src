@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.7 1997/10/20 02:36:41 lukem Exp $	*/
+/*	$NetBSD: units.c,v 1.8 1998/02/03 04:16:02 perry Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "pathnames.h"
 
