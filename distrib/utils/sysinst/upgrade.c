@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.30 2001/01/07 13:07:57 jdc Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.31 2001/01/14 02:38:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -172,6 +172,7 @@ save_etc()
 
 	/* network config */
 	cp_within_target("/etc.old/ifconfig.*", "/etc/");
+	/* these should become parts of rc.conf */
 	cp_within_target("/etc.old/myname", "/etc/");
 	cp_within_target("/etc.old/mygate", "/etc/");
 	cp_within_target("/etc.old/defaultdomain", "/etc/");

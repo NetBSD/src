@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2001/01/07 13:07:59 jdc Exp $	*/
+/*	$NetBSD: md.c,v 1.8 2001/01/14 02:38:22 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -126,22 +126,12 @@ md_post_disklabel(void)
 }
 
 /*
- * MD hook called after upgrade() or install() has finished setting
- * up the target disk but immediately before the user is given the
- * ``disks are now set up'' message, so that if power fails, they can
- * continue installation by booting the target disk and doing an
- * `upgrade'.
- *
- * On the sparc, we use this opportunity to install the boot blocks.
+ * hook called after running newfs.
  */
 int
 md_post_newfs(void)
 {
-
-	/* boot blocks ... */
-	msg_display(MSG_dobootblks, diskdev);
-	return (run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -W %s", diskdev) ||
-		run_prog(RUN_DISPLAY, NULL, "/usr/mdec/binstall ffs /mnt"));
+	return 0;
 }
 
 /*
@@ -159,7 +149,7 @@ md_copy_filesystem(void)
 int
 md_make_bsd_partitions(void)
 {
-	return(make_bsd_partitions());
+	return make_bsd_partitions();
 }
 
 /*
@@ -168,7 +158,7 @@ md_make_bsd_partitions(void)
 int
 md_check_partitions(void)
 {
-	return 1;
+	return check_partitions();
 }
 
 /* Upgrade support */
@@ -192,15 +182,17 @@ md_cleanup_install(void)
 	char realto[STRSIZE];
 	char sedcmd[STRSIZE];
 
+	/* Install boot blocks now that we have a full system ... */
+	msg_display(MSG_dobootblks, diskdev);
+	run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -W %s", diskdev);
+	run_prog(RUN_DISPLAY, NULL, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
 
 	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
-	if (logging)
-		(void)fprintf(log, "%s\n", sedcmd);
-	if (scripting)
-		(void)fprintf(script, "%s\n", sedcmd);
+	scripting_fprintf(log, "%s\n", sedcmd);
 	do_system(sedcmd);
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
@@ -219,4 +211,22 @@ md_pre_update()
 void
 md_init()
 {
+}
+
+void
+md_set_sizemultname()
+{
+
+	set_sizemultname_cyl();
+}
+
+void
+md_set_no_x()
+{
+	toggle_getit (8);
+	toggle_getit (9);
+	toggle_getit (10);
+	toggle_getit (11);
+	toggle_getit (12);
+	toggle_getit (13);
 }
