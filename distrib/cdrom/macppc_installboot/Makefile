@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2002/10/21 05:08:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/29 01:09:18 jmc Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
-PROG=		macppc_installboot
-CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/arch
+HOSTPROG=		macppc_installboot
+HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/arch
 
 CLEANFILES+=	mkmacppcboot bootxx.raw macppcboot.raw
 
@@ -19,7 +19,7 @@ macppcboot.raw: macppcboot.raw.uue
 	rm -f ${.TARGET}
 	uudecode ${.ALLSRC}
 
-.include <bsd.prog.mk>
+.include <bsd.hostprog.mk>
 
 mkmacppcboot: mkmacppcboot.c
 	${LINK.c} -o ${.TARGET} ${.ALLSRC}
