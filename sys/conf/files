@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.411 2000/12/14 22:36:49 thorpej Exp $
+#	$NetBSD: files,v 1.412 2000/12/24 06:39:01 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -554,6 +554,10 @@ file	dev/usb/uhci.c			uhci	needs-flag
 # OHCI USB controller
 device	ohci: usbus
 file	dev/usb/ohci.c			ohci	needs-flag
+
+# EHCI USB controller
+device	ehci: usbus
+file	dev/usb/ehci.c			ehci	needs-flag
 
 # IEEE 1394 controllers
 # (These need to be here since it will have both PCI and CardBus attachments)

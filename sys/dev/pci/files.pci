@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.112 2000/12/14 04:11:25 onoe Exp $
+#	$NetBSD: files.pci,v 1.113 2000/12/24 06:39:01 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -302,6 +302,10 @@ file	dev/pci/uhci_pci.c		uhci_pci
 # OHCI USB controller
 attach	ohci at pci with ohci_pci
 file	dev/pci/ohci_pci.c		ohci_pci
+
+# EHCI USB controller
+attach	ehci at pci with ehci_pci
+file	dev/pci/ehci_pci.c		ehci_pci
 
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
