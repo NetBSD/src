@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.30 1994/06/08 11:16:49 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.30.2.1 1994/07/27 08:46:13 cgd Exp $
  */
 
 /*
@@ -588,30 +588,27 @@ uhaprobe(parent, self, aux)
 	if (u24_find(uha, ia) != 0 && u14_find(uha, ia) != 0)
 		return 0;
 
-#ifdef NEWCONFIG
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = (1 << uha->vect);
-	} else {
+	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != (1 << uha->vect)) {
-			printf("uha%d: irq mismatch, %x != %x\n",
-				uha->sc_dev.dv_unit, ia->ia_irq,
-				1 << uha->vect);
+			printf("uha%d: irq mismatch; kernel configured %d != board configured %d\n",
+				uha->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
+				uha->vect);
 			return 0;
 		}
-	}
+	} else
+		ia->ia_irq = (1 << uha->vect);
 
-	if (ia->ia_drq == DRQUNK) {
-		ia->ia_drq = uha->dma;
-	} else {
+	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != uha->dma) {
-			printf("uha%d: drq mismatch, %x != %x\n",
+			printf("uha%d: drq mismatch; kernel configured %d != board configured %d\n",
 				uha->sc_dev.dv_unit, ia->ia_drq, uha->dma);
 			return 0;
 		}
-	}
-#endif
+	} else
+		ia->ia_drq = uha->dma;
 
 	ia->ia_msize = 0;
+	ia->ia_iosize = 4;
 	return 1;
 }
 
