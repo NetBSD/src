@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.1.1 1997/01/14 20:57:09 gwr Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 1997/01/16 21:56:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,14 +44,14 @@
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
-#ifdef _KERNEL
-
 /*
  * Internal definitions unique to sun3/68k cpu support.
  * These are the "private" declarations - those needed
  * only here in machine-independent code.  The "public"
  * definitions are in cpu.h (used by common code).
  */
+
+#ifdef _KERNEL
 
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
@@ -147,7 +147,7 @@ void	isr_config __P((void));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
-void	loadcrp __P((vm_offset_t crp));
+void	loadcrp __P((int crp));
 
 void	netintr __P((void));
 void	proc_trampoline __P((void));
