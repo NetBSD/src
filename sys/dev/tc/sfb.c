@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.34 2000/02/18 06:51:51 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.35 2000/03/16 05:48:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.34 2000/02/18 06:51:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.35 2000/03/16 05:48:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.34 2000/02/18 06:51:51 nisimura Exp $");
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG1_TO_PHYS(x)
 #endif
 
-#if defined(__alpha__) || defined(alpha)
+#if defined(alpha)
 #define machine_btop(x) alpha_btop(x)
 #define MACHINE_KSEG0_TO_PHYS(x) ALPHA_K0SEG_TO_PHYS(x)
 #endif
@@ -164,14 +164,14 @@ static void sfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
 static struct fb_devconfig sfb_console_dc;
 static tc_addr_t sfb_consaddr;
 
+static void sfb_putchar __P((void *, int, int, u_int, long));
+static void sfb_erasecols __P((void *, int, int, int, long));
+static void sfb_eraserows __P((void *, int, int, long));
+static void sfb_copyrows __P((void *, int, int, int));
 #if 0
 static void sfb_cursor __P((void *, int, int, int));
 static void sfb_copycols __P((void *, int, int, int, int));
-static void sfb_erasecols __P((void *, int, int, int, long));
-static void sfb_eraserows __P((void *, int, int, long));
 #endif
-static void sfb_putchar __P((void *, int, int, u_int, long));
-static void sfb_copyrows __P((void *, int, int, int));
 
 static struct wsscreen_descr sfb_stdscreen = {
 	"std", 0, 0,
@@ -303,6 +303,7 @@ sfb_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
 
+	dc->rinfo.ri_flg = RI_CENTER;
 	dc->rinfo.ri_depth = dc->dc_depth;
 	dc->rinfo.ri_bits = (void *)dc->dc_videobase;
 	dc->rinfo.ri_width = dc->dc_wid;
@@ -327,11 +328,13 @@ sfb_getdevconfig(dense_addr, dc)
 	}
 	dc->rinfo.ri_wsfcookie = cookie;
 
-	rasops_init(&dc->rinfo, 1000, 1000); /* as large as possible */
+	rasops_init(&dc->rinfo, 34, 80);
 
 	/* add our accelerated functions */
-	dc->rinfo.ri_ops.copyrows = sfb_copyrows;
 	dc->rinfo.ri_ops.putchar = sfb_putchar;
+	dc->rinfo.ri_ops.erasecols = sfb_erasecols;
+	dc->rinfo.ri_ops.copyrows = sfb_copyrows;
+	dc->rinfo.ri_ops.eraserows = sfb_eraserows;
 
 	/* XXX shouldn't be global */
 	sfb_stdscreen.nrows = dc->rinfo.ri_rows;
@@ -806,6 +809,7 @@ get_cursor(sc, p)
 	struct sfb_softc *sc;
 	struct wsdisplay_cursor *p;
 {
+
 	return (ENOTTY); /* XXX */
 }
 
@@ -871,12 +875,12 @@ bt459_set_curpos(sc)
 #define	SFBCOPYBITMASK		0x1f
 #define	SFBCOPYBYTESDONE	32
 
-#ifdef pmax
+#if defined(pmax)
 #define	WRITE_MB()
 #define	BUMP(p) (p)
 #endif
 
-#ifdef alpha
+#if defined(alpha)
 #define	WRITE_MB() tc_wmb()
 #define	BUMP(p) ((p) = (caddr_t)(((long)(p) + 128) & ~0x400))
 #endif
@@ -910,11 +914,11 @@ sfb_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
 {
-	struct rcons *rc = id;
-	struct raster *rap = rc->rc_sp;
+	struct rasops_info *ri = id;
 	caddr_t sfb, p;
 	int scanspan, height, width, align, x, y;
 	u_int32_t lmask, rmask;
+	int fg, bg;
 
 	/* turn the cursor off */
 	if (!on) {
@@ -930,23 +934,27 @@ sfb_cursor(id, on, row, col)
 		*rc->rc_ccolp = col;
 	}
 
-	x = col * rc->rc_font->width + rc->rc_xorigin;
-	y = row * rc->rc_font->height + rc->rc_yorigin;
-	scanspan = rap->linelongs * 4;
-	height = rc->rc_font->height;
+	x = col * ri->ri_font->fontwidth;
+	y = row * ri->ri_font->fontheight;
+	scanspan = ri->ri_stride;
+	height = ri->ri_font->fontheight;
 
-	p = (caddr_t)rap->pixels + y * scanspan + x;
+	p = ri->ri_bits + y * scanspan + x;
 	align = (long)p & SFBALIGNMASK;
 	p -= align;
-	width = rc->rc_font->width + align;
+	width = ri->ri_font->fontwidth + align;
 	lmask = SFBSTIPPLEALL1 << align;
 	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
-	sfb = rap->data;
+	sfb = ri->ri_hw;
 
 	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
 	SFBROP(sfb, 6);			/* ROP_XOR */
-	SFBFG(sfb, 0x01010101);		/* (fg ^ bg) to swap fg/bg */
+	rasops_unpack_attr(attr, &fg, &bg, 0);
+	fg ^= bg;			/* (fg ^ bg) to swap fg/bg */
+	fg |= fg << 8;
+	fg |= fg << 16;
+	SFBFG(sfb, fg);
 	if (width <= SFBSTIPPLEBITS) {
 		lmask = lmask & rmask;
 		while (height > 0) {
@@ -1011,26 +1019,29 @@ sfb_putchar(id, row, col, uc, attr)
 	SFBMODE(sfb, MODE_OPAQUESTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
 	rasops_unpack_attr(attr, &fg, &bg, 0);
-	SFBFG(sfb, fg * 0x01010101);
-	SFBBG(sfb, bg * 0x01010101);
-	if (width <= SFBSTIPPLEBITS) {
+	fg |= fg << 8;
+	fg |= fg << 16;
+	bg |= bg << 8;
+	bg |= bg << 16;
+	SFBFG(sfb, fg);
+	SFBBG(sfb, bg);
+	if (1 /* width <= SFBSTIPPLEBITS */) {
 		lmask = lmask & rmask;
 		while (height > 0) {
-			glyph = g[0];
-			if (ri->ri_font->fontwidth > 8)
-				glyph |= (g[1] << 8);
+			glyph = *(u_int16_t *)g;		/* XXX */
 			SFBPIXELMASK(sfb, lmask);
 			SFBADDRESS(sfb, (long)p);
 			SFBSTART(sfb, glyph << align);
 			p += scanspan;
-			g += ri->ri_font->stride;
+			g += 2;					/* XXX */
 			height--;
 		}
 	}
+#if supportlargerfonts
 	else {
 		caddr_t q = p;
 		while (height > 0) {
-			glyph = *g;
+			glyph = *(u_int16_t *)g;		/* XXX */
 			SFBPIXELMASK(sfb, lmask);
 WRITE_MB();
 			*(u_int32_t *)p = glyph << align;
@@ -1042,10 +1053,11 @@ WRITE_MB();
 WRITE_MB();
 
 			p = (q += scanspan);
-			g += 1;
+			g += 2;					/* XXX */
 			height--;
 		}
 	}
+#endif
 	SFBMODE(sfb, MODE_SIMPLE);
 	SFBPIXELMASK(sfb, ~0);		/* entire pixel */
 }
@@ -1059,23 +1071,22 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
 {
-	struct rcons *rc = id;
-	struct raster *rap = rc->rc_sp;
+	struct rasops_info *ri = id;
 	caddr_t sp, dp, basex, sfb;
 	int scanspan, height, width, aligns, alignd, shift, w, y;
 	u_int32_t lmasks, rmasks, lmaskd, rmaskd;
 
-	scanspan = rap->linelongs * 4;
-	y = rc->rc_yorigin + rc->rc_font->height * row;
-	basex = (caddr_t)rap->pixels + y * scanspan + rc->rc_xorigin;
-	height = rc->rc_font->height;
-	w = rc->rc_font->width * ncols;
+	scanspan = ri->ri_stride;
+	y = row * ri->ri_font->fontheight;
+	basex = (caddr_t)rap->pixels + y * scanspan;
+	height = ri->ri_font->fontheight;
+	w = ri->ri_font->fontwidth * ncols;
 
-	sp = basex + rc->rc_font->width * srccol;
+	sp = basex + ri->ri_font->fontwidth * srccol;
 	aligns = (long)sp & SFBALIGNMASK;
-	dp = basex + rc->rc_font->width * dstcol;
+	dp = basex + ri->ri_font->fontwidth * dstcol;
 	alignd = (long)dp & SFBALIGNMASK;
-	sfb = rap->data;
+	sfb = ri->ri_hw;
 
 	SFBMODE(sfb, MODE_COPY);
 	SFBPLANEMASK(sfb, ~0);
@@ -1209,7 +1220,6 @@ WRITE_MB();
 }
 #endif
 
-#if 0
 /*
  * Clear characters in a line.
  */
@@ -1219,29 +1229,32 @@ sfb_erasecols(id, row, startcol, ncols, attr)
 	int row, startcol, ncols;
 	long attr;
 {
-	struct rcons *rc = id;
-	struct raster *rap = rc->rc_sp;
+	struct rasops_info *ri = id;
 	caddr_t sfb, p;
 	int scanspan, startx, height, width, align, w, y;
 	u_int32_t lmask, rmask;
+	int fg, bg;
 
-	scanspan = rap->linelongs * 4;
-	y = rc->rc_yorigin + rc->rc_font->height * row;
-	startx = rc->rc_xorigin + rc->rc_font->width * startcol;
-	height = rc->rc_font->height;
-	w = rc->rc_font->width * ncols;
+	scanspan = ri->ri_stride;
+	y = row * ri->ri_font->fontheight;
+	startx = startcol * ri->ri_font->fontwidth;
+	height = ri->ri_font->fontheight;
+	w = ri->ri_font->fontwidth * ncols;
 
-	p = (caddr_t)rap->pixels + y * scanspan + startx;
+	p = ri->ri_bits + y * scanspan + startx;
 	align = (long)p & SFBALIGNMASK;
 	p -= align;
 	width = w + align;
 	lmask = SFBSTIPPLEALL1 << align;
 	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
-	sfb = rap->data;
+	sfb = ri->ri_hw;
 
 	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
-	SFBFG(sfb, 0);				/* fill with bg color */
+	rasops_unpack_attr(attr, &fg, &bg, 0);
+	bg |= bg << 8;
+	bg |= bg << 16;
+	SFBFG(sfb, bg);				/* fill with bg color */
 	if (width <= SFBSTIPPLEBITS) {
 		lmask = lmask & rmask;
 		while (height > 0) {
@@ -1274,7 +1287,6 @@ WRITE_MB();
 	}
 	SFBMODE(sfb, MODE_SIMPLE);
 }
-#endif
 
 /*
  * Copy lines.
@@ -1298,7 +1310,7 @@ sfb_copyrows(id, srcrow, dstrow, nrows)
 		srcy += height;
 	}
 
-	p = (caddr_t)(ri->ri_bits + srcy * ri->ri_stride);
+	p = ri->ri_bits + srcy * ri->ri_stride;
 	align = (long)p & SFBALIGNMASK;
 	p -= align;
 	w = ri->ri_emuwidth;
@@ -1337,7 +1349,6 @@ sfb_copyrows(id, srcrow, dstrow, nrows)
 	SFBMODE(sfb, MODE_SIMPLE);
 }
 
-#if 0
 /*
  * Erase lines.
  */
@@ -1347,28 +1358,31 @@ sfb_eraserows(id, startrow, nrows, attr)
 	int startrow, nrows;
 	long attr;
 {
-	struct rcons *rc = id;
-	struct raster *rap = rc->rc_sp;
+	struct rasops_info *ri = id;
 	caddr_t sfb, p;
 	int scanspan, starty, height, width, align, w;
 	u_int32_t lmask, rmask;
+	int fg, bg;
 
-	scanspan = rap->linelongs * 4;
-	starty = rc->rc_yorigin + rc->rc_font->height * startrow;
-	height = rc->rc_font->height * nrows;
+	scanspan = ri->ri_stride;
+	starty = ri->ri_font->fontheight * startrow;
+	height = ri->ri_font->fontheight * nrows;
 
-	p = (caddr_t)rap->pixels + starty * scanspan + rc->rc_xorigin;
+	p = ri->ri_bits + starty * scanspan;
 	align = (long)p & SFBALIGNMASK;
 	p -= align;
-	w = rc->rc_font->width * rc->rc_maxcol;
+	w = ri->ri_emuwidth;
 	width = w + align;
 	lmask = SFBSTIPPLEALL1 << align;
 	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
-	sfb = rap->data;
+	sfb = ri->ri_hw;
 
 	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
-	SFBFG(sfb, 0);				/* fill with bg color */
+	rasops_unpack_attr(attr, &fg, &bg, 0);
+	bg |= bg << 8;
+	bg |= bg << 16;
+	SFBFG(sfb, bg);				/* fill with bg color */
 	if (width <= SFBSTIPPLEBITS) {
 		/* never happens */;
 	}
@@ -1395,4 +1409,3 @@ WRITE_MB();
 	}
 	SFBMODE(sfb, MODE_SIMPLE);
 }
-#endif
