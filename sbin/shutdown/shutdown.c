@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.11 1997/01/23 05:48:06 mikel Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.12 1997/07/09 02:39:38 jtk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: shutdown.c,v 1.11 1997/01/23 05:48:06 mikel Exp $";
+static char rcsid[] = "$NetBSD: shutdown.c,v 1.12 1997/07/09 02:39:38 jtk Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, killflg, mbuflen, nosync;
+static int dofast, dohalt, doreboot, killflg, mbuflen, nosync, dodump;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
@@ -120,7 +120,7 @@ main(argc, argv)
 	}
 #endif
 	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-fhknr")) != EOF)
+	while ((ch = getopt(argc, argv, "-fhknrd")) != EOF)
 		switch (ch) {
 		case '-':
 			readstdin = 1;
@@ -140,6 +140,9 @@ main(argc, argv)
 		case 'r':
 			doreboot = 1;
 			break;
+		case 'd':
+			dodump = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -158,6 +161,11 @@ main(argc, argv)
 	if (doreboot && dohalt) {
 		(void)fprintf(stderr,
 		    "shutdown: incompatible switches -h and -r.\n");
+		usage();
+	}
+	if (dodump && dohalt) {
+		(void)fprintf(stderr,
+		    "shutdown: incompatible switches -h and -d.\n");
 		usage();
 	}
 	getoffset(*argv++);
@@ -329,7 +337,7 @@ die_you_gravy_sucking_pig_dog()
 {
 
 	syslog(LOG_NOTICE, "%s by %s: %s",
-	    doreboot ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
+	    doreboot || dodump ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
 	(void)sleep(2);
 
 	(void)printf("\r\nSystem shutdown time has arrived\007\007\r\n");
@@ -340,8 +348,8 @@ die_you_gravy_sucking_pig_dog()
 	if (dofast)
 		doitfast();
 #ifdef DEBUG
-	if (doreboot)
-		(void)printf("reboot");
+	if (doreboot || dodump)
+		(void)printf("reboot%s", dodump ? " -d" : "");
 	else if (dohalt)
 		(void)printf("halt");
 	if (nosync)
@@ -350,9 +358,10 @@ die_you_gravy_sucking_pig_dog()
 		(void)printf(" no fsck");
 	(void)printf("\nkill -HUP 1\n");
 #else
-	if (doreboot) {
-		execle(_PATH_REBOOT, "reboot", nosync ? "-ln" : "-l",
-		    (char *)0, (char **)0);
+	if (doreboot || dodump) {
+		execle(_PATH_REBOOT, "reboot",
+		       dodump ? (nosync ? "-ldn" : "-ld") :
+		       (nosync ? "-ln" : "-l"), 0, (char **)0);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		perror("shutdown");
 	}
@@ -495,6 +504,6 @@ badtime()
 void
 usage()
 {
-	fprintf(stderr, "usage: shutdown [-fhknr] shutdowntime [ message ]\n");
+	fprintf(stderr, "usage: shutdown [-fhknrd] shutdowntime [ message ]\n");
 	exit(1);
 }

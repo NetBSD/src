@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
+.\"	$NetBSD: shutdown.8,v 1.7 1997/07/09 02:39:37 jtk Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Sh SYNOPSIS
 .Nm shutdown
 .Op Fl 
-.Op Fl fhkrn
+.Op Fl fhkrnd
 .Ar time
 .Op Ar warning-message ...
 .Sh DESCRIPTION
@@ -85,10 +85,19 @@ execs
 .Xr reboot 8
 at the specified
 .Ar time .
+.It Fl d
+.Nm
+will pass the
+.Fl d
+and
+.Fl r
+flags to
+.Xr reboot 8
+to request a forced crash dump and reboot.
 .It Ar time
 .Ar Time
 is the time at which
-.Nm shutdown
+.Nm
 will bring the system down and
 may be the word
 .Ar now
