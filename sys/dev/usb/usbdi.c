@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.74 2000/06/01 14:29:02 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.75 2000/06/01 15:51:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ usbd_finish(void)
 	--usbd_nbuses;
 }
 
-Static __inline int
+static __inline int
 usbd_xfer_isread(usbd_xfer_handle xfer)
 {
 	if (xfer->rqflags & URQ_REQUEST)
@@ -108,6 +108,7 @@ usbd_xfer_isread(usbd_xfer_handle xfer)
 }
 
 #ifdef USB_DEBUG
+void usbd_dump_queue(usbd_pipe_handle pipe);
 void
 usbd_dump_queue(usbd_pipe_handle pipe)
 {
