@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.51 2004/01/01 22:48:54 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.52 2004/03/24 16:55:07 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.51 2004/01/01 22:48:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.52 2004/03/24 16:55:07 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -614,7 +614,7 @@ mach_port_get(void)
 {
 	struct mach_port *mp;
 
-	mp = (struct mach_port *)pool_get(&mach_port_pool, M_WAITOK);
+	mp = (struct mach_port *)pool_get(&mach_port_pool, PR_WAITOK);
 	bzero(mp, sizeof(*mp));
 	mp->mp_recv = NULL;
 	mp->mp_count = 0;
@@ -692,7 +692,7 @@ mach_right_get(mp, l, type, hint)
 		}
 	}
 	
-	mr = pool_get(&mach_right_pool, M_WAITOK);
+	mr = pool_get(&mach_right_pool, PR_WAITOK);
 
 	mr->mr_port = mp;
 	mr->mr_lwp = l;
