@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.3 2000/02/27 21:47:05 sommerfeld Exp $
  */
 
 /*
@@ -175,10 +175,10 @@ static void mp_print_special_intr (int intr);
 static void mp_print_pci_intr (int intr);
 static void mp_print_isa_intr (int intr);
 
-static int mpbios_cpu __P((const u_int8_t *, struct device *));
-static int mpbios_bus __P((const u_int8_t *, struct device *));
-static int mpbios_ioapic __P((const u_int8_t *, struct device *));
-static int mpbios_int __P((const u_int8_t *, int, struct mp_intr_map *));
+static void mpbios_cpu __P((const u_int8_t *, struct device *));
+static void mpbios_bus __P((const u_int8_t *, struct device *));
+static void mpbios_ioapic __P((const u_int8_t *, struct device *));
+static void mpbios_int __P((const u_int8_t *, int, struct mp_intr_map *));
 
 static const void *mpbios_map __P((paddr_t, int, struct mp_map *));
 static void mpbios_unmap __P((struct mp_map *));
@@ -656,7 +656,7 @@ mpbios_scan(self)
 	}
 }
 
-static int
+static void
 mpbios_cpu(ent, self)
 	const u_int8_t *ent;
 	struct device *self;
@@ -667,7 +667,7 @@ mpbios_cpu(ent, self)
 	/* XXX move this into the CPU attachment goo. */
 	/* check for usability */
 	if (!(entry->cpu_flags & PROCENTRY_FLAG_EN))
-		return 0;
+		return;
 
 	/* check for BSP flag */
 	if (entry->cpu_flags & PROCENTRY_FLAG_BP)
@@ -687,7 +687,6 @@ mpbios_cpu(ent, self)
 	caa.feature_flags = entry->feature_flags;
 
 	config_found_sm(self, &caa, mp_print, mp_match);
-	return 1;
 }
 
 /*
@@ -828,7 +827,7 @@ static void mp_print_isa_intr (int intr)
 #define _TAB_ROUND(a,u)	(((a) + (u - 1)) & ~(u-1))
 #define EXTEND_TAB(a,u)	(!(_TAB_ROUND(a,u) == _TAB_ROUND((a+1),u)))
 
-static int
+static void
 mpbios_bus(ent, self)
 	const u_int8_t *ent;
 	struct device *self;
@@ -855,11 +854,10 @@ mpbios_bus(ent, self)
 		printf("%s: unsupported bus type %6.6s\n", self->dv_xname,
 		    entry->bus_type);
 	}
-	return 1;
 }
 
 
-static int
+static void
 mpbios_ioapic(ent, self)
 	const u_int8_t *ent;
 	struct device *self;
@@ -869,8 +867,8 @@ mpbios_ioapic(ent, self)
 
 	/* XXX let flags checking happen in ioapic driver.. */
 	if (!(entry->apic_flags & IOAPICENTRY_FLAG_EN))
-		return 0;
-	
+		return;
+
 	aaa.aaa_name   = "ioapic";
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
@@ -878,8 +876,6 @@ mpbios_ioapic(ent, self)
 	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 
 	config_found_sm(self, &aaa, mp_print, mp_match);
-
-	return 1;
 }
 
 static const char inttype_fmt[] = "\177\020"		
@@ -889,7 +885,7 @@ static const char flagtype_fmt[] = "\177\020"
 		"f\0\2pol\0" "=\1Act Hi\0" "=\3Act Lo\0"
 		"f\2\2trig\0" "=\1Edge\0" "=\3Level\0";
 
-static int
+static void
 mpbios_int(ent, enttype, mpi)
 	const u_int8_t *ent;
 	int enttype;
@@ -933,6 +929,12 @@ mpbios_int(ent, enttype, mpi)
 	mpi->type = type;
 	mpi->flags = flags;
 	mpi->redir = 0;
+	if (mpb->mb_intr_cfg == NULL) {
+		printf("mpbios: can't find bus %d for apic %d pin %d\n",
+		    bus, id, pin);
+		return;
+	}
+	
 	(mpb->mb_intr_cfg)(type, flags, &mpi->redir);
 
 	if (enttype == MPS_MCT_IOINT) {
@@ -976,6 +978,8 @@ mpbios_int(ent, enttype, mpi)
 		if (mpb->mb_idx != -1)
 			printf("%d", mpb->mb_idx);
 
+		if (mpb != NULL) 
+
 		(*(mpb->mb_intr_print))(dev);
 
 		printf(" (type %s", 
@@ -984,8 +988,6 @@ mpbios_int(ent, enttype, mpi)
 		printf(" flags %s)\n",
 		    bitmask_snprintf(flags, flagtype_fmt, buf, sizeof(buf)));
 	}
-
-	return 1;
 }
 
 
