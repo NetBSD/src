@@ -1,11 +1,14 @@
-PROG    = verifiedexec_load
-MAN   	= verifiedexec_load.8
-SRCS    = verifiedexec_parse.y verifiedexec_conf.l verifiedexec_load.c
+#	$NetBSD: Makefile,v 1.2 2002/11/16 14:25:10 itojun Exp $
 
-CFLAGS += -g
-LDADD      =  -ll -static
-YFLAGS += -d
-LDFLAGS += -g
-CLEANFILES = *.o *~ y.tab.h
+PROG=	verifiedexec_load
+MAN=	verifiedexec_load.8
+SRCS=	verifiedexec_parse.y verifiedexec_conf.l verifiedexec_load.c
+
+LDADD=		-ll
+YFLAGS+=	-d
+LDSTATIC=	-static
+CLEANFILES=	verifiedexec_parse.h
+# not sure if it is really needed
+DBG=		-g
 
 .include <bsd.prog.mk>
