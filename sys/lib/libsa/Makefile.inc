@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1998/02/07 00:11:31 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1998/09/05 15:15:19 lukem Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -64,7 +64,7 @@ cleansalib:		.NOTMAIN __always_make_salib
 	@echo cleaning the sa library objects
 	@${SAMAKE} clean
 
-cleandir:		.NOTMAIN cleandirsalib
+cleandir distclean:	.NOTMAIN cleandirsalib
 cleandirsalib:		.NOTMAIN __always_make_salib
 	@echo cleandiring the sa library objects
 	@${SAMAKE} cleandir
