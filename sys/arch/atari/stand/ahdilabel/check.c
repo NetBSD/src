@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.1.2.2 2000/08/14 07:59:59 leo Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.1.2.3 2000/10/26 21:12:21 tv Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ ahdi_checklabel (ptable)
 		i_end = ptable->parts[i].start + ptable->parts[i].size - 1;
 
 		/* Check partition does not extend past end of disk */
-		if (i_end > ptable->secperunit) {
+		if (i_end >= ptable->secperunit) {
 			ahdi_errp1 = i;
 			return (-5);
 		}
