@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2001/03/20 16:03:28 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.3 2001/06/04 17:08:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,13 +80,37 @@ cdev_decl(com);
 cons_decl(com);
 
 /* builtin video console */
+#if NBICONSDEV > 0
 #define biconscnpollc	nullcnpollc
 cdev_decl(biconsdev);
 cons_decl(bicons);
+#endif
+
+/* HD64461 video module */
+#if NHD64461IF > 0
+cons_decl(hd64461video_);
+#if NWSKBD > 0
+#define hd64461video_cngetc	wskbd_cngetc
+#else
+int
+hd64461video_cngetc(dev_t dev)
+{
+	printf("no input method. reboot me.\n");
+	while (1)
+		;
+	/* NOTREACHED */
+}
+#endif
+#define hd64461video_cnputc	wsdisplay_cnputc
+#define	hd64461video_cnpollc	nullcnpollc
+#endif
 
 struct consdev constab[] = {
 #if NBICONSDEV > 0
 	cons_init(bicons),
+#endif
+#if NHD64461IF > 0
+	cons_init(hd64461video_),
 #endif
 #if NSCI > 0
 	cons_init(sci),
@@ -110,6 +134,8 @@ static void cn_nonprobe(struct consdev *);
 void
 consinit()
 {
+	int serial_console = 1;
+
 	if (initialized)
 		return;
 
@@ -120,6 +146,13 @@ consinit()
 	case BI_CNUSE_BUILTIN:
 #if NBICONSDEV > 0
 		CN_ENABLE(bicons);
+		serial_console = 0;
+#endif
+		break;
+	case BI_CNUSE_HD64461VIDEO:
+#if NHD64461IF > 0
+		CN_ENABLE(hd64461video_);
+		serial_console = 0;
 #endif
 		break;
 	case BI_CNUSE_SCI:
@@ -149,19 +182,20 @@ consinit()
 	if (initialized)
 		cninit();
 
-	if (bootinfo->bi_cnuse == BI_CNUSE_BUILTIN) {
 #if NPFCKBD > 0
+	if (!serial_console)
 		pfckbd_cnattach();
 #endif
-#if NHPCFB > 0
+
+#if NHPCFB > 0 && NBICONSDEV > 0
+	if (cn_tab->cn_putc == biconscnputc)
 		hpcfb_cnattach(0);
 #endif
-	}
 }
 
 static void
 set_console(void (*putc_func)(dev_t, int),
-	    void (*probe_func)(struct consdev *))
+    void (*probe_func)(struct consdev *))
 {
 	struct consdev *cp;
 
