@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.18 1998/07/06 06:50:49 mrg Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.19 1998/07/26 21:47:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.18 1998/07/06 06:50:49 mrg Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.19 1998/07/26 21:47:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static struct toktab {
 int
 ruserpass(host, aname, apass, aacct)
 	const char *host;
-	char **aname, **apass, **aacct;
+	const char **aname, **apass, **aacct;
 {
 	char *hdir, buf[BUFSIZ], *tmp;
 	char myname[MAXHOSTNAMELEN + 1], *mydomain;

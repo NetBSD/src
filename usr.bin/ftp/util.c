@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.28 1998/07/22 16:06:28 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.29 1998/07/26 21:47:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.28 1998/07/22 16:06:28 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.29 1998/07/26 21:47:48 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -238,10 +238,10 @@ setpeer(argc, argv)
 int
 ftp_login(host, user, pass)
 	const char *host;
-	char *user, *pass;
+	const char *user, *pass;
 {
 	char tmp[80];
-	char *acct;
+	const char *acct;
 	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN + 1]; /* user@hostname */
 	char hostname[MAXHOSTNAMELEN + 1];
 	struct passwd *pw;
@@ -292,7 +292,7 @@ ftp_login(host, user, pass)
 	}
 
 	while (user == NULL) {
-		char *myname = getlogin();
+		const char *myname = getlogin();
 
 		if (myname == NULL && (pw = getpwuid(getuid())) != NULL)
 			myname = pw->pw_name;
