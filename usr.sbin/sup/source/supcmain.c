@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.10 1998/07/27 01:07:01 mycroft Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.11 1998/07/30 21:03:48 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -638,7 +638,7 @@ char **argv;
 	}
 	if ((u = getlogin()) ||
 	    ((pw = getpwuid ((int)getuid())) && (u = pw->pw_name)))
-		(void) strcpy (username, p);
+		(void) strcpy (username, u);
 	else
 		*username = '\0';
 	if (*supfname) {
