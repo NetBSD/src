@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.4 2003/07/14 15:47:20 lukem Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.5 2003/10/28 18:21:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.4 2003/07/14 15:47:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.5 2003/10/28 18:21:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -915,28 +915,13 @@ mvmebus_mod_string(addr, len, am, ds)
 	static const char *mode[] = {"BLT64)", "DATA)", "PROG)", "BLT32)"};
 	static const char *dsiz[] = {"(", "(D8,", "(D16,", "(D16-D8,",
 	"(D32,", "(D32,D8,", "(D32-D16,", "(D32-D8,"};
+	static const char *adrfmt[] = { "A32:%08x-%08x ", "A16:%04x-%04x ",
+	    "A24:%06x-%06x ", "USR:%08x-%08x " };
 	static char mstring[40];
-	char *fmt;
 
-	switch (am & VME_AM_ADRSIZEMASK) {
-	case VME_AM_A32:
-		fmt = "A32:%08x-%08x ";
-		break;
-
-	case VME_AM_A24:
-		fmt = "A24:%06x-%06x ";
-		break;
-
-	case VME_AM_A16:
-		fmt = "A16:%04x-%04x ";
-		break;
-
-	case VME_AM_USERDEF:
-		fmt = "USR:%08x-%08x ";
-		break;
-	}
-
-	sprintf(mstring, fmt, addr, addr + len - 1);
+	sprintf(mstring,
+	    adrfmt[(am & VME_AM_ADRSIZEMASK) >> VME_AM_ADRSIZESHIFT],
+	    addr, addr + len - 1);
 	strcat(mstring, dsiz[ds & 0x7]);
 
 	if (MVMEBUS_AM_HAS_CAP(am)) {
