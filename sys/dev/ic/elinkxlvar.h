@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.15 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.16 2005/02/06 03:15:14 kim Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,8 @@ struct ex_softc {
 
 	bus_dma_segment_t sc_useg, sc_dseg;
 	int sc_urseg, sc_drseg;
+
+	short sc_if_flags;
 };
 
 #define ex_waitcmd(sc) \
