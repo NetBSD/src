@@ -1,5 +1,5 @@
-/*	$NetBSD: des.h,v 1.3 2000/08/31 14:53:48 itojun Exp $	*/
-/*	$KAME: des.h,v 1.6 2000/08/31 14:52:59 itojun Exp $	*/
+/*	$NetBSD: des.h,v 1.4 2000/11/06 14:11:41 itojun Exp $	*/
+/*	$KAME: des.h,v 1.7 2000/09/18 20:59:21 itojun Exp $	*/
 
 /* lib/des/des.h */
 /* Copyright (C) 1995-1996 Eric Young (eay@mincom.oz.au)
@@ -83,14 +83,6 @@ typedef struct des_ks_struct
 extern int des_check_key;	/* defaults to false */
 
 char *des_options __P((void));
-struct mbuf;
-int des_cbc_encrypt __P((struct mbuf *, size_t, size_t,
-	des_key_schedule, des_cblock *, int));
-void des_3cbc_encrypt __P((des_cblock *, des_cblock *, long,
-	des_key_schedule, des_key_schedule,
-	des_cblock *, des_cblock *, int));
-extern int des_3cbc_process __P((struct mbuf *, size_t, size_t,
-	des_key_schedule *, des_cblock *, int));
 void des_ecb_encrypt __P((des_cblock *, des_cblock *,
 	des_key_schedule, int));
 void des_encrypt __P((DES_LONG *, des_key_schedule, int));

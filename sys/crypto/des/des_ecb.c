@@ -1,5 +1,5 @@
-/*	$NetBSD: des_ecb.c,v 1.2 2000/08/31 07:33:05 itojun Exp $	*/
-/*	$KAME: des_ecb.c,v 1.4 2000/08/31 07:27:27 itojun Exp $	*/
+/*	$NetBSD: des_ecb.c,v 1.3 2000/11/06 14:11:41 itojun Exp $	*/
+/*	$KAME: des_ecb.c,v 1.5 2000/11/06 13:58:08 itojun Exp $	*/
 
 /* crypto/des/ecb_enc.c */
 /* Copyright (C) 1995-1996 Eric Young (eay@mincom.oz.au)
@@ -49,8 +49,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
+#else
+#include <string.h>
+#endif
 #include <crypto/des/des_locl.h>
 #include <crypto/des/spr.h>
 
