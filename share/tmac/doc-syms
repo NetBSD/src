@@ -287,6 +287,26 @@
 .\" .			as b1 (``\\*(tNANSI C\\*(aa'')
 .		\}
 .       \}
+.       if "\\*(A\\n(aP"-xpg3" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNX/Open Portability Guide Issue 3\\*(aa\\*(sV
+.			as b1 (``\\*(tNXPG3\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNX/Open Portability Guide Issue 3\\*(aa\\*(sV
+.			as b1 (``\\*(tNXPG3\\*(aa'')
+.		\}
+.       \}
+.       if "\\*(A\\n(aP"-xpg4" \{\
+.		ie \\n(sT==1 \{\
+.			ds b1 \&\\*(tNX/Open Portability Guide Issue 4\\*(aa\\*(sV
+.			as b1 (``\\*(tNXPG4\\*(aa'')
+.		\}
+.		el \{\
+.			ds b1 \&\\*(tNX/Open Portability Guide Issue 4\\*(aa\\*(sV
+.			as b1 (``\\*(tNXPG4\\*(aa'')
+.		\}
+.       \}
 .	ie \\n(aC>\\n(aP \{\
 .		nr aP \\n(aP+1
 .		nR
