@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.171 2002/12/23 00:55:16 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.172 2002/12/31 14:34:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2836,9 +2836,11 @@ nmi_sun4m:
 	st	%o1, [%l6 + ICR_PI_CLR_OFFSET]
 	 nop; nop; nop;
 	ld	[%l6 + ICR_PI_PEND_OFFSET], %g0	! drain register!?
-	 nop; nop; nop;
+	 nop;
 
-	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
+	or	%l0, PSR_PIL, %o4	! splhigh()
+	wr	%o4, 0, %psr		!
+	wr	%o4, PSR_ET, %psr	! turn traps on again
 
 	std	%g2, [%sp + CCFSZ + 80]	! save g2, g3
 	rd	%y, %l4			! save y
