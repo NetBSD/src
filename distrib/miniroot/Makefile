@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/05/10 15:42:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1997/06/23 21:32:52 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ IMAGE?=		miniroot-${REV}.fs
 IMAGESIZE?=	10240 # 5Mb in 512 byte blocks
 NEWFSOPTS?=
 
+DISKTYPE=	miniroot
+
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
@@ -31,8 +33,8 @@ all:
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} miniroot
+	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
+	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \

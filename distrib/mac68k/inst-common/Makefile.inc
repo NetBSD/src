@@ -1,5 +1,5 @@
 #
-#	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/06/23 21:31:11 thorpej Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -18,10 +18,12 @@ LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
 
+DISKTYPE=	ram
+
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} bs=1k count=1024
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -m 0 -o space -i 16384 ${VND_RDEV} ram
+	vnconfig -t ${DISKTYPE} -v -c ${VND_DEV} ${IMAGE}
+	newfs -m 0 -o space -i 16384 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
