@@ -1,4 +1,4 @@
-.\" $NetBSD: bktr.4,v 1.1 2000/05/07 20:46:10 wiz Exp $
+.\" $NetBSD: bktr.4,v 1.1.4.1 2000/08/29 00:21:06 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Thomas Klausner
 .\" 	All rights reserved.
@@ -56,76 +56,102 @@ and
 .Tn Bt879
 chips.
 .Pp
+Supported cards include most cards by
+.Tn AVerMedia,
+.Tn Hauppauge,
+.Tn Leadtek,
+.Tn Miro,
+.Tn Pinnacle,
+.Tn Pixelview,
+.Tn Terratec,
+and some other companies, especially all cards based on the
+.Tn Brooktree
+.Tn Bt848,
+.Tn Bt848A,
+.Tn Bt849A,
+.Tn Bt878,
+or
+.Tn Bt879
+chips.
+A notable exception are the
+.Tn ATI
+.Tn All-in-Wonder
+cards.
+.Pp
 The following kernel configuration options are available:
 .Bl -ohang
 .It Cd options BKTR_OVERRIDE_CARD=n
 If the card is not recognized correctly by the auto-detection routine,
 it can be overridden by setting this option to the appropriate
 value. The following values are allowed:
-.Em 1
-for Pinnacle (Miro) TV,
-.Em 2
-for Hauppauge WinCast/TV,
-.Em 3
-for STB TV/PCI,
-.Em 4
-for Intel Smart Video III and Videologic Captivator PCI,
-.Em 5
-for IMS TV Turbo,
-.Em 6
-for AVer Media TV/FM,
-.Em 7
-for MMAC Osprey,
-.Em 8
-for NEC PK-UG-X017,
-.Em 9
-for I/O DATA GV-BCTV2/PCI,
-.Em 10
-for FlyVideo,
-.Em 11
-for Zoltrix,
-.Em 12
-for KISS TV/FM PCI,
-.Em 13
-for Video Highway Xtreme,
-.Em 14
-for Askey/Dynalink Magic TView,
-.Em 15
-for Leadtek Winfast TV 2000,
+.Bl -tag -width 2n -compact
+.It 1
+Pinnacle (Miro) TV,
+.It 2
+Hauppauge WinCast/TV,
+.It 3
+STB TV/PCI,
+.It 4
+Intel Smart Video III and Videologic Captivator PCI,
+.It 5
+IMS TV Turbo,
+.It 6
+AVer Media TV/FM,
+.It 7
+MMAC Osprey,
+.It 8
+NEC PK-UG-X017,
+.It 9
+I/O DATA GV-BCTV2/PCI,
+.It 10
+FlyVideo,
+.It 11
+Zoltrix,
+.It 12
+KISS TV/FM PCI,
+.It 13
+Video Highway Xtreme,
+.It 14
+Askey/Dynalink Magic TView,
+.It 15
+Leadtek Winfast TV 2000,
 and
-.Em 16
-for TerraTVplus.
+.It 16
+TerraTVplus.
+.El
 .It Cd options BKTR_OVERRIDE_TUNER=n
 If the TV tuner is not recognized correctly by the auto-detection
 routine, it can be overridden by setting this option to the
 appropriate value. Known values are:
-.Em 1
-for Temic NTSC,
-.Em 2
-for Temic PAL,
-.Em 3
-for Temic SECAM,
-.Em 4
-for Philips NTSC,
-.Em 5
-for Philips PAL,
-.Em 6
-for Philips SECAM,
-.Em 7
-for Temic PAL I,
-.Em 8
-for Philips PAL I,
-.Em 9
-for Philips FR1236 NTSC FM,
-.Em 10
-for Philips FR1216 PAL FM,
-.Em 11
-for Philips FR1236 SECAM FM,
-.Em 12
-for ALPS TSCH5 NTSC FM,
+.Bl -tag -width 2n -compact
+.It 1
+Temic NTSC,
+.It 2
+Temic PAL,
+.It 3
+Temic SECAM,
+.It 4
+Philips NTSC,
+.It 5
+Philips PAL,
+.It 6
+Philips SECAM,
+.It 7
+Temic PAL I,
+.It 8
+Philips PAL I,
+.It 9
+Philips FR1236 NTSC FM,
+.It 10
+Philips FR1216 PAL FM,
+.It 11
+Philips FR1236 SECAM FM,
+.It 12
+ALPS TSCH5 NTSC FM,
 and
-.Em 13
-for ALPS TSBH1 NTSC.
+.It 13
+ALPS TSBH1 NTSC.
+.El
 .It Cd options BKTR_OVERRIDE_DBX=n
 To override detection of the BTSC (dbx) chip, set this to
 .Em 1
@@ -154,28 +180,6 @@ reboot.
 .\" .It Cd options BKTR_430_FX_MODE
 .\" .It Cd options BKTR_SIS_VIA_MODE
 .El
-.Sh HARDWARE
-Supported cards include most cards by
-.Tn AVerMedia,
-.Tn Hauppauge,
-.Tn Leadtek,
-.Tn Miro,
-.Tn Pinnacle,
-.Tn Pixelview,
-.Tn Terratec,
-and some other companies, especially all cards based on the
-.Tn Brooktree
-.Tn Bt848,
-.Tn Bt848A,
-.Tn Bt849A,
-.Tn Bt878,
-or
-.Tn Bt879
-chips.
-A notable exception are the
-.Tn ATI
-.Tn All-in-Wonder
-cards.
 .Sh FILES
 .Bl -tag -width /dev/tuner* -compact
 .It Pa /dev/bktr*
@@ -189,7 +193,9 @@ teletext interface device
 .El
 .Sh "SEE ALSO"
 .Xr options 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Pa pkgsrc/audio/xmradio ,
+.Pa pkgsrc/graphics/fxtv
 .Sh AUTHORS
 The
 .Nm
