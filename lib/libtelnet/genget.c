@@ -32,9 +32,10 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)genget.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: genget.c,v 1.4 1995/06/05 19:46:58 pk Exp $";
+/* from: static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95"; */
+static char *rcsid = "$NetBSD: genget.c,v 1.5 1996/02/24 01:15:21 jtk Exp $";
 #endif /* not lint */
+
 
 #include <ctype.h>
 #include "misc-proto.h"
@@ -54,21 +55,22 @@ int Ambiguous __P((char *));
 isprefix(s1, s2)
 	register char *s1, *s2;
 {
+	register int n = 0;
 	char *os1;
 	register char c1, c2;
 
-        if (*s1 == '\0')
-                return(-1);
-        os1 = s1;
+	if (*s1 == '\0')
+		return(-1);
+	os1 = s1;
 	c1 = *s1;
 	c2 = *s2;
-        while (LOWER(c1) == LOWER(c2)) {
+	while (LOWER(c1) == LOWER(c2)) {
 		if (c1 == '\0')
 			break;
-                c1 = *++s1;
-                c2 = *++s2;
-        }
-        return(*s1 ? 0 : (*s2 ? (s1 - os1) : (os1 - s1)));
+		c1 = *++s1;
+		c2 = *++s2;
+	}
+	return(*s1 ? 0 : (*s2 ? (s1 - os1) : (os1 - s1)));
 }
 
 static char *ambiguous;		/* special return value for command routines */
