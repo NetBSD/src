@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.4 1999/04/26 04:27:47 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.5 1999/04/29 02:49:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.4 1999/04/26 04:27:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.5 1999/04/29 02:49:40 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -120,6 +120,8 @@ rasops_init(ri, wantrows, wantcols, clear, center)
 			printf("rasops_init: couldn't lock font\n");
 			return (-1);
 		}
+		
+		ri->ri_wsfcookie = cookie;
 	}
 #endif
 	
@@ -218,7 +220,13 @@ rasops_setfont(ri, wantrows, wantcols, clear, center)
 		ri->ri_bits += ((ri->ri_stride - ri->ri_emustride) >> 1) & ~3;
 		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) * 
 		    ri->ri_stride;
-	}
+		
+		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits) 
+		   / ri->ri_stride;
+		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits) 
+		   % ri->ri_stride) * bpp) >> 3;
+	} else
+		ri->ri_xorigin = ri->ri_yorigin = 0;
 
 	/*	
 	 * Fill in defaults for operations set.  XXX this nukes private

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.4 1999/04/26 04:27:47 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.5 1999/04/29 02:49:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -41,8 +41,12 @@ struct rasops_info {
 	int	ri_height;	/* height (pels) */
 	int	ri_stride;	/* stride in bytes */
 
-	/* These can optionally be left empty */
+	/* 
+	 * These can optionally be left empty. If you fill ri_font,
+	 * but aren't using wsfont, set ri_wsfcookie to -1.
+	 */
 	struct	wsdisplay_font *ri_font;
+	int	ri_wsfcookie;
 	void	*ri_priv;	/* driver private data */
 	u_char	ri_forcemono;	/* force monochrome operation */
 	u_char	ri_swab;	/* swap bytes for 15/16/32 bit depths? */
@@ -74,6 +78,8 @@ struct rasops_info {
 	int	ri_xscale;	/* fontwidth * pelbytes */
 	int	ri_yscale;	/* fontheight * stride */
 	u_char  *ri_origbits;	/* where screen bits actually start */
+	int	ri_xorigin;	/* where ri_bits begins (x) */
+	int	ri_yorigin;	/* where ri_bits begins (y) */
 	
 	/* For 15, 16, 24, 32 bits */
 	int32_t	ri_devcmap[16]; /* device colormap (WSCOL_*) */
@@ -105,7 +111,8 @@ struct rasops_info {
  * rasops_init() takes care of rasops_setfont(). You only need to use this
  * when you want to switch fonts later on. The integer parameters to both
  * are the same. Before calling rasops_setfont(), set ri.ri_font. This
- * should happen at _splhigh_.
+ * should happen at _splhigh_. If (ri_wsfcookie >= 0), you must call
+ * wsfont_unlock() on it first.
  */
 
 /* rasops.c */
