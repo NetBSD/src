@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.13 2000/01/22 22:19:13 mycroft Exp $	*/
+/*	$NetBSD: timezone.c,v 1.14 2000/01/23 07:37:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: timezone.c,v 1.13 2000/01/22 22:19:13 mycroft Exp $");
+__RCSID("$NetBSD: timezone.c,v 1.14 2000/01/23 07:37:47 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,10 @@ __RCSID("$NetBSD: timezone.c,v 1.13 2000/01/22 22:19:13 mycroft Exp $");
 #include <string.h>
 #include <tzfile.h>
 
+#if 0
 #ifdef __weak_alias
 __weak_alias(timezone,_timezone)
+#endif
 #endif
 
 /*
