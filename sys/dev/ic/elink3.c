@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.18.4.3 1997/02/27 19:17:25 is Exp $	*/
+/*	$NetBSD: elink3.c,v 1.18.4.4 1997/03/09 21:44:12 is Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -54,7 +54,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
