@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: toolchain2netbsd,v 1.7 2001/08/06 23:26:28 tv Exp $
+#	$NetBSD: toolchain2netbsd,v 1.8 2001/08/10 11:57:48 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -183,6 +183,7 @@ if [ "$have_new_gcc" = "yes" ]; then
 
 		(cd dist/toolchain/libstdc++ && echo 'STD_HEADERS=' *.h std/*.h std/*.cc std/*.tcc)
 		(cd dist/toolchain/libstdc++/stl && echo 'STL_HEADERS=' *.h)
+		(cd dist/toolchain/libio && echo 'LIBIO_HEADERS=' *.h)
 	} | write_mk lib/libstdc++/arch/$MACHINE_ARCH/defs.mk
 fi
 

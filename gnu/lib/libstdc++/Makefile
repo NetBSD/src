@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/07/24 19:44:49 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2001/08/10 11:57:48 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,12 +9,14 @@ MKLINT=		no
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-SUBDIR=		include
+SUBDIR=		include io config
 
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 
 SRCS=		${G_OBJS:.o=.cc} ${G_LIBIBERTY_OBJS:.o=.c}
+INCS=		_G_config.h
+INCSDIR=	/usr/include/g++
 
 # Ugly, but they aren't identified individually in libio/Makefile:
 .for f in ${G_LIBIOSTREAM_USE}
