@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.35 2002/01/11 05:18:11 itojun Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.36 2002/04/29 19:03:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.35 2002/01/11 05:18:11 itojun Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.36 2002/04/29 19:03:15 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,13 +240,13 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 	if (cmd_err || (argc != 1))
-		err(1, "usage: lfs_cleanerd [-bdms] [-l load] [-n nsegs] [-r report_freq] [-t timeout] fs_name");
+		errx(1, "usage: lfs_cleanerd [-bdms] [-l load] [-n nsegs] [-r report_freq] [-t timeout] fs_name");
 
 	fs_name = argv[0];
 
 	if (fs_getmntinfo(&lstatfsp, fs_name, MOUNT_LFS) == 0) {
 		/* didn't find the filesystem */
-		err(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
+		errx(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
 	}
 
 	/* should we become a daemon, chdir to / & close fd's */
@@ -771,7 +771,7 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 							   dip[j].di_u.inumber);
 						}
 					}
-					err(1,"lost inode");
+					errx(1, "lost inode");
 				} else if (debug > 1) {
 					syslog(LOG_DEBUG,"Ino %d corrected to 0x%x",
 					       tba[i].bi_inode,
