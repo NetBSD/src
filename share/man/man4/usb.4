@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.17 1999/09/09 12:35:53 augustss Exp $
+.\" $NetBSD: usb.4,v 1.18 1999/11/08 22:30:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,9 @@
 .Nm usb
 .Nd Universal Serial Bus driver
 .Sh SYNOPSIS
-.Cd "uhci*   at pci? function ?"
-.Cd "ohci*   at pci? function ?"
+.Cd "uhci*   at pci? dev ? function ?"
+.Cd "ohci*   at pci? dev ? function ?"
+.Cd "ohci*   at cardbus?"
 .Cd "usb*    at uhci?"
 .Cd "usb*    at ohci?"
 .Cd "uhub*   at usb?"
@@ -313,6 +314,7 @@ The
 specifications can be found at
 .Dv http://www.usb.org/developers/docs.htm .
 .Pp
+.Xr cardbus 4 ,
 .Xr pci 4 ,
 .Xr uaudio 4 ,
 .Xr ugen 4 ,
