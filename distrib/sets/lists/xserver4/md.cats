@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.5 2003/12/19 14:51:48 tron Exp $
+# $NetBSD: md.cats,v 1.6 2003/12/28 15:46:00 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -70,8 +70,8 @@
 ./usr/X11R6/man/cat4/fbdev.0
 ./usr/X11R6/man/cat4/fbdevhw.0
 ./usr/X11R6/man/cat4/glint.0
-./usr/X11R6/man/cat4/keyboard.0
 ./usr/X11R6/man/cat4/imstt.0
+./usr/X11R6/man/cat4/keyboard.0
 ./usr/X11R6/man/cat4/mga.0
 ./usr/X11R6/man/cat4/microtouch.0
 ./usr/X11R6/man/cat4/mouse.0

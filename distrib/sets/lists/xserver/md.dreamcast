@@ -1,5 +1,0 @@
-# $NetBSD: md.dreamcast,v 1.1 2003/12/23 17:43:38 tsutsui Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/Xdreamcast
-./usr/X11R6/lib/X11/rgb.db
-./usr/X11R6/man/cat1/Xdreamcast.0

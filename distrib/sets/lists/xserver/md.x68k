@@ -1,5 +1,0 @@
-# $NetBSD: md.x68k,v 1.6 2002/02/11 16:23:21 tron Exp $
-./usr/X11R6/bin/X
-./usr/X11R6/bin/X68k
-./usr/X11R6/lib/X11/X68kConfig
-./usr/X11R6/man/cat1/X68k.0
