@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.3 1999/08/05 15:45:01 jdolecek Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.4 1999/09/07 08:16:14 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -112,7 +112,7 @@ To read directory raw data:
 .Pp
 .Sh WRITING
 There is limited writing ability. Limitations: file must be nonresident
-and must not contain any sparces (uninitialized areas), compressed
+and must not contain any holes (uninitialized areas), compressed
 files are not supported either.
 .Sh SEE ALSO
 .Xr mount 2 ,
