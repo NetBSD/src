@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.41 2000/12/04 09:59:48 scw Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.42 2000/12/23 12:32:12 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.41 2000/12/04 09:59:48 scw Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.42 2000/12/23 12:32:12 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1339,7 +1339,7 @@ swap_cg(struct cg *o, struct cg *n)
 		n32 = (u_int32_t*)((u_int8_t*)n + bswap32(n->cg_clustersumoff));
 		o32 = (u_int32_t*)((u_int8_t*)o + bswap32(n->cg_clustersumoff));
 	}
-	for (i = 0; i < sblock.fs_contigsumsize + 1; i++)
+	for (i = 1; i < sblock.fs_contigsumsize + 1; i++)
 		n32[i] = bswap32(o32[i]);
 }
 
