@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.159 1999/09/08 21:39:54 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.160 1999/09/08 22:25:56 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.152 1999/09/08 21:39:24 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.153 1999/09/08 22:25:19 thorpej Exp 
  */
 
 /*
@@ -517,6 +517,7 @@
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
+#define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
@@ -642,6 +643,9 @@
 
 /* Addtron Products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
+
+/* ADMtek products */
+#define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* ADMtek AL981 10/100 Ethernet */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
@@ -804,6 +808,7 @@
 /* Compex products - XXX better descriptions */
 #define	PCI_PRODUCT_COMPEX_NE2KETHER	0x1401		/* Ethernet */
 #define	PCI_PRODUCT_COMPEX_RL100ATX	0x2011		/* RL100-ATX 10/100 Ethernet */
+#define	PCI_PRODUCT_COMPEX_RL100TX	0x9881		/* RL100-TX 10/100 Ethernet */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -999,6 +1004,7 @@
 
 /* Lite-On products */
 #define	PCI_PRODUCT_LITEON_82C168	0x0002		/* 82C168/82C169 (PNIC) 10/100 Ethernet */
+#define	PCI_PRODUCT_LITEON_82C115	0xc115		/* 82C115 (PNIC II) 10/100 Ethernet */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* MX98713 (PMAC) 10/100 Ethernet */
