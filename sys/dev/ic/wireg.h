@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.11 2001/10/13 15:00:23 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.12 2001/10/14 12:33:18 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -314,6 +314,7 @@
  * PCI Host Interface Registers (HFA3842 Specific)
  * The value of all Register's Offset, such as WI_INFO_FID and WI_PARAM0,
  * has doubled.
+ * About WI_PCI_COR: In this Register, only soft-reset bit implement; Bit(7).
  */
 #define WI_PCI_COR		0x4C
 #define WI_PCI_HCR		0x5C
@@ -327,7 +328,9 @@
 #define WI_PCI_MASTER1_ADDRH	0xA0
 #define WI_PCI_MASTER1_ADDRL	0xA4
 #define WI_PCI_MASTER1_LEN	0xA8
-#define WI_PCI_MASTER1_CON	0xAC	
+#define WI_PCI_MASTER1_CON	0xAC
+
+#define WI_PCI_SOFT_RESET	(1 << 7)
 
 /*
  * One form of communication with the Hermes is with what Lucent calls
