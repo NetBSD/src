@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2003/03/15 23:41:26 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2003/03/25 00:09:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include "opt_cpureset_delay.h"
 #include "opt_multiprocessor.h"
 #include "opt_mtrr.h"
+#include "opt_realmem.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1184,12 +1185,15 @@ init_x86_64(first_avail)
 {
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
-	struct btinfo_memmap *bim;
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
 	int x, first16q, ist;
-	u_int64_t seg_start, seg_end, addr, size;
-	u_int64_t seg_start1, seg_end1, io_end;
+	u_int64_t seg_start, seg_end;
+	u_int64_t seg_start1, seg_end1;
+#if !defined(REALEXTMEM) && !defined(REALBASEMEM)
+	struct btinfo_memmap *bim;
+	u_int64_t addr, size, io_end;
+#endif
 
 	cpu_init_msrs(&cpu_info_primary);
 
@@ -1228,6 +1232,8 @@ init_x86_64(first_avail)
 
 	if (avail_start != PAGE_SIZE)
 		pmap_prealloc_lowmem_ptps();
+
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
@@ -1319,6 +1325,7 @@ init_x86_64(first_avail)
 			mem_cluster_cnt++;
 		}
 	}
+#endif	/* ! REALBASEMEM && ! REALEXTMEM */
 
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
@@ -1647,7 +1654,8 @@ init_x86_64(first_avail)
 			tesym = (vaddr_t)symtab->esym + KERNBASE;
 			ddb_init(symtab->nsym, (void *)tssym, (void *)tesym);
 		} else
-			ddb_init(*(long *)&end, ((long *)&end) + 1, esym);
+			ddb_init(*(long *)(void *)&end,
+			    ((long *)(void *)&end) + 1, esym);
 	}
 	if (boothowto & RB_KDB)
 		Debugger();

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.14 2003/03/05 23:56:00 fvdl Exp $
+#	$NetBSD: files.x86_64,v 1.15 2003/03/25 00:09:27 fvdl Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -13,6 +13,9 @@ defparam		CPURESET_DELAY
 
 # Large page size
 defflag			LARGEPAGES
+
+# The REAL{BASE,EXT}MEM options
+defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
 
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2003/03/05 23:56:09 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2003/03/25 00:09:47 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -119,6 +119,7 @@
 #include "opt_user_ldt.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_realmem.h"
 
 #include "assym.h"
 #include "lapic.h"
