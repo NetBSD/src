@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.15 2002/09/16 17:24:18 skrll Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.16 2002/12/18 22:57:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,15 +72,19 @@ ENTRY(pthread__switch)
 	PIC_PROLOGUE
 	movl	8(%ebp), %eax		/* eax holds the current thread */
 	movl	12(%ebp), %ecx		/* ecx holds the thread to switch to */
-	subl	$CONTEXTSIZE+16, %esp	/* Allocate space for the ucontext_t */
-	leal	16(%esp), %edi
+	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
+	leal	12(%esp), %edi
 	andl	$~(0xf), %edi		/* 16-byte-align the ucontext_t area */
 	movl	%edi, PT_UC(%eax)
+	/*
+	 * Note: Alignment space below the ucontext_t can consume up to
+	 * 12 bytes of STACKSPACE.
+	 */
 	movl	PT_UC(%ecx), %esi
 	pushl	%esi			/* ucontext_t *ucp */
 	pushl	%edi			/* ucontext_t *oucp */
 	call	*PIC_GOTOFF(_C_LABEL(_md_swapcontext_u))
-	addl	$CONTEXTSIZE+24, %esp
+	addl	$CONTEXTSIZE+20, %esp
 	PIC_EPILOGUE
 	popl	%edi
 	popl	%esi
@@ -176,10 +180,14 @@ ENTRY(pthread__locked_switch)
 	movl	12(%ebp), %ecx 		/* ecx holds the thread to switch to */
 	movl	16(%ebp), %edx		/* edx holds the spinlock pointer */
 	incl	PT_SPINLOCKS(%ecx)	/* Make sure we get continued */
-	subl	$CONTEXTSIZE+16, %esp	/* Allocate space for the ucontext_t */
-	leal	16(%esp), %edi
+	subl	$CONTEXTSIZE+12, %esp	/* Allocate space for the ucontext_t */
+	leal	12(%esp), %edi
 	andl	$~(0xf), %edi		/* 16-byte-align the ucontext_t area */
 	movl	%edi, PT_UC(%eax)
+	/*
+	 * Note: Alignment space below the ucontext_t can consume up to
+	 * 12 bytes of STACKSPACE.
+	 */
 	pushl	%eax			/* caller save */
 	pushl	%ecx			/* caller save */
 	pushl	%edx			/* caller save */
@@ -260,7 +268,7 @@ locked_no_new_preempt:
 	call	*PIC_GOTOFF(_C_LABEL(_md_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
-	addl	$CONTEXTSIZE+32, %esp
+	addl	$CONTEXTSIZE+28, %esp
 	PIC_EPILOGUE
 	popl	%edi
 	popl	%esi
