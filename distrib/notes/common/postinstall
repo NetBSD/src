@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.54 2003/11/01 03:02:59 grant Exp $
+.\"	$NetBSD: postinstall,v 1.55 2004/05/13 00:26:25 cl Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,6 +189,7 @@ For example:
 .if \n[mac68k]  .ds IFname sn0
 .if \n[macppc]  .ds IFname mc0
 .if \n[sgimips] .ds IFname sq0
+.if \n[xen]     .ds IFname xennet0
 .
 .Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
 .Pp
@@ -370,13 +371,13 @@ A list of available packages suitable for browsing is at
 Precompiled binaries can be found at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/ ,
 usually in the
-.Pa \*V/\*M/All
+.Pa \*V/\*P/All
 subdir.
 You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*P/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v apache
@@ -389,7 +390,7 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*P/All
 \&...
 .Ed
 .Pp
