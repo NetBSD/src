@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.11.2.2 1999/02/25 04:02:36 chs Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.11.2.3 1999/05/30 15:02:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -87,7 +87,7 @@ void ffs_clusteracct __P((int, struct fs *, struct cg *, ufs_daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
-		    struct buf **, daddr_t *, int, boolean_t *));
+		    struct buf **, daddr_t *, int));
 int ffs_balloc_range __P((struct inode *, off_t, off_t, struct ucred *, int));
 
 /* ffs_bswap.c */
