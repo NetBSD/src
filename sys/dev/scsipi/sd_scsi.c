@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.35 2003/09/09 06:32:14 mycroft Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.36 2003/09/17 23:33:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.35 2003/09/09 06:32:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.36 2003/09/17 23:33:43 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,8 @@ static int	sd_scsibus_mode_sense __P((struct sd_softc *,
 		    u_int8_t, void *, size_t, int, int, int *));
 static int	sd_scsibus_mode_select __P((struct sd_softc *,
 		    u_int8_t, void *, size_t, int, int));
+static int	sd_scsibus_get_capacity __P((struct sd_softc *,
+		    struct disk_parms *, int));
 static int	sd_scsibus_get_parms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_get_simplifiedparms __P((struct sd_softc *,
@@ -291,16 +293,106 @@ sd_scsibus_get_simplifiedparms(sd, dp, flags)
  * results to fill out the disk parameter structure.
  */
 static int
+sd_scsibus_get_capacity(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	u_int64_t sectors;
+	int error;
+#if 0
+	int i;
+	u_int8_t *p;
+#endif
+
+	dp->disksize = sectors = scsipi_size(sd->sc_periph, flags);
+	if (sectors == 0) {
+		struct scsipi_read_format_capacities scsipi_cmd;
+		struct {
+			struct scsipi_capacity_list_header header;
+			struct scsipi_capacity_descriptor desc;
+		} __attribute__((packed)) scsipi_result;
+
+		memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
+		memset(&scsipi_result, 0, sizeof(scsipi_result));
+		scsipi_cmd.opcode = READ_FORMAT_CAPACITIES;
+		_lto2b(sizeof(scsipi_result), scsipi_cmd.length);
+		error = scsipi_command(sd->sc_periph, (void *)&scsipi_cmd,
+		    sizeof(scsipi_cmd), (void *)&scsipi_result,
+		    sizeof(scsipi_result), SDRETRIES, 20000,
+		    NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK /*|
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST*/);
+		if (error || scsipi_result.header.length == 0)
+			return (SDGP_RESULT_OFFLINE);
+
+#if 0
+printf("rfc: length=%d\n", scsipi_result.header.length);
+printf("rfc result:"); for (i = sizeof(struct scsipi_capacity_list_header) + scsipi_result.header.length, p = (void *)&scsipi_result; i; i--, p++) printf(" %02x", *p); printf("\n");
+#endif
+		switch (scsipi_result.desc.byte5 & SCSIPI_CAP_DESC_CODE_MASK) {
+		case SCSIPI_CAP_DESC_CODE_RESERVED:
+		case SCSIPI_CAP_DESC_CODE_FORMATTED:
+			break;
+
+		case SCSIPI_CAP_DESC_CODE_UNFORMATTED:
+			return (SDGP_RESULT_UNFORMATTED);
+
+		case SCSIPI_CAP_DESC_CODE_NONE:
+			return (SDGP_RESULT_OFFLINE);
+		}
+
+		dp->disksize = sectors = _4btol(scsipi_result.desc.nblks);
+		if (sectors == 0)
+			return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+		dp->blksize = _3btol(scsipi_result.desc.blklen);
+		if (dp->blksize == 0)
+			dp->blksize = 512;
+	} else {
+		struct sd_scsibus_mode_sense_data scsipi_sense;
+		int big, bsize;
+		struct scsi_blk_desc *bdesc;
+
+		memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+		error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
+		    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
+		if (!error) {
+			if (big) {
+				bdesc = (void *)(&scsipi_sense.header.big + 1);
+				bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
+			} else {
+				bdesc = (void *)(&scsipi_sense.header.small + 1);
+				bsize = scsipi_sense.header.small.blk_desc_len;
+			}
+
+#if 0
+printf("page 0 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
+printf("page 0 bsize=%d\n", bsize);
+printf("page 0 ok\n");
+#endif
+
+			if (bsize >= 8) {
+				dp->blksize = _3btol(bdesc->blklen);
+				if (dp->blksize == 0)
+					dp->blksize = 512;
+			} else
+				dp->blksize = 512;
+		}
+	}
+
+	dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
+	return (0);
+}
+
+static int
 sd_scsibus_get_parms(sd, dp, flags)
 	struct sd_softc *sd;
 	struct disk_parms *dp;
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
-	u_int64_t sectors;
 	int error;
-	int big, bsize;
-	struct scsi_blk_desc *bdesc;
+	int big;
 	union scsi_disk_pages *pages;
 #if 0
 	int i;
@@ -314,31 +406,27 @@ sd_scsibus_get_parms(sd, dp, flags)
 	if (sd->type == T_SIMPLE_DIRECT)
 		return (sd_scsibus_get_simplifiedparms(sd, dp, flags));
 
-	dp->disksize = sectors = scsipi_size(sd->sc_periph, flags);
-	if (sectors == 0)
-		return (SDGP_RESULT_OFFLINE);		/* XXX? */
+	error = sd_scsibus_get_capacity(sd, dp, flags);
+	if (error)
+		return (error);
 
 	if (sd->type == T_OPTICAL)
 		goto page0;
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
-	error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
+	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
 	    sizeof(scsipi_sense.blk_desc) +
 	    sizeof(scsipi_sense.pages.rigid_geometry), 4,
 	    flags | XS_CTL_SILENT, &big);
 	if (!error) {
-		if (big) {
-			bdesc = (void *)(&scsipi_sense.header.big + 1);
-			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
-		} else {
-			bdesc = (void *)(&scsipi_sense.header.small + 1);
-			bsize = scsipi_sense.header.small.blk_desc_len;
-		}
-		pages = (void *)(((u_int8_t *)bdesc) + bsize);
+		if (big)
+			pages = (void *)(&scsipi_sense.header.big + 1);
+		else
+			pages = (void *)(&scsipi_sense.header.small + 1);
 
 #if 0
 printf("page 4 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
-printf("page 4 bsize=%d pg_code=%d sense=%p/%p/%p\n", bsize, pages->rigid_geometry.pg_code, &scsipi_sense, bdesc, pages);
+printf("page 4 pg_code=%d sense=%p/%p\n", pages->rigid_geometry.pg_code, &scsipi_sense, pages);
 #endif
 
 		if ((pages->rigid_geometry.pg_code & PGCODE_MASK) != 4)
@@ -362,7 +450,7 @@ printf("page 4 bsize=%d pg_code=%d sense=%p/%p/%p\n", bsize, pages->rigid_geomet
 		dp->cyls = _3btol(pages->rigid_geometry.ncyl);
 		if (dp->heads == 0 || dp->cyls == 0)
 			goto page5;
-		dp->sectors = sectors / (dp->heads * dp->cyls);	/* XXX */
+		dp->sectors = dp->disksize / (dp->heads * dp->cyls);	/* XXX */
 
 		dp->rot_rate = _2btol(pages->rigid_geometry.rpm);
 		if (dp->rot_rate == 0)
@@ -375,24 +463,20 @@ printf("page 4 ok\n");
 	}
 
 page5:
-	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
+	memset(&scsipi_sense, SMS_DBD, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
 	    sizeof(scsipi_sense.blk_desc) +
 	    sizeof(scsipi_sense.pages.flex_geometry), 5,
 	    flags | XS_CTL_SILENT, &big);
 	if (!error) {
-		if (big) {
-			bdesc = (void *)(&scsipi_sense.header.big + 1);
-			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
-		} else {
-			bdesc = (void *)(&scsipi_sense.header.small + 1);
-			bsize = scsipi_sense.header.small.blk_desc_len;
-		}
-		pages = (void *)(((u_int8_t *)bdesc) + bsize);
+		if (big)
+			pages = (void *)(&scsipi_sense.header.big + 1);
+		else
+			pages = (void *)(&scsipi_sense.header.small + 1);
 
 #if 0
 printf("page 5 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
-printf("page 5 bsize=%d pg_code=%d sense=%p/%p/%p\n", bsize, pages->flex_geometry.pg_code, &scsipi_sense, bdesc, pages);
+printf("page 5 pg_code=%d sense=%p/%p\n", pages->flex_geometry.pg_code, &scsipi_sense, pages);
 #endif
 
 		if ((pages->flex_geometry.pg_code & PGCODE_MASK) != 5)
@@ -422,31 +506,11 @@ printf("page 5 ok\n");
 	}
 
 page0:
-	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
-	error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
-	    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
-	if (!error) {
-		if (big) {
-			bdesc = (void *)(&scsipi_sense.header.big + 1);
-			bsize = _2btol(scsipi_sense.header.big.blk_desc_len);
-		} else {
-			bdesc = (void *)(&scsipi_sense.header.small + 1);
-			bsize = scsipi_sense.header.small.blk_desc_len;
-		}
-
-#if 0
-printf("page 0 sense:"); for (i = sizeof(scsipi_sense), p = (void *)&scsipi_sense; i; i--, p++) printf(" %02x", *p); printf("\n");
-printf("page 0 bsize=%d\n", bsize);
-printf("page 0 ok\n");
-#endif
-	} else
-		bsize = 0;
-
 	printf("%s: fabricating a geometry\n", sd->sc_dev.dv_xname);
 	/* Try calling driver's method for figuring out geometry. */
 	if (!sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom ||
 	    !(*sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom)
-		(sd->sc_periph, dp, sectors)) {
+		(sd->sc_periph, dp, dp->disksize)) {
 		/*
 		 * Use adaptec standard fictitious geometry
 		 * this depends on which controller (e.g. 1542C is
@@ -454,19 +518,11 @@ printf("page 0 ok\n");
 		 */
 		dp->heads = 64;
 		dp->sectors = 32;
-		dp->cyls = sectors / (64 * 32);
+		dp->cyls = dp->disksize / (64 * 32);
 	}
 	dp->rot_rate = 3600;
 
-blksize:	
-	if (bsize >= 8) {
-		dp->blksize = _3btol(bdesc->blklen);
-		if (dp->blksize == 0)
-			dp->blksize = 512;
-	} else
-		dp->blksize = 512;
-	dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
-
+blksize:
 	return (SDGP_RESULT_OK);
 }
 
