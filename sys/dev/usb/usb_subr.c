@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.35 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.36 1999/08/16 20:24:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1102,14 +1102,9 @@ usb_start_next(pipe)
 		printf("usb_start_next:  no start method\n");
 		return;
 	}
-	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
-		printf("usb_start_next: empty\n");
-		return;
-	}
 #endif
 
-	/* First remove remove old */
-	SIMPLEQ_REMOVE_HEAD(&pipe->queue, SIMPLEQ_FIRST(&pipe->queue), next);
+	/* Get next request in queue. */
 	reqh = SIMPLEQ_FIRST(&pipe->queue);
 	DPRINTFN(5, ("usb_start_next: start reqh=%p\n", reqh));
 	if (!reqh)
