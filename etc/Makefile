@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.32 1994/02/05 02:01:49 jtc Exp $
+#	$Id: Makefile,v 1.33 1994/02/05 07:26:19 cgd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -18,7 +18,7 @@ BIN1=	aliases csh.cshrc csh.login csh.logout dm.conf \
 	ftpusers gettytab group hosts hosts.equiv hosts.lpd inetd.conf \
 	man.conf motd myname netstart newsyslog.conf phones \
 	printcap protocols rc rc.local remote security services shells \
-	syslog.conf ttys etc.${MACHINE}/disktab rpc
+	syslog.conf etc.${MACHINE}/ttys etc.${MACHINE}/disktab rpc
 
 # -rw-rw-rw-
 BIN2=	motd
