@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.27 2001/05/09 22:33:09 he Exp $
+# $NetBSD: mi,v 1.253.2.28 2001/06/07 16:50:12 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -255,7 +255,6 @@
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pawd.0
 ./usr/share/man/cat1/pax.0
-./usr/share/man/cat1/pim6stat.0
 ./usr/share/man/cat1/pkg_add.0
 ./usr/share/man/cat1/pkg_admin.0
 ./usr/share/man/cat1/pkg_create.0
@@ -964,8 +963,6 @@
 ./usr/share/man/cat5/openssl.cnf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/phones.0
-./usr/share/man/cat5/pim6dd.conf.0
-./usr/share/man/cat5/pim6sd.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
@@ -1265,8 +1262,6 @@
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/peace.0
 ./usr/share/man/cat8/pickup.0
-./usr/share/man/cat8/pim6dd.0
-./usr/share/man/cat8/pim6sd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
 ./usr/share/man/cat8/pipe.0
@@ -1681,7 +1676,6 @@
 ./usr/share/man/man1/patch.1
 ./usr/share/man/man1/pawd.1
 ./usr/share/man/man1/pax.1
-./usr/share/man/man1/pim6stat.1
 ./usr/share/man/man1/pkg_add.1
 ./usr/share/man/man1/pkg_admin.1
 ./usr/share/man/man1/pkg_create.1
@@ -2390,8 +2384,6 @@
 ./usr/share/man/man5/openssl.cnf.5
 ./usr/share/man/man5/passwd.5
 ./usr/share/man/man5/phones.5
-./usr/share/man/man5/pim6dd.conf.5
-./usr/share/man/man5/pim6sd.conf.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
 ./usr/share/man/man5/ranlib.5
@@ -2691,8 +2683,6 @@
 ./usr/share/man/man8/pcnfsd.8
 ./usr/share/man/man8/peace.8
 ./usr/share/man/man8/pickup.8
-./usr/share/man/man8/pim6dd.8
-./usr/share/man/man8/pim6sd.8
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/pipe.8
