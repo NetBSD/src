@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1997/06/04 14:33:51 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 1997/06/10 18:41:13 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -308,7 +308,7 @@ u_int		hw_addr, hw_pages;
 	for (i = 0; usable_segs[i+1].start; i++)
 		;
 	/* XXX: allow for msgbuf */
-	usable_segs[i].end -= atari_round_page(sizeof(struct msgbuf));
+	usable_segs[i].end -= m68k_round_page(sizeof(struct msgbuf));
 
 	avail_start = usable_segs[0].start;
 	avail_end   = usable_segs[i].end;
@@ -645,7 +645,7 @@ pmap_page_index(pa)
 
 	while (sep->start) {
 		if (pa >= sep->start && pa < sep->end)
-			return (atari_btop(pa - sep->start) + sep->first_page);
+			return (m68k_btop(pa - sep->start) + sep->first_page);
 		++sep;
 	}
 	return -1;
@@ -928,9 +928,9 @@ pmap_remove(pmap, sva, eva)
 	     */
 	    if (!pmap_ste_v(pmap, va)) {
 		/* XXX: avoid address wrap around */
-		if (va >= atari_trunc_seg((vm_offset_t)-1))
+		if (va >= m68k_trunc_seg((vm_offset_t)-1))
 			break;
-		va = atari_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+		va = m68k_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
 		continue;
 	    }
 	    pte = pmap_pte(pmap, va);
@@ -1225,9 +1225,9 @@ pmap_protect(pmap, sva, eva, prot)
 		 */
 		if (!pmap_ste_v(pmap, va)) {
 			/* XXX: avoid address wrap around */
-			if (va >= atari_trunc_seg((vm_offset_t)-1))
+			if (va >= m68k_trunc_seg((vm_offset_t)-1))
 				break;
-			va = atari_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = m68k_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
 			pte = pmap_pte(pmap, va);
 			pte++;
 			continue;
@@ -1973,7 +1973,7 @@ vm_offset_t
 pmap_phys_address(ppn)
 	int ppn;
 {
-	return(atari_ptob(ppn));
+	return(m68k_ptob(ppn));
 }
 
 /*
