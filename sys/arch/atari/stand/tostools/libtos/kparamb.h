@@ -1,4 +1,4 @@
-/*	$NetBSD: kparamb.h,v 1.5 2001/01/07 21:24:05 leo Exp $	*/
+/*	$NetBSD: kparamb.h,v 1.6 2001/10/10 14:19:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -30,22 +30,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LIBTOS_KPARAMB_H
+#define _LIBTOS_KPARAMB_H
 /*
  * Structure passed to bsd_startup().
  */
 struct kparamb {
-	u_char	*kp;		/* 00: Kernel load address		*/
-	long	ksize;		/* 04: Size of loaded kernel		*/
-	u_long	entry;		/* 08: Kernel entry point		*/
-	long	stmem_size;	/* 12: Size of st-ram			*/
-	long	ttmem_size;	/* 16: Size of tt-ram			*/
-	long	bootflags;	/* 20: Various boot flags		*/
-	long	boothowto;	/* 24: How to boot			*/
-	long	ttmem_start;	/* 28: Start of tt-ram			*/
-	long	esym_loc;	/* 32: End of symbol table		*/
+	u_int8_t	*kp;		/* 00: Kernel load address	*/
+	long		ksize;		/* 04: Size of loaded kernel	*/
+	u_int32_t	entry;		/* 08: Kernel entry point	*/
+	long		stmem_size;	/* 12: Size of st-ram		*/
+	long		ttmem_size;	/* 16: Size of tt-ram		*/
+	long		bootflags;	/* 20: Various boot flags	*/
+	long		boothowto;	/* 24: How to boot		*/
+	long		ttmem_start;	/* 28: Start of tt-ram		*/
+	long		esym_loc;	/* 32: End of symbol table	*/
 };
 
-#ifndef	_STANDALONE
+#ifdef TOSTOOLS
+/*
+ * XXX: We cannot reach over....
+ */
+
 /*
  * Values for 'bootflags'.
  * Note: These should match with the values NetBSD uses!
@@ -76,4 +82,5 @@ struct kparamb {
 #define	RB_SINGLE	0x02
 #define	RB_KDB		0x40
 
-#endif	/* _STANDALONE */
+#endif	/* TOSTOOLS */
+#endif /* _LIBTOS_KPARAMB_H */
