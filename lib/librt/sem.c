@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.1 2003/01/24 01:52:44 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.2 2003/03/09 00:44:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sem.c,v 1.2 2003/03/09 00:44:43 lukem Exp $");
 
 /*
  * If an application is linked against both librt and libpthread, the

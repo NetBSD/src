@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.21 2001/07/24 16:43:02 wiz Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.22 2003/03/09 00:46:07 lukem Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -13,6 +13,9 @@
  *
  * S/KEY misc routines.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: skeysubr.c,v 1.22 2003/03/09 00:46:07 lukem Exp $");
 
 #include <ctype.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc_i386.c,v 1.3 2002/08/09 10:13:07 wiz Exp $	*/
+/*	$NetBSD: pmc_i386.c,v 1.4 2003/03/09 00:42:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pmc_i386.c,v 1.4 2003/03/09 00:42:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <pmc.h>
