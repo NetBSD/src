@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.79 2002/03/17 11:10:43 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.79.6.1 2003/10/22 06:06:50 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.79 2002/03/17 11:10:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.79.6.1 2003/10/22 06:06:50 jmc Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
@@ -987,6 +987,7 @@ softclock(void *v)
 				arg = c->c_arg;
 				c->c_func = NULL;
 				c->c_flags &= ~CALLOUT_PENDING;
+				c->c_flags |= CALLOUT_INVOKING;
 				CALLWHEEL_UNLOCK(s);
 				(*func)(arg);
 				CALLWHEEL_LOCK(s);
