@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11.6.1 2005/02/23 09:42:43 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11.6.2 2005/02/23 10:10:45 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.6.1 2005/02/23 09:42:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.6.2 2005/02/23 10:10:45 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -242,13 +242,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Initialize Sysptmap
 		 */
-		pte = ((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
 		pte = (u_int *)kptmpa;
 		epte = &pte[nptpages];
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
@@ -343,13 +336,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = RELOC(intiobase_phys, u_int) | PG_RW | PG_CI | PG_V;
 	epte = &pte[iiomapsize];
-	RELOC(initiobase, char *) = PTE2VA(pte);
-	RELOC(initiolimit, char *) = PTE2VA(epte);
+	RELOC(intiobase, char *) = (char *)PTE2VA(pte);
+	RELOC(intiolimit, char *) = (char *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
-	RELOC(extiobase, char *) = PTE2VA(pte);
+	RELOC(extiobase, char *) = (char *)PTE2VA(pte);
 	pte += eiomapsize;
 	RELOC(virtual_avail, vaddr_t) = PTE2VA(pte);
 
