@@ -85,6 +85,9 @@ see
 .It Li /mnt/
 empty directory commonly used by
 system administrators as a temporary mount point
+.It Li /netbsd
+pure kernel executable (the operating system loaded into memory
+at boot time).  
 .It Li /sbin/
 system programs and administration utilities
 fundamental to both single-user and multi-user environments
@@ -368,9 +371,6 @@ commonly ~uucp; public uucp temporary directory
 .It Li tmp/ 
 temporary files that are kept between system reboots
 .El
-.It Li /netbsd
-pure kernel executable (the operating system loaded into memory
-at boot time).  
 .El
 .Sh SEE ALSO
 .Xr \&ls 1 ,
