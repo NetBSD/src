@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.3 1996/03/08 20:49:47 mark Exp $ */
+/* $NetBSD: postmortem.c,v 1.4 1996/03/13 21:26:52 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -38,8 +38,6 @@
  * Postmortem routines
  *
  * Created      : 17/09/94
- *
- *    $Id: postmortem.c,v 1.3 1996/03/08 20:49:47 mark Exp $
  */
 
 #include <sys/param.h>
@@ -61,9 +59,7 @@ typedef struct {
 extern pv_addr_t irqstack;
 extern pv_addr_t undstack;
 extern pv_addr_t abtstack;
-extern struct pcb *curpcb;
 extern struct proc *proc1;
-extern char *kstack;
 
 int usertraceback = 0;
 
@@ -173,7 +169,7 @@ dumpframe(frame)
 
 
 /* Dump kstack information */
-
+/*
 void kstack_stuff(p)
 	struct proc *p;
 {
@@ -189,18 +185,14 @@ void kstack_stuff(p)
 
 	printf("pmap=%08x\n", (u_int)pmap);
 
-	printf("p->p_addr=%08x pa=%08x,%d:%08x,%d kstack=%08x,%d %08x,%d\n",
+	printf("p->p_addr=%08x pa=%08x,%d:%08x,%d\n",
 	    (u_int)p->p_addr,
 	    (u_int)pmap_extract(pmap, (vm_offset_t)p->p_addr),
 	    pmap_page_index(pmap_extract(pmap, (vm_offset_t)p->p_addr)),
 	    (u_int)pmap_extract(pmap, (vm_offset_t)p->p_addr + NBPG),
-	    pmap_page_index(pmap_extract(pmap, (vm_offset_t)p->p_addr + NBPG)),
-	    (u_int)pmap_extract(pmap, 0xefbfe000),
-	    pmap_page_index(pmap_extract(pmap, 0xefbfe000)),
-	    (u_int)pmap_extract(pmap, 0xefbff000),
-	    pmap_page_index(pmap_extract(pmap, 0xefbff000)));
+	    pmap_page_index(pmap_extract(pmap, (vm_offset_t)p->p_addr + NBPG)));
 }
-
+*/
 
 void
 check_stacks(p)
@@ -253,7 +245,6 @@ postmortem(frame)
 	printf("pid = %d ", curproc->p_pid); 
 	printf("comm = %s\n", curproc->p_comm); 
 
-	pm_dumpw(kstack + 0x1e00, 0x200);
 	pm_dumpw(irqstack.virtual + NBPG - 0x100, 0x100);
 	pm_dumpw(undstack.virtual + NBPG - 0x20, 0x20);
 	pm_dumpw(abtstack.virtual + NBPG - 0x20, 0x20);
@@ -270,10 +261,10 @@ postmortem(frame)
 	printf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
 	    (u_int)proc0.p_addr, (u_int) &proc0.p_addr->u_pcb);
 
+/*
 	kstack_stuff(&proc0);
 	kstack_stuff(curproc);
-	if (proc1)
-		kstack_stuff(proc1);
+*/
 #else
 	printf("Process = %08x ", (u_int)curproc);
 	printf("pid = %d ", curproc->p_pid); 
@@ -309,12 +300,6 @@ buried_alive(p)
 	printf("Putting the process down to minimise further trashing\n");
 	printf("Process was %08x pid=%d comm=%s\n", (u_int) p, p->p_pid, p->p_comm);
 
-#ifdef ROTTEN_INARDS
-	printf("Performing autopsy\n");
-
-	pm_dumpw(kstack, 0x40);
-	postmortem((trapframe_t *)(kstack + USPACE - sizeof(trapframe_t)));
-#endif
 }
 #else
 void
