@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.8 1998/04/19 11:16:18 jonathan Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.8.4.1 1998/10/15 02:38:13 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,7 +60,7 @@
 #ifndef __MACHINE_TC_MACHDEP_H__
 #define __MACHINE_TC_MACHDEP_H__
 
-#include <mips/cpuregs.h>		/* defines MIPS_PHYS_TO_KSEG1 */
+#include <mips/cpuarch.h>		/* defines MIPS_PHYS_TO_KSEG1 */
 
 typedef int32_t		tc_addr_t;
 typedef int32_t		tc_offset_t;
@@ -73,22 +73,11 @@ typedef int32_t		tc_offset_t;
  */
 #define	tc_syncbus()	wbflush();
 
-#define	tc_badaddr(tcaddr)						\
-    badaddr((void *)(tcaddr), sizeof (u_int32_t))
+#define	tc_badaddr(tcaddr) badaddr((void *)(tcaddr), sizeof (u_int32_t))
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
 		
 #define	TC_PHYS_TO_UNCACHED(addr) MIPS_PHYS_TO_KSEG1(addr)
-
-
-/*
- * Use the following macros to compare device names on a pmax, as
- * the autoconfig structs are in a state of flux.
- */
-struct confargs;
-
-#define TC_BUS_MATCHNAME(ta, name) \
-     (strncmp( (ta)->ta_modname, (name), TC_ROM_LLEN+1) == 0)
 
 /*
  * Port-specific declarations:
@@ -99,8 +88,7 @@ int tc_checkslot __P((tc_addr_t slotbase, char *namep));
 
 /*
  * And declarations for the MD function used to search for and configure
- * a TC framebuffer  as system console, and to configure the TC bus
- * (the last is a hack).
+ * a TC framebuffer as system console, and to configure the TC bus.
  */
 
 extern int tc_findconsole __P((int preferred_slot));
@@ -108,8 +96,7 @@ extern void config_tcbus __P((struct device *parent, int cputype,
 			      int printfn __P((void*, const char*)) ));
 extern int badaddr	 __P((void *, u_int));
 
-#define TC_SCSI  "PMAZ-AA "
-#define TC_ETHER "PMAD-AA "
-#define TC_KV(x)  ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
-#define TC_C(x)	((void *)(u_long)x)
+#define TC_KV(x)	((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
+#define TC_C(x)		((void *)(u_long)x)
+
 #endif /* __MACHINE_TC_MACHDEP_H__*/

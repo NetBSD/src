@@ -1,7 +1,8 @@
-/*	$NetBSD: font.c,v 1.8 1996/04/07 19:53:36 jonathan Exp $ */
+/* $NetBSD: z8530var.h,v 1.1.2.1 1998/10/15 02:38:13 nisimura Exp $ */
 
 /*
- * Copyright (c) 1991, 1993, 1995
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
@@ -41,35 +42,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rcons_font.c	8.1 (Berkeley) 6/11/93
+ *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef _KERNEL
-#include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <machine/fbio.h>
-#include <machine/fbvar.h>
-#else
-#include <sys/types.h>
-#include "myfbdevice.h"
-#endif
+/*
+ * XXX XXX XXX THIS DOES NOT WORK WITH MULTIPLE ATTACHMENTS!!! XXX XXX XXX
+ */
 
-#include <dev/rcons/rcons.h>
-#include <dev/rcons/raster.h>
+#include <dev/ic/z8530sc.h>
 
-#include <pmax/dev/qvss.h>	/* Little-endian font for rcons */
+struct zsc_softc {
+	struct	device zsc_dev;		/* required first: base device */
+	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	/* Machine-dependent part follows... */
+	struct zs_chanstate  zsc_cs_store[2];
+};
 
-void rcons_font __P((struct rconsole *rc));
+/*
+ * Functions to read and write individual registers in a channel.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses,
+ * and the Alpha TC hardware does NOT take care of this for you.
+ * The delay is now handled inside the chip access functions.
+ * These could be inlines, but with the delay, speed is moot.
+ */
 
-void
-rcons_font(rc)
-	register struct rconsole *rc;
-{
+u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
+u_char zs_read_csr __P((struct zs_chanstate *cs));
+u_char zs_read_data __P((struct zs_chanstate *cs));
 
-	/* XXX really rather get this from the prom */
-	rc->rc_font = &qvss;
+void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
+void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
-	/* Get distance to top and bottom of font from font origin */
-	rc->rc_font->ascent = -(rc->rc_font->chars)['a'].homey;
-}
+/* Interrupt priority for the SCC chip; needs to match ZSHARD_PRI. */
+#define splzs()		spltty()
