@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	8.1 (Berkeley) 6/10/93
- *	$Id: if_ether.c,v 1.12 1994/05/13 06:05:55 mycroft Exp $
+ *	$Id: if_ether.c,v 1.13 1994/06/03 02:54:26 gwr Exp $
  */
 
 /*
@@ -93,10 +93,10 @@ int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
 
 /* revarp state */
-struct	in_addr myip; 
-int	myip_initialized = 0;
-int	revarp_in_progress = 0;
-struct	ifnet *myip_ifp = NULL;
+static struct	in_addr myip, srv_ip;
+static int	myip_initialized = 0;
+static int	revarp_in_progress = 0;
+static struct	ifnet *myip_ifp = NULL;
 
 /*
  * Timeout routine.  Age arp_tab entries periodically.
@@ -134,6 +134,13 @@ arp_rtrequest(req, rt, sa)
 
 	if (!arpinit_done) {
 		arpinit_done = 1;
+		/*
+		 * We generate expiration times from time.tv_sec
+		 * so avoid accidently creating permanent routes.
+		 */
+		if (time.tv_sec == 0) {
+			time.tv_sec++;
+		}
 		timeout(arptimer, (caddr_t)0, hz);
 	}
 	if (rt->rt_flags & RTF_GATEWAY)
@@ -158,7 +165,12 @@ arp_rtrequest(req, rt, sa)
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
-			rt->rt_expire = time.tv_sec;
+			/*
+			 * This is a permanent route (no expiration).
+			 * Clones of it will get an expiration time
+			 * when RTM_RESOLVE is requested. -gwr
+			 */
+			rt->rt_expire = 0;
 			break;
 		}
 		/* Announce a new entry if requested. */
@@ -192,6 +204,13 @@ arp_rtrequest(req, rt, sa)
 		Bzero(la, sizeof(*la));
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
+		/*
+		 * This route was cloned, but it was cloned from a
+		 * permanent route, so give it an expiration time.
+		 */
+		if (rt->rt_expire == 0) {
+			rt->rt_expire = time.tv_sec;
+		}
 		insque(la, &llinfo_arp);
 		if (SIN(rt_key(rt))->sin_addr.s_addr ==
 		    (IA_SIN(rt->rt_ifa))->sin_addr.s_addr) {
@@ -337,19 +356,27 @@ arpresolve(ac, rt, m, dst, desten)
 	 */
 	if (la->la_hold)
 		m_freem(la->la_hold);
-	la->la_hold = m;
-	if (rt->rt_expire) {
-		rt->rt_flags &= ~RTF_REJECT;
-		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
-			rt->rt_expire = time.tv_sec;
-			if (la->la_asked++ < arp_maxtries)
-				arpwhohas(ac, &(SIN(dst)->sin_addr));
-			else {
-				rt->rt_flags |= RTF_REJECT;
-				rt->rt_expire += arpt_down;
-				la->la_asked = 0;
-			}
-		}
+	la->la_hold = m;	/* +0x146 */
+	/*
+	 * Re-send the ARP request when appropriate.
+	 */
+#ifdef	DIAGNOSTIC
+	if (rt->rt_expire == 0) {
+		/* This should never happen, but... -gwr */
+		printf("arpresolve: unresolved and rt_expire == 0\n");
+		/* Set expiration time to now (expired). */
+		rt->rt_expire = time.tv_sec;
+	}
+#endif
+	rt->rt_flags &= ~RTF_REJECT;
+	if (la->la_asked++ < arp_maxtries)
+	    /* Ask again. */
+	    arpwhohas(ac, &(SIN(dst)->sin_addr));
+	else {
+	    /* We have asked enough times.  Give up. */
+	    rt->rt_flags |= RTF_REJECT;
+	    rt->rt_expire += arpt_down;
+	    la->la_asked = 0;
 	}
 	return (0);
 }
@@ -631,13 +658,15 @@ in_revarpinput(m)
 	ifp = m->m_pkthdr.rcvif;
 	if (ifp != myip_ifp) /* !same interface */
 		goto out;
-	if (myip_initialized != 0)
-		goto out;
+	if (myip_initialized)
+		goto wake;
 	if (bcmp(ar->arp_tha, ((struct arpcom *)ifp)->ac_enaddr,
 	    sizeof(ar->arp_tha)))
 		goto out;
+	bcopy((caddr_t)ar->arp_spa, (caddr_t)&srv_ip, sizeof(srv_ip));
 	bcopy((caddr_t)ar->arp_tpa, (caddr_t)&myip, sizeof(myip));
 	myip_initialized = 1;
+wake:	/* Do wakeup every time in case it was missed. */
 	wakeup((caddr_t)&myip);
 
 out:
@@ -684,13 +713,15 @@ revarprequest(ifp)
 }
 
 /*
- * RARP for the ip address of the specified interface.  Timeout if
- * no response is received.
+ * RARP for the ip address of the specified interface, but also
+ * save the ip address of the server that sent the answer.
+ * Timeout if no response is received.
  */
 int
-revarpwhoami(in, ifp)
-	struct in_addr *in;
+revarpwhoarewe(ifp, serv_in, clnt_in)
 	struct ifnet *ifp;
+	struct in_addr *serv_in;
+	struct in_addr *clnt_in;
 {
 	int result, count = 20;
 	
@@ -709,6 +740,128 @@ revarpwhoami(in, ifp)
 	if (!myip_initialized)
 		return ENETUNREACH;
 	
-	bcopy((caddr_t)&myip, in, sizeof(*in));
+	bcopy((caddr_t)&srv_ip, serv_in, sizeof(*serv_in));
+	bcopy((caddr_t)&myip, clnt_in, sizeof(*clnt_in));
 	return 0;
 }
+
+/* For compatibility: only saves interface address. */
+int
+revarpwhoami(in, ifp)
+	struct in_addr *in;
+	struct ifnet *ifp;
+{
+	struct in_addr server;
+	return (revarpwhoarewe(ifp, &server, in));
+}
+
+
+#ifdef	DDB
+static void
+db_print_sa(sa)
+	struct sockaddr *sa;
+{
+	int len;
+	u_char *p;
+
+	if (sa == 0) {
+		db_printf("[NULL]");
+		return;
+	}
+
+	p = (u_char*)sa;
+	len = sa->sa_len;
+	db_printf("[");
+	while (len > 0) {
+		db_printf("%d", *p);
+		p++; len--;
+		if (len) db_printf(",");
+	}
+	db_printf("]\n");
+}
+static void
+db_print_ifa(ifa)
+	struct ifaddr *ifa;
+{
+	if (ifa == 0)
+		return;
+	db_printf("  ifa_addr=");
+	db_print_sa(ifa->ifa_addr);
+	db_printf("  ifa_dsta=");
+	db_print_sa(ifa->ifa_dstaddr);
+	db_printf("  ifa_mask=");
+	db_print_sa(ifa->ifa_netmask);
+	db_printf("  flags=0x%x,refcnt=%d,metric=%d\n",
+			  ifa->ifa_flags,
+			  ifa->ifa_refcnt,
+			  ifa->ifa_metric);
+}
+static void
+db_print_llinfo(li)
+	caddr_t li;
+{
+	struct llinfo_arp *la;
+
+	if (li == 0)
+		return;
+	la = (struct llinfo_arp *)li;
+	db_printf("  la_rt=0x%x la_hold=0x%x, la_asked=0x%x\n",
+			  la->la_rt, la->la_hold, la->la_asked);
+}
+/*
+ * Function to pass to rn_walktree().
+ * Return non-zero error to abort walk.
+ */
+static int
+db_show_radix_node(rn, w)
+	struct radix_node *rn;
+	void *w;
+{
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	db_printf("rtentry=0x%x", rt);
+
+	db_printf(" flags=0x%x refcnt=%d use=%d expire=%d\n",
+			  rt->rt_flags, rt->rt_refcnt,
+			  rt->rt_use, rt->rt_expire);
+
+	db_printf(" key="); db_print_sa(rt_key(rt));
+	db_printf(" mask="); db_print_sa(rt_mask(rt));
+	db_printf(" gw="); db_print_sa(rt->rt_gateway);
+
+	db_printf(" ifp=0x%x ", rt->rt_ifp);
+	if (rt->rt_ifp)
+		db_printf("(%s%d)",
+				  rt->rt_ifp->if_name,
+				  rt->rt_ifp->if_unit);
+	else
+		db_printf("(NULL)");
+
+	db_printf(" ifa=0x%x\n", rt->rt_ifa);
+	db_print_ifa(rt->rt_ifa);
+
+	db_printf(" genmask="); db_print_sa(rt->rt_genmask);
+
+	db_printf(" gwroute=0x%x llinfo=0x%x\n",
+			  rt->rt_gwroute, rt->rt_llinfo);
+	db_print_llinfo(rt->rt_llinfo);
+
+	return (0);
+}
+/*
+ * Function to print all the route trees.
+ * Use this from ddb:  "call db_show_arptab"
+ */
+db_show_arptab()
+{
+	struct radix_node_head *rnh;
+	rnh = rt_tables[AF_INET];
+	db_printf("Route tree for AF_INET\n");
+	if (rnh == NULL) {
+		db_printf(" (not initialized)\n");
+		return (0);
+	}
+	rn_walktree(rnh, db_show_radix_node, NULL);
+	return (0);
+}
+#endif
