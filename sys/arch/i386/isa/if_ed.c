@@ -13,10 +13,9 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.38 1994/03/08 12:21:19 mycroft Exp $
+ *	$Id: if_ed.c,v 1.39 1994/03/29 04:35:47 mycroft Exp $
  */
 
-#include "ed.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -55,14 +54,14 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_edreg.h>
 
 /*
  * ed_softc: per line info and status
  */
-struct	ed_softc {
+struct ed_softc {
 	struct	device sc_dev;
 
 	struct	arpcom sc_arpcom;	/* ethernet common */
@@ -101,10 +100,10 @@ struct	ed_softc {
 	u_char	rec_page_start;	/* first page of RX ring-buffer */
 	u_char	rec_page_stop;	/* last page of RX ring-buffer */
 	u_char	next_packet;	/* pointer to next unread RX packet */
-} ed_softc[NED];
+};
 
-int ed_probe __P((struct isa_device *));
-int ed_attach __P((struct isa_device *));
+int edprobe();
+void edattach();
 int edintr __P((int));
 int ed_ioctl __P((struct ifnet *, int, caddr_t));
 int ed_start __P((struct ifnet *));
@@ -131,10 +130,8 @@ struct trailer_header {
 	u_short ether_residual;
 };
 
-struct isa_driver eddriver = {
-	ed_probe,
-	ed_attach,
-	"ed"
+struct cfdriver edcd = {
+	NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_softc)
 };
 
 /* 
@@ -171,22 +168,20 @@ static u_short ed_790_intr_mask[] = {
  * Determine if the device is present.
  */
 int
-ed_probe(isa_dev)
-	struct isa_device *isa_dev;
+edprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
-	int nports;
+	struct ed_softc *sc = (void *)self;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	struct isa_attach_args *ia = aux;
 
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", eddriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
-
-	if (nports = ed_probe_WD80x3(isa_dev))
-		return nports;
-	if (nports = ed_probe_3Com(isa_dev))
-		return nports;
-	if (nports = ed_probe_Novell(isa_dev))
-		return nports;
+	if (ed_probe_WD80x3(sc, cf, ia))
+		return 1;
+	if (ed_probe_3Com(sc, cf, ia))
+		return 1;
+	if (ed_probe_Novell(sc, cf, ia))
+		return 1;
 	return 0;
 }
 
@@ -211,11 +206,11 @@ ed_probe(isa_dev)
  *
  * Return 1 if 8390 was found, 0 if not. 
  */
-
 int
 ed_probe_generic8390(sc)
 	struct ed_softc *sc;
 {
+
 	if ((inb(sc->nic_addr + ED_P0_CR) &
 	    (ED_CR_RD2 | ED_CR_TXP | ED_CR_STA | ED_CR_STP)) !=
 	    (ED_CR_RD2 | ED_CR_STP))
@@ -230,15 +225,16 @@ ed_probe_generic8390(sc)
  * Probe and vendor-specific initialization routine for SMC/WD80x3 boards.
  */
 int
-ed_probe_WD80x3(isa_dev)
-	struct isa_device *isa_dev;
+ed_probe_WD80x3(sc, cf, ia)
+	struct ed_softc *sc;
+	struct cfdata *cf;
+	struct isa_attach_args *ia;
 {
-	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
 	int i;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
 
-	sc->asic_addr = isa_dev->id_iobase;
+	sc->asic_addr = ia->ia_iobase;
 	sc->nic_addr = sc->asic_addr + ED_WD_NIC_OFFSET;
 	sc->is790 = 0;
 
@@ -375,20 +371,20 @@ ed_probe_WD80x3(isa_dev)
 #ifdef ED_DEBUG
 	printf("type=%x type_str=%s isa16bit=%d memsize=%d id_msize=%d\n",
 	    sc->type, sc->type_str ?: "unknown", isa16bit, memsize,
-	    isa_dev->id_msize);
+	    ia->ia_msize);
 	for (i = 0; i < 8; i++)
 		printf("%x -> %x\n", i, inb(sc->asic_addr + i));
 #endif
 	/* Allow the user to override the autoconfiguration. */
-	if (isa_dev->id_msize)
-		memsize = isa_dev->id_msize;
+	if (ia->ia_msize)
+		memsize = ia->ia_msize;
 	/*
 	 * (Note that if the user specifies both of the following flags that
 	 * '8-bit' mode intentionally has precedence.)
 	 */
-	if (isa_dev->id_flags & ED_FLAGS_FORCE_16BIT_MODE)
+	if (cf->cf_flags & ED_FLAGS_FORCE_16BIT_MODE)
 		isa16bit = 1;
-	if (isa_dev->id_flags & ED_FLAGS_FORCE_8BIT_MODE)
+	if (cf->cf_flags & ED_FLAGS_FORCE_8BIT_MODE)
 		isa16bit = 0;
 
 	/*
@@ -400,43 +396,40 @@ ed_probe_WD80x3(isa_dev)
 	if (sc->is790) {
 		sc->ed_cr_rd2 = 0;
 		/* Assemble together the encoded interrupt number. */
-		outb(isa_dev->id_iobase + 0x04, inb(isa_dev->id_iobase + 0x04)
-		    | 0x80);
-		iptr = ((inb(isa_dev->id_iobase + 0x0d) & 0x0c) >> 2) |
-		    ((inb(isa_dev->id_iobase + 0x0d) & 0x40) >> 4);
-		outb(isa_dev->id_iobase + 0x04, inb(isa_dev->id_iobase + 0x04)
-		    & ~0x80);
+		outb(ia->ia_iobase + 0x04, inb(ia->ia_iobase + 0x04) | 0x80);
+		iptr = ((inb(ia->ia_iobase + 0x0d) & 0x0c) >> 2) |
+		    ((inb(ia->ia_iobase + 0x0d) & 0x40) >> 4);
+		outb(ia->ia_iobase + 0x04, inb(ia->ia_iobase + 0x04) & ~0x80);
 		/*
 		 * Translate it using translation table, and check for
 		 * correctness.
 		 */
-		if (ed_790_intr_mask[iptr] != isa_dev->id_irq) {
+		if (ed_790_intr_mask[iptr] != ia->ia_irq) {
 			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-			    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1,
+			    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1,
 			    ffs(ed_790_intr_mask[iptr]) - 1);
 			return 0;
 		}
 		/* Enable the interrupt. */
-		outb(isa_dev->id_iobase + 0x06, inb(isa_dev->id_iobase + 0x06)
-		    | 0x01);
+		outb(ia->ia_iobase + 0x06, inb(ia->ia_iobase + 0x06) | 0x01);
 	} else if (sc->type & ED_WD_SOFTCONFIG) {
 		/* Assemble together the encoded interrupt number. */
-		iptr = (inb(isa_dev->id_iobase + ED_WD_ICR) & ED_WD_ICR_IR2) |
-		    ((inb(isa_dev->id_iobase + ED_WD_IRR) &
+		iptr = (inb(ia->ia_iobase + ED_WD_ICR) & ED_WD_ICR_IR2) |
+		    ((inb(ia->ia_iobase + ED_WD_IRR) &
 		    (ED_WD_IRR_IR0 | ED_WD_IRR_IR1)) >> 5);
 		/*
 		 * Translate it using translation table, and check for
 		 * correctness.
 		 */
-		if (ed_intr_mask[iptr] != isa_dev->id_irq) {
+		if (ed_intr_mask[iptr] != ia->ia_irq) {
 			printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-			    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1,
+			    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1,
 			    ffs(ed_intr_mask[iptr]) - 1);
 			return 0;
 		}
 		/* Enable the interrupt. */
-		outb(isa_dev->id_iobase + ED_WD_IRR,
-		    inb(isa_dev->id_iobase + ED_WD_IRR) | ED_WD_IRR_IEN);
+		outb(ia->ia_iobase + ED_WD_IRR,
+		    inb(ia->ia_iobase + ED_WD_IRR) | ED_WD_IRR_IEN);
 	}
 
 	sc->isa16bit = isa16bit;
@@ -447,21 +440,22 @@ ed_probe_WD80x3(isa_dev)
 	 * mode - without mapping the NIC memory shared.  ...Not the prefered
 	 * way, but it might be the only way.
 	 */
-	if (isa_dev->id_flags & ED_FLAGS_FORCE_PIO) {
+	if (cf->cf_flags & ED_FLAGS_FORCE_PIO) {
 		sc->mem_shared = 0;
-		isa_dev->id_maddr = 0;
-	} else
+		ia->ia_msize = 0;
+	} else {
 		sc->mem_shared = 1;
+		ia->ia_msize = memsize;
+	}
 #else
 	sc->mem_shared = 1;
+	ia->ia_msize = memsize;
 #endif
-	isa_dev->id_msize = memsize;
 
-	sc->mem_start = (caddr_t)isa_dev->id_maddr;
+	sc->mem_start = (caddr_t)ia->ia_maddr;
 
 	/* Allocate one xmit buffer if < 16k, two buffers otherwise. */
-	if ((memsize < 16384) ||
-	    (isa_dev->id_flags & ED_FLAGS_NO_MULTI_BUFFERING))
+	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
 		sc->txb_cnt = 1;
 	else
 		sc->txb_cnt = 2;
@@ -570,23 +564,25 @@ ed_probe_WD80x3(isa_dev)
 		}
 	}
 
-	return ED_WD_IO_PORTS;
+	ia->ia_iosize = ED_WD_IO_PORTS;
+	return 1;
 }
 
 /*
  * Probe and vendor-specific initialization routine for 3Com 3c503 boards.
  */
 int
-ed_probe_3Com(isa_dev)
-	struct isa_device *isa_dev;
+ed_probe_3Com(sc, cf, ia)
+	struct ed_softc *sc;
+	struct cfdata *cf;
+	struct isa_attach_args *ia;
 {
-	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
 	int i;
 	u_int memsize;
 	u_char isa16bit, sum;
 
-	sc->asic_addr = isa_dev->id_iobase + ED_3COM_ASIC_OFFSET;
-	sc->nic_addr = isa_dev->id_iobase + ED_3COM_NIC_OFFSET;
+	sc->asic_addr = ia->ia_iobase + ED_3COM_ASIC_OFFSET;
+	sc->nic_addr = ia->ia_iobase + ED_3COM_NIC_OFFSET;
 	sc->ed_cr_rd2 = ED_CR_RD2;
 
 	/*
@@ -599,35 +595,35 @@ ed_probe_3Com(isa_dev)
 	 */
 	switch (inb(sc->asic_addr + ED_3COM_BCFR)) {
 	case ED_3COM_BCFR_300:
-		if (isa_dev->id_iobase != 0x300)
+		if (ia->ia_iobase != 0x300)
 			return 0;
 		break;
 	case ED_3COM_BCFR_310:
-		if (isa_dev->id_iobase != 0x310)
+		if (ia->ia_iobase != 0x310)
 			return 0;
 		break;
 	case ED_3COM_BCFR_330:
-		if (isa_dev->id_iobase != 0x330)
+		if (ia->ia_iobase != 0x330)
 			return 0;
 		break;
 	case ED_3COM_BCFR_350:
-		if (isa_dev->id_iobase != 0x350)
+		if (ia->ia_iobase != 0x350)
 			return 0;
 		break;
 	case ED_3COM_BCFR_250:
-		if (isa_dev->id_iobase != 0x250)
+		if (ia->ia_iobase != 0x250)
 			return 0;
 		break;
 	case ED_3COM_BCFR_280:
-		if (isa_dev->id_iobase != 0x280)
+		if (ia->ia_iobase != 0x280)
 			return 0;
 		break;
 	case ED_3COM_BCFR_2A0:
-		if (isa_dev->id_iobase != 0x2a0)
+		if (ia->ia_iobase != 0x2a0)
 			return 0;
 		break;
 	case ED_3COM_BCFR_2E0:
-		if (isa_dev->id_iobase != 0x2e0)
+		if (ia->ia_iobase != 0x2e0)
 			return 0;
 		break;
 	default:
@@ -640,25 +636,24 @@ ed_probe_3Com(isa_dev)
 	 */
 	switch (inb(sc->asic_addr + ED_3COM_PCFR)) {
 	case ED_3COM_PCFR_DC000:
-		if (kvtop(isa_dev->id_maddr) != 0xdc000)
+		if (kvtop(ia->ia_maddr) != 0xdc000)
 			return 0;
 		break;
 	case ED_3COM_PCFR_D8000:
-		if (kvtop(isa_dev->id_maddr) != 0xd8000)
+		if (kvtop(ia->ia_maddr) != 0xd8000)
 			return 0;
 		break;
 	case ED_3COM_PCFR_CC000:
-		if (kvtop(isa_dev->id_maddr) != 0xcc000)
+		if (kvtop(ia->ia_maddr) != 0xcc000)
 			return 0;
 		break;
 	case ED_3COM_PCFR_C8000:
-		if (kvtop(isa_dev->id_maddr) != 0xc8000)
+		if (kvtop(ia->ia_maddr) != 0xc8000)
 			return 0;
 		break;
 	default:
 		return 0;
 	}
-
 
 	/*
 	 * Reset NIC and ASIC.  Enable on-board transceiver throughout reset
@@ -731,7 +726,7 @@ ed_probe_3Com(isa_dev)
 	/* Select page 0 registers. */
 	outb(sc->nic_addr + ED_P2_CR, ED_CR_RD2 | ED_CR_STP);
 
-	sc->mem_start = (caddr_t)isa_dev->id_maddr;
+	sc->mem_start = (caddr_t)ia->ia_maddr;
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
 
@@ -745,7 +740,7 @@ ed_probe_3Com(isa_dev)
 	 * we optimize for linear transfers of same-size packets.)
 	 */
 	if (isa16bit) {
- 		if (isa_dev->id_flags & ED_FLAGS_NO_MULTI_BUFFERING)
+ 		if (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING)
 			sc->txb_cnt = 1;
 		else
 			sc->txb_cnt = 2;
@@ -775,7 +770,7 @@ ed_probe_3Com(isa_dev)
 	outb(sc->asic_addr + ED_3COM_PSPR, sc->rec_page_stop);
 
 	/* Set IRQ.  3c503 only allows a choice of irq 3-5 or 9. */
-	switch (isa_dev->id_irq) {
+	switch (ia->ia_irq) {
 	case IRQ9:
 		outb(sc->asic_addr + ED_3COM_IDCFR, ED_3COM_IDCFR_IRQ2);
 		break;
@@ -790,7 +785,7 @@ ed_probe_3Com(isa_dev)
 		break;
 	default:
 		printf("%s: invalid irq configuration (%d) must be 3-5 or 9 for 3c503\n",
-		    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1);
+		    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1);
 		return 0;
 	}
 
@@ -821,25 +816,27 @@ ed_probe_3Com(isa_dev)
 			return 0;
 		}
 
-	isa_dev->id_msize = memsize;
-	return ED_3COM_IO_PORTS;
+	ia->ia_msize = memsize;
+	ia->ia_iosize = ED_3COM_IO_PORTS;
+	return 1;
 }
 
 /*
  * Probe and vendor-specific initialization routine for NE1000/2000 boards.
  */
 int
-ed_probe_Novell(isa_dev)
-	struct isa_device *isa_dev;
+ed_probe_Novell(sc, cf, ia)
+	struct ed_softc *sc;
+	struct cfdata *cf;
+	struct isa_attach_args *ia;
 {
-	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
 	u_int memsize, n;
 	u_char romdata[16], isa16bit = 0, tmp;
 	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
 	u_char test_buffer[32];
 
-	sc->asic_addr = isa_dev->id_iobase + ED_NOVELL_ASIC_OFFSET;
-	sc->nic_addr = isa_dev->id_iobase + ED_NOVELL_NIC_OFFSET;
+	sc->asic_addr = ia->ia_iobase + ED_NOVELL_ASIC_OFFSET;
+	sc->nic_addr = ia->ia_iobase + ED_NOVELL_NIC_OFFSET;
 	sc->ed_cr_rd2 = ED_CR_RD2;
 
 	/* XXX - do Novell-specific probe here */
@@ -884,7 +881,7 @@ ed_probe_Novell(isa_dev)
 
 	sc->vendor = ED_VENDOR_NOVELL;
 	sc->mem_shared = 0;
-	isa_dev->id_maddr = 0;
+	ia->ia_msize = 0;
 
 	/*
 	 * Test the ability to read and write to the NIC memory.  This has the
@@ -944,8 +941,8 @@ ed_probe_Novell(isa_dev)
 
 #if 0 /* probably not useful - NE boards only come two ways */
 	/* Allow kernel config file overrides. */
-	if (isa_dev->id_msize)
-		memsize = isa_dev->id_msize;
+	if (ia->ia_msize)
+		memsize = ia->ia_msize;
 #endif
 
 	sc->mem_size = memsize;
@@ -960,8 +957,7 @@ ed_probe_Novell(isa_dev)
 	 * Use one xmit buffer if < 16k, two buffers otherwise (if not told
 	 * otherwise).
 	 */
-	if ((memsize < 16384) ||
-	    (isa_dev->id_flags & ED_FLAGS_NO_MULTI_BUFFERING))
+	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
 		sc->txb_cnt = 1;
 	else
 		sc->txb_cnt = 2;
@@ -979,17 +975,20 @@ ed_probe_Novell(isa_dev)
 	/* Clear any pending interrupts that might have occurred above. */
 	outb(sc->nic_addr + ED_P0_ISR, 0xff);
 
-	return ED_NOVELL_IO_PORTS;
+	ia->ia_iosize = ED_NOVELL_IO_PORTS;
+	return 1;
 }
  
 /*
  * Install interface into kernel networking data structures.
  */
-int
-ed_attach(isa_dev)
-	struct isa_device *isa_dev;
+void
+edattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
+	struct ed_softc *sc = (void *)self;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -999,7 +998,7 @@ ed_attach(isa_dev)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = eddriver.name;
+	ifp->if_name = edcd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = ed_start;
@@ -1012,7 +1011,7 @@ ed_attach(isa_dev)
 	 * Set default state for LINK0 flag (used to disable the tranceiver
 	 * for AUI operation), based on compile-time config option.
 	 */
-	if (isa_dev->id_flags & ED_FLAGS_DISABLE_TRANCEIVER)
+	if (cf->cf_flags & ED_FLAGS_DISABLE_TRANCEIVER)
 		ifp->if_flags |= IFF_LINK0;
 
 	/* Attach the interface. */
@@ -1040,8 +1039,7 @@ ed_attach(isa_dev)
 	}
 
 	/* Print additional info when attached. */
-	printf("%s: address %s, ", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->type_str && (*sc->type_str != '\0'))
 		printf("type %s ", sc->type_str);
@@ -1056,7 +1054,6 @@ ed_attach(isa_dev)
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-
 }
  
 /*
@@ -1102,7 +1099,7 @@ int
 ed_watchdog(unit)
 	short unit;
 {
-	struct ed_softc *sc = &ed_softc[unit];
+	struct ed_softc *sc = edcd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1306,7 +1303,7 @@ int
 ed_start(ifp)
 	struct ifnet *ifp;
 {
-	struct ed_softc *sc = &ed_softc[ifp->if_unit];
+	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int len;
@@ -1565,7 +1562,7 @@ int
 edintr(unit)
 	int unit;
 {
-	struct ed_softc *sc = &ed_softc[unit];
+	struct ed_softc *sc = edcd.cd_devs[unit];
 	u_char isr;
 
 	/* Set NIC to page 0 registers. */
@@ -1750,7 +1747,7 @@ ed_ioctl(ifp, command, data)
 	int command;
 	caddr_t data;
 {
-	struct ed_softc *sc = &ed_softc[ifp->if_unit];
+	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

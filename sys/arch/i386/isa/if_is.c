@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.25 1994/03/08 12:21:26 mycroft Exp $
+ *	$Id: if_is.c,v 1.26 1994/03/29 04:36:01 mycroft Exp $
  */
 
 /* TODO
@@ -19,7 +19,6 @@
  * 2) Add more of the timers/counters e.g. arpcom.opackets etc.
  */
 
-#include "is.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -59,7 +58,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_isreg.h>
 
@@ -95,13 +94,8 @@ struct is_softc {
 	int	sc_debug;
 #endif
 	caddr_t sc_bpf;		      /* BPF "magic cookie" */
-} is_softc[NIS];
+};
 
-int is_probe __P((struct isa_device *));
-int ne2100_probe __P((struct isa_device *, struct is_softc *));
-int bicc_probe __P((struct isa_device *, struct is_softc *));
-int lance_probe __P((struct is_softc *));
-int is_attach __P((struct isa_device *));
 int isintr __P((int));	/* XXX can't be renamed till new interrupt code */
 int is_ioctl __P((struct ifnet *, int, caddr_t));
 int is_start __P((struct ifnet *));
@@ -122,10 +116,14 @@ void xmit_print __P((struct is_softc *, int));
 #endif
 void is_setladrf __P((struct arpcom *, u_long *));
 
-struct isa_driver isdriver = {
-	is_probe,
-	is_attach,
-	"is"
+int isprobe();
+int ne2100_probe __P((struct is_softc *, struct isa_attach_args *));
+int bicc_probe __P((struct is_softc *, struct isa_attach_args *));
+int lance_probe __P((struct is_softc *));
+void isattach();
+
+struct cfdriver iscd = {
+	NULL, "is", isprobe, isattach, DV_IFNET, sizeof(struct is_softc)
 };
 
 struct trailer_header {
@@ -155,20 +153,16 @@ isrdcsr(sc, port)
 } 
 
 int
-is_probe(isa_dev)
-	struct isa_device *isa_dev;
+isprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	int unit = isa_dev->id_unit;
-	register struct is_softc *sc = &is_softc[unit];
-	int nports;
+	struct is_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", isdriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
-
-	if (nports = bicc_probe(isa_dev, sc))
+	if (bicc_probe(sc, ia))
 		goto found;
-	if (nports = ne2100_probe(isa_dev, sc))
+	if (ne2100_probe(sc, ia))
 		goto found;
 	return 0;
 
@@ -194,15 +188,15 @@ found:
 	 */
 	sc->sc_init += 8 - ((u_long)sc->sc_init & 7);
 
-	return nports;
+	return 1;
 }
 
 int
-ne2100_probe(isa_dev, sc)
-	struct isa_device *isa_dev;
+ne2100_probe(sc, ia)
 	struct is_softc *sc;
+	struct isa_attach_args *ia;
 {
-	u_short iobase = isa_dev->id_iobase;
+	u_short iobase = ia->ia_iobase;
 	int i;
 
 	sc->sc_iobase = iobase;
@@ -219,15 +213,16 @@ ne2100_probe(isa_dev, sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i);
 
-	return 24;
+	ia->ia_iosize = 24;
+	return 1;
 }
 
 int
-bicc_probe(isa_dev, sc)
-	struct isa_device *isa_dev;
+bicc_probe(sc, ia)
 	struct is_softc *sc;
+	struct isa_attach_args *ia;
 {
-	u_short iobase = isa_dev->id_iobase;
+	u_short iobase = ia->ia_iobase;
 	int i;
 
 	sc->sc_iobase = iobase;
@@ -244,7 +239,8 @@ bicc_probe(isa_dev, sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + (i * 2));
 
-	return 16;
+	ia->ia_iosize = 16;
+	return 1;
 }
 
 /*
@@ -289,17 +285,19 @@ lance_probe(sc)
  * record.  System will initialize the interface when it is ready
  * to accept packets.  We get the ethernet address here.
  */
-int
-is_attach(isa_dev)
-	struct isa_device *isa_dev;
+void
+isattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct is_softc *sc = &is_softc[isa_dev->id_unit];
+	struct is_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = isdriver.name;
+	ifp->if_name = iscd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = is_start;
@@ -308,7 +306,7 @@ is_attach(isa_dev)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
-	isa_dmacascade(isa_dev->id_drq);
+	isa_dmacascade(ia->ia_drq);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -355,7 +353,7 @@ int
 is_watchdog(unit)
 	short unit;
 {
-	struct is_softc *sc = &is_softc[unit];
+	struct is_softc *sc = iscd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -500,7 +498,7 @@ int
 is_start(ifp)
 	struct ifnet *ifp;
 {
-	register struct is_softc *sc = &is_softc[ifp->if_unit];
+	register struct is_softc *sc = iscd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	int len;
@@ -632,7 +630,7 @@ outloop:
 int
 isintr(unit)
 {
-	register struct is_softc *sc = &is_softc[unit];
+	register struct is_softc *sc = iscd.cd_devs[unit];
 	u_short isr;
 
 	isr = isrdcsr(sc, 0);
@@ -953,7 +951,7 @@ is_ioctl(ifp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	struct is_softc *sc = &is_softc[ifp->if_unit];
+	struct is_softc *sc = iscd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

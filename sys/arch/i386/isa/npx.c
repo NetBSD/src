@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 William Jolitz.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -32,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.14 1994/03/06 17:19:15 mycroft Exp $
+ *	$Id: npx.c,v 1.15 1994/03/29 04:36:18 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -44,6 +45,7 @@
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/vmmeter.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
@@ -53,7 +55,7 @@
 #include <machine/specialreg.h>
 
 #include <i386/isa/icu.h>
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/isa.h>
 
 /*
@@ -108,12 +110,13 @@ void	npxexit		__P((struct proc *p));
 void	npxinit		__P((u_int control));
 void	npxintr		__P((struct intrframe frame));
 void	npxsave		__P((struct save87 *addr));
-static	int	npxattach	__P((struct isa_device *dvp));
-static	int	npxprobe	__P((struct isa_device *dvp));
-static	int	npxprobe1	__P((struct isa_device *dvp));
+int	npxprobe1	__P((struct isa_attach_args *));
 
-struct	isa_driver npxdriver = {
-	npxprobe, npxattach, "npx",
+int npxprobe();
+void npxattach();
+
+struct cfdriver npxcd = {
+	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct device)
 };
 
 u_int	npx0mask;
@@ -165,10 +168,12 @@ _probetrap:
  * to tell npxattach() what to do.  Modify device struct if npx doesn't
  * need to use interrupts.  Return 1 if device exists.
  */
-static int
-npxprobe(dvp)
-	struct isa_device *dvp;
+int
+npxprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct	isa_attach_args *ia = aux;
 	int	result;
 	u_long	save_eflags;
 	u_char	save_icu1_mask;
@@ -182,20 +187,20 @@ npxprobe(dvp)
 	 * install suitable handlers and run with interrupts enabled so we
 	 * won't need to do so much here.
 	 */
-	npx_intrno = NRSVIDT + ffs(dvp->id_irq) - 1;
+	npx_intrno = NRSVIDT + ffs(ia->ia_irq) - 1;
 	save_eflags = read_eflags();
 	disable_intr();
 	save_icu1_mask = inb(IO_ICU1 + 1);
 	save_icu2_mask = inb(IO_ICU2 + 1);
 	save_idt_npxintr = idt[npx_intrno];
 	save_idt_npxtrap = idt[16];
-	outb(IO_ICU1 + 1, ~(IRQ_SLAVE | dvp->id_irq));
-	outb(IO_ICU2 + 1, ~(dvp->id_irq >> 8));
+	outb(IO_ICU1 + 1, ~(IRQ_SLAVE | ia->ia_irq));
+	outb(IO_ICU2 + 1, ~(ia->ia_irq >> 8));
 	setidt(16, probetrap, SDT_SYS386TGT, SEL_KPL);
 	setidt(npx_intrno, probeintr, SDT_SYS386IGT, SEL_KPL);
 	npx_idt_probeintr = idt[npx_intrno];
 	enable_intr();
-	result = npxprobe1(dvp);
+	result = npxprobe1(ia);
 	disable_intr();
 	outb(IO_ICU1 + 1, save_icu1_mask);
 	outb(IO_ICU2 + 1, save_icu2_mask);
@@ -205,15 +210,16 @@ npxprobe(dvp)
 	return (result);
 }
 
-static int
-npxprobe1(dvp)
-	struct isa_device *dvp;
+int
+npxprobe1(ia)
+	struct isa_attach_args *ia;
 {
 	int control;
 	int status;
-#ifdef lint
-	npxintr();
-#endif
+
+	ia->ia_iosize = 16;
+	ia->ia_msize = 0;
+
 	/*
 	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
 	 * it after a warm boot.
@@ -221,6 +227,7 @@ npxprobe1(dvp)
 	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
 	delay(1000);
 	outb(0xf0, 0);		/* clear BUSY# latch */
+
 	/*
 	 * Prepare to trap all ESC (i.e., NPX) instructions and all WAIT
 	 * instructions.  We must set the CR0_MP bit and use the CR0_TS
@@ -236,10 +243,12 @@ npxprobe1(dvp)
 	 * Setting it should fail or do nothing on lesser processors.
 	 */
 	lcr0(rcr0() | CR0_MP | CR0_NE);
+
 	/*
 	 * But don't trap while we're probing.
 	 */
 	stop_emulating();
+
 	/*
 	 * Finish resetting the coprocessor, if any.  If there is an error
 	 * pending, then we may get a bogus IRQ13, but probeintr() will handle
@@ -256,6 +265,7 @@ npxprobe1(dvp)
 		printf("fninit caused %u bogus npx trap(s)\n",
 		       npx_traps_while_probing);
 #endif
+
 	/*
 	 * Check for a status of mostly zero.
 	 */
@@ -282,16 +292,16 @@ npxprobe1(dvp)
 				 * Good, exception 16 works.
 				 */
 				npx_ex16 = 1;
-				dvp->id_irq = 0;	/* zap the interrupt */
-				return 16;
+				ia->ia_irq = 0;		/* zap the interrupt */
+				return 1;
 			}
 			if (npx_intrs_while_probing != 0) {
 				/*
 				 * Bad, we are stuck with IRQ13.
 				 */
 				npx_irq13 = 1;
-				npx0mask = dvp->id_irq;	/* npxattach too late */
-				return 16;
+				npx0mask = ia->ia_irq;	/* npxattach too late */
+				return 1;
 			}
 			/*
 			 * Worse, even IRQ13 is broken.  Use emulator.
@@ -303,34 +313,34 @@ npxprobe1(dvp)
 	 * emulator and say that it has been installed.  XXX handle devices
 	 * that aren't really devices better.
 	 */
-	dvp->id_irq = 0;
-	return 16;
+	ia->ia_irq = 0;
+	return 1;
 }
 
 /*
  * Attach routine - announce which it is, and wire into system
  */
-int
-npxattach(dvp)
-	struct isa_device *dvp;
+void
+npxattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+
 	if (npx_ex16)
-		printf("npx%d: using exception 16\n", dvp->id_unit);
+		printf(": using exception 16\n");
 	else if (npx_irq13)
-		;
+		printf("\n");
 	else {
 #ifdef MATH_EMULATE
 		if (npx_exists)
-			printf("npx%d: error reporting broken, using emulator\n",
-				dvp->id_unit);
+			printf("error reporting broken; using emulator\n");
 		else
-			printf("npx%d: emulator\n", dvp->id_unit);
+			printf("emulator\n");
 #else
 		panic("npxattach: no math emulator in kernel!");
 #endif
 	}
 	npxinit(__INITIAL_NPXCW__);
-	return (1);
 }
 
 /*
