@@ -7,5 +7,5 @@
 
 ENTRY(fpgetsticky)
 	fmovel fpsr,d0
-	andl #248,d0
+	bfextu d0{#24:#5},d0
 	rts
