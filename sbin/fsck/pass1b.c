@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1b.c	5.8 (Berkeley) 7/20/90";*/
-static char rcsid[] = "$Id: pass1b.c,v 1.4 1993/08/01 18:27:20 mycroft Exp $";
+static char rcsid[] = "$Id: pass1b.c,v 1.5 1994/04/25 18:28:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <ufs/dinode.h>
 #include <ufs/fs.h>
 #include <string.h>
