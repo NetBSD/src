@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.3 1996/01/07 22:02:02 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.4 1996/03/14 21:41:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
 #include <sys/proc.h>		/* XXXX and all that uses it */
 #include <sys/disk.h>
 
-#include "ramd.h"
+#include "rd.h"
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
@@ -71,8 +71,8 @@ struct	swdevt swdevt[] = {
 #if NFD > 0
 extern	struct cfdriver fdcd;
 #endif
-#if NRAMD > 0
-extern	struct cfdriver ramdcd;
+#if NRD > 0
+extern	struct cfdriver rdcd;
 #endif
 #if NSD > 0
 extern	struct cfdriver sdcd;
@@ -92,8 +92,8 @@ struct genericconf {
  * in preference of boot.
  */
 static struct genericconf genericconf[] = {
-#if NRAMD > 0
-	{&ramdcd,makedev(1, 0)},
+#if NRD > 0
+	{&rdcd, makedev(1, 0)},
 #endif
 #if NFD > 0
 	{&fdcd,	makedev(2, 0)},
@@ -142,6 +142,7 @@ char	*bp;
 	return (gc);
 }
 
+void
 setconf()
 {
 	struct genericconf	*gc;
