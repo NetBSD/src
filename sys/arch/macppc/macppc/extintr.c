@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.8 1999/03/24 05:51:04 mrg Exp $	*/
+/*	$NetBSD: extintr.c,v 1.9 1999/09/08 17:28:02 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -64,9 +64,9 @@ struct intrhand *intrhand[ICU_LEN];
 extern u_int *heathrow_FCR;
 
 static __inline int cntlzw __P((int));
-static int read_irq __P((void));
+static __inline int read_irq __P((void));
+static __inline int mapirq __P((int));
 static void enable_irq __P((int));
-static int mapirq __P((int));
 
 static int hwirq[ICU_LEN], virq[64];
 static int virq_max = 0;
@@ -82,6 +82,102 @@ static int virq_max = 0;
 #define INT_ENABLE_REG1 (INT_ENABLE_REG0 - 0x10)
 #define INT_CLEAR_REG1  (INT_CLEAR_REG0  - 0x10)
 #define INT_LEVEL_REG1  (INT_LEVEL_REG0  - 0x10)
+
+/*
+ * Map 64 irqs into 32 (bits).
+ */
+int
+mapirq(irq)
+	int irq;
+{
+	int v;
+
+	if (irq < 0 || irq >= 64)
+		panic("invalid irq");
+	if (virq[irq])
+		return virq[irq];
+
+	virq_max++;
+	v = virq_max;
+	if (v > HWIRQ_MAX)
+		panic("virq overflow");
+
+	hwirq[v] = irq;
+	virq[irq] = v;
+
+	return v;
+}
+
+/*
+ * Count leading zeros.
+ */
+static __inline int
+cntlzw(x)
+	int x;
+{
+	int a;
+
+	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
+
+	return a;
+}
+
+int
+read_irq()
+{
+	int rv = 0;
+	int state0, state1, p;
+
+	state0 = in32rb(INT_STATE_REG0);
+	if (state0)
+		out32rb(INT_CLEAR_REG0, state0);
+	while (state0) {
+		p = 31 - cntlzw(state0);
+		rv |= 1 << virq[p];
+		state0 &= ~(1 << p);
+	}
+
+	if (heathrow_FCR)			/* has heathrow? */
+		state1 = in32rb(INT_STATE_REG1);
+	else
+		state1 = 0;
+
+	if (state1)
+		out32rb(INT_CLEAR_REG1, state1);
+	while (state1) {
+		p = 31 - cntlzw(state1);
+		rv |= 1 << virq[p + 32];
+		state1 &= ~(1 << p);
+	}
+
+	/* 1 << 0 is invalid. */
+	return rv & ~1;
+}
+
+void
+enable_irq(x)
+	int x;
+{
+	int state0, state1, v;
+	int irq;
+
+	x &= HWIRQ_MASK;	/* XXX Higher bits are software interrupts. */
+
+	state0 = state1 = 0;
+	while (x) {
+		v = 31 - cntlzw(x);
+		irq = hwirq[v];
+		if (irq < 32)
+			state0 |= 1 << irq;
+		else
+			state1 |= 1 << (irq - 32);
+		x &= ~(1 << v);
+	}
+
+	out32rb(INT_ENABLE_REG0, state0);
+	if (heathrow_FCR)
+		out32rb(INT_ENABLE_REG1, state1);
+}
 
 /*
  * Recalculate the interrupt masks from scratch.
@@ -324,20 +420,6 @@ intr_disestablish(arg)
 }
 
 /*
- * Count leading zeros.
- */
-static __inline int
-cntlzw(x)
-	int x;
-{
-	int a;
-
-	__asm __volatile ("cntlzw %0,%1" : "=r"(a) : "r"(x));
-
-	return a;
-}
-
-/*
  * external interrupt handler
  */
 void
@@ -439,83 +521,4 @@ do_pending_int()
 	cpl = pcpl;	/* Don't use splx... we are here already! */
 	asm volatile("mtmsr %0" :: "r"(emsr));
 	processing = 0;
-}
-
-/*
- * Map 64 irqs into 32 (bits).
- */
-int
-mapirq(irq)
-	int irq;
-{
-	int v;
-
-	if (irq < 0 || irq >= 64)
-		panic("invalid irq");
-	virq_max++;
-	v = virq_max;
-	if (v > HWIRQ_MAX)
-		panic("virq overflow");
-
-	hwirq[v] = irq;
-	virq[irq] = v;
-
-	return v;
-}
-
-int
-read_irq()
-{
-	int rv = 0;
-	int state0, state1, p;
-
-	state0 = in32rb(INT_STATE_REG0);
-	if (state0)
-		out32rb(INT_CLEAR_REG0, state0);
-	while (state0) {
-		p = 31 - cntlzw(state0);
-		rv |= 1 << virq[p];
-		state0 &= ~(1 << p);
-	}
-
-	if (heathrow_FCR)			/* has heathrow? */
-		state1 = in32rb(INT_STATE_REG1);
-	else
-		state1 = 0;
-
-	if (state1)
-		out32rb(INT_CLEAR_REG1, state1);
-	while (state1) {
-		p = 31 - cntlzw(state1);
-		rv |= 1 << virq[p + 32];
-		state1 &= ~(1 << p);
-	}
-
-	/* 1 << 0 is invalid. */
-	return rv & ~1;
-}
-
-void
-enable_irq(x)
-	int x;
-{
-	int state0, state1, v;
-	int irq;
-
-	x &= HWIRQ_MASK;	/* XXX Higher bits are software interrupts. */
-
-	state0 = state1 = 0;
-	while (x) {
-		v = 31 - cntlzw(x);
-		irq = hwirq[v];
-		if (irq < 32)
-			state0 |= 1 << irq;
-		else
-			state1 |= 1 << (irq - 32);
-		x &= ~(1 << v);
-	}
-
-	out32rb(INT_ENABLE_REG0, state0);
-	if (heathrow_FCR)
-		out32rb(INT_ENABLE_REG1, state1);
 }
