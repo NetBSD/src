@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.4 1999/03/16 01:19:18 garbled Exp $
+.\"	$NetBSD: tl.4,v 1.5 1999/03/31 12:20:22 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -36,7 +36,6 @@
 .Nd Ethernet driver for Texas Instruments ThunderLAN based board
 .Sh SYNOPSIS
 .Cd "tl* at pci? dev ? function ?"
-.Cd "mii* at tl?"
 .Cd "tlphy* at mii?"
 .Cd "nsphy* at mii?"
 .Sh DESCRIPTION
@@ -50,7 +49,7 @@ Supported cards include:
 .It Compaq Netelligent 
 in baseboard and PCI variants (10bT-only and dual-port variants untested).
 .It Compaq NetFlex 3/P
-in baseboard and PCI variants (only baseboard variant tested).
+in baseboard variant only (the PCI variant doesn't use the same chip !).
 .It Baseboard Compaq Deskpro 4000 5233MMX ethernet (untested).
 .It TI TravelMate 5000 series laptop docking station's ethernet board.
 .El
