@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.9 2000/05/02 12:43:16 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.10 2000/05/16 05:45:27 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -4920,11 +4920,19 @@ static void
 sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 {
 	struct in6_addr myaddr;
+	struct timeval tv;
 
 	sppp_get_ip6_addrs(sp, &myaddr, 0, 0);
 
 	myaddr.s6_addr[8] &= ~0x02;	/* u bit to "local" */
-	myaddr.s6_addr[15] ^= ~0xff;
+	microtime(&tv);
+	if ((tv.tv_usec & 0xff) == 0 && (tv.tv_sec & 0xff) == 0) {
+		myaddr.s6_addr[14] ^= 0xff;
+		myaddr.s6_addr[15] ^= 0xff;
+	} else {
+		myaddr.s6_addr[14] ^= (tv.tv_usec & 0xff);
+		myaddr.s6_addr[15] ^= (tv.tv_sec & 0xff);
+	}
 	if (suggest)
 		bcopy(&myaddr, suggest, sizeof(myaddr));
 }
