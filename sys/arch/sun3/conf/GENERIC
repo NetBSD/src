@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 1999/07/20 07:40:37 christos Exp $
+# $NetBSD: GENERIC,v 1.59 1999/07/29 10:37:24 augustss Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
@@ -46,6 +46,7 @@ options 	COMPAT_10	# NetBSD 1.0
 options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.22 1999/04/20 09:30:08 mark Exp $
+#	$NetBSD: RPCINST,v 1.23 1999/07/29 10:37:15 augustss Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -78,6 +78,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.
 options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
