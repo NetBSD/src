@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.48 1997/03/18 05:04:33 cgd Exp $	*/
+/*	$NetBSD: conf.h,v 1.49 1997/03/18 05:55:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -405,7 +405,8 @@ cdev_decl(ch);
 bdev_decl(sd);
 cdev_decl(sd);
 
-cdev_decl(se);
+/* XXX Namespace collissions with SYSVSEM; just declare what we need. */
+dev_decl(se,open); dev_decl(se,close); dev_decl(se,ioctl);
 
 bdev_decl(st);
 cdev_decl(st);
