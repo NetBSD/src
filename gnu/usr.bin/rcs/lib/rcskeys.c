@@ -30,7 +30,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(keysId, "$Id: rcskeys.c,v 1.3 1994/06/29 05:26:39 mycroft Exp $")
+libId(keysId, "$Id: rcskeys.c,v 1.4 1994/09/19 02:34:22 mycroft Exp $")
 
 
 char const *const Keyword[] = {
@@ -38,8 +38,8 @@ char const *const Keyword[] = {
 	nil,
 	AUTHOR, DATE, HEADER, IDH,
 	LOCKER, LOG,
-#ifdef NETBSD_DEVELOPMENT
-	NETBSDH,
+#ifdef LOCALID
+	LOCALID,
 #endif
 	RCSFILE, REVISION, SOURCE, STATE
 };
