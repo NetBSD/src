@@ -1,4 +1,4 @@
-/*	$NetBSD: bsafe_link.c,v 1.2 2001/01/27 07:22:02 itojun Exp $	*/
+/*	$NetBSD: bsafe_link.c,v 1.3 2001/04/06 11:13:53 wiz Exp $	*/
 
 #if defined(BSAFE) || defined(DNSSAFE)
 static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/bsafe_link.c,v 1.11 1999/10/13 16:39:22 vixie Exp";
@@ -1050,7 +1050,7 @@ dst_bsafe_md5digest(const int mode, B_ALGORITHM_OBJ *digest_obj,
 
 	if (digest_obj == NULL || *digest_obj == NULL) {
 		printf("NO digest obj\n");
-		exit(-33);
+		exit(33);
 	}
 
 	if ((mode & SIG_MODE_INIT) &&

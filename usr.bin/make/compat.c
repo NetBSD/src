@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.31 2001/01/01 15:47:37 sommerfeld Exp $	*/
+/*	$NetBSD: compat.c,v 1.32 2001/04/06 11:13:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.31 2001/01/01 15:47:37 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.32 2001/04/06 11:13:46 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.31 2001/01/01 15:47:37 sommerfeld Exp $");
+__RCSID("$NetBSD: compat.c,v 1.32 2001/04/06 11:13:46 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -428,7 +428,7 @@ CompatMake (gnp, pgnp)
 	 * to tell him/her "yes".
 	 */
 	if (queryFlag) {
-	    exit (-1);
+	    exit (1);
 	}
 
 	/*

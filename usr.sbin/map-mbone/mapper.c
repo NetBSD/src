@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.5 2000/10/11 20:23:53 is Exp $	*/
+/*	$NetBSD: mapper.c,v 1.6 2001/04/06 11:13:47 wiz Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -202,7 +202,7 @@ log(severity, syserr, format, va_alist)
     }
 
     if (severity <= LOG_ERR)
-	exit(-1);
+	exit(1);
 }
 
 
@@ -919,7 +919,7 @@ int main(argc, argv)
 	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0
 	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
 	    perror("Determining local address");
-	    exit(-1);
+	    exit(1);
 	}
 	close(udp);
 	our_addr = addr.sin_addr.s_addr;

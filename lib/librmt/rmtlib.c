@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.16 2001/01/05 05:42:45 enami Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.17 2001/04/06 11:13:55 wiz Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -223,7 +223,7 @@ _rmt_rexec(const char *host, const char *user)
 	rexecserv = getservbyname("exec", "tcp");
 	if (rexecserv == NULL) {
 		fprintf(stderr, "? exec/tcp: service not available.");
-		exit(-1);
+		exit(1);
 	}
 	if ((user != NULL) && *user == '\0')
 		user = NULL;

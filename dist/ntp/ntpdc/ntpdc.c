@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.3 2000/10/10 12:43:42 itojun Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.4 2001/04/06 11:13:54 wiz Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -448,7 +448,7 @@ openhost(
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd == INVALID_SOCKET) {
 		error("socket");
-		exit(-1);
+		exit(1);
 	}
 #else
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
