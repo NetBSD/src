@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.4 1997/07/20 06:35:38 thorpej Exp $	*/
+/*	$NetBSD: io.c,v 1.5 2000/04/04 17:07:29 thorpej Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
 /*-
@@ -32,14 +32,12 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-__RCSID("$NetBSD: io.c,v 1.4 1997/07/20 06:35:38 thorpej Exp $");
+__RCSID("$NetBSD: io.c,v 1.5 2000/04/04 17:07:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #include "ed.h"
 
-
-extern int scripted;
 
 /* read_file: read a named file/pipe into the buffer; return line count */
 long
@@ -67,8 +65,6 @@ read_file(fn, n)
 	return current_addr - n;
 }
 
-
-extern int des;
 
 char *sbuf;			/* file i/o buffer */
 int sbufsz;			/* file i/o buffer size */
@@ -320,9 +316,6 @@ get_tty_line()
 
 #define ESCAPES "\a\b\f\n\r\t\v\\"
 #define ESCCHARS "abfnrtv\\"
-
-extern int rows;
-extern int cols;
 
 /* put_tty_line: print text to stdout */
 int
