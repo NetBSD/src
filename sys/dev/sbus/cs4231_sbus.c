@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.6 1998/09/25 14:19:20 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.7 1999/01/12 02:28:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -860,7 +860,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 		return (EINVAL);
 	}
 
-	n = end - start;
+	n = (char *)end - (char *)start;
 
 	/* XXX
 	 * Do only `blksize' at a time, so audio_pint() is kept
