@@ -31,23 +31,23 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_mbuf.c	7.19 (Berkeley) 4/20/91
- *	$Id: uipc_mbuf.c,v 1.4.2.2 1993/10/26 12:54:57 mycroft Exp $
+ *	$Id: uipc_mbuf.c,v 1.4.2.3 1993/11/14 21:21:30 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
 #define MBTYPES
-#include "mbuf.h"
-#include "kernel.h"
-#include "syslog.h"
-#include "domain.h"
-#include "protosw.h"
+#include <sys/mbuf.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
 
-#include "machine/cpu.h"
+#include <vm/vm.h>
 
-#include "vm/vm.h"
+#include <machine/cpu.h>
 
 extern	vm_map_t mb_map;
 struct	mbuf *mbutl;

@@ -31,22 +31,22 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket2.c	7.17 (Berkeley) 5/4/91
- *	$Id: uipc_socket2.c,v 1.4.4.1 1993/09/24 08:51:56 mycroft Exp $
+ *	$Id: uipc_socket2.c,v 1.4.4.2 1993/11/14 21:21:34 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "file.h"
-#include "buf.h"
-#include "malloc.h"
-#include "select.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/select.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers

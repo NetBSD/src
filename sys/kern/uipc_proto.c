@@ -31,14 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_proto.c	7.6 (Berkeley) 5/9/91
- *	$Id: uipc_proto.c,v 1.2.4.1 1993/11/10 20:05:31 mycroft Exp $
+ *	$Id: uipc_proto.c,v 1.2.4.2 1993/11/14 21:21:32 mycroft Exp $
  */
 
-#include "param.h"
-#include "socket.h"
-#include "protosw.h"
-#include "domain.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/protosw.h>
+#include <sys/domain.h>
+#include <sys/mbuf.h>
 
 /*
  * Definitions of protocols supported in the UNIX domain.
