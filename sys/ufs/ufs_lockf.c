@@ -34,21 +34,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: ufs_lockf.c,v 1.5 1993/07/28 02:23:18 cgd Exp $
+ *	$Id: ufs_lockf.c,v 1.6 1993/12/17 08:12:10 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "file.h"
-#include "proc.h"
-#include "vnode.h"
-#include "malloc.h"
-#include "fcntl.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/malloc.h>
+#include <sys/fcntl.h>
 
-#include "lockf.h"
-#include "quota.h"
-#include "inode.h"
+#include <ufs/lockf.h>
+#include <ufs/quota.h>
+#include <ufs/inode.h>
 
 
 

@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.16 1993/08/01 19:26:22 mycroft Exp $
+ *	$Id: st.c,v 1.17 1993/12/17 08:51:06 mycroft Exp $
  */
 
 /*
@@ -25,22 +25,23 @@
 
 #include "st.h"
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/malloc.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/mtio.h"
-#include "sys/dkbad.h"
-#include "sys/disklabel.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsi_tape.h"
-#include "scsi/scsiconf.h"
-#include "scsi/stdefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/mtio.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_tape.h>
+#include <scsi/scsiconf.h>
+#include <scsi/stdefs.h>
 
 long int ststrats, stqueues;
 

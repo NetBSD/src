@@ -67,12 +67,13 @@
  *	Virtual memory mapping module.
  */
 
-#include "param.h"
-#include "malloc.h"
-#include "systm.h"
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_object.h"
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_object.h>
 
 /*
  *	Virtual memory maps provide for the mapping, protection,

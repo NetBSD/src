@@ -13,29 +13,30 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.18 1993/08/01 19:26:21 mycroft Exp $
+ *	$Id: sd.c,v 1.19 1993/12/17 08:50:56 mycroft Exp $
  */
 
 #include "sd.h"
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/dkbad.h"
-#include "sys/systm.h"
-#include "sys/conf.h"
-#include "sys/proc.h"
-#include "sys/file.h"
-#include "sys/stat.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "sys/uio.h"
-#include "sys/malloc.h"
-#include "sys/errno.h"
-#include "sys/disklabel.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsi_disk.h"
-#include "scsi/scsiconf.h"
-#include "scsi/sddefs.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/dkbad.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/errno.h>
+#include <sys/disklabel.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_disk.h>
+#include <scsi/scsiconf.h>
+#include <scsi/sddefs.h>
 
 long int sdstrats, sdqueues;
 
