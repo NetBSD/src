@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.11 1994/06/24 14:22:12 hpeyerl Exp $";
+static char rcsid[] = "$Id: main.c,v 1.12 1995/04/28 07:01:03 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (argc != 1) {
-usage:		fputs("usage: config [-gkp] sysname\n", stderr);
+usage:		fputs("usage: config.old [-gkp] sysname\n", stderr);
 		exit(1);
 	}
 
@@ -102,7 +102,7 @@ usage:		fputs("usage: config [-gkp] sysname\n", stderr);
 		}
 	}
 	else if ((buf.st_mode & S_IFMT) != S_IFDIR) {
-		fprintf(stderr, "config: %s isn't a directory.\n", p);
+		fprintf(stderr, "config.old: %s isn't a directory.\n", p);
 		exit(2);
 	}
 
@@ -292,7 +292,7 @@ get_quoted_word(fp)
 				break;
 			if (ch == '\n') {
 				*cp = 0;
-				printf("config: missing quote reading `%s'\n",
+				printf("config.old: missing quote reading `%s'\n",
 					line);
 				exit(2);
 			}

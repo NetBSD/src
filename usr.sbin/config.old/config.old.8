@@ -30,28 +30,28 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)config.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: config.old.8,v 1.6 1993/08/07 07:53:27 cgd Exp $
+.\"	$Id: config.old.8,v 1.7 1995/04/28 07:00:59 cgd Exp $
 .\"
 .Dd March 16, 1991
-.Dt CONFIG 8
+.Dt CONFIG.OLD 8
 .Os BSD 4
 .Sh NAME
-.Nm config
+.Nm config.old
 .Nd build system configuration files
 .Sh SYNOPSIS
-.Nm config
+.Nm config.old
 .Op Fl gkp
 .Ar SYSTEM_NAME
 .Sh DESCRIPTION
 .Pp
-.Nm Config
+.Nm config.old
 builds a set of system configuration files from the file
 .Ar SYSTEM_NAME
 which describes
 the system to configure.
 A second file
 tells
-.Nm config
+.Nm config.old
 what files are needed to generate a system and
 can be augmented by configuration specific set of files
 that give alternate files for a specific machine.
@@ -66,19 +66,19 @@ Available option and operand:
 If the
 .Fl g
 option is supplied, 
-.Nm config
+.Nm config.old
 will configure a system for debugging.
 .It Fl k
 If the
 .Fl k
 option is supplied, 
-.Nm config
+.Nm config.old
 will not fail immediately on detection of a configuration error.
 .It Fl p
 If the
 .Fl p
 option is supplied, 
-.Nm config
+.Nm config.old
 will configure a system for profiling; for example,
 .Xr kgmon 8
 and
@@ -90,17 +90,17 @@ containing device specifications, configuration options
 and other system parameters for one system configuration.
 .El
 .Pp
-.Nm Config
+.Nm config.old
 should be run from the
 .Pa conf
 subdirectory of the system source (usually
 .Pa /sys/arch/ARCH/conf ) .
-.Nm Config
+.Nm Config.old
 assumes the directory
 .Pa ../compile/SYSTEM_NAME
 exists and places all output files there.  
 The output of
-.Nm config
+.Nm config.old
 consists of a number of files; for the
 .Tn i386 ,
 they are:
@@ -124,18 +124,18 @@ the disk areas to be used for swapping, the root file system,
 argument processing, and system dumps.
 .Pp
 After running
-.Nm config ,
+.Nm config.old ,
 it is necessary to run
 .Dq Li make depend
 in the directory where the new makefile
 was created.
-.Nm Config
+.Nm Config.old
 prints a reminder of this when it completes.
 .Pp
 If any other error messages are produced by
-.Nm config ,
+.Nm config.old ,
 the problems in the configuration file should be corrected and
-.Nm config
+.Nm config.old
 should be run again.
 Attempts to compile a system that had configuration errors
 are likely to fail.

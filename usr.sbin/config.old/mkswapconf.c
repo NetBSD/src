@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.8 1994/06/13 02:32:50 cgd Exp $";
+static char rcsid[] = "$Id: mkswapconf.c,v 1.9 1995/04/28 07:01:08 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -140,7 +140,7 @@ nametodev(name, defunit, defpartition)
 
 	cp = name;
 	if (cp == 0) {
-		fprintf(stderr, "config: internal error, nametodev\n");
+		fprintf(stderr, "config.old: internal error, nametodev\n");
 		exit(1);
 	}
 	while (*cp && !isdigit(*cp))
@@ -148,7 +148,7 @@ nametodev(name, defunit, defpartition)
 	unit = *cp ? atoi(cp) : defunit;
 	if (unit < 0 || unit > 31) {
 		fprintf(stderr,
-"config: %s: invalid device specification, unit out of range\n", name);
+"config.old: %s: invalid device specification, unit out of range\n", name);
 		unit = defunit;			/* carry on more checking */
 	}
 	if (*cp) {
@@ -159,7 +159,7 @@ nametodev(name, defunit, defpartition)
 	partition = *cp ? *cp : defpartition;
 	if (partition < 'a' || partition > 'h') {
 		fprintf(stderr,
-"config: %c: invalid device specification, bad partition\n", *cp);
+"config.old: %c: invalid device specification, bad partition\n", *cp);
 		partition = defpartition;	/* carry on */
 	}
 	if (devtablenotread)
@@ -168,7 +168,7 @@ nametodev(name, defunit, defpartition)
 		if (eq(name, dp->dev_name))
 			break;
 	if (dp == 0) {
-		fprintf(stderr, "config: %s: unknown device\n", name);
+		fprintf(stderr, "config.old: %s: unknown device\n", name);
 		return (NODEV);
 	}
 	return (makedev(dp->dev_major, (unit << 3) + (partition - 'a')));
@@ -202,13 +202,13 @@ initdevtable()
 	FILE *fp;
 
 	if (machinename==NULL) {
-		fprintf(stderr, "config: machine not specified\n");
+		fprintf(stderr, "config.old: machine not specified\n");
 		exit(1);
 	}
 	(void) sprintf(buf, "../conf/devices.%s", machinename);
 	fp = fopen(buf, "r");
 	if (fp == NULL) {
-		fprintf(stderr, "config: ");
+		fprintf(stderr, "config.old: ");
 		perror(buf);
 		exit(1);
 	}
