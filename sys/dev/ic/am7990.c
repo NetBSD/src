@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.58 2000/04/16 17:03:42 matt Exp $	*/
+/*	$NetBSD: am7990.c,v 1.59 2000/09/24 18:37:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -405,7 +405,7 @@ am7990_intr(arg)
 
 	isr = (*sc->sc_rdcsr)(sc, LE_CSR0) | sc->sc_saved_csr0;
 	sc->sc_saved_csr0 = 0;
-#ifdef LEDEBUG
+#if defined(LEDEBUG) && LEDEBUG > 1
 	if (sc->sc_debug)
 		printf("%s: am7990_intr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
