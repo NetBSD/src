@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.30 2003/04/05 10:06:59 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.31 2003/06/26 17:17:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -264,7 +264,6 @@ int      _cursesi_gettmode(SCREEN *);
 void     _cursesi_reset_acs(SCREEN *);
 void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
-int      _cursesi_wnoutrefresh(SCREEN *, WINDOW *, int, int, int, int, int, int);
 int	 __delay(void);
 u_int	 __hash_more(char *, size_t, u_int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)
