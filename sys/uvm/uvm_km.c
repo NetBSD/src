@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.76.4.5 2005/02/18 10:09:40 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.76.4.6 2005/02/18 14:35:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.5 2005/02/18 10:09:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.6 2005/02/18 14:35:09 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -479,15 +479,16 @@ void
 uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 {
 	vaddr_t va;
+	paddr_t pa;
 
 	KDASSERT(VM_MIN_KERNEL_ADDRESS <= start);
 	KDASSERT(start < end);
 	KDASSERT(end < VM_MAX_KERNEL_ADDRESS);
 
 	for (va = start; va < end; va += PAGE_SIZE) {
-		if (pmap_extract(pmap_kernel(), va, NULL)) {
-			panic("uvm_km_check_empty: has page mapped at %p",
-			    (const void *)va);
+		if (pmap_extract(pmap_kernel(), va, &pa)) {
+			panic("uvm_km_check_empty: va %p has pa %p",
+			    (void *)va, (void *)pa);
 		}
 		if (!intrsafe) {
 			const struct vm_page *pg;
@@ -529,10 +530,7 @@ uvm_km_alloc(map, size, align, flags)
 	int pgaflags;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
-		    map, obj, size, flags);
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
-
 	KASSERT((flags & UVM_KMF_TYPEMASK) == UVM_KMF_WIRED ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_PAGEABLE ||
 		(flags & UVM_KMF_TYPEMASK) == UVM_KMF_VAONLY);
@@ -543,11 +541,9 @@ uvm_km_alloc(map, size, align, flags)
 
 	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
-
-	if (flags & UVM_KMF_PAGEABLE)
-		obj = uvm.kernel_object;
-	else
-		obj = NULL;
+	obj = (flags & UVM_KMF_PAGEABLE) ? uvm.kernel_object : NULL;
+	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
+		    map, obj, size, flags);
 
 	/*
 	 * allocate some virtual space
