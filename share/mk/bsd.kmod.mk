@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.52 2002/04/06 17:49:02 jdolecek Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.53 2002/04/09 17:14:38 jdolecek Exp $
 
 .include <bsd.init.mk>
 
@@ -34,6 +34,7 @@ ${PROG}: ${OBJS} ${DPADD}
 
 # XXX.  This should be done a better way.  It's @'d to reduce visual spew.
 # XXX   .BEGIN is used to make sure the links are done before anything else.
+.if make(depend) || make(all) || make(dependall)
 .BEGIN:
 	@rm -f machine && \
 	    ln -s $S/arch/${MACHINE}/include machine
@@ -43,6 +44,7 @@ ${PROG}: ${OBJS} ${DPADD}
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
 	@rm -f sun68k && \
 	    ln -s $S/arch/sun68k/include sun68k
+.endif
 .endif
 
 ##### Install rules
