@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.2 2003/03/03 22:16:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.1 2003/02/26 21:26:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.2 2003/03/03 22:16:54 fvdl Exp $");
 
 #include "opt_largepages.h"
 
@@ -314,7 +314,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 *
 		 * XXX extreme paranoia suggests tlb shootdown belongs here.
 		 */
-		if (cpu_class != CPUCLASS_386) {
+		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
 			if (cacheable)
 				*pte &= ~PG_N;
@@ -825,7 +825,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 	cpumask = 0;
-	nocache = (flags & BUS_DMA_NOCACHE) != 0 && cpu_class != CPUCLASS_386;
+	nocache = (flags & BUS_DMA_NOCACHE) != 0 && pmap_cpu_has_pg_n();
 	marked = 0;
 
 	va = uvm_km_valloc(kernel_map, size);
