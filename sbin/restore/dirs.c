@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.29 1997/09/16 08:37:13 mrg Exp $	*/
+/*	$NetBSD: dirs.c,v 1.30 1997/09/16 13:44:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
+static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.29 1997/09/16 08:37:13 mrg Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.30 1997/09/16 13:44:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: dirs.c,v 1.29 1997/09/16 08:37:13 mrg Exp $");
 #include <sys/stat.h>
 #include <sys/time.h>
 
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #include <protocols/dumprestore.h>
 
 #include <err.h>
@@ -429,7 +429,7 @@ putent(dp)
 		(void) fwrite(dirbuf, 1, DIRBLKSIZ, df);
 		dirloc = 0;
 	}
-	memcpy(dirbuf + dirloc, dp, (long)dp->d_reclen);
+	memmove(dirbuf + dirloc, dp, (long)dp->d_reclen);
 	prev = dirloc;
 	dirloc += dp->d_reclen;
 }

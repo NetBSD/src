@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.12 1997/09/15 08:04:31 lukem Exp $	*/
+/*	$NetBSD: interactive.c,v 1.13 1997/09/16 13:44:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
+static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.12 1997/09/15 08:04:31 lukem Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.13 1997/09/16 13:44:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: interactive.c,v 1.12 1997/09/15 08:04:31 lukem Exp $");
 #include <sys/time.h>
 #include <sys/stat.h>
 
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #include <protocols/dumprestore.h>
 
 #include <setjmp.h>
@@ -541,8 +541,6 @@ printlist(name, basename)
 		(void) strncat(locname, "/", MAXPATHLEN);
 		namelen = strlen(locname);
 		while ((dp = rst_readdir(dirp)) != NULL) {
-			if (dp == NULL)
-				break;
 			if (!dflag && TSTINO(dp->d_ino, dumpmap) == 0)
 				continue;
 			if (!vflag && (dp->d_ino == WINO ||
@@ -734,7 +732,7 @@ glob_readdir(dirp)
 		return (NULL);
 	adirent.d_fileno = dp->d_ino;
 	adirent.d_namlen = dp->d_namlen;
-	memcpy(adirent.d_name, dp->d_name, dp->d_namlen + 1);
+	memmove(adirent.d_name, dp->d_name, dp->d_namlen + 1);
 	return (&adirent);
 }
 
