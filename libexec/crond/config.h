@@ -1,6 +1,6 @@
 /* config.h - configurables for Vixie Cron
  *
- * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.3 1993/05/28 08:34:09 cgd Exp $
+ * $Header: /cvsroot/src/libexec/crond/Attic/config.h,v 1.4 1993/05/28 08:56:47 cgd Exp $
  */
 
 /* Copyright 1988,1990,1993 by Paul Vixie
@@ -143,7 +143,7 @@
 #else
 # define PIDDIR "/etc/"
 #endif
-#if defined(BSD) && (BSD >= 199103)
+#if defined(BSD) && (BSD > 199103)
 # define PIDFILE		"%scron.pid"
 #else
 # define PIDFILE		"%scrond.pid"
