@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_pci.c,v 1.22 2000/03/15 02:33:52 fvdl Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.23 2000/03/16 10:34:33 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -557,7 +557,7 @@ int ahc_pci_probe __P((struct device *, struct cfdata *, void *));
 void ahc_pci_attach __P((struct device *, struct device *, void *));
 
 /* Exported for use in the ahc_intr routine */
-void ahc_pci_intr(struct ahc_softc *ahc);
+int ahc_pci_intr(struct ahc_softc *ahc);
 
 struct cfattach ahc_pci_ca = {
         sizeof(struct ahc_softc), ahc_pci_probe, ahc_pci_attach
@@ -683,7 +683,7 @@ ahc_pci_attach(parent, self, aux)
 	bd->dev = pa->pa_device;
 
 	ahc->bus_data = bd;
-
+	ahc->bus_intr = ahc_pci_intr;
 	ahc->channel = channel;
 
 	/* Remeber how the card was setup in case there is no SEEPROM */
@@ -990,11 +990,14 @@ done:
 #define STA	PCI_STATUS_TARGET_TARGET_ABORT
 #define DPR	PCI_STATUS_PARITY_ERROR
 
-void
+int
 ahc_pci_intr(struct ahc_softc *ahc)
 {
 	pcireg_t status1;
 	struct ahc_pci_busdata *bd = ahc->bus_data;
+
+	if ((ahc_inb(ahc, ERROR) & PCIERRSTAT) == 0)
+		return 0;
 
 	status1 = pci_conf_read(bd->pc, bd->tag, PCI_COMMAND_STATUS_REG);
 
@@ -1027,6 +1030,8 @@ ahc_pci_intr(struct ahc_softc *ahc)
 	if (status1 & (DPR|RMA|RTA)) {
 		ahc_outb(ahc, CLRINT, CLRPARERR);
 	}
+
+	return 1;
 }
 
 static int
