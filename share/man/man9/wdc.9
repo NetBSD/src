@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.7 2001/06/21 11:51:32 wiz Exp $
+.\"	$NetBSD: wdc.9,v 1.8 2001/11/28 16:48:11 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -87,14 +87,14 @@ struct wdc_softc { /* Per controller state */
         struct channel_softc *channels;
 
         void            *dma_arg;
-        int            (*dma_init) __P((void *, int, int, void *, size_t,
-        void           (*dma_start) __P((void *, int, int, int));
-        int            (*dma_finish) __P((void *, int, int, int));
+        int            (*dma_init)(void *, int, int, void *, size_t, int);
+        void           (*dma_start)(void *, int, int, int);
+        int            (*dma_finish)(void *, int, int, int);
 #define WDC_DMA_READ 0x01
 #define WDC_DMA_POLL 0x02
 
-        int            (*claim_hw) __P((void *, int));
-        void            (*free_hw) __P((void *));
+        int            (*claim_hw)(void *, int);
+        void            (*free_hw)(void *);
 };
 
 struct channel_softc { /* Per channel data */
