@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.6 1997/10/18 12:31:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $";
+__RCSID("$NetBSD: cap_mkdb.c,v 1.6 1997/10/18 12:31:08 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,9 +59,10 @@ static char rcsid[] = "$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $";
 #include <string.h>
 #include <unistd.h>
 
-void	 db_build __P((char **));
-void	 dounlink __P((void));
-void	 usage __P((void));
+void	db_build __P((char **));
+void	dounlink __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
 DB *capdbp;
 int verbose;
@@ -116,7 +117,7 @@ main(argc, argv)
 	 */
 	(void)snprintf(buf, sizeof(buf), "%s.db", capname ? capname : *argv);
 	if ((capname = strdup(buf)) == NULL)
-		err(1, "");
+		err(1, "strdup");
 	if ((capdbp = dbopen(capname, O_CREAT | O_TRUNC | O_RDWR,
 	    DEFFILEMODE, DB_HASH, &openinfo)) == NULL)
 		err(1, "%s", buf);
@@ -173,12 +174,12 @@ db_build(ifiles)
 		if (bplen <= len + 2) {
 			bplen += MAX(256, len + 2);
 			if ((data.data = realloc(data.data, bplen)) == NULL)
-				err(1, "");
+				err(1, "realloc");
 		}
 
 		/* Find the end of the name field. */
 		if ((p = strchr(bp, ':')) == NULL) {
-			warnx("no name field: %.*s", MIN(len, 20), bp);
+			warnx("no name field: %.*s", (int)(MIN(len, 20)), bp);
 			continue;
 		}
 
@@ -207,7 +208,7 @@ db_build(ifiles)
 			/* NOTREACHED */
 		case 1:
 			warnx("ignored duplicate: %.*s",
-			    key.size, (char *)key.data);
+			    (int)key.size, (char *)key.data);
 			continue;
 		}
 		++reccnt;
@@ -233,7 +234,7 @@ db_build(ifiles)
 					/* NOTREACHED */
 				case 1:
 					warnx("ignored duplicate: %.*s",
-					    key.size, (char *)key.data);
+					    (int)key.size, (char *)key.data);
 				}
 				t = p + 1;
 			}
