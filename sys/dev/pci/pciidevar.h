@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.18 2003/12/19 19:09:20 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.19 2003/12/19 19:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -63,6 +63,14 @@ extern int wdcdebug_pciide_mask;
 
 struct device;
 
+/*
+ * While standard PCI IDE controllers only have 2 channels, it is
+ * common for PCI SATA controllers to have more.  Here we define
+ * the maximum number of channels that any one PCI IDE device can
+ * have.
+ */
+#define	PCIIDE_MAX_CHANNELS	4
+
 struct pciide_softc {
 	struct wdc_softc	sc_wdcdev;	/* common wdc definitions */
 	pci_chipset_tag_t	sc_pc;		/* PCI registers info */
@@ -107,7 +115,7 @@ struct pciide_softc {
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;
 	/* common definitions */
-	struct channel_softc *wdc_chanarray[PCIIDE_NUM_CHANNELS];
+	struct channel_softc *wdc_chanarray[PCIIDE_MAX_CHANNELS];
 	/* internal bookkeeping */
 	struct pciide_channel {			/* per-channel data */
 		struct channel_softc wdc_channel; /* generic part */
@@ -130,7 +138,7 @@ struct pciide_softc {
 		 * required.
 		 */
 		uint8_t		idedma_cmd;
-	} pciide_channels[PCIIDE_NUM_CHANNELS];
+	} pciide_channels[PCIIDE_MAX_CHANNELS];
 };
 
 struct pciide_product_desc {
