@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.2 1997/10/05 18:27:50 thorpej Exp $	*/
+/*	$NetBSD: dl.c,v 1.3 1998/01/12 20:52:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -126,13 +126,11 @@ struct	tty *	dltty __P((dev_t));
 	int	dlioctl __P((dev_t, int, caddr_t, int, struct proc *));
 	void	dlstop __P((struct tty *, int));
 
-struct cfdriver dl_cd = {
-	NULL, "dl", DV_TTY
-};
-
 struct cfattach dl_ca = {
 	sizeof(struct dl_softc), dl_match, dl_attach
 };
+
+extern struct cfdriver dl_cd;
 
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */

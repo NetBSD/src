@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.4 1996/10/13 03:35:15 christos Exp $	*/
+/*	$NetBSD: dz.c,v 1.5 1998/01/12 20:52:47 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -123,14 +123,11 @@ struct	tty *	dztty __P((dev_t));
 	int	dzioctl __P((dev_t, int, caddr_t, int, struct proc *));
 	void	dzstop __P((struct tty *, int));
 
-struct	cfdriver dz_cd = {
-	NULL, "dz", DV_TTY
-};
-
 struct	cfattach dz_ca = {
 	sizeof(struct dz_softc), dz_match, dz_attach
 };
 
+extern struct cfdriver dz_cd;
 
 /*
  * The DZ series doesn't interrupt on carrier transitions,

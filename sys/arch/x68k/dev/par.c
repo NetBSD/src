@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.5 1997/10/12 14:44:14 oki Exp $	*/
+/*	$NetBSD: par.c,v 1.6 1998/01/12 21:13:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -113,9 +113,7 @@ struct cfattach par_ca = {
 	sizeof(struct par_softc), (void *)parmatch, parattach
 };
 
-struct cfdriver par_cd = {
-	NULL, "par", DV_DULL
-};
+extern struct cfdriver par_cd;
 
 int
 parmatch(pdp, cfp, aux)

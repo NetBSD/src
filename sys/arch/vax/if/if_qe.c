@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.22 1997/05/02 17:11:24 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.23 1998/01/12 20:52:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -260,13 +260,11 @@ void	qeread __P((struct qe_softc *, struct ifrw *, int));
 void	qetimeout __P((struct ifnet *));
 void	qerestart __P((struct qe_softc *));
 
-struct	cfdriver qe_cd = {
-	NULL, "qe", DV_IFNET
-};
-
 struct	cfattach qe_ca = {
 	sizeof(struct qe_softc), qematch, qeattach
 };
+
+extern struct cfdriver qe_cd;
 
 #define QEUNIT(x)	minor(x)
 /*

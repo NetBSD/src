@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1997/10/12 18:06:26 oki Exp $ */
+/*	$NetBSD: zs.c,v 1.8 1998/01/12 21:13:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,9 +118,7 @@ struct cfattach zs_ca = {
 	sizeof(struct zs_softc), zsmatch, zsattach
 };
 
-struct cfdriver zs_cd = {
-	NULL, "zs", DV_TTY, NULL, 0
-};
+extern struct cfdriver zs_cd;
 
 #ifdef x68k
 static struct zs_chanstate *zsms;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.26 1997/11/02 14:01:07 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.27 1998/01/12 20:52:54 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -102,17 +102,13 @@ int	udaprint __P((void *, const char *));
 void	udasaerror __P((struct device *, int));
 int	udago __P((struct device *, struct buf *));
 
-struct	cfdriver mtc_cd = {
-	NULL, "mtc", DV_DULL
-};
+extern struct cfdriver mtc_cd;
 
 struct	cfattach mtc_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach
 };
 
-struct	cfdriver uda_cd = {
-	NULL, "uda", DV_DULL
-};
+extern struct cfdriver uda_cd;
 
 struct	cfattach uda_ca = {
 	sizeof(struct uda_softc), udamatch, udaattach

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.14 1997/07/17 02:22:27 jtk Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.15 1998/01/12 20:52:41 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -126,13 +126,11 @@ struct	mscp_device ra_device = {
 #define	rapart(dev)	(minor(dev) & UNITMASK)
 #define	raminor(u, p)	(((u) << UNITSHIFT) | (p))
 
-struct	cfdriver ra_cd = {
-	NULL, "ra", DV_DISK
-};
-
 struct	cfattach ra_ca = {
 	sizeof(struct ra_softc), ramatch, raattach
 };
+
+extern struct cfdriver ra_cd;
 
 /*
  * Software state, per drive

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.18 1996/08/20 13:38:04 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.19 1998/01/12 20:52:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -179,8 +179,6 @@ struct ubinfo {
 #ifdef _KERNEL
 #define	ubago(ui)	ubaqueue(ui)
 #define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
-
-extern	struct cfdriver	uba_cd;
 
 void    ubasetvec __P((struct device *, int, void (*) __P((int))));
 int	uballoc __P((struct uba_softc *, caddr_t, int, int));

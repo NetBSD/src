@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
+/*	$NetBSD: ts.c,v 1.12 1998/01/12 20:52:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -199,14 +199,11 @@ int	tsread __P((dev_t, struct uio *));
 int	tswrite __P((dev_t, struct uio *));
 int	tsdump __P((dev_t, daddr_t, caddr_t, size_t));
 
-struct	cfdriver ts_cd = {
-	NULL, "ts", DV_DULL
-};
-
 struct	cfattach ts_ca = {
 	sizeof(struct ts_softc), tsmatch, tsattach
 };
 
+extern struct cfdriver ts_cd;
 
 #define ST_INVALID	0	/* uninitialized, before probe */
 #define ST_PROBE	1	/* during tsprobe(), not used */

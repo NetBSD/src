@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
+/*	$NetBSD: dc.c,v 1.5 1998/01/12 20:53:01 thorpej Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -132,9 +132,6 @@ void	dcattach __P((struct device *parent, struct device *self, void *aux));
 int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
 int	dcintr __P((void * xxxunit));
 
-struct	cfdriver dc_cd = {
-	NULL, "dc", DV_TTY
-};
 struct	cfattach dc_ca = {
 	sizeof(struct dc_softc), dcmatch, dcattach
 };

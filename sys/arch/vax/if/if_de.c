@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.28 1998/01/12 20:52:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -152,13 +152,12 @@ void	de_setaddr __P((u_char *, struct de_softc *));
 void	deintr __P((int));
 
 
-struct	cfdriver de_cd = {
-	NULL, "de", DV_IFNET
-};
-
 struct	cfattach de_ca = {
 	sizeof(struct de_softc), dematch, deattach
 };
+
+extern struct cfdriver de_cd;
+
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready

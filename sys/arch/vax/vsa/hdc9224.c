@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.7 1998/01/12 20:53:03 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -182,9 +182,6 @@ int	hdcmatch  __P((struct device *parent, void *cfdata, void *aux));
 void	hdcattach __P((struct device *parent, struct device *self, void *aux));
 int	hdcprint  __P((void *aux, const char *name));
 
-struct	cfdriver hdc_cd = {
-	NULL, "hdc", DV_DULL
-};
 struct	cfattach hdc_ca = {
 	sizeof(struct hdcsoftc), hdcmatch, hdcattach
 };
@@ -194,12 +191,11 @@ void	rdattach __P((struct device *parent, struct device *self, void *aux));
 int	rdprint __P((void *aux, const char *name));
 void	rdstrategy __P((struct buf *bp));
 
-struct	cfdriver rd_cd = {
-	NULL, "rd", DV_DISK
-};
 struct	cfattach rd_ca = {
 	sizeof(struct rdsoftc), rdmatch, rdattach
 };
+
+extern struct cfdriver rd_cd;
 
 struct dkdriver rddkdriver = { rdstrategy };
 

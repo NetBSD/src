@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1997/11/02 14:07:10 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1998/01/12 20:52:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -360,24 +360,12 @@ mem_attach(parent, self, aux)
 #endif
 }
 
-struct	cfdriver backplane_cd = {
-	NULL, "backplane", DV_DULL
-};
-
 struct	cfattach backplane_ca = {
 	sizeof(struct device), backplane_match, backplane_attach
 };
 
-struct	cfdriver cpu_cd = {
-	NULL, "cpu", DV_CPU
-};
-
 struct	cfattach cpu_backplane_ca = {
 	sizeof(struct device), cpu_match, cpu_attach
-};
-
-struct	cfdriver mem_cd = {
-	NULL, "mem", DV_CPU
 };
 
 struct	cfattach mem_backplane_ca = {

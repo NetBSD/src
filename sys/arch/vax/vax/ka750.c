@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.20 1997/11/02 14:07:20 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.21 1998/01/12 20:52:57 thorpej Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -283,10 +283,6 @@ ka750_steal_pages()
 static  int cmi_print __P((void *, const char *));
 static  int cmi_match __P((struct device *, void *, void *));
 static  void cmi_attach __P((struct device *, struct device *, void*));
-
-struct  cfdriver cmi_cd = {
-        NULL, "cmi", DV_DULL
-};      
 
 struct  cfattach cmi_ca = {
         sizeof(struct device), cmi_match, cmi_attach

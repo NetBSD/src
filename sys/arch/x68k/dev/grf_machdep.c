@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.8 1997/10/12 14:45:43 oki Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.9 1998/01/12 21:13:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -76,16 +76,8 @@ struct cfattach grfbus_ca = {
 	sizeof(struct device), grfbusmatch, grfbusattach
 };
 
-struct cfdriver grfbus_cd = {
-	NULL, "grfbus", DV_DULL
-};
-
 struct cfattach grf_ca = {
 	sizeof(struct grf_softc), grfmatch, grfattach
-};
-
-struct cfdriver grf_cd = {
-	NULL, "grf", DV_DULL
 };
 
 /*
@@ -93,6 +85,8 @@ struct cfdriver grf_cd = {
  */
 static struct cfdata *cfdata_gbus  = NULL;
 static struct cfdata *cfdata_grf   = NULL;
+
+extern struct cfdriver grfbus_cd;
 
 int
 grfbusmatch(pdp, match, auxp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.29 1996/10/13 03:35:24 christos Exp $	   */
+/*	$NetBSD: uba.c,v 1.30 1998/01/12 20:52:50 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -75,10 +75,7 @@ static	void ubainitmaps __P((struct uba_softc *));
 static	void uba_attach __P((struct uba_softc *, unsigned long));
 static	int ubasetup __P((struct uba_softc *, struct buf *, int));
 
-
-struct	cfdriver uba_cd = {
-	NULL, "uba", DV_DULL, 1
-};
+extern struct cfdriver uba_cd;
 
 #define spluba	spl7
 

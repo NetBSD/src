@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.7 1997/02/19 10:04:18 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.8 1998/01/12 20:52:58 thorpej Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -162,7 +162,7 @@ ka780_memenable(sa, osc)
 void
 ka780_memerr()
 {
-	extern	struct cfdriver mem_cd;
+	extern struct cfdriver mem_cd;
 	struct	mem_softc *sc;
 	register struct mcr780 *mcr;
 	register int m;

@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.29 1997/08/27 11:26:06 bouyer Exp $
+#       $NetBSD: files.vax,v 1.30 1998/01/12 20:52:31 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -8,45 +8,45 @@ maxpartitions 8
 
 maxusers 8 32 64
 
-device	backplane { }
+device	backplane class dull { }
 attach	backplane at root
 
-device	sbi { tr=-1 }
+device	sbi class dull { tr=-1 }
 attach	sbi at backplane
 file	arch/vax/vax/sbi.c		sbi needs-flag
 
-device	cmi { tr=-1 }
+device	cmi class dull { tr=-1 }
 attach	cmi at backplane
 
-device	bi { node=-1 }
+device	bi class dull { node=-1 }
 attach	bi at backplane
 file	arch/vax/bi/bi.c		bi needs-flag
 
-device	vsbus { }
+device	vsbus class dull { }
 attach	vsbus at backplane
 file	arch/vax/vsa/vsbus.c		vsbus
 
-device	cpu
+device	cpu class cpu
 attach	cpu at backplane with cpu_backplane
 attach	cpu at bi with cpu_bi
 
-device	mem
+device	mem class dull
 attach	mem at backplane with mem_backplane
 attach	mem at bi with mem_bi
 attach	mem at sbi with mem_sbi
 attach	mem at cmi with mem_cmi
 
-device	mba { drive = -1 }
+device	mba class dull { drive = -1 }
 attach	mba at sbi with mba_sbi
 attach	mba at cmi with mba_cmi
 file	arch/vax/mba/mba.c		mba needs-flag
 
-device  hp: disk
+device  hp class disk: disk
 attach  hp at mba
 file    arch/vax/mba/hp.c		hp needs-flag
 major	{hp = 0}
 
-device	ht
+device	ht class tape
 attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
@@ -56,58 +56,58 @@ major	{ra = 9}
 major	{mt = 16}
 
 # KDB50 on BI
-device	kdb: mscp
+device	kdb class dull: mscp
 attach	kdb at bi
 file	arch/vax/bi/kdb.c		kdb
 
-device	uba { csr }
+device	uba class dull { csr }
 attach	uba at backplane with uba_backplane
 attach	uba at sbi with uba_sbi
 attach	uba at cmi with uba_cmi
 attach	uba at bi with uba_bi
 file	arch/vax/uba/uba.c		uba
 
-device	mtc: mscp
+device	mtc class dull: mscp
 attach	mtc at uba
-device	uda: mscp
+device	uda class dull: mscp
 attach	uda at uba
 file    arch/vax/uba/uda.c		uda | mtc
 
-device	de:ifnet, ether, arp
+device	de class ifnet: ifnet, ether, arp
 attach	de at uba
 file	arch/vax/if/if_de.c		de needs-flag
 
 # DEQNA/DELQA used on Qbus
-device	qe:ifnet, ether, arp
+device	qe class ifnet: ifnet, ether, arp
 attach	qe at uba
 file	arch/vax/if/if_qe.c		qe needs-flag
 
 # DEBNA/DEBNT Ethernet Adapter
-device	ni:ifnet, ether, arp
+device	ni class ifnet: ifnet, ether, arp
 attach	ni at bi
 file	arch/vax/bi/ni.c		ni needs-flag
 
 # TS11 at UBA
-device	ts
+device	ts class tape
 attach	ts at uba
 file	arch/vax/uba/ts.c		ts needs-count
 
 # DHU-11 at UBA
-device	dhu
+device	dhu class tty
 attach	dhu at uba
 file	arch/vax/uba/dhu.c		dhu needs-count
 
 # DZ11 at UBA
-device	dz
+device	dz class tty
 attach	dz at uba
 file	arch/vax/uba/dz.c		dz needs-count
 
 # RD-type disks at VS2000's onboard MFM-controller
-device	hdc { drive = -1 }
+device	hdc class dull { drive = -1 }
 attach	hdc at vsbus
 file	arch/vax/vsa/hdc9224.c		hdc needs-flag
 
-device	rd: disk
+device	rd class disk: disk
 attach	rd at hdc
 major	{rd = 19}
 
@@ -123,7 +123,7 @@ major	{ cd = 22 }
 major	{ md = 23 }
 
 # builtin NCR5380 SCSI-controller on VAXstation 
-device	ncr: scsi, ncr5380sbc
+device	ncr class dull: scsi, ncr5380sbc
 attach	ncr at vsbus
 file	arch/vax/vsa/ncr.c		ncr needs-flag
 
@@ -133,17 +133,17 @@ file	arch/vax/if/if_le.c		le needs-flag
 
 # DC367-B in VAXstation 2000/3100 (DZ-like 4-port serial line controller,
 # controls keyboard, mouse, modem, and printer/console)
-device	dc
+device	dc class tty
 attach	dc at vsbus
 file	arch/vax/vsa/dc.c		dc needs-flag
 file	arch/vax/vsa/lk201.c		dc
 
 # PM Framebuffer in VAXstation 2000/3100
-device	pm
+device	pm class dull
 attach	pm at vsbus
 file	arch/vax/vsa/pm.c		pm needs-flag
 
-device	dl
+device	dl class tty
 attach	dl at uba
 file	arch/vax/uba/dl.c		dl needs-flag
 
@@ -152,146 +152,146 @@ file	arch/vax/uba/dl.c		dl needs-flag
 #
 
 # Ikonas framebuffer
-device	ik
+device	ik class dull
 attach	ik at uba
 file	arch/vax/uba/ik.c		ik needs-count
 
-device	vs
+device	vs class dull
 attach	vs at uba
 file	arch/vax/uba/vs.c		vs needs-count
 
 # RK06/07 on UBA
-device	rk
+device	rk class disk
 attach	rk at uba
 file	arch/vax/uba/rk.c		rk needs-count
 
 # TM11/TE10 at UBA
-device	te
+device	te class tape
 attach	te at uba
 file	arch/vax/uba/tm.c		te needs-count
 
 # TU78 at MBA
-device	mu
+device	mu class tape
 attach	mu at mba
 file	arch/vax/mba/mt.c		mu needs-count
 
 # DMF32 on UBA
-device	dmf
+device	dmf class dull # XXX?
 attach	dmf at uba
 file	arch/vax/uba/dmf.c		dmf needs-count
 file	arch/vax/uba/dmz.c		dmf needs-count
 
 # DMZ32 on UBA
-device	dmz
+device	dmz class dull # XXX?
 attach	dmz at uba
 file	arch/vax/uba/dmx.c		dmz needs-count
 
 # DN-11 on UBA
-device	dn
+device	dn class dull # XXX?
 attach	dn at uba
 file	arch/vax/uba/dn.c		dn needs-count
 
 # IDC (RB730) on UBA (VAX 11/730)
-device	idc { drive=-1 }
+device	idc class dull { drive=-1 }
 attach	idc at uba
-device	rb
+device	rb class disk
 attach	rb at idc
 file	arch/vax/uba/idc.c		rb needs-count
 
 # LP-11 at UBA
-device	lp
+device	lp class dull
 attach	lp at uba
 file	arch/vax/uba/lp.c		lp needs-count
 
 # ???? at UBA
-device	lpa
+device	lpa class dull
 attach	lpa at uba
 file	arch/vax/uba/lpa.c		lpa needs-count
 
 # PS2 at UBA
-device	ps
+device	ps class dull
 attach	ps at uba
 file	arch/vax/uba/ps.c		ps needs-count
 
 # RL02/RL11 at UBA
-device	hl { drive=-1 }
+device	hl class dull { drive=-1 }
 attach	hl at uba
-device	rl
+device	rl class disk
 attach	rl at hl
 file	arch/vax/uba/rl.c		rl needs-count
 
 # RX211/RX02 at UBA
-device	fx { drive=-1 }
+device	fx class dull { drive=-1 }
 attach	fx at uba
-device	rx
+device	rx class disk
 attach	rx at fx
 file	arch/vax/uba/rx.c		rx needs-count
 
 # SC-21/SC-31 at UBA
-device	sc { drive=-1 }
+device	sc class dull { drive=-1 }
 attach	sc at uba
-device	up
+device	up class disk
 attach	up at sc
 file	arch/vax/uba/up.c		up needs-count
 
 # TU45 at UBA
-device	ut { drive=-1}
+device	ut class dull { drive=-1}
 attach	ut at uba
-device	tj
+device	tj class tape
 attach	tj at ut
 file	arch/vax/uba/ut.c		tj needs-count
 
 # TU58/DECtape II
-device	uu
+device	uu class tape
 attach	uu at uba
 file	arch/vax/uba/uu.c		uu needs-count
 
 # Benson-Varian plotter at UBA
-device	va { drive=-1}
+device	va class dull { drive=-1}
 attach	va at uba
-device	vz
+device	vz class dull
 attach	vz at va
 file	arch/vax/uba/va.c		va needs-count
 
 # Versatec plotter at UBA
-device	vp
+device	vp class dull
 attach	vp at uba
 file	arch/vax/uba/vp.c		vp needs-count
 
 # QVSS at UBA
-device	qv
+device	qv class dull
 attach	qv at uba
 file	arch/vax/uba/qv.c		qv needs-count
 file	arch/vax/uba/qfont.c		qv needs-count
 
 # QDSS at UBA
-device	qd
+device	qd class dull
 attach	qd at uba
 file	arch/vax/uba/qd.c		qd needs-count
 
 # Interlan NP100 at UBA
-device	np
+device	np class ifnet
 attach	np at uba
 file	arch/vax/if/if_ix.c		np needs-count
 file	arch/vax/uba/np.c		np needs-count
 
 # ACC LH/DH IMP on UBA
-device	acc
+device	acc class ifnet
 attach	acc at uba
 file	arch/vax/if/if_acc.c		acc needs-count
 
 # DR11C at UBA
-device	ct
+device	ct class dull # XXX
 attach	ct at uba
 file	arch/vax/uba/ct.c		ct needs-count
 
 # A/D-converter on UBA
-device	ad
+device	ad class dull
 attach	ad at uba
 file	arch/vax/uba/ad.c		ad needs-count
 
 # DH-11/DM-11 on UBA
-device	dh
+device	dh class dull # XXX?
 attach	dh at uba
 file	arch/vax/uba/dh.c		dh needs-count
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.16 1997/10/19 15:17:24 oki Exp $
+#	$NetBSD: files.x68k,v 1.17 1998/01/12 21:13:39 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -8,10 +8,10 @@ maxpartitions 8
 
 maxusers 2 16 64
 
-device	mainbus {}
+device	mainbus class dull {}
 attach	mainbus at root
 
-device	cpu
+device	cpu class cpu
 attach	cpu at mainbus
 
 define	event {}
@@ -56,34 +56,34 @@ major	{cd = 7}
 major	{sd = 4}
 major	{st = 5}
 
-device	spc: scsi
+device	spc class dull: scsi
 attach	spc at mainbus
 file	arch/x68k/dev/spc.c		spc needs-count
 
-device	mha: scsi
+device	mha class dull: scsi
 attach	mha at mainbus
 file	arch/x68k/dev/mha.c		mha needs-count
 
-device	ed: ether, ifnet, arp
+device	ed class ifnet: ether, ifnet, arp
 attach	ed at mainbus
 file	arch/x68k/dev/if_ed.c		ed needs-flag
 
-device	fdc { unit = -1 }
+device	fdc class dull { unit = -1 }
 attach	fdc at mainbus
 
-device	fd
+device	fd class disk
 attach	fd at fdc
 file	arch/x68k/dev/fd.c		fd needs-flag
 
-device	zs: tty
+device	zs class tty: tty
 attach	zs at mainbus
 file	arch/x68k/dev/zs.c		zs needs-count
 
-device	xcom: tty
+device	xcom class tty: tty
 attach	xcom at mainbus
 file	arch/x68k/dev/com.c		xcom needs-count
 
-device	par
+device	par class dull
 attach	par at mainbus
 file	arch/x68k/dev/par.c		par needs-flag
 
@@ -94,10 +94,10 @@ file	arch/x68k/dev/ms.c		mouse
 # graphic devices
 define	grfb {}
 
-device	grfbus: grfb
+device	grfbus class dull: grfb
 attach	grfbus at mainbus
 
-device	grf {}
+device	grf class dull {}
 attach	grf at grfb
 file	arch/x68k/dev/grf.c		grf needs-count
 file	arch/x68k/dev/grf_conf.c	grf|ite
@@ -105,7 +105,7 @@ file	arch/x68k/dev/grf_machdep.c	grf|ite
 file	arch/x68k/dev/grf_tv.c		grf|ite
 file	arch/x68k/dev/grf_gv.c		grf|ite
 
-device	ite
+device	ite class tty
 attach	ite at grf
 file	arch/x68k/dev/ite.c		ite needs-flag
 file	arch/x68k/dev/ite_tv.c		grf|ite
@@ -115,7 +115,7 @@ pseudo-device bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag
 file	arch/x68k/dev/opm.c		bell|fdc
 
-device	adpcm: audio
+device	adpcm class dull: audio
 attach	adpcm at mainbus
 file	arch/x68k/dev/bsd_audio.c	adpcm needs-flag
 file	arch/x68k/dev/adpcm.c		adpcm

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.10 1996/10/13 03:35:00 christos Exp $ */
+/*	$NetBSD: mba.c,v 1.11 1998/01/12 20:52:39 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,10 +77,6 @@ void	mbaqueue __P((struct mba_device *));
 void	mbastart __P((struct mba_softc *));
 void	mbamapregs __P((struct mba_softc *));
 
-struct	cfdriver mba_cd = {
-	NULL, "mba", DV_DULL
-};
-
 struct	cfattach mba_cmi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
@@ -88,6 +84,8 @@ struct	cfattach mba_cmi_ca = {
 struct	cfattach mba_sbi_ca = {
 	sizeof(struct mba_softc), mbamatch, mbaattach
 };
+
+extern cfdriver mba_cd;
 
 /*
  * Look if this is a massbuss adapter.
