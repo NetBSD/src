@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.1 2000/12/12 19:02:00 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -202,4 +202,21 @@ linux_sys_lstat64(p, v, retval)
 	} */ *uap = v;
 
 	return linux_do_stat64(p, uap, retval, 1);
+}
+
+int
+linux_sys_truncate64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_truncate64_args /* {
+		syscallarg(const char *) path;
+		syscallarg(off_t) length;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return sys_truncate(p, uap, retval);
 }
