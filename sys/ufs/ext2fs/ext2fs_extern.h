@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.24 2004/05/20 06:34:32 atatat Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.25 2005/02/09 23:02:10 ws Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -109,6 +109,8 @@ int ext2fs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
 int ext2fs_bmap __P((void *));
 
 /* ext2fs_inode.c */
+u_int64_t ext2fs_size(struct inode *);
+int ext2fs_setsize(struct inode *, u_int64_t);
 int ext2fs_update __P((void *));
 int ext2fs_truncate __P((void *));
 int ext2fs_inactive __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.43 2004/08/15 07:19:56 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.44 2005/02/09 23:02:10 ws Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.43 2004/08/15 07:19:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.44 2005/02/09 23:02:10 ws Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,47 @@ extern int prtactive;
 
 static int ext2fs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
 				  daddr_t, int, long *));
+
+/*
+ * Get the size of an inode.
+ */
+u_int64_t
+ext2fs_size(struct inode *ip)
+{
+	u_int64_t size = ip->i_e2fs_size;
+
+	if ((ip->i_e2fs_mode & IFMT) == IFREG)
+		size |= (u_int64_t)ip->i_e2fs_dacl << 32;
+	return size;
+}
+
+int
+ext2fs_setsize(struct inode *ip, u_int64_t size)
+{
+	if ((ip->i_e2fs_mode & IFMT) == IFREG ||
+	    ip->i_e2fs_mode == 0) {
+		ip->i_e2fs_dacl = size >> 32;
+		if (size >= 0x80000000U) {
+			struct m_ext2fs *fs = ip->i_e2fs;
+
+			if (fs->e2fs.e2fs_rev <= E2FS_REV0) {
+				/* Linux automagically upgrades to REV1 here! */
+				return EFBIG;
+			}
+			if (!(fs->e2fs.e2fs_features_rocompat
+			    & EXT2F_ROCOMPAT_LARGEFILE)) {
+				fs->e2fs.e2fs_features_rocompat |=
+				    EXT2F_ROCOMPAT_LARGEFILE;
+				fs->e2fs_fmod = 1;
+			}
+		}
+	} else if (size >= 0x80000000U)
+		return EFBIG;
+
+	ip->i_e2fs_size = size;
+
+	return 0;
+}
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
@@ -118,7 +159,7 @@ ext2fs_inactive(v)
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
-		if (ip->i_e2fs_size != 0) {
+		if (ext2fs_size(ip) != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
 		}
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
@@ -245,16 +286,16 @@ ext2fs_truncate(v)
 		return (EINVAL);
 
 	if (ovp->v_type == VLNK &&
-	    (oip->i_e2fs_size < ump->um_maxsymlinklen ||
+	    (ext2fs_size(oip) < ump->um_maxsymlinklen ||
 	     (ump->um_maxsymlinklen == 0 && oip->i_e2fs_nblock == 0))) {
 		KDASSERT(length == 0);
 		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
-			(u_int)oip->i_e2fs_size);
-		oip->i_e2fs_size = 0;
+			(u_int)ext2fs_size(oip));
+		(void)ext2fs_setsize(oip, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
-	if (oip->i_e2fs_size == length) {
+	if (ext2fs_size(oip) == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
@@ -262,7 +303,7 @@ ext2fs_truncate(v)
 	if (length > ump->um_maxfilesize)
 		return (EFBIG);
 
-	osize = oip->i_e2fs_size;
+	osize = ext2fs_size(oip);
 	ioflag = ap->a_flags;
 
 	/*
@@ -280,7 +321,7 @@ ext2fs_truncate(v)
 		}
 		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		KASSERT(ovp->v_size == oip->i_size);
+		KASSERT(error || ovp->v_size == oip->i_size);
 		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	/*
@@ -297,7 +338,7 @@ ext2fs_truncate(v)
 		/* XXXUBC we should handle more than just VREG */
 		uvm_vnp_zerorange(ovp, length, size - offset);
 	}
-	oip->i_e2fs_size = length;
+	(void)ext2fs_setsize(oip, length);
 	uvm_vnp_setsize(ovp, length);
 	/*
 	 * Calculate index into inode's block list of
@@ -347,7 +388,7 @@ ext2fs_truncate(v)
 	memcpy((caddr_t)newblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof newblks);
 	memcpy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)oldblks, sizeof oldblks);
 
-	oip->i_e2fs_size = osize;
+	(void)ext2fs_setsize(oip, osize);
 	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
 	if (error && !allerror)
 		allerror = error;
@@ -407,7 +448,7 @@ done:
 	/*
 	 * Put back the real size.
 	 */
-	oip->i_e2fs_size = length;
+	(void)ext2fs_setsize(oip, length);
 	oip->i_e2fs_nblock -= blocksreleased;
 	oip->i_flag |= IN_CHANGE;
 	KASSERT(ovp->v_type != VREG || ovp->v_size == oip->i_size);
