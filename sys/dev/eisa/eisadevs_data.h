@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp 
+ *	NetBSD: eisadevs,v 1.2 1996/03/17 00:13:56 cgd Exp 
  */
 
 /*
@@ -79,6 +79,21 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "AMI4801",
+	    EISA_PRODUCT_AMI4801,
+	},
+	{
+	    0,
+	    "BUS4201",
+	    EISA_PRODUCT_BUS4201,
+	},
+	{
+	    0,
+	    "BUS4202",
+	    EISA_PRODUCT_BUS4202,
+	},
+	{
+	    0,
 	    "DEC4250",
 	    EISA_PRODUCT_DEC4250,
 	},
@@ -96,6 +111,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "ADP",
 	    "Adaptec",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "AMI",
+	    "AMI",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
