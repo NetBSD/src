@@ -405,7 +405,6 @@
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
-./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/core.0
@@ -462,7 +461,6 @@
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
-./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat5/rc.conf.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
@@ -1407,7 +1405,6 @@
 ./usr/share/man/man5/a.out.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
-./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bootptab.5
 ./usr/share/man/man5/core.5
@@ -1464,7 +1461,6 @@
 ./usr/share/man/man5/phones.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
-./usr/share/man/man5/ranlib.5
 ./usr/share/man/man5/rc.conf.5
 ./usr/share/man/man5/rcsfile.5
 ./usr/share/man/man5/remote.5

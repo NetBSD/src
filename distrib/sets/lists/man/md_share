@@ -231,6 +231,7 @@
 ./usr/share/man/cat8/atari/MAKEDEV.0
 ./usr/share/man/cat8/atari/binpatch.0
 ./usr/share/man/cat8/atari/boot.0
+./usr/share/man/cat8/atari/bootpref.0
 ./usr/share/man/cat8/atari/installboot.0
 ./usr/share/man/cat8/atari/makedev.0
 ./usr/share/man/cat8/bad144.0
@@ -520,6 +521,7 @@
 ./usr/share/man/man8/atari/MAKEDEV.8
 ./usr/share/man/man8/atari/binpatch.8
 ./usr/share/man/man8/atari/boot.8
+./usr/share/man/man8/atari/bootpref.8
 ./usr/share/man/man8/atari/installboot.8
 ./usr/share/man/man8/atari/makedev.8
 ./usr/share/man/man8/bad144.8

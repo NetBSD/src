@@ -250,7 +250,6 @@
 ./usr/bin/printenv
 ./usr/bin/printf
 ./usr/bin/quota
-./usr/bin/ranlib
 ./usr/bin/rcs
 ./usr/bin/rcsclean
 ./usr/bin/rcsdiff
