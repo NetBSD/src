@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_sysent.c,v 1.13 1998/01/09 06:21:31 thorpej Exp $	*/
+
 /*
  * System call switch table.
  *

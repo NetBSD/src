@@ -1,3 +1,5 @@
+/*	$NetBSD: linux_syscall.h,v 1.26 1998/01/09 06:22:55 thorpej Exp $	*/
+
 /*
  * System call numbers.
  *

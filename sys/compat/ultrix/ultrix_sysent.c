@@ -1,3 +1,5 @@
+/*	$NetBSD: ultrix_sysent.c,v 1.25 1998/01/09 06:27:35 thorpej Exp $	*/
+
 /*
  * System call switch table.
  *
