@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db.c,v 1.2 2003/07/16 08:13:51 tshiozak Exp $	*/
+/*	$NetBSD: citrus_db.c,v 1.3 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db.c,v 1.2 2003/07/16 08:13:51 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_db.c,v 1.3 2004/01/02 21:49:35 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -313,7 +313,7 @@ _citrus_db_get_entry(struct _citrus_db *db, int idx,
 	dhx = _memstream_getregion(&ms, NULL, sizeof(*dhx));
 	_DIAGASSERT(dhx);
 	num_entries = be32toh(dhx->dhx_num_entries);
-	if (idx<0 || (u_int32_t)idx>=num_entries)
+	if (idx < 0 || (u_int32_t)idx >= num_entries)
 		return EINVAL;
 
 	/* seek to the next entry */
