@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.17 1995/03/01 03:47:08 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.18 1995/03/23 13:00:05 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.17 1995/03/01 03:47:08 briggs Exp $
+ * $Id: if_ae.c,v 1.18 1995/03/23 13:00:05 briggs Exp $
  */
  
 #include "ae.h"
@@ -61,6 +61,7 @@
 #endif
 
 #include <sys/device.h>
+#include "../mac68k/via.h"
 #include "nubus.h"
 #include "if_aereg.h"
 
@@ -108,9 +109,9 @@ struct	ae_softc {
 	u_char	next_packet;	/* pointer to next unread RX packet */
 } ae_softc[NAE];
 
-void	ae_find(), ae_attach(), aeintr();
+void	ae_find(), ae_attach();
 int	ae_init(), ae_ioctl(), ae_probe(),
-	ae_start(), ae_reset(), ae_watchdog();
+	ae_start(), ae_reset(), ae_watchdog(), aeintr();
 
 struct cfdriver aecd =
 { NULL, "ae", ae_probe, ae_attach, DV_IFNET, sizeof(struct ae_device), NULL, 0 };
@@ -526,11 +527,28 @@ ae_stop(sc)
  * Device timeout/watchdog routine. Entered if the device neglects to
  *	generate an interrupt after a transmit has been started on it.
  */
+static	int aeintr_ctr=0;
 int
 ae_watchdog(unit)
 	short unit;
 {
 	struct ae_softc *sc = &ae_softc[unit];
+
+#if 1
+/*
+ * This is a kludge!  The via code seems to miss slot interrupts
+ * sometimes.  This kludges around that by calling the handler
+ * by hand if the watchdog is activated. -- XXX (akb)
+ */
+	int	i;
+
+	i = aeintr_ctr;
+
+	(*via2itab[1])(1);
+
+	if (i != aeintr_ctr)
+		return;
+#endif
 
 	log(LOG_ERR, "ae%d: device timeout\n", unit);
 	ae_reset(sc);
@@ -723,7 +741,7 @@ static inline void ae_xmit(ifp)
 	/*
 	 * Set a timer just in case we never hear from the board again
 	 */
-	ifp->if_timer = 4;
+	ifp->if_timer = 2;
 }
 
 /*
@@ -979,13 +997,14 @@ ae_rint(unit)
 /*
  * Ethernet interface interrupt processor
  */
-void
+int
 aeintr(unit)
 	int unit;
 {
 	struct ae_softc *sc = &ae_softc[unit];
 	u_char isr;
 
+	aeintr_ctr++;
 	/*
 	 * Set NIC to page 0 registers
 	 */
@@ -1148,6 +1167,7 @@ aeintr(unit)
 			(void) NIC_GET(sc, AE_P0_CNTR2);
 		}
 	}
+	return 0;
 }
  
 /*
