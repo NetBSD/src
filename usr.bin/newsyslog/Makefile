@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1993/06/29 15:37:37 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/12/22 04:38:45 cgd Exp $
 
 PROG=	newsyslog
 
@@ -10,12 +10,6 @@ CFLAGS+= -DCOMPRESS_POSTFIX=\".gz\"
 
 BINOWN=	root
 
-MAN5=	newsyslog.conf.0
 MAN8=	newsyslog.0
-
-CLEANFILES+= newsyslog.conf.5
-
-newsyslog.conf.5:
-	ln -s ${.CURDIR}/newsyslog.8 $@
 
 .include <bsd.prog.mk>
