@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.167 2000/05/03 15:15:50 matt Exp $
+#	$NetBSD: bsd.lib.mk,v 1.168 2000/06/06 09:22:01 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -342,36 +342,37 @@ libinstall::
 
 .if ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
+
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 .endif
 
 .if ${MKPROFILE} != "no"
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
+
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_p.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
 .if ${MKPIC} != "no" && ${MKPICINSTALL} != "no"
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
+
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_pic.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 .endif
@@ -386,14 +387,14 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 
 .if ${MKPIC} != "no" && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
+
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR})
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${LIBOWN} \
 	    -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} ${.TARGET}
@@ -414,14 +415,14 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${S
 
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no"
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
+.PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .endif
+
 .if !defined(BUILD) && !make(all) && !make(llib-l${LIB}.ln)
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${LIBOWN} \
 	    -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
