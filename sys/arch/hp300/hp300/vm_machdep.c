@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.10 1994/05/20 07:21:31 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.11 1994/05/20 10:44:57 mycroft Exp $
  */
 
 #include "param.h"
@@ -107,9 +107,9 @@ cpu_fork(p1, p2)
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
- * Once finished, we call swtch_exit, which switches to a temporary
+ * Once finished, we call switch_exit, which switches to a temporary
  * pcb and stack and never returns.  We block memory allocation
- * until swtch_exit has made things safe again.
+ * until switch_exit has made things safe again.
  */
 void
 cpu_exit(p)
@@ -120,7 +120,7 @@ cpu_exit(p)
 
 	(void) splimp();
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	swtch_exit();
+	switch_exit();
 	/* NOTREACHED */
 }
 
