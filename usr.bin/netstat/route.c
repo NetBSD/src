@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.58 2001/10/06 18:56:49 bjh21 Exp $	*/
+/*	$NetBSD: route.c,v 1.59 2002/05/13 05:13:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.58 2001/10/06 18:56:49 bjh21 Exp $");
+__RCSID("$NetBSD: route.c,v 1.59 2002/05/13 05:13:23 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ routepr(rtree)
 	u_long rtree;
 {
 	struct radix_node_head *rnh, head;
+	struct radix_node_head *rt_tables[AF_MAX+1];
 	int i;
 
 	printf("Routing tables\n");
