@@ -1,24 +1,28 @@
-#	$NetBSD: Makefile,v 1.2 1996/01/06 22:40:58 pk Exp $
+#	$NetBSD: Makefile,v 1.3 1996/05/24 23:36:38 pk Exp $
 
-# Revision is 1.1A
-REV=		11A
+# Revision is 1.1B
+REV=		11B
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
+
+.if exists(${ARCHDIR}/Makefile.inc)
+.include "${ARCHDIR}/Makefile.inc"
+.endif
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-IMAGE?=		xxx-${REV}.fs
-MDEC=		${DESTDIR}/usr/mdec
+IMAGE?=		miniroot-${REV}.fs
+IMAGESIZE?=	5
 
 LISTS=		${ARCHDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
 
 all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} bs=512k count=10
+	dd if=/dev/zero of=${IMAGE} bs=1024k count=${IMAGESIZE}
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
 	newfs -m 0 -o space ${VND_RDEV} miniroot
 	mount ${VND_DEV} ${MOUNT_POINT}
