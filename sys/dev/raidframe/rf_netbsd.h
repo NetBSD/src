@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.10 2000/03/26 22:38:29 oster Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.11 2000/03/27 03:01:33 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,13 +104,6 @@ typedef struct RF_SingleComponent_s {
 } RF_SingleComponent_t; 
 
 #ifdef _KERNEL
-
-/* XXX this is *not* the place for these... */
-int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
-int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
-int rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component);
-int rf_incorporate_hot_spare(RF_Raid_t *raidPtr, 
-			     RF_SingleComponent_t *component);
 
 struct raidcinfo {
 	struct vnode *ci_vp;	/* component device's vnode */
