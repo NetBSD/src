@@ -10,6 +10,7 @@ divert(-1)
 #
 divert(0)
 VERSIONID(`Id: compat_check.m4,v 1.4 2002/02/26 22:15:31 gshapiro Exp')
+VERSIONID(`$NetBSD: compat_check.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 ifdef(`_ACCESS_TABLE_', `',
 `errprint(`FEATURE(`compat_check') requires FEATURE(`access_db')

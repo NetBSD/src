@@ -1,4 +1,5 @@
 #       Id: Makefile,v 1.1 2000/08/31 16:19:25 ca Exp
+#       $NetBSD: Makefile,v 1.1.1.2 2003/06/01 14:01:47 atatat Exp $
 
 SHELL= /bin/sh
 BUILD=   ./Build

@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: queuegroup.m4,v 1.4 2001/03/28 00:39:39 ca Exp')
+VERSIONID(`$NetBSD: queuegroup.m4,v 1.1.1.2 2003/06/01 14:01:43 atatat Exp $')
 divert(-1)
 
 ifdef(`_ACCESS_TABLE_', `',
