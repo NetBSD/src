@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.65.4.1 1999/10/19 12:50:30 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.65.4.2 1999/10/26 19:15:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -151,6 +151,7 @@ struct vnode {
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
 #define VLAYER		0x2000	/* vnode is on a layer filesystem */
+#define	VONWORKLST	0x4000	/* On syncer work-list */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -320,8 +321,10 @@ vref(vp)
  */
 extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	int desiredvnodes;		/* number of vnodes desired */
-extern	time_t syncdelay;		/* time to delay syncing vnodes */
-extern	int rushjob;		/* # of slots filesys_syncer should run ASAP */
+extern	time_t syncdelay;		/* max time to delay syncing data */
+extern	time_t filedelay;		/* time to delay syncing files */
+extern	time_t dirdelay;		/* time to delay syncing directories */
+extern	time_t metadelay;		/* time to delay syncing metadata */
 extern	struct vattr va_null;		/* predefined null vattr structure */
 
 /*
@@ -482,6 +485,7 @@ int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
 			 int (**vops) __P((void *)), struct vnode **vpp));
 int	getvnode __P((struct filedesc *fdp, int fd, struct file **fpp));
 void	vfs_getnewfsid __P((struct mount *, char *));
+int	speedup_syncer __P((void));
 void 	vattr_null __P((struct vattr *vap));
 int 	vcount __P((struct vnode *vp));
 void	vclean __P((struct vnode *, int, struct proc *));

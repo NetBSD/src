@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.12.10.1 1999/10/19 12:50:34 fvdl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.12.10.2 1999/10/26 19:15:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -161,6 +161,7 @@ void	softdep_setup_allocindir_page __P((struct inode *, ufs_lbn_t,
 	    struct buf *, int, ufs_daddr_t, ufs_daddr_t, struct buf *));
 void	softdep_disk_io_initiation __P((struct buf *));
 void	softdep_disk_write_complete __P((struct buf *));
+void	softdep_fsync_mountdev __P((struct vnode *));
 int	softdep_sync_metadata __P((void *));
 
 extern int (**ffs_vnodeop_p) __P((void *));

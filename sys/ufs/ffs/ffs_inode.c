@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28.10.1 1999/10/19 12:50:34 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.10.2 1999/10/26 19:15:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -134,9 +134,9 @@ ffs_update(v)
 	else
 #endif
 		memcpy(cp, &ip->i_din.ffs_din, DINODE_SIZE);
-	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
 		return (bwrite(bp));
-	else {
+	} else {
 		bdwrite(bp);
 		return (0);
 	}
@@ -262,10 +262,11 @@ ffs_truncate(v)
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
-	 * truncated to a block boundry, the contents of the
+	 * truncated to a block boundary, the contents of the
 	 * partial block following the end of the file must be
-	 * zero'ed in case it ever become accessable again because
-	 * of subsequent file growth.
+	 * zero'ed in case it ever becomes accessible again because
+	 * of subsequent file growth. Directories however are not
+	 * zero'ed as they should grow back initialized to empty.
 	 */
 	offset = blkoff(fs, length);
 	if (offset == 0) {
@@ -281,7 +282,9 @@ ffs_truncate(v)
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
-		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
+		if (ovp->v_type != VDIR)
+			memset((char *)bp->b_data + offset, 0,
+			       (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
 			bwrite(bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.4.3 1999/10/23 14:54:04 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.4.4 1999/10/26 19:15:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -753,7 +753,6 @@ brelvp(bp)
 	register struct buf *bp;
 {
 	struct vnode *vp;
-	struct buf *wasdirty;
 
 	if (bp->b_vp == (struct vnode *) 0)
 		panic("brelvp: NULL");
@@ -761,11 +760,12 @@ brelvp(bp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	wasdirty = vp->v_dirtyblkhd.lh_first;
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
-	if (wasdirty && LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
+	if ((vp->v_flag & VONWORKLST) && LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		vp->v_flag &= ~VONWORKLST;
 		LIST_REMOVE(vp, v_synclist);
+	}
 	bp->b_vp = (struct vnode *) 0;
 	HOLDRELE(vp);
 }
@@ -781,7 +781,6 @@ reassignbuf(bp, newvp)
 	struct vnode *newvp;
 {
 	struct buflists *listheadp;
-	struct buf *wasdirty;
 	int delay;
 
 	if (newvp == NULL) {
@@ -791,7 +790,6 @@ reassignbuf(bp, newvp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	wasdirty = newvp->v_dirtyblkhd.lh_first;
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
 	/*
@@ -800,23 +798,26 @@ reassignbuf(bp, newvp)
 	 */
 	if ((bp->b_flags & B_DELWRI) == 0) {
 		listheadp = &newvp->v_cleanblkhd;
-		if (wasdirty && LIST_FIRST(&newvp->v_dirtyblkhd) == NULL)
+		if ((newvp->v_flag & VONWORKLST) &&
+		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
+			newvp->v_flag &= ~VONWORKLST;
 			LIST_REMOVE(newvp, v_synclist);
+		}
 	} else {
 		listheadp = &newvp->v_dirtyblkhd;
-		if (LIST_FIRST(listheadp) == NULL) {
+		if ((newvp->v_flag & VONWORKLST) == 0) {
 			switch (newvp->v_type) {
 			case VDIR:
-				delay = syncdelay / 3;
+				delay = dirdelay;
 				break;
 			case VBLK:
 				if (newvp->v_specmountpoint != NULL) {
-					delay = syncdelay / 2;
+					delay = metadelay;
 					break;
 				}
 				/* fall through */
 			default:
-				delay = syncdelay;
+				delay = filedelay;;
 			}
 			vn_syncer_add_to_worklist(newvp, delay);
 		}
