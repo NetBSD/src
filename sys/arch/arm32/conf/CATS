@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.38 2000/10/26 18:33:02 abs Exp $
+#	$NetBSD: CATS,v 1.39 2000/10/28 22:42:08 tsutsui Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -69,7 +69,7 @@ file-system	PROCFS		# /proc
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-#options 	SOFTDEP         # FFS soft updates support
+options 	SOFTDEP         # FFS soft updates support
 
 # Networking options
 
