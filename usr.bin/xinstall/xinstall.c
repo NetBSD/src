@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.71 2002/04/10 06:12:04 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.72 2002/06/08 15:02:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.71 2002/04/10 06:12:04 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.72 2002/06/08 15:02:27 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -920,7 +920,7 @@ void
 metadata_log(const char *path, const char *type, struct timeval *tv,
 	const char *link)
 {
-	const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
+	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 	char		*buf;
 
 	if (!metafp)	
