@@ -1,13 +1,13 @@
-$NetBSD: acronyms.comp,v 1.39 2004/03/11 01:37:44 jschauma Exp $
 
+$NetBSD: acronyms.comp,v 1.40 2004/03/11 09:32:48 keihan Exp $
 ABI	application binary interface
 ACPI	advanced configuration and power interface
 ADC	analog [to] digital converter
 AGP	accelerated graphics port
 ANSI	American National Standards Institute
 API	application programming interface
-ARP	address resolution protocol
 APIC	advanced programmable interrupt controller
+ARP	address resolution protocol
 AT	advanced technology
 ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
@@ -176,6 +176,7 @@ SPD	serial presence detect
 SRAM	static random access memory
 SSH	secure shell
 SSL	secure sockets layer
+STP	shielded twisted pair
 SVGA	super video graphics array
 TCL	tool command language
 TCP	transmission control protocol
@@ -194,6 +195,7 @@ URI	uniform resource identifier
 URL	uniform resource locator
 USB	universal serial bus
 USWC	uncacheable speculative write combining
+UTP	unshielded twisted pair
 UUCP	unix-to-unix copy protocol
 VAX	virtual address extension
 VCM	virtual channel memory
