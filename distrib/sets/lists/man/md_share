@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.97 2000/08/03 09:52:48 ad Exp $
+# $NetBSD: md_share,v 1.98 2000/08/25 06:33:46 jun Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -273,6 +273,7 @@
 ./usr/share/man/cat8/hp300/makedev.0
 ./usr/share/man/cat8/hpcmips/MAKEDEV.0
 ./usr/share/man/cat8/hpcmips/makedev.0
+./usr/share/man/cat8/hpcmips/pbsdboot.0
 ./usr/share/man/cat8/i386/MAKEDEV.0
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/boot.0
@@ -607,6 +608,7 @@
 ./usr/share/man/man8/hp300/makedev.8
 ./usr/share/man/man8/hpcmips/MAKEDEV.8
 ./usr/share/man/man8/hpcmips/makedev.8
+./usr/share/man/man8/hpcmips/pbsdboot.8
 ./usr/share/man/man8/i386/MAKEDEV.8
 ./usr/share/man/man8/i386/apm.8
 ./usr/share/man/man8/i386/boot.8
