@@ -86,22 +86,19 @@ typedef struct undo {
 # define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-/* nextln: return line after l mod k */
-#define nextln(l,k)	((l)+1 > (k) ? 0 : (l)+1)
+#define INC_MOD(l, k)	((l)+1 > (k) ? 0 : (l)+1)
+#define DEC_MOD(l, k)	((l)-1 < 0 ? (k) : (l)-1)
 
-/* prevln: return line before l mod k */
-#define prevln(l,k)	((l)-1 < 0 ? (k) : (l)-1)
+#define	SKIPBLANKS() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
 
-#define	skipblanks() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
+/* SPL1: disable some interrupts (requires reliable signals) */
+#define SPL1() mutex++
 
-/* spl1: disable some interrupts (requires reliable signals) */
-#define spl1() mutex++
-
-/* spl0: enable all interrupts; check sigflags (requires reliable signals) */
-#define spl0() \
+/* SPL0: enable all interrupts; check sigflags (requires reliable signals) */
+#define SPL0() \
 if (--mutex == 0) { \
-	if (sigflags & (1 << SIGHUP)) dohup(SIGHUP); \
-	if (sigflags & (1 << SIGINT)) dointr(SIGINT); \
+	if (sigflags & (1 << SIGHUP)) handle_hup(SIGHUP); \
+	if (sigflags & (1 << SIGINT)) handle_int(SIGINT); \
 }
 
 #if defined(sun) || defined(NO_REALLOC_NULL)
@@ -110,25 +107,25 @@ if (--mutex == 0) { \
 if ((i) > (n)) { \
 	int ti = (n); \
 	char *ts; \
-	spl1(); \
+	SPL1(); \
 	if ((b) != NULL) { \
 		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 			fprintf(stderr, "%s\n", strerror(errno)); \
 			sprintf(errmsg, "out of memory"); \
-			spl0(); \
+			SPL0(); \
 			return err; \
 		} \
 	} else { \
 		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
 			fprintf(stderr, "%s\n", strerror(errno)); \
 			sprintf(errmsg, "out of memory"); \
-			spl0(); \
+			SPL0(); \
 			return err; \
 		} \
 	} \
 	(n) = ti; \
 	(b) = ts; \
-	spl0(); \
+	SPL0(); \
 }
 #else /* NO_REALLOC_NULL */
 /* CKBUF: assure at least a minimum size for buffer b */
@@ -136,16 +133,16 @@ if ((i) > (n)) { \
 if ((i) > (n)) { \
 	int ti = (n); \
 	char *ts; \
-	spl1(); \
+	SPL1(); \
 	if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 		fprintf(stderr, "%s\n", strerror(errno)); \
 		sprintf(errmsg, "out of memory"); \
-		spl0(); \
+		SPL0(); \
 		return err; \
 	} \
 	(n) = ti; \
 	(b) = ts; \
-	spl0(); \
+	SPL0(); \
 }
 #endif /* NO_REALLOC_NULL */
 
@@ -159,14 +156,14 @@ if ((i) > (n)) { \
 	requeue((pred), elem); \
 }
 
-/* remqueue: remove elem from circular queue */
+/* remqueue: remove_lines elem from circular queue */
 #define remqueue(elem) requeue((elem)->prev, (elem)->next);
 
-/* nultonl: overwrite ASCII NULs with newlines */
-#define nultonl(s, l) translit(s, l, '\0', '\n')
+/* NUL_TO_NEWLINE: overwrite ASCII NULs with newlines */
+#define NUL_TO_NEWLINE(s, l) translit_text(s, l, '\0', '\n')
 
-/* nltonul: overwrite newlines with ASCII NULs */
-#define nltonul(s, l) translit(s, l, '\n', '\0')
+/* NEWLINE_TO_NUL: overwrite newlines with ASCII NULs */
+#define NEWLINE_TO_NUL(s, l) translit_text(s, l, '\n', '\0')
 
 #ifndef strerror
 # define strerror(n) sys_errlist[n]
@@ -181,75 +178,75 @@ if ((i) > (n)) { \
 #endif
 
 /* Local Function Declarations */
-int append __P((long, int));
-int catsub __P((char *, regmatch_t *, int, int));
-int cbcdec __P((char *, FILE *));
-int cbcenc __P((char *, int, FILE *));
-char *ccl __P((char *));
-char *ckfn __P((char *));
-int ckglob __P((void));
-int ckrange __P((long, long));
-void clractive __P((void));
-void clrmark __P((line_t *));
-void cvtkey __P((char *, char *));
-int desflush __P((FILE *));
-int desgetc __P((FILE *));
-void desinit __P((void));
-int desputc __P((int, FILE *));
-int docmd __P((int));
-long doglob __P((int));
-void dohup __P((int));
-void dointr __P((int));
-int doprint __P((long, long, int));
-long doread __P((long, char *));
-void dowinch __P((int));
-long dowrite __P((long, long, char *, char *));
-void err __P((char *));
-char *esctos __P((char *));
-long getaddr __P((line_t *));
-char *getcmdv __P((int *, int));
-char *getfn __P((void));
-int getkey __P((void));
-char *getlhs __P((int));
-int getline __P((void));
-int getlist __P((void));
-line_t *getlp __P((long));
-long getmark __P((int));
-long getone __P((void));
-int getrhs __P((int));
-int getshcmd __P((void));
-char *gettxt __P((line_t *));
-void inited __P((void));
-int insactive __P((line_t *));
-int join __P((long, long, int));
-int lndelete __P((long, long, int));
-line_t *lpdup __P((line_t *));
-void lpqueue __P((line_t *));
-long patscan __P((pattern_t *, int));
-void makekey __P((char *));
-char *makesub __P((int));
-int move __P((long, int));
-line_t *nextactive __P(());
-int oddesc __P((char *, char *));
-void onhup __P((int));
-void onintr __P((int));
-pattern_t *optpat __P((void));
-int putmark __P((int, line_t *));
-void putstr __P((char *, int, long, int));
-char *puttxt __P((char *));
+void add_line_node __P((line_t *));
+int append_lines __P((long));
+int apply_subst_template __P((char *, regmatch_t *, int, int));
+int build_active_list __P((int));
+int cbc_decode __P((char *, FILE *));
+int cbc_encode __P((char *, int, FILE *));
+int check_addr_range __P((long, long));
+void clear_active_list __P((void));
+void clear_undo_stack __P((void));
+int close_sbuf __P((void));
+int copy_lines __P((long));
+int delete_lines __P((long, long));
+void des_error __P((char *));
+int display_lines __P((long, long, int));
+line_t *dup_line_node __P((line_t *));
+int exec_command __P((void));
+long exec_global __P((int, int));
+void expand_des_key __P((char *, char *));
+int extract_addr_range __P((void));
+char *extract_pattern __P((int));
+int extract_subst_tail __P((void));
+char *extract_subst_template __P((void));
+int flush_des_file __P((FILE *));
+line_t *get_addressed_line_node __P((long));
+int get_des_char __P((FILE *));
+pattern_t *get_compiled_pattern __P((void));
+char *get_extended_line __P((int *, int));
+int get_file_line __P((FILE *));
+char *get_filename __P((void));
+int get_input_line __P((void));
+int get_keyword __P((void));
+long get_line_node_addr __P((line_t *));
+long get_matching_node_addr __P((pattern_t *, int));
+long get_marked_node_addr __P((int));
+char *get_sbuf_line __P((line_t *));
+int get_shell_command __P((void));
+void handle_hup __P((int));
+void handle_int __P((int));
+void handle_winch __P((int));
+int has_trailing_escape __P((char *, char *));
+int hex_to_binary __P((int, int));
+void init_buffers __P((void));
+void init_des_cipher __P((void));
+int is_legal_filename __P((char *));
+int join_lines __P((long, long));
+int mark_line_node __P((line_t *, int));
+int move_lines __P((long));
+line_t *next_active_node __P(());
+long next_addr __P((void));
+int open_sbuf __P((void));
+void output_line __P((char *, int, long, int));
+char *parse_char_class __P((char *));
+int pop_undo_stack __P((void));
+undo_t *push_undo_stack __P((int, long, long));
+int put_des_char __P((int, FILE *));
+char *put_sbuf_line __P((char *));
 void quit __P((int));
-int regsub __P((pattern_t *, line_t *, int));
-void remactive __P((line_t *));
-int sbclose __P((void));
-int sbopen __P((void));
-int sgetline __P((FILE *));
-int subst __P((pattern_t *, int, int));
-int tobinhex __P((int, int));
-int transfer __P((long));
-char *translit __P((char *, int, int, int));
-int undo __P((int));
-undo_t *upush __P((int, long, long));
-void ureset __P((void));
+long read_file __P((long, char *));
+int search_and_replace __P((pattern_t *, int));
+int set_active_node __P((line_t *));
+void set_des_key __P((char *));
+void signal_hup __P((int));
+void signal_int __P((int));
+char *strip_escapes __P((char *));
+int substitute_matching_text __P((pattern_t *, line_t *, int));
+char *translit_text __P((char *, int, int, int));
+void unmark_line_node __P((line_t *));
+void unset_active_nodes __P((line_t *, line_t *));
+long write_file __P((long, long, char *, char *));
 
 extern char *sys_errlist[];
 extern int mutex;
