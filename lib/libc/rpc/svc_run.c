@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_run.c,v 1.4 1994/12/04 01:13:27 cgd Exp $";
+static char *rcsid = "$Id: svc_run.c,v 1.5 1995/01/04 02:58:47 mycroft Exp $";
 #endif
 
 /*
@@ -39,8 +39,6 @@ static char *rcsid = "$Id: svc_run.c,v 1.4 1994/12/04 01:13:27 cgd Exp $";
  */
 #include <rpc/rpc.h>
 #include <sys/errno.h>
-
-extern int svc_maxfd;
 
 void
 svc_run()
