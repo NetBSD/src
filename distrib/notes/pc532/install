@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.12 2000/10/03 22:32:33 lukem Exp $
+.\"	$NetBSD: install,v 1.13 2000/10/10 12:55:21 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,11 +32,17 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-(IF you already have NetBSD/pc532 installed and you only want to update
+(If you already have
+.Nx*M
+installed and you only want to update
 your system, see the next section.)
 .Pp
-To install NetBSD/pc532, there are several things you need to know.
-First, NetBSD "autoconfigs" the scsi devices.
+To install
+.Nx*M ,
+there are several things you need to know.
+First,
+.Nx
+"autoconfigs" the scsi devices.
 .Pa floppy-144.fs
 has only
 support for disks configured into the kernel. Starting the search at
@@ -60,8 +66,7 @@ kernel.
 Next you need to know what the install script wants to do. This install
 is script on the ram disk root that can do most of the work of configuring
 your disk.
-.Bl -enum
-.It
+.(enum
 The script assumes your are using the first n sectors of your
 disk, where you can specify n. It will allow you to create
 up to 5 file system partitions, one swap partition and one
@@ -78,10 +83,10 @@ preserving what is there. Then, later you can make a new
 file system after you no longer need the stuff there. You
 will need to do only one boot to get things working from
 the disk.
-.El
-.Ss2 The Install Procedure:
-.Bl -enum
-.It
+.enum)
+.
+.Ss2 The install procedure
+.(enum
 Adjust your console device settings.
 The floppy-144.fs kernel will come up with 9600 baud, 7 bits,
 even parity and one stop bit. Adjust your terminal to match
@@ -91,30 +96,30 @@ these settings. The monitor's baud rate can be changed with
 .It
 Get floppy-144.fs and boot the kernel from...
 .
-.	Bl -tag -width Serial\ line
-.		It Em Floppy
+.(tag Serial\ line
+.It Em Floppy
 From Floppy: (and using the autoboot monitor)
 If you have a 1.44 meg SCSI floppy drive, you can put floppy-144.fs
 onto a 3.5" floppy disk. Insert the disk into your floppy
 drive and use the monitor's boot command to boot the default
 image from the floppy. The image booted will ask you for a
 kernel to load. Answer
-.		Dl Ic sd Ns Ar x Ns Ic a:/netbsd
+.Dl Ic sd Ns Ar x Ns Ic a:/netbsd
 Replace
-.		Ar x
+.Ar x
 with your drive number. For KLONDIKE,
-.		Ar x No would be Ic 2 .
+.Ar x No would be Ic 2 .
 .
-.		It Em Tape
+.It Em Tape
 You will need to load a copy of
-.		Pa floppy-144.fs
+.Pa floppy-144.fs
 into RAM.
-.		Dl No \-\ load\ the Pa floppy-144.fs No at\ 0x260000
-.		Dl No \-\ run at 0x3BE020
+.Dl No \-\ load\ the Pa floppy-144.fs No at\ 0x260000
+.Dl No \-\ run at 0x3BE020
 The boot program will ask you now for a kernel to load. Answer
-.		Ic md0a:/netbsd.gz
+.Ic md0a:/netbsd.gz
 .
-.		Em Serial Line
+.Em Serial Line
 Provided with the distribution is source for program called
 download. (download.c) This program when used as
 "download file" will read the contents of the file and
@@ -123,15 +128,18 @@ ROM monitor to download a binary file into RAM. Using this
 program on a computer connected to the pc532, one can
 load a copy of floppy-144.fs into RAM at 0x260000. The boot
 sequence is now the same as with tape.
-.		El
+.tag)
 .It
 The floppy-144.fs will run the new sysinst utility as the standard
 setup. It assumes a VT100 compatible terminal. If you don't want
 to try using sysinst or you dont' have a VT100, type f followed by
 the return. Then following these instructions for installation.
 If you want to use sysinst, read the i386 INSTALL instructions to
-learn about sysinst. Note: sysinst does not support SLIP or PPP
+learn about sysinst.
+.(Note
+Sysinst does not support SLIP or PPP
 connections.
+.Note)
 .It
 Choose a disk geometry. For me, the reported geometry left
 some sectors "unallocated". That is, the autoconfig message
@@ -171,7 +179,7 @@ the auto-boot monitor), your root partition, your swap partition,
 and then any other partitions you may want. For the "other"
 partitions, it will ask for a mount point. The mount point will
 be "relative to /" and should not include the leading "/". Also,
-IF you do not want the partition to have newfs run on it (that is
+If you do not want the partition to have newfs run on it (that is
 it might be the last one and have a copy of floppy-144.fs) enter "NO"
 to the mount point and it will not run newfs on the partition.
 It will enter the partition into the disklabel.
@@ -185,15 +193,16 @@ You can get it to do it faster by pressing return.
 .Pp
 If you are not using the autoboot monitor, you will have to
 figure out the starting sector of the boot images partition
-and manually load the NetBSD boot loader from the disk using
+and manually load the
+.Nx
+boot loader from the disk using
 the read command. If you would rather use the autoboot monitor
 you can get source and ROM images from the URL
 .Lk ftp://ftp.cs.wwu.edu/pub/pc532/mon.auto.tar.gz
 .It
 Now it is time to load all the other files of the distribution:
 You can do this via --
-.Bl -bullet
-.It
+.(bullet
 a TCP/IP link (slip, ppp or plip)
 you have ifconfig, slattach, route, netstat,
 hostname and ftp on the mini-root. You can even
@@ -207,7 +216,9 @@ floppy disk
 .It
 tape
 .It
-cd-rom (If you have a CD with NetBSD/532, which most likely
+cd-rom (If you have a CD with
+.Nx*M ,
+which most likely
 won't happen for a while after \*V release.)
 .Dl Ic mount -rt cd9660 /dev/cd0a /mnt
 Get the .tgz files from the cd-rom
@@ -218,7 +229,7 @@ can be used as the receive end of the download by
 using it as "download -r file_to_write". If the CRC is
 correct, the file is retained. If the CRC is not
 correct, the file is deleted.
-.El
+.bullet)
 .It
 Load the .tgz files. Choose a place to put them. I would make
 a directory /gz.files and put them there. If you are "short
@@ -246,7 +257,7 @@ For "update" extracts, move /etc to /etc.old and then extract
 installations, 	extract all files.
 .It
 Edit the information in /etc
-.Bl -tag -width resolv.conf
+.(tag resolv.conf
 .It rc.conf
 Many things can be configured here
 .It hosts
@@ -260,7 +271,7 @@ I find "ap" instead of "ep" in the default entry
 works better for me.
 .It fstab
 make sure it includes all partitions you want mounted
-.El
+.tag)
 .Pp
 Now you can adjust the kernel's default baud rate to match your
 monitor's default baud rate. Do the following:
@@ -276,5 +287,6 @@ not be able to reboot... So be carefull!
 Reboot the machine and it should come up in multi-user mode *IF*
 you got it configured correctly.
 .It
-Enjoy! And help fix bugs and improve NetBSD/pc532!
-.El
+Enjoy! And help fix bugs and improve
+.Nx*M !
+.enum)

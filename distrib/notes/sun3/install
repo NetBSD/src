@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.7 2000/03/13 22:37:14 soren Exp $	
+.\"	$NetBSD: install,v 1.8 2000/10/10 12:55:23 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,9 @@ initialize the disk on that machine and then move the disk.
 .
 .Ss2 Installing from tape
 .
-Create the NetBSD/sun3 _VER boot tape as described in the section
+Create the
+.Nx*M
+_VER boot tape as described in the section
 entitled "Preparing a boot tape" and boot the tape. At the PROM
 monitor prompt, use one of the commands:
 .Dl \*> Ns Ic "b st()
@@ -55,8 +57,8 @@ second will use SCSI target 5. The '\*>' is the monitor prompt.
 .Pp
 After the tape loads, you should see many lines of configuration
 messages, and then the following "welcome" screen:
-.Bd -literal -offset indent
-        Welcome to the NetBSD/sun3 RAMDISK root!
+.(disp
+        Welcome to the NetBSD/\*M RAMDISK root!
 
 This environment is designed to do only three things:
 1:  Partititon your disk (use the command:  edlabel /dev/rsd0c)
@@ -78,7 +80,7 @@ then at the PROM monitor prompt use a command like:
         b sd(,,1) -s
 
 To view this message again, type:  cat /.welcome
-.Ed
+.disp)
 .Pp
 Copy the miniroot as described in the welcome message, and
 reboot from that just installed miniroot. See the section
@@ -133,7 +135,9 @@ pair of commands similar to the above. Here is another example:
 .
 .Ss2 Installing from SunOS
 .
-To install NetBSD/sun3 onto a machine already running SunOS, you
+To install
+.Nx*M
+onto a machine already running SunOS, you
 will need the miniroot image (miniroot.gz) and some means to
 decompress it.
 .Pp
@@ -163,24 +167,22 @@ SCSI target ID=0 then the PROM boot command would be:
 With SCSI target ID=2, the PROM is:
 .Dl \*> Ns Ic "b sd(0,10,1) -s
 The numbers in parentheses above are:
-.Bl -enum -compact -offset indent
-.	It
+.(enum -compact -offset indent
 controller (usually zero)
-.	It
+.It
 unit number (SCSI ID * 8, in hexadecimal)
-.	It
+.It
 partition number
-.El
+.enum)
 .
-.Ss2 Miniroot Install Program
+.Ss2 Miniroot install program
 .
 The miniroot's install program is very simple to use. It will guide
 you through the entire process, and is well automated. Additional
 improvements are planned for future releases.
 .Pp
 The miniroot's install program will:
-.Bl -bullet -offset indent
-.It
+.(bullet -offset indent
 Allow you to place disklabels on additional disks.
 The disk we are installing on should already have
 been partitioned using the RAMDISK kernel.
@@ -210,7 +212,7 @@ Copy a new kernel onto your root partition.
 Install a new boot block.
 .It
 Check your filesystems for integrity.
-.El
+.bullet)
 .Pp
 First-time installation on a system through a method other than the
 installation program is possible, but strongly discouraged.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 1999/06/12 11:24:35 pk Exp $	
+.\"	$NetBSD: prep,v 1.9 2000/10/10 12:55:22 lukem Exp $
 .
 Before you start you might need to consider your disk configuration
 to sort out a quirk in SCSI-ID to SD-UNIT mapping that exists on
@@ -49,15 +49,17 @@ operates in `old monitor compatibility' mode.
 Also, you cannot use the security modes of the sparc OpenBOOT ROM.
 .Dl ok Ic setenv security-mode none
 .Pp
-If you're installing NetBSD/sparc for the first time it's a good idea
+If you're installing
+.Nx*M
+for the first time it's a good idea
 to look at the partition sizes of disk you intend installing NetBSD on.
 .Pp
 Asumming a classic partition scheme with root (`/') and /usr filesystems,
-a comfortable size for the NetBSD root filesystem partition is about 20MB;
+a comfortable size for the NetBSD root filesystem partition is about 20 MB;
 a good initial size for the swap partition is twice the amount of physical
 memory in your machine (though, unlike SunOS 4.x, there are no restrictions
 on the size of the swap partition that would render part of your memory
-unusable). A full binary installation takes about 60MB in `/usr'.
+unusable). A full binary installation takes about 60 MB in `/usr'.
 .Pp
 Some network devices (i.e. the built-in `le' interface on sun4m machines)
 allow a choice between operating on a UTP or a AUI port. The `le' driver

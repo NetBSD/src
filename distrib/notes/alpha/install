@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 2000/10/03 22:46:20 lukem Exp $	
+.\"	$NetBSD: install,v 1.19 2000/10/10 12:55:15 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,8 +31,9 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Pp
-Installation of NetBSD/alpha is now easier than ever!
+Installation of
+.Nx*M
+is now easier than ever!
 For the latest news, problem reports, and discussion, join
 the port-alpha mainlist by mailing a line saying
 .Dl subscribe port-alpha
@@ -46,21 +47,25 @@ If you encounter any problems, please report them via the mailing list or the
 .Xr send-pr 1
 program so that they can be fixed for the next release.
 .Pp
-To install or upgrade NetBSD, you need to first boot an installation
+To install or upgrade
+.Nx ,
+you need to first boot an installation
 program and then interact with the screen-menu program
 .Ic sysinst .
-The installation program actually consists of the NetBSD kernel plus
-an in-memory file system of utility programs.
+The installation program actually consists of the
+.Nx
+kernel plus an in-memory file system of utility programs.
 .Pp
 The usual procedure is to write the installation system to a floppy
 disk set and then boot from the floppies, however, there
-are now six ways to boot the NetBSD/alpha installation system! Each approach
+are now six ways to boot the
+.Nx*M
+installation system! Each approach
 loads the exact same installation bits.
 The six paths are:
 .Pp
 .
-.Bl -enum -compact -offset indent
-.It
+.(bullet -offset indent
 Floppy disk boot
 .It
 CD boot
@@ -72,31 +77,41 @@ Magnetic Tape Boot
 Existing Root FS Boot
 .It
 Network boot
-.El
+.bullet)
 .
 .Pp
 In all cases, you need to transfer a
 bootable image of the installation system
-from the NetBSD CD or from an ftp site to the chosen media type.
+from the
+.Nx
+CD or from an ftp site to the chosen media type.
 Although booting from floppy is the usual path, the
 hard drive boot is useful if you have another operating system (and a spare
 drive) already installed, or if you don't mind swapping hard drives from
 box to box. CD and tape boots are nice and fast if you have a CD writer
 or a tape format in common with another previously installed Unix-like
-system. Finally, most versions of SRM can locate the NetBSD boot program
+system. Finally, most versions of SRM can locate the
+.Nx
+boot program
 .Ic netboot
 via bootp and download it via tftp,
 .Ic netboot
 then mounts the root file system via NFS and loads the kernel.
-.
-.
-.Bl -enum -compact
 .Pp
-.It
+Note that if you are installing or upgrading from a writable media,
+the media can be write-protected if you wish.
+These systems mount a root image from inside the kernel, and will not
+need to write to the media.
+If you booted from a floppy, the floppy disk may be removed from
+the drive after the system has booted.
+.Pp
+.
+.(bullet
 Floppy disk boot
 .Pp
 The 3.5", 1.44 MB boot floppy set is found under the
-NetBSD/alpha \*V distribution directory in
+.Nx*M
+\*V distribution directory in
 .Pa alpha/installation/floppy/
 as two files called
 .Pa disk1of2
@@ -106,13 +121,14 @@ You need to put these two disk images on two floppy disks.
 .Pp
 If you have a Unix system handy, you can do this with commands
 like the following:
-.Bd -literal -offset indent
+.(disp -offset indent
 dd if=disk1of2 of=/dev/rfd0a bs=18k
 dd if=disk2of2 of=/dev/rfd0a bs=18k
-.Ed
+.disp)
 .Pp
-If the Unix system you are using is not a NetBSD system, you will
-probably need to replace
+If the Unix system you are using is not a
+.Nx
+system, you will probably need to replace
 .Li /dev/rfd0a
 with the name of the floppy device on your particular system.
 .Pp
@@ -150,8 +166,10 @@ or
 it is important
 to create the tape image with 512-byte records. Use a command like:
 .Dl "dd if=cdhdtape bs=512 of=/dev/rst0"
-If the host system is not NetBSD, the names of the destination devices
-are likely to be different. Be sure to use a
+If the host system is not
+.Nx ,
+the names of the destination devices are likely to be different.
+Be sure to use a
 .Dq "raw partition"
 device that doesn't skip over labels!
 .Pp
@@ -176,15 +194,16 @@ uncompress it first.
 .It
 Network Boot
 .Pp
-Booting NetBSD/alpha \*V over a network requires a BOOTP or
+Booting
+.Nx*M
+\*V over a network requires a BOOTP or
 DHCP server, a TFTP server and an NFS server. (These are usually
 all run on the same machine.) There are three basic stages to
 the boot:
 .Pp
 .
 .
-.Bl -bullet
-.It
+.(bullet
 Alpha console software sends a BOOTP request to get its
 own address, the address of the TFTP server and the file to
 download. It downloads this file, which is the second stage
@@ -198,14 +217,16 @@ root path via NFS and reads in and transfers to the kernel:
 The kernel probes and configures the devices, and then sends
 out another BOOTP request so it can find out its address, the NFS
 server, and path. It then mounts its root via NFS and continues.
-.El
+.bullet)
 .
 .
 .Pp
 You will need to set up servers for BOOTP, TFTP and NFS.
 .Pp
 If you want to run a full system
-from the network, untar the NetBSD snapshot or distribution
+from the network, untar the
+.Nx
+snapshot or distribution
 into a directory on your server and NFS export that directory
 to the client. Make sure you put a kernel there as well, and
 create the device nodes in
@@ -215,14 +236,10 @@ with
 Detailed instructions on netbooting can be found by visiting the
 .Nx
 Alpha platform page:
-.Pp
-\~\~\~\~\~
 .Lk http://www.NetBSD.org/Ports/alpha
 .Pp
 At the time of this
 release, the URL for the netbooting instructions is:
-.Pp
-\~\~\~\~\~
 .Lk http://www.netbsd.org/Documentation/network/netboot/
 .Pp
 You'll want to map root to
@@ -231,7 +248,9 @@ You'll want to map root to
 .Li nobody )
 when you export your root filesystem. A typical
 .Pa /etc/exports
-line on a NetBSD system would be:
+line on a
+.Nx
+system would be:
 .Dl /usr/export/alpha -maproot=0 myclient.mydom.com
 .Pp
 One option is to load just the install kernel over the network but then
@@ -248,7 +267,9 @@ image from the distribution.
 The gzipped image can be booted directly; it is not necessary to
 uncompress it first.
 .Pp
-The console will be using TFTP to load the NetBSD boot program,
+The console will be using TFTP to load the
+.Nx
+boot program,
 so for the TFTP setup, you need to copy the second stage bootstrap,
 .Ic netboot ,
 into an appropriately named file such as
@@ -261,10 +282,8 @@ if not, you can get this from the
 directory where you found the alpha distribution.
 .Pp
 For the BOOTP server you need to specify the:
-.Pp
 .
-.Bl -bullet -compact
-.It
+.(bullet -compact -offset indent
 hardware type (Ethernet)
 .It
 hardware address (Ethernet MAC address)
@@ -278,18 +297,19 @@ address of of the TFTP/NFS server
 name of the second stage bootstrap loaded via TFTP
 .It
 path to the root for the client (mounted via NFS)
-.El
+.bullet)
 .
 .Pp
 Here's an example for a Unix system running bootpd:
-.Bd -literal -offset indent
+.(disp
 myhost.mydom.com:\
 	 :ht=ethernet:ha=0000c0391ae4:\e
 	 :ip=192.168.1.2:sm=255.255.255.0:\e
 	 :sa=192.168.1.1:bf=boot.netbsd.alpha:rp=/usr/export/alpha:
-.Ed
+.disp)
+.Pp
 And here's an example for a Unix system running the ISC dhcpd:
-.Bd -literal -offset indent
+.(disp
 host axp {
 	hardware ethernet 0:0:c0:39:1a:e4;
 	fixed-address 192.168.1.2;
@@ -300,7 +320,7 @@ host axp {
 	option broadcast-address 255.255.255.0;
 	option domain-name "my.domain";
 }
-.Ed
+.disp)
 .Pp
 The only Ethernet device the console on most Alpha systems
 knows how to boot from is the onboard Ethernet interface or a
@@ -332,8 +352,7 @@ do not have a
 option and use different device names. They also tend to not netboot very
 well so you probably don't need to worry about this section. However, if you
 want to give it a try, note the following differences:
-.Bl -bullet -offset indent
-.It
+.(bullet -offset indent
 There is no
 .Fl Ar proto
 argument, or
@@ -349,14 +368,14 @@ boot program.
 .It
 Example:
 .Dl \*>\*>\*>\ boot\ ez0
-.El
-.El
+.bullet)
+.bullet)
 .
 .
 .Pp
 .so ../common/sysinst
 .
-.Ss2 "Manual and Script-Assisted Installation"
+.Ss2 Manual and script-assisted installation
 .
 All of the installation procedures consist of
 putting a label on the disk to provide information on
@@ -366,13 +385,12 @@ filesystems on the partitions, and unpacking the distribution
 tar archives.
 .
 .
-.Bl -enum
-.It
+.(enum
 Disk prep: label, boot block, and file system setup
 .
 .
-.Bl -tag -width 3n
-.It A.
+.(tag "AA."
+.It "A."
 Manual Install from the Shell Prompt
 .Pp
 The normal installation involves running the install shell script
@@ -385,8 +403,7 @@ what the install script does. The procedure is:
 .Pp
 .
 .
-.Bl -bullet -compact
-.It
+.(bullet -compact
 create
 .Pa /etc/disktab ,
 see
@@ -406,12 +423,13 @@ cd to
 .Pa /usr/mdec
 and run
 .Xr installboot 8
-.El
+.bullet)
 .
 .
 .Pp
-If you are reviewing man pages on NetBSD platforms other than
-alpha, be sure that when reading
+If you are reviewing man pages on
+.Nx
+platforms other than alpha, be sure that when reading
 .Xr installboot 8
 you read the alpha
 version by typing: "man 8 alpha/installboot".
@@ -489,8 +507,7 @@ bootable, initialise the filesystems, and mount them all under
 .Pa /mnt .
 You are now ready to go on to the next step.
 .
-.
-.El
+.tag)
 .
 .
 .It
@@ -509,8 +526,7 @@ via a CD-ROM archive, a tape archive, or by preloading an accessible hard
 drive with the necesary tar files.
 .
 .
-.Bl -bullet
-.It
+.(bullet
 Preparing to Install from a CD-ROM
 .Pp
 All you need to do is mount the CD-ROM, which will generally
@@ -582,25 +598,25 @@ which to put them and then use the ftp client to download them.
 Mirror sites are listed at:
 .Lk http://www.netbsd.org/Sites/net.html
 A typical session might be:
-.Bd -literal -offset indent
+.(disp
 mkdir /mnt/usr/release
 cd /mnt/usr/release
 ftp ftp.netbsd.org
-.Ed
-[the following commmands are given to the ftp program
-after logging in]
-.Bd -literal offset indent
+.disp)
+.Pp
+[the following commmands are given to the ftp program after logging in]
+.(disp
 prompt
 cd /pub/NetBSD/NetBSD-\*V/alpha/binary/sets
 mget *
 bye
-.Ed
+.disp)
 .Pp
 Feel free, of course, to leave off the sets that you don't need
 if you don't plan to install everything.
 .
 .
-.El
+.bullet)
 .
 .
 .It
@@ -618,7 +634,7 @@ For this and the following commands, replace
 with the path to your NFS volume or CD-ROM if that's how you
 chose to access your install files instead.
 .Pp
-The sets and kernel are extracted with
+The sets and kernel are extracted with:
 .
 .(disp
 cd /mnt
@@ -626,8 +642,9 @@ for i in base kern comp etc games man misc text; do
     tar xpzf /mnt/usr/release/$i.tgz;
 done
 .disp)
-.
+.Pp
 or perhaps:
+.Pp
 .
 .(disp
 cd /mnt
@@ -636,13 +653,12 @@ for i in /mnt/usr/release/*.tgz; do
     tar xpzf $i
 done
 .disp)
-.
+.Pp
 Now make the device nodes:
 .(disp
 cd /mnt/dev
 sh ./MAKEDEV all
 .disp)
-.
 .
 .It
 Restart your system
@@ -671,12 +687,12 @@ to see a full list of bootable
 devices in your system. Your system will come up in single-user
 mode, ready for you to configure it.
 .
-.El
+.enum)
 .
 .
 .Pp
 You can create the floppy needed for installation
-under DOS or Windows. Supposing your 1.44M floppy
+under DOS or Windows. Supposing your 1.44 MB floppy
 drive is drive A:, and your CD is drive
 .Ic E: ,
 do the following from an MS-DOS command prompt:

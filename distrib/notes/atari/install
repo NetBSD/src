@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.13 2000/10/03 23:21:26 lukem Exp $	
+.\"	$NetBSD: install,v 1.14 2000/10/10 12:55:17 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,14 +43,13 @@ The following is a walk-through of the steps necessary to get NetBSD
 installed on your hard disk.  If you wish to stop the installation,
 you may press Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
-.Bl -enum
-.It
+.(enum
 Booting the miniroot
 First you need to get yourself into NetBSD.  This can be
 done in a couple ways, both of which currently require
 GEMDOS. You need either the bootfloppy provided in the
 distribution or you can copy the loadbsd.ttp program and
-kernel to a boot floppy disk (1.4M needed) or put them on a TOS
+kernel to a boot floppy disk (1.44 MB needed) or put them on a TOS
 partition.  Select the loadbsd program and it will
 ask for parameters, supply: '-b netbsd' (or whatever name
 you copied the kernel to).  You can, of course, also run it
@@ -68,10 +67,10 @@ track loaded. After loading 80 tracks, it will ask you
 to insert the next floppy. At this time, insert the BSD
 install floppy 2 and press any key. The kernel continous
 loading another 40 tracks before it continues to boot.
-.(tag Note:
-If you are using 1.44Mb floppies, you should select 'md1a'
+.(Note
+If you are using 1.44 MB floppies, you should select 'md1a'
 instead of 'md0a'.
-.tag)
+.Note)
 The system should continue to boot.  For now ignore WARNING:
 messages about bad dates in clocks. Eventually you will be
 be asked to enter the pathname of the shell, just press
@@ -102,7 +101,7 @@ but is blank or used by another non-AHDI system, start at item 4b.
 .Pp
 .Em You are now at the point of no return!
 The programs in section
-4 will modify your harddisk. Type Control-C 
+4 will modify your harddisk. Type Control-C
 .Em now
 if you don't
 want this.
@@ -121,14 +120,14 @@ that AHDI created them. When you leave this editor and continue
 at item 4b, your changes to the id's do have consequences to the
 partition order! They will show up as follows:
 .Pp
-.	Bl -tag -width d\ (and\ up)
-.	It a          
+.(tag d\ (and\ up)
+.It a
 \- the first NBD partition
-.	It b          
+.It b
 \- the first NBS partition
-.	It d\ (and\ up) 
+.It d (and up)
 \- the rest of the partitions in AHDI order
-.	El
+.tag)
 .It
 Labeling your root disk (using edlabel)
 You are now allowed to change the partitioning of your disk. If
@@ -139,20 +138,20 @@ yourself by selecting 'standarize geometry'. This allows you to
 select a 'sectors per track' and 'tracks/cylinder' value and have
 the (fictious) SCSI geometry changed accordingly. So if you select
 64 sect/track and 32 tracks/cylinder, each cylinder is exactly
-1Mb in size. Well, go ahead and don't forget to save your work
+1 MB in size. Well, go ahead and don't forget to save your work
 before you quit!
-.(tag Note:
+.(Note
 to make sure that NetBSD can create/mount filesystems on
 the partitions you defined, make sure the 'type' is entered
 correctly:
 .Pp
-.Bl -tag -width 4.2BSD -compact
+.(tag 4.2BSD -compact
 .It Tn 4.2BSD
 \- filesystems created by NetBSD
 .It Tn MSDOS
 \- filesystems shared with GEM
-.El
 .tag)
+.Note)
 .It
 Label additional disks
 Now that your root-disk is labeled, you are given the opportunity
@@ -184,8 +183,7 @@ You are finally at the point where some real data will be put on
 your freshly-made filesystems. Select the device type you whish
 to install from and off you go....
 Some notes:
-.Bl -bullet
-.It
+.(bullet
 If you want to install from tape, please read the section
 about how to create such a tape.
 The tape device name will be "nrst0" for the first tape
@@ -199,7 +197,7 @@ you need the mount-point itself, enter '.'.
 For previous NetBSD users:  If you want to install from a
 GEMDOS filesystem, you don't need to rename the distribution
 sets as you may have done in previous versions of NetBSD.
-.El
+.bullet)
 .It
 Timezone selection and device-node building
 The isn't much to say about this. Just select the timezone you
@@ -211,8 +209,8 @@ Be patient, this will take a while...
 Installing the kernel
 Because the kernel didn't fit on the install-disks, the installer
 asks you about the disk your kernel is on. You can specify the
-floppy with disk 'fd0' and partition 'b' for  720K disks and
-partition 'c' for 1.4M disks, or one of the hard disk partitions.
+floppy with disk 'fd0' and partition 'b' for  720 KB disks and
+partition 'c' for 1.44 MB disks, or one of the hard disk partitions.
 .It
 Installing the bootstrap
 Finally, the installer ask you if you want to install the bootblock
@@ -226,13 +224,12 @@ also installed a bootblock, you only have to reboot your atari to
 enter your freshly build system. If you didn't, get back to section
 1 (How to boot the miniroot). Just substitute 'md0a' by your NetBSD
 root disk.
-.El
-.Ss2 Some\ Extra\ Remarks
+.enum)
+.Ss2 Some extra remarks
 If you don't want to use the bootloader. You could use the following
 setup:
-.Bl -bullet
-.It
-Reserve a small GEMDOS partition of about 4Mb. This is
+.(bullet
+Reserve a small GEMDOS partition of about 4 MB. This is
 enough to put in a few kernels. Put the netbsd kernel
 into this partition. Also, edit your /etc/fstab to always
 mount this partition, say as /kernels. Now make a symlink
@@ -242,4 +239,4 @@ own kernel. When compilation is finished, you just copy
 your kernel to /kernels/netbsd and reboot. It's wise to
 make sure there is _always_ a 'known to work' kernel image
 present.
-.El
+.bullet)
