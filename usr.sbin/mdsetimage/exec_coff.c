@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_coff.c,v 1.1 1999/09/12 16:08:14 itojun Exp $	*/
+/*	$NetBSD: exec_coff.c,v 1.2 2000/01/07 09:40:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_coff.c,v 1.1 1999/09/12 16:08:14 itojun Exp $");
+__RCSID("$NetBSD: exec_coff.c,v 1.2 2000/01/07 09:40:35 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: exec_coff.c,v 1.1 1999/09/12 16:08:14 itojun Exp $");
 #include "extern.h"
 
 #if defined(NLIST_COFF)
-#include <machine/exec_coff.h>	/* XXX sys/exec_coff.h? */
+#include <sys/exec_coff.h>
 
 #define	check(off, size)	((off < 0) || (off + size > mappedsize))
 #define	BAD			do { rv = -1; goto out; } while (0)
