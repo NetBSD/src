@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.22 2000/06/28 16:27:53 mrg Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.23 2000/07/12 23:14:09 soren Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -87,9 +87,6 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
  * IRQs for PCMCIA slots.  Useful if order of probing would screw up other
  * devices, or if PCIC hardware/cards have trouble with certain interrupt
  * lines.
- *
- * We disable IRQ 10 by default, since some common laptops (namely, the
- * NEC Versa series) reserve IRQ 10 for the docking station SCSI interface.
  */
 
 #ifndef PCIC_ISA_INTR_ALLOC_MASK
