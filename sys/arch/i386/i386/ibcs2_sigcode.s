@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1.4.9 2002/02/24 01:55:11 sommerfeld Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.s,v 1.4.2.2 2002/02/24 01:55:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,120 +76,23 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
-#include "opt_multiprocessor.h"
 #endif
 
 #include "assym.h"
 
-#include <machine/psl.h>
-#include <machine/segments.h>
-#include <machine/trap.h>
-#include <compat/svr4/svr4_syscall.h>
-
-/*
- * override user-land alignment before including asm.h
- */
-#ifdef __ELF__
-#define	ALIGN_DATA	.align	4
-#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
-#else
-#define	ALIGN_DATA	.align	2
-#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
-#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
-#endif
-#define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
+#include <compat/ibcs2/ibcs2_syscall.h>
 
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#ifdef __ELF__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-#else
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
-#endif
-
-/*
- * These are used on interrupt or trap entry or exit.
- */
-#define	INTRENTRY \
-	pushl	%eax		; \
-	pushl	%ecx		; \
-	pushl	%edx		; \
-	pushl	%ebx		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
-	pushl	%ebp		; \
-	pushl	%esi		; \
-	pushl	%edi		; \
-	pushl	%ds		; \
-	pushl	%es		; \
-	movw	%ax,%ds		; \
-	movw	%ax,%es		; \
-	pushl	%fs		; \
-	pushl	%gs		; \
-	movw	%ax,%gs		; \
-	movw	$GSEL(GCPU_SEL, SEL_KPL),%ax	; \
-	movw	%ax,%fs		
-	
-#define	INTRFASTEXIT \
-	popl	%gs		; \
-	popl	%fs		; \
-	popl	%es		; \
-	popl	%ds		; \
-	popl	%edi		; \
-	popl	%esi		; \
-	popl	%ebp		; \
-	popl	%ebx		; \
-	popl	%edx		; \
-	popl	%ecx		; \
-	popl	%eax		; \
-	addl	$8,%esp		; \
-	iret
-	
-#define _CONCAT(a,b) a/**/b
-
-#if defined(MULTIPROCESSOR)
-#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
-#else
-#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
-#endif
-
-#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
-#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
-	
-/*
- * Signal trampoline; copied to top of user stack.
- */
-/* LINTSTUB: Var: char svr4_sigcode[1], svr4_esigcode[1]; */
-NENTRY(svr4_sigcode)
-	call	*SVR4_SIGF_HANDLER(%esp)
-	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
-					# copy at SIGF_UCP(%esp))
-	pushl	%eax
-	pushl	$1			# setcontext(p) == syscontext(1, p) 
-	pushl	%eax			# junk to fake return address
-	movl	$SVR4_SYS_context,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$SVR4_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(svr4_esigcode)
-_C_LABEL(svr4_esigcode):
-
-IDTVEC(svr4_fasttrap)
-	pushl	$2		# size of instruction for restart
-	pushl	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	call	_C_LABEL(svr4_fasttrap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING()		
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING()
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	2b
-1:	INTRFASTEXIT
+/* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */
+NENTRY(ibcs2_sigcode)
+	call    *SIGF_HANDLER(%esp)
+	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
+					# copy at SIGF_SCP(%esp))
+	pushl   %eax
+	pushl   %eax                    # junk to fake return address
+	movl    $IBCS2_SYS_sigreturn,%eax
+	int     $0x80                   # enter kernel with args on stack
+	movl    $IBCS2_SYS_exit,%eax
+	int     $0x80                   # exit if sigreturn fails
+	.globl  _C_LABEL(ibcs2_esigcode)
+_C_LABEL(ibcs2_esigcode):
