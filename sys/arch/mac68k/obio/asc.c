@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.17 1997/02/11 07:47:36 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.18 1997/02/11 22:44:25 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -86,7 +86,7 @@
 #include "ascvar.h"
 #include "obiovar.h"
 
-#define	MAC68K_ASC_BASE	((caddr_t) 0x50f14000)
+#define	MAC68K_ASC_BASE	0x50f14000
 #define	MAC68K_ASC_LEN	0x01000
 
 static u_int8_t		asc_wave_tab[0x800];
@@ -111,23 +111,23 @@ ascmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct obio_attach_args *oa = aux;
-	bus_space_tag_t bst = MAC68K_BUS_SPACE_MEM;
-	bus_space_handle_t bsh;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_addr_t addr;
+	bus_space_handle_t bsh;
 	int rval = 0;
 
-	addr = (bus_addr_t) (oa->oa_addr ? oa->oa_addr : MAC68K_ASC_BASE);
+	addr = (bus_addr_t)(oa->oa_addr != (-1) ?
+	    oa->oa_addr : MAC68K_ASC_BASE);
 
-	if (bus_space_map(bst, addr, MAC68K_ASC_LEN, 0, &bsh))
+	if (bus_space_map(oa->oa_tag, addr, MAC68K_ASC_LEN, 0, &bsh))
 		return (0);
 
-	if (bus_probe(bst, bsh, 0, 1))
+	if (bus_probe(oa->oa_tag, bsh, 0, 1))
 		rval = 1;
 	else
 		rval = 0;
 
-	bus_space_unmap(bst, bsh, MAC68K_ASC_LEN);
+	bus_space_unmap(oa->oa_tag, bsh, MAC68K_ASC_LEN);
 
 	return rval;
 }
@@ -137,13 +137,14 @@ ascattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct asc_softc *sc = (struct asc_softc *) self;
-	struct obio_attach_args *oa = aux;
+	struct asc_softc *sc = (struct asc_softc *)self;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_addr_t addr;
 	int i;
 
-	sc->sc_tag = MAC68K_BUS_SPACE_MEM;
-	addr = (bus_addr_t) (oa->oa_addr ? oa->oa_addr : MAC68K_ASC_BASE);
+	sc->sc_tag = oa->oa_tag;
+	addr = (bus_addr_t)(oa->oa_addr != (-1) ?
+	    oa->oa_addr : MAC68K_ASC_BASE);
 	if (bus_space_map(sc->sc_tag, addr, MAC68K_ASC_LEN, 0,
 	    &sc->sc_handle)) {
 		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
@@ -166,8 +167,8 @@ ascattach(parent, self, aux)
 	}
 
 	printf(": Apple Sound Chip");
-	if (oa->oa_addr)
-		printf(" at %p", oa->oa_addr);
+	if (oa->oa_addr != (-1))
+		printf(" at %x", oa->oa_addr);
 	printf("\n");
 
 	mac68k_set_bell_callback(asc_ring_bell, sc);
@@ -271,7 +272,7 @@ ascmmap(dev, off, prot)
 
 	sc = asc_cd.cd_devs[unit];
 	if (off < MAC68K_ASC_LEN) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t) sc->sc_handle);
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_handle);
 		return mac68k_btop(pa + off);
 	}
 
@@ -283,7 +284,7 @@ asc_ring_bell(arg, freq, length, volume)
 	void *arg;
 	int freq, length, volume;
 {
-	struct asc_softc *sc = (struct asc_softc *) arg;
+	struct asc_softc *sc = (struct asc_softc *)arg;
 	unsigned long cfreq;
 	int i;
 
@@ -324,7 +325,7 @@ asc_ring_bell(arg, freq, length, volume)
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 2); /* enable sampled */
 	}
 	sc->sc_ringing++;
-	timeout((void *) asc_stop_bell, sc, length);
+	timeout(asc_stop_bell, sc, length);
 
 	return (0);
 }
@@ -333,7 +334,7 @@ static void
 asc_stop_bell(arg)
 	void *arg;
 {
-	struct asc_softc *sc = (struct asc_softc *) arg;
+	struct asc_softc *sc = (struct asc_softc *)arg;
 
 	if (!sc)
 		return;
