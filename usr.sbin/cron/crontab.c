@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.1.1.5 1994/01/26 19:09:35 jtc Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.2 1994/03/30 01:46:45 jtc Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -76,7 +76,7 @@ usage(msg)
 {
 	fprintf(stderr, "%s: usage error: %s\n", ProgramName, msg);
 	fprintf(stderr, "usage:\t%s [-u user] file\n", ProgramName);
-	fprintf(stderr, "\t%s [-u user] { -e | -l | -r }\n", ProgramName);
+	fprintf(stderr, "\t%s [-u user] [ -e | -l | -r ]\n", ProgramName);
 	fprintf(stderr, "\t\t(default operation is replace, per 1003.2)\n");
 	fprintf(stderr, "\t-e\t(edit user's crontab)\n");
 	fprintf(stderr, "\t-l\t(list user's crontab)\n");
