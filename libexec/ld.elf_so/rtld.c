@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.9 1998/07/15 11:26:28 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.10 1998/10/07 02:53:27 ross Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -204,8 +204,8 @@ Elf_Addr
 _rtld(
     Elf_Word *sp)
 {
-    const AuxInfo *aux_info[AUX_count];
-    int i = 0;
+    const AuxInfo *pAUX_base, *pAUX_entry, *pAUX_execfd,
+	          *pAUX_phdr, *pAUX_phent, *pAUX_phnum;
     char **env;
     const AuxInfo *aux;
     const AuxInfo *auxp;
@@ -241,23 +241,31 @@ _rtld(
     aux = (const AuxInfo *) sp;
 
     /* Digest the auxiliary vector. */
-    for (i = 0;  i < AUX_count;  ++i)
-	aux_info[i] = NULL;
+    pAUX_base = pAUX_entry = pAUX_execfd =
+    	        pAUX_phdr  = pAUX_phent = pAUX_phnum  = NULL;
     for (auxp = aux;  auxp->au_id != AUX_null;  ++auxp) {
-	if (auxp->au_id < AUX_count)
-	    aux_info[auxp->au_id] = auxp;
+	switch(auxp->au_id) {
+	    case AUX_base:
+		pAUX_base   = auxp; break;
+	    case AUX_entry:
+		pAUX_entry  = auxp; break;
+	    case AUX_execfd:
+		pAUX_execfd = auxp; break;
+	    case AUX_phdr:
+		pAUX_phdr   = auxp; break;
+	    case AUX_phent:
+		pAUX_phent  = auxp; break;
+	    case AUX_phnum:
+		pAUX_phnum  = auxp; break;
+	}
     }
 
     /* Initialize and relocate ourselves. */
-    assert(aux_info[AUX_base] != NULL);
-    _rtld_init((caddr_t) aux_info[AUX_base]->au_v);
+    assert(pAUX_base != NULL);
+    _rtld_init((caddr_t) pAUX_base->au_v);
 
 #ifdef RTLD_DEBUG
     xprintf("_ctype_ is %p\n", _ctype_);
-#endif
-#ifdef DEBUG
-    if (aux_info[AUX_debug] != NULL)	/* Set debugging level */
-	debug = aux_info[AUX_debug]->au_v;
 #endif
 
     __progname = _rtld_objself.path;
@@ -277,15 +285,14 @@ _rtld(
 	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
     }
 
-    dbg("%s is initialized, base address = %p", __progname,
-	(caddr_t) aux_info[AUX_base]->au_v);
+    dbg("%s is initialized, base address = %p", __progname, pAUX_base->au_v);
 
     /*
      * Load the main program, or process its program header if it is
      * already loaded.
      */
-    if (aux_info[AUX_execfd] != NULL) {	/* Load the main program. */
-	int fd = aux_info[AUX_execfd]->au_v;
+    if (pAUX_execfd != NULL) {	/* Load the main program. */
+	int fd = pAUX_execfd->au_v;
 	dbg("loading main program");
 	_rtld_objmain = _rtld_map_object(argv[0], fd);
 	close(fd);
@@ -297,14 +304,14 @@ _rtld(
 	caddr_t entry;
 
 	dbg("processing main program's program header");
-	assert(aux_info[AUX_phdr] != NULL);
-	phdr = (const Elf_Phdr *) aux_info[AUX_phdr]->au_v;
-	assert(aux_info[AUX_phnum] != NULL);
-	phnum = aux_info[AUX_phnum]->au_v;
-	assert(aux_info[AUX_phent] != NULL);
-	assert(aux_info[AUX_phent]->au_v == sizeof(Elf_Phdr));
-	assert(aux_info[AUX_entry] != NULL);
-	entry = (caddr_t) aux_info[AUX_entry]->au_v;
+	assert(pAUX_phdr != NULL);
+	phdr = (const Elf_Phdr *) pAUX_phdr->au_v;
+	assert(pAUX_phnum != NULL);
+	phnum = pAUX_phnum->au_v;
+	assert(pAUX_phent != NULL);
+	assert(pAUX_phent->au_v == sizeof(Elf_Phdr));
+	assert(pAUX_entry != NULL);
+	entry = (caddr_t) pAUX_entry->au_v;
 	_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
     }
 
