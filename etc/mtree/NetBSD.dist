@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.102 2000/04/30 18:10:28 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.103 2000/05/02 11:49:16 simonb Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -455,10 +455,23 @@ special
 
 # ./usr/share/doc
 doc
-# ./usr/share/doc/xntp
-xntp
+
+# ./usr/share/doc/html
+html
+
+# ./usr/share/doc/html/ntp
+ntp
+# ./usr/share/doc/html/ntp/hints
+hints
+# ./usr/share/doc/html/ntp
+..
+
+# ./usr/share/doc/html
+..
+
 # ./usr/share/doc
 ..
+
 # ./usr/share/doc/psd
 psd
 
