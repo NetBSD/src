@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_util.h,v 1.4 1995/06/22 21:34:44 fvdl Exp $	*/
+/*	$NetBSD: linux_util.h,v 1.5 1995/06/24 20:20:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,51 +27,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * from: svr4_util.h,v 1.5 1994/11/18 02:54:31 christos Exp
- */
-
-/*
- * This file is pretty much the same as Christos' svr4_util.h
- * (for now).
  */
 
 #ifndef	_LINUX_UTIL_H_
 #define	_LINUX_UTIL_H_
 
-#include <machine/vmparam.h>
-#include <sys/cdefs.h>
+#include <compat/common/compat_util.h>
 
 #define cvtto_linux_mask(flags,bmask,lmask) (((flags) & bmask) ? lmask : 0)
 #define cvtto_bsd_mask(flags,lmask,bmask) (((flags) & lmask) ? bmask : 0)
 
-static __inline caddr_t
-stackgap_init()
-{
-	extern char     linux_sigcode[], linux_esigcode[];
-#define szsigcode ((caddr_t)(linux_esigcode - linux_sigcode))
-	return STACKGAPBASE;
-}
-
-
-static __inline void *
-stackgap_alloc(sgp, sz)
-	caddr_t	*sgp;
-	size_t   sz;
-{
-	void	*p = (void *) *sgp;
-	*sgp += ALIGN(sz);
-	return p;
-}
-
 extern const char linux_emul_path[];
 
-int linux_emul_find __P((struct proc *, caddr_t *, const char *, char *,
-			char **, int));
+#define LINUX_CHECK_ALT_EXIST(p, sgp, path) \
+    CHECK_ALT_EXIST(p, sgp, linux_emul_path, path)
 
-#define CHECK_ALT_EXIST(p, sgp, path) \
-    linux_emul_find(p, sgp, linux_emul_path, path, &(path), 0)
-
-#define CHECK_ALT_CREAT(p, sgp, path) \
-    linux_emul_find(p, sgp, linux_emul_path, path, &(path), 1)
+#define LINUX_CHECK_ALT_CREAT(p, sgp, path) \
+    CHECK_ALT_CREAT(p, sgp, linux_emul_path, path)
 
 #endif /* !_LINUX_UTIL_H_ */
