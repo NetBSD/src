@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.7 2002/02/16 10:54:55 wiz Exp $
+	$NetBSD: prep.RISCOS,v 1.8 2002/03/12 19:20:10 reinoud Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
@@ -95,7 +95,11 @@ Additionally you will require the following :
 	A hardcopy of this document, along with a hardcopy of the
 	NetBSD installation instructions "INSTALL").
 
+Preliminary steps :
 
+	Unpack your BtNetBSD archive in whatever way, set the type of
+	the `Settype' file in the BtNetBSD directory to `Obey' and run
+	it. This will make the files RISC OS typed correctly.
 
 2 Preparing your hard disk
 
