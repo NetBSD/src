@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.27 2003/04/08 04:31:23 kml Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.28 2003/05/13 05:51:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,20 @@
 #include <net/if_ether.h>
 
 #define	IEEE80211_ADDR_LEN			ETHER_ADDR_LEN
+
+/* IEEE 802.11 PLCP header */
+struct ieee80211_plcp_hdr {
+	u_int16_t	i_sfd;		/* IEEE80211_PLCP_SFD */
+	u_int8_t	i_signal;	/* MPDU data rate in 100Kb/s */
+	u_int8_t	i_service;	/* IEEE80211_PLCP_SERVICE */
+	u_int16_t	i_length;	/* MPDU duration in microseconds */
+	u_int16_t	i_crc;		/* CRC16 of i_signal, i_service,
+					 * i_length
+					 */
+} __attribute__((__packed__));
+
+#define IEEE80211_PLCP_SFD	0xF3A0
+#define IEEE80211_PLCP_SERVICE	0x00
 
 /*
  * generic definitions for IEEE 802.11 frames
@@ -155,6 +169,29 @@ typedef uint8_t *ieee80211_mgt_beacon_t;
 #define	IEEE80211_RATE_BASIC			0x80
 #define	IEEE80211_RATE_VAL			0x7f
 
+/* One Time Unit (TU) is 1Kus = 1024 microseconds. */
+#define IEEE80211_DUR_TU		1024
+
+/* IEEE 802.11b durations for DSSS PHY in microseconds */
+#define IEEE80211_DUR_DS_LONG_PREAMBLE	144
+#define IEEE80211_DUR_DS_SHORT_PREAMBLE	72
+#define IEEE80211_DUR_DS_FAST_PLCPHDR	24
+#define IEEE80211_DUR_DS_SLOW_PLCPHDR	48
+#define IEEE80211_DUR_DS_SLOW_ACK	112
+#define IEEE80211_DUR_DS_FAST_ACK	56
+#define IEEE80211_DUR_DS_SLOW_CTS	112
+#define IEEE80211_DUR_DS_FAST_CTS	56
+#define IEEE80211_DUR_DS_SLOT		20
+#define IEEE80211_DUR_DS_SIFS		10
+#define IEEE80211_DUR_DS_PIFS	(IEEE80211_DUR_DS_SIFS + IEEE80211_DUR_DS_SLOT)
+#define IEEE80211_DUR_DS_DIFS	(IEEE80211_DUR_DS_SIFS + \
+				 2 * IEEE80211_DUR_DS_SLOT)
+#define IEEE80211_DUR_DS_EIFS	(IEEE80211_DUR_DS_SIFS + \
+				 IEEE80211_DUR_DS_SLOW_ACK + \
+				 IEEE80211_DUR_DS_LONG_PREAMBLE + \
+				 IEEE80211_DUR_DS_SLOW_PLCPHDR + \
+				 IEEE80211_DUR_DIFS)
+
 /*
  * Management information elements
  */
@@ -264,6 +301,8 @@ typedef u_int8_t *ieee80211_mgt_auth_t;
 #define	IEEE80211_STATUS_SP_REQUIRED		19
 #define	IEEE80211_STATUS_PBCC_REQUIRED		20
 #define	IEEE80211_STATUS_CA_REQUIRED		21
+#define	IEEE80211_STATUS_TOO_MANY_STATIONS	22
+#define	IEEE80211_STATUS_RATES			23
 
 #define	IEEE80211_WEP_KEYLEN			5	/* 40bit */
 #define	IEEE80211_WEP_IVLEN			3	/* 24bit */
