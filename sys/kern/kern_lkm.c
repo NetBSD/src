@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.63 2003/01/18 10:06:27 thorpej Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.64 2003/04/10 19:06:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.63 2003/01/18 10:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.64 2003/04/10 19:06:05 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -250,7 +250,6 @@ lkmioctl(dev, cmd, data, flag, p)
 
 	switch(cmd) {
 	case LMRESERV:		/* reserve pages for a module */
-	case LMRESERV_O:	/* reserve pages for a module */
 		if (securelevel > 0)
 			return EPERM;
 
@@ -271,7 +270,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		}
 		curp = &lkmods[i];
 		curp->id = i;		/* self reference slot offset */
-		curp->ver = (cmd == LMRESERV) ? LKM_VERSION : LKM_OLDVERSION;
+		curp->ver = LKM_VERSION;
 
 		resrvp->slot = i;		/* return slot */
 
