@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11 2003/08/07 11:25:44 agc Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.1 2004/11/14 23:04:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd November 14, 2004
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -43,7 +43,9 @@ The
 file is the configuration file for the
 .Xr syslogd 8
 program.
-It consists of lines with two fields: the
+It consists of blocks of lines separated by
+.Em program
+specifications, with each line containing two fields: the
 .Em selector
 field which specifies the types of messages and priorities to which the
 line applies, and an
@@ -99,6 +101,17 @@ values specified to the
 .Xr syslog 3
 library routine.
 .Pp
+Each block of lines is separated from the previous block by a tag.
+The tag is a line beginning with
+.Em #!prog
+or
+.Em !prog
+(the former is for compatbility with older versions of
+.Xr syslogd 8 ,
+which will interpret the tag as a comment)
+and each block will be associated with log messages from the program
+specified by the tag.
+.Pp
 See
 .Xr syslog 3
 for a further descriptions of both the
@@ -106,12 +119,22 @@ for a further descriptions of both the
 and
 .Em level
 keywords and their significance.
+It is preferred that selections be made based on
+.Em facility
+rather than
+.Em program ,
+since the latter can vary in a networked environment.
+However, there are cases where a
+.Em facility
+may be too broadly defined.
 .Pp
 If a received message matches the specified
 .Em facility
 and is of the specified
 .Em level
 .Em (or a higher level) ,
+and the first word in the message after the date matches the
+.Em program ,
 the action specified in the
 .Em action
 field will be taken.
@@ -138,7 +161,9 @@ characters.
 An asterisk
 .Pq Sq \&*
 can be used to specify all
-.Em facilities
+.Em programs ,
+all
+.Em facilities ,
 or all
 .Em levels .
 .Pp
@@ -226,6 +251,10 @@ mail.*							/var/log/maillog
 # Save mail and news errors of level err and higher in a
 # special file.
 mail,news.err						/var/log/spoolerr
+
+# Save ftpd transactions along with mail and news
+!ftpd
+*.*							/var/log/spoolerr
 .Ed
 .Sh SEE ALSO
 .Xr syslog 3 ,
