@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.13 2002/03/10 16:48:58 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.14 2002/03/15 07:16:10 tacha Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.13 2002/03/10 16:48:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.14 2002/03/15 07:16:10 tacha Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,7 +498,6 @@ int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 
-#if 0 /* XXX Not until we emulate it. */
 	switch (aep->index) {
 	case 0:
 		strcpy(aep->name, AudioEulinear);
@@ -506,9 +505,6 @@ auich_query_encoding(void *v, struct audio_encoding *aep)
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
-#else
-	switch (aep->index + 1) {
-#endif
 	case 1:
 		strcpy(aep->name, AudioEmulaw);
 		aep->encoding = AUDIO_ENCODING_ULAW;
@@ -586,21 +582,24 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			return (EINVAL);
 
 		p->factor = 1;
+		if (p->precision == 8)
+			p->factor *= 2;
+
 		p->sw_code = NULL;
+		/* setup hardware formats */
+		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+		p->hw_precision = 16;
 		if (p->channels < 2)
 			p->hw_channels = 2;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (p->precision == 16) {
 				p->sw_code = swap_bytes;
-				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			} else {
 				if (mode == AUMODE_PLAY)
 					p->sw_code = linear8_to_linear16_le;
 				else
 					p->sw_code = linear16_to_linear8_le;
-				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-				p->hw_precision = 16;
 			}
 			break;
 
@@ -610,7 +609,6 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 					p->sw_code = linear8_to_linear16_le;
 				else
 					p->sw_code = linear16_to_linear8_le;
-				p->hw_precision = 16;
 			}
 			break;
 
@@ -622,24 +620,26 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 				else
 					p->sw_code =
 					    change_sign16_swap_bytes_le;
-				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			} else {
-				/*
-				 * XXX ulinear8_to_slinear16_le
-				 */
-				return (EINVAL);
+				if (mode == AUMODE_PLAY)
+					p->sw_code =
+					    ulinear8_to_slinear16_le;
+				else
+					p->sw_code =
+					    slinear16_to_ulinear8_le;
 			}
 			break;
 
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16) {
 				p->sw_code = change_sign16_le;
-				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			} else {
-				/*
-				 * XXX ulinear8_to_slinear16_le
-				 */
-				return (EINVAL);
+				if (mode == AUMODE_PLAY)
+					p->sw_code =
+					    ulinear8_to_slinear16_le;
+				else
+					p->sw_code =
+					    slinear16_to_ulinear8_le;
 			}
 			break;
 
@@ -649,22 +649,13 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 			} else {
 				p->sw_code = slinear16_to_mulaw_le;
 			}
-			p->factor = 2;
-			p->hw_precision = 16;
-			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			break;
 
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
 				p->sw_code = alaw_to_slinear16_le;
-				p->hw_precision = 16;
-				p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
 			} else {
-				/*
-				 * XXX slinear16_le_to_alaw
-				 */
-				return (EINVAL);
+				p->sw_code = slinear16_to_alaw_le;
 			}
 			break;
 
@@ -678,10 +669,17 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		if (sc->sc_fixed_rate) {
 			p->hw_sample_rate = sc->sc_fixed_rate;
 		} else {
-			auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-			    p->sample_rate);
-			auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-			    &rate);
+			if (mode == AUMODE_PLAY) {
+				auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+				    p->sample_rate);
+				auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
+				    &rate);
+			} else {
+				auich_write_codec(sc, AC97_REG_PCM_LR_ADC_RATE,
+				    p->sample_rate);
+				auich_read_codec(sc, AC97_REG_PCM_LR_ADC_RATE,
+				    &rate);
+			}
 			p->hw_sample_rate = rate;
 		}
 
