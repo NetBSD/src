@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 23:22:58 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2001/11/05 15:05:55 hubertf Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kafs
 
@@ -16,6 +16,8 @@ SRCS=						\
 INCSDIR= /usr/include/kerberosIV
 
 INCS=	kafs.h
+
+MAN=	kafs.3
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/kafs		\
