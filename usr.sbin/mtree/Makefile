@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/11/07 08:01:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2001/11/10 07:10:11 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	mtree
@@ -12,9 +12,7 @@ LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 
 CPPFLAGS+=	-I${.CURDIR}/../../bin/ls -I${.CURDIR}/../../sbin/mknod
-.PATH:	${.CURDIR}/../../usr.bin/cksum \
-	${.CURDIR}/../../bin/ls \
-	${.CURDIR}/../../sbin/mknod
+.PATH:	${.CURDIR}/../../bin/ls ${.CURDIR}/../../sbin/mknod
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>
