@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.39 2001/02/12 23:30:12 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.40 2001/03/14 05:44:21 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -80,23 +80,21 @@
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
-static void ispminphys __P((struct buf *));
-static int32_t ispcmd __P((XS_T *));
-static int
-ispioctl __P((struct scsipi_link *, u_long, caddr_t, int, struct proc *));
+static void ispminphys(struct buf *);
+static int32_t ispcmd(XS_T *);
+static int ispioctl (struct scsipi_link *, u_long, caddr_t, int, struct proc *);
 
 static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
-static int isp_polled_cmd __P((struct ispsoftc *, XS_T *));
-static void isp_dog __P((void *));
-static void isp_command_requeue __P((void *));
-static void isp_internal_restart __P((void *));
+static int isp_polled_cmd(struct ispsoftc *, XS_T *);
+static void isp_dog(void *);
+static void isp_command_requeue(void *);
+static void isp_internal_restart(void *);
 
 /*
  * Complete attachment of hardware, include subdevices.
  */
 void
-isp_attach(isp)
-	struct ispsoftc *isp;
+isp_attach(struct ispsoftc *isp)
 {
 	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
 	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
@@ -197,8 +195,7 @@ isp_attach(isp)
  */
 
 static void
-ispminphys(bp)
-	struct buf *bp;
+ispminphys(struct buf *bp)
 {
 	/*
 	 * XX: Only the 1020 has a 24 bit limit.
@@ -210,12 +207,8 @@ ispminphys(bp)
 }
 
 static int      
-ispioctl(sc_link, cmd, addr, flag, p)
-	struct scsipi_link *sc_link;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+ispioctl(struct scsipi_link *sc_link, u_long cmd, caddr_t addr,
+    int flag, struct proc *p)
 {
 	struct ispsoftc *isp = sc_link->adapter_softc;
 	int s, chan, retval = ENOTTY;
@@ -267,8 +260,7 @@ ispioctl(sc_link, cmd, addr, flag, p)
 
 
 static int32_t
-ispcmd(xs)
-	XS_T *xs;
+ispcmd(XS_T *xs)
 {
 	struct ispsoftc *isp;
 	int result, s;
@@ -344,9 +336,7 @@ ispcmd(xs)
 }
 
 static int
-isp_polled_cmd(isp, xs)
-	struct ispsoftc *isp;
-	XS_T *xs;
+isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 {
 	int result;
 	int infinite = 0, mswait;
@@ -407,8 +397,7 @@ isp_polled_cmd(isp, xs)
 }
 
 void
-isp_done(xs)
-	XS_T *xs;
+isp_done(XS_T *xs)
 {
 	XS_CMD_S_DONE(xs);
 	if (XS_CMD_WDOG_P(xs) == 0) {
@@ -424,12 +413,11 @@ isp_done(xs)
 }
 
 static void
-isp_dog(arg)
-	void *arg;
+isp_dog(void *arg)
 {
 	XS_T *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	u_int32_t handle;
+	u_int16_t handle;
 
 	ISP_ILOCK(isp);
 	/*
@@ -522,8 +510,7 @@ isp_dog(arg)
  * Locks are held before coming here.
  */
 void
-isp_uninit(isp)
-	struct ispsoftc *isp;
+isp_uninit(struct ispsoftc *isp)
 {
 	isp_lock(isp);
 	/*
@@ -537,8 +524,7 @@ isp_uninit(isp)
  * Restart function for a command to be requeued later.
  */
 static void
-isp_command_requeue(arg)
-	void *arg;
+isp_command_requeue(void *arg)
 {
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
@@ -574,8 +560,7 @@ isp_command_requeue(arg)
  * done as a timeout for some hysteresis.
  */
 static void
-isp_internal_restart(arg)
-	void *arg;
+isp_internal_restart(void *arg)
 {
 	struct ispsoftc *isp = arg;
 	int result, nrestarted = 0;
@@ -607,10 +592,7 @@ isp_internal_restart(arg)
 }
 
 int
-isp_async(isp, cmd, arg)
-	struct ispsoftc *isp;
-	ispasync_t cmd;
-	void *arg;
+isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 {
 	int bus, tgt;
 	int s = splbio();
@@ -858,14 +840,7 @@ isp_async(isp, cmd, arg)
 
 #include <machine/stdarg.h>
 void
-#ifdef	__STDC__
 isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
-#else
-isp_prt(isp, fmt, va_alist)
-	struct ispsoftc *isp;
-	char *fmt;
-	va_dcl;
-#endif
 {
 	va_list ap;
 	if (level != ISP_LOGALL && (level & isp->isp_dblev) == 0) {
