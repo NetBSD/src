@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2003/07/21 17:41:16 tshiozak Exp $
+# $NetBSD: Makefile,v 1.14 2003/09/02 09:30:36 junyoung Exp $
 
 NOMAN=	# defined
 
@@ -236,6 +236,10 @@ LOCALES += ja_JP.eucJP
 LOCALES += ko_KR.eucKR
  LOCALESRC_ko_KR.eucKR = ko_KR.eucKR
    ALIASES_ko_KR.eucKR+=
+
+LOCALES += ko_KR.UTF-8
+ LOCALESRC_ko_KR.UTF-8 = en_US.UTF-8
+   ALIASES_ko_KR.UTF-8+=
 
 LOCALES += zh_CN.eucCN
  LOCALESRC_zh_CN.eucCN = zh_CN.eucCN

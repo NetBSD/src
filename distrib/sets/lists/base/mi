@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.422 2003/07/21 17:45:50 tshiozak Exp $
+# $NetBSD: mi,v 1.423 2003/09/02 09:30:31 junyoung Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1502,6 +1502,8 @@
 ./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko
 ./usr/share/locale/ko_KR.eucKR			base-locale-ko
 ./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko
+./usr/share/locale/ko_KR.UTF-8			base-locale-ko
+./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-locale-ko
 ./usr/share/locale/lt_LT.ISO8859-4		base-locale-lt
 ./usr/share/locale/lt_LT.ISO8859-4/LC_CTYPE	base-locale-lt
 ./usr/share/locale/lt_LT.ISO8859-13		base-locale-lt
