@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $	*/
+/*	$NetBSD: strptime.c,v 1.8 1998/01/20 20:39:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.8 1998/01/20 20:39:06 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -317,13 +317,18 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, INT_MAX)))
 				return (0);
 
-			tm->tm_year = i - 1900;
+			tm->tm_year = i - TM_YEAR_BASE;
 			break;
 
 		case 'y':	/* The year within the 20th century. */
 			_LEGAL_ALT(_ALT_E | _ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_year, 0, 99)))
+			if (!(_conv_num(&bp, &i, 0, 99)))
 				return (0);
+
+			if (i < 70)
+				tm->tm_year = i + 2000 - TM_YEAR_BASE;
+			else
+				tm->tm_year = i + 1900 - TM_YEAR_BASE;
 			break;
 
 		/*
