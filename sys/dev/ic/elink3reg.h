@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.6 1996/11/17 23:58:30 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.7 1996/11/22 04:48:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -359,3 +359,7 @@
 #define IS_PCI_AUI 			(1<<5)
 #define IS_PCI_BNC 			(1<<4)
 #define IS_PCI_UTP 			(1<<3)
+
+/* Used to probe for large-packet support */
+#define EP_LARGEWIN_PROBE		EP_THRESH_DISABLE
+#define EP_LARGEWIN_MASK		0xffc
