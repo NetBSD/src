@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.25 2003/11/20 15:46:42 yamt Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.26 2003/11/20 17:16:41 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.25 2003/11/20 15:46:42 yamt Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.26 2003/11/20 17:16:41 uwe Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -867,30 +867,30 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	 * handler. So we borrow a bit of space from the target's
 	 * stack, which we were adjusting anyway.
 	 */
-	siginfop = (siginfo_t *)(void *)((char *)(void *)olduc -
-	    sizeof(*siginfop));
-	*siginfop = *si;
-	maskp = (sigset_t *)(void *)((char *)(void *)siginfop -
+	maskp = (sigset_t *)(void *)((char *)(void *)olduc -
 	    STACKSPACE - sizeof(sigset_t));
 	*maskp = oldmask;
+	siginfop = (siginfo_t *)(void *)((char *)(void *)maskp -
+	    sizeof(*siginfop));
+	*siginfop = *si;
 
 	/*
 	 * XXX We are blatantly ignoring SIGALTSTACK. It would screw
 	 * with our notion of stack->thread mappings.
 	 */
-	uc = (ucontext_t *)(void *)((char *)(void *)maskp -
+	uc = (ucontext_t *)(void *)((char *)(void *)siginfop -
 	    sizeof(ucontext_t));
 #ifdef _UC_UCONTEXT_ALIGN
 	uc = (ucontext_t *)((uintptr_t)uc & _UC_UCONTEXT_ALIGN);
 #endif
 
 	_INITCONTEXT_U(uc);
-	uc->uc_stack.ss_sp = maskp;
+	uc->uc_stack.ss_sp = uc;
 	uc->uc_stack.ss_size = 0;
 	uc->uc_link = NULL;
 
 	SDPRINTF(("(makecontext %p): target %p: sig: %d uc: %p oldmask: %08x\n",
-	    self, target, si->si_signo, target->pt_uc, maskp->__bits[0]));
+	    self, target, si->si_signo, olduc, maskp->__bits[0]));
 	makecontext(uc, pthread__signal_tramp, 3, act.sa_handler, siginfop,
 	    olduc);
 	target->pt_uc = uc;
