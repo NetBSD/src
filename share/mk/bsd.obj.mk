@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.44 2003/07/28 02:38:33 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.45 2003/11/06 22:47:22 lukem Exp $
 
 .if !defined(_BSD_OBJ_MK_)
 _BSD_OBJ_MK_=1
@@ -32,7 +32,7 @@ obj:
 		if [ ! -d ${__objdir} ]; then \
 			mkdir ${__objdir}; exit 1; \
 		fi; \
-		echo "${__curdir} -> ${__objdir}"; \
+		${_MKSHMSG} " objdir  ${__objdir}"; \
 	fi
 .else
 PAWD?=		/bin/pwd
@@ -78,7 +78,7 @@ obj:
 		    [ "$$dest" = "$$ttarg" ]; then \
 			: ; \
 		else \
-			echo "$${here}${__objdir} -> $$dest"; \
+			${_MKSHMSG} " objdir  $$dest"; \
 			rm -rf ${__objdir}; \
 			ln -s $$dest ${__objdir}; \
 		fi; \
@@ -91,7 +91,7 @@ obj:
 		true ; \
 		dest=$${here}${__objdir} ; \
 		if [ ! -d ${__objdir} ] || [ -h ${__objdir} ]; then \
-			echo "making $$dest" ; \
+			${_MKSHMSG} " objdir  $$dest"; \
 			rm -f ${__objdir}; \
 			mkdir $$dest; \
 		fi ; \
