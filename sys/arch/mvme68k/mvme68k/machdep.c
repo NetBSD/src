@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86.4.2 2001/11/17 13:07:56 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86.4.3 2001/12/02 12:30:33 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -445,6 +445,12 @@ cpu_startup()
 
 	pmapdebug = 0;
 #endif
+
+	/*
+	 * If we have an FPU, initialise the cached idle frame
+	 */
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize the kernel crash dump header.

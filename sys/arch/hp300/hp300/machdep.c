@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.2 2001/11/18 18:09:33 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.3 2001/12/02 12:30:31 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -314,6 +314,9 @@ cpu_startup()
 
 	pmapdebug = 0;
 #endif
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize the kernel crash dump header.

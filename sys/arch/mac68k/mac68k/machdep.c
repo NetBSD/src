@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.4.2 2001/11/18 18:12:02 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265.4.3 2001/12/02 12:30:32 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -381,6 +381,9 @@ cpu_startup(void)
 	vsize_t size = 0;	/* To avoid compiler warning */
 	int delay;
 	char pbuf[9];
+
+	if (fputype != FPU_NONE)
+		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize the kernel crash dump header.
