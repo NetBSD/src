@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.54 1999/11/25 02:48:12 nisimura Exp $
+# 	$NetBSD: GENERIC,v 1.55 1999/11/27 01:19:31 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -138,30 +138,29 @@ tc*	at	mainbus0
 
 # 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
 ioasic0	at	tc?
-mcclock0 at	ioasic? offset ?	# DS1287 RTC
-le0	at	ioasic? offset ?	# LANCE
-scc0	at	ioasic? offset ?	# Z85C30
-scc1	at	ioasic? offset ?	# Z85C30
+mcclock* at	ioasic? offset ?	# DS1287 RTC
+le*	at	ioasic? offset ?	# LANCE
+scc*	at	ioasic? offset ?	# Z85C30
 #isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
-dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
+dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
-asc0	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
+asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
 
 # 3MAX has TURBOchannel but no IOASIC
 ibus0	at	tc? slot ? offset ?	# 3MAX system slot
-mcclock0 at	ibus0 addr ?		# DS1287 RTC
-dc0	at	ibus0 addr ?		# DC7085 quad line serial device
-asc0	at	tc? slot ? offset ?	# NCR53C94 SCSI
-le0	at	tc? slot ? offset ?	# LANCE
+
+# PMAX, 3MAX and MIPSMATE common devices
+mcclock* at	ibus0 addr ?		# DS1287 RTC
+dc*	at	ibus0 addr ?		# DC7085 quad line serial device
 
 # TURBOchannel devices
 mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
 cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
 #tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
 sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-px0	at	tc? slot ? offset ?	# PMAG-C PX family
+px*	at	tc? slot ? offset ?	# PMAG-C PX family
 #sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
-xcfb0	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
+xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
 le*	at	tc? slot ? offset ?	# PMAD-A LANCE
 fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
@@ -170,12 +169,9 @@ fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
 
 # PMAX and MIPSMATE
 ibus0	at	mainbus0
-pm0	at	ibus0 addr ?		# 3100 onboard fb
-dc0	at	ibus0 addr ?		# DC7085 quad line serial device
-le0	at	ibus0 addr ?		# 3100 onboard LANCE
-sii0	at	ibus0 addr ?		# DC7061 onboard SCSI
-mcclock0 at	ibus0 addr ?		# MC146818 RTC
-dc*	at	ibus0 addr ?		# 5100 optional serial devices
+pm*	at	ibus0 addr ?		# 3100 onboard fb
+le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
+sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 
 #########################################################################
 # SCSI configuration							#
