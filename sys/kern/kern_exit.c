@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.67 1999/04/30 21:23:49 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.68 1999/05/13 00:59:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -376,9 +376,9 @@ reaper()
 		/* Process is now a true zombie. */
 		LIST_INSERT_HEAD(&zombproc, p, p_list);
 
-		/* Wake up the parent so it can get exit satus. */
+		/* Wake up the parent so it can get exit status. */
 		if ((p->p_flag & P_FSTRACE) == 0)
-			psignal(p->p_pptr, SIGCHLD);
+			psignal(p->p_pptr, P_EXITSIG(p));
 		wakeup((caddr_t)p->p_pptr);
 	}
 }
@@ -401,7 +401,7 @@ sys_wait4(q, v, retval)
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
 		return (EINVAL);
 
 loop:
@@ -411,6 +411,15 @@ loop:
 		    p->p_pid != SCARG(uap, pid) &&
 		    p->p_pgid != -SCARG(uap, pid))
 			continue;
+		/*
+		 * Wait for processes with p_exitsig != SIGCHLD processes only
+		 * if WALTSIG is set; wait for processes with p_exitsig ==
+		 * SIGCHLD only if WALTSIG is clear.
+		 */
+		if ((SCARG(uap, options) & WALTSIG) ? p->p_exitsig == SIGCHLD :
+						      p->p_exitsig != SIGCHLD)
+			continue;
+
 		nfound++;
 		if (p->p_stat == SZOMB) {
 			retval[0] = p->p_pid;
@@ -433,8 +442,8 @@ loop:
 			 * the parent is different (meaning the process was
 			 * attached, rather than run as a child), then we need
 			 * to give it back to the old parent, and send the
-			 * parent a SIGCHLD.  The rest of the cleanup will be
-			 * done when the old parent waits on the child.
+			 * parent the exit signal.  The rest of the cleanup
+			 * will be done when the old parent waits on the child.
 			 */
 			if ((p->p_flag & P_TRACED) &&
 			    p->p_oppid != p->p_pptr->p_pid) {
@@ -442,7 +451,7 @@ loop:
 				proc_reparent(p, t ? t : initproc);
 				p->p_oppid = 0;
 				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-				psignal(p->p_pptr, SIGCHLD);
+				psignal(p->p_pptr, P_EXITSIG(p));
 				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}

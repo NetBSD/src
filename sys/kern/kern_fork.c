@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.57 1999/04/30 21:39:51 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.58 1999/05/13 00:59:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -77,7 +77,7 @@ sys_fork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 0, retval, NULL));
+	return (fork1(p, 0, SIGCHLD, retval, NULL));
 }
 
 /*
@@ -92,7 +92,7 @@ sys_vfork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT, retval, NULL));
+	return (fork1(p, FORK_PPWAIT, SIGCHLD, retval, NULL));
 }
 
 /*
@@ -107,13 +107,14 @@ sys___vfork14(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval, NULL));
+	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, retval, NULL));
 }
 
 int
-fork1(p1, flags, retval, rnewprocp)
+fork1(p1, flags, exitsig, retval, rnewprocp)
 	register struct proc *p1;
 	int flags;
+	int exitsig;
 	register_t *retval;
 	struct proc **rnewprocp;
 {
@@ -232,6 +233,9 @@ again:
 
 	/* Record the pid we've allocated. */
 	p2->p_pid = nextpid;
+
+	/* Record the signal to be delivered to the parent on exit. */
+	p2->p_exitsig = exitsig;
 
 	/*
 	 * Put the proc on allproc before unlocking PID allocation

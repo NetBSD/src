@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.75 1999/04/30 18:40:05 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.76 1999/05/13 00:59:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -123,6 +123,7 @@ struct	proc {
 #define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
+	int	p_exitsig;		/* signal to sent to parent on exit */
 	int	p_flag;			/* P_* flags. */
 	u_char	p_unused;		/* XXX: used to be emulation flag */
 	char	p_stat;			/* S* process status. */
@@ -229,6 +230,13 @@ struct	proc {
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
 #define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
+
+/*
+ * Macro to compute the exit signal.
+ */
+#define	P_EXITSIG(p)	((((p)->p_flag & (P_TRACED|P_FSTRACE)) ||	\
+			  (p)->p_pptr == initproc) ?			\
+			 SIGCHLD : p->p_exitsig)
 
 /*
  * MOVE TO ucred.h?
@@ -349,7 +357,7 @@ void	wakeup __P((void *chan));
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));
-int	fork1 __P((struct proc *, int, register_t *, struct proc **));
+int	fork1 __P((struct proc *, int, int, register_t *, struct proc **));
 void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
