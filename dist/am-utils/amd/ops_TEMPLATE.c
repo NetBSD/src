@@ -1,7 +1,5 @@
-/*	$NetBSD: ops_TEMPLATE.c,v 1.1.1.2 2000/11/19 23:43:48 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: ops_TEMPLATE.c,v 1.3 2000/01/12 16:44:21 ezk Exp
+ * $Id: ops_TEMPLATE.c,v 1.1.1.3 2001/05/13 17:34:20 veego Exp $
  *
  */
 
@@ -62,18 +60,18 @@
 #include <amd.h>
 
 /* forward declarations */
-static char * foofs_match(am_opts *fo);
+static char *foofs_match(am_opts *fo);
 static int foofs_init(mntfs *mf);
 static int foofs_mount(am_node *mp);
 static int foofs_fmount(mntfs *mf);
 static int foofs_umount(am_node *mp);
 static int foofs_fumount(mntfs *mf);
-static am_node * foofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
+static am_node *foofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
 static int foofs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count);
-static am_node * foofs_readlink(am_node *mp, int *error_return);
+static am_node *foofs_readlink(am_node *mp, int *error_return);
 static void foofs_mounted(mntfs *mf);
 static void foofs_umounted(am_node *mp);
-fserver * foofs_ffserver(mntfs *mf);
+fserver *foofs_ffserver(mntfs *mf);
 
 
 /*

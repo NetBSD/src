@@ -150,4 +150,13 @@ If you're using NFSv3, you must install HP patches PHNE_20344 and
 PHNE_20371.  If you don't, and you try to use amd with NFSv3 over TCP, your
 kernel will panic.
 
+(11) *-linux* (any system using a 2.2.18+ kernel)
+
+The Linux kernels don't support Amd's direct mounts very well, leading to
+erratic behavior: shares that don't get remounted after the first timeout,
+inability to restart Amd because its mount points cannot be unmounted,
+etc. There are some kernel patches on the am-utils Web site, which solve
+these problems.
+
+
 Erez.

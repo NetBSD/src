@@ -1,7 +1,5 @@
-/*	$NetBSD: mntfs.c,v 1.1.1.2 2000/11/19 23:43:40 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mntfs.c,v 1.5 2000/02/24 08:11:19 ezk Exp
+ * $Id: mntfs.c,v 1.1.1.3 2001/05/13 17:34:10 veego Exp $
  *
  */
 

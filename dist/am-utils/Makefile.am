@@ -89,7 +89,6 @@ EXTRA_DIST_AUX =			\
 	aux/macros/name_package.m4			\
 	aux/macros/name_version.m4			\
 	aux/macros/opt_amu_cflags.m4			\
-	aux/macros/opt_amq_mount.m4			\
 	aux/macros/opt_cppflags.m4			\
 	aux/macros/opt_debug.m4				\
 	aux/macros/opt_ldflags.m4			\
@@ -181,6 +180,7 @@ EXTRA_DIST_CONF =			\
 	conf/nfs_prot/nfs_prot_aix4_3.h		\
 	conf/nfs_prot/nfs_prot_bsdi2.h		\
 	conf/nfs_prot/nfs_prot_bsdi3.h		\
+	conf/nfs_prot/nfs_prot_darwin.h		\
 	conf/nfs_prot/nfs_prot_default.h	\
 	conf/nfs_prot/nfs_prot_freebsd2.h	\
 	conf/nfs_prot/nfs_prot_freebsd3.h	\
@@ -197,6 +197,7 @@ EXTRA_DIST_CONF =			\
 	conf/nfs_prot/nfs_prot_openbsd.h	\
 	conf/nfs_prot/nfs_prot_osf2.h		\
 	conf/nfs_prot/nfs_prot_osf4.h		\
+	conf/nfs_prot/nfs_prot_osf5_1.h		\
 	conf/nfs_prot/nfs_prot_sunos3.h		\
 	conf/nfs_prot/nfs_prot_sunos4.h		\
 	conf/nfs_prot/nfs_prot_sunos5_3.h	\
@@ -226,7 +227,6 @@ EXTRA_DIST_CONF =			\
 	conf/trap/trap_dgux.h		\
 	conf/trap/trap_hcx.h		\
 	conf/trap/trap_hpux.h		\
-	conf/trap/trap_hpux11.h		\
 	conf/trap/trap_irix.h		\
 	conf/trap/trap_isc3.h		\
 	conf/trap/trap_linux.h		\
@@ -246,7 +246,9 @@ EXTRA_DIST_INCLUDE =		\
 	include/am_utils.h	\
 	include/am_xdr_func.h	\
 	include/am_defs.h	\
-	include/amq_defs.h
+	include/amq_defs.h	\
+	include/mount_headers1.h \
+	include/mount_headers2.h
 
 EXTRA_DIST =			\
 	$(EXTRA_DIST_AUX)	\
@@ -257,10 +259,13 @@ EXTRA_DIST =			\
 	LSM.am-utils		\
 	MIRRORS			\
 	README.autofs		\
+	README.ldap		\
 	README.y2k		\
 	buildall		\
 	config.guess.long	\
 	depcomp			\
+	ldap-id.ms		\
+	ldap-id.txt		\
 	tasks
 
 DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
@@ -270,7 +275,7 @@ DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
 
 # update possibly new versions of autoconf/automake/libtool files
 update:
-	${MAKE} ${MFLAGS} -f $(top_srcdir)/aux/GNUmakefile update
+	(cd $(top_srcdir) && ${MAKE} ${MFLAGS} -f ./aux/GNUmakefile update)
 	${MAKE} ${MFLAGS} libtool
 # remake libtool
 libtool: $(LIBTOOL_DEPS)

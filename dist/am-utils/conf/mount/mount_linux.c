@@ -1,7 +1,5 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.2 2000/11/19 23:43:06 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mount_linux.c,v 1.11 2000/02/16 13:52:58 ezk Exp
+ * $Id: mount_linux.c,v 1.1.1.3 2001/05/13 17:33:41 veego Exp $
  */
 
 /*
@@ -115,6 +113,10 @@ const struct fs_opts dos_opts[] = {
   { NULL,	0 }
 };
 
+const struct fs_opts null_opts[] = {
+  { NULL,	0 }
+};
+
 
 /*
  * New parser for linux-specific mounts Should now handle fs-type specific
@@ -156,19 +158,27 @@ parse_opts(char *type, char *optstr, int *flags, char **xopts, int *noauto)
        * and parse the fs-specific options
        */
 #ifdef MOUNT_TYPE_PCFS
-      if (STREQ(type, MOUNT_TYPE_PCFS))
+      if (STREQ(type, MOUNT_TYPE_PCFS)) {
 	dev_opts = dos_opts;
-      else
+	goto do_opts;
+      }
 #endif /* MOUNT_TYPE_PCFS */
 #ifdef MOUNT_TYPE_CDFS
-	if (STREQ(type, MOUNT_TYPE_CDFS))
-	  dev_opts = iso_opts;
-	else
+      if (STREQ(type, MOUNT_TYPE_CDFS)) {
+	dev_opts = iso_opts;
+	goto do_opts;
+      }
 #endif /* MOUNT_TYPE_CDFS */
-	  {
-	    plog(XLOG_FATAL, "linux mount: unknown fs-type: %s\n", type);
-	    return NULL;
-	  }
+#ifdef MOUNT_TYPE_LOFS
+      if (STREQ(type, MOUNT_TYPE_LOFS)) {
+	dev_opts = null_opts;
+	goto do_opts;
+      }
+#endif /* MOUNT_TYPE_LOFS */
+      plog(XLOG_FATAL, "linux mount: unknown fs-type: %s\n", type);
+      return NULL;
+
+      do_opts:
       while (dev_opts->opt &&
 	     !NSTREQ(dev_opts->opt, opt, strlen(dev_opts->opt)))
 	++dev_opts;
@@ -219,7 +229,6 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   int noauto = 0;
   int errorcode;
   nfs_args_t *mnt_data = (nfs_args_t *) data;
-  int nfs_def_file_io_buffer_size = 1024;
 
   if (mnt->mnt_opts && STREQ (mnt->mnt_opts, "defaults"))
     mnt->mnt_opts = NULL;
@@ -249,24 +258,16 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 #endif /* MNT2_NFS_OPT_NOAC */
 
     /*
-     * Linux kernels 2.0.x and earlier used a default NFS read/write size of
-     * 1024 bytes.  2.1.86+ kernels and newer use a 4KB rsize/wsize.
-     */
-    if (linux_version_code() >= 0x020156)
-      nfs_def_file_io_buffer_size = 4096;
-    if (!mnt_data->rsize)
-      mnt_data->rsize = nfs_def_file_io_buffer_size;
-    if (!mnt_data->wsize)
-      mnt_data->wsize = nfs_def_file_io_buffer_size;
-    /*
      * in nfs structure implementation version 4, the old
      * filehandle field was renamed "old_root" and left as 3rd field,
      * while a new field called "root" was added to the end of the
      * structure.
      */
+#ifdef MNT2_NFS_OPT_VER3
     if (mnt_data->flags & MNT2_NFS_OPT_VER3)
       memset(mnt_data->old_root.data, 0, FHSIZE);
     else
+#endif /* MNT2_NFS_OPT_VER3 */
       memcpy(mnt_data->old_root.data, mnt_data->root.data, FHSIZE);
 
 #ifdef HAVE_FIELD_NFS_ARGS_T_BSIZE
@@ -319,15 +320,19 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   } else {
 
     /* Non nfs mounts */
-    if ((sub_type = hasmntopt(mnt, "type")) &&
-	(sub_type = index(sub_type, '=')) &&
-	(sub_type = strdup(sub_type + 1))) {
-      type = strpbrk(sub_type, ",:;\n\t");
-      if (type == NULL)
-	type = MOUNT_TYPE_UFS;
-      else {
-	*type = '\0';
-	type = sub_type;
+    sub_type = hasmnteq(mnt, "type");
+    if (sub_type) {
+      sub_type = strdup(sub_type);
+      if (sub_type) {		/* the strdup malloc might have failed */
+	type = strpbrk(sub_type, ",:;\n\t");
+	if (type == NULL)
+	  type = MOUNT_TYPE_UFS;
+	else {
+	  *type = '\0';
+	  type = sub_type;
+	}
+      } else {
+	plog(XLOG_ERROR, "strdup returned null in mount_linux");
       }
     }
 
@@ -336,6 +341,19 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 
     /* We only parse opts if non-NFS drive */
     tmp_opts = parse_opts(type, mnt->mnt_opts, &flags, &extra_opts, &noauto);
+#ifdef MOUNT_TYPE_LOFS
+    if (STREQ(type, MOUNT_TYPE_LOFS)) {
+# if defined(MNT2_GEN_OPT_BIND)
+      /* use bind mounts for lofs */
+      flags |= MNT2_GEN_OPT_BIND;
+# else /* not MNT2_GEN_OPT_BIND */
+      /* this is basically a hack to support fist lofs */
+      XFREE(extra_opts);
+      extra_opts = (char *) xmalloc(strlen(mnt->mnt_fsname) + sizeof("dir=") + 1);
+      sprintf(extra_opts, "dir=%s", mnt->mnt_fsname);
+# endif /* not MNT2_GEN_OPT_BIND */
+    }
+#endif /* MOUNT_TYPE_LOFS */
 
 #ifdef DEBUG
     amuDebug(D_FULL) {
@@ -408,8 +426,6 @@ fail:
  * other architectures yet.
  */
 
-#define nfs_error	linux_nfs_error
-
 #define NE_PERM		1
 #define NE_NOENT	2
 #define NE_IO		5
@@ -429,11 +445,16 @@ fail:
 #define NE_DQUOT	69
 #define NE_STALE	70
 
-#define NFS_LOMAP	2
-#define NFS_HIMAP	123
+#define NFS_LOMAP	1
+#define NFS_HIMAP	122
 
+/*
+ * The errno's below are correct for Linux/i386. One day, somebody
+ * with lots of energy ought to verify them against the other ports...
+ */
 static int nfs_errormap[] = {
-	0,		/* (2, unused)		*/
+	NE_PERM,	/* EPERM (1)		*/
+	NE_NOENT,	/* ENOENT (2)		*/
 	NE_INVAL,	/* ESRCH (3)		*/
 	NE_IO,		/* EINTR (4)		*/
 	NE_IO,		/* EIO (5)		*/
@@ -472,6 +493,7 @@ static int nfs_errormap[] = {
 	NE_INVAL,	/* ENOSYS (38)		*/
 	NE_NOTEMPTY,	/* ENOTEMPTY (39)	*/
 	NE_INVAL,	/* ELOOP (40)		*/
+	NE_INVAL,	/* unused (41)		*/
 	NE_INVAL,	/* ENOMSG (42)		*/
 	NE_INVAL,	/* EIDRM (43)		*/
 	NE_INVAL,	/* ECHRNG (44)		*/
@@ -488,7 +510,7 @@ static int nfs_errormap[] = {
 	NE_INVAL,	/* ENOANO (55)		*/
 	NE_INVAL,	/* EBADRQC (56)		*/
 	NE_INVAL,	/* EBADSLT (57)		*/
-	NE_INVAL,	/* 58: unused		*/
+	NE_INVAL,	/* unused (58)		*/
 	NE_INVAL,	/* EBFONT (59)		*/
 	NE_INVAL,	/* ENOSTR (60)		*/
 	NE_INVAL,	/* ENODATA (61)		*/
@@ -559,11 +581,10 @@ static int nfs_errormap[] = {
 int
 linux_nfs_error(int e)
 {
-  int idx = e;
-
-  if (idx > NFS_LOMAP && idx < NFS_HIMAP)
-    idx = nfs_errormap[idx - NFS_LOMAP];
-  return (nfsstat)(idx);
+  if (e < NFS_LOMAP || e > NFS_HIMAP)
+    return (nfsstat)NE_IO;
+  e = nfs_errormap[e - NFS_LOMAP];
+  return (nfsstat)e;
 }
 
 /****************************************************************************/

@@ -1,5 +1,3 @@
-/*	$NetBSD: alloca.c,v 1.1.1.2 2000/11/19 23:43:25 wiz Exp $	*/
-
 /* alloca.c -- allocate automatically reclaimed memory
    (Mostly) portable public-domain implementation -- D A Gwyn
 

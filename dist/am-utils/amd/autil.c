@@ -1,7 +1,5 @@
-/*	$NetBSD: autil.c,v 1.1.1.2 2000/11/19 23:43:36 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: autil.c,v 1.4 2000/01/12 16:44:17 ezk Exp
+ * $Id: autil.c,v 1.1.1.3 2001/05/13 17:34:08 veego Exp $
  *
  */
 
@@ -221,7 +219,9 @@ forcibly_timeout_mp(am_node *mp)
    */
   if (mf && ((mp->am_flags & AMF_ROOT) ||
 	     (mf->mf_flags & (MFF_MOUNTING | MFF_UNMOUNTING)))) {
-    if (!(mf->mf_flags & MFF_UNMOUNTING))
+    if (mf->mf_flags & MFF_UNMOUNTING)
+      plog(XLOG_WARNING, "node %s is currently being unmounted, ignoring timeout request", mp->am_path);
+    else
       plog(XLOG_WARNING, "ignoring timeout request for active node %s", mp->am_path);
   } else {
     plog(XLOG_INFO, "\"%s\" forcibly timed out", mp->am_path);

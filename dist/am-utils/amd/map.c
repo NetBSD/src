@@ -1,7 +1,5 @@
-/*	$NetBSD: map.c,v 1.1.1.2 2000/11/19 23:43:38 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: map.c,v 1.6.2.1 2000/06/08 00:24:13 ezk Exp
+ * $Id: map.c,v 1.1.1.3 2001/05/13 17:34:09 veego Exp $
  *
  */
 
@@ -67,6 +65,7 @@
  * there is no way that 2^32 generation numbers could ever
  * be allocated by a single run of amd - there is simply
  * not enough cpu time available.
+ * Famous last words... -Ion
  */
 static u_int am_gen = 2;	/* Initial generation number */
 static int timeout_mp_id;	/* Id from last call to timeout */
@@ -309,7 +308,7 @@ init_map(am_node *mp, char *dir)
 {
   /*
    * mp->am_mapno is initialized by exported_ap_alloc
-   * other fields don't need to be set to zero.
+   * other fields don't need to be initialized.
    */
   mp->am_mnt = new_mntfs();
   mp->am_name = strdup(dir);
@@ -320,7 +319,7 @@ init_map(am_node *mp, char *dir)
   mp->am_attr.ns_status = NFS_OK;
   mp->am_fattr = gen_fattr;
   mp->am_fattr.na_fsid = 42;
-  mp->am_fattr.na_fileid = 0;
+  mp->am_fattr.na_fileid = mp->am_gen;
   mp->am_fattr.na_atime.nt_seconds = clocktime();
   mp->am_fattr.na_atime.nt_useconds = 0;
   mp->am_fattr.na_mtime = mp->am_fattr.na_ctime = mp->am_fattr.na_atime;

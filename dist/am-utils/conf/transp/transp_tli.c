@@ -1,7 +1,5 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.2 2000/11/19 23:43:14 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: transp_tli.c,v 1.5 2000/01/12 16:44:55 ezk Exp
+ * $Id: transp_tli.c,v 1.1.1.3 2001/05/13 17:33:57 veego Exp $
  *
  * TLI specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -108,13 +106,13 @@ bind_resv_port(int td, u_short *pp)
 
   treq = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
   if (!treq) {
-    plog(XLOG_ERROR, "t_alloc 1");
+    plog(XLOG_ERROR, "t_alloc req");
     return -1;
   }
   tret = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
   if (!tret) {
     t_free((char *) treq, T_BIND);
-    plog(XLOG_ERROR, "t_alloc 2");
+    plog(XLOG_ERROR, "t_alloc ret");
     return -1;
   }
   memset((char *) treq->addr.buf, 0, treq->addr.len);
@@ -202,13 +200,13 @@ bind_resv_port2(u_short *pp)
   }
   treq = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
   if (!treq) {
-    plog(XLOG_ERROR, "t_alloc 1");
+    plog(XLOG_ERROR, "t_alloc req");
     return -1;
   }
   tret = (struct t_bind *) t_alloc(td, T_BIND, T_ADDR);
   if (!tret) {
     t_free((char *) treq, T_BIND);
-    plog(XLOG_ERROR, "t_alloc 2");
+    plog(XLOG_ERROR, "t_alloc ret");
     return -1;
   }
   memset((char *) treq->addr.buf, 0, treq->addr.len);
@@ -255,7 +253,7 @@ amu_close(int fd)
  * Create an rpc client attached to the mount daemon.
  */
 CLIENT *
-get_mount_client(char *host, struct sockaddr_in *unused_sin, struct timeval * tv, int *sock, u_long mnt_version)
+get_mount_client(char *host, struct sockaddr_in *unused_sin, struct timeval *tv, int *sock, u_long mnt_version)
 {
   CLIENT *client;
   struct netbuf nb;
@@ -430,7 +428,7 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
    */
   *soNFSp = (*nfs_xprtp)->xp_fd;
   if (*soNFSp < 0 || bindnfs_port(*soNFSp, nfs_portp) < 0) {
-    plog(XLOG_ERROR, "Can't create privileged nfs port");
+    plog(XLOG_ERROR, "Can't create privileged nfs port (TLI)");
     return 1;
   }
   if (svc_reg(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, NULL) != 1) {
@@ -668,10 +666,10 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
 
   if (clnt == NULL) {
     if (nfs_version == NFS_VERSION)
-      plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s %s",
+      plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s: %s",
 	   (int) nfs_version, proto, host, clnt_spcreateerror(""));
     else
-      plog(XLOG_INFO, "get_nfs_version NFS(%d-%d,%s) failed for %s %s",
+      plog(XLOG_INFO, "get_nfs_version NFS(%d-%d,%s) failed for %s: %s",
 	   (int) NFS_VERSION, (int) nfs_version, proto, host, clnt_spcreateerror(""));
     return 0;
   }

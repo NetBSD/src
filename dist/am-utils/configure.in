@@ -28,17 +28,33 @@ dnl ######################################################################
 dnl PACKAGE NAME AND VERSION
 AC_MSG(PACKAGE NAME AND VERSION)
 PACKAGE=am-utils
-VERSION=6.0.4
+VERSION=6.0.6
 AC_SUBST(PACKAGE)
 AC_NAME_PACKAGE($PACKAGE)
 AC_SUBST(VERSION)
 AC_NAME_VERSION($VERSION)
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION)
 dnl SET (shared) library version.  Update it only before major release!
+dnl Clarification:
+dnl The major number should change when an incompatible change is made to
+dnl the API; the minor number should change when an API is added; the patch
+dnl level should change when an internal implementation change is made that
+dnl does not affect the API.
+dnl
+dnl In other words: if the major changes, the library is incompatible with
+dnl older ones; if the minor changes, the library is backwards compatible
+dnl with libraries using the same major; if the patchlevel changes, the
+dnl library is backward and forward compatible with libraries using the same
+dnl major and minor.
+dnl
+dnl For sanity, the lower numbers should be set to 0 when a higher number
+dnl is changed.
 dnl version info for am-utils-6.0.2:	3:2:1
 dnl version info for am-utils-6.0.3:	4:0:2
 dnl version info for am-utils-6.0.4:	4:1:2
-LIBTOOL_LDFLAGS="-version-info 4:1:2"
+dnl version info for am-utils-6.0.5:	4:2:2
+dnl version info for am-utils-6.0.6:	4:3:2
+LIBTOOL_LDFLAGS="-version-info 4:3:2"
 AC_SUBST(LIBTOOL_LDFLAGS)
 dnl ======================================================================
 
@@ -47,8 +63,6 @@ dnl OPTION PROCESSING
 AC_MSG(OPTION PROCESSING)
 dnl Debugging options (yes, mem, or no)
 AC_OPT_DEBUG
-dnl Do you want to turn on "amq -M" code
-AC_OPT_AMQ_MOUNT
 dnl additional preprocessor options for configuration/compilation
 AC_OPT_CPPFLAGS
 dnl additional linker -l options for configuration/compilation
@@ -802,6 +816,7 @@ AC_CHECK_MNTTAB_OPTS(	\
 	pgthresh	\
 	port		\
 	posix		\
+	proplist	\
 	proto		\
 	retrans		\
 	retry		\
@@ -829,6 +844,7 @@ AC_MSG(GENERIC MOUNT(2) OPTIONS)
 AC_CHECK_MNT2_GEN_OPTS(	\
 	async		\
 	automntfs	\
+	bind		\
 	cache		\
 	data		\
 	fss		\
@@ -876,6 +892,7 @@ AC_CHECK_MNT2_NFS_OPTS(	\
 	ignore		\
 	int		\
 	intr		\
+	kerb		\
 	knconf		\
 	leaseterm	\
 	maxgrps		\
@@ -884,10 +901,14 @@ AC_CHECK_MNT2_NFS_OPTS(	\
 	noconn		\
 	nocto		\
 	noint		\
+	nonlm		\
 	nqnfs		\
 	pgthresh	\
 	posix		\
+	proplist	\
+	rdirplus	\
 	readahead	\
+	readdirsize	\
 	resvport	\
 	retrans		\
 	ronly		\
@@ -899,6 +920,7 @@ AC_CHECK_MNT2_NFS_OPTS(	\
 	timeo		\
 	ver3		\
 	wsize		\
+	xlatecookie	\
 	)
 dnl ======================================================================
 
