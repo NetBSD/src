@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.90.2.1 2004/04/21 03:56:14 jmc Exp $	*/
+/*	$NetBSD: bpf.c,v 1.90.2.2 2004/05/28 07:24:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.90.2.1 2004/04/21 03:56:14 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.90.2.2 2004/05/28 07:24:55 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -1614,13 +1614,15 @@ SYSCTL_SETUP(sysctl_net_bfp_setup, "sysctl net.bpf subtree setup")
 	node = NULL;
 	sysctl_createv(clog, 0, NULL, &node,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "bpf", NULL,
+		       CTLTYPE_NODE, "bpf",
+		       SYSCTL_DESCR("BPF options"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL)
 		sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "maxbufsize", NULL,
+			CTLTYPE_INT, "maxbufsize",
+			SYSCTL_DESCR("Maximum size for data capture buffer"),
 			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }
