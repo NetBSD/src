@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.76 1995/10/10 02:52:56 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.77 1995/11/11 20:07:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -167,18 +167,7 @@ cdattach(parent, self, aux)
 	dk_establish(&cd->sc_dk, &cd->sc_dev);
 #endif
 
-	/*
-	 * Use the subdriver to request information regarding
-	 * the drive. We cannot use interrupts yet, so the
-	 * request must specify this.
-	 */
-	if (scsi_start(cd->sc_link, SSS_START,
-	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
-	    cd_get_parms(cd, SCSI_AUTOCONF) != 0)
-		printf(": drive empty\n");
-	else
-		printf(": cd present, %d x %d byte records\n",
-		    cd->params.disksize, cd->params.blksize);
+	printf("\n");
 }
 
 /*
