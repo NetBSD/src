@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.11 2000/06/04 19:14:57 cgd Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.12 2000/06/06 00:27:58 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.11 2000/06/04 19:14:57 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.12 2000/06/06 00:27:58 nisimura Exp $");
 
 /*
  * Which system models were configured?
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.11 2000/06/04 19:14:57 cgd Exp $");
 #include <dev/tc/tcvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-static const struct evcnt *tc_ds_intr_evcnt __P((struct device *, void *);
+static const struct evcnt *tc_ds_intr_evcnt __P((struct device *, void *));
 static void	tc_ds_intr_establish __P((struct device *, void *,
 				int, int (*)(void *), void *));
 static void	tc_ds_intr_disestablish __P((struct device *, void *));
@@ -131,7 +131,7 @@ tcbus_attach(parent, self, aux)
 /*
  * Dispatch to model specific interrupt line evcnt fetch rontine
  */
-static void
+static const struct evcnt *
 tc_ds_intr_evcnt(dev, cookie)
 	struct device *dev;
 	void *cookie;
