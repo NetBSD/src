@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 2002/07/29 18:27:48 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.21 2002/08/02 00:50:50 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -108,6 +108,7 @@
 #	systrace syscall tracer
 #	kttcp	kernel ttcp helper
 #	sysmon	System Monitoring hardware
+#	dmoverio hardware-assisted data movers
 #
 
 dialin=0
@@ -149,6 +150,7 @@ all)
 	makedev systrace
 	makedev kttcp
 	makedev	sysmon
+	makedev dmoverio
 	;;
 
 ramdisk|floppy)
@@ -666,6 +668,12 @@ sysmon)
 	rm -f watchdog
 	mknod watchdog c $major 1
 	chmod 644 watchdog
+	;;
+
+dmoverio)
+	rm -f dmoverio
+	mknod dmoverio c 102 0
+	chmod 644 dmoverio
 	;;
 
 local)

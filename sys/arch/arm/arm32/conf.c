@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2002/07/29 18:26:58 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 2002/08/02 00:50:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -414,6 +414,9 @@ cdev_decl(kttcp);
 #include <dev/sysmon/sysmonconf.h>
 cdev_decl(sysmon);
 
+#include "dmoverio.h"
+cdev_decl(dmoverio);
+
 struct cdevsw cdevsw[] = {
 	cdev_mm_init(1,mm),			/*  0: /dev/{null,mem,kmem,...} */
 	cdev_swap_init(1,sw),			/*  1: /dev/drum (swap pseudo-device) */
@@ -521,6 +524,7 @@ struct cdevsw cdevsw[] = {
 	cdev__oci_init(NKTTCP,kttcp),		/* 99: kernel ttcp helper */
 	cdev_tty_init(NIXPCOM,ixpcom),		/* 100: IXP1200 serial port */
 	cdev_sysmon_init(NSYSMON, sysmon),	/* 101: System Monitor */
+	cdev_clonemisc_init(NDMOVERIO,dmoverio),/* 102: data mover interface */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -665,6 +669,7 @@ static int chrtoblktbl[] = {
     /* 99 */	    NODEV,
     /* 100 */	    NODEV,
     /* 101 */	    NODEV,
+    /* 102 */	    NODEV,
 };
 
 /*
