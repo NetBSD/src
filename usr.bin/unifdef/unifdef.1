@@ -1,4 +1,4 @@
-.\"	$NetBSD: unifdef.1,v 1.4 1994/12/07 00:33:48 jtc Exp $
+.\"	$NetBSD: unifdef.1,v 1.5 1997/10/20 02:23:13 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm unifdef
 .Nd remove ifdef'ed lines
 .Sh SYNOPSIS
-.Nm unifdef
+.Nm
 .Op Fl clt
 .Oo
 .Fl D Ns Ar sym
@@ -54,10 +54,10 @@
 .Ar ...
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Unifdef
+.Nm
 is useful for removing ifdef'ed lines
 from a file while otherwise leaving the file alone.
-.Nm Unifdef
+.Nm
 acts on
 #ifdef, #ifndef, #else, and #endif lines,
 and it knows only enough about C
@@ -97,7 +97,7 @@ If the
 .Fl c
 flag is specified,
 then the operation of
-.Nm unifdef
+.Nm
 is complemented,
 i.e. the lines that would have been removed or blanked
 are retained and vice versa.
@@ -116,7 +116,7 @@ If your C code uses ifdefs to delimit non-C lines,
 such as comments
 or code which is under construction,
 then you must tell
-.Nm unifdef
+.Nm
 which symbols are used for that purpose so that it won't try to parse
 for quotes and comments
 inside those ifdefs.
@@ -131,7 +131,7 @@ and
 above.
 .El
 .Pp
-.Nm Unifdef
+.Nm
 copies its output to
 .Em stdout
 and will take its input from
@@ -140,7 +140,7 @@ if no
 .Ar file
 argument is given.
 .Pp
-.Nm Unifdef
+.Nm
 works nicely with the
 .Fl D Ns Ar sym
 option added to
