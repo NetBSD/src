@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.14 2003/12/07 07:28:05 christos Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.15 2003/12/30 12:52:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.14 2003/12/07 07:28:05 christos Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.15 2003/12/30 12:52:48 pk Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,18 +58,10 @@ __RCSID("$NetBSD: bufcache.c,v 1.14 2003/12/07 07:28:05 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#include <miscfs/specfs/specdev.h>
+
 #include "systat.h"
 #include "extern.h"
-
-/*
- * Definitions for the buffer free lists (from sys/kern/vfs_bio.c).
- */
-#define	BQUEUES		4		/* number of free buffer queues */
-
-#define	BQ_LOCKED	0		/* super-blocks &c */
-#define	BQ_LRU		1		/* lru, useful buffers */
-#define	BQ_AGE		2		/* rubbish */
-#define	BQ_EMPTY	3		/* buffer headers with no memory */
 
 #define VCACHE_SIZE	50
 
@@ -80,34 +72,25 @@ struct vcache {
 };
 
 struct ml_entry {
-	int ml_count;
-	long ml_size;
-	long ml_valid;
+	u_int ml_count;
+	u_long ml_size;
+	u_long ml_valid;
 	struct mount *ml_addr;
-	struct mount ml_mount;
 	LIST_ENTRY(ml_entry) ml_entries;
+	struct mount ml_mount;
 };
 
 static struct nlist namelist[] = {
-#define	X_NBUF		0
-	{ "_nbuf" },
-#define	X_BUF		1
-	{ "_buf" },
-#define	X_BUFQUEUES	2
-	{ "_bufqueues" },
-#define	X_BUFPAGES	3
-	{ "_bufpages" },
+#define	X_BUFMEM	0
+	{ "_bufmem" },
 	{ "" },
 };
 
 static struct vcache vcache[VCACHE_SIZE];
 static LIST_HEAD(mount_list, ml_entry) mount_list;
 
-static int nbuf, bufpages, bufkb, pgwidth, kbwidth;
+static u_int nbuf, bufmem, pgwidth, kbwidth;
 static struct uvmexp_sysctl uvmexp;
-static void *bufaddr;
-static struct buf *buf = NULL;
-static TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
 static void	vc_init(void);
 static void	ml_init(void);
@@ -138,10 +121,6 @@ closebufcache(WINDOW *w)
 void
 labelbufcache(void)
 {
-	mvwprintw(wnd, 0, 0,
-	    "There are %*d metadata buffers using           %*d kBytes of memory.",
-	    pgwidth, nbuf, kbwidth, bufkb);
-	wclrtoeol(wnd);
 	wmove(wnd, 1, 0);
 	wclrtoeol(wnd);
 	wmove(wnd, 2, 0);
@@ -157,9 +136,15 @@ void
 showbufcache(void)
 {
 	int tbuf, i, lastrow;
-	long tvalid, tsize;
+	double tvalid, tsize;
 	struct ml_entry *ml;
 
+	NREAD(X_BUFMEM, &bufmem, sizeof(bufmem));
+
+	mvwprintw(wnd, 0, 0,
+	    "There are %*d metadata buffers using           %*d kBytes of memory.",
+	    pgwidth, nbuf, kbwidth, bufmem/1024);
+	wclrtoeol(wnd);
 	mvwprintw(wnd, 1, 0,
 	    "There are %*llu pages for cached file data using %*llu kBytes of memory.",
 	    pgwidth, (long long)uvmexp.filepages,
@@ -171,62 +156,59 @@ showbufcache(void)
 	    kbwidth, (long long) uvmexp.execpages * getpagesize() / 1024);
 	wclrtoeol(wnd);
 
-	tbuf = tvalid = tsize = 0;
+	if (nbuf == 0 || bufmem == 0) {
+		wclrtobot(wnd);
+		return;
+	}
+
+	tbuf = 0;
+	tvalid = tsize = 0;
 	lastrow = 5;	/* Leave room for header. */
 	for (i = lastrow, ml = LIST_FIRST(&mount_list); ml != NULL;
 	    i++, ml = LIST_NEXT(ml, ml_entries)) {
+
+		int c = ml->ml_count;
+		double v = ml->ml_valid;
+		double s = ml->ml_size;
 
 		/* Display in window if enough room. */
 		if (i < getmaxy(wnd) - 2) {
 			mvwprintw(wnd, i, 0, "%-20.20s", ml->ml_addr == NULL ?
 			    "NULL" : ml->ml_mount.mnt_stat.f_mntonname);
 			wprintw(wnd,
-			    "    %6d %3d    %8ld %3ld    %8ld %3ld     %3ld",
-			    ml->ml_count, (100 * ml->ml_count) / nbuf,
-			    ml->ml_valid, (100 * ml->ml_valid) / bufkb,
-			    ml->ml_size, (100 * ml->ml_size) / bufkb,
-			    (100 * ml->ml_valid) / ml->ml_size);
+			    "    %6d %3d    %8ld %3.0f    %8ld %3.0f     %3.0f",
+			    c, (100 * c) / nbuf,
+			    (long)(v/1024), 100 * v / bufmem,
+			    (long)(s/1024), 100 * s / bufmem,
+			    100 * v / s);
 			wclrtoeol(wnd);
 			lastrow = i;
 		}
 
 		/* Update statistics. */
-		tbuf += ml->ml_count;
-		tvalid += ml->ml_valid;
-		tsize += ml->ml_size;
+		tbuf += c;
+		tvalid += v;
+		tsize += s;
 	}
 
 	wclrtobot(wnd);
 	mvwprintw(wnd, lastrow + 2, 0,
-	    "%-20s    %6d %3d    %8ld %3ld    %8ld %3ld     %3ld",
+	    "%-20s    %6d %3d    %8ld %3.0f    %8ld %3.0f     %3.0f",
 	    "Total:", tbuf, (100 * tbuf) / nbuf,
-	    tvalid, (100 * tvalid) / bufkb,
-	    tsize, (100 * tsize) / bufkb, tsize ? (100 * tvalid) / tsize : 0); 
+	    (long)(tvalid/1024), 100 * tvalid / bufmem,
+	    (long)(tsize/1024), 100 * tsize / bufmem,
+	    tsize != 0 ? ((100 * tvalid) / tsize) : 0);
 }
 
 int
 initbufcache(void)
 {
-	if (namelist[X_NBUF].n_type == 0) {
+	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
 			nlisterr(namelist);
 			return(0);
 		}
-		if (namelist[X_NBUF].n_type == 0) {
-			error("No namelist");
-			return(0);
-		}
 	}
-
-	NREAD(X_NBUF, &nbuf, sizeof(nbuf));
-	NREAD(X_BUFPAGES, &bufpages, sizeof(bufpages));
-	bufkb = bufpages * sysconf(_SC_PAGESIZE) / 1024;
-
-	if ((buf = malloc(nbuf * sizeof(struct buf))) == NULL) {
-		error("malloc failed");
-		die(0);
-	}
-	NREAD(X_BUF, &bufaddr, sizeof(bufaddr));
 
 	fetchuvmexp();
 	pgwidth = (int)(floor(log10((double)uvmexp.npages)) + 1);
@@ -254,37 +236,76 @@ fetchuvmexp(void)
 void
 fetchbufcache(void)
 {
-	int i, count;
+	int count;
 	struct buf *bp;
 	struct vnode *vn;
 	struct mount *mt;
 	struct ml_entry *ml;
+	int mib[2];
+	size_t size;
+	struct buf *buffers;
+	int extraslop = 0;
 
+	/* Re-read pages used for vnodes & executables */
 	fetchuvmexp();
-	/* Re-read bufqueues lists and buffer cache headers */
-	NREAD(X_BUFQUEUES, bufqueues, sizeof(bufqueues));
-	KREAD(bufaddr, buf, sizeof(struct buf) * nbuf);
 
 	/* Initialise vnode cache and mount list. */
 	vc_init();
 	ml_init();
-	for (i = 0; i < BQUEUES; i++) {
-		for (bp = bufqueues[i].tqh_first; bp != NULL;
-		    bp = bp->b_freelist.tqe_next) {
-			if (bp != NULL) {
-				bp = (struct buf *)((u_long)bp + (u_long)buf -
-				    (u_long)bufaddr);
 
-				if (bp->b_vp != NULL) {
-					vn = vc_lookup(bp->b_vp);
-					if (vn == NULL)
-						break;
-					if (vn->v_mount != NULL)
-						mt = ml_lookup(vn->v_mount,
-						    bp->b_bufsize,
-						    bp->b_bcount);
-				}
+	/* Get metadata buffers */
+again:
+	size = 0;
+	buffers = NULL;
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_BUF;
+	if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0) {
+		error("can't get buffers size: %s\n", strerror(errno));
+		return;
+	}
+	if (size == 0)
+		return;
+
+	size += extraslop * sizeof(struct buf);
+	buffers = malloc(size);
+	if (buffers == NULL) {
+		error("can't allocate buffers: %s\n", strerror(errno));
+		return;
+	}
+	if (sysctl(mib, 2, buffers, &size, NULL, 0) < 0) {
+		free(buffers);
+		if (extraslop == 0) {
+			extraslop = 100;
+			goto again;
+		}
+		error("can't get buffers: %s\n", strerror(errno));
+		return;
+	}
+
+	nbuf = size / sizeof(struct buf);
+	for (bp = buffers; bp < buffers + nbuf; bp++) {
+		if (bp->b_vp != NULL) {
+			struct mount *mp;
+			vn = vc_lookup(bp->b_vp);
+			if (vn == NULL)
+				break;
+
+			mp = vn->v_mount;
+			/*
+			 * References to mounted-on vnodes should be
+			 * counted towards the mounted filesystem.
+			 */
+			if (vn->v_type == VBLK && vn->v_specinfo != NULL) {
+				struct specinfo sp;
+				if (!KREAD(vn->v_specinfo, &sp, sizeof(sp)))
+					continue;
+				if (sp.si_mountpoint)
+					mp = sp.si_mountpoint;
 			}
+			if (mp != NULL)
+				mt = ml_lookup(mp,
+				    bp->b_bufsize,
+				    bp->b_bcount);
 		}
 	}
 
@@ -307,6 +328,8 @@ fetchbufcache(void)
 			}
 		}
 	} while (count != 0);
+
+	free(buffers);
 }
 
 static void
@@ -378,8 +401,8 @@ ml_lookup(struct mount *maddr, int size, int valid)
 	    ml = LIST_NEXT(ml, ml_entries))
 		if (ml->ml_addr == maddr) {
 			ml->ml_count++;
-			ml->ml_size += size / 1024;
-			ml->ml_valid += valid / 1024;
+			ml->ml_size += size;
+			ml->ml_valid += valid;
 			if (ml->ml_addr == NULL)
 				return(NULL);
 			else
@@ -392,8 +415,8 @@ ml_lookup(struct mount *maddr, int size, int valid)
 	}
 	LIST_INSERT_HEAD(&mount_list, ml, ml_entries);
 	ml->ml_count = 1;
-	ml->ml_size = size / 1024;
-	ml->ml_valid = valid / 1024;
+	ml->ml_size = size;
+	ml->ml_valid = valid;
 	ml->ml_addr = maddr;
 	if (maddr == NULL)
 		return(NULL);
