@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.21 1997/10/20 08:08:37 scottr Exp $	*/
+/*	$NetBSD: options.c,v 1.22 1997/11/19 12:00:04 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.39 1997/07/14 03:53:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.21 1997/10/20 08:08:37 scottr Exp $");
+__RCSID("$NetBSD: options.c,v 1.22 1997/11/19 12:00:04 christos Exp $");
 #endif
 #endif
 
@@ -258,7 +258,7 @@ static int setipxcpfails __P((char **));
 #endif /* IPX_CHANGE */
 
 #ifdef MSLANMAN
-static int setmslanman __P((void));
+static int setmslanman __P((char **));
 #endif
 
 static int number_option __P((char *, u_int32_t *, int));
@@ -2564,7 +2564,8 @@ resetipxproto(argv)
 
 #ifdef MSLANMAN
 static int
-setmslanman()
+setmslanman(argv)
+    char **argv;
 {
     ms_lanman = 1;
     return (1);
