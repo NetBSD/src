@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.124 2003/11/25 15:14:57 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.125 2003/12/16 11:45:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.124 2003/11/25 15:14:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.125 2003/12/16 11:45:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,6 @@ lfsfifo_close(void *v)
 /*
  * Reclaim an inode so that it can be used for other purposes.
  */
-int lfs_no_inactive = 0;
 
 int
 lfs_reclaim(void *v)
