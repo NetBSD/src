@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.5 2004/06/27 01:10:53 jonathan Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.6 2004/07/17 16:36:39 atatat Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.5 2004/06/27 01:10:53 jonathan Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.6 2004/07/17 16:36:39 atatat Exp $");
 #endif
 #endif /* not lint*/
 
@@ -57,10 +57,31 @@ __RCSID("$NetBSD: fast_ipsec.c,v 1.5 2004/06/27 01:10:53 jonathan Exp $");
 #include <machine/int_fmtio.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "netstat.h"
+
+/*
+ * Cache the check to see if we have fast_ipsec so that we don't
+ * have to go to the kernel repeatedly.
+ */
+static int
+have_fast_ipsec(void)
+{
+	static int haveit = -1;
+
+	if (haveit == -1) {
+		if (sysctlbyname("net.inet.ipsec.ipsecstats", NULL, NULL,
+		    NULL, 0) == -1)
+			haveit = 0;
+		else
+			haveit = 1;
+	}
+
+	return (haveit);
+}
 
 /*
  * Dispatch between fetching and printing (KAME) IPsec statistics,
@@ -70,12 +91,8 @@ __RCSID("$NetBSD: fast_ipsec.c,v 1.5 2004/06/27 01:10:53 jonathan Exp $");
 void
 ipsec_switch(u_long off, char * name)
 {
-	int status;
-	size_t slen;
-	
-	slen = 0;
-	status = sysctlbyname("net.inet.ipsec.stats", NULL, &slen, NULL, 0);
-	if (status == 0 && slen == sizeof(struct newipsecstat))
+
+	if (have_fast_ipsec())
 		return fast_ipsec_stats(off, name);
 
 	return ipsec_stats(off, name);
@@ -156,26 +173,34 @@ fast_ipsec_stats(u_long off, char *name)
 	memset(&ipips, 0, sizeof(ipips));
 
 	/* silence check */
-	status = sysctlbyname("net.inet.ipsec.stats", NULL, &slen, NULL, 0);
-	if (status != 0)
-	    return;
+	if (!have_fast_ipsec())
+		return;
 
 	slen = sizeof(ipsecstats);
-	status = sysctlbyname("net.inet.ipsec.stats", &ipsecstats, &slen,
+	status = sysctlbyname("net.inet.ipsec.ipsecstats", &ipsecstats, &slen,
 			      NULL, 0);
-	if (status < 0)
-	  err(1, "net.inet.ipsec.stats");
+	if (status < 0 && errno != ENOMEM)
+		err(1, "net.inet.ipsec.ipsecstats");
 
 	slen = sizeof (ahstats);
-	if (sysctlbyname("net.inet.ah.stats", &ahstats, &slen, NULL, 0) < 0)
-		err(1, "net.inet.ah.stats");
+	status = sysctlbyname("net.inet.ah.ah_stats", &ahstats, &slen, NULL, 0);
+	if (status < 0 && errno != ENOMEM)
+		err(1, "net.inet.ah.ah_stats");
+
 	slen = sizeof (espstats);
-	if (sysctlbyname("net.inet.esp.stats", &espstats, &slen, NULL, 0) < 0)
-		err(1, "net.inet.esp.stats");
-	if (sysctlbyname("net.inet.ipcomp.stats", &ipcs, &slen, NULL, 0) < 0)
-		err(1, "net.inet.ipcomp.stats");
-	if (sysctlbyname("net.inet.ipip.stats", &ipips, &slen, NULL, 0) < 0)
-		err(1, "net.inet.ipip.stats");
+	status = sysctlbyname("net.inet.esp.esp_stats", &espstats, &slen, NULL, 0);
+	if (status < 0 && errno != ENOMEM)
+		err(1, "net.inet.esp.esp_stats");
+
+	slen = sizeof(ipcs);
+	status = sysctlbyname("net.inet.ipcomp.ipcomp_stats", &ipcs, &slen, NULL, 0);
+	if (status < 0 && errno != ENOMEM)
+		err(1, "net.inet.ipcomp.ipcomp_stats");
+
+	slen = sizeof(ipips);
+	status = sysctlbyname("net.inet.ipip.ipip_stats", &ipips, &slen, NULL, 0);
+	if (status < 0 && errno != ENOMEM)
+		err(1, "net.inet.ipip.ipip_stats");
 
 	printf("(Fast) IPsec:\n");
 
@@ -269,7 +294,7 @@ fast_ipsec_stats(u_long off, char *name)
 	IPIPSTAT(ipips.ipips_family,	"protocol family mismatched");
 	IPIPSTAT(ipips.ipips_unspec,	"missing tunnel-endpoint address");
 	IPIPSTAT(ipips.ipips_ibytes,	"input bytes received");
-	IPIPSTAT(ipips.ipips_obytes,	"output bytes procesesed");
+	IPIPSTAT(ipips.ipips_obytes,	"output bytes processed");
 #undef IPIPSTAT
 
 	printf("IPsec ipcomp:\n");
