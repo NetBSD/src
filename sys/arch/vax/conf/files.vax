@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.14 1996/02/09 15:24:18 ragge Exp $
+#       $NetBSD: files.vax,v 1.15 1996/03/02 14:19:49 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -54,6 +54,10 @@ file	arch/vax/if/if_qe.c		qe
 device	ts at uba
 file	arch/vax/uba/ts.c		ts needs-count
 
+# DHU-11 at UBA
+device	dhu at uba
+file	arch/vax/uba/dhu.c		dhu needs-count
+
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
 #
@@ -64,10 +68,6 @@ file	arch/vax/uba/ik.c		ik needs-count
 
 device	vs at uba
 file	arch/vax/uba/vs.c		vs needs-count
-
-# TU58 on 750/730
-device	tu at root
-file	arch/vax/vax/tu.c		tu needs-count
 
 # RK06/07 on UBA
 device	rk at uba
@@ -183,10 +183,6 @@ file	arch/vax/uba/ad.c		ad needs-count
 device	dh at uba
 file	arch/vax/uba/dh.c		dh needs-count
 
-# DHU-11 at UBA
-device	dhu at uba
-file	arch/vax/uba/dhu.c		dhu needs-count
-
 # These are general files needed for compilation.
 file	dev/cons.c
 file	dev/cninit.c
@@ -197,6 +193,7 @@ file	arch/vax/vax/gencons.c
 file	arch/vax/vax/pmap.c
 file	arch/vax/vax/machdep.c
 file	arch/vax/vax/ka750.c		vax750
+file	arch/vax/vax/ka780.c		vax780
 file	arch/vax/vax/ctu.c		vax750
 file	arch/vax/vax/uvaxII.c		vax630
 file	arch/vax/vax/emulate.s		vax630 ka650
@@ -225,11 +222,8 @@ file	compat/ultrix/ultrix_sysent.c	compat_ultrix
 #arch/vax/vax/dkbad.c         standard
 #arch/vax/vax/flp.c           standard
 #arch/vax/vax/ka730.c         standard
-#arch/vax/vax/ka780.c         standard
 #arch/vax/vax/ka820.c         standard
 #arch/vax/vax/ka860.c         standard
-#arch/vax/vax/kdb_machdep.c   optional kadb
-#arch/vax/vax/kdb_opset.c     optional kadb
 #arch/vax/vax/rx50.c          standard
 #arch/vax/vax/iidr.o          optional ii
 #arch/vax/vax/iidrsys.o       optional ii
