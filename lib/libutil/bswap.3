@@ -1,4 +1,4 @@
-.\" $NetBSD: bswap.3,v 1.1 1998/03/18 16:40:45 bouyer Exp $
+.\" $NetBSD: bswap.3,v 1.2 1998/05/05 00:43:16 enami Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -47,10 +47,10 @@
 .Fd #include <machine/endian.h>
 .Ft u_int16_t
 .Fn bswap16 "u_int16_t"
-.Ft u_int32
-.Fn bswap32 "u_int16_t"
-.Ft u_int64
-.Fn bswap64 "u_int16_t"
+.Ft u_int32_t
+.Fn bswap32 "u_int32_t"
+.Ft u_int64_t
+.Fn bswap64 "u_int64_t"
 .Sh DESCRIPTION
 The
 .Fn bswap16 ,
