@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.76 2002/10/23 09:11:52 jdolecek Exp $	*/
+/*	$NetBSD: scc.c,v 1.77 2003/01/06 12:29:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.76 2002/10/23 09:11:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.77 2003/01/06 12:29:50 wiz Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -113,7 +113,7 @@ void	ttrstrt __P((void *));
 
 
 /*
- * True iff the console unit is diverted throught this SCC device.
+ * True iff the console unit is diverted through this SCC device.
  * (used to just test if cn_tab->cn_getc was sccGetc, but that
  * breaks with the new-style glass-tty framebuffer console input.
  */
