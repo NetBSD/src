@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.20 1996/03/29 02:00:59 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.21 1996/04/01 04:30:34 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -45,8 +45,14 @@
  * are similar to the IIsi ("Universal ROMs"?).
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/queue.h>
+
+#include <vm/vm_prot.h>
+#include <vm/vm_param.h>
+#include <vm/lock.h>
+#include <vm/pmap.h>
+
 #include <machine/viareg.h>
 #include "macrom.h"
 #include <sys/malloc.h>
@@ -849,7 +855,7 @@ mrg_init()
 	VBLQueue_tail = (caddr_t) 0;	 *  before the RTC interrupts are enabled */
 					 
 	if(mrg_romready()){
-		printf("mrg: '%s' rom glue", mrg_romident);
+		printf("mrg: '%s' ROM glue", mrg_romident);
 
 #if defined(MRG_TRACE)
 #if defined(MRG_FOLLOW)
@@ -986,6 +992,22 @@ mrg_init()
 	printf("after setting jump points\n");
 	printf("mrg: end init\n");
 #endif
+
+	if (current_mac_model->class == MACH_CLASSII) {
+		/*
+		 * For the bloody Mac II ROMs, we have to map this space
+		 * so that the PRam functions will work.
+		 * Gee, Apple, is that a hard-coded hardware address in
+		 * your code?  I think so! (_ReadXPRam + 0x0062)  We map
+		 * the first 
+		 */
+#ifdef DIAGNOSTIC
+		printf("mrg: I/O map kludge for old ROMs that use hardware %s",
+			"addresses directly.\n");
+#endif
+		pmap_map(0x50f00000, 0x50f00000, 0x50f00000 + 0x4000,
+			 VM_PROT_READ|VM_PROT_WRITE);
+	}
 }
 
 void
