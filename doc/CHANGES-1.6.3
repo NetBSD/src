@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.65 2004/04/06 05:40:45 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.66 2004/04/06 05:45:45 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -402,3 +402,10 @@ bin/sh/arith_lex.l				1.11
 
 	Recognise octal and hexadecimal constants in expressions.
 	[simonb, ticket #1650]
+
+lib/libc/db/hash/hash_buf.c			1.9
+lib/libc/db/hash/hash_bigkey.c			1.16
+
+	lib/libc/db/hash/* writes memory garbage to db file.
+	Fixed by changing malloc's to calloc's where needed. PR#5996
+	[bouyer, ticket #1651]
