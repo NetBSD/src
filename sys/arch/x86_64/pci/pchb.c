@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 2002/05/16 01:01:42 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3 2002/06/04 17:51:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -102,19 +102,10 @@ pchbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if NRND > 0
-	struct pchb_softc *sc = (void *) self;
-#endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
-	struct pcibus_attach_args pba;
-	pcireg_t bcreg;
-	u_char bdnum, pbnum;
-	pcitag_t tag;
-	int doattach;
 
 	printf("\n");
-	doattach = 0;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -125,139 +116,11 @@ pchbattach(parent, self, aux)
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_SERVERWORKS:
-		pbnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xff;
-
-		if (pbnum == 0)
+		/* Nothing yet */
+		default:
 			break;
-
-		/*
-		 * This host bridge has a second PCI bus.
-		 * Configure it.
-		 */
-		doattach = 1;
-		break;
-
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_82443BX_AGP:
-		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
-			/*
-			 * BIOS BUG WORKAROUND!  The 82443BX
-			 * datasheet indicates that the only
-			 * legal setting for the "Idle/Pipeline
-			 * DRAM Leadoff Timing (IPLDT)" parameter
-			 * (bits 9:8) is 01.  Unfortunately, some
-			 * BIOSs do not set these bits properly.
-			 */
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    I82443BX_SDRAMC_REG);
-			if ((bcreg & 0x0300) != 0x0100) {
-				printf("%s: fixing Idle/Pipeline DRAM "
-				    "Leadoff Timing\n", self->dv_xname);
-				bcreg &= ~0x0300;
-				bcreg |=  0x0100;
-				pci_conf_write(pa->pa_pc, pa->pa_tag,
-				    I82443BX_SDRAMC_REG, bcreg);
-			}
-			break;
-
-		case PCI_PRODUCT_INTEL_PCI450_PB:
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-					      PCISET_BUSCONFIG_REG);
-			bdnum = PCISET_BRIDGE_NUMBER(bcreg);
-			pbnum = PCISET_PCI_BUS_NUMBER(bcreg);
-			switch (bdnum & PCISET_BRIDGETYPE_MASK) {
-			default:
-				printf("%s: bdnum=%x (reserved)\n",
-				       self->dv_xname, bdnum);
-				break;
-			case PCISET_TYPE_COMPAT:
-				printf("%s: Compatibility PB (bus %d)\n",
-				       self->dv_xname, pbnum);
-				break;
-			case PCISET_TYPE_AUX:
-				printf("%s: Auxiliary PB (bus %d)\n",
-				       self->dv_xname, pbnum);
-				/*
-				 * This host bridge has a second PCI bus.
-				 * Configure it.
-				 */
-				doattach = 1;
-				break;
-			}
-			break;
-		case PCI_PRODUCT_INTEL_CDC:
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-					      I82424_CPU_BCTL_REG);
-			if (bcreg & I82424_BCTL_CPUPCI_POSTEN) {
-				bcreg &= ~I82424_BCTL_CPUPCI_POSTEN;
-				pci_conf_write(pa->pa_pc, pa->pa_tag,
-					       I82424_CPU_BCTL_REG, bcreg);
-				printf("%s: disabled CPU-PCI write posting\n",
-					self->dv_xname);
-			}
-			break;
-		case PCI_PRODUCT_INTEL_82451NX_PXB:
-			/*
-			 * The NX chipset supports up to 2 "PXB" chips
-			 * which can drive 2 PCI buses each. Each bus
-			 * shows up as logical PCI device, with fixed
-			 * device numbers between 18 and 21.
-			 * See the datasheet at
-		ftp://download.intel.com/design/chipsets/datashts/24377102.pdf
-			 * for details.
-			 * (It would be easier to attach all the buses
-			 * at the MIOC, but less aesthetical imho.)
-			 */
-			pbnum = 0;
-			switch (pa->pa_device) {
-			case 18: /* PXB 0 bus A - primary bus */
-				break;
-			case 19: /* PXB 0 bus B */
-				/* read SUBA0 from MIOC */
-				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
-				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd0);
-				pbnum = ((bcreg & 0x0000ff00) >> 8) + 1;
-				break;
-			case 20: /* PXB 1 bus A */
-				/* read BUSNO1 from MIOC */
-				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
-				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd0);
-				pbnum = (bcreg & 0xff000000) >> 24;
-				break;
-			case 21: /* PXB 1 bus B */
-				/* read SUBA1 from MIOC */
-				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
-				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd4);
-				pbnum = (bcreg & 0x000000ff) + 1;
-				break;
-			}
-			if (pbnum != 0)
-				doattach = 1;
-			break;
-		}
-		break;
 	}
 
-	if (doattach) {
-		pba.pba_busname = "pci";
-		pba.pba_iot = pa->pa_iot;
-		pba.pba_memt = pa->pa_memt;
-		pba.pba_dmat = pa->pa_dmat;
-		pba.pba_bus = pbnum;
-		pba.pba_bridgetag = NULL;
-		pba.pba_flags = pa->pa_flags;
-		pba.pba_pc = pa->pa_pc;
-		config_found(self, &pba, pchb_print);
-	}
-
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_attach_rnd(sc, pa);
-#endif
 }
 
 int
