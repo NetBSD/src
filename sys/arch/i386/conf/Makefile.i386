@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.120 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: Makefile.i386,v 1.121 2001/11/23 05:19:00 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -27,16 +27,12 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 I386=		$S/arch/i386
 GENASSYM=	${I386}/i386/genassym.cf
-MD_CPPFLAGS=	-Di386
 
 ##
 ## (2) compile settings
 ##
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
-		${MD_CPPFLAGS}
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+CPPFLAGS+=	-Di386
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
 ##
 ## (3) libkern and compat
@@ -57,7 +53,7 @@ locore.o: ${I386}/i386/locore.s assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	c0100000
-EXTRA_LINKFLAGS=-X
+EXTRA_LINKFLAGS=	-X
 .if (${OBJECT_FMT} == "ELF")
 KERN_LDSCRIPT?=	kern.ldscript
 LINKFORMAT=	-T ${I386}/conf/${KERN_LDSCRIPT}
