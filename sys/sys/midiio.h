@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.1 1998/08/07 00:01:01 augustss Exp $	*/
+/*	$NetBSD: midiio.h,v 1.2 1998/08/12 18:11:54 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,15 @@
  * for naming.
  */
 
+#ifndef _POSIX_SOURCE
+#define __MIDIIO_UNSET_POSIX_SOURCE
+#define _POSIX_SOURCE		/* make sure we don't get all the gunk */
+#endif
 #include <machine/endian.h>
+#ifdef __MIDIIO_UNSET_POSIX_SOURCE
+#undef _POSIX_SOURCE
+#undef __MIDIIO_UNSET_POSIX_SOURCE
+#endif
 
 /*
  * ioctl() commands for /dev/midi##
@@ -72,7 +80,7 @@ typedef struct {
 #define SEQUENCER_GETINCOUNT		_IOR ('Q', 5, int)
 /*#define SEQUENCER_PERCMODE		_IOW ('Q', 6, int)*/
 /*#define SEQUENCER_TESTMIDI		_IOW ('Q', 8, int)*/
-/*#define SEQUENCER_RESETSAMPLES		_IOW ('Q', 9, int)*/
+#define SEQUENCER_RESETSAMPLES		_IOW ('Q', 9, int)
 #define SEQUENCER_NRSYNTHS		_IOR ('Q',10, int)
 #define SEQUENCER_NRMIDIS		_IOR ('Q',11, int)
 /*#define SEQUENCER_MIDI_INFO		_IOWR('Q',12, struct midi_info)*/
@@ -185,13 +193,13 @@ struct synth_info {
 	(e)->arr[3] = (chan), (e)->arr[4] = (p1), (e)->arr[5] = (p2),\
 	*(short*)&(e)->arr[6] = (w14))
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _QUAD_LOWWORD == 1
 #define SEQ_PATCHKEY(id) ((id<<8)|0xfd)
 #else
 #define SEQ_PATCHKEY(id) (0xfd00|id)
 #endif
 struct sysex_info {
-	int16_t	key;		/* Use SYSEX_PATCH or MAUI_PATCH here */
+	u_int16_t	key;	/* Use SYSEX_PATCH or MAUI_PATCH here */
 #define SEQ_SYSEX_PATCH	SEQ_PATCHKEY(0x05)
 #define SEQ_MAUI_PATCH	SEQ_PATCHKEY(0x06)
 	int16_t	device_no;	/* Synthesizer number */
@@ -203,8 +211,8 @@ struct sysex_info {
 typedef unsigned char sbi_instr_data[32];
 struct sbi_instrument {
 	u_int16_t key;	/* FM_PATCH or OPL3_PATCH */
-#define SYS_FM_PATCH	SEQ_PATCHKEY(0x01)
-#define SYS_OPL3_PATCH	SEQ_PATCHKEY(0x03)
+#define SBI_FM_PATCH	SEQ_PATCHKEY(0x01)
+#define SBI_OPL3_PATCH	SEQ_PATCHKEY(0x03)
 	int16_t		device;
 	int32_t		channel;
 	sbi_instr_data	operators;
