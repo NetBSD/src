@@ -1,7 +1,7 @@
-/* $NetBSD: dtopvar.h,v 1.2 1997/05/25 04:50:00 jonathan Exp $ */
+/*	$NetBSD: ibus_subr.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $	*/
 
 /*
- * Copyright (c) 1997 Jonathan Stone.  All rights reserved.
+ * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,66 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int	dtopKBDGetc __P((dev_t dev));
-void	dtopKBDPutc __P((dev_t dev, int c));
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-/*
- * Support for UGLY 4.4bsd/pmax-derived console/X11 input redirection
- * to in-kernel input-event queue.
- */
+__KERNEL_RCSID(0, "$NetBSD: ibus_subr.c,v 1.1.2.1 1998/10/15 02:41:16 nisimura Exp $");
 
-/* X11 keyboard input upcall */
-void	(*dtopDivertXInput) __P((int));
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 
-/* X11 mouse motion event upcall */
-void	(*dtopMouseEvent) __P((MouseReport *mrp));
+#include <machine/autoconf.h>
+#include <pmax/ibus/ibusvar.h>
 
-/* X11 mouse buttons event upcall */
-void	(*dtopMouseButtons) __P((MouseReport *mrp));
+static int ibusprint __P((void *, const char *));
+extern struct cfdriver ibus_cd;
 
-/*
- * Device numbers.
- */
-#define	DTOPKBD_PORT	0
-#define	DTOPMOUSE_PORT	1
+void
+ibus_devattach(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	struct ibus_softc *sc = (struct ibus_softc *)dev;
+	struct ibus_dev_attach_args *ibd = aux;
+	int i;
+
+	sc->ibd_ndevs = ibd->ibd_ndevs;
+	sc->ibd_devs = ibd->ibd_devs;
+        sc->ibd_establish = ibd->ibd_establish;
+        sc->ibd_disestablish = ibd->ibd_disestablish;
+	for (i = 0; i < sc->ibd_ndevs; i++) {
+		config_found(dev, &sc->ibd_devs[i], ibusprint);
+	}
+}
+
+static int
+ibusprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	if (pnp)
+		return (QUIET);
+	return (UNCONF);
+}
+
+void
+ibus_intr_establish(dev, cookie, level, func, arg)
+	struct device *dev;
+	void *cookie, *arg;
+	int level;
+	int (*func) __P((void *));
+{
+	struct ibus_softc *sc = (void *)ibus_cd.cd_devs[0];
+
+	(*sc->ibd_establish)(dev, cookie, level, func, arg);
+}
+
+void
+ibus_intr_disestablish(dev, cookie)
+	struct device *dev;
+	void *cookie;
+{
+	struct ibus_softc *sc = (void *)ibus_cd.cd_devs[0];
+
+	(*sc->ibd_disestablish)(dev, cookie);
+}
