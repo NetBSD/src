@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.12 1999/06/12 20:10:55 kleink Exp $
+.\"	$NetBSD: audio.9,v 1.13 1999/06/16 14:19:27 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,8 +81,8 @@ struct audio_hw_if {
 
 	int	(*query_devinfo)__P((void *, mixer_devinfo_t *));
 	
-	void	*(*alloc)__P((void *, unsigned long, int, int));
-	void	(*free)__P((void *, void *, int));
+	void	*(*allocm)__P((void *, int, size_t, int, int));
+	void	(*freem)__P((void *, void *, int));
 	size_t	(*round_buffersize)__P((void *, int, size_t));
 	int	(*mappage)__P((void *, void *, int, int));
 
@@ -322,16 +322,16 @@ is used.  It should fill the
 .Va mixer_devinfo_t
 struct.
 Return 0 on success, otherwise an error code.
-.It Dv "void *alloc(void *hdl, u_long size, int type, int flags)"
+.It Dv "void *allocm(void *hdl, int direction, size_t size, int type, int flags)"
 .br
 optional, is called to allocate the device buffers.  If not present
 .Xr malloc 9
-is used instead (with the same arguments except the first).
+is used instead (with the same arguments but the first two).
 The reason for using a device dependent routine instead of
 .Xr malloc 9
 is that some buses need special allocation to do DMA.
 Returns the address of the buffer, or 0 on failure.
-.It Dv void free(void *hdl, void *addr, int type)
+.It Dv void freem(void *hdl, void *addr, int type)
 optional, is called to free memory allocated by
 .Va alloc .
 If not supplied
