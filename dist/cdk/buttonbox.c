@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:29 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 DeclareCDKObjects(my_funcs,Buttonbox);
@@ -261,8 +261,7 @@ int injectCDKButtonbox (CDKBUTTONBOX *buttonbox, chtype input)
       /* Check for a key binding. */
       if (checkCDKObjectBind (vBUTTONBOX, buttonbox, input) != 0)
       {
-	 buttonbox->exitType = vESCAPE_HIT;
-	 return -1;
+	  return -1;
       }
       else
       {

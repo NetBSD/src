@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -198,7 +198,6 @@ int injectCDKMenu (CDKMENU *menu, chtype input)
       /* Check for key bindings. */
       if (checkCDKObjectBind (vMENU, menu, input) != 0)
       {
-	 menu->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else

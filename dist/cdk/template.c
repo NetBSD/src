@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:31 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:54 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -293,7 +293,6 @@ char *injectCDKTemplate (CDKTEMPLATE *cdktemplate, chtype input)
       /* Check a predefined binding...		 */
       if (checkCDKObjectBind (vTEMPLATE, cdktemplate, input) != 0)
       {
-	 cdktemplate->exitType = vESCAPE_HIT;
 	 return 0;
       }
       else

@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 20:15:31 $
- * $Revision: 1.2 $
+ * $Date: 2001/01/09 18:41:53 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -292,7 +292,6 @@ int injectCDKRadio (CDKRADIO *radio, chtype input)
       /* Check for a predefined key binding. */
       if (checkCDKObjectBind (vRADIO, radio, input) != 0)
       {
-	 radio->exitType = vESCAPE_HIT;
 	 return -1;
       }
       else
