@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.3.2.1 1993/09/24 08:53:59 mycroft Exp $ */
+/* $Id: if_ppp.c,v 1.3.2.2 1993/10/16 10:49:27 mycroft Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -135,7 +135,6 @@
 #endif
 
 #include "if_ppp.h"
-#include "machine/mtpr.h"
 
 struct ppp_softc ppp_softc[NPPP];
 int ppp_async_out_debug = 0;

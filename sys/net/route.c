@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.c	7.22 (Berkeley) 6/27/91
- *	$Id: route.c,v 1.4.4.1 1993/09/24 08:54:05 mycroft Exp $
+ *	$Id: route.c,v 1.4.4.2 1993/10/16 10:49:32 mycroft Exp $
  */
 
 #include "param.h"
@@ -44,7 +44,6 @@
 #include "protosw.h"
 #include "ioctl.h"
 
-#include "machine/mtpr.h"
 #include "machine/cpu.h"
 
 #include "if.h"

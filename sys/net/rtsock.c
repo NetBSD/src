@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtsock.c	7.18 (Berkeley) 6/27/91
- *	$Id: rtsock.c,v 1.4.2.1 1993/09/24 08:54:10 mycroft Exp $
+ *	$Id: rtsock.c,v 1.4.2.2 1993/10/16 10:49:33 mycroft Exp $
  */
 
 #include "param.h"
@@ -43,7 +43,6 @@
 #include "domain.h"
 #include "protosw.h"
 
-#include "machine/mtpr.h"
 #include "machine/cpu.h"
 
 #include "af.h"

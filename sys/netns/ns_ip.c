@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_ip.c	7.6 (Berkeley) 6/28/90
- *	$Id: ns_ip.c,v 1.2 1993/05/20 04:35:57 cgd Exp $
+ *	$Id: ns_ip.c,v 1.2.4.1 1993/10/16 10:51:55 mycroft Exp $
  */
 
 /*
@@ -58,8 +58,6 @@
 #include "../netinet/in_var.h"
 #include "../netinet/ip.h"
 #include "../netinet/ip_var.h"
-
-#include "machine/mtpr.h"
 
 #include "../netns/ns.h"
 #include "../netns/ns_if.h"

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.3 1993/05/22 11:42:35 cgd Exp $
+ *	$Id: ip_output.c,v 1.3.4.1 1993/10/16 10:51:46 mycroft Exp $
  */
 
 #include "param.h"
@@ -51,10 +51,6 @@
 #include "in_pcb.h"
 #include "in_var.h"
 #include "ip_var.h"
-
-#ifdef vax
-#include "machine/mtpr.h"
-#endif
 
 struct mbuf *ip_insertoptions();
 
