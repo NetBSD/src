@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.23 1995/07/24 20:35:02 cgd Exp $	*/
+/*	$NetBSD: savecore.c,v 1.24 1996/03/08 08:52:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.23 1995/07/24 20:35:02 cgd Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.24 1996/03/08 08:52:12 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -368,7 +368,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	(void)fclose(fp);
 
 	/* Create the core file. */
-	(void)snprintf(path, sizeof(path), "%s/netbsd.%d%s.core",
+	(void)snprintf(path, sizeof(path), "%s/netbsd.%d.core%s",
 	    dirname, bounds, compress ? ".Z" : "");
 	if (compress) {
 		if ((fp = zopen(path, "w", 0)) == NULL) {
