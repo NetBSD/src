@@ -1,8 +1,8 @@
 #	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 #
-# $Header: /cvsroot/src/usr.bin/Makefile,v 1.11 1993/04/09 12:57:44 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/Makefile,v 1.12 1993/04/26 02:22:13 mycroft Exp $
 
-# BROKEN: tn3270 rcs
+# BROKEN: tn3270
 
 SUBDIR=	ar awk biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
