@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.7 2000/05/03 11:40:54 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/03/13 16:29:42 christos Exp $
 
 CPPFLAGS+=-I${.CURDIR}/../../../sys -I${.CURDIR}/../../../sys/netinet
-CPPFLAGS+=-DUSE_INET6
+CPPFLAGS+=-DUSE_INET6 -DSTATETOP
 
 .PATH:	${.CURDIR}/../../../dist/ipf \
 	${.CURDIR}/../../../dist/ipf/man
