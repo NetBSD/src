@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.38 2002/10/30 06:41:46 manu Exp $
+#	$NetBSD: files.powerpc,v 1.39 2002/11/03 23:17:19 manu Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -55,6 +55,7 @@ file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13
 
 # MACH binary compatibility (COMPAT_MACH)
 include "compat/mach/files.mach"
+include "compat/mach/arch/powerpc/files.mach_powerpc"
 file	arch/powerpc/powerpc/mach_machdep.c		compat_mach
 file	arch/powerpc/powerpc/mach_sigcode.S		compat_mach
 file	arch/powerpc/powerpc/mach_syscall.c		compat_mach

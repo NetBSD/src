@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.2 2002/10/30 18:34:15 matt Exp $ */
+/*	$NetBSD: mach_syscall.c,v 1.3 2002/11/03 23:17:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,10 +39,71 @@
 #include "opt_compat_mach.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.2 2002/10/30 18:34:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.3 2002/11/03 23:17:18 manu Exp $");
+
+#include <sys/types.h>
+#include <sys/systm.h>
+#include <sys/syscall.h>
+
+#include <compat/mach/mach_syscall.h> 
+#include <compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscall.h>
+#include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h>
+
+extern struct sysent mach_sysent[];
+extern struct sysent mach_ppccalls_sysent[];
+extern struct sysent mach_fasttraps_sysent[];
 
 #define EMULNAME(x)	__CONCAT(mach_,x)
 #define EMULNAMEU(x)	(x)	/* COMPAT_MACH uses the native syscalls */
-#define MACH_SYSCALL
+
+#define MACH_FASTTRAPS		0x00007ff0
+#define MACH_PPCCALLS		0x00006000
+#define MACH_ODD_SYSCALL_MASK	0x0000fff0
+
+static inline int mach_syscall_dispatch __P((register_t *, 
+    const struct sysent **, int *));
 
 #include "syscall.c"
+
+static inline int
+mach_syscall_dispatch(code, callp, nsysent)
+	register_t *code;
+	const struct sysent **callp;
+	int *nsysent;
+{
+	int ret = 0;
+
+#ifdef DEBUG_MACH
+	if (*code >= MACH_PPCCALLS);
+		printf("->mach(0x%x)\n", *code);
+#endif
+	switch (*code & MACH_ODD_SYSCALL_MASK) {
+	case MACH_PPCCALLS:
+		*code -= MACH_PPCCALLS;
+		*callp = mach_ppccalls_sysent;
+		*nsysent = MACH_PPCCALLS_SYS_MAXSYSCALL;
+		ret = 1;
+		break;
+
+	case MACH_FASTTRAPS:
+		*code -= MACH_FASTTRAPS;
+		*callp = mach_fasttraps_sysent;
+		*nsysent = MACH_FASTTRAPS_SYS_MAXSYSCALL;
+		ret = 1;
+		break;
+
+	default:
+		if (*code < 0) {
+#ifdef DEBUG_MACH
+			printf("->mach(%d)\n", *code);
+#endif /* DEBUG_MACH */
+			*code = -*code;
+			*callp = mach_sysent;
+			*nsysent = MACH_SYS_MAXSYSCALL;
+			ret = 1;
+		}
+		break;
+	}
+
+	return ret;
+}

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_syscall.c,v 1.4 2002/11/03 23:17:18 manu Exp $ */
+/*	$NetBSD: mach_fasttraps_thread.c,v 1.1 2002/11/03 23:17:21 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus
+ * by Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,25 +36,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_compat_linux.h"
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4 2002/11/03 23:17:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_thread.c,v 1.1 2002/11/03 23:17:21 manu Exp $");
 
 #include <sys/types.h>
-#include <sys/param.h>
-#include <sys/signal.h>
-#include <sys/proc.h>
+#include <sys/systm.h>
 
-#include <compat/linux/linux_syscall.h>
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_errno.h>
-#include <compat/linux/common/linux_signal.h>
-#include <compat/linux/common/linux_siginfo.h>
-#include <compat/linux/arch/powerpc/linux_siginfo.h>
-#include <compat/linux/arch/powerpc/linux_machdep.h>
+#include <compat/mach/mach_types.h>
+#include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h>
+#include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscallargs.h>
 
-#define EMULNAME(x)	__CONCAT(linux_,x)
-#define EMULNAMEU(x)	__CONCAT(LINUX_,x)
+int
+mach_sys_cthread_set_self(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	printf("mach_sys_cthread_set_self()\n");
+	return 0;
+}
 
-#include "syscall.c"
+int
+mach_sys_cthread_info(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	printf("mach_sys_cthread_info()\n");
+	return 0;
+}
+
