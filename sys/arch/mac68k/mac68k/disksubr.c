@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 1997/10/23 14:58:49 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 1997/11/26 04:14:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -144,6 +144,10 @@ whichType(part)
 	if (strcmp(PART_DRIVER_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
 	if (strcmp(PART_DRIVER43_TYPE, (char *)part->pmPartType) == 0)
+		return 0;
+	if (strcmp(PART_DRIVERATA_TYPE, (char *)part->pmPartType) == 0)
+		return 0;
+	if (strcmp(PART_FWB_COMPONENT_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
 	if (strcmp(PART_PARTMAP_TYPE, (char *)part->pmPartType) == 0)
 		return 0;
