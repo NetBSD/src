@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/07/09 05:57:37 dbj Exp $	
+#	$NetBSD: Makefile,v 1.2 2002/08/19 10:17:00 lukem Exp $	
 
 .include <bsd.own.mk>
 
-SRCDIR=	${.CURDIR}/../../dist/pdisk
+SRCDIR=	${NETBSDSRCDIR}/dist/pdisk
 .PATH:	${SRCDIR}
 
 .if (${MACHINE} == "macppc" || \

@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.20 2001/02/20 23:24:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.21 2002/08/19 10:16:55 lukem Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
+
+.include <bsd.own.mk>
 
 PROG=	mount
 MAN=	mount.8
@@ -21,7 +23,7 @@ MOUNT_PROGS=	mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_ffs \
 	
 # include individual source files and manpages to build process
 .for p in ${MOUNT_PROGS}
-.PATH: ${.CURDIR}/../${p}
+.PATH: ${NETBSDSRCDIR}/sbin/${p}
 SRCS+=	${p}.c
 MAN+=	${p}.8
 LINKS+=	${BINDIR}/${PROG} ${BINDIR}/${p}
