@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohs.S,v 1.3 1998/02/22 08:43:28 mycroft Exp $	*/
+/*	$NetBSD: ntohs.S,v 1.4 1999/11/11 01:32:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,13 +43,13 @@
 #if 0
 	RCSID("from: @(#)ntohs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ntohs.S,v 1.3 1998/02/22 08:43:28 mycroft Exp $")
+	RCSID("$NetBSD: ntohs.S,v 1.4 1999/11/11 01:32:12 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* hostorder = ntohs(netorder) */
 
 ENTRY(ntohs)
-	clrl	d0
-	movw	sp@(6),d0
+	clrl	%d0
+	movw	%sp@(6),%d0
 	rts
