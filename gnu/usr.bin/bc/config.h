@@ -39,7 +39,7 @@
 /* #undef BC_MATH_FILE */
 
 /* Define to use the readline library. */
-/* #undef READLINE */
+#define READLINE 1
 
 /* Define to `size_t' if <sys/types.h> and <stddef.h> don't define.  */
 /* #undef ptrdiff_t */
