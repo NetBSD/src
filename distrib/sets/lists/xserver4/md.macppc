@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.8 2004/03/05 20:07:27 tron Exp $
+# $NetBSD: md.macppc,v 1.9 2004/03/06 20:49:05 heas Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -192,6 +192,7 @@
 ./usr/X11R6/man/cat4/tdfx.0
 ./usr/X11R6/man/cat4/trident.0
 ./usr/X11R6/man/cat4/vga.0
+./usr/X11R6/man/cat4/via.0
 ./usr/X11R6/man/cat4/void.0
 ./usr/X11R6/man/cat4/wacom.0
 ./usr/X11R6/man/cat5/XF86Config.0
