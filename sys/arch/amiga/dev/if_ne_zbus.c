@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.2 1999/11/25 21:53:01 is Exp $	*/
+/*	$NetBSD: if_ne_zbus.c,v 1.3 1999/11/25 21:58:57 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,12 +82,15 @@ struct cfattach ne_zbus_ca = {
 	sizeof(struct ne_zbus_softc), ne_zbus_match, ne_zbus_attach
 };
 
-/* The amiga address are shifted by one bit to the ISA-Bus. */
-#define	NE_ARIADNE_II_NPORTS	0x40
+/*
+ * The Amiga address are shifted by one bit to the ISA-Bus, but 
+ * this is handled by the bus_space functions.
+ */
+#define	NE_ARIADNE_II_NPORTS	0x20
 #define	NE_ARIADNE_II_NICBASE	0x0300	/* 0x0600 */
-#define	NE_ARIADNE_II_NICSIZE	0x20
+#define	NE_ARIADNE_II_NICSIZE	0x10
 #define	NE_ARIADNE_II_ASICBASE	0x0310	/* 0x0620 */
-#define	NE_ARIADNE_II_ASICSIZE	0x20
+#define	NE_ARIADNE_II_ASICSIZE	0x10
 
 int
 ne_zbus_match(parent, cf, aux)
