@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.2 1998/11/08 22:02:25 veego Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.3 2000/03/03 21:37:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,10 @@ rtl80x9_init_card(sc)
 	/* Set NIC to page 3 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_3);
 
+	/* write enable config1-3. */
+	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_EECR,
+	    RTL3_EECR_EEM1|RTL3_EECR_EEM0);
+
 	/* First, set basic media type. */
 	reg = NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
 	reg &= ~(RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0);
@@ -152,6 +156,9 @@ rtl80x9_init_card(sc)
 		reg &= ~RTL3_CONFIG3_FUDUP;
 	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3, reg);
 
+	/* write disable config1-3 */
+	NIC_PUT(sc->sc_regt, sc->sc_regh, NERTL_RTL3_EECR, 0);
+
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(sc->sc_regt, sc->sc_regh, ED_P0_CR, cr_proto | ED_CR_PAGE_0);
 }
@@ -168,10 +175,44 @@ rtl80x9_init_media(sc, mediap, nmediap, defmediap)
 		IFM_ETHER|IFM_10_2,
 	};
 
-	printf("%s: 10base2, 10baseT, 10baseT-FDX, auto, default auto\n",
-	    sc->sc_dev.dv_xname);
+	u_int8_t conf2, conf3;
 
 	*mediap = rtl80x9_media;
 	*nmediap = sizeof(rtl80x9_media) / sizeof(rtl80x9_media[0]);
-	*defmediap = IFM_ETHER|IFM_AUTO;
+
+	printf("%s: 10base2, 10baseT, 10baseT-FDX, auto, default ",
+	    sc->sc_dev.dv_xname);
+
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_3);
+
+	conf2 = bus_space_read_1(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG2);
+	conf3 = bus_space_read_1(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3);
+	printf("[0x%02x 0x%02x] ", conf2, conf3);
+
+	conf2 &= RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0;
+
+	switch (conf2) {
+	case 0:
+		*defmediap = IFM_ETHER|IFM_AUTO;
+		printf("auto\n");
+		break;
+
+	case RTL3_CONFIG2_PL1|RTL3_CONFIG2_PL0:
+	case RTL3_CONFIG2_PL1:	/* XXX rtl docs sys 10base5, but chip cant do */
+		*defmediap = IFM_ETHER|IFM_10_2;
+		printf("10base2\n");
+		break;
+
+	case RTL3_CONFIG2_PL0:
+		if (conf3 & RTL3_CONFIG3_FUDUP) {
+			*defmediap = IFM_ETHER|IFM_10_T|IFM_FDX;
+			printf("10baseT-FDX\n");
+		} else {
+			*defmediap = IFM_ETHER|IFM_10_T;
+			printf("10baseT\n");
+		}
+		break;
+	}
+
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_0);
 }
