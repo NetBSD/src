@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.15 2000/06/06 18:17:07 bouyer Exp $	*/
+/*	$NetBSD: statd.c,v 1.16 2000/06/09 09:57:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.15 2000/06/06 18:17:07 bouyer Exp $");
+__RCSID("$NetBSD: statd.c,v 1.16 2000/06/09 09:57:29 bouyer Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -79,12 +79,12 @@ extern char *__progname;
 
 
 /* statd.c */
-static int walk_one __P((int (*fun )__P ((DBT *, DBT *, void *)), DBT *, DBT *, void *));
-static int walk_db __P((int (*fun )__P ((DBT *, DBT *, void *)), void *));
-static int reset_host __P((DBT *, DBT *, void *));
-static int check_work __P((DBT *, DBT *, void *));
-static int unmon_host __P((DBT *, DBT *, void *));
-static int notify_one __P((DBT *, DBT *, void *));
+static int walk_one __P((int (*fun )__P ((DBT *, HostInfo *, void *)), DBT *, DBT *, void *));
+static int walk_db __P((int (*fun )__P ((DBT *, HostInfo *, void *)), void *));
+static int reset_host __P((DBT *, HostInfo *, void *));
+static int check_work __P((DBT *, HostInfo *, void *));
+static int unmon_host __P((DBT *, HostInfo *, void *));
+static int notify_one __P((DBT *, HostInfo *, void *));
 static void init_file __P((char *));
 static int notify_one_host __P((char *));
 static void die __P((int)) __attribute__((__noreturn__));
@@ -315,10 +315,11 @@ bad:
  */
 static int
 walk_one(fun, key, data, ptr)
-	int (*fun) __P((DBT *, DBT *, void *));
+	int (*fun) __P((DBT *, HostInfo *, void *));
 	DBT *key, *data;
 	void *ptr;
 {
+	HostInfo h;
 	if (key->size == undefkey.size &&
 	    memcmp(key->data, undefkey.data, key->size) == 0)
 		return 0;
@@ -326,8 +327,8 @@ walk_one(fun, key, data, ptr)
 		syslog(LOG_ERR, "Bad data in database");
 		die(1);
 	}
-
-	return (*fun)(key, data, ptr);
+	memcpy(&h, data->data, sizeof(h));
+	return (*fun)(key, &h, ptr);
 }
 
 /* walk_db -------------------------------------------------------------- */
@@ -338,7 +339,7 @@ walk_one(fun, key, data, ptr)
  */
 static int
 walk_db(fun, ptr)
-	int (*fun) __P((DBT *, DBT *, void *));
+	int (*fun) __P((DBT *, HostInfo *, void *));
 	void *ptr;
 {
 	DBT key, data;
@@ -393,14 +394,14 @@ bad:
  *		notify them before the second crash occurred.
  */
 static int
-reset_host(key, data, ptr)
-	DBT *key, *data;
+reset_host(key, hi, ptr)
+	DBT *key;
+	HostInfo *hi;
 	void *ptr;
 {
-	HostInfo *hi = data->data;
 
 	if (hi->monList) {
-		hi->notifyReqd = *(time_t *) data;
+		hi->notifyReqd = *(time_t *) ptr;
 		hi->attempts = 0;
 		hi->monList = NULL;
 	}
@@ -414,12 +415,11 @@ reset_host(key, data, ptr)
  * Notes:	
  */
 static int
-check_work(key, data, ptr)
-	DBT *key, *data;
+check_work(key, hi, ptr)
+	DBT *key;
+	HostInfo *hi;
 	void *ptr;
 {
-	HostInfo *hi = data->data;
-
 	return hi->notifyReqd ? -1 : 0;
 }
 
@@ -430,12 +430,12 @@ check_work(key, data, ptr)
  * Notes:	
  */
 static int
-unmon_host(key, data, ptr)
-	DBT *key, *data;
+unmon_host(key, hi, ptr)
+	DBT *key;
+	HostInfo *hi;
 	void *ptr;
 {
 	char *name = key->data;
-	HostInfo *hi = data->data;
 
 	if (do_unmon(name, hi, ptr))
 		change_host(name, hi);
@@ -449,13 +449,14 @@ unmon_host(key, data, ptr)
  * Notes:	
  */
 static int
-notify_one(key, data, ptr)
-	DBT *key, *data;
+notify_one(key, hi, ptr)
+	DBT *key;
+	HostInfo *hi;
 	void *ptr;
 {
 	time_t now = *(time_t *) ptr;
 	char *name = key->data;
-	HostInfo *hi = data->data;
+	DBT data;
 
 	if (hi->notifyReqd == 0 || hi->notifyReqd > now)
 		return 0;
@@ -464,7 +465,9 @@ notify_one(key, data, ptr)
 give_up:
 		hi->notifyReqd = 0;
 		hi->attempts = 0;
-		switch ((*db->put)(db, key, data, 0)) {
+		data.data = hi;
+		data.size = sizeof(*hi);
+		switch ((*db->put)(db, key, &data, 0)) {
 		case -1:
 			syslog(LOG_ERR, "Error storing %s (%m)", name);
 		case 0:
