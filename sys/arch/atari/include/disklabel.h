@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 1995/11/30 00:58:03 jtc Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 1996/02/19 09:05:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,25 +35,46 @@
 
 /*
  * On a volume, exclusively used by NetBSD, the boot block starts at
- * sector 0. To allow shared use of a volume between two or more OS's
+ * sector 0. To allow shared use of a volume between two or more OS's,
  * the vendor specific AHDI format is supported. In this case the boot
  * block is located at the start of an AHDI partition. In any case the
- * size of the boot block is 8KB, the disk label is at offset 7KB.
+ * size of the boot block must be at least 8KB.
  */
+#define	BBMINSIZE	8192		/* minimum size of boot block      */
 #define LABELSECTOR	0		/* `natural' start of boot block   */
-#define LABELOFFSET	(7 * 1024)	/* offset of disklabel in bytes,
+#define LABELOFFSET	516		/* offset of disk label in bytes,
 					   relative to start of boot block */
-#define MAXPARTITIONS	16
+#define LABELMAXSIZE	1020		/* maximum size of disk label, at
+					   least (MAXPARTITIONS * 16 + 152)*/
+#define MAXPARTITIONS	16		/* max. # of NetBSD partitions     */
 #define RAW_PART	2		/* xx?c is raw partition	   */
 
-#define MAX_TOS_ROOTS	61		/* max. # of auxilary root sectors */
+#define MAXAUXROOTS	29		/* max. # of auxilary root sectors */
 
 struct cpu_disklabel {
-	u_int32_t	cd_bblock;	/* start of NetBSD boot block      */
-#define NO_BOOT_BLOCK	((u_int32_t) -1)
-	u_int32_t	cd_bslst;	/* start of TOS bad sector list    */
-	u_int32_t	cd_bslsize;	/* size of TOS bad sector list     */
-	u_int32_t	cd_roots[MAX_TOS_ROOTS]; /* TOS root sectors       */
+	u_int		cd_bblock;	/* start of NetBSD boot block      */
+#define NO_BOOT_BLOCK	((u_int)-1)
+	u_int		cd_label;	/* offset of NetBSD disk label     */
+#ifdef DISKLABEL_AHDI
+	u_int		cd_bslst;	/* start of AHDI bad sector list   */
+	u_int		cd_bslend;	/* end of AHDI bad sector list     */
+	u_int		cd_roots[MAXAUXROOTS+1]; /* auxilary root sectors  */
+#endif /* DISKLABEL_AHDI */
 };
+
+struct bootblock {
+	u_int8_t	bb_xxboot[LABELOFFSET - sizeof(u_int32_t)];
+						/* first-stage boot loader */
+	u_int32_t	bb_magic;		/* boot block magic number */
+#define	NBDAMAGIC	0x4e424441 /* 'NBDA' */
+#define	AHDIMAGIC	0x41484449 /* 'AHDI' */
+	u_int8_t	bb_label[LABELMAXSIZE];	/* disk pack label         */
+	u_int8_t	bb_bootxx[BBMINSIZE - LABELOFFSET - LABELMAXSIZE];
+						/* second-stage boot loader*/
+};
+
+struct disklabel;
+#define	BBGETLABEL(bb, dl)	*(dl) = *((struct disklabel *)(bb)->bb_label)
+#define	BBSETLABEL(bb, dl)	*((struct disklabel *)(bb)->bb_label) = *(dl)
 
 #endif /* _MACHINE_DISKLABEL_H_ */

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.5 1995/11/30 00:57:46 jtc Exp $
+#	$NetBSD: BOOT,v 1.6 1996/02/19 09:05:47 leo Exp $
 #
 # BOOT
 #
@@ -59,6 +59,7 @@ options		DDB		# Kernel debugger
 #
 options		COMPAT_43	# 4.3 BSD compatible system calls (required)
 options		COMPAT_10	# Compatibility to NetBSD1.0
+options		COMPAT_11	# Compatibility to NetBSD1.1
 
 #
 # Support for various kernel options
@@ -76,6 +77,8 @@ options		TT_SCSI			# SCSI-support for TT
 options		FALCON_SCSI		# SCSI-support for Falcon
 options		TT_VIDEO		# Graphics support for TT
 options		FALCON_VIDEO		# Graphics support for FALCON
+options		DISKLABEL_NBDA		# NetBSD disklabels (required)
+options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 #
 # Build one kernel that can boot from any disk.
@@ -95,3 +98,4 @@ pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
 zs0	at mainbus0		# Serial support through 8530
 grf1	at grfbus0		# second graphics driver
 ite1	at grf1			# second tty
+nvr0	at mainbus0		# nvram driver
