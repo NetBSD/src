@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.78 1999/12/24 16:53:45 minoura Exp $
+# $NetBSD: md_share,v 1.79 1999/12/27 22:53:15 jlam Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -609,7 +609,6 @@
 ./usr/share/man/man8/hpcmips/makedev.8
 ./usr/share/man/man8/i386/MAKEDEV.8
 ./usr/share/man/man8/i386/apm.8
-./usr/share/man/man8/i386/apmd.8
 ./usr/share/man/man8/i386/boot.8
 ./usr/share/man/man8/i386/boot_console.8
 ./usr/share/man/man8/i386/dosboot.8
