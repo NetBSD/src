@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.20 2000/04/14 14:20:02 augustss Exp $
+#	$NetBSD: files.usb,v 1.21 2000/04/14 14:51:22 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -103,3 +103,9 @@ file	dev/usb/if_kue.c		kue
 device	upl: ifnet
 attach	upl at uhub
 file	dev/usb/if_upl.c		upl
+
+# Serial drivers
+# FTDI serial driver
+device	uftdi: ucombus
+attach	uftdi at uhub
+file	dev/usb/uftdi.c			uftdi
