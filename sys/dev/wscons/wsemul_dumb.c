@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.6 1999/01/17 15:44:57 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_dumb.c,v 1.6 1999/01/17 15:44:57 drochner Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

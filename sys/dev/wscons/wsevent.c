@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.3 1999/01/10 00:28:21 augustss Exp $ */
+/* $NetBSD: wsevent.c,v 1.4 2000/01/05 11:19:37 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsevent.c,v 1.3 1999/01/10 00:28:21 augustss Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.4 2000/01/05 11:19:37 drochner Exp $");
 
 /*
  * Copyright (c) 1992, 1993
