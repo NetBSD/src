@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.10 2003/02/01 14:48:18 dsl Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.11 2003/04/16 14:22:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -43,12 +43,34 @@
 #include "biosdisk_ll.h"
 #include "bootinfo.h"
 
+#ifdef BIOSDISK_EXT13INFO_V3
+static struct {
+	char	*name;
+	int	flag;
+} bus_names[] = { {"ISA", BI_GEOM_BUS_ISA},
+		  {"PCI", BI_GEOM_BUS_PCI},
+		  {NULL, BI_GEOM_BUS_OTHER} };
+static struct {
+	char	*name;
+	int	flag;
+} iface_names[] = { {"ATA", BI_GEOM_IFACE_ATA},
+		    {"ATAPI", BI_GEOM_IFACE_ATAPI},
+		    {"SCSI", BI_GEOM_IFACE_SCSI},
+		    {"USB", BI_GEOM_IFACE_USB},
+		    {"1394", BI_GEOM_IFACE_1394},
+		    {"FIBRE", BI_GEOM_IFACE_FIBRE},
+		    {NULL, BI_GEOM_IFACE_OTHER} };
+#endif
+
 void bi_getbiosgeom()
 {
 	struct btinfo_biosgeom *bibg;
 	int i, j, nvalid;
 	unsigned char nhd;
 	unsigned int cksum;
+	struct biosdisk_ll d;
+	struct biosdisk_ext13info ed;
+	char buf[BIOSDISK_SECSIZE];
 
 	pvbcopy((void *)(0x400 + 0x75), &nhd, 1);
 #ifdef GEOM_DEBUG
@@ -61,9 +83,6 @@ void bi_getbiosgeom()
 		return;
 
 	for (i = nvalid = 0; i < MAX_BIOSDISKS && nvalid < (int)nhd; i++) {
-		struct biosdisk_ll d;
-		struct biosdisk_ext13info ed;
-		char buf[BIOSDISK_SECSIZE];
 
 		d.dev = 0x80 + i;
 
@@ -94,6 +113,64 @@ void bi_getbiosgeom()
 			bibg->disk[nvalid].totsec = ed.totsec;
 			bibg->disk[nvalid].flags |= BI_GEOM_EXTINT13;
 		}
+#ifdef BIOSDISK_EXT13INFO_V3
+#ifdef GEOM_DEBUG
+		printf("   edd_cfg %x, sig %x, len %x, bus %s type %s\n",
+			ed.edd_cfg, ed.devpath_sig, ed.devpath_len,
+			ed.host_bus, ed.iface_type);
+#endif
+
+		/* The v3.0 stuff will help identify the disks */
+		if (ed.size >= offsetof(struct biosdisk_ext13info, checksum)
+		    && ed.devpath_sig == EXT13_DEVPATH_SIGNATURE) {
+			char *cp;
+
+			for (cp = (void *)&ed.devpath_sig, cksum = 0;
+			    cp <= (char *)&ed.checksum; cp++) {
+				cksum += *cp;
+			}
+			if ((cksum & 0xff) != 0)
+				bibg->disk[nvalid].flags |= BI_GEOM_BADCKSUM;
+#ifdef GEOM_DEBUG
+			printf("checksum %x\n", cksum & 0xff);
+#endif
+			for (j = 0; ; j++) {
+				cp = bus_names[j].name;
+				if (cp == NULL)
+					break;
+				if (strncmp(cp, ed.host_bus,
+				    sizeof ed.host_bus) == 0)
+					break;
+			}
+#ifdef GEOM_DEBUG
+			printf("bus %s (%x)\n", cp ? cp : "null",
+					bus_names[j].flag);
+#endif
+			bibg->disk[nvalid].flags |= bus_names[j].flag;
+			for (j = 0; ; j++) {
+				cp = iface_names[j].name;
+				if (cp == NULL)
+					break;
+				if (strncmp(cp, ed.iface_type,
+				    sizeof ed.iface_type) == 0)
+					break;
+			}
+			bibg->disk[nvalid].flags |= iface_names[j].flag;
+			/* Dump raw interface path and device path */
+			bibg->disk[nvalid].interface_path =
+					ed.interface_path.ip_32[0];
+			bibg->disk[nvalid].device_path =
+					ed.device_path.dp_64[0];
+#ifdef GEOM_DEBUG
+			printf("device %s (%x) interface %x path %llx\n",
+					cp ? cp : "null",
+					iface_names[j].flag,
+					ed.interface_path.ip_32[0],
+					ed.device_path.dp_64[0]);
+#endif
+		}
+#endif
+
 		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
 			cksum += buf[j];
 		bibg->disk[nvalid].cksum = cksum;
