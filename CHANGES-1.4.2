@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.32 1999/09/22 03:26:17 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.33 1999/09/22 05:59:29 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -467,3 +467,8 @@ sys/dev/pci/if_vr.c				1.26
   Fix packet reception in promiscuous mode: compare the Ethernet
   destination address against our station address if it's not a
   multicast packet.  Fixes a redirect storm problem.
+
+sys/arch/alpha/conf/Makefile.alpha		1.53
+
+  Be more efficient when linking kernels with debugging symbols.  (Don't
+  copy them just to strip them, use strip -o.)
