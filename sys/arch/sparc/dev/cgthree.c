@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.25 1996/03/17 02:00:52 thorpej Exp $ */
+/*	$NetBSD: cgthree.c,v 1.26 1996/03/31 22:30:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -380,7 +380,7 @@ cgthreeloadcmap(sc, start, ncolors)
  * map the whole thing, so we repeatedly map the first 256K to the
  * first page of the color screen.  If someone tries to use the overlay
  * and enable regions, they will get a surprise....
- * 
+ *
  * As well, mapping at an offset of 0x04000000 causes the cg3 to be
  * mapped in flat mode without the cg4 emulation.
  */
