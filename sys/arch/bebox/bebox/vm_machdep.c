@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 1997/10/16 01:55:24 sakamoto Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 1997/12/18 09:08:01 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -252,30 +252,4 @@ vunmapbuf(bp, len)
 	kmem_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
-}
-
-/*
- * Physical Memory Map into kernel virtual address space.
- */
-vm_offset_t
-physmemmap(pa, size)
-	vm_offset_t pa;
-	vm_size_t size;
-{
-	vm_offset_t endpa, va, o;
-
-	pa = trunc_page(pa);
-	endpa = round_page(pa + size);
-#ifdef DIAGNOSTIC
-	if (endpa <= pa)
-		panic("physmemmap: overflow");
-#endif
-
-	o = va = kmem_alloc_wait(phys_map, size);
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(vm_map_pmap(phys_map), va, pa,
-			   VM_PROT_READ | VM_PROT_WRITE, 1);
-	}
-
-	return (o);
 }

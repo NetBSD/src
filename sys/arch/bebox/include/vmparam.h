@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 1997/10/14 06:48:49 sakamoto Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 1997/12/18 09:08:04 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,3 +96,5 @@
 #define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
 
 #define	SAFERSS		4
+
+#define	MACHINE_NONCONTIG

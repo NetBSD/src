@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1997/12/15 08:00:23 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1997/12/18 09:07:58 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,12 +78,14 @@ struct bat battable[16];
 
 vm_offset_t bebox_mb_reg;		/* BeBox MotherBoard register */
 
+#define OFMEMREGIONS	32
+struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
+
 int astpending;
 
 char *bootpath;
 
-extern vm_offset_t avail_end, virtual_avail;
-caddr_t	msgbufaddr;
+vm_offset_t msgbuf_vaddr, msgbuf_paddr;
 
 caddr_t allocsys __P((caddr_t));
 
@@ -111,7 +113,15 @@ initppc(startkernel, endkernel, size, args)
 #endif
 	extern void consinit __P((void));
 	extern void ext_intr __P((void));
-	int exc, scratch;
+	int exc, scratch, i;
+
+	/*
+	 * BeBox memory region set
+	 */
+	physmemr[0].start = 0;
+	physmemr[0].size = size & ~PGOFSET;
+	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
+	availmemr[0].size = size - availmemr[0].start;
 
 	/*
 	 * BeBox MotherBoard's Register
@@ -246,7 +256,7 @@ initppc(startkernel, endkernel, size, args)
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel, size);
+	pmap_bootstrap(startkernel, endkernel);
 
 #ifdef DDB
 	ddb_init(startsym, endsym);
@@ -259,6 +269,14 @@ initppc(startkernel, endkernel, size, args)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
+}
+
+void
+mem_regions(mem, avail)
+	struct mem_region **mem, **avail;
+{
+	*mem = physmemr;
+	*avail = availmemr;
 }
 
 /*
@@ -345,19 +363,26 @@ cpu_startup()
 	vm_offset_t minaddr, maxaddr;
 	int base, residual;
 
+	proc0.p_addr = proc0paddr;
+	v = (caddr_t)proc0paddr + USPACE;
+
+	/*
+	 * BeBox Mother Board's Register Mapping
+	 */
+	if (!(bebox_mb_reg = kmem_alloc(kernel_map, round_page(NBPG))))
+		panic("initppc: no room for interrupt register");
+	pmap_enter(pmap_kernel(), bebox_mb_reg, MOTHER_BOARD_REG,
+		VM_PROT_ALL, TRUE);
+
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
+	if (!(msgbuf_vaddr = kmem_alloc(kernel_map, round_page(MSGBUFSIZE))))
+		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(),
-		    (vm_offset_t)((caddr_t)msgbufaddr + i * NBPG),
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
-	msgbufmapped = 1;
-	
-	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
+		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
+		    msgbuf_paddr + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
 	identifycpu();
@@ -374,7 +399,7 @@ cpu_startup()
 		panic("startup: no room for tables");
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
-	
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -414,34 +439,29 @@ cpu_startup()
 	 */
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
-	
+
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
-	
+
 	/*
 	 * Initialize callouts.
 	 */
 	callfree = callout;
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
-	
+
 	printf("avail memory = %d (%dK bytes)\n",
 		ptoa(cnt.v_free_count), ptoa(cnt.v_free_count) / 1024);
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
-	
+
 	/*
 	 * Set up the buffers.
 	 */
 	bufinit();
-
-	/*
-	 * BeBox Mother Board's Register Mapping
-	 */
-	bebox_mb_reg  = physmemmap(MOTHER_BOARD_REG, NBPG);
 
 	/*
 	 * Now allow hardware interrupts.
@@ -453,7 +473,7 @@ cpu_startup()
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
-	
+
 	/*
 	 * Configure devices.
 	 */
