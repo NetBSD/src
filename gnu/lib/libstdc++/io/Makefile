@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 23:12:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/19 20:52:11 tv Exp $
 
 NOOBJ=	# defined
 
@@ -15,7 +15,7 @@ NOOBJ=	# defined
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
 
-INCS=		${LIBIO_HEADERS}
+INCS=		${LIBIO_HEADERS:Niostdio.h}
 INCSDIR=	/usr/include/g++
 
 .PATH: ${DIST}/libstdc++ ${DIST}/libstdc++/stl ${DIST}/libio
