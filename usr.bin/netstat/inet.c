@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: inet.c,v 1.11 1995/05/14 08:20:16 cgd Exp $";
+static char *rcsid = "$Id: inet.c,v 1.12 1995/06/12 03:03:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,31 +88,27 @@ protopr(off, name)
 	u_long off;
 	char *name;
 {
-	struct inpcb cb;
-	register struct inpcb *prev, *next;
+	struct inpcbtable table;
+	register struct inpcb *next, **prev;
 	int istcp;
 	static int first = 1;
 
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
-	kread(off, (char *)&cb, sizeof (struct inpcb));
-	inpcb = cb;
-	prev = (struct inpcb *)off;
-	if (inpcb.inp_next == (struct inpcb *)off)
-		return;
-	while (inpcb.inp_next != (struct inpcb *)off) {
-		next = inpcb.inp_next;
-		kread((u_long)next, (char *)&inpcb, sizeof (inpcb));
-		if (inpcb.inp_prev != prev) {
+	kread(off, (char *)&table, sizeof table);
+	prev = &((struct inpcbtable *)off)->inpt_list.lh_first;
+	while (inpcb.inp_list.le_next != 0) {
+		next = inpcb.inp_list.le_next;
+		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
+		if (inpcb.inp_list.le_prev != prev) {
 			printf("???\n");
 			break;
 		}
+		prev = &next->inp_list.le_next;
 		if (!aflag &&
-		  inet_lnaof(inpcb.inp_laddr) == INADDR_ANY) {
-			prev = next;
+		    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 			continue;
-		}
 		kread((u_long)inpcb.inp_socket, (char *)&sockb, sizeof (sockb));
 		if (istcp) {
 			kread((u_long)inpcb.inp_ppcb,
@@ -148,7 +144,6 @@ protopr(off, name)
 				printf(" %s", tcpstates[tcpcb.t_state]);
 		}
 		putchar('\n');
-		prev = next;
 	}
 }
 

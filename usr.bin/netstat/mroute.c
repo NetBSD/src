@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mroute.c	8.1 (Berkeley) 6/6/93
- *	$Id: mroute.c,v 1.6 1995/03/28 17:26:42 jtc Exp $
+ *	$Id: mroute.c,v 1.7 1995/06/12 03:03:13 mycroft Exp $
  */
 
 /*
@@ -49,6 +49,8 @@
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 
+#include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/igmp.h>
 #define _KERNEL
@@ -59,21 +61,44 @@
 #include <stdlib.h>
 #include "netstat.h"
 
+char *
+pktscale(n)
+	u_long n;
+{
+	static char buf[8];
+	char t;
+
+	if (n < 1024)
+		t = ' ';
+	else if (n < 1024 * 1024) {
+		t = 'k';
+		n /= 1024;
+	} else {
+		t = 'm';
+		n /= 1048576;
+	}
+
+	sprintf(buf, "%u%c", n, t);
+	return (buf);
+}
+
 void
-mroutepr(mrpaddr, mrtaddr, vifaddr)
-	u_long mrpaddr, mrtaddr, vifaddr;
+mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
+	u_long mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr;
 {
 	u_int mrtproto;
-	struct mrt *mrttable[MRTHASHSIZ];
+	LIST_HEAD(, mfc) *mfchashtbl;
+	u_long mfchash;
 	struct vif viftable[MAXVIFS];
-	register struct mrt *mrt;
-	struct mrt smrt;
+	struct mfc *mfcp, mfc;
 	register struct vif *v;
 	register vifi_t vifi;
-	register struct in_addr *grp;
-	register int i, n;
-	register int banner_printed;
-	register int saved_nflag;
+	struct in_addr *grp;
+	int i;
+	int banner_printed;
+	int saved_nflag;
+	int numvifs;
+	int nmfc;		/* No. of cache entries */
 
 	if (mrpaddr == 0) {
 		printf("ip_mrtproto: symbol not in namelist\n");
@@ -82,7 +107,6 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 
 	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
-
 	case 0:
 		printf("no multicast routing compiled into this system\n");
 		return;
@@ -95,8 +119,12 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 		return;
 	}
 
-	if (mrtaddr == 0) {
-		printf("mrttable: symbol not in namelist\n");
+	if (mfchashtbladdr == 0) {
+		printf("mfchashtbl: symbol not in namelist\n");
+		return;
+	}
+	if (mfchashaddr == 0) {
+		printf("mfchash: symbol not in namelist\n");
 		return;
 	}
 	if (vifaddr == 0) {
@@ -109,64 +137,64 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 
 	kread(vifaddr, (char *)&viftable, sizeof(viftable));
 	banner_printed = 0;
+	numvifs = 0;
+
 	for (vifi = 0, v = viftable; vifi < MAXVIFS; ++vifi, ++v) {
 		if (v->v_lcl_addr.s_addr == 0)
 			continue;
+		numvifs = vifi;
 
 		if (!banner_printed) {
-			printf("\nVirtual Interface Table\n%s%s",
-			    " Vif   Threshold   Local-Address   ",
-			    "Remote-Address   Groups\n");
+			printf("\nVirtual Interface Table\n %s%s",
+			    "Vif  Thresh  Limit  Local-Address    ",
+			    "Remote-Address   Pkt_in  Pkt_out\n");
 			banner_printed = 1;
 		}
 
-		printf(" %2u       %3u      %-15.15s",
-		    vifi, v->v_threshold, routename(v->v_lcl_addr.s_addr));
-		printf(" %-15.15s\n", (v->v_flags & VIFF_TUNNEL) ?
-		    routename(v->v_rmt_addr.s_addr) : "");
-
-		n = v->v_lcl_grps_n;
-		grp = (struct in_addr *)malloc(n * sizeof(*grp));
-		if (grp == NULL) {
-			printf("v_lcl_grps_n: malloc failed\n");
-			return;
-		}
-		kread((u_long)v->v_lcl_grps, (caddr_t)grp, n * sizeof(*grp));
-		for (i = 0; i < n; ++i)
-			printf("%51s %-15.15s\n",
-			    "", routename((grp++)->s_addr));
-		free(grp);
+		printf(" %3u     %3u  %5u  %-15.15s",
+		    vifi, v->v_threshold, v->v_rate_limit,
+		    routename(v->v_lcl_addr.s_addr));
+		printf("  %-15.15s  %6u  %7u\n", (v->v_flags & VIFF_TUNNEL) ?
+		    routename(v->v_rmt_addr.s_addr) : "",
+		    v->v_pkt_in, v->v_pkt_out);
 	}
 	if (!banner_printed)
 		printf("\nVirtual Interface Table is empty\n");
 
-	kread(mrtaddr, (char *)&mrttable, sizeof(mrttable));
+	kread(mfchashtbladdr, (char *)&mfchashtbl, sizeof(mfchashtbl));
+	kread(mfchashaddr, (char *)&mfchash, sizeof(mfchash));
 	banner_printed = 0;
-	for (i = 0; i < MRTHASHSIZ; ++i) {
-		for (mrt = mrttable[i]; mrt != NULL; mrt = mrt->mrt_next) {
+	nmfc = 0;
+
+	for (i = 0; i <= mfchash; ++i) {
+		kread((u_long)&mfchashtbl[i], (char *)&mfcp, sizeof(mfcp));
+
+		for (; mfcp != 0; mfcp = mfc.mfc_hash.le_next) {
 			if (!banner_printed) {
-				printf("\nMulticast Routing Table\n%s",
-				    " Hash  Origin-Subnet  In-Vif  Out-Vifs\n");
+				printf("\nMulticast Forwarding Cache\n %s%s",
+				    "Hash  Origin           Mcastgroup       ",
+				    "Traffic  In-Vif  Out-Vifs/Forw-ttl\n");
 				banner_printed = 1;
 			}
 
-			kread((u_long)mrt, (char *)&smrt, sizeof(*mrt));
-			mrt = &smrt;
-			printf(" %3u   %-15.15s  %2u   ",
-			    i, netname(mrt->mrt_origin.s_addr,
-			    ntohl(mrt->mrt_originmask.s_addr)),
-			    mrt->mrt_parent);
-			for (vifi = 0; vifi < MAXVIFS; ++vifi)
-				if (VIFM_ISSET(vifi, mrt->mrt_children))
-					printf(" %u%c",
-					    vifi,
-					    VIFM_ISSET(vifi, mrt->mrt_leaves) ?
-					    '*' : ' ');
+			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
+			printf("  %3u  %-15.15s",
+			    i, routename(mfc.mfc_origin.s_addr));
+			printf("  %-15.15s  %7s     %3u ",
+			    routename(mfc.mfc_mcastgrp.s_addr),
+			    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
+			for (vifi = 0; vifi <= numvifs; ++vifi)
+				if (mfc.mfc_ttls[vifi])
+					printf(" %u/%u", vifi, mfc.mfc_ttls[vifi]);
+
 			printf("\n");
+			nmfc++;
 		}
 	}
 	if (!banner_printed)
-		printf("\nMulticast Routing Table is empty\n");
+		printf("\nMulticast Forwarding Cache is empty\n");
+	else
+		printf("\nTotal no. of entries in cache: %d\n", nmfc);
 
 	printf("\n");
 	nflag = saved_nflag;
@@ -180,21 +208,21 @@ mrt_stats(mrpaddr, mstaddr)
 	u_int mrtproto;
 	struct mrtstat mrtstat;
 
-	if(mrpaddr == 0) {
+	if (mrpaddr == 0) {
 		printf("ip_mrtproto: symbol not in namelist\n");
 		return;
 	}
 
 	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
-	    case 0:
+	case 0:
 		printf("no multicast routing compiled into this system\n");
 		return;
 
-	    case IGMP_DVMRP:
+	case IGMP_DVMRP:
 		break;
 
-	    default:
+	default:
 		printf("multicast routing protocol %u, unknown\n", mrtproto);
 		return;
 	}
@@ -206,20 +234,26 @@ mrt_stats(mrpaddr, mstaddr)
 
 	kread(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
 	printf("multicast routing:\n");
-	printf(" %10u multicast route lookup%s\n",
-	  mrtstat.mrts_mrt_lookups, plural(mrtstat.mrts_mrt_lookups));
-	printf(" %10u multicast route cache miss%s\n",
-	  mrtstat.mrts_mrt_misses, plurales(mrtstat.mrts_mrt_misses));
-	printf(" %10u group address lookup%s\n",
-	  mrtstat.mrts_grp_lookups, plural(mrtstat.mrts_grp_lookups));
-	printf(" %10u group address cache miss%s\n",
-	  mrtstat.mrts_grp_misses, plurales(mrtstat.mrts_grp_misses));
 	printf(" %10u datagram%s with no route for origin\n",
-	  mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));
+	    mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));
+	printf(" %10u upcall%s made to mrouted\n",
+	    mrtstat.mrts_upcalls, plural(mrtstat.mrts_upcalls));
 	printf(" %10u datagram%s with malformed tunnel options\n",
-	  mrtstat.mrts_bad_tunnel, plural(mrtstat.mrts_bad_tunnel));
+	    mrtstat.mrts_bad_tunnel, plural(mrtstat.mrts_bad_tunnel));
 	printf(" %10u datagram%s with no room for tunnel options\n",
-	  mrtstat.mrts_cant_tunnel, plural(mrtstat.mrts_cant_tunnel));
-	printf(" %10u datagram%s arrived on the wrong interface\n",
-	  mrtstat.mrts_wrong_if, plural(mrtstat.mrts_wrong_if));
+	    mrtstat.mrts_cant_tunnel, plural(mrtstat.mrts_cant_tunnel));
+	printf(" %10u datagram%s arrived on wrong interface\n",
+	    mrtstat.mrts_wrong_if, plural(mrtstat.mrts_wrong_if));
+	printf(" %10u datagram%s dropped due to upcall Q overflow\n",
+	    mrtstat.mrts_upq_ovflw, plural(mrtstat.mrts_upq_ovflw));
+	printf(" %10u datagram%s dropped due to upcall socket overflow\n",
+	    mrtstat.mrts_upq_sockfull, plural(mrtstat.mrts_upq_sockfull));
+	printf(" %10u datagram%s cleaned up by the cache\n",
+	    mrtstat.mrts_cache_cleanups, plural(mrtstat.mrts_cache_cleanups));
+	printf(" %10u datagram%s dropped selectively by ratelimiter\n",
+	    mrtstat.mrts_drop_sel, plural(mrtstat.mrts_drop_sel));
+	printf(" %10u datagram%s dropped - bucket Q overflow\n",
+	    mrtstat.mrts_q_overflow, plural(mrtstat.mrts_q_overflow));
+	printf(" %10u datagram%s dropped - larger than bkt size\n",
+	    mrtstat.mrts_pkt2large, plural(mrtstat.mrts_pkt2large));
 }

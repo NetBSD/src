@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)netstat.h	8.2 (Berkeley) 1/4/94
- *	$Id: netstat.h,v 1.2 1994/05/13 08:08:20 mycroft Exp $
+ *	$Id: netstat.h,v 1.3 1995/06/12 03:03:14 mycroft Exp $
  */
 
 #include <sys/cdefs.h>
@@ -106,5 +106,5 @@ void	tp_protopr __P((u_long, char *));
 void	tp_inproto __P((u_long));
 void	tp_stats __P((caddr_t, caddr_t));
 
-void	mroutepr __P((u_long, u_long, u_long));
+void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));
