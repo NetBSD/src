@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.15 1999/12/07 23:53:48 soren Exp $
+.\"	$NetBSD: yp.8,v 1.15.4.1 2001/04/26 12:54:59 he Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 16, 1999
+.Dd February 8, 2001
 .Dt YP 8
 .Os
 .Sh NAME
@@ -126,8 +126,16 @@ that can use
 .Tn NIS
 maps.
 .Pp
+Password maps in standard YP are insecure, because the pw_passwd
+field is accessable by any user. A common solution to this is to
+generate a secure map (using
+.Dq makedbm -s )
+which can only be accessed by a client bound to a privileged port.
+To activate the secure map, see the appropriate comment in
+.Pa /var/yp/Makefile.yp .
+.Pp
 The
-.Tn NIS 
+.Tn NIS
 subsystem is conditionally started in
 .Pa /etc/rc .
 See the
@@ -135,9 +143,14 @@ See the
 file for configuration variables.
 .Sh BUGS
 If
-.Xr ypbind
+.Xr ypbind 8
 cannot find a server, the system behaves the same way as Sun's code:
 it hangs.
+.Pp
+The
+.Sq secure map
+feature is not compatible with non-BSD implementations as found
+e.g. in Solaris.
 .Sh SEE ALSO
 .Xr domainname 1 ,
 .Xr ypcat 1 ,
@@ -149,7 +162,7 @@ it hangs.
 .Xr rc 8 ,
 .Xr rc.conf 5 ,
 .Xr ypbind 8 ,
-.Xr yppoll 8 , 
+.Xr yppoll 8 ,
 .Xr ypset 8 ,
 .Xr ypwhich 1 ,
 .Xr ypserv 8 ,
