@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:50:16 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2001/12/12 12:06:48 lukem Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/miscfs/fdesc ${.CURDIR}/../..
-
-NOMAN=	# defined
 
 KMOD=	fdesc
 
