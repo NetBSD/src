@@ -1,10 +1,12 @@
+/*	$NetBSD: nl_langinfo.c,v 1.4 1997/04/29 16:40:18 kleink Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: nl_langinfo.c,v 1.3 1995/04/28 23:19:37 jtc Exp $";
+static char *rcsid = "$NetBSD: nl_langinfo.c,v 1.4 1997/04/29 16:40:18 kleink Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

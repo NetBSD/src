@@ -1,3 +1,5 @@
+/*	$NetBSD: setlocale.c,v 1.10 1997/04/29 16:40:19 kleink Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
+#else
+static char rcsid[] = "$NetBSD: setlocale.c,v 1.10 1997/04/29 16:40:19 kleink Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

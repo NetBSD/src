@@ -1,10 +1,12 @@
+/*	$NetBSD: localeconv.c,v 1.7 1997/04/29 16:40:17 kleink Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: localeconv.c,v 1.6 1995/04/28 23:19:32 jtc Exp $";
+static char *rcsid = "$NetBSD: localeconv.c,v 1.7 1997/04/29 16:40:17 kleink Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
