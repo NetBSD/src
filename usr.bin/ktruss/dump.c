@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.12 2002/06/06 10:48:49 enami Exp $	*/
+/*	$NetBSD: dump.c,v 1.13 2003/03/16 09:44:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.12 2002/06/06 10:48:49 enami Exp $");
+__RCSID("$NetBSD: dump.c,v 1.13 2003/03/16 09:44:25 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@ int timestamp, decimal, fancy = 1, tail, maxdata;
 
 #include <sys/syscall.h>
 
-static char *ptrace_ops[] = {
+static const char * const ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
