@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.157 2002/06/02 02:00:30 gson Exp $	*/
+/*	$NetBSD: audio.c,v 1.158 2002/06/23 01:36:07 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.157 2002/06/02 02:00:30 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.158 2002/06/23 01:36:07 gmcgarry Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -288,12 +288,12 @@ audioattach(struct device *parent, struct device *self, void *aux)
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
-	sc->sc_inports.master = 0;
+	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
 	sc->sc_outports.index = -1;
-	sc->sc_outports.master = 0;
+	sc->sc_outports.master = -1;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
