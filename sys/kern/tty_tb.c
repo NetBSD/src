@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.10 1994/02/13 00:10:47 cgd Exp $
+ *	$Id: tty_tb.c,v 1.11 1994/02/17 14:50:38 mycroft Exp $
  */
 
 #include "tb.h"
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/tablet.h>
 #include <sys/tty.h>
+#include <sys/proc.h>
 
 /*
  * Tablet configuration table.
