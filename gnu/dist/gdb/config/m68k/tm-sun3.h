@@ -84,6 +84,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* The code which tries to deal with this bug is never harmful on a sun3.  */
 #define SUN_FIXED_LBRAC_BUG (0)
 
+/* Offset to saved PC in sigcontext, from <sys/signal.h>.  */
+#define SIGCONTEXT_PC_OFFSET 12
+
+/* The common sigtramp_saved_pc() works fine, but if you insist,
+   the following is how to do the old SIG_PC_FP_OFFSET hack.  */
+
+#if 0	/* XXX */
 /* On the sun3 the kernel pushes a sigcontext on the user stack and then
    `calls' _sigtramp in user code. _sigtramp saves the floating point status
    on the stack and calls the signal handler function. The stack does not
@@ -99,8 +106,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    Please note that it is impossible to correctly backtrace from a breakpoint
    in _sigtramp as _sigtramp modifies the stack pointer a few times.  */
 
-#undef SIG_PC_FP_OFFSET
 #define SIG_PC_FP_OFFSET 324
 #define SIG_SP_FP_OFFSET 332
+
+#undef	FRAME_SAVED_PC
+#define FRAME_SAVED_PC(FRAME) \
+  ((FRAME)->signal_handler_caller \
+   ? m68k_sigtramp_saved_pc (FRAME) \
+   : read_memory_integer ((FRAME)->frame + 4, 4))
+
+extern CORE_ADDR m68k_sigtramp_saved_pc PARAMS ((struct frame_info *));
+#endif	/* XXX */
 
 #endif /* TM_SUN3_H */
