@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.9 2000/03/21 04:42:57 itojun Exp $	*/
+/*	$NetBSD: shb.c,v 1.9.4.1 2000/08/21 18:20:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -408,6 +408,10 @@ intrhandler(p1, p2, p3, p4, frame)
 		irq_num = TMU1_IRQ;
 	} else if (IS_INTEVT_SCI0(irl)) {	/* XXX TOO DIRTY */
 		irq_num = SCI_IRQ;
+#ifdef SH4
+	} else if ((irl & 0x0f00) == INTEVT_SCIF) {
+		irq_num = SCIF_IRQ;
+#endif
 	} else
 		irq_num = (irl - 0x200) >> 5;
 
