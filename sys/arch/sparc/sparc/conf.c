@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.58 1998/12/18 16:55:39 drochner Exp $ */
+/*	$NetBSD: conf.c,v 1.59 1999/07/30 23:58:26 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@
 
 #include "kbd.h"
 #include "ms.h"
+#include "com.h"
 #include "zstty.h"
 #include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
@@ -164,7 +165,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
-	cdev_notdef(),			/* 36 */
+	cdev_tty_init(NCOM,com),	/* 36: NS16x50 compatible ports */
 	cdev_notdef(),			/* 37 */
 	cdev_notdef(),			/* 38 */
 	cdev_fb_init(NCGFOUR,cgfour),	/* 39: /dev/cgfour */
