@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: kcorelow.c,v 1.3 1995/01/12 10:17:52 pk Exp $
+	$Id: kcorelow.c,v 1.4 1995/07/08 01:55:54 cgd Exp $
 */
 
 #ifdef KERNEL_DEBUG
@@ -89,6 +89,10 @@ curProc()
 
 	if (kvread(addr, &p))
 		error("cannot read proc pointer at %x\n", addr);
+
+	if (p == NULL)
+		p = (struct proc *)ksym_lookup("proc0");
+
 	return p;
 }
 
@@ -154,7 +158,11 @@ kcore_open (filename, from_tty)
 	if (exec_bfd == NULL)
 		error("No kernel image specified");
 
-	kernel_start = bfd_get_start_address (exec_bfd); /* XXX */
+#ifndef __i386__						/* XXX */
+	kernel_start = bfd_get_start_address (exec_bfd);
+#else								/* XXX */
+	kernel_start = VM_MAXUSER_ADDRESS;			/* XXX */
+#endif								/* XXX */
 
 	target_preopen (from_tty);
 	if (!filename) {
