@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.47 2001/01/30 19:27:39 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.48 2001/04/26 08:21:51 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -467,7 +467,7 @@ ex_config(sc)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 			sc->sc_dev.dv_xname);
 
-	/* Add a suspend hook to make sure we com back up after a resume. */
+	/* Add a suspend hook to make sure we come back up after a resume. */
 	sc->sc_powerhook = powerhook_establish(ex_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -1574,6 +1574,7 @@ ex_detach(sc)
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
+	powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }
@@ -1832,14 +1833,24 @@ ex_power(why, arg)
 	int s;
 
 	s = splnet();
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		ex_stop(ifp, 0);
 		if (sc->power != NULL)
 			(*sc->power)(sc, why);
-	} else if (ifp->if_flags & IFF_UP) {
-		if (sc->power != NULL)
-			(*sc->power)(sc, why);
-		ex_init(ifp);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->power != NULL)
+				(*sc->power)(sc, why);
+			ex_init(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:		
+	case PWR_SOFTSTANDBY:		
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }
