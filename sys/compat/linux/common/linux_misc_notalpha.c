@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.51 1999/05/14 18:45:31 thorpej Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.52 1999/08/16 19:06:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -390,4 +390,36 @@ linux_sys_getresgid(p, v, retval)
 		return (error);
 
 	return (copyout(&pc->p_svgid, SCARG(uap, sgid), sizeof(gid_t)));
+}
+
+/*
+ * I wonder why Linux has settimeofday() _and_ stime().. Still, we
+ * need to deal with it.
+ */
+int
+linux_sys_stime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_time_args /* {
+		linux_time_t *t;
+	} */ *uap = v;
+	struct timeval atv;
+	linux_time_t tt;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
+		return error;
+
+	atv.tv_sec = tt;
+	atv.tv_usec = 0;
+
+	if ((error = settime(&atv)))
+		return (error);
+
+	return 0;
 }
