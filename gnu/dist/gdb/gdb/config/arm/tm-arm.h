@@ -26,6 +26,22 @@
 #define GDB_MULTI_ARCH 1
 #endif
 
+#ifdef ARM_26BIT_R15
+/* Functions to unpack and pack R15 on 26-bit ARMs. */
+void arm_supply_26bit_r15 (char *);
+void arm_read_26bit_r15 (char *);
+#endif
+
+/* Most ARMs don't have single stepping capability, so provide a
+   single-stepping mechanism by default */
+#ifndef SOFTWARE_SINGLE_STEP_P
+#define SOFTWARE_SINGLE_STEP_P 1
+#endif
+#if SOFTWARE_SINGLE_STEP_P
+#define SOFTWARE_SINGLE_STEP(sig,bpt) arm_software_single_step((sig), (bpt))
+void arm_software_single_step PARAMS((int, int));
+#endif
+
 /* Specify that for the native compiler variables for a particular
    lexical context are listed after the beginning LBRAC instead of
    before in the executables list of symbols.  */

@@ -36,6 +36,7 @@
    on the Sparc, the stack frames are offset by +2047 (and the arguments
    are 8 bytes instead of 4). */
 /* Instructions are:
+   save %sp, -320, %sp
    std  %f10, [ %fp + 0x7a7 ]
    std  %f8, [ %fp + 0x79f ]
    std  %f6, [ %fp + 0x797 ]
@@ -67,7 +68,7 @@
    ldx  [ %sp + 0x897 ], %o3
    ldx  [ %sp + 0x88f ], %o2
    ldx  [ %sp + 0x887 ], %o1
-   call  %g0
+   jmpl %g1, %o7
    ldx  [ %sp + 0x87f ], %o0
    nop
    ta  1

@@ -1066,6 +1066,33 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+/* For NetBSD, sigtramp is 32 bytes before STACK_END_ADDR,
+   but we don't know where that is until run-time!  */
+
+#ifdef TM_NBSD_H
+int
+nbsd_in_sigtramp (pc)
+     CORE_ADDR pc;
+{
+  static CORE_ADDR stack_end_addr;
+  struct minimal_symbol *msymbol;
+  CORE_ADDR pssaddr;
+  int rv;
+
+  if (stack_end_addr == 0) {
+    msymbol = lookup_minimal_symbol("__ps_strings", NULL, NULL);
+    if (msymbol == NULL)
+      pssaddr = 0x40a0; /* XXX return 0? */
+    else
+      pssaddr = SYMBOL_VALUE_ADDRESS(msymbol);
+    stack_end_addr = read_memory_integer (pssaddr, 4);
+    stack_end_addr = (stack_end_addr + 0xFF) & ~0xFF;
+  }
+  rv = ((pc >= (stack_end_addr - 32)) &&
+	(pc < stack_end_addr));
+  return rv;
+}
+#endif	/* TM_NBSD_H */
 
 static void
 m68k_dump_tdep (struct gdbarch *current_gdbarch, struct ui_file *file)
