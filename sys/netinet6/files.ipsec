@@ -1,4 +1,4 @@
-#	$NetBSD: files.ipsec,v 1.1 2003/09/12 11:21:36 itojun Exp $
+#	$NetBSD: files.ipsec,v 1.2 2003/09/20 05:14:41 itojun Exp $
 
 defflag opt_ipsec.h		IPSEC: rijndael, sha2, ripemd160
 defflag opt_ipsec.h		IPSEC_ESP: des, blowfish, cast128, rijndael
@@ -20,7 +20,7 @@ file	netinet6/ipcomp_output.c	ipsec
 
 file	netinet6/ipsec.c		ipsec
 
-file	netkey/key.c			ipsec | fast_ipsec
-file	netkey/key_debug.c		ipsec | fast_ipsec
-file	netkey/keydb.c			ipsec | fast_ipsec
-file	netkey/keysock.c		ipsec | fast_ipsec
+file	netkey/key.c			ipsec
+file	netkey/key_debug.c		ipsec
+file	netkey/keydb.c			ipsec
+file	netkey/keysock.c		ipsec
