@@ -1,7 +1,7 @@
-/*	$NetBSD: makefs.c,v 1.14 2002/11/29 13:06:33 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.15 2003/03/10 10:02:58 lukem Exp $	*/
 
 /*
- * Copyright (c) 2001-2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001-2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Luke Mewburn for Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.14 2002/11/29 13:06:33 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.15 2003/03/10 10:02:58 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -123,11 +123,13 @@ main(int argc, char *argv[])
 
 		case 'B':
 			if (strcmp(optarg, "be") == 0 ||
+			    strcmp(optarg, "4321") == 0 ||
 			    strcmp(optarg, "big") == 0) {
 #if BYTE_ORDER == LITTLE_ENDIAN
 				fsoptions.needswap = 1;
 #endif
 			} else if (strcmp(optarg, "le") == 0 ||
+			    strcmp(optarg, "1234") == 0 ||
 			    strcmp(optarg, "little") == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 				fsoptions.needswap = 1;
