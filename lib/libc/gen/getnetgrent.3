@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getnetgrent.3	8.1 (Berkeley) 6/4/93
-.\"	$Id: getnetgrent.3,v 1.2 1994/12/04 18:12:12 christos Exp $
+.\"	$Id: getnetgrent.3,v 1.3 1994/12/11 22:47:06 christos Exp $
 .\"
 .Dd June 4, 1993
 .Dt GETNETGRENT 3
@@ -56,16 +56,17 @@ These functions operate on the netgroup database file
 which is described
 in
 .Xr netgroup 5 .
-If that file does not exist, and the systems supports 
-.Sy NIS,
+If that file does not exist, and the system supports 
+.Sy YP,
 then the
 .Sy netgroup 
-.Sy NIS
+.Sy YP
 databases are used instead.
 The database defines a set of netgroups, each made up of one or more triples:
 .Bd -literal -offset indent
 (host, user, domain)
 .Ed
+.Pp
 that defines a combination of host, user and domain.
 Any of the three fields may be specified as ``wildcards'' that match any
 string.
