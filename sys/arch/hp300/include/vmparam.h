@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 1996/10/20 23:23:28 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 1997/03/15 22:02:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,7 @@
  * have the user's stack hard-wired at FFF00000 for post-mortems,
  * and we must be compatible...
  */
-#define	USRTEXT		NBPG
+#define	USRTEXT		8192			/* Must equal __LDPGSZ */
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define P1PAGES		0x100000
