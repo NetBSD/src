@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.9 2001/02/16 03:21:35 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.10 2001/03/25 12:27:22 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -37,10 +37,10 @@
 #include <eti.h>
 
 /* Define the types of field justification that can be used. */
-#define NO_JUSTIFICATION  0
-#define JUSTIFY_RIGHT     1
-#define JUSTIFY_LEFT      2
-#define JUSTIFY_CENTER    3
+#define NO_JUSTIFICATION  (0)
+#define JUSTIFY_RIGHT     (1)
+#define JUSTIFY_LEFT      (2)
+#define JUSTIFY_CENTER    (3)
 
 /* Define the max and min valid justification styles for range checking */
 #define MIN_JUST_STYLE    NO_JUSTIFICATION
@@ -54,93 +54,121 @@ typedef unsigned int Form_Options;
 #define O_NL_OVERLOAD (0x002)
 
 /* field options */
-#define O_VISIBLE  0x001  /* Field is visible */
-#define O_ACTIVE   0x002  /* Field is active in the form */
-#define O_PUBLIC   0x004  /* The contents entered into the field is echoed */
-#define O_EDIT     0x008  /* Can edit the field */
-#define O_WRAP     0x010  /* The field contents can line wrap */
-#define O_BLANK    0x020  /* Blank the field on modification */
-#define O_AUTOSKIP 0x040  /* Skip to next field when current is full */
-#define O_NULLOK   0x080  /* Field is allowed to contain no data */
-#define O_STATIC   0x100  /* Field is not dynamic */
-#define O_PASSOK   0x200  /* An umodified field is OK */
+#define O_VISIBLE  (0x001)  /* Field is visible */
+#define O_ACTIVE   (0x002)  /* Field is active in the form */
+#define O_PUBLIC   (0x004)  /* The contents entered into the field is echoed */
+#define O_EDIT     (0x008)  /* Can edit the field */
+#define O_WRAP     (0x010)  /* The field contents can line wrap */
+#define O_BLANK    (0x020)  /* Blank the field on modification */
+#define O_AUTOSKIP (0x040)  /* Skip to next field when current is full */
+#define O_NULLOK   (0x080)  /* Field is allowed to contain no data */
+#define O_STATIC   (0x100)  /* Field is not dynamic */
+#define O_PASSOK   (0x200)  /* An umodified field is OK */
 
 /*
  * Form driver requests - be VERY careful about changing the ordering
  * of the requests below.  The form driver code depends on a particular
  * order for the requests.
  */
-#define REQ_MIN_REQUEST   0x100 /* must equal value of the first request */
+#define REQ_MIN_REQUEST   (KEY_MAX + 0x101) /* must equal value of the
+                                               first request */
 
-#define REQ_NEXT_PAGE     0x100 /* next page in form */
-#define REQ_PREV_PAGE     0x101 /* previous page in form */
-#define REQ_FIRST_PAGE    0x102 /* goto first page in form */
-#define REQ_LAST_PAGE     0x103 /* goto last page in form */
+#define REQ_NEXT_PAGE     (KEY_MAX + 0x101) /* next page in form */
+#define REQ_PREV_PAGE     (KEY_MAX + 0x102) /* previous page in form */
+#define REQ_FIRST_PAGE    (KEY_MAX + 0x103) /* goto first page in form */
+#define REQ_LAST_PAGE     (KEY_MAX + 0x104) /* goto last page in form */
 
-#define REQ_NEXT_FIELD    0x104 /* move to the next field */
-#define REQ_PREV_FIELD    0x105 /* move to the previous field */
-#define REQ_FIRST_FIELD   0x106 /* goto the first field */
-#define REQ_LAST_FIELD    0x107 /* goto the last field */
+#define REQ_NEXT_FIELD    (KEY_MAX + 0x105) /* move to the next field */
+#define REQ_PREV_FIELD    (KEY_MAX + 0x106) /* move to the previous field */
+#define REQ_FIRST_FIELD   (KEY_MAX + 0x107) /* goto the first field */
+#define REQ_LAST_FIELD    (KEY_MAX + 0x108) /* goto the last field */
 
-#define REQ_SNEXT_FIELD   0x108 /* move to the next field in sorted order */
-#define REQ_SPREV_FIELD   0x109 /* move to the prev field in sorted order */
-#define REQ_SFIRST_FIELD  0x10a /* move to the first sorted field */
-#define REQ_SLAST_FIELD   0x10b /* move to the last sorted field */
+#define REQ_SNEXT_FIELD   (KEY_MAX + 0x109) /* move to the next field
+                                               in sorted order */
+#define REQ_SPREV_FIELD   (KEY_MAX + 0x10a) /* move to the prev field
+                                               in sorted order */
+#define REQ_SFIRST_FIELD  (KEY_MAX + 0x10b) /* move to the first
+                                               sorted field */
+#define REQ_SLAST_FIELD   (KEY_MAX + 0x10c) /* move to the last sorted
+                                               field */
 
-#define REQ_LEFT_FIELD    0x10c /* go left one field */
-#define REQ_RIGHT_FIELD   0x10d /* go right one field */
-#define REQ_UP_FIELD      0x10e /* go up one field */
-#define REQ_DOWN_FIELD    0x10f /* go down one field */
+#define REQ_LEFT_FIELD    (KEY_MAX + 0x10d) /* go left one field */
+#define REQ_RIGHT_FIELD   (KEY_MAX + 0x10e) /* go right one field */
+#define REQ_UP_FIELD      (KEY_MAX + 0x10f) /* go up one field */
+#define REQ_DOWN_FIELD    (KEY_MAX + 0x110) /* go down one field */
 
-#define REQ_NEXT_CHAR     0x110 /* move to the next char in field */
-#define REQ_PREV_CHAR     0x111 /* move to the previous char in field */
-#define REQ_NEXT_LINE     0x112 /* go to the next line in the field */
-#define REQ_PREV_LINE     0x113 /* go to the previous line in the field */
-#define REQ_NEXT_WORD     0x114 /* go to the next word in the field */
-#define REQ_PREV_WORD     0x115 /* go to the previous word in the field */
-#define REQ_BEG_FIELD     0x116 /* go to the beginning of the field */
-#define REQ_END_FIELD     0x117 /* go to the end of the field */
-#define REQ_BEG_LINE      0x118 /* go to the beginning of the line */
-#define REQ_END_LINE      0x119 /* go to the end of the line */
-#define REQ_LEFT_CHAR     0x11a /* move left in the field */
-#define REQ_RIGHT_CHAR    0x11b /* move right in the field */
-#define REQ_UP_CHAR       0x11c /* move up in the field */
-#define REQ_DOWN_CHAR     0x11d /* move down in the field */
+#define REQ_NEXT_CHAR     (KEY_MAX + 0x111) /* move to the next char
+                                               in field */
+#define REQ_PREV_CHAR     (KEY_MAX + 0x112) /* move to the previous
+                                               char in field */
+#define REQ_NEXT_LINE     (KEY_MAX + 0x113) /* go to the next line in
+                                               the field */
+#define REQ_PREV_LINE     (KEY_MAX + 0x114) /* go to the previous line
+                                               in the field */
+#define REQ_NEXT_WORD     (KEY_MAX + 0x115) /* go to the next word in
+                                               the field */
+#define REQ_PREV_WORD     (KEY_MAX + 0x116) /* go to the previous word
+                                               in the field */
+#define REQ_BEG_FIELD     (KEY_MAX + 0x117) /* go to the beginning of
+                                               the field */
+#define REQ_END_FIELD     (KEY_MAX + 0x118) /* go to the end of the field */
+#define REQ_BEG_LINE      (KEY_MAX + 0x119) /* go to the beginning of
+                                               the line */
+#define REQ_END_LINE      (KEY_MAX + 0x11a) /* go to the end of the
+                                               line */
+#define REQ_LEFT_CHAR     (KEY_MAX + 0x11b) /* move left in the field */
+#define REQ_RIGHT_CHAR    (KEY_MAX + 0x11c) /* move right in the field */
+#define REQ_UP_CHAR       (KEY_MAX + 0x11d) /* move up in the field */
+#define REQ_DOWN_CHAR     (KEY_MAX + 0x11e) /* move down in the field */
 
-#define REQ_NEW_LINE      0x11e /* insert/overlay a new line */
-#define REQ_INS_CHAR      0x11f /* insert a blank char at the cursor */
-#define REQ_INS_LINE      0x120 /* insert a blank line at the cursor */
+#define REQ_NEW_LINE      (KEY_MAX + 0x11f) /* insert/overlay a new line */
+#define REQ_INS_CHAR      (KEY_MAX + 0x120) /* insert a blank char at
+                                               the cursor */
+#define REQ_INS_LINE      (KEY_MAX + 0x121) /* insert a blank line at
+                                               the cursor */
 
-#define REQ_DEL_CHAR      0x121 /* delete the current character */
-#define REQ_DEL_PREV      0x122 /* delete the character before the current */
-#define REQ_DEL_LINE      0x123 /* delete the current line */
-#define REQ_DEL_WORD      0x124 /* delete the word at the cursor */
-#define REQ_CLR_EOL       0x125 /* clear to the end of the line */
-#define REQ_CLR_EOF       0x126 /* clear to the end of the field */
-#define REQ_CLR_FIELD     0x127 /* clear the field */
+#define REQ_DEL_CHAR      (KEY_MAX + 0x122) /* delete the current character */
+#define REQ_DEL_PREV      (KEY_MAX + 0x123) /* delete the character
+                                               before the current */
+#define REQ_DEL_LINE      (KEY_MAX + 0x124) /* delete the current line */
+#define REQ_DEL_WORD      (KEY_MAX + 0x125) /* delete the word at the cursor */
+#define REQ_CLR_EOL       (KEY_MAX + 0x126) /* clear to the end of the line */
+#define REQ_CLR_EOF       (KEY_MAX + 0x127) /* clear to the end of the field */
+#define REQ_CLR_FIELD     (KEY_MAX + 0x128) /* clear the field */
 
-#define REQ_OVL_MODE      0x128 /* overlay mode */
-#define REQ_INS_MODE      0x129 /* insert mode */
+#define REQ_OVL_MODE      (KEY_MAX + 0x129) /* overlay mode */
+#define REQ_INS_MODE      (KEY_MAX + 0x12a) /* insert mode */
 
-#define REQ_SCR_FLINE     0x12a /* scroll field forward one line */
-#define REQ_SCR_BLINE     0x12b /* scroll field backward one line */
-#define REQ_SCR_FPAGE     0x12c /* scroll field forward one page */
-#define REQ_SCR_BPAGE     0x12d /* scroll field backward one page */
-#define REQ_SCR_FHPAGE    0x12e /* scroll field forward half a page */
-#define REQ_SCR_BHPAGE    0x12f /* scroll field backward half a page */
+#define REQ_SCR_FLINE     (KEY_MAX + 0x12b) /* scroll field forward one line */
+#define REQ_SCR_BLINE     (KEY_MAX + 0x12c) /* scroll field backward
+                                               one line */
+#define REQ_SCR_FPAGE     (KEY_MAX + 0x12d) /* scroll field forward one page */
+#define REQ_SCR_BPAGE     (KEY_MAX + 0x12e) /* scroll field backward
+                                               one page */
+#define REQ_SCR_FHPAGE    (KEY_MAX + 0x12f) /* scroll field forward
+                                               half a page */
+#define REQ_SCR_BHPAGE    (KEY_MAX + 0x130) /* scroll field backward
+                                               half a page */
 
-#define REQ_SCR_FCHAR     0x130 /* horizontal scroll forward a character */
-#define REQ_SCR_BCHAR     0x131 /* horizontal scroll backward a character */
-#define REQ_SCR_HFLINE    0x132 /* horizontal scroll forward a line */
-#define REQ_SCR_HBLINE    0x133 /* horizontal scroll backward a line */
-#define REQ_SCR_HFHALF    0x134 /* horizontal scroll forward half a line */
-#define REQ_SCR_HBHALF    0x135 /* horizontal scroll backward half a line */
+#define REQ_SCR_FCHAR     (KEY_MAX + 0x131) /* horizontal scroll
+                                               forward a character */
+#define REQ_SCR_BCHAR     (KEY_MAX + 0x132) /* horizontal scroll
+                                               backward a character */
+#define REQ_SCR_HFLINE    (KEY_MAX + 0x133) /* horizontal scroll
+                                               forward a line */
+#define REQ_SCR_HBLINE    (KEY_MAX + 0x134) /* horizontal scroll
+                                               backward a line */
+#define REQ_SCR_HFHALF    (KEY_MAX + 0x135) /* horizontal scroll
+                                               forward half a line */
+#define REQ_SCR_HBHALF    (KEY_MAX + 0x136) /* horizontal scroll
+                                               backward half a line */
 
-#define REQ_VALIDATION    0x136 /* validate the field */
-#define REQ_PREV_CHOICE   0x137 /* display previous field choice */
-#define REQ_NEXT_CHOICE   0x138 /* display next field choice */
+#define REQ_VALIDATION    (KEY_MAX + 0x137) /* validate the field */
+#define REQ_PREV_CHOICE   (KEY_MAX + 0x138) /* display previous field choice */
+#define REQ_NEXT_CHOICE   (KEY_MAX + 0x139) /* display next field choice */
 
-#define REQ_MAX_COMMAND   0x138 /* must match the last driver command */
+#define REQ_MAX_COMMAND   (KEY_MAX + 0x139) /* must match the last
+                                               driver command */
 
 typedef struct _form_string {
 	size_t allocated;
@@ -233,6 +261,7 @@ struct _form_struct {
 	int wrap; /* wrap from last field to first field if true */
 	WINDOW *win; /* window for the form */
 	WINDOW *subwin; /* subwindow for the form */
+	WINDOW *scrwin; /* this is the window to use for output */
 	void *userptr; /* user defined pointer */
 	Form_Options opts; /* options for the form */
 	Form_Hook form_init; /* function called when form posted and
@@ -247,7 +276,6 @@ struct _form_struct {
 	int cur_field; /* current field */
 	int page; /* current page of form */
 	int max_page; /* number of pages in the form */
-	int subwin_created; /* libform made the window */
 	_FORMI_PAGE_START *page_starts; /* dynamic array of fields that start
 					   the pages */
 	CIRCLEQ_HEAD(_formi_sort_head, _form_field) sorted_fields; /* sorted field
