@@ -1,4 +1,4 @@
-/*	$NetBSD: homedir.c,v 1.3 1997/10/26 00:25:49 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.4 1998/03/30 02:37:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -59,8 +59,8 @@
  */
 static FILE *passwd_fp = NULL;
 static char pw_name[16], pw_dir[128];
-static hlfsd_diskspace(char *);
-static hlfsd_stat(char *, struct stat *);
+static int hlfsd_diskspace(char *);
+static int hlfsd_stat(char *, struct stat *);
 static int cur_pwtab_num = 0, max_pwtab_num = 0;
 static int passwd_line = 0;
 static int plt_reset(void);
