@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.27 1998/03/03 01:40:51 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.28 1998/05/24 19:52:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -141,7 +141,11 @@ struct ctlname {
 #define	KERN_RTC_OFFSET		29	/* int: offset of rtc from gmt */
 #define	KERN_ROOT_DEVICE	30	/* string: root device */
 #define	KERN_MSGBUFSIZE		31	/* int: max # of chars in msg buffer */
-#define	KERN_MAXID		32	/* number of valid kern ids */
+#define	KERN_FSYNC		32	/* int: file synchronization support */
+#define	KERN_SYSVMSG		33	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
+#define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
+#define	KERN_MAXID		36	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -176,6 +180,10 @@ struct ctlname {
 	{ "rtc_offset", CTLTYPE_INT }, \
 	{ "root_device", CTLTYPE_STRING }, \
 	{ "msgbufsize", CTLTYPE_INT }, \
+	{ "fsync", CTLTYPE_INT }, \
+	{ "sysvmsg", CTLTYPE_INT }, \
+	{ "sysvsem", CTLTYPE_INT }, \
+	{ "sysvshm", CTLTYPE_INT }, \
 }
 
 /*
