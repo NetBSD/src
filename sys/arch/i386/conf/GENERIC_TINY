@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.16.2.3 2000/10/09 13:16:24 fvdl Exp $
+#	$NetBSD: GENERIC_TINY,v 1.16.2.4 2000/10/10 14:05:22 fvdl Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI or SCSI.
@@ -36,7 +36,7 @@ options 	MATH_EMULATE	# floating point emulation
 # memory if the extended BIOS data area is located at the top of base memory
 # (as is the case on most recent systems).
 #options 	REALBASEMEM=...	# size of base memory
-options 	REALEXTMEM=3200	# size of extended memory
+#options 	REALEXTMEM=...	# size of extended memory
 
 # Standard system options
 
