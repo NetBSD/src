@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.12 (Berkeley) 3/7/91
-#	$Id: Makefile,v 1.10 1993/11/12 08:45:45 cgd Exp $
+#	$Id: Makefile,v 1.11 1993/11/12 08:48:26 cgd Exp $
 #
 #	dump.h			header file
 #	dumpitime.c		reads /etc/dumpdates
@@ -23,7 +23,7 @@ CLEANFILES=dumprmain.o dumprtape.o dumprmt.o rdump
 
 all: rdump
 
-rdump: ${LIBCRT0} ${ROBJS} ${LIBC}
+rdump: ${LIBCRT0} ${ROBJS} ${LIBC} ${DPADD}
 	${CC} ${LDSTATIC} ${LDFLAGS} -o ${.TARGET} ${ROBJS} ${LDADD}
 
 dumprmain.o: dumpmain.o
