@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getinfo.c	5.26 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: getinfo.c,v 1.3 1994/12/23 16:55:47 cgd Exp $";
+static char rcsid[] = "$Id: getinfo.c,v 1.4 1995/05/22 01:02:34 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -544,7 +544,7 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
     register int	result;
     register char	*cp, **domain;
     Boolean		got_nodata = FALSE;
-    unsigned long	ina;
+    struct in_addr	ina;
 
     /* Catch explicit addresses */
     if ((queryType == T_A) && IsAddr(name, &ina)) {
@@ -553,9 +553,9 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
 	hostPtr->aliases = NULL;
 	hostPtr->servers = NULL;
 	hostPtr->addrType = AF_INET;
-	hostPtr->addrLen = sizeof(struct in_addr);
+	hostPtr->addrLen = sizeof(ina);
 	hostPtr->addrList = (char **)Calloc(2, sizeof(char *));
-	hostPtr->addrList[0] = Calloc(sizeof(long), sizeof(char));
+	hostPtr->addrList[0] = Calloc(1, sizeof(ina));
 	bcopy((char *)&ina, hostPtr->addrList[0], sizeof(ina));
 	hostPtr->addrList[1] = NULL;
 	return(SUCCESS);
