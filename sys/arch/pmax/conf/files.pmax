@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.5 1998/10/22 19:08:37 drochner Exp $
+#	$NetBSD: files.pmax,v 1.56.2.6 1998/10/26 10:52:53 nisimura Exp $
 #
 # DECstation-specific configuration info
 
@@ -105,8 +105,9 @@ file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
 # DC7085 Quad line serial controller
 device	dc: tty
-attach	dc at ibus
-file	arch/pmax/ibus/dc.c		dc needs-flag
+attach	dc at ibus with dc_ibus
+file	arch/pmax/ibus/dc_ibus.c	dc needs-flag
+file	arch/pmax/ibus/dc.c		dc
 
 # 8530 UARTs using the MI 8530 driver
 device	zsc { [channel = -1] }
@@ -120,7 +121,7 @@ file	dev/ic/z8530tty.c		zstty needs-flag
 
 device	zskbd: wskbddev
 attach	zskbd at zsc
-file	dev/dec/zskbd.c		zskbd needs-flag
+file	dev/dec/zskbd.c			zskbd needs-flag
 
 # ACCESS.bus (desktop bus) for MAXINE keyboard and mouse
 device	dtop: tty
