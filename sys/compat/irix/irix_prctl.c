@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.14 2002/08/02 23:02:51 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.15 2002/08/12 20:11:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.14 2002/08/02 23:02:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.15 2002/08/12 20:11:38 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -75,6 +75,7 @@ struct irix_sproc_child_args {
 	int isc_inh;
 	struct proc *isc_parent;
 	struct irix_share_group *isc_share_group;
+	int isc_child_done;
 }; 
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
 static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t, 
@@ -375,6 +376,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	isc->isc_inh = inh;
 	isc->isc_parent = p;
 	isc->isc_share_group = isg;
+	isc->isc_child_done = 0;
 
 	if (inh & IRIX_PR_SADDR)
 		ied->ied_shareaddr = 1;
@@ -382,6 +384,15 @@ irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
 	    (void *)irix_sproc_child, (void *)isc, retval, &p2)) != 0)
 		return error;
+
+	/*
+	 * The child needs the parent to stay alive until it has
+	 * copied a few things from it. We sleep whatever happen
+	 * until the child is done.
+	 */
+	while (!isc->isc_child_done)
+		(void)tsleep(&isc->isc_child_done, PZERO, "sproc", 0);
+	free(isc, M_TEMP);
 
 	retval[0] = (register_t)p2->p_pid;
 	retval[1] = 0;
@@ -425,7 +436,8 @@ irix_sproc_child(isc)
 		error = uvm_map_extract(&parent->p_vmspace->vm_map, 
 		    vm_min, vm_len, &p2->p_vmspace->vm_map, &dstaddrp, 0);
 		if (error != 0) {
-			free(isc, M_TEMP);
+			isc->isc_child_done = 1;
+			wakeup(&isc->isc_child_done);
 			killproc(p2, "failed to initialize share group VM");
 		}
 
@@ -436,7 +448,8 @@ irix_sproc_child(isc)
 		/* Remap the process private arena (unshared) */
 		error = irix_prda_init(p2);
 		if (error != 0) {
-			free(isc, M_TEMP);
+			isc->isc_child_done = 1;
+			wakeup(&isc->isc_child_done);
 			killproc(p2, "failed to initialize share group VM");
 		}
 	}
@@ -500,7 +513,13 @@ irix_sproc_child(isc)
 	if (inh & IRIX_PR_SADDR) 
 		ied->ied_shareaddr = 1;
 
-	free(isc, M_TEMP);
+	/*
+	 * wakeup the parent as it can now die without 
+	 * causing a panic in the child.
+	 */
+	isc->isc_child_done = 1;
+	wakeup(&isc->isc_child_done);
+
 	/*
 	 * Return to userland for a newly created process
 	 */
