@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: get_mic.c,v 1.1.1.2 2000/08/02 19:59:08 assar Exp $");
+RCSID("$Id: get_mic.c,v 1.2 2000/08/03 03:38:25 assar Exp $");
 
 OM_uint32 gss_get_mic
            (OM_uint32 * minor_status,
@@ -73,11 +73,11 @@ OM_uint32 gss_get_mic
   p += 16;
 
   /* checksum */
-  MD5Init (&md5);
-  MD5Update (&md5, p - 24, 8);
-  MD5Update (&md5, message_buffer->value,
+  MD5_Init (&md5);
+  MD5_Update (&md5, p - 24, 8);
+  MD5_Update (&md5, message_buffer->value,
 	     message_buffer->length);
-  MD5Final (hash, &md5);
+  MD5_Final (hash, &md5);
 
   memset (&zero, 0, sizeof(zero));
   gss_krb5_getsomekey(context_handle, &key);

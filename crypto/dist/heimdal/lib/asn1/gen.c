@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$Id: gen.c,v 1.1.1.2 2000/08/02 19:59:03 assar Exp $");
+RCSID("$Id: gen.c,v 1.2 2000/08/03 03:38:25 assar Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
@@ -55,7 +55,7 @@ init_generate (const char *filename, const char *base)
     orig_filename = filename;
     if(base)
 	strcpy(headerbase, base);
-    sprintf(header, "%s.h", headerbase);
+    sprintf(header, "%s.hx", headerbase);
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
 	err (1, "open %s", header);
