@@ -149,7 +149,6 @@ rs6000-*-*)		gdb_host=rs6000 ;;
 sparc-*-linux*)		gdb_host=linux ;;
 sparc-*-lynxos*)	gdb_host=sparclynx ;;
 sparc-*-netbsdelf*)	gdb_host=nbsdelf ;;
-sparc-*-netbsdaout*)	gdb_host=nbsd ;;
 sparc-*-netbsd*)	gdb_host=nbsd ;;
 sparc64-*-netbsd*)	gdb_host=nbsd64 ;;
 sparc-*-solaris2*)	gdb_host=sun4sol2 ;;
