@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.5 2005/03/30 01:30:21 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.6 2005/04/03 06:56:39 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.5 2005/03/30 01:30:21 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.6 2005/04/03 06:56:39 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -322,12 +322,11 @@ main(int argc, char *argv[])
 		if (have_ss)
 			PAM_SET_ITEM(PAM_SOCKADDR, &ss); 
 
-		if (getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf),
-		    &pwd) != 0) {
-			pam_end(pamh, PAM_SUCCESS);
-			syslog(LOG_ERR, "Cannot find user `%s'", username);
-			errx(EXIT_FAILURE, "Cannot find user `%s'", username);
-		}
+		/*
+		 * Don't check for errors, because we don't want to give
+		 * out any information.
+		 */
+		(void)getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf), &pwd);
 
 		/*
 		 * Establish the class now, before we might goto
@@ -366,14 +365,12 @@ main(int argc, char *argv[])
 				PAM_END("pam_get_item(PAM_USER)");
 
 			username = (char *)newuser;
-			if (getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf),
-			    &pwd) != 0) {
-				pam_end(pamh, PAM_SUCCESS);
-				syslog(LOG_ERR, "Cannot find user `%s'",
-				    username);
-				errx(EXIT_FAILURE, "Cannot find user `%s'",
-				    username);
-			}
+			/*
+			 * Don't check for errors, because we don't want to give
+			 * out any information.
+			 */
+			(void)getpwnam_r(username, &pwres, pwbuf, sizeof(pwbuf),
+			    &pwd);
 			lc = login_getpwclass(pwd);
 			auth_passed = 1;
 
