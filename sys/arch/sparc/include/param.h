@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 1995/12/06 22:35:54 pk Exp $ */
+/*	$NetBSD: param.h,v 1.18 1995/12/11 12:25:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,6 +181,8 @@ extern struct map	*dvmamap;
 #define vtorc(v)		((btoc((v)-dvma_base))+1)
 
 extern caddr_t	kdvma_mapin __P((caddr_t, int, int));
+extern caddr_t	dvma_malloc __P((size_t, void *, int));
+extern void	dvma_free __P((caddr_t, size_t, void *));
 #endif
 
 
