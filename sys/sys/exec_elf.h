@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.32 1999/11/10 17:31:56 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.33 1999/12/30 15:48:19 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -589,13 +589,15 @@ typedef struct {
 #define ELF_NO_ADDR	ELF32_NO_ADDR
 #endif
 
+#if defined(ELFSIZE)
 struct elf_args {
-        u_long  arg_entry;      /* program entry point */
-        u_long  arg_interp;     /* Interpreter load address */
-        u_long  arg_phaddr;     /* program header address */
-        u_long  arg_phentsize;  /* Size of program header */
-        u_long  arg_phnum;      /* Number of program headers */
+        Elf_Addr  arg_entry;      /* program entry point */
+        Elf_Addr  arg_interp;     /* Interpreter load address */
+        Elf_Addr  arg_phaddr;     /* program header address */
+        Elf_Addr  arg_phentsize;  /* Size of program header */
+        Elf_Addr  arg_phnum;      /* Number of program headers */
 };
+#endif
 
 #ifndef _LKM
 #include "opt_execfmt.h"
