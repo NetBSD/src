@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.162 2000/06/11 02:41:11 mycroft Exp $
+#	$NetBSD: files.i386,v 1.163 2000/06/16 03:47:24 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -180,8 +180,10 @@ file	dev/clock_subr.c		isa
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
-attach	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
+
+attach	npx at isa with npx_isa
+file	arch/i386/isa/npx_isa.c		npx_isa
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
