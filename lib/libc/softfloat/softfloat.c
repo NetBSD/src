@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.8 2002/05/06 19:05:00 bjh21 Exp $ */
+/* $NetBSD: softfloat.c,v 1.9 2002/05/07 10:02:42 bjh21 Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.8 2002/05/06 19:05:00 bjh21 Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.9 2002/05/07 10:02:42 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -1620,6 +1620,8 @@ float32 float32_round_to_int( float32 a )
                 return packFloat32( aSign, 0x7F, 0 );
             }
             break;
+	 case float_round_to_zero:
+	    break;
          case float_round_down:
             return aSign ? 0xBF800000 : 0;
          case float_round_up:
@@ -2583,6 +2585,8 @@ float64 float64_round_to_int( float64 a )
                 return packFloat64( aSign, 0x3FF, 0 );
             }
             break;
+	 case float_round_to_zero:
+	    break;
          case float_round_down:
             return aSign ? LIT64( 0xBFF0000000000000 ) : 0;
          case float_round_up:
@@ -3518,6 +3522,8 @@ floatx80 floatx80_round_to_int( floatx80 a )
                     packFloatx80( aSign, 0x3FFF, LIT64( 0x8000000000000000 ) );
             }
             break;
+	 case float_round_to_zero:
+	    break;
          case float_round_down:
             return
                   aSign ?
@@ -4609,6 +4615,8 @@ float128 float128_round_to_int( float128 a )
                     return packFloat128( aSign, 0x3FFF, 0, 0 );
                 }
                 break;
+	     case float_round_to_zero:
+		break;
              case float_round_down:
                 return
                       aSign ? packFloat128( 1, 0x3FFF, 0, 0 )
