@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.68 2002/10/03 16:13:24 uwe Exp $
+#	$NetBSD: files.sparc64,v 1.69 2002/10/15 15:11:07 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -126,14 +126,12 @@ file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
 attach com at ebus with com_ebus
 file	arch/sparc64/dev/com_ebus.c		com_ebus
 
-define zstty {}
-device zstty: tty
+device zstty {}: tty
 attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sparc/dev/zs_kgdb.c		kgdb
 
-define sabtty {}
-device sabtty: tty
+device sabtty {}: tty
 attach sabtty at sab
 # file arch/sparc64/dev/sabtty.c	sabtty needs-flag
 
