@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.10 1998/05/30 18:33:43 kleink Exp $	*/
+/*	$NetBSD: common.c,v 1.11 1998/07/25 04:59:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -72,7 +72,7 @@ __load_rtld(dp)
 		_FATAL("No /dev/zero\n");
 	}
 #endif
-#ifdef BSD
+#ifdef __NetBSD__
 	/* We use MAP_ANON */
 	crt.crt_dzfd = -1;
 #endif
@@ -92,7 +92,7 @@ __load_rtld(dp)
 		_FATAL("Cannot map ld.so\n");
 	}
 
-#ifdef BSD
+#ifdef __NetBSD__
 /* !!!
  * This is gross, ld.so is a ZMAGIC a.out, but has `sizeof(hdr)' for
  * an entry point and not at PAGSIZ as the N_*ADDR macros assume.
