@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.16 2003/10/08 04:25:46 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.17 2003/10/09 10:25:40 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 The NetBSD Foundation, Inc.
@@ -472,9 +472,6 @@ struct apple_blockzeroblock {
  * Parameters for NetBSD /boot written to start of pbr code by installboot
  */
 
-#define	X86_BOOT_MAGIC_1	('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)
-#define	X86_BOOT_MAGIC_2	('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)
-
 struct x86_boot_params {
 	uint32_t	bp_length;	/* length of patchable data */
 	uint32_t	bp_flags;
@@ -483,6 +480,13 @@ struct x86_boot_params {
 	uint32_t	bp_conspeed;
 	char		bp_password[16];	/* md5 hash of password */
 };
+
+#endif	/* !defined(__ASSEMBLER__) */				/* } */
+
+#define	X86_BOOT_MAGIC(n)	('x' << 24 | 0x86b << 12 | 'm' << 4 | (n))
+#define	X86_BOOT_MAGIC_1	X86_BOOT_MAGIC(1)	/* pbr.S */
+#define	X86_BOOT_MAGIC_2	X86_BOOT_MAGIC(2)	/* bootxx.S */
+#define	X86_BOOT_MAGIC_PXE	X86_BOOT_MAGIC(3)	/* start_pxe.S */
 
 		/* values for bp_flags */
 #define	X86_BP_FLAGS_RESET_VIDEO	1
@@ -498,6 +502,8 @@ struct x86_boot_params {
 #define	X86_BP_CONSDEV_COM1KBD	6
 #define	X86_BP_CONSDEV_COM2KBD	7
 #define	X86_BP_CONSDEV_COM3KBD	8
+
+#if !defined(__ASSEMBLER__)					/* { */
 
 /* ------------------------------------------
  * macppc
