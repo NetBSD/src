@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.5 2004/01/30 04:37:39 lukem Exp $
+#	$NetBSD: master.cf,v 1.6 2004/03/27 00:03:16 dan Exp $
 #
 #
 # Postfix master process configuration file.  Each line describes how
@@ -73,7 +73,7 @@
 # service type  private unpriv  chroot  wakeup  maxproc command + args
 #               (yes)   (yes)   (yes)   (never) (100)
 # ==========================================================================
-smtp      inet  n       -       n       -       -       smtpd
+#smtp     inet  n       -       n       -       -       smtpd
 #628      inet  n       -       n       -       -       qmqpd
 pickup    fifo  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
