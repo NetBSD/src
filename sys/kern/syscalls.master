@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.103 2000/12/09 05:27:31 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.104 2000/12/09 07:04:48 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -85,12 +85,20 @@
 			    int flags); }
 19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
+#ifdef COMPAT_43
+20	STD		{ pid_t sys_getpid_with_ppid(void); } getpid
+#else
 20	STD		{ pid_t sys_getpid(void); }
+#endif
 21	STD		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
 23	STD		{ int sys_setuid(uid_t uid); }
+#ifdef COMPAT_43
+24	STD		{ uid_t sys_getuid_with_euid(void); } getuid
+#else
 24	STD		{ uid_t sys_getuid(void); }
+#endif
 25	STD		{ uid_t sys_geteuid(void); }
 26	STD		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
 			    int data); }
@@ -131,7 +139,11 @@
 46	COMPAT_13	{ int sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
+#ifdef COMPAT_43
+47	STD		{ gid_t sys_getgid_with_egid(void); } getgid
+#else
 47	STD		{ gid_t sys_getgid(void); }
+#endif
 48	COMPAT_13	{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD		{ int sys___getlogin(char *namebuf, size_t namelen); }
