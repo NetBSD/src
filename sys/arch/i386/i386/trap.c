@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128 1999/02/10 16:52:02 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.129 1999/02/13 16:10:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_ibcs2.h"
+#include "opt_compat_aout.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,28 +129,32 @@ extern struct emul emul_ibcs2_coff, emul_ibcs2_xout, emul_ibcs2_elf;
 #endif
 
 #ifdef COMPAT_LINUX
-#include <sys/exec.h>
-#include <compat/linux/linux_syscall.h>
+# include <sys/exec.h>
+# include <compat/linux/linux_syscall.h>
 
-#ifdef EXEC_AOUT
+# ifdef EXEC_AOUT
 extern struct emul emul_linux_aout;
-#endif
-#ifdef EXEC_ELF32
+# endif
+# ifdef EXEC_ELF32
 extern struct emul emul_linux_elf32;
-#endif
-#ifdef EXEC_ELF64
+# endif
+# ifdef EXEC_ELF64
 extern struct emul emul_linux_elf64;
-#endif
+# endif
 #endif /* COMPAT_LINUX */
 
 #ifdef COMPAT_FREEBSD
-#ifdef EXEC_AOUT
+# ifdef EXEC_AOUT
 extern struct emul emul_freebsd_aout;
-#endif /* EXEC_AOUT */
-#ifdef EXEC_ELF32
+# endif /* EXEC_AOUT */
+# ifdef EXEC_ELF32
 extern struct emul emul_freebsd_elf32;
-#endif /* EXEC_ELF32 */
-#endif /* COMPAT_LINUX */
+# endif /* EXEC_ELF32 */
+#endif /* COMPAT_FREEBSD */
+
+#ifdef COMPAT_AOUT
+extern struct emul emul_netbsd_aout;
+#endif /* COMPAT_AOUT */
 
 #include "npx.h"
 
@@ -747,16 +752,17 @@ syscall(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
+		if (callp == sysent 	/* Native */
 #ifdef COMPAT_FREEBSD
-		/* FreeBSD has a same function in SYS___syscall */
-		if (callp != sysent && !freebsd)
-			break;
-#else
-		if (callp != sysent)
-			break;
-#endif /* COMPAT_FREEBSD */
-		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
-		params += sizeof(quad_t);
+		    || freebsd		/* FreeBSD has the same function */
+#endif
+#ifdef COMPAT_AOUT
+		    || (p->p_emul == &emul_netbsd_aout)	/* Our a.out */
+#endif
+		    ) {
+			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
+			params += sizeof(quad_t);
+		}
 		break;
 	default:
 		break;
