@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.259 1998/11/26 15:31:22 pk Exp $
+#	$NetBSD: files,v 1.260 1998/12/10 10:53:35 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -47,15 +47,18 @@ defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 # networking protocols
 defopt	INET
 defopt	opt_atalk.h	NETATALK
-defopt	opt_ns.h	NS	 	# Xerox Network Services (XNS)
 defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
 defopt	opt_iso.h	ISO TPIP	# ISO network stack
+defopt  IPX				# IPX network stack
 defopt	EON				# ISO clnp over IP
 defopt	CCITT				# 
 defopt	HDLC				# CCITT over HDLC
 defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
 defopt	NATM				# "native" ATM protocols
 defopt	PFIL_HOOKS			# pfil(9)
+defopt	IPFILTER_LOG			# logging of ip packets
+# Include deflate or bsd compression, enable pppd packet filtering support
+defopt  opt_ppp.h	PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 
 # networking options
 defopt	GATEWAY
@@ -681,6 +684,17 @@ file netatalk/at_rmx.c			netatalkdebug
 file netatalk/ddp_input.c		netatalk
 file netatalk/ddp_output.c		netatalk
 file netatalk/ddp_usrreq.c		netatalk
+file netipx/ipx.c			ipx
+file netipx/ipx_cksum.c			ipx
+file netipx/ipx_input.c			ipx
+file netipx/ipx_ip.c			ipx
+file netipx/ipx_outputfl.c		ipx
+file netipx/ipx_pcb.c			ipx
+file netipx/ipx_proto.c			ipx
+file netipx/ipx_tun.c			ipx
+file netipx/ipx_usrreq.c		ipx
+file netipx/spx_debug.c			ipx
+file netipx/spx_usrreq.c		ipx
 file netiso/clnp_debug.c		iso
 file netiso/clnp_er.c			iso
 file netiso/clnp_frag.c			iso
