@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.4 2002/08/15 01:38:16 briggs Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -39,12 +39,12 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.4 2002/08/15 01:38:16 briggs Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $")	
 
 	.text
 	.align	0
 
-Lcurpcb:
+.Lcurpcb:
 	.word _C_LABEL(curpcb)
 
 #ifdef __PROG32
@@ -80,11 +80,11 @@ ENTRY(copyin)
 	moveq	pc, lr
 
 	SAVE_REGS
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #Lcopyfault - . - 8
+	add	r3, pc, #.Lcopyfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -269,7 +269,7 @@ ENTRY(copyin)
 
 	mov	pc, lr
 
-Lcopyfault:
+.Lcopyfault:
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
@@ -293,11 +293,11 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #Lcopyfault - . - 8
+	add	r3, pc, #.Lcopyfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
@@ -496,11 +496,11 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
-	ldr	r4, Lcurpcb
+	ldr	r4, .Lcurpcb
 	ldr	r4, [r4]
 
 	ldr	r5, [r4, #PCB_ONFAULT]
-	add	r3, pc, #Lcopyfault - . - 8
+	add	r3, pc, #.Lcopyfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
 	PREFETCH(r0, 0)
