@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.205 2004/08/14 15:08:05 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.206 2004/08/19 23:25:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.205 2004/08/14 15:08:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.206 2004/08/19 23:25:35 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -180,7 +180,7 @@ struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
 void
 wdc_init_shadow_regs(struct ata_channel *chp)
 {
-	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
 	wdr->cmd_iohs[wd_status] = wdr->cmd_iohs[wd_command];
 	wdr->cmd_iohs[wd_features] = wdr->cmd_iohs[wd_error];

@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.10 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: siside.c,v 1.11 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -307,8 +307,8 @@ sis96x_setup_channel(struct ata_channel *chp)
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
 	int regtim;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	sis_tim = 0;
 	idedma_ctl = 0;
@@ -370,8 +370,8 @@ sis_setup_channel(struct ata_channel *chp)
 	int drive;
 	u_int32_t sis_tim;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	ATADEBUG_PRINT(("sis_setup_channel: old timings reg for "
 	    "channel %d 0x%x\n", chp->ch_channel, 

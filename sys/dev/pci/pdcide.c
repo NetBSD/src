@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.15 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.16 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -328,8 +328,8 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 	int drive;
 	pcireg_t mode, st;
 	u_int32_t idedma_ctl, scr, atapi;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int channel = chp->ch_channel;
 
 	/* setup DMA if needed */
@@ -442,8 +442,8 @@ pdc20268_setup_channel(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int u100;
 
 	/* setup DMA if needed */     

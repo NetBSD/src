@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.6 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.7 2004/08/19 23:25:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Toru Nishimura
@@ -135,8 +135,8 @@ static const u_int16_t piotbl[] = { 0x03C0, 0x0230, 0x01A0, 0x0110, 0x0010 };
 static void
 stpc_setup_channel(struct ata_channel *chp)
 {
-	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int channel = chp->ch_channel;
 	struct ata_drive_datas *drvp;

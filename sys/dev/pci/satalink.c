@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.19 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.20 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -597,9 +597,9 @@ sii3114_chansetup(struct pciide_softc *sc, int channel)
 static void
 sii3114_mapchan(struct pciide_channel *cp)
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
 	struct ata_channel *wdc_cp = &cp->ata_channel;
-	struct wdc_regs *wdr = &sc->sc_wdcdev.regs[wdc_cp->ch_channel];
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(wdc_cp);
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(wdc_cp);
 	int i;
 
 	cp->compat = 0;
@@ -763,9 +763,8 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 static void
 sii3112_drv_probe(struct ata_channel *chp)
 {
-	struct pciide_channel *cp = (struct pciide_channel *)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
-	struct wdc_regs *wdr = &sc->sc_wdcdev.regs[chp->ch_channel];
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint32_t scontrol, sstatus;
 	uint8_t scnt, sn, cl, ch;
 	int i;
@@ -873,8 +872,8 @@ sii3112_setup_channel(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	int drive;
 	u_int32_t idedma_ctl, dtm;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc*)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);

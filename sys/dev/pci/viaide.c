@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.15 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.16 2004/08/19 23:25:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -342,8 +342,8 @@ via_setup_channel(struct ata_channel *chp)
 	u_int8_t idedma_ctl;
 	int mode, drive;
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 #ifndef PCIIDE_AMD756_ENABLEDMA
 	int rev = PCI_REVISION(

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.75 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.76 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -135,6 +135,12 @@ struct wdc_softc {
 	void	(*datain_pio)(struct ata_channel *, int, void *, size_t);
 	void	(*dataout_pio)(struct ata_channel *, int, void *, size_t);
 };
+
+/* Given an ata_channel, get the wdc_softc. */
+#define	CHAN_TO_WDC(chp)	((chp)->ch_wdc)
+
+/* Given an ata_channel, get the wdc_regs. */
+#define	CHAN_TO_WDC_REGS(chp)	(&CHAN_TO_WDC(chp)->regs[(chp)->ch_channel])
 
 /*
  * Public functions which can be called by ATA or ATAPI specific parts,

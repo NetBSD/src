@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.13 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: hptide.c,v 1.14 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -279,8 +279,8 @@ hpt_setup_channel(struct ata_channel *chp)
 	int cable;
 	u_int32_t before, after;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int revision =
 	     PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 	const u_int32_t *tim_pio, *tim_dma, *tim_udma;
