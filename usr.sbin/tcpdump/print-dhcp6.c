@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dhcp6.c,v 1.1 1999/12/10 05:45:08 itojun Exp $	*/
+/*	$NetBSD: print-dhcp6.c,v 1.1.2.1 1999/12/27 18:38:13 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -35,7 +35,7 @@
 static const char rcsid[] =
     "@(#) KAME Header: /cvsroot/kame/kame/kame/kame/tcpdump/print-dhcp6.c,v 1.5 1999/11/02 14:55:01 itojun Exp";
 #else
-__RCSID("$NetBSD: print-dhcp6.c,v 1.1 1999/12/10 05:45:08 itojun Exp $");
+__RCSID("$NetBSD: print-dhcp6.c,v 1.1.2.1 1999/12/27 18:38:13 wrstuden Exp $");
 #endif
 #endif
 

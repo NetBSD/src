@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.10 1999/04/20 13:53:53 mrg Exp $	*/
+/*	$NetBSD: xstr.c,v 1.10.4.1 1999/12/27 18:37:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.10 1999/04/20 13:53:53 mrg Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.10.4.1 1999/12/27 18:37:19 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,10 +359,10 @@ hashit(str, new)
 			return (hp->hpt + i);
 	}
 	if ((hp = (struct hash *) calloc(1, sizeof (*hp))) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	hp->hpt = mesgpt;
 	if ((hp->hstr = strdup(str)) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 	mesgpt += strlen(hp->hstr) + 1;
 	hp->hnext = hp0->hnext;
 	hp->hnew = new;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.12 1999/06/29 18:14:15 mjl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.12.4.1 1999/12/27 18:37:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.12 1999/06/29 18:14:15 mjl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.12.4.1 1999/12/27 18:37:12 wrstuden Exp $");
 #endif not lint
 
 #include <sys/param.h>
@@ -317,21 +317,32 @@ histogram(val, colwidth, scale)
 	wclrtoeol(wnd);
 }
 
-int
-cmdiostat(cmd, args)
-	char *cmd, *args;
+void
+iostat_bars (args)
+	char *args;
 {
-
-	if (prefix(cmd, "secs"))
-		secs = !secs;
-	else if (prefix(cmd, "numbers"))
-		numbers = 1;
-	else if (prefix(cmd, "bars"))
-		numbers = 0;
-	else if (!dkcmd(cmd, args))
-		return (0);
+	numbers = 0;
 	wclear(wnd);
 	labeliostat();
 	refresh();
-	return (1);
+}
+
+void
+iostat_numbers (args)
+	char *args;
+{
+	numbers = 1;
+	wclear(wnd);
+	labeliostat();
+	refresh();
+}
+
+void
+iostat_secs (args)
+	char *args;
+{
+	secs = !secs;
+	wclear(wnd);
+	labeliostat();
+	refresh();
 }

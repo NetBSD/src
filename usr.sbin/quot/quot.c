@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.14 1998/03/01 02:26:03 fvdl Exp $	*/
+/*	$NetBSD: quot.c,v 1.14.4.1 1999/12/27 18:38:04 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.14 1998/03/01 02:26:03 fvdl Exp $");
+__RCSID("$NetBSD: quot.c,v 1.14.4.1 1999/12/27 18:38:04 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,9 +70,9 @@ static int headerlen;
  * kByte when done (on request).
  */
 #ifdef	COMPAT
-#define	SIZE(n)	(n)
+#define	SIZE(n)	((long long)(n))
 #else
-#define	SIZE(n)	howmany((n) * DEV_BSIZE, blocksize)
+#define	SIZE(n)	howmany((long long)(n) * DEV_BSIZE, (long long)blocksize)
 #endif
 
 #define	INOCNT(fs)	((fs)->fs_ipg)
@@ -405,10 +405,10 @@ dofsizes(fd, super, name)
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = 0; i < FSZCNT; i++) {
 			if (fp->fsz_count[i])
-				printf("%ld\t%ld\t%ld\n",
+				printf("%ld\t%ld\t%lld\n",
 				    (long)(fp->fsz_first + i),
 				    (long)fp->fsz_count[i],
-				    (long)SIZE(sz += fp->fsz_sz[i]));
+				    SIZE(sz += fp->fsz_sz[i]));
 		}
 	}
 }
@@ -439,12 +439,12 @@ douser(fd, super, name)
 	memmove(usrs, users, nusers * sizeof(struct user));
 	sortusers(usrs);
 	for (usr = usrs, n = nusers; --n >= 0 && usr->count; usr++) {
-		printf("%5ld", (long)SIZE(usr->space));
+		printf("%5lld", SIZE(usr->space));
 		if (count)
-			printf("\t%5ld", (long)usr->count);
+			printf("\t%5ld", usr->count);
 		printf("\t%-8s", usr->name);
 		if (unused)
-			printf("\t%5ld\t%5ld\t%5ld",
+			printf("\t%5lld\t%5lld\t%5lld",
 			    SIZE(usr->spc30), SIZE(usr->spc60),
 			    SIZE(usr->spc90));
 		printf("\n");

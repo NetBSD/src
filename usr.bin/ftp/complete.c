@@ -1,7 +1,7 @@
-/*	$NetBSD: complete.c,v 1.27 1999/09/22 03:01:53 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.27.2.1 1999/12/27 18:36:57 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.27 1999/09/22 03:01:53 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.27.2.1 1999/12/27 18:36:57 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: complete.c,v 1.27 1999/09/22 03:01:53 lukem Exp $");
  */
 
 #include <sys/stat.h>
-#include <signal.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -63,6 +62,7 @@ static int	     comparstr		__P((const void *, const void *));
 static unsigned char complete_ambiguous	__P((char *, int, StringList *));
 static unsigned char complete_command	__P((char *, int));
 static unsigned char complete_local	__P((char *, int));
+static unsigned char complete_option	__P((char *, int));
 static unsigned char complete_remote	__P((char *, int));
 
 static int
@@ -147,14 +147,14 @@ complete_command(word, list)
 	size_t wordlen;
 	unsigned char rv;
 
-	words = sl_init();
+	words = xsl_init();
 	wordlen = strlen(word);
 
 	for (c = cmdtab; c->c_name != NULL; c++) {
 		if (wordlen > strlen(c->c_name))
 			continue;
 		if (strncmp(word, c->c_name, wordlen) == 0)
-			sl_add(words, c->c_name);
+			xsl_add(words, c->c_name);
 	}
 
 	rv = complete_ambiguous(word, list, words);
@@ -190,37 +190,30 @@ complete_local(word, list)
 		if (file == word) {
 			dir[0] = '/';
 			dir[1] = '\0';
-		} else {
-			(void)strncpy(dir, word, file - word);
-			dir[file - word] = '\0';
-		}
+		} else
+			(void)strlcpy(dir, word, file - word + 1);
 		file++;
 	}
 	if (dir[0] == '~') {
 		char *p;
 
-		p = dir;
-		if (!globulize(&p))
+		if ((p = globulize(dir)) == NULL)
 			return (CC_ERROR);
-		if (p != dir) {
-			strncpy(dir, p, sizeof(dir));
-			dir[sizeof(dir)-1] = '\0';
-			free(p);
-		}
+		(void)strlcpy(dir, p, sizeof(dir));
+		free(p);
 	}
 
 	if ((dd = opendir(dir)) == NULL)
 		return (CC_ERROR);
 
-	words = sl_init();
-
+	words = xsl_init();
 	len = strlen(file);
 
 	for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
 
-#if defined(__SVR4) || defined(__linux__)
+#if defined(DIRENT_MISSING_D_NAMLEN)
 		if (len > strlen(dp->d_name))
 			continue;
 #else
@@ -231,7 +224,7 @@ complete_local(word, list)
 			char *tcp;
 
 			tcp = xstrdup(dp->d_name);
-			sl_add(words, tcp);
+			xsl_add(words, tcp);
 		}
 	}
 	closedir(dd);
@@ -241,9 +234,9 @@ complete_local(word, list)
 		struct stat sb;
 		char path[MAXPATHLEN];
 
-		strlcpy(path, dir,		sizeof(path));
-		strlcat(path, "/",		sizeof(path));
-		strlcat(path, words->sl_str[0],	sizeof(path));
+		(void)strlcpy(path, dir,		sizeof(path));
+		(void)strlcat(path, "/",		sizeof(path));
+		(void)strlcat(path, words->sl_str[0],	sizeof(path));
 
 		if (stat(path, &sb) >= 0) {
 			char suffix[2] = " ";
@@ -255,6 +248,37 @@ complete_local(word, list)
 		}
 	}
 	sl_free(words, 1);
+	return (rv);
+}
+/*
+ * Complete an option
+ */
+static unsigned char
+complete_option(word, list)
+	char *word;
+	int list;
+{
+	struct option *o;
+	StringList *words;
+	size_t wordlen;
+	unsigned char rv;
+
+	words = xsl_init();
+	wordlen = strlen(word);
+
+	for (o = optiontab; o->name != NULL; o++) {
+		if (wordlen > strlen(o->name))
+			continue;
+		if (strncmp(word, o->name, wordlen) == 0)
+			xsl_add(words, o->name);
+	}
+
+	rv = complete_ambiguous(word, list, words);
+	if (rv == CC_REFRESH) {
+		if (el_insertstr(el, " ") == -1)
+			rv = CC_ERROR;
+	}
+	sl_free(words, 0);
 	return (rv);
 }
 
@@ -278,24 +302,23 @@ complete_remote(word, list)
 	dummyargv[1] = dir;
 
 	if ((file = strrchr(word, '/')) == NULL) {
-		dir[0] = '.';
-		dir[1] = '\0';
+		dir[0] = '\0';
 		file = word;
 	} else {
 		cp = file;
 		while (*cp == '/' && cp > word)
 			cp--;
-		(void)strncpy(dir, word, cp - word + 1);
-		dir[cp - word + 1] = '\0';
+		(void)strlcpy(dir, word, cp - word + 2);
 		file++;
 	}
 
-	if (dirchange || strcmp(dir, lastdir) != 0) {	/* dir not cached */
+	if (dirchange || dirlist == NULL ||
+	    strcmp(dir, lastdir) != 0) {		/* dir not cached */
 		char *emesg;
 
 		if (dirlist != NULL)
 			sl_free(dirlist, 1);
-		dirlist = sl_init();
+		dirlist = xsl_init();
 
 		mflag = 1;
 		emesg = NULL;
@@ -314,23 +337,23 @@ complete_remote(word, list)
 			else
 				tcp = cp;
 			tcp = xstrdup(tcp);
-			sl_add(dirlist, tcp);
+			xsl_add(dirlist, tcp);
 		}
 		if (emesg != NULL) {
 			fprintf(ttyout, "\n%s\n", emesg);
 			return (CC_REDISPLAY);
 		}
-		(void)strcpy(lastdir, dir);
+		(void)strlcpy(lastdir, dir, sizeof(lastdir));
 		dirchange = 0;
 	}
 
-	words = sl_init();
+	words = xsl_init();
 	for (i = 0; i < dirlist->sl_cur; i++) {
 		cp = dirlist->sl_str[i];
 		if (strlen(file) > strlen(cp))
 			continue;
 		if (strncmp(file, cp, strlen(file)) == 0)
-			sl_add(words, cp);
+			xsl_add(words, cp);
 	}
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 0);
@@ -350,15 +373,14 @@ complete(el, ch)
 
 	struct cmd *c;
 	const LineInfo *lf;
-	int celems, dolist;
+	int celems, dolist, cmpltype;
 	size_t len;
 
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
 		return (CC_ERROR);
-	(void)strncpy(line, lf->buffer, len);
-	line[len] = '\0';
+	(void)strlcpy(line, lf->buffer, len + 1);
 	cursor_pos = line + (lf->cursor - lf->buffer);
 	lastc_argc = cursor_argc;	/* remember last cursor pos */
 	lastc_argo = cursor_argo;
@@ -370,10 +392,11 @@ complete(el, ch)
 	dolist = 0;
 			/* if cursor and word is same, list alternatives */
 	if (lastc_argc == cursor_argc && lastc_argo == cursor_argo
-	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
+	    && strncmp(word, margv[cursor_argc] ? margv[cursor_argc] : "",
+			cursor_argo) == 0)
 		dolist = 1;
-	else
-		(void)strncpy(word, margv[cursor_argc], cursor_argo);
+	else if (cursor_argc < margc)
+		(void)strlcpy(word, margv[cursor_argc], cursor_argo + 1);
 	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)
@@ -392,10 +415,20 @@ complete(el, ch)
 	if (cursor_argc > celems)
 		return (CC_ERROR);
 
-	switch (c->c_complete[cursor_argc - 1]) {
+	cmpltype = c->c_complete[cursor_argc - 1];
+	switch (cmpltype) {
+		case 'c':			/* command complete */
+		case 'C':
+			return (complete_command(word, dolist));
 		case 'l':			/* local complete */
 		case 'L':
 			return (complete_local(word, dolist));
+		case 'n':			/* no complete */
+		case 'N':			/* no complete */
+			return (CC_ERROR);
+		case 'o':			/* local complete */
+		case 'O':
+			return (complete_option(word, dolist));
 		case 'r':			/* remote complete */
 		case 'R':
 			if (connected != -1) {
@@ -404,15 +437,11 @@ complete(el, ch)
 				return (CC_REDISPLAY);
 			}
 			return (complete_remote(word, dolist));
-		case 'c':			/* command complete */
-		case 'C':
-			return (complete_command(word, dolist));
-		case 'n':			/* no complete */
 		default:
+			errx(1, "unknown complete type `%c'", cmpltype);
 			return (CC_ERROR);
 	}
-
-	return (CC_ERROR);
+	/* NOTREACHED */
 }
 
 #endif /* !NO_EDITCOMPLETE */

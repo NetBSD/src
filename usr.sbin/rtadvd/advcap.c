@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+/*	$NetBSD: advcap.c,v 1.2.4.1 1999/12/27 18:38:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -40,7 +40,7 @@ static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: advcap.c,v 1.2.4.1 1999/12/27 18:38:06 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

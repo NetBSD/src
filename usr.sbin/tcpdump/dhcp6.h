@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcp6.h,v 1.1 1999/12/10 05:45:07 itojun Exp $	*/
+/*	$NetBSD: dhcp6.h,v 1.1.2.1 1999/12/27 18:38:12 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.

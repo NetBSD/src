@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/10/20 01:07:52 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.5.6.1 1999/12/27 18:37:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: misc.c,v 1.5 1997/10/20 01:07:52 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.5.6.1 1999/12/27 18:37:15 wrstuden Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -68,9 +68,9 @@ cat(file)
 	(void)close(fd);
 }
 
-void
+int
 outc(c)
 	int c;
 {
-	(void)putc(c, stderr);
+	return (putc(c, stderr));
 }

@@ -1,9 +1,12 @@
-/*	$NetBSD: extern.h,v 1.35 1999/09/22 07:18:32 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.35.2.1 1999/12/27 18:36:57 wrstuden Exp $	*/
 
-/*
- * Copyright (C) 1997 and 1998 WIDE Project.
+/*-
+ * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
- * 
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,21 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*-
@@ -64,13 +71,42 @@
  *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
+/*
+ * Copyright (C) 1997 and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 struct sockaddr;
 struct tm;
 
-void    abort_remote __P((FILE *));
-void    abortpt __P((int));
-void    abortrecv __P((int));
-void    abortsend __P((int));
+void	abort_remote __P((FILE *));
+void	abort_squared __P((int));
+void	abortpt __P((int));
+void	abortxfer __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
@@ -79,51 +115,57 @@ void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
+void	cleanuppeer __P((void));
 void	cmdabort __P((int));
-void	cmdscanner __P((int));
-void	crankrate __P((int));
+void	cmdtimeout __P((int));
+void	cmdscanner __P((void));
 int	command __P((const char *, ...));
 #ifndef NO_EDITCOMPLETE
 unsigned char complete __P((EditLine *, int));
 void	controlediting __P((void));
 #endif /* !NO_EDITCOMPLETE */
-int	confirm __P((const char *, const char *));
+void	crankrate __P((int));
 FILE   *dataconn __P((const char *));
 void	delete __P((int, char **));
 void	disconnect __P((int, char **));
 void	do_chmod __P((int, char **));
 void	do_umask __P((int, char **));
+char   *docase __P((char *));
 void	domacro __P((int, char **));
 char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int	foregroundproc __P((void));
+void	formatbuf __P((char *, size_t, const char *));
 void	ftpvis __P((char *, size_t, const char *, size_t));
 int	ftp_login __P((const char *, const char *, const char *));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
+struct option *getoption __P((const char *));
+char   *getoptionvalue __P((const char *));
 int	getreply __P((int));
-int	globulize __P((char **));
+char   *globulize __P((const char *));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
 char   *hookup __P((char *, char *));
-void	idle __P((int, char **));
-int     initconn __P((void));
-void	intr __P((void));
+void	idlecmd __P((int, char **));
+int	initconn __P((void));
+void	intr __P((int));
 int	isipv6addr __P((const char *));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
-void	lostpeer __P((void));
+void	lostpeer __P((int));
+void	lpage __P((int, char **));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
-void	mabort __P((int));
+void	mabort __P((void));
 void	macdef __P((int, char **));
 void	makeargv __P((void));
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
-time_t	mkgmtime __P((struct tm *));
+void	mintr __P((int));
 void	mls __P((int, char **));
 void	modtime __P((int, char **));
 void	mput __P((int, char **));
@@ -131,20 +173,20 @@ char   *onoff __P((int));
 void	newer __P((int, char **));
 void	page __P((int, char **));
 int	parserate __P((int, char **, int));
-void    progressmeter __P((int));
+void	progressmeter __P((int));
 char   *prompt __P((void));
 void	proxabort __P((int));
-void    proxtrans __P((const char *, const char *, const char *));
-void    psabort __P((int));
+void	proxtrans __P((const char *, const char *, const char *));
+void	psabort __P((int));
 void	psummary __P((int));
-void    pswitch __P((int));
-void    ptransfer __P((int));
+void	pswitch __P((int));
+void	ptransfer __P((int));
 void	put __P((int, char **));
 void	pwd __P((int, char **));
 void	quit __P((int, char **));
 void	quote __P((int, char **));
 void	quote1 __P((const char *, int, char **));
-void    recvrequest __P((const char *, const char *, const char *,
+void	recvrequest __P((const char *, const char *, const char *,
 	    const char *, int, int));
 void	reget __P((int, char **));
 char   *remglob __P((char **, int, char **));
@@ -152,13 +194,14 @@ off_t	remotesize __P((const char *, int));
 time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
 void	renamefile __P((int, char **));
-void    reset __P((int, char **));
+void	reset __P((int, char **));
 void	restart __P((int, char **));
 void	rmthelp __P((int, char **));
 void	rmtstatus __P((int, char **));
+char   *rprompt __P((void));
 int	ruserpass __P((const char *, const char **, const char **,
 	    const char **));
-void    sendrequest __P((const char *, const char *, const char *, int));
+void	sendrequest __P((const char *, const char *, const char *, int));
 void	setascii __P((int, char **));
 void	setbell __P((int, char **));
 void	setbinary __P((int, char **));
@@ -174,6 +217,7 @@ void	setglob __P((int, char **));
 void	sethash __P((int, char **));
 void	setnmap __P((int, char **));
 void	setntrans __P((int, char **));
+void	setoption __P((int, char **));
 void	setpassive __P((int, char **));
 void	setpeer __P((int, char **));
 void	setport __P((int, char **));
@@ -199,21 +243,15 @@ void	status __P((int, char **));
 int	strsuftoi __P((const char *));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
+void	unsetoption __P((int, char **));
+void	updateremotepwd __P((void));
 void	usage __P((void));
 void	user __P((int, char **));
 int	xconnect __P((int, const struct sockaddr *, int));
 int	xlisten __P((int, int));
 void   *xmalloc __P((size_t));
+StringList *xsl_init __P((void));
+void	xsl_add __P((StringList *, char *));
 char   *xstrdup __P((const char *));
 sig_t	xsignal __P((int, void (func) __P((int))));
-
-extern struct	cmd cmdtab[];
-extern FILE    *cout;
-extern int	data;
-extern char    *home;
-extern int	proxy;
-extern char	reply_string[];
-extern int	NCMDS;
-
-extern char *__progname;		/* from crt0.o */
-
+sig_t	xsignal_restart __P((int, void (func) __P((int)), int));

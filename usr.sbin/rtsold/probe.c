@@ -1,4 +1,4 @@
-/*	$NetBSD: probe.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
+/*	$NetBSD: probe.c,v 1.2.4.1 1999/12/27 18:38:07 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -172,7 +172,8 @@ sendprobe(struct in6_addr *addr, int ifindex)
 	       if_indextoname(ifindex, ifnamebuf));
 
 	if (sendmsg(probesock, &sndmhdr, 0))
-		warnmsg(LOG_ERR, __FUNCTION__, "sendmsg: %s", strerror(errno));
+		warnmsg(LOG_ERR, __FUNCTION__, "sendmsg on %s: %s",
+			if_indextoname(ifindex, ifnamebuf), strerror(errno));
 
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.9 1999/01/08 06:16:55 abs Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.9.6.1 1999/12/27 18:37:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1345,11 +1345,11 @@ ctag_file(sp, tfp, name, dirp, dlenp)
 	    stat(name, &sb) && (p = strrchr(tfp->name, '/')) != NULL) {
 		*p = '\0';
 		len = snprintf(buf, sizeof(buf), "%s/%s", tfp->name, name);
-		*p = '/';
 		if (stat(buf, &sb) == 0) {
 			*dirp = tfp->name;
 			*dlenp = strlen(*dirp);
 		}
+		*p = '/';
 	}
 }
 

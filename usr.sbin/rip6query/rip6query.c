@@ -1,4 +1,4 @@
-/*	$NetBSD: rip6query.c,v 1.2 1999/07/06 13:14:54 itojun Exp $	*/
+/*	$NetBSD: rip6query.c,v 1.2.4.1 1999/12/27 18:38:05 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <signal.h>
+#include <err.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -50,6 +51,11 @@
 
 #include "route6d.h"
 
+/* wrapper for KAME-special getnameinfo() */
+#ifndef NI_WITHSCOPEID
+#define NI_WITHSCOPEID	0
+#endif
+
 int	s;
 extern int errno;
 struct sockaddr_in6 sin6;
@@ -58,46 +64,80 @@ struct rip6	*ripbuf;
 #define	RIPSIZE(n)	(sizeof(struct rip6) + (n-1) * sizeof(struct netinfo6))
 
 int main __P((int, char **));
-void fatal __P((char *));
-const char *inet6_n2a __P((struct in6_addr *));
+static void usage __P((void));
+static const char *sa_n2a __P((struct sockaddr *));
+static const char *inet6_n2a __P((struct in6_addr *));
 
-int main(argc, argv)
+int
+main(argc, argv)
 	int argc;
 	char **argv;
 {
 	struct netinfo6 *np;
 	struct sockaddr_in6 fsock;
-	struct hostent *hp;
-	char *hostname;
 	int i, n, len, flen;
+	int c;
+	extern char *optarg;
+	extern int optind;
+	int ifidx = -1;
+	int error;
+	char pbuf[10];
+	struct addrinfo hints, *res;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s address\n", *argv);
+	while ((c = getopt(argc, argv, "I:")) != EOF) {
+		switch (c) {
+		case 'I':
+			ifidx = if_nametoindex(optarg);
+			if (ifidx == 0) {
+				errx(1, "invalid interface %s", optarg);
+				/*NOTREACHED*/
+			}
+			break;
+		default:
+			usage();
+			exit(1);
+			/*NOTREACHED*/
+		}
+	}
+	argv += optind;
+	argc -= optind;
+
+	if (argc != 1) {
+		usage();
 		exit(-1);
 	}
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
-		fatal("socket");
-
-	hp = (struct hostent *)gethostbyname2(argv[1], AF_INET6);
-	if (hp == NULL) {
-		if (inet_pton(AF_INET6, argv[1], (u_int32_t *)&sin6.sin6_addr)
-			!= 1) {
-			fprintf(stderr, "%s: unknown host %s\n",
-				argv[0], argv[1]);
-			exit(-1);
-		}
-	} else {
-		bcopy(hp->h_addr, (caddr_t)&sin6.sin6_addr, hp->h_length);
-		hostname = strdup(hp->h_name);
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+		err(1, "socket");
+		/*NOTREACHED*/
 	}
 
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_port = htons(RIP6_PORT);
+	/* getaddrinfo is preferred for addr@ifname syntax */
+	snprintf(pbuf, sizeof(pbuf), "%d", RIP6_PORT);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;
+	error = getaddrinfo(argv[0], pbuf, &hints, &res);
+	if (error) {
+		errx(1, "%s: %s", argv[0], gai_strerror(error));
+		/*NOTREACHED*/
+	}
+	if (res->ai_next) {
+		errx(1, "%s: %s", argv[0], "resolved to multiple addrs");
+		/*NOTREACHED*/
+	}
+	if (sizeof(sin6) != res->ai_addrlen) {
+		errx(1, "%s: %s", argv[0], "invalid addrlen");
+		/*NOTREACHED*/
+	}
+	memcpy(&sin6, res->ai_addr, res->ai_addrlen);
+	if (ifidx >= 0)
+		sin6.sin6_scope_id = ifidx;
 
-	if ((ripbuf = (struct rip6 *)malloc(BUFSIZ)) == NULL)
-		fatal("malloc");
+	if ((ripbuf = (struct rip6 *)malloc(BUFSIZ)) == NULL) {
+		err(1, "malloc");
+		/*NOTREACHED*/
+	}
 	ripbuf->rip6_cmd = RIP6_REQUEST;
 	ripbuf->rip6_vers = RIP6_VERSION;
 	ripbuf->rip6_res1[0] = 0;
@@ -107,16 +147,20 @@ int main(argc, argv)
 	np->rip6_tag = 0;
 	np->rip6_plen = 0;
 	np->rip6_metric = HOPCNT_INFINITY6;
-	if (sendto(s, ripbuf, RIPSIZE(1), 0,
-		(struct sockaddr *)&sin6, sizeof(struct sockaddr_in6)) < 0)
-		fatal("send");
+	if (sendto(s, ripbuf, RIPSIZE(1), 0, (struct sockaddr *)&sin6,
+			sizeof(struct sockaddr_in6)) < 0) {
+		err(1, "send");
+		/*NOTREACHED*/
+	}
 	do {
-		flen = sizeof(struct sockaddr_in6);
+		flen = sizeof(fsock);
 		if ((len = recvfrom(s, ripbuf, BUFSIZ, 0,
-			(struct sockaddr *)&fsock, &flen)) < 0)
-			fatal("recvfrom");
+				(struct sockaddr *)&fsock, &flen)) < 0) {
+			err(1, "recvfrom");
+			/*NOTREACHED*/
+		}
 		printf("Response from %s len %d\n",
-			inet6_n2a(&fsock.sin6_addr), len);
+			sa_n2a((struct sockaddr *)&fsock), len);
 		n = (len - sizeof(struct rip6) + sizeof(struct netinfo6)) /
 			sizeof(struct netinfo6);
 		np = ripbuf->rip6_nets;
@@ -132,17 +176,31 @@ int main(argc, argv)
 	exit(0);
 }
 
-void fatal(p)
-	char *p;
+static void
+usage()
 {
-	fprintf(stderr, "%s: %s", p, strerror(errno));
-	exit(-1);
+	fprintf(stderr, "Usage: rip6query [-I iface] address\n");
 }
 
-const char *inet6_n2a(p)
-	struct in6_addr *p;
+/* getnameinfo() is preferred as we may be able to show ifindex as ifname */
+static const char *
+sa_n2a(sa)
+	struct sockaddr *sa;
 {
-	static char buf[BUFSIZ];
+	static char buf[NI_MAXHOST];
 
-	return inet_ntop(AF_INET6, (u_int32_t *)p, buf, sizeof(buf));
+	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf),
+			NULL, 0, NI_NUMERICHOST | NI_WITHSCOPEID) != 0) {
+		snprintf(buf, sizeof(buf), "%s", "(invalid)");
+	}
+	return buf;
+}
+
+static const char *
+inet6_n2a(addr)
+	struct in6_addr *addr;
+{
+	static char buf[NI_MAXHOST];
+
+	return inet_ntop(AF_INET6, addr, buf, sizeof(buf));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.8.4.1 1999/12/27 18:37:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -358,20 +358,7 @@ playdata(buf, tot, name)
 	 * The ticks variable is the number of ticks that make up a quarter
 	 * note and is used as a reference value for the delays between
 	 * the MIDI events.
-	 * The sequencer has two "knobs": the TIMEBASE and the TEMPO.
-	 * The delay specified in TMR_WAIT_REL is specified in
-	 * sequencer time units.  The length of a unit is
-	 * 60*1000000 / (TIMEBASE * TEMPO).
-	 * Set it to 1ms/unit (adjusted by user tempo changes).
 	 */
-	t = 500 * ttempo / 100;
-	if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &t) < 0)
-		err(1, "SEQUENCER_TMR_TIMEBASE");
-	t = 120;
-	if (ioctl(fd, SEQUENCER_TMR_TEMPO, &t) < 0)
-		err(1, "SEQUENCER_TMR_TEMPO");
-	if (ioctl(fd, SEQUENCER_TMR_START, 0) < 0)
-		err(1, "SEQUENCER_TMR_START");
 	now = 0;
 	for (;;) {
 		/* Locate lowest curtime */
@@ -494,6 +481,7 @@ main(argc, argv)
 	int listdevs = 0;
 	int example = 0;
 	int nmidi;
+	int t;
 	char *file = DEVMUSIC;
 	struct synth_info info;
 	FILE *f;
@@ -547,9 +535,27 @@ main(argc, argv)
 		}
 		exit(0);
 	}
+
+	/*
+	 * The sequencer has two "knobs": the TIMEBASE and the TEMPO.
+	 * The delay specified in TMR_WAIT_REL is specified in
+	 * sequencer time units.  The length of a unit is
+	 * 60*1000000 / (TIMEBASE * TEMPO).
+	 * Set it to 1ms/unit (adjusted by user tempo changes).
+	 */
+	t = 500 * ttempo / 100;
+	if (ioctl(fd, SEQUENCER_TMR_TIMEBASE, &t) < 0)
+		err(1, "SEQUENCER_TMR_TIMEBASE");
+	t = 120;
+	if (ioctl(fd, SEQUENCER_TMR_TEMPO, &t) < 0)
+		err(1, "SEQUENCER_TMR_TEMPO");
+	if (ioctl(fd, SEQUENCER_TMR_START, 0) < 0)
+		err(1, "SEQUENCER_TMR_START");
+
 	midireset();
 	if (example)
-		playdata(sample, sizeof sample, "<Gubben Noa>");
+		while (example--)
+			playdata(sample, sizeof sample, "<Gubben Noa>");
 	else if (argc == 0)
 		playfile(stdin, "<stdin>");
 	else

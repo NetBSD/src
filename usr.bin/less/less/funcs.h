@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: funcs.h,v 1.3.2.1 1999/12/27 18:37:02 wrstuden Exp $	*/
 
 
 /* brac.c */
@@ -219,7 +219,7 @@ public int isatty __P((int));
 /* output.c */
 public void put_line __P((void));
 public void flush __P((void));
-public void putchr __P((int));
+public int putchr __P((int));
 public void putstr __P((char *));
 public void get_return __P((void));
 public void error __P((char *, PARG *));

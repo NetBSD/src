@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $NetBSD: ndp.8,v 1.3 1999/09/03 03:54:47 itojun Exp $
-.\"     KAME Id: ndp.8,v 1.1.1.1 1999/08/08 23:30:48 itojun Exp
+.\"	$NetBSD: ndp.8,v 1.3.4.1 1999/12/27 18:37:55 wrstuden Exp $
+.\"	KAME Id: ndp.8,v 1.4 1999/12/13 11:07:41 jinmei Exp
 .\"
 .Dd May 17, 1998
 .Dt NDP 8
@@ -39,10 +39,10 @@
 .Sh SYNOPSIS
 .Nm ndp
 .Fl a
-.Op Fl nt
+.Op Fl ntl
 .Nm ndp
 .Fl A Ar wait
-.Op Fl nt
+.Op Fl ntl
 .Nm ndp
 .Fl c
 .Op Fl nt
@@ -56,6 +56,9 @@
 .Ar filename
 .Nm ndp
 .Fl H
+.Nm ndp
+.Fl I
+.Op delete \(ba Ar interface
 .Nm ndp
 .Fl i
 .Ar interface
@@ -98,8 +101,21 @@ Parse the file specified by
 .It Fl H
 Harmonize consistency between the routing table and the default router
 list; install the top entry of the list into the kernel routing table.
+.It Fl I Op delete \(ba Ar interface
+Shows or specifies the default interface used as the default route when
+there is no default router. If no argument is given to the option,
+the current deafult interface will be shown.
+If an
+.Ar interface
+is specified, the interface will be used as the default.
+If a special keyword
+.Ic delete
+is specified, the current default interface will be deleted from the kernel.
 .It Fl i
+.Ar interface
 view ND information for specified interface.
+.It Fl l
+Do not truncate numeric IPv6 address.
 .It Fl n
 Do not try to resolve numeric address to hostname.
 .It Fl p

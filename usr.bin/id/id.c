@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.15 1999/08/17 17:37:32 mycroft Exp $");
+__RCSID("$NetBSD: id.c,v 1.15.4.1 1999/12/27 18:37:01 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ main(argc, argv)
 
 	maxgroups = sysconf(_SC_NGROUPS_MAX);
 	if ((groups = malloc((maxgroups + 1) * sizeof(gid_t))) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 
 	if (gflag) {
 		id = pw ? pw->pw_gid : rflag ? getgid() : getegid();

@@ -1,9 +1,12 @@
-/*	$NetBSD: main.c,v 1.50 1999/09/22 07:18:36 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.50.2.1 1999/12/27 18:36:58 wrstuden Exp $	*/
 
-/*
- * Copyright (C) 1997 and 1998 WIDE Project.
+/*-
+ * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
- * 
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,21 +15,25 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -62,6 +69,35 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Copyright (C) 1997 and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
@@ -72,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.50 1999/09/22 07:18:36 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.50.2.1 1999/12/27 18:36:58 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,39 +119,38 @@ __RCSID("$NetBSD: main.c,v 1.50 1999/09/22 07:18:36 lukem Exp $");
 #include <sys/socket.h>
 
 #include <err.h>
+#include <errno.h>
 #include <netdb.h>
+#include <paths.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#define	GLOBAL		/* force GLOBAL decls in ftp_var.h to be declared */
 #include "ftp_var.h"
-#include "pathnames.h"
 
-#define FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
-#define HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
-#define NO_PROXY	"no_proxy"	/* env var with list of non-proxied
+#define	FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
+#define	HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
+#define	NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
 
-int main __P((int, char **));
+static void	setupoption __P((char *, char *, char *));
+int		main __P((int, char **));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, top, rval;
+	int ch, rval;
 	struct passwd *pw = NULL;
-	char *cp, *ep, homedir[MAXPATHLEN];
+	char *cp, *ep, *anonuser, *anonpass;
 	int dumbterm, s, len;
 
 	ftpport = "ftp";
 	httpport = "http";
-	ftpproxy = getenv(FTP_PROXY);
-	httpproxy = getenv(HTTP_PROXY);
-	no_proxy = getenv(NO_PROXY);
 	gateport = NULL;
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL)
@@ -131,6 +166,7 @@ main(argc, argv)
 	verbose = 0;
 	progress = 0;
 	gatemode = 0;
+	data = -1;
 	outfile = NULL;
 	restartautofetch = 0;
 #ifndef NO_EDITCOMPLETE
@@ -138,6 +174,7 @@ main(argc, argv)
 	el = NULL;
 	hist = NULL;
 #endif
+	bytes = 0;
 	mark = HASHBYTES;
 	rate_get = 0;
 	rate_get_incr = DEFAULTINCR;
@@ -148,6 +185,7 @@ main(argc, argv)
 #else
 	epsv4 = 0;
 #endif
+	epsv4bad = 0;
 
 	/*
 	 * Get the default socket buffer sizes if we don't already have them.
@@ -158,31 +196,36 @@ main(argc, argv)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s == -1)
 		err(1, "can't create socket");
-	len = sizeof(sndbuf_size);
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size, &len)
-	    < 0)
-		err(1, "unable to get default sndbuf size");
 	len = sizeof(rcvbuf_size);
 	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, (void *) &rcvbuf_size, &len)
 	    < 0)
 		err(1, "unable to get default rcvbuf size");
-	close(s);
+	len = sizeof(sndbuf_size);
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, (void *) &sndbuf_size, &len)
+	    < 0)
+		err(1, "unable to get default sndbuf size");
+	(void)close(s);
+					/* sanity check returned buffer sizes */
+	if (rcvbuf_size <= 0)
+		rcvbuf_size = 8192;
+	if (sndbuf_size <= 0)
+		sndbuf_size = 8192;
 
-	marg_sl = sl_init();
+	marg_sl = xsl_init();
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 
 	/* Set default operation mode based on FTPMODE environment variable */
 	if ((cp = getenv("FTPMODE")) != NULL) {
-		if (strcmp(cp, "passive") == 0) {
+		if (strcasecmp(cp, "passive") == 0) {
 			passivemode = 1;
 			activefallback = 0;
-		} else if (strcmp(cp, "active") == 0) {
+		} else if (strcasecmp(cp, "active") == 0) {
 			passivemode = 0;
 			activefallback = 0;
-		} else if (strcmp(cp, "gate") == 0) {
+		} else if (strcasecmp(cp, "gate") == 0) {
 			gatemode = 1;
-		} else if (strcmp(cp, "auto") == 0) {
+		} else if (strcasecmp(cp, "auto") == 0) {
 			passivemode = 1;
 			activefallback = 1;
 		} else
@@ -345,20 +388,52 @@ main(argc, argv)
 	 * Set up the home directory in case we're globbing.
 	 */
 	cp = getlogin();
-	if (cp != NULL) {
+	if (cp != NULL)
 		pw = getpwnam(cp);
-	}
 	if (pw == NULL)
 		pw = getpwuid(getuid());
 	if (pw != NULL) {
-		home = homedir;
-		(void)strcpy(home, pw->pw_dir);
+		(void)strlcpy(home, pw->pw_dir, sizeof(home));
+		anonuser = pw->pw_name;
+	} else {
+		(void)strlcpy(home, "/", sizeof(home));
+		anonuser = "anonymous";
 	}
 
+	/*
+	 * Every anonymous FTP server I've encountered will accept the
+	 * string "username@", and will append the hostname itself. We
+	 * do this by default since many servers are picky about not
+	 * having a FQDN in the anonymous password.
+	 * - thorpej@netbsd.org
+	 */
+	len = strlen(anonuser) + 2;
+	anonpass = xmalloc(len);
+	(void)strlcpy(anonpass, anonuser, len);
+	(void)strlcat(anonpass, "@",	  len);
+
+			/*
+			 * set all the defaults for options defined in
+			 * struct option optiontab[]  declared in cmdtab.c
+			 */
+	setupoption("anonpass",		getenv("FTPANONPASS"),	anonpass);
+	setupoption("ftp_proxy",	getenv(FTP_PROXY),	"");
+	setupoption("http_proxy",	getenv(HTTP_PROXY),	"");
+	setupoption("no_proxy",		getenv(NO_PROXY),	"");
+	setupoption("pager",		getenv("PAGER"),	DEFAULTPAGER);
+	setupoption("prompt",		getenv("FTPPROMPT"),	DEFAULTPROMPT);
+	setupoption("rprompt",		getenv("FTPRPROMPT"),	DEFAULTRPROMPT);
+
+	free(anonpass);
+
 	setttywidth(0);
-	(void)xsignal(SIGWINCH, setttywidth);
+#ifdef SIGINFO
+	(void)xsignal(SIGINFO, psummary);
+#endif
+	(void)xsignal(SIGQUIT, psummary);
 	(void)xsignal(SIGUSR1, crankrate);
 	(void)xsignal(SIGUSR2, crankrate);
+	(void)xsignal(SIGWINCH, setttywidth);
 
 #ifdef __GNUC__			/* to shut up gcc warnings */
 	(void)&argc;
@@ -371,19 +446,36 @@ main(argc, argv)
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {
-			char *xargv[5];
+			char *xargv[4], *user, *host;
 
-			if (setjmp(toplevel))
+			if (sigsetjmp(toplevel, 1))
 				exit(0);
-			(void)signal(SIGINT, (sig_t)intr);
-			(void)signal(SIGPIPE, (sig_t)lostpeer);
+			(void)xsignal(SIGINT, intr);
+			(void)xsignal(SIGPIPE, lostpeer);
+			user = NULL;
+			host = argv[0];
+			cp = strchr(host, '@');
+			if (cp) {
+				*cp = '\0';
+				user = host;
+				host = cp + 1;
+			}
 			xargv[0] = __progname;
-			xargv[1] = argv[0];
+			xargv[1] = host;
 			xargv[2] = argv[1];
-			xargv[3] = argv[2];
-			xargv[4] = NULL;
+			xargv[3] = NULL;
 			do {
+				int oautologin;
+
+				oautologin = autologin;
+				if (user != NULL) {
+					anonftp = 0;
+					autologin = 0;
+				}
 				setpeer(argc+1, xargv);
+				autologin = oautologin;
+				if (connected == 1 && user != NULL)
+					(void)ftp_login(host, user, NULL);
 				if (!retry_connect)
 					break;
 				if (!connected) {
@@ -400,54 +492,12 @@ main(argc, argv)
 #ifndef NO_EDITCOMPLETE
 	controlediting();
 #endif /* !NO_EDITCOMPLETE */
-	top = setjmp(toplevel) == 0;
-	if (top) {
-		(void)signal(SIGINT, (sig_t)intr);
-		(void)signal(SIGPIPE, (sig_t)lostpeer);
-	}
-	for (;;) {
-		cmdscanner(top);
-		top = 1;
-	}
-}
 
-void
-intr()
-{
-
-	alarmtimer(0);
-	longjmp(toplevel, 1);
-}
-
-void
-lostpeer()
-{
-
-	alarmtimer(0);
-	if (connected) {
-		if (cout != NULL) {
-			(void)shutdown(fileno(cout), 1+1);
-			(void)fclose(cout);
-			cout = NULL;
-		}
-		if (data >= 0) {
-			(void)shutdown(data, 1+1);
-			(void)close(data);
-			data = -1;
-		}
-		connected = 0;
-	}
-	pswitch(1);
-	if (connected) {
-		if (cout != NULL) {
-			(void)shutdown(fileno(cout), 1+1);
-			(void)fclose(cout);
-			cout = NULL;
-		}
-		connected = 0;
-	}
-	proxflag = 0;
-	pswitch(0);
+	(void)sigsetjmp(toplevel, 1);
+	(void)xsignal(SIGINT, intr);
+	(void)xsignal(SIGPIPE, lostpeer);
+	for (;;)
+		cmdscanner();
 }
 
 /*
@@ -456,35 +506,68 @@ lostpeer()
 char *
 prompt()
 {
-	return ("ftp> ");
+	static char	**prompt;
+	static char	  buf[MAXPATHLEN];
+
+	if (prompt == NULL) {
+		struct option *o;
+
+		o = getoption("prompt");
+		if (o == NULL)
+			errx(1, "no such option `prompt'");
+		prompt = &(o->value);
+	}
+	formatbuf(buf, sizeof(buf), *prompt ? *prompt : DEFAULTPROMPT);
+	return (buf);
+}
+
+/*
+ * Generate an rprompt
+ */
+char *
+rprompt()
+{
+	static char	**rprompt;
+	static char	  buf[MAXPATHLEN];
+
+	if (rprompt == NULL) {
+		struct option *o;
+
+		o = getoption("rprompt");
+		if (o == NULL)
+			errx(1, "no such option `rprompt'");
+		rprompt = &(o->value);
+	}
+	formatbuf(buf, sizeof(buf), *rprompt ? *rprompt : DEFAULTRPROMPT);
+	return (buf);
 }
 
 /*
  * Command parser.
  */
 void
-cmdscanner(top)
-	int top;
+cmdscanner()
 {
-	struct cmd *c;
-	int num;
+	struct cmd	*c;
+	char		*p;
+	int		 num;
 
-	if (!top
-#ifndef NO_EDITCOMPLETE
-	    && !editing
-#endif /* !NO_EDITCOMPLETE */
-	    )
-		(void)putc('\n', ttyout);
 	for (;;) {
 #ifndef NO_EDITCOMPLETE
 		if (!editing) {
 #endif /* !NO_EDITCOMPLETE */
 			if (fromatty) {
 				fputs(prompt(), ttyout);
+				p = rprompt();
+				if (*p)
+					fprintf(ttyout, "%s ", p);
 				(void)fflush(ttyout);
 			}
-			if (fgets(line, sizeof(line), stdin) == NULL)
+			if (fgets(line, sizeof(line), stdin) == NULL) {
+				if (fromatty)
+					putc('\n', ttyout);
 				quit(0, 0);
+			}
 			num = strlen(line);
 			if (num == 0)
 				break;
@@ -504,8 +587,11 @@ cmdscanner(top)
 			HistEvent ev;
 			cursor_pos = NULL;
 
-			if ((buf = el_gets(el, &num)) == NULL || num == 0)
+			if ((buf = el_gets(el, &num)) == NULL || num == 0) {
+				if (fromatty)
+					putc('\n', ttyout);
 				quit(0, 0);
+			}
 			if (buf[--num] == '\n') {
 				if (num == 0)
 					break;
@@ -553,8 +639,8 @@ cmdscanner(top)
 		if (c->c_handler != help)
 			break;
 	}
-	(void)signal(SIGINT, (sig_t)intr);
-	(void)signal(SIGPIPE, (sig_t)lostpeer);
+	(void)xsignal(SIGINT, intr);
+	(void)xsignal(SIGPIPE, lostpeer);
 }
 
 struct cmd *
@@ -606,7 +692,7 @@ makeargv()
 	marg_sl->sl_cur = 0;		/* reset to start of marg_sl */
 	for (margc = 0; ; margc++) {
 		argp = slurpstring();
-		sl_add(marg_sl, argp);
+		xsl_add(marg_sl, argp);
 		if (argp == NULL)
 			break;
 	}
@@ -622,9 +708,9 @@ makeargv()
 }
 
 #ifdef NO_EDITCOMPLETE
-#define INC_CHKCURSOR(x)	(x)++
+#define	INC_CHKCURSOR(x)	(x)++
 #else  /* !NO_EDITCOMPLETE */
-#define INC_CHKCURSOR(x)	{ (x)++ ; \
+#define	INC_CHKCURSOR(x)	{ (x)++ ; \
 				if (x == cursor_pos) { \
 					cursor_argc = margc; \
 					cursor_argo = ap-argbase; \
@@ -767,7 +853,7 @@ OUT:
 }
 
 /*
- * Help command.
+ * Help/usage command.
  * Call each command handler with argc == 0 and argv[0] == name.
  */
 void
@@ -776,23 +862,31 @@ help(argc, argv)
 	char *argv[];
 {
 	struct cmd *c;
+	char *nargv[1], *p, *cmd;
+	int isusage;
 
+	cmd = argv[0];
+	isusage = (strcmp(cmd, "usage") == 0);
+	if (argc == 0 || (isusage && argc == 1)) {
+		fprintf(ttyout, "usage: %s [command [...]]\n", cmd);
+		return;
+	}
 	if (argc == 1) {
 		StringList *buf;
 
-		buf = sl_init();
+		buf = xsl_init();
 		fprintf(ttyout,
 		    "%sommands may be abbreviated.  Commands are:\n\n",
 		    proxy ? "Proxy c" : "C");
-		for (c = cmdtab; c < &cmdtab[NCMDS]; c++)
-			if (c->c_name && (!proxy || c->c_proxy))
-				sl_add(buf, c->c_name);
+		for (c = cmdtab; (p = c->c_name) != NULL; c++)
+			if (!proxy || c->c_proxy)
+				xsl_add(buf, p);
 		list_vertical(buf);
 		sl_free(buf, 0);
 		return;
 	}
 
-#define HELPINDENT ((int) sizeof("disconnect"))
+#define	HELPINDENT ((int) sizeof("disconnect"))
 
 	while (--argc > 0) {
 		char *arg;
@@ -800,21 +894,75 @@ help(argc, argv)
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
-			fprintf(ttyout, "?Ambiguous help command %s\n", arg);
+			fprintf(ttyout, "?Ambiguous %s command `%s'\n",
+			    cmd, arg);
 		else if (c == NULL)
-			fprintf(ttyout, "?Invalid help command %s\n", arg);
-		else
-			fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
-				c->c_name, c->c_help);
+			fprintf(ttyout, "?Invalid %s command `%s'\n",
+			    cmd, arg);
+		else {
+			if (isusage) {
+				nargv[0] = arg;
+				(*c->c_handler)(0, nargv);
+			} else
+				fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
+				    c->c_name, c->c_help);
+		}
 	}
+}
+
+struct option *
+getoption(name)
+	const char *name;
+{
+	const char *p;
+	struct option *c;
+
+	if (name == NULL)
+		return (NULL);
+	for (c = optiontab; (p = c->name) != NULL; c++) {
+		if (strcasecmp(p, name) == 0)
+			return (c);
+	}
+	return (NULL);
+}
+
+char *
+getoptionvalue(name)
+	const char *name;
+{
+	struct option *c;
+
+	if (name == NULL)
+		errx(1, "getoptionvalue() invoked with NULL name");
+	c = getoption(name);
+	if (c != NULL)
+		return (c->value);
+	errx(1, "getoptionvalue() invoked with unknown option `%s'", name);
+}
+
+static void
+setupoption(name, value, defaultvalue)
+	char *name, *value, *defaultvalue;
+{
+	char *nargv[3];
+	int overbose;
+
+	nargv[0] = "setupoption()";
+	nargv[1] = name;
+	nargv[2] = (value ? value : defaultvalue);
+	overbose = verbose;
+	verbose = 0;
+	setoption(3, nargv);
+	verbose = overbose;
 }
 
 void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: %s [-AadefginpRtvV] [-r retry] [-o outfile] [-P port] [-T dir,max[,inc]\n"
-"       [host [port]] [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
-"       [http://[user[:pass]@]host[:port]/path] [host:path[/]]\n", __progname);
+"usage: %s [-AadefginpRtvV] [-o outfile] [-P port] [-r retry] [-T dir,max[,inc]\n"
+"       [[user@]host [port]] [host:path[/]] [file:///file]\n"
+"       [ftp://[user[:pass]@]host[:port]/path[/]]\n"
+"       [http://[user[:pass]@]host[:port]/path] [...]\n", __progname);
 	exit(1);
 }
