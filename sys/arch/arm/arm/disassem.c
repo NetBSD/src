@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.2 2001/01/12 21:35:48 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.3 2001/01/12 21:56:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -83,6 +83,7 @@
  * p - saved or current status register
  * F - PSR transfer fields
  * B - byte transfer flag
+ * D - destination-is-r15 (P) flag on TST, TEQ, CMP, CMN
  * L - co-processor transfer size
  * S - set status flag
  * T - user mode transfer
@@ -142,10 +143,10 @@ static struct arm32_insn arm32_i[] = {
     { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
     { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
     { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
-    { 0x0df00000, 0x01100000, "tst",	"Sn2" },
-    { 0x0df00000, 0x01300000, "teq",	"Sn2" },
-    { 0x0de00000, 0x01400000, "cmp",	"Sn2" },
-    { 0x0de00000, 0x01600000, "cmn",	"Sn2" },
+    { 0x0df00000, 0x01100000, "tst",	"Dn2" },
+    { 0x0df00000, 0x01300000, "teq",	"Dn2" },
+    { 0x0de00000, 0x01400000, "cmp",	"Dn2" },
+    { 0x0de00000, 0x01600000, "cmn",	"Dn2" },
     { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
     { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
     { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
@@ -299,14 +300,11 @@ disasm(di, loc, altfmt)
 		/* 2 - print Operand 2 of a data processing instruction */
 		case '2':
 			if (insn & 0x02000000) {
-				int shift = ((insn >> 7) & 0x1e);
+				int rotate= ((insn >> 7) & 0x1e);
 
-				if (shift == 0)
-					di->di_printf("#0x%08x",
-					    (insn & 0xff));
-				else
-					di->di_printf("#0x%08x",
-					    ((insn & 0xff) << (32 - shift)));
+				di->di_printf("#0x%08x",
+					      (insn & 0xff) << (32 - rotate) |
+					      (insn & 0xff) >> rotate);
 			} else {  
 				disasm_register_shift(di, insn);
 			}
@@ -314,6 +312,11 @@ disasm(di, loc, altfmt)
 		/* d - destination register (bits 12-15) */
 		case 'd':
 			di->di_printf("r%d", ((insn >> 12) & 0x0f));
+			break;
+		/* D - insert 'p' if Rd is R15 */
+		case 'D':
+			if (((insn >> 12) & 0x0f) == 15)
+				di->di_printf("p");
 			break;
 		/* n - n register (bits 16-19) */
 		case 'n':
