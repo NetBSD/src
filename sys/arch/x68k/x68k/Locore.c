@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 1996/12/31 00:35:21 oki Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 1997/01/08 16:16:14 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/pte.h>
-#include <machinecpu.h>
+#include <machine/cpu.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
