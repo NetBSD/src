@@ -42,7 +42,7 @@
  *	@(#)vmparam.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vmparam.h,v 1.8 93/05/25 09:52:16 torek Exp 
- * $Id: vmparam.h,v 1.1 1993/10/02 10:23:33 deraadt Exp $
+ * $Id: vmparam.h,v 1.2 1993/10/11 02:28:31 deraadt Exp $
  */
 
 /*
@@ -122,7 +122,7 @@
  * IO space virtual base, which must be the same as VM_MAX_KERNEL_ADDRESS:
  * tread with care.
  */
-#define VM_MIN_ADDRESS		((vm_offset_t)0x2000)	/* texts start at 8K */
+#define VM_MIN_ADDRESS		((vm_offset_t)0)
 #define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)

@@ -42,7 +42,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.h,v 1.11 93/05/25 10:36:09 torek Exp 
- * $Id: pmap.h,v 1.1 1993/10/02 10:23:18 deraadt Exp $
+ * $Id: pmap.h,v 1.2 1993/10/11 02:28:28 deraadt Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_
@@ -154,7 +154,6 @@ typedef struct pmap *pmap_t;
 #define PMAP_NULL	((pmap_t)0)
 
 extern struct kpmap kernel_pmap_store;
-#define	kernel_pmap ((struct pmap *)(&kernel_pmap_store))
 
 #define PMAP_ACTIVATE(pmap, pcb, iscurproc)
 #define PMAP_DEACTIVATE(pmap, pcb)
@@ -174,6 +173,8 @@ extern struct kpmap kernel_pmap_store;
 #define	PMAP_NC		4		/* tells pmap_enter to set PG_NC */
 #define	PMAP_TNC	7		/* mask to get PG_TYPE & PG_NC */
 
+void	pmap_bootstrap __P((int nmmu, int nctx));
+void	pmap_init __P((vm_offset_t phys_start, vm_offset_t phys_end));
 #endif /* KERNEL */
 
 #endif /* _SPARC_PMAP_H_ */

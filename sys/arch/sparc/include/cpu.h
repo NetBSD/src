@@ -42,7 +42,7 @@
  *	@(#)cpu.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.1 1993/10/02 10:23:07 deraadt Exp $
+ * $Id: cpu.h,v 1.2 1993/10/11 02:28:25 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -73,7 +73,6 @@
 
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
-#define	cpu_setstack(p, ap)	((p)->p_md.md_tf->tf_out[6] = (ap) - 64)
 
 /*
  * Arguments to hardclock, softclock and gatherstats encapsulate the
@@ -90,6 +89,7 @@ struct clockframe {
 };
 
 extern int eintstack[];
+#define enablertclock()		/* TDR: delete this soon */
 
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)

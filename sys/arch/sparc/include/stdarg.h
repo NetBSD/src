@@ -42,7 +42,7 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: stdarg.h,v 1.8 93/05/07 18:10:14 torek Exp 
- * $Id: stdarg.h,v 1.1 1993/10/02 10:23:29 deraadt Exp $
+ * $Id: stdarg.h,v 1.2 1993/10/11 02:28:30 deraadt Exp $
  */
 
 /*
@@ -61,8 +61,12 @@ typedef char *va_list;
  *
  * va_end cleans up after va_start.  There is nothing to do there.
  */
+#ifdef __GCC_NEW_VARARGS__	/* gcc 2.4.5 */
+#define va_start(ap, l)	((ap) = (char *)__builtin_saveregs())
+#else				/* gcc 2.3.3 */
 #define va_start(ap, l)	(__builtin_saveregs(), \
-			 ap = (char *)__builtin_next_arg())
+			 (ap) = (char *)__builtin_next_arg())
+#endif
 #define va_end(ap)	/* empty */
 
 #if __GNUC__ == 1
