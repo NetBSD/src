@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.64 1996/12/20 19:16:20 veego Exp $
+#	$NetBSD: GENERIC,v 1.65 1997/01/05 20:44:42 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -247,6 +247,7 @@ pseudo-device	sl	1		# slip
 pseudo-device	ppp	1		# ppp
 #pseudo-device	tun	1		# network tunnel line discipline
 pseudo-device	bpfilter	16	# berkeley packet filters
+#pseudo-device	ipl	1		# ip filter
 
 pseudo-device	view	10		# views
 pseudo-device	pty	16		# pseudo terminals
