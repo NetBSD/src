@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2001/01/17 02:07:25 tv Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2002/06/15 02:19:39 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -75,7 +75,7 @@ ALPHA_IBOOT?=	/sys/arch/alpha/stand/installboot/installboot
 PMAX_IBOOT?=	/sys/arch/pmax/stand/installboot/installboot
 VAX_IBOOT?=	/sys/arch/vax/stand/installboot/installboot
 .if !empty(ALL_PORTS:Mmacppc)
-MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${MAKE} print-objdir
+MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
 
 RSYNC_SITE?=	rsync://rsync.netbsd.org/NetBSD/
