@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.26 1998/07/26 10:03:29 simonb Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.27 1998/07/31 20:46:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -453,8 +453,10 @@ kmem_free_wakeup(map, addr, size)
  *	Allocate a PAGE_SIZE page for the pool allocator.  Separate from
  *	kmem_alloc(), as we may be using a direct-mapping for the page.
  */
+/* ARGSUSED */
 vm_offset_t
-kmem_alloc_poolpage()
+kmem_alloc_poolpage1(map)
+	vm_map_t	map;
 {
 #if defined(PMAP_MAP_POOLPAGE)
 	vm_page_t pg;
@@ -472,7 +474,7 @@ kmem_alloc_poolpage()
 	int s;
 
 	s = splimp();
-	va = kmem_malloc(kmem_map, PAGE_SIZE, 0);
+	va = kmem_malloc(map, PAGE_SIZE, 0);
 	splx(s);
 	return (va);
 #endif /* PMAP_MAP_POOLPAGE */
@@ -483,8 +485,10 @@ kmem_alloc_poolpage()
  *
  *	Free the specified PAGE_SIZE pool page.
  */
+/* ARGSUSED */
 void
-kmem_free_poolpage(addr)
+kmem_free_poolpage1(map, addr)
+	vm_map_t	map;
 	vm_offset_t	addr;
 {
 #if defined(PMAP_UNMAP_POOLPAGE)
@@ -496,7 +500,7 @@ kmem_free_poolpage(addr)
 	int s;
 
 	s = splimp();
-	kmem_free(kmem_map, addr, PAGE_SIZE);
+	kmem_free(map, addr, PAGE_SIZE);
 	splx(s);
 #endif /* PMAP_UNMAP_POOLPAGE */
 }
