@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24 1997/02/02 00:11:33 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.25 1997/02/02 17:29:42 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -31,6 +31,7 @@ options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
 options 	"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
+options 	LKM		# Loadable kernel modules
 
 # Filesystems
 file-system 	FFS		# fast filesystem
