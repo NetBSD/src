@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.471 2004/04/01 14:49:05 martin Exp $
+# $NetBSD: mi,v 1.472 2004/04/01 21:43:32 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -640,7 +640,7 @@
 ./usr/bin/what					base-util-bin
 ./usr/bin/whatis				base-util-bin
 ./usr/bin/whereis				base-util-bin
-./usr/bin/which					base-obsolete	obsolete
+./usr/bin/which					base-util-bin
 ./usr/bin/who					base-util-bin
 ./usr/bin/whoami				base-util-bin
 ./usr/bin/whois					base-netutil-bin
