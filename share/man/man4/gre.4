@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.4 1998/10/31 12:37:59 hwr Exp $
+.\" $NetBSD: gre.4,v 1.5 1999/01/26 21:25:47 hwr Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,11 +52,6 @@ The so called ``tunnel'' appears to the inner datagrams like one hop.
 .Pp
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
-.It IPIP encapsulation (IP protocol number 4). 
-Complete IP packets (IP header and IP payload) are 
-directly encapsulated into IP packets
-and sent to the tunnel destination. This mode allows only for IP in IP
-tunneling.
 .It GRE encapsulation (IP protocol number 47). 
 Encapsulated datagrams are
 prepended by a outer datagram and a GRE header. The GRE header specifies
@@ -99,8 +94,6 @@ be given as
 .Bl -tag -width bbb
 .It link0
 IPPROTO_GRE
-.It link1
-IPPROTO_IPIP
 .It link2
 IPPROTO_MOBILE
 .El
@@ -190,8 +183,6 @@ option to
 .Pp
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 .Pp
-A description of IPIP encapsulation can be found in RFC 2003.
-.Pp
 A description of MOBILE encapsulation can be found in RFC 2004.
 
 .Sh BUGS
@@ -202,7 +193,6 @@ the best solution.
 .Pp
 GRE RFC not yet fully implemented (no GRE options), no other protocols
 yet than IP over IP.
-RFC 2003 also not yet fully supported wrt. options etc.
 .Pp
 Traceroute does not work yet over the tunnel :(
 .Pp
