@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.194 2004/05/08 21:32:34 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.195 2004/05/08 21:33:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.194 2004/05/08 21:32:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.195 2004/05/08 21:33:41 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2213,13 +2213,17 @@ nfs_mkdir(v)
 			cnp->cn_proc, &np);
 		if (!error) {
 			newvp = NFSTOV(np);
-			if (newvp->v_type != VDIR)
+			if (newvp->v_type != VDIR || newvp == dvp)
 				error = EEXIST;
 		}
 	}
 	if (error) {
-		if (newvp)
-			vput(newvp);
+		if (newvp) {
+			if (dvp != newvp)
+				vput(newvp);
+			else
+				vrele(newvp);
+		}
 	} else {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		if (cnp->cn_flags & MAKEENTRY)
