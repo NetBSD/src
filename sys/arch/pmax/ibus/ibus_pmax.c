@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.14 2000/01/14 13:45:21 simonb Exp $ */
+/*	$NetBSD: ibus_pmax.c,v 1.15 2000/01/14 15:52:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,8 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.14 2000/01/14 13:45:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.15 2000/01/14 15:52:33 ad Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -42,12 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.14 2000/01/14 13:45:21 simonb Exp $"
 #include <sys/device.h>
 
 #include <pmax/ibus/ibusvar.h>
+
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
+
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn230.h>
 #include <pmax/pmax/pmaxtype.h>
-
 
 static int	ibus_pmax_match __P((struct device *, struct cfdata *, void *));
 static void	ibus_pmax_attach __P((struct device *, struct device *, void *));
@@ -56,7 +56,7 @@ struct cfattach ibus_pmax_ca = {
 	sizeof(struct ibus_softc), ibus_pmax_match, ibus_pmax_attach
 };
 
-#define KV(x) MIPS_PHYS_TO_KSEG1(x)
+#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
 
 #ifdef DEC_3100
 struct ibus_attach_args ibus_pmax_devs[] = {
@@ -83,6 +83,9 @@ struct ibus_attach_args ibus_mipsmate_devs[] = {
 	/*
 	 * Ultrix configures it at 0x86400400.  The first 0x400 bytes
 	 * used for NVRAM state??
+	 *
+	 * The first 0x400 bytes are apparently used for diagnostic
+	 * registers - ad
 	 */
 	{ "nvram",	7,	KV(0x86400000),			0	},
 #endif
@@ -102,13 +105,13 @@ ibus_pmax_match(parent, cfdata, aux)
 	struct mainbus_attach_args *ma = aux;
 
 	if (ibus_attached)
-		return 0;
+		return (0);
 	if (systype != DS_PMAX && systype != DS_MIPSMATE)
-		return 0;
+		return (0);
 	if (strcmp(ma->ma_name, "baseboard") != 0)
-		return 0;
+		return (0);
 
-	return 1;
+	return (1);
 }
 
 void
