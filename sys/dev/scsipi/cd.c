@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.75 1995/09/26 19:26:48 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.76 1995/10/10 02:52:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -382,6 +382,13 @@ cdstrategy(bp)
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_link, SDEV_DB1,
 	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	/*
+	 * The transfer must be a whole number of blocks.
+	 */
+	if ((bp->b_bcount % cd->sc_dk.dk_label.d_secsize) != 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 	/*
 	 * If the device has been made invalid, error out
 	 * maybe the media changed
