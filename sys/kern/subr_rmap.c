@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_rmap.c,v 1.15 1998/08/18 06:26:30 thorpej Exp $	*/
+/*	$NetBSD: subr_rmap.c,v 1.16 1998/08/18 18:16:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1992, 1994 Wolfgang Solfrank.
@@ -139,18 +139,13 @@ rmfree(mp, size, addr)
 {
 	struct mapent *ep, *fp;
 
-#ifdef __GNUC__
-	/* XXX VERY BOGUS -Wuninitialized warning */
-	ep = NULL;
-#endif
-
 	/* first check arguments */
 	if (size <= 0 || addr <= 0)
 		panic("rmfree %s", mp->m_name);
-
+	
 	while (1) {
 		fp = 0;
-
+		
 		for (ep = (struct mapent *)mp + 1; ep < mp->m_limit; ep++) {
 			if (!ep->m_addr) {
 				/* unused slots terminate the list */
