@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.37 (Berkeley) 7/20/92";*/
-static char rcsid[] = "$Id: print.c,v 1.7 1994/01/13 21:50:41 jtc Exp $";
+static char rcsid[] = "$Id: print.c,v 1.8 1994/01/25 20:45:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: print.c,v 1.7 1994/01/13 21:50:41 jtc Exp $";
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <err.h>
 #include "ls.h"
 #include "extern.h"
 
@@ -160,7 +161,7 @@ printcol(dp)
 		lastentries = dp->entries;
 		if ((array =
 		    realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
-			err(0, "%s", strerror(errno));
+			warn(NULL);
 			printscol(dp);
 		}
 	}
