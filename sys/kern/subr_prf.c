@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.35 1996/10/27 20:50:00 gwr Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.36 1996/10/27 21:55:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -538,11 +538,11 @@ sprintf(char *buf, const char *cfmt, ...)
 #else
 sprintf(buf, cfmt, va_alist)
 	char *buf;
-	char *cfmt;
+	const char *cfmt;
 	va_dcl
 #endif
 {
-	register __const char *fmt = cfmt;
+	register const char *fmt = cfmt;
 	register char *p, *bp;
 	register int ch, base;
 	u_long ul;
