@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/05/02 18:02:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/05/03 15:22:58 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -10,7 +10,7 @@ MDSETTARGETS=	INSTALL ${RAMDISK} netbsd.aout-INSTALL
 MDSET.netbsd.aout-INSTALL.post=	\
 		OBJCOPY=${OBJCOPY:Q} SIZE=${SIZE:Q} \
 	    	    ${KERNSRCDIR}/arch/arm/conf/elf2aout.sh \
-		    netbsd.tmp netbsd.tmp
+		    ${.TARGET:R} ${.TARGET:R}
 
 MDSET_RELEASEDIR=	binary/kernel
 

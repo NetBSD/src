@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/05/03 14:20:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2002/05/03 15:22:55 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -23,8 +23,8 @@ IMAGE_RELEASEDIR=	installation/diskimage
 
 .if defined(ECOFF_KERNEL)
 MDSET.install.suffixes=	ecoff
-MDSET.install.post=	${ELF2ECOFF} netbsd.tmp netbsd.ecoff && \
-			gzip -9f netbsd.ecoff
+MDSET.install.post=	${ELF2ECOFF} ${.TARGET:R} ${.TARGET:R}.ecoff && \
+			gzip -9f ${.TARGET:R}.ecoff
 .endif # ECOFF_KERNEL
 
 .include "${DISTRIBDIR}/common/Makefile.image"
