@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.23 1996/05/31 00:09:38 cgd Exp $	*/
+/*	$NetBSD: pstat.c,v 1.24 1996/06/03 18:50:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.23 1996/05/31 00:09:38 cgd Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.24 1996/06/03 18:50:26 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ main(argc, argv)
 		for (i = quit = 0; i <= NLMANDATORY; i++)
 			if (!nl[i].n_value) {
 				quit = 1;
-				warnx("undefined symbol: %s\n", nl[i].n_name);
+				warnx("undefined symbol: %s", nl[i].n_name);
 			}
 		if (quit)
 			exit(1);
