@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.287 2004/04/12 12:52:42 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.288 2004/04/12 14:26:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2004/04/12 12:52:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2004/04/12 14:26:01 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -674,19 +674,9 @@ static __inline__ void sp_tlb_flush_all(void)
 #if defined(MULTIPROCESSOR)
 /*
  * The SMP versions of the tlb flush routines.  We only need to
- * do a cross call for these on sun4m systems, which itself
- * ensures that there is only one concurrent flush happening.
- * For the sun4d case, we provide a special lock.
+ * do a cross call for these on sun4m (Mbus) systems. sun4d systems
+ * have an Xbus which broadcasts TLB demaps in hardware.
  */
-
-#if defined(SUN4D)
-static struct simplelock sun4d_tlb_lock = SIMPLELOCK_INITIALIZER;
-#define LOCK_4DTLB()	simple_lock(&sun4d_tlb_lock);
-#define UNLOCK_4DTLB()	simple_unlock(&sun4d_tlb_lock);
-#else
-#define LOCK_4DTLB()	/* nothing */
-#define UNLOCK_4DTLB()	/* nothing */
-#endif
 
 static __inline__ void	smp_tlb_flush_page (int va, int ctx, u_int cpuset);
 static __inline__ void	smp_tlb_flush_segment (int va, int ctx, u_int cpuset);
@@ -698,9 +688,7 @@ static __inline__ void
 smp_tlb_flush_page(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L3);
-		UNLOCK_4DTLB();
 	} else
 		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L3, cpuset);
 }
@@ -709,9 +697,7 @@ static __inline__ void
 smp_tlb_flush_segment(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L2);
-		UNLOCK_4DTLB();
 	} else
 		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L2, cpuset);
 }
@@ -720,9 +706,7 @@ static __inline__ void
 smp_tlb_flush_region(int va, int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(va, ctx, ASI_SRMMUFP_L1);
-		UNLOCK_4DTLB();
 	} else
 		XCALL3(sp_tlb_flush, va, ctx, ASI_SRMMUFP_L1, cpuset);
 }
@@ -731,9 +715,7 @@ static __inline__ void
 smp_tlb_flush_context(int ctx, u_int cpuset)
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush(ctx, 0, ASI_SRMMUFP_L0);
-		UNLOCK_4DTLB();
 	} else
 		XCALL3(sp_tlb_flush, 0, ctx, ASI_SRMMUFP_L0, cpuset);
 }
@@ -742,9 +724,7 @@ static __inline__ void
 smp_tlb_flush_all()
 {
 	if (CPU_ISSUN4D) {
-		LOCK_4DTLB();
 		sp_tlb_flush_all();
-		UNLOCK_4DTLB();
 	} else
 		XCALL0(sp_tlb_flush_all, CPUSET_ALL);
 }
@@ -822,7 +802,7 @@ VA2PA(addr)
  * PTE at the same time we are.  This is the procedure that is
  * recommended in the SuperSPARC user's manual.
  */
-static struct simplelock pte4m_lock = SIMPLELOCK_INITIALIZER;
+static struct simplelock demap_lock = SIMPLELOCK_INITIALIZER;
 
 int
 updatepte4m(va, pte, bic, bis, ctx, cpuset)
@@ -840,7 +820,7 @@ updatepte4m(va, pte, bic, bis, ctx, cpuset)
 	 * Can only be one of these happening in the system
 	 * at any one time.
 	 */
-	simple_lock(&pte4m_lock);
+	simple_lock(&demap_lock);
 
 	/*
 	 * The idea is to loop swapping zero into the pte, flushing
@@ -859,7 +839,7 @@ updatepte4m(va, pte, bic, bis, ctx, cpuset)
 	swapval = (oldval & ~bic) | bis;
 	swap(vpte, swapval);
 
-	simple_unlock(&pte4m_lock);
+	simple_unlock(&demap_lock);
 
 	return (oldval);
 }
