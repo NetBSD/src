@@ -41,7 +41,7 @@
 #include <arpa/inet.h>
 #include <rpcsvc/rstat.h>
 
-#define HOST_WIDTH 12
+#define HOST_WIDTH 15
 
 char *argv0;
 
@@ -98,7 +98,7 @@ rstat_reply(char *replyp, struct sockaddr_in *raddrp)
 	else
 		host = inet_ntoa(raddrp->sin_addr);
 
-	printf("%-*.*s\t", HOST_WIDTH, HOST_WIDTH, host);
+	printf("%-*s\t", HOST_WIDTH, host);
 
 	tmp_time = localtime((time_t *)&host_stat->curtime.tv_sec);
 	host_time = *tmp_time;
