@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.1 2004/04/21 01:05:36 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.2 2004/05/22 20:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.1 2004/04/21 01:05:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.2 2004/05/22 20:46:53 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -150,18 +150,25 @@ compat_20_sys_statfs(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statvfs sbuf;
-	int error;
+	struct statvfs *sbuf;
+	int error = 0;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return error;
+
 	mp = nd.ni_vp->v_mount;
 	vrele(nd.ni_vp);
+
+	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = dostatvfs(mp, &sbuf, p, 0, 1)) != 0)
-		return error;
-	return vfs2fs(SCARG(uap, buf), &sbuf);
+		goto done;
+
+	error = vfs2fs(SCARG(uap, buf), &sbuf);
+done:
+	free(sbuf, M_TEMP);
+	return error;
 }
 
 /*
