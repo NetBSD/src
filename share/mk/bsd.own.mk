@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.291 2002/05/03 08:58:45 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.292 2002/05/03 20:38:42 kleink Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -148,6 +148,7 @@ MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/nbmsgc
 MTREE=		${TOOLDIR}/bin/nbmtree
 PAX=		${TOOLDIR}/bin/nbpax
 PIC=		${TOOLDIR}/bin/nbpic
+PREPMKBOOTIMAGE=${TOOLDIR}/bin/nbprep-mkbootimage
 PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
 REFER=		${TOOLDIR}/bin/nbrefer
 RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/nbrpcgen
