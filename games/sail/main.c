@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2001/01/01 22:05:04 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2001/01/01 22:33:01 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2001/01/01 22:05:04 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2001/01/01 22:33:01 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,9 @@ main(int argc, char **argv)
 			fprintf(stderr, "SAIL: Unknown flag %s.\n", p);
 			exit(1);
 		}
+
+	argc -= optind;
+	argv += optind;
 
 	if (*argv)
 		game = atoi(*argv);
