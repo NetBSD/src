@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 1999/08/05 18:08:10 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.1 2000/02/20 17:41:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,20 +39,33 @@
 #ifndef _I386_INTR_H_
 #define _I386_INTR_H_
 
-/* Interrupt priority `levels'. */
-#define	IPL_NONE	9	/* nothing */
-#define	IPL_SOFTCLOCK	8	/* timeouts */
-#define	IPL_SOFTNET	7	/* protocol stacks */
-#define	IPL_BIO		6	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	4	/* serial */
-#define	IPL_TTY		3	/* terminal */
-#define	IPL_IMP		3	/* memory allocation */
-#define	IPL_AUDIO	2	/* audio */
-#define	IPL_CLOCK	1	/* clock */
-#define	IPL_HIGH	1	/* everything */
-#define	IPL_SERIAL	0	/* serial */
-#define	NIPL		10
+/*
+ * Interrupt priority levels.
+ * 
+ * There are tty, network and disk drivers that use free() at interrupt
+ * time, so imp > (tty | net | bio).
+ *
+ * Since run queues may be manipulated by both the statclock and tty,
+ * network, and disk drivers, clock > imp.
+ *
+ * IPL_HIGH must block everything that can manipulate a run queue.
+ *
+ * We need serial drivers to run at the absolute highest priority to
+ * avoid overruns, so serial > high.
+ */
+#define	IPL_NONE	0x00	/* nothing */
+#define	IPL_SOFTCLOCK	0x50	/* timeouts */
+#define	IPL_SOFTNET	0x60	/* protocol stacks */
+#define	IPL_BIO		0x70	/* block I/O */
+#define	IPL_NET		0x80	/* network */
+#define	IPL_SOFTSERIAL	0x90	/* serial */
+#define	IPL_TTY		0xa0	/* terminal */
+#define	IPL_IMP		0xb0	/* memory allocation */
+#define	IPL_AUDIO	0xc0	/* audio */
+#define	IPL_CLOCK	0xd0	/* clock */
+#define	IPL_HIGH	0xd0	/* everything */
+#define	IPL_SERIAL	0xe0	/* serial */
+#define	NIPL		16
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -67,15 +80,31 @@
 
 #ifndef _LOCORE
 
-volatile int cpl, ipending, astpending;
-int imask[NIPL];
+#ifdef MULTIPROCESSOR
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
+#endif
+
+extern volatile u_int32_t lapic_tpr;
+volatile u_int32_t ipending;
+
+#ifndef MULTIPROCESSOR
+volatile u_int32_t astpending;
+#endif
+
+int imasks[NIPL];
+int iunmask[NIPL];
+
+#define CPSHIFT 4
+#define IMASK(level) imasks[(level)>>CPSHIFT]
+#define IUNMASK(level) iunmask[(level)>>CPSHIFT]
 
 extern void Xspllower __P((void));
 
 static __inline int splraise __P((int));
 static __inline int spllower __P((int));
 static __inline void splx __P((int));
-static __inline void softintr __P((int));
+static __inline void softintr __P((int, int));
 
 /*
  * Add a mask to cpl, and return the old value of cpl.
@@ -84,9 +113,10 @@ static __inline int
 splraise(ncpl)
 	register int ncpl;
 {
-	register int ocpl = cpl;
+	register int ocpl = lapic_tpr;
 
-	cpl = ocpl | ncpl;
+	if (ncpl > ocpl)
+		lapic_tpr = ncpl;
 	return (ocpl);
 }
 
@@ -98,9 +128,11 @@ static __inline void
 splx(ncpl)
 	register int ncpl;
 {
+	register int cmask;
 
-	cpl = ncpl;
-	if (ipending & ~ncpl)
+	lapic_tpr = ncpl;
+	cmask = IUNMASK(ncpl);
+	if (ipending & cmask)
 		Xspllower();
 }
 
@@ -112,10 +144,12 @@ static __inline int
 spllower(ncpl)
 	register int ncpl;
 {
-	register int ocpl = cpl;
-
-	cpl = ncpl;
-	if (ipending & ~ncpl)
+	register int ocpl = lapic_tpr;
+	register int cmask;
+	
+	lapic_tpr = ncpl;
+	cmask = IUNMASK(ncpl);
+	if (ipending & cmask)
 		Xspllower();
 	return (ocpl);
 }
@@ -123,13 +157,13 @@ spllower(ncpl)
 /*
  * Hardware interrupt masks
  */
-#define	splbio()	splraise(imask[IPL_BIO])
-#define	splnet()	splraise(imask[IPL_NET])
-#define	spltty()	splraise(imask[IPL_TTY])
-#define	splaudio()	splraise(imask[IPL_AUDIO])
-#define	splclock()	splraise(imask[IPL_CLOCK])
+#define	splbio()	splraise(IPL_BIO)
+#define	splnet()	splraise(IPL_NET)
+#define	spltty()	splraise(IPL_TTY)
+#define	splaudio()	splraise(IPL_AUDIO)
+#define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splclock()
-#define	splserial()	splraise(imask[IPL_SERIAL])
+#define	splserial()	splraise(IPL_SERIAL)
 
 #define spllpt()	spltty()
 
@@ -139,17 +173,18 @@ spllower(ncpl)
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
-#define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
-#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
-#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
+#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
+
+#define	splsoftclock()	splraise(IPL_SOFTCLOCK)
+#define	splsoftnet()	splraise(IPL_SOFTNET)
+#define	splsoftserial()	splraise(IPL_SOFTSERIAL)
 
 /*
  * Miscellaneous
  */
-#define	splimp()	splraise(imask[IPL_IMP])
-#define	splhigh()	splraise(imask[IPL_HIGH])
-#define	spl0()		spllower(0)
+#define	splimp()	splraise(IPL_IMP)
+#define	splhigh()	splraise(IPL_HIGH)
+#define	spl0()		spllower(IPL_NONE)
 
 /*
  * Software interrupt registration
@@ -157,16 +192,35 @@ spllower(ncpl)
  * We hand-code this to ensure that it's atomic.
  */
 static __inline void
-softintr(mask)
-	register int mask;
+softintr(sir, vec)
+	register int sir;
+	register int vec;
 {
-	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (1 << mask));
+	__asm __volatile("orl %1, %0" : "=m"(ipending) : "ir" (1 << sir));
+#ifdef MULTIPROCESSOR
+	i82489_writereg(LAPIC_ICRLO,
+	    vec | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
+#endif
 }
 
 #define	setsoftast()	(astpending = 1)
-#define	setsoftclock()	softintr(SIR_CLOCK)
-#define	setsoftnet()	softintr(SIR_NET)
-#define	setsoftserial()	softintr(SIR_SERIAL)
+#define	setsoftclock()	softintr(SIR_CLOCK,IPL_SOFTCLOCK)
+#define	setsoftnet()	softintr(SIR_NET,IPL_SOFTNET)
+#define	setsoftserial()	softintr(SIR_SERIAL,IPL_SOFTSERIAL)
+
+
+#define I386_IPI_HALT		0x00000001
+#define I386_IPI_TLB		0x00000002
+
+/* the following are for debugging.. */
+#define I386_IPI_GMTB		0x00000010
+#define I386_IPI_NYCHI		0x00000020
+
+#define I386_NIPI		6
+
+void i386_send_ipi (int, int);
+void i386_broadcast_ipi (int);
+void i386_ipi_handler (void);
 
 #endif /* !_LOCORE */
 
