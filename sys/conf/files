@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.236 1998/08/25 22:38:29 pk Exp $
+#	$NetBSD: files,v 1.237 1998/08/26 09:31:24 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -36,6 +36,7 @@ defopt	COMPAT_OSF1
 defopt	COMPAT_SUNOS
 defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
+defopt	COMPAT_SPARC32
 defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_NOMID
 
