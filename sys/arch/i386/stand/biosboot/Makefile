@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2000/01/20 16:51:01 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2000/04/23 19:57:13 tsarna Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -26,6 +26,10 @@ CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
 
 .if (${BASE} == "biosboot_com0")
 CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0 -DDIRECT_SERIAL
+.endif
+
+.if (${BASE} == "biosboot_resetvideo")
+CPPFLAGS+= -DRESET_VIDEO
 .endif
 
 CPPFLAGS+= -DSUPPORT_USTARFS
