@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.73 1998/05/02 18:33:21 christos Exp $
+	$NetBSD: syscalls.master,v 1.74 1998/05/07 17:08:42 kleink Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -425,7 +425,7 @@
 			    union semun *arg); }
 221	STD		{ int sys_semget(key_t key, int nsems, int semflg); }
 222	STD		{ int sys_semop(int semid, struct sembuf *sops, \
-			    u_int nsops); }
+			    size_t nsops); }
 223	STD		{ int sys_semconfig(int flag); }
 #else
 220	UNIMPL		semctl
@@ -437,10 +437,10 @@
 224	STD		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 225	STD		{ int sys_msgget(key_t key, int msgflg); }
-226	STD		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
-			    int msgflg); }
-227	STD		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
-			    long msgtyp, int msgflg); }
+226	STD		{ int sys_msgsnd(int msqid, const void *msgp, \
+			    size_t msgsz, int msgflg); }
+227	STD		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
+			    size_t msgsz, long msgtyp, int msgflg); }
 #else
 224	UNIMPL		msgctl
 225	UNIMPL		msgget
@@ -448,12 +448,12 @@
 227	UNIMPL		msgrcv
 #endif
 #ifdef SYSVSHM
-228	STD		{ void *sys_shmat(int shmid, void *shmaddr, \
+228	STD		{ void *sys_shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
 229	STD		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
-230	STD		{ int sys_shmdt(void *shmaddr); }
-231	STD		{ int sys_shmget(key_t key, int size, int shmflg); }
+230	STD		{ int sys_shmdt(const void *shmaddr); }
+231	STD		{ int sys_shmget(key_t key, size_t size, int shmflg); }
 #else
 228	UNIMPL		shmat
 229	UNIMPL		shmctl
