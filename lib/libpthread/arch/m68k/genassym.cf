@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.3 2001/11/25 10:08:38 scw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.4 2001/12/01 18:20:36 scw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,7 +83,7 @@ define _REG_SP		_REG_A7
 define _REG_PC		_REG_PC
 define _REG_PS		_REG_PS
 
-define _FPREG_REGS	offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_fpregs)
+define _FPREG_FP0      offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_fpregs[0])
 define _FPREG_PCR	offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_pcr)
 define _FPREG_PSR	offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_psr)
 define _FPREG_PIADDR	offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_piaddr)
