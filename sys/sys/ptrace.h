@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.21.42.3 2002/01/08 00:34:44 nathanw Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.21.42.4 2002/01/09 02:55:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -77,7 +77,7 @@ int	process_write_regs __P((struct lwp *l, struct reg *regs));
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP
-int	ptrace_machdep_dorequest(struct proc *, struct proc *, int,
+int	ptrace_machdep_dorequest(struct proc *, struct lwp *, int,
 	    caddr_t, int);
 #endif
 
