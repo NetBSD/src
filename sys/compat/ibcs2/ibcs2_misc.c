@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.27 1997/09/09 21:17:28 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.28 1997/09/11 23:05:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -167,26 +167,30 @@ ibcs2_sys_waitsys(p, v, retval)
 	} */ *uap = v;
 	int error;
 	struct sys_wait4_args w4;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	
 	SCARG(&w4, rusage) = NULL;
+	SCARG(&w4, status) = stackgap_alloc(&sg, sizeof(int));
+
 	if ((p->p_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
 		/* waitpid */
 		SCARG(&w4, pid) = SCARG(uap, a1);
-		SCARG(&w4, status) = (int *)SCARG(uap, a2);
 		SCARG(&w4, options) = SCARG(uap, a3);
 	} else {
 		/* wait */
 		SCARG(&w4, pid) = WAIT_ANY;
-		SCARG(&w4, status) = (int *)SCARG(uap, a1);
 		SCARG(&w4, options) = 0;
 	}
+
 	if ((error = sys_wait4(p, &w4, retval)) != 0)
 		return error;
-	if (SCARG(&w4, status))		/* this is real iBCS brain-damage */
-		return copyin((caddr_t)SCARG(&w4, status), (caddr_t)&retval[1],
-			      sizeof(SCARG(&w4, status)));
-	return 0;
+
+	return copyin((caddr_t)SCARG(&w4, status), (caddr_t)&retval[1],
+		      sizeof(int));
 }
 
 int
