@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.26 1998/03/24 03:10:02 kml Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.27 1998/04/29 03:44:12 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -155,12 +155,13 @@ struct	ipstat {
 
 struct	  ipstat ipstat;
 LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
-u_int16_t  ip_id;			/* ip packet ctr, for ids */
-int        ip_defttl;			/* default IP ttl */
-extern int ip_mtudisc;			/* mtu discovery */
-extern int anonportmin;			/* minimum ephemeral port */
-extern int anonportmax;			/* maximum ephemeral port */
-
+u_int16_t    ip_id;			/* ip packet ctr, for ids */
+int          ip_defttl;			/* default IP ttl */
+extern int   ip_mtudisc;		/* mtu discovery */
+extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
+extern int   anonportmin;		/* minimum ephemeral port */
+extern int   anonportmax;		/* maximum ephemeral port */
+extern struct rttimer_queue *ip_mtudisc_timeout_q;
 struct	 inpcb;
 
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
