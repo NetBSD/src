@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.1 2002/03/28 20:40:47 thorpej Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.2 2003/03/25 23:32:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -51,6 +51,10 @@
 
 #define	ISSET(t,f)	((t) & (f))
 
+#ifndef NS16550_FREQ
+#define	NS16550_FREQ	COM_FREQ
+#endif
+
 static int
 comspeed(int speed)
 {
@@ -60,10 +64,10 @@ comspeed(int speed)
 
 	if (speed <= 0)  
 		return (-1);
-	x = divrnd((COM_FREQ / 16), speed);
+	x = divrnd((NS16550_FREQ / 16), speed);
 	if (x <= 0)
 		return (-1);
-	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	err = divrnd((((quad_t)NS16550_FREQ) / 16) * 1000, speed * x) - 1000;
 	if (err < 0)
 		err = -err; 
 	if (err > COM_TOLERANCE)
