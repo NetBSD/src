@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.24 2004/03/27 04:37:59 atatat Exp $	*/
+/*	$NetBSD: ath.c,v 1.24.2.1 2004/05/29 09:00:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24 2004/03/27 04:37:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24.2.1 2004/05/29 09:00:13 tron Exp $");
 #endif
 
 /*
@@ -323,7 +323,8 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ath", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "ath",
+	    SYSCTL_DESCR("ath information and options"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
@@ -332,7 +333,9 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	/* channel dwell time (ms) for AP/station scanning */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "dwell", NULL, sysctl_ath_verify, 0, &ath_dwelltime,
+	    CTLTYPE_INT, "dwell",
+	    SYSCTL_DESCR("Channel dwell time (ms) for AP/station scanning"),
+	    sysctl_ath_verify, 0, &ath_dwelltime,
 	    0, CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
@@ -342,7 +345,8 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	/* chip calibration interval (secs) */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "calibrate", NULL, sysctl_ath_verify,
+	    CTLTYPE_INT, "calibrate",
+	    SYSCTL_DESCR("Chip calibration interval (secs)"), sysctl_ath_verify,
 	    0, &ath_calinterval, 0, CTL_HW,
 	    ath_node_num, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
@@ -352,7 +356,8 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	/* enable/disable outdoor operation */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
-	    "outdoor", NULL, NULL, 0, &ath_outdoor, 0,
+	    "outdoor", SYSCTL_DESCR("Enable/disable outdoor operation"),
+	    NULL, 0, &ath_outdoor, 0,
 	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
@@ -362,7 +367,8 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	/* country code */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
-	    "countrycode", NULL, NULL, 0, &ath_countrycode, 0,
+	    "countrycode", SYSCTL_DESCR("Country code"),
+	    NULL, 0, &ath_countrycode, 0,
 	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
@@ -372,7 +378,8 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	/* regulatory domain */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
-	    "regdomain", NULL, NULL, 0, &ath_regdomain, 0,
+	    "regdomain", SYSCTL_DESCR("Regulatory domain"),
+	    NULL, 0, &ath_regdomain, 0,
 	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
@@ -384,7 +391,8 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	/* control debugging printfs */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "debug", NULL, sysctl_ath_verify, 0, &ath_debug, 0,
+	    "debug", SYSCTL_DESCR("Enable/disable ath debugging output"),
+	    sysctl_ath_verify, 0, &ath_debug, 0,
 	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
