@@ -1,8 +1,8 @@
-/*	$NetBSD: button.c,v 1.1 2001/04/30 10:10:18 takemura Exp $	*/
+/*	$NetBSD: button.c,v 1.2 2001/04/30 11:42:17 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999
- *         Shin Takemura and PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999-2001
+ *         TAKEMURA Shin1 and PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,12 +46,9 @@
 
 #include <dev/hpc/hpciovar.h>
 
-#include "opt_vr41xx.h"
-#include <hpcmips/vr/vripvar.h>
-
 #include "locators.h"
 
-struct button_vrgiu_softc {
+struct button_softc {
 	struct device sc_dev;
 	hpcio_chip_t sc_hc;
 	hpcio_intr_handle_t sc_intr_handle;
@@ -62,20 +59,20 @@ struct button_vrgiu_softc {
 	config_hook_tag sc_ghook_tag;
 };
 
-static int	button_vrgiu_match __P((struct device *, struct cfdata *,
+static int	button_match __P((struct device *, struct cfdata *,
 				       void *));
-static void	button_vrgiu_attach __P((struct device *, struct device *,
+static void	button_attach __P((struct device *, struct device *,
 					void *));
-static int	button_vrgiu_intr __P((void*));
-static int	button_vrgiu_state __P((void *ctx, int type, long id,
+static int	button_intr __P((void*));
+static int	button_state __P((void *ctx, int type, long id,
 				      void *msg));
 
-struct cfattach button_vrgiu_ca = {
-	sizeof(struct button_vrgiu_softc), button_vrgiu_match, button_vrgiu_attach
+struct cfattach button_ca = {
+	sizeof(struct button_softc), button_match, button_attach
 };
 
 int
-button_vrgiu_match(parent, match, aux)
+button_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -89,19 +86,18 @@ button_vrgiu_match(parent, match, aux)
 }
 
 void
-button_vrgiu_attach(parent, self, aux)
+button_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
-	struct button_vrgiu_softc *sc = (void*)self;
+	struct button_softc *sc = (void*)self;
 	int mode;
     
-	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, VRIP_IOCHIP_VRGIU);
-
 	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
 	sc->sc_id = loc[HPCIOIFCF_ID];
 	sc->sc_active = loc[HPCIOIFCF_ACTIVE];
@@ -125,6 +121,24 @@ button_vrgiu_attach(parent, self, aux)
 		printf(" sense=level");
 	} else {
 		mode |= HPCIO_INTR_EDGE;
+		switch (loc[HPCIOIFCF_EDGE]) {
+		case 1:
+			mode |= HPCIO_INTR_POSEDGE;
+			break;
+		case 2:
+			mode |= HPCIO_INTR_NEGEDGE;
+			break;
+		case 0:
+		case 3:
+		case HPCIOMANCF_EDGE_DEFAULT:
+			mode |= HPCIO_INTR_POSEDGE;
+			mode |= HPCIO_INTR_NEGEDGE;
+			break;
+		default:
+			printf("%s(%d): invalid configuration, edge=%d",
+			    __FILE__, __LINE__, loc[HPCIOIFCF_EDGE]);
+			break;
+		}
 		printf(" sense=edge");
 	}
 
@@ -134,23 +148,23 @@ button_vrgiu_attach(parent, self, aux)
 	else
 		sc->sc_intr_handle =
 		    hpcio_intr_establish(sc->sc_hc, sc->sc_port,
-					 mode, button_vrgiu_intr, sc);
+					 mode, button_intr, sc);
 	sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET,
 				       sc->sc_id,
 				       CONFIG_HOOK_SHARE,
-				       button_vrgiu_state,
+				       button_state,
 				       sc);	
 	printf("\n");
 }
 
 int
-button_vrgiu_state(ctx, type, id, msg)
+button_state(ctx, type, id, msg)
 	void *ctx;
 	int type;
 	long id;
 	void *msg;
 {
-	struct button_vrgiu_softc *sc = ctx;
+	struct button_softc *sc = ctx;
 
 	if (type != CONFIG_HOOK_GET || id != sc->sc_id)
 		return 1;
@@ -163,10 +177,10 @@ button_vrgiu_state(ctx, type, id, msg)
 }
 
 int
-button_vrgiu_intr(ctx)
+button_intr(ctx)
 	void *ctx;
 {
-	struct button_vrgiu_softc *sc = ctx;
+	struct button_softc *sc = ctx;
 	int on;
 
 	on = (hpcio_portread(sc->sc_hc, sc->sc_port) == sc->sc_active);

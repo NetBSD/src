@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.2 1999/12/04 14:23:37 takemura Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.3 2001/04/30 11:42:19 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,8 @@
 typedef void *vrip_chipset_tag_t;
 
 #include <hpcmips/vr/cmuvar.h>
-#include <hpcmips/vr/vrgiuvar.h>
+#include <dev/hpc/hpciovar.h>
+
 /*
  * Vrip bus attach arguments
  */
@@ -46,12 +47,17 @@ struct vripbus_attach_args {
 	bus_space_tag_t vba_iot;	/* vrip i/o space tag */
 };
 
+/* Vrip GPIO chips */
+enum vrip_iochip {
+	VRIP_IOCHIP_VRGIU = 0,
+	VRIP_NIOCHIPS
+};
+
 struct vrip_softc {
 	struct	device sc_dv;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	vrgiu_chipset_tag_t sc_gc;
-	vrgiu_function_tag_t sc_gf;
+	hpcio_chip_t sc_gpio_chips[VRIP_NIOCHIPS];
 	vrcmu_chipset_tag_t sc_cc;
 	vrcmu_function_tag_t sc_cf;
 	int sc_pri; /* attaching device priority */
@@ -69,8 +75,7 @@ struct vrip_attach_args {
 	int		va_intr;	/* level 1 interrupt line */
 	bus_addr_t	va_addr2;	/* i/o address 2	*/
 	bus_size_t	va_size2;
-	vrgiu_chipset_tag_t va_gc;
-	vrgiu_function_tag_t va_gf;
+	hpcio_chip_t*	va_gpio_chips;
 	vrcmu_chipset_tag_t va_cc;
 	vrcmu_function_tag_t va_cf;
 #ifdef HPCMIPS_NOT_YET
@@ -89,10 +94,10 @@ void vrip_intr_get_status2 __P((vrip_chipset_tag_t, void*, u_int32_t*));
 void vrip_intr_suspend(void);
 void vrip_intr_resume(void);
 /*
- * CMU/GIU interface.
+ * CMU/GPIO interface.
  */
 void vrip_cmu_function_register __P((vrip_chipset_tag_t, vrcmu_function_tag_t, vrcmu_chipset_tag_t));
-void vrip_giu_function_register __P((vrip_chipset_tag_t, vrgiu_function_tag_t, vrgiu_chipset_tag_t));
+void vrip_gpio_register __P((vrip_chipset_tag_t, hpcio_chip_t));
     
 /*
  * Debuggin utility

@@ -1,8 +1,8 @@
-/*	$NetBSD: pwctl.c,v 1.1 2001/04/30 10:09:14 takemura Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.2 2001/04/30 11:42:17 takemura Exp $	*/
 
 /*-
- * Copyright (c) 1999
- *         Shin Takemura and PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999-2001
+ *         TAKEMURA Shin and PocketBSD Project. All rights reserved.
  * Copyright (c) 2000,2001
  *         SATO Kazumi. All rights reserved.
  *
@@ -40,28 +40,23 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/bus.h>
-
 #include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 
 #include <dev/hpc/hpciovar.h>
 
-#include "opt_vr41xx.h"
-#include <hpcmips/vr/vripvar.h>
-
 #include "locators.h"
 
 #define PWCTLVRGIUDEBUG
 #ifdef PWCTLVRGIUDEBUG
-int	pwctl_vrgiu_debug = 0;
-#define	DPRINTF(arg) if (pwctl_vrgiu_debug) printf arg;
+int	pwctl_debug = 0;
+#define	DPRINTF(arg) if (pwctl_debug) printf arg;
 #else
 #define	DPRINTF(arg)
 #endif
 
-struct pwctl_vrgiu_softc {
+struct pwctl_softc {
 	struct device sc_dev;
 	hpcio_chip_t sc_hc;
 	int sc_port;
@@ -74,22 +69,22 @@ struct pwctl_vrgiu_softc {
 	int sc_initvalue;
 };
 
-static int	pwctl_vrgiu_match __P((struct device *, struct cfdata *,
+static int	pwctl_match __P((struct device *, struct cfdata *,
 				       void *));
-static void	pwctl_vrgiu_attach __P((struct device *, struct device *,
+static void	pwctl_attach __P((struct device *, struct device *,
 					void *));
-static int	pwctl_vrgiu_hook __P((void *ctx, int type, long id,
+static int	pwctl_hook __P((void *ctx, int type, long id,
 				      void *msg));
-static int	pwctl_vrgiu_ghook __P((void *ctx, int type, long id,
+static int	pwctl_ghook __P((void *ctx, int type, long id,
 				      void *msg));
-int	pwctl_vrgiu_hardpower __P((void *, int, long, void *));
+int	pwctl_hardpower __P((void *, int, long, void *));
 
-struct cfattach pwctl_vrgiu_ca = {
-	sizeof(struct pwctl_vrgiu_softc), pwctl_vrgiu_match, pwctl_vrgiu_attach
+struct cfattach pwctl_ca = {
+	sizeof(struct pwctl_softc), pwctl_match, pwctl_attach
 };
 
 int
-pwctl_vrgiu_match(parent, match, aux)
+pwctl_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -105,18 +100,17 @@ pwctl_vrgiu_match(parent, match, aux)
 }
 
 void
-pwctl_vrgiu_attach(parent, self, aux)
+pwctl_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
-	struct pwctl_vrgiu_softc *sc = (void*)self;
+	struct pwctl_softc *sc = (void*)self;
     
-	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, VRIP_IOCHIP_VRGIU);
-
 	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
 	sc->sc_id = loc[HPCIOIFCF_ID];
 	sc->sc_on = loc[HPCIOIFCF_ACTIVE] ? 1 : 0;
@@ -133,14 +127,14 @@ pwctl_vrgiu_attach(parent, self, aux)
 	} else {
 		sc->sc_hook_tag = config_hook(CONFIG_HOOK_POWERCONTROL,
 					      sc->sc_id, CONFIG_HOOK_SHARE,
-					      pwctl_vrgiu_hook, sc);
+					      pwctl_hook, sc);
 		sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET,
 					      sc->sc_id, CONFIG_HOOK_SHARE,
-					      pwctl_vrgiu_ghook, sc);
+					      pwctl_ghook, sc);
 		sc->sc_hook_hardpower = config_hook(CONFIG_HOOK_PMEVENT,
 						CONFIG_HOOK_PMEVENT_HARDPOWER,
 						CONFIG_HOOK_SHARE,
-						pwctl_vrgiu_hardpower, sc);
+						pwctl_hardpower, sc);
 
 	}
 	if (sc->sc_initvalue != -1)
@@ -150,13 +144,13 @@ pwctl_vrgiu_attach(parent, self, aux)
 }
 
 int
-pwctl_vrgiu_hook(ctx, type, id, msg)
+pwctl_hook(ctx, type, id, msg)
 	void *ctx;
 	int type;
 	long id;
 	void *msg;
 {
-	struct pwctl_vrgiu_softc *sc = ctx;
+	struct pwctl_softc *sc = ctx;
 
 	DPRINTF(("pwctl hook: port %d %s(%d)", sc->sc_port,
 		 msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off));
@@ -166,13 +160,13 @@ pwctl_vrgiu_hook(ctx, type, id, msg)
 }
 
 int
-pwctl_vrgiu_ghook(ctx, type, id, msg)
+pwctl_ghook(ctx, type, id, msg)
 	void *ctx;
 	int type;
 	long id;
 	void *msg;
 {
-	struct pwctl_vrgiu_softc *sc = ctx;
+	struct pwctl_softc *sc = ctx;
 
 	if (CONFIG_HOOK_VALUEP(msg))
 		return 1;
@@ -184,13 +178,13 @@ pwctl_vrgiu_ghook(ctx, type, id, msg)
 }
 
 int
-pwctl_vrgiu_hardpower(ctx, type, id, msg)
+pwctl_hardpower(ctx, type, id, msg)
 	void *ctx;
 	int type;
 	long id;
 	void *msg;
 {
-	struct pwctl_vrgiu_softc *sc = ctx;
+	struct pwctl_softc *sc = ctx;
 	int why =(int)msg;
 
 #if 0

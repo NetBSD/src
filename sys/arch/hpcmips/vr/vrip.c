@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.9 2001/04/18 11:07:28 sato Exp $	*/
+/*	$NetBSD: vrip.c,v 1.10 2001/04/30 11:42:19 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -230,8 +230,7 @@ vrip_search(parent, cf, aux)
 	va.va_intr = cf->cf_loc[VRIPCF_INTR];
 	va.va_addr2 = cf->cf_loc[VRIPCF_ADDR2];
 	va.va_size2 = cf->cf_loc[VRIPCF_SIZE2];
-	va.va_gc = sc->sc_gc;
-	va.va_gf = sc->sc_gf;
+	va.va_gpio_chips = sc->sc_gpio_chips;
 	va.va_cc = sc->sc_cc;
 	va.va_cf = sc->sc_cf;
 	if (((*cf->cf_attach->ca_match)(parent, cf, &va) == sc->sc_pri))
@@ -452,12 +451,14 @@ vrip_cmu_function_register(vc, func, arg)
 }
 
 void
-vrip_giu_function_register(vc, func, arg)
+vrip_gpio_register(vc, chip)
 	vrip_chipset_tag_t vc;
-	vrgiu_function_tag_t func;
-	vrgiu_chipset_tag_t arg;
+	hpcio_chip_t chip;
 {
 	struct vrip_softc *sc = (void*)vc;
-	sc->sc_gf = func;
-	sc->sc_gc = arg;
+
+	if (chip->hc_chipid < 0 || VRIP_NIOCHIPS <= chip->hc_chipid)
+		panic("%s: '%s' has unknown id, %d", __FUNCTION__,
+		    chip->hc_name, chip->hc_chipid);
+	sc->sc_gpio_chips[chip->hc_chipid] = chip;
 }

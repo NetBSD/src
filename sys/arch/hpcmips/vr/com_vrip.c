@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.6 2001/03/11 16:45:13 uch Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.7 2001/04/30 11:42:19 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -56,6 +56,8 @@
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
 
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrgiuvar.h>
 #include <hpcmips/vr/com_vripvar.h>
 
 #include "locators.h"
@@ -101,20 +103,20 @@ find_comenableport_from_cfdata(int *port)
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		if (strcmp(cf->cf_driver->cd_name, "pwctl"))
 			continue;
-		mask = PLATID_DEREF(cf->cf_loc[NEWGPBUSIFCF_PLATFORM]);
-		id = cf->cf_loc[NEWGPBUSIFCF_ID];
+		mask = PLATID_DEREF(cf->cf_loc[HPCIOIFCF_PLATFORM]);
+		id = cf->cf_loc[HPCIOIFCF_ID];
 		if (platid_match(&platid, &mask) &&
 		    id == CONFIG_HOOK_POWERCONTROL_COM0)
 			goto found;
 	}
 	*port = -1;
 	printf ("not found\n");
-	return 1;
+	return (0);
  found:
-	*port = cf->cf_loc[NEWGPBUSIFCF_PORT];
+	*port = cf->cf_loc[HPCIOIFCF_PORT];
 	printf ("#%d\n", *port);
 
-	return *port == GPBUSIFCF_COMCTRL_DEFAULT;
+	return (1);
 }
 
 int
@@ -128,7 +130,7 @@ com_vrip_cndb_attach(iot, iobase, rate, frequency, cflag, kgdb)
 	int port;
 	/* Platform dependent setting */
 	__vrcmu_supply(CMUMSKSSIU | CMUMSKSIU, 1);
-	if (find_comenableport_from_cfdata(&port) == 0)
+	if (find_comenableport_from_cfdata(&port))
 		__vrgiu_out(port, 1);	
 
 	if (!com_vrip_common_probe(iot, iobase))
