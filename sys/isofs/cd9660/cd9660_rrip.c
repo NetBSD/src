@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.4 1994/06/29 06:31:49 cgd Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.5 1994/07/03 09:52:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -313,7 +313,7 @@ cd9660_rrip_tstamp(p,ana)
 	ISO_RRIP_TSTAMP *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	unsigned char *ptime;
+	u_char *ptime;
 	
 	ptime = p->time;
 	
@@ -381,7 +381,7 @@ cd9660_rrip_device(p,ana)
 	ISO_RRIP_DEVICE *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	unsigned high, low;
+	u_int high, low;
 	
 	high = isonum_733(p->dev_t_high_l);
 	low  = isonum_733(p->dev_t_low_l);

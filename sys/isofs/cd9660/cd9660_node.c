@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.4 1994/06/29 06:31:45 cgd Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.5 1994/07/03 09:51:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -59,7 +59,7 @@
 #if	((INOHSZ&(INOHSZ-1)) == 0)
 #define	INOHASH(dev,ino)	(((dev)+((ino)>>12))&(INOHSZ-1))
 #else
-#define	INOHASH(dev,ino)	(((unsigned)((dev)+((ino)>>12)))%INOHSZ)
+#define	INOHASH(dev,ino)	(((u_int)((dev)+((ino)>>12)))%INOHSZ)
 #endif
 
 union iso_ihead {
@@ -72,7 +72,7 @@ union iso_ihead {
 #if	((DNOHSZ&(DNOHSZ-1)) == 0)
 #define	DNOHASH(dev,ino)	(((dev)+((ino)>>12))&(DNOHSZ-1))
 #else
-#define	DNOHASH(dev,ino)	(((unsigned)((dev)+((ino)>>12)))%DNOHSZ)
+#define	DNOHASH(dev,ino)	(((u_int)((dev)+((ino)>>12)))%DNOHSZ)
 #endif
 
 union iso_dhead {
@@ -594,12 +594,12 @@ struct timeval *pu;
 	return 1;
 }
 
-static unsigned
+static u_int
 cd9660_chars2ui(begin,len)
-	unsigned char *begin;
+	u_char *begin;
 	int len;
 {
-	unsigned rc;
+	u_int rc;
 	
 	for (rc = 0; --len >= 0;) {
 		rc *= 10;
@@ -610,10 +610,10 @@ cd9660_chars2ui(begin,len)
 
 int
 cd9660_tstamp_conv17(pi,pu)
-	unsigned char *pi;
+	u_char *pi;
 	struct timeval *pu;
 {
-	unsigned char buf[7];
+	u_char buf[7];
 	
 	/* year:"0001"-"9999" -> -1900  */
 	buf[0] = cd9660_chars2ui(pi,4) - 1900;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.4 1994/06/29 06:31:59 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.5 1994/07/03 09:52:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -289,7 +289,7 @@ cd9660_read(ap)
 	do {
 		lbn = iso_lblkno(imp, uio->uio_offset);
 		on = iso_blkoff(imp, uio->uio_offset);
-		n = min((unsigned)(imp->logical_block_size - on),
+		n = min((u_int)(imp->logical_block_size - on),
 			uio->uio_resid);
 		diff = (off_t)ip->i_size - uio->uio_offset;
 		if (diff <= 0)
