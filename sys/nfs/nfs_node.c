@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.27 1998/08/09 21:19:50 perry Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.28 1998/09/01 03:11:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,6 +47,7 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/lock.h>
 
 #include <nfs/rpcv2.h>
@@ -61,6 +62,9 @@ LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
 u_long nfsnodehash;
 struct lock nfs_hashlock;
 
+struct pool nfs_node_pool;		/* memory pool for nfs nodes */
+struct pool nfs_vattr_pool;		/* memory pool for nfs vattrs */
+
 #define TRUE	1
 #define	FALSE	0
 
@@ -74,6 +78,11 @@ nfs_nhinit()
 
 	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, M_WAITOK, &nfsnodehash);
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
+
+	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
+	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
 }
 
 /*
@@ -136,7 +145,7 @@ loop:
 		return (error);
 	}
 	vp = nvp;
-	MALLOC(np, struct nfsnode *, sizeof *np, M_NFSNODE, M_WAITOK);
+	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset((caddr_t)np, 0, sizeof *np);
 	vp->v_data = np;
 	np->n_vnode = vp;
@@ -150,8 +159,7 @@ loop:
 		np->n_fhp = &np->n_fh;
 	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
 	np->n_fhsize = fhsize;
-	MALLOC(np->n_vattr, struct vattr *, sizeof (struct vattr),
-	    M_NFSNODE, M_WAITOK);
+	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 	memset(np->n_vattr, 0, sizeof (struct vattr));
 	lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 	*npp = np;
@@ -252,9 +260,9 @@ nfs_reclaim(v)
 		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);
 	}
 
-	FREE(np->n_vattr, M_NFSNODE);
+	pool_put(&nfs_vattr_pool, np->n_vattr);
 	cache_purge(vp);
-	FREE(vp->v_data, M_NFSNODE);
+	pool_put(&nfs_node_pool, vp->v_data);
 	vp->v_data = (void *)0;
 	return (0);
 }
