@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.11 2003/07/14 15:55:54 itojun Exp $	*/
+/*	$NetBSD: slc.c,v 1.12 2003/07/15 05:03:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.11 2003/07/14 15:55:54 itojun Exp $");
+__RCSID("$NetBSD: slc.c,v 1.12 2003/07/15 05:03:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,9 @@ end_slc(bufp)
 			*bufp = &slcbuf[4];
 			return(slcptr - slcbuf - 4);
 		} else {
-			(void) sprintf((char *)slcptr, "%c%c", IAC, SE);
+			(void) snprintf((char *)slcptr,
+			    sizeof(slcbuf) - (slcptr - slcbuf), "%c%c",
+			    IAC, SE);
 			slcptr += 2;
 			len = slcptr - slcbuf;
 			writenet(slcbuf, len);
