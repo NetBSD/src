@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.21 1997/03/12 20:18:02 christos Exp $	*/
+
 /*
  * main.c - Point-to-Point Protocol main module
  *
@@ -18,10 +20,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.20 1996/11/26 07:53:02 mikel Exp $";
+#if 0
+static char rcsid[] = "Id: main.c,v 1.40 1997/03/04 03:41:17 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/03/12 20:18:02 christos Exp $";
+#endif
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -52,16 +59,19 @@ static char rcsid[] = "$NetBSD: main.c,v 1.20 1996/11/26 07:53:02 mikel Exp $";
 #include "pathnames.h"
 #include "patchlevel.h"
 
+#ifdef CBCP_SUPPORT
+#include "cbcp.h"
+#endif
+
+#if defined(SUNOS4)
+extern char *strerror();
+#endif
+
 #ifdef IPX_CHANGE
 #include "ipxcp.h"
 #endif /* IPX_CHANGE */
-
-/*
- * If REQ_SYSOPTIONS is defined to 1, pppd will not run unless
- * /etc/ppp/options exists.
- */
-#ifndef	REQ_SYSOPTIONS
-#define REQ_SYSOPTIONS	1
+#ifdef AT_CHANGE
+#include "atcp.h"
 #endif
 
 /* interface vars */
@@ -74,20 +84,24 @@ static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static char default_devnam[MAXPATHLEN];	/* name of default device */
 static pid_t pid;		/* Our pid */
 static uid_t uid;		/* Our real user-id */
+static int conn_running;	/* we have a [dis]connector running */
 
 int ttyfd = -1;			/* Serial port file descriptor */
+mode_t tty_mode = -1;		/* Original access permissions to tty */
+int baud_rate;			/* Actual bits/second for serial device */
+int hungup;			/* terminal has been hung up */
+int privileged;			/* we're running as real uid root */
+int need_holdoff;		/* need holdoff period before restarting */
 
 int phase;			/* where the link is at */
 int kill_link;
 int open_ccp_flag;
+int redirect_stderr;		/* Connector's stderr should go to file */
 
 u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
 
-int hungup;			/* terminal has been hung up */
 static int n_children;		/* # child processes still running */
-
-int baud_rate;			/* Actual bits/second for serial device */
 
 static int locked;		/* lock() has succeeded */
 
@@ -98,26 +112,31 @@ char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
 static void cleanup __P((void));
 static void close_tty __P((void));
 static void get_input __P((void));
-static void connect_time_expired __P((caddr_t));
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
+static void kill_my_pg __P((int));
 static void hup __P((int));
 static void term __P((int));
 static void chld __P((int));
 static void toggle_debug __P((int));
 static void open_ccp __P((int));
 static void bad_signal __P((int));
-static void holdoff_end __P((void *));
+static void holdoff_end __P((caddr_t));
 static int device_script __P((char *, int, int));
 static void reap_kids __P((void));
 static void pr_log __P((void *, char *, ...));
 
 extern	char	*ttyname __P((int));
 extern	char	*getlogin __P((void));
+int main __P((int, char *[]));
 
 #ifdef ultrix
 #undef	O_NONBLOCK
 #define	O_NONBLOCK	O_NDELAY
+#endif
+
+#ifdef ULTRIX
+#define setlogmask(x)
 #endif
 
 /*
@@ -129,10 +148,16 @@ struct protent *protocols[] = {
     &lcp_protent,
     &pap_protent,
     &chap_protent,
+#ifdef CBCP_SUPPORT
+    &cbcp_protent,
+#endif
     &ipcp_protent,
     &ccp_protent,
 #ifdef IPX_CHANGE
     &ipxcp_protent,
+#endif
+#ifdef AT_CHANGE
+    &atcp_protent,
 #endif
     NULL
 };
@@ -150,38 +175,60 @@ main(argc, argv)
     struct timeval timo;
     sigset_t mask;
     struct protent *protp;
+    struct stat statbuf;
 
+    phase = PHASE_INITIALIZE;
     p = ttyname(0);
     if (p)
 	strcpy(devnam, p);
     strcpy(default_devnam, devnam);
 
+    /* Initialize syslog facilities */
+#ifdef ULTRIX
+    openlog("pppd", LOG_PID);
+#else
+    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
+    setlogmask(LOG_UPTO(LOG_INFO));
+#endif
+
     if (gethostname(hostname, MAXNAMELEN) < 0 ) {
-	perror("couldn't get hostname");
+	option_error("Couldn't get hostname: %m");
 	die(1);
     }
     hostname[MAXNAMELEN-1] = 0;
 
     uid = getuid();
+    privileged = uid == 0;
 
     /*
      * Initialize to the standard option set, then parse, in order,
-     * the system options file, the user's options file, and the command
-     * line arguments.
+     * the system options file, the user's options file,
+     * the tty's options file, and the command line arguments.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
   
     progname = *argv;
 
-    if (!options_from_file(_PATH_SYSOPTIONS, REQ_SYSOPTIONS, 0) ||
-	!options_from_user() ||
-	!parse_args(argc-1, argv+1) ||
-	!options_for_tty())
+    if (!options_from_file(_PATH_SYSOPTIONS, !privileged, 0, 1)
+	|| !options_from_user())
+	exit(1);
+    scan_args(argc-1, argv+1);	/* look for tty name on command line */
+    if (!options_for_tty()
+	|| !parse_args(argc-1, argv+1))
 	exit(1);
 
+    /*
+     * Check that we are running as root.
+     */
+    if (geteuid() != 0) {
+	option_error("must be root to run %s, since it is not setuid-root",
+		     argv[0]);
+	die(1);
+    }
+
     if (!ppp_available()) {
-	fprintf(stderr, no_ppp_msg);
+	option_error(no_ppp_msg);
 	exit(1);
     }
 
@@ -194,8 +241,7 @@ main(argc, argv)
 	if (protp->check_options != NULL)
 	    (*protp->check_options)();
     if (demand && connector == 0) {
-	fprintf(stderr, "%s: connect script required for demand-dialling\n",
-		progname);
+	option_error("connect script required for demand-dialling\n");
 	exit(1);
     }
 
@@ -205,12 +251,15 @@ main(argc, argv)
      */
     if (!default_device && strcmp(devnam, default_devnam) == 0)
 	default_device = 1;
+    redirect_stderr = !nodetach || default_device;
 
     /*
      * Initialize system-dependent stuff and magic number package.
      */
     sys_init();
     magic_init();
+    if (debug)
+	setlogmask(LOG_UPTO(LOG_DEBUG));
 
     /*
      * Detach ourselves from the terminal, if required,
@@ -301,6 +350,13 @@ main(argc, argv)
 #endif
 
     /*
+     * Apparently we can get a SIGPIPE when we call syslog, if
+     * syslogd has died and been restarted.  Ignoring it seems
+     * be sufficient.
+     */
+    signal(SIGPIPE, SIG_IGN);
+
+    /*
      * If we're doing dial-on-demand, set up the interface now.
      */
     if (demand) {
@@ -329,6 +385,8 @@ main(argc, argv)
     }
 
     for (;;) {
+
+	need_holdoff = 1;
 
 	if (demand) {
 	    /*
@@ -373,9 +431,11 @@ main(argc, argv)
 	 * the non-blocking I/O bit.
 	 */
 	nonblock = (connector || !modem)? O_NONBLOCK: 0;
-	if ((ttyfd = open(devnam, nonblock | O_RDWR, 0)) < 0) {
-	    syslog(LOG_ERR, "Failed to open %s: %m", devnam);
-	    goto fail;
+	while ((ttyfd = open(devnam, nonblock | O_RDWR, 0)) < 0) {
+	    if (errno != EINTR)
+		syslog(LOG_ERR, "Failed to open %s: %m", devnam);
+	    if (!persist || errno != EINTR)
+		goto fail;
 	}
 	if (nonblock) {
 	    if ((fdflags = fcntl(ttyfd, F_GETFL)) == -1
@@ -385,6 +445,16 @@ main(argc, argv)
 	}
 	hungup = 0;
 	kill_link = 0;
+
+	/*
+	 * Do the equivalent of `mesg n' to stop broadcast messages.
+	 */
+	if (fstat(ttyfd, &statbuf) < 0
+	    || fchmod(ttyfd, statbuf.st_mode & ~(S_IWGRP | S_IWOTH)) < 0) {
+	    syslog(LOG_WARNING,
+		   "Couldn't restrict write permissions to %s: %m", devnam);
+	} else
+	    tty_mode = statbuf.st_mode;
 
 	/* run connection script */
 	if (connector && connector[0]) {
@@ -440,13 +510,6 @@ main(argc, argv)
 	}
 
 	/*
-	 * Set a timeout to close the connection once the maximum
-	 * connect time has expired.
-	 */
-	if (maxconnect > 0)
-	    TIMEOUT(connect_time_expired, 0, maxconnect);
-
-	/*
 	 * Start opening the connection and wait for
 	 * incoming events (reply, timeout, etc.).
 	 */
@@ -459,13 +522,12 @@ main(argc, argv)
 	    get_input();
 	    if (kill_link) {
 		lcp_close(0, "User request");
-		phase = PHASE_TERMINATE;
 		kill_link = 0;
 	    }
 	    if (open_ccp_flag) {
 		if (phase == PHASE_NETWORK) {
 		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
-		    ccp_open(0);
+		    (*ccp_protent.open)(0);
 		}
 		open_ccp_flag = 0;
 	    }
@@ -496,14 +558,16 @@ main(argc, argv)
 	}
 
     fail:
-	close_tty();
+	if (ttyfd >= 0)
+	    close_tty();
 	if (locked) {
 	    unlock();
 	    locked = 0;
 	}
 
-	if (!demand && pidfilename[0] != 0) {
-	    if (unlink(pidfilename) < 0 && errno != ENOENT) 
+	if (!demand) {
+	    if (pidfilename[0] != 0
+		&& unlink(pidfilename) < 0 && errno != ENOENT) 
 		syslog(LOG_WARNING, "unable to delete pid file: %m");
 	    pidfilename[0] = 0;
 	}
@@ -513,9 +577,9 @@ main(argc, argv)
 
 	if (demand)
 	    demand_discard();
-	if (holdoff > 0) {
+	if (holdoff > 0 && need_holdoff) {
 	    phase = PHASE_HOLDOFF;
-	    TIMEOUT(holdoff_end, NULL, holdoff);
+	    TIMEOUT(holdoff_end, (caddr_t) NULL, holdoff);
 	    do {
 		wait_time(timeleft(&timo));
 		calltimeout();
@@ -531,6 +595,7 @@ main(argc, argv)
     }
 
     die(0);
+    return 0;
 }
 
 /*
@@ -538,7 +603,7 @@ main(argc, argv)
  */
 static void
 holdoff_end(arg)
-    void *arg;
+    caddr_t arg;
 {
     phase = PHASE_DORMANT;
 }
@@ -585,7 +650,19 @@ get_input()
      */
     if (protocol != PPP_LCP && lcp_fsm[0].state != OPENED) {
 	MAINDEBUG((LOG_INFO,
-		   "io(): Received non-LCP packet when LCP not open."));
+		   "get_input: Received non-LCP packet when LCP not open."));
+	return;
+    }
+
+    /*
+     * Until we get past the authentication phase, toss all packets
+     * except LCP, LQR and authentication packets.
+     */
+    if (phase <= PHASE_AUTHENTICATE
+	&& !(protocol == PPP_LCP || protocol == PPP_LQR
+	     || protocol == PPP_PAP || protocol == PPP_CHAP)) {
+	MAINDEBUG((LOG_INFO, "get_input: discarding proto 0x%x in phase %d",
+		   protocol, phase));
 	return;
     }
 
@@ -632,19 +709,6 @@ die(status)
 }
 
 /*
- * connect_time_expired - log a message and close the connection.
- */
-static void
-connect_time_expired(arg)
-    caddr_t arg;
-{
-    syslog(LOG_INFO, "Connect time expired");
-
-    phase = PHASE_TERMINATE;
-    lcp_close(0, "Connect time expired");	/* Close connection */
-}
-
-/*
  * cleanup - restore anything which needs to be restored before we exit
  */
 /* ARGSUSED */
@@ -684,6 +748,9 @@ close_tty()
 
     restore_tty(ttyfd);
 
+    if (tty_mode != (mode_t) -1)
+	chmod(devnam, tty_mode);
+
     close(ttyfd);
     ttyfd = -1;
 }
@@ -692,7 +759,7 @@ close_tty()
 struct	callout {
     struct timeval	c_time;		/* time at which to call routine */
     caddr_t		c_arg;		/* argument to routine */
-    void		(*c_func)();	/* routine */
+    void		(*c_func) __P((caddr_t)); /* routine */
     struct		callout *c_next;
 };
 
@@ -707,7 +774,7 @@ static struct timeval timenow;		/* Current time */
  */
 void
 timeout(func, arg, time)
-    void (*func)();
+    void (*func) __P((caddr_t));
     caddr_t arg;
     int time;
 {
@@ -747,7 +814,7 @@ timeout(func, arg, time)
  */
 void
 untimeout(func, arg)
-    void (*func)();
+    void (*func) __P((caddr_t));
     caddr_t arg;
 {
     struct callout **copp, *freep;
@@ -816,7 +883,24 @@ timeleft(tvp)
 
     return tvp;
 }
-    
+
+
+/*
+ * kill_my_pg - send a signal to our process group, and ignore it ourselves.
+ */
+static void
+kill_my_pg(sig)
+    int sig;
+{
+    struct sigaction act, oldact;
+
+    act.sa_handler = SIG_IGN;
+    act.sa_flags = 0;
+    kill(0, sig);
+    sigaction(sig, &act, &oldact);
+    sigaction(sig, &oldact, NULL);
+}
+
 
 /*
  * hup - Catch SIGHUP signal.
@@ -831,6 +915,9 @@ hup(sig)
 {
     syslog(LOG_INFO, "Hangup (SIGHUP)");
     kill_link = 1;
+    if (conn_running)
+	/* Send the signal to the [dis]connector process(es) also */
+	kill_my_pg(sig);
 }
 
 
@@ -847,6 +934,9 @@ term(sig)
     syslog(LOG_INFO, "Terminating on signal %d.", sig);
     persist = 0;		/* don't try to restart */
     kill_link = 1;
+    if (conn_running)
+	/* Send the signal to the [dis]connector process(es) also */
+	kill_my_pg(sig);
 }
 
 
@@ -873,7 +963,11 @@ toggle_debug(sig)
     int sig;
 {
     debug = !debug;
-    note_debug_level();
+    if (debug) {
+	setlogmask(LOG_UPTO(LOG_DEBUG));
+    } else {
+	setlogmask(LOG_UPTO(LOG_WARNING));
+    }
 }
 
 
@@ -899,6 +993,8 @@ bad_signal(sig)
     int sig;
 {
     syslog(LOG_ERR, "Fatal signal %d", sig);
+    if (conn_running)
+	kill_my_pg(SIGTERM);
     die(1);
 }
 
@@ -916,20 +1012,44 @@ device_script(program, in, out)
     int status;
     int errfd;
 
+    conn_running = 1;
     pid = fork();
 
     if (pid < 0) {
+	conn_running = 0;
 	syslog(LOG_ERR, "Failed to create child process: %m");
 	die(1);
     }
 
     if (pid == 0) {
 	sys_close();
-	dup2(in, 0);
-	dup2(out, 1);
-	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0644);
-	if (errfd >= 0)
-	    dup2(errfd, 2);
+	closelog();
+	if (in == out) {
+	    if (in != 0) {
+		dup2(in, 0);
+		close(in);
+	    }
+	    dup2(0, 1);
+	} else {
+	    if (out == 0)
+		out = dup(out);
+	    if (in != 0) {
+		dup2(in, 0);
+		close(in);
+	    }
+	    if (out != 1) {
+		dup2(out, 1);
+		close(out);
+	    }
+	}
+	if (redirect_stderr) {
+	    close(2);
+	    errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0644);
+	    if (errfd >= 0 && errfd != 2) {
+		dup2(errfd, 2);
+		close(errfd);
+	    }
+	}
 	setuid(getuid());
 	setgid(getgid());
 	execl("/bin/sh", "sh", "-c", program, (char *)0);
@@ -944,6 +1064,7 @@ device_script(program, in, out)
 	syslog(LOG_ERR, "error waiting for (dis)connection process: %m");
 	die(1);
     }
+    conn_running = 0;
 
     return (status == 0 ? 0 : -1);
 }
@@ -981,6 +1102,7 @@ run_program(prog, args, must_exist)
 
 	/* Ensure that nothing of our device environment is inherited. */
 	sys_close();
+	closelog();
 	close (0);
 	close (1);
 	close (2);
@@ -1104,43 +1226,23 @@ format_packet(p, len, printer, arg)
     }
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-
 static void
-pr_log(void *arg, char *fmt, ...)
+pr_log __V((void *arg, char *fmt, ...))
 {
     int n;
     va_list pvar;
     char buf[256];
 
+#if __STDC__
     va_start(pvar, fmt);
-    vsprintf(buf, fmt, pvar);
-    va_end(pvar);
-
-    n = strlen(buf);
-    if (linep + n + 1 > line + sizeof(line)) {
-	syslog(LOG_DEBUG, "%s", line);
-	linep = line;
-    }
-    strcpy(linep, buf);
-    linep += n;
-}
-
-#else /* __STDC__ */
-#include <varargs.h>
-
-static void
-pr_log(arg, fmt, va_alist)
-void *arg;
-char *fmt;
-va_dcl
-{
-    int n;
-    va_list pvar;
-    char buf[256];
-
+#else
+    void *arg;
+    char *fmt;
     va_start(pvar);
+    arg = va_arg(pvar, void *);
+    fmt = va_arg(pvar, char *);
+#endif
+
     vsprintf(buf, fmt, pvar);
     va_end(pvar);
 
@@ -1152,7 +1254,6 @@ va_dcl
     strcpy(linep, buf);
     linep += n;
 }
-#endif
 
 /*
  * print_string - print a readable representation of a string using
@@ -1170,10 +1271,25 @@ print_string(p, len, printer, arg)
     printer(arg, "\"");
     for (; len > 0; --len) {
 	c = *p++;
-	if (' ' <= c && c <= '~')
+	if (' ' <= c && c <= '~') {
+	    if (c == '\\' || c == '"')
+		printer(arg, "\\");
 	    printer(arg, "%c", c);
-	else
-	    printer(arg, "\\%.3o", c);
+	} else {
+	    switch (c) {
+	    case '\n':
+		printer(arg, "\\n");
+		break;
+	    case '\r':
+		printer(arg, "\\r");
+		break;
+	    case '\t':
+		printer(arg, "\\t");
+		break;
+	    default:
+		printer(arg, "\\%.3o", c);
+	    }
+	}
     }
     printer(arg, "\"");
 }
@@ -1187,4 +1303,254 @@ novm(msg)
 {
     syslog(LOG_ERR, "Virtual memory exhausted allocating %s\n", msg);
     die(1);
+}
+
+/*
+ * fmtmsg - format a message into a buffer.  Like sprintf except we
+ * also specify the length of the output buffer, and we handle
+ * %r (recursive format), %m (error message) and %I (IP address) formats.
+ * Doesn't do floating-point formats.
+ * Returns the number of chars put into buf.
+ */
+int
+fmtmsg __V((char *buf, int buflen, char *fmt, ...))
+{
+    va_list args;
+    int n;
+
+#if __STDC__
+    va_start(args, fmt);
+#else
+    char *buf;
+    int buflen;
+    char *fmt;
+    va_start(args);
+    buf = va_arg(args, char *);
+    buflen = va_arg(args, int);
+    fmt = va_arg(args, char *);
+#endif
+    n = vfmtmsg(buf, buflen, fmt, args);
+    va_end(args);
+    return n;
+}
+
+/*
+ * vfmtmsg - like fmtmsg, takes a va_list instead of a list of args.
+ */
+#define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
+
+int
+vfmtmsg(buf, buflen, fmt, args)
+    char *buf;
+    int buflen;
+    char *fmt;
+    va_list args;
+{
+    int c, i, n;
+    int width, prec, fillch;
+    int base, len, neg, quoted;
+    unsigned long val = 0;
+    char *str, *f, *buf0;
+    unsigned char *p;
+    void *a;
+    char num[32];
+    time_t t;
+    static char hexchars[] = "0123456789abcdef";
+
+    buf0 = buf;
+    --buflen;
+    while (buflen > 0) {
+	for (f = fmt; *f != '%' && *f != 0; ++f)
+	    ;
+	if (f > fmt) {
+	    len = f - fmt;
+	    if (len > buflen)
+		len = buflen;
+	    memcpy(buf, fmt, len);
+	    buf += len;
+	    buflen -= len;
+	    fmt = f;
+	}
+	if (*fmt == 0)
+	    break;
+	c = *++fmt;
+	width = prec = 0;
+	fillch = ' ';
+	if (c == '0') {
+	    fillch = '0';
+	    c = *++fmt;
+	}
+	if (c == '*') {
+	    width = va_arg(args, int);
+	    c = *++fmt;
+	} else {
+	    while (isdigit(c)) {
+		width = width * 10 + c - '0';
+		c = *++fmt;
+	    }
+	}
+	if (c == '.') {
+	    c = *++fmt;
+	    if (c == '*') {
+		prec = va_arg(args, int);
+		c = *++fmt;
+	    } else {
+		while (isdigit(c)) {
+		    prec = prec * 10 + c - '0';
+		    c = *++fmt;
+		}
+	    }
+	}
+	str = 0;
+	base = 0;
+	neg = 0;
+	++fmt;
+	switch (c) {
+	case 'd':
+	    i = va_arg(args, int);
+	    if (i < 0) {
+		neg = 1;
+		val = -i;
+	    } else
+		val = i;
+	    base = 10;
+	    break;
+	case 'o':
+	    val = va_arg(args, unsigned int);
+	    base = 8;
+	    break;
+	case 'x':
+	    val = va_arg(args, unsigned int);
+	    base = 16;
+	    break;
+	case 'p':
+	    val = (unsigned long) va_arg(args, void *);
+	    base = 16;
+	    neg = 2;
+	    break;
+	case 's':
+	    str = va_arg(args, char *);
+	    break;
+	case 'c':
+	    num[0] = va_arg(args, int);
+	    num[1] = 0;
+	    str = num;
+	    break;
+	case 'm':
+	    str = strerror(errno);
+	    break;
+	case 'I':
+	    str = ip_ntoa(va_arg(args, u_int32_t));
+	    break;
+	case 'r':
+	    f = va_arg(args, char *);
+	    /*
+	     * XXX We assume a va_list is either a pointer or an array, so
+	     * what gets passed for a va_list is like a void * in some sense.
+	     */
+	    a = va_arg(args, void *);
+	    n = vfmtmsg(buf, buflen + 1, f, a);
+	    buf += n;
+	    buflen -= n;
+	    continue;
+	case 't':
+	    time(&t);
+	    str = ctime(&t);
+	    str += 4;		/* chop off the day name */
+	    str[15] = 0;	/* chop off year and newline */
+	    break;
+	case 'v':		/* "visible" string */
+	case 'q':		/* quoted string */
+	    quoted = c == 'q';
+	    p = va_arg(args, unsigned char *);
+	    if (fillch == '0' && prec > 0) {
+		n = prec;
+	    } else {
+		n = strlen((char *)p);
+		if (prec > 0 && prec < n)
+		    n = prec;
+	    }
+	    while (n > 0 && buflen > 0) {
+		c = *p++;
+		--n;
+		if (!quoted && c >= 0x80) {
+		    OUTCHAR('M');
+		    OUTCHAR('-');
+		    c -= 0x80;
+		}
+		if (quoted && (c == '"' || c == '\\'))
+		    OUTCHAR('\\');
+		if (c < 0x20 || (0x7f <= c && c < 0xa0)) {
+		    if (quoted) {
+			OUTCHAR('\\');
+			switch (c) {
+			case '\t':	OUTCHAR('t');	break;
+			case '\n':	OUTCHAR('n');	break;
+			case '\b':	OUTCHAR('b');	break;
+			case '\f':	OUTCHAR('f');	break;
+			default:
+			    OUTCHAR('x');
+			    OUTCHAR(hexchars[c >> 4]);
+			    OUTCHAR(hexchars[c & 0xf]);
+			}
+		    } else {
+			if (c == '\t')
+			    OUTCHAR(c);
+			else {
+			    OUTCHAR('^');
+			    OUTCHAR(c ^ 0x40);
+			}
+		    }
+		} else
+		    OUTCHAR(c);
+	    }
+	    continue;
+	default:
+	    *buf++ = '%';
+	    if (c != '%')
+		--fmt;		/* so %z outputs %z etc. */
+	    --buflen;
+	    continue;
+	}
+	if (base != 0) {
+	    str = num + sizeof(num);
+	    *--str = 0;
+	    while (str > num + neg) {
+		*--str = hexchars[val % base];
+		val = val / base;
+		if (--prec <= 0 && val == 0)
+		    break;
+	    }
+	    switch (neg) {
+	    case 1:
+		*--str = '-';
+		break;
+	    case 2:
+		*--str = 'x';
+		*--str = '0';
+		break;
+	    }
+	    len = num + sizeof(num) - 1 - str;
+	} else {
+	    len = strlen(str);
+	    if (prec > 0 && len > prec)
+		len = prec;
+	}
+	if (width > 0) {
+	    if (width > buflen)
+		width = buflen;
+	    if ((n = width - len) > 0) {
+		buflen -= n;
+		for (; n > 0; --n)
+		    *buf++ = fillch;
+	    }
+	}
+	if (len > buflen)
+	    len = buflen;
+	memcpy(buf, str, len);
+	buf += len;
+	buflen -= len;
+    }
+    *buf = 0;
+    return buf - buf0;
 }

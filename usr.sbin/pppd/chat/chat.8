@@ -1,6 +1,7 @@
+.\"	$NetBSD: chat.8,v 1.4 1997/03/12 20:18:34 christos Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" $Id: chat.8,v 1.3 1997/03/08 14:32:26 mouse Exp $
+.\" Id: chat.8,v 1.4 1996/06/26 00:51:05 paulus Exp 
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -33,8 +34,8 @@ the strings.
 .B -t \fI<timeout>
 Set the timeout for the expected string to be received. If the string
 is not received within the time limit then the reply string is not
-sent. An alternative reply may be sent or the script will fail if there
-is no alternative reply string. A failed script will cause the
+sent. An alternate reply may be sent or the script will fail if there
+is no alternate reply string. A failed script will cause the
 \fIchat\fR program to terminate with a non-zero error code.
 .TP
 .B -r \fI<report file>
@@ -43,10 +44,26 @@ Set the file for output of the report strings. If you use the keyword
 option is not used and you still use \fIREPORT\fR keywords, the
 \fIstderr\fR file is used for the report strings.
 .TP
+.B -e
+Start with the echo option turned on. Echoing may also be turned on
+or off at specific points in the chat script by using the \fIECHO\fR
+keyword. When echoing is enabled, all output from the modem is echoed
+to \fIstderr\fR.
+.TP
 .B -v
 Request that the \fIchat\fR script be executed in a verbose mode. The
 \fIchat\fR program will then log all text received from the modem and
 the output strings which it sends to the SYSLOG.
+.TP
+.B -V
+Request that the \fIchat\fR script be executed in a stderr verbose
+mode. The \fIchat\fR program will then log all text received from the
+modem and the output strings which it sends to the stderr device. This
+device is usually the local console at the station running the chat or
+pppd program. This option will not work properly if the stderr is
+redirected to the /dev/null locaiton as is the case should pppd be run
+in the 'detached' mode. In that case, use the '-v' option to record
+the session on the SYSLOG device.
 .TP
 .B script
 If the script is not specified in a file with the \fI-f\fR option then
@@ -154,6 +171,34 @@ ATDT5551212 to dial the telephone. The expected string is
 of the script is executed. In addition the program will write to the
 expect-file the string "CONNECT" plus any characters which follow it
 such as the connection rate.
+.SH ECHO
+The echo options controls whether the output from the modem is echoed
+to \fIstderr\fR. This option may be set with the \fI-e\fR option, but
+it can also be controlled by the \fIECHO\fR keyword. The "expect-send"
+pair \fIECHO\fR \fION\fR enables echoing, and \fIECHO\fR \fIOFF\fR
+disables it. With this keyword you can select which parts of the
+conversation should be visible. For instance, with the following
+script:
+.IP
+ABORT   'BUSY'
+.br
+ABORT   'NO CARIER'
+.br
+''      ATZ
+.br
+OK\\r\\n  ATD1234567
+.br
+\\r\\n    \\c
+.br
+ECHO    ON
+.br
+CONNECT \\c
+.br
+ogin:   account
+.LP
+all output resulting from modem configuration and dialing is not visible,
+but starting with the \fICONNECT\fR (or \fIBUSY\fR) message, everything
+will be echoed.
 .SH TIMEOUT
 The initial timeout value is 45 seconds. This may be changed using the \fB-t\fR
 parameter.
