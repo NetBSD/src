@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.23 2003/12/29 06:33:57 sekiya Exp $	*/
+/*	$NetBSD: hpc.c,v 1.24 2003/12/30 23:45:25 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.23 2003/12/29 06:33:57 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.24 2003/12/30 23:45:25 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,11 @@ const struct hpc_device {
 	  HPC_PBUS_CH6_DEVREGS + IOC_SERIAL_REGS, 0,
 	  29,
 	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "zsc",        /* serial 0/1 duart 1 */
+	  0x0d10, 0,
+	  5,
+	  HPCDEV_IP20 },
 
 	{ "pckbc",
 	  HPC_PBUS_CH6_DEVREGS + IOC_KB_REGS, 0,
@@ -328,6 +333,11 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			hpctype = 15;
 		else
 			hpctype = 1;
+
+		/* force big-endian mode */
+		*(u_int32_t *)MIPS_PHYS_TO_KSEG1(ga->ga_addr + HPC1_BIGENDIAN) =
+			hpctype & 0xe0;
+		
 	}
 	
 	printf(": SGI HPC%d%s\n", (hpctype ==  3) ? 3 : 1,
