@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.47 1999/01/15 23:37:05 thorpej Exp $
+# $NetBSD: Makefile.alpha,v 1.48 1999/02/01 23:18:56 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -173,6 +173,7 @@ depend: .depend
 	${MKDEP} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} \
 	    ${ALPHA}/alpha/transfer.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	test -z "${SFILES}" || \
 	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/genassym.c
 
