@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.47.4.2 2001/04/24 22:21:35 he Exp $	*/
+/*	$NetBSD: in.h,v 1.47.4.3 2002/02/26 20:57:22 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -348,7 +348,8 @@ struct ip_mreq {
 #define IPCTL_LOWPORTMIN       16	/* minimum reserved port */
 #define IPCTL_LOWPORTMAX       17	/* maximum reserved port */
 #define IPCTL_MAXFRAGPACKETS   18	/* max packets in reassembly queue */
-#define	IPCTL_MAXID	       19
+#define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
+#define	IPCTL_MAXID	       20
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -370,6 +371,7 @@ struct ip_mreq {
 	{ "lowportmin", CTLTYPE_INT }, \
 	{ "lowportmax", CTLTYPE_INT }, \
 	{ "maxfragpackets", CTLTYPE_INT }, \
+	{ "grettl", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
