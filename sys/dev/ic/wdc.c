@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.17 1998/02/04 14:13:42 sakamoto Exp $ */
+/*	$NetBSD: wdc.c,v 1.18 1998/03/27 19:32:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1532,6 +1532,9 @@ wdc_atapi_get_params(ab_link, drive, id)
 		error = 0;
 		goto end;
 	}
+
+	/* Some ATAPI devices seem a bit more time after software reset. */
+	delay(5000);
 
 	if (wdccommand(wdc, (struct wd_link*)(&(ab_link->scsipi_atapi)),
 		ATAPI_IDENTIFY_DEVICE, drive, sizeof(struct atapi_identify),
