@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)defs.h	5.10 (Berkeley) 3/1/91
+ *	@(#)defs.h	8.1 (Berkeley) 6/4/93
  */
 
 /*
@@ -146,6 +146,10 @@ typedef unsigned char cc_t;
 #include <memory.h>
 #endif	/* CRAY */
 
+#ifdef __hpux
+#include <sys/ptyio.h>
+#endif
+
 #if	!defined(TIOCSCTTY) && defined(TCSETCTTY)
 # define	TIOCSCTTY TCSETCTTY
 #endif
@@ -181,7 +185,9 @@ typedef struct fd_set { int fds_bits[1]; } fd_set;
 /*
  * Linemode support states, in decreasing order of importance
  */
-#define REAL_LINEMODE	0x02
+#define REAL_LINEMODE	0x04
+#define KLUDGE_OK	0x03
+#define	NO_AUTOKLUDGE	0x02
 #define KLUDGE_LINEMODE	0x01
 #define NO_LINEMODE	0x00
 
