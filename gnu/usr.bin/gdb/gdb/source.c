@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: source.c,v 1.2 1995/01/26 09:09:38 mycroft Exp $
+	$Id: source.c,v 1.3 1995/01/26 09:16:09 mycroft Exp $
 */
 
 #include "defs.h"
@@ -654,12 +654,13 @@ find_source_lines (s, desc)
   stream = fdopen (desc, FOPEN_RT);
   clearerr (stream);
 
+  fgetpos (stream, &line_charpos[nlines++]);
   newline = 1;
   while (1)
     {
       c = fgetc (stream);
       if (c == EOF) break;
-      if (newline)
+      if (c == '\n')
 	{
 	  if (nlines == lines_allocated)
 	    {
@@ -669,9 +670,13 @@ find_source_lines (s, desc)
 				     lines_allocated * sizeof (fpos_t));
 	    }
 	  fgetpos (stream, &line_charpos[nlines++]);
+	  newline = 1;
 	}
-      newline = c == '\n';
+      else
+	newline = 0;
     }
+    if (newline)
+      nlines--;
     s->nlines = nlines;
     s->line_charpos =
      (fpos_t *) xmrealloc (s -> objfile -> md, (char *) line_charpos,
