@@ -34,6 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 /* NetBSD ZMAGIC has its header in the text segment.  */
 #define N_HEADER_IN_TEXT(x)	1
 
+/* Determine if this file is compiled as pic code. */
+#define N_PIC(exec) ((exec).a_info & 0x40000000)
+
 /* Determine if this is a shared library using the flags. */
 #define N_SHARED_LIB(x) 	(N_DYNAMIC(x))
 
@@ -81,6 +84,14 @@ static boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 
 static boolean netbsd_translate_from_native_sym_flags PARAMS ((bfd *, aout_symbol_type *));
 static boolean netbsd_translate_to_native_sym_flags PARAMS ((bfd *, asymbol *, struct external_nlist *));
+
+#define SET_ARCH_MACH(ABFD, EXEC) \
+  bfd_default_set_arch_mach(abfd, DEFAULT_ARCH, 0); \
+  netbsd_choose_reloc_size(ABFD);
+
+static void netbsd_choose_reloc_size (bfd *abfd);
+
+#include "aout/netbsd.h"
 
 #include "aout-target.h"
 
@@ -139,6 +150,22 @@ MY(write_object_contents) (abfd)
   WRITE_HEADERS(abfd, execp);
 
   return true;
+}
+
+/* Determine the size of a relocation entry, based on the architecture */
+static void
+netbsd_choose_reloc_size (abfd)
+     bfd *abfd;
+{
+  switch (bfd_get_arch (abfd))
+    {
+    case bfd_arch_sparc:
+      obj_reloc_entry_size (abfd) = RELOC_EXT_SIZE;
+      break;
+    default:
+      obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
+      break;
+    }
 }
 
 /* Translate an a.out symbol into a BFD symbol.  The desc, other, type

@@ -44,6 +44,11 @@ MY(callback) (abfd)
   unsigned int arch_align_power;
   unsigned long arch_align;
 
+#ifdef N_PIC
+  if (N_PIC(*execp))
+    abfd->flags |= BFD_PIC;
+#endif
+
   /* Calculate the file positions of the parts of a newly read aout header */
   obj_textsec (abfd)->_raw_size = N_TXTSIZE(*execp);
 
@@ -613,7 +618,7 @@ const bfd_target MY(vec) =
 #endif
   (HAS_RELOC | EXEC_P |		/* object flags */
    HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED),
+   HAS_SYMS | HAS_LOCALS | DYNAMIC | WP_TEXT | D_PAGED | BFD_PIC),
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC), /* section flags */
   MY_symbol_leading_char,
   AR_PAD_CHAR,			/* ar_pad_char */
