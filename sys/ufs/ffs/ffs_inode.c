@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.63 2004/05/25 14:54:59 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.64 2004/06/20 18:23:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.63 2004/05/25 14:54:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.64 2004/06/20 18:23:30 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -185,7 +185,7 @@ ffs_truncate(v)
 	daddr_t lastblock;
 	struct inode *oip;
 	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	daddr_t blks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct fs *fs;
 	int offset, size, level;
@@ -349,14 +349,14 @@ ffs_truncate(v)
 	 * normalized to -1 for calls to ffs_indirtrunc below.
 	 */
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		oldblks[NDADDR + level] = DIP(oip, ib[level]);
+		blks[NDADDR + level] = DIP(oip, ib[level]);
 		if (lastiblock[level] < 0) {
 			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
 	}
 	for (i = 0; i < NDADDR; i++) {
-		oldblks[i] = DIP(oip, db[i]);
+		blks[i] = DIP(oip, db[i]);
 		if (i > lastblock)
 			DIP_ASSIGN(oip, db[i], 0);
 	}
@@ -372,12 +372,14 @@ ffs_truncate(v)
 	 * when we are done.
 	 */
 	for (i = 0; i < NDADDR; i++) {
-		newblks[i] = DIP(oip, db[i]);
-		DIP_ASSIGN(oip, db[i], oldblks[i]);
+		bn = DIP(oip, db[i]);
+		DIP_ASSIGN(oip, db[i], blks[i]);
+		blks[i] = bn;
 	}
 	for (i = 0; i < NIADDR; i++) {
-		newblks[NDADDR + i] = DIP(oip, ib[i]);
-		DIP_ASSIGN(oip, ib[i], oldblks[NDADDR + i]);
+		bn = DIP(oip, ib[i]);
+		DIP_ASSIGN(oip, ib[i], blks[NDADDR + i]);
+		blks[NDADDR + i] = bn;
 	}
 
 	oip->i_size = osize;
@@ -471,10 +473,10 @@ ffs_truncate(v)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] != DIP(oip, ib[level]))
+		if (blks[NDADDR + level] != DIP(oip, ib[level]))
 			panic("itrunc1");
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != DIP(oip, db[i]))
+		if (blks[i] != DIP(oip, db[i]))
 			panic("itrunc2");
 	if (length == 0 &&
 	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
