@@ -1,3 +1,5 @@
+/*	$NetBSD: ops_pcfs.c,v 1.5 1997/10/26 00:25:15 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_pcfs.c,v 1.4 1997/09/26 17:00:15 christos Exp $
+ * Id: ops_pcfs.c,v 5.2.2.1 1992/02/09 15:09:08 jsp beta 
  *
  */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_subr.c,v 1.7 1997/10/26 00:25:05 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: nfs_subr.c,v 1.6 1997/09/26 17:00:08 christos Exp $
+ * Id: nfs_subr.c,v 5.2.2.1 1992/02/09 15:08:53 jsp beta 
  *
  */
 

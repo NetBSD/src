@@ -1,3 +1,5 @@
+/*	$NetBSD: check_mount.c,v 1.3 1997/10/26 00:25:34 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: check_mount.c,v 1.2 1997/09/26 17:08:11 christos Exp $
+ * Id: checkmount_bsd44.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
  *
  */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: homedir.c,v 1.3 1997/10/26 00:25:49 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: homedir.c,v 1.2 1997/10/10 16:12:10 christos Exp $
+ * Id: homedir.c,v 1.16 1993/09/13 15:11:00 ezk Exp 
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -55,10 +57,14 @@
 /*
  * STATIC VARIABLES AND FUNCTIONS:
  */
+static FILE *passwd_fp = NULL;
+static char pw_name[16], pw_dir[128];
 static hlfsd_diskspace(char *);
 static hlfsd_stat(char *, struct stat *);
 static int cur_pwtab_num = 0, max_pwtab_num = 0;
+static int passwd_line = 0;
 static int plt_reset(void);
+static struct passwd passwd_ent;
 static uid2home_t *lastchild;
 static uid2home_t *pwtab;
 static void delay(uid2home_t *, int);
@@ -193,7 +199,7 @@ homedir(int userid)
    *
    */
   if (seteuid(userid) < 0) {
-    plog(XLOG_WARNING, "could not seteuid to %d", userid);
+    plog(XLOG_WARNING, "could not seteuid to %d: %m", userid);
     return linkval;
   }
   if (hlfsd_stat(linkval, &homestat) < 0) {
@@ -436,6 +442,111 @@ unt_compare_fxn(const voidp x, const voidp y)
 }
 
 
+/* perform initialization of user passwd database */
+static void
+hlfsd_setpwent(void)
+{
+  if (!passwdfile) {
+    setpwent();
+    return;
+  }
+
+  passwd_fp = fopen(passwdfile, "r");
+  if (!passwd_fp) {
+    plog(XLOG_ERROR, "unable to read passwd file %s: %m", passwdfile);
+    return;
+  }
+  plog(XLOG_INFO, "reading password entries from file %s", passwdfile);
+
+  passwd_line = 0;
+  memset((char *) &passwd_ent, 0, sizeof(struct passwd));
+  passwd_ent.pw_name = (char *) &pw_name;
+  passwd_ent.pw_dir = (char *) &pw_dir;
+}
+
+
+/* perform de-initialization of user passwd database */
+static void
+hlfsd_endpwent(void)
+{
+  if (!passwdfile) {
+    endpwent();
+    return;
+  }
+
+  if (passwd_fp) {
+    fclose(passwd_fp);
+  }
+}
+
+
+/* perform record reading/parsing of individual passwd database records */
+static struct passwd *
+hlfsd_getpwent(void)
+{
+  char buf[256], *cp;
+
+  /* check if to perform standard unix function */
+  if (!passwdfile) {
+    return getpwent();
+  }
+
+  /* return here to read another entry */
+readent:
+
+  /* return NULL if reached end of file */
+  if (feof(passwd_fp))
+    return NULL;
+
+  pw_name[0] = pw_dir[0] = '\0';
+
+  /* read records */
+  buf[0] = '\0';
+  fgets(buf, 256, passwd_fp);
+  passwd_line++;
+  if (!buf || buf[0] == '\0')
+    goto readent;
+
+  /* read user name */
+  cp = strtok(buf, ":");
+  if (!cp || cp[0] == '\0') {
+    plog(XLOG_ERROR, "no user name on line %d of %s", passwd_line, passwdfile);
+    goto readent;
+  }
+  strcpy(pw_name, cp);		/* will show up in passwd_ent.pw_name */
+
+  /* skip passwd */
+  strtok(NULL, ":");
+
+  /* read uid */
+  cp = strtok(NULL, ":");
+  if (!cp || cp[0] == '\0') {
+    plog(XLOG_ERROR, "no uid on line %d of %s", passwd_line, passwdfile);
+    goto readent;
+  }
+  passwd_ent.pw_uid = atoi(cp);
+
+  /* skip gid and gcos */
+  strtok(NULL, ":");
+  strtok(NULL, ":");
+
+  /* read home dir */
+  cp = strtok(NULL, ":");
+  if (!cp || cp[0] == '\0') {
+    plog(XLOG_ERROR, "no home dir on line %d of %s", passwd_line,  passwdfile);
+    goto readent;
+  }
+  strcpy(pw_dir, cp);	/* will show up in passwd_ent.pw_dir */
+
+  /* the rest of the fields are unimportant and not being considered */
+
+  plog(XLOG_USER, "hlfsd_getpwent: name=%s, uid=%d, dir=%s",
+       passwd_ent.pw_name, passwd_ent.pw_uid, passwd_ent.pw_dir);
+
+  return &passwd_ent;
+}
+
+
 static void
 plt_init(void)
 {
@@ -446,11 +557,11 @@ plt_init(void)
 
   plog(XLOG_INFO, "reading password map");
 
-  setpwent();			/* prepare to read passwd entries */
-  while ((pent_p = getpwent()) != (struct passwd *) NULL) {
+  hlfsd_setpwent();			/* prepare to read passwd entries */
+  while ((pent_p = hlfsd_getpwent()) != (struct passwd *) NULL) {
     table_add(pent_p->pw_uid, pent_p->pw_dir, pent_p->pw_name);
   }
-  endpwent();
+  hlfsd_endpwent();
 
   qsort((char *) pwtab, cur_pwtab_num, sizeof(uid2home_t),
 	plt_compare_fxn);
@@ -470,12 +581,12 @@ plt_reset(void)
 {
   int i;
 
-  setpwent();
-  if (getpwent() == (struct passwd *) NULL) {
-    endpwent();
+  hlfsd_setpwent();
+  if (hlfsd_getpwent() == (struct passwd *) NULL) {
+    hlfsd_endpwent();
     return -1;			/* did not reset table */
   }
-  endpwent();
+  hlfsd_endpwent();
 
   lastchild = (uid2home_t *) NULL;
 
@@ -531,8 +642,10 @@ table_add(int u, char *h, char *n)
   /* do NOT add duplicate entries (this is an O(N^2) algorithm... */
   for (i=0; i<cur_pwtab_num; ++i)
     if (u == pwtab[i].uid  &&  u != 0 ) {
-      plog(XLOG_ERROR, "ignoring duplicate home %s for uid %d (already %s)",
+#ifdef DEBUG
+      dlog("ignoring duplicate home %s for uid %d (already %s)",
 	   h, u, pwtab[i].home);
+#endif /* DEBUG */
       return;
     }
 

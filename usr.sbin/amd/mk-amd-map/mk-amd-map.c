@@ -1,3 +1,5 @@
+/*	$NetBSD: mk-amd-map.c,v 1.6 1997/10/26 00:25:59 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mk-amd-map.c,v 1.5 1997/10/17 00:07:55 lukem Exp $
+ * Id: mk-amd-map.c,v 5.2.2.1 1992/02/09 15:09:18 jsp beta 
  */
 
 /*

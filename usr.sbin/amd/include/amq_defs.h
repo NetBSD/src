@@ -1,3 +1,5 @@
+/*	$NetBSD: amq_defs.h,v 1.4 1997/10/26 00:25:54 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_defs.h,v 1.3 1997/09/22 22:11:10 christos Exp $
+ * Id: amq_defs.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
  *
  */
 

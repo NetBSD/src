@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.10 1997/10/25 06:57:53 lukem Exp $
+#	$NetBSD: amd2netbsd,v 1.11 1997/10/26 00:24:44 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -15,10 +15,10 @@
 #	SRCDIR - am-utils source directory
 #	TARGETDIR - name of the high level directory to make
 #
-#  Written by Christos Zoulas July 17, 1997 for am-utils-6.0a12
+#  Written by Christos Zoulas July 17, 1997 for am-utils-6.0a13
 #
 
-$version = "6.0a12";
+$version = "6.0a13";
 
 # definitions ...
 
@@ -120,6 +120,63 @@ sub makedir {
     system("mkdir -p @_");
 }
 
+# &fixrcs (fromfile, tofile);
+sub fixrcs
+{
+    my ($f, $t) = @_;
+    my @keywords = ("Author", "Date", "Header", "Id", "Locker", "Log",
+		    "Name", "RCSfile", "Revision", "Source", "State");
+    my $state = 0;
+    my $hdr = 0;
+
+    open(IFILE, "<$f") || die "Cannot open $f";
+    open(OFILE, ">$t") || die "Cannot create $t";
+
+    if ($t =~ /.*\.[0-9]/) {
+	print OFILE '.\\" $', 'NetBSD',  '$', "\n", '.\\"', "\n";
+    }
+    elsif ($t =~ /.*\.[ch]/) {
+	print OFILE "/*\t", '$', 'NetBSD', '$', "\t*/\n\n";
+    }
+    elsif ($t =~ /.*\.[yl]/) {
+	$hdr = 1;
+    }
+    else {
+	print OFILE '$', 'NetBSD', '$', "\n";
+    }
+    while (<IFILE>) {
+	if ($hdr == 1) {
+	    if (/%{/) {
+		print OFILE "%{\n/*\t", '$', 'NetBSD', '$', "\t*/\n\n";
+		$hdr = 0;
+		next;
+	    }
+	}
+	if ($state == 2) {
+	    if (/#endif/) {
+		print OFILE "#else\n__RCSID(", '"$', 'NetBSD', '$"',
+		    ");\n#endif\n";
+		$state = 0;
+	    }
+	}
+	if ($state == 1) {
+	    print OFILE "#if 0\n";
+	    $state = 2;
+	}
+	if (/#ifndef lint/) {
+	    print OFILE "#include <sys/cdefs.h>\n";
+	    $state = 1;
+	}
+	foreach $key (@keywords) {
+	    s/\$$key\$/$key/g;
+	    s/\$$key:(.*)\$/$key:$1/g;
+	}
+	print OFILE $_;
+    }
+    close(IFILE) || die "closing input file";
+    close(OFILE) || die "closing output file";
+}
+
 # &copyfiles (fromdir, todir, list of files);
 sub copyfiles {
     local ($fdir, $tdir, @list) = @_;
@@ -127,7 +184,7 @@ sub copyfiles {
 
     foreach $f (@list) {
 	print "  $fdir/$f --> $tdir/$f\n";
-	system ("cp $fdir/$f $tdir/$f");
+	&fixrcs("$fdir/$f", "$tdir/$f");
     }
 }
 
@@ -136,7 +193,7 @@ sub copyfile {
     local ($f, $t) = @_;
 
     print "  $f --> $t\n";
-    system ("cp $f $t");
+    &fixrcs("$f", "$t");
 }
 
 sub uniq {
@@ -1000,8 +1057,14 @@ clean:
 /* Has authenticator */
 /* #undef MNT2_NFS_OPT_HASAUTH */
 
+/* provide name of server's fs to system */
+/* #undef MNT2_NFS_OPT_FSNAME */
+
 /* set hostname for error printf */
 /* #undef MNT2_NFS_OPT_HOSTNAME */
+
+/* ignore mount point */
+/* #undef MNT2_NFS_OPT_IGNORE */
 
 /* allow interrupts on hard mount */
 #define MNT2_NFS_OPT_INT 0x40
@@ -1313,7 +1376,7 @@ clean:
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a12"
+#define VERSION "6.0a13"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -1420,6 +1483,9 @@ clean:
 /* define if have a bad version of memcmp() */
 /* #undef HAVE_BAD_MEMCMP */
 
+/* define if have a bad version of yp_all() */
+/* #undef HAVE_BAD_YP_ALL */
+
 /* Define if you have the __seterr_reply function.  */
 /* #undef HAVE___SETERR_REPLY */
 
@@ -1435,11 +1501,11 @@ clean:
 /* Define if you have the bzero function.  */
 #define HAVE_BZERO 1
 
+/* Define if you have the clnt_create_timed function.  */
+/* #undef HAVE_CLNT_CREATE_TIMED */
+
 /* Define if you have the clnt_sperrno function.  */
 #define HAVE_CLNT_SPERRNO 1
-
-/* Define if you have the clnt_tp_create_timed function.  */
-/* #undef HAVE_CLNT_TP_CREATE_TIMED */
 
 /* Define if you have the cnodeid function.  */
 /* #undef HAVE_CNODEID */
@@ -1555,14 +1621,11 @@ clean:
 /* Define if you have the seteuid function.  */
 #define HAVE_SETEUID 1
 
-/* Define if you have the setpgid function.  */
-#define HAVE_SETPGID 1
-
-/* Define if you have the setpgrp function.  */
-#define HAVE_SETPGRP 1
-
 /* Define if you have the setresuid function.  */
 /* #undef HAVE_SETRESUID */
+
+/* Define if you have the setsid function.  */
+#define HAVE_SETSID 1
 
 /* Define if you have the sigaction function.  */
 #define HAVE_SIGACTION 1
@@ -1812,9 +1875,6 @@ clean:
 
 /* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
 /* #undef HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
-
-/* Define if you have the <jfs/jfsmount.h> header file.  */
-/* #undef HAVE_JFS_JFSMOUNT_H */
 
 /* Define if you have the <lber.h> header file.  */
 /* #undef HAVE_LBER_H */

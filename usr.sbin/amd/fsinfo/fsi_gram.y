@@ -38,11 +38,13 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: fsi_gram.y,v 1.4 1997/07/24 23:18:25 christos Exp $
+ * Id: fsi_gram.y,v 5.2.2.1 1992/02/09 15:09:35 jsp beta 
  *
  */
 
 %{
+/*	$NetBSD: fsi_gram.y,v 1.5 1997/10/26 00:25:38 christos Exp $	*/
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif /* HAVE_CONFIG_H */

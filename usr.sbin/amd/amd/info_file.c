@@ -1,3 +1,5 @@
+/*	$NetBSD: info_file.c,v 1.6 1997/10/26 00:24:56 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_file.c,v 1.5 1997/09/26 16:59:52 christos Exp $
+ * Id: info_file.c,v 5.2.2.1 1992/02/09 15:08:28 jsp beta 
  *
  */
 

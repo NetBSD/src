@@ -1,3 +1,5 @@
+/*	$NetBSD: info_passwd.c,v 1.7 1997/10/26 00:24:59 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_passwd.c,v 1.6 1997/09/26 16:59:56 christos Exp $
+ * Id: info_passwd.c,v 5.2.2.1 1992/02/09 15:08:33 jsp beta 
  *
  */
 
