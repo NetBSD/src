@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.10 1997/04/10 05:36:23 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -101,13 +101,16 @@ int	query __P((char *question));
 void	quit __P((const char *fmt, ...));
 void	set_operators __P((void));
 time_t	do_stats __P((void));
+void	statussig __P((int));
 void	timeest __P((void));
 time_t	unctime __P((char *str));
 
 /* mapping routines */
 struct	dinode;
 long	blockest __P((struct dinode *dp));
-int	mapfiles __P((ino_t maxino, long *tapesize));
+void	mapfileino __P((ino_t, long *, int *));
+int	mapfiles __P((ino_t maxino, long *tapesize, char *disk,
+		    char * const *dirv));
 int	mapdirs __P((ino_t maxino, long *tapesize));
 
 /* file dumping routines */
