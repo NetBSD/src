@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.10 2003/06/28 14:21:33 darrenr Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.11 2003/06/29 22:30:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.10 2003/06/28 14:21:33 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.11 2003/06/29 22:30:07 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -172,7 +172,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 	uio_out->uio_resid = len;
 	uio_out->uio_rw = UIO_READ;
 	uio_out->uio_segflg = UIO_USERSPACE;
-	uio_out->uio_lwp = curlwp;
+	uio_out->uio_procp = curproc;
 
 	dreq->dreq_outbuf_type = DMOVER_BUF_UIO;
 	dreq->dreq_outbuf.dmbuf_uio = uio_out;
@@ -233,7 +233,7 @@ dmio_usrreq_init(struct file *fp, struct dmio_usrreq_state *dus,
 		uio_in->uio_resid = len;
 		uio_in->uio_rw = UIO_WRITE;
 		uio_in->uio_segflg = UIO_USERSPACE;
-		uio_in->uio_lwp = curlwp;
+		uio_in->uio_procp = curproc;
 
 		dreq->dreq_inbuf[i].dmbuf_uio = uio_in;
 	}

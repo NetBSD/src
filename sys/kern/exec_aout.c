@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.28 2003/06/28 14:21:51 darrenr Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.29 2003/06/29 22:31:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.28 2003/06/28 14:21:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.29 2003/06/29 22:31:15 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.28 2003/06/28 14:21:51 darrenr Exp $
  */
 
 int
-exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
+exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;
 	int error;
-	struct proc *p = l->l_proc;
 	struct exec *execp = epp->ep_hdr;
 
 	if (epp->ep_hdrvalid < sizeof(struct exec))
@@ -85,7 +84,7 @@ exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 		error = exec_aout_prep_omagic(p, epp);
 		break;
 	default:
-		error = cpu_exec_aout_makecmds(l, epp);
+		error = cpu_exec_aout_makecmds(p, epp);
 	}
 
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.18 2003/06/29 18:43:34 thorpej Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.19 2003/06/29 22:31:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.18 2003/06/29 18:43:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.19 2003/06/29 22:31:45 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.18 2003/06/29 18:43:34 thorpej Exp 
 #define MEBUFFERSIZE 256
 
 extern int getcwd_common __P((struct vnode *, struct vnode *,
-			      char **, char *, int, int, struct lwp *));
+			      char **, char *, int, int, struct proc *));
 
 static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
-				struct lwp *curl, struct proc *p);
+				struct proc *curp, struct proc *p);
 
 /*
  * The map entries can *almost* be read with programs like cat.  However,
@@ -75,7 +75,7 @@ static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
  * can try a bigger buffer.
  */
 int
-procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 	     struct uio *uio, int linuxmode)
 {
 	size_t len;
@@ -96,7 +96,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		return (0);
 	
 	error = 0;
-	if (map != &curl->l_proc->p_vmspace->vm_map)
+	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
 	for (entry = map->header.next;
 		((uio->uio_resid > 0) && (entry != &map->header));
@@ -118,13 +118,13 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			if (UVM_ET_ISOBJ(entry) &&
 			    UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
 				vp = (struct vnode *)entry->object.uvm_obj;
-				error = VOP_GETATTR(vp, &va, curl->l_proc->p_ucred,
-				    curl);
+				error = VOP_GETATTR(vp, &va, curp->p_ucred,
+				    curp);
 				if (error == 0 && vp != pfs->pfs_vnode) {
 					fileid = va.va_fileid;
 					dev = va.va_fsid;
 					error = procfs_vnode_to_path(vp, path,	
-					    MAXPATHLEN * 4, curl, p);
+					    MAXPATHLEN * 4, curp, p);
 				}
 			}
 			snprintf(mebuffer, sizeof(mebuffer),
@@ -166,15 +166,15 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		if (error)
 			break;
 	}
-	if (map != &curl->l_proc->p_vmspace->vm_map)
+	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
 	return error;
 }
 
 int
-procfs_validmap(struct lwp *l, struct mount *mp)
+procfs_validmap(struct proc *p, struct mount *mp)
 {
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((p->p_flag & P_SYSTEM) == 0);
 }
 
 /*
@@ -183,9 +183,8 @@ procfs_validmap(struct lwp *l, struct mount *mp)
  * option to work (to make cache_revlookup succeed).
  */
 static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
-				struct lwp *curl, struct proc *p)
+				struct proc *curp, struct proc *p)
 {
-	struct proc *curp = curl->l_proc;
 	int error, lenused, elen;
 	char *bp, *bend;
 	struct vnode *dvp;
@@ -206,7 +205,7 @@ static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
 		return error;
 	*(--bp) = '/';
 	/* XXX GETCWD_CHECK_ACCESS == 0x0001 */
-	error = getcwd_common(dvp, NULL, &bp, path, len / 2, 1, curl);
+	error = getcwd_common(dvp, NULL, &bp, path, len / 2, 1, curp);
 
 	/*
 	 * Strip off emulation path for emulated processes looking at

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.36 2003/06/28 14:21:52 darrenr Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.37 2003/06/29 22:31:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.36 2003/06/28 14:21:52 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.37 2003/06/29 22:31:17 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.36 2003/06/28 14:21:52 darrenr Exp $
 
 void
 new_vmcmd(struct exec_vmcmd_set *evsp,
-    int (*proc)(struct lwp * l, struct exec_vmcmd *),
+    int (*proc)(struct proc * p, struct exec_vmcmd *),
     u_long len, u_long addr, struct vnode *vp, u_long offset,
     u_int prot, int flags)
 {
@@ -134,10 +134,9 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
  */
 
 int
-vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
+vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	struct uvm_object *uobj;
-	struct proc *p = l->l_proc;
 	int error;
 
 	KASSERT(cmd->ev_vp->v_flag & VTEXT);
@@ -185,9 +184,8 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
  *	objects (a la OMAGIC and NMAGIC).
  */
 int
-vmcmd_map_readvn(struct lwp *l, struct exec_vmcmd *cmd)
+vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
-	struct proc *p = l->l_proc;
 	int error;
 	long diff;
 
@@ -208,18 +206,17 @@ vmcmd_map_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (error)
 		return error;
 
-	return vmcmd_readvn(l, cmd);
+	return vmcmd_readvn(p, cmd);
 }
 
 int
-vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
+vmcmd_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
-	struct proc *p = l->l_proc;
 	int error;
 
 	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
 	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,
-	    p->p_ucred, NULL, l);
+	    p->p_ucred, NULL, p);
 	if (error)
 		return error;
 
@@ -256,9 +253,8 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
  */
 
 int
-vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
+vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 {
-	struct proc *p = l->l_proc;
 	int error;
 	long diff;
 
@@ -280,14 +276,14 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
  *	Read from vnode into buffer at offset.
  */
 int
-exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *buf,
+exec_read_from(struct proc *p, struct vnode *vp, u_long off, void *buf,
     size_t size)
 {
 	int error;
 	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
-	    0, l->l_proc->p_ucred, &resid, l)) != 0)
+	    0, p->p_ucred, &resid, p)) != 0)
 		return error;
 	/*
 	 * See if we got all of it

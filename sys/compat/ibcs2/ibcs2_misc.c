@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.65 2003/06/28 14:21:19 darrenr Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.66 2003/06/29 22:29:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.65 2003/06/28 14:21:19 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66 2003/06/29 22:29:21 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,11 +218,12 @@ ibcs2_sys_execv(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(char **) argp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	sg = stackgap_init(p, 0);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -242,11 +243,12 @@ ibcs2_sys_execve(l, v, retval)
 		syscallarg(char **) argp;
 		syscallarg(char **) envp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	sg = stackgap_init(p, 0);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -403,7 +405,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -473,7 +475,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -521,7 +523,7 @@ ibcs2_sys_read(l, v, retval)
 	}
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VDIR) {
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		return sys_read(l, uap, retval);
 	}
 	buflen = min(MAXBSIZE, max(DEV_BSIZE, SCARG(uap, nbytes)));
@@ -535,7 +537,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -603,7 +605,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -621,7 +623,7 @@ ibcs2_sys_mknod(l, v, retval)
 	struct proc *p = l->l_proc;
         caddr_t sg = stackgap_init(p, 0);
 
-        CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
+        CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	if (S_ISFIFO(SCARG(uap, mode))) {
                 struct sys_mkfifo_args ap;
                 SCARG(&ap, path) = SCARG(uap, path);
@@ -1057,13 +1059,14 @@ ibcs2_sys_utime(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_utimbuf *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 	struct sys_utimes_args sa;
 	struct timeval *tp;
 
-	caddr_t sg = stackgap_init(l->l_proc, 0);
-	tp = stackgap_alloc(l->l_proc, &sg, 2 * sizeof(struct timeval *));
-        CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	caddr_t sg = stackgap_init(p, 0);
+	tp = stackgap_alloc(p, &sg, 2 * sizeof(struct timeval *));
+        CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
 		struct ibcs2_utimbuf ubuf;
@@ -1348,9 +1351,10 @@ ibcs2_sys_unlink(l, v, retval)
 	struct ibcs2_sys_unlink_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_unlink(l, uap, retval);
 }
 
@@ -1363,9 +1367,10 @@ ibcs2_sys_chdir(l, v, retval)
 	struct ibcs2_sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chdir(l, uap, retval);
 }
 
@@ -1379,9 +1384,10 @@ ibcs2_sys_chmod(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chmod(l, uap, retval);
 }
 
@@ -1396,9 +1402,10 @@ ibcs2_sys_chown(l, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys___posix_chown(l, uap, retval);
 }
 
@@ -1411,9 +1418,10 @@ ibcs2_sys_rmdir(l, v, retval)
 	struct ibcs2_sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_rmdir(l, uap, retval);
 }
 
@@ -1427,9 +1435,10 @@ ibcs2_sys_mkdir(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return sys_mkdir(l, uap, retval);
 }
 
@@ -1443,10 +1452,11 @@ ibcs2_sys_symlink(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) link;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, link));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
 	return sys_symlink(l, uap, retval);
 }
 
@@ -1460,10 +1470,11 @@ ibcs2_sys_rename(l, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, to));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 	return sys___posix_rename(l, uap, retval);
 }
 
@@ -1478,9 +1489,10 @@ ibcs2_sys_readlink(l, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
+	struct proc *p = l->l_proc;
+        caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_readlink(l, uap, retval);
 }
 

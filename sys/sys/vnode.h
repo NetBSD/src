@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.111 2003/06/29 18:43:38 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.112 2003/06/29 22:32:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -444,7 +444,7 @@ extern struct simplelock	mntvnode_slock;
 /*
  * Union filesystem hook for vn_readdir().
  */
-extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
+extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.
@@ -543,13 +543,13 @@ int	vflush(struct mount *mp, struct vnode *vp, int flags);
 void	vflushbuf(struct vnode *vp, int sync);
 int 	vget(struct vnode *vp, int lockflag);
 void 	vgone(struct vnode *vp);
-void	vgonel(struct vnode *vp, struct lwp *p);
+void	vgonel(struct vnode *vp, struct proc *p);
 int	vinvalbuf(struct vnode *vp, int save, struct ucred *cred,
-	    struct lwp *p, int slpflag, int slptimeo);
+	    struct proc *p, int slpflag, int slptimeo);
 void	vprint(char *label, struct vnode *vp);
 void 	vput(struct vnode *vp);
 int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
-	    struct lwp *p);
+	    struct proc *p);
 void 	vrele(struct vnode *vp);
 int	vtruncbuf(struct vnode *vp, daddr_t lbn,
 	    int slpflag, int slptimeo);
@@ -558,20 +558,20 @@ void	vwakeup(struct buf *);
 /* see vnsubr(9) */
 int	vn_bwrite(void *ap);
 int 	vn_close(struct vnode *vp,
-	    int flags, struct ucred *cred, struct lwp *p);
-int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct lwp *p);
+	    int flags, struct ucred *cred, struct proc *p);
+int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 int	vn_lock(struct vnode *vp, int flags);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
 int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
-	    struct ucred *cred, size_t *aresid, struct lwp *p);
+	    struct ucred *cred, size_t *aresid, struct proc *p);
 int	vn_readdir(struct file *fp, char *, int segflg, u_int count,
-	    int *done, struct lwp *p, off_t **cookies, int *ncookies);
+	    int *done, struct proc *p, off_t **cookies, int *ncookies);
 void	vn_restorerecurse(struct vnode *vp, u_int flags);
 u_int	vn_setrecurse(struct vnode *vp);
-int	vn_stat(struct vnode *vp, struct stat *sb, struct lwp *p);
+int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
 int	vn_kqfilter(struct file *fp, struct knote *kn);
 int	vn_writechk(struct vnode *vp);
 

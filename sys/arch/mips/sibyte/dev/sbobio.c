@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.10 2003/06/29 12:20:19 simonb Exp $ */
+/* $NetBSD: sbobio.c,v 1.11 2003/06/29 22:28:40 fvdl Exp $ */
 
 /*
  * Copyright 2000, 2001

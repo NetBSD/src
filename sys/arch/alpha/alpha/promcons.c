@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.23 2003/06/29 15:17:40 simonb Exp $ */
+/* $NetBSD: promcons.c,v 1.24 2003/06/29 22:28:03 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.23 2003/06/29 15:17:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.24 2003/06/29 22:28:03 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ int	promparam(struct tty *, struct termios *);
 struct callout prom_ch = CALLOUT_INITIALIZER;
 
 int
-promopen(dev_t dev, int flag, int mode, struct lwp *l)
+promopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -111,7 +111,7 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state&TS_XCLUDE && l->l_proc->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 		splx(s);
 		return EBUSY;
 	}
@@ -129,7 +129,7 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
  
 int
-promclose(dev_t dev, int flag, int mode, struct lwp *l)
+promclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
@@ -157,24 +157,24 @@ promwrite(dev_t dev, struct uio *uio, int flag)
 }
  
 int
-prompoll(dev_t dev, int events, struct lwp *l)
+prompoll(dev_t dev, int events, struct proc *p)
 {
 	struct tty *tp = prom_tty[minor(dev)];
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, l);
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_elf32.c,v 1.10 2003/06/28 14:21:17 darrenr Exp $	*/
+/*	$NetBSD: freebsd_exec_elf32.c,v 1.11 2003/06/29 22:29:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.10 2003/06/28 14:21:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.11 2003/06/29 22:29:16 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_elf32.c,v 1.10 2003/06/28 14:21:17 darr
 #include <compat/common/compat_util.h>
 
 int
-ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
-	struct lwp *l;
+ELFNAME2(freebsd,probe)(p, epp, veh, itp, pos)
+	struct proc *p;
 	struct exec_package *epp;
 	void *veh;
 	char *itp;
@@ -86,7 +86,7 @@ ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
 	if (i != 0) {
 		phsize = i * sizeof(Elf_Phdr);
 		ph = (Elf_Phdr *) malloc(phsize, M_TEMP, M_WAITOK);
-		if ((error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph,
+		if ((error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph,
 		    phsize)) != 0)
 			goto bad1;
 
@@ -101,7 +101,7 @@ ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
 			np = (Elf_Nhdr *) malloc(ephp->p_filesz+1,
 			    M_TEMP, M_WAITOK);
 
-			if (((error = exec_read_from(l, epp->ep_vp,
+			if (((error = exec_read_from(p, epp->ep_vp,
 			    ephp->p_offset, np, ephp->p_filesz)) != 0))
 				goto bad2;
 
@@ -116,8 +116,8 @@ ELFNAME2(freebsd,probe)(l, epp, veh, itp, pos)
 	}
 
 	if (itp[0]) {
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
 			return error;
 	}
 	*pos = ELF_NO_ADDR;

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.68 2003/06/28 14:21:47 darrenr Exp $ */
+/* $NetBSD: wskbd.c,v 1.69 2003/06/29 22:31:04 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.68 2003/06/28 14:21:47 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69 2003/06/29 22:31:04 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -205,7 +205,7 @@ static int  wskbd_detach(struct device *, int);
 static int  wskbd_activate(struct device *, enum devact);
 
 static int  wskbd_displayioctl(struct device *, u_long, caddr_t, int,
-			      struct lwp *);
+			      struct proc *);
 #if NWSDISPLAY > 0
 static int  wskbd_set_display(struct device *, struct wsevsrc *);
 #else
@@ -223,7 +223,7 @@ static void wskbd_holdscreen(struct wskbd_softc *, int);
 #endif
 
 static int wskbd_do_ioctl_sc(struct wskbd_softc *, u_long, caddr_t, int,
-			     struct lwp *);
+			     struct proc *);
 
 #if NWSMUX > 0
 static int wskbd_mux_open(struct wsevsrc *, struct wseventvar *);
@@ -234,7 +234,7 @@ static int wskbd_mux_close(struct wsevsrc *);
 #endif
 
 static int wskbd_do_open(struct wskbd_softc *, struct wseventvar *);
-static int wskbd_do_ioctl(struct device *, u_long, caddr_t, int, struct lwp *);
+static int wskbd_do_ioctl(struct device *, u_long, caddr_t, int, struct proc *);
 
 CFATTACH_DECL(wskbd, sizeof (struct wskbd_softc),
     wskbd_match, wskbd_attach, wskbd_detach, wskbd_activate);
@@ -716,7 +716,7 @@ wskbd_mux_open(struct wsevsrc *me, struct wseventvar *evp)
 #endif
 
 int
-wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
+wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wskbd_softc *sc;
 	struct wseventvar *evar;
@@ -752,7 +752,7 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	evar = &sc->sc_base.me_evar;
 	wsevent_init(evar);
-	evar->io = l->l_proc;
+	evar->io = p;
 
 	error = wskbd_do_open(sc, evar);
 	if (error) {
@@ -774,7 +774,7 @@ wskbd_do_open(struct wskbd_softc *sc, struct wseventvar *evp)
 }
 
 int
-wskbdclose(dev_t dev, int flags, int mode, struct lwp *l)
+wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wskbd_softc *sc = 
 	    (struct wskbd_softc *)wskbd_cd.cd_devs[minor(dev)];
@@ -832,21 +832,21 @@ wskbdread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-wskbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+wskbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (wskbd_do_ioctl(wskbd_cd.cd_devs[minor(dev)], cmd, data, flag,l));
+	return (wskbd_do_ioctl(wskbd_cd.cd_devs[minor(dev)], cmd, data, flag,p));
 }
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
 int
 wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag, 
-	struct lwp *l)
+	struct proc *p)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
 	int error;
 
 	sc->sc_refcnt++;
-	error = wskbd_do_ioctl_sc(sc, cmd, data, flag, l);
+	error = wskbd_do_ioctl_sc(sc, cmd, data, flag, p);
 	if (--sc->sc_refcnt < 0)
 		wakeup(sc);
 	return (error);
@@ -854,7 +854,7 @@ wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 
 int
 wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
-		  struct lwp *l)
+		  struct proc *p)
 {
 
 	/*      
@@ -882,7 +882,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 	 * Try the keyboard driver for WSKBDIO ioctls.  It returns EPASSTHROUGH
 	 * if it didn't recognize the request.
 	 */
-	return (wskbd_displayioctl(&sc->sc_base.me_dv, cmd, data, flag, l));
+	return (wskbd_displayioctl(&sc->sc_base.me_dv, cmd, data, flag, p));
 }
 
 /*
@@ -891,14 +891,13 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
  */
 static int
 wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
-	struct lwp *l)
+	struct proc *p)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	struct wskbd_bell_data *ubdp, *kbdp;
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
 	struct wskbd_map_data *umdp;
 	struct wskbd_mapdata md;
-	struct proc *p = l ? l->l_proc : NULL;
 	kbd_t enc;
 	void *buf;
 	int len, error;
@@ -1083,13 +1082,13 @@ getkeyrepeat:
 }
 
 int
-wskbdpoll(dev_t dev, int events, struct lwp *l)
+wskbdpoll(dev_t dev, int events, struct proc *p)
 {
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	if (sc->sc_base.me_evp == NULL)
 		return (EINVAL);
-	return (wsevent_poll(sc->sc_base.me_evp, events, l));
+	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 
 int

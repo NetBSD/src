@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.40 2003/06/28 14:21:34 darrenr Exp $	*/
+/*	$NetBSD: dpt.c,v 1.41 2003/06/29 22:30:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.40 2003/06/28 14:21:34 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.41 2003/06/29 22:30:11 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ static void	dpt_ctlrinfo(struct dpt_softc *, struct dpt_eata_ctlrinfo *);
 static void	dpt_hba_inquire(struct dpt_softc *, struct eata_inquiry_data **);
 static void	dpt_minphys(struct buf *);
 static int	dpt_passthrough(struct dpt_softc *, struct eata_ucp *,
-				struct lwp *);
+				struct proc *);
 static void	dpt_scsipi_request(struct scsipi_channel *,
 				   scsipi_adapter_req_t, void *);
 static void	dpt_shutdown(void *);
@@ -1109,7 +1109,7 @@ dpt_hba_inquire(struct dpt_softc *sc, struct eata_inquiry_data **ei)
 }
 
 int
-dptopen(dev_t dev, int flag, int mode, struct lwp *l)
+dptopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	if (securelevel > 1)
@@ -1121,7 +1121,7 @@ dptopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct dpt_softc *sc;
 	int rv;
@@ -1161,7 +1161,7 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (sc->sc_uactive++)
 			tsleep(&sc->sc_uactive, PRIBIO, "dptslp", 0);
 
-		rv = dpt_passthrough(sc, (struct eata_ucp *)data, l);
+		rv = dpt_passthrough(sc, (struct eata_ucp *)data, p);
 
 		sc->sc_uactive--;
 		wakeup_one(&sc->sc_uactive);
@@ -1267,7 +1267,7 @@ dpt_sysinfo(struct dpt_softc *sc, struct dpt_sysinfo *info)
 }
 
 int
-dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
+dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 {
 	struct dpt_ccb *ccb;
 	struct eata_sp sp;
@@ -1307,7 +1307,7 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct lwp *l)
 			return (EFBIG);
 		}
 		rv = bus_dmamap_load(sc->sc_dmat, xfer,
-		    ucp->ucp_dataaddr, ucp->ucp_datalen, l->l_proc,
+		    ucp->ucp_dataaddr, ucp->ucp_datalen, proc,
 		    BUS_DMA_WAITOK | BUS_DMA_STREAMING |
 		    (datain ? BUS_DMA_READ : BUS_DMA_WRITE));
 		if (rv != 0) {

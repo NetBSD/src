@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.8 2003/06/28 14:21:18 darrenr Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.9 2003/06/29 22:29:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.8 2003/06/28 14:21:18 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.9 2003/06/29 22:29:16 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ freebsd_sys_ioctl(l, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
         struct oss_sys_ioctl_args ap;
 	struct sys_ioctl_args nap;
 
@@ -138,13 +139,13 @@ freebsd_sys_ioctl(l, v, retval)
 	switch (FREEBSD_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
         	freebsd_to_oss(uap, &ap);
-		return oss_ioctl_mixer(l, &ap, retval);
+		return oss_ioctl_mixer(p, &ap, retval);
 	case 'Q':
         	freebsd_to_oss(uap, &ap);
-		return oss_ioctl_sequencer(l, &ap, retval);
+		return oss_ioctl_sequencer(p, &ap, retval);
 	case 'P':
         	freebsd_to_oss(uap, &ap);
-		return oss_ioctl_audio(l, &ap, retval);
+		return oss_ioctl_audio(p, &ap, retval);
 	case 'i':
 		freebsd_to_netbsd_ifioctl(uap, &nap);
 		return sys_ioctl(l, &nap, retval);

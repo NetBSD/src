@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.48 2003/06/29 09:56:28 simonb Exp $	*/
+/*	$NetBSD: px.c,v 1.49 2003/06/29 22:28:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.48 2003/06/29 09:56:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.49 2003/06/29 22:28:46 fvdl Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1661,10 +1661,10 @@ px_cursor_hack(fi, x, y)
 }
 
 int
-pxopen(dev, flag, mode, l)
+pxopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
@@ -1702,10 +1702,10 @@ pxopen(dev, flag, mode, l)
 }
 
 int
-pxclose(dev, flag, mode, l)
+pxclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	extern struct fbinfo *firstfi;		/* XXX */
 	struct stic_regs *stic;
@@ -1749,12 +1749,12 @@ pxclose(dev, flag, mode, l)
 }
 
 int
-pxioctl(dev, cmd, data, flag, l)
+pxioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct pmax_fbtty *fbtty;
 	struct px_info *pxi;
@@ -1777,7 +1777,7 @@ pxioctl(dev, cmd, data, flag, l)
 		/*
 		 * Map card info.
 		 */
-		return (px_mmap_info(l->l_proc, dev, (vaddr_t *)data));
+		return (px_mmap_info(p, dev, (vaddr_t *)data));
 
 	case QIOCPMSTATE:
 		/*
@@ -1864,10 +1864,10 @@ pxioctl(dev, cmd, data, flag, l)
 }
 
 int
-pxpoll(dev, events, l)
+pxpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct fbinfo *fi = &px_unit[minor(dev)]->pxi_fbinfo;
 	int revents = 0;
@@ -1877,7 +1877,7 @@ pxpoll(dev, events, l)
 		    fi->fi_fbu->scrInfo.qe.eTail)
 		 	revents |= (events & (POLLIN | POLLRDNORM));
 		else
-	  		selrecord(l, &fi->fi_selp);
+	  		selrecord(p, &fi->fi_selp);
 	}
 
 	return (revents);

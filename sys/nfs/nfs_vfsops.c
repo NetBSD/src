@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.130 2003/06/29 18:43:37 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.131 2003/06/29 22:32:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.130 2003/06/29 18:43:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.131 2003/06/29 22:32:19 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -83,7 +83,7 @@ extern int nfs_ticks;
 MALLOC_DEFINE(M_NFSMNT, "NFS mount", "NFS mount structure");
 
 int nfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		      struct lwp *));
+		      struct proc *));
 
 /*
  * nfs vfs operations.
@@ -125,16 +125,16 @@ extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 
 static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
-    struct mount **, struct vnode **, struct lwp *));
+    struct mount **, struct vnode **, struct proc *));
 
 /*
  * nfs statfs call
  */
 int
-nfs_statfs(mp, sbp, l)
+nfs_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *vp;
 	struct nfs_statfs *sfp;
@@ -163,12 +163,12 @@ nfs_statfs(mp, sbp, l)
 	cred->cr_ngroups = 0;
 #ifndef NFS_V2_ONLY
 	if (v3 && (nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
-		(void)nfs_fsinfo(nmp, vp, cred, l);
+		(void)nfs_fsinfo(nmp, vp, cred, p);
 #endif
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	nfsm_reqhead(np, NFSPROC_FSSTAT, NFSX_FH(v3));
 	nfsm_fhtom(np, v3);
-	nfsm_request(np, NFSPROC_FSSTAT, l, cred);
+	nfsm_request(np, NFSPROC_FSSTAT, p, cred);
 	if (v3)
 		nfsm_postop_attr(vp, retattr, 0);
 	if (error) {
@@ -215,11 +215,11 @@ nfs_statfs(mp, sbp, l)
  * nfs version 3 fsinfo rpc call
  */
 int
-nfs_fsinfo(nmp, vp, cred, l)
+nfs_fsinfo(nmp, vp, cred, p)
 	struct nfsmount *nmp;
 	struct vnode *vp;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct nfsv3_fsinfo *fsp;
 	caddr_t cp;
@@ -234,7 +234,7 @@ nfs_fsinfo(nmp, vp, cred, l)
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
 	nfsm_reqhead(np, NFSPROC_FSINFO, NFSX_FH(1));
 	nfsm_fhtom(np, 1);
-	nfsm_request(np, NFSPROC_FSINFO, l, cred);
+	nfsm_request(np, NFSPROC_FSINFO, p, cred);
 	nfsm_postop_attr(vp, retattr, 0);
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
@@ -293,11 +293,11 @@ nfs_mountroot()
 	struct vattr attr;
 	struct mount *mp;
 	struct vnode *vp;
-	struct lwp *l;
+	struct proc *procp;
 	long n;
 	int error;
 
-	l = curlwp; /* XXX */
+	procp = curproc; /* XXX */
 
 	if (root_device->dv_class != DV_IFNET)
 		return (ENODEV);
@@ -317,7 +317,7 @@ nfs_mountroot()
 	 */
 	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
 	memset((caddr_t)nd, 0, sizeof(*nd));
-	error = nfs_boot_init(nd, l);
+	error = nfs_boot_init(nd, procp);
 	if (error) {
 		free(nd, M_NFSMNT);
 		return (error);
@@ -326,7 +326,7 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
-	error = nfs_mount_diskless(&nd->nd_root, "/", &mp, &vp, l);
+	error = nfs_mount_diskless(&nd->nd_root, "/", &mp, &vp, procp);
 	if (error)
 		goto out;
 	printf("root on %s\n", nd->nd_root.ndm_host);
@@ -342,7 +342,7 @@ nfs_mountroot()
 	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
-	error = VOP_GETATTR(vp, &attr, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
 	if (error)
 		panic("nfs_mountroot: getattr for root");
 	n = attr.va_atime.tv_sec;
@@ -353,7 +353,7 @@ nfs_mountroot()
 
 out:
 	if (error)
-		nfs_boot_cleanup(nd, l);
+		nfs_boot_cleanup(nd, procp);
 	free(nd, M_NFSMNT);
 	return (error);
 }
@@ -364,12 +364,12 @@ out:
  * (once for root and once for swap)
  */
 static int
-nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
+nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	struct nfs_dlmount *ndmntp;
 	const char *mntname;	/* mount point name */
 	struct mount **mpp;
 	struct vnode **vpp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct mount *mp;
 	struct mbuf *m;
@@ -394,7 +394,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 	      (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
-			 ndmntp->ndm_args.hostname, vpp, l);
+			 ndmntp->ndm_args.hostname, vpp, p);
 	if (error) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
@@ -550,12 +550,12 @@ nfs_decode_args(nmp, argp)
  */
 /* ARGSUSED */
 int
-nfs_mount(mp, path, data, ndp, l)
+nfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 	struct nfs_args args;
@@ -564,7 +564,6 @@ nfs_mount(mp, path, data, ndp, l)
 	struct sockaddr *sa;
 	struct vnode *vp;
 	char *pth, *hst;
-	struct proc *p;
 	size_t len;
 	u_char *nfh;
 
@@ -572,7 +571,6 @@ nfs_mount(mp, path, data, ndp, l)
 	if (error)
 		return (error);
 
-	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 
 		if (nmp == NULL)
@@ -649,7 +647,7 @@ nfs_mount(mp, path, data, ndp, l)
 		goto free_hst;
 	MCLAIM(nam, &nfs_mowner);
 	args.fh = nfh;
-	error = mountnfs(&args, mp, nam, pth, hst, &vp, l);
+	error = mountnfs(&args, mp, nam, pth, hst, &vp, p);
 
 free_hst:
 	FREE(hst, M_TEMP);
@@ -665,13 +663,13 @@ free_nfh:
  * Common code for mount and mountroot
  */
 int
-mountnfs(argp, mp, nam, pth, hst, vpp, l)
+mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	struct nfs_args *argp;
 	struct mount *mp;
 	struct mbuf *nam;
 	const char *pth, *hst;
 	struct vnode **vpp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct nfsmount *nmp;
 	struct nfsnode *np;
@@ -743,7 +741,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 #else
 	mp->mnt_stat.f_type = 0;
 #endif
-	error = set_statfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, l);
+	error = set_statfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, p);
 	if (error)
 		goto bad;
 	nmp->nm_nam = nam;
@@ -772,18 +770,18 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 * point.
 	 */
 	mp->mnt_stat.f_iosize = NFS_MAXDGRAMDATA;
-	error = nfs_nget(mp, (nfsfh_t *)argp->fh, argp->fhsize, &np, l);
+	error = nfs_nget(mp, (nfsfh_t *)argp->fh, argp->fhsize, &np);
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
 	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
-	VOP_GETATTR(*vpp, attrs, l->l_proc->p_ucred, l);
+	VOP_GETATTR(*vpp, attrs, p->p_ucred, p);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = crget();
 		cr->cr_uid = attrs->va_uid;
 		cr->cr_gid = attrs->va_gid;
 		cr->cr_ngroups = 0;
-		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, l, cr);
+		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, p, cr);
 		crfree(cr);
 	}
 	FREE(attrs, M_TEMP);
@@ -812,10 +810,10 @@ bad:
  * unmount system call
  */
 int
-nfs_unmount(mp, mntflags, l)
+nfs_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct nfsmount *nmp;
 	struct vnode *vp;
@@ -917,11 +915,11 @@ extern int syncprt;
  */
 /* ARGSUSED */
 int
-nfs_sync(mp, waitfor, cred, l)
+nfs_sync(mp, waitfor, cred, p)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *vp;
 	int error, allerror = 0;
@@ -944,7 +942,7 @@ loop:
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
 		if (error)
 			allerror = error;
 		vput(vp);
@@ -971,14 +969,14 @@ nfs_vget(mp, ino, vpp)
  * Do that sysctl thang...
  */
 int
-nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	int rv;
 
@@ -1072,10 +1070,10 @@ nfs_vptofh(vp, fhp)
  */
 /* ARGSUSED */
 int
-nfs_start(mp, flags, l)
+nfs_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
@@ -1086,12 +1084,12 @@ nfs_start(mp, flags, l)
  */
 /* ARGSUSED */
 int
-nfs_quotactl(mp, cmd, uid, arg, l)
+nfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);

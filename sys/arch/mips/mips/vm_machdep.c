@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.96 2003/06/29 09:24:54 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97 2003/06/29 22:28:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2003/06/29 09:24:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97 2003/06/29 22:28:39 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ cpu_coredump(l, vp, cred, chdr)
 		struct frame frame;
 		struct fpreg fpregs;
 	} cpustate;
+	struct proc *p = l->l_proc;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(struct core));
@@ -262,7 +263,7 @@ cpu_coredump(l, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
@@ -270,7 +271,7 @@ cpu_coredump(l, vp, cred, chdr)
 			(off_t)chdr->c_cpusize,
 			(off_t)(chdr->c_hdrsize + chdr->c_seghdrsize),
 			UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-			cred, NULL, l);
+			cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;

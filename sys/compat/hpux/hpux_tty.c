@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.23 2003/06/29 15:54:33 thorpej Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.24 2003/06/29 22:29:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.23 2003/06/29 15:54:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.24 2003/06/29 22:29:19 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -88,7 +88,7 @@ hpux_termio(fd, com, data, l)
 	int line, error;
 	int newi = 0;
 	int (*ioctlrout) __P((struct file *fp, u_long com,
-	    void *data, struct lwp *l));
+	    void *data, struct proc *p));
 
 
 	fp = p->p_fd->fd_ofiles[fd];
@@ -101,7 +101,7 @@ hpux_termio(fd, com, data, l)
 		/*
 		 * Get BSD terminal state
 		 */
-		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, l)))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
 			break;
 		memset((char *)&htios, 0, sizeof htios);
 		/*
@@ -176,7 +176,7 @@ hpux_termio(fd, com, data, l)
 		 */
 		if (!newi) {
 			line = 0;
-			(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, l);
+			(void) (*ioctlrout)(fp, TIOCGETD, (caddr_t)&line, p);
 			htios.c_reserved = line;
 		}
 		/*
@@ -229,7 +229,7 @@ hpux_termio(fd, com, data, l)
 		/*
 		 * Get old characteristics and determine if we are a tty.
 		 */
-		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, l)))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
 			break;
 		if (newi)
 			memcpy((char *)&htios, data, sizeof htios);
@@ -334,7 +334,7 @@ hpux_termio(fd, com, data, l)
 			com = TIOCSETAW;
 		else
 			com = TIOCSETAF;
-		error = (*ioctlrout)(fp, com, (caddr_t)&tios, l);
+		error = (*ioctlrout)(fp, com, (caddr_t)&tios, p);
 		if (error == 0) {
 			/*
 			 * Set line discipline
@@ -342,7 +342,7 @@ hpux_termio(fd, com, data, l)
 			if (!newi) {
 				line = htios.c_reserved;
 				(void) (*ioctlrout)(fp, TIOCSETD,
-						    (caddr_t)&line, l);
+						    (caddr_t)&line, p);
 			}
 			/*
 			 * Set non-blocking IO if VMIN == VTIME == 0, clear
@@ -544,13 +544,13 @@ getsettty(l, fdes, com, cmarg)
 			sb.sg_flags |= XTABS;
 		if (hsb.sg_flags & V7_HUPCL)
 			(void)(*fp->f_ops->fo_ioctl)
-				(fp, TIOCHPCL, (caddr_t)0, l);
+				(fp, TIOCHPCL, (caddr_t)0, p);
 		com = TIOCSETP;
 	} else {
 		memset((caddr_t)&hsb, 0, sizeof hsb);
 		com = TIOCGETP;
 	}
-	error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&sb, l);
+	error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&sb, p);
 	if (error == 0 && com == TIOCGETP) {
 		hsb.sg_ispeed = sb.sg_ispeed;
 		hsb.sg_ospeed = sb.sg_ospeed;

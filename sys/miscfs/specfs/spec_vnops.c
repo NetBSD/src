@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.67 2003/06/28 14:22:05 darrenr Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.68 2003/06/29 22:31:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.67 2003/06/28 14:22:05 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.68 2003/06/29 22:31:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,9 +174,9 @@ spec_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
-	struct lwp *l = ap->a_l;
+	struct proc *p = ap->a_p;
 	struct vnode *bvp, *vp = ap->a_vp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -222,7 +222,7 @@ spec_open(v)
 		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
 		VOP_UNLOCK(vp, 0);
-		error = (*cdev->d_open)(dev, ap->a_mode, S_IFCHR, l);
+		error = (*cdev->d_open)(dev, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
@@ -243,12 +243,12 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
-		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, l);
+		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, p);
 		if (error) {
 			return error;
 		}
 		error = (*bdev->d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curlwp);
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (error == 0) {
 			vp->v_size = (voff_t)pi.disklab->d_secsize *
 			    pi.part->p_size;
@@ -283,7 +283,7 @@ spec_read(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
- 	struct lwp *l = uio->uio_lwp;
+ 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -296,7 +296,7 @@ spec_read(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("spec_read mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
+	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 		panic("spec_read proc");
 #endif
 	if (uio->uio_resid == 0)
@@ -321,7 +321,7 @@ spec_read(v)
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev != NULL &&
 		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
-				     FREAD, l) == 0) {
+				     FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -365,7 +365,7 @@ spec_write(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct lwp *l = uio->uio_lwp;
+	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -378,7 +378,7 @@ spec_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("spec_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
+	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 		panic("spec_write proc");
 #endif
 
@@ -403,7 +403,7 @@ spec_write(v)
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev != NULL &&
 		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
-				    FREAD, l) == 0) {
+				    FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -457,7 +457,7 @@ spec_ioctl(v)
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
@@ -470,7 +470,7 @@ spec_ioctl(v)
 		if (cdev == NULL)
 			return (ENXIO);
 		return ((*cdev->d_ioctl)(dev, ap->a_command, ap->a_data,
-		    ap->a_fflag, ap->a_l));
+		    ap->a_fflag, ap->a_p));
 
 	case VBLK:
 		bdev = bdevsw_lookup(dev);
@@ -483,7 +483,7 @@ spec_ioctl(v)
 				return (1);
 		}
 		return ((*bdev->d_ioctl)(dev, ap->a_command, ap->a_data,
-		   ap->a_fflag, ap->a_l));
+		   ap->a_fflag, ap->a_p));
 
 	default:
 		panic("spec_ioctl");
@@ -499,7 +499,7 @@ spec_poll(v)
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
 		int a_events;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	const struct cdevsw *cdev;
 	dev_t dev;
@@ -511,7 +511,7 @@ spec_poll(v)
 		cdev = cdevsw_lookup(dev);
 		if (cdev == NULL)
 			return (ENXIO);
-		return (*cdev->d_poll)(dev, ap->a_events, ap->a_l);
+		return (*cdev->d_poll)(dev, ap->a_events, ap->a_p);
 
 	default:
 		return (genfs_poll(v));
@@ -561,7 +561,7 @@ spec_fsync(v)
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -599,7 +599,7 @@ spec_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -642,13 +642,13 @@ spec_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	const struct bdevsw *bdev;
 	const struct cdevsw *cdev;
 	dev_t dev = vp->v_rdev;
-	int (*devclose) __P((dev_t, int, int, struct lwp *));
+	int (*devclose) __P((dev_t, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
 
 	count = vcount(vp);
@@ -668,11 +668,11 @@ spec_close(v)
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
 		 */
-		if (count == 2 && ap->a_l && ap->a_l->l_proc &&
-		    vp == ap->a_l->l_proc->p_session->s_ttyvp) {
+		if (count == 2 && ap->a_p &&
+		    vp == ap->a_p->p_session->s_ttyvp) {
 			vrele(vp);
 			count--;
-			ap->a_l->l_proc->p_session->s_ttyvp = NULL;
+			ap->a_p->p_session->s_ttyvp = NULL;
 		}
 		/*
 		 * If the vnode is locked, then we are in the midst
@@ -695,7 +695,7 @@ spec_close(v)
 		 * we must invalidate any in core blocks, so that
 		 * we can, for instance, change floppy disks.
 		 */
-		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_l, 0, 0);
+		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0);
 		if (error)
 			return (error);
 		/*
@@ -740,7 +740,7 @@ spec_close(v)
 		VOP_UNLOCK(vp, 0);
 
 	if (devclose != NULL)
-		error = (*devclose)(dev, flags1, mode, ap->a_l);
+		error = (*devclose)(dev, flags1, mode, ap->a_p);
 	else
 		error = ENXIO;
 

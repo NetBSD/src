@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.122 2003/06/29 10:13:11 ichiro Exp $	*/
+/*	$NetBSD: if.c,v 1.123 2003/06/29 22:31:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.122 2003/06/29 10:13:11 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123 2003/06/29 22:31:50 fvdl Exp $");
 
 #include "opt_inet.h"
 
@@ -603,7 +603,7 @@ if_detach(ifp)
 			if (pr->pr_usrreq != NULL) {
 				(void) (*pr->pr_usrreq)(&so,
 				    PRU_PURGEIF, NULL, NULL,
-				    (struct mbuf *) ifp, curlwp);
+				    (struct mbuf *) ifp, curproc);
 				purged = 1;
 			}
 		}
@@ -1304,11 +1304,11 @@ ifunit(name)
  * Interface ioctls.
  */
 int
-ifioctl(so, cmd, data, l)
+ifioctl(so, cmd, data, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1316,7 +1316,6 @@ ifioctl(so, cmd, data, l)
 	struct ifdatareq *ifdr;
 	int s, error = 0;
 	short oif_flags;
-	struct proc *p = l->l_proc;
 
 	switch (cmd) {
 
@@ -1525,7 +1524,7 @@ ifioctl(so, cmd, data, l)
 #if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(COMPAT_ULTRIX) && !defined(LKM)
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l));
+		    (struct mbuf *)ifp, p));
 #else
 	    {
 		int ocmd = cmd;
@@ -1566,7 +1565,7 @@ ifioctl(so, cmd, data, l)
 
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l));
+		    (struct mbuf *)ifp, p));
 
 		switch (ocmd) {
 		case OSIOCGIFADDR:

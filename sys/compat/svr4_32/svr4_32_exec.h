@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.6 2003/06/28 14:21:28 darrenr Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.7 2003/06/29 22:29:50 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 # define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(netbsd32_charp))
 #endif
 
-int svr4_32_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings *,
+int svr4_32_copyargs __P((struct proc *, struct exec_package *, struct ps_strings *,
     char **, void *));
 
 /*
@@ -74,7 +74,7 @@ int svr4_32_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings
 extern const struct emul emul_svr4_32;
 
 void svr4_32_setregs __P((struct lwp *, struct exec_package *, u_long));
-int svr4_32_elf32_probe __P((struct lwp *, struct exec_package *, void *,
+int svr4_32_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 
 #endif /* !_SVR4_32_EXEC_H_ */

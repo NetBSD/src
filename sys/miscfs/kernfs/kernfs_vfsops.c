@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.51 2003/06/29 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.52 2003/06/29 22:31:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.51 2003/06/29 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.52 2003/06/29 22:31:41 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,21 +69,21 @@ void	kernfs_init __P((void));
 void	kernfs_done __P((void));
 void	kernfs_get_rrootdev __P((void));
 int	kernfs_mount __P((struct mount *, const char *, void *,
-	    struct nameidata *, struct lwp *));
-int	kernfs_start __P((struct mount *, int, struct lwp *));
-int	kernfs_unmount __P((struct mount *, int, struct lwp *));
+	    struct nameidata *, struct proc *));
+int	kernfs_start __P((struct mount *, int, struct proc *));
+int	kernfs_unmount __P((struct mount *, int, struct proc *));
 int	kernfs_root __P((struct mount *, struct vnode **));
-int	kernfs_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int	kernfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int	kernfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			     struct lwp *));
-int	kernfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+			     struct proc *));
+int	kernfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	kernfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	kernfs_vptofh __P((struct vnode *, struct fid *));
 int	kernfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct lwp *));
+			   struct proc *));
 
 void
 kernfs_init()
@@ -130,12 +130,12 @@ kernfs_get_rrootdev()
  * Mount the Kernel params filesystem
  */
 int
-kernfs_mount(mp, path, data, ndp, l)
+kernfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error = 0;
 	struct kernfs_mount *fmp;
@@ -170,7 +170,7 @@ kernfs_mount(mp, path, data, ndp, l)
 	vfs_getnewfsid(mp);
 
 	error = set_statfs_info(path, UIO_USERSPACE, "kernfs", UIO_SYSSPACE,
-	    mp, l);
+	    mp, p);
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: at %s\n", mp->mnt_stat.f_mntonname);
 #endif
@@ -180,20 +180,20 @@ kernfs_mount(mp, path, data, ndp, l)
 }
 
 int
-kernfs_start(mp, flags, l)
+kernfs_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
 }
 
 int
-kernfs_unmount(mp, mntflags, l)
+kernfs_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 	int flags = 0;
@@ -257,22 +257,22 @@ kernfs_root(mp, vpp)
 }
 
 int
-kernfs_quotactl(mp, cmd, uid, arg, l)
+kernfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-kernfs_statfs(mp, sbp, l)
+kernfs_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -297,11 +297,11 @@ kernfs_statfs(mp, sbp, l)
 
 /*ARGSUSED*/
 int
-kernfs_sync(mp, waitfor, uc, l)
+kernfs_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *uc;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
@@ -355,14 +355,14 @@ kernfs_vptofh(vp, fhp)
 }
 
 int
-kernfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+kernfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (EOPNOTSUPP);
 }
