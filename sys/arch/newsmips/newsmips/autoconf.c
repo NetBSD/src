@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1999/12/06 06:47:14 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,8 +76,6 @@
  */
 int	cpuspeed = 10;	/* approx # instr per usec. */
 
-extern int initcpu __P((void));		/*XXX*/
-
 void	findroot __P((struct device **, int *));
 
 /*
@@ -101,13 +99,16 @@ cpu_configure()
 	_splnone();	/* enable all interrupts */
 	splhigh();	/* ...then disable device interrupts */
 
-	*(char *)INTEN0 = INTEN0_BERR;		/* only buserr occurs */
-	*(char *)INTEN1 = 0;
+	if (systype == NEWS3400) {
+		*(char *)INTEN0 = INTEN0_BERR;	/* only buserr occurs */
+		*(char *)INTEN1 = 0;
+	}
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
-	initcpu();
+	/* Enable hardware interrupt registers. */
+	enable_intr();
 
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */

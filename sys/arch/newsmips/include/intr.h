@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1999/10/17 15:06:45 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -109,10 +109,14 @@ extern u_int intrcnt[];
 /* handle i/o device interrupts */
 extern int (*mips_hardware_intr) __P((u_int, u_int, u_int, u_int));
 extern int news3400_intr __P((u_int, u_int, u_int, u_int));
+extern int news5000_intr __P((u_int, u_int, u_int, u_int));
 
 /* handle software interrupts */
 extern void (*mips_software_intr) __P((int));
 extern void news3400_softintr __P((int));
+
+extern void (*enable_intr) __P((void));
+extern void (*disable_intr) __P((void));
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
