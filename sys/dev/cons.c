@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.8 1993/07/07 11:00:23 deraadt Exp $
+ *	$Id: cons.c,v 1.8.4.1 1993/10/06 12:42:52 mycroft Exp $
  */
 
 
@@ -104,7 +104,7 @@ cninit()
 	/*
 	 * Turn on console
 	 */
-	(*cp->cn_init)(cp);
+	(*cp->cn_attach)(cp);
 }
 
 int
