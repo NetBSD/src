@@ -1,7 +1,7 @@
-/*	$NetBSD: SYS.h,v 1.17 2003/08/07 16:42:15 agc Exp $ */
+/*	$NetBSD: SYS.h,v 1.18 2003/10/29 12:28:33 pooka Exp $ */
 
 /*-
- * Copyright (c) 1996 Jonathan STone
+ * Copyright (c) 1996 Jonathan Stone
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
