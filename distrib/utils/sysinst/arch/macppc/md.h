@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/07/25 08:26:28 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/08/30 13:53:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,13 @@
 /* md.h -- Machine specific definitions for the macppc */
 
 /* Constants and defines */
+
+/*
+ * Symbolic names for disk partitions.
+ */
+#define	PART_ROOT	A
+#define	PART_RAW	C
+#define	PART_USR	G
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 35	/* XXXTHORPEJ */
