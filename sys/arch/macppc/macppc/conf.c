@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 2001/02/18 04:55:38 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 2001/02/28 19:14:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -262,15 +262,15 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NCY,cy),		/* 47: Cyclom-Y serial port */
 	cdev_audio_init(NAUDIO,audio),	/* 48: generic audio I/O */
 	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
-	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
+	cdev_midi_init(NSEQUENCER,sequencer), /* 50: sequencer I/O */
 	cdev_usbdev_init(NURIO,urio),	/* 51: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 52: USB scanner */
-	cdev_openfirm_init(NOPENFIRM,openfirm),	/* 53: /dev/openfirm */
-	cdev_i4b_init(NI4B, i4b),		/* 54: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 55: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 56: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 57: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 58: i4b phone device */
+	cdev_openfirm_init(NOPENFIRM,openfirm), /* 53: /dev/openfirm */
+	cdev_i4b_init(NI4B, i4b),	/* 54: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl), /* 55: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 56: i4b raw b-channel access */
+	cdev_i4btrc_init(NI4BTRC, i4btrc), /* 57: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel), /* 58: i4b phone device */
 	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
@@ -364,6 +364,7 @@ static int chrtoblktbl[] = {
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
+	/* 59 */	NODEV,
 };
 
 /*
