@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.20 2001/04/06 01:54:04 he Exp $
+# $NetBSD: mi,v 1.253.2.21 2001/04/06 01:57:17 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -575,7 +575,6 @@
 ./usr/share/man/cat4/i386/com.0
 ./usr/share/man/cat4/i386/console.0
 ./usr/share/man/cat4/i386/fdc.0
-./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
 ./usr/share/man/cat4/i386/joy.0
 ./usr/share/man/cat4/i386/kmem.0
@@ -1994,7 +1993,6 @@
 ./usr/share/man/man4/i386/com.4
 ./usr/share/man/man4/i386/console.4
 ./usr/share/man/man4/i386/fdc.4
-./usr/share/man/man4/i386/ie.4
 ./usr/share/man/man4/i386/intro.4
 ./usr/share/man/man4/i386/joy.4
 ./usr/share/man/man4/i386/kmem.4
