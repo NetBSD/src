@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.9 1999/11/08 10:21:21 kleink Exp $	*/
+/*	$NetBSD: record.c,v 1.10 2000/02/02 05:02:25 dmcmahill Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -235,6 +235,8 @@ main(argc, argv)
 		if (encoding == -1)
 			errx(1, "unknown encoding, bailing...");
 	}
+	else
+		encoding = AUDIO_ENCODING_ULAW;
 
 	if (precision)
 		info.record.precision = precision;
