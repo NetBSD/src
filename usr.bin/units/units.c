@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.12 2003/05/17 21:12:51 itojun Exp $	*/
+/*	$NetBSD: units.c,v 1.13 2003/12/05 22:26:43 mycroft Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -70,6 +70,7 @@ void	cancelunit __P((struct unittype *));
 int	compare __P((const void *, const void *));
 int	compareproducts __P((char **, char **));
 int	compareunits __P((struct unittype *, struct unittype *));
+int	compareunitsreciprocal __P((struct unittype *, struct unittype *));
 int	completereduce __P((struct unittype *));
 void	initializeunit __P((struct unittype *));
 int	main __P((int, char **));
@@ -609,6 +610,14 @@ compareunits(struct unittype * first, struct unittype * second)
 	compareproducts(first->denominator, second->denominator);
 }
 
+int 
+compareunitsreciprocal(struct unittype * first, struct unittype * second)
+{
+	return
+	compareproducts(first->numerator, second->denominator) ||
+	compareproducts(first->denominator, second->numerator);
+}
+
 
 int 
 completereduce(struct unittype * unit)
@@ -625,9 +634,15 @@ void
 showanswer(struct unittype * have, struct unittype * want)
 {
 	if (compareunits(have, want)) {
-		printf("conformability error\n");
-		showunit(have);
-		showunit(want);
+		if (compareunitsreciprocal(have, want)) {
+			printf("conformability error\n");
+			showunit(have);
+			showunit(want);
+		} else {
+			printf("\treciprocal conversion\n");
+			printf("\t* %.8g\n\t/ %.8g\n", 1 / (have->factor * want->factor),
+			    want->factor * have->factor);
+		}
 	}
 	else
 		printf("\t* %.8g\n\t/ %.8g\n", have->factor / want->factor,
