@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.1 2000/07/24 18:39:03 jdolecek Exp $
+#	$NetBSD: Makefile.booters,v 1.2 2000/07/28 20:08:20 scw Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -41,6 +41,7 @@ m68k :
 .if defined(LIB)
 
 lib${LIB}.a:: machine m68k ${OBJS}
+beforedepend:	machine m68k
 
 .else
 

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.9 2000/07/24 18:39:14 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.10 2000/07/28 20:08:21 scw Exp $
 
 CLEANFILES+=stboot bootst bootst.bug
 
@@ -11,6 +11,7 @@ DPADD=	${WRTVID}
 
 bootst stboot: ${PROG} ${WRTVID}
 	@size bootst.bug
+	@strip bootst.bug
 	@${WRTVID} bootst.bug # creates bootst  and stboot
 
 proginstall::
@@ -21,5 +22,5 @@ proginstall::
 
 .include "../Makefile.booters"
 
-all: bootst
+all realall: bootst
 .include <bsd.prog.mk>

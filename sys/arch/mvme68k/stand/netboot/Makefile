@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/07/24 18:43:16 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.10 2000/07/28 20:08:21 scw Exp $
 
 DEFS= -DSUN_BOOTPARAMS
 
@@ -14,7 +14,7 @@ netboot.bin: ${PROG}
 
 .include "../Makefile.booters"
 
-all: netboot.bin
+all realall: netboot.bin
 
 install: netboot.bin
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \

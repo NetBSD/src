@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/07/27 21:06:53 scw Exp $
+#	$NetBSD: Makefile,v 1.10 2000/07/28 20:08:21 scw Exp $
 
 LIB=bug
 
@@ -24,6 +24,6 @@ bugcrt.o: bugcrt.c
 	${CC} -nostdinc ${INCPATH} -D_STANDALONE -o ${.TARGET}.tmp -c ${.IMPSRC}
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
 
-all: lib${LIB}.a bugcrt.o
-beforedepend: machine m68k
+all realall: lib${LIB}.a bugcrt.o
+
 .include <bsd.lib.mk>
