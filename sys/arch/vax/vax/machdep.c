@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.130 2002/11/14 20:30:40 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.131 2002/12/01 21:20:32 matt Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -95,7 +95,7 @@
 
 #include "smg.h"
 
-extern int virtual_avail, virtual_end;
+extern vaddr_t virtual_avail, virtual_end;
 /*
  * We do these external declarations here, maybe they should be done
  * somewhere else...
@@ -139,7 +139,7 @@ cpu_startup()
 	u_int		base, residual, i, sz;
 	vaddr_t		minaddr, maxaddr;
 	vsize_t		size;
-	extern unsigned int avail_end;
+	extern paddr_t avail_end;
 	char pbuf[9];
 
 	/*
