@@ -1,13 +1,13 @@
-/*	$NetBSD: ip_auth.h,v 1.1.1.8 1999/12/12 10:58:15 veego Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.1.1.9 2000/05/03 10:58:23 veego Exp $	*/
 
 /*
- * Copyright (C) 1997-1998 by Darren Reed & Guido Van Rooij.
+ * Copyright (C) 1997-2000 by Darren Reed & Guido Van Rooij.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_auth.h,v 2.1 1999/08/04 17:29:54 darrenr Exp
+ * Id: ip_auth.h,v 2.3 2000/03/13 22:10:19 darrenr Exp
  *
  */
 #ifndef	__IP_AUTH_H__
@@ -52,6 +52,7 @@ extern	int	fr_authstart;
 extern	int	fr_authend;
 extern	int	fr_authsize;
 extern	int	fr_authused;
+extern	int	fr_auth_lock;
 extern	u_32_t	fr_checkauth __P((ip_t *, fr_info_t *));
 extern	void	fr_authexpire __P((void));
 extern	void	fr_authunload __P((void));
