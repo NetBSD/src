@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.34 1999/01/26 01:08:06 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.34.2.1 1999/04/27 14:10:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.34 1999/01/26 01:08:06 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.34.2.1 1999/04/27 14:10:58 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,8 +81,9 @@ __weak_alias(setgroupent,_setgroupent);
 static FILE		*_gr_fp;
 static struct group	_gr_group;
 static int		_gr_stayopen;
-static int		_gr_nomore;
+static int		_gr_filesdone;
 
+static void grcleanup	__P((void));
 static int grscan	__P((int, gid_t, const char *));
 static int matchline	__P((int, gid_t, const char *));
 static int start_gr	__P((void));
@@ -96,10 +97,11 @@ static char		line[MAXLINELENGTH];
 #ifdef YP
 static char	*__ypcurrent, *__ypdomain;
 static int	 __ypcurrentlen;
+static int	 _gr_ypdone;
 #endif
 
 #ifdef HESIOD
-static int	__gr_hesnum;
+static int	_gr_hesnum;
 #endif
 
 #ifdef _GROUP_COMPAT
@@ -110,9 +112,8 @@ static enum _grmode	 __grmode;
 struct group *
 getgrent()
 {
-	_gr_nomore = 0;
-	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL) || _gr_nomore)
- 		return(NULL);
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
+ 		return (NULL);
 	return &_gr_group;
 }
 
@@ -144,20 +145,28 @@ getgrgid(gid)
 	return (rval) ? &_gr_group : NULL;
 }
 
-static int
-start_gr()
+void
+grcleanup()
 {
+	_gr_filesdone = 0;
 #ifdef YP
 	if (__ypcurrent)
 		free(__ypcurrent);
 	__ypcurrent = NULL;
+	_gr_ypdone = 0;
 #endif
 #ifdef HESIOD
-	__gr_hesnum = 0;
+	_gr_hesnum = 0;
 #endif
 #ifdef _GROUP_COMPAT
 	__grmode = GRMODE_NONE;
 #endif
+}
+
+static int
+start_gr()
+{
+	grcleanup();
 	if (_gr_fp) {
 		rewind(_gr_fp);
 		return 1;
@@ -184,17 +193,7 @@ setgroupent(stayopen)
 void
 endgrent()
 {
-#ifdef YP
-	if (__ypcurrent)
-		free(__ypcurrent);
-	__ypcurrent = NULL;
-#endif
-#ifdef HESIOD
-	__gr_hesnum = 0;
-#endif
-#ifdef _GROUP_COMPAT
-	__grmode = GRMODE_NONE;
-#endif
+	grcleanup();
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
@@ -215,12 +214,12 @@ _local_grscan(rv, cb_data, ap)
 	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
 
+	if (_gr_filesdone)
+		return NS_NOTFOUND;
 	for (;;) {
 		if (!fgets(line, sizeof(line), _gr_fp)) {
-			if (!search) {
-				_gr_nomore = 1;
-				return NS_SUCCESS;
-			}
+			if (!search)
+				_gr_filesdone = 1;
 			return NS_NOTFOUND;
 		}
 		/* skip lines that are too big */
@@ -256,6 +255,8 @@ _dns_grscan(rv, cb_data, ap)
 	int		  r;
 
 	r = NS_UNAVAIL;
+	if (!search && _gr_hesnum == -1)
+		return NS_NOTFOUND;
 	if (hesiod_init(&context) == -1)
 		return (r);
 
@@ -267,20 +268,17 @@ _dns_grscan(rv, cb_data, ap)
 				snprintf(line, sizeof(line), "%u",
 				    (unsigned int)gid);
 		} else {
-			snprintf(line, sizeof(line), "group-%u", __gr_hesnum);
-			__gr_hesnum++;
+			snprintf(line, sizeof(line), "group-%u", _gr_hesnum);
+			_gr_hesnum++;
 		}
 
 		line[sizeof(line) - 1] = '\0';
 		hp = hesiod_resolve(context, line, "group");
 		if (hp == NULL) {
 			if (errno == ENOENT) {
-				if (!search) {
-					__gr_hesnum = 0;
-					_gr_nomore = 1;
-					r = NS_SUCCESS;
-				} else
-					r = NS_NOTFOUND;
+				if (!search)
+					_gr_hesnum = -1;
+				r = NS_NOTFOUND;
 			}
 			break;
 		}
@@ -363,7 +361,10 @@ _nis_grscan(rv, cb_data, ap)
 			return NS_NOTFOUND;
 	}
 
-	for (;;) {			/* ! search */
+						/* ! search */
+	if (_gr_ypdone)		
+		return NS_NOTFOUND;
+	for (;;) {
 		data = NULL;
 		if(__ypcurrent) {
 			key = NULL;
@@ -380,8 +381,8 @@ _nis_grscan(rv, cb_data, ap)
 					free(key);
 				if (data)
 					free(data);
-				_gr_nomore = 1;
-				return NS_SUCCESS;
+				_gr_ypdone = 1;
+				return NS_NOTFOUND;
 			default:
 				if (key)
 					free(key);
