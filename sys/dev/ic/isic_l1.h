@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.7 2002/03/27 07:39:37 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.8 2002/03/30 17:54:17 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -264,6 +264,8 @@ struct isic_softc
 	void		(*readfifo) __P((struct isic_softc *sc, int what, void *buf, size_t size));
 	void		(*writefifo) __P((struct isic_softc *sc, int what, const void *data, size_t size));
 	void		(*clearirq) __P((struct isic_softc *sc));
+
+	void		(*drv_command) __P((struct isic_softc *sc, int cmd, void *data));
 
 #define	ISAC_READ(r)		(*sc->readreg)(sc, ISIC_WHAT_ISAC, (r))
 #define	ISAC_WRITE(r,v)		(*sc->writereg)(sc, ISIC_WHAT_ISAC, (r), (v))
