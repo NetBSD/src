@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.10 1999/01/11 22:40:01 kleink Exp $	*/
+/*	$NetBSD: yppush.c,v 1.11 1999/07/25 09:36:02 lukem Exp $	*/
 
 /*
  *
@@ -182,7 +182,6 @@ main(argc, argv)
 	datum.dptr = YP_LAST_KEY;
 	datum.dsize = YP_LAST_LEN;
 	datum = ypdb_fetch(ypdb, datum);
-	ypdb_close(ypdb);
 	if (datum.dptr == NULL)
 		errx(1,
 		    "unable to fetch %s key: check database with 'makedbm -u'",
@@ -196,6 +195,7 @@ main(argc, argv)
 		ypi.order = (ypi.order * 10) + *cp - '0';
 		cp++;
 	}
+	ypdb_close(ypdb);
 
 	if (verbo)
 		printf("pushing %s [order=%d] in domain %s\n", ypi.map,
