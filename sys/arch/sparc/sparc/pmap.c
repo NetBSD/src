@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.243 2003/02/20 16:22:49 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.244 2003/02/21 19:07:36 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1026,6 +1026,7 @@ pmap_page_upload()
 	/* First, the `etext gap' */
 	start = PMAP_BOOTSTRAP_VA2PA(etext_gap_start);
 	end = PMAP_BOOTSTRAP_VA2PA(etext_gap_end);
+
 #ifdef DIAGNOSTIC
 	if (avail_start <= start)
 		panic("pmap_page_upload: etext gap overlap: %lx < %lx",
@@ -1045,47 +1046,54 @@ pmap_page_upload()
 		start = pmemarr[n].addr;
 		end = start + pmemarr[n].len;
 
+		/* Update vm_{first_last}_phys */
+		if (vm_first_phys > start)
+			vm_first_phys = start;
+		if (vm_last_phys < end)
+			vm_last_phys = end;
+
 		/*
-		 * If the kernel is not loaded at address 0, upload the
-		 * initial segment [0, `loadaddr'].
+		 * Exclude any memory allocated for the kernel as computed
+		 * by pmap_bootstrap(), i.e. the range
+		 *	[KERNBASE_PA, avail_start>.
+		 * Note that this will also exclude the `etext gap' range
+		 * already uploaded above.
 		 */
 		if (start < PMAP_BOOTSTRAP_VA2PA(KERNBASE)) {
-			/* `bootstrap gap' */
+			/*
+			 * This segment starts below the kernel load address.
+			 * Chop it off at the start of the kernel.
+			 */
+			paddr_t	chop = PMAP_BOOTSTRAP_VA2PA(KERNBASE);
+
+			if (end < chop)
+				chop = end;
 #ifdef DEBUG
-			printf("bootstrap gap: start %lx, end %lx\n", start, end);
+			printf("bootstrap gap: start %lx, chop %lx, end %lx\n",
+				start, chop, end);
 #endif
 			uvm_page_physload(
 				atop(start),
-				atop(PMAP_BOOTSTRAP_VA2PA(KERNBASE)),
+				atop(chop),
 				atop(start),
-				atop(PMAP_BOOTSTRAP_VA2PA(KERNBASE)),
+				atop(chop),
 				VM_FREELIST_DEFAULT);
 
-			if (vm_first_phys > start)
-				vm_first_phys = start;
-
-			start = PMAP_BOOTSTRAP_VA2PA(KERNBASE);
+			/*
+			 * Adjust the start address to reflect the
+			 * uploaded portion of this segment.
+			 */
+			start = chop;
 		}
 
-		/*
-		 * If this segment contains `avail_start', we must exclude
-		 * the range of initial kernel memory as computed by
-		 * pmap_bootstrap(). Note that this will also exclude
-		 * the `etext gap' range already uploaded above.
-		 */
+		/* Skip the current kernel address range */
 		if (start <= avail_start && avail_start < end)
 			start = avail_start;
 
 		if (start == end)
 			continue;
 
-		/* Update vm_{first_last}_phys */
-		if (vm_first_phys > start)
-			vm_first_phys = start;
-
-		if (vm_last_phys < end)
-			vm_last_phys = end;
-
+		/* Upload (the rest of) this segment */
 		uvm_page_physload(
 			atop(start),
 			atop(end),
@@ -2431,7 +2439,7 @@ pv_link4_4c(pg, pm, va, nc)
 					printf(
 			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pv %p\n",
 					curproc ? curproc->p_comm : "--",
-					va, npv->pv_va, pv);
+					va, npv->pv_va, pg);
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv0->pv_flags |= PV_ANC;
@@ -2952,7 +2960,10 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	struct   regmap *rp;
 	int i, j;
 	int npte, zseg, vr, vs;
-	int rcookie, scookie;
+	int startscookie, scookie;
+#if defined(SUN4_MMU3L)
+	int startrcookie, rcookie;
+#endif
 	caddr_t p;
 	int lastpage;
 	vaddr_t va;
@@ -3136,8 +3147,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 *
 	 * All the other MMU entries are free.
 	 *
-	 * THIS ASSUMES SEGMENT i IS MAPPED BY MMU ENTRY i DURING THE
-	 * BOOT PROCESS
+	 * THIS ASSUMES THE KERNEL IS MAPPED BY A CONTIGUOUS RANGE OF
+	 * MMU SEGMENTS/REGIONS DURING THE BOOT PROCESS
 	 */
 
 	/* Compute the number of segments used by the kernel */
@@ -3156,7 +3167,18 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	vr = VA_VREG(KERNBASE);		/* first virtual region */
 	rp = &pmap_kernel()->pm_regmap[vr];
 
-	for (rcookie = 0, scookie = 0;;) {
+	/* Get region/segment where kernel addresses start */
+#if defined(SUN4_MMU3L)
+	if (HASSUN4_MMU3L)
+		startrcookie = rcookie = getregmap(p);
+	mmureg = &mmuregions[rcookie];
+#endif
+
+	startscookie = scookie = getsegmap(p);
+	mmuseg = &mmusegments[scookie];
+	zseg += scookie;	/* First free segment */
+
+	for (;;) {
 
 		/*
 		 * Distribute each kernel region/segment into all contexts.
@@ -3263,13 +3285,20 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 
 #if defined(SUN4_MMU3L)
 	if (HASSUN4_MMU3L)
-		for (; rcookie < nregion; rcookie++, mmureg++) {
+		for (rcookie = 0; rcookie < nregion; rcookie++, mmureg++) {
+			if (rcookie == startrcookie)
+				/* Kernel must fit in one region! */
+				rcookie++;
+			mmureg = &mmuregions[rcookie];
 			mmureg->me_cookie = rcookie;
 			TAILQ_INSERT_TAIL(&region_freelist, mmureg, me_list);
 		}
 #endif
 
-	for (; scookie < nsegment; scookie++, mmuseg++) {
+	for (scookie = 0; scookie < nsegment; scookie++, mmuseg++) {
+		if (scookie == startscookie)
+			scookie = zseg;
+		mmuseg = &mmusegments[scookie];
 		mmuseg->me_cookie = scookie;
 		TAILQ_INSERT_TAIL(&segm_freelist, mmuseg, me_list);
 		pmap_stats.ps_npmeg_free++;
