@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.7 1994/04/08 06:32:26 hpeyerl Exp $
+ *	$Id: grf.c,v 1.8 1994/05/04 03:47:10 mycroft Exp $
  */
 
 /*
@@ -220,7 +220,7 @@ grfopen(dev, flags)
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (curproc->p_flag & SHPUX)
+	if (curproc->p_emul == EMUL_HPUX)
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
@@ -267,7 +267,7 @@ grfioctl(dev, cmd, data, flag, p)
 	int error;
 
 #ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX)
+	if (p->p_emul == EMUL_HPUX)
 		return(hpuxgrfioctl(dev, cmd, data, flag, p));
 #endif
 	error = 0;

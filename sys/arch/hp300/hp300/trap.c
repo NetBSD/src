@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.11 1994/04/10 08:23:02 mycroft Exp $
+ *	$Id: trap.c,v 1.12 1994/05/04 03:47:20 mycroft Exp $
  */
 
 #include "param.h"
@@ -271,7 +271,7 @@ copyfault:
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX) {
+		if (p->p_emul == EMUL_HPUX) {
 			ucode = HPUX_ILL_ILLINST_TRAP;
 			i = SIGILL;
 			break;
@@ -280,7 +280,7 @@ copyfault:
 #endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX)
+		if (p->p_emul == EMUL_HPUX)
 			ucode = HPUX_ILL_PRIV_TRAP;
 		else
 #endif
@@ -290,7 +290,7 @@ copyfault:
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX)
+		if (p->p_emul == EMUL_HPUX)
 			ucode = HPUX_FPE_INTDIV_TRAP;
 		else
 #endif
@@ -300,7 +300,7 @@ copyfault:
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX) {
+		if (p->p_emul == EMUL_HPUX) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
 			ucode = HPUX_ILL_CHK_TRAP;
@@ -313,7 +313,7 @@ copyfault:
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX) {
+		if (p->p_emul == EMUL_HPUX) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
 			ucode = HPUX_ILL_TRAPV_TRAP;
@@ -503,7 +503,7 @@ syscall(code, frame)
 	p->p_regs = frame.f_regs;
 	opc = frame.f_pc;
 #ifdef HPUXCOMPAT
-	if (p->p_flag & SHPUX)
+	if (p->p_emul == EMUL_HPUX)
 		callp = hpux_sysent, numsys = nhpux_sysent;
 	else
 #endif
@@ -517,7 +517,7 @@ syscall(code, frame)
 
 	case SYS___syscall:
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX)
+		if (p->p_emul == EMUL_HPUX)
 			break;
 #endif
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
@@ -579,7 +579,7 @@ syscall(code, frame)
 	default:
 	bad:
 #ifdef HPUXCOMPAT
-		if (p->p_flag & SHPUX)
+		if (p->p_emul == EMUL_HPUX)
 			error = bsdtohpuxerrno(error);
 #endif
 		frame.f_regs[D0] = error;
