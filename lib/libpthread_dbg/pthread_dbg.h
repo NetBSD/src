@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.4 2004/06/02 21:13:43 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.5 2004/06/02 21:18:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -76,6 +76,7 @@ typedef struct td_thread_info_st {
 #define	TD_STATE_BLOCKED	3	/* Blocked in the kernel */
 #define	TD_STATE_SLEEPING	4	/* Blocked on a sync object */
 #define	TD_STATE_ZOMBIE		5
+#define	TD_STATE_SUSPENDED	6	/* Removed from run queues */
 
 #define	TD_TYPE_UNKNOWN	0
 #define	TD_TYPE_USER	1
