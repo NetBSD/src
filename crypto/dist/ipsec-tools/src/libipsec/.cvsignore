@@ -1,9 +1,0 @@
-policy_parse.c
-policy_parse.h
-policy_token.c
-Makefile
-Makefile.in
-.libs
-.deps
-*.la
-*.lo
