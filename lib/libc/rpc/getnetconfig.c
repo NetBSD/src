@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.1 2000/06/02 23:11:11 fvdl Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.1.2.1 2000/07/03 22:19:26 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -519,16 +519,17 @@ char *stringp;		/* string to parse */
 struct netconfig *ncp;	/* where to put results */
 {
     char    *tokenp;	/* for processing tokens */
+    char    *lasts;
 
     nc_error = NC_BADFILE;	/* nearly anything that breaks is for this reason */
     stringp[strlen(stringp)-1] = '\0';	/* get rid of newline */
     /* netid */
-    if ((ncp->nc_netid = strtok(stringp, "\t ")) == NULL) {
+    if ((ncp->nc_netid = strtok_r(stringp, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
 
     /* semantics */
-    if ((tokenp = strtok(NULL, "\t ")) == NULL) {
+    if ((tokenp = strtok_r(NULL, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
     if (strcmp(tokenp, NC_TPI_COTS_ORD_S) == 0)
@@ -543,7 +544,7 @@ struct netconfig *ncp;	/* where to put results */
 	return (-1);
 
     /* flags */
-    if ((tokenp = strtok(NULL, "\t ")) == NULL) {
+    if ((tokenp = strtok_r(NULL, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
     for (ncp->nc_flag = NC_NOFLAG; *tokenp != '\0';
@@ -562,18 +563,18 @@ struct netconfig *ncp;	/* where to put results */
 	}
     }
     /* protocol family */
-    if ((ncp->nc_protofmly = strtok(NULL, "\t ")) == NULL) {
+    if ((ncp->nc_protofmly = strtok_r(NULL, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
     /* protocol name */
-    if ((ncp->nc_proto = strtok(NULL, "\t ")) == NULL) {
+    if ((ncp->nc_proto = strtok_r(NULL, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
     /* network device */
-    if ((ncp->nc_device = strtok(NULL, "\t ")) == NULL) {
+    if ((ncp->nc_device = strtok_r(NULL, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
-    if ((tokenp = strtok(NULL, "\t ")) == NULL) {
+    if ((tokenp = strtok_r(NULL, "\t ", &lasts)) == NULL) {
 	return (-1);
     }
     if (strcmp(tokenp, NC_NOLOOKUP) == 0) {
