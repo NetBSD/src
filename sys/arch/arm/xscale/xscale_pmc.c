@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.5 2002/10/08 23:59:41 thorpej Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.6 2003/01/17 22:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.5 2002/10/08 23:59:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.6 2003/01/17 22:28:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -102,6 +102,7 @@ xscale_pmc_dispatch(void *arg)
 {
 	struct clockframe *frame = arg;
 	struct xscale_pmc_state *pmcs;
+	struct proc *p;
 	uint32_t pmnc;
 	int s;
 
@@ -123,13 +124,14 @@ xscale_pmc_dispatch(void *arg)
 			proftick(frame);
 			__asm __volatile("mcr p14, 0, %0, c1, c0, 0"
 			    : : "r" (pmc_reset_vals[__PMC_CCNT_I]));
-		} else if (curproc && curproc->p_md.pmc_enabled & __PMC_CCNT) {
+		} else if ((p = curproc) != NULL &&
+			   (p->p_md.pmc_enabled & __PMC_CCNT) != 0) {
 			/*
 			 * XXX - It's not quite clear that this is the proper
 			 * way to handle this case (here or in the other
 			 * counters below).
 			 */
-			pmcs = curproc->p_md.pmc_state;
+			pmcs = p->p_md.pmc_state;
 			pmcs->pmcv[__PMC_CCNT_I] += 0x100000000ULL;
 			__asm __volatile("mcr p14, 0, %0, c1, c0, 0"
 			    : : "r" (pmcs->pmcr[__PMC_CCNT_I]));
@@ -144,11 +146,12 @@ xscale_pmc_dispatch(void *arg)
 			proftick(frame);
 			__asm __volatile("mcr p14, 0, %0, c2, c0, 0"
 			    : : "r" (pmc_reset_vals[__PMC0_I]));
-		} else if (curproc && curproc->p_md.pmc_enabled & __PMC0) {
+		} else if ((p = curproc) != NULL &&
+			   (p->p_md.pmc_enabled & __PMC0) != 0) {
 			/*
 			 * XXX - should handle wrapping the counter.
 			 */
-			pmcs = curproc->p_md.pmc_state;
+			pmcs = p->p_md.pmc_state;
 			pmcs->pmcv[__PMC0_I] += 0x100000000ULL;
 			__asm __volatile("mcr p14, 0, %0, c2, c0, 0"
 			    : : "r" (pmcs->pmcr[__PMC0_I]));
@@ -163,8 +166,9 @@ xscale_pmc_dispatch(void *arg)
 			proftick(frame);
 			__asm __volatile("mcr p14, 0, %0, c3, c0, 0"
 			    : : "r" (pmc_reset_vals[__PMC1_I]));
-		} else if (curproc && curproc->p_md.pmc_enabled & __PMC1) {
-			pmcs = curproc->p_md.pmc_state;
+		} else if ((p = curproc) != NULL &&
+			   (p->p_md.pmc_enabled & __PMC1) != 0) {
+			pmcs = p->p_md.pmc_state;
 			pmcs->pmcv[__PMC1_I] += 0x100000000ULL;
 			__asm __volatile("mcr p14, 0, %0, c3, c0, 0"
 			    : : "r" (pmcs->pmcr[__PMC1_I]));
@@ -371,11 +375,12 @@ xscale_process_exit(struct proc *p)
 static void
 xscale_enable_counter(struct proc *p, int ctr)
 {
+	int current = (p == curproc);
 
 	if (ctr < 0 || ctr >= __PMC_NCTRS || !p)
 		return;
 
-	if (p == curproc)
+	if (current)
 		pmc_save_context(p);
 
 	if ((p->p_md.pmc_enabled & (1 << ctr)) == 0) {
@@ -383,18 +388,19 @@ xscale_enable_counter(struct proc *p, int ctr)
 		p->p_md.pmc_enabled |= (1 << ctr);
 	}
 
-	if (p == curproc)
+	if (current)
 		pmc_restore_context(p);
 }
 
 static void
 xscale_disable_counter(struct proc *p, int ctr)
 {
+	int current = (p == curproc);
 
 	if (ctr < 0 || ctr >= __PMC_NCTRS || !p)
 		return;
 
-	if (p == curproc)
+	if (current)
 		pmc_save_context(p);
 
 	if (p->p_md.pmc_enabled & (1 << ctr)) {
@@ -402,7 +408,7 @@ xscale_disable_counter(struct proc *p, int ctr)
 		p->p_md.pmc_enabled &= ~(1 << ctr);
 	}
 
-	if (p == curproc)
+	if (current)
 		pmc_restore_context(p);
 }
 
@@ -427,6 +433,7 @@ static int
 xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 {
 	struct xscale_pmc_state *pmcs;
+	int current = (p == curproc);
 
 	if (ctr < 0 || ctr >= __PMC_NCTRS || !p)
 		return EINVAL;
@@ -443,7 +450,7 @@ xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 			return ENODEV;
 	}
 
-	if (p == curproc)
+	if (current)
 		pmc_save_context(p);
 
 	if (p->p_md.pmc_state == NULL) {
@@ -475,7 +482,7 @@ xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 	pmcs->pmcr[ctr] = (uint32_t) -((int32_t) cfg->reset_value);
 	pmcs->pmcv[ctr] = pmcs->pmcr[ctr];
 
-	if (p == curproc)
+	if (current)
 		pmc_restore_context(p);
 
 	return 0;
@@ -529,6 +536,7 @@ xscale_get_counter_value(struct proc *p, int ctr, int flags, uint64_t *pval)
 static int
 xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 {
+	struct proc *p = curproc;
 	int s;
 
 	if (ctr < 0 || ctr >= __PMC_NCTRS)
@@ -546,7 +554,7 @@ xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 			return ENODEV;
 	}
 
-	pmc_save_context(curproc);
+	pmc_save_context(p);
 
 	pmc_reset_vals[ctr] = (uint32_t) -((int32_t) cfg->reset_value);
 
@@ -587,7 +595,7 @@ xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 	pmc_kernel_enabled |= (1 << ctr);
 	pmc_profiling_enabled |= (1 << ctr);
 
-	pmc_restore_context(curproc);
+	pmc_restore_context(p);
 
 	splx(s);
 
@@ -597,6 +605,7 @@ xscale_start_profiling(int ctr, struct pmc_counter_cfg *cfg)
 static int
 xscale_stop_profiling(int ctr)
 {
+	struct proc *p = curproc;
 	uint32_t save;
 
 	if (ctr < 0 || ctr >= __PMC_NCTRS)
@@ -607,7 +616,7 @@ xscale_stop_profiling(int ctr)
 
 	save = pmc_kernel_bits;
 	pmc_kernel_bits = 0;
-	pmc_save_context(curproc);
+	pmc_save_context(p);
 	pmc_kernel_bits = save;
 
 	switch (ctr) {
@@ -628,7 +637,7 @@ xscale_stop_profiling(int ctr)
 	if (pmc_profiling_enabled == 0)
 		profsrc &= ~1;
 
-	pmc_restore_context(curproc);
+	pmc_restore_context(p);
 
 	return 0;
 }
@@ -636,6 +645,8 @@ xscale_stop_profiling(int ctr)
 static int
 xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg)
 {
+	struct proc *p = curproc;
+
 	if (ctr < 0 || ctr >= __PMC_NCTRS)
 		return EINVAL;
 
@@ -651,7 +662,7 @@ xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg)
 			return ENODEV;
 	}
 
-	pmc_save_context(curproc);
+	pmc_save_context(p);
 
 	pmc_reset_vals[ctr] = (uint32_t) -((int32_t) cfg->reset_value);
 
@@ -679,7 +690,7 @@ xscale_alloc_kernel_counter(int ctr, struct pmc_counter_cfg *cfg)
 
 	pmc_kernel_enabled |= (1 << ctr);
 
-	pmc_restore_context(curproc);
+	pmc_restore_context(p);
 
 	return 0;
 }

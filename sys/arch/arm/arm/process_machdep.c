@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 2001/11/24 01:26:23 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -70,7 +70,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 2001/11/24 01:26:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.10 2003/01/17 22:28:48 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -88,16 +88,16 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 2001/11/24 01:26:23 thorpej 
 #endif
 
 static __inline struct trapframe *
-process_frame(struct proc *p)
+process_frame(struct lwp *l)
 {
 
-	return p->p_addr->u_pcb.pcb_tf;
+	return l->l_addr->u_pcb.pcb_tf;
 }
 
 int
-process_read_regs(struct proc *p, struct reg *regs)
+process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
 	bcopy((caddr_t)&tf->tf_r0, (caddr_t)regs->r, sizeof(regs->r));
@@ -116,7 +116,7 @@ process_read_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct proc *p, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 #ifdef ARMFPE
 	arm_fpe_getcontext(p, regs);
@@ -129,9 +129,9 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 }
 
 int
-process_write_regs(struct proc *p, struct reg *regs)
+process_write_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
 	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
@@ -157,7 +157,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct proc *p,  struct fpreg *regs)
+process_write_fpregs(struct lwp *l,  struct fpreg *regs)
 {
 #ifdef ARMFPE
 	arm_fpe_setcontext(p, regs);
@@ -169,9 +169,9 @@ process_write_fpregs(struct proc *p,  struct fpreg *regs)
 }
 
 int
-process_set_pc(struct proc *p, caddr_t addr)
+process_set_pc(struct lwp *l, caddr_t addr)
 {
-	struct trapframe *tf = process_frame(p);
+	struct trapframe *tf = process_frame(l);
 
 	KASSERT(tf != NULL);
 #ifdef __PROG32

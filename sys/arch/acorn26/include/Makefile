@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/11/26 23:30:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/01/17 21:55:25 thorpej Exp $
 
 INCSDIR= /usr/include/acorn26
 
@@ -12,7 +12,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h ipkdb.h irq.h \
 	limits.h lock.h \
-	math.h \
+	math.h mcontext.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \

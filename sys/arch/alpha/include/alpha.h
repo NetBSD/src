@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.17 2001/06/14 22:56:55 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.18 2003/01/17 22:11:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,7 @@ typedef union alpha_t_float {
 #include <machine/stdarg.h>
 
 struct pcb;
-struct proc;
+struct lwp;
 struct reg;
 struct rpb;
 struct trapframe;
@@ -92,7 +92,7 @@ u_int64_t console_restart(struct trapframe *);
 void	do_sir(void);
 void	dumpconf(void);
 void	exception_return(void);					/* MAGIC */
-void	frametoreg(struct trapframe *, struct reg *);
+void	frametoreg(const struct trapframe *, struct reg *);
 long	fswintrberr(void);					/* MAGIC */
 void	init_bootstrap_console(void);
 void	init_prom_interface(struct rpb *);
@@ -103,9 +103,9 @@ void	machine_check(unsigned long, struct trapframe *, unsigned long,
 u_int64_t hwrpb_checksum(void);
 void	hwrpb_restart_setup(void);
 void	regdump(struct trapframe *);
-void	regtoframe(struct reg *, struct trapframe *);
+void	regtoframe(const struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
-void    switch_exit(struct proc *);				/* MAGIC */
+void    switch_exit(struct lwp *, void (*)(struct lwp *));	/* MAGIC */
 void	proc_trampoline(void);					/* MAGIC */
 void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
@@ -114,7 +114,7 @@ void	enable_nsio_ide(bus_space_tag_t);
 char *	dot_conv(unsigned long);
 
 void	fpusave_cpu(struct cpu_info *, int);
-void	fpusave_proc(struct proc *, int);
+void	fpusave_proc(struct lwp *, int);
 
 /* Multiprocessor glue; cpu.c */
 
@@ -140,11 +140,11 @@ void alpha_ldt(int, t_float *);					/* MAGIC */
 uint64_t alpha_read_fpcr(void);					/* MAGIC */
 void alpha_write_fpcr(u_int64_t);				/* MAGIC */
 
-u_int64_t alpha_read_fp_c(struct proc *);
-void alpha_write_fp_c(struct proc *, u_int64_t);
+u_int64_t alpha_read_fp_c(struct lwp *);
+void alpha_write_fp_c(struct lwp *, u_int64_t);
 
-void alpha_enable_fp(struct proc *, int);
-int alpha_fp_complete(u_long, u_long, struct proc *, u_int64_t *);
+void alpha_enable_fp(struct lwp *, int);
+int alpha_fp_complete(u_long, u_long, struct lwp *, u_int64_t *);
 
 /* Security sensitive rate limiting printf */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.4 2002/06/23 00:16:21 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.5 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,6 +44,7 @@
 #ifndef _LOCORE
 
 #include <sys/signal.h>
+#include <sys/sa.h>
 
 /*
  * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
@@ -82,6 +83,21 @@ typedef struct trapframe {
 
 struct sigframe {
 	struct	sigcontext sf_sc;
+};
+
+/*
+ * Scheduler activations upcall frame.  Pushed onto user stack before
+ * calling an SA upcall.
+ */
+
+struct saframe {
+#if 0 /* in registers on entry to upcall */
+	int		sa_type;
+	struct sa_t **	sa_sas;
+	int		sa_events;
+	int		sa_interrupted;
+#endif
+	void *		sa_arg;
 };
 
 #endif /* _LOCORE */

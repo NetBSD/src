@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2002/03/30 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -47,6 +47,7 @@
 #include <sys/mount.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/sysarch.h>
@@ -88,8 +89,8 @@ arm32_drain_writebuf(p, args, retval)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -97,6 +98,7 @@ sys_sysarch(p, v, retval)
 		syscallarg(int) op;
 		syscallarg(void *) parms;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error = 0;
 
 	switch(SCARG(uap, op)) {

@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.44 2003/01/17 22:11:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -393,6 +393,18 @@ alpha_pal_rdps(void)
 }
 
 static __inline unsigned long
+alpha_pal_rdunique(void)
+{
+	register unsigned long v0 __asm("$0");
+
+	__asm __volatile("call_pal %1 # PAL_rdunique"
+		: "=r" (v0)
+		: "i" (PAL_rdunique));
+
+	return (v0);
+}
+
+static __inline unsigned long
 alpha_pal_rdusp(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -499,6 +511,16 @@ alpha_pal_wripir(unsigned long cpu_id)
 		: "i" (PAL_ipir), "0" (a0)
 		/* clobbers t0, t8..t11, a0 (above) */
 		: "$1", "$22", "$23", "$24", "$25");
+}
+
+static __inline void
+alpha_pal_wrunique(unsigned long unique)
+{
+	register unsigned long a0 __asm("$16") = unique;
+
+	__asm __volatile("call_pal %1 # PAL_wrunique"
+		: "=r" (a0)
+		: "i" (PAL_wrunique), "0" (a0));
 }
 
 static __inline void

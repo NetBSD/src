@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.194 2002/10/14 05:11:21 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.195 2003/01/17 22:11:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2002/10/14 05:11:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2003/01/17 22:11:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ int	pmap_physpage_delref(void *);
 	 */								\
 	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
 									\
-	if (curproc != NULL && curproc->p_vmspace != NULL &&		\
+	if (curlwp != NULL && curproc->p_vmspace != NULL &&	\
 	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
 		panic("PMAP_ISACTIVE");					\
 	(isactive_);							\
@@ -615,21 +615,21 @@ do {									\
  *	This is called only when it is known that a pmap is "active"
  *	on the current processor; the ASN must already be valid.
  */
-#define	PMAP_ACTIVATE(pmap, p, cpu_id)					\
+#define	PMAP_ACTIVATE(pmap, l, cpu_id)					\
 do {									\
 	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);				\
 									\
-	(p)->p_addr->u_pcb.pcb_hw.apcb_ptbr =				\
+	(l)->l_addr->u_pcb.pcb_hw.apcb_ptbr =				\
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
-	(p)->p_addr->u_pcb.pcb_hw.apcb_asn = 				\
+	(l)->l_addr->u_pcb.pcb_hw.apcb_asn = 				\
 	    (pmap)->pm_asni[(cpu_id)].pma_asn;				\
 									\
-	if ((p) == curproc) {						\
+	if ((l) == curlwp) {						\
 		/*							\
 		 * Page table base register has changed; switch to	\
 		 * our own context again so that it will take effect.	\
 		 */							\
-		(void) alpha_pal_swpctx((u_long)p->p_md.md_pcbpaddr);	\
+		(void) alpha_pal_swpctx((u_long)l->l_md.md_pcbpaddr);	\
 	}								\
 } while (0)
 
@@ -992,9 +992,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Set up proc0's PCB such that the ptbr points to the right place
 	 * and has the kernel pmap's (really unused) ASN.
 	 */
-	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
+	lwp0.l_addr->u_pcb.pcb_hw.apcb_ptbr =
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)kernel_lev1map) >> PGSHIFT;
-	proc0.p_addr->u_pcb.pcb_hw.apcb_asn =
+	lwp0.l_addr->u_pcb.pcb_hw.apcb_asn =
 	    pmap_kernel()->pm_asni[cpu_number()].pma_asn;
 
 	/*
@@ -2229,14 +2229,14 @@ pmap_collect(pmap_t pmap)
  *	by a critical section in cpu_switch()!
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_activate(%p)\n", p);
+		printf("pmap_activate(%p)\n", l);
 #endif
 
 	PMAP_LOCK(pmap);
@@ -2251,7 +2251,7 @@ pmap_activate(struct proc *p)
 	 */
 	pmap_asn_alloc(pmap, cpu_id);
 
-	PMAP_ACTIVATE(pmap, p, cpu_id);
+	PMAP_ACTIVATE(pmap, l, cpu_id);
 
 	PMAP_UNLOCK(pmap);
 }
@@ -2267,13 +2267,13 @@ pmap_activate(struct proc *p)
  *	so no locking is necessary.
  */
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_deactivate(%p)\n", p);
+		printf("pmap_deactivate(%p)\n", l);
 #endif
 
 	/*
@@ -2294,14 +2294,14 @@ pmap_do_reactivate(struct cpu_info *ci, struct trapframe *framep)
 {
 	struct pmap *pmap;
 
-	if (ci->ci_curproc == NULL)
+	if (ci->ci_curlwp == NULL)
 		return;
 
-	pmap = ci->ci_curproc->p_vmspace->vm_map.pmap;
+	pmap = ci->ci_curlwp->l_proc->p_vmspace->vm_map.pmap;
 
 	pmap_asn_alloc(pmap, ci->ci_cpuid);
 	if (PMAP_ISACTIVE(pmap, ci->ci_cpuid))
-		PMAP_ACTIVATE(pmap, ci->ci_curproc, ci->ci_cpuid);
+		PMAP_ACTIVATE(pmap, ci->ci_curlwp, ci->ci_cpuid);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -2730,7 +2730,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
  *	Emulate reference and/or modified bit hits.
  */
 void
-pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
+pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int write)
 {
 	pt_entry_t faultoff, *pte;
 	struct vm_page *pg;
@@ -2741,7 +2741,7 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_emulate_reference: %p, 0x%lx, %d, %d\n",
-		    p, v, user, write);
+		    l, v, user, write);
 #endif
 
 	/*
@@ -2756,14 +2756,14 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 		pte = PMAP_KERNEL_PTE(v);
 	} else {
 #ifdef DIAGNOSTIC
-		if (p == NULL)
+		if (l == NULL)
 			panic("pmap_emulate_reference: bad proc");
-		if (p->p_vmspace == NULL)
+		if (l->l_proc->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		PMAP_LOCK(p->p_vmspace->vm_map.pmap);
+		PMAP_LOCK(l->l_proc->p_vmspace->vm_map.pmap);
 		didlock = TRUE;
-		pte = pmap_l3pte(p->p_vmspace->vm_map.pmap, v, NULL);
+		pte = pmap_l3pte(l->l_proc->p_vmspace->vm_map.pmap, v, NULL);
 		/*
 		 * We'll unlock below where we're done with the PTE.
 		 */
@@ -2804,7 +2804,7 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 	 * it now.
 	 */
 	if (didlock)
-		PMAP_UNLOCK(p->p_vmspace->vm_map.pmap);
+		PMAP_UNLOCK(l->l_proc->p_vmspace->vm_map.pmap);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2812,7 +2812,7 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int write)
 #endif
 #ifdef DIAGNOSTIC
 	if (!PAGE_IS_MANAGED(pa))
-		panic("pmap_emulate_reference(%p, 0x%lx, %d, %d): pa 0x%lx not managed", p, v, user, write, pa);
+		panic("pmap_emulate_reference(%p, 0x%lx, %d, %d): pa 0x%lx not managed", l, v, user, write, pa);
 #endif
 
 	/*
@@ -3274,7 +3274,7 @@ pmap_lev1map_create(pmap_t pmap, long cpu_id)
 	 */
 	if (PMAP_ISACTIVE(pmap, cpu_id)) {
 		pmap_asn_alloc(pmap, cpu_id);
-		PMAP_ACTIVATE(pmap, curproc, cpu_id);
+		PMAP_ACTIVATE(pmap, curlwp, cpu_id);
 	}
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 	return (0);
@@ -3322,7 +3322,7 @@ pmap_lev1map_destroy(pmap_t pmap, long cpu_id)
 	 */
 	PMAP_INVALIDATE_ASN(pmap, cpu_id);
 	if (PMAP_ISACTIVE(pmap, cpu_id))
-		PMAP_ACTIVATE(pmap, curproc, cpu_id);
+		PMAP_ACTIVATE(pmap, curlwp, cpu_id);
 	PMAP_LEV1MAP_SHOOTDOWN(pmap, cpu_id);
 
 	/*
