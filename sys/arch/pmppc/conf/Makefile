@@ -40,3 +40,6 @@ sb:
 
 sbc:
 	$(MAKE) CONF=SB conf comp
+
+pmppc:
+	$(MAKE) CONF=PMPPC conf depend comp
