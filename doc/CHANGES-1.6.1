@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.29 2002/11/10 16:30:44 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.30 2002/11/11 23:49:50 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -955,3 +955,84 @@ sys/arch/powerpc/mpc6xx/pmap.c			1.51
 	how we remember the ``execness'' of a page, so that we can
 	avoid I-cache syncing in some cases.
 	[matt, ticket #559]
+
+lib/libc/sys/Makefile.inc			1.128
+lib/libc/sys/makelintstub			1.9
+
+	Fix some problems using makelintstub as a cross-tool:
+	 o Require that the path to the C preprocessor be passed
+	   in the CPP environment variable, and use it rather than
+	   hard-coding "cpp".  Provide the target's preprocessor
+	   when invoking makelintstub.
+	 o Fix some quoting issues found with Solaris 8's XPG4 sh
+	   and sed.
+	 o Do not use "echo -n".  The resulting whitespace is not
+	   supposed to be syntactically significant anyway.
+	[thorpej, ticket #803]
+
+sys/arch/arm/xscale/i80321reg.h			1.4
+
+	Several changes:
+	 o Remove some AAU definitions, will be defined elsewhere
+	   in a future commit.
+	 o Fix a typo in the watchdog enable names.
+	 o Add SSP (synchronous serial port, for SPI, Microwire, etc.)
+	   definitions.
+	[thorpej, ticket #570]
+
+sys/arch/arm/xscale/files.i80321		1.4
+sys/arch/arm/xscale/i80321.c			1.4
+sys/arch/arm/xscale/i80321var.h			1.3
+
+	Add support for attaching IOP built-in sub-devices (aau,
+	dma, ssp, watchdog, etc.)
+	[thorpej, ticket #571]
+
+sys/arch/arm/xscale/files.i80321		1.5 via patch
+sys/arch/arm/xscale/i80321_wdog.c		1.1 (new)
+
+	Add support for the i80321 watchdog timer.
+	[thorpej, ticket #575]
+
+sys/arch/evbarm/conf/IQ80321			1.7
+
+	Add iopwdog (i80321 built-in watchdog timer), fxp, and
+	inphy.
+	[thorpej, ticket #576]
+
+sys/arch/arm/xscale/i80200_irq.S		1.3
+sys/arch/arm/xscale/i80321_irq.S		1.2
+
+	Clean up some comments.
+	[thorpej, ticket #579]
+
+distrib/notes/evbarm/hardware			1.5
+
+	Note support for the i80321 watchdog timer.
+	[thorpej, ticket #580]
+
+sys/kern/subr_pool.c				1.78
+
+	Bring down a fix from the "newlock" branch, slightly modified:
+	 o In pool_prime_page(), assert that the object being placed
+	   onto the free list meets the alignment constraints (that
+	   "ioff" within the object is aligned to "align").
+	 o In pool_init(), round up the object size to the alignment
+	   value (or ALIGN(1), if no special alignment is needed) so
+	   that the above invariant holds true.
+	[thorpej, ticket #582]
+
+sys/arch/arm/xscale/i80321_icu.c		1.3
+sys/arch/arm/xscale/i80321var.h			1.4
+sys/arch/evbarm/iq80321/iq80321_pci.c		1.2
+
+	Use more descriptive interrupt names.
+	[thorpej, ticket #583]
+
+etc/defaults/rc.conf				1.41
+etc/rc.d/Makefile				1.32 via patch
+etc/rc.d/wdogctl				1.1 (new)
+distrib/sets/lists/etc/mi			1.102
+
+	Add a wdogctl startup/shutdown script.
+	[thorpej, ticket #584]
