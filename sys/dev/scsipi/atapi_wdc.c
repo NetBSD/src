@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.4 1998/10/13 09:34:01 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.5 1998/10/13 15:02:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -193,7 +193,8 @@ wdc_atapi_send_cmd(sc_xfer)
 	int drive = sc_xfer->sc_link->scsipi_atapi.drive;
 	int s, ret;
 
-	WDCDEBUG_PRINT(("wdc_atapi_send_cmd\n"), DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
+	    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
 
 	xfer = wdc_get_xfer(flags & SCSI_NOSLEEP ? WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
@@ -232,8 +233,9 @@ wdc_atapi_start(chp, xfer)
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
-	WDCDEBUG_PRINT(("wdc_atapi_start, scsi flags 0x%x \n",sc_xfer->flags),
-	    DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdc_atapi_start %s:%d:%d, scsi flags 0x%x \n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive,
+	    sc_xfer->flags), DEBUG_XFERS);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
 		if (drvp->state != PIOMODE) {
@@ -263,6 +265,7 @@ wdc_atapi_start(chp, xfer)
 	 * ATAPI spec that that behaviour should be expected.  If more
 	 * data is necessary, multiple data transfer phases will be done.
 	 */
+
 	wdccommand(chp, xfer->drive, ATAPI_PKT_CMD, 
 	    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
 	    0, 0, 0, 
@@ -308,7 +311,8 @@ wdc_atapi_intr(chp, xfer)
 	int ire, dma_err = 0;
 	int dma_flags = 0;
 
-	WDCDEBUG_PRINT(("wdc_atapi_intr\n"), DEBUG_INTR);
+	WDCDEBUG_PRINT(("wdc_atapi_intr %s:%d:%d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive), DEBUG_INTR);
 
 	/* Is it not a transfer, but a control operation? */
 	if (drvp->state < READY) {
@@ -593,7 +597,8 @@ wdc_atapi_ctrl(chp, xfer)
 
 	/* Ack interrupt done in wait_for_unbusy */
 again:
-	WDCDEBUG_PRINT(("wdc_atapi_ctrl state %d\n", drvp->state),
+	WDCDEBUG_PRINT(("wdc_atapi_ctrl %s:%d:%d state %d\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive, drvp->state),
 	    DEBUG_INTR | DEBUG_FUNCS);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
@@ -679,8 +684,9 @@ wdc_atapi_done(chp, xfer)
 	struct wdc_softc *wdc = chp->wdc;
 	int need_done =  xfer->c_flags & C_NEEDDONE;
 
-	WDCDEBUG_PRINT(("wdc_atapi_done: flags 0x%x\n", (u_int)xfer->c_flags),
-	    DEBUG_XFERS);
+	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+	    (u_int)xfer->c_flags), DEBUG_XFERS);
 	sc_xfer->resid = xfer->c_bcount;
 	/* remove this command from xfer queue */
 	xfer->c_skip = 0;
