@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_signal.c,v 1.3 2002/06/20 11:42:58 itojun Exp $	*/
+/*	$NetBSD: ns_signal.c,v 1.4 2003/08/07 09:20:48 agc Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -17,11 +17,7 @@ static const char rcsid[] = "Id: ns_signal.c,v 8.15 2002/05/18 01:39:15 marka Ex
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
