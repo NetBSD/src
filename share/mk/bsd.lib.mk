@@ -47,7 +47,9 @@ BINMODE?=	555
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
+.if !defined(NOMAN)
 MANALL=	${MAN1} ${MAN2} ${MAN3} ${MAN4} ${MAN5} ${MAN6} ${MAN7} ${MAN8}
+.endif
 
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
@@ -152,7 +154,10 @@ tags: ${SRCS}
 	    sed "s;\${.CURDIR}/;;" > tags
 .endif
 
+.if !defined(NOMAN)
 .include <bsd.man.mk>
+.endif
+
 .if !target(obj)
 .if defined(NOOBJ)
 obj:
