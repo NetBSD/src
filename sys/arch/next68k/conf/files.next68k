@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.9 1999/03/26 04:42:59 dbj Exp $
+# $NetBSD: files.next68k,v 1.10 1999/03/27 02:59:41 dbj Exp $
 
 # next68k-specific configuration info
 
@@ -6,6 +6,9 @@
 maxpartitions 8
 
 maxusers 2 8 64
+
+# serial console options
+defopt opt_serial.h ZS_CONSOLE_ABORT
 
 device mainbus { }
 attach mainbus at root
@@ -25,9 +28,10 @@ file	dev/ic/z8530sc.c		zsc
 device	zstty: tty
 attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
+file	arch/next68k/dev/zs_kgdb.c		kgdb
 
-#file	arch/m68k/m68k/db_memrw.c	ddb
-file	arch/next68k/next68k/db_memrw.c	ddb
+#file	arch/m68k/m68k/db_memrw.c	ddb | kgdb
+file	arch/next68k/next68k/db_memrw.c	ddb | kgdb
 
 file	arch/m68k/m68k/cacheops.c
 
@@ -47,6 +51,8 @@ file    arch/next68k/next68k/autoconf.c
 file    arch/next68k/next68k/nextrom.c
 file    arch/next68k/next68k/rtc.c
 file	arch/next68k/next68k/disksubr.c
+file	arch/next68k/next68k/kgdb_machdep.c   kgdb
+file	arch/next68k/next68k/stub.c	      kgdb
 
 #file    arch/next68k/dev/dbj_debug.c
 file 	arch/next68k/dev/bus_dma.c

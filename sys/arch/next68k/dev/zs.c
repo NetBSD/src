@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.10 1999/03/27 02:59:41 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <machine/z8530var.h>
 
 #include <next68k/next68k/isr.h>
+#include <next68k/dev/zs_cons.h>
 
 #include "zsc.h" 	/* NZSC */
 
@@ -137,10 +138,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR15_BREAK_IE,
 };
 
-static struct zschan *
-zs_get_chan_addr __P((int zsc_unit, int channel));
-
-static struct zschan *
+struct zschan *
 zs_get_chan_addr(zs_unit, channel)
 	int zs_unit, channel;
 {
@@ -304,7 +302,6 @@ zs_attach(parent, self, aux)
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
-
 }
 
 static int
@@ -575,6 +572,8 @@ void
 zs_abort(cs)
 	struct zs_chanstate *cs;
 {
+#include "opt_serial.h"
+#if defined(ZS_CONSOLE_ABORT)
 	register volatile struct zschan *zc = zs_conschan;
 	int rr0;
 
@@ -592,6 +591,9 @@ zs_abort(cs)
 #else
 	printf("stopping on keyboard abort\n");
 	callrom();
+#endif
+#else /* !ZS_CONSOLE_ABORT */
+	return;
 #endif
 }
 

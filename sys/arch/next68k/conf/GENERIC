@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 1999/03/26 23:17:53 dbj Exp $
+# $NetBSD: GENERIC,v 1.14 1999/03/27 02:59:41 dbj Exp $
 #
 # GENERIC next68k
 #
@@ -30,7 +30,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB		# support for kernel gdb
 #options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDBRATE=0x2580	# baud rate
 
 # Other debugging options
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
@@ -103,6 +103,7 @@ options 	FPSP
 #options 	FPU_EMULATE
 
 options         ZS_CONSOLE_ABORT
+#options        SERCONSOLE
 
 options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_DHCP
