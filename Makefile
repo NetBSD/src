@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.130 2001/09/22 05:37:17 tv Exp $
+#	$NetBSD: Makefile,v 1.131 2001/09/22 12:30:13 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -43,11 +43,11 @@
 #
 # Sub targets of `make build,' in order:
 #   buildstartmsg: displays the start time of the build.
-#   beforeinstall: creates the distribution directories.
+#   do-make-tools: builds host toolchain.
+#   do-distrib-dirs: creates the distribution directories.
 #   do-force-domestic: check's that FORCE_DOMESTIC isn't set (deprecated.)
 #   do-cleandir: cleans the tree.
 #   do-make-obj: creates object directories if required.
-#   do-make-tools: builds host toolchain.
 #   do-make-includes: install include files.
 #   do-lib-csu: build & install startup object files.
 #   do-lib: build & install system libraries.
@@ -103,15 +103,6 @@ buildendmsg:
 	@echo -n "Build finished at: "
 	@date
 
-beforeinstall:
-.ifndef NODISTRIBDIRS
-.ifndef DESTDIR
-	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=/ distrib-dirs)
-.else
-	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs)
-.endif
-.endif
-
 afterinstall:
 .if ${MKMAN} != "no" && !defined(_BUILD)
 	${MAKE} ${_M} whatis.db
@@ -129,11 +120,11 @@ build:
 .else
 build:
 	@${MAKE} ${_M} buildstartmsg
-	@${MAKE} ${_M} beforeinstall
+	@${MAKE} ${_M} do-make-tools
+	@${MAKE} ${_M} do-distrib-dirs
 	@${MAKE} ${_M} do-force-domestic
 	@${MAKE} ${_M} do-cleandir
 	@${MAKE} ${_M} do-make-obj
-	@${MAKE} ${_M} do-make-tools
 	@${MAKE} ${_M} do-make-includes
 	@${MAKE} ${_M} do-lib-csu
 	@${MAKE} ${_M} do-lib
@@ -142,6 +133,21 @@ build:
 	@${MAKE} ${_M} do-domestic
 	@${MAKE} ${_M} do-whatisdb
 	@${MAKE} ${_M} buildendmsg
+.endif
+
+do-make-tools:
+.if ${MKOBJDIRS} != "no"
+	cd ${.CURDIR}/tools && ${MAKE} ${_M} obj
+.endif
+	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
+
+do-distrib-dirs:
+.ifndef NODISTRIBDIRS
+.ifndef DESTDIR
+	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=/ distrib-dirs)
+.else
+	(cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs)
+.endif
 .endif
 
 do-force-domestic:
@@ -160,11 +166,7 @@ do-cleandir:
 do-make-obj:
 .if ${MKOBJDIRS} != "no"
 	${MAKE} ${_J} ${_M} obj
-	cd ${.CURDIR}/tools && ${MAKE} ${_M} obj
 .endif
-
-do-make-tools:
-	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
 
 do-make-includes:
 .if !defined(NOINCLUDES)
