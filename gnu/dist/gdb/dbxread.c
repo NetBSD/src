@@ -2231,6 +2231,9 @@ process_one_symbol (type, desc, valu, name, section_offsets, objfile)
 		    file's symbols at once.  */
     case N_ENDM:		/* Solaris 2:  End of module */
     case N_MAIN:		/* Name of main routine.  */
+#ifdef	__NetBSD__
+    case 0x1e:	/* NetBSD "N_WARNING" type */
+#endif	/* NetBSD */
       break;
     }
 
