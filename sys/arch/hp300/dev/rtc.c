@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.12 2005/01/02 12:03:12 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.13 2005/02/10 16:07:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2005/01/02 12:03:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2005/02/10 16:07:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ struct rtc_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	struct todr_chip_handle sc_handle;
 };
 
 static int	rtcmatch(struct device *, struct cfdata *, void *);
@@ -143,9 +144,7 @@ rtcattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_bst = bst;
 
-	MALLOC(todr_handle, struct todr_chip_handle *,
-	    sizeof(struct todr_chip_handle), M_DEVBUF, M_NOWAIT);
-
+	todr_handle = &sc->sc_handle;
 	todr_handle->cookie = sc;
 	todr_handle->todr_gettime = rtc_gettime;
 	todr_handle->todr_settime = rtc_settime;
