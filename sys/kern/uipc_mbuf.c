@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.35 1999/01/09 22:10:13 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.36 1999/03/22 22:06:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -92,14 +92,33 @@ mclpool_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
+	volatile static struct timeval lastlogged;
+	struct timeval curtime, logdiff;
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	vaddr_t va;
+	int s;
 
 #if defined(UVM)
-	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
-	    waitok));
+	va = uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object, waitok);
 #else
-	return ((void *)kmem_alloc_poolpage1(mb_map, waitok));
+	va = kmem_alloc_poolpage1(mb_map, waitok);
 #endif
+	if (va == 0) {
+		s = splclock();
+		curtime = mono_time;
+		splx(s);
+		timersub(&curtime, &lastlogged, &logdiff);
+		if (logdiff.tv_sec >= 60) {
+			lastlogged = curtime;
+			log(LOG_ERR, "mb_map full\n");
+		}
+		/*
+		 * Don't need to reclaim here; MCLGET(), which calls
+		 * pool_get(), will reclaim and attempt the allocation
+		 * again.
+		 */
+	}
+	return ((void *)va);
 }
 
 void
