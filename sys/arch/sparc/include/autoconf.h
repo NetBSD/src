@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.31 1999/02/14 12:26:16 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.32 2000/01/11 13:00:36 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,6 @@ struct mainbus_attach_args {
 	int		ma_size;	/* register physical size */
 	int		ma_pri;		/* priority (IPL) */
 	void		*ma_promvaddr;	/* PROM virtual address, if any */
-	struct bootpath *ma_bp;		/* used for locating boot device */
 };
 
 /* Attach arguments presented to devices by obio_attach() (sun4 only) */
@@ -141,7 +140,6 @@ struct obio4_attach_args {
 	bus_dma_tag_t	oba_dmatag;
 	bus_addr_t	oba_paddr;	/* register physical address */
 	int		oba_pri;	/* interrupt priority (IPL) */
-	struct bootpath *oba_bp;	/* used for locating boot device */
 };
 
 union obio_attach_args {
@@ -198,7 +196,9 @@ struct bootpath {
 	struct device *dev;	/* device that recognised this component */
 };
 
+#if 0
 struct bootpath	*bootpath_store __P((int, struct bootpath *));
+#endif
 int		sd_crazymap __P((int));
 
 /* Parse a disk string into a dev_t, return device struct pointer */
@@ -212,14 +212,3 @@ void	bootstrap __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
 int	romgetcursoraddr __P((int **, int **));
-#if 0
-/* Pass a string to the FORTH interpreter.  May fail silently. */
-void	rominterpret __P((char *));
-int	firstchild __P((int));
-int	nextsibling __P((int));
-void	callrom __P((void));
-int	findroot __P((void));
-int	findnode __P((int, const char *));
-int	opennode __P((char *));
-int	node_has_property __P((int, const char *));
-#endif

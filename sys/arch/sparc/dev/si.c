@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.53 1999/10/21 13:46:06 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.54 2000/01/11 12:59:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -372,7 +372,6 @@ si_attach(parent, self, aux)
 		ncr_sc->sc_intr_on   = si_vme_intr_on;
 		ncr_sc->sc_intr_off  = si_vme_intr_off;
 	}
-	bootpath_store(1, NULL);
 }
 
 static void
@@ -385,7 +384,6 @@ sw_attach(parent, self, aux)
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_handle_t bh;
-	struct bootpath *bp;
 
 	sc->sc_dmatag = oba->oba_dmatag;
 
@@ -425,18 +423,7 @@ sw_attach(parent, self, aux)
 
 	printf(" pri %d\n", oba->oba_pri);
 
-	/*
-	 * If the boot path is "sw" or "si" at the moment and it's me, then
-	 * walk out pointer to the sub-device, ready for the config
-	 * below.
-	 */
-	bp = oba->oba_bp;
-	if (bp != NULL && strcmp(bp->name, "sw") == 0 &&
-	    bp->val[0] == -1 && bp->val[1] == ncr_sc->sc_dev.dv_unit)
-		bootpath_store(1, bp + 1);
-
 	si_attach_common(parent, sc);
-	bootpath_store(1, NULL);
 }
 
 static void

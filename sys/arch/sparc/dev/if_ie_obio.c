@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.12 1999/11/13 00:32:12 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.13 2000/01/11 12:59:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -282,7 +282,6 @@ ie_obio_attach(parent, self, aux)
 	bus_space_handle_t bh;
 	bus_dma_segment_t seg;
 	int rseg;
-	struct bootpath *bp;
 	paddr_t pa;
 	struct intrhand *ih;
 	u_long iebase;
@@ -410,9 +409,4 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	ih = bus_intr_establish(oba->oba_bustag,
 				oba->oba_pri, 0,
 				i82586_intr, sc);
-
-	bp = oba->oba_bp;
-	if (bp != NULL && strcmp(bp->name, "ie") == 0 &&
-	    sc->sc_dev.dv_unit == bp->val[1])
-		bp->dev = &sc->sc_dev;
 }

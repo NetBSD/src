@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.6 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.7 2000/01/11 12:59:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -338,9 +338,6 @@ lematch_ledma(parent, cf, aux)
 }
 
 
-#define SAME_LANCE(bp, sa) \
-	(bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
-
 void
 leattach_ledma(parent, self, aux)
 	struct device *parent, *self;
@@ -399,10 +396,6 @@ leattach_ledma(parent, self, aux)
 	/* Assume SBus is grandparent */
 	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, parent);
-
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
-	    SAME_LANCE(sa->sa_bp, sa))
-		sa->sa_bp->dev = &sc->sc_dev;
 
 	sc->sc_mediachange = lemediachange;
 	sc->sc_mediastatus = lemediastatus;

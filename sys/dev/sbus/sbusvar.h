@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.9 1998/09/06 21:23:58 eeh Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.10 2000/01/11 12:59:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,13 +95,11 @@ struct sbus_attach_args {
 	u_int32_t	*sa_promvaddrs;/* PROM-supplied virtual addresses -- 32-bit */
 	int		sa_npromvaddrs;	/* Number of PROM VAs */
 #define sa_promvaddr	sa_promvaddrs[0]
-
-	struct bootpath *sa_bp;		/* used for locating boot device */
 };
 
 /* sbus_attach_internal() is also used from obio.c */
 void	sbus_attach_common __P((struct sbus_softc *, char *, int, 
-				struct bootpath *, const char * const *));
+				const char * const *));
 int	sbus_print __P((void *, const char *));
 
 void	sbus_establish __P((struct sbusdev *, struct device *));
@@ -111,7 +109,6 @@ int	sbus_setup_attach_args __P((
 		bus_space_tag_t,
 		bus_dma_tag_t,
 		int,			/*node*/
-		struct bootpath *,
 		struct sbus_attach_args *));
 
 void	sbus_destroy_attach_args __P((struct sbus_attach_args *));
