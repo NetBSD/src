@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2003/07/15 02:54:52 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2003/08/10 11:41:36 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2003/07/15 02:54:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2003/08/10 11:41:36 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -182,6 +182,19 @@ initppc(startkernel, endkernel, args, btinfo)
 	boothowto = args;
 
 	/*
+	 * Now setup fixed bat registers
+	 */
+	oea_batinit(
+	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
+	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
+	    0);
+
+	/*
+	 * Install vectors and interrupt handler.
+	 */
+	oea_init(NULL);
+
+	/*
 	 * Initialize bus_space.
 	 */
 	prep_bus_space_init();
@@ -192,16 +205,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	 * as early as possible.
 	 */
 	consinit();
-
-	/*
-	 * Now setup fixed bat registers
-	 */
-	oea_batinit(
-	    PREP_BUS_SPACE_MEM, BAT_BL_256M,
-	    PREP_BUS_SPACE_IO,  BAT_BL_256M,
-	    0);
-
-	oea_init(NULL);
 
 	/*
 	 * external interrupt handler install
