@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.36 2001/07/07 15:53:22 thorpej Exp $ */
+/* $NetBSD: vga.c,v 1.37 2001/09/03 17:34:07 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,27 +44,32 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/unicode.h>
+#include <dev/wsfont/wsfont.h>
 
 #include <dev/ic/pcdisplay.h>
 
 #include "opt_wsdisplay_compat.h" /* for WSCONS_SUPPORT_PCVTFONTS */
 
-static const struct vgafont {
-	char name[16];
-	int height;
-	int encoding;
-#ifdef notyet
-	int firstchar, numchars;
-#endif
-	int slot;
-} vga_builtinfont = {
+static struct wsdisplay_font _vga_builtinfont = {
 	"builtin",
-	16,
-	WSDISPLAY_FONTENC_IBM,
-#ifdef notyet
 	0, 256,
-#endif
+	WSDISPLAY_FONTENC_IBM,
+	8, 16, 1,
+	WSDISPLAY_FONTORDER_L2R, 0,
 	0
+};
+
+struct egavga_font {
+	struct wsdisplay_font *wsfont;
+	int cookie; /* wsfont handle */
+	int slot; /* in adapter RAM */
+	int usecount;
+	TAILQ_ENTRY(egavga_font) next; /* LRU queue */
+};
+
+static struct egavga_font vga_builtinfont = {
+	&_vga_builtinfont,
+	0, 0
 };
 
 struct vgascreen {
@@ -75,7 +80,7 @@ struct vgascreen {
 	struct vga_config *cfg;
 
 	/* videostate */
-	const struct vgafont *fontset1, *fontset2;
+	struct egavga_font *fontset1, *fontset2;
 	/* font data */
 	/* palette */
 
@@ -95,7 +100,8 @@ struct vga_config {
 	bus_space_tag_t vc_biostag;
 	bus_space_handle_t vc_bioshdl;
 
-	const struct vgafont *vc_fonts[8];
+	struct egavga_font *vc_fonts[8]; /* currently loaded */
+	TAILQ_HEAD(, egavga_font) vc_fontlist; /* LRU queue */
 
 	struct vgascreen *wantedscreen;
 	void (*switchcb) __P((void *, int, int));
@@ -109,6 +115,10 @@ struct vga_config {
 static int vgaconsole, vga_console_type, vga_console_attached;
 static struct vgascreen vga_console_screen;
 static struct vga_config vga_console_vc;
+
+struct egavga_font *egavga_getfont(struct vga_config *, struct vgascreen *,
+				   char *, int);
+void egavga_unreffont(struct vga_config *, struct egavga_font *);
 
 int vga_selectfont __P((struct vga_config *, struct vgascreen *,
 			char *, char *));
@@ -347,9 +357,84 @@ bad:
  * first font slot.
  */
 #define vga_valid_primary_font(f) \
-	(f->encoding == WSDISPLAY_FONTENC_IBM || \
-	f->encoding == WSDISPLAY_FONTENC_ISO || \
-	f->encoding == WSDISPLAY_FONTENC_ISO7)
+	(f->wsfont->encoding == WSDISPLAY_FONTENC_IBM || \
+	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO || \
+	f->wsfont->encoding == WSDISPLAY_FONTENC_ISO7)
+
+struct egavga_font *
+egavga_getfont(vc, scr, name, primary)
+	struct vga_config *vc;
+	struct vgascreen *scr;
+	char *name;
+	int primary;
+{
+	struct egavga_font *f;
+	int cookie;
+	struct wsdisplay_font *wf;
+
+	TAILQ_FOREACH(f, &vc->vc_fontlist, next) {
+		if (wsfont_matches(f->wsfont, name,
+				   8, scr->pcs.type->fontheight, 0) &&
+		    (!primary || vga_valid_primary_font(f))) {
+#ifdef VGAFONTDEBUG
+			if (scr != &vga_console_screen || vga_console_attached)
+				printf("vga_getfont: %s already present\n",
+				       name ? name : <default>);
+#endif
+			goto found;
+		}
+	}
+
+	cookie = wsfont_find(name, 8, scr->pcs.type->fontheight, 0);
+	/* XXX obey "primary" */
+	if (cookie == -1) {
+#ifdef VGAFONTDEBUG
+		if (scr != &vga_console_screen || vga_console_attached)
+			printf("vga_getfont: %s not found\n", name);
+#endif
+		return (0);
+	}
+
+	if (wsfont_lock(cookie, &wf, WSDISPLAY_FONTORDER_L2R, 0) < 0)
+		return (0);
+
+	f = malloc(sizeof(struct egavga_font), M_DEVBUF, M_NOWAIT);
+	if (!f) {
+		wsfont_unlock(cookie);
+		return (0);
+	}
+	f->wsfont = wf;
+	f->cookie = cookie;
+	f->slot = -1; /* not yet loaded */
+	f->usecount = 0; /* incremented below */
+	TAILQ_INSERT_TAIL(&vc->vc_fontlist, f, next);
+
+found:
+	f->usecount++;
+#ifdef VGAFONTDEBUG
+	if (scr != &vga_console_screen || vga_console_attached)
+		printf("vga_getfont: usecount=%d\n", f->usecount);
+#endif
+	return (f);
+}
+
+void
+egavga_unreffont(vc, f)
+	struct vga_config *vc;
+	struct egavga_font *f;
+{
+
+	f->usecount--;
+#ifdef VGAFONTDEBUG
+	printf("vga_unreffont: usecount=%d\n", f->usecount);
+#endif
+	if (f->usecount == 0) {
+		/* XXX not for builtin font */
+		TAILQ_REMOVE(&vc->vc_fontlist, f, next);
+		wsfont_unlock(f->cookie);
+		free(f, M_DEVBUF);
+	}
+}
 
 int
 vga_selectfont(vc, scr, name1, name2)
@@ -358,49 +443,38 @@ vga_selectfont(vc, scr, name1, name2)
 	char *name1, *name2; /* NULL: take first found */
 {
 	const struct wsscreen_descr *type = scr->pcs.type;
-	const struct vgafont *f1, *f2;
-	int i;
+	struct egavga_font *f1, *f2;
 
-	f1 = f2 = 0;
+	f1 = egavga_getfont(vc, scr, name1, 1);
+	if (!f1)
+		return (ENXIO);
 
-	for (i = 0; i < 8; i++) {
-		const struct vgafont *f = vc->vc_fonts[i];
-		if (!f || f->height != type->fontheight)
-			continue;
-		if (!f1 &&
-		    vga_valid_primary_font(f) &&
-		    (!name1 || !strcmp(name1, f->name))) {
-			f1 = f;
-			continue;
+	if (VGA_SCREEN_CANTWOFONTS(type) && name2) {
+		f2 = egavga_getfont(vc, scr, name2, 0);
+		if (!f2) {
+			egavga_unreffont(vc, f1);
+			return (ENXIO);
 		}
-		if (!f2 &&
-		    VGA_SCREEN_CANTWOFONTS(type) &&
-		    (!name2 || !strcmp(name2, f->name))) {
-			f2 = f;
-			continue;
-		}
-	}
+	} else
+		f2 = 0;
 
-	/*
-	 * The request fails if no primary font was found,
-	 * or if a second font was requested but not found.
-	 */
-	if (f1 && (!name2 || f2)) {
 #ifdef VGAFONTDEBUG
-		if (scr != &vga_console_screen || vga_console_attached) {
-			printf("vga (%s): font1=%s (slot %d)", type->name,
-			       f1->name, f1->slot);
-			if (f2)
-				printf(", font2=%s (slot %d)",
-				       f2->name, f2->slot);
-			printf("\n");
-		}
-#endif
-		scr->fontset1 = f1;
-		scr->fontset2 = f2;
-		return (0);
+	if (scr != &vga_console_screen || vga_console_attached) {
+		printf("vga (%s): font1=%s (slot %d)", type->name,
+		       f1->wsfont->name, f1->slot);
+		if (f2)
+			printf(", font2=%s (slot %d)",
+			       f2->wsfont->name, f2->slot);
+		printf("\n");
 	}
-	return (ENXIO);
+#endif
+	if (scr->fontset1)
+		egavga_unreffont(vc, scr->fontset1);
+	scr->fontset1 = f1;
+	if (scr->fontset2)
+		egavga_unreffont(vc, scr->fontset2);
+	scr->fontset2 = f2;
+	return (0);
 }
 
 void
@@ -462,6 +536,7 @@ vga_init_screen(vc, scr, type, existing, attrp)
 
 	scr->pcs.mem = NULL;
 
+	wsfont_init();
 	scr->fontset1 = scr->fontset2 = 0;
 	if (vga_selectfont(vc, scr, 0, 0)) {
 		if (scr == &vga_console_screen)
@@ -522,6 +597,8 @@ vga_init(vc, iot, memt)
 	vc->vc_fonts[0] = &vga_builtinfont;
 	for (i = 1; i < 8; i++)
 		vc->vc_fonts[i] = 0;
+	TAILQ_INIT(&vc->vc_fontlist);
+	TAILQ_INSERT_HEAD(&vc->vc_fontlist, &vga_builtinfont, next);
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
 }
@@ -727,12 +804,59 @@ vga_free_screen(v, cookie)
 		vc->active = 0;
 }
 
+void vga_usefont(struct vga_config *, struct egavga_font *);
+
+void
+vga_usefont(vc, f)
+	struct vga_config *vc;
+	struct egavga_font *f;
+{
+	int slot;
+	struct egavga_font *of;
+
+	if (f->slot != -1)
+		goto toend;
+
+	for (slot = 0; slot < 8; slot++) {
+		if (!vc->vc_fonts[slot])
+			goto loadit;
+	}
+
+	/* have to kick out another one */
+	TAILQ_FOREACH(of, &vc->vc_fontlist, next) {
+		if (of->slot != -1) {
+			if (of == &vga_builtinfont)
+				continue; /* XXX for now */
+			KASSERT(vc->vc_fonts[of->slot] == of);
+			slot = of->slot;
+			of->slot = -1;
+			goto loadit;
+		}
+	}
+	panic("vga_usefont");
+
+loadit:
+	vga_loadchars(&vc->hdl, slot, 0, 256,
+		      f->wsfont->fontheight, f->wsfont->data);
+	f->slot = slot;
+	vc->vc_fonts[slot] = f;
+
+toend:
+	TAILQ_REMOVE(&vc->vc_fontlist, f, next);
+	TAILQ_INSERT_TAIL(&vc->vc_fontlist, f, next);
+}
+
 static void
 vga_setfont(vc, scr)
 	struct vga_config *vc;
 	struct vgascreen *scr;
 {
 	int fontslot1, fontslot2;
+
+	if (scr->fontset1)
+		vga_usefont(vc, scr->fontset1);
+	if (scr->fontset2)
+		vga_usefont(vc, scr->fontset2);
 
 	fontslot1 = (scr->fontset1 ? scr->fontset1->slot : 0);
 	fontslot2 = (scr->fontset2 ? scr->fontset2->slot : fontslot1);
@@ -852,8 +976,7 @@ vga_load_font(v, cookie, data)
 	struct vga_config *vc = v;
 	struct vgascreen *scr = cookie;
 	char *name2;
-	int res, slot;
-	struct vgafont *f;
+	int res;
 
 	if (scr) {
 		name2 = strchr(data->name, ',');
@@ -864,39 +987,6 @@ vga_load_font(v, cookie, data)
 			vga_setfont(vc, scr);
 		return (res);
 	}
-
-	if (data->fontwidth != 8 || data->stride != 1)
-		return (EINVAL); /* XXX 1 byte per line */
-	if (data->firstchar != 0 || data->numchars != 256)
-		return (EINVAL);
-#ifndef WSCONS_SUPPORT_PCVTFONTS
-	if (data->encoding == WSDISPLAY_FONTENC_PCVT) {
-		printf("vga: pcvt font support not built in, see vga(4)\n");
-		return (EINVAL);
-	}
-#endif
-
-	for (slot = 0; slot < 8; slot++)
-		if (!vc->vc_fonts[slot])
-			break;
-	if (slot == 8)
-		return (ENOSPC);
-
-	f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
-	strncpy(f->name, data->name, sizeof(f->name));
-	f->height = data->fontheight;
-	f->encoding = data->encoding;
-#ifdef notyet
-	f->firstchar = data->firstchar;
-	f->numchars = data->numchars;
-#endif
-#ifdef VGAFONTDEBUG
-	printf("vga: load %s (8x%d, enc %d) font to slot %d\n", f->name,
-	       f->height, f->encoding, slot);
-#endif
-	vga_loadchars(&vc->hdl, slot, 0, 256, f->height, data->data);
-	f->slot = slot;
-	vc->vc_fonts[slot] = f;
 
 	return (0);
 }
@@ -1153,17 +1243,17 @@ vga_iso7_mapchar(int uni, unsigned int *index)
 
 #endif /* WSCONS_SUPPORT_ISO7FONTS */
 
-static int _vga_mapchar __P((void *, const struct vgafont *, int, unsigned int *));
+static int _vga_mapchar __P((void *, const struct egavga_font *, int, unsigned int *));
 
 static int
 _vga_mapchar(id, font, uni, index)
 	void *id;
-	const struct vgafont *font;
+	const struct egavga_font *font;
 	int uni;
 	unsigned int *index;
 {
 
-	switch (font->encoding) {
+	switch (font->wsfont->encoding) {
 	case WSDISPLAY_FONTENC_ISO:
 		if (uni < 256) {
 			*index = uni;
@@ -1185,7 +1275,7 @@ _vga_mapchar(id, font, uni, index)
 #endif
 	default:
 #ifdef VGAFONTDEBUG
-		printf("_vga_mapchar: encoding=%d\n", font->encoding);
+		printf("_vga_mapchar: encoding=%d\n", font->wsfont->encoding);
 #endif
 		*index = ' ';
 		return (0);
