@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.41 2000/06/28 14:16:42 mrg Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.42 2000/07/01 19:03:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -581,7 +581,6 @@ lfs_remove(v)
 	error = ufs_remove(ap);
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(vp);
-	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
 
 	/*
 	 * If ufs_remove failed, vp doesn't need to be VDIROP any more.
@@ -594,6 +593,7 @@ lfs_remove(v)
 	wakeup(&lfs_dirvcount);
 	vrele(vp);
 
+	SET_ENDOP(VTOI(dvp)->i_lfs,dvp,"remove");
 	return (error);
 }
 
@@ -621,7 +621,6 @@ lfs_rmdir(v)
 	error = ufs_rmdir(ap);
 	UNMARK_VNODE(ap->a_dvp);
 	UNMARK_VNODE(ap->a_vp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
 
 	/*
 	 * If ufs_rmdir failed, vp doesn't need to be VDIROP any more.
@@ -634,6 +633,7 @@ lfs_rmdir(v)
 	wakeup(&lfs_dirvcount);
 	vrele(ap->a_vp);
 
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
 	return (error);
 }
 
