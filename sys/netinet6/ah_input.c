@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.36 2002/09/11 02:41:22 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.37 2002/09/11 03:45:44 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.36 2002/09/11 02:41:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.37 2002/09/11 03:45:44 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -100,7 +100,7 @@ ah4_input(m, va_alist)
 	const struct ah_algorithm *algo;
 	size_t siz;
 	size_t siz1;
-	u_char cksum[AH_MAXSUMSIZE];
+	u_int8_t cksum[AH_MAXSUMSIZE];
 	struct secasvar *sav = NULL;
 	u_int16_t nxt;
 	size_t hlen;
@@ -283,7 +283,7 @@ ah4_input(m, va_alist)
 	ip->ip_len = htons(ip->ip_len);
 	ip->ip_off = htons(ip->ip_off);
 #endif
-	if (ah4_calccksum(m, (caddr_t)cksum, siz1, algo, sav)) {
+	if (ah4_calccksum(m, cksum, siz1, algo, sav)) {
 		ipsecstat.in_inval++;
 		goto fail;
 	}
@@ -629,7 +629,7 @@ ah6_input(mp, offp, proto)
 	const struct ah_algorithm *algo;
 	size_t siz;
 	size_t siz1;
-	u_char cksum[AH_MAXSUMSIZE];
+	u_int8_t cksum[AH_MAXSUMSIZE];
 	struct secasvar *sav = NULL;
 	u_int16_t nxt;
 	int s;
@@ -761,7 +761,7 @@ ah6_input(mp, offp, proto)
 	 * cryptographic checksum.
 	 */
 
-	if (ah6_calccksum(m, (caddr_t)cksum, siz1, algo, sav)) {
+	if (ah6_calccksum(m, cksum, siz1, algo, sav)) {
 		ipsec6stat.in_inval++;
 		goto fail;
 	}
