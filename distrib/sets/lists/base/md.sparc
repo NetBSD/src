@@ -1,5 +1,4 @@
-# $NetBSD: md.sparc,v 1.59 2001/04/12 02:51:14 toddpw Exp $
-./dev/apm			base-sys-devlinks
+# $NetBSD: md.sparc,v 1.60 2001/10/21 23:03:15 jmc Exp $
 ./sbin/edlabel			base-sysutil-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/bin/fdformat		base-util-bin
