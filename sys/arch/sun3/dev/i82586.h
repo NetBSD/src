@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.2 1995/01/26 23:23:34 gwr Exp $ */
+/*	$NetBSD: i82586.h,v 1.3 1995/10/08 23:41:36 gwr Exp $ */
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -42,6 +42,10 @@
  * chip written by Russ Nelson and others.
  *
  * Sun support added by Charles D. Cranor, 25-Oct-94
+ *
+ * XXX: This is very much like dev/ic/i82586reg.h except for
+ * XXX: the SWAP() macro used here to byte-swap word constants.
+ * XXX: (This should probably replace the version in dev/ic)
  */
 
 struct ie_en_addr {
