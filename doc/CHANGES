@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.234 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.235 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -538,3 +538,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sysctl: Switch to dynamic implementation.  [atatat 20031204]
 	editline(3): Provide public interfaces to the internal line
 		tokenization routines.  [lukem 20031205]
+	sh5: Switch sh5 to the in-tree toolchain, albeit somewhat hobbled.
+		[scw 20031207]
