@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.h,v 1.3 1995/03/26 20:14:07 glass Exp $	*/
+/*	$NetBSD: ctags.h,v 1.4 2001/05/03 22:25:00 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -89,4 +89,4 @@ extern void	l_entries __P((void));
 extern void	y_entries __P((void));
 extern int	PF_funcs __P((void));
 extern void	c_entries __P((void));
-extern void	skip_comment __P((void));
+extern void	skip_comment __P((int));
