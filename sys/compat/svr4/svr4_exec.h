@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.1 1994/08/15 22:47:24 mycroft Exp $	*/
+/*	$NetBSD: svr4_exec.h,v 1.2 1994/08/15 22:54:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -77,8 +77,6 @@ typedef struct {
     Elf32_Half	e_shstrndx;		/* Section header string table index */
 } Elf32_Ehdr;
 
-#define	ELF_HDR_SIZE	(sizeof(Elf32_Ehdr))
-
 
 enum Elf32_p_pf {
     Elf32_pf_r = 4,
@@ -112,5 +110,9 @@ typedef struct {
 
 #define Elf32_e_ident "\177ELF"
 #define Elf32_e_siz (sizeof(Elf32_e_ident) - 1)
+
+
+#define	ELF_HDR_SIZE	(sizeof(Elf32_Ehdr))
+int	exec_svr4_elf_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* !_SVR4_EXEC_H_ */
