@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.49 2001/01/08 21:45:42 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.50 2001/01/08 21:50:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -184,6 +184,8 @@ const struct tulip_pci_product {
 	  TULIP_CHIP_AL981 },
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	  TULIP_CHIP_AN985 },
+	{ PCI_VENDOR_ACCTON,		PCI_PRODUCT_ACCTON_EN2242,
 	  TULIP_CHIP_AN985 },
 
 #if 0
