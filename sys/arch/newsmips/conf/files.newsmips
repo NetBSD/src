@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.5 1999/11/10 13:33:10 tsubai Exp $
+#	$NetBSD: files.newsmips,v 1.6 1999/12/05 15:50:47 tsubai Exp $
 # NEWS-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -81,6 +81,7 @@ file arch/newsmips/newsmips/newsmips_trap.c
 file arch/newsmips/newsmips/disksubr.c
 file arch/newsmips/newsmips/mainbus.c
 file arch/newsmips/newsmips/cpu_cons.c
+file dev/clock_subr.c
 file dev/cons.c
 
 #
