@@ -15,6 +15,9 @@ Things to do for scheduler activations/LWP code.
   processes requires a whole new kind of scheduling. Implementing such a thing
   (such as an "equal-space" scheduler) is a major project unto itself.
 
+- lwp-exit2: kill -9 should succeed against processes whose LWPs are
+  all suspended.
+
 - Make multi-LWP process core dumps include multiple CORE_CPU sections, and
   rework coredump() to only dump memory regions once per process, not once
   per LWP.
