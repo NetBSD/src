@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.10 2003/08/10 00:44:46 keihan Exp $
+$NetBSD: acronyms.comp,v 1.11 2003/08/15 05:56:41 keihan Exp $
 
 ABI	application binary interface
 API	application programming interface
@@ -9,6 +9,7 @@ BLOB	binary large object
 BSD	berkeley software distribution
 CD	compact disc
 CHS	cylinder/head/sector
+CIDR	classless inter-domain routing
 CLI	command line interface
 CRLF	carriage return line feed
 CSS	cascading style sheets
@@ -59,6 +60,7 @@ LUN	logical unit number
 MBR	master boot record
 MIPS	million instructions per second
 NAT	network address translation
+NIC	network interface card
 NIS	network information service
 NUMA	non uniform memory access
 PAX	portable archive exchange
