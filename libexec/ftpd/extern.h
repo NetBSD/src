@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 2000/11/30 02:59:11 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.37 2000/12/18 02:32:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ int	ftpd_pclose(FILE *);
 FILE   *ftpd_popen(char *[], const char *, int);
 char   *getline(char *, int, FILE *);
 void	init_curclass(void);
-void	logcmd(const char *, off_t, const char *, const char *,
+void	logxfer(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
 void	logwtmp(const char *, const char *, const char *);
 struct tab *lookup(struct tab *, const char *);
@@ -174,6 +174,38 @@ LLT	strsuftoll(const char *);
 void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
+
+#include <netinet/in.h>
+
+#ifdef BSD4_4
+# define HAVE_SETPROCTITLE	1
+# define HAVE_SOCKADDR_SA_LEN	1
+#endif
+
+struct sockinet {
+	union sockunion {
+		struct sockaddr_in  su_sin;
+#ifdef INET6
+		struct sockaddr_in6 su_sin6;
+#endif
+	} si_su;
+#if !HAVE_SOCKADDR_SA_LEN
+	int	si_len;
+#endif
+};
+
+#if !HAVE_SOCKADDR_SA_LEN
+# define su_len		si_len
+#else
+# define su_len		si_su.su_sin.sin_len
+#endif
+#define su_addr		si_su.su_sin.sin_addr
+#define su_family	si_su.su_sin.sin_family
+#define su_port		si_su.su_sin.sin_port
+#ifdef INET6
+# define su_6addr	si_su.su_sin6.sin6_addr
+# define su_scope_id	si_su.su_sin6.sin6_scope_id
+#endif
 
 struct tab {
 	char	*name;
@@ -213,6 +245,7 @@ typedef enum {
 #define CURCLASS_FLAGS_ISSET(x)	(curclass.flags &   (FLAG_ ## x))
 
 struct ftpclass {
+	struct sockinet	 advertise;	/* PASV address to advertise as */
 	char		*chroot;	/* Directory to chroot(2) to at login */
 	char		*classname;	/* Current class */
 	struct ftpconv	*conversions;	/* List of conversions */
@@ -235,38 +268,6 @@ struct ftpclass {
 	class_ft	 type;		/* Class type */
 	mode_t		 umask;		/* Umask to use */
 };
-
-#include <netinet/in.h>
-
-#ifdef BSD4_4
-# define HAVE_SETPROCTITLE	1
-# define HAVE_SOCKADDR_SA_LEN	1
-#endif
-
-struct sockinet {
-	union sockunion {
-		struct sockaddr_in  su_sin;
-#ifdef INET6
-		struct sockaddr_in6 su_sin6;
-#endif
-	} si_su;
-#if !HAVE_SOCKADDR_SA_LEN
-	int	si_len;
-#endif
-};
-
-#if !HAVE_SOCKADDR_SA_LEN
-# define su_len		si_len
-#else
-# define su_len		si_su.su_sin.sin_len
-#endif
-#define su_addr		si_su.su_sin.sin_addr
-#define su_family	si_su.su_sin.sin_family
-#define su_port		si_su.su_sin.sin_port
-#ifdef INET6
-# define su_6addr	si_su.su_sin6.sin6_addr
-# define su_scope_id	si_su.su_sin6.sin6_scope_id
-#endif
 
 extern  int		yyparse(void);
 
