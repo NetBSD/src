@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.88 1998/03/01 02:22:45 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.89 1998/03/03 13:46:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -440,7 +440,7 @@ sunos_sys_getdents(p, v, retval)
 	struct sunos_dirent idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag;
-	off_t *cookiebuf, *cookie;
+	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -530,7 +530,8 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp, 0);
-	free(cookiebuf, M_TEMP);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }

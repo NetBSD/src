@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.59 1998/03/01 02:22:50 fvdl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.60 1998/03/03 13:45:58 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -234,7 +234,7 @@ svr4_sys_getdents64(p, v, retval)
 	struct svr4_dirent64 idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
-	off_t *cookiebuf, *cookie;
+	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -318,7 +318,8 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp, 0);
-	free(cookiebuf, M_TEMP);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
 }
@@ -343,7 +344,7 @@ svr4_sys_getdents(p, v, retval)
 	struct svr4_dirent idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
-	off_t *cookiebuf, *cookie;
+	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -431,7 +432,8 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp, 0);
-	free(cookiebuf, M_TEMP);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
 }

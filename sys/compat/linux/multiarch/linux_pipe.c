@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.39 1998/03/01 02:23:03 fvdl Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.40 1998/03/03 13:44:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -788,7 +788,7 @@ linux_sys_getdents(p, v, retval)
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag, nbytes, oldcall;
 	struct vattr va;
-	off_t *cookiebuf, *cookie;
+	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -904,7 +904,8 @@ eof:
 	*retval = nbytes - resid;
 out:
 	VOP_UNLOCK(vp, 0);
-	free(cookiebuf, M_TEMP);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return error;
 }
