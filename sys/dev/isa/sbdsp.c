@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.2 1995/03/08 18:27:38 brezak Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.3 1995/03/13 14:37:12 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.2 1995/03/08 18:27:38 brezak Exp $
+ *	$Id: sbdsp.c,v 1.3 1995/03/13 14:37:12 brezak Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -556,14 +556,9 @@ sbdsp_commit_settings(addr)
 
 	register struct sbdsp_softc *sc = (struct sbdsp_softc *)addr;
 
-	if (ISSBPROCLASS(sc)) {
-#ifdef not_anymore
-		sbdsp_set_in_gain_real(addr, sc->in_gain, sc->in_balance);
-		sbdsp_set_out_gain_real(addr, sc->out_gain, sc->out_balance);
-#endif
-		sbdsp_set_out_sr_real(addr, sc->sc_orate);
-		sbdsp_set_in_sr_real(addr, sc->sc_irate);
-	}
+	sbdsp_set_out_sr_real(addr, sc->sc_orate);
+	sbdsp_set_in_sr_real(addr, sc->sc_irate);
+
 	sc->sc_last_hsw_size = sc->sc_last_hsr_size = 0;
 	return(0);
 }
