@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.9 1994/10/09 16:44:01 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.10 1995/07/24 04:22:29 cgd Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
 .if !target(.MAIN)
@@ -9,22 +9,30 @@ _SUBDIRUSE: .USE
 .if defined(SUBDIR)
 	@for entry in ${SUBDIR}; do \
 		(set -e; if test -d ${.CURDIR}/$${entry}.${MACHINE}; then \
-			echo "===> $${entry}.${MACHINE}"; \
-			cd ${.CURDIR}/$${entry}.${MACHINE}; \
+			_newdir_="$${entry}.${MACHINE}"; \
 		else \
-			echo "===> $$entry"; \
-			cd ${.CURDIR}/$${entry}; \
+			_newdir_="$${entry}"; \
 		fi; \
-		${MAKE} ${.TARGET:S/realinstall/install/:S/.depend/depend/}); \
+		if test X"${_THISDIR_}" = X""; then \
+			_nextdir_="$${_newdir_}"; \
+		else \
+			_nextdir_="$${_THISDIR_}/$${_newdir_}"; \
+		fi; \
+		echo "===> $${_nextdir_}"; \
+		cd ${.CURDIR}/$${_newdir_}; \
+		${MAKE} _THISDIR_="$${_nextdir_}" \
+		    ${.TARGET:S/realinstall/install/:S/.depend/depend/}); \
 	done
 
 ${SUBDIR}::
 	@set -e; if test -d ${.CURDIR}/${.TARGET}.${MACHINE}; then \
-		cd ${.CURDIR}/${.TARGET}.${MACHINE}; \
+		_newdir_=${.TARGET}.${MACHINE}; \
 	else \
-		cd ${.CURDIR}/${.TARGET}; \
+		_newdir_=${.TARGET}; \
 	fi; \
-	${MAKE} all
+	echo "===> $${_newdir_}"; \
+	cd ${.CURDIR}/$${_newdir_}; \
+	${MAKE} _THISDIR_="$${_newdir_}" all
 .endif
 
 .if !target(install)
