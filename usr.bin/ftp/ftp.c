@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.72 1999/09/30 23:51:27 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.73 1999/10/01 06:55:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.72 1999/09/30 23:51:27 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.73 1999/10/01 06:55:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,12 +103,12 @@ __RCSID("$NetBSD: ftp.c,v 1.72 1999/09/30 23:51:27 lukem Exp $");
 
 #include "ftp_var.h"
 
-int	data = -1;
 int	abrtflag = 0;
 jmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
 off_t	restart_point = 0;
+char	pasv[BUFSIZ];	/* passive port for proxy data connection */
 
 static int empty __P((FILE *, FILE *, int));
 
@@ -143,8 +143,6 @@ union sockunion {
 #define su_port		su_si.si_port
 
 union sockunion myctladdr, hisctladdr, data_addr;
-
-FILE	*cin, *cout;
 
 char *
 hookup(host, port)
@@ -419,8 +417,6 @@ command(va_alist)
 	(void)xsignal(SIGINT, oldintr);
 	return (r);
 }
-
-char reply_string[BUFSIZ];		/* first line of previous reply */
 
 int
 getreply(expecteof)

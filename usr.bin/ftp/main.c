@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 1999/10/01 06:18:32 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.57 1999/10/01 06:55:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -72,7 +72,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.56 1999/10/01 06:18:32 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.57 1999/10/01 06:55:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,14 +91,13 @@ __RCSID("$NetBSD: main.c,v 1.56 1999/10/01 06:18:32 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#define	GLOBAL		/* force GLOBAL decls in ftp_var.h to be declared */
 #include "ftp_var.h"
 
 #define FTP_PROXY	"ftp_proxy"	/* env var with FTP proxy location */
 #define HTTP_PROXY	"http_proxy"	/* env var with HTTP proxy location */
 #define NO_PROXY	"no_proxy"	/* env var with list of non-proxied
 					 * hosts, comma or space separated */
-
-char home[MAXPATHLEN] = "/";
 
 int main __P((int, char **));
 
@@ -132,6 +131,7 @@ main(argc, argv)
 	verbose = 0;
 	progress = 0;
 	gatemode = 0;
+	data = -1;
 	outfile = NULL;
 	restartautofetch = 0;
 #ifndef NO_EDITCOMPLETE
@@ -358,6 +358,8 @@ main(argc, argv)
 		pw = getpwuid(getuid());
 	if (pw != NULL)
 		(void)strlcpy(home, pw->pw_dir, sizeof(home));
+	else
+		(void)strlcpy(home, "/", sizeof(home));
 
 	setttywidth(0);
 	(void)xsignal(SIGWINCH, setttywidth);

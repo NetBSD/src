@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.38 1999/10/01 06:18:32 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.39 1999/10/01 06:55:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -141,113 +141,128 @@ struct macel {
 #define	TMPFILE		"ftpXXXXXXXXXX"
 
 
+#ifndef	GLOBAL
+#define	GLOBAL	extern
+#endif
+
 /*
  * Options and other state info.
  */
-int	trace;			/* trace packets exchanged */
-int	hash;			/* print # for each buffer transferred */
-int	mark;			/* number of bytes between hashes */
-int	sendport;		/* use PORT/LPRT cmd for each data connection */
-int	verbose;		/* print messages coming back from server */
-int	connected;		/* 1 = connected to server, -1 = logged in */
-int	fromatty;		/* input is from a terminal */
-int	interactive;		/* interactively prompt on m* cmds */
-int	confirmrest;		/* confirm rest of current m* cmd */
-int	debug;			/* debugging level */
-int	bell;			/* ring bell on cmd completion */
-int	doglob;			/* glob local file names */
-int	autologin;		/* establish user account on connection */
-int	proxy;			/* proxy server connection active */
-int	proxflag;		/* proxy connection exists */
-int	gatemode;		/* use gate-ftp */
-char   *gateserver;		/* server to use for gate-ftp */
-int	sunique;		/* store files on server with unique name */
-int	runique;		/* store local files with unique name */
-int	mcase;			/* map upper to lower case for mget names */
-int	ntflag;			/* use ntin ntout tables for name translation */
-int	mapflag;		/* use mapin mapout templates on file names */
-int	preserve;		/* preserve modification time on files */
-int	progress;		/* display transfer progress bar */
-int	code;			/* return/reply code for ftp command */
-int	crflag;			/* if 1, strip car. rets. on ascii gets */
-char	pasv[BUFSIZ];		/* passive port for proxy data connection */
-int	passivemode;		/* passive mode enabled */
-int	activefallback;		/* fall back to active mode if passive fails */
-char   *altarg;			/* argv[1] with no shell-like preprocessing  */
-char	ntin[17];		/* input translation table */
-char	ntout[17];		/* output translation table */
-char	mapin[MAXPATHLEN];	/* input map template */
-char	mapout[MAXPATHLEN];	/* output map template */
-char	typename[32];		/* name of file transfer type */
-int	type;			/* requested file transfer type */
-int	curtype;		/* current file transfer type */
-char	structname[32];		/* name of file transfer structure */
-int	stru;			/* file transfer structure */
-char	formname[32];		/* name of file transfer format */
-int	form;			/* file transfer format */
-char	modename[32];		/* name of file transfer mode */
-int	mode;			/* file transfer mode */
-char	bytename[32];		/* local byte size in ascii */
-int	bytesize;		/* local byte size in binary */
-int	anonftp;		/* automatic anonymous login */
-int	dirchange;		/* remote directory changed by cd command */
-int	flushcache;		/* set HTTP cache flush headers with request */
-int	rate_get;		/* maximum get xfer rate */
-int	rate_get_incr;		/* increment for get xfer rate */
-int	rate_put;		/* maximum put xfer rate */
-int	rate_put_incr;		/* increment for put xfer rate */
-int	retry_connect;		/* seconds between retrying connection */
-int	ttywidth;		/* width of tty */
-char   *tmpdir;			/* temporary directory */
-FILE   *ttyout;			/* stdout, or stderr if retrieving to stdout */
-int	epsv4;			/* use EPSV/EPRT on IPv4 connections */
+GLOBAL	int	trace;		/* trace packets exchanged */
+GLOBAL	int	hash;		/* print # for each buffer transferred */
+GLOBAL	int	mark;		/* number of bytes between hashes */
+GLOBAL	int	sendport;	/* use PORT/LPRT cmd for each data connection */
+GLOBAL	int	verbose;	/* print messages coming back from server */
+GLOBAL	int	connected;	/* 1 = connected to server, -1 = logged in */
+GLOBAL	int	fromatty;	/* input is from a terminal */
+GLOBAL	int	interactive;	/* interactively prompt on m* cmds */
+GLOBAL	int	confirmrest;	/* confirm rest of current m* cmd */
+GLOBAL	int	debug;		/* debugging level */
+GLOBAL	int	bell;		/* ring bell on cmd completion */
+GLOBAL	int	doglob;		/* glob local file names */
+GLOBAL	int	autologin;	/* establish user account on connection */
+GLOBAL	int	proxy;		/* proxy server connection active */
+GLOBAL	int	proxflag;	/* proxy connection exists */
+GLOBAL	int	gatemode;	/* use gate-ftp */
+GLOBAL	char   *gateserver;	/* server to use for gate-ftp */
+GLOBAL	int	sunique;	/* store files on server with unique name */
+GLOBAL	int	runique;	/* store local files with unique name */
+GLOBAL	int	mcase;		/* map upper to lower case for mget names */
+GLOBAL	int	ntflag;		/* use ntin ntout tables for name translation */
+GLOBAL	int	mapflag;	/* use mapin mapout templates on file names */
+GLOBAL	int	preserve;	/* preserve modification time on files */
+GLOBAL	int	progress;	/* display transfer progress bar */
+GLOBAL	int	code;		/* return/reply code for ftp command */
+GLOBAL	int	crflag;		/* if 1, strip car. rets. on ascii gets */
+GLOBAL	int	passivemode;	/* passive mode enabled */
+GLOBAL	int	activefallback;	/* fall back to active mode if passive fails */
+GLOBAL	char   *altarg;		/* argv[1] with no shell-like preprocessing  */
+GLOBAL	char	ntin[17];	/* input translation table */
+GLOBAL	char	ntout[17];	/* output translation table */
+GLOBAL	char	mapin[MAXPATHLEN]; /* input map template */
+GLOBAL	char	mapout[MAXPATHLEN]; /* output map template */
+GLOBAL	char	typename[32];	/* name of file transfer type */
+GLOBAL	int	type;		/* requested file transfer type */
+GLOBAL	int	curtype;	/* current file transfer type */
+GLOBAL	char	structname[32];	/* name of file transfer structure */
+GLOBAL	int	stru;		/* file transfer structure */
+GLOBAL	char	formname[32];	/* name of file transfer format */
+GLOBAL	int	form;		/* file transfer format */
+GLOBAL	char	modename[32];	/* name of file transfer mode */
+GLOBAL	int	mode;		/* file transfer mode */
+GLOBAL	char	bytename[32];	/* local byte size in ascii */
+GLOBAL	int	bytesize;	/* local byte size in binary */
+GLOBAL	int	anonftp;	/* automatic anonymous login */
+GLOBAL	int	dirchange;	/* remote directory changed by cd command */
+GLOBAL	int	flushcache;	/* set HTTP cache flush headers with request */
+GLOBAL	int	rate_get;	/* maximum get xfer rate */
+GLOBAL	int	rate_get_incr;	/* increment for get xfer rate */
+GLOBAL	int	rate_put;	/* maximum put xfer rate */
+GLOBAL	int	rate_put_incr;	/* increment for put xfer rate */
+GLOBAL	int	retry_connect;	/* seconds between retrying connection */
+GLOBAL	int	ttywidth;	/* width of tty */
+GLOBAL	char   *tmpdir;		/* temporary directory */
+GLOBAL	FILE   *ttyout;		/* stdout, or stderr if retrieving to stdout */
+GLOBAL	int	epsv4;		/* use EPSV/EPRT on IPv4 connections */
 
 #ifndef NO_EDITCOMPLETE
-int	  editing;		/* command line editing enabled */
-EditLine *el;			/* editline(3) status structure */
-History  *hist;			/* editline(3) history structure */
-char	 *cursor_pos;		/* cursor position we're looking for */
-size_t	  cursor_argc;		/* location of cursor in margv */
-size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
+GLOBAL	int	  editing;	/* command line editing enabled */
+GLOBAL	EditLine *el;		/* editline(3) status structure */
+GLOBAL	History  *hist;		/* editline(3) history structure */
+GLOBAL	char	 *cursor_pos;	/* cursor position we're looking for */
+GLOBAL	size_t	  cursor_argc;	/* location of cursor in margv */
+GLOBAL	size_t	  cursor_argo;	/* offset of cursor in margv[cursor_argc] */
 #endif /* !NO_EDITCOMPLETE */
 
-off_t	bytes;			/* current # of bytes read */
-off_t	filesize;		/* size of file being transferred */
-char   *direction;		/* direction transfer is occurring */
-off_t	restart_point;		/* offset to restart transfer */
+GLOBAL	off_t	bytes;		/* current # of bytes read */
+GLOBAL	off_t	filesize;	/* size of file being transferred */
+GLOBAL	char   *direction;	/* direction transfer is occurring */
+GLOBAL	off_t	restart_point;	/* offset to restart transfer */
 
-char   *hostname;		/* name of host connected to */
-int	unix_server;		/* server is unix, can use binary for ascii */
-int	unix_proxy;		/* proxy is unix, can use binary for ascii */
+GLOBAL	char   *hostname;	/* name of host connected to */
+GLOBAL	int	unix_server;	/* server is unix, can use binary for ascii */
+GLOBAL	int	unix_proxy;	/* proxy is unix, can use binary for ascii */
 
-char 	*ftpport;		/* port number to use for FTP connections */
-char	*httpport;		/* port number to use for HTTP connections */
-char	*gateport;		/* port number to use for gateftp connections */
+GLOBAL	char 	*ftpport;	/* port number to use for FTP connections */
+GLOBAL	char	*httpport;	/* port number to use for HTTP connections */
+GLOBAL	char	*gateport;	/* port number to use for gateftp connections */
 
-const char	*ftpproxy;	/* ftp:// proxy server */
-const char	*httpproxy;	/* http:// proxy server */
-const char	*no_proxy;	/* list of domains not to proxy */
+GLOBAL	const char *ftpproxy;	/* ftp:// proxy server */
+GLOBAL	const char *httpproxy;	/* http:// proxy server */
+GLOBAL	const char *no_proxy;	/* list of domains not to proxy */
 
-char   *outfile;		/* filename to output URLs to */
-int	restartautofetch;	/* restart auto-fetch */
+GLOBAL	char   *outfile;	/* filename to output URLs to */
+GLOBAL	int	restartautofetch; /* restart auto-fetch */
 
-jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
+GLOBAL	jmp_buf	toplevel;	/* non-local goto stuff for cmd scanner */
 
-char	line[FTPBUFLEN];	/* input line buffer */
-char	*stringbase;		/* current scan point in line buffer */
-char	argbuf[FTPBUFLEN];	/* argument storage buffer */
-char	*argbase;		/* current storage point in arg buffer */
-StringList *marg_sl;		/* stringlist containing margv */
-int	margc;			/* count of arguments on input line */
+GLOBAL	char	line[FTPBUFLEN]; /* input line buffer */
+GLOBAL	char	*stringbase;	/* current scan point in line buffer */
+GLOBAL	char	argbuf[FTPBUFLEN]; /* argument storage buffer */
+GLOBAL	char	*argbase;	/* current storage point in arg buffer */
+GLOBAL	StringList *marg_sl;	/* stringlist containing margv */
+GLOBAL	int	margc;		/* count of arguments on input line */
 #define margv (marg_sl->sl_str)	/* args parsed from input line */
-int     cpend;                  /* flag: if != 0, then pending server reply */
-int	mflag;			/* flag: if != 0, then active multi command */
+GLOBAL	int     cpend;		/* flag: if != 0, then pending server reply */
+GLOBAL	int	mflag;		/* flag: if != 0, then active multi command */
 
-int	options;		/* used during socket creation */
+GLOBAL	int	options;	/* used during socket creation */
 
-int	sndbuf_size;		/* socket send buffer size */
-int	rcvbuf_size;		/* socket receive buffer size */
+GLOBAL	int	sndbuf_size;	/* socket send buffer size */
+GLOBAL	int	rcvbuf_size;	/* socket receive buffer size */
 
-int	macnum;			/* number of defined macros */
-struct macel macros[16];
-char	macbuf[4096];
+GLOBAL	int	macnum;		/* number of defined macros */
+GLOBAL	struct macel macros[16];
+GLOBAL	char	macbuf[4096];
+
+GLOBAL	char	 home[MAXPATHLEN];	/* home directory (for lcd) */
+GLOBAL	char	 reply_string[BUFSIZ];	/* first line of previous reply */
+
+GLOBAL	FILE   	*cin;
+GLOBAL	FILE   	*cout;
+GLOBAL	int	 data;
+
+extern	struct cmd cmdtab[];
+extern	int	 NCMDS;
+
+extern	char	*__progname;		/* from crt0.o */
