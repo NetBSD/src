@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.21 1995/04/17 12:22:08 chopps Exp $	*/
+/*	$NetBSD: advnops.c,v 1.22 1995/08/18 15:14:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -886,7 +886,12 @@ adnullop(sp)
 
 #define adosfs_close ((int (*) __P((struct vop_close_args *)))adnullop)
 #define adosfs_fsync ((int (*) __P((struct vop_fsync_args *)))adnullop)
+#ifdef NFSSERVER
+int	lease_check __P((struct vop_lease_args *));
+#define	adosfs_lease_check lease_check
+#else
 #define adosfs_lease_check ((int (*) __P((struct vop_lease_args *)))adnullop)
+#endif
 #define adosfs_seek ((int (*) __P((struct vop_seek_args *)))adnullop)
 #define adosfs_vfree ((int (*) __P((struct vop_vfree_args *)))adnullop)
 
