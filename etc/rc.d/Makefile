@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.18 2001/04/05 17:04:03 wiz Exp $
+# $NetBSD: Makefile,v 1.19 2001/04/05 23:54:59 thorpej Exp $
 
 .include <bsd.own.mk>
 
-FILES=	DAEMON LOGIN NETWORK SERVERS accounting amd apmd bootparams \
+FILES=	DAEMON LOGIN NETWORK SERVERS accounting altqd amd apmd bootparams \
 	bootconf.sh ccd cleartmp cron dhclient dhcpd dhcrelay dmesg \
 	fsck inetd ipfilter ipmon ipnat ipsec isdnd kdc ldconfig \
 	lkm1 lkm2 lkm3 local lpd mopd motd mountall mountcritlocal \
