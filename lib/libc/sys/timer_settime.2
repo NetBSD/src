@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_settime.2,v 1.3 2003/09/13 23:00:38 kleink Exp $
+.\"	$NetBSD: timer_settime.2,v 1.4 2003/09/14 09:02:50 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,9 @@
 .Dt TIMER_SETTIME 2
 .Os
 .Sh NAME
-.Nm timer_settime, timer_gettime, timer_getoverrun
+.Nm timer_settime ,
+.Nm timer_gettime ,
+.Nm timer_getoverrun
 .Nd process timer manipulation
 .Sh LIBRARY
 .Lb libc
@@ -48,7 +50,7 @@
 .Fn timer_settime "timer_t timerid" "int flags" "const struct itimerspec * restrict tim" "struct itimerspec * restrict otim"
 .Ft int
 .Fn timer_gettime "timer_t timerid" "struct itimerspec *tim"
-.Ft int 
+.Ft int
 .Fn timer_getoverrun "timer_t timerid"
 .Sh DESCRIPTION
 The
@@ -70,8 +72,8 @@ If the
 .Ar flags
 argument is set to
 .Dv TIMER_RELTIME
-then the expiration time is set to the value in nanoseconds specified in
-the
+then the expiration time is set to the value in nanoseconds specified
+in the
 .Ar tim
 argument from the time the call to
 .Fn timer_settime
@@ -83,14 +85,15 @@ argument is set to
 then the expiration time is set to be equal to the difference between the
 clock associated with this timer, and the value specified in the
 .Ar tim
-argument. If that time has already passed, then the call succeeds, and the
+argument.
+If that time has already passed, then the call succeeds, and the
 expiration notification occurs.
 .Pp
 If the
 .Fa it_interval
 of the
 .Ar tim
-argument is non zero, then the timer reloads upon expiration.
+argument is non-zero, then the timer reloads upon expiration.
 .Pp
 The
 .Fn timer_gettime
@@ -116,8 +119,7 @@ argument.
 .Sh NOTES
 Expiration time values are always rounded up to the resolution of the timer,
 so a notification will never be sent before the requested time.
-Values returned
-in the
+Values returned in the
 .Ar otim
 argument of
 .Fn timer_settime
@@ -162,7 +164,7 @@ function will fail if:
 .It Bq Er EINVAL
 A nanosecond field in the
 .Ar tim
-structure specified a value less than zero or greater than or equal to 10e9. 
+structure specified a value less than zero or greater than or equal to 10e9.
 .El
 .Sh SEE ALSO
 .Xr clock_gettime 2 ,
