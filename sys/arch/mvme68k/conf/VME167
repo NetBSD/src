@@ -1,4 +1,4 @@
-#	$NetBSD: VME167,v 1.20 2003/09/22 14:11:23 cl Exp $
+#	$NetBSD: VME167,v 1.20.2.1 2004/07/15 20:19:57 he Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -20,6 +20,7 @@ options 	KTRACE
 options 	COMPAT_43
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 file-system 	FFS
 file-system 	NFS
