@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2004/03/24 17:06:57 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -73,10 +73,10 @@ struct btinfo_systype {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void *lookup_bootinfo(int);
 #endif
 
 #ifdef _STANDALONE
-void bi_init __P((paddr_t));
-void bi_add __P((void *, int, int));
+void bi_init(paddr_t);
+void bi_add(void *, int, int);
 #endif

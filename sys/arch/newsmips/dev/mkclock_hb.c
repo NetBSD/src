@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.3 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.3 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,20 +62,17 @@ CFATTACH_DECL(mkclock_hb, sizeof(struct mk48txx_softc),
 extern struct cfdriver mkclock_cd;
 
 int
-mkclock_hb_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mkclock_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	static int mkclock_hb_matched;
 
 	/* Only one clock, please. */
 	if (mkclock_hb_matched)
-		return (0);
+		return 0;
 
 	if (strcmp(ha->ha_name, mkclock_cd.cd_name))
-		return (0);
+		return 0;
 
 	mkclock_hb_matched = 1;
 
@@ -83,9 +80,7 @@ mkclock_hb_match(parent, cf, aux)
 }
 
 void
-mkclock_hb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mkclock_hb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mk48txx_softc *sc = (void *)self;
 	struct hb_attach_args *ha = aux;
