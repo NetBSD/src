@@ -1,4 +1,4 @@
-/*	$NetBSD: blist.h,v 1.5 2005/04/06 13:09:10 yamt Exp $	*/
+/*	$NetBSD: blist.h,v 1.6 2005/04/06 13:13:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Matthew Dillon.  All Rights Reserved.
@@ -56,6 +56,11 @@
 
 #ifndef _SYS_BLIST_H_
 #define _SYS_BLIST_H_
+
+/*
+ * for space efficiency, sizeof(blist_bitmap_t) should be
+ * greater than or equal to sizeof(blist_blkno_t).
+ */
 
 typedef uint32_t blist_bitmap_t;
 typedef uint32_t blist_blkno_t;
