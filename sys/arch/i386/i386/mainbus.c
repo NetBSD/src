@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.34 2001/10/24 15:53:04 soren Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.35 2001/10/26 17:07:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -140,10 +140,12 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+#if NPCI > 0
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
 	pci_mode = pci_mode_detect();
+#endif
 
 #if NACPI > 0
 	if (acpi_probe()) {
