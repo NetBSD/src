@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.52 2001/01/21 19:36:31 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.53 2001/01/21 19:42:29 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -129,12 +129,10 @@
 #endif
 #endif /* defined(__OpenBSD__) */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #endif
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -820,7 +818,6 @@ USB_DETACH(aue)
 	return (0);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 aue_activate(device_ptr_t self, enum devact act)
 {
@@ -840,7 +837,6 @@ aue_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
@@ -988,9 +984,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct mbuf		*m;
 	u_int32_t		total_len;
 	struct aue_rxpkt	r;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int			s;
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev),__FUNCTION__));
 
@@ -1433,9 +1427,7 @@ Static int
 aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct aue_softc	*sc = ifp->if_softc;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct mii_data		*mii;
 	int			s, error = 0;
@@ -1534,25 +1526,23 @@ Static void
 aue_watchdog(struct ifnet *ifp)
 {
 	struct aue_softc	*sc = ifp->if_softc;
+	struct aue_chain	*c;
+	usbd_status		stat;
+	int			s;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __FUNCTION__));
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->aue_dev));
 
-	/*
-	 * The polling business is a kludge to avoid allowing the
-	 * USB code to call tsleep() in usbd_delay_ms(), which will
-	 * kill us since the watchdog routine is invoked from
-	 * interrupt context.
-	 */
-	usbd_set_polling(sc->aue_udev, 1);
-	aue_stop(sc);
-	aue_init(sc);
-	usbd_set_polling(sc->aue_udev, 0);
+	s = splusb();
+	c = &sc->aue_cdata.aue_tx_chain[0];
+	usbd_get_xfer_status(c->aue_xfer, NULL, NULL, NULL, &stat);
+	aue_txeof(c->aue_xfer, c, stat);
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		aue_start(ifp);
+	splx(s);
 }
 
 /*
