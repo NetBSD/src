@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.14 1997/10/29 18:36:47 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.15 1997/10/31 09:11:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.14 1997/10/29 18:36:47 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.15 1997/10/31 09:11:53 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -217,13 +217,11 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 		_PATH_USRSBIN,
 		NULL
 	};
-	char execbase[MAXPATHLEN];
 	const char **argv, **edir;
 	pid_t pid;
-	int argc = 1, i, status, maxargc;
-	char *optbuf = NULL, execname[MAXPATHLEN + 1];
+	int argc, i, status, maxargc;
+	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN];
 	const char *extra = getoptions(vfstype);
-
 
 #ifdef __GNUC__
 	/* Avoid vfork clobbering */
@@ -231,30 +229,29 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	(void) &vfstype;
 #endif
 
-	if (strcmp(vfstype, "ufs") == 0)
+	if (!strcmp(vfstype, "ufs"))
 		vfstype = MOUNT_UFS;
 
-	maxargc = 100;
-	argv = emalloc(sizeof(char *) * maxargc);
-
-	/* construct basename of executable and argv[0] simultaneously */
-	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
-
-	/* We set argv[0] to the real name for crunch'ed binaries */
-	argv[0] = execbase;	
-
 	if (options) {
-		if (extra != NULL)
+		if (extra)
 			optbuf = catopt(options, extra, 0);
 		else
 			optbuf = estrdup(options);
+	} else {
+		if (extra)
+			optbuf = estrdup(extra);
+		else
+			optbuf = NULL;
 	}
-	else if (extra)
-		optbuf = estrdup(extra);
 
+	maxargc = 64;
+	argv = emalloc(sizeof(char *) * maxargc);
+
+	(void) snprintf(execbase, sizeof(execbase), "fsck_%s", vfstype);
+	argc = 0;
+	argv[argc++] = execbase;
 	if (optbuf)
 		mangle(optbuf, &argc, &argv, &maxargc);
-
 	argv[argc++] = spec;
 	argv[argc] = NULL;
 
@@ -426,8 +423,7 @@ catopt(s0, s1, fr)
 		i = strlen(s0) + strlen(s1) + 1 + 1;
 		cp = emalloc(i);
 		(void)snprintf(cp, i, "%s,%s", s0, s1);
-	}
-	else
+	} else
 		cp = estrdup(s1);
 
 	if (s0 && fr)
@@ -437,23 +433,23 @@ catopt(s0, s1, fr)
 
 
 static void
-mangle(opts, argcp, argvp, maxargcp)
-	char *opts;
-	int *argcp;
+mangle(options, argcp, argvp, maxargcp)
+	char *options;
+	int *argcp, *maxargcp;
 	const char ***argvp;
-	int *maxargcp;
 {
 	char *p, *s;
-	int argc = *argcp, maxargc = *maxargcp;
-	const char **argv = *argvp;
+	int argc, maxargc;
+	const char **argv;
 
 	argc = *argcp;
+	argv = *argvp;
 	maxargc = *maxargcp;
 
-	for (s = opts; (p = strsep(&s, ",")) != NULL;) {
-		/* always leave space for one more argument and the NULL */
+	for (s = options; (p = strsep(&s, ",")) != NULL;) {
+		/* Always leave space for one more argument and the NULL. */
 		if (argc >= maxargc - 3) {
-			maxargc += 50;
+			maxargc <<= 1;
 			argv = erealloc(argv, maxargc * sizeof(char *));
 		}
 		if (*p != '\0')
@@ -464,8 +460,7 @@ mangle(opts, argcp, argvp, maxargcp)
 					*p = '\0';
 					argv[argc++] = p+1;
 				}
-			}
-			else {
+			} else {
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
