@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.2 1998/01/09 06:07:12 perry Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -354,18 +354,18 @@ true_receive(rbufp)
 	/*
 	 * Read clock output.  Automatically handles STREAMS, CLKLDISC.
 	 */
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX, &pp->lastrec);
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &pp->lastrec);
 
 	/*
 	 * There is a case where <cr><lf> generates 2 timestamps.
 	 */
 	if (pp->lencode == 0)
 		return;
-	pp->lastcode[pp->lencode] = '\0';
-	true_debug(peer, "receive(%s) [%d]\n", pp->lastcode, pp->lencode);
+	pp->a_lastcode[pp->lencode] = '\0';
+	true_debug(peer, "receive(%s) [%d]\n", pp->a_lastcode, pp->lencode);
 
 	up->pollcnt = 2;
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 
 	/*
 	 * We get down to business, check the timecode format and decode
@@ -378,7 +378,7 @@ true_receive(rbufp)
 	/*
 	 * Clock misunderstood our last command?
 	 */
-	if (pp->lastcode[0] == '?') {
+	if (pp->a_lastcode[0] == '?') {
 		true_doevent(peer, e_Huh);
 		return;
 	}
@@ -387,48 +387,49 @@ true_receive(rbufp)
 	 * Timecode: "nnnnn+nnn-nnn"
 	 * (from GOES clock when asked about satellite position)
 	 */
-	if ((pp->lastcode[5] == '+' || pp->lastcode[5] == '-') &&
-	    (pp->lastcode[9] == '+' || pp->lastcode[9] == '-') &&
-	    sscanf(pp->lastcode, "%5d%*c%3d%*c%3d", &lon, &lat, &off) == 3
-	    ) {
-		char *label = "Botch!";
+	if ((pp->a_lastcode[5] == '+' || pp->a_lastcode[5] == '-') &&
+	    (pp->a_lastcode[9] == '+' || pp->a_lastcode[9] == '-') &&
+	    sscanf(pp->a_lastcode, "%5d%*c%3d%*c%3d", &lon, &lat, &off) == 3
+	    )
+	  {
+	    const char *label = "Botch!";
 
-		/*
-		 * This is less than perfect.  Call the (satellite)
-		 * either EAST or WEST and adjust slop accodingly
-		 * Perfectionists would recalculate the exact delay
-		 * and adjust accordingly...
-		 */
-		if (lon > 7000 && lon < 14000) {
-			if (lon < 10000) {
-				new_station = GOES_EAST;
-				label = "EAST";
-			} else {
-				new_station = GOES_WEST;
-				label = "WEST";
-			}
-				
-			if (new_station != up->station) {
-				tmp_l_fp = pp->fudgetime1;
-				pp->fudgetime1 = pp->fudgetime2;
-				pp->fudgetime2 = tmp_l_fp;
-				up->station = new_station;
-			}
-		}
-		else {
-			refclock_report(peer, CEVNT_BADREPLY);
-			label = "UNKNOWN";
-		}
-		true_debug(peer, "GOES: station %s\n", label);
-		true_doevent(peer, e_Satellite);
-		return;
-	}
+	    /*
+	     * This is less than perfect.  Call the (satellite)
+	     * either EAST or WEST and adjust slop accodingly
+	     * Perfectionists would recalculate the exact delay
+	     * and adjust accordingly...
+	     */
+	    if (lon > 7000 && lon < 14000) {
+	      if (lon < 10000) {
+		new_station = GOES_EAST;
+		label = "EAST";
+	      } else {
+		new_station = GOES_WEST;
+		label = "WEST";
+	      }
+
+	      if (new_station != up->station) {
+		tmp_l_fp = pp->fudgetime1;
+		pp->fudgetime1 = pp->fudgetime2;
+		pp->fudgetime2 = tmp_l_fp;
+		up->station = new_station;
+	      }
+	    }
+	    else {
+	      refclock_report(peer, CEVNT_BADREPLY);
+	      label = "UNKNOWN";
+	    }
+	    true_debug(peer, "GOES: station %s\n", label);
+	    true_doevent(peer, e_Satellite);
+	    return;
+	  }
 
 	/*
 	 * Timecode: "Fnn"
 	 * (from TM/TMD clock when it wants to tell us what it's up to.)
 	 */
-	if (sscanf(pp->lastcode, "F%2d", &i) == 1 && i > 0 && i < 80) {
+	if (sscanf(pp->a_lastcode, "F%2d", &i) == 1 && i > 0 && i < 80) {
 		switch (i) {
 		case 50:
 			true_doevent(peer, e_F50);
@@ -447,10 +448,10 @@ true_receive(rbufp)
 	 * Timecode: " TRUETIME Mk III"
 	 * (from a TM/TMD clock during initialization.)
 	 */
-	if (strcmp(pp->lastcode, " TRUETIME Mk III") == 0) {
+	if (strcmp(pp->a_lastcode, " TRUETIME Mk III") == 0) {
 		true_doevent(peer, e_F18);
 		NLOG(NLOG_CLOCKSTATUS) {
-			msyslog(LOG_INFO, "TM/TMD: %s", pp->lastcode);
+			msyslog(LOG_INFO, "TM/TMD: %s", pp->a_lastcode);
 		}
 		return;
 	}
@@ -461,12 +462,12 @@ true_receive(rbufp)
 	 *            0123456789012345678901234
 	 * (from a TCU during initialization)
 	 */
-	if ((pp->lastcode[0] == 'N' || pp->lastcode[0] == 'S') &&
-	    (pp->lastcode[9] == 'W' || pp->lastcode[9] == 'E') &&
-	    pp->lastcode[18] == '+') {
+	if ((pp->a_lastcode[0] == 'N' || pp->a_lastcode[0] == 'S') &&
+	    (pp->a_lastcode[9] == 'W' || pp->a_lastcode[9] == 'E') &&
+	    pp->a_lastcode[18] == '+') {
 		true_doevent(peer, e_Location);
 		NLOG(NLOG_CLOCKSTATUS) {
-			msyslog(LOG_INFO, "TCU-800: %s", pp->lastcode);
+			msyslog(LOG_INFO, "TCU-800: %s", pp->a_lastcode);
 		}
 		return;
 	}
@@ -474,10 +475,10 @@ true_receive(rbufp)
  	 * Timecode: "ddd:hh:mm:ssQ"
 	 * (from all clocks supported by this driver.)
  	 */
-	if (pp->lastcode[3] == ':' &&
-	    pp->lastcode[6] == ':' &&
-	    pp->lastcode[9] == ':' &&
-	    sscanf(pp->lastcode, "%3d:%2d:%2d:%2d%c",
+	if (pp->a_lastcode[3] == ':' &&
+	    pp->a_lastcode[6] == ':' &&
+	    pp->a_lastcode[9] == ':' &&
+	    sscanf(pp->a_lastcode, "%3d:%2d:%2d:%2d%c",
 		   &pp->day, &pp->hour, &pp->minute,
 		   &pp->second, &sync) == 5) {
 

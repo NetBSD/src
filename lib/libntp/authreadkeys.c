@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.2 1998/01/09 03:15:58 perry Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -85,7 +85,7 @@ authreadkeys(file)
 	FILE *fp;
 	char *line;
 	char *token;
-	u_long keyno;
+	u_int32 keyno;
 	int keytype;
 	char buf[512];		/* lots of room for line? */
 #if !defined(VMS)   /* wjm - what are these lines doing here? */

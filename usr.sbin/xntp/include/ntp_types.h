@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.2 1998/01/09 06:06:16 perry Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.3 1998/03/06 18:17:18 christos Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -22,20 +22,6 @@
 #ifdef mac
 #undef mac
 #endif
-
-/*
- * Set up for prototyping
- */
-#ifndef P
-#if defined(__STDC__) || defined(USE_PROTOTYPES)
-#define	P(x)	x
-#else /* __STDC__ USE_PROTOTYPES */
-#define P(x)	()
-#if	!defined(const)
-#define	const
-#endif /* const */
-#endif /* __STDC__ USE_PROTOTYPES */
-#endif /* P */
 
 /*
  * VMS DECC (v4.1), {u_char,u_short,u_long} are only in SOCKET.H,

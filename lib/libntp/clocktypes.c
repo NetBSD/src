@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktypes.c,v 1.2 1998/01/09 03:16:05 perry Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
  * Data for pretty printing clock types
@@ -66,6 +66,10 @@ struct clktype clktypes[] = {
 	    "TRUETIME" },
 	{ REFCLK_GPS_HP,	"HP 58503A GPS Time & Frequency Receiver (26)",
 	    "GPS_HP" },
+	{ REFCLK_ARCRON_MSF,	"ARCRON MSF (and DCF77) Receiver (27)",
+	    "ARCRON_MSF" },
+	{ REFCLK_SHM,		"Clock attached thru shared Memory (28)",
+	    "SHM" },
 	{ -1,			"", "" }
 };
 

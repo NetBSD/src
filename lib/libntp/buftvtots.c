@@ -1,4 +1,4 @@
-/*	$NetBSD: buftvtots.c,v 1.2 1998/01/09 03:16:00 perry Exp $	*/
+/*	$NetBSD: buftvtots.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
  * buftvtots - pull a Unix-format (struct timeval) time stamp out of
@@ -18,7 +18,7 @@ buftvtots(bufp, ts)
 	register u_long usec;
 
 #ifdef XNTP_BIG_ENDIAN
-	bp = (u_char *)bufp;
+	bp = (const u_char *)bufp;
 
 	sec = (u_long)*bp++ & 0xff;
 	sec <<= 8;

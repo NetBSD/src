@@ -1,4 +1,4 @@
-/*	$NetBSD: authdecrypt.c,v 1.2 1998/01/09 03:15:54 perry Exp $	*/
+/*	$NetBSD: authdecrypt.c,v 1.3 1998/03/06 18:17:13 christos Exp $	*/
 
 /*
  * authdecrypt - routine to decrypt a packet to see if this guy knows our key.
@@ -21,9 +21,9 @@
 /*
  * Imported from the key data base module
  */
-extern u_long cache_keyid;	/* cached key ID */
-extern u_long DEScache_dkeys[];	/* cached decryption keys */
-extern u_long DESzerodkeys[];	/* zero key decryption keys */
+extern u_int32 cache_keyid;	/* cached key ID */
+extern u_int32 DEScache_dkeys[];	/* cached decryption keys */
+extern u_int32 DESzerodkeys[];	/* zero key decryption keys */
 
 /*
  * Stat counters, imported from data base module
@@ -33,7 +33,7 @@ extern u_int32 authkeyuncached;
 
 int
 DESauthdecrypt(keyno, pkt, length)
-	u_long keyno;
+	u_int32 keyno;
 	const u_int32 *pkt;
 	int length;	/* length of variable data in octets */
 {

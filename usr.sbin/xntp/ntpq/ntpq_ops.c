@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.2 1998/01/09 06:06:24 perry Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.3 1998/03/06 18:17:19 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -20,7 +20,7 @@ int		maxhostlen;
 /*
  * Declarations for command handlers in here
  */
-static	int	checkassocid	P((u_long));
+static	int	checkassocid	P((u_int32));
 static	char *	strsave		P((char *));
 static	struct varlist *findlistvar	P((struct varlist *, char *));
 static	void	doaddvlist	P((struct varlist *, char *));
@@ -40,7 +40,7 @@ static	void	readvar		P((struct parse *, FILE *));
 static	void	writevar	P((struct parse *, FILE *));
 static	void	clocklist	P((struct parse *, FILE *));
 static	void	clockvar	P((struct parse *, FILE *));
-static	int	findassidrange	P((u_long, u_long, int *, int *));
+static	int	findassidrange	P((u_int32, u_int32, int *, int *));
 static	void	mreadlist	P((struct parse *, FILE *));
 static	void	mreadvar	P((struct parse *, FILE *));
 static	int	dogetassoc	P((FILE *));
@@ -182,8 +182,8 @@ char flash2[] = " .+*    ";	/* flash decode for version 2 */
 char flash3[] = " x.-+#*o";	/* flash decode for peer status version 3 */
 
 struct varlist {
-	char *name;
-	char *value;
+  const char *name;
+  const char *value;
 } varlist[MAXLIST] = { { 0, 0 } };
 
 /*
@@ -208,7 +208,7 @@ extern u_char pktversion;
  */
 static int
 checkassocid(value)
-	u_long value;
+	u_int32 value;
 {
 	if (value == 0 || value >= 65536) {
 		(void) fprintf(stderr, "***Invalid association ID specified\n");
@@ -283,7 +283,7 @@ doaddvlist(vlist, vars)
 		if (vl->name == 0) {
 			vl->name = strsave(name);
 		} else if (vl->value != 0) {
-			(void) free(vl->value);
+			(void) free((void *) vl->value);
 			vl->value = 0;
 		}
 
@@ -313,9 +313,9 @@ dormvlist(vlist, vars)
 			(void) fprintf(stderr, "Variable `%s' not found\n",
 			    name);
 		} else {
-			(void) free(vl->name);
+			(void) free((void *) vl->name);
 			if (vl->value != 0)
-				(void) free(vl->value);
+				(void) free((void *) vl->value);
 			for ( ; (vl+1) < (varlist+MAXLIST)
 			    && (vl+1)->name != 0; vl++) {
 				vl->name = (vl+1)->name;
@@ -337,10 +337,10 @@ doclearvlist(vlist)
 	register struct varlist *vl;
 
 	for (vl = vlist; vl < vlist + MAXLIST && vl->name != 0; vl++) {
-		(void) free(vl->name);
+		(void) free((void *) vl->name);
 		vl->name = 0;
 		if (vl->value != 0) {
-			(void) free(vl->value);
+			(void) free((void *) vl->value);
 			vl->value = 0;
 		}
 	}
@@ -537,12 +537,13 @@ readlist(pcmd, fp)
 	int associd;
 
 	if (pcmd->nargs == 0) {
-		associd = 0;
+	  associd = 0;
 	} else {
-		if (pcmd->argval[0].uval == 0)
-			associd = 0;
-		else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
-			return;
+	  /* HMS: I think we want the u_int32 target here, not the u_long */
+	  if (pcmd->argval[0].uval == 0)
+	    associd = 0;
+	  else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
+	    return;
 	}
 
 	(void) dolist(varlist, associd, CTL_OP_READVAR,
@@ -565,15 +566,16 @@ writelist(pcmd, fp)
 	u_short rstatus;
 
 	if (pcmd->nargs == 0) {
-		associd = 0;
+	  associd = 0;
 	} else {
-		if (pcmd->argval[0].uval == 0)
-			associd = 0;
-		else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
-			return;
+	  /* HMS: Do we really want uval here? */
+	  if (pcmd->argval[0].uval == 0)
+	    associd = 0;
+	  else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
+	    return;
 	}
 
-	res = doquerylist(varlist, CTL_OP_WRITEVAR, associd, 0, &rstatus,
+	res = doquerylist(varlist, CTL_OP_WRITEVAR, associd, 1, &rstatus,
 	    &dsize, &datap);
 
 	if (res != 0)
@@ -599,6 +601,7 @@ readvar(pcmd, fp)
 	int associd;
 	struct varlist tmplist[MAXLIST];
 
+	/* HMS: uval? */
 	if (pcmd->nargs == 0 || pcmd->argval[0].uval == 0)
 		associd = 0;
 	else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
@@ -630,6 +633,7 @@ writevar(pcmd, fp)
 	u_short rstatus;
 	struct varlist tmplist[MAXLIST];
 
+	/* HMS: uval? */
 	if (pcmd->argval[0].uval == 0)
 		associd = 0;
 	else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
@@ -638,7 +642,7 @@ writevar(pcmd, fp)
 	memset((char *)tmplist, 0, sizeof(tmplist));
 	doaddvlist(tmplist, pcmd->argval[1].string);
 
-	res = doquerylist(tmplist, CTL_OP_WRITEVAR, associd, 0, &rstatus,
+	res = doquerylist(tmplist, CTL_OP_WRITEVAR, associd, 1, &rstatus,
 	    &dsize, &datap);
 
 	doclearvlist(tmplist);
@@ -665,6 +669,7 @@ clocklist(pcmd, fp)
 {
 	int associd;
 
+	/* HMS: uval? */
 	if (pcmd->nargs == 0) {
 		associd = 0;
 	} else {
@@ -689,6 +694,7 @@ clockvar(pcmd, fp)
 	int associd;
 	struct varlist tmplist[MAXLIST];
 
+	/* HMS: uval? */
 	if (pcmd->nargs == 0 || pcmd->argval[0].uval == 0)
 		associd = 0;
 	else if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
@@ -709,8 +715,8 @@ clockvar(pcmd, fp)
  */
 static int
 findassidrange(assid1, assid2, from, to)
-	u_long assid1;
-	u_long assid2;
+	u_int32 assid1;
+	u_int32 assid2;
 	int *from;
 	int *to;
 {
@@ -774,6 +780,7 @@ mreadlist(pcmd, fp)
 	int from;
 	int to;
 
+	/* HMS: uval? */
 	if (!findassidrange(pcmd->argval[0].uval, pcmd->argval[1].uval,
 	    &from, &to))
 		return;
@@ -802,6 +809,7 @@ mreadvar(pcmd, fp)
 	int to;
 	struct varlist tmplist[MAXLIST];
 
+	/* HMS: uval? */
 	if (!findassidrange(pcmd->argval[0].uval, pcmd->argval[1].uval,
 	    &from, &to))
 		return;
@@ -880,11 +888,11 @@ printassoc(showall, fp)
 	u_char statval;
 	int event;
 	u_long event_count;
-	char *conf;
+	const char *conf;
 	char *reach;
-	char *auth;
-	char *condition = "";
-	char *last_event;
+	const char *auth;
+	const char *condition = "";
+	const char *last_event;
 	char *cnt;
 	char buf[128];
 
@@ -1114,6 +1122,7 @@ pstatus(pcmd, fp)
 	int dsize;
 	u_short rstatus;
 
+	/* HMS: uval? */
 	if ((associd = checkassocid(pcmd->argval[0].uval)) == 0)
 		return;
 
@@ -1277,7 +1286,7 @@ doprintpeers(pvl, associd, rstatus, datalen, data, fp)
 	u_int32 srcadr;
 	u_int32 dstadr;
 	u_long srcport;
-	char *dstadr_refid = "0.0.0.0";
+	const char *dstadr_refid = "0.0.0.0";
 	u_long stratum;
 	long ppoll;
 	long hpoll;
@@ -1300,6 +1309,7 @@ doprintpeers(pvl, associd, rstatus, datalen, data, fp)
 	
 	while (nextvar(&datalen, &data, &name, &value)) {
 		u_int32 dummy;
+
 		i = findvar(name, peer_var);
 		if (i == 0)
 			continue;	/* don't know this one */

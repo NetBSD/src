@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.2 1998/01/09 06:06:41 perry Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.3 1998/03/06 18:17:21 christos Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 3 protocol machinery
@@ -31,7 +31,7 @@ u_char	sys_stratum;		/* stratum of system */
 s_char	sys_precision;		/* local clock precision */
 s_fp	sys_rootdelay;		/* distance to current sync source */
 u_fp	sys_rootdispersion;	/* dispersion of system clock */
-u_long	sys_refid;		/* reference source for local clock */
+u_int32	sys_refid;		/* reference source for local clock */
 l_fp	sys_offset;		/* combined offset from clock_select */
 u_fp	sys_maxd[3];		/* total (filter plus select) dispersion */
 u_fp	maxd;			/* max select dispersion */
@@ -107,7 +107,7 @@ extern int debug;
 static	void	clear_all	P((void));
 
 /*
- * transmit - Transmit Procedure. See Section 3.4.1 of the
+ * transmit - Transmit Procedure. See Section 3.4.2 of the
  *	specification.
  */
 void
@@ -139,7 +139,8 @@ transmit(peer)
 			bool = 1;
 	}
 	if (bool) {
-		u_long xkeyid;
+		u_int32 xkeyid;
+
 		int find_rtt = (peer->cast_flags & MDF_MCAST) &&
 		    peer->hmode != MODE_BROADCAST;
 
@@ -184,8 +185,7 @@ transmit(peer)
 			int sendlen;
 
 			xpkt.keyid = htonl(xkeyid);
-			auth1crypt(xkeyid, (u_int32 *)&xpkt,
-			    LEN_PKT_NOMAC);
+			auth1crypt(xkeyid, (u_int32 *)&xpkt, LEN_PKT_NOMAC);
 			get_systime(&peer->xmt);
 			L_ADD(&peer->xmt, &sys_authdelay);
 			HTONL_FP(&peer->xmt, &xpkt.xmt);
@@ -203,8 +203,7 @@ transmit(peer)
 			sendpkt(&peer->srcadr, find_rtt ?
 			    any_interface : peer->dstadr,
 			    ((peer->cast_flags & MDF_MCAST) && !find_rtt) ?
-			    peer->ttl : -7, &xpkt, sendlen +
-			    LEN_PKT_NOMAC);
+			    peer->ttl : -7, &xpkt, sendlen + LEN_PKT_NOMAC);
 #ifdef DEBUG
 			if (debug > 1)
 				printf("transmit auth to %s %s\n",
@@ -246,9 +245,6 @@ transmit(peer)
 		 * broadcasts.
 		 */
 		opeer_reach = peer->reach;
-		if (opeer_reach & 0x80 && peer->flags & FLAG_MCAST2) {
-			peer->hmode = MODE_BCLIENT;
-		}
 		peer->reach <<= 1;
 		if (peer->reach == 0) {
 			if (opeer_reach != 0)
@@ -261,10 +257,10 @@ transmit(peer)
 			if (peer->flags & FLAG_CONFIG) {
 				if (opeer_reach != 0) {
 					peer_clear(peer);
-					peer->timereachable =
-					    current_time;
+					peer->timereachable = current_time;
 				}
-			}
+			} else if (peer->flags & FLAG_MCAST2)
+				unpeer(peer);
 
 			/*
 			 * While we have a chance, if our system peer is
@@ -306,7 +302,7 @@ transmit(peer)
 				peer->hpoll--;
 			L_CLR(&off);
 			clock_filter(peer, &off, (s_fp)0,
-			    (u_fp)NTP_MAXDISPERSE);
+				     (u_fp)NTP_MAXDISPERSE);
 			if (peer->flags & FLAG_SYSPEER)
 				clock_select();
 		} else {
@@ -346,14 +342,14 @@ transmit(peer)
 		 * Oops, someone did already.
 		 */
 		TIMER_DEQUEUE(&peer->event_timer);
-	peer_timer = 1 << (int)max((u_char)min(peer->ppoll,
-	    peer->hpoll), peer->minpoll);
+	peer_timer = 1 << (int)max((u_char)min(peer->ppoll, peer->hpoll),
+				   peer->minpoll);
 	peer->event_timer.event_time = current_time + peer_timer;
 	TIMER_ENQUEUE(timerqueue, &peer->event_timer);
 }
 
 /*
- * receive - Receive Procedure.  See section 3.4.2 in the specification.
+ * receive - Receive Procedure.  See section 3.4.3 in the specification.
  */
 void
 receive(rbufp)
@@ -366,7 +362,7 @@ receive(rbufp)
 	int has_mac;
 	int trustable;
 	int is_authentic;
-	u_long hiskeyid;
+	u_int32 hiskeyid;
 	struct peer *peer2;
 
 #ifdef DEBUG
@@ -410,7 +406,7 @@ receive(rbufp)
 	if (PKT_MODE(pkt->li_vn_mode) == MODE_PRIVATE) {
 		if (restrict & RES_NOQUERY)
 			return;
-		process_private(rbufp, ((restrict&RES_NOMODIFY) == 0));
+		process_private(rbufp, ((restrict & RES_NOMODIFY) == 0));
 		return;
 	}
 
@@ -499,7 +495,7 @@ receive(rbufp)
 		if (debug > 2)
 			printf(
 	    "receive: pkt is %d octets, mac %d octets long, keyid %ld\n",
-			    rbufp->recv_length, has_mac, hiskeyid);
+			    rbufp->recv_length, has_mac, (u_long)hiskeyid);
 #endif
 	} else if (rbufp->recv_length == LEN_PKT_NOMAC) {
 		hiskeyid = 0;
@@ -849,7 +845,7 @@ receive(rbufp)
 
 
 /*
- * process_packet - Packet Procedure, a la Section 3.4.3 of the
+ * process_packet - Packet Procedure, a la Section 3.4.4 of the
  *	specification. Or almost, at least. If we're in here we have a
  *	reasonable expectation that we will be having a long term
  *	relationship with this host.
@@ -1276,7 +1272,7 @@ clock_update(peer)
 
 
 /*
- * poll_update - update peer poll interval. See Section 3.4.8 of the
+ * poll_update - update peer poll interval. See Section 3.4.9 of the
  *     spec.
  */
 void
@@ -1335,10 +1331,9 @@ poll_update(peer, new_hpoll, randomize)
 	}
 
 	/* hpoll <= maxpoll for sure */
-	newpoll = max((u_char)min(peer->ppoll, peer->hpoll),
-	    peer->minpoll);
-	if (randomize == POLL_MAKERANDOM || (randomize ==
-	     POLL_RANDOMCHANGE && newpoll != oldpoll))
+	newpoll = max((u_char)min(peer->ppoll, peer->hpoll), peer->minpoll);
+	if (randomize == POLL_MAKERANDOM
+	    || (randomize == POLL_RANDOMCHANGE && newpoll != oldpoll))
 		new_timer = (1 << (newpoll - 1))
 		    + ranp2(newpoll - 1) + current_time;
 	else
@@ -1379,7 +1374,7 @@ clear_all()
 
 
 /*
- * clear - clear peer filter registers.  See Section 3.4.7 of the spec.
+ * clear - clear peer filter registers.  See Section 3.4.8 of the spec.
  */
 void
 peer_clear(peer)
@@ -1495,8 +1490,7 @@ clock_filter(peer, sample_offset, sample_delay, sample_error)
 	 */
 	skewmax = 0;
 	for (n = 0; n < NTP_SHIFT && sample_delay; n++) {
-		for (j = 0; j < n && skewmax <
-		    CLOCK_MAXSEC; j++) {
+		for (j = 0; j < n && skewmax < CLOCK_MAXSEC; j++) {
 			if (distance[j] > distance[n]) {
 				s_fp ftmp;
 
@@ -1535,8 +1529,7 @@ clock_filter(peer, sample_offset, sample_delay, sample_error)
 
 		y = 0;
 		for (i = NTP_SHIFT - 1; i > 0; i--) {
-			if (peer->filter_error[ord[i]] >=
-			    NTP_MAXDISPERSE)
+			if (peer->filter_error[ord[i]] >= NTP_MAXDISPERSE)
 				d = NTP_MAXDISPERSE;
 			else {
 				d = peer->filter_soffset[ord[i]] -
@@ -1795,10 +1788,9 @@ clock_select()
 			nlist = 1;
 		} else {
 			if (sys_peer != 0) {
-			  report_event(EVNT_PEERSTCHG,
-				       (struct peer *)0);
-			  NLOG(NLOG_SYNCSTATUS)
-			    msyslog(LOG_INFO, "synchronisation lost");
+				report_event(EVNT_PEERSTCHG, (struct peer *)0);
+				NLOG(NLOG_SYNCSTATUS)
+				    msyslog(LOG_INFO, "synchronisation lost");
 			}
 			sys_peer = 0;
 			sys_stratum = STRATUM_UNSPEC;
@@ -1825,8 +1817,7 @@ clock_select()
 		    L_ISGEQ(&peer->offset, &high)))
 			continue;
 		peer->correct = 1;
-		d = peer->synch + ((u_fp)peer->stratum <<
-		    NTP_DISPFACTOR);
+		d = peer->synch + ((u_fp)peer->stratum << NTP_DISPFACTOR);
 		if (j >= NTP_MAXCLOCK) {
 			if (d >= synch[j - 1])
 				continue;
@@ -2006,10 +1997,10 @@ clock_select()
 
 #ifdef REFCLOCK
 		if (ISREFCLOCKADR(&sys_peer->srcadr))
-		  src = refnumtoa(sys_peer->srcadr.sin_addr.s_addr);
+			src = refnumtoa(sys_peer->srcadr.sin_addr.s_addr);
 		else
 #endif
-		  src = ntoa(&sys_peer->srcadr);
+			src = ntoa(&sys_peer->srcadr);
 
 		sys_poll = sys_peer->minpoll;
 		report_event(EVNT_PEERSTCHG, (struct peer *)0);
@@ -2151,14 +2142,15 @@ fast_xmit(rbufp, rmode, authentic)
 	struct pkt xpkt;
 	register struct pkt *rpkt;
 	u_char xmode;
-	u_long xkey = 0;
+	u_int32 xkey = 0;
 	int docrypt = 0;
 	l_fp xmt_ts, xmt_tx;
 	u_fp precision;
 
 #ifdef DEBUG
 	if (debug > 1)
-		printf("fast_xmit(%s, %d)\n", ntoa(&rbufp->recv_srcadr), rmode);
+		printf("fast_xmit(%s, %d)\n",
+		       ntoa(&rbufp->recv_srcadr), rmode);
 #endif
 
 	/*
@@ -2237,7 +2229,7 @@ fast_xmit(rbufp, rmode, authentic)
  */
 #define	DUSECS	1000000	/* us in a s */
 #define	HUSECS	(1 << 20) /* approx DUSECS for shifting etc */
-#define	MINSTEP	5	/* minimum clock increment (ys) */
+#define	MINSTEP	5	/* minimum clock increment (us) */
 #define MAXSTEP 20000	/* maximum clock increment (us) */
 #define MINLOOPS 5	/* minimum number of step samples */
 

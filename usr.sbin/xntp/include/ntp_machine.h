@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_machine.h,v 1.2 1998/01/09 06:06:10 perry Exp $	*/
+/*	$NetBSD: ntp_machine.h,v 1.3 1998/03/06 18:17:17 christos Exp $	*/
 
 /*
  * Collect all machine dependent idiosyncrasies in one place.
@@ -10,6 +10,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include "ntp_proto.h"
 
 /*
 
@@ -214,15 +216,17 @@ typedef unsigned long u_long;
  * Windows NT
  */
 #if defined(SYS_WINNT)
-# define REFCLOCK				/* from xntpd.mak */
-# define LOCAL_CLOCK			/* from xntpd.mak */
-# define DES					/* from libntp.mak */
-# define MD5					/* from libntp.mak */
-# define NTP_LITTLE_ENDIAN		/* from libntp.mak */
-# define SYSLOG_FILE			/* from libntp.mak */
-# define HAVE_PROTOTYPES		/* from ntpq.mak */
-# define SIZEOF_INT 4			/* for ntp_types.h */
-# define SYSV_TIMEOFDAY			/* for ntp_unixtime.h */
+# define MCAST			/* Enable Multicast Support */
+# define REFCLOCK		/* from xntpd.mak */
+# define LOCAL_CLOCK		/* from xntpd.mak */
+# define SHM_CLOCK		/* from xntpd.mak */
+# define DES			/* from libntp.mak */
+# define MD5			/* from libntp.mak */
+# define NTP_LITTLE_ENDIAN	/* from libntp.mak */
+# define SYSLOG_FILE		/* from libntp.mak */
+# define HAVE_PROTOTYPES	/* from ntpq.mak */
+# define SIZEOF_INT 4		/* for ntp_types.h */
+# define SYSV_TIMEOFDAY		/* for ntp_unixtime.h */
 # define HAVE_NET_IF_H
 # define QSORT_USES_VOID_P
 # define HAVE_MEMMOVE
@@ -259,10 +263,145 @@ typedef unsigned long u_long;
 typedef char *caddr_t;
 #endif
 
+/*casey Tue May 27 15:45:25 SAT 1997*/
+#ifdef SYS_VXWORKS
+
+/* casey's new defines */
+#define NO_MAIN_ALLOWED     1
+#define NO_NETDB            1
+#define NO_RENAME           1
+
+/* in vxWorks we use FIONBIO, but the others are defined for old systems, so
+ * all hell breaks loose if we leave them defined we define USE_FIONBIO to 
+ * undefine O_NONBLOCK FNDELAY O_NDELAY where necessary. 
+ */
+#define USE_FIONBIO         1
+/* end my new defines */
+    
+#define TIMEOFDAY           0x0     /* system wide realtime clock */
+#define HAVE_GETCLOCK       1       /* configure does not set this ... */
+#define HAVE_NO_NICE        1       /* configure does not set this ... */
+#define NODETACH            1
+
+/* vxWorks specific additions to take care of its 
+ * unix (non)complicance
+ */
+
+#include "vxWorks.h"
+#include "ioLib.h"
+#include "taskLib.h"
+#include "time.h"
+
+extern int sysClkRateGet();
+
+/* usrtime.h 
+ * Bob Herlien's excellent time code find it at:
+ * ftp://ftp.atd.ucar.edu/pub/vxworks/vx/usrTime.shar
+ * I would recommend this instead of clock_[g|s]ettime() plus you get
+ * adjtime() too ... casey
+ */
+/*
+extern int    gettimeofday( struct timeval *tp, struct timezone *tzp );
+extern int    settimeofday(struct timeval *, struct timezone *);
+extern int    adjtime( struct timeval *delta, struct timeval *olddelta );
+ */
+
+/* in  machines.c */
+extern void sleep (int seconds);
+extern void alarm (int seconds);
+/* machines.c */
+
+
+/*      this is really this     */
+#define getpid      taskIdSelf
+#define getclock    clock_gettime
+#define fcntl       ioctl
+#define _getch      getchar
+
+/* define this away for vxWorks */
+#define openlog(x,y) 
+/* use local defines for these */
+#undef min
+#undef max
+
+#endif /* SYS_VXWORKS */
+
+#ifdef NO_NETDB
+/* These structures are needed for gethostbyname() etc... */
+/* structures used by netdb.h */
+struct	hostent {
+	char	*h_name;	            /* official name of host */
+	char	**h_aliases;	        /* alias list */
+	int	h_addrtype;	                /* host address type */
+	int	h_length;	                /* length of address */
+	char	**h_addr_list;	        /* list of addresses from name server */
+#define		h_addr h_addr_list[0]   /* address, for backward compatibility */
+};
+
+struct	servent {
+	char	*s_name;	            /* official service name */
+	char	**s_aliases;	        /* alias list */
+	int	s_port;		                /* port # */
+	char	*s_proto;	            /* protocol to use */
+};
+extern int h_errno;
+
+#define TRY_AGAIN	2
+
+struct hostent *gethostbyname(char * netnum);
+struct hostent *gethostbyaddr(char * netnum, int size, int addr_type);
+/* type is the protocol */
+struct servent *getservbyname (char *name, char *type);
+#endif  /* NO_NETDB */
+
+#ifdef NO_MAIN_ALLOWED
+/* we have no main routines so lets make a plan */
+#define CALL(callname, progname, callmain) \
+    extern void callmain(int,char**); \
+    void callname(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) \
+        char *a0;  \
+        char *a1;  \
+        char *a2;  \
+        char *a3;  \
+        char *a4;  \
+        char *a5;  \
+        char *a6;  \
+        char *a7;  \
+        char *a8;  \
+        char *a9;  \
+        char *a10; \
+    { \
+      char *x[11]; \
+      int argc; \
+      char *argv[] = {progname,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}; \
+      int i; \
+      for (i=0;i<11;i++) \
+       x[i] = NULL; \
+      x[0] = a0; \
+      x[1] = a1; \
+      x[2] = a2; \
+      x[3] = a3; \
+      x[4] = a4; \
+      x[5] = a5; \
+      x[6] = a6; \
+      x[7] = a7; \
+      x[8] = a8; \
+      x[9] = a9; \
+      x[10] = a10; \
+      argc=1; \
+      for (i=0; i<11;i++) \
+        if (x[i]) \
+        { \
+          argv[argc++] = x[i];  \
+        } \
+     callmain(argc,argv);  \
+    }
+#endif /* NO_MAIN_ALLOWED */
+/*casey Tue May 27 15:45:25 SAT 1997*/
+
 /*
  * Here's where autoconfig starts to take over
  */
-
 #ifdef HAVE_SYS_STROPTS_H
 # define STREAM
 #endif
@@ -336,13 +475,13 @@ typedef char *caddr_t;
 # undef HAVE_BSD_TTYS
 #endif
 
-#if !defined(SYS_WINNT) && !defined(VMS)
+#if !defined(SYS_WINNT) && !defined(VMS) && !defined(SYS_VXWORKS)
 # if	!defined(HAVE_SYSV_TTYS) \
 	&& !defined(HAVE_BSD_TTYS) \
 	&& !defined(HAVE_TERMIOS)
 #include "ERROR: no tty type defined!"
 # endif
-#endif /* SYS_WINNT || VMS */
+#endif /* SYS_WINNT || VMS  || SYS_VXWORKS*/
 
 #ifdef	WORDS_BIGENDIAN
 # define	XNTP_BIG_ENDIAN	1
@@ -370,12 +509,6 @@ typedef char *caddr_t;
 	 * Pick one or the other.
 	 */
 	BYTE_ORDER_NOT_DEFINED_FOR_AUTHENTICATION
-#endif
-
-#ifdef HAVE_PROTOTYPES
-#define P(x) x
-#else
-#define P(x) ()
 #endif
 
 #endif /* __ntp_machine */

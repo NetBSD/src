@@ -1,4 +1,4 @@
-/*	$NetBSD: atolfp.c,v 1.2 1998/01/09 03:15:52 perry Exp $	*/
+/*	$NetBSD: atolfp.c,v 1.3 1998/03/06 18:17:13 christos Exp $	*/
 
 /*
  * atolfp - convert an ascii string to an l_fp number
@@ -37,7 +37,7 @@ atolfp(str, lfp)
 	char *ind;
 	int ndec;
 	int isneg;
-	static char *digits = "0123456789";
+	static const char *digits = "0123456789";
 
 	isneg = 0;
 	dec_i = dec_f = 0;

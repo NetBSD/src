@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.2 1998/01/09 06:07:17 perry Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.3 1998/03/06 18:17:26 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -1060,7 +1060,7 @@ doconfig(pcmd, fp, mode, refc)
 	int items;
 	int itemsize;
 	char *dummy;
-	u_long keyid;
+	u_int32 keyid;
 	u_int version;
 	u_char minpoll;
 	u_int flags;
@@ -1259,8 +1259,8 @@ doset(pcmd, fp, req)
  * data for printing/interrpreting the restrict flags
  */
 struct resflags {
-	char *str;
-	int bit;
+  const char *str;
+  int bit;
 };
 
 static struct resflags resflags[] = {
@@ -1299,11 +1299,11 @@ reslist(pcmd, fp)
 	char *addr;
 	char *mask;
 	struct resflags *rf;
-	u_long count;
+	u_int32 count;
 	u_short flags;
 	u_short mflags;
 	char flagstr[300];
-	static char *comma = ", ";
+	static const char *comma = ", ";
 
 	res = doquery(IMPL_XNTPD, REQ_GET_RESTRICT, 0, 0, 0, (char *)NULL,
 	    &items, &itemsize, (char **)&rl, 0);
@@ -1359,7 +1359,7 @@ reslist(pcmd, fp)
 			(void) strcpy(flagstr, "none");
 
 		(void) fprintf(fp, "%-15.15s %-15.15s %9ld  %s\n",
-		    addr, mask, count, flagstr);
+		    addr, mask, (u_long)count, flagstr);
 		rl++;
 		items--;
 	}
@@ -1416,7 +1416,7 @@ do_restrict(pcmd, fp, req_code)
 	int items;
 	int itemsize;
 	char *dummy;
-	u_long num;
+	u_int32 num;
 	u_long bit;
 	int i;
 	int res;
@@ -1596,8 +1596,8 @@ monlist(pcmd, fp)
  * Mapping between command line strings and stat reset flags
  */
 struct statreset {
-	char *str;
-	int flag;
+  const char *str;
+  int flag;
 } sreset[] = {
 	{ "io",		RESET_FLAG_IO },
 	{ "sys",	RESET_FLAG_SYS },
@@ -1741,7 +1741,7 @@ do_trustkey(pcmd, fp, req)
 	FILE *fp;
 	int req;
 {
-	u_long keyids[MAXARGS];
+	u_int32 keyids[MAXARGS];
 	int i;
 	int items;
 	int itemsize;
@@ -1754,7 +1754,7 @@ do_trustkey(pcmd, fp, req)
 		keyids[ritems++] = pcmd->argval[i].uval;
 	}
 
-	res = doquery(IMPL_XNTPD, req, 1, ritems, sizeof(u_long),
+	res = doquery(IMPL_XNTPD, req, 1, ritems, sizeof(u_int32),
 	    (char *)keyids, &items, &itemsize, &dummy, 0);
 	
 	if (res == 0)
@@ -1839,19 +1839,21 @@ traps(pcmd, fp)
 		(void) fprintf(fp, "address %s, port %d\n",
 		    numtoa(it->trap_address), ntohs(it->trap_port));
 		(void) fprintf(fp, "interface: %s, ",
-		   it->local_address==0?"wildcard":numtoa(it->local_address));
+			       (it->local_address == 0)
+			       ? "wildcard"
+			       : numtoa(it->local_address));
 
-		if (htonl(it->flags) & TRAP_CONFIGURED)
+		if (ntohl(it->flags) & TRAP_CONFIGURED)
 			(void) fprintf(fp, "configured\n");
-		else if (it->flags & TRAP_NONPRIO)
+		else if (ntohl(it->flags) & TRAP_NONPRIO)
 			(void) fprintf(fp, "low priority\n");
 		else
 			(void) fprintf(fp, "normal priority\n");
 		
 		(void) fprintf(fp, "set for %ld secs, last set %ld secs ago\n",
-		    (long)it->origtime, (long)it->settime);
+		    (long)ntohl(it->origtime), (long)ntohl(it->settime));
 		(void) fprintf(fp, "sequence %d, number of resets %ld\n",
-		    it->sequence, (long)it->resets);
+		    ntohs(it->sequence), (long)ntohl(it->resets));
 	}
 }
 
@@ -1951,16 +1953,16 @@ do_changekey(pcmd, fp, req)
 	FILE *fp;
 	int req;
 {
-	u_long key;
+	u_int32 key;
 	int items;
 	int itemsize;
 	char *dummy;
 	int res;
 
 
-	key = htonl(pcmd->argval[0].uval);
+	key = htonl((u_int32)pcmd->argval[0].uval);
 
-	res = doquery(IMPL_XNTPD, req, 1, 1, sizeof(u_long),
+	res = doquery(IMPL_XNTPD, req, 1, 1, sizeof(u_int32),
 	    (char *)&key, &items, &itemsize, &dummy, 0);
 	
 	if (res == 0)
@@ -2033,18 +2035,18 @@ ctlstats(pcmd, fp)
 /*
  * Table for human printing leap bits
  */
-char *leapbittab[] = {
-	"00 (no leap second scheduled)",
-	"01 (second to be added at end of month)",
-	"10 (second to be deleted at end of month)",
-	"11 (clock out of sync)"
+const char *leapbittab[] = {
+  "00 (no leap second scheduled)",
+  "01 (second to be added at end of month)",
+  "10 (second to be deleted at end of month)",
+  "11 (clock out of sync)"
 };
 
-char *controlleapbittab[] = {
-	"00 (leap controlled by lower stratum)",
-	"01 (second to be added at end of month)",
-	"10 (second to be deleted at end of month)",
-	"11 (lower stratum leap information ignored - no leap)"
+const char *controlleapbittab[] = {
+  "00 (leap controlled by lower stratum)",
+  "01 (second to be added at end of month)",
+  "10 (second to be deleted at end of month)",
+  "11 (lower stratum leap information ignored - no leap)"
 };
 
 /*
@@ -2234,13 +2236,13 @@ fudge(pcmd, fp)
 		if (!atoint(pcmd->argval[2].string, &val))
 			err = 1;
 		else
-			fudgedata.fudgeval_flags = htonl(val);
+			fudgedata.fudgeval_flags = htonl((u_int32)val);
 	} else if (STREQ(pcmd->argval[1].string, "flags")) {
 		fudgedata.which = htonl(FUDGE_FLAGS);
-		if (!atoint(pcmd->argval[2].string, &val))
+		if (!hextoint(pcmd->argval[2].string, &val))
 			err = 1;
 		else
-			fudgedata.fudgeval_flags = htonl(val & 0xf);
+			fudgedata.fudgeval_flags = htonl((u_int32)(val & 0xf));
 	} else {
 		(void) fprintf(stderr, "What fudge is %s?\n",
 		    pcmd->argval[1].string);
@@ -2273,11 +2275,11 @@ clkbug(pcmd, fp)
 {
 	register int i;
 	register int n;
-	register u_long s;
+	register u_int32 s;
 	struct info_clkbug *cl;
 	/* 8 is the maximum number of clocks which will fit in a packet */
 	u_long clist[min(MAXARGS, 8)];
-	u_long ltemp;
+	u_int32 ltemp;
 	int qitems;
 	int items;
 	int itemsize;
@@ -2309,14 +2311,14 @@ clkbug(pcmd, fp)
 		if (n > NUMCBUGVALUES)
 			n = NUMCBUGVALUES;
 		for (i = 0; i < n; i++) {
-			ltemp = (u_long)ntohl(cl->values[i]);
-			ltemp &= 0xffffffff;
+			ltemp = ntohl(cl->values[i]);
+			ltemp &= 0xffffffff; /* HMS: This does nothing now */
 			if ((i & 0x3) == 0)
 				(void) fprintf(fp, "\n");
 			if (s & (1 << i))
-				(void) fprintf(fp, "%12ld", ltemp);
+				(void) fprintf(fp, "%12ld", (u_long)ltemp);
 			else
-				(void) fprintf(fp, "%12lu", ltemp);
+				(void) fprintf(fp, "%12lu", (u_long)ltemp);
 		}
 		(void) fprintf(fp, "\n");
 
