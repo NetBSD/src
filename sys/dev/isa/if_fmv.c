@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.24 2000/05/29 17:37:17 jhawk Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.25 2001/11/13 08:01:18 lukem Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,6 +30,9 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.25 2001/11/13 08:01:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

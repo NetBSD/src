@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.19 2000/03/23 07:01:35 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.20 2001/11/13 08:01:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.20 2001/11/13 08:01:33 lukem Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.11 2000/11/04 18:47:20 thorpej Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.12 2001/11/13 08:01:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.12 2001/11/13 08:01:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

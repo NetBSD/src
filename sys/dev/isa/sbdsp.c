@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.107 2001/02/22 15:23:31 minoura Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.108 2001/11/13 08:01:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,6 +79,9 @@
  * with information from SB "Hardware Programming Guide" and the
  * Linux drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.108 2001/11/13 08:01:30 lukem Exp $");
 
 #include "midi.h"
 #include "mpu.h"

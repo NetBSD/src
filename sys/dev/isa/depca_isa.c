@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.1 2000/08/11 02:27:10 thorpej Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.2 2001/11/13 08:01:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.2 2001/11/13 08:01:12 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

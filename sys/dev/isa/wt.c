@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.52 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.53 2001/11/13 08:01:35 lukem Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -49,6 +49,9 @@
 /*
  *  Copyright 1988, 1989 by Intel Corporation
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.53 2001/11/13 08:01:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
