@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.12 1994/04/21 23:34:17 briggs Exp $
+ *	$Id: locore.s,v 1.13 1994/05/06 17:39:44 briggs Exp $
  */
 
 #include "assym.s"
@@ -2002,7 +2002,7 @@ ENTRY(longjmp)
  * _whichqs tells which of the 32 queues _qs
  * have processes in them.  Setrq puts processes into queues, Remrq
  * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_pri, divided by 4
+ * other processes are on a queue related to p->p_priority, divided by 4
  * actually to shrink the 0-127 range of priorities into the 32 available
  * queues.
  */
@@ -2195,10 +2195,10 @@ Lswok:
 	movl	d1,a1
 	cmpl	a1@(P_LINK),a1		| anyone on queue?
 	jeq	Lbadsw			| no, panic
-	movl	a1@(P_LINK),a0			| p = q->p_link
-	movl	a0@(P_LINK),a1@(P_LINK)		| q->p_link = p->p_link
-	movl	a0@(P_LINK),a1			| q = p->p_link
-	movl	a0@(P_RLINK),a1@(P_RLINK)	| q->p_rlink = p->p_rlink
+	movl	a1@(P_LINK),a0			| p = q->p_forw
+	movl	a0@(P_LINK),a1@(P_LINK)		| q->p_forw = p->p_forw
+	movl	a0@(P_LINK),a1			| q = p->p_forw
+	movl	a0@(P_RLINK),a1@(P_RLINK)	| q->p_back = p->p_back
 	cmpl	a0@(P_LINK),d1		| anyone left on queue?
 	jeq	Lsw2			| no, skip
 	movl	_whichqs,d1

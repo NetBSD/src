@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.14 1994/04/22 12:11:16 briggs Exp $
+ *	$Id: machdep.c,v 1.15 1994/05/06 17:39:48 briggs Exp $
  */
 
 #include <param.h>
@@ -386,8 +386,8 @@ setregs(p, entry, sp, retval)
 	u_long sp;
 	int retval[2];
 {
-	p->p_regs[PC] = entry & ~1;
-	p->p_regs[SP] = sp;
+	p->p_md.md_regs[PC] = entry & ~1;
+	p->p_md.md_regs[SP] = sp;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -542,9 +542,9 @@ sendsig(catcher, sig, mask, code)
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
@@ -582,9 +582,9 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -717,9 +717,9 @@ sun_sendsig(catcher, sig, mask, code)
 	register short ft;
 	int oonstack, fsize;
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -728,9 +728,9 @@ sun_sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sun_sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -847,9 +847,9 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
@@ -974,9 +974,9 @@ sun_sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
@@ -1329,7 +1329,7 @@ nmihand(frame)
 				      "forced crash, nosync" : "forced crash");
 			}
 			crashandburn++;
-			timeout(candbtimer, (caddr_t)0, candbdelay);
+			timeout((void *) candbtimer, (caddr_t)0, candbdelay);
 		}
 #endif
 		return;
@@ -2083,14 +2083,14 @@ likeohmigod(void)
 {
 	register struct proc *p = curproc;
 	if (p)
-		printf("-%d,0x%x,0x%x\n", p->p_pid, p->p_regs[PC], p->p_regs[SP]);
+		printf("-%d,0x%x,0x%x\n", p->p_pid, p->p_md.md_regs[PC], p->p_md.md_regs[SP]);
 	return;
 	if (p)
 	  printf("swtch %d (%s) out.\n", p->p_pid, p->p_comm);
 	else
 	  printf("proc NULL out.\n", p->p_pid, p->p_comm);
 /*	printf("proc %d (%s, pc=0x%x, sp=0x%x being switched out.\n",
-		p->p_pid, p->p_comm, p->p_regs[PC], p->p_regs[SP]); */
+		p->p_pid, p->p_comm, p->p_md.md_regs[PC], p->p_md.md_regs[SP]); */
 }
 
 void
@@ -2098,14 +2098,14 @@ likeyuhknow(void)
 {
 	register struct proc *p = curproc;
 	if (p)
-		printf("+%d,0x%x,0x%x\n", p->p_pid, p->p_regs[PC], p->p_regs[SP]);
+		printf("+%d,0x%x,0x%x\n", p->p_pid, p->p_md.md_regs[PC], p->p_md.md_regs[SP]);
 	return;
 	if (p)
 	  printf("proc %d (%s) in.\n", p->p_pid, p->p_comm);
 	else
 	  printf("proc NULL in.\n", p->p_pid, p->p_comm);
 /*	printf("proc %d (%s, pc=0x%x, sp=0x%x being switched in.\n",
-		p->p_pid, p->p_comm, p->p_regs[PC], p->p_regs[SP]);*/
+		p->p_pid, p->p_comm, p->p_md.md_regs[PC], p->p_md.md_regs[SP]);*/
 }
 
 #if defined(MACHINE_NONCONTIG)
@@ -2168,7 +2168,7 @@ pslisting(void)
 		if (strlen(s) > 16) s = "> 16 char.";
 		printf("0x%x: pid %d, flag 0x%x, stat %d, comm %s, wmsg %s.\n",
 			p, p->p_pid, p->p_flag, p->p_stat, p->p_comm, s);
-		p = p->p_nxt;
+		p = p->p_next;
 	} while (p && p != allproc);
 }
 

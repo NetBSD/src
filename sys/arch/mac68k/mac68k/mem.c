@@ -39,7 +39,7 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.3 1994/04/18 02:59:16 briggs Exp $
+ *	$Id: mem.c,v 1.4 1994/05/06 17:39:51 briggs Exp $
  */
 
 /*
@@ -104,10 +104,11 @@ mmrw(dev, uio, flags)
 /* minor device 1 is kernel memory */
 		case 1:
 			c = MIN(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)uio->uio_offset, c,
+			if (!kernacc((caddr_t)(long)uio->uio_offset, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)uio->uio_offset, (int)c, uio);
+			error = uiomove((caddr_t)(long)uio->uio_offset,
+					(int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
