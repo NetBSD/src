@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.27 2003/08/07 16:43:09 agc Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.28 2004/01/29 01:39:15 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.27 2003/08/07 16:43:09 agc Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.28 2004/01/29 01:39:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -517,14 +517,14 @@ _yp_getnetbyaddr(rv, cb_data, ap)
 	default:
 		return NS_UNAVAIL;
 	case 3: 	/* Class A */
-		snprintf(qbuf, sizeof(qbuf), "%u", netbr[0]);
+		snprintf(qbuf, sizeof(qbuf), "%u", netbr[3]);
 		break;
 	case 2: 	/* Class B */
-		snprintf(qbuf, sizeof(qbuf), "%u.%u", netbr[0], netbr[1]);
+		snprintf(qbuf, sizeof(qbuf), "%u.%u", netbr[2], netbr[3]);
 		break;
 	case 1: 	/* Class C */
-		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u", netbr[0], netbr[1],
-		    netbr[2]);
+		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u", netbr[1], netbr[2],
+		    netbr[3]);
 		break;
 	case 0: 	/* Class D - E */
 		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u", netbr[0], netbr[1],
