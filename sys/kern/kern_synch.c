@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.126 2003/02/04 20:15:59 pk Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.127 2003/05/08 02:04:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.126 2003/02/04 20:15:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.127 2003/05/08 02:04:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1026,7 +1026,7 @@ setrunnable(struct lwp *l)
 	case LSZOMB:
 	case LSDEAD:
 	default:
-		panic("setrunnable");
+		panic("setrunnable: lwp %p state was %d", l, l->l_stat);
 	case LSSTOP:
 		/*
 		 * If we're being traced (possibly because someone attached us
