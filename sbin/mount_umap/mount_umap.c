@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.9 1999/06/25 19:28:37 perseant Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.10 1999/07/08 03:04:40 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.9 1999/06/25 19:28:37 perseant Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.10 1999/07/08 03:04:40 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ main(argc, argv)
 
 
 	/* Setup mount call args. */
-	args.target = source;
+	args.la.target = source;
 	args.nentries = nentries;
 	args.mapdata = mapdata;
 	args.gnentries = gnentries;
