@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.13 1999/04/05 03:02:07 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.14 1999/04/05 05:48:12 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
-#include <isofs/cd9660/iso.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <err.h>
@@ -85,11 +84,9 @@
 #include <unistd.h>
 #include <util.h>
 
-#include "extern.h"
-
 #include "stand/common/bbinfo.h"
 
-int	verbose, nowrite, hflag, cd9660, conblockmode, conblockstart;
+int	verbose, nowrite, hflag, conblockmode, conblockstart;
 char	*boot, *proto, *dev;
 
 struct bbinfoloc *bbinfolocp;
@@ -99,10 +96,7 @@ int	max_block_count;
 
 void		setup_contig_blks(u_long, u_long, int, int, char *);
 char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums_ffs __P((char *, int, unsigned long));
-int		loadblocknums_cd9660 __P((char *, int, unsigned long));
 int		loadblocknums_passthru __P((char *, int, unsigned long));
-static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
 
@@ -112,7 +106,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-	    "usage: %s [-n] [-v] <boot> <proto> <dev>\n", __progname);
+	    "usage: %s [-n] [-v] -b blkno boot proto dev\n", __progname);
 	exit(1);
 }
 
@@ -126,8 +120,6 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 	struct stat disksb, bootsb;
-	struct statfs fssb;
-	struct disklabel dl;
 	unsigned long partoffset;
 	int (*loadblocknums_func) __P((char *, int, unsigned long));
 
@@ -189,56 +181,11 @@ main(argc, argv)
 	 */
 	if (!S_ISREG(bootsb.st_mode))
 		errx(1, "%s must be a regular file", boot);
-	if(!conblockmode) {
-		if ((minor(disksb.st_rdev) / getmaxpartitions()) != 
-		    (minor(bootsb.st_dev) / getmaxpartitions()))
-			errx(1, "%s must be somewhere on %s", boot, dev);
-		/*
-		 * Determine the file system type of the file system on which
-		 * the boot program resides.
-		 */
-		if (statfs(boot, &fssb) == -1)
-			err(1, "statfs: %s", boot);
-		if (strcmp(fssb.f_fstypename, MOUNT_CD9660) == 0) {
-			/*
-			 * Installing a boot block on a CD-ROM image.
-			 */
-			cd9660 = 1;
-		} else if (strcmp(fssb.f_fstypename, MOUNT_FFS) != 0) {
-			/*
-			 * Some other file system type, which is not FFS.
-			 * Can't handle these.
-			 */
-			errx(1, "unsupported file system type: %s",
-			    fssb.f_fstypename);
-		}
-		if (verbose)
-			printf("file system type: %s\n", fssb.f_fstypename);
-		/*
-		 * Find the offset of the secondary boot block's partition
-		 * into the disk.
-		 */
-		if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
-			err(1, "read disklabel: %s", dev);
-		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
-		    getmaxpartitions()].p_offset;
-		if (verbose)
-			printf("%s partition offset = 0x%lx\n",
-				boot, partoffset);
-		/* 
-		 * sync filesystems (make sure boot's block numbers are stable)
-		 */
-		sync();
-		sleep(2);
-		sync();
-		sleep(2);
-	}
-	if (conblockmode)
-		loadblocknums_func = loadblocknums_passthru;
-	else if (cd9660)
-		loadblocknums_func = loadblocknums_cd9660;
-	else
-		loadblocknums_func = loadblocknums_ffs;
+
+	if (!conblockmode)
+		usage();
+
+	loadblocknums_func = loadblocknums_passthru;
 
 	if ((*loadblocknums_func)(boot, devfd, partoffset) != 0)
 		exit(1);
@@ -262,68 +209,6 @@ main(argc, argv)
 
 	if (write(devfd, protostore, protosize) != protosize)
 		err(1, "write bootstrap");
-
-	/*
-	 * Disks should already have a disklabel, but CD-ROM images
-	 * may not.  Construct one as the SCSI CD driver would and
-	 * write it to the image.
-	 */
-	if (cd9660) {
-		char block[DEV_BSIZE];
-		struct disklabel *lp;
-		size_t imagesize;
-		int rawpart = getrawpartition();
-		off_t labeloff;
-
-		labeloff = (LABELSECTOR * DEV_BSIZE) + LABELOFFSET;
-		if (lseek(devfd, labeloff, SEEK_SET) != labeloff)
-			err(1, "lseek to write fake label");
-
-		if (read(devfd, block, sizeof(block)) != sizeof(block))
-			err(1, "read fake label block");
-
-		lp = (struct disklabel *)block;
-
-		imagesize = howmany(dl.d_partitions[rawpart].p_size *
-		    dl.d_secsize, DEV_BSIZE);
-
-		memset(lp, 0, sizeof(struct disklabel));
-
-		lp->d_secsize = DEV_BSIZE;
-		lp->d_ntracks = 1;
-		lp->d_nsectors = 100;
-		lp->d_ncylinders = (imagesize / 100) + 1;
-		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-
-		strncpy(lp->d_typename, "SCSI CD-ROM", 16);
-		lp->d_type = DTYPE_SCSI;
-		strncpy(lp->d_packname, "NetBSD/alpha", 16);
-		lp->d_secperunit = imagesize;
-		lp->d_rpm = 300;
-		lp->d_interleave = 1;
-		lp->d_flags = D_REMOVABLE;
-
-		lp->d_partitions[0].p_size = lp->d_secperunit;
-		lp->d_partitions[0].p_offset = 0;
-		lp->d_partitions[0].p_fstype = FS_ISO9660;
-		lp->d_partitions[rawpart].p_size = lp->d_secperunit;
-		lp->d_partitions[rawpart].p_offset = 0;
-		lp->d_partitions[rawpart].p_fstype = FS_ISO9660;
-		lp->d_npartitions = rawpart + 1;
-
-		lp->d_bbsize = 8192;
-		lp->d_sbsize = 8192;
-
-		lp->d_magic = lp->d_magic2 = DISKMAGIC;
-
-		lp->d_checksum = dkcksum(lp);
-
-		if (lseek(devfd, labeloff, SEEK_SET) != labeloff)
-			err(1, "lseek to write fake label");
-
-		if (write(devfd, block, sizeof(block)) != sizeof(block))
-			err(1, "write fake label");
-	}
 
 	{
 	struct boot_block bb;
@@ -425,162 +310,6 @@ loadprotoblocks(fname, size)
 
 	*size = sz;
 	return (bp);
-}
-
-static void
-devread(fd, buf, blk, size, msg)
-	int	fd;
-	void	*buf;
-	daddr_t	blk;
-	size_t	size;
-	char	*msg;
-{
-	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
-		err(1, "%s: devread: lseek", msg);
-
-	if (read(fd, buf, size) != size)
-		err(1, "%s: devread: read", msg);
-}
-
-static char sblock[SBSIZE];
-
-int
-loadblocknums_ffs(boot, devfd, partoffset)
-	char	*boot;
-	int	devfd;
-	unsigned long partoffset;
-{
-	int		i, fd;
-	struct	stat	statbuf;
-	struct	statfs	statfsbuf;
-	struct fs	*fs;
-	char		*buf;
-	daddr_t		blk, *ap;
-	struct dinode	*ip;
-	int		ndb;
-	int32_t		cksum;
-
-	/*
-	 * Open 2nd-level boot program and record the block numbers
-	 * it occupies on the filesystem represented by `devfd'.
-	 */
-	if ((fd = open(boot, O_RDONLY)) < 0)
-		err(1, "open: %s", boot);
-
-	if (fstatfs(fd, &statfsbuf) != 0)
-		err(1, "statfs: %s", boot);
-
-	if (strncmp(statfsbuf.f_fstypename, MOUNT_FFS, MFSNAMELEN))
-		errx(1, "%s: must be on a FFS filesystem", boot);
-
-	if (fsync(fd) != 0)
-		err(1, "fsync: %s", boot);
-
-	if (fstat(fd, &statbuf) != 0)
-		err(1, "fstat: %s", boot);
-
-	close(fd);
-
-	/* Read superblock */
-	devread(devfd, sblock, btodb(SBOFF) + partoffset, SBSIZE,
-	    "superblock");
-	fs = (struct fs *)sblock;
-
-	/* Read inode */
-	if ((buf = malloc(fs->fs_bsize)) == NULL)
-		errx(1, "No memory for filesystem block");
-
-	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
-	devread(devfd, buf, blk + partoffset, fs->fs_bsize, "inode");
-	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
-
-	/*
-	 * Register filesystem block size.
-	 */
-	bbinfop->bsize = fs->fs_bsize;
-
-	/*
-	 * Get the block numbers; we don't handle fragments
-	 */
-	ndb = howmany(ip->di_size, fs->fs_bsize);
-	if (ndb > max_block_count)
-		errx(1, "%s: Too many blocks", boot);
-
-	/*
-	 * Register block count.
-	 */
-	bbinfop->nblocks = ndb;
-
-	if (verbose)
-		printf("%s: block numbers: ", boot);
-	ap = ip->di_db;
-	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--) {
-		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk + partoffset;
-		if (verbose)
-			printf("%d ", bbinfop->blocks[i]);
-	}
-	if (verbose)
-		printf("\n");
-
-	if (ndb == 0)
-		goto checksum;
-
-	/*
-	 * Just one level of indirections; there isn't much room
-	 * for more in the 1st-level bootblocks anyway.
-	 */
-	if (verbose)
-		printf("%s: block numbers (indirect): ", boot);
-	blk = ip->di_ib[0];
-	devread(devfd, buf, blk + partoffset, fs->fs_bsize,
-	    "indirect block");
-	ap = (daddr_t *)buf;
-	for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--) {
-		blk = fsbtodb(fs, *ap);
-		bbinfop->blocks[i] = blk + partoffset;
-		if (verbose)
-			printf("%d ", bbinfop->blocks[i]);
-	}
-	if (verbose)
-		printf("\n");
-
-	if (ndb)
-		errx(1, "%s: Too many blocks", boot);
-
-checksum:
-	cksum = 0;
-	for (i = 0; i < bbinfop->nblocks +
-	    (sizeof (*bbinfop) / sizeof (bbinfop->blocks[0])) - 1; i++) {
-		cksum += ((int32_t *)bbinfop)[i];
-	}
-	bbinfop->cksum = -cksum;
-
-	return 0;
-}
-
-/* ARGSUSED */
-int
-loadblocknums_cd9660(boot, devfd, partoffset)
-	char *boot;
-	int devfd;
-	unsigned long partoffset;
-{
-	u_long blkno, size;
-	char *fname;
-
-	fname = strrchr(boot, '/');
-	if (fname != NULL)
-		fname++;
-	else
-		fname = boot;
-
-	if (cd9660_lookup(fname, devfd, &blkno, &size))
-		errx(1, "unable to find file `%s' in file system", fname);
-
-	setup_contig_blks(blkno, size, ISO_DEFAULT_BLOCK_SIZE,
-		ISO_DEFAULT_BLOCK_SIZE, fname);
-	return 0;
 }
 
 int
