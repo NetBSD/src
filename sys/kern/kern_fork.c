@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.68 2000/06/27 17:41:20 mrg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.69 2000/07/04 15:33:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -139,7 +139,7 @@ fork1(p1, flags, exitsig, stack, stacksize, func, arg, retval, rnewprocp)
 	uid = p1->p_cred->p_ruid;
 	if (__predict_false((nprocs >= maxproc - 1 && uid != 0) ||
 			    nprocs >= maxproc)) {
-		tablefull("proc");
+		tablefull("proc", "increase kern.maxproc or NPROC");
 		return (EAGAIN);
 	}
 
