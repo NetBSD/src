@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.109 1998/12/23 06:00:03 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.110 1998/12/23 23:01:44 itohy Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -74,8 +74,7 @@ STRIPFLAG?=	-s
 # XXX The next two are temporary until the transition to UVM is complete.
 
 # Systems on which UVM is the standard VM system.
-.if	(${MACHINE} != "pica") && \
-	(${MACHINE} != "x68k")
+.if	(${MACHINE} != "pica")
 UVM?=		yes
 .endif
 

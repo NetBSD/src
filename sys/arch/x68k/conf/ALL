@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.24 1998/12/16 14:10:38 minoura Exp $
+#	$NetBSD: ALL,v 1.25 1998/12/23 23:01:52 itohy Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -20,7 +20,7 @@ options 	M68060
 
 #### System options specific to the x68k port
 
-#options 	UVM			# new virtual memory system
+options 	UVM			# new virtual memory system
 options 	MACHINE_NONCONTIG	# support for noncontiguous memory
 options 	MACHINE_NEW_NONCONTIG	# new i/f for noncontig memory support
 options 	FPU_EMULATE		# software fpu emulation for MC68030
