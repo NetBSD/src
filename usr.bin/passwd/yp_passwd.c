@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char sccsid[] = "@(#)nis_passwd.c	1.0 2/2/93";
+static char sccsid[] = "@(#)yp_passwd.c	1.0 2/2/93";
 #endif /* not lint */
 
 #ifdef	YP
@@ -60,7 +60,7 @@ static struct passwd *ypgetpwnam();
 static uid_t uid;
 char *domain;
 
-nis_passwd(uname)
+yp_passwd(uname)
         char *uname;
 {
         char *master;
@@ -77,7 +77,7 @@ nis_passwd(uname)
          * Get local domain
          */
         if (r = yp_get_default_domain(&domain)) {
-                (void)fprintf(stderr, "%s: can't get local NIS domain. Reason: %s\n", progname, yperr_string(r));
+                (void)fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n", progname, yperr_string(r));
                 exit(1);
         }
 
@@ -86,7 +86,7 @@ nis_passwd(uname)
          * the daemon.
          */
         if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
-                (void)fprintf(stderr, "%s: can't find the master NIS server. Reason: %s\n", progname, yperr_string(r));
+                (void)fprintf(stderr, "%s: can't find the master YP server. Reason: %s\n", progname, yperr_string(r));
                 exit(1);
         }
 
@@ -94,7 +94,7 @@ nis_passwd(uname)
          * Ask the portmapper for the port of the daemon.
          */
         if ((rpcport = getrpcport(master, YPPASSWDPROG, YPPASSWDPROC_UPDATE, IPPROTO_UDP)) == 0) {
-                (void)fprintf(stderr, "%s: master NIS server not running yppasswd daemon.\n\tCan't change password.\n", progname);
+                (void)fprintf(stderr, "%s: master YP server not running yppasswd daemon.\n\tCan't change password.\n", progname);
                 exit(1);
         }
 
@@ -142,9 +142,9 @@ nis_passwd(uname)
         if (r)
                 fprintf(stderr, "%s: rpc to yppasswdd failed.\n");
         else if (status)
-                printf("Couldn't change NIS password.\n");
+                printf("Couldn't change YP password.\n");
         else
-                printf("The NIS password has been changed on %s, the master NIS passwd server.\n", master);
+                printf("The YP password has been changed on %s, the master YP passwd server.\n", master);
 
         exit(0);
 }
@@ -159,7 +159,7 @@ getnewpasswd(pw, old_pass)
 	int tries;
 	char salt[9], *crypt(), *getpass();
         
-	(void)printf("Changing NIS password for %s.\n", pw->pw_name);
+	(void)printf("Changing YP password for %s.\n", pw->pw_name);
 
         if (uid && old_pass) {
                 *old_pass = NULL;
