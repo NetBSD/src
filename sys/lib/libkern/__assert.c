@@ -1,4 +1,4 @@
-/*	$NetBSD: __assert.c,v 1.1 1996/08/27 00:44:20 cgd Exp $	*/
+/*	$NetBSD: __assert.c,v 1.2 1999/02/11 09:13:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <lib/libkern/libkern.h>
 
 void
 __assert(t, f, l, e)
