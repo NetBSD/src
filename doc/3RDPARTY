@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.193 2004/03/20 04:48:23 groo Exp $
+#	$NetBSD: 3RDPARTY,v 1.194 2004/03/20 21:52:54 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -143,7 +143,7 @@ Archive Site:	ftp://ftp.vix.com/pub/vixie/cron-3.0/
 Mailing List:
 Responsible:
 Notes:
-ftp://ftp.isc.org/isc/cron/cron_4.0_b1.shar is available, aparently
+ftp://ftp.isc.org/isc/cron/cron_4.0_b1.shar is available, apparently
 there's also a version in the works that has all changes from *BSD and Linux.
 
 Package:	cvs
