@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.1 2002/07/19 19:04:40 yamt Exp $	*/
+/*	$NetBSD: path.c,v 1.2 2002/08/08 00:17:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.1 2002/07/19 19:04:40 yamt Exp $");
+__RCSID("$NetBSD: path.c,v 1.2 2002/08/08 00:17:39 yamt Exp $");
 #endif
 
 #include <err.h>
@@ -37,6 +37,12 @@ __RCSID("$NetBSD: path.c,v 1.1 2002/07/19 19:04:40 yamt Exp $");
 
 struct pathhead PkgPath = TAILQ_HEAD_INITIALIZER(PkgPath);
 
+/*
+ * path_create: make PkgPath from a given string.
+ *
+ * => relative pathes are resolved to absolute ones.
+ * => if NULL is passed, use "." instead. XXX
+ */
 void
 path_create(const char *path)
 {
@@ -99,6 +105,9 @@ path_create(const char *path)
 	}
 }
 
+/*
+ * path_free: free PkgPath.
+ */
 void
 path_free()
 {
@@ -111,6 +120,11 @@ path_free()
 	}
 }
 
+/*
+ * path_setenv: construct string from PkgPath and set it to a environment.
+ *
+ * => the environment name is given by envname.
+ */
 void
 path_setenv(const char *envname)
 {
