@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.11.10.2 2000/10/18 04:15:42 tv Exp $
+#	$NetBSD: airport,v 1.11.10.3 2000/10/19 13:44:56 he Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -38,7 +38,7 @@ BHM:Birmingham Municipal, Alabama, USA
 BHZ:All Airports around Belo Horizonte, MG, Brazil
 BIL:Billings Logan International, Montana, USA
 BIS:Bismarck Municipal, North Dakota, USA
-BKK:Bangkok, Thailand
+BKK:Bangkok [Don Muang International Airport], Thailand
 BKL:Cleveland Lakefront, Ohio, USA
 BNA:Nashville Metro, Tennessee, USA
 BNE:Brisbane, Queensland, Australia
@@ -57,6 +57,7 @@ CAE:Columbia Metropolitan, South Carolina, USA
 CAK:Akron/Canton Regional, Ohio, USA
 CBR:Canberra, Australian Capital Territory, Australia
 CDG:Charles de Gaulle, Paris, France
+CEI:Chiang Rai [Chiang Rai International Airport], Thailand
 CGD:Changde, China
 CGN:Koeln/Bonn, Cologne, Germany
 CGX:Chicago Merrill C. Meigs Field, Chicago, Illinois, USA
@@ -68,6 +69,7 @@ CLE:Cleveland-Hopkins International, Ohio, USA
 CLT:Charlotte/Douglas International, North Carolina, USA
 CMH:Columbus International, Ohio, USA
 CNS:Cairns, Queensland, Australia
+CNX:Chiang Mai [Chiang Mai International Airport], Thailand
 COS:Peterson, Colorado Springs, USA
 CPH:Copenhagen, Denmark
 CPR:Casper/Natrone County International, Wyoming, USA
@@ -116,9 +118,11 @@ GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Sao Paulo, Brazil
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
 HAV:Jose Marti, Havana, Cuba
+HDY:Hat Yai (Hatyai) [Songkhia], Thailand
 HEL:Helsinki, Finland
 HEL:Kazantzakis, Herakleion, Greece
 HKG:Hong Kong
+HKT:Phuket, Thailand
 HNL:Honolulu International, Hawaii, USA
 HOT:Hot Springs Memorial Field
 HOU:Houston William P. Hobby, Texas, USA
