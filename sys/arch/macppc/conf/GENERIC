@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.98 2001/05/27 23:39:03 wiz Exp $
+#	$NetBSD: GENERIC,v 1.99 2001/06/03 13:46:58 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	32
 
@@ -147,6 +147,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP 10x0/2xx0 SCSI/Fibre Chan
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
@@ -213,6 +214,7 @@ wsmouse0 at ams?
 scsibus* at adv?
 scsibus* at ahc?
 scsibus* at bha?
+scsibus* at iha?
 scsibus* at isp?
 scsibus* at esp?
 scsibus* at mesh?
