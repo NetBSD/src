@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.21 1999/12/04 22:17:43 tron Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.22 2000/03/30 11:27:17 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 int
 linux_sys_signal(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -98,7 +98,7 @@ linux_sys_signal(p, v, retval)
 /* ARGSUSED */
 int
 linux_sys_siggetmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -121,7 +121,7 @@ linux_sys_siggetmask(p, v, retval)
  */
 int
 linux_sys_sigsetmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -144,7 +144,7 @@ linux_sys_sigsetmask(p, v, retval)
 
 int
 linux_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -164,7 +164,7 @@ linux_sys_sigprocmask(p, v, retval)
  */
 int
 linux_sys_pause(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;	
 	register_t *retval;
 {	

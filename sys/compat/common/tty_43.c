@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.9 2000/03/29 03:43:31 simonb Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.10 2000/03/30 11:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -95,7 +95,7 @@ void ttcompatsetlflags __P((struct tty *, struct termios *));
 /*ARGSUSED*/
 int
 ttcompat(tp, com, data, flag, p)
-	register struct tty *tp;
+	struct tty *tp;
 	u_long com;
 	caddr_t data;
 	int flag;
@@ -104,9 +104,9 @@ ttcompat(tp, com, data, flag, p)
 
 	switch (com) {
 	case TIOCGETP: {
-		register struct sgttyb *sg = (struct sgttyb *)data;
-		register u_char *cc = tp->t_cc;
-		register int speed;
+		struct sgttyb *sg = (struct sgttyb *)data;
+		u_char *cc = tp->t_cc;
+		int speed;
 
 		speed = ttspeedtab(tp->t_ospeed, compatspeeds);
 		sg->sg_ospeed = (speed == -1) ? MAX_SPEED : speed;
@@ -124,7 +124,7 @@ ttcompat(tp, com, data, flag, p)
 
 	case TIOCSETP:
 	case TIOCSETN: {
-		register struct sgttyb *sg = (struct sgttyb *)data;
+		struct sgttyb *sg = (struct sgttyb *)data;
 		struct termios term;
 		int speed;
 
@@ -147,7 +147,7 @@ ttcompat(tp, com, data, flag, p)
 
 	case TIOCGETC: {
 		struct tchars *tc = (struct tchars *)data;
-		register u_char *cc = tp->t_cc;
+		u_char *cc = tp->t_cc;
 
 		tc->t_intrc = cc[VINTR];
 		tc->t_quitc = cc[VQUIT];
@@ -159,7 +159,7 @@ ttcompat(tp, com, data, flag, p)
 	}
 	case TIOCSETC: {
 		struct tchars *tc = (struct tchars *)data;
-		register u_char *cc = tp->t_cc;
+		u_char *cc = tp->t_cc;
 
 		cc[VINTR] = tc->t_intrc;
 		cc[VQUIT] = tc->t_quitc;
@@ -173,7 +173,7 @@ ttcompat(tp, com, data, flag, p)
 	}
 	case TIOCSLTC: {
 		struct ltchars *ltc = (struct ltchars *)data;
-		register u_char *cc = tp->t_cc;
+		u_char *cc = tp->t_cc;
 
 		cc[VSUSP] = ltc->t_suspc;
 		cc[VDSUSP] = ltc->t_dsuspc;
@@ -185,7 +185,7 @@ ttcompat(tp, com, data, flag, p)
 	}
 	case TIOCGLTC: {
 		struct ltchars *ltc = (struct ltchars *)data;
-		register u_char *cc = tp->t_cc;
+		u_char *cc = tp->t_cc;
 
 		ltc->t_suspc = cc[VSUSP];
 		ltc->t_dsuspc = cc[VDSUSP];
@@ -261,13 +261,13 @@ ttcompat(tp, com, data, flag, p)
 
 int
 ttcompatgetflags(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register tcflag_t iflag = tp->t_iflag;
-	register tcflag_t lflag = tp->t_lflag;
-	register tcflag_t oflag = tp->t_oflag;
-	register tcflag_t cflag = tp->t_cflag;
-	register int flags = 0;
+	tcflag_t iflag = tp->t_iflag;
+	tcflag_t lflag = tp->t_lflag;
+	tcflag_t oflag = tp->t_oflag;
+	tcflag_t cflag = tp->t_cflag;
+	int flags = 0;
 
 	if (ISSET(iflag, IXOFF))
 		SET(flags, TANDEM);
@@ -325,14 +325,14 @@ ttcompatgetflags(tp)
 
 void
 ttcompatsetflags(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-	register int flags = tp->t_flags;
-	register tcflag_t iflag = t->c_iflag;
-	register tcflag_t oflag = t->c_oflag;
-	register tcflag_t lflag = t->c_lflag;
-	register tcflag_t cflag = t->c_cflag;
+	int flags = tp->t_flags;
+	tcflag_t iflag = t->c_iflag;
+	tcflag_t oflag = t->c_oflag;
+	tcflag_t lflag = t->c_lflag;
+	tcflag_t cflag = t->c_cflag;
 
 	if (ISSET(flags, TANDEM))
 		SET(iflag, IXOFF);
@@ -413,14 +413,14 @@ ttcompatsetflags(tp, t)
 
 void
 ttcompatsetlflags(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-	register int flags = tp->t_flags;
-	register tcflag_t iflag = t->c_iflag;
-	register tcflag_t oflag = t->c_oflag;
-	register tcflag_t lflag = t->c_lflag;
-	register tcflag_t cflag = t->c_cflag;
+	int flags = tp->t_flags;
+	tcflag_t iflag = t->c_iflag;
+	tcflag_t oflag = t->c_oflag;
+	tcflag_t lflag = t->c_lflag;
+	tcflag_t cflag = t->c_cflag;
 
 	/* Nothing we can do with CRTBS. */
 	if (ISSET(flags, PRTERA))

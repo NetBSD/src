@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.25 1999/12/04 22:26:52 tron Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.26 2000/03/30 11:27:18 augustss Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -318,7 +318,7 @@ native_to_linux_sigaction(bsa, lsa)
  */
 int
 linux_sys_rt_sigaction(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -359,7 +359,7 @@ linux_sys_rt_sigaction(p, v, retval)
 
 int
 linux_sigprocmask1(p, how, set, oset)
-	register struct proc *p;
+	struct proc *p;
 	int how;
 	const linux_old_sigset_t *set;
 	linux_old_sigset_t *oset;
@@ -403,7 +403,7 @@ linux_sigprocmask1(p, how, set, oset)
 
 int
 linux_sys_rt_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -460,7 +460,7 @@ linux_sys_rt_sigprocmask(p, v, retval)
 
 int
 linux_sys_rt_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -481,7 +481,7 @@ linux_sys_rt_sigpending(p, v, retval)
 
 int
 linux_sys_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -498,7 +498,7 @@ linux_sys_sigpending(p, v, retval)
 
 int
 linux_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -516,7 +516,7 @@ linux_sys_sigsuspend(p, v, retval)
 }
 int
 linux_sys_rt_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -546,7 +546,7 @@ linux_sys_rt_sigsuspend(p, v, retval)
  */
 int
 linux_sys_rt_queueinfo(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -566,7 +566,7 @@ linux_sys_rt_queueinfo(p, v, retval)
 
 int
 linux_sys_kill(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

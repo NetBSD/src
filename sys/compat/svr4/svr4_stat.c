@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.35 2000/03/28 23:57:34 simonb Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.36 2000/03/30 11:27:20 augustss Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ bsd_to_svr4_stat64(st, st4)
 
 int
 svr4_sys_stat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -208,7 +208,7 @@ svr4_sys_stat(p, v, retval)
 
 int
 svr4_sys_lstat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -253,7 +253,7 @@ svr4_sys_lstat(p, v, retval)
 
 int
 svr4_sys_fstat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -294,7 +294,7 @@ svr4_sys_fstat(p, v, retval)
 
 int
 svr4_sys_xstat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -330,7 +330,7 @@ svr4_sys_xstat(p, v, retval)
 
 int
 svr4_sys_lxstat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -366,7 +366,7 @@ svr4_sys_lxstat(p, v, retval)
 
 int
 svr4_sys_fxstat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -398,7 +398,7 @@ svr4_sys_fxstat(p, v, retval)
 
 int
 svr4_sys_stat64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -434,7 +434,7 @@ svr4_sys_stat64(p, v, retval)
 
 int
 svr4_sys_lstat64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -470,7 +470,7 @@ svr4_sys_lstat64(p, v, retval)
 
 int
 svr4_sys_fstat64(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -507,7 +507,7 @@ struct svr4_ustat_args {
 
 int
 svr4_ustat(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -534,7 +534,7 @@ svr4_ustat(p, v, retval)
 
 int
 svr4_sys_uname(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -565,7 +565,7 @@ svr4_sys_uname(p, v, retval)
 
 int
 svr4_sys_systeminfo(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -679,7 +679,7 @@ svr4_sys_systeminfo(p, v, retval)
 
 int
 svr4_sys_utssys(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -713,7 +713,7 @@ svr4_sys_utssys(p, v, retval)
 
 int
 svr4_sys_utime(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -748,7 +748,7 @@ svr4_sys_utime(p, v, retval)
 
 int
 svr4_sys_utimes(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -811,7 +811,7 @@ svr4_to_bsd_pathconf(name)
 
 int
 svr4_sys_pathconf(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -837,7 +837,7 @@ svr4_sys_pathconf(p, v, retval)
 
 int
 svr4_sys_fpathconf(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {

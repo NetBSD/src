@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.5 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.6 2000/03/30 11:27:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -75,7 +75,7 @@ compat_13_netbsd32_sigaltstack13(p, v, retval)
 
 int
 compat_13_netbsd32_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -99,7 +99,7 @@ compat_13_netbsd32_sigprocmask(p, v, retval)
 
 int
 compat_13_netbsd32_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
