@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.143 2003/09/06 18:12:39 yamt Exp $
+#       $NetBSD: Makefile,v 1.144 2003/09/07 11:24:34 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -23,8 +23,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	microtime.9 mstohz.9 namecache.9 namei.9 need_resched.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
-	pmap.9 pmc.9 pool.9 powerhook_establish.9 ppsratecheck.9 properties.9 \
-	preempt.9 \
+	pmap.9 pmc.9 pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
+	properties.9 preempt.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	SCHED_LOCK.9 scheduler.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
@@ -355,6 +355,15 @@ MLINKS+=pmc.9 pmc_get_num_counters.9 \
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
+MLINKS+=pool_cache.9 pool_cache.9 \
+	pool_cache.9 pool_cache_init.9 \
+	pool_cache.9 pool_cache_destroy.9 \
+	pool_cache.9 pool_cache_get_paddr.9 \
+	pool_cache.9 pool_cache_get.9 \
+	pool_cache.9 pool_cache_put_paddr.9 \
+	pool_cache.9 pool_cache_put.9 \
+	pool_cache.9 pool_cache_destruct_object.9 \
+	pool_cache.9 pool_cache_invalidate.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=properties.9 propdb_create.9 \
 	properties.9 propdb_destroy.9 \
