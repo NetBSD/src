@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.20 2003/08/07 16:29:36 agc Exp $ */
+/*	$NetBSD: fpu.c,v 1.21 2003/10/05 21:13:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2003/08/07 16:29:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2003/10/05 21:13:23 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,13 +101,28 @@ static char cx_to_trapx[] = {
 	X8(FSR_OF),
 	X16(FSR_NV)
 };
-static u_char fpu_codes[] = {
+static u_char fpu_codes_native[] = {
+	X1(FPE_FLTRES),
+	X2(FPE_FLTDIV),
+	X4(FPE_FLTUND),
+	X8(FPE_FLTOVF),
+	X16(FPE_FLTINV)
+};
+#if defined(COMPAT_SUNOS) || defined(SVR4_COMPAT)
+static u_char fpu_codes_compat[] = {
 	X1(FPE_FLTINEX_TRAP),
 	X2(FPE_FLTDIV_TRAP),
 	X4(FPE_FLTUND_TRAP),
 	X8(FPE_FLTOVF_TRAP),
 	X16(FPE_FLTOPERR_TRAP)
 };
+#ifdef COMPAT_SUNOS
+extern struct emul emul_sunos;
+#endif
+#ifdef COMPAT_SVR4
+extern struct emul emul_svr4;
+#endif
+#endif /* {SUNOS,SVR4}_COMPAT */
 
 /*
  * The FPU gave us an exception.  Clean up the mess.  Note that the
@@ -117,17 +132,28 @@ static u_char fpu_codes[] = {
  */
 void
 fpu_cleanup(l, fs)
-	register struct lwp *l;
+	struct lwp *l;
 #ifndef SUN4U
-	register struct fpstate *fs;
+	struct fpstate *fs;
 #else /* SUN4U */
-	register struct fpstate64 *fs;
+	struct fpstate64 *fs;
 #endif /* SUN4U */
 {
-	register int i, fsr = fs->fs_fsr, error;
+	int i, fsr = fs->fs_fsr, error;
 	struct proc *p = l->l_proc;
 	union instr instr;
 	struct fpemu fe;
+	u_char *fpu_codes;
+	ksiginfo_t ksi;
+
+	fpu_codes = (0
+#ifdef COMPAT_SUNOS
+			|| p->p_emul == &emul_sunos
+#endif
+#ifdef SVR4_COMPAT
+			|| p->p_emul == &emul_svr4
+#endif
+		) ? fpu_codes_compat : fpu_codes_native;
 
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
 
@@ -140,8 +166,14 @@ fpu_cleanup(l, fs)
 		/* XXX missing trap address! */
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = fpu_codes[i - 1];
 		KERNEL_PROC_LOCK(l);
-		trapsignal(l, SIGFPE, fpu_codes[i - 1]);
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
+#endif
 		KERNEL_PROC_UNLOCK(l);
 		break;		/* XXX should return, but queue remains */
 
@@ -171,8 +203,14 @@ fpu_cleanup(l, fs)
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_comm, p->p_pid);
 		uprintf("%s[%d]: fpu hardware error\n", p->p_comm, p->p_pid);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_code = 0;
 		KERNEL_PROC_LOCK(l);
-		trapsignal(l, SIGFPE, -1);	/* ??? */
+#ifdef __HAVE_SIGINFO
+		trapsignal(l, &ksi);
+#else
+		trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
+#endif
 		KERNEL_PROC_UNLOCK(l);
 		goto out;
 
@@ -196,8 +234,13 @@ fpu_cleanup(l, fs)
 		KERNEL_PROC_LOCK(l);
 		switch (error) {
 		case FPE:
-			trapsignal(l, SIGFPE,
-			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1]);
+			ksi.ksi_signo = SIGFPE;
+			ksi.ksi_code = fpu_codes[(fs->fs_fsr & FSR_CX) - 1];
+#ifdef __HAVE_SIGINFO
+			trapsignal(l, &ksi);
+#else
+			trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
+#endif
 			break;
 
 		case NOTFPU:
@@ -206,7 +249,13 @@ fpu_cleanup(l, fs)
 			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n");
 #endif
 #endif /* SUN4U */
-			trapsignal(l, SIGILL, 0);	/* ??? code?  */
+			ksi.ksi_signo = SIGFPE;
+			ksi.ksi_code = ILL_ILLOPC;
+#ifdef __HAVE_SIGINFO
+			trapsignal(l, &ksi);
+#else
+			trapsignal(l, ksi.ksi_signo, ksi.ksi_code);
+#endif
 			break;
 
 		default:
@@ -230,11 +279,11 @@ out:
  */
 fpu_emulate(l, tf, fs)
 	struct lwp *l;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 #ifndef SUN4U
-	register struct fpstate *fs;
+	struct fpstate *fs;
 #else /* SUN4U */
-	register struct fpstate64 *fs;
+	struct fpstate64 *fs;
 #endif /* SUN4U */
 {
 
@@ -282,16 +331,16 @@ fpu_emulate(l, tf, fs)
  */
 int
 fpu_execute(fe, instr)
-	register struct fpemu *fe;
+	struct fpemu *fe;
 	union instr instr;
 {
-	register struct fpn *fp;
+	struct fpn *fp;
 #ifndef SUN4U
-	register int opf, rs1, rs2, rd, type, mask, fsr, cx;
-	register struct fpstate *fs;
+	int opf, rs1, rs2, rd, type, mask, fsr, cx;
+	struct fpstate *fs;
 #else /* SUN4U */
-	register int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
-	register struct fpstate64 *fs;
+	int opf, rs1, rs2, rd, type, mask, fsr, cx, i, cond;
+	struct fpstate64 *fs;
 #endif /* SUN4U */
 	u_int space[4];
 

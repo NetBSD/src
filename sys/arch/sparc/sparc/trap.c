@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.142 2003/09/16 19:02:51 cl Exp $ */
+/*	$NetBSD: trap.c,v 1.143 2003/10/05 21:13:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2003/09/16 19:02:51 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2003/10/05 21:13:23 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -335,6 +335,7 @@ trap(type, psr, pc, tf)
 	int n, s;
 	char bits[64];
 	u_quad_t sticks;
+	ksiginfo_t ksi;
 	int sig;
 	u_long ucode;
 
@@ -447,6 +448,9 @@ trap(type, psr, pc, tf)
 			       PSR_BITS, bits, sizeof(bits)));
 			sig = SIGILL;
 			ucode = type;
+			ksi.ksi_trap = type;
+			ksi.ksi_code = ILL_ILLTRP;
+			ksi.ksi_addr = (void *)pc;
 			break;
 		}
 #if defined(COMPAT_SVR4)
@@ -459,7 +463,9 @@ badtrap:
 			p->p_comm, p->p_pid, type);
 #endif
 		sig = SIGILL;
-		ucode = type;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLTRP;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 #ifdef COMPAT_SVR4
@@ -484,12 +490,16 @@ badtrap:
 			ADVANCE;
 			break;
 		}
-		/* XXX - ucode? */
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_PRIVINST:
 		sig = SIGILL;
-		/* XXX - ucode? */
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_PRVOPC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FPDISABLED: {
@@ -520,6 +530,9 @@ badtrap:
 #else
 			sig = SIGFPE;
 			/* XXX - ucode? */
+			ksi.ksi_trap = type;
+			ksi.ksi_code = 0;
+			ksi.ksi_addr = (void *)pc;
 #endif
 			break;
 		}
@@ -654,7 +667,9 @@ badtrap:
 			}
 		}
 		sig = SIGBUS;
-		/* XXX - ucode? */
+		ksi.ksi_trap = type;
+		ksi.ksi_code = BUS_ADRALN;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FPE:
@@ -685,24 +700,33 @@ badtrap:
 
 	case T_TAGOF:
 		sig = SIGEMT;
-		/* XXX - ucode? */
+		ksi.ksi_trap = type;
+		ksi.ksi_code = 0;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
 		sig = SIGILL;
-		/* XXX - ucode? */
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_COPROC;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_BREAKPOINT:
 		sig = SIGTRAP;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = TRAP_BRKPT;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_DIV0:
 	case T_IDIV0:
 		ADVANCE;
 		sig = SIGFPE;
-		ucode = FPE_INTDIV_TRAP;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = FPE_INTDIV;
+		ksi.ksi_addr = (void *)pc;
 		break;
 
 	case T_FLUSHWIN:
@@ -725,6 +749,9 @@ badtrap:
 		uprintf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
 		sig = SIGILL;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = ILL_ILLADR;
+		ksi.ksi_addr = (void *)pc;
 		/* XXX - ucode? */
 		break;
 
@@ -741,12 +768,15 @@ badtrap:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
 		sig = SIGFPE;
-		ucode = FPE_INTOVF_TRAP;
+		ksi.ksi_trap = type;
+		ksi.ksi_code = FPE_INTOVF;
+		ksi.ksi_addr = (void *)pc;
 		break;
 	}
 	if (sig != 0) {
 		KERNEL_PROC_LOCK(l);
-		trapsignal(l, sig, ucode);
+		ksi.ksi_signo = sig;
+		trapsignal(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 	}
 	userret(l, pc, sticks);
@@ -844,6 +874,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	int onfault;
 	u_quad_t sticks;
 	char bits[64];
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 	if ((l = curlwp) == NULL)	/* safety check */
@@ -945,9 +976,6 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
-	if (rv == EACCES) {
-		rv = EFAULT;
-	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -996,7 +1024,7 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
-			tf->tf_out[0] = rv;
+			tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
 			return;
 		}
 		if (rv == ENOMEM) {
@@ -1004,9 +1032,16 @@ kfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, (u_int)v);
-		} else
-			trapsignal(l, SIGSEGV, (u_int)v);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = 0;
+		} else {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = (rv == EACCES
+				? SEGV_ACCERR : SEGV_MAPERR);
+		}
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)v;
+		trapsignal(l, &ksi);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
@@ -1038,6 +1073,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	int onfault;
 	u_quad_t sticks;
 	char bits[64];
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;	/* XXXSMP */
 
@@ -1238,9 +1274,6 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
-	if (rv == EACCES) {
-		rv = EFAULT;
-	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1275,7 +1308,7 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
-			tf->tf_out[0] = rv;
+			tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
 			KERNEL_UNLOCK();
 			return;
 		}
@@ -1284,9 +1317,16 @@ kfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, (u_int)sfva);
-		} else
-			trapsignal(l, SIGSEGV, (u_int)sfva);
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = 0;
+		} else {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = (rv == EACCES)
+				? SEGV_ACCERR : SEGV_MAPERR;
+		}
+		ksi.ksi_trap = type;
+		ksi.ksi_addr = (void *)sfva;
+		trapsignal(l, &ksi);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {

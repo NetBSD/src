@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 2003/08/07 16:29:41 agc Exp $ */
+/*	$NetBSD: signal.h,v 1.13 2003/10/05 21:13:23 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,10 @@
 #define _SPARC_SIGNAL_H_
 
 #include <sys/featuretest.h>
+
+#ifndef __sparc64__
+#define __HAVE_SIGINFO
+#endif
 
 #ifndef _LOCORE
 typedef int sig_atomic_t;
