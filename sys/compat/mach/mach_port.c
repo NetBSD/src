@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.13 2002/12/10 21:36:45 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.14 2002/12/12 00:29:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.13 2002/12/10 21:36:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.14 2002/12/12 00:29:24 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -263,3 +263,30 @@ mach_port_insert_member(p, msgh, maxlen, dst)
 
 	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
 }
+
+int 
+mach_port_move_member(p, msgh, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	mach_port_insert_member_request_t req;
+	mach_port_insert_member_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	bzero(&rep, sizeof(rep));
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+}
+
