@@ -34,28 +34,28 @@
  */
 
 int
-ipcperm(uc, perm, mode)
-	struct ucred *uc;
+ipcperm(cred, perm, mode)
+	struct ucred *cred;
 	struct ipc_perm *perm;
 	int mode;
 {
-	int i = 0;
 
-	if (uc->cr_uid == 0)
-		return(0);
+	if (cred->cr_uid == 0)
+		return (0);
 
-	/*
-	 * Does the user have permission?
-	 */
-	if (uc->cr_uid != perm->cuid && uc->cr_uid != perm->uid) {
-		i = 3;
-		/*
-		 * Does the group have permission?
-		 */
-		if (!groupmember(perm->gid, uc) && !groupmember(perm->cgid, uc))
-			i += 3;
+	/* Check for user match. */
+	if (cred->cr_uid != perm->cuid && cred->cr_uid != perm->uid) {
+		if (mode & IPC_M)
+			return (EPERM);
+		/* Check for group match. */
+		mode >>= 3;
+		if (!groupmember(perm->gid, cred) &&
+		    !groupmember(perm->cgid, cred))
+			/* Check for `other' match. */
+			mode >>= 3;
 	}
 
-	if (((mode&0700) & (perm->mode << i)) != mode)
-		return(EACCES);
+	if (mode & IPC_M)
+		return (0);
+	return ((mode & perm->mode) == mode ? 0 : EACCES);
 }

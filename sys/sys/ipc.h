@@ -41,7 +41,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ipc.h	8.3 (Berkeley) 1/21/94
- *	$Id: ipc.h,v 1.7 1994/05/21 04:13:59 cgd Exp $
+ *	$Id: ipc.h,v 1.8 1994/05/25 08:16:02 mycroft Exp $
  */
 
 /*
@@ -65,6 +65,7 @@ struct ipc_perm {
 /* common mode bits */
 #define	IPC_R		00400	/* read permission */
 #define	IPC_W		00200	/* write/alter permission */
+#define	IPC_M		10000	/* permission to change control info */
 
 /* SVID required constants (same values as system 5) */
 #define	IPC_CREAT	01000	/* create entry if key does not exist */
