@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: err.c,v 8.120.4.1 2000/05/25 18:56:15 gshapiro Exp";
+static char id[] = "@(#)Id: err.c,v 8.120.4.5 2001/08/17 22:09:40 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -107,7 +107,7 @@ syserr(fmt, va_alist)
 	if (!panic && CurEnv != NULL)
 	{
 		if (CurEnv->e_message != NULL)
-			free(CurEnv->e_message);
+			sm_free(CurEnv->e_message);
 		CurEnv->e_message = newstr(errtxt);
 	}
 
@@ -122,13 +122,13 @@ syserr(fmt, va_alist)
 			dprintf("syserr: ExitStat = %d\n", ExitStat);
 	}
 
-	pw = sm_getpwuid(getuid());
+	pw = sm_getpwuid(RealUid);
 	if (pw != NULL)
 		user = pw->pw_name;
 	else
 	{
 		user = ubuf;
-		snprintf(ubuf, sizeof ubuf, "UID%d", (int) getuid());
+		snprintf(ubuf, sizeof ubuf, "UID%d", (int) RealUid);
 	}
 
 	if (LogLevel > 0)
@@ -157,8 +157,6 @@ syserr(fmt, va_alist)
 #ifdef ESTALE
 	  case ESTALE:
 #endif /* ESTALE */
-
-
 		printopenfds(TRUE);
 		mci_dump_all(TRUE);
 		break;
@@ -237,7 +235,7 @@ usrerr(fmt, va_alist)
 	  case '5':
 	  case '6':
 		if (CurEnv->e_message != NULL)
-			free(CurEnv->e_message);
+			sm_free(CurEnv->e_message);
 		if (MsgBuf[0] == '6')
 		{
 			char buf[MAXLINE];
@@ -323,7 +321,7 @@ usrerrenh(enhsc, fmt, va_alist)
 	  case '5':
 	  case '6':
 		if (CurEnv->e_message != NULL)
-			free(CurEnv->e_message);
+			sm_free(CurEnv->e_message);
 		if (MsgBuf[0] == '6')
 		{
 			char buf[MAXLINE];
@@ -392,7 +390,7 @@ message(msg, va_alist)
 
 	  case '5':
 		if (CurEnv->e_message != NULL)
-			free(CurEnv->e_message);
+			sm_free(CurEnv->e_message);
 		CurEnv->e_message = newstr(errtxt);
 		break;
 	}
@@ -446,7 +444,7 @@ nmessage(msg, va_alist)
 
 	  case '5':
 		if (CurEnv->e_message != NULL)
-			free(CurEnv->e_message);
+			sm_free(CurEnv->e_message);
 		CurEnv->e_message = newstr(errtxt);
 		break;
 	}
@@ -778,10 +776,27 @@ fmtmsg(eb, to, num, enhsc, eno, fmt, ap)
 		spaceleft -= l;
 	}
 
-	/* output the "to" person */
+	/*
+	**  output the "to" address only if it is defined and one of the
+	**  following codes is used:
+	**  050 internal notices, e.g., alias expansion
+	**  250 Ok
+	**  252 Cannot VRFY user, but will accept message and attempt delivery
+	**  450 Requested mail action not taken: mailbox unavailable
+	**  550 Requested action not taken: mailbox unavailable
+	**  553 Requested action not taken: mailbox name not allowed
+	**
+	**  Notice: this still isn't "the right thing", this code shouldn't
+	**	(indirectly) depend on CurEnv->e_to.
+	*/
+
 	if (to != NULL && to[0] != '\0' &&
-	    strncmp(num, "551", 3) != 0 &&
-	    strncmp(num, "251", 3) != 0)
+	    (strncmp(num, "050", 3) == 0 ||
+	     strncmp(num, "250", 3) == 0 ||
+	     strncmp(num, "252", 3) == 0 ||
+	     strncmp(num, "450", 3) == 0 ||
+	     strncmp(num, "550", 3) == 0 ||
+	     strncmp(num, "553", 3) == 0))
 	{
 		(void) snprintf(eb, spaceleft, "%s... ",
 			shortenstring(to, MAXSHORTSTR));
