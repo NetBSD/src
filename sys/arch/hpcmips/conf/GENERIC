@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.126 2002/05/11 14:10:04 takemura Exp $
+# $NetBSD: GENERIC,v 1.127 2002/05/30 01:45:01 greg Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.126 $"
+#ident 		"GENERIC-$Revision: 1.127 $"
 
 maxusers	16
 
@@ -248,6 +248,7 @@ vrisab0 at vrgiu? platform NEC_MCCS
 vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
 isa0	at vrisab0
 pcic0	at isa0 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00090003
+vrdsiu_mouse0 at vr4102ip? platform IBM_WORKPAD addr 0x0b0001a0 size 0x20 unit VRDSIU
 #
 # Freestyle
 # Button to GPIO port # mapping
@@ -433,6 +434,7 @@ hpcfb*		at	bivideo0
 wsdisplay*	at	hpcfb?
 wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
+wsmouse*	at	vrdsiu_mouse? mux 0
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
 
