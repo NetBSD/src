@@ -1,7 +1,7 @@
-/*	$NetBSD: esovar.h,v 1.3 1999/11/02 12:11:43 kleink Exp $	*/
+/*	$NetBSD: esovar.h,v 1.4 2000/03/22 14:37:43 kleink Exp $	*/
 
 /*
- * Copyright (c) 1999 Klaus J. Klein
+ * Copyright (c) 1999, 2000 Klaus J. Klein
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -122,6 +122,10 @@ struct eso_softc {
 	void *			sc_parg;
 	void			(*sc_rintr) __P((void *));
 	void *			sc_rarg;
+
+	/* Auto-initialize DMA transfer block drain timeouts, in ticks */
+	int			sc_pdrain;
+	int			sc_rdrain;
 
 	/* Audio 2 state */
 	uint8_t			sc_a2c2;	/* Audio 2 Control 2 */

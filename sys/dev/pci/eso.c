@@ -1,7 +1,7 @@
-/*	$NetBSD: eso.c,v 1.17 2000/01/18 04:48:47 cjs Exp $	*/
+/*	$NetBSD: eso.c,v 1.18 2000/03/22 14:37:43 kleink Exp $	*/
 
 /*
- * Copyright (c) 1999 Klaus J. Klein
+ * Copyright (c) 1999, 2000 Klaus J. Klein
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -823,7 +823,7 @@ eso_halt_output(hdl)
 	    ESO_IO_A2DMAM_DMAENB);
 
 	sc->sc_pintr = NULL;
-	error = tsleep(&sc->sc_pintr, PCATCH | PWAIT, "esoho", hz);
+	error = tsleep(&sc->sc_pintr, PCATCH | PWAIT, "esoho", sc->sc_pdrain);
 	splx(s);
 	
 	/* Shut down DMA completely. */
@@ -851,7 +851,7 @@ eso_halt_input(hdl)
 	    DMA37MD_WRITE | DMA37MD_DEMAND);
 
 	sc->sc_rintr = NULL;
-	error = tsleep(&sc->sc_rintr, PCATCH | PWAIT, "esohi", hz);
+	error = tsleep(&sc->sc_rintr, PCATCH | PWAIT, "esohi", sc->sc_rdrain);
 	splx(s);
 
 	/* Shut down DMA completely. */
@@ -1662,6 +1662,11 @@ eso_trigger_output(hdl, start, end, blksize, intr, arg, param)
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
+	/* Compute drain timeout. */
+	sc->sc_pdrain = (blksize * NBBY * hz) / 
+	    (param->sample_rate * param->channels *
+	     param->precision * param->factor) + 2;	/* slop */
+
 	/* DMA transfer count (in `words'!) reload using 2's complement. */
 	blksize = -(blksize >> 1);
 	eso_write_mixreg(sc, ESO_MIXREG_A2TCRLO, blksize & 0xff);
@@ -1743,6 +1748,11 @@ eso_trigger_input(hdl, start, end, blksize, intr, arg, param)
 
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
+
+	/* Compute drain timeout. */
+	sc->sc_rdrain = (blksize * NBBY * hz) / 
+	    (param->sample_rate * param->channels *
+	     param->precision * param->factor) + 2;	/* slop */
 
 	/* Set up ADC DMA converter parameters. */
 	actl = eso_read_ctlreg(sc, ESO_CTLREG_ACTL);
