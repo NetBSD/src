@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.8 2001/11/15 09:48:26 lukem Exp $	*/
+/*	$NetBSD: aarp.c,v 1.9 2002/10/22 21:58:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.8 2001/11/15 09:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.9 2002/10/22 21:58:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -99,6 +99,7 @@ u_char aarp_org_code[3] = {
 
 struct callout aarptimer_callout;
 
+/*ARGSUSED*/
 static void
 aarptimer(ignored)
 	void *ignored;
