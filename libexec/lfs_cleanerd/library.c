@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
+/*static char sccsid[] = "from: @(#)library.c	8.1 (Berkeley) 6/4/93";*/
+static char *rcsid = "$Id: library.c,v 1.2 1997/05/17 19:35:14 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +74,7 @@ int
 fs_getmntinfo(buf, name, type)
 	struct	statfs	**buf;
 	char	*name;
-	char	*type;
+	const	char	*type;
 {
 	/* allocate space for the filesystem info */
 	*buf = (struct statfs *)malloc(sizeof(struct statfs));
@@ -87,7 +88,7 @@ fs_getmntinfo(buf, name, type)
 	}
 
 	/* check to see if it's the one we want */
-	if (strcmp((*buf)->f_fstypename, type) ||
+	if (strncmp(type, (*buf)->f_fstypename, MFSNAMELEN) ||
 	    strncmp(name, (*buf)->f_mntonname, MNAMELEN)) {
 		/* "this is not the filesystem you're looking for */
 		free(*buf);
@@ -108,7 +109,7 @@ get_fs_info (lstatfsp, use_mmap)
 {
 	FS_INFO	*fsp;
 	int	i;
-	
+
 	fsp = (FS_INFO *)malloc(sizeof(FS_INFO));
 	if (fsp == NULL)
 		return NULL;
@@ -125,7 +126,7 @@ get_fs_info (lstatfsp, use_mmap)
 
 /*
  * If we are reading the ifile then we need to refresh it.  Even if
- * we are mmapping it, it might have grown.  Finally, we need to 
+ * we are mmapping it, it might have grown.  Finally, we need to
  * refresh the file system information (statfs) info.
  */
 void
@@ -134,14 +135,14 @@ reread_fs_info(fsp, use_mmap)
 	int use_mmap;
 {
 	int i;
-	
+
 	if (statfs(fsp->fi_statfsp->f_mntonname, fsp->fi_statfsp))
 		err(1, "reread_fs_info: statfs failed");
 	get_ifile (fsp, use_mmap);
 }
 
-/* 
- * Gets the superblock from disk (possibly in face of errors) 
+/*
+ * Gets the superblock from disk (possibly in face of errors)
  */
 int
 get_superblock (fsp, sbp)
@@ -149,6 +150,7 @@ get_superblock (fsp, sbp)
 	struct lfs *sbp;
 {
 	char mntfromname[MNAMELEN+1];
+	char buf[LFS_SBPAD];
         int fid;
 
 	strcpy(mntfromname, "/dev/r");
@@ -159,13 +161,14 @@ get_superblock (fsp, sbp)
 		return (-1);
 	}
 
-	get(fid, LFS_LABELPAD, sbp, sizeof(struct lfs));
+	get(fid, LFS_LABELPAD, buf, LFS_SBPAD);
+	bcopy(buf, sbp, sizeof(struct lfs));
 	close (fid);
-	
+
 	return (0);
 }
 
-/* 
+/*
  * This function will map the ifile into memory.  It causes a
  * fatal error on failure.
  */
@@ -209,16 +212,16 @@ get_ifile (fsp, use_mmap)
 		if (fsp->fi_cip)
 			free(fsp->fi_cip);
 		if (!(ifp = malloc (file_stat.st_size)))
-			err (1, "get_ifile: malloc failed"); 
+			err (1, "get_ifile: malloc failed");
 redo_read:
 		count = read (fid, ifp, (size_t) file_stat.st_size);
 
 		if (count < 0)
-			err(1, "get_ifile: bad ifile read"); 
+			err(1, "get_ifile: bad ifile read");
 		else if (count < file_stat.st_size) {
 			err(0, "get_ifile");
 			if (lseek(fid, 0, SEEK_SET) < 0)
-				err(1, "get_ifile: bad ifile lseek"); 
+				err(1, "get_ifile: bad ifile lseek");
 			goto redo_read;
 		}
 	}
@@ -249,7 +252,7 @@ redo_read:
  * summary was read (it may have "died" since then).  Any given
  * pair will be listed at most once.
  */
-int 
+int
 lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	FS_INFO *fsp;		/* pointer to local file system information */
 	int seg;		/* the segment number */
@@ -264,7 +267,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 	struct lfs *lfsp;
 	caddr_t s, segend;
 	daddr_t pseg_addr, seg_addr;
-	int i, nelem, nblocks, nsegs, sumsize;
+	int i, nelem, nblocks, sumsize;
 	time_t timestamp;
 
 	lfsp = &fsp->fi_lfs;
@@ -281,21 +284,18 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 #endif /* VERBOSE */
 
 	*bcount = 0;
-	for (nsegs = 0, timestamp = 0; nsegs < sup->su_nsums; nsegs++) {
+	for (segend = seg_buf + seg_size(lfsp), timestamp = 0; s < segend; ) {
 		sp = (SEGSUM *)s;
-
-		nblocks = pseg_valid(fsp, sp);
-		if (nblocks <= 0) {
-			printf("Warning: invalid segment summary at 0x%x\n",
-			    pseg_addr);
-			break;
-		}
 
 #ifdef VERBOSE
 		printf("\tpartial at: 0x%x\n", pseg_addr);
 		print_SEGSUM(lfsp, sp);
 		fflush(stdout);
 #endif /* VERBOSE */
+
+		nblocks = pseg_valid(fsp, sp);
+		if (nblocks <= 0)
+			break;
 
 		/* Check if we have hit old data */
 		if (timestamp > ((SEGSUM*)s)->ss_create)
@@ -306,7 +306,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 		/* Verfiy size of summary block */
 		sumsize = sizeof(SEGSUM) +
 		    (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
-		for (i = 0, fip = (FINFO *)(sp + 1); i < sp->ss_nfinfo; ++i) {
+		for (fip = (FINFO *)(sp + 1); i < sp->ss_nfinfo; ++i) {
 			sumsize += sizeof(FINFO) +
 			    (fip->fi_nblocks - 1) * sizeof(daddr_t);
 			fip = (FINFO *)(&fip->fi_blocks[fip->fi_nblocks]);
@@ -348,13 +348,13 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 
 err0:	*bcount = 0;
 	return (-1);
-	
+
 }
 
-/* 
+/*
  * This will parse a partial segment and fill in BLOCK_INFO structures
  * for each block described in the segment summary.  It will not include
- * blocks or inodes from files with new version numbers.  
+ * blocks or inodes from files with new version numbers.
  */
 void
 add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
@@ -371,9 +371,7 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 	caddr_t	bp;
 	daddr_t	*dp, *iaddrp;
 	int db_per_block, i, j;
-	int db_frag;
 	u_long page_size;
-long *lp;
 
 #ifdef VERBOSE
 	printf("FILE INFOS\n");
@@ -405,24 +403,8 @@ long *lp;
 			bip->bi_segcreate = (time_t)(sp->ss_create);
 			bip->bi_bp = bp;
 			bip->bi_version = ifp->if_version;
-			if (fip->fi_lastlength == page_size) {
-				bip->bi_size = page_size;
-				psegaddr += db_per_block;
-				bp += page_size;
-			} else {
-				db_frag = fragstodb(&(fsp->fi_lfs), 
-				    numfrags(&(fsp->fi_lfs),
-				    fip->fi_lastlength));
-#ifdef VERBOSE
-				printf("lastlength, frags: %d, %d, %d\n", 
-				    fip->fi_lastlength, temp,
-				    bytetoda(fsp, temp));
-				fflush(stdout);
-#endif
-				bip->bi_size = fip->fi_lastlength;
-				bp += fip->fi_lastlength;
-				psegaddr += db_frag;
-			}
+			psegaddr += db_per_block;
+			bp += page_size;
 			++bip;
 			++(*countp);
 		}
@@ -450,10 +432,10 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
 	daddr_t	*daddrp;
 	ino_t inum;
 	int i;
-	
+
 	if (sp->ss_ninos <= 0)
 		return;
-	
+
 	bp = bip + *countp;
 	lfsp = &fsp->fi_lfs;
 #ifdef VERBOSE
@@ -465,9 +447,9 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
 			--daddrp;
 			di = (struct dinode *)(seg_buf +
 			    ((*daddrp - seg_addr) << fsp->fi_daddr_shift));
-		} else 
+		} else
 			++di;
-		
+
 		inum = di->di_inumber;
 		bp->bi_lbn = LFS_UNUSED_LBN;
 		bp->bi_inode = inum;
@@ -487,7 +469,7 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
 			if (ifp->if_daddr == *daddrp) {
 				bp++;
 				++(*countp);
-			} 
+			}
 		}
 	}
 }
@@ -497,7 +479,7 @@ add_inodes (fsp, bip, countp, sp, seg_buf, seg_addr)
  * segment is valid or not.  Returns the size of the partial segment if it
  * is valid, * and 0 otherwise.  Use dump_summary to figure out size of the
  * the partial as well as whether or not the checksum is valid.
- */	 
+ */
 int
 pseg_valid (fsp, ssp)
 	FS_INFO *fsp;   /* pointer to file system info */
@@ -507,13 +489,10 @@ pseg_valid (fsp, ssp)
 	int i, nblocks;
 	u_long *datap;
 
-	if (ssp->ss_magic != SS_MAGIC)
-		return(0);
-
 	if ((nblocks = dump_summary(&fsp->fi_lfs, ssp, 0, NULL)) <= 0 ||
 	    nblocks > fsp->fi_lfs.lfs_ssize - 1)
 		return(0);
-		
+
 	/* check data/inode block(s) checksum too */
 	datap = (u_long *)malloc(nblocks * sizeof(u_long));
 	p = (caddr_t)ssp + LFS_SUMMARY_SIZE;
@@ -523,13 +502,13 @@ pseg_valid (fsp, ssp)
 	}
 	if (cksum ((void *)datap, nblocks * sizeof(u_long)) != ssp->ss_datasum)
 		return (0);
-	
+
 	return (nblocks);
 }
 
 
 /* #define MMAP_SEGMENT */
-/* 
+/*
  * read a segment into a memory buffer
  */
 int
@@ -566,7 +545,7 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 		    0, fid, seg_byte);
 		if (*(long *)segbuf < 0) {
 			err(0, "mmap_segment: mmap failed");
-			return (NULL);
+			return (0);
 		}
 	} else {
 #ifdef VERBOSE
@@ -577,7 +556,7 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 		*segbuf = malloc(ssize);
 		if (!*segbuf) {
 			err(0, "mmap_segment: malloc failed");
-			return(NULL);
+			return (0);
 		}
 
 		/* read the segment data into the buffer */
@@ -586,7 +565,7 @@ mmap_segment (fsp, segment, segbuf, use_mmap)
 			free(*segbuf);
 			return (-1);
 		}
-		
+
 		if (read (fid, *segbuf, ssize) != ssize) {
 			err (0, "mmap_segment: bad read");
 			free(*segbuf);
@@ -654,7 +633,7 @@ bi_compare(a, b)
 		return (diff);
 	diff = (int)(ba->bi_daddr - bb->bi_daddr);
 	return (diff);
-}	
+}
 
 int
 bi_toss(dummy, a, b)
@@ -689,7 +668,7 @@ toss(p, nump, size, dotoss, client)
 		if (dotoss(client, p, p1)) {
 			memmove(p, p1, i * size);
 			--(*nump);
-		} else 
+		} else
 			p += size;
 	}
 }
