@@ -125,9 +125,14 @@ groff: groff.texinfo
 	$(MAKEINFO) -I$(srcdir) $(srcdir)/groff.texinfo
 
 gnu.eps: gnu.xpm
+	@echo "NOT REBUILDING $@"
+	test -f gnu.eps || cp $(srcdir)/gnu.eps .
+NetBSD_DISABLED_gnu.eps:
 	xpmtoppm $(srcdir)/gnu.xpm | pnmdepth 15 | \
           $(pnmtops_nosetpage) -noturn -rle >$@
 gnu.png: gnu.xpm
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gnu.png:
 	xpmtoppm $(srcdir)/gnu.xpm | pnmdepth 15 | pnmtopng >$@
 
 webpage.html: webpage.ms gnu.png
