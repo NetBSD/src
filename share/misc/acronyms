@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.16 1999/07/16 09:18:28 christos Exp $
+$NetBSD: acronyms,v 1.17 1999/07/16 09:21:03 mycroft Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -29,6 +29,7 @@ RTFMP	read the fine man page
 RTFS	read the fine source
 SMOP	simple matter of programming
 SOL	shit out [of] luck
+TTFN	ta ta for now
 UTSL	use the source, Luke
 WTF	{what,where,who,why} the fuck
 WTH	{what,where,who,why} the hell
