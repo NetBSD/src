@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 1998/02/11 03:11:30 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.106 1998/03/21 20:33:31 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1021,6 +1021,8 @@ stackdump()
  *
  * See also machine/autoconf.h.
  */
+static vm_offset_t iobase;
+
 void *
 mapdev(phys, virt, offset, size)
 	register struct rom_reg *phys;
@@ -1029,7 +1031,6 @@ mapdev(phys, virt, offset, size)
 	register vm_offset_t v;
 	register vm_offset_t pa;
 	register void *ret;
-	static vm_offset_t iobase;
 	unsigned int pmtype;
 
 	if (iobase == NULL)
@@ -1804,3 +1805,118 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
+
+
+/* EXP EXP */
+int
+sparc_bus_map(cookie, iospace, addr, size, flags, virt, hp)
+	void		*cookie;	/* not used */
+	bus_type_t	iospace;
+	bus_addr_t	addr;
+	bus_size_t	size;
+	vm_offset_t	virt;
+	bus_space_handle_t *hp;
+{
+	vm_offset_t v;
+	vm_offset_t pa;
+	unsigned int pmtype;
+
+	if (iobase == NULL)
+		iobase = IODEV_BASE;
+
+	size = round_page(size);
+	if (size == 0) {
+		printf("sparc_bus_map: zero size\n");
+		return (EINVAL);
+	}
+
+	if (virt)
+		v = trunc_page(virt);
+	else {
+		v = iobase;
+		iobase += size;
+		if (iobase > IODEV_END)	/* unlikely */
+			panic("sparc_bus_map: iobase=0x%lx", iobase);
+	}
+
+	/* note: preserve page offset */
+	*hp = (bus_space_handle_t)(v | ((u_long)addr & PGOFSET));
+
+	pa = trunc_page(addr);
+	pmtype = PMAP_IOENC(iospace);
+
+	do {
+		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
+			   VM_PROT_READ | VM_PROT_WRITE, 1);
+		v += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	} while ((size -= PAGE_SIZE) > 0);
+	return (0);
+}
+
+int	sparc_bus_unmap __P((void *, bus_space_handle_t, bus_size_t));
+
+int     
+sparc_bus_unmap(cookie, bh, size)
+	void *cookie;
+	bus_space_handle_t bh;
+	bus_size_t size;
+{
+	vm_offset_t vaddr = (vm_offset_t)bh;
+
+	pmap_remove(pmap_kernel(), vaddr, vaddr + size);
+	return (0);
+}
+
+int     
+sparc_bus_mmap(cookie, iospace, paddr, flags)
+	void *cookie;
+	bus_type_t iospace;
+	bus_addr_t paddr;
+	int flags;
+{
+	return (paddr | PMAP_IOENC(iospace));
+}
+
+
+static void *sparc_mainbus_intr_establish __P((
+		void *,			/*cookie*/
+		int,			/*level*/
+		int,			/*flags*/
+		int (*) __P((void *)),	/*handler*/
+		void *));		/*handler arg*/
+
+void *
+sparc_mainbus_intr_establish(cookie, level, flags, handler, arg)
+	void	*cookie;	/* not used */
+	int	level;
+	int	flags;
+	int	(*handler)__P((void *));
+	void	*arg;
+{
+	struct intrhand *ih;
+
+	ih = (struct intrhand *)
+		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		return (NULL);
+
+	ih->ih_fun = handler;
+	ih->ih_arg = arg;
+	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
+		intr_fasttrap(level, (void (*)__P((void)))handler);
+	else
+		intr_establish(level, ih);
+	return (ih);
+}
+
+struct sparc_bus_space_tag mainbus_space_tag = {
+	NULL,				/* cookie */
+	sparc_bus_map,			/* bus_space_map */
+	sparc_bus_unmap,		/* bus_space_unmap */
+	NULL,				/* bus_space_subregion */
+	NULL,				/* bus_space_barrier */
+	sparc_bus_mmap,			/* bus_space_mmap */
+	sparc_mainbus_intr_establish	/* bus_intr_establish */
+};
+
