@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.24 2001/02/04 17:36:08 briggs Exp $	*/
+/*	$NetBSD: extintr.c,v 1.25 2001/02/04 17:46:33 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -743,7 +743,7 @@ init_interrupt()
 			goto failed;
 
 		macppc_openpic_base = (void *)(obio_base + reg[0]);
-		openpic_init();
+		macppc_openpic_init();
 		return;
 	}
 
