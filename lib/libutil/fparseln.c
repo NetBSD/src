@@ -1,0 +1,183 @@
+/*	$NetBSD: fparseln.c,v 1.1 1997/11/16 22:15:55 christos Exp $	*/
+
+/*
+ * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Christos Zoulas.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: fparseln.c,v 1.1 1997/11/16 22:15:55 christos Exp $");
+#endif
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <util.h>
+
+static int isescaped __P((const char *, const char *, int));
+
+/* isescaped():
+ *	Return true if the character in *p that belongs to a string
+ *	that starts in *sp, is escaped by the escape character esc.
+ */
+static int
+isescaped(sp, p, esc)
+	const char *sp, *p;
+	int esc;
+{
+	const char *cp;
+	size_t ne;
+
+	/* No escape character */
+	if (esc == '\0')
+		return 1;
+
+	/* Count the number of escape characters that precede ours */
+	for (ne = 0, cp = p; --cp >= sp && *cp == esc; ne++)
+		continue;
+
+	/* Return true if odd number of escape characters */
+	return (ne & 1) != 0;
+}
+
+
+/* fparseln():
+ *	Read a line from a file parsing continuations ending in \
+ *	and eliminating trailing newlines, or comments starting with
+ *	the comment char.
+ */
+char *
+fparseln(fp, size, lineno, str)
+	FILE *fp;
+	size_t *size, *lineno;
+	const char str[4];
+{
+	size_t s, len = 0;
+	char *buf = NULL;
+	char *ptr, *cp;
+	int cnt = 1;
+	static const char dstr[3] = "\\\\#";
+	char esc, con, nl, com;
+
+	if (str == NULL)
+		str = dstr;
+
+	esc = str[0];
+	con = str[1];
+	com = str[2];
+	/*
+	 * XXX: it would be cool to be able to specify the newline character,
+	 * but unfortunately, fgetln does not let us
+	 */
+	nl  = '\n';
+
+	while (cnt) {
+		cnt = 0;
+
+		if (lineno)
+			(*lineno)++;
+
+		if ((ptr = fgetln(fp, &s)) == NULL)
+			break;
+
+		if (s && com) {		/* Check and eliminate comments */
+			for (cp = ptr; cp < ptr + s; cp++)
+				if (*cp == com && !isescaped(ptr, cp, esc)) {
+					s = cp - ptr;
+					cnt = s == 0 && buf == NULL;
+					break;
+				}
+		}
+
+		if (s && nl) { 		/* Check and eliminate newlines */
+			cp = &ptr[s - 1]; 
+
+			if (*cp == nl) {
+				s--;	/* forget newline */
+				cnt = s == 0 && buf == NULL;
+			}
+		}
+
+		if (s && con) {		/* Check and eliminate continuations */
+			cp = &ptr[s - 1]; 
+
+			if (*cp == con && !isescaped(ptr, cp, esc)) {
+				s--;	/* forget escape */
+				cnt = 1;
+			}
+		}
+
+		if (s == 0)
+			continue;
+
+		if ((cp = realloc(buf, len + s + 1)) == NULL) {
+			free(buf);
+			return NULL;
+		}
+		cp = buf;
+
+		(void) memcpy(buf + len, ptr, s);
+		len += s;
+		buf[len] = '\0';
+	}
+
+	if (size)
+		*size = len;
+	return buf;
+}
+
+#ifdef TEST
+
+int main __P((int, char **));
+
+int
+main(argc, argv)
+	int argc;
+	char **argv;
+{
+	char *ptr;
+	while ((ptr = fparseln(stdin, NULL, NULL, NULL)) != NULL)
+		printf("%s\n", ptr);
+	return 0;
+}
+
+/* 
+
+# This is a test
+line 1
+line 2 \
+line 3 # Comment
+line 4 \# Not comment \\\\
+
+# And a comment \
+line 5 \\\
+line 6
+
+*/
+
+#endif /* TEST */
