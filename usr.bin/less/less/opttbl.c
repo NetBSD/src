@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.7 2001/07/26 13:43:46 mrg Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.8 2002/03/05 12:28:35 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -37,14 +37,15 @@ public int back_scroll;		/* Repaint screen on backwards movement */
 public int forw_scroll;		/* Repaint screen on forward movement */
 public int caseless;		/* Do "caseless" searches */
 public int linenums;		/* Use line numbers */
-public int cbufs;		/* Current number of buffers */
 public int autobuf;		/* Automatically allocate buffers as needed */
+public int bufspace;		/* Max buffer space per file (K) */
 public int ctldisp;		/* Send control chars to screen untranslated */
 public int force_open;		/* Open the file even if not regular file */
 public int swindow;		/* Size of scrolling window */
 public int jump_sline;		/* Screen line of "jump target" */
 public int chopline;		/* Truncate displayed lines at screen width */
 public int no_init;		/* Disable sending ti/te termcap strings */
+public int no_keypad;		/* Disable sending ks/ke termcap strings */
 public int twiddle;             /* Show tildes after EOF */
 public int show_attn;		/* Hilite first unread line */
 public int shift_count;		/* Number of positions to shift horizontally */
@@ -105,12 +106,22 @@ static struct optname quote_optname  = { "quotes",               NULL };
 static struct optname tilde_optname  = { "tilde",                NULL };
 static struct optname query_optname  = { "help",                 NULL };
 static struct optname pound_optname  = { "shift",                NULL };
+static struct optname keypad_optname = { "no-keypad",            NULL };
 
 
 /*
  * Table of all options and their semantics.
+ *
+ * For BOOL and TRIPLE options, odesc[0], odesc[1], odesc[2] are
+ * the description of the option when set to 0, 1 or 2, respectively.
+ * For NUMBER options, odesc[0] is the prompt to use when entering
+ * a new value, and odesc[1] is the description, which should contain 
+ * one %d which is replaced by the value of the number.
+ * For STRING options, odesc[0] is the prompt to use when entering
+ * a new value, and odesc[1], if not NULL, is the set of characters
+ * that are valid in the string.
  */
-static struct option option[] =
+static struct loption option[] =
 {
 	{ 'a', &a_optname,
 		BOOL, OPT_OFF, &how_search, NULL,
@@ -120,9 +131,9 @@ static struct option option[] =
 	},
 
 	{ 'b', &b_optname,
-		NUMBER, 10, &cbufs, opt_b, 
-		{ "Buffers: ",
-		"%d buffers",
+		NUMBER, 64, &bufspace, opt_b, 
+		{ "Max buffer space per file (K): ",
+		"Max buffer space per file: %dK",
 		NULL }
 	},
 	{ 'B', &B__optname,
@@ -154,7 +165,9 @@ static struct option option[] =
 #if MSDOS_COMPILER
 	{ 'D', &D__optname,
 		STRING|REPAINT|NO_QUERY, 0, NULL, opt_D,
-		{ "color desc: ", NULL, NULL }
+		{ "color desc: ", 
+		"Ddknsu0123456789. ",
+		NULL }
 	},
 #endif
 	{ 'e', &e_optname,
@@ -298,9 +311,9 @@ static struct option option[] =
 		"Highlight first unread line after any forward movement", }
 	},
 	{ 'x', &x_optname,
-		NUMBER|REPAINT, 8, &tabstop, NULL,
+		STRING|REPAINT, 0, NULL, opt_x,
 		{ "Tab stops: ",
-		"Tab stops every %d spaces", 
+		"0123456789, ",
 		NULL }
 	},
 	{ 'X', &X__optname,
@@ -341,6 +354,12 @@ static struct option option[] =
 		"Horizontal shift %d positions",
 		NULL }
 	},
+	{ '.', &keypad_optname,
+		BOOL|NO_TOGGLE, OPT_OFF, &no_keypad, NULL,
+		{ "Use keypad mode",
+		"Don't use keypad mode",
+		NULL }
+	},
 	{ '\0', NULL, NOVAR, 0, NULL, NULL, { NULL, NULL, NULL } }
 };
 
@@ -351,7 +370,7 @@ static struct option option[] =
 	public void
 init_option()
 {
-	register struct option *o;
+	register struct loption *o;
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{
@@ -366,11 +385,11 @@ init_option()
 /*
  * Find an option in the option table, given its option letter.
  */
-	public struct option *
+	public struct loption *
 findopt(c)
 	int c;
 {
-	register struct option *o;
+	register struct loption *o;
 
 	for (o = option;  o->oletter != '\0';  o++)
 	{
@@ -388,18 +407,18 @@ findopt(c)
  * is updated to point after the matched name.
  * p_oname if non-NULL is set to point to the full option name.
  */
-	public struct option *
+	public struct loption *
 findopt_name(p_optname, p_oname, p_err)
 	char **p_optname;
 	char **p_oname;
 	int *p_err;
 {
 	char *optname = *p_optname;
-	register struct option *o;
+	register struct loption *o;
 	register struct optname *oname;
 	register int len;
 	int uppercase;
-	struct option *maxo = NULL;
+	struct loption *maxo = NULL;
 	struct optname *maxoname = NULL;
 	int maxlen = 0;
 	int ambig = 0;
@@ -440,7 +459,7 @@ findopt_name(p_optname, p_oname, p_err)
 					maxoname = oname;
 					maxlen = len;
 					ambig = 0;
-					exact = (len == strlen(oname->oname));
+					exact = (len == (int)strlen(oname->oname));
 				}
 				if (!(o->otype & TRIPLE))
 					break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.5 2001/07/26 13:43:46 mrg Exp $	*/
+/*	$NetBSD: search.c,v 1.6 2002/03/05 12:28:36 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -1355,24 +1355,6 @@ regerror(s)
 
 	parg.p_string = s;
 	error("%s", &parg);
-}
-#endif
-
-#if !HAVE_STRCHR
-/*
- * strchr is used by regexp.c.
- */
-	char *
-strchr(s, c)
-	char *s;
-	int c;
-{
-	for ( ;  *s != '\0';  s++)
-		if (*s == c)
-			return (s);
-	if (c == '\0')
-		return (s);
-	return (NULL);
 }
 #endif
 

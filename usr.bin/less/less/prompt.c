@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.9 2001/07/26 13:43:46 mrg Exp $	*/
+/*	$NetBSD: prompt.c,v 1.10 2002/03/05 12:28:35 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -42,20 +42,23 @@ extern char *editproto;
  * Prototypes for the three flavors of prompts.
  * These strings are expanded by pr_expand().
  */
-static char s_proto[] =
-  "?n?f%f .?m(file %i of %m) ..?e(END) ?x- Next\\: %x..%t";
-static char m_proto[] =
-  "?n?f%f .?m(file %i of %m) ..?e(END) ?x- Next\\: %x.:?pB%pB\\%:byte %bB?s/%s...%t";
+static constant char s_proto[] =
+  "?n?f%f .?m(%T %i of %m) ..?e(END) ?x- Next\\: %x..%t";
+static constant char m_proto[] =
+  "?n?f%f .?m(%T %i of %m) ..?e(END) ?x- Next\\: %x.:?pB%pB\\%:byte %bB?s/%s...%t";
 static constant char M_proto[] =
-  "?f%f .?n?m(file %i of %m) ..?ltlines %lt-%lb?L/%L. :byte %bB?s/%s. .?e(END) ?x- Next\\: %x.:?pB%pB\\%..%t";
+  "?f%f .?n?m(%T %i of %m) ..?ltlines %lt-%lb?L/%L. :byte %bB?s/%s. .?e(END) ?x- Next\\: %x.:?pB%pB\\%..%t";
 static constant char e_proto[] =
-  "?f%f .?m(file %i of %m) .?ltlines %lt-%lb?L/%L. .byte %bB?s/%s. ?e(END) :?pB%pB\\%..%t";
+  "?f%f .?m(%T %i of %m) .?ltlines %lt-%lb?L/%L. .byte %bB?s/%s. ?e(END) :?pB%pB\\%..%t";
 static constant char h_proto[] =
   "HELP -- ?eEND -- Press g to see it again:Press RETURN for more., or q when done";
+static constant char w_proto[] =
+  "Waiting for data";
 
 public char *prproto[3];
-public constant char *eqproto = e_proto;
-public constant char *hproto = h_proto;
+public char constant *eqproto = e_proto;
+public char constant *hproto = h_proto;
+public char constant *wproto = w_proto;
 
 static char message[PROMPT_SIZE];
 static char *mp;
@@ -82,6 +85,7 @@ init_prompt()
 	prproto[2] = save(M_proto);
 	eqproto = save(e_proto);
 	hproto = save(h_proto);
+	wproto = save(w_proto);
 }
 
 /*
@@ -123,10 +127,19 @@ ap_char(i)
 ap_pos(pos)
 	POSITION pos;
 {
-	char buf[MAX_PRINT_POSITION];
-
-	sprintf(buf, PR_POSITION, (PR_CAST)pos);
-	ap_str(buf);
+	char buf[INT_STRLEN_BOUND(pos) + 1]; 
+	char *p = buf + sizeof(buf) - 1;
+	int neg = (pos < 0);
+ 
+	if (neg)
+		pos = -pos;
+	*p = '\0';
+	do
+		*--p = '0' + (pos % 10);
+	while ((pos /= 10) != 0);
+	if (neg)
+		*--p = '-';
+	ap_str(p);
 }
 
 /*
@@ -136,7 +149,7 @@ ap_pos(pos)
 ap_int(n)
 	int n;
 {
-	char buf[MAX_PRINT_INT];
+	char buf[INT_STRLEN_BOUND(n) + 1];
 
 	sprintf(buf, "%d", n);
 	ap_str(buf);
@@ -200,9 +213,9 @@ cond(c, where)
 	case 'D':	/* Same as L */
 		return (linenums && ch_length() != NULL_POSITION);
 	case 'm':	/* More than one file? */
-		return (nifile() > 1);
+		return (ntags() ? (ntags() > 1) : (nifile() > 1));
 	case 'n':	/* First prompt in a new file? */
-		return (new_file);
+		return (ntags() ? 1 : new_file);
 	case 'p':	/* Percent into file (bytes) known? */
 		return (curr_byte(where) != NULL_POSITION && 
 				ch_length() > 0);
@@ -214,6 +227,8 @@ cond(c, where)
 	case 'B':
 		return (ch_length() != NULL_POSITION);
 	case 'x':	/* Is there a "next" file? */
+		if (ntags())
+			return (0);
 		return (next_ifile(curr_ifile) != NULL_IFILE);
 	}
 	return (0);
@@ -236,8 +251,6 @@ protochar(c, where, iseditproto)
 	POSITION len;
 	int n;
 	IFILE h;
-	char *s;
-	char *escs;
 
 	switch (c)
 	{
@@ -272,21 +285,13 @@ protochar(c, where, iseditproto)
 		break;
 #endif
 	case 'f':	/* File name */
-		s = unquote_file(get_filename(curr_ifile));
-		/*
-		 * If we are expanding editproto then we escape metachars.
-		 * This allows us to run the editor on files with funny names.
-		 */
-		if (iseditproto && (escs = esc_metachars(s)) != NULL)
-		{
-			free(s);
-			s = escs;
-		}
-		ap_str(s);
-		free(s);
+		ap_str(get_filename(curr_ifile));
 		break;
 	case 'i':	/* Index into list of files */
-		ap_int(get_index(curr_ifile));
+		if (ntags())
+			ap_int(curr_tag());
+		else
+			ap_int(get_index(curr_ifile));
 		break;
 	case 'l':	/* Current line number */
 		n = currline(where);
@@ -304,7 +309,11 @@ protochar(c, where, iseditproto)
 			ap_int(n-1);
 		break;
 	case 'm':	/* Number of files */
-		ap_int(nifile());
+		n = ntags();
+		if (n)
+			ap_int(n);
+		else
+			ap_int(nifile());
 		break;
 	case 'p':	/* Percent into file (bytes) */
 		pos = curr_byte(where);
@@ -335,14 +344,17 @@ protochar(c, where, iseditproto)
 		while (mp > message && mp[-1] == ' ')
 			mp--;
 		break;
+	case 'T':	/* Type of list */
+		if (ntags())
+			ap_str("tag");
+		else
+			ap_str("file");
+		break;
 	case 'x':	/* Name of next file */
 		h = next_ifile(curr_ifile);
 		if (h != NULL_IFILE)
-		{
-			s = unquote_file(get_filename(h));
-			ap_str(s);
-			free(s);
-		} else
+			ap_str(get_filename(h));
+		else
 			ap_quest();
 		break;
 	}
@@ -497,7 +509,6 @@ pr_expand(proto, maxwidth)
 		}
 	}
 
-	new_file = 0;
 	if (mp == message)
 		return (NULL);
 	if (maxwidth > 0 && mp >= message + maxwidth)
@@ -529,7 +540,20 @@ eq_message()
 	public char *
 pr_string()
 {
-	if (ch_getflags() & CH_HELPFILE)
-		return (pr_expand(hproto, sc_width-so_s_width-so_e_width-2));
-	return (pr_expand(prproto[pr_type], sc_width-so_s_width-so_e_width-2));
+	char *prompt;
+
+	prompt = pr_expand((ch_getflags() & CH_HELPFILE) ?
+				hproto : prproto[pr_type],
+			sc_width-so_s_width-so_e_width-2);
+	new_file = 0;
+	return (prompt);
+}
+
+/*
+ * Return a message suitable for printing while waiting in the F command.
+ */
+	public char *
+wait_message()
+{
+	return (pr_expand(wproto, sc_width-so_s_width-so_e_width-2));
 }

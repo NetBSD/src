@@ -1,4 +1,4 @@
-/*	$NetBSD: lesskey.c,v 1.5 2001/07/26 14:20:48 mrg Exp $	*/
+/*	$NetBSD: lesskey.c,v 1.6 2002/03/05 12:28:38 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -128,11 +128,14 @@ struct cmdname cmdnames[] =
 	{ "invalid",		A_UINVALID },
 	{ "left-scroll",	A_LSHIFT },
 	{ "next-file",		A_NEXT_FILE },
+	{ "next-tag",		A_NEXT_TAG },
 	{ "noaction",		A_NOACTION },
 	{ "percent",		A_PERCENT },
 	{ "pipe",		A_PIPE },
 	{ "prev-file",		A_PREV_FILE },
+	{ "prev-tag",		A_PREV_TAG },
 	{ "quit",		A_QUIT },
+	{ "remove-file",	A_REMOVE_FILE },
 	{ "repaint",		A_REPAINT },
 	{ "repaint-flush",	A_FREPAINT },
 	{ "repeat-search",	A_AGAIN_SEARCH },
@@ -415,6 +418,10 @@ tstr(pp)
 			case 'h': ch = SK_HOME; break;
 			case 'e': ch = SK_END; break;
 			case 'x': ch = SK_DELETE; break;
+			default:
+				terror("illegal char after \\k");
+				*pp = p+1;
+				return ("");
 			}
 			*pp = p+1;
 			buf[0] = SK_SPECIAL_KEY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.3 2001/07/26 13:43:46 mrg Exp $	*/
+/*	$NetBSD: version.c,v 1.4 2002/03/05 12:28:36 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -602,6 +602,34 @@ v356   7/5/00	Add -J option.
 v357   7/6/00	Support sigprocmask.
 -----------------------------------------------------------------
 v358   7/8/00	Fix problems with #stop in lesskey file.
+		Posted to Web page.
+-----------------------------------------------------------------
+v359  9/10/00	Fixes for Win32 display problems (thanks to Maurizio Vairani).
+v360  1/17/01	Move sysless to etc.
+v361  12/4/01	Add IBM-1047 charset & EBCDIC fixes (thanks to Thomas Dorner).
+		Fix 32 bit dependencies (thanks to Paul Eggert).
+		Fix UTF-8 overstriking (thanks to Robert Brady).
+v362  12/4/01	Make status column show search targets.
+v363  12/6/01	Add --no-keypad option.
+		Add variable width tabstops (thanks to Peter Samuelson).
+v364 12/10/01	Better handling of very long lines in input;
+		Fix horizontal shifting of colored text.
+v365 12/11/01	Fix overstriking of tabs;
+		Add support for global(1) and multiple tag matches
+		(thanks to Shigio Yamaguchi and Tim Vanderhoek).
+v366 12/11/01	Fixes for OS/2 (thanks to Kyosuke Tokoro).
+v367 12/13/01	Allow -D and -x options to terminate without dollar sign;
+		Right/left arrow when entering N are shift cmds, not line edit.
+v368 12/18/01	Update lesskey commands.
+v370 12/23/01	Fix tags error messages.
+		Posted to Web page.
+-----------------------------------------------------------------
+v371 12/26/01	Fix new_file bug; use popen in Windows version;
+		fix some compiler warnings.
+v372 12/29/01	Make -b be in units of 1K.
+v373  1/14/02	Improve handling of filenames containing shell metachars.
+v374  2/7/02	Fix memory leak; fix bug in -x argument parsing.
+
 */
 
-char version[] = "358";
+char version[] = "374";
