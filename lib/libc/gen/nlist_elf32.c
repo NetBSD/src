@@ -1,9 +1,7 @@
-/*	$NetBSD: nlist_elf32.c,v 1.2 1996/09/30 23:51:05 cgd Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.3 1996/10/01 00:32:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,32 +13,22 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$NetBSD: nlist_elf32.c,v 1.2 1996/09/30 23:51:05 cgd Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -72,94 +60,109 @@ static char rcsid[] = "$NetBSD: nlist_elf32.c,v 1.2 1996/09/30 23:51:05 cgd Exp 
 #define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
+#define	check(off, size)	((off < 0) || (off + size > mappedsize))
+#define	BAD			do { rv = -1; goto out; } while (0)
+#define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
+
 int
 ELFNAMEEND(__fdnlist)(fd, list)
 	register int fd;
 	register struct nlist *list;
 {
-	register struct nlist *p;
-	register caddr_t strtab;
-	register Elf32_Word symsize, symstrsize;
-	register Elf32_Off symoff = 0, symstroff;
-	register long nent, cc, i;
-	Elf_Sym sbuf[1024];
-	Elf_Sym *s;
-	Elf_Ehdr ehdr;
-	Elf_Shdr *shdr = NULL;
-	Elf_Word shdr_size;
 	struct stat st;
+	struct nlist *p;
+	char *mappedfile, *strtab;
+	size_t mappedsize;
+	Elf_Ehdr *ehdrp;
+	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
+	Elf_Sym *symp;
+	Elf32_Off shdr_off;
+	Elf32_Word shdr_size;
+#if (ELFSIZE == 32)
+	Elf32_Half nshdr;
+#elif (ELFSIZE == 64)
+	Elf64_Half nshdr;
+#endif
+	unsigned long i, nsyms;
+	int rv, nent;
 
-	/* Make sure obj is OK */
-	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &ehdr, sizeof(Elf_Ehdr)) != sizeof(Elf_Ehdr) ||
-	    fstat(fd, &st) < 0)
-		return (-1);
+	rv = -1;
 
-	if (bcmp(ehdr.e_ident, Elf_e_ident, Elf_e_siz))
-		return (-1);
+	/*
+	 * Map the whole file.  If we can't open/stat it, something bad
+	 * is going on so we punt.
+	 */
+	if (fstat(fd, &st) < 0)
+		BAD;
+	if (st.st_size > SIZE_T_MAX) {
+		errno = EFBIG;
+		BAD;
+	}
 
-	switch (ehdr.e_machine) {
+	/*
+	 * Map the file in its entirety.
+	 */
+	mappedsize = st.st_size;
+	mappedfile = mmap(NULL, mappedsize, PROT_READ, 0, fd, 0);
+	if (mappedfile == (char *)-1)
+		BAD;
+
+	/*
+	 * Make sure we can access the executable's header
+	 * directly, and make sure the recognize the executable
+	 * as an ELF binary.
+	 */
+	if (check(0, sizeof *ehdrp))
+		BADUNMAP;
+	ehdrp = (Elf_Ehdr *)&mappedfile[0];
+
+	if (bcmp(ehdrp->e_ident, Elf_e_ident, Elf_e_siz))
+		BADUNMAP;
+
+	switch (ehdrp->e_machine) {
 	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
-		return (-1);
+		BADUNMAP;
 	}
-
-	/* calculate section header table size */
-	shdr_size = ehdr.e_shentsize * ehdr.e_shnum;
-
-	/* Make sure it's not too big to mmap */
-	if (shdr_size > SIZE_T_MAX) {
-		errno = EFBIG;
-		return (-1);
-	}
-
-	/* mmap section header table */
-	shdr = (Elf_Shdr *)mmap(NULL, (size_t)shdr_size,
-	    PROT_READ, 0, fd, ehdr.e_shoff);
-	if (shdr == (Elf_Shdr *)-1)
-		return (-1);
 
 	/*
-	 * Find the symbol table entry and it's corresponding
-	 * string table entry.  Version 1.1 of the ABI states
-	 * that there is only one symbol table but that this
-	 * could change in the future.
+	 * Find the symbol list and string table.
 	 */
-	for (i = 0; i < ehdr.e_shnum; i++) {
-		if (shdr[i].sh_type == Elf_sht_symtab) {
-			symoff = shdr[i].sh_offset;
-			symsize = shdr[i].sh_size;
-			symstroff = shdr[shdr[i].sh_link].sh_offset;
-			symstrsize = shdr[shdr[i].sh_link].sh_size;
-			break;
+	nshdr = ehdrp->e_shnum;
+	shdr_off = ehdrp->e_shoff;
+	shdr_size = ehdrp->e_shentsize * nshdr;
+
+	if (check(shdr_off, shdr_size) ||
+	    (sizeof *shdrp != ehdrp->e_shentsize))
+		BADUNMAP;
+	shdrp = (Elf_Shdr *)&mappedfile[shdr_off];
+
+	for (i = 0; i < nshdr; i++) {
+		if (shdrp[i].sh_type == Elf_sht_symtab) {
+			symshdrp = &shdrp[i];
+			symstrshdrp = &shdrp[shdrp[i].sh_link];
 		}
 	}
 
-	/* Flush the section header table */
-	munmap((caddr_t)shdr, shdr_size);
+	/* Make sure we're not stripped. */
+	if (symshdrp->sh_offset == 0)
+		BADUNMAP;
 
-	/* Check for files too large to mmap. */
-	/* XXX is this really possible? */
-	if (symstrsize > SIZE_T_MAX) {
-		errno = EFBIG;
-		return (-1);
-	}
-	/*
-	 * Map string table into our address space.  This gives us
-	 * an easy way to randomly access all the strings, without
-	 * making the memory allocation permanent as with malloc/free
-	 * (i.e., munmap will return it to the system).
-	 */
-	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, 0, fd, symstroff);
-	if (strtab == (char *)-1)
-		return (-1);
+	/* Make sure the symbols and strings are safely mapped. */
+	if (check(symshdrp->sh_offset, symshdrp->sh_size))
+		BADUNMAP;
+	if (check(symstrshdrp->sh_offset, symstrshdrp->sh_size))
+		BADUNMAP;
+
+	symp = (Elf_Sym *)&mappedfile[symshdrp->sh_offset];
+	nsyms = symshdrp->sh_size / sizeof(*symp);
+	strtab = &mappedfile[symstrshdrp->sh_offset];
+
 	/*
 	 * clean out any left-over information for all valid entries.
 	 * Type and value defined to be 0 if not found; historical
-	 * versions cleared other and desc as well.  Also figure out
-	 * the largest string length so don't read any more of the
-	 * string table than we have to.
+	 * versions cleared other and desc as well.
 	 *
 	 * XXX clearing anything other than n_type and n_value violates
 	 * the semantics given in the man page.
@@ -173,66 +176,54 @@ ELFNAMEEND(__fdnlist)(fd, list)
 		++nent;
 	}
 
-	/* Don't process any further if object is stripped. */
-	/* ELFism - dunno if stripped by looking at header */
-	if (symoff == 0)
-		goto done;
+	for (i = 0; i < nsyms; i++) {
+		for (p = list; !ISLAST(p); ++p) {
+			char *nlistname;
+			char *symtabname;
 
-	if (lseek(fd, symoff, SEEK_SET) == -1) {
-		nent = -1;
-		goto done;
-	}
+			/* This may be incorrect */
+			nlistname = p->n_un.n_name;
+			if (*nlistname == '_')
+				nlistname++;
 
-	while (symsize > 0) {
-		cc = MIN(symsize, sizeof(sbuf));
-		if (read(fd, sbuf, cc) != cc)
-			break;
-		symsize -= cc;
-		for (s = sbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			register int soff = s->st_name;
+			symtabname = &strtab[symp[i].st_name];
 
-			if (soff == 0)
-				continue;
-
-			for (p = list; !ISLAST(p); p++) {
-				char *nlistname;
-
-				nlistname = p->n_un.n_name;
-				if (*nlistname == '_')
-					nlistname++;
-
-				if (!strcmp(&strtab[soff], nlistname)) {
-					p->n_value = s->st_value;
-
-					switch(ELF_SYM_TYPE(s->st_info)) {
-					case Elf_estt_notype:
-						p->n_type = N_UNDF;
-						break;
-					case Elf_estt_object:
-						p->n_type = N_DATA;
-						break;
-					case Elf_estt_func:
-						p->n_type = N_TEXT;
-						break;
-					case Elf_estt_file:
-						p->n_type = N_FN;
-						break;
-					}
-					if (ELF_SYM_BIND(s->st_info) !=
-					    Elf_estb_local)
-						p->n_type |= N_EXT;
-					p->n_desc = 0;
-					p->n_other = 0;
-					if (--nent <= 0)
-						break;
+			if (!strcmp(symtabname, nlistname)) {
+				/* Fill in the nlist data. */
+				p->n_value = symp[i].st_value;
+				switch(ELF_SYM_TYPE(symp[i].st_info)) {
+				case Elf_estt_notype:
+					p->n_type = N_UNDF;
+					break;
+				case Elf_estt_object:
+					p->n_type = N_DATA;
+					break;
+				case Elf_estt_func:
+					p->n_type = N_TEXT;
+					break;
+				case Elf_estt_file:
+					p->n_type = N_FN;
+					break;
 				}
+				if (ELF_SYM_BIND(symp[i].st_info) !=
+				    Elf_estb_local)
+					p->n_type |= N_EXT;
+				p->n_desc = 0;			/* XXX */
+				p->n_other = 0;			/* XXX */
+
+				if (--nent <= 0)
+					goto done;
+				break;	/* into next run of outer loop */
 			}
 		}
 	}
-done:
-	munmap(strtab, symstrsize);
 
-	return (nent);
+done:
+	rv = nent;
+unmap:
+	munmap(mappedfile, mappedsize);
+out:
+	return (rv);
 }
 
 #endif
