@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.208 2000/05/31 05:14:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2000/05/26 21:19:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2000/05/31 05:14:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,14 +708,16 @@ nobootinfo:
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 
-#if defined(MULTIPROCESSOR)
 	/*
-	 * Initialize the primary CPU's idle PCB to proc0's, until
-	 * autoconfiguration runs (it will get its own idle PCB there).
+	 * Initialize the primary CPU's idle PCB to proc0's.  In a
+	 * MULTIPROCESSOR configuration, each CPU will later get
+	 * its own idle PCB when autoconfiguration runs.
 	 */
 	curcpu()->ci_idle_pcb = &proc0paddr->u_pcb;
 	curcpu()->ci_idle_pcb_paddr = (u_long)proc0.p_md.md_pcbpaddr;
-#endif
+
+	/* Indicate that proc0 has a CPU. */
+	proc0.p_cpu = curcpu();
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.

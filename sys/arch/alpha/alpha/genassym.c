@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.28 2000/05/26 21:19:21 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.29 2000/05/31 05:14:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.28 2000/05/26 21:19:21 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.29 2000/05/31 05:14:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -173,6 +173,7 @@ struct nv assyms[] = {
 	off(P_ADDR, struct proc, p_addr),
 	off(P_VMSPACE, struct proc, p_vmspace),
 	off(P_STAT, struct proc, p_stat),
+	off(P_CPU, struct proc, p_cpu),
 	off(P_MD_FLAGS, struct proc, p_md.md_flags),
 	off(P_MD_PCBPADDR, struct proc, p_md.md_pcbpaddr),
 	off(PH_LINK, struct prochd, ph_link),
@@ -218,14 +219,14 @@ struct nv assyms[] = {
 	def1(SYS___sigreturn14),
 	def1(SYS_exit),
 
-#if defined(MULTIPROCESSOR)
 	/* CPU info */
-	def1(ALPHA_MAXPROCS),
 	off(CPU_INFO_CURPROC, struct cpu_info, ci_curproc),
 	off(CPU_INFO_FPCURPROC, struct cpu_info, ci_fpcurproc),
 	off(CPU_INFO_CURPCB, struct cpu_info, ci_curpcb),
 	off(CPU_INFO_IDLE_PCB_PADDR, struct cpu_info, ci_idle_pcb_paddr),
-#endif
+	off(CPU_INFO_WANT_RESCHED, struct cpu_info, ci_want_resched),
+	off(CPU_INFO_ASTPENDING, struct cpu_info, ci_astpending),
+	def(CPU_INFO_SIZEOF, sizeof(struct cpu_info)),
 };
 int nassyms = sizeof(assyms)/sizeof(assyms[0]);
 
