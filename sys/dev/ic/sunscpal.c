@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.4 2001/07/07 16:13:51 thorpej Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.5 2001/07/08 18:06:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -119,7 +119,7 @@ static void	sunscpal_machine __P((struct sunscpal_softc *));
 void	sunscpal_abort __P((struct sunscpal_softc *));
 void	sunscpal_cmd_timeout __P((void *));
 /*
- * Action flags returned by the info_tranfer functions:
+ * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
  */
 #define ACT_CONTINUE	0x00	/* No flags: expect another phase */

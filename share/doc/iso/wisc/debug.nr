@@ -1,4 +1,4 @@
-.\"	$NetBSD: debug.nr,v 1.3 1998/01/09 06:34:40 perry Exp $
+.\"	$NetBSD: debug.nr,v 1.4 2001/07/08 18:06:42 wiz Exp $
 .\"
 .\"WISC: Header: debug.nr,v 1.4 88/12/06 16:05:36 nhall Exp $
 .\"WISC: Source: /usr/argo/doc/kernel/RCS/debug.nr,v $
@@ -919,7 +919,7 @@ In the middle of the transfer, if the sender process
 is stopped, both TP entities continue
 to send acknowledgments. 
 This can be observed in the trace.
-If the file tranfer is between machines, taking down one of the machines
+If the file transfer is between machines, taking down one of the machines
 will cause the inactivity timer on the other machine to expire.
 The TP entity will respond to this by sending a DR TPDU
 to close the connection, which can be observed in the trace.
