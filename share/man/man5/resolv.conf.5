@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.22 2003/08/07 10:31:17 agc Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.23 2003/09/07 16:22:29 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -140,7 +140,7 @@ enable debugging information, by setting RES_DEBUG in _res.options
 (see
 .Xr resolver 3 ) .
 .It Sy edns0
-attach OPT pseudo-RR for ENDS0 extension specified in RFC2671,
+attach OPT pseudo-RR for ENDS0 extension specified in RFC 2671,
 to inform DNS server of our receive buffer size.
 The option will allow DNS servers to take advantage of non-default receive
 buffer size, and to send larger replies.
