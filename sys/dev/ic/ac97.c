@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.22 2002/01/06 17:03:17 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.23 2002/01/12 16:03:11 tsutsui Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.22 2002/01/06 17:03:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.23 2002/01/12 16:03:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,12 +566,10 @@ ac97_attach(host_if)
 	u_int32_t id;
 	mixer_ctrl_t ctl;
 	
-	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK);
+	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (as == NULL)
 		return (ENOMEM);
-
-	memset(as, 0, sizeof(*as));
 
 	as->codec_if.vtbl = &ac97civ;
 	as->host_if = host_if;
