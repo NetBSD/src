@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.4 2003/10/13 18:41:11 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.5 2004/02/20 16:11:44 drochner Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -127,5 +127,7 @@ struct x86_64_set_mtrr_args32 {
 	uint32_t mtrrp;
 	uint32_t n;
 };
+
+#define NETBSD32_MID_MACHINE MID_I386
 
 #endif /* _MACHINE_NETBSD32_H_ */
