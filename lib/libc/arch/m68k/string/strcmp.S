@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.S,v 1.6 1997/01/03 22:57:05 jtc Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.7 1997/01/04 03:21:16 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)strcmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcmp.S,v 1.6 1997/01/03 22:57:05 jtc Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.7 1997/01/04 03:21:16 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,9 +59,9 @@ ENTRY(strcmp)
 Lscloop:
 	movb	a0@+,d0			| get *string1
 	cmpb	a1@+,d0			| compare a byte
-	bne	Lscexit			| not equal, break out
+	jne	Lscexit			| not equal, break out
 	tstb	d0			| at end of string1?
-	bne	Lscloop			| no, keep going
+	jne	Lscloop			| no, keep going
 	moveq	#0,d0			| strings are equal
 	rts
 Lscexit:

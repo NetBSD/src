@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.S,v 1.5 1997/01/03 22:57:05 jtc Exp $	*/
+/*	$NetBSD: strcpy.S,v 1.6 1997/01/04 03:21:17 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcpy.S,v 1.5 1997/01/03 22:57:05 jtc Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.6 1997/01/04 03:21:17 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,5 +53,5 @@ ENTRY(strcpy)
 	movl	d0,a1			| a1 = toaddr
 Lscloop:
 	movb	a0@+,a1@+		| copy a byte
-	bne	Lscloop			| copied non-null, keep going
+	jne	Lscloop			| copied non-null, keep going
 	rts
