@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.23 1997/09/06 05:44:08 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.23.4.1 1997/10/25 01:25:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -991,23 +991,31 @@ CHIP_mem_set_region_N(2,u_int16_t)
 CHIP_mem_set_region_N(4,u_int32_t)
 CHIP_mem_set_region_N(8,u_int64_t)
 
-#define	CHIP_mem_copy_region_N(BYTES)						\
+#define	CHIP_mem_copy_region_N(BYTES)					\
 void									\
-__C(__C(CHIP,_mem_copy_region_),BYTES)(v, h1, o1, h2, o2, c)			\
+__C(__C(CHIP,_mem_copy_region_),BYTES)(v, h1, o1, h2, o2, c)		\
 	void *v;							\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
 {									\
-	bus_size_t i, o;						\
+	bus_size_t o;							\
 									\
 	if ((h1 >> 63) != 0 && (h2 >> 63) != 0) {			\
-		bcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES);	\
+		ovbcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES); \
 		return;							\
 	}								\
 									\
-	for (i = 0, o = 0; i < c; i++, o += BYTES)			\
-		__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,		\
-		    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o));	\
+	if ((h1 + o1) >= (h2 + o2)) {					\
+		/* src after dest: copy forward */			\
+		for (o = 0; c != 0; c--, o += BYTES)			\
+			__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,	\
+			    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o)); \
+	} else {							\
+		/* dest after src: copy backwards */			\
+		for (o = (c - 1) * BYTES; c != 0; c--, o -= BYTES)	\
+			__C(__C(CHIP,_mem_write_),BYTES)(v, h2, o2 + o,	\
+			    __C(__C(CHIP,_mem_read_),BYTES)(v, h1, o1 + o)); \
+	}								\
 }
 CHIP_mem_copy_region_N(1)
 CHIP_mem_copy_region_N(2)
