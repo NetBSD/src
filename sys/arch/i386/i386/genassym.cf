@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28.10.3 2002/03/22 00:24:44 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.28.10.4 2002/03/22 19:39:40 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@ include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 endif
+
+def	__MUTEX_PRIVATE
 
 include <sys/param.h>
 include <sys/proc.h>

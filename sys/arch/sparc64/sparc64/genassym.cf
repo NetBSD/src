@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25.8.2 2002/03/22 00:41:54 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.25.8.3 2002/03/22 19:39:41 thorpej Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
 #
 #	@(#)genassym.c	8.1 (Berkeley) 6/11/93
 #
+
+def	__MUTEX_PRIVATE
 
 include <sys/param.h>
 include <sys/buf.h>
