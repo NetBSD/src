@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.23 1995/02/23 23:41:43 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.24 1995/03/18 14:35:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -247,17 +247,11 @@ again:
 	 */
 	retval[0] = p1->p_pid;
 	retval[1] = 1;
-	if (vm_fork(p1, p2, isvfork)) {
-		/*
-		 * Child process.  Set start time and get to work.
-		 */
-		(void) splclock();
-		(void) spl0();
+	if (vm_fork(p1, p2, isvfork))
 		return (0);
-	}
 
 	/*
-	 * Make child runnable and add to run queue.
+	 * Make child runnable, set start time, and add to run queue.
 	 */
 	(void) splhigh();
 	p2->p_stats->p_start = time;
