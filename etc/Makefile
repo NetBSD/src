@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.135 2000/02/20 03:10:50 mycroft Exp $
+#	$NetBSD: Makefile,v 1.136 2000/02/20 03:32:37 mycroft Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -250,9 +250,7 @@ release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/security
 .endif
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/sets
-.ifdef EXTRA_KERNELS
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
-.endif
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
