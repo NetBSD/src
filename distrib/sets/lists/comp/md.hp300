@@ -14,9 +14,11 @@
 ./usr/include/m68k/endian.h
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
+./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
+./usr/include/m68k/m68k.h
 ./usr/include/m68k/param.h
 ./usr/include/m68k/pcb.h
 ./usr/include/m68k/profile.h
@@ -62,8 +64,9 @@
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
-./usr/lib/libc_pic.a
 ./usr/lib/libamu_pic.a
+./usr/lib/libbfd_pic.a
+./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a
@@ -72,6 +75,7 @@
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
+./usr/lib/libossaudio_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libposix_pic.a
 ./usr/lib/libresolv_pic.a

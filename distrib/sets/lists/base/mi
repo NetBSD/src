@@ -97,6 +97,7 @@
 ./sbin/rdump
 ./sbin/reboot
 ./sbin/restore
+./sbin/rndctl
 ./sbin/route
 ./sbin/routed
 ./sbin/rrestore
@@ -209,6 +210,7 @@
 ./usr/bin/login
 ./usr/bin/logname
 ./usr/bin/look
+./usr/bin/lp
 ./usr/bin/lpq
 ./usr/bin/lpr
 ./usr/bin/lprm
@@ -354,6 +356,7 @@
 ./usr/games/hide
 ./usr/include
 ./usr/include/arpa
+./usr/include/bfd
 ./usr/include/dev
 ./usr/include/dev/microcode
 ./usr/include/dev/ofw
@@ -369,6 +372,7 @@
 ./usr/include/netnatm
 ./usr/include/netns
 ./usr/include/nfs
+./usr/include/objc
 ./usr/include/protocols
 ./usr/include/rpc
 ./usr/include/rpcsvc
@@ -412,6 +416,8 @@
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
+./usr/libexec/sm.bin
+./usr/libexec/smrsh
 ./usr/libexec/telnetd
 ./usr/libexec/tftpd
 ./usr/libexec/uucp
@@ -420,6 +426,7 @@
 ./usr/libexec/uucp/uuconv
 ./usr/libexec/uucp/uuxqt
 ./usr/libexec/uucpd
+./usr/libexec/uugetty
 ./usr/lkm
 ./usr/local
 ./usr/local/bin
@@ -498,6 +505,7 @@
 ./usr/sbin/mdconfig
 ./usr/sbin/mdsetimage
 ./usr/sbin/mk-amd-map
+./usr/sbin/mkalias
 ./usr/sbin/mknetid
 ./usr/sbin/mopa.out
 ./usr/sbin/mopchk
@@ -540,6 +548,7 @@
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
 ./usr/sbin/repquota
+./usr/sbin/revnetgroup
 ./usr/sbin/rmt
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
@@ -555,6 +564,9 @@
 ./usr/sbin/spray
 ./usr/sbin/stdethers
 ./usr/sbin/stdhosts
+./usr/sbin/sup
+./usr/sbin/supfilesrv
+./usr/sbin/supscan
 ./usr/sbin/sysctl
 ./usr/sbin/syslogd
 ./usr/sbin/tcpdchk
@@ -568,6 +580,7 @@
 ./usr/sbin/update
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
+./usr/sbin/wire-test
 ./usr/sbin/xntpd
 ./usr/sbin/xntpdc
 ./usr/sbin/ypbind
@@ -873,16 +886,11 @@
 ./usr/share/sendmail/cf/uucpproto.mc
 ./usr/share/sendmail/domain
 ./usr/share/sendmail/domain/Berkeley.EDU.m4
-./usr/share/sendmail/domain/Berkeley.m4
 ./usr/share/sendmail/domain/CS.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/EECS.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/S2K.Berkeley.EDU.m4
 ./usr/share/sendmail/domain/berkeley-only.m4
-./usr/share/sendmail/domain/cs.exposed.m4
-./usr/share/sendmail/domain/cs.hidden.m4
-./usr/share/sendmail/domain/eecs.hidden.m4
 ./usr/share/sendmail/domain/generic.m4
-./usr/share/sendmail/domain/s2k.m4
 ./usr/share/sendmail/feature
 ./usr/share/sendmail/feature/allmasquerade.m4
 ./usr/share/sendmail/feature/always_add_domain.m4
@@ -988,6 +996,7 @@
 ./usr/share/tabset/tandem653
 ./usr/share/tabset/teleray
 ./usr/share/tabset/vt100
+./usr/share/tabset/vt100-w
 ./usr/share/tabset/wyse-adds
 ./usr/share/tabset/xerox1720
 ./usr/share/tabset/xerox1730
