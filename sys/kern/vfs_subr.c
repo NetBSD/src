@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.35 1994/12/24 16:44:16 ws Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.36 1995/01/09 19:54:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -94,7 +94,7 @@ vntblinit()
 {
 
 	TAILQ_INIT(&vnode_free_list);
-	TAILQ_INIT(&mountlist);
+	CIRCLEQ_INIT(&mountlist);
 }
 
 /*
@@ -175,7 +175,8 @@ getvfs(fsid)
 {
 	register struct mount *mp;
 
-	for (mp = mountlist.tqh_first; mp != NULL; mp = mp->mnt_list.tqe_next)
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	     mp = mp->mnt_list.cqe_next)
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
 		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1])
 			return (mp);
@@ -200,7 +201,7 @@ getnewfsid(mp, mtype)
 		++xxxfs_mntid;
 	tfsid.val[0] = makedev((nblkdev + mtype) & 0xff, xxxfs_mntid);
 	tfsid.val[1] = mtype;
-	if (mountlist.tqh_first != NULL) {
+	if (mountlist.cqh_first != (void *)&mountlist) {
 		while (getvfs(&tfsid)) {
 			tfsid.val[0]++;
 			xxxfs_mntid++;
@@ -253,7 +254,6 @@ vattr_null(vap)
 extern int (**dead_vnodeop_p)();
 extern void vclean();
 long numvnodes;
-extern struct vattr va_null;
 
 /*
  * Return the next vnode from the free list.
@@ -1162,7 +1162,8 @@ printlockedvnodes()
 	register struct vnode *vp;
 
 	printf("Locked vnodes\n");
-	for (mp = mountlist.tqh_first; mp != NULL; mp = mp->mnt_list.tqe_next) {
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	     mp = mp->mnt_list.cqe_next) {
 		for (vp = mp->mnt_vnodelist.lh_first;
 		     vp != NULL;
 		     vp = vp->v_mntvnodes.le_next)
@@ -1198,8 +1199,8 @@ sysctl_vnode(where, sizep)
 	}
 	ewhere = where + *sizep;
 		
-	for (mp = mountlist.tqh_first; mp != NULL; mp = nmp) {
-		nmp = mp->mnt_list.tqe_next;
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+		nmp = mp->mnt_list.cqe_next;
 		if (vfs_busy(mp))
 			continue;
 		savebp = bp;
@@ -1472,4 +1473,20 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	if (acc_mode & VWRITE)
 		mask |= S_IWOTH;
 	return (file_mode & mask) == mask ? 0 : EACCES;
+}
+
+/*
+ * Unmount all file systems.
+ * We traverse the list in reverse order under the assumption that doing so
+ * will avoid needing to worry about dependencies.
+ */
+void
+vfs_unmountall()
+{
+	register struct mount *mp, *nmp;
+
+	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
+		nmp = mp->mnt_list.cqe_prev;
+		(void) dounmount(mp, MNT_FORCE, &proc0);
+	}
 }
