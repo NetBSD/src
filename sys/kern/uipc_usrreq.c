@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.68 2003/09/03 21:30:12 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.69 2003/09/03 22:20:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.68 2003/09/03 21:30:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.69 2003/09/03 22:20:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,7 +715,7 @@ unp_connect(so, nam, p)
 		unp3->unp_flags = unp2->unp_flags;
 		so2 = so3;
 	}
-	error = unp_connect2(so, so, PRU_CONNECT);
+	error = unp_connect2(so, so2, PRU_CONNECT);
  bad:
 	vput(vp);
  bad2:
