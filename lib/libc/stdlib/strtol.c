@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strtol.c	5.4 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: strtol.c,v 1.5 1995/12/20 23:14:48 mycroft Exp $";
+static char *rcsid = "$Id: strtol.c,v 1.6 1995/12/21 03:56:06 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -55,9 +55,8 @@ strtol(nptr, endptr, base)
 	register int base;
 {
 	register const char *s;
-	register unsigned long acc;
+	register long acc, cutoff;
 	register int c;
-	register unsigned long cutoff;
 	register int neg, any, cutlim;
 
 	/*
@@ -103,9 +102,16 @@ strtol(nptr, endptr, base)
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
-	cutlim = cutoff % (unsigned long)base;
-	cutoff /= (unsigned long)base;
+	cutoff = neg ? LONG_MIN : LONG_MAX;
+	cutlim = cutoff % base;
+	cutoff /= base;
+	if (neg) {
+		if (cutlim > 0) {
+			cutlim -= base;
+			cutoff += 1;
+		}
+		cutlim = -cutlim;
+	}
 	for (acc = 0, any = 0;; c = *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -115,19 +121,30 @@ strtol(nptr, endptr, base)
 			break;
 		if (c >= base)
 			break;
-		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
-			any = -1;
-		else {
-			any = 1;
-			acc *= (unsigned long)base;
-			acc += c;
+		if (any < 0)
+			continue;
+		if (neg) {
+			if (acc < cutoff || acc == cutoff && c > cutlim) {
+				any = -1;
+				acc = LONG_MIN;
+				errno = ERANGE;
+			} else {
+				any = 1;
+				acc *= base;
+				acc -= c;
+			}
+		} else {
+			if (acc > cutoff || acc == cutoff && c > cutlim) {
+				any = -1;
+				acc = LONG_MAX;
+				errno = ERANGE;
+			} else {
+				any = 1;
+				acc *= base;
+				acc += c;
+			}
 		}
 	}
-	if (any < 0) {
-		acc = neg ? LONG_MIN : LONG_MAX;
-		errno = ERANGE;
-	} else if (neg)
-		acc = -acc;
 	if (endptr != 0)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);

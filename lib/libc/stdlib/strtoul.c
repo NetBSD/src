@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: strtoul.c,v 1.5 1995/12/20 23:14:50 mycroft Exp $";
+static char *rcsid = "$Id: strtoul.c,v 1.6 1995/12/21 03:56:09 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -54,9 +54,8 @@ strtoul(nptr, endptr, base)
 	register int base;
 {
 	register const char *s;
-	register unsigned long acc;
+	register unsigned long acc, cutoff;
 	register int c;
-	register unsigned long cutoff;
 	register int neg, any, cutlim;
 
 	/*
@@ -94,18 +93,19 @@ strtoul(nptr, endptr, base)
 			break;
 		if (c >= base)
 			break;
-		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
+		if (any < 0)
+			continue;
+		if (acc > cutoff || acc == cutoff && c > cutlim) {
 			any = -1;
-		else {
+			acc = ULONG_MAX;
+			errno = ERANGE;
+		} else {
 			any = 1;
 			acc *= (unsigned long)base;
 			acc += c;
 		}
 	}
-	if (any < 0) {
-		acc = ULONG_MAX;
-		errno = ERANGE;
-	} else if (neg)
+	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
 		*endptr = (char *) (any ? s - 1 : nptr);

@@ -55,9 +55,8 @@ strtouq(nptr, endptr, base)
 	register int base;
 {
 	register const char *s;
-	register u_quad_t acc;
+	register u_quad_t acc, cutoff;
 	register int c;
-	register u_quad_t cutoff;
 	register int neg, any, cutlim;
 
 	/*
@@ -95,18 +94,19 @@ strtouq(nptr, endptr, base)
 			break;
 		if (c >= base)
 			break;
-		if (any < 0 || acc > cutoff || acc == cutoff && c > cutlim)
+		if (any < 0)
+			continue;
+		if (acc > cutoff || acc == cutoff && c > cutlim) {
 			any = -1;
-		else {
+			acc = UQUAD_MAX;
+			errno = ERANGE;
+		} else {
 			any = 1;
 			acc *= (u_quad_t)base;
 			acc += c;
 		}
 	}
-	if (any < 0) {
-		acc = UQUAD_MAX;
-		errno = ERANGE;
-	} else if (neg)
+	if (neg && any > 0)
 		acc = -acc;
 	if (endptr != 0)
 		*endptr = (char *) (any ? s - 1 : nptr);
