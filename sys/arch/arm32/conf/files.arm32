@@ -259,9 +259,7 @@ file	arch/arm32/arm32/fiq.S
 # library functions
 file	arch/arm32/arm32/strstr.c
 file	arch/arm32/arm32/strtoul.c
-file	arch/arm32/arm32/memset.S
 file	arch/arm32/arm32/bcopy_page.S
-file	arch/arm32/arm32/bcopy.S
 file	arch/arm32/arm32/bcopyinout.S
 file	arch/arm32/arm32/copystr.S
 
