@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.123 2000/11/16 20:04:33 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.124 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,6 +33,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,7 @@
 #include <sys/mman.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 
 #include <sys/syscallargs.h>
 
@@ -59,6 +61,27 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+extern char sigcode[], esigcode[];
+#ifdef SYSCALL_DEBUG
+extern const char * const syscallnames[];
+#endif
+
+const struct emul emul_netbsd = {
+	"netbsd",
+	NULL,
+	sendsig,
+	SYS_syscall,
+	SYS_MAXSYSCALL,
+	sysent,
+#ifdef SYSCALL_DEBUG
+	syscallnames,
+#else
+	NULL,
+#endif
+	sigcode,
+	esigcode,
+};
 
 /*
  * check exec:
@@ -146,10 +169,16 @@ check_exec(struct proc *p, struct exec_package *epp)
 		if (execsw[i].es_check == NULL)
 			continue;
 
+		epp->ep_esch = &execsw[i];
 		newerror = (*execsw[i].es_check)(p, epp);
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
+
+		/* if es_check call was successful, update epp->ep_es */
+		if (!newerror && (epp->ep_flags & EXEC_HASES) == 0)
+			epp->ep_es = &execsw[i];
+
 		if (epp->ep_flags & EXEC_DESTR && error != 0)
 			return error;
 	}
@@ -222,7 +251,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	char **tmpfap;
 	int szsigcode;
 	struct exec_vmcmd *base_vcp = NULL;
-	extern struct emul emul_netbsd;
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -252,7 +280,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
-	pack.ep_emul = &emul_netbsd;
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */
@@ -335,15 +362,15 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	dp = (char *) ALIGN(dp);
 
-	szsigcode = pack.ep_emul->e_esigcode - pack.ep_emul->e_sigcode;
+	szsigcode = pack.ep_es->es_emul->e_esigcode - pack.ep_es->es_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(int) +
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) * sizeof(int) +
 		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
 		       sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) * sizeof(char *) +
 		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
 		       sizeof(struct ps_strings)) - argp;
 
@@ -424,7 +451,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp)) {
+	if (!(*pack.ep_es->es_copyargs)(&pack, &arginfo, stack, argp)) {
 #ifdef DEBUG
 		printf("execve: copyargs failed\n");
 #endif
@@ -449,7 +476,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
-		if (copyout((char *)pack.ep_emul->e_sigcode,
+		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
 		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
 		    szsigcode)) {
 #ifdef DEBUG
@@ -521,7 +548,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_emul->e_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
@@ -538,18 +565,19 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * same, the exec hook code should deallocate any old emulation
 	 * resources held previously by this process.
 	 */
-	if (p->p_emul && p->p_emul->e_proc_exit && p->p_emul != pack.ep_emul)
+	if (p->p_emul && p->p_emul->e_proc_exit
+	    && p->p_emul != pack.ep_es->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
 	 * from &pack.
 	 */
-        if (pack.ep_emul->e_proc_exec)
-                (*pack.ep_emul->e_proc_exec)(p, &pack);
+        if (pack.ep_es->es_emul->e_proc_exec)
+                (*pack.ep_es->es_emul->e_proc_exec)(p, &pack);
 
 	/* update p_emul, the old value is no longer needed */
-	p->p_emul = pack.ep_emul;
+	p->p_emul = pack.ep_es->es_emul;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
@@ -586,7 +614,7 @@ exec_abort:
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_emul_arg)
-		free(pack.ep_emul_arg, M_TEMP);
+		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
@@ -623,7 +651,7 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo,
 	argc >>= 32;
 #endif
 
-	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	dp = (char *) (cpp + argc + envc + 2 + pack->ep_es->es_arglen);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.37 2000/06/29 02:40:38 mrg Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.38 2000/11/21 00:37:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -62,9 +62,14 @@
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
-
+#include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_errno.h>
 
 const char linux_emul_path[] = "/emul/linux";
+
+extern struct sysent linux_sysent[];
+extern const char * const linux_syscallnames[];
+extern char linux_sigcode[], linux_esigcode[];
 
 /*
  * Execve(2). Just check the alternate emulation path, and pass it on
@@ -93,3 +98,18 @@ linux_sys_execve(p, v, retval)
 
 	return sys_execve(p, &ap, retval);
 }
+
+/*
+ * Emulation switch.
+ */
+const struct emul emul_linux = {
+	"linux",
+	native_to_linux_errno,
+	linux_sendsig,
+	LINUX_SYS_syscall,
+	LINUX_SYS_MAXSYSCALL,
+	linux_sysent,
+	linux_syscallnames,
+	linux_sigcode,
+	linux_esigcode,
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.72 2000/09/28 19:05:07 eeh Exp $	*/
+/*	$NetBSD: exec.h,v 1.73 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -107,6 +107,21 @@ typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
 	exec_makecmds_fcn es_check;	/* function to check exec format */
+	union {				/* probe function */
+		int (*elf_probe_func) __P((struct proc *,
+			struct exec_package *, void *, char *, vaddr_t *));
+		int (*ecoff_probe_func) __P((struct proc *,
+			struct exec_package *));
+	} u;
+	const struct  emul *es_emul;	/* os emulation */
+	int	es_flags;		/* miscellaneous flags */
+	int	es_arglen;		/* Extra argument size in words */
+					/* Copy arguments on the new stack */
+	void	*(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
+				    void *, void *));
+					/* Set registers before execution */
+	void	(*es_setregs) __P((struct proc *, struct exec_package *,
+				  u_long));
 };
 
 /* exec vmspace-creation command set; see below */
@@ -138,8 +153,9 @@ struct exec_package {
 	u_int	ep_flags;		/* flags; see below. */
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
-	struct  emul *ep_emul;		/* os emulation */
 	void	*ep_emul_arg;		/* emulation argument */
+	const struct	execsw *ep_es;	/* appropriate execsw entry */
+	const struct	execsw *ep_esch;/* checked execsw entry */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
@@ -147,6 +163,7 @@ struct exec_package {
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
+#define	EXEC_HASES	0x0040		/* don't update exec switch pointer */
 
 struct exec_vmcmd {
 	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
@@ -219,7 +236,7 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
  * Functions for specific exec types should be defined in their own
  * header file.
  */
-extern struct	execsw execsw[];
+extern const struct	execsw execsw[];
 extern int	nexecs;
 extern int	exec_maxhdrsz;
 

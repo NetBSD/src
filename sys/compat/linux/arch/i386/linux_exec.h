@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.3 2000/11/17 03:55:18 erh Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.4 2000/11/21 00:37:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,11 @@
 #define LINUX_GCC_SIGNATURE	1
 
 #define LINUX_ELF_AUX_ARGSIZ \
-	(howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof(Elf_Addr)))
+	(howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
+#ifdef ELF32NAME
+#define LINUX_COPYARGS_FUNCTION	ELF32NAME(copyargs)
+#else
 #define LINUX_COPYARGS_FUNCTION	ELFNAME(copyargs)
+#endif
 
 #endif /* !_I386_LINUX_EXEC_H */

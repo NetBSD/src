@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.22 2000/11/13 21:32:18 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.23 2000/11/21 00:37:54 jdolecek Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -75,8 +75,7 @@ static int netbsd32_exec_aout_prep_nmagic __P((struct proc *,
 static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
 	struct exec_package *));
 
-#ifdef EXEC_AOUT
-struct emul emul_netbsd32 = {
+const struct emul emul_netbsd32 = {
 	"netbsd32",
 	NULL,
 	netbsd32_sendsig,
@@ -88,34 +87,11 @@ struct emul emul_netbsd32 = {
 #else
 	NULL,
 #endif
-	0,
-	netbsd32_copyargs,
-	netbsd32_setregs,
 	netbsd32_sigcode,
 	netbsd32_esigcode,
 };
-#endif /* EXEC_AOUT */
 
 #ifdef EXEC_ELF32
-/* Elf emul structure */
-struct emul ELFNAMEEND(emul_netbsd32) = {
-	"netbsd32",
-	NULL,
-	netbsd32_sendsig,
-	netbsd32_SYS_syscall,
-	netbsd32_SYS_MAXSYSCALL,
-	netbsd32_sysent,
-#ifdef SYSCALL_DEBUG
-	netbsd32_syscallnames,
-#else
-	NULL,
-#endif
-	howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof(Elf_Addr)),
-	netbsd32_elf32_copyargs,
-	netbsd32_setregs,
-	netbsd32_sigcode,
-	netbsd32_esigcode,
-};
 
 extern int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *));
