@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.24 1999/12/28 02:15:41 mjl Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.25 2000/01/08 17:08:02 tron Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1152,7 +1152,7 @@ The
 .Ql \&.Ic
 macro designates an interactive or internal command.
 .Pp
-.Dl Usage: .Li argument ... \*(Pu
+.Dl Usage: .Ic command ... \*(Pu
 .Bl -tag -width ".Ic setenv , unsetenvxx" -compact -offset 14n
 .It Li \&.Ic :wq
 .Ic :wq
@@ -2042,7 +2042,9 @@ for example, this section was set with:
 .Ss Paragraphs and Line Spacing.
 .Bl -tag -width 6n
 .It \&.Pp
-The \&.Pp paragraph command may
+The
+.Ql \&.Pp
+paragraph command may
 be used to specify a line space where necessary.
 The macro is not necessary after a
 .Ql \&.Sh
@@ -2191,10 +2193,10 @@ In the example for the make command line arguments (see
 .Sx What's in a name ) ,
 the keep prevented
 .Xr nroff
-from placing up the
+from placing the
 flag and the argument
 on separate lines.
-(Actually, the option macro used to prevent this from occurring,
+(Actually, the option macro formerly prevented this from occurring,
 but was dropped when the decision (religious) was made to force
 right justified margins in
 .Xr troff
@@ -2204,11 +2206,11 @@ More work needs to be done with the keep macros, a
 .Fl line
 option needs to be added.)
 .Ss Examples and Displays
-There are six types of displays, a quickie one line indented display
-.Ql \&.D1 ,
-a quickie one line literal display
-.Ql \&.Dl ,
-and block literal, block filled, block unfilled, and block ragged which use
+There are six types of displays: a quickie, one-line indented display
+.Ql \&.D1 ;
+a quickie, one-line literal display
+.Ql \&.Dl ;
+and block-literal, block-filled, block-unfilled, and block-ragged which use
 the
 .Ql \&.Bd
 begin-display
@@ -2221,10 +2223,10 @@ end-display macros.
 (D-one) Display one line of indented text.
 This macro is parsed, but it is not callable.
 .Pp
-.Dl Fl ldghfstru
+.D1 Fl ldghfstru
 .Pp
 The above was produced by:
-.Li \&.Dl Fl ldghfstru .
+.Li \&.D1 \&Fl ldghfstru .
 .It Li \&.Dl
 (D-ell)
 Display one line of indented
@@ -2239,11 +2241,11 @@ the indent (display) of one line of text.
 Its default font is set to
 constant width (literal) however
 it is parsed and will recognize other macros.
-It is not callable however.
+It is however not callable.
 .Pp
 .Dl % ls -ldg /usr/local/bin
 .Pp
-The above was produced by
+The above was produced by:
 .Li \&.Dl % ls -ldg /usr/local/bin .
 .It Li \&.Bd
 Begin-display.
@@ -2261,8 +2263,9 @@ has the following syntax:
 .Pp
 .Dl ".Bd display-type [-offset offset_value] [-compact]"
 .Pp
-The display-type must be one of the following four types and
-may have an offset specifier for indentation:
+The display-type must be one of the four types
+.Fl ( ragged , unfilled , filled , literal )
+and may have an offset specifier for indentation:
 .Ql \&.Bd .
 .Pp
 .Bl -tag -width "file file_name  " -compact
@@ -2415,11 +2418,11 @@ Bullet one goes here.
 Bullet two here.
 .El
 .Pp
-.It Fl tag
+.It Fl inset
 .It Fl diag
 .It Fl hang
 .It Fl ohang
-.It Fl inset
+.It Fl tag
 These list-types collect arguments specified with the
 .Ql \&.It
 macro and create a label which may be
@@ -2482,7 +2485,7 @@ Here is the source text which produced the above example:
 \&.El
 .Ed
 .Pp
-Here is a hanged list with just one item:
+Here is a hanged list with just two items:
 .Bl -hang -offset indent
 .It Em Hanged
 labels appear similar to tagged lists when the
@@ -2605,8 +2608,8 @@ was produced by:
 .Bd -literal -offset indent
 \&.Bl -column "String" "Nroff" "Troff" -offset indent
 \&.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
-\&.It Li "<=" Ta \&<\&= Ta \*(<=
-\&.It Li ">=" Ta \&>\&= Ta \*(>=
+\&.It Li "<=" Ta \e&<\e&= Ta \e*(<=
+\&.It Li ">=" Ta \e&>\e&= Ta \e*(>=
 \&.El
 .Ed
 .Sh PREDEFINED STRINGS
@@ -2871,7 +2874,8 @@ looks ridiculous if a line is in fill mode.
 .Pp
 The method used to prevent header and footer page
 breaks (other than the initial header and footer) when using
-nroff occasionally places an unsightly partially filled line (blank)
+.Xr nroff
+occasionally places an unsightly partially filled line (blank)
 at the would be bottom of the page.
 .Pp
 If the outer-most list definition doesn't have a
