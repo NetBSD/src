@@ -1,4 +1,4 @@
-/* $NetBSD: if_bcereg.h,v 1.3.2.3 2003/10/05 11:51:16 tron Exp $	 */
+/* $NetBSD: if_bcereg.h,v 1.3.2.4 2003/10/05 11:55:52 tron Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -71,7 +71,7 @@
 /* Ethernet MAC Control */
 #define BCE_MACCTL			0x00A8	/* ethernet mac control */
 /* mac control bits */
-#define BCE_EMC_CG				0x00000001	/* crc32 generation */
+#define BCE_EMC_CG			0x00000001	/* crc32 generation */
 
 /* DMA Interrupt control */
 #define BCE_DMAI_CTL			0x0100
@@ -90,6 +90,8 @@
 #define BCE_DMA_RXSTATUS		0x021C	/* active desc, etc */
 /* receive status bits */
 #define RS_CD_MASK			0x0fff	/* current descriptor pointer */
+#define RS_DMA_IDLE			0x2000	/* DMA is idle */
+#define RS_ERROR			0xf0000	/* had an error */
 
 /* Ethernet MAC control registers */
 #define BCE_RX_CTL			0x0400	/* receive config */
@@ -127,14 +129,25 @@
 #define BCE_SBIMSTATE			0x0f90
 #define BCE_SBTMSTATELOW		0x0f98
 #define BCE_SBTMSTATEHI			0x0f9C
-#define SBTML_RESET     0x1	/* reset */
-#define SBTML_REJ       0x2	/* reject */
-#define SBTML_CLK       0x10000	/* clock enable */
-#define SBTML_FGC       0x20000	/* force gated clocks on */
+#define SBTML_RESET			0x1	/* reset */
+#define SBTML_REJ			0x2	/* reject */
+#define SBTML_CLK			0x10000	/* clock enable */
+#define SBTML_FGC			0x20000	/* force gated clocks on */
 
 /* MI communication register */
 #define BCE_MICOMM_DATA			0x0000FFFF
 
+#define BCE_MIREG(x)			((x & 0x1F) << 18)
+#define BCE_MIPHY(x)			((x & 0x1F) << 23)
 
-#define BCE_MIREG(x)	((x & 0x1F) << 18)
-#define BCE_MIPHY(x)	((x & 0x1F) << 23)
+/* Magic constants.... */
+#define BCE_MAGIC_PHYEMAC_BASE		0x1000
+#define	 BCE_MAGIC_PHY			(BCE_MAGIC_PHYEMAC_BASE + 90)
+#define	 BCE_MAGIC_ENET0		(BCE_MAGIC_PHYEMAC_BASE + 79)
+#define	 BCE_MAGIC_ENET1		(BCE_MAGIC_PHYEMAC_BASE + 78)
+#define	 BCE_MAGIC_ENET2		(BCE_MAGIC_PHYEMAC_BASE + 81)
+#define	 BCE_MAGIC_ENET3		(BCE_MAGIC_PHYEMAC_BASE + 80)
+#define	 BCE_MAGIC_ENET4		(BCE_MAGIC_PHYEMAC_BASE + 83)
+#define	 BCE_MAGIC_ENET5		(BCE_MAGIC_PHYEMAC_BASE + 82)
+
+#define  SBIM_MAGIC_ERRORBITS		0x60000
