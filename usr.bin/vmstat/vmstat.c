@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.81 2001/05/02 01:26:04 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.82 2001/06/13 08:18:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.81 2001/05/02 01:26:04 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.82 2001/06/13 08:18:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,7 +467,7 @@ dovmstat(u_int interval, int reps)
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
 #define	pgtok(a) (long)((a) * (pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
-		(void)printf("%6ld%6ld ",
+		(void)printf(" %5ld %5ld ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 		(void)printf("%4lu ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3lu ", rate(uvmexp.pdreact - ouvmexp.pdreact));
