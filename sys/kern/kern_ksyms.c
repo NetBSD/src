@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.14 2003/09/03 10:55:22 ragge Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.15 2003/10/25 09:03:59 christos Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.14 2003/09/03 10:55:22 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.15 2003/10/25 09:03:59 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -167,7 +167,7 @@ static int
 ptree_add(char *key, int val)
 {
 	int idx;
-	int nix, cix, bit, rbit, sb, lastrbit, svbit, ix;
+	int nix, cix, bit, rbit, sb, lastrbit, svbit = 0, ix;
 	char *m, *k;
 
 	if (baseidx == 0) {
@@ -531,8 +531,8 @@ ksyms_getname(const char **mod, char **sym, vaddr_t v, int f)
 	struct symtab *st;
 	Elf_Sym *les, *es = NULL;
 	vaddr_t laddr = 0;
-	const char *lmod;
-	char *stable;
+	const char *lmod = NULL;
+	char *stable = NULL;
 	int type, i, sz;
 
 	if (ksymsinited == 0)
@@ -1012,10 +1012,10 @@ ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 {
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct symtab *st;
-	Elf_Sym *sym;
+	Elf_Sym *sym = NULL;
 	unsigned long val;
 	int error = 0;
-	char *str;
+	char *str = NULL;
 
 	if (cmd == KIOCGVALUE || cmd == KIOCGSYMBOL)
 		str = malloc(ksyms_maxlen, M_DEVBUF, M_WAITOK);
