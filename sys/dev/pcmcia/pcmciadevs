@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.56 1999/11/06 00:58:32 enami Exp $
+$NetBSD: pcmciadevs,v 1.57 1999/11/20 18:32:08 jtk Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 product TDK XIR_CE_10		0x0108 Xircom CreditCard Ethernet
 product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
 product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
+product TDK XIR_CE3_10_100	0x010a Xircom CreditCard CE3 10/100 Ethernet
 product TDK XIR_CNW		0x0802 Xircom CreditCard Netwave
 
 /* New Media Products */
