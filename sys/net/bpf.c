@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.99 2004/05/29 08:56:19 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.100 2004/05/29 14:18:33 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.99 2004/05/29 08:56:19 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.100 2004/05/29 14:18:33 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -122,8 +122,6 @@ static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
 static void	reset_d __P((struct bpf_d *));
 static int	bpf_getdltlist __P((struct bpf_d *, struct bpf_dltlist *));
 static int	bpf_setdlt __P((struct bpf_d *, u_int));
-static int	bpf_mmapinfo __P((struct bpf_d *, struct bpf_mmapinfo *));
-static int	bpf_waitfordata __P((struct bpf_d *));
 
 dev_type_open(bpfopen);
 dev_type_close(bpfclose);
@@ -132,11 +130,10 @@ dev_type_write(bpfwrite);
 dev_type_ioctl(bpfioctl);
 dev_type_poll(bpfpoll);
 dev_type_kqfilter(bpfkqfilter);
-dev_type_mmap(bpfmmap); 
 
 const struct cdevsw bpf_cdevsw = {
 	bpfopen, bpfclose, bpfread, bpfwrite, bpfioctl,
-	nostop, notty, bpfpoll, bpfmmap, bpfkqfilter,
+	nostop, notty, bpfpoll, nommap, bpfkqfilter,
 };
 
 static int
@@ -423,14 +420,11 @@ bpfclose(dev, flag, mode, p)
  * Zero the length of the new store buffer.
  */
 #define ROTATE_BUFFERS(d) \
-	do { \
-		(d)->bd_hbuf = (d)->bd_sbuf; \
-		(d)->bd_hlen = (d)->bd_slen; \
-		(d)->bd_sbuf = (d)->bd_fbuf; \
-		(d)->bd_slen = 0; \
-		(d)->bd_fbuf = 0; \
-	} while (0)
-
+	(d)->bd_hbuf = (d)->bd_sbuf; \
+	(d)->bd_hlen = (d)->bd_slen; \
+	(d)->bd_sbuf = (d)->bd_fbuf; \
+	(d)->bd_slen = 0; \
+	(d)->bd_fbuf = 0;
 /*
  *  bpfread - read next chunk of packets from buffers
  */
@@ -457,43 +451,6 @@ bpfread(dev, uio, ioflag)
 		callout_stop(&d->bd_callout);
 	timed_out = (d->bd_state == BPF_TIMED_OUT);
 	d->bd_state = BPF_IDLE;
-	error = bpf_waitfordata(d);
-	if (error != 0)
-		goto done;
-	/*
-	 * At this point, we know we have something in the hold slot.
-	 */
-	splx(s);
-
-	/*
-	 * Move data from hold buffer into user space.
-	 * We know the entire buffer is transferred since
-	 * we checked above that the read buffer is bpf_bufsize bytes.
-	 */
-	error = uiomove(d->bd_hbuf, d->bd_hlen, uio);
-
-	s = splnet();
-	d->bd_fbuf = d->bd_hbuf;
-	d->bd_hbuf = 0;
-	d->bd_hlen = 0;
-done:
-	splx(s);
-	if (error == -1)
-		error = 0;
-	return (error);
-}
-
-
-/*
- * NOTE: splnet() is assumed to be held when calling this function.
- * It is left to the caller to drop the spl.
- */
-static int
-bpf_waitfordata(d)
-	struct bpf_d *d;
-{
-	int error;
-
 	/*
 	 * If the hold buffer is empty, then do a timed sleep, which
 	 * ends when the timeout expires or when enough packets
@@ -502,6 +459,7 @@ bpf_waitfordata(d)
 	while (d->bd_hbuf == 0) {
 		if (ioflag & IO_NDELAY) {
 			if (d->bd_slen == 0) {
+				splx(s);
 				return (EWOULDBLOCK);
 			}
 			ROTATE_BUFFERS(d);
@@ -537,19 +495,35 @@ bpf_waitfordata(d)
 				 */
 				break;
 
-			if (d->bd_slen == 0)
-				return -1;
-
-			if (d->bd_mapbuf == -1) {
-				ROTATE_BUFFERS(d);
-				break;
+			if (d->bd_slen == 0) {
+				splx(s);
+				return (0);
 			}
+			ROTATE_BUFFERS(d);
+			break;
 		}
 		if (error != 0)
-			return error;
+			goto done;
 	}
+	/*
+	 * At this point, we know we have something in the hold slot.
+	 */
+	splx(s);
 
-	return 0;
+	/*
+	 * Move data from hold buffer into user space.
+	 * We know the entire buffer is transferred since
+	 * we checked above that the read buffer is bpf_bufsize bytes.
+	 */
+	error = uiomove(d->bd_hbuf, d->bd_hlen, uio);
+
+	s = splnet();
+	d->bd_fbuf = d->bd_hbuf;
+	d->bd_hbuf = 0;
+	d->bd_hlen = 0;
+done:
+	splx(s);
+	return (error);
 }
 
 
@@ -934,10 +908,6 @@ bpfioctl(dev, cmd, addr, flag, p)
 	 */
 	case BIOCSSEESENT:
 		d->bd_seesent = *(u_int *)addr;
-		break;
-
-	case BIOCMMAPINFO:
-		error = bpf_mmapinfo(d, (struct bpf_mmapinfo *)addr);
 		break;
 
 	case FIONBIO:		/* Non-blocking I/O */
@@ -1396,7 +1366,7 @@ catchpacket(d, pkt, pktlen, snaplen, cpfn)
 		 * Rotate the buffers if we can, then wakeup any
 		 * pending reads.
 		 */
-		if (d->bd_fbuf == 0 || d->bd_mapbuf != -1) {
+		if (d->bd_fbuf == 0) {
 			/*
 			 * We haven't completed the previous read yet,
 			 * so drop the packet.
@@ -1443,22 +1413,16 @@ bpf_allocbufs(d)
 	struct bpf_d *d;
 {
 
-	d->bd_bufs[1] = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
-	if (d->bd_bufs[1] == NULL)
+	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_fbuf = d->bd_bufs[1];
-	d->bd_bufs[0] = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
-	if (d->bd_bufs[0] == NULL) {
-		free(d->bd_bufs[1], M_DEVBUF);
-		d->bd_bufs[1] = NULL;
-		d->bd_fbuf = NULL;
+	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (!d->bd_sbuf) {
+		free(d->bd_fbuf, M_DEVBUF);
 		return (ENOBUFS);
 	}
-	d->bd_sbuf = d->bd_bufs[0];
-	d->bd_fbuf = d->bd_bufs[1];
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
-	d->bd_mapbuf = -1;
 	return (0);
 }
 
@@ -1475,10 +1439,13 @@ bpf_freed(d)
 	 * been detached from its interface and it yet hasn't been marked
 	 * free.
 	 */
-	if (d->bd_bufs[0] != 0)
-		free(d->bd_bufs[0], M_DEVBUF);
-	if (d->bd_bufs[1] != 0)
-		free(d->bd_bufs[1], M_DEVBUF);
+	if (d->bd_sbuf != 0) {
+		free(d->bd_sbuf, M_DEVBUF);
+		if (d->bd_hbuf != 0)
+			free(d->bd_hbuf, M_DEVBUF);
+		if (d->bd_fbuf != 0)
+			free(d->bd_fbuf, M_DEVBUF);
+	}
 	if (d->bd_filter)
 		free((caddr_t)d->bd_filter, M_DEVBUF);
 
@@ -1658,94 +1625,6 @@ bpf_setdlt(d, dlt)
 	}
 	if (bp == NULL)
 		return EINVAL;
-
-/*
- * Provide a mmap(2) interface to the BPF buffers.
- * Read-only mapping (PROT_READ) is enforced by this driver - an application
- * using this should never write to this buffer and especially not with copy
- * on write as the real buffer contents will then disappear from the process
- * view.
- *
- * An application should create two maps: one for each buffer that bpf has
- * internally and use the information returned from BIOCMMAPINFO to determine
- * which one has valid data in it and how much data is valid.
- */
-paddr_t
-bpfmmap(dev_t dev, off_t off, int prot)
-{
-	struct bpf_d *d;
-	u_int uoff;
-
-	if (prot != VM_PROT_READ)
-		return -1;
-
-	if (off & PAGE_MASK)
-		panic("bpfmmap");
-
-	d = &bpf_dtab[minor(dev)];
-	uoff = (u_int)off;
-
-	if (uoff >= 0 && uoff < d->bd_bufsize)
-		return (atop(d->bd_bufs[0] + uoff));
-
-	if (uoff >= d->bd_bufsize && uoff < (d->bd_bufsize * 2))
-		return (atop(d->bd_bufs[1] + (uoff - d->bd_bufsize)));
-
-	/* Page not found. */
-	return (-1);
-}
-
-static int
-bpf_mmapinfo(d, info)
-	struct bpf_d *d;
-	struct bpf_mmapinfo *info;
-{
-	int which, s, error;
-
-	s = splnet();
-
-	if (info->bpm_op == BPM_RELEASE) {	/* only want to unlock */
-		d->bd_mapbuf = -1;
-		splx(s);
-		return 0;
-	}
-
-	/*
-	 * Currently only two operations are supported, release and acquire.
-	 * If it's not one of these then return an error.
-	 */
-	if (info->bpm_op != BPM_ACQUIRE) {
-		splx(s);
-		return EINVAL;
-	}
-
-	/*
-	 * An incoming call must give up the current buffer locked for use
-	 * with mmap, if it has one, so that bpf has somewhere to write new
-	 * data when this call returns.
-	 */
-	if (d->bd_mapbuf != -1) {
-		d->bd_fbuf = d->bd_hbuf;
-		d->bd_hbuf = NULL;
-		d->bd_hlen = 0;
-		d->bd_mapbuf = -1;
-	}
-
-	error = bpf_waitfordata(d);
-	if (error == 0) {
-		if (d->bd_hbuf == d->bd_bufs[0])
-			which = 0;
-		else if (d->bd_hbuf == d->bd_bufs[1])
-			which = 1;
-		else
-			which = -1;
-		d->bd_mapbuf = which;
-		info->bpm_len = d->bd_hlen;
-		info->bpm_which = which;
-	}
-	splx(s);
-	return 0;
-}
 	s = splnet();
 	opromisc = d->bd_promisc;
 	bpf_detachd(d);
@@ -1809,5 +1688,3 @@ SYSCTL_SETUP(sysctl_net_bfp_setup, "sysctl net.bpf subtree setup")
 			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }
-
- 
