@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.58 2000/09/12 22:15:42 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.59 2000/09/20 18:19:53 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1332,3 +1332,18 @@ distrib/notes/common/contents			patch
 usr.sbin/user/user.c				1.13
 
   Make the ``-d homedir'' option work.  Fixes PR#10401.
+
+distrib/notes/common/main			patch
+
+  Pull up still relevant entries from 1.4.2 for the 1.4.3 ``caveats''
+  section.
+
+lib/libc/time/strftime.c			1.9-1.10
+
+  Fix %k and %e to print a 0 for hour 0, not just spaces.  Fixes
+  PR#5057.  Add the C99 %F conversion.
+
+sys/conf/osrelease.sh				patch
+gnu/usr.bin/send-pr/Makefile			patch
+
+  Mark this as 1.4.3.
