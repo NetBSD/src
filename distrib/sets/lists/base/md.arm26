@@ -1,4 +1,5 @@
-# $NetBSD: md.arm26,v 1.5 2001/11/25 23:34:40 thorpej Exp $
+# $NetBSD: md.arm26,v 1.6 2001/11/26 01:00:48 thorpej Exp $
 ./usr/lib/libarm32.so.0		base-sys-shlib
+./usr/mdec/BBBB			base-sysutil-bin
 ./usr/mdec/boot26		base-sysutil-bin
-./usr/mdec/boot26,ff8		base-sysutil-bin
+./usr/mdec/boot26,ffa		base-sysutil-bin
