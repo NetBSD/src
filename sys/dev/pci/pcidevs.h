@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.496 2002/12/26 20:53:18 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.497 2002/12/30 04:03:04 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp 
+ *	NetBSD: pcidevs,v 1.494 2002/12/30 04:02:22 explorer Exp 
  */
 
 /*
@@ -569,6 +569,7 @@
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp. */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics, Inc. */
+#define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros Communications, Inc. */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
@@ -946,6 +947,9 @@
 #define	PCI_PRODUCT_AMCIRCUITS_VICBUS	0x812e		/* FZJ/ZEL VICBUS interface */
 #define	PCI_PRODUCT_AMCIRCUITS_PCISYNC	0x812f		/* FZJ/ZEL Synchronisation module */
 #define	PCI_PRODUCT_AMCIRCUITS_S5920	0x5920		/* S5920 PCI Target */
+
+/* Atheros Communications, Inc. products */
+#define	PCI_PRODUCT_ATHEROS_AR5001	0x0012		/* AR5001 Wireless LAN Reference Card */
 
 /* Atronics products */
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
