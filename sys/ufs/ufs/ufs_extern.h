@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.15 1998/08/10 08:11:14 matthias Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.16 1998/11/12 19:54:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,10 @@
  *
  *	@(#)ufs_extern.h	8.10 (Berkeley) 5/14/95
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_ffs.h"
+#endif
 
 struct buf;
 struct componentname;
