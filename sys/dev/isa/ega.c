@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.2 2000/01/05 18:27:47 ad Exp $ */
+/* $NetBSD: ega.c,v 1.3 2000/01/25 02:44:04 ad Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -373,8 +373,6 @@ ega_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
-
-		pcdisplay_cursor_init(&scr->pcs);
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
@@ -382,11 +380,7 @@ ega_init_screen(vc, scr, type, existing, attrp)
 
 	scr->pcs.vc_crow = cpos / type->ncols;
 	scr->pcs.vc_ccol = cpos % type->ncols;
-#ifdef PCDISPLAY_SOFTCURSOR
-	scr->pcs.cursoron = 0;
-#else
-	scr->pcs.cursoron = 1;
-#endif
+	pcdisplay_cursor_init(&scr->pcs, existing);
 
 	res = ega_alloc_attr(scr, 0, 0, 0, attrp);
 #ifdef DIAGNOSTIC
