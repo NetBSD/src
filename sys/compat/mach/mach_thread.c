@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.9 2002/12/21 23:57:57 gmcgarry Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.10 2002/12/27 09:59:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,19 +37,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.9 2002/12/21 23:57:57 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.10 2002/12/27 09:59:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
+#include <sys/lock.h>
+#include <sys/queue.h>
 #include <sys/proc.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_clock.h>
+#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_thread.h>
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_syscallargs.h>
@@ -84,7 +87,7 @@ mach_sys_syscall_thread_switch(p, v, retval)
 	case MACH_SWITCH_OPTION_WAIT:
 		med->med_thpri = 1;
 		while (med->med_thpri != 0)
-			(void)tsleep(&med->med_thpri, PZERO, 
+			(void)tsleep(&med->med_thpri, PZERO|PCATCH, 
 			    "thread_switch", timeout);
 		break;
 
@@ -168,4 +171,47 @@ mach_thread_create_running(args)
 
 	*msglen = sizeof(*rep);
 	return 0;
+}
+
+/* 
+ * Duplicate the right of p1 into p2 on thread creation.
+ * This will disapear the day we will have struct lwp. 
+ * XXX mr_p is not accurate anymore, this might introduce
+ * some problems.
+ */
+void
+mach_copy_right(p1, p2)
+	struct proc *p1;
+	struct proc *p2;
+{
+	struct mach_emuldata *med1;
+	struct mach_emuldata *med2;
+
+	med1 = (struct mach_emuldata *)p1->p_emuldata;
+	med2 = (struct mach_emuldata *)p2->p_emuldata;
+
+	/* Undo what mach_e_proc_init did */
+	if (--med2->med_bootstrap->mp_refcount == 0)
+		mach_port_put(med2->med_bootstrap);
+	if (--med2->med_kernel->mp_refcount == 0)
+		mach_port_put(med2->med_kernel);
+	if (--med2->med_host->mp_refcount == 0)
+		mach_port_put(med2->med_host);
+	if (--med2->med_exception->mp_refcount == 0)
+		mach_port_put(med2->med_exception);
+
+	/* Share ports and rights with the parent */
+	med2->med_right = med1->med_right;
+
+	med2->med_bootstrap->mp_refcount++;
+	med2->med_kernel->mp_refcount++;
+	med2->med_host->mp_refcount++;
+	med2->med_exception->mp_refcount++;
+
+	med2->med_bootstrap = med1->med_bootstrap;
+	med2->med_kernel = med1->med_kernel;
+	med2->med_host = med1->med_host;
+	med2->med_exception = med1->med_exception;
+
+	return;
 }

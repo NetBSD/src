@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.17 2002/12/26 13:45:18 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.18 2002/12/27 09:59:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.17 2002/12/26 13:45:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.18 2002/12/27 09:59:26 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -159,7 +159,7 @@ mach_host_get_clock_service(args)
 	struct proc *p = args->p;
 	struct mach_right *mr;
 
-	mr = mach_right_get(mach_clock_port, p, MACH_PORT_RIGHT_SEND);
+	mr = mach_right_get(mach_clock_port, p, MACH_PORT_TYPE_SEND);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
