@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.7 1997/01/11 07:28:34 mikel Exp $
+#	$NetBSD: special,v 1.8 1997/03/26 07:41:55 mikel Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -7,11 +7,11 @@
 .		type=dir mode=0755 uname=root gname=wheel
 
 dev		type=dir mode=0755 uname=root gname=wheel
-drum		type=char mode=640 uname=root gname=kmem
+drum		type=char mode=0640 uname=root gname=kmem
 fd		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#dev/fd
-kmem		type=char mode=640 uname=root gname=kmem
-mem		type=char mode=640 uname=root gname=kmem ignore
+kmem		type=char mode=0640 uname=root gname=kmem
+mem		type=char mode=0640 uname=root gname=kmem ignore
 ..	#dev
 
 etc		type=dir mode=0755 uname=root gname=wheel
@@ -34,15 +34,15 @@ kerberosIV	type=dir mode=0755 uname=root gname=wheel ignore
 ..	#kerberosIV
 lkm.conf	type=file mode=0644 uname=root gname=wheel
 mail.rc		type=file mode=0644 uname=root gname=wheel
-master.passwd	type=file mode=600 uname=root gname=wheel
+master.passwd	type=file mode=0600 uname=root gname=wheel
 monthly		type=file mode=0644 uname=root gname=wheel
 monthly.conf	type=file mode=0644 uname=root gname=wheel
 mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
 named.boot	type=file mode=0644 uname=root gname=wheel
-netstart	type=file mode=0744 uname=root gname=wheel
-passwd		type=file mode=644 uname=root gname=wheel
+netstart	type=file mode=0644 uname=root gname=wheel
+passwd		type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
 rc		type=file mode=0644 uname=root gname=wheel
 rc.conf		type=file mode=0644 uname=root gname=wheel
@@ -101,7 +101,7 @@ src		type=dir mode=0775 uname=root gname=wheel ignore
 
 var		type=dir mode=0755 uname=root gname=wheel
 account		type=dir mode=0755 uname=root gname=wheel
-acct		type=file mode=644 uname=root gname=wheel
+acct		type=file mode=0644 uname=root gname=wheel
 ..	#var/account
 at		type=dir mode=0755 uname=root gname=daemon ignore
 ..	#var/at
@@ -124,13 +124,13 @@ utmp		type=file mode=0664 uname=root gname=utmp
 spool		type=dir mode=0755 uname=root gname=wheel
 ftp		type=dir mode=0755 uname=root gname=wheel
 bin		type=dir mode=0755 uname=root gname=wheel
-ls		type=file mode=555 uname=root gname=wheel
+ls		type=file mode=0555 uname=root gname=wheel
 ..	#var/spool/ftp/bin
 etc		type=dir mode=0755 uname=root gname=wheel
-group		type=file mode=644 uname=root gname=wheel
-localtime	type=file mode=644 uname=root gname=wheel
-master.passwd	type=file mode=600 uname=root gname=wheel
-passwd		type=file mode=644 uname=root gname=wheel
+group		type=file mode=0644 uname=root gname=wheel
+localtime	type=file mode=0644 uname=root gname=wheel
+master.passwd	type=file mode=0600 uname=root gname=wheel
+passwd		type=file mode=0644 uname=root gname=wheel
 ..	#var/spool/ftp/etc
 hidden		type=dir mode=0111 uname=root gname=wheel ignore
 ..	#var/spool/ftp/hidden
