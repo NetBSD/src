@@ -13,7 +13,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: nlm_prot.x,v 1.5 2000/02/02 18:15:12 bouyer Exp $");
+%__RCSID("$NetBSD: nlm_prot.x,v 1.6 2000/06/07 14:30:15 bouyer Exp $");
 %#endif /* not lint */
 #endif
 
@@ -241,10 +241,25 @@ struct	nlm4_shareres {
 };
 
 /*
+ * argument for the procedure called by rpc.statd when a monitored host
+ * status change.
+ * XXX assumes LM_MAXSTRLEN == SM_MAXSTRLEN
+ */
+struct nlm_sm_status {
+	string mon_name<LM_MAXSTRLEN>; /* name of host */
+	int state;			/* new state */
+	opaque priv[16];		/* private data */
+};
+
+/*
  * Over-the-wire protocol used between the network lock managers
  */
 
 program NLM_PROG {
+	version NLM_SM {
+		void NLM_SM_NOTIFY(struct nlm_sm_status) = 1;
+	} = 0;
+
 	version NLM_VERS {
 
 		nlm_testres	NLM_TEST(struct nlm_testargs) =	1;
@@ -281,7 +296,6 @@ program NLM_PROG {
 	} = 3;
 
 	version NLM_VERS4 {
-		void NLM4_NULL(void) = 0;
 		nlm4_testres NLM4_TEST(nlm4_testargs) = 1;
 		nlm4_res NLM4_LOCK(nlm4_lockargs) = 2;
 		nlm4_res NLM4_CANCEL(nlm4_cancargs) = 3;
