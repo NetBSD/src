@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.16 1998/05/01 15:35:43 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.17 2000/05/24 16:48:35 thorpej Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -179,7 +179,6 @@ arm_fpe_postproc(fpframe, frame)
 	u_int fpframe;
 	struct trapframe *frame;
 {
-	register u_int s;
 	register int sig;
 	register struct proc *p;
 
@@ -195,22 +194,10 @@ arm_fpe_postproc(fpframe, frame)
 	p->p_priority = p->p_usrpri;
 
 	if (want_resched) {
-        /*
-         * Since we are curproc, a clock interrupt could
-         * change our priority without changing run queues
-         * (the running process is not kept on a run queue).
-         * If this happened after we setrunqueue ourselves but
-         * before we switch()'ed, we might not be on the queue
-         * indicated by our priority
-         */
-	
-	        s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-
-		mi_switch();
-
-		(void)splx(s);
+		/*
+		 * We are being preempted.
+		 */
+		preempt(NULL);
 		while ((sig = (CURSIG(p))) != 0) {
 			postsig(sig);
 		}
