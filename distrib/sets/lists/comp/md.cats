@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.cats,v 1.9 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
@@ -46,3 +46,4 @@
 ./usr/include/cats/types.h			comp-c-include
 ./usr/include/cats/varargs.h			comp-c-include
 ./usr/include/cats/vmparam.h			comp-c-include
+./usr/include/cats/wchar_limits.h		comp-c-include

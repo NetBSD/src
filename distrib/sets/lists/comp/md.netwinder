@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.7 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.netwinder,v 1.8 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/netwinder				comp-c-include
 ./usr/include/netwinder/ansi.h			comp-c-include
 ./usr/include/netwinder/aout_machdep.h		comp-c-include
@@ -45,3 +45,4 @@
 ./usr/include/netwinder/types.h			comp-c-include
 ./usr/include/netwinder/varargs.h		comp-c-include
 ./usr/include/netwinder/vmparam.h		comp-c-include
+./usr/include/netwinder/wchar_limits.h		comp-c-include

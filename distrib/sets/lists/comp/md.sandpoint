@@ -1,4 +1,4 @@
-# $NetBSD: md.sandpoint,v 1.10 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.sandpoint,v 1.11 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sandpoint				comp-c-include
 ./usr/include/sandpoint/_G_config.h		comp-obsolete		obsolete
@@ -56,3 +56,4 @@
 ./usr/include/sandpoint/types.h			comp-c-include
 ./usr/include/sandpoint/varargs.h		comp-c-include
 ./usr/include/sandpoint/vmparam.h		comp-c-include
+./usr/include/sandpoint/wchar_limits.h		comp-c-include

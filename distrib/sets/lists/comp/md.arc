@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.17 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.arc,v 1.18 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
@@ -52,4 +52,5 @@
 ./usr/include/arc/types.h			comp-c-include
 ./usr/include/arc/varargs.h			comp-c-include
 ./usr/include/arc/vmparam.h			comp-c-include
+./usr/include/arc/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

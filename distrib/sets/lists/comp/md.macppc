@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.28 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.macppc,v 1.29 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -59,4 +59,5 @@
 ./usr/include/macppc/types.h			comp-c-include
 ./usr/include/macppc/varargs.h			comp-c-include
 ./usr/include/macppc/vmparam.h			comp-c-include
+./usr/include/macppc/wchar_limits.h		comp-c-include
 ./usr/include/macppc/z8530var.h			comp-obsolete		obsolete
