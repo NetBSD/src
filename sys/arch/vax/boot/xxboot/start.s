@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.9 2000/07/13 03:17:21 matt Exp $ */
+/*	$NetBSD: start.s,v 1.10 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,9 +43,10 @@
 #include "../include/mtpr.h"
 #include "../include/asm.h"		
 
+_C_LABEL(_start):
 _C_LABEL(start):
 	.globl _C_LABEL(start)	# this is the symbolic name for the start
-				# of code to be relocated. We can use this
+	.globl _C_LABEL(_start) # of code to be relocated. We can use this
 				# to get the actual/real adress (pc-rel)
 				# or to get the relocated address (abs).
 
@@ -205,7 +206,10 @@ ENTRY(hoppabort, 0)
 	movl    4(ap),r6
 	movl	_C_LABEL(rpb),r11
 	mnegl	$1,ap		# Hack to figure out boot device.
-	jmp	2(r6)
+	movpsl	-(sp)
+	pushab	2(r6)
+	mnegl	$1,_C_LABEL(vax_load_failure)
+	rei
 #	calls	$0,(r6)
 	halt
 

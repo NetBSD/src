@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.8 2000/07/10 10:38:23 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.9 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -79,7 +79,8 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	static volatile struct uda *ubauda;
 	unsigned short johan, johan2;
-	int i, err;
+	size_t i;
+	int err;
 	char *msg;
 
 #ifdef DEV_DEBUG
