@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.13 1994/07/21 14:59:08 pk Exp $
+ *	$Id: ld.h,v 1.14 1994/08/21 15:17:00 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -155,6 +155,14 @@ extern int	netzmagic;
 
 #define CHECK_GOT_RELOC(r)		((r)->r_pcrel)
 
+#endif
+
+#ifndef MAX_GOTOFF
+#define MAX_GOTOFF	(LONG_MAX)
+#endif
+
+#ifndef MIN_GOTOFF
+#define MIN_GOTOFF	(LONG_MIN)
 #endif
 
 /*
@@ -341,7 +349,7 @@ typedef struct localsymbol {
 #define LS_L_SYMBOL		1	/* Local symbol starts with an `L' */
 #define LS_WRITE		2	/* Symbol goes in output symtable */
 #define LS_RENAME		4	/* xlat name to `<file>.<name>' */
-#define LS_GOTSLOTCLAIMED	8	/* This symbol has a GOT entry */
+#define LS_HASGOTSLOT		8	/* This symbol has a GOT entry */
 #define LS_WARNING		16	/* Second part of a N_WARNING duo */
 } localsymbol_t;
 
@@ -396,8 +404,8 @@ typedef struct glosym {
 #define GS_REFERENCED		2	/* Symbol is referred to by something
 					   interesting */
 #define GS_TRACE		4	/* Symbol will be traced */
-#define GS_JMPSLOTCLAIMED	8	/*				 */
-#define GS_GOTSLOTCLAIMED	0x10	/* Some state bits concerning    */
+#define GS_HASJMPSLOT		8	/*				 */
+#define GS_HASGOTSLOT		0x10	/* Some state bits concerning    */
 #define GS_CPYRELOCRESERVED	0x20	/* entries in GOT and PLT tables */
 #define GS_CPYRELOCCLAIMED	0x40	/*				 */
 
