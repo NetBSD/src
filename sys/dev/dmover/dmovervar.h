@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.2 2002/08/02 06:45:41 thorpej Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.3 2002/08/04 02:17:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -243,6 +243,18 @@ extern const char dmover_funcname_xor3[];
 
 extern const char dmover_funcname_xor4[];
 #define	DMOVER_FUNC_XOR4		dmover_funcname_xor4
+
+extern const char dmover_funcname_xor5[];
+#define	DMOVER_FUNC_XOR5		dmover_funcname_xor5
+
+extern const char dmover_funcname_xor6[];
+#define	DMOVER_FUNC_XOR6		dmover_funcname_xor6
+
+extern const char dmover_funcname_xor7[];
+#define	DMOVER_FUNC_XOR7		dmover_funcname_xor7
+
+extern const char dmover_funcname_xor8[];
+#define	DMOVER_FUNC_XOR8		dmover_funcname_xor8
 
 /* Back-end management functions. */
 void	dmover_backend_register(struct dmover_backend *);
