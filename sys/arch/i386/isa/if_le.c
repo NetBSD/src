@@ -10,7 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.5 1994/07/01 21:38:19 mycroft Exp $
+ *	$Id: if_le.c,v 1.6 1994/07/02 04:13:16 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -87,7 +87,7 @@ struct le_softc {
 	u_char	*sc_rbuf, *sc_tbuf;
 	int	sc_last_rd, sc_last_td;
 	int	sc_no_td;
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 	int	sc_debug;
 #endif
 };
@@ -106,7 +106,7 @@ void le_tint __P((struct le_softc *));
 void le_rint __P((struct le_softc *));
 void le_read __P((struct le_softc *, u_char *, int));
 struct mbuf *le_get __P((u_char *, int, struct ifnet *));
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 void recv_print __P((struct le_softc *, int));
 void xmit_print __P((struct le_softc *, int));
 #endif
@@ -602,10 +602,9 @@ le_start(ifp)
 		return;
 
 outloop:
-	if (++sc->sc_no_td > NTBUF) {
-		sc->sc_no_td = NTBUF;
+	if (sc->sc_no_td >= NTBUF) {
 		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("no_td = %x, last_td = %x\n", sc->sc_no_td,
 			    sc->sc_last_td);
@@ -620,10 +619,10 @@ outloop:
 #endif
 	
 	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
-	if (!m) {
-		--sc->sc_no_td;
+	if (!m)
 		return;
-	}
+
+	++sc->sc_no_td;
 
 	/*
 	 * Copy the mbuf chain into the transmit buffer.
@@ -651,7 +650,7 @@ outloop:
 	cdm->mcnt = 0;
 	cdm->flags |= OWN | STP | ENP;
 
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 	if (sc->sc_debug)
 		xmit_print(sc, sc->sc_last_td);
 #endif
@@ -675,7 +674,7 @@ leintr(sc)
 	u_short isr;
 
 	isr = lerdcsr(sc, 0);
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 	if (sc->sc_debug)
 		printf("%s: leintr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
@@ -738,7 +737,7 @@ leintr(sc)
 		isr = lerdcsr(sc, 0);
 	} while ((isr & INTR) != 0);
 
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 	if (sc->sc_debug)
 		printf("%s: leintr returning with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
@@ -762,7 +761,7 @@ le_tint(sc)
 
 	if (cdm->flags & OWN) {
 		/* Race condition with loop below. */
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("%s: extra tint\n", sc->sc_dev.dv_xname);
 #endif
@@ -774,7 +773,7 @@ le_tint(sc)
 	do {
 		if (sc->sc_no_td <= 0)
 			break;
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("trans cdm = %x\n", cdm);
 #endif
@@ -822,7 +821,7 @@ le_rint(sc)
 
 	if (cdm->flags & OWN) {
 		/* Race condition with loop below. */
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("%s: extra rint\n", sc->sc_dev.dv_xname);
 #endif
@@ -853,7 +852,7 @@ le_rint(sc)
 				return;
 			}
 		} else {
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 			if (sc->sc_debug)
 				recv_print(sc, sc->sc_last_rd);
 #endif
@@ -865,7 +864,7 @@ le_rint(sc)
 		cdm->mcnt = 0;
 		cdm->flags |= OWN;
 		NEXTRDS;
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("sc->sc_last_rd = %x, cdm = %x\n",
 			    sc->sc_last_rd, cdm);
@@ -1087,7 +1086,7 @@ le_ioctl(ifp, cmd, data)
 			/*le_stop(sc);*/
 			le_init(sc);
 		}
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			sc->sc_debug = 1;
 		else
@@ -1118,7 +1117,7 @@ le_ioctl(ifp, cmd, data)
 	return error;
 }
 
-#ifdef ISDEBUG
+#ifdef LEDEBUG
 void
 recv_print(sc, no)
 	struct le_softc *sc;
@@ -1170,7 +1169,7 @@ xmit_print(sc, no)
 	if (printed)
 		printf("\n");
 }
-#endif /* ISDEBUG */
+#endif /* LEDEBUG */
 
 /*
  * Set up the logical address filter.
