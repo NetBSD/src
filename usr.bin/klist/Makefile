@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2002/10/23 01:25:37 itojun Exp $
+# $NetBSD: Makefile,v 1.13 2003/07/23 08:01:34 itojun Exp $
 
 NOLINT= # defined
 
@@ -13,6 +13,13 @@ PROG= klist
 
 SRCS= klist.c
 
+.if ${MKKERBEROS4} != "no"
+CPPFLAGS+= -DKRB4
+CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
+KRB4LDADD= -lkrb
+KRB4DPADD= ${LIBKRB}
+.endif
+
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kuser			\
 	-I${NETBSDSRCDIR}/include/heimdal	\
@@ -22,9 +29,9 @@ CPPFLAGS+= -I.					\
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	-lkafs -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err \
+LDADD+=	-lkafs -lkrb5 ${KRB4LDADD} -lcrypto -lasn1 -lcom_err \
 	-L${VERS} -lvers -lroken -lcrypt
-DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} \
+DPADD+=	${LIBKAFS} ${LIBKRB5} ${KRB4DPADD} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} \
 	${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
 
 .include <bsd.prog.mk>
