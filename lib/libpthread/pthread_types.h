@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.3 2001/07/24 21:28:11 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.4 2001/07/25 21:24:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,6 +97,24 @@ struct	pthread_mutex_st {
 	
 
 struct	pthread_mutexattr_st {
+	int	pad;
+};
+
+
+struct	pthread_cond_st {
+	unsigned int	ptc_magic;
+
+	/* Protects the queue of waiters */
+	pt_spin_t	ptc_lock;
+	struct pt_queue_t	ptc_waiters;
+
+	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
+};
+
+#define	_PT_COND_MAGIC	0xCAFEC00D
+#define	_PT_COND_DEAD	0xDEADC00D
+
+struct	pthread_condattr_st {
 	int	pad;
 };
 
