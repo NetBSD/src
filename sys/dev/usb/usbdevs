@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.382 2004/10/23 14:07:27 augustss Exp $
+$NetBSD: usbdevs,v 1.383 2004/10/23 14:17:07 augustss Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ vendor 3COM		0x0506	3Com
 vendor AZTECH		0x0509	Aztech Systems
 vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor
+vendor COMPOSITE	0x0518	Composite
 vendor APC		0x051d	American Power Conversion
 vendor CONNECTEK	0x0522	Advanced Connectek USA
 vendor NETCHIP		0x0525	NetChip Technology
@@ -345,6 +346,7 @@ vendor CSR		0x0a12	Cambridge Silicon Radio
 vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical
 vendor BOCASYSTEMS	0x0a43	Boca Systems
+vendor MEDIAGEAR	0x0a48	MediaGear
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
@@ -608,6 +610,7 @@ product BELKIN SCSI		0x0115	SCSI Adaptor
 product BELKIN USB2LAN		0x0121	USB to LAN Converter
 product BELKIN F5U208		0x0208	F5U208 VideoBus II
 product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
+product BELKIN UPS		0x0980	UPS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
 
 /* Billionton products */
@@ -681,6 +684,9 @@ product COMPAQ W200		0x0076	WLAN MultiPort W200
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
 product COMPAQ HNE200		0x8511	HNE-200 USB Ethernet adapter
+
+/* Composite Corp products looks the same as "TANGTOP" */
+product COMPOSITE USBPS2	0x0001	USB to PS2 Adaptor
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
@@ -1158,8 +1164,9 @@ product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
-product LOGITECH MUV55A		0xc016	M-UV55a
 product LOGITECH BD58		0xc00c	BD58 mouse
+product LOGITECH USBPS2MOUSE	0xc00e	USB-PS/2 Optical Mouse
+product LOGITECH MUV55A		0xc016	M-UV55a
 product LOGITECH UN58A		0xc030	iFeel Mouse
 product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
 product LOGITECH WMFFGP		0xc293	WingMan Formula Force GP (GT-Force)
@@ -1183,12 +1190,15 @@ product LUWEN EASYDISK		0x0005  EasyDisc
 /* Macally products */
 product MACALLY MOUSE1		0x0101	mouse
 
-/* MCT Corp. */
+/* MCT Corp. products */
 product MCT HUB0100		0x0100	Hub
 product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP USB BAY Hub
 product MCT USB232		0x0210	USB-232 Interface
 product MCT SITECOM_USB232	0x0230	Sitecom USB-232 Products
 product MCT ML_4500		0x0302	ML-4500
+
+/* MediaGear products */
+product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
@@ -1236,6 +1246,7 @@ product MICROTEK X6U		0x0099	ScanMaker X6 - X6U
 product MICROTEK C6		0x009a	Phantom C6 scanner
 product MICROTEK 336CX2		0x00a0	Phantom 336CX - C3 scanner
 product MICROTEK V6USL		0x00a3	ScanMaker V6USL
+product MICROTEK 6000		0x30e5	ScanMaker 6000
 product MICROTEK V6USL2		0x80a3	ScanMaker V6USL
 product MICROTEK V6UL		0x80ac	ScanMaker V6UL
 
@@ -1257,6 +1268,7 @@ product MINOLTA XT		0x4015	Dimage Xt
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
 product MITSUMI MOUSE		0x6407	Mouse
+product MITSUMI SONY_MOUSE	0x6408	Quick Scroll Mouse
 product MITSUMI BT_DONGLE	0x641f	Bluetooth USB dongle
 product MITSUMI FDD		0x6901	FDD
 
@@ -1300,6 +1312,7 @@ product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
 product NATIONAL BEARPAW2400	0x1001	BearPaw 2400
 
 /* NEC products */
+product NEC HUB_20		0x0059	2.0 hub
 product NEC HUB			0x55aa	hub
 product NEC HUB_B		0x55ab	hub
 product NEC PICTY760		0xbef4	Picty760
@@ -1324,6 +1337,7 @@ product NETGEAR EA101X		0x1002	Ethernet adapter
 product NETGEAR FA101		0x1020	10/100 Ethernet
 product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
 product NETGEAR MA111NA		0x4110	802.11b Adapter
+product NETGEAR XA601		0x8100	USB to PL Adapter
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
