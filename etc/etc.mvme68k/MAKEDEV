@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 1999/01/16 01:40:29 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1999/02/20 00:21:28 scw Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -41,9 +41,11 @@
 #	raid*	RAIDframe disk devices
 #
 # Serial ports:
-#	tty*	Onboard serial ports 1 to 3 (tty01 -> tty03). Note that
-#		tty00 is grabbed by the console device so is not created
-#		by default.
+#	tty*	Onboard serial ports.
+#		On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3.
+#		On the mvme167, and '177: ttyC1, ttyC2 and ttyC3.
+#		Note that tty[CZ]0 is grabbed by the console device
+#		so is not created by default.
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -74,7 +76,8 @@ do
 case $i in
 
 all)
-	sh $0 std fd sd0 sd1 sd2 pty0 tty01 tty02 tty03
+	sh $0 std fd sd0 sd1 sd2 pty0
+	sh $0 ttyZ1 ttyZ2 ttyZ3 ttyC1 ttyC2 ttyC3
 	sh $0 st0 st1 ch0 cd0 cd1 lpa0 lpt0 vnd0 vnd1 
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1
@@ -161,11 +164,18 @@ ccd*|sd*|vnd*)
 	chmod 640 $name$unit? r$name$unit?
 	;;
 
-tty*)
+ttyZ*)
 	unit=${i#???}
-	rm -f tty$unit
-	mknod tty$unit c 12 $unit
-	chown uucp.wheel tty$unit
+	rm -f ttyZ$unit
+	mknod ttyZ$unit c 12 $unit
+	chown uucp.wheel ttyZ$unit
+	;;
+
+ttyC*)
+	unit=${i#???}
+	rm -f ttyC$unit
+	mknod ttyC$unit c 13 $unit
+	chown uucp.wheel ttyC$unit
 	;;
 
 pty*)
