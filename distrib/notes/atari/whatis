@@ -1,9 +1,9 @@
-.\"	$NetBSD: whatis,v 1.13 2002/07/08 14:42:48 lukem Exp $
+.\"	$NetBSD: whatis,v 1.14 2002/07/08 14:51:51 lukem Exp $
 .
 The \*M release was imported into
 .Nx
 in in March 1995.
-The first formal release was
+The first major release was
 .Nx 1.1 .
 About a year later,
 .Nx 1.2

@@ -1,8 +1,8 @@
-.\"	$NetBSD: whatis,v 1.2 2002/03/29 22:24:29 bjh21 Exp $
+.\"	$NetBSD: whatis,v 1.3 2002/07/08 14:51:51 lukem Exp $
 .
 .ie \n[FOR_RELEASE] \{\
 .Nx*M
-\*V is the first formal release of
+\*V is the first major release of
 .Nx*M .
 .\}
 .el \{\
