@@ -1,4 +1,4 @@
-/*	$NetBSD: opmsvar.h,v 1.2 2003/08/07 16:26:48 agc Exp $	*/
+/*	$NetBSD: opmsvar.h,v 1.3 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -92,7 +92,7 @@ struct opms_softc {		/* driver status information */
 #endif
 };
 
-int opms_common_match __P((bus_space_tag_t, struct pccons_config *));
-void opms_common_attach __P((struct opms_softc *, bus_space_tag_t,
-	struct pccons_config *));
-int opmsintr __P((void *));
+int opms_common_match(bus_space_tag_t, struct pccons_config *);
+void opms_common_attach(struct opms_softc *, bus_space_tag_t,
+    struct pccons_config *);
+int opmsintr(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.3 2000/06/09 05:42:01 soda Exp $	*/
+/*	$NetBSD: pio.h,v 1.4 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: pio.h,v 1.3 1997/04/19 17:19:58 pefo Exp $	*/
 
 /*
@@ -47,12 +47,12 @@
 #define	inl(a)		(*(volatile unsigned int*)(a))
 #define	in32(a)		inl(a)
 
-void insb __P((u_int8_t *, u_int8_t *,int));
-void insw __P((u_int16_t *, u_int16_t *,int));
-void insl __P((u_int32_t *, u_int32_t *,int));
-void outsb __P((u_int8_t *, const u_int8_t *,int));
-void outsw __P((u_int16_t *, const u_int16_t *,int));
-void outsl __P((u_int32_t *, const u_int32_t *,int));
+void insb(uint8_t *, uint8_t *,int);
+void insw(uint16_t *, uint16_t *,int);
+void insl(uint32_t *, uint32_t *,int);
+void outsb(uint8_t *, const uint8_t *,int);
+void outsw(uint16_t *, const uint16_t *,int);
+void outsl(uint32_t *, const uint32_t *,int);
 
 extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 

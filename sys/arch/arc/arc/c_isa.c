@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.7 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.7 2003/08/07 16:26:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,14 +169,14 @@ __KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.7 2003/08/07 16:26:47 agc Exp $");
  * chipset-dependent isa bus configuration
  */
 
-int isabr_dti_intr_status __P((void));
+int isabr_dti_intr_status(void);
 
 struct isabr_config isabr_dti_conf = {
 	isabr_dti_intr_status,
 };
 
 int
-isabr_dti_intr_status()
+isabr_dti_intr_status(void)
 {
 	int isa_vector;
 	char vector;
@@ -200,8 +200,9 @@ isabr_dti_intr_status()
  * common configuration for DTI platforms
  */
 void
-c_isa_init()
+c_isa_init(void)
 {
+
 	/* chipset-dependent mcclock configuration */
 	mcclock_isa_conf = 1;
 
@@ -216,8 +217,9 @@ c_isa_init()
  * console initialization
  */
 void
-c_isa_cons_init()
+c_isa_cons_init(void)
 {
+
 	if (!com_console) {
 #if NVGA_ISA > 0
 		if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
