@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.13 2003/11/23 23:16:40 lukem Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.14 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.13 2003/11/23 23:16:40 lukem Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.14 2004/01/05 23:23:33 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -966,7 +966,7 @@ static void
 usage(void)
 {
     fprintf(stderr,
-	    "Usage: %s [ -options ] special [disktype]\n", getprogname());
+	    "usage: %s [ -options ] special [disktype]\n", getprogname());
     fprintf(stderr, "where the options are:\n");
     fprintf(stderr, "\t-N don't create file system: "
 	    "just print out parameters\n");

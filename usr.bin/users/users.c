@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.12 2003/08/07 11:16:57 agc Exp $	*/
+/*	$NetBSD: users.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: users.c,v 1.12 2003/08/07 11:16:57 agc Exp $");
+__RCSID("$NetBSD: users.c,v 1.13 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ main(argc, argv)
 		switch(ch) {
 		case '?':
 		default:
-			(void)fprintf(stderr, "Usage: %s\n", getprogname());
+			(void)fprintf(stderr, "usage: %s\n", getprogname());
 			exit(1);
 		}
 	argc -= optind;

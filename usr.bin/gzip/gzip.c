@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.18 2004/01/03 02:39:18 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.18 2004/01/03 02:39:18 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $");
 #endif /* not lint */
 
 /*
@@ -1009,7 +1009,7 @@ usage(void)
 
 	fprintf(stderr, "%s\n", gzip_version);
 	fprintf(stderr,
-    "Usage: %s [-cdfhnNqrStvV123456789] [<file> [<file> ...]]\n"
+    "usage: %s [-cdfhnNqrStvV123456789] [<file> [<file> ...]]\n"
 #ifndef SMALL
     " -c --stdout          write to stdout, keep original files\n"
     "    --to-stdout\n"

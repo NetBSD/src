@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.20 2003/08/07 11:15:56 agc Exp $	*/
+/*	$NetBSD: split.c,v 1.21 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.20 2003/08/07 11:15:56 agc Exp $");
+__RCSID("$NetBSD: split.c,v 1.21 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -308,7 +308,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"Usage: %s [-b byte_count] [-l line_count] [-a suffix_length] "
+"usage: %s [-b byte_count] [-l line_count] [-a suffix_length] "
 "[file [prefix]]\n", getprogname());
 	exit(1);
 }

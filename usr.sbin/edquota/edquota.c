@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.24 2003/08/07 11:25:20 agc Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.25 2004/01/05 23:23:38 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "Usage: edquota [-u] [-p username] [-f filesystem] username ...\n"
+	    "usage: edquota [-u] [-p username] [-f filesystem] username ...\n"
 	    "\tedquota -g [-p groupname] [-f filesystem] groupname ...\n"
 	    "\tedquota [-u] [-f filesystem] [-s b#/i#] [-h b#/i#] username ...\n"
 	    "\tedquota -g [-f filesystem] [-s b#/i#] [-h b#/i#] groupname ...\n"

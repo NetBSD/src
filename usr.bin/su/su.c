@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.57 2003/08/20 14:11:17 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.57 2003/08/20 14:11:17 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.58 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "Usage: %s [%s] [login [shell arguments]]\n",
+			    "usage: %s [%s] [login [shell arguments]]\n",
 			    getprogname(), ARGSTR);
 			exit(1);
 		}

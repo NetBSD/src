@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.10 2003/06/23 13:05:54 agc Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.10 2003/06/23 13:05:54 agc Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 
 #include <stdio.h>
@@ -208,7 +208,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s -c config_file [-d] -f hid_dev "
+	fprintf(stderr, "usage: %s -c config_file [-d] -f hid_dev "
 		"[-i] [-v]\n", getprogname());
 	exit(1);
 }

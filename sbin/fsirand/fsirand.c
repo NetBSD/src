@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.22 2003/09/06 12:47:45 itojun Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.22 2003/09/06 12:47:45 itojun Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.23 2004/01/05 23:23:33 jmmv Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "Usage: %s [-F] [-p] [-x <constant>] <special>\n",
+	    "usage: %s [-F] [-p] [-x <constant>] <special>\n",
 	    getprogname());
 	exit(1);
 }

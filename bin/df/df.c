@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.50 2003/12/07 22:42:36 perry Exp $	*/
+/*	$NetBSD: df.c,v 1.51 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.50 2003/12/07 22:42:36 perry Exp $");
+__RCSID("$NetBSD: df.c,v 1.51 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -387,7 +387,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aghiklmnP] [-t type] [file | file_system ...]\n",
+	    "usage: %s [-aghiklmnP] [-t type] [file | file_system ...]\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.10 2003/08/07 11:14:12 agc Exp $	*/
+/*	$NetBSD: jot.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.10 2003/08/07 11:14:12 agc Exp $");
+__RCSID("$NetBSD: jot.c,v 1.11 2004/01/05 23:23:34 jmmv Exp $");
 #endif /* not lint */
 
 /*
@@ -328,7 +328,7 @@ usage(void)
 {
 	fprintf(stderr, "jot - print sequential or random data\n\n");
 	fprintf(stderr,
-	    "Usage:\n\tjot [ options ] [ reps [ begin [ end [ s ] ] ] ]\n\n");
+	    "usage:\n\tjot [ options ] [ reps [ begin [ end [ s ] ] ] ]\n\n");
 	fprintf(stderr, "Options:\n\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
 			"-r		random data\n",
 			"-c		character data\n",

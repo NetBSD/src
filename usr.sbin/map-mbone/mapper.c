@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.20 2003/05/17 13:56:41 itojun Exp $	*/
+/*	$NetBSD: mapper.c,v 1.21 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -850,7 +850,7 @@ int main(int argc, char **argv)
     if (argc > 1) {
       usage:	
 	fprintf(stderr,
-		"Usage: map-mbone [-f] [-g] [-n] [-t timeout] %s\n\n",
+		"usage: map-mbone [-f] [-g] [-n] [-t timeout] %s\n\n",
 		"[-r retries] [-d [debug-level]] [router]");
         fprintf(stderr, "\t-f  Flood the routing graph with queries\n");
         fprintf(stderr, "\t    (True by default unless `router' is given)\n");

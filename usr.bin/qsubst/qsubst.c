@@ -1,4 +1,4 @@
-/*	$NetBSD: qsubst.c,v 1.6 2003/06/23 13:05:51 agc Exp $	*/
+/*	$NetBSD: qsubst.c,v 1.7 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
@@ -100,7 +100,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: qsubst.c,v 1.6 2003/06/23 13:05:51 agc Exp $");
+__RCSID("$NetBSD: qsubst.c,v 1.7 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 
 #include <sys/file.h>
@@ -505,7 +505,7 @@ main(int ac, char **av)
 	char *cp;
 
 	if (ac < 3) {
-		fprintf(stderr, "Usage: %s str1 str2 [ -w -! -noask -go -f file -F file ]\n",
+		fprintf(stderr, "usage: %s str1 str2 [ -w -! -noask -go -f file -F file ]\n",
 		    __progname);
 		exit(1);
 	}
