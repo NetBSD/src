@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.36 2002/05/18 17:27:31 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.37 2002/05/19 01:15:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.36 2002/05/18 17:27:31 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.37 2002/05/19 01:15:12 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3202,8 +3202,6 @@ init386(first_avail)
 		kgdb_connect(1);
 	}
 #endif
-	printf("curcpu: %p; cpu_info_primary: %p\n",
-	    curcpu(), &cpu_info_primary);
 
 #if NMCA > 0
 	/* check for MCA bus, needed to be done before ISA stuff - if
