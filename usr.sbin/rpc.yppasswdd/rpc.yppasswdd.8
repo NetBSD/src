@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.yppasswdd.8,v 1.4 1997/10/18 06:50:54 mikel Exp $
+.\"	$NetBSD: rpc.yppasswdd.8,v 1.4.2.1 1998/11/03 17:59:47 cgd Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -43,12 +43,10 @@
 .Op Fl m Ar arg1 arg2 ... 
 .Sh DESCRIPTION
 .Nm
-must be running on the YP master server to allow users to change information
+must be running on the
+.Tn YP
+master server to allow users to change information
 in the password file.
-.Pp
-If the file
-.Pa /var/yp/yppasswdd.log
-exists then messages will be written to the file.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -66,8 +64,7 @@ man page for
 .Ar ypserv.acl .
 .El
 .Sh FILES
-.Bl -tag -width /var/yp/yppasswdd.log -compact
-.It Pa /var/yp/yppasswdd.log
+.Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/passwd
 .It Pa /etc/master.passwd
 .El
