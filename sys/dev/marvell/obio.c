@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 2003/07/14 15:47:18 lukem Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 2004/09/08 20:08:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2003/07/14 15:47:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2004/09/08 20:08:46 drochner Exp $");
 
 #include "opt_marvell.h"
 
@@ -71,7 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2003/07/14 15:47:18 lukem Exp $");
 
 static int obio_cfprint(void *, const char *);
 static int obio_cfmatch(struct device *, struct cfdata *, void *);
-static int obio_cfsearch(struct device *, struct cfdata *, void *);
+static int obio_cfsearch(struct device *, struct cfdata *,
+			 const locdesc_t *, void *);
 static void obio_cfattach(struct device *, struct device *, void *);
 
 struct obio_softc {
@@ -116,7 +117,8 @@ obio_cfprint(void *aux, const char *pnp)
 
 
 int
-obio_cfsearch(struct device *parent, struct cfdata *cf, void *aux)
+obio_cfsearch(struct device *parent, struct cfdata *cf,
+	      const locdesc_t *ldesc, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *) parent;
 	struct obio_attach_args oa;
@@ -172,6 +174,5 @@ obio_cfattach(struct device *parent, struct device *self, void *aux)
 	    GT_LowAddr_GET(datal), GT_HighAddr_GET(datah),
 	    GT_PCISwap_GET(datal) == 1 ? "little" : "big");
 
-        config_search(obio_cfsearch, &sc->sc_dev, NULL);
+        config_search_ia(obio_cfsearch, &sc->sc_dev, "obio", NULL);
 }
-
