@@ -56,18 +56,6 @@
 # Special purpose devices:
 #	bpf*	packet filter
 #
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       00097
-# --------------------         -----   ----------------------
-#
-# 16 Feb 93	Julian Elischer		ADDED for SCSI system
-# 16 Feb 93	Julian Elischer		media changer device
-# 10 Mar 93	Rodney W. Grimes	general clean up of above patches
-#					typo in rm of kmem (was kmdem)
-#					major number for /dev/fd/* and /dev/std*
-#					added lpt, lpa, bpf, vga, vgaco, kbdco
-#
 
 PATH=/sbin:/bin/:/usr/bin
 umask 77
@@ -95,6 +83,7 @@ std)
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
+	mknod acct		c 26 0	; chmod 600 acct
 	;;
 
 wt*)
