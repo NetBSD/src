@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)commands.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: commands.c,v 1.5 1994/02/25 03:00:22 cgd Exp $";
+static char *rcsid = "$Id: commands.c,v 1.6 1994/05/08 20:42:26 mycroft Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -2235,7 +2235,7 @@ tn(argc, argv)
 		tos = tp->t_tos;
 # endif
 	    if (tos < 0)
-		tos = 020;	/* Low Delay bit */
+		tos = IPTOS_LOWDELAY;
 	    if (tos
 		&& (setsockopt(net, IPPROTO_IP, IP_TOS,
 		    (char *)&tos, sizeof(int)) < 0)
