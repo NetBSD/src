@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1998/09/09 00:07:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1998/09/30 23:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,7 @@
  *
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
+#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_hpux.h"
