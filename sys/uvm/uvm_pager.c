@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.27 2000/03/30 02:49:55 simonb Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.28 2000/04/03 08:09:02 chs Exp $	*/
 
 /*
  *
@@ -359,41 +359,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 
 	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
 	return(ppsp);
-}
-
-
-/*
- * uvm_shareprot: generic share protect routine
- *
- * => caller must lock map entry's map
- * => caller must lock object pointed to by map entry
- */
-
-void
-uvm_shareprot(entry, prot)
-	vm_map_entry_t entry;
-	vm_prot_t prot;
-{
-	struct uvm_object *uobj = entry->object.uvm_obj;
-	struct vm_page *pp;
-	voff_t start, stop;
-	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
-
-	if (UVM_ET_ISSUBMAP(entry)) 
-		panic("uvm_shareprot: non-object attached");
-
-	start = entry->offset;
-	stop = start + (entry->end - entry->start);
-
-	/*
-	 * traverse list of pages in object.   if page in range, pmap_prot it
-	 */
-
-	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = pp->listq.tqe_next) {
-		if (pp->offset >= start && pp->offset < stop)
-			pmap_page_protect(pp, prot);
-	}
-	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
 }
 
 /*
