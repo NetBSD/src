@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.20 1998/03/26 19:20:37 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.21 1998/11/11 11:25:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.20 1998/03/26 19:20:37 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.21 1998/11/11 11:25:43 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.20 1998/03/26 19:20:37 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.21 1998/11/11 11:25:43 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -259,15 +259,18 @@ Make_OODate (gn)
 	}
 	oodate = TRUE;
     } else {
-#if 0
-	/* WHY? */
+	/* 
+	 * If a child has been made, then the parent is out of date.
+	 * This is the case when a non-existing child with no sources
+	 * (such as a typically used FORCE source) has been made and
+	 * the target of the child (usually a directory) has the same
+	 * timestamp as the timestamp just given to the non-existing child
+	 * after it was considered made.
+	 */
 	if (DEBUG(MAKE)) {
 	    printf("source %smade...", gn->childMade ? "" : "not ");
 	}
 	oodate = gn->childMade;
-#else
-	oodate = FALSE;
-#endif /* 0 */
     }
 
     /*
