@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2005/01/20 15:36:02 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.3 2005/01/20 16:39:22 xtraeme Exp $
 
-WARNS=	2
 SRCS=	atactl.c
 
 PROG=	atactl

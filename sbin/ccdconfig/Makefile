@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 2005/01/20 15:49:24 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.7 2005/01/20 16:39:23 xtraeme Exp $
 
-WARNS=	2
 PROG=	ccdconfig
 MAN=	ccdconfig.8 ccd.conf.5
 
