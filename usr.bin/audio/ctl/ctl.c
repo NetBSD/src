@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.26 2001/02/19 23:03:43 cgd Exp $	*/
+/*	$NetBSD: ctl.c,v 1.27 2001/03/28 03:18:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -312,7 +312,7 @@ getinfo(fd)
 		if (pos >= sizeof(encbuf)-1)
 			break;
 		pos += snprintf(encbuf+pos, sizeof(encbuf)-pos, "%s:%d%s",
-			enc.name, enc.precision, 
+			enc.name, enc.precision,
 			enc.flags & AUDIO_ENCODINGFLAG_EMULATED ? "*" : "");
 	}
 	if (ioctl(fd, AUDIO_GETFD, &fullduplex) < 0)
@@ -346,11 +346,11 @@ main(argc, argv)
 	struct stat dstat, ostat;
 	const char *file;
 	char *sep = "=";
-    
+
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == 0)
 		file = _PATH_AUDIOCTL;
-    
+
 	while ((ch = getopt(argc, argv, "af:nw")) != -1) {
 		switch(ch) {
 		case 'a':
@@ -372,7 +372,7 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
-    
+
 	fd = open(file, O_WRONLY);
 	if (fd < 0)
 		fd = open(file, O_RDONLY);
@@ -387,7 +387,7 @@ main(argc, argv)
 #endif
 	if (fd < 0)
 		err(1, "%s", file);
-    
+
 	/* Check if stdout is the same device as the audio device. */
 	if (fstat(fd, &dstat) < 0)
 		err(1, "fstat audioctl");

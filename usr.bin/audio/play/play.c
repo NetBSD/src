@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.24 2001/03/08 06:28:14 ross Exp $	*/
+/*	$NetBSD: play.c,v 1.25 2001/03/28 03:18:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -272,8 +272,8 @@ play(file)
 		err(1, "munmap failed");
 
 	close(fd);
-	
 }
+
 /*
  * play the file on on the file descriptor fd
  */
@@ -328,7 +328,7 @@ play_fd(file, fd)
 		}
 		if (write(audiofd, buffer, datainbuf) != datainbuf)
 			err(1, "write failed");
-		
+
 		datasize -= datainbuf;
 		datainbuf = 0;
 	}
@@ -357,7 +357,7 @@ audioctl_write_fromhdr(hdr, fsz, fd, datasize)
 	AUDIO_INITINFO(&info);
 	sunhdr = hdr;
 	if (ntohl(sunhdr->magic) == AUDIO_FILE_MAGIC) {
-		if (audio_sun_to_encoding(ntohl(sunhdr->encoding), 
+		if (audio_sun_to_encoding(ntohl(sunhdr->encoding),
 		    &info.play.encoding, &info.play.precision)) {
 			if (!qflag)
 				warnx("unknown unsupported Sun audio encoding"
@@ -369,9 +369,9 @@ audioctl_write_fromhdr(hdr, fsz, fd, datasize)
 
 		info.play.sample_rate = ntohl(sunhdr->sample_rate);
 		info.play.channels = ntohl(sunhdr->channels);
-		hdr_len = ntohl(sunhdr->hdr_size); 
+		hdr_len = ntohl(sunhdr->hdr_size);
 
-		*datasize = ntohl(sunhdr->data_size); 
+		*datasize = ntohl(sunhdr->data_size);
 		goto set_audio_mode;
 	}
 
@@ -419,7 +419,7 @@ set_audio_mode:
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
-	
+
 	return (hdr_len);
 }
 
