@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.22 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.23 1999/12/03 21:43:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -330,7 +330,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 	 * is no way of doing the necessary page moving, so
 	 * terminate early.
 	 */
-	if (size != roundup(size, CLBYTES))
+	if (size != roundup(size, NBPG))
 		return (bp);
 
 	inc = btodb(size);

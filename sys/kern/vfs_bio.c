@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.61 1999/11/26 17:18:15 fvdl Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.62 1999/12/03 21:43:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -159,9 +159,9 @@ bufinit()
 		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
 		if (i < residual)
-			bp->b_bufsize = (base + 1) * CLBYTES;
+			bp->b_bufsize = (base + 1) * NBPG;
 		else
-			bp->b_bufsize = base * CLBYTES;
+			bp->b_bufsize = base * NBPG;
 		bp->b_flags = B_INVAL;
 		dp = bp->b_bufsize ? &bufqueues[BQ_AGE] : &bufqueues[BQ_EMPTY];
 		binsheadfree(bp, dp);
@@ -703,7 +703,7 @@ allocbuf(bp, size)
 	vsize_t       desired_size;
 	int	     s;
 
-	desired_size = roundup(size, CLBYTES);
+	desired_size = roundup(size, NBPG);
 	if (desired_size > MAXBSIZE)
 		panic("allocbuf: buffer larger than MAXBSIZE requested");
 
@@ -960,23 +960,23 @@ vfs_bufstats()
 	int s, i, j, count;
 	register struct buf *bp;
 	register struct bqueues *dp;
-	int counts[MAXBSIZE/CLBYTES+1];
+	int counts[MAXBSIZE/NBPG+1];
 	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
+		for (j = 0; j <= MAXBSIZE/NBPG; j++)
 			counts[j] = 0;
 		s = splbio();
 		for (bp = dp->tqh_first; bp; bp = bp->b_freelist.tqe_next) {
-			counts[bp->b_bufsize/CLBYTES]++;
+			counts[bp->b_bufsize/NBPG]++;
 			count++;
 		}
 		splx(s);
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/CLBYTES; j++)
+		for (j = 0; j <= MAXBSIZE/NBPG; j++)
 			if (counts[j] != 0)
-				printf(", %d-%d", j * CLBYTES, counts[j]);
+				printf(", %d-%d", j * NBPG, counts[j]);
 		printf("\n");
 	}
 }
