@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2000/09/21 17:46:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2000/10/10 20:39:42 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2000/09/21 17:46:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2000/10/10 20:39:42 jeffs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -208,7 +208,7 @@ boolean_t	pmap_initialized = FALSE;
 	int bank_, pg_;							\
 									\
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
-	&vm_physmem[bank_].pmseg.pvent[pg_].pv_flags; 				\
+	&vm_physmem[bank_].pmseg.pvent[pg_].pv_flags; 			\
 })
 
 /* Forward function declarations */
@@ -1091,6 +1091,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
+	int need_enter_pv;
 	pt_entry_t *pte;
 	u_int npte;
 	vm_page_t mem;
@@ -1166,7 +1167,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DEBUG
 		enter_stats.managed++;
 #endif
-		pmap_enter_pv(pmap, va, pa, &npte);
+		need_enter_pv = 1;
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
@@ -1185,6 +1186,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 			    (MIPS1_PG_D | MIPS1_PG_N) :
 			    (MIPS1_PG_RO | MIPS1_PG_N);
 		}
+
+		need_enter_pv = 0;
 	}
 
 	/*
@@ -1202,6 +1205,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 
 	if (pmap == pmap_kernel()) {
+		if (need_enter_pv)
+			pmap_enter_pv(pmap, va, pa, &npte);
+
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
 
@@ -1236,17 +1242,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 
 	if (!(pte = pmap_segmap(pmap, va))) {
-		do {
-			mem = uvm_pagealloc(NULL, 0, NULL,
-			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-			if (mem == NULL) {
-				/*
-				 * XXX What else can we do?  Could we
-				 * XXX deadlock here?
-				 */
-				uvm_wait("pmap_enter");
-			}
-		} while (mem == NULL);
+		mem = uvm_pagealloc(NULL, 0, NULL,
+				    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
+		if (mem == NULL) {
+			if (flags & PMAP_CANFAIL)
+				return (KERN_RESOURCE_SHORTAGE);
+			panic("pmap_enter: cannot allocate segmap");
+		}
 
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
 			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
@@ -1259,6 +1261,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 	    }
 #endif
 	}
+
+	/* Done after case that may sleep/return. */
+	if (need_enter_pv)
+		pmap_enter_pv(pmap, va, pa, &npte);
+
 	pte += (va >> PGSHIFT) & (NPTEPG - 1);
 
 	/*
