@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.145 2000/05/02 06:41:44 sjg Exp $
+#	$NetBSD: Makefile,v 1.146 2000/05/03 00:10:33 sjg Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -40,7 +40,7 @@
 #	stuff for this target is found in etc.${MACHINE}/Makefile.inc.
 #    release: a synonym for `snapshot'
 
-# do this before bsd.own.mk so we get correct BSDSRCDIR
+# do this before bsd.own.mk so we get correct SRCDIR
 .include "../Makefile.inc"
 
 # For NO_SENDMAIL and INSTPRIV and CRYPTOPATH
