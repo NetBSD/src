@@ -1,7 +1,7 @@
-/*	$NetBSD: obio.c,v 1.3 2001/11/19 19:08:33 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 2002/02/07 21:34:24 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -73,7 +73,18 @@ struct {
 	const char *od_name;
 	bus_addr_t od_addr;
 	int od_irq;
-} obio_devices[] = {
+} obio_devices[] =
+#if defined(TEAMASA_NPWR)
+{
+	/*
+	 * There is only one UART on the Npwr.
+	 */
+	{ "com",	IQ80310_UART2,		XINT3_IRQ(XINT3_UART2) },
+
+	{ NULL,		0,			0 },
+};
+#else /* Default to stock IQ80310 */
+{
 	/*
 	 * Order these so the first UART matched is the one at J9
 	 * and the second is the one at J10.  (This is the same
@@ -84,6 +95,7 @@ struct {
 
 	{ NULL,		0,			0 },
 };
+#endif /* list of IQ80310-based designs */
 
 int
 obio_match(struct device *parent, struct cfdata *cf, void *aux)

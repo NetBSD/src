@@ -1,7 +1,7 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.3 2001/11/09 23:15:53 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.4 2002/02/07 21:34:24 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -123,7 +123,12 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_piow_vaddr = IQ80310_PIOW_VBASE;
 	sc->sc_siow_vaddr = IQ80310_SIOW_VBASE;
 
+	/* Some boards are always considered "host". */
+#if defined(IOP310_TEAMASA_NPWR)
+	sc->sc_is_host = 1;
+#else
 	sc->sc_is_host = CPLD_READ(IQ80310_BACKPLANE_DET) & 1;
+#endif
 
 	printf(": i80312 Companion I/O, acting as PCI %s\n",
 	    sc->sc_is_host ? "host" : "slave");
