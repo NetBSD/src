@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.6 1998/07/21 17:36:02 drochner Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.7 1998/12/09 07:33:59 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -75,23 +75,24 @@
 #include <atari/vme/vmevar.h>
 #include <atari/vme/if_levar.h>
 
+/*
+ * All cards except BVME410 have 64KB RAM. However.... On the Riebl cards the
+ * area between the offsets 0xee70-0xeec0 is used to store config data.
+ */
 struct le_addresses {
 	u_long	reg_addr;
 	u_long	mem_addr;
 	int	irq;
+	int	reg_size;
+	int	mem_size;
 } lestd[] = {
-	{ 0xfe00fff0, 0xfe010000, IRQUNK },	/* Riebl VME	*/
-	{ 0xffcffff0, 0xffcf0000,      5 },	/* PAM VME	*/
-	{ 0xfecffff0, 0xfecf0000,      5 }	/* Rhotron VME	*/
+	{ 0xfe00fff0, 0xfe010000, IRQUNK, 16, 64*1024 }, /* Riebl	*/
+	{ 0xffcffff0, 0xffcf0000,      5, 16, 64*1024 }, /* PAM		*/
+	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024 }, /* Rhotron	*/
+	{ 0xfeff4100, 0xfe000000,      4,  8, VMECF_MEMSIZ_DEFAULT } /*BVME410*/
 };
 
 #define	NLESTD	(sizeof(lestd) / sizeof(lestd[0]))
-
-/*
- * All cards have 64KB RAM. However.... On the Riebl cards the area
- * between the offsets 0xee70-0xeec0 is used to store config data.
- */
-#define	MEMSIZE	(64*1024)
 
 /*
  * Default mac for RIEBL cards without a (working) battery. The first 4 bytes
@@ -108,6 +109,10 @@ static void le_vme_attach __P((struct device *, struct device *, void *));
 static int probe_addresses __P((bus_space_tag_t *, bus_space_tag_t *,
 				bus_space_handle_t *, bus_space_handle_t *));
 static void riebl_skip_reserved_area __P((struct lance_softc *));
+static int nm93c06_read __P((bus_space_tag_t, bus_space_handle_t, int));
+static int bvme410_mem_size __P((bus_space_tag_t, u_long));
+static void bvme410_copytobuf __P((struct lance_softc *, void *, int, int));
+static void bvme410_zerobuf __P((struct lance_softc *, int, int));
 
 struct cfattach le_vme_ca = {
 	sizeof(struct le_softc), le_vme_match, le_vme_attach
@@ -190,24 +195,35 @@ le_vme_match(parent, cfp, aux)
 		if ((le_ap->irq != IRQUNK) && (va->va_irq != le_ap->irq))
 			continue;
 
-		if (bus_space_map(iot, le_ap->reg_addr, 16, 0, &ioh)) {
+		if (bus_space_map(iot, le_ap->reg_addr, le_ap->reg_size, 0, &ioh)) {
 			printf("leprobe: cannot map io-area\n");
 			return (0);
 		}
-		if (bus_space_map(memt, le_ap->mem_addr, MEMSIZE, 0, &memh)) {
-			bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, 16);
+		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
+			if (bus_space_peek_2(iot, ioh, BVME410_IVEC)) {
+				bus_space_write_2(iot, ioh, BVME410_BAR, 0x1); /* XXX */
+				le_ap->mem_size = bvme410_mem_size(memt, le_ap->mem_addr);
+			}
+		}
+		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
+			bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, le_ap->reg_size);
+			continue;
+		}
+
+		if (bus_space_map(memt, le_ap->mem_addr, le_ap->mem_size, 0, &memh)) {
+			bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, le_ap->reg_size);
 			printf("leprobe: cannot map memory-area\n");
 			return (0);
 		}
 		found = probe_addresses(&iot, &memt, &ioh, &memh);
-		bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, 16);
-		bus_space_unmap(memt, (caddr_t)le_ap->mem_addr, 8*NBPG);
+		bus_space_unmap(iot, (caddr_t)le_ap->reg_addr, le_ap->reg_size);
+		bus_space_unmap(memt, (caddr_t)le_ap->mem_addr, le_ap->mem_size);
 
 		if (found) {
 			va->va_iobase = le_ap->reg_addr;
-			va->va_iosize = 16;
+			va->va_iosize = le_ap->reg_size;
 			va->va_maddr  = le_ap->mem_addr;
-			va->va_msize  = MEMSIZE;
+			va->va_msize  = le_ap->mem_size;
 			if (va->va_irq == IRQUNK)
 				va->va_irq = le_ap->irq;
 			return 1;
@@ -333,6 +349,10 @@ le_vme_attach(parent, self, aux)
 		lesc->sc_type = LE_PAM;
 		bus_space_read_1(va->va_iot, ioh, LER_MEME);
 	}
+	else if (bus_space_peek_2(va->va_iot, ioh, BVME410_IVEC)) {
+		printf("BVME410");
+		lesc->sc_type = LE_BVME410;
+	}
 	else {
 		printf("Riebl card");
 		if(bus_space_read_4(va->va_memt, memh, RIEBL_MAGIC_ADDR)
@@ -344,11 +364,22 @@ le_vme_attach(parent, self, aux)
 		}
 	}
 
-	sc->sc_copytodesc   = lance_copytobuf_contig;
-	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
-	sc->sc_copytobuf    = lance_copytobuf_contig;
-	sc->sc_copyfrombuf  = lance_copyfrombuf_contig;
-	sc->sc_zerobuf      = lance_zerobuf_contig;
+	switch (lesc->sc_type) {
+	    case LE_BVME410:
+		sc->sc_copytodesc   = bvme410_copytobuf;
+		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+		sc->sc_copytobuf    = bvme410_copytobuf;
+		sc->sc_copyfrombuf  = lance_copyfrombuf_contig;
+		sc->sc_zerobuf      = bvme410_zerobuf;
+		break;
+	    default:
+		sc->sc_copytodesc   = lance_copytobuf_contig;
+		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
+		sc->sc_copytobuf    = lance_copytobuf_contig;
+		sc->sc_copyfrombuf  = lance_copyfrombuf_contig;
+		sc->sc_zerobuf      = lance_zerobuf_contig;
+		break;
+	}
 
 	sc->sc_rdcsr   = lerdcsr;
 	sc->sc_wrcsr   = lewrcsr;
@@ -380,6 +411,15 @@ le_vme_attach(parent, self, aux)
 		}
 		i = bus_space_read_1(va->va_iot, ioh, LER_MEME);
 		break;
+	    case LE_BVME410:
+		for (i = 0; i < (sizeof(sc->sc_enaddr) >> 1); i++) {
+		    u_int16_t tmp;
+
+		    tmp = nm93c06_read(va->va_iot, ioh, i);
+		    sc->sc_enaddr[2 * i] = (tmp >> 8) & 0xff;
+		    sc->sc_enaddr[2 * i + 1] = tmp & 0xff;
+		}
+		bus_space_write_2(va->va_iot, ioh, BVME410_BAR, 0x1); /* XXX */
 	}
 
 	am7990_config(&lesc->sc_am7990);
@@ -407,6 +447,9 @@ le_vme_attach(parent, self, aux)
 			break;
 		case LE_PAM:
 			bus_space_write_1(va->va_iot, ioh, LER_IVEC, 64 + 64);
+			break;
+		case LE_BVME410:
+			bus_space_write_2(va->va_iot, ioh, BVME410_IVEC, 64 + 64);
 			break;
 	}
 
@@ -445,3 +488,102 @@ riebl_skip_reserved_area(sc)
 		sc->sc_tbufaddr[i] += offset;
 	}
 }
+
+static int
+nm93c06_read(iot, ioh, nm93c06reg)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int nm93c06reg;
+{
+	int bar;
+	int shift;
+	int bits = 0x180 | (nm93c06reg & 0xf);
+	int data = 0;
+
+	bar = 1<<BVME410_CS_SHIFT;
+	bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+	delay(1); /* tCSS = 1 us */
+	for (shift = 9; shift >= 0; shift--) {
+		if (((bits >> shift) & 1) == 1)
+			bar |= 1<<BVME410_DIN_SHIFT;
+		else
+			bar &= ~(1<<BVME410_DIN_SHIFT);
+		bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+		delay(1); /* tDIS = 0.4 us */
+		bar |= 1<<BVME410_CLK_SHIFT;
+		bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+		delay(2); /* tSKH = 1 us, tSKH + tSKL >= 4 us */
+		bar &= ~(1<<BVME410_CLK_SHIFT);
+		bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+		delay(2); /* tSKL = 1 us, tSKH + tSKL >= 4 us */
+	}
+	bar &= ~(1<<BVME410_DIN_SHIFT);
+	for (shift = 15; shift >= 0; shift--) {
+		delay(1); /* tDIS = 100 ns, BVM manual says 0.4 us */
+		bar |= 1<<BVME410_CLK_SHIFT;
+		bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+		delay(2); /* tSKH = 1 us, tSKH + tSKL >= 4 us */
+		data |= (bus_space_read_2(iot, ioh, BVME410_BAR) & 1) << shift;
+		bar &= ~(1<<BVME410_CLK_SHIFT);
+		bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+		delay(2); /* tSKL = 1 us, tSKH + tSKL >= 4 us */
+	}
+	bar &= ~(1<<BVME410_CS_SHIFT);
+	bus_space_write_2(iot, ioh, BVME410_BAR, bar);
+	delay(1); /* tCS = 1 us */
+	return data;
+}
+
+static int
+bvme410_mem_size(memt, mem_addr)
+	bus_space_tag_t memt;
+	u_long mem_addr;
+{
+	bus_space_handle_t memh;
+	int r;
+
+	if (bus_space_map(memt, mem_addr, 256*1024, 0, &memh))
+		return VMECF_MEMSIZ_DEFAULT;
+	if (!bus_space_peek_1(memt, memh, 0)) {
+		bus_space_unmap(memt, (caddr_t)mem_addr, 256*1024);
+		return VMECF_MEMSIZ_DEFAULT;
+	}
+	bus_space_write_1(memt, memh, 0, 128);
+	bus_space_write_1(memt, memh, 64*1024, 32);
+	bus_space_write_1(memt, memh, 32*1024, 8);
+	r = (int)(bus_space_read_1(memt, memh, 0) * 2048);
+	bus_space_unmap(memt, (caddr_t)mem_addr, 256*1024);
+	return r;
+}
+
+/*
+ * Need to be careful when writing to the bvme410 dual port memory.
+ * Continue writing each byte until it reads back the same.
+ */
+
+static void
+bvme410_copytobuf(sc, from, boff, len)
+	struct lance_softc *sc;
+	void *from;
+	int boff, len;
+{
+	volatile char *buf = (volatile char *) sc->sc_mem;
+	char *f = (char *) from;
+
+	for (buf += boff; len; buf++,f++,len--)
+		while (*buf != *f)
+			*buf = *f;
+}
+
+static void
+bvme410_zerobuf(sc, boff, len)
+	struct lance_softc *sc;
+	int boff, len;
+{
+	volatile char *buf = (volatile char *)sc->sc_mem;
+
+	for (buf += boff; len; buf++,len--)
+		while (*buf != '\0')
+			*buf = '\0';
+}
+

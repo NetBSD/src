@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.3 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: lance.c,v 1.4 1998/12/09 07:36:51 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -267,6 +267,10 @@ lance_config(sc)
 	case 131072:
 		sc->sc_nrbuf = 64;
 		sc->sc_ntbuf = 16;
+		break;
+	case 262144:
+		sc->sc_nrbuf = 128;
+		sc->sc_ntbuf = 32;
 		break;
 	default:
 		panic("lance_config: weird memory size");

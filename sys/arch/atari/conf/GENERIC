@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.50 1998/11/25 20:30:45 hwr Exp $
+#	$NetBSD: GENERIC,v 1.51 1998/12/09 07:35:28 leo Exp $
 #
 # Generic atari
 #
@@ -184,6 +184,7 @@ ahc*	at pci? dev ? function ?        # Adaptec [23]94x, aic78x0 SCSI
 avmebus0 at mainbus0			# VME bus
 vme0	at avmebus0
 le0	at vme0	irq 5			# Lance ethernet (Riebl/PAM).
+le0	at vme0 irq 4			# Lance ethernet (BVME410).
 et0	at vme0				# Crazy Dots II
 
 isabus0	at mainbus0			# ISA-bus
