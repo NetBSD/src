@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.10 1997/06/19 07:41:32 mikel Exp $	*/
+/*	$NetBSD: catgets.c,v 1.11 1997/07/13 19:58:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #define _NLS_PRIVATE
 
+#include "namespace.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: catclose.c,v 1.7 1996/05/13 23:29:37 jtc Exp $	*/
+/*	$NetBSD: catclose.c,v 1.8 1997/07/13 19:58:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,9 +38,11 @@
 
 #define _NLS_PRIVATE
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <nl_types.h>
 
 int
