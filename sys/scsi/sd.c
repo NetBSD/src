@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.79 1995/09/30 22:57:19 pk Exp $	*/
+/*	$NetBSD: sd.c,v 1.80 1995/10/10 02:53:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -388,6 +388,13 @@ sdstrategy(bp)
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_link, SDEV_DB1,
 	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	/*
+	 * The transfer must be a whole number of blocks.
+	 */
+	if ((bp->b_bcount % sd->sc_dk.dk_label.d_secsize) != 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 	/*
 	 * If the device has been made invalid, error out
 	 */
