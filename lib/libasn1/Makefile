@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2004/07/12 20:44:56 jonathan Exp $
+# $NetBSD: Makefile,v 1.25 2005/01/10 03:11:17 lukem Exp $
 
 NOLINT=		# defined
 
@@ -107,6 +107,10 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -I${DIST}/heimdal/lib/com_err		\
 	 -DHAVE_CONFIG_H
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DHAVE_IPV6
+.endif
 
 ${gen_files} krb5_asn1.hx: asn1_files
 

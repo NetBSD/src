@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2002/10/23 01:25:38 itojun Exp $
+# $NetBSD: Makefile,v 1.12 2005/01/10 03:11:18 lukem Exp $
 
 NOMAN=	# defined
 NOLINT= # defined
@@ -21,6 +21,10 @@ CFLAGS+= -I.					\
 	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DHAVE_IPV6
+.endif
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2002/09/13 17:29:56 thorpej Exp $
+# $NetBSD: Makefile,v 1.19 2005/01/10 03:11:17 lukem Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -48,6 +48,10 @@ HOST_CPPFLAGS+= -I.				\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DKRB5=1				\
 	 -DHAVE_CONFIG_H
+
+.if (${USE_INET6} != "no")
+HOST_CPPFLAGS+=-DHAVE_IPV6
+.endif
 
 DPSRCS=		print_version.h
 
