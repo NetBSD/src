@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.6 1993/08/27 10:26:08 mycroft Exp $
+ *	$Id: if.c,v 1.7 1993/12/06 04:17:38 hpeyerl Exp $
  */
 
 #include "param.h"
@@ -471,6 +471,16 @@ ifioctl(so, cmd, data, p)
 	case SIOCGIFMETRIC:
 		ifr->ifr_metric = ifp->if_metric;
 		break;
+
+#ifdef MULTICAST
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+  		if (error = suser(p->p_ucred, &p->p_acflag))
+  			return (error);
+  		if (! ifp->if_ioctl) /* BUG:: 10NOV93 CMAEDA */
+  			return (EOPNOTSUPP);
+ 		return ((*ifp->if_ioctl)(ifp, cmd, data));
+#endif
 
 	case SIOCSIFFLAGS:
 		if (error = suser(p->p_ucred, &p->p_acflag))
