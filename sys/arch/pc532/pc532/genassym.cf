@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 1999/03/25 00:41:47 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.6 1999/06/17 00:22:42 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -40,8 +40,6 @@
 
 config long n c
 
-include "opt_pmap_new.h"
-
 include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
@@ -63,11 +61,6 @@ define	PGSHIFT 		PGSHIFT
 define	PGOFSET 		PGOFSET
 define	NBPG			NBPG
 
-ifndef PMAP_NEW
-define	PTDPTDI 		PTDPTDI
-define	KPTDI			KPTDI
-define	APTDPTDI		APTDPTDI
-endif
 define	PDE_SIZE		sizeof(pd_entry_t)
 
 define	KERNBASE		KERNBASE
