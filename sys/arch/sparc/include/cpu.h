@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1996/09/05 09:32:48 thorpej Exp $ */
+/*	$NetBSD: cpu.h,v 1.23 1996/11/06 20:19:51 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ void	copywords __P((const void *, void *, size_t));
 void	qcopy __P((const void *, void *, size_t));
 void	qzero __P((void *, size_t));
 /* locore2.c */
-void	remrq __P((struct proc *));
+void	remrunqueue __P((struct proc *));
 /* trap.c */
 void	kill_user_windows __P((struct proc *));
 int	rwindow_save __P((struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.154 1996/10/13 16:53:29 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.155 1996/11/06 20:19:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1481,10 +1481,10 @@ ENTRY(setrunqueue)
 #endif /* DIAGNOSTIC */
 
 /*
- * remrq(struct proc *p);
+ * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
-ENTRY(remrq)
+ENTRY(remrunqueue)
 	movl	4(%esp),%ecx
 	movzbl	P_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
@@ -1508,7 +1508,7 @@ ENTRY(remrq)
 1:	pushl	$3f
 	call	_panic
 	/* NOTREACHED */
-3:	.asciz	"remrq"
+3:	.asciz	"remrunqueue"
 #endif /* DIAGNOSTIC */
 
 #if NAPM > 0
