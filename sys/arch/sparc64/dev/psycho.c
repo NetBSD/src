@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.21 2000/07/09 20:57:50 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.22 2000/07/12 21:49:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -120,8 +120,12 @@ static	int	psycho_match __P((struct device *, struct cfdata *, void *));
 static	void	psycho_attach __P((struct device *, struct device *, void *));
 static	int	psycho_print __P((void *aux, const char *p));
 
-static	void	sabre_init __P((struct psycho_softc *, struct pcibus_attach_args *));
-static	void	psycho_init __P((struct psycho_softc *, struct pcibus_attach_args *));
+static	void	sabre_init __P((struct psycho_softc *,
+				struct mainbus_attach_args *,
+				struct pcibus_attach_args *));
+static	void	psycho_init __P((struct psycho_softc *,
+				struct mainbus_attach_args *,
+				struct pcibus_attach_args *));
 
 struct cfattach psycho_ca = {
         sizeof(struct psycho_softc), psycho_match, psycho_attach
@@ -186,18 +190,12 @@ psycho_attach(parent, self, aux)
 	 */
 
 	/*
-	 * XXX use the prom address for the psycho registers?  we do so far.
-	 */
-	sc->sc_regs = (struct psychoreg *)(u_long)ma->ma_address[0];
-	sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
-
-	/*
 	 * call the model-specific initialisation routine.
 	 */
 	if (strcmp(model, ROM_SABRE_MODEL) == 0)
-		sabre_init(sc, &pba);
+		sabre_init(sc, ma, &pba);
 	else if (strcmp(model, ROM_PSYCHO_MODEL) == 0)
-		psycho_init(sc, &pba);
+		psycho_init(sc, ma, &pba);
 #ifdef DIAGNOSTIC
 	else
 		panic("psycho_attach: unknown model %s?", model);
@@ -235,8 +233,9 @@ psycho_print(aux, p)
  *	- turn on the iommu
  */
 static void
-sabre_init(sc, pba)
+sabre_init(sc, ma, pba)
 	struct psycho_softc *sc;
+	struct mainbus_attach_args *ma;
 	struct pcibus_attach_args *pba;
 {
 	struct psycho_pbm *pp;
@@ -244,6 +243,17 @@ sabre_init(sc, pba)
 	u_int64_t csr;
 	unsigned int node;
 	int sabre_br[2], simba_br[2];
+
+	/*
+	 * The sabre gets two register banks:
+	 * (0) per-PBM PCI configuration space, containing only the
+	 *     PBM 256-byte PCI header
+	 * (1) the shared psycho configuration registers (struct psychoreg)
+	 *
+	 * XXX use the prom address for the psycho registers?  we do so far.
+	 */
+	sc->sc_regs = (struct psychoreg *)(u_long)ma->ma_address[0];
+	sc->sc_basepaddr = (paddr_t)ma->ma_reg[0].ur_paddr;
 
 	/* who? said a voice, incredulous */
 	sc->sc_mode = PSYCHO_MODE_SABRE;
@@ -417,8 +427,9 @@ sabre_init(sc, pba)
  * note that the partner can be found via matching `ranges' properties.
  */
 static void
-psycho_init(sc, pba)
+psycho_init(sc, ma, pba)
 	struct psycho_softc *sc;
+	struct mainbus_attach_args *ma;
 	struct pcibus_attach_args *pba;
 {
 	struct psycho_softc *osc = NULL;
@@ -429,6 +440,18 @@ psycho_init(sc, pba)
 	char who;
 
 	printf("psycho: ");
+
+	/*
+	 * The psycho gets three register banks:
+	 * (0) per-PBM configuration and status registers
+	 * (1) per-PBM PCI configuration space, containing only the
+	 *     PBM 256-byte PCI header
+	 * (2) the shared psycho configuration registers (struct psychoreg)
+	 *
+	 * XXX use the prom address for the psycho registers?  we do so far.
+	 */
+	sc->sc_regs = (struct psychoreg *)(u_long)ma->ma_address[2];
+	sc->sc_basepaddr = (paddr_t)ma->ma_reg[2].ur_paddr;
 
 	/*
 	 * OK, so the deal here is:
@@ -480,19 +503,20 @@ psycho_init(sc, pba)
 	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
 
 	/* allocate our psycho_pbm */
-	sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_psycho_this == NULL)
+	pp = sc->sc_psycho_this = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
+	if (pp == NULL)
 		panic("could not allocate psycho pbm");
 	if (osc) {
 		sc->sc_psycho_other = osc->sc_psycho_this;
 		osc->sc_psycho_other = sc->sc_psycho_this;
 	}
 
-	memset(sc->sc_psycho_this, 0, sizeof *pp);
+	memset(pp, 0, sizeof *pp);
+
+	pp->pp_sc = sc;
 
 	/* grab the psycho ranges */
-	psycho_get_ranges(sc->sc_node, &sc->sc_psycho_this->pp_range,
-	    &sc->sc_psycho_this->pp_nrange);
+	psycho_get_ranges(sc->sc_node, &pp->pp_range, &pp->pp_nrange);
 
 	/* get the bus-range for the psycho */
 	psycho_get_bus_range(sc->sc_node, psycho_br);
@@ -504,8 +528,7 @@ psycho_init(sc, pba)
 
 	pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 
-	/* grab the psycho registers, interrupt map and map mask */
-	psycho_get_registers(sc->sc_node, &pp->pp_regs, &pp->pp_nregs);
+	/* grab the interrupt map and map mask */
 	psycho_get_intmap(sc->sc_node, &pp->pp_intmap, &pp->pp_nintmap);
 	psycho_get_intmapmask(sc->sc_node, &pp->pp_intmapmask);
 
@@ -520,9 +543,7 @@ psycho_init(sc, pba)
 	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);
 
 	/* setup the rest of the psycho pbm */
-	pp->pp_sc = sc;
-	pba->pba_pc = psycho_alloc_chipset(pp, sc->sc_node,
-	    sc->sc_psycho_this->pp_pc);
+	pba->pba_pc = psycho_alloc_chipset(pp, sc->sc_node, pp->pp_pc);
 
 	printf("\n");
 
