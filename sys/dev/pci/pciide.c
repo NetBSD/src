@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.189 2003/04/05 13:00:15 kent Exp $	*/
+/*	$NetBSD: pciide.c,v 1.190 2003/04/19 23:37:26 christos Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.189 2003/04/05 13:00:15 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.190 2003/04/19 23:37:26 christos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -124,6 +124,9 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/cy82c693var.h>
 
 #include "opt_pciide.h"
+
+static const char dmaerrfmt[] = 
+    "%s:%d: unable to %s table DMA map for drive %d, error=%d\n";
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -1108,40 +1111,35 @@ pciide_dma_table_setup(sc, channel, drive)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dma_table_size,
 	    IDEDMA_TBL_ALIGN, IDEDMA_TBL_ALIGN, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s:%d: unable to allocate table DMA for "
-		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
-		    channel, drive, error);
+		printf(dmaerrfmt, sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    "allocate", drive, error);
 		return error;
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    dma_table_size,
 	    (caddr_t *)&dma_maps->dma_table,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s:%d: unable to map table DMA for"
-		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
-		    channel, drive, error);
+		printf(dmaerrfmt, sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    "map", drive, error);
 		return error;
 	}
 	WDCDEBUG_PRINT(("pciide_dma_table_setup: table at %p len %lu, "
 	    "phy 0x%lx\n", dma_maps->dma_table, (u_long)dma_table_size,
 	    (unsigned long)seg.ds_addr), DEBUG_PROBE);
-
 	/* Create and load table DMA map for this disk */
 	if ((error = bus_dmamap_create(sc->sc_dmat, dma_table_size,
 	    1, dma_table_size, IDEDMA_TBL_ALIGN, BUS_DMA_NOWAIT,
 	    &dma_maps->dmamap_table)) != 0) {
-		printf("%s:%d: unable to create table DMA map for "
-		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
-		    channel, drive, error);
+		printf(dmaerrfmt, sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    "create", drive, error);
 		return error;
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 	    dma_maps->dmamap_table,
 	    dma_maps->dma_table,
 	    dma_table_size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s:%d: unable to load table DMA map for "
-		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
-		    channel, drive, error);
+		printf(dmaerrfmt, sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    "load", drive, error);
 		return error;
 	}
 	WDCDEBUG_PRINT(("pciide_dma_table_setup: phy addr of table 0x%lx\n",
@@ -1152,9 +1150,8 @@ pciide_dma_table_setup(sc, channel, drive)
 	    NIDEDMA_TABLES, sc->sc_dma_maxsegsz, sc->sc_dma_boundary,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &dma_maps->dmamap_xfer)) != 0) {
-		printf("%s:%d: unable to create xfer DMA map for "
-		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
-		    channel, drive, error);
+		printf(dmaerrfmt, sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    "create xfer", drive, error);
 		return error;
 	}
 	return 0;
@@ -1178,9 +1175,8 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	    databuf, datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
 	    ((flags & WDC_DMA_READ) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
-		printf("%s:%d: unable to load xfer DMA map for"
-		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
-		    channel, drive, error);
+		printf(dmaerrfmt, sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    "load xfer", drive, error);
 		return error;
 	}
 
