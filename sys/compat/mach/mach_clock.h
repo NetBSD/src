@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_clock.h,v 1.2 2002/11/28 21:21:32 manu Exp $ */
+/*	$NetBSD: mach_clock.h,v 1.3 2002/12/17 18:42:56 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_clock_get_time_reply_t;
 
-int mach_clock_get_time(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
+int mach_clock_get_time(struct mach_trap_args *);
 
 #endif /* _MACH_CLOCK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.4 2002/12/12 23:18:22 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.5 2002/12/17 18:42:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -97,10 +97,8 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_create_running_reply_t;
 	
-int mach_thread_policy(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
-int mach_thread_create_running(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
+int mach_thread_policy(struct mach_trap_args *);
+int mach_thread_create_running(struct mach_trap_args *);
 void mach_create_thread_child(void *);
 
 #endif /* _MACH_THREAD_H_ */
