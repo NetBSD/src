@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regsub.c,v 1.5 1997/10/09 10:21:26 lukem Exp $");
+__RCSID("$NetBSD: regsub.c,v 1.6 1998/02/03 18:58:11 perry Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
@@ -44,11 +44,11 @@ const regexp *prog;
 const char *source;
 char *dest;
 {
-	register char *src;
-	register char *dst;
-	register char c;
-	register int no;
-	register int len;
+	char *src;
+	char *dst;
+	char c;
+	int no;
+	int len;
 
 	if (prog == NULL || source == NULL || dest == NULL) {
 		regerror("NULL parm to regsub");

@@ -1,4 +1,4 @@
-/*	$NetBSD: strxfrm.c,v 1.6 1998/01/30 23:38:45 perry Exp $	*/
+/*	$NetBSD: strxfrm.c,v 1.7 1998/02/03 18:49:26 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strxfrm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strxfrm.c,v 1.6 1998/01/30 23:38:45 perry Exp $");
+__RCSID("$NetBSD: strxfrm.c,v 1.7 1998/02/03 18:49:26 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,11 +54,11 @@ __RCSID("$NetBSD: strxfrm.c,v 1.6 1998/01/30 23:38:45 perry Exp $");
  */
 size_t
 strxfrm(dst, src, n)
-	register char *dst;
+	char *dst;
 	const char *src;
 	size_t n;
 {
-	register size_t srclen, copysize;
+	size_t srclen, copysize;
 
 	/*
 	 * Since locales are unimplemented, this is just a copy.

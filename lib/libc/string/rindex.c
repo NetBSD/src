@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.c,v 1.7 1998/01/30 23:38:24 perry Exp $	*/
+/*	$NetBSD: rindex.c,v 1.8 1998/02/03 18:49:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rindex.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rindex.c,v 1.7 1998/01/30 23:38:24 perry Exp $");
+__RCSID("$NetBSD: rindex.c,v 1.8 1998/02/03 18:49:16 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,10 +55,10 @@ strrchr(p, ch)
 #else
 rindex(p, ch)
 #endif
-	register const char *p;
-	register int ch;
+	const char *p;
+	int ch;
 {
-	register char *save;
+	char *save;
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)

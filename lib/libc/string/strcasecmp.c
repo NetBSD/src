@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.8 1998/01/30 23:38:25 perry Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.9 1998/02/03 18:49:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.8 1998/01/30 23:38:25 perry Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.9 1998/02/03 18:49:17 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ int
 strcasecmp(s1, s2)
 	const char *s1, *s2;
 {
-	register const u_char *us1 = (const u_char *)s1,
+	const u_char *us1 = (const u_char *)s1,
 			*us2 = (const u_char *)s2;
 
 	while (tolower(*us1) == tolower(*us2++))
@@ -69,10 +69,10 @@ strcasecmp(s1, s2)
 int
 strncasecmp(s1, s2, n)
 	const char *s1, *s2;
-	register size_t n;
+	size_t n;
 {
 	if (n != 0) {
-		register const u_char *us1 = (const u_char *)s1,
+		const u_char *us1 = (const u_char *)s1,
 				*us2 = (const u_char *)s2;
 
 		do {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.c,v 1.6 1997/07/21 14:09:07 jtc Exp $	*/
+/*	$NetBSD: bm.c,v 1.7 1998/02/03 18:49:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94";
 #else
-__RCSID("$NetBSD: bm.c,v 1.6 1997/07/21 14:09:07 jtc Exp $");
+__RCSID("$NetBSD: bm.c,v 1.7 1998/02/03 18:49:11 perry Exp $");
 #endif
 #endif /* LIBC_SCCS && not lint */
 
@@ -108,9 +108,9 @@ bm_comp(pb, len, freq)
 	size_t len;
 	u_char const *freq;
 {
-	register u_char const *pe, *p;
-	register size_t *d, r;
-	register int j;
+	u_char const *pe, *p;
+	size_t *d, r;
+	int j;
 	int sv_errno;
 	bm_pat *pat;
 
@@ -176,9 +176,9 @@ bm_exec(pat, base, n)
 	u_char *base;
 	size_t n;
 {
-	register u_char *e, *ep, *p, *q, *s;
-	register size_t *d0, k, md2, n1, ro;
-	register int rc;
+	u_char *e, *ep, *p, *q, *s;
+	size_t *d0, k, md2, n1, ro;
+	int rc;
 
 	if (n == 0)
 		return (NULL);

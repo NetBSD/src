@@ -1,4 +1,4 @@
-/*	$NetBSD: strncpy.c,v 1.7 1998/01/30 23:38:37 perry Exp $	*/
+/*	$NetBSD: strncpy.c,v 1.8 1998/02/03 18:49:22 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strncpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncpy.c,v 1.7 1998/01/30 23:38:37 perry Exp $");
+__RCSID("$NetBSD: strncpy.c,v 1.8 1998/02/03 18:49:22 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,11 +59,11 @@ char *
 strncpy(dst, src, n)
 	char *dst;
 	const char *src;
-	register size_t n;
+	size_t n;
 {
 	if (n != 0) {
-		register char *d = dst;
-		register const char *s = src;
+		char *d = dst;
+		const char *s = src;
 
 		do {
 			if ((*d++ = *s++) == 0) {

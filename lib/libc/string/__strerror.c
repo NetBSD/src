@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.10 1997/07/13 20:24:09 christos Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.11 1998/02/03 18:49:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.10 1997/07/13 20:24:09 christos Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.11 1998/02/03 18:49:08 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ __strerror(num, buf, buflen)
 	int buflen;
 {
 #define	UPREFIX	"Unknown error: %u"
-	register unsigned int errnum;
+	unsigned int errnum;
 
 #ifdef NLS
 	nl_catd catd ;

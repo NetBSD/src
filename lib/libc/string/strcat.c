@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.c,v 1.8 1998/01/30 23:38:27 perry Exp $	*/
+/*	$NetBSD: strcat.c,v 1.9 1998/02/03 18:49:17 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strcat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcat.c,v 1.8 1998/01/30 23:38:27 perry Exp $");
+__RCSID("$NetBSD: strcat.c,v 1.9 1998/02/03 18:49:17 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: strcat.c,v 1.8 1998/01/30 23:38:27 perry Exp $");
 
 char *
 strcat(s, append)
-	register char *s;
-	register const char *append;
+	char *s;
+	const char *append;
 {
 	char	*t = s;
 

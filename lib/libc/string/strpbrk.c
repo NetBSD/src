@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.6 1998/01/30 23:38:39 perry Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.7 1998/02/03 18:49:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strpbrk.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strpbrk.c,v 1.6 1998/01/30 23:38:39 perry Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.7 1998/02/03 18:49:22 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,10 @@ __RCSID("$NetBSD: strpbrk.c,v 1.6 1998/01/30 23:38:39 perry Exp $");
  */
 char *
 strpbrk(s1, s2)
-	register const char *s1, *s2;
+	const char *s1, *s2;
 {
-	register const char *scanp;
-	register int c, sc;
+	const char *scanp;
+	int c, sc;
 
 	while ((c = *s1++) != 0) {
 		for (scanp = s2; (sc = *scanp++) != 0;)

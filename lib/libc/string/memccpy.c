@@ -1,4 +1,4 @@
-/*	$NetBSD: memccpy.c,v 1.8 1998/01/30 23:38:19 perry Exp $	*/
+/*	$NetBSD: memccpy.c,v 1.9 1998/02/03 18:49:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)memccpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memccpy.c,v 1.8 1998/01/30 23:38:19 perry Exp $");
+__RCSID("$NetBSD: memccpy.c,v 1.9 1998/02/03 18:49:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,13 +49,13 @@ memccpy(t, f, c, n)
 	void *t;
 	const void *f;
 	int c;
-	register size_t n;
+	size_t n;
 {
 
 	if (n) {
-		register unsigned char *tp = t;
-		register const unsigned char *fp = f;
-		register unsigned char uc = c;
+		unsigned char *tp = t;
+		const unsigned char *fp = f;
+		unsigned char uc = c;
 		do {
 			if ((*tp++ = *fp++) == uc)
 				return (tp);

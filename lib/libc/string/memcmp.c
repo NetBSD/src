@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.7 1998/01/30 23:38:21 perry Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.8 1998/02/03 18:49:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memcmp.c,v 1.7 1998/01/30 23:38:21 perry Exp $");
+__RCSID("$NetBSD: memcmp.c,v 1.8 1998/02/03 18:49:15 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ memcmp(s1, s2, n)
 	size_t n;
 {
 	if (n != 0) {
-		register const unsigned char *p1 = s1, *p2 = s2;
+		const unsigned char *p1 = s1, *p2 = s2;
 
 		do {
 			if (*p1++ != *p2++)
