@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.28 1997/05/28 19:26:52 pk Exp $	*/
+/*	$NetBSD: pstat.c,v 1.29 1997/06/05 06:14:17 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.28 1997/05/28 19:26:52 pk Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.29 1997/06/05 06:14:17 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -1043,6 +1043,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: pstat [-Tfknstv] [-M core] [-N system]\n");
+	    "usage: pstat [-T|-f|-s|-t|-v] [-kn] [-M core] [-N system]\n");
 	exit(1);
 }
