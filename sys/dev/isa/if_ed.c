@@ -12,7 +12,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series
  *   and the 3Com 3c503
  *
- *	$Id: if_ed.c,v 1.5 1993/08/03 01:52:57 glass Exp $
+ *	$Id: if_ed.c,v 1.6 1993/08/26 00:27:05 cgd Exp $
  */
  
 #include "ed.h"
@@ -807,14 +807,14 @@ ed_init(unit)
 	if (sc->memwidth == 16) {
 		/*
 		 * Set FIFO threshold to 8, No auto-init Remote DMA,
-		 *	byte order=80x86, word-wide DMA xfers
+		 *	byte order=80x86, word-wide DMA xfers,
 		 */
-		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1|ED_DCR_WTS);
+		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1|ED_DCR_WTS|ED_DCR_LS);
 	} else {
 		/*
 		 * Same as above, but byte-wide DMA xfers
 		 */
-		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1);
+		outb(sc->nic_addr + ED_P0_DCR, ED_DCR_FT1|ED_DCR_LS);
 	}
 
 	/*
