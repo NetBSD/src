@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.17 1998/11/22 15:00:47 drochner Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.18 1999/01/03 04:30:56 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_sysv.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
