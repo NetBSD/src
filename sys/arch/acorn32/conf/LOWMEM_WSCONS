@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.9 2002/04/02 05:30:37 lukem Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.10 2002/04/10 20:10:08 thorpej Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -26,9 +26,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 
 # For small kernels
 makeoptions	COPTS="-Os -fno-inline -Dinline= -D__inline__= -D_inline_= "
-
-# Architecture options
-options 	RISCPC		# We are a RiscPC
 
 # FPA options
 
