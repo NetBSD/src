@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.7 1993/08/27 22:30:44 jtc Exp $";
+static char rcsid[] = "$Id: su.c,v 1.8 1994/01/07 16:05:42 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,8 +82,8 @@ main(argc, argv)
 	uid_t ruid, getuid();
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
-	char *user, *shell, *username, *cleanenv[2], **np;
-	char shellbuf[MAXPATHLEN];
+	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
+	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 	char *getpass(), *getenv(), *getlogin(), *ontty();
 
 	asme = asthem = fastlogin = 0;
@@ -198,10 +198,10 @@ main(argc, argv)
 	/* if we're forking a csh, we want to slightly muck the args */
 	if (iscsh == UNSET) {
 		if (p = rindex(shell, '/'))
-			++p;
+			avshell = p+1;
 		else
-			p = shell;
-		iscsh = strcmp(p, "csh") ? NO : YES;
+			avshell = shell;
+		iscsh = strcmp(avshell, "csh") ? NO : YES;
 	}
 
 	/* set permissions */
@@ -221,9 +221,9 @@ main(argc, argv)
 	if (!asme) {
 		if (asthem) {
 			p = getenv("TERM");
-			cleanenv[0] = _PATH_DEFPATH;
-			cleanenv[1] = NULL;
+			cleanenv[0] = NULL;
 			environ = cleanenv;
+			(void)setenv("PATH", _PATH_DEFPATH, 1);
 			(void)setenv("TERM", p, 1);
 			if (chdir(pwd->pw_dir) < 0) {
 				fprintf(stderr, "su: no directory\n");
@@ -243,8 +243,18 @@ main(argc, argv)
 			*np-- = "-m";
 	}
 
-	/* csh strips the first character... */
-	*np = asthem ? "-su" : iscsh == YES ? "_su" : "su";
+	if (asthem) {
+		avshellbuf[0] = '-';
+		strcpy(avshellbuf+1, avshell);
+		avshell = avshellbuf;
+	} else if (iscsh == YES) {
+		/* csh strips the first character... */
+		avshellbuf[0] = '_';
+		strcpy(avshellbuf+1, avshell);
+		avshell = avshellbuf;
+	}
+			
+	*np = avshell;
 
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
