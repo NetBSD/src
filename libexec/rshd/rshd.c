@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.21 2000/11/09 01:04:14 itojun Exp $	*/
+/*	$NetBSD: rshd.c,v 1.22 2001/01/11 01:32:34 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.21 2000/11/09 01:04:14 itojun Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.22 2001/01/11 01:32:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ main(argc, argv)
 	int ch, on = 1, fromlen;
 	struct sockaddr_storage from;
 
-	openlog("rshd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
+	openlog("rshd", LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
@@ -326,8 +326,8 @@ doit(fromp)
 
 		if ((cc = read(STDIN_FILENO, &c, 1)) != 1) {
 			if (cc < 0)
-				syslog(LOG_NOTICE, "read: %m");
-			shutdown(0, 1+1);
+				syslog(LOG_ERR, "read: %m");
+			shutdown(0, SHUT_RDWR);
 			exit(1);
 		}
 		if (c == 0)
@@ -349,7 +349,7 @@ doit(fromp)
 		}
 		*portp = htons(port);
 		if (connect(s, (struct sockaddr *)fromp, fromp->sa_len) < 0) {
-			syslog(LOG_INFO, "connect second port %d: %m", port);
+			syslog(LOG_ERR, "connect second port %d: %m", port);
 			exit(1);
 		}
 	}
@@ -382,7 +382,7 @@ doit(fromp)
 			hints.ai_flags = AI_CANONNAME;
 			gaierror = getaddrinfo(remotehost, pbuf, &hints, &res0);
 			if (gaierror) {
-				syslog(LOG_INFO,
+				syslog(LOG_NOTICE,
 				    "Couldn't look up address for %s: %s",
 				    remotehost, gai_strerror(gaierror));
 				errorstr =
@@ -543,7 +543,7 @@ fail:
 					errno = 0;
 					cc = read(pv[0], buf, sizeof(buf));
 					if (cc <= 0) {
-						shutdown(s, 1+1);
+						shutdown(s, SHUT_RDWR);
 						FD_CLR(pv[0], &readfrom);
 					} else {
 						(void) write(s, buf, cc);
@@ -573,7 +573,7 @@ fail:
 	
 	if((sh = login_getcapstr(lc, "shell", NULL, NULL))) {
 		if(!(sh = strdup(sh))) {
-                	syslog(LOG_NOTICE, "Cannot alloc mem");
+                	syslog(LOG_ERR, "Cannot alloc mem");
                 	exit(1);
 		}
 		pwd->pw_shell = sh;
