@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.12 1996/05/23 23:35:27 mycroft Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.13 1996/10/10 22:58:29 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -63,10 +63,12 @@
 #include <netccitt/pk_var.h>
 #include <netccitt/pk_extern.h>
 
+static void pk_setsockaddr __P((struct pklcd *, struct mbuf *));
+static void pk_setpeeraddr __P((struct pklcd *, struct mbuf *));
 static void old_to_new __P((struct mbuf *));
 static void new_to_old __P((struct mbuf *));
 
-void
+static void
 pk_setsockaddr(lcp, nam)
 	struct pklcd *lcp;
 	struct mbuf *nam;
@@ -78,7 +80,7 @@ pk_setsockaddr(lcp, nam)
 		new_to_old(nam);
 }
 
-void
+static void
 pk_setpeeraddr(lcp, nam)
 	struct pklcd *lcp;
 	struct mbuf *nam;
