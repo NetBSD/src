@@ -1,9 +1,6 @@
 /*
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Scooter Morris at Genentech Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,51 +29,47 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)lockf.h	8.2 (Berkeley) 10/26/94
  */
+
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
+#endif /* LIBC_SCCS and not lint */
+
+#include <sys/param.h>
+#include <dirent.h>
 
 /*
- * The lockf structure is a kernel structure which contains the information
- * associated with a byte range lock.  The lockf structures are linked into
- * the inode structure. Locks are sorted by the starting byte of the lock for
- * efficiency.
+ * get next entry in a directory.
  */
-TAILQ_HEAD(locklist, lockf);
+struct dirent *
+readdir(dirp)
+	register DIR *dirp;
+{
+	register struct dirent *dp;
 
-struct lockf {
-	short	lf_flags;	    /* Semantics: F_POSIX, F_FLOCK, F_WAIT */
-	short	lf_type;	    /* Lock type: F_RDLCK, F_WRLCK */
-	off_t	lf_start;	    /* Byte # of the start of the lock */
-	off_t	lf_end;		    /* Byte # of the end of the lock (-1=EOF) */
-	caddr_t	lf_id;		    /* Id of the resource holding the lock */
-	struct	inode *lf_inode;    /* Back pointer to the inode */
-	struct	lockf *lf_next;	    /* Pointer to the next lock on this inode */
-	struct	locklist lf_blkhd;  /* List of requests blocked on this lock */
-	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
-};
-
-/* Maximum length of sleep chains to traverse to try and detect deadlock. */
-#define MAXDEPTH 50
-
-__BEGIN_DECLS
-void	 lf_addblock __P((struct lockf *, struct lockf *));
-int	 lf_clearlock __P((struct lockf *));
-int	 lf_findoverlap __P((struct lockf *,
-	    struct lockf *, int, struct lockf ***, struct lockf **));
-struct lockf *
-	 lf_getblock __P((struct lockf *));
-int	 lf_getlock __P((struct lockf *, struct flock *));
-int	 lf_setlock __P((struct lockf *));
-void	 lf_split __P((struct lockf *, struct lockf *));
-void	 lf_wakelock __P((struct lockf *));
-__END_DECLS
-
-#ifdef LOCKF_DEBUG
-extern int lockf_debug;
-
-__BEGIN_DECLS
-void	lf_print __P((char *, struct lockf *));
-void	lf_printlist __P((char *, struct lockf *));
-__END_DECLS
-#endif
+	for (;;) {
+		if (dirp->dd_loc >= dirp->dd_size) {
+			if (dirp->dd_flags & __DTF_READALL)
+				return (NULL);
+			dirp->dd_loc = 0;
+		}
+		if (dirp->dd_loc == 0 && !(dirp->dd_flags & __DTF_READALL)) {
+			dirp->dd_size = getdirentries(dirp->dd_fd,
+			    dirp->dd_buf, dirp->dd_len, &dirp->dd_seek);
+			if (dirp->dd_size <= 0)
+				return (NULL);
+		}
+		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
+		if ((int)dp & 03)	/* bogus pointer check */
+			return (NULL);
+		if (dp->d_reclen <= 0 ||
+		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
+			return (NULL);
+		dirp->dd_loc += dp->d_reclen;
+		if (dp->d_ino == 0)
+			continue;
+		if (dp->d_type == DT_WHT && (dirp->dd_flags & DTF_HIDEW))
+			continue;
+		return (dp);
+	}
+}
