@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.25 1999/08/08 04:40:18 jdolecek Exp $
+.\"	$NetBSD: mount.8,v 1.26 2000/06/15 22:36:07 fvdl Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -169,6 +169,18 @@ Do not allow set-user-identifier or set-group-identifier bits to take effect.
 The same as
 .Fl r ;
 mount the file system read-only (even the super-user may not write it).
+.It Cm softdep
+(FFS only) Mount the filesystem using soft-dependencies. This means that
+metadata will not be written immediately, but is written in an ordered fashion
+to keep the on-disk state of the filesystem consistent. This results
+in significant speedups for file create/delete operations. This option
+will be ignored when using the
+.Fl u
+flag and a filesystem is already mounted read/write. This option has gone
+through moderate to heavy testing, but should still be used with care.
+It requires the
+.Dv SOFTDEP
+option to be enabled in the running kernel.
 .It Cm symperm
 Recognize permission of symbolic link when reading or traversing link.
 .It Cm sync
