@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.10 2001/01/18 21:54:28 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.11 2001/03/04 04:15:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: disassem.c,v 1.10 2001/01/18 21:54:28 bjh21 Exp $");
+__RCSID("$NetBSD: disassem.c,v 1.11 2001/03/04 04:15:58 matt Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -264,8 +264,8 @@ static void disasm_insn_ldcstc(const disasm_interface_t *di, u_int insn,
 static u_int disassemble_readword(u_int address);
 static void disassemble_printaddr(u_int address);
 
-vm_offset_t
-disasm(const disasm_interface_t *di, vm_offset_t loc, int altfmt)
+vaddr_t
+disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 {
 	struct arm32_insn *i_ptr = (struct arm32_insn *)&arm32_i;
 
