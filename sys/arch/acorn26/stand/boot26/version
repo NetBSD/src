@@ -1,4 +1,4 @@
-	$NetBSD: version,v 1.2 2002/05/27 20:18:56 bjh21 Exp $
+	$NetBSD: version,v 1.3 2002/06/13 22:01:45 bjh21 Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
@@ -7,3 +7,4 @@
 1.2:	*boot26 available after loading module.
 1.3:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.4:	get_page() abstracted.
+1.5:	bump HIMEM to 0x28000 so .gz kernels work on 16 MB machines
