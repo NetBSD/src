@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.8 2003/06/29 22:29:18 fvdl Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.9 2003/08/08 18:57:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8 2003/06/29 22:29:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.9 2003/08/08 18:57:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ exec_hpux_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (exec_aout_setup_stack(p, epp));
+	return (*epp->ep_esch->es_setup_stack)(p, epp));
 }
 
 static int
@@ -229,7 +229,7 @@ exec_hpux_prep_zmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return (exec_aout_setup_stack(p, epp));
+	return (*epp->ep_esch->es_setup_stack)(p, epp));
 }
 
 /*
@@ -273,5 +273,5 @@ exec_hpux_prep_omagic(p, epp)
 	dsize = epp->ep_dsize + execp->ha_text - roundup(execp->ha_text,
 							 PAGE_SIZE);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return (exec_aout_setup_stack(p, epp));
+	return (*epp->ep_esch->es_setup_stack)(p, epp));
 }

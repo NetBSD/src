@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.8 2003/06/29 22:29:54 fvdl Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.9 2003/08/08 18:57:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8 2003/06/29 22:29:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.9 2003/08/08 18:57:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,5 +190,5 @@ exec_vax1k_prep_anymagic(p, epp, text_foffset, textpad)
 	epp->ep_dsize += execp->a_bss;
 
 	/* finally, setup the stack ... */
-        return exec_aout_setup_stack(p, epp);
+        return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
