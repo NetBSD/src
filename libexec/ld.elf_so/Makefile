@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/24 22:18:33 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1997/04/10 17:39:20 cgd Exp $
 
 PROG=	ld.elf_so
 
 # Adds SRCS, CFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
+.if exists(${.CURDIR}/${MACHINE_ARCH}/Makefile.inc)
 .include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
+.endif
 
 SRCS+=	rtld.c reloc.c symbol.c malloc.c xmalloc.c xprintf.c debug.c \
 	map_object.c load.c search.c headers.c paths.c
