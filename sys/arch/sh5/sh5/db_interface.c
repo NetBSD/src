@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 2002/09/01 09:01:33 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.3 2002/09/01 11:40:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -73,12 +73,10 @@ const struct db_variable db_regs[] = {
 	{ "r7",  (long *)&ddb_regs.tf_caller.r7,  db_var_reg },
 	{ "r8",  (long *)&ddb_regs.tf_caller.r8,  db_var_reg },
 	{ "r9",  (long *)&ddb_regs.tf_caller.r9,  db_var_reg },
-
-	{ "r10", (long *)&ddb_regs.tf_callee.r10, db_var_reg },
-	{ "r11", (long *)&ddb_regs.tf_callee.r11, db_var_reg },
-	{ "r12", (long *)&ddb_regs.tf_callee.r12, db_var_reg },
-	{ "r13", (long *)&ddb_regs.tf_callee.r13, db_var_reg },
-
+	{ "r10", (long *)&ddb_regs.tf_caller.r10, db_var_reg },
+	{ "r11", (long *)&ddb_regs.tf_caller.r11, db_var_reg },
+	{ "r12", (long *)&ddb_regs.tf_caller.r12, db_var_reg },
+	{ "r13", (long *)&ddb_regs.tf_caller.r13, db_var_reg },
 	{ "r14", (long *)&ddb_regs.tf_caller.r14, db_var_reg },
 	{ "r15", (long *)&ddb_regs.tf_caller.r15, db_var_reg },
 	{ "r16", (long *)&ddb_regs.tf_caller.r16, db_var_reg },

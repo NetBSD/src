@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 2002/08/26 10:32:55 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 2002/09/01 11:40:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -218,8 +218,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 */
 	pcb->pcb_ctx.sf_pc = (register_t)(intptr_t)proc_trampoline;
 	pcb->pcb_ctx.sf_sp = (register_t)(intptr_t)tf;
-	pcb->pcb_ctx.sf_regs.r10 = (register_t)(intptr_t)func;
-	pcb->pcb_ctx.sf_regs.r11 = (register_t)(intptr_t)arg;
+	pcb->pcb_ctx.sf_r10 = (register_t)(intptr_t)func;
+	pcb->pcb_ctx.sf_r11 = (register_t)(intptr_t)arg;
 }
 
 /*
