@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.6 1996/06/26 21:35:32 pk Exp $
+#	$NetBSD: install.md,v 1.7 1996/08/22 03:24:24 mrg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -226,4 +226,61 @@ To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
+}
+
+md_install_sets() {
+MDSETS='xbin xman xinc xcon'
+}
+
+md_install_sets() {
+	cat << __want_x_1;
+
+Version ${VERSION} of NetBSD/sparc includes an X11R6.1 binary set.  Sources
+are, of course, also available.  You must now decide whether or not
+to install X11R6.1 into the /usr/X11R6 directory.  The installation
+takes:
+	23M for binary and library set (necessary)
+	3M for manual pages (recommended)
+	2M for X11 include files (recommended)
+
+__want_x_1
+echo -n "Install X11R6.1? [y] "
+getresp "y"
+case "$resp" in
+	y*|Y*)
+		MDSETS="X11R6.bin"
+		tar -C/mnt -zxf X11R6.bin.tar.gz
+		cat << __want_x_2
+
+Mandatory X11R6.1 binaries and libraries installed.
+
+__wait_x_2
+		echo -n "Do you want to install the X11R6.1 manual pages? [y] "
+		getresp "y"
+		case "$resp" in
+			y*|Y*)
+				nresp=y
+				MDSETS="${MDSETS} X11R6.man"
+				;;
+			*)
+				nresp=n
+				;;
+		esac
+		echo -n "Do you want to install the X11R6.1 include files? [$nresp] "
+		getresp $nresp
+		case "$resp" in
+			y*|Y*)
+				MDSETS="${MDSETS} X11R6.include.tar.gz"
+				;;
+			*)
+				;;
+		esac
+		;;
+	*)
+		MDSETS=
+		echo "Not installing X11R6.1."
+		echo ""
+		;;
+esac
+
 }
