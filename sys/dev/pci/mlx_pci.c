@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.7 2002/08/26 15:27:13 ad Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.8 2002/08/31 05:18:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.7 2002/08/26 15:27:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.8 2002/08/31 05:18:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,9 +326,9 @@ mlx_v3_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inb(mlx, MLX_V3REG_IDB) & MLX_V3_IDB_FULL) == 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V3REG_MAILBOX, mc->mc_mbox, MLX_V3_MAILBOX_LEN);
+		    MLX_V3REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V3REG_MAILBOX, MLX_V3_MAILBOX_LEN,
+		    MLX_V3REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command. */
@@ -474,9 +474,9 @@ mlx_v4_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inl(mlx, MLX_V4REG_IDB) & MLX_V4_IDB_FULL) == 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V4REG_MAILBOX, mc->mc_mbox, MLX_V4_MAILBOX_LEN);
+		    MLX_V4REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V4REG_MAILBOX, MLX_V4_MAILBOX_LEN,
+		    MLX_V4REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command. */
@@ -585,9 +585,9 @@ mlx_v5_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	if ((mlx_inb(mlx, MLX_V5REG_IDB) & MLX_V5_IDB_EMPTY) != 0) {
 		/* Copy mailbox data to window. */
 		bus_space_write_region_1(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V5REG_MAILBOX, mc->mc_mbox, MLX_V5_MAILBOX_LEN);
+		    MLX_V5REG_MAILBOX, mc->mc_mbox, 13);
 		bus_space_barrier(mlx->mlx_iot, mlx->mlx_ioh,
-		    MLX_V5REG_MAILBOX, MLX_V5_MAILBOX_LEN,
+		    MLX_V5REG_MAILBOX, 13,
 		    BUS_SPACE_BARRIER_WRITE);
 
 		/* Post command */
