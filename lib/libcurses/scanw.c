@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.17 2002/06/26 18:14:06 christos Exp $	*/
+/*	$NetBSD: scanw.c,v 1.18 2003/08/07 16:44:23 agc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.17 2002/06/26 18:14:06 christos Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.18 2003/08/07 16:44:23 agc Exp $");
 #endif
 #endif				/* not lint */
 

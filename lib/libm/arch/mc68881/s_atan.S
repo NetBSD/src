@@ -1,4 +1,4 @@
-/*	$NetBSD: s_atan.S,v 1.5 1999/11/10 16:45:40 thorpej Exp $	*/
+/*	$NetBSD: s_atan.S,v 1.6 2003/08/07 16:44:43 agc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -42,7 +38,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)atan.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_atan.S,v 1.5 1999/11/10 16:45:40 thorpej Exp $")
+RCSID("$NetBSD: s_atan.S,v 1.6 2003/08/07 16:44:43 agc Exp $")
 
 ENTRY(atan)
 	fatand	%sp@(4),%fp0
