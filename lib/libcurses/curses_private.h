@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.27 2003/01/09 12:48:05 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.28 2003/01/27 21:09:20 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -308,7 +308,6 @@ extern int		 __endwin;
 extern int		 __pfast;
 extern int		 __rawmode;
 extern int		 __noqch;
-extern attr_t		 __nca;
 extern attr_t		 __mask_op, __mask_me, __mask_ue, __mask_se;
 extern struct __winlist	*__winlistp;
 extern WINDOW		*__virtscr;
