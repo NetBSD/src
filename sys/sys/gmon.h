@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.h,v 1.5 1996/04/09 20:55:30 cgd Exp $	*/
+/*	$NetBSD: gmon.h,v 1.6 1996/11/25 20:08:44 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993
@@ -61,7 +61,9 @@ struct gmonhdr {
 /*
  * fraction of text space to allocate for histogram counters here, 1/2
  */
+#ifndef HISTFRACTION
 #define	HISTFRACTION	2
+#endif	/* HISTFRACTION */
 
 /*
  * Fraction of text space to allocate for from hash buckets.
