@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.5 2001/02/21 21:40:00 jdolecek Exp $	*/
+/*	$NetBSD: umidi.c,v 1.6 2001/04/07 22:01:34 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1273,15 +1273,21 @@ static void
 out_build_packet(int cable_number, struct umidi_packet *packet, uByte in)
 {
 	int cin;
+	uByte prev;
 
 retry:
 	switch (packet->state) {
 	case PS_END:
 	case PS_INITIAL:
+		prev = packet->buffer[1];
 		memset(packet->buffer, 0, UMIDI_PACKET_SIZE);
 		if (in<0x80) {
+			if (prev>=0x80 && prev<0xf0) {
+				/* running status */
+				out_build_packet(cable_number, packet, prev);
+				goto retry;
+			}
 			/* ??? */
-			packet->state = PS_INITIAL;
 			break;
 		}
 		if (in>=0xf0) {
