@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.109 2002/12/05 22:59:25 jonb Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.110 2002/12/11 14:28:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.109 2002/12/05 22:59:25 jonb Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.110 2002/12/11 14:28:46 fvdl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -657,7 +657,7 @@ readmbr(int f)
 		return (0);
 	}
 
-#if !defined(__i386__)
+#if !defined(__i386__) && !defined(__x86_64__)
 	/* avoid alignment error */
 	memcpy(mbr, &mbr[MBR_PARTOFF], NMBRPART * sizeof(*dp));
 	dp = (struct mbr_partition *)mbr;
