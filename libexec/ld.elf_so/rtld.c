@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.87 2002/10/05 11:59:04 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.88 2002/11/24 18:13:30 fvdl Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -233,8 +233,8 @@ _rtld(sp, relocbase)
 	/* first Elf_Word reserved to address of exit routine */
 #if defined(RTLD_DEBUG)
 	debug = 1;
-	dbg(("sp = %p, argc = %ld, argv = %p <%s>", sp, (long)sp[2],
-	     &sp[3], (char *) sp[3]));
+	dbg(("sp = %p, argc = %ld, argv = %p <%s> relocbase %p", sp,
+	    (long)sp[2], &sp[3], (char *) sp[3], (void *)relocbase));
 	dbg(("got is at %p, dynamic is at %p", _GLOBAL_OFFSET_TABLE_,
 	    &_DYNAMIC));
 	dbg(("_ctype_ is %p", _ctype_));
