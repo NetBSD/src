@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.19 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.20 2004/09/01 21:09:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,14 +123,6 @@ struct eisa_attach_args {
 	u_int8_t	ea_pid[EISA_NPIDREGS];
 	char		ea_idstring[EISA_IDSTRINGLEN];
 };
-
-#include "locators.h"
-
-/*
- * Locators for EISA devices, as specified to config.
- */
-#define	eisacf_slot		cf_loc[EISACF_SLOT]
-#define	EISA_UNKNOWN_SLOT	EISACF_SLOT_DEFAULT	/* wildcarded 'slot' */
 
 int	eisabusprint(void *, const char *);
 

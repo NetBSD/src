@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.34 2004/08/30 15:05:19 drochner Exp $	*/
+/*	$NetBSD: eisa.c,v 1.35 2004/09/01 21:09:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.34 2004/08/30 15:05:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.35 2004/09/01 21:09:09 drochner Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -53,13 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.34 2004/08/30 15:05:19 drochner Exp $");
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
+#include "locators.h"
+
 static int	eisamatch(struct device *, struct cfdata *, void *);
 static void	eisaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(eisa, sizeof(struct device),
     eisamatch, eisaattach, NULL, NULL);
 
-static int	eisasubmatch(struct device *, struct cfdata *, void *);
+static int	eisasubmatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int	eisaprint(void *, const char *);
 static void	eisa_devinfo(const char *, char *, size_t);
 
@@ -86,12 +89,12 @@ eisaprint(void *aux, const char *pnp)
 }
 
 static int
-eisasubmatch(struct device *parent, struct cfdata *cf, void *aux)
+eisasubmatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t * ldesc, void *aux)
 {
-	struct eisa_attach_args *ea = aux;
 
-	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&
-	    cf->eisacf_slot != ea->ea_slot)
+	if (cf->cf_loc[EISACF_SLOT] != EISACF_SLOT_DEFAULT &&
+	    cf->cf_loc[EISACF_SLOT] != ldesc->locs[EISACF_SLOT])
 		return (0);
 	return (config_match(parent, cf, aux));
 }
@@ -125,6 +128,8 @@ eisaattach(struct device *parent, struct device *self, void *aux)
 		u_int slotaddr;
 		bus_space_handle_t slotioh;
 		int i;
+		int help[2];
+		locdesc_t *ldesc = (void *)help; /* XXX */
 
 		ea.ea_iot = iot;
 		ea.ea_memt = memt;
@@ -187,8 +192,12 @@ eisaattach(struct device *parent, struct device *self, void *aux)
 		/* We no longer need the I/O handle; free it. */
 		bus_space_unmap(iot, slotioh, EISA_SLOT_SIZE);
 
+		ldesc->len = 1;
+		ldesc->locs[EISACF_SLOT] = slot;
+
 		/* Attach matching device. */
-		config_found_sm(self, &ea, eisaprint, eisasubmatch);
+		config_found_sm_loc(self, "eisa", ldesc, &ea,
+				    eisaprint, eisasubmatch);
 	}
 }
 
