@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.11 2001/09/21 09:11:47 gmcgarry Exp $
+.\"	$NetBSD: intro.4,v 1.12 2001/10/29 18:59:57 gmcgarry Exp $
 .\"
 .Dd September 12, 2001
 .Dt INTRO 4 pmax
@@ -99,26 +99,26 @@ also known as "pmax". The 2100 and 3100 differ only in CPU clock speed.
 also known as "MIPSMATE".
 .It DECstation 5000/200
 also known as "3MAX".
-The 5000/200 has a 25 MHz R3000 and is the first-generation TurboChannel
+The 5000/200 has a 25 MHz R3000 and is the first-generation TURBOchannel
 platform.
 .It DECstation 5000/1xx
 also known as "3MIN" or "kmin".
 The 5000/1xx comes in 20 MHz, 25 MHz, and 33 MHz versions and is
 numbered appropriately.
 Two 12.5 MHz
-TurboChannel slots are provided.
+TURBOchannel slots are provided.
 .It DECstation 5000/2x
 also known as "Personal DECstation" or "MAXINE".
 The 5000/xx comes in 20 MHz and 25 MHz variants.
-A baseboard 1024x786 framebuffer, and two 12.5 MHz TurboChannel slots
+A baseboard 1024x786 framebuffer, and two 12.5 MHz TURBOchannel slots
 are provided.
 .It DECstation 5000/240 and DECsystem 5900
 also known as "3MAXPLUS".
-These systems have a 40 MHz R3400 CPU and three 25 MHz TurboChannel slots.
+These systems have a 40 MHz R3400 CPU and three 25 MHz TURBOchannel slots.
 The 5900 is an expanded-cabinet version of the 5000/240.
 .El
 .Pp
-TurboChannel systems (except the 5000/200) can be upgraded to an
+TURBOchannel systems (except the 5000/200) can be upgraded to an
 R4000 or R4400 CPU by upgrading the CPU daughterboard.
 .Pp
 The Qbus-based DECsystem 5400 and 5500 are not supported.
@@ -142,12 +142,12 @@ on the baseboard of DECstation 2100/31000, 5100, and 5000/200 systems.
 serial driver for Zilog SCC asynchronous/synchronous devices on the
 baseboard of DECstation 5000-series systems (excluding 5000/200).
 .It le
-Ethernet driver for baseboard or TurboChannel option cards.
+Ethernet driver for baseboard or TURBOchannel option cards.
 .It ioasic
-Adaptor for the baseboard IO ASIC on second-generation TurboChannel
+Adaptor for the baseboard IO ASIC on second-generation TURBOchannel
 machines.
 An ioasic must be configured on a 5000/1xx, 5000/xx, and 5000/240
-if support for baseboard devices or the TurboChannel bus is desired.
+if support for baseboard devices or the TURBOchannel bus is desired.
 .It fb
 Pseudo-device driver supporting glass-tty console emulation on DEC
 framebuffers, DEC mice, and LK-201 family keyboards.
@@ -156,17 +156,17 @@ DEC custom SCSI adaptor on DECstation 2100, 3100, 5100, and VAXstation 3100.
 .It pm
 DECstation 2100/3100 baseboard framebuffer
 .It tc
-Adaptor for the TurboChannel I/O expansion bus.
-This must be included if any TurboChannel option cards are supported,
+Adaptor for the TURBOchannel I/O expansion bus.
+This must be included if any TURBOchannel option cards are supported,
 or for the baseboard Ethernet and SCSI devices on a 5000/200.
 .It cfb
-PMAG-B TurboChannel 1024x876 unaccelerated 2-D framebuffer.
+PMAG-B TURBOchannel 1024x876 unaccelerated 2-D framebuffer.
 .It sfb
-PMAGB-BA TurboChannel 1280x1024 unaccelerated framebuffer.
+PMAGB-BA TURBOchannel 1280x1024 unaccelerated framebuffer.
 .It mfb
-PMAG-AA TurboChannel 1280x1024 mono/greyscale unaccelerated framebuffer.
+PMAG-AA TURBOchannel 1280x1024 mono/greyscale unaccelerated framebuffer.
 .It px
-PMAG-C TurboChannel 2-D accelerated graphics board
+PMAG-C TURBOchannel 2-D accelerated graphics board
 .It fb
 pmax frame buffer pseudo-device
 .El
