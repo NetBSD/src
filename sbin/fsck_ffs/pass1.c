@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.35 2005/01/19 17:33:58 xtraeme Exp $	*/
+/*	$NetBSD: pass1.c,v 1.36 2005/01/20 15:29:40 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.35 2005/01/19 17:33:58 xtraeme Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.36 2005/01/20 15:29:40 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: pass1.c,v 1.35 2005/01/19 17:33:58 xtraeme Exp $");
 
 static daddr_t badblk;
 static daddr_t dupblk;
-static void checkinode (ino_t, struct inodesc *);
+static void checkinode(ino_t, struct inodesc *);
 static ino_t lastino;
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.20 2005/01/19 17:33:58 xtraeme Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.21 2005/01/20 15:29:40 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1b.c,v 1.20 2005/01/19 17:33:58 xtraeme Exp $");
+__RCSID("$NetBSD: pass1b.c,v 1.21 2005/01/20 15:29:40 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: pass1b.c,v 1.20 2005/01/19 17:33:58 xtraeme Exp $");
 #include "fsutil.h"
 
 static  struct dups *duphead;
-static int pass1bcheck (struct inodesc *);
+static int pass1bcheck(struct inodesc *);
 
 void
 pass1b(void)

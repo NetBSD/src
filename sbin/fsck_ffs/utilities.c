@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.48 2005/01/19 17:33:59 xtraeme Exp $	*/
+/*	$NetBSD: utilities.c,v 1.49 2005/01/20 15:29:40 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.48 2005/01/19 17:33:59 xtraeme Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.49 2005/01/20 15:29:40 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: utilities.c,v 1.48 2005/01/19 17:33:59 xtraeme Exp $");
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror (char *, daddr_t);
+static void rwerror(char *, daddr_t);
 
 extern int returntosingle;
 
