@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x86_64,v 1.8 2002/05/26 00:23:49 fvdl Exp $
+#	$NetBSD: Makefile.x86_64,v 1.9 2002/06/03 18:18:43 fvdl Exp $
 
 # Makefile for NetBSD
 #
@@ -31,6 +31,7 @@ GENASSYM=	${X86_64}/x86_64/genassym.cf
 ##
 ## (2) compile settings
 ##
+COPTS=		-O
 CPPFLAGS+=	-Dx86_64
 CFLAGS+=	-mcmodel=kernel
 CFLAGS+=	-mno-red-zone
