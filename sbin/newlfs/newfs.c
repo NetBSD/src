@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.8 1997/09/15 06:55:44 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.9 1997/09/15 11:40:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.3 (Berkeley) 4/22/94";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.8 1997/09/15 06:55:44 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.9 1997/09/15 11:40:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,9 +130,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int ch;
-	register struct partition *pp;
-	register struct disklabel *lp;
+	int ch;
+	struct partition *pp;
+	struct disklabel *lp;
 	struct stat st;
 	int debug, lfs, fsi, fso, segsize, maxpartitions;
 	char *cp, *opstring;
@@ -386,7 +386,7 @@ static void
 rewritelabel(s, fd, lp)
 	char *s;
 	int fd;
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
 #ifdef COMPAT
 	if (unlabeled)
@@ -401,7 +401,7 @@ rewritelabel(s, fd, lp)
 	}
 #if vax
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
-		register i;
+		int i;
 		int cfd;
 		daddr_t alt;
 		char specname[64];
