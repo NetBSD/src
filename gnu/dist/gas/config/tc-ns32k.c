@@ -23,6 +23,7 @@
 #include <ctype.h>
 
 #include "as.h"
+#include "subsegs.h"
 #include "opcode/ns32k.h"
 
 #include "obstack.h"
@@ -1407,7 +1408,7 @@ convert_iif ()
 			size = 0;
 
 			temp = -(rem_size - 4);
-			frag_grow (temp);
+			obstack_blank_fast(&frchain_now->frch_obstack, temp);
 
 			{
 			  fragS *old_frag = frag_now;
@@ -1475,7 +1476,7 @@ convert_iif ()
 		    /* rewind the bytes not used */
 		    temp = -(4 - size);
 		    md_number_to_disp (memP, exprP.X_add_number, size);
-		    frag_grow (temp);
+		    obstack_blank_fast(&frchain_now->frch_obstack, temp);
 		    memP += size;
 		    rem_size -= 4;	/* we allocated this amount */
 		  }
