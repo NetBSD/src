@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.12 1997/02/03 03:12:09 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.13 1997/07/08 19:41:30 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -65,6 +65,8 @@ extern u_int fpe_nexthandler;
 extern u_int fpe_arm_start[];
 extern arm_fpe_mod_hdr_t fpe_arm_header;
 extern u_int undefined_handler_address;
+u_int arm_fpe_old_handler_address;
+u_int arm_fpe_core_workspace;
 
 /*
  * Error messages for the various exceptions, numbered 0-5
@@ -133,10 +135,8 @@ arm_fpe_boot(cpu)
 	if (!workspace)
 		return(ENOMEM);
 
-	*fpe_arm_header.main_ws_ptr_addr = workspace;
-
-	*fpe_arm_header.local_handler_ptr_addr = (u_int)&undefined_handler_address;
-	*fpe_arm_header.old_handler_ptr_addr = undefined_handler_address;
+	arm_fpe_core_workspace = workspace;
+	arm_fpe_old_handler_address = undefined_handler_address;
 
 	/* Initialise out gloable workspace */
 
@@ -151,26 +151,6 @@ arm_fpe_boot(cpu)
 #ifdef DEBUG
 	printf("fpe id=%08x\n", id);
 #endif
-
-	/* Set up an exception handler */
-
-	*fpe_arm_header.exc_handler_ptr_addr = (u_int)arm_fpe_exception_glue;
-	/* Set up post instruction handler */
-#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110)
-	*fpe_arm_header.fp_post_proc_addr = (((((u_int)arm_fpe_post_proc_glue -
-	    (u_int)fpe_arm_header.fp_post_proc_addr - 8)>>2) & 0x00ffffff)
-	    | 0xea000000);
-#ifdef DEBUG
-	printf("fpe_arm_header.fp_post_proc_addr = %08x (%08x)",
-	    (u_int)fpe_arm_header.fp_post_proc_addr,
-	    (u_int)*fpe_arm_header.fp_post_proc_addr);
-#endif
-#else
-#error ARMFPE currently only supports ARM6, ARM7 and SA110 cores
-#endif
-
-	/* We have modified code so sync the instruction cache */
-	sync_icache();
 
 	/* Initialise proc0's FPE context and select it */
 
