@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.10 2003/10/24 00:58:01 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2003/10/24 19:50:13 kleink Exp $
 
 SRCS+=	__setjmp14.S __sigsetjmp14.S _setjmp.S \
 	alloca.S \
 	byte_swap_2.S byte_swap_4.S byte_swap_8.S \
 	fabs.S flt_rounds.S \
 
-SRCS+=	frexp_ieee754.c infinity_ieee754.c isinf_ieee754.c
+SRCS+=	frexp_ieee754.c infinity_ieee754.c isinf_ieee754.c \
 	isinfl_dbl_ieee754.c isnan_ieee754.c isnanl_dbl_ieee754.c \
 	ldexp_ieee754.c modf_ieee754.c nanf_ieee754.c
 
