@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.h,v 1.1 2001/03/29 04:41:13 fredette Exp $	*/
+/*	$NetBSD: dvma.h,v 1.2 2001/04/06 13:03:14 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
  * DVMA space.  
  */
 
+#include <machine/idprom.h>
+
 /*
  * Note that while the DVMA harware makes the last 1MB visible
  * for secondary masters, the PROM "owns" the last page of it.
@@ -54,11 +56,11 @@
  * Also note that OBIO devices can actually see all of
  * of kernel virtual space.
  */
-/* XXX fredette - the MAP_SIZE value is for the 2/120; the
-   2/50 can have a MAP_SIZE of 0x000F8000: */
-#define DVMA_MAP_BASE	0x00F00000
-#define DVMA_MAP_SIZE	0x00040000
-#define DVMA_MAP_AVAIL	(DVMA_MAP_SIZE-NBPG)
+#define DVMA_MAP_BASE		0x00F00000
+#define DVMA_MAP_SIZE_120	0x00040000
+#define DVMA_MAP_SIZE_50	0x000F8000
+#define DVMA_MAP_SIZE		(cpu_machine_id == SUN2_MACH_120 ? DVMA_MAP_SIZE_120 : DVMA_MAP_SIZE_50)
+#define DVMA_MAP_AVAIL		(DVMA_MAP_SIZE-NBPG)
 
 /*
  * To convert an address in DVMA space to a slave address,
@@ -73,17 +75,4 @@
 
 #define DVMA_VME_SLAVE_BASE 	0x00F00000
 #define DVMA_VME_SLAVE_MASK 	0x000Fffff	/*  1MB */
-
-void dvma_init __P((void));
-
-/* Allocate/free actual pages of DVMA space. */
-void * dvma_malloc __P((size_t bytes));
-void dvma_free(void *addr, size_t bytes);
-
-/* Remap/unmap kernel memory in DVMA space. */
-void * dvma_mapin __P((void *kva, int len, int canwait));
-void dvma_mapout __P((void *dvma_addr, int len));
-
-/* Convert a kernel DVMA pointer to a slave address. */
-u_long dvma_kvtopa __P((void *kva, int bus));
 
