@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2002/08/19 09:41:34 lukem Exp $
+# $NetBSD: Makefile,v 1.13 2005/01/10 03:11:17 lukem Exp $
 
 NOLINT=		# defined
 
@@ -65,6 +65,10 @@ CPPFLAGS+= -I. \
 	-I${NETBSDSRCDIR}/include/heimdal \
 	-I${DIST}/heimdal/lib/roken \
 	-DHAVE_CONFIG_H
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DHAVE_IPV6
+.endif
 
 HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/include/heimdal -DHAVE_CONFIG_H
 
