@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2000/05/29 09:43:33 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61 2000/05/30 01:30:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2000/05/29 09:43:33 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2000/05/30 01:30:01 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
 	if ((p1->p_md.md_flags & MDP_FPUSED) && p1 == fpcurproc)
 		savefpregs(p1);
-#endif
 
 	/*
 	 * Copy pcb from proc p1 to p2.
@@ -217,16 +215,10 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
 	chdr->c_cpusize = sizeof(struct cpustate);
 
+	if ((p->p_md.md_flags & MDP_FPUSED && p == fpcurproc)
+		savefpregs(p);
 	cpustate.frame = *(struct frame *)p->p_md.md_regs;
-	if (p->p_md.md_flags & MDP_FPUSED) {
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-		if (p == fpcurproc)
-			savefpregs(p);
-#endif
-		cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
-	}
-	else
-		memset(&cpustate.fpregs, 0, sizeof(struct fpreg));
+	cpustate.fpregs = p->p_addr->u_pcb.pcb_fpregs;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
