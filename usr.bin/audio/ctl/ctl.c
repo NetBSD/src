@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.11 1997/10/11 13:40:26 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.12 1997/10/19 07:44:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct field {
 #define UCHAR 6
 #define ENC 7
 #define PROPS 8
+#define XINT 9
 	char flags;
 #define READONLY 1
 #define ALIAS 2
@@ -87,11 +88,10 @@ struct field {
 	{ "encodings",		encbuf,			STRING, READONLY },
 	{ "properties",		&properties,		PROPS,	READONLY },
 	{ "full_duplex",	&fullduplex,		INT,    0 },
-	{ "buffersize",		&info.buffersize,	UINT,	0 },
 	{ "blocksize",		&info.blocksize,	UINT,	0 },
 	{ "hiwat",		&info.hiwat,		UINT,	0 },
 	{ "lowat",		&info.lowat,		UINT,	0 },
-	{ "backlog",		&info.backlog,		UINT,	0 },
+	{ "monitor_gain",	&info.monitor_gain,	UINT,	0 },
 	{ "mode",		&info.mode,		P_R,	READONLY },
 	{ "play.rate",		&info.play.sample_rate,	UINT,	0 },
 	{ "play.sample_rate",	&info.play.sample_rate,	UINT,	ALIAS },
@@ -99,7 +99,9 @@ struct field {
 	{ "play.precision",	&info.play.precision,	UINT,	0 },
 	{ "play.encoding",	&info.play.encoding,	ENC,	0 },
 	{ "play.gain",		&info.play.gain,	UINT,	0 },
-	{ "play.port",		&info.play.port,	UINT,	0 },
+	{ "play.balance",	&info.play.balance,	UCHAR,	0 },
+	{ "play.port",		&info.play.port,	XINT,	0 },
+	{ "play.avail_ports",	&info.play.avail_ports,	XINT,	0 },
 	{ "play.seek",		&info.play.seek,	ULONG,	READONLY },
 	{ "play.samples",	&info.play.samples,	UINT,	READONLY },
 	{ "play.eof",		&info.play.eof,		UINT,	READONLY },
@@ -108,13 +110,16 @@ struct field {
 	{ "play.waiting",	&info.play.waiting,	UCHAR,	READONLY },
 	{ "play.open",		&info.play.open,	UCHAR,	READONLY },
 	{ "play.active",	&info.play.active,	UCHAR,	READONLY },
+	{ "play.buffer_size",	&info.play.buffer_size,	UINT,	0 },
 	{ "record.rate",	&info.record.sample_rate,UINT,	0 },
 	{ "record.sample_rate",	&info.record.sample_rate,UINT,	ALIAS },
 	{ "record.channels",	&info.record.channels,	UINT,	0 },
 	{ "record.precision",	&info.record.precision,	UINT,	0 },
 	{ "record.encoding",	&info.record.encoding,	ENC,	0 },
 	{ "record.gain",	&info.record.gain,	UINT,	0 },
-	{ "record.port",	&info.record.port,	UINT,	0 },
+	{ "record.balance",	&info.record.balance,	UCHAR,	0 },
+	{ "record.port",	&info.record.port,	XINT,	0 },
+	{ "record.avail_ports",	&info.record.avail_ports,XINT,	0 },
 	{ "record.seek",	&info.record.seek,	ULONG,	READONLY },
 	{ "record.samples",	&info.record.samples,	UINT,	READONLY },
 	{ "record.eof",		&info.record.eof,	UINT,	READONLY },
@@ -123,6 +128,7 @@ struct field {
 	{ "record.waiting",	&info.record.waiting,	UCHAR,	READONLY },
 	{ "record.open",	&info.record.open,	UCHAR,	READONLY },
 	{ "record.active",	&info.record.active,	UCHAR,	READONLY },
+	{ "record.buffer_size",	&info.record.buffer_size,UINT,	0 },
 	{ "record.errors",	&rerror,		INT,	READONLY },
 	{ 0 }
 };
@@ -131,20 +137,26 @@ struct {
 	char *ename;
 	int eno;
 } encs[] = {
+	{ AudioEmulaw,		AUDIO_ENCODING_ULAW },
 	{ "ulaw",		AUDIO_ENCODING_ULAW },
-	{ "mulaw",		AUDIO_ENCODING_ULAW },
-	{ "alaw", 		AUDIO_ENCODING_ALAW },
-	{ "slinear",		AUDIO_ENCODING_SLINEAR },
+	{ AudioEalaw, 		AUDIO_ENCODING_ALAW },
+	{ AudioEslinear,	AUDIO_ENCODING_SLINEAR },
 	{ "linear",		AUDIO_ENCODING_SLINEAR },
-	{ "ulinear",		AUDIO_ENCODING_ULINEAR },
-	{ "adpcm",		AUDIO_ENCODING_ADPCM },
+	{ AudioEulinear,	AUDIO_ENCODING_ULINEAR },
+	{ AudioEadpcm,		AUDIO_ENCODING_ADPCM },
 	{ "ADPCM",		AUDIO_ENCODING_ADPCM },
-	{ "slinear_le",		AUDIO_ENCODING_SLINEAR_LE },
+	{ AudioEslinear_le,	AUDIO_ENCODING_SLINEAR_LE },
 	{ "linear_le",		AUDIO_ENCODING_SLINEAR_LE },
-	{ "ulinear_le",		AUDIO_ENCODING_ULINEAR_LE },
-	{ "slinear_be",		AUDIO_ENCODING_SLINEAR_BE },
+	{ AudioEulinear_le,	AUDIO_ENCODING_ULINEAR_LE },
+	{ AudioEslinear_be,	AUDIO_ENCODING_SLINEAR_BE },
 	{ "linear_be",		AUDIO_ENCODING_SLINEAR_BE },
-	{ "ulinear_be",		AUDIO_ENCODING_ULINEAR_BE },
+	{ AudioEulinear_be,	AUDIO_ENCODING_ULINEAR_BE },
+	{ AudioEmpeg_l1_stream,	AUDIO_ENCODING_MPEG_L1_STREAM },
+	{ AudioEmpeg_l1_packets,AUDIO_ENCODING_MPEG_L1_PACKETS },
+	{ AudioEmpeg_l1_system,	AUDIO_ENCODING_MPEG_L1_SYSTEM },
+	{ AudioEmpeg_l2_stream,	AUDIO_ENCODING_MPEG_L2_STREAM },
+	{ AudioEmpeg_l2_packets,AUDIO_ENCODING_MPEG_L2_PACKETS },
+	{ AudioEmpeg_l2_system,	AUDIO_ENCODING_MPEG_L2_SYSTEM },
 	{ 0 }
 };
 
@@ -190,6 +202,9 @@ prfield(p, sep)
 	case UINT:
 		fprintf(out, "%u", *(u_int*)p->valp);
 		break;
+	case XINT:
+		fprintf(out, "0x%x", *(u_int*)p->valp);
+		break;
 	case UCHAR:
 		fprintf(out, "%u", *(u_char*)p->valp);
 		break;
@@ -229,7 +244,7 @@ prfield(p, sep)
 		}
 		break;
 	default:
-		errx(1, "Invalid format.");
+		errx(1, "Invalid print format.");
 	}
 }
 
@@ -239,10 +254,22 @@ rdfield(p, q)
 	char *q;
 {
 	int i;
+	u_int u;
 
 	switch(p->format) {
 	case UINT:
 		if (sscanf(q, "%u", (unsigned int *)p->valp) != 1)
+			warnx("Bad number %s", q);
+		break;
+	case UCHAR:
+		if (sscanf(q, "%u", &u) != 1)
+			warnx("Bad number %s", q);
+		else
+			*(u_char *)p->valp = u;
+		break;
+	case XINT:
+		if (sscanf(q, "0x%x", (unsigned int *)p->valp) != 1 &&
+		    sscanf(q, "%x", (unsigned int *)p->valp) != 1)
 			warnx("Bad number %s", q);
 		break;
 	case ENC:
@@ -255,7 +282,7 @@ rdfield(p, q)
 			warnx("Unknown encoding: %s", q);
 		break;
 	default:
-		errx(1, "Invalid format.");
+		errx(1, "Invalid read format.");
 	}
 	p->flags |= SET;
 }
