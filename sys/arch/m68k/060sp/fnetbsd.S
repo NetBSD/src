@@ -1,5 +1,6 @@
+/*
 #
-# $NetBSD: fnetbsd.S,v 1.4 1999/02/22 21:25:05 is Exp $
+# $NetBSD: fnetbsd.S,v 1.4.18.1 2001/04/24 22:31:38 he Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -59,7 +60,9 @@
 # _060_real_fpu_disabled()	#
 # _060_real_trap()		#
 #################################
+*/
 
+/*
 #
 # _060_fpsp_done():
 #
@@ -68,10 +71,11 @@
 # routine. The operating system can do system dependent clean-up or
 # simply execute an "rte" as with the sample code below.
 #
-	.global	_060_fpsp_done
-_060_fpsp_done:
+*/
+ASENTRY_NOPROFILE(_060_fpsp_done)
 	rte
 
+/*
 #
 # _060_real_ovfl():
 #
@@ -83,13 +87,14 @@ _060_fpsp_done:
 # The sample routine below simply clears the exception status bit and
 # does an "rte".
 #
-	.global	_060_real_ovfl
-_060_real_ovfl:
-	fsave	sp@-
-	movew	#0x6000,sp@(0x2)
-	frestore	sp@+
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_ovfl)
+	fsave	%sp@-
+	movew	#0x6000,%sp@(0x2)
+	frestore	%sp@+
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_unfl():
 #
@@ -101,13 +106,14 @@ _060_real_ovfl:
 # The sample routine below simply clears the exception status bit and
 # does an "rte".
 #
-	.global	_060_real_unfl
-_060_real_unfl:
-	fsave	sp@-
-	movew	#0x6000,sp@(0x2)
-	frestore	sp@+
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_unfl)
+	fsave	%sp@-
+	movew	#0x6000,%sp@(0x2)
+	frestore	%sp@+
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_operr():
 #
@@ -120,13 +126,14 @@ _060_real_unfl:
 # The sample routine below simply clears the exception status bit and
 # does an "rte".
 #
-	.global	_060_real_operr
-_060_real_operr:
-	fsave	sp@-
-	movew	#0x6000,sp@(0x2)
-	frestore	sp@+
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_operr)
+	fsave	%sp@-
+	movew	#0x6000,%sp@(0x2)
+	frestore	%sp@+
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_snan():
 #
@@ -139,13 +146,14 @@ _060_real_operr:
 # The sample routine below simply clears the exception status bit and
 # does an "rte".
 #
-	.global	_060_real_snan
-_060_real_snan:
-	fsave	sp@-
-	movew	#0x6000,sp@(0x2)
-	frestore	sp@+
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_snan)
+	fsave	%sp@-
+	movew	#0x6000,%sp@(0x2)
+	frestore	%sp@+
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_dz():
 #
@@ -158,13 +166,14 @@ _060_real_snan:
 # The sample routine below simply clears the exception status bit and
 # does an "rte".
 #
-	.global	_060_real_dz
-_060_real_dz:
-	fsave	sp@-
-	movew	#0x6000,sp@(0x2)
-	frestore	sp@+
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_dz)
+	fsave	%sp@-
+	movew	#0x6000,%sp@(0x2)
+	frestore	%sp@+
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_inex():
 #
@@ -177,13 +186,14 @@ _060_real_dz:
 # The sample routine below simply clears the exception status bit and
 # does an "rte".
 #
-	.global	_060_real_inex
-_060_real_inex:
-	fsave	sp@-
-	movew	#0x6000,sp@(0x2)
-	frestore	sp@+
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_inex)
+	fsave	%sp@-
+	movew	#0x6000,%sp@(0x2)
+	frestore	%sp@+
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_bsun():
 #
@@ -196,17 +206,18 @@ _060_real_inex:
 # bit in the FPSR, and does an "rte". The instruction that caused the 
 # bsun will now be re-executed but with the NaN FPSR bit cleared.
 #
-	.global	_060_real_bsun
-_060_real_bsun:
-	fsave	sp@-
+*/
+ASENTRY_NOPROFILE(_060_real_bsun)
+	fsave	%sp@-
 
-	fmovel	fpsr,sp@-
-	andib	#0xfe,sp@
-	fmovel	sp@+,fpsr
+	fmovel	%fpsr,%sp@-
+	andib	#0xfe,%sp@
+	fmovel	%sp@+,%fpsr
 
-	addl	#0xc,sp
-	jmp	_fpfault
+	addl	#0xc,%sp
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_fline():
 #
@@ -217,10 +228,11 @@ _060_real_bsun:
 # _fpsp_fline() distinguishes between the three and acts appropriately. F-Line
 # Illegals branch here.
 # 
-	.global	_060_real_fline
-_060_real_fline:
-	jmp	_fpfault
+*/
+ASENTRY_NOPROFILE(_060_real_fline)
+	jmp	_C_LABEL(fpfault)
 
+/*
 #
 # _060_real_fpu_disabled():
 #
@@ -236,18 +248,19 @@ _060_real_fline:
 # The execution of the instruction then proceeds with an enabled floating-point
 # unit.
 #
-	.global	_060_real_fpu_disabled
-_060_real_fpu_disabled:
-	movel	d0,sp@-			|# enabled the fpu
+*/
+ASENTRY_NOPROFILE(_060_real_fpu_disabled)
+	movel	%d0,%sp@-		|# enabled the fpu
 
 	.short	0x4e7a,0x0808		|* movec.l pcr,d0
-	bclr	#0x1,d0
+	bclr	#0x1,%d0
 	.short	0x4e7b,0x0808		|* movec.l d0,pcr
-	movel	sp@+,d0
+	movel	%sp@+,%d0
 
-	movel	sp@(0xc),sp@(0x2)	|# set "Current PC"
+	movel	%sp@(0xc),%sp@(0x2)	|# set "Current PC"
 	rte
 
+/*
 #
 # _060_real_trap():
 #
@@ -257,52 +270,45 @@ _060_real_fpu_disabled:
 #
 # The sample code below simply executes an "rte".
 #
-	.global	_060_real_trap
-_060_real_trap:
+*/
+ASENTRY_NOPROFILE(_060_real_trap)
 	rte
 
+/*
 #############################################################################
 
 ##################################
 # (2) EXAMPLE PACKAGE ENTRY CODE #
 ##################################
+*/
+ASENTRY_NOPROFILE(_060_fpsp_snan)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x00
 
-	.global	_060_fpsp_snan
-_060_fpsp_snan:
-	bral	_FP_CALL_TOP+0x80+0x00
+ASENTRY_NOPROFILE(_060_fpsp_operr)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x08
 
-	.global	_060_fpsp_operr
-_060_fpsp_operr:
-	bral	_FP_CALL_TOP+0x80+0x08
+ASENTRY_NOPROFILE(_060_fpsp_ovfl)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x10
 
-	.global	_060_fpsp_ovfl
-_060_fpsp_ovfl:
-	bral	_FP_CALL_TOP+0x80+0x10
+ASENTRY_NOPROFILE(_060_fpsp_unfl)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x18
 
-	.global	_060_fpsp_unfl
-_060_fpsp_unfl:
-	bral	_FP_CALL_TOP+0x80+0x18
+ASENTRY_NOPROFILE(_060_fpsp_dz)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x20
 
-	.global	_060_fpsp_dz
-_060_fpsp_dz:
-	bral	_FP_CALL_TOP+0x80+0x20
+ASENTRY_NOPROFILE(_060_fpsp_inex)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x28
 
-	.global	_060_fpsp_inex
-_060_fpsp_inex:
-	bral	_FP_CALL_TOP+0x80+0x28
+ASENTRY_NOPROFILE(_060_fpsp_fline)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x30
 
-	.global	_060_fpsp_fline
-_060_fpsp_fline:
-	bral	_FP_CALL_TOP+0x80+0x30
+ASENTRY_NOPROFILE(_060_fpsp_unsupp)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x38
 
-	.global	_060_fpsp_unsupp
-_060_fpsp_unsupp:
-	bral	_FP_CALL_TOP+0x80+0x38
+ASENTRY_NOPROFILE(_060_fpsp_effadd)
+	bral	_C_LABEL(FP_CALL_TOP)+0x80+0x40
 
-	.global	_060_fpsp_effadd
-_060_fpsp_effadd:
-	bral	_FP_CALL_TOP+0x80+0x40
-
+/*
 #############################################################################
 
 ################################
@@ -310,43 +316,44 @@ _060_fpsp_effadd:
 ################################
 
 # The size of this section MUST be 128 bytes!!!
-
-	.global	_FP_CALL_TOP
-_FP_CALL_TOP:
-	.long	_060_real_bsun-_FP_CALL_TOP
-	.long	_060_real_snan-_FP_CALL_TOP
-	.long	_060_real_operr-_FP_CALL_TOP
-	.long	_060_real_ovfl-_FP_CALL_TOP
-	.long	_060_real_unfl-_FP_CALL_TOP
-	.long	_060_real_dz-_FP_CALL_TOP
-	.long	_060_real_inex-_FP_CALL_TOP
-	.long	_060_real_fline-_FP_CALL_TOP
-	.long	_060_real_fpu_disabled-_FP_CALL_TOP
-	.long	_060_real_trap-_FP_CALL_TOP
-	.long	_060_real_trace-_FP_CALL_TOP
-	.long	_060_real_access-_FP_CALL_TOP
-	.long	_060_fpsp_done-_FP_CALL_TOP
+*/
+GLOBAL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_bsun)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_snan)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_operr)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_ovfl)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_unfl)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_dz)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_inex)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_fline)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_fpu_disabled)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_trap)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_trace)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_real_access)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_fpsp_done)-_C_LABEL(FP_CALL_TOP)
 
 	.long	0x00000000,0x00000000,0x00000000
 
-	.long	_060_imem_read-_FP_CALL_TOP
-	.long	_060_dmem_read-_FP_CALL_TOP
-	.long	_060_dmem_write-_FP_CALL_TOP
-	.long	_060_imem_read_word-_FP_CALL_TOP
-	.long	_060_imem_read_long-_FP_CALL_TOP
-	.long	_060_dmem_read_byte-_FP_CALL_TOP
-	.long	_060_dmem_read_word-_FP_CALL_TOP
-	.long	_060_dmem_read_long-_FP_CALL_TOP
-	.long	_060_dmem_write_byte-_FP_CALL_TOP
-	.long	_060_dmem_write_word-_FP_CALL_TOP
-	.long	_060_dmem_write_long-_FP_CALL_TOP
+	.long	_ASM_LABEL(_060_imem_read)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_imem_read_word)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_imem_read_long)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read_byte)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read_word)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_read_long)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write_byte)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write_word)-_C_LABEL(FP_CALL_TOP)
+	.long	_ASM_LABEL(_060_dmem_write_long)-_C_LABEL(FP_CALL_TOP)
 
 	.long	0x00000000
 
 	.long	0x00000000,0x00000000,0x00000000,0x00000000
 
+/*
 #############################################################################
 
 # 060 FPSP KERNEL PACKAGE NEEDS TO GO HERE!!!
+*/
 
-	.include	"fpsp.S"
+#include "fpsp.S"
