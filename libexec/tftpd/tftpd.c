@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.15 1998/09/20 04:44:55 explorer Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.16 1999/02/07 21:38:44 aidan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.15 1998/09/20 04:44:55 explorer Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.16 1999/02/07 21:38:44 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -456,8 +456,6 @@ FILE *file;
  * If we were invoked with arguments
  * from inetd then the file must also be
  * in one of the given directory prefixes.
- * Note also, full path name must be
- * given as we have no login directory.
  */
 int
 validate_access(filep, mode)
@@ -504,45 +502,59 @@ validate_access(filep, mode)
 				return (EACCESS);
 		}
 	} else {
-		int err;
-
 		/*
 		 * Relative file name: search the approved locations for it.
-		 * Don't allow write requests or ones that avoid directory
-		 * restrictions.
 		 */
 
-		if (mode != RRQ || !strncmp(filename, "../", 3))
+		if (!strncmp(filename, "../", 3))
 			return (EACCESS);
 
 		/*
-		 * If the file exists in one of the directories and isn't
-		 * readable, continue looking. However, change the error code
-		 * to give an indication that the file exists.
+		 * Find the first file that exists in any of the directories,
+		 * check access on it.
 		 */
-		err = ENOTFOUND;
 		if (dirs[0].name != NULL) {
 			for (dirp = dirs; dirp->name != NULL; dirp++) {
 				snprintf(pathname, sizeof pathname, "%s/%s",
 				    dirp->name, filename);
 				if (stat(pathname, &stbuf) == 0 &&
 				    (stbuf.st_mode & S_IFMT) == S_IFREG) {
-					if ((stbuf.st_mode & S_IROTH) != 0)
-						break;
-					err = EACCESS;
+					break;
 				}
 			}
 			if (dirp->name == NULL)
-				return (err);
+				return (ENOTFOUND);
+			if (mode == RRQ && !(stbuf.st_mode & S_IROTH))
+				return (EACCESS);
+			if (mode == WRQ && !(stbuf.st_mode & S_IWOTH))
+				return (EACCESS);
 			*filep = filename = pathname;
-		} else
+		} else {
+			/*
+			 * If there's no directory list, take our cue from the
+			 * absolute file request check above (*filename == '/'),
+			 * and allow access to anything.
+			 */
+			if (stat(filename, &stbuf) < 0)
+				return (errno == ENOENT ? ENOTFOUND : EACCESS);
+			if (!S_ISREG(stbuf.st_mode))
+				return (ENOTFOUND);
+			if (mode == RRQ) {
+				if ((stbuf.st_mode & S_IROTH) == 0)
+					return (EACCESS);
+			} else {
+				if ((stbuf.st_mode & S_IWOTH) == 0)
+					return (EACCESS);
+			}
 			*filep = filename;
+		}
 	}
 	fd = open(filename, mode == RRQ ? 0 : 1);
 	if (fd < 0)
 		return (errno + 100);
 	file = fdopen(fd, (mode == RRQ)? "r":"w");
 	if (file == NULL) {
+		close(fd);
 		return errno+100;
 	}
 	return (0);
