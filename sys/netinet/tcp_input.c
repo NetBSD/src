@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_input.c	7.25 (Berkeley) 6/30/90
- *	$Id: tcp_input.c,v 1.6 1994/01/08 23:26:40 mycroft Exp $
+ *	$Id: tcp_input.c,v 1.7 1994/04/12 18:07:46 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -627,35 +627,19 @@ trimthenstep6:
 		}
 		if (todrop > ti->ti_len ||
 		    todrop == ti->ti_len && (tiflags&TH_FIN) == 0) {
-			tcpstat.tcps_rcvduppack++;
-			tcpstat.tcps_rcvdupbyte += ti->ti_len;
 			/*
-			 * If segment is just one to the left of the window,
-			 * check two special cases:
-			 * 1. Don't toss RST in response to 4.2-style keepalive.
-			 * 2. If the only thing to drop is a FIN, we can drop
-			 *    it, but check the ACK or we will get into FIN
-			 *    wars if our FINs crossed (both CLOSING).
-			 * In either case, send ACK to resynchronize,
+			 * Any valid FIN must be to the left of the
+			 * window.  At this point, FIN must be a
+			 * duplicate or out-of-sequence, so drop it.
+			 */
+			tiflags &= ~TH_FIN;
+			/*
+			 * Send ACK to resynchronize, and drop any data,
 			 * but keep on processing for RST or ACK.
 			 */
-			if ((tiflags & TH_FIN && todrop == ti->ti_len + 1)
-#ifdef TCP_COMPAT_42
-			  || (tiflags & TH_RST && ti->ti_seq == tp->rcv_nxt - 1)
-#endif
-			   ) {
-				todrop = ti->ti_len;
-				tiflags &= ~TH_FIN;
-				tp->t_flags |= TF_ACKNOW;
-			} else {
-				/*
-				 * Handle the case when a bound socket connects
-				 * to itself. Allow packets with a SYN and
-				 * an ACK to continue with the processing.
-				 */
-				if (todrop != 0 || (tiflags & TH_ACK) == 0)
-					goto dropafterack;
-			}
+			tp->t_flags |= TF_ACKNOW;
+			tcpstat.tcps_rcvdupbyte += todrop = ti->ti_len;
+			tcpstat.tcps_rcvduppack++;
 		} else {
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
