@@ -1,4 +1,4 @@
-/*	$NetBSD: pram.c,v 1.9 1996/10/11 00:25:21 christos Exp $	*/
+/*	$NetBSD: pram.c,v 1.10 1996/10/13 03:21:45 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -110,7 +110,7 @@ char *convtime(unsigned long t)
     t=0;
   }
 
-  ksprintf(s,"%s %d, %d   %d:%d:%d",monstr[month],day,year,hour,minute,seconds);
+  sprintf(s,"%s %d, %d   %d:%d:%d",monstr[month],day,year,hour,minute,seconds);
 
   return s;
 }
@@ -127,8 +127,8 @@ pram_readtime(void)
    else
 	timedata = getPramTime();
 #if DEBUG
-   kprintf("time read from PRAM: 0x%x\n", timedata);
-   kprintf("Date and time: %s\n",convtime(timedata));
+   printf("time read from PRAM: 0x%x\n", timedata);
+   printf("Date and time: %s\n",convtime(timedata));
 #endif
 
    return(timedata);

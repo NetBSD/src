@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1996/10/11 00:25:09 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 1996/10/13 03:21:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -219,7 +219,7 @@ setRoot(part, lp, slot)
 	lp->d_partitions[slot].p_fstype = FS_BSDFFS;
 
 #if PRINT_DISKLABELS
-	kprintf("%c: Root '%s' at %d size %d\n", slot + 'a',
+	printf("%c: Root '%s' at %d size %d\n", slot + 'a',
 	    part->pmPartName,
 	    part->pmPyPartStart,
 	    part->pmPartBlkCnt);
@@ -239,7 +239,7 @@ setSwap(part, lp, slot)
 	lp->d_partitions[slot].p_fstype = FS_SWAP;
 
 #if PRINT_DISKLABELS
-	kprintf("%c: Swap '%s' at %d size %d\n", slot + 'a',
+	printf("%c: Swap '%s' at %d size %d\n", slot + 'a',
 	    part->pmPartName,
 	    part->pmPyPartStart,
 	    part->pmPartBlkCnt);
@@ -259,7 +259,7 @@ setUfs(part, lp, slot)
 	lp->d_partitions[slot].p_fstype = FS_BSDFFS;
 
 #if PRINT_DISKLABELS
-	kprintf("%c: Usr '%s' at %d size %d\n", slot + 'a',
+	printf("%c: Usr '%s' at %d size %d\n", slot + 'a',
 	    part->pmPartName,
 	    part->pmPyPartStart,
 	    part->pmPartBlkCnt);
@@ -279,7 +279,7 @@ setHfs(part, lp, slot)
 	lp->d_partitions[slot].p_fstype = FS_HFS;
 
 #if PRINT_DISKLABELS
-	kprintf("%c: HFS_PART '%s' at %d size %d\n", slot + 'a',
+	printf("%c: HFS_PART '%s' at %d size %d\n", slot + 'a',
 	    part->pmPartName,
 	    part->pmPyPartStart,
 	    part->pmPartBlkCnt);
@@ -299,7 +299,7 @@ setScratch(part, lp, slot)
 	lp->d_partitions[slot].p_fstype = FS_OTHER;
 
 #if PRINT_DISKLABELS
-	kprintf("%c: Other (%s) '%s' at %d size %d\n", slot + 'a',
+	printf("%c: Other (%s) '%s' at %d size %d\n", slot + 'a',
 	    part->pmPartType,
 	    part->pmPartName,
 	    part->pmPyPartStart,
@@ -343,7 +343,7 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
 				if (*maxslot < 1) *maxslot = 1;
 				break;
 			default:
-				kprintf("disksubr.c: can't do type %d\n", type);
+				printf("disksubr.c: can't do type %d\n", type);
 				break;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.49 1996/10/11 00:25:23 christos Exp $	*/
+/*	$NetBSD: via.c,v 1.50 1996/10/13 03:21:48 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -272,14 +272,14 @@ static void
 via1_noint(bitnum)
 	void *bitnum;
 {
-	kprintf("via1_noint(%d)\n", (int) bitnum);
+	printf("via1_noint(%d)\n", (int) bitnum);
 }
 
 static void
 via2_noint(bitnum)
 	void *bitnum;
 {
-	kprintf("via2_noint(%d)\n", (int) bitnum);
+	printf("via2_noint(%d)\n", (int) bitnum);
 }
 
 static int	nubus_intr_mask = 0;
@@ -388,7 +388,7 @@ slot_noint(client_data, slot)
 	void *client_data;
 	int slot;
 {
-	kprintf("slot_noint() slot %x\n", slot);
+	printf("slot_noint() slot %x\n", slot);
 }
 
 void

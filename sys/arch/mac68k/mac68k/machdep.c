@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 1996/10/11 00:25:12 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 1996/10/13 03:21:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -256,7 +256,7 @@ cpu_startup(void)
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	kprintf(version);
+	printf(version);
 	identifycpu();
 
 	vers = mac68k_machine.booter_version;
@@ -265,14 +265,14 @@ cpu_startup(void)
 		if (vers < 100)
 			vers += 99;
 
-		kprintf("\nYou booted with booter version %d.%d.\n",
+		printf("\nYou booted with booter version %d.%d.\n",
 		    vers / 100, vers % 100);
-		kprintf("Booter version %d.%d is necessary to fully support\n",
+		printf("Booter version %d.%d is necessary to fully support\n",
 		    CURRENTBOOTERVER / 100, CURRENTBOOTERVER % 100);
-		kprintf("this kernel.\n\n");
+		printf("this kernel.\n\n");
 		for (delay = 0; delay < 1000000; delay++);
 	}
-	kprintf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %d\n", ctob(physmem));
 
 	/*
 	 * Allocate space for system data structures.
@@ -423,8 +423,8 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-	kprintf("avail mem = %ld\n", ptoa(cnt.v_free_count));
-	kprintf("using %d buffers containing %d bytes of memory\n",
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+	printf("using %d buffers containing %d bytes of memory\n",
 	    nbuf, bufpages * CLBYTES);
 
 	/*
@@ -537,13 +537,13 @@ sendsig(catcher, sig, mask, code)
 		(void) grow(p, (unsigned) fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		    p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t) fp, sizeof(struct sigframe), B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			kprintf("sendsig(%d): useracc failed on sig %d\n",
+			printf("sendsig(%d): useracc failed on sig %d\n",
 			    p->p_pid, sig);
 #endif
 		/*
@@ -597,7 +597,7 @@ sendsig(catcher, sig, mask, code)
 		frame->f_format = frame->f_vector = 0;
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
-			kprintf("sendsig(%d): copy out %d of frame %d\n",
+			printf("sendsig(%d): copy out %d of frame %d\n",
 			    p->p_pid, exframesize[ft], ft);
 #endif
 	}
@@ -607,7 +607,7 @@ sendsig(catcher, sig, mask, code)
 	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *) &kfp->sf_state.ss_fpstate)
-		kprintf("sendsig(%d): copy out FP state (%x) to %x\n",
+		printf("sendsig(%d): copy out FP state (%x) to %x\n",
 		    p->p_pid, *(u_int *) & kfp->sf_state.ss_fpstate,
 		    &kfp->sf_state.ss_fpstate);
 #endif
@@ -626,7 +626,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int) fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
 		    p->p_pid, sig, kfp->sf_scp, fp,
 		    kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -636,7 +636,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_pc = (int) (((char *) PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sendsig(%d): sig %d returns\n",
+		printf("sendsig(%d): sig %d returns\n",
 		    p->p_pid, sig);
 #endif
 	free((caddr_t) kfp, M_TEMP);
@@ -671,7 +671,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	if ((int) scp & 1)
 		return (EINVAL);
@@ -712,7 +712,7 @@ sys_sigreturn(p, v, retval)
 	flags = fuword((caddr_t) rf);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		kprintf("sigreturn(%d): sc_ap %x flags %x\n",
+		printf("sigreturn(%d): sc_ap %x flags %x\n",
 		    p->p_pid, rf, flags);
 #endif
 	/*
@@ -724,7 +724,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		kprintf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
 		    p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		    (flags & SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -753,7 +753,7 @@ sys_sigreturn(p, v, retval)
 		bcopy((caddr_t) & tstate.ss_frame.F_u, (caddr_t) & frame->F_u, sz);
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
-			kprintf("sigreturn(%d): copy in %d of frame type %d\n",
+			printf("sigreturn(%d): copy in %d of frame type %d\n",
 			    p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
@@ -764,12 +764,12 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *) &tstate.ss_fpstate)
-		kprintf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
 		    p->p_pid, *(u_int *) & tstate.ss_fpstate,
 		    &tstate.ss_fpstate);
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		kprintf("sigreturn(%d): returns\n", p->p_pid);
+		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }
@@ -805,14 +805,14 @@ boot(howto, bootstr)
 		resettodr();
 #else
 # ifdef DIAGNOSTIC
-		kprintf("NetBSD/mac68k does not trust itself to update the "
+		printf("NetBSD/mac68k does not trust itself to update the "
 		    "RTC on shutdown.\n");
 # endif
 #endif
 	}
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
-		kprintf("halted\n\n");
+		printf("halted\n\n");
 		via_shutdown();
 	} else {
 		if (howto & RB_DUMP) {
@@ -833,8 +833,8 @@ boot(howto, bootstr)
 		doboot();
 		/* NOTREACHED */
 	}
-	kprintf("            The system is down.\n");
-	kprintf("You may reboot or turn the machine off, now.\n");
+	printf("            The system is down.\n");
+	printf("You may reboot or turn the machine off, now.\n");
 	for (;;);		/* Foil the compiler... */
 	/* NOTREACHED */
 }
@@ -975,12 +975,12 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	kprintf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
-	kprintf("dump ");
+	printf("dump ");
 	if (psize == -1) {
-		kprintf("area unavailable.\n");
+		printf("area unavailable.\n");
 		return;
 	}
 	bytes = get_max_page();
@@ -1006,7 +1006,7 @@ dumpsys()
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
 		if (n && (n % (1024 * 1024)) == 0)
-			kprintf("%d ", n / (1024 * 1024));
+			printf("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
 		if (n > BYTES_PER_DUMP)
@@ -1023,34 +1023,34 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		kprintf("device bad\n");
+		printf("device bad\n");
 		break;
 
 	case EFAULT:
-		kprintf("device not ready\n");
+		printf("device not ready\n");
 		break;
 
 	case EINVAL:
-		kprintf("area improper\n");
+		printf("area improper\n");
 		break;
 
 	case EIO:
-		kprintf("i/o error\n");
+		printf("i/o error\n");
 		break;
 
 	case EINTR:
-		kprintf("aborted from console\n");
+		printf("aborted from console\n");
 		break;
 
 	case 0:
-		kprintf("succeeded\n");
+		printf("succeeded\n");
 		break;
 
 	default:
-		kprintf("error %d\n", error);
+		printf("error %d\n", error);
 		break;
 	}
-	kprintf("\n\n");
+	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }
 
@@ -1094,7 +1094,7 @@ straytrap(pc, evec)
 	int     pc;
 	int     evec;
 {
-	kprintf("unexpected trap; vector offset 0x%x from 0x%x.\n",
+	printf("unexpected trap; vector offset 0x%x from 0x%x.\n",
 	    (int) (evec & 0xfff), pc);
 }
 
@@ -1249,7 +1249,7 @@ nmihand(frame)
 /*	regdump(&frame, 128);
 	dumptrace(); */
 #if DDB
-	kprintf("Panic switch: PC is 0x%x.\n", frame.f_pc);
+	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
 	Debugger();
 #endif
 	nmihanddeep = 0;
@@ -1270,26 +1270,26 @@ regdump(frame, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	kprintf("pid = %d, pc = 0x%08x, ", curproc->p_pid, frame->f_pc);
-	kprintf("ps = 0x%08x, ", frame->f_sr);
-	kprintf("sfc = 0x%08x, ", getsfc());
-	kprintf("dfc = 0x%08x\n", getdfc());
-	kprintf("Registers:\n     ");
+	printf("pid = %d, pc = 0x%08x, ", curproc->p_pid, frame->f_pc);
+	printf("ps = 0x%08x, ", frame->f_sr);
+	printf("sfc = 0x%08x, ", getsfc());
+	printf("dfc = 0x%08x\n", getdfc());
+	printf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
-		kprintf("        %d", i);
-	kprintf("\ndreg:");
+		printf("        %d", i);
+	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		kprintf(" %08x", frame->f_regs[i]);
-	kprintf("\nareg:");
+		printf(" %08x", frame->f_regs[i]);
+	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		kprintf(" %08x", frame->f_regs[i + 8]);
+		printf(" %08x", frame->f_regs[i + 8]);
 	if (sbytes > 0) {
 		if (1) {	/* (frame->f_sr & PSL_S) *//* BARF - BG */
-			kprintf("\n\nKernel stack (%08x):",
+			printf("\n\nKernel stack (%08x):",
 			    (int) (((int *) frame) - 1));
 			dumpmem(((int *) frame) - 1, sbytes);
 		} else {
-			kprintf("\n\nUser stack (%08x):", frame->f_regs[15]);
+			printf("\n\nUser stack (%08x):", frame->f_regs[15]);
 			dumpmem((int *) frame->f_regs[15], sbytes);
 		}
 	}
@@ -1309,12 +1309,12 @@ dumpmem(ptr, sz)
 	sz /= 4;
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
-			kprintf("\n%08x: ", (u_int) ptr);
+			printf("\n%08x: ", (u_int) ptr);
 		else
-			kprintf(" ");
-		kprintf("%08x ", *ptr++);
+			printf(" ");
+		printf("%08x ", *ptr++);
 	}
-	kprintf("\n");
+	printf("\n");
 }
 
 /*
@@ -2064,11 +2064,11 @@ identifycpu()
 		proc = ("(unknown processor)");
 		break;
 	}
-	ksprintf(cpu_model, "Apple Macintosh %s%s %s",
+	sprintf(cpu_model, "Apple Macintosh %s%s %s",
 	    cpu_models[mac68k_machine.cpu_model_index].model_major,
 	    cpu_models[mac68k_machine.cpu_model_index].model_minor,
 	    proc);
-	kprintf("%s\n", cpu_model);
+	printf("%s\n", cpu_model);
 }
 
 static void	get_machine_info __P((void));
@@ -2476,7 +2476,7 @@ check_video(id, limit, maxm)
 	u_long  addr, phys;
 
 	if (!get_physical(videoaddr, &phys))
-		kprintf("get_mapping(): %s.  False start.\n", id);
+		printf("get_mapping(): %s.  False start.\n", id);
 	else {
 		mac68k_vidlog = videoaddr;
 		mac68k_vidphys = phys;
@@ -2487,19 +2487,19 @@ check_video(id, limit, maxm)
 			    != mac68k_vidlen)
 				break;
 			if (mac68k_vidlen + 32768 > limit) {
-				kprintf("mapping: %s.  Does it never end?\n",
+				printf("mapping: %s.  Does it never end?\n",
 				    id);
-				kprintf("               Forcing VRAM size ");
-				kprintf("to a conservative %ldK.\n", maxm/1024);
+				printf("               Forcing VRAM size ");
+				printf("to a conservative %ldK.\n", maxm/1024);
 				mac68k_vidlen = maxm;
 				break;
 			}
 			mac68k_vidlen += 32768;
 			addr += 32768;
 		}
-		kprintf("  %s internal video at addr 0x%x (phys 0x%x), ",
+		printf("  %s internal video at addr 0x%x (phys 0x%x), ",
 		    id, mac68k_vidlog, mac68k_vidphys);
-		kprintf("len 0x%x.\n", mac68k_vidlen);
+		printf("len 0x%x.\n", mac68k_vidlen);
 	}
 }
 
@@ -2535,9 +2535,9 @@ get_mapping(void)
 		}
 	}
 #if 1
-	kprintf("System RAM: %ld bytes in %ld pages.\n", addr, addr / NBPG);
+	printf("System RAM: %ld bytes in %ld pages.\n", addr, addr / NBPG);
 	for (i = 0; i < numranges; i++) {
-		kprintf("     Low = 0x%lx, high = 0x%lx\n", low[i], high[i]);
+		printf("     Low = 0x%lx, high = 0x%lx\n", low[i], high[i]);
 	}
 #endif
 
@@ -2566,7 +2566,7 @@ get_mapping(void)
 		}
 		len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
 
-		/* kprintf ("0x%x --> 0x%x\n", addr, phys); */
+		/* printf ("0x%x --> 0x%x\n", addr, phys); */
 		if (nbnumranges > 0
 		    && addr == nblog[nbnumranges - 1] + len
 		    && phys == nbphys[nbnumranges - 1]) {	/* Same as last one */
@@ -2584,7 +2584,7 @@ get_mapping(void)
 					same = 0;
 				}
 				if (nbnumranges == NBMAXRANGES) {
-					kprintf("get_mapping(): Too many NuBus "
+					printf("get_mapping(): Too many NuBus "
 					    "ranges.\n");
 					break;
 				}
@@ -2600,9 +2600,9 @@ get_mapping(void)
 		same = 0;
 	}
 #if 0
-	kprintf("Non-system RAM (nubus, etc.):\n");
+	printf("Non-system RAM (nubus, etc.):\n");
 	for (i = 0; i < nbnumranges; i++) {
-		kprintf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
+		printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
 		    nblog[i], nbphys[i], nblen[i], nblen[i]);
 	}
 #endif
@@ -2626,7 +2626,7 @@ get_mapping(void)
 	}
 	if (i == nbnumranges) {
 		if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
-			kprintf("Checking for Internal Video ");
+			printf("Checking for Internal Video ");
 			/*
 			 * Kludge for IIvx internal video (60b0 0000).
 			 * PB 520 (6000 0000)
@@ -2640,14 +2640,14 @@ get_mapping(void)
 			check_video("LC video (0x50f40000)",
 					512 * 1024, 512 * 1024);
 		} else {
-			kprintf( "  no internal video at address 0 -- "
+			printf( "  no internal video at address 0 -- "
 				"videoaddr is 0x%lx.\n", videoaddr);
 		}
 	} else {
-		kprintf("  Video address = 0x%lx\n", videoaddr);
-		kprintf("  Int video starts at 0x%x\n",
+		printf("  Video address = 0x%lx\n", videoaddr);
+		printf("  Int video starts at 0x%x\n",
 		    mac68k_vidlog);
-		kprintf("  Length = 0x%x (%d) bytes\n",
+		printf("  Length = 0x%x (%d) bytes\n",
 		    mac68k_vidlen, mac68k_vidlen);
 	}
 
@@ -2670,7 +2670,7 @@ printstar(void)
 	asm("movl d0, sp@-");
 	asm("movl d1, sp@-");
 
-	/* kprintf("*"); */
+	/* printf("*"); */
 
 	asm("movl sp@+, d1");
 	asm("movl sp@+, d0");

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1996/10/11 00:25:07 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 1996/10/13 03:21:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,17 +161,17 @@ getdisk(str, len, defpart, devp)
 	register struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
-		kprintf("use one of:");
+		printf("use one of:");
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
-				kprintf(" %s[a-h]", dv->dv_xname);
+				printf(" %s[a-h]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				kprintf(" %s", dv->dv_xname);
+				printf(" %s", dv->dv_xname);
 #endif
 		}
-		kprintf(" halt\n");
+		printf(" halt\n");
 	}
 	return (dv);
 }
@@ -255,7 +255,7 @@ setroot(void)
 	bootpartition = booted_partition;
 
 #ifdef DEBUG
-	kprintf("boot device: %s\n",
+	printf("boot device: %s\n",
 		(bootdv) ? bootdv->dv_xname : "<unknown>");
 #endif
 	/*
@@ -267,14 +267,14 @@ setroot(void)
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			kprintf("root device");
+			printf("root device");
 			if (bootdv != NULL) {
-				kprintf(" (default %s", bootdv->dv_xname);
+				printf(" (default %s", bootdv->dv_xname);
 				if (bootdv->dv_class == DV_DISK)
-					kprintf("a");
-				kprintf(")");
+					printf("a");
+				printf(")");
 			}
-			kprintf(": ");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
@@ -305,12 +305,12 @@ setroot(void)
 			goto gotswap;
 		}
 		for (;;) {
-			kprintf("swap device");
-			kprintf(" (default %s", rootdv->dv_xname);
+			printf("swap device");
+			printf(" (default %s", rootdv->dv_xname);
 			if (rootdv->dv_class == DV_DISK)
-				kprintf("b");
-			kprintf(")");
-			kprintf(": ");
+				printf("b");
+			printf(")");
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0) {
 				switch (rootdv->dv_class) {
@@ -389,16 +389,16 @@ gotswap:
 #if defined(FFS)
 	case DV_DISK:
 		mountroot = ffs_mountroot;
-		kprintf("root on %s%c", rootdv->dv_xname,
+		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
 		if (nswapdev != NODEV)
-			kprintf(" swap on %s%c", swapdv->dv_xname,
+			printf(" swap on %s%c", swapdv->dv_xname,
 			    DISKPART(nswapdev) + 'a');
-		kprintf("\n");
+		printf("\n");
 		break;
 #endif
 	default:
-		kprintf("can't figure root, hope your kernel is right\n");
+		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
 
@@ -442,7 +442,7 @@ getstr(cp, size)
 		switch (c) {
 		case '\n':
 		case '\r':
-			kprintf("\n");
+			printf("\n");
 			*lp++ = '\0';
 			return (len);
 		case '\b':
@@ -451,21 +451,21 @@ getstr(cp, size)
 			if (len) {
 				--len;
 				--lp;
-				kprintf("\b \b");
+				printf("\b \b");
 			}
 			continue;
 		case '@':
 		case 'u'&037:
 			len = 0;
 			lp = cp;
-			kprintf("\n");
+			printf("\n");
 			continue;
 		default:
 			if (len + 1 >= size || c < ' ') {
-				kprintf("\007");
+				printf("\007");
 				continue;
 			}
-			kprintf("%c", c);
+			printf("%c", c);
 			++len;
 			*lp++ = c;
 		}
@@ -524,7 +524,7 @@ target_to_unit(bus, target, lun)
 extern	struct cfdriver		scsibus_cd;
 
 	if (target < 0 || target > 7 || lun < 0 || lun > 7) {
-		kprintf("scsi target to unit, target (%ld) or lun (%ld)"
+		printf("scsi target to unit, target (%ld) or lun (%ld)"
 			" out of range.\n", target, lun);
 		return -1;
 	}
@@ -545,7 +545,7 @@ extern	struct cfdriver		scsibus_cd;
 		return -1;
 	}
 	if (bus < 0 || bus >= scsibus_cd.cd_ndevs) {
-		kprintf("scsi target to unit, bus (%ld) out of range.\n", bus);
+		printf("scsi target to unit, bus (%ld) out of range.\n", bus);
 		return -1;
 	}
 	if (scsibus_cd.cd_devs[bus]) {

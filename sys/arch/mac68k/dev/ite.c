@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25 1996/10/11 00:24:51 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.26 1996/10/13 03:21:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,7 +113,7 @@ static int	ite_pollforchar __P((void));
 static int	itematch __P((struct device *, void *, void *));
 static void	iteattach __P((struct device *, struct device *, void *));
 
-#define dprintf if (0) kprintf
+#define dprintf if (0) printf
 
 #define ATTR_NONE	0
 #define ATTR_BOLD	1
@@ -825,7 +825,7 @@ iteattach(parent, self, aux)
 	struct device *parent, *self;
 	void	*aux;
 {
-	kprintf(" (minimal console)\n");
+	printf(" (minimal console)\n");
 }
 
 

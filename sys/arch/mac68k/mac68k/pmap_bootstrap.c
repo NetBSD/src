@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27 1996/10/11 00:25:20 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.28 1996/10/13 03:21:44 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -180,11 +180,11 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += USPACE;
 
 	if (nextpa > high[0]) {
-		kprintf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
+		printf("Failure in BSD boot.  nextpa=0x%lx, high[0]=0x%lx.\n",
 			nextpa, high[0]);
-		kprintf("You're hosed!  Try booting with 32-bit addressing ");
-		kprintf("enabled in the memory control panel.\n");
-		kprintf("Older machines may need Mode32 to get that option.\n");
+		printf("You're hosed!  Try booting with 32-bit addressing ");
+		printf("enabled in the memory control panel.\n");
+		printf("Older machines may need Mode32 to get that option.\n");
 		panic("Cannot work with the current memory mappings.\n");
 	}
 
@@ -565,7 +565,7 @@ bootstrap_mac68k(tc)
 	caddr_t		oldROMBase;
 
 	if (mac68k_machine.do_graybars)
-		kprintf("Bootstrapping NetBSD/mac68k.\n");
+		printf("Bootstrapping NetBSD/mac68k.\n");
 
 	oldROMBase = ROMBase;
 	mac68k_vidphys = videoaddr;
@@ -573,10 +573,10 @@ bootstrap_mac68k(tc)
 	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
 
 		if (mac68k_machine.do_graybars)
-			kprintf("Getting mapping from MMU.\n");
+			printf("Getting mapping from MMU.\n");
 		(void) get_mapping();
 		if (mac68k_machine.do_graybars)
-			kprintf("Done.\n");
+			printf("Done.\n");
 	} else {
 		/* MMU not enabled.  Fake up ranges. */
 		nbnumranges = 0;
@@ -584,7 +584,7 @@ bootstrap_mac68k(tc)
 		low[0] = 0;
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
 		if (mac68k_machine.do_graybars)
-			kprintf("Faked range to byte 0x%lx.\n", high[0]);
+			printf("Faked range to byte 0x%lx.\n", high[0]);
 	}
 	nextpa = load_addr + (((int)esym + NBPG - 1) & PG_FRAME);
 
@@ -594,32 +594,32 @@ bootstrap_mac68k(tc)
 		boothowto |= RB_DFLTROOT;
 		nextpa = mac68k_round_page(nextpa);
 		if ((v = mfs_initminiroot((caddr_t) nextpa-load_addr)) == 0) {
-			kprintf("Error loading miniroot.\n");
+			printf("Error loading miniroot.\n");
 		}
-		kprintf("Loaded %d byte miniroot.\n", v);
+		printf("Loaded %d byte miniroot.\n", v);
 		nextpa += v;
 	}
 #endif
 
 	if (mac68k_machine.do_graybars)
-		kprintf("Bootstrapping the pmap system.\n");
+		printf("Bootstrapping the pmap system.\n");
 
 	pmap_bootstrap(nextpa, load_addr);
 
 	if (mac68k_machine.do_graybars)
-		kprintf("Pmap bootstrapped.\n");
+		printf("Pmap bootstrapped.\n");
 
 	if (!vidlen)
 		panic("Don't know how to relocate video!\n");
 
 	if (mac68k_machine.do_graybars)
-		kprintf("Moving ROMBase from %p to %p.\n",
+		printf("Moving ROMBase from %p to %p.\n",
 			oldROMBase, ROMBase);
 
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	if (mac68k_machine.do_graybars)
-		kprintf("Video address 0x%lx -> 0x%lx.\n",
+		printf("Video address 0x%lx -> 0x%lx.\n",
 			(unsigned long) videoaddr,
 			(unsigned long) newvideoaddr);
 
