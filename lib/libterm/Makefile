@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.26 2002/02/26 00:24:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.27 2002/08/19 14:55:17 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
-LIB=	termcap
 USE_SHLIBDIR=	yes
+
+LIB=	termcap
 CPPFLAGS+=-I${.CURDIR} -DCM_N -DCM_GT -DCM_B -DCM_D
 SRCS=	termcap.c tgoto.c tputs.c
 
