@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -69,6 +70,11 @@ static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 
 #include "kvm_private.h"
 
+#define KREAD(kd, addr, obj) \
+	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
+
+int _kvm_readfrompager __P((kvm_t *, struct vm_object *, u_long, char *));
+
 static char *
 kvm_readswap(kd, p, va, cnt)
 	kvm_t *kd;
@@ -76,15 +82,10 @@ kvm_readswap(kd, p, va, cnt)
 	u_long va;
 	u_long *cnt;
 {
-	register int ix;
 	register u_long addr, head;
-	register u_long offset, pagestart, sbstart, pgoff;
-	register off_t seekpoint;
+	register u_long offset;
 	struct vm_map_entry vme;
 	struct vm_object vmo;
-	struct pager_struct pager;
-	struct swpager swap;
-	struct swblock swb;
 	static char page[NBPG];
 
 	head = (u_long)&p->p_vmspace->vm_map.header;
@@ -95,81 +96,120 @@ kvm_readswap(kd, p, va, cnt)
 	 */
 	addr = head;
 	while (1) {
-		if (kvm_read(kd, addr, (char *)&vme, sizeof(vme)) != 
-		    sizeof(vme))
+		if (KREAD(kd, addr, &vme))
 			return (0);
 
-		if (va >= vme.start && va <= vme.end && 
+		if (va >= vme.start && va < vme.end && 
 		    vme.object.vm_object != 0)
 			break;
 
 		addr = (u_long)vme.next;
-		if (addr == 0 || addr == head)
+		if (addr == head)
 			return (0);
 	}
+
 	/*
 	 * We found the right object -- follow shadow links.
 	 */
 	offset = va - vme.start + vme.offset;
 	addr = (u_long)vme.object.vm_object;
 	while (1) {
-		if (kvm_read(kd, addr, (char *)&vmo, sizeof(vmo)) != 
-		    sizeof(vmo))
+		if (KREAD(kd, addr, &vmo))
 			return (0);
+
+		/* If there is a pager here, see if it has the page. */
+		if (vmo.pager != 0 &&
+		    _kvm_readfrompager(kd, &vmo, offset, page))
+			break;
+
+		/* Move down the shadow chain. */
 		addr = (u_long)vmo.shadow;
 		if (addr == 0)
-			break;
+			return (0);
 		offset += vmo.shadow_offset;
 	}
-	if (vmo.pager == 0)
-		return (0);
 
-	offset += vmo.paging_offset;
-	/*
-	 * Read in the pager info and make sure it's a swap device.
-	 */
-	addr = (u_long)vmo.pager;
-	if (kvm_read(kd, addr, (char *)&pager, sizeof(pager)) != sizeof(pager)
-	    || pager.pg_type != PG_SWAP)
-		return (0);
-
-	/*
-	 * Read in the swap_pager private data, and compute the
-	 * swap offset.
-	 */
-	addr = (u_long)pager.pg_data;
-	if (kvm_read(kd, addr, (char *)&swap, sizeof(swap)) != sizeof(swap))
-		return (0);
-	ix = offset / dbtob(swap.sw_bsize);
-	if (swap.sw_blocks == 0 || ix >= swap.sw_nblocks)
-		return (0);
-
-	addr = (u_long)&swap.sw_blocks[ix];
-	if (kvm_read(kd, addr, (char *)&swb, sizeof(swb)) != sizeof(swb))
-		return (0);
-
-	sbstart = (offset / dbtob(swap.sw_bsize)) * dbtob(swap.sw_bsize);
-	sbstart /= NBPG;
-	pagestart = offset / NBPG;
-	pgoff = pagestart - sbstart;
-
-	if (swb.swb_block == 0 || (swb.swb_mask & (1 << pgoff)) == 0)
-		return (0);
-
-	seekpoint = dbtob(swb.swb_block) + ctob(pgoff);
-	errno = 0;
-	if (lseek(kd->swfd, seekpoint, 0) == -1 && errno != 0)
-		return (0);
-	if (read(kd->swfd, page, sizeof(page)) != sizeof(page))
-		return (0);
-
+	/* Found the page. */
 	offset %= NBPG;
 	*cnt = NBPG - offset;
 	return (&page[offset]);
 }
 
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
+int
+_kvm_readfrompager(kd, vmop, offset, buf)
+	kvm_t *kd;
+	struct vm_object *vmop;
+	u_long offset;
+	char *buf;
+{	
+	u_long addr;
+	struct pager_struct pager;
+	struct swpager swap;
+	int ix;
+	struct swblock swb;
+	register off_t seekpoint;
+
+	/* Read in the pager info and make sure it's a swap device. */
+	addr = (u_long)vmop->pager;
+	if (KREAD(kd, addr, &pager) || pager.pg_type != PG_SWAP)
+		return (0);
+
+	/* Read in the swap_pager private data. */
+	addr = (u_long)pager.pg_data;
+	if (KREAD(kd, addr, &swap))
+		return (0);
+
+	/*
+	 * Calculate the paging offset, and make sure it's within the
+	 * bounds of the pager.
+	 */
+	offset += vmop->paging_offset;
+	ix = offset / dbtob(swap.sw_bsize);
+#if 0
+	if (swap.sw_blocks == 0 || ix >= swap.sw_nblocks)
+		return (0);
+#else
+	if (swap.sw_blocks == 0 || ix >= swap.sw_nblocks) {
+		int i;
+		printf("BUG BUG BUG BUG:\n");
+		printf("object %x offset %x pgoffset %x pager %x swpager %x\n",
+		    vmop, offset - vmop->paging_offset, vmop->paging_offset,
+		    vmop->pager, pager.pg_data);
+		printf("osize %x bsize %x blocks %x nblocks %x\n",
+		    swap.sw_osize, swap.sw_bsize, swap.sw_blocks,
+		    swap.sw_nblocks);
+		for (ix = 0; ix < swap.sw_nblocks; ix++) {
+			addr = (u_long)&swap.sw_blocks[ix];
+			if (KREAD(kd, addr, &swb))
+				return (0);
+			printf("sw_blocks[%d]: block %x mask %x\n", ix,
+			    swb.swb_block, swb.swb_mask);
+		}
+		return (0);
+	}
+#endif
+
+	/* Read in the swap records. */
+	addr = (u_long)&swap.sw_blocks[ix];
+	if (KREAD(kd, addr, &swb))
+		return (0);
+
+	/* Calculate offset within pager. */
+	offset %= dbtob(swap.sw_bsize);
+
+	/* Check that the page is actually present. */
+	if ((swb.swb_mask & (1 << (offset / NBPG))) == 0)
+		return (0);
+
+	/* Calculate the physical address and read the page. */
+	seekpoint = dbtob(swb.swb_block) + (offset & ~PGOFSET);
+	if (lseek(kd->swfd, seekpoint, 0) == -1)
+		return (0);
+	if (read(kd->swfd, buf, NBPG) != NBPG)
+		return (0);
+
+	return (1);
+}
 
 /*
  * Read proc's from memory file into buffer bp, which has space to hold
