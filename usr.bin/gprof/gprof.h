@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.h,v 1.11 1995/04/19 07:16:01 cgd Exp $	*/
+/*	$NetBSD: gprof.h,v 1.12 1995/04/19 07:22:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,8 +43,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if vax
-#   include "vax.h"
+#if alpha
+#   include "alpha.h"
+#endif
+#if i386
+#   include "i386.h"
+#endif
+#if m68k
+#   include "m68k.h"
+#endif
+#if mips
+#   include "mips.h"
+#endif
+#if ns32k
+#   include "ns32k.h"
+#endif
+#if pmax
+#   include "pmax.h"
 #endif
 #if sparc
 #   include "sparc.h"
@@ -52,20 +67,8 @@
 #if tahoe
 #   include "tahoe.h"
 #endif
-#if m68k
-#   include "m68k.h"
-#endif
-#if i386
-#   include "i386.h"
-#endif
-#if mips
-#   include "mips.h"
-#endif
-#if pmax
-#   include "pmax.h"
-#endif
-#if ns32k
-#   include "ns32k.h"
+#if vax
+#   include "vax.h"
 #endif
 
 
