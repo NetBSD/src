@@ -1,9 +1,10 @@
-#       $NetBSD: files.ixp425,v 1.5 2003/11/16 12:41:03 scw Exp $
+#       $NetBSD: files.ixp425,v 1.6 2003/12/08 14:41:11 scw Exp $
 #
 # Configuration info for Intel IXP4xx CPU support
 #
 
 file    arch/arm/xscale/ixp425_intr.c
+file    arch/arm/xscale/ixp425_mem.c
 file    arch/arm/arm32/irq_dispatch.S
 
 file    arch/arm/xscale/xscale_pmc.c            perfctrs

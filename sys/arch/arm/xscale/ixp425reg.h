@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.15 2003/12/08 13:40:33 scw Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.16 2003/12/08 14:41:11 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -445,7 +445,12 @@
  * SDRAM Configuration Register
  */
 #define	IXP425_MCU_HWBASE	0xcc000000UL
+#define IXP425_MCU_VBASE	(IXP425_PCI_VBASE + IXP425_PCI_SIZE)
+						/* 0xf0012000 */
+#define	IXP425_MCU_SIZE		0x1000		/* Actually only 256 bytes */
 #define	MCU_SDR_CONFIG		0x00
+#define  MCU_SDR_CONFIG_MCONF(x) ((x) & 0x7)
+#define  MCU_SDR_CONFIG_64MBIT	(1u << 5)
 #define	MCU_SDR_REFRESH		0x04
 #define	MCU_SDR_IR		0x08
 
