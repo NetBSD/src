@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.9 1995/04/21 01:24:29 mellon Exp $	*/
+/*	$NetBSD: dc.c,v 1.10 1995/08/04 00:26:39 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,6 +74,10 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
+#include <machine/machConst.h>
+
 #include <machine/dc7085cons.h>
 #include <machine/pmioctl.h>
 
@@ -84,13 +88,33 @@
 #include <pmax/dev/pdma.h>
 #include <pmax/dev/fbreg.h>
 
+#include "dcvar.h"
+
 extern int pmax_boardtype;
 extern struct consdev cn_tab;
 
 /*
- * Driver information for auto-configuration stuff.
+ * Autoconfiguration data for config.new.
+ * Use the statically-allocated softc until old autoconfig code and
+ * config.old are completely gone.
+ * 
  */
-int	dcprobe();
+int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
+void	dcattach __P((struct device *parent, struct device *self, void *aux));
+
+int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
+
+extern struct cfdriver dccd;
+struct  cfdriver dccd = {
+	NULL, "dc", dcmatch, dcattach, DV_DULL, sizeof(struct device), 0
+};
+
+
+
+/*
+ * Autoconfiguration data for config.old
+ */
+int	dcprobe __P ((struct pmax_ctlr *cp));
 void	dcintr();
 struct	driver dcdriver = {
 	"dc", dcprobe, 0, 0, dcintr,
@@ -159,33 +183,96 @@ struct speedtab dcspeedtab[] = {
 #endif
 
 /*
+ * Match driver based on name
+ */
+
+int
+dcmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+
+	static int nunits = 0;
+
+	if (!BUS_MATCHNAME(ca, "dc"))
+		return (0);
+
+	/*
+	 * Use statically-allocated softc and attach code until
+	 * old config is completely gone.  Don't  over-run softc.
+	 */
+	if (nunits > NDC) {
+		printf("dc: too many units for old config\n");
+		return (0);
+	}
+	nunits++;
+	return (1);
+}
+
+void
+dcattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+
+	(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
+			  self->dv_unit, self->dv_cfdata->cf_flags,
+			  ca->ca_slot);
+
+	/* tie pseudo-slot to device */
+	BUS_INTR_ESTABLISH(ca, dcintr, self->dv_unit);
+}
+
+/*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
+int
 dcprobe(cp)
 	register struct pmax_ctlr *cp;
+{
+	return dc_doprobe(cp->pmax_addr, cp->pmax_unit,
+		 cp->pmax_flags, cp->pmax_pri);
+}
+
+
+
+dc_doprobe(addr, unit, flags, priority)
+	void *addr;
+	int unit, flags, priority;
 {
 	register dcregs *dcaddr;
 	register struct pdma *pdp;
 	register struct tty *tp;
 	register int cntr;
 	int s;
+	static int nunits = 0; /*XXX*/
 
-	if (cp->pmax_unit >= NDC)
+	if (unit >= NDC)
 		return (0);
-	if (badaddr(cp->pmax_addr, 2))
+	if (badaddr(addr, 2))
 		return (0);
+
+	if (++nunits > NDC) {
+		printf("dc%d: static softc full\n", unit);
+		return (0);
+	}
 
 	/*
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-	if (major(cn_tab.cn_dev) == DCDEV && cp->pmax_unit == 0 &&
+	if (major(cn_tab.cn_dev) == DCDEV && unit == 0 &&
 		cn_tab.cn_screen == 0)
 		DELAY(10000);
 
 	/* reset chip */
-	dcaddr = (dcregs *)cp->pmax_addr;
+	dcaddr = (dcregs *)addr;
 	dcaddr->dc_csr = CSR_CLR;
 	MachEmptyWriteBuffer();
 	while (dcaddr->dc_csr & CSR_CLR)
@@ -193,15 +280,15 @@ dcprobe(cp)
 	dcaddr->dc_csr = CSR_MSE | CSR_TIE | CSR_RIE;
 
 	/* init pseudo DMA structures */
-	pdp = &dcpdma[cp->pmax_unit * 4];
+	pdp = &dcpdma[unit * 4];
 	for (cntr = 0; cntr < 4; cntr++) {
 		pdp->p_addr = (void *)dcaddr;
-		tp = dc_tty[cp->pmax_unit * 4 + cntr] = ttymalloc();
+		tp = dc_tty[unit * 4 + cntr] = ttymalloc();
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
 	}
-	dcsoftCAR[cp->pmax_unit] = cp->pmax_flags | 0xB;
+	dcsoftCAR[unit] = flags | 0xB;
 
 	if (dc_timer == 0) {
 		dc_timer = 1;
@@ -211,7 +298,7 @@ dcprobe(cp)
 	/*
 	 * Special handling for consoles.
 	 */
-	if (cp->pmax_unit == 0) {
+	if (unit == 0) {
 		if (cn_tab.cn_screen) {
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
@@ -235,7 +322,7 @@ dcprobe(cp)
 		}
 	}
 	printf("dc%d at nexus0 csr 0x%x priority %d\n",
-		cp->pmax_unit, cp->pmax_addr, cp->pmax_pri);
+		unit, addr, priority);
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.6 1995/07/22 05:04:46 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.7 1995/08/04 00:26:46 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,6 +108,9 @@
 #include <dtop.h>
 #include <scc.h>
 
+#include <sys/device.h>
+#include <machine/autoconf.h>
+
 #define PMAX	/* enable /dev/pm compatibility */
 
 /*
@@ -119,17 +122,20 @@ struct pmax_fb cfbfb;
 /*
  * Forward references.
  */
-static void cfbScreenInit();
-static void cfbLoadCursor();
-static void cfbRestoreCursorColor();
-static void cfbCursorColor();
-void cfbPosCursor();
-static void cfbInitColorMap();
-static void cfbLoadColorMap();
+extern struct cfdriver cfb;
+
+static void cfbScreenInit __P(());
+static void cfbLoadCursor __P((u_short *ptr));
+static void cfbRestoreCursorColor __P(());
+static void cfbCursorColor __P((u_int *color));
+void cfbPosCursor __P((int x, int y));
+static void cfbInitColorMap __P(());
+static void cfbLoadColorMap __P ((ColorMap *ptr));
 static void bt459_set_cursor_ram(), bt459_video_on(), bt459_video_off();
 static void bt459_select_reg(), bt459_write_reg();
 static u_char bt459_read_reg();
 static void cfbConfigMouse(), cfbDeconfigMouse();
+
 
 void cfbKbdEvent(), cfbMouseEvent(), cfbMouseButtons();
 #if NDC > 0
@@ -151,10 +157,14 @@ extern int pmax_boardtype;
 extern u_short defCursor[32];
 extern struct consdev cn_tab;
 
+/*
+ * Autoconfiguration data for config.old
+ */
 int	cfbprobe();
 struct	driver cfbdriver = {
 	"cfb", cfbprobe, 0, 0,
 };
+
 
 #define	CFB_OFFSET_VRAM		0x0		/* from module's base */
 #define CFB_OFFSET_BT459	0x200000	/* Bt459 registers */
@@ -162,6 +172,61 @@ struct	driver cfbdriver = {
 #define CFB_OFFSET_ROM		0x380000	/* Diagnostic ROM */
 #define CFB_OFFSET_RESET	0x3c0000	/* Bt459 resets on writes */
 #define CFB_FB_SIZE		0x100000	/* frame buffer size */
+
+/*
+ * Autoconfiguration data for config.new.
+ * Use static-sized softc until config.old and old autoconfig
+ * code is completely gone.
+ */
+
+int cfbmatch __P((struct device *, void *, void *));
+void cfbattach __P((struct device *, struct device *, void *));
+
+struct cfdriver cfbcd = {
+	NULL, "cfb", cfbmatch, cfbattach, DV_DULL, sizeof(struct device), 0
+};
+
+int
+cfbmatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+	struct confargs *ca = aux;
+	static int ncfbs = 1;
+
+	/* make sure that we're looking for this type of device. */
+	if (!BUS_MATCHNAME(ca, "PMAG-BA "))
+		return (0);
+
+#ifdef notyet
+	/* if it can't have the one mentioned, reject it */
+	if (cf->cf_unit >= ncfbs)
+		return (0);
+#endif
+	return (1);
+}
+
+void
+cfbattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	if (!cfbinit(BUS_CVTADDR(ca)))
+		return;
+
+	/* no interrupts for CFB */
+	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	return;
+}
+
+
+
+/* old-style autoconfig code */
 
 /*
  * Test to see if device is present.
@@ -172,11 +237,22 @@ cfbprobe(cp)
 	register struct pmax_ctlr *cp;
 {
 	register struct pmax_fb *fp = &cfbfb;
+#ifdef NEWCONF
+	return 0;
+#else
+
+	if (fp->initialized) {
+		printf("cfb: %x: already have one display\n", cp->pmax_addr);
+		return(0);
+	}
+
 
 	if (!fp->initialized && !cfbinit(cp->pmax_addr))
+	
 		return (0);
 	printf("cfb0 (color display)\n");
 	return (1);
+#endif
 }
 
 /*ARGSUSED*/
