@@ -32,8 +32,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: from: @(#)glob.3	8.1 (Berkeley) 6/9/93
-.\"	$Id: glob.3,v 1.5 1993/11/25 02:49:00 jtc Exp $
-.\"	$Id: glob.3,v 1.5 1993/11/25 02:49:00 jtc Exp $
+.\"	$Id: glob.3,v 1.6 1993/11/30 21:52:53 jtc Exp $
+.\"	$Id: glob.3,v 1.6 1993/11/30 21:52:53 jtc Exp $
 .\"
 .Dd June 9, 1993
 .Dt GLOB 3
@@ -361,9 +361,10 @@ are undefined.
 .Pp
 If
 .Fn glob
-terminates due to an error, it sets errno and returns one of the
-following non-zero constants, which are defined in the include
-file
+terminates due to an error, it sets 
+.Va errno 
+and returns one of the following non-zero constants, which are defined 
+in the include file
 .Aq Pa glob.h :
 .Bl -tag -width GLOB_NOCHECK
 .It Dv GLOB_NOSPACE
@@ -436,9 +437,9 @@ may cause unchecked errors.
 .Pp
 The
 .Fn glob
-argument
-may fail and set errno for any of the errors specified for the
-library routines
+function may fail and set 
+.Va errno 
+for any of the errors specified for the library routines
 .Xr stat 2 ,
 .Xr closedir 3 ,
 .Xr opendir 3 ,
