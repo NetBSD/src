@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2004/08/05 13:31:38 cube Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2004/10/20 04:20:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2004/08/05 13:31:38 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2004/10/20 04:20:05 thorpej Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -167,8 +167,8 @@ char bootinfo[BOOTINFO_MAXSIZE];
 struct cpu_info cpu_info_primary;
 struct cpu_info *cpu_info_list;
 
-struct bi_devmatch *x86_64_alldisks = NULL;
-int x86_64_ndisks = 0;
+extern struct bi_devmatch *x86_alldisks;
+extern int x86_ndisks;
 
 #ifdef CPURESET_DELAY
 int	cpureset_delay = CPURESET_DELAY;
@@ -377,13 +377,13 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 {
         struct sysctlnode node;
 
-	if (x86_64_alldisks == NULL)
+	if (x86_alldisks == NULL)
 		return (ENOENT);
 
         node = *rnode;
-        node.sysctl_data = x86_64_alldisks;
+        node.sysctl_data = x86_alldisks;
         node.sysctl_size = sizeof(struct disklist) +
-	    (x86_64_ndisks - 1) * sizeof(struct nativedisk_info);
+	    (x86_ndisks - 1) * sizeof(struct nativedisk_info);
         return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
