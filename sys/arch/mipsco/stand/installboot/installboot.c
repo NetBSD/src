@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 2000/09/26 10:00:19 wdk Exp $	*/
+/*	$NetBSD: installboot.c,v 1.2 2001/02/20 23:59:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,12 +73,11 @@ int verbose, nowrite;
 static void
 usage()
 {
-	extern char *__progname;
 
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-nv] disk bootstrap [name]\n", __progname);
-	fprintf(stderr, "\t%s -r [-nv] disk [name]\n", __progname);
-	fprintf(stderr, "\t%s -l [-nv] disk\n", __progname);
+	fprintf(stderr, "\t%s [-nv] disk bootstrap [name]\n", getprogname());
+	fprintf(stderr, "\t%s -r [-nv] disk [name]\n", getprogname());
+	fprintf(stderr, "\t%s -l [-nv] disk\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 

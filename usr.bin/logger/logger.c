@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.7 2000/09/21 10:17:24 ad Exp $	*/
+/*	$NetBSD: logger.c,v 1.8 2001/02/20 23:52:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.7 2000/09/21 10:17:24 ad Exp $");
+__RCSID("$NetBSD: logger.c,v 1.8 2001/02/20 23:52:26 cgd Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -182,10 +182,9 @@ decode(const char *name, const CODE *codetab)
 void
 usage(void)
 {
-	extern const char *__progname;
 
 	(void)fprintf(stderr,
 	    "%s: [-is] [-f file] [-p pri] [-t tag] [ message ... ]\n",
-	    __progname);
+	    getprogname());
 	exit(EXIT_FAILURE);
 }

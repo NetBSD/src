@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.1 2000/10/24 23:54:31 thorpej Exp $	*/
+/*	$NetBSD: pmc.c,v 1.2 2001/02/20 23:55:12 cgd Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -226,12 +226,11 @@ list_pmc_names(void)
 static void
 usage(void)
 {
-	extern const char *__progname;
 
 	fprintf(stderr, "Usage: %s -h\n"
 			"       %s -C\n"
 			"       %s -c <event> command [options] ...\n",
-	    __progname, __progname, __progname);
+	    getprogname(), getprogname(), getprogname());
 	exit(1);
 }
 

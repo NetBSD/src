@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.25 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.26 2001/02/21 00:03:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -383,10 +383,9 @@ cmphdr(const char *tfname, const char *nfname)
 static int
 herr(const char *what, const char *fname, FILE *fp)
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr, "%s: error %sing %s: %s\n",
-	    __progname, what, fname, strerror(errno));
+	    getprogname(), what, fname, strerror(errno));
 	if (fp)
 		(void)fclose(fp);
 	return (1);

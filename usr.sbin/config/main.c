@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2001/01/16 02:43:37 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2001/02/21 00:03:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,7 +99,7 @@ void	defopt(struct hashtab *ht, const char *fname,
 int badfilename(const char *fname);
 
 #ifdef	MAKE_BOOTSTRAP
-char *__progname;
+const char *progname;
 #endif
 
 int
@@ -109,9 +109,7 @@ main(int argc, char **argv)
 	const char *last_component;
 	int pflag, ch;
 
-#ifdef	MAKE_BOOTSTRAP
-	__progname = argv[0];
-#endif
+	setprogname(argv[0]);
 
 	pflag = 0;
 	while ((ch = getopt(argc, argv, "Dgpvb:s:")) != -1) {
