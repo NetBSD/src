@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.65 2004/12/22 17:16:08 christos Exp $	*/
+/*	$NetBSD: w.c,v 1.66 2004/12/22 17:20:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.65 2004/12/22 17:16:08 christos Exp $");
+__RCSID("$NetBSD: w.c,v 1.66 2004/12/22 17:20:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,6 +148,8 @@ main(int argc, char **argv)
 #endif
 	const char *progname;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
+
+	setprogname(argv[0]);
 
 	/* Are we w(1) or uptime(1)? */
 	progname = getprogname();
@@ -608,8 +610,9 @@ usage(int wcmd)
 
 	if (wcmd)
 		(void)fprintf(stderr,
-		    "usage: w: [-hin] [-M core] [-N system] [user]\n");
+		    "Usage: %s [-hinw] [-M core] [-N system] [user]\n",
+		    getprogname());
 	else
-		(void)fprintf(stderr, "uptime\n");
+		(void)fprintf(stderr, "Usage: %s\n", getprogname());
 	exit(1);
 }
