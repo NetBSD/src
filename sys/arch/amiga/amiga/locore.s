@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.77 1997/04/09 19:29:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.78 1997/04/13 02:37:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1091,33 +1091,10 @@ _proc_trampoline:
 	addql	#8,sp			| pop sp and stack adjust
 	jra	rei			| all done
 
-
 /*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
- *
- * Stack looks like:
- *
- *	sp+0 ->	signal number
- *	sp+4	signal specific code
- *	sp+8	pointer to signal context frame (scp)
- *	sp+12	address of handler
- *	sp+16	saved hardware state
- *			.
- *			.
- *	scp+0->	beginning of signal context frame
+ * Use common m68k sigcode.
  */
-	.globl	_sigcode, _esigcode
-	.data
-_sigcode:
-	movl	sp@(12),a0		| signal handler addr	(4 bytes)
-	jsr	a0@			| call signal handler	(2 bytes)
-	addql	#4,sp			| pop signo		(2 bytes)
-	trap	#1			| special syscall entry	(2 bytes)
-	movl	d0,sp@(4)		| save errno		(4 bytes)
-	moveq	#1,d0			| syscall == exit	(2 bytes)
-	trap	#0			| exit(errno)		(2 bytes)
-	.align	2
-_esigcode:
+#include <m68k/m68k/sigcode.s>
 
 /*
  * Primitives
