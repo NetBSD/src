@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.14 1998/12/30 03:52:30 augustss Exp $
+$NetBSD: usbdevs,v 1.15 1999/01/03 01:12:41 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ product NANAO HUB		0x0000	hub
 product NANAO MONITOR		0x0001	monitor
 
 /* Unixtar products */
-product UNIXTAR UTUSB41		0x1446	UT-USB41
+product UNIXTAR UTUSB41		0x1446	UT-USB41 hub
 
 /* Genius products */
 product GENIUS NICHE		0x0001	Niche mouse
@@ -155,7 +155,7 @@ product ADS ENET		0x0008	Ethernet adapter
 product PLX TESTBOARD		0x9060	test board
 
 /* Inside Out Networks products */
-product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4
+product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
 
 /* Intel products */
 product INTEL TESTBOARD		0x9890	82930 test board
