@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.2 1997/09/17 18:10:51 drochner Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.3 1998/02/19 14:15:38 drochner Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -59,18 +59,23 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/asm.h>
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
+#include <machine/disklabel.h>
 
 #include "bbinfo.h"
 
 BOOTSEG		=	0x0100	# boot will be loaded here (below 640K)
 BOOTSTACK	=	0xfffc	# boot stack
-SIGNATURE	=	0xaa55
-LOADSZ		=	PRIM_LOADSZ	# size of unix boot
-PARTSTART	=	0x1be	# starting address of partition table
-NUMPART		=	4	# number of partitions in partition table
-PARTSZ		=	16	# each partition table entry is 16 bytes
-BSDPART		=	0xA5	# value of boot_ind, means bootable partition
-BOOTABLE	=	0x80	# value of boot_ind, means bootable partition
+LOADSZ		=	PRIM_LOADSZ	# size of first loaded chunk
+
+SIGNATURE		=	0xaa55
+PARTSTART		=	DOSPARTOFF	# starting address of partition table
+NUMPART		=	NDOSPART	# number of partitions in partition table
+PARTSZ		=	16	# sizeof(struct dos_partition)
+NETBSDPART	=	DOSPTYP_NETBSD
+#ifdef COMPAT_386BSD_MBRPART
+OLDBSDPART	= 	DOSPTYP_386BSD
+#endif
+BOOTABLE		=	0x80	# value of dp_flag, means bootable partition
 
 	.text
 _boot1:
@@ -112,7 +117,7 @@ fd:
 	data32
 	jmp	load
 
-hd:	/**** load sector 0 into the BOOTSEG ****/
+hd:	/**** load sector 0 (DOSBBSECTOR) into the BOOTSEG ****/
 	data32
 	movl	$0x0201, %eax
 	xorl	%ebx, %ebx	# %bx = 0
@@ -125,21 +130,41 @@ hd:	/**** load sector 0 into the BOOTSEG ****/
 	data32
 	jb	read_error
 
-	/***# find the first 386BSD partition *****/
+	/***# find the first NetBSD partition *****/
 	data32
 	movl	$PARTSTART, %ebx
 	data32
 	movl	$NUMPART, %ecx
 again:
 	addr32
-	movb    %es:4(%ebx), %al
-	cmpb	$BSDPART, %al
+	movb    %es:4(%ebx), %al	/* dp_typ */
+	cmpb	$NETBSDPART, %al
 	data32
 	je	found
 	data32
 	addl	$PARTSZ, %ebx
 	data32
 	loop	again
+
+#ifdef COMPAT_386BSD_MBRPART
+	/* didn't find a NetBSD partition, look for a 386BSD one */
+	data32
+	movl	$PARTSTART, %ebx
+	data32
+	movl	$NUMPART, %ecx
+again1:
+	addr32
+	movb    %es:4(%ebx), %al	/* dp_typ */
+	cmpb	$OLDBSDPART, %al
+	data32
+	je	found
+	data32
+	addl	$PARTSZ, %ebx
+	data32
+	loop	again1
+#endif
+
+	/* didn't find either NetBSD or 386BSD partitions */
 	data32
 	movl	$enoboot, %esi
 	data32
@@ -161,9 +186,9 @@ again:
 
 found:
 	addr32
-	movb	%es:1(%ebx), %dh /* head */
+	movb	%es:1(%ebx), %dh /* head: dp_sdh */
 	addr32
-	movl	%es:2(%ebx), %ecx /*sect, cyl (+ 2 bytes junk in top word) */
+	movl	%es:2(%ebx), %ecx /*sect, cyl: dp_ssect + (dp_scyl << 8)*/
 
 load:
 	movb	$0x2, %ah	/* function 2 */
@@ -272,13 +297,8 @@ bootcodeseg = . - gdt
 
 	/* boot data segment, will be patched */
 bootdataseg = . - gdt
-#ifdef HEAP_BELOW_64K
-	.word	0xffff, 0
-	.byte	0, 0x92, 0x00, 0
-#else
 	.word	0xffff, 0
 	.byte	0, 0x92, 0x0f, 0
-#endif
 
 	/* 16 bit real mode, will be patched */
 bootrealseg = . - gdt
@@ -348,7 +368,7 @@ endofcode:
 	.long	0,0
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
-	.byte	BOOTABLE,0,1,0,BSDPART,255,255,255
+	.byte	BOOTABLE,0,1,0,NETBSDPART,255,255,255
 	.long	0,50000
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = _C_LABEL(boot1) + 0x1fe
