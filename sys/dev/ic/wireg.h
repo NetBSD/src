@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.20 2002/03/15 13:15:36 martin Exp $	*/
+/*	$NetBSD: wireg.h,v 1.21 2002/03/31 03:36:15 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -607,15 +607,15 @@ struct wi_scan_data {
 };
 
 /*
- * Hermes transmit/receive frame structure
+ * transmit/receive frame structure (Max2304byte)
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
-	u_int16_t		wi_rsvd0;	/* 0x02 */
-	u_int16_t		wi_rsvd1;	/* 0x04 */
+	u_int16_t		wi_rsvd0;	/* 0x02 */ /* 0 */
+	u_int16_t		wi_rsvd1;	/* 0x04 */ /* 0 */
 	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_rsvd2;	/* 0x08 */
-	u_int16_t		wi_rsvd3;	/* 0x0A */
+	u_int16_t		wi_txrate;	/* 0x08 */ /* (Prism2 Only) */
+	u_int16_t		wi_retcount;	/* 0x0A */ /* (Prism2 Only) */
 	u_int16_t		wi_tx_ctl;	/* 0x0C */
 	u_int16_t		wi_frame_ctl;	/* 0x0E */
 	u_int16_t		wi_id;		/* 0x10 */
@@ -635,7 +635,9 @@ struct wi_frame {
 #define WI_802_3_OFFSET		0x2E
 #define WI_802_11_OFFSET	0x44
 #define WI_802_11_OFFSET_RAW	0x3C
+#define	WI_802_11_OFFSET_HDR	0x0E
 
+/* Status Field */
 #define WI_STAT_BADCRC		0x0001
 #define WI_STAT_UNDECRYPTABLE	0x0002
 #define WI_STAT_ERRSTAT		0x0003
@@ -643,15 +645,22 @@ struct wi_frame {
 #define WI_STAT_1042		0x2000	/* RFC1042 encoded */
 #define WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
 #define WI_STAT_WMP_MSG		0x6000	/* WaveLAN-II management protocol */
+#define	WI_STAT_MGMT		0x8000	/* 802.11b management frames */
 #define WI_RXSTAT_MSG_TYPE	0xE000
 
 #define WI_ENC_TX_802_3		0x00
 #define WI_ENC_TX_802_11	0x11
+#define	WI_ENC_TX_MGMT		0x08
 #define WI_ENC_TX_E_II		0x0E
 
 #define WI_ENC_TX_1042		0x00
 #define WI_ENC_TX_TUNNEL	0xF8
 
+/* TxControl Field (enhanced) */
+#define	WI_TXCNTL_TX_OK		0x0002
+#define	WI_TXCNTL_TX_EX		0x0004
+#define	WI_TXCNTL_ALTRTRY	0x0020
+#define	WI_TXCNTL_NOCRYPT	0x0080
 #define WI_TXCNTL_MACPORT	0x00FF
 #define WI_TXCNTL_STRUCTTYPE	0xFF00
 
