@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.1 1997/06/11 11:21:51 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.2 1997/07/10 04:52:39 mikel Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1.c,v 1.1 1997/06/11 11:21:51 bouyer Exp $";
+static char rcsid[] = "$NetBSD: pass1.c,v 1.2 1997/07/10 04:52:39 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ checkinode(inumber, idesc)
 	if (/* dp->di_size < 0 || */
 	    dp->e2di_size + sblock.e2fs_bsize - 1 < dp->e2di_size) {
 		if (debug)
-			printf("bad size %qu:", dp->e2di_size);
+			printf("bad size %lu:", (u_long)dp->e2di_size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
@@ -178,8 +178,8 @@ checkinode(inumber, idesc)
 	ndb = howmany(dp->e2di_size, sblock.e2fs_bsize);
 	if (ndb < 0) {
 		if (debug)
-			printf("bad size %qu ndb %d:",
-				dp->e2di_size, ndb);
+			printf("bad size %lu ndb %d:",
+			    (u_long)dp->e2di_size, ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
