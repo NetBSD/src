@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3 2003/03/15 07:50:28 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.4 2003/03/15 19:51:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -122,7 +122,8 @@ int intrdebug = 0;
 #define ILLEGAL_IRQ(x) (((x) < 0) || ((x) >= NIRQ) || \
 		 ((1<<((x)&IMASK_BITMASK)) & imres[(x)>>IMASK_WORDSHIFT]))
 
-struct powerpc_bus_space gt_mem_bs_tag; 
+extern struct powerpc_bus_space gt_mem_bs_tag; 
+extern bus_space_handle_t gt_memh; 
 extern int safepri;
 
 struct intrsource {
@@ -475,10 +476,10 @@ write_intr_mask(volatile imask_t *imp)
 	lo |= IML_SUM;
 	hi |= IMH_GPP_SUM;
 
-	bus_space_write_4(&gt_mem_bs_tag, gt_handle, ICR_CIM_LO, lo);
-	bus_space_write_4(&gt_mem_bs_tag, gt_handle, ICR_CIM_HI, hi);
-	bus_space_write_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Interrupt_Mask, gpp);
-	(void)bus_space_read_4(&gt_mem_bs_tag, gt_handle,
+	bus_space_write_4(&gt_mem_bs_tag, gt_memh, ICR_CIM_LO, lo);
+	bus_space_write_4(&gt_mem_bs_tag, gt_memh, ICR_CIM_HI, hi);
+	bus_space_write_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Interrupt_Mask, gpp);
+	(void)bus_space_read_4(&gt_mem_bs_tag, gt_memh,
 	    GT_GPP_Interrupt_Mask);	/* R.A.W. */
 }
 
@@ -559,19 +560,19 @@ ext_intr_cause(
 	u_int32_t gpp = 0;
 	u_int32_t gpp_v;
 
-	lo = bus_space_read_4(&gt_mem_bs_tag, gt_handle, ICR_MIC_LO);
+	lo = bus_space_read_4(&gt_mem_bs_tag, gt_memh, ICR_MIC_LO);
 	lo &= ~((*imresp)[IMASK_ICU_LO] | (*impendp)[IMASK_ICU_LO]);
 	(*imenp)[IMASK_ICU_LO] &= ~lo;
 
-	hi = bus_space_read_4(&gt_mem_bs_tag, gt_handle, ICR_MIC_HI);
+	hi = bus_space_read_4(&gt_mem_bs_tag, gt_memh, ICR_MIC_HI);
 
 	if (hi & IMH_GPP_SUM) {
-		gpp = bus_space_read_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Interrupt_Cause);
+		gpp = bus_space_read_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Interrupt_Cause);
 		gpp &= ~(*imresp)[IMASK_ICU_GPP];
-		bus_space_write_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Interrupt_Cause, ~gpp);
+		bus_space_write_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Interrupt_Cause, ~gpp);
 	}
 
-	gpp_v = bus_space_read_4(&gt_mem_bs_tag, gt_handle, GT_GPP_Value);
+	gpp_v = bus_space_read_4(&gt_mem_bs_tag, gt_memh, GT_GPP_Value);
 	KASSERT((gpp_intrtype_level_mask & (*imresp)[IMASK_ICU_GPP]) == 0);
 	gpp_v &= (gpp_intrtype_level_mask & (*imenp)[IMASK_ICU_GPP]);
 
