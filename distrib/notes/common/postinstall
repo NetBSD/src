@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9.4.9 2001/05/09 20:03:13 he Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.10 2001/05/15 22:38:58 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,10 @@ prompt. If you are asked for a terminal type, respond with
 .Ic hp300h
 for a local console, or whatever is appropriate for your serial console.
 .\}
+.el .ie r_macppc \{\
+.Ic vt100
+(or whatever is appropriate for your terminal type)
+.\}
 .el .ie r_pmax \{\
 the correct terminal type as discussed in the
 .Sx Once you've booted the diskimage
@@ -81,7 +85,9 @@ and press
 At this point, you need to configure at least
 one file in the
 .Pa /etc
-directory. Change to the
+directory. You will need to mount your root filesystem read/write with:
+.Dl # Ic "/sbin/mount -u -w /"
+Change to the
 .Pa /etc
 directory and take a look at the
 .Pa /etc/rc.conf
@@ -109,6 +115,7 @@ Do the following:
 .Pp
 .Dl # Ic "mount /usr"
 .ie     r_hp300 .Dl # Ic "export TERM=hp300h"
+.el .ie r_macppc .Dl # Ic "export TERM=vt100"
 .el .ie r_pmax  .Dl # Ic "export TERM=termtype"
 .el .ie r_sparc .Dl # Ic "export TERM=sun"
 .el             .Dl # Ic "export TERM=vt220"
@@ -217,6 +224,13 @@ The X Window System
 If you have installed the X Window System, look at the files in
 .Pa /usr/X11R6/lib/X11/doc
 for information.
+.if \n[macppc] \{\
+Also, you may want to read through the 
+.Nx*M
+X11R6 HOW-TO.
+.br
+.Lk http://www.netbsd.org/Ports/macppc/x11.html
+.\}
 .if \n[arm32]:\n[i386] \{\
 .Pp
 You will need to set up a configuration file, see
