@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.4 2001/12/17 05:41:12 mhitch Exp $ */
+/* $NetBSD: console.c,v 1.5 2002/01/26 13:18:58 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ getchar()
 		}
 		WaitIO((struct AmigaIO *)mc->tmior);
 		timelimit = 0;
-	} 
+	}
 	(void)WaitIO(mc->cnior);
 	return c;
 }
