@@ -1,8 +1,9 @@
-/*	$NetBSD: trap.c,v 1.66 1995/01/15 01:15:04 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 1995/01/15 03:29:05 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
 /*-
+ * Copyright (c) 1995 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -231,15 +232,15 @@ trap(frame)
 		 */
 		switch (*(u_char *)frame.tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)(frame.tf_esp - 44);
+			vframe = (void *)((int)&frame.tf_esp - 44);
 			resume = (int)resume_iret;
 			break;
 		case 0x1f:	/* popl %ds */
-			vframe = (void *)(frame.tf_esp - 4);
+			vframe = (void *)((int)&frame.tf_esp - 4);
 			resume = (int)resume_pop_ds;
 			break;
 		case 0x07:	/* popl %es */
-			vframe = (void *)(frame.tf_esp - 0);
+			vframe = (void *)((int)&frame.tf_esp - 0);
 			resume = (int)resume_pop_es;
 			break;
 		default:
