@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.9 2002/04/29 02:06:14 rafal Exp $	*/
+/*	$NetBSD: ip22.c,v 1.10 2002/05/02 18:00:40 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -27,6 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cputype.h"
 #include "opt_machtypes.h"
 
 #ifdef IP22
@@ -174,8 +175,8 @@ ip22_init(void)
 
 	printf("Timer calibration, got %lu cycles (%lu, %lu, %lu)\n", cps,
 				ctrdiff[0], ctrdiff[1], ctrdiff[2]);
-	printf("CPU clock speed = %lu.%02luMhz\n", cps / (1000000 / hz),
-						(cps % (1000000 / hz) / 100));
+	printf("CPU clock speed = %lu.%02luMhz\n", (2 * cps) / (1000000 / hz),
+					((2 * cps) % (1000000 / hz) / 100));
 
 	platform.clkread = ip22_clkread;
 
@@ -465,11 +466,22 @@ ip22_cache_init(struct device *self)
 	/*
 	 * If we don't have an R4000-style cache, then initialize the
 	 * IP22 SysAD L2 cache.
+	 *
+	 * XXX: For now we disable the SysAD cache on R4600/R5k systems,
+	 * as there's no code to drive it; also make sure to clear the
+	 * flags used by the generic MIPS code so it doesn't attempt to
+	 * use the L2.
 	 */
-	if (mips_sdcache_line_size == 0) {
-		/* XXX */
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	case MIPS_R4600:
+#ifndef ENABLE_MIPS_R3NKK
+	case MIPS_R5000:
+#endif
+		mips_sdcache_size = 0;
+		mips_sdcache_line_size = 0;
 		printf("%s: disabling IP22 SysAD L2 cache\n", self->dv_xname);
 		ip22_sdcache_disable();
+		break;
 	}
 }
 
