@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.2 1997/03/27 17:25:49 christos Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.3 1997/10/17 10:18:41 lukem Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -31,20 +31,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: lastlogin.c,v 1.3 1997/10/17 10:18:41 lukem Exp $");
+#endif
+
 #include <sys/types.h>
-#include <utmp.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
 #include <pwd.h>
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <utmp.h>
 
 extern	char *__progname;
 static	char *logfile = _PATH_LASTLOG;
 
-static void output __P((struct passwd *, struct lastlog *));
-static void usage __P((void));
+	int	main __P((int, char **));
+static	void	output __P((struct passwd *, struct lastlog *));
+static	void	usage __P((void));
 
 int
 main(argc, argv)

@@ -1,5 +1,5 @@
 .\"
-.\"	$NetBSD: mdconfig.8,v 1.2 1997/01/02 00:22:44 pk Exp $
+.\"	$NetBSD: mdconfig.8,v 1.3 1997/10/17 10:24:17 lukem Exp $
 .\"
 .\" Copyright (c) 1995 Gordon W. Ross
 .\" All rights reserved.
@@ -33,26 +33,27 @@
 .Nm mdconfig
 .Nd configure MEMORY disks
 .Sh SYNOPSIS
-.Nm mdconfig Fl c
+.Nm
+.Fl c
 .Op Fl v
 .Ar special_file
 .Ar 512-byte-blocks
 .Sh DESCRIPTION
 The
-.Nm mdconfig
+.Nm
 command configures memory disk devices.
 It will associate the special file 
 .Ar special_file
 with a range of user-virtual memory allocated by the
-.Nm mdconfig
+.Nm
 process itself.  The
-.Nm mdconfig
+.Nm
 command should be run in the background.
 If successful, the command will not return.
 Otherwise, an error message will be printed.
 .Pp
 To "unconfigure" the memory disk, just kill the background
-.Nm mdconfig
+.Nm
 process started earlier.
 .Sh FILES
 .Bl -tag -width /etc/rmd?? -compact
@@ -68,7 +69,7 @@ Configures the memory disk
 with one megabyte of user-space memory.
 .Sh BUGS
 The special device will become inoperative if the
-.Nm mdconfig
+.Nm
 process is killed while the special device is open.
 .Sh SEE ALSO
 .Xr swapon 8 ,
