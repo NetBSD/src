@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.27 2004/03/08 01:55:14 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.28 2004/03/08 01:59:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -118,14 +118,14 @@ struct RF_Raid_s {
 	RF_RaidDisk_t *Disks;	/* all information related to physical disks */
 	RF_DiskQueue_t *Queues;/* all information related to disk queues */
 	const RF_DiskQueueSW_t *qType;/* pointer to the DiskQueueSW used for the
-				   component queues. */
+					 component queues. */
 	/* NOTE:  This is an anchor point via which the queues can be
 	 * accessed, but the enqueue/dequeue routines in diskqueue.c use a
 	 * local copy of this pointer for the actual accesses. */
 	/* The remainder of the structure can change, and therefore requires
 	 * locking on reads and updates */
-	        RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
-					 * the fields below */
+	RF_DECLARE_MUTEX(mutex)	/* mutex used to serialize access to
+				 * the fields below */
 	RF_RowStatus_t status;	/* the status of each row in the array */
 	int     valid;		/* indicates successful configuration */
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
@@ -180,7 +180,7 @@ struct RF_Raid_s {
 	RF_HeadSepLimit_t headSepLimit;
 	int     numFloatingReconBufs;
 	int     reconInProgress;
-	        RF_DECLARE_COND(waitForReconCond)
+	RF_DECLARE_COND(waitForReconCond)
 	RF_RaidReconDesc_t *reconDesc;	/* reconstruction descriptor */
 	RF_ReconCtrl_t *reconControl;	/* reconstruction control structure
 					 * pointers for each row in the array */
