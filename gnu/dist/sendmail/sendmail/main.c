@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.\n\
      Copyright (c) 1988, 1993\n\
@@ -21,7 +21,7 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: main.c,v 8.485.4.19 2000/06/29 01:31:02 gshapiro Exp";
+static char id[] = "@(#)Id: main.c,v 8.485.4.44 2001/02/08 14:06:55 ca Exp";
 #endif /* ! lint */
 
 #define	_DEFINE
@@ -99,6 +99,7 @@ static sasl_callback_t srvcallbacks[] =
 	{	SASL_CB_PROXY_POLICY,	&proxy_policy,	NULL	},
 	{	SASL_CB_LIST_END,	NULL,		NULL	}
 };
+
 #endif /* SASL */
 
 int SubmitMode;
@@ -134,6 +135,9 @@ main(argc, argv, envp)
 	char jbuf[MAXHOSTNAMELEN];	/* holds MyHostName */
 	static char rnamebuf[MAXNAME];	/* holds RealUserName */
 	char *emptyenviron[1];
+# if STARTTLS
+	bool tls_ok;
+# endif /* STARTTLS */
 	QUEUE_CHAR *new;
 	extern int DtableSize;
 	extern int optind;
@@ -307,7 +311,6 @@ main(argc, argv, envp)
 #  endif /* LOG_MAIL */
 #endif /* LOG */
 	}
-
 
 	/* set up the blank envelope */
 	BlankEnvelope.e_puthdr = putheader;
@@ -621,6 +624,10 @@ main(argc, argv, envp)
 			setclass('w', ipbuf);
 		}
 #endif /* NETINET || NETINET6 */
+#if _FFR_FREEHOSTENT && NETINET6
+		freehostent(hp);
+		hp = NULL;
+#endif /* _FFR_FREEHOSTENT && NETINET6 */
 	}
 
 	/* current time */
@@ -697,13 +704,13 @@ main(argc, argv, envp)
 			break;
 
 		  case 'B':	/* body type */
-			CurEnv->e_bodytype = optarg;
+			CurEnv->e_bodytype = newstr(optarg);
 			break;
 
 		  case 'C':	/* select configuration file (already done) */
 			if (RealUid != 0)
 				warn_C_flag = TRUE;
-			ConfFile = optarg;
+			ConfFile = newstr(optarg);
 			dp = drop_privileges(TRUE);
 			setstat(dp);
 			safecf = FALSE;
@@ -1055,7 +1062,8 @@ main(argc, argv, envp)
 
 	/* set up the $=m class now, after .cf has a chance to redefine $m */
 	expand("\201m", jbuf, sizeof jbuf, CurEnv);
-	setclass('m', jbuf);
+	if (jbuf[0] != '\0')
+		setclass('m', jbuf);
 
 	/* probe interfaces and locate any additional names */
 	if (!DontProbeInterfaces)
@@ -1224,8 +1232,10 @@ main(argc, argv, envp)
 		/* full names can't have newlines */
 		if (strchr(FullName, '\n') != NULL)
 		{
-			FullName = full = newstr(denlstring(FullName, TRUE, TRUE));
+			full = newstr(denlstring(FullName, TRUE, TRUE));
+			FullName = full;
 		}
+
 		/* check for characters that may have to be quoted */
 		if (!rfc822_string(FullName))
 		{
@@ -1234,6 +1244,7 @@ main(argc, argv, envp)
 			**  as a comment so crackaddr() doesn't destroy
 			**  the name portion of the address.
 			*/
+
 			FullName = addquotes(FullName);
 			if (full != NULL)
 				free(full);
@@ -1288,10 +1299,13 @@ main(argc, argv, envp)
 
 	/* our name for SMTP codes */
 	expand("\201j", jbuf, sizeof jbuf, CurEnv);
-	MyHostName = jbuf;
-	if (strchr(jbuf, '.') == NULL)
+	if (jbuf[0] == '\0')
+		MyHostName = newstr("localhost");
+	else
+		MyHostName = jbuf;
+	if (strchr(MyHostName, '.') == NULL)
 		message("WARNING: local host name (%s) is not qualified; fix $j in config file",
-			jbuf);
+			MyHostName);
 
 	/* make certain that this name is part of the $=w class */
 	setclass('w', MyHostName);
@@ -1451,6 +1465,7 @@ main(argc, argv, envp)
 		milter_parse_list(InputFilterList, InputFilters, MAXFILTERS);
 #endif /* _FFR_MILTER */
 
+
 	/* if we've had errors so far, exit now */
 	if (ExitStat != EX_OK && OpMode != MD_TEST)
 		finis(FALSE, ExitStat);
@@ -1536,6 +1551,15 @@ main(argc, argv, envp)
 	{
 		char buf[MAXLINE];
 
+#if _FFR_TESTMODE_DROP_PRIVS
+		dp = drop_privileges(TRUE);
+		if (dp != EX_OK)
+		{
+			CurEnv->e_id = NULL;
+			finis(TRUE, dp);
+		}
+#endif /* _FFR_TESTMODE_DROP_PRIVS */
+
 		if (isatty(fileno(stdin)))
 			Verbose = 2;
 
@@ -1577,7 +1601,7 @@ main(argc, argv, envp)
 #  endif /* 0 */
 
 	/* initialize PRNG */
-	tls_rand_init(RandFile, 7);
+	tls_ok = tls_rand_init(RandFile, 7);
 
 # endif /* STARTTLS */
 #endif /* SMTP */
@@ -1591,6 +1615,8 @@ main(argc, argv, envp)
 	{
 # if SMTP
 #  if STARTTLS
+		if (tls_ok
+		   )
 		{
 			/* init TLS for client, ignore result for now */
 			(void) initclttls();
@@ -1601,6 +1627,16 @@ main(argc, argv, envp)
 		finis(TRUE, ExitStat);
 	}
 #endif /* QUEUE */
+
+# if SASL
+	if (OpMode == MD_SMTP || OpMode == MD_DAEMON)
+	{
+		/* give a syserr or just disable AUTH ? */
+		if ((i = sasl_server_init(srvcallbacks, "Sendmail")) != SASL_OK)
+			syserr("!sasl_server_init failed! [%s]",
+			       sasl_errstring(i, NULL, NULL));
+	}
+# endif /* SASL */
 
 	/*
 	**  If a daemon, wait for a request.
@@ -1754,12 +1790,6 @@ main(argc, argv, envp)
 		define(macid("{client_port}", NULL),
 		       newstr(pbuf), &BlankEnvelope);
 
-#if SASL
-		/* give a syserr or just disable AUTH ? */
-		if (sasl_server_init(srvcallbacks, "Sendmail") != SASL_OK)
-			syserr("!sasl_server_init failed!");
-#endif /* SASL */
-
 		if (OpMode == MD_DAEMON)
 		{
 			/* validate the connection */
@@ -1777,6 +1807,8 @@ main(argc, argv, envp)
 		if (OpMode == MD_SMTP)
 			(void) initsrvtls();
 # endif /* STARTTLS */
+
+
 		smtp(nullserver, *p_flags, CurEnv);
 	}
 #endif /* SMTP */
@@ -1830,7 +1862,7 @@ main(argc, argv, envp)
 			}
 			else
 				p = newstr(fv);
-			CurEnv->e_auth_param = newstr(xtextify(p, NULL));
+			CurEnv->e_auth_param = newstr(xtextify(p, "="));
 		}
 	}
 	if (macvalue('s', CurEnv) == NULL)
@@ -1841,6 +1873,7 @@ main(argc, argv, envp)
 		CurEnv->e_to = NULL;
 		CurEnv->e_flags |= EF_GLOBALERRS;
 		HoldErrs = FALSE;
+		SuperSafe = FALSE;
 		usrerr("Recipient names must be specified");
 
 		/* collect body for UUCP return */
@@ -2160,7 +2193,7 @@ struct metamac	MetaMacros[] =
 	/* miscellaneous control characters */
 	{ '&', MACRODEXPAND },
 
-	{ '\0' }
+	{ '\0', '\0' }
 };
 
 #define MACBINDING(name, mid) \
@@ -2174,7 +2207,7 @@ initmacros(e)
 	register struct metamac *m;
 	register int c;
 	char buf[5];
-	extern char *MacroName[256];
+	extern char *MacroName[MAXMACROID + 1];
 
 	for (m = MetaMacros; m->metaname != '\0'; m++)
 	{
@@ -2381,7 +2414,18 @@ auth_warning(e, msg, va_alist)
 		static char hostbuf[48];
 
 		if (hostbuf[0] == '\0')
-			(void) myhostname(hostbuf, sizeof hostbuf);
+		{
+			struct hostent *hp;
+
+			hp = myhostname(hostbuf, sizeof hostbuf);
+#if _FFR_FREEHOSTENT && NETINET6
+			if (hp != NULL)
+			{
+				freehostent(hp);
+				hp = NULL;
+			}
+#endif /* _FFR_FREEHOSTENT && NETINET6 */
+		}
 
 		(void) snprintf(buf, sizeof buf, "%s: ", hostbuf);
 		p = &buf[strlen(buf)];
@@ -2755,6 +2799,11 @@ testmodeline(line, e)
 #if _FFR_ADDR_TYPE
 	define(macid("{addr_type}", NULL), "e r", e);
 #endif /* _FFR_ADDR_TYPE */
+
+	/* skip leading spaces */
+	while (*line == ' ')
+		line++;
+
 	switch (line[0])
 	{
 	  case '#':
@@ -2770,7 +2819,7 @@ testmodeline(line, e)
 		{
 		  case 'D':
 			mid = macid(&line[2], &delimptr);
-			if (mid == '\0')
+			if (mid == 0)
 				return;
 			translate_dollars(delimptr);
 			define(mid, newstr(delimptr), e);
@@ -2781,7 +2830,7 @@ testmodeline(line, e)
 				return;
 
 			mid = macid(&line[2], &delimptr);
-			if (mid == '\0')
+			if (mid == 0)
 				return;
 			translate_dollars(delimptr);
 			expand(delimptr, exbuf, sizeof exbuf, e);
@@ -2887,12 +2936,12 @@ testmodeline(line, e)
 		if (line[1] == '=')
 		{
 			mid = macid(&line[2], NULL);
-			if (mid != '\0')
+			if (mid != 0)
 				stabapply(dump_class, mid);
 			return;
 		}
 		mid = macid(&line[1], NULL);
-		if (mid == '\0')
+		if (mid == 0)
 			return;
 		p = macvalue(mid, e);
 		if (p == NULL)
@@ -3157,6 +3206,6 @@ dump_class(s, id)
 {
 	if (s->s_type != ST_CLASS)
 		return;
-	if (bitnset(id & 0xff, s->s_class))
+	if (bitnset(bitidx(id), s->s_class))
 		printf("%s\n", s->s_name);
 }
