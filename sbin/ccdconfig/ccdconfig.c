@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.10 1997/07/20 05:00:51 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.11 1997/07/20 05:20:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\n\
 	The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: ccdconfig.c,v 1.10 1997/07/20 05:00:51 thorpej Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.11 1997/07/20 05:20:40 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -315,7 +315,7 @@ do_single(argc, argv, action)
 			    i == 0 ? '(' : ' ', cp2,
 			    i == ccio.ccio_ndisks - 1 ? ')' : ',');
 		}
-		printf(", %d blocks ", ccio.ccio_size);
+		printf(", %ld blocks ", (long)ccio.ccio_size);
 		if (ccio.ccio_ileave != 0)
 			printf("interleaved at %d blocks\n", ccio.ccio_ileave);
 		else
