@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 1995/08/16 04:48:37 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 1995/08/16 05:17:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1850,7 +1850,7 @@ getenvvars()
 	if (ROMBase == (caddr_t) 0) {
 		ROMBase = (caddr_t) ROMBASE;
 	}
-	MacOSROMBase = ROMBase
+	MacOSROMBase = (unsigned long) ROMBase;
 	TimeDBRA = getenv("TIMEDBRA");
 	ADBDelay = (u_short) getenv("ADBDELAY");
 }
