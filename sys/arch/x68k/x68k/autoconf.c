@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1997/10/10 21:45:22 oki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1997/10/19 09:30:06 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -35,6 +35,7 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/malloc.h>
 #include <machine/cpu.h>
@@ -55,6 +56,7 @@ int x68k_realconfig;
 struct devnametobdevmaj x68k_nam2blk[] = {
 	{ "fd",		2 },
 	{ "sd",		4 },
+	{ "cd",		7 },
 	{ "md",		8 },
 	{ NULL,		0 },
 };
@@ -152,6 +154,7 @@ config_console()
 
 dev_t	bootdev = 0;
 
+#if 0
 static void
 findroot(devpp, partp)
 	struct device **devpp;
@@ -190,6 +193,109 @@ findroot(devpp, partp)
 		}
 	}
 }
+#else
+/*
+ * The system will assign the "booted device" indicator (and thus
+ * rootdev if rootspec is wildcarded) to the first partition 'a'
+ * in preference of boot.
+ */
+#include <sys/fcntl.h>		/* XXXX and all that uses it */
+#include <sys/proc.h>		/* XXXX and all that uses it */
+
+#include "fd.h"
+#include "sd.h"
+#include "cd.h"
+
+#if NSD > 0
+extern	struct cfdriver sd_cd;  
+#endif
+#if NCD > 0
+extern	struct cfdriver cd_cd;
+#endif
+#if NFD > 0
+extern	struct cfdriver fd_cd;
+#endif
+
+struct cfdriver *genericconf[] = {
+#if NSD > 0
+	&sd_cd,
+#endif
+#if NCD > 0
+	&cd_cd,
+#endif
+#if NFD > 0
+	&fd_cd,
+#endif
+	NULL,
+};
+
+void
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
+{
+	struct disk *dkp;
+	struct partition *pp;
+	struct device **devs;
+	int i, maj, unit;
+
+	/*
+	 * Default to "not found".
+	 */
+	*devpp = NULL;
+
+	/* partition from bootblock */
+	*partp = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
+
+	if (boothowto & RB_ASKNAME)
+		return;		/* Don't bother looking */
+
+	for (i = 0; genericconf[i] != NULL; i++) {
+		for (unit = 0; unit < genericconf[i]->cd_ndevs; unit++) {
+			if (genericconf[i]->cd_devs[unit] == NULL)
+				continue;
+
+			/*
+			 * Find the disk structure corresponding to the
+			 * current device.
+			 */
+			devs = (struct device **)genericconf[i]->cd_devs;
+			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+				continue;
+
+			if (dkp->dk_driver == NULL ||
+			    dkp->dk_driver->d_strategy == NULL)
+				continue;
+			
+			for (maj = 0; maj < nblkdev; maj++)
+				if (bdevsw[maj].d_strategy ==
+				    dkp->dk_driver->d_strategy)
+					break;
+
+			if (maj != ((bootdev >> B_TYPESHIFT) & B_TYPEMASK))
+				continue;
+
+#ifdef DIAGNOSTIC
+			if (maj >= nblkdev)
+				panic("findroot: impossible");
+#endif
+
+			/* Open disk; forces read of disklabel. */
+			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			    unit, *partp), FREAD|FNONBLOCK, 0, &proc0))
+				continue;
+			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
+			    unit, *partp), FREAD|FNONBLOCK, 0, &proc0);
+			
+			pp = &dkp->dk_label->d_partitions[*partp];
+			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
+				*devpp = devs[unit];
+				return;
+			}
+		}
+	}
+}
+#endif
 
 /* 
  * mainbus driver 
@@ -235,6 +341,7 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "com"    , simple_devprint);
 	config_found(dp, "com"    , simple_devprint);
 	config_found(dp, "spc"    , simple_devprint);
+	config_found(dp, "mha"    , simple_devprint);
 	config_found(dp, "adpcm"  , simple_devprint);
 	config_found(dp, "*"      , simple_devprint);
 }

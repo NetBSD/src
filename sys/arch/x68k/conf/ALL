@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.16 1997/10/15 23:39:18 thorpej Exp $
+#	$NetBSD: ALL,v 1.17 1997/10/19 09:29:55 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -107,6 +107,8 @@ par0		at mainbus0		# builtin parallel port
 spc0		at mainbus0		# builtin scsi
 spc1		at mainbus0		# external scsi
 scsibus*	at spc?
+mha0		at mainbus0		# MK-HA1 Mach-2 SCSI
+scsibus*	at mha?
 grfbus0 	at mainbus0		# bitmapped display's
 grf0		at grfbus0		# multiplane graphics
 grf1		at grfbus0		# flexible graphics
@@ -125,7 +127,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown device
 
 # ethernet board
 #se0	at scsibus? target ? lun ?
-#ed0	at mainbus0
+ed0	at mainbus0
 
 # /dev/audio
 #adpcm0	at mainbus0
