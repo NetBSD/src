@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.4 2000/05/15 06:34:47 bouyer Exp $
+.\"	$NetBSD: wdc.9,v 1.5 2001/05/31 10:51:21 abs Exp $
 
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm wdc
-.Nd machine-indepedant IDE/ATAPI driver
+.Nd machine-independent IDE/ATAPI driver
 .Sh SYNOPSIS
 .Fd #include <dev/ata/atavar.h>
 .Fd #include <sys/dev/ic/wdcvar.h>
@@ -48,7 +48,7 @@
 .Sh description
 The
 .Nm
-driver provides the machine independant core functions for driving IDE
+driver provides the machine independent core functions for driving IDE
 devices.
 IDE devices-specific drivers (
 .Nm wd
@@ -57,7 +57,7 @@ or
 will use services provided by
 .Nm wdc .
 .Pp
-The machine-dependant bus front-end provides informations to
+The machine-dependent bus front-end provides informations to
 .Nm
 vith the 
 .Va wdc_softc
@@ -311,7 +311,7 @@ is set in the controller's
 can point to a common
 .Va struct channel_queue
 if the controller doesn't support concurent access to his different channels.
-If each channels are independant, it his recommended that each channel have
+If each channels are independent, it his recommended that each channel have
 his own
 .Va ch_queue .
 Better performances will result.
