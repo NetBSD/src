@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1996/09/17 19:41:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -264,11 +264,12 @@ setroot()
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
 			printf("root device");
-			if (bootdv != NULL)
-				printf(" (default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK
-						? bootpartition + 'a' : ' ');
+			if (bootdv != NULL) {
+				printf(" (default %s", bootdv->dv_xname);
+				if (bootdv->dv_class == DV_DISK)
+					printf("%c", bootpartition + 'a');
+				printf(")");
+			}
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
@@ -303,8 +304,10 @@ setroot()
 		}
 		for (;;) {
 			printf("swap device");
-			printf(" (default %s%c)", rootdv->dv_xname,
-			    rootdv->dv_class == DV_DISK?'b':' ');
+			printf(" (default %s", rootdv->dv_xname);
+			if (->dv_class == DV_DISK)
+				printf("b");
+			printf(")");
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0) {
