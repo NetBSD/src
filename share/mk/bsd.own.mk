@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.191 2001/10/21 23:10:48 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.192 2001/10/23 17:15:21 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -222,7 +222,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 .if ${OBJECT_FMT} == "ELF" && \
-    (${MACHINE_ARCH} == "arm" || \
+    (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
      ${MACHINE_ARCH} == "sparc" || \
