@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1998/02/25 21:41:55 perry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11 1998/07/07 17:51:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -40,18 +40,11 @@
  * Created      : 10/01/96
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>

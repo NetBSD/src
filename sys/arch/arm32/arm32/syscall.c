@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.16 1998/07/06 02:40:43 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.17 1998/07/07 17:51:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -49,25 +49,11 @@
 #include "opt_uvm.h"
 
 #include <sys/param.h>
-#include <sys/filedesc.h>
 #include <sys/errno.h>
-#include <sys/exec.h>
-#include <sys/kernel.h>
-#include <sys/mount.h>
-#include <sys/map.h>
-#include <sys/proc.h>
-#include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
-#include <sys/vnode.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
-#include <sys/device.h>
-#include <sys/protosw.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/syscall.h>
-#include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -82,8 +68,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/katelib.h>
-#include <machine/undefined.h>
-#include <machine/irqhandler.h>
 
 #include <arm32/arm32/disassem.h>
 
@@ -96,7 +80,6 @@ extern int pmap_debug_level;
 #endif
 
 u_int arm700bugcount = 0;
-extern int vnodeconsolebug;
 extern int usertraceback;
 
 #if NHYDRABUS > 0
