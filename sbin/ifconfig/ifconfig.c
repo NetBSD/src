@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.59 1999/12/13 15:24:45 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.60 2000/01/12 10:29:35 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.59 1999/12/13 15:24:45 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.60 2000/01/12 10:29:35 joda Exp $");
 #endif
 #endif /* not lint */
 
@@ -1809,6 +1809,27 @@ in_getaddr(s, which)
 	if (which != MASK)
 		sin->sin_family = AF_INET;
 
+	if (which == ADDR) {
+		char *p = NULL;
+	    
+		if((p = strrchr(s, '/')) != NULL) {
+			/* address is `name/masklen' */
+			int masklen;
+			int ret;
+			struct sockaddr_in *min = sintab[MASK];
+			*p = '\0';
+			ret = sscanf(p+1, "%u", &masklen);
+			if(ret != 1 || (masklen < 0 || masklen > 32)) {
+				*p = '/';
+				errx(1, "%s: bad value", s);
+			}
+			min->sin_len = sizeof(*min);
+			min->sin_addr.s_addr = 
+				htonl(~((1LL << (32 - masklen)) - 1) & 
+				      0xffffffff);
+		}
+	}
+
 	if (inet_aton(s, &sin->sin_addr) == 0) {
 		if ((hp = gethostbyname(s)) != NULL)
 			(void) memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
@@ -1895,6 +1916,15 @@ in6_getaddr(s, which)
 	sin->sin6_len = sizeof(*sin);
 	if (which != MASK)
 		sin->sin6_family = AF_INET6;
+
+	if (which == ADDR) {
+		char *p = NULL;
+		if((p = strrchr(s, '/')) != NULL) {
+			*p = '\0';
+			in6_getprefix(p + 1, MASK);
+			explicit_prefix = 1;
+		}
+	}
 
 	if (inet_pton(AF_INET6, s, &sin->sin6_addr) != 1)
 		errx(1, "%s: bad value", s);

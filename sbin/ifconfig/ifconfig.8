@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.28 1999/12/09 01:28:25 itojun Exp $
+.\"	$NetBSD: ifconfig.8,v 1.29 2000/01/12 10:30:05 joda Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -260,6 +260,9 @@ and 0's for the host part.
 The mask should contain at least the standard network portion,
 and the subnet field should be contiguous with the network
 portion.
+.Pp
+For INET and INET6 addresses, the netmask can also be given with
+slash-notation after the address (e.g 192.168.17.3/24).
 .\" see
 .\" Xr eon 5 .
 .It Cm nsellength Ar n
