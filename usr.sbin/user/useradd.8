@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.1 1999/12/06 21:31:48 agc Exp $ */
+.\" $NetBSD: useradd.8,v 1.2 1999/12/06 21:39:21 agc Exp $ */
 .\"
 .\"
 .\" Copyright © 1999 Alistair G. Crooks.  All rights reserved.
@@ -70,7 +70,7 @@ populating a home directory if necessary.
 Any skeleton dot files will be provided
 for the new user if they exist in the /etc/skel directory.
 Default values for the base directory, the time of password expiry,
-the skeletn directory,
+the skeleton directory,
 seconds until password change, primary group, the range from which the uid will be
 allocated,
 and default login shell can be provided in the /etc/usermgmt.conf
@@ -95,7 +95,7 @@ is added, which will be created if the -m option is specified and no
 sets the time at which the current password will expire for this user.
 .It Fl f Ar inactive-secs
 sets the number of seconds after which, if no login has occurred for
-ths user during that time, the login will be "locked".
+the user during that time, the login will be "locked".
 .It Fl g Ar gid/groupname/=uid
 sets the default group for any user added using the
 .Nm
@@ -162,7 +162,7 @@ field in the
 .Xr /etc/usermgmt.conf
 file - it has the format:
 .Ar group <groupname/groupid/=uid> .
-.It Fl k Ar skleton directory
+.It Fl k Ar skeleton directory
 gives the skeleton directory in which to find dot files
 with which to populate the new user's home directory.
 .It Fl m
