@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.84 1996/04/22 01:38:12 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.85 1996/05/29 19:10:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -61,6 +61,7 @@
 #include <sys/device.h>
 #include <sys/protosw.h>
 #include <sys/reboot.h>
+#include <sys/tty.h>
 #include <sys/user.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -178,6 +179,7 @@ main(framep)
 	vm_mem_init();
 	kmeminit();
 	disk_init();		/* must come before autoconfiguration */
+	tty_init();		/* initialise tty list */
 	config_init();		/* init autoconfiguration data structures */
 	cpu_startup();
 
