@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.8 2004/08/07 12:20:20 rearnsha Exp $	*/
+/*	$NetBSD: undefined.h,v 1.9 2004/08/21 12:03:16 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -52,16 +52,26 @@
 
 typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, int));
 
-#define FPA_COPROC	1
-#define FPA_COPROC2	2
-#define SYSTEM_COPROC	15
-#define MAX_COPROCS	16
-
-/* 
- * Not really a co-processor, but used by the undefined instruction handler
- * to catch undefined instructions in the core instruction set.
+/*
+ * Enumeration of coprocessor numbers.  Values may be duplicated
+ * (the iWMMX coprocessor clashes with the FPA, for example), but
+ * keep this table in numeric order.
  */
-#define CORE_UNKNOWN_HANDLER	MAX_COPROCS
+enum arm_coprocs {
+	FPA_COPROC = 1,
+	FPA_COPROC2 = 2,
+	DEBUG_COPROC = 14,
+	SYSTEM_COPROC = 15,
+	/* 
+	 *The following are not really co-processors, but are on the end
+	 * of the unknown instruction table for each coproc.
+	 */
+	CORE_UNKNOWN_HANDLER = 16,
+#ifdef THUMB_CODE
+	THUMB_UNKNOWN_HANDLER = 17,
+#endif
+	NUM_UNKNOWN_HANDLERS	/* Last entry */
+};
 
 /* Prototypes for undefined.c */
 
