@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.7 1994/10/09 08:30:13 mycroft Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.8 1994/12/02 06:07:37 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,17 +41,11 @@
 #include <ddb/db_command.h>
 #include <ddb/db_break.h>
 
-#include <setjmp.h>
-
-extern jmp_buf		*db_recover;
-
 db_trap(type, code)
 	int	type, code;
 {
 	boolean_t	bkpt;
 	boolean_t	watchpt;
-	jmp_buf		db_jmpbuf;
-	jmp_buf		*savejmp = db_recover;
 
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
@@ -68,8 +62,7 @@ db_trap(type, code)
 	    else
 		db_printf("Stopped at\t");
 	    db_dot = PC_REGS(DDB_REGS);
-	    if (!setjmp(*(db_recover = &db_jmpbuf)))
-		db_print_loc_and_inst(db_dot);
+	    db_print_loc_and_inst(db_dot);
 
 	    db_command_loop();
 	}
