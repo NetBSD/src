@@ -1,4 +1,4 @@
-/*	$NetBSD: va-ppc.h,v 1.1 1998/05/15 10:15:56 tsubai Exp $	*/
+/*	$NetBSD: va-ppc.h,v 1.2 1998/08/09 12:47:27 tsubai Exp $	*/
 
 /* GNU C varargs support for the PowerPC with V.4 calling sequence */
 
@@ -6,6 +6,10 @@
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
+
+#ifdef __lint__
+#define __extension__(x) (0)
+#endif
 
 /* Note that the names in this structure are in the user's namespace, but
    that the V.4 abi explicitly states that these names should be used.  */
@@ -99,7 +103,7 @@ __extension__ ({							\
   ((__builtin_classify_type(*(TYPE *)0) == 1) && (sizeof(TYPE) == 8))
 
 #define va_arg(AP,TYPE)							\
-__extension__ (*({							\
+((TYPE) __extension__ (*({						\
   register TYPE *__ptr;							\
 									\
   if (__va_float_p (TYPE) && (AP)->fpr < 8)				\
@@ -149,7 +153,7 @@ __extension__ (*({							\
     }									\
 									\
   __ptr;								\
-}))
+})))
 
 #define va_end(AP)	((void)0)
 
