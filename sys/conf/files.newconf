@@ -62,6 +62,7 @@ file isofs/isofs_util.c	 	isofs
 file isofs/isofs_vfsops.c	isofs
 file isofs/isofs_vnops.c	isofs
 file kern/exec_aout.c	
+file kern/exec_subr.c	
 file kern/init_main.c	
 file kern/init_sysent.c	
 file kern/kern_acct.c	
@@ -117,16 +118,32 @@ file kern/vfs_lookup.c
 file kern/vfs_subr.c		
 file kern/vfs_syscalls.c	
 file kern/vfs_vnops.c	
-file miscfs/fdesc/fdesc_vfsops.c	 fdesc
-file miscfs/fdesc/fdesc_vnops.c		 fdesc
 file miscfs/deadfs/dead_vnops.c
-file miscfs/fifofs/fifo_vnops.c		 fifo
-file miscfs/kernfs/kernfs_vfsops.c	 kernfs
-file miscfs/kernfs/kernfs_vnops.c	 kernfs
-file miscfs/procfs/procfs_vfsops.c	 procfs
-file miscfs/procfs/procfs_vnops.c	 procfs
-file miscfs/procfs/procfs_subr.c	 procfs
+file miscfs/fdesc/fdesc_vfsops.c	fdesc
+file miscfs/fdesc/fdesc_vnops.c		fdesc
+file miscfs/fifofs/fifo_vnops.c		fifo
+file miscfs/kernfs/kernfs_vfsops.c	kernfs
+file miscfs/kernfs/kernfs_vnops.c	kernfs
+file miscfs/lofs/lofs_subr.c		lofs
+file miscfs/lofs/lofs_vfsops.c		lofs
+file miscfs/lofs/lofs_vnops.c		lofs
+file miscfs/portal/portal_vfsops.c	portal
+file miscfs/portal/portal_vnops.c	portal
+file miscfs/procfs/procfs_ctl.c		procfs
+file miscfs/procfs/procfs_mem.c		procfs
+file miscfs/procfs/procfs_note.c	procfs
+file miscfs/procfs/procfs_regs.c	procfs
+file miscfs/procfs/procfs_status.c	procfs
+file miscfs/procfs/procfs_subr.c	procfs
+file miscfs/procfs/procfs_vfsops.c	procfs
+file miscfs/procfs/procfs_vnops.c	procfs
 file miscfs/specfs/spec_vnops.c
+file msdosfs/msdosfs_conv.c 	msdosfs
+file msdosfs/msdosfs_denode.c 	msdosfs
+file msdosfs/msdosfs_fat.c	msdosfs
+file msdosfs/msdosfs_lookup.c 	msdosfs
+file msdosfs/msdosfs_vfsops.c 	msdosfs
+file msdosfs/msdosfs_vnops.c 	msdosfs
 file net/af.c		
 file net/bpf.c		 	bpfilter needs-count
 file net/bpf_filter.c	 	bpfilter 
@@ -160,11 +177,13 @@ file netimp/if_imp.c		imp needs-count
 file netimp/if_imphost.c	imp needs-count
 file netimp/raw_imp.c	 	imp needs-count
 file netinet/if_ether.c		ether
+file netinet/igmp.c		multicast
 file netinet/in.c		inet
 file netinet/in_pcb.c	 	inet
 file netinet/in_proto.c	 	inet
 file netinet/ip_icmp.c	 	inet
 file netinet/ip_input.c	 	inet
+file netinet/ip_mroute.c	multicast mrouting
 file netinet/ip_output.c	inet
 file netinet/raw_ip.c	 	inet
 file netinet/tcp_debug.c	inet
@@ -225,12 +244,6 @@ file nfs/nfs_subs.c		nfsserver nfsclient
 file nfs/nfs_syscalls.c	 	nfsserver nfsclient
 file nfs/nfs_vfsops.c	 	nfsclient
 file nfs/nfs_vnops.c		nfsclient
-file msdosfs/msdosfs_conv.c 	msdosfs
-file msdosfs/msdosfs_denode.c 	msdosfs
-file msdosfs/msdosfs_fat.c	msdosfs
-file msdosfs/msdosfs_lookup.c 	msdosfs
-file msdosfs/msdosfs_vfsops.c 	msdosfs
-file msdosfs/msdosfs_vnops.c 	msdosfs
 file ufs/mfs_vfsops.c	 	mfs
 file ufs/mfs_vnops.c		mfs
 file ufs/ufs_alloc.c		
