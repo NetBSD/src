@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.5 1998/06/05 11:22:20 frueauf Exp $ */
+/* $NetBSD: lib.h,v 1.6 1998/07/06 07:03:56 mrg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -26,16 +26,17 @@
 #define _INST_LIB_LIB_H_
 
 /* Includes */
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+
+#include <ctype.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/file.h>
 
 /* Macros */
 #define SUCCESS	(0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.28 1998/04/02 11:39:40 kleink Exp $	*/
+/*	$NetBSD: w.c,v 1.29 1998/07/06 06:56:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.28 1998/04/02 11:39:40 kleink Exp $");
+__RCSID("$NetBSD: w.c,v 1.29 1998/07/06 06:56:43 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ int		header = 1;	/* true if -h flag: don't print heading */
 int		nflag;		/* true if -n flag: don't convert addrs */
 int		sortidle;	/* sort bu idle time */
 char	       *sel_user;	/* login of particular user selected */
-char		domain[MAXHOSTNAMELEN];
+char		domain[MAXHOSTNAMELEN + 1];
 
 /*
  * One of these per active utmp entry.
@@ -282,14 +282,16 @@ main(argc, argv)
 		}
 	}
 			
-	if (!nflag)
-		if (gethostname(domain, sizeof(domain) - 1) < 0 ||
-		    (p = strchr(domain, '.')) == 0)
+	if (!nflag) {
+		int	rv;
+
+		rv = gethostname(domain, sizeof(domain));
+		domain[sizeof(domain) - 1] = '\0';
+		if (rv < 0 || (p = strchr(domain, '.')) == 0)
 			domain[0] = '\0';
-		else {
-			domain[sizeof(domain) - 1] = '\0';
+		else
 			memmove(domain, p, strlen(p) + 1);
-		}
+	}
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
@@ -451,5 +453,5 @@ usage(wcmd)
 		    "usage: w: [-hin] [-M core] [-N system] [user]\n");
 	else
 		(void)fprintf(stderr, "uptime\n");
-	exit (1);
+	exit(1);
 }

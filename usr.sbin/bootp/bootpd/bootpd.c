@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.8 1998/03/14 04:39:53 lukem Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.9 1998/07/06 07:02:16 mrg Exp $");
 #endif
 
 /*
@@ -166,7 +166,7 @@ char *pktbuf;					/* Receive packet buffer */
 int pktlen;
 char *progname;
 char *chdir_path;
-char hostname[MAXHOSTNAMELEN];	/* System host name */
+char hostname[MAXHOSTNAMELEN + 1];	/* System host name */
 struct in_addr my_ip_addr;
 
 /* Flags set by signal catcher. */
@@ -202,8 +202,10 @@ main(argc, argv)
 	int standalone;
 
 	progname = strrchr(argv[0], '/');
-	if (progname) progname++;
-	else progname = argv[0];
+	if (progname)
+		progname++;
+	else
+		progname = argv[0];
 
 	/*
 	 * Initialize logging.
@@ -376,6 +378,7 @@ main(argc, argv)
 			fprintf(stderr, "bootpd: can't get hostname\n");
 			exit(1);
 		}
+		hostname[sizeof(hostname) - 1] = '\0';
 	}
 	hep = gethostbyname(hostname);
 	if (!hep) {

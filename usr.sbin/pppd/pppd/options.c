@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.23 1998/05/02 14:19:15 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.24 1998/07/06 07:04:29 mrg Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.23 1998/05/02 14:19:15 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.24 1998/07/06 07:04:29 mrg Exp $");
 #endif
 #endif
 
@@ -1578,7 +1578,8 @@ setdomain(argv)
 	option_error("using the domain option requires root privilege");
 	return 0;
     }
-    gethostname(hostname, MAXNAMELEN);
+    gethostname(hostname, sizeof(hostname));
+    hostname[sizeof(hostname) - 1] = '\0';
     if (**argv != 0) {
 	if (**argv != '.')
 	    strncat(hostname, ".", MAXNAMELEN - strlen(hostname));

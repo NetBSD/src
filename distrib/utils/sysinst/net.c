@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.30 1998/06/20 13:05:50 mrg Exp $	*/
+/*	$NetBSD: net.c,v 1.31 1998/07/06 06:59:36 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,7 +91,7 @@ get_ifinterface_info()
 	char *textbuf;
 	int textsize;
 	char *t;
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[MAXHOSTNAMELEN + 1];
 
 	/* First look to see if the selected interface is already configured. */
 	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig %s 2>/dev/null",
@@ -117,8 +117,10 @@ get_ifinterface_info()
 	}
 
 	/* Check host (and domain?) name */
-	if (gethostname(hostname, sizeof(hostname)) == 0)
+	if (gethostname(hostname, sizeof(hostname)) == 0) {
+		hostname[sizeof(hostname) - 1] = '\0';
 		strncpy(net_host, hostname, sizeof(net_host));
+	}
 }
 
 /*

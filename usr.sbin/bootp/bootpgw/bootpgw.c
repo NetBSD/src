@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpgw.c,v 1.7 1998/03/14 04:39:53 lukem Exp $");
+__RCSID("$NetBSD: bootpgw.c,v 1.8 1998/07/06 07:02:17 mrg Exp $");
 #endif
 
 /*
@@ -142,7 +142,7 @@ int pktlen;
 char *progname;
 char *servername;
 
-char myhostname[64];
+char myhostname[MAXHOSTNAMELEN + 1];
 struct in_addr my_ip_addr;
 
 
@@ -222,6 +222,7 @@ main(argc, argv)
 	stmp = NULL;
 	timeout = &actualtimeout;
 	gethostname(myhostname, sizeof(myhostname));
+	myhostname[sizeof(myhostname) - 1] = '\0';
 	hep = gethostbyname(myhostname);
 	if (!hep) {
 		printf("Can not get my IP address\n");

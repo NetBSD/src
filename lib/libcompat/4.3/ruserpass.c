@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.2 1998/03/19 18:06:15 tv Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.3 1998/07/06 07:01:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.2 1998/03/19 18:06:15 tv Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.3 1998/07/06 07:01:16 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ ruserpass(host, aname, apass)
 	char **aname, **apass;
 {
 	char *hdir, buf[BUFSIZ], *tmp;
-	char myname[MAXHOSTNAMELEN], *mydomain;
+	char myname[MAXHOSTNAMELEN + 1], *mydomain;
 	int t, i, c, usedefault = 0;
 	struct stat stb;
 
@@ -119,6 +119,8 @@ ruserpass(host, aname, apass)
 	}
 	if (gethostname(myname, sizeof(myname)) < 0)
 		myname[0] = '\0';
+	else
+		myname[sizeof(myname) - 1] = '\0';
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";
 next:

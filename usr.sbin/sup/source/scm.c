@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.6 1997/06/17 21:38:24 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.7 1998/07/06 07:05:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -434,12 +434,12 @@ static
 char *myhost ()		/* find my host name */
 {
 	struct hostent *h;
-	static char name[MAXHOSTNAMELEN];
-
+	static char name[MAXHOSTNAMELEN + 1];
 
 	if (name[0] == '\0') {
-		if (gethostname (name,MAXHOSTNAMELEN) < 0)
+		if (gethostname(name, sizeof name) < 0)
 			return (NULL);
+		name[sizeof(name) - 1] = '\0';
 		if ((h = gethostbyname (name)) == NULL)
 			return (NULL);
 		(void) strcpy (name,h->h_name);

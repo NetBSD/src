@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.6 1998/05/29 20:46:47 veego Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.7 1998/07/06 07:02:57 mrg Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed
@@ -178,7 +178,8 @@ char	**argv;
 	struct	in_addr	gwip;
 	tcphdr_t	*tcp;
 	ip_t	*ip;
-	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
+	char	*name =  argv[0], host[MAXHOSTNAMELEN];
+	char	*gateway = NULL, *dev = NULL;
 	char	*src = NULL, *dst, *s;
 	int	mtu = 1500, olen = 0, c, nonl = 0;
 
@@ -318,6 +319,7 @@ char	**argv;
 	if (!src)
 	    {
 		gethostname(host, sizeof(host));
+		host[sizeof(host) - 1] = '\0';
 		src = host;
 	    }
 
