@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.9 1995/06/20 20:32:39 jtc Exp $	*/
+/*	$NetBSD: float.h,v 1.10 1995/06/20 20:45:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -34,6 +34,7 @@
  *
  *	@(#)float.h	7.1 (Berkeley) 5/8/90
  */
+
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
 
