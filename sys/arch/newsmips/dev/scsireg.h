@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.6 2001/04/26 15:52:01 tsubai Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.7 2002/05/31 21:45:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,7 +162,7 @@
 
 
 #ifdef CPU_DOUBLE
-# ifdef mips
+# ifdef __mips__
 #  define	ipc_phys(x)	(caddr_t)K0_TT0(x)
 # else
 #  define	ipc_phys(x)	(caddr_t)((int)(x) & ~0x80000000)
