@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.45 1996/10/12 17:27:28 mhitch Exp $	*/
+/*	$NetBSD: ite.c,v 1.46 1996/10/13 03:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,15 +221,15 @@ iteattach(pdp, dp, auxp)
 
 		alloc_sicallback();
 		iteinit(gp->g_itedev);
-		kprintf(": rows %d cols %d", ip->rows, ip->cols);
-		kprintf(" repeat at (%d/100)s next at (%d/100)s",
+		printf(": rows %d cols %d", ip->rows, ip->cols);
+		printf(" repeat at (%d/100)s next at (%d/100)s",
 		    start_repeat_timeo, next_repeat_timeo);
 
 		if (kbd_ite == NULL)
 			kbd_ite = ip;
 		if (kbd_ite == ip)
-			kprintf(" has keyboard");
-		kprintf("\n");
+			printf(" has keyboard");
+		printf("\n");
 	} else {
 		if (con_itesoftc.grf != NULL &&
 		    con_itesoftc.grf->g_conpri > gp->g_conpri)
@@ -1749,7 +1749,7 @@ iteputchar(c, ip)
 					break;
 				case 6:
 					/* cursor position report */
-					ksprintf(ip->argbuf, "\033[%d;%dR",
+					sprintf(ip->argbuf, "\033[%d;%dR",
 					    ip->cury + 1, ip->curx + 1);
 					ite_sendstr(ip->argbuf);
 					break;

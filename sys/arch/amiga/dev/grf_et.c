@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.6 1996/10/10 23:55:47 christos Exp $	*/
+/*	$NetBSD: grf_et.c,v 1.7 1996/10/13 03:07:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -278,7 +278,7 @@ grfetattach(pdp, dp, auxp)
 
 	zap = auxp;
 
-	kprintf("\n");
+	printf("\n");
 
 	/* make sure both halves have matched */
 	if (!et_regaddr || !et_fbaddr)
@@ -319,46 +319,46 @@ grfetattach(pdp, dp, auxp)
 	 */
 	if (amiga_config_found(cfdata, &gp->g_device, gp, grfetprint)) {
 		attachflag = 1;
-		kprintf("grfet: %dMB ", et_fbsize / 0x100000);
+		printf("grfet: %dMB ", et_fbsize / 0x100000);
 		switch (ettype) {
 		    case OMNIBUS:
-			kprintf("oMniBus");
+			printf("oMniBus");
 			break;
 		    case DOMINO:
-			kprintf("Domino");
+			printf("Domino");
 			break;
 		    case MERLIN:
-			kprintf("Merlin");
+			printf("Merlin");
 			break;
 		}
-		kprintf(" with ");
+		printf(" with ");
 		switch (etctype) {
 		    case ET4000:
-			kprintf("Tseng ET4000");
+			printf("Tseng ET4000");
 			break;
 		    case ETW32:
-			kprintf("Tseng ETW32");
+			printf("Tseng ETW32");
 			break;
 		}
-		kprintf(" and ");
+		printf(" and ");
 		switch (etdtype) {
 		    case SIERRA11483:
-			kprintf("Sierra SC11483 DAC");
+			printf("Sierra SC11483 DAC");
 			break;
 		    case SIERRA15025:
-			kprintf("Sierra SC15025 DAC");
+			printf("Sierra SC15025 DAC");
 			break;
 		    case MUSICDAC:
-			kprintf("MUSIC DAC");
+			printf("MUSIC DAC");
 			break;
 		    case MERLINDAC:
-			kprintf("BrookTree DAC");
+			printf("BrookTree DAC");
 			break;
 		}
-		kprintf(" being used\n");
+		printf(" being used\n");
 	} else {
 		if (!attachflag)
-			kprintf("grfet unattached!!\n");
+			printf("grfet unattached!!\n");
 	}
 }
 
@@ -369,7 +369,7 @@ grfetprint(auxp, pnp)
 	const char   *pnp;
 {
 	if (pnp)
-		kprintf("ite at %s: ", pnp);
+		printf("ite at %s: ", pnp);
 	return (UNCONF);
 }
 
@@ -1055,7 +1055,7 @@ et_load_mon(gp, md)
 	TEXT = (gv->depth == 4);
 
 	if (!et_mondefok(gv)) {
-		kprintf("mondef not ok\n");
+		printf("mondef not ok\n");
 		return (0);
 	}
 	ba = gp->g_regkva;

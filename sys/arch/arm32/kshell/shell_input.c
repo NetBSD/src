@@ -1,4 +1,4 @@
-/* $NetBSD: shell_input.c,v 1.4 1996/10/11 00:07:09 christos Exp $ */
+/* $NetBSD: shell_input.c,v 1.5 1996/10/13 03:06:07 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -83,7 +83,7 @@ readstring(string, length, valid_string, insert)
 	if (insert && insert[0] != 0) {
 		strcpy(string, insert);
 		loop = strlen(insert);
-		kprintf("%s", insert);
+		printf("%s", insert);
 	} else
 		loop = 0;
 
@@ -100,9 +100,9 @@ readstring(string, length, valid_string, insert)
  * Display the cursor depending on what mode we are in
  */
 		if (!insert_mode)
-			kprintf("\xe2");
+			printf("\xe2");
 		else
-			kprintf("\xe1");
+			printf("\xe1");
 #endif
 
 /*
@@ -117,9 +117,9 @@ readstring(string, length, valid_string, insert)
  */
 
 		if (loop == entered || entered == 0)
-			kprintf("\x7f");
+			printf("\x7f");
 		else
-			kprintf("\x08%c\x08", string[loop]);
+			printf("\x08%c\x08", string[loop]);
 #endif
 
 /*
@@ -142,10 +142,10 @@ readstring(string, length, valid_string, insert)
 			}
 			--entered;
 			string[entered] = 0;
-/*			kprintf("\x1b[s%s \x1b[u", &string[loop]);*/
-			kprintf("\r%s \r", string);
+/*			printf("\x1b[s%s \x1b[u", &string[loop]);*/
+			printf("\r%s \r", string);
 			for (loop1 = 0; loop1 <= loop; ++loop1)
-				kprintf("\x09");
+				printf("\x09");
 		}
 		break;
 
@@ -158,7 +158,7 @@ readstring(string, length, valid_string, insert)
 			int loop1;
 
 			if (loop == 0) {
-				kprintf("\x07");
+				printf("\x07");
 				break;
 			}
 			for (loop1 = loop-1; loop1 < (entered - 1); ++loop1) {
@@ -167,10 +167,10 @@ readstring(string, length, valid_string, insert)
 			--loop;
 			--entered;
 			string[entered] = 0;
-/*			kprintf("\x1b[D\x1b[s%s \x1b[u", &string[loop]);*/
-			kprintf("\r%s \r", string);
+/*			printf("\x1b[D\x1b[s%s \x1b[u", &string[loop]);*/
+			printf("\r%s \r", string);
 			for (loop1 = 0; loop1 < loop; ++loop1)
-				kprintf("\x09");
+				printf("\x09");
 		}
 		break;
 
@@ -206,7 +206,7 @@ readstring(string, length, valid_string, insert)
 			if (loop < 0)
 				loop = 0;
 			else
-				kprintf("\x1b[D");
+				printf("\x1b[D");
 			break;
 
 /*
@@ -218,7 +218,7 @@ readstring(string, length, valid_string, insert)
 			if (loop > entered)
 				loop = entered;
 			else
-				kprintf("\x1b[C");
+				printf("\x1b[C");
 			break;
 
 /*
@@ -243,7 +243,7 @@ readstring(string, length, valid_string, insert)
 			    && (valid_string == NULL || strchr(valid_string, key))) {
 				if (!insert_mode && loop < length) {
 					string[loop] = key;
-					kprintf("%c", key);
+					printf("%c", key);
 					++loop;
 					if (loop > entered) entered = loop;
 				}
@@ -257,18 +257,18 @@ readstring(string, length, valid_string, insert)
 					++loop;
 					++entered;
 					string[entered] = 0;
-					if (loop != entered) kprintf("\x1b[s");
-					kprintf("%s", &string[loop-1]);
-					if (loop != entered) kprintf("\x1b[u\x1b[C");
+					if (loop != entered) printf("\x1b[s");
+					printf("%s", &string[loop-1]);
+					if (loop != entered) printf("\x1b[u\x1b[C");
 				} else {
-					kprintf("\x07");
+					printf("\x07");
 				}
 			}
 			break;
 		}
 	} while (key != 0x0d && key != 0x0a);
 
-	kprintf("\n\r");
+	printf("\n\r");
 
 	string[entered] = 0;
 
@@ -285,13 +285,13 @@ deleteline(loop, entered)
 {
 	while (loop < entered) {
 		++loop;
-		kprintf("\x1b[C");
+		printf("\x1b[C");
 	}
 
 	while (loop > 0) {
 		--loop;
 		--entered;
-		kprintf("\x7f");
+		printf("\x7f");
 	}
 }
 

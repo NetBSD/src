@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.9 1996/10/11 00:07:37 christos Exp $ */
+/* $NetBSD: if_eb.c,v 1.10 1996/10/13 03:06:39 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -108,7 +108,7 @@
 
 /* for debugging convenience */
 #ifdef EB_DEBUG
-#define dprintf(x) kprintf x
+#define dprintf(x) printf x
 #else
 #define dprintf(x)
 #endif
@@ -222,12 +222,12 @@ eb_dump_buffer(sc, offset)
 		if (ptr == 0) break;
 		size = ptr - addr;
 
-		kprintf("addr=%04x size=%04x ", addr, size);
-		kprintf("cmd=%02x st=%02x\n", ctrl & 0xff, ctrl >> 8);
+		printf("addr=%04x size=%04x ", addr, size);
+		printf("cmd=%02x st=%02x\n", ctrl & 0xff, ctrl >> 8);
 
 		for (loop = 0; loop < size - 4; loop += 2)
-			kprintf("%04x ", ReadShort(iobase + EB_8004_BUFWIN));
-		kprintf("\n");
+			printf("%04x ", ReadShort(iobase + EB_8004_BUFWIN));
+		printf("\n");
 		addr = ptr;
 	} while (size != 0);
 #endif
@@ -343,9 +343,9 @@ ebattach(parent, self, aux)
 	/* Print out some information for the user. */
 
 	if ((id & 0xf0) == 0xa0)
-		kprintf(" SEEQ80C04 rev %x address %s", id & 0x0f, ether_sprintf(sc->sc_arpcom.ac_enaddr));
+		printf(" SEEQ80C04 rev %x address %s", id & 0x0f, ether_sprintf(sc->sc_arpcom.ac_enaddr));
 	else
-		kprintf(" SEEQ???? rev %02x address %s", id, ether_sprintf(sc->sc_arpcom.ac_enaddr));
+		printf(" SEEQ???? rev %02x address %s", id, ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	sc->sc_irqclaimed = 0;
 
@@ -500,9 +500,9 @@ eb_ramtest(sc)
 	/* Report */
 
 	if (sum == 0)
-		kprintf(" %dK buffer RAM\n", EB_BUFFER_SIZE / 1024);
+		printf(" %dK buffer RAM\n", EB_BUFFER_SIZE / 1024);
 	else
-		kprintf(" buffer RAM failed self test, %d faults\n", sum);
+		printf(" buffer RAM failed self test, %d faults\n", sum);
 }
 
 
@@ -1200,7 +1200,7 @@ ebintr(arg)
 /*		if ((status & EB_STATUS_RX_ON) == 0) {
 			WriteShort(iobase + EB_8004_COMMAND, sc->sc_command
 			    | EB_CMD_RX_ON);
-			kprintf("rxintr: rx is off st=%04x\n",status);
+			printf("rxintr: rx is off st=%04x\n",status);
 		}*/
 	}
 
@@ -1271,7 +1271,7 @@ ebgetpackets(sc)
 
 		if (status & 0x0f) {
 			++sc->sc_arpcom.ac_if.if_ierrors;
-			kprintf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
+			printf("rx packet error (%02x) - dropping packet\n", status & 0x0f);
 /*			sc->sc_config2 |= EB_CFG2_OUTPUT;
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 			eb_reinit(sc);
@@ -1284,7 +1284,7 @@ ebgetpackets(sc)
 
 		if (len > ETHER_MAX_LEN) {
 			++sc->sc_arpcom.ac_if.if_ierrors;
-			kprintf("rx packet size error len=%d\n", len);
+			printf("rx packet size error len=%d\n", len);
 /*			sc->sc_config2 |= EB_CFG2_OUTPUT;
 			WriteShort(iobase + EB_8004_CONFIG2, sc->sc_config2);
 			eb_reinit(sc);

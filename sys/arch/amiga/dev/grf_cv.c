@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.17 1996/10/10 23:55:44 christos Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.18 1996/10/13 03:07:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -353,7 +353,7 @@ grfcvattach(pdp, dp, auxp)
 		 * inited earlier, just copy (not device struct)
 		 */
 
-		kprintf("\n");
+		printf("\n");
 #ifdef CV64CONSOLE
 		bcopy(&congrf.g_display, &gp->g_display,
 			(char *) &gp[1] - (char *) &gp->g_display);
@@ -389,11 +389,11 @@ grfcvattach(pdp, dp, auxp)
 	 */
 	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcvprint)) {
 		if (dp != NULL)
-			kprintf("grfcv: CyberVision64 with %dMB being used\n", cv_fbsize/0x100000);
+			printf("grfcv: CyberVision64 with %dMB being used\n", cv_fbsize/0x100000);
 		attachflag = 1;
 	} else {
 		if (!attachflag)
-			/*kprintf("grfcv unattached!!\n")*/;
+			/*printf("grfcv unattached!!\n")*/;
 	}
 }
 
@@ -403,7 +403,7 @@ grfcvprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		kprintf("ite at %s: ", pnp);
+		printf("ite at %s: ", pnp);
 	return (UNCONF);
 }
 
@@ -429,9 +429,9 @@ cv_compute_clock(freq)
 	long diff, d2;
 
 	if (freq < 12500000 || freq > MAXPIXELCLOCK) {
-		kprintf("grfcv: Illegal clock frequency: %ldMHz\n", freq/1000000);
-		kprintf("grfcv: Using default frequency: 25MHz\n");
-		kprintf("grfcv: See the manpage of grfconfig for more informations.\n");
+		printf("grfcv: Illegal clock frequency: %ldMHz\n", freq/1000000);
+		printf("grfcv: Using default frequency: 25MHz\n");
+		printf("grfcv: See the manpage of grfconfig for more informations.\n");
 		freq = 25000000;
 	}
 
@@ -934,7 +934,7 @@ cv_setmonitor(gp, gv)
 	 */
 	if (gp->g_flags & GF_GRFON)
 		if (md == monitor_current) {
-			kprintf("grf_cv: Changing the used mode not allowed!\n");
+			printf("grf_cv: Changing the used mode not allowed!\n");
 			return (EINVAL);
 		}
 
@@ -1079,23 +1079,23 @@ cv_mondefok(gv)
 #endif
 		break;
 	   default:
-		kprintf("grf_cv: Illegal depth in mode %d\n",
+		printf("grf_cv: Illegal depth in mode %d\n",
 			(int) gv->mode_num);
 		return (0);
 	}
 
 	if (gv->pixel_clock > maxpix) {
-		kprintf("grf_cv: Pixelclock too high in mode %d\n",
+		printf("grf_cv: Pixelclock too high in mode %d\n",
 			(int) gv->mode_num);
 		return (0);
 	}
 
 	if (gv->mode_num == 255) { /* console mode */
 		if ((gv->disp_width / 8) > MAXCOLS) {
-			kprintf ("grfcv: Too many columns for console\n");
+			printf ("grfcv: Too many columns for console\n");
 			return (0);
 		} else if ((gv->disp_height / S3FONTY) > MAXROWS) {
-			kprintf ("grfcv: Too many rows for console\n");
+			printf ("grfcv: Too many rows for console\n");
 			return (0);
 		}
 	}
@@ -1128,8 +1128,8 @@ cv_load_mon(gp, md)
 	CONSOLE = (gv->mode_num == 255);
 
 	if (!cv_mondefok(gv)) {
-		kprintf("grfcv: The monitor definition is illegal.\n");
-		kprintf("grfcv: See the manpage of grfconfig for more informations\n");
+		printf("grfcv: The monitor definition is illegal.\n");
+		printf("grfcv: See the manpage of grfconfig for more informations\n");
 		return (0);
 	}
 	ba = gp->g_regkva;

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.8 1996/10/11 00:07:00 christos Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.9 1996/10/13 03:06:01 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -122,7 +122,7 @@ cpu_fork(p1, p2)
 
 #ifdef DEBUG_VMMACHDEP        
 	if (pmap_debug_level >= 0)
-		kprintf("cpu_fork: %08x %08x %08x %08x\n", (u_int)p1, (u_int)p2,
+		printf("cpu_fork: %08x %08x %08x %08x\n", (u_int)p1, (u_int)p2,
 		   (u_int) curproc, (u_int)&proc0);
 #endif
 
@@ -163,11 +163,11 @@ cpu_fork(p1, p2)
  
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("cpu_fork: pcb = %08x pagedir = %08x\n",
+		printf("cpu_fork: pcb = %08x pagedir = %08x\n",
 		    (u_int)&up->u_pcb, (u_int)up->u_pcb.pcb_pagedir);
-		kprintf("p1->procaddr=%08x p1->procaddr->u_pcb=%08x pid=%d pmap=%08x\n",
+		printf("p1->procaddr=%08x p1->procaddr->u_pcb=%08x pid=%d pmap=%08x\n",
 		    (u_int)p1->p_addr, (u_int)&p1->p_addr->u_pcb, p1->p_pid, (u_int)&p1->p_vmspace->vm_pmap);
-		kprintf("p2->procaddr=%08x p2->procaddr->u_pcb=%08x pid=%d pmap=%08x\n",
+		printf("p2->procaddr=%08x p2->procaddr->u_pcb=%08x pid=%d pmap=%08x\n",
 		    (u_int)p2->p_addr, (u_int)&p2->p_addr->u_pcb, p2->p_pid, (u_int)&p2->p_vmspace->vm_pmap);
 	}
 #endif
@@ -186,9 +186,9 @@ cpu_fork(p1, p2)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("fun time: paging in PT %08x for %08x\n", (u_int)addr, 0);
-		kprintf("p2->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p2->p_vmspace->vm_pmap.pm_pdir[0]);
-		kprintf("p2->pm_vptpt[0] = %08x", *((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)));
+		printf("fun time: paging in PT %08x for %08x\n", (u_int)addr, 0);
+		printf("p2->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p2->p_vmspace->vm_pmap.pm_pdir[0]);
+		printf("p2->pm_vptpt[0] = %08x", *((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
 #endif
 
@@ -205,7 +205,7 @@ cpu_fork(p1, p2)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("vm_map_pageable: addr=%08x\n", (u_int)addr);
+		printf("vm_map_pageable: addr=%08x\n", (u_int)addr);
 	}
 #endif
 
@@ -215,9 +215,9 @@ cpu_fork(p1, p2)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("party on! acquired a page table for 0M->(4M-1)\n");
-		kprintf("p2->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p2->p_vmspace->vm_pmap.pm_pdir[0]);
-		kprintf("p2->pm_vptpt[0] = %08x", *((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)));
+		printf("party on! acquired a page table for 0M->(4M-1)\n");
+		printf("p2->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p2->p_vmspace->vm_pmap.pm_pdir[0]);
+		printf("p2->pm_vptpt[0] = %08x", *((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
 #endif
 
@@ -293,7 +293,7 @@ cpu_exit(p)
 	}
 */
 
-/*    kprintf("cpu_exit: proc=%08x pid=%d comm=%s\n", p, p->p_pid, p->p_comm);*/
+/*    printf("cpu_exit: proc=%08x pid=%d comm=%s\n", p, p->p_pid, p->p_comm);*/
 
 	cnt.v_swtch++;
 
@@ -309,13 +309,13 @@ cpu_swapin(p)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0)
-		kprintf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
+		printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
 #endif
 
 #ifdef FREESWAPPEDPAGEDIRS
-	kprintf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
+	printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
 	if (p->p_vmspace->vm_pmap.pm_pdir)
-		kprintf("pdir = %08x\n", p->p_vmspace->vm_pmap.pm_pdir);
+		printf("pdir = %08x\n", p->p_vmspace->vm_pmap.pm_pdir);
 	pmap_pinit(&p->p_vmspace->vm_pmap);
 	pmap_debug_level = 10;
 #endif
@@ -326,9 +326,9 @@ cpu_swapin(p)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("fun time: paging in PT %08x for %08x\n", (u_int)addr, 0);
-		kprintf("p->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p->p_vmspace->vm_pmap.pm_pdir[0]);
-		kprintf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
+		printf("fun time: paging in PT %08x for %08x\n", (u_int)addr, 0);
+		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p->p_vmspace->vm_pmap.pm_pdir[0]);
+		printf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
 #endif
 
@@ -338,9 +338,9 @@ cpu_swapin(p)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("party on! acquired a page table for 0M->(4M-1)\n");
-		kprintf("p->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p->p_vmspace->vm_pmap.pm_pdir[0]);
-		kprintf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
+		printf("party on! acquired a page table for 0M->(4M-1)\n");
+		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p->p_vmspace->vm_pmap.pm_pdir[0]);
+		printf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
 #endif
 
@@ -357,8 +357,8 @@ cpu_swapout(p)
 {
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0) {
-		kprintf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
-		kprintf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
+		printf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
+		printf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
 #endif
 
@@ -367,8 +367,8 @@ cpu_swapout(p)
 	pmap_remove(&p->p_vmspace->vm_pmap, 0, NBPG);
 
 #ifdef FREESWAPPEDPAGEDIRS
-	kprintf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
-	kprintf("p->pm_vptpt[0] = %08x pdir=%08x\n", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)), p->p_vmspace->vm_pmap.pm_pdir);
+	printf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
+	printf("p->pm_vptpt[0] = %08x pdir=%08x\n", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)), p->p_vmspace->vm_pmap.pm_pdir);
 	pmap_freepagedir(&p->p_vmspace->vm_pmap);
 	p->p_vmspace->vm_pmap.pm_pdir = 0;
 #endif
@@ -395,7 +395,7 @@ pagemove(from, to, size)
 
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0)
-		kprintf("pagemove: V%08x to %08x size %08x\n", (u_int)from,
+		printf("pagemove: V%08x to %08x size %08x\n", (u_int)from,
 		    (u_int)to, size);
 #endif
 	fpte = vtopte(from);
@@ -442,7 +442,7 @@ vmapbuf(bp, len)
 	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 	if (pmap_debug_level >= 0)
-		kprintf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
+		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
 		    (u_int)bp->b_data, (u_int)len);
     
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -484,7 +484,7 @@ vunmapbuf(bp, len)
 	vm_offset_t addr, off;
 
 	if (pmap_debug_level >= 0)
-		kprintf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
+		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
 		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
 
 	if ((bp->b_flags & B_PHYS) == 0)

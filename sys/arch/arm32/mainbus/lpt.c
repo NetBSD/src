@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.10 1996/10/11 00:07:23 christos Exp $ */
+/* $NetBSD: lpt.c,v 1.11 1996/10/13 03:06:24 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -117,7 +117,7 @@
 #if !defined(DEBUG) || !defined(notdef)
 #define LPRINTF(a)
 #else
-#define LPRINTF		if (lptdebug) kprintf a
+#define LPRINTF		if (lptdebug) printf a
 int lptdebug = 1;
 #endif
 
@@ -290,7 +290,7 @@ lptprobe(parent, match, aux)
 	int i, rv;
 
 #ifdef DEBUG
-#define	ABORT	do {kprintf("lptprobe: mask %x data %x failed\n", mask, data); \
+#define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
 		    goto out;} while (0)
 #else
 #define	ABORT	goto out
@@ -347,9 +347,9 @@ lptattach(parent, self, aux)
 	bus_io_handle_t ioh;
 
 	if (mb->mb_irq != IRQUNK)
-		kprintf("\n");
+		printf("\n");
 	else
-		kprintf(": polled\n");
+		printf(": polled\n");
 
 	sc->sc_iobase = mb->mb_iobase;
 	sc->sc_irq = mb->mb_irq;
@@ -377,7 +377,7 @@ lptattach(parent, self, aux)
 	}
 #if defined(INET) && defined(PLIP)
 	else
-		kprintf("Warning PLIP device needs an interrupt driven lpt driver\n");
+		printf("Warning PLIP device needs an interrupt driven lpt driver\n");
 #endif
 
 }
@@ -412,7 +412,7 @@ lptopen(dev, flag, mode, p)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		kprintf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
 		    sc->sc_state);
 #endif
 
@@ -724,7 +724,7 @@ plipattach(struct lpt_softc *sc, int unit)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->sc_ifbuf = NULL;
-	ksprintf(ifp->if_xname, "plip%d", unit);
+	sprintf(ifp->if_xname, "plip%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_output = ether_output;
@@ -738,7 +738,7 @@ plipattach(struct lpt_softc *sc, int unit)
 	ifp->if_mtu = PLIPMTU;
 	sc->sc_ifsoftint = IRQMASK_SOFTPLIP;
 
-	kprintf("plip%d at lpt%d: mtu=%d,%d,%d", unit, unit, (int) ifp->if_mtu,
+	printf("plip%d at lpt%d: mtu=%d,%d,%d", unit, unit, (int) ifp->if_mtu,
 	    ifp->if_hdrlen, ifp->if_addrlen);
 
 	if_attach(ifp);
@@ -760,8 +760,8 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int error = 0;
 
 #if PLIP_DEBUG > 0
-	kprintf("plipioctl: cmd=%08lx ifp=%08x data=%08x\n", cmd, (u_int)ifp, (u_int)data);
-	kprintf("plipioctl: ifp->flags=%08x\n", ifp->if_flags);
+	printf("plipioctl: cmd=%08lx ifp=%08x data=%08x\n", cmd, (u_int)ifp, (u_int)data);
+	printf("plipioctl: ifp->flags=%08x\n", ifp->if_flags);
 #endif
 
 	switch (cmd) {
@@ -773,7 +773,7 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 /* Deactive the parallel port */
 #if PLIP_DEBUG != 0
 			if (plip_debug & PLIP_DEBUG_IF)
-				kprintf("plip: Disabling lpt irqs\n");
+				printf("plip: Disabling lpt irqs\n");
 #endif
 			bus_io_write_1(bc, ioh, lpt_data, 0x00);
 			bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_DISABLE);
@@ -801,7 +801,7 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 #if PLIP_DEBUG != 0
 			if (plip_debug & PLIP_DEBUG_IF)
-				kprintf("plip: Enabling lpt irqs\n");
+				printf("plip: Enabling lpt irqs\n");
 #endif
 
 			bus_io_write_1(bc, ioh, lpt_data, 0x00);
@@ -851,7 +851,7 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 #if PLIP_DEBUG != 0
 			if (plip_debug & PLIP_DEBUG_IF)
-				kprintf("plip: Enabling lpt irqs\n");
+				printf("plip: Enabling lpt irqs\n");
 #endif
 			bus_io_write_1(bc, ioh, lpt_data, 0x00);
 			bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_ENABLE);

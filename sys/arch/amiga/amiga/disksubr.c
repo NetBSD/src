@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 1996/10/10 23:55:13 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -199,11 +199,11 @@ readdisklabel(dev, strat, lp, clp)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 #ifdef DIAGNOSTIC
 	if (lp->d_ncylinders != rbp->ncylinders)
-		kprintf("warning found rdb->ncylinders(%ld) != "
+		printf("warning found rdb->ncylinders(%ld) != "
 		    "rdb->highcyl(%ld) + 1\n", rbp->ncylinders,
 		    rbp->highcyl);
 	if (lp->d_nsectors * lp->d_ntracks != rbp->secpercyl)
-		kprintf("warning found rdb->secpercyl(%ld) != "
+		printf("warning found rdb->secpercyl(%ld) != "
 		    "rdb->nsectors(%ld) * rdb->nheads(%ld)\n", rbp->secpercyl,
 		    rbp->nsectors, rbp->nheads);
 #endif
@@ -216,7 +216,7 @@ readdisklabel(dev, strat, lp, clp)
 		lp->d_sparespertrack = lp->d_sparespercyl / lp->d_ntracks;
 #ifdef DIAGNOSTIC
 		if (lp->d_sparespercyl % lp->d_ntracks)
-			kprintf("warning lp->d_sparespercyl(%d) not multiple "
+			printf("warning lp->d_sparespercyl(%d) not multiple "
 			    "of lp->d_ntracks(%d)\n", lp->d_sparespercyl,
 			    lp->d_ntracks);
 #endif
@@ -288,7 +288,7 @@ readdisklabel(dev, strat, lp, clp)
 		case ADT_NETBSDROOT:
 			pp = &lp->d_partitions[0];
 			if (pp->p_size) {
-				kprintf("WARN: more than one root, ignoring\n");
+				printf("WARN: more than one root, ignoring\n");
 				clp->rdblock = RDBNULL;	/* invlidate cpulab */
 				continue;
 			}
@@ -296,7 +296,7 @@ readdisklabel(dev, strat, lp, clp)
 		case ADT_NETBSDSWAP:
 			pp = &lp->d_partitions[1];
 			if (pp->p_size) {
-				kprintf("WARN: more than one swap, ignoring\n");
+				printf("WARN: more than one swap, ignoring\n");
 				clp->rdblock = RDBNULL;	/* invlidate cpulab */
 				continue;
 			}
@@ -317,10 +317,10 @@ readdisklabel(dev, strat, lp, clp)
 				pbp->partname[pbp->partname[0] + 1] = 0;
 			else
 				pbp->partname[sizeof(pbp->partname) - 1] = 0;
-			kprintf("Partition '%s' geometry %ld/%ld differs",
+			printf("Partition '%s' geometry %ld/%ld differs",
 			    pbp->partname + 1, pbp->e.numheads,
 			    pbp->e.secpertrk);
-			kprintf(" from RDB %d/%d\n", lp->d_ntracks,
+			printf(" from RDB %d/%d\n", lp->d_ntracks,
 			    lp->d_nsectors);
 		}
 #endif
@@ -579,7 +579,7 @@ getadostype(dostype)
 		return(adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
-		kprintf("found dostype: 0x%lx which is deprecated", dostype);
+		printf("found dostype: 0x%lx which is deprecated", dostype);
 #endif
 		if (b1 == 'S') {
 			dostype = DOST_NBS;
@@ -592,12 +592,12 @@ getadostype(dostype)
 			dostype |= FS_BSDFFS;
 		}
 #ifdef DIAGNOSTIC
-		kprintf(" using: 0x%lx instead\n", dostype);
+		printf(" using: 0x%lx instead\n", dostype);
 #endif
 		return(getadostype(dostype));
 	default:
 #ifdef DIAGNOSTIC
-		kprintf("warning unknown dostype: 0x%lx marking unused\n",
+		printf("warning unknown dostype: 0x%lx marking unused\n",
 		    dostype);
 #endif
 		adt.archtype = ADT_UNKNOWN;

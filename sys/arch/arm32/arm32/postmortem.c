@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.6 1996/10/11 00:06:53 christos Exp $ */
+/* $NetBSD: postmortem.c,v 1.7 1996/10/13 03:05:57 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -74,32 +74,32 @@ pm_dumpb(addr, count)
 	int loop;
 
 	for (; count > 0; count -= 16) {
-		kprintf("%08x: ", (int)addr);
+		printf("%08x: ", (int)addr);
 
 		for (loop = 0; loop < 16; ++loop) {
 			byte = addr[loop];
-			kprintf("%02x ", byte);
+			printf("%02x ", byte);
 		}
 
-		kprintf(" ");
+		printf(" ");
 
 		for (loop = 0; loop < 16; ++loop) {
 			byte = addr[loop];
 			if (byte < 0x20)
-				kprintf("\x1b[31m%c\x1b[0m", byte + '@');
+				printf("\x1b[31m%c\x1b[0m", byte + '@');
 			else if (byte == 0x7f)
-				kprintf("\x1b[31m?\x1b[0m");
+				printf("\x1b[31m?\x1b[0m");
 			else if (byte < 0x80)
-				kprintf("%c", byte);
+				printf("%c", byte);
 			else if (byte < 0xa0)
-				kprintf("\x1b[32m%c\x1b[0m", byte - '@');
+				printf("\x1b[32m%c\x1b[0m", byte - '@');
 			else if (byte == 0xff)
-				kprintf("\x1b[32m?\x1b[0m");
+				printf("\x1b[32m?\x1b[0m");
 			else
-				kprintf("%c", byte & 0x7f);
+				printf("%c", byte & 0x7f);
 		}
 
-		kprintf("\r\n");
+		printf("\r\n");
 		addr += 16;
 	}
 }
@@ -116,32 +116,32 @@ pm_dumpw(addr, count)
 	int loop;
 
 	for (; count > 0; count -= 32) {
-	        kprintf("%08x: ", (int)addr);
+	        printf("%08x: ", (int)addr);
 
 		for (loop = 0; loop < 8; ++loop) {
 			byte = ((u_int *)addr)[loop];
-			kprintf("%08x ", byte);
+			printf("%08x ", byte);
 		}
 
-		kprintf(" ");
+		printf(" ");
 
 		for (loop = 0; loop < 32; ++loop) {
 			byte = addr[loop];
 			if (byte < 0x20)
-				kprintf("\x1b[31m%c\x1b[0m", byte + '@');
+				printf("\x1b[31m%c\x1b[0m", byte + '@');
 			else if (byte == 0x7f)
-				kprintf("\x1b[31m?\x1b[0m");
+				printf("\x1b[31m?\x1b[0m");
 			else if (byte < 0x80)
-				kprintf("%c", byte);
+				printf("%c", byte);
 			else if (byte < 0xa0)
-				kprintf("\x1b[32m%c\x1b[0m", byte - '@');
+				printf("\x1b[32m%c\x1b[0m", byte - '@');
 			else if (byte == 0xff)
-				kprintf("\x1b[32m?\x1b[0m");
+				printf("\x1b[32m?\x1b[0m");
 			else
-				kprintf("%c", byte & 0x7f);
+				printf("%c", byte & 0x7f);
 		}
 
-		kprintf("\r\n");
+		printf("\r\n");
 		addr += 32;
 	}
 }
@@ -156,13 +156,13 @@ dumpframe(frame)
 	u_int s;
     
 	s = splhigh();
-	kprintf("frame address = %08x  ", (u_int)frame);
-	kprintf("spsr =%08x\n", frame->tf_spsr);
-	kprintf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n", frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
-	kprintf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n", frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
-	kprintf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n", frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
-	kprintf("r12=%08x r13=%08x r14=%08x r15=%08x\n", frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
-	kprintf("slr=%08x\n", frame->tf_svc_lr);
+	printf("frame address = %08x  ", (u_int)frame);
+	printf("spsr =%08x\n", frame->tf_spsr);
+	printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n", frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
+	printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n", frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
+	printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n", frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
+	printf("r12=%08x r13=%08x r14=%08x r15=%08x\n", frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
+	printf("slr=%08x\n", frame->tf_svc_lr);
 
 	(void)splx(s);
 }
@@ -179,13 +179,13 @@ void kstack_stuff(p)
 	if (p->p_addr == 0) return;
 	if (p->p_vmspace == 0) return;
 	
-	kprintf("proc=%08x comm=%s pid=%d\n", (u_int)p, p->p_comm, p->p_pid);
+	printf("proc=%08x comm=%s pid=%d\n", (u_int)p, p->p_comm, p->p_pid);
 	
 	pmap = &p->p_vmspace->vm_pmap;
 
-	kprintf("pmap=%08x\n", (u_int)pmap);
+	printf("pmap=%08x\n", (u_int)pmap);
 
-	kprintf("p->p_addr=%08x pa=%08x,%d:%08x,%d\n",
+	printf("p->p_addr=%08x pa=%08x,%d:%08x,%d\n",
 	    (u_int)p->p_addr,
 	    (u_int)pmap_extract(pmap, (vm_offset_t)p->p_addr),
 	    pmap_page_index(pmap_extract(pmap, (vm_offset_t)p->p_addr)),
@@ -204,11 +204,11 @@ check_stacks(p)
 	if (p) {
 		ptr = ((u_char *)p->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
 		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
-		kprintf("%d bytes of undefined stack fill pattern out of %d bytes\n", loop,
+		printf("%d bytes of undefined stack fill pattern out of %d bytes\n", loop,
 		    USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM);
 		ptr = ((u_char *)p->p_addr) + USPACE_SVC_STACK_BOTTOM;
 		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
-		kprintf("%d bytes of svc stack fill pattern out of %d bytes\n", loop,
+		printf("%d bytes of svc stack fill pattern out of %d bytes\n", loop,
 		    USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM);
 	}
 }
@@ -235,29 +235,29 @@ postmortem(frame)
 
 	dumpframe(frame);
 
-	kprintf("curproc=%08x paddr=%08x pcb=%08x curpcb=%08x\n",
+	printf("curproc=%08x paddr=%08x pcb=%08x curpcb=%08x\n",
 	    (u_int) curproc, (u_int) curproc->p_addr,
 	    (u_int) &curproc->p_addr->u_pcb, (u_int) curpcb);
-	kprintf("CPSR=%08x ", GetCPSR());
+	printf("CPSR=%08x ", GetCPSR());
 
-	kprintf("Process = %08x ", (u_int)curproc);
-	kprintf("pid = %d ", curproc->p_pid); 
-	kprintf("comm = %s\n", curproc->p_comm); 
+	printf("Process = %08x ", (u_int)curproc);
+	printf("pid = %d ", curproc->p_pid); 
+	printf("comm = %s\n", curproc->p_comm); 
 
 	pm_dumpw(irqstack.virtual + NBPG - 0x100, 0x100);
 	pm_dumpw(undstack.virtual + NBPG - 0x20, 0x20);
 	pm_dumpw(abtstack.virtual + NBPG - 0x20, 0x20);
 
-	kprintf("abt_sp=%08x irq_sp=%08x und_sp=%08x svc_sp=%08x\n",
+	printf("abt_sp=%08x irq_sp=%08x und_sp=%08x svc_sp=%08x\n",
 	    get_stackptr(PSR_ABT32_MODE),
 	    get_stackptr(PSR_IRQ32_MODE),
 	    get_stackptr(PSR_UND32_MODE),
 	    get_stackptr(PSR_SVC32_MODE));
 
 	if (curpcb)
-		kprintf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);
+		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);
 
-	kprintf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
+	printf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
 	    (u_int)proc0.p_addr, (u_int) &proc0.p_addr->u_pcb);
 
 /*
@@ -265,26 +265,26 @@ postmortem(frame)
 	kstack_stuff(curproc);
 */
 #else
-	kprintf("Process = %08x ", (u_int)curproc);
-	kprintf("pid = %d ", curproc->p_pid); 
-	kprintf("comm = %s\n", curproc->p_comm); 
-	kprintf("CPSR=%08x ", GetCPSR());
+	printf("Process = %08x ", (u_int)curproc);
+	printf("pid = %d ", curproc->p_pid); 
+	printf("comm = %s\n", curproc->p_comm); 
+	printf("CPSR=%08x ", GetCPSR());
 
-	kprintf("Traceback info\n");
+	printf("Traceback info\n");
 	addr = simpletraceback();
-	kprintf("Trapframe PC = %08x\n", frame->tf_pc);
-	kprintf("Trapframe SPSR = %08x\n", frame->tf_spsr);
+	printf("Trapframe PC = %08x\n", frame->tf_pc);
+	printf("Trapframe SPSR = %08x\n", frame->tf_spsr);
 
 	if (usertraceback) {
-		kprintf("Attempting user trackback\n");
+		printf("Attempting user trackback\n");
 		user_traceback(frame->tf_r11);
 	}
 
 #endif
 	if ((frame->tf_spsr & PSR_MODE) == PSR_IRQ32_MODE
 	    && addr >= irqstack.virtual && addr < (irqstack.virtual + NBPG)) {
-		kprintf("Trap occurred in IRQ\n");
-		kprintf("IRQ Traceback info\n");
+		printf("Trap occurred in IRQ\n");
+		printf("IRQ Traceback info\n");
 		irqtraceback(addr, irqstack.virtual);
 	}
 	(void)splx(s);
@@ -295,9 +295,9 @@ void
 buried_alive(p)
 	struct proc *p;
 {
-	kprintf("Ok major screw up detected on kernel stack\n");
-	kprintf("Putting the process down to minimise further trashing\n");
-	kprintf("Process was %08x pid=%d comm=%s\n", (u_int) p, p->p_pid, p->p_comm);
+	printf("Ok major screw up detected on kernel stack\n");
+	printf("Putting the process down to minimise further trashing\n");
+	printf("Process was %08x pid=%d comm=%s\n", (u_int) p, p->p_pid, p->p_comm);
 
 }
 #else
@@ -305,7 +305,7 @@ void
 postmortem(frame)
 	trapframe_t *frame;
 {
-	kprintf("No postmortem support compiled in\n");	
+	printf("No postmortem support compiled in\n");	
 }
 
 void
@@ -321,14 +321,14 @@ traceback_sym(lr, pc)
 	u_int pc;
 {
 #ifdef DDB
-	kprintf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
-/*	kprintf("fp->lr=");
+	printf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
+/*	printf("fp->lr=");
 	db_printsym((db_addr_t)(lr), DB_STGY_ANY);
-	kprintf(" fp->pc=");
+	printf(" fp->pc=");
 	db_printsym((db_addr_t)(pc), DB_STGY_ANY);	
-	kprintf("\n");*/
+	printf("\n");*/
 #else
-	kprintf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
+	printf("fp->lr=%08x fp->pc=%08x\n", lr, pc);
 #endif
 }
 

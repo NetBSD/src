@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.11 1996/10/10 23:56:33 christos Exp $	*/
+/*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -106,7 +106,7 @@ u_char	sfas_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 u_char	sfas_inhibit_disc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 #ifdef DEBUG
-#define QPRINTF(a) if (sfas_debug > 1) kprintf a
+#define QPRINTF(a) if (sfas_debug > 1) printf a
 int	sfas_debug = 0;
 #else
 #define QPRINTF(a)
@@ -246,7 +246,7 @@ sfasinitialize(dev)
 	*pte = PG_V | PG_RW | PG_CI | page;
 	TBIAS();
 
-	kprintf(": dmabuf 0x%lx", dev->sc_bump_pa);
+	printf(": dmabuf 0x%lx", dev->sc_bump_pa);
 
 /*
  * FIX
@@ -271,7 +271,7 @@ sfasinitialize(dev)
  * to us during interrupt time.
  */
 		offset = (vm_offset_t)dev->sc_vm_link - VM_MIN_KERNEL_ADDRESS;
-		kprintf(" vmlnk %p", dev->sc_vm_link);
+		printf(" vmlnk %p", dev->sc_vm_link);
 		vm_object_reference(kernel_object);
 		vm_map_insert(kernel_map, kernel_object, offset,
 			      (vm_offset_t)dev->sc_vm_link,
@@ -1075,19 +1075,19 @@ sfas_pretests(dev, rp)
 
 			sfas_init_nexus(dev, &dev->sc_nexus[i]);
 		}
-		kprintf("sfasintr: SCSI-RESET detected!");
+		printf("sfasintr: SCSI-RESET detected!");
 		return(-1);
 	}
 
 	if (dev->sc_interrupt & SFAS_INT_ILLEGAL_COMMAND) {
 		/* Something went terrible wrong! Dump some data and panic! */
 
-		kprintf("FIFO:");
+		printf("FIFO:");
 		while(*rp->sfas_fifo_flags & SFAS_FIFO_COUNT_MASK)
-			kprintf(" %x", *rp->sfas_fifo);
-		kprintf("\n");
+			printf(" %x", *rp->sfas_fifo);
+		printf("\n");
 
-		kprintf("CMD: %x\n", *rp->sfas_command);
+		printf("CMD: %x\n", *rp->sfas_command);
 		panic("sfasintr: ILLEGAL COMMAND!");
 	}
 
@@ -1149,7 +1149,7 @@ sfas_pretests(dev, rp)
 		}
 
 		/* Somehow we got an illegal reselection. Dump and panic. */
-		kprintf("sfasintr: resel[0] %x resel[1] %x disconnected %d\n",
+		printf("sfasintr: resel[0] %x resel[1] %x disconnected %d\n",
 		       dev->sc_resel[0], dev->sc_resel[1],
 		       dev->sc_units_disconnected);
 		panic("sfasintr: Unexpected reselection!");
@@ -1243,8 +1243,8 @@ sfas_midaction(dev, rp, nexus)
 			 * Unexpected disconnection! Cleanup and exit. This
 			 * shouldn't cause any problems.
 			 */
-			kprintf("sfasintr: Unexpected disconnection\n");
-			kprintf("sfasintr: u %x s %d p %d f %x c %x\n",
+			printf("sfasintr: Unexpected disconnection\n");
+			printf("sfasintr: u %x s %d p %d f %x c %x\n",
 			       nexus->lun_unit, nexus->state,
 			       dev->sc_status & SFAS_STAT_PHASE_MASK,
 			       nexus->flags, nexus->cbuf[0]);
@@ -1718,7 +1718,7 @@ sfas_postaction(dev, rp, nexus)
 		}
 		break;
 	default:
-		kprintf("SFASINTR: UNKNOWN PHASE! phase: %d\n",
+		printf("SFASINTR: UNKNOWN PHASE! phase: %d\n",
 		       dev->sc_status & SFAS_STAT_PHASE_MASK);
 		dev->sc_led(dev, 0);
 		sfas_scsidone(dev, nexus->xs, -4);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.12 1996/10/10 23:55:31 christos Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.13 1996/10/13 03:06:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -184,7 +184,7 @@ bzscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.device = &bzsc_scsidev;
 	sc->sc_softc.sc_link.openings = 1;
 
-	kprintf("\n");
+	printf("\n");
 
 	sc->sc_softc.sc_isr.isr_intr = bzsc_intr;
 	sc->sc_softc.sc_isr.isr_arg = &sc->sc_softc;

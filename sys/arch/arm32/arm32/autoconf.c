@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.9 1996/10/11 00:06:29 christos Exp $ */
+/* $NetBSD: autoconf.c,v 1.10 1996/10/13 03:05:44 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -161,7 +161,7 @@ set_root_device()
 
 #ifdef DEBUG              
 			if (pmap_debug_level >= 0)
-				kprintf("rootdev = %08x\n", rootdev);
+				printf("rootdev = %08x\n", rootdev);
 #endif
 		}
 	}
@@ -222,7 +222,7 @@ swapconf()
 			break;
 		if (bdevsw[maj].d_psize) {
 			s = spltty();
-			kprintf("swap dev %04x ", swp->sw_dev);
+			printf("swap dev %04x ", swp->sw_dev);
 			(void)splx(s);
 			if (swapsize == -1)
 				nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
@@ -230,9 +230,9 @@ swapconf()
 				nblks = swapsize;
 			s = spltty();
 			if (nblks == -1)
-				kprintf("-> device not configured for swap\n");
+				printf("-> device not configured for swap\n");
 			else
-				kprintf("-> %d bytes\n", nblks*DEV_BSIZE);
+				printf("-> %d bytes\n", nblks*DEV_BSIZE);
 			(void)splx(s);
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
@@ -290,7 +290,7 @@ configure()
 
 /* Debugging information */
 
-	kprintf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x ipl_none=%08x\n",
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x ipl_none=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_CLOCK], irqmasks[IPL_IMP], irqmasks[IPL_NONE]);
 

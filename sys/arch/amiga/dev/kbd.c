@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.25 1996/10/11 21:12:51 mhitch Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26 1996/10/13 03:07:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -112,16 +112,16 @@ kbdattach(pdp, dp, auxp)
 		case 0: 
 		case 1: 
 		case 2: 
-			kprintf(": CIA A type Amiga\n");
+			printf(": CIA A type Amiga\n");
 			break;
 		case 3:
 		case 4:
 		default:
-			kprintf(": QuickLogic type MF-II\n");
+			printf(": QuickLogic type MF-II\n");
 			break;
 	}
 #else
-	kprintf(": CIA A type Amiga\n");
+	printf(": CIA A type Amiga\n");
 #endif
 
 }
@@ -303,7 +303,7 @@ kbdintr(mask)
 #ifdef KBDRESET
 	if (reset_warn && c == 0xf0) {
 #ifdef DEBUG
-		kprintf ("kbdintr: !!!! Reset Warning !!!!\n");
+		printf ("kbdintr: !!!! Reset Warning !!!!\n");
 #endif
 		bootsync();
 		reset_warn = 0;
@@ -320,7 +320,7 @@ kbdintr(mask)
 #ifdef KBDRESET
 	if (c == 0x78) {
 #ifdef DEBUG
-		kprintf ("kbdintr: Reset Warning started\n");
+		printf ("kbdintr: Reset Warning started\n");
 #endif
 		++reset_warn;
 		return;
@@ -387,7 +387,7 @@ kbdgetcn ()
 		}
 		splx(s);
 #ifdef DRACORAWKEYDEBUG
-		kprintf("<%02x>", in);
+		printf("<%02x>", in);
 #endif
 		return (in>=sizeof(drkbdtab) ? 0xff : drkbdtab[in]|c);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.15 1996/10/10 23:56:40 christos Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.16 1996/10/13 03:07:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -76,7 +76,7 @@ struct scsi_device wstsc_scsidev = {
 
 #ifdef DEBUG
 extern int sci_debug;
-#define QPRINTF(a) if (sci_debug > 1) kprintf a
+#define QPRINTF(a) if (sci_debug > 1) printf a
 #else
 #define QPRINTF(a)
 #endif
@@ -125,7 +125,7 @@ wstscattach(pdp, dp, auxp)
 	struct sci_softc *sc;
 	struct zbus_args *zap;
 
-	kprintf("\n");
+	printf("\n");
 
 	zap = auxp;
 	
@@ -210,7 +210,7 @@ wstsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug | 1)
-					kprintf("supradma2_in fail: l%d i%x w%d\n",
+					printf("supradma2_in fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode = 0;
@@ -247,7 +247,7 @@ wstsc_dma_xfer_in (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug | 1)
-					kprintf("supradma1_in fail: l%d i%x w%d\n",
+					printf("supradma1_in fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode = 0;
@@ -297,7 +297,7 @@ wstsc_dma_xfer_out (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					kprintf("supradma_out fail: l%d i%x w%d\n",
+					printf("supradma_out fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode = 0;
@@ -352,7 +352,7 @@ wstsc_dma_xfer_in2 (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug | 1)
-					kprintf("supradma2_in2 fail: l%d i%x w%d\n",
+					printf("supradma2_in2 fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -385,7 +385,7 @@ wstsc_dma_xfer_in2 (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug | 1)
-					kprintf("supradma1_in2 fail: l%d i%x w%d\n",
+					printf("supradma1_in2 fail: l%d i%x w%d\n",
 					len, *dev->sci_bus_csr, wait);
 #endif
 				*dev->sci_mode &= ~SCI_MODE_DMA;
@@ -446,7 +446,7 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					kprintf("supradma_out2 fail: l%d i%x w%d\n",
+					printf("supradma_out2 fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				*dev->sci_mode = 0;
@@ -480,7 +480,7 @@ wstsc_dma_xfer_out2 (dev, len, buf, phase)
 			  || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					kprintf("supradma_out2 fail: l%d i%x w%d\n",
+					printf("supradma_out2 fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				*dev->sci_mode = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: ast.c,v 1.6 1996/10/11 00:06:28 christos Exp $ */
+/* $NetBSD: ast.c,v 1.7 1996/10/13 03:05:43 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -70,7 +70,7 @@ userret(p, pc, oticks)
 		panic("userret called in non SVC mode !");
 
 	if (current_spl_level != SPL_0)
-		kprintf("userret: spl level=%d on entry\n", current_spl_level);
+		printf("userret: spl level=%d on entry\n", current_spl_level);
 #endif
 
 /* take pending signals */
@@ -120,7 +120,7 @@ userret(p, pc, oticks)
 
 #ifdef DIAGNOSTIC
 	if (current_spl_level != SPL_0)
-		kprintf("userret: spl level=%d on exit\n", current_spl_level);
+		printf("userret: spl level=%d on exit\n", current_spl_level);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.c,v 1.2 1996/10/11 00:07:20 christos Exp $ */
+/* $NetBSD: iomd.c,v 1.3 1996/10/13 03:06:21 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -100,57 +100,57 @@ iomdattach(parent, self, aux)
 
 	id = ReadByte(IOMD_ID0) | (ReadByte(IOMD_ID1) << 8);
 
-	kprintf(": ");
+	printf(": ");
 
 	switch (id) {
 #ifdef CPU_ARM7500
 		case ARM7500_IOC_ID:
-			kprintf("ARM7500 IOMD ");
+			printf("ARM7500 IOMD ");
 			refresh = ReadByte(IOMD_REFCR) & 0x0f;
 			break;
 #else
 		case RPC600_IOMD_ID:
-			kprintf("RPC IOMD ");
+			printf("RPC IOMD ");
 			refresh = ReadByte(IOMD_VREFCR) & 0x09;
 			break;
 #endif	/* CPU_ARM7500 */
 		default:
-			kprintf("Unknown IOMD=%04x ", id);
+			printf("Unknown IOMD=%04x ", id);
 			refresh = 0;
 			break;
 	}
-	kprintf("\n");
-	kprintf("%s: ", self->dv_xname);
-	kprintf("DRAM refresh=");
+	printf("\n");
+	printf("%s: ", self->dv_xname);
+	printf("DRAM refresh=");
 	switch(refresh){
 		case 0x0:
-			kprintf("off");
+			printf("off");
 			break;
 		case 0x1:
-			kprintf("16us");
+			printf("16us");
 			break;
 		case 0x2:
-			kprintf("32us");
+			printf("32us");
 			break;
 		case 0x4:
-			kprintf("64us");
+			printf("64us");
 			break;
 		case 0x8:
-			kprintf("128us");
+			printf("128us");
 			break;
 		default:
-			kprintf("unknown [%02x]", refresh);
+			printf("unknown [%02x]", refresh);
 			break;
 	}
 
 	dma_time = ReadByte(IOMD_DMATCR);
-	kprintf(", dma cycle types=");
+	printf(", dma cycle types=");
 	for (loop = 0; loop < 4; ++loop,dma_time = dma_time >> 2)
-		kprintf("%c", 'A' + (dma_time & 3));
+		printf("%c", 'A' + (dma_time & 3));
 
 	combo_time = ReadByte(IOMD_IOTCR);
-	kprintf(", combo cycle type=%c", 'A' + ((combo_time >> 2) & 3));
-	kprintf("\n");
+	printf(", combo cycle type=%c", 'A' + ((combo_time >> 2) & 3));
+	printf("\n");
 }
 
 struct cfattach iomd_ca = {

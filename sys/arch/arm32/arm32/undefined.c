@@ -1,4 +1,4 @@
-/* $NetBSD: undefined.c,v 1.4 1996/10/11 00:06:59 christos Exp $ */
+/* $NetBSD: undefined.c,v 1.5 1996/10/13 03:06:00 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -172,10 +172,10 @@ undefinedinstruction(frame)
 	if ((p = curproc) == 0)
 		p = &proc0;
 
-/*	kprintf("fault in process %08x %d\n", p, p->p_pid);*/
+/*	printf("fault in process %08x %d\n", p, p->p_pid);*/
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-/*		kprintf("USR32 mode : %08x\n", frame->tf_spsr);*/
+/*		printf("USR32 mode : %08x\n", frame->tf_spsr);*/
 		sticks = p->p_sticks;
                   
 /* Modify the fault_code to reflect the USR/SVC state at time of fault */
@@ -201,7 +201,7 @@ undefinedinstruction(frame)
 
 /*
 	s = splhigh();
-    	kprintf("Coprocessor number %d instruction fault\n", coprocessor);
+    	printf("Coprocessor number %d instruction fault\n", coprocessor);
 	(void)splx(s);
 */
 
@@ -210,26 +210,26 @@ undefinedinstruction(frame)
 		s = splhigh();
 
 		if ((fault_instruction & 0x0f000010) == 0x0e000000) {
-			kprintf("CDP\n");
+			printf("CDP\n");
 			disassemble(fault_pc);
 		}
 		else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-			kprintf("LDC/STC\n");
+			printf("LDC/STC\n");
 			disassemble(fault_pc);
 		}
 		else if ((fault_instruction & 0x0f000010) == 0x0e000010) {
-			kprintf("MRC/MCR\n");
+			printf("MRC/MCR\n");
 			disassemble(fault_pc);
 		}
 		else {
-			kprintf("Undefined instruction\n");
+			printf("Undefined instruction\n");
 			disassemble(fault_pc);
 		}
 
 		(void)splx(s);
         
 		if ((fault_code & FAULT_USER) == 0) {
-			kprintf("Undefined instruction in kernel: Heavy man !\n");
+			printf("Undefined instruction in kernel: Heavy man !\n");
 			postmortem(frame);
 		}
 
@@ -314,8 +314,8 @@ resethandler(frame)
 	postmortem(frame);
 
 #ifdef CONTINUE_AFTER_RESET_BUG
-	kprintf("Branch throuh zero\n");
-	kprintf("The system should now be considered very unstable :-)\n");
+	printf("Branch throuh zero\n");
+	printf("The system should now be considered very unstable :-)\n");
 	sigexit(curproc, SIGILL);
 
 #ifdef VALIDATE_TRAPFRAME

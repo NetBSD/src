@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10 1996/10/11 00:06:48 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.11 1996/10/13 03:05:54 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -288,13 +288,13 @@ boot(howto, bootstr)
 /* Debugging here */
 
 	if (curproc == NULL)
-		kprintf("curproc = 0 - must have been in cpu_idle()\n");
+		printf("curproc = 0 - must have been in cpu_idle()\n");
 
 /*	if (panicstr)
-		kprintf("ioctlconsolebug=%d %08x\n", ioctlconsolebug, ioctlconsolebug);*/
+		printf("ioctlconsolebug=%d %08x\n", ioctlconsolebug, ioctlconsolebug);*/
 
 /*	if (curpcb)
-		kprintf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
+		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);*/
 
 #if NHYDRABUS > 0
 /*
@@ -308,10 +308,10 @@ boot(howto, bootstr)
 
 /* Debug info */
 
-	kprintf("boot: howto=%08x %08x curproc=%08x\n", howto, spl_mask, (u_int)curproc);
+	printf("boot: howto=%08x %08x curproc=%08x\n", howto, spl_mask, (u_int)curproc);
 
-	kprintf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
-	kprintf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
+	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x ipl_imp=%08x\n",
             irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
             irqmasks[IPL_CLOCK], irqmasks[IPL_IMP]);
 
@@ -322,7 +322,7 @@ boot(howto, bootstr)
 /* Did we encounter the ARM700 bug we discovered ? */
 
 	if (arm700bugcount > 0)
-		kprintf("ARM700 PREFETCH/SWI bug count = %d\n", arm700bugcount);
+		printf("ARM700 PREFETCH/SWI bug count = %d\n", arm700bugcount);
 
 /* Disable console buffering */
 
@@ -331,8 +331,8 @@ boot(howto, bootstr)
 /* If we are still cold then hit the air brakes */
 
 	if (cold) {
-		kprintf("Halted while still in the ICE age.\n");
-		kprintf("Hit a key to reboot\n");
+		printf("Halted while still in the ICE age.\n");
+		printf("Hit a key to reboot\n");
 		cngetc();
 		boot0();
 	}
@@ -374,8 +374,8 @@ boot(howto, bootstr)
 		shell();
 #else
 	if (action & ACTION_KSHELL) {
-		kprintf("Halted.\n");
-		kprintf("Hit a key to reboot ");
+		printf("Halted.\n");
+		printf("Hit a key to reboot ");
 		cngetc();
 	}
 #endif
@@ -430,7 +430,7 @@ boot(howto, bootstr)
 
 /* Run any shutdown hooks */
 
-	kprintf("Running shutdown hooks ...\n");
+	printf("Running shutdown hooks ...\n");
 	doshutdownhooks();
 
 /* Make sure IRQ's are disabled */
@@ -439,12 +439,12 @@ boot(howto, bootstr)
 
 /* Tell the user we are booting */
 
-	kprintf("boot...");
+	printf("boot...");
 
 /* Give the user time to read the last couple of lines of text. */
 
 	for (loop = 5; loop > 0; --loop) {
-		kprintf("%d..", loop);
+		printf("%d..", loop);
 		delay(500000);
 	}
 
@@ -476,7 +476,7 @@ bootsync(void)
  */
 
 		IRQenable;
-		kprintf("Warning IRQ's disabled during boot()\n");
+		printf("Warning IRQ's disabled during boot()\n");
 	}
 
 	vfs_shutdown();
@@ -563,35 +563,35 @@ initarm(bootconf)
 /*
  * Initialise the physical console
  * This is done in main() but for the moment we do it here so that
- * we can use kprintf in initarm() before main() has been called.
+ * we can use printf in initarm() before main() has been called.
  */
 
 	consinit();
 
 /* Talk to the user */
 
-	kprintf("initarm...\n");
+	printf("initarm...\n");
 
-	kprintf("Kernel loaded from file %s\n", bootconfig.kernelname);
-	kprintf("Kernel arg string %s\n", (char *)bootconfig.argvirtualbase);
+	printf("Kernel loaded from file %s\n", bootconfig.kernelname);
+	printf("Kernel arg string %s\n", (char *)bootconfig.argvirtualbase);
 
-	kprintf("\nBoot configuration structure reports the following memory\n");
+	printf("\nBoot configuration structure reports the following memory\n");
 
-	kprintf("  DRAM block 0a at %08x size %08x  DRAM block 0b at %08x size %08x\n\r",
+	printf("  DRAM block 0a at %08x size %08x  DRAM block 0b at %08x size %08x\n\r",
 	    bootconfig.dram[0].address,
 	    bootconfig.dram[0].pages * bootconfig.pagesize,
 	    bootconfig.dram[1].address,
 	    bootconfig.dram[1].pages * bootconfig.pagesize);
-	kprintf("  DRAM block 1a at %08x size %08x  DRAM block 1b at %08x size %08x\n\r",
+	printf("  DRAM block 1a at %08x size %08x  DRAM block 1b at %08x size %08x\n\r",
 	    bootconfig.dram[2].address,
 	    bootconfig.dram[2].pages * bootconfig.pagesize,
 	    bootconfig.dram[3].address,
 	    bootconfig.dram[3].pages * bootconfig.pagesize);
-	kprintf("  VRAM block 0  at %08x size %08x\n\r",
+	printf("  VRAM block 0  at %08x size %08x\n\r",
 	    bootconfig.vram[0].address,
 	    bootconfig.vram[0].pages * bootconfig.pagesize);
 
-	kprintf(" videomem = %08x %08x\n", bootconfig.display_start, videomemory.vidm_vbase);
+	printf(" videomem = %08x %08x\n", bootconfig.display_start, videomemory.vidm_vbase);
 
 /* Check to make sure the page size is correct */
 
@@ -638,7 +638,7 @@ initarm(bootconf)
  * memory to low physical memory etc.
  */
 
-	kprintf("initarm: Primary bootstrap ... ");
+	printf("initarm: Primary bootstrap ... ");
 
 /*
  * Update the videomemory structure to reflect the mapping changes
@@ -702,14 +702,14 @@ initarm(bootconf)
 /* Print some debugging info */
 
 /*
-	kprintf("page tables look like this ...\n");
-	kprintf("V0x00000000 - %08x\n", ReadWord(l1pagetable + 0x0000));
-	kprintf("V0x03500000 - %08x\n", ReadWord(l1pagetable + 0x00d4));
-	kprintf("V0x00200000 - %08x\n", ReadWord(l1pagetable + 0x0080));
-	kprintf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
-	kprintf("V0xf0000000 - %08x\n", ReadWord(l1pagetable + 0x3c00));
-	kprintf("page dir = P%08x\n", bootconfig.scratchphysicalbase + 0x4000);
-	kprintf("l1= V%08x\n", l1pagetable);
+	printf("page tables look like this ...\n");
+	printf("V0x00000000 - %08x\n", ReadWord(l1pagetable + 0x0000));
+	printf("V0x03500000 - %08x\n", ReadWord(l1pagetable + 0x00d4));
+	printf("V0x00200000 - %08x\n", ReadWord(l1pagetable + 0x0080));
+	printf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
+	printf("V0xf0000000 - %08x\n", ReadWord(l1pagetable + 0x3c00));
+	printf("page dir = P%08x\n", bootconfig.scratchphysicalbase + 0x4000);
+	printf("l1= V%08x\n", l1pagetable);
 */
 
 /*
@@ -728,7 +728,7 @@ initarm(bootconf)
 	bootconfig.display_start = VMEM_VBASE;
 	physcon_display_base(VMEM_VBASE);
 
-	kprintf("done.\n");
+	printf("done.\n");
 
 /*
  * Ok we have finished the primary boot strap. All this has done is to
@@ -746,7 +746,7 @@ initarm(bootconf)
 
 	process_kernel_args();
 
-	kprintf("initarm: Secondary bootstrap ... ");
+	printf("initarm: Secondary bootstrap ... ");
 
 /* Zero down the memory we mapped in for the secondary bootstrap */
 
@@ -821,7 +821,7 @@ initarm(bootconf)
 #endif
 
 	physical = physical_start + kerneldatasize;
-/*	kprintf("physical=%08x next_phys=%08x\n", physical, pmap_next_phys_page(physical - NBPG));*/
+/*	printf("physical=%08x next_phys=%08x\n", physical, pmap_next_phys_page(physical - NBPG));*/
 	loop1 = 1;
 	kernel_pt_table[0] = 0;
 	for (loop = 0; loop < 15; ++loop) {
@@ -841,7 +841,7 @@ initarm(bootconf)
 
 /*
 	for (loop=0; loop < 10; ++loop)
-		kprintf("%d - P%08x\n", loop, kernel_pt_table[loop]);
+		printf("%d - P%08x\n", loop, kernel_pt_table[loop]);
 */
 
 /* This should never be able to happen but better confirm that. */
@@ -852,14 +852,14 @@ initarm(bootconf)
 /* Update the address of the first free page of physical memory */
 
 	physical_freestart = physical;
-/*	kprintf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
+/*	printf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
 	free_pages -= (physical - physical_start) / NBPG;
 
 /* Allocate a page for the system page mapped to 0x00000000 */
 
 	systempage.physical = physical_freestart;
 	physical_freestart += NBPG;
-/*	kprintf("(0)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
+/*	printf("(0)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
 	--free_pages;
 	bzero((char *)systempage.physical - physical_start, NBPG);
 
@@ -876,14 +876,14 @@ initarm(bootconf)
 	irqstack.virtual = KERNEL_BASE + irqstack.physical-physical_start;
 	abtstack.virtual = KERNEL_BASE + abtstack.physical-physical_start;
 	undstack.virtual = KERNEL_BASE + undstack.physical-physical_start;
-/*	kprintf("(1)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
+/*	printf("(1)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
 
 	kernelstack.physical = physical_freestart;
 	physical_freestart += UPAGES * NBPG;
 	bzero((char *)kernelstack.physical - physical_start, UPAGES * NBPG);
 	free_pages -= UPAGES;
 
-/*	kprintf("(2)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
+/*	printf("(2)physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
 
 
 	kernelstack.virtual = KERNEL_BASE + kernelstack.physical
@@ -893,7 +893,7 @@ initarm(bootconf)
 	physical_freestart += round_page(sizeof(struct msgbuf));
 	free_pages -= round_page(sizeof(struct msgbuf)) / NBPG;
 
-/*	kprintf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
+/*	printf("physical_fs=%08x next_phys=%08x\n", (u_int)physical_freestart, (u_int)pmap_next_phys_page(physical_freestart - NBPG));*/
 
 /* Ok we have allocated physical pages for the primary kernel page tables */
 
@@ -902,10 +902,10 @@ initarm(bootconf)
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL] - physical_start;
 
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
-/*		kprintf("[ktext read-only] ");
-		kprintf("[%08x %08x %08x] \n", (u_int)kerneldatasize, (u_int)kernexec->a_text,
+/*		printf("[ktext read-only] ");
+		printf("[%08x %08x %08x] \n", (u_int)kerneldatasize, (u_int)kernexec->a_text,
 		    (u_int)(kernexec->a_text+kernexec->a_data+kernexec->a_bss));*/
-/*		kprintf("physical start=%08x physical freestart=%08x hydra phys=%08x\n", physical_start, physical_freestart, hydrascratch.physical);*/
+/*		printf("physical start=%08x physical freestart=%08x hydra phys=%08x\n", physical_start, physical_freestart, hydrascratch.physical);*/
 		for (logical = 0; logical < 0x00/*kernexec->a_text*/;
 		    logical += NBPG)
 			map_entry_ro(l2pagetable, logical, physical_start
@@ -1071,20 +1071,20 @@ initarm(bootconf)
 /* Bit more debugging info */
 
 /*
-	kprintf("page tables look like this ...\n");
-	kprintf("V0x00000000 - %08x\n", ReadWord(l1pagetable + 0x0000));
-	kprintf("V0x03200000 - %08x\n", ReadWord(l1pagetable + 0x00c8));
-	kprintf("V0x03500000 - %08x\n", ReadWord(l1pagetable + 0x00d4));
-	kprintf("V0xf0000000 - %08x\n", ReadWord(l1pagetable + 0x3c00));
-	kprintf("V0xf1000000 - %08x\n", ReadWord(l1pagetable + 0x3c40));
-	kprintf("V0xf2000000 - %08x\n", ReadWord(l1pagetable + 0x3c80));
-	kprintf("V0xf3000000 - %08x\n", ReadWord(l1pagetable + 0x3cc0));
-	kprintf("V0xf3300000 - %08x\n", ReadWord(l1pagetable + 0x3ccc));
-	kprintf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
-	kprintf("V0xf6000000 - %08x\n", ReadWord(l1pagetable + 0x3d80));
+	printf("page tables look like this ...\n");
+	printf("V0x00000000 - %08x\n", ReadWord(l1pagetable + 0x0000));
+	printf("V0x03200000 - %08x\n", ReadWord(l1pagetable + 0x00c8));
+	printf("V0x03500000 - %08x\n", ReadWord(l1pagetable + 0x00d4));
+	printf("V0xf0000000 - %08x\n", ReadWord(l1pagetable + 0x3c00));
+	printf("V0xf1000000 - %08x\n", ReadWord(l1pagetable + 0x3c40));
+	printf("V0xf2000000 - %08x\n", ReadWord(l1pagetable + 0x3c80));
+	printf("V0xf3000000 - %08x\n", ReadWord(l1pagetable + 0x3cc0));
+	printf("V0xf3300000 - %08x\n", ReadWord(l1pagetable + 0x3ccc));
+	printf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
+	printf("V0xf6000000 - %08x\n", ReadWord(l1pagetable + 0x3d80));
 */
-/*	kprintf("V0xefc00000 - %08x\n", ReadWord(l1pagetable + 0x3bf8));
-	kprintf("V0xef800000 - %08x\n", ReadWord(l1pagetable + 0x3bfc));*/
+/*	printf("V0xefc00000 - %08x\n", ReadWord(l1pagetable + 0x3bf8));
+	printf("V0xef800000 - %08x\n", ReadWord(l1pagetable + 0x3bfc));*/
 
 /*
  * Now we have the real page tables in place so we can switch to them.
@@ -1097,7 +1097,7 @@ initarm(bootconf)
  * which is why it is left to the last moment.
  */
 
-	kprintf("mapping ... ");
+	printf("mapping ... ");
 
 	bcopy((char *)KERNEL_BASE, (char *)0x00000000, kerneldatasize);
 
@@ -1105,7 +1105,7 @@ initarm(bootconf)
 
 	setttb(kernel_pt_table[KERNEL_PT_PAGEDIR]);
 
-	kprintf("done.\n");
+	printf("done.\n");
 
 /* Right set up the vectors at the bottom of page 0 */
 
@@ -1121,22 +1121,22 @@ initarm(bootconf)
  */
 
 #ifdef DIAGNOSTIC
-	kprintf("IRQ stack V%08x P%08x\n", (u_int) irqstack.virtual,
+	printf("IRQ stack V%08x P%08x\n", (u_int) irqstack.virtual,
 	    (u_int) irqstack.physical);
-	kprintf("ABT stack V%08x P%08x\n", (u_int) abtstack.virtual,
+	printf("ABT stack V%08x P%08x\n", (u_int) abtstack.virtual,
 	    (u_int) abtstack.physical);
-	kprintf("UND stack V%08x P%08x\n", (u_int) undstack.virtual,
+	printf("UND stack V%08x P%08x\n", (u_int) undstack.virtual,
 	    (u_int) undstack.physical);
 #endif
 
-	kprintf("init subsystems: stacks ");
+	printf("init subsystems: stacks ");
 
 	set_stackptr(PSR_IRQ32_MODE, irqstack.virtual + NBPG);
 	set_stackptr(PSR_ABT32_MODE, abtstack.virtual + NBPG);
 	set_stackptr(PSR_UND32_MODE, undstack.virtual + NBPG);
 
 	if (pmap_debug_level >= 0)
-		kprintf("kstack V%08x P%08x\n", (int) kernelstack.virtual,
+		printf("kstack V%08x P%08x\n", (int) kernelstack.virtual,
 		    (int) kernelstack.physical);
 
 /*
@@ -1148,7 +1148,7 @@ initarm(bootconf)
  * This just fills in a slighly better one.
  */
 
-	kprintf("vectors ");
+	printf("vectors ");
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
@@ -1163,7 +1163,7 @@ initarm(bootconf)
 /*
 	for (loop = 0x0; loop < 0x1000; ++loop) {
 		if (ReadWord(PAGE_DIRS_BASE + loop * 4) != 0)
-			kprintf("Pagetable for V%08x = %08x\n", loop << 20,
+			printf("Pagetable for V%08x = %08x\n", loop << 20,
 			    ReadWord(0xf2000000 + loop * 4));
 	}
 
@@ -1174,7 +1174,7 @@ initarm(bootconf)
 /*
 	for (loop = 0x0; loop < 0x400; ++loop) {
 		if (ReadWord(kernel_pt_table[KERNEL_PT_PTE] + loop * 4) != 0)
-			kprintf("Pagetable for V%08x P%08x = %08x\n",
+			printf("Pagetable for V%08x P%08x = %08x\n",
 			    loop << 22, kernel_pt_table[KERNEL_PT_PTE]+loop*4,
 			    ReadWord(kernel_pt_table[KERNEL_PT_PTE]+loop * 4));
 	}
@@ -1194,22 +1194,22 @@ initarm(bootconf)
 
 /* Initialise the undefined instruction handlers */
 
-	kprintf("undefined ");
+	printf("undefined ");
 	undefined_init();
 
 /* Boot strap pmap telling it where the kernel page table is */
 
-	kprintf("pmap ");
+	printf("pmap ");
 	pmap_bootstrap(PAGE_DIRS_BASE);
 
 /* Setup the IRQ system */
 
-	kprintf("irq ");
+	printf("irq ");
 	irq_init();
-	kprintf("done.\n");
+	printf("done.\n");
 
 #ifdef DDB
-	kprintf("ddb: ");
+	printf("ddb: ");
 	db_machine_init();
 	ddb_init();
 
@@ -1294,14 +1294,14 @@ cpu_startup()
  * not be buffered).
  */
  
-	kprintf(version);
+	printf(version);
 
-	kprintf("screen: %d x %d x %d\n", bootconfig.width + 1, bootconfig.height + 1, bootconfig.framerate);
+	printf("screen: %d x %d x %d\n", bootconfig.width + 1, bootconfig.height + 1, bootconfig.framerate);
 
 	if (cmos_read(RTC_ADDR_REBOOTCNT) > 0)
-		kprintf("Warning: REBOOTCNT = %d\n", cmos_read(RTC_ADDR_REBOOTCNT));
+		printf("Warning: REBOOTCNT = %d\n", cmos_read(RTC_ADDR_REBOOTCNT));
 
-	kprintf("real mem = %d (%d pages)\n", arm_page_to_byte(physmem), physmem);
+	printf("real mem = %d (%d pages)\n", arm_page_to_byte(physmem), physmem);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -1380,7 +1380,7 @@ cpu_startup()
 			       VM_MBUF_SIZE, FALSE);
 
 /*
-    kprintf("mb_buf: map=%08x maxaddr = %08x mbutl = %08x\n", mb_map, maxaddr, mbutl);
+    printf("mb_buf: map=%08x maxaddr = %08x mbutl = %08x\n", mb_map, maxaddr, mbutl);
 */
 
 /*
@@ -1392,9 +1392,9 @@ cpu_startup()
 	for (loop = 1; loop < ncallout; ++loop)
 		callout[loop - 1].c_next = &callout[loop];
 
-	kprintf("avail mem = %d (%d pages)\n", (int)ptoa(cnt.v_free_count),
+	printf("avail mem = %d (%d pages)\n", (int)ptoa(cnt.v_free_count),
 	    (int)ptoa(cnt.v_free_count) / NBPG);
-	kprintf("using %d buffers containing %d bytes of memory\n",
+	printf("using %d buffers containing %d bytes of memory\n",
 	    nbuf, bufpages * CLBYTES);
 
 /*
@@ -1440,9 +1440,9 @@ cpu_startup()
 		kmodule_size = round_page(kmodule_size);
 		kmodule_base = (u_int)kmem_alloc(kernel_map, kmodule_size);
 		if (kmodule_base)
-			kprintf("KMODULE SPACE = %08x\n", kmodule_base);
+			printf("KMODULE SPACE = %08x\n", kmodule_base);
 	        else
-			kprintf("\x1b[31mNO KMODULE SPACE\n\x1b[0m");
+			printf("\x1b[31mNO KMODULE SPACE\n\x1b[0m");
 	}
 
 /*
@@ -1657,7 +1657,7 @@ process_kernel_args()
 				max_processes = 16;
 			if (max_processes > 256)
 				max_processes = 256;
-			kprintf("Maximum \"in memory\" processes = %d\n",
+			printf("Maximum \"in memory\" processes = %d\n",
 			    max_processes);
 		}
 		ptr = strstr(args, "ramdisc=");
@@ -1686,7 +1686,7 @@ process_kernel_args()
 			videodram_size = round_page(videodram_size);
 			if (videodram_size > 1024*1024)
 				videodram_size = 1024*1024;
-			kprintf("VIDEO DRAM = %d\n", videodram_size);
+			printf("VIDEO DRAM = %d\n", videodram_size);
 		}
 		if (strstr(args, "single"))
 			boothowto |= RB_SINGLE;
@@ -1722,7 +1722,7 @@ setup_cursor()
  */
 
 	cursor_data = (u_int *)kmem_alloc(kernel_map, NBPG);
-/*	kprintf("Cursor data page = V%08x P%08x\n", cursor_data, pmap_extract(kernel_pmap, (vm_offset_t)cursor_data));*/
+/*	printf("Cursor data page = V%08x P%08x\n", cursor_data, pmap_extract(kernel_pmap, (vm_offset_t)cursor_data));*/
 	WriteWord(IOMD_CURSINIT, pmap_extract(kernel_pmap,
 		(vm_offset_t)cursor_data));
 	return(0);
@@ -1743,13 +1743,13 @@ setregs(p, pack, stack, retval)
 	register struct trapframe *tf;
 
 	if (pmap_debug_level >= -1)
-		kprintf("setregs: ip=%08x sp=%08x proc=%08x\n",
+		printf("setregs: ip=%08x sp=%08x proc=%08x\n",
 		    (u_int) pack->ep_entry, (u_int) stack, (u_int) p);
 
 	tf = p->p_md.md_regs;
 
 	if (pmap_debug_level >= -1)
-		kprintf("mdregs=%08x pc=%08x lr=%08x sp=%08x\n",
+		printf("mdregs=%08x pc=%08x lr=%08x sp=%08x\n",
 		    (u_int) tf, tf->tf_pc, tf->tf_usr_lr, tf->tf_usr_sp);
 
 	tf->tf_r11 = 0;				/* bottom of the fp chain */
@@ -1820,7 +1820,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 	if (pmap_debug_level >= 0)
-		kprintf("Sendsig: sig=%d mask=%08x catcher=%08x code=%08x\n",
+		printf("Sendsig: sig=%d mask=%08x catcher=%08x code=%08x\n",
 		    sig, mask, (u_int)catcher, (u_int)code);
 
 	tf = p->p_md.md_regs;
@@ -1896,7 +1896,7 @@ sendsig(catcher, sig, mask, code)
 	tf->tf_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 
 	if (pmap_debug_level >= 0)
-		kprintf("Sendsig: sig=%d pc=%08x\n", sig, tf->tf_pc);
+		printf("Sendsig: sig=%d pc=%08x\n", sig, tf->tf_pc);
 }
 
 
@@ -1926,7 +1926,7 @@ sys_sigreturn(p, v, retval)
 	register struct trapframe *tf;
 
 	if (pmap_debug_level >= 0)
-		kprintf("sigreturn: context=%08x\n", (int)SCARG(uap, sigcntxp));
+		printf("sigreturn: context=%08x\n", (int)SCARG(uap, sigcntxp));
 
 	tf = p->p_md.md_regs;
 
@@ -2000,7 +2000,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	kprintf("cpu_sysctl: Currently stoned - Cannot support the operation\n");
+	printf("cpu_sysctl: Currently stoned - Cannot support the operation\n");
 	return(EOPNOTSUPP);
 }
 
@@ -2161,11 +2161,11 @@ extern u_int vtbugcaddr;
 void
 vtbugreport()
 {
-	kprintf("vtvalbug = %d\n", vtvalbug);
+	printf("vtvalbug = %d\n", vtvalbug);
 	if (vtlastbug)
-		kprintf("vtlastbug = %s\n", vtlastbug);
-	kprintf("vtbugaddr = %08x\n", vtbugaddr);
-	kprintf("vtbugcaddr = %08x\n", vtbugcaddr);
+		printf("vtlastbug = %s\n", vtlastbug);
+	printf("vtbugaddr = %08x\n", vtbugaddr);
+	printf("vtbugcaddr = %08x\n", vtbugcaddr);
 }
 #endif
 

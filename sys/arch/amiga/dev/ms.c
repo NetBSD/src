@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.12 1996/10/11 21:12:53 mhitch Exp $	*/
+/*	$NetBSD: ms.c,v 1.13 1996/10/13 03:07:26 christos Exp $	*/
 
 /*
  * based on:
@@ -119,7 +119,7 @@ msattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	kprintf("\n");
+	printf("\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.19 1996/10/10 23:55:30 christos Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.20 1996/10/13 03:06:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -150,16 +150,16 @@ atzscattach(pdp, dp, auxp)
 	if (kvtop(sc) & sc->sc_dmamask) {
 		sc->sc_dmabuffer = (char *)alloc_z2mem(MAXPHYS * 8); /* XXX */
 		if (isztwomem(sc->sc_dmabuffer))
-			kprintf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
+			printf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
 		else if (sc->sc_dmabuffer)
-			kprintf(" bounce pa 0x%x",
+			printf(" bounce pa 0x%x",
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
 	}
 #endif
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
-	kprintf(": dmamask 0x%lx\n", ~sc->sc_dmamask);
+	printf(": dmamask 0x%lx\n", ~sc->sc_dmamask);
 
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
@@ -210,7 +210,7 @@ atzsc_dmago(dev, addr, count, flags)
 		dev->sc_dmacmd |= CNTR_DDIR;
 #ifdef DEBUG
 	if (atzsc_dmadebug & DDB_IO)
-		kprintf("atzsc_dmago: cmd %x\n", dev->sc_dmacmd);
+		printf("atzsc_dmago: cmd %x\n", dev->sc_dmacmd);
 #endif
 
 	dev->sc_flags |= SBICF_INTR;
@@ -232,7 +232,7 @@ atzsc_dmastop(dev)
 
 #ifdef DEBUG
 	if (atzsc_dmadebug & DDB_FOLLOW)
-		kprintf("atzsc_dmastop()\n");
+		printf("atzsc_dmastop()\n");
 #endif
 	if (dev->sc_dmacmd) {
 		s = splbio();
@@ -271,7 +271,7 @@ atzsc_dmaintr(arg)
 
 #ifdef DEBUG
 	if (atzsc_dmadebug & DDB_FOLLOW)
-		kprintf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
+		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
 
 	/*
@@ -307,7 +307,7 @@ atzsc_dmanext(dev)
 
 	if (dev->sc_cur > dev->sc_last) {
 		/* shouldn't happen !! */
-		kprintf("atzsc_dmanext at end !!!\n");
+		printf("atzsc_dmanext at end !!!\n");
 		atzsc_dmastop(dev);
 		return(0);
 	}

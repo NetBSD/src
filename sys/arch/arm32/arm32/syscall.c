@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.7 1996/10/11 00:06:57 christos Exp $ */
+/* $NetBSD: syscall.c,v 1.8 1996/10/13 03:05:59 christos Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -147,12 +147,12 @@ syscall(frame, code)
 		u_int s;
 		
 		s = splhigh();
-		kprintf("swi code = %08x %d\n", code, code);
+		printf("swi code = %08x %d\n", code, code);
 		postmortem(frame);
 
-		kprintf("nkt: syscall in kernel mode !\n");
+		printf("nkt: syscall in kernel mode !\n");
 #ifdef CONTINUE_AFTER_SYSCALL_BUG              
-		kprintf("The system should now be considered very unstable :-(\n");
+		printf("The system should now be considered very unstable :-(\n");
 		sigexit(curproc, SIGILL);
 
 /* Not reached */
@@ -184,15 +184,15 @@ syscall(frame, code)
 #ifdef ARM700BUGTRACK
 		int loop;
 
-		kprintf("ARM700 just stumbled at 0x%08x\n", frame->tf_pc - 4);
-		kprintf("Code leading up to this was\n");
+		printf("ARM700 just stumbled at 0x%08x\n", frame->tf_pc - 4);
+		printf("Code leading up to this was\n");
 		for (loop = frame->tf_pc - 32; loop < frame->tf_pc; loop += 4)
 			disassemble(loop);
 
 		dumpframe(frame);
-		kprintf("CPU ID=%08x\n", cpu_id());
-		kprintf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
-		kprintf("Page table entry for 0x%08x at 0x%08x = 0x%08x\n", frame->tf_pc - 4, vtopte(frame->tf_pc - 4),
+		printf("CPU ID=%08x\n", cpu_id());
+		printf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
+		printf("Page table entry for 0x%08x at 0x%08x = 0x%08x\n", frame->tf_pc - 4, vtopte(frame->tf_pc - 4),
 			*vtopte(frame->tf_pc - 4));
 #endif
 
@@ -211,7 +211,7 @@ syscall(frame, code)
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
 		splhigh();
 
-		kprintf("swi code = %08x %d\n", code, code);
+		printf("swi code = %08x %d\n", code, code);
 		postmortem(frame);
 		panic("syscall in non SVC mode !");
 	}
@@ -236,7 +236,7 @@ syscall(frame, code)
 	regparams = 4;
     
 	if (pmap_debug_level >= -1)
-		kprintf("\x1b[31mSYSCALL\x1b[0m: code=%08x lr=%08x pid=%d\n",
+		printf("\x1b[31mSYSCALL\x1b[0m: code=%08x lr=%08x pid=%d\n",
 		    code, frame->tf_pc, p->p_pid);
 
 	nsys = p->p_emul->e_nsysent;
@@ -244,12 +244,12 @@ syscall(frame, code)
 
 	switch (code) {
 	case 0x1002:
-		kprintf((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
+		printf((char *)frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
 	case 0x1003:
-		kprintf("%s", (char *)frame->tf_r0);
+		printf("%s", (char *)frame->tf_r0);
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
@@ -303,14 +303,14 @@ syscall(frame, code)
 			frame->tf_r0 = pmap_next_phys_page(frame->tf_r1);
 			break;*/
 		default:
-			kprintf("Unknown SYS_special call (%d)\n", frame->tf_r0);
+			printf("Unknown SYS_special call (%d)\n", frame->tf_r0);
 			break;
 		}
 		SYSCALL_SPECIAL_RETURN;
 		break;
 
 	case 0x100a:
-		kprintf("Warning: This syscall is about to be revoked (0x100a)\n");
+		printf("Warning: This syscall is about to be revoked (0x100a)\n");
 		frame->tf_r0 = pmap_page_attributes(frame->tf_r0);
 		SYSCALL_SPECIAL_RETURN;
 		break;
@@ -342,7 +342,7 @@ syscall(frame, code)
 	    
 		caller = (void *)frame->tf_r0;
 	    
-		frame->tf_r0 = (*caller)(kprintf, install_coproc_handler);
+		frame->tf_r0 = (*caller)(printf, install_coproc_handler);
 		}
 		SYSCALL_SPECIAL_RETURN;
 		break;
@@ -378,7 +378,7 @@ syscall(frame, code)
 		{ struct vnode *vp;
 		vp = (struct vp *)frame->tf_r0;
 		if (vp->v_numoutput > 0 && vp->v_usecount == 0 && vp->v_writecount == 0) {
-			kprintf("Patching vnode %08x\n", vp);
+			printf("Patching vnode %08x\n", vp);
 			vprint(NULL, vp);
 			if (--vp->v_numoutput < 0)
 				panic("vwakeup: neg numoutput");
@@ -395,7 +395,7 @@ syscall(frame, code)
 		{ struct vnode *vp;
 		vp = (struct vp *)frame->tf_r0;
 		if (vp->v_numoutput == 0 && vp->v_usecount == 0 && vp->v_writecount == 0) {
-			kprintf("Patching vnode %08x\n", vp);
+			printf("Patching vnode %08x\n", vp);
 			vprint(NULL, vp);
 			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
 				vp->v_flag &= ~VBWAIT;
@@ -462,7 +462,7 @@ syscall(frame, code)
 		code = ReadWord(params);
 		params += sizeof(int);
 		regparams -= 1;
-		kprintf("SYS_syscall: code=%d %02x", code, code);
+		printf("SYS_syscall: code=%d %02x", code, code);
 		break;
 	
         case SYS___syscall:
@@ -488,7 +488,7 @@ syscall(frame, code)
 		callp += code;
 
 	if (callp->sy_call == sys_nosys) {
-		kprintf("SYSCALL: nosys code=%08x lr=%08x proc=%08x pid=%d %s\n",
+		printf("SYSCALL: nosys code=%08x lr=%08x proc=%08x pid=%d %s\n",
 		    code, frame->tf_pc, (u_int)p, p->p_pid, p->p_comm);
 		postmortem(frame);
 #ifdef POSTMORTEM

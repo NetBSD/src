@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.18 1996/10/10 23:55:58 christos Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.19 1996/10/13 03:07:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -147,7 +147,7 @@ gtscattach(pdp, dp, auxp)
 		sc->sc_dmamask = ~0x01ffffff;
 	else
 		sc->sc_dmamask = ~0x07ffffff;
-	kprintf(": dmamask 0x%lx", ~sc->sc_dmamask);
+	printf(": dmamask 0x%lx", ~sc->sc_dmamask);
 	
 	if ((gap->flags & GVP_NOBANK) == 0)
 		sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;
@@ -167,10 +167,10 @@ gtscattach(pdp, dp, auxp)
 	if (gtsc_dmabounce || kvtop(sc) & sc->sc_dmamask) {
 		sc->sc_dmabuffer = (char *) alloc_z2mem(MAXPHYS * 8); /* XXX */
 		if (isztwomem(sc->sc_dmabuffer))
-			kprintf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
+			printf(" bounce pa 0x%x", kvtop(sc->sc_dmabuffer));
 		else if (gtsc_maxdma == 0) {
 			gtsc_maxdma = 1024;
-			kprintf(" bounce pa 0x%x", 
+			printf(" bounce pa 0x%x", 
 			    PREP_DMA_MEM(sc->sc_dmabuffer));
 		}
 	}
@@ -178,13 +178,13 @@ gtscattach(pdp, dp, auxp)
 	if (gtsc_maxdma == 0)
 		gtsc_maxdma = MAXPHYS;
 
-	kprintf(" flags %x", gap->flags);
-	kprintf(" maxdma %d\n", gtsc_maxdma);
+	printf(" flags %x", gap->flags);
+	printf(" maxdma %d\n", gtsc_maxdma);
 
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x61);
 	sc->sc_clkfreq = gtsc_clock_override ? gtsc_clock_override :
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
-	kprintf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
+	printf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
 
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
@@ -236,13 +236,13 @@ gtsc_dmago(dev, addr, count, flags)
 
 #ifdef DEBUG
 	if (gtsc_debug & DDB_IO)
-		kprintf("gtsc_dmago: cmd %x\n", dev->sc_dmacmd);
+		printf("gtsc_dmago: cmd %x\n", dev->sc_dmacmd);
 #endif
 	dev->sc_flags |= SBICF_INTR;
 	sdp->CNTR = dev->sc_dmacmd;
 	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask) {
 #if 1
-		kprintf("gtsc_dmago: pa %p->%lx dmacmd %x",
+		printf("gtsc_dmago: pa %p->%lx dmacmd %x",
 		    dev->sc_cur->dc_addr,
 		    (u_int)dev->sc_cur->dc_addr & ~dev->sc_dmamask,
 		     dev->sc_dmacmd);
@@ -262,7 +262,7 @@ gtsc_dmago(dev, addr, count, flags)
 		dev->sc_tcnt = gtsc_maxdma;
 #if 1
 	if((u_int)dev->sc_cur->dc_addr & dev->sc_dmamask)
-		kprintf(" tcnt %ld\n", dev->sc_tcnt);
+		printf(" tcnt %ld\n", dev->sc_tcnt);
 #endif
 	return(dev->sc_tcnt);
 }
@@ -278,7 +278,7 @@ gtsc_dmastop(dev)
 
 #ifdef DEBUG
 	if (gtsc_debug & DDB_FOLLOW)
-		kprintf("gtsc_dmastop()\n");
+		printf("gtsc_dmastop()\n");
 #endif
 	if (dev->sc_dmacmd) {
 		/* 
@@ -306,7 +306,7 @@ gtsc_dmaintr(arg)
 		return (0);
 #ifdef DEBUG
 	if (gtsc_debug & DDB_FOLLOW)
-		kprintf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
+		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
 	if (dev->sc_flags & SBICF_INTR)
 		if (sbicintr(dev))
@@ -325,7 +325,7 @@ gtsc_dmanext(dev)
 
 	if (dev->sc_cur > dev->sc_last) {
 		/* shouldn't happen !! */
-		kprintf("gtsc_dmanext at end !!!\n");
+		printf("gtsc_dmanext at end !!!\n");
 		gtsc_dmastop(dev);
 		return(0);
 	}
@@ -347,7 +347,7 @@ gtsc_dmanext(dev)
 		dev->sc_tcnt = gtsc_maxdma;
 #ifdef DEBUG
 	if (gtsc_debug & DDB_FOLLOW)
-		kprintf("gtsc_dmanext ret: %ld\n", dev->sc_tcnt);
+		printf("gtsc_dmanext ret: %ld\n", dev->sc_tcnt);
 #endif
 	return(dev->sc_tcnt);
 }

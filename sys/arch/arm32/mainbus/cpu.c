@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.6 1996/10/11 00:07:15 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.7 1996/10/13 03:06:13 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -168,7 +168,7 @@ fpa_handler(address, instruction, frame)
     
 	__asm __volatile("stmfd sp!, {r0}; .word 0xee300110; mov %0, r0; ldmfd sp!, {r0}" : "=r" (fpsr));
 
-	kprintf("FPA exception: fpsr = %08x\n", fpsr);
+	printf("FPA exception: fpsr = %08x\n", fpsr);
 
 	return(1);
 }
@@ -230,14 +230,14 @@ identify_master_cpu(cpu_number)
 
 #if 0
 /* Experimental stuff used when playing with an ARM700+FPA11 */
-			kprintf("FPA11: FPSR=%08x\n", fpsr);
+			printf("FPA11: FPSR=%08x\n", fpsr);
 			fpsr=0x00070400;
 			__asm __volatile("wfs %0" : "=r" (fpsr));
 			__asm __volatile("rfc %0" : "=r" (fpsr));
-			kprintf("FPA11: FPCR=%08x", fpsr);
+			printf("FPA11: FPCR=%08x", fpsr);
 			__asm __volatile("stmfd sp!, {r0}; mov r0, #0x00000e00 ; wfc r0; ldmfd sp!, {r0}");
 			__asm __volatile("rfc %0" : "=r" (fpsr));
-			kprintf("FPA11: FPCR=%08x", fpsr);
+			printf("FPA11: FPCR=%08x", fpsr);
 #endif
 			break;
 
@@ -316,22 +316,22 @@ identify_arm_cpu(cpu_number)
 
 	cpu = &cpus[cpu_number];
 	if (cpu->cpu_host == CPU_HOST_NONE || cpu->cpu_class == CPU_CLASS_NONE) {
-		kprintf("No installed processor\n");
+		printf("No installed processor\n");
 		return;
 	}
 	if (cpu->cpu_class != CPU_CLASS_ARM) {
-		kprintf("identify_arm_cpu: Can only identify ARM CPU's\n");
+		printf("identify_arm_cpu: Can only identify ARM CPU's\n");
 		return;
 	}
 	cpuid = cpu->cpu_id;
 
 	if (cpuid == 0) {
-		kprintf("Processor failed probe - no CPU ID\n");
+		printf("Processor failed probe - no CPU ID\n");
 		return;
 	}
 
 	if ((cpuid & CPU_ID_DESIGNER_MASK) != CPU_ID_ARM_LTD)
-		kprintf("Unrecognised designer ID = %08x\n", cpuid);
+		printf("Unrecognised designer ID = %08x\n", cpuid);
 
 	switch (cpuid & CPU_ID_CPU_MASK) {
         case ID_ARM610:
@@ -346,18 +346,18 @@ identify_arm_cpu(cpu_number)
 	case ID_SARM110 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
-		ksprintf(cpu->cpu_model, "SA-110 rev %d",
+		sprintf(cpu->cpu_model, "SA-110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
 
 	default :
-		kprintf("Unrecognised processor ID = %08x\n", cpuid);
+		printf("Unrecognised processor ID = %08x\n", cpuid);
 		cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
 		break;
 	}
 
 	if (cpu->cpu_class == CPU_CLASS_ARM) {
-		ksprintf(cpu->cpu_model, "ARM%x rev %d", cpu->cpu_type,
+		sprintf(cpu->cpu_model, "ARM%x rev %d", cpu->cpu_type,
 		    cpuid & CPU_ID_REVISION_MASK);
 
 		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
@@ -386,7 +386,7 @@ identify_arm_cpu(cpu_number)
 
 /* Print the info */
 
-	kprintf(": %s\n", cpu->cpu_model);
+	printf(": %s\n", cpu->cpu_model);
 }
 
 
@@ -404,12 +404,12 @@ identify_arm_fpu(cpu_number)
 
 	cpu = &cpus[cpu_number];
 	if (cpu->cpu_host == CPU_HOST_NONE || cpu->cpu_class == CPU_CLASS_NONE) {
-		kprintf("No installed processor\n");
+		printf("No installed processor\n");
 		return;
 	}
 
 	if (cpu->cpu_class != CPU_CLASS_ARM) {
-		kprintf("identify_arm_cpu: Can only identify ARM FPU's\n");
+		printf("identify_arm_cpu: Can only identify ARM FPU's\n");
 		return;
 	}
 
@@ -420,17 +420,17 @@ identify_arm_fpu(cpu_number)
 		strcpy(cpu->fpu_model, "None");
 		break;
 	case FPU_CLASS_FPE :
-		kprintf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
-		kprintf("fpe%d: no hardware found\n", cpu_number);
+		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
+		printf("fpe%d: no hardware found\n", cpu_number);
 		break;
 	case FPU_CLASS_FPA :
-		kprintf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
+		printf("fpe%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
 		if (cpu->fpu_type == FPU_TYPE_FPA11) {
 			strcpy(cpu->fpu_model, "FPA11");
-			kprintf("fpe%d: fpa11 found\n", cpu_number);
+			printf("fpe%d: fpa11 found\n", cpu_number);
 		} else {
 			strcpy(cpu->fpu_model, "FPA");
-			kprintf("fpe%d: fpa10 found\n", cpu_number);
+			printf("fpe%d: fpa10 found\n", cpu_number);
 		}
 		if ((cpu->fpu_flags & 4) == 0)
 			strcat(cpu->fpu_model, "");
@@ -438,8 +438,8 @@ identify_arm_fpu(cpu_number)
 			strcat(cpu->fpu_model, " clk/2");
 		break;
 	case FPU_CLASS_FPU :
-		ksprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n", cpu->fpu_type);
-		kprintf("fpu%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
+		sprintf(cpu->fpu_model, "Unknown FPU (ID=%02x)\n", cpu->fpu_type);
+		printf("fpu%d at cpu%d: %s\n", cpu_number, cpu_number, cpu->fpu_model);
 		break;
 	}
 }

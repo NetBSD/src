@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.37 1996/10/10 23:56:30 christos Exp $	*/
+/*	$NetBSD: ser.c,v 1.38 1996/10/13 03:07:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -207,13 +207,13 @@ serattach(pdp, dp, auxp)
 			(void) serinit(0, kgdb_rate);
 			serconsinit = 1;       /* don't re-init in serputc */
 			if (kgdb_debug_init == 0)
-				kprintf(" kgdb enabled\n");
+				printf(" kgdb enabled\n");
 			else {
 				/*
 				 * Print prefix of device name,
 				 * let kgdb_connect print the rest.
 				 */
-				kprintf("ser0: ");
+				printf("ser0: ");
 				kgdb_connect(1);
 			}
 		}
@@ -225,7 +225,7 @@ serattach(pdp, dp, auxp)
 	if (0 == serconsole)
 		serconsinit = 0;
 	if (dp)
-		kprintf(": input fifo %d output fifo %d\n", SERIBUF_SIZE,
+		printf(": input fifo %d output fifo %d\n", SERIBUF_SIZE,
 		    SEROBUF_SIZE);
 }
 
@@ -743,7 +743,7 @@ int serhwiflow(tp, flag)
         int flag;
 {
 #if 0
-	kprintf ("serhwiflow %d\n", flag);
+	printf ("serhwiflow %d\n", flag);
 #endif
         if (flag)
 		CLRRTS(ciab.pra);

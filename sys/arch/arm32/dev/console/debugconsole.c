@@ -1,4 +1,4 @@
-/* $NetBSD: debugconsole.c,v 1.2 1996/03/18 19:33:04 mark Exp $ */
+/* $NetBSD: debugconsole.c,v 1.3 1996/10/13 03:06:03 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -79,7 +79,7 @@ dprintf(fmt, va_alist)
 		return;
 
 	va_start(ap, fmt);
-	kprintf(fmt, TOTTY, debug_tty, ap);
+	printf(fmt, TOTTY, debug_tty, ap);
 	va_end(ap);
 */
 }
