@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1999/10/28 13:43:54 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 2001/01/05 13:09:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -138,7 +138,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	dev_init(c,n,mmap) }
 
-#ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -149,14 +148,16 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 /* open, close, read, write */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 /* open, close, read, write */
 #define	cdev_i4btel_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev, D_TTY }
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
 
 /* open, close, read, ioctl */
 #define cdev_i4btrc_init(c,n) { \
@@ -170,7 +171,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
+	(dev_type_mmap((*))) enodev }	
 	
 #include "i4b.h"
 #include "i4bctl.h"
@@ -182,7 +183,6 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
-#endif /* __I4B_IS_INTEGRATED */
 
 /* open, close, read, write, ioctl, mmap */
 #define cdev_leo_init(c,n) { \
@@ -301,20 +301,11 @@ struct cdevsw	cdevsw[] =
         cdev_notdef(),			/* 41: wscons placeholder	*/
   	cdev_audio_init(NAUDIO,audio),	/* 42 */
   	cdev_notdef(),			/* 43 */
-#ifdef __I4B_IS_INTEGRATED
-	/* i4b character devices */
 	cdev_i4b_init(NI4B, i4b),		/* 44: i4b main device */
 	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 45: i4b control device */
 	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 46: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 47: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 48: i4b phone device */
-#else
-	cdev_notdef(),			/* 44 */
-	cdev_notdef(),			/* 45 */
-	cdev_notdef(),			/* 46 */
-	cdev_notdef(),			/* 47 */
-	cdev_notdef(),			/* 48 */
-#endif /* __I4B_IS_INTEGRATED */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 49: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 50: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 51: svr4 net pseudo-device */
