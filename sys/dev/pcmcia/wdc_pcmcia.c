@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.4.2.4 1998/06/09 13:04:25 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.4.2.5 1998/06/13 14:26:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.

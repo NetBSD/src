@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.6.2.2 1998/06/09 13:04:24 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.6.2.3 1998/06/13 14:26:17 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.

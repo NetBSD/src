@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.2.2.2 1998/06/09 13:04:24 bouyer Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.2.2.3 1998/06/13 14:26:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
