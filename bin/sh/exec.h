@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.8 1995/05/11 21:29:05 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.9 1995/06/09 01:53:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)exec.h	8.2 (Berkeley) 5/4/95
+ *	@(#)exec.h	8.3 (Berkeley) 6/8/95
  */
 
 /* values of cmdtype */
@@ -59,7 +59,7 @@ extern char *pathopt;		/* set by padvance */
 void shellexec __P((char **, char **, char *, int));
 char *padvance __P((char **, char *));
 int hashcmd __P((int, char **));
-void find_command __P((char *, struct cmdentry *, int));
+void find_command __P((char *, struct cmdentry *, int, char *));
 int find_builtin __P((char *));
 void hashcd __P((void));
 void changepath __P((char *));
