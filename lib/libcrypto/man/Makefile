@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/04 06:46:14 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2000/10/04 07:15:07 itojun Exp $
 
 VERSION=	0.9.5a
 CRYPTODIST=	${.CURDIR}/../../../crypto/dist
@@ -20,12 +20,7 @@ manpages:
 	for i in ${CRYPTODIST}/openssl/doc/crypto/*.pod \
 	    ${CRYPTODIST}/openssl/doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
-		if [ "$$fn" = "ssl" ]; then \
-			sec=4; \
-			(cd `dirname $$i`; \
-			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-				`basename $$i`) | sed -e '/$$RCSfile/d' -e '/$$Log/d' > `basename $$i .pod`.$$sec; \
-		elif [ "$$fn" = "des_modes" ]; then \
+		if [ "$$fn" = "des_modes" ]; then \
 			sec=7; \
 			(cd `dirname $$i`; \
 			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
