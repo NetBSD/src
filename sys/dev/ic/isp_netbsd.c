@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.13 2001/03/27 15:31:58 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.14 2001/04/06 07:27:58 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -100,7 +100,8 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._adapter.adapt_dev = &isp->isp_osinfo._dev;
 	isp->isp_osinfo._adapter.adapt_nchannels = IS_DUALBUS(isp) ? 2 : 1;
 	isp->isp_osinfo._adapter.adapt_openings = isp->isp_maxcmds; /* XXX per adapter or per channel ? */
-	isp->isp_osinfo._adapter.adapt_max_periph = isp->isp_maxcmds;
+	isp->isp_osinfo._adapter.adapt_max_periph =
+		(isp->isp_maxcmds > 256) ? 256 : isp->isp_maxcmds;
 	isp->isp_osinfo._adapter.adapt_ioctl = ispioctl;
 	isp->isp_osinfo._adapter.adapt_request = isprequest;
 	isp->isp_osinfo._adapter.adapt_minphys = ispminphys;
