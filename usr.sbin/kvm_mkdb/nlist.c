@@ -197,6 +197,6 @@ badfmt(p)
 	char *p;
 {
 	(void)fprintf(stderr,
-	    "symorder: %s: %s: %s\n", kfile, p, strerror(EFTYPE));
+	    "kvm_mkdb: %s: %s: %s\n", kfile, p, strerror(EFTYPE));
 	exit(1);
 }
