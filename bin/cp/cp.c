@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.19 1997/09/14 07:15:28 lukem Exp $	*/
+/*	$NetBSD: cp.c,v 1.20 1998/07/28 03:47:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.19 1997/09/14 07:15:28 lukem Exp $");
+__RCSID("$NetBSD: cp.c,v 1.20 1998/07/28 03:47:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
 int Rflag, iflag, pflag, rflag;
-int myumask;
+mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
 
@@ -247,6 +247,7 @@ main(argc, argv)
 		type = FILE_TO_DIR;
 
 	exit (copy(argv, type, fts_options));
+	/* NOTREACHED */
 }
 
 int
