@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.10 1998/03/01 02:21:51 fvdl Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.11 1999/03/19 21:46:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,7 +157,7 @@ umap_bypass(v)
 		 * that aren't.  (Must map first vp or vclean fails.)
 		 */
 
-		if (i && (*this_vp_p)->v_op != umap_vnodeop_p) {
+		if (i && ((*this_vp_p)==NULL || (*this_vp_p)->v_op != umap_vnodeop_p)) {
 			old_vps[i] = NULL;
 		} else {
 			old_vps[i] = *this_vp_p;
