@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.1.2.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.1.2.2 2005/01/18 14:52:15 bouyer Exp $	*/
 
 /*
  *
@@ -34,9 +34,10 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.1 2004/12/13 17:52:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.2 2005/01/18 14:52:15 bouyer Exp $");
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -51,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.1.2.1 2004/12/13 17:52:21 bouyer Exp $"
 #include <machine/evtchn.h>
 #include <machine/ctrl_if.h>
 #include <machine/xenfunc.h>
+
+#include "opt_xen.h"
 
 struct pic xenev_pic = {
 	.pic_dev = {
@@ -73,6 +76,15 @@ int irq_to_evtchn[NR_IRQS];
 /* IRQ <-> VIRQ mapping. */
 static int virq_to_irq[NR_VIRQS];
 
+
+#ifdef DOM0OPS
+/* IRQ <-> PIRQ mapping */
+static int pirq_to_irq[NR_PIRQS];
+/* PIRQ needing notify */
+static u_int32_t pirq_needs_unmask_notify[NR_PIRQS / 32];
+void pirq_notify(int);
+#endif
+
 /* Reference counts for bindings to IRQs. */
 static int irq_bindcount[NR_IRQS];
 
@@ -90,6 +102,14 @@ events_default_setup()
 	/* No VIRQ -> IRQ mappings. */
 	for (i = 0; i < NR_VIRQS; i++)
 		virq_to_irq[i] = -1;
+
+#ifdef DOM0OPS
+	/* No PIRQ -> IRQ mappings. */
+	for (i = 0; i < NR_PIRQS; i++)
+		pirq_to_irq[i] = -1;
+	for (i = 0; i < NR_PIRQS / 32; i++)
+		pirq_needs_unmask_notify[i] = 0;
+#endif
 
 	/* No event-channel -> IRQ mappings. */
 	for (i = 0; i < NR_EVENT_CHANNELS; i++) {
@@ -138,21 +158,28 @@ do_event(int irq, struct intrframe *regs)
 		return ENOENT;
 	}
 
-	if (0 && irq == 4) {
+#if 0 /* DDD */
+	if (irq >= 3 && irq != 7) {
 		ci = &cpu_info_primary;
 		printf("do_event %d/%d called, ilevel %d\n", irq,
 		       irq_to_evtchn[irq], ci->ci_ilevel);
 	}
+#endif
 
 	ci = &cpu_info_primary;
 
 	hypervisor_acknowledge_irq(irq);
 	if (ci->ci_isources[irq] == NULL) {
+		printf("ci_isources[%d] is NULL\n", irq);
 		hypervisor_enable_irq(irq);
 		return 0;
 	}
 	ilevel = ci->ci_ilevel;
 	if (ci->ci_isources[irq]->is_maxlevel <= ilevel) {
+#if 0 /* DDD */
+		if (irq != 7) printf("ci_isources[%d]->is_maxlevel %d <= ilevel %d\n", irq,
+		    ci->ci_isources[irq]->is_maxlevel, ilevel);
+#endif
 		ci->ci_ipending |= 1 << irq;
 		/* leave masked */
 		return 0;
@@ -189,9 +216,11 @@ do_event(int irq, struct intrframe *regs)
 	ci->ci_idepth--;
 	splx(ilevel);
 
-	if (0 && irq == 4)
-		printf("do_event %d done, ipending %08x\n", irq,
+#if 0 /* DDD */
+	if (irq >= 3)
+		if (irq != 7) printf("do_event %d done, ipending %08x\n", irq,
 		    ci->ci_ipending);
+#endif
 
 	return 0;
 }
@@ -266,6 +295,113 @@ unbind_virq_from_irq(int virq)
 	simple_unlock(&irq_mapping_update_lock);
 }
 
+#ifdef DOM0OPS
+int
+bind_pirq_to_irq(int pirq)
+{
+	evtchn_op_t op;
+	int evtchn, irq;
+
+	if (pirq >= NR_PIRQS) {
+		panic("pirq %d out of bound, increase NR_PIRQS", pirq);
+	}
+	simple_lock(&irq_mapping_update_lock);
+
+	irq = pirq_to_irq[pirq];
+	if (irq == -1) {
+		op.cmd = EVTCHNOP_bind_pirq;
+		op.u.bind_pirq.pirq = pirq;
+		op.u.bind_pirq.flags = BIND_PIRQ__WILL_SHARE;
+		if (HYPERVISOR_event_channel_op(&op) != 0)
+			panic("Failed to bind physical IRQ %d\n", pirq);
+		evtchn = op.u.bind_pirq.port;
+
+		irq = find_unbound_irq();
+		printf("pirq %d irq %d evtchn %d\n", pirq, irq, evtchn);
+		evtchn_to_irq[evtchn] = irq;
+		irq_to_evtchn[irq] = evtchn;
+
+		pirq_to_irq[pirq] = irq;
+	}
+
+	irq_bindcount[irq]++;
+
+	simple_unlock(&irq_mapping_update_lock);
+    
+	return irq;
+}
+
+void
+unbind_pirq_from_irq(int pirq)
+{
+	evtchn_op_t op;
+	int irq = pirq_to_irq[pirq];
+	int evtchn = irq_to_evtchn[irq];
+
+	simple_lock(&irq_mapping_update_lock);
+
+	irq_bindcount[irq]--;
+	if (irq_bindcount[irq] == 0) {
+		op.cmd = EVTCHNOP_close;
+		op.u.close.dom = DOMID_SELF;
+		op.u.close.port = evtchn;
+		if (HYPERVISOR_event_channel_op(&op) != 0)
+			panic("Failed to unbind physical IRQ %d\n", pirq);
+
+		evtchn_to_irq[evtchn] = -1;
+		irq_to_evtchn[irq] = -1;
+		pirq_to_irq[pirq] = -1;
+	}
+
+	simple_unlock(&irq_mapping_update_lock);
+}
+
+struct pintrhand *
+pirq_establish(int pirq, int irq, int (*func)(void *), void *arg, int level)
+{
+	struct pintrhand *ih;
+	physdev_op_t physdev_op;
+
+	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	if (ih == NULL) {
+		printf("pirq_establish: can't malloc handler info\n");
+		return NULL;
+	}
+	if (event_set_handler(irq, func, arg, level) != 0) {
+		free(ih, M_DEVBUF);
+		return NULL;
+	}
+	ih->pirq = pirq;
+	ih->irq = irq;
+
+	physdev_op.cmd = PHYSDEVOP_IRQ_STATUS_QUERY;
+	physdev_op.u.irq_status_query.irq = pirq;
+	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
+		panic("HYPERVISOR_physdev_op(PHYSDEVOP_IRQ_STATUS_QUERY)");
+	if (physdev_op.u.irq_status_query.flags &
+	    PHYSDEVOP_IRQ_NEEDS_UNMASK_NOTIFY) {
+		pirq_needs_unmask_notify[pirq >> 5] |= 1 << (pirq & 0x1f);
+		printf("pirq %d needs notify\n", pirq);
+	}
+	hypervisor_enable_irq(irq);
+	pirq_notify(pirq);
+	return ih;
+}
+
+void
+pirq_notify(int irq)
+{
+	physdev_op_t physdev_op;
+
+	if (pirq_needs_unmask_notify[irq >> 5] & (1 & (irq & 0x1f)))
+		physdev_op.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY;
+		if (HYPERVISOR_physdev_op(&physdev_op) < 0)
+			printf("HYPERVISOR_physdev_op"
+			    "(PHYSDEVOP_IRQ_UNMASK_NOTIFY) failed\n");
+}
+
+#endif /* DOM0OPS */
+
 int bind_evtchn_to_irq(int evtchn)
 {
 	int irq;
@@ -292,6 +428,8 @@ event_set_handler(int irq, ev_handler_t handler, void *arg, int level)
 	struct intrsource *isp;
 	struct intrhand *ih;
 	struct cpu_info *ci;
+
+	printf("event_set_handler IRQ %d handler %p\n", irq, handler);
 
 	if (irq >= NR_IRQS) {
 #ifdef DIAGNOSTIC
