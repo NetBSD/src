@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.1 1998/10/08 02:27:59 eeh Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.1.10.1 2000/07/26 23:55:00 mycroft Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -35,23 +35,23 @@
 #ifdef PIC
 
 ENTRY(__sigsetjmp14)
-	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
+	PIC_PROLOGUE(%g1,%o2)	! %g1 = _GLOBAL_OFFSET_TABLE
 	cmp %o1,0
 	st %o1,[%o0+0x38]		! jmpbuf[JBLEN]
 	bne,a 1f
-	 ld [%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto _setjmp;
-	ld [%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
+	 ldx [%g1+_C_LABEL(__setjmp14)], %g1	! if (%o1 != 0) goto _setjmp;
+	ldx [%g1+_C_LABEL(_setjmp)], %g1	! else goto __setjmp;
 1:
 	jmp %g1
 	 nop
 
 ENTRY(__siglongjmp14)
-	PIC_PROLOGUE(%g1,%g2)	! %g1 = _GLOBAL_OFFSET_TABLE
-	ld [%o0+0x38],%g2		! jmpbuf[JBLEN]
-	cmp %g2,0
+	PIC_PROLOGUE(%g1,%o2)	! %g1 = _GLOBAL_OFFSET_TABLE
+	ld [%o0+0x38],%o2		! jmpbuf[JBLEN]
+	cmp %o2,0
 	bne,a 1f
-	 ld [%g1+_C_LABEL(__longjmp14)], %g1	 ! if (%g2 != 0) goto _longjmp;
-	ld [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
+	 ldx [%g1+_C_LABEL(__longjmp14)], %g1	 ! if (%g2 != 0) goto _longjmp;
+	ldx [%g1+_C_LABEL(_longjmp)], %g1 ! else goto __longjmp;
 1:
 	jmp %g1
 	 nop
