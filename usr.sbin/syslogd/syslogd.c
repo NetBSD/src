@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.65 2004/03/06 20:29:25 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.66 2004/10/08 17:25:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.65 2004/03/06 20:29:25 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.66 2004/10/08 17:25:52 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,6 +198,7 @@ int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 int	NoRepeat = 0;		/* disable "repeated"; log always */
+int	SyncKernel = 0;		/* write kernel messages synchronously */
 volatile sig_atomic_t gothup = 0; /* got SIGHUP */
 
 void	cfline(char *, struct filed *);
@@ -243,7 +244,7 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dnsf:m:p:P:ru:g:t:")) != -1)
+	while ((ch = getopt(argc, argv, "dnsSf:m:p:P:ru:g:t:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -275,6 +276,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':		/* no network listen mode */
 			SecureMode++;
+			break;
+		case 'S':
+			SyncKernel = 1;
 			break;
 		case 't':
 			root = optarg;
@@ -686,7 +690,9 @@ printsys(char *msg)
 	(void)strlcat(line, ": ", sizeof(line));
 	lp = line + strlen(line);
 	for (p = msg; *p != '\0'; ) {
-		flags = SYNC_FILE | ADDDATE;	/* fsync file after write */
+		flags = ADDDATE;
+		if (SyncKernel)
+			flags |= SYNC_FILE;
 		pri = DEFSPRI;
 		if (*p == '<') {
 			pri = 0;
