@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 1997/01/27 20:43:52 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.34 1997/01/27 20:50:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -197,13 +197,13 @@ void clock_init()
 {
 	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
 
-	if (!clock_va)
-		mon_panic("clock_init: clock_va\n");
-	if (!interrupt_reg)
-		mon_panic("clock_init: interrupt_reg\n");
+	if (!clock_va || !interrupt_reg) {
+		mon_printf("clock_init\n");
+		sunmon_abort();
+	}
 
 	/* Turn off clock interrupts until cpu_initclocks() */
-	/* isr_init() already set the interrupt reg to zero. */
+	/* intreg_init() already cleared the interrupt register. */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
 	intersil_clear();
@@ -219,7 +219,7 @@ cpu_initclocks(void)
 {
 	int s;
 
-	if (!intersil_clock)
+	if (!clock_va)
 		panic("cpu_initclocks");
 	s = splhigh();
 
@@ -248,8 +248,7 @@ setstatclockrate(newhz)
 }
 
 /*
- * This is is called by the "custom" interrupt handler
- * after it has reset the pending bit in the clock.
+ * This is is called by the "custom" interrupt handler.
  */
 void
 clock_intr(cf)
@@ -376,7 +375,7 @@ void inittodr(fs_time)
 		if (diff >= (SECDAY*2)) {
 			printf("WARNING: clock %s %d days",
 				   (clk_time < fs_time) ? "lost" : "gained",
-				   diff / SECDAY);
+				   (int) (diff / SECDAY));
 			clk_bad = 1;
 		}
 	}
