@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut.h,v 1.2 2001/06/24 01:13:11 simonb Exp $	*/
+/*	$NetBSD: walnut.h,v 1.3 2001/10/29 01:31:11 simonb Exp $	*/
 
 /* include/eval.h, openbios_walnut, walnut_bios 8/10/00 14:35:05 */
 /*-----------------------------------------------------------------------------+
@@ -54,6 +54,9 @@
 #define MIN_PCI_PCI_IOADDR  0x00000000  /* PCI side of PCI I/O address space */
 #define MAX_PCI_DEVICES     5
 
+#define	SRAM_START_ADDR	0xfff00000	/* SRAM starting addr */
+#define	SRAM_SIZE	0x80000		/* SRAM size - 512K */
+
 /*----------------------------------------------------------------------------+
 | Universal Interrupt Controller (UIC) events for the Walnut board.
 +----------------------------------------------------------------------------*/
@@ -95,27 +98,58 @@
 #define KEY_MOUSE_CMD   0x1  /* write only */
 #define KEY_MOUSE_STAT  0x1  /* read only */
 
-#if 0
 /*-----------------------------------------------------------------------------+
 | Defines for FPGA regs.
 +-----------------------------------------------------------------------------*/
 #define	FPGA_BASE	0xf0300000
 #define FPGA_INT_STATUS 0x00    /* Int status - read only 	*/
+#define	 FPGA_SW_SMI	  0x10     /* SW_SMI_N present */
+#define	 FPGA_EXT_IRQ	  0x08     /* EXT_IRQ present */
+#define	 FPGA_IRQ_IRDA	  0x04     /* IRQ_IRDA present */
+#define	 FPGA_IRQ_KYBD	  0x02     /* IRQ_KYBD present */
+#define	 FPGA_IRQ_MOUSE	  0x01     /* IRQ_MOUSE present */
 #define FPGA_INT_ENABLE 0x01    /* Int enable 			*/
+      /* FPGA_SW_SMI  */	   /* enable SW_SMI_N */
+      /* FPGA_EXT_IRQ  */	   /* enable FPGA_EXT_IRQ */
+      /* FPGA_IRQ_IRDA  */	   /* enable FPGA_IRQ_IRDA */
+      /* FPGA_IRQ_KYBD  */	   /* enable FPGA_IRQ_KYBD */
+      /* FPGA_IRQ_MOUSE  */	   /* enable FPGA_IRQ_MOUSE */
 #define FPGA_INT_POL    0x02    /* Int polarity 		*/
+      /* FPGA_SW_SMI  */	   /* SW_SMI_N active high/rising */
+      /* FPGA_EXT_IRQ  */	   /* FPGA_EXT_IRQ active high/rising */
+      /* FPGA_IRQ_IRDA  */	   /* FPGA_IRQ_IRDA active high/rising */
+      /* FPGA_IRQ_KYBD  */	   /* FPGA_IRQ_KYBD active high/rising */
+      /* FPGA_IRQ_MOUSE  */	   /* FPGA_IRQ_MOUSE active high/rising */
 #define FPGA_INT_TRIG   0x03    /* Int type 			*/
+      /* FPGA_SW_SMI  */	   /* SW_SMI_N level */
+      /* FPGA_EXT_IRQ  */	   /* FPGA_EXT_IRQ level */
+      /* FPGA_IRQ_IRDA  */	   /* FPGA_IRQ_IRDA level */
+      /* FPGA_IRQ_KYBD  */	   /* FPGA_IRQ_KYBD level */
+      /* FPGA_IRQ_MOUSE  */	   /* FPGA_IRQ_MOUSE level */
 #define FPGA_BRDC       0x04    /* Board controls 		*/
+#define	 FPGA_BRDC_INT	 0x80	   /* IRQ_MOUSE is separate */
+#define	 FPGA_BRDC_TC3	 0x10	   /* DMA_EOT/TC3 is set to TC */
+#define	 FPGA_BRDC_TC2	 0x08	   /* DMA_EOT/TC2 is set to TC */
+#define	 FPGA_BRDC_DIS_EI 0x04	   /* disable expansion interface */
+#define	 FPGA_BRDC_EN_INV 0x02	   /* enable invalid address checking */
+#define	 FPGA_BRDC_UART_CR 0x01	   /* UART1 is set to CTS/RTS */
 #define FPGA_BRDS1      0x05    /* Board status - read only 	*/
-#define FPGA_BRDS2      0x06    /* Board status - read only       */
-#define  SW_CLK_SRC1     0x40      /* if async pci, ext or int clk   */
-#define  FSEL_A          0x03      /* use for mask                   */
-#define  FSEL_INVALID1   0x00      /* invalid FSEL_A0, FSEL_A1 settings*/
-#define  FSEL_INVALID2   0x02      /* invalid FSEL_A0, FSEL_A1 settings*/
-#define  FSEL_66         0x01      /* select 66Mhz async int PCI	*/
-#define  FSEL_33         0x03      /* select 33Mhz async int PCI     */   
-#define FPGA_SPARE1     0x0e    /* Spare inputs - read only       */
-#define FPGA_SPARE2     0x0f    /* Spare outputs                  */
-#endif
+#define	 FPGA_BRDS1_CLK  0x04	   /* 405 SDRAM CLK disabled, MPC972 used */
+#define	 FPGA_BRDS1_FLASH_EN 0x02  /* On board FLASH disabled */
+#define	 FPGA_BRDS1_FLASH_SEL 0x01 /* FLASH at low addr */
+#define FPGA_BRDS2      0x06    /* Board status - read only */
+#define  SW_CLK_SRC1     0x40      /* if async pci, ext or int clk */
+#define	 SW_SEL1	 0x20	   /* use test clock for master clock */
+#define	 SW_SEL0	 0x10	   /* use 405GP arbiter */
+#define  FSEL_B          0x0c      /* use for mask */
+#define  FSEL_SDRAM100   0x01      /* select 100Mhz SDRAM */
+#define  FSEL_SDRAM66    0x03      /* select 66Mhz SDRAM */   
+#define  FSEL_A          0x03      /* use for mask */
+#define  FSEL_PCI_66     0x01      /* select 66Mhz async int PCI */
+#define  FSEL_PCI_33     0x03      /* select 33Mhz async int PCI */   
+#define FPGA_SPARE1     0x0e    /* Spare inputs - read only */
+#define FPGA_SPARE2     0x0f    /* Spare outputs */
+#define	FPGA_SIZE	FPGA_SPARE2
 
 #ifndef _LOCORE
 /*
