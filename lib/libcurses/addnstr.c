@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)addnstr.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: addnstr.c,v 1.2 1993/11/09 04:06:52 cgd Exp $";
+static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #endif	/* not lint */
 
-#include <curses.h>
 #include <string.h>
+
+#include "curses.h"
 
 /*
  * waddnstr --

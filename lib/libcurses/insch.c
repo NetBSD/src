@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1981, 1993
+ * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)insch.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: insch.c,v 1.6 1993/11/09 04:08:03 cgd Exp $";
+static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #endif	/* not lint */
 
-#include <curses.h>
 #include <string.h>
+
+#include "curses.h"
 
 /*
  * winsch --
