@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.25 2003/01/16 09:38:40 kleink Exp $ */
+/* $NetBSD: proc.c,v 1.26 2003/02/08 19:40:30 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.25 2003/01/16 09:38:40 kleink Exp $");
+__RCSID("$NetBSD: proc.c,v 1.26 2003/02/08 19:40:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -932,6 +932,7 @@ dokill(Char **v, struct command *t)
     Char *signame;
     char *name;
     int signum;
+    char *ep;
 
     signum = SIGTERM;
     v++;
@@ -941,7 +942,7 @@ dokill(Char **v, struct command *t)
 		if (!Isdigit(v[1][0]))
 		    stderror(ERR_NAME | ERR_BADSIG);
 
-		signum = atoi(short2str(v[1]));
+		signum = strtol(short2str(v[1]), &ep, 10);
 		if (signum < 0 || signum >= NSIG)
 		    stderror(ERR_NAME | ERR_BADSIG);
 		else if (signum == 0)
@@ -959,8 +960,8 @@ dokill(Char **v, struct command *t)
 	    return;
 	}
 	if (Isdigit(v[0][1])) {
-	    signum = atoi(short2str(v[0] + 1));
-	    if (signum < 0 || signum > NSIG)
+	    signum = strtol(short2str(v[0] + 1), &ep, 10);
+	    if (signum < 0 || signum > NSIG || *ep)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
@@ -1000,6 +1001,7 @@ pkill(Char **v, int signum)
     Char *cp;
     sigset_t nsigset;
     int err1, jobflags, pid;
+    char *ep;
 
     jobflags = 0;
     err1 = 0;    
@@ -1056,8 +1058,13 @@ pkill(Char **v, int signum)
 	else if (!(Isdigit(*cp) || *cp == '-'))
 	    stderror(ERR_NAME | ERR_JOBARGS);
 	else {
-	    pid = atoi(short2str(cp));
-	    if (kill((pid_t) pid, signum) < 0) {
+	    pid = strtoul(short2str(cp), &ep, 0);
+	    if (*ep) {
+		(void)fprintf(csherr, "%s: Badly formed number\n",
+		    short2str(cp));
+		err1++;
+		goto cont;
+	    } else if (kill(pid, signum) < 0) {
 		(void)fprintf(csherr, "%d: %s\n", pid, strerror(errno));
 		err1++;
 		goto cont;
