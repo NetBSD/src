@@ -10,25 +10,21 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Adam Glass.
- * 4. The name of the Author may not be used to endorse or promote products
+ * 3. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL Adam Glass BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: nfs_boot.c,v 1.2 1994/05/05 05:39:42 cgd Exp $
+ * $Id: nfs_boot.c,v 1.3 1994/06/13 15:28:59 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -43,7 +39,10 @@
 #include <sys/reboot.h>
 
 #include <net/if.h>
+#include <net/route.h>
+
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
@@ -54,347 +53,538 @@
  * Support for NFS diskless booting, specifically getting information
  * about where to boot from, what pathnames, etc.
  *
- * We currently support the RPC bootparam protocol.
+ * This implememtation uses RARP and the bootparam RPC.
+ * We are forced to implement RPC anyway (to get file handles)
+ * so we might as well take advantage of it for bootparam too.
  *
- * We'd like to support BOOTP, but someone needs to write small kernel-ized
- * BOOTP client
+ * The diskless boot sequence goes as follows:
+ * (1) Get our interface address using RARP
+ *     (also save the address of the RARP server)
+ * (2) Get our hostname using RPC/bootparam/whoami
+ *     (all boopararms RPCs to the RARP server)
+ * (3) Get the root path using RPC/bootparam/getfile
+ * (4) Get the root file handle using RPC/mountd
+ * (5) Get the swap path using RPC/bootparam/getfile
+ * (6) Get the swap file handle using RPC/mountd
  *
+ * (This happens to be the way Sun does it too.)
  */
 
-/* from rfc951 to avoid bringing in cmu header file */
+/* bootparam RPC */
+static int bp_whoami(struct sockaddr_in *bpsin,
+					 struct in_addr *my_ip,
+					 struct in_addr *gw_ip);
+static int bp_getfile(struct sockaddr_in *bpsin, char *key,
+					  struct sockaddr_in *mdsin,
+					  char *servname, char *path);
 
-#define UDP_BOOTPSERVER 67
-#define UDP_BOOTPCLIENT 68
+/* mountd RPC */
+static int md_mount(struct sockaddr_in *mdsin, char *path, u_char *fh);
 
-#define BOOTP_REQUEST 1
-#define BOOTP_REPLY   2
+/* other helpers */
+static void get_path_and_handle(struct sockaddr_in *bpsin, char *key,
+								struct nfs_dlmount *ndmntp);
 
-/* rfc1048 tag bytes, (from rfc1497), only the semi-useful bits */
-#define TAG_PAD                0	/* [1] no data */
-#define TAG_SUBNET_MASK        1        /* [4] subnet mask bytes */
-#define TAG_GATEWAY_ADDR       3        /* [addr] gateway address */
-#define TAG_DNS_ADDR           6        /* [addr] dns name server */
-#define TAG_HOSTNAME          12        /* [n] hostname */
-#define TAG_BOOT_SIZE         13        /* [2] boot file size?*/
-#define TAG_DOMAIN_NAME       15        /* [n] domain name */
-#define TAG_SWAP_ADDR         16        /* [addr] swap server */
-#define TAG_ROOT_PATH         17        /* [n] root path */
-#define TAG_END              255
-
-#define BOOTP_ROOT 1
-#define BOOTP_SWAP 2
-#define BOOTP_COMPLETED (BOOTP_ROOT|BOOTP_SWAP)
-
-struct bootp_msg {
-	u_char bpm_op;		/* packet op code / message type */
-	u_char bpm_htype;	/* hardware address type */
-	u_char bpm_hlen;	/* hardware address length */
-	u_char bpm_hops;	/* bootp hops XXX ugly*/
-	u_long bpm_xid;		/* transaction ID */
-	u_short bpm_secs;	/* seconds elapsed since boot */
-	u_short bpm_unused;	
-	struct in_addr bpm_ciaddr; /* client IP address */
-	struct in_addr bpm_yiaddr; /* 'your' (client) IP address */
-	struct in_addr bpm_siaddr; /* server IP address */
-	struct in_addr bpm_giaddr; /* gateway IP address */
-	u_char bpm_chaddr[16];	/* client hardware address */
-	u_char bpm_sname[64];	/* optional server host name */
-	u_char bpm_file[128];	/* boot file name */
-	u_char bpm_vendor[64];	/* vendor-specific data */
-};
-
-static u_char vend_rfc1048[4] = {
-	99, 130, 83, 99,
-};
 
 /*
- * Get a file handle given a path name.
+ * Called with an empty nfs_diskless struct to be filled in.
+ */
+int nfs_boot_init(nd, procp)
+	struct nfs_diskless *nd;
+	struct proc *procp;
+{
+	struct ifreq ireq;
+	struct in_addr my_ip, srv_ip, gw_ip;
+	struct sockaddr_in bp_sin;
+	struct sockaddr_in *sin;
+	struct ifnet *ifp;
+	struct socket *so;
+	int error, len;
+	u_short port;
+
+#if 0
+	/*
+	 * XXX time must be non-zero when we init the interface or else
+	 * the arp code will wedge... (Fixed in if_ether.c -gwr)
+	 */
+	if (time.tv_sec == 0)
+		time.tv_sec = 1;
+#endif
+
+	/*
+	 * Find an interface, rarp for its ip address, stuff it, the
+	 * implied broadcast addr, and netmask into a nfs_diskless struct.
+	 *
+	 * This was moved here from nfs_vfsops.c because this procedure
+	 * would be quite different if someone decides to write (i.e.) a
+	 * BOOTP version of this file (might not use RARP, etc.) -gwr
+	 */
+
+	/*
+	 * Find a network interface.
+	 * XXX - This should use the specified boot device.
+	 */
+	for (ifp = ifnet; ifp; ifp = ifp->if_next)
+		if ((ifp->if_flags & (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
+			break;
+	if (ifp == NULL)
+		panic("nfs_boot: no suitable interface");
+	sprintf(ireq.ifr_name, "%s%d", ifp->if_name, ifp->if_unit);
+	printf("nfs_boot: using network interface '%s'\n",
+		   ireq.ifr_name);
+
+	/*
+	 * Bring up the interface.
+	 */
+	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0)) != 0)
+		panic("nfs_boot: socreate, error=%d", error);
+	ireq.ifr_flags = IFF_UP;
+	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
+	if (error) panic("nfs_boot: SIFFLAGS, error=%d", error);
+
+	/*
+	 * Do RARP for the interface address.  Also
+	 * save the server address for bootparam RPC.
+	 */
+	if ((error = revarpwhoarewe(ifp, &srv_ip, &my_ip)) != 0)
+		panic("revarp failed, error=%d", error);
+	printf("nfs_boot: client=0x%x, server=0x%x\n",
+		   my_ip.s_addr, srv_ip.s_addr);
+
+	/*
+	 * Do enough of ifconfig(8) so that the chosen interface can
+	 * talk to the server(s).  (also get brcast addr and netmask)
+	 */
+	/* Set interface address. */
+	sin = (struct sockaddr_in *)&ireq.ifr_addr;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = my_ip.s_addr;
+	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
+	if (error) panic("nfs_boot: set if addr, error=%d", error);
+
+	soclose(so);
+
+	/*
+	 * Get client name and gateway address.
+	 * RPC: bootparam/whoami
+	 */
+	bp_sin.sin_len = sizeof(bp_sin);
+	bp_sin.sin_family = AF_INET;
+	bp_sin.sin_addr.s_addr = srv_ip.s_addr;
+	hostnamelen = MAXHOSTNAMELEN;
+	error = bp_whoami(&bp_sin,	/*  input: where to send RPC */
+					  &my_ip, 	/*  input: client IP */
+					  &gw_ip);	/* ouptut: gateway IP */
+	if (error)
+		panic("nfs_boot: bootparam whoami, error=%d", error);
+	printf("nfs_boot: hostname=%s\n", hostname);
+
+#ifdef	NFS_BOOT_GATEWAY
+	/*
+	 * XXX - Server supplied gateway is usually bogus...
+	 * (At least for SunOS 4.1.3 servers it is.)
+	 * If your server is OK, you can turn on this option.
+	 *
+	 * If the gateway address is set, add a default route.
+	 * (The mountd RPCs may go across a gateway.)
+	 */
+	if (gw_ip.s_addr) {
+		/* Destination: (default) */
+		struct sockaddr_in dst, gw;
+		bzero(&dst, sizeof(dst));
+		dst.sin_len = sizeof(dst);
+		dst.sin_family = AF_INET;
+		/* Gateway: */
+		bzero(&gw, sizeof(gw));
+		gw.sin_len = sizeof(gw);
+		gw.sin_family = AF_INET;
+		gw.sin_addr.s_addr = gw_ip.s_addr;
+		/* Netmask: */
+		error = ifioctl(so, SIOCGIFNETMASK, (caddr_t)&ireq, procp);
+		if (error) panic("nfs_boot: get netmask, error=%d", error);
+		
+		/* add, dest, gw, mask, flags, 0 */
+		error = rtrequest(RTM_ADD, &dst, &gw, &ifr.ifr_addr,
+						  (RTF_UP | RTF_GATEWAY), NULL);
+		if (error)
+			printf("nfs_boot: add route, error=%d\n", error);
+	}
+#endif
+
+	get_path_and_handle(&bp_sin, "root", &nd->nd_root);
+	get_path_and_handle(&bp_sin, "swap", &nd->nd_swap);
+
+	return (0);
+}
+
+static void
+get_path_and_handle(bpsin, key, ndmntp)
+	struct sockaddr_in *bpsin;	/* bootparam server */
+	char *key;					/* root or swap */
+	struct nfs_dlmount *ndmntp; /* output */
+{
+	char pathname[MAXPATHLEN];
+	int error;
+
+	/*
+	 * Get server:pathname for "key" (root or swap)
+	 * using RPC to bootparam/getfile
+	 */
+	error = bp_getfile(bpsin, key,
+					   &ndmntp->ndm_saddr,
+					   ndmntp->ndm_host,
+					   pathname);
+	if (error)
+		panic("nfs_boot: bootparam get %s: %d", key, error);
+	printf("%s on %s:%s\n", key, ndmntp->ndm_host, pathname);
+
+	/*
+	 * Get file handle for "key" (root or swap)
+	 * using RPC to mountd/mount
+	 */
+	error = md_mount(&ndmntp->ndm_saddr,
+					 pathname,
+					 ndmntp->ndm_fh);
+	if (error)
+		panic("nfs_boot: mountd %s, error=%d", key, error);
+}
+
+
+/*
+ * Get an mbuf with the given length, and
+ * initialize the pkthdr length field.
+ */
+static struct mbuf *
+m_get_len(int msg_len)
+{
+	struct mbuf *m;
+	m = m_gethdr(M_WAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+	if (msg_len > MHLEN) {
+		if (msg_len > MCLBYTES)
+			panic("nfs_boot: msg_len > MCLBYTES");
+		MCLGET(m, M_WAIT);
+		if (m == NULL)
+			return NULL;
+	}
+	m->m_len = msg_len;
+	m->m_pkthdr.len = m->m_len;
+	return (m);
+}
+
+
+/*
+ * String representation for RPC.
+ */
+struct rpc_string {
+	u_long len;		/* length without null or padding */
+	u_char data[4];	/* data (longer, of course) */
+    /* data is padded to a long-word boundary */
+};
+/* Compute space used given string length. */
+#define	RPC_STR_SIZE(slen) (4 + ((slen + 3) & ~3))
+
+/*
+ * Inet address in RPC messages
+ * (Note, really four longs, NOT chars.  Blech.)
+ */
+struct bp_inaddr {
+	u_long  atype;
+	long	addr[4];
+};
+
+
+/*
+ * RPC definitions for bootparamd
+ * (XXX - move to a header file?)
+ */
+#define	BOOTPARAM_PROG		100026
+#define	BOOTPARAM_VERS		1
+#define BOOTPARAM_WHOAMI	1
+#define BOOTPARAM_GETFILE	2
+
+
+/*
+ * RPC: bootparam/whoami
+ * Given client IP address, get:
+ *	client name	(hostname)
+ *	domain name (domainname)
+ *	gateway address
+ *
+ * Setting the hostname and domainname here may be somewhat
+ * controvercial, but it is so easy to do it here. -gwr
  */
 static int
-nfs_boot_getfh(sa, path, fhp)
-	struct sockaddr *sa;		/* server address */
+bp_whoami(struct sockaddr_in *bpsin,
+		  struct in_addr *my_ip,
+		  struct in_addr *gw_ip)
+{
+	/* The RPC structures */
+	struct bp_inaddr *bia;
+	struct rpc_string *str;
+	struct mbuf *m;
+	struct sockaddr_in *sin;
+	int error, msg_len;
+	int cn_len, dn_len;
+	u_char *p;
+
+	/*
+	 * Get message buffer of sufficient size.
+	 */
+	msg_len = sizeof(*bia);
+	m = m_get_len(msg_len);
+	if (m == NULL)
+		return ENOBUFS;
+
+	/*
+	 * Build request message.
+	 */
+	/* client IP address */
+	bia = mtod(m, struct bp_inaddr *);
+	bia->atype = htonl(1);
+	p = (u_char*)my_ip;	/* ugh! */
+	bia->addr[0] = htonl(*p); p++;
+	bia->addr[1] = htonl(*p); p++;
+	bia->addr[2] = htonl(*p); p++;
+	bia->addr[3] = htonl(*p); p++;
+
+	/* RPC: bootparam/whoami */
+	error = krpc_call((struct sockaddr *)bpsin,
+					  BOOTPARAM_PROG, BOOTPARAM_VERS,
+					  BOOTPARAM_WHOAMI, &m);
+	if (error)
+		return error;
+
+	/*
+	 * Parse result message.
+	 */
+	msg_len = m->m_len;
+	p = mtod(m, char *);
+
+	/* client name */
+	if (msg_len < sizeof(*str))
+		goto bad;
+	str = (struct rpc_string *)p;
+	cn_len = ntohl(str->len);
+	if (msg_len < cn_len)
+		goto bad;
+	if (cn_len >= MAXHOSTNAMELEN)
+		goto bad;
+	bcopy(str->data, hostname, cn_len);
+	hostname[cn_len] = '\0';
+	hostnamelen = cn_len;
+	p += RPC_STR_SIZE(cn_len);
+	msg_len -= RPC_STR_SIZE(cn_len);
+
+	/* domain name */
+	if (msg_len < sizeof(*str))
+		goto bad;
+	str = (struct rpc_string *)p;
+	dn_len = ntohl(str->len);
+	if (msg_len < dn_len)
+		goto bad;
+	if (dn_len >= MAXHOSTNAMELEN)
+		goto bad;
+	bcopy(str->data, domainname, dn_len);
+	domainname[dn_len] = '\0';
+	domainnamelen = dn_len;
+	p += RPC_STR_SIZE(dn_len);
+	msg_len -= RPC_STR_SIZE(dn_len);
+
+	/* gateway address */
+	if (msg_len < sizeof(*bia))
+		goto bad;
+	bia = (struct bp_inaddr *)p;
+	if (bia->atype != htonl(1))
+		goto bad;
+	p = (u_char*)gw_ip;
+	*p++ = ntohl(bia->addr[0]);
+	*p++ = ntohl(bia->addr[1]);
+	*p++ = ntohl(bia->addr[2]);
+	*p++ = ntohl(bia->addr[3]);
+	goto out;
+
+ bad:
+	printf("nfs_boot: bootparam_whoami: bad reply\n");
+	error = EBADRPC;
+
+ out:
+	m_freem(m);
+	return(error);
+}
+
+
+/*
+ * RPC: bootparam/getfile
+ * Given client name and file "key", get:
+ *	server name
+ *	server IP address
+ *	server pathname
+ */
+static int
+bp_getfile(struct sockaddr_in *bpsin, char *key,
+	struct sockaddr_in *md_sin, char *serv_name, char *pathname)
+{
+	struct rpc_string *str;
+	struct mbuf *m;
+	struct bp_inaddr *bia;
+	struct sockaddr_in *sin;
+	u_char *p, *q;
+	int error, msg_len;
+	int cn_len, key_len, sn_len, path_len;
+
+	/*
+	 * Get message buffer of sufficient size.
+	 */
+	cn_len = hostnamelen;
+	key_len = strlen(key);
+	msg_len = 0;
+	msg_len += RPC_STR_SIZE(cn_len);
+	msg_len += RPC_STR_SIZE(key_len);
+	m = m_get_len(msg_len);
+	if (m == NULL)
+		return ENOBUFS;
+
+	/*
+	 * Build request message.
+	 */
+	p = mtod(m, u_char *);
+	bzero(p, msg_len);
+	/* client name (hostname) */
+	str = (struct rpc_string *)p;
+	str->len = htonl(cn_len);
+	bcopy(hostname, str->data, cn_len);
+	p += RPC_STR_SIZE(cn_len);
+	/* key name (root or swap) */
+	str = (struct rpc_string *)p;
+	str->len = htonl(key_len);
+	bcopy(key, str->data, key_len);
+
+	/* RPC: bootparam/getfile */
+	error = krpc_call((struct sockaddr *)bpsin,
+					  BOOTPARAM_PROG, BOOTPARAM_VERS,
+					  BOOTPARAM_GETFILE, &m);
+	if (error)
+		return error;
+
+	/*
+	 * Parse result message.
+	 */
+	p = mtod(m, u_char *);
+	msg_len = m->m_len;
+
+	/* server name */
+	if (msg_len < sizeof(*str))
+		goto bad;
+	str = (struct rpc_string *)p;
+	sn_len = ntohl(str->len);
+	if (msg_len < sn_len)
+		goto bad;
+	if (sn_len >= MNAMELEN)
+		goto bad;
+	bcopy(str->data, serv_name, sn_len);
+	serv_name[sn_len] = '\0';
+	p += RPC_STR_SIZE(sn_len);
+	msg_len -= RPC_STR_SIZE(sn_len);
+
+	/* server IP address (mountd) */
+	if (msg_len < sizeof(*bia))
+		goto bad;
+	bia = (struct bp_inaddr *)p;
+	if (bia->atype != htonl(1))
+		goto bad;
+	sin = md_sin;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	q = (u_char*) &sin->sin_addr;
+	*q++ = ntohl(bia->addr[0]);
+	*q++ = ntohl(bia->addr[1]);
+	*q++ = ntohl(bia->addr[2]);
+	*q++ = ntohl(bia->addr[3]);
+	p += sizeof(*bia);
+	msg_len -= sizeof(*bia);
+
+	/* server pathname */
+	if (msg_len < sizeof(*str))
+		goto bad;
+	str = (struct rpc_string *)p;
+	path_len = ntohl(str->len);
+	if (msg_len < path_len)
+		goto bad;
+	if (path_len >= MAXPATHLEN)
+		goto bad;
+	bcopy(str->data, pathname, path_len);
+	pathname[path_len] = '\0';
+	goto out;
+
+ bad:
+	printf("nfs_boot: bootparam_getfile: bad reply\n");
+	error = EBADRPC;
+
+ out:
+	m_freem(m);
+	return(0);
+}
+
+
+/*
+ * RPC: mountd/mount
+ * Given a server pathname, get an NFS file handle.
+ * Also, sets sin->sin_port to the NFS service port.
+ */
+static int
+md_mount(mdsin, path, fhp)
+	struct sockaddr_in *mdsin;		/* mountd server address */
 	char *path;
 	u_char *fhp;
 {
 	/* The RPC structures */
-	struct sdata {
-		u_long  len;
-		u_char  path[4];	/* longer, of course */
-	} *sdata;
+	struct rpc_string *str;
 	struct rdata {
 		u_long	errno;
 		u_char	fh[NFS_FHSIZE];
 	} *rdata;
-	struct sockaddr_in *sin;
 	struct mbuf *m;
 	int error, mlen, slen;
 
-	/*
-	 * Validate address family.
-	 * Sorry, this is INET specific...
-	 */
-	if (sa->sa_family != AF_INET)
-		return EAFNOSUPPORT;
-
 	slen = strlen(path);
-	if (slen > (MLEN-4))
-		slen = (MLEN-4);
-	mlen = 4 + ((slen + 3) & ~3); /* XXX ??? */
+	mlen = RPC_STR_SIZE(slen);
 
-	m = m_get(M_WAIT, MT_DATA);
+	m = m_get_len(mlen);
 	if (m == NULL)
 		return ENOBUFS;
-	m->m_len = mlen;
-	sdata = mtod(m, struct sdata *);
-	sdata->len = htonl(slen);
-	bcopy(path, sdata->path, slen);
+	str = mtod(m, struct rpc_string *);
+	str->len = htonl(slen);
+	bcopy(path, str->data, slen);
 
 	/* Do RPC to mountd. */
-	error = krpc_call(sa, RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT,
-			  &m, sizeof(*rdata));
+	error = krpc_call((struct sockaddr *)mdsin,
+					  RPCPROG_MNT, RPCMNT_VER1,
+					  RPCMNT_MOUNT, &m);
 	if (error) 
-		return error;
+		return error;	/* message already freed */
 
+	mlen = m->m_len;
+	if (mlen < sizeof(*rdata))
+		goto bad;
 	rdata = mtod(m, struct rdata *);
 	error = ntohl(rdata->errno);
-	if (!error)
-		bcopy(rdata->fh, fhp, NFS_FHSIZE);
+	if (error)
+		goto bad;
+	bcopy(rdata->fh, fhp, NFS_FHSIZE);
+
+	/* Set port number for NFS use. */
+	error = krpc_portmap((struct sockaddr *)mdsin,
+						 NFS_PROG, NFS_VER2,
+						 &mdsin->sin_port);
+	goto out;
+
+ bad:
+	error = EBADRPC;
+
+ out:
 	m_freem(m);
 	return error;
-}
-
-/*
- * Receive a bootp reply
- */
-static int bootp_receive(so, msg)
-	struct socket *so;
-	struct bootp_msg *msg;
-{
-	int error, rcvflag = 0;
-	struct mbuf *m;
-	struct uio auio;
-
-	auio.uio_resid = (1<<16);
-
-	error = soreceive(so, NULL, &auio, &m, NULL, &rcvflag);
-	if (error)
-		return error;
-	if (m->m_len < sizeof(*msg)) {
-		m = m_pullup(m, sizeof(*msg));
-		if (m == NULL)
-			return ENOBUFS;
-	}
-	if (((1<<16) - auio.uio_resid) != sizeof(*msg))
-		return EMSGSIZE;
-	m_copydata(m, 0, sizeof(*msg), (caddr_t) msg);
-	return 0;
-}
-
-/*
- * Send a bootp request
- */
-static int bootp_send(so, nam, start, msg)
-	struct socket *so;
-	struct mbuf *nam;
-	time_t start;
-	struct bootp_msg *msg;
-{
-	int error;
-	struct mbuf *m;
-	struct bootp_msg *bpm;
-
-	MGETHDR(m, M_WAIT, MT_DATA);
-	m->m_len = MHLEN;
-	if (m->m_len < sizeof(*msg)) {
-		MCLGET(m, M_WAIT);
-		m->m_len = min(sizeof(*msg), MCLBYTES);
-	}
-	m->m_pkthdr.len = sizeof(*msg);
-	m->m_pkthdr.rcvif = NULL;
-	bpm = mtod(m, struct bootp_msg *);
-	bcopy((caddr_t) msg, (caddr_t) bpm, sizeof(*bpm));
-	bpm->bpm_secs = time.tv_sec - start;
-
-	error = sosend(so, nam, NULL, m, NULL, 0);
-	if (error)
-		return error;
-}
-
-/*
- * Fill in as much of the nfs_diskless struct using the results
- * of bootp requests.
- */
-int nfs_boot_bootp(diskless, rpath, spath)
-	struct nfs_diskless *diskless;
-	char *rpath, *spath;
-{
-	int error, bootp_timeout = 30, *opt_val, have, need;
-	time_t start;
-	struct socket *so;
-	struct sockaddr *sa;
-	struct sockaddr_in *sin;
-	struct mbuf *m, *nam;
-	struct timeval *tv;
-	struct bootp_msg outgoing, incoming;
-
-	sa = &diskless->myif.ifra_broadaddr;
-	if (sa->sa_family != AF_INET)
-		return EAFNOSUPPORT;
-
-	/*
-	 * Create socket and set its recieve timeout.
-	 */
-	if (error = socreate(AF_INET, &so, SOCK_DGRAM, 0))
-		return error;
-	nam = m_get(M_WAIT, MT_SONAME);
-	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t) sin, sizeof(*sin));
-	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = htonl(INADDR_ANY);
-	sin->sin_port = htons(UDP_BOOTPCLIENT);
-	nam->m_len = sizeof(struct sockaddr_in);
-	if (error = sobind(so, nam))
-		goto out;
-	m = m_get(M_WAIT, MT_SOOPTS);
-	tv = mtod(m, struct timeval *);
-	m->m_len = sizeof(*tv);
-	tv->tv_sec = 5;
-	tv->tv_usec = 0;
-	if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
-		goto out;
-	m = m_get(M_WAIT, MT_SOOPTS);
-	opt_val = mtod(m, int *);
-	m->m_len = sizeof(*opt_val);
-	*opt_val = 1;
-	if ((error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m))) 
-		goto out;
-
-	/*
-	 * Setup socket address for the server.
-	 */
-	nam = m_get(M_WAIT, MT_SONAME);
-	sin = mtod(nam, struct sockaddr_in *);
-	bcopy((caddr_t)sa, (caddr_t)sin, sizeof(struct sockaddr));
-	sin->sin_port = htons(UDP_BOOTPSERVER);
-	nam->m_len = sizeof(struct sockaddr);
-	
-	bzero((caddr_t) &outgoing, sizeof(outgoing));
-	outgoing.bpm_op = BOOTP_REQUEST;
-	outgoing.bpm_htype = 1;
-	outgoing.bpm_hlen = 6;
-	outgoing.bpm_hops = 0;
-	sin = (struct sockaddr_in *) &diskless->myif.ifra_addr;
-	bcopy((caddr_t) &sin->sin_addr, (caddr_t) &outgoing.bpm_ciaddr, 4);
-	bcopy((caddr_t) &sin->sin_addr, (caddr_t) &outgoing.bpm_yiaddr, 4);
-	bcopy((caddr_t) vend_rfc1048, (caddr_t) outgoing.bpm_vendor, 4);
-	outgoing.bpm_xid = time.tv_usec;
-	outgoing.bpm_vendor[4] = TAG_END;
-	start = time.tv_sec;
-
-	have = 0;
-	while (bootp_timeout-- && (have != BOOTP_COMPLETED)) {
-		if ((have & BOOTP_ROOT) == 0)
-			strcpy(outgoing.bpm_file, "root");
-		else if ((have & BOOTP_SWAP) == 0)
-			strcpy(outgoing.bpm_file, "swap");
-		if (error = bootp_send(so, nam, start, &outgoing)) {
-			goto out;
-		}
-		error = bootp_receive(so, &incoming);
-		if (error == EWOULDBLOCK) 
-			continue;
-		if (error)
-			goto out;
-
-		if (outgoing.bpm_xid != incoming.bpm_xid)
-			continue;
-		if ((have & BOOTP_ROOT) == 0) {
-			sin = (struct sockaddr_in *) &diskless->root_saddr;
-			sin->sin_family = AF_INET;
-			sin->sin_len = sizeof(*sin);
-			bcopy((caddr_t) &incoming.bpm_siaddr,
-			      (caddr_t) &sin->sin_addr, sizeof(sin->sin_addr));
-			strcpy(diskless->root_hostnam, incoming.bpm_sname);
-			strcpy(rpath, incoming.bpm_file);
-			have |= BOOTP_ROOT;
-			outgoing.bpm_xid++;
-		}
-		else if ((have & BOOTP_SWAP) == 0) {
-			sin = (struct sockaddr_in *) &diskless->swap_saddr;
-			sin->sin_family = AF_INET;
-			sin->sin_len = sizeof(*sin);
-			bcopy((caddr_t) &incoming.bpm_siaddr,
-			      (caddr_t) &sin->sin_addr, sizeof(sin->sin_addr));
-			strcpy(diskless->swap_hostnam, incoming.bpm_sname);
-			strcpy(spath, incoming.bpm_file);
-			have |= BOOTP_SWAP;
-		}
-	}
-		
-	if (have != BOOTP_COMPLETED)
-		error = ETIMEDOUT;
- out:
-	if (nam)
-		m_freem(nam);
-	soclose(so);
-
-	return error;
-}
-
-/*
- * Called with a nfs_diskless struct in which a interface ip addr,
- * broadcast addr, and netmask have been specified.,
- *
- * The responsibility of this routine is to fill out the rest of the
- * struct using whatever mechanism.
- *
- */
-int nfs_boot(diskless)
-	struct nfs_diskless *diskless;
-{
-	int error;
-	u_short port;
-	struct sockaddr_in *sin;
-	char root_path[MAXPATHLEN], swap_path[MAXPATHLEN];
-
-	error = nfs_boot_bootp(diskless, root_path, swap_path);
-	if (error)
-		return error;
-
-	sin = (struct sockaddr_in *) &diskless->root_saddr;
-	error = nfs_boot_getfh(&diskless->root_saddr, root_path,
-			       diskless->root_fh);
-	if (error)
-		return error;
-	error = krpc_portmap(&diskless->root_saddr,
-			     NFS_PROG, NFS_VER2, &sin->sin_port);
-	if (error)
-		return error;
-
-	sin = (struct sockaddr_in *) &diskless->swap_saddr;
-	error = nfs_boot_getfh(&diskless->swap_saddr, swap_path,
-			       diskless->swap_fh);
-	if (error)
-		return error;
-	error = krpc_portmap(&diskless->swap_saddr,
-			     NFS_PROG, NFS_VER2, &sin->sin_port);
-	if (error)
-		return error;
-
-	printf("root on %x:%s\n", diskless->root_hostnam, root_path);
-	printf("swap on %x:%s\n", diskless->swap_hostnam, swap_path);
-	diskless->root_args.addr = &diskless->root_saddr;
-	diskless->swap_args.addr = &diskless->swap_saddr;
-	diskless->root_args.sotype = diskless->swap_args.sotype = SOCK_DGRAM;
-	diskless->root_args.proto = diskless->swap_args.proto = 0;
-	diskless->root_args.flags = diskless->swap_args.flags = 0;
-	diskless->root_args.wsize = diskless->swap_args.wsize = NFS_WSIZE;
-	diskless->root_args.rsize = diskless->swap_args.rsize = NFS_RSIZE;
-	diskless->root_args.timeo = diskless->swap_args.timeo = NFS_TIMEO;
-	diskless->root_args.retrans = diskless->swap_args.retrans =
-		NFS_RETRANS;
-	diskless->root_args.hostname = diskless->root_hostnam;
-	diskless->swap_args.hostname = diskless->swap_hostnam;
-	return 0;
 }
