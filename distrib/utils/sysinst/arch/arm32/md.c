@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 1999/06/27 00:23:07 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.22 1999/08/16 08:29:05 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -435,7 +435,7 @@ int md_make_bsd_partitions (void)
 			partsize = remain;
 			snprintf (isize, 20, "%d", partsize/sizemult);
 			msg_prompt_add(MSG_askfspart, isize, isize, 20,
-			    diskdev, partname[part], remain/sizemult, multname);
+			    diskdev, partition_name(part), remain/sizemult, multname);
 			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 			if (partsize > 0) {
 				if (remain - partsize < sizemult)

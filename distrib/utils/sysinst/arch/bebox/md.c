@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1999/07/10 23:07:15 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.14 1999/08/16 08:29:05 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -237,7 +237,7 @@ editlab:
 			partsize = remain;
 			snprintf (isize, 20, "%d", partsize/sizemult);
 			msg_prompt_add (MSG_askfspart, isize, isize, 20,
-					diskdev, partname[part],
+					diskdev, partition_name(part),
 					remain/sizemult, multname);
 			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 			if (partsize > 0) {

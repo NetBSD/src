@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 1999/06/20 06:08:22 cgd Exp $	*/
+/*	$NetBSD: md.h,v 1.12 1999/08/16 08:29:06 abs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,12 +41,18 @@
 /* Constants and defines */
 
 /*
- * Megabytes of disk required for a full X installation. 
- * XXX is this swap space or  additional space in /usr required
- *     to  hold X binaries?
- * For now, we set it to 100 on the pmax.
+ * Symbolic names for disk partitions.
  */
-#define XNEEDMB 100
+#define PART_ROOT	A
+#define PART_SWAP	B
+#define PART_RAW	C
+#define PART_USR	D	/* Can be after PART_FIRST_FREE */
+#define PART_FIRST_FREE	E
+
+#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
+#define DEFROOTSIZE	32	/* Default root size */
+#define STDNEEDMB	140	/* Min space for non X install */
+#define XNEEDMB		100	/* Extra megs for full X installation */
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.
