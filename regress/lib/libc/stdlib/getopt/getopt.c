@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.3 2002/11/30 03:10:53 lukem Exp $	*/
+/*	$NetBSD: getopt.c,v 1.4 2003/10/21 08:46:15 agc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 					fprintf(stderr, "argv[%d] = %s\n", i,
 					    args[i]);
 			}
-		} else if (strncmp(line, "result:", 7) == NULL) {
+		} else if (strncmp(line, "result:", 7) == 0) {
 			buf[0] = '\0';
 			optind = optreset = 1;
 			if (result)
