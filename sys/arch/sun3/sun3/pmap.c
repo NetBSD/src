@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1995/04/13 22:06:23 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1995/05/24 21:06:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1832,10 +1832,12 @@ pmap_remove_range_mmu(pmap, sva, eva)
 	if (pmegp->pmeg_vpages <= 0) {
 		/* We are done with this pmeg. */
 		if (is_pmeg_wired(pmegp)) {
+#ifdef	PMAP_DEBUG
 			if (pmap_debug & PMD_WIRING) {
 				printf("pmap: removing wired pmeg: 0x%x\n", pmegp);
 				Debugger(); /* XXX */
 			}
+#endif	/* PMAP_DEBUG */
 		}
 
 		/* First, remove it from the MMU. */
@@ -3134,6 +3136,23 @@ pmap_zero_page(pa)
 
 	tmp_vpages_inuse--;
 	PMAP_UNLOCK();
+}
+
+/*
+ *	Routine:	pmap_collect
+ *	Function:
+ *		Garbage collects the physical map system for
+ *		pages which are no longer used.
+ *		Success need not be guaranteed -- that is, there
+ *		may well be pages which are not referenced, but
+ *		others may be collected.
+ *	Usage:
+ *		Called by the pageout daemon when pages are scarce.
+ */
+void
+pmap_collect(pmap)
+	pmap_t pmap;
+{
 }
 
 static int temp_seg_inuse;
