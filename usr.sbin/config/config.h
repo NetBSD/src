@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.12 1994/02/01 02:07:11 cgd Exp $
+ *	$Id: config.h,v 1.13 1994/03/10 19:50:43 mycroft Exp $
  */
 
 /*
@@ -43,6 +43,12 @@
 
 #define	NODEV	((dev_t)-1)
 
+struct name_expr {
+	int type;
+	char *name;
+	struct name_expr *next,*left,*right;
+};
+
 struct file_list {
 	struct	file_list *f_next;	
 	char	*f_fn;			/* the name */
@@ -51,8 +57,8 @@ struct file_list {
 	u_char  f_was_driver;	 /* to handle un-included pseudo-drivers*/
 	u_char  f_needs_count;	 /* to handle un-included pseudo-drivers*/
 	char	*f_special;		/* special make rule if present */
-	char	*f_needs;
-	char	*f_countname;
+	struct	name_expr *f_needs;
+	struct	name_expr *f_countname;
 	/*
 	 * Random values:
 	 *	swap space parameters for swap areas

@@ -107,12 +107,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.12 1994/02/18 06:10:42 mycroft Exp $
+ *	$Id: config.y,v 1.13 1994/03/10 19:50:44 mycroft Exp $
  */
 
-#include "config.h"
 #include <ctype.h>
 #include <stdio.h>
+#include "config.h"
+#include "specfile.h"
 
 struct	device cur;
 struct	device *curp = 0;
@@ -612,10 +613,14 @@ mkconf(sysname)
 	char *sysname;
 {
 	register struct file_list *fl, **flp;
+	register struct name_expr *expr;
 
 	fl = (struct file_list *) malloc(sizeof *fl);
+	expr = (struct name_expr *) malloc(sizeof *expr);
 	fl->f_type = SYSTEMSPEC;
-	fl->f_needs = sysname;
+	fl->f_needs = expr;
+	expr->type = T_IDENTIFIER;
+	expr->name = sysname;
 	fl->f_rootdev = NODEV;
 	fl->f_dumpdev = NODEV;
 	fl->f_fn = 0;
@@ -677,7 +682,7 @@ mkswap(system, fl, size)
 	if (eq(fl->f_fn, "generic") || eq(fl->f_fn, "nfs"))
 		system->f_fn = ns(fl->f_fn);
 	else
-		system->f_fn = ns(system->f_needs);
+		system->f_fn = ns(system->f_needs->name);
 }
 
 /*
@@ -938,14 +943,14 @@ verifysystemspecs()
 		if (fl->f_type != SYSTEMSPEC)
 			continue;
 		if (!finddev(fl->f_rootdev))
-			deverror(fl->f_needs, "root");
+			deverror(fl->f_needs->name, "root");
 		*pchecked++ = fl->f_rootdev;
 		pchecked = verifyswap(fl->f_next, checked, pchecked);
 #define	samedev(dev1, dev2) \
 	((minor(dev1) &~ 07) != (minor(dev2) &~ 07))
 		if (!alreadychecked(fl->f_dumpdev, checked, pchecked)) {
 			if (!finddev(fl->f_dumpdev))
-				deverror(fl->f_needs, "dump");
+				deverror(fl->f_needs->name, "dump");
 			*pchecked++ = fl->f_dumpdev;
 		}
 	}
