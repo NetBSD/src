@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.8 1997/08/12 16:27:01 gwr Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.8.4.1 2000/10/04 16:22:56 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,7 +91,8 @@ struct __kvm {
 /*
  * Functions used internally by kvm, but across kvm modules.
  */
-void	 _kvm_err __P((kvm_t *kd, const char *program, const char *fmt, ...));
+void	 _kvm_err __P((kvm_t *kd, const char *program, const char *fmt, ...))
+	__attribute__((__format__(__printf__, 3, 4)));
 int	 _kvm_dump_mkheader __P((kvm_t *kd_live, kvm_t *kd_dump));
 void	 _kvm_freeprocs __P((kvm_t *kd));
 void	 _kvm_freevtop __P((kvm_t *));
@@ -102,4 +103,6 @@ void	*_kvm_malloc __P((kvm_t *kd, size_t));
 off_t	 _kvm_pa2off __P((kvm_t *, u_long));
 void	*_kvm_realloc __P((kvm_t *kd, void *, size_t));
 void	 _kvm_syserr
-	    __P((kvm_t *kd, const char *program, const char *fmt, ...));
+	    __P((kvm_t *kd, const char *program, const char *fmt, ...))
+	    __attribute__((__format__(__printf__, 3, 4)));
+
