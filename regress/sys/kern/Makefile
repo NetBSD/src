@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 1997/09/30 23:15:47 is Exp $
+#	$NetBSD: Makefile,v 1.5 1998/01/09 13:39:57 lukem Exp $
 
-SUBDIR+= execve
+SUBDIR+= execve unfdpass
 
 .include <bsd.subdir.mk>
