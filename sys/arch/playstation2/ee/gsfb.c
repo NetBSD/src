@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.8 2003/10/22 20:26:32 he Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.9 2003/11/02 13:12:14 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.8 2003/10/22 20:26:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.9 2003/11/02 13:12:14 shin Exp $");
 
 #include "debug_playstation2.h"
 
@@ -531,7 +531,7 @@ paddr_t
 _gsfb_mmap(void *v, off_t offset, int prot)
 {
 
-	return (0); /* can't mmap */
+	return (-1); /* can't mmap */
 }
 
 int
