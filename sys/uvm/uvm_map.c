@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.90 2001/02/05 11:29:54 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.91 2001/02/06 17:01:51 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2763,8 +2763,9 @@ uvmspace_unshare(p)
  */
 
 void
-uvmspace_exec(p)
+uvmspace_exec(p, start, end)
 	struct proc *p;
+	vaddr_t start, end;
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
@@ -2804,7 +2805,7 @@ uvmspace_exec(p)
 		/*
 		 * now unmap the old program
 		 */
-		uvm_unmap(map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
+		uvm_unmap(map, map->min_offset, map->max_offset);
 
 	} else {
 
@@ -2813,7 +2814,7 @@ uvmspace_exec(p)
 		 * it is still being used for others.   allocate a new vmspace
 		 * for p
 		 */
-		nvm = uvmspace_alloc(map->min_offset, map->max_offset, 
+		nvm = uvmspace_alloc(start, end,
 			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.55 2000/11/30 11:04:43 simonb Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.56 2001/02/06 17:01:52 eeh Exp $	*/
 
 /*
  *
@@ -593,7 +593,7 @@ struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t,
 				boolean_t));
 void			uvmspace_init __P((struct vmspace *, struct pmap *,
 				vaddr_t, vaddr_t, boolean_t));
-void			uvmspace_exec __P((struct proc *));
+void			uvmspace_exec __P((struct proc *, vaddr_t, vaddr_t));
 struct vmspace		*uvmspace_fork __P((struct vmspace *));
 void			uvmspace_free __P((struct vmspace *));
 void			uvmspace_share __P((struct proc *, struct proc *));

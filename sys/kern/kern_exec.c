@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.134 2000/12/22 22:58:59 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.135 2001/02/06 17:01:53 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -453,7 +453,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 * for remapping.  Note that this might replace the current
 	 * vmspace with another!
 	 */
-	uvmspace_exec(p);
+	uvmspace_exec(p, VM_MIN_ADDRESS, (vaddr_t)pack.ep_minsaddr);
 
 	/* Now map address space */
 	vm = p->p_vmspace;
