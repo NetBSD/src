@@ -1,8 +1,11 @@
-/*	$NetBSD: conf.c,v 1.2.8.2 2002/07/15 00:33:03 gehenna Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.1.4.2 2002/07/15 00:33:08 gehenna Exp $	*/
 
-/*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net) at Sandburst Corp.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,14 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/conf.h>
+struct mainbus_attach_args {
+	const char *mb_name;
+	u_long mb_addr;
+	int mb_irq;
+	bus_space_tag_t mb_bt;		/* Bus space tag */
+	bus_dma_tag_t mb_dmat;		/* DMA tag */
 
-/*
- * Routine that identifies /dev/mem and /dev/kmem.
- */
-int
-iskmemdev(dev_t dev)
-{
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
-}
+	union {
+		struct {
+			u_int size;
+			u_int width;
+		} mb_flash;
+	} u;
+};
+

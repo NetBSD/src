@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2002/04/23 17:14:45 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.2.1 2002/07/15 00:33:12 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -897,7 +897,7 @@ pmap_pinit(pmap_t pm)
 				entropy = (pmap_vsidcontext >> 20);
 				continue;
 			}
-			i = ffs(~pmap_vsid_bitmap[i]) - 1;
+			i = ffs(~pmap_vsid_bitmap[n]) - 1;
 			mask = 1 << i;
 			hash &= 0xfffff & ~(VSID_NBPW-1);
 			hash |= i;
@@ -2379,7 +2379,7 @@ pmap_pool_ualloc(struct pool *pp, int flags)
 	pvop = SIMPLEQ_FIRST(&pmap_upvop_head);
 	if (pvop != NULL) {
 		pmap_upvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop, pvop_link);
+		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop_link);
 		return pvop;
 	}
 	if (uvm.page_init_done != TRUE) {
@@ -2397,7 +2397,7 @@ pmap_pool_malloc(struct pool *pp, int flags)
 	pvop = SIMPLEQ_FIRST(&pmap_mpvop_head);
 	if (pvop != NULL) {
 		pmap_mpvop_free--;
-		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop, pvop_link);
+		SIMPLEQ_REMOVE_HEAD(&pmap_mpvop_head, pvop_link);
 		return pvop;
 	}
  again:
