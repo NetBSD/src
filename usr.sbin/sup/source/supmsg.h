@@ -1,3 +1,5 @@
+/*	$NetBSD: supmsg.h,v 1.4 1997/06/17 18:57:01 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -31,17 +33,6 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
- *
- * $Log: supmsg.h,v $
- * Revision 1.3  1996/12/31 18:08:10  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.2  1993/08/04 17:46:24  brezak
- * Changes from nate for gzip'ed sup
- *
- * Revision 1.1.1.1  1993/05/21  14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.7  92/08/11  12:08:20  mrt
  * 	Added copyright.

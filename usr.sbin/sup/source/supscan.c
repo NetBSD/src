@@ -1,3 +1,5 @@
+/*	$NetBSD: supscan.c,v 1.4 1997/06/17 18:57:03 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -38,20 +40,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: supscan.c,v $
- * Revision 1.3  1996/12/31 18:08:11  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.2  1996/12/23 19:42:23  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 1.14  92/08/11  12:08:30  mrt
  * 	Picked up Brad's deliniting and variable argument changes
  * 	[92/08/10            mrt]

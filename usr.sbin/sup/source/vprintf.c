@@ -1,3 +1,5 @@
+/*	$NetBSD: vprintf.c,v 1.5 1997/06/17 18:57:10 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -27,36 +29,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: vprintf.c,v $
- * Revision 1.4  1996/12/31 18:08:12  christos
- * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
- * sup now works on the alpha!
- *
- * Revision 1.3  1996/09/30 04:19:55  christos
- * Use a better fix for vsnprintf on svr4. Apparently, svr4 stdio does not
- * have _IOSTRG, but it uses _IOREAD to indicate that _doprnt() should print
- * to the buffer and not to the file stream.
- *
- * Revision 1.2  1996/09/05 16:50:13  christos
- * - for portability make sure that we never use "" as a pathname, always convert
- *   it to "."
- * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
- * - use POSIX signals and wait macros
- * - add -S silent flag, so that the client does not print messages unless there
- *   is something wrong
- * - use flock or lockf as appropriate
- * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
- *   don't depend on the major() = 255 hack; it only works on legacy systems.
- * - use gzip -cf to make sure that gzip compresses the file even when the file
- *   would expand.
- * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
- *
- * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
- * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
- *
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 2.5  89/09/08  18:15:55  mbj
  * 	Use _doprnt() for the Multimax (an "old" architecture).
  * 	[89/09/08            mbj]

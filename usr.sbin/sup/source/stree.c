@@ -1,3 +1,5 @@
+/*	$NetBSD: stree.c,v 1.3 1997/06/17 18:56:39 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -27,16 +29,6 @@
  *
  **********************************************************************
  * HISTORY
- * $Log: stree.c,v $
- * Revision 1.2  1996/12/23 19:42:14  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 1.4  92/08/11  12:06:32  mrt
  * 	Added copyright. Delinted
  * 	[92/08/10            mrt]
