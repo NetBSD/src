@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.15 2003/08/07 16:43:51 agc Exp $	*/
+/*	$NetBSD: strmode.c,v 1.15.2.1 2004/06/22 07:20:18 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.15 2003/08/07 16:43:51 agc Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.15.2.1 2004/06/22 07:20:18 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,9 +80,11 @@ strmode(mode, p)
 	case S_IFLNK:			/* symbolic link */
 		*p++ = 'l';
 		break;
+#ifdef S_IFSOCK
 	case S_IFSOCK:			/* socket */
 		*p++ = 's';
 		break;
+#endif
 #ifdef S_IFIFO
 	case S_IFIFO:			/* fifo */
 		*p++ = 'p';

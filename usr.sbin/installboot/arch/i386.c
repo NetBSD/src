@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.15 2004/03/14 23:05:47 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.15.2.1 2004/06/22 07:20:18 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.15 2004/03/14 23:05:47 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.15.2.1 2004/06/22 07:20:18 tron Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ i386_setboot(ib_params *params)
 {
 	int		retval, i, bpbsize;
 	uint8_t		*bootstrapbuf;
-	uint		bootstrapsize;
+	u_int		bootstrapsize;
 	ssize_t		rv;
 	uint32_t	magic;
 	struct x86_boot_params	*bp;
