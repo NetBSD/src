@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.212 2000/04/16 23:38:48 perry Exp $
+#	$NetBSD: mi,v 1.213 2000/04/19 06:39:15 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -595,6 +595,7 @@
 ./usr/include/net/if_pppvar.h		comp-c-include
 ./usr/include/net/if_slvar.h		comp-c-include
 ./usr/include/net/if_sppp.h		comp-c-include
+./usr/include/net/if_stf.h		comp-c-include
 ./usr/include/net/if_stripvar.h		comp-c-include
 ./usr/include/net/if_token.h		comp-c-include
 ./usr/include/net/if_tun.h		comp-c-include
@@ -646,6 +647,7 @@
 ./usr/include/netinet/ip_auth.h		comp-c-include
 ./usr/include/netinet/ip_compat.h		comp-c-include
 ./usr/include/netinet/ip_ecn.h		comp-c-include
+./usr/include/netinet/ip_encap.h		comp-c-include
 ./usr/include/netinet/ip_fil.h		comp-c-include
 ./usr/include/netinet/ip_frag.h		comp-c-include
 ./usr/include/netinet/ip_icmp.h		comp-c-include
