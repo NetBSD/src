@@ -35,8 +35,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)memset.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: memset.c,v 1.1 1993/10/13 11:16:23 cgd Exp $";
+#ifdef notdef
+static char *sccsid = "@(#)memset.c	5.6 (Berkeley) 1/26/91";
+#endif
+static char *rcsid = "$NetBSD: memset.c,v 1.2 1994/10/26 05:36:51 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>

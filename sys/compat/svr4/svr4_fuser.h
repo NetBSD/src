@@ -1,4 +1,5 @@
-/* $NetBSD: svr4_fuser.h,v 1.1 1994/10/24 17:37:41 deraadt Exp $	*/
+/*	$NetBSD: svr4_fuser.h,v 1.2 1994/10/26 05:27:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -25,6 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_SVR4_FUSER_H_
 #define	_SVR4_FUSER_H_
 
