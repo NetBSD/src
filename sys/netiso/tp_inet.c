@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_inet.c	7.8 (Berkeley) 5/6/91
- *	$Id: tp_inet.c,v 1.3 1993/12/18 00:43:33 mycroft Exp $
+ *	$Id: tp_inet.c,v 1.4 1993/12/18 04:58:05 mycroft Exp $
  */
 
 /***********************************************************
@@ -104,7 +104,7 @@ SOFTWARE.
 #include <netinet/in_var.h>
 
 #ifndef ISO
-#include "iso_chksum.c"
+#include <netiso/iso_chksum.c>
 #endif
 
 /*

@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_aout.c,v 1.8 1993/12/18 04:46:27 mycroft Exp $
+ *	$Id: db_aout.c,v 1.9 1993/12/18 04:54:21 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -38,8 +38,8 @@
 #ifndef	DB_NO_AOUT
 
 #define _AOUT_INCLUDE_
-#include "nlist.h"
-#include "stab.h"
+#include <nlist.h>
+#include <stab.h>
 
 /*
  * An a.out symbol table as loaded into the kernel debugger:
