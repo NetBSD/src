@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.118 2000/11/02 20:49:10 veego Exp $
+#	$NetBSD: NetBSD.dist,v 1.119 2000/11/02 22:33:10 tron Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1122,7 +1122,7 @@ vfs
 locale
 
 # ./usr/share/locale/da
-de
+da
 
 # ./usr/share/locale/da/LC_MESSAGES
 LC_MESSAGES
