@@ -1940,7 +1940,7 @@ ssize_t decode_hw_header PROTO ((struct interface_info *, unsigned char *,
 				 unsigned, struct hardware *));
 ssize_t decode_udp_ip_header PROTO ((struct interface_info *, unsigned char *,
 				     unsigned, struct sockaddr_in *,
-				     unsigned char *, unsigned));
+				     unsigned char *, unsigned, unsigned *));
 
 /* ethernet.c */
 void assemble_ethernet_header PROTO ((struct interface_info *, unsigned char *,

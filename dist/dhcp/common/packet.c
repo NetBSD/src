@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.4 2003/10/24 05:30:33 mellon Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.5 2004/10/22 05:22:39 perry Exp $ Copyright (c) 1996-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -219,13 +219,14 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 
 /* UDP header and IP header decoded together for convenience. */
 
-ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
+ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen, rbuflen)
 	struct interface_info *interface;
 	unsigned char *buf;
 	unsigned bufix;
 	struct sockaddr_in *from;
 	unsigned char *data;
 	unsigned buflen;
+	unsigned *rbuflen;
 {
   struct ip *ip;
   struct udphdr *udp;
@@ -343,6 +344,7 @@ ssize_t decode_udp_ip_header (interface, buf, bufix, from, data, buflen)
   /* Copy out the port... */
   memcpy (&from -> sin_port, &udp -> uh_sport, sizeof udp -> uh_sport);
 
+  *rbuflen = ntohs (ip->ip_len) - ip_len - sizeof *udp;
   return ip_len + sizeof *udp;
 }
 #endif /* PACKET_DECODING */
