@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.191 2004/04/03 19:38:04 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.192 2004/04/03 19:43:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.191 2004/04/03 19:38:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.192 2004/04/03 19:43:08 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -143,6 +143,11 @@ ksiginfo_put(struct proc *p, const ksiginfo_t *ksi)
 	int s;
 
 	if ((sa->sa_flags & SA_SIGINFO) == 0)
+		return;
+	/*
+	 * If there's no info, don't save it.
+	 */
+	if (KSI_EMPTY_P(ksi))
 		return;
 
 	s = splsoftclock();
@@ -827,7 +832,7 @@ void
 gsignal(int pgid, int signum)
 {
 	ksiginfo_t ksi;
-	KSI_INIT(&ksi);
+	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = signum;
 	kgsignal(pgid, &ksi, NULL);
 }
@@ -849,7 +854,7 @@ void
 pgsignal(struct pgrp *pgrp, int sig, int checkctty)
 {
 	ksiginfo_t ksi;
-	KSI_INIT(&ksi);
+	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = sig;
 	kpgsignal(pgrp, &ksi, NULL, checkctty);
 }
@@ -949,7 +954,7 @@ psignal1(struct proc *p, int signum, int dolock)
 {
 	ksiginfo_t ksi;
 
-	KSI_INIT(&ksi);
+	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = signum;
 	kpsignal2(p, &ksi, dolock);
 }
@@ -1861,7 +1866,7 @@ postsig(int signum)
 			 * because the signal was not caught, or because the
 			 * user did not request SA_SIGINFO
 			 */
-			KSI_INIT(&ksi1);
+			KSI_INIT_EMPTY(&ksi1);
 			ksi1.ksi_signo = signum;
 			kpsendsig(l, &ksi1, returnmask);
 		} else {
