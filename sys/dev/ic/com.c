@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.188 2001/08/27 14:27:01 enami Exp $	*/
+/*	$NetBSD: com.c,v 1.189 2001/09/17 02:47:13 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2036,7 +2036,7 @@ comintr(arg)
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
 
-	do {
+again:	do {
 		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
@@ -2114,7 +2114,6 @@ comintr(arg)
 				bus_space_write_1(iot, ioh, com_ier, 0);
 				delay(10);
 				bus_space_write_1(iot, ioh, com_ier,sc->sc_ier);
-				iir = IIR_NOPEND;
 				continue;
 			}
 		}
@@ -2187,7 +2186,8 @@ comintr(arg)
 
 			sc->sc_st_check = 1;
 		}
-	} while (!ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND));
+	} while (ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_RXRDY)
+	    || ((iir & IIR_IMASK) == 0));
 
 	/*
 	 * Done handling any receive interrupts. See if data can be
@@ -2228,6 +2228,10 @@ comintr(arg)
 			}
 		}
 	}
+
+	if (!ISSET((iir = bus_space_read_1(iot, ioh, com_iir)), IIR_NOPEND))
+		goto again;
+
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
