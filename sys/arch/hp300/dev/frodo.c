@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.5 1999/07/31 21:15:20 thorpej Exp $	*/
+/*	$NetBSD: frodo.c,v 1.6 2001/11/17 23:35:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct frodo_softc {
 	struct device	sc_dev;		/* generic device glue */
 	volatile u_int8_t *sc_regs;	/* register base */
 	struct frodo_isr sc_intr[FRODO_NINTR]; /* interrupt handlers */
+	int		sc_ipl;
 	void		*sc_ih;		/* out interrupt cookie */
 	int		sc_refcnt;	/* number of interrupt refs */
 };
@@ -129,31 +130,19 @@ frodomatch(parent, match, aux)
 	void *aux;
 {
 	struct intio_attach_args *ia = aux;
-	caddr_t va;
 	static int frodo_matched = 0;
 
 	/* only allow one instance */
 	if (frodo_matched)
 		return (0);
 
-	/* only 4xx workstations can have this */
-	switch (machineid) {
-	case HP_400:
-	case HP_425:
-	case HP_433:
-		break;
-
-	default:
+	if (strcmp(ia->ia_modname, "frodo   ") != 0)
 		return (0);
-	}
 
-	/* make sure the hardware is there in any case */
-	va = (caddr_t)IIOV(FRODO_BASE);
-	if (badaddr(va))
+	if (badaddr((caddr_t)ia->ia_addr))
 		return (0);
 
 	frodo_matched = 1;
-	ia->ia_addr = FRODO_BASE;
 	return (1);
 }
 
@@ -166,7 +155,8 @@ frodoattach(parent, self, aux)
 	struct intio_attach_args *ia = aux;
 	int i;
 
-	sc->sc_regs = (volatile u_int8_t *)IIOV(ia->ia_addr);
+	sc->sc_regs = (volatile u_int8_t *)ia->ia_addr;
+	sc->sc_ipl = ia->ia_ipl;
 
 	if ((FRODO_READ(sc, FRODO_IISR) & FRODO_IISR_SERVICE) == 0)
 		printf(": service mode enabled");
@@ -276,7 +266,7 @@ frodo_intr_establish(frdev, func, arg, line, priority)
 	if (isr == NULL || isr->isr_priority < priority) {
 		if (isr != NULL)
 			intr_disestablish(isr);
-		sc->sc_ih = intr_establish(frodointr, sc, 5, priority);
+		sc->sc_ih = intr_establish(frodointr, sc, sc->sc_ipl, priority);
 	}
 
 	sc->sc_refcnt++;
@@ -320,7 +310,7 @@ frodo_intr_disestablish(frdev, line)
 
 	if (newpri != isr->isr_priority) {
 		intr_disestablish(isr);
-		sc->sc_ih = intr_establish(frodointr, sc, 5, newpri);
+		sc->sc_ih = intr_establish(frodointr, sc, sc->sc_ipl, newpri);
 	}
 }
 
