@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.2 2001/02/23 21:23:53 reinoud Exp $ */
+/* $NetBSD: sysarch.h,v 1.3 2001/07/14 00:23:11 matt Exp $ */
 
-#include <arm/arm32/sysarch.h>
+#include <arm/sysarch.h>
 
