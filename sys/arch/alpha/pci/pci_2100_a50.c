@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_2100_a50.c,v 1.6 1996/04/12 06:08:37 cgd Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.7 1996/04/23 14:15:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -46,6 +46,7 @@
 
 #include <alpha/pci/pci_2100_a50.h>
 #include <alpha/pci/siovar.h>
+#include <alpha/pci/sioreg.h>
 
 #include "sio.h"
 
@@ -55,6 +56,8 @@ const char *dec_2100_a50_intr_string __P((void *, pci_intr_handle_t));
 void    *dec_2100_a50_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void    dec_2100_a50_intr_disestablish __P((void *, void *));
+
+#define	APECS_SIO_DEVICE	7	/* XXX */
 
 void
 pci_2100_a50_pickintr(acp)
@@ -162,7 +165,8 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 		break;
 	}
 
-	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, 7, 0), 0x60); /*XXX*/
+	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),
+	    SIO_PCIREG_PIRQ_RTCTRL);
 #if 0
 	printf("pci_2100_a50_map_int: device %d pin %c: pirq %d, reg = %x\n",
 		device, '@' + buspin, pirq, pirqreg);
