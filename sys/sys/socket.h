@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.26 1997/05/05 06:29:09 thorpej Exp $	*/
+/*	$NetBSD: socket.h,v 1.27 1998/01/07 22:46:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -189,6 +189,24 @@ struct sockproto {
 #define	PF_MAX		AF_MAX
 
 /*
+ * Socket credentials.
+ */
+struct sockcred {
+	uid_t	sc_uid;			/* real user id */
+	uid_t	sc_euid;		/* effective user id */
+	gid_t	sc_gid;			/* real group id */
+	gid_t	sc_egid;		/* effective group id */
+	int	sc_ngroups;		/* number of supplemental groups */
+	gid_t	sc_groups[1];		/* variable length */
+};
+
+/*
+ * Compute size of a sockcred structure with groups.
+ */
+#define	SOCKCREDSIZE(ngrps) \
+	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
+
+/*
  * Definitions for network related sysctl, CTL_NET.
  *
  * Second level is protocol family.
@@ -308,6 +326,7 @@ struct cmsghdr {
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #define	SCM_TIMESTAMP	0x02		/* timestamp (struct timeval) */
+#define	SCM_CREDS	0x04		/* credientials (struct sockcred) */
 
 /*
  * 4.3 compat sockaddr, move to compat file later
