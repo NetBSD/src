@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 1999/05/22 20:28:22 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 1999/06/05 20:38:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ enum bus_type {
 	PCI_MEMORY_BUS_SPACE,
 	LAST_BUS_SPACE
 }; 
-extern int bus_type_asi[LAST_BUS_SPACE];
+extern int bus_type_asi[];
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
 
