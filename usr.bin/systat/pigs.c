@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.21 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: pigs.c,v 1.22 2002/05/04 18:44:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.21 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.22 2002/05/04 18:44:27 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -96,7 +96,7 @@ void
 showpigs(void)
 {
 	int i, y, k;
-	struct	eproc *ep;
+	struct kinfo_proc2 *kp;
 	float total;
 	int factor;
 	const char *pname;
@@ -127,10 +127,11 @@ showpigs(void)
 			usrstr[0] = '\0';
 		}
 		else {
-			ep = &pt[k].pt_kp->kp_eproc;
-			pname = pt[k].pt_kp->kp_proc.p_comm;
-			snprintf(pidstr, sizeof(pidstr), "%5d", pt[k].pt_kp->kp_proc.p_pid);
-			snprintf(usrstr, sizeof(usrstr), "%8s", user_from_uid(ep->e_ucred.cr_uid, 0));
+			kp = pt[k].pt_kp;
+			pname = kp->p_comm;
+			snprintf(pidstr, sizeof(pidstr), "%5d", kp->p_pid);
+			snprintf(usrstr, sizeof(usrstr), "%8s",
+			    user_from_uid(kp->p_uid, 0));
 		}
 		wmove(wnd, y, 0);
 		wclrtoeol(wnd);
@@ -183,16 +184,16 @@ fetchpigs(void)
 {
 	int i;
 	float time;
-	struct proc *pp;
 	float *pctp;
-	struct kinfo_proc *kpp;
+	struct kinfo_proc2 *kpp, *k;
 	u_int64_t ctime[CPUSTATES];
 	double t;
 	static int lastnproc = 0;
 
 	if (namelist[X_FIRST].n_type == 0)
 		return;
-	if ((kpp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nproc)) == NULL) {
+	if ((kpp = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(*kpp),
+				&nproc)) == NULL) {
 		error("%s", kvm_geterr(kd));
 		if (pt)
 			free(pt);
@@ -211,15 +212,15 @@ fetchpigs(void)
 	 * calculate %cpu for each proc
 	 */
 	for (i = 0; i < nproc; i++) {
-		pt[i].pt_kp = &kpp[i];
-		pp = &kpp[i].kp_proc;
+		pt[i].pt_kp = k = &kpp[i];
 		pctp = &pt[i].pt_pctcpu;
-		time = pp->p_swtime;
-		if (P_ZOMBIE(pp) ||
-		    time == 0 || (pp->p_flag & P_INMEM) == 0)
+		time = k->p_swtime;
+		/* XXX - I don't like this */
+		if (k->p_swtime == 0 || (k->p_flag & P_INMEM) == 0 ||
+		    k->p_stat == SZOMB || k->p_stat == SDEAD)
 			*pctp = 0;
 		else
-			*pctp = ((double) pp->p_pctcpu / 
+			*pctp = ((double) k->p_pctcpu / 
 					fscale) / (1.0 - exp(time * lccpu));
 	}
 	/*

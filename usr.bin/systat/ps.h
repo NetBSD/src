@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.h,v 1.2 2000/06/04 16:06:26 thorpej Exp $  */
+/*      $NetBSD: ps.h,v 1.3 2002/05/04 18:44:27 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -36,7 +36,7 @@
 extern int nproc;       
 extern struct p_times {       
 	float pt_pctcpu;
-	struct kinfo_proc *pt_kp;
+	struct kinfo_proc2 *pt_kp;
 } *pt;
  
 extern u_int64_t stime[CPUSTATES];       
