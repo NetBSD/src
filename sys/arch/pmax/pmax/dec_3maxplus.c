@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.3 1998/03/26 03:12:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.2 1998/03/25 06:22:19 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.3 1998/03/26 03:12:05 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ static void 	dec_3maxplus_errintr __P ((void));
  */
 u_long	kn03_tc3_imask;
 void	dec_3maxplus_tc_reset __P((void));		/* XXX unused? */
-tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
 /*
