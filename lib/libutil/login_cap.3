@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.10 2002/02/07 07:00:52 ross Exp $
+.\" $NetBSD: login_cap.3,v 1.11 2002/07/10 14:37:17 yamt Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -230,3 +230,38 @@ family of functions are largely based on the
 implementation of same, and appeared in
 .Nx 1.5
 by kind permission.
+.Sh CAVEATS
+The string returned by
+.Fn login_getcapstr
+is allocated via
+.Xr malloc 3
+when the specified capability is present and thus it is the responsibility
+of the caller to
+.Fn free
+this space.
+However, if the capability was not found or an error occurred and
+.Fa def
+or
+.Fa err
+(whichever is relevant) are non-NULL the returned value is simply what
+was passed in to
+.Fn login_getcapstr .
+Therefore it is not possible to blindly
+.Fn free
+the return value without first checking it against
+.Fa def
+and
+.Fa err .
+.Pp
+The same warnings set forth in
+.Xr setlogin 2
+apply to
+.Fn setusercontext
+when the
+.Dv LOGIN_SETLOGIN
+flag is used.
+Specifically, changing the login name affects all processes in the current
+session, not just the current process.
+See
+.Xr setlogin 2
+for more information.
