@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.78 2004/05/12 02:07:38 jrf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.78 2004/05/12 02:07:38 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -453,7 +453,7 @@ spec_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void  *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
@@ -845,7 +845,7 @@ spec_advlock(v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t a_id;
+		void *a_id;
 		int a_op;
 		struct flock *a_fl;
 		int a_flags;

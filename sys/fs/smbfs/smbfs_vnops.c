@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.42 2004/03/22 16:40:48 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.43 2004/05/12 02:07:38 jrf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.42 2004/03/22 16:40:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.43 2004/05/12 02:07:38 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1017,7 +1017,7 @@ smbfs_advlock(v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
-		caddr_t  a_id;
+		void *a_id;
 		int  a_op;
 		struct flock *a_fl;
 		int  a_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.8 2004/03/22 16:39:30 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.9 2004/05/12 02:07:38 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.8 2004/03/22 16:39:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.9 2004/05/12 02:07:38 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ ntfs_ntlookup(
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
 	ddprintf(("ntfs_ntlookup: allocating ntnode: %d: %p\n", ino, ip));
-	bzero((caddr_t) ip, sizeof(struct ntnode));
+	bzero(ip, sizeof(struct ntnode));
 
 	/* Generic initialization */
 	ip->i_devvp = ntmp->ntm_devvp;
