@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.131 2004/05/28 17:46:49 erh Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.132 2004/06/22 18:32:45 abs Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.131 2004/05/28 17:46:49 erh Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.132 2004/06/22 18:32:45 abs Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1610,7 +1610,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		/* We have a partition entry */
 		part = *cp - 'a';
 
-		if (part > lp->d_npartitions) {
+		if (part >= MAXPARTITIONS) {
 			warnx("line %d: bad partition name: %s", lineno, cp);
 			errors++;
 			continue;
@@ -1768,8 +1768,16 @@ checklabel(struct disklabel *lp)
 	if (lp->d_npartitions > MAXPARTITIONS)
 		warnx("warning, number of partitions (%d) > MAXPARTITIONS (%d)",
 		    lp->d_npartitions, MAXPARTITIONS);
+	else
+		for (i = MAXPARTITIONS - 1; i >= lp->d_npartitions; i--) {
+			pp = &lp->d_partitions[i];
+			if (pp->p_size || pp->p_offset) {
+				warnx("warning, partition %c increased number of partitions from %d to %d", 'a' + i, lp->d_npartitions, i + 1);
+				lp->d_npartitions = i + 1;
+				break;
+			}
+		}
 	for (i = 0; i < lp->d_npartitions; i++) {
-		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size == 0 && pp->p_offset != 0)
 			warnx("warning, partition %c: size 0, but offset %d",
@@ -1793,13 +1801,6 @@ checklabel(struct disklabel *lp)
 			errors++;
 		}
 	}
-	for (; i < MAXPARTITIONS; i++) {
-		part = 'a' + i;
-		pp = &lp->d_partitions[i];
-		if (pp->p_size || pp->p_offset)
-			warnx("warning, unused partition %c: size %d offset %d",
-			    'a' + i, pp->p_size, pp->p_offset);
-	}
 	return (errors);
 }
 
@@ -1815,7 +1816,6 @@ setbootflag(struct disklabel *lp)
 {
 	struct partition *pp;
 	int	i, errors;
-	char	part;
 	u_long	boffset;
 
 	errors = 0;
@@ -1823,7 +1823,6 @@ setbootflag(struct disklabel *lp)
 		return;
 	boffset = bootsize / lp->d_secsize;
 	for (i = 0; i < lp->d_npartitions; i++) {
-		part = 'a' + i;
 		pp = &lp->d_partitions[i];
 		if (pp->p_size == 0)
 			continue;
