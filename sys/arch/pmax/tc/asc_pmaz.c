@@ -1,7 +1,7 @@
-/* $NetBSD: asc_pmaz.c,v 1.1.2.4 1999/03/05 04:42:12 nisimura Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.1.2.5 1999/03/30 07:09:42 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.4 1999/03/05 04:42:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.5 1999/03/30 07:09:42 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -21,9 +21,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.4 1999/03/05 04:42:12 nisimura Ex
 
 #include <dev/tc/tcvar.h>
 
-int	asc_pmaz_match __P((struct device *, struct cfdata *, void *));
-void	asc_pmaz_attach __P((struct device *, struct device *, void *));
-
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
@@ -33,8 +30,7 @@ struct asc_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
 	int	sc_active;			/* DMA active ? */
-	int	sc_iswrite;			/* DMA into main memory? */
-	int	sc_datain;
+	int	sc_ispullup;			/* DMA into main memory? */
 	size_t	sc_dmasize;
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
@@ -42,6 +38,9 @@ struct asc_softc {
 	/* XXX XXX XXX */
 	caddr_t sc_base, sc_bounce, sc_target;
 };
+
+int	asc_pmaz_match __P((struct device *, struct cfdata *, void *));
+void	asc_pmaz_attach __P((struct device *, struct device *, void *));
 
 struct cfattach asc_pmaz_ca = {
 	sizeof(struct asc_softc), asc_pmaz_match, asc_pmaz_attach
@@ -204,7 +203,7 @@ asc_pmaz_intr(sc)
 	int trans, resid;
 
 	resid = 0;
-	if (!asc->sc_iswrite &&
+	if (!asc->sc_ispullup &&
 	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("pmaz_intr: empty FIFO of %d ", resid));
 		DELAY(1);
@@ -215,13 +214,13 @@ asc_pmaz_intr(sc)
 
 	trans = asc->sc_dmasize - resid;
 
-	if (asc->sc_iswrite)
-		bcopy(asc->sc_bounce, asc->sc_target, trans);
+	if (asc->sc_ispullup)
+		memcpy(asc->sc_target, asc->sc_bounce, trans);
 	*asc->sc_dmalen -= trans;
 	*asc->sc_dmaaddr += trans;
 	asc->sc_active = 0;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -238,7 +237,7 @@ asc_pmaz_setup(sc, addr, len, datain, dmasize)
 
 	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
-	asc->sc_iswrite = datain;
+	asc->sc_ispullup = datain;
 
 	NCR_DMA(("pmaz_setup: start %d@%p, %s\n",
 		*asc->sc_dmalen, *asc->sc_dmaaddr, datain ? "IN" : "OUT"));
@@ -250,16 +249,16 @@ asc_pmaz_setup(sc, addr, len, datain, dmasize)
 
 	NCR_DMA(("pmaz_setup: dmasize = %d\n", asc->sc_dmasize));
 
-	asc->sc_bounce = (caddr_t)((char *)asc->sc_base + PMAZ_OFFSET_RAM);
+	asc->sc_bounce = asc->sc_base + PMAZ_OFFSET_RAM;
 	asc->sc_bounce += PER_TGT_DMA_SIZE *
 	    sc->sc_nexus->xs->sc_link->scsipi_scsi.target;
 	asc->sc_target = *addr;
 
-	if (!asc->sc_iswrite)
-		bcopy(asc->sc_target, asc->sc_bounce, size);
+	if (!asc->sc_ispullup)
+		memcpy(asc->sc_bounce, asc->sc_target, size);
 
 #if 1
-	if (asc->sc_iswrite)
+	if (asc->sc_ispullup)
 		tc_dmar = PMAZ_DMA_ADDR(asc->sc_bounce);
 	else
 		tc_dmar = PMAZ_DMAR_WRITE | PMAZ_DMA_ADDR(asc->sc_bounce);
@@ -277,7 +276,7 @@ asc_pmaz_go(sc)
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_int32_t tc_dmar;
 
-	if (asc->sc_iswrite)
+	if (asc->sc_ispullup)
 		tc_dmar = PMAZ_DMA_ADDR(asc->sc_bounce);
 	else
 		tc_dmar = PMAZ_DMAR_WRITE | PMAZ_DMA_ADDR(asc->sc_bounce);
@@ -294,8 +293,8 @@ asc_pmaz_stop(sc)
 #if 0
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	if (asc->sc_iswrite)
-		bcopy(asc->sc_bounce, asc->sc_target, asc->sc_dmasize);
+	if (asc->sc_ispullup)
+		memcpy(asc->sc_target, asc->sc_bounce, asc->sc_dmasize);
 	asc->sc_active = 0;
 #endif
 }
