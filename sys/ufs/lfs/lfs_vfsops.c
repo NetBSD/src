@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.125 2003/07/12 16:17:08 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.126 2003/07/12 16:19:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.125 2003/07/12 16:17:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.126 2003/07/12 16:19:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -182,8 +182,10 @@ lfs_writerd(void *arg)
 
 	lfs_writer_daemon = curproc->p_pid;
 
+	simple_lock(&lfs_subsys_lock);
 	for (;;) {
-		tsleep(&lfs_writer_daemon, PVM, "lfswriter", 0);
+		ltsleep(&lfs_writer_daemon, PVM | PNORELOCK, "lfswriter", 0,
+		    &lfs_subsys_lock);
 
 #ifdef LFS_PD
 		/*
@@ -238,7 +240,6 @@ lfs_writerd(void *arg)
 			lfs_flush(NULL, SEGM_WRITERD);
 			lfs_do_flush = 0;
 		}
-		simple_unlock(&lfs_subsys_lock);
 	}
 	/* NOTREACHED */
 }
