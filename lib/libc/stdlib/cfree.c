@@ -33,21 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)calloc.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: calloc.c,v 1.4 1993/10/13 21:44:25 jtc Exp $";
+static char *rcsid = "$Id: cfree.c,v 1.1 1993/10/13 21:44:27 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
-#include <string.h>
 
-void *
-calloc(num, size)
-	size_t num;
-	register size_t size;
+void
+cfree(p)
+	void *p;
 {
-	register void *p;
-
-	size *= num;
-	if (p = malloc(size))
-		bzero(p, size);
-	return(p);
+	(void)free(p);
 }
