@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.4 1998/04/24 01:25:19 mjacob Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.5 1998/04/25 00:12:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.4 1998/04/24 01:25:19 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.5 1998/04/25 00:12:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,14 +160,14 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
 	int device;
 	int kn300_irq;
 
-        if (buspin == 0) {
-                /* No IRQ used. */
-                return 1;
-        }
-        if (buspin > 4 || buspin < 0) {
-                printf("dec_kn300_intr_map: bad interrupt pin %d\n", buspin);
-                return 1;
-        }
+	if (buspin == 0) {
+		/* No IRQ used. */
+		return 1;
+	}
+	if (buspin > 4 || buspin < 0) {
+		printf("dec_kn300_intr_map: bad interrupt pin %d\n", buspin);
+		return 1;
+	}
 
 	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
