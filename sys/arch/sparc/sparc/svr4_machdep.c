@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.24 1997/07/29 10:04:45 fair Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.24.4.1 1997/09/08 23:42:16 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -216,11 +216,10 @@ svr4_setcontext(p, uc)
 	struct proc *p;
 	struct svr4_ucontext *uc;
 {
-	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &psp->ps_sigstk;
+	struct sigaltstack *sf = &p->p_sigstk;
 	int mask;
 #ifdef FPU_CONTEXT
 	svr4_fregset_t *f = &uc->uc_mcontext.freg;
@@ -477,22 +476,23 @@ svr4_sendsig(catcher, sig, mask, code)
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
+	struct sigaction *sa = &psp->ps_sigact[sig];
 	int oonstack, oldsp, newsp, addr;
 	extern char svr4_sigcode[], svr4_esigcode[];
 
 
 	tf = (struct trapframe *)p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct svr4_sigframe *)(psp->ps_sigstk.ss_sp +
-					      psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct svr4_sigframe *)(p->p_sigstk.ss_sp +
+					      p->p_sigstk.ss_size);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct svr4_sigframe *)oldsp;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.45 1997/07/26 10:12:49 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.45.4.1 1997/09/08 23:44:36 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -423,9 +423,9 @@ sys_sigreturn(p, v, retval)
 		return (EINVAL);
 	}
 	if (cntx->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = cntx->sc_mask & ~sigcantmask;
 
 	scf->fp = cntx->sc_fp;
@@ -455,11 +455,12 @@ sendsig(catcher, sig, mask, code)
 {
 	struct	proc	*p = curproc;
 	struct	sigacts *psp = p->p_sigacts;
+	struct	sigaction *sa = &psp->ps_sigact[sig];
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx;
 	struct	trampframe *trampf;
 	unsigned	cursp;
-	int	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	int	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	extern	char sigcode[], esigcode[];
 	/*
 	 * Allocate and validate space for the signal handler context. Note
@@ -472,9 +473,9 @@ sendsig(catcher, sig, mask, code)
 
 	/* First check what stack to work on */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		cursp = (int)(psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (sa->sa_flags & SA_ONSTACK)) {
+		cursp = (int)(p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		cursp = syscf->sp;
 	if (cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
@@ -496,8 +497,6 @@ sendsig(catcher, sig, mask, code)
 		 */
 		SIGACTION(p, SIGILL) = SIG_DFL;
 		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;

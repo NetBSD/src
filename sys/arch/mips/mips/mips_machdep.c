@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.19 1997/08/09 19:06:45 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.19.2.1 1997/09/08 23:38:09 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -471,12 +471,13 @@ sendsig(catcher, sig, mask, code)
 	register struct sigframe *fp;
 	register int *regs;
 	register struct sigacts *psp = p->p_sigacts;
+	register struct sigaction *sa = &psp->ps_sigact[sig];
 	int oonstack, fsize;
 	struct sigcontext ksc;
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	oonstack = p->p_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -486,11 +487,11 @@ sendsig(catcher, sig, mask, code)
 	 */
 	fsize = sizeof(struct sigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
-					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    (p->p_sigstk.ss_flags & SS_ONSTACK) == 0 &&
+	    (sa->sa_flags & SA_ONSTACK)) {
+		fp = (struct sigframe *)(p->p_sigstk.ss_sp +
+					 p->p_sigstk.ss_size - fsize);
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -528,8 +529,6 @@ sendsig(catcher, sig, mask, code)
 		 */
 		SIGACTION(p, SIGILL) = SIG_DFL;
 		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
 		psignal(p, SIGILL);
 		return;
@@ -610,9 +609,9 @@ sys_sigreturn(p, v, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs[PC] = scp->sc_pc;
 	regs[MULLO] = scp->mullo;
