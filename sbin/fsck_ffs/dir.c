@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.24 1997/09/20 06:16:23 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.25 1998/03/18 17:01:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.24 1997/09/20 06:16:23 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.25 1998/03/18 17:01:23 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: dir.c,v 1.24 1997/09/20 06:16:23 lukem Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -132,17 +133,45 @@ dirscan(idesc)
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);
-	blksiz = idesc->id_numfrags * sblock.fs_fsize;
+	blksiz = idesc->id_numfrags * sblock->fs_fsize;
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
 		return (SKIP);
 	}
+
+	/*
+	 * If we are are swapping byte order in directory entries, just swap
+	 * this block and return.
+	 */
+	if (do_dirswap) {
+		int off;
+		bp = getdirblk(idesc->id_blkno, blksiz);
+		for (off = 0; off < blksiz; off += iswap16(dp->d_reclen)) {
+			dp = (struct direct *)(bp->b_un.b_buf + off);
+			dp->d_ino = bswap32(dp->d_ino);
+			dp->d_reclen = bswap16(dp->d_reclen);
+			if (!newinofmt) {
+				u_int8_t tmp = dp->d_namlen;
+				dp->d_namlen = dp->d_type;
+				dp->d_type = tmp;
+			}
+			if (dp->d_reclen == 0)
+				break;
+		}
+		dirty(bp);
+		idesc->id_filesize -= blksiz;
+		return (idesc->id_filesize > 0 ? KEEPON : STOP);
+	}
+
 	idesc->id_loc = 0;
 	for (dp = fsck_readdir(idesc); dp != NULL; dp = fsck_readdir(idesc)) {
-		dsize = dp->d_reclen;
+		dsize = iswap16(dp->d_reclen);
 		memmove(dbuf, dp, (size_t)dsize);
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
-			if (!newinofmt) {
+			if (!newinofmt && !needswap) {
+#		else
+			if (!newinofmt && needswap) {
+#		endif
 				struct direct *tdp = (struct direct *)dbuf;
 				u_char tmp;
 
@@ -150,11 +179,13 @@ dirscan(idesc)
 				tdp->d_namlen = tdp->d_type;
 				tdp->d_type = tmp;
 			}
-#		endif
 		idesc->id_dirp = (struct direct *)dbuf;
 		if ((n = (*idesc->id_func)(idesc)) & ALTERED) {
 #			if (BYTE_ORDER == LITTLE_ENDIAN)
-				if (!newinofmt && !doinglevel2) {
+				if (!newinofmt && !doinglevel2 && !needswap) {
+#			else
+				if (!newinofmt && !doinglevel2 && needswap) {
+#			endif
 					struct direct *tdp;
 					u_char tmp;
 
@@ -163,7 +194,6 @@ dirscan(idesc)
 					tdp->d_namlen = tdp->d_type;
 					tdp->d_type = tmp;
 				}
-#			endif
 			bp = getdirblk(idesc->id_blkno, blksiz);
 			memmove(bp->b_un.b_buf + idesc->id_loc - dsize, dbuf,
 			    (size_t)dsize);
@@ -187,7 +217,7 @@ fsck_readdir(idesc)
 	struct bufarea *bp;
 	long size, blksiz, fix, dploc;
 
-	blksiz = idesc->id_numfrags * sblock.fs_fsize;
+	blksiz = idesc->id_numfrags * sblock->fs_fsize;
 	bp = getdirblk(idesc->id_blkno, blksiz);
 	if (idesc->id_loc % DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
@@ -199,13 +229,15 @@ fsck_readdir(idesc)
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
-		dp->d_reclen = DIRBLKSIZ;
+		dp->d_reclen = iswap16(DIRBLKSIZ);
 		dp->d_ino = 0;
 		dp->d_type = 0;
 		dp->d_namlen = 0;
 		dp->d_name[0] = '\0';
 		if (fix)
 			dirty(bp);
+		else 
+			markclean=  0;
 		idesc->id_loc += DIRBLKSIZ;
 		idesc->id_filesize -= DIRBLKSIZ;
 		return (dp);
@@ -215,8 +247,8 @@ dpok:
 		return NULL;
 	dploc = idesc->id_loc;
 	dp = (struct direct *)(bp->b_un.b_buf + dploc);
-	idesc->id_loc += dp->d_reclen;
-	idesc->id_filesize -= dp->d_reclen;
+	idesc->id_loc += iswap16(dp->d_reclen);
+	idesc->id_filesize -= iswap16(dp->d_reclen);
 	if ((idesc->id_loc % DIRBLKSIZ) == 0)
 		return (dp);
 	ndp = (struct direct *)(bp->b_un.b_buf + idesc->id_loc);
@@ -230,9 +262,11 @@ dpok:
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bp = getdirblk(idesc->id_blkno, blksiz);
 		dp = (struct direct *)(bp->b_un.b_buf + dploc);
-		dp->d_reclen += size;
+		dp->d_reclen = iswap16(iswap16(dp->d_reclen) + size);
 		if (fix)
 			dirty(bp);
+		else 
+			markclean=  0;
 	}
 	return (dp);
 }
@@ -252,27 +286,26 @@ dircheck(idesc, dp)
 	int spaceleft;
 
 	spaceleft = DIRBLKSIZ - (idesc->id_loc % DIRBLKSIZ);
-	if (dp->d_ino >= maxino ||
+	if (iswap32(dp->d_ino) >= maxino ||
 	    dp->d_reclen == 0 ||
-	    dp->d_reclen > spaceleft ||
-	    (dp->d_reclen & 0x3) != 0)
+	    iswap16(dp->d_reclen) > spaceleft ||
+	    (iswap16(dp->d_reclen) & 0x3) != 0)
 		return (0);
 	if (dp->d_ino == 0)
 		return (1);
-	size = DIRSIZ(!newinofmt, dp);
+	size = DIRSIZ(!newinofmt, dp, needswap);
 #	if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (!newinofmt) {
+		if (!newinofmt && !needswap) {
+#	else
+		if (!newinofmt && needswap) {
+#	endif
 			type = dp->d_namlen;
 			namlen = dp->d_type;
 		} else {
 			namlen = dp->d_namlen;
 			type = dp->d_type;
 		}
-#	else
-		namlen = dp->d_namlen;
-		type = dp->d_type;
-#	endif
-	if (dp->d_reclen < size ||
+	if (iswap16(dp->d_reclen) < size ||
 	    idesc->id_filesize < size ||
 	    namlen > MAXNAMLEN ||
 	    type > 15)
@@ -313,7 +346,7 @@ fileerror(cwd, ino, errmesg)
 	dp = ginode(ino);
 	if (ftypeok(dp))
 		pfatal("%s=%s\n",
-		    (dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE", pathbuf);
+		    (iswap16(dp->di_mode) & IFMT) == IFDIR ? "DIR" : "FILE", pathbuf);
 	else
 		pfatal("NAME=%s\n", pathbuf);
 }
@@ -326,15 +359,15 @@ adjust(idesc, lcnt)
 	struct dinode *dp;
 
 	dp = ginode(idesc->id_number);
-	if (dp->di_nlink == lcnt) {
+	if (iswap16(dp->di_nlink) == lcnt) {
 		if (linkup(idesc->id_number, (ino_t)0) == 0)
 			clri(idesc, "UNREF", 0);
 	} else {
 		pwarn("LINK COUNT %s", (lfdir == idesc->id_number) ? lfname :
-			((dp->di_mode & IFMT) == IFDIR ? "DIR" : "FILE"));
+			((iswap16(dp->di_mode) & IFMT) == IFDIR ? "DIR" : "FILE"));
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d",
-			dp->di_nlink, dp->di_nlink - lcnt);
+			iswap16(dp->di_nlink), (iswap16(dp->di_nlink) - lcnt) & 0xffff);
 		if (preen) {
 			if (lcnt < 0) {
 				printf("\n");
@@ -343,9 +376,10 @@ adjust(idesc, lcnt)
 			printf(" (ADJUSTED)\n");
 		}
 		if (preen || reply("ADJUST") == 1) {
-			dp->di_nlink -= lcnt;
+			dp->di_nlink = iswap16(iswap16(dp->di_nlink) - lcnt);
 			inodirty();
-		}
+		} else 
+			markclean=  0;
 	}
 }
 
@@ -358,17 +392,17 @@ mkentry(idesc)
 	int newlen, oldlen;
 
 	newent.d_namlen = strlen(idesc->id_name);
-	newlen = DIRSIZ(0, &newent);
+	newlen = DIRSIZ(0, &newent, 0);
 	if (dirp->d_ino != 0)
-		oldlen = DIRSIZ(0, dirp);
+		oldlen = DIRSIZ(0, dirp, 0);
 	else
 		oldlen = 0;
-	if (dirp->d_reclen - oldlen < newlen)
+	if (iswap16(dirp->d_reclen) - oldlen < newlen)
 		return (KEEPON);
-	newent.d_reclen = dirp->d_reclen - oldlen;
-	dirp->d_reclen = oldlen;
+	newent.d_reclen = iswap16(iswap16(dirp->d_reclen) - oldlen);
+	dirp->d_reclen = iswap16(oldlen);
 	dirp = (struct direct *)(((char *)dirp) + oldlen);
-	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
+	dirp->d_ino = iswap32(idesc->id_parent);	/* ino to be entered is in id_parent */
 	dirp->d_reclen = newent.d_reclen;
 	if (newinofmt)
 		dirp->d_type = typemap[idesc->id_parent];
@@ -383,14 +417,16 @@ mkentry(idesc)
 		 * writing it back out.  So, we reverse the byte order here if
 		 * necessary.
 		 */
-		if (oldlen != 0 && !newinofmt && !doinglevel2) {
+		if (oldlen != 0 && !newinofmt && !doinglevel2 && !needswap) {
+#	else
+		if (oldlen != 0 && !newinofmt && !doinglevel2 && needswap) {
+#	endif
 			u_char tmp;
 
 			tmp = dirp->d_namlen;
 			dirp->d_namlen = dirp->d_type;
 			dirp->d_type = tmp;
 		}
-#	endif
 	return (ALTERED|STOP);
 }
 
@@ -402,7 +438,7 @@ chgino(idesc)
 
 	if (memcmp(dirp->d_name, idesc->id_name, (int)dirp->d_namlen + 1))
 		return (KEEPON);
-	dirp->d_ino = idesc->id_parent;
+	dirp->d_ino = iswap32(idesc->id_parent);
 	if (newinofmt)
 		dirp->d_type = typemap[idesc->id_parent];
 	else
@@ -423,7 +459,7 @@ linkup(orphan, parentdir)
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	dp = ginode(orphan);
-	lostdir = (dp->di_mode & IFMT) == IFDIR;
+	lostdir = (iswap16(dp->di_mode) & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
 	if (preen && dp->di_size == 0)
@@ -431,8 +467,10 @@ linkup(orphan, parentdir)
 	if (preen)
 		printf(" (RECONNECTED)\n");
 	else
-		if (reply("RECONNECT") == 0)
+		if (reply("RECONNECT") == 0) {
+			markclean = 0;
 			return (0);
+		}
 	if (lfdir == 0) {
 		dp = ginode(ROOTINO);
 		idesc.id_name = lfname;
@@ -461,21 +499,26 @@ linkup(orphan, parentdir)
 		if (lfdir == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY");
 			printf("\n\n");
+			markclean = 0;
 			return (0);
 		}
 	}
 	dp = ginode(lfdir);
-	if ((dp->di_mode & IFMT) != IFDIR) {
+	if ((iswap16(dp->di_mode) & IFMT) != IFDIR) {
 		pfatal("lost+found IS NOT A DIRECTORY");
-		if (reply("REALLOCATE") == 0)
+		if (reply("REALLOCATE") == 0) {
+			markclean = 0;
 			return (0);
+		}
 		oldlfdir = lfdir;
 		if ((lfdir = allocdir(ROOTINO, (ino_t)0, lfmode)) == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
+			markclean = 0;
 			return (0);
 		}
 		if ((changeino(ROOTINO, lfname, lfdir) & ALTERED) == 0) {
 			pfatal("SORRY. CANNOT CREATE lost+found DIRECTORY\n\n");
+			markclean = 0;
 			return (0);
 		}
 		inodirty();
@@ -488,12 +531,14 @@ linkup(orphan, parentdir)
 	}
 	if (statemap[lfdir] != DFOUND) {
 		pfatal("SORRY. NO lost+found DIRECTORY\n\n");
+		markclean = 0;
 		return (0);
 	}
 	(void)lftempname(tempname, orphan);
 	if (makeentry(lfdir, orphan, tempname) == 0) {
 		pfatal("SORRY. NO SPACE IN lost+found DIRECTORY");
 		printf("\n\n");
+		markclean = 0;
 		return (0);
 	}
 	lncntp[orphan]--;
@@ -502,7 +547,7 @@ linkup(orphan, parentdir)
 		    parentdir != (ino_t)-1)
 			(void)makeentry(orphan, lfdir, "..");
 		dp = ginode(lfdir);
-		dp->di_nlink++;
+		dp->di_nlink = iswap16(iswap16(dp->di_nlink) + 1);
 		inodirty();
 		lncntp[lfdir]++;
 		pwarn("DIR I=%u CONNECTED. ", orphan);
@@ -558,8 +603,8 @@ makeentry(parent, ino, name)
 	idesc.id_fix = DONTKNOW;
 	idesc.id_name = name;
 	dp = ginode(parent);
-	if (dp->di_size % DIRBLKSIZ) {
-		dp->di_size = roundup(dp->di_size, DIRBLKSIZ);
+	if (iswap16(dp->di_size) % DIRBLKSIZ) {
+		dp->di_size = iswap16(roundup(iswap16(dp->di_size), DIRBLKSIZ));
 		inodirty();
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
@@ -583,31 +628,32 @@ expanddir(dp, name)
 	struct bufarea *bp;
 	char *cp, firstblk[DIRBLKSIZ];
 
-	lastbn = lblkno(&sblock, dp->di_size);
+	lastbn = lblkno(sblock, iswap64(dp->di_size));
 	if (lastbn >= NDADDR - 1 || dp->di_db[lastbn] == 0 || dp->di_size == 0)
 		return (0);
-	if ((newblk = allocblk(sblock.fs_frag)) == 0)
+	if ((newblk = allocblk(sblock->fs_frag)) == 0)
 		return (0);
 	dp->di_db[lastbn + 1] = dp->di_db[lastbn];
-	dp->di_db[lastbn] = newblk;
-	dp->di_size += sblock.fs_bsize;
-	dp->di_blocks += btodb(sblock.fs_bsize);
-	bp = getdirblk(dp->di_db[lastbn + 1],
-		(long)dblksize(&sblock, dp, lastbn + 1));
+	dp->di_db[lastbn] = iswap32(newblk);
+	dp->di_size = iswap64(iswap64(dp->di_size) + sblock->fs_bsize);
+	dp->di_blocks = iswap32(iswap32(dp->di_blocks) + btodb(sblock->fs_bsize));
+	bp = getdirblk(iswap32(dp->di_db[lastbn + 1]),
+		(long)dblksize(sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memmove(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
-	bp = getdirblk(newblk, sblock.fs_bsize);
+	bp = getdirblk(newblk, sblock->fs_bsize);
 	if (bp->b_errs)
 		goto bad;
 	memmove(bp->b_un.b_buf, firstblk, DIRBLKSIZ);
+	emptydir.dot_reclen = iswap16(DIRBLKSIZ);
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
-	     cp < &bp->b_un.b_buf[sblock.fs_bsize];
+	     cp < &bp->b_un.b_buf[sblock->fs_bsize];
 	     cp += DIRBLKSIZ)
 		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
-	bp = getdirblk(dp->di_db[lastbn + 1],
-		(long)dblksize(&sblock, dp, lastbn + 1));
+	bp = getdirblk(iswap32(dp->di_db[lastbn + 1]),
+		(long)dblksize(sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memmove(bp->b_un.b_buf, &emptydir, sizeof emptydir);
@@ -622,9 +668,10 @@ expanddir(dp, name)
 bad:
 	dp->di_db[lastbn] = dp->di_db[lastbn + 1];
 	dp->di_db[lastbn + 1] = 0;
-	dp->di_size -= sblock.fs_bsize;
-	dp->di_blocks -= btodb(sblock.fs_bsize);
-	freeblk(newblk, sblock.fs_frag);
+	dp->di_size = iswap64(iswap64(dp->di_size) - sblock->fs_bsize);
+	dp->di_blocks = iswap32(iswap32(dp->di_blocks) - btodb(sblock->fs_bsize));
+	freeblk(newblk, sblock->fs_frag);
+	markclean = 0;
 	return (0);
 }
 
@@ -643,28 +690,35 @@ allocdir(parent, request, mode)
 	struct dirtemplate *dirp;
 
 	ino = allocino(request, IFDIR|mode);
+	dirhead.dot_reclen = iswap16(12);
+	dirhead.dotdot_reclen = iswap16(DIRBLKSIZ - 12);
+	odirhead.dot_reclen = iswap16(12);
+	odirhead.dotdot_reclen = iswap16(DIRBLKSIZ - 12);
+	odirhead.dot_namlen = iswap16(1);
+	odirhead.dotdot_namlen = iswap16(2);
 	if (newinofmt)
 		dirp = &dirhead;
 	else
 		dirp = (struct dirtemplate *)&odirhead;
-	dirp->dot_ino = ino;
-	dirp->dotdot_ino = parent;
+	dirp->dot_ino = iswap32(ino);
+	dirp->dotdot_ino = iswap32(parent);
 	dp = ginode(ino);
-	bp = getdirblk(dp->di_db[0], sblock.fs_fsize);
+	bp = getdirblk(iswap32(dp->di_db[0]), sblock->fs_fsize);
 	if (bp->b_errs) {
 		freeino(ino);
 		return (0);
 	}
 	memmove(bp->b_un.b_buf, dirp, sizeof(struct dirtemplate));
+	emptydir.dot_reclen = iswap16(DIRBLKSIZ);
 	for (cp = &bp->b_un.b_buf[DIRBLKSIZ];
-	     cp < &bp->b_un.b_buf[sblock.fs_fsize];
+	     cp < &bp->b_un.b_buf[sblock->fs_fsize];
 	     cp += DIRBLKSIZ)
 		memmove(cp, &emptydir, sizeof emptydir);
 	dirty(bp);
-	dp->di_nlink = 2;
+	dp->di_nlink = iswap16(2);
 	inodirty();
 	if (ino == ROOTINO) {
-		lncntp[ino] = dp->di_nlink;
+		lncntp[ino] = iswap16(dp->di_nlink);
 		cacheino(dp, ino);
 		return(ino);
 	}
@@ -675,11 +729,11 @@ allocdir(parent, request, mode)
 	cacheino(dp, ino);
 	statemap[ino] = statemap[parent];
 	if (statemap[ino] == DSTATE) {
-		lncntp[ino] = dp->di_nlink;
+		lncntp[ino] = iswap16(dp->di_nlink);
 		lncntp[parent]++;
 	}
 	dp = ginode(parent);
-	dp->di_nlink++;
+	dp->di_nlink = iswap16(iswap16(dp->di_nlink) + 1);
 	inodirty();
 	return (ino);
 }
@@ -695,7 +749,7 @@ freedir(ino, parent)
 
 	if (ino != parent) {
 		dp = ginode(parent);
-		dp->di_nlink--;
+		dp->di_nlink = iswap16(iswap16(dp->di_nlink) -1);
 		inodirty();
 	}
 	freeino(ino);
