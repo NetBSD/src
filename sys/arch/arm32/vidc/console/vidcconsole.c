@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.6 1996/03/27 21:47:29 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.7 1996/03/28 21:18:40 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Robert Black
@@ -167,14 +167,50 @@ irqhandler_t flash_ih;
 #ifndef HARDCODEDMODES
 /* The table of modes is separately compiled */
 extern struct vidc_mode vidcmodes[];
-#else
+#else /* HARDCODEDMODES */
+#ifdef RC7500
+static struct vidc_mode vidcmodes[] = {
+	{31500,/**/48,  84, 30, 640,  30, 0,/**/3, 28, 0, 480, 0, 9,/**/0,/**/3},
+	{36000,/**/72,  84, 34, 800,  34, 0,/**/2, 22, 0, 600, 0, 1,/**/0,/**/3},
+};
+#else /* RC7500 */
 /* We have a hard compiled table of modes and a list of definable modes */
 static struct vidc_mode vidcmodes[] = {
 	{32500,/**/52,  64, 30, 640,  30, 14,/**/3, 28, 0, 480, 0, 9,/**/0,/**/3},
 	{65000,/**/128, 36, 60, 1024, 60 ,36,/**/6, 29, 0, 768, 0, 3,/**/0,/**/3},
 };
-#endif
+#endif /* RC7500 */
+#endif /* HARDCODEDMODES */
 
+#ifdef RC7500
+struct vfreq {
+	u_int frqcon;
+	int freq;
+};
+
+static struct vfreq vfreq[] = {
+	{ VIDFREQ_25_18, 25175},
+	{ VIDFREQ_25_18, 25180},
+	{ VIDFREQ_28_32, 28320},
+	{ VIDFREQ_31_50, 31500},
+	{ VIDFREQ_36_00, 36000},
+	{ VIDFREQ_40_00, 40000},
+	{ VIDFREQ_44_90, 44900},
+	{ VIDFREQ_50_00, 50000},
+	{ VIDFREQ_65_00, 65000},
+	{ VIDFREQ_72_00, 72000},
+	{ VIDFREQ_75_00, 75000},
+	{ VIDFREQ_77_00, 77000},
+	{ VIDFREQ_80_00, 80000},
+	{ VIDFREQ_94_50, 94500},
+	{ VIDFREQ_110_0, 110000},
+	{ VIDFREQ_120_0, 120000},
+	{ VIDFREQ_130_0, 130000}
+};
+
+#define NFREQ	(sizeof (vfreq) / sizeof(struct vfreq))
+u_int vfreqcon = 0;
+#else /* RC7500 */
 
 struct fsyn {
 	int r, v, f;
@@ -193,6 +229,7 @@ static struct fsyn fsyn_pref[] = {
 	{ 12, 35, 70000 },
 	{ 0,   0, 00000 }
 };
+#endif /* RC7500 */
 
 static inline int
 mod ( int n )
@@ -217,86 +254,85 @@ vidcconsole_coldinit(vc)
 	vidc_write ( VIDC_CP3, 0x0 );
 
     /* Try to determine the current mode */
-    vidc_initialmode.hder = bootconfig.width+1;
-    vidc_initialmode.vder = bootconfig.height+1;
+	vidc_initialmode.hder = bootconfig.width+1;
+	vidc_initialmode.vder = bootconfig.height+1;
 /*
-    vidc_initialmode.hder = 1024;
-    vidc_initialmode.vder = 768;
+	vidc_initialmode.hder = 1024;
+	vidc_initialmode.vder = 768;
 */
-    vidc_initialmode.bitsperpixel = 1 << bootconfig.bitsperpixel;
+	vidc_initialmode.bitsperpixel = 1 << bootconfig.bitsperpixel;
 
 /* Nut - should be using videomemory.vidm_vbase - mark */
 
-    dispbase = vmem_base = dispstart = bootconfig.display_start;
-    phys_base = videomemory.vidm_pbase;
+	dispbase = vmem_base = dispstart = bootconfig.display_start;
+	phys_base = videomemory.vidm_pbase;
 
 /* Nut - should be using videomemory.vidm_size - mark */
 
-    dispsize = bootconfig.vram[0].pages * NBPG;
-    transfersize = dispsize >> 10;
+#ifdef RC7500
+	dispsize = videomemory.vidm_size;
+	transfersize = 16;
+#else /* RC7500 */
+	dispsize = bootconfig.vram[0].pages * NBPG;
+	transfersize = dispsize >> 10;
+#endif /* RC7500 */
     
-    ptov = dispbase - phys_base;
+	ptov = dispbase - phys_base;
 
-    dispend = dispstart+dispsize;
+	dispend = dispstart+dispsize;
  
-    vidc_currentmode = &vidcmodes[0];
-    loop = 0;
-    found = 0;
+	vidc_currentmode = &vidcmodes[0];
+	loop = 0;
+	found = 0;
   
-    while (vidcmodes[loop].pixel_rate != 0) {
-      if (vidcmodes[loop].hder == (bootconfig.width + 1)
-       && vidcmodes[loop].vder == (bootconfig.height + 1)
-       && vidcmodes[loop].frame_rate == bootconfig.framerate)
-        {
-          vidc_currentmode = &vidcmodes[loop];  
-          found = 1;
-        }
-      ++loop;
-    }
+	while (vidcmodes[loop].pixel_rate != 0) {
+  		if (vidcmodes[loop].hder == (bootconfig.width + 1)
+  		    && vidcmodes[loop].vder == (bootconfig.height + 1)
+		    && vidcmodes[loop].frame_rate == bootconfig.framerate) {
+			vidc_currentmode = &vidcmodes[loop];
+			found = 1;
+		}
+		++loop;
+	}
 
-    if (!found) {
-      vidc_currentmode = &vidcmodes[0];
-      loop = 0;
-      found = 0;
+	if (!found) {
+		vidc_currentmode = &vidcmodes[0];
+		loop = 0;
+		found = 0;
 
-      while (vidcmodes[loop].pixel_rate != 0) {
-      if (vidcmodes[loop].hder == (bootconfig.width + 1)
-       && vidcmodes[loop].vder == (bootconfig.height + 1))
-/*
-        if (vidcmodes[loop].hder == vidc_initialmode.hder
-         && vidcmodes[loop].vder == vidc_initialmode.vder)
-*/
-          {
-            vidc_currentmode = &vidcmodes[loop];  
-            found = 1;
-          }
-        ++loop;
-      }
-    }
+		while (vidcmodes[loop].pixel_rate != 0) {
+			if (vidcmodes[loop].hder == (bootconfig.width + 1)
+ 			    && vidcmodes[loop].vder == (bootconfig.height + 1)) {
+ 				vidc_currentmode = &vidcmodes[loop];
+ 				found = 1;
+ 			}
+ 			++loop;
+ 		}
+	}
 
-    /* vidc_currentmode = &vidcmodes[0];*/
-    vidc_currentmode->bitsperpixel = 1 << bootconfig.bitsperpixel;
+	/* vidc_currentmode = &vidcmodes[0];*/
+	vidc_currentmode->bitsperpixel = 1 << bootconfig.bitsperpixel;
 
-    R_DATA->flash = R_DATA->cursor_flash = 0;
+	R_DATA->flash = R_DATA->cursor_flash = 0;
 
-    dispstart = dispbase;
-    dispend = dispstart+dispsize;
+	dispstart = dispbase;
+	dispend = dispstart+dispsize;
     
-    WriteWord ( IOMD_VIDINIT, dispstart-ptov );
-    WriteWord ( IOMD_VIDSTART, dispstart-ptov );
-    WriteWord ( IOMD_VIDEND, (dispend-transfersize)-ptov );
-    return 0;
+	WriteWord ( IOMD_VIDINIT, dispstart-ptov );
+	WriteWord ( IOMD_VIDSTART, dispstart-ptov );
+	WriteWord ( IOMD_VIDEND, (dispend-transfersize)-ptov );
+	return 0;
 }
 
 struct vidc_mode newmode;
 
 static const int bpp_mask_table[] = {
-    0,  /* 1bpp */
-    1,  /* 2bpp */
-    2,  /* 4bpp */
-    3,  /* 8bpp */
-    4,  /* 16bpp */
-    6   /* 32bpp */
+	0,  /* 1bpp */
+	1,  /* 2bpp */
+	2,  /* 4bpp */
+	3,  /* 8bpp */
+	4,  /* 16bpp */
+	6   /* 32bpp */
 };
 
 void
@@ -304,141 +340,179 @@ vidcconsole_mode(vc, mode)
 	struct vconsole *vc;
 	struct vidc_mode *mode;
 {    
-    register int acc;
-    int best_r, best_v, best_match;
-    int bpp_mask;
+	register int acc;
+	int bpp_mask;
+        int log_bpp;
+        int tmp_bpp;
+
+#ifndef RC7500
+	int best_r, best_v, best_match;
+#endif
 
 /*
  * Find out what bit mask we need to or with the vidc20 control register
  * in order to generate the desired number of bits per pixel.
  * log_bpp is log base 2 of the number of bits per pixel.
  */
-    {
-        int log_bpp;
-        int tmp_bpp;
 
-        tmp_bpp = mode->bitsperpixel;
-        if (tmp_bpp < 1 || tmp_bpp > 32)
-            tmp_bpp = 8; /* Set 8 bpp if we get asked for something silly */
+	tmp_bpp = mode->bitsperpixel;
+	if (tmp_bpp < 1 || tmp_bpp > 32)
+		tmp_bpp = 8; /* Set 8 bpp if we get asked for something silly */
 
-        for (log_bpp = 0; tmp_bpp != 1; tmp_bpp >>= 1)
-            log_bpp++;
+	for (log_bpp = 0; tmp_bpp != 1; tmp_bpp >>= 1)
+		log_bpp++;
 
-        bpp_mask = bpp_mask_table[log_bpp];
-    }
+	bpp_mask = bpp_mask_table[log_bpp];
 
 /*
-    printf ( "res = (%d, %d) rate = %d\n", mode->hder, mode->vder, mode->pixel_rate );
+	printf ( "res = (%d, %d) rate = %d\n", mode->hder, mode->vder, mode->pixel_rate );
 */
 
-    newmode = *mode;
-    vidc_currentmode = &newmode;
+	newmode = *mode;
+	vidc_currentmode = &newmode;
 
+#ifdef RC7500
+	{
+		int i;
+		int old, new;
+		u_int nfreq;
+
+		old = vfreq[0].freq;
+		nfreq = vfreq[0].frqcon;
+		for (i = 0; i < (NFREQ - 1); i++) {
+			new = vfreq[i].freq - mode->pixel_rate;
+			if (new < 0)
+				new = -new;
+			if (new < old) {
+				nfreq = vfreq[i].frqcon;
+				old = new;
+			}
+			if (new == 0)
+				break;
+		}
+		nfreq |= (vfreqcon & 0xf0);
+		vfreqcon = nfreq;
+	}
+#else /* RC7500 */
     /* Program the VCO Look up a preferred value before choosing one */
-    {
-        int least_error = mod (fsyn_pref[0].f - vidc_currentmode->pixel_rate);
-        int counter;
-        best_r = fsyn_pref[0].r;
-        best_match = fsyn_pref[0].f;
-        best_v = fsyn_pref[0].v;
+	{
+		int least_error = mod (fsyn_pref[0].f - vidc_currentmode->pixel_rate);
+		int counter;
+		best_r = fsyn_pref[0].r;
+		best_match = fsyn_pref[0].f;
+		best_v = fsyn_pref[0].v;
         
-        /* Look up */
+	/* Look up */
         
-        counter=0;
+		counter=0;
         
-        while ( fsyn_pref[counter].r != 0 )
-        {
-            if (least_error > mod (fsyn_pref[counter].f - vidc_currentmode->pixel_rate))
-            {
-                best_match = fsyn_pref[counter].f;
-                least_error = mod (fsyn_pref[counter].f - vidc_currentmode->pixel_rate);
-        	best_r = fsyn_pref[counter].r;
-        	best_v = fsyn_pref[counter].v;
-            }
-	    counter++;
-        }
-        
-        if ( least_error > 0) /* Accuracy of 1000Hz */
-        {
-            int r, v, f;
-            for ( v=63; v>0; v-- )
-            	for ( r=63; r>0; r-- )
-            	{
-            	    f = (v * VIDC_FREF/1000) / r;
-            	    if (least_error >= mod (f - vidc_currentmode->pixel_rate))
-            	    {
-                	best_match = f;
-                	least_error = mod (f - vidc_currentmode->pixel_rate);
-                	best_r = r;
-                	best_v = v;
-            	    }
-            	}
-        }
+		while ( fsyn_pref[counter].r != 0 ) {
+			if (least_error > mod (fsyn_pref[counter].f - vidc_currentmode->pixel_rate)) {
+				best_match = fsyn_pref[counter].f;
+				least_error = mod (fsyn_pref[counter].f - vidc_currentmode->pixel_rate);
+				best_r = fsyn_pref[counter].r;
+				best_v = fsyn_pref[counter].v;
+			}
+			counter++;
+		}
+
+		if ( least_error > 0) { /* Accuracy of 1000Hz */
+			int r, v, f;
+			for ( v=63; v>0; v-- )
+				for ( r=63; r>0; r-- ) {
+					f = (v * VIDC_FREF/1000) / r;
+					if (least_error >= mod (f - vidc_currentmode->pixel_rate)) {
+						best_match = f;
+						least_error = mod (f - vidc_currentmode->pixel_rate);
+						best_r = r;
+						best_v = v;
+					}
+				}
+		}
     
-        if ( best_r>63 ) best_r=63;	if ( best_v>63 ) best_v=63;
-        if ( best_r<1 )  best_r= 1;	if ( best_v<1 )  best_v= 1;
+		if ( best_r>63 ) best_r=63;
+		if ( best_v>63 ) best_v=63;
+		if ( best_r<1 )  best_r= 1;
+		if ( best_v<1 )  best_v= 1;
     
-    }
+	}
 /*
-    printf ( "best_v = %d  best_r = %d best_f = %d\n", best_v, best_r, best_match );
+	printf ( "best_v = %d  best_r = %d best_f = %d\n", best_v, best_r, best_match );
 */
+#endif /* RC7500 */
 
-if ( vc==vconsole_current )
-{
-    vidc_write ( VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0 );
-    acc=0;
-    acc+=vidc_currentmode->hswr;vidc_write(VIDC_HSWR,(acc  - 8  )& (~1)	);
-    acc+=vidc_currentmode->hbsr;vidc_write(VIDC_HBSR,(acc  - 12 )& (~1)	);
-    acc+=vidc_currentmode->hdsr;vidc_write(VIDC_HDSR,(acc  - 18 )& (~1)	);
-    acc+=vidc_currentmode->hder;vidc_write(VIDC_HDER,(acc  - 18 )& (~1)	);
-    acc+=vidc_currentmode->hber;vidc_write(VIDC_HBER,(acc  - 12 )& (~1)	);
-    acc+=vidc_currentmode->hcr ;vidc_write(VIDC_HCR ,(acc  - 8)&(~3));
+	if (vc==vconsole_current) {
+#ifdef RC7500
+		outb(FREQCON, vfreqcon);
+		/*
+		 * Need to program the control register first.
+		 */
+		if ( dispsize>1024*1024 ) {
+			if ( vidc_currentmode->hder>=800 )
+				vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+			else
+				vidc_write ( VIDC_CONREG, 6<<8 | bpp_mask<<5);
+		} else {
+			vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+		}
 
-    acc=0;
-    acc+=vidc_currentmode->vswr;	vidc_write(VIDC_VSWR,(acc  - 1 ));
-    acc+=vidc_currentmode->vbsr;	vidc_write(VIDC_VBSR,(acc  - 1 ));
-    acc+=vidc_currentmode->vdsr;	vidc_write(VIDC_VDSR,(acc  - 1 ));
-    acc+=vidc_currentmode->vder;	vidc_write(VIDC_VDER,(acc  - 1 ));
-    acc+=vidc_currentmode->vber;	vidc_write(VIDC_VBER,(acc  - 1 ));
-    acc+=vidc_currentmode->vcr;		vidc_write(VIDC_VCR ,(acc  - 1 ));
+		/*
+		 * We don't use VIDC_FSYNREG.  Program it low.
+		 */
+		vidc_write(VIDC_FSYNREG, 0x2020);
+#else /* RC7500 */
+		vidc_write ( VIDC_FSYNREG, (best_v-1)<<8 | (best_r-1)<<0 );
+#endif /* RC7500 */
+		acc=0;
+		acc+=vidc_currentmode->hswr;vidc_write(VIDC_HSWR,(acc  - 8  )& (~1)	);
+		acc+=vidc_currentmode->hbsr;vidc_write(VIDC_HBSR,(acc  - 12 )& (~1)	);
+		acc+=vidc_currentmode->hdsr;vidc_write(VIDC_HDSR,(acc  - 18 )& (~1)	);
+		acc+=vidc_currentmode->hder;vidc_write(VIDC_HDER,(acc  - 18 )& (~1)	);
+		acc+=vidc_currentmode->hber;vidc_write(VIDC_HBER,(acc  - 12 )& (~1)	);
+		acc+=vidc_currentmode->hcr ;vidc_write(VIDC_HCR ,(acc  - 8)&(~3));
 
-    WriteWord ( IOMD_FSIZE, vidc_currentmode->vcr
-				+ vidc_currentmode->vswr
-				+ vidc_currentmode->vber
-				+ vidc_currentmode->vbsr - 1 );
+		acc=0;
+		acc+=vidc_currentmode->vswr;	vidc_write(VIDC_VSWR,(acc  - 1 ));
+		acc+=vidc_currentmode->vbsr;	vidc_write(VIDC_VBSR,(acc  - 1 ));
+		acc+=vidc_currentmode->vdsr;	vidc_write(VIDC_VDSR,(acc  - 1 ));
+		acc+=vidc_currentmode->vder;	vidc_write(VIDC_VDER,(acc  - 1 ));
+		acc+=vidc_currentmode->vber;	vidc_write(VIDC_VBER,(acc  - 1 ));
+		acc+=vidc_currentmode->vcr;		vidc_write(VIDC_VCR ,(acc  - 1 ));
 
-    if ( dispsize==1024*1024 )
-       vidc_write ( VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
-    else
-       vidc_write ( VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
+		WriteWord(IOMD_FSIZE, vidc_currentmode->vcr
+		    + vidc_currentmode->vswr
+		    + vidc_currentmode->vber
+		    + vidc_currentmode->vbsr - 1 );
 
-    vidc_write ( VIDC_EREG, 1<<12 );
-    if ( dispsize>1024*1024 )
-    {
-	if ( vidc_currentmode->hder>=800 )
-    	    vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
-	else
-    	    vidc_write ( VIDC_CONREG, 6<<8 | bpp_mask<<5);
-    }
-    else
-    {
-    	    vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
-    }
-}
+		if ( dispsize==1024*1024 )
+			vidc_write ( VIDC_DCTL, vidc_currentmode->hder>>2 | 1<<16 | 1<<12);
+		else
+			vidc_write ( VIDC_DCTL, vidc_currentmode->hder>>2 | 3<<16 | 1<<12);
 
-    R_DATA->mode = *vidc_currentmode;
-    R_DATA->screensize = R_DATA->XRES * R_DATA->YRES * R_DATA->BITSPERPIXEL/8;
-    R_DATA->pixelsperbyte = 8 / R_DATA->BITSPERPIXEL;
-    R_DATA->frontporch = MODE.hswr + MODE.hbsr + MODE.hdsr;
-    R_DATA->topporch = MODE.vswr + MODE.vbsr + MODE.vdsr;
-    R_DATA->bytes_per_line = R_DATA->XRES *
-    		             R_DATA->font->y_spacing/R_DATA->pixelsperbyte;
-    R_DATA->bytes_per_scroll = (vc->ycur % R_DATA->font->y_spacing)
-                        * vc->xcur / R_DATA->pixelsperbyte;
-    R_DATA->text_width = R_DATA->XRES / R_DATA->font->x_spacing;
-    R_DATA->text_height = R_DATA->YRES / R_DATA->font->y_spacing;
-    vc->xchars = R_DATA->text_width;
-    vc->ychars = R_DATA->text_height;
+		vidc_write ( VIDC_EREG, 1<<12 );
+		if ( dispsize>1024*1024) {
+			if ( vidc_currentmode->hder>=800 )
+ 				vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+			else
+				vidc_write ( VIDC_CONREG, 6<<8 | bpp_mask<<5);
+		} else {
+			vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
+		}
+	}
+
+	R_DATA->mode = *vidc_currentmode;
+	R_DATA->screensize = R_DATA->XRES * R_DATA->YRES * R_DATA->BITSPERPIXEL/8;
+	R_DATA->pixelsperbyte = 8 / R_DATA->BITSPERPIXEL;
+	R_DATA->frontporch = MODE.hswr + MODE.hbsr + MODE.hdsr;
+	R_DATA->topporch = MODE.vswr + MODE.vbsr + MODE.vdsr;
+	R_DATA->bytes_per_line = R_DATA->XRES *
+	    R_DATA->font->y_spacing/R_DATA->pixelsperbyte;
+	R_DATA->bytes_per_scroll = (vc->ycur % R_DATA->font->y_spacing)
+	    * vc->xcur / R_DATA->pixelsperbyte;
+	R_DATA->text_width = R_DATA->XRES / R_DATA->font->x_spacing;
+	R_DATA->text_height = R_DATA->YRES / R_DATA->font->y_spacing;
+	vc->xchars = R_DATA->text_width;
+	vc->ychars = R_DATA->text_height;
 }
 
 void
@@ -894,14 +968,14 @@ void
 vidcconsole_cls(vc)
 	struct vconsole *vc;
 {
-/*
+#ifdef RC7500
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
     
 	WriteWord ( IOMD_VIDINIT, dispstart-ptov );
 	WriteWord ( IOMD_VIDSTART, dispstart-ptov );
 	WriteWord ( IOMD_VIDEND, (dispend-transfersize)-ptov );
-*/   
+#endif
     
 	vidcconsolemc_cls ( (char *)dispstart, (char *)dispstart+R_DATA->screensize, R_DATA->backfillcolour );
     /*
@@ -1137,12 +1211,17 @@ vidcconsole_cursorintr(vc)
 	if ( cursor_flash==0 )
 		return 0;
 
+	/*
+	 * We don't need this.
+	 */
+#ifndef RC7500
 	vconsole_blankcounter--;
 
 	if ( vconsole_blankcounter<0 ) {
 		vconsole_blankcounter=vconsole_blankinit;
 		vidcconsole_blank ( vc, BLANK_OFF );
 	}
+#endif
 
 	cursorcounter--;
 	if (cursorcounter<=0) {
@@ -1435,7 +1514,11 @@ vidcconsole_blank(vc, type)
 	vc->blanked=type;
 	switch (type) {
 	case 0:
+#ifdef RC7500
+		vidc_write ( VIDC_EREG, 0x51<<12 );
+#else
     		vidc_write ( VIDC_EREG, 1<<12 );
+#endif
 		break;
 		
 	case 1: /* not implemented yet */
