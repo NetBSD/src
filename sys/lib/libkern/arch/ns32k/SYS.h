@@ -35,7 +35,7 @@
  *
  *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  *
- *	$Id: SYS.h,v 1.3 1996/11/07 07:36:09 matthias Exp $
+ *	$NetBSD: SYS.h,v 1.4 1997/10/13 11:57:04 lukem Exp $
  *
  *  Modified for the ns532 by Phil Nelson, 12/1/92
  *
