@@ -2,7 +2,7 @@
  *
  * Module Name: a16find - 16-bit (real mode) routines to find ACPI
  *                        tables in memory
- *              $Revision: 20 $
+ *              $Revision: 23 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -160,14 +160,14 @@ UINT32                      AcpiGbl_RsdpOriginalLocation;
  *
  ******************************************************************************/
 
-NATIVE_INT
+ACPI_NATIVE_INT
 AfWriteBuffer (
     char                *Filename,
     char                *Buffer,
     UINT32              Length)
 {
     FILE                *fp;
-    NATIVE_INT          Actual;
+    ACPI_NATIVE_INT     Actual;
 
 
     fp = fopen (Filename, "wb");
@@ -198,7 +198,7 @@ AfWriteBuffer (
 char *
 AfGenerateFilename (char *TableId)
 {
-    NATIVE_UINT              i;
+    ACPI_NATIVE_UINT         i;
 
 
     for (i = 0; i < 8 && TableId[i] != ' ' && TableId[i] != 0; i++)
@@ -480,7 +480,7 @@ AfGetAllTables (
 
 
     ACPI_FUNCTION_TRACE ("AfGetAllTables");
-                  
+
 
     if (AcpiGbl_DbOpt_verbose)
     {
@@ -527,8 +527,8 @@ AfGetAllTables (
         return_ACPI_STATUS (Status);
     }
 
-    /* 
-     * Get the FACS 
+    /*
+     * Get the FACS
      */
     CopyExtendedToReal (&AcpiTblHeader, ACPI_GET_ADDRESS (AcpiGbl_FADT->XFirmwareCtrl),
                         sizeof (ACPI_TABLE_HEADER));
@@ -562,7 +562,7 @@ AfGetAllTables (
     AcpiTbBuildCommonFacs (&TableInfo);
 
     /*
-     * Get the DSDT 
+     * Get the DSDT
      */
     CopyExtendedToReal (&AcpiTblHeader, ACPI_GET_ADDRESS (AcpiGbl_FADT->XDsdt), sizeof (ACPI_TABLE_HEADER));
     AcpiGbl_DSDT = ACPI_MEM_ALLOCATE (AcpiTblHeader.Length);
@@ -694,7 +694,7 @@ AfFindTable(
         CopyExtendedToReal (AcpiGbl_XSDT, PhysicalAddress, AcpiTblHeader.Length);
         AcpiOsPrintf ("%s at %p (Phys %8.8X)\n",
             TableSignature, AcpiGbl_XSDT, (UINT32) PhysicalAddress);
-   
+
         if (AcpiGbl_DbOpt_verbose)
         {
             AcpiUtDumpBuffer ((char *) &AcpiTblHeader, sizeof (ACPI_TABLE_HEADER), 0, 0);
@@ -728,7 +728,6 @@ AfFindTable(
     }
 
 
-
     if (!ACPI_STRNCMP (TableName, DSDT_SIG, ACPI_NAME_SIZE))
     {
         *TablePtr = (UINT8 *) AcpiGbl_DSDT;
@@ -755,7 +754,7 @@ AfFindTable(
         *TablePtr = NULL;
         return AE_SUPPORT;
     }
-    
+
     return AE_OK;
 
 ErrorExit:
