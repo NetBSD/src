@@ -1,7 +1,7 @@
+/*	$NetBSD: mapper.c,v 1.2 1995/10/03 23:16:56 thorpej Exp $	*/
+
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
- *
- * $Id: mapper.c,v 1.1 1995/06/01 05:32:13 mycroft Exp $
  */
 
 /*
