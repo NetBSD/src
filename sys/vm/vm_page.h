@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.9.2.1 1994/03/18 05:46:35 cgd Exp $
+ *	$Id: vm_page.h,v 1.9.2.2 1994/04/15 04:24:32 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -201,26 +201,6 @@ u_long		first_page;		/* first physical page number */
 extern
 int		vm_page_count;		/* How many pages do we manage? */
 #endif	/* MACHINE_NONCONTIG */
-
-/* XXX -- do these belong here? */
-extern
-int	vm_page_free_count;	/* How many pages are free? */
-extern
-int	vm_page_active_count;	/* How many pages are active? */
-extern
-int	vm_page_inactive_count;	/* How many pages are inactive? */
-extern
-int	vm_page_wire_count;	/* How many pages are wired? */
-extern
-int	vm_page_free_target;	/* How many do we want free? */
-extern
-int	vm_page_free_min;	/* When to wakeup pageout */
-extern
-int	vm_page_inactive_target;/* How many do we want inactive? */
-extern
-int	vm_page_free_reserved;	/* How many pages reserved to do pageout */
-extern
-int	vm_page_laundry_count;	/* How many pages being laundered? */
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 

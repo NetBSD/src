@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.12.2.1 1994/03/18 05:46:29 cgd Exp $
+ *	$Id: vm_page.c,v 1.12.2.2 1994/04/15 04:24:30 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -118,17 +118,6 @@ vm_offset_t	last_phys_addr;
 u_long		first_page;
 int		vm_page_count;
 #endif /* MACHINE_NONCONTIG */
-
-int	vm_page_free_count;
-int	vm_page_active_count;
-int	vm_page_inactive_count;
-int	vm_page_wire_count;
-int	vm_page_laundry_count;
-
-int	vm_page_free_target = 0;
-int	vm_page_free_min = 0;
-int	vm_page_inactive_target = 0;
-int	vm_page_free_reserved = 0;
 
 /*
  *	vm_set_page_size:
@@ -390,7 +379,7 @@ vm_page_startup(start, end, vaddr)
 	 *	of a page structure per page).
 	 */
 
-	vm_page_free_count = npages =
+	cnt.v_free_count = npages =
 		(end - start + sizeof(struct vm_page))/(PAGE_SIZE + sizeof(struct vm_page));
 
 	/*
@@ -738,14 +727,6 @@ vm_page_alloc(object, offset)
 
 	spl = splimp();				/* XXX */
 	simple_lock(&vm_page_queue_free_lock);
-	if (	object != kernel_object &&
-		object != kmem_object	&&
-		vm_page_free_count <= vm_page_free_reserved) {
-
-		simple_unlock(&vm_page_queue_free_lock);
-		splx(spl);
-		return(NULL);
-	}
 	if (vm_page_queue_free.tqh_first == NULL) {
 		simple_unlock(&vm_page_queue_free_lock);
 		splx(spl);
@@ -755,7 +736,7 @@ vm_page_alloc(object, offset)
 	mem = vm_page_queue_free.tqh_first;
 	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
 
-	vm_page_free_count--;
+	cnt.v_free_count--;
 	simple_unlock(&vm_page_queue_free_lock);
 	splx(spl);
 
@@ -772,9 +753,9 @@ vm_page_alloc(object, offset)
 	 *	it doesn't really matter.
 	 */
 
-	if ((vm_page_free_count < vm_page_free_min) ||
-			((vm_page_free_count < vm_page_free_target) &&
-			(vm_page_inactive_count < vm_page_inactive_target)))
+	if ((cnt.v_free_count < cnt.v_free_min) ||
+			((cnt.v_free_count < cnt.v_free_target) &&
+			(cnt.v_inactive_count < cnt.v_inactive_target)))
 		thread_wakeup(&vm_pages_needed);
 	return(mem);
 }
@@ -795,13 +776,13 @@ vm_page_free(mem)
 	if (mem->flags & PG_ACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
 		mem->flags &= ~PG_ACTIVE;
-		vm_page_active_count--;
+		cnt.v_active_count--;
 	}
 
 	if (mem->flags & PG_INACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
 		mem->flags &= ~PG_INACTIVE;
-		vm_page_inactive_count--;
+		cnt.v_inactive_count--;
 	}
 
 	if (!(mem->flags & PG_FICTITIOUS)) {
@@ -811,7 +792,7 @@ vm_page_free(mem)
 		simple_lock(&vm_page_queue_free_lock);
 		TAILQ_INSERT_TAIL(&vm_page_queue_free, mem, pageq);
 
-		vm_page_free_count++;
+		cnt.v_free_count++;
 		simple_unlock(&vm_page_queue_free_lock);
 		splx(spl);
 	}
@@ -835,15 +816,15 @@ vm_page_wire(mem)
 	if (mem->wire_count == 0) {
 		if (mem->flags & PG_ACTIVE) {
 			TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
-			vm_page_active_count--;
+			cnt.v_active_count--;
 			mem->flags &= ~PG_ACTIVE;
 		}
 		if (mem->flags & PG_INACTIVE) {
 			TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
-			vm_page_inactive_count--;
+			cnt.v_inactive_count--;
 			mem->flags &= ~PG_INACTIVE;
 		}
-		vm_page_wire_count++;
+		cnt.v_wire_count++;
 	}
 	mem->wire_count++;
 }
@@ -865,9 +846,9 @@ vm_page_unwire(mem)
 	mem->wire_count--;
 	if (mem->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&vm_page_queue_active, mem, pageq);
-		vm_page_active_count++;
+		cnt.v_active_count++;
 		mem->flags |= PG_ACTIVE;
-		vm_page_wire_count--;
+		cnt.v_wire_count--;
 	}
 }
 
@@ -901,11 +882,11 @@ vm_page_deactivate(m)
 		if (m->flags & PG_ACTIVE) {
 			TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
 			m->flags &= ~PG_ACTIVE;
-			vm_page_active_count--;
+			cnt.v_active_count--;
 		}
 		TAILQ_INSERT_TAIL(&vm_page_queue_inactive, m, pageq);
 		m->flags |= PG_INACTIVE;
-		vm_page_inactive_count++;
+		cnt.v_inactive_count++;
 		if (pmap_is_modified(VM_PAGE_TO_PHYS(m)))
 			m->flags &= ~PG_CLEAN;
 		if (m->flags & PG_CLEAN)
@@ -930,7 +911,7 @@ vm_page_activate(m)
 
 	if (m->flags & PG_INACTIVE) {
 		TAILQ_REMOVE(&vm_page_queue_inactive, m, pageq);
-		vm_page_inactive_count--;
+		cnt.v_inactive_count--;
 		m->flags &= ~PG_INACTIVE;
 	}
 	if (m->wire_count == 0) {
@@ -939,7 +920,7 @@ vm_page_activate(m)
 
 		TAILQ_INSERT_TAIL(&vm_page_queue_active, m, pageq);
 		m->flags |= PG_ACTIVE;
-		vm_page_active_count++;
+		cnt.v_active_count++;
 	}
 }
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.10.2.1 1994/03/18 05:46:37 cgd Exp $
+ *	$Id: vm_pageout.c,v 1.10.2.2 1994/04/15 04:24:33 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -101,11 +101,11 @@ vm_pageout_scan()
 
 	s = splimp();
 	simple_lock(&vm_page_queue_free_lock);
-	free = vm_page_free_count;
+	free = cnt.v_free_count;
 	simple_unlock(&vm_page_queue_free_lock);
 	splx(s);
 
-	if (free < vm_page_free_target) {
+	if (free < cnt.v_free_target) {
 #ifdef OMIT
 		swapout_threads();
 #endif	/* OMIT*/
@@ -135,10 +135,10 @@ vm_pageout_scan()
 	for (m = vm_page_queue_inactive.tqh_first; m != NULL; m = next) {
 		s = splimp();
 		simple_lock(&vm_page_queue_free_lock);
-		free = vm_page_free_count;
+		free = cnt.v_free_count;
 		simple_unlock(&vm_page_queue_free_lock);
 		splx(s);
-		if (free >= vm_page_free_target)
+		if (free >= cnt.v_free_target)
 			break;
 
 		cnt.v_scan++;
@@ -228,7 +228,7 @@ vm_pageout_scan()
 				 *	Do a wakeup here in case the following
 				 *	operations block.
 				 */
-				thread_wakeup((int) &vm_page_free_count);
+				thread_wakeup((int) &cnt.v_free_count);
 
 				/*
 				 *	If there is no pager for the page,
@@ -310,8 +310,8 @@ vm_pageout_scan()
 	 *	to inactive.
 	 */
 
-	page_shortage = vm_page_inactive_target - vm_page_inactive_count;
-	page_shortage -= vm_page_free_count;
+	page_shortage = cnt.v_inactive_target - cnt.v_inactive_count;
+	page_shortage -= cnt.v_free_count;
 
 	if ((page_shortage <= 0) && (pages_freed == 0))
 		page_shortage = 1;
@@ -344,35 +344,26 @@ vm_pageout()
 	 *	Initialize some paging parameters.
 	 */
 
-	if (vm_page_free_min == 0) {
-		vm_page_free_min = vm_page_free_count / 20;
-		if (vm_page_free_min < 3)
-			vm_page_free_min = 3;
+	if (cnt.v_free_min == 0) {
+		cnt.v_free_min = cnt.v_free_count / 20;
+		if (cnt.v_free_min < 3)
+			cnt.v_free_min = 3;
 
-		if (vm_page_free_min > vm_page_free_min_sanity)
-			vm_page_free_min = vm_page_free_min_sanity;
+		if (cnt.v_free_min > vm_page_free_min_sanity)
+			cnt.v_free_min = vm_page_free_min_sanity;
 	}
 
-	if (vm_page_free_reserved == 0) {
-		if ((vm_page_free_reserved = vm_page_free_min / 2) < 10)
-			vm_page_free_reserved = 10;
-	}
-	if (vm_pageout_free_min == 0) {
-		if ((vm_pageout_free_min = vm_page_free_reserved / 2) > 10)
-			vm_pageout_free_min = 10;
-	}
+	if (cnt.v_free_target == 0)
+		cnt.v_free_target = (cnt.v_free_min * 4) / 3;
 
-	if (vm_page_free_target == 0)
-		vm_page_free_target = (vm_page_free_min * 4) / 3;
+	if (cnt.v_inactive_target == 0)
+		cnt.v_inactive_target = cnt.v_free_min * 2;
 
-	if (vm_page_inactive_target == 0)
-		vm_page_inactive_target = vm_page_free_min * 2;
+	if (cnt.v_free_target <= cnt.v_free_min)
+		cnt.v_free_target = cnt.v_free_min + 1;
 
-	if (vm_page_free_target <= vm_page_free_min)
-		vm_page_free_target = vm_page_free_min + 1;
-
-	if (vm_page_inactive_target <= vm_page_free_target)
-		vm_page_inactive_target = vm_page_free_target + 1;
+	if (cnt.v_inactive_target <= cnt.v_free_target)
+		cnt.v_inactive_target = cnt.v_free_target + 1;
 
 	/*
 	 *	The pageout daemon is never done, so loop
@@ -386,6 +377,6 @@ vm_pageout()
 		vm_pageout_scan();
 		vm_pager_sync();
 		simple_lock(&vm_pages_needed_lock);
-		thread_wakeup((int) &vm_page_free_count);
+		thread_wakeup((int) &cnt.v_free_count);
 	}
 }
