@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.19.2.8 2001/05/15 21:39:40 he Exp $
+.\"	$NetBSD: pciide.4,v 1.19.2.9 2002/02/09 17:41:10 he Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -55,6 +55,8 @@ PCI0640 controller, and IDE DMA/Ultra-DMA support for the following
 controllers:
 .Bl -dash -compact -offset indent
 .It
+Acard ATP850 (Ultra/33) and ATP860 (Ultra/66) IDE Controllers
+.It
 Acer labs M5229 IDE Controller
 .It
 Advanced Micro Devices AMD-756 and 766 IDE Controllers
@@ -97,7 +99,6 @@ Ultra-DMA is disabled by default for this controller. To enable Ultra-DMA,
 use the PCIIDE_CMD0646U_ENABLEUDMA option. Ultra-DMA can eventually be
 disabled on a per-drive basis with config flags, see
 .Xr wd 4 .
-
 .Pp
 The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
 modes.  The workaround documented by AMD is to not use DMA on any drive which
