@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.7 2000/07/24 15:36:49 mycroft Exp $	*/
+/*	$NetBSD: bzero.S,v 1.8 2001/02/10 23:35:41 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.7 2000/07/24 15:36:49 mycroft Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.8 2001/02/10 23:35:41 eeh Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -231,14 +231,14 @@ Lbzero_block:
 	fmovda	%icc, %f0, %f14
 	
 	!! Remember: we were 8 bytes too far
-	dec	56, %i1			! Go one iteration too far
+	dec	56, %i1					! Go one iteration too far
 5:
-	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
+	stda	%f0, [%i0] ASI_BLK_P			! Store 64 bytes
 	deccc	64, %i1
 	ble,pn	%xcc, 6f
 	 inc	64, %i0
 
-	stda	%f0, [%i0] ASI_BLK_COMMIT_P		! Store 64 bytes
+	stda	%f0, [%i0] ASI_BLK_P			! Store 64 bytes
 	deccc	64, %i1
 	bg,pn	%xcc, 5b
 	 inc	64, %i0
