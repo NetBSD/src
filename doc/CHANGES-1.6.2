@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.14 2003/06/16 12:51:14 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.15 2003/06/16 12:57:12 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -278,10 +278,15 @@ sys/dev/pci/agp.c				1.26
 	Patch supplied by Quentin Garnier in PR kern/19256.
 	[tron, ticket #1181]
 
-sys/sys/agpio.h
+sys/sys/agpio.h					1.2
 
 	From FreeBSD: Fix an off-by-bit error in the AGP_MODE_[GS]ET_RATE()
 	macros.
 
 	This fixes PR kern/20480 by Quentin Garnier.
 	[tron, ticket #1182]
+
+include/vis.h					1.13
+
+	this needs <sys/types.h>
+	[klienk, ticket #1210]
