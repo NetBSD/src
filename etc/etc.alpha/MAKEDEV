@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.73 2001/09/10 21:23:53 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.74 2001/09/15 04:41:46 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -398,16 +398,23 @@ ttyEcfg)
 	chown root:wheel $i
 	;;
 
-ttyB*|ttyC*|ttyE*)
+ttyB*|ttyE*)
 	case $i in
 	ttyB*)	name=ttyB; unit=${i#ttyB};	major=15; minor=$(($unit * 2));;
-	ttyC*)	name=ttyC; unit=${i#ttyC};	major=26; minor=$unit;;
 	ttyE*)	name=ttyE; unit=${i#ttyE};	major=25; minor=$unit;;
 	esac
         rm -f $name$unit
         mknod $name$unit c $major $minor
         chown uucp.wheel $name$unit
         ;;
+
+ttyC*)
+	unit=${i#ttyC}
+	rm -f ttyC$unit dtyC$unit
+	mknod ttyC$unit c 26 $(($unit + $dialin))
+	mknod dtyC$unit c 26 $(($unit + $dialout))
+	chown uucp.wheel ttyC$unit dtyC$unit
+	;;
 
 pty*)
 	class=${i#pty}
