@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.31 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: util.h,v 1.32 2004/08/03 23:29:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -82,6 +82,8 @@ int		pidfile(const char *);
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
 void		pw_copy(int, int, struct passwd *, struct passwd *);
+int		pw_copyx(int, int, struct passwd *, struct passwd *,
+			 char *, size_t);
 void		pw_edit(int, const char *);
 void		pw_error(const char *, int, int);
 void		pw_getconf(char *, size_t, const char *, const char *);
