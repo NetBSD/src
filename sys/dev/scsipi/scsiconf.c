@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.106 1998/08/17 00:49:02 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.107 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,17 +93,9 @@ struct scsipi_device probe_switch = {
 	NULL,
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int scsibusmatch __P((struct device *, void *, void *));
-#else
 int scsibusmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void scsibusattach __P((struct device *, struct device *, void *));
-#ifdef __BROKEN_INDIRECT_CONFIG
-int scsibussubmatch __P((struct device *, void *, void *));
-#else
 int scsibussubmatch __P((struct device *, struct cfdata *, void *));
-#endif
 
 struct cfattach scsibus_ca = {
 	sizeof(struct scsibus_softc), scsibusmatch, scsibusattach
@@ -133,22 +125,11 @@ scsiprint(aux, pnp)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-scsibusmatch(parent, match, aux)
-#else
 scsibusmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct scsipi_link *l = aux;
 	int channel;
 
@@ -220,22 +201,11 @@ scsibusattach(parent, self, aux)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-scsibussubmatch(parent, match, aux)
-#else
 scsibussubmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 

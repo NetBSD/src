@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.6 1998/08/17 00:49:03 mycroft Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.7 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,11 +71,7 @@
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/sdvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	sd_scsibus_match __P((struct device *, void *, void *));
-#else
 int	sd_scsibus_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	sd_scsibus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sd_scsibus_ca = {
@@ -115,11 +111,7 @@ const struct sd_ops sd_scsibus_ops = {
 int
 sd_scsibus_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;

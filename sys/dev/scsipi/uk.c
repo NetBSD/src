@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.23 1998/08/17 00:49:04 mycroft Exp $	*/
+/*	$NetBSD: uk.c,v 1.24 1998/08/31 22:28:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,11 +62,7 @@ struct uk_softc {
 	struct scsipi_link *sc_link;	/* all the inter level info */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ukmatch __P((struct device *, void *, void *));
-#else
 int ukmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void ukattach __P((struct device *, struct device *, void *));
 
 struct cfattach uk_ca = {
@@ -90,11 +86,7 @@ cdev_decl(uk);
 int
 ukmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 
