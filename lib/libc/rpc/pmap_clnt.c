@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.12 1999/03/25 01:16:11 lukem Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.13 1999/04/17 13:16:39 drochner Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.12 1999/03/25 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.13 1999/04/17 13:16:39 drochner Exp $");
 #endif
 #endif
 
@@ -59,7 +59,6 @@ __weak_alias(pmap_set,_pmap_set);
 __weak_alias(pmap_unset,_pmap_unset);
 #endif
 
-static const struct timeval timeout = { 5, 0 };
 static const struct timeval tottimeout = { 60, 0 };
 
 /*
@@ -74,15 +73,15 @@ pmap_set(program, version, protocol, port)
 	u_short port;
 {
 	struct sockaddr_in myaddress;
-	int socket = -1;
+	int socket = RPC_ANYSOCK;
 	CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
 
 	if (get_myaddress(&myaddress) != 0)
 		return (FALSE);
-	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
-	    timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+	client = clnttcp_create(&myaddress, PMAPPROG, PMAPVERS,
+	    &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
 	if (client == (CLIENT *)NULL)
 		return (FALSE);
 	parms.pm_prog = program;
@@ -108,15 +107,15 @@ pmap_unset(program, version)
 	u_long version;
 {
 	struct sockaddr_in myaddress;
-	int socket = -1;
+	int socket = RPC_ANYSOCK;
 	CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
 
 	if (get_myaddress(&myaddress) != 0)
 		return (FALSE);
-	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
-	    timeout, &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+	client = clnttcp_create(&myaddress, PMAPPROG, PMAPVERS,
+	    &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
 	if (client == (CLIENT *)NULL)
 		return (FALSE);
 	parms.pm_prog = program;
