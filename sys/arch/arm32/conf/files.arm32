@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.53 1998/07/30 21:51:00 thorpej Exp $
+#	$NetBSD: files.arm32,v 1.54 1998/07/30 21:58:48 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -62,7 +62,7 @@ attach  lpt at pioc with lpt_pioc
 file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
 
 # Common OFW files
-include "../../../dev/ofw/files.ofw"
+include "dev/ofw/files.ofw"
 attach	ofbus at root with ofbus_root
 file	arch/arm32/ofw/ofw.c			ofw
 file	arch/arm32/ofw/openfirm.c		ofw
@@ -92,7 +92,7 @@ device	cs: arp, ether, ifnet, isadma
 file	dev/isa/cs89x0.c		cs
 
 # OFW ISA bus driver.
-include "../../../dev/ofisa/files.ofisa"
+include "dev/ofisa/files.ofisa"
 file	arch/arm32/ofw/ofisa_machdep.c		ofisa
 file	arch/arm32/ofw/com_ofisa_machdep.c	com_ofisa
 file	arch/arm32/ofw/com_ofisa_consolehack.c	com_ofisa	# XXX
@@ -264,7 +264,7 @@ file	arch/arm32/rc7500/if_es.c		es & rc7500
 # Machine-independent SCSI drivers
 #
 
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 major   {sd = 24}
 major   {st = 25}
 major   {cd = 26}
