@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.262 2000/09/13 13:58:26 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.263 2000/09/13 15:58:13 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.258 2000/09/13 13:58:06 tron Exp 
+ *	NetBSD: pcidevs,v 1.259 2000/09/13 14:45:09 ad Exp 
  */
 
 /*
@@ -656,6 +656,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD756 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
+	    0,
+	    "American Megatrends",
+	    "MegaRAID",
+	},
+	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID2,
+	    0,
+	    "American Megatrends",
+	    "MegaRAID 2",
+	},
+	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID3,
+	    0,
+	    "American Megatrends",
+	    "MegaRAID 3",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.264 2000/09/13 13:58:25 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.265 2000/09/13 15:58:13 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.258 2000/09/13 13:58:06 tron Exp 
+ *	NetBSD: pcidevs,v 1.259 2000/09/13 14:45:09 ad Exp 
  */
 
 /*
@@ -699,6 +699,11 @@
 #define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* AMD756 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC756_PMC	0x740B		/* AMD756 Power Management Controller */
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* AMD756 USB Host Controller */
+
+/* American Megatrends products */
+#define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
+#define	PCI_PRODUCT_AMI_MEGARAID2	0x9060		/* MegaRAID 2 */
+#define	PCI_PRODUCT_AMI_MEGARAID3	0x1960		/* MegaRAID 3 */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit Host-PCI Bridge */
