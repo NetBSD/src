@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.32 2003/09/08 01:27:09 mycroft Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.33 2003/09/08 03:09:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.32 2003/09/08 01:27:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.33 2003/09/08 03:09:09 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,7 @@ sd_scsibus_attach(parent, self, aux)
 		sd->flags |= SDF_ANCIENT;
 
 	if (sd->type == T_SIMPLE_DIRECT)
-		periph->periph_quirks |=
-			(PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE);
+		periph->periph_quirks |= PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE;
 
 	sdattach(parent, sd, periph, &sd_scsibus_ops);
 }
@@ -187,7 +186,8 @@ sd_scsibus_mode_sense(sd, byte2, sense, size, page, flags, big)
 	int *big;
 {
 
-	if (sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) {
+	if ((sd->sc_periph->periph_quirks & PQUIRK_ONLYBIG) &&
+	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
 		*big = 1;
 		return scsipi_mode_sense_big(sd->sc_periph, byte2, page, sense,
 		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
