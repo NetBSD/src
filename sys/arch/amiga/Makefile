@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1994/10/26 02:01:24 cgd Exp $
+#	$NetBSD: Makefile,v 1.10.6.1 1996/06/09 20:48:33 is Exp $
 
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -11,8 +11,10 @@ COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 
 # Makefile for amiga tags file
 
-all:
-	@echo "make tags or links only"
+SUBDIR=stand
+
+#all:
+#	@echo "make tags or links only"
 
 TAMIGA=	$S/arch/amiga/tags
 SAMIGA=	$S/arch/m68k/m68k/*.c $S/arch/m68k/include/*.h \
