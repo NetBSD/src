@@ -1,4 +1,4 @@
-.\"     $NetBSD: util.3,v 1.10 2002/10/01 19:36:30 wiz Exp $
+.\"     $NetBSD: util.3,v 1.11 2002/10/12 20:53:15 elric Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,6 +62,8 @@ Declarations for these functions may be obtained from the include file
 \fIName/Page\fP	\fIDescription\fP
 .ta \w'getmaxpartitions.3'u+2n +\w'get the maximum number of partitions allowed per disk'u+6nC
 .sp 5p
+disklabel_dkcksum.3	compute the checksum of a disklabel
+disklabel_scan.3	scan a buffer for a valid disklabel
 forkpty.3	tty utility function
 fparseln.3	return the next logical line from a stream
 getbootfile.3	get the name of the booted kernel file
