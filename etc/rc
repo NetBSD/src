@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.152 2000/04/22 03:01:22 lukem Exp $
+# $NetBSD: rc,v 1.153 2000/08/21 23:09:50 lukem Exp $
 #
 # rc.sh --
 #	Run the scripts in /etc/rc.d with rcorder.
@@ -33,7 +33,7 @@ stty status '^T'
 trap : 2
 trap "echo 'Boot interrupted.'; exit 1" 3
 
-files=`rcorder /etc/rc.d/*`
+files=`rcorder -s nostart /etc/rc.d/*`
 
 for i in $files; do
 	run_rc_script $i start
