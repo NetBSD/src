@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 1999/12/17 06:05:40 tsubai Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7 2002/10/09 07:00:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 struct confargs {
-	char	*ca_name;		/* Device name. */
+	const char	*ca_name;		/* Device name. */
 	int	ca_slot;		/* Device slot (table entry). */
 	int	ca_offset;		/* Offset into slot. */
 	int	ca_addr;		/* Device address. */
