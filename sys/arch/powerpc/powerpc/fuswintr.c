@@ -1,4 +1,4 @@
-/*	$NetBSD: fuswintr.c,v 1.1 1996/09/30 16:34:45 ws Exp $	*/
+/*	$NetBSD: fuswintr.c,v 1.2 2000/06/08 07:29:54 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -31,6 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/systm.h>
+
 /*
  * Emulate fuswintr
  *
@@ -38,7 +40,7 @@
  */
 int
 fuswintr(addr)
-	char *addr;
+	const void *addr;
 {
 	return -1;
 }
