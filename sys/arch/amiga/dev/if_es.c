@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.28 2002/01/28 09:56:58 aymeric Exp $ */
+/*	$NetBSD: if_es.c,v 1.29 2002/03/02 21:08:04 mhitch Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.28 2002/01/28 09:56:58 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.29 2002/03/02 21:08:04 mhitch Exp $");
 
 #include "bpfilter.h"
 
@@ -234,6 +234,25 @@ es_dump_smcregs(char *where, union smcregs *smc)
 void
 esstop(struct es_softc *sc)
 {
+	union smcregs *smc = sc->sc_base;
+
+	/*
+	 * Clear interrupt mask; disable all interrupts.
+	 */
+	smc->b2.bsr = BSR_BANK2;
+	smc->b2.msk = 0;
+
+	/*
+	 * Disable transmitter and receiver.
+	 */
+	smc->b0.bsr = BSR_BANK0;
+	smc->b0.rcr = 0;
+	smc->b0.tcr = 0;
+
+	/*
+	 * Cancel watchdog timer.
+	 */
+	sc->sc_ethercom.ec_if.if_timer = 0;
 }
 
 void
@@ -347,6 +366,7 @@ esintr(void *arg)
 				;
 			smc->b2.pnr = save_pnr;
 			ifp->if_flags &= ~IFF_OACTIVE;
+			ifp->if_timer = 0;
 		}
 #ifdef ESDEBUG
 		else if (esdebug || 1)
@@ -387,6 +407,7 @@ esintr(void *arg)
 #endif
 		smc->b2.ist = ACK_TX_EMPTY;
 		sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
+		ifp->if_timer = 0;
 #ifdef ESDEBUG
 		if (esdebug)
 			printf ("->%02x intcl %x pnr %02x arr %02x\n",
@@ -470,6 +491,7 @@ zzzz:
 			if (smc->b2.ist & IST_TX_EMPTY) {
 				smc->b2.mmucr = MMUCR_RESET_TX;
 				sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
+				ifp->if_timer = 0;
 			}
 #endif
 #ifdef ESDEBUG
@@ -787,6 +809,7 @@ esstart(struct ifnet *ifp)
 		if (smc->b2.arr & ARR_FAILED) {
 			sc->sc_ethercom.ec_if.if_flags |= IFF_OACTIVE;
 			sc->sc_intctl |= MSK_ALLOC;
+			sc->sc_ethercom.ec_if.if_timer = 5;
 			break;
 		}
 		active_pnr = smc->b2.pnr = smc->b2.arr;
@@ -795,7 +818,7 @@ esstart(struct ifnet *ifp)
 		while ((smc->b2.bsr & BSR_MASK) != BSR_BANK2) {
 			printf("%s: esstart+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
 			    smc->b2.bsr);
-		smc->b2.bsr = BSR_BANK2;
+			smc->b2.bsr = BSR_BANK2;
 		}
 #endif
 		IF_DEQUEUE(&sc->sc_ethercom.ec_if.if_snd, m);
@@ -910,6 +933,7 @@ esstart(struct ifnet *ifp)
 		m_freem(m0);
 		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
+		sc->sc_ethercom.ec_if.if_timer = 5;
 	}
 	smc->b2.msk = sc->sc_intctl;
 #ifdef ESDEBUG
@@ -1028,6 +1052,9 @@ esioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 	return (error);
 }
 
+/*
+ * Reset the interface.
+ */
 void
 esreset(struct es_softc *sc)
 {
