@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.58 2005/03/20 21:39:11 dsl Exp $	*/
+/*	$NetBSD: parser.c,v 1.59 2005/03/21 20:10:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.58 2005/03/20 21:39:11 dsl Exp $");
+__RCSID("$NetBSD: parser.c,v 1.59 2005/03/21 20:10:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -974,6 +974,9 @@ readtoken1(int firstc, char const *syntax, char *eofmark, int striptabs)
 					setprompt(0);
 				c = pgetc();
 				goto loop;		/* continue outer loop */
+			case CWORD:
+				USTPUTC(c, out);
+				break;
 			case CCTL:
 				if (eofmark == NULL || ISDBLQUOTE())
 					USTPUTC(CTLESC, out);
@@ -1064,14 +1067,6 @@ readtoken1(int firstc, char const *syntax, char *eofmark, int striptabs)
 					USTPUTC(CTLQUOTEMARK, out);
 				}
 				break;
-			case CWORD:
-				if (!arinest || !is_name(c)) {
-					USTPUTC(c, out);
-					break;
-				}
-				/* Treat $((x)) as $(($x)) */
-				pungetc();
-				/* FALLTHROUGH */
 			case CVAR:	/* '$' */
 				PARSESUB();		/* parse substitution */
 				break;
