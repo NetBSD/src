@@ -37,7 +37,7 @@
  *
  * from: Utah Hdr: hpux_sysent.c 1.1 90/07/09
  * from: @(#)ultrix_sysent.c	7.5 (Berkeley) 10/11/92
- * $Id: ultrix_sysent.c,v 1.1.1.1 1993/10/12 03:22:47 deraadt Exp $
+ * $Id: ultrix_sysent.c,v 1.2 1994/05/05 03:31:09 cgd Exp $
  */
 
 /*
@@ -146,8 +146,8 @@ int	adjtime();
 int	ogetpeername();
 int	gethostid();
 int	sethostid();
-int	getrlimit();
-int	setrlimit();
+int	ultrixgetrlimit();
+int	ultrixsetrlimit();
 int	okillpg();
 int	ogetsockname();
 int	ogetdirentries();
@@ -307,8 +307,8 @@ struct sysent ultrixsysent[] = {
 	3, ogetpeername,		/* 141 = getpeername */
 	2, gethostid,			/* 142 = gethostid */
 	2, sethostid,			/* 143 = sethostid */
-	2, getrlimit,			/* 144 = getrlimit */
-	2, setrlimit,			/* 145 = setrlimit */
+	2, ultrixgetrlimit,		/* 144 = getrlimit */
+	2, ultrixsetrlimit,		/* 145 = setrlimit */
 	2, okillpg,			/* 146 = killpg */
 	0, nosys,			/* 147 = nosys */
 	0, notimp,			/* 148 = setquota */
