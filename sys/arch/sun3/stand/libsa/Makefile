@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1999/02/13 02:54:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 1999/03/04 08:19:38 gwr Exp $
 
 LIB=sa
 
@@ -25,12 +25,12 @@ CLEANFILES= SRT0.o SRT1.o machine m68k
 SRC_net= net.c ether.c arp.c in_cksum.c rarp.c
 
 SRC_sa = alloc.c bcopy.c close.c getfile.c memcpy.c open.c \
-	 printf.c read.c strerror.c
+	 printf.c read.c sprintf.c strerror.c subr_prf.c twiddle.c
 
 SRC_kern= ashrdi3.c bcmp.c bzero.c strcmp.c strlen.c strncmp.c
 
 SRC_here= clock.c dev_disk.c devopen.c exec_sun.c \
-	 gets.c netif_sun.c panic.c \
+	 gets.c idprom.c netif_sun.c panic.c \
 	 promboot.c promcons.c promdev.c \
 	 sun3.c sun3x.c version.c
 
