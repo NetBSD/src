@@ -1,4 +1,4 @@
-/*	$NetBSD: errmsg.c,v 1.4 1998/07/26 15:52:46 mycroft Exp $	*/
+/*	$NetBSD: errmsg.c,v 1.5 1998/08/04 04:33:15 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -59,9 +59,11 @@ int cod;
 	extern char	*sys_errlist[];
 	static char unkmsg[] = "Unknown error ";
 	static char unk[sizeof(unkmsg)+11];		/* trust us */
+#endif
 
 	if (cod < 0) cod = errno;
 
+#ifndef __NetBSD__
 	if((cod >= 0) && (cod < sys_nerr))
 	    return(sys_errlist[cod]);
 
