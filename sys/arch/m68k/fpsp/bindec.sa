@@ -1,4 +1,4 @@
-*	$NetBSD: bindec.sa,v 1.4 2001/09/16 16:34:32 wiz Exp $
+*	$NetBSD: bindec.sa,v 1.5 2001/12/09 01:43:13 briggs Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -510,11 +510,12 @@ A9_str:
 	fmove.x	(a0),fp0	;load X from memory
 	fabs.x	fp0		;use abs(X)
 	tst.w	d5		;LAMBDA is in lower word of d5
-	bne.b	sc_mul		;if neg (LAMBDA = 1), scale by mul
+	bne.b	short_sc_mul	;if neg (LAMBDA = 1), scale by mul
 	fdiv.x	fp1,fp0		;calculate X / SCALE -> Y to fp0
 	bra.b	A10_st		;branch to A10
 
 sc_mul:
+short_sc_mul:
 	tst.b	BINDEC_FLG(a6)	;check for denorm
 	beq.b	A9_norm		;if norm, continue with mul
 	fmovem.x fp1,-(a7)	;load ETEMP with 10^ISCALE
