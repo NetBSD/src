@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 1999/05/16 16:37:45 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.144 1999/05/16 16:48:59 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5473,6 +5473,25 @@ printf("pmap_enter: segment filled during sleep\n");	/* can this happen? */
 		rp->rg_nsegmap = 0;
 		for (i = NSEGRG; --i >= 0;)
 			sp++->sg_pmeg = seginval;
+#if defined(SUN4_MMU3L)
+/*
+ * XXX - preallocate the region MMU cookies.
+ * XXX - Doing this keeps the machine running for a while
+ * XXX - Remove or alter this after dealing with the bugs...
+ */
+		if (HASSUN4_MMU3L) {
+			vaddr_t tva;
+			rp->rg_smeg = region_alloc(&region_lru, pm, vr)->me_cookie;
+			setregmap(va, rp->rg_smeg);
+
+			tva = VA_ROUNDDOWNTOREG(va);
+			for (i = 0; i < NSEGRG; i++) {
+				setsegmap(tva, seginval);
+				tva += NBPSG;
+			};
+		}
+/* XXX  - end of work-around */
+#endif
 	}
 
 	sp = &rp->rg_segmap[vs];
