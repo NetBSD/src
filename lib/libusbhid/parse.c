@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
+/*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -51,7 +51,6 @@ struct hid_data {
 	int multimax;
 	int kindset;
 	int reportid;
-	int lastreportid;
 
 	/*
 	 * The start of collection item has no report ID set, so save
@@ -64,7 +63,7 @@ struct hid_data {
 	 *  Assumes that hid_input, hid_output and hid_feature have
 	 *  values 0, 1 and 2.
 	 */
-        unsigned int kindpos[3];
+	unsigned int kindpos[3];
 };
 
 static int min(int x, int y) { return x < y ? x : y; }
@@ -103,7 +102,6 @@ hid_start_parse(report_desc_t d, int kindset, int id)
 	s->end = d->data + d->size;
 	s->kindset = kindset;
 	s->reportid = id;
-	s->lastreportid = -1;
 	s->hassavedcoll = 0;
 	return (s);
 }
@@ -131,15 +129,8 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 		r = hid_get_item_raw(s, h);
 		if (r <= 0)
 			break;
-		if (h->report_ID == s->reportid || s->reportid == -1) {
-			if (s->lastreportid != s->reportid) {
-				s->lastreportid = s->reportid;
-				s->kindpos[hid_input] =
-				     s->kindpos[hid_output] =
-				     s->kindpos[hid_feature] = 0;
-			}
+		if (h->report_ID == s->reportid || s->reportid == -1)
 			break;
-		}
 	}
 	return (r);
 }
@@ -356,6 +347,9 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				break;
 			case 8:
 				c->report_ID = dval;
+				s->kindpos[hid_input] =
+				    s->kindpos[hid_output] =
+				    s->kindpos[hid_feature] = 0;
 				break;
 			case 9:
 				c->report_count = dval;
