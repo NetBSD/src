@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1998/11/11 05:26:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2000/04/16 04:57:55 mrg Exp $
 
 PROG=	fgen
 SRCS=	fgen.l
 MAN=	fgen.1
 
 .include <bsd.prog.mk>
-
