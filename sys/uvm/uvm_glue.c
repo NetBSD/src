@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.11 2002/01/08 00:35:01 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.12 2002/02/28 19:57:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.11 2002/01/08 00:35:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.12 2002/02/28 19:57:09 nathanw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -601,8 +601,8 @@ uvm_swapout(l)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
-	   p->p_pid, p->p_comm, l->l_addr, l->l_stat,
+		printf("swapout: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
+	   p->p_pid, l->l_lid, p->p_comm, l->l_addr, l->l_stat,
 	   l->l_slptime, uvmexp.free);
 #endif
 
