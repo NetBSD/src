@@ -1,5 +1,4 @@
-$NetBSD: pcmciadevs,v 1.112 2001/01/20 08:49:53 taca Exp $
-/*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
+$NetBSD: pcmciadevs,v 1.113 2001/01/20 17:03:32 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
