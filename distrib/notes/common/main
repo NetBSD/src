@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.4 1999/04/23 15:29:29 perry Exp $
+.\" $NetBSD: main,v 1.6.2.5 1999/04/23 23:18:29 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,13 +60,14 @@
 This document describes the installation procedure for
 .Nx \*V
 on the
-.Em \*[MACHINE] No platform .
-It is available in four different formats titled
+.Em \*[MACHINE]
+platform. It is available in four different formats titled
 .Pa INSTALL. Ns Ar ext ,
-.No where Ar ext
+where
+.Ar ext
 is one of
-.Pa .ps , .html , .more ,
-.No or Pa txt .
+.Pa \&.ps , \&.html , \&.more ,
+.No or Pa \&.txt .
 .Bl -tag -width \&.morex -offset indent
 .It Pa \&.ps
 PostScript.
@@ -86,7 +87,8 @@ Plain old
 .El
 .Pp
 You are reading the
-.Em \*[format] No version .
+.Em \*[format]
+version.
 .
 .Ss "What is NetBSD?"
 .
@@ -111,8 +113,7 @@ is a completely integrated system.
 In addition to its highly portable, high performance kernel,
 .Nx
 features a complete set of user utilities, compilers for several
-languages,
-.Tn The X Window System ,
+languages, The X Window System,
 and numerous other tools, all accompanied by full source code.
 .Pp
 .\" XXX Should we include some text here about NetBSD's license
@@ -182,8 +183,9 @@ including support for MIDI device drivers.
 .It
 Linux compatibility support has been improved.
 .It
-The scheduler has had several bugs fixed, yielding dramatic
-improvements in interactive performance.
+A number of scheduler enhancements have yielded dramatic
+improvements in interactive performance and better control
+of background tasks.
 .It
 Several network tunneling protocols, including GRE and IP in IP, have
 been implemented.
