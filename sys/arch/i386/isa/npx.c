@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74.2.14 2002/10/18 02:38:01 nathanw Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.15 2002/10/18 04:14:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.14 2002/10/18 02:38:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.74.2.15 2002/10/18 04:14:08 nathanw Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -344,9 +344,9 @@ npxintr(void *arg)
 	if (ci->ci_fpsaving)
 		return (1);
 
-	if (p == 0 || npx_type == NPX_NONE) {
-		printf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
-		    p, curproc, npx_type);
+	if (l == NULL || npx_type == NPX_NONE) {
+		printf("npxintr: l = %p, curproc = %p, npx_type = %d\n",
+		    l, curproc, npx_type);
 		printf("npxintr: came from nowhere");
 		return 1;
 	}
@@ -491,7 +491,7 @@ npxdna_xmm(struct cpu_info *ci)
 	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #else
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(l, 1);
+		npxsave_lwp(l, 1);
 #endif
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
@@ -537,7 +537,7 @@ npxdna_s87(struct cpu_info *ci)
 	 * implicit initialization); otherwise, initialize the FPU state to
 	 * clear any exceptions.
 	 */
-	if (ci->ci_fpcurproc != NULL)
+	if (ci->ci_fpcurlwp != NULL)
 		npxsave_cpu(ci, 1);
 	else {
 		clts();
@@ -554,7 +554,7 @@ npxdna_s87(struct cpu_info *ci)
 	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #else
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_proc(l, 1);
+		npxsave_lwp(l, 1);
 #endif
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
