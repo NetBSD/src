@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2002/06/06 19:48:06 fredette Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2002/08/05 20:23:56 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1 2002/06/06 19:48:06 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2002/08/05 20:23:56 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -137,13 +137,13 @@ softintr_dispatch(void *arg)
 
 	/* Special handling for softnet. */
 	if (which == HP700_SOFTINTR_SOFTNET) {
-		/* use atomic "load & clear" */
-		/*
-		 * XXX netisr must be 16-byte aligned, but
-		 * we can't control its declaration.
-		 */
-		 __asm __volatile ("ldcws 0(%1), %0"
-				    : "=r" (ni) : "r" (&netisr));
+		__asm __volatile(
+		"	mfctl	%%eiem, %%r22	\n"
+		"	mtctl	%%r0, %%eiem	\n"
+		"	ldw	0(%1), %0	\n"
+		"	stw	%%r0, 0(%1)	\n"
+		"	mtctl	%%r22, %%eiem	\n"
+		: "=&r" (ni) : "r" (&netisr) : "r22");
 #define DONETISR(m,c) if (ni & (1 << (m))) c()
 #include <net/netisr_dispatch.h>
 	}
