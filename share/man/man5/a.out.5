@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)a.out.5	8.1 (Berkeley) 6/5/93
+.\"	@(#)a.out.5	8.2 (Berkeley) 6/1/94
 .\"
-.Dd June 5, 1993
+.Dd June 1, 1994
 .Dt A.OUT 5
 .Os
 .Sh NAME
@@ -122,6 +122,7 @@ that uniquely identifies binary files
 and distinguishes different loading conventions.
 The field must contain one of the following values:
 .Bl -tag -width ZMAGIC
+.ne 1i
 .It Dv OMAGIC
 The text and data segments immediately follow the header
 and are contiguous.
@@ -208,6 +209,7 @@ Text relocation offsets are reckoned from the start of the text segment,
 and data relocation offsets from the start of the data segment.
 The link editor adds the value that is already stored at this offset
 into the new value that it computes using this relocation record.
+.ne 1i
 .It Fa r_symbolnum
 Contains the ordinal number of a symbol structure
 in the symbol table (it is
