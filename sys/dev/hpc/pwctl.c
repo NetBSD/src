@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.6 2001/07/31 10:37:49 sato Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.7 2001/08/02 09:47:18 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -50,9 +50,12 @@
 
 #include "locators.h"
 
-#define PWCTLVRGIUDEBUG
-#ifdef PWCTLVRGIUDEBUG
-int	pwctl_debug = 1;
+#define PWCTLDEBUG
+#ifndef PWCTLDEBUG_CONF
+#define PWCTLDEBUG_CONF	0
+#endif
+#ifdef PWCTLDEBUG
+int	pwctl_debug = PWCTLDEBUG_CONF;
 #define	DPRINTF(arg) if (pwctl_debug) printf arg;
 #define	VPRINTF(arg) if (bootverbose) printf arg;
 #else
