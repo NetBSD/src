@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.48 1996/01/30 18:21:08 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.49 1996/02/01 00:26:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -242,9 +242,9 @@ vattr_null(vap)
 	vap->va_mode = vap->va_nlink = vap->va_uid = vap->va_gid =
 		vap->va_fsid = vap->va_fileid =
 		vap->va_blocksize = vap->va_rdev =
-		vap->va_atime.ts_sec = vap->va_atime.ts_nsec =
-		vap->va_mtime.ts_sec = vap->va_mtime.ts_nsec =
-		vap->va_ctime.ts_sec = vap->va_ctime.ts_nsec =
+		vap->va_atime.tv_sec = vap->va_atime.tv_nsec =
+		vap->va_mtime.tv_sec = vap->va_mtime.tv_nsec =
+		vap->va_ctime.tv_sec = vap->va_ctime.tv_nsec =
 		vap->va_flags = vap->va_gen = VNOVAL;
 	vap->va_vaflags = 0;
 }
