@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12 2003/11/20 01:22:19 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13 2004/03/25 01:25:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2003/11/20 01:22:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2004/03/25 01:25:08 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -175,7 +175,7 @@ intc_intr_enable(int evtcode)
 
 /*
  * int intc_intr_priority(int evtcode, int level)
- *	Setup interrupt priority register.  Returns old level.
+ *	Setup interrupt priority register.
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
  *	SH7709, SH7709A				  ... evtcode is INTEVT2
  */
@@ -251,6 +251,18 @@ intc_intr_priority(int evtcode, int level)
 		case SH7709_INTEVT2_IRQ4:
 			SH7709_IPR(D, 0);
 			break;
+		case SH7709_INTEVT2_DEI0:
+		case SH7709_INTEVT2_DEI1:
+		case SH7709_INTEVT2_DEI2:
+		case SH7709_INTEVT2_DEI3:
+			SH7709_IPR(E, 12);
+			break;
+		case SH7709_INTEVT2_IRDA_ERI:
+		case SH7709_INTEVT2_IRDA_RXI:
+		case SH7709_INTEVT2_IRDA_BRI:
+		case SH7709_INTEVT2_IRDA_TXI:
+			SH7709_IPR(E, 8);
+			break;
 		case SH7709_INTEVT2_SCIF_ERI:
 		case SH7709_INTEVT2_SCIF_RXI:
 		case SH7709_INTEVT2_SCIF_BRI:
@@ -272,7 +284,7 @@ intc_intr_priority(int evtcode, int level)
 		}
 
 	/*
-	 * XXX: This functions gets called even for interrupts which
+	 * XXX: This function gets called even for interrupts that
 	 * don't have their priority defined by IPR registers.
 	 */
 	if (pos < 0)
