@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.171 2002/10/05 21:21:05 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.172 2002/10/31 22:24:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.171 2002/10/05 21:21:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.172 2002/10/31 22:24:42 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -159,7 +159,9 @@ const char *trap_type[] = {
 	"invalid TSS fault",			/* 15 T_TSSFLT */
 	"segment not present fault",		/* 16 T_SEGNPFLT */
 	"stack fault",				/* 17 T_STKFLT */
-	"reserved trap",			/* 18 T_RESERVED */
+	"machine check fault",			/* 18 T_MCA */
+	"SSE FP exception",			/* 19 T_XMM */
+	"reserved trap",			/* 20 T_RESERVED */
 };
 int	trap_types = sizeof trap_type / sizeof trap_type[0];
 
