@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.88 2002/11/22 15:23:50 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.89 2002/12/04 01:36:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.88 2002/11/22 15:23:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.89 2002/12/04 01:36:10 fvdl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -676,7 +676,9 @@ npxsave_proc(struct proc *p, int save)
 		npxsave_cpu(ci, save);
 		splx(s);
 	} else {
+#ifdef DIAGNOSTIC
 		int spincount;
+#endif
 
 		IPRINTF(("%s: fp ipi to %s %s %p\n",
 		    ci->ci_dev->dv_xname,
@@ -686,15 +688,21 @@ npxsave_proc(struct proc *p, int save)
 		i386_send_ipi(oci,
 		    save ? I386_IPI_SYNCH_FPU : I386_IPI_FLUSH_FPU);
 
+#ifdef DIAGNOSTIC
 		spincount = 0;
+#endif
 		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+#ifdef DIAGNOSTIC
 		{
 			spincount++;
-			delay(10); /* XXX */
-			if (spincount > 1000000) {
+			if (spincount > 10000000) {
 				panic("fp_save ipi didn't");
 			}
 		}
+#else
+		__splbarrier();		/* XXX replace by generic barrier */
+		;
+#endif
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);
