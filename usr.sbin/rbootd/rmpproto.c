@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.9 1997/08/25 19:32:06 kleink Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.10 1997/10/18 11:23:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rmpproto.c,v 1.9 1997/08/25 19:32:06 kleink Exp $");
+__RCSID("$NetBSD: rmpproto.c,v 1.10 1997/10/18 11:23:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,9 +182,9 @@ int
 SendServerID(rconn)
 	RMPCONN *rconn;
 {
-	register struct rmp_packet *rpl;
-	register char *src, *dst;
-	register u_int8_t *size;
+	struct rmp_packet *rpl;
+	char *src, *dst;
+	u_int8_t *size;
 
 	rpl = &rconn->rmp;			/* cache ptr to RMP packet */
 
@@ -236,10 +236,10 @@ SendFileNo(req, rconn, filelist)
 	RMPCONN *rconn;
 	char *filelist[];
 {
-	register struct rmp_packet *rpl;
-	register char *src, *dst;
-	register u_int8_t *size;
-	register int i;
+	struct rmp_packet *rpl;
+	char *src, *dst;
+	u_int8_t *size;
+	int i;
 
 	GETWORD(req->r_brpl.rmp_seqno, i);	/* SeqNo is really FileNo */
 	rpl = &rconn->rmp;			/* cache ptr to RMP packet */
@@ -302,9 +302,9 @@ SendBootRepl(req, rconn, filelist)
 	int retval;
 	char *filename, filepath[RMPBOOTDATA+1];
 	RMPCONN *oldconn;
-	register struct rmp_packet *rpl;
-	register char *src, *dst1, *dst2;
-	register u_int8_t i;
+	struct rmp_packet *rpl;
+	char *src, *dst1, *dst2;
+	u_int8_t i;
 
 	/*
 	 *  If another connection already exists, delete it since we
@@ -345,7 +345,7 @@ SendBootRepl(req, rconn, filelist)
 	 *  stripped file name and spoof the client into thinking that it
 	 *  really got what it wanted.
 	 */
-	filename = (filename = rindex(filepath,'/'))? ++filename: filepath;
+	filename = (filename = strrchr(filepath,'/'))? ++filename: filepath;
 
 	/*
 	 *  Check that this is a valid boot file name.
@@ -408,8 +408,8 @@ SendReadRepl(rconn)
 {
 	int retval = 0;
 	RMPCONN *oldconn;
-	register struct rmp_packet *rpl, *req;
-	register int size = 0;
+	struct rmp_packet *rpl, *req;
+	int size = 0;
 	int madeconn = 0;
 
 	/*
@@ -570,14 +570,14 @@ BootDone(rconn)
 */
 int
 SendPacket(rconn)
-	register RMPCONN *rconn;
+	RMPCONN *rconn;
 {
 	/*
 	 *  Set Ethernet Destination address to Source (BPF and the enet
 	 *  driver will take care of getting our source address set).
 	 */
-	bcopy((char *)&rconn->rmp.hp_hdr.saddr[0],
-	      (char *)&rconn->rmp.hp_hdr.daddr[0], RMP_ADDRLEN);
+	memmove((char *)&rconn->rmp.hp_hdr.daddr[0],
+	    (char *)&rconn->rmp.hp_hdr.saddr[0], RMP_ADDRLEN);
 #ifdef __FreeBSD__
 	/* BPF (incorrectly) wants this in host order. */
 	rconn->rmp.hp_hdr.len = rconn->rmplen - sizeof(struct hp_hdr);
