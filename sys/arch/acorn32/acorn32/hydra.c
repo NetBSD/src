@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.11 2002/10/06 18:28:48 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.12 2002/10/12 21:06:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.11 2002/10/06 18:28:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.12 2002/10/12 21:06:46 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -308,33 +308,27 @@ cpu_hydra_attach(struct device *parent, struct device *self, void *aux)
 	int slave = ha->ha_slave;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int i, error;
-	vaddr_t uaddr;
+	int i;
 	struct hydraboot_vars *hb;
-
-	/*
-	 * Generate a kernel stack and PCB (in essence, a u-area) for the
-	 * new CPU.
-	 */
-	uaddr = uvm_uarea_alloc();
-	error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
-	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
-	if (error)
-		panic("cpu_hydra_attach: uvm_fault_wire failed: %d", error);
 
 	/* Set up a struct cpu_info for this CPU */
 	cpu_info[slave | HYDRA_ID_ISSLAVE] = &cpu->sc_cpuinfo;
 	cpu->sc_cpuinfo.ci_dev = &cpu->sc_dev;
 	cpu->sc_cpuinfo.ci_cpunum = slave | HYDRA_ID_ISSLAVE;
 
+	if (cpu_alloc_idlepcb(&cpu->sc_cpuinfo) != 0) {
+		printf(": couldn't allocate idle PCB.\n");
+		return;
+	}
+
 	/* Copy hatch code to boot page, and set up arguments */
 	memcpy((caddr_t)sc->sc_bootpage_va, hydra_hatchcode,
 	    hydra_ehatchcode - hydra_hatchcode);
 	KASSERT(hydra_ehatchcode - hydra_hatchcode <= HYDRABOOT_VARS);
 	hb = (struct hydraboot_vars *)(sc->sc_bootpage_va + HYDRABOOT_VARS);
-	hb->hb_ttb = (paddr_t)curproc->p_addr->u_pcb.pcb_pagedir;
+	hb->hb_ttb = (paddr_t)cpu->sc_cpuinfo.ci_idlepcb->pcb_pagedir;
 	hb->hb_bootpage_pa = sc->sc_bootpage_pa;
-	hb->hb_sp = uaddr + USPACE;
+	hb->hb_sp = cpu->sc_cpuinfo.ci_idlepcb->pcb_un.un_32.pcb32_sp;
 	hb->hb_entry = &cpu_hydra_hatch;
 
 	cpu_drain_writebuf();
