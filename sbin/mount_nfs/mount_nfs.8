@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.21 2003/02/25 10:35:03 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.22 2003/04/06 19:42:59 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,7 +125,7 @@ be a multiple of DIRBLKSIZ that is \*[Le] the read size for the mount.
 Pass Kerberos authenticators to the server for client-to-server
 user-credential mapping.
 This requires that the kernel be built with the NFSKERB option.
-(Refer to the INTERNET-DRAFT titled
+(Refer to the Internet-draft titled
 .%T "Authentication Mechanisms for ONC RPC" ,
 for more information.)
 .It Fl L
@@ -197,7 +197,9 @@ Try 8, if users in a lot of groups cannot get response from the mount
 point.
 .It Fl i
 Make the mount interruptible, which implies that file system calls that
-are delayed due to an unresponsive server will fail with EINTR when a
+are delayed due to an unresponsive server will fail with
+.Er EINTR
+when a
 termination signal is posted for the process.
 .It Fl l
 Used with NQNFS and NFSv3 to specify that the ReaddirPlus RPC should
