@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 1995/08/06 05:32:59 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 1995/08/06 19:01:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -908,7 +908,6 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	register struct pcb *pcb;
 	register struct trapframe *tf;
 
 #if NNPX > 0
@@ -917,9 +916,8 @@ setregs(p, pack, stack, retval)
 		npxdrop();
 #endif
 
-	pcb = &p->p_addr->u_pcb;
-	lcr0(pcb->pcb_cr0);
-	pcb->pcb_flags = 0;
+	p->p_md.md_flags &= ~MDP_USEDFPU;
+	p->p_addr->u_pcb.pcb_flags = 0;
 
 	tf = p->p_md.md_regs;
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
