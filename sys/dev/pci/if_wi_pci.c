@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.7 2002/04/04 17:43:33 jdolecek Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.8 2002/09/23 14:12:35 thorpej Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.7 2002/04/04 17:43:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.8 2002/09/23 14:12:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,12 +157,30 @@ static void
 wi_pci_reset(sc)
 	struct wi_softc		*sc;
 {
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-			  WI_PCI_COR, WI_PCI_SOFT_RESET);
-	DELAY(100*1000); /* 100 m sec */
+	int i, secs, usecs;
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
-	DELAY(100*1000); /* 100 m sec */
+	CSR_WRITE_2(sc, WI_PCI_COR_OFFSET, WI_COR_SOFT_RESET);
+	DELAY(250*1000); /* 1/4 second */
+
+	CSR_WRITE_2(sc, WI_PCI_COR_OFFSET, WI_COR_CLEAR);
+	DELAY(500*1000); /* 1/2 second */
+
+	/* wait 2 seconds for firmware to complete initialization. */
+
+	for (i = 200000; i--; DELAY(10))
+		if (!(CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY))
+			break;
+ 
+	if (i < 0) {
+		printf("%s: PCI reset timed out\n", sc->sc_dev.dv_xname);
+	} else if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG) {
+		usecs = (200000 - i) * 10;
+		secs = usecs / 1000000;
+		usecs %= 1000000;
+
+		printf("%s: PCI reset in %d.%06d seconds\n",
+                       sc->sc_dev.dv_xname, secs, usecs);
+	}
 
 	return;
 }
