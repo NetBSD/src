@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.112 2004/01/04 11:44:52 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,7 @@
 #include <lib/libkern/libkern.h>	/* offsetof */
 
 struct intrsource;
+struct pmap;
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -91,6 +92,13 @@ struct cpu_info {
 	int	ci_fpsaving;		/* save in progress */
 
 	volatile u_int32_t	ci_tlb_ipi_mask;
+
+	struct pmap *ci_pmap;		/* current pmap */
+	int ci_want_pmapload;		/* pmap_load() is needed */
+	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+#define	TLBSTATE_VALID	0	/* all user tlbs are valid */
+#define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
+#define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.7 2003/08/20 21:48:41 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.8 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,13 +150,17 @@ IDTVEC(doreti)
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-5:	CHECK_ASTPENDING(%eax)
-	je	3f
+5:
 	testb   $SEL_RPL,TF_CS(%esp)
+	jnz	doreti_checkast
 #ifdef VM86
-	jnz	4f
 	testl	$PSL_VM,TF_EFLAGS(%esp)
+	jz	6f
+#else
+	jmp	6f
 #endif
+doreti_checkast:
+	CHECK_ASTPENDING(%eax)
 	jz	3f
 4:	CLEAR_ASTPENDING(%eax)
 	sti
@@ -168,4 +172,12 @@ IDTVEC(doreti)
 	cli
 	jmp	5b
 3:
+	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
+6:
 	INTRFASTEXIT
+9:
+	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	doreti_checkast	/* recheck ASTs */
