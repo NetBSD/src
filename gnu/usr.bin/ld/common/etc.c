@@ -1,5 +1,5 @@
 /*
- * $Id: etc.c,v 1.5 1994/01/28 20:56:09 pk Exp $
+ * $Id: etc.c,v 1.6 1994/04/22 07:57:54 pk Exp $
  */
 
 #include <sys/param.h>
@@ -100,20 +100,6 @@ concat(s1, s2, s3)
 	result[len1 + len2 + len3] = 0;
 
 	return result;
-}
-
-/* Parse the string ARG using scanf format FORMAT, and return the result.
-   If it does not parse, report fatal error
-   generating the error message using format string ERROR and ARG as arg.  */
-
-int
-parse(arg, format, error)
-	char *arg, *format, *error;
-{
-	int x;
-	if (1 != sscanf (arg, format, &x))
-		fatal (error, arg);
-	return x;
 }
 
 /* Like malloc but get fatal error if memory is exhausted.  */
