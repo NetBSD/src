@@ -1,4 +1,4 @@
-/*	$Id: inode.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
+/*	$Id: inode.c,v 1.2.2.1 2000/01/21 00:34:56 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -64,14 +64,14 @@ SEGUSE *lfs_gseguse(int);
 /* stolen from lfs_inode.c */
 /* Search a block for a specific dinode. */
 struct dinode *
-lfs_ifind(struct lfs *fs, ino_t ino, struct dinode *dip)
+lfs_difind(struct lfs *fs, ino_t ino, struct dinode *dip)
 {
     register int cnt;
 
     for(cnt=0;cnt<INOPB(fs);cnt++)
         if(dip[cnt].di_inumber == ino)
             return &(dip[cnt]);
-    /* printf("lfs_ifind: dinode %u not found\n", ino); */
+    /* printf("lfs_difind: dinode %u not found\n", ino); */
     return NULL;
 }
 
@@ -210,7 +210,7 @@ int lfs_maxino(void)
 #if 1
     struct dinode *idinode;
 
-    idinode = lfs_ifind(&sblock,sblock.lfs_ifile,&ifblock);
+    idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
     return ((idinode->di_size
             - (sblock.lfs_cleansz + sblock.lfs_segtabsz) * sblock.lfs_bsize)
         / sblock.lfs_bsize) * sblock.lfs_ifpb - 1;
@@ -224,7 +224,7 @@ static struct dinode *gidinode(void)
     static struct dinode *idinode;
 
     if(!idinode) {              /* only need to do this once */
-        idinode = lfs_ifind(&sblock,sblock.lfs_ifile,&ifblock);
+        idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
         if(din_table[LFS_IFILE_INUM]
            && din_table[LFS_IFILE_INUM]->di_gen > idinode->di_gen) {
             printf("XXX replacing IFILE gen %d with gen %d\n",
@@ -301,7 +301,7 @@ lfs_ginode(ino_t inumber) {
                ifp->if_daddr, datosn(&sblock,ifp->if_daddr));
     }
     pbp = getddblk(ifp->if_daddr,sblock.lfs_bsize);
-    din=lfs_ifind(&sblock, inumber, pbp->b_un.b_dinode);
+    din=lfs_difind(&sblock, inumber, pbp->b_un.b_dinode);
 
     /* debug */
     if(din && din->di_inumber != inumber)
