@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54 1998/06/06 05:03:23 mrg Exp $ */
+/*	$NetBSD: conf.c,v 1.55 1998/09/21 21:13:51 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@
 #include "kbd.h"
 #include "ms.h"
 #include "zstty.h"
+#include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
@@ -229,7 +230,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
-	cdev_notdef(),			/* 107 */
+	cdev_gen_init(NBPP,bpp),	/* 107: on-board parallel port */
 	cdev_notdef(),			/* 108 */
 	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
