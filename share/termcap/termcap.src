@@ -1947,8 +1947,9 @@ c100-rv-s|concept-rv-s|concept100-rv-s|c100rvs|slow reverse concept 100:\
 # are in non-volatile memory and don't need to be reset upon login.
 # You can type "reset" to get them set.
 vt100|dec-vt100|vt100-am|vt100am|dec vt100:\
+	:bl=^G:cr=^M:it#8:\
 	:do=^J:co#80:li#24:cl=50\E[;H\E[2J:sf=2*\ED:\
-	:le=^H:bs:am:cm=5\E[%i%d;%dH:nd=2\E[C:up=2\E[A:\
+	:le=^H:bs:am:cm=5\E[%i%d;%dH:nd=2\E[C:up=2\E[A:cb=3\E[1K:\
 	:ce=3\E[K:cd=50\E[J:so=2\E[7m:se=2\E[m:us=2\E[4m:ue=2\E[m:\
 	:md=2\E[1m:mr=2\E[7m:mb=2\E[5m:me=2\E[m:is=\E[1;24r\E[24;1H:\
 	:if=/usr/share/tabset/vt100:\
@@ -2074,20 +2075,13 @@ pro350|decpro|dec pro console:\
 pcvt:\
 	:SF=\E[%dS:SR=\E[%dT:sf=\E[S:sr=\E[T:tc=vt220:
 vt200|vt220|dec-vt220|vt200-js|vt220-js|dec vt200 series with jump scroll:\
-	:co#80:li#24:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:LE=\E[%dD:\
-	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:am:as=^N:\
-	:bl=^G:bs:cb=\E[1K:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:\
-	:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:ei=\E[4l:\
-	:ho=\E[H:im=\E[4h:it#8:k1=\E[17~:k2=\E[18~:k3=\E[19~:k4=\E[20~:\
+	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:ct=\E[3g:dc=\E[P:dl=\E[M:\
+	:ei=\E[4l:im=\E[4h:k1=\E[17~:k2=\E[18~:k3=\E[19~:k4=\E[20~:\
 	:k5=\E[21~:k6=\E[23~:k7=\E[24~:k8=\E[25~:kD=\E[3~:kH=\E[4~:\
-	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:kd=\EOB:ke=\E[?1l\E>:kh=\E[1~:\
-	:kl=\EOD:km:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:\
-	:me=\E[m:mi:mr=\E[7m:ms:nd=\E[C:pt:rc=\E8:\
-	:rf=/usr/share/tabset/vt100:rs=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:\
-	:sc=\E7:se=\E[27m:so=\E[7m:st=\EH:ue=\E[24m:up=\E[A:\
-	:us=\E[4m:vt#3:xn:\
-	:ed=:sb=\EM:is=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:
+	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:kh=\E[1~:km:mi:ms:\
+	:if=/usr/share/tabset/vt100:se=\E[27m:st=\EH:ue=\E[24m:\
+	:tc=vt100:
 vt200-ss|vt220-ss|dec-vt220-ss|dec vt200 series with smooth scroll:\
 	:is=\E>\E[?3l\E[?4h\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:\
 	:rs=\E>\E[?3l\E[?4h\E[?5l\E[?7h\E[?8h:\
