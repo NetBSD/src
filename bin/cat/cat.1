@@ -1,4 +1,4 @@
-.\"	$NetBSD: cat.1,v 1.25 2002/05/15 06:52:54 kleink Exp $
+.\"	$NetBSD: cat.1,v 1.25.2.1 2002/06/11 15:45:15 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nd concatenate and print files
 .Sh SYNOPSIS
 .Nm
-.Op Fl befnstuv
+.Op Fl beflnstuv
 .Op Fl
 .Op Ar
 .Sh DESCRIPTION
@@ -79,6 +79,15 @@ at the end of each line
 as well.
 .It Fl f
 Only attempt to display regular files.
+.It Fl l
+Set an exclusive advisory lock on the standard output file descriptor.
+This lock is set using
+.Xr fcntl 2
+with the
+.Dv F_SETLKW
+command. If the output file is already locked,
+.Nm
+will block until the lock is acquired.
 .It Fl n
 Number the output lines, starting at 1.
 .It Fl s
@@ -117,7 +126,8 @@ utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Xr pr 1 ,
 .Xr tail 1 ,
 .Xr view 1 ,
-.Xr vis 1
+.Xr vis 1 ,
+.Xr fcntl 2
 .Rs
 .%A Rob Pike
 .%T "UNIX Style, or cat -v Considered Harmful"
