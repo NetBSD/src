@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.22 1998/02/26 03:01:12 perry Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.23 1998/07/26 19:05:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.22 1998/02/26 03:01:12 perry Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.23 1998/07/26 19:05:07 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ static int grscan __P((int, gid_t, const char *));
 static int start_gr __P((void));
 
 #define	MAXGRP		200
-static char *members[MAXGRP];
+static const char *members[MAXGRP];
 #define	MAXLINELENGTH	1024
 static char line[MAXLINELENGTH];
 
@@ -176,8 +176,8 @@ grscan(search, gid, name)
 	gid_t gid;
 	const char *name;
 {
-	char *cp, **m;
-	char *bp, *ep;
+	const char **m;
+	char *cp, *bp, *ep;
 	unsigned long id;
 #ifdef YP
 	char *key, *data;
@@ -362,7 +362,7 @@ parse:
 		cp = NULL;
 		if (bp == NULL)
 			continue;
-		for (m = _gr_group.gr_mem = members;; bp++) {
+		for (_gr_group.gr_mem = m = members;; bp++) {
 			if (m == &members[MAXGRP - 1])
 				break;
 			if (*bp == ',') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.6 1998/06/19 22:53:57 kleink Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.7 1998/07/26 19:05:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.6 1998/06/19 22:53:57 kleink Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.7 1998/07/26 19:05:06 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -358,7 +358,7 @@ globtilde(pattern, patbuf, pglob)
 	glob_t *pglob;
 {
 	struct passwd *pwd;
-	char *h;
+	const char *h;
 	const Char *p;
 	Char *b;
 
@@ -366,11 +366,11 @@ globtilde(pattern, patbuf, pglob)
 		return pattern;
 
 	/* Copy up to the end of the string or / */
-	for (p = pattern + 1, h = (char *) patbuf; *p && *p != SLASH; 
-	     *h++ = *p++)
+	for (p = pattern + 1, b = patbuf; *p && *p != SLASH; 
+	     *b++ = *p++)
 		continue;
 
-	*h = EOS;
+	*b = EOS;
 
 	if (((char *) patbuf)[0] == EOS) {
 		/* 
@@ -388,7 +388,7 @@ globtilde(pattern, patbuf, pglob)
 		/*
 		 * Expand a ~user
 		 */
-		if ((pwd = getpwnam((char*) patbuf)) == NULL)
+		if ((pwd = getpwnam((char *) patbuf)) == NULL)
 			return pattern;
 		else
 			h = pwd->pw_dir;
