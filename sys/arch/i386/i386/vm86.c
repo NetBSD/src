@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.21 1998/10/19 22:14:55 tron Exp $	*/
+/*	$NetBSD: vm86.c,v 1.22 1998/10/26 19:11:57 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_sysv.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -59,15 +57,6 @@
 #include <sys/device.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
