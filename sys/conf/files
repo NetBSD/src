@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.460 2001/09/15 20:36:35 chs Exp $
+#	$NetBSD: files,v 1.461 2001/09/16 00:11:41 eeh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -364,6 +364,10 @@ attach	le at depca with le_depca
 # Sun HME Ethernet controllers
 device	hme: arp, ether, ifnet, mii
 file	dev/ic/hme.c			hme
+
+# Sun GEM Ethernet controllers
+device	gem: arp, ether, ifnet, mii
+file	dev/ic/gem.c			gem
 
 # 8390-family Ethernet controllers
 defopt	opt_ipkdb.h	IPKDB_DP8390				: IPKDB
