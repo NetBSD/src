@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.15 1994/12/23 20:32:58 pk Exp $	- library routines
+ * $Id: lib.c,v 1.16 1995/06/04 21:33:14 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -515,26 +515,13 @@ subfile_wanted_p(entry)
 				fprintf(stdout, " needed due to %s\n", sp->name);
 			}
 			return 1;
-		} else {
+
+		} else if (!sp->defined && sp->sorefs) {
 			/*
 			 * Check for undefined symbols or commons
 			 * in shared objects.
 			 */
 			struct localsymbol *lsp;
-			int wascommon = sp->defined && sp->common_size;
-			int iscommon = type == (N_UNDF|N_EXT) && p->n_value;
-
-			if (wascommon) {
-				/*
-				 * sp was defined as common by shared object.
-				 */
-				if (iscommon && p->n_value < sp->common_size)
-					sp->common_size = p->n_value;
-				continue;
-			}
-
-			if (sp->sorefs == NULL)
-				continue;
 
 			for (lsp = sp->sorefs; lsp; lsp = lsp->next) {
 				int type = lsp->nzlist.nlist.n_type;
@@ -543,28 +530,22 @@ subfile_wanted_p(entry)
 					type != (N_UNDF | N_EXT))
 					break; /* We don't need it */
 			}
-			if (lsp != NULL) {
-				/* There's a real definition */
-				if (iscommon)
-					/*
-					 * But this member wants it to be
-					 * a common; ignore it.
-					 */
-					continue;
-
-				if (N_ISWEAK(&lsp->nzlist.nlist))
-					/* Weak symbols don't pull archive members */
-					continue;
-			}
+			if (lsp != NULL)
+				/*
+				 * We have a worthy definition in a shared
+				 * object that was specified ahead of the
+				 * archive we're examining now. So, punt.
+				 */
+				continue;
 
 			/*
-			 * At this point, either the new symbol is a common
-			 * and the shared object reference is undefined --
-			 * in which case we note the common -- or the shared
-			 * object reference has a definition -- in which case
-			 * the library member takes precedence.
+			 * At this point, we have an undefined shared
+			 * object reference. Again, if the archive member
+			 * defines a common we just note the its size.
+			 * Otherwise, the member gets included.
 			 */
-			if (iscommon) {
+			
+			if (type == (N_UNDF|N_EXT) && p->n_value) {
 				/*
 				 * New symbol is common, just takes its
 				 * size, but don't load.
