@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.8 2004/03/12 05:58:07 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.9 2004/03/12 06:01:18 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -47,3 +47,8 @@ usr.bin/sed/process.c				1.34
 
 	Prevent integer underflow.
 	[itojun, ticket #1558]
+
+sys/net/if.c					1.131
+
+	Fix out-of-bounds access to ifindex2ifnet[].
+	[briggs, ticket #1560]
