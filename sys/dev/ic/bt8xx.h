@@ -1,7 +1,10 @@
-/*	$NetBSD: bt8xx.h,v 1.1.1.1 2000/05/07 00:17:13 wiz Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.2 2000/05/07 03:01:59 wiz Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
+
+#ifndef _DEV_IC_BT8XX_H_
+#define _DEV_IC_BT8XX_H_
 /*
  * Copyright (c) 1995 Mark Tinguely and Jim Lowe
  * All rights reserved.
@@ -469,3 +472,4 @@ struct bktr_remote {
 
 
 
+#endif /* _DEV_IC_BT8XX_H_ */
