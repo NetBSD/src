@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 1994/02/03 12:57:34 deraadt Exp $
+# $Id: Makefile,v 1.5 1994/05/17 14:01:44 pk Exp $
 
 # Paths to libraries
 #
@@ -20,14 +20,14 @@ CFLAGS+=	-I$(.CURDIR)/arch/$(MACHINE_ARCH) -I$(.CURDIR)/../bfd \
 		-DHOST_CANONICAL=\"$(MACHINE_ARCH)-netbsd\" \
 		-DTARGET_CANONICAL=\"$(MACHINE_ARCH)-netbsd\"
 
-CFLAGS+=	-DNO_MMALLOC
+CFLAGS+=	-DNO_MMALLOC -DKERNEL_DEBUG
 YFLAGS+=	-p $(.PREFIX:S/-exp/_/:S/ch_/chill_/)
 
 .PATH:		$(.CURDIR)/arch/$(MACHINE_ARCH)
 
 SRCS=		blockframe.c core.c gdbtypes.c main.c source.c		\
 		breakpoint.c maint.c  stabsread.c			\
-		buildsym.c corelow.c mem-break.c stack.c		\
+		buildsym.c corelow.c kcorelow.c mem-break.c stack.c	\
 		c-exp.c cp-valprint.c minsyms.c symfile.c		\
 		c-lang.c dbxread.c elfread.c infcmd.c symmisc.c		\
 		c-typeprint.c dcache.c inflow.c symtab.c		\
@@ -47,8 +47,8 @@ CLEANFILES+=	y.tab.h c-exp.c ch-exp.c m2-exp.c
 LDADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 DPADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 
-LDADD+=		-ltermcap
-DPADD+=		$(LIBTERMCAP)
+LDADD+=		-ltermcap -lkvm
+DPADD+=		$(LIBTERMCAP) $(LIBKVM)
 
 
 .include "arch/$(MACHINE_ARCH)/Makefile.inc"
