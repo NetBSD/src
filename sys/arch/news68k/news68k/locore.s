@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 2001/07/22 13:34:06 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.25 2002/05/14 02:03:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1526,8 +1526,6 @@ GLOBAL(bootdevlun)
 GLOBAL(bootctrllun)
 	.long	0
 GLOBAL(bootaddr)
-	.long	0
-GLOBAL(boothowto)
 	.long	0
 
 GLOBAL(want_resched)
