@@ -92,6 +92,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
+#undef MAX_WCHAR_TYPE_SIZE
+#define MAX_WCHAR_TYPE_SIZE 16
+
 #define HANDLE_SYSV_PRAGMA
 
 /* We don't have any limit on the length as out debugger is GDB.  */
