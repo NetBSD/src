@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.9 2001/09/10 23:36:57 wiz Exp $
+.\"	$NetBSD: rnd.9,v 1.10 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -167,6 +167,12 @@ for
 is permitted, and the device does not need to be attached.
 .El
 .\" .Sh ERRORS
+.Sh FILES
+These functions are declared in src/sys/sys/rnd.h and defined in
+src/sys/dev/rnd.c.
+.Sh SEE ALSO
+.Xr rnd 4 ,
+.Xr rndctl 8
 .Sh HISTORY
 The random device was introduced in
 .Nx 1.3 .
@@ -178,9 +184,3 @@ the driver written by Ted Ts'o.
 The only good sources of randomness are quantum mechanical, and most
 computers avidly avoid having true sources of randomness included.
 Don't expect to surpass "pretty good".
-.Sh FILES
-These functions are declared in src/sys/sys/rnd.h and defined in
-src/sys/dev/rnd.c.
-.Sh SEE ALSO
-.Xr rndctl 8 ,
-.Xr rnd 4

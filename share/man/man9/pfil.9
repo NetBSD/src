@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.15 2001/09/04 02:51:16 wiz Exp $
+.\"	$NetBSD: pfil.9,v 1.16 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -107,6 +107,8 @@ The
 interface is enabled in the kernel via the
 .Sy PFIL_HOOKS
 option.
+.Sh SEE ALSO
+.Xr bpf 4
 .Sh HISTORY
 The
 .Nm
@@ -145,5 +147,3 @@ as well as be less IP-centric.
 The current
 .Nm
 implementation will need changes to suit a threaded kernel model.
-.Sh SEE ALSO
-.Xr bpf 4

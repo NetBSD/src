@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.7 2001/11/28 16:49:02 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.8 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -556,10 +556,6 @@ will freeze the channel by one, it's up to the caller to thaw it when
 appropriate.  Returns 0 if the callback was properly recorded, or EBUSY if the
 channel has already a callback pending.
 .El
-.Sh EXAMPLES
-The best examples are existing HBA drivers.  Most of them sit in the
-.Pa sys/dev/ic
-directory.
 .Sh FILES
 .Bl -tag -width sys/dev/atapiconf.h
 .It Pa sys/dev/scsiconf.h
@@ -571,13 +567,17 @@ header file for use by ATAPI HBA drivers
 Both header files include
 .Pa sys/dev/scsipiconf.h
 which contains most structure definitions, function prototypes and macros.
-.Sh AUTHORS
-The
-.Nm
-interface was designed and implemented by Jason R. Thorpe.  Manuel Bouyer
-converted most drivers to the new interface.
+.Sh EXAMPLES
+The best examples are existing HBA drivers.  Most of them sit in the
+.Pa sys/dev/ic
+directory.
 .Sh HISTORY
 The
 .Nm
 interface appeared in
 .Nx 1.6 .
+.Sh AUTHORS
+The
+.Nm
+interface was designed and implemented by Jason R. Thorpe.  Manuel Bouyer
+converted most drivers to the new interface.

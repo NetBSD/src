@@ -1,4 +1,4 @@
-.\" $NetBSD: softintr.9,v 1.7 2001/09/10 23:36:57 wiz Exp $
+.\" $NetBSD: softintr.9,v 1.8 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -124,11 +124,6 @@ immediately.
 can safely be called multiple times before the
 callback routine is invoked.
 .El
-.Sh AUTHORS
-The
-.Nx
-machine-independent software interrupt framework was designed by
-Charles Hannum <mycroft@NetBSD.ORG>.
 .Sh SEE ALSO
 .Xr spl 9
 .Sh HISTORY
@@ -139,3 +134,8 @@ and was implemented by one port in
 .Nx 1.3 .
 However, it did not gain wider implementation until
 .Nx 1.5 .
+.Sh AUTHORS
+The
+.Nx
+machine-independent software interrupt framework was designed by
+Charles Hannum <mycroft@NetBSD.ORG>.

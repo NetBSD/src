@@ -1,4 +1,4 @@
-.\"	$NetBSD: fetch.9,v 1.12 2001/05/16 03:54:24 perry Exp $
+.\"	$NetBSD: fetch.9,v 1.13 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -87,6 +87,9 @@ therefore will never sign extend byte or short values.
 This prevents ambiguity with the error return value
 for all functions except
 .Fn fuword .
+.Sh SEE ALSO
+.Xr copy 9 ,
+.Xr store 9
 .Sh BUGS
 The function
 .Fn fuword
@@ -95,6 +98,3 @@ data it reads might legitimately be the same as the -1
 used to indicate an error.  The other functions do not
 have this problem because the unsigned values returned
 by those can never match the -1 error return value.
-.Sh SEE ALSO
-.Xr copy 9 ,
-.Xr store 9

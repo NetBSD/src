@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.9 2001/09/10 23:36:57 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.10 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -619,7 +619,7 @@ implementation.
 This function is used to inform the
 .Nm
 module that all physical mappings, for the specified pmap, must now be
-correct.  That is, all delayed virtual-to-physical mappings updates 
+correct.  That is, all delayed virtual-to-physical mappings updates
 (such as TLB invalidation or address space identifier updates) must
 be completed.  This routine must be used after calls to
 .Fn pmap_enter ,
@@ -998,29 +998,6 @@ API.  Since the introduction of
 the
 .Nm
 API has evolved further.
-.Sh BUGS
-The use and definition of
-.Fn pmap_activate
-and
-.Fn pmap_deactivate
-needs to be reexamined.
-.Pp
-The use of
-.Fn pmap_copy
-needs to be reexamined.  Empirical evidence suggests that performance
-of the system suffers when
-.Fn pmap_copy
-actually performs its defined function.  This is largely due to the
-fact that the copy of the virtual-to-physical mappings is wasted if
-the process calls
-.Xr execve 2
-after
-.Xr fork 2 .
-For this reason, it is recommended that
-.Nm
-implementations leave the body of the
-.Fn pmap_copy
-function empty for now.
 .Sh AUTHORS
 The original Mach VAX
 .Nm
@@ -1054,3 +1031,26 @@ and
 The author of this document is
 .An Jason R. Thorpe
 .Aq thorpej@netbsd.org .
+.Sh BUGS
+The use and definition of
+.Fn pmap_activate
+and
+.Fn pmap_deactivate
+needs to be reexamined.
+.Pp
+The use of
+.Fn pmap_copy
+needs to be reexamined.  Empirical evidence suggests that performance
+of the system suffers when
+.Fn pmap_copy
+actually performs its defined function.  This is largely due to the
+fact that the copy of the virtual-to-physical mappings is wasted if
+the process calls
+.Xr execve 2
+after
+.Xr fork 2 .
+For this reason, it is recommended that
+.Nm
+implementations leave the body of the
+.Fn pmap_copy
+function empty for now.
