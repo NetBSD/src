@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.15 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.16 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.15 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.16 2004/01/10 00:56:28 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -151,8 +151,7 @@ ReadRegionLog(
 	rrd_rdNode->params[0].p = *rrd_pda;
 /*  rrd_rdNode->params[1] = regionBuffer; */
 	rrd_rdNode->params[2].v = 0;
-	rrd_rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 
-						   0, 0, 0);
+	rrd_rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0);
 
 	/* launch region log read dag */
 	rf_DispatchDAG(*rrd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
@@ -204,8 +203,7 @@ WriteCoreLog(
 	fwr_wrNode->params[0].p = *fwr_pda;
 /*  fwr_wrNode->params[1] = log->bufPtr; */
 	fwr_wrNode->params[2].v = 0;
-	fwr_wrNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 
-						   0, 0, 0);
+	fwr_wrNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0);
 
 	/* launch the dag to write the core log to disk */
 	rf_DispatchDAG(*fwr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
@@ -260,8 +258,7 @@ ReadRegionParity(
 	prd_rdNode->params[0].p = *prd_pda;
 	prd_rdNode->params[1].p = parityBuffer;
 	prd_rdNode->params[2].v = 0;
-	prd_rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 
-						   0, 0, 0);
+	prd_rdNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0);
 #if RF_DEBUG_VALIDATE_DAG
 	if (rf_validateDAGDebug)
 		rf_ValidateDAG(*prd_dag_h);
@@ -313,8 +310,7 @@ WriteRegionParity(
 	pwr_wrNode->params[0].p = *pwr_pda;
 /*  pwr_wrNode->params[1] = parityBuffer; */
 	pwr_wrNode->params[2].v = 0;
-	pwr_wrNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 
-						   0, 0, 0);
+	pwr_wrNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0);
 
 	/* launch the dag to write region parity to disk */
 	rf_DispatchDAG(*pwr_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
