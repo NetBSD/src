@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.24 1998/09/20 02:36:09 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.25 1998/10/02 20:00:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -253,7 +253,7 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *osctx, struct mbuf *m);
 #define	PDQ_OS_SPL_RAISE()	splimp()
 #endif
 
-#if !defined(PDQ_OS_LOWER_SPL)
+#if !defined(PDQ_OS_SPL_LOWER)
 #define	PDQ_OS_SPL_LOWER(s)	splx(s)
 #endif
 
