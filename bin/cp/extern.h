@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1998/10/08 17:43:24 wsanchez Exp $	*/
+/* $NetBSD: extern.h,v 1.6 2001/09/13 09:53:59 wiz Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,6 +35,9 @@
  *	@(#)extern.h	8.2 (Berkeley) 4/1/94
  */
 
+#ifndef _EXTERN_H_
+#define _EXTERN_H_
+
 typedef struct {
 	char *p_end;			/* pointer to NULL at end of path */
 	char *target_end;               /* pointer to end of target base */
@@ -43,17 +46,19 @@ typedef struct {
 
 extern PATH_T to;
 extern uid_t myuid;
-extern int iflag, pflag, fflag;
+extern int fflag, iflag, pflag;
 extern mode_t myumask;
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	copy_fifo __P((struct stat *, int));
-int	copy_file __P((FTSENT *, int));
-int	copy_link __P((FTSENT *, int));
-int	copy_special __P((struct stat *, int));
-int	set_utimes __P((const char *, struct stat *));
-int	setfile __P((struct stat *, int));
-void	usage __P((void));
+int	copy_fifo(struct stat *, int);
+int	copy_file(FTSENT *, int);
+int	copy_link(FTSENT *, int);
+int	copy_special(struct stat *, int);
+int	set_utimes(const char *, struct stat *);
+int	setfile(struct stat *, int);
+void	usage(void);
 __END_DECLS
+
+#endif /* !_EXTERN_H_ */
