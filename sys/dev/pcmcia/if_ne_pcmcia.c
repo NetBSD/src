@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.34 1999/05/24 10:17:49 augustss Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.35 1999/05/24 13:05:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -123,11 +123,6 @@ struct ne2000dev {
       PCMCIA_CIS_SVEC_COMBOCARD,
       0, -1, { 0x00, 0xe0, 0x98 } },
 
-    { "SMC EZCard 10 PCMCIA",
-      0x108, 0x8022,
-      { "SMC", "EZCard-10-PCMCIA", "SMC8022", "R01" },
-      0, 0x1c0, { 0, 0xe0, 0x29 }},
-
     { PCMCIA_STR_SVEC_LANCARD,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SVEC_LANCARD,
@@ -216,6 +211,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
       0, 0x01c0, { 0x00, 0xa0, 0x0c } },
+
+    { PCMCIA_STR_SMC_EZCARD,
+      PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
+      PCMCIA_CIS_SMC_EZCARD,
+      0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
