@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.147 2001/11/21 02:38:36 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.148 2001/11/21 12:25:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.147 2001/11/21 02:38:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.148 2001/11/21 12:25:55 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,7 +586,7 @@ uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 	/* 
 	 * XXX
 	 * Since we are allocating a buffer we can assume that we will
-	 * need TDs for it.  Since we don't want to alolocate those from
+	 * need TDs for it.  Since we don't want to allocate those from
 	 * an interrupt context, we allocate them here and free them again.
 	 * This is no guarantee that we'll get the TDs next time...
 	 */
