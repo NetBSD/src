@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.113 2004/09/17 23:10:50 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.114 2004/09/17 23:30:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.113 2004/09/17 23:10:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.114 2004/09/17 23:30:22 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1896,6 +1896,21 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	struct scsipi_channel *chan = periph->periph_channel;
 	int oasync, async, poll, retries, error, s;
 
+	(chan->chan_bustype->bustype_cmd)(xs);
+
+	if (xs->xs_control & XS_CTL_DATA_ONSTACK) {
+#if 1
+		if (xs->xs_control & XS_CTL_ASYNC)
+			panic("scsipi_execute_xs: on stack and async");
+#endif
+		/*
+		 * If the I/O buffer is allocated on stack, the
+		 * process must NOT be swapped out, as the device will
+		 * be accessing the stack.
+		 */
+		PHOLD(curlwp);
+	}
+
 	xs->xs_status &= ~XS_STS_DONE;
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
@@ -2058,6 +2073,8 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 */
 	scsipi_run_queue(chan);
 
+	if (xs->xs_control & XS_CTL_DATA_ONSTACK)
+		PRELE(curlwp);
 	return (error);
 }
 
