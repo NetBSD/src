@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.h,v 1.17 2001/02/07 08:59:48 itojun Exp $	*/
-/*	$KAME: nd6.h,v 1.42 2001/02/06 09:14:39 jinmei Exp $	*/
+/*	$NetBSD: nd6.h,v 1.18 2001/02/08 12:57:55 itojun Exp $	*/
+/*	$KAME: nd6.h,v 1.46 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -283,7 +283,7 @@ struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
 void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
-void nd6_free __P((struct rtentry *));
+struct llinfo_nd6 *nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));

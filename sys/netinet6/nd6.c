@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.c,v 1.36 2001/02/07 08:59:48 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.110 2001/02/06 09:14:38 jinmei Exp $	*/
+/*	$NetBSD: nd6.c,v 1.37 2001/02/08 12:57:54 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.118 2001/02/08 12:14:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -458,7 +458,7 @@ nd6_timer(ignored_arg)
 						    ICMP6_DST_UNREACH_ADDR, 0);
 					ln->ln_hold = NULL;
 				}
-				nd6_free(rt);
+				next = nd6_free(rt);
 			}
 			break;
 		case ND6_LLINFO_REACHABLE:
@@ -489,12 +489,11 @@ nd6_timer(ignored_arg)
 					nd_ifinfo[ifp->if_index].retrans / 1000;
 				nd6_ns_output(ifp, &dst->sin6_addr,
 					       &dst->sin6_addr, ln, 0);
-			} else {
-				nd6_free(rt);
-			}
+			} else
+				next = nd6_free(rt);
 			break;
 		case ND6_LLINFO_WAITDELETE:
-			nd6_free(rt);
+			next = nd6_free(rt);
 			break;
 		}
 		ln = next;
@@ -626,7 +625,7 @@ nd6_purge(ifp)
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			sdl = (struct sockaddr_dl *)rt->rt_gateway;
 			if (sdl->sdl_index == ifp->if_index)
-				nd6_free(rt);
+				nln = nd6_free(rt);
 		}
 		ln = nln;
 	}
@@ -804,11 +803,11 @@ nd6_is_addr_neighbor(addr, ifp)
 /*
  * Free an nd6 llinfo entry.
  */
-void
+struct llinfo_nd6 *
 nd6_free(rt)
 	struct rtentry *rt;
 {
-	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct sockaddr_dl *sdl;
 	struct in6_addr in6 = ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
@@ -873,11 +872,26 @@ nd6_free(rt)
 		ln->ln_state = ND6_LLINFO_WAITDELETE;
 		ln->ln_asked = 0;
 		rt->rt_flags &= ~RTF_REJECT;
-		return;
+		return ln->ln_next;
 	}
 
+	/*
+	 * Before deleting the entry, remember the next entry as the
+	 * return value.  We need this because pfxlist_onlink_check() above
+	 * might have freed other entries (particularly the old next entry) as
+	 * a side effect (XXX). 
+	 */
+	next = ln->ln_next;
+
+	/*
+	 * Detach the route from the routing tree and the list of neighbor
+	 * caches, and disable the route entry not to be used in already
+	 * cached routes.
+	 */
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
 		  rt_mask(rt), 0, (struct rtentry **)0);
+
+	return next;
 }
 
 /*
@@ -1585,7 +1599,7 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 		return NULL;
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) != RTF_LLINFO) {
 fail:
-		nd6_free(rt);
+		(void)nd6_free(rt);
 		return NULL;
 	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
