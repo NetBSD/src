@@ -1,3 +1,5 @@
+/*	$NetBSD: fwohci_pci.c,v 1.5 2000/12/13 11:30:14 enami Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
