@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.51 2002/06/07 14:48:56 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.52 2002/06/07 17:13:56 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.51 2002/06/07 14:48:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.52 2002/06/07 17:13:56 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -137,6 +137,10 @@ extern struct ifnet loif[NLOOP];
  * This function may modify ver and hlim only.
  * The mbuf chain containing the packet will be freed.
  * The mbuf opt, if present, will not be freed.
+ *
+ * type of "mtu": rt_rmx.rmx_mtu is u_long, ifnet.ifr_mtu is int, and
+ * nd_ifinfo.linkmtu is u_int32_t.  so we use u_long to hold largest one,
+ * which is rt_rmx.rmx_mtu.
  */
 int
 ip6_output(m0, opt, ro, flags, im6o, ifpp)
