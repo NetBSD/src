@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/19 21:51:20 leo Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
@@ -13,7 +13,7 @@ LIBCRT0=
 DPADD=	${S_MACHSA}/libsa.a
 LDADD=	${S_MACHSA}/libsa.a
 
-DEFS=	-DSTANDALONE
+DEFS=	-D_STANDALONE
 INCL=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
 
 CPPFLAGS+=	${DEFS} ${INCL}
