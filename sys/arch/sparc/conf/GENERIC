@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.35 1996/11/18 00:10:19 pk Exp $
+# 	$NetBSD: GENERIC,v 1.36 1996/12/06 22:02:32 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -161,9 +161,11 @@ esp*	at dma? flags 0xff0f				# depending on model
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
 le0	at ledma0					#
 
-# Additional SBus LANCE devices - glued on by lebuffer (not yet implemented)
-#lebuffer*	at sbus0 slot ? offset ?		# sun4m SBus
-#le*	at lebuffer?					#
+# Additional SBus LANCE devices - glued on by lebuffer
+lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
+lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
+le0	at lebuffer0					#
+le*	at lebuffer?					#
 
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at sbus0 slot ? offset ?			# sun4c on-board
