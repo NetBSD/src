@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.51 2001/03/15 02:23:47 hubertf Exp $
+#	$NetBSD: security,v 1.52 2001/04/04 03:17:19 atatat Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -139,13 +139,10 @@ if [ -s $CUR ] ; then
 	if cmp -s $CUR $MP; then
 		:
 	else
-		cp -p $CUR $BACK
-		cp -p $MP $CUR
-		chown root:wheel $CUR
+		backup_file update $MP $CUR $BACK
 	fi
 else
-	cp -p $MP $CUR
-	chown root:wheel $CUR
+	backup_file add $MP $CUR $BACK
 fi
 
 # Check the group file syntax.
@@ -525,14 +522,13 @@ if checkyesno check_devices; then
 					printf "\n" >> $ERR
 				fi
 
-				cp $CUR $BACK
-				cp $TMP1 $CUR
+				backup_file update $TMP1 $CUR $BACK
 			fi
 		else
 			printf "Setuid additions:\n" >> $ERR
 			column -t $TMP1 >> $ERR
 			printf "\n" >> $ERR
-			cp $TMP1 $CUR
+			backup_file add $TMP1 $CUR $BACK
 		fi
 	fi
 
@@ -595,14 +591,13 @@ if checkyesno check_devices; then
 					printf "\n" >> $ERR
 				fi
 
-				cp $CUR $BACK
-				cp $TMP1 $CUR
+				backup_file update $TMP1 $CUR $BACK
 			fi
 		else
 			printf "Device additions:\n" >> $ERR
 			column -t $TMP1 >> $ERR
 			printf "\n" >> $ERR
-			cp $TMP1 $CUR >> $ERR
+			backup_file add $TMP1 $CUR $BACK >> $ERR
 		fi
 	fi
 	if [ -s $ERR ] ; then
@@ -656,7 +651,7 @@ CHANGELIST=""
 if checkyesno check_disklabels; then
 		# generate list of old disklabels and remove them
 	ls -1d $backup_dir/disklabel.* 2>/dev/null |
-	    egrep -v '\.(backup|current)$' > $LABELS
+	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
 	disks=`iostat -x | sed 1d | awk '$1 !~ /^[cfm]d/ { print $1; }'`
@@ -667,7 +662,7 @@ if checkyesno check_disklabels; then
 
 		# append list of new disklabels, sort list
 	ls -1d $backup_dir/disklabel.* 2>/dev/null |
-	    egrep -v '\.(backup|current)$' >> $LABELS
+	    egrep -v '\.(backup|current)(,v)?$' >> $LABELS
 	sort -u -o $LABELS $LABELS
 	CHANGELIST=$LABELS
 fi
@@ -690,21 +685,18 @@ if [ -n "$CHANGELIST" ]; then
 				if [ -s $OUTPUT ] ; then
 		printf "\n======\n%s diffs (OLD < > NEW)\n======\n" $file
 					cat $OUTPUT
-					mv -f $CUR $BACK
-					cp -p $file $CUR
-					chown root:wheel $CUR
+					backup_file update $file $CUR $BACK
 				fi
 			else
 		printf "\n======\n%s added\n======\n" $file
 				diff /dev/null $file
-				cp -p $file $CUR
-				chown root:wheel $CUR
+				backup_file add $file $CUR $BACK
 			fi
 		else
 			if [ -f $CUR ]; then
 		printf "\n======\n%s removed\n======\n" $file
 				diff $CUR /dev/null
-				mv -f $CUR $BACK
+				backup_file remove $file $CUR $BACK
 			fi
 		fi
 	done
