@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1999/09/14 11:20:54 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1999/09/16 21:20:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1354,7 +1354,7 @@ InitializeBsc()
 	 * Area4 = Normal Memory
 	 * Area6 = Normal memory
 	 */
-	SHREG_BSC.BCR1.WORD  = 0x1010;
+	SHREG_BCR1 = 0x1010;
 #else
 	/*
 	 * Drive RAS,CAS in stand by mode and bus release mode
@@ -1363,7 +1363,7 @@ InitializeBsc()
 	 * Area4 = Normal Memory
 	 * Area6 = PCMCIA
 	 */
-	SHREG_BSC.BCR1.WORD  = 0x1013;
+	SHREG_BCR1 = 0x1013;
 #endif
 
 #define PCMCIA_16
@@ -1375,7 +1375,7 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	SHREG_BSC.BCR2.WORD  = 0x2af4;
+	SHREG_BCR2 = 0x2af4;
 #else
 	/*
 	 * Bus Width
@@ -1384,14 +1384,14 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	SHREG_BSC.BCR2.WORD  = 0x16f4;
+	SHREG_BCR2 = 0x16f4;
 #endif
 	/*
 	 * Idle cycle number in transition area and read to write
 	 * Area6 = 3, Area5 = 3, Area4 = 3, Area3 = 3, Area2 = 3
 	 * Area1 = 3, Area0 = 3
 	 */
-	SHREG_BSC.WCR1.WORD  = 0x3fff;
+	SHREG_WCR1 = 0x3fff;
 
 #if 0
 	/*
@@ -1402,7 +1402,7 @@ InitializeBsc()
 	 * Area 2,1 = 3
 	 * Area 0 = 6
 	 */
-	SHREG_BSC.WCR2.WORD  = 0x4bdd;
+	SHREG_WCR2 = 0x4bdd;
 #else
 	/*
 	 * Wait cycle
@@ -1413,7 +1413,7 @@ InitializeBsc()
 	 * Area 2,1 = 3
 	 * Area 0 = 6
 	 */
-	SHREG_BSC.WCR2.WORD  = 0xabfd;
+	SHREG_WCR2 = 0xabfd;
 #endif
 
 	/*
@@ -1423,18 +1423,18 @@ InitializeBsc()
 	 * Disable burst, Bus size=32bit, Column Address=10bit,Refresh ON
 	 * CAS before RAS refresh ON, EDO DRAM
 	 */
-	SHREG_BSC.MCR.WORD   = 0x6135;
-	/* SHREG_BSC.MCR.WORD   = 0x4135; */
+	SHREG_MCR = 0x6135;
+	/* SHREG_MCR = 0x4135; */
 
 	/* DRAM Control Register */
-	SHREG_BSC.DCR.WORD   = 0x0000;
+	SHREG_DCR = 0x0000;
 
 	/*
 	 * PCMCIA Control Register
 	 * OE/WE assert delay 3.5 cycle
 	 * OE/WE negate-address delay 3.5 cycle
 	 */
-	SHREG_BSC.PCR.WORD   = 0x00ff;
+	SHREG_PCR = 0x00ff;
 
 	/*
 	 * Refresh Timer Control/Status Register
@@ -1443,23 +1443,23 @@ InitializeBsc()
 	 * In following statement, the reason why high byte = 0xa5(a4 in RFCR)
 	 * is the rule of SH3 in writing these register .
 	 */
-	SHREG_BSC.RTCSR.WORD = 0xa594;
+	SHREG_RTCSR = 0xa594;
 
 	/*
 	 * Refresh Timer Counter
 	 * initialize to 0
 	 */
-	SHREG_BSC.RTCNT      = 0xa500;
+	SHREG_RTCNT = 0xa500;
 
 	/*
 	 * set Refresh Time Constant Register
 	 */
-	SHREG_BSC.RTCOR      = 0xa50d;
+	SHREG_RTCOR = 0xa50d;
 
 	/*
 	 * init Refresh Count Register
 	 */
-	SHREG_BSC.RFCR       = 0xa400;
+	SHREG_RFCR = 0xa400;
 
 	/*
 	 * Set Clock mode (make internal clock double speed)
