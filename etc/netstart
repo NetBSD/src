@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.62 1999/09/06 18:52:33 itojun Exp $
+#	$NetBSD: netstart,v 1.63 1999/11/08 09:29:24 erh Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -89,7 +89,9 @@ if [ "$net_interfaces" != NO ]; then
 		elif [ -f /etc/ifconfig.$int ]; then
 			echo -n " $int"
 			(while read args; do
-				ifconfig $int $args
+				if [ -n "`eval echo '$args'`" ] ; then
+					ifconfig $int $args
+				fi
 			done) < /etc/ifconfig.$int
 		else
 			if ! checkyesno auto_ifconfig; then
