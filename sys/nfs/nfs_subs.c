@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.115 2003/04/24 21:21:05 drochner Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.116 2003/05/03 16:28:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.115 2003/04/24 21:21:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.116 2003/05/03 16:28:57 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2453,9 +2453,10 @@ nfs_clearcommit(mp)
 	struct vnode *vp;
 	struct nfsnode *np;
 	struct vm_page *pg;
-	int s;
+	struct nfsmount *nmp = VFSTONFS(mp);
 
-	s = splbio();
+	lockmgr(&nmp->nm_writeverflock, LK_EXCLUSIVE, NULL);
+
 	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type == VNON)
@@ -2471,7 +2472,10 @@ nfs_clearcommit(mp)
 		}
 		simple_unlock(&vp->v_uobj.vmobjlock);
 	}
-	splx(s);
+	simple_lock(&nmp->nm_slock);
+	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
+	simple_unlock(&nmp->nm_slock);
+	lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
 }
 
 void
