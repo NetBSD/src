@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.12 1995/02/27 01:03:47 cgd Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.12 1995/02/27 01:03:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.13 1995/05/21 16:21:14 mycroft Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -441,7 +441,7 @@ again:
 	/* THIS STUFF IS INTERNET SPECIFIC */
 	h_addr_ptrs[0] = (char *)&host_addr;
 	h_addr_ptrs[1] = NULL;
-	*((u_int32_t *)&host_addr.s_addr) = inet_addr(p);
+	(void) inet_aton(p, &host_addr);
 	host.h_addr_list = h_addr_ptrs;
 	host.h_length = sizeof(u_int32_t);
 	host.h_addrtype = AF_INET;
@@ -528,11 +528,11 @@ struct hostent *
 _yphostent(line)
 	char *line;
 {
-	static u_int32_t host_addrs[MAXADDRS];
+	static struct in_addr host_addrs[MAXADDRS];
 	char *p = line;
 	char *cp, **q;
 	char **hap;
-	u_int32_t *buf;
+	struct in_addr *buf;
 	int more;
 
 	host.h_name = NULL;
@@ -555,7 +555,7 @@ nextline:
 	*cp++ = '\0';
 
 	*hap++ = (char *)buf;
-	*buf++ = inet_addr(p);
+	(void) inet_aton(p, buf++);
 
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
