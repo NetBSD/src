@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.38 1998/07/27 16:05:46 mycroft Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.39 1998/07/27 16:12:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -179,11 +179,11 @@ long	 random __P((void));
 char	*setstate __P((char *));
 void	 srandom __P((unsigned long));
 
+char	*mkdtemp __P((char *));
 int	 mkstemp __P((char *));
 #ifndef __AUDIT__
 char	*mktemp __P((char *));
 #endif
-char	*mktempdir __P((char *));
 
 int	 setkey __P((const char *));
 
