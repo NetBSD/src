@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2001/01/21 23:38:35 marcus Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2001/05/26 19:04:40 marcus Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -155,6 +155,8 @@ cdev_decl(wsmouse);
 cdev_decl(wsmux);
 
 cdev_decl(gdrom);
+#include "maple.h"
+cdev_decl(maple);
 
 struct cdevsw	cdevsw[] =
 {
@@ -217,6 +219,7 @@ struct cdevsw	cdevsw[] =
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 55: svr4 net pseudo-device */
 	cdev_mouse_init(NWSMUX, wsmux),  /* 56: ws multiplexor */
 	cdev_disk_init(NGDROM,gdrom),	/* 57: GDROM */
+	cdev__oci_init(NMAPLE, maple),	/* 58: Maple bus */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
