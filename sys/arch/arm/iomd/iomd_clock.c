@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.1 2001/10/05 22:27:40 reinoud Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -140,16 +140,6 @@ int
 clockhandler(frame)
 	struct clockframe *frame;
 {
-#ifdef RC7500
-	extern void setleds();
-	static int leds = 0;
-
-	setleds(1 << leds);
-	leds++;
-	if (leds >> 3)
-		leds = 0;
-#endif	/* RC7500 */
-
 	hardclock(frame);
 	return(0);	/* Pass the interrupt on down the chain */
 }
