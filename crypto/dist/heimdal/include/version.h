@@ -1,2 +1,2 @@
-const char *heimdal_long_version = "@(#)$Version: Heimdal 0.6.1 by lha on schelly.pdc.kth.se (i386-unknown-netbsdelf2.0.) Fri Apr  2 16:40:34 CEST 2004 $";
-const char *heimdal_version = "Heimdal 0.6.1";
+const char *heimdal_long_version = "@(#)$Version: Heimdal 0.6.2 by lha on hummel.it.su.se (i386-unknown-netbsdelf2.0C) Thu May  6 18:14:43 CEST 2004 $";
+const char *heimdal_version = "Heimdal 0.6.2";
