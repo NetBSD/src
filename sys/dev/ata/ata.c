@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.13 2000/05/15 08:31:33 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.13.4.1 2003/01/23 08:11:28 msaitoh Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -105,6 +105,9 @@ ata_get_params(drvp, flags, prms)
 		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
+		/* if we didn't read any data something is wrong */
+		if ((wdc_c.flags & AT_XFDONE) == 0)
+			return CMD_ERR;
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
 #if BYTE_ORDER == LITTLE_ENDIAN
