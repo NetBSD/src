@@ -1,21 +1,22 @@
-#	$NetBSD: Makefile,v 1.70 1997/10/09 14:36:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.70.2.1 1997/11/09 00:59:46 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
 # not contain these strings, delete -DLIBC_SCCS and -DSYSLIBC_SCCS
-# from CFLAGS below.  To remove these strings from just the system call
-# stubs, remove just -DSYSLIBC_SCCS from CFLAGS.
+# from CPPFLAGS below.  To remove these strings from just the system call
+# stubs, remove just -DSYSLIBC_SCCS from CPPFLAGS.
 #
 # The NLS (message catalog) functions are always in libc.  To choose that
 # strerror(), perror(), strsignal(), psignal(), etc. actually call the NLS
-# functions, put -DNLS on the CFLAGS line below.
+# functions, put -DNLS on the CPPFLAGS line below.
 #
 # The YP functions are always in libc. To choose that getpwent() and friends
-# actually call the YP functions, put -DYP on the CFLAGS line below.
+# actually call the YP functions, put -DYP on the CPPFLAGS line below.
 
 LIB=c
-CFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT -I${.CURDIR}/include
+CPPFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
+CPPFLAGS+=-I${.CURDIR}/include
 AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include

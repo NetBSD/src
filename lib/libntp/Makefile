@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/09 14:36:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 1997/11/09 01:00:36 lukem Exp $
 
 LIB=	ntp
 SRCS=	a_md512crypt.c a_md5decrypt.c a_md5encrypt.c adjtime.c atoint.c \
@@ -13,6 +13,6 @@ SRCS=	a_md512crypt.c a_md5decrypt.c a_md5encrypt.c adjtime.c atoint.c \
 	refnumtoa.c statestr.c syssignal.c systime.c tsftomsu.c tstotv.c \
 	tvtoa.c tvtots.c uglydate.c uinttoa.c utvtoa.c version.c
 
-CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/09 14:36:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 1997/11/09 01:01:09 lukem Exp $
 
 LIB=	z
 NOMAN=	zlib.3
@@ -6,7 +6,7 @@ NOMAN=	zlib.3
 SRCS=	adler32.c compress.c crc32.c gzio.c uncompr.c deflate.c trees.c \
 	zutil.c inflate.c infblock.c inftrees.c infcodes.c infutil.c inffast.c
 
-CFLAGS+= -I${.CURDIR}
+CPPFLAGS+= -I${.CURDIR}
 
 CLEANFILES+= minigzip
 
