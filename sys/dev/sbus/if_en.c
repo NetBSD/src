@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.17 2002/10/02 16:52:37 thorpej Exp $	*/
+/*	$NetBSD: if_en.c,v 1.18 2002/12/10 13:44:47 pk Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.17 2002/10/02 16:52:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.18 2002/12/10 13:44:47 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ en_sbus_attach(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri,
-					 IPL_NET, 0, en_intr, sc);
+					 IPL_NET, en_intr, sc);
 
 	sc->ipl = sa->sa_pri;	/* appropriate? */
 
