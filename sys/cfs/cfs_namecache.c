@@ -1,33 +1,35 @@
+/*	$NetBSD: cfs_namecache.c,v 1.2 1998/09/08 17:12:46 rvb Exp $	*/
+
 /*
-
-            Coda: an Experimental Distributed File System
-                             Release 3.1
-
-          Copyright (c) 1987-1998 Carnegie Mellon University
-                         All Rights Reserved
-
-Permission  to  use, copy, modify and distribute this software and its
-documentation is hereby granted,  provided  that  both  the  copyright
-notice  and  this  permission  notice  appear  in  all  copies  of the
-software, derivative works or  modified  versions,  and  any  portions
-thereof, and that both notices appear in supporting documentation, and
-that credit is given to Carnegie Mellon University  in  all  documents
-and publicity pertaining to direct or indirect use of this code or its
-derivatives.
-
-CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
-SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
-FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
-DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
-RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
-ANY DERIVATIVE WORK.
-
-Carnegie  Mellon  encourages  users  of  this  software  to return any
-improvements or extensions that  they  make,  and  to  grant  Carnegie
-Mellon the rights to redistribute these changes without encumbrance.
-*/
-
-/* $Header: /cvsroot/src/sys/cfs/Attic/cfs_namecache.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ */
+ * 
+ *             Coda: an Experimental Distributed File System
+ *                              Release 3.1
+ * 
+ *           Copyright (c) 1987-1998 Carnegie Mellon University
+ *                          All Rights Reserved
+ * 
+ * Permission  to  use, copy, modify and distribute this software and its
+ * documentation is hereby granted,  provided  that  both  the  copyright
+ * notice  and  this  permission  notice  appear  in  all  copies  of the
+ * software, derivative works or  modified  versions,  and  any  portions
+ * thereof, and that both notices appear in supporting documentation, and
+ * that credit is given to Carnegie Mellon University  in  all  documents
+ * and publicity pertaining to direct or indirect use of this code or its
+ * derivatives.
+ * 
+ * CODA IS AN EXPERIMENTAL SOFTWARE SYSTEM AND IS  KNOWN  TO  HAVE  BUGS,
+ * SOME  OF  WHICH MAY HAVE SERIOUS CONSEQUENCES.  CARNEGIE MELLON ALLOWS
+ * FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.   CARNEGIE  MELLON
+ * DISCLAIMS  ANY  LIABILITY  OF  ANY  KIND  FOR  ANY  DAMAGES WHATSOEVER
+ * RESULTING DIRECTLY OR INDIRECTLY FROM THE USE OF THIS SOFTWARE  OR  OF
+ * ANY DERIVATIVE WORK.
+ * 
+ * Carnegie  Mellon  encourages  users  of  this  software  to return any
+ * improvements or extensions that  they  make,  and  to  grant  Carnegie
+ * Mellon the rights to redistribute these changes without encumbrance.
+ * 
+ * 	@(#) cfs/cfs_namecache.c,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ */
 
 /* 
  * Mach Operating System
@@ -45,6 +47,9 @@ Mellon the rights to redistribute these changes without encumbrance.
 /*
  * HISTORY
  * $Log: cfs_namecache.c,v $
+ * Revision 1.2  1998/09/08 17:12:46  rvb
+ * Pass2 complete
+ *
  * Revision 1.1.1.1  1998/08/29 21:26:45  rvb
  * Very Preliminary Coda
  *
@@ -215,19 +220,9 @@ Mellon the rights to redistribute these changes without encumbrance.
 #include <cfs/cnode.h>
 #include <cfs/cfsnc.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
 #ifndef insque
 #include <sys/systm.h>
 #endif /* insque */
-#endif /* __NetBSD__ || defined(__FreeBSD__) */
-
-#ifdef	__FreeBSD__
-#include <vm/vm.h>
-#include <vm/vm_object.h>
-#ifdef	__FreeBSD_version
-#include <sys/ucred.h>
-#endif
-#endif
 
 /* 
  * Declaration of the name cache data structure.
@@ -249,7 +244,6 @@ struct cfsnc_statistics cfsnc_stat;	/* Keep various stats */
  */
 int cfsnc_debug = 0;
 
-
 /*
  * Entry points for the CFS Name Cache
  */
@@ -258,7 +252,6 @@ cfsnc_find(struct cnode *dcp, const char *name, int namelen,
 	struct ucred *cred, int hash);
 static void
 cfsnc_remove(struct cfscache *cncp, enum dc_status dcstat);
-
 
 /*  
  * Initialize the cache, the LRU structure and the Hash structure(s)
@@ -565,7 +558,6 @@ cfsnc_zapParentfid(fid, dcstat)
 	}
 }
 
-
 /*
  * Remove all entries which have the same fid as the input
  */
@@ -870,8 +862,6 @@ cfsnc_resize(hashsize, heapsize, dcstat)
     return(0);
 }
 
-#define DEBUG
-#ifdef	DEBUG
 char cfsnc_name_buf[CFS_MAXNAMLEN+1];
 
 void
@@ -898,4 +888,3 @@ cfsnc_name(struct cnode *cp)
 		}
 	}
 }
-#endif
