@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1999/01/10 10:24:17 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1999/01/12 10:26:18 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,7 +67,7 @@ struct pmap kernel_pmap_;
 int physmem;
 static int npgs;
 static u_int nextavail;
-#ifdef __NO_FIXED_MSGBUF
+#ifndef MSGBUFADDR
 extern paddr_t msgbuf_paddr;
 #endif
 
@@ -434,6 +434,7 @@ pmap_bootstrap(kernelstart, kernelend)
 			bcopy(mp, mp + 1,
 			      (cnt - (mp - avail)) * sizeof *mp);
 			mp++->size = s;
+			cnt++;
 		}
 		mp->start += s + HTABSIZE;
 		mp->size -= s + HTABSIZE;
@@ -468,21 +469,21 @@ pmap_bootstrap(kernelstart, kernelend)
 		LIST_INIT(potable + i);
 	LIST_INIT(&pv_page_freelist);
 
-#ifdef __NO_FIXED_MSGBUF
+#ifndef MSGBUFADDR
 	/*
 	 * allow for msgbuf
 	 */
 	sz = round_page(MSGBUFSIZE);
-	for (mp = avail; mp->size; mp++)
-		if (mp->size >= sz)
-			break;
-	if (!mp->size)
+	mp = NULL;
+	for (mp1 = avail; mp1->size; mp1++)
+		if (mp1->size >= sz)
+			mp = mp1;
+	if (mp == NULL)
 		panic("not enough memory?");
 
 	npgs -= btoc(sz);
-	msgbuf_paddr = mp->start;
+	msgbuf_paddr = mp->start + mp->size - sz;
 	mp->size -= sz;
-	mp->start += sz;
 	if (mp->size <= 0)
 		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 #endif
