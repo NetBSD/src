@@ -1,8 +1,0 @@
-unknown: wanted:    foo-ext -> foo
-unknown: strip_addr foo-ext -> foo
-unknown: wanted:    foo-ext -> foo -ext
-unknown: strip_addr foo-ext -> foo -ext
-unknown: wanted:    foo-ext@bar -> foo@bar
-unknown: strip_addr foo-ext@bar -> foo@bar
-unknown: wanted:    foo-ext@bar -> foo@bar -ext
-unknown: strip_addr foo-ext@bar -> foo@bar -ext
