@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/07/24 19:44:48 tv Exp $
+#	$NetBSD: Makefile,v 1.11 2001/09/21 15:38:15 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,9 @@ MKLINT=		no
 .if defined(USE_NEW_TOOLCHAIN)
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+
+SHLIB_MAJOR=	1
+SHLIB_MINOR=	0
 
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
@@ -52,7 +55,9 @@ ${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 #
 # XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
 #
-MKPIC=no	# XXX hack; shlib_version mismatch
+
+SHLIB_MAJOR=	0
+SHLIB_MINOR=	0
 
 F77SRCS=	F77_aloc.c Version.c main.c s_rnge.c abort_.c getarg_.c \
 		iargc_.c getenv_.c signal_.c s_stop.c s_paus.c system_.c \

@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.22 2001/08/19 14:19:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2001/09/21 15:38:15 tv Exp $
 
 LIB=		bfd
 
+MKLINKLIB=	no
 MKLINT=		no
 MKMAN=		no
 MKPROFILE=	no
@@ -12,7 +13,8 @@ MKPROFILE=	no
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
-MKLINKLIB=	no
+SHLIB_MAJOR=	4
+SHLIB_MINOR=	0
 
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
@@ -43,11 +45,9 @@ targets.o targets.so: targmatch.h Makefile
 #
 # XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
 #
-MKPIC=		no	# XXX shlib version mismatch
 
-.if ${MKPIC} != "no"
-MKLINKLIB=	no
-.endif
+SHLIB_MAJOR=	3
+SHLIB_MINOR=	0
 
 .if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
 ELF_PLEASE=
