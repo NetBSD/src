@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1997/03/27 21:01:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 1997/05/19 23:34:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,6 +188,7 @@ int	kn03_intr();
 #endif
 
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3(), splhigh();
+extern	int cpu_spl0(), cpu_spl1(), cpu_spl2(), cpu_spl3(), splhigh();
 int	(*Mach_splbio)() = splhigh;
 int	(*Mach_splnet)() = splhigh;
 int	(*Mach_spltty)() = splhigh;
@@ -414,12 +415,13 @@ mach_init(argc, argv, code, cv)
 		 */
 		mips_hardware_intr = kn01_intr;
 		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
-		Mach_splbio = Mach_spl0;
-		Mach_splnet = Mach_spl1;
-		Mach_spltty = Mach_spl2;
+		Mach_splbio = cpu_spl0;
+		Mach_splnet = cpu_spl1;
+		Mach_spltty = cpu_spl2;
 		Mach_splimp = splhigh; /*XXX Mach_spl1(), if not for malloc()*/
-		Mach_splclock = Mach_spl3;
-		Mach_splstatclock = Mach_spl3;
+		Mach_splclock = cpu_spl3;
+		Mach_splstatclock = cpu_spl3;
+
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "3100");
@@ -471,8 +473,8 @@ mach_init(argc, argv, code, cv)
 		Mach_splnet = Mach_spl0;
 		Mach_spltty = Mach_spl0;
 		Mach_splimp = Mach_spl0;
-		Mach_splclock = Mach_spl1;
-		Mach_splstatclock = Mach_spl1;
+		Mach_splclock = cpu_spl1;
+		Mach_splstatclock = cpu_spl1;
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN02_SYS_CLOCK);
 
@@ -548,12 +550,24 @@ mach_init(argc, argv, code, cv)
 		ioasic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
 		mips_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
+
+		/* On the MAXINE ioasic interrupts at level 3. */
 		Mach_splbio = Mach_spl3;
 		Mach_splnet = Mach_spl3;
 		Mach_spltty = Mach_spl3;
 		Mach_splimp = Mach_spl3;
-		Mach_splclock = Mach_spl1;
-		Mach_splstatclock = Mach_spl1;
+
+		/*
+		 * Note priority inversion of ioasic and clock:
+		 * clock interrupts are at hw priority 1, and when blocking
+		 * clock interrups we we must block hw priority 3
+		 * (bio,net,tty) also.
+		 *
+		 * XXX hw priority 2 is used for memory errors, we
+		 * should not disable memory errors during clock interrupts!
+		 */
+		Mach_splclock = cpu_spl3;
+		Mach_splstatclock = cpu_spl3;
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(XINE_SYS_CLOCK);
 
@@ -587,13 +601,16 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Reset interrupts, clear any errors from newconf probes
 		 */
-
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl0;
 		Mach_spltty = Mach_spl0;
-		Mach_splimp = Mach_spl0;
-		Mach_splclock = Mach_spl1;
-		Mach_splstatclock = Mach_spl1;
+		Mach_splimp = Mach_spl0;	/* XXX */
+		/*
+		 * Clock interrupts at hw priority 1 must block bio,net,tty
+		 * at hw priority 0.
+		 */
+		Mach_splclock = cpu_spl1;
+		Mach_splstatclock = cpu_spl1;
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN03_SYS_CLOCK);
 
