@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.24 2002/03/31 05:22:26 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.25 2002/03/31 06:09:37 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -490,9 +490,12 @@ struct wi_ltv_pcf {
 
 /*
  * Connection control characteristics. (0xFC00)
+ * 0 == IBSS (802.11 compliant mode) (Only PRISM2)
  * 1 == Basic Service Set (BSS)
  * 2 == Wireless Distribudion System (WDS)
- * 3 == Pseudo IBSS
+ * 3 == Pseudo IBSS 
+ *	(Only PRISM2; not 802.11 compliant mode, testing use only)
+ * 6 == HOST AP (Only PRISM2)
  */
 #define WI_PORTTYPE_BSS		0x1
 #define WI_PORTTYPE_WDS		0x2
