@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 2003/09/26 00:00:17 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2003/09/25 18:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.18 2003/09/26 00:00:17 eeh Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -136,6 +136,7 @@ trap(struct trapframe *frame)
 	struct proc *p = l ? l->l_proc : NULL;
 	int type = frame->exc;
 	int ftype, rv;
+	ksiginfo_t ksi;
 
 	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
