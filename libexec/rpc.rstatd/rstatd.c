@@ -1,4 +1,4 @@
-/*	$NetBSD: rstatd.c,v 1.10 2000/06/02 23:20:19 fvdl Exp $	*/
+/*	$NetBSD: rstatd.c,v 1.11 2000/06/03 18:48:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rstatd.c,v 1.10 2000/06/02 23:20:19 fvdl Exp $");
+__RCSID("$NetBSD: rstatd.c,v 1.11 2000/06/03 18:48:24 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,9 +60,9 @@ void
 cleanup(dummy)
 	int dummy;
 {
-        (void) pmap_unset(RSTATPROG, RSTATVERS_TIME);
-        (void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
-        (void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
+        (void) rpcb_unset(RSTATPROG, RSTATVERS_TIME, NULL);
+        (void) rpcb_unset(RSTATPROG, RSTATVERS_SWTCH, NULL);
+        (void) rpcb_unset(RSTATPROG, RSTATVERS_ORIG, NULL);
         exit(0);
 }
 
@@ -90,9 +90,9 @@ main(argc, argv)
         if (!from_inetd) {
                 /* daemon(0, 0); */
 
-                (void)pmap_unset(RSTATPROG, RSTATVERS_TIME);
-                (void)pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
-                (void)pmap_unset(RSTATPROG, RSTATVERS_ORIG);
+                (void)rpcb_unset(RSTATPROG, RSTATVERS_TIME, NULL);
+                (void)rpcb_unset(RSTATPROG, RSTATVERS_SWTCH, NULL);
+                (void)rpcb_unset(RSTATPROG, RSTATVERS_ORIG, NULL);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
