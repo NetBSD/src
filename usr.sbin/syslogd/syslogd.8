@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.34 2004/10/08 17:25:52 mycroft Exp $
+.\"	$NetBSD: syslogd.8,v 1.35 2004/10/10 09:42:11 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 17, 2003
+.Dd October 10, 2004
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl dnrs
+.Op Fl dnrSs
 .Bk -words
 .Op Fl f Ar config_file
 .Ek
@@ -102,6 +102,8 @@ is used.
 Disable the compression of repeated instances of the same line
 into a single line of the form
 .Dq last message repeated N times .
+.It Fl S
+Sync kernel messages to disk immediately.
 .It Fl s
 Select
 .Dq secure
@@ -116,8 +118,6 @@ which
 runs is subject to attack over the network and it is desired
 that the machine be protected from attempts to remotely fill logs
 and similar attacks.
-.It Fl S
-Sync kernel messages to disk immediately.
 .It Fl t Ar chroot_dir
 .Xr chroot 2
 to
