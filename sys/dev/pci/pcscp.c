@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.13 2001/03/08 02:36:35 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.14 2001/03/29 03:26:52 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ pcscp_attach(parent, self, aux)
 	ncr53c9x_attach(sc, NULL, NULL);
 
 	/* Turn on target selection using the `dma' method */
-	ncr53c9x_dmaselect = 1;
+	sc->sc_features |= NCR_F_DMASELECT;
 }
 
 /*
