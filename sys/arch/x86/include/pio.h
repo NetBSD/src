@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: pio.h,v 1.2 2003/02/27 11:22:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
     (/* CONSTCOND */ __use_immediate_port(port) ? __inbc(port) : __inb(port))
 
 static __inline u_int8_t
-__inbc(int port)
+__inbc(unsigned port)
 {
 	u_int8_t data;
 	__asm __volatile("inb %w1,%0" : "=a" (data) : "id" (port));
@@ -72,7 +72,7 @@ __inbc(int port)
 }
 
 static __inline u_int8_t
-__inb(int port)
+__inb(unsigned port)
 {
 	u_int8_t data;
 	__asm __volatile("inb %w1,%0" : "=a" (data) : "d" (port));
@@ -80,7 +80,7 @@ __inb(int port)
 }
 
 static __inline void
-insb(int port, void *addr, int cnt)
+insb(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -94,7 +94,7 @@ insb(int port, void *addr, int cnt)
     (/* CONSTCOND */ __use_immediate_port(port) ? __inwc(port) : __inw(port))
 
 static __inline u_int16_t
-__inwc(int port)
+__inwc(unsigned port)
 {
 	u_int16_t data;
 	__asm __volatile("inw %w1,%0" : "=a" (data) : "id" (port));
@@ -102,7 +102,7 @@ __inwc(int port)
 }
 
 static __inline u_int16_t
-__inw(int port)
+__inw(unsigned port)
 {
 	u_int16_t data;
 	__asm __volatile("inw %w1,%0" : "=a" (data) : "d" (port));
@@ -110,7 +110,7 @@ __inw(int port)
 }
 
 static __inline void
-insw(int port, void *addr, int cnt)
+insw(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -124,7 +124,7 @@ insw(int port, void *addr, int cnt)
     (/* CONSTCOND */ __use_immediate_port(port) ? __inlc(port) : __inl(port))
 
 static __inline u_int32_t
-__inlc(int port)
+__inlc(unsigned port)
 {
 	u_int32_t data;
 	__asm __volatile("inl %w1,%0" : "=a" (data) : "id" (port));
@@ -132,7 +132,7 @@ __inlc(int port)
 }
 
 static __inline u_int32_t
-__inl(int port)
+__inl(unsigned port)
 {
 	u_int32_t data;
 	__asm __volatile("inl %w1,%0" : "=a" (data) : "d" (port));
@@ -140,7 +140,7 @@ __inl(int port)
 }
 
 static __inline void
-insl(int port, void *addr, int cnt)
+insl(unsigned port, void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -151,22 +151,23 @@ insl(int port, void *addr, int cnt)
 }
 
 #define	outb(port, data) \
-    (/* CONSTCOND */__use_immediate_port(port) ? __outbc(port, data) : __outb(port, data))
+    (/* CONSTCOND */__use_immediate_port(port) ? __outbc(port, data) : \
+						__outb(port, data))
 
 static __inline void
-__outbc(int port, u_int8_t data)
+__outbc(unsigned port, u_int8_t data)
 {
 	__asm __volatile("outb %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
-__outb(int port, u_int8_t data)
+__outb(unsigned port, u_int8_t data)
 {
 	__asm __volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
-outsb(int port, void *addr, int cnt)
+outsb(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -176,22 +177,23 @@ outsb(int port, void *addr, int cnt)
 }
 
 #define	outw(port, data) \
-    (/* CONSTCOND */ __use_immediate_port(port) ? __outwc(port, data) : __outw(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outwc(port, data) : \
+						__outw(port, data))
 
 static __inline void
-__outwc(int port, u_int16_t data)
+__outwc(unsigned port, u_int16_t data)
 {
 	__asm __volatile("outw %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
-__outw(int port, u_int16_t data)
+__outw(unsigned port, u_int16_t data)
 {
 	__asm __volatile("outw %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
-outsw(int port, void *addr, int cnt)
+outsw(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -201,22 +203,23 @@ outsw(int port, void *addr, int cnt)
 }
 
 #define	outl(port, data) \
-    (/* CONSTCOND */ __use_immediate_port(port) ? __outlc(port, data) : __outl(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outlc(port, data) : \
+						__outl(port, data))
 
 static __inline void
-__outlc(int port, u_int32_t data)
+__outlc(unsigned port, u_int32_t data)
 {
 	__asm __volatile("outl %0,%w1" : : "a" (data), "id" (port));
 }
 
 static __inline void
-__outl(int port, u_int32_t data)
+__outl(unsigned port, u_int32_t data)
 {
 	__asm __volatile("outl %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
-outsl(int port, void *addr, int cnt)
+outsl(unsigned port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
