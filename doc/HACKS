@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.14 2003/10/27 07:31:07 simonb Exp $
+# $NetBSD: HACKS,v 1.15 2003/10/27 08:07:58 wiz Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -224,6 +224,6 @@ pr	GCC PR optimization/5230
 descr
 	gcc incorrectly gives an "unreachable code at beginning of switch
 	statement" for a Duff's device construct in arch/pc532/dev/ncr.c.
-	There is now way to disable just this warning, so -Wno-error is
+	There is no way to disable just this warning, so -Wno-error is
 	turned on for this file.
 kcah
