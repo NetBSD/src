@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.12.8.1 2001/02/26 16:59:29 he Exp $
+.\"	$NetBSD: tftpd.8,v 1.12.8.2 2004/04/09 03:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 Internet Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
+.Op Fl d
 .Op Fl g Ar group
 .Op Fl l
 .Op Fl n
@@ -93,6 +94,9 @@ relative filename requests.
 .Pp
 The options are:
 .Bl -tag -width "directory"
+.It Fl d
+Enable verbose debugging messages to
+.Xr syslogd 8 .
 .It Fl g Ar group
 Change gid to that of
 .Ar group
@@ -117,7 +121,7 @@ on startup.
 This is recommended for security reasons (so that files other than
 those in the
 .Pa /tftpboot
-directory aren't accessable).
+directory aren't accessible).
 If the remote host passes the directory name as part of the
 file name to transfer, you may have to create a symbolic link
 from
@@ -142,7 +146,6 @@ isn't also given, change the gid to that of
 .Ar user
 as well.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr tftp 1 ,
 .Xr inetd 8
@@ -151,6 +154,24 @@ as well.
 .%N 1350
 .%D July 1992
 .%T "The TFTP Protocol (Revision 2)"
+.Re
+.Rs
+.%R RFC
+.%N 2347
+.%D May 1998
+.%T "TFTP Option Extension"
+.Re
+.Rs
+.%R RFC
+.%N 2348
+.%D May 1998
+.%T "TFTP Blocksize Option"
+.Re
+.Rs
+.%R RFC
+.%N 2349
+.%D May 1998
+.%T "TFTP Timeout Interval and Transfer Size Options"
 .Re
 .Sh HISTORY
 The
@@ -171,15 +192,19 @@ flags appeared in
 .Nx 1.4 .
 .Pp
 IPv6 support was implemented by WIDE/KAME project in 1999.
+.Pp
+TFTP options were implemented by Wasabi Systems, Inc., in 2003,
+and first appeared in
+.Nx 2.0 .
 .Sh BUGS
 Files larger than 33488896 octets (65535 blocks) cannot be transferred
-without client and server supporting blocksize negotiation (RFC1783).
+without client and server supporting blocksize negotiation (RFCs 2347 & 2348).
 .Pp
 Many tftp clients will not transfer files over 16744448 octets (32767 blocks).
 .Sh SECURITY CONSIDERATIONS
 You are
 .Em strongly
-advised to setup
+advised to set up
 .Nm
 using the
 .Fl s
