@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 1998/05/24 19:32:36 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 1998/05/24 20:10:33 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -2390,7 +2390,7 @@ pmap_enter_ptpage(pmap, va)
 	}
 
 #ifdef M68060
-	if (machineid & M68060) {
+	if (machineid & AMIGA_68060) {
 		pmap_changebit(ptpa, PG_CCB, 0);
 		pmap_changebit(ptpa, PG_CI, 1);
 		DCIS();
