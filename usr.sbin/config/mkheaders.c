@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.30 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.31 2002/02/12 23:20:11 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,6 @@ static int herr(const char *, const char *, FILE *);
 static int locators_print(const char *, void *, void *);
 static int defopts_print(const char *, void *, void *);
 static char *cntname(const char *);
-static int cmphdr(const char *, const char *);
 static int fprintcnt(FILE *, struct nvlist *);
 static int fprintstr(FILE *, const char *);
 
@@ -117,7 +116,7 @@ emitcnt(struct nvlist *head)
 	if (fclose(fp) == EOF)
 		return (herr("clos", tfname, NULL));
 
-	return (cmphdr(tfname, nfname));
+	return (moveifchanged(tfname, nfname));
 }
 
 /*
@@ -189,7 +188,7 @@ defopts_print(const char *name, void *value, void *arg)
 	if (fclose(fp) == EOF)
 		return (herr("clos", tfname, NULL));
 
-	return (cmphdr(tfname, name));
+	return (moveifchanged(tfname, name));
 
  bad:
 	return (herr("writ", tfname, fp));
@@ -284,7 +283,7 @@ emitlocs(void)
 		return (herr("clos", tfname, NULL));
 	if (rval)
 		return (rval);
-	return (cmphdr(tfname, "locators.h"));
+	return (moveifchanged(tfname, "locators.h"));
 }
 
 /*
@@ -313,15 +312,15 @@ emitioconfh(void)
 	if (fclose(tfp) == EOF)
 		return (herr("clos", tfname, NULL));
 
-	return (cmphdr(tfname, "ioconf.h"));
+	return (moveifchanged(tfname, "ioconf.h"));
 }
 
 /*
- * Compare two header files.  If nfname doesn't exist, or is different from
+ * Compare two files.  If nfname doesn't exist, or is different from
  * tfname, move tfname to nfname.  Otherwise, delete tfname.
  */
-static int
-cmphdr(const char *tfname, const char *nfname)
+int
+moveifchanged(const char *tfname, const char *nfname)
 {
 	char tbuf[BUFSIZ], nbuf[BUFSIZ];
 	FILE *tfp, *nfp;

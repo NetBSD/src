@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.12 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.13 2002/02/12 23:20:11 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,11 +86,12 @@ mkoneswap(struct config *cf)
 {
 	struct nvlist *nv;
 	FILE *fp;
-	char fname[200];
+	char fname[200], tname[200];
 	char specinfo[200];
 
 	(void)sprintf(fname, "swap%s.c", cf->cf_name);
-	if ((fp = fopen(fname, "w")) == NULL) {
+	(void)sprintf(tname, "swap%s.c.tmp", cf->cf_name);
+	if ((fp = fopen(tname, "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write %s: %s\n",
 		    fname, strerror(errno));
 		return (1);
@@ -146,6 +147,11 @@ mkoneswap(struct config *cf)
 	if (fclose(fp)) {
 		fp = NULL;
 		goto wrerror;
+	}
+	if (moveifchanged(tname, fname) != 0) {
+		(void)fprintf(stderr, "config: error renaming %s: %s\n",
+		    fname, strerror(errno));
+		return (1);
 	}
 	return (0);
 wrerror:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.57 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.58 2002/02/12 23:20:11 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@ mkioconf(void)
 	int v;
 
 	qsort(packed, npacked, sizeof *packed, cforder);
-	if ((fp = fopen("ioconf.c", "w")) == NULL) {
+	if ((fp = fopen("ioconf.c.tmp", "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write ioconf.c: %s\n",
 		    strerror(errno));
 		return (1);
@@ -98,10 +98,15 @@ mkioconf(void)
 			    "config: error writing ioconf.c: %s\n",
 			    strerror(errno));
 		(void)fclose(fp);
-		/* (void)unlink("ioconf.c"); */
+		/* (void)unlink("ioconf.c.tmp"); */
 		return (1);
 	}
 	(void)fclose(fp);
+	if (moveifchanged("ioconf.c.tmp", "ioconf.c") != 0) {
+		(void)fprintf(stderr, "config: error renaming ioconf.c: %s\n",
+		    strerror(errno));
+		return (1);
+	}
 	return (0);
 }
 
