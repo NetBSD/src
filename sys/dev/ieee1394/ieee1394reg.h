@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.14 2002/12/04 00:28:43 haya Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.15 2002/12/09 07:24:57 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -228,6 +228,7 @@ struct ieee1394_async_nodata {
 #define IEEE1394_MAX_REC(i)     ((0x1 << (i + 1)))
 #define IEEE1394_BUSINFO_LEN	3
 
+#define IEEE1394_MAX_ASYNCH_FOR_SPEED(i) (IEEE1394_MAX_REC(8+i))
 #define IEEE1394_GET_MAX_REC(i) ((i & 0x0000f000) >> 12)
 #define IEEE1394_GET_LINK_SPD(i) (i & 0x00000007)
 
