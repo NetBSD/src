@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.13 1999/05/29 09:38:28 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.14 1999/05/31 06:10:32 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1068,7 +1068,7 @@ END(mips1_TLBFlushAddr)
  *		unsigned highreg, lowreg;
  *
  * Results:
- *	None.		(XXX not correct XXX)
+ *	None.
  *
  * Side effects:
  *	None.
@@ -1076,38 +1076,35 @@ END(mips1_TLBFlushAddr)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBUpdate)
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+	mfc0	v1, MIPS_COP_0_STATUS		# save the status register
+	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
-	li	v0, -1				#
-	bne	v0, a0, 3f			#
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# this is the way MIPS
-	nop					# TLB exception
-	tlbwi					# handlers should be
-	nop					# implemented.
-	j	ra				#
-	mtc0	v1, MIPS_COP_0_STATUS		#
-
-3:
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Save current PID
-	nop					# 2 cycles before intr disabled
-	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
+	li	v0, -1				# check to use current
+	bne	v0, a0, 1f			# entryhi and tlbindex
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
 	nop
-	tlbp					# Probe for the entry.
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# init low reg.
-	bltz	v0, 1f				# index < 0 => !found
-	sra	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
-	b	2f
-	tlbwi					# update slot found
-1:
-	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
-	nop
-	tlbwr					# enter into a random slot
-2:
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	tlbwi
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS
+
+1:
+	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
+	nop
+	mtc0	a0, MIPS_COP_0_TLB_HI		# set entryhi
+	nop
+	tlbp					# probe the existence
+	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
+	nop
+	bgez	v0, 2f				# index < 0 => !found
+	nop
+	b	3f
+	tlbwr					# add vicitimizing another
+2:
+	tlbwi					# update the existing one
+3:
+	mtc0	t0, MIPS_COP_0_TLB_HI		# restore current PID
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS
 END(mips1_TLBUpdate)
 
 #if 0
@@ -1760,7 +1757,7 @@ LEAF(mips1_update_tlb)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	li	v0, -1				# check to use current entryhi
-	beq	v0, a0, 2f
+	beq	v0, a0, 1f
 	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
 
 	mfc0	v0, MIPS_COP_0_TLB_HI		# pick current TLBPID
@@ -1773,7 +1770,7 @@ LEAF(mips1_update_tlb)
 	tlbp					# probe looking for the entry
 	mfc0	t0, MIPS_COP_0_TLB_INDEX	# see what we got
 	nop
-	bgtz	t0, 1f				# index < 0 => !found
+	bgez	t0, 1f				# index < 0 => !found
 	mtc0	a1, MIPS_COP_0_TLB_LOW
 	b	2f
 	tlbwr					# add vicitimizing another
