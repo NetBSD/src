@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.25 2000/07/15 15:11:04 darrenr Exp $	*/
+/*	$NetBSD: mv.c,v 1.26 2000/07/16 04:49:55 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.25 2000/07/15 15:11:04 darrenr Exp $");
+__RCSID("$NetBSD: mv.c,v 1.26 2000/07/16 04:49:55 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ err:		if (unlink(to))
 	}
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);
-	if (fchflags(to_fd, sbp->st_flags))
+	if (fchflags(to_fd, sbp->st_flags) && (errno != EOPNOTSUPP))
 		warn("%s: set flags (was: 0%07o)", to, sbp->st_flags);
 
 	if (close(to_fd)) {
