@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.35 2001/06/05 11:22:43 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.36 2001/11/16 11:30:09 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -211,7 +211,10 @@ format. Note that, regardless of whether
 was specified, this format is always accepted by
 .Nm
 on input with either the
-.Fl e No or Fl R No flag.
+.Fl e
+or
+.Fl R
+flag.
 .Pp
 With the
 .Fl R
@@ -367,12 +370,6 @@ disk for which no entry appears in
 if you create the
 prototype file by dumping some other disk's label to a file and editing
 it appropriately (total size, partition offsets, types, etc.)
-.Sh SEE ALSO
-.Xr disktab 5 ,
-.Xr disklabel 5 ,
-.Xr fdisk 8 ,
-.Xr installboot 8 ,
-.Xr mbrlabel 8
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while it is open.
@@ -399,6 +396,12 @@ utility will disallow creation of filesystems on FS_BOOT partitions.
 Conversely, if a partition has a type other than FS_UNUSED or FS_BOOT,
 .Nm
 will not install bootstrap code that overlaps it.
+.Sh SEE ALSO
+.Xr disklabel 5 ,
+.Xr disktab 5 ,
+.Xr fdisk 8 ,
+.Xr installboot 8 ,
+.Xr mbrlabel 8
 .Sh BUGS
 If the disk partition is not specified in the disk name
 (i.e. ``xy0'' instead of ``/dev/rxy0c''),
