@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.45 1998/02/01 14:10:22 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.46 1998/02/23 23:10:34 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.45 1998/02/01 14:10:22 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.46 1998/02/23 23:10:34 cjs Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,7 +642,7 @@ pass(passwd)
 		rval = 1;
 
 skip:
-		if (pw->pw_expire && time(NULL) >= pw->pw_expire)
+		if (pw != NULL && pw->pw_expire && time(NULL) >= pw->pw_expire)
 			rval = 2;
 		/*
 		 * If rval > 0, the user failed the authentication check
