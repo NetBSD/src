@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.13 2000/01/09 16:37:28 sommerfeld Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.14 2000/01/24 18:07:54 mycroft Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.13 2000/01/09 16:37:28 sommerfeld Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.14 2000/01/24 18:07:54 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -574,9 +574,9 @@ void fillin_program_objs(prog_t *p, char *dirpath)
 	return;
     }
 	
-    fprintf(f, ".include \"Makefile\"\n");
-    fprintf(f, ".if defined(PROG) && !defined(OBJS)\n");
-    fprintf(f, "OBJS=${PROG}.o\n");
+    fprintf(f, ".include \"${.CURDIR}/Makefile\"\n");
+    fprintf(f, ".if defined(PROG)\n");
+    fprintf(f, "OBJS?= ${PROG}.o\n");
     fprintf(f, ".endif\n");
     fprintf(f, "crunchgen_objs:\n\t@echo 'OBJS= '${OBJS}\n");
     fclose(f);
