@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.39 1999/05/01 04:34:20 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.40 1999/05/01 04:47:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -86,9 +86,6 @@
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
-
-void cvtstat2osf1 __P((struct stat *, struct osf1_stat *));
-void cvtrusage2osf1 __P((struct rusage *, struct osf1_rusage *));
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
@@ -298,7 +295,7 @@ osf1_sys_stat(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	cvtstat2osf1(&sb, &osb);
+	osf1_cvt_stat_from_native(&sb, &osb);
 	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
@@ -331,7 +328,7 @@ osf1_sys_lstat(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	cvtstat2osf1(&sb, &osb);
+	osf1_cvt_stat_from_native(&sb, &osb);
 	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
@@ -369,43 +366,11 @@ osf1_sys_fstat(p, v, retval)
 		panic("ofstat");
 		/*NOTREACHED*/
 	}
-	cvtstat2osf1(&ub, &oub);
+	osf1_cvt_stat_from_native(&ub, &oub);
 	if (error == 0)
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
 		    sizeof (oub));
 	return (error);
-}
-
-#define	bsd2osf_dev(dev)	osf1_makedev(major(dev), minor(dev))
-#define	osf2bsd_dev(dev)	makedev(osf1_major(dev), osf1_minor(dev))
-
-/*
- * Convert from a stat structure to an osf1 stat structure.
- */
-void
-cvtstat2osf1(st, ost)
-	struct stat *st;
-	struct osf1_stat *ost;
-{
-
-	ost->st_dev = bsd2osf_dev(st->st_dev);
-	ost->st_ino = st->st_ino;
-	ost->st_mode = st->st_mode;
-	ost->st_nlink = st->st_nlink;
-	ost->st_uid = st->st_uid == -2 ? (u_int16_t) -2 : st->st_uid;
-	ost->st_gid = st->st_gid == -2 ? (u_int16_t) -2 : st->st_gid;
-	ost->st_rdev = bsd2osf_dev(st->st_rdev);
-	ost->st_size = st->st_size;
-	ost->st_atime_sec = st->st_atime;
-	ost->st_spare1 = 0;
-	ost->st_mtime_sec = st->st_mtime;
-	ost->st_spare2 = 0;
-	ost->st_ctime_sec = st->st_ctime;
-	ost->st_spare3 = 0;
-	ost->st_blksize = st->st_blksize;
-	ost->st_blocks = st->st_blocks;
-	ost->st_flags = st->st_flags;
-	ost->st_gen = st->st_gen;
 }
 
 int
@@ -423,7 +388,7 @@ osf1_sys_mknod(p, v, retval)
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, mode) = SCARG(uap, mode);
-	SCARG(&a, dev) = osf2bsd_dev(SCARG(uap, dev));
+	SCARG(&a, dev) = osf1_cvt_dev_to_native(SCARG(uap, dev));
 
 	return sys_mknod(p, &a, retval);
 }
@@ -839,43 +804,12 @@ osf1_sys_getrusage(p, v, retval)
                 error = copyin((caddr_t)SCARG(&a, rusage),
 		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
 	if (error == 0) {
-		cvtrusage2osf1(&netbsd_rusage, &osf1_rusage);
+		osf1_cvt_rusage_from_native(&netbsd_rusage, &osf1_rusage);
                 error = copyout((caddr_t)&osf1_rusage,
 		    (caddr_t)SCARG(uap, rusage), sizeof osf1_rusage);
 	}
 
 	return (error);
-}
-
-/*
- * Convert from as rusage structure to an osf1 rusage structure.
- */
-void
-cvtrusage2osf1(ru, oru)
-	struct rusage *ru;
-	struct osf1_rusage *oru;
-{
-
-	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
-	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
-
-	oru->ru_stime.tv_sec = ru->ru_stime.tv_sec;
-	oru->ru_stime.tv_usec = ru->ru_stime.tv_usec;
-
-	oru->ru_maxrss = ru->ru_maxrss;
-	oru->ru_ixrss = ru->ru_ixrss;
-	oru->ru_idrss = ru->ru_idrss;
-	oru->ru_isrss = ru->ru_isrss;
-	oru->ru_minflt = ru->ru_minflt;
-	oru->ru_majflt = ru->ru_majflt;
-	oru->ru_nswap = ru->ru_nswap;
-	oru->ru_inblock = ru->ru_inblock;
-	oru->ru_oublock = ru->ru_oublock;
-	oru->ru_msgsnd = ru->ru_msgsnd;
-	oru->ru_msgrcv = ru->ru_msgrcv;
-	oru->ru_nsignals = ru->ru_nsignals;
-	oru->ru_nvcsw = ru->ru_nvcsw;
-	oru->ru_nivcsw = ru->ru_nivcsw;
 }
 
 int
@@ -1373,7 +1307,8 @@ osf1_sys_wait4(p, v, retval)
 		error = copyin((caddr_t)SCARG(&a, rusage),
 		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
 		if (error == 0) {
-			cvtrusage2osf1(&netbsd_rusage, &osf1_rusage);
+			osf1_cvt_rusage_from_native(&netbsd_rusage,
+			    &osf1_rusage);
 			error = copyout((caddr_t)&osf1_rusage,
 			    (caddr_t)SCARG(uap, rusage), sizeof osf1_rusage);
 		}
