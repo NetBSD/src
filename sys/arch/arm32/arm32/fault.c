@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.37 1999/03/18 04:56:04 chs Exp $	*/
+/*	$NetBSD: fault.c,v 1.38 1999/03/23 17:14:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -79,6 +79,7 @@ extern int pmap_debug_level;
 int pmap_modified_emulation __P((pmap_t, vm_offset_t));
 int pmap_handled_emulation __P((pmap_t, vm_offset_t));
 pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
+int cowfault __P((vaddr_t));
 
 int fetchuserword __P((u_int address, u_int *location));
 extern char fusubailout[];
@@ -577,9 +578,9 @@ copyfault:
 		}
 nogo:
 		if (user == 0) {
-			printf("Failed page fault in kernel\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
+			printf("Failed page fault in kernel\n");
 			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
@@ -847,6 +848,23 @@ prefetch_abort_handler(frame)
 	}
 
 	userret(p, frame->tf_pc, sticks);
+}
+
+int
+cowfault(va)
+	vaddr_t va;
+{
+	struct vmspace *vm;
+
+	if (va >= VM_MAXUSER_ADDRESS)
+		return (EFAULT);
+
+	vm = curproc->p_vmspace;
+	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
+	    != KERN_SUCCESS)
+		return (EFAULT);
+
+	return (0);
 }
 
 /* End of fault.c */
