@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.219.2.1 2002/05/30 14:03:58 tv Exp $
+#	$NetBSD: Makefile,v 1.219.2.2 2002/05/30 23:59:12 tv Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -107,20 +107,11 @@ BIN3+=	hosts.equiv
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 
 .if make(install-etc-files)						# {
-# find out endianness of target and set proper flag for pwd_mkdb so that
-# it creates database in same endianness
-.if exists(${DESTDIR}/usr/include/sys/endian.h)
-TARGET_ENDIANNESS!= \
-	printf '\#include <sys/endian.h>\n_BYTE_ORDER\n' | \
-	${CC} -I${DESTDIR}/usr/include -E - | tail -1 | awk '{print $$1}'
-.else
-TARGET_ENDIANNESS=
-.endif
-
+.include <bsd.endian.mk>
 .if ${TARGET_ENDIANNESS} == "1234"
-TARGET_ENDIANNESS= -L
+TARGET_ENDIANNESS=	-L
 .elif ${TARGET_ENDIANNESS} == "4321"
-TARGET_ENDIANNESS= -B
+TARGET_ENDIANNESS=	-B
 .else
 TARGET_ENDIANNESS=
 .endif
