@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.29 2001/12/20 20:10:34 soren Exp $ */
+/* $NetBSD: rm.c,v 1.30 2002/05/02 13:25:09 enami Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.29 2001/12/20 20:10:34 soren Exp $");
+__RCSID("$NetBSD: rm.c,v 1.30 2002/05/02 13:25:09 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 
 	Pflag = rflag = 0;
 	while ((ch = getopt(argc, argv, "dfiPRrW")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
 			dflag = 1;
 			break;
@@ -169,7 +169,7 @@ rm_tree(char **argv)
 	if (Wflag)
 		flags |= FTS_WHITEOUT;
 	if (!(fts = fts_open(argv, flags,
-		(int (*) __P((const FTSENT **, const FTSENT **)))NULL)))
+	    (int (*) __P((const FTSENT **, const FTSENT **)))NULL)))
 		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
@@ -331,14 +331,14 @@ rm_overwrite(char *file, struct stat *sbp)
 	if ((fd = open(file, O_WRONLY, 0)) == -1)
 		goto err;
 
-#define	PASS(byte) {							\
+#define	PASS(byte) do {							\
 	memset(buf, byte, sizeof(buf));					\
 	for (len = sbp->st_size; len > 0; len -= wlen) {		\
 		wlen = len < sizeof(buf) ? len : sizeof(buf);		\
 		if (write(fd, buf, wlen) != wlen)			\
 			goto err;					\
 	}								\
-}
+} while (/* CONSTCOND */ 0)
 	PASS(0xff);
 	if (fsync(fd) || lseek(fd, (off_t)0, SEEK_SET))
 		goto err;
@@ -352,7 +352,6 @@ rm_overwrite(char *file, struct stat *sbp)
 err:	eval = 1;
 	warn("%s", file);
 }
-
 
 int
 check(char *path, char *name, struct stat *sp)
@@ -371,7 +370,7 @@ check(char *path, char *name, struct stat *sp)
 		 * first because we may not have stat'ed the file.
 		 */
 		if (!stdin_ok || S_ISLNK(sp->st_mode) ||
-			!(access(name, W_OK) && (errno != ETXTBSY)))
+		    !(access(name, W_OK) && (errno != ETXTBSY)))
 			return (1);
 		strmode(sp->st_mode, modep);
 		(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
@@ -430,6 +429,7 @@ checkdot(char **argv)
 void
 usage(void)
 {
+
 	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrW] file ...\n",
 	    getprogname());
 	exit(1);
