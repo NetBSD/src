@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/02/26 22:31:59 tv Exp $
+#	$NetBSD: Makefile,v 1.20 2002/02/27 04:43:22 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -28,14 +28,14 @@ CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 bootstrap-libgcc: .configure_done
 	@echo 'Creating files needed for libgcc by a native bootstrap build.'
 	@MAKE=${MAKE:Q} sh ${.CURDIR}/mknative libgcc \
-		${.OBJDIR}/.native ${.CURDIR}/../.. ${MACHINE_GNU_PLATFORM}
+		${.OBJDIR}/build ${.CURDIR}/../.. ${MACHINE_GNU_PLATFORM}
 
 native: .native/.configure_done
 	@echo 'Extracting GNU configury for a native toolchain.'
 	@MAKE=${MAKE:Q} sh ${.CURDIR}/mknative all \
 		${.OBJDIR}/.native ${.CURDIR}/../.. ${MACHINE_GNU_PLATFORM}
 
-.native/.configure_done: #${_GNU_CFGSRC} ${.CURDIR}/Makefile
+.native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	@mkdir .native 2>/dev/null || true
 	@PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${CONFIGURE_ENV:NC*:NLD*} \
