@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.79 2000/11/01 04:31:20 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.80 2000/11/01 05:28:09 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.80 $"
 
 maxusers	32
 
@@ -283,6 +283,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 
 # Audio support
 #audio*	at auvia?
+audio* at awacs?
 #audio*	at clcs?
 #audio*	at cmpci?
 audio*	at eap?
