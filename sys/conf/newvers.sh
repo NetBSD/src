@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.27 1997/05/10 15:40:09 lukem Exp $
+#	$NetBSD: newvers.sh,v 1.28 1999/02/02 19:40:47 cjs Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,10 @@ osr=`sh $osrelcmd`
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
-# note: pad `sccs' with spaces, so its size becomes 8
-echo "char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };" >> vers.c
+echo \
+  "char sccs[] = \
+    \"@(#)${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
+  >> vers.c
 echo \
   "char version[] = \
     \"${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
