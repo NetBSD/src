@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.19 1994/01/28 20:56:17 pk Exp $
+ *	$Id: ld.c,v 1.20 1994/02/10 20:58:50 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -2867,10 +2867,11 @@ coptxtrel(entry)
 			 * If we aren't going to be adding in the
 			 * value in memory on the next pass of the
 			 * loader, then we need to add it in from the
-			 * relocation entry.  Otherwise the work we
+			 * relocation entry, unless the symbol remains
+			 * external in our output. Otherwise the work we
 			 * did in this pass is lost.
 			 */
-			if (!RELOC_MEMORY_ADD_P(r))
+			if (!RELOC_MEMORY_ADD_P(r) && !RELOC_EXTERN_P(r))
 				RELOC_ADD_EXTRA(r) += sp->value;
 #endif
 		} else
