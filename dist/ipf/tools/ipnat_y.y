@@ -312,11 +312,10 @@ portspec:
 					  if ($$ < 0 || $$ > 65535)
 						yyerror("invalid port number");
 					}
-	| YY_STR			{ $$ = getport(NULL, $1);
-					  if (ntohl((long)$$) < 0 ||
-					      ntohl((long)$$) > 65535)
+	| YY_STR			{ int p = getport(NULL, $1);
+					  if (p < 0)
 						yyerror("invalid port number");
-					  $$ = ntohs($$);
+					  $$ = p;
 					}
 	;
 
