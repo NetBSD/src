@@ -1,5 +1,7 @@
 #	@(#)Makefile	5.11 (Berkeley) 5/21/91
 
+LOCALTIME=	US/Pacific
+
 NOOBJ=	oobj
 
 # disktab may be wrong -- hcx9 is a tahoe, but gets its own.
@@ -45,6 +47,8 @@ distribution: distrib-dirs
 	    ${DESTDIR}/etc/mtree
 	cd namedb; install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${NAMEDB} \
 	    ${DESTDIR}/etc/namedb
+	/bin/rm -f ${DESTDIR}/etc/localtime
+	ln -s ${TZDIR}/${LOCALTIME} ${DESTDIR}/etc/localtime
 	install -c -o ${BINOWN} -g operator -m 664 /dev/null \
 	    ${DESTDIR}/etc/dumpdates
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
