@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.5 1998/03/06 19:13:19 cgd Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6 1998/03/12 23:34:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -54,6 +54,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
+#include <dev/ic/wdcreg.h>
 
 struct pciide_softc {
 	struct device		sc_dev;
@@ -95,13 +96,17 @@ struct cfattach pciide_ca = {
 
 int	pciide_map_channel_compat __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
-int	pciide_compat_channel_probe __P((struct pciide_softc *,
+const char *pciide_compat_channel_probe __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
+int	pciide_probe_wdc __P((struct pciide_channel *));
 int	pciide_map_channel_native __P((struct pciide_softc *,
 	    struct pci_attach_args *, int));
 int	pciide_print __P((void *, const char *pnp));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
+
+#define	PCIIDE_PROBE_WDC_DELAY	100		/* 100us each */
+#define	PCIIDE_PROBE_WDC_NDELAY	10000		/* wait up to 1s */
 
 int
 pciide_match(parent, match, aux)
@@ -254,6 +259,7 @@ pciide_map_channel_compat(sc, pa, chan)
 	int chan;
 {
 	struct pciide_channel *cp = &sc->sc_channels[chan];
+	const char *probe_fail_reason;
 	int rv = 1;
 
 	cp->compat = 1;
@@ -296,7 +302,10 @@ pciide_map_channel_compat(sc, pa, chan)
 	 * has been disabled and that other devices are free to use
 	 * its ports.
 	 */
-	if (pciide_compat_channel_probe(sc, pa, chan) == 0) {
+	probe_fail_reason = pciide_compat_channel_probe(sc, pa, chan);
+	if (probe_fail_reason != NULL) {
+		printf("%s: %s channel ignored (%s)\n", sc->sc_dev.dv_xname,
+		    PCIIDE_CHANNEL_NAME(chan), probe_fail_reason);
 		rv = 0;
 
 		bus_space_unmap(cp->cmd_iot, cp->cmd_ioh,
@@ -334,16 +343,79 @@ out:
 	return (rv);
 }
 
-int
+const char *
 pciide_compat_channel_probe(sc, pa, chan)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
+	pcireg_t csr;
+	const char *failreason = NULL;
 
 	/*
-	 * XXX for now we claim that the devices are always present.
+	 * Check to see if something appears to be there.
 	 */
-	return (1);
+	if (!pciide_probe_wdc(&sc->sc_channels[chan])) {
+		failreason = "not responding; disabled or no drives?";
+		goto out;
+	}
+
+	/*
+	 * Now, make sure it's actually attributable to this PCI IDE
+	 * channel by trying to access the channel again while the
+	 * PCI IDE controller's I/O space is disabled.  (If the
+	 * channel no longer appears to be there, it belongs to
+	 * this controller.)  YUCK!
+	 */
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    csr & ~PCI_COMMAND_IO_ENABLE);
+	if (pciide_probe_wdc(&sc->sc_channels[chan]))
+		failreason = "other hardware responding at addresses";
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+
+out:
+	return (failreason);
+}
+
+int
+pciide_probe_wdc(cp)
+	struct pciide_channel *cp;
+{
+	u_int8_t st0, st1;
+	int timeout;
+
+	/*
+	 * Sanity check to see if the wdc channel responds at all.
+	 * (Modeled on wdc_init_controller() and wdc_reset() in wdc.c.)
+	 *
+	 * Reset the channel, and make sure that it responds sanely
+	 * after it's been reset.
+	 */
+
+        /* Reset the channel. */
+        bus_space_write_1(cp->ctl_iot, cp->ctl_ioh, wd_aux_ctlr,
+            WDCTL_RST | WDCTL_IDS); 
+        delay(1000);
+        bus_space_write_1(cp->ctl_iot, cp->ctl_ioh, wd_aux_ctlr,
+            WDCTL_IDS);
+        delay(1000);
+        (void)bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_error);
+
+	timeout = 0;
+	while (timeout++ < PCIIDE_PROBE_WDC_NDELAY) {
+		st0 = bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_status);
+		bus_space_write_1(cp->cmd_iot, cp->cmd_ioh, wd_sdh,
+		    WDSD_IBM | 0x10);
+		st1 = bus_space_read_1(cp->cmd_iot, cp->cmd_ioh, wd_status);
+
+		if ((st0 & WDCS_BSY) == 0 || (st1 & WDCS_BSY) == 0)
+			return (1);
+
+		delay(PCIIDE_PROBE_WDC_DELAY);
+	}
+	/* timed out; nothing there */
+
+	return (0);	
 }
 
 int
