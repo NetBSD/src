@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.31 1999/05/16 21:19:33 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.32 1999/05/18 18:13:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -413,7 +413,7 @@ fbrcons_init(fb)
 	ri->ri_forcemono = 1;
 
 	/* Get operations set and connect to rcons */
-	if (rasops_init(ri, maxrow, maxcol, 1, 0))
+	if (rasops_init(ri, maxrow, maxcol, 0, 0))
 		panic("fbrcons_init: rasops_init failed!");
 	
 	rc->rc_ops = &ri->ri_ops;
