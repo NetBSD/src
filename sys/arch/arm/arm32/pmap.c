@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2001/11/01 15:49:16 rearnsha Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2001/11/03 00:06:02 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2001/11/01 15:49:16 rearnsha Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2001/11/03 00:06:02 rearnsha Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2345,7 +2345,7 @@ pmap_remove(pmap, sva, eva)
 	ptes = pmap_map_ptes(pmap);
 	/* Get a page table pointer */
 	while (sva < eva) {
-		if (pmap_pde_v(pmap_pde(pmap, sva)))
+		if (pmap_pde_page(pmap_pde(pmap, sva)))
 			break;
 		sva = (sva & PD_MASK) + NBPD;
 	}
@@ -2362,7 +2362,7 @@ pmap_remove(pmap, sva, eva)
 	while (sva < eva) {
 		/* Check if we can move to the next PDE (l1 chunk) */
 		if (!(sva & PT_MASK))
-			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
+			if (!pmap_pde_page(pmap_pde(pmap, sva))) {
 				sva += NBPD;
 				pte += arm_byte_to_page(NBPD);
 				continue;
@@ -2506,8 +2506,8 @@ pmap_remove_all(pa)
 		PDEBUG(0, printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
 		    pv->pv_va, pv->pv_flags));
 #ifdef DEBUG
-		if (!pmap_pde_v(pmap_pde(pmap, va)) || !pmap_pte_v(pte)
-			    || pmap_pte_pa(pte) != pa)
+		if (!pmap_pde_page(pmap_pde(pmap, pv->pv_pa)) ||
+		    !pmap_pte_v(pte) || pmap_pte_pa(pte) != pa)
 			panic("pmap_remove_all: bad mapping");
 #endif	/* DEBUG */
 
@@ -2593,7 +2593,7 @@ pmap_protect(pmap, sva, eva, prot)
 	 * the following loop.
 	 */
 	while (sva < eva) {
-		if (pmap_pde_v(pmap_pde(pmap, sva)))
+		if (pmap_pde_page(pmap_pde(pmap, sva)))
 			break;
 		sva = (sva & PD_MASK) + NBPD;
 	}
@@ -2603,7 +2603,7 @@ pmap_protect(pmap, sva, eva, prot)
 	while (sva < eva) {
 		/* only check once in a while */
 		if ((sva & PT_MASK) == 0) {
-			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
+			if (!pmap_pde_page(pmap_pde(pmap, sva))) {
 				/* We can race ahead here, to the next pde. */
 				sva += NBPD;
 				pte += arm_byte_to_page(NBPD);
@@ -2898,8 +2898,13 @@ pmap_kenter_pa(va, pa, prot)
 	pt_entry_t *pte;
 	struct vm_page *pg;
  
-	if (!pmap_pde_v(pmap_pde(pmap, va))) {
+	if (!pmap_pde_page(pmap_pde(pmap, va))) {
 
+#ifdef DIAGNOSTIC
+		if (pmap_pde_v(pmap_pde(pmap, va)))
+			panic("Trying to map kernel page into section mapping"
+			    " VA=%lx PA=%lx", va, pa);
+#endif
 		/* 
 		 * For the kernel pmaps it would be better to ensure
 		 * that they are always present, and to grow the
@@ -2939,7 +2944,7 @@ pmap_kremove(va, len)
 		 * regions of memory.
 		 */
 
-		KASSERT(pmap_pde_v(pmap_pde(pmap_kernel(), va)));
+		KASSERT(pmap_pde_page(pmap_pde(pmap_kernel(), va)));
 		pte = vtopte(va);
 		cpu_cache_purgeID_rng(va, PAGE_SIZE);
 		*pte = 0;
@@ -3051,7 +3056,7 @@ pmap_pte(pmap, va)
 	    pmap, va, pmap_pde(pmap, va), *(pmap_pde(pmap, va))));
 
 	/* Do we have a valid pde ? If not we don't have a page table */
-	if (!pmap_pde_v(pmap_pde(pmap, va))) {
+	if (!pmap_pde_page(pmap_pde(pmap, va))) {
 		PDEBUG(0, printf("pmap_pte: failed - pde = %p\n",
 		    pmap_pde(pmap, va)));
 		return(NULL); 
@@ -3146,8 +3151,9 @@ pmap_extract(pmap, va, pap)
 	/*
 	 * If there is no pte then there is no page table etc.
 	 * Is the pte valid ? If not then no paged is actually mapped here
+	 * XXX Should we handle section mappings?
 	 */
-	if (!pmap_pde_v(pmap_pde(pmap, va)) || !pmap_pte_v(pte)){
+	if (!pmap_pde_page(pmap_pde(pmap, va)) || !pmap_pte_v(pte)){
 	    pmap_unmap_ptes(pmap);
     	    return (FALSE);
 	}
@@ -3656,7 +3662,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
 {
     struct vm_page *ptp;
 
-    if (pmap_pde_v(pmap_pde(pmap, va))) {
+    if (pmap_pde_page(pmap_pde(pmap, va))) {
 
 	/* valid... check hint (saves us a PA->PG lookup) */
 #if 0
