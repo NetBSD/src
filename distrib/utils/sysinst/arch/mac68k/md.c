@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.2.1 1999/04/19 15:19:29 perry Exp $ */
+/*	$NetBSD: md.c,v 1.2.2.2 1999/06/24 22:51:39 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -417,7 +417,7 @@ disp_selected_part(sel)
 }
 
 /*
- * check for any anomolies on the requested setup
+ * check for any anomalies on the requested setup
  */
 int
 check_for_errors()
@@ -439,7 +439,7 @@ check_for_errors()
 }
 
 /*
- * check for and report anomolies on the requested setup
+ * check for and report anomalies on the requested setup
  */
 void
 report_errors()
@@ -480,7 +480,7 @@ report_errors()
 	}
     }
     if (!errs)
-	msg_printf_add ("** No errors or anomolies found in disk setup.\n");
+	msg_printf_add ("** No errors or anomalies found in disk setup.\n");
     return;
 }
 
@@ -646,7 +646,7 @@ md_pre_disklabel()
      */
     if ((fd = open(devname, O_WRONLY, 0)) < 0) {
 	endwin();
-	fprintf(stderr, "Can't open %s to re-write the Disk Map\n", devname);
+	fprintf(stderr, "Can't open %s to rewrite the Disk Map\n", devname);
 	exit (1);
     }
     /*
@@ -671,7 +671,7 @@ md_pre_disklabel()
     }
     if (lseek (fd, (off_t)1 * bsize, SEEK_SET) < 0) {
 	endwin();
-	fprintf (stderr, "Can't position disk to re-write Disk Map\n");
+	fprintf (stderr, "Can't position disk to rewrite Disk Map\n");
 	close (fd);
 	exit (1);
     }
@@ -732,7 +732,7 @@ md_make_bsd_partitions(void)
 	 * Scan for any problems and report them before continuing.
 	 *  The user can abort installation and we'll take them back
 	 *  to the main menu; continue ignoring the warnings, or
-	 *  ask to re-edit the Disk Partition Map.
+	 *  ask to reedit the Disk Partition Map.
 	 */
 	while (1) {
 	    if (check_for_errors()) {
@@ -856,7 +856,8 @@ md_update (void)
 	endwin();
 	md_copy_filesystem ();
 	md_post_newfs();
-	puts (CL);
+	puts(CL);		/* XXX */
+	wclear(stdscr);
 	wrefresh(stdscr);
 	return 1;
 }
