@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2002/02/22 19:44:02 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2002/02/24 18:19:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -88,17 +88,14 @@ extern struct cpu_info cpu_info_store;
  *
  * XXX intrframe has a lot of gunk we don't need.
  */
-#define clockframe intrframe
+#define clockframe trapframe
 
-#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->if_r15, (frame)->if_ssr))
-#if 0
-#define	CLKF_BASEPRI(frame)	((frame)->if_pri == 0)
-#else
+#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->tf_r15, (frame)->tf_ssr))
 /* XXX we should fix this */
 #define	CLKF_BASEPRI(frame)	(0)
-#endif
-#define	CLKF_PC(frame)		((frame)->if_spc)
-#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
+#define	CLKF_PC(frame)		((frame)->tf_spc)
+/* XXX we should have an interrupt stack */
+#define	CLKF_INTR(frame)	(0)
 
 /*
  * Preempt the current process if in interrupt from user mode,

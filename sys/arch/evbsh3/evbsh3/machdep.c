@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2002/02/19 17:21:19 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2002/02/24 18:19:41 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -517,17 +517,10 @@ dumpsys()
 /*
  * Initialize segments and descriptor tables
  */
-#define VBRINIT		((char *)IOM_RAM_BEGIN)
-#define Trap100Vec	(VBRINIT + 0x100)
-#define Trap600Vec	(VBRINIT + 0x600)
-#define TLBVECTOR	(VBRINIT + 0x400)
 #define VADDRSTART	VM_MIN_KERNEL_ADDRESS
 
 extern int nkpde;
-extern char MonTrap100[], MonTrap100_end[];
-extern char MonTrap600[], MonTrap600_end[];
-extern char _start[], etext[], edata[], end[];
-extern char tlbmisshandler_stub[], tlbmisshandler_stub_end[];
+extern char start[], etext[], edata[], end[];
 
 void
 initSH3(pc)
@@ -561,12 +554,6 @@ initSH3(pc)
 #else
 #error "define SH3 or SH4"
 #endif
-	/*
-	 * install trap handler
-	 */
-	memcpy(Trap100Vec, MonTrap100, MonTrap100_end - MonTrap100);
-	memcpy(Trap600Vec, MonTrap600, MonTrap600_end - MonTrap600);
-	__asm ("ldc %0, vbr" :: "r"(VBRINIT));
 
 /*
  *                          edata  end
@@ -604,11 +591,6 @@ initSH3(pc)
 
 	/* set PageDirReg */
 	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
-
-	/* Set TLB miss handler */
-	p = tlbmisshandler_stub;
-	x = tlbmisshandler_stub_end - p;
-	memcpy(TLBVECTOR, p, x);
 
 	/*
 	 * Activate MMU
@@ -669,8 +651,8 @@ initSH3(pc)
 	u_short *p, sum;
 	int size;
 
-	size = etext - _start;
-	p = (u_short *)_start;
+	size = etext - start;
+	p = (u_short *)start;
 	sum = 0;
 	size >>= 1;
 	while (size--)

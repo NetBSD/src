@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.25 2002/02/22 19:44:05 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.26 2002/02/24 18:19:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_kgdb.h"
+#include "opt_memsize.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -118,10 +119,21 @@ struct vm_map *phys_map = NULL;
 
 extern int physmem;
 
+#ifndef IOM_RAM_BEGIN
+#error "define IOM_RAM_BEGIN"
+#endif
+#define VBR	(u_int8_t *)IOM_RAM_BEGIN
+vaddr_t ram_start = IOM_RAM_BEGIN;
+/* exception handler holder (sh3/sh3/exception_vector.S) */
+extern char sh_vector_generic[], sh_vector_generic_end[];
+extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
+extern char sh_vector_tlbmiss[], sh_vector_tlbmiss_end[];
+
+u_int32_t __sh_BBRA; //XXX
+
 void
 sh_cpu_init(int arch, int product)
 {
-
 	/* CPU type */
 	cpu_arch = arch;
 	cpu_product = product;
@@ -134,6 +146,18 @@ sh_cpu_init(int arch, int product)
 
 	/* Hardclock, RTC initialize. */
 	machine_clock_init();
+
+	/* Exception vector. */
+	memcpy(VBR + 0x100, sh_vector_generic,
+	    sh_vector_generic_end - sh_vector_generic);
+	memcpy(VBR + 0x400, sh_vector_tlbmiss,
+	    sh_vector_tlbmiss_end - sh_vector_tlbmiss);
+	memcpy(VBR + 0x600, sh_vector_interrupt,
+	    sh_vector_interrupt_end - sh_vector_interrupt);
+	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBR));
+
+
+	__sh_BBRA = CPU_IS_SH3 ? 0xffffffb8 : 0xff200008; //XXX
 }
 
 void
@@ -149,6 +173,10 @@ sh3_startup()
 	char pbuf[9];
 
 	printf(version);
+
+	/* Check exception vector size here. */
+	KDASSERT(sh_vector_generic_end - sh_vector_generic < 0x300);
+	KDASSERT(sh_vector_tlbmiss_end - sh_vector_tlbmiss < 0x200);
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	sprintf(cpu_model, "HITACHI SH%d %d.%02dMHz PCLOCK %d.%02d MHz",
