@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.42 2002/03/12 03:45:02 simonb Exp $	*/
+/*	$NetBSD: jobs.c,v 1.43 2002/03/22 19:50:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.42 2002/03/12 03:45:02 simonb Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.43 2002/03/22 19:50:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -416,7 +416,8 @@ waitcmd(argc, argv)
 					break;
 			}
 		}
-		dowait(1, (struct job *)NULL);
+		if (dowait(1, (struct job *)NULL) == -1)
+		       return 128 + SIGINT;
 	}
 }
 
@@ -775,12 +776,13 @@ dowait(block, job)
 	int stopped;
 	int core;
 	int sig;
+	extern volatile char gotsig[];
 
 	TRACE(("dowait(%d) called\n", block));
 	do {
 		pid = waitproc(block, job, &status);
 		TRACE(("wait returns %d, status=%d\n", pid, status));
-	} while (pid == -1 && errno == EINTR);
+	} while (pid == -1 && errno == EINTR && gotsig[SIGINT - 1] == 0);
 	if (pid <= 0)
 		return pid;
 	INTOFF;
