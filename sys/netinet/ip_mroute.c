@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.41 1999/02/02 07:10:45 marc Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.42 1999/03/27 21:47:59 nathanw Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1694,8 +1694,8 @@ tbf_send_packet(vifp, m)
 				  IP_FORWARDING|IP_MULTICASTOPTS, &imo);
 
 		if (mrtdebug & DEBUG_XMIT)
-			log(LOG_DEBUG, "phyint_send on vif %d err %d\n",
-			    vifp-viftable, error);
+			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
+			    (long)(vifp-viftable), error);
 	}
 	splx(s);
 }
