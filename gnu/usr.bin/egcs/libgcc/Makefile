@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/04/03 06:58:16 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1998/04/07 13:18:36 tv Exp $
 
 .PATH: ${.CURDIR}/../../../dist/gcc/cp ${.CURDIR}/../../../dist/gcc/cp/inc
 LIB=	gcc
@@ -27,7 +27,7 @@ LIB2OBJS+=__gcc_bcmp.o _varargs.o _eprintf.o _op_new.o _new_handler.o \
 HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo 
 
 # Extra code to include in libgcc2 for C++ support.
-.if !defined(EGCS_BOOTSTRAP) && ${HAVE_GCC28} != ""
+.if (${HAVE_GCC28} != "")
 SRCS+=		tinfo.cc tinfo2.cc new.cc new1.cc new2.cc exception.cc frame.c
 CXXFLAGS+=	-I${DIST}/cp/inc
 LIB2OBJS+=	_eh.o
