@@ -803,7 +803,7 @@ sun_sendsig(catcher, sig, mask, code)
 
 	/* have the user-level trampoline code sort out what registers it
 	   has to preserve. */
-	frame->f_pc = catcher;
+	frame->f_pc = (u_int) catcher;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sun_sendsig(%d): sig %d returns\n",
@@ -959,12 +959,15 @@ sigreturn(p, uap, retval)
 /* this is a "light weight" version of the NetBSD sigreturn, just for
    SunOS processes. We don't have to restore any hardware frames,
    registers, fpu stuff, that's all done in user space. */
+
+struct sun_sigreturn_args {
+    struct sun_sigcontext *sigcntxp;
+};
+
 int
 sun_sigreturn(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct sun_sigcontext *sigcntxp;
-	} *uap;
+	struct sun_sigreturn_args *uap;
 	int *retval;
 {
 	register struct sun_sigcontext *scp;
