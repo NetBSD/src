@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2000/02/29 15:21:29 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2000/08/14 09:55:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,8 +96,7 @@ void softnet __P((void));
 void softserial __P((void));
 
 static __inline int splraise __P((int));
-static __inline int spllower __P((int));
-static __inline void splx __P((int));
+static __inline void spllower __P((int));
 static __inline void set_sint __P((int));
 
 extern volatile int cpl, ipending, astpending, tickspending;
@@ -123,29 +122,15 @@ splraise(newcpl)
 }
 
 static __inline void
-splx(newcpl)
-	int newcpl;
-{
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	cpl = newcpl;
-	if(ipending & ~newcpl)
-		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-}
-
-static __inline int
 spllower(newcpl)
 	int newcpl;
 {
-	int oldcpl;
 
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
-	return(oldcpl);
 }
 
 /* Following code should be implemented with lwarx/stwcx to avoid
@@ -200,6 +185,7 @@ set_sint(pending)
 #define	setsoftserial()	set_sint(SINT_SERIAL);
 
 #define	splhigh()	splraise(imask[IPL_HIGH])
+#define	splx(x)		spllower(x)
 #define	spl0()		spllower(0)
 
 #endif /* !_LOCORE */
