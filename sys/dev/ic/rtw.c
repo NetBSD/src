@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.14 2004/12/23 05:52:27 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.15 2004/12/23 05:54:54 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.14 2004/12/23 05:52:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.15 2004/12/23 05:54:54 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1540,9 +1540,16 @@ rtw_kick(struct rtw_softc *sc)
 	int pri;
 	struct rtw_regs *regs = &sc->sc_regs;
 
-	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
 	RTW_WRITE16(regs, RTW_IMR, 0);
-	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
+	RTW_WBW(regs, RTW_IMR, RTW_TPPOLL);
+
+	RTW_WRITE8(regs, RTW_TPPOLL,
+	    RTW_TPPOLL_SBQ|RTW_TPPOLL_SHPQ|RTW_TPPOLL_SNPQ|RTW_TPPOLL_SLPQ);
+
+	RTW_SYNC(regs, RTW_TPPOLL, RTW_TPPOLL);
+
+	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
+
 	rtw_rxbufs_release(sc->sc_dmat, &sc->sc_rxctl[0]);
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
