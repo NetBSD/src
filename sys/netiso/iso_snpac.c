@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.16.6.1 1997/02/18 18:34:46 is Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.16.6.2 1997/03/10 13:25:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -83,7 +83,6 @@ SOFTWARE.
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>

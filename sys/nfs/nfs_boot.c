@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.30.2.1 1997/02/07 18:10:17 is Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.30.2.2 1997/03/10 12:56:39 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -46,7 +46,7 @@
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

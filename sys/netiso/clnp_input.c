@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.14.6.1 1997/02/18 18:34:48 is Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.14.6.2 1997/03/10 13:25:44 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -86,7 +86,6 @@ SOFTWARE.
 #include <netiso/esis.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
 #include <netiso/eonvar.h>
 #include <netiso/clnp_stat.h>
 #include <netiso/argo_debug.h>
