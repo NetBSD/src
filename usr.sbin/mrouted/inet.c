@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.10 2003/05/16 18:10:38 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.11 2003/05/16 22:59:50 dsl Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -13,13 +13,11 @@
 #include "defs.h"
 
 
-/*
- * Exported variables.
- */
-char s1[19];		/* buffers to hold the string representations  */
-char s2[19];		/* of IP addresses, to be passed to inet_fmt() */
-char s3[19];		/* or inet_fmts().                             */
-char s4[19];
+/* buffers to hold the string representations  */
+/* of IP addresses, returned by inet_fmt{s}() */
+#define SS_MASK	((1 << 3) - 1)
+static char ss[SS_MASK + 1][32];
+static int ss_index = 0;	/* index into above */
 
 
 /*
@@ -103,12 +101,13 @@ inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask)
  * Convert an IP address in u_long (network) format into a printable string.
  */
 char *
-inet_fmt(u_int32_t addr, char *s, size_t len)
+inet_fmt(u_int32_t addr)
 {
     u_char *a;
+    char *s = ss[++ss_index & SS_MASK];
 
     a = (u_char *)&addr;
-    snprintf(s, len, "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
+    snprintf(s, sizeof ss[0], "%u.%u.%u.%u", a[0], a[1], a[2], a[3]);
     return (s);
 }
 
@@ -118,24 +117,25 @@ inet_fmt(u_int32_t addr, char *s, size_t len)
  * string including the netmask as a number of bits.
  */
 char *
-inet_fmts(u_int32_t addr, u_int32_t mask, char *s, size_t len)
+inet_fmts(u_int32_t addr, u_int32_t mask)
 {
     u_char *a, *m;
     int bits;
+    char *s = ss[++ss_index & SS_MASK];
 
     if ((addr == 0) && (mask == 0)) {
-	snprintf(s, len, "default");
+	snprintf(s, sizeof ss[0], "default");
 	return (s);
     }
     a = (u_char *)&addr;
     m = (u_char *)&mask;
     bits = 33 - ffs(ntohl(mask));
 
-    if      (m[3] != 0) snprintf(s, len, "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3],
+    if      (m[3] != 0) snprintf(s, sizeof ss[0], "%u.%u.%u.%u/%d", a[0], a[1], a[2], a[3],
 						bits);
-    else if (m[2] != 0) snprintf(s, len, "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
-    else if (m[1] != 0) snprintf(s, len, "%u.%u/%d",       a[0], a[1], bits);
-    else                snprintf(s, len, "%u/%d",          a[0], bits);
+    else if (m[2] != 0) snprintf(s, sizeof ss[0], "%u.%u.%u/%d",    a[0], a[1], a[2], bits);
+    else if (m[1] != 0) snprintf(s, sizeof ss[0], "%u.%u/%d",       a[0], a[1], bits);
+    else                snprintf(s, sizeof ss[0], "%u/%d",          a[0], bits);
 
     return (s);
 }
@@ -147,20 +147,28 @@ inet_fmts(u_int32_t addr, u_int32_t mask, char *s, size_t len)
  * with "255.255.255.255".)
  */
 u_int32_t
-inet_parse(char *s)
+inet_parse(char *s, int *mask_p)
 {
     u_int32_t a = 0;
     u_int a0, a1, a2, a3;
     char c;
+    int mask = 0;
+    int n;
 
-    if (sscanf(s, "%u.%u.%u.%u%c", &a0, &a1, &a2, &a3, &c) != 4 ||
-	a0 > 255 || a1 > 255 || a2 > 255 || a3 > 255)
+    n = sscanf(s, "%u.%u.%u.%u/%d%c", &a0, &a1, &a2, &a3, &mask, &c);
+    if (n < 4 || (n == 4 && mask_p) || (n == 5 && !mask_p) || n >= 6)
+	return (0xffffffff);
+
+    if (a0 > 255 || a1 > 255 || a2 > 255 || a3 > 255)
 	return (0xffffffff);
 
     ((u_char *)&a)[0] = a0;
     ((u_char *)&a)[1] = a1;
     ((u_char *)&a)[2] = a2;
     ((u_char *)&a)[3] = a3;
+
+    if (mask_p)
+	*mask_p = mask;
 
     return (a);
 }
