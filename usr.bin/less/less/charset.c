@@ -1,4 +1,4 @@
-/*	$NetBSD: charset.c,v 1.1.1.3 1997/09/21 12:22:58 mrg Exp $	*/
+/*	$NetBSD: charset.c,v 1.2 1998/02/22 14:57:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -61,6 +61,9 @@ static char chardef[256];
 static char *binfmt = NULL;
 public int binattr = AT_STANDOUT;
 
+static void ichardef __P((char *));
+static int icharset __P((char *));
+static void ilocale __P((void));
 
 /*
  * Define a charset, given a description string.
@@ -249,7 +252,7 @@ init_charset()
  */
 	public int
 binary_char(c)
-	unsigned char c;
+	unsigned int c;
 {
 	c &= 0377;
 	return (chardef[c] & IS_BINARY_CHAR);

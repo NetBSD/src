@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.1.1.3 1997/09/21 12:22:51 mrg Exp $	*/
+/*	$NetBSD: line.c,v 1.2 1998/02/22 14:57:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -51,7 +51,14 @@ static int is_null_line;	/* There is no current line */
 static char pendc;
 static POSITION pendpos;
 
-static int do_append();
+
+static void pshift __P((int));
+static int attr_swidth __P((int));
+static int attr_ewidth __P((int));
+static int pwidth __P((int, int));
+static void backc __P((void));
+static int storec __P((int, int, POSITION));
+static int do_append __P((int, POSITION));
 
 extern int bs_mode;
 extern int tabstop;

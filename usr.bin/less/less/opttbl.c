@@ -1,4 +1,4 @@
-/*	$NetBSD: opttbl.c,v 1.3 1997/09/21 12:41:01 mrg Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.4 1998/02/22 14:57:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -71,175 +71,177 @@ public int hilite_search;	/* Highlight matched search patterns? */
 static struct option option[] =
 {
 	{ 'a', BOOL, OPT_OFF, &how_search, NULL,
-		"Search includes displayed screen",
+		{ "Search includes displayed screen",
 		"Search skips displayed screen",
-		NULL
+		NULL }
 	},
 	{ 'b', NUMBER, 10, &cbufs, opt_b, 
-		"Buffers: ",
+		{ "Buffers: ",
 		"%d buffers",
-		NULL
+		NULL }
 	},
 	{ 'B', BOOL, OPT_ON, &autobuf, NULL,
-		"Don't automatically allocate buffers",
+		{ "Don't automatically allocate buffers",
 		"Automatically allocate buffers when needed",
-		NULL
+		NULL }
 	},
 	{ 'c', TRIPLE, OPT_OFF, &top_scroll, NULL,
-		"Repaint by scrolling from bottom of screen",
+		{ "Repaint by scrolling from bottom of screen",
 		"Repaint by clearing each line",
-		"Repaint by painting from top of screen"
+		"Repaint by painting from top of screen" }
 	},
 #if 1
 	{ 'd', BOOL, OPT_OFF, &be_helpful, NULL,
-		"Be helpful in prompts",
-		"Be less helpful in prompts",
-	NULL,
-		},
+		{ "Be helpful in prompts",
+		"Be less helpful in prompts", 
+		NULL }
+	},
 #else
 	{ 'd', BOOL|NO_TOGGLE, OPT_OFF, &know_dumb, NULL,
-		"Assume intelligent terminal",
+		{ "Assume intelligent terminal",
 		"Assume dumb terminal",
-		NULL
+		NULL }
 	},
 #endif
 #if MSDOS_COMPILER
 	{ 'D', STRING|REPAINT|NO_QUERY, 0, NULL, opt_D,
-		"color desc: ", NULL, NULL
+		{ "color desc: ", NULL, NULL }
 	},
 #endif
 	{ 'e', TRIPLE, OPT_OFF, &quit_at_eof, NULL,
-		"Don't quit at end-of-file",
+		{ "Don't quit at end-of-file",
 		"Quit at end-of-file",
-		"Quit immediately at end-of-file"
+		"Quit immediately at end-of-file" }
 	},
 	{ 'f', BOOL, OPT_OFF, &force_open, NULL,
-		"Open only regular files",
+		{ "Open only regular files",
 		"Open even non-regular files",
-		NULL
+		NULL }
 	},
 #if HILITE_SEARCH
 	{ 'g', TRIPLE|HL_REPAINT, OPT_ONPLUS, &hilite_search, NULL,
-		"Don't highlight search matches",
+		{ "Don't highlight search matches",
 		"Highlight matches for previous search only",
-		"Highlight all matches for previous search pattern",
+		"Highlight all matches for previous search pattern" }
 	},
 #endif
 	{ 'h', NUMBER, -1, &back_scroll, NULL,
-		"Backwards scroll limit: ",
+		{ "Backwards scroll limit: ",
 		"Backwards scroll limit is %d lines",
-		NULL
+		NULL }
 	},
 	{ 'i', TRIPLE|HL_REPAINT, OPT_OFF, &caseless, opt_i,
-		"Case is significant in searches",
+		{ "Case is significant in searches",
 		"Ignore case in searches",
-		"Ignore case in searches and in patterns"
+		"Ignore case in searches and in patterns" }
 	},
 	{ 'j', NUMBER, 1, &jump_sline, NULL,
-		"Target line: ",
+		{ "Target line: ",
 		"Position target at screen line %d",
-		NULL
+		NULL }
 	},
 #if USERFILE
 	{ 'k', STRING|NO_TOGGLE|NO_QUERY, 0, NULL, opt_k,
-		NULL, NULL, NULL
+		{ NULL, NULL, NULL }
 	},
 #endif
 	{ 'l', STRING|NO_TOGGLE|NO_QUERY, 0, NULL, opt_l,
-		NULL, NULL, NULL
+		{ NULL, NULL, NULL }
 	},
 	{ 'm', TRIPLE, OPT_OFF, &pr_type, NULL,
-		"Short prompt",
+		{ "Short prompt",
 		"Medium prompt",
-		"Long prompt"
+		"Long prompt" }
 	},
 	{ 'n', TRIPLE|REPAINT, OPT_ON, &linenums, NULL,
-		"Don't use line numbers",
+		{ "Don't use line numbers",
 		"Use line numbers",
-		"Constantly display line numbers"
+		"Constantly display line numbers" }
 	},
 #if LOGFILE
 	{ 'o', STRING, 0, NULL, opt_o,
-		"log file: ", NULL, NULL
+		{ "log file: ", NULL, NULL }
 	},
 	{ 'O', STRING, 0, NULL, opt__O,
-		"Log file: ", NULL, NULL
+		{ "Log file: ", NULL, NULL }
 	},
 #endif
 	{ 'p', STRING|NO_TOGGLE|NO_QUERY, 0, NULL, opt_p,
-		NULL, NULL, NULL
+		{ NULL, NULL, NULL }
 	},
 	{ 'P', STRING, 0, NULL, opt__P,
-		"prompt: ", NULL, NULL
+		{ "prompt: ", NULL, NULL }
 	},
 	{ 'q', TRIPLE, OPT_OFF, &quiet, NULL,
-		"Ring the bell for errors AND at eof/bof",
+		{ "Ring the bell for errors AND at eof/bof",
 		"Ring the bell for errors but not at eof/bof",
-		"Never ring the bell"
+		"Never ring the bell" }
 	},
 	{ 'r', BOOL|REPAINT, OPT_ON, &ctldisp, NULL,
-		"Display control characters directly",
+		{ "Display control characters directly",
 		"Display control characters as ^X",
-		NULL
+		NULL }
 	},
 	{ 's', BOOL|REPAINT, OPT_OFF, &squeeze, NULL,
-		"Display all blank lines",
+		{ "Display all blank lines",
 		"Squeeze multiple blank lines",
-		NULL
+		NULL }
 	},
 	{ 'S', BOOL|REPAINT, OPT_OFF, &chopline, NULL,
-		"Fold long lines",
+		{ "Fold long lines",
 		"Chop long lines",
-		NULL
+		NULL }
 	},
 #if TAGS
 	{ 't', STRING|NO_QUERY, 0, NULL, opt_t,
-		"tag: ", NULL, NULL
+		{ "tag: ", NULL, NULL }
 	},
 	{ 'T', STRING, 0, NULL, opt__T,
-		"tags file: ", NULL, NULL
+		{ "tags file: ", NULL, NULL }
 	},
 #endif
 	{ 'u', TRIPLE|REPAINT, OPT_OFF, &bs_mode, NULL,
-		"Display underlined text in underline mode",
+		{ "Display underlined text in underline mode",
 		"Backspaces cause overstrike",
-		"Print backspace as ^H"
+		"Print backspace as ^H" }
 	},
 	{ 'V', NOVAR, 0, NULL, opt__V,
-		NULL, NULL, NULL
+		{ NULL, NULL, NULL }
 	},
 	{ 'w', BOOL|REPAINT, OPT_ON, &twiddle, NULL,
-		"Display nothing for lines after end-of-file",
+		{ "Display nothing for lines after end-of-file",
 		"Display ~ for lines after end-of-file",
-		NULL
+		NULL }
 	},
 	{ 'x', NUMBER|REPAINT, 8, &tabstop, NULL,
-		"Tab stops: ",
+		{ "Tab stops: ",
 		"Tab stops every %d spaces", 
-		NULL
+		NULL }
 	},
 	{ 'X', BOOL|NO_TOGGLE, OPT_OFF, &no_init, NULL,
-		"Send init/deinit strings to terminal",
+		{ "Send init/deinit strings to terminal",
 		"Don't use init/deinit strings",
-		NULL
+		NULL }
 	},
 	{ 'y', NUMBER, -1, &forw_scroll, NULL,
-		"Forward scroll limit: ",
+		{ "Forward scroll limit: ",
 		"Forward scroll limit is %d lines",
-		NULL
+		NULL }
 	},
 	{ 'z', NUMBER, -1, &swindow, NULL,
-		"Scroll window size: ",
+		{ "Scroll window size: ",
 		"Scroll window size is %d lines",
-		NULL
+		NULL }
 	},
 	{ '"', STRING, 0, NULL, opt_quote,
-		"quotes: ", NULL, NULL
+		{ "quotes: ", NULL, NULL }
 	},
 	{ '?', NOVAR, 0, NULL, opt_query,
-		NULL, NULL, NULL
+		{ NULL, NULL, NULL }
 	},
-	{ '\0' }
+	{ '\0', NOVAR, 0, NULL, NULL,
+		{ NULL, NULL, NULL }
+	}
 };
 
 

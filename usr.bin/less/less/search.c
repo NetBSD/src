@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1.1.3 1997/09/21 12:23:08 mrg Exp $	*/
+/*	$NetBSD: search.c,v 1.2 1998/02/22 14:57:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -58,7 +58,21 @@ extern char *__loc1;
 #include "regexp.h"
 #endif
 
-static int match();
+
+static void cvt_text __P((char *, char *, int));
+static int is_ucase __P((char *));
+static int prev_pattern __P((void));
+static int compile_pattern __P((char *, int));
+static void uncompile_pattern __P((void));
+static int match_pattern __P((char *, char **, char **));
+struct hilite;
+static void add_hilite __P((struct hilite *, struct hilite *));
+static void adj_hilite __P((struct hilite *, POSITION));
+static void hilite_line __P((POSITION, char *, char *, char *));
+static void hilite_screen __P((void));
+static POSITION search_pos __P((int));
+static int search_range __P((POSITION, POSITION, int, int, int, POSITION *, POSITION *));
+static int match __P((char *, char *, char **, char **));
 
 extern int sigs;
 extern int how_search;
