@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.41 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: iop.c,v 1.42 2003/12/09 19:43:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.41 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.42 2003/12/09 19:43:54 ad Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -244,6 +244,7 @@ static int	iop_passthrough(struct iop_softc *, struct ioppt *,
 static void	iop_reconf_thread(void *);
 static void	iop_release_mfa(struct iop_softc *, u_int32_t);
 static int	iop_reset(struct iop_softc *);
+static int	iop_sys_enable(struct iop_softc *);
 static int	iop_systab_set(struct iop_softc *);
 static void	iop_tfn_print(struct iop_softc *, struct i2o_fault_notify *);
 
@@ -548,8 +549,7 @@ iop_config_interrupts(struct device *self)
 		printf("%s: unable to set system table\n", sc->sc_dv.dv_xname);
 		return;
 	}
-	if (iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_ENABLE, IOP_ICTX, 1,
-	    30000) != 0) {
+	if (iop_sys_enable(sc) != 0) {
 		printf("%s: unable to enable system\n", sc->sc_dv.dv_xname);
 		return;
 	}
@@ -1229,6 +1229,39 @@ iop_lct_get(struct iop_softc *sc)
 }
 
 /*
+ * Post a SYS_ENABLE message to the adapter.
+ */
+int
+iop_sys_enable(struct iop_softc *sc)
+{
+	struct iop_msg *im;
+	struct i2o_msg mf;
+	int rv;
+
+	im = iop_msg_alloc(sc, IM_WAIT | IM_NOSTATUS);
+
+	mf.msgflags = I2O_MSGFLAGS(i2o_msg);
+	mf.msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_SYS_ENABLE);
+	mf.msgictx = IOP_ICTX;
+	mf.msgtctx = im->im_tctx;
+
+	rv = iop_msg_post(sc, im, &mf, 30000);
+	if (rv == 0) {
+		if ((im->im_flags & IM_FAIL) != 0)
+			rv = ENXIO;
+		else if (im->im_reqstatus == I2O_STATUS_SUCCESS ||
+		    (im->im_reqstatus == I2O_STATUS_ERROR_NO_DATA_XFER &&
+		    im->im_detstatus == I2O_DSC_INVALID_REQUEST))
+			rv = 0;
+		else
+			rv = EIO;
+	}
+
+	iop_msg_free(sc, im);
+	return (rv);
+}
+
+/*
  * Request the specified parameter group from the target.  If an initiator
  * is specified (a) don't wait for the operation to complete, but instead
  * let the initiator's interrupt handler deal with the reply and (b) place a
@@ -1240,7 +1273,6 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 {
 	struct iop_msg *im;
 	struct i2o_util_params_op *mf;
-	struct i2o_reply *rf;
 	int rv;
 	struct iop_pgop *pgop;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
@@ -1250,13 +1282,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 		iop_msg_free(sc, im);
 		return (ENOMEM);
 	}
-	if ((rf = malloc(sizeof(*rf), M_DEVBUF, M_WAITOK)) == NULL) {
-		iop_msg_free(sc, im);
-		free(pgop, M_DEVBUF);
-		return (ENOMEM);
-	}
 	im->im_dvcontext = pgop;
-	im->im_rb = rf;
 
 	mf = (struct i2o_util_params_op *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_util_params_op);
@@ -1284,11 +1310,11 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
-		if (rf->reqstatus == I2O_STATUS_ERROR_PARTIAL_XFER &&
-		    le16toh(rf->detail) == I2O_DSC_UNKNOWN_ERROR)
+		if (im->im_reqstatus == I2O_STATUS_ERROR_PARTIAL_XFER &&
+		    im->im_detstatus == I2O_DSC_UNKNOWN_ERROR)
 			rv = 0;
 		else
-			rv = (rf->reqstatus != 0 ? EIO : 0);
+			rv = (im->im_reqstatus != 0 ? EIO : 0);
 
 		if (rv != 0)
 			printf("%s: FIELD_GET failed for tid %d group %d\n",
@@ -1299,7 +1325,6 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 		iop_msg_unmap(sc, im);
 		iop_msg_free(sc, im);
 		free(pgop, M_DEVBUF);
-		free(rf, M_DEVBUF);
 	}
 
 	return (rv);
@@ -1735,6 +1760,7 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 			iop_reply_print(sc, rb);
 #endif
 		im->im_reqstatus = status;
+		im->im_detstatus = le16toh(rb->detail);
 
 		/* Copy the reply frame, if requested. */
 		if (im->im_rb != NULL) {
@@ -2540,7 +2566,8 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case IOPIOCRECONFIG:
-		rv = iop_reconfigure(sc, 0);
+		if ((rv = lockmgr(&sc->sc_conflock, LK_UPGRADE, NULL)) == 0)
+			rv = iop_reconfigure(sc, 0);
 		break;
 
 	case IOPIOCGTIDMAP:
