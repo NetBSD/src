@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.17 1998/01/12 07:37:43 thorpej Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.18 1998/02/19 06:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,6 +127,7 @@ defopts_print(name, value, arg)
 {
 	char tfname[BUFSIZ];
 	struct nvlist *nv, *option;
+	int isfsoption;
 	FILE *fp;
 
 	(void)sprintf(tfname, "tmp_%s", name);
@@ -137,14 +138,18 @@ defopts_print(name, value, arg)
 	}
 
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
-		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL) {
-			if (fprintf(fp, "/* option `%s' not defined */\n",
+		isfsoption = (ht_lookup(deffstab, nv->nv_name) != NULL);
+
+		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
+		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) {
+			if (fprintf(fp, "/* %s `%s' not defined */\n",
+			    isfsoption ? "file system" : "option",
 			    nv->nv_name) < 0)
 				goto bad;
 		} else {
 			if (fprintf(fp, "#define\t%s", option->nv_name) < 0)
 				goto bad;
-			if (option->nv_str != NULL &&
+			if (option->nv_str != NULL && isfsoption == 0 &&
 			    fprintf(fp, "\t%s", option->nv_str) < 0)
 				goto bad;
 			if (fputc('\n', fp) < 0)
