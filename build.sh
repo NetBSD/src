@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.90 2003/02/06 22:19:06 enami Exp $
+#	$NetBSD: build.sh,v 1.91 2003/02/16 04:35:03 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -689,7 +689,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.90 2003/02/06 22:19:06 enami Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.91 2003/02/16 04:35:03 lukem Exp $
 #
 
 EOF
@@ -778,8 +778,16 @@ buildkernel()
 	    bomb "make depend failed in ${kernbuilddir}"
 	$runcmd "$makewrapper" $parallel all ||
 	    bomb "make all failed in ${kernbuilddir}"
-	$runcmd echo "===> New kernel should be in:"
-	$runcmd echo "	${kernbuilddir}"
+
+	if [ "$runcmd" != "echo" ]; then
+		echo "===> New kernels built:"
+		kernlist=$(awk '$1 == "config" { print $2 }' ${kernconfpath})
+		for kern in ${kernlist:-netbsd}; do
+			[ -f "${kernbuilddir}/${kern}" ] && \
+			    echo "  ${kernbuilddir}/${kern}"
+		done
+		echo "."
+	fi
 }
 
 installworld()
