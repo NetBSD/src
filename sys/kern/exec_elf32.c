@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.77 2002/11/13 15:49:44 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.78 2003/01/19 22:52:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.77 2002/11/13 15:49:44 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.78 2003/01/19 22:52:11 simonb Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -324,10 +324,8 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 	Elf_Phdr *ph = NULL;
 	Elf_Phdr *base_ph = NULL;
 	u_long phsize;
-	char *bp = NULL;
 	Elf_Addr addr = *last;
 
-	bp = path;
 	/*
 	 * 1. open file
 	 * 2. read filehdr
