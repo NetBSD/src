@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.6 1998/02/24 05:39:56 jonathan Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.7 1998/02/27 21:30:09 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -129,9 +129,11 @@ void set_fdisk_info (void)
 	
 	for (i=0; i<4; i++)
 		if (part[i][SET])
-			run_prog("/sbin/fdisk -u -f -%d -s %d/%d/%d /dev/r%sd",
-				 i, part[i][ID], part[i][START],
-				 part[i][SIZE],  diskdev);
+                        run_prog("/sbin/fdisk -u -f -%d -b %d/%d/%d "
+                                 "-s %d/%d/%d /dev/r%sd",
+                                 i, bcyl, bhead, bsec,
+                                 part[i][ID], part[i][START],
+                                 part[i][SIZE],  diskdev);
 
 	if (activepart >= 0)
 		run_prog ("/sbin/fdisk -a -%d -f /dev/r%s",
