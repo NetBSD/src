@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.46 1996/10/01 18:56:14 cgd Exp $	*/
+/*	$NetBSD: kvm.c,v 1.47 1996/10/04 03:34:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$NetBSD: kvm.c,v 1.46 1996/10/01 18:56:14 cgd Exp $";
+static char *rcsid = "$NetBSD: kvm.c,v 1.47 1996/10/04 03:34:09 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -440,10 +440,10 @@ fail:
 
 /*
  * The format while on the dump device is: (new format)
- *    kcore_seg_t cpu_hdr;
- *    (opaque)    cpu_data; (size is cpu_hdr.c_size)
- *	  kcore_seg_t mem_hdr;
- *    (memory)    mem_data; (size is mem_hdr.c_size)
+ *	kcore_seg_t cpu_hdr;
+ *	(opaque)    cpu_data; (size is cpu_hdr.c_size)
+ *	kcore_seg_t mem_hdr;
+ *	(memory)    mem_data; (size is mem_hdr.c_size)
  */
 int
 kvm_dump_mkheader(kd, dump_off)
