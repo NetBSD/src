@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.20 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.21 1999/03/29 21:51:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,8 @@
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+
+static int lfs_vinvalbuf __P((struct vnode *, struct ucred *, struct proc *, ufs_daddr_t));
 
 /* Search a block for a specific dinode. */
 struct dinode *
@@ -439,8 +441,10 @@ lfs_truncate(v)
 	}
 #endif
 	fs->lfs_avail += fragstodb(fs, a_released);
-	e1 = vinvalbuf(vp, (length > 0) ? V_SAVE : 0, ap->a_cred, ap->a_p,
-		       0, 0); 
+	if(length>0)
+		e1 = lfs_vinvalbuf(vp, ap->a_cred, ap->a_p, lastblock);
+	else
+		e1 = vinvalbuf(vp, 0, ap->a_cred, ap->a_p, 0, 0); 
 	e2 = VOP_UPDATE(vp, NULL, NULL, 0);
 	if(e1)
 		printf("lfs_truncate: vinvalbuf: %d\n",e1);
@@ -448,4 +452,62 @@ lfs_truncate(v)
 		printf("lfs_truncate: update: %d\n",e2);
 
 	return (e1 ? e1 : e2 ? e2 : 0);
+}
+
+/*
+ * Get rid of blocks a la vinvalbuf; but only blocks that are of a higher
+ * lblkno than the file size allows.
+ */
+int
+lfs_vinvalbuf(vp, cred, p, maxblk)
+	register struct vnode *vp;
+	struct ucred *cred;
+	struct proc *p;
+	ufs_daddr_t maxblk;
+{
+	register struct buf *bp;
+	struct buf *nbp, *blist;
+	int i, s, error;
+
+	for (i=0;i<2;i++) {
+		if(i==0)
+			blist = vp->v_cleanblkhd.lh_first;
+		else /* i == 1 */
+			blist = vp->v_dirtyblkhd.lh_first;
+
+		for (bp = blist; bp; bp = nbp) {
+			nbp = bp->b_vnbufs.le_next;
+			s = splbio();
+			if (bp->b_flags & B_BUSY) {
+				bp->b_flags |= B_WANTED;
+				error = tsleep((caddr_t)bp,
+					(PRIBIO + 1), "lfs_vinval", 0);
+				splx(s);
+				if (error)
+					return (error);
+				break;
+			}
+			/*
+			 * Don't touch gathered buffers; and certainly don't
+			 * mark cleaner buffers B_INVAL, since that would
+			 * change them to "fake buffers".
+			 *
+			 * But get rid of anything else that's past the new
+			 * last block.
+			 */
+			bp->b_flags |= B_BUSY;
+			splx(s);
+			if((bp->b_lblkno >= 0 && bp->b_lblkno > maxblk)
+			   || (bp->b_lblkno < 0 && bp->b_lblkno < -maxblk-NIADDR))
+			{
+				if(!(bp->b_flags & (B_GATHERED|B_CALL)))
+					bp->b_flags |= B_INVAL;
+			}
+			if(bp->b_flags & B_CALL)
+				bp->b_flags &= ~B_BUSY;
+			else
+				brelse(bp);
+		}
+	}
+	return (0);
 }
