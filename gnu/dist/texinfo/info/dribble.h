@@ -1,3 +1,5 @@
+/*	$NetBSD: dribble.h,v 1.1.1.2 2003/01/17 14:54:31 wiz Exp $	*/
+
 /* dribble.h -- Functions and vars declared in dribble.c. */
 
 /* This file is part of GNU Info, a program for reading online documentation

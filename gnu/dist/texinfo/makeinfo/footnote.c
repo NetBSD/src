@@ -1,7 +1,9 @@
-/* footnote.c -- footnotes for Texinfo.
-   $Id: footnote.c,v 1.1.1.1 2001/07/25 16:20:58 assar Exp $
+/*	$NetBSD: footnote.c,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
 
-   Copyright (C) 1998, 99 Free Software Foundation, Inc.
+/* footnote.c -- footnotes for Texinfo.
+   Id: footnote.c,v 1.4 2002/11/05 03:04:26 karl Exp
+
+   Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,6 +23,7 @@
 #include "footnote.h"
 #include "macro.h"
 #include "makeinfo.h"
+#include "xml.h"
 
 /* Nonzero means that the footnote style for this document was set on
    the command line, which overrides any other settings. */
@@ -200,6 +203,18 @@ cm_footnote ()
       return;
     }
 
+  /* output_pending_notes is non-reentrant (it uses a global data
+     structure pending_notes, which it frees before it returns), and
+     TeX doesn't grok footnotes inside footnotes anyway.  Disallow
+     that.  */
+  if (already_outputting_pending_notes)
+    {
+      line_error (_("Footnotes inside footnotes are not allowed"));
+      free (marker);
+      free (note);
+      return;
+    }
+
   if (!*marker)
     {
       free (marker);
@@ -213,14 +228,21 @@ cm_footnote ()
         marker = xstrdup ("*");
     }
 
+  if (xml)
+    xml_insert_footnote (note);
+  else 
+    {
   remember_note (marker, note);
 
   /* fixme: html: footnote processing needs work; we currently ignore
      the style requested; we could clash with a node name of the form
      `fn-<n>', though that's unlikely. */
   if (html)
-    add_word_args ("<a rel=footnote href=\"#fn-%d\"><sup>%s</sup></a>",
-                   current_footnote_number, marker);
+    {
+      add_html_elt ("<a rel=\"footnote\" href=");
+      add_word_args ("\"#fn-%d\"><sup>%s</sup></a>",
+		     current_footnote_number, marker);
+    }
   else
     /* Your method should at least insert MARKER. */
     switch (footnote_style)
@@ -255,7 +277,7 @@ cm_footnote ()
         break;
       }
   current_footnote_number++;
-
+    }
   free (marker);
   free (note);
 }
@@ -274,7 +296,7 @@ output_pending_notes ()
          out there doesn't use numbers by default.  Since we rely on the
          browser to produce the footnote numbers, we need to make sure
          they ARE indeed numbers.  Pre-HTML4 browsers seem to not care.  */
-      add_word ("<hr><h4>");
+      add_word ("<div class=\"footnote\">\n<hr>\n<h4>");
       add_word (_("Footnotes"));
       add_word ("</h4>\n<ol type=\"1\">\n");
     }
@@ -328,7 +350,9 @@ output_pending_notes ()
 	    /* Make the text of every footnote begin a separate paragraph.  */
             add_word_args ("<li><a name=\"fn-%d\"></a>\n<p>",
 			   footnote->number);
+            already_outputting_pending_notes++;
             execute_string ("%s", footnote->note);
+            already_outputting_pending_notes--;
             add_word ("</p>\n");
           }
         else
@@ -350,7 +374,7 @@ output_pending_notes ()
       }
 
     if (html)
-      add_word ("</ol><hr>");
+      add_word ("</ol><hr></div>");
     close_paragraph ();
     free (array);
   }

@@ -1,13 +1,21 @@
-## Makefile.am for texinfo/lib.
-## $Id: Makefile.am,v 1.1.1.2 2001/07/25 16:20:43 assar Exp $
-## Run automake in .. to produce Makefile.in from this.
+# Id: Makefile.am,v 1.2 2002/09/26 21:59:16 karl Exp
+# Makefile.am for texinfo/lib.
+# Run automake in .. to produce Makefile.in from this.
+#
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 noinst_LIBRARIES = libtxi.a
 INCLUDES = -I../intl
 
 # Don't need to list alloca.c, etc., Automake includes them.
-libtxi_a_SOURCES = getopt.c getopt.h getopt1.c substring.c system.h \
-                   xexit.c xmalloc.c xstrdup.c
+libtxi_a_SOURCES = getopt.c getopt.h getopt1.c gettext.h substring.c system.h \
+                   xalloc.h xexit.c xmalloc.c xstrdup.c
 libtxi_a_LIBADD = @LIBOBJS@ @ALLOCA@
 libtxi_a_DEPENDENCIES = $(libtxi_a_LIBADD)
 

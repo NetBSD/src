@@ -1,5 +1,7 @@
+/*	$NetBSD: echo-area.h,v 1.1.1.2 2003/01/17 14:54:31 wiz Exp $	*/
+
 /* echo-area.h -- Functions used in reading information from the echo area.
-   $Id: echo-area.h,v 1.1.1.1 1999/02/11 03:57:19 tv Exp $
+   Id: echo-area.h,v 1.1 2002/08/25 23:38:38 karl Exp
 
    This file is part of GNU Info, a program for reading online documentation
    stored in Info format.

@@ -1,7 +1,9 @@
-/* files.h -- declarations for files.c.
-   $Id: files.h,v 1.1.1.1 2001/07/25 16:20:57 assar Exp $
+/*	$NetBSD: files.h,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
 
-   Copyright (C) 1998 Free Software Foundation, Inc.
+/* files.h -- declarations for files.c.
+   Id: files.h,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1998, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -41,5 +43,6 @@ extern char *output_name_from_input_name ();
 extern char *expand_filename ();
 extern char *filename_part ();
 extern char *pathname_part ();
+extern char *normalize_filename ();
 
 #endif /* !FILES_H */

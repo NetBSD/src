@@ -1,7 +1,9 @@
-/* html.c -- html-related utilities.
-   $Id: html.c,v 1.1.1.1 2001/07/25 16:20:58 assar Exp $
+/*	$NetBSD: html.c,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
 
-   Copyright (C) 1999 Free Software Foundation, Inc.
+/* html.c -- html-related utilities.
+   Id: html.c,v 1.8 2002/11/04 22:14:40 karl Exp
+
+   Copyright (C) 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,33 +26,62 @@
 #include "makeinfo.h"
 #include "sectioning.h"
 
+HSTACK *htmlstack = NULL;
+
 /* See html.h.  */
 int html_output_head_p = 0;
+int html_title_written = 0;
 
 void
 html_output_head ()
 {
-  char *html_title;
-  
+  static char *html_title = NULL;
+
   if (html_output_head_p)
     return;
   html_output_head_p = 1;
 
-  /* The <title> should not have markup.  */
-  html_title = title ? text_expansion (title) : _("Untitled");
+  /* The <title> should not have markup, so use text_expansion.  */
+  if (!html_title)
+    html_title = title ? text_expansion (title) : _("Untitled");
 
-  add_word_args ("<html lang=\"%s\"><head>\n<title>%s</title>\n",
+  add_word_args ("<html lang=\"%s\">\n<head>\n<title>%s</title>\n",
                  language_table[language_code].abbrev, html_title);
 
   add_word ("<meta http-equiv=\"Content-Type\" content=\"text/html");
-  if (document_encoding)
-    add_word_args ("; charset=%s", document_encoding);
+  if (document_encoding_code != no_encoding)
+    add_word_args ("; charset=%s",
+                   encoding_table[document_encoding_code].ecname);
   add_word ("\">\n");
-  
-  add_word_args ("<meta name=description content=\"%s\">\n", html_title);
-  add_word_args ("<meta name=generator content=\"makeinfo %s\">\n", VERSION);
-  add_word ("<link href=\"http://texinfo.org/\" rel=generator-home>\n");
-  add_word ("</head><body>\n\n");
+
+  if (!document_description)
+    document_description = html_title;
+
+  add_word_args ("<meta name=\"description\" content=\"%s\">\n",
+                 document_description);
+  add_word_args ("<meta name=\"generator\" content=\"makeinfo %s\">\n",
+                 VERSION);
+  add_word ("<link href=\"http://www.gnu.org/software/texinfo/\" \
+rel=\"generator-home\">\n");
+
+  if (copying_text)
+    { /* copying_text has already been fully expanded in
+         begin_insertion (by full_expansion), so use insert_ rather than
+         add_.  It is not ideal that we include the html markup here within
+         <head>, but the alternative is to have yet more and different
+         expansions of the copying text.  Yuck.  */
+      insert_string ("<!--\n");
+      insert_string (copying_text);
+      insert_string ("-->\n");
+    }
+
+  add_word ("</head>\n<body>\n");
+
+  if (title && !html_title_written && titlepage_cmd_present)
+    {
+      add_word_args ("<h1 class=\"settitle\">%s</h1>\n", html_title);
+      html_title_written = 1;
+    }
 }
 
 
@@ -78,13 +109,12 @@ escape_string (string)
         default:
           newlen++;
         }
-      i++;
     }
-  while (string[i]);
+  while (string[i++]);
 
   if (newlen == i) return string; /* Already OK. */
 
-  newstring = xmalloc (newlen + 2);
+  newstring = xmalloc (newlen);
   i = 0;
   do
     {
@@ -109,7 +139,35 @@ escape_string (string)
     }
   while (string[i++]);
   free (string);
-  return newstring - newlen -1;
+  return newstring - newlen;
+}
+
+/* Save current tag.  */
+void
+push_tag (tag)
+     char *tag;
+{
+  HSTACK *newstack = xmalloc (sizeof (HSTACK));
+
+  newstack->tag = tag;
+  newstack->next = htmlstack;
+  htmlstack = newstack;
+}
+
+/* Get last tag.  */
+void
+pop_tag ()
+{
+  HSTACK *tos = htmlstack;
+
+  if (!tos)
+    {
+      line_error (_("[unexpected] no html tag to pop"));
+      return;
+    }
+
+  htmlstack = htmlstack->next;
+  free (tos);
 }
 
 /* Open or close TAG according to START_OR_END. */
@@ -118,6 +176,9 @@ insert_html_tag (start_or_end, tag)
      int start_or_end;
      char *tag;
 {
+  char *old_tag = NULL;
+  int do_return = 0;
+
   if (!paragraph_is_open && (start_or_end == START))
     {
       /* Need to compensate for the <p> we are about to insert, or
@@ -126,24 +187,62 @@ insert_html_tag (start_or_end, tag)
       adjust_braces_following (output_paragraph_offset, 3);
       add_word ("<p>");
     }
-  add_char ('<');
+
   if (start_or_end != START)
-    add_char ('/');
-  add_word (tag);
-  add_char ('>');
+    pop_tag (tag);
+
+  if (htmlstack)
+    old_tag = htmlstack->tag;
+
+  if (htmlstack
+      && (strcmp (htmlstack->tag, tag) == 0))
+    do_return = 1;
+
+  if (start_or_end == START)
+    push_tag (tag);
+
+  if (do_return)
+    return;
+
+  /* texinfo.tex doesn't support more than one font attribute
+     at the same time.  */
+  if ((start_or_end == START) && old_tag && *old_tag)
+    {
+      add_word ("</");
+      add_word (old_tag);
+      add_char ('>');
+    }
+
+  if (*tag)
+    {
+      add_char ('<');
+      if (start_or_end != START)
+        add_char ('/');
+      add_word (tag);
+      add_char ('>');
+    }
+
+  if ((start_or_end != START) && old_tag && *old_tag)
+    {
+      add_char ('<');
+      add_word (old_tag);
+      add_char ('>');
+    }
 }
 
 /* Output an HTML <link> to the filename for NODE, including the
    other string as extra attributes. */
 void
-add_link (node, attributes)
-     char *node, *attributes;
+add_link (nodename, attributes)
+     char *nodename, *attributes;
 {
-  if (node)
+  if (nodename)
     {
-      add_word_args ("<link %s href=\"", attributes);
-      add_anchor_name (node, 1);
-      add_word ("\">\n");
+      add_html_elt ("<link ");
+      add_word_args ("%s", attributes);
+      add_word_args (" href=\"");
+      add_anchor_name (nodename, 1);
+      add_word ("\"></a>\n");
     }
 }
 
@@ -176,7 +275,170 @@ add_anchor_name (nodename, href)
      int href;
 {
   if (href)
-    add_char ('#');
+    {
+      if (splitting)
+	add_url_name (nodename, href);
+      add_char ('#');
+    }
+  /* Always add NODENAME, so that the reference would pinpoint the
+     exact node on its file.  This is so several nodes could share the
+     same file, in case of file-name clashes, but also for more
+     accurate browser positioning.  */
+  if (strcasecmp (nodename, "(dir)") == 0)
+    /* Strip the parens, but keep the original letter-case.  */
+    add_word_args ("%.3s", nodename + 1);
+  else
+    add_escaped_anchor_name (nodename);
+}
 
-  add_escaped_anchor_name (nodename);
+/* Insert the text for the name of a reference in an HTML url, aprropriate
+   for NODENAME */
+void
+add_url_name (nodename, href)
+     char *nodename;
+     int href;
+{
+    add_nodename_to_filename (nodename, href);
+}
+
+/* Only allow [-0-9a-zA-Z_.] when nodifying filenames.  This may
+   result in filename clashes; e.g.,
+
+   @node Foo ],,,
+   @node Foo [,,,
+
+   both map to Foo--.html.  If that happens, cm_node will put all
+   the nodes whose file names clash on the same file.  */
+void
+fix_filename (filename)
+     char *filename;
+{
+  char *p;
+  for (p = filename; *p; p++)
+    {
+      if (!(isalnum (*p) || strchr ("-._", *p)))
+	*p = '-';
+    }
+}
+
+/* As we can't look-up a (forward-referenced) nodes' html filename
+   from the tentry, we take the easy way out.  We assume that
+   nodenames are unique, and generate the html filename from the
+   nodename, that's always known.  */
+static char *
+nodename_to_filename_1 (nodename, href)
+     char *nodename;
+     int href;
+{
+  char *p;
+  char *filename;
+  char dirname[PATH_MAX];
+
+  if (strcasecmp (nodename, "Top") == 0)
+    {
+      /* We want to convert references to the Top node into
+	 "index.html#Top".  */
+      if (href)
+	filename = xstrdup ("index.html"); /* "#Top" is added by our callers */
+      else
+	filename = xstrdup ("Top");
+    }
+  else if (strcasecmp (nodename, "(dir)") == 0)
+    /* We want to convert references to the (dir) node into
+       "../index.html".  */
+    filename = xstrdup ("../index.html");
+  else
+    {
+      filename = xmalloc (PATH_MAX);
+      dirname[0] = '\0';
+      *filename = '\0';
+
+      /* Check for external reference: ``(info-document)node-name''
+	 Assume this node lives at: ``../info-document/node-name.html''
+
+	 We need to handle the special case (sigh): ``(info-document)'',
+	 ie, an external top-node, which should translate to:
+	 ``../info-document/info-document.html'' */
+
+      p = nodename;
+      if (*nodename == '(')
+	{
+	  int length;
+
+	  p = strchr (nodename, ')');
+	  if (p == NULL)
+	    {
+	      line_error (_("[unexpected] invalid node name: `%s'"), nodename);
+	      xexit (1);
+	    }
+
+	  length = p - nodename - 1;
+	  if (length > 5 &&
+	      FILENAME_CMPN (p - 5, ".info", 5) == 0)
+	    length -= 5;
+	  /* This is for DOS, and also for Windows and GNU/Linux
+	     systems that might have Info files copied from a DOS 8+3
+	     filesystem.  */
+	  if (length > 4 &&
+	      FILENAME_CMPN (p - 4, ".inf", 4) == 0)
+	    length -= 4;
+	  strcpy (filename, "../");
+	  strncpy (dirname, nodename + 1, length);
+	  *(dirname + length) = '\0';
+	  fix_filename (dirname);
+	  strcat (filename, dirname);
+	  strcat (filename, "/");
+	  p++;
+	}
+
+      /* In the case of just (info-document), there will be nothing
+	 remaining, and we will refer to ../info-document/, which will
+	 work fine.  */
+      strcat (filename, p);
+      if (*p)
+	{
+	  /* Hmm */
+	  fix_filename (filename + strlen (filename) - strlen (p));
+	  strcat (filename, ".html");
+	}
+    }
+
+  /* Produce a file name suitable for the underlying filesystem.  */
+  normalize_filename (filename);
+
+#if 0
+  /* We add ``#Nodified-filename'' anchor to external references to be
+     prepared for non-split HTML support.  Maybe drop this. */
+  if (href && *dirname)
+    {
+      strcat (filename, "#");
+      strcat (filename, p);
+      /* Hmm, again */
+      fix_filename (filename + strlen (filename) - strlen (p));
+    }
+#endif
+
+  return filename;
+}
+
+/* If necessary, ie, if current filename != filename of node, output
+   the node name.  */
+void
+add_nodename_to_filename (nodename, href)
+     char *nodename;
+     int href;
+{
+  /* for now, don't check: always output filename */
+  char *filename = nodename_to_filename_1 (nodename, href);
+  add_word (filename);
+  free (filename);
+}
+
+char *
+nodename_to_filename (nodename)
+     char *nodename;
+{
+  /* The callers of nodename_to_filename use the result to produce
+     <a href=, so call nodename_to_filename_1 with last arg non-zero.  */
+  return nodename_to_filename_1 (nodename, 1);
 }

@@ -1,5 +1,7 @@
+/*	$NetBSD: xstrdup.c,v 1.1.1.2 2003/01/17 14:54:30 wiz Exp $	*/
+
 /* xstrdup.c -- copy a string with out of memory checking
-   Copyright (C) 1990, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1996, 1998, 2001 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,24 +21,20 @@
 # include <config.h>
 #endif
 
-#if defined(STDC_HEADERS) || defined(HAVE_STRING_H)
+#if STDC_HEADERS || HAVE_STRING_H
 # include <string.h>
 #else
 # include <strings.h>
 #endif
 
-#if defined (__STDC__) && __STDC__
-char *xmalloc (size_t);
-char *xstrdup (char *string);
-#else
-char *xmalloc ();
-#endif
+#include <sys/types.h>
+
+#include "xalloc.h"
 
 /* Return a newly allocated copy of STRING.  */
 
 char *
-xstrdup (string)
-     char *string;
+xstrdup (const char *string)
 {
   return strcpy (xmalloc (strlen (string) + 1), string);
 }

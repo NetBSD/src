@@ -1,7 +1,9 @@
-/* signals.c -- install and maintain Info signal handlers.
-   $Id: signals.c,v 1.1.1.2 2001/07/25 16:20:53 assar Exp $
+/*	$NetBSD: signals.c,v 1.1.1.3 2003/01/17 14:54:33 wiz Exp $	*/
 
-   Copyright (C) 1993, 94, 95, 98 Free Software Foundation, Inc.
+/* signals.c -- install and maintain Info signal handlers.
+   Id: signals.c,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1993, 1994, 1995, 1998, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

@@ -1,7 +1,9 @@
-/* html.h -- declarations for html-related utilities.
-   $Id: html.h,v 1.1.1.1 2001/07/25 16:20:58 assar Exp $
+/*	$NetBSD: html.h,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
 
-   Copyright (C) 1999 Free Software Foundation, Inc.
+/* html.h -- declarations for html-related utilities.
+   Id: html.h,v 1.4 2002/10/31 22:08:23 karl Exp
+
+   Copyright (C) 1999, 2000, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,8 +22,18 @@
 #ifndef HTML_H
 #define HTML_H
 
+/* A stack of font tags.  */
+typedef struct hstack
+{
+  struct hstack *next;
+  char *tag;
+} HSTACK;
+
 /* Nonzero if we have output the <head>.  */
 extern int html_output_head_p;
+
+/* Nonzero if we have output a title, from @titlefont or @settitle.  */
+extern int html_title_written;
 
 /* Perform the <head> output.  */
 extern void html_output_head ();
@@ -40,5 +52,8 @@ extern void add_escaped_anchor_name (/* char *name */);
 
 /* See html.c.  */
 extern void add_anchor_name (/* nodename, href */);
+extern void add_url_name ( /* nodename, href */ );
+extern char* nodename_to_filename ( /* nodename */ );
+extern void add_nodename_to_filename ( /*nodename, href */ );
 
 #endif /* !HTML_H */

@@ -1,3 +1,5 @@
+/*	$NetBSD: deref.c,v 1.1.1.3 2003/01/17 14:54:37 wiz Exp $	*/
+
 /*
  * deref.c
  *

@@ -1,9 +1,9 @@
-/* terminal.h -- The external interface to terminal I/O. */
+/*	$NetBSD: terminal.h,v 1.1.1.2 2003/01/17 14:54:33 wiz Exp $	*/
 
-/* This file is part of GNU Info, a program for reading online documentation
-   stored in Info format.
+/* terminal.h -- The external interface to terminal I/O.
+   Id: terminal.h,v 1.1 2002/08/25 23:38:38 karl Exp
 
-   Copyright (C) 1993, 96, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1996, 1997, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -118,8 +118,11 @@ extern VFunction *terminal_scroll_terminal_hook;
 extern void terminal_ring_bell ();
 extern VFunction *terminal_ring_bell_hook;
 
-/* The key sequences output by the arrow keys, if this terminal has any. */
+/* The key sequences output by special keys, if this terminal has any. */
 extern char *term_ku, *term_kd, *term_kr, *term_kl;
 extern char *term_kP, *term_kN;
+extern char *term_ke, *term_kh;
+extern char *term_kx, *term_ki;
+extern char *term_kD;
 
 #endif /* !TERMINAL_H */

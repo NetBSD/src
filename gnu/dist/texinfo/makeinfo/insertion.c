@@ -1,7 +1,9 @@
-/* insertion.c -- insertions for Texinfo.
-   $Id: insertion.c,v 1.1.1.1 2001/07/25 16:20:59 assar Exp $
+/*	$NetBSD: insertion.c,v 1.1.1.2 2003/01/17 14:54:35 wiz Exp $	*/
 
-   Copyright (C) 1998, 99 Free Software Foundation, Inc.
+/* insertion.c -- insertions for Texinfo.
+   Id: insertion.c,v 1.12 2002/11/11 12:37:34 feloy Exp
+
+   Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,19 +25,21 @@
 #include "insertion.h"
 #include "macro.h"
 #include "makeinfo.h"
+#include "xml.h"
 
 /* Must match list in insertion.h.  */
 static char *insertion_type_names[] =
-{
-  "cartouche", "defcv", "deffn", "defivar", "defmac", "defmethod",
-  "defop", "defopt", "defspec", "deftp", "deftypefn", "deftypefun",
-  "deftypeivar", "deftypemethod", "deftypeop", "deftypevar",
-  "deftypevr", "defun", "defvar", "defvr", "detailmenu", "direntry",
-  "display", "enumerate", "example", "flushleft", "flushright",
-  "format", "ftable", "group", "ifclear", "ifhtml", "ifinfo",
-  "ifnothtml", "ifnotinfo", "ifnottex", "ifset", "iftex", "itemize",
-  "lisp", "menu", "multitable", "quotation", "rawhtml", "rawtex",
-  "smalldisplay", "smallexample", "smallformat", "smalllisp", "table",
+{ 
+  "cartouche", "copying", "defcv", "deffn", "defivar", "defmac",
+  "defmethod", "defop", "defopt", "defspec", "deftp", "deftypefn",
+  "deftypefun", "deftypeivar", "deftypemethod", "deftypeop",
+  "deftypevar", "deftypevr", "defun", "defvar", "defvr", "detailmenu",
+  "direntry", "display", "documentdescription", "enumerate", "example",
+  "flushleft", "flushright", "format", "ftable", "group", "ifclear",
+  "ifhtml", "ifinfo", "ifnothtml", "ifnotinfo", "ifnotplaintext", "ifnottex", "ifnotxml",
+  "ifplaintext", "ifset", "iftex", "ifxml", "itemize", "lisp", "menu",
+  "multitable", "quotation", "rawhtml", "rawtex", "smalldisplay",
+  "smallexample", "smallformat", "smalllisp", "verbatim", "table",
   "tex", "vtable", "bad_type"
 };
 
@@ -45,21 +49,23 @@ INSERTION_ELT *insertion_stack = NULL;
 /* How deeply we're nested.  */
 int insertion_level = 0;
 
-/* Whether to examine menu lines.  */
-int in_menu = 0;
+/* Set to 1 if we've processed (commentary) text in a @menu that
+   wasn't part of a menu item.  */
+int had_menu_commentary;
 
 /* How to examine menu lines.  */
 int in_detailmenu = 0;
 
-/* Set to 1 if we've processed (commentary) text in a @menu that
-   wasn't part of a menu item.  */
-int had_menu_commentary;
+/* Whether to examine menu lines.  */
+int in_menu = 0;
 
 /* Set to 1 if <p> is written in normal context. 
    Used for menu and itemize. */
 int in_paragraph = 0;
 
 static const char dl_tag[] = "<dl>\n";
+extern void cm_insert_copying ();
+
 
 void
 init_insertion_stack ()
@@ -94,15 +100,19 @@ current_item_function ()
         case ifinfo:
         case ifnothtml:
         case ifnotinfo:
+        case ifnotplaintext:
         case ifnottex:
+	case ifnotxml:
+        case ifplaintext:
         case ifset:
         case iftex:
+	case ifxml:
         case rawhtml:
         case rawtex:
         case tex:
         case cartouche:
-	  elt = elt->next;
-	  break;
+          elt = elt->next;
+          break;
       
         default:
           done = 1;
@@ -204,6 +214,8 @@ find_type_from_name (name)
       if (STREQ (name, insertion_type_names[index]))
         return (enum insertion_type) index;
       if (index == rawhtml && STREQ (name, "html"))
+        return rawhtml;
+      if (index == rawhtml && STREQ (name, "xml"))
         return rawhtml;
       if (index == rawtex && STREQ (name, "tex"))
         return rawtex;
@@ -359,7 +371,9 @@ begin_insertion (type)
       no_discard++;
     }
   else
-    push_insertion (type, get_item_function ());
+    {
+      push_insertion (type, get_item_function ());
+    }
 
   switch (type)
     {
@@ -374,9 +388,13 @@ begin_insertion (type)
         {
           had_menu_commentary = 1;
         }
-      else if (!no_headers)
+      else if (!no_headers && !xml)
         add_word ("* Menu:\n");
 
+      if (xml)
+        xml_insert_element (MENU, START);
+
+      next_menu_item_number = 1;
       in_menu++;
       in_fixed_width_font++;
       no_discard++;
@@ -399,24 +417,96 @@ begin_insertion (type)
       break;
 
     case direntry:
-      if (html)
-        command_name_condition ();
-      else
-        {
-          close_single_paragraph ();
-          filling_enabled = no_indent = 0;
-          inhibit_paragraph_indentation = 1;
-          insert_string ("START-INFO-DIR-ENTRY\n");
-        }
+      close_single_paragraph ();
+      filling_enabled = no_indent = 0;
+      inhibit_paragraph_indentation = 1;
+      insert_string ("START-INFO-DIR-ENTRY\n");
       break;
 
+    case documentdescription:
+      {
+        char *desc;
+        int start_of_end;
+        int save_fixed_width;
+
+        discard_until ("\n"); /* ignore the @documentdescription line */
+        start_of_end = get_until ("\n@end documentdescription", &desc);
+        save_fixed_width = in_fixed_width_font;
+
+        in_fixed_width_font = 0;
+        document_description = expansion (desc, 0);
+        free (desc);
+
+        in_fixed_width_font = save_fixed_width;
+        input_text_offset = start_of_end; /* go back to the @end to match */
+      }
+      break;
+
+    case copying:
+      {
+        /* Save the copying text away for @insertcopying,
+           typically used on the back of the @titlepage (for TeX) and
+           the Top node (for info/html).  */
+        char *text;
+        int start_of_end;
+	int save_paragraph_indentation;
+
+        discard_until ("\n"); /* ignore remainder of @copying line */
+        start_of_end = get_until ("\n@end copying", &text);
+
+        /* include all the output-format-specific markup.  */
+	if (docbook)
+	  {
+	    save_paragraph_indentation = inhibit_paragraph_indentation;
+	    inhibit_paragraph_indentation = 1;
+	  }
+        copying_text = full_expansion (text, 0);
+        free (text);
+
+	if (docbook)
+	  inhibit_paragraph_indentation = save_paragraph_indentation;
+	
+        input_text_offset = start_of_end; /* go back to the @end to match */
+      }
+      
+      /* For info, output the copying text right away, so it will end up
+         in the header of the Info file, before the first node, and thus
+         get copied automatically to all the split files.  For xml, also
+         output it right away since xml output is never split.
+         For html, we output it specifically in html_output_head. 
+         For plain text, there's no way to hide it, so the author must
+          use @insertcopying in the desired location.  */
+      if (docbook)
+	{
+	  if (!xml_in_bookinfo)
+	    {
+	      xml_insert_element (BOOKINFO, START);
+	      xml_in_bookinfo = 1;
+	    }
+	  if (!xml_in_abstract)
+	    {
+	      xml_insert_element (ABSTRACT, START);
+	      xml_in_abstract = 1;
+	    }
+	}
+      if (!html && !no_headers)
+        cm_insert_copying ();
+      if (docbook && xml_in_abstract)
+	{
+	  xml_insert_element (ABSTRACT, END);
+	  xml_in_abstract = 0;
+	}
+      break;
+      
     case quotation:
       /* @quotation does filling (@display doesn't).  */
       if (html)
         add_word ("<blockquote>\n");
       else
         {
-          close_single_paragraph ();
+          /* with close_single_paragraph, we get no blank line above
+             within @copying.  */
+          close_paragraph ();
           last_char_was_newline = no_indent = 0;
           indented_fill = filling_enabled = 1;
           inhibit_paragraph_indentation = 1;
@@ -443,10 +533,21 @@ begin_insertion (type)
         /* Kludge alert: if <pre> is followed by a newline, IE3
            renders an extra blank line before the pre-formatted block.
            Other browsers seem to not mind one way or the other.  */
-        add_word ("<pre>");
+        add_word_args ("<pre class=\"%s\">", command);
 
       if (type != format && type != smallformat)
-        current_indent += default_indentation_increment;
+        {
+          current_indent += default_indentation_increment;
+          if (html)
+            {
+              /* Since we didn't put \n after <pre>, we need to insert
+                 the indentation by hand.  */
+              int i;
+              for (i = current_indent; i > 0; i--)
+                add_char (' ');
+            }
+        }
+
       break;
 
     case multitable:
@@ -485,13 +586,15 @@ begin_insertion (type)
       if (html)
         {
           if (type == itemize)
-	    {
-	      add_word ("<ul>\n");
-	      in_paragraph = 0;
-	    }
+            {
+              add_word ("<ul>\n");
+              in_paragraph = 0;
+            }
           else
             add_word (dl_tag);
         }
+      if (xml)
+        xml_begin_table (type, insertion_stack->item_function);
       break;
 
     case enumerate:
@@ -507,8 +610,14 @@ begin_insertion (type)
       filling_enabled = indented_fill = 1;
 
       if (html)
-        enum_html ();
+        {
+          enum_html ();
+          in_paragraph = 0;
+        }
 
+      if (xml)
+        xml_begin_enumerate (enumeration_arg);
+      
       if (isdigit (*enumeration_arg))
         start_enumerating (atoi (enumeration_arg), ENUM_DIGITS);
       else
@@ -519,7 +628,9 @@ begin_insertion (type)
     case group:
       /* Only close the paragraph if we are not inside of an
          @example-like environment. */
-      if (!insertion_stack->next
+      if (xml)
+        xml_insert_element (GROUP, START);
+      else if (!insertion_stack->next
           || (insertion_stack->next->insertion != display
               && insertion_stack->next->insertion != smalldisplay
               && insertion_stack->next->insertion != example
@@ -540,9 +651,13 @@ begin_insertion (type)
     case ifinfo:
     case ifnothtml:
     case ifnotinfo:
+    case ifnotplaintext:
     case ifnottex:
+    case ifnotxml:
+    case ifplaintext:
     case ifset:
     case iftex:
+    case ifxml:
     case rawtex:
       if (in_menu)
         no_discard++;
@@ -581,6 +696,8 @@ begin_insertion (type)
       close_single_paragraph ();
       inhibit_paragraph_indentation = 1;
       filling_enabled = indented_fill = no_indent = 0;
+      if (html)
+        add_word ("<div align=\"left\">");
       break;
 
     case flushright:
@@ -588,6 +705,8 @@ begin_insertion (type)
       filling_enabled = indented_fill = no_indent = 0;
       inhibit_paragraph_indentation = 1;
       force_flush_right++;
+      if (html)
+        add_word ("<div align=\"right\">");
       break;
 
     default:
@@ -627,27 +746,88 @@ end_insertion (type)
 
   pop_insertion ();
 
+  if (xml)
+    {
+      switch (type)
+        {
+        case ifinfo:
+        case documentdescription:       
+          break;
+        case copying:
+          xml_insert_element (COPYING, END);
+          break;
+        case quotation:
+          xml_insert_element (QUOTATION, END);
+          break;
+        case example:
+          xml_insert_element (EXAMPLE, END);
+          break;
+        case smallexample:
+          xml_insert_element (SMALLEXAMPLE, END);
+          break;
+        case lisp:
+          xml_insert_element (LISP, END);
+          break;
+        case smalllisp:
+          xml_insert_element (SMALLLISP, END);
+          break;
+        case cartouche:
+          xml_insert_element (CARTOUCHE, END);
+          break;
+        case format:
+	  if (docbook && xml_in_bookinfo && xml_in_abstract)
+	    {
+	      xml_insert_element (ABSTRACT, END);
+	      xml_in_abstract = 0;
+	    }
+	  else
+	    xml_insert_element (FORMAT, END);
+          break;
+        case smallformat:
+          xml_insert_element (SMALLFORMAT, END);
+          break;
+        case display:
+          xml_insert_element (DISPLAY, END);
+          break;
+        case smalldisplay:
+          xml_insert_element (SMALLDISPLAY, END);
+          break;
+        case table:
+        case ftable:
+        case vtable:      
+        case itemize:
+          xml_end_table (type);
+          break;
+        case enumerate:
+          xml_end_enumerate (type);
+          break;
+        case group:
+          xml_insert_element (GROUP, END);
+          break;
+        }
+    }
   switch (type)
     {
       /* Insertions which have no effect on paragraph formatting. */
+    case copying:
+    case documentdescription:
     case ifclear:
-    case ifhtml:
     case ifinfo:
+    case ifhtml:
     case ifnothtml:
     case ifnotinfo:
+    case ifnotplaintext:
     case ifnottex:
+    case ifnotxml:
+    case ifplaintext:
     case ifset:
     case iftex:
+    case ifxml:
     case rawtex:
       break;
 
     case rawhtml:
       escape_html = 1;
-      break;
-
-    case direntry:              /* Eaten if html. */
-      insert_string ("END-INFO-DIR-ENTRY\n\n");
-      close_insertion_paragraph ();
       break;
 
     case detailmenu:
@@ -657,6 +837,11 @@ end_insertion (type)
           if (!no_headers)
             close_insertion_paragraph ();
         }
+      break;
+
+    case direntry:              /* Eaten if html. */
+      insert_string ("END-INFO-DIR-ENTRY\n\n");
+      close_insertion_paragraph ();
       break;
 
     case menu:
@@ -680,6 +865,11 @@ end_insertion (type)
       break;
 
     case flushleft:
+      if (html)
+        add_word ("</div>\n");
+      close_insertion_paragraph ();
+      break;
+
     case group:
     case cartouche:
       close_insertion_paragraph ();
@@ -724,13 +914,15 @@ end_insertion (type)
 
     case flushright:
       force_flush_right--;
+      if (html)
+        add_word ("</div>\n");
       close_insertion_paragraph ();
       break;
 
     /* Handle the @defun insertions with this default clause. */
     default:
       {
-	enum insertion_type base_type;
+        enum insertion_type base_type;
 
         if (type < defcv || type > defvr)
           line_error ("end_insertion internal error: type=%d", type);
@@ -745,12 +937,12 @@ end_insertion (type)
           case deftypevr:
           case defcv:
           case defop:
-	  case deftypemethod:
-	  case deftypeop:
-	  case deftypeivar:
-	    if (html)
-	      /* close the tables which has been opened in defun.c */
-              add_word ("</TD></TR>\n</TABLE>\n");
+          case deftypemethod:
+          case deftypeop:
+          case deftypeivar:
+            if (html)
+              /* close the tables which has been opened in defun.c */
+              add_word ("</td></tr>\n</table>\n");
             break;
           } /* switch (base_type)... */
   
@@ -790,12 +982,11 @@ discard_insertions (specials_ok)
       else
         {
           char *offender = insertion_type_pname (insertion_stack->insertion);
-          char *current_filename = input_filename;
 
-          input_filename = insertion_stack->filename;
-          line_number = insertion_stack->line_number;
-          line_error (_("No matching `%cend %s'"), COMMAND_PREFIX, offender);
-          input_filename = current_filename;
+          file_line_error (insertion_stack->filename,
+                           insertion_stack->line_number,
+                           _("No matching `%cend %s'"), COMMAND_PREFIX,
+                           offender);
           pop_insertion ();
         }
     }
@@ -807,73 +998,129 @@ discard_insertions (specials_ok)
 void
 cm_quotation ()
 {
+  if (xml)
+    xml_insert_element (QUOTATION, START);
   begin_insertion (quotation);
 }
 
 void
 cm_example ()
 {
+  if (xml)
+    xml_insert_element (EXAMPLE, START);
   begin_insertion (example);
 }
 
 void
 cm_smallexample ()
 {
+  if (xml)
+    xml_insert_element (SMALLEXAMPLE, START);
   begin_insertion (smallexample);
 }
 
 void
 cm_lisp ()
 {
+  if (xml)
+    xml_insert_element (LISP, START);
   begin_insertion (lisp);
 }
 
 void
 cm_smalllisp ()
 {
+  if (xml)
+    xml_insert_element (SMALLLISP, START);
   begin_insertion (smalllisp);
 }
 
-/* @cartouche/@end cartouche draws box with rounded corners in
-   TeX output.  Right now, just a no-op insertion. */
 void
 cm_cartouche ()
 {
+  if (xml)
+    xml_insert_element (CARTOUCHE, START);
   begin_insertion (cartouche);
+}
+
+void
+cm_copying ()
+{
+  if (xml)
+    xml_insert_element (COPYING, START);
+  begin_insertion (copying);
+}
+
+/* Not an insertion, despite the name, but it goes with cm_copying.  */
+void
+cm_insert_copying ()
+{
+  if (copying_text)
+    { /* insert_string rather than add_word because we've already done
+         full expansion on copying_text when we saved it.  */
+      insert_string (copying_text);
+      insert ('\n');
+    }
 }
 
 void
 cm_format ()
 {
+  if (xml)
+    {
+      if (docbook && xml_in_bookinfo)
+	{
+	  xml_insert_element (ABSTRACT, START);
+	  xml_in_abstract = 1;
+	}
+      else
+	xml_insert_element (FORMAT, START);
+    }
   begin_insertion (format);
 }
 
 void
 cm_smallformat ()
 {
+  if (xml)
+    xml_insert_element (SMALLFORMAT, START);
   begin_insertion (smallformat);
 }
 
 void
 cm_display ()
 {
+  if (xml)
+    xml_insert_element (DISPLAY, START);
   begin_insertion (display);
 }
 
 void
 cm_smalldisplay ()
 {
+  if (xml)
+    xml_insert_element (SMALLDISPLAY, START);
   begin_insertion (smalldisplay);
 }
 
 void
 cm_direntry ()
 {
-  if (no_headers || html)
+  if (html || xml)
     command_name_condition ();
   else
     begin_insertion (direntry);
 }
+
+void
+cm_documentdescription ()
+{
+  if (html || xml)
+    begin_insertion (documentdescription);
+  else
+    command_name_condition ();
+}
+
 
 void
 cm_itemize ()
@@ -918,6 +1165,83 @@ cm_enumerate ()
   do_enumeration (enumerate, "1");
 }
 
+/*  Handle verbatim environment:
+    find_end_verbatim == 0:  process until end of file
+    find_end_verbatim != 0:  process until 'COMMAND_PREFIXend verbatim'
+                             or end of file
+
+  We cannot simply copy input stream onto output stream; as the
+  verbatim environment may be encapsulated in an @example environment,
+  for example. */
+void
+handle_verbatim_environment (find_end_verbatim)
+  int find_end_verbatim;
+{
+  int character;
+  int seen_end = 0;
+  int save_filling_enabled = filling_enabled;
+  int save_inhibit_paragraph_indentation = inhibit_paragraph_indentation;
+
+  close_single_paragraph ();
+  inhibit_paragraph_indentation = 1;
+  filling_enabled = 0;
+  in_fixed_width_font++;
+  last_char_was_newline = 0;
+
+  /* No indentation: this is verbatim after all
+     If you want indent, enclose @verbatim in @example
+       current_indent += default_indentation_increment;
+   */
+
+  if (html)
+    add_word ("<pre class=\"verbatim\">");
+
+  while (input_text_offset < input_text_length)
+    {
+      character = curchar ();
+
+      if (character == '\n')
+        line_number++;
+      /*
+        Assume no newlines in END_VERBATIM
+      */
+      else if (find_end_verbatim && (character == COMMAND_PREFIX) /* @ */
+          && (input_text_length - input_text_offset > sizeof (END_VERBATIM))
+          && !strncmp (&input_text[input_text_offset+1], END_VERBATIM,
+                       sizeof (END_VERBATIM)-1))
+        {
+          input_text_offset += sizeof (END_VERBATIM);
+          seen_end = 1;
+          break;
+        }
+
+      if (html && character == '&' && escape_html)
+        add_word ("&amp;");
+      else if (html && character == '<' && escape_html)
+        add_word ("&lt;");
+      else
+        add_char (character);
+
+      input_text_offset++;
+    }
+
+  if (find_end_verbatim && !seen_end)
+    warning (_("end of file inside verbatim block"));
+
+  if (html)
+    add_word ("</pre>");
+  
+  in_fixed_width_font--;
+  filling_enabled = save_filling_enabled;
+  inhibit_paragraph_indentation = save_inhibit_paragraph_indentation;
+}
+
+void
+cm_verbatim ()
+{
+  handle_verbatim_environment (1);
+}
+
 void
 cm_table ()
 {
@@ -948,30 +1272,11 @@ cm_group ()
   begin_insertion (group);
 }
 
-void
-cm_ifinfo ()
-{
-  if (process_info)
-    begin_insertion (ifinfo);
-  else
-    command_name_condition ();
-}
-
-void
-cm_ifnotinfo ()
-{
-  if (!process_info)
-    begin_insertion (ifnotinfo);
-  else
-    command_name_condition ();
-}
-
-
 /* Insert raw HTML (no escaping of `<' etc.). */
 void
 cm_html ()
 {
-  if (process_html)
+  if (process_html || process_xml)
     begin_insertion (rawhtml);
   else
     command_name_condition ();
@@ -991,6 +1296,44 @@ cm_ifnothtml ()
 {
   if (!process_html)
     begin_insertion (ifnothtml);
+  else
+    command_name_condition ();
+}
+
+
+void
+cm_ifinfo ()
+{
+  if (process_info)
+    begin_insertion (ifinfo);
+  else
+    command_name_condition ();
+}
+
+void
+cm_ifnotinfo ()
+{
+  if (!process_info)
+    begin_insertion (ifnotinfo);
+  else
+    command_name_condition ();
+}
+
+
+void
+cm_ifplaintext ()
+{
+  if (process_plaintext)
+    begin_insertion (ifplaintext);
+  else
+    command_name_condition ();
+}
+
+void
+cm_ifnotplaintext ()
+{
+  if (!process_plaintext)
+    begin_insertion (ifnotplaintext);
   else
     command_name_condition ();
 }
@@ -1022,6 +1365,25 @@ cm_ifnottex ()
   else
     command_name_condition ();
 }
+
+void
+cm_ifxml ()
+{
+  if (process_xml)
+    begin_insertion (ifxml);
+  else
+    command_name_condition ();
+}
+
+void
+cm_ifnotxml ()
+{
+  if (!process_xml)
+    begin_insertion (ifnotxml);
+  else
+    command_name_condition ();
+}
+
 
 /* Begin an insertion where the lines are not filled or indented. */
 void
@@ -1087,6 +1449,10 @@ cm_end ()
       line_error (_("Bad argument to `%s', `%s', using `%s'"),
            command, temp, insertion_type_pname (current_insertion_type ()));
     }
+  if (xml && type == menu) /* fixme */
+    {
+      xml_end_menu ();
+    }
   end_insertion (type);
   free (temp);
 }
@@ -1096,7 +1462,7 @@ cm_end ()
 static int itemx_flag = 0;
 
 /* Return whether CMD takes a brace-delimited {arg}.  */
-static int
+/*static */int
 command_needs_braces (cmd)
      char *cmd;
 {
@@ -1147,9 +1513,13 @@ cm_item ()
         case ifinfo:
         case ifnothtml:
         case ifnotinfo:
+        case ifnotplaintext:
         case ifnottex:
+	case ifnotxml:
+        case ifplaintext:
         case ifset:
         case iftex:
+	case ifxml:
         case rawhtml:
         case rawtex:
         case tex:
@@ -1187,14 +1557,16 @@ cm_item ()
           else
             {
               if (html)
-		{
-		  if (in_paragraph)
-		    {
-		      add_word ("</p>");
-		      in_paragraph = 0;
-		    }
-		  add_word ("<li>");
-		}
+                {
+                  if (in_paragraph)
+                    {
+                      add_word ("</p>");
+                      in_paragraph = 0;
+                    }
+                  add_word ("<li>");
+                }
+              else if (xml)
+                xml_begin_item ();
               else
                 {
                   start_paragraph ();
@@ -1233,12 +1605,12 @@ cm_item ()
                   must_start_paragraph = 1;
                 }
 
-	      /* Handle text directly after the @item.  */
-	      if (*rest_of_line)
-		{
-		  line_number--;
-		  input_text_offset = original_input_text_offset;
-		}
+              /* Handle text directly after the @item.  */
+              if (*rest_of_line)
+                {
+                  line_number--;
+                  input_text_offset = original_input_text_offset;
+                }
             }
           break;
 
@@ -1259,7 +1631,7 @@ cm_item ()
                 output_paragraph_offset = 0;
 
               /* Force the browser to render one blank line before
-                 each new @item in a table.  But don't do that unless
+                 each new @item in a table.  But don't do that if
                  this is the first <dt> after the <dl>, or if we are
                  converting @itemx.
 
@@ -1288,6 +1660,15 @@ cm_item ()
               close_single_paragraph ();
               last_html_output_position = output_position;
               add_word ("<dd>");
+            }
+          else if (xml) /* && docbook)*/ /* 05-08 */
+            {
+              xml_begin_table_item ();
+              if (item_func && *item_func)
+                execute_string ("%s{%s}", item_func, rest_of_line);
+              else
+                execute_string ("%s", rest_of_line);
+              xml_continue_table_item ();
             }
           else
             {

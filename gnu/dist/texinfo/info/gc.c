@@ -1,3 +1,5 @@
+/*	$NetBSD: gc.c,v 1.1.1.2 2003/01/17 14:54:31 wiz Exp $	*/
+
 /* gc.c -- Functions to remember and garbage collect unused node contents. */
 
 /* This file is part of GNU Info, a program for reading online documentation

@@ -1,10 +1,9 @@
-/* variables.c -- How to manipulate user visible variables in Info.
-   $Id: variables.c,v 1.1.1.2 2001/07/25 16:20:54 assar Exp $
+/*	$NetBSD: variables.c,v 1.1.1.3 2003/01/17 14:54:33 wiz Exp $	*/
 
-   This file is part of GNU Info, a program for reading online documentation
-   stored in Info format.
+/* variables.c -- how to manipulate user visible variables in Info.
+   Id: variables.c,v 1.1 2002/08/25 23:38:38 karl Exp
 
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 2001, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -273,3 +272,40 @@ make_variable_completions_array ()
 
   return (array);
 }
+
+#if defined(INFOKEY)
+
+void
+set_variable_to_value(name, value)
+	char *name;
+	char *value;
+{
+	register int i;
+
+	/* Find the variable in our list of variables. */
+	for (i = 0; info_variables[i].name; i++)
+		if (strcmp(info_variables[i].name, name) == 0)
+			break;
+
+	if (!info_variables[i].name)
+		return;
+
+	if (info_variables[i].choices)
+	{
+		register int j;
+
+		/* Find the choice in our list of choices. */
+		for (j = 0; info_variables[i].choices[j]; j++)
+			if (strcmp (info_variables[i].choices[j], value) == 0)
+				break;
+
+		if (info_variables[i].choices[j])
+			*info_variables[i].value = j;
+	}
+	else
+	{
+		*info_variables[i].value = atoi(value);
+	}
+}
+
+#endif /* INFOKEY */

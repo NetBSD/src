@@ -1,4 +1,3 @@
-# $Id: acinclude.m4,v 1.1.1.1 2001/07/25 16:20:35 assar Exp $
 # Source file used by aclocal in generating aclocal.m4.
 
 #serial 3

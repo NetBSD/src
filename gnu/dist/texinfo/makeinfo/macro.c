@@ -1,7 +1,9 @@
-/* macro.c -- user-defined macros for Texinfo.
-   $Id: macro.c,v 1.1.1.1 2001/07/25 16:21:00 assar Exp $
+/*	$NetBSD: macro.c,v 1.1.1.2 2003/01/17 14:54:35 wiz Exp $	*/
 
-   Copyright (C) 1998, 99 Free Software Foundation, Inc.
+/* macro.c -- user-defined macros for Texinfo.
+   Id: macro.c,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -590,10 +592,8 @@ define_macro (mactype, recursive)
     {
       if ((input_text_offset + 9) > input_text_length)
         {
-          int temp_line = line_number;
-          line_number = defining_line;
-          line_error (_("%cend macro not found"), COMMAND_PREFIX);
-          line_number = temp_line;
+          file_line_error (input_filename, defining_line,
+			   _("%cend macro not found"), COMMAND_PREFIX);
           return;
         }
 
@@ -1002,6 +1002,8 @@ cm_alias ()
 
   skip_whitespace ();
   get_until_in_line (1, "=", &(a->alias));
+  canon_white (a->alias);
+
   discard_until ("=");
   skip_whitespace ();
   get_until_in_line (0, " ", &(a->mapto));
