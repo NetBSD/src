@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.17 2000/03/01 12:49:46 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.18 2000/03/29 03:38:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -124,7 +124,6 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
 
-extern struct ifnet **ifindex2ifnet;
 extern struct ifnet loif[NLOOP];
 
 /*
