@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.20 1999/11/04 02:53:03 simonb Exp $ */
+/* 	$NetBSD: px.c,v 1.21 1999/12/08 21:33:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.20 1999/11/04 02:53:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.21 1999/12/08 21:33:43 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -300,7 +300,7 @@ px_attach(parent, self, aux)
 
 	/* Init the card only if it hasn't been done before... */
 	if (!px_cons_info || slotbase != (caddr_t)px_cons_info->pxi_slotbase)
-		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 1);
+		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 0);
 
 	/* px_init() fills in px_unit[#] */
 	pxi = px_unit[sc->px_dv.dv_unit];
@@ -411,10 +411,11 @@ px_init(fi, slotbase, unit, console)
 	/* Clear ringbuffer and then the screen */
 	bzero(pxi->pxi_rbuf, pxi->pxi_rbuf_size);
 	px_rect(pxi, 0, 0, 1280, 1024, 0);
-	pxi->pxi_fontscale = pxi->pxi_font->fontheight * pxi->pxi_font->stride;
 
 	/* Connect to rcons if this is the console device */
 	if (console) {
+		pxi->pxi_fontscale = pxi->pxi_font->fontheight * 
+		    pxi->pxi_font->stride;
 		px_cons_info = pxi;
 		
 		/* XXX no multiscreen X support yet */
