@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.15 1997/10/03 23:04:46 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.16 1997/10/21 15:17:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -399,7 +399,6 @@ kbdioctl(dev, cmd, data, flag, p)
 {
 	struct kbd_softc *k;
 	struct kbd_state *ks;
-	int *ip;
 	int error = 0;
 
 	k = kbd_cd.cd_devs[minor(dev)];
@@ -408,16 +407,14 @@ kbdioctl(dev, cmd, data, flag, p)
 	switch (cmd) {
 
 	case KIOCTRANS: 	/* Set translation mode */
-		ip = (int *)data;
 		/* We only support "raw" mode on /dev/kbd */
-		if (*ip != TR_UNTRANS_EVENT)
+		if (*(int *)data != TR_UNTRANS_EVENT)
 			error = EINVAL;
 		break;
 
 	case KIOCGTRANS:	/* Get translation mode */
-		ip = (int *)data;
 		/* We only support "raw" mode on /dev/kbd */
-		*ip = TR_UNTRANS_EVENT;
+		*(int *)data = TR_UNTRANS_EVENT;
 		break;
 
 #ifdef	KIOCGETKEY
@@ -427,30 +424,25 @@ kbdioctl(dev, cmd, data, flag, p)
 #endif	KIOCGETKEY */
 
 	case KIOCSKEY:  	/* Set keymap entry */
-		/* Don't let just anyone hose the keyboard. */
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
 		/* fallthrough */
 	case KIOCGKEY:  	/* Get keymap entry */
 		error = kbd_iockeymap(ks, cmd, (struct kiockeymap *)data);
 		break;
 
 	case KIOCCMD:	/* Send a command to the keyboard */
-		error = kbd_docmd(*((int *)data), 1);
+		error = kbd_docmd(*(int *)data, 1);
 		break;
 
 	case KIOCTYPE:	/* Get keyboard type */
-		ip = (int *)data;
-		*ip = ks->kbd_id;
+		*(int *)data = ks->kbd_id;
 		break;
 
 	case KIOCSDIRECT:	/* where to send input */
-		ip = (int *)data;
-		k->k_evmode = *ip;
+		k->k_evmode = *(int *)data;
 		break;
 
 	case KIOCLAYOUT:	/* Get keyboard layout */
-		*data = ks->kbd_layout;
+		*(int *)data = ks->kbd_layout;
 		break;
 
 	case KIOCSLED:
@@ -469,11 +461,13 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSPGRP:
-		ip = (int *)data;
-		if (*ip != k->k_events.ev_io->p_pgid)
+		if (*(int *)data != k->k_events.ev_io->p_pgid)
 			error = EPERM;
 		break;
 
+	default:
+		error = ENOTTY;
+		break;
 	}
 
 	return (error);
