@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.58.2.4 2000/10/18 17:51:15 tv Exp $	*/
+/*	$NetBSD: net.c,v 1.58.2.5 2002/02/26 20:19:28 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -690,8 +690,13 @@ get_via_ftp()
 			return (-1);
 		msg_display(MSG_netnotup);
 		process_menu(MENU_yesno);
-		if (!yesno)
-			return 0;
+		if (!yesno) {
+			msg_display(MSG_netnotup_continueanyway);
+			process_menu(MENU_yesno);
+			if (!yesno)
+				return 0;
+			network_up = 1;
+		}
 	}
 
 	cd_dist_dir("ftp");
@@ -778,8 +783,13 @@ get_via_nfs()
 			return (-1);
                 msg_display(MSG_netnotup);
                 process_menu(MENU_yesno);
-                if (!yesno)
-                        return (0);
+                if (!yesno) {
+			msg_display(MSG_netnotup_continueanyway);
+			process_menu(MENU_yesno);
+			if (!yesno)
+				return 0;
+			network_up = 1;
+		}
         }
 
 	/* Get server and filepath */
