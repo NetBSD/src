@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.167 1999/11/10 22:41:00 jdolecek Exp $
+# $NetBSD: mi,v 1.168 1999/11/23 13:13:21 blymn Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1042,6 +1042,8 @@
 ./usr/lib/libl_p.a
 ./usr/lib/libm.a
 ./usr/lib/libm_p.a
+./usr/lib/libmenu.a
+./usr/lib/libmenu_p.a
 ./usr/lib/libntp.a
 ./usr/lib/libntp_p.a
 ./usr/lib/libobjc.a
