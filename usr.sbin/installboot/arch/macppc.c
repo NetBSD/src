@@ -1,4 +1,4 @@
-/*	$NetBSD: macppc.c,v 1.1 2002/05/15 09:56:59 lukem Exp $ */
+/*	$NetBSD: macppc.c,v 1.2 2002/05/15 13:38:42 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: macppc.c,v 1.1 2002/05/15 09:56:59 lukem Exp $");
+__RCSID("$NetBSD: macppc.c,v 1.2 2002/05/15 13:38:42 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -50,6 +50,8 @@ __RCSID("$NetBSD: macppc.c,v 1.1 2002/05/15 09:56:59 lukem Exp $");
 #include <assert.h>
 #include <err.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "installboot.h"
 
@@ -61,6 +63,8 @@ static struct bbinfo_params bbparams = {
 	0,
 	0,
 };
+
+static int writeapplepartmap(ib_params *, struct bbinfo_params *, char *);
 
 
 int
@@ -77,6 +81,73 @@ macppc_clearboot(ib_params *params)
 	return (shared_bbinfo_clearboot(params, &bbparams));
 }
 
+static int
+writeapplepartmap(ib_params *params, struct bbinfo_params *bb_params, char *bb)
+{
+	struct apple_drvr_map dm;
+	struct apple_part_map_entry pme;
+
+	assert (params != NULL);
+	assert (bb_params != NULL);
+	assert (bb != NULL);
+
+	if (params->flags & IB_NOWRITE)
+		return (1);
+
+		/* block 0: driver map  */
+	if (pread(params->fsfd, &dm, MACPPC_BOOT_BLOCK_BLOCKSIZE, 0) !=
+	    MACPPC_BOOT_BLOCK_BLOCKSIZE) {
+		warn("Can't read sector 0 of `%s'", params->filesystem);
+		return (0);
+	}
+	dm.sbSig = APPLE_DRVR_MAP_MAGIC;
+	dm.sbBlockSize = 512;
+	dm.sbBlkCount = 0;
+	if (pwrite(params->fsfd, &dm, MACPPC_BOOT_BLOCK_BLOCKSIZE, 0) !=
+	    MACPPC_BOOT_BLOCK_BLOCKSIZE) {
+		warn("Can't write sector 0 of `%s'", params->filesystem);
+		return (0);
+	}
+
+		/* block 1: Apple Partition Map */
+	memset(&pme, 0, sizeof(pme));
+	pme.pmSig = APPLE_PART_MAP_ENTRY_MAGIC;
+	pme.pmMapBlkCnt = 2;
+	pme.pmPyPartStart = 1;
+	pme.pmPartBlkCnt = pme.pmDataCnt = 2;
+	strlcpy(pme.pmPartName, "Apple", sizeof(pme.pmPartName));
+	strlcpy(pme.pmPartType, "Apple_partition_map", sizeof(pme.pmPartType));
+	pme.pmPartStatus = 0x37;
+	if (pwrite(params->fsfd, &pme, MACPPC_BOOT_BLOCK_BLOCKSIZE,
+	    1 * MACPPC_BOOT_BLOCK_BLOCKSIZE) != MACPPC_BOOT_BLOCK_BLOCKSIZE) {
+		warn("Can't write Apple Partition Map into sector 1 of `%s'",
+		    params->filesystem);
+		return (0);
+	}
+
+		/* block 2: NetBSD partition */
+	memset(&pme, 0, sizeof(pme));
+	pme.pmSig = APPLE_PART_MAP_ENTRY_MAGIC;
+	pme.pmMapBlkCnt = 2;
+	pme.pmPyPartStart = 4;
+	pme.pmPartBlkCnt = pme.pmDataCnt = 0x7fffffff;
+	strlcpy(pme.pmPartName, "NetBSD", sizeof(pme.pmPartName));
+	strlcpy(pme.pmPartType, "NetBSD/macppc", sizeof(pme.pmPartType));
+	pme.pmPartStatus = 0x3b;
+	pme.pmBootSize = 0x400;
+	pme.pmBootLoad = 0x4000;
+	pme.pmBootEntry = 0x4000;
+	strlcpy(pme.pmProcessor, "PowerPC", sizeof(pme.pmProcessor));
+	if (pwrite(params->fsfd, &pme, MACPPC_BOOT_BLOCK_BLOCKSIZE,
+	    2 * MACPPC_BOOT_BLOCK_BLOCKSIZE) != MACPPC_BOOT_BLOCK_BLOCKSIZE) {
+		warn("Can't write Apple Partition Map into sector 2 of `%s'",
+		    params->filesystem);
+		return (0);
+	}
+
+	return (1);
+}
+
 int
 macppc_setboot(ib_params *params)
 {
@@ -88,5 +159,5 @@ macppc_setboot(ib_params *params)
 		    params->machine->name);
 		return (0);
 	}
-	return (shared_bbinfo_setboot(params, &bbparams, NULL));
+	return (shared_bbinfo_setboot(params, &bbparams, writeapplepartmap));
 }
