@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.49 2000/03/24 22:03:33 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.50 2000/03/25 00:10:19 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -180,6 +180,9 @@ struct usbd_xfer {
 	usbd_status		status;
 	usbd_callback		callback;
 	__volatile char		done;
+#ifdef DIAGNOSTIC
+	char			isfree;
+#endif
 
 	/* For control pipe */
 	usb_device_request_t	request;
@@ -200,7 +203,6 @@ struct usbd_xfer {
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
-	int			hcprivint;
 
 	usb_callout_t		timo_handle;
 	usb_callout_t		abort_handle;
