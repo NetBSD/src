@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.9 1997/01/03 23:19:02 mark Exp $ */
+/* $NetBSD: postmortem.c,v 1.10 1997/07/29 01:37:30 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -203,11 +203,19 @@ postmortem(frame)
 	u_int s;
 	struct proc *p = curproc;
 	u_int addr;
-			
+	static	postmortem_active = 0;
+
 	s = splhigh();
 
+	if (postmortem_active) {
+		printf("postmortem aborted - re-entrancy detected\n");
+		(void)splx(s);
+		return;
+	}
+	++postmortem_active;
+
 #ifdef STACKCHECKS
-/* Check the stack for a known pattern */
+	/* Check the stack for a known pattern */
 
 	check_stacks(p);
 #endif
@@ -266,6 +274,7 @@ postmortem(frame)
 		printf("IRQ Traceback info\n");
 		irqtraceback(addr, irqstack.virtual);
 	}
+	--postmortem_active;
 	(void)splx(s);
 }
 
