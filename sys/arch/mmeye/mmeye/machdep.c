@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2000/08/24 11:35:16 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2000/09/05 15:57:26 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -116,6 +116,11 @@
 #if 0
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+#endif
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -512,7 +517,14 @@ initSH3(pc)
 	int x;
 	char *p;
 
+	/* clear BSS */
+	bzero(edata, end - edata);
+
 	avail = sh3_round_page(end);
+#ifdef DDB
+	/* XXX Currently symbol table size is not passed to the kernel. */
+	avail += 0x40000;					/* XXX */
+#endif
 
 	/*
 	 * clear .bss, .common area, page dir area,
@@ -520,7 +532,7 @@ initSH3(pc)
 	 */
 
 	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * 9;
-	bzero(edata, p - edata);
+	bzero((char *)avail, p - (char *)avail);
 
 	/*
 	 * install trap handler
@@ -625,6 +637,10 @@ initSH3(pc)
 	/* MMEYE_LED = 0x04; */
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
+
+#ifdef DDB
+	ddb_init(1, end, end + 0x40000);			/* XXX */
+#endif
 
 	/* MMEYE_LED = 0x00; */
 
@@ -753,10 +769,6 @@ consinit()
 	initted = 1;
 
 	cninit();
-
-#ifdef DDB
-	ddb_init();
-#endif
 }
 
 void
@@ -769,7 +781,7 @@ cpu_reset()
 }
 
 int
-bus_space_map (t, addr, size, flags, bshp)
+bus_space_map(t, addr, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t addr;
 	bus_size_t size;
