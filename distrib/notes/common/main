@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.78 2000/10/10 12:08:24 lukem Exp $
+.\"	$NetBSD: main,v 1.79 2000/10/10 22:03:42 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,17 +49,6 @@
 .as MACHINE_LIST " prep sgimips sparc sparc64 sun3 vax x68k
 .
 .so \*[.CURDIR]/../common/macros
-.
-.\" Supported CPUs:
-.\"	alpha arm26 arm32 i386 m68k mips pc532 powerpc sh3 sparc sparc64 vax
-.\" Define registers for MACHINE_ARCHs with multiple MACHINEs
-.
-.if \n[amiga]:\n[atari]:\n[hp300]:\n[luna68k]:\n[mac68k] .nr _m68k 1
-.if \n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .nr _m68k 1
-.if \n[arc]:\n[cobolt]:\n[hpcmips]:\n[newsmips]:\n[pmax]:\n[sgimips] .nr _mips 1
-.if \n[amigappc]:\n[bebox]:\n[macppc]:\n[ofppc]:\n[prep] .nr _powerpc 1
-.if \n[evbsh3]:\n[mmeye] .nr _sh3 1
-.
 .
 .Dd October 10, 2000
 .Dt INSTALL 8
@@ -142,7 +131,7 @@ possible, it's likely that
 .Nx
 wouldn't exist.
 .Ss Changes Since The Last Release
-.if \n[_FOR_RELEASE] \{\
+.if \n[FOR_RELEASE] \{\
 The
 .Nx \*V
 release is a substantial improvement over its predecessors.  We have
@@ -427,7 +416,7 @@ Refer to
 The root directory of the
 .Nx \*V
 release is organized as follows:
-.ie \n[_FOR_RELEASE] \{\
+.ie \n[FOR_RELEASE] \{\
 .Pp
 .Pa .../NetBSD-\*V/
 .(tag LAST_MINUTE

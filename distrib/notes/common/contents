@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.18 2000/10/10 12:30:54 lukem Exp $
+.\"	$NetBSD: contents,v 1.19 2000/10/10 22:03:41 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,7 +37,7 @@ The \*M-specific portion of the
 release is found in the
 .Pa \*M
 subdirectory of the distribution:
-.ie \n[_FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/
+.ie \n[FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/
 .el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/
 .(tag INSTALL.html -compact
 .	It Pa INSTALL.html
