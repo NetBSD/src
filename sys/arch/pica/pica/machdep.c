@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1997/02/04 04:57:14 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1997/03/26 22:42:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -368,7 +368,7 @@ mips_init(argc, argv, code)
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
-		boot(RB_HALT | RB_NOSYNC, NULL);
+		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 
 	/*
@@ -859,7 +859,7 @@ sys_sigreturn(p, v, retval)
 
 int	waittime = -1;
 
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
@@ -903,7 +903,7 @@ int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;
 
@@ -940,7 +940,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1997/03/21 22:46:09 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1997/03/26 22:43:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -497,10 +497,9 @@ reboot_sync __P((void))
 
 /*
  * Common part of the BSD and SunOS reboot system calls.
- * XXX - Should be named: cpu_reboot maybe? -gwr
  */
 __dead void
-boot(howto, user_boot_string)
+cpu_reboot(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -581,14 +580,14 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /*
- * This is called by cpu_startup to set dumplo, dumpsize.
+ * This is called by main to set dumplo, dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
@@ -652,7 +651,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0)
 		return;
 	savectx(&dumppcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1997/03/26 15:46:12 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1997/03/26 22:42:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -451,15 +451,15 @@ identifycpu()
 			mmu = "/MMU";
 		}
 		break;
-	    case CPU_68040:
-		cpu     = "m68040";
-		mmu     = "/MMU";
+	case CPU_68040:
+		cpu = "m68040";
+		mmu = "/MMU";
 		break;
-	    case CPU_68030:
+	case CPU_68030:
 		cpu = "m68030";
 		mmu = "/MMU";
 		break;
-	    default: /* XXX */
+	default: /* XXX */
 		cpu = "m68020";
 		mmu = " m68851 MMU";
 	}
@@ -519,7 +519,7 @@ bootsync(void)
 }
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int	howto;
 	char	*bootstr;
 {
@@ -572,7 +572,7 @@ int		dumpsize = 0;		/* also for savecore		*/
 long		dumplo   = 0;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int	nblks, i;
 
@@ -623,7 +623,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);

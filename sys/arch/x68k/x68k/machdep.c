@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1997/02/04 11:43:30 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1997/03/26 22:43:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1002,7 +1002,7 @@ sys_sigreturn(p, v, retval)
 int	waittime = -1;
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
@@ -1058,14 +1058,14 @@ int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
 /*
- * This is called by configure to set dumplo and dumpsize.
+ * This is called by main to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
  */
 void
-dumpconf()
+cpu_dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
@@ -1171,7 +1171,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0) {
-		dumpconf();
+		cpu_dumpconf();
 	}
 	if (dumplo < 0)
 		return;
