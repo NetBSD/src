@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.7 2001/06/30 14:47:24 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.8 2001/06/30 14:57:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1091,6 +1091,7 @@ struct ti_softc {
 	 */
 	int			(*sc_tx_encap)(struct ti_softc *,
 				    struct mbuf *, uint32_t *);
+	void			(*sc_tx_eof)(struct ti_softc *);
 
 	u_int16_t		ti_tx_saved_considx;
 	u_int16_t		ti_rx_saved_considx;
