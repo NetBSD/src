@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2000/01/27 05:17:14 itojun Exp $
+# $NetBSD: mi,v 1.42 2000/01/28 06:53:33 fair Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -45,6 +45,7 @@
 ./etc/networks
 ./etc/newsyslog.conf
 ./etc/nsswitch.conf
+./etc/ntp.conf
 ./etc/passwd
 ./etc/phones
 ./etc/postfix
