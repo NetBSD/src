@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.7 1997/01/18 01:51:41 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.7.12.1 1998/05/05 09:39:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -195,11 +195,21 @@ ibcs2_sys_msgsys(p, v, retval)
  * iBCS2 semsys call
  */
 
+struct ibcs2_ipc_perm {
+	ibcs2_uid_t uid;
+	ibcs2_gid_t gid;
+	ibcs2_uid_t cuid;
+	ibcs2_gid_t cgid;
+	ibcs2_mode_t mode;
+	u_short seq;
+	ibcs2_key_t key;
+};
+
 struct ibcs2_semid_ds {
-        struct ipc_perm sem_perm;
+	struct ibcs2_ipc_perm sem_perm;
 	struct ibcs2_sem *sem_base;
 	u_short sem_nsems;
-	int pad1;
+	u_short pad1;
 	ibcs2_time_t sem_otime;
 	ibcs2_time_t sem_ctime;
 };
@@ -247,7 +257,13 @@ cvt_semid2isemid(bp, ibp)
 	struct semid_ds *bp;
 	struct ibcs2_semid_ds *ibp;
 {
-	ibp->sem_perm = bp->sem_perm;
+	ibp->sem_perm.cuid = bp->sem_perm.cuid;
+	ibp->sem_perm.cgid = bp->sem_perm.cgid;
+	ibp->sem_perm.uid = bp->sem_perm.uid;
+	ibp->sem_perm.gid = bp->sem_perm.gid;
+	ibp->sem_perm.mode = bp->sem_perm.mode;
+	ibp->sem_perm.seq = bp->sem_perm.seq;
+	ibp->sem_perm.key = bp->sem_perm.key;
 	ibp->sem_base = (struct ibcs2_sem *)bp->sem_base;
 	ibp->sem_nsems = bp->sem_nsems;
 	ibp->sem_otime = bp->sem_otime;
@@ -260,7 +276,13 @@ cvt_isemid2semid(ibp, bp)
 	struct ibcs2_semid_ds *ibp;
 	struct semid_ds *bp;
 {
-	bp->sem_perm = ibp->sem_perm;
+	bp->sem_perm.cuid = ibp->sem_perm.cuid;
+	bp->sem_perm.cgid = ibp->sem_perm.cgid;
+	bp->sem_perm.uid = ibp->sem_perm.uid;
+	bp->sem_perm.gid = ibp->sem_perm.gid;
+	bp->sem_perm.mode = ibp->sem_perm.mode;
+	bp->sem_perm.seq = ibp->sem_perm.seq;
+	bp->sem_perm.key = ibp->sem_perm.key;
 	bp->sem_base = (struct sem *)ibp->sem_base;
 	bp->sem_nsems = ibp->sem_nsems;
 	bp->sem_otime = ibp->sem_otime;
@@ -289,39 +311,42 @@ ibcs2_sys_semsys(p, v, retval)
 		switch(SCARG(uap, a4)) {
 		case IBCS2_IPC_STAT:
 		    {
-			struct ibcs2_semid_ds *isp;
-			struct semid_ds *sp;
-			caddr_t sg = stackgap_init(p->p_emul);
-
-			isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
-			sp = stackgap_alloc(&sg, sizeof(struct semid_ds));
-			SCARG(uap, a5) = (int)sp;
-			error = compat_10_sys_semsys(p, uap, retval);
-			if (!error) {
-				SCARG(uap, a5) = (int)isp;
-				isp = stackgap_alloc(&sg, sizeof(*isp));
-				cvt_semid2isemid(sp, isp);
-				error = copyout((caddr_t)isp,
-						(caddr_t)SCARG(uap, a5),
-						sizeof(*isp));
-			}
-			return error;
+			    struct ibcs2_semid_ds *isp, isi;
+			    struct semid_ds *sp, s;
+			    caddr_t sg = stackgap_init(p->p_emul);
+  
+			    isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
+			    sp = stackgap_alloc(&sg, sizeof(struct semid_ds));
+			    SCARG(uap, a5) = (int)sp;
+			    error = compat_10_sys_semsys(p, uap, retval);
+			    if (error)
+				    return error;
+			    error = copyin((caddr_t)sp, (caddr_t)&s,
+					   sizeof(s));
+			    if (error)
+				    return error;
+			    cvt_semid2isemid(&s, &isi);
+			    return copyout((caddr_t)&isi, (caddr_t)isp,
+					   sizeof(isi));
 		    }
 		case IBCS2_IPC_SET:
 		    {
-			struct ibcs2_semid_ds *isp;
-			struct semid_ds *sp;
-			caddr_t sg = stackgap_init(p->p_emul);
-
-			isp = stackgap_alloc(&sg, sizeof(*isp));
-			sp = stackgap_alloc(&sg, sizeof(*sp));
-			error = copyin((caddr_t)SCARG(uap, a5), (caddr_t)isp,
-				       sizeof(*isp));
-			if (error)
-				return error;
-			cvt_isemid2semid(isp, sp);
-			SCARG(uap, a5) = (int)sp;
-			return compat_10_sys_semsys(p, uap, retval);
+			    struct ibcs2_semid_ds isp;
+			    struct semid_ds *sp, s;
+			    caddr_t sg = stackgap_init(p->p_emul);
+  
+			    error = copyin((caddr_t)SCARG(uap, a5),
+					   (caddr_t)&isp, sizeof(isp));
+			    if (error)
+				    return error;
+			    cvt_isemid2semid(&isp, &s);
+			    sp = stackgap_alloc(&sg, sizeof(s));
+			    error = copyout((caddr_t)&s, (caddr_t)sp,
+					    sizeof(s));
+			    if (error)
+				    return error;
+			    SCARG(uap, a5) = (int)sp;
+			    return compat_10_sys_semsys(p, uap, retval);
 		    }
 		}
 		return compat_10_sys_semsys(p, uap, retval);
@@ -418,39 +443,42 @@ ibcs2_sys_shmsys(p, v, retval)
 		switch(SCARG(uap, a3)) {
 		case IBCS2_IPC_STAT:
 		    {
-			struct ibcs2_shmid_ds *isp;
-			struct shmid_ds *sp;
-			caddr_t sg = stackgap_init(p->p_emul);
-
-			isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
-			sp = stackgap_alloc(&sg, sizeof(*sp));
-			SCARG(uap, a4) = (int)sp;
-			error = compat_10_sys_shmsys(p, uap, retval);
-			if (!error) {
-				SCARG(uap, a4) = (int)isp;
-				isp = stackgap_alloc(&sg, sizeof(*isp));
-				cvt_shmid2ishmid(sp, isp);
-				error = copyout((caddr_t)isp,
-						(caddr_t)SCARG(uap, a4),
-						sizeof(*isp));
-			}
-			return error;
+			    struct ibcs2_shmid_ds *isp, is;
+			    struct shmid_ds *sp, s;
+			    caddr_t sg = stackgap_init(p->p_emul);
+  
+			    isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
+			    sp = stackgap_alloc(&sg, sizeof(*sp));
+			    SCARG(uap, a4) = (int)sp;
+			    error = compat_10_sys_shmsys(p, uap, retval);
+			    if (error)
+				    return error;
+			    error = copyin((caddr_t)sp, (caddr_t)&s,
+					   sizeof(s));
+			    if (error)
+				    return error;
+			    cvt_shmid2ishmid(&s, &is);
+			    return copyout((caddr_t)&is, (caddr_t)isp,
+					   sizeof(is));
 		    }
 		case IBCS2_IPC_SET:
 		    {
-			struct ibcs2_shmid_ds *isp;
-			struct shmid_ds *sp;
-			caddr_t sg = stackgap_init(p->p_emul);
-
-			isp = stackgap_alloc(&sg, sizeof(*isp));
-			sp = stackgap_alloc(&sg, sizeof(*sp));
-			error = copyin((caddr_t)SCARG(uap, a4), (caddr_t)isp,
-				       sizeof(*isp));
-			if (error)
-				return error;
-			cvt_ishmid2shmid(isp, sp);
-			SCARG(uap, a4) = (int)sp;
-			return compat_10_sys_shmsys(p, uap, retval);
+			    struct ibcs2_shmid_ds is;
+			    struct shmid_ds *sp, s;
+			    caddr_t sg = stackgap_init(p->p_emul);
+  
+			    error = copyin((caddr_t)SCARG(uap, a4),
+					   (caddr_t)&is, sizeof(is));
+			    if (error)
+				    return error;
+			    cvt_ishmid2shmid(&is, &s);
+			    sp = stackgap_alloc(&sg, sizeof(*sp));
+			    SCARG(uap, a4) = (int)sp;
+			    error = copyout((caddr_t)&s, (caddr_t)sp,
+					    sizeof(s));
+			    if (error)
+				    return error;
+			    return compat_10_sys_shmsys(p, uap, retval);
 		    }
 		}
 		return compat_10_sys_shmsys(p, uap, retval);
