@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1996/09/08 00:40:08 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1996/10/15 01:42:18 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -163,13 +163,6 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, seltrue, dev_init(c,n,mmap), 0 }
-
-/* open, close, write, ioctl */
-#define cdev_uk_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, write, ioctl */
 #define cdev_iic_init(c,n) { \
