@@ -41,11 +41,8 @@
  * the manufacturer or anyone else might provide better documentation,
  * so this file (and the driver) will then have a better quality.
  *
- *	$Id: mcdreg.h,v 1.2 1993/11/17 12:22:57 cgd Exp $
+ *	$Id: mcdreg.h,v 1.3 1994/02/21 15:23:12 mycroft Exp $
  */
-
-#ifndef MCD_H
-#define	MCD_H
 
 #ifdef __GNUC__
 #if __GNUC__ >= 2
@@ -77,15 +74,6 @@ typedef unsigned char	bcd_t;
 				/* 011 = int 5 */
 				/* 100 = int 10 */
 				/* 101 = int 11 */
-/* flags */
-#define	STATUS_AVAIL	0xb
-#define	DATA_AVAIL	0xf
-
-/* ports */
-#define	MCD_DATA	0
-#define	MCD_FLAGS	1
-#define	MCD_DONT_KNOW	2	/* What are these two ports for??? */
-#define	CHANNEL		3
 
 /* Status bits */
 #define	MCD_ST_DOOROPEN		0x80
@@ -148,4 +136,3 @@ struct mcd_read2 {
 	bcd_t	start_msf[3];
 	bcd_t	end_msf[3];
 };
-#endif /* MCD_H */
