@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.10.2.9 2000/11/04 18:43:11 he Exp $ */
+/* $NetBSD: user.c,v 1.10.2.10 2000/11/04 19:24:21 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.10.2.9 2000/11/04 18:43:11 he Exp $");
+__RCSID("$NetBSD: user.c,v 1.10.2.10 2000/11/04 19:24:21 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,6 +166,7 @@ enum {
 };
 
 /* Full paths of programs used here */
+#define CHMOD		"/bin/chmod"
 #define CHOWN		"/usr/sbin/chown"
 #define MKDIR		"/bin/mkdir"
 #define MV		"/bin/mv"
@@ -388,6 +389,7 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
 	(void) asystem("%s -R -h %d:%d %s", CHOWN, uid, gid, dir);
+	(void) asystem("%s -R u+w %s", CHMOD, dir);
 	return n;
 }
 
@@ -964,12 +966,18 @@ adduser(char *login, user_t *up)
 		err(EXIT_FAILURE, "can't add `%s'", buf);
 	}
 	if (up->u_flags & F_MKDIR) {
-		if (lstat(home, &st) < 0 && asystem("%s -p %s", MKDIR, home) != 0) {
+		if (lstat(home, &st) == 0) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
-			err(EXIT_FAILURE, "can't mkdir `%s'", home);
+			errx(EXIT_FAILURE, "home directory `%s' already exists", home);
+		} else {
+			if (asystem("%s -p %s", MKDIR, home) != 0) {
+				(void) close(ptmpfd);
+				(void) pw_abort();
+				err(EXIT_FAILURE, "can't mkdir `%s'", home);
+			}
+			(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 		}
-		(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 &&
 	    getgrnam(login) == NULL &&
