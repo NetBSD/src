@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.7 1997/06/16 06:35:29 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.8 1997/11/07 07:38:14 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -61,11 +61,13 @@ int	adbpoll __P((dev_t dev, int events, struct proc *p));
 /* adbsysasm.s */
 void	adb_asmcomplete __P((void));
 void	adb_msa3_asmcomplete __P((void));
+void	adb_mm_nonemp_asmcomplete __P((void));
 void	extdms_complete __P((void));
 
 /* adbsys.c */
 void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 void	adb_msa3_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void	adb_mm_nonemp_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 void	extdms_init __P((int));
 
 #ifndef MRG_ADB
