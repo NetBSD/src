@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.23 2004/04/10 19:20:19 pooka Exp $	*/
+/*	$NetBSD: zs.c,v 1.24 2004/07/08 22:30:53 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.23 2004/04/10 19:20:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24 2004/07/08 22:30:53 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -610,28 +610,67 @@ zs_get_chan_addr(int zs_unit, int channel)
 	struct zsdevice *addr;
 	struct zschan *zc;
 
-	switch(mach_type)
-	{
-		case MACH_SGI_IP12:
-	    	case MACH_SGI_IP20:
-		addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fb80d10);
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+		if (zs_unit == 2 && (mach_subtype == MACH_SGI_IP12_4D_3X ||
+		    		     mach_subtype == MACH_SGI_IP12_VIP12)) {
+			addr = (struct zsdevice *)
+						MIPS_PHYS_TO_KSEG1(0x1fb80d20);
+			break;
+		}
+
+		/* FALLTHROUGH */
+	case MACH_SGI_IP20:
+		if (zs_unit == 0) {
+			addr = (struct zsdevice *)
+						MIPS_PHYS_TO_KSEG1(0x1fb80d00);
+		} else if (zs_unit == 1) {
+			addr = (struct zsdevice *)
+						MIPS_PHYS_TO_KSEG1(0x1fb80d10);
+		} else {
+			panic("zs_get_chan_addr: bad zs_unit %d\n", zs_unit); 
+		}
 		break;
  
-	      	case MACH_SGI_IP22:
-		default:
+	case MACH_SGI_IP22:
+		if (zs_unit != 0)
+			panic("zs_get_chan_addr zs_unit != 0 on IP%d",
+								mach_type);
+
 		addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
 		break;
-	} 
 
-	if (channel == 0) {
-		zc = &addr->zs_chan_b;
+	default:
+		panic("zs_get_chan_addr: unsupported IP%d", mach_type);
+	}
+
+	/*
+	 * We need to swap serial ports to match reality on
+	 * non-keyboard channels. 
+	 */
+	if (mach_type == MACH_SGI_IP22) {
+		if (channel == 0)
+			zc = &addr->zs_chan_b;
+		else
+			zc = &addr->zs_chan_a; 
 	} else {
-		zc = &addr->zs_chan_a;
+		if (zs_unit == 0) {
+			if (channel == 0)
+				zc = &addr->zs_chan_a;
+			else
+				zc = &addr->zs_chan_b;
+		} else {
+			if (channel == 0)
+				zc = &addr->zs_chan_b;
+			else
+				zc = &addr->zs_chan_a;
+		}
 	}
 
 	if (dumped_addr == 0) {
 		dumped_addr++;
-		aprint_debug("zs channel %d had address %p\n", channel, zc);
+		aprint_debug("zs unit %d, channel %d had address %p\n",
+						zs_unit, channel, zc);
 	}
 
 	return (zc);
@@ -730,7 +769,18 @@ zscngetc(dev_t dev)
 {
 	struct zschan *zs;
 
-	zs = zs_get_chan_addr(0, cons_port);
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+		zs = zs_get_chan_addr(1, cons_port);
+		break;
+
+	case MACH_SGI_IP22:
+	default:
+		zs = zs_get_chan_addr(0, cons_port);
+		break;
+	}
+
 	return zs_getc(zs);
 }
 
@@ -739,7 +789,18 @@ zscnputc(dev_t dev, int c)
 {
 	struct zschan *zs;
 
-	zs = zs_get_chan_addr(0, cons_port);
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+		zs = zs_get_chan_addr(1, cons_port);
+		break;
+
+	case MACH_SGI_IP22:
+	default:
+		zs = zs_get_chan_addr(0, cons_port);
+		break;
+	}
+
 	zs_putc(zs, c);
 }
 
