@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.4 1998/01/17 21:53:59 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.4 1998/01/17 21:53:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.5 1998/02/04 07:37:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct alpha_bus_dma_tag tc_dmat_sgmap = {
 	tc_bus_dmamap_load_uio_sgmap,
 	tc_bus_dmamap_load_raw_sgmap,
 	tc_bus_dmamap_unload_sgmap,
-	NULL,				/* _dmamap_sync */
+	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
