@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.5 2002/04/04 09:32:11 tron Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.6 2002/11/25 10:34:34 schmonz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.5 2002/04/04 09:32:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.6 2002/11/25 10:34:34 schmonz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ linux_sys___sysctl(struct proc *p, void *v, register_t *retval)
 }
 
 char linux_sysname[128] = "Linux";
-#ifdef __i386__
+#if defined(__i386__) || defined(__powerpc__)
 char linux_release[128] = "2.4.18";
 char linux_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
 #else
