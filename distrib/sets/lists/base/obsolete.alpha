@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.alpha,v 1.4 2002/05/03 15:43:40 lukem Exp $
+# $NetBSD: obsolete.alpha,v 1.5 2002/05/08 04:14:24 lukem Exp $
 /usr/include/alpha
 /usr/include/machine
 /usr/include/machine/_G_config.h
@@ -53,4 +53,5 @@
 /usr/include/machine/z8530var.h
 /usr/mdec/bootxx
 /usr/mdec/bootxx.old
+/usr/mdec/installboot
 /usr/mdec/installboot.old
