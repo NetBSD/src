@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.32 1996/08/14 03:46:44 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.33 1996/09/06 05:07:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -153,12 +153,16 @@ struct	route ipforward_rt;
 void
 ipintr()
 {
-	register struct ip *ip;
+	register struct ip *ip = NULL;
 	register struct mbuf *m;
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
 	struct ipqent *ipqe;
-	int hlen, mff, s;
+	int hlen = 0, mff, s;
+#ifdef PACKET_FILTER
+	struct packet_filter_hook *pfh;
+	struct mbuf *m0;
+#endif /* PACKET_FILTER */
 
 next:
 	/*
@@ -236,6 +240,19 @@ next:
 		} else
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
+
+#ifdef PACKET_FILTER
+	/*
+	 * Run through list of hooks for input packets.
+	 */
+	m0 = m;
+	for (pfh = pfil_hook_get(PFIL_IN); pfh; pfh = pfh->pfil_link.le_next)
+		if (pfh->pfil_func) {
+			if (pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 0, &m0)) 
+				goto bad;
+			ip = mtod(m = m0, struct ip *);
+		}
+#endif /* PACKET_FILTER */
 
 	/*
 	 * Process options and, if not destined for us,
@@ -418,6 +435,14 @@ found:
 	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen);
 	goto next;
 bad:
+#ifdef PACKET_FILTER
+	m0 = m;
+	for (pfh = pfil_hook_get(PFIL_BAD); pfh; pfh = pfh->pfil_link.le_next)
+		if (pfh->pfil_func) {
+			(void)pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 2, &m0);
+			ip = mtod(m = m0, struct ip *);
+		}
+#endif /* PACKET_FILTER */
 	m_freem(m);
 	goto next;
 }
