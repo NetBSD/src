@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.22 2001/02/19 15:45:45 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.23 2001/02/19 15:53:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.22 2001/02/19 15:45:45 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.23 2001/02/19 15:53:07 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -172,7 +172,8 @@ main(argc, argv)
 			d_mask[REC_D] = REC_D_F;
 			break;
 		case 'T':
-			/* -T tmpdir, noop (not supported) */
+			/* -T tmpdir */
+			tmpdir = optarg;
 			break;
 		case 'u':
 			UNIQUE = 1;
