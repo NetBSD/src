@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1995/05/16 22:24:47 jtc Exp $
+#	$NetBSD: Makefile,v 1.20 1995/06/26 03:24:17 christos Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -27,6 +27,7 @@
 S=	${.CURDIR}/../../..
 
 ### find out what to use for libkern
+KERNREL=
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=	${KERNLIB}
@@ -97,5 +98,10 @@ fd:	${DESTDIR}/usr/mdec/bootfd ${DESTDIR}/usr/mdec/fdboot
 install: wd sd fd
 
 CLEANFILES+=bootbios boot biosboot boot.sym machine ${MACHINE_ARCH}
+
+clean::
+	rm -f a.out [Ee]rrs mklog core *.core
+	rm -f ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
+
 
 .include <bsd.prog.mk>
