@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.5 1997/07/21 14:07:35 jtc Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.6 1998/02/27 18:43:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.5 1997/07/21 14:07:35 jtc Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.6 1998/02/27 18:43:12 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,7 +87,7 @@ sysconf(name)
 		mib[1] = KERN_ARGMAX;
 		break;
 	case _SC_CHILD_MAX:
-		return (getrlimit(RLIMIT_NPROC, &rl) ? -1 : rl.rlim_cur);
+		return (getrlimit(RLIMIT_NPROC, &rl) ? -1 : (long)rl.rlim_cur);
 	case _SC_CLK_TCK:
 		return (CLK_TCK);
 	case _SC_JOB_CONTROL:
@@ -99,7 +99,7 @@ sysconf(name)
 		mib[1] = KERN_NGROUPS;
 		break;
 	case _SC_OPEN_MAX:
-		return (getrlimit(RLIMIT_NOFILE, &rl) ? -1 : rl.rlim_cur);
+		return (getrlimit(RLIMIT_NOFILE, &rl) ? -1 : (long)rl.rlim_cur);
 	case _SC_STREAM_MAX:
 		mib[0] = CTL_USER;
 		mib[1] = USER_STREAM_MAX;
@@ -190,6 +190,7 @@ yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
 		if (value == 0)
 			return (-1);
 		return (value);
+		/*NOTREACHED*/
 		break;
 	default:
 		errno = EINVAL;

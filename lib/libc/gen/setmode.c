@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.19 1998/02/03 18:23:52 perry Exp $	*/
+/*	$NetBSD: setmode.c,v 1.20 1998/02/27 18:36:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.19 1998/02/03 18:23:52 perry Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.20 1998/02/27 18:36:43 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -384,7 +384,7 @@ addcmd(set, op, who, oparg, mask)
 			set->cmd2 = ((who & S_IRUSR) ? CMD2_UBITS : 0) |
 				    ((who & S_IRGRP) ? CMD2_GBITS : 0) |
 				    ((who & S_IROTH) ? CMD2_OBITS : 0);
-			set->bits = ~0;
+			set->bits = (mode_t)~0;
 		} else {
 			set->cmd2 = CMD2_UBITS | CMD2_GBITS | CMD2_OBITS;
 			set->bits = mask;
