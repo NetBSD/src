@@ -1,11 +1,11 @@
-/*	$NetBSD: rcache.c,v 1.9 2001/12/22 08:45:36 lukem Exp $	*/
+/*	$NetBSD: rcache.c,v 1.10 2001/12/23 12:29:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin J. Laubach <mjl@emsi.priv.at> and 
+ * by Martin J. Laubach <mjl@emsi.priv.at> and
  *    Manuel Bouyer <Manuel.Bouyer@lip6.fr>.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -90,7 +90,7 @@ static int64_t physreadsize;
 
 #define CDATA(i)	(cdata + ((i) * nblksread * dev_bsize))
 
-void 
+void
 initcache(int cachesize, int readblksize)
 {
 	size_t len;
@@ -100,7 +100,7 @@ initcache(int cachesize, int readblksize)
 	if(cachesize == -1) {	/* Compute from memory available */
 		int usermem;
 		int mib[2] = { CTL_HW, HW_USERMEM };
-		
+
 		len = sizeof(usermem);
 		if (sysctl(mib, 2, &usermem, &len, NULL, 0) < 0) {
 			msg("sysctl(hw.usermem) failed: %s\n", strerror(errno));
@@ -110,7 +110,7 @@ initcache(int cachesize, int readblksize)
 	} else {		/* User specified */
 		cachebufs = cachesize;
 	}
-	
+
 	if(cachebufs) {	/* Don't allocate if zero --> no caching */
 		if (cachebufs > MAXCACHEBUFS)
 			cachebufs = MAXCACHEBUFS;
@@ -118,7 +118,7 @@ initcache(int cachesize, int readblksize)
 		sharedSize = sizeof(struct cheader) +
 	   	    sizeof(struct cdesc) * cachebufs +
 	   	    nblksread * cachebufs * dev_bsize;
-#ifdef STATS	
+#ifdef STATS
 		fprintf(stderr, "Using %d buffers (%d bytes)\n", cachebufs,
 	   	    sharedSize);
 #endif
@@ -142,7 +142,7 @@ initcache(int cachesize, int readblksize)
 /*
  * Find the cache buffer descriptor that shows the minimal access time
  */
-static int 
+static int
 findlru(void)
 {
 	int	i;
@@ -169,7 +169,7 @@ findlru(void)
 static int breaderrors = 0;
 #define BREADEMAX 32
 
-void 
+void
 rawread(daddr_t blkno, char *buf, int size)
 {
 	int cnt, i;
@@ -240,7 +240,7 @@ err:
 	}
 }
 
-void 
+void
 bread(daddr_t blkno, char *buf, int size)
 {
 	int	osize = size;
@@ -268,7 +268,7 @@ bread(daddr_t blkno, char *buf, int size)
 retry:
 	while(size > 0) {
 		int	i;
-		
+
 		for (i = 0; i < cachebufs; i++) {
 			struct cdesc *curr = &cdesc[i];
 
@@ -309,7 +309,7 @@ retry:
 						curr->blkstart) * dev_bsize,
 					   CDATA(i));
 					fprintf(stderr, "cdesc[i].blkstart %d "
-					    "blkno %d dev_bsize %ld\n", 
+					    "blkno %d dev_bsize %ld\n",
 				   	    curr->blkstart, blkno, dev_bsize);
 					dumpabort(0);
 				}
@@ -423,7 +423,7 @@ retry:
 			 */
 		}
 	}
-	
+
 	if (flock(diskfd, LOCK_UN))
 		msg("flock(LOCK_UN) failed: %s\n",
 		    strerror(errno));
