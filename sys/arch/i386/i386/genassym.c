@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.36 1995/04/17 12:06:39 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.37 1995/04/21 09:17:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -122,11 +122,6 @@ main()
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);
-
-	def("PR_BASE", &uprof->pr_base);
-	def("PR_SIZE", &uprof->pr_size);
-	def("PR_OFF", &uprof->pr_off);
-	def("PR_SCALE", &uprof->pr_scale);
 
 #if NISA > 0
 	def("IH_FUN", &ih->ih_fun);
