@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.8 2001/08/26 11:47:25 simonb Exp $ */
+/* $NetBSD: asc_tc.c,v 1.16 2001/10/01 10:17:26 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.8 2001/08/26 11:47:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.16 2001/10/01 10:17:26 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
