@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 class macro;
@@ -24,13 +24,15 @@ class charinfo {
   static int next_index;
   charinfo *translation;
   int index;
+  int number;
   macro *mac;
   unsigned char special_translation;
   unsigned char hyphenation_code;
   unsigned char flags;
   unsigned char ascii_code;
-  unsigned char number;
   char not_found;
+  char transparent_translate;	// non-zero means translation applies to
+				// to transparent throughput
 public:
   enum { 
     ENDS_SENTENCE = 1,
@@ -39,12 +41,14 @@ public:
     OVERLAPS_HORIZONTALLY = 8,
     OVERLAPS_VERTICALLY = 16,
     TRANSPARENT = 32,
-    NUMBERED = 64,
+    NUMBERED = 64
     };
   enum {
     TRANSLATE_NONE,
     TRANSLATE_SPACE,
     TRANSLATE_DUMMY,
+    TRANSLATE_STRETCHABLE_SPACE,
+    TRANSLATE_HYPHEN_INDICATOR
   };
   symbol nm;
   charinfo(symbol s);
@@ -59,22 +63,22 @@ public:
   unsigned char get_ascii_code();
   void set_hyphenation_code(unsigned char);
   void set_ascii_code(unsigned char);
-  charinfo *get_translation();
-  void set_translation(charinfo *);
+  charinfo *get_translation(int = 0);
+  void set_translation(charinfo *, int);
   void set_flags(unsigned char);
-  void set_special_translation(int);
-  int get_special_translation();
+  void set_special_translation(int, int);
+  int get_special_translation(int = 0);
   macro *set_macro(macro *);
   macro *get_macro();
   int first_time_not_found();
-  void set_number(unsigned char);
+  void set_number(int);
   int get_number();
   int numbered();
 };
 
 charinfo *get_charinfo(symbol);
 extern charinfo *charset_table[];
-charinfo *get_charinfo_by_number(unsigned char);
+charinfo *get_charinfo_by_number(int);
 
 inline int charinfo::overlaps_horizontally()
 {
@@ -111,9 +115,11 @@ inline int charinfo::numbered()
   return flags & NUMBERED;
 }
 
-inline charinfo *charinfo::get_translation()
+inline charinfo *charinfo::get_translation(int transparent_throughput)
 {
-  return translation;
+  return (transparent_throughput && !transparent_translate
+	  ? 0
+	  : translation);
 }
 
 inline unsigned char charinfo::get_hyphenation_code()
@@ -136,9 +142,11 @@ inline int charinfo::get_index()
   return index;
 }
 
-inline int charinfo::get_special_translation()
+inline int charinfo::get_special_translation(int transparent_throughput)
 {
-  return special_translation;
+  return (transparent_throughput && !transparent_translate
+	  ? TRANSLATE_NONE
+	  : special_translation);
 }
 
 inline macro *charinfo::get_macro()

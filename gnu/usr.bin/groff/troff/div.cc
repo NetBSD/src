@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,13 +15,13 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
 // diversions
 
-#include "groff.h"
+#include "troff.h"
 #include "symbol.h"
 #include "dictionary.h"
 #include "hvunits.h"
@@ -31,6 +31,11 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 #include "token.h"
 #include "div.h"
 #include "reg.h"
+
+int exit_started = 0;		// the exit process has started
+int done_end_macro = 0;		// the end macro (if any) has finished
+int seen_last_page_ejector = 0;	// seen the LAST_PAGE_EJECTOR cookie
+static int began_page_in_end_macro = 0;	// a new page was begun during the end macro
 
 static int last_post_line_extra_space = 0; // needed for \n(.a
 static int nl_reg_contents = -1;
@@ -59,7 +64,7 @@ vertical_size::vertical_size(vunits vs, int ls)
     post = V0;
 }
 
-void node::set_vertical_size(vertical_size *v)
+void node::set_vertical_size(vertical_size *)
 {
 }
 
@@ -256,8 +261,8 @@ void macro_diversion::output(node *nd, int retain_size,
   mac->append(new vertical_size_node(v.post));
   mac->append('\n');
   vertical_position += x;
-  if (vertical_position > high_water_mark)
-    high_water_mark = vertical_position;
+  if (vertical_position - v.post > high_water_mark)
+    high_water_mark = vertical_position - v.post;
 }
 
 void macro_diversion::space(vunits n, int)
@@ -273,8 +278,6 @@ void macro_diversion::space(vunits n, int)
     n = -vertical_position;
   mac->append(new diverted_space_node(n));
   vertical_position += n;
-  if (vertical_position > high_water_mark)
-    high_water_mark = vertical_position;
 }
 
 void macro_diversion::copy_file(const char *filename)
@@ -285,8 +288,8 @@ void macro_diversion::copy_file(const char *filename)
 top_level_diversion::top_level_diversion()
 : page_count(0), have_next_page_number(0), page_length(units_per_inch*11), 
   page_offset(units_per_inch), prev_page_offset(units_per_inch), 
-  ejecting_page(0), page_trap_list(0), first_page_begun(0), no_space_mode(0),
-  page_number(0)
+  ejecting_page(0), page_trap_list(0), before_first_page(1), no_space_mode(0),
+  page_number(0), last_page_count(-1)
 {
 }
 
@@ -332,7 +335,7 @@ void top_level_diversion::output(node *nd, int retain_size,
   no_space_mode = 0;
   vunits next_trap_pos;
   trap *next_trap = find_next_trap(&next_trap_pos);
-  if (!first_page_begun && begin_page()) 
+  if (before_first_page && begin_page()) 
     fatal("sorry, I didn't manage to begin the first page in time: use an explicit .br request");
   vertical_size v(vs, ls);
   for (node *tem = nd; tem != 0; tem = tem->next)
@@ -348,14 +351,14 @@ void top_level_diversion::output(node *nd, int retain_size,
   the_output->print_line(page_offset, vertical_position, nd,
 			 v.pre + v.pre_extra, v.post_extra);
   vertical_position += v.post_extra;
+  if (vertical_position > high_water_mark)
+    high_water_mark = vertical_position;
   if (vertical_position_traps_flag && vertical_position >= page_length)
     begin_page();
   else if (vertical_position_traps_flag
 	   && next_trap != 0 && vertical_position >= next_trap_pos) {
     nl_reg_contents = vertical_position.to_units();
     truncated_space = v.post;
-    if (vertical_position > high_water_mark)
-      high_water_mark = vertical_position;
     spring_trap(next_trap->nm);
   }
   else if (v.post > V0) {
@@ -365,28 +368,20 @@ void top_level_diversion::output(node *nd, int retain_size,
       truncated_space = vertical_position - next_trap_pos;
       vertical_position = next_trap_pos;
       nl_reg_contents = vertical_position.to_units();
-      if (vertical_position > high_water_mark)
-	high_water_mark = vertical_position;
       spring_trap(next_trap->nm);
     }
     else if (vertical_position_traps_flag && vertical_position >= page_length)
       begin_page();
-    else {
+    else
       nl_reg_contents = vertical_position.to_units();
-      if (vertical_position > high_water_mark)
-	high_water_mark = vertical_position;
-    }
   }
-  else {
+  else
     nl_reg_contents = vertical_position.to_units();
-    if (vertical_position > high_water_mark)
-      high_water_mark = vertical_position;
-  }
 }
 
 void top_level_diversion::transparent_output(unsigned char c)
 {
-  if (!first_page_begun && begin_page())
+  if (before_first_page && begin_page())
     // This can only happen with the transparent() request.
     fatal("sorry, I didn't manage to begin the first page in time: use an explicit .br request");
   const char *s = asciify(c);
@@ -401,7 +396,7 @@ void top_level_diversion::transparent_output(node * /*n*/)
 
 void top_level_diversion::copy_file(const char *filename)
 {
-  if (!first_page_begun && begin_page())
+  if (before_first_page && begin_page())
     fatal("sorry, I didn't manage to begin the first page in time: use an explicit .br request");
   the_output->copy_file(page_offset, vertical_position, filename);
 }
@@ -414,7 +409,7 @@ void top_level_diversion::space(vunits n, int forced)
     else
       no_space_mode = 0;
   }
-  if (!first_page_begun) {
+  if (before_first_page) {
     if (begin_page()) {
       // This happens if there's a top of page trap, and the first-page
       // transition is caused by `'sp'.
@@ -429,8 +424,6 @@ void top_level_diversion::space(vunits n, int forced)
     vertical_position = next_trap_pos;
     nl_reg_contents = vertical_position.to_units();
     truncated_space = y - vertical_position;
-    if (vertical_position > high_water_mark)
-      high_water_mark = vertical_position;
     spring_trap(next_trap->nm);
   }
   else if (y < V0) {
@@ -442,8 +435,6 @@ void top_level_diversion::space(vunits n, int forced)
   else {
     vertical_position = y;
     nl_reg_contents = vertical_position.to_units();
-    if (vertical_position > high_water_mark)
-      high_water_mark = vertical_position;
   }
 }
 
@@ -456,12 +447,14 @@ void top_level_diversion::add_trap(symbol nm, vunits pos)
 {
   trap *first_free_slot = 0;
   for (trap **p = &page_trap_list; *p; p = &(*p)->next) {
-    if ((*p)->position == pos) {
+    if ((*p)->nm.is_null()) {
+      if (first_free_slot == 0)
+	first_free_slot = *p;
+    }
+    else if ((*p)->position == pos) {
       (*p)->nm = nm;
       return;
     }
-    else if ((*p)->nm.is_null() && first_free_slot == 0)
-      first_free_slot = *p;
   }
   if (first_free_slot) {
     first_free_slot->nm = nm;
@@ -521,19 +514,25 @@ void end_diversions()
 
 NO_RETURN void cleanup_and_exit(int exit_code)
 {
-  if (the_output)
+  if (the_output) {
+    the_output->trailer(topdiv->get_page_length());
     delete the_output;
+  }
   exit(exit_code);
 }
-
-int exit_flag = 0;
 
 // returns non-zero if it sprung a top of page trap
 
 int top_level_diversion::begin_page()
 {
-  if (exit_flag == 2 || (exit_flag == 1 && curenv->is_empty()))
-    cleanup_and_exit(0);
+  if (exit_started) {
+    if (page_count == last_page_count
+	? curenv->is_empty()
+	: (done_end_macro && (seen_last_page_ejector || began_page_in_end_macro)))
+      cleanup_and_exit(0);
+    if (!done_end_macro)
+      began_page_in_end_macro = 1;
+  }
   if (!the_output)
     init_output();
   ++page_count;
@@ -541,6 +540,8 @@ int top_level_diversion::begin_page()
     page_number = next_page_number;
     have_next_page_number = 0;
   }
+  else if (before_first_page == 1)
+    page_number = 1;
   else
     page_number++;
   // spring the top of page trap if there is one
@@ -548,9 +549,13 @@ int top_level_diversion::begin_page()
   vertical_position = -vresolution;
   trap *next_trap = find_next_trap(&next_trap_pos);
   vertical_position = V0;
-  first_page_begun = 1;
+  high_water_mark = V0;
   ejecting_page = 0;
-  the_output->begin_page(page_number, page_length);
+  // If before_first_page was 2, then the top of page transition was undone
+  // using eg .nr nl 0-1.  See nl_reg::set_value.
+  if (before_first_page != 2)
+    the_output->begin_page(page_number, page_length);
+  before_first_page = 0;
   nl_reg_contents = vertical_position.to_units();
   if (vertical_position_traps_flag && next_trap != 0 && next_trap_pos == V0) {
     truncated_space = V0;
@@ -598,25 +603,20 @@ diversion::~diversion()
 void page_offset()
 {
   hunits n;
-  if (!has_arg()) {
-    hunits temp = topdiv->page_offset;
-    topdiv->page_offset = topdiv->prev_page_offset;
-    topdiv->prev_page_offset = temp;
-  }
-  else if (get_hunits(&n, 'v', topdiv->page_offset)) {
-    topdiv->prev_page_offset = topdiv->page_offset;
-    topdiv->page_offset = n;
-  }
+  if (!has_arg() || !get_hunits(&n, 'v', topdiv->page_offset))
+    n = topdiv->prev_page_offset;
+  topdiv->prev_page_offset = topdiv->page_offset;
+  topdiv->page_offset = n;
   skip_line();
 }
 
 void page_length()
 {
   vunits n;
-  if (!has_arg())
-    topdiv->set_page_length(11*units_per_inch);
-  else if (get_vunits(&n, 'v', topdiv->get_page_length()))
+  if (has_arg() && get_vunits(&n, 'v', topdiv->get_page_length()))
     topdiv->set_page_length(n);
+  else
+    topdiv->set_page_length(11*units_per_inch);
   skip_line();
 }
 
@@ -642,10 +642,15 @@ void begin_page()
   while (!tok.newline() && !tok.eof())
     tok.next();
   if (curdiv == topdiv) {
-    if (!topdiv->first_page_begun) {
-      if (topdiv->no_space_mode && !got_arg) {
-	topdiv->begin_page();
+    if (topdiv->before_first_page) {
+      if (!break_flag) {
+	if (got_arg)
+	  topdiv->set_next_page_number(n);
+	if (got_arg || !topdiv->no_space_mode)
+	  topdiv->begin_page();
       }
+      else if (topdiv->no_space_mode && !got_arg)
+	topdiv->begin_page();
       else {
 	/* Given this
 
@@ -712,23 +717,16 @@ void space_request()
   postpone_traps();
   if (break_flag)
     curenv->do_break();
-  int err = 0;
   vunits n;
-  if (!has_arg())
+  if (!has_arg() || !get_vunits(&n, 'v'))
     n = curenv->get_vertical_spacing();
-  else if (!get_vunits(&n, 'v'))
-    err = 1;
   while (!tok.newline() && !tok.eof())
     tok.next();
-  if (!unpostpone_traps()) {
-    if (!err)
-      curdiv->space(n);
-  }
-  else {
+  if (!unpostpone_traps())
+    curdiv->space(n);
+  else
     // The line might have had line spacing that was truncated.
-    if (!err)
-      truncated_space += n;
-  }
+    truncated_space += n;
   tok.next();
 }
 
@@ -746,16 +744,12 @@ BEGIN_TRAP token is not skipped over. */
 
 void need_space()
 {
-  int err = 0;
   vunits n;
-  if (!has_arg())
+  if (!has_arg() || !get_vunits(&n, 'v'))
     n = curenv->get_vertical_spacing();
-  else if (!get_vunits(&n, 'v'))
-    err = 1;
   while (!tok.newline() && !tok.eof())
     tok.next();
-  if (!err)
-    curdiv->need(n);
+  curdiv->need(n);
   tok.next();
 }
 
@@ -862,15 +856,18 @@ void mark()
   symbol s = get_name();
   if (s.is_null())
     curdiv->marked_place = curdiv->get_vertical_position();
+  else if (curdiv == topdiv)
+    set_number_reg(s, nl_reg_contents);
   else
     set_number_reg(s, curdiv->get_vertical_position().to_units());
   skip_line();
 }
 
+// This is truly bizarre.  It is documented in the SQ manual.
+
 void return_request()
 {
-  vunits dist = V0;
-  // This is truly bizarre.  It is documented in the SQ manual.
+  vunits dist = curdiv->marked_place - curdiv->get_vertical_position();
   if (has_arg()) {
     if (tok.ch() == '-') {
       tok.next();
@@ -880,12 +877,10 @@ void return_request()
     }
     else {
       vunits x;
-      if (get_vunits(&x, 'v') && x >= V0)
-	dist = x - curdiv->get_vertical_position();
+      if (get_vunits(&x, 'v'))
+	dist = x >= V0 ? x - curdiv->get_vertical_position() : V0;
     }
   }
-  else
-    dist = curdiv->marked_place - curdiv->get_vertical_position();
   if (dist < V0)
     curdiv->space(dist);
   skip_line();
@@ -894,10 +889,10 @@ void return_request()
 void vertical_position_traps()
 {
   int n;
-  if (!has_arg())
-    vertical_position_traps_flag = 1;
-  else if (get_integer(&n))
+  if (has_arg() && get_integer(&n))
     vertical_position_traps_flag = (n != 0);
+  else
+    vertical_position_traps_flag = 1;
   skip_line();
 }
 
@@ -943,7 +938,7 @@ public:
   
 int vertical_position_reg::get_value(units *res)
 {
-  if (curdiv == topdiv && !topdiv->first_page_begun)
+  if (curdiv == topdiv && topdiv->before_first_page)
     *res = -1;
   else
     *res = curdiv->get_vertical_position().to_units();
@@ -952,7 +947,7 @@ int vertical_position_reg::get_value(units *res)
 
 const char *vertical_position_reg::get_string()
 {
-  if (curdiv == topdiv && !topdiv->first_page_begun)
+  if (curdiv == topdiv && topdiv->before_first_page)
     return "-1";
   else
     return itoa(curdiv->get_vertical_position().to_units());
@@ -1060,6 +1055,30 @@ const char *constant_vunits_reg::get_string()
   return itoa(p->to_units());
 }
 
+class nl_reg : public variable_reg {
+public:
+  nl_reg();
+  void set_value(units);
+};
+
+nl_reg::nl_reg() : variable_reg(&nl_reg_contents)
+{
+}
+
+void nl_reg::set_value(units n)
+{
+  variable_reg::set_value(n);
+  // Setting nl to a negative value when the vertical position in
+  // the top-level diversion is 0 undoes the top of page transition,
+  // so that the header macro will be called as if the top of page
+  // transition hasn't happened.  This is used by Larry Wall's
+  // wrapman program.  Setting before_first_page to 2 rather than 1,
+  // tells top_level_diversion::begin_page not to call
+  // output_file::begin_page again.
+  if (n < 0 && topdiv->get_vertical_position() == V0)
+    topdiv->before_first_page = 2;
+}
+
 void init_div_requests()
 {
   init_request("wh", when_request);
@@ -1092,7 +1111,7 @@ void init_div_requests()
   number_reg_dictionary.define(".t", new distance_to_next_trap_reg);
   number_reg_dictionary.define("dl", new variable_reg(&dl_reg_contents));
   number_reg_dictionary.define("dn", new variable_reg(&dn_reg_contents));
-  number_reg_dictionary.define("nl", new variable_reg(&nl_reg_contents));
+  number_reg_dictionary.define("nl", new nl_reg);
   number_reg_dictionary.define(".vpt", 
 		       new constant_int_reg(&vertical_position_traps_flag));
   number_reg_dictionary.define("%", new page_number_reg);
