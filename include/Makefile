@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2000/06/03 10:17:59 fvdl Exp $
+#	$NetBSD: Makefile,v 1.90 2000/06/03 11:23:54 fvdl Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 SRCTOP=	..
@@ -24,24 +24,17 @@ INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/telnet.h arpa/tftp.h
 INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
 	protocols/talkd.h protocols/timed.h
-INCS+=	rpc/auth.h rpc/auth_unix.h rpc/clnt.h rpc/clnt_soc.h rpc/nettype.h \
-	rpc/pmap_clnt.h rpc/pmap_prot.h rpc/pmap_rmt.h rpc/raw.h rpc/rpc.h \
-	rpc/rpc_msg.h rpc/rpcb_clnt.h rpc/rpcb_prot.h rpc/rpcent.h \
-	rpc/svc.h rpc/svc_auth.h rpc/svc_soc.h rpc/types.h rpc/xdr.h
 INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
-
-
-rpc/rpcb_prot.h: rpc/rpcb_prot.x
-	rpcgen -h ${.ALLSRC} -o ${.TARGET}
-
-CLEANFILES+=	rpc/rpcb_prot.h
 
 INCSDIR=/usr/include
 
 MKOBJ=	no
+
+SUBDIR=	rpc
 
 .if defined(CRYPTOPATH)
 .sinclude "${CRYPTOPATH}/include/Makefile.frag"
 .endif
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
