@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.66 2003/04/12 02:49:25 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.67 2003/04/18 01:24:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.66 2003/04/12 02:49:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.67 2003/04/18 01:24:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ mbinit(void)
 {
 
 	KASSERT(sizeof(struct _m_ext) <= MHLEN);
+	KASSERT(sizeof(struct mbuf) == MSIZE);
 
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
