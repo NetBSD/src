@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1999/02/26 14:40:45 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 1999/03/05 06:10:48 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1053,6 +1053,7 @@ pmap_enter(pm, va, pa, prot, wired)
 		}
 
 	s = splimp();
+	pm->pm_stats.resident_count++;
 	/*
 	 * Try to insert directly into HTAB.
 	 */
@@ -1095,6 +1096,7 @@ pmap_remove(pm, va, endva)
 				asm volatile ("sync");
 				tlbie(va);
 				tlbsync();
+				pm->pm_stats.resident_count--;
 			}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
@@ -1103,6 +1105,7 @@ pmap_remove(pm, va, endva)
 				asm volatile ("sync");
 				tlbie(va);
 				tlbsync();
+				pm->pm_stats.resident_count--;
 			}
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
@@ -1111,6 +1114,7 @@ pmap_remove(pm, va, endva)
 					       &po->po_pte);
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
+				pm->pm_stats.resident_count--;
 			}
 		}
 		va += NBPG;
