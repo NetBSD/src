@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.84 2001/03/15 19:18:20 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.85 2001/03/15 23:23:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -230,19 +230,18 @@ linux_sys_brk(p, v, retval)
 	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
 	caddr_t oldbrk;
+	struct linux_emuldata *ed = (struct linux_emuldata*)p->p_emuldata;
 
 	oldbrk = vm->vm_daddr + ctob(vm->vm_dsize);
 
 	SCARG(&oba, nsize) = nbrk;
 
-	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(p, &oba, retval) == 0) {
-		((struct linux_emuldata*)(p->p_emuldata))->p_break = (char*)nbrk;
-		retval[0] = (register_t)nbrk;
-	}
-	else {
-		retval[0] = 
-		    (register_t)((struct linux_emuldata*)(p->p_emuldata))->p_break;
-	}
+	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(p, &oba, retval) == 0) 
+		ed->p_break = (char*)nbrk;
+	else 
+		nbrk = ed->p_break;
+
+	retval[0] = (register_t)nbrk;
 
 	return 0;
 }
