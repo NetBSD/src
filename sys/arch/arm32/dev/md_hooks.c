@@ -1,4 +1,4 @@
-/* $NetBSD: md_hooks.c,v 1.4 1996/03/09 17:26:01 mark Exp $ */
+/* $NetBSD: md_hooks.c,v 1.5 1996/03/28 21:14:13 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -75,7 +75,7 @@ rd_attach_hook(unit, rd)
 			bootrd = rd;
 		}
 	}
-	printf(": %dK (%d blocks) fixed @ 0x%08x", rd->rd_size / 1024, rd->rd_size / DEV_BSIZE, rd->rd_addr);
+	printf("rd%d: allocated %dK (%d blocks)\n", unit, rd->rd_size / 1024, rd->rd_size / DEV_BSIZE);
 }
 
 
