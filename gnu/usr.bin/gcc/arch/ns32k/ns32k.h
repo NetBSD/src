@@ -971,13 +971,11 @@ __transfer_from_trampoline ()		\
   (GET_CODE (X) == LABEL_REF || GET_CODE (X) == SYMBOL_REF		\
    || GET_CODE (X) == CONST						\
    || (GET_CODE (X) == CONST_INT					\
-       && ((unsigned)INTVAL (X) >= 0xe0000000				\
-	   || (unsigned)INTVAL (X) < 0x20000000)))
+       && NS32K_DISPLACEMENT_P (INTVAL (X))))
 
 #define CONSTANT_ADDRESS_NO_LABEL_P(X)   \
   (GET_CODE (X) == CONST_INT						\
-   && ((unsigned)INTVAL (X) >= 0xe0000000				\
-       || (unsigned)INTVAL (X) < 0x20000000))
+   && NS32K_DISPLACEMENT_P (INTVAL (X)))
 
 /* Return the register class of a scratch register needed to copy IN into
    or out of a register in CLASS in MODE.  If it can be done directly,
@@ -1214,7 +1212,13 @@ extern int current_function_uses_pic_offset_table, flag_pic;
   (((! current_function_uses_pic_offset_table			\
      && global_symbolic_reference_mentioned_p (X, 1))?		\
       (current_function_uses_pic_offset_table = 1):0		\
-   ), 1)
+   ), (! SYMBOLIC_CONST (X)					\
+   || GET_CODE (X) == SYMBOL_REF || GET_CODE (X) == LABEL_REF))
+
+#define SYMBOLIC_CONST(X)	\
+(GET_CODE (X) == SYMBOL_REF						\
+ || GET_CODE (X) == LABEL_REF						\
+ || (GET_CODE (X) == CONST && symbolic_reference_mentioned_p (X)))
 
 /* Define this macro if references to a symbol must be treated
    differently depending on something about the variable or
