@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.9 2003/12/12 14:31:39 martin Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.10 2004/02/10 01:11:45 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.9 2003/12/12 14:31:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.10 2004/02/10 01:11:45 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,10 +310,5 @@ pckbc_machdep_cnattach(constag, slot)
     pckbc_slot_t slot;
 {
 
-#if !defined(__HAVE_NWSCONS) && defined(MSIIEP)
-	/* we do use wscons on krups! */
-	return (pckbd_cnattach(constag, slot));
-#else
 	return (0);
-#endif
 }
