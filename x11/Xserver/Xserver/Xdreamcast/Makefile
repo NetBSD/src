@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/02/07 08:30:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 12:27:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ PROG=	Xdreamcast
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/dreamcast
 
 LDADD=	${LDADD.dix} ${LDADD.hw/netbsd/dreamcast} ${LDADD.os} -lXfont \
-	-lfreetype ${LDADD.os} ${LDADD.cfb} ${LDADD.cfb16} \
+	-lfreetype ${LDADD.os} ${LDADD.cfb} ${LDADD.cfb16} ${LDADD.cfb} \
 	${LDADD.mfb} ${LDADD.dix/xpstubs} ${LDADD.mi} ${LDADD.Xext/ext} \
 	${LDADD.xkb} ${LDADD.xinput} ${LDADD.lbx} -llbxutil \
 	${LDADD.dbe} ${LDADD.record} ${LDADD.xtrap} ${LDADD.GL/glx} \
