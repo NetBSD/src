@@ -1,4 +1,4 @@
-/* $NetBSD: exception.S,v 1.4 1996/03/08 20:37:59 mark Exp $ */
+/* $NetBSD: exception.S,v 1.5 1996/03/13 21:00:26 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -240,18 +240,7 @@ abortprefetchmsg:
  * Main entry point for the SWI vector
  */
 
-/*
- * Ok there is a lot of debugging in the function. This dates from the
- * time of the "syscall in kernel mode" bug caused a trash kstack.
- * Since fixing that bug this error has never occurred, as expected, and
- * thus this debugging code is now redundant and will be removed soonish
- *
- * I am always hesitant to remove debugging code because as soon as I do
- * a new bug shows up and I need it again :-)
- */
-
 	.global	swi_entry
-
 swi_entry:
 	PUSHFRAME
 
@@ -308,7 +297,6 @@ undefined_entry:
 	str	r1, [r0, #0x0004]
 	ldmia	r0, {r0, r1, pc}
 
-
 Lundefined_handler_indirection:
 	.word	Lundefined_handler_indirection_data
 
@@ -334,6 +322,12 @@ _undefinedinstruction_bounce:
 
 	.data
 	.align	0
+
+/*
+ * Indirection data
+ * 2 words use for preserving r0 and r1
+ * 3rd word contains the undefined handler address.
+ */
 
 Lundefined_handler_indirection_data:
 	.word	0
