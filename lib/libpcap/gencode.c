@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.30 2002/05/16 19:57:22 wiz Exp $	*/
+/*	$NetBSD: gencode.c,v 1.31 2002/08/26 11:21:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.30 2002/05/16 19:57:22 wiz Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.31 2002/08/26 11:21:18 yamt Exp $");
 #endif
 #endif
 
@@ -2635,16 +2635,16 @@ gen_relation(code, a0, a1, reversed)
 
 	s0 = xfer_to_x(a1);
 	s1 = xfer_to_a(a0);
-	s2 = new_stmt(BPF_ALU|BPF_SUB|BPF_X);
-	b = new_block(JMP(code));
-	if (code == BPF_JGT || code == BPF_JGE) {
-		reversed = !reversed;
-		b->s.k = 0x80000000;
+	if (code == BPF_JEQ) {
+		s2 = new_stmt(BPF_ALU|BPF_SUB|BPF_X);
+		b = new_block(JMP(code));
+		sappend(s1, s2);
 	}
+	else
+		b = new_block(BPF_JMP|code|BPF_X);
 	if (reversed)
 		gen_not(b);
 
-	sappend(s1, s2);
 	sappend(s0, s1);
 	sappend(a1->s, s0);
 	sappend(a0->s, a1->s);
