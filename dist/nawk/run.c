@@ -1946,8 +1946,16 @@ Cell *gensub(Node **a, int nnn)	/* global selective substitute */
 	sptr = getsval(h);
 	if (sptr[0] == 'g' || sptr[0] == 'G')
 		whichm = -1;
-	else
-		whichm = (int) getfval(h);
+	else {
+		/*
+		 * The specified number is index of replacement, starting
+		 * from 1. GNU awk treats index lower than 0 same as
+		 * 1, we do same for compatibility.
+		 */
+		whichm = (int) getfval(h) - 1;
+		if (whichm < 0)
+			whichm = 0;
+	}
 	tempfree(h);
 
 	if (pmatch(pfa, t)) {
