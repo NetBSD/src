@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.1 1999/09/13 10:31:29 itojun Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.2 2002/02/12 15:26:50 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,15 +50,15 @@
  * Return -1 if not found.
  */
 
-isbad(bt, cyl, trk, sec)
-	register struct dkbad *bt;
+isbad(struct dkbad *bt)
 {
-	register int i;
-	register long blk, bblk;
+	int i;
+	long blk, bblk;
 
 	blk = ((long)cyl << 16) + (trk << 8) + sec;
 	for (i = 0; i < 126; i++) {
-		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) + bt->bt_bad[i].bt_trksec;
+		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
+		    bt->bt_bad[i].bt_trksec;
 		if (blk == bblk)
 			return (i);
 		if (blk < bblk || bblk < 0)
@@ -66,4 +66,4 @@ isbad(bt, cyl, trk, sec)
 	}
 	return (-1);
 }
-#endif
+#endif /* !NOBADSECT */

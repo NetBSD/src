@@ -1,4 +1,4 @@
-/* $NetBSD: wdogvar.h,v 1.3 2000/10/31 02:04:13 msaitoh Exp $ */
+/* $NetBSD: wdogvar.h,v 1.4 2002/02/12 15:26:48 uch Exp $ */
 
 #ifndef _SH3_WDOGVAR_H_
 #define _SH3_WDOGVAR_H_
@@ -16,8 +16,8 @@
 
 #ifdef _KERNEL
 extern unsigned int maxwdog;
-extern void wdog_wr_cnt __P((unsigned char));
-extern void wdog_wr_csr __P((unsigned char));
+extern void wdog_wr_cnt(unsigned char);
+extern void wdog_wr_csr(unsigned char);
 #endif
 
 #endif /* !_SH3_WDOGVAR_H_ */
