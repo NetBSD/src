@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.17 1997/10/19 05:50:11 lukem Exp $	*/
+/*	$NetBSD: unix.c,v 1.17.4.1 1999/08/20 05:00:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.17 1997/10/19 05:50:11 lukem Exp $");
+__RCSID("$NetBSD: unix.c,v 1.17.4.1 1999/08/20 05:00:54 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ unixpr(off)
 
 	filebuf = (char *)kvm_getfiles(kvmd, KERN_FILE, 0, &nfiles);
 	if (filebuf == 0) {
-		printf("Out of memory (file table).\n");
+		printf("file table read error: %s", kvm_geterr(kvmd));
 		return;
 	}
 	file = (struct file *)(filebuf + sizeof(fp));
