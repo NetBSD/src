@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.32 2003/11/27 23:44:49 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.33 2003/12/03 18:18:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.32 2003/11/27 23:44:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.33 2003/12/03 18:18:43 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -153,14 +153,13 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 
 		lr = mach_right_check(ln, l, MACH_PORT_TYPE_ALL_RIGHTS);
 		rr = mach_right_check(rn, l, MACH_PORT_TYPE_ALL_RIGHTS);
-		if (rr == NULL) {
+		if ((rr == NULL) || (rr->mr_port == NULL)) {
 #ifdef DEBUG_MACH
 			printf("msg id %d: invalid dest\n", sm->msgh_id);
 #endif
 			*retval = MACH_SEND_INVALID_DEST;
 			goto out1;
 		}
-
 
 		/* 
 		 * Check that the process has send a send right on 
@@ -211,7 +210,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * as we already receive a reply.
 			 * - request and reply are swapped
 			 * - there will be no reply, so set lr to NULL.
-			 * - skip the lr == NULL test
+			 * - skip the lr == NULL tests
 			 * XXX This is inelegant.
 			 */
 			if ((sm->msgh_id >= 2501) && (sm->msgh_id <= 2503)) {
@@ -225,7 +224,12 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 			 * Check that the local port is valid, else
 			 * we will not be able to send the reply
 			 */
-			if (lr == NULL) {
+			if ((lr == NULL) || 
+			    (lr->mr_port == NULL) || 
+			    (lr->mr_port->mp_recv == NULL)) {
+#ifdef DEBUG_MACH
+				printf("msg id %d: invalid src\n", sm->msgh_id);
+#endif
 				*retval = MACH_SEND_INVALID_REPLY;
 				goto out1;
 			}
@@ -337,9 +341,19 @@ out1:
 		} else {
 			/* 
 			 * The message is not to be handled by the kernel. 
-			 * Queue the message in the remote port.
+			 * Check that there is a valid receiver, and
+			 * queue the message in the remote port.
 			 */
-			mp = rr->mr_port;
+			mp = rr->mr_port; /* (mp != NULL) already checked */
+			if (mp->mp_recv == NULL) {
+#ifdef DEBUG_MACH
+				printf("msg id %d: invalid dst\n", sm->msgh_id);
+#endif
+				*retval = MACH_SEND_INVALID_DEST;
+				free(sm, M_EMULDATA);
+				return 0;
+			}
+
 			(void)mach_message_get(sm, send_size, mp, l);
 #ifdef DEBUG_MACH_MSG
 			printf("pid %d: message queued on port %p (%d) [%p]\n", 
