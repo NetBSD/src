@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.207 2000/03/23 15:11:26 joda Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.208 2000/03/27 16:56:27 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.202 2000/03/23 15:10:56 joda Exp 
+ *	NetBSD: pcidevs,v 1.203 2000/03/27 16:55:43 ad Exp 
  */
 
 /*
@@ -1532,6 +1532,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Distributed Processing Technology",
 	    "SmartCache/SmartRAID",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_I2O,
+	    0,
+	    "Distributed Processing Technology",
+	    "SmartRAID (I2O)",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
+	    0,
+	    "Distributed Processing Technology",
+	    "Memory Controller",
 	},
 	{
 	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI,
