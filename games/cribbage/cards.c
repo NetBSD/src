@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.5 1999/09/08 21:17:47 jsm Exp $	*/
+/*	$NetBSD: cards.c,v 1.6 1999/09/30 18:01:32 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.5 1999/09/08 21:17:47 jsm Exp $");
+__RCSID("$NetBSD: cards.c,v 1.6 1999/09/30 18:01:32 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,10 +101,10 @@ eq(a, b)
 }
 
 /*
- * isone returns TRUE if a is in the set of cards b
+ * is_one returns TRUE if a is in the set of cards b
  */
 int
-isone(a, b, n)
+is_one(a, b, n)
 	CARD a;
 	const CARD b[];
 	int n;
