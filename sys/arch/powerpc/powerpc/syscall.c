@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2002/10/30 06:37:38 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6 2002/10/30 06:41:45 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -36,6 +36,7 @@
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 #include "opt_compat_linux.h"
+#include "opt_compat_mach.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -67,6 +68,11 @@
 #include <compat/linux/arch/powerpc/linux_machdep.h>
 #endif
 
+#ifdef COMPAT_MACH
+#include <compat/mach/mach_syscall.h>
+extern struct sysent mach_sysent[];
+#endif
+
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
@@ -94,7 +100,16 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 
 	code = frame->fixreg[0];
 
-	callp = p->p_emul->e_sysent;
+#if MACH_SYSCALL
+	if (code < 0) {
+#ifdef DEBUG_MACH
+		printf("->mach(%d)\n", code);
+#endif /* DEBUG_MACH */
+		code = -code;
+		callp = mach_sysent;
+	} else
+#endif /* MACH_SYSCALL */
+		callp = p->p_emul->e_sysent;
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
@@ -187,7 +202,16 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
-	callp = p->p_emul->e_sysent;
+#ifdef MACH_SYSCALL
+	if (code < 0) {
+#ifdef DEBUG_MACH
+		printf("->mach(%d)\n", code);
+#endif /* DEBUG_MACH */
+		code = -code;
+		callp = mach_sysent;
+	} else 
+#endif /* MACH_SYSCALL */
+		callp = p->p_emul->e_sysent;
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
 
