@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.126 2001/04/30 01:13:21 lukem Exp $	*/
+/*	$NetBSD: systm.h,v 1.127 2001/05/08 13:07:35 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -377,8 +377,8 @@ int cn_get_magic __P((char *magic, int len));
 /* Encode out-of-band events this way when passing to cn_check_magic() */
 #define	CNC_BREAK		0x100
 
-#if defined(DDB) || defined(sun3)
-/* note that cpu_Debugger() is always available on sun3 */
+#if defined(DDB) || defined(sun3) || defined(sun2)
+/* note that cpu_Debugger() is always available on sun[23] */
 void	cpu_Debugger __P((void));
 #define Debugger	cpu_Debugger
 #endif
