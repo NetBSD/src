@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.1 2000/05/02 06:43:05 augustss Exp $ */
+/* $NetBSD: bba.c,v 1.2 2000/05/28 06:13:40 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,17 +59,6 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
-
-#ifdef pmax
-#include <pmax/pmax/maxine.h>
-#define IOASIC_CSR_ISDN_ENABLE	XINE_CSR_ISDN_ENABLE
-#define IOASIC_INTR_ISDN_TXLOAD	IOASIC_INTR_ISDN_DS_TXLOAD
-#define IOASIC_INTR_ISDN_RXLOAD	IOASIC_INTR_ISDN_DS_RXLOAD
-#ifdef IOASIC_INTR_ISDN_OVRUN
-#undef IOASIC_INTR_ISDN_OVRUN
-#endif
-#define IOASIC_INTR_ISDN_OVRUN	IOASIC_INTR_ISDN_DS_OVRUN
-#endif
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (am7930debug) printf x
@@ -496,8 +485,8 @@ bba_trigger_output(addr, start, end, blksize, intr, arg, param)
 	d->curseg = 1;
 
 	/* get physical address of buffer start */
-	phys = (tc_addr_t)d->dmam->dm_segs[d->curseg].ds_addr;
-	nphys = (tc_addr_t)d->dmam->dm_segs[d->curseg+1].ds_addr;
+	phys = (tc_addr_t)d->dmam->dm_segs[0].ds_addr;
+	nphys = (tc_addr_t)d->dmam->dm_segs[1].ds_addr;
 
 	/* setup DMA pointer */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_X_DMAPTR,
@@ -566,8 +555,8 @@ bba_trigger_input(addr, start, end, blksize, intr, arg, param)
 	d->curseg = 1;
 
 	/* get physical address of buffer start */
-	phys = (tc_addr_t)d->dmam->dm_segs[d->curseg].ds_addr;
-	nphys = (tc_addr_t)d->dmam->dm_segs[d->curseg+1].ds_addr;
+	phys = (tc_addr_t)d->dmam->dm_segs[0].ds_addr;
+	nphys = (tc_addr_t)d->dmam->dm_segs[1].ds_addr;
 
 	/* setup DMA pointer */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_R_DMAPTR,
