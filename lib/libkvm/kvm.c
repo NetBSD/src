@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.81 2003/08/07 16:44:36 agc Exp $	*/
+/*	$NetBSD: kvm.c,v 1.82 2003/11/04 14:59:10 cube Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.81 2003/08/07 16:44:36 agc Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.82 2003/11/04 14:59:10 cube Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -337,6 +337,16 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 				_kvm_syserr(kd, kd->program, "%s", uf);
 				goto failed;
 			}
+		} else {
+			/*
+			 * We're here because /dev/ksyms was opened
+			 * successfully.  However, we don't want to keep it
+			 * open, so we close it now.  Later, we will open
+			 * it again, since it will be the only case where
+			 * kd->nlfd is negative.
+			 */
+			close(kd->nlfd);
+			kd->nlfd = -1;
 		}
 	} else {
 		/*
@@ -733,14 +743,33 @@ kvm_nlist(kd, nl)
 	kvm_t *kd;
 	struct nlist *nl;
 {
-	int rv;
+	int rv, nlfd;
+
+	/*
+	 * kd->nlfd might be negative when we get here, and in that
+	 * case that means that we're using /dev/ksyms.
+	 * So open it again, just for the time we retrieve the list.
+	 */
+	if (kd->nlfd < 0) {
+		nlfd = open_cloexec(_PATH_KSYMS, O_RDONLY, 0);
+		if (nlfd < 0) {
+			_kvm_err(kd, 0, "failed to open %s", _PATH_KSYMS);
+			return (nlfd);
+		}
+	} else
+		nlfd = kd->nlfd;
 
 	/*
 	 * Call the nlist(3) routines to retrieve the given namelist.
 	 */
-	rv = __fdnlist(kd->nlfd, nl);
+	rv = __fdnlist(nlfd, nl);
+
 	if (rv == -1)
 		_kvm_err(kd, 0, "bad namelist");
+
+	if (kd->nlfd < 0)
+		close(nlfd);
+
 	return (rv);
 }
 
